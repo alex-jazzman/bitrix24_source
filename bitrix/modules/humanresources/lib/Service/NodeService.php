@@ -198,6 +198,11 @@ class NodeService implements Contract\Service\NodeService
 			$this->moveNode($nodeEntity, $targetNode);
 		}
 
+		if ($node->sort !== $nodeEntity->sort)
+		{
+			$node->sort = $nodeEntity->sort;
+		}
+
 		return $this->nodeRepository->update($node);
 	}
 }

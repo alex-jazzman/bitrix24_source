@@ -55,10 +55,6 @@ export const AddToChat = {
 		{
 			return this.query.length === 0;
 		},
-		recentSearchItems(): SearchResultItem[]
-		{
-			return getUsersFromRecentItems({ withFakeUsers: true });
-		},
 		isEmptyState(): boolean
 		{
 			return this.searchResult.length === 0;
@@ -82,6 +78,7 @@ export const AddToChat = {
 			users: true,
 		});
 		this.searchOnServerDelayed = Runtime.debounce(this.searchOnServer, 400, this);
+		this.recentSearchItems = getUsersFromRecentItems({ withFakeUsers: true });
 
 		EventEmitter.subscribe(EventType.search.keyPressed, this.onKeyPressed);
 	},

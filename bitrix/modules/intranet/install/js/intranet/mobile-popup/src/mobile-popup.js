@@ -44,15 +44,22 @@ export class MobilePopup extends EventEmitter
 
 	#calculatePopupPosition(): void
 	{
+		const isAirTemplate = BX.Reflection.getClass('BX.Intranet.Bitrix24.Template') !== null;
 		const minHeight = 602;
 		const minWidth = this.#isTablet ? 375 : 321;
 		const height = (window.screen.height - minHeight) >= 0 ? (window.screen.height - minHeight) / 2 : 0;
 		const width = (window.screen.width - minWidth) >= 0 ? (window.screen.width - minWidth) / 2 : 0;
+		let offsetTop = height - window.screen.height;
+
+		if (isAirTemplate)
+		{
+			offsetTop = height - document.body.scrollHeight;
+		}
 
 		this.#position = {
 			minHeight,
 			minWidth,
-			offsetTop: height - window.screen.height,
+			offsetTop,
 			offsetLeft: width,
 		};
 	}

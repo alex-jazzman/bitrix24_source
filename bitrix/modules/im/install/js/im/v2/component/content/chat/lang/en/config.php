@@ -1,4 +1,5 @@
 <?php
+$MESS["IM_CONTENT_AIASSISTANT_TEXTAREA_PLACEHOLDER"] = "Send a message to your personal assistant";
 $MESS["IM_CONTENT_BLOCKED_TEXTAREA_JOIN_CHANNEL_V2"] = "Subscribe";
 $MESS["IM_CONTENT_CHANNEL_START_MESSAGE_SUBTITLE"] = "Channel will show up in your chat list as soon as you subscribe to it.";
 $MESS["IM_CONTENT_CHANNEL_START_MESSAGE_V3"] = "This screen will show public channels";
@@ -28,10 +29,10 @@ $MESS["IM_CONTENT_COMMENTS_FOLLOW_TOGGLE_TEXT"] = "Follow";
 $MESS["IM_CONTENT_COMMENTS_HEADER_TITLE"] = "Comments";
 $MESS["IM_CONTENT_EMBEDDED_CHAT_START_FEATURE_AI"] = "AI is part of the daily routine";
 $MESS["IM_CONTENT_EMBEDDED_CHAT_START_FEATURE_EASE"] = "Intuitive user interface";
-$MESS["IM_CONTENT_EMBEDDED_CHAT_START_FEATURE_INVITE_MSGVER_2"] = "[action]Invite a team[/action] to start collaborating.";
+$MESS["IM_CONTENT_EMBEDDED_CHAT_START_FEATURE_INVITE_MSGVER_2"] = "[action]Invite users[/action] to start collaborating";
 $MESS["IM_CONTENT_EMBEDDED_CHAT_START_FEATURE_SAFETY"] = "Secure communications";
 $MESS["IM_CONTENT_EMBEDDED_CHAT_START_FEATURE_SUBTITLE"] = "Select a chat to start communicating";
-$MESS["IM_CONTENT_EMBEDDED_CHAT_START_INVITE_ACTION"] = "Invite a team";
+$MESS["IM_CONTENT_EMBEDDED_CHAT_START_INVITE_ACTION"] = "Invite users";
 $MESS["IM_CONTENT_EMBEDDED_CHAT_START_SEPARATOR_TEXT"] = "or";
 $MESS["IM_CONTENT_EMBEDDED_CHAT_START_TITLE"] = "Bitrix[color]24[/color]: your ultimate workspace";
 $MESS["IM_CONTENT_EMBEDDED_CHAT_START_TOOL_BOARDS"] = "Boards";

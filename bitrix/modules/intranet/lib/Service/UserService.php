@@ -4,6 +4,9 @@ namespace Bitrix\Intranet\Service;
 
 use Bitrix\Intranet\Contract;
 use Bitrix\Intranet\Entity\User;
+use Bitrix\Intranet\User\Access\UserActionDictionary;
+use Bitrix\Intranet\User\ActionRule\ActionRule;
+use Bitrix\Intranet\User\ActionRule\ActionRuleFactory;
 use Bitrix\Main\Application;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Data\Cache;
@@ -167,5 +170,37 @@ class UserService
 	public function clearCache(): void
 	{
 		$this->cache->cleanDir(self::BASE_CACHE_DIR);
+	}
+
+	public function isActionAvailableForUser(User $user, UserActionDictionary $action): bool
+	{
+		return $this->getActionRule($action)->canExecute($user);
+	}
+
+	/**
+	 * @param User $user
+	 * @return array<UserActionDictionary>
+	 */
+	public function getAvailableActions(User $user): array
+	{
+		$availableActions = [];
+
+		foreach (UserActionDictionary::cases() as $action)
+		{
+			if ($this->isActionAvailableForUser($user, $action))
+			{
+				$availableActions[] = $action;
+			}
+		}
+
+		return $availableActions;
+	}
+
+	private function getActionRule(UserActionDictionary $action): ActionRule
+	{
+		static $actionRuleSet = [];
+		$actionRuleSet[$action->value] ??= ActionRuleFactory::getActionRule($action);
+
+		return $actionRuleSet[$action->value];
 	}
 }

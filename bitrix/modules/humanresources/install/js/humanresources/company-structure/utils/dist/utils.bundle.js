@@ -96,6 +96,20 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  team: 'TEAM',
 	  company: 'COMPANY'
 	});
+	var WizardApiEntityChangedDict = Object.freeze({
+	  department: 'department',
+	  employees: 'employees',
+	  bindChats: 'bindChats',
+	  settings: 'settings'
+	});
+	var NodeSettingsTypes = {
+	  businessProcAuthority: 'BUSINESS_PROC_AUTHORITY',
+	  reportsAuthority: 'REPORTS_AUTHORITY'
+	};
+	var ChatTypes = Object.freeze({
+	  channel: 'CHANNEL',
+	  chat: 'CHAT'
+	});
 
 	/**
 	 * Type for color picker and structure
@@ -195,6 +209,9 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	exports.EntityTypes = EntityTypes;
 	exports.NodeColorsSettingsDict = NodeColorsSettingsDict;
 	exports.getNodeColorSettings = getNodeColorSettings;
+	exports.NodeSettingsTypes = NodeSettingsTypes;
+	exports.WizardApiEntityChangedDict = WizardApiEntityChangedDict;
+	exports.ChatTypes = ChatTypes;
 
 }((this.BX.Humanresources.CompanyStructure = this.BX.Humanresources.CompanyStructure || {}),BX.Humanresources.CompanyStructure));
 //# sourceMappingURL=utils.bundle.js.map

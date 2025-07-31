@@ -2,16 +2,14 @@ import { Type } from 'main.core';
 
 import { Logger } from 'im.v2.lib.logger';
 import { MessengerSlider } from 'im.v2.lib.slider';
-import { ActionByUserType, Layout, NavigationMenuItem, PromoId } from 'im.v2.const';
+import { ActionByUserType, Layout, NavigationMenuItem } from 'im.v2.const';
 import { DesktopApi } from 'im.v2.lib.desktop-api';
 import { PhoneManager } from 'im.v2.lib.phone';
 import { Feature, FeatureManager } from 'im.v2.lib.feature';
 import { PermissionManager } from 'im.v2.lib.permission';
-import { PromoManager } from 'im.v2.lib.promo';
 
 import { UserSettings } from './components/user-settings';
 import { MarketApps } from './components/market-apps';
-import { CopilotPromoHint } from './components/copilot-promo-hint';
 
 import './css/navigation.css';
 
@@ -34,7 +32,7 @@ const LayoutToAction = Object.freeze({
 // @vue/component
 export const MessengerNavigation = {
 	name: 'MessengerNavigation',
-	components: { UserSettings, MarketApps, CopilotPromoHint },
+	components: { UserSettings, MarketApps },
 	props: {
 		currentLayoutName: {
 			type: String,
@@ -47,7 +45,6 @@ export const MessengerNavigation = {
 		return {
 			needTopShadow: false,
 			needBottomShadow: false,
-			showCopilotPromoHint: false,
 		};
 	},
 	computed: {
@@ -124,10 +121,6 @@ export const MessengerNavigation = {
 		{
 			return !DesktopApi.isChatTab();
 		},
-		isCopilotChatsInRecentTabEnabled(): boolean
-		{
-			return FeatureManager.isFeatureAvailable(Feature.showCopilotChatsInRecentTab);
-		},
 	},
 	created()
 	{
@@ -137,8 +130,6 @@ export const MessengerNavigation = {
 	{
 		const container = this.$refs.navigation;
 		this.needBottomShadow = container && container.scrollTop + container.clientHeight !== container.scrollHeight;
-		this.showCopilotPromoHint = this.isCopilotChatsInRecentTabEnabled
-			&& PromoManager.getInstance().needToShow(PromoId.copilotInRecentTab);
 	},
 	methods:
 	{
@@ -239,10 +230,6 @@ export const MessengerNavigation = {
 		{
 			return DesktopApi.isChatWindow();
 		},
-		closeHint()
-		{
-			this.showCopilotPromoHint = false;
-		},
 		loc(phraseCode: string, replacements: {[string]: string} = {}): string
 		{
 			return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
@@ -288,11 +275,6 @@ export const MessengerNavigation = {
 						</div>
 					</div>
 				</template>
-				<CopilotPromoHint
-					v-if="showCopilotPromoHint"
-					:bindElement="$refs.chat[0]"
-					@close="closeHint"
-				/>
 			</div>
 			<div v-if="needBottomShadow" class="bx-im-navigation__shadow --bottom">
 				<div class="bx-im-navigation__scroll-button --bottom" @click="onClickScrollDown"></div>

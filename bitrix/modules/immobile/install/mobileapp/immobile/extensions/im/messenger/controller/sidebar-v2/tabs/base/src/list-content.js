@@ -67,12 +67,19 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/base/src/list-content', (requ
 				{
 					this.setState({ items, hasNextPage, pending: false });
 				}
+
+				return;
 			}
-			else
+
+			if (this.getItems().length === 0)
 			{
-				this.state.hasNextPage = hasNextPage;
-				void this.syncRows(items);
+				this.setState({ items, hasNextPage });
+
+				return;
 			}
+
+			this.state.hasNextPage = hasNextPage;
+			void this.syncRows(items);
 		}
 
 		/**

@@ -7,7 +7,7 @@ use Bitrix\HumanResources\Integration\Im\ChatService;
 use Bitrix\HumanResources\Result\Command\Structure\SaveNodeChatsResult;
 use Bitrix\HumanResources\Service\Container;
 use Bitrix\HumanResources\Contract\Service\NodeMemberService;
-use Bitrix\HumanResources\Contract\Service\NodeRelationService;
+use Bitrix\HumanResources\Service\NodeRelationService;
 use Bitrix\HumanResources\Type\RelationEntitySubtype;
 use Bitrix\HumanResources\Type\RelationEntityType;
 use Bitrix\HumanResources\Item;
@@ -28,6 +28,17 @@ class SaveNodeChatsCommandHandler
 
 	public function __invoke(SaveNodeChatsCommand $command): SaveNodeChatsResult
 	{
+		if (!empty($command->removeIds))
+		{
+			// unlink removed relations
+			// no need to check permission, because we depend on _COMMUNICATION_EDIT permission
+			$this->nodeRelationService->unlinkByEntityIdsAndNodeIdAndType(
+				$command->node->id,
+				$command->removeIds,
+				RelationEntityType::CHAT,
+			);
+		}
+
 		/**
 		 * We filter chats & channels before creating new because current user
 		 * might have no right to add department to a newly created chat or channel

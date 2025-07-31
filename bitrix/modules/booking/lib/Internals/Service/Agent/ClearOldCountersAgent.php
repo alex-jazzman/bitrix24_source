@@ -50,7 +50,30 @@ class ClearOldCountersAgent
 
 	private static function clearCountersByBookingIds(array $bookingIds): void
 	{
-		Container::getCounterRepository()->downMultiple($bookingIds, self::SUPPORTED_TYPES);
+		$counterRepository = Container::getCounterRepository();
+
+		$affectedUsers = $counterRepository->getUsersByCounterType(
+			entityIds: $bookingIds,
+			types: self::SUPPORTED_TYPES,
+		);
+		if (empty($affectedUsers))
+		{
+			return;
+		}
+
+		$counterRepository->downMultiple($bookingIds, self::SUPPORTED_TYPES);
+
+		foreach ($affectedUsers as $row)
+		{
+			$userId = (int)$row['USER_ID'];
+
+			\CUserCounter::Set(
+				$userId,
+				CounterDictionary::LeftMenu->value,
+				$counterRepository->get($userId, CounterDictionary::Total),
+				'**',
+			);
+		}
 	}
 
 	/**

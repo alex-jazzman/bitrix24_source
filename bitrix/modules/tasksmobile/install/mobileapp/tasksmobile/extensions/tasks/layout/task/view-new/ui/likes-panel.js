@@ -42,6 +42,8 @@ jn.define('tasks/layout/task/view-new/ui/likes-panel', (require, exports, module
 	};
 
 	const LikesPanel = ({
+		isLoadingAfterCreation,
+		hasVoteSignToken,
 		taskId,
 		users,
 		userId,
@@ -51,7 +53,6 @@ jn.define('tasks/layout/task/view-new/ui/likes-panel', (require, exports, module
 		reactionLength,
 		isOnlyMyReaction,
 		voteSignToken,
-		hasVoteSignToken,
 	}) => {
 		const isTemplateLoaded = !Type.isUndefined(template);
 		const isReactionTemplate = template === LIKE || template === LIKE_GRAPHIC;
@@ -63,6 +64,7 @@ jn.define('tasks/layout/task/view-new/ui/likes-panel', (require, exports, module
 			},
 			isTemplateLoaded
 				&& hasVoteSignToken
+				&& !isLoadingAfterCreation
 				? (isReactionTemplate
 					? new LikeButton({
 						reactions,

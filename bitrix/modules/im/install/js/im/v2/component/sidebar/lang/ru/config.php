@@ -30,7 +30,7 @@ $MESS['IM_SIDEBAR_MEDIA_DETAIL_TITLE'] = "Медиа и файлы";
 $MESS['IM_SIDEBAR_FILEUNSORTED_DETAIL_TITLE'] = "Медиа и файлы";
 $MESS['IM_SIDEBAR_MEETING_DETAIL_TITLE'] = "Встречи";
 $MESS['IM_SIDEBAR_SUPPORT_TICKET_DETAIL_TITLE'] = "Все чаты";
-$MESS['IM_SIDEBAR_BRIEF_DETAIL_TITLE'] = "Резюме встреч";
+$MESS['IM_SIDEBAR_BRIEF_DETAIL_TITLE_MSGVER_2'] = "Протоколы встреч";
 $MESS['IM_SIDEBAR_MARKET_DETAIL_TITLE'] = "Приложения";
 $MESS['IM_SIDEBAR_SHARED_CHAT_DETAIL_TITLE'] = "Общие чаты";
 $MESS['IM_SIDEBAR_SUPPORT_TICKET_TITLE'] = "Все чаты";
@@ -64,7 +64,7 @@ $MESS['IM_SIDEBAR_MEDIA_EMPTY'] = "Нет медиа";
 $MESS['IM_SIDEBAR_FILES_EMPTY'] = "Нет файлов";
 $MESS['IM_SIDEBAR_FAVORITES_EMPTY'] = "Нет избранного";
 $MESS['IM_SIDEBAR_TASKS_EMPTY'] = "Нет задач";
-$MESS['IM_SIDEBAR_BRIEFS_EMPTY'] = "Нет резюме встреч";
+$MESS['IM_SIDEBAR_BRIEFS_EMPTY_MSGVER_2'] = "Нет протоколов встреч";
 $MESS['IM_SIDEBAR_MEDIA_AND_FILES_EMPTY'] = "Нет медиа и файлов";
 $MESS['IM_SIDEBAR_MEETINGS_EMPTY'] = "Нет встреч";
 $MESS['IM_SIDEBAR_MESSAGE_SEARCH_NOT_FOUND'] = "Ничего не найдено";
@@ -77,7 +77,7 @@ $MESS['IM_SIDEBAR_MESSAGE_SEARCH_NOT_FOUND_EXTENDED'] = "Ничего не на�
 $MESS['IM_SIDEBAR_FILES_MEDIA_TAB'] = "Медиа";
 $MESS['IM_SIDEBAR_FILES_AUDIO_TAB'] = "Аудио";
 $MESS['IM_SIDEBAR_FILES_FILE_TAB'] = "Файлы";
-$MESS['IM_SIDEBAR_FILES_BRIEF_TAB'] = "Резюме";
+$MESS['IM_SIDEBAR_FILES_BRIEF_TAB_MSGVER_2'] = "Протоколы";
 
 //chat types
 $MESS['IM_SIDEBAR_CHAT_TYPE_GROUP_V2'] = "Групповой чат";

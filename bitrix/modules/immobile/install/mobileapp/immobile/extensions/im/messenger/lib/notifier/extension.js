@@ -2,7 +2,7 @@
  * @module im/messenger/lib/notifier
  */
 jn.define('im/messenger/lib/notifier', (require, exports, module) => {
-	/* global InAppNotifier, include, ChatUtils  */
+	/* global InAppNotifier, include  */
 	const { Type } = require('type');
 	const { transparent } = require('utils/color');
 
@@ -100,9 +100,9 @@ jn.define('im/messenger/lib/notifier', (require, exports, module) => {
 		showNotification(options)
 		{
 			const notification = {
-				title: ChatUtils.htmlspecialcharsback(options.title),
+				title: jnComponent.convertHtmlEntities(options.title),
 				backgroundColor: transparent(Theme.colors.baseBlackFixed, 0.8),
-				message: ChatUtils.htmlspecialcharsback(options.text),
+				message: jnComponent.convertHtmlEntities(options.text),
 				data: options,
 			};
 

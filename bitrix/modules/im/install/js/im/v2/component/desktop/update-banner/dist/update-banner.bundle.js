@@ -3,12 +3,15 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,main_core,im_v2_lib_desktopApi,im_v2_lib_analytics,im_v2_lib_helpdesk,im_v2_lib_utils) {
+(function (exports,main_core,ui_vue3_components_richLoc,im_v2_lib_analytics,im_v2_lib_desktopApi,im_v2_lib_utils,im_v2_lib_helpdesk) {
 	'use strict';
 
 	// @vue/component
 	const DesktopUpdateBanner = {
 	  name: 'DesktopUpdateBanner',
+	  components: {
+	    RichLoc: ui_vue3_components_richLoc.RichLoc
+	  },
 	  computed: {
 	    desktopDownloadUrl() {
 	      const settings = main_core.Extension.getSettings('im.v2.component.desktop.update-banner');
@@ -21,13 +24,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    descriptionText() {
 	      const messageCode = this.isSupportedOs ? 'IM_DESKTOP_UPDATE_BANNER_DESCRIPTION' : 'IM_DESKTOP_UPDATE_BANNER_DESCRIPTION_NOT_SUPPORTED_OS';
 	      return main_core.Loc.getMessage(messageCode, {
-	        '[helpdesk]': `<span onclick="${this.showHelpArticle()}" class="bx-im-desktop-update-banner__description-more">`,
-	        '[/helpdesk]': '</span>',
-	        '[br]': '<br>'
+	        '[br]': '\n'
 	      });
 	    },
-	    showBrowserLink() {
-	      return im_v2_lib_desktopApi.DesktopApi.getMajorVersion() > 15;
+	    isSupportedOpenLinkInBrowser() {
+	      const DESKTOP_VERSION_SUPPORTED_OPEN_LINK_IN_BROWSER = 16;
+	      return im_v2_lib_desktopApi.DesktopApi.getMajorVersion() >= DESKTOP_VERSION_SUPPORTED_OPEN_LINK_IN_BROWSER;
 	    },
 	    isSupportedOs() {
 	      if (!main_core.Browser.isWin()) {
@@ -56,12 +58,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  methods: {
 	    showHelpArticle() {
 	      const ARTICLE_CODE = '25374968';
-	      const analyticsHandler = 'BX.Messenger.v2.Lib.Analytics.getInstance().desktopUpdateBanner.onClickMoreInformation()';
-	      const helpdeskArticleHandler = im_v2_lib_helpdesk.getHelpdeskStringCallback(ARTICLE_CODE);
-	      return `
-				${analyticsHandler}
-				${helpdeskArticleHandler}
-			`;
+	      im_v2_lib_helpdesk.openHelpdeskArticle(ARTICLE_CODE);
+	      im_v2_lib_analytics.Analytics.getInstance().desktopUpdateBanner.onClickMoreInformation();
 	    },
 	    openRootDomain() {
 	      im_v2_lib_analytics.Analytics.getInstance().desktopUpdateBanner.onOpenWebVersion();
@@ -84,13 +82,19 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				<div class="bx-im-desktop-update-banner__image"></div>
 				<div class="bx-im-desktop-update-banner__content">
 					<h2 class="bx-im-desktop-update-banner__heading">{{ loc('IM_DESKTOP_UPDATE_BANNER_HEADING') }}</h2>
-					<p v-html="descriptionText" class="bx-im-desktop-update-banner__description"></p>
+					<RichLoc class="bx-im-desktop-update-banner__description" :text="descriptionText" placeholder="[helpdesk]">
+						<template #helpdesk="{ text }">
+							<span class="bx-im-desktop-update-banner__description-more" @click="showHelpArticle">
+								{{ text }}
+							</span>
+						</template>
+					</RichLoc>
 				</div>
 				<div v-if="isSupportedOs" class="bx-im-desktop-update-banner__buttons">
 					<button @click="openDesktopDownloadPage" class="bx-im-desktop-update-banner__update">
 						{{ loc('IM_DESKTOP_UPDATE_BANNER_UPDATE') }}
 					</button>
-					<button v-if="showBrowserLink" @click="openRootDomain" class="bx-im-desktop-update-banner__version">
+					<button v-if="isSupportedOpenLinkInBrowser" @click="openRootDomain" class="bx-im-desktop-update-banner__version">
 						{{ loc('IM_DESKTOP_UPDATE_BANNER_VERSION') }}
 					</button>
 				</div>
@@ -101,5 +105,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.DesktopUpdateBanner = DesktopUpdateBanner;
 
-}((this.BX.Messenger.v2.Component.Desktop = this.BX.Messenger.v2.Component.Desktop || {}),BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib));
+}((this.BX.Messenger.v2.Component.Desktop = this.BX.Messenger.v2.Component.Desktop || {}),BX,BX.UI.Vue3.Components,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib));
 //# sourceMappingURL=update-banner.bundle.js.map

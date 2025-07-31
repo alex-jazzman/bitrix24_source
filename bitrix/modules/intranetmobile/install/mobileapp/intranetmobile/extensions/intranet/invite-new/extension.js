@@ -158,7 +158,7 @@ jn.define('intranet/invite-new', (require, exports, module) => {
 
 		#renderButtons()
 		{
-			const { isBitrix24Included } = this.props;
+			const inviteCasesCount = this.#getAvailableAndEnabledInvitersCount();
 
 			return BoxFooter(
 				{
@@ -166,7 +166,7 @@ jn.define('intranet/invite-new', (require, exports, module) => {
 					testId: this.getTestId('buttons'),
 				},
 				this.#getInviterForMainButton().renderMainButton(),
-				isBitrix24Included && Button(
+				inviteCasesCount > 2 && Button(
 					{
 						testId: this.getTestId('by-other-button'),
 						forwardRef: this.#bindInviteCasesButtonRef,
@@ -179,6 +179,7 @@ jn.define('intranet/invite-new', (require, exports, module) => {
 						},
 					},
 				),
+				inviteCasesCount === 2 && this.#getInviterForSecondaryButton().renderSecondaryButton(),
 			);
 		}
 
@@ -187,15 +188,36 @@ jn.define('intranet/invite-new', (require, exports, module) => {
 			return this.inviters.filter((inviter) => inviter.isAvailableInviteMethod());
 		}
 
+		#getAvailableAndEnabledInviters()
+		{
+			return this.#getAvailableInviters().filter((inviter) => !inviter.isDisabledInviteMethod());
+		}
+
+		#getAvailableAndEnabledInvitersCount()
+		{
+			return this.#getAvailableAndEnabledInviters().length;
+		}
+
 		#getInviterForMainButton()
 		{
-			const availableInviters = this.#getAvailableInviters().filter((inviter) => !inviter.isDisabledInviteMethod());
-			if (availableInviters.length > 0)
+			const availableAndEnabledInviters = this.#getAvailableAndEnabledInviters();
+			if (availableAndEnabledInviters.length > 0)
 			{
-				return availableInviters[0];
+				return availableAndEnabledInviters[0];
 			}
 
 			return this.inviters[0];
+		}
+
+		#getInviterForSecondaryButton()
+		{
+			const availableAndEnabledInviters = this.#getAvailableAndEnabledInviters();
+			if (availableAndEnabledInviters.length > 1)
+			{
+				return availableAndEnabledInviters[1];
+			}
+
+			return null;
 		}
 
 		#bindInviteCasesButtonRef = (ref) => {

@@ -9,5 +9,6 @@ return [
 		'loc',
 		'intranet:create-department',
 		'module',
+		'intranet:department-info',
 	],
 ];

@@ -97,6 +97,11 @@ jn.define('intranet/invite-new/src/inviter/link', (require, exports, module) => 
 			return Icon.LINK;
 		}
 
+		isAvailableInviteMethod()
+		{
+			return true;
+		}
+
 		isDisabledInviteMethod()
 		{
 			return !this.canInviteByLink();

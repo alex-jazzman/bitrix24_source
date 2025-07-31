@@ -4,12 +4,13 @@
  * @module im/messenger/provider/pull/base/message
  */
 jn.define('im/messenger/provider/pull/base/message', (require, exports, module) => {
-	/* global ChatMessengerCommon, ChatTimer */
+	/* global ChatMessengerCommon */
 	const { Loc } = require('loc');
 	const { Type } = require('type');
 	const { clone } = require('utils/object');
 
 	const { BasePullHandler } = require('im/messenger/provider/pull/base/pull-handler');
+	const { Worker } = require('im/messenger/lib/helper');
 	const { ChatTitle, ChatAvatar } = require('im/messenger/lib/element');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { MessengerParams } = require('im/messenger/lib/params');
@@ -33,6 +34,8 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 	const { NewMessageManager } = require('im/messenger/provider/pull/lib/new-message-manager/base');
 	const { FileUtils } = require('im/messenger/provider/pull/lib/file');
 
+	const INPUT_ACTION_TIMER = 25000;
+
 	/**
 	 * @class BaseMessagePullHandler
 	 */
@@ -44,7 +47,8 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 
 			this.messageViews = {};
 			this.shareDialogCache = new ShareDialogCache();
-			this.writingTimer = 25000;
+			this.inputActionTimer = INPUT_ACTION_TIMER;
+			this.inputActionWorkers = {};
 		}
 
 		handleMessage(params, extra, command)
@@ -55,7 +59,7 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 			}
 			this.logger.log(`${this.getClassName()}.handleMessage `, params, extra);
 
-			const dialogId = params.message.recipientId;
+			const dialogId = params.dialogId;
 			const userId = MessengerParams.getUserId();
 
 			const recipientId = params.message.senderId === userId
@@ -80,7 +84,6 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 				return;
 			}
 			recentItem.message.status = recentParams.message.senderId === userId ? 'received' : '';
-			const userPromise = this.setUsers(params);
 			this.updateDialog(params)
 				.then(() => this.store.dispatch('recentModel/set', [recentItem]))
 				.then(() => {
@@ -103,29 +106,24 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 
 					this.saveShareDialogCache();
 				})
-			;
+				.then(() => this.setUsers(params))
+				.then(() => this.setFiles(params))
+				.then(() => {
+					this.checkTimerInputAction(params.dialogId, params.message.senderId);
 
-			const dialog = this.getDialog(dialogId);
-			if (!dialog)
-			{
-				return;
-			}
-
-			userPromise.then(() => {
-				this.setFiles(params).then(() => {
+					const dialog = this.getDialog(dialogId);
 					const hasUnloadMessages = dialog.hasNextPage;
 					if (hasUnloadMessages)
 					{
-						this.storeMessage(params);
-					}
-					else
-					{
-						this.setMessage(params);
+						return this.storeMessage(params);
 					}
 
-					this.checkTimerInputAction(params.dialogId, params.message.senderId);
-				});
-			});
+					return this.setMessage(params);
+				})
+				.catch((error) => {
+					this.logger.error(`${this.constructor.name}.handleMessage error`, error);
+				})
+			;
 		}
 
 		handleMessageChat(params, extra, command)
@@ -157,7 +155,7 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 				recentParams.message.params,
 			);
 			recentParams.message.status = recentParams.message.senderId === userId ? 'received' : '';
-			const userData = recentParams.message.senderId > 0
+			const userData = recentParams.message.senderId > 0 && Type.isPlainObject(recentParams.users)
 				? recentParams.users[recentParams.message.senderId]
 				: { id: 0 };
 			const recentItem = RecentDataConverter.fromPushToModel({
@@ -199,29 +197,24 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 
 					this.saveShareDialogCache();
 				})
-			;
+				.then(() => this.setUsers(params))
+				.then(() => this.setFiles(params))
+				.then(() => {
+					this.checkTimerInputAction(params.dialogId, params.message.senderId);
 
-			const dialog = this.getDialog(dialogId);
-			if (!dialog)
-			{
-				return;
-			}
-
-			this.setUsers(params).then(() => {
-				this.setFiles(params).then(() => {
+					const dialog = this.getDialog(dialogId);
 					const hasUnloadMessages = dialog.hasNextPage;
 					if (hasUnloadMessages)
 					{
-						this.storeMessage(params);
-					}
-					else
-					{
-						this.setMessage(params);
+						return this.storeMessage(params);
 					}
 
-					this.checkTimerInputAction(dialogId, params.message.senderId);
-				});
-			});
+					return this.setMessage(params);
+				})
+				.catch((error) => {
+					this.logger.error(`${this.constructor.name}.handleMessage error`, error);
+				})
+			;
 		}
 
 		handleMessageUpdate(params, extra, command)
@@ -401,9 +394,18 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 
 			this.updateUserOnline(userId);
 			this.store.dispatch('dialoguesModel/setInputAction', { ...params });
-			ChatTimer.start('writing', `${dialogId} ${userId} ${type}`, this.writingTimer, () => {
-				this.store.dispatch('dialoguesModel/removeInputAction', { ...params });
-			}, params);
+
+			const timerId = `${dialogId} ${userId} ${type}`;
+
+			this.inputActionWorkers[timerId] = new Worker({
+				frequency: this.inputActionTimer,
+				callback: () => {
+					this.store.dispatch('dialoguesModel/removeInputAction', { ...params });
+					delete this.inputActionWorkers[timerId];
+				},
+			});
+
+			this.inputActionWorkers[timerId].startOnce();
 		}
 
 		handleReadMessage(params, extra, command)
@@ -991,10 +993,7 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 
 		saveShareDialogCache()
 		{
-			this.shareDialogCache.saveRecentItemList()
-				.catch((error) => {
-					this.logger.error(`${this.constructor.name}.saveShareDialogCache.catch:`, error);
-				});
+			this.shareDialogCache.saveRecentItemListThrottled();
 		}
 
 		/**
@@ -1178,7 +1177,7 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 		 */
 		hasTimerInputAction(timerId)
 		{
-			return ChatTimer.isHasTimer('writing', timerId);
+			return Boolean(this.inputActionWorkers[timerId]?.isHasOnce());
 		}
 
 		/**
@@ -1188,8 +1187,15 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 		 */
 		stopTimerInputAction(timerId)
 		{
-			/** @type {object} */
-			return ChatTimer.stop('writing', timerId);
+			if (!this.inputActionWorkers[timerId])
+			{
+				return false;
+			}
+
+			this.inputActionWorkers[timerId].stop({ skipCallback: false });
+			delete this.inputActionWorkers[timerId];
+
+			return true;
 		}
 
 		/**

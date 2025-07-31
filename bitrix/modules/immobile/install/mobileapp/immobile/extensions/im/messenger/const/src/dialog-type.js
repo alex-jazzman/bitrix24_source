@@ -33,6 +33,7 @@ jn.define('im/messenger/const/dialog-type', (require, exports, module) => {
 		chat: 'messenger',
 		copilot: 'copilot',
 		collab: 'collab',
+		aiAssistant: 'aiAssistant',
 	});
 
 	module.exports = {

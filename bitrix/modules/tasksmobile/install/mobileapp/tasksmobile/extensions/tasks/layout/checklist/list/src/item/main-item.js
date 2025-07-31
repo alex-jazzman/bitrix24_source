@@ -219,16 +219,16 @@ jn.define('tasks/layout/checklist/list/src/item/main-item', (require, exports, m
 
 		handleOnFocus()
 		{
-			const { item, showMenu } = this.props;
+			const { item, updateMenu } = this.props;
 
 			if (this.buttonRemoveRef)
 			{
 				this.buttonRemoveRef.show();
 			}
 
-			if (showMenu)
+			if (updateMenu)
 			{
-				showMenu(item);
+				updateMenu(item);
 			}
 
 			super.handleOnFocus(item);

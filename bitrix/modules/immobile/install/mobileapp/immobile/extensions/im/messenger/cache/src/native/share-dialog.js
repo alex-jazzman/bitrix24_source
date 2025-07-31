@@ -13,25 +13,32 @@ jn.define('im/messenger/cache/share-dialog', (require, exports, module) => {
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { ChatTitle } = require('im/messenger/lib/element/chat-title'); // TODO: refactor, after splitting into separate extensions im/messenger/lib/element and  im/messenger/provider/service
 	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar'); // TODO: refactor, after splitting into separate extensions im/messenger/lib/element and  im/messenger/provider/service
+	const { getLogger } = require('im/messenger/lib/logger');
+
+	const logger = getLogger('cache--share-dialog');
 
 	class ShareDialogCache
 	{
 		constructor()
 		{
-			this.saveRecentItemList = throttle(this.saveRecentItemList, 10000, this);
+			this.saveRecentItemListThrottled = throttle(this.saveRecentItemList, 10000, this);
 			this.store = serviceLocator.get('core').getStore();
+		}
+
+		get className()
+		{
+			return this.constructor.name;
 		}
 
 		saveRecentItemList()
 		{
-			const recentFirstPage = this.store.getters['recentModel/getRecentPage'](1, 50);
+			try
+			{
+				const recentFirstPage = this.store.getters['recentModel/getRecentPage'](1, 50);
 
-			return new Promise((resolve, reject) => {
 				const componentCode = MessengerParams.getComponentCode();
 				if (componentCode === ComponentCode.imCopilotMessenger)
 				{
-					reject(new Error('Copilot recent cache not available for current app version'));
-
 					return;
 				}
 
@@ -55,10 +62,14 @@ jn.define('im/messenger/cache/share-dialog', (require, exports, module) => {
 						lastMessageTimestamp,
 					};
 				});
+				logger.log(`${this.className}.saveRecentItemList set recent`, formattedRecentList);
 
 				utils.setRecentUsers(formattedRecentList);
-				resolve(formattedRecentList);
-			});
+			}
+			catch (error)
+			{
+				logger.error(`${this.className}.saveRecentItemList error`, error);
+			}
 		}
 	}
 

@@ -11,6 +11,7 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	    moduleId: resourceTypeDto.moduleId,
 	    name: resourceTypeDto.name,
 	    code: resourceTypeDto.code,
+	    resourcesCnt: resourceTypeDto.resourcesCnt,
 	    // info
 	    isInfoNotificationOn: resourceTypeDto.isInfoNotificationOn,
 	    templateTypeInfo: resourceTypeDto.templateTypeInfo,
@@ -42,6 +43,7 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	    moduleId: resourceType.moduleId,
 	    name: resourceType.name,
 	    code: resourceType.code,
+	    resourcesCnt: resourceType.resourcesCnt,
 	    // info
 	    isInfoNotificationOn: resourceType.isInfoNotificationOn,
 	    templateTypeInfo: resourceType.templateTypeInfo,

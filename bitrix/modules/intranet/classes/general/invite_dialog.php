@@ -42,8 +42,6 @@ class CIntranetInviteDialog
 	public const EMAIL_EXIST_ERROR = 'INTRANET_INVITE_DIALOG_EMAIL_EXIST_ERROR';
 	public const PHONE_EXIST_ERROR = 'INTRANET_INVITE_DIALOG_PHONE_EXIST_ERROR';
 
-	private static array $userGroupsCache = [];
-
 	public static function ShowInviteDialogLink($params = array())
 	{
 		$data = [
@@ -1108,18 +1106,11 @@ class CIntranetInviteDialog
 		}
 		else
 		{
-			if (isset(static::$userGroupsCache["EMPLOYEES_".$SITE_ID]))
+			$groupId = CGroup::GetIDByCode("EMPLOYEES_" . $SITE_ID);
+			if ($groupId)
 			{
-				return static::$userGroupsCache["EMPLOYEES_".$SITE_ID];
+				return [$groupId];
 			}
-			static::$userGroupsCache["EMPLOYEES_".$SITE_ID] = \Bitrix\Main\GroupTable::query()
-				->where('STRING_ID', "EMPLOYEES_".$SITE_ID)
-				->setSelect(['ID'])
-				->fetchCollection()
-				->getIdList()
-				;
-
-			return static::$userGroupsCache["EMPLOYEES_".$SITE_ID];
 		}
 
 		return [];
@@ -1128,16 +1119,10 @@ class CIntranetInviteDialog
 	public static function getAdminGroups($SITE_ID)
 	{
 		$arGroups = array(1);
-		$rsGroups = CGroup::GetList(
-			'',
-			'',
-			array(
-				"STRING_ID" => "PORTAL_ADMINISTRATION_".$SITE_ID
-			)
-		);
-		while($arGroup = $rsGroups->Fetch())
+		$groupId = CGroup::GetIDByCode("PORTAL_ADMINISTRATION_" . $SITE_ID);
+		if ($groupId)
 		{
-			$arGroups[] = $arGroup["ID"];
+			$arGroups[] = $groupId;
 		}
 
 		return $arGroups;

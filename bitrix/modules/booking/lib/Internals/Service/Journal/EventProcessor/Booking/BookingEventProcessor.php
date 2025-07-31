@@ -9,14 +9,15 @@ use Bitrix\Booking\Command\Booking\UpdateBookingCommand;
 use Bitrix\Booking\Internals\Container;
 use Bitrix\Booking\Internals\Integration\Im\Chat;
 use Bitrix\Booking\Internals\Service\Agent\ComingSoonBookingAgentManager;
+use Bitrix\Booking\Internals\Service\Enum\EventType;
 use Bitrix\Booking\Internals\Service\Journal\EventProcessor\EventProcessor;
 use Bitrix\Booking\Internals\Service\Journal\JournalEvent;
 use Bitrix\Booking\Internals\Service\Journal\JournalEventCollection;
 use Bitrix\Booking\Internals\Service\Journal\JournalType;
 use Bitrix\Booking\Internals\Service\Time;
 use Bitrix\Booking\Provider\Params\Booking\BookingFilter;
-use Bitrix\Main\Event;
 use Bitrix\Booking\Entity;
+use Bitrix\Main\Event;
 use DateTimeImmutable;
 use DateInterval;
 
@@ -100,7 +101,9 @@ class BookingEventProcessor implements EventProcessor
 
 	private function processBookingDeletedEvent(JournalEvent $journalEvent): void
 	{
-		$this->sendBitrixEvent(type: 'onBookingDelete', parameters: ['bookingId' => $journalEvent->entityId]);
+		$this->sendBitrixEvent(type: 'onBookingDelete', parameters: [
+			'bookingId' => $journalEvent->entityId,
+		]);
 
 		$bookingCollection = Container::getBookingRepository()->getList(
 			limit: 1,
@@ -114,15 +117,6 @@ class BookingEventProcessor implements EventProcessor
 		{
 			(new ComingSoonBookingAgentManager())->unSchedule($booking);
 		}
-	}
-
-	private function sendBitrixEvent(string $type, array $parameters): void
-	{
-		(new Event(
-			moduleId: 'booking',
-			type: $type,
-			parameters: $parameters,
-		))->send();
 	}
 
 	private function processBookingCanceledEvent(JournalEvent $journalEvent): void
@@ -322,5 +316,14 @@ class BookingEventProcessor implements EventProcessor
 				->modify('+1 day')
 				->setTime(Time::DAYTIME_START_HOUR, 0);
 		}
+	}
+
+	private function sendBitrixEvent(string $type, array $parameters): void
+	{
+		(new Event(
+			moduleId: 'booking',
+			type: $type,
+			parameters: $parameters,
+		))->send();
 	}
 }

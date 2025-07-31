@@ -4,6 +4,8 @@
  * @module im/messenger/provider/services/lib/chat-data-extractor
  */
 jn.define('im/messenger/provider/services/lib/chat-data-extractor', (require, exports, module) => {
+	const { Type } = require('type');
+
 	const { UserManager } = require('im/messenger/lib/user-manager');
 	const { DialogType } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
@@ -18,6 +20,13 @@ jn.define('im/messenger/provider/services/lib/chat-data-extractor', (require, ex
 		constructor(restResult)
 		{
 			this.restResult = restResult;
+
+			// im.v2.Chat.Message.tail and im.v2.Chat.load does not guarantee that the messages in the batch will be sorted
+			// but this is important for forming a linked list
+			if (Type.isObject(this.restResult) && Type.isArrayFilled(this.restResult.messages))
+			{
+				this.restResult.messages.sort((a, b) => a.id - b.id);
+			}
 		}
 
 		getChatId()

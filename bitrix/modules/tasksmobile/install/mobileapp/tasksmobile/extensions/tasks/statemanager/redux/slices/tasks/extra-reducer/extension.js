@@ -415,9 +415,12 @@ jn.define('tasks/statemanager/redux/slices/tasks/extra-reducer', (require, expor
 		const { taskId } = action.meta.arg;
 
 		const oldTaskState = state.entities[taskId];
-		const newTaskState = preparePingNewState(oldTaskState);
+		if (oldTaskState)
+		{
+			const newTaskState = preparePingNewState(oldTaskState);
 
-		upsertOne(state, action, oldTaskState, newTaskState);
+			upsertOne(state, action, oldTaskState, newTaskState);
+		}
 	};
 
 	const preparePinNewState = (oldTaskState) => ({

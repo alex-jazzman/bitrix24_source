@@ -86,13 +86,8 @@ final class UserModel extends \Bitrix\Main\Access\User\UserModel implements Acce
 
 		$this->accessCodes = array_values(\CAccess::GetUserCodesArray($this->userId) ?? []);
 
-		if (
-			Storage::instance()->isCompanyStructureConverted()
-			&& Container::instance()->getUserService()->isEmployee($this->userId)
-		)
+		if (Storage::instance()->isCompanyStructureConverted())
 		{
-			$this->accessCodes[] = AccessCode::ACCESS_EMPLOYEE . '0';
-
 			return $this->accessCodes;
 		}
 

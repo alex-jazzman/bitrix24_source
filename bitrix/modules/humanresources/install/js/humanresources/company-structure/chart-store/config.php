@@ -8,9 +8,10 @@ return [
 	'css' => 'dist/chart-store.bundle.css',
 	'js' => 'dist/chart-store.bundle.js',
 	'rel' => [
-		'main.polyfill.core',
+		'main.core',
 		'ui.vue3.pinia',
 		'humanresources.company-structure.api',
+		'humanresources.company-structure.utils',
 	],
-	'skip_core' => true,
+	'skip_core' => false,
 ];

@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["IM_ERROR_EMPTY_FROM_USER_ID"] = "Не задан отправитель сообщения";
 $MESS["IM_ERROR_EMPTY_USER_ID_BY_PRIVACY"] = "Указанные пользователи запретили приглашать их в чат";
 $MESS["IM_ERROR_EMPTY_TO_CHAT_ID"] = "Не задан получатель сообщения";

@@ -1,6 +1,3 @@
-/* eslint-disable no-param-reassign */
-/* global ChatUtils */
-
 /**
  * @module im/messenger/model/dialogues/validator
  */
@@ -152,7 +149,7 @@ jn.define('im/messenger/model/dialogues/validator', (require, exports, module) =
 
 		if (Type.isNumber(fields.name) || Type.isStringFilled(fields.name))
 		{
-			result.name = ChatUtils.htmlspecialcharsback(fields.name.toString());
+			result.name = jnComponent.convertHtmlEntities(fields.name.toString());
 		}
 
 		if (!Type.isUndefined(fields.owner))

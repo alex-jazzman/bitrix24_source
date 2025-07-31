@@ -41,7 +41,7 @@ export const EmptyTabAddButtons = {
 				@click.stop="this.onChatButtonClick()"
 				data-test-id="hr-department-detail-content_chats-tab__empty-tab-add_chat-button"
 			>
-				<div class="ui-icon-set --add-chat hr-department-detail-content__chat-empty-tab-add_chat-button-icon"/>
+				<div class="ui-icon-set --chat-message hr-department-detail-content__chat-empty-tab-add_chat-button-icon"/>
 				<span>
 					{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_TAB_ADD_EMPTY_CHAT_BUTTON') }}
 				</span>
@@ -52,7 +52,7 @@ export const EmptyTabAddButtons = {
 				@click.stop="onChannelButtonClick()"
 				data-test-id="hr-department-detail-content_chats-tab__empty-tab-add_channel-button"
 			>
-				<div class="ui-icon-set --speaker-mouthpiece-plus hr-department-detail-content__chat-empty-tab-add_chat-button-icon"/>
+				<div class="ui-icon-set --speaker-mouthpiece hr-department-detail-content__chat-empty-tab-add_chat-button-icon"/>
 				<span>
 					{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_TAB_ADD_EMPTY_CHANNEL_BUTTON') }}
 				</span>

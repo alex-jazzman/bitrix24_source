@@ -70,6 +70,10 @@ class Director extends Base
 				PermissionDictionary::HUMAN_RESOURCES_TEAM_MEMBER_REMOVE,
 				PermissionValueType::DepartmentValue
 			) => PermissionVariablesDictionary::VARIABLE_NONE,
+			TeamPermissionMapper::makeTeamPermissionId(
+				PermissionDictionary::HUMAN_RESOURCES_TEAM_COMMUNICATION_EDIT,
+				PermissionValueType::TeamValue
+			) => PermissionVariablesDictionary::VARIABLE_SELF_TEAMS_SUB_TEAMS,
 			PermissionDictionary::HUMAN_RESOURCES_TEAM_ACCESS_EDIT => PermissionDictionaryAlias::VALUE_NO,
 		];
 	}

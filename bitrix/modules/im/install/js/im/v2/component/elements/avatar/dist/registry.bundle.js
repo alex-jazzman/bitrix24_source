@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,ui_fonts_opensans,im_v2_lib_utils,im_v2_lib_channel,ui_avatar,im_v2_lib_copilot,im_v2_lib_feature,main_core,im_v2_const) {
+(function (exports,ui_fonts_opensans,im_v2_lib_utils,im_v2_lib_channel,ui_avatar,im_v2_lib_copilot,main_core,im_v2_const) {
 	'use strict';
 
 	const AvatarSize = Object.freeze({
@@ -617,9 +617,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      default: ''
 	    }
 	  },
-	  created() {
-	    this.copilotManager = new im_v2_lib_copilot.CopilotManager();
-	  },
 	  computed: {
 	    isUser() {
 	      return this.avatarDialog.type === im_v2_const.ChatType.user;
@@ -656,9 +653,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    isCopilot() {
 	      return this.copilotManager.isCopilotChatOrBot(this.avatarDialogId);
 	    },
-	    isCopilotChatsInRecentTabEnabled() {
-	      return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.showCopilotChatsInRecentTab);
-	    },
 	    avatarComponent() {
 	      if (this.customType === ChatAvatarType.notes) {
 	        return NotesAvatar;
@@ -672,11 +666,14 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      if (this.isCollabChat) {
 	        return CollabChatAvatar;
 	      }
-	      if (this.isCopilot && this.isCopilotChatsInRecentTabEnabled) {
+	      if (this.isCopilot) {
 	        return CopilotAvatar;
 	      }
 	      return this.isExtranetChat ? ExtranetChatAvatar : Avatar;
 	    }
+	  },
+	  created() {
+	    this.copilotManager = new im_v2_lib_copilot.CopilotManager();
 	  },
 	  template: `
 		<component
@@ -741,18 +738,13 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    user() {
 	      return this.$store.getters['users/get'](this.authorId, true);
 	    },
-	    isCopilotChatsInRecentTabEnabled() {
-	      return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.showCopilotChatsInRecentTab);
-	    },
 	    avatarComponent() {
 	      var _avatarMap$this$user$;
 	      const avatarMap = {
 	        [im_v2_const.UserType.extranet]: ExtranetUserAvatar,
-	        [im_v2_const.UserType.collaber]: CollaberAvatar
+	        [im_v2_const.UserType.collaber]: CollaberAvatar,
+	        [im_v2_const.UserType.bot]: this.getBotAvatar()
 	      };
-	      if (this.isCopilotChatsInRecentTabEnabled) {
-	        avatarMap[im_v2_const.UserType.bot] = this.getBotAvatar();
-	      }
 	      return (_avatarMap$this$user$ = avatarMap[this.user.type]) != null ? _avatarMap$this$user$ : Avatar;
 	    }
 	  },
@@ -854,5 +846,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	exports.MessageAvatar = MessageAvatar;
 	exports.EmptyAvatar = EmptyAvatar;
 
-}((this.BX.Messenger.v2.Component.Elements = this.BX.Messenger.v2.Component.Elements || {}),BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.UI,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Const));
+}((this.BX.Messenger.v2.Component.Elements = this.BX.Messenger.v2.Component.Elements || {}),BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.UI,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Const));
 //# sourceMappingURL=registry.bundle.js.map

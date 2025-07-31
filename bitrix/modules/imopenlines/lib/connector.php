@@ -17,6 +17,7 @@ use Bitrix\Im\Bot\Keyboard;
 use Bitrix\Im\Text;
 use Bitrix\Im\User;
 use Bitrix\Im\Model\ChatTable;
+use Bitrix\Im\Model\MessageTable;
 
 Loc::loadMessages(__FILE__);
 
@@ -2035,12 +2036,39 @@ class Connector
 
 		$startId = (int)$params['START_ID'];
 		$endId = (int)$params['END_ID'];
+
 		if ($startId === 0 || $endId === 0)
 		{
 			$session = V2\Session\Session::getInstanceByChatId((int)$params['CHAT_ID']);
+		}
 
-			$startId = $startId ?: $session->getStartId();
-			$endId = $endId ?: $session->getEndId();
+		if ($startId === 0)
+		{
+			if ($session && ($sessionStartId = $session->getStartId()))
+			{
+				$startId = $sessionStartId;
+			}
+			else
+			{
+				$firstMessage = MessageTable::getRow([
+					'select' => ['ID'],
+					'filter' => ['=CHAT_ID' => (int)$params['CHAT_ID']],
+					'order' => ['ID'],
+				]);
+				$startId = $firstMessage ? (int)$firstMessage['ID'] : 1;
+			}
+		}
+
+		if ($endId === 0)
+		{
+			if ($session && ($sessionEndId = $session->getEndId()))
+			{
+				$endId = $sessionEndId;
+			}
+			else
+			{
+				$endId = Im\V2\Chat::getInstance((int)$params['CHAT_ID'])->getLastMessageId();
+			}
 		}
 
 		$messages = [];

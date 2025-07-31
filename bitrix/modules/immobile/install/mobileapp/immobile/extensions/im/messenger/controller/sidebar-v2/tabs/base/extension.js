@@ -19,6 +19,7 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/base', (require, exports, mod
 		constructor(props)
 		{
 			this.dialogId = props.dialogId;
+			this.dialogLocator = props.dialogLocator;
 
 			/** @type {SidebarWidgetNavigator} */
 			this.widgetNavigator = props.widgetNavigator;

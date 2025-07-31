@@ -12,7 +12,7 @@ jn.define('calendar/event-view-form', (require, exports, module) => {
 	const { EventViewForm } = require('calendar/event-view-form/form');
 	const { CalendarType } = require('calendar/enums');
 	const { DataLoader } = require('calendar/event-view-form/data-loader');
-	const { AppRatingManager, UserEvent } = require('app-rating-manager');
+	const { AppRatingClient } = require('calendar/app-rating-client');
 
 	const initialLayoutTitle = {
 		text: Loc.getMessage('M_CALENDAR_EVENT_VIEW_FORM_TITLE'),
@@ -185,7 +185,7 @@ jn.define('calendar/event-view-form', (require, exports, module) => {
 				});
 
 				layout.showComponent(component);
-				void AppRatingManager.increaseCounter(UserEvent.CALENDAR_EVENT_VIEWED);
+				AppRatingClient.increaseCalendarEventViewedCounter();
 			});
 		}
 	}

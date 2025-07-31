@@ -9,8 +9,10 @@ import { PermissionChecker } from 'humanresources.company-structure.permission-c
 export { UsersTabActionMenu } from './components/menu/menu/users-tab-action-menu';
 export { EmptyUsersTabActionMenu } from './components/menu/menu/empty-users-tab-action-menu';
 export { UserListActionMenu } from './components/menu/menu/user-list-item-action-menu';
+export { ChatListActionMenu } from './components/menu/menu/chat-list-action-menu';
 export { MenuActions } from './components/menu/menu-actions';
 export { NotConvertedState } from './not-converted-state';
+export { events } from './consts';
 
 export class App
 {

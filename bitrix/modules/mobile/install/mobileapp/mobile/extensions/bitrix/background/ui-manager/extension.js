@@ -62,10 +62,25 @@ jn.define('background/ui-manager', (require, exports, module) => {
 
 		openComponentCallback()
 		{
-			if (this.currentComponent && this.currentComponent.openCallback)
+			if (!this.currentComponent)
+			{
+				return;
+			}
+
+			const componentName = this.currentComponent.componentName;
+			if (!componentName)
+			{
+				return;
+			}
+
+			const componentWasOpened = window?.backgroundUiManager?.[componentName];
+
+			if (this.currentComponent.openCallback && componentWasOpened === undefined)
 			{
 				this.isComponentOpened = true;
 				this.currentComponent.openCallback();
+				window.backgroundUiManager = window.backgroundUiManager || {};
+				window.backgroundUiManager[componentName] = true;
 			}
 		}
 
@@ -84,6 +99,8 @@ jn.define('background/ui-manager', (require, exports, module) => {
 		onCloseActiveComponent()
 		{
 			this.currentComponent = null;
+			window.backgroundUiManager = window.backgroundUiManager || {};
+			window.backgroundUiManager[this.currentComponent?.componentName] = null;
 		}
 
 		/**

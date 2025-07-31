@@ -6,7 +6,6 @@ jn.define('im/messenger/lib/counters/tab-counters/copilot', (require, exports, m
 
 	const { EventType, CounterType } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { Feature } = require('im/messenger/lib/feature');
 
 	const { BaseTabCounters } = require('im/messenger/lib/counters/tab-counters/base');
 	const { TabCounterState } = require('im/messenger/lib/counters/tab-counters/state');
@@ -101,10 +100,6 @@ jn.define('im/messenger/lib/counters/tab-counters/copilot', (require, exports, m
 
 			logger.log(`${this.getClassName()}.update`, counters);
 
-			if (!Feature.isCopilotInDefaultTabAvailable)
-			{
-				BX.postComponentEvent('ImRecent::counter::list', [counters], 'communication');
-			}
 			BX.postComponentEvent('ImRecent::counter::list', [counters], 'im.navigation');
 		}
 
@@ -144,10 +139,7 @@ jn.define('im/messenger/lib/counters/tab-counters/copilot', (require, exports, m
 
 			const counterId = this.getIdByChatId(chatId);
 
-			if (
-				type === CounterType.copilot
-				&& !Feature.isCopilotInDefaultTabAvailable
-			)
+			if (type === CounterType.copilot)
 			{
 				this.copilotCounter.detail[counterId] = counter;
 			}

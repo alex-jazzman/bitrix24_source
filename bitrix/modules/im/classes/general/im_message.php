@@ -1499,44 +1499,12 @@ class CIMMessage
 				return 0;
 			}
 
-			$result = \Bitrix\Im\Model\ChatTable::add(Array('TYPE' => IM_MESSAGE_PRIVATE, 'AUTHOR_ID' => $fromUserId));
-			$chatId = $result->getId();
-			if ($chatId > 0)
-			{
-				\Bitrix\Im\Model\RelationTable::add(array(
-					"CHAT_ID" => $chatId,
-					"MESSAGE_TYPE" => IM_MESSAGE_PRIVATE,
-					"USER_ID" => $fromUserId,
-					//"STATUS" => IM_STATUS_READ,
-				));
-				\Bitrix\Im\Model\RelationTable::add(array(
-					"CHAT_ID" => $chatId,
-					"MESSAGE_TYPE" => IM_MESSAGE_PRIVATE,
-					"USER_ID" => $toUserId,
-					//"STATUS" => IM_STATUS_READ,
-				));
-
-				$botJoinFields = Array(
-					"CHAT_TYPE" => IM_MESSAGE_PRIVATE,
-					"MESSAGE_TYPE" => IM_MESSAGE_PRIVATE
-				);
-				if (\Bitrix\Im\User::getInstance($fromUserId)->isExists() && !\Bitrix\Im\User::getInstance($fromUserId)->isBot())
-				{
-					$botJoinFields['BOT_ID'] = $toUserId;
-					$botJoinFields['USER_ID'] = $fromUserId;
-					$botJoinFields['TO_USER_ID'] = $toUserId;
-					$botJoinFields['FROM_USER_ID'] = $fromUserId;
-					\Bitrix\Im\Bot::onJoinChat($fromUserId, $botJoinFields);
-				}
-				else if (\Bitrix\Im\User::getInstance($toUserId)->isExists() && !\Bitrix\Im\User::getInstance($toUserId)->isBot())
-				{
-					$botJoinFields['BOT_ID'] = $fromUserId;
-					$botJoinFields['USER_ID'] = $toUserId;
-					$botJoinFields['TO_USER_ID'] = $toUserId;
-					$botJoinFields['FROM_USER_ID'] = $fromUserId;
-					\Bitrix\Im\Bot::onJoinChat($toUserId, $botJoinFields);
-				}
-			}
+			$result = Chat\ChatFactory::getInstance()->addChat([
+				'TYPE' => Chat::IM_TYPE_PRIVATE,
+				'FROM_USER_ID' => $fromUserId,
+				'TO_USER_ID' => $toUserId,
+			]);
+			$chatId = $result->getResult()['CHAT_ID'] ?? 0;
 		}
 
 		return $chatId;

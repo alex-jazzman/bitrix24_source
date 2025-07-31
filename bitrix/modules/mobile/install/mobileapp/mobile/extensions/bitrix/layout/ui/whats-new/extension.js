@@ -8,6 +8,8 @@ jn.define('layout/ui/whats-new', (require, exports, module) => {
 	const { WhatsNewItemSkeleton } = require('layout/ui/whats-new/items/skeleton');
 	const {
 		fetchWhatsNewThunk,
+		fetchUrlParamsThunk,
+		selectUrlParams,
 		updateReadNewsThunk,
 		setHasReadNews,
 		selectArticlesWithMinimalParams,
@@ -20,6 +22,7 @@ jn.define('layout/ui/whats-new', (require, exports, module) => {
 		selectNewCheckTime,
 		selectHasUnsupportedFeatures,
 		updateLocalWhatsNewsParamsThunk,
+		selectErrorStatus,
 	} = require('statemanager/redux/slices/whats-new');
 	const { connect } = require('statemanager/redux/connect');
 	const { Indent, Color } = require('tokens');
@@ -33,8 +36,7 @@ jn.define('layout/ui/whats-new', (require, exports, module) => {
 	const { ButtonSize, ButtonDesign, Button } = require('ui-system/form/buttons/button');
 	const { openStore } = require('utils/store');
 	const { WhatsNewAnalytics } = require('layout/ui/whats-new/analytics');
-
-	const isAndroid = Application.getPlatform() === 'android';
+	const { isEmpty } = require('utils/object');
 
 	SkeletonFactory.register(ListItemType.WhatsNewItem, WhatsNewItemSkeleton);
 	const MAX_ANIMATION_RETRIES = 5;
@@ -103,15 +105,44 @@ jn.define('layout/ui/whats-new', (require, exports, module) => {
 
 		componentDidMount()
 		{
-			const { isIdle, hasReadNews } = this.props;
-			if (isIdle || hasReadNews)
+			if (this.shouldInitialLoad())
 			{
 				// eslint-disable-next-line promise/catch-or-return
-				this.loadItemsHandler(0, false)
+				this.loadInitialData()
 					.then(() => {
 						this.props.updateLocalWhatsNewsParamsThunk({});
 					});
 			}
+		}
+
+		shouldInitialLoad()
+		{
+			const { isIdle, hasReadNews, errorStatus } = this.props;
+
+			return (
+				isIdle
+				|| hasReadNews
+				|| (Number.isInteger(errorStatus) && errorStatus === 0)
+			);
+		}
+
+		async loadInitialData()
+		{
+			if (isEmpty(this.props.urlParams))
+			{
+				try
+				{
+					await this.props.fetchUrlParamsThunk().unwrap();
+				}
+				catch (error)
+				{
+					console.error('Failed to fetch URL params:', error);
+
+					return;
+				}
+			}
+
+			await this.loadItemsHandler(0, false);
 		}
 
 		componentWillUnmount()
@@ -131,7 +162,7 @@ jn.define('layout/ui/whats-new', (require, exports, module) => {
 
 		prepareState(props)
 		{
-			const { articles, isFailed, isLoading, isLast, hasUnreadNews } = props;
+			const { articles, isFailed, isLoading, isLast, hasUnreadNews, errorStatus } = props;
 
 			if (isFailed)
 			{
@@ -141,7 +172,7 @@ jn.define('layout/ui/whats-new', (require, exports, module) => {
 					type: ListItemType.ErrorItem,
 				}];
 
-				this.state.allItemsLoaded = true;
+				this.state.allItemsLoaded = Number.isInteger(errorStatus) && errorStatus !== 0;
 				this.state.isRefreshing = false;
 			}
 			else
@@ -262,6 +293,10 @@ jn.define('layout/ui/whats-new', (require, exports, module) => {
 				{
 					style: {
 						flex: 1,
+						backgroundColor: Color.bgContentPrimary.toHex(),
+					},
+					safeArea: {
+						bottom: this.props.hasUnsupportedFeatures,
 					},
 				},
 				new SimpleList({
@@ -321,7 +356,7 @@ jn.define('layout/ui/whats-new', (require, exports, module) => {
 		{
 			return DialogFooter(
 				{
-					safeArea: !isAndroid,
+					safeArea: false,
 					keyboardButton: {
 						text: Loc.getMessage('WHATS_NEW_LIST_UPDATE'),
 						onClick: this.openStore,
@@ -500,7 +535,7 @@ jn.define('layout/ui/whats-new', (require, exports, module) => {
 			reduxComponentRef.animateReading()
 				.then(() => {
 					this.animatingNow.delete(itemId);
-					delete this.pendingAnimations[itemId]; // если нужно
+					delete this.pendingAnimations[itemId];
 				})
 				.catch((error) => {
 					console.warn(`Animation failed for item ${itemId}:`, error);
@@ -539,11 +574,14 @@ jn.define('layout/ui/whats-new', (require, exports, module) => {
 			hasReadNews: selectHasReadNews(state),
 			newCheckTime: selectNewCheckTime(state),
 			hasUnsupportedFeatures: selectHasUnsupportedFeatures(state, articlesIds),
+			errorStatus: selectErrorStatus(state),
+			urlParams: selectUrlParams(state),
 		};
 	};
 
 	const mapDispatchToProps = {
 		fetchWhatsNewThunk,
+		fetchUrlParamsThunk,
 		updateReadNewsThunk,
 		setHasReadNews,
 		updateLocalWhatsNewsParamsThunk,

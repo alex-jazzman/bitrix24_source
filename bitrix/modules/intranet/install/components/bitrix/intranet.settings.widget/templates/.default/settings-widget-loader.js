@@ -49,6 +49,7 @@ export class SettingsWidgetLoader
 		}
 
 		const widgetLoader = new WidgetLoader({
+			id: "bx-settings-header-popup",
 			bindElement: this.#node,
 			width: 374,
 		});

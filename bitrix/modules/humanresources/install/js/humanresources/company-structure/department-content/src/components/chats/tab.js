@@ -1,3 +1,4 @@
+import { PermissionActions, PermissionChecker } from 'humanresources.company-structure.permission-checker';
 import { EntityTypes } from 'humanresources.company-structure.utils';
 import { DepartmentContentActions } from '../../actions';
 import { DepartmentAPI } from '../../api';
@@ -26,6 +27,7 @@ import { useChartStore } from 'humanresources.company-structure.chart-store';
 import { mapState } from 'ui.vue3.pinia';
 import { Type } from 'main.core';
 import type { TabOptions } from 'ui.entity-selector';
+import type { ChatOrChannelDetailed } from 'humanresources.company-structure.utils';
 
 import './styles/tab.css';
 
@@ -44,8 +46,6 @@ export const ChatsTab = {
 	data(): Object
 	{
 		return {
-			chatMenuItems: [],
-			channelMenuItems: [],
 			isChatLinkActive: false,
 			chatLinkDialogVisible: false,
 			isChannelLinkActive: false,
@@ -58,8 +58,6 @@ export const ChatsTab = {
 	created(): void
 	{
 		this.loadChatAction();
-		this.chatMenuItems = this.getChatListMenuItems();
-		this.channelMenuItems = this.getChannelListMenuItems();
 	},
 
 	methods:
@@ -81,7 +79,7 @@ export const ChatsTab = {
 				return;
 			}
 
-			if (!force && Type.isArray(department.chats) && Type.isArray(department.channels))
+			if (!force && Type.isArray(department.chatsDetailed) && Type.isArray(department.channelsDetailed))
 			{
 				return;
 			}
@@ -104,15 +102,11 @@ export const ChatsTab = {
 		},
 		getChatListMenuItems(): Array
 		{
-			return [
-				ChatsMenuLinkChat,
-			];
+			return this.canEdit ? [ChatsMenuLinkChat] : [];
 		},
 		getChannelListMenuItems(): Array
 		{
-			return [
-				ChatsMenuLinkChannel,
-			];
+			return this.canEdit ? [ChatsMenuLinkChannel] : [];
 		},
 		onActionMenuItemClick(actionId: string): void
 		{
@@ -133,7 +127,7 @@ export const ChatsTab = {
 			if (this.isTeamEntity)
 			{
 				stateArray = [
-					this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_TAB_ADD_EMPTY_STATE_TEAM_LIST_ITEM_1'),
+					this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_TAB_ADD_EMPTY_STATE_TEAM_LIST_ITEM_1_MSGVER_1'),
 					this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_TAB_ADD_EMPTY_STATE_LIST_ITEM_2'),
 					this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_TAB_ADD_EMPTY_STATE_TEAM_LIST_ITEM_3'),
 				];
@@ -141,7 +135,7 @@ export const ChatsTab = {
 			else
 			{
 				stateArray = [
-					this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_TAB_ADD_EMPTY_STATE_LIST_ITEM_1'),
+					this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_TAB_ADD_EMPTY_STATE_LIST_ITEM_1_MSGVER_1'),
 					this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_TAB_ADD_EMPTY_STATE_LIST_ITEM_2'),
 					this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_TAB_ADD_EMPTY_STATE_LIST_ITEM_3'),
 				];
@@ -223,21 +217,21 @@ export const ChatsTab = {
 
 	computed:
 	{
-		chats(): Array
+		chats(): Array<ChatOrChannelDetailed>
 		{
-			return this.departments.get(this.focusedNode)?.chats ?? [];
+			return this.departments.get(this.focusedNode)?.chatsDetailed ?? [];
 		},
-		channels(): Array
+		channels(): Array<ChatOrChannelDetailed>
 		{
-			return this.departments.get(this.focusedNode)?.channels ?? [];
+			return this.departments.get(this.focusedNode)?.channelsDetailed ?? [];
 		},
-		filteredChats(): Array
+		filteredChats(): Array<ChatOrChannelDetailed>
 		{
 			return this.chats.filter(
 				(chat) => chat.title.toLowerCase().includes(this.searchQuery.toLowerCase()),
 			);
 		},
-		filteredChannels(): Array
+		filteredChannels(): Array<ChatOrChannelDetailed>
 		{
 			return this.channels.filter(
 				(channel) => channel.title.toLowerCase().includes(this.searchQuery.toLowerCase()),
@@ -251,11 +245,11 @@ export const ChatsTab = {
 		{
 			return this.filteredChats.length === 0 && this.filteredChannels.length === 0;
 		},
-		getLinkedChatIds(): Array
+		getLinkedChatIds(): Array<string>
 		{
 			return (this.chats).map((chatItem) => `chat${chatItem.id}`);
 		},
-		getLinkedChannelIds(): Array
+		getLinkedChannelIds(): Array<string>
 		{
 			return (this.channels).map((channelItem) => `chat${channelItem.id}`);
 		},
@@ -263,7 +257,7 @@ export const ChatsTab = {
 		{
 			const department = this.departments.get(this.focusedNode);
 
-			return Boolean(Type.isArray(department.chats) && Type.isArray(department.channels));
+			return Boolean(Type.isArray(department.chatsDetailed) && Type.isArray(department.channelsDetailed));
 		},
 		teamEntity(): boolean
 		{
@@ -292,6 +286,47 @@ export const ChatsTab = {
 			return this.isTeamEntity
 				? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_CHANNEL_LINK_DIALOG_TEAM_DESC')
 				: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_CHANNEL_LINK_DIALOG_DESC')
+			;
+		},
+		chatMenuItems(): boolean
+		{
+			return this.getChatListMenuItems();
+		},
+		channelMenuItems(): boolean
+		{
+			return this.getChannelListMenuItems();
+		},
+		emptyChatTitle(): string
+		{
+			if (this.canEdit)
+			{
+				return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_CHAT_LIST_ITEM_TEXT');
+			}
+
+			return this.isTeamEntity
+				? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_CHAT_LIST_ITEM_NO_TEAM_TEXT')
+				: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_CHAT_LIST_ITEM_NO_DEPARTMENT_TEXT')
+			;
+		},
+		emptyChannelTitle(): string
+		{
+			if (this.canEdit)
+			{
+				return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_CHANNEL_LIST_ITEM_TEXT');
+			}
+
+			return this.isTeamEntity
+				? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_CHANNEL_LIST_ITEM_NO_TEAM_TEXT')
+				: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_CHANNEL_LIST_ITEM_NO_DEPARTMENT_TEXT')
+			;
+		},
+		canEdit(): boolean
+		{
+			const permissionChecker = PermissionChecker.getInstance();
+
+			return this.isTeamEntity
+				? permissionChecker.hasPermission(PermissionActions.teamCommunicationEdit, this.focusedNode)
+				: permissionChecker.hasPermission(PermissionActions.departmentCommunicationEdit, this.focusedNode)
 			;
 		},
 		...mapState(useChartStore, ['focusedNode', 'departments']),
@@ -325,14 +360,15 @@ export const ChatsTab = {
 						:count="chats.length"
 						:menuItems="chatMenuItems"
 						:listItems="filteredChats"
-						:emptyItemTitle="loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_CHAT_LIST_ITEM_TEXT')"
+						:emptyItemTitle="emptyChatTitle"
 						emptyItemImageClass="hr-department-detail-content__chat-empty-tab-list-item_tab-icon"
 						:hideEmptyItem="searchQuery.length > 0"
+						:withAddPermission="canEdit"
 						@tabListAction="onActionMenuItemClick"
 						:dataTestIds="getChatListDataTestIds()"
 					>
 						<template v-slot="{ item }">
-							<ChatListItem :chat="item"/>
+							<ChatListItem :chat="item" :nodeId="focusedNode"/>
 						</template>
 					</TabList>
 					<TabList
@@ -341,20 +377,21 @@ export const ChatsTab = {
 						:count="channels.length"
 						:menuItems="channelMenuItems"
 						:listItems="filteredChannels"
-						:emptyItemTitle="loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_CHANNEL_LIST_ITEM_TEXT')"
+						:emptyItemTitle="emptyChannelTitle"
 						emptyItemImageClass="hr-department-detail-content__chat-empty-tab-list-item_tab-icon"
 						:hideEmptyItem="searchQuery.length > 0"
+						:withAddPermission="canEdit"
 						@tabListAction="onActionMenuItemClick"
 						:dataTestIds="getChannelListDataTestIds()"
 					>
 						<template v-slot="{ item }">
-							<ChatListItem :chat="item"/>
+							<ChatListItem :chat="item" :nodeId="focusedNode"/>
 						</template>
 					</TabList>
 				</div>
 				<EmptyState 
 					v-else
-					imageClass="hr-department-detail-content__empty-tab-search_tab-icon"
+					imageClass="hr-department-detail-content__chat-empty-tab-search_tab-icon"
 					:title="loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_EMPTY_SEARCHED_EMPLOYEES_TITLE')"
 					:description ="loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_EMPTY_SEARCHED_EMPLOYEES_SUBTITLE')"
 				/>

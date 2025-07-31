@@ -16,6 +16,7 @@ const serverComponentList = new Set([
 	MessageComponent.callInvite,
 	MessageComponent.copilotCreation,
 	MessageComponent.copilotMessage,
+	MessageComponent.aiAssistantMessage,
 	MessageComponent.supportVote,
 	MessageComponent.supportSessionNumber,
 	MessageComponent.supportChatCreation,
@@ -30,6 +31,7 @@ const serverComponentList = new Set([
 	MessageComponent.channelCreationMessage,
 	MessageComponent.callMessage,
 	MessageComponent.voteMessage,
+	MessageComponent.convertToCollabMessage,
 ]);
 
 const demoComponentList = new Set([

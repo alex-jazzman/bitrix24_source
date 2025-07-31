@@ -20,8 +20,7 @@ export const CopilotTextarea = {
 	template: `
 		<ChatTextarea
 			:dialogId="dialogId"
-			:placeholder="this.loc('IM_CONTENT_COPILOT_TEXTAREA_PLACEHOLDER')"
-			:withCreateMenu="false"
+			:placeholder="loc('IM_CONTENT_COPILOT_TEXTAREA_PLACEHOLDER')"
 			:withMarket="false"
 			:withEdit="false"
 			:withUploadMenu="false"

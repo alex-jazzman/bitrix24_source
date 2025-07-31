@@ -1,7 +1,7 @@
 /* eslint-disable flowtype/require-return-type */
 /* eslint-disable bitrix-rules/no-bx */
 /* eslint-disable bitrix-rules/no-pseudo-private */
-
+/* eslint-disable  no-param-reassign */
 /**
  * @module im/messenger/lib/parser/functions/quote
  */
@@ -20,6 +20,10 @@ jn.define('im/messenger/lib/parser/functions/quote', (require, exports, module) 
 	const QUOTE_SIGN = '>>';
 
 	const parserQuote = {
+		patterns: {
+			DECODE_QUOTE_CONTENT_PATTERN: /-{54}[\r\n\\n]*([\s\S]*?)[\r\n\\n]*-{54}/g,
+		},
+
 		decodeArrowQuote(text)
 		{
 			if (!text.includes(QUOTE_SIGN))
@@ -45,6 +49,7 @@ jn.define('im/messenger/lib/parser/functions/quote', (require, exports, module) 
 					textLines[i] = textLines[i].replace(QUOTE_SIGN, '');
 					quoteText += '\n' + textLines[i];
 				}
+
 				const quoteEndIndex = i - 1;
 
 				textLines.splice(quoteStartIndex, quoteEndIndex - quoteStartIndex);
@@ -62,89 +67,178 @@ jn.define('im/messenger/lib/parser/functions/quote', (require, exports, module) 
 			return textLines.join('\n');
 		},
 
+		/**
+		 * @param {string} text
+		 * @param {object} options
+		 * @return {string}
+		 */
 		decodeQuote(text, options)
 		{
-			text = text.replace(
-				/-{54}((.*?)\[(.*?)]( #(?:(?:chat)?\d+|\d+:\d+)\/\d+)?)?(.*?)-{54}?/gs,
-				(whole, userBlock, userName, timeTag, contextTag, text) => {
-					const skipTitle = !userName;
-					if (skipTitle && !text) // greedy date detector :(
-					{
-						text = `${timeTag}`;
-					}
+			text = text.replace(this.patterns.DECODE_QUOTE_CONTENT_PATTERN, (whole, content) => {
+				const textWithoutTags = parsedElements.cutTags(content);
+				const userNameMatch = textWithoutTags.match(/^(.*?)\[/s);
+				const userName = userNameMatch ? userNameMatch[1].trim() : '';
 
-					text = this.truncateDoubleLineBreak(text.trim());
+				const timeTagMatch = textWithoutTags.match(/\[([^\]]*?)]/s);
+				const timeTag = timeTagMatch ? timeTagMatch[1].trim() : '';
 
-					let title = '';
-					if (!skipTitle)
-					{
-						title = userName.trim();
-					}
+				const contextTagMatch = textWithoutTags.match(/(\s+#(?:chat\d+|\d+:\d+)\/\d+)/);
+				let contextTag = contextTagMatch ? contextTagMatch[1].trim() : '';
 
-					let contextDialogId = '';
-					let contextMessageId = '';
-					let isActiveQuote = false;
+				let userNameWithData = '';
+				if (userName && timeTag)
+				{
+					userNameWithData = `${userName} ${timeTag}`;
+				}
+				else
+				{
+					userNameWithData = textWithoutTags.split(/\s+#(?:chat\d+|\d+:\d+)\/\d+/s)[0]?.trim() || '';
+				}
 
-					if (contextTag)
-					{
-						contextTag = contextTag.trim().slice(1);
+				let quoteText = textWithoutTags;
+				if (contextTag)
+				{
+					const lines = textWithoutTags
+						.split(/\r?\n/)
+						.map((line) => line.trim())
+						.filter(Boolean);
 
-						let [, dialogId, user1, user2, messageId] =
-							contextTag
-								.match(/((?:chat)?\d+|(\d+):(\d+))\/(\d+)/i)
-						;
+					quoteText = lines.length > 1 ? lines.slice(1).join('\n') : '';
+				}
 
-						contextDialogId = dialogId;
-						contextMessageId = messageId;
-						const currentDialogId = options.dialogId || serviceLocator.get('core').getStore().getters['applicationModel/getCurrentOpenedDialogId']();
-						const isCurrenDialog = [dialogId, String(user1), String(user2)].includes(String(currentDialogId));
+				const hasUserBlock = userName && timeTag;
+				if (!hasUserBlock && !quoteText)
+				{
+					// the case, when inside the quote we have only some string in square brackets
+					quoteText = timeTag;
+				}
 
-						if (isCurrenDialog)
-						{
-							isActiveQuote = true;
-						}
+				let title = '';
+				if (userName)
+				{
+					title = userName;
+				}
 
-						if (!dialogId.toString().startsWith('chat'))
-						{
-							user1 = Number.parseInt(user1, 10);
-							user2 = Number.parseInt(user2, 10);
+				if (userName && !contextTag)
+				{
+					// the case, for compatibility with web behavior
+					title = '';
+				}
 
-							if (MessengerParams.getUserId() === user1)
-							{
-								contextDialogId = user2;
-							}
-							else if (MessengerParams.getUserId() === user2)
-							{
-								contextDialogId = user1;
-							}
-						}
-					}
+				if (!userName && userNameWithData && contextTag)
+				{
+					// the case, for compatibility with web behavior
+					title += `${userNameWithData} ${contextTag}`;
+					contextTag = '';
+				}
 
-					let quoteMark;
-					if (isActiveQuote)
-					{
-						text = parserUrl.simplify(text);
-						const activeQuote = new QuoteActive(title, text, contextDialogId, contextMessageId);
-						const activeQuoteId = parsedElements.add(activeQuote);
-						quoteMark = `${PLACEHOLDER}${activeQuoteId}`;
-					}
-					else
-					{
-						const inactiveQuote = new QuoteInactive(title, text);
-						const inactiveQuoteId = parsedElements.add(inactiveQuote);
-						quoteMark = `${PLACEHOLDER}${inactiveQuoteId}`;
-					}
+				return this.createQuote(title, contextTag, quoteText, userNameWithData, options);
+			});
 
-					return quoteMark;
-				},
-			);
-
-			const findQuotesWithoutLineBreaks = new RegExp(`(${PLACEHOLDER}\\d+)([^\\S\\r\\n]*)(?!\\n)`, 'g');
-			const addLineBreaksIfNotExists = (textWithQuote) => textWithQuote.replace(findQuotesWithoutLineBreaks, '$1$2\n');
-			text = addLineBreaksIfNotExists(text);
-			text = text.trim();
+			parsedElements.cleanTags();
 
 			return text;
+		},
+
+		/**
+		 * @param {string} contextTag
+		 * @param {object} options
+		 * @return {object}
+		 */
+		getQuoteContextData(contextTag, options)
+		{
+			let contextDialogId = '';
+			let contextMessageId = '';
+			let isActiveQuote = false;
+
+			if (contextTag)
+			{
+				contextTag = contextTag.trim().slice(1);
+
+				// eslint-disable-next-line prefer-const
+				let [, dialogId, user1, user2, messageId] = contextTag
+					.match(/((?:chat)?\d+|(\d+):(\d+))\/(\d+)/i);
+
+				contextDialogId = dialogId;
+				contextMessageId = messageId;
+				const currentDialogId = options.dialogId || serviceLocator.get('core').getStore().getters['applicationModel/getCurrentOpenedDialogId']();
+				const isCurrenDialog = [dialogId, String(user1), String(user2)].includes(String(currentDialogId));
+
+				if (isCurrenDialog)
+				{
+					isActiveQuote = true;
+				}
+
+				if (!dialogId.toString().startsWith('chat'))
+				{
+					user1 = Number.parseInt(user1, 10);
+					user2 = Number.parseInt(user2, 10);
+
+					if (MessengerParams.getUserId() === user1)
+					{
+						contextDialogId = user2;
+					}
+					else if (MessengerParams.getUserId() === user2)
+					{
+						contextDialogId = user1;
+					}
+				}
+			}
+
+			return { isActiveQuote, contextDialogId, contextMessageId };
+		},
+
+		/**
+		 * @param {string} title
+		 * @param {string} contextTag
+		 * @param {string} quoteText
+		 * @param {string} userNameWithData
+		 * @param {object} options
+		 * @return {string}
+		 */
+		createQuote(title, contextTag, quoteText, userNameWithData, options)
+		{
+			const { isActiveQuote, contextDialogId, contextMessageId } = this.getQuoteContextData(contextTag, options);
+
+			if (!isActiveQuote && contextTag)
+			{
+				title = userNameWithData;
+			}
+
+			/**
+				Replacement below bb code is needed because native does not support clicking on a mention
+				in a quote title yet.
+				And there is no product development.
+				As needed, remove.
+			 */
+			let restoredTagTitle = parsedElements.restoreTags(title);
+			if (restoredTagTitle)
+			{
+				restoredTagTitle = restoredTagTitle.replaceAll(/\[USER=\d+](.*?)\[\/USER]/g, '$1').trim();
+			}
+
+			let restoredTagQuoteText = parsedElements.restoreTags(quoteText);
+			let quoteMark = '';
+			if (isActiveQuote)
+			{
+				restoredTagQuoteText = parserUrl.simplify(restoredTagQuoteText);
+				const activeQuote = new QuoteActive(
+					restoredTagTitle,
+					restoredTagQuoteText,
+					contextDialogId,
+					contextMessageId,
+				);
+				const activeQuoteId = parsedElements.add(activeQuote);
+				quoteMark = `${PLACEHOLDER}${activeQuoteId}`;
+			}
+			else
+			{
+				const inactiveQuote = new QuoteInactive(restoredTagTitle, restoredTagQuoteText);
+				const inactiveQuoteId = parsedElements.add(inactiveQuote);
+				quoteMark = `${PLACEHOLDER}${inactiveQuoteId}`;
+			}
+
+			return quoteMark;
 		},
 
 		decodeTextAroundQuotes(text)

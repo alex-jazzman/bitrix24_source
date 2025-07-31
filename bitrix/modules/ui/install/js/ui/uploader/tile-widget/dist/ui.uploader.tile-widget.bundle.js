@@ -437,6 +437,10 @@ this.BX.UI = this.BX.UI || {};
 	    item: {
 	      type: Object,
 	      default: () => {}
+	    },
+	    readonly: {
+	      type: Boolean,
+	      default: false
 	    }
 	  },
 	  setup() {
@@ -532,11 +536,15 @@ this.BX.UI = this.BX.UI || {};
 	            var _this$menu;
 	            return (_this$menu = this.menu) == null ? void 0 : _this$menu.close();
 	          }
-	        }, {
+	        });
+	      }
+	      if (!this.readonly) {
+	        const removeItem = {
 	          id: 'remove',
 	          text: main_core.Loc.getMessage('TILE_UPLOADER_MENU_REMOVE'),
 	          onclick: this.remove
-	        });
+	        };
+	        items.push(removeItem);
 	      }
 	      return items;
 	    },
@@ -561,6 +569,9 @@ this.BX.UI = this.BX.UI || {};
 	  },
 	  methods: {
 	    remove() {
+	      if (this.readonly) {
+	        return;
+	      }
 	      this.uploader.removeFile(this.item.id);
 	    },
 	    handleMouseEnter(item) {
@@ -641,10 +652,10 @@ this.BX.UI = this.BX.UI || {};
 						<div class="ui-tile-uploader-item-status-name">{{status}}</div>
 						<div v-if="fileSize" class="ui-tile-uploader-item-state-desc">{{fileSize}}</div>
 					</div>
-					<div class="ui-tile-uploader-item-state-remove" @click="remove" key="aaa"></div>
+					<div v-if="!readonly" class="ui-tile-uploader-item-state-remove" @click="remove" key="aaa"></div>
 				</div>
 				<template v-else>
-					<div class="ui-tile-uploader-item-remove" key="remove" @click="remove">
+					<div v-if="!readonly" class="ui-tile-uploader-item-remove" key="remove" @click="remove">
 						<BIcon :name="Outline.CROSS_L"/>
 					</div>
 					<div class="ui-tile-uploader-item-actions" key="actions">
@@ -974,6 +985,7 @@ this.BX.UI = this.BX.UI || {};
 	exports.TileWidgetComponent = TileWidgetComponent;
 	exports.TileWidgetSlot = TileWidgetSlot;
 	exports.TileList = TileList;
+	exports.TileItem = TileItem;
 	exports.FileIcon = FileIconComponent;
 	exports.ErrorPopup = ErrorPopup;
 	exports.UploadLoader = UploadLoader;

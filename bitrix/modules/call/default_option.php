@@ -9,7 +9,7 @@ $call_default_option = [
 ];
 
 $region = \Bitrix\Main\Application::getInstance()->getLicense()->getRegion();
-if (in_array($region, ['ru', 'by', 'kz']))
+if (in_array($region, ['ru', 'by', 'kz', 'uz']))
 {
 	$call_default_option['turn_server'] = 'turn.bitrix24.tech';
 }
@@ -17,6 +17,7 @@ else
 {
 	$call_default_option['turn_server'] = 'turn.calls.bitrix24.com';
 }
+
 
 if (file_exists($_SERVER["DOCUMENT_ROOT"]."/bitrix/php_interface/call_options.php"))
 {

@@ -595,6 +595,7 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 						->isCollaberById((int)$user["ID"]);
 					$user["STATUS"] = $isCollaber ? "collaber" : "extranet";
 					$user["IS_EXTRANET"] = true;
+					$user["IS_COLLABER"] = $isCollaber;
 				}
 				else
 				{

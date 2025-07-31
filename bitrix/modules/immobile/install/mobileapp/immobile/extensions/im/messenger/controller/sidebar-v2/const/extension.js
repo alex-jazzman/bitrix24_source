@@ -29,9 +29,12 @@ jn.define('im/messenger/controller/sidebar-v2/const', (require, exports, module)
 		audio: 'audio',
 	});
 
+	const SIDEBAR_DEFAULT_TOAST_OFFSET = 26;
+
 	module.exports = {
 		SidebarContextMenuActionId,
 		SidebarContextMenuActionPosition,
 		SidebarFileType,
+		SIDEBAR_DEFAULT_TOAST_OFFSET,
 	};
 });

@@ -19,7 +19,7 @@ class Http
 		ERROR_ANSWER = 'ANSWER_MALFORMED';
 
 	private const SERVICE_MAP = [
-		'ru' => 'https://marta.bitrix.info/json/',
+		'ru' => 'https://marta.bitrix24.tech/json/',
 		'eu' => 'https://marta-eu.bitrix.info/json/',
 	];
 
@@ -72,7 +72,7 @@ class Http
 		}
 		else
 		{
-			if (in_array($region, ['ru', 'by', 'kz'], true))
+			if (in_array($region, ['ru', 'by', 'kz', 'uz'], true))
 			{
 				$serviceEndpoint = self::SERVICE_MAP['ru'];
 			}

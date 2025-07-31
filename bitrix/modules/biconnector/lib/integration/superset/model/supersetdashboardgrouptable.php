@@ -138,4 +138,16 @@ class SupersetDashboardGroupTable extends DataManager
 
 		return $result;
 	}
+
+	public static function onBeforeUpdate(Event $event): EventResult
+	{
+		$result = new EventResult();
+
+		$fields = $event->getParameter('fields');
+		$fields['DATE_MODIFY'] = new DateTime();
+
+		$result->modifyFields($fields);
+
+		return $result;
+	}
 }

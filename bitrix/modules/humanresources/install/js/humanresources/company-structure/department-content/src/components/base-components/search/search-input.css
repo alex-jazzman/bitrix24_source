@@ -3,7 +3,7 @@
 	background-color: var(--ui-color-palette-gray-03);
 	padding: 5px 10px;
 	border-radius: 20px;
-	margin: var(--hr-department-detail-margin-top) var(--hr-department-detail-padding-left-right) 16px;
+	margin: var(--hr-department-detail-margin-top) var(--hr-department-detail-padding-left-right) 0;
 	height: 22px;
 	align-items: center;
 }
@@ -25,6 +25,7 @@
 .hr-department-detail-content__content-search.--focused {
 	background-color: var(--ui-color-palette-white-base);
 	border: var(--ui-border-width-thin) solid #00ACE3;
+	padding: 4px 10px;
 }
 
 .hr-department-detail-content__content-search-close-button {

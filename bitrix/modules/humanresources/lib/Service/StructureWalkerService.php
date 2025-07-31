@@ -7,8 +7,10 @@ use Bitrix\HumanResources\Contract;
 use Bitrix\HumanResources\Contract\Repository\NodeMemberRepository;
 use Bitrix\HumanResources\Contract\Repository\NodeRepository;
 use Bitrix\HumanResources\Contract\Repository\StructureRepository;
-use Bitrix\HumanResources\Contract\Repository\NodeRelationRepository;
+use Bitrix\HumanResources\Item\Collection\NodeRelationCollection;
+use Bitrix\HumanResources\Repository\NodeRelationRepository;
 use Bitrix\HumanResources\Enum\Direction;
+use Bitrix\HumanResources\Enum\EventName;
 use Bitrix\HumanResources\Enum\NodeActiveFilter;
 use Bitrix\HumanResources\Exception\DeleteFailedException;
 use Bitrix\HumanResources\Item\Node;
@@ -40,6 +42,7 @@ class StructureWalkerService implements Contract\Service\StructureWalkerService
 	private NodeMemberRepository $nodeMemberRepository;
 	private Contract\Repository\RoleRepository $roleRepository;
 	private NodeRelationRepository $nodeRelationRepository;
+	private EventSenderService $eventSenderService;
 
 	/**
 	 * @param \Bitrix\HumanResources\Repository\NodeRepository|null $nodeRepository
@@ -49,15 +52,15 @@ class StructureWalkerService implements Contract\Service\StructureWalkerService
 		?NodeMemberRepository $nodeMemberRepository = null,
 		?RoleRepository $roleRepository = null,
 		?StructureRepository $structureRepository = null,
-		?NodeRelationRepository $nodeRelationRepository = null,
 	)
 	{
 		$this->nodeRepository = $nodeRepository ?? Container::getNodeRepository();
 		$this->nodeMemberRepository = $nodeMemberRepository ?? Container::getNodeMemberRepository();
 		$this->roleRepository = $roleRepository ?? Container::getRoleRepository();
 		$this->structureRepository = $structureRepository ?? Container::getStructureRepository();
-		$this->nodeRelationRepository = $nodeRelationRepository ?? Container::getNodeRelationRepository();
+		$this->nodeRelationRepository = Container::getNodeRelationRepository();
 
+		$this->eventSenderService = Container::getEventSenderService();
 		$this->connection = Application::getConnection();
 
 		if (defined('LOG_FILENAME'))
@@ -165,12 +168,18 @@ class StructureWalkerService implements Contract\Service\StructureWalkerService
 				$this->moveMembers($node);
 			}
 
+			$nodeRelationPartCollection = $this->nodeRelationRepository->findRelationsByNodeId(
+				$node->id,
+			);
+
 			$this->nodeRepository->deleteById($node->id);
 			$nodeRelationCollection = $this->nodeRelationRepository->findAllByNodeId($node->id);
 			foreach ($nodeRelationCollection as $nodeRelation)
 			{
+				$nodeRelation->node = $node;
 				$this->nodeRelationRepository->remove($nodeRelation);
 			}
+			$this->processNodeRelationParts($node, $nodeRelationPartCollection);
 			$this->connection->commitTransaction();
 
 			return;
@@ -312,5 +321,21 @@ class StructureWalkerService implements Contract\Service\StructureWalkerService
 		}
 
 		return $result;
+	}
+
+	private function processNodeRelationParts(Node $node, NodeRelationCollection $nodeRelationPartCollection): void
+	{
+		foreach ($nodeRelationPartCollection as $nodeRelationPart)
+		{
+			if ($nodeRelationPart->nodeId === $node->id)
+			{
+				continue;
+			}
+
+			$nodeRelationPart->node = $node;
+			$this->eventSenderService->send(EventName::OnRelationPartDeleted, [
+				'relation' => $nodeRelationPart
+			]);
+		}
 	}
 }

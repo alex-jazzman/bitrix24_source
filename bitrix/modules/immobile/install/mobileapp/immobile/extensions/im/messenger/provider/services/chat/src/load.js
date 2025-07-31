@@ -2,8 +2,9 @@
  * @module im/messenger/provider/services/chat/load
  */
 jn.define('im/messenger/provider/services/chat/load', (require, exports, module) => {
-	/* global ChatMessengerCommon, ChatUtils */
+	/* global ChatMessengerCommon */
 	const { Type } = require('type');
+	const { clone } = require('utils/object');
 
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { RestManager } = require('im/messenger/lib/rest-manager');
@@ -352,7 +353,7 @@ jn.define('im/messenger/provider/services/chat/load', (require, exports, module)
 		 */
 		setRecent(extractor)
 		{
-			const messages = ChatUtils.objectClone(extractor.getMessages());
+			const messages = clone(extractor.getMessages());
 			const message = messages[messages.length - 1];
 			if (Type.isNil(message))
 			{

@@ -1,29 +1,19 @@
 import { getMemberRoles } from 'humanresources.company-structure.api';
-import { TagSelector } from 'ui.entity-selector';
-import { BIcon, Set } from 'ui.icon-set.api.vue';
-import { EntityTypes } from 'humanresources.company-structure.utils';
-import { DefaultHint } from '../responsive-hint/default-hint';
-import {
-	getChatDialogEntity,
-	getChannelDialogEntity,
-	getChatRecentTabOptions,
-	ChatTypeDict,
-} from 'humanresources.company-structure.structure-components';
+import { EntityTypes, WizardApiEntityChangedDict, type ChatOrChannelDetailed } from 'humanresources.company-structure.utils';
+import { ChatSelector } from './steps-components/chat-selector';
+import { ChatTypeDict } from 'humanresources.company-structure.structure-components';
 
+// @vue/component
 export const BindChat = {
 	name: 'bindChat',
 
-	emits: ['applyData'],
-
-	components: {
-		DefaultHint,
-		BIcon,
-	},
+	components: { ChatSelector },
 
 	props: {
 		heads: {
 			type: Array,
 			required: false,
+			default: () => [],
 		},
 		name: {
 			type: String,
@@ -33,145 +23,45 @@ export const BindChat = {
 			type: String,
 			required: true,
 		},
+		isEditMode: {
+			type: Boolean,
+			required: true,
+		},
+		/** @type ChatOrChannelDetailed[] */
+		initChats: {
+			type: Array,
+			required: true,
+		},
+		/** @type ChatOrChannelDetailed[] */
+		initChannels: {
+			type: Array,
+			required: true,
+		},
 	},
 
-	data(): Object
+	emits: ['applyData'],
+
+	computed:
 	{
-		// this boolean values are true by default but false if no heads specified
-		return {
-			createDefaultChat: true,
-			createDefaultChannel: true,
-		};
-	},
-
-	created(): void
-	{
-		this.chatSelector = this.getChatSelector();
-		this.channelSelector = this.getChannelSelector();
-		this.chats = [];
-		this.channels = [];
-
-		if (!this.headsCreated)
-		{
-			this.createDefaultChat = false;
-			this.createDefaultChannel = false;
-		}
-	},
-
-	mounted(): void
-	{
-		this.chatSelector.renderTo(this.$refs['chat-selector']);
-		this.channelSelector.renderTo(this.$refs['channel-selector']);
-	},
-
-	methods: {
-		loc(phraseCode: string, replacements: {[p: string]: string} = {}): string
-		{
-			return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
-		},
-		getChatSelector(): TagSelector
-		{
-			const options = {
-				multiple: true,
-				events: {
-					onTagAdd: (event: BaseEvent) => {
-						const { tag } = event.getData();
-						this.chats.push(Number(tag.id.replace('chat', '')));
-						this.applyData();
-					},
-					onTagRemove: (event: BaseEvent) => {
-						const { tag } = event.getData();
-						const intId = Number(tag.id.replace('chat', ''));
-						this.chats = this.chats.filter((chat) => chat !== intId);
-						this.applyData();
-					},
-				},
-				dialogOptions: {
-					enableSearch: true,
-					height: 250,
-					width: 380,
-					dropdownMode: true,
-					recentTabOptions: getChatRecentTabOptions(this.entityType, ChatTypeDict.chat),
-					entities: [
-						getChatDialogEntity(),
-					],
-				},
-			};
-
-			return new TagSelector(options);
-		},
-		getChannelSelector(): TagSelector
-		{
-			const options = {
-				multiple: true,
-				events: {
-					onTagAdd: (event: BaseEvent) => {
-						const { tag } = event.getData();
-						this.channels.push(Number(tag.id.replace('chat', '')));
-						this.applyData();
-					},
-					onTagRemove: (event: BaseEvent) => {
-						const { tag } = event.getData();
-						const intId = Number(tag.id.replace('chat', ''));
-						this.channels = this.channels.filter((chat) => chat !== intId);
-						this.applyData();
-					},
-				},
-				dialogOptions: {
-					enableSearch: true,
-					height: 250,
-					width: 380,
-					dropdownMode: true,
-					recentTabOptions: getChatRecentTabOptions(this.entityType, ChatTypeDict.channel),
-					entities: [
-						getChannelDialogEntity(),
-					],
-				},
-			};
-
-			return new TagSelector(options);
-		},
-		applyData(): void
-		{
-			this.$emit('applyData', {
-				chats: this.chats,
-				channels: this.channels,
-				createDefaultChat: this.createDefaultChat,
-				createDefaultChannel: this.createDefaultChannel,
-				isDepartmentDataChanged: true,
-			});
-		},
-	},
-
-	watch: {
-		headsCreated(value): void
-		{
-			this.createDefaultChat = value;
-			this.createDefaultChannel = value;
-		},
-	},
-
-	computed: {
 		chatHintText(): string
 		{
 			return this.isTeamEntity
 				? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_CHATS_ADD_CHECKBOX_HINT')
-				: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_CHATS_ADD_CHECKBOX_HINT_MSGVER_1');
+				: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_CHATS_ADD_CHECKBOX_HINT_MSGVER_1')
+			;
 		},
 		channelHintText(): string
 		{
 			return this.isTeamEntity
 				? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_CHANNELS_ADD_CHECKBOX_HINT')
-				: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_CHANNELS_ADD_CHECKBOX_HINT_MSGVER_1');
+				: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_CHANNELS_ADD_CHECKBOX_HINT_MSGVER_1')
+			;
 		},
 		headsCreated(): boolean
 		{
 			const memberRoles = getMemberRoles(this.entityType);
 
 			return this.heads.some((item) => item.role === memberRoles.head);
-		},
-		set(): Set {
-			return Set;
 		},
 		isTeamEntity(): boolean
 		{
@@ -194,20 +84,86 @@ export const BindChat = {
 				this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_HINT_3'),
 			];
 		},
+		ChatTypeDict(): Record<string, string>
+		{
+			return ChatTypeDict;
+		},
+	},
+
+	watch:
+	{
+		initChats(value: ChatOrChannelDetailed[]): void
+		{
+			this.chats = value.map((item) => item.id);
+		},
+		initChannels(value: ChatOrChannelDetailed[]): void
+		{
+			this.channels = value.map((item) => item.id);
+		},
+	},
+
+	created(): void
+	{
+		this.chats = this.initChats.map((item) => item.id);
+		this.channels = this.initChannels.map((item) => item.id);
+		this.createDefaultChat = false;
+		this.createDefaultChannel = false;
+	},
+
+	activated(): void
+	{
+		this.$emit('applyData', {
+			isDepartmentDataChanged: false,
+			isValid: true,
+		});
+	},
+
+	methods:
+	{
+		loc(phraseCode: string, replacements: {[p: string]: string} = {}): string
+		{
+			return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
+		},
+		applyData(): void
+		{
+			this.$emit('applyData', {
+				apiEntityChanged: WizardApiEntityChangedDict.bindChats,
+				chats: this.chats,
+				channels: this.channels,
+				createDefaultChat: this.createDefaultChat,
+				createDefaultChannel: this.createDefaultChannel,
+				isDepartmentDataChanged: true,
+			});
+		},
+		onChatSelectorChanged(data: { type: string, chats: Array, createDefault: boolean })
+		{
+			if (data.type === ChatTypeDict.chat)
+			{
+				this.chats = data.chats;
+				this.createDefaultChat = data.createDefault;
+			}
+			else
+			{
+				this.channels = data.chats;
+				this.createDefaultChannel = data.createDefault;
+			}
+
+			this.applyData();
+		},
 	},
 
 	template: `
 		<div class="chart-wizard__bind-chat">
 			<div class="chart-wizard__bind-chat__item">
-				<div class="chart-wizard__bind-chat__item-hint" :class="{ '--team': isTeamEntity }">
+				<div v-if="!isEditMode" class="chart-wizard__bind-chat__item-hint" :class="{ '--team': isTeamEntity }">
 					<div class="chart-wizard__bind-chat__item-hint_logo" :class="{ '--team': isTeamEntity }"></div>
 					<div class="chart-wizard__bind-chat__item-hint_text">
 						<div
 							class="chart-wizard__bind-chat__item-hint_title"
 							v-html="
 								isTeamEntity 
-								? loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_HINT_TITLE')
-								: loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_HINT_TITLE')
+									? loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_HINT_TITLE')
+									: loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_HINT_TITLE')
 							"
 						>
 						</div>
@@ -235,48 +191,14 @@ export const BindChat = {
 								: loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_CHATS_DESCRIPTION')
 						}}
 					</span>
-					<div
-						class="chart-wizard__chat_selector"
-						ref="chat-selector"
-						data-test-id="hr-company-structure_chart-wizard__chat-selector"
+					<ChatSelector
+						:name="name"
+						:headsCreated="headsCreated"
+						:initChats="initChats"
+						:type="ChatTypeDict.chat"
+						:isTeamEntity="isTeamEntity"
+						@applyData="onChatSelectorChanged"
 					/>
-					<div class="chart-wizard__bind-chat__item-checkbox_container">
-						<input
-							id="addChatCheckbox"
-							type="checkbox"
-							class="form-control"
-							:disabled="!headsCreated"
-							v-model="createDefaultChat"
-							@change="applyData()"
-							data-test-id="hr-company-structure_chart-wizard__make-default-chat-checkbox"
-						/>
-						<label for="addChatCheckbox">
-							{{
-								isTeamEntity
-									? loc(
-										'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_CHATS_ADD_CHECKBOX_LABEL')
-									: loc(
-										'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_CHATS_ADD_CHECKBOX_LABEL_MSGVER_1')
-							}}
-						</label>
-						<DefaultHint :content="chatHintText"/>
-					</div>
-					<div v-if="!headsCreated" class="chart-wizard__bind-chat__item-checkbox_warning">
-						<BIcon
-							:name="set.WARNING"
-							color="#FFA900"
-							:size="16"
-						></BIcon>
-						<span>
-							{{
-								isTeamEntity
-									? loc(
-										'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_CHATS_ADD_CHECKBOX_WARNING')
-									: loc(
-										'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_CHATS_ADD_CHECKBOX_WARNING')
-							}}
-						</span>
-					</div>
 				</div>
 				<div class="chart-wizard__bind-chat__item-options">
 					<div class="chart-wizard__bind-chat__item-options__item-content_title">
@@ -287,53 +209,18 @@ export const BindChat = {
 					<span class="chart-wizard__bind-chat__item-description">
 						{{
 							isTeamEntity
-								? loc(
-									'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_CHANNELS_DESCRIPTION')
+								? loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_CHANNELS_DESCRIPTION')
 								: loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_CHANNELS_DESCRIPTION')
 						}}
 					</span>
-					<div
-						class="chart-wizard__channel_selector"
-						ref="channel-selector"
-						data-test-id="hr-company-structure_chart-wizard__channel-selector"
+					<ChatSelector
+						:name="name"
+						:headsCreated="headsCreated"
+						:initChats="initChannels"
+						:type="ChatTypeDict.channel"
+						:isTeamEntity="isTeamEntity"
+						@applyData="onChatSelectorChanged"
 					/>
-					<div class="chart-wizard__bind-chat__item-checkbox_container">
-						<input
-							id="addChannelCheckbox"
-							type="checkbox"
-							class="form-control"
-							:disabled="!headsCreated"
-							v-model="createDefaultChannel"
-							@change="applyData()"
-							data-test-id="hr-company-structure_chart-wizard__make-default-channel-checkbox"
-						/>
-						<label for="addChannelCheckbox">
-							{{
-								isTeamEntity
-									? loc(
-										'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_CHANNELS_ADD_CHECKBOX_LABEL')
-									: loc(
-										'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_CHANNELS_ADD_CHECKBOX_LABEL_MSGVER_1')
-							}}
-						</label>
-						<DefaultHint :content="channelHintText"/>
-					</div>
-					<div v-if="!headsCreated" class="chart-wizard__bind-chat__item-checkbox_warning --bottom-space">
-						<BIcon
-							:name="set.WARNING"
-							color="#FFA900"
-							:size="16"
-						></BIcon>
-						<span>
-							{{
-								isTeamEntity
-									? loc(
-										'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_CHANNELS_ADD_CHECKBOX_WARNING')
-									: loc(
-										'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_CHANNELS_ADD_CHECKBOX_WARNING')
-							}}
-						</span>
-					</div>
 				</div>
 			</div>
 		</div>

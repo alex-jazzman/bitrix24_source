@@ -156,6 +156,14 @@ jn.define('im/messenger/controller/dialog/lib/floating-buttons-bar-manager', (re
 				return null;
 			}
 
+			const uniqueMessageIds = new Set(reactions.map((anchor) => anchor.messageId));
+			const messagesWithReactionsCount = uniqueMessageIds.size;
+
+			if (!messagesWithReactionsCount)
+			{
+				return null;
+			}
+
 			return {
 				id: ButtonId.reactions,
 				sort: ButtonSort[ButtonId.reactions],
@@ -164,7 +172,7 @@ jn.define('im/messenger/controller/dialog/lib/floating-buttons-bar-manager', (re
 					tintColor: Color.accentMainAlert.toHex(),
 				},
 				badge: {
-					value: reactions.length,
+					value: messagesWithReactionsCount,
 					backgroundColor: Color.accentMainPrimary.toHex(),
 				},
 			};
@@ -178,6 +186,14 @@ jn.define('im/messenger/controller/dialog/lib/floating-buttons-bar-manager', (re
 				return null;
 			}
 
+			const uniqueMessageIds = new Set(mentions.map((anchor) => anchor.messageId));
+			const messagesWithMentionCount = uniqueMessageIds.size;
+
+			if (!messagesWithMentionCount)
+			{
+				return null;
+			}
+
 			return {
 				id: ButtonId.mentions,
 				sort: ButtonSort[ButtonId.mentions],
@@ -186,16 +202,16 @@ jn.define('im/messenger/controller/dialog/lib/floating-buttons-bar-manager', (re
 					tintColor: Color.accentMainPrimary.toHex(),
 				},
 				badge: {
-					value: mentions.length,
+					value: messagesWithMentionCount,
 					backgroundColor: Color.accentMainPrimary.toHex(),
 				},
 			};
 		};
 
 		getCommentsButton = () => {
-			const value = this.store.getters['commentModel/getChannelCounters'](this.getChatId());
+			const postsCountWithCounters = this.store.getters['commentModel/getPostsCountWithCounters'](this.getChatId());
 
-			if (!Number(value) || value < 1)
+			if (!postsCountWithCounters)
 			{
 				return null;
 			}
@@ -207,7 +223,7 @@ jn.define('im/messenger/controller/dialog/lib/floating-buttons-bar-manager', (re
 					name: Icon.MESSENGER.getIconName(),
 				},
 				badge: {
-					value,
+					value: postsCountWithCounters,
 					backgroundColor: Color.accentMainSuccess.toHex(),
 				},
 			};
@@ -358,7 +374,6 @@ jn.define('im/messenger/controller/dialog/lib/floating-buttons-bar-manager', (re
 		 */
 		updateReactionsButton = () => {
 			const button = this.getReactionButton();
-			console.log({ button });
 			if (button)
 			{
 				this.floatingButtonsBar.upsert(button);

@@ -268,6 +268,9 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 			throw new Error('Table: getFields() must be override in subclass.');
 		}
 
+		/**
+		 * @returns { FieldsCollection<ReturnType<this['getFields']>>}
+		 */
 		getFieldsCollection()
 		{
 			if (!this.fieldsCollection)

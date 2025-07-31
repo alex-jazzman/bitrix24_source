@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Intranet = this.BX.Intranet || {};
-(function (exports,ui_avatar,ui_label,ui_formElements_field,main_popup,ui_cnt,intranet_reinvite,ui_iconSet_main,ui_dialogs_messagebox,im_public,ui_entitySelector,main_core) {
+(function (exports,ui_avatar,ui_label,ui_formElements_field,ui_cnt,intranet_reinvite,ui_iconSet_main,ui_dialogs_messagebox,im_public,ui_entitySelector,main_core) {
 	'use strict';
 
 	var _fieldId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("fieldId");
@@ -255,8 +255,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    }
 	  }
 	  static reinviteCloudAction(data) {
-	    return BX.ajax.runAction('intranet.invite.reinviteWithChangeContact', {
-	      data: data
+	    return main_core.ajax.runAction('intranet.invite.reinviteWithChangeContact', {
+	      data
 	    }).then(response => {
 	      if (response.data.result) {
 	        const InviteAccessPopup = new BX.PopupWindow({
@@ -273,7 +273,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    });
 	  }
 	  static reinviteAction(userId, isExtranetUser) {
-	    return BX.ajax.runAction('intranet.controller.invite.reinvite', {
+	    return main_core.ajax.runAction('intranet.controller.invite.reinvite', {
 	      data: {
 	        params: {
 	          userId,
@@ -299,19 +299,29 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      this.confirmUser(params.isAccept ? 'confirm' : 'decline', () => {
 	        const row = babelHelpers.classPrivateFieldLooseBase(this, _grid)[_grid].getRows().getById(params.userId);
 	        row == null ? void 0 : row.stateLoad();
-	        BX.ajax.runAction('intranet.controller.invite.confirmUserRequest', {
+	        main_core.ajax.runAction('intranet.controller.invite.confirmUserRequest', {
 	          data: {
 	            userId: params.userId,
 	            isAccept: params.isAccept ? 'Y' : 'N'
 	          }
 	        }).then(response => {
-	          row == null ? void 0 : row.update();
-	        }).catch(err => {
-	          row == null ? void 0 : row.stateUnload();
-	          if (!params.isAccept) {
+	          if (response.data === true) {
+	            row == null ? void 0 : row.update();
+	          } else if (params.isAccept) {
+	            row == null ? void 0 : row.stateUnload();
+	          } else {
 	            this.activityAction({
 	              userId: params.userId,
-	              action: 'deactivateInvited'
+	              action: 'deleteOrFire'
+	            });
+	          }
+	        }).catch(() => {
+	          if (params.isAccept) {
+	            row == null ? void 0 : row.stateUnload();
+	          } else {
+	            this.activityAction({
+	              userId: params.userId,
+	              action: 'deleteOrFire'
 	            });
 	          }
 	        });
@@ -326,35 +336,19 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      this.confirmUser(action, () => {
 	        const row = babelHelpers.classPrivateFieldLooseBase(this, _grid)[_grid].getRows().getById(params.userId);
 	        row == null ? void 0 : row.stateLoad();
-	        if (action === 'restore' || action === 'fire') {
-	          BX.ajax.runAction(`intranet.user.${action}`, {
+	        if (['fire', 'restore', 'deleteOrFire'].includes(action)) {
+	          main_core.ajax.runAction(`intranet.v2.User.${action}`, {
 	            data: {
 	              userId
 	            }
 	          }).then(() => {
 	            row == null ? void 0 : row.update();
+	          }).catch(response => {
+	            row == null ? void 0 : row.stateUnload();
+	            const errors = response.errors.map(error => error.message);
+	            ui_formElements_field.ErrorCollection.showSystemError(errors.join('<br>'));
 	          });
-	          return;
 	        }
-	        BX.ajax.runComponentAction('bitrix:intranet.user.list', 'setActivity', {
-	          mode: 'class',
-	          data: {
-	            params: {
-	              userId,
-	              action
-	            }
-	          }
-	        }).then(() => {
-	          row == null ? void 0 : row.update();
-	        }).catch(response => {
-	          row == null ? void 0 : row.stateUnload();
-	          if (BX.type.isNotEmptyObject(response) && BX.type.isArray(response.errors) && action === 'delete') {
-	            return this.activityAction({
-	              action: 'deactivateInvited',
-	              userId
-	            });
-	          }
-	        });
 	      });
 	    }
 	  }
@@ -378,6 +372,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      case 'confirm':
 	        return main_core.Loc.getMessage('INTRANET_USER_LIST_ACTION_CONFIRM_TITLE');
 	      case 'delete':
+	      case 'deleteOrFire':
 	        return main_core.Loc.getMessage('INTRANET_USER_LIST_ACTION_DELETE_TITLE');
 	      case 'fire':
 	        return main_core.Loc.getMessage('INTRANET_USER_LIST_ACTION_DEACTIVATE_TITLE');
@@ -395,6 +390,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      case 'confirm':
 	        return main_core.Loc.getMessage('INTRANET_USER_LIST_ACTION_CONFIRM_MESSAGE');
 	      case 'delete':
+	      case 'deleteOrFire':
 	        return main_core.Loc.getMessage('INTRANET_USER_LIST_ACTION_DELETE_MESSAGE');
 	      case 'fire':
 	        return main_core.Loc.getMessage('INTRANET_USER_LIST_ACTION_DEACTIVATE_MESSAGE');
@@ -413,6 +409,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      case 'confirm':
 	        return main_core.Loc.getMessage('INTRANET_USER_LIST_ACTION_CONFIRM_BUTTON');
 	      case 'delete':
+	      case 'deleteOrFire':
 	        return main_core.Loc.getMessage('INTRANET_USER_LIST_ACTION_DELETE_BUTTON');
 	      case 'fire':
 	        return main_core.Loc.getMessage('INTRANET_USER_LIST_ACTION_DEACTIVATE_BUTTON');
@@ -1124,5 +1121,5 @@ this.BX.Intranet = this.BX.Intranet || {};
 	exports.GridManager = GridManager;
 	exports.Panel = Panel;
 
-}((this.BX.Intranet.UserList = this.BX.Intranet.UserList || {}),BX.UI,BX.UI,BX.UI.FormElements,BX.Main,BX.UI,BX.Intranet.Reinvite,BX,BX.UI.Dialogs,BX.Messenger.v2.Lib,BX.UI.EntitySelector,BX));
+}((this.BX.Intranet.UserList = this.BX.Intranet.UserList || {}),BX.UI,BX.UI,BX.UI.FormElements,BX.UI,BX.Intranet.Reinvite,BX,BX.UI.Dialogs,BX.Messenger.v2.Lib,BX.UI.EntitySelector,BX));
 //# sourceMappingURL=grid.bundle.js.map

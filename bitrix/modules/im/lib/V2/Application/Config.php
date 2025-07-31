@@ -6,6 +6,7 @@ use Bitrix\Call\Call;
 use Bitrix\Im\V2\Anchor\DI\AnchorContainer;
 use Bitrix\Im\V2\Common\ContextCustomer;
 use Bitrix\Im\V2\Promotion\Internals\DeviceType;
+use Bitrix\Im\V2\Integration\AI\EngineManager;
 use Bitrix\ImOpenLines\V2\Status\Status;
 use Bitrix\Im\V2\TariffLimit\Limit;
 use Bitrix\Main\Application;
@@ -45,6 +46,7 @@ class Config implements \JsonSerializable
 			'sessionStatusMap' => $this->getSessionStatusMap(),
 			'tariffRestrictions' => $this->getTariffRestrictions(),
 			'anchors' => $this->getAnchors(),
+			'copilot' => $this->getCopilotData(),
 		];
 	}
 
@@ -185,5 +187,12 @@ class Config implements \JsonSerializable
 			->setContext($this->getContext());
 
 		return $anchorProvider->getUserAnchors();
+	}
+
+	protected function getCopilotData(): array
+	{
+		return [
+			'availableEngines' => (new EngineManager())->getAvailableEnginesForRest(),
+		];
 	}
 }

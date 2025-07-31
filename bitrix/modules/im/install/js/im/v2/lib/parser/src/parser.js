@@ -15,6 +15,7 @@ import { ParserMention } from './functions/mention';
 import { ParserCommon } from './functions/common';
 import { ParserIcon } from './functions/icon';
 import { ParserDisk } from './functions/disk';
+import { ParserDate } from './functions/date';
 import { ParserRecursionPrevention } from './utils/recursion-prevention';
 import { ParserUtils } from './utils/utils';
 
@@ -145,7 +146,7 @@ export const Parser = {
 			text = ParserImage.decodeLink(text);
 		}
 		text = ParserDisk.decode(text);
-		text = ParserAction.decodeDate(text);
+		text = ParserDate.decode(text);
 
 		text = ParserQuote.decodeArrowQuote(text);
 		text = ParserQuote.decodeQuote(text, { contextDialogId });
@@ -266,6 +267,7 @@ export const Parser = {
 		text = ParserImage.purifyLink(text);
 		text = ParserImage.purifyIcon(text);
 		text = ParserDisk.purify(text);
+		text = ParserDate.purify(text);
 		text = ParserCommon.purifyNewLine(text);
 		text = ParserIcon.addIconToShortText({ text, attach, files });
 

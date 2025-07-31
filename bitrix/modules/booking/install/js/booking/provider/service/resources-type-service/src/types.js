@@ -3,6 +3,7 @@ export type ResourceTypeDto = {
 	moduleId: string,
 	name: string,
 	code: string | null,
+	resourcesCnt: number | null,
 
 	// info
 	isInfoNotificationOn: boolean,

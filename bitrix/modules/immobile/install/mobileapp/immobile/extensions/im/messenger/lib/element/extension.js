@@ -58,6 +58,7 @@ jn.define('im/messenger/lib/element', (require, exports, module) => {
 	const { CallMessageHandler } = require('im/messenger/lib/element/dialog/message/call/handler');
 	const { VoteMessageFactory } = require('im/messenger/lib/element/dialog/message/vote/factory');
 	const { VoteMessageHandler } = require('im/messenger/lib/element/dialog/message/vote/handler');
+	const { AiAssistantMessage } = require('im/messenger/lib/element/dialog/message/ai-assistant');
 
 	module.exports = {
 		ChatAvatar,
@@ -114,5 +115,6 @@ jn.define('im/messenger/lib/element', (require, exports, module) => {
 		CallMessageHandler,
 		VoteMessageFactory,
 		VoteMessageHandler,
+		AiAssistantMessage,
 	};
 });

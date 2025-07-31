@@ -18,6 +18,7 @@ return [
 		'im:messenger/lib/feature',
 		'im:messenger/lib/di/service-locator',
 		'im:messenger/provider/services/analytics',
+		'im:messenger/view/lib/state-manager',
 	],
 	'bundle' => [
 		'./src/dialog',

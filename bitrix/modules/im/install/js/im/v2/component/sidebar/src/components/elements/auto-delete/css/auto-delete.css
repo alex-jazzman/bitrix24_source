@@ -7,16 +7,9 @@
 	justify-content: space-between;
 	padding-left: 30px;
 	height: 36px;
-	opacity: 0.3;
-	cursor: not-allowed;
 }
 
-.bx-im-sidebar-auto-delete__container.--enabled {
-	opacity: 1;
-	cursor: default;
-}
-
-.bx-im-sidebar-auto-delete__container.--enabled .bx-im-toggle__container {
+.bx-im-sidebar-auto-delete__container .bx-im-toggle__container {
 	cursor: pointer;
 }
 

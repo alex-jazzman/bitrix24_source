@@ -110,7 +110,11 @@ jn.define('layout/ui/whats-new/items/whats-new/redux-content', (require, exports
 			const { name, description } = this.item;
 
 			return View(
-				{},
+				{
+					style: {
+						backgroundColor: Color.accentSoftBlue3.toHex(),
+					},
+				},
 				Card(
 					{
 						ref: this.bindCardRef,

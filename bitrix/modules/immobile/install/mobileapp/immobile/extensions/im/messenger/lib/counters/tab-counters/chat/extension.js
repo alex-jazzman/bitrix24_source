@@ -15,7 +15,6 @@ jn.define('im/messenger/lib/counters/tab-counters/chat', (require, exports, modu
 	const { TabCounterState } = require('im/messenger/lib/counters/tab-counters/state');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { DialogHelper } = require('im/messenger/lib/helper');
-	const { Feature } = require('im/messenger/lib/feature');
 
 	const { getLogger } = require('im/messenger/lib/logger');
 	const logger = getLogger('chat-counters');
@@ -203,28 +202,25 @@ jn.define('im/messenger/lib/counters/tab-counters/chat', (require, exports, modu
 
 			if (!this.isCopilotLaunched)
 			{
-				if (Feature.isCopilotInDefaultTabAvailable)
-				{
-					this.copilotCounter.value = this.store.getters['recentModel/getCollection']()
-						.reduce((counter, item) => {
-							const dialog = this.getDialog(item);
-							if (!this.validateDialog(item, dialog))
-							{
-								return counter;
-							}
+				this.copilotCounter.value = this.store.getters['recentModel/getCollection']()
+					.reduce((counter, item) => {
+						const dialog = this.getDialog(item);
+						if (!this.validateDialog(item, dialog))
+						{
+							return counter;
+						}
 
-							const isCopilot = DialogHelper.createByModel(dialog)?.isCopilot;
-							if (!isCopilot)
-							{
-								return counter;
-							}
+						const isCopilot = DialogHelper.createByModel(dialog)?.isCopilot;
+						if (!isCopilot)
+						{
+							return counter;
+						}
 
-							this.deleteCounterDetails(this.copilotCounter, item, dialog.chatId);
+						this.deleteCounterDetails(this.copilotCounter, item, dialog.chatId);
 
-							return this.calculateCounter(counter, item, dialog);
-						}, 0)
-					;
-				}
+						return this.calculateCounter(counter, item, dialog);
+					}, 0)
+				;
 
 				this.copilotCounter.update();
 				counters.copilot = this.copilotCounter.value;
@@ -233,10 +229,7 @@ jn.define('im/messenger/lib/counters/tab-counters/chat', (require, exports, modu
 			logger.log(`${this.getClassName()}.update`, counters);
 
 			const communicationCounters = { ...counters };
-			if (Feature.isCopilotInDefaultTabAvailable)
-			{
-				communicationCounters.copilot = 0;
-			}
+			communicationCounters.copilot = 0;
 
 			BX.postComponentEvent('ImRecent::counter::messages', [this.chatCounter.value], 'calls');
 			BX.postComponentEvent('ImRecent::counter::list', [communicationCounters], 'communication');
@@ -391,10 +384,7 @@ jn.define('im/messenger/lib/counters/tab-counters/chat', (require, exports, modu
 					this.copilotCounter.detail[counterId] = counter;
 				}
 
-				if (Feature.isCopilotInDefaultTabAvailable)
-				{
-					this.chatCounter.detail[counterId] = counter;
-				}
+				this.chatCounter.detail[counterId] = counter;
 
 				return;
 			}

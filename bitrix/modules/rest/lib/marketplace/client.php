@@ -90,7 +90,13 @@ class Client
 
 		if (!is_array($immuneAppList))
 		{
-			throw new SystemException('Wrong answer from service');
+			if ($immuneAppList !== false) {
+				AddMessage2Log([
+					'message' => 'Wrong answer from service',
+					'data' => print_r($immuneAppList, true),
+				], 'rest');
+			}
+			return [];
 		}
 
 		return $immuneAppList;

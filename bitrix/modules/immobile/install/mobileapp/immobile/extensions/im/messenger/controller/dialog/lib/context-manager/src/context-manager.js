@@ -146,6 +146,7 @@ jn.define('im/messenger/controller/dialog/lib/context-manager/context-manager', 
 		#bindEvents()
 		{
 			this.#goToMessageContextHandler = this.goToMessageContextInCurrentDialog.bind(this);
+			this.goToMessageContext = this.goToMessageContext.bind(this);
 		}
 
 		#subscribeEvents()

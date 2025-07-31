@@ -192,6 +192,45 @@ class Settings
 
 		return (bool)\CUserOptions::GetOption('call', 'call_user_control_enabled', false);
 	}
+	
+	/**
+	 * Disable camera of new joined users feature is enabled.
+	 * @return bool
+	 * task-596223
+	 */
+	public static function isDisableCameraNewJoinedUsersFeatureEnabled(): bool
+	{
+		if (Option::get('call', 'call_disable_camera_new_joined_users_enabled', false))
+		{
+			return true;
+		}
+
+		return (bool)\CUserOptions::GetOption('call', 'call_disable_camera_new_joined_users_enabled', false);
+	}
+	/**
+	 * Enable/disable logs to Kibana.
+	 * @return bool
+	 * task-605234
+	 */
+	public static function isKibanaLogsEnabled(): bool
+	{
+		if (Option::get('call', 'call_kibana_logs_enabled', false))
+		{
+			return true;
+		}
+
+		return (bool)\CUserOptions::GetOption('call', 'call_kibana_logs_enabled', false);
+	}
+	
+	/**
+	 * Disable camera of new joined users feature is enabled.
+	 * @return bool
+	 * task-596223
+	 */
+	public static function countDisableCameraNewJoinedUsersFeature(): int
+	{
+		return Option::get('call', 'call_disable_camera_new_joined_users_count', 4);
+	}
 
 	/**
 	 * Picture in picture feature is enabled.

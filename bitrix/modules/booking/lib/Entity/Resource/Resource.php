@@ -6,9 +6,14 @@ namespace Bitrix\Booking\Entity\Resource;
 
 use Bitrix\Booking\Entity\EntityInterface;
 use Bitrix\Booking\Entity\Enum\Notification\ReminderNotificationDelay;
+use Bitrix\Booking\Entity\Enum\TemplateType\TemplateTypeConfirmation;
+use Bitrix\Booking\Entity\Enum\TemplateType\TemplateTypeDelayed;
+use Bitrix\Booking\Entity\Enum\TemplateType\TemplateTypeFeedback;
+use Bitrix\Booking\Entity\Enum\TemplateType\TemplateTypeInfo;
+use Bitrix\Booking\Entity\Enum\TemplateType\TemplateTypeReminder;
 use Bitrix\Booking\Entity\ResourceType\ResourceType;
 use Bitrix\Booking\Entity\Slot\RangeCollection;
-use Bitrix\Booking\Internals\Service\Notifications\NotificationTemplateType;
+use Bitrix\Booking\Internals\Exception\InvalidArgumentException;
 
 class Resource implements EntityInterface
 {
@@ -43,18 +48,21 @@ class Resource implements EntityInterface
 	private int|null $createdBy = null;
 	private int|null $createdAt = null;
 	private int|null $updatedAt = null;
+	private ResourceLinkedEntityCollection|null $entityCollection = null;
 
 	public function __construct()
 	{
 		$this->slotRanges = new RangeCollection(...[]);
 
-		$this->templateTypeInfo = NotificationTemplateType::Inanimate->value;
-		$this->templateTypeConfirmation = NotificationTemplateType::Inanimate->value;
-		$this->templateTypeReminder = NotificationTemplateType::Inanimate->value;
-		$this->templateTypeFeedback = NotificationTemplateType::Inanimate->value;
-		$this->templateTypeDelayed = NotificationTemplateType::Inanimate->value;
+		$this->templateTypeInfo = TemplateTypeInfo::InAnimate->value;
+		$this->templateTypeConfirmation = TemplateTypeConfirmation::InAnimate->value;
+		$this->templateTypeReminder = TemplateTypeReminder::Base->value;
+		$this->templateTypeFeedback = TemplateTypeFeedback::InAnimate->value;
+		$this->templateTypeDelayed = TemplateTypeDelayed::InAnimate->value;
 
 		$this->reminderNotificationDelay = ReminderNotificationDelay::Morning->value;
+
+		$this->entityCollection = new ResourceLinkedEntityCollection();
 	}
 
 	public function getId(): int|null
@@ -197,6 +205,11 @@ class Resource implements EntityInterface
 
 	public function setTemplateTypeInfo(string $templateTypeInfo): self
 	{
+		if (!TemplateTypeInfo::isValid($templateTypeInfo))
+		{
+			throw new InvalidArgumentException('Invalid value for templateTypeInfo');
+		}
+
 		$this->templateTypeInfo = $templateTypeInfo;
 
 		return $this;
@@ -209,6 +222,11 @@ class Resource implements EntityInterface
 
 	public function setTemplateTypeConfirmation(string $templateTypeConfirmation): self
 	{
+		if (!TemplateTypeConfirmation::isValid($templateTypeConfirmation))
+		{
+			throw new InvalidArgumentException('Invalid value for templateTypeConfirmation');
+		}
+
 		$this->templateTypeConfirmation = $templateTypeConfirmation;
 
 		return $this;
@@ -269,6 +287,11 @@ class Resource implements EntityInterface
 
 	public function setTemplateTypeReminder(string $templateTypeReminder): self
 	{
+		if (!TemplateTypeReminder::isValid($templateTypeReminder))
+		{
+			throw new InvalidArgumentException('Invalid value for templateTypeReminder');
+		}
+
 		$this->templateTypeReminder = $templateTypeReminder;
 
 		return $this;
@@ -293,6 +316,11 @@ class Resource implements EntityInterface
 
 	public function setTemplateTypeFeedback(string $templateTypeFeedback): self
 	{
+		if (!TemplateTypeFeedback::isValid($templateTypeFeedback))
+		{
+			throw new InvalidArgumentException('Invalid value for templateTypeFeedback');
+		}
+
 		$this->templateTypeFeedback = $templateTypeFeedback;
 
 		return $this;
@@ -315,9 +343,14 @@ class Resource implements EntityInterface
 		return $this->templateTypeDelayed;
 	}
 
-	public function setTemplateTypeDelayed(string $templateTypeFeedback): self
+	public function setTemplateTypeDelayed(string $templateTypeDelayed): self
 	{
-		$this->templateTypeDelayed = $templateTypeFeedback;
+		if (!TemplateTypeDelayed::isValid($templateTypeDelayed))
+		{
+			throw new InvalidArgumentException('Invalid value for templateTypeDelayed');
+		}
+
+		$this->templateTypeDelayed = $templateTypeDelayed;
 
 		return $this;
 	}
@@ -419,6 +452,16 @@ class Resource implements EntityInterface
 		return $this;
 	}
 
+	public function getEntityCollection(): ResourceLinkedEntityCollection
+	{
+		return $this->entityCollection;
+	}
+
+	public function setEntityCollection(ResourceLinkedEntityCollection $entityCollection): void
+	{
+		$this->entityCollection = $entityCollection;
+	}
+
 	public function toArray(): array
 	{
 		return [
@@ -451,6 +494,7 @@ class Resource implements EntityInterface
 			'createdAt' => $this->createdAt,
 			'updatedAt' => $this->updatedAt,
 			'counter' => $this->counter,
+			'entities' => $this->entityCollection->toArray(),
 		];
 	}
 
@@ -556,6 +600,11 @@ class Resource implements EntityInterface
 		if (isset($props['isMain']))
 		{
 			$resource->setMain((bool)$props['isMain']);
+		}
+
+		if (isset($props['entities']))
+		{
+			$resource->setEntityCollection(ResourceLinkedEntityCollection::mapFromArray($props['entities']));
 		}
 
 		return $resource;

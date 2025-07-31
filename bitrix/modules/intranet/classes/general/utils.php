@@ -7,6 +7,7 @@ use Bitrix\HumanResources\Enum\DepthLevel;
 use Bitrix\Main\Application;
 use Bitrix\Intranet\MainPage;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Type\Date;
 
 IncludeModuleLangFile(__FILE__);
 
@@ -250,7 +251,7 @@ class CIntranetUtils
 		if (null === $CACHE_ABSENCE)
 		{
 			$cache_ttl = (24-date('G')) * 3600;
-			$cache_dir = '/'.SITE_ID.'/intranet/absence';
+			$cache_dir = '/'.SITE_ID.'/intranet/absence/v3';
 
 			$obCache = new CPHPCache();
 			if ($obCache->InitCache($cache_ttl, 'intranet_absence', $cache_dir))
@@ -262,17 +263,28 @@ class CIntranetUtils
 				if (null == $CALENDAR_IBLOCK_ID)
 					$CALENDAR_IBLOCK_ID = COption::GetOptionInt('intranet', 'iblock_calendar', null);
 
-				$dt = ConvertTimeStamp(false, 'SHORT');
+				$timeZoneEnabled = \CTimeZone::Enabled();
+
+				if ($timeZoneEnabled)
+				{
+					\CTimeZone::Disable();
+				}
+
 				$arAbsence = CIntranetUtils::GetAbsenceData(
 					array(
 						'CALENDAR_IBLOCK_ID' => $CALENDAR_IBLOCK_ID,
-						'DATE_START' => $dt,
-						'DATE_FINISH' => $dt,
+						'DATE_START' => (new Date(null, 'Y-m-01'))->add('-1 day'),
+						'DATE_FINISH' => (new Date(null, 'Y-m-01'))->add('1 month'),
 						'PER_USER' => true,
 						'SELECT' => array('DATE_ACTIVE_FROM', 'DATE_ACTIVE_TO'),
 						'CHECK_PERMISSIONS' => 'N'
 					)
 				);
+
+				if ($timeZoneEnabled)
+				{
+					\CTimeZone::Enable();
+				}
 
 				$obCache->StartDataCache();
 				$CACHE_MANAGER->StartTagCache($cache_dir);
@@ -298,19 +310,28 @@ class CIntranetUtils
 
 		if (is_array($arAbsence[$USER_ID] ?? null))
 		{
-			$ts = time() + \CTimeZone::getOffset();
+			$ts = (new \Bitrix\Main\Type\DateTime())->enableUserTime()->getTimestamp();
 			foreach($arAbsence[$USER_ID] as $arEntry)
 			{
-				$ts_start = MakeTimeStamp($arEntry['DATE_FROM'], FORMAT_DATETIME);
+				$ts_start = MakeTimeStamp($arEntry['DATE_FROM'], FORMAT_DATETIME) + CTimeZone::GetOffset();
 				if ($ts_start < $ts)
 				{
-					$ts_finish = MakeTimeStamp($arEntry['DATE_TO'], FORMAT_DATETIME);
+					$ts_finish = MakeTimeStamp($arEntry['DATE_TO'], FORMAT_DATETIME) + CTimeZone::GetOffset();
 
 					if ($ts_finish > $ts)
+					{
 						return true;
+					}
 
-					if (($ts_start+date('Z')) % 86400 == 0 && $ts_start == $ts_finish)
+					if ($ts_start === $ts_finish && !self::IsDateTime($ts_start))
+					{
 						return true;
+					}
+
+					if (($ts_finish + 86400 > $ts) && (!self::IsDateTime($ts_finish)))
+					{
+						return true;
+					}
 				}
 			}
 		}

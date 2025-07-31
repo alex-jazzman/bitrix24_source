@@ -33,6 +33,8 @@ $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '') . 
 	'ui.avatar-editor',
 	'avatar_editor',
 	'ui.avatar',
+	'ui.fonts.inter',
+	'intranet.transfer-to-intranet',
 ]);
 
 CJSCore::Init("loader");
@@ -949,6 +951,9 @@ if ($arResult["adminRightsRestricted"])
 		gratPostListPageSize: <?= (int)$arParams['GRAT_POST_LIST_PAGE_SIZE'] ?>,
 		userId: <?= (int)$arResult["User"]["ID"] ?>,
 		userStatus: <?= CUtil::PhpToJSObject($arResult["User"]["STATUS"]) ?>,
+		isCollaber: "<?=($arResult["User"]["IS_COLLABER"] ?? null) ? "Y" : "N"?>",
+		userFullName: <?= CUtil::PhpToJSObject($arResult["User"]["FULL_NAME"]) ?>,
+		userPhoto: <?= CUtil::PhpToJSObject($arResult["User"]["PHOTO"]) ?>,
 		isIntegratorUser: '<?=($arResult["User"]['IS_INTEGRATOR'] ?? null) ? "Y" : "N"?>',
 		isOwnProfile: '<?=$arResult["IsOwnProfile"] ? "Y" : "N"?>',
 		urls: <?= CUtil::PhpToJSObject($arResult["Urls"]) ?>,
@@ -975,6 +980,7 @@ if ($arResult["adminRightsRestricted"])
 		voximplantEnablePhones: <?=CUtil::PhpToJSObject($arResult["User"]["VOXIMPLANT_ENABLE_PHONES"])?>,
 		userpicUploadAttribute: <?= \Bitrix\Main\Web\Json::encode(UI\Avatar\Mask\Helper::getHTMLAttribute($arResult["User"]["PERSONAL_PHOTO"])) ?>,
 		actionsAvailability: <?= \Bitrix\Main\Web\Json::encode($arResult['ACTIONS_AVAILABILITY']) ?>,
+		rootDepartment: <?= \Bitrix\Main\Web\Json::encode($arResult['ROOT_DEPARTMENT']) ?>,
 	});
 </script>
 

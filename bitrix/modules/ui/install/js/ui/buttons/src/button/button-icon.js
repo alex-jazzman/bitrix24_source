@@ -67,6 +67,8 @@ export default class ButtonIcon
 	static CHEVRON_LEFT_S = 'ui-btn-icon-chevron-left-s';
 	static CHEVRON_RIGHT_S = 'ui-btn-icon-chevron-right-s';
 	static REFRESH = 'ui-btn-icon-refresh';
+	static APPS = 'ui-btn-icon-apps';
+	static IMAGE = 'ui-btn-icon-image';
 	static CITY = 'ui-btn-icon-city';
 	static TWO_PERSONS = 'ui-btn-icon-two-persons';
 	static COPILOT = 'ui-btn-icon-copilot';

@@ -10,8 +10,8 @@
 	--min-height: 181px;
 }
 
-.humanresources-tree__node.--dragging {
-	z-index: 2;
+.humanresources-tree__node.--hidden {
+	visibility: hidden;
 }
 
 .humanresources-tree__node.--current-department:before {
@@ -25,6 +25,7 @@
 	padding: 5px 10px 5px 8px;
 	border-radius: 17px;
 	text-transform: uppercase;
+	z-index: 2;
 }
 
 .humanresources-tree__node.--current-department.--team:before {
@@ -49,13 +50,18 @@
 	box-shadow: 0px 2px 18px 0px rgba(0, 0, 0, 0.16);
 }
 
-.humanresources-tree__node.--expanded > .humanresources-tree__node_summary {
+.humanresources-tree__node.--expanded > .humanresources-tree__node_summary,
+.humanresources-tree__node.--focused > .humanresources-tree__node_summary {
 	border-color: var(--node-expanded-color);
+	/*
+		This is a temporary workaround to fix https://bugzilla.mozilla.org/show_bug.cgi?id=1950029
+		Should be removed later
+	*/
+	-moz-transform: rotate(0.1deg);
 }
 
 .humanresources-tree__node.--focused > .humanresources-tree__node_summary {
 	box-shadow: 0px 2px 4px 0 rgba(0, 0, 0, 0.12), 0px 0px 0px 12px var(--team-focused-border-color);
-	border-color: var(--node-expanded-color);
 }
 
 .humanresources-tree__node.--dragging > .humanresources-tree__node_summary {
@@ -133,7 +139,8 @@
 .humanresources-tree__node_dnd-icon {
 	--ui-icon-set__icon-size: 22px;
 	--ui-icon-set__icon-color: var(--ui-color-palette-gray-50);
-	transform: translateX(-2px);
+	position: relative;
+	left: -2px;
 }
 
 .humanresources-tree__node_dnd-icon.--team {
@@ -148,22 +155,6 @@
 
 .humanresources-tree__node_dnd-icon:active {
 	--ui-icon-set__icon-color: var(--ui-color-palette-blue-60);
-	cursor: grabbing;
-}
-
-.humanresources-tree__node_dnd-ghost {
-	display: none;
-	background-color: rgba(229, 249, 255, 0.74);
-	background-image: repeating-linear-gradient(90deg, rgba(47, 198, 246, 0.43), rgba(47, 198, 246, 0.43) 10px, transparent 10px, transparent 20px), repeating-linear-gradient(180deg, rgba(47, 198, 246, 0.43), rgba(47, 198, 246, 0.43) 10px, transparent 10px, transparent 20px), repeating-linear-gradient(90deg, rgba(47, 198, 246, 0.43), rgba(47, 198, 246, 0.43) 10px, transparent 10px, transparent 20px), repeating-linear-gradient(180deg, rgba(47, 198, 246, 0.43), rgba(47, 198, 246, 0.43) 10px, transparent 10px, transparent 20px);
-	background-position: left 5px top, right top -11px, left 5px bottom, left top -11px;
-	background-repeat: repeat-x, repeat-y, repeat-x, repeat-y;
-	background-size: calc(100% * 20) 2px, 2px calc(100% * 20), calc(100% * 20) 2px, 2px calc(100% * 20);
-	box-sizing: border-box;
-	border-radius: 12px;
-	position: absolute;
-	top: 0;
-	left: 0;
-	z-index: 1;
 }
 
 .humanresources-tree__node_department-title_text {
@@ -300,14 +291,6 @@
 	display: flex;
 	gap: 24px;
 	top: 364px;
-}
-
-.humanresources-tree__node_children.--drag-progress {
-	pointer-events: none;
-}
-
-.humanresources-tree__node_children.--drag-progress .humanresources-tree__node_dnd-ghost {
-	display: block;
 }
 
 .humanresources-tree__node_add-subdivision {

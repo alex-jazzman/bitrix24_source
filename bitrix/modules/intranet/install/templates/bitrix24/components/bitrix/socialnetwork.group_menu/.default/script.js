@@ -106,7 +106,7 @@ this.BX = this.BX || {};
 	          editRolesAllowed: this.editFeaturesAllowed
 	        });
 	      }
-	      this.projectWidgetInstance.show(event.target);
+	      this.projectWidgetInstance.show(event.currentTarget);
 	      if (this.projectWidgetInstance.widget && this.projectWidgetInstance.widget.getPopup()) {
 	        BX.UI.Hint.init(this.projectWidgetInstance.widget.getPopup().getContentContainer());
 	      }
@@ -135,7 +135,7 @@ this.BX = this.BX || {};
 	            container: controlButtonContainer,
 	            entityType: 'workgroup',
 	            entityId: _this.groupId,
-	            buttonClassName: "intranet-control-btn-no-hover".concat(_this.inIframe ? ' ui-btn-themes' : '')
+	            airDesign: true
 	          });
 	        });
 	      }

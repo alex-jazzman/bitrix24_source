@@ -5,10 +5,13 @@ namespace Bitrix\Im\V2\Chat;
 use Bitrix\Im\Model\ChatTable;
 use Bitrix\Im\V2\Analytics\ChatAnalytics;
 use Bitrix\Im\V2\Chat;
+use Bitrix\Im\V2\Chat\Ai\AiAssistantPrivateChat;
 use Bitrix\Im\V2\Common\ContextCustomer;
+use Bitrix\Im\V2\Integration\AiAssistant\AiAssistantService;
 use Bitrix\Im\V2\Result;
 use Bitrix\Main\Application;
 use Bitrix\Main\Data\Cache;
+use Bitrix\Main\DI\ServiceLocator;
 
 class ChatFactory
 {
@@ -18,9 +21,11 @@ class ChatFactory
 	private const LOCK_TIMEOUT = 3;
 
 	protected static self $instance;
+	protected AiAssistantService $aiAssistantService;
 
 	private function __construct()
 	{
+		$this->aiAssistantService = ServiceLocator::getInstance()->get(AiAssistantService::class);
 	}
 
 	/**
@@ -113,20 +118,11 @@ class ChatFactory
 		return $this->getChat($params);
 	}
 
-	/**
-	 * @param string $entityType
-	 * @param int|string $entityId
-	 * @return Chat|EntityChat|null
-	 */
-	public function getEntityChat(string $entityType, $entityId): ?EntityChat
+	public function getEntityChat(string $entityType, string $entityId): Chat
 	{
-		$params = [
-			'TYPE' => Chat::IM_TYPE_CHAT,
-			'ENTITY_TYPE' => $entityType,
-			'ENTITY_ID' => $entityId,
-		];
+		$chatId = $this->getEntityChatId($entityType, $entityId);
 
-		return $this->getChat($params);
+		return Chat::getInstance($chatId);
 	}
 
 	/**
@@ -185,8 +181,12 @@ class ChatFactory
 	 */
 	public function initChat(?array $params = null): Chat
 	{
-		$type = $params['TYPE'] ?? $params['MESSAGE_TYPE'] ?? '';
-		$entityType = $params['ENTITY_TYPE'] ?? '';
+		$params['TYPE'] ??= $params['MESSAGE_TYPE'] ?? '';
+		$params['ENTITY_TYPE'] ??= '';
+
+		$type = $params['TYPE'];
+		$entityType = $params['ENTITY_TYPE'];
+
 		$chat = match (true)
 		{
 			$entityType === Chat::ENTITY_TYPE_FAVORITE || $entityType === 'PERSONAL' => new FavoriteChat($params),
@@ -195,6 +195,7 @@ class ChatFactory
 			$entityType === Chat::ENTITY_TYPE_LINE || $type === Chat::IM_TYPE_OPEN_LINE => new OpenLineChat($params),
 			$entityType === Chat::ENTITY_TYPE_LIVECHAT => new OpenLineLiveChat($params),
 			$entityType === Chat::ENTITY_TYPE_VIDEOCONF => new VideoConfChat($params),
+			$this->isPrivateAiAssistantChat($params) => new AiAssistantPrivateChat($params),
 			$type === Chat::IM_TYPE_CHANNEL => new ChannelChat($params),
 			$type === Chat::IM_TYPE_OPEN_CHANNEL => new OpenChannelChat($params),
 			$type === Chat::IM_TYPE_OPEN => new OpenChat($params),
@@ -211,6 +212,23 @@ class ChatFactory
 		$chat->setContext($this->context);
 
 		return $chat;
+	}
+
+	protected function isPrivateAiAssistantChat(array $params): bool
+	{
+		$botId = $this->aiAssistantService->getBotId();
+
+		if ($params['TYPE'] !== Chat::IM_TYPE_PRIVATE || !$botId)
+		{
+			return false;
+		}
+
+		$users = [(int)($params['FROM_USER_ID'] ?? 0), (int)($params['TO_USER_ID'] ?? 0)];
+
+		return
+			$params['ENTITY_TYPE'] === Chat::ENTITY_TYPE_PRIVATE_AI_ASSISTANT
+			|| in_array($botId, $users, true)
+		;
 	}
 
 	/**
@@ -496,7 +514,12 @@ class ChatFactory
 
 		ChatAnalytics::blockSingleUserEvents();
 
-		$initParams = ['TYPE' => $params['TYPE'] ?? null, 'ENTITY_TYPE' => $params['ENTITY_TYPE'] ?? null];
+		$initParams = [
+			'TYPE' => $params['TYPE'] ?? null,
+			'ENTITY_TYPE' => $params['ENTITY_TYPE'] ?? null,
+			'FROM_USER_ID' => $params['FROM_USER_ID'] ?? null,
+			'TO_USER_ID' => $params['TO_USER_ID'] ?? null,
+		];
 		$chat = $this->initChat($initParams);
 		$addResult = $chat->add($params);
 

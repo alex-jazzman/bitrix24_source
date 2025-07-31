@@ -171,6 +171,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    if (this.getRightBar() && !this.isMessengerSlider()) {
 	      const stack = main_core.ZIndexManager.getOrAddStack(document.body);
 	      stack.register(this.getRightBar());
+	      main_core.Dom.addClass(this.getRightBar(), '--ui-context-edge-dark');
 	    }
 	    return true;
 	  }
@@ -180,6 +181,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    if (this.getRightBar()) {
 	      const stack = main_core.ZIndexManager.getOrAddStack(document.body);
 	      stack.unregister(this.getRightBar());
+	      main_core.Dom.removeClass(this.getRightBar(), '--ui-context-edge-dark');
 	      main_core.Dom.style(this.getRightBar(), 'z-index', null); // ZIndexManager may not remove z-index, so we do it manually
 	    }
 	  }

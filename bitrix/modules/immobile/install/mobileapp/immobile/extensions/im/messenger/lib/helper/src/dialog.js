@@ -8,7 +8,7 @@ jn.define('im/messenger/lib/helper/dialog', (require, exports, module) => {
 	const { DialogType, UserRole, UrlGetParameter } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { getLogger } = require('im/messenger/lib/logger');
-	const { MessagesAutoDeleteDelay } = require('im/messenger/const');
+	const { MessagesAutoDeleteDelay, BotCode } = require('im/messenger/const');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { ChatPermission } = require('im/messenger/lib/permission-manager');
 
@@ -165,6 +165,23 @@ jn.define('im/messenger/lib/helper/dialog', (require, exports, module) => {
 			return false;
 		}
 
+		/**
+		 * @desc Return check is bot ai assistant
+		 * @return {boolean}
+		 */
+		get isAiAssistant()
+		{
+			if (this.isDirect)
+			{
+				const store = serviceLocator.get('core').getStore();
+				const userModelState = store.getters['usersModel/getById'](this.dialogId);
+
+				return userModelState?.botData?.code === BotCode.aiAssistant;
+			}
+
+			return false;
+		}
+
 		get isChannel()
 		{
 			return [
@@ -300,8 +317,8 @@ jn.define('im/messenger/lib/helper/dialog', (require, exports, module) => {
 		{
 			const delay = this.dialogModel.messagesAutoDeleteDelay;
 
-			return !isNil(delay) && MessagesAutoDeleteDelay.off !== delay
-				&& Feature.isMessagesAutoDeleteAvailable
+			return !isNil(delay)
+				&& MessagesAutoDeleteDelay.off !== delay
 				&& Feature.isMessagesAutoDeleteNativeAvailable;
 		}
 

@@ -8,8 +8,8 @@ use Bitrix\Main\Access\AccessibleItem;
 
 trait SelfRuleTrait
 {
-	public function checkSelfAction(AccessibleItem $item): bool
+	public function isSelfAction(AccessibleItem $item): bool
 	{
-		return $item->getId() !== $this->user?->getUserId();
+		return $item->getId() === $this->user?->getUserId();
 	}
 }

@@ -72,12 +72,18 @@ jn.define('statemanager/redux/slices/whats-new/thunk', (require, exports, module
 					},
 				};
 			}
-			catch (error)
+			catch (response)
 			{
-				console.error('fetchWhatsNewThunk error', error);
+				let status = null;
+
+				if (response && Number.isInteger(response?.xhr?.status))
+				{
+					status = response?.xhr?.status;
+				}
 
 				return rejectWithValue({
 					error: 'load error',
+					errorStatus: status,
 				});
 			}
 		},

@@ -12,6 +12,7 @@ use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
+use Bitrix\Main\Type\DateTime;
 
 class DashboardGroupService
 {
@@ -83,6 +84,11 @@ class DashboardGroupService
 
 				return $result;
 			}
+
+			if ($saveScopeBindingResult->getData()['isScopeChanged'])
+			{
+				$group->setDateModify(new DateTime());
+			}
 		}
 
 		$dashboardIdList = array_map('intval', array_column($dashboards, 'id'));
@@ -94,12 +100,28 @@ class DashboardGroupService
 			return $result;
 		}
 
+		if ($saveDashboardsBindingResult->getData()['isDashboardBindChanged'])
+		{
+			$group->setDateModify(new DateTime());
+		}
+
 		$saveScopeDashboardResult = self::saveDashboardScopeList($dashboards);
 		if (!$saveScopeDashboardResult->isSuccess())
 		{
 			$result->addErrors($saveScopeDashboardResult->getErrors());
 
 			return $result;
+		}
+
+		if ($group->isDateModifyChanged())
+		{
+			$saveResult = $group->save();
+			if (!$saveResult->isSuccess())
+			{
+				$result->addErrors($saveResult->getErrors());
+
+				return $result;
+			}
 		}
 
 		$result->setData(['id' => $groupId]);
@@ -174,6 +196,9 @@ class DashboardGroupService
 			]);
 		}
 
+		$isScopeChanged = !empty($addScopeList) || !empty($deleteScopeList);
+		$result->setData(['isScopeChanged' => $isScopeChanged]);
+
 		return $result;
 	}
 
@@ -227,6 +252,9 @@ class DashboardGroupService
 				'GROUP_ID' => $groupId,
 			]);
 		}
+
+		$isDashboardBindChanged = !empty($addDashboardBinding) || !empty($deleteDashboardBinding);
+		$result->setData(['isDashboardBindChanged' => $isDashboardBindChanged]);
 
 		return $result;
 	}

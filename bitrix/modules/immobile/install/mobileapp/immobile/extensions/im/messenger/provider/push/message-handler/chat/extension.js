@@ -44,11 +44,6 @@ jn.define('im/messenger/provider/push/message-handler/chat', (require, exports, 
 					continue;
 				}
 
-				if (helper.isCopilotChat() && !Feature.isCopilotInDefaultTabAvailable)
-				{
-					continue;
-				}
-
 				if (helper.isOpenChannelChat && !helper.isUserInChat())
 				{
 					continue;

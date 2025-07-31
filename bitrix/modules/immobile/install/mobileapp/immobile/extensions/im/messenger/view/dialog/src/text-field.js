@@ -4,6 +4,7 @@
 jn.define('im/messenger/view/dialog/text-field', (require, exports, module) => {
 	const { EventFilterType } = require('im/messenger/const');
 
+	const { StateManager } = require('im/messenger/view/lib/state-manager');
 	const { ProxyView } = require('im/messenger/view/lib/proxy-view');
 
 	/**
@@ -11,6 +12,30 @@ jn.define('im/messenger/view/dialog/text-field', (require, exports, module) => {
 	 */
 	class DialogTextField extends ProxyView
 	{
+		/**
+		 * @constructor
+		 * @param {JNBaseClassInterface} ui
+		 * @param {EventFilter} eventFilter
+		 */
+		constructor(ui, eventFilter)
+		{
+			super(ui, eventFilter);
+
+			this.initStateManager();
+		}
+
+		initStateManager()
+		{
+			const state = {
+				isShow: true,
+				placeholder: null,
+				actionButton: null,
+				quoteParams: null,
+			};
+
+			this.stateManager = new StateManager(state);
+		}
+
 		/**
 		 * @return {AvailableEventCollection}
 		 */
@@ -63,9 +88,13 @@ jn.define('im/messenger/view/dialog/text-field', (require, exports, module) => {
 		 */
 		setPlaceholder(text)
 		{
-			if (this.isUiAvailable())
+			const newState = { placeholder: text };
+			const hasChanges = this.stateManager.hasChanges(newState);
+
+			if (this.isUiAvailable() && hasChanges)
 			{
 				this.ui.setPlaceholder(text);
+				this.stateManager.updateState(newState);
 			}
 		}
 
@@ -87,17 +116,30 @@ jn.define('im/messenger/view/dialog/text-field', (require, exports, module) => {
 		 */
 		show(isAnimated = false)
 		{
-			if (this.isUiAvailable())
+			const newState = { isShow: true };
+			const hasChanges = this.stateManager.hasChanges(newState);
+
+			if (this.isUiAvailable() && hasChanges)
 			{
 				this.ui.show({ animated: isAnimated });
+				this.stateManager.updateState(newState);
 			}
 		}
 
+		/**
+		 * @param { string } params.id
+		 * @param { string } params.icon.name
+		 * @param { string } params.icon.tintColor
+		 */
 		showActionButton(params)
 		{
-			if (this.isUiAvailable())
+			const newState = { actionButton: params };
+			const hasChanges = this.stateManager.hasChanges(newState);
+
+			if (this.isUiAvailable() && hasChanges)
 			{
 				this.ui.showActionButton(params);
+				this.stateManager.updateState(newState);
 			}
 		}
 
@@ -114,9 +156,13 @@ jn.define('im/messenger/view/dialog/text-field', (require, exports, module) => {
 
 		hideActionButton()
 		{
-			if (this.isUiAvailable())
+			const newState = { actionButton: null };
+			const hasChanges = this.stateManager.hasChanges(newState);
+
+			if (this.isUiAvailable() && hasChanges)
 			{
 				this.ui.hideActionButton();
+				this.stateManager.updateState(newState);
 			}
 		}
 
@@ -125,9 +171,13 @@ jn.define('im/messenger/view/dialog/text-field', (require, exports, module) => {
 		 */
 		hide(isAnimated = false)
 		{
-			if (this.isUiAvailable())
+			const newState = { isShow: false };
+			const hasChanges = this.stateManager.hasChanges(newState);
+
+			if (this.isUiAvailable() && hasChanges)
 			{
 				this.ui.hide({ animated: isAnimated });
+				this.stateManager.updateState(newState);
 			}
 		}
 
@@ -151,9 +201,13 @@ jn.define('im/messenger/view/dialog/text-field', (require, exports, module) => {
 		 */
 		setQuote(message, type, openKeyboard, title, text)
 		{
-			if (this.isUiAvailable())
+			const newState = { quoteParams: { message, type, openKeyboard, title, text } };
+			const hasChanges = this.stateManager.hasChanges(newState);
+
+			if (this.isUiAvailable() && hasChanges)
 			{
 				this.ui.setQuote(message, type, openKeyboard, title, text);
+				this.stateManager.updateState(newState);
 			}
 		}
 
@@ -162,9 +216,13 @@ jn.define('im/messenger/view/dialog/text-field', (require, exports, module) => {
 		 */
 		removeQuote()
 		{
-			if (this.isUiAvailable())
+			const newState = { quoteParams: null };
+			const hasChanges = this.stateManager.hasChanges(newState);
+
+			if (this.isUiAvailable() && hasChanges)
 			{
 				this.ui.removeQuote();
+				this.stateManager.updateState(newState);
 			}
 		}
 

@@ -73,6 +73,14 @@ jn.define('im/messenger/provider/services/messenger-init/service', (require, exp
 		/**
 		 * @param {Function} eventHandler
 		 */
+		onceOnInit(eventHandler)
+		{
+			this.#once(EventType.messenger.init, eventHandler);
+		}
+
+		/**
+		 * @param {Function} eventHandler
+		 */
 		onInit(eventHandler)
 		{
 			this.#on(EventType.messenger.init, eventHandler);
@@ -90,6 +98,15 @@ jn.define('im/messenger/provider/services/messenger-init/service', (require, exp
 		#on(eventName, eventHandler)
 		{
 			this.eventEmitter.on(eventName, eventHandler);
+		}
+
+		/**
+		 * @param {Function} eventHandler
+		 * @param {string} eventName
+		 */
+		#once(eventName, eventHandler)
+		{
+			this.eventEmitter.once(eventName, eventHandler);
 		}
 
 		#isMessengerComponent()

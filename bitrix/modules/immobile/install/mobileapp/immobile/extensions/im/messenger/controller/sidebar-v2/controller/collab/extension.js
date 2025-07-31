@@ -16,6 +16,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/collab', (require, expo
 	const {
 		SidebarContextMenuActionId,
 		SidebarContextMenuActionPosition,
+		SIDEBAR_DEFAULT_TOAST_OFFSET,
 	} = require('im/messenger/controller/sidebar-v2/const');
 	const {
 		createSearchButton,
@@ -137,7 +138,10 @@ jn.define('im/messenger/controller/sidebar-v2/controller/collab', (require, expo
 						? Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_COLLAB_DELETE_ERROR_NOT_EMPTY')
 						: Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_COLLAB_DELETE_ERROR_DEFAULT');
 
-					Notification.showErrorToast({ message });
+					Notification.showErrorToast({
+						message,
+						offset: SIDEBAR_DEFAULT_TOAST_OFFSET,
+					});
 				},
 			});
 		}

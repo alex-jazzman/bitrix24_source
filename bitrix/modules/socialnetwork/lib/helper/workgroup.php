@@ -360,7 +360,7 @@ class Workgroup
 		}
 
 		$cacheTTL = 3600 * 24 * 30;
-		$cacheDir = '/sonet/features_perms_v2/' . FeatureTable::FEATURE_ENTITY_TYPE_GROUP . '/list/' . (int)($userId / 1000);
+		$cacheDir = '/sonet/features_perms_v3/' . FeatureTable::FEATURE_ENTITY_TYPE_GROUP . '/list/' . $userId;
 		$cacheId = implode(' ', [ 'entities_list', $feature, $operation, $userId ]);
 
 		$cache = new \CPHPCache();

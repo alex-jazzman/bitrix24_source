@@ -10,6 +10,7 @@ import { ChatButton, ButtonSize, ButtonColor } from 'im.v2.component.elements.bu
 import { FeaturePromoter } from 'ui.info-helper';
 
 import { CopyInviteLink } from './copy-invite-link';
+import { InviteLanguageSelector } from './invite-language-selector';
 
 import type { ImModelChat, ImModelCollabInfo, ImModelUser } from 'im.v2.model';
 import type { JsonObject } from 'main.core';
@@ -20,7 +21,7 @@ const HELPDESK_SLIDER_ID = 'main:helper';
 // @vue/component
 export const AddGuestsTab = {
 	name: 'AddGuestsTab',
-	components: { ChatButton, ScrollWithGradient, CopyInviteLink },
+	components: { ChatButton, ScrollWithGradient, CopyInviteLink, InviteLanguageSelector },
 	props:
 	{
 		dialogId: {
@@ -32,12 +33,13 @@ export const AddGuestsTab = {
 			default: 0,
 		},
 	},
-	emits: ['close', 'closeHelpdeskSlider', 'openHelpdeskSlider'],
+	emits: ['close', 'closeHelpdeskSlider', 'openHelpdeskSlider', 'closeLanguageSelector', 'openLanguageSelector'],
 	data(): JsonObject
 	{
 		return {
 			isAddButtonDisabled: true,
 			isInvitingGuests: false,
+			invitationLangCode: '',
 		};
 	},
 	computed:
@@ -109,6 +111,14 @@ export const AddGuestsTab = {
 		{
 			return FeatureManager.isFeatureAvailable(Feature.enabledCollabersInvitation);
 		},
+		isChangeInviteLanguageAvailable(): boolean
+		{
+			return FeatureManager.isFeatureAvailable(Feature.changeInviteLanguageAvailable);
+		},
+		defaultLanguageCode(): string
+		{
+			return Core.getLanguageId();
+		},
 	},
 	created()
 	{
@@ -117,6 +127,7 @@ export const AddGuestsTab = {
 	},
 	mounted()
 	{
+		this.invitationLangCode = this.defaultLanguageCode;
 		this.invitationGuests.renderTo(this.$refs['im-collab-invitation-guests-input']);
 	},
 	beforeUnmount()
@@ -177,6 +188,11 @@ export const AddGuestsTab = {
 				this.$emit('closeHelpdeskSlider');
 			}
 		},
+		onInviteLanguageSelected(langCode: string)
+		{
+			this.invitationLangCode = langCode;
+			this.invitationGuests.changeLanguage(langCode);
+		},
 		loc(phraseCode: string, replacements: {[string]: string} = {}): string
 		{
 			return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
@@ -188,7 +204,6 @@ export const AddGuestsTab = {
 				<ScrollWithGradient :gradientHeight="28" :withShadow="true">
 					<div class="bx-im-add-to-collab__content">
 						<div class="bx-im-add-to-collab__description">
-							<div class="bx-im-add-to-collab__description_icon"></div>
 							<div class="bx-im-add-to-collab__description_content">
 								<div class="bx-im-add-to-collab__description_title">{{ preparedDescriptionTitle }}</div>
 								<div class="bx-im-add-to-collab__description_text">{{ preparedDescription }}</div>
@@ -196,8 +211,16 @@ export const AddGuestsTab = {
 									{{ loc('IM_ENTITY_SELECTOR_ADD_TO_COLLAB_HELPDESK_LINK') }}
 								</a>
 							</div>
+							<div class="bx-im-add-to-collab__description_icon"></div>
 						</div>
-						<CopyInviteLink :collabId="collabId" :dialogId="dialogId" />
+						<InviteLanguageSelector
+							v-if="isChangeInviteLanguageAvailable"
+							:defaultLanguageCode="defaultLanguageCode"
+							@selectLanguage="onInviteLanguageSelected"
+							@openLanguageSelector="$emit('openLanguageSelector')"
+							@closeLanguageSelector="$emit('closeLanguageSelector')"
+						/>
+						<CopyInviteLink :collabId="collabId" :dialogId="dialogId" :langCode="invitationLangCode"/>
 						<div class="bx-im-add-to-collab__invite-block">
 							<span class="bx-im-add-to-collab__invite-block-title --ellipsis">
 								{{ preparedInvitationTitle }}

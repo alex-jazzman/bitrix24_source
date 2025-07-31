@@ -39,6 +39,11 @@ return [
 		'ui-system/form/buttons/button',
 		'selector/widget/factory',
 		'im:messenger/controller/selector/member',
+		'ui-system/typography/bbcodetext',
+		'utils/test',
+		'ui-system/blocks/icon',
+		'ui-system/popups/aha-moment',
+		'rest/run-action-executor',
 	],
 	'bundle' => [
 		'./src/guests-tab-content',

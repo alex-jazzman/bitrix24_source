@@ -164,6 +164,7 @@
 	--im-color-palette-blue-15-rgb: 236, 250, 254;
 	--im-color-palette-copilot-primary: var(--ui-color-copilot-primary);
 	--im-color-palette-copilot-dark: var(--ui-color-copilot-dark);
+	--im-color-palette-copilot-light: #ECDEFF;
 	--im-color-palette-copilot-secondary: var(--ui-color-copilot-secondary);
 	--im-color-palette-copilot-secondary-rgb: var(--ui-color-copilot-secondary-rgb);
 	--im-color-accent-light-blue: var(--ui-color-accent-light-blue, #559be6);

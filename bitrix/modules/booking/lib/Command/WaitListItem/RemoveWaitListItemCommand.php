@@ -25,11 +25,11 @@ class RemoveWaitListItemCommand extends AbstractCommand
 		];
 	}
 
-	public static function mapFromArray(array $array): self
+	public static function mapFromArray(array $props): self
 	{
 		return new self(
-			id: $array['id'],
-			removedBy: $array['removedBy'],
+			id: $props['id'],
+			removedBy: $props['removedBy'],
 		);
 	}
 

@@ -6,6 +6,7 @@ import { ButtonColor } from 'ui.buttons';
 import { UrlProvidedParamsService } from '../../classes/url-provided-params-service';
 import { TreeNode } from './tree-node/tree-node';
 import { Connectors } from './connectors';
+import { DragAndDrop } from './directives/drag-and-drop';
 import { useChartStore } from 'humanresources.company-structure.chart-store';
 import { mapState } from 'ui.vue3.pinia';
 import { EventEmitter, type BaseEvent } from 'main.core.events';
@@ -13,7 +14,7 @@ import { events } from '../../consts';
 import { chartAPI } from '../../api';
 import { sendData as analyticsSendData } from 'ui.analytics';
 import { OrgChartActions } from '../../actions';
-import type { MountedDepartment, TreeData } from '../../types';
+import type { MountedDepartment, TreeData, DragAndDropData } from '../../types';
 import './style.css';
 
 // @vue/component
@@ -21,6 +22,8 @@ export const Tree = {
 	name: 'companyTree',
 
 	components: { TreeNode, Connectors },
+
+	directives: { dnd: DragAndDrop },
 
 	provide(): { [key: string]: Function }
 	{
@@ -30,8 +33,8 @@ export const Tree = {
 	},
 
 	props: {
-		canvasZoom: {
-			type: Number,
+		canvasTransform: {
+			type: Object,
 			required: true,
 		},
 	},
@@ -43,6 +46,7 @@ export const Tree = {
 		return {
 			expandedNodes: [],
 			isLocatedDepartmentVisible: false,
+			isLoaded: false,
 		};
 	},
 
@@ -131,9 +135,10 @@ export const Tree = {
 			const { id, html } = data;
 			this.treeNodes.set(id, html);
 			const departmentIdToFocus = this.getDepartmentIdForInitialFocus();
-			if (id === departmentIdToFocus) // zoom to  department when loading
+			if (id === departmentIdToFocus && !this.isLoaded) // zoom to  department when loading
 			{
 				const movingDelay = 1800;
+				this.isLoaded = true;
 				Runtime.debounce(() => {
 					this.moveTo(departmentIdToFocus);
 				}, movingDelay)();
@@ -149,27 +154,20 @@ export const Tree = {
 				OrgChartActions.removeDepartment(id);
 			}
 		},
-		onDragDepartment({ data }: BaseEvent): void
+		onDragEntity({ data }: BaseEvent): void
 		{
 			const { draggedId } = data;
-			const department = this.departments.get(draggedId);
-			const { parentId } = department;
-			const parentDepartment = this.departments.get(parentId);
-			parentDepartment.children.forEach((childId) => {
-				if (this.expandedNodes.includes(childId))
-				{
-					this.collapse(childId);
-				}
-			});
+			if (this.expandedNodes.includes(draggedId))
+			{
+				this.collapseRecursively(draggedId);
+			}
 		},
 		onToggleConnectors({ data }: BaseEvent): void
 		{
-			const { draggedId, shouldShow } = data;
-			const department = this.departments.get(draggedId);
-			const { parentId } = department;
-			this.connectors.toggleConnectorsVisibility(parentId, shouldShow, this.expandedNodes);
+			const { shouldShow } = data;
+			this.connectors.toggleAllConnectorsVisibility(shouldShow, this.expandedNodes);
 		},
-		async onDropDepartment({ data }: BaseEvent): Promise<void>
+		async changeOrder(data: DragAndDropData): Promise<void>
 		{
 			const { draggedId, targetId, affectedItems, direction } = data;
 			const promise = OrgChartActions.orderDepartments(draggedId, targetId, direction, affectedItems.length);
@@ -184,6 +182,60 @@ export const Tree = {
 				this.connectors.adaptConnectorsAfterReorder([draggedId], -draggedShift, true);
 				this.connectors.adaptConnectorsAfterReorder(affectedItems, -affectedShift, true);
 			}
+		},
+		async updateParent(data: DragAndDropData): Promise<void>
+		{
+			const { draggedId, targetId, targetIndex, insertion } = data;
+			const { id, parentId } = this.departments.get(draggedId);
+			if (parentId === targetId && insertion === 'inside')
+			{
+				return;
+			}
+
+			let updateParentPromise = null;
+			const store = useChartStore();
+			if (insertion === 'sibling-left' || insertion === 'sibling-right')
+			{
+				const { parentId: targetParentId } = this.departments.get(targetId);
+				const position = insertion === 'sibling-left' ? targetIndex : targetIndex + 1;
+				store.updateDepartment({ id, parentId: targetParentId }, position);
+				updateParentPromise = chartAPI.updateDepartment(draggedId, targetParentId);
+			}
+			else
+			{
+				store.updateDepartment({ id, parentId: targetId });
+				updateParentPromise = chartAPI.updateDepartment(draggedId, targetId);
+			}
+
+			this.locateToDepartment(draggedId);
+			try
+			{
+				await updateParentPromise;
+				if (insertion === 'sibling-left' || insertion === 'sibling-right')
+				{
+					const { parentId: targetParentId } = this.departments.get(targetId);
+					const { children } = this.departments.get(targetParentId);
+					const shift = insertion === 'sibling-left' ? 1 : 2;
+					const affectedCount = children.length - targetIndex - shift;
+					await chartAPI.changeOrder(draggedId, -1, affectedCount);
+				}
+			}
+			catch (err)
+			{
+				console.error(err);
+			}
+		},
+		onDropEntity({ data }: BaseEvent): void
+		{
+			const { insertion } = data;
+			if (insertion === 'reorder')
+			{
+				this.changeOrder(data);
+
+				return;
+			}
+
+			this.updateParent(data);
 		},
 		onPublicFocusNode({ data }: BaseEvent): void
 		{
@@ -200,7 +252,7 @@ export const Tree = {
 		collapse(nodeId: number): void
 		{
 			this.expandedNodes = this.expandedNodes.filter((expandedId) => expandedId !== nodeId);
-			this.connectors.toggleConnectorsVisibility(nodeId, false, this.expandedNodes);
+			this.connectors.toggleConnectorsVisibility(nodeId, false);
 			this.connectors.toggleConnectorHighlighting(nodeId, false);
 		},
 		collapseRecursively(nodeId: number): void
@@ -230,7 +282,7 @@ export const Tree = {
 		{
 			this.collapseRecursively(departmentId);
 			this.expandedNodes = [...this.expandedNodes, departmentId];
-			this.connectors.toggleConnectorsVisibility(departmentId, true, this.expandedNodes);
+			this.connectors.toggleConnectorsVisibility(departmentId, true);
 			this.connectors.toggleConnectorHighlighting(departmentId, true);
 			const department = this.departments.get(departmentId);
 			const childrenWithoutHeads = department.children.filter((childId) => {
@@ -468,9 +520,9 @@ export const Tree = {
 				[events.HR_DEPARTMENT_CONNECT]: this.onConnectDepartment,
 				[events.HR_DEPARTMENT_DISCONNECT]: this.onDisconnectDepartment,
 				[events.HR_DEPARTMENT_FOCUS]: this.onFocusDepartment,
-				[events.HR_DRAG_DEPARTMENT]: this.onDragDepartment,
-				[events.HR_DROP_DEPARTMENT]: this.onDropDepartment,
-				[events.HR_DEPARTMENT_TOGGLE_CONNECTORS]: this.onToggleConnectors,
+				[events.HR_DRAG_ENTITY]: this.onDragEntity,
+				[events.HR_DROP_ENTITY]: this.onDropEntity,
+				[events.HR_ENTITY_TOGGLE_CONNECTORS]: this.onToggleConnectors,
 				[events.HR_PUBLIC_FOCUS_NODE]: this.onPublicFocusNode,
 			};
 			Object.entries(this.events).forEach(([event, handle]) => {
@@ -489,13 +541,14 @@ export const Tree = {
 		<div
 			class="humanresources-tree"
 			v-if="departments.size > 0"
+			v-dnd="canvasTransform"
 		>
 			<TreeNode
 				class="--root"
 				:key="rootId"
 				:nodeId="rootId"
 				:expandedNodes="[...expandedNodes]"
-				:canvasZoom="canvasZoom"
+				:canvasZoom="canvasTransform.zoom"
 				:currentDepartments="currentDepartments"
 			></TreeNode>
 			<Connectors

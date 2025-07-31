@@ -1,4 +1,5 @@
 <?php
+$MESS["COLLAB_GUEST_INVITE_LANGUAGE_CHOOSER_TEXT"] = "Шақыру тілі: [COLOR=#COLOR#][URL]#LANGUAGE#[/URL][/COLOR]";
 $MESS["COLLAB_GUEST_INVITE_RESTRICTIONS_BOX_BUTTON_TEXT"] = "Жабу";
 $MESS["COLLAB_GUEST_INVITE_RESTRICTIONS_BOX_DETAILS_BUTTON_TEXT"] = "Толығырақ";
 $MESS["COLLAB_GUEST_INVITE_RESTRICTIONS_BOX_STATUS_BLOCK_DESCRIPTION"] = " Сіздің Битрикс24 \nәкімшісіне хабарласыңыз";
@@ -16,6 +17,8 @@ $MESS["COLLAB_INVITE_INVALID_EMAIL_ALERT_DESCRIPTION"] = "Бұл e-mail дұры
 $MESS["COLLAB_INVITE_INVALID_EMAIL_ALERT_TITLE"] = "Кейбір e-mail-ге шақыру жібере алмаймыз";
 $MESS["COLLAB_INVITE_INVALID_PHONE_NUMBER_ALERT_DESCRIPTION"] = "Бұл нөмерлер дұрыс емес форматта берілген: #phonesNumbersString#";
 $MESS["COLLAB_INVITE_INVALID_PHONE_NUMBER_ALERT_TITLE"] = "Кейбір байланыстарға шақыру жібере алмаймыз";
+$MESS["COLLAB_INVITE_LANGUAGE_CHOOSER_AHA_MOMENT_TEXT"] = "Шақыру және қонақ интерфейсі үшін тілді таңдаңыз. Басқа қатысушылар үшін тіл өзгермейді";
+$MESS["COLLAB_INVITE_LANGUAGE_CHOOSER_MENU_SECTION_TITLE"] = " әдепкі бойынша";
 $MESS["COLLAB_INVITE_MULTIPLE_ADD_SUCCESS_TOAST_TEXT"] = "Қызметкерлер қосылды";
 $MESS["COLLAB_INVITE_MULTIPLE_SEND_SUCCESS_TOAST_TEXT"] = "Шақырулар жіберілді";
 $MESS["COLLAB_INVITE_NAME_CHECKER_CLOSE_ALERT_CONTINUE_BUTTON"] = "Шақыруды жалғастыру";
@@ -34,7 +37,6 @@ $MESS["COLLAB_INVITE_PERMISSIONS_ALERT_TITLE"] = "Құқықтар жеткіл�
 $MESS["COLLAB_INVITE_QR_SHARING_MESSAGE_TEXT"] = "QR кодын сканерлеп, коллабқа қосылыңыз";
 $MESS["COLLAB_INVITE_SELECTOR_SEND_BUTTON_TEXT"] = "Шақыру";
 $MESS["COLLAB_INVITE_SHARE_LINK_DIALOG_TITLE"] = "Сілтемені бөлісу";
-$MESS["COLLAB_INVITE_SHARING_MESSAGE_TEXT"] = "Коллабқа қосылыңыз. Мұнда біз чатта сөйлесеміз, қоңырау шаламыз және #link# нәтижесіне бірге барамыз";
 $MESS["COLLAB_INVITE_SINGLE_ADD_SUCCESS_TOAST_TEXT"] = "Қызметкер қосылды";
 $MESS["COLLAB_INVITE_SINGLE_SEND_SUCCESS_TOAST_TEXT"] = "Шақыру жіберілді";
 $MESS["COLLAB_INVITE_TAB_EMPLOYEES_TITLE"] = "Қызметкерлер";

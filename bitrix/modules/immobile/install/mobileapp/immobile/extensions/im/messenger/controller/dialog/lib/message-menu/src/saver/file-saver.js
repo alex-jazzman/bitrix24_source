@@ -7,11 +7,14 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/saver/file-saver'
 	const { fileSaver: fileSaverUtility } = require('utils/file');
 	const { Alert, ButtonType } = require('alert');
 	const { MobileFeature } = require('im/messenger/lib/feature');
-	const { FileDownloadType } = require('im/messenger/const');
+	const { FileDownloadType, Analytics } = require('im/messenger/const');
 	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
 	const { ServerDownloadMenu } = require('im/messenger/controller/file-download-menu');
 	const { BaseSaver } = require('im/messenger/controller/dialog/lib/message-menu/src/saver/base-saver');
 
+	/**
+	 * @class FileSaver
+	 */
 	class FileSaver extends BaseSaver
 	{
 		async save()
@@ -37,7 +40,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/saver/file-saver'
 			}
 			catch (error)
 			{
-				this.showSaveFailureToast();
+				this.downloadFailure(Analytics.DownloadErrorStatus.toDevice);
 				this.logger.error('MessageMenu.saveFiles.catch:', error);
 			}
 		}
@@ -84,7 +87,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/saver/file-saver'
 				return downloadResult.map((result) => result.value);
 			}
 
-			this.showSaveFailureToast();
+			this.downloadFailure(Analytics.DownloadErrorStatus.multipleFiles);
 
 			return null;
 		};
@@ -117,7 +120,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/saver/file-saver'
 				}
 				else if (isMediaMessage)
 				{
-					this.showSaveFailureToast();
+					this.downloadFailure(Analytics.DownloadErrorStatus.toGallery);
 				}
 
 				this.logger.error('MessageMenu.saveFiles.catch:', error);

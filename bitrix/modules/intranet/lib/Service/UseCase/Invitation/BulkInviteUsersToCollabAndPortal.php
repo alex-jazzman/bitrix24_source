@@ -147,6 +147,8 @@ class BulkInviteUsersToCollabAndPortal
 						$userInvitationDto->email->toLogin(),
 						$userInvitationDto->name,
 						$userInvitationDto->lastName,
+						null,
+						$userInvitationDto->languageId,
 					));
 				}
 				else
@@ -241,7 +243,10 @@ class BulkInviteUsersToCollabAndPortal
 		if (!$invitationToPortalAndGroupCollection->empty())
 		{
 			$invitationContainer = new InvitationsContainer($invitationToPortalAndGroupCollection);
-			$inviteToPortalAndGroupResult = Intranet\Public\Service\InvitationService::inviteUsersToGroup($collabId, $invitationContainer);
+			$inviteToPortalAndGroupResult = Intranet\Public\Service\InvitationService::inviteUsersToGroup(
+				$collabId,
+				$invitationContainer,
+			);
 
 			if (!$inviteToPortalAndGroupResult->isSuccess())
 			{

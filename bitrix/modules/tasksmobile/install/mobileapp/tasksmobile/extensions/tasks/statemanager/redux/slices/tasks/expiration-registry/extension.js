@@ -80,15 +80,8 @@ jn.define('tasks/statemanager/redux/slices/tasks/expiration-registry', (require,
 			const deadlineInMs = deadline * 1000;
 			const timeout = Math.max(deadlineInMs - Date.now(), 0);
 
-			if (timeout > oneDayInMs * 25)
+			if (timeout > oneDayInMs * 3)
 			{
-				const timerId = setTimeout(() => {
-					this.removeTimer(taskId);
-					this.handleDeadlineTimerForTask(this.selectors.selectByTaskIdOrGuid(store.getState(), taskId));
-				}, oneDayInMs * 25);
-
-				this.registry.set(taskId, timerId);
-
 				return;
 			}
 

@@ -1,6 +1,7 @@
 import { Text } from 'main.core';
 import { TagSelector } from 'ui.entity-selector';
-import { AuthorityTypes, SettingsTypes } from '../../consts';
+import { AuthorityTypes } from '../../consts';
+import { WizardApiEntityChangedDict, NodeSettingsTypes } from 'humanresources.company-structure.utils';
 
 export const TeamRights = {
 	name: 'teamRights',
@@ -27,8 +28,8 @@ export const TeamRights = {
 		];
 
 		this.initBpValues = new Set();
-		this.businessProcSelector = this.getTagSelector(SettingsTypes.businessProcAuthority, false);
-		this.reportsSelector = this.getTagSelector(SettingsTypes.reportsAuthority, true);
+		this.businessProcSelector = this.getTagSelector(NodeSettingsTypes.businessProcAuthority, false);
+		this.reportsSelector = this.getTagSelector(NodeSettingsTypes.reportsAuthority, true);
 	},
 
 	mounted(): void
@@ -37,16 +38,24 @@ export const TeamRights = {
 		this.reportsSelector.renderTo(this.$refs['reports-selector']);
 	},
 
+	activated(): void
+	{
+		this.$emit('applyData', {
+			isDepartmentDataChanged: false,
+			isValid: true,
+		});
+	},
+
 	watch:
 	{
 		settings:
 			{
 				handler(payload: Record<string, Set>): void
 				{
-					if (payload[SettingsTypes.businessProcAuthority])
+					if (payload[NodeSettingsTypes.businessProcAuthority])
 					{
 						const businessProcPreselected = this.getTagItems(false)
-							.filter((item) => payload[SettingsTypes.businessProcAuthority].has(item.id))
+							.filter((item) => payload[NodeSettingsTypes.businessProcAuthority].has(item.id))
 						;
 
 						businessProcPreselected.forEach((businessProcPreselectedItem) => {
@@ -72,6 +81,7 @@ export const TeamRights = {
 		applyData(): void
 		{
 			this.$emit('applyData', {
+				apiEntityChanged: WizardApiEntityChangedDict.settings,
 				settings: this.settings,
 				isDepartmentDataChanged: true,
 			});

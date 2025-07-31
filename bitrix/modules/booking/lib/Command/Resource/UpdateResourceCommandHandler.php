@@ -10,14 +10,17 @@ use Bitrix\Booking\Internals\Exception\Resource\UpdateResourceException;
 use Bitrix\Booking\Internals\Service\Journal\JournalEvent;
 use Bitrix\Booking\Internals\Service\Journal\JournalType;
 use Bitrix\Booking\Internals\Repository\FavoritesRepositoryInterface;
+use Bitrix\Booking\Internals\Service\ResourceService;
 
 class UpdateResourceCommandHandler
 {
 	private FavoritesRepositoryInterface $favoritesRepository;
+	private ResourceService $resourceService;
 
 	public function __construct()
 	{
 		$this->favoritesRepository = Container::getFavoritesRepository();
+		$this->resourceService = Container::getResourceService();
 	}
 
 	public function __invoke(UpdateResourceCommand $command): Entity\Resource\Resource
@@ -38,6 +41,7 @@ class UpdateResourceCommandHandler
 			fn: function() use ($command, $currentResource) {
 				// update slot ranges
 				$this->handleSlotRanges($command, $currentResource);
+				$this->resourceService->handleResourceEntities($currentResource, $command->resource->getEntityCollection());
 
 				// update resource
 				$updatedResourceId = Container::getResourceRepository()->save($command->resource);

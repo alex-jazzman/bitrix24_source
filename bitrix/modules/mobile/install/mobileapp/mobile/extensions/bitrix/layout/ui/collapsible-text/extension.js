@@ -64,6 +64,11 @@ jn.define('layout/ui/collapsible-text', (require, exports, module) => {
 			return false;
 		}
 
+		get canExpand()
+		{
+			return this.props.canExpand ?? true;
+		}
+
 		render()
 		{
 			const {
@@ -73,7 +78,6 @@ jn.define('layout/ui/collapsible-text', (require, exports, module) => {
 				onLinkClick,
 				testId,
 				useBBCodeEditor = false,
-				canExpand = true,
 			} = this.props;
 
 			return View(
@@ -85,11 +89,11 @@ jn.define('layout/ui/collapsible-text', (require, exports, module) => {
 						...containerStyle,
 					},
 					onClick: this.isClickable() && (() => {
-						if (onClick && (useBBCodeEditor || !canExpand || !this.isExpandable()))
+						if (useBBCodeEditor || !this.canExpand || !this.isExpandable())
 						{
 							onClick();
 						}
-						else if (canExpand)
+						else if (this.canExpand)
 						{
 							this.toggleExpand();
 						}
@@ -110,11 +114,11 @@ jn.define('layout/ui/collapsible-text', (require, exports, module) => {
 			const {
 				onClick,
 				useBBCodeEditor,
-				canExpand,
-
 			} = this.props;
 
-			return ((onClick && (useBBCodeEditor || !canExpand || !this.isExpandable())) || canExpand);
+			const canClick = onClick && (useBBCodeEditor || !this.isExpandable());
+
+			return Boolean(this.canExpand || canClick);
 		}
 
 		handleContentLongClick()

@@ -28,22 +28,20 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base/src/widget-navigat
 		 * @public
 		 * @return {Promise<void>}
 		 */
-		async backToChat()
-		{
+		backToChat = async () => {
 			return this.sidebarWidget?.back();
-		}
+		};
 
 		/**
 		 * Close sidebar, then close related chat and move to list of chats.
 		 * @public
 		 * @return {Promise<void>}
 		 */
-		async backToDialogs()
-		{
+		backToDialogs = async () => {
 			await this.backToChat();
 
 			return this.dialogWidget?.back();
-		}
+		};
 
 		/**
 		 * Same as backToChat, but then scroll to specific message.

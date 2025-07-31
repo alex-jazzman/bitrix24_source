@@ -10,6 +10,7 @@ return [
 		'im:messenger/controller/sidebar-v2/loc',
 		'im:messenger/controller/sidebar-v2/ui/sidebar-avatar',
 		'im:messenger/controller/sidebar-v2/ui/primary-button/factory',
+		'im:messenger/controller/sidebar-v2/const',
 		'im:messenger/lib/ui/notification',
 		'ui-system/typography',
 		'assets/icons',

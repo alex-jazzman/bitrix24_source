@@ -328,12 +328,57 @@ jn.define('testing/matchers', (require, exports, module) => {
 			this.actualOblect = actualValue;
 			this.expectedOblect = expectedValue;
 		}
+
 		/**
 		 * @returns {boolean}
 		 */
 		match()
 		{
 			return this.actualOblect instanceof this.expectedOblect;
+		}
+	}
+
+	class RegexMatcher extends TestingMatcher
+	{
+		/**
+		 * @returns {boolean}
+		 */
+		match()
+		{
+			if (typeof this.actualValue !== 'string')
+			{
+				return false;
+			}
+
+			return this.actualValue.match(this.expectedValue) !== null;
+		}
+	}
+
+	class LessThanMatcher
+	{
+		constructor(actualValue, expectedValue)
+		{
+			this.actualValue = actualValue;
+			this.expectedValue = expectedValue;
+		}
+
+		match()
+		{
+			return this.actualValue < this.expectedValue;
+		}
+	}
+
+	class GreaterThanMatcher
+	{
+		constructor(actualValue, expectedValue)
+		{
+			this.actualValue = actualValue;
+			this.expectedValue = expectedValue;
+		}
+
+		match()
+		{
+			return this.actualValue > this.expectedValue;
 		}
 	}
 
@@ -348,7 +393,9 @@ jn.define('testing/matchers', (require, exports, module) => {
 		NullMatcher,
 		BooleanMatcher,
 		MatchObjectMatcher,
-		InstanceOfMatcher
+		InstanceOfMatcher,
+		RegexMatcher,
+		LessThanMatcher,
+		GreaterThanMatcher,
 	};
-
 });

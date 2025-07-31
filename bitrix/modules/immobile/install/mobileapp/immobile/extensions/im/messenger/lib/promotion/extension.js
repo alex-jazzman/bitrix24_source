@@ -158,8 +158,7 @@ jn.define('im/messenger/lib/promotion', (require, exports, module) => {
 		async checkPromoCopilotInDefaultTab()
 		{
 			if (
-				!Feature.isCopilotInDefaultTabAvailable
-				|| !Feature.isCopilotEnabled
+				!Feature.isCopilotEnabled
 				|| !Feature.isSpotlightIdInTabViewAvailable
 			)
 			{

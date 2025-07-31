@@ -1953,7 +1953,7 @@ class Message implements ArrayAccess, RegistryEntry, ActiveRecord, RestEntity, P
 		}
 
 		$roles = [];
-		$messageRole = $this->getParams()->get(Params::COPILOT_ROLE)->getValue() ?? $this->getDefaultCopilotRole();
+		$messageRole = $this->getCopilotRole();
 		$roles[] = $messageRole;
 		$chatRoleInfo = null;
 
@@ -1969,6 +1969,19 @@ class Message implements ArrayAccess, RegistryEntry, ActiveRecord, RestEntity, P
 			'messages' => $messageRole ? [['id' => $this->getId(), 'role' => $messageRole]] : null,
 			'roles' => $roleManager->getRoles($roles),
 		];
+	}
+
+	public function getCopilotRole(): ?string
+	{
+		if (
+			!$this->chat instanceof Im\V2\Chat\CopilotChat
+			&& !$this->getParams()->isSet(Params::COPILOT_ROLE)
+		)
+		{
+			return null;
+		}
+
+		return $this->getParams()->get(Params::COPILOT_ROLE)->getValue() ?? $this->getDefaultCopilotRole();
 	}
 
 	protected function getDefaultCopilotRole(): ?string

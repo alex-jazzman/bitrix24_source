@@ -35,7 +35,7 @@ class CompleteDeletionStrategy extends DeletionStrategy
 			);
 		}
 
-		$this->files = $this->messages->getFiles();
+		$this->messages->fillFiles();
 
 		$this->fillChatPreviousMessages();
 		if ($this->messages->count() !== 0)

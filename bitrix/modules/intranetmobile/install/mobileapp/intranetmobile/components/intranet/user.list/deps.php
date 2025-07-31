@@ -23,5 +23,8 @@ return [
 		'intranet:statemanager/redux/slices/employees/observers/stateful-list-observer',
 		'intranet:invite-opener-new',
 		'intranet:analytics',
+		'intranet:statemanager/redux/slices/employees',
+		'analytics',
+		'user-profile',
 	],
 ];

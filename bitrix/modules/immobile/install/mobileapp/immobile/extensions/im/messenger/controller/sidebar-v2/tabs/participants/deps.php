@@ -33,6 +33,7 @@ return [
 		'im:messenger/controller/sidebar-v2/user-actions/participants',
 		'im:messenger/controller/sidebar-v2/services/dummy-data-provider',
 		'im:messenger/controller/sidebar-v2/services/participants-service',
+		'im:messenger/controller/sidebar-v2/const',
 	],
 	'bundle' => [
 		'./src/const',

@@ -68,11 +68,7 @@ export const BusyPopup = {
 		{
 			const timeFormat = DateTimeFormat.getFormat('SHORT_TIME_FORMAT');
 
-			const messageId = (
-				this.busySlot.type === BusySlot.Intersection
-					? 'BOOKING_BOOKING_INTERSECTING_RESOURCE_IS_BUSY'
-					: 'BOOKING_BOOKING_RESOURCE_IS_BUSY'
-			);
+			const messageId = this.getPopupMessageId(this.busySlot.type);
 
 			return this.loc(messageId, {
 				'#RESOURCE#': this.resource.name,
@@ -91,6 +87,20 @@ export const BusyPopup = {
 		},
 	},
 	methods: {
+		getPopupMessageId(slotType: $Values<BusySlot>): string
+		{
+			if (slotType === BusySlot.Intersection)
+			{
+				return 'BOOKING_BOOKING_INTERSECTING_RESOURCE_IS_BUSY';
+			}
+
+			if (slotType === BusySlot.IntersectionOverbooking)
+			{
+				return 'BOOKING_BOOKING_INTERSECTING_RESOURCE_IS_FULL_BUSY';
+			}
+
+			return 'BOOKING_BOOKING_RESOURCE_IS_BUSY';
+		},
 		adjustPosition(): void
 		{
 			const popup: MainPopup = this.$refs.popup?.getPopupInstance();

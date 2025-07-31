@@ -28,6 +28,10 @@ export const TileItem: BitrixVueComponentProps = {
 			type: Object,
 			default: () => {},
 		},
+		readonly: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	setup(): Object
 	{
@@ -148,12 +152,18 @@ export const TileItem: BitrixVueComponentProps = {
 						href: this.item.downloadUrl,
 						onclick: (): void => this.menu?.close(),
 					},
-					{
-						id: 'remove',
-						text: Loc.getMessage('TILE_UPLOADER_MENU_REMOVE'),
-						onclick: this.remove,
-					},
 				);
+			}
+
+			if (!this.readonly)
+			{
+				const removeItem = {
+					id: 'remove',
+					text: Loc.getMessage('TILE_UPLOADER_MENU_REMOVE'),
+					onclick: this.remove,
+				};
+
+				items.push(removeItem);
 			}
 
 			return items;
@@ -190,6 +200,11 @@ export const TileItem: BitrixVueComponentProps = {
 	methods: {
 		remove(): void
 		{
+			if (this.readonly)
+			{
+				return;
+			}
+
 			this.uploader.removeFile(this.item.id);
 		},
 
@@ -284,10 +299,10 @@ export const TileItem: BitrixVueComponentProps = {
 						<div class="ui-tile-uploader-item-status-name">{{status}}</div>
 						<div v-if="fileSize" class="ui-tile-uploader-item-state-desc">{{fileSize}}</div>
 					</div>
-					<div class="ui-tile-uploader-item-state-remove" @click="remove" key="aaa"></div>
+					<div v-if="!readonly" class="ui-tile-uploader-item-state-remove" @click="remove" key="aaa"></div>
 				</div>
 				<template v-else>
-					<div class="ui-tile-uploader-item-remove" key="remove" @click="remove">
+					<div v-if="!readonly" class="ui-tile-uploader-item-remove" key="remove" @click="remove">
 						<BIcon :name="Outline.CROSS_L"/>
 					</div>
 					<div class="ui-tile-uploader-item-actions" key="actions">

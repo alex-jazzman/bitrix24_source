@@ -11,12 +11,9 @@ use Bitrix\Booking\Internals\Model\Enum\EntityType;
 use Bitrix\Booking\Internals\Repository\BookingRepositoryInterface;
 use Bitrix\Booking\Internals\Service\Overbooking\IntersectionResult;
 use Bitrix\Booking\Internals\Service\Overbooking\OverlapPolicy;
-use Bitrix\Booking\Provider\BookingProvider;
 
 class BookingService
 {
-	private BookingProvider $bookingProvider;
-
 	public function __construct(
 		private readonly BookingRepositoryInterface $bookingRepository,
 		private readonly ResourceService $resourceService,
@@ -25,7 +22,6 @@ class BookingService
 		private readonly OverlapPolicy $overbookingOverlapPolicy
 	)
 	{
-		$this->bookingProvider = new BookingProvider();
 	}
 
 	public function create(Entity\Booking\Booking $newBooking, int $userId): Entity\Booking\Booking

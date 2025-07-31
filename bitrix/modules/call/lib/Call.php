@@ -13,6 +13,8 @@ use Bitrix\Main\Type\DateTime;
 
 class Call
 {
+	public const ACTIVE_CALLS_DEPTH_HOURS = 12;
+
 	protected static function getCurrentUserId(): int
 	{
 		global $USER;
@@ -75,7 +77,7 @@ class Call
 		}
 	}
 
-	public static function finishOldCallsAgent(int $depthHours = 12): string
+	public static function finishOldCallsAgent(): string
 	{
 		if (!Loader::includeModule('im'))
 		{
@@ -86,7 +88,7 @@ class Call
 			'select' => ['*'],
 			'filter' => [
 				'!=STATE' => \Bitrix\Im\Call\Call::STATE_FINISHED,
-				'<START_DATE' => (new DateTime())->add("-{$depthHours} hour"),
+				'<START_DATE' => (new DateTime())->add('-' . self::ACTIVE_CALLS_DEPTH_HOURS . ' hour'),
 			]
 		]);
 
@@ -94,6 +96,8 @@ class Call
 		{
 			$call = CallFactory::createWithArray($row['PROVIDER'], $row);
 			$call->finish();
+
+			(new \Bitrix\Call\Analytics\CallAnalytics($call))->finishOldCalls();
 		}
 
 		return __METHOD__ . '();';

@@ -282,8 +282,17 @@ class DepartmentProvider extends BaseProvider
 			$includedTypes = [$parentNode->type];
 		}
 
-		$nodes = $this->getStructure(['parentId' => $parentNode->id, 'nodeTypes' => $includedTypes]);
-		$this->fillNodes($dialog, $nodes);
+		$nodes = $this->getStructure([
+			'parentId' => $parentNode->id,
+			'nodeTypes' => $includedTypes,
+			'depthLevel' => DepthLevel::FIRST,
+		]);
+
+		if (!$nodes->empty())
+		{
+			$this->fillNodes($dialog, $nodes);
+		}
+
 		if ($this->getSelectMode() === self::MODE_DEPARTMENTS_ONLY)
 		{
 			return;

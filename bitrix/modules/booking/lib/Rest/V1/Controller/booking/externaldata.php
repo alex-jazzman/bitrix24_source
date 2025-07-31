@@ -32,7 +32,7 @@ class ExternalData extends Controller
 	 */
 	public function listAction(
 		int $bookingId,
-	): Page
+	): ?Page
 	{
 		$booking =
 			$this

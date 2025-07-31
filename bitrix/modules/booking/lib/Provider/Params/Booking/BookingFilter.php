@@ -8,14 +8,17 @@ use Bitrix\Booking\Entity\Booking\BookingVisitStatus;
 use Bitrix\Booking\Internals\Container;
 use Bitrix\Booking\Internals\Model\BookingClientTable;
 use Bitrix\Booking\Internals\Model\BookingResourceTable;
+use Bitrix\Booking\Internals\Model\BookingTable;
 use Bitrix\Booking\Internals\Model\ClientTypeTable;
 use Bitrix\Booking\Internals\Model\Enum\EntityType;
 use Bitrix\Booking\Internals\Model\ScorerTable;
+use Bitrix\Booking\Internals\Service\CounterDictionary;
 use Bitrix\Booking\Internals\Service\Time;
 use Bitrix\Booking\Provider\Params\Filter;
 use Bitrix\Main\Application;
 use Bitrix\Main\DB\Connection;
 use Bitrix\Main\DB\SqlExpression;
+use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\ORM\Query\Filter\ConditionTree;
 use Bitrix\Main\ORM\Query\Query;
 
@@ -110,6 +113,7 @@ class BookingFilter extends Filter
 		$this->applyIsDelayedFilter($result);
 		$this->applyHasResourcesFilter($result);
 		$this->applyHasClientsFilter($result);
+		$this->applyHasCounterOfTypeFilter($result);
 
 		if (isset($this->filter['HAS_COUNTERS_USER_ID']))
 		{
@@ -191,40 +195,29 @@ class BookingFilter extends Filter
 			&& isset($this->filter['WITHIN']['DATE_TO'])
 		)
 		{
-			$result
-				->where(
-					Query::filter()
-						->logic('OR')
-						->where(
-							Query::filter()
-								->logic('OR')
-								->where(
-									Query::filter()
-										->where('DATE_FROM', '<=', $this->filter['WITHIN']['DATE_FROM'])
-										->where('DATE_MAX', '>', $this->filter['WITHIN']['DATE_FROM'])
-								)
-								->where(
-									Query::filter()
-										->where('DATE_FROM', '<', $this->filter['WITHIN']['DATE_TO'])
-										->where('DATE_MAX', '>=', $this->filter['WITHIN']['DATE_TO'])
-								)
-						)
-						->where(
-							Query::filter()
-								->logic('OR')
-								->where(
-									Query::filter()
-										->where('DATE_FROM', '>=', $this->filter['WITHIN']['DATE_FROM'])
-										->where('DATE_FROM', '<', $this->filter['WITHIN']['DATE_TO'])
-								)
-								->where(
-									Query::filter()
-										->where('DATE_MAX', '>', $this->filter['WITHIN']['DATE_FROM'])
-										->where('DATE_MAX', '<=', $this->filter['WITHIN']['DATE_TO'])
-								)
-						)
-				)
-			;
+			$periodDateFrom = (int)$this->filter['WITHIN']['DATE_FROM'];
+			$periodDateTo = (int)$this->filter['WITHIN']['DATE_TO'];
+
+			$bookingIds = array_column(
+				Application::getConnection()->query("
+					SELECT ID
+					FROM " . BookingTable::getTableName() . "
+					WHERE
+						DATE_FROM <= $periodDateTo
+						AND DATE_MAX > $periodDateTo
+						AND IS_DELETED = 'N'
+					UNION
+					SELECT ID
+					FROM " . BookingTable::getTableName() . "
+					WHERE
+						DATE_FROM >= $periodDateFrom
+						AND DATE_FROM < $periodDateTo
+						AND IS_DELETED = 'N'
+					")->fetchAll(),
+				'ID'
+			);
+
+			$result->whereIn('ID', empty($bookingIds) ? [0] : $bookingIds);
 		}
 
 		return $result;
@@ -307,6 +300,31 @@ class BookingFilter extends Filter
 				$result->whereNot($filter);
 			}
 		}
+	}
+
+	private function applyHasCounterOfTypeFilter(ConditionTree $result): void
+	{
+		if (!isset($this->filter['HAS_COUNTER_OF_TYPE']))
+		{
+			return;
+		}
+
+		$counter = (string)$this->filter['HAS_COUNTER_OF_TYPE'];
+		if (!CounterDictionary::isExists($counter))
+		{
+			return;
+		}
+
+		$result->whereExists(
+			new SqlExpression("
+			SELECT 1
+			FROM " . ScorerTable::getTableName() . "
+			WHERE
+				ENTITY_ID = " . $this->initAlias . ".ID
+				AND TYPE = '" . $this->connection->getSqlHelper()->forSql($counter) . "'
+				AND VALUE > 0
+				AND USER_ID = " . (int)CurrentUser::get()->getId()
+			));
 	}
 
 	private function getHasCountersUserIdConditionTree(int $userId): ConditionTree

@@ -1,8 +1,32 @@
 .booking-crm-forms-field-container {
-	--booking--crm-forms--title-color-rgb: 51, 51, 51;
+	--booking--crm-forms--title-color: rgb(51, 51, 51);
 	--booking--crm-forms--text-color-rgb: 82, 92, 105;
 	--booking--crm-forms--text-disabled-color-rgb: 130, 139, 149;
 	--booking--crm-forms--border-color-rgb: 223, 224, 227;
+	--booking--crm-forms--tag-selector-input-icon-color: rgb(var(--booking--crm-forms--text-color-rgb));
+	--booking--crm-forms--hint-text-color: rgb(var(--booking--crm-forms--text-color-rgb));
+	--booking--crm-forms--hint-text-opacity: 1;
+	--booking--crm-forms--datepicker-header-title-color: rgb(var(--booking--crm-forms--text-color-rgb));
+	--booking--crm-forms--datepicker-header-icon-color: rgb(var(--booking--crm-forms--text-color-rgb));
+	--booking--crm-forms--resource-type-name-color: rgb(0, 0, 0);
+	--booking--crm-forms--resource-type-name-opacity: .3;
+	--booking--crm-forms--resource-slot-text-color: rgb(82, 92, 105);
+	--booking--crm-forms--resource-slot-text-opacity: 1;
+	--booking--crm-forms--resource-slot-selected-text-color: rgb(82, 92, 105);
+}
+
+.b24-form-dark .booking-crm-forms-field-container {
+	--booking--crm-forms--title-color: var(--b24-text-color);
+	--booking--crm-forms--tag-selector-input-icon-color: rgba(255, 255, 255, .8);
+	--booking--crm-forms--hint-text-color: var(--b24-text-color);
+	--booking--crm-forms--hint-text-opacity: .7;
+	--booking--crm-forms--datepicker-header-title-color: rgba(255, 255, 255, .8);
+	--booking--crm-forms--datepicker-header-icon-color: rgba(255, 255, 255, .8);
+	--booking--crm-forms--resource-type-name-color: var(--b24-text-color);
+	--booking--crm-forms--resource-type-name-opacity: .7;
+	--booking--crm-forms--resource-slot-text-color: var(--b24-text-color);
+	--booking--crm-forms--resource-slot-text-opacity: .9;
+	--booking--crm-forms--resource-slot-selected-text-color: var(--b24-text-color);
 }
 
 .booking-crm-forms-field {
@@ -108,7 +132,8 @@
 }
 
 .booking--crm-forms--field-hint-text {
-	color: rgb(var(--booking--crm-forms--text-color-rgb));
+	color: var(--booking--crm-forms--hint-text-color);
+	opacity: var(--booking--crm-forms--hint-text-opacity);
 	font-size: 12px;
 	font-style: normal;
 	font-weight: 400;
@@ -169,7 +194,7 @@
 	position: absolute;
 	right: 8px;
 	top: 12px;
-	background-color: rgb(var(--booking--crm-forms--text-color-rgb));
+	background-color: var(--booking--crm-forms--tag-selector-input-icon-color);
 	cursor: pointer;
 	height: 28px;
 	width: 28px;
@@ -203,7 +228,7 @@
 }
 
 .booking--crm-forms--calendar-block-datepicker-header-title {
-	color: rgb(var(--booking--crm-forms--text-color-rgb));
+	color: var(--booking--crm-forms--datepicker-header-title-color);
 	font-size: 15px;
 	font-style: normal;
 	font-weight: 400;
@@ -212,7 +237,7 @@
 }
 
 .booking--crm-forms--calendar-block-datepicker-icon {
-	background-color: rgb(var(--booking--crm-forms--text-color-rgb));
+	background-color: var(--booking--crm-forms--datepicker-header-icon-color);
 	cursor: pointer;
 	height: 20px;
 	width: 20px;
@@ -259,7 +284,7 @@
 
 .booking--crm-forms--time-selector-block-resource-name {
 	overflow: hidden;
-	color: rgb(var(--booking--crm-forms--title-color-rgb));
+	color: var(--booking--crm-forms--title-color);
 	text-overflow: ellipsis;
 	font-size: 17px;
 	font-style: normal;
@@ -269,7 +294,8 @@
 
 .booking--crm-forms--time-selector-block-resource-type-name {
 	overflow: hidden;
-	color: rgba(0, 0, 0, 0.30);
+	color: var(--booking--crm-forms--resource-type-name-color);
+	opacity: var(--booking--crm-forms--resource-type-name-opacity);
 	text-overflow: ellipsis;
 	font-size: 12px;
 	font-style: normal;
@@ -285,6 +311,11 @@
 
 .booking--crm-forms--field-group--available-slots-block__btn-show-more {
 	width: 160px
+}
+
+.booking--crm-forms--available-slots-block__empty-slots {
+	margin: 4em 0;
+	text-align: center;
 }
 
 .booking--crm-forms--resource-selector-resource {
@@ -349,11 +380,11 @@
 }
 
 .booking--crm-forms--resource-slots__slot > span {
-	color: rgba(82, 92, 105, 1);
+	color: var(--booking--crm-forms--resource-slot-text-color);
 }
 
 .booking--crm-forms--resource-slots__slot.--selected > span {
-	color: var(--b24-background-color, #FFF);
+	color: var(--booking--crm-forms--resource-slot-selected-text-color);
 }
 
 .booking--crm-forms--resource-slots__empty-slots {

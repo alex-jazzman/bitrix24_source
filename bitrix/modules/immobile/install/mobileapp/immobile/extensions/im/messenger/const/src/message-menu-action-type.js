@@ -24,6 +24,7 @@ jn.define('im/messenger/const/message-menu-action-type', (require, exports, modu
 		finishVote: 'finish-vote',
 		revote: 'revote',
 		openVoteResult: 'open-vote-result',
+		goToMessage: 'go-to-message',
 	});
 
 	module.exports = { MessageMenuActionType };

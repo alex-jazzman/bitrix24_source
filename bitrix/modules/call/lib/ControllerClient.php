@@ -19,7 +19,7 @@ class ControllerClient extends BaseSender
 		'eu' => 'https://videocalls-de.bitrix.info',
 		'us' => 'https://videocalls-us.bitrix.info',
 	];
-	private const REGION_RU = ['ru', 'by', 'kz'];
+	private const REGION_CIS = ['ru', 'by', 'kz', 'am', 'az', 'ge', 'kg', 'uz'];
 	private const REGION_EU = ['de', 'eu', 'fr', 'it', 'pl', 'tr', 'uk'];
 
 	private array $httpClientParameters = [];
@@ -36,7 +36,7 @@ class ControllerClient extends BaseSender
 
 		if (empty($endpoint))
 		{
-			if (in_array($region, self::REGION_RU, true))
+			if (in_array($region, self::REGION_CIS, true))
 			{
 				$endpoint = self::SERVICE_MAP['ru'];
 			}
@@ -65,7 +65,7 @@ class ControllerClient extends BaseSender
 	 */
 	public function getServiceUrl(): string
 	{
-		$region = \Bitrix\Main\Application::getInstance()->getLicense()->getRegion() ?: 'ru';
+		$region = \Bitrix\Main\Application::getInstance()->getLicense()->getRegion() ?: '';
 
 		return $this->getEndpoint($region);
 	}

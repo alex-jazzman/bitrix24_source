@@ -107,9 +107,9 @@ jn.define('collab/invite', (require, exports, module) => {
 				...this.props,
 				pending: !this.settings,
 				isBitrix24Included: this.settings?.isBitrix24Included ?? false,
-				inviteLink: this.settings?.inviteLink ?? null,
 				analytics: this.analytics,
 				canInviteCollabers: this.settings?.canInviteCollabers ?? false,
+				languages: this.settings?.languages ?? [],
 			});
 
 			layout.showComponent(this.guestsTabInstance);

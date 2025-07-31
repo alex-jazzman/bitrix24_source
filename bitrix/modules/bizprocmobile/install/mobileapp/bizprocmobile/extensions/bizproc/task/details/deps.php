@@ -30,5 +30,6 @@ return [
 		'bizproc:task/buttons',
 		'bizproc:task/fields',
 		'bizproc:skeleton',
+		'bizproc:app-rating-client',
 	],
 ];

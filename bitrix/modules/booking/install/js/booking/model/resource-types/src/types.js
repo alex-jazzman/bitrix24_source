@@ -7,6 +7,7 @@ export type ResourceTypeModel = {
 	moduleId: string | null,
 	name: string,
 	code: string,
+	resourcesCnt: number | null,
 
 	// info
 	isInfoNotificationOn: boolean,

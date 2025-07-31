@@ -12,15 +12,16 @@ jn.define('layout/ui/app-rating', (require, exports, module) => {
 	const { Area } = require('ui-system/layout/area');
 	const { AreaList } = require('ui-system/layout/area-list');
 	const { Text2 } = require('ui-system/typography/text');
-	const { BoxStrategy } = require('layout/ui/app-rating/src/box-strategy');
+	const { BoxContent } = require('layout/ui/app-rating/src/box-strategy');
 	const { StarRating } = require('layout/ui/star-rating');
 	const { H4 } = require('ui-system/typography/heading');
 	const {
-		HighestRate,
+		MinRateForStore,
 		BackdropHeight,
 		LottiePath,
 	} = require('layout/ui/app-rating/src/rating-constants');
 	const { AppRatingAnalytics } = require('layout/ui/app-rating/src/analytics');
+	const { FeedbackFormStrategy } = require('layout/ui/app-rating/src/strategies/feedback-form-strategy');
 
 	const sharedStorageKey = 'app-rating-manager';
 	const storedDataKey = `app_rate_attempt_${env.userId}`;
@@ -109,11 +110,12 @@ jn.define('layout/ui/app-rating', (require, exports, module) => {
 				return this.renderAppRating();
 			}
 
-			return BoxStrategy({
+			return BoxContent({
 				parentWidget: layoutWidget,
 				userRate: rating,
 				onGoToStoreButtonClick,
 				triggerEvent: this.triggerEvent,
+				shouldAnimate: true,
 			});
 		}
 
@@ -293,9 +295,24 @@ jn.define('layout/ui/app-rating', (require, exports, module) => {
 		}
 	}
 
+	AppRating.defaultProps = {
+		parentWidget: PageManager,
+		title: Loc.getMessage('M_UI_APP_RATING_TITLE'),
+		triggerEvent: 'unknown',
+	};
+
+	AppRating.propTypes = {
+		parentWidget: PropTypes.object,
+		title: PropTypes.string,
+		triggerEvent: PropTypes.string,
+		onGoToStoreButtonClick: PropTypes.func,
+		onRateAppButtonClick: PropTypes.func,
+	};
+
 	module.exports = {
 		AppRating,
-		HighestRate,
+		MinRateForStore,
 		AppRatingAnalytics,
+		FeedbackFormStrategy,
 	};
 });

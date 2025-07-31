@@ -1,5 +1,5 @@
 import { Type, Dom, Event, Loc } from 'main.core';
-import DepartmentControl from './department-control';
+import DepartmentControl from 'intranet.department-control';
 import { InputRowFactory, InputRowType } from './input-row-factory';
 import { MessageBar } from './message-bar';
 import { Navigation } from './navigation';
@@ -272,6 +272,9 @@ export default class Form extends EventEmitter
 					this.changeContent('success');
 					this.submitButton.sendSuccessEvent(response.data);
 				}
+				EventEmitter.emit(EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Invitation:onInviteRequestSuccess', {
+					response,
+				});
 			}
 
 			EventEmitter.subscribe(
@@ -338,7 +341,7 @@ export default class Form extends EventEmitter
 		this.sliderHeader = document.querySelector('.ui-side-panel-wrap-title-wrap');
 		this.buttonPanel = document.querySelector('.ui-button-panel');
 
-		this.sliderHeaderHeight = this.sliderHeader.getBoundingClientRect().height;
+		this.sliderHeaderHeight = this.sliderHeader?.getBoundingClientRect().height;
 		this.buttonPanelRect = this.buttonPanel.getBoundingClientRect();
 		this.panelRect = this.panelConfirmBtn.getBoundingClientRect();
 		this.btnWidth = Math.ceil(this.panelRect.width);

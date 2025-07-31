@@ -53,7 +53,7 @@ class booking extends CModule
 
 	/**
 	 * Calls all install methods.
-	 * @returm void
+	 * @return void
 	 */
 	public function doInstall()
 	{
@@ -94,7 +94,7 @@ class booking extends CModule
 			$this->UninstallDB($params);
 			$this->UninstallFiles();
 			$APPLICATION->includeAdminFile(
-				Loc::getMessage('BOOKIN_UNINSTALL_TITLE'),
+				Loc::getMessage('BOOKING_UNINSTALL_TITLE'),
 				$this->getDocumentRoot() . '/bitrix/modules/booking/install/unstep2.php'
 			);
 		}
@@ -250,6 +250,14 @@ class booking extends CModule
 			'\Bitrix\Booking\Internals\Integration\Crm\EventsHandler',
 			'onDynamicItemDelete'
 		);
+
+		EventManager::getInstance()->registerEventHandler(
+			'rest',
+			'OnRestServiceBuildDescription',
+			'booking',
+			'\Bitrix\Booking\Rest\V1\Event\RestEventHandler',
+			'onRestServiceBuildDescription',
+		);
 	}
 
 	public function InstallAgents(): void
@@ -335,6 +343,14 @@ class booking extends CModule
 			'booking',
 			'\Bitrix\Booking\Internals\Integration\Crm\EventsHandler',
 			'onDynamicItemDelete'
+		);
+
+		EventManager::getInstance()->unRegisterEventHandler(
+			'rest',
+			'OnRestServiceBuildDescription',
+			'booking',
+			'\Bitrix\Booking\Rest\V1\Event\RestEventHandler',
+			'onRestServiceBuildDescription',
 		);
 	}
 }

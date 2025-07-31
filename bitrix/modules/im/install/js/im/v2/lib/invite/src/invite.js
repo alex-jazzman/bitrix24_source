@@ -15,7 +15,7 @@ export const InviteManager = {
 		InviteService.cancelInvite(userId);
 	},
 
-	openInviteSlider(): void
+	openInviteSlider(analyticsContext: string = ''): void
 	{
 		const sidePanel: SliderManager = SidePanel.Instance;
 		const sliderOptions: SliderOptions = {
@@ -24,19 +24,27 @@ export const InviteManager = {
 			width: 1100,
 		};
 
-		sidePanel.open(getInviteSliderLink(), sliderOptions);
+		sidePanel.open(getInviteSliderLink(analyticsContext), sliderOptions);
 	},
 };
 
-const getInviteSliderLink = (): string => {
+const getInviteSliderLink = (analyticsContext: string): string => {
 	const AJAX_PATH = '/bitrix/services/main/ajax.php';
 	const COMPONENT_NAME = 'bitrix:intranet.invitation';
 	const ACTION_NAME = 'getSliderContent';
+	const analytics = {};
+
+	if (analyticsContext)
+	{
+		analytics['analyticsLabel[source]'] = analyticsContext;
+	}
+
 	const params = new URLSearchParams({
 		action: ACTION_NAME,
 		site_id: Core.getSiteId(),
 		c: COMPONENT_NAME,
 		mode: 'ajax',
+		...analytics,
 	});
 
 	return `${AJAX_PATH}?${params.toString()}`;

@@ -23,6 +23,11 @@ jn.define('disk/statemanager/redux/slices/files/model/file', (require, exports, 
 			}
 
 			preparedFile.id = Number(preparedFile.id);
+			if (preparedFile.trackedId)
+			{
+				preparedFile.trackedId = Number(preparedFile.trackedId);
+			}
+
 			preparedFile.typeFile = Number(preparedFile.typeFile);
 			preparedFile.isFolder = !preparedFile.typeFile;
 			preparedFile.createdBy = Number(preparedFile.createdBy);

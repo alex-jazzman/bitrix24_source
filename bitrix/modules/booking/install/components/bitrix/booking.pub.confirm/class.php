@@ -6,6 +6,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Bitrix24\Form\AbuseZoneMap;
 use Bitrix\Booking\Internals\Exception\Booking\ConfirmBookingException;
+use Bitrix\Booking\Internals\Integration\Calendar\IcsBuilder;
 use Bitrix\Booking\Internals\Service\Feature\BookingConfirmLink;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Uri;
@@ -32,6 +33,12 @@ class BookingPubConfirmComponent extends BookingBaseComponent implements \Bitrix
 				],
 			],
 			'confirm' => [
+				'-prefilters' => [
+					\Bitrix\Main\Engine\ActionFilter\Csrf::class,
+					\Bitrix\Main\Engine\ActionFilter\Authentication::class,
+				],
+			],
+			'getIcsContent' => [
 				'-prefilters' => [
 					\Bitrix\Main\Engine\ActionFilter\Csrf::class,
 					\Bitrix\Main\Engine\ActionFilter\Authentication::class,
@@ -126,6 +133,42 @@ class BookingPubConfirmComponent extends BookingBaseComponent implements \Bitrix
 		if (!$result->isSuccess())
 		{
 			$this->addError($result->getError()?->getCode(), $result->getError()?->getMessage());
+		}
+	}
+
+	public function getIcsContentAction(string $hash): array|null
+	{
+		if (!\Bitrix\Main\Loader::includeModule('booking'))
+		{
+			return null;
+		}
+
+		try {
+			$bookingWithContext = (new BookingConfirmLink())->getBookingWithContext($hash);
+			/** @var \Bitrix\Booking\Entity\Booking\Booking $booking */
+			$booking = $bookingWithContext['booking'];
+
+			if ($booking->isDeleted())
+			{
+				return null;
+			}
+
+			$icsContent = (new IcsBuilder())->buildFromBooking($booking);
+
+			return ['ics' => $icsContent];
+		}
+		catch (Exception $e)
+		{
+			if ($e->isPublic())
+			{
+				$this->addError($e->getCode(), $e->getMessage());
+			}
+			else
+			{
+				$this->addError(Exception::CODE_INVALID_ARGUMENT, 'error');
+			}
+
+			return null;
 		}
 	}
 

@@ -10,16 +10,17 @@ import { resourceDialogService } from 'booking.provider.service.resource-dialog-
 import { SectionAnalytics } from 'booking.lib.analytics';
 import { mousePosition } from 'booking.lib.mouse-position';
 import type { BookingModel } from 'booking.model.bookings';
+import type { BookingUIFilter } from 'booking.lib.booking-filter';
 
 import { expandOffHours } from '../lib/expand-off-hours/expand-off-hours';
-import { Filter as BookingFilter, FilterPreset } from './filter/filter';
+import { Filter as BookingFilter, RequireAttention } from './filter/filter';
 import { CountersPanel, CounterItem } from './counters-panel/counters-panel';
 import { AfterTitle } from './after-title/after-title';
-import { SettingsButton } from './settings-button/settings-button';
 import { BaseComponent } from './base-component/base-component';
 import { MultiBooking } from './multi-booking/multi-booking';
 import { Banner } from './banner/banner';
 import { Trial } from './trial/trial';
+import { CrmFormsButton } from './crm-forms-button/crm-forms-button';
 
 // @vue/component
 export const App = {
@@ -27,12 +28,12 @@ export const App = {
 	components: {
 		BaseComponent,
 		AfterTitle,
-		SettingsButton,
 		BookingFilter,
 		CountersPanel,
 		MultiBooking,
 		Banner,
 		Trial,
+		CrmFormsButton,
 	},
 	props: {
 		afterTitleContainer: HTMLElement,
@@ -167,15 +168,14 @@ export const App = {
 				return;
 			}
 
-			this.$refs.filter.setPresetId(this.getPresetIdByCounterItem(counterItem));
+			const fields = this.getFilterFieldsByCounterItem(counterItem);
+			this.$refs.filter.setFields(fields);
 		},
 		async applyFilter(): Promise<void>
 		{
-			const presetId = this.$refs.filter.getPresetId();
 			const fields = this.$refs.filter.getFields();
 
-			this.setCounterItem(this.getCounterItemByPresetId(presetId));
-
+			this.setCounterItem(this.getCounterItemByFilterFields(fields));
 			this.showLoader();
 
 			await Promise.all([
@@ -186,6 +186,33 @@ export const App = {
 			]);
 
 			this.hideLoader();
+		},
+		setCounterItem(item: string | null): void
+		{
+			this.ignoreConterPanel = true;
+			setTimeout(() => {
+				this.ignoreConterPanel = false;
+			}, 0);
+
+			this.$refs.countersPanel.setItem(item);
+		},
+		getCounterItemByFilterFields(filterFields: BookingUIFilter): string | null
+		{
+			return {
+				[RequireAttention.AwaitConfirmation]: CounterItem.AwaitConfirmation,
+				[RequireAttention.Delayed]: CounterItem.Delayed,
+			}[filterFields.REQUIRE_ATTENTION];
+		},
+		getFilterFieldsByCounterItem(counterItem: string | null): BookingUIFilter
+		{
+			const fields = this.$refs.filter.getFields();
+
+			fields.REQUIRE_ATTENTION = {
+				[CounterItem.AwaitConfirmation]: RequireAttention.AwaitConfirmation,
+				[CounterItem.Delayed]: RequireAttention.Delayed,
+			}[counterItem];
+
+			return fields;
 		},
 		async clearFilter(): Promise<void>
 		{
@@ -202,29 +229,6 @@ export const App = {
 			]);
 
 			this.hideLoader();
-		},
-		setCounterItem(item: string | null): void
-		{
-			this.ignoreConterPanel = true;
-			setTimeout(() => {
-				this.ignoreConterPanel = false;
-			}, 0);
-
-			this.$refs.countersPanel.setItem(item);
-		},
-		getCounterItemByPresetId(presetId: string | null): string | null
-		{
-			return {
-				[FilterPreset.NotConfirmed]: CounterItem.NotConfirmed,
-				[FilterPreset.Delayed]: CounterItem.Delayed,
-			}[presetId];
-		},
-		getPresetIdByCounterItem(counterItem: string | null): string | null
-		{
-			return {
-				[CounterItem.NotConfirmed]: FilterPreset.NotConfirmed,
-				[CounterItem.Delayed]: FilterPreset.Delayed,
-			}[counterItem];
 		},
 		addAfterTitle(): void
 		{
@@ -293,7 +297,7 @@ export const App = {
 		<div>
 			<MultiBooking v-if="hasSelectedCells"/>
 			<AfterTitle ref="afterTitle"/>
-			<SettingsButton :container="settingsButtonContainer"/>
+			<CrmFormsButton :container="settingsButtonContainer"/>
 			<BookingFilter
 				:filterId="filterId"
 				ref="filter"

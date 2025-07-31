@@ -5,7 +5,7 @@ namespace Bitrix\HumanResources\Repository;
 use Bitrix\HumanResources\Access\AuthProvider\StructureAuthProvider;
 use Bitrix\HumanResources\Command\Structure\Node\NodeOrderCommand;
 use Bitrix\HumanResources\Contract;
-use Bitrix\HumanResources\Contract\Service\EventSenderService;
+use Bitrix\HumanResources\Service\EventSenderService;
 use Bitrix\HumanResources\Enum\DepthLevel;
 use Bitrix\HumanResources\Enum\EventName;
 use Bitrix\HumanResources\Enum\NodeActiveFilter;
@@ -16,7 +16,6 @@ use Bitrix\HumanResources\Exception\WrongStructureItemException;
 use Bitrix\HumanResources\Item;
 use Bitrix\HumanResources\Item\Node;
 use Bitrix\HumanResources\Model;
-use Bitrix\HumanResources\Model\EO_Node_Query;
 use Bitrix\HumanResources\Model\NodePathTable;
 use Bitrix\HumanResources\Model\NodeTable;
 use Bitrix\HumanResources\Service\Container;
@@ -46,13 +45,12 @@ class NodeRepository implements Contract\Repository\NodeRepository
 	protected const DEFAULT_TTL = 3600;
 
 	public function __construct(
-		?EventSenderService $eventSenderService = null,
 		?StructureAuthProvider $structureAuthProvider = null,
 	)
 	{
 		$this->cacheManager = Container::getCacheManager();
 		$this->cacheManager->setTtl(86400*7);
-		$this->eventSenderService = $eventSenderService ?? Container::getEventSenderService();
+		$this->eventSenderService = Container::getEventSenderService();
 		$this->structureAuthProvider = $structureAuthProvider ?? Container::getStructureAuthProvider();
 	}
 
@@ -94,6 +92,7 @@ class NodeRepository implements Contract\Repository\NodeRepository
 			globalActive: $node->getGlobalActive(),
 			sort: $node->getSort(),
 			description: $node->getDescription(),
+			colorName: $node->getColorName(),
 		);
 	}
 

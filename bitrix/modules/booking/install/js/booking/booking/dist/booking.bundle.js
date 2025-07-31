@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,booking_component_mixin_locMixin,main_loader,booking_provider_service_mainPageService,booking_provider_service_dictionaryService,booking_provider_service_calendarService,main_core_events,ui_counterpanel,ui_cnt,ui_vue3_components_menu,booking_lib_drag,ui_vue3_components_richLoc,ui_notificationManager,booking_provider_service_bookingActionsService,booking_component_loader,ui_vue3_directives_hint,booking_lib_mousePosition,booking_component_timeSelector,booking_component_notePopup,ui_iconSet_api_core,ui_iconSet_animated,booking_component_counter,booking_component_popup,booking_lib_checkBookingIntersection,booking_lib_grid,booking_lib_inInterval,booking_lib_range,booking_core,ui_datePicker,booking_lib_isRealId,booking_component_actionsPopup,booking_component_booking,booking_lib_dealHelper,booking_model_bookings,booking_model_clients,booking_provider_service_waitListService,booking_lib_removeBooking,booking_lib_removeWaitListItem,booking_lib_currencyFormat,booking_component_statisticsPopup,ui_dialogs_messagebox,ui_hint,booking_provider_service_resourcesService,ui_iconSet_actions,booking_resourceCreationWizard,booking_provider_service_resourceDialogService,booking_lib_resources,booking_lib_resourcesDateCache,main_popup,ui_iconSet_api_vue,ui_iconSet_main,booking_provider_service_optionService,booking_lib_helpDesk,booking_lib_busySlots,ui_entitySelector,booking_lib_limit,booking_provider_service_bookingService,booking_provider_service_clientService,ui_ears,main_date,booking_lib_duration,booking_component_clientPopup,booking_component_button,booking_lib_analytics,ui_autoLaunch,ui_vue3_vuex,main_core,ui_vue3,ui_bannerDispatcher,booking_lib_resolvable,booking_const,booking_lib_ahaMoments) {
+(function (exports,booking_component_mixin_locMixin,main_loader,booking_provider_service_mainPageService,booking_provider_service_dictionaryService,booking_provider_service_calendarService,main_core_events,ui_counterpanel,ui_cnt,booking_lib_drag,ui_vue3_components_richLoc,ui_notificationManager,booking_provider_service_bookingActionsService,booking_component_loader,ui_vue3_directives_hint,booking_lib_mousePosition,booking_component_timeSelector,booking_component_notePopup,ui_iconSet_api_core,ui_iconSet_animated,booking_component_counter,booking_lib_checkBookingIntersection,booking_lib_grid,booking_lib_inInterval,booking_lib_range,booking_core,ui_datePicker,booking_lib_isRealId,booking_component_actionsPopup,booking_component_booking,booking_lib_dealHelper,booking_model_bookings,booking_model_clients,booking_provider_service_waitListService,booking_lib_removeBooking,booking_lib_removeWaitListItem,booking_lib_currencyFormat,booking_component_statisticsPopup,ui_dialogs_messagebox,ui_hint,booking_provider_service_resourcesService,ui_iconSet_actions,booking_resourceCreationWizard,booking_provider_service_resourceDialogService,booking_lib_resources,booking_lib_resourcesDateCache,ui_iconSet_api_vue,ui_iconSet_main,booking_provider_service_optionService,booking_lib_helpDesk,booking_lib_busySlots,ui_entitySelector,booking_lib_limit,booking_provider_service_bookingService,booking_provider_service_clientService,ui_ears,main_date,booking_lib_duration,booking_component_clientPopup,booking_lib_analytics,ui_autoLaunch,ui_vue3_vuex,main_core,ui_bannerDispatcher,booking_lib_resolvable,booking_lib_ahaMoments,main_popup,booking_component_popup,booking_component_helpDeskLoc,ui_vue3,booking_const,booking_component_button) {
 	'use strict';
 
 	const cellHeight = 50;
@@ -110,8 +110,6 @@ this.BX = this.BX || {};
 	const expandOffHours = new ExpandOffHours();
 
 	const FilterPreset = Object.freeze({
-	  NotConfirmed: 'booking-filter-preset-unconfirmed',
-	  Delayed: 'booking-filter-preset-delayed',
 	  CreatedByMe: 'booking-filter-preset-created-by-me'
 	});
 	const FilterField = Object.freeze({
@@ -120,7 +118,11 @@ this.BX = this.BX || {};
 	  Company: 'COMPANY',
 	  Resource: 'RESOURCE',
 	  Confirmed: 'CONFIRMED',
-	  Delayed: 'DELAYED'
+	  RequireAttention: 'REQUIRE_ATTENTION'
+	});
+	const RequireAttention = Object.freeze({
+	  Delayed: 'D',
+	  AwaitConfirmation: 'AC'
 	});
 	const Filter = {
 	  emits: ['apply', 'clear'],
@@ -151,17 +153,11 @@ this.BX = this.BX || {};
 	        this.$emit('apply');
 	      }
 	    },
-	    setPresetId(presetId) {
-	      if (this.getPresetId() === presetId) {
-	        return;
-	      }
-	      this.filter.getApi().setFilter({
-	        preset_id: presetId
-	      });
-	    },
-	    getPresetId() {
-	      const preset = this.filter.getPreset().getCurrentPresetId();
-	      return preset === 'tmp_filter' ? null : preset;
+	    setFields(fields) {
+	      const preparedFields = this.filter.getFilterFieldsValues();
+	      preparedFields[FilterField.RequireAttention] = fields.REQUIRE_ATTENTION;
+	      this.filter.getApi().setFields(preparedFields);
+	      this.filter.getApi().apply();
 	    },
 	    isFilterEmpty() {
 	      return Object.keys(this.getFields()).length === 0;
@@ -169,6 +165,7 @@ this.BX = this.BX || {};
 	    getFields() {
 	      const booleanFields = [FilterField.Confirmed, FilterField.Delayed];
 	      const arrayFields = [FilterField.Company, FilterField.Contact, FilterField.CreatedBy, FilterField.Resource];
+	      const stringFields = [FilterField.RequireAttention];
 	      const filterFields = this.filter.getFilterFieldsValues();
 	      const fields = booleanFields.filter(field => ['Y', 'N'].includes(filterFields[field])).reduce((acc, field) => ({
 	        ...acc,
@@ -177,6 +174,12 @@ this.BX = this.BX || {};
 	      arrayFields.forEach(field => {
 	        var _filterFields$field;
 	        if (((_filterFields$field = filterFields[field]) == null ? void 0 : _filterFields$field.length) > 0) {
+	          fields[field] = filterFields[field];
+	        }
+	      });
+	      stringFields.forEach(field => {
+	        var _filterFields$field2;
+	        if (((_filterFields$field2 = filterFields[field]) == null ? void 0 : _filterFields$field2.length) > 0) {
 	          fields[field] = filterFields[field];
 	        }
 	      });
@@ -189,7 +192,7 @@ this.BX = this.BX || {};
 	};
 
 	const CounterItem = Object.freeze({
-	  NotConfirmed: 'not-confirmed',
+	  AwaitConfirmation: 'await-confirmation',
 	  Delayed: 'delayed'
 	});
 	const CountersPanel = {
@@ -218,8 +221,8 @@ this.BX = this.BX || {};
 	      this.counterPanel = new ui_counterpanel.CounterPanel({
 	        target: this.target,
 	        items: [{
-	          id: CounterItem.NotConfirmed,
-	          title: this.loc('BOOKING_BOOKING_COUNTER_PANEL_NOT_CONFIRMED'),
+	          id: CounterItem.AwaitConfirmation,
+	          title: this.loc('BOOKING_BOOKING_COUNTER_PANEL_AWAIT_CONFIRMATION'),
 	          value: this.counters.unConfirmed,
 	          color: getFieldName(ui_cnt.CounterColor, ui_cnt.CounterColor.THEME)
 	        }, {
@@ -243,7 +246,7 @@ this.BX = this.BX || {};
 	  watch: {
 	    counters(counters) {
 	      this.counterPanel.getItems().forEach(item => {
-	        if (item.id === CounterItem.NotConfirmed) {
+	        if (item.id === CounterItem.AwaitConfirmation) {
 	          item.updateColor(getFieldName(ui_cnt.CounterColor, ui_cnt.CounterColor.DANGER));
 	          item.updateValue(counters.unConfirmed);
 	        }
@@ -573,91 +576,6 @@ this.BX = this.BX || {};
 				<Profit/>
 			</div>
 		</div>
-	`
-	};
-
-	const webForms = main_core.Extension.getSettings('booking.booking').webForms;
-
-	// @vue/component
-	const SettingsButton = {
-	  components: {
-	    UiButton: booking_component_button.Button,
-	    BMenu: ui_vue3_components_menu.BMenu
-	  },
-	  props: {
-	    container: {
-	      type: HTMLElement,
-	      required: true
-	    }
-	  },
-	  setup() {
-	    return {
-	      ButtonColor: booking_component_button.ButtonColor,
-	      ButtonSize: booking_component_button.ButtonSize,
-	      ButtonIcon: booking_component_button.ButtonIcon
-	    };
-	  },
-	  data() {
-	    return {
-	      isMenuShown: false
-	    };
-	  },
-	  computed: {
-	    ...ui_vue3_vuex.mapGetters({
-	      expanded: `${booking_const.Model.Interface}/expanded`
-	    }),
-	    menuOptions() {
-	      const createSection = 'create';
-	      return {
-	        id: 'booking-settings-menu',
-	        bindElement: this.$refs.button.$el,
-	        offsetTop: 8,
-	        sections: [{
-	          code: createSection
-	        }],
-	        items: [{
-	          title: this.loc('BOOKING_TOP_MENU_ITEM_FORMS_ALL_FORMS'),
-	          onClick: this.openAllForms
-	        }, {
-	          sectionCode: createSection,
-	          title: this.loc('BOOKING_TOP_MENU_ITEM_FORMS_CREATE_FORM'),
-	          subMenu: {
-	            items: webForms.presets.map(preset => ({
-	              title: preset.NAME,
-	              onClick: () => this.createFormFromPreset(preset.LINK)
-	            }))
-	          }
-	        }]
-	      };
-	    }
-	  },
-	  mounted() {
-	    this.container.replaceWith(this.$refs.button.$el);
-	  },
-	  methods: {
-	    handleClick() {
-	      this.isMenuShown = true;
-	    },
-	    openAllForms() {
-	      BX.SidePanel.Instance.open(webForms.link, {
-	        cacheable: false
-	      });
-	    },
-	    createFormFromPreset(link) {
-	      window.open(link, '_blank');
-	    }
-	  },
-	  template: `
-		<UiButton
-			v-show="expanded"
-			buttonClass="ui-btn-themes"
-			:color="ButtonColor.LIGHT_BORDER"
-			:size="ButtonSize.SMALL"
-			:icon="ButtonIcon.DOTS"
-			ref="button"
-			@click="handleClick"
-		/>
-		<BMenu v-if="isMenuShown" :options="menuOptions" @close="isMenuShown = false"/>
 	`
 	};
 
@@ -1796,7 +1714,7 @@ this.BX = this.BX || {};
 	      selectedDateTs: `${booking_const.Model.Interface}/selectedDateTs`
 	    }),
 	    popupId() {
-	      return `booking-change-time-popup-${this.bookingId}`;
+	      return `booking-change-time-popup-${this.bookingId}-${this.resourceId}`;
 	    },
 	    config() {
 	      return {
@@ -1832,7 +1750,7 @@ this.BX = this.BX || {};
 	        }
 	        return id !== bookingId && dateToTs > this.fromTs && this.toTs > dateFromTs;
 	      });
-	      return bookings.length > 0;
+	      return bookings.length > 1;
 	    },
 	    bookings() {
 	      return this.$store.getters[`${booking_const.Model.Bookings}/getByDateAndResources`](this.selectedDateTs, this.booking.resourcesIds);
@@ -2274,7 +2192,6 @@ this.BX = this.BX || {};
 	`
 	};
 
-	// @vue/component
 	const ResizeDirection = Object.freeze({
 	  From: -1,
 	  None: 0,
@@ -2282,6 +2199,8 @@ this.BX = this.BX || {};
 	});
 	const minDuration = booking_lib_duration.Duration.getUnitDurations().i * 5;
 	const minInitialDuration = booking_lib_duration.Duration.getUnitDurations().i * 15;
+
+	// @vue/component
 	const Resize = {
 	  name: 'BookingResize',
 	  props: {
@@ -2930,6 +2849,10 @@ this.BX = this.BX || {};
 	// @vue/component
 	const Booking = {
 	  name: 'Booking',
+	  components: {
+	    BookingBase,
+	    Actions
+	  },
 	  props: {
 	    bookingId: {
 	      type: [Number, String],
@@ -3040,6 +2963,24 @@ this.BX = this.BX || {};
 	    },
 	    hasAccent() {
 	      return this.editingBookingId === this.bookingId || this.isBookingCreatedFromEmbed(this.bookingId);
+	    }
+	  },
+	  watch: {
+	    draggedDataTransfer: {
+	      handler(draggedDataTransfer) {
+	        if (this.hasOverbooking) {
+	          return;
+	        }
+	        if (draggedDataTransfer.kind === booking_const.DraggedElementKind.Booking && draggedDataTransfer.id === this.bookingId) {
+	          return;
+	        }
+	        if (!draggedDataTransfer || !draggedDataTransfer.kind || !draggedDataTransfer.id) {
+	          this.stopDropHandler();
+	        } else {
+	          this.startDropHandler();
+	        }
+	      },
+	      deep: true
 	    }
 	  },
 	  methods: {
@@ -3193,28 +3134,6 @@ this.BX = this.BX || {};
 	      });
 	    }
 	  },
-	  watch: {
-	    draggedDataTransfer: {
-	      handler(draggedDataTransfer) {
-	        if (this.hasOverbooking) {
-	          return;
-	        }
-	        if (draggedDataTransfer.kind === booking_const.DraggedElementKind.Booking && draggedDataTransfer.id === this.bookingId) {
-	          return;
-	        }
-	        if (!draggedDataTransfer || !draggedDataTransfer.kind || !draggedDataTransfer.id) {
-	          this.stopDropHandler();
-	        } else {
-	          this.startDropHandler();
-	        }
-	      },
-	      deep: true
-	    }
-	  },
-	  components: {
-	    BookingBase,
-	    Actions
-	  },
 	  template: `
 		<BookingBase
 			:bookingId
@@ -3224,6 +3143,7 @@ this.BX = this.BX || {};
 			:bookingClass="{
 				'--short': overlappingBookings.length > 1,
 				'--overbooking': hasOverbooking,
+				'--overbooking-bg': hasOverbooking || overbooking !== null,
 				'--shifted': isShifted && !realBooking,
 				'--drop-area': dropArea,
 				'--accent': hasAccent,
@@ -3292,7 +3212,7 @@ this.BX = this.BX || {};
 	    },
 	    textFormatted() {
 	      const timeFormat = main_date.DateTimeFormat.getFormat('SHORT_TIME_FORMAT');
-	      const messageId = this.busySlot.type === booking_const.BusySlot.Intersection ? 'BOOKING_BOOKING_INTERSECTING_RESOURCE_IS_BUSY' : 'BOOKING_BOOKING_RESOURCE_IS_BUSY';
+	      const messageId = this.getPopupMessageId(this.busySlot.type);
 	      return this.loc(messageId, {
 	        '#RESOURCE#': this.resource.name,
 	        '#TIME_FROM#': main_date.DateTimeFormat.format(timeFormat, (this.busySlot.fromTs + this.offset) / 1000),
@@ -3309,6 +3229,15 @@ this.BX = this.BX || {};
 	    }
 	  },
 	  methods: {
+	    getPopupMessageId(slotType) {
+	      if (slotType === booking_const.BusySlot.Intersection) {
+	        return 'BOOKING_BOOKING_INTERSECTING_RESOURCE_IS_BUSY';
+	      }
+	      if (slotType === booking_const.BusySlot.IntersectionOverbooking) {
+	        return 'BOOKING_BOOKING_INTERSECTING_RESOURCE_IS_FULL_BUSY';
+	      }
+	      return 'BOOKING_BOOKING_RESOURCE_IS_BUSY';
+	    },
 	    adjustPosition() {
 	      var _this$$refs$popup;
 	      const popup = (_this$$refs$popup = this.$refs.popup) == null ? void 0 : _this$$refs$popup.getPopupInstance();
@@ -3341,8 +3270,12 @@ this.BX = this.BX || {};
 	  mapGetters: mapInterfaceGetters
 	} = ui_vue3_vuex.createNamespacedHelpers(booking_const.Model.Interface);
 	const BookingBusySlotClassName = 'booking-booking-busy-slot';
+	// @vue/component
 	const BusySlot = {
 	  name: 'BusySlot',
+	  components: {
+	    BusyPopup
+	  },
 	  props: {
 	    busySlot: {
 	      type: Object,
@@ -3351,7 +3284,8 @@ this.BX = this.BX || {};
 	  },
 	  setup() {
 	    return {
-	      BookingBusySlotClassName
+	      BookingBusySlotClassName,
+	      BusySlotType: booking_const.BusySlot
 	    };
 	  },
 	  data() {
@@ -3368,7 +3302,8 @@ this.BX = this.BX || {};
 	    }),
 	    isDisabled() {
 	      const isDragOffHours = this.isDragMode && this.busySlot.type === booking_const.BusySlot.OffHours;
-	      if (this.isFilterMode || isDragOffHours) {
+	      const isDragOverbooking = this.isDragMode && this.busySlot.type === booking_const.BusySlot.IntersectionOverbooking;
+	      if (this.isFilterMode || isDragOffHours || isDragOverbooking) {
 	        return true;
 	      }
 	      return this.busySlot.id in this.disabledBusySlots;
@@ -3385,7 +3320,7 @@ this.BX = this.BX || {};
 	  },
 	  methods: {
 	    onClick() {
-	      if (this.isFilterMode || this.isEditingBookingMode || this.busySlot.type === booking_const.BusySlot.Intersection) {
+	      if (this.isFilterMode || this.isEditingBookingMode || this.busySlot.type === booking_const.BusySlot.IntersectionOverbooking) {
 	        return;
 	      }
 	      void this.$store.dispatch(`${booking_const.Model.Interface}/addDisabledBusySlot`, this.busySlot);
@@ -3433,9 +3368,6 @@ this.BX = this.BX || {};
 	      this.isPopupShown = false;
 	    }
 	  },
-	  components: {
-	    BusyPopup
-	  },
 	  template: `
 		<div
 			v-if="left >= 0"
@@ -3446,6 +3378,7 @@ this.BX = this.BX || {};
 				'--left': left + 'px',
 				'--top': top + 'px',
 				'--height': height + 'px',
+				'z-index': busySlot.type === BusySlotType.IntersectionOverbooking ? 1 : 'unset',
 			}"
 			data-element="booking-busy-slot"
 			:data-id="busySlot.resourceId"
@@ -6562,6 +6495,10 @@ this.BX = this.BX || {};
 	// @vue/component
 	const ResourceWorkload = {
 	  name: 'ResourceWorkload',
+	  components: {
+	    BatteryIcon,
+	    WorkloadPopup
+	  },
 	  props: {
 	    resourceId: {
 	      type: Number,
@@ -6592,9 +6529,10 @@ this.BX = this.BX || {};
 	        return 0;
 	      }
 	      const slotsDuration = this.slotSize * this.slotsCount;
-	      return this.bookings.reduce((acc, booking) => {
-	        return acc + Math.round(booking.duration * 100 / slotsDuration);
+	      const percent = this.bookings.reduce((acc, booking) => {
+	        return acc + booking.duration * 100 / slotsDuration;
 	      }, 0);
+	      return Math.round(percent);
 	    },
 	    slotSize() {
 	      var _this$resource$slotRa;
@@ -6607,7 +6545,7 @@ this.BX = this.BX || {};
 	        return slotRange.weekDays.includes(selectedWeekDay);
 	      }));
 	      return Math.floor(slotRanges.reduce((sum, slotRange) => {
-	        return sum + (slotRange.to - slotRange.from) / this.slotSize;
+	        return sum + Math.round((slotRange.to - slotRange.from) / this.slotSize);
 	      }, 0));
 	    },
 	    bookings() {
@@ -6619,9 +6557,6 @@ this.BX = this.BX || {};
 	          duration: (booking.dateToTs - booking.dateFromTs) / 60000
 	        };
 	      });
-	    },
-	    bookingCount() {
-	      return this.bookings.length;
 	    },
 	    bookingsDuration() {
 	      return this.bookings.reduce((acc, booking) => {
@@ -6639,6 +6574,13 @@ this.BX = this.BX || {};
 	    },
 	    bookingsCount() {
 	      return this.bookings.length;
+	    }
+	  },
+	  watch: {
+	    bookingsCount(newCount, previousCount) {
+	      if (this.isGrid && newCount > previousCount && booking_lib_ahaMoments.ahaMoments.shouldShow(booking_const.AhaMoment.ResourceWorkload)) {
+	        void this.showAhaMoment();
+	      }
 	    }
 	  },
 	  methods: {
@@ -6666,17 +6608,6 @@ this.BX = this.BX || {};
 	      });
 	      booking_lib_ahaMoments.ahaMoments.setShown(booking_const.AhaMoment.ResourceWorkload);
 	    }
-	  },
-	  watch: {
-	    bookingsCount(newCount, previousCount) {
-	      if (this.isGrid && newCount > previousCount && booking_lib_ahaMoments.ahaMoments.shouldShow(booking_const.AhaMoment.ResourceWorkload)) {
-	        void this.showAhaMoment();
-	      }
-	    }
-	  },
-	  components: {
-	    BatteryIcon,
-	    WorkloadPopup
 	  },
 	  template: `
 		<div
@@ -7092,9 +7023,17 @@ this.BX = this.BX || {};
 	      selectedTypes: {}
 	    };
 	  },
-	  computed: ui_vue3_vuex.mapGetters({
-	    resourceTypes: 'resourceTypes/get'
-	  }),
+	  computed: {
+	    ...ui_vue3_vuex.mapGetters({
+	      resourceTypes: 'resourceTypes/get'
+	    }),
+	    visibleResourceTypes() {
+	      return this.resourceTypes.filter(item => item.resourcesCnt > 0);
+	    },
+	    isResourceTypesSectionVisible() {
+	      return this.visibleResourceTypes.length > 0;
+	    }
+	  },
 	  methods: {
 	    selectAll() {
 	      Object.keys(this.selectedTypes).forEach(typeId => {
@@ -7122,7 +7061,7 @@ this.BX = this.BX || {};
 	    }
 	  },
 	  template: `
-		<div class="booking-booking-resources-dialog-header-types">
+		<div v-if="isResourceTypesSectionVisible" class="booking-booking-resources-dialog-header-types">
 			<div class="booking-booking-resources-dialog-header-header">
 				<div class="booking-booking-resources-dialog-header-title">
 					{{ loc('BOOKING_BOOKING_RESOURCES_DIALOG_RESOURCE_TYPES') }}
@@ -7143,7 +7082,7 @@ this.BX = this.BX || {};
 				</div>
 			</div>
 			<div class="booking-booking-resources-dialog-header-items">
-				<template v-for="resourceType of resourceTypes" :key="resourceType.id">
+				<template v-for="resourceType of visibleResourceTypes" :key="resourceType.id">
 					<label
 						class="booking-booking-resources-dialog-header-item"
 						data-element="booking-resources-dialog-type"
@@ -8718,17 +8657,409 @@ this.BX = this.BX || {};
 	};
 
 	// @vue/component
+	const CrmFormsPopupLayout = {
+	  name: 'CrmFormsPopupLayout',
+	  components: {
+	    HelpDeskLoc: booking_component_helpDeskLoc.HelpDeskLoc
+	  },
+	  setup() {
+	    const helpDesk = booking_const.HelpDesk.CrmFormsPopup;
+	    return {
+	      helpDesk
+	    };
+	  },
+	  template: `
+		<div class="booking--booking--crm-forms-popup__wrapper">
+			<div class="booking--booking--crm-forms-popup__header">
+				<span class="booking--booking--crm-forms-popup__header-title">
+					{{ loc('BOOKING_OPEN_CRM_FORMS_POPUP_TITLE') }}
+				</span>
+				<div class="booking--booking--crm-forms-popup__header-description">
+					<HelpDeskLoc
+						:message="loc('BOOKING_OPEN_CRM_FORMS_POPUP_DESCRIPTION')"
+						:code="helpDesk.code"
+						:anchor="helpDesk.anchorCode"
+					/>
+				</div>
+			</div>
+			<div class="booking--booking--crm-forms-popup__toolbar">
+				<slot name="toolbar"/>
+			</div>
+			<div class="booking--booking-crm-forms-popup__list-wrapper">
+				<slot/>
+			</div>
+			<div class="booking--booking-crm-forms-popup__footer">
+				<slot name="footer"/>
+			</div>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const CrmFormItemSkeleton = {
+	  name: 'CrmFormItemSkeleton',
+	  template: `
+		<div class="booking--booking--crm-forms-popup--item-skeleton">
+			<div class="booking--booking--crm-forms-popup--item-skeleton__circle"></div>
+			<div class="booking--booking--crm-forms-popup--item-skeleton__line"></div>
+			<div class="booking--booking--crm-forms-popup--item-skeleton__space"></div>
+			<div class="booking--booking--crm-forms-popup--item-skeleton__line --thin"></div>
+			<div class="booking--booking--crm-forms-popup--item-skeleton__circle"></div>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const CrmFormListEmpty = {
+	  name: 'CrmFormListEmpty',
+	  components: {
+	    CrmFormItemSkeleton
+	  },
+	  template: `
+		<CrmFormItemSkeleton v-for="i in 4" :key="i"/>
+		<div class="booking--booking--crm-forms-popup--list__placeholder-bg"></div>
+		<div class="booking--booking--crm-forms-popup--list__placeholder">
+			<span>{{ loc('BOOKING_OPEN_CRM_FORMS_POPUP_FORMS_LIST_PLACEHOLDER') }}</span>
+		</div>
+	`
+	};
+
+	function CrmFormsListItemNameLink(props, {
+	  slots
+	}) {
+	  if (props.canEdit && props.editUrl) {
+	    return ui_vue3.h('a', {
+	      href: props.editUrl,
+	      target: '_blank'
+	    }, slots.default());
+	  }
+	  return slots.default();
+	}
+	const props = ['canEdit', 'editUrl'];
+	CrmFormsListItemNameLink.props = props;
+
+	// eslint-disable-next-line no-unused-vars
+
+	// @vue/component
+	const CrmFormsListItem = {
+	  name: 'CrmFormsListItem',
+	  components: {
+	    CrmFormsListItemNameLink
+	  },
+	  props: {
+	    /**
+	     * @type {FormsMenuItem}
+	     */
+	    item: {
+	      type: Object,
+	      required: true
+	    },
+	    canEdit: Boolean
+	  },
+	  setup() {
+	    return {
+	      AirButtonStyle: booking_component_button.AirButtonStyle
+	    };
+	  },
+	  data() {
+	    return {
+	      copedPopupTimeoutId: null
+	    };
+	  },
+	  methods: {
+	    copyLink() {
+	      if (!BX.clipboard.isCopySupported()) {
+	        return;
+	      }
+	      BX.clipboard.copy(this.item.publicUrl);
+	      this.showCopedPopup();
+	    },
+	    showCopedPopup() {
+	      var _this$popup;
+	      (_this$popup = this.popup) == null ? void 0 : _this$popup.destroy();
+	      this.popup = new BX.PopupWindow(`booking_open_crm_forms_popup_item_${this.item.id}_clipboard_copy`, this.$refs.copy, {
+	        content: this.loc('BOOKING_OPEN_CRM_FORMS_POPUP_FORMS_LIST_ITEM_LINK_COPED'),
+	        darkMode: true,
+	        autoHide: true,
+	        zIndex: 1000,
+	        angle: true,
+	        offsetLeft: 20,
+	        bindOptions: {
+	          position: 'top'
+	        }
+	      });
+	      this.popup.show();
+	      this.copedPopupTimeoutId = setTimeout(() => {
+	        var _this$popup2;
+	        this.popup.close();
+	        (_this$popup2 = this.popup) == null ? void 0 : _this$popup2.destroy();
+	      }, 1200);
+	    }
+	  },
+	  template: `
+		<div class="booking--booking--crm-forms-popup--item">
+			<div class="ui-icon-set --o-form booking--booking--crm-forms-popup--item__icon"></div>
+			<div
+				class="booking--booking--crm-forms-popup--item__name"
+				:title="item.name"
+			>
+				<CrmFormsListItemNameLink :canEdit :editUrl="item.editUrl">
+					<span>{{ item.name }}</span>
+				</CrmFormsListItemNameLink>
+			</div>
+			<div
+				ref="copy"
+				:class="['booking--booking--crm-forms-popup--item__copy-btn', AirButtonStyle.OUTLINE_NO_ACCENT]"
+				role="button"
+				tabindex="0"
+				@click="copyLink"
+			>
+				{{ loc('BOOKING_OPEN_CRM_FORMS_POPUP_FORMS_LIST_ITEM_COPY_LINK_BUTTON_LABEL') }}
+				<div class="ui-icon-set --o-copy booking--booking--crm-forms-popup--item__copy-btn-icon"></div>
+			</div>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const CrmFormsList = {
+	  name: 'CrmFormsList',
+	  components: {
+	    CrmFormListEmpty,
+	    CrmFormsListItem
+	  },
+	  computed: {
+	    canEdit() {
+	      return this.$store.state[booking_const.Model.FormsMenu].canEdit;
+	    },
+	    formList() {
+	      return this.$store.getters[`${booking_const.Model.FormsMenu}/formList`];
+	    }
+	  },
+	  template: `
+		<div class="booking--booking--crm-forms-popup--list__container">
+			<div class="booking--booking--crm-forms-popup--list-items">
+				<template v-if="formList.length === 0">
+					<CrmFormListEmpty />
+				</template>
+				<template v-else>
+					<CrmFormsListItem
+						v-for="item in formList"
+						:key="item.id"
+						:item="item"
+						:canEdit
+					/>
+				</template>
+			</div>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const CrmFormsToolbar = {
+	  name: 'CrmFormsToolbar',
+	  template: `
+		<div class="booking--booking--crm-forms-popup-sort">
+			<span>{{ loc('BOOKING_OPEN_CRM_FORMS_POPUP_SORT_LATEST_CREATED_LABEL') }}</span>
+			<div class="ui-icon-set --o-change-order-2 booking--booking--crm-forms-popup--sort-icon"></div>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const AddCrmFormButton = {
+	  name: 'AddCrmFormButton',
+	  components: {
+	    UiButton: booking_component_button.Button
+	  },
+	  setup() {
+	    return {
+	      ButtonColor: booking_component_button.ButtonColor,
+	      ButtonSize: booking_component_button.ButtonSize,
+	      ButtonStyle: booking_component_button.ButtonStyle
+	    };
+	  },
+	  computed: {
+	    createFormLink() {
+	      return this.$store.state[booking_const.Model.FormsMenu].createFormLink;
+	    },
+	    addBtnLabel() {
+	      return this.loc('BOOKING_OPEN_CRM_FORMS_POPUP_ADD_FORM_BUTTON_LABEL').replace('[plus]', '+');
+	    }
+	  },
+	  template: `
+		<a :href="createFormLink" target="_blank">
+			<UiButton
+				:text="addBtnLabel"
+				:color="ButtonColor.LIGHT_BORDER"
+				:size="ButtonSize.SMALL"
+				:buttonClass="['--air', ButtonStyle.NO_CAPS]"
+			/>
+		</a>
+	`
+	};
+
+	// @vue/component
+	const AllCrmFormsButton = {
+	  name: 'AllCrmFormsButton',
+	  components: {
+	    UiButton: booking_component_button.Button
+	  },
+	  setup() {
+	    return {
+	      AirButtonStyle: booking_component_button.AirButtonStyle,
+	      ButtonColor: booking_component_button.ButtonColor,
+	      ButtonSize: booking_component_button.ButtonSize,
+	      ButtonStyle: booking_component_button.ButtonStyle
+	    };
+	  },
+	  template: `
+		<a href="/crm/webform/" target="_blank">
+			<UiButton
+				:text="loc('BOOKING_OPEN_CRM_FORMS_POPUP_ALL_FORMS_BUTTON_LABEL')"
+				:color="ButtonColor.LIGHT_BORDER"
+				:size="ButtonSize.SMALL"
+				:buttonClass="['--air', AirButtonStyle.OUTLINE_NO_ACCENT, ButtonStyle.NO_CAPS]"
+			/>
+		</a>
+	`
+	};
+
+	// @vue/component
+	const CrmFormsPopup = {
+	  name: 'CrmFormsPopup',
+	  components: {
+	    HelpDeskLoc: booking_component_helpDeskLoc.HelpDeskLoc,
+	    Popup: booking_component_popup.Popup,
+	    CrmFormsList,
+	    CrmFormsPopupLayout,
+	    CrmFormsToolbar,
+	    AddCrmFormButton,
+	    AllCrmFormsButton
+	  },
+	  props: {
+	    visible: {
+	      type: Boolean,
+	      default: false
+	    },
+	    bindElement: {
+	      type: HTMLElement,
+	      required: true
+	    }
+	  },
+	  emits: ['update:visible'],
+	  computed: {
+	    config() {
+	      return {
+	        className: 'booking--booking--crm-forms-popup',
+	        bindElement: this.bindElement,
+	        offsetTop: 10,
+	        padding: 24,
+	        minHeight: 376,
+	        minWidth: 488,
+	        maxWidth: 500,
+	        bindOptions: {
+	          forceBindPosition: true,
+	          position: 'bottom'
+	        },
+	        angle: {
+	          offset: this.bindElement.offsetWidth / 2
+	        }
+	      };
+	    }
+	  },
+	  methods: {
+	    closePopup() {
+	      this.$emit('update:visible', false);
+	    }
+	  },
+	  template: `
+		<Popup
+			ref="popup"
+			id="booking-crm-forms-popup"
+			:config
+			@close="closePopup"
+		>
+			<CrmFormsPopupLayout>
+				<template #toolbar>
+					<CrmFormsToolbar />
+				</template>
+				<CrmFormsList />
+				<template #footer>
+					<div class="booking--booking--crm-forms-popup--footer-buttons-bar">
+						<AllCrmFormsButton />
+						<AddCrmFormButton />
+					</div>
+				</template>
+			</CrmFormsPopupLayout>
+		</Popup>
+	`
+	};
+
+	// @vue/component
+	const CrmFormsButton = {
+	  name: 'CrmFormsButton',
+	  components: {
+	    CrmFormsPopup,
+	    UiButton: booking_component_button.Button
+	  },
+	  props: {
+	    container: {
+	      type: HTMLElement,
+	      required: true
+	    }
+	  },
+	  setup() {
+	    const isPopupShown = ui_vue3.ref(false);
+	    const openMenu = () => {
+	      isPopupShown.value = true;
+	    };
+	    return {
+	      isPopupShown,
+	      AirButtonStyle: booking_component_button.AirButtonStyle,
+	      ButtonColor: booking_component_button.ButtonColor,
+	      ButtonSize: booking_component_button.ButtonSize,
+	      ButtonStyle: booking_component_button.ButtonStyle,
+	      openMenu
+	    };
+	  },
+	  computed: {
+	    label() {
+	      return this.loc('BOOKING_OPEN_CRM_FORMS_BUTTON_LABEL');
+	    }
+	  },
+	  mounted() {
+	    this.container.replaceWith(this.$refs.button.$el);
+	  },
+	  template: `
+		<UiButton
+			ref="button"
+			:buttonClass="['--air', ButtonStyle.NO_CAPS, AirButtonStyle.OUTLINE_NO_ACCENT]"
+			:text="label"
+			:color="ButtonColor.LIGHT_BORDER"
+			:size="ButtonSize.MEDIUM"
+			@click="openMenu"
+		/>
+		<CrmFormsPopup
+			v-if="isPopupShown"
+			v-model:visible="isPopupShown"
+			:bindElement="$refs.button.$el"
+		/>
+	`
+	};
+
+	// @vue/component
 	const App = {
 	  name: 'BookingApp',
 	  components: {
 	    BaseComponent,
 	    AfterTitle,
-	    SettingsButton,
 	    BookingFilter: Filter,
 	    CountersPanel,
 	    MultiBooking,
 	    Banner,
-	    Trial
+	    Trial,
+	    CrmFormsButton
 	  },
 	  props: {
 	    afterTitleContainer: HTMLElement,
@@ -8829,23 +9160,16 @@ this.BX = this.BX || {};
 	      if (this.ignoreConterPanel) {
 	        return;
 	      }
-	      this.$refs.filter.setPresetId(this.getPresetIdByCounterItem(counterItem));
+	      const fields = this.getFilterFieldsByCounterItem(counterItem);
+	      this.$refs.filter.setFields(fields);
 	    },
 	    async applyFilter() {
-	      const presetId = this.$refs.filter.getPresetId();
 	      const fields = this.$refs.filter.getFields();
-	      this.setCounterItem(this.getCounterItemByPresetId(presetId));
+	      this.setCounterItem(this.getCounterItemByFilterFields(fields));
 	      this.showLoader();
 	      await Promise.all([this.$store.dispatch(`${booking_const.Model.Interface}/setFilterMode`, true), this.updateMarks(),
 	      // eslint-disable-next-line unicorn/no-array-callback-reference
 	      booking_provider_service_bookingService.bookingService.filter(fields)]);
-	      this.hideLoader();
-	    },
-	    async clearFilter() {
-	      this.setCounterItem(null);
-	      booking_provider_service_calendarService.calendarService.clearFilterCache();
-	      booking_provider_service_bookingService.bookingService.clearFilterCache();
-	      void Promise.all([this.$store.dispatch(`${booking_const.Model.Interface}/setResourcesIds`, this.resourcesIds), this.$store.dispatch(`${booking_const.Model.Interface}/setFilterMode`, false), this.$store.dispatch(`${booking_const.Model.Interface}/setFilteredBookingsIds`, []), this.$store.dispatch(`${booking_const.Model.Interface}/setFilteredMarks`, [])]);
 	      this.hideLoader();
 	    },
 	    setCounterItem(item) {
@@ -8855,17 +9179,26 @@ this.BX = this.BX || {};
 	      }, 0);
 	      this.$refs.countersPanel.setItem(item);
 	    },
-	    getCounterItemByPresetId(presetId) {
+	    getCounterItemByFilterFields(filterFields) {
 	      return {
-	        [FilterPreset.NotConfirmed]: CounterItem.NotConfirmed,
-	        [FilterPreset.Delayed]: CounterItem.Delayed
-	      }[presetId];
+	        [RequireAttention.AwaitConfirmation]: CounterItem.AwaitConfirmation,
+	        [RequireAttention.Delayed]: CounterItem.Delayed
+	      }[filterFields.REQUIRE_ATTENTION];
 	    },
-	    getPresetIdByCounterItem(counterItem) {
-	      return {
-	        [CounterItem.NotConfirmed]: FilterPreset.NotConfirmed,
-	        [CounterItem.Delayed]: FilterPreset.Delayed
+	    getFilterFieldsByCounterItem(counterItem) {
+	      const fields = this.$refs.filter.getFields();
+	      fields.REQUIRE_ATTENTION = {
+	        [CounterItem.AwaitConfirmation]: RequireAttention.AwaitConfirmation,
+	        [CounterItem.Delayed]: RequireAttention.Delayed
 	      }[counterItem];
+	      return fields;
+	    },
+	    async clearFilter() {
+	      this.setCounterItem(null);
+	      booking_provider_service_calendarService.calendarService.clearFilterCache();
+	      booking_provider_service_bookingService.bookingService.clearFilterCache();
+	      void Promise.all([this.$store.dispatch(`${booking_const.Model.Interface}/setResourcesIds`, this.resourcesIds), this.$store.dispatch(`${booking_const.Model.Interface}/setFilterMode`, false), this.$store.dispatch(`${booking_const.Model.Interface}/setFilteredBookingsIds`, []), this.$store.dispatch(`${booking_const.Model.Interface}/setFilteredMarks`, [])]);
+	      this.hideLoader();
 	    },
 	    addAfterTitle() {
 	      this.afterTitleContainer.append(this.$refs.afterTitle.$el);
@@ -8908,7 +9241,7 @@ this.BX = this.BX || {};
 		<div>
 			<MultiBooking v-if="hasSelectedCells"/>
 			<AfterTitle ref="afterTitle"/>
-			<SettingsButton :container="settingsButtonContainer"/>
+			<CrmFormsButton :container="settingsButtonContainer"/>
 			<BookingFilter
 				:filterId="filterId"
 				ref="filter"
@@ -8947,5 +9280,5 @@ this.BX = this.BX || {};
 
 	exports.Booking = Booking$1;
 
-}((this.BX.Booking = this.BX.Booking || {}),BX.Booking.Component.Mixin,BX,BX.Booking.Provider.Service,BX.Booking.Provider.Service,BX.Booking.Provider.Service,BX.Event,BX.UI,BX.UI,BX.UI.Vue3.Components,BX.Booking.Lib,BX.UI.Vue3.Components,BX.UI.NotificationManager,BX.Booking.Provider.Service,BX.Booking.Component,BX.Vue3.Directives,BX.Booking.Lib,BX.Booking.Component,BX.Booking.Component,BX.UI.IconSet,BX,BX.Booking.Component,BX.Booking.Component,BX.Booking.Lib,BX.Booking.Lib,BX.Booking.Lib,BX.Booking.Lib,BX.Booking,BX.UI.DatePicker,BX.Booking.Lib,BX.Booking.Component,BX.Booking.Component,BX.Booking.Lib,BX.Booking.Model,BX.Booking.Model,BX.Booking.Provider.Service,BX.Booking.Lib,BX.Booking.Lib,BX.Booking.Lib,BX.Booking.Component,BX.UI.Dialogs,BX,BX.Booking.Provider.Service,BX,BX.Booking,BX.Booking.Provider.Service,BX.Booking.Lib,BX.Booking.Lib,BX.Main,BX.UI.IconSet,BX,BX.Booking.Provider.Service,BX.Booking.Lib,BX.Booking.Lib,BX.UI.EntitySelector,BX.Booking.Lib,BX.Booking.Provider.Service,BX.Booking.Provider.Service,BX.UI,BX.Main,BX.Booking.Lib,BX.Booking.Component,BX.Booking.Component,BX.Booking.Lib,BX.UI.AutoLaunch,BX.Vue3.Vuex,BX,BX.Vue3,BX.UI,BX.Booking.Lib,BX.Booking.Const,BX.Booking.Lib));
+}((this.BX.Booking = this.BX.Booking || {}),BX.Booking.Component.Mixin,BX,BX.Booking.Provider.Service,BX.Booking.Provider.Service,BX.Booking.Provider.Service,BX.Event,BX.UI,BX.UI,BX.Booking.Lib,BX.UI.Vue3.Components,BX.UI.NotificationManager,BX.Booking.Provider.Service,BX.Booking.Component,BX.Vue3.Directives,BX.Booking.Lib,BX.Booking.Component,BX.Booking.Component,BX.UI.IconSet,BX,BX.Booking.Component,BX.Booking.Lib,BX.Booking.Lib,BX.Booking.Lib,BX.Booking.Lib,BX.Booking,BX.UI.DatePicker,BX.Booking.Lib,BX.Booking.Component,BX.Booking.Component,BX.Booking.Lib,BX.Booking.Model,BX.Booking.Model,BX.Booking.Provider.Service,BX.Booking.Lib,BX.Booking.Lib,BX.Booking.Lib,BX.Booking.Component,BX.UI.Dialogs,BX,BX.Booking.Provider.Service,BX,BX.Booking,BX.Booking.Provider.Service,BX.Booking.Lib,BX.Booking.Lib,BX.UI.IconSet,BX,BX.Booking.Provider.Service,BX.Booking.Lib,BX.Booking.Lib,BX.UI.EntitySelector,BX.Booking.Lib,BX.Booking.Provider.Service,BX.Booking.Provider.Service,BX.UI,BX.Main,BX.Booking.Lib,BX.Booking.Component,BX.Booking.Lib,BX.UI.AutoLaunch,BX.Vue3.Vuex,BX,BX.UI,BX.Booking.Lib,BX.Booking.Lib,BX.Main,BX.Booking.Component,BX.Booking.Component,BX.Vue3,BX.Booking.Const,BX.Booking.Component));
 //# sourceMappingURL=booking.bundle.js.map

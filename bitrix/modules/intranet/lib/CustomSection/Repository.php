@@ -77,6 +77,9 @@ class Repository
 			'filter' => [
 				'=CODE' => $customSectionCode,
 			],
+			'cache' => [
+				'ttl' => 3600,
+			],
 		])->fetchObject();
 
 		$section = ($object ? $this->assembler::constructCustomSectionFromEntityObject($object) : null);

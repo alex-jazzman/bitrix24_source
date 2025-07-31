@@ -9,6 +9,7 @@ return [
 		'im:messenger/controller/sidebar-v2/loc',
 		'im:messenger/controller/dialog/lib/helper/text',
 		'im:messenger/controller/sidebar-v2/factory',
+		'im/messenger/controller/sidebar-v2/const',
 		'layout/ui/safe-image',
 		'ui-system/blocks/icon',
 		'tokens',

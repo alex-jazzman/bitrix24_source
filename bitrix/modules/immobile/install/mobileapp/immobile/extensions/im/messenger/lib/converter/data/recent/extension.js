@@ -3,7 +3,7 @@
  */
 jn.define('im/messenger/lib/converter/data/recent', (require, exports, module) => {
 	/* eslint-disable no-param-reassign */
-	/* global ChatDataConverter ChatMessengerCommon ChatUtils */
+	/* global ChatDataConverter ChatMessengerCommon */
 	const { Type } = require('type');
 	const { clone } = require('utils/object');
 	const { Uuid } = require('utils/uuid');
@@ -173,24 +173,24 @@ jn.define('im/messenger/lib/converter/data/recent', (require, exports, module) =
 
 			if (userData.id > 0)
 			{
-				if (!Type.isUndefined(user.name))
+				if (Type.isStringFilled(user.name))
 				{
-					userData.name = ChatUtils.htmlspecialcharsback(user.name);
+					userData.name = jnComponent.convertHtmlEntities(user.name);
 				}
 
-				if (!Type.isUndefined(user.last_name))
+				if (Type.isStringFilled(user.last_name))
 				{
-					userData.last_name = ChatUtils.htmlspecialcharsback(user.last_name);
+					userData.last_name = jnComponent.convertHtmlEntities(user.last_name);
 				}
 
-				if (!Type.isUndefined(user.first_name))
+				if (Type.isStringFilled(user.first_name))
 				{
-					userData.first_name = ChatUtils.htmlspecialcharsback(user.first_name);
+					userData.first_name = jnComponent.convertHtmlEntities(user.first_name);
 				}
 
-				if (!Type.isUndefined(user.work_position))
+				if (Type.isStringFilled(user.work_position))
 				{
-					userData.work_position = ChatUtils.htmlspecialcharsback(user.work_position);
+					userData.work_position = jnComponent.convertHtmlEntities(user.work_position);
 				}
 			}
 

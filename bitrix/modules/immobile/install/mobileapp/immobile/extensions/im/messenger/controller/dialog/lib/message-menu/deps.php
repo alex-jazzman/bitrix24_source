@@ -3,7 +3,6 @@
 return [
 	'extensions' => [
 		'apptheme',
-		'assets/icons',
 		'loc',
 		'type',
 		'alert',
@@ -11,6 +10,7 @@ return [
 		'notify-manager',
 		'utils/url',
 		'utils/file',
+		'assets/icons',
 		'utils/object',
 		'device/connection',
 		'layout/ui/feedback-form-opener',

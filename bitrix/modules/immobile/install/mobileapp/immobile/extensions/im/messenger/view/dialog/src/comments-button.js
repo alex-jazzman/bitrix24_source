@@ -4,6 +4,7 @@
 jn.define('im/messenger/view/dialog/comments-button', (require, exports, module) => {
 	const { EventFilterType } = require('im/messenger/const');
 
+	const { StateManager } = require('im/messenger/view/lib/state-manager');
 	const { ProxyView } = require('im/messenger/view/lib/proxy-view');
 
 	/**
@@ -20,7 +21,17 @@ jn.define('im/messenger/view/dialog/comments-button', (require, exports, module)
 		{
 			super(ui, eventFilter);
 
-			this.currentCounterValue = null;
+			this.initStateManager();
+		}
+
+		initStateManager()
+		{
+			const state = {
+				counter: null,
+				isShow: false,
+			};
+
+			this.stateManager = new StateManager(state);
 		}
 
 		/**
@@ -38,8 +49,12 @@ jn.define('im/messenger/view/dialog/comments-button', (require, exports, module)
 		 */
 		show()
 		{
-			if (this.isUiAvailable())
+			const newState = { isShow: true };
+			const hasChanges = this.stateManager.hasChanges(newState);
+
+			if (this.isUiAvailable() && hasChanges)
 			{
+				this.stateManager.updateState(newState);
 				this.ui.show();
 			}
 		}
@@ -49,8 +64,12 @@ jn.define('im/messenger/view/dialog/comments-button', (require, exports, module)
 		 */
 		hide({ isAnimated = false } = {})
 		{
-			if (this.isUiAvailable())
+			const newState = { isShow: false };
+			const hasChanges = this.stateManager.hasChanges(newState);
+
+			if (this.isUiAvailable() && hasChanges)
 			{
+				this.stateManager.updateState(newState);
 				this.ui.hide(isAnimated);
 			}
 		}
@@ -60,11 +79,13 @@ jn.define('im/messenger/view/dialog/comments-button', (require, exports, module)
 		 */
 		setCounter(value)
 		{
-			const isNewCounterValue = this.currentCounterValue !== value;
-			if (this.isUiAvailable() && isNewCounterValue)
+			const newState = { counter: value };
+			const hasChanges = this.stateManager.hasChanges(newState);
+
+			if (this.isUiAvailable() && hasChanges)
 			{
 				this.ui.setCounter(value);
-				this.currentCounterValue = value;
+				this.stateManager.updateState(newState);
 			}
 		}
 	}

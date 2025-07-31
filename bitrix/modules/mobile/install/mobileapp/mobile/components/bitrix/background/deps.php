@@ -39,8 +39,7 @@ return [
 		'background/notifications/promotion',
 
 		'calendar:background',
-		'tourist',
-		'app-rating-manager',
+		'app-rating-background-client',
 		'whats-new/background',
 	],
 ];

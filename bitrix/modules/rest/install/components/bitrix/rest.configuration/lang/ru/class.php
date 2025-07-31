@@ -3,6 +3,7 @@ $MESS['REST_CONFIGURATION_TITLE_PAGE_INDEX'] = 'Отраслевые решен�
 $MESS['REST_CONFIGURATION_TITLE_PAGE_EXPORT'] = 'Экспорт отраслевых решений';
 $MESS['REST_CONFIGURATION_TITLE_PAGE_IMPORT'] = 'Импорт отраслевых решений';
 $MESS['REST_CONFIGURATION_TITLE_PAGE_SECTION'] = 'Отраслевые решения';
+$MESS['REST_CONFIGURATION_TITLE_PAGE_SECTION_CRM'] = 'Отраслевые CRM';
 $MESS['REST_CONFIGURATION_TITLE_PAGE_IMPORT_APP'] = 'Импорт отраслевых решений';
 $MESS['REST_CONFIGURATION_TITLE_PAGE_IMPORT_ROLLBACK'] = 'Восстановление отраслевых решений';
 $MESS['REST_CONFIGURATION_TITLE_PAGE_PLACEMENT'] = 'Отраслевые решения';

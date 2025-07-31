@@ -51,9 +51,4 @@ class DeputyAndHRPermissionInstaller extends BaseInstaller
 				) !== null
 			;
 	}
-
-	public function getVersion(): int
-	{
-		return InstallerFactory::VERSION_1;
-	}
 }

@@ -109,6 +109,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    },
 	    withoutPreview() {
 	      return !main_core.Type.isStringFilled(this.previewSourceLink);
+	    },
+	    progressBarSize() {
+	      return this.isGallery ? im_v2_component_elements_progressbar.ProgressBarSize.S : im_v2_component_elements_progressbar.ProgressBarSize.L;
 	    }
 	  },
 	  methods: {
@@ -155,9 +158,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				class="bx-im-elements-media-gallery-image-item__source"
 			/>
 			<ProgressBar 
-				v-if="handleLoading && !isLoaded" 
+				v-if="handleLoading" 
 				:item="file" 
-				:withLabels="!isGallery" 
+				:size="progressBarSize" 
 				@cancelClick="onCancelClick"
 			/>
 			<div v-if="showPlayIcon" class="bx-im-elements-media-gallery-image-item__play-icon-container">

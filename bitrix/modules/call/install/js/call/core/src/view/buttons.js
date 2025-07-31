@@ -39,6 +39,13 @@ export class TitleButton
 			return BX.message("IM_M_CALL_WITH").replace("#USER_NAME#", prettyName);
 		}
 	};
+
+	update(config)
+	{
+		this.text = Type.isStringFilled(config.text) ? config.text : '';
+		this.isGroupCall = config.isGroupCall;
+		this.elements.root.innerHTML = this.getTitle();
+	}
 }
 
 export class SimpleButton
@@ -268,10 +275,10 @@ export class DeviceButton
 									props: {className: this.getIconClass()},
 								}),
 							]
-						}),						
+						}),
 					]
 				}),
-				
+
 				Dom.create("div", {
 					props: {className: "bx-messenger-videocall-panel-text"},
 					text: this.text
@@ -541,22 +548,32 @@ export class WaterMarkButton
 	constructor(config)
 	{
 		this.language = config.language;
-	};
+		this.elements = {
+			root: null,
+		};
+	}
 
-	render()
+	render(): HTMLElement
 	{
-		return Dom.create("div", {
-			props: {className: "bx-messenger-videocall-watermark"},
+		if (this.elements.root)
+		{
+			return this.elements.root;
+		}
+
+		this.elements.root = Dom.create('div', {
+			props: { className: 'bx-messenger-videocall-watermark' },
 			children: [
-				Dom.create("img", {
+				Dom.create('img', {
 					props: {
-						className: "bx-messenger-videocall-watermark-img",
-						src: this.getWatermarkUrl(this.language)
+						className: 'bx-messenger-videocall-watermark-img',
+						src: this.getWatermarkUrl(this.language),
 					},
-				})
-			]
+				}),
+			],
 		});
-	};
+
+		return this.elements.root;
+	}
 
 	getWatermarkUrl(language)
 	{
@@ -576,88 +593,118 @@ export class TopButton
 {
 	constructor(config)
 	{
-		this.iconClass = BX.prop.getString(config, "iconClass", "");
-		this.text = BX.prop.getString(config, "text", "");
-		
+		this.iconClass = BX.prop.getString(config, 'iconClass', '');
+		this.text = BX.prop.getString(config, 'text', '');
 		this.elements = {
 			root: null,
+			icon: null,
+			text: null,
 		};
 
 		this.callbacks = {
-			onClick: BX.prop.getFunction(config, "onClick", BX.DoNothing),
-			onMouseOver: BX.prop.getFunction(config, "onMouseOver", BX.DoNothing),
-			onMouseOut: BX.prop.getFunction(config, "onMouseOut", BX.DoNothing),
-		}
-	};
+			onClick: BX.prop.getFunction(config, 'onClick', BX.DoNothing),
+			onMouseOver: BX.prop.getFunction(config, 'onMouseOver', BX.DoNothing),
+			onMouseOut: BX.prop.getFunction(config, 'onMouseOut', BX.DoNothing),
+		};
+	}
 
-	render()
+	render(): HTMLElement
 	{
 		if (this.elements.root)
 		{
 			return this.elements.root;
 		}
-		
-		this.elements.root = Dom.create("div", {
-			props: {className: "bx-messenger-videocall-top-button"},
+
+		this.elements.root = Dom.create('div', {
+			props: { className: 'bx-messenger-videocall-top-button' },
 			children: [
-				Dom.create("div", {
-					props: {className: "bx-messenger-videocall-top-button-icon " + this.iconClass}
+				this.elements.icon = Dom.create('div', {
+					props: { className: `bx-messenger-videocall-top-button-icon ${this.iconClass}` },
 				}),
-				Dom.create("div", {
-					props: {className: "bx-messenger-videocall-top-button-text " + this.iconClass},
-					text: this.text
-				})
+				this.elements.text = Dom.create('div', {
+					props: { className: `bx-messenger-videocall-top-button-text ${this.iconClass}` },
+					text: this.text,
+				}),
 			],
 			events: {
 				click: this.callbacks.onClick,
 				mouseover: this.callbacks.onMouseOver,
-				mouseout: this.callbacks.onMouseOut
-			}
+				mouseout: this.callbacks.onMouseOut,
+			},
 		});
-		
+
 		return this.elements.root;
-	};
+	}
+
+	update(config)
+	{
+		const iconClass = BX.prop.getString(config, 'iconClass', this.iconClass);
+		const text = BX.prop.getString(config, 'text', this.text);
+
+		if (this.iconClass !== iconClass)
+		{
+			this.iconClass = iconClass;
+			this.elements.icon.className = `bx-messenger-videocall-top-button-icon ${this.iconClass}`;
+		}
+
+		if (this.text !== text)
+		{
+			this.text = text;
+			this.elements.text.innerText = this.text;
+			this.elements.text.className = `bx-messenger-videocall-top-button-text ${this.iconClass}`;
+		}
+	}
 }
 
 export class TopFramelessButton
 {
 	constructor(config)
 	{
-		this.iconClass = BX.prop.getString(config, "iconClass", "");
-		this.textClass = BX.prop.getString(config, "textClass", "");
-		this.text = BX.prop.getString(config, "text", "");
+		this.iconClass = BX.prop.getString(config, 'iconClass', '');
+		this.textClass = BX.prop.getString(config, 'textClass', '');
+		this.text = BX.prop.getString(config, 'text', '');
+
+		this.elements = {
+			root: null,
+		};
 
 		this.callbacks = {
-			onClick: BX.prop.getFunction(config, "onClick", BX.DoNothing),
-			onMouseOver: BX.prop.getFunction(config, "onMouseOver", BX.DoNothing),
-			onMouseOut: BX.prop.getFunction(config, "onMouseOut", BX.DoNothing),
-		}
-	};
+			onClick: BX.prop.getFunction(config, 'onClick', BX.DoNothing),
+			onMouseOver: BX.prop.getFunction(config, 'onMouseOver', BX.DoNothing),
+			onMouseOut: BX.prop.getFunction(config, 'onMouseOut', BX.DoNothing),
+		};
+	}
 
-	render()
+	render(): HTMLElement
 	{
-		return Dom.create("div", {
-			props: {className: "bx-messenger-videocall-top-button-frameless"},
+		if (this.elements.root)
+		{
+			return this.elements.root;
+		}
+
+		this.elements.root = Dom.create('div', {
+			props: { className: 'bx-messenger-videocall-top-button-frameless' },
 			children: [
-				Dom.create("div", {
-					props: {className: "bx-messenger-videocall-top-button-icon " + this.iconClass}
+				Dom.create('div', {
+					props: { className: `bx-messenger-videocall-top-button-icon ${this.iconClass}` },
 				}),
-				(this.text != "" ?
-						Dom.create("div", {
-							props: {className: "bx-messenger-videocall-top-button-text " + this.textClass},
-							text: this.text
+				(this.text === ''
+						? null
+						: Dom.create('div', {
+							props: { className: `bx-messenger-videocall-top-button-text ${this.textClass}` },
+							text: this.text,
 						})
-						:
-						null
-				)
+				),
 			],
 			events: {
 				click: this.callbacks.onClick,
 				mouseover: this.callbacks.onMouseOver,
-				mouseout: this.callbacks.onMouseOut
+				mouseout: this.callbacks.onMouseOut,
 			},
 		});
-	};
+
+		return this.elements.root;
+	}
 }
 
 export class ParticipantsButton

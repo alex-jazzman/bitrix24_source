@@ -22,9 +22,7 @@
 	const { OpenPromotionNotification } = require('background/notifications/promotion');
 	OpenPromotionNotification.bindPromotionEvent();
 
-	const { Tourist } = require('tourist');
-	Tourist.loadEvents();
-
-	const { AppRatingManager } = require('app-rating-manager');
-	AppRatingManager.subscribeToUserEvents();
+	const { AppRatingBackgroundClient } = require('app-rating-background-client');
+	AppRatingBackgroundClient.subscribeToUserEvents();
+	AppRatingBackgroundClient.subscribeToAppPausedEvent();
 })();

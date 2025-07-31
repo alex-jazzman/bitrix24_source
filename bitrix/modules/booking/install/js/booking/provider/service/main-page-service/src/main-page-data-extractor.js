@@ -14,6 +14,7 @@ import type { ResourceModel } from 'booking.model.resources';
 import type { ResourceDto } from 'booking.provider.service.resources-service';
 import type { ResourceTypeModel } from 'booking.model.resource-types';
 import type { ResourceTypeDto } from 'booking.provider.service.resources-type-service';
+import type { FormsMenuModel } from 'booking.model.forms-menu';
 import type { WaitListItemModel } from 'booking.model.wait-list';
 import type { WaitListItemDto } from 'booking.provider.service.wait-list-service';
 
@@ -126,5 +127,10 @@ export class MainPageDataExtractor
 	getIsCurrentSenderAvailable(): boolean
 	{
 		return this.#response.isCurrentSenderAvailable;
+	}
+
+	getFormsMenu(): FormsMenuModel
+	{
+		return this.#response.formsMenu;
 	}
 }

@@ -2,9 +2,9 @@
  * @module im/messenger/controller/user-add
  */
 jn.define('im/messenger/controller/user-add', (require, exports, module) => {
-	/* global ChatUtils */
 	const { Type } = require('type');
 	const { Loc } = require('loc');
+	const { clone } = require('utils/object');
 
 	const { Logger } = require('im/messenger/lib/logger');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
@@ -76,7 +76,7 @@ jn.define('im/messenger/controller/user-add', (require, exports, module) => {
 		getUserList()
 		{
 			const userItems = [];
-			const recentUserList = ChatUtils.objectClone(this.store.getters['recentModel/getUserList']());
+			const recentUserList = clone(this.store.getters['recentModel/getUserList']());
 			const recentUserListIndex = {};
 			if (Type.isArrayFilled(recentUserList))
 			{
@@ -91,7 +91,7 @@ jn.define('im/messenger/controller/user-add', (require, exports, module) => {
 				});
 			}
 
-			const colleaguesList = ChatUtils.objectClone(this.store.getters['usersModel/getList']());
+			const colleaguesList = clone(this.store.getters['usersModel/getList']());
 			if (Type.isArrayFilled(colleaguesList))
 			{
 				colleaguesList.forEach((user) => {

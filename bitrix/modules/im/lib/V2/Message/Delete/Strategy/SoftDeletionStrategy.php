@@ -29,7 +29,7 @@ class SoftDeletionStrategy extends DeletionStrategy
 			);
 		}
 
-		$this->files = $this->messages->getFiles();
+		$this->messages->fillFiles();
 
 		foreach ($this->messages as $message)
 		{

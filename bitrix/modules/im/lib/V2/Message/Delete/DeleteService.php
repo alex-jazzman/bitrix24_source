@@ -162,7 +162,10 @@ class DeleteService
 			Message\Delete\Strategy\DeletionStrategy::getInstance(
 				$this->getMessageCollectionByMode($deletionMode),
 				$deletionMode
-			)->delete();
+			)
+				->setContext($this->getContext())
+				->delete()
+			;
 		}
 
 		$this->needUpdateRecent = $this->chat->getLastMessageId() !== $chatLastMessageId;

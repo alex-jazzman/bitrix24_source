@@ -8,6 +8,7 @@ return [
 		'utils/object',
 		'utils/string',
 		'utils/enums/base',
+		'utils/validation',
 		'utils/enums/style',
 		'ui-system/blocks/icon',
 		'ui-system/typography/text',

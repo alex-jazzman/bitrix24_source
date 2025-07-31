@@ -35,8 +35,11 @@ export class Copilot
 			event: AnalyticsEvent.aiRecordStart,
 			type: params.callType,
 			c_section: AnalyticsSection.callFollowup,
+			p2: `chatUserCount_${params.chatUserCount}`,
 			p5: `callId_${params.callId}`,
 		};
+
+		resultData.p1 = params?.isAutostart ? 'launchType_auto' : 'launchType_manual';
 
 		if (params?.userCount)
 		{
@@ -162,7 +165,7 @@ export class Copilot
 	{
 		sendData({
 			tool: AnalyticsTool.im,
-			category: AnalyticsCategory.call,
+			category: AnalyticsCategory.callFollowup,
 			event: AnalyticsEvent.delete,
 			type: params.callType,
 			c_section: AnalyticsSection.call,

@@ -4,6 +4,7 @@
 jn.define('im/messenger/view/dialog/join-button', (require, exports, module) => {
 	const { EventFilterType } = require('im/messenger/const');
 
+	const { StateManager } = require('im/messenger/view/lib/state-manager');
 	const { ProxyView } = require('im/messenger/view/lib/proxy-view');
 
 	/**
@@ -11,6 +12,27 @@ jn.define('im/messenger/view/dialog/join-button', (require, exports, module) => 
 	 */
 	class DialogJoinButton extends ProxyView
 	{
+		/**
+		 * @constructor
+		 * @param {JNBaseClassInterface} ui
+		 * @param {EventFilter} eventFilter
+		 */
+		constructor(ui, eventFilter)
+		{
+			super(ui, eventFilter);
+
+			this.initStateManager();
+		}
+
+		initStateManager()
+		{
+			const state = {
+				isShow: false,
+			};
+
+			this.stateManager = new StateManager(state);
+		}
+
 		/**
 		 * @return {AvailableEventCollection}
 		 */
@@ -26,8 +48,12 @@ jn.define('im/messenger/view/dialog/join-button', (require, exports, module) => 
 		 */
 		hide(isAnimated = false)
 		{
-			if (this.isUiAvailable())
+			const newState = { isShow: false };
+			const hasChanges = this.stateManager.hasChanges(newState);
+
+			if (this.isUiAvailable() && hasChanges)
 			{
+				this.stateManager.updateState(newState);
 				this.ui.hide({ animated: isAnimated });
 			}
 		}
@@ -37,8 +63,12 @@ jn.define('im/messenger/view/dialog/join-button', (require, exports, module) => 
 		 */
 		show(params)
 		{
-			if (this.isUiAvailable())
+			const newState = { ...params, isShow: true };
+			const hasChanges = this.stateManager.hasChanges(newState);
+
+			if (this.isUiAvailable() && hasChanges)
 			{
+				this.stateManager.updateState(newState);
 				this.ui.show(params);
 			}
 		}

@@ -8,25 +8,21 @@ use Bitrix\HumanResources\Contract\AgentInstaller;
 
 class InstallerFactory
 {
-	public const REINSTALL = -1;
-	public const VERSION_0 = 0;
-	public const VERSION_1 = 1;
-	public const VERSION_2 = 2;
-	public const VERSION_3 = 3;
-	public const VERSION_4 = 4;
-
 	/**
 	 * @return array<int, string>
 	 */
 	public static function getVersionMap(): array
 	{
 		return [
-			self::REINSTALL => PermissionReInstaller::class,
-			self::VERSION_0 => DefaultPermissionInstaller::class,
-			self::VERSION_1 => DeputyAndHRPermissionInstaller::class,
-			self::VERSION_2 => InviteAndFirePermissionInstaller::class,
-			self::VERSION_3 => TeamRolesInstaller::class,
-			self::VERSION_4 => TeamRoleViewAllCompanyInstaller::class,
+			-1 => PermissionReInstaller::class,
+			0 => DefaultPermissionInstaller::class,
+			1 => DeputyAndHRPermissionInstaller::class,
+			2 => InviteAndFirePermissionInstaller::class,
+			3 => TeamRolesInstaller::class,
+			4 => TeamRoleViewAllCompanyInstaller::class,
+			5 => UpdateAdminRoleInstaller::class,
+			6 => TeamRolesInstallerV2::class,
+			7 => CommunicationInstaller::class,
 		];
 	}
 

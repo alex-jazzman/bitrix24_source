@@ -426,8 +426,7 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 				onBlur: this.handleOnBlur,
 				onChange: this.handleOnChange,
 				updateRowByKey: this.updateRowByKey,
-				hideMenu: this.handleHideMenu,
-				showMenu: this.handleShowMenu,
+				updateMenu: this.updateActionMenu,
 				onChangeAttachments: this.#handleOnChangeAttachments,
 				onToggleComplete: this.handleOnToggleComplete,
 				openUserSelectionManager: this.openUserSelectionManager,
@@ -698,7 +697,7 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 			const moveIds = item.getMoveIds();
 
 			this.reloadItem(item);
-			this.updateActionMenu();
+			this.updateActionMenu(item);
 			parentItems.forEach((parentItem) => {
 				this.reloadItem(parentItem);
 			});
@@ -750,7 +749,7 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 		};
 
 		#handleOnChangeAttachments = ({ item, shouldRender }) => {
-			this.updateActionMenu();
+			this.updateActionMenu(item);
 			this.handleOnChange();
 
 			return this.updateRows({ itemIds: [item.getId()], animation: 'automatic', shouldRender });
@@ -858,7 +857,7 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 
 		#handleOnChangeUsers = ({ item, memberType }) => (_, members = []) => {
 			this.#handleOnChangeMembers({ item, members, memberType });
-			this.updateActionMenu();
+			this.updateActionMenu(item);
 			this.updateRows({ itemIds: [item.getId()], animation: 'fade', saveFocus: true });
 			this.handleOnChange();
 		};
@@ -903,7 +902,7 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 				return;
 			}
 
-			this.menuRef.setItem(focusedItem);
+			this.updateActionMenu(focusedItem);
 			if (!this.menuRef.isShownMenu())
 			{
 				const isStubMenu = this.checklistQueue.getElementPosition(STUB_MENU.key);
@@ -924,6 +923,10 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 
 			void this.deleteRows([STUB_MENU.key], 'none');
 			this.menuRef.hide();
+		};
+
+		updateActionMenu = (item) => {
+			this.menuRef?.setItem(item);
 		};
 
 		/**
@@ -957,11 +960,6 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 				focusedItem.textInputBlur();
 			}
 		};
-
-		updateActionMenu()
-		{
-			this.menuRef?.refreshExtension();
-		}
 
 		showToastNoRights = () => {
 			toastNoRights({

@@ -74,6 +74,7 @@ $MESS["CALL_M_BTN_TITLE_STOP_RECORD"] = "Жазуды тоқтату";
 $MESS["CALL_M_INCOMING_NOTIFICATION_SETTINGS_TITLE"] = "Баптаулар";
 $MESS["CALL_POPUP_AI_AGREEMENT_ERROR"] = "Битрикс24 әкімшісінен жаңартылған Лицензиялық келісімді қабылдауды сұраңыз";
 $MESS["CALL_POPUP_AI_DEFAULT_TEXT"] = "CoPilot-ты қоңырауға қосу мүмкін болмады. Кейінірек көріңіз";
+$MESS["CALL_POPUP_AI_MODULE_ERROR"] = "CoPilot жұмыс істеуі үшін AI-интеграция модулі қажет. Әкімшіге хабарласыңыз";
 $MESS["CALL_POPUP_AI_NOT_ENOUGH_BAAS_ERROR"] = "CoPilot Follow-up жұмыс істеуі үшін CoPilot бусттары жеткіліксіз";
 $MESS["CALL_POPUP_AI_SETTINGS_ERROR"] = "Битрикс24 баптауларында CoPilot Follow-up қосыңыз.";
 $MESS["CALL_POPUP_AI_UNAVAILABLE_ERROR"] = "CoPilot Follow-up сіздің тарифіңізде қолжетімсіз. Тиісті тарифті таңдаңыз";

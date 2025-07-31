@@ -15,10 +15,11 @@ Loc::loadMessages(__FILE__);
 
 $id = 'widget-' . htmlspecialcharsbx(bin2hex(random_bytes(5)));
 
+$region = $arResult['REGION'];
 $zone = $arResult['ZONE'];
 $isTrialActive = $arResult['IS_TRIAL_ACTIVE'] ?? false;
 $isTariffFree = $arResult['IS_TARIFF_FREE'] ?? false;
-$isTrialAlreadyActivated = $arResult['IS_TRIAL_ALREADY_ACTIVATED'] ?? false;
+$isTrialable = $arResult['IS_TRIALABLE'] ?? false;
 
 $textButtonTrial = Loc::getMessage('BLOCK_MP_WIDGET_ENT_COMP_SCHEDULE_WEST_BUTTON_TRIAL');
 $textButtonTalk = Loc::getMessage('BLOCK_MP_WIDGET_ENT_COMP_SCHEDULE_WEST_BUTTON_TALK');
@@ -29,14 +30,19 @@ $textTrialActive = Loc::getMessage('BLOCK_MP_WIDGET_ENT_COMP_SCHEDULE_WEST_TEXT'
 $titleTariffNotFree = Loc::getMessage('BLOCK_MP_WIDGET_ENT_COMP_SCHEDULE_WEST_TITLE_TARIFF_NOT_FREE');
 $textTariffNotFree = Loc::getMessage('BLOCK_MP_WIDGET_ENT_COMP_SCHEDULE_WEST_TEXT_TARIFF_NOT_FREE');
 $titleTrialActive = Loc::getMessage('BLOCK_MP_WIDGET_ENT_COMP_SCHEDULE_WEST_TITLE');
-$hrefButtonTalk = 'https://global.bitrix24.com/';
-if ($zone === 'com')
+
+$hrefButtonTalk = '';
+if (!in_array($region, ['ru', 'kz', 'by', 'uz']))
 {
-	$hrefButtonTalk .= '~TePdd';
-}
-if ($zone === 'br')
-{
-	$hrefButtonTalk .= '~ercrn';
+	$hrefButtonTalk = 'https://global.bitrix24.com/';
+	if (in_array($zone, ['en', 'eu', 'uk']))
+	{
+		$hrefButtonTalk .= '~TePdd';
+	}
+	if ($zone === 'br')
+	{
+		$hrefButtonTalk .= '~ercrn';
+	}
 }
 ?>
 
@@ -47,7 +53,7 @@ if ($zone === 'br')
 >
 	<div class="g-pl-25 g-pr-25 g-pt-55 g-pb-55">
 		<div style="display: flex; flex-direction: column; justify-content: center; min-height: 170px;">
-			<?php if ($zone === 'com' || $zone === 'br'): ?>
+			<?php if (in_array($zone, ['en', 'eu', 'uk', 'br'])): ?>
 				<a href="<?= $hrefButtonTalk ?>" target="_blank">
 					<button
 						style="--color: var(--theme-color-strict-inverse); --bg: var(--primary); --color-hover: var(--theme-color-strict-inverse); --bg-hover: var(--primary-lighten-1);"
@@ -61,7 +67,7 @@ if ($zone === 'br')
 			<?php else: ?>
 				<?php if (!$isTrialActive): ?>
 					<?php if ($isTariffFree): ?>
-						<?php if (!$isTrialAlreadyActivated): ?>
+						<?php if ($isTrialable): ?>
 							<div>
 								<button
 									style="--color: var(--theme-color-strict-inverse); --bg: var(--primary); --color-hover: var(--theme-color-strict-inverse); --bg-hover: var(--primary-lighten-1);"
@@ -74,7 +80,7 @@ if ($zone === 'br')
 								<?= $textTrialNotActive ?>
 							</div>
 						<?php endif; ?>
-						<?php if ($isTrialAlreadyActivated): ?>
+						<?php if (!$isTrialable): ?>
 							<div class="landing-block-node-content g-mb-13">
 								<div class="landing-block-node-title g-color-main g-font-size-25 g-font-weight-600 g-mb-10">
 									<?= $titleTariffNotFree ?>
@@ -83,7 +89,7 @@ if ($zone === 'br')
 									<?= $textTariffNotFree ?>
 								</div>
 							</div>
-							<a href="/settings/license.php" target="_blank">
+							<a href="/settings/license_all.php" target="_blank">
 								<button
 									style="--color: var(--theme-color-strict-inverse); --bg: var(--primary); --color-hover: var(--theme-color-strict-inverse); --bg-hover: var(--primary-lighten-1);"
 									class="g-btn-primary g-height-45 g-font-weight-500 g-font-size-20 g-rounded-25 btn g-brd-none g-color g-bg g-color--hover g-bg--hover g-cursor-pointer landing-widget-ent-west-button">
@@ -112,7 +118,7 @@ if ($zone === 'br')
 							<?= $textTrialActive ?>
 						</div>
 					</div>
-					<a href="/settings/license.php" target="_blank">
+					<a href="/settings/license_all.php" target="_blank">
 						<button
 							style="--color: var(--theme-color-strict-inverse); --bg: var(--primary); --color-hover: var(--theme-color-strict-inverse); --bg-hover: var(--primary-lighten-1);"
 							class="g-btn-primary g-height-45 g-font-weight-500 g-font-size-20 g-rounded-25 btn g-brd-none g-color g-bg g-color--hover g-bg--hover g-cursor-pointer landing-widget-ent-west-button">

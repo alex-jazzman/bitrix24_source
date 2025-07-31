@@ -59,7 +59,7 @@ jn.define('intranet/create-department/src/selector-card/base', (require, exports
 			const { title } = this.props;
 
 			return Text5({
-				testId: this.#getTestId('selector-card-title'),
+				testId: this.#getTestId('selector-card-title-text'),
 				text: title ?? '',
 				color: Color.base3,
 				numberOfLines: 1,
@@ -82,7 +82,7 @@ jn.define('intranet/create-department/src/selector-card/base', (require, exports
 					},
 				},
 				Text4({
-					testId: this.#getTestId('selector-card-title'),
+					testId: this.#getTestId('selector-card-dropdown-text'),
 					text: text ?? '',
 					color: Color.base1,
 					numberOfLines: 1,

@@ -7,7 +7,7 @@ use Bitrix\HumanResources\Compatibility\Converter\StructureBackwardConverter;
 use Bitrix\HumanResources\Compatibility\Converter\UserBackwardConverter;
 use Bitrix\HumanResources\Contract;
 use Bitrix\HumanResources\Contract\Repository\NodeMemberRepository;
-use Bitrix\HumanResources\Contract\Repository\NodeRelationRepository;
+use Bitrix\HumanResources\Repository\NodeRelationRepository;
 use Bitrix\HumanResources\Contract\Repository\NodeRepository;
 use Bitrix\HumanResources\Contract\Repository\StructureRepository;
 use Bitrix\HumanResources\Public\Service\NodeSettingsService;
@@ -111,7 +111,7 @@ class Container
 		return self::getService('humanresources.service.role.helper');
 	}
 
-	public static function getEventSenderService(): Contract\Service\EventSenderService
+	public static function getEventSenderService(): Service\EventSenderService
 	{
 		return self::getService('humanresources.service.event.sender');
 	}
@@ -166,7 +166,7 @@ class Container
 		return self::getService('humanresources.compatibility.converter.user');
 	}
 
-	public static function getNodeRelationService(): Contract\Service\NodeRelationService
+	public static function getNodeRelationService(): Service\NodeRelationService
 	{
 		return self::getService('humanresources.service.node.relation');
 	}
@@ -299,11 +299,6 @@ class Container
 	public static function getNodeSettingsService(): NodeSettingsService
 	{
 		return self::getService('humanresources.service.public.nodeSettings');
-	}
-
-	public static function getStructureAccessService(): Service\Access\Structure\StructureAccessService
-	{
-		return self::getService('humanresources.service.access.structure.structureAccessService');
 	}
 
 	public static function getChatService(): ChatService

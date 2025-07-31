@@ -15,6 +15,7 @@ import { MenuActions } from '../../menu-actions';
 export class AddDepartmentMenuItem extends AbstractMenuItem
 {
 	permissionChecker: PermissionCheckerClass;
+	entityType: null;
 
 	constructor(entityType: string)
 	{
@@ -52,7 +53,9 @@ export class AddDepartmentMenuItem extends AbstractMenuItem
 			dataTestId: 'hr-company-structure_menu__add-department-item',
 		});
 
+		this.entityType = entityType;
 		this.permissionChecker = permissionChecker;
+		this.entityType = entityType;
 	}
 
 	invoke({ entityId, analyticSource, entityType }): void

@@ -9,10 +9,10 @@ return [
 	'rel' => [
 		'main.polyfill.core',
 		'booking.core',
-		'booking.const',
 		'booking.lib.slot-ranges',
 		'booking.provider.service.resource-dialog-service',
 		'booking.lib.resources-date-cache',
+		'booking.const',
 	],
 	'skip_core' => true,
 ];

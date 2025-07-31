@@ -1,7 +1,7 @@
 <?php
 
-use Bitrix\Bitrix24\Feature;
 use Bitrix\Landing\Manager;
+use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
@@ -37,6 +37,7 @@ class LandingBlocksMainpageWidgetEntWest extends LandingBlocksMainpageWidgetBase
 	protected function getData(): void
 	{
 		$this->arResult['ZONE']  = Manager::getZone();
+		$this->arResult['REGION']  = Application::getInstance()->getLicense()->getRegion();
 
 		if (Loader::includeModule('bitrix24'))
 		{
@@ -44,7 +45,7 @@ class LandingBlocksMainpageWidgetEntWest extends LandingBlocksMainpageWidgetBase
 
 			$this->arResult['IS_TARIFF_FREE'] = $licenseType === 'project';
 			$this->arResult['IS_TRIAL_ACTIVE'] = $licenseType === 'demo';
-			$this->arResult['IS_TRIAL_ALREADY_ACTIVATED'] = Feature::isEditionTrialable('demo');
+			$this->arResult['IS_TRIALABLE'] = (new Bitrix\Bitrix24\License\DemoLicense)->isAvailable();
 		}
 	}
 }

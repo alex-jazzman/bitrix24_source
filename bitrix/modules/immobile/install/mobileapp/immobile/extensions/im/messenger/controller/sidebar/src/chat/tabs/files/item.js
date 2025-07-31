@@ -3,7 +3,6 @@
  */
 jn.define('im/messenger/controller/sidebar/chat/tabs/files/item', (require, exports, module) => {
 	const { Loc } = require('loc');
-	const { Feature: MobileFeature } = require('feature');
 	const { resolveFileIcon } = require('assets/icons');
 	const { Moment } = require('utils/date');
 	const { getExtension } = require('utils/file');
@@ -190,7 +189,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/files/item', (require, expo
 		renderSubTitle()
 		{
 			const { dateCreate } = this.props;
-			const { id, avatar, name, color } = this.author;
+			const { id } = this.author;
 
 			const date = new Moment(dateCreate).format(dayMonth);
 			const time = new Moment(dateCreate).format(shortTime);
@@ -200,20 +199,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/files/item', (require, expo
 				'#TIME#': time,
 			});
 
-			let avatarView = null;
-			if (MobileFeature.isNativeAvatarSupported())
-			{
-				avatarView = Avatar(ChatAvatar.createFromDialogId(id).getSidebarTabItemDescriptionAvatarProps());
-			}
-			else
-			{
-				avatarView = new MessengerAvatarLegacy({
-					text: name,
-					uri: avatar,
-					color,
-					size: 'S',
-				});
-			}
+			const avatarView = Avatar(ChatAvatar.createFromDialogId(id).getSidebarTabItemDescriptionAvatarProps());
 
 			return View(
 				{

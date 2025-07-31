@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Bitrix\Booking\Internals\Model;
 
+use Bitrix\Main\Entity\BooleanField;
 use Bitrix\Main\Entity\DataManager;
 use Bitrix\Main\ORM\Data\Internal\DeleteByFilterTrait;
 use Bitrix\Main\ORM\Fields\IntegerField;
@@ -55,6 +56,11 @@ final class BookingResourceTable extends DataManager
 			(new Reference('RESOURCE', ResourceTable::class,
 				Join::on('this.RESOURCE_ID', 'ref.ID')))
 				->configureJoinType('inner'),
+
+			(new BooleanField('IS_PRIMARY'))
+				->configureRequired()
+				->configureValues('N', 'Y')
+				->configureDefaultValue('N'),
 		];
 	}
 }

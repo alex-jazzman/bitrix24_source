@@ -1,4 +1,4 @@
-import {JNWidgetTitleParams } from '../../../../../../../../../mobile/dev/janative/api';
+import { JNWidgetTitleParams } from '../../../../../../../../../mobile/dev/janative/api';
 import { ForwardMessageIds } from '../../controller/dialog/lib/reply-manager/types/reply-manager';
 
 declare type DialogOpenOptions = {
@@ -20,7 +20,15 @@ declare type DialogOpenOptions = {
 	 */
 	context: string,
 	integrationSettings: ChatIntegrationSettings,
+	actionsAfterOpen: DialogOptionActionsAfterOpen
 }
+
+type DialogOptionActionsAfterOpen = [
+	{
+		type: string,
+		messageId: string | number,
+	},
+]
 
 declare type DialogTitleParams = {
 	name?: string,

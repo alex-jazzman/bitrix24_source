@@ -7,6 +7,7 @@ namespace Bitrix\Booking\Internals\Service;
 use Bitrix\Booking\Entity\DatePeriod;
 use Bitrix\Booking\Entity\DatePeriodCollection;
 use Bitrix\Booking\Internals\Exception\InvalidArgumentException;
+use Bitrix\Booking\Internals\Service\Recurr\DateExclusion;
 use Bitrix\Booking\Internals\Service\Recurr\Rule;
 use Bitrix\Booking\Internals\Service\Recurr\Transformer\ArrayTransformer;
 use Bitrix\Booking\Internals\Service\Recurr\Transformer\ArrayTransformerConfig;
@@ -155,5 +156,36 @@ class Rrule
 	public function getDatePeriodCollection(): DatePeriodCollection
 	{
 		return new DatePeriodCollection(...$this->getDatePeriodsSequence());
+	}
+
+	/**
+	 * @return \DateTimeInterface[]
+	 */
+	public function getExcludedDates(): array
+	{
+		return array_map(
+			static fn (DateExclusion $dateExclusion) => $dateExclusion->date,
+			$this->rrule->getExDates()
+		);
+	}
+
+	public function getFrequencyAsText(): string
+	{
+		return $this->rrule->getFreqAsText();
+	}
+
+	public function getCount(): ?int
+	{
+		return $this->rrule->getCount();
+	}
+
+	public function getInterval(): ?int
+	{
+		return $this->rrule->getInterval();
+	}
+
+	public function getByDay(): array
+	{
+		return $this->rrule->getByDay();
 	}
 }

@@ -86,16 +86,16 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  collabAvailable: 'collabAvailable',
 	  collabCreationAvailable: 'collabCreationAvailable',
 	  enabledCollabersInvitation: 'enabledCollabersInvitation',
+	  changeInviteLanguageAvailable: 'changeInviteLanguageAvailable',
 	  inviteByLinkAvailable: 'inviteByLinkAvailable',
 	  inviteByPhoneAvailable: 'inviteByPhoneAvailable',
 	  documentSignAvailable: 'documentSignAvailable',
 	  intranetInviteAvailable: 'intranetInviteAvailable',
 	  voteCreationAvailable: 'voteCreationAvailable',
-	  messagesAutoDeleteAvailable: 'messagesAutoDeleteAvailable',
 	  defaultTabCopilotAvailable: 'defaultTabCopilotAvailable',
 	  messagesAutoDeleteEnabled: 'messagesAutoDeleteEnabled',
 	  isNotificationsStandalone: 'isNotificationsStandalone',
-	  showCopilotChatsInRecentTab: 'copilotInDefaultTabAvailable',
+	  isAIModelChangeAllowed: 'isCopilotSelectModelAvailable',
 	  teamsInStructureAvailable: 'teamsInStructureAvailable',
 	  isDesktopRedirectAvailable: 'isDesktopRedirectAvailable'
 	};

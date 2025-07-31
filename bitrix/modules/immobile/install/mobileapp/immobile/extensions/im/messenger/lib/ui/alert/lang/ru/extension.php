@@ -1,4 +1,5 @@
 <?php
+
 $MESS['IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_DELETE_CHAT_TITLE_MSGVER_1'] = 'Удалить чат?';
 $MESS['IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_DELETE_CHAT_DESCRIPTION'] = 'Чат нельзя будет восстановить. Удалятся все сообщения и файлы';
 $MESS['IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_DELETE_CHANNEL_TITLE_MSGVER_1'] = 'Удалить канал?';
@@ -12,6 +13,10 @@ $MESS['IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_DELETE_MESSAGES_TITLE'] = 'Удали�
 $MESS['IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_DELETE_COLLAB_TITLE'] = 'Удалить коллабу?';
 $MESS['IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_DELETE_COLLAB_DESCRIPTION'] = 'Коллаба удалится со всей историей общения. Восстановить коллабу будет нельзя';
 $MESS['IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_DELETE_COLLAB_CONFIRM_YES'] = 'Да, удалить';
+
+$MESS['IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_DELETE_GALLERY_TITLE'] = 'Удалить галерею?';
+$MESS['IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_DELETE_GALLERY_DESCRIPTION'] = 'Все файлы из этого сообщения удалятся';
+$MESS['IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_DELETE_GALLERY_CONFIRM_YES'] = 'Да, удалить';
 
 $MESS['IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_LEAVE_COLLAB_TITLE'] = 'Выйти из коллабы?';
 $MESS['IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_LEAVE_COLLAB_DESCRIPTION'] = 'У вас не будет доступа к чату, задачам, файлам и встречам коллабы';

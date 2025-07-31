@@ -26,6 +26,7 @@ jn.define('layout/ui/menu', (require, exports, module) => {
 	 * @property {string} title
 	 * @property {string} sectionCode
 	 * @property {Function} onItemSelected
+	 * @property {string} [subtitle]
 	 * @property {Icon} [icon]
 	 * @property {Object} [counterValue]
 	 * @property {boolean} [disable]
@@ -284,6 +285,7 @@ jn.define('layout/ui/menu', (require, exports, module) => {
 						id: action.id,
 						testId: action.testId,
 						title: action.title,
+						subtitle: action.subtitle,
 						iconUrl: this.getIconUrl(action),
 						iconName: this.getIconName(action),
 						showTopSeparator: action.showTopSeparator || false,

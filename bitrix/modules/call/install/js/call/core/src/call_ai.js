@@ -15,6 +15,7 @@ export type CallAiOptions = {
 };
 
 export const CallAiError = {
+	AI_MODULE_ERROR: 'AI_MODULE_ERROR',
 	AI_UNAVAILABLE_ERROR: 'AI_UNAVAILABLE_ERROR',
 	AI_SETTINGS_ERROR: 'AI_SETTINGS_ERROR',
 	AI_AGREEMENT_ERROR: 'AI_AGREEMENT_ERROR',
@@ -169,6 +170,7 @@ class CallAi
 			case CallAiError.AI_UNAVAILABLE_ERROR:
 				this.tariffAvailable = false;
 				break;
+			case CallAiError.AI_MODULE_ERROR:
 			case CallAiError.AI_SETTINGS_ERROR:
 				this.settingsEnabled = false;
 				break;

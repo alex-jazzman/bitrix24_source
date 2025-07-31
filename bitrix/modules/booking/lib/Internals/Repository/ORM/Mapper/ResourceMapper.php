@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Bitrix\Booking\Internals\Repository\ORM\Mapper;
 
 use Bitrix\Booking\Entity\Resource\Resource;
+use Bitrix\Booking\Entity\Resource\ResourceLinkedEntityCollection;
 use Bitrix\Booking\Internals\Model\EO_Resource;
+use Bitrix\Booking\Internals\Model\EO_ResourceLinkedEntity_Collection;
 use Bitrix\Booking\Internals\Model\ResourceTable;
 
 class ResourceMapper
@@ -28,6 +30,12 @@ class ResourceMapper
 		if ($ormResourceSettings)
 		{
 			$resource->setSlotRanges((new ResourceSlotMapper())->convertFromOrm($ormResourceSettings));
+		}
+
+		$ormEntities = $ormResource->getEntities();
+		if ($ormEntities)
+		{
+			$this->setEntityCollection($resource, $ormEntities);
 		}
 
 		$ormNotificationSettings = $ormResource->getNotificationSettings();
@@ -90,5 +98,19 @@ class ResourceMapper
 		$ormResource->setIsMain($resource->isMain());
 
 		return $ormResource;
+	}
+
+	public function setEntityCollection(
+		Resource $resource,
+		EO_ResourceLinkedEntity_Collection $ormEntityCollection
+	): void
+	{
+		$linkedEntityCollection = new ResourceLinkedEntityCollection();
+		foreach ($ormEntityCollection as $ormResourceLinkedEntity)
+		{
+			$linkedEntityCollection->add((new ResourceLinkedEntityMapper())->convertFromOrm($ormResourceLinkedEntity));
+		}
+
+		$resource->setEntityCollection($linkedEntityCollection);
 	}
 }

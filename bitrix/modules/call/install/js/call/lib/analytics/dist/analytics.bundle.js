@@ -162,8 +162,10 @@ this.BX.Call = this.BX.Call || {};
 	      event: AnalyticsEvent.aiRecordStart,
 	      type: params.callType,
 	      c_section: AnalyticsSection.callFollowup,
+	      p2: `chatUserCount_${params.chatUserCount}`,
 	      p5: `callId_${params.callId}`
 	    };
+	    resultData.p1 = params != null && params.isAutostart ? 'launchType_auto' : 'launchType_manual';
 	    if (params != null && params.userCount) {
 	      resultData.p3 = `userCount_${params.userCount}`;
 	    }
@@ -260,7 +262,7 @@ this.BX.Call = this.BX.Call || {};
 	  onSelectAIDelete(params) {
 	    ui_analytics.sendData({
 	      tool: AnalyticsTool.im,
-	      category: AnalyticsCategory.call,
+	      category: AnalyticsCategory.callFollowup,
 	      event: AnalyticsEvent.delete,
 	      type: params.callType,
 	      c_section: AnalyticsSection.call,
@@ -378,7 +380,7 @@ this.BX.Call = this.BX.Call || {};
 	      c_element: params.withVideo ? AnalyticsElement.videoButton : AnalyticsElement.audioButton,
 	      status: params.status,
 	      p1: params.mediaParams.video ? AnalyticsDeviceStatus.videoOn : AnalyticsDeviceStatus.videoOff,
-	      p2: params.mediaParams.audio ? AnalyticsDeviceStatus.micOn : AnalyticsDeviceStatus.micOff,
+	      p2: `chatUserCount_${params.userCounter}`,
 	      p3: params.isCopilotActive ? AnalyticsAIStatus.aiOn : AnalyticsAIStatus.aiOff,
 	      p5: `callId_${params.callId}`
 	    });
@@ -397,6 +399,7 @@ this.BX.Call = this.BX.Call || {};
 	    });
 	  }
 	  onStartCall(params) {
+	    var _params$associatedEnt;
 	    const resultData = {
 	      tool: AnalyticsTool.im,
 	      category: AnalyticsCategory.call,
@@ -404,7 +407,7 @@ this.BX.Call = this.BX.Call || {};
 	      type: params.callType,
 	      status: params.status,
 	      p1: params.mediaParams.video ? AnalyticsDeviceStatus.videoOn : AnalyticsDeviceStatus.videoOff,
-	      p2: params.mediaParams.audio ? AnalyticsDeviceStatus.micOn : AnalyticsDeviceStatus.micOff,
+	      p2: `chatUserCount_${(_params$associatedEnt = params.associatedEntity) == null ? void 0 : _params$associatedEnt.userCounter}`,
 	      p3: params.isCopilotActive ? AnalyticsAIStatus.aiOn : AnalyticsAIStatus.aiOff,
 	      p5: `callId_${params.callId}`
 	    };
@@ -462,13 +465,15 @@ this.BX.Call = this.BX.Call || {};
 	    ui_analytics.sendData(resultData);
 	  }
 	  onReconnect(params) {
+	    const reconnectionReasonInfo = params.reconnectionReasonInfo.substring(0, 100);
 	    ui_analytics.sendData({
 	      tool: AnalyticsTool.im,
 	      category: AnalyticsCategory.call,
 	      event: AnalyticsEvent.reconnect,
 	      type: params.callType,
 	      c_section: AnalyticsSection.callWindow,
-	      status: params.status,
+	      status: params.reconnectionReason || '',
+	      p3: `msg_${reconnectionReasonInfo}`,
 	      p4: `attemptNumber_${params.reconnectionEventCount}`,
 	      p5: `callId_${params.callId}`
 	    });

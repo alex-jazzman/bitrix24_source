@@ -11,4 +11,7 @@ export const MenuActions = Object.freeze({
 	moveUserToAnotherDepartment: 'moveUserToAnotherDepartment',
 	removeUserFromDepartment: 'removeUserFromDepartment',
 	fireUserFromCompany: 'fireUserFromCompany',
+
+	openChat: 'openChat',
+	unbindChat: 'unbindChat',
 });

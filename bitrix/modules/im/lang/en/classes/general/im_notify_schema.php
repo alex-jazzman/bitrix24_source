@@ -1,5 +1,5 @@
 <?php
-$MESS["IM_NS_BIZPROC_ACTIVITY"] = "Notifications from business processes";
+$MESS["IM_NS_BIZPROC_ACTIVITY"] = "Workflow notifications";
 $MESS["IM_NS_CHAT_NEW"] = "Private chat messages";
 $MESS["IM_NS_DEFAULT"] = "Unrecognized notifications";
 $MESS["IM_NS_IM"] = "Chat & Calls";

@@ -5,6 +5,7 @@ use Bitrix\Main\Data\Cache;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Type\Date;
 
 class UserAbsence
 {
@@ -171,7 +172,9 @@ class UserAbsence
 				array(
 					'PER_USER' => true,
 					'SELECT' => array('ID', 'DATE_ACTIVE_FROM', 'DATE_ACTIVE_TO', 'PROPERTY_ABSENCE_TYPE'),
-					'ABSENCE_IBLOCK_ID' => self::getIblockId()
+					'ABSENCE_IBLOCK_ID' => self::getIblockId(),
+					'DATE_START' => (new Date(null, 'Y-m-01'))->add('-1 day'),
+					'DATE_FINISH' => (new Date(null, 'Y-m-01'))->add('1 month'),
 				),
 				BX_INTRANET_ABSENCE_HR
 			);
@@ -264,7 +267,7 @@ class UserAbsence
 		if (isset($result[$userId]))
 		{
 			$now = new \Bitrix\Main\Type\DateTime();
-			$nowTs = $now->getTimestamp();
+			$nowTs = $now->enableUserTime()->getTimestamp();
 
 			foreach ($result[$userId] as $vacation)
 			{
@@ -273,20 +276,21 @@ class UserAbsence
 					continue;
 				}
 
-				$isCounterpart = $vacation['DATE_FROM_TS'] === $vacation['DATE_TO_TS'];
-				$isLastDayWithoutTime = date('y.d.m', $nowTs) === date('y.d.m', $vacation['DATE_TO_TS'])
-					&& date('H:i:s', $vacation['DATE_TO_TS']) === '00:00:00';
+				$dateFrom = $vacation['DATE_FROM_TS'] + \CTimeZone::GetOffset();
+				$dateTo = $vacation['DATE_TO_TS'] + \CTimeZone::GetOffset();
+				$isCounterpart = $dateFrom === $dateTo;
+				$isLastDayWithoutTime = !\CIntranetUtils::IsDateTime($dateTo);
 
 				if ($isCounterpart || $isLastDayWithoutTime)
 				{
-					$vacation['DATE_TO_TS'] += 86400;
+					$dateTo += 86400;
 				}
 
-				if ($nowTs >= $vacation['DATE_FROM_TS'] && $nowTs < $vacation['DATE_TO_TS'])
+				if ($nowTs >= $dateFrom && $nowTs < $dateTo)
 				{
 					if ($isCounterpart || $isLastDayWithoutTime)
 					{
-						$vacation['DATE_TO_TS'] -= 86399;
+						$vacation['DATE_TO_TS'] += 1;
 					}
 
 					if ($returnToDate)

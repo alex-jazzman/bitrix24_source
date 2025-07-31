@@ -4,7 +4,6 @@ return [
 	'extensions' => [
 		'im:lib/theme',
 		'loc',
-		'feature',
 		'utils/color',
 		'utils/object',
 		'im:messenger/lib/ui/base/avatar',

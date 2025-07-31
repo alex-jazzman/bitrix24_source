@@ -207,6 +207,11 @@ jn.define('im/messenger/model/files/validator', (require, exports, module) => {
 			}
 		}
 
+		if (fields.mediaUrl && Type.isObject(fields.mediaUrl))
+		{
+			result.mediaUrl = fields.mediaUrl;
+		}
+
 		return result;
 	}
 

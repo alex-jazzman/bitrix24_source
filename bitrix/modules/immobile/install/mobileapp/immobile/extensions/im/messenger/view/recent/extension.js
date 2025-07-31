@@ -7,6 +7,8 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 	const { Runtime } = require('runtime');
 	const { Loc } = require('loc');
 	const { Icon } = require('assets/icons');
+	const { isEqual } = require('utils/object');
+
 	const { getTopMenuNotificationsButton } = require('im/messenger/api/notifications-opener');
 
 	const { openIntranetInviteWidget } = require('intranet/invite-opener-new');
@@ -24,6 +26,7 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 	const logger = LoggerManager.getInstance().getLogger('recent--view');
 
 	const { View } = require('im/messenger/view/base');
+	const { StateManager } = require('im/messenger/view/lib/state-manager');
 
 	class RecentView extends View
 	{
@@ -31,13 +34,14 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 		{
 			super(options);
 
+			this.initStateManager();
+
 			this.setCustomEvents([
 				EventType.recent.createChat,
 				EventType.recent.readAll,
 				EventType.recent.loadNextPage,
 			]);
 
-			this.isWelcomeScreenVisible = false;
 			this.loaderShown = false;
 			this.loadNextPageItemId = 'loadNextPage';
 			this.itemCollection = {};
@@ -73,6 +77,17 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 			this.ui.on(EventType.recent.scroll, Runtime.throttle(this.onScroll, 50, this));
 
 			this.ui.on(EventType.recent.itemWillDisplay, this.itemWillDisplayHandler);
+		}
+
+		initStateManager()
+		{
+			const state = {
+				floatingButton: false,
+				rightButtons: null,
+				isWelcomeScreenVisible: false,
+			};
+
+			this.stateManager = new StateManager(state);
 		}
 
 		initTopMenu()
@@ -333,12 +348,26 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 
 		setFloatingButton(floatingButton)
 		{
-			this.ui.setFloatingButton(floatingButton);
+			const newState = { floatingButton };
+			const hasChanges = this.stateManager.hasChanges(newState);
+
+			if (hasChanges)
+			{
+				this.ui.setFloatingButton(floatingButton);
+				this.stateManager.updateState(newState);
+			}
 		}
 
 		setRightButtons(buttonList)
 		{
-			this.ui.setRightButtons(buttonList);
+			const newState = { rightButtons: buttonList };
+			const hasChanges = this.stateManager.hasChanges(newState);
+
+			if (hasChanges)
+			{
+				this.ui.setRightButtons(buttonList);
+				this.stateManager.updateState(newState);
+			}
 		}
 
 		/**
@@ -508,7 +537,9 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 
 		showWelcomeScreen()
 		{
-			if (this.isWelcomeScreenVisible)
+			const newState = { isWelcomeScreenVisible: true };
+			const hasChanges = this.stateManager.hasChanges(newState);
+			if (!hasChanges)
 			{
 				return;
 			}
@@ -570,16 +601,19 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 
 			this.ui.welcomeScreen.show(options);
 			this.renderChatCreateButtonForWelcomeScreen();
-			this.isWelcomeScreenVisible = true;
+			this.stateManager.updateState(newState);
 		}
 
 		hideWelcomeScreen()
 		{
-			if (this.isWelcomeScreenVisible)
+			const newState = { isWelcomeScreenVisible: false };
+			const hasChanges = this.stateManager.hasChanges(newState);
+
+			if (hasChanges)
 			{
 				this.ui.welcomeScreen.hide();
 				this.renderChatCreateButton();
-				this.isWelcomeScreenVisible = false;
+				this.stateManager.updateState(newState);
 			}
 		}
 

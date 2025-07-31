@@ -2,6 +2,7 @@
 
 namespace Bitrix\HumanResources\Public\Service;
 
+use Bitrix\HumanResources\Public\Service\Team\UserService;
 use Bitrix\Main\DI\ServiceLocator;
 
 /**
@@ -32,5 +33,10 @@ class Container
 	public static function getNodeSettingsService(): NodeSettingsService
 	{
 		return self::getService('humanresources.service.public.nodeSettings');
+	}
+
+	public static function getUserTeamService(): UserService
+	{
+		return self::getService('humanresources.service.public.team.userService');
 	}
 }

@@ -4,6 +4,8 @@ namespace Bitrix\Im\V2\TariffLimit;
 
 use Bitrix\Bitrix24\Feature;
 use Bitrix\Im\V2\Chat;
+use Bitrix\Im\V2\Integration\AiAssistant\AiAssistantService;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Type\DateTime;
 
@@ -20,8 +22,11 @@ class Limit
 
 	private static ?self $instance;
 
+	private AiAssistantService $aiAssistantService;
+
 	private function __construct()
 	{
+		$this->aiAssistantService = ServiceLocator::getInstance()->get(AiAssistantService::class);
 	}
 
 	public static function getInstance(): static
@@ -125,6 +130,11 @@ class Limit
 			{
 				return false;
 			}
+		}
+
+		if ($this->aiAssistantService->isAssistantChat($chat))
+		{
+			return false;
 		}
 
 		return true;

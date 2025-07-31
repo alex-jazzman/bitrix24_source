@@ -2,9 +2,8 @@
 
 return [
 	'extensions' => [
-		'loc',
-		'feature',
-		'toast',
 		'assets/icons',
+		'loc',
+		'toast',
 	],
 ];

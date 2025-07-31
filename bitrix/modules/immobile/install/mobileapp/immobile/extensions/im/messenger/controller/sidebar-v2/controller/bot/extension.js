@@ -8,7 +8,6 @@ jn.define('im/messenger/controller/sidebar-v2/controller/bot', (require, exports
 	const { SidebarLinksTab } = require('im/messenger/controller/sidebar-v2/tabs/links');
 	const { SidebarFilesTab } = require('im/messenger/controller/sidebar-v2/tabs/files');
 	const { SidebarAudioTab } = require('im/messenger/controller/sidebar-v2/tabs/audio');
-	const { SidebarCommonChatsTab } = require('im/messenger/controller/sidebar-v2/tabs/common-chats');
 	const { SidebarMediaTab } = require('im/messenger/controller/sidebar-v2/tabs/media');
 	const { SidebarParticipantsTab } = require('im/messenger/controller/sidebar-v2/tabs/participants');
 	const {
@@ -79,9 +78,16 @@ jn.define('im/messenger/controller/sidebar-v2/controller/bot', (require, exports
 		{
 			const props = this.getTabsProps();
 
+			if (this.dialogHelper.isAiAssistant)
+			{
+				return [
+					new SidebarParticipantsTab(props),
+					new SidebarLinksTab(props),
+				];
+			}
+
 			return [
 				new SidebarParticipantsTab(props),
-				new SidebarCommonChatsTab(props),
 				new SidebarMediaTab(props),
 				new SidebarFilesTab(props),
 				new SidebarLinksTab(props),

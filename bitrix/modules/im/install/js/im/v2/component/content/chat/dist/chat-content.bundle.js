@@ -206,7 +206,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		<ChatTextarea
 			:dialogId="dialogId"
 			:placeholder="this.loc('IM_CONTENT_CHANNEL_TEXTAREA_PLACEHOLDER')"
-			:withCreateMenu="false"
 			:withMarket="false"
 			:withAudioInput="false"
 			class="bx-im-channel-send-panel__container"
@@ -1045,6 +1044,42 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	`
 	};
 
+	const AiAssistantContent = {
+	  name: 'AiAssistantContent',
+	  components: {
+	    BaseChatContent: im_v2_component_content_elements.BaseChatContent,
+	    ChatHeader: im_v2_component_content_elements.ChatHeader,
+	    ChatTextarea: im_v2_component_textarea.ChatTextarea
+	  },
+	  props: {
+	    dialogId: {
+	      type: String,
+	      required: true
+	    }
+	  },
+	  methods: {
+	    loc(phraseCode) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode);
+	    }
+	  },
+	  template: `
+		<BaseChatContent :dialogId="dialogId">
+			<template #textarea="{ onTextareaMount }">
+				<ChatTextarea
+					:dialogId="dialogId"
+					:key="dialogId"
+					:placeholder="loc('IM_CONTENT_AIASSISTANT_TEXTAREA_PLACEHOLDER')"
+					:withMarket="false"
+					:withEdit="false"
+					:withUploadMenu="false"
+					:withSmileSelector="false"
+					@mounted="onTextareaMount"
+				/>
+			</template>
+		</BaseChatContent>
+	`
+	};
+
 	// @vue/component
 	const BaseEmptyState = {
 	  props: {
@@ -1210,7 +1245,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  },
 	  methods: {
 	    onInviteActionClick() {
-	      im_v2_lib_invite.InviteManager.openInviteSlider();
+	      const analyticsContext = im_v2_lib_analytics.Analytics.getInstance().sliderInvite.getEmptyStateContext();
+	      im_v2_lib_invite.InviteManager.openInviteSlider(analyticsContext);
 	    },
 	    loc(phraseCode, replacements = {}) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
@@ -1471,8 +1507,38 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    isNotes() {
 	      return Number.parseInt(this.dialogId, 10) === im_v2_application_core.Core.getUserId();
 	    },
+	    isAiAssistant() {
+	      return this.$store.getters['users/bots/isAiAssistant'](this.dialogId);
+	    },
 	    isGuest() {
 	      return this.dialog.role === im_v2_const.UserRole.guest;
+	    },
+	    contentComponentConfig() {
+	      return [{
+	        condition: this.isChannel,
+	        component: ChannelContent
+	      }, {
+	        condition: this.isCollab,
+	        component: CollabContent
+	      }, {
+	        condition: this.isMultidialog,
+	        component: MultidialogContent
+	      }, {
+	        condition: this.isNotes,
+	        component: NotesContent
+	      }, {
+	        condition: this.isAiAssistant,
+	        component: AiAssistantContent
+	      }, {
+	        condition: this.isRecentChat,
+	        component: DefaultChatContent
+	      }];
+	    },
+	    contentComponent() {
+	      const matchingItem = this.contentComponentConfig.find(item => {
+	        return item.condition === true;
+	      });
+	      return matchingItem ? matchingItem.component : im_v2_component_content_elements.BaseChatContent;
 	    },
 	    emptyStateComponent() {
 	      var _EmptyStateComponentB;
@@ -1585,12 +1651,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  template: `
 		<div class="bx-im-content-default-chat__container">
 			<component :is="emptyStateComponent" v-if="!dialogId" />
-			<ChannelContent v-else-if="isChannel" :dialogId="dialogId" />
-			<CollabContent v-else-if="isCollab" :dialogId="dialogId" />
-			<MultidialogContent v-else-if="isMultidialog" :dialogId="dialogId" />
-			<NotesContent v-else-if="isNotes" :dialogId="dialogId" />
-			<DefaultChatContent v-else-if="isRecentChat" :dialogId="dialogId" />
-			<BaseChatContent v-else :dialogId="dialogId" />
+			<component :is="contentComponent" v-else :dialogId="dialogId" />
 		</div>
 	`
 	};

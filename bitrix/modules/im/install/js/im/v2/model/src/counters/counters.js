@@ -245,6 +245,10 @@ export class CountersModel extends BuilderModel
 
 				store.commit('deleteForChannel', payload);
 			},
+			/** @function counters/clear */
+			clear: (store) => {
+				store.commit('clear');
+			},
 		};
 	}
 
@@ -333,6 +337,12 @@ export class CountersModel extends BuilderModel
 				}
 
 				delete state.commentCounters[channelChatId][commentChatId];
+			},
+			clear: (state: CountersState) => {
+				state.unloadedChatCounters = {};
+				state.unloadedLinesCounters = {};
+				state.unloadedCopilotCounters = {};
+				state.unloadedCollabCounters = {};
 			},
 		};
 	}

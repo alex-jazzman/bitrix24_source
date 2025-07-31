@@ -21,6 +21,8 @@ import {Hardware} from '../hardware';
 import Util from '../util'
 
 import {Event} from 'main.core';
+import { UnsupportedBrowserFeatures } from './unsupported_features_in_browsers';
+
 
 /**
  * Implements Call interface
@@ -136,6 +138,7 @@ export class BitrixCall extends AbstractCall
 		};
 
 		this._recorderState = RecorderStatus.UNAVAILABLE;
+		this._recorderStateHasChange = false;
 		this._isCopilotFeaturesEnabled = true;
 		this._isRecordWhenCopilotActivePopupAlreadyShow = false;
 		this._isBoostExpired = false;
@@ -153,7 +156,7 @@ export class BitrixCall extends AbstractCall
 
 	get isCopilotInitialized()
 	{
-		return this._recorderState !== RecorderStatus.UNAVAILABLE;
+		return this._recorderState !== RecorderStatus.UNAVAILABLE || this._recorderStateHasChange;
 	}
 
 	get isCopilotActive()
@@ -241,12 +244,6 @@ export class BitrixCall extends AbstractCall
 
 	set reconnectionEventCount(newValue)
 	{
-		if (this._reconnectionEventCount === 0 && newValue > 0)
-		{
-			this.runCallback(CallEvent.onReconnecting, {
-				reconnectionEventCount: newValue,
-			});
-		}
 		if (newValue === 0)
 		{
 			this.runCallback(CallEvent.onReconnected);
@@ -356,7 +353,7 @@ export class BitrixCall extends AbstractCall
 
 		if (this.BitrixCall)
 		{
-			if (!event.data.calledProgrammatically)
+			if (!event.data.calledProgrammatically && this.muted)
 			{
 				this.signaling.sendMicrophoneState(!this.muted);
 			}
@@ -946,10 +943,10 @@ export class BitrixCall extends AbstractCall
 				this.localUserState = UserState.Connecting;
 				this.BitrixCall = new Call(this.userId);
 
-				if (Hardware.isCameraOn)
+				/*if (Hardware.isCameraOn) // transfered to #onCallConnected
 				{
 					this.localVideoShown = true;
-				}
+				}*/
 
 				this.joinedAsViewer = joinAsViewer;
 
@@ -1008,6 +1005,13 @@ export class BitrixCall extends AbstractCall
 		this.sendTelemetryEvent("connect");
 		this.localUserState = UserState.Connected;
 
+		const MAX_USERS_WITH_VIDEO = Util.countDisableCameraNewJoinedUsersFeature();
+
+		if (Util.isDisableCameraNewJoinedUsersFeatureEnabled() && this.BitrixCall.remoteParticipantsCount >= MAX_USERS_WITH_VIDEO) // task-596223
+		{
+			Hardware.isCameraOn = false;
+		}
+
 		if (!Util.havePermissionToBroadcast('cam'))
 		{
 			Hardware.isCameraOn = false;
@@ -1020,7 +1024,6 @@ export class BitrixCall extends AbstractCall
 
 		this.BitrixCall.on('Failed', this.#onCallDisconnected);
 
-		this.signaling.sendMicrophoneState(!Hardware.isMicrophoneMuted);
 		this.signaling.sendCameraState(Hardware.isCameraOn);
 
 		if (!this.BitrixCall.isAudioPublished())
@@ -1031,6 +1034,8 @@ export class BitrixCall extends AbstractCall
 
 		if (Hardware.isCameraOn)
 		{
+			this.localVideoShown = true;
+
 			if (!this.BitrixCall.isVideoPublished())
 			{
 				this.#setPublishingState(MediaStreamsKinds.Camera, true);
@@ -1372,10 +1377,7 @@ export class BitrixCall extends AbstractCall
 			pullEvent: '#onPullEventHangup',
 		});
 
-		//peer.participant = null; // task-605993 (task-601473)
-		//peer.setReady(false);
-		
-		if (!peer.participant) // task-605993
+		if (!peer.participant)
 		{
 			if (params.code == 603)
 			{
@@ -1418,6 +1420,8 @@ export class BitrixCall extends AbstractCall
 
 		this.log('__onLocalMediaRendererAdded', kind);
 
+		const isNotSupportDevicesListBeforeStream = UnsupportedBrowserFeatures.isNotSupportDevicesListBeforeStream;
+
 		switch (e) {
 			case MediaStreamsKinds.Camera:
 				this.BitrixCall.getLocalVideo()
@@ -1436,6 +1440,11 @@ export class BitrixCall extends AbstractCall
 							tag: 'main',
 							stream: mediaRenderer.stream,
 						});
+
+						if (isNotSupportDevicesListBeforeStream)
+						{
+							this.runCallback(CallEvent.onGetUserMediaEnded, {});
+						}
 					});
 				break;
 			case MediaStreamsKinds.Screen:
@@ -1458,6 +1467,11 @@ export class BitrixCall extends AbstractCall
 					});
 				break;
 			case MediaStreamsKinds.Microphone:
+				if (!this.BitrixCall)
+				{
+					return;
+				}
+				this.signaling.sendMicrophoneState(true);
 				this.BitrixCall.getLocalAudio()
 					.then((track) =>
 					{
@@ -1465,8 +1479,18 @@ export class BitrixCall extends AbstractCall
 						this.#onMicAccessResult({
 							result: true,
 							stream: new MediaStream([track]),
-						})
+						});
+
+						if (isNotSupportDevicesListBeforeStream)
+						{
+							this.runCallback(CallEvent.onGetUserMediaEnded, {});
+						}
 					});
+
+				if (Hardware.isMicrophoneMuted) // task-597518
+				{
+					this.BitrixCall.disableAudio();
+				}
 				break;
 		}
 	};
@@ -1476,6 +1500,7 @@ export class BitrixCall extends AbstractCall
 		if (e === MediaStreamsKinds.Microphone)
 		{
 			this.#setPublishingState(MediaStreamsKinds.Microphone, false);
+			this.signaling.sendMicrophoneState(false);
 		}
 		else if (e === MediaStreamsKinds.Camera)
 		{
@@ -1540,11 +1565,6 @@ export class BitrixCall extends AbstractCall
 		if (options.video)
 		{
 			this.signaling.sendCameraState(true);
-		}
-
-		if (options.audio)
-		{
-			this.signaling.sendMicrophoneState(true);
 		}
 	}
 
@@ -1790,7 +1810,7 @@ export class BitrixCall extends AbstractCall
 
 	#onParticipantLeaved = (p) => {
 		const peer = this.peers[p.userId];
-		
+
 		if (peer)
 		{
 			for (const type in MediaStreamsKinds)
@@ -1844,10 +1864,18 @@ export class BitrixCall extends AbstractCall
 		}
 	};
 
-	#onCallReconnecting = () =>
+	#onCallReconnecting = (params) =>
 	{
+		if (this._reconnectionEventCount === 0)
+		{
+			params.reconnectionEventCount = this.reconnectionEventCount + 1;
+			
+			this.runCallback(CallEvent.onReconnecting, params);
+		}
+		
 		if (this.reconnectionEventCount++)
 		{
+			
 			return;
 		}
 
@@ -1877,7 +1905,6 @@ export class BitrixCall extends AbstractCall
 		this.sendTelemetryEvent("reconnect");
 		this.localUserState = UserState.Connected;
 
-		this.signaling.sendMicrophoneState(!Hardware.isMicrophoneMuted);
 		if (!this.BitrixCall.isAudioPublished())
 		{
 			this.#setPublishingState(MediaStreamsKinds.Microphone, true);
@@ -2314,10 +2341,11 @@ export class BitrixCall extends AbstractCall
 	}
 
 	#onRecorderStatusChanged = (status) => {
-		const ignoreError = status.code === RecorderStatus.DESTROYED;
+		const ignoreError = status.code === RecorderStatus.DESTROYED || status.code === RecorderStatus.UNAVAILABLE;
 		const error = ignoreError ? '' : status.errMsg;
 		this._recorderState = error ? this._recorderState : status.code;
 		const isCopilotActive = this._recorderState === RecorderStatus.ENABLED;
+		this._recorderStateHasChange = true;
 
 		this.runCallback(CallEvent.onRecorderStatusChanged, {
 			error,

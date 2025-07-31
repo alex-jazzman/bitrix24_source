@@ -31,7 +31,7 @@ class Client extends Controller
 	 */
 	public function listAction(
 		int $waitListId,
-	): Page
+	): ?Page
 	{
 		$waitListItem =
 			$this

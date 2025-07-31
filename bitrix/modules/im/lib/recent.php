@@ -8,13 +8,13 @@ use Bitrix\Im\Model\RecentTable;
 use Bitrix\Im\V2\Chat\Background\Background;
 use Bitrix\Im\V2\Application\Features;
 use Bitrix\Im\V2\Chat\Copilot\CopilotPopupItem;
-use Bitrix\Im\V2\Chat\Copilot\Entity;
 use Bitrix\Im\V2\Chat\EntityLink;
 use Bitrix\Im\V2\Chat\Param\Params;
 use Bitrix\Im\V2\Chat\MessagesAutoDelete\MessagesAutoDeleteConfigs;
 use Bitrix\Im\V2\Chat\TextField\TextFieldEnabled;
 use Bitrix\Im\V2\Integration\Socialnetwork\Collab\Collab;
 use Bitrix\Im\V2\Message\Counter\CounterType;
+use Bitrix\Im\V2\MessageCollection;
 use Bitrix\Im\V2\Entity\User\NullUser;
 use Bitrix\Im\V2\Permission;
 use Bitrix\Im\V2\Integration\AI\RoleManager;
@@ -128,10 +128,6 @@ class Recent
 		}
 		elseif (!$byChatIds)
 		{
-			if (!Features::isCopilotInDefaultTabAvailable())
-			{
-				$skipTypes[] = \Bitrix\Im\V2\Chat::IM_TYPE_COPILOT;
-			}
 			if ($options['SKIP_OPENLINES'] === 'Y')
 			{
 				$skipTypes[] = IM_MESSAGE_OPEN_LINE;
@@ -303,10 +299,6 @@ class Recent
 		else
 		{
 			$skipTypes = [];
-			if (!Features::isCopilotInDefaultTabAvailable())
-			{
-				$skipTypes[] = \Bitrix\Im\V2\Chat::IM_TYPE_COPILOT;
-			}
 			if ($options['SKIP_OPENLINES'] === 'Y')
 			{
 				$skipTypes[] = IM_MESSAGE_OPEN_LINE;
@@ -466,10 +458,7 @@ class Recent
 			}
 		}
 
-		$copilotData = !Features::isCopilotInDefaultTabAvailable() && $shortInfo
-			? []
-			: self::prepareCopilotData($copilotData, $userId, $shortInfo)
-		;
+		$copilotData = self::prepareCopilotData($copilotData, $userId, $shortInfo);
 
 		if ($showOpenlines && !$onlyCopilotOption && Loader::includeModule('imopenlines'))
 		{
@@ -557,14 +546,13 @@ class Recent
 			$recentCopilotRoles
 		));
 
-		$chats = CopilotPopupItem::convertArrayData($copilotData['chats'] ?? [], Entity::Chats);
-		$messages = CopilotPopupItem::convertArrayData($copilotData['messages'] ?? [], Entity::Messages);
+		$chats = CopilotPopupItem::convertArrayDataForChats($copilotData['chats'] ?? []);
+		$messages = CopilotPopupItem::convertArrayDataForMessages($copilotData['messages'] ?? []);
 		$roles =
 			$shortInfo
 				? $roleManager->getRolesShort($copilotRoles)
 				: $roleManager->getRoles($copilotRoles)
 		;
-
 		return [
 			'chats' => !empty($chats) ? $chats : null,
 			'messages' => !empty($messages) ? $messages : null,

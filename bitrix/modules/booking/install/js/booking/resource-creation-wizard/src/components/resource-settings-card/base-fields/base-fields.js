@@ -86,6 +86,7 @@ export const BaseFields = {
 				context: 'bookingResourceCreationType',
 				multiple: false,
 				cacheable: true,
+				preselectedItems: [[this.entityId, this.initialResourceType?.typeId]],
 				entities: [
 					{
 						id: this.entityId,

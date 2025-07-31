@@ -12,6 +12,7 @@ return [
 		'tokens',
 		'utils/function',
 		'whats-new/ui-manager',
+		'user-profile',
 	],
 	'bundle' => [
 		'./src/calendar',

@@ -9,7 +9,6 @@ jn.define('layout/ui/fields/project', (require, exports, module) => {
 	const { Icon } = require('assets/icons');
 	const AppTheme = require('apptheme');
 	const { dispatch } = require('statemanager/redux/store');
-	const { groupsUpsertedFromEntitySelector } = require('tasks/statemanager/redux/slices/groups');
 	const DEFAULT_AVATAR = '/bitrix/mobileapp/mobile/extensions/bitrix/layout/ui/fields/project/images/default-avatar.png';
 	const DEFAULT_SELECTOR_AVATAR = '/bitrix/mobileapp/mobile/extensions/bitrix/selector/providers/common/images/project.png';
 
@@ -252,7 +251,11 @@ jn.define('layout/ui/fields/project', (require, exports, module) => {
 
 		setReduxState(projectsList)
 		{
-			dispatch(groupsUpsertedFromEntitySelector(projectsList));
+			requireLazy('tasks:statemanager/redux/slices/groups')
+				.then(({ groupsUpsertedFromEntitySelector }) => {
+					dispatch(groupsUpsertedFromEntitySelector(projectsList));
+				})
+				.catch(console.error);
 		}
 	}
 

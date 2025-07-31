@@ -52,20 +52,32 @@ jn.define('im/messenger/provider/services/sync/fillers/counter', (require, expor
 				result,
 			} = data;
 
-			const counterCollectionToUpdate = this.#prepareCounterCollectionToUpdate(result);
-			logger.log(`${this.constructor.name}.fillData counterCollectionToUpdate`, counterCollectionToUpdate);
+			try
+			{
+				const counterCollectionToUpdate = this.#prepareCounterCollectionToUpdate(result);
+				logger.log(`${this.constructor.name}.fillData counterCollectionToUpdate`, counterCollectionToUpdate);
 
-			const chatIdListToDelete = this.#prepareChatIdListToDelete(result);
-			logger.log(`${this.constructor.name}.fillData chatIdListToDelete`, chatIdListToDelete);
+				const chatIdListToDelete = this.#prepareChatIdListToDelete(result);
+				logger.log(`${this.constructor.name}.fillData chatIdListToDelete`, chatIdListToDelete);
 
-			void this.storageWriter.setCollection(counterCollectionToUpdate);
-			void this.storageWriter.deleteFromCollection(chatIdListToDelete);
+				void this.storageWriter.setCollection(counterCollectionToUpdate);
+				void this.storageWriter.deleteFromCollection(chatIdListToDelete);
 
-			MessengerEmitter.emit(
-				EventType.sync.requestResultSaved,
-				{ uuid },
-				ComponentCode.imMessenger,
-			);
+				MessengerEmitter.emit(
+					EventType.sync.requestResultSaved,
+					{ uuid },
+					ComponentCode.imMessenger,
+				);
+			}
+			catch (error)
+			{
+				logger.error(`${this.constructor.name}.fillData catch:`, error);
+
+				MessengerEmitter.emit(EventType.sync.requestResultSaved, {
+					uuid,
+					error: `${this.constructor.name}.fillData error: ${error.message}`,
+				}, ComponentCode.imMessenger);
+			}
 		}
 
 		/**

@@ -15,6 +15,7 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/links/src/content', (require,
 	const { inAppUrl } = require('in-app-url');
 	const { DialogTextHelper } = require('im/messenger/controller/dialog/lib/helper/text');
 	const { resolveSidebarType, SidebarType } = require('im/messenger/controller/sidebar-v2/factory');
+	const { SIDEBAR_DEFAULT_TOAST_OFFSET } = require('im/messenger/controller/sidebar-v2/const');
 
 	class SidebarLinksTabContent extends SidebarBaseTabListContent
 	{
@@ -119,6 +120,7 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/links/src/content', (require,
 							{
 								notificationText: Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_COPY_LINK_SUCCESS'),
 								notificationIcon: Icon.LINK,
+								toastOffset: SIDEBAR_DEFAULT_TOAST_OFFSET,
 							},
 							true,
 						);

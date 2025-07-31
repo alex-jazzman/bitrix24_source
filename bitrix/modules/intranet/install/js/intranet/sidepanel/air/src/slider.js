@@ -45,6 +45,7 @@ export class Slider extends BaseSlider
 		{
 			const stack = ZIndexManager.getOrAddStack(document.body);
 			stack.register(this.getRightBar());
+			Dom.addClass(this.getRightBar(), '--ui-context-edge-dark');
 		}
 
 		return true;
@@ -59,6 +60,7 @@ export class Slider extends BaseSlider
 		{
 			const stack = ZIndexManager.getOrAddStack(document.body);
 			stack.unregister(this.getRightBar());
+			Dom.removeClass(this.getRightBar(), '--ui-context-edge-dark');
 			Dom.style(this.getRightBar(), 'z-index', null); // ZIndexManager may not remove z-index, so we do it manually
 		}
 	}

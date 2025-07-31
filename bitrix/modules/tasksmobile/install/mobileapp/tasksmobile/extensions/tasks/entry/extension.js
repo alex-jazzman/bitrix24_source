@@ -2,8 +2,8 @@
  * @module tasks/entry
  */
 jn.define('tasks/entry', (require, exports, module) => {
-	const AppTheme = require('apptheme');
 	const { Loc } = require('loc');
+	const { Color } = require('tokens');
 	const { checkDisabledToolById } = require('settings/disabled-tools');
 	const { InfoHelper } = require('layout/ui/info-helper');
 	const { FeatureId } = require('tasks/enum');
@@ -148,10 +148,11 @@ jn.define('tasks/entry', (require, exports, module) => {
 				titleParams: {
 					text: Loc.getMessage('TASKSMOBILE_ENTRY_EFFICIENCY_TITLE'),
 				},
-				backgroundColor: AppTheme.colors.bgSecondary,
+				enableNavigationBarBorder: false,
+				backgroundColor: Color.bgSecondary.toHex(),
 				backdrop: {
-					mediumPositionHeight: 600,
-					navigationBarColor: AppTheme.colors.bgSecondary,
+					mediumPositionHeight: 530,
+					navigationBarColor: Color.bgSecondary.toHex(),
 				},
 				cache: false,
 			});

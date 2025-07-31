@@ -21,10 +21,9 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 	const { inAppUrl } = require('in-app-url');
 	const { clone, isEmpty } = require('utils/object');
 	const { Uuid } = require('utils/uuid');
-	const { throttle, debounce } = require('utils/function');
+	const { throttle, debounce, mapPromise } = require('utils/function');
 	const { openPhoneMenu } = require('communication/phone-menu');
 	const { isOnline } = require('device/connection');
-	const { AppRatingManager, UserEvent } = require('app-rating-manager');
 	const { CollabAccessService } = require('collab/service/access');
 	/* endregion mobile import */
 
@@ -49,6 +48,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		MessageIdType,
 		AttachPickerId,
 		MessageParams,
+		DialogActionType,
 	} = require('im/messenger/const');
 
 	const { RecentDataConverter } = require('im/messenger/lib/converter/data/recent');
@@ -131,7 +131,9 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 	const { HeaderTitleController } = require('im/messenger/controller/dialog/lib/header/title/controller');
 	const { SidebarManager } = require('im/messenger/controller/dialog/lib/sidebar');
 	const { VoteManager } = require('im/messenger/controller/dialog/lib/vote-manager');
+	const { AppRatingClient } = require('im/messenger/controller/dialog/lib/app-rating-client');
 	const { FloatingButtonsBarManager } = require('im/messenger/controller/dialog/lib/floating-buttons-bar-manager');
+	const { DialogMediaGallery } = require('im/messenger/controller/dialog/lib/media-gallery');
 
 	/* endregion lib import */
 
@@ -487,12 +489,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			/** @private */
 			this.messageQuoteTapHandler = this.messageQuoteTapHandler.bind(this);
 			/** @private */
-			// this.messageLongTapHandler = this.onMessageLongTap.bind(this);
-			/** @private */
 			this.messageDoubleTapHandler = this.messageDoubleTapHandler.bind(this);
-			/** @private */
-			// this.messageMenuReactionTapHandler = this.setReaction.bind(this);
-			// this.messageMenuActionTapHandler = this.onMessageMenuAction.bind(this);
 			/** @private */
 			this.messageFileDownloadTapHandler = this.messageFileDownloadTapHandler.bind(this);
 			/** @private */
@@ -621,12 +618,12 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				.on(EventType.view.show, this.showHandler)
 				.on(EventType.dialog.audioTap, this.audioTapHandler)
 				.on(EventType.dialog.audioRateTap, this.audioRateTapHandler)
-				.on(EventType.dialog.imageTap, this.imageTapHandler)
+				.on(EventType.dialog.imageTap, this.mediaTapHandler(FileType.image))
 				.on(EventType.dialog.fileTap, this.fileTapHandler)
 				.on(EventType.dialog.sendTap, this.sendTapHandler)
 				.on(EventType.dialog.putTap, this.putTapHandler)
 				.on(EventType.dialog.phoneTap, this.phoneTapHandler)
-				.on(EventType.dialog.videoTap, this.videoTapHandler)
+				.on(EventType.dialog.videoTap, this.mediaTapHandler(FileType.video))
 				.on(EventType.dialog.forwardTap, this.forwardTapHandler)
 				.on(EventType.dialog.channelCommentTap, this.channelCommentTapHandler)
 				.on(EventType.dialog.titleClick, this.openSidebar)
@@ -884,7 +881,8 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 
 		async initComponents()
 		{
-			await this.initMessageMenu();
+			this.messageMenu = this.createMessageMenu();
+
 			this.checkInMessageHandler = new CheckInMessageHandler(serviceLocator, this.locator);
 			this.bannerMessageHandler = new BannerMessageHandler(serviceLocator, this.locator);
 			this.callMessageHandler = new CallMessageHandler(serviceLocator, this.locator);
@@ -892,12 +890,23 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			this.commentButton = new CommentButton(this.view, this.getDialogId(), this.locator);
 		}
 
-		async initMessageMenu()
+		/**
+		 * @return {MessageMenuController}
+		 */
+		createMessageMenu()
 		{
-			this.messageMenu = await MessageMenuController.create({
-				getDialog: this.getDialog.bind(this),
+			return new MessageMenuController(this.getMessageMenuParams());
+		}
+
+		/**
+		 * @return {MessageMenuControllerCreateParams}
+		 */
+		getMessageMenuParams()
+		{
+			return {
 				dialogLocator: this.locator,
-			});
+				getDialog: this.getDialog.bind(this),
+			};
 		}
 
 		/**
@@ -917,6 +926,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				chatType = DialogType.chat,
 				context = OpenDialogContextType.default,
 				integrationSettings,
+				actionsAfterOpen,
 			} = options;
 
 			// early exit if the dialog data is in local storage
@@ -1025,11 +1035,46 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				}
 			}
 
-			return this.createWidget(titleParams, parentWidget)
+			await this.createWidget(titleParams, parentWidget)
 				.catch((error) => {
 					logger.error(`${this.constructor.name}.createWidget error:`, error);
-				})
-			;
+				});
+
+			await this.executeAfterOpen(actionsAfterOpen);
+		}
+
+		/**
+		 * @param {DialogOptionActionsAfterOpen} actions
+		 */
+		async executeAfterOpen(actions)
+		{
+			if (!Array.isArray(actions))
+			{
+				return Promise.reject(new Error('actionsAfterOpen should be an array'));
+			}
+
+			return mapPromise(actions, (action) => {
+				if (action.type === DialogActionType.goToMessage)
+				{
+					return this.contextManager.goToMessageContext({
+						dialogId: this.dialogId,
+						messageId: action.messageId,
+						targetMessagePosition: action.targetMessagePosition,
+					});
+				}
+
+				if (action.type === DialogActionType.reply)
+				{
+					return new Promise((resolve) => {
+						this.replyManager.startQuotingMessage({
+							id: action.messageId,
+						});
+						resolve();
+					});
+				}
+
+				return Promise.resolve();
+			});
 		}
 
 		closeDialogHandler({ dialogId })
@@ -1296,8 +1341,18 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			return DialogWidgetType.chat;
 		}
 
+		/**
+		 * @returns {boolean}
+		 */
 		checkCanHaveAttachments()
 		{
+			return true;
+		}
+
+		/**
+		 * @returns {boolean}
+		 */
+		checkCanRecordAudio() {
 			return true;
 		}
 
@@ -1345,6 +1400,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 					code: this.dialogCode,
 					dialogType: this.getDialogType(),
 					canHaveAttachments: this.checkCanHaveAttachments(),
+					canRecordAudio: this.checkCanRecordAudio(),
 					pinPanel: this.pinManager?.getPinPanelParams(),
 					background: this.backgroundManager?.getConfiguration(),
 				},
@@ -2086,7 +2142,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			this.anchorService.readChatAnchors();
 
 			this.store.dispatch('applicationModel/closeDialogId', dialogId);
-			AppRatingManager.tryOpenAppRating();
+			AppRatingClient.tryOpenAppRatingAfterChatClose(this.getDialogHelper().isCopilot);
 		}
 
 		async hiddenHandler()
@@ -2197,7 +2253,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				await this.contextManager.goToLastReadMessageContext();
 				this.needScrollToBottom = true;
 			}
-		};
+		}
 
 		/**
 		 * @private
@@ -2310,6 +2366,8 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		 */
 		mentionTapHandler(params)
 		{
+			logger.log(`${this.constructor.name}.mentionTapHandler params:`, params);
+
 			if (typeof params === 'string')
 			{
 				if (params === 'sidebar')
@@ -2389,8 +2447,24 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		}
 
 		/**
+		 * @param {string} mediaType
+		 * @returns {function(string, string, string=): void}
+		 */
+		mediaTapHandler = (mediaType) => (mediaId, messageId, localUrl = null) => {
+			DialogMediaGallery.open({
+				localUrl,
+				mediaId,
+				messageId,
+				mediaType,
+				dialogLocator: this.locator,
+				dialogModel: this.getDialog(),
+			});
+		};
+
+		/**
 		 * @param {string} imageId
 		 * @param {string} messageId
+		 * @param {string} localUrl
 		 */
 		imageTapHandler(imageId, messageId, localUrl = null)
 		{
@@ -2962,11 +3036,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 					await this.view.scrollToBottomSmoothly();
 					await this.sendMessageToServer(sendMessageParams);
 
-					void AppRatingManager.increaseCounter(
-						this.getDialogHelper()?.isCopilot
-							? UserEvent.COPILOT_REQUESTS
-							: UserEvent.MESSAGES_SENT,
-					);
+					AppRatingClient.increaseSendMessageCounter(this.getDialogHelper()?.isCopilot);
 				})
 				.catch((error) => logger.error(`${this.constructor.name}.sendMessage.error`, error))
 			;

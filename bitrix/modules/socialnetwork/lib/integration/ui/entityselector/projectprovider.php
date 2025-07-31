@@ -1107,7 +1107,7 @@ class ProjectProvider extends BaseProvider
 		return null;
 	}
 
-	public static function makeProjectEntityType(EO_Workgroup $project): string
+	public static function makeProjectEntityType(EO_Workgroup $project): ?string
 	{
 		$extranetSiteId = Option::get('extranet', 'extranet_site');
 		$extranetSiteId = ($extranetSiteId && ModuleManager::isModuleInstalled('extranet') ? $extranetSiteId : false);

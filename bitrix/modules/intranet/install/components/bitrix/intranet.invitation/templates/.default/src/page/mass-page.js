@@ -1,7 +1,7 @@
 import { Tag, Loc, Event, Type } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { Analytics } from '../analytics';
-import DepartmentControl from '../department-control';
+import DepartmentControl from 'intranet.department-control';
 import MassInvitationField from '../mass-invitation-field';
 import { Page } from './page';
 
@@ -132,6 +132,12 @@ export class MassPage extends Page
 			data,
 			analyticsLabel,
 		});
+	}
+
+	onInviteSuccess(event: BaseEvent)
+	{
+		this.#massInvitationField.reset();
+		this.#departmentControl.reset();
 	}
 
 	#getEmptyError(): string

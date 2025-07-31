@@ -18,7 +18,6 @@ use Bitrix\Main\Context;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Booking\Internals\Integration\Crm\WebForm;
 
 class BookingComponent extends CBitrixComponent
 {
@@ -200,36 +199,11 @@ class BookingComponent extends CBitrixComponent
 
 	private function getTopMenuItems(): array
 	{
-		if (!WebForm::isAvailable())
-		{
-			return [];
-		}
-
 		return [
 			[
 				'ID' => 'records',
 				'TEXT' => Loc::getMessage('BOOKING_TOP_MENU_ITEM_RECORDS'),
 				'IS_ACTIVE' => true,
-			],
-			[
-				'ID' => 'forms',
-				'TEXT' => Loc::getMessage('BOOKING_TOP_MENU_ITEM_FORMS'),
-				'ITEMS' => [
-					[
-						'ID' => 'all_forms',
-						'TEXT' => Loc::getMessage('BOOKING_TOP_MENU_ITEM_FORMS_ALL_FORMS'),
-						'ON_CLICK' => "BX.SidePanel.Instance.open('" . \CUtil::JSEscape(WebForm::getCrmFormLink()) . "', { cacheable: false })",
-					],
-					[
-						'ID' => 'create_form',
-						'TEXT' => Loc::getMessage('BOOKING_TOP_MENU_ITEM_FORMS_CREATE_FORM'),
-						'ITEMS' => array_map(static fn ($preset): array => [
-							'ID' => $preset['XML_ID'],
-							'TEXT' => $preset['NAME'],
-							'ON_CLICK' => 'window.open(\'' . \CUtil::JSescape($preset['LINK']) . '\', \'_blank\');',
-						], WebForm::getCrmFormPresets()),
-					],
-				],
 			],
 		];
 	}

@@ -538,6 +538,7 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 						onChange: onChangeSubTaskField,
 						config: makeSubTasksFieldConfig({
 							items: task.subTasks.filter(Boolean),
+							undeselectableIds: task.subTasks.filter((item) => !item?.customData?.canUpdate).map((item) => item.id),
 							currentTaskId: task.id,
 							userId,
 							groupId: task.groupId,

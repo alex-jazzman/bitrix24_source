@@ -18,6 +18,11 @@ jn.define('tasks/layout/fields/subtask', (require, exports, module) => {
 			return BX.message('TASKS_FIELDS_SUBTASK_ADD_BUTTON_TEXT');
 		}
 
+		getDefaultSelectorType()
+		{
+			return 'editable_task';
+		}
+
 		openTaskCreateForm()
 		{
 			const currentTaskId = this.getCurrentTaskId();

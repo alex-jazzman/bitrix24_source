@@ -51,6 +51,11 @@ export default class MassInvitationField
 		}
 	}
 
+	reset(): void
+	{
+		this.#input.getTagSelector().removeTags();
+	}
+
 	renderTo(node: HTMLElement)
 	{
 		this.#input.renderTo(node);

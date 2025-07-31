@@ -1,3 +1,5 @@
+import { events } from 'humanresources.company-structure.org-chart';
+import { EventEmitter } from 'main.core.events';
 import { AddButton } from './add-button/add-button.js';
 import { SearchBar } from './search/search-bar.js';
 import { BurgerMenuButton } from './burger-menu-button/burger-menu-button.js';
@@ -44,8 +46,8 @@ export const TitlePanel = {
 				);
 			this.canAddNode = permissionChecker
 				&& (
-					permissionChecker.hasPermissionWithAnyNode(PermissionActions.departmentCreate)
-					|| permissionChecker.hasPermissionWithAnyNode(PermissionActions.teamCreate)
+					permissionChecker.hasPermissionOfAction(PermissionActions.departmentCreate)
+					|| permissionChecker.hasPermissionOfAction(PermissionActions.teamCreate)
 				);
 		}
 		catch (error)
@@ -64,7 +66,7 @@ export const TitlePanel = {
 
 	name: 'title-panel',
 
-	emits: ['showWizard', 'locate'],
+	emits: ['showWizard'],
 
 	computed: {
 		set(): Set
@@ -111,7 +113,7 @@ export const TitlePanel = {
 		},
 		onLocate(nodeId: number)
 		{
-			this.$emit('locate', nodeId);
+			EventEmitter.emit(events.HR_ORG_CHART_LOCATE_TO_DEPARTMENT, { nodeId });
 		},
 		triggerFavoriteStar()
 		{

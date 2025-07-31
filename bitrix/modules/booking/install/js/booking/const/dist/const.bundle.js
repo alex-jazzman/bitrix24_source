@@ -94,6 +94,10 @@ this.BX.Booking = this.BX.Booking || {};
 	    code: '23661964',
 	    anchorCode: 'visit'
 	  },
+	  CrmFormsPopup: {
+	    code: '25366370',
+	    anchorCode: ''
+	  },
 	  WaitListDescription: {
 	    code: '24846212',
 	    anchorCode: ''
@@ -102,7 +106,8 @@ this.BX.Booking = this.BX.Booking || {};
 
 	const BusySlot = Object.freeze({
 	  OffHours: 'offHours',
-	  Intersection: 'intersection'
+	  Intersection: 'intersection',
+	  IntersectionOverbooking: 'intersection-overbooking'
 	});
 
 	const CrmEntity = Object.freeze({
@@ -159,6 +164,7 @@ this.BX.Booking = this.BX.Booking || {};
 	  Counters: 'counters',
 	  Dictionary: 'dictionary',
 	  Favorites: 'favorites',
+	  FormsMenu: 'forms-menu',
 	  Interface: 'interface',
 	  MainResources: 'main-resources',
 	  MessageStatus: 'message-status',

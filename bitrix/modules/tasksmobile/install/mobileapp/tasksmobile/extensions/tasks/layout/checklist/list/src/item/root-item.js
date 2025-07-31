@@ -106,14 +106,9 @@ jn.define('tasks/layout/checklist/list/src/item/root-item', (require, exports, m
 
 		handleOnFocus()
 		{
-			const { item, hideMenu } = this.props;
+			const { item } = this.props;
 
 			this.toggleChecklistRootTitle(item, FOCUS);
-
-			if (hideMenu)
-			{
-				hideMenu();
-			}
 
 			super.handleOnFocus(item);
 		}

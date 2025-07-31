@@ -54,6 +54,34 @@ class Manager
 		return MobileApp\Mobile::getApiVersion() >= 41;
 	}
 
+	private function getTabs(): array
+	{
+		return [
+			$this->messenger,
+			$this->copilot,
+			$this->openLines,
+			$this->channel,
+			$this->collab,
+		];
+	}
+
+	private function getCacheId(): string
+	{
+		$enabledIds = [];
+		$tabs = $this->getTabs();
+
+		foreach ($tabs as $tab)
+		{
+			if ($tab->isAvailable())
+			{
+				$enabledIds[] = $tab->getId();
+			}
+		}
+
+		sort($enabledIds);
+		return 'chat_tabs_' . hash('sha256', implode('_', $enabledIds));
+	}
+
 	public function getMessengerComponent(): array
 	{
 		/**
@@ -78,6 +106,7 @@ class Manager
 		return [
 			'sort' => 100,
 			'imageName' => 'chat',
+			'cacheId' => $this->getCacheId(),
 			'badgeCode' => 'messages',
 			'component' => [
 				'name' => 'JSStackComponent',
@@ -279,7 +308,6 @@ class Manager
 				'HAS_ACTIVE_CLOUD_STORAGE_BUCKET' => $hasActiveBucket,
 				'IS_BETA_AVAILABLE' => Settings::isBetaAvailable(),
 				'IS_CHAT_M1_ENABLED' => Settings::isChatM1Enabled(),
-				'SIDEBAR_V2_FEATURES' => Settings::getSidebarV2Features(),
 				'IS_CHAT_LOCAL_STORAGE_AVAILABLE' => Settings::isChatLocalStorageAvailable(),
 				'SHOULD_SHOW_CHAT_V2_UPDATE_HINT' => Settings::shouldShowChatV2UpdateHint(),
 				'SMILE_LAST_UPDATE_DATE' => CSmile::getLastUpdate()->format(DateTimeInterface::ATOM),

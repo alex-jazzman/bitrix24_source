@@ -2,6 +2,7 @@
 
 namespace Bitrix\Im\V2\Sync\Entity;
 
+use Bitrix\Im\V2\Chat\Comment\CommentPopupItem;
 use Bitrix\Im\V2\MessageCollection;
 use Bitrix\Im\V2\Rest\RestAdapter;
 use Bitrix\Im\V2\Sync\Entity;
@@ -53,10 +54,11 @@ class Messages implements Entity
 	{
 		$fullMessages = $this->getFullMessages();
 		[$messages, $updatedMessages] = $this->divideByEventType($fullMessages);
+		$option = ['POPUP_DATA_EXCLUDE' => [CommentPopupItem::class]];
 
 		return [
-			'messages' => (new RestAdapter($messages))->toRestFormat(),
-			'updatedMessages' => (new RestAdapter($updatedMessages))->toRestFormat(),
+			'messages' => (new RestAdapter($messages))->toRestFormat($option),
+			'updatedMessages' => (new RestAdapter($updatedMessages))->toRestFormat($option),
 			'completeDeletedMessages' => $this->completeDeletedMessageIds,
 		];
 	}

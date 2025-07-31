@@ -54,7 +54,7 @@ export const DepartmentMenuButton = {
 			{
 				this.menuVisible = false;
 				EventEmitter.unsubscribe(events.HR_DEPARTMENT_MENU_CLOSE, this.closeMenu);
-				EventEmitter.unsubscribe(events.HR_DRAG_DEPARTMENT, this.closeMenu);
+				EventEmitter.unsubscribe(events.HR_DRAG_ENTITY, this.closeMenu);
 			}
 		},
 		openMenu(): void
@@ -63,7 +63,7 @@ export const DepartmentMenuButton = {
 			{
 				this.menuVisible = true;
 				EventEmitter.subscribe(events.HR_DEPARTMENT_MENU_CLOSE, this.closeMenu);
-				EventEmitter.subscribe(events.HR_DRAG_DEPARTMENT, this.closeMenu);
+				EventEmitter.subscribe(events.HR_DRAG_ENTITY, this.closeMenu);
 			}
 		},
 	},

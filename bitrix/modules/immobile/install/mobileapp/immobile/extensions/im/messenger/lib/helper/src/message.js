@@ -47,6 +47,7 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 	const customMessages = new Set([
 		MessageParams.ComponentId.CallMessage,
 		MessageParams.ComponentId.VoteMessage,
+		MessageParams.ComponentId.AiAssistantMessage,
 	]);
 
 	/**
@@ -134,6 +135,14 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 			this.messageModel = messageModel;
 			this.filesModel = filesModel;
 			this.voteModel = messageModel.vote;
+		}
+
+		/**
+		 * @return {MessengerCoreStore}
+		 */
+		get #store()
+		{
+			return serviceLocator.get('core').getStore();
 		}
 
 		get messageId()
@@ -381,9 +390,12 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 
 		get isInitialPostForComment()
 		{
-			this.dialogModel ??= this.#getDialoguesModel();
+			return Boolean(this.#store.getters['dialoguesModel/getByParentMessageId'](this.messageModel.id));
+		}
 
-			return String(this.dialogModel?.parentMessageId) === String(this.messageModel.id);
+		get isAiAssistant()
+		{
+			return this.messageModel.params?.componentId === MessageParams.ComponentId.AiAssistantMessage;
 		}
 
 		getComponentId()
@@ -440,7 +452,7 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 		 */
 		#getDialoguesModel()
 		{
-			return serviceLocator.get('core').getStore()
+			return this.#store
 				.getters['dialoguesModel/getByChatId'](this.messageModel.chatId);
 		}
 

@@ -10,6 +10,7 @@ Loc::loadMessages(__FILE__);
 class CallAIError extends \Bitrix\Call\Error
 {
 	public const
+		AI_MODULE_ERROR = 'AI_MODULE_ERROR',
 		AI_UNAVAILABLE_ERROR = 'AI_UNAVAILABLE_ERROR',
 		AI_SETTINGS_ERROR = 'AI_SETTINGS_ERROR',
 		AI_AGREEMENT_ERROR = 'AI_AGREEMENT_ERROR',

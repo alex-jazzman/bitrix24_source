@@ -4,6 +4,7 @@
 jn.define('im/messenger/lib/element/recent/item/user/bot', (require, exports, module) => {
 	const { merge } = require('utils/object');
 
+	const { BotCode	} = require('im/messenger/const');
 	const { UserItem } = require('im/messenger/lib/element/recent/item/user');
 
 	/**
@@ -33,6 +34,13 @@ jn.define('im/messenger/lib/element/recent/item/user/bot', (require, exports, mo
 
 		createTitleStyle()
 		{
+			const userModel = this.getUserModelByDialogId(Number(this.getModelItem().id));
+
+			if (userModel?.botData?.code === BotCode.aiAssistant)
+			{
+				return this;
+			}
+
 			this.styles.title = merge(this.styles.title, {
 				image: {
 					name: 'name_status_bot',

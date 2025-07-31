@@ -18,6 +18,7 @@ class SaveNodeChatsCommand extends AbstractCommand
 	const CHANNEL_INDEX = 'channel';
 
 	public readonly array $ids;
+	public readonly array $removeIds;
 
 	/**
 	 * @param Item\Node $node
@@ -28,9 +29,11 @@ class SaveNodeChatsCommand extends AbstractCommand
 		public readonly Item\Node $node,
 		public readonly array $createDefault = [self::CHAT_INDEX => false, self::CHANNEL_INDEX => false],
 		array $ids = [self::CHAT_INDEX => [], self::CHANNEL_INDEX => []],
+		array $removeIds = [],
 	)
 	{
 		$this->ids = array_merge([self::CHAT_INDEX => [], self::CHANNEL_INDEX => []], $ids);
+		$this->removeIds = $removeIds;
 	}
 
 	protected function validate(): bool
@@ -46,6 +49,7 @@ class SaveNodeChatsCommand extends AbstractCommand
 
 		if (!array_product(array_map('is_numeric', $this->ids[self::CHAT_INDEX]))
 			|| !array_product(array_map('is_numeric', $this->ids[self::CHANNEL_INDEX]))
+			|| !array_product(array_map('is_numeric', $this->removeIds))
 		)
 		{
 			return false;

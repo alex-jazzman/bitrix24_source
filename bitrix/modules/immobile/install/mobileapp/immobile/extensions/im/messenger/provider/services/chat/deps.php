@@ -4,6 +4,7 @@ return [
 	'extensions' => [
 		'type',
 		'runtime',
+		'utils/object',
 		'im:messenger/lib/helper',
 		'im:messenger/lib/di/service-locator',
 		'im:messenger/lib/rest-manager',

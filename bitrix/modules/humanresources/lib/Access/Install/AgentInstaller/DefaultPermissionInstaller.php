@@ -31,16 +31,11 @@ class DefaultPermissionInstaller extends BaseInstaller
 		Feature::instance()->setHRFirePermissionAvailable(true);
 	}
 
-	public function getVersion(): int
-	{
-		return InstallerFactory::VERSION_0;
-	}
-
 	private function isAdminRoleDefined(): bool
 	{
 		return Container::getAccessRoleRepository()
 				->getRoleObjectByNameAndCategory(
-					RoleDictionary::ROLE_ADMIN,
+					RoleDictionary::ROLE_STRUCTURE_ADMIN,
 					RoleCategory::Department,
 				) !== null
 			;

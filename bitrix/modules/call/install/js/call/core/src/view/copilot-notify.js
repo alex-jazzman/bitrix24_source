@@ -14,6 +14,7 @@ export const CopilotNotifyType = {
 	AI_SETTINGS_ERROR: 'AI_SETTINGS_ERROR',
 	AI_AGREEMENT_ERROR: 'AI_AGREEMENT_ERROR',
 	AI_NOT_ENOUGH_BAAS_ERROR: 'AI_NOT_ENOUGH_BAAS_ERROR',
+	AI_MODULE_ERROR: 'AI_MODULE_ERROR',
 	ENABLE_AI_INTERNAL_ERROR: 'ENABLE_AI_INTERNAL_ERROR',
 	DISABLE_AI_INTERNAL_ERROR: 'DISABLE_AI_INTERNAL_ERROR',
 };
@@ -88,6 +89,10 @@ export class CopilotNotify {
 				break;
 			case CopilotNotifyType.AI_UNAVAILABLE_ERROR:
 				this.notifyText = BX.message('CALL_POPUP_AI_UNAVAILABLE_ERROR');
+				this.notifyColor = '#FF5752';
+				break;
+			case CopilotNotifyType.AI_MODULE_ERROR:
+				this.notifyText = BX.message('CALL_POPUP_AI_MODULE_ERROR').replace('#ERROR_CODE#', this.code);
 				this.notifyColor = '#FF5752';
 				break;
 			case CopilotNotifyType.AI_SETTINGS_ERROR:

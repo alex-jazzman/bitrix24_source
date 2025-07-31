@@ -75,6 +75,13 @@ class ResourceTable extends DataManager
 				ResourceNotificationSettingsTable::getEntity(),
 				Join::on('this.ID', 'ref.RESOURCE_ID')
 			)),
+			(new OneToMany(
+				'ENTITIES',
+				ResourceLinkedEntityTable::class,
+				'RESOURCE',
+			))
+				->configureJoinType(Join::TYPE_LEFT)
+				->configureCascadeDeletePolicy(CascadePolicy::FOLLOW),
 		];
 	}
 }

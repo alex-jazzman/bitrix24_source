@@ -2,10 +2,19 @@
 
 namespace Bitrix\Main\Access\Auth;
 
+use Bitrix\HumanResources\Builder\Structure\Filter\Column\EntityIdFilter;
+use Bitrix\HumanResources\Builder\Structure\Filter\Column\Node\NodeTypeFilter;
+use Bitrix\HumanResources\Builder\Structure\Filter\NodeFilter;
+use Bitrix\HumanResources\Builder\Structure\Filter\NodeMemberFilter;
+use Bitrix\HumanResources\Builder\Structure\NodeMemberDataBuilder;
 use Bitrix\HumanResources\Config\Storage;
+use Bitrix\HumanResources\Item\Collection\NodeMemberCollection;
 use Bitrix\HumanResources\Service\Container;
+use Bitrix\HumanResources\Type\IntegerCollection;
 use Bitrix\HumanResources\Type\MemberEntityType;
 use Bitrix\HumanResources\Type\NodeEntityType;
+use Bitrix\HumanResources\Type\NodeEntityTypeCollection;
+
 use Bitrix\Main\Application;
 use Bitrix\Main\Access\AccessCode;
 use Bitrix\Main\Loader;
@@ -81,23 +90,47 @@ class AccessAuthProvider extends \CAuthProvider
 	private function updateCodesByHr(int $userId): void
 	{
 		$roleHelperService = Container::getRoleHelperService();
-		$deputyRole = $roleHelperService->getDeputyRoleId();
-		$headRole = $roleHelperService->getHeadRoleId();
-
-		if (!$deputyRole && !$headRole)
+		$roleCollection = $roleHelperService->getAllRoleCollectionForSync();
+		if ($roleCollection->empty())
 		{
 			return;
 		}
 
-		$nodeMemberRepository = Container::getNodeMemberRepository();
-		$nodeMemberCollection = $nodeMemberRepository->findAllByEntityIdAndEntityTypeAndNodeType(
-			$userId,
-			MemberEntityType::USER,
-			NodeEntityType::DEPARTMENT,
-		);
+		$getMemberCollectionByNodeType =
+			static fn(NodeEntityType $nodeType) =>
+				(new NodeMemberDataBuilder())
+					->addFilter(
+						new NodeMemberFilter(
+							entityIdFilter: EntityIdFilter::fromEntityId($userId),
+							entityType: MemberEntityType::USER,
+							nodeFilter: new NodeFilter(
+								entityTypeFilter: NodeTypeFilter::fromNodeTypes([$nodeType]),
+							),
+							findRelatedMembers: false,
+							active: null,
+						)
+					)
+					->getAll()
+		;
 
-		$connection = Application::getConnection();
-		$insertValues = [];
+		$accessCodeSet = [];
+
+		$departmentMemberCollection = $getMemberCollectionByNodeType(NodeEntityType::DEPARTMENT);
+		if (!$departmentMemberCollection->empty())
+		{
+			$accessCodeSet[AccessCode::ACCESS_EMPLOYEE . '0'] = true;
+		}
+
+		$teamMemberCollection = $getMemberCollectionByNodeType(NodeEntityType::TEAM);
+		if (!$teamMemberCollection->empty())
+		{
+			$accessCodeSet[AccessCode::ACCESS_TEAM_EMPLOYEE . '0'] = true;
+		}
+
+		$nodeMemberCollection = new NodeMemberCollection(...[
+			...$departmentMemberCollection->getValues(),
+			...$teamMemberCollection->getValues(),
+		]);
 
 		foreach ($nodeMemberCollection as $nodeMember)
 		{
@@ -106,26 +139,45 @@ class AccessAuthProvider extends \CAuthProvider
 				continue;
 			}
 
-			$neededRoles = array_intersect([$headRole, $deputyRole], $nodeMember->roles);
-			if (empty($neededRoles))
+			$neededRoleIds = array_intersect($roleCollection->getKeys(), $nodeMember->roles);
+			if (empty($neededRoleIds))
 			{
 				continue;
 			}
 
 			$userId = $nodeMember->entityId;
 
-			foreach ($neededRoles as $role)
+			foreach ($neededRoleIds as $roleId)
 			{
-				$type = $role === $headRole ? AccessCode::ACCESS_DIRECTOR : AccessCode::ACCESS_DEPUTY;
+				$role = $roleCollection->getItemById($roleId);
+				if (!$role)
+				{
+					continue;
+				}
+
+				$type = $roleHelperService->getAccessCodeByRoleXmlId($role->xmlId);
+				if (!$type)
+				{
+					continue;
+				}
+
 				$accessCode = $type . $nodeMember->nodeId;
 
-				$insertValues[] = "($userId, '$this->id', '{$type}0')";
-				$insertValues[] = "($userId, '$this->id', '$accessCode')";
+				$accessCodeSet[$type . '0'] = true;
+				$accessCodeSet[$accessCode] = true;
 			}
+		}
+
+		$insertValues = [];
+		$accessCodes = array_keys($accessCodeSet);
+		foreach ($accessCodes as $accessCode)
+		{
+			$insertValues[] = "($userId, '$this->id', '$accessCode')";
 		}
 
 		if (!empty($insertValues))
 		{
+			$connection = Application::getConnection();
 			$helper = $connection->getSqlHelper();
 
 			$sql = $helper->getInsertIgnore(

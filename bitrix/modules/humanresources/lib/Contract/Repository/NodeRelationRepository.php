@@ -81,4 +81,10 @@ interface NodeRelationRepository
 	 * @throws InvalidArgumentException
 	 */
 	public function deleteRelationByEntityTypeAndEntityIds(RelationEntityType $entityType, array $entityIds): void;
+
+	public function getByEntityIdsAndNodeIdAndType(
+		int $nodeId,
+		array $entityIds,
+		RelationEntityType $entityType
+	): Item\Collection\NodeRelationCollection;
 }

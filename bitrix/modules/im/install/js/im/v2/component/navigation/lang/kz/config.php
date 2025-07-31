@@ -1,7 +1,4 @@
 <?php
-$MESS["IM_CONTENT_COPILOT_PROMO_HINT_ACTION"] = "CoPilot бар жаңа чат жасау";
-$MESS["IM_CONTENT_COPILOT_PROMO_HINT_DESCRIPTION"] = "Онымен мәселені талқылау немесе идея ойлап табу оңайырақ болды";
-$MESS["IM_CONTENT_COPILOT_PROMO_HINT_TITLE"] = "CoPilot қазір чаттардың жалпы тізімінде";
 $MESS["IM_NAVIGATION_CALLS"] = "Қоңыраулар";
 $MESS["IM_NAVIGATION_CALLS_V2"] = "Телефония";
 $MESS["IM_NAVIGATION_CHANNELS"] = "Арналар";

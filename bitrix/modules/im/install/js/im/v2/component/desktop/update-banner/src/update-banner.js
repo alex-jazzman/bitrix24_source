@@ -1,15 +1,17 @@
 import { Browser, Extension, Loc } from 'main.core';
+import { RichLoc } from 'ui.vue3.components.rich-loc';
 
-import { DesktopApi } from 'im.v2.lib.desktop-api';
 import { Analytics } from 'im.v2.lib.analytics';
-import { getHelpdeskStringCallback } from 'im.v2.lib.helpdesk';
+import { DesktopApi } from 'im.v2.lib.desktop-api';
 import { Utils } from 'im.v2.lib.utils';
+import { openHelpdeskArticle } from 'im.v2.lib.helpdesk';
 
 import './css/update-banner.css';
 
 // @vue/component
 export const DesktopUpdateBanner = {
 	name: 'DesktopUpdateBanner',
+	components: { RichLoc },
 	computed:
 	{
 		desktopDownloadUrl(): string
@@ -35,14 +37,14 @@ export const DesktopUpdateBanner = {
 			;
 
 			return Loc.getMessage(messageCode, {
-				'[helpdesk]': `<span onclick="${this.showHelpArticle()}" class="bx-im-desktop-update-banner__description-more">`,
-				'[/helpdesk]': '</span>',
-				'[br]': '<br>',
+				'[br]': '\n',
 			});
 		},
-		showBrowserLink(): boolean
+		isSupportedOpenLinkInBrowser(): boolean
 		{
-			return DesktopApi.getMajorVersion() > 15;
+			const DESKTOP_VERSION_SUPPORTED_OPEN_LINK_IN_BROWSER = 16;
+
+			return DesktopApi.getMajorVersion() >= DESKTOP_VERSION_SUPPORTED_OPEN_LINK_IN_BROWSER;
 		},
 		isSupportedOs(): boolean
 		{
@@ -82,13 +84,8 @@ export const DesktopUpdateBanner = {
 		{
 			const ARTICLE_CODE = '25374968';
 
-			const analyticsHandler = 'BX.Messenger.v2.Lib.Analytics.getInstance().desktopUpdateBanner.onClickMoreInformation()';
-			const helpdeskArticleHandler = getHelpdeskStringCallback(ARTICLE_CODE);
-
-			return `
-				${analyticsHandler}
-				${helpdeskArticleHandler}
-			`;
+			openHelpdeskArticle(ARTICLE_CODE);
+			Analytics.getInstance().desktopUpdateBanner.onClickMoreInformation();
 		},
 		openRootDomain()
 		{
@@ -114,13 +111,19 @@ export const DesktopUpdateBanner = {
 				<div class="bx-im-desktop-update-banner__image"></div>
 				<div class="bx-im-desktop-update-banner__content">
 					<h2 class="bx-im-desktop-update-banner__heading">{{ loc('IM_DESKTOP_UPDATE_BANNER_HEADING') }}</h2>
-					<p v-html="descriptionText" class="bx-im-desktop-update-banner__description"></p>
+					<RichLoc class="bx-im-desktop-update-banner__description" :text="descriptionText" placeholder="[helpdesk]">
+						<template #helpdesk="{ text }">
+							<span class="bx-im-desktop-update-banner__description-more" @click="showHelpArticle">
+								{{ text }}
+							</span>
+						</template>
+					</RichLoc>
 				</div>
 				<div v-if="isSupportedOs" class="bx-im-desktop-update-banner__buttons">
 					<button @click="openDesktopDownloadPage" class="bx-im-desktop-update-banner__update">
 						{{ loc('IM_DESKTOP_UPDATE_BANNER_UPDATE') }}
 					</button>
-					<button v-if="showBrowserLink" @click="openRootDomain" class="bx-im-desktop-update-banner__version">
+					<button v-if="isSupportedOpenLinkInBrowser" @click="openRootDomain" class="bx-im-desktop-update-banner__version">
 						{{ loc('IM_DESKTOP_UPDATE_BANNER_VERSION') }}
 					</button>
 				</div>

@@ -125,8 +125,9 @@ jn.define('im/messenger/lib/ui/notification/messenger-toast', (require, exports,
 		 *
 		 * @param {ToastType} toastType
 		 * @param layoutWidget
+		 * @param {ShowToastParams} params
 		 */
-		static show(toastType, layoutWidget = null)
+		static show(toastType, layoutWidget = null, params = {})
 		{
 			if (!(toastType in ToastType))
 			{
@@ -149,6 +150,8 @@ jn.define('im/messenger/lib/ui/notification/messenger-toast', (require, exports,
 			{
 				toastParams.iconName = ToastIconName[toastType];
 			}
+
+			toastParams = { ...toastParams, ...params };
 
 			showSafeToast(
 				toastParams,

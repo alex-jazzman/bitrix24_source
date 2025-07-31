@@ -9,6 +9,7 @@ return [
 		'im:messenger/lib/di/service-locator',
 		'im:messenger/lib/params',
 		'im:messenger/lib/helper',
+		'im:messenger/provider/data',
 	],
 	'bundle' => [
 		'./src/chat-create',
@@ -28,5 +29,6 @@ return [
 		'./src/messenger',
 		'./src/message-create-menu',
 		'./src/chat-open',
+		'./src/navigation-tab',
 	],
 ];

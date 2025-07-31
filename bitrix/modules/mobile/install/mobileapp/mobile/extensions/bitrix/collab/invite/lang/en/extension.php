@@ -1,4 +1,5 @@
 <?php
+$MESS["COLLAB_GUEST_INVITE_LANGUAGE_CHOOSER_TEXT"] = "Invitation language: [COLOR=#COLOR#][URL]#LANGUAGE#[/URL][/COLOR]";
 $MESS["COLLAB_GUEST_INVITE_RESTRICTIONS_BOX_BUTTON_TEXT"] = "Close";
 $MESS["COLLAB_GUEST_INVITE_RESTRICTIONS_BOX_DETAILS_BUTTON_TEXT"] = "Learn more";
 $MESS["COLLAB_GUEST_INVITE_RESTRICTIONS_BOX_STATUS_BLOCK_DESCRIPTION"] = "Please contact your\nBitrix24 administrator.";
@@ -16,6 +17,8 @@ $MESS["COLLAB_INVITE_INVALID_EMAIL_ALERT_DESCRIPTION"] = "These emails have inco
 $MESS["COLLAB_INVITE_INVALID_EMAIL_ALERT_TITLE"] = "Cannot send invitation to some of the emails";
 $MESS["COLLAB_INVITE_INVALID_PHONE_NUMBER_ALERT_DESCRIPTION"] = "These numbers have incorrect format: #phonesNumbersString#";
 $MESS["COLLAB_INVITE_INVALID_PHONE_NUMBER_ALERT_TITLE"] = "Cannot send invitation to some of the contacts";
+$MESS["COLLAB_INVITE_LANGUAGE_CHOOSER_AHA_MOMENT_TEXT"] = "Select the language that will be used for the guest's invitation and user interface.";
+$MESS["COLLAB_INVITE_LANGUAGE_CHOOSER_MENU_SECTION_TITLE"] = "default";
 $MESS["COLLAB_INVITE_MULTIPLE_ADD_SUCCESS_TOAST_TEXT"] = "Employees added";
 $MESS["COLLAB_INVITE_MULTIPLE_SEND_SUCCESS_TOAST_TEXT"] = "Invitations have been sent";
 $MESS["COLLAB_INVITE_NAME_CHECKER_CLOSE_ALERT_CONTINUE_BUTTON"] = "Continue with invitation";
@@ -33,7 +36,6 @@ $MESS["COLLAB_INVITE_PERMISSIONS_ALERT_DESCRIPTION"] = "Only the collab owner or
 $MESS["COLLAB_INVITE_PERMISSIONS_ALERT_TITLE"] = "Insufficient permissions";
 $MESS["COLLAB_INVITE_SELECTOR_SEND_BUTTON_TEXT"] = "Invite";
 $MESS["COLLAB_INVITE_SHARE_LINK_DIALOG_TITLE"] = "Share link";
-$MESS["COLLAB_INVITE_SHARING_MESSAGE_TEXT"] = "Join our collab to communicate and bring our project to success #link#";
 $MESS["COLLAB_INVITE_SINGLE_ADD_SUCCESS_TOAST_TEXT"] = "Employee added";
 $MESS["COLLAB_INVITE_SINGLE_SEND_SUCCESS_TOAST_TEXT"] = "Invitation has been sent";
 $MESS["COLLAB_INVITE_TAB_EMPLOYEES_TITLE"] = "Employees";

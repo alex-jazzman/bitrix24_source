@@ -11,3 +11,4 @@ $MESS["REST_CONFIGURATION_TITLE_PAGE_IMPORT_ROLLBACK"] = "Салалық шеш�
 $MESS["REST_CONFIGURATION_TITLE_PAGE_INDEX"] = "Салалық шешімдер";
 $MESS["REST_CONFIGURATION_TITLE_PAGE_PLACEMENT"] = "Салалық шешімдер";
 $MESS["REST_CONFIGURATION_TITLE_PAGE_SECTION"] = "Салалық шешімдер";
+$MESS["REST_CONFIGURATION_TITLE_PAGE_SECTION_CRM"] = "Салалық CRM";

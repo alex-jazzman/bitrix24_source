@@ -40,6 +40,7 @@ class CollabInvitationMessageFactory implements InvitationMessageFactoryContract
 		}
 
 		$siteId = \CExtranet::GetExtranetSiteID();
+		$userLang = $this->user->getLanguageId();
 
 		$messageId = \CIntranetInviteDialog::getMessageId("COLLAB_INVITATION", $siteId, LANGUAGE_ID);
 		$eventName = 'COLLAB_INVITATION';
@@ -51,8 +52,8 @@ class CollabInvitationMessageFactory implements InvitationMessageFactoryContract
 			"USER_TEXT" => Loc::getMessage('INTRANET_COMMAND_INVITATION_USER_COLLECTION_TO_GROUP_COLLAB_EMAIL_TEXT'),
 			"COLLAB_NAME" => $this->collab->getName(),
 			"ACTIVE_USER" => $this->user->getInviteStatus() === InvitationStatus::ACTIVE,
-			'COLLAB_INVITATION_SUBJECT' => $this->createCollabSubject(),
-			'USER_LANG' => $this->user->getLanguageId(),
+			'COLLAB_INVITATION_SUBJECT' => $this->createCollabSubject($userLang),
+			'USER_LANG' => $userLang,
 		];
 
 		return new EmailMessage(
@@ -70,13 +71,13 @@ class CollabInvitationMessageFactory implements InvitationMessageFactoryContract
 		return new PhoneMessage($this->user, true);
 	}
 
-	private function createCollabSubject(): ?string
+	private function createCollabSubject(string $lang = LANGUAGE_ID): ?string
 	{
-		Loc::loadLanguageFile($_SERVER["DOCUMENT_ROOT"] . '/bitrix/components/bitrix/intranet.template.mail/templates/.default/collab.php');
+		Loc::loadLanguageFile($_SERVER["DOCUMENT_ROOT"] . '/bitrix/components/bitrix/intranet.template.mail/templates/.default/collab.php', $lang);
 
 		if (Loader::includeModule('bitrix24') && \CBitrix24::isLicenseNeverPayed())
 		{
-			return Loc::getMessage('INTRANET_INVITATION_COLLAB_TITLE');
+			return Loc::getMessage('INTRANET_INVITATION_COLLAB_TITLE', null, $lang);
 		}
 
 		$formattedName = \CUser::FormatName('#NAME# #LAST_NAME#', [
@@ -86,6 +87,6 @@ class CollabInvitationMessageFactory implements InvitationMessageFactoryContract
 			'LOGIN' => CurrentUser::get()->getLogin(),
 		], true);
 
-		return $formattedName . ' ' . Loc::getMessage('INTRANET_INVITATION_COLLAB_INVITE_YOU') . ' ' . $this->collab->getName();
+		return $formattedName . ' ' . Loc::getMessage('INTRANET_INVITATION_COLLAB_INVITE_YOU', null, $lang) . ' ' . $this->collab->getName();
 	}
 }

@@ -106,15 +106,6 @@
 	--ui-icon-set__icon-color: rgba(0, 0, 0, 0.3);
 }
 
-.humanresources-detail-panel__head:not(.--team) .humanresources-detail-panel__edit-button:hover,
-.humanresources-detail-panel__head:not(.--team) .humanresources-detail-panel__edit-button:active {
-	background-color: var(--ui-color-palette-blue-20);
-}
-
-.humanresources-detail-panel__head:not(.--team) .humanresources-detail-panel__edit-button.--focused{
-	background-color: var(--ui-color-palette-blue-25);
-}
-
 .humanresources-detail-panel__edit-button.--focused .humanresources-detail-panel__edit-button-icon,
 .humanresources-detail-panel__edit-button:hover .humanresources-detail-panel__edit-button-icon{
 	--ui-icon-set__icon-color: var(--ui-color-palette-gray-80);

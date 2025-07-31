@@ -3,7 +3,7 @@ import { Type } from 'main.core';
 import { Utils } from 'im.v2.lib.utils';
 import { FileViewerContext } from 'im.v2.const';
 import { VideoPlayer } from	'im.v2.component.elements.videoplayer';
-import { ProgressBar } from	'im.v2.component.elements.progressbar';
+import { ProgressBar } from 'im.v2.component.elements.progressbar';
 
 import '../../css/items/video.css';
 
@@ -132,8 +132,7 @@ export const VideoItem = {
 			@click="download"
 		>
 			<ProgressBar 
-				v-if="!isLoaded" 
-				:item="file" 
+				:item="file"
 				@cancelClick="onCancelClick"
 			/>
 			<VideoPlayer

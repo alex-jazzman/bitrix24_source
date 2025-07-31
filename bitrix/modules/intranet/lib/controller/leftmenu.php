@@ -53,16 +53,6 @@ class LeftMenu extends \Bitrix\Main\Engine\Controller
 			\Bitrix\Intranet\Composite\CacheProvider::deleteUserCache();
 		}
 
-		global $CACHE_MANAGER;
-
-		if (defined('BX_COMP_MANAGED_CACHE'))
-		{
-			$CACHE_MANAGER->ClearByTag('bitrix24_left_menu');
-		}
-
-		$CACHE_MANAGER->CleanDir('menu');
-		\CBitrixComponent::clearComponentCache('bitrix:menu');
-
 		FirstPage::getInstance()->clearCache();
 
 		return true;

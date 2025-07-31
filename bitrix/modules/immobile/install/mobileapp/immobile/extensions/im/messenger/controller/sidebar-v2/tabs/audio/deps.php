@@ -22,6 +22,7 @@ return [
 		'ui-system/typography/text',
 		'ui-system/blocks/icon',
 		'layout/ui/loaders/spinner',
+		'layout/pure-component',
 
 		'native/media',
 	],

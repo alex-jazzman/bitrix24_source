@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,ui_iconSet_outline,im_v2_lib_localStorage,im_v2_provider_service_message,im_v2_lib_soundNotification,im_v2_lib_channel,im_v2_lib_inputAction,im_v2_lib_desktopApi,im_v2_component_elements_tabs,im_v2_lib_smileManager,im_v2_provider_service_sending,im_v2_lib_helpdesk,im_v2_lib_rest,calendar_sharing_interface,vote_application,im_v2_component_elements_menu,im_v2_lib_entityCreator,im_v2_lib_analytics,im_v2_lib_feature,im_v2_lib_permission,im_v2_lib_notifier,file_dialog,main_popup,im_v2_lib_draft,im_v2_lib_hotkey,im_v2_lib_textarea,im_v2_provider_service_uploading,im_v2_component_message_file,im_v2_component_elements_mediaGallery,ui_icons,main_core_events,im_v2_component_elements_scrollWithGradient,im_v2_lib_textHighlighter,im_v2_component_elements_chatTitle,im_v2_component_elements_avatar,im_v2_lib_user,im_v2_lib_logger,im_v2_lib_search,im_v2_lib_utils,im_v2_application_core,im_v2_lib_parser,main_core,im_v2_component_elements_loader,im_v2_lib_market,im_v2_component_elements_popup,ui_iconSet_api_vue,im_v2_component_elements_autoDelete,im_v2_provider_service_chat,im_v2_lib_autoDelete,im_v2_const) {
+(function (exports,ui_iconSet_outline,im_v2_lib_localStorage,im_v2_provider_service_message,im_v2_lib_soundNotification,im_v2_lib_inputAction,im_v2_lib_desktopApi,im_v2_component_elements_tabs,im_v2_lib_smileManager,im_v2_provider_service_sending,im_v2_lib_helpdesk,im_v2_lib_rest,calendar_sharing_interface,vote_application,im_v2_component_elements_menu,im_v2_lib_entityCreator,im_v2_lib_analytics,im_v2_lib_feature,im_v2_lib_permission,im_v2_lib_notifier,file_dialog,main_popup,im_v2_lib_draft,im_v2_lib_hotkey,im_v2_lib_textarea,im_v2_provider_service_uploading,im_v2_component_message_file,im_v2_component_elements_mediaGallery,ui_icons,main_core_events,im_v2_component_elements_scrollWithGradient,im_v2_lib_textHighlighter,im_v2_component_elements_chatTitle,im_v2_component_elements_avatar,im_v2_lib_user,im_v2_lib_logger,im_v2_lib_search,im_v2_lib_utils,im_v2_application_core,im_v2_lib_parser,main_core,im_v2_component_elements_loader,im_v2_lib_market,im_v2_component_elements_popup,ui_iconSet_api_vue,im_v2_component_elements_autoDelete,im_v2_provider_service_chat,im_v2_lib_autoDelete,im_v2_const) {
 	'use strict';
 
 	const MentionSymbols = new Set(['@', '+']);
@@ -6624,10 +6624,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      type: String,
 	      default: ''
 	    },
-	    withCreateMenu: {
-	      type: Boolean,
-	      default: true
-	    },
 	    withMarket: {
 	      type: Boolean,
 	      default: true
@@ -6716,9 +6712,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      const settings = main_core.Extension.getSettings('im.v2.component.textarea');
 	      return settings.get('maxLength');
 	    },
-	    isChannelType() {
-	      return im_v2_lib_channel.ChannelManager.isChannel(this.dialogId);
-	    },
 	    isEmptyText() {
 	      return this.text === '';
 	    },
@@ -6800,10 +6793,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      main_core_events.EventEmitter.emit(im_v2_const.EventType.textarea.onAfterSendMessage);
 	    },
 	    handlePanelAction(text) {
-	      if (this.editMode && text === '') {
-	        this.getMessageService().deleteMessages([this.panelContext.messageId]);
-	      } else if (this.editMode && text !== '') {
-	        this.getMessageService().editMessageText(this.panelContext.messageId, text);
+	      if (this.editMode) {
+	        this.handleEditAction(text);
 	      } else if (this.forwardMode) {
 	        void this.getSendingService().forwardMessages({
 	          text,
@@ -6819,6 +6810,19 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          replyId: this.panelContext.messageId
 	        });
 	      }
+	    },
+	    handleEditAction(text) {
+	      if (text === '' && !this.messageHasFiles(this.panelContext.messageId)) {
+	        return this.getMessageService().deleteMessages([this.panelContext.messageId]);
+	      }
+	      return this.getMessageService().editMessageText(this.panelContext.messageId, text);
+	    },
+	    messageHasFiles(messageId) {
+	      const message = this.$store.getters['messages/getById'](messageId);
+	      if (!message) {
+	        return false;
+	      }
+	      return message.files.length > 0;
 	    },
 	    clear() {
 	      var _this$mentionManager;
@@ -7370,5 +7374,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.ChatTextarea = ChatTextarea;
 
-}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Service??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Service??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Calendar?.Sharing??{},BX?.Vote??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX??{},BX?.Main??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Service??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Elements??{},BX??{},BX?.Event??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Application??{},BX?.Messenger?.v2?.Lib??{},BX??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.UI?.IconSet??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Service??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Const??{}));
+}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Service??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Service??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Calendar?.Sharing??{},BX?.Vote??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX??{},BX?.Main??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Service??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Elements??{},BX??{},BX?.Event??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Application??{},BX?.Messenger?.v2?.Lib??{},BX??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.UI?.IconSet??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Service??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Const??{}));
 //# sourceMappingURL=textarea.bundle.js.map

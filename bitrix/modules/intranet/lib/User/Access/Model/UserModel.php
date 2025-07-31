@@ -5,10 +5,9 @@ declare(strict_types=1);
 namespace Bitrix\Intranet\User\Access\Model;
 
 use Bitrix\Intranet\Entity\User;
-use Bitrix\Intranet\Enum\InvitationStatus;
 use Bitrix\Intranet\Service\ServiceContainer;
 
-final class UserModel extends \Bitrix\Main\Access\User\UserModel
+class UserModel extends \Bitrix\Main\Access\User\UserModel
 {
 	private ?User $user = null;
 

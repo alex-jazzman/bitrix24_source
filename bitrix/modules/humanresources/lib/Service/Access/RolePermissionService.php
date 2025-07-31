@@ -66,6 +66,11 @@ class RolePermissionService
 			$roleTitle = $setting['title'];
 
 			$roleId = $this->saveRole($roleTitle, $roleId);
+			if (!$roleId)
+			{
+				throw new SqlQueryException(self::DB_ERROR_KEY);
+			}
+
 			$setting['id'] = $roleId;
 			$roleIds[] = $roleId;
 
@@ -166,12 +171,12 @@ class RolePermissionService
 
 	/**
 	 * @param string $name
-	 * @param int|null $roleId
+	 * @param int $roleId
 	 *
 	 * @return int
 	 * @throws SqlQueryException
 	 */
-	public function saveRole(string $name, int $roleId = null): int
+	public function saveRole(string $name, int $roleId = 0): int
 	{
 		$name = Encoding::convertEncodingToCurrent($name);
 		try
@@ -191,14 +196,9 @@ class RolePermissionService
 				return $roleId;
 			}
 
-			$role = $this->roleRepository->getRoleObjectByName($name);
+			$role = $this->roleRepository->create($name, $this->category);
 
-			if(!$role)
-			{
-				$role = $this->roleRepository->create($name, $this->category);
-			}
-
-			return $role->getId();
+			return (int)$role->getId();
 		}
 		catch (\Exception $e)
 		{

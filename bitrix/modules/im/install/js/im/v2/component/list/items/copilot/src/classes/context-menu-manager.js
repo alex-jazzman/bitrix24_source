@@ -2,7 +2,6 @@ import { Loc } from 'main.core';
 
 import { Messenger } from 'im.public';
 import { RecentMenu, type MenuItem } from 'im.v2.lib.menu';
-import { Feature, FeatureManager } from 'im.v2.lib.feature';
 
 import { CopilotRecentService } from './copilot-service';
 
@@ -10,19 +9,10 @@ export class CopilotRecentMenu extends RecentMenu
 {
 	getMenuItems(): MenuItem[]
 	{
-		if (FeatureManager.isFeatureAvailable(Feature.showCopilotChatsInRecentTab))
-		{
-			return [
-				this.getUnreadMessageItem(),
-				this.getPinMessageItem(),
-				this.getMuteItem(),
-				this.getHideItem(),
-				this.getLeaveItem(),
-			];
-		}
-
 		return [
+			this.getUnreadMessageItem(),
 			this.getPinMessageItem(),
+			this.getMuteItem(),
 			this.getHideItem(),
 			this.getLeaveItem(),
 		];

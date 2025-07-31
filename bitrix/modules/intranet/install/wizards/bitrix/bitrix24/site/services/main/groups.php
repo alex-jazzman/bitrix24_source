@@ -64,13 +64,12 @@ $SiteGroups = array();
 $group = new CGroup;
 foreach ($arGroups as $arGroup)
 {
-
 	//Add Group
-	$dbResult = CGroup::GetList('', '', Array("STRING_ID" => $arGroup["STRING_ID"], "STRING_ID_EXACT_MATCH" => "Y"));
-	if ($arExistsGroup = $dbResult->Fetch())
-		$groupID = $arExistsGroup["ID"];
-	else
+	$groupID = CGroup::GetIDByCode($arGroup["STRING_ID"]);
+	if (!$groupID)
+	{
 		$groupID = $group->Add($arGroup);
+	}
 
 	if ($groupID <= 0)
 		continue;

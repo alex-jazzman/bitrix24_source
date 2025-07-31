@@ -22,15 +22,23 @@ if ($arParams['VIEW_TARGET'])
 
 <?php
 if (isset($arParams['air']) && $arParams['air'] === true):
-	$airButton = new Bitrix\UI\Buttons\Button([
+	$airButton = new \Bitrix\UI\Buttons\Button([
 		'air' => true,
 		'text' => $title,
 		'style' => AirButtonStyle::OUTLINE,
+		'color' => \Bitrix\UI\Buttons\Color::LIGHT_BORDER,
 	]);
 
 	$airButton->addAttribute('id', $buttonId);
 
-	echo $airButton->render();
+	if (isset($arParams['USE_UI_TOOLBAR']) && $arParams['USE_UI_TOOLBAR'] === 'Y')
+	{
+		\Bitrix\UI\Toolbar\Facade\Toolbar::addButton($airButton);
+	}
+	else
+	{
+		echo $airButton->render();
+	}
 ?>
 <?php else: ?>
 	<div id="<?=htmlspecialcharsbx($buttonId)?>" class="ui-btn ui-btn-themes ui-btn-light-border">

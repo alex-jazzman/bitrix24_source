@@ -33,7 +33,7 @@ $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_CONFIG_PERMISSION_DESCR_MSGVER_1'] = 'Н
 $MESS['HUMANRESOURCES_SEARCH_PLACEHOLDER_MSGVER_1'] = 'Найти сотрудника, отдел или команду';
 
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_EDIT_MENU_EDIT_DEPARTMENT_TITLE'] = 'Редактировать отдел';
-$MESS['HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_EDIT_MENU_EDIT_DEPARTMENT_SUBTITLE'] = 'Название, описание и вышестоящий отдел';
+$MESS['HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_EDIT_MENU_EDIT_DEPARTMENT_SUBTITLE_MSGVER_1'] = 'Изменение названия, состава и других параметров этого отдела';
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_EDIT_MENU_ADD_DEPARTMENT_TITLE_NO_TEAM'] = 'Добавить отдел в подчинение';
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_EDIT_MENU_ADD_DEPARTMENT_SUBTITLE_NO_TEAM'] = 'Новый отдел будет находиться в структуре под этим отделом';
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_EDIT_MENU_ADD_DEPARTMENT_TITLE_MSGVER_1'] = 'Добавить отдел или команду в подчинение';
@@ -74,7 +74,7 @@ $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_TAB_USERS_MEMBER_ACTIO
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_TAB_USERS_MEMBER_ACTION_MENU_EDIT_TEAM_EMPLOYEE_SUBTITLE'] = 'Удалите участника или поменяйте сотрудникам роль в команде';
 
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_EDIT_MENU_EDIT_TEAM_TITLE'] = 'Редактировать команду';
-$MESS['HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_EDIT_MENU_EDIT_TEAM_SUBTITLE'] = 'Название, описание, подчинение в структуре';
+$MESS['HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_EDIT_MENU_EDIT_TEAM_SUBTITLE_MSGVER_1'] = 'Название, описание, участники, подчинение в структуре, чаты и каналы';
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_EDIT_MENU_ADD_TEAM_TITLE'] = 'Добавить команду в подчинение';
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_EDIT_MENU_ADD_TEAM_SUBTITLE'] = 'Новая команда будет включена в структуре в эту команду';
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_EDIT_MENU_TEAM_RIGHTS_TITLE'] = 'Изменить настройки';
@@ -117,7 +117,21 @@ $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_USER_LIST_ACTION_MENU_MOVE_TO_ANOTHER_TE
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_USER_LIST_ACTION_MENU_MOVE_TO_ANOTHER_TEAM_SUBTITLE'] = 'Сотрудник будет удалён из этой команды и переведён в другую';
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_USER_LIST_ACTION_MENU_FIRE_FROM_COMPANY_TITLE'] = 'Уволить';
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_USER_LIST_ACTION_MENU_DELETE_FROM_COMPANY_TITLE'] = 'Удалить';
-$MESS['HUMANRESOURCES_COMPANY_STRUCTURE_USER_LIST_ACTION_MENU_FIRE_FROM_COMPANY_SUBTITLE'] = 'Сотрудник будет удалён из вашего Битрикс24';
+$MESS['HUMANRESOURCES_COMPANY_STRUCTURE_USER_LIST_ACTION_MENU_FIRE_FROM_COMPANY_SUBTITLE_MSGVER_1'] = 'Сотрудник не сможет войти в ваш Битрикс24';
+
+$MESS['HUMANRESOURCES_COMPANY_STRUCTURE_CHAT_LIST_ACTION_MENU_OPEN_CHAT_TITLE'] = 'Перейти в чат';
+$MESS['HUMANRESOURCES_COMPANY_STRUCTURE_CHAT_LIST_ACTION_MENU_OPEN_CHAT_DESCRIPTION'] = 'Открыть этот чат в мессенджере';
+$MESS['HUMANRESOURCES_COMPANY_STRUCTURE_CHAT_LIST_ACTION_MENU_OPEN_CHANNEL_TITLE'] = 'Перейти в канал';
+$MESS['HUMANRESOURCES_COMPANY_STRUCTURE_CHAT_LIST_ACTION_MENU_OPEN_CHANNEL_DESCRIPTION'] = 'Открыть этот канал в мессенджере';
+
+$MESS['HUMANRESOURCES_COMPANY_STRUCTURE_CHAT_LIST_ACTION_MENU_UNBIND_DEPARTMENT_CHAT_TITLE'] = 'Удалить отдел из чата';
+$MESS['HUMANRESOURCES_COMPANY_STRUCTURE_CHAT_LIST_ACTION_MENU_UNBIND_DEPARTMENT_CHAT_DESCRIPTION'] = 'Все сотрудники отдела будут исключены из этого чата';
+$MESS['HUMANRESOURCES_COMPANY_STRUCTURE_CHAT_LIST_ACTION_MENU_UNBIND_DEPARTMENT_CHANNEL_TITLE'] = 'Удалить отдел из канала';
+$MESS['HUMANRESOURCES_COMPANY_STRUCTURE_CHAT_LIST_ACTION_MENU_UNBIND_DEPARTMENT_CHANNEL_DESCRIPTION'] = 'Все сотрудники отдела будут исключены из этого канала';
+$MESS['HUMANRESOURCES_COMPANY_STRUCTURE_CHAT_LIST_ACTION_MENU_UNBIND_TEAM_CHAT_TITLE'] = 'Удалить команду из чата';
+$MESS['HUMANRESOURCES_COMPANY_STRUCTURE_CHAT_LIST_ACTION_MENU_UNBIND_TEAM_CHAT_DESCRIPTION'] = 'Все участники команды будут исключены из этого чата';
+$MESS['HUMANRESOURCES_COMPANY_STRUCTURE_CHAT_LIST_ACTION_MENU_UNBIND_TEAM_CHANNEL_TITLE'] = 'Удалить команду из канала';
+$MESS['HUMANRESOURCES_COMPANY_STRUCTURE_CHAT_LIST_ACTION_MENU_UNBIND_TEAM_CHANNEL_DESCRIPTION'] = 'Все участники команды будут исключены из этого канала';
 
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_NOT_CONVERTED_SCREEN_LOADING_TITLE'] = 'Загружаем структуру компании';
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_NOT_CONVERTED_SCREEN_LOADING_DESCRIPTION'] = 'Это может занять какое-то время';
@@ -127,3 +141,7 @@ $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_TEAMS_DISABLED_ERROR_MSGVER_1'] = 'До�
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_INFO_POPUP_ADD_DESCRIPTION_TITLE'] = 'Добавьте описание';
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_INFO_POPUP_ADD_DESCRIPTION_TEXT'] = 'Это поможет всем заинтересованным лицам понимать цели и задачи этого структурного подразделения';
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_INFO_POPUP_ADD_DESCRIPTION_BUTTON'] = 'Добавить';
+
+$MESS['HUMANRESOURCES_COMPANY_STRUCTURE_DRAG_DEPARTMENT_LABEL'] = 'Переместите отдел сюда';
+$MESS['HUMANRESOURCES_COMPANY_STRUCTURE_DRAG_TEAM_LABEL'] = 'Переместите команду сюда';
+$MESS['HUMANRESOURCES_COMPANY_STRUCTURE_NO_DRAG_PERMISSION'] = 'Недостаточно прав на перемещение';

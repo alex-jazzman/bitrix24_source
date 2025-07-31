@@ -8,7 +8,7 @@ import { formatFieldsWithConfig } from '../../../utils/validate';
 
 import type { JsonObject } from 'main.core';
 import type { GetterTree, ActionTree, MutationTree } from 'ui.vue3.vuex';
-import type { CopilotRole } from '../../../type/copilot';
+import type { ImModelCopilotAIModel, ImModelCopilotRole } from '../../../registry';
 
 type ChatsState = {
 	collection: {[dialogId: string]: CopilotChat},
@@ -17,6 +17,7 @@ type ChatsState = {
 type CopilotChat = {
 	dialogId: string,
 	role: string,
+	aiModel: string,
 }
 
 /* eslint-disable no-param-reassign */
@@ -34,6 +35,7 @@ export class ChatsModel extends BuilderModel
 		return {
 			dialogId: '',
 			role: '',
+			aiModel: '',
 		};
 	}
 
@@ -41,7 +43,7 @@ export class ChatsModel extends BuilderModel
 	{
 		return {
 			/** @function copilot/chats/getRole */
-			getRole: (state) => (dialogId: number): ?CopilotRole => {
+			getRole: (state) => (dialogId: string): ?ImModelCopilotRole => {
 				const chat = state.collection[dialogId];
 				if (!chat)
 				{
@@ -51,7 +53,7 @@ export class ChatsModel extends BuilderModel
 				return Core.getStore().getters['copilot/roles/getByCode'](chat.role);
 			},
 			/** @function copilot/chats/getRoleAvatar */
-			getRoleAvatar: (state, getters) => (dialogId: number): string => {
+			getRoleAvatar: (state, getters) => (dialogId: string): string => {
 				const role = getters.getRole(dialogId);
 				if (!role)
 				{
@@ -59,6 +61,18 @@ export class ChatsModel extends BuilderModel
 				}
 
 				return Core.getStore().getters['copilot/roles/getAvatar'](role.code);
+			},
+			/** @function copilot/chats/getAIModel */
+			getAIModel: (state) => (dialogId: string): ?ImModelCopilotAIModel => {
+				const chat = state.collection[dialogId];
+				if (!chat)
+				{
+					return null;
+				}
+
+				const aiModelList = Core.getStore().getters['copilot/getAIModels'];
+
+				return aiModelList.find((aiModel) => aiModel.code === chat.aiModel);
 			},
 		};
 	}

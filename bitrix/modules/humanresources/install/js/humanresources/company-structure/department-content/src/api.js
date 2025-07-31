@@ -1,4 +1,5 @@
 import { getData, postData } from 'humanresources.company-structure.api';
+import type { ChatListResponse } from 'humanresources.company-structure.utils';
 
 export const DepartmentAPI = {
 	getPagedEmployees: (id: Number, page: Number, countPerPage: Number) => {
@@ -39,18 +40,22 @@ export const DepartmentAPI = {
 			query,
 		});
 	},
-	getChatsAndChannels: (nodeId: number) => {
+	getChatsAndChannels: (nodeId: number): Promise<ChatListResponse> => {
 		return getData('humanresources.api.Structure.Node.Member.Chat.getList', {
 			nodeId,
 		});
 	},
 	saveChats: (
 		nodeId: number,
-		ids: number[],
+		ids: number[] = [],
+		removeIds: number[] = [],
+		parentId: ?number = null,
 	): Promise<Array> => {
 		return postData('humanresources.api.Structure.Node.Member.Chat.saveChatList', {
 			nodeId,
 			ids,
+			removeIds,
+			parentId,
 		});
 	},
 };

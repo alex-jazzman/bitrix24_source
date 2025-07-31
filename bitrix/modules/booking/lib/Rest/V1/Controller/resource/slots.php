@@ -33,7 +33,7 @@ class Slots extends Controller
 	 */
 	public function listAction(
 		int $resourceId,
-	): Page
+	): ?Page
 	{
 		$resource =
 			$this

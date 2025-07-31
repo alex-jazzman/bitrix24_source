@@ -138,6 +138,20 @@ foreach ($arWorkflowParameterTypesTmp as $key => $value)
 }
 
 CBPDocument::AddShowParameterInit(MODULE_ID, "only_users", $_POST['document_type'], ENTITY);
+
+$availableTriggers = [];
+if (
+	$workflowTemplateType === WorkflowTemplateType::Default->value
+	&& \Bitrix\Main\Config\Option::get('bizproc', 'bp_triggers', false)
+)
+{
+	$target = $documentService->createAutomationTarget($documentType);
+	$availableTriggers = array_filter(
+		$target?->getAvailableTriggers() ?? [],
+		static fn($trigger) => empty($trigger['SETTINGS']) && !array_key_exists('APP_LIST', $trigger)
+	);
+}
+
 ?>
 <script>
 BX.namespace('BX.Bizproc');
@@ -333,6 +347,22 @@ function WFSSaveOK(response)
 			document.getElementById('WFStemplate_show_in_timeline').checked
 				? 'Y'
 				: 'N';
+	}
+
+	if (document.getElementById('WFSTriggers'))
+	{
+		const previousSelected = <?= \Bitrix\Main\Web\Json::encode(
+			array_filter($workflowTemplateSettings, static fn($setting) => str_starts_with($setting, 'TRIGGER_'), ARRAY_FILTER_USE_KEY)
+		) ?>;
+		for (const option of Object.keys(previousSelected))
+		{
+			workflowTemplateSettings[option] = 'N';
+		}
+		const options = document.getElementById('WFSTriggers').selectedOptions;
+		for (const option of options)
+		{
+			workflowTemplateSettings[`TRIGGER_${option.value}`] = 'Y';
+		}
 	}
 
 	if (workflowTemplateAutostart < 8)
@@ -770,10 +800,20 @@ BX.ready(function() {
 <form id="bizprocform" name="bizprocform" method="post">
 <?= bitrix_sessid_post() ?>
 <?php
-$aTabs = [["DIV" => "edit1", "TAB" => GetMessage("BIZPROC_WFS_TAB_MAIN"), "ICON" => "group_edit", "TITLE" => GetMessage("BIZPROC_WFS_TAB_MAIN_TITLE")]];
-$aTabs[] = ["DIV" => "edit2", "TAB" => GetMessage("BIZPROC_WFS_TAB_PARAM"), "ICON" => "group_edit", "TITLE" => GetMessage("BIZPROC_WFS_TAB_PARAM_TITLE")];
-$aTabs[] = ["DIV" => "edit3", "TAB" => GetMessage("BP_WF_TAB_VARS"), "ICON" => "group_edit", "TITLE" => GetMessage("BP_WF_TAB_VARS_TITLE")];
+$aTabs = [["DIV" => "edit1", "TAB" => GetMessage("BIZPROC_WFS_TAB_MAIN"), "ICON" => "group_edit", "TITLE" => GetMessage("BIZPROC_WFS_TAB_MAIN_TITLE_MSGVER_1")]];
+$aTabs[] = ["DIV" => "edit2", "TAB" => GetMessage("BIZPROC_WFS_TAB_PARAM"), "ICON" => "group_edit", "TITLE" => GetMessage("BIZPROC_WFS_TAB_PARAM_TITLE_MSGVER_1")];
+$aTabs[] = ["DIV" => "edit3", "TAB" => GetMessage("BP_WF_TAB_VARS"), "ICON" => "group_edit", "TITLE" => GetMessage("BP_WF_TAB_VARS_TITLE_MSGVER_1")];
 $aTabs[] = ["DIV" => "edit5", "TAB" => GetMessage("BP_WF_TAB_CONSTANTS"), "ICON" => "group_edit", "TITLE" => GetMessage("BP_WF_TAB_CONSTANTS_TITLE")];
+
+if ($availableTriggers)
+{
+	$aTabs[] = [
+		'DIV' => 'edit6',
+		'TAB' => \Bitrix\Main\Localization\Loc::getMessage('BP_WF_TAB_TRIGGERS'),
+		'ICON' => 'group_edit',
+		'TITLE' => \Bitrix\Main\Localization\Loc::getMessage('BP_WF_TAB_TRIGGERS_TITLE')
+	];
+}
 
 if ($showTabShowProcess)
 {
@@ -782,7 +822,7 @@ if ($showTabShowProcess)
 
 if (!empty($arAllowableOperations))
 {
-	$aTabs[] = ["DIV" => "edit4", "TAB" => GetMessage("BP_WF_TAB_PERM"), "ICON" => "group_edit", "TITLE" => GetMessage("BP_WF_TAB_PERM_TITLE")];
+	$aTabs[] = ["DIV" => "edit4", "TAB" => GetMessage("BP_WF_TAB_PERM"), "ICON" => "group_edit", "TITLE" => GetMessage("BP_WF_TAB_PERM_TITLE_MSGVER_1")];
 }
 
 $tabControl = new CAdminTabControl("tabControl", $aTabs);
@@ -995,7 +1035,7 @@ $tabControl->BeginNextTab(['className' => 'bizproc-wf-settings-tab-content bizpr
 		</div>
 	</td>
 </tr>
-<?
+<?php
 $tabControl->BeginNextTab(['className' => 'bizproc-wf-settings-tab-content bizproc-wf-settings-tab-content-variables']);
 ?>
 	<tr>
@@ -1071,6 +1111,25 @@ $tabControl->BeginNextTab(['className' => 'bizproc-wf-settings-tab-content bizpr
 			</div>
 		</td>
 	</tr>
+<?php if ($availableTriggers):
+	$tabControl->BeginNextTab(['className' => 'adm-detail-content settings-tab']);?>
+	<tr>
+		<td><?= \Bitrix\Main\Localization\Loc::getMessage('BP_WF_TAB_TRIGGERS_LIST') ?></td>
+		<td>
+			<select multiple size="10" id="WFSTriggers">
+				<?php foreach ($availableTriggers as $k => $v): ?>
+					<option
+						value="<?= htmlspecialcharsbx($v['CODE']) ?>"
+						<?= ($workflowTemplateSettings["TRIGGER_{$v['CODE']}"] ?? 'N') === 'Y' ? ' selected' : '' ?>
+					>
+						<?= htmlspecialcharsbx($v['NAME']) ?>
+					</option>
+				<?php endforeach ?>
+			</select>
+		</td>
+	</tr>
+<?php endif ?>
+
 <?php
 if ($showTabShowProcess):
 

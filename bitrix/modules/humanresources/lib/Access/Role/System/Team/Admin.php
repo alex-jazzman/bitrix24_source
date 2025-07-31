@@ -70,7 +70,14 @@ class Admin extends Base
 				PermissionDictionary::HUMAN_RESOURCES_TEAM_MEMBER_REMOVE,
 				PermissionValueType::DepartmentValue,
 			) => PermissionVariablesDictionary::VARIABLE_ALL,
-
+			TeamPermissionMapper::makeTeamPermissionId(
+				PermissionDictionary::HUMAN_RESOURCES_TEAM_COMMUNICATION_EDIT,
+				PermissionValueType::TeamValue,
+			) => PermissionVariablesDictionary::VARIABLE_ALL,
+			TeamPermissionMapper::makeTeamPermissionId(
+				PermissionDictionary::HUMAN_RESOURCES_TEAM_COMMUNICATION_EDIT,
+				PermissionValueType::DepartmentValue,
+			) => PermissionVariablesDictionary::VARIABLE_ALL,
 			PermissionDictionary::HUMAN_RESOURCES_TEAM_ACCESS_EDIT => PermissionDictionaryAlias::VALUE_YES,
 		];
 	}

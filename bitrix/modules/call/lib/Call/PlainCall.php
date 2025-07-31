@@ -30,15 +30,20 @@ class PlainCall extends Call
 			}
 			(new ControllerClient())->createCall($this);
 		}
+
 		parent::initCall();
 	}
 
 	public function finish(): void
 	{
-		if ($this->getState() != static::STATE_FINISHED)
+		if (
+			$this->scheme !== self::SCHEME_JWT
+			&& $this->getState() != static::STATE_FINISHED
+		)
 		{
 			(new ControllerClient())->finishCall($this);
 		}
+
 		parent::finish();
 	}
 

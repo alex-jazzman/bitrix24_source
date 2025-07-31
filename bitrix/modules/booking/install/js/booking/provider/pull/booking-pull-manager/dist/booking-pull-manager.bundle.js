@@ -210,6 +210,7 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	  void booking_core.Core.getStore().dispatch(`${booking_const.Model.ResourceTypes}/upsert`, resourceType);
 	}
 
+	var _delayTimeout = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("delayTimeout");
 	var _handleWaitListItemAdded = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleWaitListItemAdded");
 	var _handleWaitListItemDeleted = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleWaitListItemDeleted");
 	var _updateCounters$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateCounters");
@@ -224,6 +225,10 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	    });
 	    Object.defineProperty(this, _handleWaitListItemAdded, {
 	      value: _handleWaitListItemAdded2
+	    });
+	    Object.defineProperty(this, _delayTimeout, {
+	      writable: true,
+	      value: null
 	    });
 	    this.handleWaitListItemAdded = babelHelpers.classPrivateFieldLooseBase(this, _handleWaitListItemAdded)[_handleWaitListItemAdded].bind(this);
 	    this.handleWaitListItemDeleted = babelHelpers.classPrivateFieldLooseBase(this, _handleWaitListItemDeleted)[_handleWaitListItemDeleted].bind(this);
@@ -257,7 +262,16 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	  void $store.commit(`${booking_const.Model.Interface}/addDeletingWaitListItemId`, params.id);
 	}
 	async function _updateCounters2() {
-	  await booking_provider_service_mainPageService.mainPageService.fetchCounters();
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _delayTimeout)[_delayTimeout]) {
+	    return;
+	  }
+	  babelHelpers.classPrivateFieldLooseBase(this, _delayTimeout)[_delayTimeout] = setTimeout(async () => {
+	    try {
+	      await booking_provider_service_mainPageService.mainPageService.fetchCounters();
+	    } finally {
+	      babelHelpers.classPrivateFieldLooseBase(this, _delayTimeout)[_delayTimeout] = null;
+	    }
+	  }, 0);
 	}
 
 	var _params = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("params");

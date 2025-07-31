@@ -232,6 +232,9 @@ return [
 			'humanresources.access.authProvider.structureAuthProvider' => [
 				'className' => \Bitrix\HumanResources\Access\AuthProvider\StructureAuthProvider::class,
 			],
+			'humanresources.service.public.team.userService' => [
+				'className' => \Bitrix\HumanResources\Public\Service\Team\UserService::class,
+			],
 		],
 	],
 	'controllers' => [

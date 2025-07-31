@@ -182,7 +182,10 @@ class NodeCollection extends BaseCollection
 
 			foreach ($children as $child)
 			{
-				$childrenNodes->add($child);
+				if ($child->id !== $node->id)
+				{
+					$childrenNodes->add($child);
+				}
 				if (!isset($processedNodes[$child->id]))
 				{
 					$nodesToProcess[] = $child->id;

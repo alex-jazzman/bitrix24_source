@@ -37,11 +37,21 @@ class RoleUtil extends \Bitrix\Main\Access\Role\RoleUtil
 	public static function getDefaultMap(): array
 	{
 		return [
-			RoleDictionary::ROLE_ADMIN => (new Role\System\Admin())->getMap(),
+			RoleDictionary::ROLE_STRUCTURE_ADMIN => (new Role\System\Admin())->getMap(),
 			RoleDictionary::ROLE_HR => (new Role\System\HR())->getMap(),
 			RoleDictionary::ROLE_DIRECTOR => (new Role\System\Director())->getMap(),
 			RoleDictionary::ROLE_DEPUTY => (new Role\System\Deputy())->getMap(),
 			RoleDictionary::ROLE_EMPLOYEE => (new Role\System\Employee())->getMap(),
+		];
+	}
+
+	public static function getDefaultTeamMap(): array
+	{
+		return [
+			RoleDictionary::ROLE_STRUCTURE_ADMIN => (new Role\System\Team\Admin())->getMap(),
+			RoleDictionary::ROLE_TEAM_DIRECTOR => (new Role\System\Team\Director())->getMap(),
+			RoleDictionary::ROLE_TEAM_DEPUTY => (new Role\System\Team\Deputy())->getMap(),
+			RoleDictionary::ROLE_TEAM_EMPLOYEE => (new Role\System\Team\Employee())->getMap(),
 		];
 	}
 

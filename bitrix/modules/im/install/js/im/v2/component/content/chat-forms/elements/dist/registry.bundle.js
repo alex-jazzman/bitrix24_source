@@ -448,9 +448,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    isEnabled() {
 	      return this.delay !== im_v2_const.AutoDeleteDelay.Off;
 	    },
-	    isFeatureAvailable() {
-	      return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.messagesAutoDeleteAvailable);
-	    },
 	    isFeatureEnabled() {
 	      return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.messagesAutoDeleteEnabled);
 	    }
@@ -480,7 +477,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    }
 	  },
 	  template: `
-		<div v-if="isFeatureAvailable" class="bx-im-chat-forms-auto-delete__container">
+		<div class="bx-im-chat-forms-auto-delete__container">
 			<Toggle
 				:size="ToggleSize.M"
 				:isEnabled="isEnabled"

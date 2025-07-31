@@ -13,37 +13,37 @@ jn.define('utils/date/formats', (require, exports, module) => {
 	};
 
 	/** @example 16:48 */
-	const shortTime = useCultureSettings('shortTime', 'HH:mm');
+	const shortTime = useCultureSettings('SHORT_TIME_FORMAT', 'HH:mm');
 
 	/** @returns boolean */
 	const isAmPmMode = () => shortTime().slice(-1) === 'a';
 
 	/** @example 1 April */
-	const dayMonth = useCultureSettings('dayMonth', 'd MMMM');
+	const dayMonth = useCultureSettings('DAY_MONTH_FORMAT', 'd MMMM');
 
 	/** @example 19.02.2022 */
-	const date = useCultureSettings('date', 'DD.MM.YYYY');
+	const date = useCultureSettings('FORMAT_DATE', 'DD.MM.YYYY');
 
 	/** @example 19.02.2022 16:48:55 */
-	const datetime = useCultureSettings('datetime', 'DD.MM.YYYY HH:MI:SS');
+	const datetime = useCultureSettings('FORMAT_DATETIME', 'DD.MM.YYYY HH:MI:SS');
 
 	/** @example Sunday, 19 February */
-	const dayOfWeekMonth = useCultureSettings('dayOfWeekMonth', 'EEEE, d MMMM');
+	const dayOfWeekMonth = useCultureSettings('DAY_OF_WEEK_MONTH_FORMAT', 'EEEE, d MMMM');
 
 	/** @example 19 Feb */
-	const dayShortMonth = useCultureSettings('dayShortMonth', 'd MMM');
+	const dayShortMonth = useCultureSettings('DAY_SHORT_MONTH_FORMAT', 'd MMM');
 
 	/** @example Sunday, 19 February 2040 */
-	const fullDate = useCultureSettings('fullDate', 'EEEE, d MMMM Y');
+	const fullDate = useCultureSettings('FULL_DATE_FORMAT', 'EEEE, d MMMM Y');
 
 	/** @example 05:48:55 */
-	const longTime = useCultureSettings('longTime', 'HH:mm:ss');
+	const longTime = useCultureSettings('LONG_TIME_FORMAT', 'HH:mm:ss');
 
 	/** @example 19 February 2040 */
-	const longDate = useCultureSettings('longDate', 'd MMMM Y');
+	const longDate = useCultureSettings('LONG_DATE_FORMAT', 'd MMMM Y');
 
 	/** @example 19 Feb 2040 */
-	const mediumDate = useCultureSettings('mediumDate', 'd MMM Y');
+	const mediumDate = useCultureSettings('MEDIUM_DATE_FORMAT', 'd MMM Y');
 
 	function monthYear(moment)
 	{

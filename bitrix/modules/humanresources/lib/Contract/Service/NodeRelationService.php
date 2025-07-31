@@ -71,4 +71,6 @@ interface NodeRelationService
 	public function linkNodeRelationCollection(
 		Item\Collection\NodeRelationCollection $nodeRelationCollection,
 	): ?Item\Collection\NodeRelationCollection;
+
+	public function unlinkByEntityIdsAndNodeIdAndType(int $nodeId, array $entityIds, RelationEntityType $entityType): void;
 }

@@ -173,6 +173,8 @@
 .bx-im-attach-grid__item.--row table {
 	border-collapse: unset;
 	border-spacing: unset;
+	table-layout: fixed;
+	width: 100%;
 }
 
 .bx-im-attach-grid__item.--row table .bx-im-attach-grid__name {
@@ -181,6 +183,7 @@
 	padding-right: 10px;
 	text-align: left;
 	min-width: 50px;
+	word-break: break-word;
 }
 
 .bx-im-attach-grid__value {
@@ -204,6 +207,7 @@
 	line-height: 21px;
 }
 /* end row */
+
 .bx-im-attach-html__container {
 
 }
@@ -403,4 +407,5 @@
 .bx-im-attach-user__name {
 	display: inline-block;
 	margin-left: 5px;
+	word-break: break-word;
 }

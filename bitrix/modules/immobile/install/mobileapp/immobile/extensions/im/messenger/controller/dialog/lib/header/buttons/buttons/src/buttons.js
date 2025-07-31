@@ -2,16 +2,13 @@
  * @module im/messenger/controller/dialog/lib/header/buttons/buttons/buttons
  */
 jn.define('im/messenger/controller/dialog/lib/header/buttons/buttons/buttons', (require, exports, module) => {
-	const { Loc } = require('loc');
 	const { isOnline } = require('device/connection');
 
 	const {
 		Analytics,
 		UserRole,
-		BotCode,
 		DialogType,
 	} = require('im/messenger/const');
-	const { UserAdd } = require('im/messenger/controller/user-add');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { CallManager } = require('im/messenger/lib/integration/callmobile/call-manager');
 	const { DialogHelper } = require('im/messenger/lib/helper');
@@ -32,6 +29,8 @@ jn.define('im/messenger/controller/dialog/lib/header/buttons/buttons/buttons', (
 		SubscribedToCommentsButton,
 		AddUsersButton,
 	} = require('im/messenger/controller/dialog/lib/header/buttons/buttons/button-configuration');
+
+	const { MemberSelector } = require('im/messenger/controller/selector/member');
 
 	/**
 	 * @class HeaderButtons
@@ -287,29 +286,29 @@ jn.define('im/messenger/controller/dialog/lib/header/buttons/buttons/buttons', (
 		 */
 		callUserAddWidget()
 		{
-			Logger.log(`${this.constructor.name}.callUserAddWidget`);
+			Logger.log(`${this.constructor.name}.callMemberSelector`);
 
-			UserAdd.open(
-				{
-					dialogId: this.dialogId,
-					title: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_HEADER_BUTTON_USER_ADD_WIDGET_TITTLE'),
-					textRightBtn: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_HEADER_BUTTON_USER_ADD_WIDGET_BTN'),
-					callback: {
-						onAddUser: (event) => Logger.log(`${this.constructor.name}.callUserAddWidget.callback event:`, event),
-					},
-					widgetOptions: { mediumPositionPercent: 65 },
-					usersCustomFilter: (user) => {
-						if (user?.botData?.code)
-						{
-							return user?.botData?.code === BotCode.copilot;
-						}
+			const memberSelector = new MemberSelector({
+				onSelectMembers: this.onSelectMembers,
+			});
 
-						return true;
-					},
-					isCopilotDialog: this.isCopilot,
-				},
-			);
+			memberSelector.open();
 		}
+
+		onSelectMembers = (membersIds) => {
+			const chatSettings = Application.storage.getObject('settings.chat', {
+				historyShow: true,
+			});
+
+			const chatId = this.store.getters['dialoguesModel/getById'](this.dialogId).chatId;
+			const showHistory = chatSettings.historyShow;
+			const chatService = this.dialogLocator.get('chat-service');
+			chatService.addToChat(chatId, membersIds, showHistory)
+				.catch((errors) => {
+					Logger.error('MemberSelector.onSelectMembers error: ', errors);
+				})
+			;
+		};
 
 		/**
 		 * @private

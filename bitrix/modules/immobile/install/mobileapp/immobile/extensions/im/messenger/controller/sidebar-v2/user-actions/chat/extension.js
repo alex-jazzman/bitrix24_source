@@ -11,6 +11,7 @@ jn.define('im/messenger/controller/sidebar-v2/user-actions/chat', (require, expo
 	const { ChatDataProvider, RecentDataProvider } = require('im/messenger/provider/data');
 	const { backToRecentChats } = require('im/messenger/controller/sidebar-v2/user-actions/navigation');
 	const { resolveDeleteDialogConfirmFn, resolveDeleteDialogToastType } = require('im/messenger/controller/sidebar-v2/user-actions/alerts');
+	const { SIDEBAR_DEFAULT_TOAST_OFFSET } = require('im/messenger/controller/sidebar-v2/const');
 
 	const analyticsService = AnalyticsService.getInstance();
 	const logger = getLogger('SidebarV2.UserActions.Chat');
@@ -65,7 +66,7 @@ jn.define('im/messenger/controller/sidebar-v2/user-actions/chat', (require, expo
 			}
 			else
 			{
-				Notification.showErrorToast();
+				Notification.showErrorToast({ offset: SIDEBAR_DEFAULT_TOAST_OFFSET });
 			}
 		}
 	}

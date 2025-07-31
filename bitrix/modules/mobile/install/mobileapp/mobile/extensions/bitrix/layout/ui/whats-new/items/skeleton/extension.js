@@ -17,7 +17,8 @@ jn.define('layout/ui/whats-new/items/skeleton', (require, exports, module) => {
 			return View(
 				{
 					style: {
-						marginTop: this.props.fullScreen && HEADER_HEIGHT,
+						paddingTop: this.props.fullScreen && HEADER_HEIGHT,
+						backgroundColor: Color.accentSoftBlue3.toHex(),
 					},
 				},
 				...this.renderItems(),

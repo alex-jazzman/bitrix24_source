@@ -12,6 +12,7 @@ CModule::IncludeModule('voximplant');
 /** @var \CMain $APPLICATION */
 
 \Bitrix\Main\UI\Extension::load([
+	'ls',
 	'ui.design-tokens',
 	'im.v2.application.messenger',
 	'im.v2.application.launch'

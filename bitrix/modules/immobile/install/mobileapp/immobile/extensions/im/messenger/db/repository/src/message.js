@@ -16,6 +16,7 @@ jn.define('im/messenger/db/repository/message', (require, exports, module) => {
 	} = require('im/messenger/db/table');
 	const { merge } = require('utils/object');
 	const { getLogger } = require('im/messenger/lib/logger');
+	const { AsyncQueue, createPromiseWithResolvers } = require('im/messenger/lib/utils');
 
 	const {
 		validate,
@@ -29,6 +30,9 @@ jn.define('im/messenger/db/repository/message', (require, exports, module) => {
 	 */
 	class MessageRepository
 	{
+		/** @type {Map<number, AsyncQueue>} */
+		#chatMessageQueueCollection = new Map();
+
 		constructor()
 		{
 			this.fileTable = new FileTable();
@@ -410,7 +414,7 @@ jn.define('im/messenger/db/repository/message', (require, exports, module) => {
 				messageListToAdd.push(messageToAdd);
 			});
 
-			return this.messageTable.add(messageListToAdd, true);
+			return this.#saveMessages(messageListToAdd, true);
 		}
 
 		async saveFromRest(messageList)
@@ -425,7 +429,7 @@ jn.define('im/messenger/db/repository/message', (require, exports, module) => {
 				messageListToAdd.push(messageToAdd);
 			});
 
-			return this.messageTable.add(messageListToAdd, true);
+			return this.#saveMessages(messageListToAdd);
 		}
 
 		/**
@@ -453,7 +457,7 @@ jn.define('im/messenger/db/repository/message', (require, exports, module) => {
 				}
 			});
 
-			return this.messageTable.add(updatedMessageList, true);
+			return this.#saveMessages(updatedMessageList);
 		}
 
 		async saveFromPush(messageList)
@@ -559,6 +563,73 @@ jn.define('im/messenger/db/repository/message', (require, exports, module) => {
 				fileList: [],
 				reactionList: [],
 			};
+		}
+
+		/**
+		 * @param {Array<MessagesModelState>} messageList
+		 */
+		async #saveMessages(messageList)
+		{
+			if (!Type.isArrayFilled(messageList))
+			{
+				return;
+			}
+
+			try
+			{
+				const chatMessageCollection = this.#groupByChatId(messageList);
+
+				const promiseList = [];
+				for (const [chatId, messageListToAdd] of chatMessageCollection.entries())
+				{
+					if (!this.#chatMessageQueueCollection.has(chatId))
+					{
+						const queue = new AsyncQueue();
+						this.#chatMessageQueueCollection.set(chatId, queue);
+					}
+					const { resolve, promise } = createPromiseWithResolvers();
+
+					this.#chatMessageQueueCollection.get(chatId).enqueue(
+						async () => {
+							await this.messageTable.add(messageListToAdd, true);
+
+							resolve();
+						},
+						(error) => {
+							logger.error(`${this.constructor.name}.#saveMessages queue error`, error);
+
+							resolve();
+						},
+					);
+					promiseList.push(promise);
+				}
+
+				await Promise.all(promiseList);
+			}
+			catch (error)
+			{
+				logger.error(`${this.constructor.name}.#saveMessages error`, error);
+			}
+		}
+
+		/**
+		 * @param {Array<MessagesModelState>} messageList
+		 * @returns {Map<number, Array<MessagesModelState>>}
+		 */
+		#groupByChatId(messageList)
+		{
+			return messageList.reduce((map, currentItem) => {
+				const { chatId } = currentItem;
+
+				if (!map.has(chatId))
+				{
+					map.set(chatId, []);
+				}
+
+				map.get(chatId).push(currentItem);
+
+				return map;
+			}, new Map());
 		}
 	}
 

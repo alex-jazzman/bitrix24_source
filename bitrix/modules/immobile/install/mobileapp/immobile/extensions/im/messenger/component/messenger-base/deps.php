@@ -2,7 +2,10 @@
 
 return [
 	'extensions' => [
+		'loc',
 		'entity-ready',
+		'im:messenger/lib/helper',
+		'im:messenger/const',
 		'im:messenger/lib/rest-manager',
 		'im:messenger/lib/visibility-manager',
 		'im:messenger/lib/logger',
@@ -15,5 +18,6 @@ return [
 		'im:messenger/provider/pull/anchor',
 		'im:messenger/lib/anchors',
 		'im:messenger/lib/counters/counter-manager/messenger/handler',
+		'im:messenger/lib/feature',
 	],
 ];

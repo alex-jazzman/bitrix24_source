@@ -12,7 +12,10 @@ use Bitrix\Call\Integration\AI\CallAISettings;
 
 class TranscriptionInsights extends AITask
 {
-	public const PROMPT_ID = 'meeting_insights';
+	public const
+		PROMPT_ID = 'meeting_insights_reasoning_eu',
+		PROMPT_ID_CIS = 'meeting_insights_reasoning_cis'
+	;
 
 	protected static string
 		$promptFields =<<<JSON
@@ -101,10 +104,21 @@ class TranscriptionInsights extends AITask
 			$content .= sprintf('"%s-%s", "%s", "%s"', $row->start, $row->end, $userName, $text). "\n";
 		}
 
-		$payload = new \Bitrix\AI\Payload\Prompt(static::PROMPT_ID);
+		$payload = new \Bitrix\AI\Payload\Prompt($this->getPromptCode());
 		$payload->setMarkers(['transcripts' => $content, 'json_call' => static::getAIPromptFields()]);
 
 		return $result->setData(['payload' => $payload]);
+	}
+
+	protected function getPromptCode(): string
+	{
+		$region = \Bitrix\Main\Application::getInstance()->getLicense()->getRegion();
+
+		return match ($region)
+		{
+			'ru', 'by', 'kz' => self::PROMPT_ID_CIS,
+			default => self::PROMPT_ID,
+		};
 	}
 
 	public function getAIEngineCategory(): string

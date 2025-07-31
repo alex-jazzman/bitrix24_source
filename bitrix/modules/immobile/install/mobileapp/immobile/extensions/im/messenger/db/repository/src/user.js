@@ -104,27 +104,27 @@ jn.define('im/messenger/db/repository/user', (require, exports, module) => {
 
 			if (Type.isStringFilled(user.name))
 			{
-				result.name = ChatUtils.htmlspecialcharsback(user.name);
+				result.name = jnComponent.convertHtmlEntities(user.name);
 			}
 
 			if (Type.isStringFilled(user.first_name))
 			{
-				result.firstName = ChatUtils.htmlspecialcharsback(user.first_name);
+				result.firstName = jnComponent.convertHtmlEntities(user.first_name);
 			}
 
 			if (Type.isStringFilled(user.firstName))
 			{
-				result.firstName = ChatUtils.htmlspecialcharsback(user.firstName);
+				result.firstName = jnComponent.convertHtmlEntities(user.firstName);
 			}
 
 			if (Type.isStringFilled(user.last_name))
 			{
-				result.lastName = ChatUtils.htmlspecialcharsback(user.last_name);
+				result.lastName = jnComponent.convertHtmlEntities(user.last_name);
 			}
 
 			if (Type.isStringFilled(user.lastName))
 			{
-				result.lastName = ChatUtils.htmlspecialcharsback(user.lastName);
+				result.lastName = jnComponent.convertHtmlEntities(user.lastName);
 			}
 
 			if (Type.isStringFilled(user.gender))
@@ -161,7 +161,7 @@ jn.define('im/messenger/db/repository/user', (require, exports, module) => {
 
 			if (Type.isStringFilled(user.work_position))
 			{
-				result.workPosition = ChatUtils.htmlspecialcharsback(user.work_position);
+				result.workPosition = jnComponent.convertHtmlEntities(user.work_position);
 			}
 
 			if (Type.isPlainObject(user.phones))

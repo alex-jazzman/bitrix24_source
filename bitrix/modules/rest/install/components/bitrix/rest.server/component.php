@@ -108,6 +108,6 @@ else
 	$server->sendHeaders();
 	echo $output;
 }
-
+$server->finalize();
 CMain::FinalActions();
 die();

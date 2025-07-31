@@ -252,7 +252,19 @@ else
 			;
 		}
 
-		if (str_starts_with($intent, 'preset_'))
+		if (preg_match('/^preset_custom_section_id(\d+)$/', $intent, $match))
+		{
+			$customSectionId = $match[1];
+
+			$manager->setCustomConfig([
+				'crm_custom_section-' . $customSectionId => 1,
+				'chat' => 2,
+				'task' => 3,
+				'stream' => 4,
+				'menu' => 5,
+			]);
+		}
+		elseif (str_starts_with($intent, 'preset_'))
 		{
 			$components = explode('_', $intent);
 			if (count($components) >= 2)

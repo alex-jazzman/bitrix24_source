@@ -34,10 +34,11 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 	const { usersSelector, usersUpserted, usersAddedFromEntitySelector } = require('statemanager/redux/slices/users');
 	const { getUniqId, selectStages } = require('tasks/statemanager/redux/slices/kanban-settings');
 	const { setTaskStage } = require('tasks/statemanager/redux/slices/tasks-stages');
-	const { selectFirstStage } = require('tasks/statemanager/redux/slices/stage-settings');
+	const { selectFirstStage, selectEntities: selectStageEntities } = require('tasks/statemanager/redux/slices/stage-settings');
 	const { create } = require('tasks/statemanager/redux/slices/tasks');
 	const { groupsAddedFromEntitySelector, groupsUpserted } = require('tasks/statemanager/redux/slices/groups');
 	const { upsertFlows } = require('tasks/statemanager/redux/slices/flows');
+	const { getStageByDeadline } = require('tasks/utils/stages');
 
 	const {
 		makeProjectFieldConfig,
@@ -57,7 +58,6 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 	} = require('tasks/enum');
 	const { getDiskFolderId } = require('tasks/disk');
 	const { confirmClosing, confirmDefaultAction } = require('alert');
-	const { Feature } = require('feature');
 	const { clone } = require('utils/object');
 	const { debounce } = require('utils/function');
 	const { guid: getGuid } = require('utils/guid');
@@ -74,7 +74,7 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 	} = require('tasks/fields/restriction');
 	const { tariffPlanRestrictionsReady } = require('tariff-plan-restriction');
 	const { AnalyticsEvent } = require('analytics');
-	const { AppRatingManager, UserEvent } = require('app-rating-manager');
+	const { AppRatingClient } = require('tasks/app-rating-client');
 
 	const isAndroid = Application.getPlatform() !== 'ios';
 	const PARENT_TASK_HEIGHT = 30;
@@ -409,38 +409,9 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 			this.setState(
 				{ isLoading: false },
 				() => {
-					if (Feature.isDidAdoptHeightByKeyboardEventSupported())
-					{
-						this.layoutWidget.once('didAdoptHeightByKeyboard', (isKeyboardOpened) => {
-							if (isKeyboardOpened)
-							{
-								this.layoutWidget.getBottomSheetHeight()
-									.then((height) => {
-										this.layoutWidget.setBottomSheetParams({
-											onlyMediumPosition: true,
-											mediumPositionHeight: height,
-											adoptHeightByKeyboard: false,
-										});
-										this.layoutHeight = height;
-										this.keyboardHeight = height - CreateNew.getStartingLayoutHeight(this.hasParentTask());
-
-										if (isAndroid)
-										{
-											this.isSheetHeightUpdateAllowed = true;
-											this.updateSheetHeight();
-										}
-									})
-									.catch(() => console.error)
-								;
-							}
-						});
-						this.focusTitle();
-					}
-					else
-					{
-						this.focusTitle();
-
-						setTimeout(() => {
+					this.layoutWidget.once('didAdoptHeightByKeyboard', (isKeyboardOpened) => {
+						if (isKeyboardOpened)
+						{
 							this.layoutWidget.getBottomSheetHeight()
 								.then((height) => {
 									this.layoutWidget.setBottomSheetParams({
@@ -450,11 +421,18 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 									});
 									this.layoutHeight = height;
 									this.keyboardHeight = height - CreateNew.getStartingLayoutHeight(this.hasParentTask());
+
+									if (isAndroid)
+									{
+										this.isSheetHeightUpdateAllowed = true;
+										this.updateSheetHeight();
+									}
 								})
 								.catch(() => console.error)
 							;
-						}, 500);
-					}
+						}
+					});
+					this.focusTitle();
 				},
 			);
 		}
@@ -1542,15 +1520,18 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 					this.layoutWidget.close(async () => {
 						if (Number.isNaN(this.state.flowId) || this.state.flowId === 0)
 						{
-							await AppRatingManager.increaseCounter(UserEvent.TASKS_CREATED);
+							await AppRatingClient.increaseTaskCreatedCounter();
+							AppRatingClient.tryOpenAppRatingAfterTaskCreated({
+								parentWidget,
+							});
 						}
 						else
 						{
-							await AppRatingManager.increaseCounter(UserEvent.TASKS_IN_FLOW_CREATED);
+							await AppRatingClient.increaseFlowTaskCreatedCounter();
+							AppRatingClient.tryOpenAppRatingAfterFlowTaskCreated({
+								parentWidget,
+							});
 						}
-						AppRatingManager.tryOpenAppRating({
-							parentWidget,
-						});
 					});
 				}
 			};
@@ -1597,7 +1578,9 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 				)
 			)
 			{
-				return 0;
+				const uniqueId = getUniqId(view, initialTaskData?.groupId, initialTaskData?.responsible.id);
+
+				return this.getRelevantStageForDeadlineView(uniqueId);
 			}
 
 			if (!stageId)
@@ -1610,6 +1593,23 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 			}
 
 			return stageId;
+		}
+
+		getRelevantStageForDeadlineView(uniqueId)
+		{
+			const stageIds = selectStages(store.getState(), uniqueId) || [];
+			const stages = stageIds.length > 0 ? Object.values(selectStageEntities(store.getState(), stageIds)) : [];
+
+			if (stages.length === 0)
+			{
+				console.warn('No stages found for the given uniqueId:', uniqueId);
+
+				return 0;
+			}
+
+			const targetStage = getStageByDeadline(this.task.deadline, stages);
+
+			return targetStage?.id ?? 0;
 		}
 
 		prepareReduxFields()

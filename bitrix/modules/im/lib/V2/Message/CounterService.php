@@ -726,14 +726,10 @@ class CounterService
 		if (!$isMuted && !isset($this->counters['COPILOT'][$id]))
 		{
 			$this->counters['TYPE']['ALL']++;
+			$this->counters['TYPE']['CHAT']++;
 			$this->counters['TYPE']['COPILOT']++;
 			$this->counters['TYPE']['MESSENGER']++;
-
-			if (Features::isCopilotInDefaultTabAvailable())
-			{
-				$this->counters['TYPE']['CHAT']++;
-				$this->counters['CHAT_UNREAD'][] = $id;
-			}
+			$this->counters['CHAT_UNREAD'][] = $id;
 		}
 
 		$this->counters['COPILOT_UNREAD'][] = $id;
@@ -761,15 +757,11 @@ class CounterService
 	protected function setFromCopilot(int $id, int $count): void
 	{
 		$this->counters['TYPE']['ALL'] += $count;
+		$this->counters['TYPE']['CHAT'] += $count;
 		$this->counters['TYPE']['MESSENGER'] += $count;
 		$this->counters['TYPE']['COPILOT'] += $count;
 		$this->counters['COPILOT'][$id] = $count;
-
-		if (Features::isCopilotInDefaultTabAvailable())
-		{
-			$this->counters['CHAT'][$id] = $count;
-			$this->counters['TYPE']['CHAT'] += $count;
-		}
+		$this->counters['CHAT'][$id] = $count;
 	}
 
 	protected function setFromCollab(int $id, int $count): void

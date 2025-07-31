@@ -4,6 +4,7 @@
 jn.define('im/messenger/controller/dialog/lib/message-menu/src/saver/base-saver', (require, exports, module) => {
 	const { getLogger } = require('im/messenger/lib/logger');
 	const { Analytics } = require('im/messenger/const');
+	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
 	const { showSuccessSaveToast, showSaveFailureToast } = require(
 		'im/messenger/controller/dialog/lib/message-menu/src/saver/save-toast',
 	);
@@ -26,12 +27,13 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/saver/base-saver'
 			/** @type {DialogLocator} */
 			this.dialogLocator = props.locator;
 			/** @type {DialogView} */
-			this.view = props.locator.get('view').ui;
+			this.view = props.locator.get('view');
 			/** @type {DialogId} */
 			this.dialogId = props.dialogId;
 			/** @type {MessageHelper} */
 			this.messageHelper = props.messageHelper;
 			this.logger = getLogger('dialog--message-menu-file-saver');
+			this.parentWidget = props.parentWidget;
 		}
 
 		/**
@@ -83,7 +85,21 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/saver/base-saver'
 			showSuccessSaveToast({
 				to: this.getType(),
 				messageHelper: this.messageHelper,
-				view: this.view,
+				parentWidget: this.parentWidget,
+			});
+		}
+
+		downloadFailure(errorStatus)
+		{
+			this.showSaveFailureToast();
+			this.sendAnalyticsErrors(errorStatus);
+		}
+
+		sendAnalyticsErrors(errorStatus)
+		{
+			AnalyticsService.getInstance().sendDownloadError({
+				...this.getAnalyticsParams(),
+				status: errorStatus,
 			});
 		}
 
@@ -92,7 +108,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/saver/base-saver'
 			showSaveFailureToast({
 				to: this.getType(),
 				messageHelper: this.messageHelper,
-				view: this.view,
+				parentWidget: this.parentWidget,
 			});
 		}
 	}

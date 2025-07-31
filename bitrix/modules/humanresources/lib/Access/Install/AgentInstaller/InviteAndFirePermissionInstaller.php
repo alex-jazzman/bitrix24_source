@@ -18,12 +18,12 @@ use Bitrix\HumanResources\Service\Container;
 use Bitrix\Main;
 use Bitrix\Main\Access\AccessCode;
 use Bitrix\Main\Access\Exception\RoleRelationSaveException;
+use Bitrix\Main\Db\SqlQueryException;
 
 class InviteAndFirePermissionInstaller extends BaseInstaller
 {
 	/**
-	 * @throws WrongStructureItemException
-	 * @throws RoleRelationSaveException
+	 * @throws SqlQueryException
 	 */
 	protected function run(): void
 	{
@@ -34,18 +34,20 @@ class InviteAndFirePermissionInstaller extends BaseInstaller
 
 		$this->resetOldDefaultRoleKeys();
 		$this->removeAllAdminsRelations();
-		$this->setInviteAndFirePermissions();
-	}
-
-	public function getVersion(): int
-	{
-		return InstallerFactory::VERSION_2;
+		try
+		{
+			$this->setInviteAndFirePermissions();
+		}
+		catch (Main\Access\Exception\AccessException)
+		{
+			Feature::instance()->setHRInvitePermissionAvailable(true);
+			Feature::instance()->setHRFirePermissionAvailable(true);
+		}
 	}
 
 	private function resetOldDefaultRoleKeys(): void
 	{
 		$defaultRoleKeys = [
-			RoleDictionary::ROLE_ADMIN => 'G1',
 			RoleDictionary::ROLE_DIRECTOR=> AccessCode::ACCESS_DIRECTOR . '0',
 			RoleDictionary::ROLE_EMPLOYEE=> AccessCode::ACCESS_EMPLOYEE . '0',
 		];
@@ -97,10 +99,6 @@ class InviteAndFirePermissionInstaller extends BaseInstaller
 	private function setInviteAndFirePermissions(): void
 	{
 		$defaultRolesPermission = [
-			RoleDictionary::ROLE_ADMIN => [
-				PermissionDictionary::HUMAN_RESOURCES_USER_INVITE => PermissionVariablesDictionary::VARIABLE_ALL,
-				PermissionDictionary::HUMAN_RESOURCES_FIRE_EMPLOYEE => 1,
-			],
 			RoleDictionary::ROLE_HR=> [
 				PermissionDictionary::HUMAN_RESOURCES_USER_INVITE=> PermissionVariablesDictionary::VARIABLE_ALL,
 				PermissionDictionary::HUMAN_RESOURCES_FIRE_EMPLOYEE => PermissionVariablesDictionary::VARIABLE_NONE,

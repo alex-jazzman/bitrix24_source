@@ -159,6 +159,13 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 
 		subscribeInitMessengerEvent()
 		{
+			if (Feature.isChatBetaEnabled && Feature.isLocalStorageEnabled)
+			{
+				this.messagerInitService.onceOnInit(this.initMessengerHandler);
+
+				return;
+			}
+
 			this.messagerInitService.onInit(this.initMessengerHandler);
 		}
 
@@ -372,7 +379,9 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 						this.view.showLoader();
 					}
 				})
-				.catch((err) => this.logger.error(`${this.constructor.name}.pageHandler.catch:`, err));
+				.catch((err) => {
+					this.logger.error(`${this.constructor.name}.updatePageFromServer data.recentList is invalid`, err, recentList);
+				});
 		}
 
 		/**
@@ -554,6 +563,81 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 		}
 
 		/**
+		 * @param {object} item
+		 * @param {boolean} [isCallItem=false]
+		 * @return {boolean}
+		 */
+		removeItem(item, isCallItem = false)
+		{
+			if (Type.isNil(item))
+			{
+				return;
+			}
+
+			this.renderer.removeFromQueue(item.id);
+
+			if (isCallItem)
+			{
+				this.renderer.do('removeCall', item);
+			}
+			else
+			{
+				this.renderer.do('remove', item);
+			}
+
+			if (!this.recentService.pageNavigation.hasNextPage && this.view.isLoaderShown)
+			{
+				this.view.hideLoader();
+			}
+
+			TabCounters.update();
+
+			this.checkEmpty();
+		}
+
+		/**
+		 * @param {object} item
+		 * @param {boolean} [useRecentUiConverter=false]
+		 */
+		upsert(item, useRecentUiConverter = true)
+		{
+			if (Type.isNil(item))
+			{
+				return;
+			}
+
+			const callback = (foundItem) => {
+				if (foundItem)
+				{
+					this.renderer.do('update', { filter: { id: item.id }, element: item });
+					if (!this.recentService.pageNavigation.hasNextPage && this.view.isLoaderShown)
+					{
+						this.view.hideLoader();
+					}
+
+					return;
+				}
+
+				if (useRecentUiConverter)
+				{
+					this.renderer.do('add', item);
+				}
+				else
+				{
+					this.renderer.do('addPreparedItems', item);
+				}
+
+				if (!this.recentService.pageNavigation.hasNextPage && this.view.isLoaderShown)
+				{
+					this.renderer.nextTick(() => this.view.hideLoader());
+				}
+				this.checkEmpty();
+			};
+
+			this.renderer.do('findItem', { id: item.id }, { callback });
+		}
+
+		/**
 		 * @param {object} data
 		 * @return {Promise<any>}
 		 */
@@ -652,11 +736,6 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 				DialogType.lines,
 				DialogType.comment,
 			];
-
-			if (!Feature.isCopilotInDefaultTabAvailable)
-			{
-				exceptDialogTypes.push(DialogType.copilot);
-			}
 
 			return {
 				exceptDialogTypes,
@@ -797,16 +876,7 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 
 		recentDeleteHandler(mutation)
 		{
-			this.renderer.removeFromQueue(mutation.payload.data.id);
-
-			this.view.removeItem({ id: mutation.payload.data.id });
-			if (!this.recentService.pageNavigation.hasNextPage && this.view.isLoaderShown)
-			{
-				this.view.hideLoader();
-			}
-			TabCounters.update();
-
-			this.checkEmpty();
+			this.removeItem({ id: mutation.payload.data.id });
 		}
 	}
 

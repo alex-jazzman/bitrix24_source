@@ -33,9 +33,4 @@ class PermissionReInstaller extends BaseInstaller
 			$roleUtil->deleteRole();
 		}
 	}
-
-	public function getVersion(): int
-	{
-		return InstallerFactory::REINSTALL;
-	}
 }

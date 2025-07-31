@@ -142,6 +142,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/menu', (require, expo
 				[MessageMenuActionType.finishVote]: this.onFinishVote.bind(this),
 				[MessageMenuActionType.revote]: this.onRevote.bind(this),
 				[MessageMenuActionType.openVoteResult]: this.onOpenVoteResult.bind(this),
+				[MessageMenuActionType.goToMessage]: this.onGoToMessage.bind(this),
 			};
 		}
 
@@ -480,6 +481,28 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/menu', (require, expo
 
 		/**
 		 * @param {MessageMenuMessage} message
+		 * @param {GoToMessageContextEvent} [params={}]
+		 * @return {Promise<void>}
+		 */
+		onGoToMessage(message, params = {})
+		{
+			const messageId = message.messageModel?.id;
+			if (!messageId || !this.#checkOnlineStatus())
+			{
+				return Promise.reject();
+			}
+
+			const dialogId = this.getDialog().dialogId;
+
+			return this.dialogLocator.get('context-manager').goToMessageContext({
+				dialogId,
+				messageId,
+				...params,
+			});
+		}
+
+		/**
+		 * @param {MessageMenuMessage} message
 		 */
 		onPin(message)
 		{
@@ -575,22 +598,29 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/menu', (require, expo
 
 		/**
 		 * @param {MessageMenuMessage} message
+		 * @param parentWidget
+		 * @param onItemSelected
+		 * @param {boolean} [closeOnSelect=true]
+		 * @return {Promise}
 		 */
-		onForward(message)
+		onForward(message, { parentWidget, onItemSelected, closeOnSelect = true } = {})
 		{
 			if (!isOnline())
 			{
 				Notification.showOfflineToast();
 
-				return;
+				return Promise.reject();
 			}
 
 			const forwardSelector = new ForwardSelector({
 				messageIds: [message.messageModel.id],
 				fromDialogId: this.#getDialogId(),
 				locator: this.dialogLocator,
+				onDialogSelected: onItemSelected,
+				closeOnSelect,
 			});
-			forwardSelector.open();
+
+			return forwardSelector.open({ parentWidget });
 		}
 
 		/**
@@ -718,8 +748,9 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/menu', (require, expo
 
 		/**
 		 * @param {MessageMenuMessage} message
+		 * @param {LayoutWidget} parentWidget
 		 */
-		async onDownloadToDevice(message)
+		async onDownloadToDevice(message, { parentWidget } = {})
 		{
 			const messageId = message.messageModel?.id;
 			if (!messageId || !this.#checkOnlineStatus())
@@ -738,13 +769,15 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/menu', (require, expo
 				locator: this.dialogLocator,
 				dialogId: this.#getDialogId(),
 				messageHelper: MessageHelper.createById(messageId),
+				parentWidget,
 			}).save();
 		}
 
 		/**
 		 * @param {MessageMenuMessage} message
+		 * @param {Object} parentWidget
 		 */
-		onDownloadToDisk(message)
+		onDownloadToDisk(message, { parentWidget = null } = {})
 		{
 			const messageId = message.messageModel?.id;
 			if (!messageId || !this.#checkOnlineStatus())
@@ -756,10 +789,14 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/menu', (require, expo
 				locator: this.dialogLocator,
 				dialogId: this.#getDialogId(),
 				messageHelper: MessageHelper.createById(messageId),
+				parentWidget,
 			}).save();
 		}
 
-		onFeedback()
+		/**
+		 * @param {MessageMenuMessage} message
+		 */
+		onFeedback(message)
 		{
 			const { openFeedbackForm } = require('layout/ui/feedback-form-opener');
 			openFeedbackForm('copilotRoles');

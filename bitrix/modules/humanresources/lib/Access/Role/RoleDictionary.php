@@ -26,4 +26,14 @@ class RoleDictionary extends \Bitrix\Main\Access\Role\RoleDictionary
 		$class = new \ReflectionClass(self::class);
 		return array_flip($class->getConstants());
 	}
+
+	public static function getRoleName(string $code): string
+	{
+		if ($code === self::ROLE_ADMIN)
+		{
+			return Loc::getMessage(self::ROLE_STRUCTURE_ADMIN);
+		}
+
+		return parent::getRoleName($code);
+	}
 }

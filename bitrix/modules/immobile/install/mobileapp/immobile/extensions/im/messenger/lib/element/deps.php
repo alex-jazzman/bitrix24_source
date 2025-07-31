@@ -91,6 +91,7 @@ return [
 		'./src/dialog/message/date-separator',
 		'./src/dialog/message/copilot',
 		'./src/dialog/message/copilot-prompt',
+		'./src/dialog/message/ai-assistant',
 		'./src/dialog/message/error',
 		'./src/dialog/message/unread-separator',
 		'./src/dialog/message/check-in/const/type',

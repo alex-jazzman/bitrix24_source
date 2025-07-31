@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,im_v2_provider_service_chat,ui_entitySelector,im_v2_lib_channel,main_core,intranet_invitationInput,im_v2_application_core,im_v2_lib_helpdesk,im_v2_component_elements_scrollWithGradient,ui_vue3_directives_hint,ui_infoHelper,im_v2_lib_permission,im_v2_lib_feature,im_v2_lib_notifier,im_v2_component_elements_button,im_v2_lib_rest,im_v2_lib_utils,main_popup,im_v2_component_elements_popup,main_core_events,im_public,im_v2_const,im_v2_lib_analytics,im_v2_component_search) {
+(function (exports,im_v2_provider_service_chat,ui_entitySelector,im_v2_lib_channel,intranet_invitationInput,im_v2_application_core,im_v2_lib_helpdesk,im_v2_component_elements_scrollWithGradient,ui_infoHelper,im_v2_lib_permission,im_v2_lib_feature,im_v2_lib_notifier,im_v2_component_elements_button,im_v2_lib_rest,im_v2_lib_utils,intranet_languages,main_core,ui_vue3_directives_hint,main_popup,im_v2_component_elements_popup,main_core_events,im_public,im_v2_const,im_v2_lib_analytics,im_v2_component_search) {
 	'use strict';
 
 	const SEARCH_ENTITY_ID = 'user';
@@ -361,10 +361,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      console.error('CollabInvitationService: add employee error', error);
 	    });
 	  }
-	  copyLink(collabId) {
+	  copyLink(collabId, userLang) {
 	    const payload = {
 	      data: {
-	        collabId
+	        collabId,
+	        userLang
 	      }
 	    };
 	    return im_v2_lib_rest.runAction(im_v2_const.RestMethod.intranetInviteGetLinkByCollabId, payload).catch(([error]) => {
@@ -401,6 +402,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    },
 	    collabId: {
 	      type: Number,
+	      required: true
+	    },
+	    langCode: {
+	      type: String,
 	      required: true
 	    }
 	  },
@@ -448,7 +453,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      }
 	      try {
 	        this.isCopyingInviteLink = true;
-	        const link = await new CollabInvitationService().copyLink(this.collabId);
+	        const link = await new CollabInvitationService().copyLink(this.collabId, this.langCode);
 	        await im_v2_lib_utils.Utils.text.copyToClipboard(link);
 	        im_v2_lib_notifier.Notifier.onCopyLinkComplete();
 	      } catch {
@@ -509,6 +514,154 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	`
 	};
 
+	const ITEM_CLASS = 'bx-im-add-to-collab__language-selector_item';
+	const ACCEPTED_ITEM_CLASS = 'menu-popup-item-accept';
+
+	// @vue/component
+	const InviteLanguageSelector = {
+	  name: 'InviteLanguageSelector',
+	  directives: {
+	    hint: ui_vue3_directives_hint.hint
+	  },
+	  props: {
+	    defaultLanguageCode: {
+	      type: String,
+	      required: true
+	    }
+	  },
+	  emits: ['selectLanguage', 'openLanguageSelector', 'closeLanguageSelector'],
+	  data() {
+	    return {
+	      selectedLanguageCode: this.defaultLanguageCode,
+	      isSelectorShown: false
+	    };
+	  },
+	  computed: {
+	    selectedLanguageName() {
+	      const lang = this.availableLanguages[this.selectedLanguageCode];
+	      return lang ? lang.NAME : '';
+	    }
+	  },
+	  created() {
+	    this.availableLanguages = new intranet_languages.Languages().getLanguages();
+	  },
+	  methods: {
+	    languageSelectorHint() {
+	      return {
+	        text: this.loc('IM_ENTITY_SELECTOR_ADD_TO_COLLAB_LANGUAGE_SELECTOR_HINT'),
+	        popupOptions: {
+	          className: 'im-add-to-collab__invite-language-section_hint',
+	          width: 270,
+	          bindOptions: {
+	            position: 'top',
+	            forceBindPosition: true
+	          },
+	          angle: {
+	            offset: 37,
+	            position: 'bottom'
+	          },
+	          offsetTop: -8
+	        }
+	      };
+	    },
+	    onLanguageSelected(langCode) {
+	      this.toggleSelector();
+	      this.selectedLanguageCode = langCode;
+	      this.$emit('selectLanguage', this.selectedLanguageCode);
+	    },
+	    toggleSelector() {
+	      if (this.isSelectorShown) {
+	        this.closeSelector();
+	      } else {
+	        this.showSelector();
+	      }
+	    },
+	    showSelector() {
+	      this.selector = this.createSelector();
+	      this.selector.show();
+	      this.isSelectorShown = true;
+	      this.$emit('openLanguageSelector');
+	    },
+	    closeSelector() {
+	      this.selector.close();
+	      this.isSelectorShown = false;
+	      this.$emit('closeLanguageSelector');
+	    },
+	    createSelector() {
+	      return main_popup.PopupMenu.create({
+	        id: main_core.Text.getRandom().toLowerCase(),
+	        bindElement: this.$refs.inviteLanguageSection,
+	        className: 'bx-im-messenger__scope bx-im-add-to-collab__invite-language-section_language-selector',
+	        items: this.getMenuItems(),
+	        angle: false,
+	        autoHide: true,
+	        closeByEsc: true,
+	        maxHeight: 207,
+	        contentPadding: 10,
+	        padding: 10,
+	        bindOptions: {
+	          forceBindPosition: true
+	        },
+	        events: {
+	          onPopupClose: () => {
+	            this.isSelectorShown = false;
+	            this.$emit('closeLanguageSelector');
+	          }
+	        }
+	      });
+	    },
+	    getMenuItems() {
+	      return Object.keys(this.availableLanguages).map(langCode => {
+	        return new main_popup.MenuItem({
+	          langCode,
+	          className: this.getMenuItemClass(langCode),
+	          text: this.getMenuItemText(langCode),
+	          onclick: () => this.onLanguageSelected(langCode)
+	        });
+	      });
+	    },
+	    getMenuItemClass(langCode) {
+	      return langCode === this.selectedLanguageCode ? `${ITEM_CLASS} ${ACCEPTED_ITEM_CLASS}` : ITEM_CLASS;
+	    },
+	    getMenuItemText(langCode) {
+	      const lang = this.availableLanguages[langCode];
+	      const langName = lang ? lang.NAME : '';
+	      if (langCode === this.defaultLanguageCode) {
+	        return this.loc('IM_ENTITY_SELECTOR_ADD_TO_COLLAB_DEFAULT_LANGUAGE_TITLE', {
+	          '#LANG_NAME#': langName
+	        });
+	      }
+	      return langName;
+	    },
+	    loc(phraseCode, replacements = {}) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
+	    }
+	  },
+	  template: `
+		<section
+			class="bx-im-add-to-collab__invite-language-section"
+			v-hint="languageSelectorHint"
+			ref="inviteLanguageSection"
+		>
+			<span class="bx-im-add-to-collab__invite-language-section_title">
+				{{ loc('IM_ENTITY_SELECTOR_ADD_TO_COLLAB_INVITE_LANGUAGE_TITLE') }}
+			</span>
+			<div
+				class="bx-im-add-to-collab__invite-language-section_selected-language-block"
+				@click="toggleSelector"
+			>
+				<span class="bx-im-add-to-collab__selected-language-block_title">
+					{{ selectedLanguageName }}
+				</span>
+				<span
+					class="bx-im-add-to-collab__selected-language-block_arrow"
+					:class="{ '--open': isSelectorShown }"
+				></span>
+			</div>
+		</section>
+	`
+	};
+
 	const HELPDESK_SLIDER_CLOSE_EVENT = 'SidePanel.Slider:onClose';
 	const HELPDESK_SLIDER_ID = 'main:helper';
 
@@ -518,7 +671,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  components: {
 	    ChatButton: im_v2_component_elements_button.ChatButton,
 	    ScrollWithGradient: im_v2_component_elements_scrollWithGradient.ScrollWithGradient,
-	    CopyInviteLink
+	    CopyInviteLink,
+	    InviteLanguageSelector
 	  },
 	  props: {
 	    dialogId: {
@@ -530,11 +684,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      default: 0
 	    }
 	  },
-	  emits: ['close', 'closeHelpdeskSlider', 'openHelpdeskSlider'],
+	  emits: ['close', 'closeHelpdeskSlider', 'openHelpdeskSlider', 'closeLanguageSelector', 'openLanguageSelector'],
 	  data() {
 	    return {
 	      isAddButtonDisabled: true,
-	      isInvitingGuests: false
+	      isInvitingGuests: false,
+	      invitationLangCode: ''
 	    };
 	  },
 	  computed: {
@@ -584,6 +739,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    },
 	    isEnabledCollabersInvitation() {
 	      return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.enabledCollabersInvitation);
+	    },
+	    isChangeInviteLanguageAvailable() {
+	      return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.changeInviteLanguageAvailable);
+	    },
+	    defaultLanguageCode() {
+	      return im_v2_application_core.Core.getLanguageId();
 	    }
 	  },
 	  created() {
@@ -591,6 +752,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    main_core_events.EventEmitter.subscribe(HELPDESK_SLIDER_CLOSE_EVENT, this.onCloseOpenHelpdeskSlider);
 	  },
 	  mounted() {
+	    this.invitationLangCode = this.defaultLanguageCode;
 	    this.invitationGuests.renderTo(this.$refs['im-collab-invitation-guests-input']);
 	  },
 	  beforeUnmount() {
@@ -641,6 +803,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        this.$emit('closeHelpdeskSlider');
 	      }
 	    },
+	    onInviteLanguageSelected(langCode) {
+	      this.invitationLangCode = langCode;
+	      this.invitationGuests.changeLanguage(langCode);
+	    },
 	    loc(phraseCode, replacements = {}) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 	    }
@@ -651,7 +817,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				<ScrollWithGradient :gradientHeight="28" :withShadow="true">
 					<div class="bx-im-add-to-collab__content">
 						<div class="bx-im-add-to-collab__description">
-							<div class="bx-im-add-to-collab__description_icon"></div>
 							<div class="bx-im-add-to-collab__description_content">
 								<div class="bx-im-add-to-collab__description_title">{{ preparedDescriptionTitle }}</div>
 								<div class="bx-im-add-to-collab__description_text">{{ preparedDescription }}</div>
@@ -659,8 +824,16 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 									{{ loc('IM_ENTITY_SELECTOR_ADD_TO_COLLAB_HELPDESK_LINK') }}
 								</a>
 							</div>
+							<div class="bx-im-add-to-collab__description_icon"></div>
 						</div>
-						<CopyInviteLink :collabId="collabId" :dialogId="dialogId" />
+						<InviteLanguageSelector
+							v-if="isChangeInviteLanguageAvailable"
+							:defaultLanguageCode="defaultLanguageCode"
+							@selectLanguage="onInviteLanguageSelected"
+							@openLanguageSelector="$emit('openLanguageSelector')"
+							@closeLanguageSelector="$emit('closeLanguageSelector')"
+						/>
+						<CopyInviteLink :collabId="collabId" :dialogId="dialogId" :langCode="invitationLangCode"/>
 						<div class="bx-im-add-to-collab__invite-block">
 							<span class="bx-im-add-to-collab__invite-block-title --ellipsis">
 								{{ preparedInvitationTitle }}
@@ -851,6 +1024,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					@close="$emit('close')"
 					@openHelpdeskSlider="disableAutoHide"
 					@closeHelpdeskSlider="enableAutoHide"
+					@openLanguageSelector="disableAutoHide"
+					@closeLanguageSelector="enableAutoHide"
 				/>
 			</KeepAlive>
 		</MessengerPopup>
@@ -997,5 +1172,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	exports.AddToCollab = AddToCollab;
 	exports.ForwardPopup = ForwardPopup;
 
-}((this.BX.Messenger.v2.Component.EntitySelector = this.BX.Messenger.v2.Component.EntitySelector || {}),BX.Messenger.v2.Service,BX.UI.EntitySelector,BX.Messenger.v2.Lib,BX,BX.Intranet,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Vue3.Directives,BX.UI,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Main,BX.Messenger.v2.Component.Elements,BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Component));
+}((this.BX.Messenger.v2.Component.EntitySelector = this.BX.Messenger.v2.Component.EntitySelector || {}),BX.Messenger.v2.Service,BX.UI.EntitySelector,BX.Messenger.v2.Lib,BX.Intranet,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.UI,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Intranet,BX,BX.Vue3.Directives,BX.Main,BX.Messenger.v2.Component.Elements,BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Component));
 //# sourceMappingURL=registry.bundle.js.map

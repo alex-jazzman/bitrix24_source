@@ -115,7 +115,7 @@ return [
 		'tasks:layout/task/form-utils',
 		'tasks:layout/task/parent-task',
 		'type',
-		'app-rating-manager',
+		'tasks:app-rating-client',
 	],
 	'bundle' => [
 		'./ui/likes-panel',

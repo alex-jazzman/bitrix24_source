@@ -6,7 +6,7 @@ $MESS['BOOKING_BOOKING_PLUS_NUM_CLIENTS_PLURAL_2'] = '+ <span>#NUM# клиент
 $MESS['BOOKING_BOOKING_ZOOM_PERCENT'] = '<span>#PERCENT#</span> %';
 $MESS['BOOKING_BOOKING_CLIENTS_LIST'] = 'Список клиентов';
 
-$MESS['BOOKING_BOOKING_COUNTER_PANEL_NOT_CONFIRMED'] = 'Не подтверждено';
+$MESS['BOOKING_BOOKING_COUNTER_PANEL_AWAIT_CONFIRMATION'] = 'Ожидают подтверждения';
 $MESS['BOOKING_BOOKING_COUNTER_PANEL_DELAYED'] = 'Опаздывают';
 
 $MESS['BOOKING_BOOKING_RESOURCES_DIALOG_RESOURCES'] = 'Ресурсы';
@@ -116,6 +116,7 @@ $MESS['BOOKING_RESOURCE_CONFIRM_DELETE_HINT'] = 'Чтобы удалить эт�
 
 $MESS['BOOKING_BOOKING_RESOURCE_IS_BUSY'] = 'С #TIME_FROM# до #TIME_TO# у #RESOURCE# нерабочие часы по графику';
 $MESS['BOOKING_BOOKING_INTERSECTING_RESOURCE_IS_BUSY'] = 'Время с #TIME_FROM# до #TIME_TO# уже занято для: #RESOURCE#';
+$MESS['BOOKING_BOOKING_INTERSECTING_RESOURCE_IS_FULL_BUSY'] = 'Этот ресурс пока недоступен для новой записи';
 
 $MESS['BOOKING_MONTH_YEAR_FORMAT'] = 'f Y';
 
@@ -167,3 +168,13 @@ $MESS['BOOKING_BOOKING_WAIT_LIST_DRAG_AREA'] = 'Перетащите запис�
 $MESS['BOOKING_BOOKING_WAIT_LIST_GROUP_DELETE'] = 'Удалить записи';
 $MESS['BOOKING_BOOKING_WAIT_LIST_GROUP_CONFIRM_DELETE'] = 'Удалить записи?';
 $MESS['BOOKING_BOOKING_WAIT_LIST_GROUP_CONFIRM_DELETE_YES'] = 'Да, удалить';
+
+$MESS['BOOKING_OPEN_CRM_FORMS_BUTTON_LABEL'] = 'Формы';
+$MESS['BOOKING_OPEN_CRM_FORMS_POPUP_TITLE'] = 'Формы онлайн-записи';
+$MESS['BOOKING_OPEN_CRM_FORMS_POPUP_DESCRIPTION'] = 'Добавьте форму на сайт, отправьте её в мессенджере или укажите в рекламе. Так клиенты сами смогут записаться к вам в любое время. [helpdesk]Подробнее[/helpdesk]';
+$MESS['BOOKING_OPEN_CRM_FORMS_POPUP_SORT_LATEST_CREATED_LABEL'] = 'Последние формы';
+$MESS['BOOKING_OPEN_CRM_FORMS_POPUP_FORMS_LIST_PLACEHOLDER'] = 'Здесь будут ваши формы';
+$MESS['BOOKING_OPEN_CRM_FORMS_POPUP_FORMS_LIST_ITEM_COPY_LINK_BUTTON_LABEL'] = 'Скопировать ссылку';
+$MESS['BOOKING_OPEN_CRM_FORMS_POPUP_FORMS_LIST_ITEM_LINK_COPED'] = 'Ссылка скопирована';
+$MESS['BOOKING_OPEN_CRM_FORMS_POPUP_ADD_FORM_BUTTON_LABEL'] = '[plus] Добавить';
+$MESS['BOOKING_OPEN_CRM_FORMS_POPUP_ALL_FORMS_BUTTON_LABEL'] = 'Все формы';

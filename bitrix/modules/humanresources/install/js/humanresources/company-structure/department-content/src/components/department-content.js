@@ -1,3 +1,4 @@
+import { PermissionActions, PermissionChecker } from 'humanresources.company-structure.permission-checker';
 import { EntityTypes } from 'humanresources.company-structure.utils';
 import { UsersTab } from './users/tab';
 import { ChatsTab } from './chats/tab';
@@ -79,6 +80,10 @@ export const DepartmentContent = {
 
 			return department.description;
 		},
+		isTeamEntity(): boolean
+		{
+			return this.departments.get(this.focusedNode)?.entityType === EntityTypes.team;
+		},
 	},
 
 	watch: {
@@ -109,13 +114,17 @@ export const DepartmentContent = {
 		},
 		selectTab(tabName): void
 		{
+			if (this.isTabDisabled(tabName))
+			{
+				return;
+			}
 			this.activeTab = tabName;
 		},
 		getTabLabel(name: string): string
 		{
 			if (name === 'usersTab')
 			{
-				return this.departments.get(this.focusedNode)?.entityType === EntityTypes.team
+				return this.isTeamEntity
 					? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_TEAM_USERS_TITLE')
 					: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_TITLE');
 			}
@@ -148,6 +157,24 @@ export const DepartmentContent = {
 				this.isDescriptionOverflowed = this.checkDescriptionOverflowed();
 			});
 		},
+		isTabDisabled(tabName: string): boolean
+		{
+			if (tabName === 'chatsTab' && this.tabArray.find((tab) => tab.name === tabName).count === 0)
+			{
+				const permissionChecker = PermissionChecker.getInstance();
+				const canEditChats = this.isTeamEntity
+					? permissionChecker.hasPermission(PermissionActions.teamCommunicationEdit, this.focusedNode)
+					: permissionChecker.hasPermission(PermissionActions.departmentCommunicationEdit, this.focusedNode)
+				;
+
+				if (!canEditChats)
+				{
+					return true;
+				}
+			}
+
+			return false;
+		},
 	},
 
 	template: `
@@ -169,7 +196,7 @@ export const DepartmentContent = {
 					v-for="tab in tabArray"
 					:key="tab.name"
 					class="hr-department-detail-content__tab-item"
-					:class="[{'--active-tab' : activeTab === tab.name}]"
+					:class="[{'--active-tab' : activeTab === tab.name, '--disabled-tab': isTabDisabled(tab.name)}]"
 					@click="selectTab(tab.name)"
 					:data-id="tab.id ? 'hr-department-detail-content__' + tab.id + '_button' : null"
 				>
@@ -181,14 +208,13 @@ export const DepartmentContent = {
 					</span>
 				</button>
 			</div>
-			<component
-				v-if="activeTab === 'usersTab'"
-				:is="activeTabComponent"
+			<UsersTab
+				v-show="activeTab === 'usersTab'"
 				@showDetailLoader="$emit('showDetailLoader')"
 				@hideDetailLoader="hideDetailLoader"
 			/>
-			<component
-				v-if="activeTab === 'chatsTab'"
+			<ChatsTab
+				v-show="activeTab === 'chatsTab'"
 				:is="activeTabComponent"
 				@showDetailLoader="$emit('showDetailLoader')"
 				@hideDetailLoader="hideDetailLoader"

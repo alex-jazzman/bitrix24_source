@@ -182,7 +182,14 @@ class StructureBackwardAdapter
 			return [];
 		}
 
-		$children = $nodeRepository->getChildOf($rootNode, $depth === null ? DepthLevel::FULL : ($depth - 1));
+		if ($fromIblockSectionId && $depth === 1)
+		{
+			$children = $nodeRepository->getChildOf($rootNode);
+		}
+		else
+		{
+			$children = $nodeRepository->getChildOf($rootNode, $depth === null ? DepthLevel::FULL : ($depth - 1));
+		}
 
 		$structureArray = [
 			'TREE' => [],

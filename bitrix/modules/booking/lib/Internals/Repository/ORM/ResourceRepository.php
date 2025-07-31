@@ -13,6 +13,8 @@ use Bitrix\Booking\Internals\Model\ResourceTable;
 use Bitrix\Booking\Internals\Repository\ORM\Mapper\ResourceDataMapper;
 use Bitrix\Booking\Internals\Repository\ORM\Mapper\ResourceMapper;
 use Bitrix\Booking\Internals\Repository\ResourceRepositoryInterface;
+use Bitrix\Booking\Provider\Params\Resource\ResourceSelect;
+use Bitrix\Booking\Provider\Params\SelectInterface;
 use Bitrix\Main\ORM\Fields\ExpressionField;
 use Bitrix\Main\ORM\Query\QueryHelper;
 use Bitrix\Main\ORM\Query\Filter\ConditionTree;
@@ -28,24 +30,18 @@ class ResourceRepository implements ResourceRepositoryInterface
 		$this->resourceDataMapper = $resourceDataMapper;
 	}
 
-	//@todo add select
 	public function getList(
 		int|null $limit = null,
 		int|null $offset = null,
 		ConditionTree|null $filter = null,
 		array|null $sort = null,
+		SelectInterface|null $select = null,
 		int|null $userId = null,
 	): Entity\Resource\ResourceCollection
 	{
 		$query = ResourceTable::query()
-			->setSelect([
-				'*',
-				'TYPE',
-				'TYPE.NOTIFICATION_SETTINGS',
-				'DATA',
-				'SETTINGS',
-				'NOTIFICATION_SETTINGS',
-			]);
+			->setSelect($select ? $select->prepareSelect() : ['*'])
+		;
 
 		if ($limit !== null)
 		{
@@ -77,6 +73,34 @@ class ResourceRepository implements ResourceRepositoryInterface
 		return new Entity\Resource\ResourceCollection(...$resources);
 	}
 
+	public function getResourceTypeCount(array $typeIds): array
+	{
+		if (empty($typeIds))
+		{
+			return [];
+		}
+
+		$result = array_fill_keys($typeIds, 0);
+
+		$rowsList = ResourceTable::query()
+			->whereIn('TYPE_ID', $typeIds)
+			->setSelect(['TYPE_ID', 'COUNT'])
+			->setGroup(['TYPE_ID'])
+			->registerRuntimeField(
+				'COUNT',
+				new ExpressionField('COUNT', 'COUNT(*)')
+			)
+			->fetchAll()
+		;
+
+		foreach ($rowsList as $row)
+		{
+			$result[(int)$row['TYPE_ID']] = (int)$row['COUNT'];
+		}
+
+		return $result;
+	}
+
 	public function getTotal(ConditionTree|null $filter = null, int|null $userId = null): int
 	{
 		$query = ResourceTable::query()
@@ -96,6 +120,7 @@ class ResourceRepository implements ResourceRepositoryInterface
 		return $this->getList(
 			limit: 1,
 			filter: (new ConditionTree())->where('ID', '=', $id),
+			select: new ResourceSelect(),
 		)->getFirstCollectionItem();
 	}
 

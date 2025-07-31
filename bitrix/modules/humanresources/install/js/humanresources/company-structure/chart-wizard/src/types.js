@@ -1,12 +1,18 @@
 import { memberRoles, teamMemberRoles } from 'humanresources.company-structure.api';
-import { EntityTypes, type UserData, type NodeColorSettingsType } from 'humanresources.company-structure.utils';
-import { SettingsTypes } from './consts';
+import { type DepartmentData } from 'humanresources.company-structure.chart-store';
+import { NodeSettingsTypes } from 'humanresources.company-structure.utils';
 
 type WizardData = {
 	stepIndex: number;
 	waiting: boolean;
 	isValidStep: boolean;
-	departmentData: DepartmentData;
+	departmentData: {
+		...DepartmentData,
+		settings: {
+			[NodeSettingsTypes.businessProcAuthority]: Set,
+			[NodeSettingsTypes.reportsAuthority]: Set,
+		},
+	};
 	removedUsers: UserData[];
 	employeesIds: number[];
 	shouldErrorHighlight: boolean;
@@ -14,29 +20,19 @@ type WizardData = {
 	saveMode: 'moveUsers' | 'addUsers';
 };
 
-type DepartmentData = {
-	id: number;
-	name: string;
-	description: string;
-	parentId: number;
-	heads: Array<UserData>;
-	employees: Array<UserData>;
-	userCount: number;
-	chats: Array<number>,
-	channels: Array<number>,
-	createDefaultChat: boolean,
-	createDefaultChannel: boolean,
-	teamColor: NodeColorSettingsType,
-	settings: {
-		[SettingsTypes.businessProcAuthority]: Set,
-		[SettingsTypes.reportsAuthority]: Set,
-	},
-	entityType: EntityTypes.department | EntityTypes.team | EntityTypes.company,
-};
+export type StepIdType = 'entities' | 'department' | 'employees' | 'bindChat' | 'teamRights';
 
 type Step = {
-	id: string;
-	title: string;
+	id: StepIdType;
+	title?: string;
+	breadcrumbsTitle?: string;
+	breadcrumbsTitleDepartment: string;
+	breadcrumbsTitleTeam: string;
+	hasBreadcrumbs: boolean;
+	hasTreePreview: boolean;
+	isEditPermitted?: boolean;
+	isPermitted?: boolean;
+	dataTestIdPart: string,
 };
 
 type DepartmentUserIds = {
@@ -49,4 +45,4 @@ type DepartmentUserIds = {
 	[teamMemberRoles.employee]: number[],
 };
 
-export type { WizardData, DepartmentData, Step, DepartmentUserIds };
+export type { WizardData, Step, DepartmentUserIds };

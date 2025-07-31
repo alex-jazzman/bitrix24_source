@@ -88,35 +88,9 @@ class Messenger
 		return $chat;
 	}
 
-	/**
-	 * @param string $entityType
-	 * @param int|string $entityId
-	 * @return EntityChat|GroupChat|NullChat
-	 */
 	public function getEntityChat(string $entityType, string $entityId): Chat
 	{
-		$chatFactory = ChatFactory::getInstance();
-		$chat = $chatFactory
-			->setContext($this->context)
-			->getEntityChat($entityType, $entityId)
-		;
-
-		if (!$chat)
-		{
-			return (new NullChat())
-				->setPreparedParams([
-					'TYPE' => Chat::IM_TYPE_CHAT,
-					'ENTITY_TYPE' => $entityType,
-					'ENTITY_ID' => $entityId,
-				]);
-		}
-
-		if (!$chat->checkAccess()->isSuccess())
-		{
-			return new NullChat();
-		}
-
-		return $chat;
+		return ChatFactory::getInstance()->getEntityChat($entityType, $entityId);
 	}
 
 	public function getGeneralChat(): Chat

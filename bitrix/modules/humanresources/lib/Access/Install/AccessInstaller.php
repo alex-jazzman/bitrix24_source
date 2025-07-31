@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Bitrix\HumanResources\Access\Install;
 use Bitrix\HumanResources\Access\Install\AgentInstaller\InstallerFactory;
+use Bitrix\HumanResources\Access\Permission\PermissionDictionary;
+use Bitrix\HumanResources\Access\Permission\PermissionVariablesDictionary;
+use Bitrix\HumanResources\Access\Role\RoleDictionary;
 use Bitrix\Main;
 use Bitrix\Main\Application;
 
@@ -49,7 +52,7 @@ class AccessInstaller
 	//endregion
 
 	//region Old Access Agents
-	public static function reInstallAgent(int $fromVersion = InstallerFactory::REINSTALL): string
+	public static function reInstallAgent(int $fromVersion = -1): string
 	{
 		(new AccessInstaller())->setActualAccessVersion($fromVersion);
 

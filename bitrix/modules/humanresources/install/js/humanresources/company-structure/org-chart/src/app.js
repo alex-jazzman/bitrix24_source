@@ -37,7 +37,7 @@ export const Chart = {
 		return {
 			canvas: {
 				shown: false,
-				moving: false,
+				moved: false,
 				modelTransform: {
 					x: 0,
 					y: 0,
@@ -56,9 +56,8 @@ export const Chart = {
 				collapsed: true,
 				preventSwitch: false,
 			},
-			// there is no way to determine if transition was initial transition was due to initial zoom in
-			// so we block all controls until initial zoom in is completed
-			initTransitionCompleted: false,
+			// so we block all controls until transition isn't completed
+			isTransitionCompleted: false,
 		};
 	},
 
@@ -101,6 +100,8 @@ export const Chart = {
 		});
 		EventEmitter.subscribe(events.HR_ENTITY_SHOW_WIZARD, this.showWizardEventHandler);
 		EventEmitter.subscribe(events.HR_ENTITY_REMOVE, this.removeDepartmentEventHandler);
+		EventEmitter.subscribe(events.HR_ORG_CHART_TRANSFORM_CANVAS, this.onCanvasTransformWhenDragging);
+		EventEmitter.subscribe(events.HR_ORG_CHART_LOCATE_TO_DEPARTMENT, this.onLocate);
 	},
 
 	unmounted(): void
@@ -108,6 +109,8 @@ export const Chart = {
 		EventEmitter.unsubscribe(events.HR_DEPARTMENT_SLIDER_ON_MESSAGE, this.handleInviteSliderMessage);
 		EventEmitter.unsubscribe(events.HR_ENTITY_SHOW_WIZARD, this.showWizardEventHandler);
 		EventEmitter.unsubscribe(events.HR_ENTITY_REMOVE, this.removeDepartmentEventHandler);
+		EventEmitter.unsubscribe(events.HR_ORG_CHART_TRANSFORM_CANVAS, this.onCanvasTransformWhenDragging);
+		EventEmitter.unsubscribe(events.HR_ORG_CHART_LOCATE_TO_DEPARTMENT, this.onLocate);
 	},
 
 	methods:
@@ -130,16 +133,16 @@ export const Chart = {
 
 			this.canvas = {
 				...this.canvas,
-				moving: true,
+				moved: true,
 				modelTransform: { ...this.canvas.modelTransform, x: newX / zoom, y: newY, zoom: 1 },
 			};
 			this.onUpdateTransform();
 		},
-		onLocate(nodeId: ?number): void
+		onLocate({ data }: BaseEvent): void
 		{
-			if (nodeId)
+			if (data.nodeId)
 			{
-				this.$refs.tree.locateToDepartment(nodeId);
+				this.$refs.tree.locateToDepartment(data.nodeId);
 
 				return;
 			}
@@ -219,14 +222,11 @@ export const Chart = {
 					break;
 			}
 		},
-		async onModifyTree({ id, parentId, showConfetti }): Promise<void>
+		onModifyTree({ id, showConfetti }): void
 		{
 			this.showConfetti = showConfetti ?? false;
 			const { tree } = this.$refs;
-			tree.expandDepartmentParents(id);
-			tree.focus(id, { expandAfterFocus: true });
-			await this.$nextTick();
-			tree.moveTo(id);
+			tree.locateToDepartment(id);
 		},
 		onWizardClose(): void
 		{
@@ -241,25 +241,30 @@ export const Chart = {
 			const { tree } = this.$refs;
 			tree.tryRemoveDepartment(nodeId, entityType);
 		},
-		onTransitionEnd(): void
+		async onTransitionEnd(): Promise<void>
 		{
-			if (this.canvas.moving)
+			if (this.canvas.moved)
 			{
-				this.initTransitionCompleted = true;
+				this.isTransitionCompleted = true;
 			}
 
-			this.canvas.moving = false;
-			if (this.showConfetti)
+			this.canvas.moved = false;
+			if (!this.showConfetti)
 			{
-				Confetti.fire({
-					particleCount: 300,
-					startVelocity: 10,
-					spread: 400,
-					ticks: 100,
-					origin: { y: 0.4, x: 0.37 },
-				});
-				this.showConfetti = false;
+				return;
 			}
+
+			this.isTransitionCompleted = false;
+			const promise = Confetti.fire({
+				particleCount: 300,
+				startVelocity: 10,
+				spread: 400,
+				ticks: 100,
+				origin: { y: 0.4, x: 0.37 },
+			});
+			this.showConfetti = false;
+			await promise;
+			this.isTransitionCompleted = true;
 		},
 		onControlDetail({ showEmployees, preventSwitch }): void
 		{
@@ -316,9 +321,22 @@ export const Chart = {
 		},
 		onKeyDown(event: KeyboardEvent): void
 		{
-			if (!this.initTransitionCompleted)
+			if (!this.isTransitionCompleted)
 			{
 				event.preventDefault();
+			}
+		},
+		onCanvasTransformWhenDragging({ data }: BaseEvent): void
+		{
+			const { directionX, directionY, speed } = data;
+			if (directionX !== 0)
+			{
+				this.canvas.modelTransform.x += -directionX * speed;
+			}
+
+			if (directionY !== 0)
+			{
+				this.canvas.modelTransform.y += -directionY * speed;
 			}
 		},
 	},
@@ -326,20 +344,20 @@ export const Chart = {
 	template: `
 		<div
 			class="humanresources-chart"
-			:class="{ '--locked': !initTransitionCompleted }"
+			:class="{ '--locked': !isTransitionCompleted }"
 			@keydown="onKeyDown"
 		>
-			<TitlePanel @showWizard="onShowWizard" @locate="onLocate"></TitlePanel>
+			<TitlePanel @showWizard="onShowWizard"></TitlePanel>
 			<TransformCanvas
 				v-if="canvas.shown"
 				v-slot="{transform}"
 				v-model="canvas.modelTransform"
 				@update:modelValue="onUpdateTransform"
-				:class="{ '--moving': canvas.moving }"
+				:class="{ '--moved': canvas.moved }"
 				@transitionend="onTransitionEnd"
 			>
 				<Tree
-					:canvasZoom="transform.zoom"
+					:canvasTransform="transform"
 					ref="tree"
 					@moveTo="onMoveTo"
 					@showWizard="onShowWizard"
@@ -354,7 +372,6 @@ export const Chart = {
 			></DetailPanel>
 			<TransformPanel
 				v-model="canvas.modelTransform"
-				@locate="onLocate"
 			></TransformPanel>
 			<ChartWizard
 				v-if="wizard.shown"

@@ -1829,7 +1829,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	function _getLogoutContainer2() {
 	  return babelHelpers.classPrivateFieldLooseBase(this, _cache$2)[_cache$2].remember('getLogoutContainer', () => {
 	    const onclickLogout = () => {
-	      if (im_v2_lib_desktopApi.DesktopApi.isDesktop()) {
+	      if (!main_core.Type.isNil(im_v2_lib_desktopApi.DesktopApi) && im_v2_lib_desktopApi.DesktopApi.isDesktop()) {
 	        im_v2_lib_desktopApi.DesktopApi.logout();
 	      } else {
 	        const backUrl = new main_core.Uri(window.location.pathname);

@@ -223,20 +223,28 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 			return this;
 		}
 
-		setAvatar(authorId)
+		/**
+		 * @param {number|string} authorId
+		 * @param {string} chatId - for a get avatar copilot role for the current message
+		 * @param {string} messageId - for a get avatar copilot role for the current message
+		 * @void
+		 */
+		setAvatar(authorId, chatId, messageId)
 		{
 			const user = serviceLocator.get('core').getStore().getters['usersModel/getById'](authorId);
 			this.avatarUrl = user?.avatar ?? '';
-			this.setAvatarDetail(user);
+			this.setAvatarDetail(user, chatId, messageId);
 
 			return this;
 		}
 
 		/**
 		 * @param {UsersModelState|null} user
+		 * @param {string} chatId - for a get avatar copilot role for the current message
+		 * @param {string} messageId - for a get avatar copilot role for the current message
 		 * @void
 		 */
-		setAvatarDetail(user)
+		setAvatarDetail(user, chatId, messageId)
 		{
 			if (Type.isNil(user))
 			{
@@ -244,7 +252,7 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 			}
 			else
 			{
-				this.avatar = ChatAvatar.createFromDialogId(user.id).getMessageAvatarProps();
+				this.avatar = ChatAvatar.createFromDialogId(user.id, { chatId, messageId }).getMessageAvatarProps();
 			}
 		}
 

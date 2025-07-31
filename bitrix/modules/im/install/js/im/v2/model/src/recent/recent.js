@@ -252,6 +252,18 @@ export class RecentModel extends BuilderModel
 
 				return message.date;
 			},
+			/** @function recent/isInRecentCollection */
+			isInRecentCollection: (state: RecentState) => (dialogId: string): boolean => {
+				return state.recentCollection.has(dialogId);
+			},
+			/** @function recent/isInCollabCollection */
+			isInCollabCollection: (state: RecentState) => (dialogId: string): boolean => {
+				return state.collabCollection.has(dialogId);
+			},
+			/** @function recent/isInCopilotCollection */
+			isInCopilotCollection: (state: RecentState) => (dialogId: string): boolean => {
+				return state.copilotCollection.has(dialogId);
+			},
 		};
 	}
 

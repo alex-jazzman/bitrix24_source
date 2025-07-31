@@ -21,6 +21,7 @@ class MainPageGetResponse implements \JsonSerializable
 		public readonly WaitListItemCollection $waitListItemCollection,
 		public readonly bool $isIntersectionForAll,
 		public readonly array $counters,
+		public readonly array $formsMenu,
 	)
 	{
 	}
@@ -39,6 +40,7 @@ class MainPageGetResponse implements \JsonSerializable
 			'waitListItems' => $this->waitListItemCollection->toArray(),
 			'isIntersectionForAll' => $this->isIntersectionForAll,
 			'isCurrentSenderAvailable' => $this->isCurrentSenderAvailable,
+			'formsMenu' => $this->formsMenu,
 		];
 	}
 }

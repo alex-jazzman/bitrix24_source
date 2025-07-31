@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,im_v2_lib_desktopApi,im_v2_lib_utils,im_v2_lib_logger,main_core,im_v2_const,main_core_events) {
+(function (exports,im_v2_lib_utils,im_v2_lib_logger,main_core,im_v2_const,main_core_events) {
 	'use strict';
 
 	const lifecycleFunctions = {
@@ -207,6 +207,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	};
 
 	const windowFunctions = {
+	  wait(ms) {
+	    return new Promise(resolve => {
+	      setTimeout(resolve, ms);
+	    });
+	  },
 	  async handlePortalTabActivation() {
 	    const hasActiveTab = await this.hasActivePortalTab();
 	    if (hasActiveTab) {
@@ -221,16 +226,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  hasActivePortalTab() {
 	    return BXDesktopSystem.HasActiveTab();
 	  },
-	  setTabWithChatPageActive() {
+	  async setTabWithChatPageActive() {
 	    this.setActiveTabUrl(`${location.origin}${im_v2_const.Path.online}`);
+	    await this.wait(im_v2_const.WINDOW_ACTIVATION_DELAY);
 	  },
-	  isTabWithChatPageActive() {
+	  shouldActivateTabWithChatPage() {
 	    const tabsList = this.getTabsList();
-	    return tabsList.some(tab => tab.visible && tab.url.includes(im_v2_const.Path.online));
-	  },
-	  hasTabWithChatPage() {
-	    const tabsList = this.getTabsList();
-	    return tabsList.some(tab => tab.url.includes(im_v2_const.Path.online));
+	    const tabsWithChatPage = tabsList.filter(tab => tab.url.includes(im_v2_const.Path.online));
+	    const hasTabsWithVisibleChatPage = tabsWithChatPage.some(tab => tab.visible);
+	    return tabsWithChatPage.length > 0 && !hasTabsWithVisibleChatPage;
 	  },
 	  getTabsList() {
 	    return BXDesktopSystem.BrowserList();
@@ -249,8 +253,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  isActiveTab() {
 	    return this.isDesktop() && BXDesktopSystem.IsActiveTab();
 	  },
-	  showBrowserWindow() {
+	  async showBrowserWindow() {
 	    BXDesktopWindow.ExecuteCommand('show.main');
+	    await this.wait(im_v2_const.WINDOW_ACTIVATION_DELAY);
 	  },
 	  setActiveTab(target = window) {
 	    var _target$BXDesktopSyst;
@@ -270,11 +275,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    (_target$BXDesktopWind = target.BXDesktopWindow) == null ? void 0 : _target$BXDesktopWind.ExecuteCommand('show');
 	  },
 	  activateWindow(target = window) {
-	    // all tabs with the same URL are activated when a call is received, since
-	    // the setActiveTab method does not work correctly yet
-	    if (!im_v2_lib_desktopApi.DesktopApi.isAirDesignEnabledInDesktop()) {
-	      this.setActiveTab(target);
-	    }
+	    this.setActiveTab(target);
 	    this.showWindow(target);
 	  },
 	  hideWindow(target = window) {
@@ -720,5 +721,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.DesktopFeature = DesktopFeature;
 	exports.DesktopSettingsKey = DesktopSettingsKey;
 
-}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Const,BX.Event));
+}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Const,BX.Event));
 //# sourceMappingURL=desktop-api.bundle.js.map

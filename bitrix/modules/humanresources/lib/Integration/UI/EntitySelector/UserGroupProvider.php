@@ -31,11 +31,11 @@ class UserGroupProvider extends BaseProvider
 	{
 		$result = [];
 
-		$userGroupsData = (new UserGroups())->getData();
+		$userGroupsItems = $this->getItemsData();
 
 		$itemsToProcess = !empty($ids)
-			? array_intersect_key($userGroupsData['ITEMS'], array_flip($ids))
-			: $userGroupsData['ITEMS']
+			? array_intersect_key($userGroupsItems, array_flip($ids))
+			: $userGroupsItems
 		;
 
 		foreach ($itemsToProcess as $id => $groupData)
@@ -77,9 +77,9 @@ class UserGroupProvider extends BaseProvider
 	{
 		return match ($id)
 		{
-			AccessCode::ACCESS_DIRECTOR . '0' => Loc::getMessage('HUMANRESOURCES_UI_ENTITYSELECTOR_USERGROUPPROVIDER_TITLE_DIRECTOR'),
-			AccessCode::ACCESS_EMPLOYEE . '0' => Loc::getMessage('HUMANRESOURCES_UI_ENTITYSELECTOR_USERGROUPPROVIDER_TITLE_EMPLOYEE'),
-			AccessCode::ACCESS_DEPUTY . '0' => Loc::getMessage('HUMANRESOURCES_UI_ENTITYSELECTOR_USERGROUPPROVIDER_TITLE_DEPUTY'),
+			AccessCode::ACCESS_DIRECTOR . '0' => Loc::getMessage('HUMANRESOURCES_UI_ENTITYSELECTOR_USERGROUPPROVIDER_TITLE_DIRECTOR_MSGVER_1'),
+			AccessCode::ACCESS_EMPLOYEE . '0' => Loc::getMessage('HUMANRESOURCES_UI_ENTITYSELECTOR_USERGROUPPROVIDER_TITLE_EMPLOYEE_MSGVER_1'),
+			AccessCode::ACCESS_DEPUTY . '0' => Loc::getMessage('HUMANRESOURCES_UI_ENTITYSELECTOR_USERGROUPPROVIDER_TITLE_DEPUTY_MSGVER_1'),
 			default => $userGroupOriginalName ?? '',
 		};
 	}
@@ -102,5 +102,43 @@ class UserGroupProvider extends BaseProvider
 		;
 
 		return 'data:image/svg+xml;base64,' . base64_encode($svg);
+	}
+
+	/**
+	 * @return array<string, array{id: int, entityId: 0, name: string, desc: string}>
+	 */
+	private function getItemsData(): array
+	{
+		return [
+			...((new UserGroups())->getData()['ITEMS'] ?? []),
+			...$this->getTeamItems(),
+		];
+	}
+
+	/**
+	 * @return array<string, array{id: int, entityId: 0, name: string, desc: string}>
+	 */
+	private function getTeamItems(): array
+	{
+		return [
+			AccessCode::ACCESS_TEAM_DIRECTOR . '0' => [
+				'id' => AccessCode::ACCESS_TEAM_DIRECTOR . '0',
+				'entityId' => 0,
+				'name' => Loc::getMessage('HUMANRESOURCES_UI_ENTITYSELECTOR_USERGROUPPROVIDER_TITLE_TEAM_DIRECTOR'),
+				'desc' => '',
+			],
+			AccessCode::ACCESS_TEAM_EMPLOYEE. '0' => [
+				'id' => AccessCode::ACCESS_EMPLOYEE . '0',
+				'entityId' => 0,
+				'name' => Loc::getMessage('HUMANRESOURCES_UI_ENTITYSELECTOR_USERGROUPPROVIDER_TITLE_TEAM_MEMBER'),
+				'desc' => '',
+			],
+			AccessCode::ACCESS_TEAM_DEPUTY . '0' => [
+				'id' => AccessCode::ACCESS_TEAM_DEPUTY . '0',
+				'entityId' => 0,
+				'name' => Loc::getMessage('HUMANRESOURCES_UI_ENTITYSELECTOR_USERGROUPPROVIDER_TITLE_TEAM_DEPUTY'),
+				'desc' => '',
+			],
+		];
 	}
 }

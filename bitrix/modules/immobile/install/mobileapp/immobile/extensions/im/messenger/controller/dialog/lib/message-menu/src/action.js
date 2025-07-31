@@ -257,6 +257,20 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/action', (require, ex
 	};
 
 	/** @type MessageContextMenuButton */
+	const GoToMessageAction = {
+		id: MessageMenuActionType.goToMessage,
+		testId: 'messageMenuAction_go-to-message',
+		type: ActionViewType.button,
+		text: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_GO_TO_MESSAGE'),
+		iconName: Icon.GO_TO_MESSAGE.getIconName(),
+		iconFallbackUrl: Url.createFromPath(Icon.GO_TO_MESSAGE.getPath()).href,
+		iconSvg: Icon.GO_TO_MESSAGE.getSvg(),
+		style: {
+			fontColor: baseColor,
+		},
+	};
+
+	/** @type MessageContextMenuButton */
 	const FinishVoteAction = {
 		id: MessageMenuActionType.finishVote,
 		testId: 'MESSAGE_MENU_ACTION_FINISH_VOTE',
@@ -325,5 +339,6 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/action', (require, ex
 		FinishVoteAction,
 		RevoteAction,
 		OpenVoteResultAction,
+		GoToMessageAction,
 	};
 });

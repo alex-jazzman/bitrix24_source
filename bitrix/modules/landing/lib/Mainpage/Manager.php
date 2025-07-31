@@ -13,6 +13,7 @@ use Bitrix\Main\Config\Option;
 use Bitrix\Main\EventManager;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Pull;
 
 /**
  * Manage mainpage site and pages
@@ -20,7 +21,9 @@ use Bitrix\Main\Localization\Loc;
 class Manager
 {
 	private const SITE_ID_OPTION_CODE = 'mainpage_site_id';
-	private const FULLY_CREATED_OPTION_CODE = 'mainpage_created';
+	private const CREATION_OPTION_CODE = 'mainpage_creating';
+	private const CREATION_OPTION_PROCESS = 'process';
+	private const CREATION_OPTION_FULL = 'fully';
 	private const USE_DEMO_OPTION_CODE = 'use_demo_data_in_block_widgets';
 	private const FREE_MODE_OPTION_CODE = 'enable_at_free_tariff';
 
@@ -278,15 +281,20 @@ class Manager
 			return false;
 		}
 
-		if (!$this->getConnectedSiteId())
+		$siteId = $this->getConnectedSiteId();
+		if (!$siteId)
 		{
 			return false;
 		}
 
 		$this->onBeforeOperation();
 		$this->onStartPageCreation();
+		if ($publication)
+		{
+			(new Publisher())->publish();
+		}
 
-		$installer = new Installer($this->getConnectedSiteId());
+		$installer = new Installer($siteId);
 
 		if ($code === null)
 		{
@@ -306,11 +314,6 @@ class Manager
 		$this->landingId = $newPageId;
 		$this->onFinishPageCreation();
 		$this->onAfterOperation();
-
-		if ($publication)
-		{
-			(new Publisher())->publish();
-		}
 
 		return true;
 	}
@@ -357,19 +360,30 @@ class Manager
 	}
 
 	/**
+	 * Check that the creation is processing now.
+	 * @return bool
+	 */
+	public function isProcessing(): bool
+	{
+		return Landing\Manager::getOption(self::CREATION_OPTION_CODE) === self::CREATION_OPTION_PROCESS;
+	}
+
+	/**
 	 * Check is Mainpage site is fully created, add all pages etc
 	 * @return bool
 	 */
 	public function isReady(): bool
 	{
-		// todo: check option
-		return $this->getConnectedPageId() && $this->isFullCreated();
+		return $this->getConnectedPageId() && $this->isFullyCreated();
 	}
 
-	protected function isFullCreated(): bool
+	protected function isFullyCreated(): bool
 	{
-		return Landing\Manager::getOption(self::FULLY_CREATED_OPTION_CODE, 'Y') === 'Y';
+		$creating = Landing\Manager::getOption(self::CREATION_OPTION_CODE, self::CREATION_OPTION_FULL);
+
+		return $creating === self::CREATION_OPTION_FULL;
 	}
+
 
 	/**
 	 * Mark is Mainpage site start creating.
@@ -378,7 +392,7 @@ class Manager
 	 */
 	public function onStartPageCreation(): void
 	{
-		Landing\Manager::setOption(self::FULLY_CREATED_OPTION_CODE, 'N');
+		Landing\Manager::setOption(self::CREATION_OPTION_CODE, self::CREATION_OPTION_PROCESS);
 	}
 
 	/**
@@ -404,17 +418,31 @@ class Manager
 	 */
 	public function onFinishPageCreation(): void
 	{
-		Landing\Manager::setOption(self::FULLY_CREATED_OPTION_CODE, 'Y');
-
 		$connectedSiteId = $this->getConnectedSiteId();
 		$connectedPageId = $this->getConnectedPageId();
 		if (isset($connectedSiteId, $connectedPageId))
 		{
+			Landing\Manager::setOption(self::CREATION_OPTION_CODE, self::CREATION_OPTION_FULL);
+
 			$this->createSonetGroupForPublicationOnce();
 
 			Landing\Site::update($connectedSiteId, [
 				'LANDING_ID_INDEX' => $connectedPageId,
 			]);
+
+			if (Loader::includeModule('pull'))
+			{
+				Pull\Event::add(
+					Landing\Manager::getUserId(),
+					[
+						'module_id' => 'landing',
+						'command' => 'Vibe:onCreate',
+						'params' => [
+							// todo: add vibe entity type
+						],
+					]
+				);
+			}
 		}
 	}
 

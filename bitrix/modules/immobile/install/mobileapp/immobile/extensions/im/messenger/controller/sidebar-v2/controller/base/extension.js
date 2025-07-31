@@ -16,9 +16,11 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base', (require, export
 		'im/messenger/controller/sidebar-v2/controller/base/src/permission-manager',
 	);
 	const { WidgetNavigator } = require('im/messenger/controller/sidebar-v2/controller/base/src/widget-navigator');
-	const { SidebarContextMenuActionId, SidebarContextMenuActionPosition } = require(
-		'im/messenger/controller/sidebar-v2/const',
-	);
+	const {
+		SidebarContextMenuActionId,
+		SidebarContextMenuActionPosition,
+		SIDEBAR_DEFAULT_TOAST_OFFSET,
+	} = require('im/messenger/controller/sidebar-v2/const');
 	const { UIMenu } = require('layout/ui/menu');
 	const { Icon } = require('assets/icons');
 	const { Loc } = require('im/messenger/controller/sidebar-v2/loc');
@@ -418,6 +420,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base', (require, export
 				{
 					notificationText: Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_COPY_LINK_SUCCESS'),
 					notificationIcon: Icon.LINK,
+					toastOffset: SIDEBAR_DEFAULT_TOAST_OFFSET,
 				},
 				true,
 			);
@@ -481,7 +484,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base', (require, export
 		{
 			if (!isOnline())
 			{
-				Notification.showOfflineToast();
+				Notification.showOfflineToast({ offset: SIDEBAR_DEFAULT_TOAST_OFFSET });
 
 				return;
 			}
@@ -498,6 +501,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base', (require, export
 					this.logger.error('Init call unexpected error', err);
 					Notification.showErrorToast({
 						message: Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_CALL_UNKNOWN_ERROR'),
+						offset: SIDEBAR_DEFAULT_TOAST_OFFSET,
 					});
 				}
 			}
@@ -507,7 +511,10 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base', (require, export
 				const message = reason || Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_CALL_UNKNOWN_ERROR');
 
 				this.logger.error('Init call permission error', reason);
-				Notification.showErrorToast({ message });
+				Notification.showErrorToast({
+					message,
+					offset: SIDEBAR_DEFAULT_TOAST_OFFSET,
+				});
 			}
 		}
 
@@ -515,7 +522,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base', (require, export
 		{
 			if (!isOnline())
 			{
-				Notification.showOfflineToast();
+				Notification.showOfflineToast({ offset: SIDEBAR_DEFAULT_TOAST_OFFSET });
 
 				return;
 			}
@@ -532,7 +539,10 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base', (require, export
 
 		handleToggleAutoDeleteAction(ref)
 		{
-			void new AutoDeleteMessages(this.dialogId).openMessagesAutoDeleteMenu({ targetRef: ref });
+			const toastParams = { offset: SIDEBAR_DEFAULT_TOAST_OFFSET };
+			const manager = new AutoDeleteMessages(this.dialogId, { toastParams });
+
+			void manager.openMessagesAutoDeleteMenu({ targetRef: ref });
 		}
 
 		// endregion

@@ -12,6 +12,7 @@ export const Connectors = {
 	expose: [
 		'toggleConnectorsVisibility',
 		'toggleConnectorHighlighting',
+		'toggleAllConnectorsVisibility',
 		'adaptConnectorsAfterReorder',
 	],
 
@@ -80,55 +81,30 @@ export const Connectors = {
 		{
 			const { nodeId, parentId, offset } = data;
 			const parentDepartment = this.departments.get(parentId);
-			if (parentDepartment.children.includes(nodeId))
-			{
-				this.adaptConnectorsAfterMount(parentId, nodeId, offset);
-
-				return;
-			}
-
-			this.adaptConnectorsAfterUnmount(parentId, nodeId, offset);
-		},
-		adaptConnectorsAfterMount(parentId: number, nodeId: number, offset: number): void
-		{
-			Object.values(this.connectors).forEach((connector) => {
-				if (!connector.id)
-				{
-					return;
-				}
-
-				if (connector.parentId === parentId)
-				{
-					const { x } = connector.endPoint;
-					Object.assign(connector.endPoint, { x: x + offset });
-
-					return;
-				}
-
-				if (connector.parentsPath.includes(parentId))
-				{
-					const { startPoint: currentStartPoint, endPoint } = connector;
-					Object.assign(currentStartPoint, { x: currentStartPoint.x + offset });
-					Object.assign(endPoint, { x: endPoint.x + offset });
-				}
-			});
-		},
-		adaptConnectorsAfterUnmount(parentId: number, nodeId: number, offset: number): void
-		{
+			const isMounted = parentDepartment.children.includes(nodeId);
 			const values = Object.values(this.connectors);
-			const { endPoint } = this.connectors[`${parentId}-${nodeId}`];
 			const parsedSiblingConnectors = values.reduce((acc, connector) => {
-				const { endPoint: currentEndPoint, id, parentId: currentParentId } = connector;
-				if (currentParentId !== parentId || id === nodeId)
+				const { endPoint: currentEndPoint, id: currentId, parentId: currentParentId } = connector;
+				if (!currentId || currentParentId !== parentId || currentId === nodeId)
 				{
 					return acc;
 				}
 
-				const sign = endPoint.x > currentEndPoint.x ? 1 : -1;
+				let sign = 0;
+				if (isMounted)
+				{
+					sign = parentDepartment.children.indexOf(nodeId)
+						> parentDepartment.children.indexOf(currentId) ? 1 : -1;
+				}
+				else
+				{
+					const { endPoint } = this.connectors[`${parentId}-${nodeId}`];
+					sign = endPoint.x > currentEndPoint.x ? 1 : -1;
+				}
 
 				return {
 					...acc,
-					[id]: sign,
+					[currentId]: sign,
 				};
 			}, {});
 			values.forEach((connector) => {
@@ -139,7 +115,7 @@ export const Connectors = {
 					endPoint: currentEndPoint,
 					startPoint: currentStartPoint,
 				} = connector;
-				if (currentId === nodeId)
+				if (!currentId || currentId === nodeId)
 				{
 					return;
 				}
@@ -196,7 +172,7 @@ export const Connectors = {
 				}
 			});
 		},
-		toggleConnectorsVisibility(parentId: number, show: boolean, expandedNodes: number[]): void
+		toggleConnectorsVisibility(parentId: number, show: boolean): void
 		{
 			const { children } = this.departments.get(parentId);
 			children.forEach((childId) => {
@@ -205,9 +181,15 @@ export const Connectors = {
 					...this.connectors,
 					[`${parentId}-${childId}`]: { ...connector, show },
 				};
-				if (expandedNodes.includes(childId))
+			});
+		},
+		toggleAllConnectorsVisibility(shouldShow: boolean, expandedNodes: number[]): void
+		{
+			Object.keys(this.connectors).forEach((key) => {
+				const connector = this.connectors[key];
+				if (!shouldShow || (expandedNodes.includes(connector.parentId) && shouldShow))
 				{
-					this.toggleConnectorsVisibility(childId, show, expandedNodes);
+					connector.show = shouldShow;
 				}
 			});
 		},

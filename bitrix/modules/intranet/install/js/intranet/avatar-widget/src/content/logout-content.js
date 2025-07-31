@@ -1,5 +1,5 @@
 import { DesktopApi } from 'im.v2.lib.desktop-api';
-import { Tag, Uri } from 'main.core';
+import { Tag, Type, Uri } from 'main.core';
 import { Content } from './content';
 import { Analytics } from '../analytics';
 import type { LogoutContentOptions } from '../types';
@@ -17,7 +17,7 @@ export class LogoutContent extends Content
 			const onclick = () => {
 				Analytics.send(Analytics.EVENT_CLICK_LOGOUT);
 
-				if (DesktopApi.isDesktop())
+				if (!Type.isNil(DesktopApi) && DesktopApi.isDesktop())
 				{
 					DesktopApi.logout();
 				}

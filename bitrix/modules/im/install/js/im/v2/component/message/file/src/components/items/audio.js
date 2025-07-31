@@ -1,5 +1,5 @@
 import { AudioPlayer } from 'im.v2.component.elements.audioplayer';
-import { ProgressBar } from 'im.v2.component.elements.progressbar';
+import { ProgressBar, ProgressBarSize } from 'im.v2.component.elements.progressbar';
 
 import '../../css/items/audio.css';
 
@@ -25,13 +25,10 @@ export const AudioItem = {
 	},
 	emits: ['cancelClick'],
 	computed: {
+		ProgressBarSize: () => ProgressBarSize,
 		file(): ImModelFile
 		{
 			return this.item;
-		},
-		isLoaded(): boolean
-		{
-			return this.file.progress === 100;
 		},
 	},
 	methods: {
@@ -43,8 +40,8 @@ export const AudioItem = {
 	template: `
 		<div class="bx-im-media-audio__container">
 			<ProgressBar 
-				v-if="!isLoaded" 
-				:item="file" 
+				:item="file"
+				:size="ProgressBarSize.S"
 				@cancelClick="onCancelClick"
 			/>
 			<AudioPlayer

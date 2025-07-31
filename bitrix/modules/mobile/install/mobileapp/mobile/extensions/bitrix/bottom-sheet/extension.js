@@ -20,7 +20,6 @@ jn.define('bottom-sheet', (require, exports, module) => {
 		},
 		preventBottomSheetDismiss: false,
 		enableNavigationBarBorder: false,
-		preventBottomSheetDismiss: false,
 		backgroundColor: DEFAULT_BACKGROUND_COLOR,
 		backdrop: {
 			showOnTop: false,

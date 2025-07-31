@@ -1,7 +1,6 @@
 'use strict';
 /* global tabs */
 (async () => {
-
 	console.log('Navigation is loaded.');
 	const require = jn.require;
 
@@ -28,15 +27,15 @@
 	serviceLocator.add('emitter', emitter);
 
 	const { NotifyManager } = require('notify-manager');
-	const { AnalyticsEvent } = require('analytics');
 
-	const { Analytics, EventType, ComponentCode, NavigationTab, NavigationTabByComponent } = require('im/messenger/const');
+	const { EventType, ComponentCode, NavigationTab, NavigationTabByComponent } = require('im/messenger/const');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { Feature } = require('im/messenger/lib/feature');
 
 	const { VisibilityManager } = require('im/messenger/lib/visibility-manager');
 	const { ConnectionService } = require('im/messenger/provider/services/connection');
 	const { NavigationCounterHandler } = require('im/messenger/lib/counters/counter-manager/navigation');
+	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
 
 	class NavigationManager
 	{
@@ -97,7 +96,6 @@
 
 			if (PageManager.getNavigator().isActiveTab())
 			{
-				this.sendAnalyticsOpenRootTabChat();
 				this.sendAnalyticsChangeTab();
 			}
 
@@ -126,12 +124,7 @@
 		}
 
 		onAppActive()
-		{
-			if (PageManager.getNavigator().isActiveTab())
-			{
-				this.sendAnalyticsOpenRootTabChat();
-			}
-		}
+		{}
 
 		onTabChange(id)
 		{
@@ -285,42 +278,13 @@
 			const rootTabChatName = 'chats';
 			if (id === rootTabChatName)
 			{
-				this.sendAnalyticsOpenRootTabChat();
 				this.sendAnalyticsChangeTab();
 			}
 		}
 
 		sendAnalyticsChangeTab(analyticsOptions = {})
 		{
-			if (this.currentTab === 'copilot') // TODO delete this, when will be universal event like below
-			{
-				const analytics = new AnalyticsEvent()
-					.setTool(Analytics.Tool.ai)
-					.setCategory(Analytics.Category.chatOperations)
-					.setEvent(Analytics.Event.openTab)
-					.setSection(Analytics.Section.copilotTab);
-
-				analytics.send();
-			}
-
-			const type = this.currentTab === 'chats' ? Analytics.Type.chat : Analytics.Type[this.currentTab];
-			const analytics = new AnalyticsEvent()
-				.setTool(analyticsOptions.tool ?? Analytics.Tool.im)
-				.setCategory(analyticsOptions.category ?? Analytics.Category.messenger)
-				.setEvent(analyticsOptions.event ?? Analytics.Event.openTab)
-				.setType(analyticsOptions.type ?? type);
-
-			analytics.send();
-		}
-
-		sendAnalyticsOpenRootTabChat()
-		{
-			const analytics = new AnalyticsEvent()
-				.setTool(Analytics.Tool.im)
-				.setCategory(Analytics.Category.messenger)
-				.setEvent(Analytics.Event.openMessenger);
-
-			analytics.send();
+			AnalyticsService.getInstance().sendChangeNavigationTab(this.currentTab, analyticsOptions);
 		}
 
 		async onUpdateCounters(counters, delay)

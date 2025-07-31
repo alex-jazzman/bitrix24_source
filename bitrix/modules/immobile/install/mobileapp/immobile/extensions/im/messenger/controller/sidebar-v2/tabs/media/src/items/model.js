@@ -1,7 +1,7 @@
 /**
- * @module im/messenger/controller/sidebar-v2/tabs/media/src/items/media-item
+ * @module im/messenger/controller/sidebar-v2/tabs/media/src/items/model
  */
-jn.define('im/messenger/controller/sidebar-v2/tabs/media/src/items/media-item', (require, exports, module) => {
+jn.define('im/messenger/controller/sidebar-v2/tabs/media/src/items/model', (require, exports, module) => {
 	const { FileType } = require('im/messenger/const');
 	const { makeLibraryImagePath } = require('im/messenger/assets');
 	/**
@@ -58,6 +58,11 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/media/src/items/media-item', 
 		 */
 		getPreviewUrl()
 		{
+			if (this.file.mediaUrl?.preview[250])
+			{
+				return this.file.mediaUrl.preview[250];
+			}
+
 			if (
 				this.file.type === FileType.image
 				&& !this.file.urlPreview
@@ -76,6 +81,15 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/media/src/items/media-item', 
 		getFileId()
 		{
 			return this.file.id;
+		}
+
+		/**
+		 * @public
+		 * @return {MessageId}
+		 */
+		getMessageId()
+		{
+			return this.file.messageId;
 		}
 
 		/**
@@ -129,6 +143,9 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/media/src/items/media-item', 
 				urlDownload: this.getDownloadUrl(),
 				sectionId: this.getSectionId(),
 				insideSectionSortKey: this.getSortKey(),
+				customData: {
+					messageId: this.getMessageId(),
+				},
 			};
 		}
 	}

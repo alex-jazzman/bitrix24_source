@@ -27,7 +27,7 @@ return [
 		'toast',
 		'ui-system/blocks/icon',
 		'im:messenger/api/dialog-opener',
-		'app-rating-manager',
+		'tasks:app-rating-client',
 	],
 	'bundle' => [
 		'./src/error',

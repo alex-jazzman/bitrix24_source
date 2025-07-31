@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Humanresources = this.BX.Humanresources || {};
-(function (exports,ui_vue3,ui_confetti,ui_canvas,ui_entitySelector,ui_dialogs_messagebox,ui_notification,humanresources_companyStructure_userManagementDialog,ui_vue3_pinia,humanresources_companyStructure_departmentContent,humanresources_companyStructure_api,humanresources_companyStructure_structureComponents,ui_iconSet_main,ui_iconSet_crm,ui_buttons,ui_forms,ui_iconSet_api_vue,humanresources_companyStructure_chartStore,humanresources_companyStructure_chartWizard,ui_analytics,ui_designTokens,humanresources_companyStructure_permissionChecker,humanresources_companyStructure_utils,ui_iconSet_api_core,main_core_events,main_core) {
+(function (exports,ui_vue3,ui_confetti,ui_canvas,humanresources_companyStructure_orgChart,ui_entitySelector,ui_dialogs_messagebox,ui_notification,humanresources_companyStructure_userManagementDialog,ui_vue3_pinia,humanresources_companyStructure_departmentContent,humanresources_companyStructure_api,humanresources_companyStructure_structureComponents,ui_iconSet_main,ui_iconSet_crm,ui_buttons,ui_forms,ui_iconSet_api_vue,humanresources_companyStructure_chartStore,humanresources_companyStructure_chartWizard,ui_analytics,ui_designTokens,humanresources_companyStructure_utils,ui_iconSet_api_core,humanresources_companyStructure_permissionChecker,main_core_events,main_core) {
 	'use strict';
 
 	const events = Object.freeze({
@@ -15,10 +15,12 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  HR_ORG_CHART_CLOSE_BY_ESC: 'SidePanel.Slider:onCloseByEsc',
 	  HR_ORG_CHART_CLOSE: 'SidePanel.Slider:onClose',
 	  HR_FIRST_POPUP_SHOW: 'HR.company-structure:first-popup-showed',
-	  HR_DRAG_DEPARTMENT: 'hr-drag-department',
-	  HR_DROP_DEPARTMENT: 'hr-drop-department',
-	  HR_DEPARTMENT_TOGGLE_CONNECTORS: 'hr-department-toggle-connectors',
+	  HR_DRAG_ENTITY: 'hr-drag-entity',
+	  HR_DROP_ENTITY: 'hr-drop-entity',
+	  HR_ENTITY_TOGGLE_CONNECTORS: 'hr-entity-toggle-connectors',
+	  HR_ORG_CHART_TRANSFORM_CANVAS: 'hr-org-chart-transform-canvas',
 	  HR_DEPARTMENT_SLIDER_ON_MESSAGE: 'SidePanel.Slider:onMessage',
+	  HR_ORG_CHART_LOCATE_TO_DEPARTMENT: 'hr-org-chart-locate-to-department',
 	  HR_ENTITY_SHOW_WIZARD: 'hr-entity-show-wizard',
 	  HR_ENTITY_REMOVE: 'hr-entity-remove',
 	  HR_PUBLIC_FOCUS_NODE: 'HumanResources.CompanyStructure:focusNode',
@@ -109,6 +111,77 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 			{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_ADD_BUTTON') }}
 		</div>
 	`
+	};
+
+	const createTreeDataStore = treeData => {
+	  const dataMap = new Map();
+	  treeData.forEach(item => {
+	    var _dataMap$get, _dataMap$get2, _mapParentItem$childr;
+	    const {
+	      id,
+	      parentId,
+	      colorName,
+	      entityType
+	    } = item;
+	    const mapItem = (_dataMap$get = dataMap.get(id)) != null ? _dataMap$get : {};
+	    const teamColor = humanresources_companyStructure_utils.getNodeColorSettings(colorName, entityType);
+	    dataMap.set(id, {
+	      ...mapItem,
+	      ...item,
+	      teamColor
+	    });
+	    if (parentId === 0) {
+	      return;
+	    }
+	    const mapParentItem = (_dataMap$get2 = dataMap.get(parentId)) != null ? _dataMap$get2 : {};
+	    const children = (_mapParentItem$childr = mapParentItem.children) != null ? _mapParentItem$childr : [];
+	    dataMap.set(parentId, {
+	      ...mapParentItem,
+	      children: [...children, id]
+	    });
+	  });
+	  return dataMap;
+	};
+	const chartAPI = {
+	  removeDepartment: id => {
+	    return humanresources_companyStructure_api.getData('humanresources.api.Structure.Node.delete', {
+	      nodeId: id
+	    });
+	  },
+	  getDepartmentsData: () => {
+	    return humanresources_companyStructure_api.getData('humanresources.api.Structure.get', {}, {
+	      tool: 'structure',
+	      category: 'structure',
+	      event: 'open_structure'
+	    });
+	  },
+	  getCurrentDepartments: () => {
+	    return humanresources_companyStructure_api.getData('humanresources.api.Structure.Node.current');
+	  },
+	  getDictionary: () => {
+	    return humanresources_companyStructure_api.getData('humanresources.api.Structure.dictionary');
+	  },
+	  getUserId: () => {
+	    return humanresources_companyStructure_api.getData('humanresources.api.User.getCurrentId');
+	  },
+	  firstTimeOpened: () => {
+	    return humanresources_companyStructure_api.postData('humanresources.api.User.firstTimeOpen');
+	  },
+	  updateDepartment: (nodeId, parentId) => {
+	    return humanresources_companyStructure_api.postData('humanresources.api.Structure.Node.update', {
+	      nodeId,
+	      parentId,
+	      name: null
+	    });
+	  },
+	  changeOrder: (draggedId, direction, count) => {
+	    return humanresources_companyStructure_api.postData('humanresources.api.Structure.Node.changeOrder', {
+	      nodeId: draggedId,
+	      direction,
+	      count
+	    });
+	  },
+	  createTreeDataStore
 	};
 
 	const OrgChartActions = {
@@ -230,11 +303,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      children: newChildren
 	    });
 	    try {
-	      await humanresources_companyStructure_api.postData('humanresources.api.Structure.Node.changeOrder', {
-	        nodeId: draggedId,
-	        direction,
-	        count
-	      });
+	      await chartAPI.changeOrder(draggedId, direction, count);
 	      return true;
 	    } catch {
 	      departments.set(parentId, {
@@ -591,7 +660,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    try {
 	      const permissionChecker = humanresources_companyStructure_permissionChecker.PermissionChecker.getInstance();
 	      this.canEditPermissions = permissionChecker && (permissionChecker.hasPermissionOfAction(humanresources_companyStructure_permissionChecker.PermissionActions.accessEdit) || permissionChecker.hasPermissionOfAction(humanresources_companyStructure_permissionChecker.PermissionActions.teamAccessEdit));
-	      this.canAddNode = permissionChecker && (permissionChecker.hasPermissionWithAnyNode(humanresources_companyStructure_permissionChecker.PermissionActions.departmentCreate) || permissionChecker.hasPermissionWithAnyNode(humanresources_companyStructure_permissionChecker.PermissionActions.teamCreate));
+	      this.canAddNode = permissionChecker && (permissionChecker.hasPermissionOfAction(humanresources_companyStructure_permissionChecker.PermissionActions.departmentCreate) || permissionChecker.hasPermissionOfAction(humanresources_companyStructure_permissionChecker.PermissionActions.teamCreate));
 	    } catch (error) {
 	      console.error('Failed to fetch data:', error);
 	    }
@@ -605,7 +674,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    this.toolbarStarActive = main_core.Dom.hasClass(this.toolbarStarElement, 'ui-toolbar-star-active');
 	  },
 	  name: 'title-panel',
-	  emits: ['showWizard', 'locate'],
+	  emits: ['showWizard'],
 	  computed: {
 	    set() {
 	      return ui_iconSet_api_vue.Set;
@@ -639,7 +708,9 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      });
 	    },
 	    onLocate(nodeId) {
-	      this.$emit('locate', nodeId);
+	      main_core_events.EventEmitter.emit(humanresources_companyStructure_orgChart.events.HR_ORG_CHART_LOCATE_TO_DEPARTMENT, {
+	        nodeId
+	      });
 	    },
 	    triggerFavoriteStar() {
 	      this.toolbarStarElement.click();
@@ -797,7 +868,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        {
 	          this.headsVisible = false;
 	          main_core_events.EventEmitter.unsubscribe(events.HR_DEPARTMENT_MENU_CLOSE, this.closeHeadList);
-	          main_core_events.EventEmitter.unsubscribe(events.HR_DRAG_DEPARTMENT, this.closeHeadList);
+	          main_core_events.EventEmitter.unsubscribe(events.HR_DRAG_ENTITY, this.closeHeadList);
 	        }
 	    },
 	    openHeadList() {
@@ -806,7 +877,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        {
 	          this.headsVisible = true;
 	          main_core_events.EventEmitter.subscribe(events.HR_DEPARTMENT_MENU_CLOSE, this.closeHeadList);
-	          main_core_events.EventEmitter.subscribe(events.HR_DRAG_DEPARTMENT, this.closeHeadList);
+	          main_core_events.EventEmitter.subscribe(events.HR_DRAG_ENTITY, this.closeHeadList);
 	        }
 	    },
 	    getPositionText(item) {
@@ -864,110 +935,6 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 			:titleBar="titleBar"
 		/>
 	`
-	};
-
-	let _ = t => t,
-	  _t;
-	const itemWidth = 278;
-	const gap = 24;
-	const mousedownHandler = ({
-	  target,
-	  currentTarget: dragContainer
-	}) => {
-	  if (!main_core.Dom.hasClass(target, 'humanresources-tree__node_dnd-icon')) {
-	    return;
-	  }
-	  event.stopPropagation();
-	  const draggedItem = target.closest('.humanresources-tree__node');
-	  const draggedId = Number(draggedItem.dataset.id);
-	  const children = [...dragContainer.children];
-	  const draggedIndex = children.indexOf(draggedItem);
-	  const ghost = createGhost(draggedItem);
-	  main_core.Dom.append(ghost, dragContainer);
-	  let transformX = 0;
-	  let prevAffectedItems = [];
-	  let targetIndex = null;
-	  const mouseMoveHandler = event => {
-	    main_core.Dom.style(document.body, 'userSelect', 'none');
-	    main_core.Dom.style(document.body, 'cursor', 'grabbing');
-	    main_core.Dom.addClass(dragContainer, '--drag-progress');
-	    main_core.Dom.addClass(draggedItem, '--dragging');
-	    transformX += event.movementX / dragContainer.dataset.zoom;
-	    setTransform(draggedItem, transformX);
-	    prevAffectedItems.forEach(affectedItem => setTransform(affectedItem));
-	    targetIndex = Math.trunc((draggedItem.offsetLeft + transformX) / (itemWidth + gap));
-	    if (targetIndex === draggedIndex) {
-	      setTransform(ghost, draggedItem.offsetLeft);
-	      return;
-	    }
-	    const direction = draggedIndex < targetIndex ? 1 : -1;
-	    const affectedItems = direction > 0 ? children.slice(draggedIndex + 1, targetIndex + 1) : children.slice(targetIndex, draggedIndex);
-	    const fullWidth = itemWidth + gap;
-	    affectedItems.forEach(affectedItem => setTransform(affectedItem, -direction * fullWidth));
-	    setTransform(ghost, draggedItem.offsetLeft + direction * affectedItems.length * fullWidth);
-	    prevAffectedItems = affectedItems;
-	  };
-	  const mouseUpHandler = () => {
-	    main_core.Dom.style(document.body, 'userSelect', '');
-	    main_core.Dom.style(document.body, 'cursor', '');
-	    main_core.Event.unbind(document, 'mousemove', mouseMoveHandler);
-	    main_core.Event.unbind(document, 'mouseup', mouseUpHandler);
-	    [...prevAffectedItems, draggedItem].forEach(item => setTransform(item));
-	    main_core.Dom.removeClass(dragContainer, '--drag-progress');
-	    main_core.Dom.removeClass(draggedItem, '--dragging');
-	    main_core.Dom.remove(ghost);
-	    main_core_events.EventEmitter.emit(events.HR_DEPARTMENT_TOGGLE_CONNECTORS, {
-	      draggedId,
-	      shouldShow: true
-	    });
-	    if (draggedIndex === targetIndex) {
-	      return;
-	    }
-	    const targetId = children[targetIndex] ? Number(children[targetIndex].dataset.id) : 0;
-	    if (targetId) {
-	      main_core_events.EventEmitter.emit(events.HR_DROP_DEPARTMENT, {
-	        draggedId,
-	        targetId,
-	        affectedItems: prevAffectedItems.map(item => Number(item.dataset.id)),
-	        direction: draggedIndex < targetIndex ? 1 : -1
-	      });
-	    }
-	  };
-	  main_core.Event.bind(document, 'mousemove', mouseMoveHandler);
-	  main_core.Event.bind(document, 'mouseup', mouseUpHandler);
-	  main_core_events.EventEmitter.emit(events.HR_DEPARTMENT_TOGGLE_CONNECTORS, {
-	    draggedId,
-	    shouldShow: false
-	  });
-	  main_core_events.EventEmitter.emit(events.HR_DRAG_DEPARTMENT, {
-	    draggedId
-	  });
-	};
-	const createGhost = draggedItem => {
-	  const {
-	    offsetWidth,
-	    offsetHeight,
-	    offsetLeft
-	  } = draggedItem;
-	  return main_core.Tag.render(_t || (_t = _`
-		<div
-			class="humanresources-tree__node_dnd-ghost"
-			style="width: ${0}px; height: ${0}px; transform: translateX(${0}px);"
-		></div>
-	`), offsetWidth, offsetHeight, offsetLeft);
-	};
-	const setTransform = (element, x) => {
-	  main_core.Dom.style(element, 'transform', x ? `translate3d(${x}px, 0, 0)` : '');
-	};
-	const DragAndDrop = {
-	  mounted(el) {
-	    main_core.Event.bind(el, 'mousedown', mousedownHandler);
-	  },
-	  updated(el, {
-	    value
-	  }) {
-	    el.setAttribute('data-zoom', value);
-	  }
 	};
 
 	class AbstractActionMenu {
@@ -1035,7 +1002,9 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  teamRights: 'teamRights',
 	  moveUserToAnotherDepartment: 'moveUserToAnotherDepartment',
 	  removeUserFromDepartment: 'removeUserFromDepartment',
-	  fireUserFromCompany: 'fireUserFromCompany'
+	  fireUserFromCompany: 'fireUserFromCompany',
+	  openChat: 'openChat',
+	  unbindChat: 'unbindChat'
 	});
 
 	class AddDepartmentMenuItem extends AbstractMenuItem {
@@ -1064,7 +1033,9 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      permissionAction: null,
 	      dataTestId: 'hr-company-structure_menu__add-department-item'
 	    });
+	    this.entityType = entityType;
 	    this.permissionChecker = permissionChecker;
+	    this.entityType = entityType;
 	  }
 	  invoke({
 	    entityId,
@@ -1109,8 +1080,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	class EditDepartmentMenuItem extends AbstractMenuItem {
 	  constructor(entityType) {
 	    const title = entityType === humanresources_companyStructure_utils.EntityTypes.team ? main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_EDIT_MENU_EDIT_TEAM_TITLE') : main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_EDIT_MENU_EDIT_DEPARTMENT_TITLE');
-	    const description = entityType === humanresources_companyStructure_utils.EntityTypes.team ? main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_EDIT_MENU_EDIT_TEAM_SUBTITLE') : main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_EDIT_MENU_EDIT_DEPARTMENT_SUBTITLE');
-	    const permissionAction = entityType === humanresources_companyStructure_utils.EntityTypes.team ? humanresources_companyStructure_permissionChecker.PermissionActions.teamEdit : humanresources_companyStructure_permissionChecker.PermissionActions.departmentEdit;
+	    const description = entityType === humanresources_companyStructure_utils.EntityTypes.team ? main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_EDIT_MENU_EDIT_TEAM_SUBTITLE_MSGVER_1') : main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_EDIT_MENU_EDIT_DEPARTMENT_SUBTITLE_MSGVER_1');
 	    super({
 	      id: MenuActions.editDepartment,
 	      title,
@@ -1120,9 +1090,10 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        size: 20,
 	        color: humanresources_companyStructure_utils.getColorCode('paletteBlue50')
 	      },
-	      permissionAction,
+	      permissionAction: null,
 	      dataTestId: 'hr-company-structure_menu__edit-department-item'
 	    });
+	    this.entityType = entityType;
 	  }
 	  invoke({
 	    entityId,
@@ -1132,10 +1103,17 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    main_core_events.EventEmitter.emit(events.HR_ENTITY_SHOW_WIZARD, {
 	      nodeId: entityId,
 	      isEditMode: true,
+	      showEntitySelector: false,
 	      type: 'department',
 	      source: analyticSource,
 	      refToFocus
 	    });
+	  }
+	  hasPermission(permissionChecker, entityId) {
+	    if (this.entityType === humanresources_companyStructure_utils.EntityTypes.team) {
+	      return permissionChecker.hasPermission(humanresources_companyStructure_permissionChecker.PermissionActions.teamEdit, entityId) || permissionChecker.hasPermission(humanresources_companyStructure_permissionChecker.PermissionActions.teamAddMember, entityId) || permissionChecker.hasPermission(humanresources_companyStructure_permissionChecker.PermissionActions.teamCommunicationEdit, entityId) || permissionChecker.hasPermission(humanresources_companyStructure_permissionChecker.PermissionActions.teamSettingsEdit, entityId);
+	    }
+	    return permissionChecker.hasPermission(humanresources_companyStructure_permissionChecker.PermissionActions.departmentEdit, entityId) || permissionChecker.hasPermission(humanresources_companyStructure_permissionChecker.PermissionActions.employeeAddToDepartment, entityId) || permissionChecker.hasPermission(humanresources_companyStructure_permissionChecker.PermissionActions.departmentCommunicationEdit, entityId);
 	  }
 	}
 
@@ -1164,35 +1142,6 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    main_core_events.EventEmitter.emit(events.HR_ENTITY_REMOVE, {
 	      nodeId: entityId,
 	      entityType
-	    });
-	  }
-	}
-
-	class TeamRightsMenuItem extends AbstractMenuItem {
-	  constructor() {
-	    super({
-	      id: MenuActions.teamRights,
-	      title: main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_EDIT_MENU_TEAM_RIGHTS_TITLE'),
-	      description: main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_EDIT_MENU_TEAM_RIGHTS_SUBTITLE'),
-	      bIcon: {
-	        name: ui_iconSet_api_core.Actions.SETTINGS_2,
-	        size: 20,
-	        color: humanresources_companyStructure_utils.getColorCode('paletteBlue50')
-	      },
-	      permissionAction: humanresources_companyStructure_permissionChecker.PermissionActions.teamSettingsEdit,
-	      dataTestId: 'hr-company-structure_menu__team-rights-item'
-	    });
-	  }
-	  invoke({
-	    entityId,
-	    analyticSource,
-	    entityType
-	  }) {
-	    main_core_events.EventEmitter.emit(events.HR_ENTITY_SHOW_WIZARD, {
-	      nodeId: entityId,
-	      isEditMode: true,
-	      type: 'teamRights',
-	      source: analyticSource
 	    });
 	  }
 	}
@@ -1331,6 +1280,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    main_core_events.EventEmitter.emit(events.HR_ENTITY_SHOW_WIZARD, {
 	      nodeId: entityId,
 	      isEditMode: true,
+	      showEntitySelector: false,
 	      type: 'employees',
 	      source: analyticSource
 	    });
@@ -1401,9 +1351,9 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  }
 	  getItems() {
 	    if (this.entityType === humanresources_companyStructure_utils.EntityTypes.team) {
-	      return [new EditDepartmentMenuItem(this.entityType), new AddDepartmentMenuItem(this.entityType), new EditEmployeesMenuItem(this.entityType, null), new TeamRightsMenuItem(), new AddEmployeeMenuItem(this.entityType), new RemoveDepartmentMenuItem(this.entityType)];
+	      return [new EditDepartmentMenuItem(this.entityType), new AddDepartmentMenuItem(this.entityType), new AddEmployeeMenuItem(this.entityType), new RemoveDepartmentMenuItem(this.entityType)];
 	    }
-	    return [new EditDepartmentMenuItem(this.entityType), new AddDepartmentMenuItem(this.entityType), new AddEmployeeMenuItem(this.entityType), new EditEmployeesMenuItem(this.entityType, null), new MoveEmployeeMenuItem(), new UserInviteMenuItem(), new RemoveDepartmentMenuItem(this.entityType)];
+	    return [new EditDepartmentMenuItem(this.entityType), new AddDepartmentMenuItem(this.entityType), new AddEmployeeMenuItem(this.entityType), new MoveEmployeeMenuItem(), new UserInviteMenuItem(), new RemoveDepartmentMenuItem(this.entityType)];
 	  }
 	}
 
@@ -1444,14 +1394,14 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      if (this.menuVisible) {
 	        this.menuVisible = false;
 	        main_core_events.EventEmitter.unsubscribe(events.HR_DEPARTMENT_MENU_CLOSE, this.closeMenu);
-	        main_core_events.EventEmitter.unsubscribe(events.HR_DRAG_DEPARTMENT, this.closeMenu);
+	        main_core_events.EventEmitter.unsubscribe(events.HR_DRAG_ENTITY, this.closeMenu);
 	      }
 	    },
 	    openMenu() {
 	      if (!this.menuVisible) {
 	        this.menuVisible = true;
 	        main_core_events.EventEmitter.subscribe(events.HR_DEPARTMENT_MENU_CLOSE, this.closeMenu);
-	        main_core_events.EventEmitter.subscribe(events.HR_DRAG_DEPARTMENT, this.closeMenu);
+	        main_core_events.EventEmitter.subscribe(events.HR_DRAG_ENTITY, this.closeMenu);
 	      }
 	    }
 	  },
@@ -1538,14 +1488,14 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      if (this.showPopup) {
 	        this.showPopup = false;
 	        main_core_events.EventEmitter.unsubscribe(events.HR_DEPARTMENT_MENU_CLOSE, this.onClose);
-	        main_core_events.EventEmitter.unsubscribe(events.HR_DRAG_DEPARTMENT, this.onClose);
+	        main_core_events.EventEmitter.unsubscribe(events.HR_DRAG_ENTITY, this.onClose);
 	      }
 	    },
 	    onOpen() {
 	      if (!this.showPopup) {
 	        this.showPopup = true;
 	        main_core_events.EventEmitter.subscribe(events.HR_DEPARTMENT_MENU_CLOSE, this.onClose);
-	        main_core_events.EventEmitter.subscribe(events.HR_DRAG_DEPARTMENT, this.onClose);
+	        main_core_events.EventEmitter.subscribe(events.HR_DRAG_ENTITY, this.onClose);
 	      }
 	    },
 	    addDescription() {
@@ -1655,8 +1605,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    DepartmentInfoIconButton
 	  },
 	  directives: {
-	    hint: humanresources_companyStructure_structureComponents.Hint,
-	    dnd: DragAndDrop
+	    hint: humanresources_companyStructure_structureComponents.Hint
 	  },
 	  inject: ['getTreeBounds'],
 	  props: {
@@ -1811,12 +1760,18 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    this.prevHeight = 0;
 	  },
 	  async mounted() {
+	    let editAction = '';
+	    let viewAction = '';
 	    if (this.isTeamEntity) {
-	      this.showInfo = humanresources_companyStructure_permissionChecker.PermissionChecker.getInstance().hasPermission(humanresources_companyStructure_permissionChecker.PermissionActions.teamView, this.nodeId);
+	      viewAction = humanresources_companyStructure_permissionChecker.PermissionActions.teamView;
+	      editAction = humanresources_companyStructure_permissionChecker.PermissionActions.teamEdit;
 	    } else {
-	      this.showInfo = humanresources_companyStructure_permissionChecker.PermissionChecker.getInstance().hasPermission(humanresources_companyStructure_permissionChecker.PermissionActions.structureView, this.nodeId);
+	      viewAction = humanresources_companyStructure_permissionChecker.PermissionActions.structureView;
+	      editAction = humanresources_companyStructure_permissionChecker.PermissionActions.departmentEdit;
 	    }
-	    this.showDnd = humanresources_companyStructure_permissionChecker.PermissionChecker.getInstance().hasPermission(humanresources_companyStructure_permissionChecker.PermissionActions.departmentEdit, this.nodeData.parentId, humanresources_companyStructure_permissionChecker.PermissionLevels.selfAndSub) && humanresources_companyStructure_permissionChecker.PermissionChecker.getInstance().hasPermission(humanresources_companyStructure_permissionChecker.PermissionActions.structureView, this.nodeData.parentId, humanresources_companyStructure_permissionChecker.PermissionLevels.selfAndSub);
+	    const permissionChecker = humanresources_companyStructure_permissionChecker.PermissionChecker.getInstance();
+	    this.showInfo = permissionChecker.hasPermission(viewAction, this.nodeId);
+	    this.showDnd = permissionChecker.hasPermission(editAction, this.nodeId) && permissionChecker.hasPermission(editAction, this.nodeData.parentId);
 	    this.$emit('calculatePosition', this.nodeId);
 	    await this.$nextTick();
 	    this.prevHeight = this.$el.offsetHeight;
@@ -2047,7 +2002,6 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 			></div>
 			<div
 				v-if="hasChildren"
-				v-dnd="canvasZoom"
 				ref="childrenNode"
 				class="humanresources-tree__node_children"
 				:style="childNodeStyle"
@@ -2075,7 +2029,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	// @vue/component
 	const Connectors = {
 	  name: 'companyTreeConnectors',
-	  expose: ['toggleConnectorsVisibility', 'toggleConnectorHighlighting', 'adaptConnectorsAfterReorder'],
+	  expose: ['toggleConnectorsVisibility', 'toggleConnectorHighlighting', 'toggleAllConnectorsVisibility', 'adaptConnectorsAfterReorder'],
 	  props: {
 	    isLocatedDepartmentVisible: {
 	      type: Boolean,
@@ -2143,58 +2097,29 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        offset
 	      } = data;
 	      const parentDepartment = this.departments.get(parentId);
-	      if (parentDepartment.children.includes(nodeId)) {
-	        this.adaptConnectorsAfterMount(parentId, nodeId, offset);
-	        return;
-	      }
-	      this.adaptConnectorsAfterUnmount(parentId, nodeId, offset);
-	    },
-	    adaptConnectorsAfterMount(parentId, nodeId, offset) {
-	      Object.values(this.connectors).forEach(connector => {
-	        if (!connector.id) {
-	          return;
-	        }
-	        if (connector.parentId === parentId) {
-	          const {
-	            x
-	          } = connector.endPoint;
-	          Object.assign(connector.endPoint, {
-	            x: x + offset
-	          });
-	          return;
-	        }
-	        if (connector.parentsPath.includes(parentId)) {
-	          const {
-	            startPoint: currentStartPoint,
-	            endPoint
-	          } = connector;
-	          Object.assign(currentStartPoint, {
-	            x: currentStartPoint.x + offset
-	          });
-	          Object.assign(endPoint, {
-	            x: endPoint.x + offset
-	          });
-	        }
-	      });
-	    },
-	    adaptConnectorsAfterUnmount(parentId, nodeId, offset) {
+	      const isMounted = parentDepartment.children.includes(nodeId);
 	      const values = Object.values(this.connectors);
-	      const {
-	        endPoint
-	      } = this.connectors[`${parentId}-${nodeId}`];
 	      const parsedSiblingConnectors = values.reduce((acc, connector) => {
 	        const {
 	          endPoint: currentEndPoint,
-	          id,
+	          id: currentId,
 	          parentId: currentParentId
 	        } = connector;
-	        if (currentParentId !== parentId || id === nodeId) {
+	        if (!currentId || currentParentId !== parentId || currentId === nodeId) {
 	          return acc;
 	        }
-	        const sign = endPoint.x > currentEndPoint.x ? 1 : -1;
+	        let sign = 0;
+	        if (isMounted) {
+	          sign = parentDepartment.children.indexOf(nodeId) > parentDepartment.children.indexOf(currentId) ? 1 : -1;
+	        } else {
+	          const {
+	            endPoint
+	          } = this.connectors[`${parentId}-${nodeId}`];
+	          sign = endPoint.x > currentEndPoint.x ? 1 : -1;
+	        }
 	        return {
 	          ...acc,
-	          [id]: sign
+	          [currentId]: sign
 	        };
 	      }, {});
 	      values.forEach(connector => {
@@ -2205,7 +2130,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	          endPoint: currentEndPoint,
 	          startPoint: currentStartPoint
 	        } = connector;
-	        if (currentId === nodeId) {
+	        if (!currentId || currentId === nodeId) {
 	          return;
 	        }
 	        if (currentParentId === parentId) {
@@ -2270,7 +2195,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        }
 	      });
 	    },
-	    toggleConnectorsVisibility(parentId, show, expandedNodes) {
+	    toggleConnectorsVisibility(parentId, show) {
 	      const {
 	        children
 	      } = this.departments.get(parentId);
@@ -2284,8 +2209,13 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	            show
 	          }
 	        };
-	        if (expandedNodes.includes(childId)) {
-	          this.toggleConnectorsVisibility(childId, show, expandedNodes);
+	      });
+	    },
+	    toggleAllConnectorsVisibility(shouldShow, expandedNodes) {
+	      Object.keys(this.connectors).forEach(key => {
+	        const connector = this.connectors[key];
+	        if (!shouldShow || expandedNodes.includes(connector.parentId) && shouldShow) {
+	          connector.show = shouldShow;
 	        }
 	      });
 	    },
@@ -2414,61 +2344,557 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	`
 	};
 
-	const createTreeDataStore = treeData => {
-	  const dataMap = new Map();
-	  treeData.forEach(item => {
-	    var _dataMap$get, _dataMap$get2, _mapParentItem$childr;
-	    const {
-	      id,
-	      parentId,
-	      colorName,
-	      entityType
-	    } = item;
-	    const mapItem = (_dataMap$get = dataMap.get(id)) != null ? _dataMap$get : {};
-	    const teamColor = humanresources_companyStructure_utils.getNodeColorSettings(colorName, entityType);
-	    dataMap.set(id, {
-	      ...mapItem,
-	      ...item,
-	      teamColor
+	let _ = t => t,
+	  _t;
+	const FULL_WIDTH = 302;
+	const CANVAS_MOVE_SPEED = 15;
+	var _prevAffectedItems = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prevAffectedItems");
+	var _targetData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("targetData");
+	var _transform = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("transform");
+	var _tree = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("tree");
+	var _draggedItem = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("draggedItem");
+	var _ghost = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("ghost");
+	var _positionPointer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("positionPointer");
+	var _zoom = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("zoom");
+	var _canvas = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("canvas");
+	var _prevPageX = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prevPageX");
+	var _prevPageY = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prevPageY");
+	var _targetTeams = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("targetTeams");
+	var _permissionChecker = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("permissionChecker");
+	var _draggedEntityType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("draggedEntityType");
+	var _mouseMoveHandler = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("mouseMoveHandler");
+	var _mouseUpHandler = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("mouseUpHandler");
+	var _mouseWheelHandler = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("mouseWheelHandler");
+	var _onMouseDown = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onMouseDown");
+	var _onMouseMove = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onMouseMove");
+	var _onMouseUp = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onMouseUp");
+	var _onMouseWheel = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onMouseWheel");
+	var _createGhost = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createGhost");
+	var _createPositionPointer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createPositionPointer");
+	var _setTransform = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setTransform");
+	var _setPositionPointerTransform = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setPositionPointerTransform");
+	var _getTargetData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getTargetData");
+	var _reorderEntity = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("reorderEntity");
+	var _changeParentWithReorder = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("changeParentWithReorder");
+	var _checkForDraggedOverflow = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("checkForDraggedOverflow");
+	var _setStyles = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setStyles");
+	var _resetTeamsBlur = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("resetTeamsBlur");
+	class TreeNodeDragController {
+	  constructor(el) {
+	    Object.defineProperty(this, _resetTeamsBlur, {
+	      value: _resetTeamsBlur2
 	    });
-	    if (parentId === 0) {
-	      return;
-	    }
-	    const mapParentItem = (_dataMap$get2 = dataMap.get(parentId)) != null ? _dataMap$get2 : {};
-	    const children = (_mapParentItem$childr = mapParentItem.children) != null ? _mapParentItem$childr : [];
-	    dataMap.set(parentId, {
-	      ...mapParentItem,
-	      children: [...children, id]
+	    Object.defineProperty(this, _setStyles, {
+	      value: _setStyles2
 	    });
+	    Object.defineProperty(this, _checkForDraggedOverflow, {
+	      value: _checkForDraggedOverflow2
+	    });
+	    Object.defineProperty(this, _changeParentWithReorder, {
+	      value: _changeParentWithReorder2
+	    });
+	    Object.defineProperty(this, _reorderEntity, {
+	      value: _reorderEntity2
+	    });
+	    Object.defineProperty(this, _getTargetData, {
+	      value: _getTargetData2
+	    });
+	    Object.defineProperty(this, _setPositionPointerTransform, {
+	      value: _setPositionPointerTransform2
+	    });
+	    Object.defineProperty(this, _setTransform, {
+	      value: _setTransform2
+	    });
+	    Object.defineProperty(this, _createPositionPointer, {
+	      value: _createPositionPointer2
+	    });
+	    Object.defineProperty(this, _createGhost, {
+	      value: _createGhost2
+	    });
+	    Object.defineProperty(this, _onMouseWheel, {
+	      value: _onMouseWheel2
+	    });
+	    Object.defineProperty(this, _onMouseUp, {
+	      value: _onMouseUp2
+	    });
+	    Object.defineProperty(this, _onMouseMove, {
+	      value: _onMouseMove2
+	    });
+	    Object.defineProperty(this, _onMouseDown, {
+	      value: _onMouseDown2
+	    });
+	    Object.defineProperty(this, _prevAffectedItems, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _targetData, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _transform, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _tree, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _draggedItem, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _ghost, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _positionPointer, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _zoom, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _canvas, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _prevPageX, {
+	      writable: true,
+	      value: 0
+	    });
+	    Object.defineProperty(this, _prevPageY, {
+	      writable: true,
+	      value: 0
+	    });
+	    Object.defineProperty(this, _targetTeams, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _permissionChecker, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _draggedEntityType, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _mouseMoveHandler, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _mouseUpHandler, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _mouseWheelHandler, {
+	      writable: true,
+	      value: void 0
+	    });
+	    main_core.Event.bind(el, 'mousedown', event => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _onMouseDown)[_onMouseDown](event);
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _mouseMoveHandler)[_mouseMoveHandler] = event => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _onMouseMove)[_onMouseMove](event);
+	    };
+	    babelHelpers.classPrivateFieldLooseBase(this, _mouseUpHandler)[_mouseUpHandler] = event => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _onMouseUp)[_onMouseUp](event);
+	    };
+	    babelHelpers.classPrivateFieldLooseBase(this, _mouseWheelHandler)[_mouseWheelHandler] = event => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _onMouseWheel)[_onMouseWheel](event);
+	    };
+	    babelHelpers.classPrivateFieldLooseBase(this, _permissionChecker)[_permissionChecker] = humanresources_companyStructure_permissionChecker.PermissionChecker.getInstance();
+	  }
+	}
+	function _onMouseDown2({
+	  target,
+	  currentTarget: tree,
+	  pageX,
+	  pageY
+	}) {
+	  if (!main_core.Dom.hasClass(target, 'humanresources-tree__node_dnd-icon')) {
+	    return;
+	  }
+	  event.stopPropagation();
+	  babelHelpers.classPrivateFieldLooseBase(this, _tree)[_tree] = tree;
+	  babelHelpers.classPrivateFieldLooseBase(this, _zoom)[_zoom] = Number(tree.dataset.zoom);
+	  babelHelpers.classPrivateFieldLooseBase(this, _canvas)[_canvas] = {
+	    x: Number(tree.dataset.x),
+	    y: Number(tree.dataset.y)
+	  };
+	  babelHelpers.classPrivateFieldLooseBase(this, _draggedItem)[_draggedItem] = target.closest('.humanresources-tree__node');
+	  babelHelpers.classPrivateFieldLooseBase(this, _ghost)[_ghost] = babelHelpers.classPrivateFieldLooseBase(this, _createGhost)[_createGhost]();
+	  babelHelpers.classPrivateFieldLooseBase(this, _prevPageX)[_prevPageX] = pageX;
+	  babelHelpers.classPrivateFieldLooseBase(this, _prevPageY)[_prevPageY] = pageY;
+	  babelHelpers.classPrivateFieldLooseBase(this, _positionPointer)[_positionPointer] = babelHelpers.classPrivateFieldLooseBase(this, _createPositionPointer)[_createPositionPointer]();
+	  babelHelpers.classPrivateFieldLooseBase(this, _targetTeams)[_targetTeams] = [];
+	  babelHelpers.classPrivateFieldLooseBase(this, _prevAffectedItems)[_prevAffectedItems] = [];
+	  babelHelpers.classPrivateFieldLooseBase(this, _transform)[_transform] = {
+	    x: 0,
+	    y: 0,
+	    prevX: 0,
+	    prevY: 0
+	  };
+	  babelHelpers.classPrivateFieldLooseBase(this, _targetData)[_targetData] = {};
+	  babelHelpers.classPrivateFieldLooseBase(this, _draggedEntityType)[_draggedEntityType] = main_core.Dom.hasClass(babelHelpers.classPrivateFieldLooseBase(this, _draggedItem)[_draggedItem], '--team') ? humanresources_companyStructure_utils.EntityTypes.team : humanresources_companyStructure_utils.EntityTypes.department;
+	  main_core.Dom.addClass(tree, '--drag-progress');
+	  main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _draggedItem)[_draggedItem].parentElement.parentElement, '--blur');
+	  babelHelpers.classPrivateFieldLooseBase(this, _setPositionPointerTransform)[_setPositionPointerTransform](babelHelpers.classPrivateFieldLooseBase(this, _draggedItem)[_draggedItem]);
+	  babelHelpers.classPrivateFieldLooseBase(this, _setStyles)[_setStyles]();
+	  main_core.Event.bind(document, 'mousemove', babelHelpers.classPrivateFieldLooseBase(this, _mouseMoveHandler)[_mouseMoveHandler]);
+	  main_core.Event.bind(document, 'mouseup', babelHelpers.classPrivateFieldLooseBase(this, _mouseUpHandler)[_mouseUpHandler]);
+	  main_core.Event.bind(document, 'wheel', babelHelpers.classPrivateFieldLooseBase(this, _mouseWheelHandler)[_mouseWheelHandler]);
+	  main_core_events.EventEmitter.emit(events.HR_ENTITY_TOGGLE_CONNECTORS, {
+	    shouldShow: false
 	  });
-	  return dataMap;
-	};
-	const chartAPI = {
-	  removeDepartment: id => {
-	    return humanresources_companyStructure_api.getData('humanresources.api.Structure.Node.delete', {
-	      nodeId: id
+	  const draggedId = Number(babelHelpers.classPrivateFieldLooseBase(this, _draggedItem)[_draggedItem].dataset.id);
+	  main_core_events.EventEmitter.emit(events.HR_DRAG_ENTITY, {
+	    draggedId
+	  });
+	}
+	function _onMouseMove2({
+	  pageX,
+	  pageY
+	}) {
+	  main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _draggedItem)[_draggedItem], '--hidden');
+	  main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _tree)[_tree].parentElement, '--disabled-transition');
+	  main_core.Dom.removeClass(babelHelpers.classPrivateFieldLooseBase(this, _positionPointer)[_positionPointer], ['--inside', '--no-permission']);
+	  main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _positionPointer)[_positionPointer], 'height', `${babelHelpers.classPrivateFieldLooseBase(this, _draggedItem)[_draggedItem].offsetHeight}px`);
+	  babelHelpers.classPrivateFieldLooseBase(this, _resetTeamsBlur)[_resetTeamsBlur]();
+	  babelHelpers.classPrivateFieldLooseBase(this, _transform)[_transform].prevX = babelHelpers.classPrivateFieldLooseBase(this, _transform)[_transform].x;
+	  babelHelpers.classPrivateFieldLooseBase(this, _transform)[_transform].prevY = babelHelpers.classPrivateFieldLooseBase(this, _transform)[_transform].y;
+	  babelHelpers.classPrivateFieldLooseBase(this, _transform)[_transform].x += (pageX - babelHelpers.classPrivateFieldLooseBase(this, _prevPageX)[_prevPageX]) / babelHelpers.classPrivateFieldLooseBase(this, _zoom)[_zoom];
+	  babelHelpers.classPrivateFieldLooseBase(this, _transform)[_transform].y += (pageY - babelHelpers.classPrivateFieldLooseBase(this, _prevPageY)[_prevPageY]) / babelHelpers.classPrivateFieldLooseBase(this, _zoom)[_zoom];
+	  babelHelpers.classPrivateFieldLooseBase(this, _prevPageX)[_prevPageX] = pageX;
+	  babelHelpers.classPrivateFieldLooseBase(this, _prevPageY)[_prevPageY] = pageY;
+	  babelHelpers.classPrivateFieldLooseBase(this, _prevAffectedItems)[_prevAffectedItems].forEach(affectedItem => babelHelpers.classPrivateFieldLooseBase(this, _setTransform)[_setTransform](affectedItem, 0, 0));
+	  babelHelpers.classPrivateFieldLooseBase(this, _prevAffectedItems)[_prevAffectedItems] = [];
+	  const {
+	    directionX,
+	    directionY
+	  } = babelHelpers.classPrivateFieldLooseBase(this, _checkForDraggedOverflow)[_checkForDraggedOverflow]();
+	  babelHelpers.classPrivateFieldLooseBase(this, _transform)[_transform].x = directionX === 0 ? babelHelpers.classPrivateFieldLooseBase(this, _transform)[_transform].x : babelHelpers.classPrivateFieldLooseBase(this, _transform)[_transform].x + directionX * CANVAS_MOVE_SPEED / babelHelpers.classPrivateFieldLooseBase(this, _zoom)[_zoom];
+	  babelHelpers.classPrivateFieldLooseBase(this, _transform)[_transform].y = directionY === 0 ? babelHelpers.classPrivateFieldLooseBase(this, _transform)[_transform].y : babelHelpers.classPrivateFieldLooseBase(this, _transform)[_transform].y + directionY * CANVAS_MOVE_SPEED / babelHelpers.classPrivateFieldLooseBase(this, _zoom)[_zoom];
+	  babelHelpers.classPrivateFieldLooseBase(this, _setTransform)[_setTransform](babelHelpers.classPrivateFieldLooseBase(this, _ghost)[_ghost], babelHelpers.classPrivateFieldLooseBase(this, _transform)[_transform].x, babelHelpers.classPrivateFieldLooseBase(this, _transform)[_transform].y, 4);
+	  babelHelpers.classPrivateFieldLooseBase(this, _setPositionPointerTransform)[_setPositionPointerTransform](babelHelpers.classPrivateFieldLooseBase(this, _draggedItem)[_draggedItem]);
+	  babelHelpers.classPrivateFieldLooseBase(this, _targetData)[_targetData] = babelHelpers.classPrivateFieldLooseBase(this, _getTargetData)[_getTargetData]();
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _targetData)[_targetData].insertion) {
+	    return;
+	  }
+	  const {
+	    insertion,
+	    targetItem,
+	    hasPermission
+	  } = babelHelpers.classPrivateFieldLooseBase(this, _targetData)[_targetData];
+	  if (!hasPermission) {
+	    main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _positionPointer)[_positionPointer], '--no-permission');
+	  }
+	  babelHelpers.classPrivateFieldLooseBase(this, _setPositionPointerTransform)[_setPositionPointerTransform](targetItem);
+	  switch (insertion) {
+	    case 'reorder':
+	      {
+	        const affectedItems = babelHelpers.classPrivateFieldLooseBase(this, _reorderEntity)[_reorderEntity](targetItem);
+	        babelHelpers.classPrivateFieldLooseBase(this, _prevAffectedItems)[_prevAffectedItems] = affectedItems;
+	        break;
+	      }
+	    case 'sibling-left':
+	    case 'sibling-right':
+	      {
+	        const affectedItems = babelHelpers.classPrivateFieldLooseBase(this, _changeParentWithReorder)[_changeParentWithReorder](targetItem, insertion);
+	        babelHelpers.classPrivateFieldLooseBase(this, _prevAffectedItems)[_prevAffectedItems] = affectedItems;
+	        break;
+	      }
+	    default:
+	      main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _positionPointer)[_positionPointer], '--inside');
+	      main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _positionPointer)[_positionPointer], 'height', `${targetItem.offsetHeight}px`);
+	  }
+	}
+	function _onMouseUp2() {
+	  babelHelpers.classPrivateFieldLooseBase(this, _setStyles)[_setStyles](true);
+	  main_core.Event.unbind(document, 'mousemove', babelHelpers.classPrivateFieldLooseBase(this, _mouseMoveHandler)[_mouseMoveHandler]);
+	  main_core.Event.unbind(document, 'mouseup', babelHelpers.classPrivateFieldLooseBase(this, _mouseUpHandler)[_mouseUpHandler]);
+	  main_core.Event.unbind(document, 'mouseup', babelHelpers.classPrivateFieldLooseBase(this, _mouseWheelHandler)[_mouseWheelHandler]);
+	  babelHelpers.classPrivateFieldLooseBase(this, _prevAffectedItems)[_prevAffectedItems].forEach(item => babelHelpers.classPrivateFieldLooseBase(this, _setTransform)[_setTransform](item, 0, 0));
+	  main_core.Dom.removeClass(babelHelpers.classPrivateFieldLooseBase(this, _tree)[_tree], '--drag-progress');
+	  main_core.Dom.removeClass(babelHelpers.classPrivateFieldLooseBase(this, _draggedItem)[_draggedItem].parentElement.parentElement, '--blur');
+	  main_core.Dom.removeClass(babelHelpers.classPrivateFieldLooseBase(this, _draggedItem)[_draggedItem], '--hidden');
+	  main_core.Dom.removeClass(babelHelpers.classPrivateFieldLooseBase(this, _tree)[_tree].parentElement, '--disabled-transition');
+	  main_core.Dom.remove(babelHelpers.classPrivateFieldLooseBase(this, _ghost)[_ghost]);
+	  main_core.Dom.remove(babelHelpers.classPrivateFieldLooseBase(this, _positionPointer)[_positionPointer]);
+	  babelHelpers.classPrivateFieldLooseBase(this, _resetTeamsBlur)[_resetTeamsBlur]();
+	  main_core_events.EventEmitter.emit(events.HR_ENTITY_TOGGLE_CONNECTORS, {
+	    shouldShow: true
+	  });
+	  const {
+	    insertion,
+	    targetItem,
+	    hasPermission
+	  } = babelHelpers.classPrivateFieldLooseBase(this, _targetData)[_targetData];
+	  if (!insertion || !hasPermission) {
+	    return;
+	  }
+	  const draggedIndex = [...babelHelpers.classPrivateFieldLooseBase(this, _draggedItem)[_draggedItem].parentElement.children].indexOf(babelHelpers.classPrivateFieldLooseBase(this, _draggedItem)[_draggedItem]);
+	  const targetIndex = [...targetItem.parentElement.children].indexOf(targetItem);
+	  const draggedId = Number(babelHelpers.classPrivateFieldLooseBase(this, _draggedItem)[_draggedItem].dataset.id);
+	  main_core_events.EventEmitter.emit(events.HR_DROP_ENTITY, {
+	    draggedId,
+	    targetId: Number(targetItem.dataset.id),
+	    targetIndex,
+	    affectedItems: babelHelpers.classPrivateFieldLooseBase(this, _prevAffectedItems)[_prevAffectedItems].map(item => Number(item.dataset.id)),
+	    direction: draggedIndex < targetIndex ? 1 : -1,
+	    insertion
+	  });
+	}
+	function _onMouseWheel2({
+	  shiftKey
+	}) {
+	  if (shiftKey) {
+	    const currentCanvasX = Number(babelHelpers.classPrivateFieldLooseBase(this, _tree)[_tree].dataset.x);
+	    const movementX = currentCanvasX - babelHelpers.classPrivateFieldLooseBase(this, _canvas)[_canvas].x;
+	    babelHelpers.classPrivateFieldLooseBase(this, _transform)[_transform].x -= movementX / babelHelpers.classPrivateFieldLooseBase(this, _zoom)[_zoom];
+	    babelHelpers.classPrivateFieldLooseBase(this, _canvas)[_canvas].x = currentCanvasX;
+	  } else {
+	    const currentCanvasY = Number(babelHelpers.classPrivateFieldLooseBase(this, _tree)[_tree].dataset.y);
+	    const movementY = currentCanvasY - babelHelpers.classPrivateFieldLooseBase(this, _canvas)[_canvas].y;
+	    babelHelpers.classPrivateFieldLooseBase(this, _transform)[_transform].y -= movementY / babelHelpers.classPrivateFieldLooseBase(this, _zoom)[_zoom];
+	    babelHelpers.classPrivateFieldLooseBase(this, _canvas)[_canvas].y = currentCanvasY;
+	  }
+	  babelHelpers.classPrivateFieldLooseBase(this, _setTransform)[_setTransform](babelHelpers.classPrivateFieldLooseBase(this, _ghost)[_ghost], babelHelpers.classPrivateFieldLooseBase(this, _transform)[_transform].x, babelHelpers.classPrivateFieldLooseBase(this, _transform)[_transform].y, 4);
+	}
+	function _createGhost2() {
+	  const ghost = babelHelpers.classPrivateFieldLooseBase(this, _draggedItem)[_draggedItem].cloneNode(true);
+	  main_core.Dom.addClass(ghost, 'humanresources-tree__dnd-ghost');
+	  main_core.Dom.removeClass(ghost, ['--expanded', '--focused']);
+	  const {
+	    x: treeX,
+	    y: treeY
+	  } = babelHelpers.classPrivateFieldLooseBase(this, _tree)[_tree].getBoundingClientRect();
+	  const {
+	    x: draggedX,
+	    y: draggedY
+	  } = babelHelpers.classPrivateFieldLooseBase(this, _draggedItem)[_draggedItem].getBoundingClientRect();
+	  const left = draggedX - treeX;
+	  const top = draggedY - treeY;
+	  main_core.Dom.style(ghost, 'left', `${left / babelHelpers.classPrivateFieldLooseBase(this, _zoom)[_zoom]}px`);
+	  main_core.Dom.style(ghost, 'top', `${top / babelHelpers.classPrivateFieldLooseBase(this, _zoom)[_zoom]}px`);
+	  main_core.Dom.append(ghost, babelHelpers.classPrivateFieldLooseBase(this, _tree)[_tree]);
+	  return ghost;
+	}
+	function _createPositionPointer2() {
+	  const {
+	    offsetWidth,
+	    offsetHeight
+	  } = babelHelpers.classPrivateFieldLooseBase(this, _draggedItem)[_draggedItem];
+	  const text = main_core.Dom.hasClass(babelHelpers.classPrivateFieldLooseBase(this, _draggedItem)[_draggedItem], '--team') ? main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_DRAG_TEAM_LABEL') : main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_DRAG_DEPARTMENT_LABEL');
+	  const positionPointer = main_core.Tag.render(_t || (_t = _`
+			<div
+				class="humanresources-tree__position-pointer"
+				style="width: ${0}px; height: ${0}px;);"
+			>
+				<div>
+					<div class="ui-icon-set --circle-plus"></div>
+					<span>${0}</span>
+				</div>
+				<div>
+					<div class="ui-icon-set --cross-circle-50"></div>
+					<span>
+						${0}
+					</span>
+				</div>
+			</div>
+		`), offsetWidth, offsetHeight, text, main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_NO_DRAG_PERMISSION'));
+	  main_core.Dom.append(positionPointer, babelHelpers.classPrivateFieldLooseBase(this, _tree)[_tree]);
+	  babelHelpers.classPrivateFieldLooseBase(this, _setPositionPointerTransform)[_setPositionPointerTransform](babelHelpers.classPrivateFieldLooseBase(this, _draggedItem)[_draggedItem]);
+	  return positionPointer;
+	}
+	function _setTransform2(element, x, y, rotation = 0) {
+	  if (x === 0 && y === 0) {
+	    main_core.Dom.style(element, 'transform', '');
+	    return;
+	  }
+	  main_core.Dom.style(element, 'transform', `translate3d(${x}px, ${y}px, 0) rotate(${rotation}deg)`);
+	}
+	function _setPositionPointerTransform2(node) {
+	  const {
+	    x: treeX,
+	    y: treeY
+	  } = babelHelpers.classPrivateFieldLooseBase(this, _tree)[_tree].getBoundingClientRect();
+	  const {
+	    x: nodeX,
+	    y: nodeY
+	  } = node.getBoundingClientRect();
+	  const x = (nodeX - treeX) / babelHelpers.classPrivateFieldLooseBase(this, _zoom)[_zoom];
+	  const y = (nodeY - treeY) / babelHelpers.classPrivateFieldLooseBase(this, _zoom)[_zoom];
+	  babelHelpers.classPrivateFieldLooseBase(this, _setTransform)[_setTransform](babelHelpers.classPrivateFieldLooseBase(this, _positionPointer)[_positionPointer], x, y);
+	}
+	function _getTargetData2() {
+	  main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _ghost)[_ghost], '--disabled-events');
+	  babelHelpers.classPrivateFieldLooseBase(this, _setTransform)[_setTransform](babelHelpers.classPrivateFieldLooseBase(this, _ghost)[_ghost], babelHelpers.classPrivateFieldLooseBase(this, _transform)[_transform].x, babelHelpers.classPrivateFieldLooseBase(this, _transform)[_transform].y);
+	  const reorderThreshold = 0.7;
+	  const changeParentWithReorderThreshold = 0.6;
+	  const {
+	    x,
+	    y,
+	    width: draggedWidth,
+	    height: draggedHeight
+	  } = babelHelpers.classPrivateFieldLooseBase(this, _ghost)[_ghost].getBoundingClientRect();
+	  babelHelpers.classPrivateFieldLooseBase(this, _setTransform)[_setTransform](babelHelpers.classPrivateFieldLooseBase(this, _ghost)[_ghost], babelHelpers.classPrivateFieldLooseBase(this, _transform)[_transform].x, babelHelpers.classPrivateFieldLooseBase(this, _transform)[_transform].y, 4);
+	  const points = [{
+	    x,
+	    y
+	  }, {
+	    x: x + draggedWidth,
+	    y
+	  }, {
+	    x,
+	    y: y + draggedHeight
+	  }, {
+	    x: x + draggedWidth,
+	    y: y + draggedHeight
+	  }, {
+	    x,
+	    y: y + draggedHeight / 2
+	  }, {
+	    x: x + draggedWidth,
+	    y: y + draggedHeight / 2
+	  }];
+	  const targetData = points.reduce((acc, point, i) => {
+	    if (acc.insertion) {
+	      return acc;
+	    }
+	    const belowItem = document.elementFromPoint(point.x, point.y);
+	    const targetItemSummary = belowItem == null ? void 0 : belowItem.closest('.humanresources-tree__node_summary');
+	    const targetItem = targetItemSummary == null ? void 0 : targetItemSummary.parentElement;
+	    if (!targetItem || targetItem === babelHelpers.classPrivateFieldLooseBase(this, _draggedItem)[_draggedItem]) {
+	      return acc;
+	    }
+	    const {
+	      x: targetX,
+	      y: targetY,
+	      width: targetWidth,
+	      height: targetHeight
+	    } = targetItem.getBoundingClientRect();
+	    const sameParent = babelHelpers.classPrivateFieldLooseBase(this, _draggedItem)[_draggedItem].parentElement === targetItem.parentElement;
+	    const hasSortPermission = babelHelpers.classPrivateFieldLooseBase(this, _permissionChecker)[_permissionChecker].canSortEntitiesByParentId(Number(targetItem.parentElement.parentElement.dataset.id));
+	    const allowSort = i === 0 && !main_core.Dom.hasClass(targetItem, '--root') && hasSortPermission;
+	    acc.targetItem = targetItem;
+	    if (sameParent && x + reorderThreshold * draggedWidth < targetX + targetWidth && allowSort) {
+	      return {
+	        ...acc,
+	        insertion: 'reorder'
+	      };
+	    }
+	    if (!sameParent && y + changeParentWithReorderThreshold * draggedHeight < targetY + targetHeight && allowSort) {
+	      return {
+	        ...acc,
+	        insertion: x < targetX + targetWidth / 2 ? 'sibling-left' : 'sibling-right'
+	      };
+	    }
+	    const isDepartmentInsertToTeam = main_core.Dom.hasClass(targetItem, '--team') && !main_core.Dom.hasClass(babelHelpers.classPrivateFieldLooseBase(this, _draggedItem)[_draggedItem], '--team');
+	    const isInsertToParent = babelHelpers.classPrivateFieldLooseBase(this, _draggedItem)[_draggedItem].parentElement.parentElement === targetItem;
+	    if (isDepartmentInsertToTeam || isInsertToParent) {
+	      if (isDepartmentInsertToTeam) {
+	        main_core.Dom.addClass(targetItem, '--blur');
+	        babelHelpers.classPrivateFieldLooseBase(this, _targetTeams)[_targetTeams].push(targetItem);
+	      }
+	      return acc;
+	    }
+	    return {
+	      ...acc,
+	      insertion: 'inside',
+	      hasPermission: babelHelpers.classPrivateFieldLooseBase(this, _permissionChecker)[_permissionChecker].canBeParentForEntity(Number(targetItem.dataset.id), babelHelpers.classPrivateFieldLooseBase(this, _draggedEntityType)[_draggedEntityType])
+	    };
+	  }, {
+	    hasPermission: true
+	  });
+	  main_core.Dom.removeClass(babelHelpers.classPrivateFieldLooseBase(this, _ghost)[_ghost], '--disabled-events');
+	  return targetData;
+	}
+	function _reorderEntity2(targetItem) {
+	  const children = [...babelHelpers.classPrivateFieldLooseBase(this, _draggedItem)[_draggedItem].parentElement.children];
+	  const draggedIndex = children.indexOf(babelHelpers.classPrivateFieldLooseBase(this, _draggedItem)[_draggedItem]);
+	  const targetIndex = [...targetItem.parentElement.children].indexOf(targetItem);
+	  const direction = draggedIndex < targetIndex ? 1 : -1;
+	  const affectedItems = direction > 0 ? children.slice(draggedIndex + 1, targetIndex + 1) : children.slice(targetIndex, draggedIndex);
+	  affectedItems.forEach(affectedItem => babelHelpers.classPrivateFieldLooseBase(this, _setTransform)[_setTransform](affectedItem, -direction * FULL_WIDTH, 0));
+	  return affectedItems;
+	}
+	function _changeParentWithReorder2(targetItem, insertion) {
+	  const children = [...targetItem.parentElement.children];
+	  const targetIndex = children.indexOf(targetItem);
+	  let affectedItems = [];
+	  if (insertion === 'sibling-right') {
+	    affectedItems = children.slice(0, targetIndex + 1);
+	    affectedItems.forEach(affectedItem => babelHelpers.classPrivateFieldLooseBase(this, _setTransform)[_setTransform](affectedItem, -FULL_WIDTH, 0));
+	  } else {
+	    affectedItems = children.slice(targetIndex);
+	    affectedItems.forEach(affectedItem => babelHelpers.classPrivateFieldLooseBase(this, _setTransform)[_setTransform](affectedItem, FULL_WIDTH, 0));
+	  }
+	  return affectedItems;
+	}
+	function _checkForDraggedOverflow2() {
+	  let directionX = 0;
+	  let directionY = 0;
+	  const {
+	    left,
+	    top
+	  } = babelHelpers.classPrivateFieldLooseBase(this, _draggedItem)[_draggedItem].getBoundingClientRect();
+	  const zoomedLeft = left / babelHelpers.classPrivateFieldLooseBase(this, _zoom)[_zoom];
+	  const zoomedTop = top / babelHelpers.classPrivateFieldLooseBase(this, _zoom)[_zoom];
+	  if (zoomedLeft + babelHelpers.classPrivateFieldLooseBase(this, _transform)[_transform].x < 0) {
+	    directionX = babelHelpers.classPrivateFieldLooseBase(this, _transform)[_transform].x < babelHelpers.classPrivateFieldLooseBase(this, _transform)[_transform].prevX ? -1 : 0;
+	  }
+	  if (zoomedLeft + babelHelpers.classPrivateFieldLooseBase(this, _transform)[_transform].x + babelHelpers.classPrivateFieldLooseBase(this, _draggedItem)[_draggedItem].offsetWidth > document.body.offsetWidth / babelHelpers.classPrivateFieldLooseBase(this, _zoom)[_zoom]) {
+	    directionX = babelHelpers.classPrivateFieldLooseBase(this, _transform)[_transform].x > babelHelpers.classPrivateFieldLooseBase(this, _transform)[_transform].prevX ? 1 : 0;
+	  }
+	  if (zoomedTop + babelHelpers.classPrivateFieldLooseBase(this, _transform)[_transform].y < 0) {
+	    directionY = babelHelpers.classPrivateFieldLooseBase(this, _transform)[_transform].y < babelHelpers.classPrivateFieldLooseBase(this, _transform)[_transform].prevY ? -1 : 0;
+	  }
+	  if (zoomedTop + babelHelpers.classPrivateFieldLooseBase(this, _transform)[_transform].y + babelHelpers.classPrivateFieldLooseBase(this, _draggedItem)[_draggedItem].offsetHeight > document.body.offsetHeight / babelHelpers.classPrivateFieldLooseBase(this, _zoom)[_zoom]) {
+	    directionY = babelHelpers.classPrivateFieldLooseBase(this, _transform)[_transform].y > babelHelpers.classPrivateFieldLooseBase(this, _transform)[_transform].prevY ? 1 : 0;
+	  }
+	  if (directionX !== 0 || directionY !== 0) {
+	    main_core_events.EventEmitter.emit(events.HR_ORG_CHART_TRANSFORM_CANVAS, {
+	      directionX,
+	      directionY,
+	      speed: CANVAS_MOVE_SPEED
 	    });
+	  }
+	  return {
+	    directionX,
+	    directionY
+	  };
+	}
+	function _setStyles2(shouldReset) {
+	  main_core.Dom.style(document.body, 'userSelect', 'none');
+	  main_core.Dom.style(document.body, '-webkit-user-select', 'none');
+	  main_core.Dom.style(document.body, 'cursor', 'grabbing');
+	  if (shouldReset) {
+	    main_core.Dom.style(document.body, 'userSelect', '');
+	    main_core.Dom.style(document.body, '-webkit-user-select', '');
+	    main_core.Dom.style(document.body, 'cursor', '');
+	  }
+	}
+	function _resetTeamsBlur2() {
+	  babelHelpers.classPrivateFieldLooseBase(this, _targetTeams)[_targetTeams].forEach(team => main_core.Dom.removeClass(team, '--blur'));
+	}
+
+	const DragAndDrop = {
+	  mounted(el) {
+	    new TreeNodeDragController(el);
 	  },
-	  getDepartmentsData: () => {
-	    return humanresources_companyStructure_api.getData('humanresources.api.Structure.get', {}, {
-	      tool: 'structure',
-	      category: 'structure',
-	      event: 'open_structure'
-	    });
-	  },
-	  getCurrentDepartments: () => {
-	    return humanresources_companyStructure_api.getData('humanresources.api.Structure.Node.current');
-	  },
-	  getDictionary: () => {
-	    return humanresources_companyStructure_api.getData('humanresources.api.Structure.dictionary');
-	  },
-	  getUserId: () => {
-	    return humanresources_companyStructure_api.getData('humanresources.api.User.getCurrentId');
-	  },
-	  firstTimeOpened: () => {
-	    return humanresources_companyStructure_api.postData('humanresources.api.User.firstTimeOpen');
-	  },
-	  createTreeDataStore
+	  updated(el, {
+	    value
+	  }) {
+	    const {
+	      x,
+	      y,
+	      zoom
+	    } = value;
+	    el.setAttribute('data-zoom', zoom);
+	    el.setAttribute('data-x', x);
+	    el.setAttribute('data-y', y);
+	  }
 	};
 
 	// @vue/component
@@ -2478,14 +2904,17 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    TreeNode,
 	    Connectors
 	  },
+	  directives: {
+	    dnd: DragAndDrop
+	  },
 	  provide() {
 	    return {
 	      getTreeBounds: () => this.getTreeBounds()
 	    };
 	  },
 	  props: {
-	    canvasZoom: {
-	      type: Number,
+	    canvasTransform: {
+	      type: Object,
 	      required: true
 	    }
 	  },
@@ -2493,7 +2922,8 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  data() {
 	    return {
 	      expandedNodes: [],
-	      isLocatedDepartmentVisible: false
+	      isLocatedDepartmentVisible: false,
+	      isLoaded: false
 	    };
 	  },
 	  computed: {
@@ -2563,10 +2993,11 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      } = data;
 	      this.treeNodes.set(id, html);
 	      const departmentIdToFocus = this.getDepartmentIdForInitialFocus();
-	      if (id === departmentIdToFocus)
+	      if (id === departmentIdToFocus && !this.isLoaded)
 	        // zoom to  department when loading
 	        {
 	          const movingDelay = 1800;
+	          this.isLoaded = true;
 	          main_core.Runtime.debounce(() => {
 	            this.moveTo(departmentIdToFocus);
 	          }, movingDelay)();
@@ -2584,39 +3015,25 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        OrgChartActions.removeDepartment(id);
 	      }
 	    },
-	    onDragDepartment({
+	    onDragEntity({
 	      data
 	    }) {
 	      const {
 	        draggedId
 	      } = data;
-	      const department = this.departments.get(draggedId);
-	      const {
-	        parentId
-	      } = department;
-	      const parentDepartment = this.departments.get(parentId);
-	      parentDepartment.children.forEach(childId => {
-	        if (this.expandedNodes.includes(childId)) {
-	          this.collapse(childId);
-	        }
-	      });
+	      if (this.expandedNodes.includes(draggedId)) {
+	        this.collapseRecursively(draggedId);
+	      }
 	    },
 	    onToggleConnectors({
 	      data
 	    }) {
 	      const {
-	        draggedId,
 	        shouldShow
 	      } = data;
-	      const department = this.departments.get(draggedId);
-	      const {
-	        parentId
-	      } = department;
-	      this.connectors.toggleConnectorsVisibility(parentId, shouldShow, this.expandedNodes);
+	      this.connectors.toggleAllConnectorsVisibility(shouldShow, this.expandedNodes);
 	    },
-	    async onDropDepartment({
-	      data
-	    }) {
+	    async changeOrder(data) {
 	      const {
 	        draggedId,
 	        targetId,
@@ -2635,6 +3052,69 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        this.connectors.adaptConnectorsAfterReorder(affectedItems, -affectedShift, true);
 	      }
 	    },
+	    async updateParent(data) {
+	      const {
+	        draggedId,
+	        targetId,
+	        targetIndex,
+	        insertion
+	      } = data;
+	      const {
+	        id,
+	        parentId
+	      } = this.departments.get(draggedId);
+	      if (parentId === targetId && insertion === 'inside') {
+	        return;
+	      }
+	      let updateParentPromise = null;
+	      const store = humanresources_companyStructure_chartStore.useChartStore();
+	      if (insertion === 'sibling-left' || insertion === 'sibling-right') {
+	        const {
+	          parentId: targetParentId
+	        } = this.departments.get(targetId);
+	        const position = insertion === 'sibling-left' ? targetIndex : targetIndex + 1;
+	        store.updateDepartment({
+	          id,
+	          parentId: targetParentId
+	        }, position);
+	        updateParentPromise = chartAPI.updateDepartment(draggedId, targetParentId);
+	      } else {
+	        store.updateDepartment({
+	          id,
+	          parentId: targetId
+	        });
+	        updateParentPromise = chartAPI.updateDepartment(draggedId, targetId);
+	      }
+	      this.locateToDepartment(draggedId);
+	      try {
+	        await updateParentPromise;
+	        if (insertion === 'sibling-left' || insertion === 'sibling-right') {
+	          const {
+	            parentId: targetParentId
+	          } = this.departments.get(targetId);
+	          const {
+	            children
+	          } = this.departments.get(targetParentId);
+	          const shift = insertion === 'sibling-left' ? 1 : 2;
+	          const affectedCount = children.length - targetIndex - shift;
+	          await chartAPI.changeOrder(draggedId, -1, affectedCount);
+	        }
+	      } catch (err) {
+	        console.error(err);
+	      }
+	    },
+	    onDropEntity({
+	      data
+	    }) {
+	      const {
+	        insertion
+	      } = data;
+	      if (insertion === 'reorder') {
+	        this.changeOrder(data);
+	        return;
+	      }
+	      this.updateParent(data);
+	    },
 	    onPublicFocusNode({
 	      data
 	    }) {
@@ -2649,7 +3129,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    },
 	    collapse(nodeId) {
 	      this.expandedNodes = this.expandedNodes.filter(expandedId => expandedId !== nodeId);
-	      this.connectors.toggleConnectorsVisibility(nodeId, false, this.expandedNodes);
+	      this.connectors.toggleConnectorsVisibility(nodeId, false);
 	      this.connectors.toggleConnectorHighlighting(nodeId, false);
 	    },
 	    collapseRecursively(nodeId) {
@@ -2677,7 +3157,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    expand(departmentId) {
 	      this.collapseRecursively(departmentId);
 	      this.expandedNodes = [...this.expandedNodes, departmentId];
-	      this.connectors.toggleConnectorsVisibility(departmentId, true, this.expandedNodes);
+	      this.connectors.toggleConnectorsVisibility(departmentId, true);
 	      this.connectors.toggleConnectorHighlighting(departmentId, true);
 	      const department = this.departments.get(departmentId);
 	      const childrenWithoutHeads = department.children.filter(childId => {
@@ -2904,9 +3384,9 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        [events.HR_DEPARTMENT_CONNECT]: this.onConnectDepartment,
 	        [events.HR_DEPARTMENT_DISCONNECT]: this.onDisconnectDepartment,
 	        [events.HR_DEPARTMENT_FOCUS]: this.onFocusDepartment,
-	        [events.HR_DRAG_DEPARTMENT]: this.onDragDepartment,
-	        [events.HR_DROP_DEPARTMENT]: this.onDropDepartment,
-	        [events.HR_DEPARTMENT_TOGGLE_CONNECTORS]: this.onToggleConnectors,
+	        [events.HR_DRAG_ENTITY]: this.onDragEntity,
+	        [events.HR_DROP_ENTITY]: this.onDropEntity,
+	        [events.HR_ENTITY_TOGGLE_CONNECTORS]: this.onToggleConnectors,
 	        [events.HR_PUBLIC_FOCUS_NODE]: this.onPublicFocusNode
 	      };
 	      Object.entries(this.events).forEach(([event, handle]) => {
@@ -2923,13 +3403,14 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 		<div
 			class="humanresources-tree"
 			v-if="departments.size > 0"
+			v-dnd="canvasTransform"
 		>
 			<TreeNode
 				class="--root"
 				:key="rootId"
 				:nodeId="rootId"
 				:expandedNodes="[...expandedNodes]"
-				:canvasZoom="canvasZoom"
+				:canvasZoom="canvasTransform.zoom"
 				:currentDepartments="currentDepartments"
 			></TreeNode>
 			<Connectors
@@ -2950,7 +3431,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      required: true
 	    }
 	  },
-	  emits: ['locate', 'update:modelValue'],
+	  emits: ['update:modelValue'],
 	  data() {
 	    return {
 	      selectedId: ''
@@ -3005,11 +3486,8 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      });
 	    },
 	    onLocate() {
-	      const {
-	        locate
-	      } = this.actions;
-	      this.$emit(locate);
-	      this.selectedId = locate;
+	      main_core_events.EventEmitter.emit(events.HR_ORG_CHART_LOCATE_TO_DEPARTMENT);
+	      this.selectedId = this.actions.locate;
 	    },
 	    onfocusout() {
 	      this.selectedId = '';
@@ -3388,7 +3866,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    return {
 	      canvas: {
 	        shown: false,
-	        moving: false,
+	        moved: false,
 	        modelTransform: {
 	          x: 0,
 	          y: 0,
@@ -3407,9 +3885,8 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        collapsed: true,
 	        preventSwitch: false
 	      },
-	      // there is no way to determine if transition was initial transition was due to initial zoom in
-	      // so we block all controls until initial zoom in is completed
-	      initTransitionCompleted: false
+	      // so we block all controls until transition isn't completed
+	      isTransitionCompleted: false
 	    };
 	  },
 	  computed: {
@@ -3444,11 +3921,15 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    });
 	    main_core_events.EventEmitter.subscribe(events.HR_ENTITY_SHOW_WIZARD, this.showWizardEventHandler);
 	    main_core_events.EventEmitter.subscribe(events.HR_ENTITY_REMOVE, this.removeDepartmentEventHandler);
+	    main_core_events.EventEmitter.subscribe(events.HR_ORG_CHART_TRANSFORM_CANVAS, this.onCanvasTransformWhenDragging);
+	    main_core_events.EventEmitter.subscribe(events.HR_ORG_CHART_LOCATE_TO_DEPARTMENT, this.onLocate);
 	  },
 	  unmounted() {
 	    main_core_events.EventEmitter.unsubscribe(events.HR_DEPARTMENT_SLIDER_ON_MESSAGE, this.handleInviteSliderMessage);
 	    main_core_events.EventEmitter.unsubscribe(events.HR_ENTITY_SHOW_WIZARD, this.showWizardEventHandler);
 	    main_core_events.EventEmitter.unsubscribe(events.HR_ENTITY_REMOVE, this.removeDepartmentEventHandler);
+	    main_core_events.EventEmitter.unsubscribe(events.HR_ORG_CHART_TRANSFORM_CANVAS, this.onCanvasTransformWhenDragging);
+	    main_core_events.EventEmitter.unsubscribe(events.HR_ORG_CHART_LOCATE_TO_DEPARTMENT, this.onLocate);
 	  },
 	  methods: {
 	    onMoveTo({
@@ -3474,7 +3955,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      }
 	      this.canvas = {
 	        ...this.canvas,
-	        moving: true,
+	        moved: true,
 	        modelTransform: {
 	          ...this.canvas.modelTransform,
 	          x: newX / zoom,
@@ -3484,9 +3965,11 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      };
 	      this.onUpdateTransform();
 	    },
-	    onLocate(nodeId) {
-	      if (nodeId) {
-	        this.$refs.tree.locateToDepartment(nodeId);
+	    onLocate({
+	      data
+	    }) {
+	      if (data.nodeId) {
+	        this.$refs.tree.locateToDepartment(data.nodeId);
 	        return;
 	      }
 	      this.$refs.tree.locateToCurrentDepartment();
@@ -3561,21 +4044,15 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	          break;
 	      }
 	    },
-	    async onModifyTree({
+	    onModifyTree({
 	      id,
-	      parentId,
 	      showConfetti
 	    }) {
 	      this.showConfetti = showConfetti != null ? showConfetti : false;
 	      const {
 	        tree
 	      } = this.$refs;
-	      tree.expandDepartmentParents(id);
-	      tree.focus(id, {
-	        expandAfterFocus: true
-	      });
-	      await this.$nextTick();
-	      tree.moveTo(id);
+	      tree.locateToDepartment(id);
 	    },
 	    onWizardClose() {
 	      this.wizard.shown = false;
@@ -3591,24 +4068,28 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      } = this.$refs;
 	      tree.tryRemoveDepartment(nodeId, entityType);
 	    },
-	    onTransitionEnd() {
-	      if (this.canvas.moving) {
-	        this.initTransitionCompleted = true;
+	    async onTransitionEnd() {
+	      if (this.canvas.moved) {
+	        this.isTransitionCompleted = true;
 	      }
-	      this.canvas.moving = false;
-	      if (this.showConfetti) {
-	        ui_confetti.Confetti.fire({
-	          particleCount: 300,
-	          startVelocity: 10,
-	          spread: 400,
-	          ticks: 100,
-	          origin: {
-	            y: 0.4,
-	            x: 0.37
-	          }
-	        });
-	        this.showConfetti = false;
+	      this.canvas.moved = false;
+	      if (!this.showConfetti) {
+	        return;
 	      }
+	      this.isTransitionCompleted = false;
+	      const promise = ui_confetti.Confetti.fire({
+	        particleCount: 300,
+	        startVelocity: 10,
+	        spread: 400,
+	        ticks: 100,
+	        origin: {
+	          y: 0.4,
+	          x: 0.37
+	        }
+	      });
+	      this.showConfetti = false;
+	      await promise;
+	      this.isTransitionCompleted = true;
 	    },
 	    onControlDetail({
 	      showEmployees,
@@ -3665,28 +4146,43 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      OrgChartActions.clearNodesChatLists(nodeIds);
 	    },
 	    onKeyDown(event) {
-	      if (!this.initTransitionCompleted) {
+	      if (!this.isTransitionCompleted) {
 	        event.preventDefault();
+	      }
+	    },
+	    onCanvasTransformWhenDragging({
+	      data
+	    }) {
+	      const {
+	        directionX,
+	        directionY,
+	        speed
+	      } = data;
+	      if (directionX !== 0) {
+	        this.canvas.modelTransform.x += -directionX * speed;
+	      }
+	      if (directionY !== 0) {
+	        this.canvas.modelTransform.y += -directionY * speed;
 	      }
 	    }
 	  },
 	  template: `
 		<div
 			class="humanresources-chart"
-			:class="{ '--locked': !initTransitionCompleted }"
+			:class="{ '--locked': !isTransitionCompleted }"
 			@keydown="onKeyDown"
 		>
-			<TitlePanel @showWizard="onShowWizard" @locate="onLocate"></TitlePanel>
+			<TitlePanel @showWizard="onShowWizard"></TitlePanel>
 			<TransformCanvas
 				v-if="canvas.shown"
 				v-slot="{transform}"
 				v-model="canvas.modelTransform"
 				@update:modelValue="onUpdateTransform"
-				:class="{ '--moving': canvas.moving }"
+				:class="{ '--moved': canvas.moved }"
 				@transitionend="onTransitionEnd"
 			>
 				<Tree
-					:canvasZoom="transform.zoom"
+					:canvasTransform="transform"
 					ref="tree"
 					@moveTo="onMoveTo"
 					@showWizard="onShowWizard"
@@ -3701,7 +4197,6 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 			></DetailPanel>
 			<TransformPanel
 				v-model="canvas.modelTransform"
-				@locate="onLocate"
 			></TransformPanel>
 			<ChartWizard
 				v-if="wizard.shown"
@@ -3755,7 +4250,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    super({
 	      id: MenuActions.fireUserFromCompany,
 	      title: isUserInvited ? main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_USER_LIST_ACTION_MENU_DELETE_FROM_COMPANY_TITLE') : main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_USER_LIST_ACTION_MENU_FIRE_FROM_COMPANY_TITLE'),
-	      description: main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_USER_LIST_ACTION_MENU_FIRE_FROM_COMPANY_SUBTITLE'),
+	      description: main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_USER_LIST_ACTION_MENU_FIRE_FROM_COMPANY_SUBTITLE_MSGVER_1'),
 	      bIcon: {
 	        name: ui_iconSet_api_core.Main.PERSONS_DENY,
 	        size: 20,
@@ -3832,6 +4327,87 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      return [new MoveFromDepartmentMenuItem(this.entityType), new RemoveFromDepartmentMenuItem(this.entityType)];
 	    }
 	    return [new MoveFromDepartmentMenuItem(this.entityType), new RemoveFromDepartmentMenuItem(this.entityType), new FireUserFromCompanyMenuItem(this.isUserInvited)];
+	  }
+	}
+
+	/**
+	 * Menu item for opening a chat or channel.
+	 * Displays appropriate title, and description based on chat type.
+	 * Checks permissions using hasAccess property of the chat.
+	 */
+	class OpenChatMenuItem extends AbstractMenuItem {
+	  constructor(entityType, chat) {
+	    const title = chat.type === humanresources_companyStructure_utils.ChatTypes.chat ? main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_CHAT_LIST_ACTION_MENU_OPEN_CHAT_TITLE') : main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_CHAT_LIST_ACTION_MENU_OPEN_CHANNEL_TITLE');
+	    const description = chat.type === humanresources_companyStructure_utils.ChatTypes.chat ? main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_CHAT_LIST_ACTION_MENU_OPEN_CHAT_DESCRIPTION') : main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_CHAT_LIST_ACTION_MENU_OPEN_CHANNEL_DESCRIPTION');
+	    super({
+	      id: MenuActions.openChat,
+	      title,
+	      description,
+	      bIcon: {
+	        name: ui_iconSet_api_core.Main.EDIT_PENCIL,
+	        size: 20,
+	        color: humanresources_companyStructure_utils.getColorCode('paletteBlue50')
+	      },
+	      permissionAction: null,
+	      dataTestId: 'hr-department-detail-content__chat-list_open-chat'
+	    });
+	    this.entityType = entityType;
+	    this.chat = chat;
+	  }
+	  hasPermission(permissionChecker, entityId) {
+	    return this.chat.hasAccess;
+	  }
+	}
+
+	/**
+	 * Menu item for unbinding a chat or channel from a team or department.
+	 * Displays appropriate title, description, and permission requirements
+	 * based on the entity type and chat type.
+	 */
+	class UnbindChatMenuItem extends AbstractMenuItem {
+	  constructor(entityType, chat) {
+	    let title = '';
+	    let description = '';
+	    if (entityType === humanresources_companyStructure_utils.EntityTypes.team) {
+	      title = chat.type === humanresources_companyStructure_utils.ChatTypes.chat ? main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_CHAT_LIST_ACTION_MENU_UNBIND_TEAM_CHAT_TITLE') : main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_CHAT_LIST_ACTION_MENU_UNBIND_TEAM_CHANNEL_TITLE');
+	      description = chat.type === humanresources_companyStructure_utils.ChatTypes.chat ? main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_CHAT_LIST_ACTION_MENU_UNBIND_TEAM_CHAT_DESCRIPTION') : main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_CHAT_LIST_ACTION_MENU_UNBIND_TEAM_CHANNEL_DESCRIPTION');
+	    } else {
+	      title = chat.type === humanresources_companyStructure_utils.ChatTypes.chat ? main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_CHAT_LIST_ACTION_MENU_UNBIND_DEPARTMENT_CHAT_TITLE') : main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_CHAT_LIST_ACTION_MENU_UNBIND_DEPARTMENT_CHANNEL_TITLE');
+	      description = chat.type === humanresources_companyStructure_utils.ChatTypes.chat ? main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_CHAT_LIST_ACTION_MENU_UNBIND_DEPARTMENT_CHAT_DESCRIPTION') : main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_CHAT_LIST_ACTION_MENU_UNBIND_DEPARTMENT_CHANNEL_DESCRIPTION');
+	    }
+	    const permissionAction = entityType === humanresources_companyStructure_utils.EntityTypes.team ? humanresources_companyStructure_permissionChecker.PermissionActions.teamCommunicationEdit : humanresources_companyStructure_permissionChecker.PermissionActions.departmentCommunicationEdit;
+	    super({
+	      id: MenuActions.unbindChat,
+	      title,
+	      description,
+	      bIcon: {
+	        name: ui_iconSet_api_core.Main.TRASH_BIN,
+	        size: 20,
+	        color: humanresources_companyStructure_utils.getColorCode('paletteRed40')
+	      },
+	      permissionAction,
+	      dataTestId: 'hr-department-detail-content__chat-list_open-chat'
+	    });
+	    this.chat = chat;
+	  }
+	  hasPermission(permissionChecker, entityId) {
+	    return !this.chat.originalNodeId && this.chat.hasAccess && permissionChecker.hasPermission(this.permissionAction, entityId);
+	  }
+	}
+
+	/**
+	 * Action menu for chat or channel items in the company structure.
+	 * Provides menu items to open or unbind a chat/channel.
+	 */
+	class ChatListActionMenu extends AbstractActionMenu {
+	  constructor(entityType, chat, entityId) {
+	    super(entityId);
+	    this.chat = chat;
+	    this.entityType = entityType;
+	    this.items = this.getFilteredItems();
+	  }
+	  getItems() {
+	    return [new OpenChatMenuItem(this.entityType, this.chat), new UnbindChatMenuItem(this.entityType, this.chat)];
 	  }
 	}
 
@@ -3938,8 +4514,10 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	exports.UsersTabActionMenu = UsersTabActionMenu;
 	exports.EmptyUsersTabActionMenu = EmptyUsersTabActionMenu;
 	exports.UserListActionMenu = UserListActionMenu;
+	exports.ChatListActionMenu = ChatListActionMenu;
 	exports.MenuActions = MenuActions;
 	exports.NotConvertedState = NotConvertedState;
+	exports.events = events;
 
-}((this.BX.Humanresources.CompanyStructure = this.BX.Humanresources.CompanyStructure || {}),BX.Vue3,BX.UI,BX.UI,BX.UI.EntitySelector,BX.UI.Dialogs,BX,BX.Humanresources.CompanyStructure,BX.Vue3.Pinia,BX.Humanresources.CompanyStructure,BX.Humanresources.CompanyStructure,BX.Humanresources.CompanyStructure,BX,BX,BX.UI,BX,BX.UI.IconSet,BX.Humanresources.CompanyStructure,BX.Humanresources.CompanyStructure,BX.UI.Analytics,BX,BX.Humanresources.CompanyStructure,BX.Humanresources.CompanyStructure,BX.UI.IconSet,BX.Event,BX));
+}((this.BX.Humanresources.CompanyStructure = this.BX.Humanresources.CompanyStructure || {}),BX.Vue3,BX.UI,BX.UI,BX.Humanresources.CompanyStructure,BX.UI.EntitySelector,BX.UI.Dialogs,BX,BX.Humanresources.CompanyStructure,BX.Vue3.Pinia,BX.Humanresources.CompanyStructure,BX.Humanresources.CompanyStructure,BX.Humanresources.CompanyStructure,BX,BX,BX.UI,BX,BX.UI.IconSet,BX.Humanresources.CompanyStructure,BX.Humanresources.CompanyStructure,BX.UI.Analytics,BX,BX.Humanresources.CompanyStructure,BX.UI.IconSet,BX.Humanresources.CompanyStructure,BX.Event,BX));
 //# sourceMappingURL=org-chart.bundle.js.map

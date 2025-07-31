@@ -98,7 +98,7 @@ export const HeadList = {
 			{
 				this.headsVisible = false;
 				EventEmitter.unsubscribe(events.HR_DEPARTMENT_MENU_CLOSE, this.closeHeadList);
-				EventEmitter.unsubscribe(events.HR_DRAG_DEPARTMENT, this.closeHeadList);
+				EventEmitter.unsubscribe(events.HR_DRAG_ENTITY, this.closeHeadList);
 			}
 		},
 		openHeadList(): void
@@ -107,7 +107,7 @@ export const HeadList = {
 			{
 				this.headsVisible = true;
 				EventEmitter.subscribe(events.HR_DEPARTMENT_MENU_CLOSE, this.closeHeadList);
-				EventEmitter.subscribe(events.HR_DRAG_DEPARTMENT, this.closeHeadList);
+				EventEmitter.subscribe(events.HR_DRAG_ENTITY, this.closeHeadList);
 			}
 		},
 		getPositionText(item: UserData): string

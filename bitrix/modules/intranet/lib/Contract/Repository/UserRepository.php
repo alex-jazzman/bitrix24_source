@@ -4,6 +4,8 @@ namespace Bitrix\Intranet\Contract\Repository;
 
 use Bitrix\Intranet\Entity\Collection\UserCollection;
 use Bitrix\Intranet\Entity\User;
+use Bitrix\Intranet\Exception\DeleteFailedException;
+use Bitrix\Intranet\Exception\UpdateFailedException;
 
 interface UserRepository
 {
@@ -37,5 +39,13 @@ interface UserRepository
 
 	public function create(User $user): User;
 
+	/**
+	 * @throws UpdateFailedException
+	 */
 	public function update(User $user): User;
+
+	/**
+	 * @throws DeleteFailedException
+	 */
+	public function delete(User $user): void;
 }

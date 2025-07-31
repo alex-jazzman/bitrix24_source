@@ -77,7 +77,7 @@ final class StructureAccessCheck extends Main\Engine\ActionFilter\Base
 	{
 		$this->addError(
 			new Main\Error(
-				Loc::getMessage('HR_ACTION_ACCESS_DENIED'),
+				Loc::getMessage('HR_ACTION_ACCESS_DENIED_MSGVER_1'),
 				self::ERROR_ACCESS_DENIED,
 			),
 		);

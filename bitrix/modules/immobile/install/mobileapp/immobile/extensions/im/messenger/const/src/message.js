@@ -64,6 +64,8 @@ jn.define('im/messenger/const/message', (require, exports, module) => {
 			VoteMessage: 'VoteMessage',
 
 			ConvertToCollabMessage: 'ConvertToCollabMessage',
+
+			AiAssistantMessage: 'AiAssistantMessage',
 		},
 	});
 

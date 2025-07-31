@@ -406,6 +406,14 @@
 					{
 						this.eventEmitter.emit(BX.Call.Event.onLocalMediaStopped);
 					}
+					if (this.muted)
+					{
+						const audioTracks = stream.getAudioTracks();
+						if (audioTracks && audioTracks.length > 0)
+						{
+							audioTracks[0].enabled = false;
+						}
+					}
 					this.localStream = stream;
 					resolve();
 				});

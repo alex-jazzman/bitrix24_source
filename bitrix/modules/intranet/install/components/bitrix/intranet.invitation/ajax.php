@@ -199,7 +199,8 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 				'POPUP_COMPONENT_PARAMS' => [
 					'USER_OPTIONS' => $params['USER_OPTIONS'] ?? []
 				],
-				'IFRAME_MODE' => true
+				'IFRAME_MODE' => true,
+				'USE_UI_TOOLBAR' => 'Y',
 			]
 		);
 

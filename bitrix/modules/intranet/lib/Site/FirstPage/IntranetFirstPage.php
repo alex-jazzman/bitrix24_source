@@ -63,9 +63,7 @@ class IntranetFirstPage implements FirstPage
 		)
 		{
 			if (
-				defined('AIR_SITE_TEMPLATE')
-				&& AIR_SITE_TEMPLATE
-				&& \CBXFeatures::IsFeatureEnabled('WebMessenger')
+				\CBXFeatures::IsFeatureEnabled('WebMessenger')
 				&& ModuleManager::isModuleInstalled('im')
 			)
 			{

@@ -37,10 +37,11 @@ jn.define('im/messenger/lib/ui/notification', (require, exports, module) => {
 		/**
 		 * @param {ToastType} toastType
 		 * @param layoutWidget
+		 * @param {ShowToastParams} params
 		 */
-		static showToast(toastType, layoutWidget = null)
+		static showToast(toastType, layoutWidget = null, params = {})
 		{
-			MessengerToast.show(toastType, layoutWidget);
+			MessengerToast.show(toastType, layoutWidget, params);
 		}
 
 		/**

@@ -10,6 +10,7 @@ export const Color = Object.freeze({
 	collab10: '#f2fee2',
 	orange50: '#ffa900',
 	accentBlue: '#00ace3',
+	accentMainPrimaryAlt: '#1f86ff',
 });
 
 export const ColorToken = Object.freeze({

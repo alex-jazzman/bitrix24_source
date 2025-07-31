@@ -3,7 +3,8 @@ import { DialogId } from '../../../types/common';
 
 type sendAnalyticsParams = {
 	fileType: FileType,
-	dialogId: DialogId
+	dialogId: DialogId,
+	status: string
 }
 
 export { sendAnalyticsParams };

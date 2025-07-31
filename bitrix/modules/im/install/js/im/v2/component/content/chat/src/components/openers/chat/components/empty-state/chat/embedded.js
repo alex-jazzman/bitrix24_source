@@ -1,5 +1,5 @@
+import { Analytics } from 'im.v2.lib.analytics';
 import { Feature, FeatureManager } from 'im.v2.lib.feature';
-
 import { InviteManager } from 'im.v2.lib.invite';
 
 import './css/embedded.css';
@@ -16,7 +16,8 @@ export const EmbeddedChatEmptyState = {
 	methods: {
 		onInviteActionClick(): void
 		{
-			InviteManager.openInviteSlider();
+			const analyticsContext = Analytics.getInstance().sliderInvite.getEmptyStateContext();
+			InviteManager.openInviteSlider(analyticsContext);
 		},
 		loc(phraseCode: string, replacements: {[p: string]: string} = {}): string
 		{

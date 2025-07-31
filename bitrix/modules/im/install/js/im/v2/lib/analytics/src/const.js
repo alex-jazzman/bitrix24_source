@@ -104,6 +104,8 @@ export const AnalyticsSection = Object.freeze({
 	chatWindow: 'chat_window',
 	forward: 'forward',
 	userAdd: 'user_add',
+	chatCreateMenu: 'chat_create_menu',
+	chatEmptyState: 'chat_empty_state',
 });
 
 export const AnalyticsSubSection = Object.freeze({

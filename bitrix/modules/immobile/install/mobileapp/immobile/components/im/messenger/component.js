@@ -18,7 +18,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 /* endregion Clearing session variables after script reload */
 
 (async () => {
-	/* global dialogList, ChatTimer, InAppNotifier, ChatUtils, reloadAllScripts */
+	/* global dialogList, reloadAllScripts */
 	/* region import */
 	const require = (ext) => jn.require(ext); // for IDE hints
 
@@ -27,7 +27,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 
 	const { Type } = require('type');
 	const { Loc } = require('loc');
-	const { get, isEqual } = require('utils/object');
+	const { get, isEqual, clone } = require('utils/object');
 	const { Feature: MobileFeature } = require('feature');
 	const { EntityReady } = require('entity-ready');
 
@@ -101,6 +101,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	const { RecentView } = require('im/messenger/view/recent');
 	const { Dialog } = require('im/messenger/controller/dialog/chat');
 	const { CopilotDialog } = require('im/messenger/controller/dialog/copilot');
+	const { AiAssistantDialog } = require('im/messenger/controller/dialog/ai-assistant');
 	const { ChatAssets } = require('im/messenger/controller/dialog/lib/assets');
 	const { ChatCreator } = require('im/messenger/controller/chat-creator');
 	const { Communication } = require('im/messenger/lib/integration/mobile/communication');
@@ -144,7 +145,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		constructor()
 		{
 			super();
-			this.refreshAfterErrorInterval = 10000;
 			this.pushUpdateListPromise = null;
 
 			this.promotion = new Promotion();
@@ -233,21 +233,14 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			this.dialogCreator = new DialogCreator();
 		}
 
-		/**
-		 * @override
-		 */
 		bindMethods()
 		{
 			super.bindMethods();
-			this.openDialog = this.openDialog.bind(this);
+
 			this.openLine = this.openLine.bind(this);
 			this.getOpenLineParams = this.getOpenLineParams.bind(this);
-			this.openChatSearch = this.openChatSearch.bind(this);
-			this.closeChatSearch = this.closeChatSearch.bind(this);
-			this.openChatCreate = this.openChatCreate.bind(this);
 			this.openNotifications = this.openNotifications.bind(this);
 			this.onFailRestoreConnection = this.onFailRestoreConnection.bind(this);
-			this.onShortRefresh = this.onShortRefresh.bind(this);
 			this.destroyDialog = this.destroyDialog.bind(this);
 			this.openVoteResult = this.openVoteResult.bind(this);
 
@@ -276,33 +269,24 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			SidebarLazyFactory.preload();
 		}
 
-		/**
-		 * @override
-		 */
 		subscribeMessengerEvents()
 		{
-			BX.addCustomEvent(EventType.messenger.openDialog, this.openDialog);
+			super.subscribeMessengerEvents();
+
 			BX.addCustomEvent(EventType.messenger.openLine, this.openLine);
 			BX.addCustomEvent(EventType.messenger.getOpenLineParams, this.getOpenLineParams);
-			BX.addCustomEvent(EventType.messenger.showSearch, this.openChatSearch);
-			BX.addCustomEvent(EventType.messenger.hideSearch, this.closeChatSearch);
-			BX.addCustomEvent(EventType.messenger.createChat, this.openChatCreate);
 			BX.addCustomEvent(EventType.messenger.openNotifications, this.openNotifications);
-			BX.addCustomEvent(EventType.messenger.refresh, this.onShortRefresh);
 			BX.addCustomEvent(EventType.messenger.destroyDialog, this.destroyDialog);
 			BX.addCustomEvent(EventType.messenger.openVoteResult, this.openVoteResult);
 		}
 
 		unsubscribeMessengerEvents()
 		{
-			BX.removeCustomEvent(EventType.messenger.openDialog, this.openDialog);
+			super.unsubscribeMessengerEvents();
+
 			BX.removeCustomEvent(EventType.messenger.openLine, this.openLine);
 			BX.removeCustomEvent(EventType.messenger.getOpenLineParams, this.getOpenLineParams);
-			BX.removeCustomEvent(EventType.messenger.showSearch, this.openChatSearch);
-			BX.removeCustomEvent(EventType.messenger.hideSearch, this.closeChatSearch);
-			BX.removeCustomEvent(EventType.messenger.createChat, this.openChatCreate);
 			BX.removeCustomEvent(EventType.messenger.openNotifications, this.openNotifications);
-			BX.removeCustomEvent(EventType.messenger.refresh, this.onShortRefresh);
 			BX.removeCustomEvent(EventType.messenger.destroyDialog, this.destroyDialog);
 			BX.removeCustomEvent(EventType.messenger.openVoteResult, this.openVoteResult);
 		}
@@ -313,6 +297,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		subscribeExternalEvents()
 		{
 			super.subscribeExternalEvents();
+
 			BX.addCustomEvent(EventType.chatDialog.initComplete, this.onChatDialogInitComplete);
 			BX.addCustomEvent(EventType.chatDialog.counterChange, this.onChatDialogCounterChange);
 			BX.addCustomEvent(EventType.chatDialog.taskStatusSuccess, this.onTaskStatusSuccess);
@@ -334,6 +319,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		unsubscribeExternalEvents()
 		{
 			super.unsubscribeExternalEvents();
+
 			BX.removeCustomEvent(EventType.chatDialog.initComplete, this.onChatDialogInitComplete);
 			BX.removeCustomEvent(EventType.chatDialog.counterChange, this.onChatDialogCounterChange);
 			BX.removeCustomEvent(EventType.chatDialog.taskStatusSuccess, this.onTaskStatusSuccess);
@@ -527,6 +513,37 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		}
 
 		/**
+		 * @return {string[]}
+		 */
+		getInitRestMethodsForRefresh()
+		{
+			return [
+				...super.getInitRestMethodsForRefresh(),
+				MessengerInitRestMethod.activeCalls,
+			];
+		}
+
+		/**
+		 * @return {string[]}
+		 */
+		getInitRestMethodsForApplicationStartup()
+		{
+			const methodList = [
+				...super.getInitRestMethodsForApplicationStartup(),
+				MessengerInitRestMethod.promotion,
+				MessengerInitRestMethod.tariffRestriction,
+			];
+
+			const isNeedDepartmentColleagues = !this.departmentColleaguesStore.get('isRequested');
+			if (isNeedDepartmentColleagues)
+			{
+				methodList.push(MessengerInitRestMethod.departmentColleagues);
+			}
+
+			return methodList;
+		}
+
+		/**
 		 * @param {object} params
 		 * @param {boolean} params.shortMode
 		 * @override
@@ -541,26 +558,8 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			SmileManager.init();
 
 			await this.queueCallBatch();
-			const methodList = [
-				...this.getBaseInitRestMethods(),
-				MessengerInitRestMethod.activeCalls,
-			];
 
-			if (!shortMode)
-			{
-				methodList.push(
-					MessengerInitRestMethod.promotion,
-					MessengerInitRestMethod.tariffRestriction,
-				);
-			}
-
-			const isNeedDepartmentColleagues = !this.departmentColleaguesStore.get('isRequested') && !shortMode;
-			if (isNeedDepartmentColleagues)
-			{
-				methodList.push(MessengerInitRestMethod.departmentColleagues);
-			}
-
-			return this.chatInitService.runAction(methodList)
+			return this.chatInitService.runAction(this.getInitRestMethods(shortMode))
 				.then(() => {
 					this.afterRefresh();
 				})
@@ -595,7 +594,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 
 			await this.core.setAppStatus(AppStatus.connection, false);
 			this.refreshErrorNoticeFlag = false;
-			ChatTimer.stop('recent', 'error', true);
+			this.notifyRefreshErrorWorker.stop();
 
 			TabCounters.update();
 
@@ -642,17 +641,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			this.refreshTimeout = setTimeout(() => {
 				if (!this.refreshErrorNoticeFlag && !Application.isBackground())
 				{
-					const notifyRefreshError = () => {
-						this.refreshErrorNoticeFlag = true;
-
-						InAppNotifier.showNotification({
-							message: Loc.getMessage('IMMOBILE_COMMON_MESSENGER_REFRESH_ERROR'),
-							backgroundColor: '#E6000000',
-							time: this.refreshAfterErrorInterval / 1000 - 2,
-						});
-					};
-
-					ChatTimer.start('recent', 'error', 2000, notifyRefreshError);
+					this.notifyRefreshErrorWorker.startOnce();
 				}
 
 				Logger.warn('Messenger.refresh after error');
@@ -818,6 +807,15 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 							return;
 						}
 
+						const isAiAssistant = dialogHelper?.isAiAssistant;
+						if (isAiAssistant)
+						{
+							this.dialog = new AiAssistantDialog();
+							this.dialog.open(openDialogOptions);
+
+							return;
+						}
+
 						this.dialog = new Dialog();
 						this.dialog.open(openDialogOptions);
 					})
@@ -890,13 +888,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			}
 
 			showNotificationList();
-		}
-
-		onShortRefresh()
-		{
-			Logger.log('EventType.messenger.refresh');
-
-			this.refresh({ shortMode: true });
 		}
 
 		openChatSearch()
@@ -1011,14 +1002,14 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		{
 			Logger.log('EventType.chatDialog.counterChange', event);
 
-			const recentItem = ChatUtils.objectClone(this.store.getters['recentModel/getById'](event.dialogId));
+			const recentItem = clone(this.store.getters['recentModel/getById'](event.dialogId));
 			if (!recentItem)
 			{
 				return;
 			}
 
 			recentItem.counter = event.counter;
-			const dialogItem = ChatUtils.objectClone(this.store.getters['dialoguesModel/getById'](event.dialogId));
+			const dialogItem = clone(this.store.getters['dialoguesModel/getById'](event.dialogId));
 			if (dialogItem)
 			{
 				this.store.dispatch('dialoguesModel/update', {

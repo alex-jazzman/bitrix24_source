@@ -75,6 +75,7 @@ this.BX = this.BX || {};
 	    return babelHelpers.classPrivateFieldLooseBase(this, _widgetLoader)[_widgetLoader];
 	  }
 	  const widgetLoader = new intranet_widgetLoader.WidgetLoader({
+	    id: "bx-settings-header-popup",
 	    bindElement: babelHelpers.classPrivateFieldLooseBase(this, _node)[_node],
 	    width: 374
 	  });

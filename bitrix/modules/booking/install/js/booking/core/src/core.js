@@ -13,6 +13,7 @@ import { Favorites } from 'booking.model.favorites';
 import { Dictionary } from 'booking.model.dictionary';
 import { MainResources } from 'booking.model.main-resources';
 import { WaitList } from 'booking.model.wait-list';
+import { FormsMenu } from 'booking.model.forms-menu';
 import { BookingPullManager } from 'booking.provider.pull.booking-pull-manager';
 import type { MoneyStatistics } from 'booking.model.interface';
 
@@ -118,6 +119,7 @@ class CoreApplication
 			.addModel(Dictionary.create())
 			.addModel(MainResources.create())
 			.addModel(WaitList.create())
+			.addModel(FormsMenu.create())
 		;
 
 		const builderResult = await this.#builder.build();

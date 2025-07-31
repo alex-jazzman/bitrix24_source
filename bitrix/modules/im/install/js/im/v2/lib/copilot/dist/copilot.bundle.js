@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,im_v2_const,im_v2_application_core) {
+(function (exports,im_v2_const,im_v2_application_core,im_v2_lib_feature) {
 	'use strict';
 
 	class CopilotManager {
@@ -101,9 +101,26 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    }
 	    return message.componentId === im_v2_const.MessageComponent.copilotCreation;
 	  }
+	  static initAvailableAIModelsList() {
+	    const {
+	      copilot
+	    } = im_v2_application_core.Core.getApplicationData();
+	    if (!copilot.availableEngines) {
+	      return;
+	    }
+	    void im_v2_application_core.Core.getStore().dispatch('copilot/setAvailableAIModels', copilot.availableEngines);
+	  }
+	  static getAIModelName(dialogId) {
+	    const isAIModelChangeAllowed = im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isAIModelChangeAllowed);
+	    if (isAIModelChangeAllowed) {
+	      const currentAIModel = im_v2_application_core.Core.getStore().getters['copilot/chats/getAIModel'](dialogId);
+	      return currentAIModel.name;
+	    }
+	    return im_v2_application_core.Core.getStore().getters['copilot/getProvider'];
+	  }
 	}
 
 	exports.CopilotManager = CopilotManager;
 
-}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX.Messenger.v2.Const,BX.Messenger.v2.Application));
+}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX.Messenger.v2.Const,BX.Messenger.v2.Application,BX.Messenger.v2.Lib));
 //# sourceMappingURL=copilot.bundle.js.map

@@ -2,6 +2,8 @@ import {Type} from 'main.core';
 import {EventEmitter} from 'main.core.events';
 import {EndpointDirection, UserState} from '../engine/engine';
 
+type UserModelMap = Record<string, UserModel>;
+
 export class UserModel
 {
 	id: number
@@ -162,15 +164,13 @@ export class UserModel
 
 export class UserRegistry extends EventEmitter
 {
-	users: UserModel[];
+	users: UserModelMap;
 
-	constructor(config:{users: UserModel[]} = {})
+	constructor()
 	{
 		super();
-		this.setEventNamespace('BX.Call.UserRegistry')
-		this.users = Type.isArray(config.users) ? config.users : [];
-
-		this._sort();
+		this.setEventNamespace('BX.Call.UserRegistry');
+		this.users = new Map();
 	};
 
 	/**
@@ -180,14 +180,7 @@ export class UserRegistry extends EventEmitter
 	 */
 	get(userId): ?UserModel
 	{
-		for (let i = 0; i < this.users.length; i++)
-		{
-			if (this.users[i].id == userId)
-			{
-				return this.users[i];
-			}
-		}
-		return null;
+		return this.users.get(Number(userId)) || null;
 	};
 
 	push(user: UserModel)
@@ -197,12 +190,12 @@ export class UserRegistry extends EventEmitter
 			throw Error("user should be instance of UserModel")
 		}
 
-		this.users.push(user);
-		this._sort();
+		this.users.set(Number(user.id), user);
+
 		user.subscribe("changed", this._onUserChanged.bind(this));
 		this.emit("userAdded", {
 			user: user
-		})
+		});
 	};
 
 	_onUserChanged(event)
@@ -216,9 +209,6 @@ export class UserRegistry extends EventEmitter
 
 	_sort()
 	{
-		this.users = this.users.sort(function (a, b)
-		{
-			return a.order - b.order;
-		});
+		this.users = new Map([...this.users].sort((a, b) => a[1].order - b[1].order));
 	}
 }

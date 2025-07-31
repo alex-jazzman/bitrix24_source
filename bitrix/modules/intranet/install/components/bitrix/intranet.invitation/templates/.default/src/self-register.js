@@ -2,7 +2,7 @@ import { Event, Type, Dom, Text, Loc } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { Switcher, SwitcherSize } from 'ui.switcher';
 import { Analytics } from './analytics';
-import DepartmentControl from './department-control';
+import DepartmentControl from 'intranet.department-control';
 import type { LinkPage } from './page/link-page';
 import { SubmitButton } from './submit-button';
 import type { Transport } from './transport';

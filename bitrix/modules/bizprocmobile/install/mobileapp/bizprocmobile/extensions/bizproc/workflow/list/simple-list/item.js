@@ -15,10 +15,11 @@ jn.define('bizproc/workflow/list/simple-list/item', (require, exports, module) =
 	const { Checkbox } = require('ui-system/form/checkbox');
 
 	const { WorkflowFaces } = require('bizproc/workflow/faces');
-	const { TaskErrorCode } = require('bizproc/task/task-constants');
+	const { TaskErrorCode, TaskUserStatus } = require('bizproc/task/task-constants');
 	const { TaskButtons } = require('bizproc/task/buttons');
 	const { ViewMode } = require('bizproc/workflow/list/view-mode');
 	const { CounterView } = require('layout/ui/counter-view');
+	const { AppRatingClient } = require('bizproc/app-rating-client');
 
 	class WorkflowSimpleListItem extends Base
 	{
@@ -338,10 +339,12 @@ jn.define('bizproc/workflow/list/simple-list/item', (require, exports, module) =
 
 		onDoTaskCompleted(responseData, props)
 		{
-			BX.postComponentEvent(
-				'AppRatingManager.onBizProcTaskCompleted',
-				[props?.taskRequest],
-			);
+			if (props?.taskRequest?.INLINE_USER_STATUS === TaskUserStatus.YES
+				|| props?.taskRequest?.INLINE_USER_STATUS === TaskUserStatus.OK)
+			{
+				AppRatingClient.increaseBusinessProcessExecutedCounter();
+				AppRatingClient.tryOpenAppRatingAfterBusinessProcessExecuted();
+			}
 		}
 
 		onDoTaskFailed(errors)

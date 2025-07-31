@@ -12,12 +12,12 @@
 			</div>
 		</div>
 		<div
-			class="landing-block-node-card-container"
-			style="display: grid; grid-template-columns: repeat(auto-fit, minmax(263px, 263px)); gap: 18px; justify-content: center;"
+			class="landing-block-node-card-container d-flex justify-content-center"
+			style="gap: 18px; flex-wrap: wrap;"
 		>
 			<div
 				class="landing-block-node-card g-bg g-pb-25 g-rounded-10 g-cursor-pointer g-border-color g-border-color--hover g-brd-2 g-brd-style-solid g-transition-0_3"
-				style="--bg: #ffffff; --border-color--hover: var(--primary); --border-color: hsla(0, 0%, 0%, 0); box-shadow: 0 4px 4px 0 rgba(0, 0, 0, .05);"
+				style="--bg: #ffffff; --border-color--hover: var(--primary); --border-color: hsla(0, 0%, 0%, 0); max-width: 263px; width: 100%; box-shadow: 0 4px 4px 0 rgba(0, 0, 0, .05);"
 			>
 				<a class="landing-block-node-card-link text-decoration-none" href="#" target="_blank">
 					<img
@@ -35,7 +35,7 @@
 			</div>
 			<div
 				class="landing-block-node-card g-bg g-pb-25 g-rounded-10 g-cursor-pointer g-border-color g-border-color--hover g-brd-2 g-brd-style-solid g-transition-0_3"
-				style="--bg: #ffffff; --border-color--hover: var(--primary); --border-color: hsla(0, 0%, 0%, 0); box-shadow: 0 4px 4px 0 rgba(0, 0, 0, .05);"
+				style="--bg: #ffffff; --border-color--hover: var(--primary); --border-color: hsla(0, 0%, 0%, 0); max-width: 263px; width: 100%; box-shadow: 0 4px 4px 0 rgba(0, 0, 0, .05);"
 			>
 				<a class="landing-block-node-card-link text-decoration-none" href="#" target="_blank">
 					<img
@@ -53,7 +53,7 @@
 			</div>
 			<div
 				class="landing-block-node-card g-bg g-pb-25 g-rounded-10 g-cursor-pointer g-border-color g-border-color--hover g-brd-2 g-brd-style-solid g-transition-0_3"
-				style="--bg: #ffffff; --border-color--hover: var(--primary); --border-color: hsla(0, 0%, 0%, 0); box-shadow: 0 4px 4px 0 rgba(0, 0, 0, .05);"
+				style="--bg: #ffffff; --border-color--hover: var(--primary); --border-color: hsla(0, 0%, 0%, 0); max-width: 263px; width: 100%; box-shadow: 0 4px 4px 0 rgba(0, 0, 0, .05);"
 			>
 				<a class="landing-block-node-card-link text-decoration-none" href="#" target="_blank">
 					<img
@@ -71,7 +71,7 @@
 			</div>
 			<div
 				class="landing-block-node-card g-bg g-pb-25 g-rounded-10 g-cursor-pointer g-border-color g-border-color--hover g-brd-2 g-brd-style-solid g-transition-0_3"
-				style="--bg: #ffffff; --border-color--hover: var(--primary); --border-color: hsla(0, 0%, 0%, 0); box-shadow: 0 4px 4px 0 rgba(0, 0, 0, .05);"
+				style="--bg: #ffffff; --border-color--hover: var(--primary); --border-color: hsla(0, 0%, 0%, 0); max-width: 263px; width: 100%; box-shadow: 0 4px 4px 0 rgba(0, 0, 0, .05);"
 			>
 				<a class="landing-block-node-card-link text-decoration-none" href="#" target="_blank">
 					<img

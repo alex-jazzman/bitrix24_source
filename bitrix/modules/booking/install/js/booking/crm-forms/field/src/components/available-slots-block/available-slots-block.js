@@ -47,9 +47,19 @@ export const AvailableSlotsBlock = {
 		};
 	},
 	computed: {
+		availableResource(): Array
+		{
+			return this.resourcesSlots.filter(({ slots }) => slots.length > 0);
+		},
 		visibleResources(): Array
 		{
-			return this.resourcesSlots.slice(0, this.visibleResourcesCount);
+			return this.availableResource.slice(0, this.visibleResourcesCount);
+		},
+		emptyResourcesSlotsMessage(): string
+		{
+			return this.loc('BOOKING_CRM_FORMS_RESOURCE_NO_SLOTS_MESSAGE', {
+				'#BR#': '<br />',
+			});
 		},
 	},
 	watch: {
@@ -197,7 +207,13 @@ export const AvailableSlotsBlock = {
 					</template>
 				</ResourceSlotsUiBlock>
 			</template>
-			<template v-if="resources.length > 0 && visibleResourcesCount < resources.length">
+			<template v-if="!fetching && visibleResources.length === 0">
+				<p
+					class="booking--crm-forms--available-slots-block__empty-slots"
+					v-html="emptyResourcesSlotsMessage"
+				></p>
+			</template>
+			<template v-if="resources.length > 0 && visibleResources.length > 0 && visibleResourcesCount < availableResource.length">
 				<div class="booking--crm-forms--field-group--available-slots-block__footer">
 					<button
 						type="button"

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Bitrix\Booking\Rest\V1\View;
 
 use Bitrix\Booking\Internals\Exception\ErrorBuilder;
+use Bitrix\Booking\Internals\Exception\Exception;
 use Bitrix\Booking\Rest\V1\ErrorCode;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\NotImplementedException;
@@ -259,6 +260,14 @@ abstract class View extends Base
 		$items = $this->getItemsFromSetArguments($arguments);
 		foreach ($items as $item)
 		{
+			if (!is_array($item))
+			{
+				return (new Result())->addError(ErrorBuilder::build(
+					"Array's element must be array, string given",
+					Exception::CODE_INVALID_ARGUMENT,
+				));
+			}
+
 			$checkResult = $this
 				->checkRequiredFieldsRecursive(
 					$item,

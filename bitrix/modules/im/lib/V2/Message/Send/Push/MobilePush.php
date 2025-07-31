@@ -325,6 +325,7 @@ class MobilePush
 		$messageText = preg_replace("/\[CALL(?:=(.+?))?\](.+?)?\[\/CALL\]/i", "$2", $messageText);
 		$messageText = preg_replace("/\[PCH=([0-9]{1,})\](.*?)\[\/PCH\]/i", "$2", $messageText);
 		$messageText = preg_replace_callback("/\[ICON\=([^\]]*)\]/i", ['\Bitrix\Im\Text', 'modifyIcon'], $messageText);
+		$messageText = preg_replace_callback('/\[TIMESTAMP=(\d+) FORMAT=([^\]]*)\]/i', [Text::class, 'modifyTimestampCode'], $messageText);
 		$messageText = preg_replace('#\-{54}.+?\-{54}#s', ' '.$quoteIcon.' ', str_replace('#BR#', ' ', $messageText));
 		$messageText = preg_replace('/^(>>(.*)(\n)?)/mi', ' '.$quoteIcon.' ', str_replace('#BR#', ' ', $messageText));
 		$messageText = preg_replace("/\\[color\\s*=\\s*([^\\]]+)\\](.*?)\\[\\/color\\]/isu", "$2", $messageText);

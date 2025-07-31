@@ -12,12 +12,12 @@
 			</div>
 		</div>
 		<div
-			class="landing-block-node-grid"
-			style="display: grid; grid-template-columns: repeat(auto-fit, minmax(366px, 1fr)); gap: 18px;"
+			class="landing-block-node-grid d-flex g-flex-centered"
+			style="flex-wrap: wrap; gap: 18px;"
 		>
 			<div
-				class="landing-block-node-card g-mb-25 g-rounded-10 g-bg g-cursor-pointer g-border-color g-border-color--hover g-brd-2 g-brd-style-solid g-overflow-hidden g-transition-0_3"
-				style="--bg: #ffffff; --border-color: hsla(0, 0%, 0%, 0); --border-color--hover: var(--primary); box-shadow: 0 3.17px 3.17px 0 rgba(0, 0, 0, .05);"
+				class="landing-block-node-card g-rounded-10 g-bg g-cursor-pointer g-border-color g-border-color--hover g-brd-2 g-brd-style-solid g-overflow-hidden g-transition-0_3"
+				style="--bg: #ffffff; --border-color: hsla(0, 0%, 0%, 0); --border-color--hover: var(--primary); width: 100%; max-width: 410px; box-shadow: 0 3.17px 3.17px 0 rgba(0, 0, 0, .05);"
 			>
 				<a
 					class="landing-block-node-card-link g-pt-30 g-pb-18 g-px-20 g-rounded-10 text-center btn g-font-size-18 g-font-weight-400 g-color g-color--hover"
@@ -39,8 +39,8 @@
 				</a>
 			</div>
 			<div
-				class="landing-block-node-card g-mb-25 g-rounded-10 g-bg g-cursor-pointer g-border-color g-border-color--hover g-brd-2 g-brd-style-solid g-overflow-hidden g-transition-0_3"
-				style="--bg: #ffffff; --border-color: hsla(0, 0%, 0%, 0); --border-color--hover: var(--primary); box-shadow: 0 3.17px 3.17px 0 rgba(0, 0, 0, .05);"
+				class="landing-block-node-card g-rounded-10 g-bg g-cursor-pointer g-border-color g-border-color--hover g-brd-2 g-brd-style-solid g-overflow-hidden g-transition-0_3"
+				style="--bg: #ffffff; --border-color: hsla(0, 0%, 0%, 0); --border-color--hover: var(--primary); width: 100%; max-width: 410px; box-shadow: 0 3.17px 3.17px 0 rgba(0, 0, 0, .05);"
 			>
 				<a
 					class="landing-block-node-card-link g-pt-30 g-pb-18 g-px-20 g-rounded-10 text-center btn g-font-size-18 g-font-weight-400 g-color g-color--hover"
@@ -62,8 +62,8 @@
 				</a>
 			</div>
 			<div
-				class="landing-block-node-card g-mb-25 g-rounded-10 g-bg g-cursor-pointer g-border-color g-border-color--hover g-brd-2 g-brd-style-solid g-overflow-hidden g-transition-0_3"
-				style="--bg: #ffffff; --border-color: hsla(0, 0%, 0%, 0); --border-color--hover: var(--primary); box-shadow: 0 3.17px 3.17px 0 rgba(0, 0, 0, .05);"
+				class="landing-block-node-card g-rounded-10 g-bg g-cursor-pointer g-border-color g-border-color--hover g-brd-2 g-brd-style-solid g-overflow-hidden g-transition-0_3"
+				style="--bg: #ffffff; --border-color: hsla(0, 0%, 0%, 0); --border-color--hover: var(--primary); width: 100%; max-width: 410px; box-shadow: 0 3.17px 3.17px 0 rgba(0, 0, 0, .05);"
 			>
 				<a
 					class="landing-block-node-card-link g-pt-30 g-pb-18 g-px-20 g-rounded-10 text-center btn g-font-size-18 g-font-weight-400 g-color g-color--hover"

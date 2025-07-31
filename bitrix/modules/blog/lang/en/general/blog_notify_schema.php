@@ -1,7 +1,6 @@
 <?php
 $MESS["BLG_NS"] = "Conversations (posts in activity stream)";
 $MESS["BLG_NS_BROADCAST_COMMENT"] = "Add comment for message to all users";
-$MESS["BLG_NS_BROADCAST_POST"] = "Send new message to all users";
 $MESS["BLG_NS_BROADCAST_POST_MSGVER_1"] = "New broadcast post added";
 $MESS["BLG_NS_COMMENT"] = "A comment was added to your post";
 $MESS["BLG_NS_GRAT"] = "Appreciation notification";

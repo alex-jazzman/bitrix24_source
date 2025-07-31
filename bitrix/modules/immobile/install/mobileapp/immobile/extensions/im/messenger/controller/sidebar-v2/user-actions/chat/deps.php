@@ -11,6 +11,7 @@ return [
 		'im:messenger/provider/data',
 		'im:messenger/controller/sidebar-v2/user-actions/navigation',
 		'im:messenger/controller/sidebar-v2/user-actions/alerts',
+		'im:messenger/controller/sidebar-v2/const',
     ],
     'bundle' => [],
 ];

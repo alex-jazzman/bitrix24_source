@@ -26,11 +26,11 @@ class UpdateWaitListItemCommand extends AbstractCommand
 		];
 	}
 
-	public static function mapFromArray(array $array): self
+	public static function mapFromArray(array $props): self
 	{
 		return new self(
-			updatedBy: $array['updatedBy'],
-			waitListItem: WaitListItem::mapFromArray($array['waitListItem']),
+			updatedBy: $props['updatedBy'],
+			waitListItem: WaitListItem::mapFromArray($props['waitListItem']),
 		);
 	}
 

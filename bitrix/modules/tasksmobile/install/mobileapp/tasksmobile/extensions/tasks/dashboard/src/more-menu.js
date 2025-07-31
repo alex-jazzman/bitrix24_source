@@ -159,7 +159,7 @@ jn.define('tasks/dashboard/src/more-menu', (require, exports, module) => {
 					showTopSeparator: true,
 					sectionCode: 'settings',
 				}),
-				this.createMenuItem({
+				!this.isScrumProject() && this.createMenuItem({
 					id: 'view-switcher',
 					title: Loc.getMessage('M_TASKS_VIEW_ROUTER_MENU_TITLE'),
 					icon: ViewIcons[this.getSelectedView()],

@@ -1,6 +1,6 @@
 import { Loc, Tag, Event, Type } from 'main.core';
 import { Analytics } from '../../analytics';
-import DepartmentControl from '../../department-control';
+import DepartmentControl from 'intranet.department-control';
 import { Transport } from '../../transport';
 import { LocalEmailPageType } from '../local-email-page';
 import { EmailInvitationInput } from 'email-invitation-input';

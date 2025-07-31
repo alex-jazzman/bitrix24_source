@@ -21,14 +21,16 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/base/src/content', (require, 
 		{
 			super(props);
 
-			this.dialogId = this.props.dialogId;
+			const { dialogId, widgetNavigator, dialogLocator } = props;
 			this.dialogHelper = DialogHelper.createByDialogId(this.dialogId);
-			assertDefined(this.dialogId, 'dialogId property is required');
+			this.dialogId = dialogId;
+			assertDefined(dialogId, 'dialogId property is required');
 
 			/** @type {SidebarWidgetNavigator} */
-			this.widgetNavigator = this.props.widgetNavigator;
+			this.widgetNavigator = widgetNavigator;
 			assertDefined(this.widgetNavigator, 'widgetNavigator property is required');
 
+			this.dialogLocator = dialogLocator;
 			this.store = serviceLocator.get('core').getStore();
 			this.storeManager = serviceLocator.get('core').getStoreManager();
 			this.currentUserId = serviceLocator.get('core').getUserId();

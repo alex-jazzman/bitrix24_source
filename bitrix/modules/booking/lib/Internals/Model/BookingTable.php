@@ -112,6 +112,7 @@ final class BookingTable extends DataManager
 
 			(new DatetimeField('CREATED_AT'))
 				->configureDefaultValue(new DateTime()),
+
 			(new DatetimeField('UPDATED_AT'))
 				->configureDefaultValue(new DateTime()),
 		];

@@ -11,8 +11,9 @@ jn.define('bizproc/task/details/buttons', (require, exports, module) => {
 
 	const { PureComponent } = require('layout/pure-component');
 
-	const { TaskErrorCode } = require('bizproc/task/task-constants');
+	const { TaskErrorCode, TaskUserStatus } = require('bizproc/task/task-constants');
 	const { TaskButtons, DelegateButton } = require('bizproc/task/buttons');
+	const { AppRatingClient } = require('bizproc/app-rating-client');
 
 	class TaskDetailsButtons extends PureComponent
 	{
@@ -164,10 +165,12 @@ jn.define('bizproc/task/details/buttons', (require, exports, module) => {
 					if (this.layout)
 					{
 						this.layout.close(() => {
-							BX.postComponentEvent(
-								'AppRatingManager.onBizProcTaskCompleted',
-								[taskCompletionParams?.taskRequest],
-							);
+							if (taskCompletionParams?.taskRequest?.INLINE_USER_STATUS === TaskUserStatus.YES
+								|| taskCompletionParams?.taskRequest?.INLINE_USER_STATUS === TaskUserStatus.OK)
+							{
+								AppRatingClient.increaseBusinessProcessExecutedCounter();
+								AppRatingClient.tryOpenAppRatingAfterBusinessProcessExecuted();
+							}
 						});
 					}
 				},

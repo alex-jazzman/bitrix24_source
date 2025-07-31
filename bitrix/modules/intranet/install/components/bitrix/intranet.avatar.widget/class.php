@@ -1,7 +1,6 @@
 <?php
 
 use Bitrix\Intranet;
-use Bitrix\Intranet\MainPage\Publisher;
 use Bitrix\Main\Web\Uri;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)

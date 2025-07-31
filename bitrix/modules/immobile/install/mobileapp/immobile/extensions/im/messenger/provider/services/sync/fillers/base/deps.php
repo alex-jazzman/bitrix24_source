@@ -12,6 +12,7 @@ return [
 		'im:messenger/lib/helper',
 		'im:messenger/provider/data',
 		'im:messenger/lib/counters/counter-manager/messenger/sender',
+		'im:messenger/lib/feature',
 	],
 	'bundle' => [],
 ];

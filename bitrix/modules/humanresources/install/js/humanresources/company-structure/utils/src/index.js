@@ -1,8 +1,9 @@
 import { getUserDataBySelectorItem, getInvitedUserData } from './user-item';
 import type { UserData } from './user-item';
 import { getColorCode } from './color';
-import { EntityTypes } from './consts';
+import { EntityTypes, NodeSettingsTypes, WizardApiEntityChangedDict, ChatTypes } from './consts';
 import { NodeColorsSettingsDict, type NodeColorSettingsType, getNodeColorSettings } from './node-color';
+import type { ChatOrChannelDetailed, ChatListResponse } from './types';
 
 export {
 	getUserDataBySelectorItem,
@@ -11,9 +12,14 @@ export {
 	EntityTypes,
 	NodeColorsSettingsDict,
 	getNodeColorSettings,
+	NodeSettingsTypes,
+	WizardApiEntityChangedDict,
+	ChatTypes,
 };
 
 export type {
 	UserData,
 	NodeColorSettingsType,
+	ChatOrChannelDetailed,
+	ChatListResponse,
 };

@@ -1,6 +1,6 @@
 import { Loc, Tag, Type, Event } from 'main.core';
 import { Analytics } from '../analytics';
-import DepartmentControl from '../department-control';
+import DepartmentControl from 'intranet.department-control';
 import { Transport } from '../transport';
 import { EmailInvitationInput } from './local-email-page/email-invitation-input';
 import { InviteEmailPopup } from './local-email-page/invite-email-popup';
@@ -66,6 +66,7 @@ export class LocalEmailPage extends Page
 				<div class="invite-title-text">
 					${Loc.getMessage('INTRANET_INVITE_DIALOG_TITLE_EMAIL_MSGVER_1')}
 				</div>
+				<div class="invite-title-helper" onclick="top.BX.Helper.show('redirect=detail&code=25375678');"></div>
 			</div>
 		`;
 	}

@@ -11,31 +11,27 @@ jn.define('im/messenger/controller/selector/forward', (require, exports, module)
 	class ForwardSelector
 	{
 		/**
-		 * @param {Object} props
-		 * @param {number[]} props.messageIds
-		 * @param {string} props.fromDialogId
-		 * @param {Object} [props.locator]
-		 * @param {() => void | Promise} [props.onDialogSelected]
+		 * @param {ForwardSelectorInitProps} props
 		 */
 		constructor(props)
 		{
-			this.onDialogSelected = props?.onDialogSelected;
-			this.messageIds = props?.messageIds;
-			this.fromDialogId = props?.fromDialogId;
-
-			this.locator = props?.locator ?? null;
+			this.props = props;
 		}
 
-		open()
+		/**
+		 * @param {Object} parentWidget
+		 * @returns {Promise}
+		 */
+		open({ parentWidget })
 		{
-			openDialogSelector({
+			return openDialogSelector({
 				title: Loc.getMessage('IMMOBILE_MESSENGER_FORWARD_SELECTOR_TITLE'),
 				providerOptions: {
 					withFavorite: true,
 				},
 				onItemSelected: this.#onDialogSelected,
-				closeOnSelect: true,
-			});
+				closeOnSelect: this.props.closeOnSelect ?? true,
+			}, parentWidget);
 		}
 
 		/**
@@ -43,23 +39,30 @@ jn.define('im/messenger/controller/selector/forward', (require, exports, module)
 		 * @param {string} item.id
 		 */
 		#onDialogSelected = async ({ item }) => {
+			const {
+				onDialogSelected,
+				messageIds,
+				fromDialogId,
+				locator,
+			} = this.props;
+
 			const dialogId = item.id;
 
-			if (this.onDialogSelected)
+			if (onDialogSelected)
 			{
-				await this.onDialogSelected();
+				await onDialogSelected();
 			}
 
-			if (String(dialogId) === String(this.fromDialogId) && this.locator)
+			if (String(dialogId) === String(fromDialogId) && locator)
 			{
-				this.locator.get(REPLY_MANAGER_KEY).startForwardingMessages(this.messageIds);
+				locator.get(REPLY_MANAGER_KEY).startForwardingMessages(messageIds);
 
 				return;
 			}
 
 			const openDialogParams = {
 				dialogId,
-				forwardMessageIds: this.messageIds,
+				forwardMessageIds: messageIds,
 			};
 
 			MessengerEmitter.emit(EventType.messenger.openDialog, openDialogParams, 'im.messenger');

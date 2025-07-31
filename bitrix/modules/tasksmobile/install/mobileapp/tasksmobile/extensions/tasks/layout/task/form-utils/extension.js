@@ -117,6 +117,7 @@ jn.define('tasks/layout/task/form-utils', (require, exports, module) => {
 				excludeIds: [extra.currentTaskId],
 			},
 		},
+		undeselectableIds: extra.undeselectableIds ?? [],
 		getNonSelectableErrorText: useCallback(() => Loc.getMessage('M_TASKS_DENIED_SELECT_TASK')),
 		selectorTitle: Loc.getMessage('M_TASK_FORM_FIELD_SUBTASK_TITLE'),
 		textMultiple: Loc.getMessage('M_TASK_FORM_FIELD_SUBTASK_TITLE_MULTI'),

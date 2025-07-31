@@ -493,6 +493,11 @@ jn.define('im/messenger/model/dialogues/model', (require, exports, module) => {
 				const indexInputActionsByUser = inputActions.findIndex((item) => item.userId === userId);
 				const actions = inputActions[indexInputActionsByUser]?.actions;
 
+				if (!Type.isArray(actions))
+				{
+					return false;
+				}
+
 				const newActions = actions.slice(1);
 				if (newActions.length === 0)
 				{

@@ -61,7 +61,7 @@ class WaitList extends Controller
 	public function listAction(
 		PageNavigation $pageNavigation,
 		array $filter = [],
-	): Page
+	): ?Page
 	{
 		if (isset($filter['CREATED_WITHIN']))
 		{

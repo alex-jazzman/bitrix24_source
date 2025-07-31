@@ -1,130 +1,13 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Intranet = this.BX.Intranet || {};
-(function (exports,ui_analytics,emailInvitationInput,ui_fonts_inter,ui_buttons,main_popup,ui_switcher,intranet_invitationInput,ui_entitySelector,main_core,main_core_events) {
+(function (exports,ui_analytics,emailInvitationInput,ui_fonts_inter,ui_buttons,main_popup,ui_switcher,intranet_invitationInput,ui_entitySelector,DepartmentControl,main_core,main_core_events) {
 	'use strict';
 
-	let _ = t => t,
-	  _t,
-	  _t2,
-	  _t3,
-	  _t4;
-	var _tagSelector = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("tagSelector");
-	var _rootDepartment = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("rootDepartment");
-	var _isRootItem = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isRootItem");
-	class DepartmentControl {
-	  constructor(options) {
-	    Object.defineProperty(this, _isRootItem, {
-	      value: _isRootItem2
-	    });
-	    Object.defineProperty(this, _tagSelector, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _rootDepartment, {
-	      writable: true,
-	      value: void 0
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _rootDepartment)[_rootDepartment] = main_core.Type.isNil(options == null ? void 0 : options.rootDepartment) ? null : options == null ? void 0 : options.rootDepartment;
-	    let items = [];
-	    if (!main_core.Type.isNil(options == null ? void 0 : options.rootDepartment)) {
-	      items = options.departmentList.map(department => {
-	        const isRootDepartment = parseInt(department.id, 10) === parseInt(babelHelpers.classPrivateFieldLooseBase(this, _rootDepartment)[_rootDepartment].id, 10);
-	        // styles has reference in \Bitrix\HumanResources\Integration\UI\DepartmentProvider
-	        const avatar = isRootDepartment ? '/bitrix/js/humanresources/entity-selector/src/images/company.svg' : '/bitrix/js/humanresources/entity-selector/src/images/department.svg';
-	        return {
-	          id: parseInt(department.id, 10),
-	          entityId: 'structure-node',
-	          title: department.name,
-	          customData: {
-	            accessCode: department.accessCode
-	          },
-	          avatar,
-	          tagOptions: {
-	            avatar,
-	            bgColor: isRootDepartment ? '#f1fbd0' : '#ade7e4',
-	            textColor: isRootDepartment ? '#7fa800' : '#207976',
-	            fontWeight: '700'
-	          }
-	        };
-	      });
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _tagSelector)[_tagSelector] = new ui_entitySelector.TagSelector({
-	      items,
-	      events: {
-	        onBeforeTagRemove: event => {
-	          const selector = event.getTarget();
-	          const {
-	            tag
-	          } = event.getData();
-	          if (selector.getTags().length === 1 && babelHelpers.classPrivateFieldLooseBase(this, _isRootItem)[_isRootItem](tag)) {
-	            event.preventDefault();
-	          }
-	        }
-	      },
-	      dialogOptions: {
-	        context: 'INVITATION_STRUCTURE',
-	        width: 350,
-	        enableSearch: true,
-	        multiple: true,
-	        entities: [{
-	          id: 'structure-node',
-	          options: {
-	            selectMode: 'departmentsOnly',
-	            restricted: 'inviteUser'
-	          }
-	        }],
-	        events: {
-	          'Item:onBeforeDeselect': event => {
-	            const dialog = event.getTarget();
-	            const selectedItems = dialog.getSelectedItems();
-	            if (selectedItems.length === 1 && babelHelpers.classPrivateFieldLooseBase(this, _isRootItem)[_isRootItem](selectedItems[0])) {
-	              event.preventDefault();
-	            }
-	          },
-	          'Item:onDeselect': event => {
-	            const dialog = event.getTarget();
-	            const selectedItems = dialog.getSelectedItems();
-	            if (selectedItems.length <= 0) {
-	              const item = dialog.getItem(['structure-node', options == null ? void 0 : options.rootDepartment.id]);
-	              item == null ? void 0 : item.select();
-	            }
-	          }
-	        }
-	      }
-	    });
-	  }
-	  renderTo(container) {
-	    main_core.Dom.append(this.render(), container);
-	  }
-	  getValues() {
-	    const tagSelectorItems = babelHelpers.classPrivateFieldLooseBase(this, _tagSelector)[_tagSelector].getDialog().getSelectedItems();
-	    const collection = [];
-	    tagSelectorItems.forEach(item => {
-	      const departmentId = parseInt(item.id, 10);
-	      if (departmentId > 0) {
-	        collection.push(departmentId);
-	      }
-	    });
-	    return collection;
-	  }
-	  render() {
-	    const title = main_core.Tag.render(_t || (_t = _`<label class="intranet-invitation__dialog-title">${0}</label>`), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_DEPARTMENT_CONTROL_LABEL'));
-	    const description = main_core.Tag.render(_t2 || (_t2 = _`<div class="intranet-invitation__dialog-description">${0}</div>`), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_DEPARTMENT_CONTROL_DESCRIPTION'));
-	    const fieldContainer = main_core.Tag.render(_t3 || (_t3 = _`<div></div>`));
-	    babelHelpers.classPrivateFieldLooseBase(this, _tagSelector)[_tagSelector].renderTo(fieldContainer);
-	    return main_core.Tag.render(_t4 || (_t4 = _`<div>${0}${0}${0}</div>`), title, description, fieldContainer);
-	  }
-	}
-	function _isRootItem2(item) {
-	  var _babelHelpers$classPr, _babelHelpers$classPr2;
-	  const itemId = main_core.Type.isNil(item == null ? void 0 : item.id) ? null : parseInt(item == null ? void 0 : item.id, 10);
-	  const rootId = main_core.Type.isNil((_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _rootDepartment)[_rootDepartment]) == null ? void 0 : _babelHelpers$classPr.id) ? null : parseInt((_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _rootDepartment)[_rootDepartment]) == null ? void 0 : _babelHelpers$classPr2.id, 10);
-	  return !main_core.Type.isNil(itemId) && !main_core.Type.isNil(rootId) && itemId === rootId;
-	}
+	DepartmentControl = DepartmentControl && DepartmentControl.hasOwnProperty('default') ? DepartmentControl['default'] : DepartmentControl;
 
-	let _$1 = t => t,
-	  _t$1;
+	let _ = t => t,
+	  _t;
 	class Phone {
 	  constructor() {
 	    this.count = 0;
@@ -143,7 +26,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    if (inputNode.parentNode.querySelector(`#phone_number_${num}`)) {
 	      return;
 	    }
-	    const element = main_core.Tag.render(_t$1 || (_t$1 = _$1`
+	    const element = main_core.Tag.render(_t || (_t = _`
 			<span style="z-index: 3;" class="ui-ctl-before" data-role="phone-block">
 				<input type="hidden" name="PHONE_COUNTRY[]" id="phone_country_${0}" value="">
 				<input type="hidden" name="PHONE[]" id="phone_number_${0}" value="">
@@ -194,9 +77,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  }
 	}
 
-	let _$2 = t => t,
-	  _t$2,
-	  _t2$1;
+	let _$1 = t => t,
+	  _t$1,
+	  _t2;
 	const InputRowType = Object.freeze({
 	  PHONE: 'phone',
 	  EMAIL: 'email',
@@ -290,7 +173,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 				</div>
 			`;
 	    }
-	    const element = main_core.Tag.render(_t$2 || (_t$2 = _$2`
+	    const element = main_core.Tag.render(_t$1 || (_t$1 = _$1`
 			<div class="invite-form-row js-form-row">
 				<div class="invite-form-col">
 					${0}
@@ -400,7 +283,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  }
 	  const phoneBlock = node.parentNode.querySelector('input.ui-ctl-element');
 	  if (main_core.Type.isDomNode(phoneBlock)) {
-	    const newInput = main_core.Tag.render(_t2$1 || (_t2$1 = _$2`
+	    const newInput = main_core.Tag.render(_t2 || (_t2 = _$1`
 				<input
 					name="${0}"
 					type="text"
@@ -428,8 +311,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  }
 	}
 
-	let _$3 = t => t,
-	  _t$3;
+	let _$2 = t => t,
+	  _t$2;
 	var _errorContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("errorContainer");
 	var _successContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("successContainer");
 	var _wrapMessage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("wrapMessage");
@@ -478,7 +361,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  }
 	}
 	function _wrapMessage2(text) {
-	  return main_core.Tag.render(_t$3 || (_t$3 = _$3`<span class="ui-alert-message">${0}</span>`), BX.util.htmlspecialchars(text));
+	  return main_core.Tag.render(_t$2 || (_t$2 = _$2`<span class="ui-alert-message">${0}</span>`), BX.util.htmlspecialchars(text));
 	}
 
 	var _container = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("container");
@@ -544,11 +427,13 @@ this.BX.Intranet = this.BX.Intranet || {};
 	class Page {
 	  constructor() {
 	    main_core_events.EventEmitter.subscribe(this, 'BX.Intranet.Invitation:submit', this.onSubmit.bind(this));
+	    main_core_events.EventEmitter.subscribe('BX.Intranet.Invitation:onInviteRequestSuccess', this.onInviteSuccess.bind(this));
 	  }
 	  render() {
 	    return new HTMLElement();
 	  }
 	  onSubmit(event) {}
+	  onInviteSuccess(event) {}
 	  getSubmitButtonText() {
 	    return null;
 	  }
@@ -720,7 +605,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  }
 	}
 	function _getAdminAllowMode2() {
-	  return document.querySelector('#allow_register_confirm').checked ? Analytics.ADMIN_ALLOW_MODE_Y : Analytics.ADMIN_ALLOW_MODE_N;
+	  var _document$querySelect;
+	  return (_document$querySelect = document.querySelector('#allow_register_confirm')) != null && _document$querySelect.checked ? Analytics.ADMIN_ALLOW_MODE_Y : Analytics.ADMIN_ALLOW_MODE_N;
 	}
 	function _getIsAdmin2() {
 	  return babelHelpers.classPrivateFieldLooseBase(this, _isAdmin)[_isAdmin] ? Analytics.IS_ADMIN_Y : Analytics.IS_ADMIN_N;
@@ -776,8 +662,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  }
 	}
 
-	let _$4 = t => t,
-	  _t$4;
+	let _$3 = t => t,
+	  _t$3;
 	var _input = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("input");
 	class EmailInvitationInput {
 	  constructor() {
@@ -806,7 +692,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  }
 	  getContent(actionBlock = null) {
 	    this.clearTags();
-	    return main_core.Tag.render(_t$4 || (_t$4 = _$4`
+	    return main_core.Tag.render(_t$3 || (_t$3 = _$3`
 			<div class="email-popup-container">
 				<div class="email-popup-container__title">
 					${0}
@@ -845,8 +731,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  }
 	}
 
-	let _$5 = t => t,
-	  _t$5;
+	let _$4 = t => t,
+	  _t$4;
 	var _sendButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendButton");
 	var _popup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("popup");
 	var _input$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("input");
@@ -926,7 +812,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	}
 	function _getActionContent2() {
 	  if (!babelHelpers.classPrivateFieldLooseBase(this, _actionContent)[_actionContent]) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _actionContent)[_actionContent] = main_core.Tag.render(_t$5 || (_t$5 = _$5`
+	    babelHelpers.classPrivateFieldLooseBase(this, _actionContent)[_actionContent] = main_core.Tag.render(_t$4 || (_t$4 = _$4`
 				<div class="email-popup-container__action">
 					${0}
 					${0}
@@ -961,8 +847,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  }).render();
 	}
 
-	let _$6 = t => t,
-	  _t$6;
+	let _$5 = t => t,
+	  _t$5;
 	var _departmentControl = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("departmentControl");
 	var _linkRegisterEnabled = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("linkRegisterEnabled");
 	var _transport = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("transport");
@@ -1118,7 +1004,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    '[LINK]': '<a class="intranet-invitation-dialog-link">',
 	    '[/LINK]': '</a>'
 	  }) : main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_POPUP_FAILED_DESCRIPTION');
-	  const content = main_core.Tag.render(_t$6 || (_t$6 = _$6`
+	  const content = main_core.Tag.render(_t$5 || (_t$5 = _$5`
 			<div class="invite-email-notification">
 				<div class="invite-email-notification__title">
 					${0}
@@ -1139,11 +1025,11 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  window.top.location = '/company/?apply_filter=Y&INVITED=Y';
 	}
 
-	let _$7 = t => t,
-	  _t$7,
-	  _t2$2,
-	  _t3$1,
-	  _t4$1,
+	let _$6 = t => t,
+	  _t$6,
+	  _t2$1,
+	  _t3,
+	  _t4,
 	  _t5,
 	  _t6;
 	var _container$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("container");
@@ -1221,7 +1107,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _container$2)[_container$2]) {
 	      return babelHelpers.classPrivateFieldLooseBase(this, _container$2)[_container$2];
 	    }
-	    return main_core.Tag.render(_t$7 || (_t$7 = _$7`
+	    return main_core.Tag.render(_t$6 || (_t$6 = _$6`
 			<div class="invite-wrap js-intranet-invitation-block" data-role="invite-block">
 				${0}
 				${0}
@@ -1246,7 +1132,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  }
 	}
 	function _titleRender2() {
-	  return main_core.Tag.render(_t2$2 || (_t2$2 = _$7`
+	  return main_core.Tag.render(_t2$1 || (_t2$1 = _$6`
 			<div class="invite-title-container">
 				<div class="invite-title-icon invite-title-icon-message">
 					<div class="ui-icon-set --person-letter"></div>
@@ -1254,6 +1140,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 				<div class="invite-title-text">
 					${0}
 				</div>
+				<div class="invite-title-helper" onclick="top.BX.Helper.show('redirect=detail&code=25375678');"></div>
 			</div>
 		`), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_TITLE_EMAIL_MSGVER_1'));
 	}
@@ -1266,7 +1153,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _input$3)[_input$3].onReadySaveInputHandler(this.onReadySaveInputHandler);
 	    babelHelpers.classPrivateFieldLooseBase(this, _input$3)[_input$3].onUnreadySaveInputHandler(this.onUnreadySaveInputHandler);
 	  }
-	  return main_core.Tag.render(_t3$1 || (_t3$1 = _$7`
+	  return main_core.Tag.render(_t3 || (_t3 = _$6`
 			<div class="invite-content-container">
 				${0}
 				${0}
@@ -1275,7 +1162,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 		`), topBlock, babelHelpers.classPrivateFieldLooseBase(this, _getDepartmentBlock)[_getDepartmentBlock](), babelHelpers.classPrivateFieldLooseBase(this, _linkRegisterEnabled$1)[_linkRegisterEnabled$1] && babelHelpers.classPrivateFieldLooseBase(this, _getMailServiceBlock)[_getMailServiceBlock]());
 	}
 	function _getNotifyBlock2() {
-	  return main_core.Tag.render(_t4$1 || (_t4$1 = _$7`
+	  return main_core.Tag.render(_t4 || (_t4 = _$6`
 			<div class="invite-content-notify">
 				<div class="invite-content-notify-wrapper">
 					<div class="invite-content-notify__image"></div>
@@ -1292,7 +1179,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 		`), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_MAIL_CONTENT_DESCRIPTION'), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LOCAL_MAIL_CONTENT_STEPS'));
 	}
 	function _getDepartmentBlock2() {
-	  return main_core.Tag.render(_t5 || (_t5 = _$7`
+	  return main_core.Tag.render(_t5 || (_t5 = _$6`
 			<div class="invite-content-department">
 				${0}
 			</div>
@@ -1303,7 +1190,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    '[LINK]': '<a class="invite-content-mail-service__link">',
 	    '[/LINK]': '</a>'
 	  });
-	  const block = main_core.Tag.render(_t6 || (_t6 = _$7`
+	  const block = main_core.Tag.render(_t6 || (_t6 = _$6`
 			<div class="invite-content-mail-service">
 				${0}
 			</div>
@@ -1400,10 +1287,10 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  }
 	}
 
-	let _$8 = t => t,
-	  _t$8,
-	  _t2$3,
-	  _t3$2;
+	let _$7 = t => t,
+	  _t$7,
+	  _t2$2,
+	  _t3$1;
 	var _container$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("container");
 	var _inputsFactory = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("inputsFactory");
 	var _smsAvailable = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("smsAvailable");
@@ -1473,7 +1360,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    const form = babelHelpers.classPrivateFieldLooseBase(this, _renderForm$1)[_renderForm$1]();
 	    babelHelpers.classPrivateFieldLooseBase(this, _inputsFactory)[_inputsFactory].renderInputRowsTo(form.querySelector('div[data-role="rows-container"]'), 5);
 	    babelHelpers.classPrivateFieldLooseBase(this, _departmentControl$2)[_departmentControl$2].renderTo(form.querySelector('form'));
-	    babelHelpers.classPrivateFieldLooseBase(this, _container$3)[_container$3] = main_core.Tag.render(_t$8 || (_t$8 = _$8`
+	    babelHelpers.classPrivateFieldLooseBase(this, _container$3)[_container$3] = main_core.Tag.render(_t$7 || (_t$7 = _$7`
 			<div class="invite-wrap js-intranet-invitation-block" data-role="invite-block">
 				${0}
 				${0}
@@ -1517,13 +1404,19 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      analyticsLabel
 	    });
 	  }
+	  onInviteSuccess(event) {
+	    var _this$render$querySel;
+	    (_this$render$querySel = this.render().querySelector('form')) == null ? void 0 : _this$render$querySel.reset();
+	    babelHelpers.classPrivateFieldLooseBase(this, _departmentControl$2)[_departmentControl$2].reset();
+	  }
 	  getSubmitButtonText() {
 	    return main_core.Loc.getMessage('BX24_INVITE_DIALOG_ACTION_INVITE');
 	  }
 	}
 	function _titleRender2$1() {
 	  const suffix = babelHelpers.classPrivateFieldLooseBase(this, _useOnlyPhone)[_useOnlyPhone] ? 'PHONE_MSGVER_1' : babelHelpers.classPrivateFieldLooseBase(this, _smsAvailable)[_smsAvailable] ? 'EMAIL_AND_PHONE' : 'EMAIL';
-	  return main_core.Tag.render(_t2$3 || (_t2$3 = _$8`
+	  const code = babelHelpers.classPrivateFieldLooseBase(this, _useOnlyPhone)[_useOnlyPhone] || babelHelpers.classPrivateFieldLooseBase(this, _smsAvailable)[_smsAvailable] ? '21141922' : '25375678';
+	  return main_core.Tag.render(_t2$2 || (_t2$2 = _$7`
 			<div class="invite-title-container">
 				<div class="invite-title-icon invite-title-icon-message">
 					<div class="ui-icon-set --person-letter"></div>
@@ -1531,11 +1424,12 @@ this.BX.Intranet = this.BX.Intranet || {};
 				<div class="invite-title-text">
 					${0}
 				</div>
+				<div class="invite-title-helper" onclick="top.BX.Helper.show('redirect=detail&code=${0}');"></div>
 			</div>
-		`), main_core.Loc.getMessage(`INTRANET_INVITE_DIALOG_TITLE_${suffix}`));
+		`), main_core.Loc.getMessage(`INTRANET_INVITE_DIALOG_TITLE_${suffix}`), code);
 	}
 	function _renderForm2$1() {
-	  const form = main_core.Tag.render(_t3$2 || (_t3$2 = _$8`
+	  const form = main_core.Tag.render(_t3$1 || (_t3$1 = _$7`
 			<div class="invite-content-container">
 				<form method="POST" name="INVITE_DIALOG_FORM" class="invite-form-container">
 					<div data-role="rows-container"></div>
@@ -1589,8 +1483,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_EMAIL_EMPTY_ERROR');
 	}
 
-	let _$9 = t => t,
-	  _t$9;
+	let _$8 = t => t,
+	  _t$8;
 	var _container$4 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("container");
 	var _inputsFactory$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("inputsFactory");
 	var _tagSelectorGroup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("tagSelectorGroup");
@@ -1623,7 +1517,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _container$4)[_container$4]) {
 	      return babelHelpers.classPrivateFieldLooseBase(this, _container$4)[_container$4];
 	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _container$4)[_container$4] = main_core.Tag.render(_t$9 || (_t$9 = _$9`
+	    babelHelpers.classPrivateFieldLooseBase(this, _container$4)[_container$4] = main_core.Tag.render(_t$8 || (_t$8 = _$8`
 			<div class="invite-wrap js-intranet-invitation-block" data-role="extranet-block">
 				<div class="invite-title-container">
 					<div class="invite-title-icon invite-title-icon-message">
@@ -1705,13 +1599,17 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      analyticsLabel
 	    });
 	  }
+	  onInviteSuccess(event) {
+	    var _this$render$querySel;
+	    (_this$render$querySel = this.render().querySelector('form')) == null ? void 0 : _this$render$querySel.reset();
+	  }
 	  getSubmitButtonText() {
 	    return main_core.Loc.getMessage('BX24_INVITE_DIALOG_ACTION_INVITE');
 	  }
 	}
 
-	let _$a = t => t,
-	  _t$a;
+	let _$9 = t => t,
+	  _t$9;
 	var _container$5 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("container");
 	var _inputsFactory$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("inputsFactory");
 	var _tagSelectorGroup$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("tagSelectorGroup");
@@ -1749,7 +1647,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _container$5)[_container$5]) {
 	      return babelHelpers.classPrivateFieldLooseBase(this, _container$5)[_container$5];
 	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _container$5)[_container$5] = main_core.Tag.render(_t$a || (_t$a = _$a`
+	    babelHelpers.classPrivateFieldLooseBase(this, _container$5)[_container$5] = main_core.Tag.render(_t$9 || (_t$9 = _$9`
 			<div class="invite-wrap js-intranet-invitation-block" data-role="invite-with-group-dp-block">
 				<div class="invite-title-container">
 					<div class="invite-title-icon invite-title-icon-message">
@@ -1837,14 +1735,20 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      analyticsLabel
 	    });
 	  }
+	  onInviteSuccess(event) {
+	    var _this$render$querySel;
+	    (_this$render$querySel = this.render().querySelector('form')) == null ? void 0 : _this$render$querySel.reset();
+	    babelHelpers.classPrivateFieldLooseBase(this, _departmentControl$3)[_departmentControl$3].reset();
+	    babelHelpers.classPrivateFieldLooseBase(this, _tagSelectorGroup$1)[_tagSelectorGroup$1].removeTags();
+	  }
 	  getSubmitButtonText() {
 	    return main_core.Loc.getMessage('BX24_INVITE_DIALOG_ACTION_INVITE');
 	  }
 	}
 
-	let _$b = t => t,
-	  _t$b,
-	  _t2$4;
+	let _$a = t => t,
+	  _t$a,
+	  _t2$3;
 	var _container$6 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("container");
 	class IntegratorPage extends Page {
 	  constructor(options) {
@@ -1858,7 +1762,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _container$6)[_container$6]) {
 	      return babelHelpers.classPrivateFieldLooseBase(this, _container$6)[_container$6];
 	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _container$6)[_container$6] = main_core.Tag.render(_t$b || (_t$b = _$b`
+	    babelHelpers.classPrivateFieldLooseBase(this, _container$6)[_container$6] = main_core.Tag.render(_t$a || (_t$a = _$a`
 			<div class="invite-wrap js-intranet-invitation-block" data-role="integrator-block">
 				<form method="POST" name="INTEGRATOR_DIALOG_FORM">
 					<div class="invite-title-container">
@@ -1916,7 +1820,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    const analyticsLabel = {
 	      INVITATION_TYPE: 'integrator'
 	    };
-	    const message = main_core.Tag.render(_t2$4 || (_t2$4 = _$b`
+	    const message = main_core.Tag.render(_t2$3 || (_t2$3 = _$a`
 			<div class="invite-integrator-confirm-message">
 				${0}
 			</div>
@@ -1963,6 +1867,10 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  }
 	  getSubmitButtonText() {
 	    return main_core.Loc.getMessage('BX24_INVITE_DIALOG_ACTION_INVITE');
+	  }
+	  onInviteSuccess(event) {
+	    var _this$render$querySel;
+	    (_this$render$querySel = this.render().querySelector('form')) == null ? void 0 : _this$render$querySel.reset();
 	  }
 	}
 
@@ -2211,11 +2119,11 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  }
 	}
 
-	let _$c = t => t,
-	  _t$c,
-	  _t2$5,
-	  _t3$3,
-	  _t4$2,
+	let _$b = t => t,
+	  _t$b,
+	  _t2$4,
+	  _t3$2,
+	  _t4$1,
 	  _t5$1,
 	  _t6$1,
 	  _t7;
@@ -2316,7 +2224,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _container$8)[_container$8]) {
 	      return babelHelpers.classPrivateFieldLooseBase(this, _container$8)[_container$8];
 	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _container$8)[_container$8] = main_core.Tag.render(_t$c || (_t$c = _$c`
+	    babelHelpers.classPrivateFieldLooseBase(this, _container$8)[_container$8] = main_core.Tag.render(_t$b || (_t$b = _$b`
 			<div class="invite-wrap js-intranet-invitation-block" data-role="self-block">
 				<div class="invite-title-container">
 					<div class="invite-title-icon invite-title-icon-link">
@@ -2402,14 +2310,14 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  }
 	}
 	function _renderCopyBtnDescription2() {
-	  return main_core.Tag.render(_t2$5 || (_t2$5 = _$c`
+	  return main_core.Tag.render(_t2$4 || (_t2$4 = _$b`
 			<div class="invite-form__copy-button-description">
 				${0}
 			</div>
 		`), main_core.Loc.getMessage('INTRANET_INVITE_COPY_BUTTON_DESCRIPTION'));
 	}
 	function _renderUpdateLinkBtn2() {
-	  return main_core.Tag.render(_t3$3 || (_t3$3 = _$c`
+	  return main_core.Tag.render(_t3$2 || (_t3$2 = _$b`
 			<span data-role="selfRegenerateSecretButton">
 				<a
 				href="javascript:void(0)"
@@ -2421,7 +2329,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 		`), main_core.Loc.getMessage('BX24_INVITE_DIALOG_REGISTER_NEW_LINK'));
 	}
 	function _renderFastRegistrationSwitcher2() {
-	  return main_core.Tag.render(_t4$2 || (_t4$2 = _$c`
+	  return main_core.Tag.render(_t4$1 || (_t4$1 = _$b`
 			<label class="invite-dialog-fast-reg-control-container js-invite-dialog-fast-reg-control-container ${0}" for="allow_register">
 				<div class="invite-dialog-fast-reg-control-switcher" data-role="self-switcher"></div>
 				<span class="invite-dialog-fast-reg-control-label">
@@ -2431,7 +2339,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 		`), babelHelpers.classPrivateFieldLooseBase(this, _fastRegistrationAvailable)[_fastRegistrationAvailable] ? '' : 'disallow-registration', main_core.Loc.getMessage('INTRANET_INVITE_ALLOW_INVITATION_LINK'));
 	}
 	function _renderConfirmRegistrationCheckbox2() {
-	  return main_core.Tag.render(_t5$1 || (_t5$1 = _$c`
+	  return main_core.Tag.render(_t5$1 || (_t5$1 = _$b`
 			<div style="padding-top: 12px;">
 				<label class="ui-ctl ui-ctl-w100 ui-ctl-checkbox invite-form-check-box">
 					<input
@@ -2449,7 +2357,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 		`), babelHelpers.classPrivateFieldLooseBase(this, _needConfirmRegistration)[_needConfirmRegistration] ? 'checked' : '', babelHelpers.classPrivateFieldLooseBase(this, _isAdmin$1)[_isAdmin$1] ? '' : 'disabled', main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_FAST_REG_TYPE'));
 	}
 	function _renderWhiteListField2() {
-	  return main_core.Tag.render(_t6$1 || (_t6$1 = _$c`
+	  return main_core.Tag.render(_t6$1 || (_t6$1 = _$b`
 		<div id="intranet-dialog-tab-content-self-whitelist" data-role="selfWhiteList" ${0}>
 			<span class="invite-form-ctl-title">
 				${0}
@@ -2468,7 +2376,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 		`), babelHelpers.classPrivateFieldLooseBase(this, _needConfirmRegistration)[_needConfirmRegistration] ? '' : 'style="display: none"', main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_FAST_REG_DOMAINS'), babelHelpers.classPrivateFieldLooseBase(this, _isAdmin$1)[_isAdmin$1] ? '' : 'disabled', babelHelpers.classPrivateFieldLooseBase(this, _wishlist)[_wishlist], main_core.Loc.getMessage('BX24_INVITE_DIALOG_REGISTER_TYPE_DOMAINS_PLACEHOLDER'));
 	}
 	function _renderWarningContainer2() {
-	  return main_core.Tag.render(_t7 || (_t7 = _$c`
+	  return main_core.Tag.render(_t7 || (_t7 = _$b`
 			<div class="intranet-invitation__error-box">
 				<div class="intranet-invitation__error-icon"></div>
 				<div class="intranet-invitation__error-title">${0}</div>
@@ -2516,6 +2424,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      babelHelpers.classPrivateFieldLooseBase(this, _input$4)[_input$4].getTagSelector().focusTextBox();
 	    });
 	  }
+	  reset() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _input$4)[_input$4].getTagSelector().removeTags();
+	  }
 	  renderTo(node) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _input$4)[_input$4].renderTo(node);
 	  }
@@ -2549,9 +2460,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  }
 	}
 
-	let _$d = t => t,
-	  _t$d,
-	  _t2$6;
+	let _$c = t => t,
+	  _t$c,
+	  _t2$5;
 	var _container$9 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("container");
 	var _smsAvailable$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("smsAvailable");
 	var _useOnlyPhone$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("useOnlyPhone");
@@ -2608,7 +2519,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _container$9)[_container$9]) {
 	      return babelHelpers.classPrivateFieldLooseBase(this, _container$9)[_container$9];
 	    }
-	    const helper = main_core.Tag.render(_t$d || (_t$d = _$d`
+	    const helper = main_core.Tag.render(_t$c || (_t$c = _$c`
 			<div class="invite-title-helper"
 				 data-hint="${0}"
 				 data-hint-no-icon
@@ -2616,7 +2527,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 			</div>
 		`), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_MASS_INVITE_HINT'));
 	    const sufix = babelHelpers.classPrivateFieldLooseBase(this, _useOnlyPhone$1)[_useOnlyPhone$1] ? 'PHONE' : babelHelpers.classPrivateFieldLooseBase(this, _smsAvailable$1)[_smsAvailable$1] ? 'EMAIL_AND_PHONE' : 'EMAIL';
-	    babelHelpers.classPrivateFieldLooseBase(this, _container$9)[_container$9] = main_core.Tag.render(_t2$6 || (_t2$6 = _$d`
+	    babelHelpers.classPrivateFieldLooseBase(this, _container$9)[_container$9] = main_core.Tag.render(_t2$5 || (_t2$5 = _$c`
 			<div class="invite-wrap js-intranet-invitation-block" data-role="mass-invite-block">
 				<div class="invite-title-container">
 					<div class="invite-title-icon invite-title-icon-mass">
@@ -2688,6 +2599,10 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      analyticsLabel
 	    });
 	  }
+	  onInviteSuccess(event) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _massInvitationField)[_massInvitationField].reset();
+	    babelHelpers.classPrivateFieldLooseBase(this, _departmentControl$6)[_departmentControl$6].reset();
+	  }
 	  getSubmitButtonText() {
 	    return main_core.Loc.getMessage('BX24_INVITE_DIALOG_ACTION_INVITE');
 	  }
@@ -2709,9 +2624,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  return main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_VALIDATE_ERROR_EMAIL');
 	}
 
-	let _$e = t => t,
-	  _t$e,
-	  _t2$7;
+	let _$d = t => t,
+	  _t$d,
+	  _t2$6;
 	var _container$a = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("container");
 	var _inputsFactory$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("inputsFactory");
 	var _isCloud$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isCloud");
@@ -2759,7 +2674,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _container$a)[_container$a]) {
 	      return babelHelpers.classPrivateFieldLooseBase(this, _container$a)[_container$a];
 	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _container$a)[_container$a] = main_core.Tag.render(_t$e || (_t$e = _$e`
+	    babelHelpers.classPrivateFieldLooseBase(this, _container$a)[_container$a] = main_core.Tag.render(_t$d || (_t$d = _$d`
 			<div class="invite-wrap js-intranet-invitation-block" data-role="add-block">
 				<form method="POST" name="ADD_DIALOG_FORM">
 					<div class="invite-title-container">
@@ -2841,9 +2756,15 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  getSubmitButtonText() {
 	    return main_core.Loc.getMessage('BX24_INVITE_DIALOG_ACTION_ADD');
 	  }
+	  onInviteSuccess(event) {
+	    var _this$render$querySel;
+	    (_this$render$querySel = this.render().querySelector('form')) == null ? void 0 : _this$render$querySel.reset();
+	    babelHelpers.classPrivateFieldLooseBase(this, _departmentControl$7)[_departmentControl$7].reset();
+	    babelHelpers.classPrivateFieldLooseBase(this, _tagSelectorGroup$2)[_tagSelectorGroup$2].removeTags();
+	  }
 	}
 	function _renderFields2() {
-	  const element = main_core.Tag.render(_t2$7 || (_t2$7 = _$e`
+	  const element = main_core.Tag.render(_t2$6 || (_t2$6 = _$d`
 			<div>
 				<div class="invite-form-row">
 					<div class="invite-form-col">
@@ -2887,8 +2808,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  return element;
 	}
 
-	let _$f = t => t,
-	  _t$f;
+	let _$e = t => t,
+	  _t$e;
 	var _container$b = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("container");
 	class SuccessPage extends Page {
 	  constructor(...args) {
@@ -2902,7 +2823,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _container$b)[_container$b]) {
 	      return babelHelpers.classPrivateFieldLooseBase(this, _container$b)[_container$b];
 	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _container$b)[_container$b] = main_core.Tag.render(_t$f || (_t$f = _$f`
+	    babelHelpers.classPrivateFieldLooseBase(this, _container$b)[_container$b] = main_core.Tag.render(_t$e || (_t$e = _$e`
 			<div class="invite-wrap js-intranet-invitation-block" data-role="success-block" style="position: fixed; left: 0; right: 0; top: 0; bottom: 0; background: #fff; z-index: 90;">
 				<div style="height: 78vh;" class="invite-send-success-wrap">
 					<div class="invite-send-success-text">${0}</div>
@@ -3263,6 +3184,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	          this.changeContent('success');
 	          this.submitButton.sendSuccessEvent(response.data);
 	        }
+	        main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Invitation:onInviteRequestSuccess', {
+	          response
+	        });
 	      }
 	      main_core_events.EventEmitter.subscribe(main_core_events.EventEmitter.GLOBAL_TARGET, 'SidePanel.Slider:onClose', () => {
 	        BX.SidePanel.Instance.postMessageTop(window, 'BX.Bitrix24.EmailConfirmation:showPopup');
@@ -3297,12 +3221,13 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    });
 	  }
 	  getSetupArrow() {
+	    var _this$sliderHeader;
 	    this.body = document.querySelector('.invite-body');
 	    this.panelConfirmBtn = document.getElementById('intranet-invitation-btn');
 	    this.sliderContent = document.querySelector('.ui-page-slider-workarea');
 	    this.sliderHeader = document.querySelector('.ui-side-panel-wrap-title-wrap');
 	    this.buttonPanel = document.querySelector('.ui-button-panel');
-	    this.sliderHeaderHeight = this.sliderHeader.getBoundingClientRect().height;
+	    this.sliderHeaderHeight = (_this$sliderHeader = this.sliderHeader) == null ? void 0 : _this$sliderHeader.getBoundingClientRect().height;
 	    this.buttonPanelRect = this.buttonPanel.getBoundingClientRect();
 	    this.panelRect = this.panelConfirmBtn.getBoundingClientRect();
 	    this.btnWidth = Math.ceil(this.panelRect.width);
@@ -3352,8 +3277,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	}
 
 	exports.Form = Form;
-	exports.DepartmentControl = DepartmentControl;
 	exports.MassInvitationField = MassInvitationField;
 
-}((this.BX.Intranet.Invitation = this.BX.Intranet.Invitation || {}),BX.UI.Analytics,BX,BX,BX.UI,BX.Main,BX.UI,BX.Intranet,BX.UI.EntitySelector,BX,BX.Event));
+}((this.BX.Intranet.Invitation = this.BX.Intranet.Invitation || {}),BX.UI.Analytics,BX,BX,BX.UI,BX.Main,BX.UI,BX.Intranet,BX.UI.EntitySelector,BX.Intranet,BX,BX.Event));
 //# sourceMappingURL=script.js.map

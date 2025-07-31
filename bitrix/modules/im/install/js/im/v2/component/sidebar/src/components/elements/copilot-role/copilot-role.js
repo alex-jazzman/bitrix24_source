@@ -46,11 +46,10 @@ export const CopilotRole = {
 		},
 		canShowChangeRolePromo(): boolean
 		{
-			const needCopilotInRecentTabHint = PromoManager.getInstance().needToShow(PromoId.copilotInRecentTab);
 			const needShowAddUsersToChatHint = PromoManager.getInstance().needToShow(PromoId.addUsersToCopilotChat);
 			const needToShowChangeRolePromo = PromoManager.getInstance().needToShow(PromoId.changeRoleCopilot);
 
-			return !needCopilotInRecentTabHint && !needShowAddUsersToChatHint && needToShowChangeRolePromo;
+			return !needShowAddUsersToChatHint && needToShowChangeRolePromo;
 		},
 	},
 	mounted()

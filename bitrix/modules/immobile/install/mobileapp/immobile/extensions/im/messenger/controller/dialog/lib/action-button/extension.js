@@ -89,8 +89,7 @@ jn.define('im/messenger/controller/dialog/lib/action-button', (require, exports,
 			const { messagesAutoDeleteDelay } = fields;
 			const isCurrentDialog = this.dialogId === dialogId;
 
-			const canShowActionButton = Feature.isMessagesAutoDeleteAvailable
-				&& isCurrentDialog
+			const canShowActionButton = isCurrentDialog
 				&& this.#isButtonSupportedByChatType()
 				&& Type.isNumber(messagesAutoDeleteDelay)
 			;
@@ -111,10 +110,7 @@ jn.define('im/messenger/controller/dialog/lib/action-button', (require, exports,
 		showActionButton()
 		{
 			const dialogModel = this.store.getters['dialoguesModel/getById'](this.dialogId);
-			const canShowActionButton = Feature.isMessagesAutoDeleteAvailable
-				&& dialogModel?.messagesAutoDeleteDelay > 0
-				&& this.#isButtonSupportedByChatType()
-			;
+			const canShowActionButton = dialogModel?.messagesAutoDeleteDelay > 0 && this.#isButtonSupportedByChatType();
 
 			if (canShowActionButton)
 			{

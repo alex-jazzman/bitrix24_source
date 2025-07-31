@@ -32,6 +32,10 @@ export type { BookingUiDuration };
 // @vue/component
 export const Booking = {
 	name: 'Booking',
+	components: {
+		BookingBase,
+		Actions,
+	},
 	props: {
 		bookingId: {
 			type: [Number, String],
@@ -160,6 +164,32 @@ export const Booking = {
 		hasAccent(): boolean
 		{
 			return this.editingBookingId === this.bookingId || this.isBookingCreatedFromEmbed(this.bookingId);
+		},
+	},
+	watch: {
+		draggedDataTransfer: {
+			handler(draggedDataTransfer: DraggedDataTransfer): void
+			{
+				if (this.hasOverbooking)
+				{
+					return;
+				}
+
+				if (draggedDataTransfer.kind === DraggedElementKind.Booking && draggedDataTransfer.id === this.bookingId)
+				{
+					return;
+				}
+
+				if (!draggedDataTransfer || !draggedDataTransfer.kind || !draggedDataTransfer.id)
+				{
+					this.stopDropHandler();
+				}
+				else
+				{
+					this.startDropHandler();
+				}
+			},
+			deep: true,
 		},
 	},
 	methods: {
@@ -336,36 +366,6 @@ export const Booking = {
 			Event.unbind(this.$el, 'mouseup', this.dropElement, { capture: true });
 		},
 	},
-	watch: {
-		draggedDataTransfer: {
-			handler(draggedDataTransfer: DraggedDataTransfer): void
-			{
-				if (this.hasOverbooking)
-				{
-					return;
-				}
-
-				if (draggedDataTransfer.kind === DraggedElementKind.Booking && draggedDataTransfer.id === this.bookingId)
-				{
-					return;
-				}
-
-				if (!draggedDataTransfer || !draggedDataTransfer.kind || !draggedDataTransfer.id)
-				{
-					this.stopDropHandler();
-				}
-				else
-				{
-					this.startDropHandler();
-				}
-			},
-			deep: true,
-		},
-	},
-	components: {
-		BookingBase,
-		Actions,
-	},
 	template: `
 		<BookingBase
 			:bookingId
@@ -375,6 +375,7 @@ export const Booking = {
 			:bookingClass="{
 				'--short': overlappingBookings.length > 1,
 				'--overbooking': hasOverbooking,
+				'--overbooking-bg': hasOverbooking || overbooking !== null,
 				'--shifted': isShifted && !realBooking,
 				'--drop-area': dropArea,
 				'--accent': hasAccent,

@@ -42,6 +42,7 @@
 	{
 		constructor(params)
 		{
+			this.id = params.id;
 			this.uuid = params.uuid;
 			this.instanceId = params.instanceId;
 			//TODO: can parentId be not null?
@@ -628,6 +629,12 @@
 			this.hangup();
 		}
 
+		getRoomType()
+		{
+			const call = callEngine.jwtCalls[this.uuid];
+			return call.connectionData.roomType;
+		}
+
 		attachToConference()
 		{
 			return new Promise((resolve, reject) => {
@@ -660,6 +667,7 @@
 						const callOptions = {
 							signalingUrl: signalingUrl,
 							callId: `${this.uuid}`,
+							roomType: this.getRoomType(),
 							sendVideo: this.videoEnabled,
 							receiveVideo: true,
 							enableSimulcast: true,
@@ -2283,8 +2291,7 @@
 
 		__onEndpointRemoteMediaRemoved(e)
 		{
-			console.log(e)
-			this.log('Remote media removed');
+			this.log('Remote media removed', e);
 			this.callbacks.onStreamReceived({
 				userId: this.userId,
 				stream: CallUtil.isNewMobileGridEnabled() ? this.getStreams() : this.getPriorityStream(),

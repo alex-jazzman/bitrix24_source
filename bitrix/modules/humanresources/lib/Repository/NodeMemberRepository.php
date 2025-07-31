@@ -3,7 +3,7 @@
 namespace Bitrix\HumanResources\Repository;
 
 use Bitrix\HumanResources\Access\AuthProvider\StructureAuthProvider;
-use Bitrix\HumanResources\Contract\Service\EventSenderService;
+use Bitrix\HumanResources\Service\EventSenderService;
 use Bitrix\HumanResources\Contract\Repository\RoleRepository;
 use Bitrix\HumanResources\Enum\NodeActiveFilter;
 use Bitrix\HumanResources\Exception\CreationFailedException;
@@ -53,12 +53,11 @@ class NodeMemberRepository implements Contract\Repository\NodeMemberRepository
 	private readonly StructureAuthProvider $structureAuthProvider;
 
 	public function __construct(
-		?EventSenderService $eventSenderService = null,
 		?RoleRepository $roleRepository = null,
 		?StructureAuthProvider $structureAuthProvider = null,
 	)
 	{
-		$this->eventSenderService = $eventSenderService ?? Container::getEventSenderService();
+		$this->eventSenderService = Container::getEventSenderService();
 		$this->roleRepository = $roleRepository ?? Container::getRoleRepository();
 		$this->cacheManager = Container::getCacheManager();
 		$this->structureAuthProvider = $structureAuthProvider ?? Container::getStructureAuthProvider();

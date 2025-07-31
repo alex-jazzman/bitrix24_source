@@ -37,7 +37,7 @@ export class Analytics
 
 	#getAdminAllowMode(): string
 	{
-		return document.querySelector('#allow_register_confirm').checked
+		return document.querySelector('#allow_register_confirm')?.checked
 			? Analytics.ADMIN_ALLOW_MODE_Y
 			: Analytics.ADMIN_ALLOW_MODE_N;
 	}

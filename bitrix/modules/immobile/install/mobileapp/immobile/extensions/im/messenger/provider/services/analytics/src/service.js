@@ -4,20 +4,12 @@
 jn.define('im/messenger/provider/services/analytics/service', (require, exports, module) => {
 	const { AnalyticsEvent } = require('analytics');
 
-	const {
-		Analytics,
-		ComponentCode,
-		DialogType,
-		UserRole,
-		OpenDialogContextType,
-	} = require('im/messenger/const');
+	const { Analytics } = require('im/messenger/const');
 	const { DialogHelper } = require('im/messenger/lib/helper');
-	const { MessengerParams } = require('im/messenger/lib/params');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
 	const { MessageDelete } = require('im/messenger/provider/services/analytics/message-delete');
 	const { ChatDelete } = require('im/messenger/provider/services/analytics/chat-delete');
-	const { ChatDataProvider } = require('im/messenger/provider/data');
 	const { DialogEdit } = require('im/messenger/provider/services/analytics/dialog-edit');
 	const { ChatCreate } = require('im/messenger/provider/services/analytics/chat-create');
 	const { Messenger } = require('im/messenger/provider/services/analytics/messenger');
@@ -31,6 +23,7 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 	const { VoteAnalytics } = require('im/messenger/provider/services/analytics/vote');
 	const { MessageCreateMenu } = require('im/messenger/provider/services/analytics/message-create-menu');
 	const { ChatOpen } = require('im/messenger/provider/services/analytics/chat-open');
+	const { NavigationTab } = require('im/messenger/provider/services/analytics/navigation-tab');
 
 	const { AnalyticsHelper } = require('im/messenger/provider/services/analytics/helper');
 
@@ -74,6 +67,8 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 		#messageCreateMenu;
 		/** @type {ChatOpen} */
 		#chatOpen;
+		/** @type {NavigationTab} */
+		#navigationTab;
 
 		static getInstance()
 		{
@@ -208,6 +203,14 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 			this.#chatOpen = this.#chatOpen ?? new ChatOpen();
 
 			return this.#chatOpen;
+		}
+
+		/** @protected */
+		get navigationTab()
+		{
+			this.#navigationTab = this.#navigationTab ?? new NavigationTab();
+
+			return this.#navigationTab;
 		}
 
 		sendMessageDeleteActionClicked({ messageId, dialogId })
@@ -379,6 +382,14 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 		}
 
 		/**
+		 * @param {sendAnalyticsParams} params
+		 */
+		sendDownloadError(params)
+		{
+			return this.downloadFile.sendDownloadError(params);
+		}
+
+		/**
 		 * @param {DialogId} dialogId
 		 */
 		sendOpenCreateTask(dialogId)
@@ -511,6 +522,15 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 		sendOpenMessageCreateMenu(dialogId)
 		{
 			this.messageCreateMenu.sendOpenCreateMenu(dialogId);
+		}
+
+		/**
+		 * @param {string} currentTab
+		 * @param {object} analyticsOptions
+		 */
+		sendChangeNavigationTab(currentTab, analyticsOptions)
+		{
+			this.navigationTab.sendChangeTab(currentTab, analyticsOptions);
 		}
 	}
 

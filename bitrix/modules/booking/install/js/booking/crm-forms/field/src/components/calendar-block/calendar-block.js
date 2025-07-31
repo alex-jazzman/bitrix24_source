@@ -95,7 +95,7 @@ export const CalendarBlock = {
 		{
 			const viewDate = this.datePicker.getViewDate();
 
-			if (viewDate.getMonth() === (new Date()).getMonth())
+			if (this.checkPastDate())
 			{
 				this.updateDisabledPrevMonth();
 
@@ -124,8 +124,14 @@ export const CalendarBlock = {
 		},
 		updateDisabledPrevMonth(): void
 		{
+			this.disabledPrevMonth = this.checkPastDate();
+		},
+		checkPastDate(): boolean
+		{
 			const viewDate = this.datePicker.getViewDate();
-			this.disabledPrevMonth = viewDate.getMonth() <= (new Date()).getMonth();
+			const today = new Date();
+
+			return viewDate.getMonth() <= today.getMonth() && viewDate.getYear() <= today.getYear();
 		},
 	},
 	template: `

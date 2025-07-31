@@ -148,15 +148,30 @@ class BookingMapper
 		 * Sort resource relationship by b_booking_booking_resource.ID in ascending order
 		 */
 		$ormBookingResources = iterator_to_array($ormBookingResources);
-		usort($ormBookingResources, fn($resource1, $resource2) => $resource1->getId() <=> $resource2->getId());
+		usort(
+			$ormBookingResources,
+			static fn($resource1, $resource2) => $resource1->getId() <=> $resource2->getId()
+		);
 
+		$primaryResource = null;
 		/** @var EO_BookingResource $ormBookingResource */
 		foreach ($ormBookingResources as $ormBookingResource)
 		{
-			$resources[] = $this->resourceMapper->convertFromOrm($ormBookingResource->getResource());
+			$resource = $this->resourceMapper->convertFromOrm($ormBookingResource->getResource());
+			if (!$primaryResource && $ormBookingResource->getIsPrimary())
+			{
+				$primaryResource = $resource;
+			}
+			$resources[] = $resource;
 		}
 
-		$booking->setResourceCollection(new ResourceCollection(...$resources));
+		$resourceCollection = new ResourceCollection(...$resources);
+		if ($primaryResource)
+		{
+			$resourceCollection->setPrimary($primaryResource);
+		}
+
+		$booking->setResourceCollection($resourceCollection);
 	}
 
 	private function setClientCollection(Booking $booking, EO_Booking $ormBooking): void

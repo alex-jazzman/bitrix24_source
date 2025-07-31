@@ -3,7 +3,9 @@
 namespace Bitrix\Im\V2\Analytics\Event;
 
 use Bitrix\AI\Engine;
+use Bitrix\Im\V2\Chat\CopilotChat;
 use Bitrix\Im\V2\Integration\AI\AIHelper;
+use Bitrix\Im\V2\Integration\AI\EngineManager;
 use Bitrix\Im\V2\Integration\AI\RoleManager;
 use Bitrix\Imbot\Bot\CopilotChatBot;
 use Bitrix\Main\Result;
@@ -83,7 +85,16 @@ class CopilotEvent extends Event
 
 	protected function setCopilotP2(): self
 	{
-		$this->p2 = 'provider_' . (AIHelper::getProviderName() ?? 'none');
+		$engineName = null;
+
+		if ($this->chat instanceof CopilotChat)
+		{
+			$engineCode = $this->chat->getEngineCode() ?? EngineManager::getDefaultEngineCode();
+			$engineName = (new EngineManager())->getEngineNameByCode($engineCode);
+		}
+
+		$engineName ??= 'none';
+		$this->p2 = 'provider_' . $engineName;
 
 		return $this;
 	}

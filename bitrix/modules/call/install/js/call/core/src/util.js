@@ -14,7 +14,7 @@ const blankAvatar = '/bitrix/js/im/images/blank.gif';
 let userData = {}
 let usersInProcess = {}
 
-let abortController= null;
+let abortController = null;
 
 /* User role & room permission */
 let roomPermissions =
@@ -1061,7 +1061,6 @@ const getCallConnectionDataById = async (callUuid) =>
 			callType: call.call.type,
 			instanceId: call.call.instanceId,
 			provider: call.call.provider,
-			roomId: call.call.uuid,
 			callToken: CallTokenManager.getTokenCached(call.call.associatedEntity.chatId),
 		}, call.call.associatedEntity.chatId);
 	}
@@ -1114,6 +1113,16 @@ const isUserControlFeatureEnabled = () =>
 	return Extension.getSettings('call.core')?.isUserControlFeatureEnabled;
 }
 
+const isDisableCameraNewJoinedUsersFeatureEnabled = () =>
+{
+	return Extension.getSettings('call.core')?.isDisableCameraNewJoinedUsersFeatureEnabled;
+}
+
+const countDisableCameraNewJoinedUsersFeature = () =>
+{
+	return Extension.getSettings('call.core')?.countDisableCameraNewJoinedUsersFeature;
+}
+
 const isPictureInPictureFeatureEnabled = () =>
 {
 	return Extension.getSettings('call.core')?.isPictureInPictureFeatureEnabled;
@@ -1127,6 +1136,11 @@ const isNewQOSEnabled = () =>
 const isNewFollowUpSliderEnabled = () =>
 {
 	return Extension.getSettings('call.core')?.isNewFollowUpSliderEnabled;
+}
+
+const isKibanaLogsEnabled = () =>
+{
+	return Extension.getSettings('call.core')?.isKibanaLogsEnabled;
 }
 
 const isChatMountInPage = () =>
@@ -1226,4 +1240,7 @@ export default {
 	UsersRoles,
 	isRegularUser,
 	getUserRoleByUserId,
+	isDisableCameraNewJoinedUsersFeatureEnabled,
+	countDisableCameraNewJoinedUsersFeature,
+	isKibanaLogsEnabled,
 }

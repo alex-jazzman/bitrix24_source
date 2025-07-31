@@ -233,7 +233,7 @@ jn.define('im/messenger/model/users/model', (require, exports, module) => {
 					return;
 				}
 
-				const userList = payload.map((dialog) => validate(store, dialog));
+				const userList = payload.map((user) => validate(user));
 
 				store.commit('setFromPush', {
 					actionName: 'setFromPush',

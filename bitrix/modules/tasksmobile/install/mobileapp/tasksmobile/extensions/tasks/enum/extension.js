@@ -30,6 +30,7 @@ jn.define('tasks/enum', (require, exports, module) => {
 		PERIOD_NEXT_WEEK: 'PERIOD4',
 		PERIOD_NO_DEADLINE: 'PERIOD5',
 		PERIOD_OVER_TWO_WEEKS: 'PERIOD6',
+		PERIOD_DONE: 'PERIOD7',
 	};
 
 	const TaskUserOption = {
@@ -79,6 +80,7 @@ jn.define('tasks/enum', (require, exports, module) => {
 		UPDATE_DEADLINE: 'updateDeadline',
 		UPDATE_PROJECT: 'updateProject',
 		EDIT_CHECKLIST: 'editChecklist',
+		CAN_CREATE: 'canCreate',
 	};
 
 	const TaskField = {
@@ -129,7 +131,6 @@ jn.define('tasks/enum', (require, exports, module) => {
 		[TaskField.AUDITORS]: TaskActionAccess.UPDATE,
 		[TaskField.TAGS]: TaskActionAccess.UPDATE,
 		[TaskField.CRM]: TaskActionAccess.UPDATE,
-		[TaskField.SUBTASKS]: TaskActionAccess.UPDATE,
 		[TaskField.RELATED_TASKS]: TaskActionAccess.UPDATE,
 		[TaskField.USER_FIELDS]: TaskActionAccess.UPDATE,
 
@@ -141,6 +142,7 @@ jn.define('tasks/enum', (require, exports, module) => {
 
 		[TaskField.ALLOW_TIME_TRACKING]: TaskActionAccess.UPDATE,
 
+		[TaskField.SUBTASKS]: TaskActionAccess.CAN_CREATE,
 		// [TaskField.PRIORITY]: 'update',
 		// [TaskField.TIME_ESTIMATE]: 'update',
 		// [TaskField.MARK]: 'update',

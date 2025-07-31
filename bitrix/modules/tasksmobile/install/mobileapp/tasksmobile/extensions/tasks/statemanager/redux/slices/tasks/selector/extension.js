@@ -100,6 +100,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/selector', (require, exports, m
 						deadline: task.deadline,
 						isCompleted: selectIsCompleted(task),
 						status: task.status,
+						canUpdate: task.canUpdate,
 					},
 				}))
 				.sort((a, b) => a.customData.isCompleted - b.customData.isCompleted);
@@ -322,6 +323,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/selector', (require, exports, m
 			copy: true,
 			copyId: true,
 			extraSettings: task.canUpdate,
+			canCreate: task.canCreate,
 		}),
 	);
 

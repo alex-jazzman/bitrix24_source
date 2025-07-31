@@ -25,11 +25,11 @@ class CreateWaitListItemFromBookingCommand extends AbstractCommand
 		];
 	}
 
-	public function mapFromArray(array $array): self
+	public function mapFromArray(array $props): self
 	{
 		return new self(
-			$array['bookingId'],
-			$array['createdBy'],
+			$props['bookingId'],
+			$props['createdBy'],
 		);
 	}
 

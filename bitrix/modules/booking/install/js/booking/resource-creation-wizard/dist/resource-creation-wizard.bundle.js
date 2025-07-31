@@ -547,6 +547,7 @@ this.BX = this.BX || {};
 	      dialog.show();
 	    },
 	    getTypeSelectorDialog(bindElement) {
+	      var _this$initialResource;
 	      const typeSelectorDialog = ui_entitySelector.Dialog.getById(this.typeSelectorId);
 	      if (typeSelectorDialog) {
 	        typeSelectorDialog.setTargetNode(bindElement);
@@ -562,6 +563,7 @@ this.BX = this.BX || {};
 	        context: 'bookingResourceCreationType',
 	        multiple: false,
 	        cacheable: true,
+	        preselectedItems: [[this.entityId, (_this$initialResource = this.initialResourceType) == null ? void 0 : _this$initialResource.typeId]],
 	        entities: [{
 	          id: this.entityId,
 	          dynamicLoad: true,

@@ -1,4 +1,5 @@
 <?php
+$MESS["BOOKING_CONFIRM_PAGE_ADD_TO_CALENDAR_BTN"] = "Күнтізбеге қосу";
 $MESS["BOOKING_CONFIRM_PAGE_BOOKING_CANCELED"] = "Жазба жойылды";
 $MESS["BOOKING_CONFIRM_PAGE_BOOKING_CONFIRMATION_WAITING"] = "Растауды күтуде";
 $MESS["BOOKING_CONFIRM_PAGE_BOOKING_CONFIRMED"] = "Жазба расталды";
@@ -16,7 +17,7 @@ $MESS["BOOKING_CONFIRM_PAGE_MESSAGEBOX_BTN_CONFIRM"] = "Растау";
 $MESS["BOOKING_CONFIRM_PAGE_MESSAGEBOX_BTN_NO"] = "Бас тартпау";
 $MESS["BOOKING_CONFIRM_PAGE_MESSAGEBOX_BTN_NOT_CONFIRM"] = "Растамау";
 $MESS["BOOKING_CONFIRM_PAGE_MESSAGEBOX_BTN_YES"] = "Иә, бас тарту";
-$MESS["BOOKING_CONFIRM_PAGE_MESSAGEBOX_CONFIRM_TEXT"] = "Егер сіздің жоспарларыңыз өзгерген болса, бізге хабарлаңыз";
+$MESS["BOOKING_CONFIRM_PAGE_MESSAGEBOX_CONFIRM_TEXT_MSGVER_1"] = "Осылайша біз сіздің келетініңізді нақты білеміз";
 $MESS["BOOKING_CONFIRM_PAGE_MESSAGEBOX_CONFIRM_TILE"] = "Жазбаны растау керек пе?";
 $MESS["BOOKING_CONFIRM_PAGE_MESSAGEBOX_TEXT"] = "Егер сіздің жоспарларыңыз өзгерген болса, сіз әрқашан қолайлы күн мен уақытты таңдай аласыз";
 $MESS["BOOKING_CONFIRM_PAGE_MESSAGEBOX_TILE"] = "Жазбаңыздан бас тартасыз ба?";

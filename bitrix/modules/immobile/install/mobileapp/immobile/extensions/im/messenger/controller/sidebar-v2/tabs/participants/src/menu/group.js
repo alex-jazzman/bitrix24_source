@@ -12,6 +12,7 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/participants/src/menu/group',
 	const { onRemoveManager, onAddManager } = require('im/messenger/controller/sidebar-v2/user-actions/manager');
 	const { SidebarActionType, ErrorType } = require('im/messenger/const');
 	const { ParticipantsBaseMenu } = require('im/messenger/controller/sidebar-v2/tabs/participants/src/menu/base');
+	const { SIDEBAR_DEFAULT_TOAST_OFFSET } = require('im/messenger/controller/sidebar-v2/const');
 
 	/**
 	 * @class ParticipantsGroupMenu
@@ -115,6 +116,7 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/participants/src/menu/group',
 						'IMMOBILE_SIDEBAR_V2_PARTICIPANTS_USER_INVITED_FROM_STRUCTURE_DELETE_ERROR',
 					),
 					backgroundColor: Color.accentMainAlert.toHex(),
+					offset: SIDEBAR_DEFAULT_TOAST_OFFSET,
 				});
 			};
 

@@ -191,8 +191,7 @@ jn.define('im/messenger/lib/feature', (require, exports, module) => {
 
 		static get isSidebarV2Enabled()
 		{
-			return Application.getApiVersion() >= 60
-				&& Object.values(MessengerParams.getSidebarV2Features()).includes(true);
+			return Application.getApiVersion() >= 60;
 		}
 
 		static get isCollabSupported()
@@ -282,9 +281,9 @@ jn.define('im/messenger/lib/feature', (require, exports, module) => {
 			return MessengerParams.getImFeatures().intranetInviteAvailable;
 		}
 
-		static get isMessagesAutoDeleteAvailable()
+		static get isSupportedMediaCollection()
 		{
-			return MessengerParams.getImFeatures().messagesAutoDeleteAvailable;
+			return Application.getApiVersion() >= 59;
 		}
 
 		static get isMessagesAutoDeleteNativeAvailable()
@@ -324,11 +323,6 @@ jn.define('im/messenger/lib/feature', (require, exports, module) => {
 			return Application.getApiVersion() >= 60;
 		}
 
-		static get isCopilotInDefaultTabAvailable()
-		{
-			return MessengerParams.getImFeatures().copilotInDefaultTabAvailable;
-		}
-
 		static get isMessagesAutoDeleteEnabled()
 		{
 			return MessengerParams.getImFeatures().messagesAutoDeleteEnabled;
@@ -361,6 +355,11 @@ jn.define('im/messenger/lib/feature', (require, exports, module) => {
 		static get isFloatingButtonsBarAvailable()
 		{
 			return NativeFeature?.isFeatureEnabled('chat-like-mention-comments') ?? false;
+		}
+
+		static get isAiAssistantMessageSupported()
+		{
+			return NativeFeature?.isFeatureEnabled('chat-ai-assistant') ?? false;
 		}
 	}
 

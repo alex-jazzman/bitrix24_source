@@ -2,10 +2,13 @@
  * @module im/messenger/controller/dialog/lib/message-menu/src/saver/disk-saver
  */
 jn.define('im/messenger/controller/dialog/lib/message-menu/src/saver/disk-saver', (require, exports, module) => {
-	const { FileDownloadType } = require('im/messenger/const');
+	const { FileDownloadType, Analytics } = require('im/messenger/const');
 	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
 	const { BaseSaver } = require('im/messenger/controller/dialog/lib/message-menu/src/saver/base-saver');
 
+	/**
+	 * @class DiskSaver
+	 */
 	class DiskSaver extends BaseSaver
 	{
 		async save()
@@ -21,7 +24,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/saver/disk-saver'
 			catch (error)
 			{
 				this.logger.error('DiskSaver.onDownloadToDisk.catch', error);
-				this.showSaveFailureToast();
+				this.downloadFailure(Analytics.DownloadErrorStatus.toDisk);
 			}
 		}
 

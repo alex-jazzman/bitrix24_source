@@ -17,6 +17,7 @@ import type { TabOptions } from './dialog/tabs/tab-options';
 import type { ItemOptions } from './item/item-options';
 import type { EntityOptions } from './entity/entity-options';
 import type { TagSelectorOptions } from './tag-selector/tag-selector-options';
+import type { ItemId } from './item/item-id';
 
 import './css/dialog.css';
 import './css/tab.css';
@@ -65,4 +66,5 @@ export type {
 	ItemOptions,
 	EntityOptions,
 	TagSelectorOptions,
+	ItemId,
 };

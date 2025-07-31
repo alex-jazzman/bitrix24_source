@@ -286,14 +286,7 @@ class NotificationAgent
 	private static function getResourceSettingsJoinSql(): string
 	{
 		return "
-			JOIN (
-				SELECT 
-					BOOKING_ID,
-					MIN(ID) AS RESOURCE_ROW_ID
-				FROM b_booking_booking_resource
-				GROUP BY BOOKING_ID
-			) pr ON b.ID = pr.BOOKING_ID
-			JOIN b_booking_booking_resource bbr on bbr.ID = pr.RESOURCE_ROW_ID
+			JOIN b_booking_booking_resource bbr ON bbr.BOOKING_ID = b.ID AND bbr.IS_PRIMARY = 'Y'
 			JOIN b_booking_resource_notification_settings rns ON rns.RESOURCE_ID = bbr.RESOURCE_ID 
 		";
 	}

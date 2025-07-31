@@ -181,6 +181,11 @@ jn.define('im/messenger/db/repository/file', (require, exports, module) => {
 				result.urlShow = file.urlShow;
 			}
 
+			if (Type.isObject(file.mediaUrl))
+			{
+				result.mediaUrl = JSON.stringify(file.mediaUrl);
+			}
+
 			return result;
 		}
 

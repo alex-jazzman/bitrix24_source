@@ -7,7 +7,6 @@ return [
 		'im:messenger/lib/counters/tab-counters/state',
 		'im:messenger/lib/di/service-locator',
 		'im:messenger/lib/logger',
-		'im:messenger/lib/feature',
 		'im:messenger/lib/emitter',
 		'im:messenger/lib/params',
 		'im:messenger/lib/helper',

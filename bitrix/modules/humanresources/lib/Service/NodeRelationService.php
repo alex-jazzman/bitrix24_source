@@ -2,7 +2,7 @@
 
 namespace Bitrix\HumanResources\Service;
 
-use Bitrix\HumanResources\Contract\Repository\NodeRelationRepository;
+use Bitrix\HumanResources\Repository\NodeRelationRepository;
 use Bitrix\HumanResources\Contract\Repository\NodeRepository;
 use Bitrix\HumanResources\Contract\Repository\NodeMemberRepository;
 use Bitrix\HumanResources\Exception\TooMuchDataException;
@@ -14,7 +14,6 @@ use Bitrix\HumanResources\Type\RelationEntitySubtype;
 use Bitrix\HumanResources\Type\RelationEntityType;
 use Bitrix\HumanResources\Item;
 use Bitrix\HumanResources\Contract;
-use InvalidArgumentException;
 
 class NodeRelationService implements Contract\Service\NodeRelationService
 {
@@ -26,12 +25,11 @@ class NodeRelationService implements Contract\Service\NodeRelationService
 	private readonly PushMessageService $pushMessageService;
 
 	public function __construct(
-		?NodeRelationRepository $relationRepository = null,
 		?NodeRepository $nodeRepository = null,
 		?NodeMemberRepository $nodeMemberRepository = null
 	)
 	{
-		$this->relationRepository = $relationRepository ?? Container::getNodeRelationRepository();
+		$this->relationRepository = Container::getNodeRelationRepository();
 		$this->nodeRepository = $nodeRepository ?? Container::getNodeRepository();
 		$this->nodeMemberRepository = $nodeMemberRepository ?? Container::getNodeMemberRepository();
 		$this->pushMessageService = Container::getPushMessageService();
@@ -228,5 +226,15 @@ class NodeRelationService implements Contract\Service\NodeRelationService
 		}
 
 		return $nodeRelationCollection;
+	}
+
+	public function unlinkByEntityIdsAndNodeIdAndType(int $nodeId, array $entityIds, RelationEntityType $entityType): void
+	{
+		$nodeRelationCollection = $this->relationRepository->getByEntityIdsAndNodeIdAndType($nodeId, $entityIds, $entityType);
+
+		foreach ($nodeRelationCollection as $nodeRelation)
+		{
+			$this->relationRepository->remove($nodeRelation);
+		}
 	}
 }

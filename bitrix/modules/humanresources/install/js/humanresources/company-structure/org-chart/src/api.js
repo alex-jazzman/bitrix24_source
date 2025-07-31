@@ -44,5 +44,19 @@ export const chartAPI = {
 	firstTimeOpened: (): Promise<void> => {
 		return postData('humanresources.api.User.firstTimeOpen');
 	},
+	updateDepartment: (nodeId: number, parentId: number): Promise<void> => {
+		return postData('humanresources.api.Structure.Node.update', {
+			nodeId,
+			parentId,
+			name: null,
+		});
+	},
+	changeOrder: (draggedId: Number, direction: Number, count: number): Promise<void> => {
+		return postData('humanresources.api.Structure.Node.changeOrder', {
+			nodeId: draggedId,
+			direction,
+			count,
+		});
+	},
 	createTreeDataStore,
 };

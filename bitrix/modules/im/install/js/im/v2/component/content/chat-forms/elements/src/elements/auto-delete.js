@@ -37,10 +37,6 @@ export const AutoDelete = {
 		{
 			return this.delay !== AutoDeleteDelay.Off;
 		},
-		isFeatureAvailable(): boolean
-		{
-			return FeatureManager.isFeatureAvailable(Feature.messagesAutoDeleteAvailable);
-		},
 		isFeatureEnabled(): boolean
 		{
 			return FeatureManager.isFeatureAvailable(Feature.messagesAutoDeleteEnabled);
@@ -83,7 +79,7 @@ export const AutoDelete = {
 		},
 	},
 	template: `
-		<div v-if="isFeatureAvailable" class="bx-im-chat-forms-auto-delete__container">
+		<div class="bx-im-chat-forms-auto-delete__container">
 			<Toggle
 				:size="ToggleSize.M"
 				:isEnabled="isEnabled"

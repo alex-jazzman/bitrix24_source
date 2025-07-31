@@ -669,28 +669,15 @@ class Util
 
 	public static function getGroupsId()
 	{
-		$employeesGroupId = "";
-		$portalAdminGroupId = "";
-
 		if (ModuleManager::isModuleInstalled("bitrix24"))
 		{
-			$employeesGroupId = "11";
-			$portalAdminGroupId = "12";
+			$employeesGroupId = 11;
+			$portalAdminGroupId = 12;
 		}
 		else
 		{
-			$res = \CGroup::GetList('', '', ["STRING_ID" => implode("|", ["EMPLOYEES_".SITE_ID, "PORTAL_ADMINISTRATION_".SITE_ID])]);
-			while ($group = $res->fetch())
-			{
-				if ($group["STRING_ID"] === "EMPLOYEES_".SITE_ID)
-				{
-					$employeesGroupId = $group["ID"];
-				}
-				elseif ($group["STRING_ID"] === "PORTAL_ADMINISTRATION_".SITE_ID)
-				{
-					$portalAdminGroupId = $group["ID"];
-				}
-			}
+			$employeesGroupId =	\CGroup::GetIDByCode("EMPLOYEES_" . SITE_ID);
+			$portalAdminGroupId = \CGroup::GetIDByCode("PORTAL_ADMINISTRATION_" . SITE_ID);
 		}
 
 		return [ $employeesGroupId, $portalAdminGroupId ];

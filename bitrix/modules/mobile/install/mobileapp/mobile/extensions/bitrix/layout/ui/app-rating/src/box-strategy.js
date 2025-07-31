@@ -2,10 +2,8 @@
  * @module layout/ui/app-rating/src/box-strategy
  */
 jn.define('layout/ui/app-rating/src/box-strategy', (require, exports, module) => {
-	const AppTheme = require('apptheme');
 	const { Area } = require('ui-system/layout/area');
 	const { AreaList } = require('ui-system/layout/area-list');
-	const { BottomSheet } = require('bottom-sheet');
 	const { Box } = require('ui-system/layout/box');
 	const { BoxFooter } = require('ui-system/layout/dialog-footer');
 	const { Button, ButtonDesign, ButtonSize } = require('ui-system/form/buttons/button');
@@ -13,26 +11,25 @@ jn.define('layout/ui/app-rating/src/box-strategy', (require, exports, module) =>
 	const { H3, H4 } = require('ui-system/typography/heading');
 	const { Loc } = require('loc');
 	const { Text4 } = require('ui-system/typography/text');
-	const { store } = require('native/store') || {};
-	const { SupportChatStrategy } = require('layout/ui/app-rating/src/support-chat-strategy');
 	const { RunActionExecutor } = require('rest/run-action-executor');
-	const {
-		HighestRate,
-		BackdropHeight,
-	} = require('layout/ui/app-rating/src/rating-constants');
+	const { defaultStrategyFactory } = require('layout/ui/app-rating/src/strategies/strategy-factory');
 
-	const hiddenFields = encodeURIComponent(JSON.stringify({
-		from_domain: currentDomain,
-		back_version: Application.getAppVersion(),
-		os_phone: Application.getPlatform(),
-		app_version: Application.getApiVersion(),
-		region_model: env.languageId,
-		sender_page: 'mobile_rating_drawer',
-		phone_model: device.model,
-		os_version: device.version,
-	}));
-
-	class BoxStrategy extends LayoutComponent
+	/**
+	 * @class BoxContent
+	 * @extends LayoutComponent
+	 *
+	 * This class represents a strategy for rendering in the appRating UI.
+	 * It determines the appropriate strategy to use based on user input and executes it.
+	 *
+	 * @property {Object} props
+	 * @property {LayoutWidget} props.parentWidget
+	 * @property {number} props.userRate
+	 * @property {Function} [props.onGoToStoreButtonClick]
+	 * @property {boolean} [props.shouldAnimate]
+	 * @property {string} [props.triggerEvent]
+	 * @property {string} [props.testId]
+	 */
+	class BoxContent extends LayoutComponent
 	{
 		constructor(props)
 		{
@@ -44,19 +41,39 @@ jn.define('layout/ui/app-rating/src/box-strategy', (require, exports, module) =>
 			};
 
 			this.sendAnalytics = false;
+			this.componentRef = null;
+			this.strategyFactory = props.strategyFactory || defaultStrategyFactory;
 		}
 
-		componentWillUnmount()
+		/**
+		 * @returns {void}
+		 */
+		animateDrawer()
 		{
-			this.sendAnalytics = false;
+			if (this.props.shouldAnimate)
+			{
+				this.componentRef.animate({ opacity: 1, duration: 250 });
+			}
 		}
 
 		async componentDidMount()
 		{
 			const botId = await this.#getBotId();
-			const strategy = this.#getContentStrategy(botId);
+			const strategyProps = { ...this.props, botId };
+			const strategy = this.strategyFactory.getApplicableStrategy(strategyProps);
 
-			this.setState({ strategy, botId });
+			if (strategy)
+			{
+				strategy.execute(strategyProps);
+				this.setState({ strategy, botId }, () => {
+					this.animateDrawer();
+				});
+			}
+		}
+
+		componentWillUnmount()
+		{
+			this.sendAnalytics = false;
 		}
 
 		async #getBotId()
@@ -81,48 +98,38 @@ jn.define('layout/ui/app-rating/src/box-strategy', (require, exports, module) =>
 		}
 
 		/**
-		 * @param props
-		 * @param {LayoutWidget} props.parentWidget
-		 * @param {Number} props.userRate
-		 * @param {Function} props.onGoToStoreButtonClick
+		 * @returns {string}
 		 */
-		static openBox(props)
-		{
-			const parentWidget = props.parentWidget ?? PageManager;
-
-			new BottomSheet({
-				component: (layoutWidget) => new BoxStrategy({
-					...props,
-					layoutWidget,
-				}),
-			})
-				.setParentWidget(parentWidget)
-				.setBackgroundColor(Color.bgSecondary.toHex())
-				.setNavigationBarColor(Color.bgSecondary.toHex())
-				.setMediumPositionHeight(BackdropHeight, true)
-				.open()
-				.catch(console.error)
-			;
-		}
-
 		get testId()
 		{
-			return 'app-rating-additional-drawer';
+			return this.props.testId ?? 'app-rating-additional-drawer';
 		}
 
 		render()
 		{
-			if (!this.state.strategy)
-			{
-				return View({});
-			}
+			const { strategy } = this.state;
 
-			return Box(
+			return View(
 				{
-					footer: this.renderFooter(),
+					ref: (ref) => {
+						if (ref)
+						{
+							this.componentRef = ref;
+						}
+					},
+					style: {
+						opacity: 0,
+					},
 				},
-				this.state.strategy.renderConfetti(),
-				this.renderAreaList(),
+				strategy && strategy.shouldRender() && Box(
+					{
+						safeArea: {
+							bottom: false,
+						},
+						footer: this.renderFooter(),
+					},
+					this.renderAreaList(),
+				),
 			);
 		}
 
@@ -224,7 +231,7 @@ jn.define('layout/ui/app-rating/src/box-strategy', (require, exports, module) =>
 						stretched: true,
 						style: {
 							alignSelf: 'center',
-							paddingVertical: Indent.XL.toNumber(),
+							marginVertical: Indent.XL.toNumber(),
 						},
 						onClick: () => {
 							if (!this.sendAnalytics)
@@ -237,56 +244,19 @@ jn.define('layout/ui/app-rating/src/box-strategy', (require, exports, module) =>
 				),
 			);
 		}
-
-		#getContentStrategy(botId)
-		{
-			const { userRate, parentWidget, onGoToStoreButtonClick } = this.props;
-
-			if (userRate >= HighestRate)
-			{
-				parentWidget.close(() => {
-					store?.requestReview();
-
-					onGoToStoreButtonClick?.();
-				});
-
-				return null;
-			}
-
-			if (botId)
-			{
-				return new SupportChatStrategy({ botId, parentWidget });
-			}
-
-			parentWidget.close(() => {
-				return BoxStrategy.openAppFeedbackForm();
-			});
-
-			return null;
-		}
-
-		static openAppFeedbackForm()
-		{
-			const formId = AppTheme.id === 'dark' ? 'appFeedbackDark' : 'appFeedbackLight';
-			PageManager.openPage({
-				backgroundColor: Color.bgSecondary.toHex(),
-				url: `${env.siteDir}mobile/settings?formId=${formId}&hiddenFields=${hiddenFields}`,
-				modal: true,
-				backdrop: {
-					mediumPositionHeight: BackdropHeight,
-					hideNavigationBar: true,
-					swipeAllowed: true,
-					forceDismissOnSwipeDown: false,
-					showOnTop: false,
-					adoptHeightByKeyboard: true,
-					shouldResizeContent: true,
-				},
-			});
-		}
 	}
 
+	BoxContent.propTypes = {
+		userRate: PropTypes.number.isRequired,
+		parentWidget: PropTypes.object.isRequired,
+		testId: PropTypes.string,
+		onGoToStoreButtonClick: PropTypes.func,
+		triggerEvent: PropTypes.string,
+		shouldAnimate: PropTypes.bool,
+	};
+
 	module.exports = {
-		BoxStrategy: (props) => new BoxStrategy(props),
-		BoxStrategyClass: BoxStrategy,
+		BoxContent: (props) => new BoxContent(props),
+		BoxContentClass: BoxContent,
 	};
 });

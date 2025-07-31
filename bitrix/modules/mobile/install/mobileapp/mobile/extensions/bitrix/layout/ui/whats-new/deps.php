@@ -18,5 +18,6 @@ return [
 		'ui-system/form/buttons/button',
 		'utils/store',
 		'layout/ui/whats-new/analytics',
+		'utils/object',
 	],
 ];

@@ -83,11 +83,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      return this.$store.getters['users/get'](this.dialogId, true);
 	    },
 	    botType() {
+	      const EXCLUDED_BOT_CODES = [im_v2_const.BotCode.aiAssistant];
 	      if (!this.isUser) {
 	        return '';
 	      }
 	      const bot = this.$store.getters['users/bots/getByUserId'](this.dialogId);
-	      if (!bot) {
+	      if (!bot || EXCLUDED_BOT_CODES.includes(bot.code)) {
 	        return '';
 	      }
 	      return bot.type;

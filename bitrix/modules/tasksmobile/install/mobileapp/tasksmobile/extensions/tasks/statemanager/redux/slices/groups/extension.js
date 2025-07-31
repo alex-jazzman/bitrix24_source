@@ -25,7 +25,6 @@ jn.define('tasks/statemanager/redux/slices/groups', (require, exports, module) =
 		isCollab: group.isCollab,
 		isExtranet: group.isExtranet,
 		additionalData: group.additionalData,
-		isScrum: group.isScrum,
 	});
 
 	const prepareGroupFromEntitySelector = (group) => {
@@ -42,7 +41,6 @@ jn.define('tasks/statemanager/redux/slices/groups', (require, exports, module) =
 			additionalData: {
 				DIALOG_ID: group.customData?.dialogId,
 			},
-			isScrum: group.isScrum,
 		});
 	};
 

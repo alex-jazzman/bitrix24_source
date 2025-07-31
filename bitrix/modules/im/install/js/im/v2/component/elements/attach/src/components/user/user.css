@@ -57,4 +57,5 @@
 .bx-im-attach-user__name {
 	display: inline-block;
 	margin-left: 5px;
+	word-break: break-word;
 }

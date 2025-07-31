@@ -3,7 +3,6 @@
  */
 jn.define('utils/copy', (require, exports, module) => {
 	const { Loc } = require('loc');
-	const { Feature } = require('feature');
 	const { Icon } = require('assets/icons');
 	const { showSafeToast, showErrorToast } = require('toast');
 
@@ -33,8 +32,6 @@ jn.define('utils/copy', (require, exports, module) => {
 					iconName: Icon.COPY.getIconName(),
 				});
 			}
-
-			return { hasCopyToClipboardAutoNotification: Feature.hasCopyToClipboardAutoNotification() };
 		}
 		catch (error)
 		{

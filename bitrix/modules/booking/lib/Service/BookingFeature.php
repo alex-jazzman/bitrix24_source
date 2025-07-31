@@ -6,7 +6,6 @@ namespace Bitrix\Booking\Service;
 
 use Bitrix\Bitrix24\Feature;
 
-use Bitrix\Crm\Integration\NotificationsManager;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Config\Option;
 
@@ -46,17 +45,13 @@ final class BookingFeature
 
 	public static function canTurnOnTrial(): bool
 	{
-		$canTurnOnTrial = false;
-
-		if (Loader::includeModule('bitrix24'))
-		{
-			$canTurnOnTrial = (
-				(!self::isFeatureEnabled() && !self::isTrialFeatureWasEnabled())
-				&& (Loader::includeModule('crm') && NotificationsManager::canUse())
-			);
-		}
-
-		return $canTurnOnTrial;
+		return (
+			Loader::includeModule('bitrix24')
+			&& (
+				!self::isFeatureEnabled()
+				&& !self::isTrialFeatureWasEnabled()
+			)
+		);
 	}
 
 	public static function canTurnOnDemo(): bool
@@ -64,7 +59,17 @@ final class BookingFeature
 		return false;
 	}
 
-	public static function turnOnTrial(): void
+	public static function turnOnTrialIfPossible(): void
+	{
+		if (!self::canTurnOnTrial())
+		{
+			return;
+		}
+
+		self::turnOnTrial();
+	}
+
+	private static function turnOnTrial(): void
 	{
 		Feature::setFeatureTrialable(self::FEATURE_ID, [
 			'days' => self::TRIAL_DAYS,

@@ -882,7 +882,7 @@ export default class Widget extends EventEmitter
 	{
 		return this.#cache.remember('getLogoutContainer', () => {
 			const onclickLogout = () => {
-				if (DesktopApi.isDesktop())
+				if (!Type.isNil(DesktopApi) && DesktopApi.isDesktop())
 				{
 					DesktopApi.logout();
 				}

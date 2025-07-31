@@ -3,12 +3,10 @@
  */
 jn.define('im/messenger/controller/sidebar/chat/sidebar-profile-info', (require, exports, module) => {
 	const { Type } = require('type');
-	const { Feature: MobileFeature } = require('feature');
 
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const logger = LoggerManager.getInstance().getLogger('sidebar--sidebar-profile-info');
 	const {
-		Avatar: MessengerAvatarLegacy,
 		AvatarSafe,
 	} = require('im/messenger/lib/ui/base/avatar');
 	const {
@@ -101,21 +99,10 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-profile-info', (require,
 					isSuperEllipse: this.props.isSuperEllipseAvatar,
 				});
 			}
-			else if (MobileFeature.isNativeAvatarSupported())
+			else
 			{
 				const avatarProps = ChatAvatar.createFromDialogId(this.props.dialogId).getSidebarTitleAvatarProps();
 				avatar = Avatar(avatarProps);
-			}
-			else
-			{
-				avatar = new MessengerAvatarLegacy({
-					text: this.state.title,
-					uri: this.state.imageUrl,
-					svg: this.props.headData.svg,
-					color: this.props.headData.imageColor,
-					size: 'XL',
-					isSuperEllipse: this.props.isSuperEllipseAvatar,
-				});
 			}
 
 			return View(

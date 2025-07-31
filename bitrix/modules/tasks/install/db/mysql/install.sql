@@ -970,11 +970,3 @@ create table if not exists b_tasks_task_chat (
 	CHAT_ID  INT(11) UNSIGNED NOT NULL,
 	INDEX task_chat_index (TASK_ID, CHAT_ID)
 );
-
-create table if not exists b_tasks_task_result_file (
-	ID int not null auto_increment,
-	RESULT_ID  int(11) unsigned not null,
-	FILE_ID int(11) not null ,
-	PRIMARY KEY (ID),
-	index task_result_file_index (RESULT_ID)
-);

@@ -94,22 +94,6 @@ class UIPromotionService implements PromotionServiceInterface
 		];
 
 		$result[] = [
-			"ID" => 'im:add-users-to-copilot-chat:09042024:all',
-			"USER_TYPE" =>  UserType::ALL->value,
-			"DEVICE_TYPE" => DeviceType::ALL->value,
-			"LIFETIME" => self::ENDLESS_LIFETIME,
-			"END_DATE" => (new DateTime('01.11.2025', 'd.m.Y'))->getTimestamp()
-		];
-
-		$result[] = [
-			"ID" => 'im:change-role-copilot-chat:09042024:all',
-			"USER_TYPE" =>  UserType::ALL->value,
-			"DEVICE_TYPE" => DeviceType::ALL->value,
-			"LIFETIME" => self::ENDLESS_LIFETIME,
-			"END_DATE" => (new DateTime('01.11.2025', 'd.m.Y'))->getTimestamp()
-		];
-
-		$result[] = [
 			"ID" => 'im:collab-helpdesk-sidebar:30102024:all',
 			"USER_TYPE" =>  UserType::ALL->value,
 			"DEVICE_TYPE" => DeviceType::ALL->value,
@@ -193,6 +177,43 @@ class UIPromotionService implements PromotionServiceInterface
 				"USER_TYPE" => UserType::ALL->value,
 				"DEVICE_TYPE" => DeviceType::WEB->value,
 				"LIFETIME" => self::ENDLESS_LIFETIME,
+			];
+		}
+
+		if (Features::isCopilotSelectModelAvailable())
+		{
+			$result[] = [
+				"ID" => 'im:chat-header-change-copilot-engine-and-role:20052025:all',
+				"USER_TYPE" =>  UserType::ALL->value,
+				"DEVICE_TYPE" => DeviceType::ALL->value,
+				"LIFETIME" => self::ENDLESS_LIFETIME,
+				"END_DATE" => (new DateTime('30.04.2027', 'd.m.Y'))->getTimestamp(),
+			];
+
+			$result[] = [
+				"ID" => 'im:chat-sidebar-change-copilot-engine-and-role:20052025:all',
+				"USER_TYPE" =>  UserType::ALL->value,
+				"DEVICE_TYPE" => DeviceType::ALL->value,
+				"LIFETIME" => self::ENDLESS_LIFETIME,
+				"END_DATE" => (new DateTime('30.04.2027', 'd.m.Y'))->getTimestamp(),
+			];
+		}
+		else
+		{
+			$result[] = [
+				"ID" => 'im:add-users-to-copilot-chat:09042024:all',
+				"USER_TYPE" =>  UserType::ALL->value,
+				"DEVICE_TYPE" => DeviceType::ALL->value,
+				"LIFETIME" => self::ENDLESS_LIFETIME,
+				"END_DATE" => (new DateTime('01.11.2025', 'd.m.Y'))->getTimestamp()
+			];
+
+			$result[] = [
+				"ID" => 'im:change-role-copilot-chat:09042024:all',
+				"USER_TYPE" =>  UserType::ALL->value,
+				"DEVICE_TYPE" => DeviceType::ALL->value,
+				"LIFETIME" => self::ENDLESS_LIFETIME,
+				"END_DATE" => (new DateTime('01.11.2025', 'd.m.Y'))->getTimestamp()
 			];
 		}
 

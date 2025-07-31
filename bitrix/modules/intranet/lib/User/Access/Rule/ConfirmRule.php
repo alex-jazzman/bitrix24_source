@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Bitrix\Intranet\User\Access\Rule;
 
-use Bitrix\Intranet\Enum\InvitationStatus;
 use Bitrix\Intranet\User\Access\Model\TargetUserModel;
 use Bitrix\Intranet\User\Access\Model\UserModel;
 use Bitrix\Intranet\User\Access\Trait\SelfRuleTrait;
@@ -34,12 +33,7 @@ class ConfirmRule extends AbstractRule
 				return false;
 			}
 
-			if (!$this->checkSelfAction($item))
-			{
-				return false;
-			}
-
-			if ($item->getInviteStatus() !== InvitationStatus::INVITE_AWAITING_APPROVE)
+			if ($this->isSelfAction($item))
 			{
 				return false;
 			}

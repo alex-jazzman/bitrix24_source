@@ -9,6 +9,7 @@ return [
 		'files/entry',
 		'files/converter',
 		'utils/color',
+		'utils/object',
 		'im:lib/theme',
 		'im:chat/selector/chat',
 		'im:messenger/lib/di/service-locator',

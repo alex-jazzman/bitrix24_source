@@ -1,6 +1,5 @@
 import { UserType } from 'im.v2.const';
 import { CopilotManager } from 'im.v2.lib.copilot';
-import { Feature, FeatureManager } from 'im.v2.lib.feature';
 
 import { AvatarSize } from './const/const';
 import { Avatar } from './components/base/avatar';
@@ -60,21 +59,13 @@ export const MessageAvatar = {
 		{
 			return this.$store.getters['users/get'](this.authorId, true);
 		},
-		isCopilotChatsInRecentTabEnabled(): boolean
-		{
-			return FeatureManager.isFeatureAvailable(Feature.showCopilotChatsInRecentTab);
-		},
 		avatarComponent(): BitrixVueComponentProps
 		{
 			const avatarMap = {
 				[UserType.extranet]: ExtranetUserAvatar,
 				[UserType.collaber]: CollaberAvatar,
+				[UserType.bot]: this.getBotAvatar(),
 			};
-
-			if (this.isCopilotChatsInRecentTabEnabled)
-			{
-				avatarMap[UserType.bot] = this.getBotAvatar();
-			}
 
 			return avatarMap[this.user.type] ?? Avatar;
 		},

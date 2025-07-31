@@ -162,21 +162,12 @@ jn.define('im/messenger/controller/recent/chat/recent', (require, exports, modul
 
 		drawCall(callItem)
 		{
-			this.view.findItem({ id: callItem.id }, (item) => {
-				if (item)
-				{
-					this.view.updateItem({ id: callItem.id }, callItem);
-
-					return;
-				}
-
-				this.view.addItems([callItem]);
-			});
+			this.upsert(callItem, false);
 		}
 
 		removeCall(call)
 		{
-			this.view.removeCallItem(call);
+			this.removeItem(call, true);
 		}
 
 		/* endregion Events */
@@ -300,10 +291,7 @@ jn.define('im/messenger/controller/recent/chat/recent', (require, exports, modul
 		 */
 		saveShareDialogCache()
 		{
-			return this.shareDialogCache.saveRecentItemList()
-				.catch(
-					(error) => this.logger.error(`${this.constructor.name}.saveShareDialogCache.catch:`, error),
-				);
+			return this.shareDialogCache.saveRecentItemListThrottled();
 		}
 	}
 

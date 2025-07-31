@@ -894,7 +894,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const {
 	  EventType: EventType$1
 	} = getConst();
-	const atomRegExpPart = '\\d{4}-\\d{2}-\\d{2}T[0-2]\\d:[0-5]\\d:[0-5]\\d[+-][0-2]\\d:[0-5]\\d';
 	const ActionType = {
 	  put: 'put',
 	  send: 'send'
@@ -948,21 +947,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      return match.replace(/\[SEND(?:=(.+))?](.+?)?\[\/SEND]/gi, (whole, command, text) => {
 	        return text ? text : command;
 	      });
-	    });
-	    return text;
-	  },
-	  decodeDate(text) {
-	    text = text.replace(RegExp('\\[DATE=(' + atomRegExpPart + ')](.+?)\\[\\/DATE]', 'ig'), (whole, date, text) => {
-	      text = text.replace(/<(\w+)[^>]*>(.*?)<\\1>/i, "$2", text);
-	      text = text.replace(/\[(\w+)[^\]]*](.*?)\[\/\1]/i, "$2", text);
-	      return this._getHtmlForAction('date', text, date);
-	    });
-	    return text;
-	  },
-	  purifyDate(text) {
-	    const atomRegexp = getUtils().date.atomRegexpString;
-	    text = text.replace(RegExp('\[DATE=(' + atomRegexp + ')](.+?)\[\/DATE]', 'ig'), (whole, date, text) => {
-	      return text;
 	    });
 	    return text;
 	  },
@@ -1309,6 +1293,39 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	};
 
+	const ParserDate = {
+	  decode(text) {
+	    return handleTimestampCode(text);
+	  },
+	  purify(text) {
+	    return handleTimestampCode(text);
+	  }
+	};
+	const handleTimestampCode = text => {
+	  // [timestamp=1645844720 format=SHORT_TIME_FORMAT]
+	  const regex = /\[timestamp=(?<timestamp>\d+)\s+format=(?<format>[_a-z]+)]/gi;
+	  return text.replaceAll(regex, (initialText, ...args) => {
+	    const {
+	      timestamp,
+	      format
+	    } = args.at(-1);
+	    const DateFormatter = main_core.Reflection.getClass('BX.Messenger.v2.Lib.DateFormatter');
+	    const DateFormat = main_core.Reflection.getClass('BX.Messenger.v2.Lib.DateFormat');
+	    const DateCode = main_core.Reflection.getClass('BX.Messenger.v2.Lib.DateCode');
+	    if (!DateFormatter) {
+	      return initialText;
+	    }
+	    const timestampInMilliseconds = Number(timestamp) * 1000;
+	    const date = new Date(timestampInMilliseconds);
+	    const preparedFormat = main_core.Text.toCamelCase(format);
+	    const availableFormats = Object.keys(DateFormat);
+	    if (!availableFormats.includes(preparedFormat)) {
+	      return initialText;
+	    }
+	    return DateFormatter.formatByCode(date, DateCode[preparedFormat]);
+	  });
+	};
+
 	const Parser = {
 	  decodeMessage(message) {
 	    const messageFiles = getCore().store.getters['messages/getMessageFiles'](message.id);
@@ -1408,7 +1425,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      text = ParserImage.decodeLink(text);
 	    }
 	    text = ParserDisk.decode(text);
-	    text = ParserAction.decodeDate(text);
+	    text = ParserDate.decode(text);
 	    text = ParserQuote.decodeArrowQuote(text);
 	    text = ParserQuote.decodeQuote(text, {
 	      contextDialogId
@@ -1514,6 +1531,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    text = ParserImage.purifyLink(text);
 	    text = ParserImage.purifyIcon(text);
 	    text = ParserDisk.purify(text);
+	    text = ParserDate.purify(text);
 	    text = ParserCommon.purifyNewLine(text);
 	    text = ParserIcon.addIconToShortText({
 	      text,

@@ -6,10 +6,6 @@
 	align-items: center;
 }
 
-.hr-department-detail-content_tab__empty-state-icon {
-	margin-top: 8px;
-}
-
 .hr-department-detail-content__empty-tab-entity-title {
 	margin-top: 16px;
 	font-size: var(--ui-font-size-xl);
@@ -65,4 +61,11 @@
 	height: 112px;
 	width: 112px;
 	background-image: url('./images/empty-tab-search.svg');
+}
+
+.hr-department-detail-content__chat-empty-tab-search_tab-icon {
+	height: 112px;
+	width: 112px;
+	background-image: url('./images/empty-tab-search.svg');
+	margin-top: 6px;
 }

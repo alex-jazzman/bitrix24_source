@@ -38,6 +38,7 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/audio/src/item', (require, ex
 			super(props);
 
 			this.ref = null;
+			this.playbackTimeIndicatorRef = null;
 
 			/**
 			 * @protected
@@ -114,11 +115,14 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/audio/src/item', (require, ex
 			const stage = this.state.stage;
 			if (stage === PlayerStage.PLAYING || stage === PlayerStage.PAUSED)
 			{
-				return PlaybackTimeIndicator(
-					this.state.timing,
-					this.state.duration,
-					this.getTestId(),
-				);
+				return new PlaybackTimeIndicator({
+					timing: this.state.timing,
+					length: this.state.duration,
+					testId: this.getTestId(),
+					onRef: (ref) => {
+						this.playbackTimeIndicatorRef = ref;
+					},
+				});
 			}
 
 			return TitleDate(this.fileModel?.date, this.getTestId());
@@ -138,7 +142,6 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/audio/src/item', (require, ex
 
 			if (this.state.stage === PlayerStage.PAUSED)
 			{
-				this.player.setSeek(this.state.timing ?? 0);
 				this.play();
 
 				return;
@@ -166,7 +169,6 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/audio/src/item', (require, ex
 		 */
 		stop = (onStop) => {
 			this.setState({ stage: PlayerStage.IDLE, timing: 0 }, () => {
-				this.clearInterval();
 				if (this.player)
 				{
 					this.player.stop();
@@ -177,6 +179,7 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/audio/src/item', (require, ex
 					this.player.off('play', this.onPlayAudio);
 					this.player.off('stop', this.stop);
 					this.player.off('finish', this.finish);
+					this.player.off('timeupdate', this.onTimeUpdate);
 
 					this.player = null;
 				}
@@ -253,9 +256,14 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/audio/src/item', (require, ex
 				this.player.on('play', this.onPlayAudio);
 				this.player.on('stop', this.stop);
 				this.player.on('finish', this.finish);
+				this.player.on('timeupdate', this.onTimeUpdate);
 			}
 
 			this.setCurrentPlayingItem(this);
+		};
+
+		onTimeUpdate = ({ currentTime }) => {
+			this.playbackTimeIndicatorRef?.updateTiming(currentTime);
 		};
 
 		onReadyAudio = ({ duration }) => {
@@ -274,10 +282,7 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/audio/src/item', (require, ex
 				return;
 			}
 
-			this.setState(
-				{ stage: PlayerStage.PAUSED, timing },
-				this.clearInterval,
-			);
+			this.setState({ stage: PlayerStage.PAUSED, timing });
 		};
 
 		onPlayAudio = () => {
@@ -286,36 +291,7 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/audio/src/item', (require, ex
 				return;
 			}
 
-			this.setState(
-				{ stage: PlayerStage.PLAYING },
-				() => {
-					if (!this.intervalId)
-					{
-						this.intervalId = setInterval(() => {
-							if (this.state.timing < this.state.duration)
-							{
-								this.setState({
-									timing: this.state.timing + 1,
-								});
-							}
-							else
-							{
-								this.setState({
-									stage: PlayerStage.IDLE,
-									timing: 0,
-								});
-
-								this.clearInterval();
-							}
-						}, 1000);
-					}
-				},
-			);
-		};
-
-		clearInterval = () => {
-			clearInterval(this.intervalId);
-			this.intervalId = null;
+			this.setState({ stage: PlayerStage.PLAYING });
 		};
 	}
 

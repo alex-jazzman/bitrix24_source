@@ -19,6 +19,7 @@ jn.define('im/messenger/provider/services/disk/service', (require, exports, modu
 
 			return BX.rest.callMethod(RestMethod.imDiskFileDelete, queryParams).catch((error) => {
 				Logger.error('DiskService.delete error: ', error);
+				throw new Error(error);
 			});
 		}
 
@@ -33,6 +34,7 @@ jn.define('im/messenger/provider/services/disk/service', (require, exports, modu
 
 			return BX.rest.callMethod(RestMethod.imV2DiskFileSave, queryParams).catch((error) => {
 				Logger.error('DiskService.save error: ', error);
+				throw new Error(error);
 			});
 		}
 	}

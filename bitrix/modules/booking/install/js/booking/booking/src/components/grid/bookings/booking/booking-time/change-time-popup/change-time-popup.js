@@ -58,7 +58,7 @@ export const ChangeTimePopup = {
 		}),
 		popupId(): string
 		{
-			return `booking-change-time-popup-${this.bookingId}`;
+			return `booking-change-time-popup-${this.bookingId}-${this.resourceId}`;
 		},
 		config(): PopupOptions
 		{
@@ -104,7 +104,7 @@ export const ChangeTimePopup = {
 					);
 				});
 
-			return bookings.length > 0;
+			return bookings.length > 1;
 		},
 		bookings(): BookingModel[]
 		{

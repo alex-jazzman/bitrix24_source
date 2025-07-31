@@ -6,6 +6,7 @@ return [
 		'loc',
 		'utils/array',
 		'utils/object',
+		'im:messenger/lib/helper',
 		'im:messenger/lib/di/service-locator',
 		'im:messenger/const',
 		'im:messenger/cache/share-dialog',

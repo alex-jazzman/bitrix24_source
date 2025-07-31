@@ -44,30 +44,30 @@ if ($workTimeAvailable)
 
 ?>
 
-<div data-testid="user-id-<?= (int)$arResult['userId'] ?>" class="air-user-profile --ui-hoverable-alt" data-id="bx-avatar-widget">
-	<div class="air-user-profile__avatar ui-icon-common-user <?= '--' . $arResult['userRole'] ?>">
-		<i style="<?= htmlspecialcharsbx($style) ?>"></i>
+	<div data-testid="user-id-<?= (int)$arResult['userId'] ?>" class="air-user-profile --ui-hoverable-alt" data-id="bx-avatar-widget">
+		<div class="air-user-profile__avatar ui-icon-common-user <?= '--' . $arResult['userRole'] ?>">
+			<i style="<?= htmlspecialcharsbx($style) ?>"></i>
+		</div>
+		<div class="air-user-profile-avatar__counter"></div>
+		<div class="air-user-profile-avatar__work-time-state"></div>
 	</div>
-	<div class="air-user-profile-avatar__counter"></div>
-	<div class="air-user-profile-avatar__work-time-state"></div>
-</div>
 
 <?php
 $frame = $this->createFrame()->begin('');
 ?>
 
-<script>
-	BX.ready(() => {
-		BX.Intranet.Bitrix24.AvatarButton.init({
-			userId: <?= (int)$arResult['userId'] ?>,
-			skeleton: <?= Json::encode($arResult['skeleton']) ?>,
-			signDocumentsCounter: <?= (int)$arResult['signDocumentsCounter'] ?>,
-			signDocumentsPullEventName: '<?= \CUtil::JSEscape($arResult['signDocumentsPullEventName']) ?>',
-			workTimeAvailable: '<?= \CUtil::JSEscape($workTimeAvailable) ?>',
-			workTimeState: '<?= \CUtil::JSEscape($workTimeState) ?>',
-			workTimeAction: '<?= \CUtil::JSEscape($workTimeAction) ?>',
-		});
-	})
-</script>
+	<script>
+		BX.ready(() => {
+			BX.Intranet.Bitrix24.AvatarButton.init({
+				userId: <?= (int)$arResult['userId'] ?>,
+				skeleton: <?= Json::encode($arResult['skeleton']) ?>,
+				signDocumentsCounter: <?= (int)$arResult['signDocumentsCounter'] ?>,
+				signDocumentsPullEventName: '<?= \CUtil::JSEscape($arResult['signDocumentsPullEventName']) ?>',
+				workTimeAvailable: '<?= \CUtil::JSEscape($workTimeAvailable) ?>',
+				workTimeState: '<?= \CUtil::JSEscape($workTimeState) ?>',
+				workTimeAction: '<?= \CUtil::JSEscape($workTimeAction) ?>',
+			});
+		})
+	</script>
 <?php
 $frame->end();

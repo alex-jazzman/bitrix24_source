@@ -135,11 +135,8 @@ abstract class UserModel
 			if (
 				Loader::includeModule('humanresources')
 				&& Storage::instance()->isCompanyStructureConverted()
-				&& Container::instance()->getUserService()->isEmployee($this->userId)
 			)
 			{
-				$this->accessCodes[] = AccessCode::ACCESS_EMPLOYEE . '0';
-
 				return $this->accessCodes;
 			}
 

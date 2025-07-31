@@ -1,4 +1,5 @@
-import { postData } from 'humanresources.company-structure.api';
+import { getData, postData } from 'humanresources.company-structure.api';
+import type { ChatListResponse } from 'humanresources.company-structure.utils';
 import { DepartmentUserIds } from './types';
 
 export const WizardAPI = {
@@ -53,11 +54,15 @@ export const WizardAPI = {
 		nodeId: number,
 		ids: number[],
 		createDefault: boolean[],
+		removeIds: number[] = [],
+		parentId: ?number = null,
 	): Promise<void> => {
 		return postData('humanresources.api.Structure.Node.Member.Chat.saveChatList', {
 			nodeId,
 			ids,
 			createDefault,
+			removeIds,
+			parentId,
 		});
 	},
 	createSettings: (
@@ -84,5 +89,10 @@ export const WizardAPI = {
 	},
 	getSettings: (nodeId: number): Promise<Array<number>> => {
 		return postData('humanresources.api.Structure.Node.NodeSettings.get', { nodeId });
+	},
+	getChatsAndChannels: (nodeId: number): Promise<ChatListResponse> => {
+		return getData('humanresources.api.Structure.Node.Member.Chat.getList', {
+			nodeId,
+		});
 	},
 };

@@ -4,8 +4,9 @@ return [
 	'extensions' => [
 		'rest',
 		'rest/run-action-executor',
+		'type',
 	],
 	'bundle' => [
-		'./src/cache',
+		'./src/events-fetcher',
 	],
 ];

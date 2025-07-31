@@ -6,7 +6,6 @@ use Bitrix\Intranet\Enum\InvitationStatus;
 use Bitrix\Intranet\Enum\UserRole;
 use Bitrix\Intranet\Infrastructure\UserNameFormatter;
 use Bitrix\Intranet\Integration\HumanResources\HrUserService;
-use Bitrix\Intranet\Integration\Main\Culture;
 use Bitrix\Intranet\Internal\Repository\Mapper\UserMapper;
 use Bitrix\Intranet\Service\ServiceContainer;
 use Bitrix\Intranet\UserTable;
@@ -15,6 +14,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
+use Bitrix\Main\Type\Date;
 use Bitrix\Socialnetwork\Collab\CollabFeature;
 
 class User
@@ -39,8 +39,19 @@ class User
 		private ?string $personalMobile = null,
 		private ?string $password = null,
 		private mixed $ufCrmEntity = null, //UF_USER_CRM_ENTITY
+		private ?Date $lastLogin = null,
 	)
 	{
+	}
+
+	public static function initByArray(array $userData): self
+	{
+		return (new UserMapper())->convertFromArray($userData);
+	}
+
+	public function toArray(): array
+	{
+		return (new UserMapper())->convertToArray($this);
 	}
 
 	public function getUfCrmEntity(): mixed
@@ -91,11 +102,6 @@ class User
 	public function setPersonalMobile(?string $authPhoneNumber): void
 	{
 		$this->personalMobile = $authPhoneNumber;
-	}
-
-	public static function initByArray(array $userData): self
-	{
-		return (new UserMapper())->convertFromArray($userData);
 	}
 
 	public function getInviteStatus(): InvitationStatus
@@ -357,5 +363,15 @@ class User
 	public function setPersonalPhoto(?int $personalPhoto): void
 	{
 		$this->personalPhoto = $personalPhoto;
+	}
+
+	public function getLastLogin(): ?Date
+	{
+		return $this->lastLogin;
+	}
+
+	public function setLastLogin(?Date $lastLogin): void
+	{
+		$this->lastLogin = $lastLogin;
 	}
 }

@@ -159,8 +159,16 @@ final class Structure extends Controller
 					PermissionDictionary::HUMAN_RESOURCES_TEAM_SETTINGS_EDIT,
 					$userId
 				),
+				StructureActionDictionary::ACTION_TEAM_COMMUNICATION_EDIT => $this->getVariablePermissionValue(
+					PermissionDictionary::HUMAN_RESOURCES_TEAM_COMMUNICATION_EDIT,
+					$userId
+				),
 				StructureActionDictionary::ACTION_TEAM_ACCESS_EDIT => $this->getVariablePermissionValue(
 					PermissionDictionary::HUMAN_RESOURCES_TEAM_ACCESS_EDIT,
+					$userId
+				),
+				StructureActionDictionary::ACTION_DEPARTMENT_COMMUNICATION_EDIT => $this->getVariablePermissionValue(
+					PermissionDictionary::HUMAN_RESOURCES_DEPARTMENT_COMMUNICATION_EDIT,
 					$userId
 				),
 			],

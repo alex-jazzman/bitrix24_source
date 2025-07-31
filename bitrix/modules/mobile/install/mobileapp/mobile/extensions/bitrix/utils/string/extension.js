@@ -26,8 +26,17 @@
 		return value.charAt(0).toUpperCase() + value.slice(1);
 	}
 
+	/**
+	 * @param {any} value
+	 * @return {string}
+	 */
 	function camelize(value)
 	{
+		if (!value || typeof value !== 'string')
+		{
+			return '';
+		}
+
 		return value
 			.replace(/_/g, ' ')
 			.replace(/(?:^\w|[A-Z]|\b\w)/g, (word, index) => {

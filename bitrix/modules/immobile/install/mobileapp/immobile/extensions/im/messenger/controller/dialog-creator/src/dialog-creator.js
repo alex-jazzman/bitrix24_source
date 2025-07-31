@@ -2,8 +2,9 @@
  * @module im/messenger/controller/dialog-creator/dialog-creator
  */
 jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exports, module) => {
-	/* global ChatUtils */
 	const { Type } = require('type');
+	const { clone } = require('utils/object');
+
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { NavigationSelector } = require('im/messenger/controller/dialog-creator/navigation-selector');
 	const { ChatTitle, ChatAvatar } = require('im/messenger/lib/element');
@@ -182,7 +183,7 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 			 */
 			const userItems = [];
 
-			const recentUserList = ChatUtils.objectClone(this.store.getters['recentModel/getUserList']());
+			const recentUserList = clone(this.store.getters['recentModel/getUserList']());
 			const recentUserListIndex = {};
 			if (Type.isArrayFilled(recentUserList))
 			{
@@ -197,7 +198,7 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 				});
 			}
 
-			const colleaguesList = ChatUtils.objectClone(this.store.getters['usersModel/getList']());
+			const colleaguesList = clone(this.store.getters['usersModel/getList']());
 			if (Type.isArrayFilled(colleaguesList))
 			{
 				colleaguesList.forEach((user) => {

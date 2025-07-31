@@ -105,7 +105,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  editor: 'editor',
 	  chatWindow: 'chat_window',
 	  forward: 'forward',
-	  userAdd: 'user_add'
+	  userAdd: 'user_add',
+	  chatCreateMenu: 'chat_create_menu',
+	  chatEmptyState: 'chat_empty_state'
 	});
 	const AnalyticsSubSection = Object.freeze({
 	  contextMenu: 'context_menu',
@@ -1114,6 +1116,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  };
 	}
 
+	class SliderInvite {
+	  getEmptyStateContext() {
+	    return AnalyticsSection.chatEmptyState;
+	  }
+	  getRecentCreateMenuContext() {
+	    return AnalyticsSection.chatCreateMenu;
+	  }
+	}
+
 	const PseudoChatTypeForNotes = 'notes';
 	var _excludedChats = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("excludedChats");
 	var _chatsWithTyping = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("chatsWithTyping");
@@ -1154,6 +1165,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    this.messagePins = new MessagePins();
 	    this.messageForward = new MessageForward();
 	    this.desktopUpdateBanner = new DesktopUpdateBanner();
+	    this.sliderInvite = new SliderInvite();
 	  }
 	  static getInstance() {
 	    if (!babelHelpers.classPrivateFieldLooseBase(this, _instance)[_instance]) {

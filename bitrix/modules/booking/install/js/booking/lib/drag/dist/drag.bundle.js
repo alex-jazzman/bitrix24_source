@@ -284,12 +284,12 @@ this.BX.Booking = this.BX.Booking || {};
 	  if (cell.fromTs === booking.dateFromTs && cell.toTs === booking.dateToTs && cell.resourceId === resourceId) {
 	    return;
 	  }
-	  const additionalResourcesIds = booking.resourcesIds.includes(cell.resourceId) ? booking.resourcesIds : booking.resourcesIds.filter(id => id !== resourceId);
+	  const resourceIds = booking.resourcesIds.includes(cell.resourceId) ? booking.resourcesIds : [cell.resourceId, ...booking.resourcesIds.filter(id => id !== resourceId)];
 	  await booking_provider_service_bookingService.bookingService.update({
 	    id: booking.id,
 	    dateFromTs: cell.fromTs,
 	    dateToTs: cell.toTs,
-	    resourcesIds: [...new Set([cell.resourceId, ...additionalResourcesIds])],
+	    resourcesIds: [...new Set(resourceIds)],
 	    timezoneFrom: booking.timezoneFrom,
 	    timezoneTo: booking.timezoneTo
 	  });

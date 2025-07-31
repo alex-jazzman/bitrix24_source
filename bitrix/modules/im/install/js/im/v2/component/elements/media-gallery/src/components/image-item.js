@@ -2,7 +2,7 @@ import { Type } from 'main.core';
 import { lazyload } from 'ui.vue3.directives.lazyload';
 import { FileType, FileViewerContext } from 'im.v2.const';
 import { Utils } from 'im.v2.lib.utils';
-import { ProgressBar } from	'im.v2.component.elements.progressbar';
+import { ProgressBar, ProgressBarSize } from 'im.v2.component.elements.progressbar';
 
 import '../css/components/image-item.css';
 
@@ -134,6 +134,10 @@ export const ImageItem = {
 		{
 			return !Type.isStringFilled(this.previewSourceLink);
 		},
+		progressBarSize(): string
+		{
+			return this.isGallery ? ProgressBarSize.S : ProgressBarSize.L;
+		},
 	},
 	methods: {
 		download()
@@ -183,9 +187,9 @@ export const ImageItem = {
 				class="bx-im-elements-media-gallery-image-item__source"
 			/>
 			<ProgressBar 
-				v-if="handleLoading && !isLoaded" 
+				v-if="handleLoading" 
 				:item="file" 
-				:withLabels="!isGallery" 
+				:size="progressBarSize" 
 				@cancelClick="onCancelClick"
 			/>
 			<div v-if="showPlayIcon" class="bx-im-elements-media-gallery-image-item__play-icon-container">

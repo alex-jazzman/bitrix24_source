@@ -21,7 +21,8 @@ $APPLICATION->IncludeComponent(
 			"SEF_MODE" => "Y",
 			"SEF_FOLDER" => "/crm/configs/exch1c/",
 			"PATH_TO_CONFIGS_INDEX" => "/crm/configs/"
-		]
+		],
+		'USE_UI_TOOLBAR' => 'Y',
 	]
 );
 ?><?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php");

@@ -173,9 +173,8 @@ export class Interface extends BuilderModel
 			/** @function interface/resourcesIds */
 			resourcesIds: (state, getters, rootState, rootGetters): number[] => {
 				const extraResourcesIds = rootGetters[`${Model.Bookings}/getByDate`](state.selectedDateTs)
-					.filter((booking) => booking.counter > 0)
-					.map((booking) => booking.resourcesIds[0])
-				;
+					.filter((booking) => !getters.isFilterMode && booking.counter > 0)
+					.map((booking) => booking.resourcesIds[0]);
 
 				const resourcesIds = [...new Set([...state.resourcesIds, ...extraResourcesIds])];
 
@@ -286,8 +285,9 @@ export class Interface extends BuilderModel
 							const isDragOffHours = getters.isDragMode && busySlot.type === BusySlot.OffHours;
 							const isActive = !(busySlot.id in state.disabledBusySlots) && !isDragOffHours;
 							const belongsToResources = resources.has(busySlot.resourceId);
+							const isIntersectionOverbooking = busySlot.type === BusySlot.IntersectionOverbooking;
 
-							return isActive && belongsToResources;
+							return isIntersectionOverbooking && isActive && belongsToResources;
 						})
 						.map(({ fromTs, toTs, resourceId }) => ({ fromTs, toTs, resourcesIds: [resourceId] }))
 					;

@@ -21,11 +21,16 @@ jn.define('im/messenger/lib/messages-auto-delete', (require, exports, module) =>
 	 */
 	class AutoDeleteMessages
 	{
-		constructor(dialogId)
+		/**
+		 * @param {DialogId} dialogId
+		 * @param {{ toastParams?: ShowToastParams }} options
+		 */
+		constructor(dialogId, options = {})
 		{
 			this.dialogId = dialogId;
 			this.store = serviceLocator.get('core').getStore();
 			this.chatService = new ChatService();
+			this.toastParams = options.toastParams ?? {};
 		}
 
 		/**
@@ -96,7 +101,7 @@ jn.define('im/messenger/lib/messages-auto-delete', (require, exports, module) =>
 			const dialogModel = this.getDialog();
 			if (!Feature.isMessagesAutoDeleteEnabled && dialogModel?.messagesAutoDeleteDelay === MessagesAutoDeleteDelay.off)
 			{
-				Notification.showToast(ToastType.messagesAutoDeleteDisabled);
+				Notification.showToast(ToastType.messagesAutoDeleteDisabled, null, this.toastParams);
 
 				return;
 			}
@@ -123,21 +128,21 @@ jn.define('im/messenger/lib/messages-auto-delete', (require, exports, module) =>
 
 			if (!Feature.isMessagesAutoDeleteEnabled && newDelay !== MessagesAutoDeleteDelay.off)
 			{
-				Notification.showToast(ToastType.messagesAutoDeleteDisabled);
+				Notification.showToast(ToastType.messagesAutoDeleteDisabled, null, this.toastParams);
 
 				return;
 			}
 
 			if (newDelay === MessagesAutoDeleteDelay.off)
 			{
-				Notification.showToast(ToastType.autoDeleteNotActive);
+				Notification.showToast(ToastType.autoDeleteNotActive, null, this.toastParams);
 
 				return;
 			}
 
 			if (oldDelay === MessagesAutoDeleteDelay.off)
 			{
-				Notification.showToast(ToastType.autoDeleteActive);
+				Notification.showToast(ToastType.autoDeleteActive, null, this.toastParams);
 			}
 		}
 

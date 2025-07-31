@@ -93,8 +93,9 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 
 			this.initProperties();
 
-			this.handleOnFocus = this.handleOnFocus.bind(this);
 			this.handleOnBlur = this.handleOnBlur.bind(this);
+			this.handleOnFocus = this.handleOnFocus.bind(this);
+			this.handleOnClick = this.handleOnClick.bind(this);
 			this.handleOnSubmit = this.handleOnSubmit.bind(this);
 			this.handleOnChange = this.handleOnChange.bind(this);
 			this.handleOnChangeText = this.handleOnChangeText.bind(this);
@@ -148,8 +149,7 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 		}
 
 		initProperties()
-		{
-		}
+		{}
 
 		render()
 		{
@@ -231,6 +231,8 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 			return View(
 				{
 					testId: this.getTestId('label'),
+					onClick: this.handleOnContentClick,
+					onLongClick: this.handleOnContentLongClick,
 					style: {
 						position: 'absolute',
 						top: 0,
@@ -347,6 +349,7 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 					marginRight: Indent.XS.toNumber(),
 				},
 				onClick: this.handleOnClickLeftContent,
+				onLongClick: this.handleOnContentLongClick,
 			});
 		}
 
@@ -369,6 +372,7 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 					marginLeft: Indent.XS2.toNumber(),
 				},
 				onClick: this.handleOnClickRightContent,
+				onLongClick: this.handleOnContentLongClick,
 			});
 		}
 
@@ -818,6 +822,10 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 			{
 				onClickLeftContent();
 			}
+			else
+			{
+				this.handleOnContentClick();
+			}
 		}
 
 		handleOnClickRightContent()
@@ -827,6 +835,10 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 			if (onClickRightContent)
 			{
 				onClickRightContent();
+			}
+			else
+			{
+				this.handleOnContentClick();
 			}
 		}
 

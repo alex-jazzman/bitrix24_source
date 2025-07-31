@@ -23,6 +23,7 @@
 	const { StatusBlock } = require('ui-system/blocks/status-block');
 	const { Box } = require('ui-system/layout/box');
 	const { ProfileView } = require('user/profile');
+	const { UserProfile, fetchNewProfileFeatureEnabled } = require('user-profile');
 
 	const { UserListSorting, UserListMoreMenu, UserListFilter, DepartmentButton } = require('intranet/user-list');
 	const { ListItemType, ListItemsFactory } = require('intranet/simple-list/items');
@@ -468,10 +469,20 @@
 				dispatch(batchActions(actions));
 			}
 
-			this.setState({itemsCount: items.length});
+			this.setState({ itemsCount: items.length });
 		};
 
-		openUserDetail = (userId) => {
+		openUserDetail = async (userId) => {
+			const isNewProfileFeatureEnabled = await fetchNewProfileFeatureEnabled();
+			if (isNewProfileFeatureEnabled)
+			{
+				await UserProfile.open({
+					ownerId: userId,
+				});
+
+				return;
+			}
+
 			const user = selectWholeUserById(store.getState(), userId);
 
 			if (!user)

@@ -6,6 +6,7 @@ return [
 		'utils/enums/base',
 		'utils/url',
 		'assets/icons/types',
+		'loc',
 	],
 	'bundle' => [
 		'./src/main',
@@ -13,5 +14,6 @@ return [
 		'./src/outline',
 		'./src/disk',
 		'./src/reaction',
+		'./src/gratitude',
 	],
 ];

@@ -1300,6 +1300,7 @@ class ConferenceApplication
 								},
 								status: Analytics.AnalyticsStatus.success,
 								isCopilotActive: this.currentCall.isCopilotActive,
+								userCounter: this.currentCall.associatedEntity?.userCounter,
 							});
 
 							this.currentCall.inviteUsers();
@@ -2277,14 +2278,14 @@ class ConferenceApplication
 			return;
 		}
 
-		const currentRoom = this.currentCall.currentRoom && this.currentCall.currentRoom();
+		const currentRoom = this.currentCall && this.currentCall.currentRoom && this.currentCall.currentRoom();
 		if (currentRoom && currentRoom.speaker != this.userId && !e.muted)
 		{
 			this.currentCall.requestRoomSpeaker();
 			return;
 		}
 
-		if (!this.currentCall.microphoneId && !e.muted)
+		if (this.currentCall && !this.currentCall.microphoneId && !e.muted)
 		{
 			this.currentCall.setMicrophoneId(Hardware.defaultMicrophone);
 		}
@@ -2319,6 +2320,11 @@ class ConferenceApplication
 		if (this.currentCall?.userId)
 		{
 			this.updateCallUser(this.currentCall.userId, {microphoneState: !e.muted});
+		}
+
+		if (!this.currentCall)
+		{
+			this.template.$emit('setMicState', !e.muted);
 		}
 	}
 
@@ -2464,7 +2470,7 @@ class ConferenceApplication
 			this.callView.releaseLocalMedia();
 		}
 
-		if (!this.currentCall.cameraId && e.video)
+		if (this.currentCall && !this.currentCall.cameraId && e.video)
 		{
 			this.currentCall.setCameraId(Hardware.defaultCamera);
 		}
@@ -4535,7 +4541,9 @@ class ConferenceApplication
 		Analytics.getInstance().onReconnect({
 			callId: this.currentCall.uuid,
 			callType: Analytics.AnalyticsType.videoconf,
-			reconnectionEventCount: e.reconnectionEventCount
+			reconnectionReason: e.reconnectionReason,
+			reconnectionReasonInfo: e.reconnectionReasonInfo,
+			reconnectionEventCount: e.reconnectionEventCount,
 		});
 
 		// noinspection UnreachableCodeJS
@@ -4751,6 +4759,7 @@ class ConferenceApplication
 				chatId: this.getChatId(),
 				name: this.params.conferenceTitle,
 				type: 'chat',
+				userCounter: this.getDialogData()?.userCounter,
 			},
 		};
 

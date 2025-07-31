@@ -5,8 +5,11 @@ namespace Bitrix\Intranet\Repository;
 use Bitrix\Intranet\Entity\Collection\UserCollection;
 use Bitrix\Intranet\Entity\User;
 use Bitrix\Intranet\Exception\CreationFailedException;
+use Bitrix\Intranet\Exception\DeleteFailedException;
 use Bitrix\Intranet\Exception\UpdateFailedException;
+use Bitrix\Intranet\Exception\WrongIdException;
 use Bitrix\Intranet\Internal\Repository\Mapper\UserMapper;
+use Bitrix\Intranet\Internals\Trait\UserUpdateError;
 use Bitrix\Intranet\UserTable;
 use Bitrix\Intranet\Contract\Repository\UserRepository as UserRepositoryContract;
 use Bitrix\Main\ArgumentException;
@@ -14,6 +17,7 @@ use Bitrix\Main\EO_User;
 use Bitrix\Main\Error;
 use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\LoaderException;
+use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Main\SystemException;
@@ -21,6 +25,8 @@ use Bitrix\Main\Type\DateTime;
 
 class UserRepository implements UserRepositoryContract
 {
+	use UserUpdateError;
+
 	public function findUsersByLogins(array $logins): UserCollection
 	{
 		if (empty($logins))
@@ -32,7 +38,7 @@ class UserRepository implements UserRepositoryContract
 			->whereIn('LOGIN', $logins)
 			->setSelect([
 				'*',
-				'AUTH_PHONE_NUMBER' => 'PHONE_AUTH.PHONE_NUMBER'
+				'AUTH_PHONE_NUMBER' => 'PHONE_AUTH.PHONE_NUMBER',
 			])
 			->fetchAll()
 		;
@@ -51,7 +57,7 @@ class UserRepository implements UserRepositoryContract
 			->whereIn('EXTERNAL_AUTH_ID', ['email', 'shop'])
 			->setSelect([
 				'*',
-				'AUTH_PHONE_NUMBER' => 'PHONE_AUTH.PHONE_NUMBER'
+				'AUTH_PHONE_NUMBER' => 'PHONE_AUTH.PHONE_NUMBER',
 			])
 			->fetchAll()
 		;
@@ -70,7 +76,7 @@ class UserRepository implements UserRepositoryContract
 			->where(Query::filter()
 				->logic('or')
 				->whereNotIn('EXTERNAL_AUTH_ID', $notUserTypes)
-				->whereNull('EXTERNAL_AUTH_ID')
+				->whereNull('EXTERNAL_AUTH_ID'),
 			)
 			->where(Query::filter()
 				->logic('or')
@@ -79,7 +85,7 @@ class UserRepository implements UserRepositoryContract
 			)
 			->setSelect([
 				'*',
-				'AUTH_PHONE_NUMBER' => 'PHONE_AUTH.PHONE_NUMBER'
+				'AUTH_PHONE_NUMBER' => 'PHONE_AUTH.PHONE_NUMBER',
 			])
 			->fetchAll()
 		;
@@ -105,12 +111,12 @@ class UserRepository implements UserRepositoryContract
 			->where(Query::filter()
 				->logic('or')
 				->whereNotIn('EXTERNAL_AUTH_ID', $notUserTypes)
-				->whereNull('EXTERNAL_AUTH_ID')
+				->whereNull('EXTERNAL_AUTH_ID'),
 			)
 			->whereNot('CONFIRM_CODE', '')
 			->setSelect([
 				'*',
-				'AUTH_PHONE_NUMBER' => 'PHONE_AUTH.PHONE_NUMBER'
+				'AUTH_PHONE_NUMBER' => 'PHONE_AUTH.PHONE_NUMBER',
 			])
 			->fetchAll()
 		;
@@ -130,11 +136,11 @@ class UserRepository implements UserRepositoryContract
 			->where(Query::filter()
 				->logic('or')
 				->whereNotIn('EXTERNAL_AUTH_ID', $notUserTypes)
-				->whereNull('EXTERNAL_AUTH_ID')
+				->whereNull('EXTERNAL_AUTH_ID'),
 			)
 			->setSelect([
 				'*',
-				'AUTH_PHONE_NUMBER' => 'PHONE_AUTH.PHONE_NUMBER'
+				'AUTH_PHONE_NUMBER' => 'PHONE_AUTH.PHONE_NUMBER',
 			])
 			->fetchAll()
 		;
@@ -188,7 +194,7 @@ class UserRepository implements UserRepositoryContract
 				'LOGIN',
 				'EXTERNAL_AUTH_ID',
 				'AUTH_PHONE_NUMBER' => 'PHONE_AUTH.PHONE_NUMBER',
-				'UF_DEPARTMENT'
+				'UF_DEPARTMENT',
 			])
 			->fetchAll()
 		;
@@ -215,7 +221,7 @@ class UserRepository implements UserRepositoryContract
 				'EMAIL',
 				'EXTERNAL_AUTH_ID',
 				'AUTH_PHONE_NUMBER' => 'PHONE_AUTH.PHONE_NUMBER',
-				'UF_DEPARTMENT'
+				'UF_DEPARTMENT',
 			])
 			->fetchAll()
 		;
@@ -239,7 +245,13 @@ class UserRepository implements UserRepositoryContract
 				'AUTH_PHONE_NUMBER' => 'PHONE_AUTH.PHONE_NUMBER',
 				'UF_DEPARTMENT',
 			])
-			->fetch();
+			->fetch()
+		;
+
+		if (!$user)
+		{
+			throw new ObjectNotFoundException('User not found');
+		}
 
 		return User::initByArray($user);
 	}
@@ -261,7 +273,7 @@ class UserRepository implements UserRepositoryContract
 			'CONFIRM_CODE',
 			'LOGIN',
 			'EMAIL',
-			'UF_DEPARTMENT'
+			'UF_DEPARTMENT',
 		];
 		$userList = UserTable::query()
 			->whereIn('LOGIN', $emails)
@@ -269,7 +281,7 @@ class UserRepository implements UserRepositoryContract
 			->union(
 				UserTable::query()
 					->whereIn('EMAIL', $emails)
-					->setSelect($fields)
+					->setSelect($fields),
 			)
 			->fetchAll()
 		;
@@ -294,7 +306,7 @@ class UserRepository implements UserRepositoryContract
 			'CONFIRM_CODE',
 			'LOGIN',
 			'AUTH_PHONE_NUMBER' => 'PHONE_AUTH.PHONE_NUMBER',
-			'UF_DEPARTMENT'
+			'UF_DEPARTMENT',
 		];
 		$userList = UserTable::query()
 			->whereIn('LOGIN', $phoneNumbers)
@@ -302,7 +314,7 @@ class UserRepository implements UserRepositoryContract
 			->union(
 				UserTable::query()
 					->whereIn('AUTH_PHONE_NUMBER', $phoneNumbers)
-					->setSelect($fields)
+					->setSelect($fields),
 			)
 			->fetchAll()
 		;
@@ -331,7 +343,7 @@ class UserRepository implements UserRepositoryContract
 
 	public function findActiveUsersWithDepartmentsOnline(int $limitOnlineSeconds, int $limitRows = 0): UserCollection
 	{
-		$date = new DateTime;
+		$date = new DateTime();
 
 		$fields = [
 			'ID',
@@ -352,14 +364,15 @@ class UserRepository implements UserRepositoryContract
 
 	public function findActiveUsersWithDepartmentsOnlineCount(int $limitOnlineSeconds): int
 	{
-		$date = new DateTime;
+		$date = new DateTime();
 
 		return (int)UserTable::query()
 			->where('ACTIVE', true)
 			->where('IS_REAL_USER', true)
 			->where('LAST_ACTIVITY_DATE', '>=', $date->add('-' . $limitOnlineSeconds . ' seconds'))
 			->where('UF_DEPARTMENT', '!=', false)
-			->queryCountTotal();
+			->queryCountTotal()
+		;
 	}
 
 	/**
@@ -414,7 +427,7 @@ class UserRepository implements UserRepositoryContract
 	}
 
 	/**
-	 * @throws ArgumentException
+	 * @throws UpdateFailedException
 	 */
 	public function update(User $user): User
 	{
@@ -427,7 +440,7 @@ class UserRepository implements UserRepositoryContract
 		$userApi = new \CUser();
 		$userData = (new UserMapper())->convertToArray($user);
 
-		if (isset($userData['PASSWORD']) && empty($userData['PASSWORD']))
+		if (array_key_exists('PASSWORD', $userData) && empty($userData['PASSWORD']))
 		{
 			unset($userData['PASSWORD']);
 		}
@@ -438,5 +451,32 @@ class UserRepository implements UserRepositoryContract
 		}
 
 		return $user;
+	}
+
+	/**
+	 * @throws DeleteFailedException
+	 * @throws ObjectNotFoundException
+	 * @throws WrongIdException
+	 */
+	public function delete(User $user): void
+	{
+		if ($user->getId() <= 0)
+		{
+			throw new WrongIdException();
+		}
+
+		$result = \CUser::GetByID($user->getId());
+
+		if (!$result->fetch())
+		{
+			throw new ObjectNotFoundException('User not found');
+		}
+
+		$userApi = new \CUser();
+
+		if (!$userApi->delete($user->getId()))
+		{
+			throw new DeleteFailedException($this->getErrorCollectionFromUpdateLastError($userApi->LAST_ERROR));
+		}
 	}
 }

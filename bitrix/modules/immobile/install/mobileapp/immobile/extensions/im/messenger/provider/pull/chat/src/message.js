@@ -96,31 +96,25 @@ jn.define('im/messenger/provider/pull/chat/message', (require, exports, module) 
 
 					this.saveShareDialogCache();
 				})
-			;
-
-			const dialog = this.getDialog(recentMessageManager.getDialogId());
-			if (!dialog)
-			{
-				return;
-			}
-
-			this.setUsers(params)
+				.then(() => this.setUsers(params))
 				.then(() => this.setFiles(params))
 				.then(() => {
-					const hasUnloadMessages = dialog.hasNextPage;
-					if (hasUnloadMessages)
-					{
-						this.storeMessage(params);
-					}
-					else
-					{
-						this.setMessage(params);
-					}
-
 					this.checkTimerInputAction(
 						recentMessageManager.getDialogId(),
 						recentMessageManager.getSenderId(),
 					);
+
+					const dialog = this.getDialog(recentMessageManager.getDialogId());
+					const hasUnloadMessages = dialog.hasNextPage;
+					if (hasUnloadMessages)
+					{
+						return this.storeMessage(params);
+					}
+
+					return this.setMessage(params);
+				})
+				.catch((error) => {
+					this.logger.error(`${this.constructor.name}.handleMessage error`, error);
 				})
 			;
 		}
@@ -219,7 +213,7 @@ jn.define('im/messenger/provider/pull/chat/message', (require, exports, module) 
 
 			const dialogId = params.message.recipientId;
 			const userId = MessengerParams.getUserId();
-			const userData = params.message.senderId > 0
+			const userData = params.message.senderId > 0 && Type.isPlainObject(params.users)
 				? params.users[params.message.senderId]
 				: { id: 0 };
 
@@ -297,7 +291,7 @@ jn.define('im/messenger/provider/pull/chat/message', (require, exports, module) 
 		updateCopilotModel(params)
 		{
 			const isCopilot = params.chat[params.chatId]?.type === DialogType.copilot;
-			if (!isCopilot || !Feature.isCopilotInDefaultTabAvailable)
+			if (!isCopilot)
 			{
 				return;
 			}
@@ -316,32 +310,6 @@ jn.define('im/messenger/provider/pull/chat/message', (require, exports, module) 
 					logger.error(`${this.getClassName()}.updateCopilotModel: `, error);
 				})
 			;
-		}
-
-		needUpdateCopilotCounter(isCopilotChat)
-		{
-			return isCopilotChat && !Feature.isCopilotInDefaultTabAvailable;
-		}
-
-		/**
-		 * @params {boolean} params
-		 * @return {boolean}
-		 */
-		updateCopilotCounter(params)
-		{
-			if (!this.isCopilotReady())
-			{
-				TabCounters.copilotCounter.detail[params.dialogId] = params.counter;
-				TabCounters.update();
-			}
-		}
-
-		/**
-		 * @return {boolean}
-		 */
-		isCopilotReady()
-		{
-			return EntityReady.isReady(`${ComponentCode.imCopilotMessenger}::launched`);
 		}
 	}
 

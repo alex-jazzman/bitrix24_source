@@ -60,6 +60,8 @@ jn.define('statemanager/redux/slices/whats-new/selector', (require, exports, mod
 		}),
 	);
 
+	const selectErrorStatus = (state) => state[sliceName].errorStatus;
+
 	module.exports = {
 		selectAll,
 		selectById,
@@ -80,5 +82,6 @@ jn.define('statemanager/redux/slices/whats-new/selector', (require, exports, mod
 		selectHasReadNews,
 		selectLastNewsCheckTime,
 		selectHasUnsupportedFeatures,
+		selectErrorStatus,
 	};
 });

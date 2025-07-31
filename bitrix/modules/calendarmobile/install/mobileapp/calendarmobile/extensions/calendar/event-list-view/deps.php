@@ -20,7 +20,6 @@ return [
 		'layout/ui/scroll-view',
 		'haptics',
 		'tourist',
-		'app-rating-manager',
 
 		'ui-system/blocks/icon',
 		'ui-system/blocks/badges/counter',
@@ -58,6 +57,7 @@ return [
 		'calendar:event-view-form',
 		'calendar:statemanager/redux/slices/events',
 		'calendar:enums',
+		'calendar:app-rating-client',
 	],
 	'bundle' => [
 		'./src/state',

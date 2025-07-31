@@ -335,15 +335,22 @@ final class NodeAccessFilter extends BaseSelectionConditionFilter
 			}
 		}
 
-		if (!$subTeamCondition->hasConditions())
+		if (!$subTeamCondition->hasConditions() && !$additionalCreateCondition->hasConditions())
 		{
 			return null;
 		}
 
-		$teamCondition->addCondition($subTeamCondition);
-		if (!$additionalCreateCondition->hasConditions())
+		if ($subTeamCondition->hasConditions())
 		{
-			return $teamCondition;
+			$teamCondition->addCondition($subTeamCondition);
+			if (!$additionalCreateCondition->hasConditions())
+			{
+				return $teamCondition;
+			}
+		}
+		else
+		{
+			$teamCondition = new ConditionTree();
 		}
 
 		return

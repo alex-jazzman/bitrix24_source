@@ -44,13 +44,6 @@ class DisappearService
 	{
 		$message = new Message($messageId);
 
-		if (!Features::isMessagesAutoDeleteAvailable())
-		{
-			self::disappearChat($message->getChat(), 0);
-
-			return false;
-		}
-
 		if (
 			!$message->getChat()->getMessagesAutoDeleteDelay()
 			|| $message->isSystem()
@@ -198,10 +191,6 @@ class DisappearService
 		if (!Features::isMessagesAutoDeleteEnabled())
 		{
 			$result->addError(new MessagesAutoDeleteError(MessagesAutoDeleteError::MESSAGES_AUTO_DELETE_DISABLED));
-		}
-		elseif (!Features::isMessagesAutoDeleteAvailable())
-		{
-			$result->addError(new MessagesAutoDeleteError(MessagesAutoDeleteError::MESSAGES_AUTO_DELETE_UNAVAILABLE));
 		}
 
 		return $result;

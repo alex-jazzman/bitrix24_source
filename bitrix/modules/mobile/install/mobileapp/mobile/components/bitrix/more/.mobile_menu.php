@@ -3,6 +3,7 @@
 use Bitrix\Crm\Integration\IntranetManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\DiskMobile\AirDiskFeature;
+use Bitrix\Intranet\Invitation;
 use Bitrix\Intranet\Settings\Tools\ToolsManager;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
@@ -597,12 +598,9 @@ if (
 	$myBitrix24Items = [];
 
 	if (
-		(
-			\CModule::IncludeModule('bitrix24')
-			|| $USER->isAdmin()
-		)
-		&& Loader::includeModule('intranet')
+		Loader::includeModule('intranet')
 		&& Loader::includeModule('intranetmobile')
+		&& Invitation::canCurrentUserInvite()
 	)
 	{
 		$myBitrix24Items[] = [
@@ -1013,6 +1011,25 @@ JS,
 					object: 'layout',
 					widgetParams: {
 						title: 'Developer playground'
+					}
+				});
+JS,
+		],
+	];
+
+	$developerMenuItems[] = [
+		"title" => "AppRatingManager test tool",
+		"color" => '#8590a2',
+		"imageUrl" => $imageDir . "catalog/icon-catalog-store.png",
+		"hidden" => false,
+		"attrs" => [
+			"id" => "appratingmanager.testing.tool",
+			"onclick" => <<<JS
+				ComponentHelper.openLayout({
+					name: 'appratingmanager.testing.tool',
+					object: 'layout',
+					widgetParams: {
+						title: 'AppRatingManager test tool'
 					}
 				});
 JS,

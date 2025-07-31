@@ -22,10 +22,11 @@ class HumanResourcesConfigPermissionsAjaxController extends \Bitrix\Main\Engine\
 	/**
 	 * @param list<array{id: string, type: string, title: string, accessRights: array, accessCodes?: array}> $userGroups
 	 * @param array|null $deletedUserGroups
+	 * @param array|null $parameters
 	 *
 	 * @return array|null
 	 */
-	public function savePermissionsAction(array $userGroups, ?array $deletedUserGroups = null, ?array $parameters = []): ?array
+	public function savePermissionsAction(array $userGroups = [], ?array $deletedUserGroups = null, ?array $parameters = []): ?array
 	{
 		if (!\Bitrix\HumanResources\Config\Storage::canUsePermissionConfig())
 		{
@@ -42,11 +43,7 @@ class HumanResourcesConfigPermissionsAjaxController extends \Bitrix\Main\Engine\
 			: StructureActionDictionary::ACTION_TEAM_ACCESS_EDIT
 		;
 
-		if (
-			empty($userGroups)
-			|| !check_bitrix_sessid()
-			|| !StructureAccessController::can(CurrentUser::get()->getId(), $action)
-		)
+		if (!check_bitrix_sessid() || !StructureAccessController::can(CurrentUser::get()->getId(), $action))
 		{
 			return null;
 		}
@@ -59,9 +56,12 @@ class HumanResourcesConfigPermissionsAjaxController extends \Bitrix\Main\Engine\
 			) ?? \Bitrix\HumanResources\Enum\Access\RoleCategory::Department;
 			$permissionService->setCategory($category);
 
-			$permissionService->saveRolePermissions($userGroups);
+			if (!empty($userGroups))
+			{
+				$permissionService->saveRolePermissions($userGroups);
+				Container::getAccessRoleRelationService()->saveRoleRelation($userGroups);
+			}
 
-			Container::getAccessRoleRelationService()->saveRoleRelation($userGroups);
 			if (is_array($deletedUserGroups))
 			{
 				$this->deleteUserGroups($deletedUserGroups);

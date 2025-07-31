@@ -14,6 +14,7 @@ use Bitrix\Booking\Provider\Params\Booking\BookingFilter;
 use Bitrix\Booking\Provider\Params\Booking\BookingSelect;
 use Bitrix\Booking\Provider\Params\GridParams;
 use Bitrix\Booking\Provider\Params\Resource\ResourceFilter;
+use Bitrix\Booking\Provider\Params\Resource\ResourceSelect;
 
 class ResourceProvider
 {
@@ -31,6 +32,7 @@ class ResourceProvider
 			offset: $gridParams->offset,
 			filter: $gridParams->getFilter(),
 			sort: $gridParams->getSort(),
+			select: $gridParams->getSelect() ?: new ResourceSelect(),
 			userId: $userId,
 		);
 	}

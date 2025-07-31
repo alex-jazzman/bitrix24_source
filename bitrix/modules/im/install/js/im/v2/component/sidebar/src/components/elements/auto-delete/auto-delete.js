@@ -1,5 +1,3 @@
-import { hint } from 'ui.vue3.directives.hint';
-
 import { ChannelManager } from 'im.v2.lib.channel';
 import { Toggle, ToggleSize } from 'im.v2.component.elements.toggle';
 import { AutoDeleteDropdown, AutoDeletePopup, AutoDeleteHint } from 'im.v2.component.elements.auto-delete';
@@ -16,7 +14,6 @@ import type { ImModelChat, ImModelUser } from 'im.v2.model';
 // @vue/component
 export const AutoDelete = {
 	name: 'AutoDelete',
-	directives: { hint },
 	components: { Toggle, AutoDeleteHint, AutoDeleteDropdown, AutoDeletePopup },
 	props:
 	{
@@ -47,10 +44,6 @@ export const AutoDelete = {
 		{
 			return this.$store.getters['chats/autoDelete/getDelay'](this.chatId);
 		},
-		isAutoDeleteFeatureAvailable(): boolean
-		{
-			return FeatureManager.isFeatureAvailable(Feature.messagesAutoDeleteAvailable);
-		},
 		isAutoDeleteFeatureEnabled(): boolean
 		{
 			return FeatureManager.isFeatureAvailable(Feature.messagesAutoDeleteEnabled);
@@ -58,26 +51,6 @@ export const AutoDelete = {
 		isAutoDeleteAllowed(): boolean
 		{
 			return AutoDeleteManager.isAutoDeleteAllowed(this.dialogId);
-		},
-		hintAutoDelete(): ?Object
-		{
-			if (this.isAutoDeleteFeatureAvailable)
-			{
-				return null;
-			}
-
-			return {
-				text: this.loc('IM_MESSENGER_NOT_AVAILABLE'),
-				popupOptions: {
-					bindOptions: {
-						position: 'top',
-					},
-					angle: true,
-					targetContainer: document.body,
-					offsetLeft: 125,
-					offsetTop: -10,
-				},
-			};
 		},
 		isBot(): boolean
 		{
@@ -119,11 +92,6 @@ export const AutoDelete = {
 		},
 		changeAutoDeleteActionHandler(): void
 		{
-			if (!this.isAutoDeleteFeatureAvailable)
-			{
-				return;
-			}
-
 			if (!this.isAutoDeleteAllowed)
 			{
 				this.showHint = true;
@@ -175,8 +143,6 @@ export const AutoDelete = {
 		<div
 			v-if="isAutoDeleteAvailableByChatType"
 			class="bx-im-sidebar-auto-delete__container"
-			:class="{'--enabled': isAutoDeleteFeatureAvailable}"
-			v-hint="hintAutoDelete"
 			ref="auto-delete"
 		>
 			<div class="bx-im-sidebar-auto-delete__title">

@@ -18,6 +18,7 @@ $MESS["BIZPROC_WFEDIT_MENU_EXPORT"] = "Экспорт";
 $MESS["BIZPROC_WFEDIT_MENU_EXPORT_TITLE"] = "Бизнес-процестің қалпын экспорттау";
 $MESS["BIZPROC_WFEDIT_MENU_GLOBAL_CONSTANTS"] = "Жаһандық константалар";
 $MESS["BIZPROC_WFEDIT_MENU_GLOBAL_CONSTANTS_TITLE"] = "Жаһандық константалар";
+$MESS["BIZPROC_WFEDIT_MENU_GLOBAL_DRAFTS_TITLE"] = "Бастапқы үлгілер";
 $MESS["BIZPROC_WFEDIT_MENU_GLOBAL_VARIABLES"] = "Жаһандық айнымалылар";
 $MESS["BIZPROC_WFEDIT_MENU_GLOBAL_VARIABLES_TITLE"] = "Жаһандық айнымалылар";
 $MESS["BIZPROC_WFEDIT_MENU_IMPORT"] = "Импорттау";

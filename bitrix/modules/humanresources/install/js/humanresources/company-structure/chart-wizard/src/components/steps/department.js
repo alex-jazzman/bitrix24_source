@@ -1,6 +1,8 @@
+import { mapState } from 'ui.vue3.pinia';
 import { TeamColorPicker } from '../team-color-picker/team-color-picker';
 import { PermissionActions, PermissionChecker } from 'humanresources.company-structure.permission-checker';
-import { EntityTypes, type NodeColorSettingsType } from 'humanresources.company-structure.utils';
+import { EntityTypes, WizardApiEntityChangedDict, type NodeColorSettingsType } from 'humanresources.company-structure.utils';
+import { useChartStore } from 'humanresources.company-structure.chart-store';
 import { type BaseEvent } from 'main.core.events';
 import { TagSelector, type Item } from 'ui.entity-selector';
 import { MemoryCache } from 'main.core.cache';
@@ -59,6 +61,7 @@ export const Department = {
 			deniedError: false,
 			showColorPicker: false,
 			teamColorValue: this.teamColor,
+			locked: false,
 		};
 	},
 
@@ -91,7 +94,8 @@ export const Department = {
 		this.$emit('applyData', {
 			isDepartmentDataChanged: false,
 			isValid:
-				this.departmentName !== ''
+				this.departmentName
+				&& this.departmentName?.trim() !== ''
 				&& this.selectedParentDepartment !== null
 				&& !this.deniedError
 			,
@@ -117,7 +121,7 @@ export const Department = {
 		},
 		createTagSelector(): TagSelector
 		{
-			const locked = this.parentId === 0 && this.isEditMode;
+			this.locked = this.isTagSelectorLocked();
 			let preselectedItems = this.parentId ? [['structure-node', this.parentId]] : [];
 			if (!this.isEditMode)
 			{
@@ -146,7 +150,7 @@ export const Department = {
 					},
 				},
 				multiple: false,
-				locked,
+				locked: this.locked,
 				dialogOptions: {
 					width: 425,
 					height: 350,
@@ -173,8 +177,15 @@ export const Department = {
 								.forEach((tab) => tab.setVisible(false))
 							;
 
+							const target = event.target;
+							const selectedItem = target.selectedItems?.values()?.next()?.value;
 							if (this.isEditMode)
 							{
+								if (selectedItem?.id === this.parentId && this.locked)
+								{
+									selector.lock();
+								}
+
 								return;
 							}
 
@@ -184,8 +195,6 @@ export const Department = {
 								return;
 							}
 
-							const target = event.target;
-							const selectedItem = target.selectedItems?.values()?.next()?.value;
 							const nodes = target.items.get('structure-node');
 
 							const permissionAction = this.isTeamEntity
@@ -222,12 +231,20 @@ export const Department = {
 								return;
 							}
 
+							const item = this.departments.get(selectedItem.id);
+							if (!item)
+							{
+								return;
+							}
+
+							const isTeamItem = item?.entityType === EntityTypes.team;
+
 							const permissionCreateAction = this.isTeamEntity
 								? PermissionActions.teamCreate
 								: PermissionActions.departmentCreate
 							;
 
-							const permissionEditAction = this.isTeamEntity
+							const permissionEditAction = isTeamItem
 								? PermissionActions.teamEdit
 								: PermissionActions.departmentEdit
 							;
@@ -263,17 +280,55 @@ export const Department = {
 		applyData(): void
 		{
 			this.$emit('applyData', {
+				apiEntityChanged: WizardApiEntityChangedDict.department,
 				name: this.departmentName,
 				description: this.departmentDescription,
 				parentId: this.selectedParentDepartment,
 				teamColor: this.teamColorValue,
 				isDepartmentDataChanged: true,
 				isValid:
-					this.departmentName !== ''
+					this.departmentName
+					&& this.departmentName?.trim() !== ''
 					&& this.selectedParentDepartment !== null
 					&& !this.deniedError
 				,
 			});
+		},
+		isTagSelectorLocked(): boolean
+		{
+			if (!this.isEditMode)
+			{
+				return false;
+			}
+
+			if (this.parentId === 0)
+			{
+				return true;
+			}
+
+			const parent = this.departments.get(this.parentId);
+			if (!parent)
+			{
+				return false;
+			}
+
+			const permissionChecker = PermissionChecker.getInstance();
+			if (!permissionChecker)
+			{
+				return true;
+			}
+
+			if (parent.entityType === EntityTypes.department)
+			{
+				return !permissionChecker.hasPermission(PermissionActions.departmentEdit, parent.id);
+			}
+
+			if (parent.entityType === EntityTypes.team)
+			{
+				return !permissionChecker.hasPermission(PermissionActions.teamEdit, parent.id);
+			}
+
+			return false;
 		},
 	},
 
@@ -305,6 +360,31 @@ export const Department = {
 			// to presumably encourage user to fill in the description field
 			return this.isTeamEntity ? '.chart-wizard__department_higher_bottom' : '.chart-wizard__department_higher_top';
 		},
+		showLockedSelectorErrorText(): boolean
+		{
+			return this.locked && this.parentId !== 0;
+		},
+		selectorErrorText(): string
+		{
+			if (this.deniedError)
+			{
+				return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_ADD_TO_DEPARTMENT_DENIED_MSG_VER_1');
+			}
+
+			if (this.locked && this.parentId !== 0)
+			{
+				return this.isTeamEntity
+					? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_PARENT_TEAM_ERROR')
+					: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_PARENT_DEPARTMENT_ERROR')
+				;
+			}
+
+			return this.isTeamEntity
+				? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_PARENT_ERROR')
+				: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_PARENT_ERROR')
+			;
+		},
+		...mapState(useChartStore, ['departments']),
 	},
 
 	template: `
@@ -323,25 +403,16 @@ export const Department = {
 						ref="tag-selector"
 					></div>
 					<div
-						v-if="deniedError || (selectedParentDepartment === null && shouldErrorHighlight)"
+						v-if="deniedError || (selectedParentDepartment === null && shouldErrorHighlight) || showLockedSelectorErrorText"
 						class="chart-wizard__department_item-error"
+						:class="{'--wizard-warning-item':  locked && parentId !== 0}"
 					>
-						<div class="ui-icon-set --warning"></div>
-						<span
-							v-if="deniedError"
-							class="chart-wizard__department_item-error-message"
-						>
-							{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_ADD_TO_DEPARTMENT_DENIED_MSG_VER_1') }}
-						</span>
-						<span
-							v-else
-							class="chart-wizard__department_item-error-message"
-						>
-							{{
-								isTeamEntity
-									? loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_PARENT_ERROR')
-									: loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_PARENT_ERROR')
-							}}
+						<div
+							class="ui-icon-set --warning"
+							:style="locked && !deniedError ? { '--ui-icon-set__icon-size': '17px', '--ui-icon-set__icon-color': '#FFA900' } : {}"
+						/>
+						<span class="chart-wizard__department_item-error-message">
+							{{ selectorErrorText }}
 						</span>
 					</div>
 				</Teleport>

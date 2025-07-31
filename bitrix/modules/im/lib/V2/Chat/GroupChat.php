@@ -14,6 +14,8 @@ use Bitrix\Im\V2\Entity\User\User;
 use Bitrix\Im\V2\Entity\User\UserCollection;
 use Bitrix\Im\V2\Entity\User\UserPopupItem;
 use Bitrix\Im\V2\Entity\User\UserType;
+use Bitrix\Im\V2\Integration\AI\AIHelper;
+use Bitrix\Im\V2\Integration\AI\EngineManager;
 use Bitrix\Im\V2\Integration\AI\RoleManager;
 use Bitrix\Im\V2\Integration\HumanResources\Structure;
 use Bitrix\Im\V2\Logger;
@@ -166,6 +168,11 @@ class GroupChat extends Chat implements PopupDataAggregatable
 		if (UserCollection::hasUserByType($userIds, UserType::COLLABER))
 		{
 			$this->getChatParams()->addParamByName(Params::CONTAINS_COLLABER, true, false);
+			$this->getChatParams()->addParamByName(Params::CONTAINS_COLLABER, true, false);
+		}
+		if (AIHelper::containsCopilotBot($this->usersIds))
+		{
+			$this->fillCopilotBeforeChatAdd($context);
 		}
 
 		$this->setUserCount(count($userIds));
@@ -640,17 +647,87 @@ class GroupChat extends Chat implements PopupDataAggregatable
 		]);
 	}
 
-	protected function getCopilotRoles(): array
+	public function containsCopilot(): bool
+	{
+		return (bool)$this->getChatParams()->get(Params::IS_COPILOT)?->getValue();
+	}
+
+	public function getCopilotRole(): ?string
 	{
 		if (
 			Loader::includeModule('imbot')
-			&& $this->getRelationFacade()?->getByUserId(CopilotChatBot::getBotId()) !== null
+			&& $this->containsCopilot()
 		)
 		{
-			$copilotRoles = (new RoleManager())->getMainRole($this->getChatId());
+			return (new RoleManager())->getMainRole($this->getChatId());
 		}
 
-		return isset($copilotRoles) ? [$this->getDialogId() => $copilotRoles] : [];
+		return null;
+	}
+
+	protected function fillCopilotBeforeChatAdd(?Context $context): void
+	{
+		$this->getChatParams()->addParamByName(Chat\Param\Params::IS_COPILOT, true, false);
+
+		$context ??= new Context();
+		$engineCode = (new EngineManager())->getLastSelectedEngineCode($context->getUserId());
+
+		if (isset($engineCode))
+		{
+			$this->setEngineCode($engineCode);
+		}
+	}
+
+	public function getEngineCode(): ?string
+	{
+		if (!$this->containsCopilot())
+		{
+			return null;
+		}
+
+		return $this->getChatParams()->get(Chat\Param\Params::COPILOT_ENGINE_CODE)?->getValue();
+	}
+
+	public function setEngineCode(?string $code): self
+	{
+		if (!isset($code))
+		{
+			return $this;
+		}
+
+		$engineManager = new EngineManager();
+		if (!$engineManager->validateEngineCode($code) || !$this->containsCopilot())
+		{
+			return $this;
+		}
+
+		$engineCode = (string)$this->getChatParams()->get(Chat\Param\Params::COPILOT_ENGINE_CODE)?->getValue();
+		if ($engineCode !== $code)
+		{
+			$this->getChatParams()->addParamByName(Chat\Param\Params::COPILOT_ENGINE_CODE, $code, false);
+		}
+
+		return $this;
+	}
+
+	public function getDefaultEngineCode(): ?string
+	{
+		return EngineManager::getDefaultEngineCode();
+	}
+
+	protected static function mirrorDataEntityFields(): array
+	{
+		$result = parent::mirrorDataEntityFields();
+
+		$result['ENGINE_CODE'] = [
+			'get' => 'getEngineCode', /** @see static::getEngineCode */
+			'set' => 'setEngineCode', /** @see static::setEngineCode */
+			'default' => 'getDefaultEngineCode', /** @see static::getDefaultEngineCode */
+			'nullable' => true,
+			'skipSave' => true,
+		];
+
+		return $result;
 	}
 
 	public function getPopupData(array $excludedList = []): PopupData
@@ -659,7 +736,7 @@ class GroupChat extends Chat implements PopupDataAggregatable
 
 		return parent::getPopupData($excludedList)
 			->add(new UserPopupItem([$userId]))
-			->add(new CopilotPopupItem($this->getCopilotRoles(), Chat\Copilot\Entity::Chats))
+			->add(CopilotPopupItem::getInstanceByChatIds([$this->getChatId()]))
 			->add(new Chat\MessagesAutoDelete\MessagesAutoDeleteConfigs([$this->getChatId()]))
 			->add(new CallToken($this->getId(), $userId))
 		;

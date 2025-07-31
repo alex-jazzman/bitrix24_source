@@ -6,6 +6,11 @@ declare type TableField = {
 	defaultValue?: any,
 }
 
+// TODO in order for the autocomplete of keys to work, you need to add return as const to method 'getFields' on TS.
+declare type FieldsCollection<T extends readonly TableField[]> = {
+	[K in T[number]['name']]: Extract<T[number], { name: K }>
+};
+
 declare enum FieldType {
 	integer = 'integer',
 	text = 'text',
@@ -37,7 +42,7 @@ interface TableGetListOptions<T> {
 
 
 export interface IDatabaseTableInstance<T> {
-	getMap(): string,
+	getMap(): Array<any>,
 
 	getList(options: TableGetListOptions<T>): Promise<{ items: Array<T> }>,
 
@@ -51,7 +56,7 @@ export interface IDatabaseTableInstance<T> {
 
 	create(): void,
 
-	prepareInsert(insert: Array<any>): Promise<{ statement: object, binding: object, values: object }>,
+	prepareInsert(insert: Array<any>): { statement: Array<any>, binding: Array<any>, values: Array<any> },
 
 	executeSql({query, values}): Promise<any>,
 }

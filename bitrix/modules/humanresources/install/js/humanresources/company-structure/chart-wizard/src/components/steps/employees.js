@@ -1,8 +1,7 @@
 import { getMemberRoles, memberRolesKeys } from 'humanresources.company-structure.api';
-import { EntityTypes } from 'humanresources.company-structure.utils';
+import { EntityTypes, getUserDataBySelectorItem, WizardApiEntityChangedDict } from 'humanresources.company-structure.utils';
 import { ChangeSaveModeControl } from '../change-save-mode-control/change-save-mode-control';
 import { TagSelector, type ItemOptions } from 'ui.entity-selector';
-import { getUserDataBySelectorItem } from 'humanresources.company-structure.utils';
 
 export const Employees = {
 	name: 'employees',
@@ -44,6 +43,7 @@ export const Employees = {
 
 		// store initial users to control applyData method in tagSelector
 		this.initialUsers = this.heads.reduce((set, item) => set.add(item.id), new Set());
+		this.employeesIds.forEach((item) => this.initialUsers.add(item));
 	},
 
 	mounted(): void
@@ -51,6 +51,14 @@ export const Employees = {
 		this.headSelector.renderTo(this.$refs['head-selector']);
 		this.deputySelector.renderTo(this.$refs['deputy-selector']);
 		this.employeesSelector.renderTo(this.$refs['employees-selector']);
+	},
+
+	activated(): void
+	{
+		this.$emit('applyData', {
+			isDepartmentDataChanged: false,
+			isValid: true,
+		});
 	},
 
 	watch:
@@ -236,6 +244,7 @@ export const Employees = {
 		applyData(): void
 		{
 			this.$emit('applyData', {
+				apiEntityChanged: WizardApiEntityChangedDict.employees,
 				heads: this.departmentHeads,
 				employees: this.departmentEmployees,
 				removedUsers: this.removedUsers,

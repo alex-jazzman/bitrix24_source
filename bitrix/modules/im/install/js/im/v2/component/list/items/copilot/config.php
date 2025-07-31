@@ -23,7 +23,6 @@ return [
 		'main.core',
 		'im.public',
 		'im.v2.lib.menu',
-		'im.v2.lib.feature',
 	],
 	'skip_core' => false,
 ];

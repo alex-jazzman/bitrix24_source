@@ -3308,6 +3308,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        var _state$collection$use2;
 	        return ((_state$collection$use2 = state.collection[userId]) == null ? void 0 : _state$collection$use2.type) === im_v2_const.BotType.support24;
 	      },
+	      /** @function users/bots/isAiAssistant */
+	      isAiAssistant: state => userId => {
+	        var _state$collection$use3;
+	        return ((_state$collection$use3 = state.collection[userId]) == null ? void 0 : _state$collection$use3.code) === im_v2_const.BotCode.aiAssistant;
+	      },
 	      /** @function users/bots/getCopilotUserId */
 	      getCopilotUserId: state => {
 	        for (const [userId, bot] of Object.entries(state.collection)) {
@@ -4367,6 +4372,18 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          return lastActivity;
 	        }
 	        return message.date;
+	      },
+	      /** @function recent/isInRecentCollection */
+	      isInRecentCollection: state => dialogId => {
+	        return state.recentCollection.has(dialogId);
+	      },
+	      /** @function recent/isInCollabCollection */
+	      isInCollabCollection: state => dialogId => {
+	        return state.collabCollection.has(dialogId);
+	      },
+	      /** @function recent/isInCopilotCollection */
+	      isInCopilotCollection: state => dialogId => {
+	        return state.copilotCollection.has(dialogId);
 	      }
 	    };
 	  }
@@ -7767,6 +7784,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          return;
 	        }
 	        store.commit('deleteForChannel', payload);
+	      },
+	      /** @function counters/clear */
+	      clear: store => {
+	        store.commit('clear');
 	      }
 	    };
 	  }
@@ -7839,6 +7860,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          return;
 	        }
 	        delete state.commentCounters[channelChatId][commentChatId];
+	      },
+	      clear: state => {
+	        state.unloadedChatCounters = {};
+	        state.unloadedLinesCounters = {};
+	        state.unloadedCopilotCounters = {};
+	        state.unloadedCollabCounters = {};
 	      }
 	    };
 	  }
@@ -7895,6 +7922,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  fieldName: 'role',
 	  targetFieldName: 'role',
 	  checkFunction: main_core.Type.isString
+	}, {
+	  fieldName: 'engine',
+	  targetFieldName: 'aiModel',
+	  checkFunction: main_core.Type.isString
 	}];
 
 	/* eslint-disable no-param-reassign */
@@ -7907,7 +7938,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  getElementState() {
 	    return {
 	      dialogId: '',
-	      role: ''
+	      role: '',
+	      aiModel: ''
 	    };
 	  }
 	  getGetters() {
@@ -7927,6 +7959,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          return '';
 	        }
 	        return im_v2_application_core.Core.getStore().getters['copilot/roles/getAvatar'](role.code);
+	      },
+	      /** @function copilot/chats/getAIModel */
+	      getAIModel: state => dialogId => {
+	        const chat = state.collection[dialogId];
+	        if (!chat) {
+	          return null;
+	        }
+	        const aiModelList = im_v2_application_core.Core.getStore().getters['copilot/getAIModels'];
+	        return aiModelList.find(aiModel => aiModel.code === chat.aiModel);
 	      }
 	    };
 	  }
@@ -8213,7 +8254,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  getState() {
 	    return {
 	      recommendedRoles: [],
-	      aiProvider: ''
+	      aiProvider: '',
+	      availableAIModels: []
 	    };
 	  }
 	  getGetters() {
@@ -8221,6 +8263,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      /** @function copilot/getProvider */
 	      getProvider: state => {
 	        return state.aiProvider;
+	      },
+	      /** @function copilot/getAIModels */
+	      getAIModels: state => {
+	        return state.availableAIModels;
 	      },
 	      /** @function copilot/getRecommendedRoles */
 	      getRecommendedRoles: state => () => {
@@ -8246,6 +8292,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          return;
 	        }
 	        store.commit('setProvider', payload);
+	      },
+	      /** @function copilot/setAvailableAIModels */
+	      setAvailableAIModels: (store, payload) => {
+	        if (!main_core.Type.isArrayFilled(payload)) {
+	          return;
+	        }
+	        store.commit('setAvailableAIModels', payload);
 	      }
 	    };
 	  }
@@ -8256,6 +8309,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      },
 	      setProvider: (state, payload) => {
 	        state.aiProvider = payload;
+	      },
+	      setAvailableAIModels: (state, payload) => {
+	        state.availableAIModels = payload;
 	      }
 	    };
 	  }

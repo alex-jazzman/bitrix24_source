@@ -108,8 +108,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			@click="download"
 		>
 			<ProgressBar 
-				v-if="!isLoaded" 
-				:item="file" 
+				:item="file"
 				@cancelClick="onCancelClick"
 			/>
 			<VideoPlayer
@@ -393,6 +392,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  },
 	  emits: ['cancelClick'],
 	  computed: {
+	    ProgressBarSize: () => im_v2_component_elements_progressbar.ProgressBarSize,
 	    file() {
 	      return this.$store.getters['files/get'](this.id, true);
 	    },
@@ -461,9 +461,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			<div class="bx-im-base-file-item__viewer-container" v-bind="viewerAttributes" @click="download">
 				<div class="bx-im-base-file-item__icon-container" ref="loader-icon">
 					<ProgressBar 
-						v-if="!isLoaded" 
 						:item="file"
-						:withLabels="false"
+						:size="ProgressBarSize.S"
 						@cancelClick="onCancelClick"
 					/>
 				<div v-if="hasPreview" :style="imageStyles" class="bx-im-base-file-item__image"></div>
@@ -583,11 +582,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  },
 	  emits: ['cancelClick'],
 	  computed: {
+	    ProgressBarSize: () => im_v2_component_elements_progressbar.ProgressBarSize,
 	    file() {
 	      return this.item;
-	    },
-	    isLoaded() {
-	      return this.file.progress === 100;
 	    }
 	  },
 	  methods: {
@@ -598,8 +595,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  template: `
 		<div class="bx-im-media-audio__container">
 			<ProgressBar 
-				v-if="!isLoaded" 
-				:item="file" 
+				:item="file"
+				:size="ProgressBarSize.S"
 				@cancelClick="onCancelClick"
 			/>
 			<AudioPlayer

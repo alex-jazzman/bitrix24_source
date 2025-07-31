@@ -1,5 +1,6 @@
 import { Dom, Event, Type } from 'main.core';
 import { createNamespacedHelpers } from 'ui.vue3.vuex';
+
 import { BusySlot as BusySlotType, Model } from 'booking.const';
 import { grid } from 'booking.lib.grid';
 
@@ -14,18 +15,23 @@ type BusySlotData = {
 	isPopupShown: boolean,
 };
 
+// @vue/component
 export const BusySlot = {
 	name: 'BusySlot',
+	components: {
+		BusyPopup,
+	},
 	props: {
 		busySlot: {
 			type: Object,
 			required: true,
 		},
 	},
-	setup(): { BookingBusySlotClassName: string }
+	setup(): { BookingBusySlotClassName: string, BusySlotType: BusySlotType }
 	{
 		return {
 			BookingBusySlotClassName,
+			BusySlotType,
 		};
 	},
 	data(): BusySlotData
@@ -44,7 +50,9 @@ export const BusySlot = {
 		isDisabled(): boolean
 		{
 			const isDragOffHours = this.isDragMode && this.busySlot.type === BusySlotType.OffHours;
-			if (this.isFilterMode || isDragOffHours)
+			const isDragOverbooking = this.isDragMode && this.busySlot.type === BusySlotType.IntersectionOverbooking;
+
+			if (this.isFilterMode || isDragOffHours || isDragOverbooking)
 			{
 				return true;
 			}
@@ -70,7 +78,7 @@ export const BusySlot = {
 			if (
 				this.isFilterMode
 				|| this.isEditingBookingMode
-				|| this.busySlot.type === BusySlotType.Intersection
+				|| this.busySlot.type === BusySlotType.IntersectionOverbooking
 			)
 			{
 				return;
@@ -141,9 +149,6 @@ export const BusySlot = {
 			this.isPopupShown = false;
 		},
 	},
-	components: {
-		BusyPopup,
-	},
 	template: `
 		<div
 			v-if="left >= 0"
@@ -154,6 +159,7 @@ export const BusySlot = {
 				'--left': left + 'px',
 				'--top': top + 'px',
 				'--height': height + 'px',
+				'z-index': busySlot.type === BusySlotType.IntersectionOverbooking ? 1 : 'unset',
 			}"
 			data-element="booking-busy-slot"
 			:data-id="busySlot.resourceId"

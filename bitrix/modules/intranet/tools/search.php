@@ -845,7 +845,12 @@ class CIntranetSearch
 				{
 					$BODY = "";
 					foreach($obj->arIndexFields as $key)
-						$BODY .= " ".$arUser[$key];
+					{
+						if (isset($arUser[$key]))
+						{
+							$BODY .= " " . $arUser[$key];
+						}
+					}
 					$BODY .= $GLOBALS["USER_FIELD_MANAGER"]->OnSearchIndex("USER", $arUser["ID"]);
 
 					$arResult = Array(

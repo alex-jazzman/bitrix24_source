@@ -1,7 +1,6 @@
 /**
- * @module 'im/messenger/controller/sidebar-v2/utils/file'
+ * @module im/messenger/controller/sidebar-v2/utils/file
  */
-
 jn.define('im/messenger/controller/sidebar-v2/utils/file', (require, exports, module) => {
 	const { Filesystem, utils } = require('native/filesystem');
 

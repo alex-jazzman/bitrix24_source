@@ -3,7 +3,7 @@ import { Type } from 'main.core';
 
 import { FileViewerContext } from 'im.v2.const';
 import { Utils } from 'im.v2.lib.utils';
-import { ProgressBar } from	'im.v2.component.elements.progressbar';
+import { ProgressBar, ProgressBarSize } from 'im.v2.component.elements.progressbar';
 
 import { BaseFileContextMenu } from '../../classes/base-file-context-menu';
 
@@ -29,6 +29,7 @@ export const BaseFileItem = {
 	emits: ['cancelClick'],
 	computed:
 	{
+		ProgressBarSize: () => ProgressBarSize,
 		file(): ImModelFile
 		{
 			return this.$store.getters['files/get'](this.id, true);
@@ -116,9 +117,8 @@ export const BaseFileItem = {
 			<div class="bx-im-base-file-item__viewer-container" v-bind="viewerAttributes" @click="download">
 				<div class="bx-im-base-file-item__icon-container" ref="loader-icon">
 					<ProgressBar 
-						v-if="!isLoaded" 
 						:item="file"
-						:withLabels="false"
+						:size="ProgressBarSize.S"
 						@cancelClick="onCancelClick"
 					/>
 				<div v-if="hasPreview" :style="imageStyles" class="bx-im-base-file-item__image"></div>

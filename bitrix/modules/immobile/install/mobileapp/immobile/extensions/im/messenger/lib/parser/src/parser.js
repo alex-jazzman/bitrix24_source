@@ -24,6 +24,7 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 	const { parsedElements } = require('im/messenger/lib/parser/utils/parsed-elements');
 	const { parserSmile } = require('im/messenger/lib/parser/functions/smile');
 	const { parserContext } = require('im/messenger/lib/parser/functions/context');
+	const { parserDate } = require('im/messenger/lib/parser/functions/date');
 
 	const parser = {
 		decodeMessageFromText(text, options = {})
@@ -32,6 +33,8 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 			{
 				return [];
 			}
+
+			text = parserDate.decode(text);
 
 			// TODO: support bb code [context]
 			text = text.replace(
@@ -168,6 +171,7 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 			});
 
 			text = parserContext.simplify(text);
+			text = parserDate.simplify(text);
 
 			if (text.length === 0 && showPhraseMessageWasDeleted)
 			{

@@ -2146,8 +2146,16 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	var _handleCounters = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleCounters");
 	var _getNewCounter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getNewCounter");
 	var _updateCommentCounter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateCommentCounter");
+	var _handleUnloadedChatCounters = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleUnloadedChatCounters");
+	var _getRecentSectionConfig = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getRecentSectionConfig");
 	class CounterPullHandler {
 	  constructor() {
+	    Object.defineProperty(this, _getRecentSectionConfig, {
+	      value: _getRecentSectionConfig2
+	    });
+	    Object.defineProperty(this, _handleUnloadedChatCounters, {
+	      value: _handleUnloadedChatCounters2
+	    });
 	    Object.defineProperty(this, _updateCommentCounter, {
 	      value: _updateCommentCounter2
 	    });
@@ -2203,11 +2211,14 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  handleChatMuteNotify(params) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _handleCounters)[_handleCounters](params);
 	  }
+	  handleReadAllChats() {
+	    im_v2_lib_logger.Logger.warn('CounterPullHandler: handleReadAllChats');
+	    void im_v2_application_core.Core.getStore().dispatch('counters/clear');
+	  }
 	}
 	function _handleCounters2(params) {
 	  const {
 	    chatId,
-	    dialogId,
 	    counter,
 	    counterType = im_v2_const.CounterType.chat,
 	    parentChatId = 0
@@ -2224,22 +2235,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    });
 	    return;
 	  }
-	  const recentItem = im_v2_application_core.Core.getStore().getters['recent/get'](dialogId);
-	  // for now existing common chats counters are stored in corresponding chat model objects
-	  if (recentItem) {
-	    return;
-	  }
-	  const newCounter = babelHelpers.classPrivateFieldLooseBase(this, _getNewCounter)[_getNewCounter](params);
-	  // collab counters are stored in two structures - for common chats and collabs
-	  // because collab counters are included in both total chat counter and total collab counter
-	  if (counterType === im_v2_const.CounterType.collab) {
-	    im_v2_application_core.Core.getStore().dispatch('counters/setUnloadedCollabCounters', {
-	      [chatId]: newCounter
-	    });
-	  }
-	  im_v2_application_core.Core.getStore().dispatch('counters/setUnloadedChatCounters', {
-	    [chatId]: newCounter
-	  });
+	  babelHelpers.classPrivateFieldLooseBase(this, _handleUnloadedChatCounters)[_handleUnloadedChatCounters](params);
 	}
 	function _getNewCounter2(params) {
 	  const {
@@ -2274,6 +2270,44 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    }
 	  };
 	  im_v2_application_core.Core.getStore().dispatch('counters/setCommentCounters', counters);
+	}
+	function _handleUnloadedChatCounters2(params) {
+	  const {
+	    chatId,
+	    recentConfig,
+	    dialogId
+	  } = params;
+	  const newCounter = babelHelpers.classPrivateFieldLooseBase(this, _getNewCounter)[_getNewCounter](params);
+	  recentConfig.sections.forEach(recentSection => {
+	    const sectionConfig = babelHelpers.classPrivateFieldLooseBase(this, _getRecentSectionConfig)[_getRecentSectionConfig](recentSection);
+	    if (!sectionConfig) {
+	      return;
+	    }
+	    const isInRecentCollection = this.store.getters[sectionConfig.collectionGetter](dialogId);
+	    if (isInRecentCollection) {
+	      return;
+	    }
+	    void im_v2_application_core.Core.getStore().dispatch(sectionConfig.setUnloadedCounterAction, {
+	      [chatId]: newCounter
+	    });
+	  });
+	}
+	function _getRecentSectionConfig2(section) {
+	  const handlers = {
+	    [im_v2_const.RecentType.default]: {
+	      setUnloadedCounterAction: 'counters/setUnloadedChatCounters',
+	      collectionGetter: 'recent/isInRecentCollection'
+	    },
+	    [im_v2_const.RecentType.collab]: {
+	      setUnloadedCounterAction: 'counters/setUnloadedCollabCounters',
+	      collectionGetter: 'recent/isInCollabCollection'
+	    },
+	    [im_v2_const.RecentType.copilot]: {
+	      setUnloadedCounterAction: 'counters/setUnloadedCopilotCounters',
+	      collectionGetter: 'recent/isInCopilotCollection'
+	    }
+	  };
+	  return handlers[section];
 	}
 
 	class PromotionPullHandler {

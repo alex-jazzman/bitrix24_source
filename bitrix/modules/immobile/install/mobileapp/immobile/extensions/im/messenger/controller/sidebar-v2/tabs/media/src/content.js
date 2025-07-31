@@ -2,18 +2,16 @@
  * @module im/messenger/controller/sidebar-v2/tabs/media/src/content
  */
 jn.define('im/messenger/controller/sidebar-v2/tabs/media/src/content', (require, exports, module) => {
-	const { SidebarBaseTabContent } = require('im/messenger/controller/sidebar-v2/tabs/base/src/content');
-	const { SidebarTabMediaItemModel } = require('im/messenger/controller/sidebar-v2/tabs/media/src/items/media-item');
-	const { Loc } = require('im/messenger/controller/sidebar-v2/loc');
-	const { FileType } = require('im/messenger/const');
 	const { Color } = require('tokens');
+	const { uniqBy } = require('utils/array');
 	const { Moment } = require('utils/date/moment');
 	const { monthYear } = require('utils/date/formats');
-	const {
-		openNativeViewer,
-	} = require('utils/file');
 	const { assertDefined } = require('utils/validation');
-	const { uniqBy } = require('utils/array');
+	const { Loc } = require('im/messenger/controller/sidebar-v2/loc');
+	const { FileType } = require('im/messenger/const');
+	const { DialogMediaGallery } = require('im/messenger/controller/dialog/lib/media-gallery');
+	const { SidebarBaseTabContent } = require('im/messenger/controller/sidebar-v2/tabs/base/src/content');
+	const { SidebarTabMediaItemModel } = require('im/messenger/controller/sidebar-v2/tabs/media/src/items/model');
 
 	const isMediaGridAvailable = Boolean(MediaGrid);
 
@@ -26,8 +24,11 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/media/src/content', (require,
 		{
 			super(props);
 
-			/** @type {SidebarDataProvider} */
+			/** @type {SidebarFileService} */
 			this.dataProvider = props.dataProvider;
+			/** @type {SidebarWidgetNavigator} */
+			this.widgetNavigator = props.widgetNavigator;
+
 			assertDefined(this.dataProvider, 'dataProvider property is required');
 
 			const { items, hasNextPage } = this.getItemsFromStore();
@@ -130,17 +131,28 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/media/src/content', (require,
 			{
 				if (items !== null)
 				{
-					this.setState({ items, hasNextPage, pending: false });
+					this.setState({
+						items,
+						hasNextPage,
+						pending: false,
+					});
 				}
 			}
 			else
 			{
-				this.state.hasNextPage = hasNextPage;
-				this.state.items = items;
-				if (this.mediaGridRef)
+				if (this.hasItems())
 				{
-					this.mediaGridRef.updateOrInsert(this.getMediaGridData());
+					this.state.items = items;
+					this.state.hasNextPage = hasNextPage;
+					this.mediaGridRef?.updateOrInsert(this.getMediaGridData());
+
+					return;
 				}
+
+				this.setState({
+					items,
+					hasNextPage,
+				});
 			}
 		}
 
@@ -158,10 +170,7 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/media/src/content', (require,
 				return;
 			}
 
-			if (this.mediaGridRef)
-			{
-				this.mediaGridRef.delete([fileId]);
-			}
+			this.mediaGridRef?.delete([fileId]);
 		}
 
 		renderContent()
@@ -199,7 +208,7 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/media/src/content', (require,
 						},
 					},
 					isScrollable: true,
-					onLoadMore: () => this.onLoadMore(),
+					onLoadMore: this.onLoadMore,
 					onItemClick: this.onItemClick,
 				}),
 			);
@@ -208,8 +217,7 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/media/src/content', (require,
 		/**
 		 * @protected
 		 */
-		onLoadMore()
-		{
+		onLoadMore = () => {
 			const offset = this.getItems().length;
 
 			if (this.isLastPage())
@@ -225,9 +233,8 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/media/src/content', (require,
 				})
 				.catch((error) => {
 					this.logger.error('onLoadMore', error);
-				})
-			;
-		}
+				});
+		};
 
 		/**
 		 * @protected
@@ -257,34 +264,32 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/media/src/content', (require,
 			}
 		};
 
-		onItemClick = (item) => {
-			if (item.type === FileType.image)
-			{
-				openNativeViewer({
-					fileType: 'image',
-					url: item.urlShow,
-					name: item.name,
-					images: this.getImagesForNativeViewer(item.fileId),
-				});
-			}
-
-			if (item.type === FileType.video)
-			{
-				viewer.openVideo(item.urlShow, item.name);
-			}
+		onItemClick = ({ fileId, type, customData }) => {
+			DialogMediaGallery.open({
+				messageId: customData.messageId,
+				direction: 'right',
+				mediaId: fileId,
+				mediaType: type,
+				forceDelete: true,
+				dialogLocator: this.dialogLocator,
+				dialogModel: this.getDialog(),
+				onBeforeAction: async () => {
+					await this.widgetNavigator.backToChat();
+					// To have time to see the result of the action after closing the widget
+					await this.#pause(500);
+				},
+			});
 		};
 
-		getImagesForNativeViewer(defaultId)
+		getImagesForNativeViewer(fileId)
 		{
 			/** @return {SidebarTabMediaItemModel[]} */
-			const images = this.getItems().filter((item) => item.getType() === FileType.image);
-
-			return images.map((image) => {
-				return {
+			return this.getItems()
+				.filter((item) => item.getType() === FileType.image)
+				.map((image) => ({
 					url: image.getUrlShow(),
-					default: image.getId() === defaultId,
-				};
-			});
+					default: image.getId() === fileId,
+				}));
 		}
 
 		/**
@@ -303,7 +308,9 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/media/src/content', (require,
 
 		getMediaGridData()
 		{
-			return this.getItems().map((item) => item.toMediaGridView()).filter(Boolean);
+			return this.getItems()
+				.map((item) => item.toMediaGridView())
+				.filter(Boolean);
 		}
 
 		/**
@@ -317,7 +324,7 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/media/src/content', (require,
 
 		/**
 		 * @param {Map<number, SidebarFile>} map
-		 * @return {Array<SidebarFile>}
+		 * @return {Array<SidebarTabMediaItemModel>}
 		 */
 		convertToSortedList(map)
 		{
@@ -369,6 +376,18 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/media/src/content', (require,
 
 			return Promise.reject(new Error('Scrollable ref not found'));
 		}
+
+		/**
+		 * @return {DialoguesModelState|{}}
+		 */
+		getDialog()
+		{
+			return this.store.getters['dialoguesModel/getById'](this.dialogId) || {};
+		}
+
+		#pause = (delay) => new Promise((resolve) => {
+			setTimeout(resolve, delay);
+		});
 	}
 
 	module.exports = { SidebarMediaTabContent };

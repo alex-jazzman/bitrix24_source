@@ -10,13 +10,10 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const {
 		EventType,
-		DialogType,
 		ComponentCode,
 		OpenDialogContextType,
 		WaitingEntity,
-		NavigationTabByComponent,
 	} = require('im/messenger/const');
-	const { EntityReady } = require('entity-ready');
 	const { Feature } = require('im/messenger/lib/feature');
 	const { ComponentRequestBroadcaster } = require('im/messenger/lib/component-request-broadcaster');
 	const { getLogger } = require('im/messenger/lib/logger');
@@ -306,38 +303,8 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 					openDialogParams.messageId = pushParams.PARAMS.MESSAGE_ID;
 				}
 
-				if (Feature.isCopilotInDefaultTabAvailable)
-				{
-					BX.postComponentEvent('onTabChange', ['chats'], ComponentCode.imNavigation);
-					MessengerEmitter.emit(EventType.messenger.openDialog, openDialogParams, ComponentCode.imMessenger);
-
-					return true;
-				}
-
-				let componentCode = ComponentCode.imMessenger;
-				if (push.data[1] && push.data[1][13] && push.data[1][13] === DialogType.copilot)
-				{
-					componentCode = ComponentCode.imCopilotMessenger;
-					BX.postComponentEvent('onTabChange', ['copilot'], ComponentCode.imNavigation);
-
-					await EntityReady.wait(`${ComponentCode.imCopilotMessenger}::ready`);
-				}
-				else
-				{
-					BX.postComponentEvent('onTabChange', ['chats'], ComponentCode.imNavigation);
-				}
-
-				MessengerEmitter.emit(
-					EventType.navigation.broadCastEventCheckTabPreload,
-					{
-						broadCastEvent: EventType.messenger.openDialog,
-						toTab: NavigationTabByComponent[componentCode],
-						data: {
-							...openDialogParams,
-						},
-					},
-					ComponentCode.imNavigation,
-				);
+				BX.postComponentEvent('onTabChange', ['chats'], ComponentCode.imNavigation);
+				MessengerEmitter.emit(EventType.messenger.openDialog, openDialogParams, ComponentCode.imMessenger);
 
 				return true;
 			}

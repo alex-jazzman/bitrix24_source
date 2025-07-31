@@ -43,6 +43,7 @@ jn.define('im/messenger/provider/services/sync/service/load', (require, exports,
 		{
 			/** @type {AppStatus['sync'] | AppStatus['backgroundSync']} */
 			this.syncMode = AppStatus.sync;
+			this.errorList = [];
 		}
 
 		get emitter()
@@ -152,7 +153,10 @@ jn.define('im/messenger/provider/services/sync/service/load', (require, exports,
 					const noResponseIdList = expectedRequestResultSavedIdList
 						.filter((id) => !requestResultSavedIdList.includes(id))
 					;
-					logger.warn('SyncService: no response from ', noResponseIdList, 'in 5 seconds');
+
+					const errorMessage = `SyncService: no response from [${noResponseIdList}] in 5 seconds`;
+					logger.warn(errorMessage);
+					this.errorList.push(errorMessage);
 				}
 			}, 5000);
 			const fillCompleteHandler = (data) => {
@@ -165,6 +169,7 @@ jn.define('im/messenger/provider/services/sync/service/load', (require, exports,
 				requestResultSavedIdList.push(uuid);
 				if (error)
 				{
+					this.errorList.push(error);
 					rejectSyncListPromise(error);
 
 					return;

@@ -347,15 +347,19 @@ class CallAISettings
 		$error = null;
 		if (!Settings::isAIServiceEnabled())
 		{
-			$error = new CallAIError(CallAIError::AI_UNAVAILABLE_ERROR, 'Service AI is unavailable');
+			$error = new CallAIError(CallAIError::AI_UNAVAILABLE_ERROR, 'AI service is unavailable');
+		}
+		elseif (!Loader::includeModule('ai'))
+		{
+			$error = new CallAIError(CallAIError::AI_MODULE_ERROR,  'AI service is unavailable');
 		}
 		elseif (!self::isTariffAvailable())
 		{
-			$error = new CallAIError(CallAIError::AI_UNAVAILABLE_ERROR, 'Service AI is unavailable');
+			$error = new CallAIError(CallAIError::AI_UNAVAILABLE_ERROR, 'AI service is unavailable');
 		}
 		elseif (!self::isEnableBySettings())
 		{
-			$error = new CallAIError(CallAIError::AI_SETTINGS_ERROR, 'Module AI is disabled by settings');
+			$error = new CallAIError(CallAIError::AI_SETTINGS_ERROR, 'AI service is disabled by settings');
 		}
 		elseif (!self::isAgreementAccepted())
 		{

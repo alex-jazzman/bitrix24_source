@@ -125,7 +125,8 @@ abstract class Chat implements RegistryEntry, ActiveRecord, RestEntity, PopupDat
 		ENTITY_TYPE_VIDEOCONF = 'VIDEOCONF',
 		ENTITY_TYPE_GENERAL = 'GENERAL',
 		ENTITY_TYPE_FAVORITE = 'FAVORITE',
-		ENTITY_TYPE_GENERAL_CHANNEL = 'GENERAL_CHANNEL'
+		ENTITY_TYPE_GENERAL_CHANNEL = 'GENERAL_CHANNEL',
+		ENTITY_TYPE_PRIVATE_AI_ASSISTANT = 'AI_ASSISTANT_PRIVATE'
 	;
 
 	//OPENLINES
@@ -162,7 +163,7 @@ abstract class Chat implements RegistryEntry, ActiveRecord, RestEntity, PopupDat
 		'manageMessages',
 		'avatar',
 		'conferencePassword',
-		'memberEntities'
+		'memberEntities',
 	];
 
 	public const
@@ -431,12 +432,12 @@ abstract class Chat implements RegistryEntry, ActiveRecord, RestEntity, PopupDat
 
 	protected function containsCollaber(): bool
 	{
-		return (bool)$this->getChatParams()?->get(Params::CONTAINS_COLLABER)?->getValue();
+		return (bool)$this->getChatParams()->get(Params::CONTAINS_COLLABER)?->getValue();
 	}
 
-	protected function containsCopilot(): bool
+	public function containsCopilot(): bool
 	{
-		return (bool)$this->getChatParams()->get(Params::IS_COPILOT)?->getValue();
+		return false;
 	}
 
 	protected function setUserIds(?array $userIds): self
@@ -2770,11 +2771,6 @@ abstract class Chat implements RegistryEntry, ActiveRecord, RestEntity, PopupDat
 	}
 	//endregion
 
-	public function createChatIfNotExists(array $params): self
-	{
-		return $this;
-	}
-
 	public function isAutoJoinEnabled(): bool
 	{
 		return false;
@@ -3331,8 +3327,6 @@ abstract class Chat implements RegistryEntry, ActiveRecord, RestEntity, PopupDat
 
 	protected function sendEventUserDelete(int $userId): void
 	{
-		//$this->getCallToken()->update();
-		//$this->sendPushTokenUpdate($this->getCallToken()->getToken(), $this->getRelations());
 		$user = Im\V2\Entity\User\User::getInstance($userId);
 		if ($user->isBot())
 		{
@@ -3407,30 +3401,6 @@ abstract class Chat implements RegistryEntry, ActiveRecord, RestEntity, PopupDat
 		{
 			\CPullWatch::AddToStack('IM_PUBLIC_' . $this->getId(), $pushMessage);
 		}
-	}
-
-	protected function sendPushTokenUpdate(string $callToken, RelationCollection $relations): array
-	{
-		if (!\Bitrix\Main\Loader::includeModule('pull'))
-		{
-			return [];
-		}
-
-		$pushMessage = [
-			'module_id' => 'im',
-			'command' => 'callTokenUpdate',
-			'params' => [
-				'chatId' => $this->getChatId(),
-				'dialogId' => 'chat' . $this->getChatId(),
-				'callToken' => $callToken,
-			],
-			'extra' => \Bitrix\Im\Common::getPullExtra()
-		];
-
-		$userIds = $relations->getUserIds();
-		\Bitrix\Pull\Event::add(array_values($userIds), $pushMessage);
-
-		return $pushMessage;
 	}
 
 	public function changeAuthor(): void

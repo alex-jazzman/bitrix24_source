@@ -577,12 +577,8 @@ class RecentProvider extends BaseProvider
 			Chat::IM_TYPE_CHANNEL,
 			Chat::IM_TYPE_OPEN_CHANNEL,
 			Chat::IM_TYPE_COLLAB,
+			Chat::IM_TYPE_COPILOT,
 		];
-
-		if (Features::isCopilotInDefaultTabAvailable())
-		{
-			$types[] = Chat::IM_TYPE_COPILOT;
-		}
 
 		return $types;
 	}

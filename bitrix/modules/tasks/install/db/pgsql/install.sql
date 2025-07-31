@@ -955,13 +955,3 @@ create table if not exists b_tasks_task_chat (
 );
 
 create index if not exists task_chat_index ON b_tasks_task_chat (TASK_ID, CHAT_ID);
-
-create table if not exists b_tasks_task_result_file (
-	ID int not null generated always as identity,
-	RESULT_ID  int not null,
-	FILE_ID int not null,
-
-	primary key (ID)
-);
-
-create index ix_b_tasks_task_result_file on b_tasks_task_result_file (RESULT_ID);

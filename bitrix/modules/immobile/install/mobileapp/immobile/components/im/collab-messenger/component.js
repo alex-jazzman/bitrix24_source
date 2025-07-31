@@ -18,7 +18,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 /* endregion Clearing session variables after script reload */
 
 (async () => {
-	/* global dialogList, ChatTimer, InAppNotifier, ChatUtils, reloadAllScripts */
+	/* global dialogList, reloadAllScripts */
 	/* region import */
 	const require = (ext) => jn.require(ext); // for IDE hints
 
@@ -27,7 +27,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 
 	const { Type } = require('type');
 	const { Loc } = require('loc');
-	const { isEqual } = require('utils/object');
+	const { isEqual, clone } = require('utils/object');
 	const { EntityReady } = require('entity-ready');
 
 	const { Logger } = require('im/messenger/lib/logger');
@@ -120,8 +120,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		constructor()
 		{
 			super();
-			this.refreshAfterErrorInterval = 10000;
-
 			EntityReady.addCondition(`${ComponentCode.imCollabMessenger}::ready`, () => this.isReady);
 		}
 
@@ -214,21 +212,15 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		 */
 		subscribeMessengerEvents()
 		{
-			BX.addCustomEvent(EventType.messenger.showSearch, this.openChatSearch);
-			BX.addCustomEvent(EventType.messenger.hideSearch, this.closeChatSearch);
-			BX.addCustomEvent(EventType.messenger.createChat, this.openChatCreate);
-			BX.addCustomEvent(EventType.messenger.refresh, this.refresh);
-			BX.addCustomEvent(EventType.messenger.openDialog, this.openDialog);
+			super.subscribeMessengerEvents();
+
 			BX.addCustomEvent(EventType.messenger.updatePlanLimitsData, this.updatePlanLimitsData);
 		}
 
 		unsubscribeMessengerEvents()
 		{
-			BX.removeCustomEvent(EventType.messenger.openDialog, this.openDialog);
-			BX.removeCustomEvent(EventType.messenger.showSearch, this.openChatSearch);
-			BX.removeCustomEvent(EventType.messenger.hideSearch, this.closeChatSearch);
-			BX.removeCustomEvent(EventType.messenger.createChat, this.openChatCreate);
-			BX.removeCustomEvent(EventType.messenger.refresh, this.refresh);
+			super.unsubscribeMessengerEvents();
+
 			BX.removeCustomEvent(EventType.messenger.updatePlanLimitsData, this.updatePlanLimitsData);
 		}
 
@@ -353,7 +345,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 					MessengerEmitter.emit(EventType.dialog.external.disableScrollToBottom);
 				}
 
-				this.refresh()
+				void this.refresh({ shortMode: true })
 					.finally(() => {
 						MessengerEmitter.emit(EventType.dialog.external.scrollToFirstUnread);
 					})
@@ -362,15 +354,19 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		}
 
 		/**
+		 * @param {object} params
+		 * @param {boolean} params.shortMode
 		 * @override
 		 */
-		async refresh()
+		async refresh(params = {})
 		{
+			const { shortMode = false } = params;
+
 			await this.core.setAppStatus(AppStatus.connection, true);
 			this.smileManager = SmileManager.getInstance();
 			await SmileManager.init();
 
-			return this.collabInitService.runAction(this.getBaseInitRestMethods())
+			return this.collabInitService.runAction(this.getInitRestMethods(shortMode))
 				.then(() => {
 					this.afterRefresh();
 				})
@@ -384,7 +380,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		{
 			await this.core.setAppStatus(AppStatus.connection, false);
 			this.refreshErrorNoticeFlag = false;
-			ChatTimer.stop('collab-recent', 'error', true);
+			this.notifyRefreshErrorWorker.stop();
 
 			TabCounters.update();
 
@@ -413,17 +409,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			this.refreshTimeout = setTimeout(() => {
 				if (!this.refreshErrorNoticeFlag && !Application.isBackground())
 				{
-					const notifyRefreshError = () => {
-						this.refreshErrorNoticeFlag = true;
-
-						InAppNotifier.showNotification({
-							message: Loc.getMessage('IMMOBILE_COMMON_MESSENGER_REFRESH_ERROR'),
-							backgroundColor: '#E6000000',
-							time: this.refreshAfterErrorInterval / 1000 - 2,
-						});
-					};
-
-					ChatTimer.start('collab-recent', 'error', 2000, notifyRefreshError);
+					this.notifyRefreshErrorWorker.startOnce();
 				}
 
 				Logger.warn(`${this.constructor.name}.refresh after error`);
@@ -556,17 +542,14 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		{
 			Logger.log(`${this.constructor.name}.chatDialog.counterChange`, event);
 
-			const recentItem = ChatUtils.objectClone(
-				this.store.getters['recentModel/getById'](event.dialogId),
-			);
-
+			const recentItem = clone(this.store.getters['recentModel/getById'](event.dialogId));
 			if (!recentItem)
 			{
 				return;
 			}
 
 			recentItem.counter = event.counter;
-			const dialogItem = ChatUtils.objectClone(this.store.getters['dialoguesModel/getById'](event.dialogId));
+			const dialogItem = clone(this.store.getters['dialoguesModel/getById'](event.dialogId));
 			if (dialogItem)
 			{
 				this.store.dispatch('dialoguesModel/update', {

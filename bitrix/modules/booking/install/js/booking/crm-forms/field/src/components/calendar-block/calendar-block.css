@@ -15,7 +15,7 @@
 }
 
 .booking--crm-forms--calendar-block-datepicker-header-title {
-	color: rgb(var(--booking--crm-forms--text-color-rgb));
+	color: var(--booking--crm-forms--datepicker-header-title-color);
 	font-size: 15px;
 	font-style: normal;
 	font-weight: 400;
@@ -24,7 +24,7 @@
 }
 
 .booking--crm-forms--calendar-block-datepicker-icon {
-	background-color: rgb(var(--booking--crm-forms--text-color-rgb));
+	background-color: var(--booking--crm-forms--datepicker-header-icon-color);
 	cursor: pointer;
 	height: 20px;
 	width: 20px;

@@ -108,6 +108,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 			this.onViewShow = this.onViewShowHandler.bind(this);
 
 			this.debounceSearch = debounce((params, callback) => this.search(params, callback), 500, this);
+			this.jsonEnabled = props.jsonEnabled ?? false;
 		}
 
 		get layout()
@@ -331,6 +332,11 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 					)
 					.setNetworkErrorHandler(this.triggerOfflineRequest)
 			);
+
+			if (this.jsonEnabled)
+			{
+				runActionExecutor.enableJson();
+			}
 
 			const newRequestUid = runActionExecutor.getUid();
 

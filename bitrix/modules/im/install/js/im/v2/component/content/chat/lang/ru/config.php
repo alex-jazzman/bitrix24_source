@@ -23,6 +23,7 @@ $MESS["IM_CONTENT_BLOCKED_TEXTAREA_JOIN_CHANNEL_V2"] = "Подписаться �
 $MESS["IM_CONTENT_COMMENTS_HEADER_TITLE"] = "Комментарии";
 $MESS["IM_CONTENT_COMMENTS_FOLLOW_TOGGLE_TEXT"] = "Следить";
 $MESS["IM_CONTENT_CHANNEL_TEXTAREA_PLACEHOLDER"] = "Добавьте публикацию";
+$MESS["IM_CONTENT_AIASSISTANT_TEXTAREA_PLACEHOLDER"] = "Напишите своему персональному помощнику";
 $MESS["IM_CONTENT_COLLAB_HEADER_LINK_TASKS"] = "Задачи";
 $MESS["IM_CONTENT_COLLAB_HEADER_LINK_FILES"] = "Файлы";
 $MESS["IM_CONTENT_COLLAB_HEADER_LINK_CALENDAR"] = "Календарь";

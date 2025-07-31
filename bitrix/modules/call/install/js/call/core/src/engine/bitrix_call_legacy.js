@@ -978,10 +978,10 @@ export class BitrixCallLegacy extends AbstractCall
 				this.localUserState = UserState.Connecting;
 				this.BitrixCall = new Call(this.userId);
 
-				if (Hardware.isCameraOn)
+				/*if (Hardware.isCameraOn) // transfered to #onCallConnected
 				{
 					this.localVideoShown = true;
-				}
+				}*/
 
 				this.joinedAsViewer = joinAsViewer;
 
@@ -1039,6 +1039,13 @@ export class BitrixCallLegacy extends AbstractCall
 		this.log("Call connected");
 		this.sendTelemetryEvent("connect");
 		this.localUserState = UserState.Connected;
+		
+		const MAX_USERS_WITH_VIDEO = Util.countDisableCameraNewJoinedUsersFeature();
+		
+		if (Util.isDisableCameraNewJoinedUsersFeatureEnabled() && this.BitrixCall.remoteParticipantsCount >= MAX_USERS_WITH_VIDEO) // task-596223
+		{
+			Hardware.isCameraOn = false;
+		}
 
 		this.BitrixCall.on('Failed', this.#onCallDisconnected);
 
@@ -1053,6 +1060,7 @@ export class BitrixCallLegacy extends AbstractCall
 
 		if (Hardware.isCameraOn)
 		{
+			this.localVideoShown = true;
 			if (!this.BitrixCall.isVideoPublished())
 			{
 				this.#setPublishingState(MediaStreamsKinds.Camera, true);

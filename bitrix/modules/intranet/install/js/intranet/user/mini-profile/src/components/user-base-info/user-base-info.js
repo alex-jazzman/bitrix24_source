@@ -125,7 +125,12 @@ export const UserBaseInfo = {
 					>
 						<Avatar 
 							:type="avatarType"
-							:options="{ userName: info.name, size: 72, title: info.name, picPath: info.avatar }"
+							:options="{
+								userName: info.name, 
+								size: 72, 
+								title: info.name, 
+								picPath: info.avatar ? encodeURI(info.avatar) : undefined,
+							}"
 						/>
 					</div>
 					<UserStatusIcon v-if="info.status" 

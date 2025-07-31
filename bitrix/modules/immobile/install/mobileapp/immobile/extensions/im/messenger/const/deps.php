@@ -5,6 +5,7 @@ return [
 		'type',
 	],
 	'bundle' => [
+		'./src/ai-assistant-button',
 		'./src/analytics',
 		'./src/attach',
 		'./src/attach-picker',

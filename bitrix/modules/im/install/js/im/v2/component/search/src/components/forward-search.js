@@ -50,8 +50,7 @@ export const ForwardSearch = {
 		},
 		recentSearchItems(): SearchResultItem[]
 		{
-			const recent = getRecentListItems({ withFakeUsers: true });
-			const filteredRecent = recent.filter(({ dialogId }) => {
+			const filteredRecent = this.recentListItems.filter(({ dialogId }) => {
 				return dialogId !== Core.getUserId().toString();
 			});
 
@@ -89,6 +88,8 @@ export const ForwardSearch = {
 			users: true,
 		});
 		this.searchOnServerDelayed = Runtime.debounce(this.searchOnServer, 400, this);
+		this.recentListItems = getRecentListItems({ withFakeUsers: true });
+
 		EventEmitter.subscribe(EventType.search.keyPressed, this.onKeyPressed);
 	},
 	beforeUnmount()

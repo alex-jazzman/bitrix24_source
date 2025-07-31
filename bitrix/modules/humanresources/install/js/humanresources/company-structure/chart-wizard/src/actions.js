@@ -14,22 +14,6 @@ export const chartWizardActions = {
 			channels: null,
 		});
 	},
-	editDepartment: (departmentData: DepartmentData): void => {
-		const { id, parentId } = departmentData;
-		const { departments } = useChartStore();
-		const oldData = departments.get(id);
-		departments.set(id, { ...oldData, ...departmentData });
-		const prevParent = [...departments.values()].find((department) => {
-			return department.children?.includes(id);
-		});
-		if (parentId !== 0 && prevParent.id !== parentId)
-		{
-			prevParent.children = prevParent.children.filter((childId) => childId !== id);
-			const newParent = departments.get(parentId);
-			newParent.children = [...(newParent.children ?? []), id];
-			departments.set(id, { ...departmentData, prevParentId: prevParent.id });
-		}
-	},
 	moveUsersToRootDepartment: (removedUsers: number[], userMovedToRootIds: number[]): void => {
 		const { departments } = useChartStore();
 		const rootEmployees = removedUsers.filter((user) => userMovedToRootIds.includes(user.id));

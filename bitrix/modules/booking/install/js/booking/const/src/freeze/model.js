@@ -4,6 +4,7 @@ export const Model = Object.freeze({
 	Counters: 'counters',
 	Dictionary: 'dictionary',
 	Favorites: 'favorites',
+	FormsMenu: 'forms-menu',
 	Interface: 'interface',
 	MainResources: 'main-resources',
 	MessageStatus: 'message-status',

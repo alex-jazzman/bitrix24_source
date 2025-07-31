@@ -5,3 +5,4 @@ import './css/landing.mainpage.pub.layout.css';
 export * from './js/landing.pub.disk.file.js';
 export * from './js/landing.pub.analytics';
 export * from './js/landing.pub.pseudolinks';
+export * from './js/landing.pub.processing';

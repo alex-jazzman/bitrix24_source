@@ -1,6 +1,7 @@
 import { Loc } from 'main.core';
 
 import { ChatType, Layout, UserType } from 'im.v2.const';
+import { CopilotManager } from 'im.v2.lib.copilot';
 
 import './chat-description.css';
 
@@ -83,7 +84,7 @@ export const ChatDescription = {
 		{
 			if (this.isCopilotLayout)
 			{
-				return this.$store.getters['copilot/getProvider'];
+				return CopilotManager.getAIModelName(this.dialogId);
 			}
 
 			if (this.isBot)

@@ -3,7 +3,8 @@
  */
 jn.define('tourist', (require, exports, module) => {
 	const { MemoryStorage } = require('native/memorystore');
-	const { TouristCacheExecutor } = require('tourist/src/cache');
+	const { TouristEventsFetcher } = require('tourist/src/events-fetcher');
+	const { Type } = require('type');
 
 	const MAX_TIMES_TO_REMEMBER = 1000;
 
@@ -23,6 +24,7 @@ jn.define('tourist', (require, exports, module) => {
 			this.userId = userId;
 			this.storage = new MemoryStorage(`tourist${this.userId}`);
 			this.onInit = this.#init();
+			this.eventsFetcher = new TouristEventsFetcher((response) => this.#handleResponse(response));
 		}
 
 		async #init()
@@ -34,38 +36,50 @@ jn.define('tourist', (require, exports, module) => {
 				return Promise.resolve();
 			}
 
-			return new Promise((resolve) => {
-				const onInit = () => {
-					BX.removeCustomEvent('Tourist.Inited', onInit);
-					resolve();
-				};
-
-				BX.addCustomEvent('Tourist.Inited', onInit);
-			});
+			return this.#loadEvents();
 		}
 
 		/**
-		 * @public
+		 * @private
+		 * @param {function(): Promise} fn
+		 * @param {number} maxRetries
+		 * @param {number} delayMs
 		 * @return {Promise}
 		 */
-		async loadEvents()
+		async #retry(fn, maxRetries = 3, delayMs = 1000)
 		{
-			const inited = await this.storage.get('_inited');
-
-			if (inited)
+			for (let attempt = 1; attempt <= maxRetries; attempt++)
 			{
-				return Promise.resolve();
+				try
+				{
+					// eslint-disable-next-line no-await-in-loop
+					return await fn();
+				}
+				catch (error)
+				{
+					const isNetworkError = error?.errors?.some((err) => err.code === 'NETWORK_ERROR');
+					if (!isNetworkError || attempt === maxRetries)
+					{
+						return error;
+					}
+					const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+					// eslint-disable-next-line no-await-in-loop
+					await delay(delayMs);
+				}
 			}
 
+			throw new Error('Retry failed: should not reach here');
+		}
+
+		/**
+		 * @private
+		 * @return {Promise}
+		 */
+		async #loadEvents()
+		{
 			try
 			{
-				const executor = TouristCacheExecutor.getRunActionExecutor()
-					.setHandler((response) => this.#handleResponse(response))
-					.setCacheHandler((cache) => this.#handleResponse(cache))
-					.setSkipRequestIfCacheExists()
-				;
-
-				return await executor.call(true);
+				return await this.#retry(() => this.eventsFetcher.call());
 			}
 			catch (error)
 			{
@@ -86,32 +100,30 @@ jn.define('tourist', (require, exports, module) => {
 			{
 				if (isKeyAllowed(eventId))
 				{
-					operations.push(this.storage.set(eventId, response.data[eventId]));
+					const preparedEventData = response.data[eventId];
+					preparedEventData.context = this.#convertContextToObjectIfNeeded(preparedEventData.context);
+					operations.push(this.storage.set(eventId, preparedEventData));
 				}
 			}
 
-			return Promise.allSettled(operations)
-				.then(() => {
-					BX.postComponentEvent('Tourist.Inited');
-				})
-				.catch((err) => {
-					console.error(err);
-				})
-			;
+			return Promise.allSettled(operations);
+		}
+
+		#convertContextToObjectIfNeeded(context)
+		{
+			if (context && typeof context === 'string')
+			{
+				return JSON.parse(context);
+			}
+
+			return context;
 		}
 
 		#handleError(error)
 		{
 			console.error('Cannot fetch tourist events from server', error);
 
-			return this.storage.set('_inited', true)
-				.then(() => {
-					BX.postComponentEvent('Tourist.Inited');
-				})
-				.catch((err) => {
-					console.error(err);
-				})
-			;
+			return this.storage.set('_inited', false);
 		}
 
 		/**
@@ -161,7 +173,7 @@ jn.define('tourist', (require, exports, module) => {
 		 */
 		getContext(event)
 		{
-			return this.storage.getSync(event)?.context;
+			return this.storage.getSync(event)?.context ?? null;
 		}
 
 		/**
@@ -189,11 +201,15 @@ jn.define('tourist', (require, exports, module) => {
 		{
 			assertKeyAllowed(event);
 
-			const cnt = count ?? Math.min((this.storage.getSync(event)?.cnt ?? 0) + 1, MAX_TIMES_TO_REMEMBER);
-			const ts = time ? Math.round(time / 1000) : Math.round(Date.now() / 1000);
+			const currentEventData = this.storage.getSync(event) ?? {};
+			const currentCount = Number.isFinite(currentEventData?.cnt) ? currentEventData.cnt : 0;
+			const counter = count ?? currentCount + 1;
+			const newCount = this.#clampEventCount(counter);
+			const timestamp = this.#getEventTimestamp(time);
+
 			const model = {
-				ts,
-				cnt,
+				ts: timestamp,
+				cnt: newCount,
 				context,
 			};
 
@@ -201,7 +217,7 @@ jn.define('tourist', (require, exports, module) => {
 				json: {
 					event,
 					context: context ? JSON.stringify(context) : null,
-					timestamp: time ? ts : null,
+					timestamp: time ? timestamp : null,
 					count: count ?? null,
 				},
 			})
@@ -211,9 +227,22 @@ jn.define('tourist', (require, exports, module) => {
 						...this.storage.getSync(event),
 						...response.data,
 					};
-					if (response.data.context)
+
+					if (Type.isStringFilled(data.context))
 					{
-						data.context = JSON.parse(response.data.context);
+						try
+						{
+							data.context = JSON.parse(response.data.context);
+						}
+						catch (error)
+						{
+							console.error('Failed to parse context JSON', error);
+							data.context = {};
+						}
+					}
+					else
+					{
+						data.context = {};
 					}
 
 					this.#updateStorage(event, data);
@@ -241,7 +270,7 @@ jn.define('tourist', (require, exports, module) => {
 
 		#updateStorage(event, eventData)
 		{
-			TouristCacheExecutor.updateRunActionCache(event, eventData);
+			this.eventsFetcher.updateCache(event, eventData);
 
 			return this.storage.set(event, eventData);
 		}
@@ -264,6 +293,16 @@ jn.define('tourist', (require, exports, module) => {
 			}
 
 			return false;
+		}
+
+		#clampEventCount(count = 0)
+		{
+			return Math.min(count, MAX_TIMES_TO_REMEMBER);
+		}
+
+		#getEventTimestamp(time)
+		{
+			return Math.round((time ?? Date.now()) / 1000);
 		}
 	}
 

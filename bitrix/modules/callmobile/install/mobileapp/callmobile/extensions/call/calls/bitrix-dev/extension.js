@@ -1309,7 +1309,7 @@
 			this.eventEmitter.emit(BX.Call.Event.onUsersLimitExceeded);
 		}
 
-		
+
 
 		destroy()
 		{

@@ -922,11 +922,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    showLatestSearchResult() {
 	      return this.query.length === 0;
 	    },
-	    recentSearchItems() {
-	      return im_v2_lib_search.getUsersFromRecentItems({
-	        withFakeUsers: true
-	      });
-	    },
 	    isEmptyState() {
 	      return this.searchResult.length === 0;
 	    }
@@ -945,6 +940,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      users: true
 	    });
 	    this.searchOnServerDelayed = main_core.Runtime.debounce(this.searchOnServer, 400, this);
+	    this.recentSearchItems = im_v2_lib_search.getUsersFromRecentItems({
+	      withFakeUsers: true
+	    });
 	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.search.keyPressed, this.onKeyPressed);
 	  },
 	  beforeUnmount() {
@@ -1094,10 +1092,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      return this.query.length === 0;
 	    },
 	    recentSearchItems() {
-	      const recent = im_v2_lib_search.getRecentListItems({
-	        withFakeUsers: true
-	      });
-	      const filteredRecent = recent.filter(({
+	      const filteredRecent = this.recentListItems.filter(({
 	        dialogId
 	      }) => {
 	        return dialogId !== im_v2_application_core.Core.getUserId().toString();
@@ -1129,6 +1124,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      users: true
 	    });
 	    this.searchOnServerDelayed = main_core.Runtime.debounce(this.searchOnServer, 400, this);
+	    this.recentListItems = im_v2_lib_search.getRecentListItems({
+	      withFakeUsers: true
+	    });
 	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.search.keyPressed, this.onKeyPressed);
 	  },
 	  beforeUnmount() {

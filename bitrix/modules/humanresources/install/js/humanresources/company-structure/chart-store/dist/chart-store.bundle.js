@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Humanresources = this.BX.Humanresources || {};
-(function (exports,ui_vue3_pinia,humanresources_companyStructure_api) {
+(function (exports,main_core,ui_vue3_pinia,humanresources_companyStructure_api,humanresources_companyStructure_utils) {
 	'use strict';
 
 	const useChartStore = ui_vue3_pinia.defineStore('hr-org-chart', {
@@ -63,11 +63,38 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	          });
 	        }
 	      });
+	    },
+	    updateDepartment(departmentData, position) {
+	      const {
+	        id,
+	        parentId
+	      } = departmentData;
+	      const oldData = this.departments.get(id);
+	      const prevParent = this.departments.get(oldData.parentId);
+	      this.departments.set(id, {
+	        ...oldData,
+	        ...departmentData
+	      });
+	      if (parentId !== 0 && prevParent.id !== parentId) {
+	        var _newParent$children;
+	        prevParent.children = prevParent.children.filter(childId => childId !== id);
+	        const newParent = this.departments.get(parentId);
+	        newParent.children = (_newParent$children = newParent.children) != null ? _newParent$children : [];
+	        if (main_core.Type.isNumber(position)) {
+	          newParent.children.splice(position, 0, id);
+	        } else {
+	          newParent.children.push(id);
+	        }
+	        this.departments.set(id, {
+	          ...this.departments.get(id),
+	          prevParentId: prevParent.id
+	        });
+	      }
 	    }
 	  }
 	});
 
 	exports.useChartStore = useChartStore;
 
-}((this.BX.Humanresources.CompanyStructure = this.BX.Humanresources.CompanyStructure || {}),BX.Vue3.Pinia,BX.Humanresources.CompanyStructure));
+}((this.BX.Humanresources.CompanyStructure = this.BX.Humanresources.CompanyStructure || {}),BX,BX.Vue3.Pinia,BX.Humanresources.CompanyStructure,BX.Humanresources.CompanyStructure));
 //# sourceMappingURL=chart-store.bundle.js.map

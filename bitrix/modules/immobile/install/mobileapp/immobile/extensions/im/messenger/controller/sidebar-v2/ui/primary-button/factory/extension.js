@@ -42,11 +42,6 @@ jn.define('im/messenger/controller/sidebar-v2/ui/primary-button/factory', (requi
 	});
 
 	const createAutoDeleteButton = ({ onClick, selected, ...rest }) => {
-		if (!Feature.isMessagesAutoDeleteAvailable)
-		{
-			return null;
-		}
-
 		return {
 			id: 'messages-auto-delete',
 			icon: Icon.TIMER_DOT,

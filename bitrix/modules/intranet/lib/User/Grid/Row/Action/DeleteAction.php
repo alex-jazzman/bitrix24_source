@@ -30,7 +30,7 @@ class DeleteAction extends JsGridAction
 	protected function getActionParams(array $rawFields): array
 	{
 		return [
-			'action' => 'delete',
+			'action' => 'deleteOrFire',
 			'userId' => $rawFields['ID'],
 		];
 	}

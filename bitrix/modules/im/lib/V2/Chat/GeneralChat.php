@@ -95,7 +95,7 @@ class GeneralChat extends GroupChat
 		$cache->startDataCache();
 		$cache->endDataCache($managerList);
 
-		return $this->getRelationFacade()->getManagerOnly()->getUserIds();
+		return $managerList;
 	}
 
 	protected function changeManagers(array $userIds, bool $isManager, bool $sendPush = true): self

@@ -32,11 +32,6 @@ jn.define('im/messenger/provider/pull/collab/message', (require, exports, module
 		{
 			return new CollabNewMessageManager(params, extra);
 		}
-
-		updateCopilotCounter(params)
-		{
-			// ignore calling this method for collab
-		}
 	}
 
 	module.exports = {

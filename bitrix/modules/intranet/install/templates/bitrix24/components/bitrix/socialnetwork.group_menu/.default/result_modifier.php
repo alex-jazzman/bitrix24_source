@@ -222,12 +222,12 @@ if ($arParams['PAGE_ID'] === 'group')
 		)
 	)
 	{
-		$redirectUrl = $arResult['Urls'][$firstKeyDefault];
+		$redirectUrl = $arResult['Urls'][$firstKeyDefault] ?? '';
 	}
 
 	if ($redirectUrl)
 	{
-		if ($arResult['inIframe'] && !$isCollab)
+		if ($arResult['inIframe'])
 		{
 			$redirectUrl = (new Uri($redirectUrl))->addParams([ 'IFRAME' => 'Y' ])->getUri();
 		}
@@ -253,13 +253,13 @@ elseif ($isCollab)
 	if (
 		$arParams['PAGE_ID'] === 'group_general'
 		|| $arParams['PAGE_ID'] === 'group_card'
-		|| $arParams['PAGE_ID'] === 'group_users'
 		|| $arParams['componentPage'] === 'group_features'
 		|| $arParams['componentPage'] === 'group_edit'
 		|| $arParams['componentPage'] === 'group_invite'
 		|| $arParams['componentPage'] === 'group_delete'
 		|| $arParams['componentPage'] === 'group_requests'
 		|| $arParams['componentPage'] === 'group_copy'
+		|| $arParams['componentPage'] === 'group_blog'
 	)
 	{
 		LocalRedirect($collabUrl);
@@ -325,7 +325,7 @@ $arResult["Urls"]["Subscribe"] = CComponentEngine::MakePathFromTemplate($arParam
 $arResult["Urls"]["GroupsList"] = \Bitrix\Socialnetwork\ComponentHelper::getWorkgroupSEFUrl();
 $arResult["Urls"]["Copy"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_GROUP_COPY"], array("group_id" => $arResult["Group"]["ID"]));
 
-$arResult['CanView']['general'] = (CSocNetFeatures::isActiveFeature(SONET_ENTITY_GROUP, $arResult['Group']['ID'], 'blog') && !$isCollab);
+$arResult['CanView']['general'] = (CSocNetFeatures::isActiveFeature(SONET_ENTITY_GROUP, $arResult['Group']['ID'], 'blog'));
 
 $arResult["Title"]["chat"] = ((array_key_exists("chat", $arResult["ActiveFeatures"]) && $arResult["ActiveFeatures"]["chat"] <> '') ? $arResult["ActiveFeatures"]["chat"] : GetMessage("SONET_UM_CHAT"));
 $arResult["OnClicks"] = array(

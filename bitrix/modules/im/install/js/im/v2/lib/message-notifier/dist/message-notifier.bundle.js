@@ -186,19 +186,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      this.onNotifierClick(event.getData());
 	      return;
 	    }
-	    im_v2_lib_desktopApi.DesktopApi.showBrowserWindow();
+	    await im_v2_lib_desktopApi.DesktopApi.showBrowserWindow();
 	    if (im_v2_lib_desktopApi.DesktopApi.isFeatureSupported(im_v2_lib_desktopApi.DesktopFeature.portalTabActivation.id)) {
 	      await im_v2_lib_desktopApi.DesktopApi.handlePortalTabActivation();
 	    }
-
-	    // delay is needed because desktop window activation takes some time
-	    // to complete and method is not async by its nature
-	    setTimeout(() => {
-	      im_v2_lib_desktop.DesktopBroadcastManager.getInstance().sendActionMessage({
-	        action: im_v2_const.DesktopBroadcastAction.notification,
-	        params: event.getData()
-	      });
-	    }, im_v2_const.WINDOW_ACTIVATION_DELAY);
+	    im_v2_lib_desktop.DesktopBroadcastManager.getInstance().sendActionMessage({
+	      action: im_v2_const.DesktopBroadcastAction.notification,
+	      params: event.getData()
+	    });
 	  });
 	  ui_notificationManager.Notifier.subscribe('action', event => {
 	    babelHelpers.classPrivateFieldLooseBase(this, _onNotifierAction)[_onNotifierAction](event.getData());

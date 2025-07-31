@@ -24,13 +24,13 @@ class DeclineAction extends JsGridAction
 
 	public function getExtensionMethod(): string
 	{
-		return 'confirmAction';
+		return 'activityAction';
 	}
 
 	protected function getActionParams(array $rawFields): array
 	{
 		return [
-			'isAccept' => false,
+			'action' => 'deleteOrFire',
 			'userId' => $rawFields['ID'],
 		];
 	}

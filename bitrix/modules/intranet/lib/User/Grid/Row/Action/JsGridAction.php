@@ -2,6 +2,7 @@
 
 namespace Bitrix\Intranet\User\Grid\Row\Action;
 
+use Bitrix\Intranet\Service\ServiceContainer;
 use Bitrix\Intranet\User\Access\Model\TargetUserModel;
 use Bitrix\Intranet\User\Access\UserAccessController;
 use Bitrix\Intranet\User\Access\UserActionDictionary;
@@ -35,10 +36,13 @@ abstract class JsGridAction extends \Bitrix\Main\Grid\Row\Action\BaseAction
 
 	public function isAvailable(array $rawFields): bool
 	{
-		return UserAccessController::createByDefault()->check(
-			static::getActionType(),
-			TargetUserModel::createFromArray($rawFields),
-		);
+		$user = $this->settings->getUserCollection()->getByUserId($rawFields['ID']);
+
+		return ServiceContainer::getInstance()->getUserService()->isActionAvailableForUser($user, static::getActionType())
+			&& UserAccessController::createByDefault()->check(
+				static::getActionType(),
+				TargetUserModel::createFromUserEntity($user),
+			);
 	}
 
 	public function getControl(array $rawFields): ?array

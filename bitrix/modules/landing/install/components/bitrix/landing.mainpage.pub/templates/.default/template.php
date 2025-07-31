@@ -68,12 +68,6 @@ Manager::setPageView(
 	'no-all-paddings landing-tile no-background'
 );
 
-if ($arResult['ERRORS'])
-{
-	include 'error.php';
-	return;
-}
-
 if (Loader::includeModule('intranet'))
 {
 	$publisher = new Intranet\MainPage\Publisher();

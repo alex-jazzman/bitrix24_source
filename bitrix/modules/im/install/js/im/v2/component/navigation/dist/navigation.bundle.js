@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,im_v2_lib_logger,im_v2_lib_slider,im_v2_lib_phone,im_v2_lib_feature,im_v2_lib_permission,im_v2_component_elements_scrollWithGradient,im_v2_component_elements_avatar,im_v2_component_elements_button,im_v2_lib_utils,im_v2_provider_service_settings,main_core,im_v2_lib_menu,im_v2_lib_desktopApi,im_v2_lib_confirm,im_v2_lib_desktop,ui_buttons,ui_feedback_form,ui_fontawesome4,im_v2_application_core,im_v2_lib_market,main_popup,im_public,im_v2_const,im_v2_lib_promo,im_v2_provider_service_copilot,im_v2_component_elements_popup,im_v2_component_elements_loader) {
+(function (exports,im_v2_lib_logger,im_v2_lib_slider,im_v2_lib_phone,im_v2_lib_feature,im_v2_lib_permission,im_v2_component_elements_scrollWithGradient,im_v2_component_elements_avatar,im_v2_component_elements_button,im_v2_component_elements_popup,im_v2_lib_utils,im_v2_provider_service_settings,main_core,main_popup,im_v2_lib_menu,im_v2_lib_desktopApi,im_v2_lib_confirm,im_v2_lib_desktop,ui_buttons,ui_feedback_form,ui_fontawesome4,im_v2_application_core,im_v2_const,im_v2_lib_market) {
 	'use strict';
 
 	// @vue/component
@@ -690,100 +690,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	`
 	};
 
-	const POPUP_ID$2 = 'im-copilot-promo-hint-popup';
-	const UNIVERSAL_ROLE_CODE = 'copilot_assistant';
-
-	// @vue/component
-	const CopilotPromoHint = {
-	  name: 'CopilotPromoHint',
-	  components: {
-	    MessengerPopup: im_v2_component_elements_popup.MessengerPopup,
-	    Spinner: im_v2_component_elements_loader.Spinner
-	  },
-	  props: {
-	    bindElement: {
-	      type: Object,
-	      required: true
-	    }
-	  },
-	  emits: ['close'],
-	  data() {
-	    return {
-	      isCreatingChat: false
-	    };
-	  },
-	  computed: {
-	    SpinnerSize: () => im_v2_component_elements_loader.SpinnerSize,
-	    SpinnerColor: () => im_v2_component_elements_loader.SpinnerColor,
-	    POPUP_ID: () => POPUP_ID$2,
-	    config() {
-	      return {
-	        darkMode: true,
-	        bindElement: this.bindElement,
-	        angle: true,
-	        width: 346,
-	        closeIcon: true,
-	        className: 'bx-im-copilot-promo-hint__scope',
-	        contentBorderRadius: 0,
-	        offsetTop: 9
-	      };
-	    }
-	  },
-	  methods: {
-	    loc(phraseCode) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode);
-	    },
-	    async close() {
-	      await im_v2_lib_promo.PromoManager.getInstance().markAsWatched(im_v2_const.PromoId.copilotInRecentTab);
-	      this.$emit('close');
-	    },
-	    async createCopilot() {
-	      this.isCreatingChat = true;
-	      const newDialogId = await this.getCopilotService().createChat({
-	        roleCode: UNIVERSAL_ROLE_CODE
-	      }).catch(() => {
-	        this.isCreatingChat = false;
-	      });
-	      this.isCreatingChat = false;
-	      await this.close();
-	      void im_public.Messenger.openChat(newDialogId);
-	    },
-	    getCopilotService() {
-	      if (!this.copilotService) {
-	        this.copilotService = new im_v2_provider_service_copilot.CopilotService();
-	      }
-	      return this.copilotService;
-	    }
-	  },
-	  template: `
-		<MessengerPopup
-			:config="config"
-			:id="POPUP_ID"
-			@close="close"
-		>
-			<div class="bx-im-copilot-promo-hint__title">
-				{{ loc('IM_CONTENT_COPILOT_PROMO_HINT_TITLE') }}
-			</div>
-			<div class="bx-im-copilot-promo-hint__description">
-				{{ loc('IM_CONTENT_COPILOT_PROMO_HINT_DESCRIPTION') }}
-			</div>
-			<button
-				class="bx-im-copilot-promo-hint__action"
-				@click="createCopilot"
-			>
-				<Spinner
-					v-if="isCreatingChat"
-					:size="SpinnerSize.XS"
-					:color="SpinnerColor.copilot"
-				/>
-				<span v-else>
-					{{ loc('IM_CONTENT_COPILOT_PROMO_HINT_ACTION') }}
-				</span>
-			</button>
-		</MessengerPopup>
-	`
-	};
-
 	const LayoutToAction = Object.freeze({
 	  [im_v2_const.Layout.market.name]: im_v2_const.ActionByUserType.getMarket,
 	  [im_v2_const.Layout.openlines.name]: im_v2_const.ActionByUserType.getOpenlines,
@@ -795,8 +701,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  name: 'MessengerNavigation',
 	  components: {
 	    UserSettings,
-	    MarketApps,
-	    CopilotPromoHint
+	    MarketApps
 	  },
 	  props: {
 	    currentLayoutName: {
@@ -808,8 +713,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  data() {
 	    return {
 	      needTopShadow: false,
-	      needBottomShadow: false,
-	      showCopilotPromoHint: false
+	      needBottomShadow: false
 	    };
 	  },
 	  computed: {
@@ -870,9 +774,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    },
 	    showCloseIcon() {
 	      return !im_v2_lib_desktopApi.DesktopApi.isChatTab();
-	    },
-	    isCopilotChatsInRecentTabEnabled() {
-	      return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.showCopilotChatsInRecentTab);
 	    }
 	  },
 	  created() {
@@ -881,7 +782,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  mounted() {
 	    const container = this.$refs.navigation;
 	    this.needBottomShadow = container && container.scrollTop + container.clientHeight !== container.scrollHeight;
-	    this.showCopilotPromoHint = this.isCopilotChatsInRecentTabEnabled && im_v2_lib_promo.PromoManager.getInstance().needToShow(im_v2_const.PromoId.copilotInRecentTab);
 	  },
 	  methods: {
 	    onItemClick(item, event) {
@@ -957,9 +857,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    isMainPageActive() {
 	      return im_v2_lib_desktopApi.DesktopApi.isChatWindow();
 	    },
-	    closeHint() {
-	      this.showCopilotPromoHint = false;
-	    },
 	    loc(phraseCode, replacements = {}) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 	    }
@@ -1004,11 +901,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 						</div>
 					</div>
 				</template>
-				<CopilotPromoHint
-					v-if="showCopilotPromoHint"
-					:bindElement="$refs.chat[0]"
-					@close="closeHint"
-				/>
 			</div>
 			<div v-if="needBottomShadow" class="bx-im-navigation__shadow --bottom">
 				<div class="bx-im-navigation__scroll-button --bottom" @click="onClickScrollDown"></div>
@@ -1023,5 +915,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.MessengerNavigation = MessengerNavigation;
 
-}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.UI,BX.UI.Feedback,BX,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Main,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements));
+}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX,BX.Main,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.UI,BX.UI.Feedback,BX,BX.Messenger.v2.Application,BX.Messenger.v2.Const,BX.Messenger.v2.Lib));
 //# sourceMappingURL=navigation.bundle.js.map

@@ -22,6 +22,7 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 		UnreadSeparatorMessage,
 	} = require('im/messenger/lib/element');
 
+	const { StateManager } = require('im/messenger/view/lib/state-manager');
 	const { DialogTextField } = require('im/messenger/view/dialog/text-field');
 	const { DialogMentionPanel } = require('im/messenger/view/dialog/mention-panel');
 	const { DialogPinPanel } = require('im/messenger/view/dialog/pin-panel');
@@ -98,6 +99,28 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			this.visibilityManager = VisibilityManager.getInstance();
 			this.resetState();
 			this.subscribeEvents();
+
+			this.initStateManager();
+		}
+
+		initStateManager()
+		{
+			const state = {
+				floatingText: {
+					isShow: false,
+					text: null,
+				},
+				rightButtons: null,
+				leftButtons: null,
+				title: null,
+				avatar: null,
+				isShowTopLoader: false,
+				isShowMessageListLoader: false,
+				isShowWelcomeScreen: false,
+				background: null,
+			};
+
+			this.stateManager = new StateManager(state);
 		}
 
 		/**
@@ -159,12 +182,6 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			 * @type {boolean}
 			 */
 			this.scrollToFirstUnreadCompleted = false;
-
-			/**
-			 * @private
-			 * @type {boolean}
-			 */
-			this.isWelcomeScreenShown = false;
 
 			this.resetStatusFieldState();
 			this.resetContextOptions();
@@ -855,6 +872,33 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			});
 		}
 
+		/**
+		 * @param {MessageId} messageId
+		 * @returns {Promise<boolean>}
+		 */
+		isAllContentCache(messageId)
+		{
+			return this.ui.isAllContentCache(messageId);
+		}
+
+		/**
+		 * @param {MessageId} messageId
+		 * @returns {Promise<boolean>}
+		 */
+		downloadFilesForMessage(messageId)
+		{
+			return this.ui.downloadFilesForMessage(messageId);
+		}
+
+		/**
+		 * @param {MessageId} messageId
+		 * @returns {Promise<string[]>}
+		 */
+		getLocalPathListForMessage(messageId)
+		{
+			return this.ui.getLocalPathListForMessage(messageId);
+		}
+
 		/* endregion ViewMessageList */
 
 		/* region Input */
@@ -1193,32 +1237,77 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 
 		setFloatingText(text = '')
 		{
-			this.ui.setFloatingText(text);
+			const { floatingText } = this.stateManager.state;
+			const newState = { floatingText: { ...floatingText, text } };
+			const hasChanges = this.stateManager.hasChanges(newState);
+
+			if (hasChanges)
+			{
+				this.ui.setFloatingText(text);
+				this.stateManager.updateState(newState);
+			}
 		}
 
 		showFloatingText()
 		{
-			this.ui.showFloatingText();
+			const { floatingText } = this.stateManager.state;
+			const newState = { floatingText: { ...floatingText, isShow: true } };
+			const hasChanges = this.stateManager.hasChanges(newState);
+
+			if (hasChanges)
+			{
+				this.ui.showFloatingText();
+				this.stateManager.updateState(newState);
+			}
 		}
 
 		hideFloatingText()
 		{
-			this.ui.hideFloatingText();
+			const { floatingText } = this.stateManager.state;
+			const newState = { floatingText: { ...floatingText, isShow: false } };
+			const hasChanges = this.stateManager.hasChanges(newState);
+
+			if (hasChanges)
+			{
+				this.ui.hideFloatingText();
+				this.stateManager.updateState(newState);
+			}
 		}
 
 		setRightButtons(buttonList)
 		{
-			this.ui.setRightButtons(buttonList);
+			const newState = { rightButtons: buttonList };
+			const hasChanges = this.stateManager.hasChanges(newState);
+
+			if (hasChanges)
+			{
+				this.ui.setRightButtons(buttonList);
+				this.stateManager.updateState(newState);
+			}
 		}
 
 		setLeftButtons(buttonList)
 		{
-			this.ui.setLeftButtons(buttonList);
+			const newState = { leftButtons: buttonList };
+			const hasChanges = this.stateManager.hasChanges(newState);
+
+			if (hasChanges)
+			{
+				this.ui.setLeftButtons(buttonList);
+				this.stateManager.updateState(newState);
+			}
 		}
 
 		setTitle(titleParams)
 		{
-			this.ui.setTitle(titleParams);
+			const newState = { title: titleParams };
+			const hasChanges = this.stateManager.hasChanges(newState);
+
+			if (hasChanges)
+			{
+				this.ui.setTitle(titleParams);
+				this.stateManager.updateState(newState);
+			}
 		}
 
 		setMessageIdToScrollAfterSet(messageId)
@@ -1231,9 +1320,13 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 		 */
 		setCurrentUserAvatar(currentUserAvatar)
 		{
-			if (this.ui.setCurrentUserAvatar)
+			const newState = { avatar: currentUserAvatar };
+			const hasChanges = this.stateManager.hasChanges(newState);
+
+			if (this.ui.setCurrentUserAvatar && hasChanges)
 			{
 				this.ui.setCurrentUserAvatar(currentUserAvatar);
+				this.stateManager.updateState(newState);
 			}
 		}
 
@@ -1247,27 +1340,42 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 
 		showMessageListLoader()
 		{
-			this.ui.showLoader();
+			const newState = { isShowMessageListLoader: true };
+			const hasChanges = this.stateManager.hasChanges(newState);
+
+			if (hasChanges)
+			{
+				this.ui.showLoader();
+				this.stateManager.updateState(newState);
+			}
 		}
 
 		showTopLoader()
 		{
-			if (!Type.isFunction(this.ui.showTopLoader))
+			const newState = { isShowTopLoader: true };
+			const hasChanges = this.stateManager.hasChanges(newState);
+
+			if (!Type.isFunction(this.ui.showTopLoader) || !hasChanges)
 			{
 				return;
 			}
 
 			this.ui.showTopLoader();
+			this.stateManager.updateState(newState);
 		}
 
 		hideTopLoader()
 		{
-			if (!Type.isFunction(this.ui.hideTopLoader))
+			const newState = { isShowTopLoader: false };
+			const hasChanges = this.stateManager.hasChanges(newState);
+
+			if (!Type.isFunction(this.ui.hideTopLoader) || !hasChanges)
 			{
 				return;
 			}
 
 			this.ui.hideTopLoader();
+			this.stateManager.updateState(newState);
 		}
 
 		close()
@@ -1282,13 +1390,21 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 
 		hideMessageListLoader()
 		{
-			this.ui.hideLoader();
+			const newState = { isShowMessageListLoader: false };
+			const hasChanges = this.stateManager.hasChanges(newState);
+
+			if (hasChanges)
+			{
+				this.ui.hideLoader();
+				this.stateManager.updateState(newState);
+			}
 		}
 
-		showAttachPicker(selectedFilesHandler = () => {
-		}, closeCallback = () => {
-		}, itemSelectedCallback = () => {
-		})
+		showAttachPicker(
+			selectedFilesHandler = () => {},
+			closeCallback = () => {},
+			itemSelectedCallback = () => {},
+		)
 		{
 			const imagePickerParams = {
 				settings: {
@@ -1374,7 +1490,10 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 
 		showWelcomeScreen()
 		{
-			if (!this.ui.welcomeScreen)
+			const newState = { isShowWelcomeScreen: true };
+			const hasChanges = this.stateManager.hasChanges(newState);
+
+			if (!this.ui.welcomeScreen || !hasChanges)
 			{
 				return false;
 			}
@@ -1384,20 +1503,23 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 				text: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_VIEW_WELCOME_SCREEN_TEXT'),
 			});
 
-			this.isWelcomeScreenShown = true;
+			this.stateManager.updateState(newState);
 
 			return true;
 		}
 
 		hideWelcomeScreen()
 		{
-			if (!this.ui.welcomeScreen)
+			const newState = { isShowWelcomeScreen: false };
+			const hasChanges = this.stateManager.hasChanges(newState);
+
+			if (!this.ui.welcomeScreen || !hasChanges)
 			{
 				return false;
 			}
 
 			this.ui.welcomeScreen.hide();
-			this.isWelcomeScreenShown = false;
+			this.stateManager.updateState(newState);
 
 			return true;
 		}
@@ -1668,9 +1790,16 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 		 */
 		setBackground(background)
 		{
-			logger.log(`${this.constructor.name}.setBackground backgroundConfiguration:`, background);
+			const newState = { background };
+			const hasChanges = this.stateManager.hasChanges(newState);
 
-			this.ui.setBackground(background);
+			if (hasChanges)
+			{
+				logger.log(`${this.constructor.name}.setBackground backgroundConfiguration:`, background);
+
+				this.ui.setBackground(background);
+				this.stateManager.updateState(newState);
+			}
 		}
 
 		async #processReadMessagesAfterSet()

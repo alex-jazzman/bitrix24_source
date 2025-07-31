@@ -15,6 +15,7 @@ use Bitrix\HumanResources\Service\Container;
 use Bitrix\HumanResources\Type\HcmLink\EmployeeDataType;
 use Bitrix\HumanResources\Util\PersonUtil;
 use Bitrix\Main;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 
 class MapperService implements Contract\Service\HcmLink\MapperService
@@ -37,7 +38,10 @@ class MapperService implements Contract\Service\HcmLink\MapperService
 		if (!$company)
 		{
 			return (new Main\Result())->addError(
-				new Main\Error('Integration not found', 'HR_HCMLINK_INTEGRATION_NOT_FOUND'),
+				new Main\Error(
+					Loc::getMessage('HUMANRESOURCES_HCMLINK_INTEGRATION_NOT_FOUND') ?? '',
+					'HR_HCMLINK_INTEGRATION_NOT_FOUND',
+				),
 			);
 		}
 

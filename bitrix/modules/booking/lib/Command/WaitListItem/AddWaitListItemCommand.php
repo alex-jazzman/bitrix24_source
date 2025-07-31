@@ -26,11 +26,11 @@ class AddWaitListItemCommand extends AbstractCommand
 		];
 	}
 
-	public static function mapFromArray(array $array): self
+	public static function mapFromArray(array $props): self
 	{
 		return new self(
-			createdBy: $array['createdBy'],
-			waitListItem: WaitListItem::mapFromArray($array['waitListItem']),
+			createdBy: $props['createdBy'],
+			waitListItem: WaitListItem::mapFromArray($props['waitListItem']),
 		);
 	}
 

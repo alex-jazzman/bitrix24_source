@@ -74,6 +74,7 @@ $MESS["CALL_M_BTN_TITLE_STOP_RECORD"] = "Stop recording";
 $MESS["CALL_M_INCOMING_NOTIFICATION_SETTINGS_TITLE"] = "Settings";
 $MESS["CALL_POPUP_AI_AGREEMENT_ERROR"] = "Ask your Bitrix24 administrator to accept the updated Terms of Service.";
 $MESS["CALL_POPUP_AI_DEFAULT_TEXT"] = "Could not activate CoPilot for this call. Please try again later.";
+$MESS["CALL_POPUP_AI_MODULE_ERROR"] = "CoPilot requires the \"AI Integration\" module. Please contact your Bitrix24 administrator.";
 $MESS["CALL_POPUP_AI_NOT_ENOUGH_BAAS_ERROR"] = "Insufficient CoPilot credits to use CoPilot Follow-Up.";
 $MESS["CALL_POPUP_AI_SETTINGS_ERROR"] = "Enable CoPilot Follow-Up in your Bitrix24 settings.";
 $MESS["CALL_POPUP_AI_UNAVAILABLE_ERROR"] = "CoPilot Follow-Up is not available on your plan. Please consider upgrading to one of the major plans.";

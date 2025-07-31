@@ -56,11 +56,11 @@
 }
 
 .booking--crm-forms--resource-slots__slot > span {
-	color: rgba(82, 92, 105, 1);
+	color: var(--booking--crm-forms--resource-slot-text-color);
 }
 
 .booking--crm-forms--resource-slots__slot.--selected > span {
-	color: var(--b24-background-color, #FFF);
+	color: var(--booking--crm-forms--resource-slot-selected-text-color);
 }
 
 .booking--crm-forms--resource-slots__empty-slots {

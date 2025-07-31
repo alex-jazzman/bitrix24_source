@@ -3,7 +3,6 @@
  */
 jn.define('im/messenger/lib/ui/base/item/item', (require, exports, module) => {
 	const { Type } = require('type');
-	const { Feature: MobileFeature } = require('feature');
 
 	const { Avatar: MessengerAvatarLegacy } = require('im/messenger/lib/ui/base/avatar');
 	const { ItemInfo } = require('im/messenger/lib/ui/base/item/item-info');
@@ -46,7 +45,7 @@ jn.define('im/messenger/lib/ui/base/item/item', (require, exports, module) => {
 		{
 			const style = this.getStyleBySize();
 			let avatar = null;
-			if (Type.isObject(this.props.data.avatar) && MobileFeature.isNativeAvatarSupported())
+			if (Type.isObject(this.props.data.avatar))
 			{
 				avatar = Avatar(this.props.data.avatar);
 			}

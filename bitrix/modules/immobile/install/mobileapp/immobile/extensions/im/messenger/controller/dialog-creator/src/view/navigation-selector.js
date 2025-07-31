@@ -139,8 +139,7 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector/view', (re
 		getNewCopilotButton()
 		{
 			if (
-				!Feature.isCopilotInDefaultTabAvailable
-				|| !Feature.isCopilotEnabled
+				!Feature.isCopilotEnabled
 				|| !UserPermission.canPerformActionByUserType(ActionByUserType.createCopilot)
 			)
 			{

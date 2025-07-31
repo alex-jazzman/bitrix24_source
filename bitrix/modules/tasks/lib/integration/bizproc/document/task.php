@@ -438,6 +438,28 @@ class Task implements \IBPWorkflowDocument
 		//$fields = $task->getData();
 		$args = func_get_args();
 		$select = $args[2] ?? [];
+
+		$select = array_merge(
+			...array_map(
+				static function($selectField)
+				{
+					$mapFields = [
+						'STATUS' => 'REAL_STATUS',
+						'IS_IMPORTANT' => 'PRIORITY',
+						'IS_EXPIRED' => ['DEADLINE', 'REAL_STATUS', 'CLOSED_DATE'],
+						'GROUP_ID_PRINTABLE' => 'GROUP_ID',
+						'MEMBER_ROLE' => ['CREATED_BY', 'RESPONSIBLE_ID', 'ACCOMPLICES', 'AUDITORS'],
+					];
+
+					$field = $mapFields[$selectField] ?? $selectField;
+
+					return is_array($field) ? $field : [$field];
+				},
+				$select
+			)
+		);
+
+
 		if (empty($select))
 		{
 			$res = \CTasks::GetByID($documentId, false);

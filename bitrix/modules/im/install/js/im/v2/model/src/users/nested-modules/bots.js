@@ -55,6 +55,10 @@ export class BotsModel extends BuilderModel
 			isSupport: (state: BotsState) => (userId: string | number): boolean => {
 				return state.collection[userId]?.type === BotType.support24;
 			},
+			/** @function users/bots/isAiAssistant */
+			isAiAssistant: (state: BotsState) => (userId: string | number): boolean => {
+				return state.collection[userId]?.code === BotCode.aiAssistant;
+			},
 			/** @function users/bots/getCopilotUserId */
 			getCopilotUserId: (state: BotsState): ?number => {
 				for (const [userId, bot] of Object.entries(state.collection))

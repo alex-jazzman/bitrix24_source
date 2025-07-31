@@ -7,6 +7,7 @@ use Bitrix\Im\Call\Registry;
 use Bitrix\Call\NotifyService;
 use Bitrix\Call\Integration\AI\Outcome\OutcomeCollection;
 use Bitrix\Im\V2\Message\Send\SendingConfig;
+use Bitrix\Call\Analytics\FollowUpAnalytics;
 
 
 class EventService
@@ -36,6 +37,8 @@ class EventService
 					->disableAiAnalyze()
 					->save();
 
+				(new FollowUpAnalytics($call))->addErrorRecording(CallAIError::AI_RECORD_TOO_SHORT);
+
 				return;
 			}
 
@@ -49,6 +52,8 @@ class EventService
 				$sendingConfig = (new SendingConfig())->enableSkipCounterIncrements();
 				NotifyService::getInstance()->sendMessageDeferred($chat, $message, $sendingConfig);
 			}
+
+			(new FollowUpAnalytics($call))->addStopRecording();
 		}
 	}
 
@@ -110,8 +115,8 @@ class EventService
 
 					CallAIService::getInstance()->removeExpectation($call->getId());
 
-					$callInstance = \Bitrix\Im\Call\Registry::getCallWithId($outcome->getCallId());
-					(new \Bitrix\Call\Analytics\FollowUpAnalytics($callInstance))->addFollowUpResultMessage();
+					$callInstance = \Bitrix\Im\Call\Registry::getCallWithId($call->getId());
+					(new FollowUpAnalytics($callInstance))->addFollowUpResultMessage();
 				}
 			}
 		}

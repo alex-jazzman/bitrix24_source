@@ -1,4 +1,4 @@
-export const HelpDesk = Object.freeze({
+export const HelpDesk: { [key: string]: HelpDeskCode } = Object.freeze({
 	Intersection: { code: '23712054', anchorCode: 'inte' },
 	ResourceType: { code: '23661822', anchorCode: 'reso' },
 	ResourceSchedule: { code: '23661822', anchorCode: 'show' },
@@ -18,5 +18,11 @@ export const HelpDesk = Object.freeze({
 	BookingActionsMessage: { code: '23661964', anchorCode: 'remind' },
 	BookingActionsConfirmation: { code: '23661964', anchorCode: 'appr' },
 	BookingActionsVisit: { code: '23661964', anchorCode: 'visit' },
+	CrmFormsPopup: { code: '25366370', anchorCode: '' },
 	WaitListDescription: { code: '24846212', anchorCode: '' },
 });
+
+type HelpDeskCode = {
+	code: string,
+	anchorCode: string,
+}

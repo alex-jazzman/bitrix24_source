@@ -98,15 +98,9 @@ export const CreateChatMenu = {
 		{
 			return FeatureManager.isFeatureAvailable(Feature.copilotActive);
 		},
-		isCopilotChatsInRecentTabEnabled(): boolean
-		{
-			return FeatureManager.isFeatureAvailable(Feature.showCopilotChatsInRecentTab);
-		},
 		isCopilotAvailableAndCreatable(): boolean
 		{
-			return this.isCopilotChatsInRecentTabEnabled
-				&& this.isCopilotAvailable
-				&& this.canCreateCopilot;
+			return this.isCopilotAvailable && this.canCreateCopilot;
 		},
 		canCreateChannel(): boolean
 		{

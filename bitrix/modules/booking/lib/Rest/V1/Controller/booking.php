@@ -74,7 +74,7 @@ class Booking extends Controller
 		PageNavigation $pageNavigation,
 		array $filter = [],
 		array $order = [],
-	): Page
+	): ?Page
 	{
 		if (isset($filter['CREATED_WITHIN']))
 		{

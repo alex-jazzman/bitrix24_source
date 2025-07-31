@@ -122,6 +122,21 @@ jn.define('im/messenger/lib/ui/alert', (require, exports, module) => {
 
 	/**
 	 * @param {function} deleteCallback
+	 * @param {function} [cancelCallback]
+	 */
+	function showDeleteGalleryAlert({ deleteCallback, cancelCallback })
+	{
+		confirmDestructiveAction({
+			title: Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_DELETE_GALLERY_TITLE'),
+			description: Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_DELETE_GALLERY_DESCRIPTION'),
+			destructionText: Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_DELETE_GALLERY_CONFIRM_YES'),
+			onDestruct: deleteCallback,
+			onCancel: cancelCallback,
+		});
+	}
+
+	/**
+	 * @param {function} deleteCallback
 	 * @param {function} cancelCallback
 	 */
 	function showDeleteChannelPostsAlert({ deleteCallback, cancelCallback })
@@ -150,6 +165,7 @@ jn.define('im/messenger/lib/ui/alert', (require, exports, module) => {
 	module.exports = {
 		showDeleteChatAlert,
 		showDeleteChannelAlert,
+		showDeleteGalleryAlert,
 		showDeleteChannelPostAlert,
 		showDeleteChannelPostsAlert,
 		showDeleteMessagesAlert,

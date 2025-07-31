@@ -33,6 +33,7 @@ jn.define('tasks/layout/fields/task/theme/air/src/entity', (require, exports, mo
 		const isCompleted = customData?.isCompleted;
 		const status = customData?.status;
 		const isLoading = customData?.isLoading;
+		const canUpdate = customData?.canUpdate;
 
 		return View(
 			{
@@ -132,12 +133,12 @@ jn.define('tasks/layout/fields/task/theme/air/src/entity', (require, exports, mo
 						}),
 					),
 				),
-				(field.isReadOnly() || field.isRestricted()) && IconView({
+				(field.isReadOnly() || field.isRestricted() || !canUpdate) && IconView({
 					icon: Icon.CHEVRON_TO_THE_RIGHT,
 					size: 20,
 					color: Color.base5,
 				}),
-				(!isLoading && !field.isReadOnly() && !field.isRestricted()) && IconView({
+				(!isLoading && !field.isReadOnly() && !field.isRestricted() && canUpdate) && IconView({
 					icon: Icon.CROSS,
 					size: 20,
 					color: Color.base5,

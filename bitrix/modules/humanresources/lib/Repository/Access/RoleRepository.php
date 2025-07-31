@@ -55,24 +55,6 @@ class RoleRepository
 		AccessRoleTable::deleteList(['@ID' => $roleIds]);
 	}
 
-	public function updateName(int $roleId, string $name): UpdateResult
-	{
-		return AccessRoleTable::update($roleId, ['NAME' => $name]);
-	}
-
-	/**
-	 * @throws ArgumentException
-	 * @throws ObjectPropertyException
-	 * @throws SystemException
-	 */
-	public function getRoleObjectByName(string $name): ?EO_AccessRole
-	{
-		return AccessRoleTable::query()
-			->setFilter(['=NAME' => $name])
-			->fetchObject()
-		;
-	}
-
 	/**
 	 * @throws ArgumentException
 	 * @throws ObjectPropertyException

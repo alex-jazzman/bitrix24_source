@@ -97,7 +97,6 @@ jn.define('im/messenger/controller/chat-composer/lib/view/group-chat', (require,
 		{
 			if (
 				!this.props.isCreate
-				|| !Feature.isMessagesAutoDeleteAvailable
 				|| !Feature.isMessagesAutoDeleteNativeAvailable
 			)
 			{

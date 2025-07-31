@@ -6,6 +6,7 @@ jn.define('selector/widget/entity/intranet/department', (require, exports, modul
 	const { mergeImmutable, clone } = require('utils/object');
 	const { BaseSelectorEntity } = require('selector/widget/entity');
 	const { isModuleInstalled } = require('module');
+	const { DepartmentInfo } = require('intranet/department-info');
 
 	/**
 	 * @class DepartmentSelector
@@ -119,7 +120,10 @@ jn.define('selector/widget/entity/intranet/department', (require, exports, modul
 						onSave: (department) => {
 							if (department)
 							{
-								resolve(department);
+								resolve({
+									...department,
+									id: String(department.id),
+								});
 							}
 							else
 							{
@@ -152,10 +156,57 @@ jn.define('selector/widget/entity/intranet/department', (require, exports, modul
 		static make(props)
 		{
 			const originalProps = clone(props);
-			const selectorInstance = super.make(props);
-			void DepartmentSelector.loadPermissions(selectorInstance, originalProps);
+			const instance = super.make(mergeImmutable(props, {
+				events: {
+					onInfoIconClicked: ({ item, text, scope }) => {
+						const departmentInfoInstance = DepartmentInfo.open({
+							departmentId: item.id,
+							parentWidget: instance.widget,
+							onSelectButtonClick: (departmentId) => {
+								const selectedDepartment = instance.getCurrentItems().find(
+									(department) => String(department.id) === String(departmentId),
+								);
+								const selectedDepartments = instance.getCurrentSelectedItems();
+								if (!selectedDepartments.some(
+									(department) => String(department.id) === String(departmentId),
+								))
+								{
+									let newSelectedDepartments = [];
+									if (instance.getAllowMultipleSelection())
+									{
+										newSelectedDepartments = [
+											...selectedDepartments,
+											selectedDepartment,
+										].map((department) => ({
+											...department,
+											id: String(department.id),
+										}));
+									}
+									else
+									{
+										newSelectedDepartments = [{
+											...selectedDepartment,
+											id: String(selectedDepartment.id),
+										}];
+									}
+									instance.setShouldSetInitiallySelectedItems(true);
+									instance.onSelectedChangedListener({
+										items: newSelectedDepartments,
+									});
+								}
 
-			return selectorInstance;
+								departmentInfoInstance.close();
+							},
+						});
+
+						props?.events?.onInfoIconClicked?.({ item, text, scope });
+					},
+				},
+			}));
+
+			void DepartmentSelector.loadPermissions(instance, originalProps);
+
+			return instance;
 		}
 
 		static async loadPermissions(selectorInstance, originalProps)
@@ -183,6 +234,14 @@ jn.define('selector/widget/entity/intranet/department', (require, exports, modul
 					}
 				});
 			}
+		}
+
+		static prepareItemForDrawing(item)
+		{
+			return {
+				...item,
+				showInfoIcon: true,
+			};
 		}
 	}
 

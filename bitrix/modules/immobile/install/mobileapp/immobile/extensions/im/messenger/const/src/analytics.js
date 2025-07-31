@@ -29,6 +29,7 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		clickCallButton: 'click_call_button',
 		saveToDisk: 'save_to_disk',
 		downloadFile: 'download_file',
+		downloadError: 'download_error',
 		clickAddUser: 'click_add_user',
 		openCalendar: 'open_calendar',
 		openTasks: 'open_tasks',
@@ -146,6 +147,9 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		/* region vote link copy source type */
 		voteLinkCopySourceMessage: 'message_link',
 		voteLinkCopySourceResult: 'poll_results',
+
+		/* region message type */
+		deletedMessage: 'deleted_message',
 	});
 
 	const Section = Object.freeze({
@@ -224,6 +228,13 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		success: 'success',
 	});
 
+	const DownloadErrorStatus = {
+		toDisk: 'download_to_disk_error',
+		toGallery: 'download_to_gallery_error',
+		multipleFiles: 'multiple_files_download_error',
+		toDevice: 'download_to_device_error',
+	};
+
 	const Analytics = Object.freeze({
 		CopilotChatType,
 		Event,
@@ -237,6 +248,7 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		P2,
 		P3,
 		Status,
+		DownloadErrorStatus,
 	});
 
 	module.exports = { Analytics };

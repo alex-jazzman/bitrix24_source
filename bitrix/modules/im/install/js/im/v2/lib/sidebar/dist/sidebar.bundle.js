@@ -165,6 +165,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  blocks: [im_v2_const.SidebarMainPanelBlock.support, im_v2_const.SidebarMainPanelBlock.tariffLimit, im_v2_const.SidebarMainPanelBlock.multidialog, im_v2_const.SidebarMainPanelBlock.info, im_v2_const.SidebarMainPanelBlock.fileList]
 	});
 
+	const isAiAssistant = chatContext => im_v2_application_core.Core.getStore().getters['users/bots/isAiAssistant'](chatContext.dialogId);
+	const aiAssistantConfig = new SidebarConfig({
+	  blocks: [im_v2_const.SidebarMainPanelBlock.user, im_v2_const.SidebarMainPanelBlock.tariffLimit, im_v2_const.SidebarMainPanelBlock.info]
+	});
+
 	const isComment = chatContext => chatContext.type === im_v2_const.ChatType.comment;
 	const commentConfig = new SidebarConfig({
 	  blocks: [im_v2_const.SidebarMainPanelBlock.post, im_v2_const.SidebarMainPanelBlock.info, im_v2_const.SidebarMainPanelBlock.fileList, im_v2_const.SidebarMainPanelBlock.taskList, im_v2_const.SidebarMainPanelBlock.meetingList],
@@ -239,6 +244,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  babelHelpers.classPrivateFieldLooseBase(this, _defaultConfigMap)[_defaultConfigMap].set(isChannel, channelConfig);
 	  babelHelpers.classPrivateFieldLooseBase(this, _defaultConfigMap)[_defaultConfigMap].set(isComment, commentConfig);
 	  babelHelpers.classPrivateFieldLooseBase(this, _defaultConfigMap)[_defaultConfigMap].set(isSupport, supportConfig);
+	  babelHelpers.classPrivateFieldLooseBase(this, _defaultConfigMap)[_defaultConfigMap].set(isAiAssistant, aiAssistantConfig);
 	  babelHelpers.classPrivateFieldLooseBase(this, _defaultConfigMap)[_defaultConfigMap].set(isBot, botConfig);
 	  babelHelpers.classPrivateFieldLooseBase(this, _defaultConfigMap)[_defaultConfigMap].set(isNotes, notesConfig);
 	  babelHelpers.classPrivateFieldLooseBase(this, _defaultConfigMap)[_defaultConfigMap].set(isLines, linesConfig);

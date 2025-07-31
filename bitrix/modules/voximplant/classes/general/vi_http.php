@@ -58,12 +58,12 @@ class CVoxImplantHttp
 		{
 			$accountLang = Application::getInstance()->getLicense()->getRegion();
 		}
-		if (in_array($accountLang, ['ru', 'by', 'kz', 'uz'], true))
-		{
-			return static::CONTROLLER_RU;
-		}
 
-		return static::CONTROLLER_OTHER;
+		return match ($accountLang)
+		{
+			'ru','by','kz','am','az','ge','kg','uz' => static::CONTROLLER_RU,
+			default => static::CONTROLLER_OTHER,
+		};
 	}
 
 	public static function GetPortalType()

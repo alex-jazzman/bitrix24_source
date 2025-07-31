@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Humanresources = this.BX.Humanresources || {};
-(function (exports,humanresources_companyStructure_api,humanresources_companyStructure_chartStore,humanresources_companyStructure_utils) {
+(function (exports,humanresources_companyStructure_api,humanresources_companyStructure_permissionChecker,main_core,humanresources_companyStructure_chartStore,humanresources_companyStructure_utils) {
 	'use strict';
 
 	const createTreeDataStore = treeData => {
@@ -58,10 +58,32 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  firstTimeOpened: () => {
 	    return humanresources_companyStructure_api.postData('humanresources.api.User.firstTimeOpen');
 	  },
+	  updateDepartment: (nodeId, parentId) => {
+	    return humanresources_companyStructure_api.postData('humanresources.api.Structure.Node.update', {
+	      nodeId,
+	      parentId,
+	      name: null
+	    });
+	  },
+	  changeOrder: (draggedId, direction, count) => {
+	    return humanresources_companyStructure_api.postData('humanresources.api.Structure.Node.changeOrder', {
+	      nodeId: draggedId,
+	      direction,
+	      count
+	    });
+	  },
 	  createTreeDataStore
 	};
 
-	/* eslint-disable no-constructor-return */
+	class BasePermissionChecker {
+	  isCheckerAction(action) {
+	    throw new Error('The method isCheckerAction must be implemented in the subclass');
+	  }
+	  hasPermission(action, nodeId, permissionValue, minLevel) {
+	    throw new Error('The method hasPermission must be implemented in the subclass');
+	  }
+	}
+
 	const PermissionActions = Object.freeze({
 	  structureView: 'ACTION_STRUCTURE_VIEW',
 	  departmentCreate: 'ACTION_DEPARTMENT_CREATE',
@@ -70,6 +92,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  employeeAddToDepartment: 'ACTION_EMPLOYEE_ADD_TO_DEPARTMENT',
 	  employeeRemoveFromDepartment: 'ACTION_EMPLOYEE_REMOVE_FROM_DEPARTMENT',
 	  employeeFire: 'ACTION_FIRE_EMPLOYEE',
+	  departmentCommunicationEdit: 'ACTION_DEPARTMENT_COMMUNICATION_EDIT',
 	  accessEdit: 'ACTION_USERS_ACCESS_EDIT',
 	  teamAccessEdit: 'ACTION_TEAM_ACCESS_EDIT',
 	  inviteToDepartment: 'ACTION_USER_INVITE',
@@ -79,7 +102,8 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  teamDelete: 'ACTION_TEAM_DELETE',
 	  teamAddMember: 'ACTION_TEAM_MEMBER_ADD',
 	  teamRemoveMember: 'ACTION_TEAM_MEMBER_REMOVE',
-	  teamSettingsEdit: 'ACTION_TEAM_SETTINGS_EDIT'
+	  teamSettingsEdit: 'ACTION_TEAM_SETTINGS_EDIT',
+	  teamCommunicationEdit: 'ACTION_TEAM_COMMUNICATION_EDIT'
 	});
 	const PermissionLevels = Object.freeze({
 	  fullCompany: 30,
@@ -87,33 +111,154 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  self: 10,
 	  none: 0
 	});
-	var _isTeamAction = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isTeamAction");
-	var _hasPermissionOfTeamAction = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hasPermissionOfTeamAction");
-	var _hasPermissionOfDepartmentAction = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hasPermissionOfDepartmentAction");
-	var _hasPermissionOfTeamActionByTeamPermission = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hasPermissionOfTeamActionByTeamPermission");
-	var _hasPermissionOfTeamActionByDepartmentPermission = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hasPermissionOfTeamActionByDepartmentPermission");
+
+	class TeamPermissionChecker extends BasePermissionChecker {
+	  constructor(departmentChecker, currentUserPermissions) {
+	    super();
+	    this.departmentChecker = departmentChecker;
+	    this.currentUserPermissions = currentUserPermissions;
+	  }
+	  isCheckerAction(action) {
+	    const teamActions = [PermissionActions.teamView, PermissionActions.teamCreate, PermissionActions.teamEdit, PermissionActions.teamDelete, PermissionActions.teamAddMember, PermissionActions.teamRemoveMember, PermissionActions.teamSettingsEdit, PermissionActions.teamCommunicationEdit];
+	    return teamActions.includes(action);
+	  }
+	  hasPermission(action, entityId, permissionValue, minValue) {
+	    if (minValue) {
+	      const isTeamPermissionInsufficient = permissionValue.TEAM < ((minValue == null ? void 0 : minValue.TEAM) || 0);
+	      const isDepartmentPermissionInsufficient = permissionValue.DEPARTMENT < ((minValue == null ? void 0 : minValue.DEPARTMENT) || 0);
+	      if (isTeamPermissionInsufficient || isDepartmentPermissionInsufficient) {
+	        return false;
+	      }
+	    }
+	    if (permissionValue.TEAM === PermissionLevels.fullCompany) {
+	      const departments = humanresources_companyStructure_chartStore.useChartStore().departments;
+	      const currentNode = departments.get(entityId);
+	      if ((action === PermissionActions.teamCreate || action === PermissionActions.teamEdit) && currentNode.entityType === humanresources_companyStructure_utils.EntityTypes.department) {
+	        return humanresources_companyStructure_permissionChecker.PermissionChecker.hasPermission(PermissionActions.structureView, currentNode.id);
+	      }
+	      return true;
+	    }
+	    if (this.hasPermissionByTeamPermission(entityId, permissionValue.TEAM)) {
+	      return true;
+	    }
+	    return this.hasPermissionByDepartmentPermission(entityId, permissionValue.DEPARTMENT, action);
+	  }
+	  hasPermissionByTeamPermission(nodeId, level = PermissionLevels.none) {
+	    if (level === PermissionLevels.none) {
+	      return false;
+	    }
+	    const nodes = humanresources_companyStructure_chartStore.useChartStore().departments;
+	    const userEntities = humanresources_companyStructure_chartStore.useChartStore().currentDepartments;
+	    const userTeams = new Set(userEntities.filter(id => {
+	      const department = nodes.get(id);
+	      return department && department.entityType === humanresources_companyStructure_utils.EntityTypes.team;
+	    }));
+	    if (userTeams.has(nodeId)) {
+	      return true;
+	    }
+	    if (level === PermissionLevels.self) {
+	      return false;
+	    }
+	    let currentDepartment = nodes.get(nodeId);
+	    while (currentDepartment) {
+	      if (currentDepartment.entityType === humanresources_companyStructure_utils.EntityTypes.department) {
+	        return false;
+	      }
+	      if (userTeams.has(currentDepartment.id)) {
+	        return true;
+	      }
+	      currentDepartment = nodes.get(currentDepartment.parentId);
+	    }
+	    return false;
+	  }
+	  hasPermissionByDepartmentPermission(nodeId, level = PermissionLevels.none, action = '') {
+	    if (level === PermissionLevels.none) {
+	      return false;
+	    }
+	    const nodes = humanresources_companyStructure_chartStore.useChartStore().departments;
+	    const userEntities = humanresources_companyStructure_chartStore.useChartStore().currentDepartments;
+	    const userDepartments = new Set(userEntities.filter(id => {
+	      const department = nodes.get(id);
+	      return department && department.entityType === humanresources_companyStructure_utils.EntityTypes.department;
+	    }));
+	    if (userDepartments.has(nodeId)) {
+	      return true;
+	    }
+	    let currentDepartment = nodes.get(nodeId);
+	    while (currentDepartment) {
+	      if (userDepartments.has(currentDepartment.id)) {
+	        return true;
+	      }
+	      if (level === PermissionLevels.self && currentDepartment.entityType === humanresources_companyStructure_utils.EntityTypes.department) {
+	        if (action === PermissionActions.teamCreate || action === PermissionActions.teamEdit) {
+	          return userDepartments.has(currentDepartment.id);
+	        }
+	        return false;
+	      }
+	      currentDepartment = nodes.get(currentDepartment.parentId);
+	    }
+	    return false;
+	  }
+	}
+
+	class DepartmentPermissionChecker extends BasePermissionChecker {
+	  isCheckerAction(action) {
+	    const departmentActions = [PermissionActions.structureView, PermissionActions.departmentCreate, PermissionActions.departmentDelete, PermissionActions.departmentEdit, PermissionActions.employeeAddToDepartment, PermissionActions.employeeRemoveFromDepartment, PermissionActions.employeeFire, PermissionActions.departmentCommunicationEdit, PermissionActions.inviteToDepartment];
+	    return departmentActions.includes(action);
+	  }
+	  hasPermission(action, departmentId, permissionValue, minLevel) {
+	    if (!this.isCheckerAction(action) && !main_core.Type.isNumber(permissionValue)) {
+	      return false;
+	    }
+	    if (minLevel !== null && permissionValue < minLevel) {
+	      return false;
+	    }
+	    const departments = humanresources_companyStructure_chartStore.useChartStore().departments;
+	    if (action === PermissionActions.departmentDelete) {
+	      const rootId = [...departments.values()].find(department => department.parentId === 0).id;
+	      if (departmentId === rootId) {
+	        return false;
+	      }
+	    }
+	    const userDepartments = humanresources_companyStructure_chartStore.useChartStore().currentDepartments;
+	    switch (permissionValue) {
+	      case PermissionLevels.fullCompany:
+	        {
+	          return true;
+	        }
+	      case PermissionLevels.selfAndSub:
+	        {
+	          let currentDepartment = departments.get(departmentId);
+	          while (currentDepartment) {
+	            if (userDepartments.includes(currentDepartment.id)) {
+	              return true;
+	            }
+	            currentDepartment = departments.get(currentDepartment.parentId);
+	          }
+	          return false;
+	        }
+	      case PermissionLevels.self:
+	        {
+	          return userDepartments.includes(departmentId);
+	        }
+	      case PermissionLevels.none:
+	      default:
+	        {
+	          return false;
+	        }
+	    }
+	  }
+	}
+
+	/* eslint-disable no-constructor-return */
 	class PermissionCheckerClass {
 	  constructor() {
-	    Object.defineProperty(this, _hasPermissionOfTeamActionByDepartmentPermission, {
-	      value: _hasPermissionOfTeamActionByDepartmentPermission2
-	    });
-	    Object.defineProperty(this, _hasPermissionOfTeamActionByTeamPermission, {
-	      value: _hasPermissionOfTeamActionByTeamPermission2
-	    });
-	    Object.defineProperty(this, _hasPermissionOfDepartmentAction, {
-	      value: _hasPermissionOfDepartmentAction2
-	    });
-	    Object.defineProperty(this, _hasPermissionOfTeamAction, {
-	      value: _hasPermissionOfTeamAction2
-	    });
-	    Object.defineProperty(this, _isTeamAction, {
-	      value: _isTeamAction2
-	    });
 	    if (!PermissionCheckerClass.instance) {
 	      this.currentUserPermissions = {};
-	      this.permissionVariablesDictionary = [];
 	      this.isTeamsAvailable = false;
 	      this.isInitialized = false;
+	      this.departmentChecker = new DepartmentPermissionChecker();
+	      this.teamChecker = new TeamPermissionChecker(this.departmentChecker, this.currentUserPermissions);
 	      PermissionCheckerClass.instance = this;
 	    }
 	    return PermissionCheckerClass.instance;
@@ -127,33 +272,31 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    }
 	    const {
 	      currentUserPermissions,
-	      permissionVariablesDictionary,
 	      teamsAvailable
 	    } = await chartAPI.getDictionary();
 	    this.currentUserPermissions = currentUserPermissions;
-	    this.permissionVariablesDictionary = permissionVariablesDictionary;
 	    this.isTeamsAvailable = teamsAvailable;
 	    this.isInitialized = true;
 	  }
-	  hasPermission(action, departmentId, minLevel = PermissionLevels.none) {
+	  hasPermission(action, entityId, minLevel = null) {
 	    const permissionLevel = this.currentUserPermissions[action];
-	    if (!permissionLevel || departmentId === 0) {
+	    if (!permissionLevel || !entityId) {
 	      return false;
 	    }
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _isTeamAction)[_isTeamAction](action)) {
-	      if (!this.isTeamsAvailable) {
-	        return false;
-	      }
-	      return babelHelpers.classPrivateFieldLooseBase(this, _hasPermissionOfTeamAction)[_hasPermissionOfTeamAction](permissionLevel, departmentId, action);
+	    if (this.departmentChecker.isCheckerAction(action)) {
+	      return this.departmentChecker.hasPermission(action, entityId, permissionLevel, minLevel);
 	    }
-	    return babelHelpers.classPrivateFieldLooseBase(this, _hasPermissionOfDepartmentAction)[_hasPermissionOfDepartmentAction](permissionLevel, departmentId, action, minLevel);
+	    if (this.isTeamsAvailable && this.teamChecker.isCheckerAction(action)) {
+	      return this.teamChecker.hasPermission(action, entityId, permissionLevel, minLevel);
+	    }
+	    return false;
 	  }
-	  hasPermissionWithAnyNode(action) {
+	  hasPermissionOfAction(action) {
 	    const permissionLevel = this.currentUserPermissions[action];
 	    if (!permissionLevel) {
 	      return false;
 	    }
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _isTeamAction)[_isTeamAction](action)) {
+	    if (this.teamChecker.isCheckerAction(action)) {
 	      if (!this.isTeamsAvailable) {
 	        return false;
 	      }
@@ -161,137 +304,44 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    }
 	    return permissionLevel > PermissionLevels.none;
 	  }
-	  hasPermissionOfAction(action) {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _isTeamAction)[_isTeamAction](action)) {
-	      return this.hasPermissionWithAnyNode(action);
-	    }
-	    return this.currentUserPermissions[action] !== undefined && this.currentUserPermissions[action] !== null && this.currentUserPermissions[action] !== PermissionLevels.none;
-	  }
-	}
-	function _isTeamAction2(action) {
-	  const teamActions = [PermissionActions.teamView, PermissionActions.teamCreate, PermissionActions.teamEdit, PermissionActions.teamDelete, PermissionActions.teamAddMember, PermissionActions.teamRemoveMember, PermissionActions.teamSettingsEdit];
-	  return teamActions.includes(action);
-	}
-	function _hasPermissionOfTeamAction2(permissionValue, nodeId, action) {
-	  if (permissionValue.TEAM === PermissionLevels.fullCompany) {
-	    const departments = humanresources_companyStructure_chartStore.useChartStore().departments;
-	    const currentNode = departments.get(nodeId);
-	    if (action === PermissionActions.teamCreate && currentNode.entityType === humanresources_companyStructure_utils.EntityTypes.department) {
-	      return this.hasPermission(PermissionActions.structureView, currentNode.id);
-	    }
-	    return true;
-	  }
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _hasPermissionOfTeamActionByTeamPermission)[_hasPermissionOfTeamActionByTeamPermission](nodeId, permissionValue.TEAM)) {
-	    return true;
-	  }
-	  return babelHelpers.classPrivateFieldLooseBase(this, _hasPermissionOfTeamActionByDepartmentPermission)[_hasPermissionOfTeamActionByDepartmentPermission](nodeId, permissionValue.DEPARTMENT, action);
-	}
-	function _hasPermissionOfDepartmentAction2(permissionLevel, departmentId, action, minLevel) {
-	  const permissionObject = this.permissionVariablesDictionary.find(item => item.id === permissionLevel);
-	  if (!permissionObject) {
-	    return false;
-	  }
-	  const departments = humanresources_companyStructure_chartStore.useChartStore().departments;
-	  if (action === PermissionActions.departmentDelete) {
-	    const rootId = [...departments.values()].find(department => department.parentId === 0).id;
-	    if (departmentId === rootId) {
+	  canSortEntitiesByParentId(entityId) {
+	    const entities = humanresources_companyStructure_chartStore.useChartStore().departments;
+	    const entity = entities.get(entityId);
+	    if (!entity) {
 	      return false;
 	    }
-	  }
-	  const userEntities = humanresources_companyStructure_chartStore.useChartStore().currentDepartments;
-	  const userDepartments = new Set(userEntities.filter(id => {
-	    const department = departments.get(id);
-	    return department && department.entityType === humanresources_companyStructure_utils.EntityTypes.department;
-	  }));
-	  if (permissionObject.id < minLevel) {
+	    const teamTeamMinValue = {
+	      TEAM: PermissionLevels.selfAndSub
+	    };
+	    const teamDepartmentMinValue = {
+	      DEPARTMENT: PermissionLevels.selfAndSub
+	    };
+	    const teamAction = PermissionActions.teamEdit;
+	    if (entity.entityType === humanresources_companyStructure_utils.EntityTypes.team) {
+	      return this.hasPermission(teamAction, entityId, teamTeamMinValue) || this.hasPermission(teamAction, entityId, teamDepartmentMinValue);
+	    }
+	    if (entity.entityType === humanresources_companyStructure_utils.EntityTypes.department) {
+	      const departmentAction = PermissionActions.departmentEdit;
+	      return this.hasPermission(departmentAction, entityId, PermissionLevels.selfAndSub);
+	    }
 	    return false;
 	  }
-	  switch (permissionObject.id) {
-	    case PermissionLevels.fullCompany:
-	      return true;
-	    case PermissionLevels.selfAndSub:
-	      {
-	        if (userDepartments.has(departmentId)) {
-	          return true;
-	        }
-	        let currentDepartment = departments.get(departmentId);
-	        while (currentDepartment) {
-	          if (userDepartments.has(currentDepartment.id)) {
-	            return true;
-	          }
-	          currentDepartment = departments.get(currentDepartment.parentId);
-	        }
-	        return false;
-	      }
-	    case PermissionLevels.self:
-	      return userDepartments.has(departmentId);
-	    case PermissionLevels.none:
-	    default:
-	      return false;
-	  }
-	}
-	function _hasPermissionOfTeamActionByTeamPermission2(nodeId, level = PermissionLevels.none) {
-	  if (level === PermissionLevels.none) {
+	  canBeParentForEntity(entityId, type) {
+	    if (type === humanresources_companyStructure_utils.EntityTypes.department) {
+	      return this.hasPermission(PermissionActions.departmentEdit, entityId);
+	    }
+	    if (type === humanresources_companyStructure_utils.EntityTypes.team) {
+	      return this.hasPermission(PermissionActions.teamEdit, entityId);
+	    }
 	    return false;
 	  }
-	  const nodes = humanresources_companyStructure_chartStore.useChartStore().departments;
-	  const userEntities = humanresources_companyStructure_chartStore.useChartStore().currentDepartments;
-	  const userTeams = new Set(userEntities.filter(id => {
-	    const department = nodes.get(id);
-	    return department && department.entityType === humanresources_companyStructure_utils.EntityTypes.team;
-	  }));
-	  if (userTeams.has(nodeId)) {
-	    return true;
-	  }
-	  if (level === PermissionLevels.self) {
-	    return false;
-	  }
-	  let currentDepartment = nodes.get(nodeId);
-	  while (currentDepartment) {
-	    if (currentDepartment.entityType === humanresources_companyStructure_utils.EntityTypes.department) {
-	      return false;
-	    }
-	    if (userTeams.has(currentDepartment.id)) {
-	      return true;
-	    }
-	    currentDepartment = nodes.get(currentDepartment.parentId);
-	  }
-	  return false;
-	}
-	function _hasPermissionOfTeamActionByDepartmentPermission2(nodeId, level = PermissionLevels.none, action = '') {
-	  if (level === PermissionLevels.none) {
-	    return false;
-	  }
-	  const nodes = humanresources_companyStructure_chartStore.useChartStore().departments;
-	  const userEntities = humanresources_companyStructure_chartStore.useChartStore().currentDepartments;
-	  const userDepartments = new Set(userEntities.filter(id => {
-	    const department = nodes.get(id);
-	    return department && department.entityType === humanresources_companyStructure_utils.EntityTypes.department;
-	  }));
-	  if (userDepartments.has(nodeId)) {
-	    return true;
-	  }
-	  let currentDepartment = nodes.get(nodeId);
-	  while (currentDepartment) {
-	    if (userDepartments.has(currentDepartment.id)) {
-	      return true;
-	    }
-	    if (level === PermissionLevels.self && currentDepartment.type === humanresources_companyStructure_utils.EntityTypes.department) {
-	      if (action === PermissionActions.teamCreate) {
-	        return this.hasPermission(PermissionActions.structureView, currentDepartment.id) && userDepartments.has(currentDepartment.id);
-	      }
-	      return false;
-	    }
-	    currentDepartment = nodes.get(currentDepartment.parentId);
-	  }
-	  return false;
 	}
 	const PermissionChecker = new PermissionCheckerClass();
 
+	exports.PermissionChecker = PermissionChecker;
 	exports.PermissionActions = PermissionActions;
 	exports.PermissionLevels = PermissionLevels;
 	exports.PermissionCheckerClass = PermissionCheckerClass;
-	exports.PermissionChecker = PermissionChecker;
 
-}((this.BX.Humanresources.CompanyStructure = this.BX.Humanresources.CompanyStructure || {}),BX.Humanresources.CompanyStructure,BX.Humanresources.CompanyStructure,BX.Humanresources.CompanyStructure));
+}((this.BX.Humanresources.CompanyStructure = this.BX.Humanresources.CompanyStructure || {}),BX.Humanresources.CompanyStructure,BX.Humanresources.CompanyStructure,BX,BX.Humanresources.CompanyStructure,BX.Humanresources.CompanyStructure));
 //# sourceMappingURL=checker.bundle.js.map

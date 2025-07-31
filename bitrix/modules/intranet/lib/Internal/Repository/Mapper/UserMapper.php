@@ -3,6 +3,8 @@
 namespace Bitrix\Intranet\Internal\Repository\Mapper;
 
 use Bitrix\Intranet\Entity\User;
+use Bitrix\Main\ObjectException;
+use Bitrix\Main\Type\Date;
 
 class UserMapper
 {
@@ -33,7 +35,8 @@ class UserMapper
 			languageId: $userData['LANGUAGE_ID'] ?? null,
 			personalMobile: $userData['PERSONAL_MOBILE'] ?? null,
 			password: $userData['PASSWORD'] ?? null,
-			ufCrmEntity: $userData['UF_USER_CRM_ENTITY'] ?? null
+			ufCrmEntity: $userData['UF_USER_CRM_ENTITY'] ?? null,
+			lastLogin: $this->parseDateValue($userData['LAST_LOGIN'] ?? null),
 		);
 	}
 
@@ -46,7 +49,6 @@ class UserMapper
 			'CONFIRM_CODE' => $user->getConfirmCode() ?? null,
 			'NAME' => $user->getName() ?? null,
 			'LAST_NAME' => $user->getLastName() ?? null,
-			'GROUP_ID' => $user->getGroupIds(),
 			'LID' => $user->getLid() ?? null,
 			'PERSONAL_PHOTO' => $user->getPersonalPhoto() ?? null,
 			'LANGUAGE_ID' => $user->getLanguageId() ?? null,
@@ -62,6 +64,11 @@ class UserMapper
 			$userData['PHONE_NUMBER'] = $user->getPhoneNumber();
 		}
 
+		if (!is_null($user->getGroupIds()))
+		{
+			$userData['GROUP_ID'] = $user->getPhoneNumber();
+		}
+
 		if ($user->getPersonalMobile())
 		{
 			$userData['PERSONAL_MOBILE'] = $user->getPersonalMobile();
@@ -72,6 +79,33 @@ class UserMapper
 			$userData['ACTIVE'] = $user->getActive() ? 'Y' : 'N';
 		}
 
+		if (!is_null($user->getLastLogin()))
+		{
+			$userData['LAST_LOGIN'] = $user->getLastLogin();
+		}
+
 		return $userData;
+	}
+
+	private function parseDateValue($value): ?Date
+	{
+		if ($value instanceof Date)
+		{
+			return $value;
+		}
+
+		if (is_string($value))
+		{
+			try
+			{
+				return new Date($value);
+			}
+			catch (ObjectException)
+			{
+				return null;
+			}
+		}
+
+		return null;
 	}
 }

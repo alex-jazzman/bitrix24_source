@@ -1,5 +1,6 @@
 <?php
 $MESS["ERROR_AI_EMPTY_PAYLOAD_ERROR"] = "Талдау үшін деректер жеткіліксіз";
+$MESS["ERROR_AI_MODULE_ERROR"] = "CoPilot жұмыс істеуі үшін AI-интеграция модулі қажет. Әкімшіге хабарласыңыз";
 $MESS["ERROR_AI_OVERVIEW_TASK_ERROR"] = "Транскрипцияны өңдеу кезіндегі қате";
 $MESS["ERROR_AI_RECORD_TOO_SHORT"] = "Тым қысқа қоңырау";
 $MESS["ERROR_AI_TASK_FAILED"] = "Copilot Follow-up тапсырмасы қатемен аяқталды";

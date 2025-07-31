@@ -1,5 +1,6 @@
 import { ChatType, MessageComponent } from 'im.v2.const';
 import { Core } from 'im.v2.application.core';
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
 
 import type { JsonObject } from 'main.core';
 import type { Store } from 'ui.vue3.vuex';
@@ -137,5 +138,31 @@ export class CopilotManager
 		}
 
 		return message.componentId === MessageComponent.copilotCreation;
+	}
+
+	static initAvailableAIModelsList(): void
+	{
+		const { copilot } = Core.getApplicationData();
+
+		if (!copilot.availableEngines)
+		{
+			return;
+		}
+
+		void Core.getStore().dispatch('copilot/setAvailableAIModels', copilot.availableEngines);
+	}
+
+	static getAIModelName(dialogId: string): string
+	{
+		const isAIModelChangeAllowed = FeatureManager.isFeatureAvailable(Feature.isAIModelChangeAllowed);
+
+		if (isAIModelChangeAllowed)
+		{
+			const currentAIModel = Core.getStore().getters['copilot/chats/getAIModel'](dialogId);
+
+			return currentAIModel.name;
+		}
+
+		return Core.getStore().getters['copilot/getProvider'];
 	}
 }

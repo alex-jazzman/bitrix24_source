@@ -48,6 +48,7 @@ body:has(.bx-call-picture-in-picture-window) {
 	background: linear-gradient(179.28deg, rgba(16, 23, 39, 0) 4.42%, rgba(16, 23, 39, 0.34) 22.09%, rgba(16, 23, 39, 0.72) 51.56%, #101727 89.93%);
 	transform: translate(0, 100%);
 	transition: transform 0.5s ease;
+	align-items: flex-start;
 }
 
 .bx-call-picture-in-picture-window:hover .bx-call-picture-in-picture-window__actions,
@@ -132,7 +133,7 @@ body:has(.bx-call-picture-in-picture-window) {
 	z-index: 11;
 	right: calc(var(--padding-container) + var(--padding-floor-request));
 	top: calc(var(--padding-container) + var(--padding-floor-request));
-	color: #ffffff;
+	color: #fff;
 	display: flex;
 	gap: 3px;
 	align-items: center;
@@ -203,4 +204,13 @@ body:has(.bx-call-picture-in-picture-window) {
 
 .bx-call-picture-in-picture-window__floor-request-index {
 	flex: 0 0 auto;
+}
+
+.bx-call-picture-in-picture-window .bx-call-picture-in-picture-window__actions .bx-messenger-videocall-panel-item {
+	gap: 0;
+}
+
+
+.bx-call-picture-in-picture-window .bx-call-picture-in-picture-window__actions .bx-messenger-videocall-panel-item .bx-messenger-videocall-panel-icon-background {
+	margin-bottom: 8px;
 }

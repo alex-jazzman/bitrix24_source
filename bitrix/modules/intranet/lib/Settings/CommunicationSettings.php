@@ -528,19 +528,16 @@ class CommunicationSettings extends AbstractSettings
 				Option::get("im", "general_chat_message_leave") ? 'Y' : 'N',
 			);
 
-			if (Option::get('im', 'auto_delete_messages_activated', 'N') === 'Y')
-			{
-				$data['isAutoDeleteMessagesEnabled'] = new Switcher(
-					'settings-communication-field-isAutoDeleteMessagesEnabled',
-					'isAutoDeleteMessagesEnabled',
-					Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_AUTO_DELETE_TO_BE_ENABLED'),
-					Option::get('im', 'isAutoDeleteMessagesEnabled', 'Y'),
-					[
-						'on' => Loc::getMessage('INTRANET_SETTINGS_FIELD_HINT_ALLOW_AUTO_DELETE_TO_BE_ENABLED')
-					],
-					helpDesk: 'redirect=detail&code=24402288'
-				);
-			}
+			$data['isAutoDeleteMessagesEnabled'] = new Switcher(
+				'settings-communication-field-isAutoDeleteMessagesEnabled',
+				'isAutoDeleteMessagesEnabled',
+				Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_AUTO_DELETE_TO_BE_ENABLED'),
+				Option::get('im', 'isAutoDeleteMessagesEnabled', 'Y'),
+				[
+					'on' => Loc::getMessage('INTRANET_SETTINGS_FIELD_HINT_ALLOW_AUTO_DELETE_TO_BE_ENABLED')
+				],
+				helpDesk: 'redirect=detail&code=24402288'
+			);
 		}
 
 		$data['url_preview_enable'] = new Switcher(
@@ -734,7 +731,7 @@ class CommunicationSettings extends AbstractSettings
 		{
 			$departmentRepository = ServiceContainer::getInstance()->departmentRepository();
 			$department = $departmentRepository->getRootDepartment();
-			$rootDepartmentId = $department->getId();
+			$rootDepartmentId = $department?->getId();
 		}
 
 		foreach($rightsList as $key => $value)
@@ -768,11 +765,6 @@ class CommunicationSettings extends AbstractSettings
 		if ($this->isBitrix24)
 		{
 			$index['general_chat_message_admin_rights'] = Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_ADMIN_MESSAGE');
-		}
-
-		if (IsModuleInstalled("im") && Option::get('im', 'auto_delete_messages_activated', 'N') === 'Y')
-		{
-			$index['isAutoDeleteMessagesEnabled'] = Loc::getMessage('INTRANET_SETTINGS_FIELD_HINT_ALLOW_AUTO_DELETE_TO_BE_ENABLED');
 		}
 
 		$searchEngine = SearchEngine::initWithDefaultFormatter($index + [

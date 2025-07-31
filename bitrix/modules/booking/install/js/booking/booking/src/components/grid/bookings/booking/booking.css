@@ -136,11 +136,11 @@
 	pointer-events: none;
 }
 
-.booking-booking-booking.--overbooking {
+.booking-booking-booking.--overbooking-bg {
 	--booking-background-color: rgba(207, 172, 0, 1);
 }
 
-.booking-booking-booking.--overbooking.--expired {
+.booking-booking-booking.--overbooking-bg.--expired {
 	--booking-background-color: rgba(229, 211, 145);
 }
 
@@ -153,7 +153,7 @@
 }
 
 .booking-booking-booking.--resizing {
-	z-index: 10;
+	z-index: 10 !important;
 }
 
 .booking-booking-booking.--accent {
@@ -168,11 +168,11 @@
 	--outline-accent-color: rgba(138, 178, 16, .8);
 }
 
-.booking-booking-booking.--overbooking.--accent {
+.booking-booking-booking.--overbooking-bg.--accent {
 	--outline-accent-color: rgba(204, 138, 3, 1);
 }
 
-.booking-booking-booking.--overbooking.--expired.--accent {
+.booking-booking-booking.--overbooking-bg.--expired.--accent {
 	--outline-accent-color: rgba(204, 138, 3, .8);
 }
 

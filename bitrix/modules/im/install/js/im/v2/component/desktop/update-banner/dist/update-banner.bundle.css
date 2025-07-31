@@ -108,6 +108,7 @@
 	margin-bottom: 30px;
 	font-size: 16px;
 	line-height: 21px;
+	white-space: pre-line;
 	font-weight: var(--im-desktop-update-banner__font-weight_description);
 	color: var(--im-desktop-update-banner__color_description);
 }

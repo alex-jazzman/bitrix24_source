@@ -64,14 +64,13 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    }
 	  },
 	  template: `
-		<div class="bx-im-compact-navigation__icon --ui-hoverable">
+		<div class="bx-im-compact-navigation__icon --ui-hoverable" @click="onNavigationItemClick">
 			<BIcon
 				:key="id"
 				:name="NavigationItemToIcon[id]"
 				:hoverable-alt="true"
 				:color="iconColorToken"
 				:size="ICON_SIZE"
-				@click="onNavigationItemClick"
 			/>
 			<div
 				v-if="hasCounter"

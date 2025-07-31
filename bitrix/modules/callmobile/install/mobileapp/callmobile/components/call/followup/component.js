@@ -357,8 +357,8 @@
 						this.copilotScoreBlockRef = ref;
 						this.tabs.set(BX.message('CALL_COMPONENT_EFFICIENCY_RECOMMENDATIONS'), { ...this.tabs.get(BX.message('CALL_COMPONENT_EFFICIENCY_RECOMMENDATIONS')), ref: this.copilotScoreBlockRef });
 					},
-					onLayout: (props) => {
-						this.positions['efficiency'] = { y: props.y, height: props.height };
+					onLayout: (params) => {
+						this.positions['efficiency'] = { y: params.y, height: params.height };
 					}
 				},
 				this.renderTitle(BX.message('CALL_COMPONENT_EFFICIENCY_RECOMMENDATIONS')),
@@ -471,8 +471,8 @@
 						this.summaryBlockRef = ref;
 						this.tabs.set(BX.message('CALL_COMPONENT_AGREEMENTS'), { ...this.tabs.get(BX.message('CALL_COMPONENT_AGREEMENTS')), ref: this.summaryBlockRef });
 					},
-					onLayout: (props) => {
-						this.positions['agreements'] = { y: props.y, height: props.height };
+					onLayout: (params) => {
+						this.positions['agreements'] = { y: params.y, height: params.height };
 					},
 				},
 				// TODO: make renderView
@@ -563,14 +563,15 @@
 						this.agreementBlockRef = ref;
 						this.tabs.set(BX.message('CALL_COMPONENT_ABOUT'), { ...this.tabs.get(BX.message('CALL_COMPONENT_ABOUT')), ref: this.agreementBlockRef });
 					},
-					onLayout: (props) => {
-						this.positions['about'] = { y: props.y, height: props.height };
+					onLayout: (params) => {
+						this.positions['about'] = { y: params.y, height: params.height };
 					}
 				},
 				this.renderTitle(BX.message('CALL_COMPONENT_ABOUT')),
-				Text({
+				BBCodeText({
+					onUserClick: ({ userId }) => DialogOpener().open({ dialogId: userId }),
 					style: { fontSize: 15, color: Color.base2.toHex(), fontWeight: '400' },
-					text: this.state.result?.aiOutcome?.overview?.agenda?.explanation,
+					value: this.state.result?.aiOutcome?.overview?.agenda?.explanation,
 				}),
 			);
 		}
@@ -597,8 +598,8 @@
 						this.analysisBlockRef = ref;
 						this.tabs.set(BX.message('CALL_COMPONENT_INSIGHTS'), { ...this.tabs.get(BX.message('CALL_COMPONENT_INSIGHTS')), ref: this.analysisBlockRef });
 					},
-					onLayout: (props) => {
-						this.positions['insights'] = props;
+					onLayout: (params) => {
+						this.positions['insights'] = params;
 					},
 				},
 				this.renderTitle(BX.message('CALL_COMPONENT_INSIGHTS')),
@@ -684,12 +685,12 @@
 						this.resumeBlockRef = ref;
 						this.tabs.set(BX.message('CALL_COMPONENT_SUMMARY'), { ...this.tabs.get(BX.message('CALL_COMPONENT_SUMMARY')), ref: this.resumeBlockRef });
 					},
-					onLayout: (props) => {
-						this.positions['summary'] = { y: props.y, height: props.height };
+					onLayout: (params) => {
+						this.positions['summary'] = { y: params.y, height: params.height };
 					},
 				},
 				this.renderTitle(BX.message('CALL_COMPONENT_SUMMARY')),
-					trackUrl && new Audioplayer({
+				trackUrl && new Audioplayer({
 					ref: (ref) => this.summaryPlayerRef = ref,
 					trackUrl,
 				}),
@@ -772,8 +773,8 @@
 						this.transcribationBlockRef = ref;
 						this.tabs.set(BX.message('CALL_COMPONENT_TRANSCRIPTIONS'), { ...this.tabs.get(BX.message('CALL_COMPONENT_TRANSCRIPTIONS')), ref: this.transcribationBlockRef });
 					},
-					onLayout: (props) => {
-						this.positions['transcribation'] = { y: props.y, height: props.height };
+					onLayout: (params) => {
+						this.positions['transcribation'] = { y: params.y, height: params.height };
 					}
 				},
 				this.renderTitle(BX.message('CALL_COMPONENT_TRANSCRIPTIONS')),
@@ -870,8 +871,12 @@
 							paddingHorizontal: 18,
 						},
 					},
-					...Array.from(this.tabs, ([title, { ref, isActive, name }]) => (
-						View(
+					...Array.from(this.tabs, ([title, { ref, isActive, name }]) => {
+						if (name === 'insights' && !insights)
+						{
+							return;
+						}
+						return View(
 							{
 								style: { marginRight: 10 },
 								ref: (ref) => {
@@ -887,9 +892,9 @@
 								ellipsize: Ellipsize.END,
 							}),
 						)
-					))
+					})
 				)
-			)
+			);
 
 			const feed = ScrollView(
 				{

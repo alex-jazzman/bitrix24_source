@@ -6,6 +6,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\LoaderException;
 use CBitrix24;
 use Bitrix\Main\Engine\CurrentUser;
+use Bitrix\Main\ModuleManager;
 
 class FeedbackFormProvider
 {
@@ -222,6 +223,8 @@ class FeedbackFormProvider
 		{
 			$result['b24_type'] = false;
 		}
+
+		$result['mobile_module_ver'] = (string)ModuleManager::getVersion('mobile');
 
 		return $result;
 	}

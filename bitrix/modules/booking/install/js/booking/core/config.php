@@ -31,6 +31,7 @@ return [
 		'booking.model.dictionary',
 		'booking.model.main-resources',
 		'booking.model.wait-list',
+		'booking.model.forms-menu',
 		'booking.provider.pull.booking-pull-manager',
 	],
 	'skip_core' => false,

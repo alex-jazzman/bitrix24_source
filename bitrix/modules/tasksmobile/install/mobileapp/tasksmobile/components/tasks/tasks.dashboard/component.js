@@ -107,6 +107,7 @@
 				this.getInitialRole(),
 				this.props.isRootComponent,
 				this.props.siteId,
+				this.props.presets,
 			);
 			this.tasksDashboardFilter.updateCounters().then(() => this.updateMoreMenuButton()).catch(console.error);
 

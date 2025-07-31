@@ -96,7 +96,11 @@ export const DepartmentBlock = {
 				@click="onUserClick(user)"
 			>
 				<div class="intranet-user-mini-profile__structure-view-department-block__user-avatar">
-					<Avatar :options="{ picPath: user.avatar, size: 28, title: user.name }"/>
+					<Avatar :options="{ 
+						picPath: user.avatar ? encodeURI(user.avatar) : undefined,
+						size: 28, 
+						title: user.name 
+					}"/>
 				</div>
 				<div class="intranet-user-mini-profile__structure-view-department-block__user-info">
 					<div 

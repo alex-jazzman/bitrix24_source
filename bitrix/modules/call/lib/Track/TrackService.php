@@ -15,6 +15,7 @@ use Bitrix\Call\Logger\Logger;
 use Bitrix\Call\Integration\AI;
 use Bitrix\Call\Integration\AI\CallAIError;
 use Bitrix\Call\Integration\AI\CallAISettings;
+use Bitrix\Call\Analytics\FollowUpAnalytics;
 
 
 final class TrackService
@@ -122,6 +123,8 @@ final class TrackService
 			{
 				$call = Registry::getCallWithId($track->getCallId());
 				NotifyService::getInstance()->sendTaskFailedMessage($error, $call);
+
+				(new FollowUpAnalytics($call))->addGotEmptyRecord();
 			}
 
 			return $result->addError($error);

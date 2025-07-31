@@ -2,26 +2,14 @@
  * @module feature
  */
 jn.define('feature', (require, exports, module) => {
+	const { feature } = require('native/feature');
 	const isAndroid = Application.getPlatform() === 'android';
 
 	/**
 	 * @class Feature
 	 */
-
 	class Feature
 	{
-		/**
-		 * Some devices will automatically show notification, when you copy something to clipboard,
-		 * so you don't have to show it manually.
-		 * @return {boolean}
-		 */
-		static hasCopyToClipboardAutoNotification()
-		{
-			const deviceVersion = parseInt(device.version, 10);
-
-			return isAndroid && deviceVersion > 12;
-		}
-
 		static async showDefaultUnsupportedWidget(props = {}, parentWidget = PageManager)
 		{
 			const { AppUpdateNotifier } = await requireLazy('app-update-notifier');
@@ -87,6 +75,14 @@ jn.define('feature', (require, exports, module) => {
 			}
 
 			return true;
+		}
+
+		static get isSupportedMediaGalleryCollection()
+		{
+			return minApiVersion(
+				60,
+				'isSupportedMediaGalleryCollection',
+			) && feature?.isFeatureEnabled('viewer_gallery');
 		}
 
 		static isMultipleFilesDownloadSupported()

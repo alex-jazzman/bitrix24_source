@@ -81,7 +81,13 @@ export const DetailTabs = {
 		},
 		getTabTitle(tab: ImModelSidebarFileTab): string
 		{
-			const langPhraseCode = `IM_SIDEBAR_FILES_${tab.toUpperCase()}_TAB`;
+			const tabNameToUpperCase = tab.toUpperCase();
+			let langPhraseCode = `IM_SIDEBAR_FILES_${tabNameToUpperCase}_TAB`;
+
+			if (tabNameToUpperCase === 'BRIEF')
+			{
+				langPhraseCode += '_MSGVER_2';
+			}
 
 			return this.$Bitrix.Loc.getMessage(langPhraseCode);
 		},

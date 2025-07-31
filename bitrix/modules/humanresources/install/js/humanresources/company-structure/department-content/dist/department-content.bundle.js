@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Humanresources = this.BX.Humanresources || {};
-(function (exports,ui_iconSet_crm,humanresources_companyStructure_orgChart,humanresources_companyStructure_api,humanresources_companyStructure_permissionChecker,ui_entitySelector,ui_notification,ui_tooltip,ui_buttons,ui_iconSet_api_core,ui_iconSet_main,ui_avatar,im_public_iframe,humanresources_companyStructure_utils,humanresources_companyStructure_structureComponents,main_core,humanresources_companyStructure_chartStore,ui_vue3_pinia) {
+(function (exports,ui_iconSet_crm,humanresources_companyStructure_api,ui_entitySelector,ui_tooltip,ui_buttons,humanresources_companyStructure_permissionChecker,ui_iconSet_api_core,ui_iconSet_main,main_core_events,ui_avatar,humanresources_companyStructure_orgChart,humanresources_companyStructure_utils,ui_notification,im_public_iframe,humanresources_companyStructure_structureComponents,main_core,humanresources_companyStructure_chartStore,ui_vue3_pinia) {
 	'use strict';
 
 	const HeadListDataTestIds = Object.freeze({
@@ -130,10 +130,12 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      nodeId
 	    });
 	  },
-	  saveChats: (nodeId, ids) => {
+	  saveChats: (nodeId, ids = [], removeIds = [], parentId = null) => {
 	    return humanresources_companyStructure_api.postData('humanresources.api.Structure.Node.Member.Chat.saveChatList', {
 	      nodeId,
-	      ids
+	      ids,
+	      removeIds,
+	      parentId
 	    });
 	  }
 	};
@@ -219,8 +221,8 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    if (!department) {
 	      return;
 	    }
-	    department.channels = channels;
-	    department.chats = chats;
+	    department.channelsDetailed = channels;
+	    department.chatsDetailed = chats;
 	    department.chatAndChannelsCount = chats.length + channels.length;
 	  },
 	  removeUserFromAllDepartments: async userId => {
@@ -233,6 +235,16 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      }
 	    }
 	    return store.refreshDepartments(departmentsToUpdate);
+	  },
+	  unbindChatFromNode: (nodeId, chatId) => {
+	    const store = humanresources_companyStructure_chartStore.useChartStore();
+	    const department = store.departments.get(nodeId);
+	    if (!department) {
+	      return;
+	    }
+	    department.channelsDetailed = department.channelsDetailed.filter(chat => chat.id !== chatId);
+	    department.chatsDetailed = department.chatsDetailed.filter(chat => chat.id !== chatId);
+	    department.chatAndChannelsCount--;
 	  }
 	};
 
@@ -1676,7 +1688,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 				@click.stop="this.onChatButtonClick()"
 				data-test-id="hr-department-detail-content_chats-tab__empty-tab-add_chat-button"
 			>
-				<div class="ui-icon-set --add-chat hr-department-detail-content__chat-empty-tab-add_chat-button-icon"/>
+				<div class="ui-icon-set --chat-message hr-department-detail-content__chat-empty-tab-add_chat-button-icon"/>
 				<span>
 					{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_TAB_ADD_EMPTY_CHAT_BUTTON') }}
 				</span>
@@ -1687,7 +1699,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 				@click.stop="onChannelButtonClick()"
 				data-test-id="hr-department-detail-content_chats-tab__empty-tab-add_channel-button"
 			>
-				<div class="ui-icon-set --speaker-mouthpiece-plus hr-department-detail-content__chat-empty-tab-add_chat-button-icon"/>
+				<div class="ui-icon-set --speaker-mouthpiece hr-department-detail-content__chat-empty-tab-add_chat-button-icon"/>
 				<span>
 					{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_TAB_ADD_EMPTY_CHANNEL_BUTTON') }}
 				</span>
@@ -1696,11 +1708,153 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	`
 	};
 
-	const ChatListItem = {
-	  name: 'chatListItem',
+	// @vue/component
+	const ChatListItemActionButton = {
+	  name: 'chatListItemActionButton',
+	  components: {
+	    RouteActionMenu: humanresources_companyStructure_structureComponents.RouteActionMenu,
+	    ConfirmationPopup: humanresources_companyStructure_structureComponents.ConfirmationPopup
+	  },
 	  props: {
+	    /** @type ChatOrChannelDetailed */
 	    chat: {
 	      type: Object,
+	      required: true
+	    },
+	    nodeId: {
+	      type: Number,
+	      required: true
+	    }
+	  },
+	  data() {
+	    return {
+	      menuVisible: false,
+	      showUnbindChatConfirmationPopup: false,
+	      unbindChatLoader: false
+	    };
+	  },
+	  computed: {
+	    getUnbindChatTitle() {
+	      const entityType = this.isTeamEntity ? 'TEAM' : 'DEPARTMENT';
+	      const chatType = this.isChat ? 'CHAT' : 'CHANNEL';
+	      return this.loc(`HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_UNBIND_POPUP_${chatType}_FROM_${entityType}_TITLE`);
+	    },
+	    getUnbindChatDescription() {
+	      const entityType = this.isTeamEntity ? 'TEAM' : 'DEPARTMENT';
+	      const chatType = this.isChat ? 'CHAT' : 'CHANNEL';
+	      return this.loc(`HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_UNBIND_POPUP_${chatType}_FROM_${entityType}_DESCRIPTION`);
+	    },
+	    isTeamEntity() {
+	      var _this$departments$get;
+	      return ((_this$departments$get = this.departments.get(this.nodeId)) == null ? void 0 : _this$departments$get.entityType) === humanresources_companyStructure_utils.EntityTypes.team;
+	    },
+	    isChat() {
+	      return this.chat.type === humanresources_companyStructure_utils.ChatTypes.chat;
+	    },
+	    menu() {
+	      var _this$departments$get2;
+	      const entityType = (_this$departments$get2 = this.departments.get(this.nodeId)) == null ? void 0 : _this$departments$get2.entityType;
+	      return new humanresources_companyStructure_orgChart.ChatListActionMenu(entityType, this.chat, this.nodeId);
+	    },
+	    ...ui_vue3_pinia.mapState(humanresources_companyStructure_chartStore.useChartStore, ['departments'])
+	  },
+	  methods: {
+	    toggleMenu() {
+	      this.menuVisible = !this.menuVisible;
+	    },
+	    loc(phraseCode, replacements = {}) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
+	    },
+	    onActionMenuItemClick(actionId) {
+	      if (actionId === humanresources_companyStructure_orgChart.MenuActions.openChat) {
+	        im_public_iframe.Messenger.openChat(this.chat.dialogId);
+	      } else if (actionId === humanresources_companyStructure_orgChart.MenuActions.unbindChat) {
+	        this.showUnbindChatConfirmationPopup = true;
+	      }
+	    },
+	    cancelUnbindChat() {
+	      this.showUnbindChatConfirmationPopup = false;
+	    },
+	    async unbindChat() {
+	      this.unbindChatLoader = true;
+	      const entityType = this.isTeamEntity ? 'TEAM' : 'DEPARTMENT';
+	      const chatType = this.isChat ? 'CHAT' : 'CHANNEL';
+	      try {
+	        await DepartmentAPI.saveChats(this.nodeId, [], [this.chat.id]);
+	      } catch (error) {
+	        if (error.code !== 'STRUCTURE_ACCESS_DENIED') {
+	          ui_notification.UI.Notification.Center.notify({
+	            content: this.loc(`HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_UNBIND_POPUP_${chatType}_FROM_${entityType}_ERROR`),
+	            autoHideDelay: 2000
+	          });
+	        }
+	        return;
+	      } finally {
+	        this.unbindChatLoader = false;
+	        this.showUnbindChatConfirmationPopup = false;
+	      }
+	      DepartmentContentActions.unbindChatFromNode(this.nodeId, this.chat.id);
+	      ui_notification.UI.Notification.Center.notify({
+	        content: this.loc(`HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_UNBIND_POPUP_${chatType}_FROM_${entityType}_SUCCESS`),
+	        autoHideDelay: 2000
+	      });
+	    }
+	  },
+	  template: `
+		<button
+			v-if="menu.items.length"
+			class="ui-icon-set --more hr-department-detail-content__tab-list_item-action-btn --chat-item-action-btn ui-icon-set"
+			:class="{ '--focused': menuVisible }"
+			@click.stop="toggleMenu()"
+			ref="actionChatButton"
+			:data-id="'hr-department-detail-content__'+ chat.type.toLowerCase() + '-list_chat-' + chat.id + '-action-btn'"
+		/>
+		<RouteActionMenu
+			v-if="menuVisible"
+			:id="'tree-node-department-menu-chat_' + this.nodeId + '_' + chat.id"
+			:items="menu.items"
+			:width="302"
+			:bindElement="$refs.actionChatButton"
+			@action="onActionMenuItemClick"
+			@close="menuVisible = false"
+		/>
+		<ConfirmationPopup
+			ref="unbindChatConfirmationPopup"
+			v-if="showUnbindChatConfirmationPopup"
+			:showActionButtonLoader="unbindChatLoader"
+			:title="getUnbindChatTitle"
+			:confirmBtnText="loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_UNBIND_POPUP_CONFIRM_BUTTON')"
+			confirmButtonClass="ui-btn-danger"
+			@action="unbindChat"
+			@close="cancelUnbindChat"
+			:width="364"
+		>
+			<template v-slot:content>
+				<div class="hr-department-detail-content__user-action-text-container">
+					<div
+						v-html="getUnbindChatDescription"
+					/>
+				</div>
+			</template>
+		</ConfirmationPopup>
+	`
+	};
+
+	// @vue/component
+	const ChatListItem = {
+	  name: 'chatListItem',
+	  components: {
+	    ChatListItemActionButton,
+	    ResponsiveHint: humanresources_companyStructure_structureComponents.ResponsiveHint
+	  },
+	  props: {
+	    /** @type ChatOrChannelDetailed */
+	    chat: {
+	      type: Object,
+	      required: true
+	    },
+	    nodeId: {
+	      type: Number,
 	      required: true
 	    }
 	  },
@@ -1708,6 +1862,47 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    return {
 	      avatar: null
 	    };
+	  },
+	  computed: {
+	    isChat() {
+	      return this.chat.type !== humanresources_companyStructure_utils.ChatTypes.channel;
+	    },
+	    originalNodeName() {
+	      var _this$departments$get;
+	      return (_this$departments$get = this.departments.get(this.chat.originalNodeId)) == null ? void 0 : _this$departments$get.name;
+	    },
+	    indirectChatSubtitle() {
+	      var _this$departments$get2;
+	      if (((_this$departments$get2 = this.departments.get(this.chat.originalNodeId)) == null ? void 0 : _this$departments$get2.entityType) === humanresources_companyStructure_utils.EntityTypes.team) {
+	        return this.isChat ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_CHAT_OF_TEAM') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_CHANNEL_OF_TEAM');
+	      }
+	      return this.isChat ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_CHAT_OF_DEPARTMENT') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_CHANNEL_OF_DEPARTMENT');
+	    },
+	    lockHint() {
+	      var _this$departments$get3, _this$departments$get4;
+	      if (!this.chat.hasAccess) {
+	        return this.isChat ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_USER_HAS_NO_ACCESS_TO_CHAT_HINT') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_USER_HAS_NO_ACCESS_TO_CHANNEL_HINT');
+	      }
+
+	      // parent node is a team so child node must be a team too
+	      if (((_this$departments$get3 = this.departments.get(this.chat.originalNodeId)) == null ? void 0 : _this$departments$get3.entityType) === humanresources_companyStructure_utils.EntityTypes.team) {
+	        return this.isChat ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_PARENT_TEAM_CHAT_HINT') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_PARENT_TEAM_CHANNEL_HINT');
+	      }
+
+	      // parent node is a department so we check if child node is a department too
+	      if (((_this$departments$get4 = this.departments.get(this.nodeId)) == null ? void 0 : _this$departments$get4.entityType) === humanresources_companyStructure_utils.EntityTypes.department) {
+	        return this.isChat ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_PARENT_DEPARTMENT_CHAT_OF_DEPARTMENT_HINT') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_PARENT_DEPARTMENT_CHANNEL_OF_DEPARTMENT_HINT');
+	      }
+
+	      // parent node is a department but child node is a team
+	      return this.isChat ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_PARENT_DEPARTMENT_CHAT_OF_TEAM_HINT') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_PARENT_DEPARTMENT_CHANNEL_OF_TEAM_HINT');
+	    },
+	    ...ui_vue3_pinia.mapState(humanresources_companyStructure_chartStore.useChartStore, ['departments'])
+	  },
+	  watch: {
+	    chat() {
+	      this.prepareAvatar();
+	    }
 	  },
 	  created() {
 	    this.prepareAvatar();
@@ -1730,19 +1925,23 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      if (this.chat.avatar) {
 	        avatarOptions.userpicPath = this.chat.avatar;
 	      }
-	      this.avatar = this.isChat() ? new ui_avatar.AvatarRound(avatarOptions) : new ui_avatar.AvatarSquare(avatarOptions);
+	      this.avatar = this.isChat ? new ui_avatar.AvatarRound(avatarOptions) : new ui_avatar.AvatarSquare(avatarOptions);
 	    },
 	    loc(phraseCode, replacements = {}) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 	    },
 	    onChatItemClick() {
-	      im_public_iframe.Messenger.openChat(this.chat.dialogId);
-	    },
-	    isChat() {
-	      return this.chat.type !== 'CHANNEL';
+	      if (this.chat.hasAccess) {
+	        im_public_iframe.Messenger.openChat(this.chat.dialogId);
+	      }
 	    },
 	    isExtranet() {
 	      return this.chat.isExtranet;
+	    },
+	    locateToOriginalDepartment() {
+	      main_core_events.EventEmitter.emit(humanresources_companyStructure_orgChart.events.HR_ORG_CHART_LOCATE_TO_DEPARTMENT, {
+	        nodeId: this.chat.originalNodeId
+	      });
 	    }
 	  },
 	  template: `
@@ -1754,26 +1953,45 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 		>
 			<div
 				class="hr-department-detail-content__tab-list_item-avatar-container"
+				:class="{ '--not-clickable': !chat.hasAccess }"
 				v-html="this.avatar.getContainer().outerHTML"
 				@click="onChatItemClick"
 			/>
 			<div class="hr-department-detail-content__tab-list_item-text-container">
-				<div class="hr-department-detail-content__tab-list_item-title-container">
-					<div
+				<div class="hr-department-detail-content__tab-list_item-title-container --chat-item">
+					<span
 						class="hr-department-detail-content__tab-list_item-title"
+						:class="{ '--not-clickable': !chat.hasAccess }"
 						:data-test-id="'hr-department-content_chats-tab__list_chat-item-' + chat.id + '-title'"
 						@click="onChatItemClick"
+					>{{ chat.title }}</span>
+					<ResponsiveHint 
+						v-if="!chat.hasAccess || chat.originalNodeId" 
+						:content="lockHint" 
+						:extraClasses="{ 'hr-department-detail-content__tab-list_hint-container': true }"
 					>
-						{{ chat.title }}
-					</div>
+						<span class="ui-icon-set --lock hr-department-detail-content__tab-list_lock-icon"></span>
+					</ResponsiveHint>
 				</div>
-				<div class="hr-department-detail-content__tab-list_item-subtitle">
+				<div v-if="chat.originalNodeId && originalNodeName" class="hr-department-detail-content__tab-list_item-subtitle --chat-item">
+					{{ indirectChatSubtitle }}
+					<span class="hr-department-detail-content__tab-list_orig-node-name" @click="locateToOriginalDepartment">
+						{{ originalNodeName }}
+					</span>
+				</div>
+				<div v-else-if="chat.originalNodeId" class="hr-department-detail-content__tab-list_item-subtitle --chat-item">
+					{{ indirectChatSubtitle }}
+					<span class="hr-department-detail-content__tab-list_orig-node-hidden-name">
+						{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_HIDDEN_DEPARTMENT') }}
+					</span>
+				</div>
+				<div v-else class="hr-department-detail-content__tab-list_item-subtitle">
 					{{ chat.subtitle }}
 				</div>
 			</div>
-			<div 
-				class="hr-department-detail-content__tab-list_item-action-btn --chat-item-action-btn ui-icon-set --arrow-right"
-				@click="onChatItemClick"
+			<ChatListItemActionButton
+				:chat="chat"
+				:nodeId="nodeId"
 			/>
 		</div>
 	`
@@ -1791,8 +2009,6 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  },
 	  data() {
 	    return {
-	      chatMenuItems: [],
-	      channelMenuItems: [],
 	      isChatLinkActive: false,
 	      chatLinkDialogVisible: false,
 	      isChannelLinkActive: false,
@@ -1803,8 +2019,6 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  },
 	  created() {
 	    this.loadChatAction();
-	    this.chatMenuItems = this.getChatListMenuItems();
-	    this.channelMenuItems = this.getChannelListMenuItems();
 	  },
 	  methods: {
 	    loc(phraseCode, replacements = {}) {
@@ -1820,7 +2034,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      if (!department) {
 	        return;
 	      }
-	      if (!force && main_core.Type.isArray(department.chats) && main_core.Type.isArray(department.channels)) {
+	      if (!force && main_core.Type.isArray(department.chatsDetailed) && main_core.Type.isArray(department.channelsDetailed)) {
 	        return;
 	      }
 	      if (this.isLoading) {
@@ -1834,10 +2048,10 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      this.isLoading = false;
 	    },
 	    getChatListMenuItems() {
-	      return [ChatsMenuLinkChat];
+	      return this.canEdit ? [ChatsMenuLinkChat] : [];
 	    },
 	    getChannelListMenuItems() {
-	      return [ChatsMenuLinkChannel];
+	      return this.canEdit ? [ChatsMenuLinkChannel] : [];
 	    },
 	    onActionMenuItemClick(actionId) {
 	      if (actionId === ChatsMenuOption.linkChat) {
@@ -1850,9 +2064,9 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    getAddEmptyStateList() {
 	      let stateArray = [];
 	      if (this.isTeamEntity) {
-	        stateArray = [this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_TAB_ADD_EMPTY_STATE_TEAM_LIST_ITEM_1'), this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_TAB_ADD_EMPTY_STATE_LIST_ITEM_2'), this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_TAB_ADD_EMPTY_STATE_TEAM_LIST_ITEM_3')];
+	        stateArray = [this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_TAB_ADD_EMPTY_STATE_TEAM_LIST_ITEM_1_MSGVER_1'), this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_TAB_ADD_EMPTY_STATE_LIST_ITEM_2'), this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_TAB_ADD_EMPTY_STATE_TEAM_LIST_ITEM_3')];
 	      } else {
-	        stateArray = [this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_TAB_ADD_EMPTY_STATE_LIST_ITEM_1'), this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_TAB_ADD_EMPTY_STATE_LIST_ITEM_2'), this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_TAB_ADD_EMPTY_STATE_LIST_ITEM_3')];
+	        stateArray = [this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_TAB_ADD_EMPTY_STATE_LIST_ITEM_1_MSGVER_1'), this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_TAB_ADD_EMPTY_STATE_LIST_ITEM_2'), this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_TAB_ADD_EMPTY_STATE_LIST_ITEM_3')];
 	      }
 	      return stateArray.map(item => ({
 	        text: item
@@ -1918,11 +2132,11 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  computed: {
 	    chats() {
 	      var _this$departments$get, _this$departments$get2;
-	      return (_this$departments$get = (_this$departments$get2 = this.departments.get(this.focusedNode)) == null ? void 0 : _this$departments$get2.chats) != null ? _this$departments$get : [];
+	      return (_this$departments$get = (_this$departments$get2 = this.departments.get(this.focusedNode)) == null ? void 0 : _this$departments$get2.chatsDetailed) != null ? _this$departments$get : [];
 	    },
 	    channels() {
 	      var _this$departments$get3, _this$departments$get4;
-	      return (_this$departments$get3 = (_this$departments$get4 = this.departments.get(this.focusedNode)) == null ? void 0 : _this$departments$get4.channels) != null ? _this$departments$get3 : [];
+	      return (_this$departments$get3 = (_this$departments$get4 = this.departments.get(this.focusedNode)) == null ? void 0 : _this$departments$get4.channelsDetailed) != null ? _this$departments$get3 : [];
 	    },
 	    filteredChats() {
 	      return this.chats.filter(chat => chat.title.toLowerCase().includes(this.searchQuery.toLowerCase()));
@@ -1944,7 +2158,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    },
 	    isChatsLoaded() {
 	      const department = this.departments.get(this.focusedNode);
-	      return Boolean(main_core.Type.isArray(department.chats) && main_core.Type.isArray(department.channels));
+	      return Boolean(main_core.Type.isArray(department.chatsDetailed) && main_core.Type.isArray(department.channelsDetailed));
 	    },
 	    teamEntity() {
 	      var _this$departments$get5;
@@ -1961,6 +2175,28 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    },
 	    getAddChannelDescription() {
 	      return this.isTeamEntity ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_CHANNEL_LINK_DIALOG_TEAM_DESC') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_CHANNEL_LINK_DIALOG_DESC');
+	    },
+	    chatMenuItems() {
+	      return this.getChatListMenuItems();
+	    },
+	    channelMenuItems() {
+	      return this.getChannelListMenuItems();
+	    },
+	    emptyChatTitle() {
+	      if (this.canEdit) {
+	        return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_CHAT_LIST_ITEM_TEXT');
+	      }
+	      return this.isTeamEntity ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_CHAT_LIST_ITEM_NO_TEAM_TEXT') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_CHAT_LIST_ITEM_NO_DEPARTMENT_TEXT');
+	    },
+	    emptyChannelTitle() {
+	      if (this.canEdit) {
+	        return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_CHANNEL_LIST_ITEM_TEXT');
+	      }
+	      return this.isTeamEntity ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_CHANNEL_LIST_ITEM_NO_TEAM_TEXT') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_CHANNEL_LIST_ITEM_NO_DEPARTMENT_TEXT');
+	    },
+	    canEdit() {
+	      const permissionChecker = humanresources_companyStructure_permissionChecker.PermissionChecker.getInstance();
+	      return this.isTeamEntity ? permissionChecker.hasPermission(humanresources_companyStructure_permissionChecker.PermissionActions.teamCommunicationEdit, this.focusedNode) : permissionChecker.hasPermission(humanresources_companyStructure_permissionChecker.PermissionActions.departmentCommunicationEdit, this.focusedNode);
 	    },
 	    ...ui_vue3_pinia.mapState(humanresources_companyStructure_chartStore.useChartStore, ['focusedNode', 'departments'])
 	  },
@@ -1990,14 +2226,15 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 						:count="chats.length"
 						:menuItems="chatMenuItems"
 						:listItems="filteredChats"
-						:emptyItemTitle="loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_CHAT_LIST_ITEM_TEXT')"
+						:emptyItemTitle="emptyChatTitle"
 						emptyItemImageClass="hr-department-detail-content__chat-empty-tab-list-item_tab-icon"
 						:hideEmptyItem="searchQuery.length > 0"
+						:withAddPermission="canEdit"
 						@tabListAction="onActionMenuItemClick"
 						:dataTestIds="getChatListDataTestIds()"
 					>
 						<template v-slot="{ item }">
-							<ChatListItem :chat="item"/>
+							<ChatListItem :chat="item" :nodeId="focusedNode"/>
 						</template>
 					</TabList>
 					<TabList
@@ -2006,20 +2243,21 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 						:count="channels.length"
 						:menuItems="channelMenuItems"
 						:listItems="filteredChannels"
-						:emptyItemTitle="loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_CHANNEL_LIST_ITEM_TEXT')"
+						:emptyItemTitle="emptyChannelTitle"
 						emptyItemImageClass="hr-department-detail-content__chat-empty-tab-list-item_tab-icon"
 						:hideEmptyItem="searchQuery.length > 0"
+						:withAddPermission="canEdit"
 						@tabListAction="onActionMenuItemClick"
 						:dataTestIds="getChannelListDataTestIds()"
 					>
 						<template v-slot="{ item }">
-							<ChatListItem :chat="item"/>
+							<ChatListItem :chat="item" :nodeId="focusedNode"/>
 						</template>
 					</TabList>
 				</div>
 				<EmptyState 
 					v-else
-					imageClass="hr-department-detail-content__empty-tab-search_tab-icon"
+					imageClass="hr-department-detail-content__chat-empty-tab-search_tab-icon"
 					:title="loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_EMPTY_SEARCHED_EMPLOYEES_TITLE')"
 					:description ="loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_EMPTY_SEARCHED_EMPLOYEES_SUBTITLE')"
 				/>
@@ -2130,6 +2368,10 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        return null;
 	      }
 	      return department.description;
+	    },
+	    isTeamEntity() {
+	      var _this$departments$get5;
+	      return ((_this$departments$get5 = this.departments.get(this.focusedNode)) == null ? void 0 : _this$departments$get5.entityType) === humanresources_companyStructure_utils.EntityTypes.team;
 	    }
 	  },
 	  watch: {
@@ -2153,12 +2395,14 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 	    },
 	    selectTab(tabName) {
+	      if (this.isTabDisabled(tabName)) {
+	        return;
+	      }
 	      this.activeTab = tabName;
 	    },
 	    getTabLabel(name) {
 	      if (name === 'usersTab') {
-	        var _this$departments$get5;
-	        return ((_this$departments$get5 = this.departments.get(this.focusedNode)) == null ? void 0 : _this$departments$get5.entityType) === humanresources_companyStructure_utils.EntityTypes.team ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_TEAM_USERS_TITLE') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_TITLE');
+	        return this.isTeamEntity ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_TEAM_USERS_TITLE') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_TITLE');
 	      }
 	      if (name === 'chatsTab') {
 	        return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_TITLE');
@@ -2181,6 +2425,16 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      this.$nextTick(() => {
 	        this.isDescriptionOverflowed = this.checkDescriptionOverflowed();
 	      });
+	    },
+	    isTabDisabled(tabName) {
+	      if (tabName === 'chatsTab' && this.tabArray.find(tab => tab.name === tabName).count === 0) {
+	        const permissionChecker = humanresources_companyStructure_permissionChecker.PermissionChecker.getInstance();
+	        const canEditChats = this.isTeamEntity ? permissionChecker.hasPermission(humanresources_companyStructure_permissionChecker.PermissionActions.teamCommunicationEdit, this.focusedNode) : permissionChecker.hasPermission(humanresources_companyStructure_permissionChecker.PermissionActions.departmentCommunicationEdit, this.focusedNode);
+	        if (!canEditChats) {
+	          return true;
+	        }
+	      }
+	      return false;
 	    }
 	  },
 	  template: `
@@ -2202,7 +2456,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 					v-for="tab in tabArray"
 					:key="tab.name"
 					class="hr-department-detail-content__tab-item"
-					:class="[{'--active-tab' : activeTab === tab.name}]"
+					:class="[{'--active-tab' : activeTab === tab.name, '--disabled-tab': isTabDisabled(tab.name)}]"
 					@click="selectTab(tab.name)"
 					:data-id="tab.id ? 'hr-department-detail-content__' + tab.id + '_button' : null"
 				>
@@ -2214,14 +2468,13 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 					</span>
 				</button>
 			</div>
-			<component
-				v-if="activeTab === 'usersTab'"
-				:is="activeTabComponent"
+			<UsersTab
+				v-show="activeTab === 'usersTab'"
 				@showDetailLoader="$emit('showDetailLoader')"
 				@hideDetailLoader="hideDetailLoader"
 			/>
-			<component
-				v-if="activeTab === 'chatsTab'"
+			<ChatsTab
+				v-show="activeTab === 'chatsTab'"
 				:is="activeTabComponent"
 				@showDetailLoader="$emit('showDetailLoader')"
 				@hideDetailLoader="hideDetailLoader"
@@ -2232,5 +2485,5 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 
 	exports.DepartmentContent = DepartmentContent;
 
-}((this.BX.Humanresources.CompanyStructure = this.BX.Humanresources.CompanyStructure || {}),BX,BX.Humanresources.CompanyStructure,BX.Humanresources.CompanyStructure,BX.Humanresources.CompanyStructure,BX.UI.EntitySelector,BX,BX.UI,BX.UI,BX.UI.IconSet,BX,BX.UI,BX.Messenger.v2.Lib,BX.Humanresources.CompanyStructure,BX.Humanresources.CompanyStructure,BX,BX.Humanresources.CompanyStructure,BX.Vue3.Pinia));
+}((this.BX.Humanresources.CompanyStructure = this.BX.Humanresources.CompanyStructure || {}),BX,BX.Humanresources.CompanyStructure,BX.UI.EntitySelector,BX.UI,BX.UI,BX.Humanresources.CompanyStructure,BX.UI.IconSet,BX,BX.Event,BX.UI,BX.Humanresources.CompanyStructure,BX.Humanresources.CompanyStructure,BX,BX.Messenger.v2.Lib,BX.Humanresources.CompanyStructure,BX,BX.Humanresources.CompanyStructure,BX.Vue3.Pinia));
 //# sourceMappingURL=department-content.bundle.js.map

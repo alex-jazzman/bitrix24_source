@@ -11,6 +11,8 @@ $MESS['HINT_HUMAN_RESOURCES_EMPLOYEE_ADD_TO_DEPARTMENT_MSGVER_1'] = 'Возмо�
 $MESS['HUMAN_RESOURCES_EMPLOYEE_REMOVE_FROM_DEPARTMENT'] = 'Удаление сотрудника из отдела';
 $MESS['HINT_HUMAN_RESOURCES_EMPLOYEE_REMOVE_FROM_DEPARTMENT_MSGVER_1'] = 'Сотрудник остается в структуре и переходит в подчинение директору компании, если он не был добавлен в другой отдел или подразделение';
 $MESS['HUMAN_RESOURCES_FIRE_EMPLOYEE'] = 'Увольнение сотрудников из Битрикс24';
+$MESS['HUMAN_RESOURCES_DEPARTMENT_COMMUNICATION_EDIT'] = 'Управление чатами и каналами отдела';
+$MESS['HINT_HUMAN_RESOURCES_DEPARTMENT_COMMUNICATION_EDIT'] = 'Добавление чатов и каналов отдела';
 
 $MESS['HUMAN_RESOURCES_USERS_ACCESS_EDIT_MSGVER_1'] = 'Управление правами доступа';
 $MESS['HUMAN_RESOURCES_USER_INVITE'] = 'Приглашение сотрудников в Битрикс24';
@@ -27,4 +29,6 @@ $MESS['HUMAN_RESOURCES_TEAM_MEMBER_REMOVE'] = 'Удаление участник
 $MESS['HINT_HUMAN_RESOURCES_TEAM_MEMBER_REMOVE'] = 'Участники останутся в своих отделах и удалятся только из команды';
 $MESS['HUMAN_RESOURCES_TEAM_SETTINGS_EDIT'] = 'Редактирование полномочий руководителей';
 $MESS['HINT_HUMAN_RESOURCES_TEAM_SETTINGS_EDIT'] = 'Настройка бизнес-процессов и рабочих отчетов';
+$MESS['HUMAN_RESOURCES_TEAM_COMMUNICATION_EDIT'] = 'Управление чатами и каналами команды';
+$MESS['HINT_HUMAN_RESOURCES_TEAM_COMMUNICATION_EDIT'] = 'Добавление чатов и каналов команды';
 $MESS['HUMAN_RESOURCES_TEAM_ACCESS_EDIT'] = 'Управление правами доступа';

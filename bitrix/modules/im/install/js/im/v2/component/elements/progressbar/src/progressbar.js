@@ -1,93 +1,117 @@
-import { ProgressBarManager } from 'im.v2.lib.progressbar';
+import { BIcon, Outline as OutlineIcons } from 'ui.icon-set.api.vue';
+
+import { FileStatus, Color } from 'im.v2.const';
+
+import { formatProgressLabel } from './helpers/format-progress-label';
 
 import './css/progressbar.css';
 
 import type { ImModelFile } from 'im.v2.model';
 
+export const ProgressBarSize = Object.freeze({
+	S: 'S',
+	L: 'L',
+});
+
+const MIN_PROGRESS = 1; // Minimum progress to show the circle animation
+
 // @vue/component
 export const ProgressBar = {
 	name: 'ProgressBar',
+	components: { BIcon },
 	props: {
 		item: {
 			type: Object,
 			required: true,
 		},
-		withLabels: {
-			type: Boolean,
-			default: true,
-		},
-		cancelCallbackDelay: {
-			type: Number,
-			default: 0,
+		size: {
+			type: String,
+			default: ProgressBarSize.L,
 		},
 	},
 	emits: ['cancelClick'],
 	computed: {
+		Color: () => Color,
+		OutlineIcons: () => OutlineIcons,
 		file(): ImModelFile
 		{
 			return this.item;
 		},
-	},
-	watch: {
-		'file.status': function() {
-			this.getProgressBarManager().update();
+		needProgressBar(): boolean
+		{
+			return [FileStatus.progress, FileStatus.upload].includes(this.file.status);
 		},
-		'file.progress': function() {
-			this.getProgressBarManager().update();
+		progressStyles(): { strokeDashoffset: number, strokeDasharray: number }
+		{
+			const radius = 23;
+			const circumference = 2 * Math.PI * radius;
+
+			const adjustedProgress = Math.max(this.file.progress, MIN_PROGRESS);
+			const offset = circumference - (adjustedProgress / 100) * circumference;
+
+			return {
+				strokeDasharray: circumference,
+				strokeDashoffset: offset,
+			};
 		},
-	},
-	mounted()
-	{
-		this.initProgressBar();
-	},
-	beforeUnmount()
-	{
-		this.removeProgressBar();
+		labelText(): string
+		{
+			return formatProgressLabel(this.file.progress, this.file.size);
+		},
+		containerClass(): string
+		{
+			return `--size-${this.size.toLowerCase()}`;
+		},
+		needLabel(): boolean
+		{
+			return this.size === ProgressBarSize.L;
+		},
+		iconSize(): number
+		{
+			return this.size === ProgressBarSize.L ? 28 : 24;
+		},
 	},
 	methods: {
-		initProgressBar()
+		onLoaderClick()
 		{
-			if (this.file.progress === 100)
+			if (![FileStatus.upload, FileStatus.progress].includes(this.file.status))
 			{
 				return;
 			}
 
-			const customConfig = {
-				hasTitle: false,
-				cancelCallbackDelay: 0,
-			};
-			if (!this.withLabels)
-			{
-				customConfig.labels = {};
-			}
-
-			this.progressBarManager = new ProgressBarManager({
-				container: this.$refs['progress-bar'],
-				uploadState: this.file,
-				customConfig,
-			});
-
-			this.progressBarManager.subscribe(ProgressBarManager.event.cancel, () => {
-				this.$emit('cancelClick', { file: this.file });
-			});
-
-			this.progressBarManager.start();
+			this.$emit('cancelClick', { file: this.file });
 		},
-		removeProgressBar()
+		loc(phraseCode: string): string
 		{
-			if (!this.getProgressBarManager())
-			{
-				return;
-			}
-
-			this.getProgressBarManager().destroy();
-		},
-		getProgressBarManager(): ProgressBarManager
-		{
-			return this.progressBarManager;
+			return this.$Bitrix.Loc.getMessage(phraseCode);
 		},
 	},
 	template: `
-		<div class="bx-im-progress-bar__container" ref="progress-bar"></div>
+		<div 
+			v-if="needProgressBar"
+			:class="containerClass"
+			class="bx-im-progress-bar__container" 
+		>
+			<div class="bx-im-progress-bar__loader" @click="onLoaderClick">
+				<svg viewBox="0 0 48 48">
+					<circle
+						:style="progressStyles"
+						class="bx-im-progress-bar__loader-progress" 
+						cx="24" 
+						cy="24" 
+						r="23"
+					></circle>
+				</svg>
+				<BIcon
+					:name="OutlineIcons.CROSS_L"
+					:color="Color.white"
+					:size="iconSize"
+					class="bx-im-progress-bar__loader-icon"
+				/>
+			</div>
+			<div v-if="needLabel" class="bx-im-progress-bar__label">
+				{{ labelText }}
+			</div>
+		</div>
 	`,
 };

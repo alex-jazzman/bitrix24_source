@@ -8,8 +8,9 @@ return [
 	'css' => 'dist/progressbar.bundle.css',
 	'js' => 'dist/progressbar.bundle.js',
 	'rel' => [
-		'main.polyfill.core',
-		'im.v2.lib.progressbar',
+		'ui.icon-set.api.vue',
+		'im.v2.const',
+		'main.core',
 	],
-	'skip_core' => true,
+	'skip_core' => false,
 ];

@@ -4,6 +4,7 @@ import type { ClientModel } from 'booking.model.clients';
 import type { ResourceDto } from 'booking.provider.service.resources-service';
 import type { ResourceTypeDto } from 'booking.provider.service.resources-type-service';
 import type { WaitListItemDto } from 'booking.provider.service.wait-list-service';
+import type { FormsMenuModel } from 'booking.model.forms-menu';
 
 export type MainPageGetResponse = {
 	favorites: {
@@ -20,6 +21,7 @@ export type MainPageGetResponse = {
 	counters: CountersModel,
 	isIntersectionForAll: boolean,
 	isCurrentSenderAvailable: boolean,
+	formsMenu: FormsMenuModel,
 };
 
 export type MainPageGetCountersResponse = {

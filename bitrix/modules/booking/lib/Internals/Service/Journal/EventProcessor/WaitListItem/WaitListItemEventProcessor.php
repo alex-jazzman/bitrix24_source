@@ -7,6 +7,7 @@ namespace Bitrix\Booking\Internals\Service\Journal\EventProcessor\WaitListItem;
 use Bitrix\Booking\Command\WaitListItem\AddWaitListItemCommand;
 use Bitrix\Booking\Command\WaitListItem\UpdateWaitListItemCommand;
 use Bitrix\Booking\Entity\WaitListItem\WaitListItem;
+use Bitrix\Booking\Internals\Service\Enum\EventType;
 use Bitrix\Booking\Internals\Service\Journal\EventProcessor\EventProcessor;
 use Bitrix\Booking\Internals\Service\Journal\JournalEvent;
 use Bitrix\Booking\Internals\Service\Journal\JournalEventCollection;
@@ -30,20 +31,23 @@ class WaitListItemEventProcessor implements EventProcessor
 		}
 	}
 
-	public function processWaitListItemAddedEvent(JournalEvent $journalEvent): void
+	public function processWaitListItemAddedEvent(JournalEvent $event): void
 	{
-		$command = AddWaitListItemCommand::mapFromArray($journalEvent->data);
+		$command = AddWaitListItemCommand::mapFromArray($event->data);
 
-		$this->sendBitrixEvent(type: 'onWaitListItemAdd', parameters: ['waitListItem' => $command->waitListItem]);
+		$this->sendBitrixEvent(
+			type: 'onWaitListItemAdd',
+			parameters: ['waitListItem' => $command->waitListItem],
+		);
 	}
 
-	public function processWaitListItemUpdatedEvent(JournalEvent $journalEvent): void
+	public function processWaitListItemUpdatedEvent(JournalEvent $event): void
 	{
-		$command = UpdateWaitListItemCommand::mapFromArray($journalEvent->data);
+		$command = UpdateWaitListItemCommand::mapFromArray($event->data);
 
 		$this->sendBitrixEvent(
 			type: 'onWaitListItemUpdate',
-			parameters:  ['waitListItem' => $command->waitListItem],
+			parameters: ['waitListItem' => $command->waitListItem],
 		);
 	}
 

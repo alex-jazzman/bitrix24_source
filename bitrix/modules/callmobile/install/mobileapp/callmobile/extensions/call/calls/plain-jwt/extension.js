@@ -34,6 +34,7 @@
 	{
 		constructor(params)
 		{
+			this.id = params.id;
 			this.uuid = params.uuid;
 			this.instanceId = params.instanceId;
 			this.parentUuid = params.parentUuid;

@@ -30,7 +30,7 @@ enum TemplateRegions: string
 	//for zones 'ru', 'by', 'kz'
 	case EnterpriseRu = 'bitrix.vibe_enterprise_ru';
 
-	public static function resolve(Templates $code): string
+	public static function resolve(Templates $code): ?string
 	{
 		$regionCode = null;
 
@@ -79,6 +79,6 @@ enum TemplateRegions: string
 				break;
 		}
 
-		return 'market/' . $regionCode->value;
+		return $regionCode?->value;
 	}
 }

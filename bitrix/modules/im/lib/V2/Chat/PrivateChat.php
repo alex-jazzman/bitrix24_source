@@ -288,6 +288,8 @@ class PrivateChat extends Chat implements PopupDataAggregatable
 				'muted' => false,
 				'unread' => Recent::isUnread($this->getContext()->getUserId(), $this->getType(), $this->getDialogId() ?? ''),
 				'viewedMessages' => $messages->getIds(),
+				'counterType' => $this->getCounterType()->value,
+				'recentConfig' => $this->getRecentConfig()->toPullFormat(),
 			],
 			'extra' => \Bitrix\Im\Common::getPullExtra()
 		]);
@@ -467,13 +469,11 @@ class PrivateChat extends Chat implements PopupDataAggregatable
 			'CHAT_ID' => $chat->getChatId(),
 			'MESSAGE_TYPE' => \IM_MESSAGE_PRIVATE,
 			'USER_ID' => $params['FROM_USER_ID'],
-			'STATUS' => \IM_STATUS_READ,
 		]);
 		\Bitrix\Im\Model\RelationTable::add([
 			'CHAT_ID' => $chat->getChatId(),
 			'MESSAGE_TYPE' => \IM_MESSAGE_PRIVATE,
 			'USER_ID' => $params['TO_USER_ID'],
-			'STATUS' => \IM_STATUS_READ,
 		]);
 
 		$botJoinFields = [

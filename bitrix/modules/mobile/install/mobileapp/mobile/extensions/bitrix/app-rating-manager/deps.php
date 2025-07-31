@@ -9,9 +9,14 @@ return [
 		'layout/ui/app-rating',
 		'bizproc:task/task-constants',
 		'feature',
-		'module',
+		'type',
+		'rest/run-action-executor',
 	],
 	'bundle' => [
-		'./src/event-listener',
+		'./src/manager',
+		'./src/storage-provider',
+		'./src/tourist-storage-provider',
+		'./src/test-storage-provider',
+		'./src/api',
 	],
 ];

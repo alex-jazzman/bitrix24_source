@@ -1,4 +1,3 @@
-import { Loc } from 'main.core';
 import { PopupOptions } from 'main.popup';
 import { Button, ButtonSize, ButtonColor, ButtonIcon } from 'booking.component.button';
 import { BIcon as Icon, Set as IconSet } from 'ui.icon-set.api.vue';

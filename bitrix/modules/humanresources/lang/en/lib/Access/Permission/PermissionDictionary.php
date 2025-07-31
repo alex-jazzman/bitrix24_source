@@ -1,13 +1,16 @@
 <?php
+$MESS["HINT_HUMAN_RESOURCES_DEPARTMENT_COMMUNICATION_EDIT"] = "Add department channels and chats";
 $MESS["HINT_HUMAN_RESOURCES_DEPARTMENT_DELETE_MSGVER_2"] = "Employees and subdepartments of the deleted department will be moved to a parent department.";
 $MESS["HINT_HUMAN_RESOURCES_DEPARTMENT_EDIT_MSGVER_2"] = "Department name and description as it will be seen in the company structure.";
 $MESS["HINT_HUMAN_RESOURCES_EMPLOYEE_ADD_TO_DEPARTMENT_MSGVER_1"] = "Add existing employees from your Bitrix24 but not invite new ones.";
 $MESS["HINT_HUMAN_RESOURCES_EMPLOYEE_REMOVE_FROM_DEPARTMENT_MSGVER_1"] = "If the employees do not belong to any other department or division, they will be made subordinates to the CEO in the company structure.";
+$MESS["HINT_HUMAN_RESOURCES_TEAM_COMMUNICATION_EDIT"] = "Add team channels and chats";
 $MESS["HINT_HUMAN_RESOURCES_TEAM_DELETE"] = "When a team is deleted, employees will remain in other departments and/or teams they are already a member of.";
 $MESS["HINT_HUMAN_RESOURCES_TEAM_EDIT_MSGVER_1"] = "Change team name and description in company structure.";
-$MESS["HINT_HUMAN_RESOURCES_TEAM_MEMBER_ADD"] = "Add team members from your Bitrix24 without permission to invite external users.";
+$MESS["HINT_HUMAN_RESOURCES_TEAM_MEMBER_ADD"] = "Add team members from your Bitrix24 without permission to invite new users.";
 $MESS["HINT_HUMAN_RESOURCES_TEAM_MEMBER_REMOVE"] = "Employees will remain in other departments and/or teams they are already a member of.";
 $MESS["HINT_HUMAN_RESOURCES_TEAM_SETTINGS_EDIT"] = "Add or remove team leader and/or deputy team leader as approvers of all team member workflows; add or remove them as recipients of work reports.";
+$MESS["HUMAN_RESOURCES_DEPARTMENT_COMMUNICATION_EDIT"] = "Manage department channels and chats";
 $MESS["HUMAN_RESOURCES_DEPARTMENT_CREATE_MSGVER_1"] = "Add new departments";
 $MESS["HUMAN_RESOURCES_DEPARTMENT_DELETE_MSGVER_1"] = "Remove departments";
 $MESS["HUMAN_RESOURCES_DEPARTMENT_EDIT_MSGVER_1"] = "Edit department information";
@@ -16,6 +19,7 @@ $MESS["HUMAN_RESOURCES_EMPLOYEE_REMOVE_FROM_DEPARTMENT"] = "Remove employee from
 $MESS["HUMAN_RESOURCES_FIRE_EMPLOYEE"] = "Dismiss employee from Bitrix24";
 $MESS["HUMAN_RESOURCES_STRUCTURE_VIEW_MSGVER_1"] = "View company departments";
 $MESS["HUMAN_RESOURCES_TEAM_ACCESS_EDIT"] = "Manage access permissions";
+$MESS["HUMAN_RESOURCES_TEAM_COMMUNICATION_EDIT"] = "Manage team channels and chats";
 $MESS["HUMAN_RESOURCES_TEAM_CREATE"] = "Create teams";
 $MESS["HUMAN_RESOURCES_TEAM_DELETE"] = "Delete teams";
 $MESS["HUMAN_RESOURCES_TEAM_EDIT"] = "Edit teams";

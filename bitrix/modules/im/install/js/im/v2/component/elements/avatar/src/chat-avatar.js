@@ -1,6 +1,5 @@
 import { ChatType, UserType } from 'im.v2.const';
 import { CopilotManager } from 'im.v2.lib.copilot';
-import { Feature, FeatureManager } from 'im.v2.lib.feature';
 
 import { AvatarSize, ChatAvatarType } from './const/const';
 import { Avatar } from './components/base/avatar';
@@ -61,11 +60,8 @@ export const ChatAvatar = {
 			default: '',
 		},
 	},
-	created()
+	computed:
 	{
-		this.copilotManager = new CopilotManager();
-	},
-	computed: {
 		isUser(): boolean
 		{
 			return this.avatarDialog.type === ChatType.user;
@@ -110,10 +106,6 @@ export const ChatAvatar = {
 		{
 			return this.copilotManager.isCopilotChatOrBot(this.avatarDialogId);
 		},
-		isCopilotChatsInRecentTabEnabled(): boolean
-		{
-			return FeatureManager.isFeatureAvailable(Feature.showCopilotChatsInRecentTab);
-		},
 		avatarComponent(): BitrixVueComponentProps
 		{
 			if (this.customType === ChatAvatarType.notes)
@@ -136,13 +128,17 @@ export const ChatAvatar = {
 				return CollabChatAvatar;
 			}
 
-			if (this.isCopilot && this.isCopilotChatsInRecentTabEnabled)
+			if (this.isCopilot)
 			{
 				return CopilotAvatar;
 			}
 
 			return this.isExtranetChat ? ExtranetChatAvatar : Avatar;
 		},
+	},
+	created()
+	{
+		this.copilotManager = new CopilotManager();
 	},
 	template: `
 		<component

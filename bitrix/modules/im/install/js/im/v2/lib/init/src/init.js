@@ -9,6 +9,7 @@ import { MessageNotifierManager } from 'im.v2.lib.message-notifier';
 import { MarketManager } from 'im.v2.lib.market';
 import { DesktopManager } from 'im.v2.lib.desktop';
 import { PromoManager } from 'im.v2.lib.promo';
+import { CopilotManager } from 'im.v2.lib.copilot';
 import { PermissionManager } from 'im.v2.lib.permission';
 import { UpdateStateManager } from 'im.v2.lib.update-state.manager';
 import { Router } from 'im.v2.lib.router';
@@ -42,6 +43,7 @@ export class InitManager
 		DesktopManager.init();
 		UpdateStateManager.init();
 		Router.init();
+		CopilotManager.initAvailableAIModelsList();
 
 		this.#started = true;
 	}

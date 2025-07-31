@@ -476,7 +476,7 @@ this.BX.Booking = this.BX.Booking || {};
 	  methods: {
 	    setPreviousMonth() {
 	      const viewDate = this.datePicker.getViewDate();
-	      if (viewDate.getMonth() === new Date().getMonth()) {
+	      if (this.checkPastDate()) {
 	        this.updateDisabledPrevMonth();
 	        return;
 	      }
@@ -497,8 +497,12 @@ this.BX.Booking = this.BX.Booking || {};
 	      return new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
 	    },
 	    updateDisabledPrevMonth() {
+	      this.disabledPrevMonth = this.checkPastDate();
+	    },
+	    checkPastDate() {
 	      const viewDate = this.datePicker.getViewDate();
-	      this.disabledPrevMonth = viewDate.getMonth() <= new Date().getMonth();
+	      const today = new Date();
+	      return viewDate.getMonth() <= today.getMonth() && viewDate.getYear() <= today.getYear();
 	    }
 	  },
 	  template: `
@@ -851,8 +855,18 @@ this.BX.Booking = this.BX.Booking || {};
 	    };
 	  },
 	  computed: {
+	    availableResource() {
+	      return this.resourcesSlots.filter(({
+	        slots
+	      }) => slots.length > 0);
+	    },
 	    visibleResources() {
-	      return this.resourcesSlots.slice(0, this.visibleResourcesCount);
+	      return this.availableResource.slice(0, this.visibleResourcesCount);
+	    },
+	    emptyResourcesSlotsMessage() {
+	      return this.loc('BOOKING_CRM_FORMS_RESOURCE_NO_SLOTS_MESSAGE', {
+	        '#BR#': '<br />'
+	      });
 	    }
 	  },
 	  watch: {
@@ -977,7 +991,13 @@ this.BX.Booking = this.BX.Booking || {};
 					</template>
 				</ResourceSlotsUiBlock>
 			</template>
-			<template v-if="resources.length > 0 && visibleResourcesCount < resources.length">
+			<template v-if="!fetching && visibleResources.length === 0">
+				<p
+					class="booking--crm-forms--available-slots-block__empty-slots"
+					v-html="emptyResourcesSlotsMessage"
+				></p>
+			</template>
+			<template v-if="resources.length > 0 && visibleResources.length > 0 && visibleResourcesCount < availableResource.length">
 				<div class="booking--crm-forms--field-group--available-slots-block__footer">
 					<button
 						type="button"

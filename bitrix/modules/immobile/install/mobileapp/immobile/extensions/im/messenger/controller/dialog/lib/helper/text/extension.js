@@ -21,6 +21,7 @@ jn.define('im/messenger/controller/dialog/lib/helper/text', (require, exports, m
 		 * @param {?string} options.notificationText
 		 * @param {?Icon} options.notificationIcon
 		 * @param {?PageManager} options.parentWidget
+		 * @param {?number} options.toastOffset
 		 * @param {boolean} forceCopy
 		 */
 		static copyToClipboard(
@@ -29,6 +30,7 @@ jn.define('im/messenger/controller/dialog/lib/helper/text', (require, exports, m
 				notificationText = null,
 				notificationIcon = null,
 				parentWidget = PageManager,
+				toastOffset = null,
 			},
 			forceCopy = false,
 		)
@@ -47,6 +49,7 @@ jn.define('im/messenger/controller/dialog/lib/helper/text', (require, exports, m
 					const toastParams = {
 						icon,
 						message: title,
+						offset: toastOffset,
 					};
 
 					Notification.showToastWithParams(toastParams, parentWidget);

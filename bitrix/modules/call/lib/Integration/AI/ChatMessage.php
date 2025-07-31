@@ -66,6 +66,10 @@ class ChatMessage
 				//$helpUrl = CallAISettings::getHelpUrl();
 				break;
 
+			case CallAIError::AI_MODULE_ERROR:
+				$errorMessage = Loc::getMessage('ERROR_AI_MODULE_ERROR');
+				break;
+
 			case CallAIError::AI_UNAVAILABLE_ERROR:
 			case 'AI_ENGINE_ERROR_SERVICE_IS_NOT_AVAILABLE_BY_TARIFF':
 				$errorMessage = Loc::getMessage('CALL_NOTIFY_COPILOT_ERROR_TARIFF_RESTRICTION');

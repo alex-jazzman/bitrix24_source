@@ -26,11 +26,12 @@
 	border-radius: 222px;
 }
 
-.humanresources-chart .humanresources-canvas__transform {
-	transition: transform 0.1s ease-out;
+.humanresources-chart .ui-transform-canvas__transform.--disabled-transition {
+	transition: none;
 }
 
-.humanresources-chart .humanresources-canvas.--moving .humanresources-canvas__transform  {
+
+.humanresources-chart .humanresources-canvas.--moved .humanresources-canvas__transform  {
 	transition-duration: 0.55s;
 }
 

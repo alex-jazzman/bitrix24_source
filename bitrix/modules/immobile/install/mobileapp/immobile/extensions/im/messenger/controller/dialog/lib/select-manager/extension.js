@@ -237,7 +237,8 @@ jn.define('im/messenger/controller/dialog/lib/select-manager', (require, exports
 					await this.disableSelectMessagesMode(true);
 				},
 			});
-			forwardSelector.open();
+
+			await forwardSelector.open({ parentWidget: PageManager });
 		}
 
 		onDeleteMessages()

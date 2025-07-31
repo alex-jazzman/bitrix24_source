@@ -2,6 +2,7 @@
 
 namespace Bitrix\HumanResources\Access\Permission;
 
+use Bitrix\HumanResources\Access\Enum\PermissionValueType;
 use Bitrix\HumanResources\Access\Model\UserModel;
 use Bitrix\HumanResources\Item\Access\Permission;
 use Bitrix\HumanResources\Item\Collection\Access\PermissionCollection;
@@ -21,6 +22,7 @@ final class PermissionHelper
 			PermissionDictionary::HUMAN_RESOURCES_DEPARTMENT_EDIT, PermissionDictionary::HUMAN_RESOURCES_TEAM_EDIT => StructureAction::UpdateAction,
 			PermissionDictionary::HUMAN_RESOURCES_EMPLOYEE_ADD_TO_DEPARTMENT, PermissionDictionary::HUMAN_RESOURCES_TEAM_MEMBER_ADD => StructureAction::AddMemberAction,
 			PermissionDictionary::HUMAN_RESOURCES_EMPLOYEE_REMOVE_FROM_DEPARTMENT, PermissionDictionary::HUMAN_RESOURCES_TEAM_MEMBER_REMOVE => StructureAction::RemoveMemberAction,
+			PermissionDictionary::HUMAN_RESOURCES_DEPARTMENT_COMMUNICATION_EDIT, PermissionDictionary::HUMAN_RESOURCES_TEAM_COMMUNICATION_EDIT => StructureAction::CommunicationEditAction,
 			PermissionDictionary::HUMAN_RESOURCES_USER_INVITE => StructureAction::InviteUserAction,
 			PermissionDictionary::HUMAN_RESOURCES_TEAM_SETTINGS_EDIT => StructureAction::EditSettingsAction,
 			default => throw new \InvalidArgumentException('Permission has no structure action'),
@@ -32,8 +34,25 @@ final class PermissionHelper
 		$permissionCollection = new PermissionCollection();
 		if (!$userId)
 		{
-			return $permissionCollection->add(
-				Permission::getWithoutRoleId($permissionId, PermissionVariablesDictionary::VARIABLE_NONE),
+			if (!PermissionDictionary::isTeamDependentVariablesPermission($permissionId))
+			{
+				return $permissionCollection->add(
+					Permission::getWithoutRoleId($permissionId, PermissionVariablesDictionary::VARIABLE_NONE),
+				);
+			}
+
+			$teamPermissionId = $permissionId . '_' . PermissionValueType::TeamValue->value;
+			$departmentPermissionId = $permissionId . '_' . PermissionValueType::DepartmentValue->value;
+
+			return new PermissionCollection(
+				Permission::getWithoutRoleId(
+					$teamPermissionId,
+					PermissionVariablesDictionary::VARIABLE_NONE,
+				),
+				Permission::getWithoutRoleId(
+					$departmentPermissionId,
+					PermissionVariablesDictionary::VARIABLE_NONE,
+				),
 			);
 		}
 

@@ -6,6 +6,7 @@
 jn.define('im/messenger/controller/recent/lib/renderer', (require, exports, module) => {
 	const { Type } = require('type');
 	const { isEqual } = require('utils/object');
+	const { uniqBy } = require('utils/array');
 
 	const { RecentUiConverter } = require('im/messenger/lib/converter/ui/recent');
 	const { Worker } = require('im/messenger/lib/helper/worker');
@@ -27,7 +28,11 @@ jn.define('im/messenger/controller/recent/lib/renderer', (require, exports, modu
 		constructor(options = {})
 		{
 			this.ACTION_ADD = 'add';
+			this.ACTION_ADD_PREPARED_ITEMS = 'addPreparedItems';
 			this.ACTION_UPDATE = 'update';
+			this.ACTION_FIND_ITEM = 'findItem';
+			this.ACTION_REMOVE = 'remove';
+			this.ACTION_REMOVE_CALL = 'removeCall';
 
 			/** @private */
 			this.view = options.view;
@@ -55,7 +60,13 @@ jn.define('im/messenger/controller/recent/lib/renderer', (require, exports, modu
 			});
 		}
 
-		do(action, items)
+		/**
+		 * @param {string} action
+		 * @param {Array<object>|object} items
+		 * @param {object} [options={}]
+		 * @return {boolean}
+		 */
+		do(action, items, options = {})
 		{
 			if (!this.isActionSupported(action))
 			{
@@ -64,16 +75,46 @@ jn.define('im/messenger/controller/recent/lib/renderer', (require, exports, modu
 				return false;
 			}
 
-			items.forEach((item) => {
-				this.updateQueue[action][item.id] = item;
+			let itemsData = items;
+			if (!Array.isArray(items))
+			{
+				itemsData = [items];
+			}
+
+			itemsData.forEach((item) => {
+				this.updateQueue[action][item.id] = {
+					item,
+					...options,
+				};
 			});
 
 			return true;
 		}
 
+		/**
+		 * @param {Array<object>} itemList
+		 * @return {boolean}
+		 */
 		add(itemList)
 		{
-			this.view.addItems(RecentUiConverter.toList(itemList));
+			this.addPreparedItems(RecentUiConverter.toList(itemList));
+
+			return true;
+		}
+
+		/**
+		 * @param {Array<object>} preparedItems
+		 * @return {boolean}
+		 */
+		addPreparedItems(preparedItems)
+		{
+			const addItemList = preparedItems.filter((item) => {
+				return Type.isStringFilled(item.id) || item.id > 0;
+			});
+
+			const itemAddItemList = uniqBy(addItemList, (item) => String(item.id));
+
+			this.view.addItems(itemAddItemList);
 
 			return true;
 		}
@@ -92,6 +133,44 @@ jn.define('im/messenger/controller/recent/lib/renderer', (require, exports, modu
 			return false;
 		}
 
+		/**
+		 * @param {object} item
+		 * @param {(object)=>any} callback
+		 * @return {boolean}
+		 */
+		findItem(item, callback = () => {})
+		{
+			this.view.findItem({ id: item.id }, callback);
+
+			return true;
+		}
+
+		/**
+		 * @param {Array<object>} items
+		 * @return {boolean}
+		 */
+		remove(items)
+		{
+			items.forEach((item) => {
+				this.view.removeItem(item);
+			});
+
+			return true;
+		}
+
+		/**
+		 * @param {Array<object>} items
+		 * @return {boolean}
+		 */
+		removeCall(items)
+		{
+			items.forEach((item) => {
+				this.view.removeCallItem(item);
+			});
+
+			return true;
+		}
+
 		removeFromQueue(itemId)
 		{
 			this.getSupportedActions().forEach((actionId) => {
@@ -108,7 +187,15 @@ jn.define('im/messenger/controller/recent/lib/renderer', (require, exports, modu
 				const itemList = [];
 
 				Object.keys(this.updateQueue[action]).forEach((itemId) => {
-					itemList.push(this.updateQueue[action][itemId]);
+					const itemData = this.updateQueue[action][itemId];
+					if (action === this.ACTION_FIND_ITEM && itemData?.callback)
+					{
+						this[action]({ id: itemId }, itemData.callback);
+					}
+					else
+					{
+						itemList.push(this.updateQueue[action][itemId].item);
+					}
 
 					delete this.updateQueue[action][itemId];
 				});
@@ -158,7 +245,11 @@ jn.define('im/messenger/controller/recent/lib/renderer', (require, exports, modu
 		{
 			return new Set([
 				this.ACTION_ADD,
+				this.ACTION_ADD_PREPARED_ITEMS,
 				this.ACTION_UPDATE,
+				this.ACTION_FIND_ITEM,
+				this.ACTION_REMOVE,
+				this.ACTION_REMOVE_CALL,
 			]);
 		}
 

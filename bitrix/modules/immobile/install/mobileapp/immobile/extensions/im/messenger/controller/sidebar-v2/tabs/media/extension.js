@@ -37,6 +37,7 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/media', (require, exports, mo
 		{
 			return (props = {}) => new SidebarMediaTabContent({
 				dialogData: this.dialogData,
+				dialogLocator: this.dialogLocator,
 				widgetNavigator: this.widgetNavigator,
 				dataProvider: this.getDataProvider(),
 				...props,

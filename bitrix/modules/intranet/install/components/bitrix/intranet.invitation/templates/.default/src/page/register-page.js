@@ -2,7 +2,7 @@ import { Tag, Loc } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { TagSelector } from 'ui.entity-selector';
 import { Analytics } from '../analytics';
-import DepartmentControl from '../department-control';
+import DepartmentControl from 'intranet.department-control';
 import { InputRowFactory } from '../input-row-factory';
 import { Page } from './page';
 
@@ -176,5 +176,12 @@ export class RegisterPage extends Page
 	getSubmitButtonText(): ?string
 	{
 		return Loc.getMessage('BX24_INVITE_DIALOG_ACTION_ADD');
+	}
+
+	onInviteSuccess(event: BaseEvent)
+	{
+		this.render().querySelector('form')?.reset();
+		this.#departmentControl.reset();
+		this.#tagSelectorGroup.removeTags();
 	}
 }

@@ -89,9 +89,4 @@ class TeamRoleViewAllCompanyInstaller extends BaseInstaller
 			}
 		}
 	}
-
-	public function getVersion(): int
-	{
-		return InstallerFactory::VERSION_4;
-	}
 }

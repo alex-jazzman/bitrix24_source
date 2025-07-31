@@ -1015,8 +1015,18 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 					}
 				});
 
-				const messageIdsToView = messageIds;
-				const messageIdsToRead = [];
+				const messageIdsToView = messageIds.filter((messageId) => {
+					const message = store.state.collection[messageId];
+					if (!message)
+					{
+						return false;
+					}
+
+					return !message.viewed;
+				});
+				/** @type {Set<number>} */
+				const uniqueMessageIdsToView = new Set(messageIdsToView);
+				const uniqueMessageIdsToRead = new Set();
 				chatMessages.forEach((chatMessage) => {
 					if (!chatMessage.unread)
 					{
@@ -1026,14 +1036,24 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 					if (chatMessage.id <= maxMessageId)
 					{
 						messagesToReadCount++;
-						messageIdsToRead.push(chatMessage.id);
+						uniqueMessageIdsToRead.add(chatMessage.id);
 					}
 				});
 
-				messageIdsToRead.forEach((messageId) => {
+				const messageIdsToViewAndRead = [];
+				[...uniqueMessageIdsToView].forEach((messageId) => {
+					if (uniqueMessageIdsToRead.has(messageId))
+					{
+						messageIdsToViewAndRead.push(messageId);
+						uniqueMessageIdsToView.delete(messageId);
+						uniqueMessageIdsToRead.delete(messageId);
+					}
+				});
+
+				[...uniqueMessageIdsToRead].forEach((messageId) => {
 					if (!store.state.collection[messageId])
 					{
-						logger.warn('MessageModel.readMessages error: update unread a missing message', messageId, chatId, messageIds);
+						logger.warn('MessageModel.readMessages error: update only unread a missing message', messageId, chatId, messageIds);
 
 						return;
 					}
@@ -1049,10 +1069,10 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 					});
 				});
 
-				messageIdsToView.forEach((messageId) => {
+				[...uniqueMessageIdsToView].forEach((messageId) => {
 					if (!store.state.collection[messageId])
 					{
-						logger.warn('MessageModel.readMessages error: update viewed a missing message', messageId, chatId, messageIds);
+						logger.warn('MessageModel.readMessages error: update only viewed a missing message', messageId, chatId, messageIds);
 
 						return;
 					}
@@ -1063,6 +1083,26 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 							id: messageId,
 							fields: {
 								viewed: true,
+							},
+						},
+					});
+				});
+
+				messageIdsToViewAndRead.forEach((messageId) => {
+					if (!store.state.collection[messageId])
+					{
+						logger.warn('MessageModel.readMessages error: update viewed and unread a missing message', messageId, chatId, messageIds);
+
+						return;
+					}
+
+					store.commit('update', {
+						actionName: 'readMessages',
+						data: {
+							id: messageId,
+							fields: {
+								viewed: true,
+								unread: false,
 							},
 						},
 					});

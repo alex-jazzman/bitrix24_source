@@ -7,6 +7,7 @@ jn.define('im/messenger/lib/element/dialog/message/copilot-prompt', (require, ex
 
 	const { MessageType } = require('im/messenger/const');
 	const { TextMessage } = require('im/messenger/lib/element/dialog/message/text');
+	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 	const { CopilotButtonType, CopilotPromptType } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Logger } = require('im/messenger/lib/logger');
@@ -31,40 +32,45 @@ jn.define('im/messenger/lib/element/dialog/message/copilot-prompt', (require, ex
 			 */
 			this.initialPrompt = [];
 
-			/**
-			 * @type CopilotRoleData
-			 */
-			const copilotRoleData = serviceLocator.get('core')
-				.getStore().getters['dialoguesModel/copilotModel/getRoleByMessageId'](this.dialogId, modelMessage.id);
-
-			this.getInitialPrompts(copilotRoleData, modelMessage.params)
+			this.setCopilotPromptAvatar(modelMessage.chatId, modelMessage.id)
+				.getInitialPrompts(modelMessage.id, modelMessage.params)
 				.setCopilotButtons()
 				.setCopilotPromptText()
 				.setShowAvatarForce(false)
 				.setCanBeQuoted(false)
 				.setCanBeChecked(false);
-			this.setCopilotPromptAvatar(copilotRoleData);
 		}
 
 		/**
-		 * @param {CopilotRoleData} copilotRoleData
-		 * @param {object} messageParams
+		 * @param {MessageId} messageId
+		 * @param {MessageParams} messageParams
 		 * @return this
 		 */
-		getInitialPrompts(copilotRoleData, messageParams)
+		getInitialPrompts(messageId, messageParams)
 		{
 			try
 			{
+				const copilotRoleData = this.getCopilotRoleDataByMessageId(messageId);
 				this.initialPrompt = copilotRoleData ? copilotRoleData.prompts : [];
 
 				this.setCopilotPromptName(copilotRoleData?.name || copilotRoleData?.desc, messageParams);
 			}
-			catch (e)
+			catch (error)
 			{
-				Logger.error('CopilotPromptMessage.getInitialPrompts.catch:', e);
+				Logger.error('CopilotPromptMessage.getInitialPrompts.catch:', error);
 			}
 
 			return this;
+		}
+
+		/**
+		 * @param {MessageId} messageId
+		 * @return {CopilotRoleData}
+		 */
+		getCopilotRoleDataByMessageId(messageId)
+		{
+			return serviceLocator.get('core')
+				.getStore().getters['dialoguesModel/copilotModel/getRoleByMessageId'](this.dialogId, messageId);
 		}
 
 		getType()
@@ -132,20 +138,23 @@ jn.define('im/messenger/lib/element/dialog/message/copilot-prompt', (require, ex
 		}
 
 		/**
-		 * @param {CopilotRoleData} copilotRoleData
+		 * @param {ChatId} chatId
+		 * @param {MessageId} messageId
 		 * @return this
 		 */
-		setCopilotPromptAvatar(copilotRoleData)
+		setCopilotPromptAvatar(chatId, messageId)
 		{
-			const avatarUrl = copilotRoleData?.avatar?.medium || copilotRoleData?.avatar?.small;
-			this.copilot.avatarUrl = avatarUrl ? encodeURI(avatarUrl) : null;
+			this.copilot.avatarUrl = ChatAvatar.createFromDialogId(
+				this.dialogId,
+				{ chatId, messageId },
+			).getMessageCopilotPromptAvatarUrl();
 
 			return this;
 		}
 
 		/**
 		 * @param {string} name
-		 * @param {object} messageParams
+		 * @param {MessageParams} messageParams
 		 * @return this
 		 */
 		setCopilotPromptName(name, messageParams)

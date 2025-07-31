@@ -43,7 +43,11 @@ export const EntityMenuItem = {
 						:size="18"
 					/>
 					<Avatar v-else
-						:options="{ size: 24, title, picPath: image.imageSrc }"
+						:options="{
+							size: 24,
+							title,
+							picPath: image.imageSrc ? encodeURI(image.imageSrc) : undefined,
+						}"
 					/>
 				</div>
 				<div 

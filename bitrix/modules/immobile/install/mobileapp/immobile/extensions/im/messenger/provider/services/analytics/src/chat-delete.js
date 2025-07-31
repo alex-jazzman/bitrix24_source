@@ -34,7 +34,6 @@ jn.define('im/messenger/provider/services/analytics/chat-delete', (require, expo
 				.setSection(Analytics.Section.sidebar)
 				.setSubSection(Analytics.SubSection.contextMenu)
 				.setP1(AnalyticsHelper.getP1ByChatType(chatData.type))
-				.setP5(AnalyticsHelper.getFormattedChatId(chatData.chatId))
 			;
 
 			analyticsEvent.send();
@@ -53,7 +52,6 @@ jn.define('im/messenger/provider/services/analytics/chat-delete', (require, expo
 				.setType(AnalyticsHelper.getTypeByChatType(chatData.type))
 				.setSection(Analytics.Section.popup)
 				.setP1(AnalyticsHelper.getP1ByChatType(chatData.type))
-				.setP5(AnalyticsHelper.getFormattedChatId(chatData.chatId))
 			;
 
 			analyticsEvent.send();
@@ -88,7 +86,6 @@ jn.define('im/messenger/provider/services/analytics/chat-delete', (require, expo
 				.setEvent(Analytics.Event.view)
 				.setType(this.#getDeletingChatCategory())
 				.setP1(AnalyticsHelper.getP1ByChatType(chatType))
-				.setP5(AnalyticsHelper.getFormattedChatId(chatId))
 			;
 
 			if (isChatOpened)

@@ -172,6 +172,27 @@ jn.define('im/messenger/model/comment/model', (require, exports, module) => {
 
 				return state.countersCollection[channelId];
 			},
+
+			/**
+			 * @function commentModel/getPostsCountWithCounters
+			 * @return number
+			 */
+			getPostsCountWithCounters: (state, getters) => (channelId) => {
+				const channelCounterCollection = getters.getChannelCounterCollection(channelId);
+
+				if (!channelCounterCollection || !Type.isObject(channelCounterCollection))
+				{
+					return 0;
+				}
+
+				let commentsCounter = 0;
+
+				Object.values(channelCounterCollection).forEach((counter) => {
+					commentsCounter += counter > 0 ? 1 : 0;
+				});
+
+				return commentsCounter;
+			},
 		},
 		actions: {
 			/** @function commentModel/setComments */

@@ -45,9 +45,22 @@ jn.define('im/messenger/provider/services/analytics/download-file', (require, ex
 		 * @param {Object} params
 		 * @param {FileType} params.fileType
 		 * @param {DialogId} params.dialogId
+		 * @param {DialogId} params.status
 		 * @return {AnalyticsEvent}
 		 */
-		#sendDownload({ fileType, dialogId })
+		sendDownloadError(params)
+		{
+			this.#sendDownload(params).setEvent(Analytics.Event.downloadError).send();
+		}
+
+		/**
+		 * @param {Object} params
+		 * @param {FileType} params.fileType
+		 * @param {DialogId} params.dialogId
+		 * @param {string} params.status
+		 * @return {AnalyticsEvent}
+		 */
+		#sendDownload({ fileType, dialogId, status })
 		{
 			const dialogModel = this.store.getters['dialoguesModel/getById'](dialogId);
 			const collabInfo = this.store.getters['dialoguesModel/collabModel/getByDialogId'](dialogId);
@@ -66,6 +79,11 @@ jn.define('im/messenger/provider/services/analytics/download-file', (require, ex
 			if (collabInfo?.collabId > 0)
 			{
 				analytics.setP4(this.#getChatP4(collabInfo?.collabId));
+			}
+
+			if (status)
+			{
+				analytics.setStatus(status);
 			}
 
 			return analytics;

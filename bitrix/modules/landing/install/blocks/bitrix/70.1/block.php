@@ -6,14 +6,14 @@
 		Title
 	</div>
 	<div
-		class="landing-block-node-content-container d-grid g-px-30 g-py-30 g-pt-0"
-		style="grid-template-columns: repeat(auto-fit, minmax(275px, 1fr)); gap: 18px;"
+		class="landing-block-node-content-container d-flex g-flex-centered g-px-30 g-py-30 g-pt-0"
+		style="flex-wrap: wrap; gap: 18px;"
 	>
 		<div
 			class="landing-block-node-card flex-column g-min-height-250 g-px-20 g-rounded-10 g-flex-centered g-text-decoration-none g-bg"
-			style="--bg: #ffffff; box-shadow: 0 4px 4px 0 rgba(0, 0, 0, 0.05);"
+			style="--bg: #ffffff; width: 100%; max-width: 275px; box-shadow: 0 4px 4px 0 rgba(0, 0, 0, 0.05);"
 		>
-			<div class="landing-block-node-item-title g-mb-14 g-font-size-20 g-font-weight-500">
+			<div class="landing-block-node-item-title g-mb-14 g-font-size-20 g-font-weight-500 text-center">
 				Card title 1
 			</div>
 			<div class="landing-block-node-item-text g-mb-14 g-overflow-hidden text-center">
@@ -23,16 +23,16 @@
 				href="#"
 				style="--color: #0253C8; --bg: #E6F4FF; --color-hover: #ffffff; --bg-hover: var(--primary);"
 				target="_blank"
-				class="landing-block-node-item-button g-pt-7 g-pb-7 g-px-18 g-rounded-10 btn g-font-size-16 g-font-weight-500 g-color g-bg g-color--hover g-bg--hover g-cursor-pointer"
+				class="landing-block-node-item-button g-pt-7 g-pb-7 g-px-18 g-rounded-10 btn g-font-size-16 g-font-weight-500 g-color g-bg g-color--hover g-bg--hover g-cursor-pointer text-center"
 			>
 				Button 1
 			</a>
 		</div>
 		<div
 			class="landing-block-node-card flex-column g-min-height-250 g-px-20 g-rounded-10 g-flex-centered g-text-decoration-none g-bg"
-			style="--bg: #ffffff; box-shadow: 0 4px 4px 0 rgba(0, 0, 0, 0.05);"
+			style="--bg: #ffffff; width: 100%; max-width: 275px; box-shadow: 0 4px 4px 0 rgba(0, 0, 0, 0.05);"
 		>
-			<div class="landing-block-node-item-title g-mb-14 g-font-size-20 g-font-weight-500">
+			<div class="landing-block-node-item-title g-mb-14 g-font-size-20 g-font-weight-500 text-center">
 				Card title 2
 			</div>
 			<div class="landing-block-node-item-text g-mb-14 g-overflow-hidden text-center">
@@ -42,23 +42,23 @@
 				href="#"
 				style="--color: #0253C8; --bg: #E6F4FF; --color-hover: #ffffff; --bg-hover: var(--primary);"
 				target="_blank"
-				class="landing-block-node-item-button g-pt-7 g-pb-7 g-px-18 g-rounded-10 btn g-font-size-16 g-font-weight-500 g-color g-bg g-color--hover g-bg--hover g-cursor-pointer"
+				class="landing-block-node-item-button g-pt-7 g-pb-7 g-px-18 g-rounded-10 btn g-font-size-16 g-font-weight-500 g-color g-bg g-color--hover g-bg--hover g-cursor-pointer text-center"
 			>
 				Button 2
 			</a>
 		</div>
 		<div
 			class="landing-block-node-card flex-column g-min-height-250 g-px-20 g-rounded-10 g-flex-centered g-text-decoration-none g-bg"
-			style="--bg: #ffffff; box-shadow: 0 4px 4px 0 rgba(0, 0, 0, 0.05);"
+			style="--bg: #ffffff; width: 100%; max-width: 275px; box-shadow: 0 4px 4px 0 rgba(0, 0, 0, 0.05);"
 		>
-			<div class="landing-block-node-item-title g-mb-14 g-font-size-20 g-font-weight-500">
+			<div class="landing-block-node-item-title g-mb-14 g-font-size-20 g-font-weight-500 text-center">
 				Card title 3
 			</div>
 			<div class="landing-block-node-item-text g-mb-14 g-overflow-hidden text-center">
 				Card text, line 1<br>card text, line 2<br>card text, line 3
 			</div>
 			<a
-				class="landing-block-node-item-button g-pt-7 g-pb-7 g-px-18 g-rounded-10 btn g-font-size-16 g-font-weight-500 g-color g-bg g-color--hover g-bg--hover g-cursor-pointer"
+				class="landing-block-node-item-button g-pt-7 g-pb-7 g-px-18 g-rounded-10 btn g-font-size-16 g-font-weight-500 g-color g-bg g-color--hover g-bg--hover g-cursor-pointer text-center"
 				style="--color: #0253C8; --bg: #E6F4FF; --color-hover: #ffffff; --bg-hover: var(--primary);"
 				href="#"
 				target="_blank"
@@ -68,16 +68,16 @@
 		</div>
 		<div
 			class="landing-block-node-card flex-column g-min-height-250 g-px-20 g-rounded-10 g-flex-centered g-text-decoration-none g-bg"
-			style="--bg: #ffffff; box-shadow: 0 4px 4px 0 rgba(0, 0, 0, 0.05);"
+			style="--bg: #ffffff; width: 100%; max-width: 275px; box-shadow: 0 4px 4px 0 rgba(0, 0, 0, 0.05);"
 		>
-			<div class="landing-block-node-item-title g-mb-14 g-font-size-20 g-font-weight-500">
+			<div class="landing-block-node-item-title g-mb-14 g-font-size-20 g-font-weight-500 text-center">
 				Card title 4
 			</div>
 			<div class="landing-block-node-item-text g-mb-14 g-overflow-hidden text-center">
 				Card text, line 1<br>card text, line 2<br>card text, line 3
 			</div>
 			<a
-				class="landing-block-node-item-button g-pt-7 g-pb-7 g-px-18 g-rounded-10 btn g-font-size-16 g-font-weight-500 g-color g-bg g-color--hover g-bg--hover g-cursor-pointer"
+				class="landing-block-node-item-button g-pt-7 g-pb-7 g-px-18 g-rounded-10 btn g-font-size-16 g-font-weight-500 g-color g-bg g-color--hover g-bg--hover g-cursor-pointer text-center"
 				style="--color: #0253C8; --bg: #E6F4FF; --color-hover: #ffffff; --bg-hover: var(--primary);"
 				href="#"
 				target="_blank"

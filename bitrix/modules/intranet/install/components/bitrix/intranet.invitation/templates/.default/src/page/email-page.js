@@ -1,7 +1,7 @@
 import { Loc, Tag, Type, Event } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { Analytics } from '../analytics';
-import DepartmentControl from '../department-control';
+import DepartmentControl from 'intranet.department-control';
 import { InputRowFactory } from '../input-row-factory';
 import { Page } from './page';
 
@@ -51,6 +51,7 @@ export class EmailPage extends Page
 	#titleRender(): HTMLElement
 	{
 		const suffix = this.#useOnlyPhone ? 'PHONE_MSGVER_1' : (this.#smsAvailable ? 'EMAIL_AND_PHONE' : 'EMAIL');
+		const code = this.#useOnlyPhone || this.#smsAvailable ? '21141922' : '25375678';
 
 		return Tag.render`
 			<div class="invite-title-container">
@@ -60,6 +61,7 @@ export class EmailPage extends Page
 				<div class="invite-title-text">
 					${Loc.getMessage(`INTRANET_INVITE_DIALOG_TITLE_${suffix}`)}
 				</div>
+				<div class="invite-title-helper" onclick="top.BX.Helper.show('redirect=detail&code=${code}');"></div>
 			</div>
 		`;
 	}
@@ -156,6 +158,12 @@ export class EmailPage extends Page
 			data,
 			analyticsLabel,
 		});
+	}
+
+	onInviteSuccess(event: BaseEvent)
+	{
+		this.render().querySelector('form')?.reset();
+		this.#departmentControl.reset();
 	}
 
 	#getValidateError()

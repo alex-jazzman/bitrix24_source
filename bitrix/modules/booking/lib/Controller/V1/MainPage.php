@@ -13,6 +13,7 @@ use Bitrix\Booking\Interfaces\ProviderInterface;
 use Bitrix\Booking\Internals\Container;
 use Bitrix\Booking\Internals\Exception\ErrorBuilder;
 use Bitrix\Booking\Internals\Exception\Exception;
+use Bitrix\Booking\Internals\Integration\Crm\WebForm;
 use Bitrix\Booking\Internals\Service\Notifications\MessageSenderPicker;
 use Bitrix\Booking\Internals\Repository\CounterRepositoryInterface;
 use Bitrix\Booking\Provider\BookingProvider;
@@ -106,6 +107,7 @@ class MainPage extends BaseController
 				waitListItemCollection: $waitListItemCollection,
 				isIntersectionForAll: true,
 				counters: $this->counterRepository->getList($userId),
+				formsMenu: $this->getFormsMenu(),
 			);
 		}
 		catch (Exception $e)
@@ -144,6 +146,7 @@ class MainPage extends BaseController
 				waitListItemCollection: $waitListItems,
 				isIntersectionForAll: $this->isIntersectionForAll($userId),
 				counters: $this->counterRepository->getList($userId),
+				formsMenu: $this->getFormsMenu(),
 			);
 		}
 		catch (Exception $e)
@@ -243,7 +246,13 @@ class MainPage extends BaseController
 
 	private function getResourceTypes(int $userId): Entity\ResourceType\ResourceTypeCollection
 	{
-		return $this->resourceTypeProvider->getList(new GridParams(), $userId);
+		$resourceTypes = $this->resourceTypeProvider->getList(new GridParams(), $userId);
+
+		$this->resourceTypeProvider
+			->withResourcesCnt($resourceTypes)
+		;
+
+		return $resourceTypes;
 	}
 
 	private function getClientsDataRecent(): array
@@ -271,5 +280,20 @@ class MainPage extends BaseController
 		;
 
 		return $waitListItems;
+	}
+
+	private function getFormsMenu(): array
+	{
+		if (!WebForm::isAvailable() || !WebForm::canRead())
+		{
+			return [];
+		}
+
+		return [
+			'canEdit' => WebForm::canEdit(),
+			'createFormLink' => WebForm::getCreateFormLink(),
+			'formsListLink' => WebForm::getFormsListLink(),
+			'formList' => WebForm::getFormsList(),
+		];
 	}
 }

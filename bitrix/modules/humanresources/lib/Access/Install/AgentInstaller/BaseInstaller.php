@@ -26,8 +26,6 @@ abstract class BaseInstaller implements AgentInstaller
 		$this->accessInstaller = new AccessInstaller();
 	}
 
-	abstract public function getVersion(): int;
-
 	/**
 	 * @throws RoleRelationSaveException
 	 * @throws WrongStructureItemException
@@ -41,14 +39,16 @@ abstract class BaseInstaller implements AgentInstaller
 	 */
 	public function install(): string
 	{
-		if ($this->accessInstaller->getAccessVersion() > $this->getVersion())
+		$version = array_flip(InstallerFactory::getVersionMap())[static::class];
+
+		if ($this->accessInstaller->getAccessVersion() > $version)
 		{
 			return '';
 		}
 
 		$this->run();
 
-		$this->accessInstaller->setActualAccessVersion($this->getVersion());
+		$this->accessInstaller->setActualAccessVersion($version);
 
 		return '';
 	}
@@ -65,7 +65,7 @@ abstract class BaseInstaller implements AgentInstaller
 	protected function fillDefaultSystemPermissions(
 		array $roles,
 		bool $ignoreExists = false,
-		RoleCategory $category = RoleCategory::Department
+		RoleCategory $category = RoleCategory::Department,
 	): void
 	{
 		$roleRepository = new RoleRepository();

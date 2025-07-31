@@ -24,7 +24,7 @@ class Feature
 
 	public function isCrossFunctionalTeamsAvailable(): bool
 	{
-		return $this->getOptionValue(self::CROSS_FUNCTIONAL_TEAMS_IS_AVAILABLE_OPTION_NAME, 'N') === 'Y';
+		return true; // enabled in 25.700.0
 	}
 
 	public function isHRFirePermissionAvailable(): bool

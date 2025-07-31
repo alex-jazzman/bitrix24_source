@@ -37,7 +37,6 @@ jn.define('im/messenger/provider/services/analytics/file-sending', (require, exp
 					.setSection(section)
 					.setP1(`chatType_${dialog?.type}`)
 					.setP3(`filesCount_${filesCount}`)
-					.setP5(`chatId_${dialog.chatId}`);
 
 				const isChannelOrComment = helper?.isChannelOrComment;
 				if (isChannelOrComment)

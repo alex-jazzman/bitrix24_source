@@ -1,4 +1,5 @@
-import { detailPanelWidth } from '../consts';
+import { EventEmitter } from 'main.core.events';
+import { detailPanelWidth, events } from '../consts';
 
 // @vue/component
 export const TransformPanel = {
@@ -12,7 +13,7 @@ export const TransformPanel = {
 		},
 	},
 
-	emits: ['locate', 'update:modelValue'],
+	emits: ['update:modelValue'],
 
 	data(): { selectedId: string; }
 	{
@@ -83,9 +84,8 @@ export const TransformPanel = {
 		},
 		onLocate(): void
 		{
-			const { locate } = this.actions;
-			this.$emit(locate);
-			this.selectedId = locate;
+			EventEmitter.emit(events.HR_ORG_CHART_LOCATE_TO_DEPARTMENT);
+			this.selectedId = this.actions.locate;
 		},
 		onfocusout(): void
 		{

@@ -78,8 +78,11 @@
 	color: var(--ui-color-palette-gray-90);
 	font-weight: var(--ui-font-weight-medium);
 }
+.hr-department-detail-content__tab-item.--disabled-tab {
+	cursor: auto;
+}
 
-.hr-department-detail-content__tab-item:hover,
+.hr-department-detail-content__tab-item:not(.--disabled-tab):hover,
 .hr-department-detail-content__tab-item.--active-tab {
 	border: var(--ui-color-palette-gray-50) solid 1px;
 }
@@ -101,8 +104,7 @@
 	display: flex;
 	flex-direction: column;
 	gap: 8px;
-	margin-right: 4px;
-	margin-bottom: 18px;
+	margin: 16px 4px 18px 0;
 }
 
 .hr-department-detail-content__lists-container::-webkit-scrollbar {

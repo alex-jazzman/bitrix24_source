@@ -128,14 +128,25 @@ export class PictureInPictureWindow {
 
 		if (hasUser && !isCurrentUser)
 		{
-			this.user.dismount();
-			this.user = null;
+			this.destroyCurrentUser();
 		}
 
 		if (!hasUser || !isCurrentUser)
 		{
 			this.renderUserPanel();
 		}
+	}
+
+	destroyCurrentUser()
+	{
+		if (!this.user)
+		{
+			return;
+		}
+
+		this.user.dismount();
+		this.user.destroy();
+		this.user = null;
 	}
 
 	getCurrentUserId()
@@ -156,6 +167,7 @@ export class PictureInPictureWindow {
 	setButtons(buttonsList)
 	{
 		this.buttons = buttonsList;
+		return this;
 	}
 
 	updateButtons()
@@ -230,6 +242,7 @@ export class PictureInPictureWindow {
 						{
 							event.stopPropagation();
 							this._onButtonClick({ buttonName: 'returnToCall', event });
+							window.focus();
 						}
 					});
 					this.actionsPanel.appendChild(this.buttons.returnToCall.render());
@@ -244,6 +257,7 @@ export class PictureInPictureWindow {
 						{
 							event.stopPropagation();
 							this._onButtonClick({ buttonName: 'stop-screen', event });
+							window.focus();
 						}
 					});
 
@@ -282,6 +296,7 @@ export class PictureInPictureWindow {
 				onClick: (event) =>
 				{
 					this._onButtonClick({ buttonName: 'returnToCall', event });
+					window.focus();
 				},
 			});
 			this.user.mount(this.userPanel);
@@ -798,7 +813,7 @@ export class PictureInPictureWindow {
 			this.render();
 
 			this.pictureWindow = await window.documentPictureInPicture.requestWindow({
-				disallowReturnToOpener: true,
+				disallowReturnToOpener: false,
 				width: 370,
 				height: 215,
 				preferInitialWindowPlacement: false,
@@ -842,6 +857,9 @@ export class PictureInPictureWindow {
 			BX.remove(this.template);
 		}
 
+		this.destroyCurrentUser();
+
+		this.close();
 		this.pictureWindow = null;
 
 		this.template = null;

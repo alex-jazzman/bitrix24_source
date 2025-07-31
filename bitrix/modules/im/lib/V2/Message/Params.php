@@ -981,7 +981,10 @@ class Params extends Registry
 		$result = [];
 		foreach ($this as $paramName => $param)
 		{
-			$result[$paramName] = $param->toRestFormat();
+			if ($param->hasValue())
+			{
+				$result[$paramName] = $param->toRestFormat();
+			}
 		}
 
 		return $result;

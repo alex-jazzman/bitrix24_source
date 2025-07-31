@@ -24,10 +24,10 @@ export class CollabInvitationService
 			});
 	}
 
-	copyLink(collabId: number): Promise<string>
+	copyLink(collabId: number, userLang: string): Promise<string>
 	{
 		const payload = {
-			data: { collabId },
+			data: { collabId, userLang },
 		};
 
 		return runAction(RestMethod.intranetInviteGetLinkByCollabId, payload)

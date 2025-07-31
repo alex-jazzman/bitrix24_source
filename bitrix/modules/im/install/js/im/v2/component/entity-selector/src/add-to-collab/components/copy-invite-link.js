@@ -28,6 +28,10 @@ export const CopyInviteLink = {
 			type: Number,
 			required: true,
 		},
+		langCode: {
+			type: String,
+			required: true,
+		},
 	},
 	data(): JsonObject
 	{
@@ -85,7 +89,7 @@ export const CopyInviteLink = {
 			try
 			{
 				this.isCopyingInviteLink = true;
-				const link = await (new CollabInvitationService()).copyLink(this.collabId);
+				const link = await (new CollabInvitationService()).copyLink(this.collabId, this.langCode);
 				await Utils.text.copyToClipboard(link);
 				Notifier.onCopyLinkComplete();
 			}

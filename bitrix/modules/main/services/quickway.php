@@ -16,6 +16,11 @@ if (empty($encryptedData))
 	return;
 }
 
+if (str_starts_with($_SERVER['SCRIPT_NAME'], '/mobile/ajax.php'))
+{
+	return;
+}
+
 function readConfig(): ?array
 {
 	/** @see \Bitrix\Main\Config\Configuration::CONFIGURATION_FILE_PATH */

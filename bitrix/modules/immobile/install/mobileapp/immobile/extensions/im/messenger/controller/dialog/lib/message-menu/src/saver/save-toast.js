@@ -40,7 +40,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/saver/save-toast'
 	 * @param view
 	 * @param {'DEVICE' | 'DISK'} to
 	 */
-	function showSuccessSaveToast({ messageHelper, view, to = FileDownloadType.device })
+	function showSuccessSaveToast({ messageHelper, parentWidget, to = FileDownloadType.device })
 	{
 		const defaultIcon = to === FileDownloadType.disk ? Icon.FOLDER_SUCCESS : Icon.DOWNLOAD;
 		const defaultMessageCode = phrasesSuccess.default[to];
@@ -77,7 +77,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/saver/save-toast'
 				icon,
 				message: Loc.getMessage(messageCode),
 			},
-			view,
+			parentWidget,
 		);
 	}
 
@@ -85,13 +85,13 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/saver/save-toast'
 	 * @param view
 	 * @param {'DEVICE' | 'DISK'} to
 	 */
-	function showSaveFailureToast({ view, to })
+	function showSaveFailureToast({ parentWidget, to })
 	{
 		Notification.showErrorToast(
 			{
 				message: Loc.getMessage(phrasesFailure[to]),
 			},
-			view,
+			parentWidget,
 		);
 	}
 

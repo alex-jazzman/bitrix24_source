@@ -20,7 +20,7 @@ use Bitrix\Call\Model\CallAITaskTable;
 use Bitrix\Call\Model\CallOutcomeTable;
 use Bitrix\Call\Model\CallTrackTable;
 use Bitrix\Call\Integration\AI\Outcome\OutcomeCollection;
-
+use Bitrix\Call\Analytics\FollowUpAnalytics;
 
 final class CallAIService
 {
@@ -281,11 +281,16 @@ final class CallAIService
 		if (!$result->isSuccess())
 		{
 			$log && $logger->error('AI processing has failed. Task Id:'.$task->getId().' Error: '.$result->getError()?->getMessage());
+
+			(new FollowUpAnalytics($call))->addAITaskFailed($task, $result->getError()?->getCode() ?? '');
+
 			$this->fireCallAiFailedEvent($task, $result->getError());
 		}
 		else
 		{
 			$log && $logger->info('New AI task has been set. TaskId:'.$task->getId().' Hash: '.$task->getHash());
+
+			(new FollowUpAnalytics($call))->addAITaskLunch($task);
 		}
 
 		return $result;
@@ -475,6 +480,9 @@ final class CallAIService
 				. ' Error: ' . ($error->getDescription() ?: $error->getMessage())
 			);
 		}
+
+		$call = Registry::getCallWithId($task->getCallId());
+		(new FollowUpAnalytics($call))->addAITaskFailed($task, $error->getCode() ?? '');
 
 		$service = self::getInstance();
 		$service->fireCallAiFailedEvent($task, $error);

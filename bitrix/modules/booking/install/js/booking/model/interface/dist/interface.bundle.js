@@ -183,7 +183,7 @@ this.BX.Booking = this.BX.Booking || {};
 	      disabledBusySlots: state => state.disabledBusySlots,
 	      /** @function interface/resourcesIds */
 	      resourcesIds: (state, getters, rootState, rootGetters) => {
-	        const extraResourcesIds = rootGetters[`${booking_const.Model.Bookings}/getByDate`](state.selectedDateTs).filter(booking => booking.counter > 0).map(booking => booking.resourcesIds[0]);
+	        const extraResourcesIds = rootGetters[`${booking_const.Model.Bookings}/getByDate`](state.selectedDateTs).filter(booking => !getters.isFilterMode && booking.counter > 0).map(booking => booking.resourcesIds[0]);
 	        const resourcesIds = [...new Set([...state.resourcesIds, ...extraResourcesIds])];
 	        const excludeResources = new Set(getters.getOccupancy(resourcesIds, Object.values(state.quickFilter.ignoredBookingIds)).filter(occupancy => Object.values(state.quickFilter.active).some(hour => {
 	          const fromTs = new Date(state.selectedDateTs).setHours(hour) - getters.offset;
@@ -261,7 +261,8 @@ this.BX.Booking = this.BX.Booking || {};
 	            const isDragOffHours = getters.isDragMode && busySlot.type === booking_const.BusySlot.OffHours;
 	            const isActive = !(busySlot.id in state.disabledBusySlots) && !isDragOffHours;
 	            const belongsToResources = resources.has(busySlot.resourceId);
-	            return isActive && belongsToResources;
+	            const isIntersectionOverbooking = busySlot.type === booking_const.BusySlot.IntersectionOverbooking;
+	            return isIntersectionOverbooking && isActive && belongsToResources;
 	          }).map(({
 	            fromTs,
 	            toTs,

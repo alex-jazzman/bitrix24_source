@@ -51,12 +51,12 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 			return false;
 		}
 
-		async initMessageMenu()
+		/**
+		 * @return {MessageMenuController}
+		 */
+		createMessageMenu()
 		{
-			this.messageMenu = await CopilotMessageMenu.create({
-				getDialog: this.getDialog.bind(this),
-				dialogLocator: this.locator,
-			});
+			return new CopilotMessageMenu(this.getMessageMenuParams());
 		}
 
 		subscribeViewEvents()
@@ -199,7 +199,7 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 		/**
 		 *
 		 * @param messageId
-		 * @param {CopilotButton} button
+		 * @param {MessageButton} button
 		 */
 		async messageButtonTapHandler(messageId, button)
 		{

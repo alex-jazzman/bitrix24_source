@@ -11,7 +11,6 @@ return [
 		'utils/url',
 		'toast',
 		'alert',
-		'app-rating-manager',
 
 		'ui-system/layout/box',
 		'ui-system/layout/area',
@@ -44,6 +43,7 @@ return [
 		'calendar:data-managers/settings-manager',
 		'calendar:data-managers/user-manager',
 		'calendar:data-managers/collab-manager',
+		'calendar:app-rating-client',
 
 		'calendar:layout/menu/recursion-mode',
 		'collab/service/access',

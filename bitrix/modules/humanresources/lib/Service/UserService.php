@@ -17,6 +17,7 @@ use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
+use Bitrix\Main\UserTable;
 use CSite;
 use CUser;
 
@@ -117,10 +118,9 @@ final class UserService
 	 */
 	public function isEmployee(int $userId): bool
 	{
-		if (!Storage::instance()->isCompanyStructureConverted()
-			&& Loader::includeModule('intranet'))
+		if (!Storage::instance()->isCompanyStructureConverted())
 		{
-			return \Bitrix\Intranet\Util::isIntranetUser($userId);
+			return $this->isUfDepartmentExists($userId);
 		}
 
 		$cacheKey = sprintf(self::USER_DEPARTMENT_EXISTS_KEY, $userId);
@@ -141,6 +141,24 @@ final class UserService
 		$this->cacheManager->setData($cacheKey, ['exists' => $exists]);
 
 		return $exists;
+	}
+
+	/**
+	 * Check if user have relation with team node
+	 * @param int $userId
+	 *
+	 * @return bool
+	 * @throws ArgumentException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 */
+	public function isTeamEmployee(int $userId): bool
+	{
+		return $this->nodeMemberRepository->findFirstByEntityIdAndEntityTypeAndNodeTypeAndActive(
+			$userId,
+			MemberEntityType::USER,
+			NodeEntityType::TEAM,
+		) !== null;
 	}
 
 	/**
@@ -215,5 +233,36 @@ final class UserService
 	public function isUserInvited(User $user): bool
 	{
 		return $user->active && $user->hasConfirmCode;
+	}
+
+	/**
+	 * @param int $userId
+	 *
+	 * @return bool
+	 * @throws ArgumentException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 */
+	private function isUfDepartmentExists(int $userId): bool
+	{
+		if (!Loader::includeModule('intranet'))
+		{
+			return false;
+		}
+
+		$user = UserTable::query()
+			->setSelect(
+				[
+					'ID',
+					'UF_DEPARTMENT',
+				]
+			)
+			->where('UF_DEPARTMENT', '!=', false)
+			->where('ID', $userId)
+			->setCacheTtl(86400)
+			->fetch()
+		;
+
+		return $user !== false && !empty($user['UF_DEPARTMENT']);
 	}
 }

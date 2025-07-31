@@ -83,6 +83,14 @@ type FirstPopupData = {
 	features: string[];
 };
 
+type DragAndDropData = {
+	draggedId: number;
+	targetId: number;
+	affectedItems: HTMLElement[];
+	direction: 1 | -1,
+	insertion: 'reorder' | 'sibling' | 'inside',
+};
+
 export type {
 	TreeItem,
 	TreeData,
@@ -92,4 +100,5 @@ export type {
 	ChartData,
 	FirstPopupData,
 	Head,
+	DragAndDropData,
 };

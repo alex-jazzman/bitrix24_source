@@ -39,19 +39,7 @@ class Documents
 
 	public static function isLocked(): bool
 	{
-		if (!Loader::includeModule('sign'))
-		{
-			return false;
-		}
-
-		if (
-			!class_exists(Sign\Integration\Bitrix24\B2eTariff::class)
-			|| !method_exists(Sign\Integration\Bitrix24\B2eTariff::class, 'isB2eRestrictedInCurrentTariff')
-		) {
-			return false;
-		}
-
-		return Sign\Integration\Bitrix24\B2eTariff::instance()->isB2eRestrictedInCurrentTariff();
+		return !Loader::includeModule('sign');
 	}
 
 	public static function getCount(): int

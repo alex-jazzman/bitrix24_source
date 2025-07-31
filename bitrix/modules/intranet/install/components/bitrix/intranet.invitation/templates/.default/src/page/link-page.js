@@ -1,7 +1,7 @@
 import { Tag, Loc, Type, Dom } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { Analytics } from '../analytics';
-import DepartmentControl from '../department-control';
+import DepartmentControl from 'intranet.department-control';
 import { SelfRegister } from '../self-register';
 import { Transport } from '../transport';
 import { Page } from './page';

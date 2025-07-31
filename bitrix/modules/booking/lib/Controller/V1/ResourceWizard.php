@@ -18,6 +18,7 @@ use Bitrix\Booking\Internals\Service\Notifications\NotificationType;
 use Bitrix\Booking\Internals\Service\OptionDictionary;
 use Bitrix\Booking\Internals\Service\Time;
 use Bitrix\Booking\Provider\AdsProvider;
+use Bitrix\Booking\Service\BookingFeature;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Request;
@@ -39,6 +40,8 @@ class ResourceWizard extends BaseController
 
 	public function getAction(): ResourceWizardResponseResponse|null
 	{
+		BookingFeature::turnOnTrialIfPossible();
+
 		try
 		{
 			return new ResourceWizardResponseResponse(

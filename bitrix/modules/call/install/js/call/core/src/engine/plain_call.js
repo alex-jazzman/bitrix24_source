@@ -115,6 +115,7 @@ export class PlainCall extends AbstractCall
 		this.userData = params.userData;
 
 		this._onUnloadHandler = this.#onUnload.bind(this);
+		this._onOnlineHandler = this.#onOnline.bind(this);
 
 		this.enableMicAutoParameters = params.enableMicAutoParameters !== false;
 		this.microphoneLevelInterval = null;
@@ -127,8 +128,9 @@ export class PlainCall extends AbstractCall
 		this._isRecordWhenCopilotActivePopupAlreadyShow = null;
 		this._isBoostExpired = false;
 
-		window.addEventListener("unload", this._onUnloadHandler);
-	};
+		window.addEventListener('unload', this._onUnloadHandler);
+		window.addEventListener('online', this._onOnlineHandler);
+	}
 
 	get provider()
 	{
@@ -1893,6 +1895,14 @@ export class PlainCall extends AbstractCall
 		}
 	};
 
+	#onOnline()
+	{
+		const peers = Object.values(this.peers);
+		peers.forEach((peer) => {
+			peer.reconnect();
+		});
+	}
+
 	#beforeLeaveCall()
 	{
 		// stop media streams
@@ -1918,7 +1928,8 @@ export class PlainCall extends AbstractCall
 		}
 
 		// remove all event listeners
-		window.removeEventListener("unload", this._onUnloadHandler);
+		window.removeEventListener('unload', this._onUnloadHandler);
+		window.removeEventListener('online', this._onOnlineHandler);
 
 		clearInterval(this.statsInterval);
 		clearInterval(this.pingUsersInterval);
@@ -1944,6 +1955,7 @@ export class PlainCall extends AbstractCall
 		}
 
 		this.#beforeLeaveCall();
+		this.runCallback(CallEvent.onLeave, { local: true });
 
 		return super.destroy();
 	}

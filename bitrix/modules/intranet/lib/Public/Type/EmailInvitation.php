@@ -17,6 +17,7 @@ class EmailInvitation extends BaseInvitation
 		readonly ?string $name = null,
 		readonly ?string $lastName = null,
 		readonly ?string $formType = null,
+		readonly ?string $languageId = null,
 	)
 	{
 		parent::__construct($name, $lastName, $formType);
@@ -29,6 +30,7 @@ class EmailInvitation extends BaseInvitation
 			'EMAIL' => $this->email,
 			'NAME' => $this->name,
 			'LAST_NAME' => $this->lastName,
+			'LANGUAGE_ID' => $this->languageId,
 		];
 	}
 

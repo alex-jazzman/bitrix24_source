@@ -26,7 +26,38 @@ $CCrmRole = new CCrmRole();
 
 if (method_exists(\Bitrix\Crm\Security\Role\RolePreset::class, 'GetDefaultRolesPreset'))
 {
-	$arRoles = \Bitrix\Crm\Security\Role\RolePreset::GetDefaultRolesPreset();
+	$existedRoles = [];
+	$existedRolesIterator = CCrmRole::GetList();
+	while ($existedRole = $existedRolesIterator->Fetch())
+	{
+		$existedRoles[$existedRole['NAME'] . '|' . ($existedRole['GROUP_CODE'] ?? '')] = $existedRole;
+	}
+
+	$roles = \Bitrix\Crm\Security\Role\RolePreset::GetDefaultRolesPreset();
+
+	$rolesRelations = [];
+	foreach ($roles as $role)
+	{
+		if (!isset($existedRoles[$role['NAME'] . '|' . ($role['GROUP_CODE'] ?? '')]))
+		{
+			$roleId = $CCrmRole->Add($role);
+			if ($roleId && $role['RELATIONS'] ?? false)
+			{
+				foreach ($role['RELATIONS'] as $relation)
+				{
+					if (!isset($rolesRelations[$relation]))
+					{
+						$rolesRelations[$relation] = [];
+					}
+					$rolesRelations[$relation][] = $roleId;
+				}
+			}
+		}
+	}
+	if (!empty($rolesRelations))
+	{
+		$CCrmRole->SetRelation($rolesRelations);
+	}
 }
 else
 {
@@ -141,31 +172,30 @@ else
 			]
 		]
 	];
+
+	$iRoleIDAdm = $iRoleIDMan = 0;
+	$obRole = CCrmRole::GetList(array(), array());
+	while ($arRole = $obRole->Fetch())
+	{
+		if ($arRole['NAME'] == $arRoles['ADMIN']['NAME'])
+			$iRoleIDAdm = $arRole['ID'];
+		else if ($arRole['NAME'] == $arRoles['MANAGER']['NAME'])
+			$iRoleIDMan = $arRole['ID'];
+	}
+
+	$arRel = array();
+	if ($iRoleIDAdm <= 0)
+		$iRoleIDAdm = $CCrmRole->Add($arRoles['ADMIN']);
+
+	if ($iRoleIDMan <= 0)
+		$iRoleIDMan = $CCrmRole->Add($arRoles['MANAGER']);
+
+	$arRel['G1'] = array($iRoleIDAdm);
+	if (defined('WIZARD_EMPLOYEES_GROUP') && WIZARD_EMPLOYEES_GROUP > 0)
+		$arRel['G' . WIZARD_EMPLOYEES_GROUP] = array($iRoleIDAdm);
+
+	$CCrmRole->SetRelation($arRel);
 }
-
-$iRoleIDAdm = $iRoleIDMan = 0;
-$obRole = CCrmRole::GetList(array(), array());
-while ($arRole = $obRole->Fetch())
-{
-	if ($arRole['NAME'] == $arRoles['ADMIN']['NAME'])
-		$iRoleIDAdm = $arRole['ID'];
-	else if ($arRole['NAME'] == $arRoles['MANAGER']['NAME'])
-		$iRoleIDMan = $arRole['ID'];
-}
-
-$arRel = array();
-if ($iRoleIDAdm <= 0)
-	$iRoleIDAdm = $CCrmRole->Add($arRoles['ADMIN']);
-
-if ($iRoleIDMan <= 0)
-	$iRoleIDMan = $CCrmRole->Add($arRoles['MANAGER']);
-
-$arRel['G1'] = array($iRoleIDAdm);
-if (defined('WIZARD_EMPLOYEES_GROUP') && WIZARD_EMPLOYEES_GROUP > 0)
-	$arRel['G'.WIZARD_EMPLOYEES_GROUP] = array($iRoleIDAdm);
-
-$CCrmRole->SetRelation($arRel);
-
 if (\Bitrix\Main\Loader::includeModule("bitrix24"))
 {
 	\CBitrix24::setCrmRecaptchaOptions();

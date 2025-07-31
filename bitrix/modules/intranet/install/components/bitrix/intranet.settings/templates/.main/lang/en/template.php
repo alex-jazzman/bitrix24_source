@@ -1,7 +1,7 @@
 <?php
 $MESS["BITRIX24_PARTNER_ORDER_MSGVER_1"] = "Implementation request";
 $MESS["BITRIX24_PARTNER_POPUP_BUTTON"] = "submit request";
-$MESS["BITRIX24_PARTNER_POPUP_TITLE"] = "Bitrix24 installation and deployment";
+$MESS["BITRIX24_PARTNER_POPUP_TITLE"] = "Bitrix24 implementation, integration and customization";
 $MESS["INTRANET_SETTINGS_ADDITIONAL_USER_ACCESS_IP"] = "Add more users and IP addresses";
 $MESS["INTRANET_SETTINGS_BLACK_LIST"] = "Blacklist";
 $MESS["INTRANET_SETTINGS_BUTTON_CREATE"] = "Create landing page";

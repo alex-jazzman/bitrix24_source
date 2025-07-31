@@ -1336,7 +1336,8 @@ class UserProvider extends BaseProvider
 		$userPage = Option::get('socialnetwork', 'user_page', false, SITE_ID);
 		if (!$userPage)
 		{
-			$userPage = SITE_DIR.'company/personal/';
+			$siteDir = (defined('SITE_DIR') && !empty(SITE_DIR)) ? SITE_DIR : '/';
+			$userPage = $siteDir . 'company/personal/';
 		}
 
 		return $userPage.'user/' . ($userId !== null ? $userId : '#id#') . '/';

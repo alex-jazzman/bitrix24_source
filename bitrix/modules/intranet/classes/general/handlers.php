@@ -1486,6 +1486,15 @@ RegisterModuleDependences('main', 'OnBeforeProlog', 'intranet', 'CIntranetEventH
 		if(defined("ADMIN_SECTION") && ADMIN_SECTION == true)
 			return;
 
+		if (
+			!defined('AIR_SITE_TEMPLATE')
+			&& defined('SITE_TEMPLATE_ID')
+			&& SITE_TEMPLATE_ID === 'bitrix24'
+		)
+		{
+			define('AIR_SITE_TEMPLATE', true);
+		}
+
 		if (self::isSkipWizardButton())
 		{
 			return;

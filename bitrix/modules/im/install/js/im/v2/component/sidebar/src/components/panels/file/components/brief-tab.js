@@ -176,7 +176,7 @@ export const BriefTab = {
 				</template>
 				<DetailEmptyState
 					v-else-if="isEmptyState"
-					:title="loc('IM_SIDEBAR_BRIEFS_EMPTY')"
+					:title="loc('IM_SIDEBAR_BRIEFS_EMPTY_MSGVER_2')"
 					:iconType="SidebarDetailBlock.document"
 				/>
 			</template>

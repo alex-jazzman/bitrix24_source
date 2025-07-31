@@ -175,7 +175,7 @@ class Track extends EO_CallTrack
 			$absolute
 		);
 
-		if (Loader::includeModule('ai'))
+		if ($absolute && Loader::includeModule('ai'))
 		{
 			$publicUrl = \Bitrix\AI\Config::getValue('public_url') ?? '';
 			if (!empty($publicUrl))

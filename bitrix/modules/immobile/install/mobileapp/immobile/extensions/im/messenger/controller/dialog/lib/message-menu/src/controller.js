@@ -38,27 +38,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/controller', (require
 	class MessageMenuController
 	{
 		/**
-		 * @type {IDialogHeaderTitle|null}
-		 */
-		#messageContextMenuController = null;
-
-		/**
-		 * @param {DialogLocator} serviceLocator
-		 * @param {() => DialoguesModelState} getDialog
-		 */
-		static async create({ dialogLocator, getDialog })
-		{
-			const controller = new this({ dialogLocator, getDialog });
-
-			await controller.registerActions();
-			await controller.registerActionHandlers();
-
-			return controller;
-		}
-
-		/**
-		 * @param {DialogLocator} serviceLocator
-		 * @param {() => DialoguesModelState} getDialog
+		 * @param {MessageMenuControllerCreateParams} params
 		 */
 		constructor({ dialogLocator, getDialog })
 		{
@@ -102,24 +82,14 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/controller', (require
 		}
 
 		/**
+		 * @param {number} messageId
 		 * @return {Promise<IMessageContextMenu>}
 		 */
-		async getMessageContextMenuController()
+		async createMessageContextMenuControllerByMessageId(messageId)
 		{
-			if (!this.#messageContextMenuController)
-			{
-				this.#messageContextMenuController = await this.#initMessageContextMenuController();
-			}
-
-			return this.#messageContextMenuController;
-		}
-
-		/**
-		 * @return {Promise<IMessageContextMenu>}
-		 */
-		async #initMessageContextMenuController()
-		{
-			const MessageContextMenuControllerClass = await this.configurator.getMessageContextMenuControllerClass();
+			const MessageContextMenuControllerClass = await this.configurator
+				.getMessageContextMenuControllerClassByMessageId(messageId)
+			;
 
 			const contextMenuController = new MessageContextMenuControllerClass({
 				getDialog: this.getDialog,
@@ -140,7 +110,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/controller', (require
 		 */
 		async getOrderedActions(message)
 		{
-			const controller = await this.getMessageContextMenuController();
+			const controller = await this.createMessageContextMenuControllerByMessageId(message.messageModel.id);
 			const orderedActions = await controller.getOrderedActions();
 
 			return [
@@ -184,7 +154,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/controller', (require
 				return;
 			}
 
-			const messageModel = this.store.getters['messagesModel/getById'](messageId);
+			const messageModel = this.#getMessageModel(messageId);
 
 			if (!messageModel || !('id' in messageModel))
 			{
@@ -202,8 +172,10 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/controller', (require
 
 			const contextMenuMessage = this.createMessageMenuMessage(messageId);
 
-			const menu = new MessageMenuView();
+			await this.registerActions(contextMenuMessage.messageModel.id);
+			await this.registerActionHandlers(contextMenuMessage.messageModel.id);
 
+			const menu = new MessageMenuView();
 			const orderedActions = await this.getOrderedActions(contextMenuMessage);
 			orderedActions
 				.forEach((actionId) => this.actions[actionId](menu, contextMenuMessage))
@@ -215,9 +187,13 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/controller', (require
 			Haptics.impactMedium();
 		}
 
+		/**
+		 * @param messageId
+		 * @returns {MessageMenuMessage}
+		 */
 		createMessageMenuMessage(messageId)
 		{
-			const messageModel = clone(this.store.getters['messagesModel/getById'](messageId));
+			const messageModel = clone(this.#getMessageModel(messageId));
 			const fileModel = clone(this.store.getters['filesModel/getById'](messageModel.files[0]));
 			const dialogModel = clone(this.store.getters['dialoguesModel/getById'](this.dialogId));
 			const userModel = clone(this.store.getters['usersModel/getById'](messageModel.authorId));
@@ -257,7 +233,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/controller', (require
 				return;
 			}
 
-			const messageModel = this.store.getters['messagesModel/getById'](message.id);
+			const messageModel = this.#getMessageModel(message.id);
 			if (!messageModel || !('id' in messageModel))
 			{
 				Haptics.notifyFailure();
@@ -280,22 +256,21 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/controller', (require
 
 			const menu = new MessageMenuView();
 			const orderedActions = await this.getOrderedActionsForErrorMessage(contextMenuMessage);
-			orderedActions
-				.forEach((actionId) => this.actions[actionId](menu, contextMenuMessage))
-			;
+			orderedActions.forEach((actionId) => this.actions[actionId](menu, contextMenuMessage));
 
-			this.dialogLocator.get('view')
-				.showMenuForMessage(message, menu)
-			;
+			this.dialogLocator.get('view').showMenuForMessage(message, menu);
 			Haptics.impactMedium();
 		}
 
 		/**
 		 * @param {string} actionId
 		 * @param {Message} message
+		 * @param {Object} params
 		 */
-		onMessageMenuActionTap(actionId, message)
+		async onMessageMenuActionTap(actionId, message, params)
 		{
+			await this.registerActionHandlers(message.id);
+
 			logger.log('MessageMenuController onMessageMenuActionTap', actionId, message);
 			if (!(actionId in this.handlers))
 			{
@@ -304,21 +279,23 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/controller', (require
 
 			const messageMenuMessage = this.createMessageMenuMessage(message.id);
 
-			this.handlers[actionId](messageMenuMessage);
+			return this.handlers[actionId](messageMenuMessage, params);
 		}
 
 		onMessageMenuReactionTap(reactionId, message)
 		{
 			logger.log('MessageMenuController onMessageMenuReactionTap', reactionId, message);
 
-			this.dialogLocator.get('message-service')
-				.setReaction(reactionId, message.id)
-			;
+			this.dialogLocator.get('message-service').setReaction(reactionId, message.id);
 		}
 
-		async registerActions()
+		/**
+		 * @param messageId
+		 * @return {Promise<void>}
+		 */
+		async registerActions(messageId)
 		{
-			const controller = await this.getMessageContextMenuController();
+			const controller = await this.createMessageContextMenuControllerByMessageId(messageId);
 
 			this.actions = {
 				[MessageMenuActionType.reaction]: this.addReactionAction.bind(this),
@@ -326,9 +303,13 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/controller', (require
 			};
 		}
 
-		async registerActionHandlers()
+		/**
+		 * @param messageId
+		 * @return {Promise<void>}
+		 */
+		async registerActionHandlers(messageId)
 		{
-			const controller = await this.getMessageContextMenuController();
+			const controller = await this.createMessageContextMenuControllerByMessageId(messageId);
 
 			this.handlers = {
 				...controller.getActionHandlers(),
@@ -353,6 +334,11 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/controller', (require
 					.addReaction(FacepalmReaction)
 				;
 			}
+		}
+
+		#getMessageModel(messageId)
+		{
+			return this.store.getters['messagesModel/getById'](messageId);
 		}
 
 		/**

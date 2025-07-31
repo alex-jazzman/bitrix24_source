@@ -129,7 +129,7 @@ export class Analytics
 			c_element: params.withVideo ? AnalyticsElement.videoButton : AnalyticsElement.audioButton,
 			status: params.status,
 			p1: params.mediaParams.video ? AnalyticsDeviceStatus.videoOn : AnalyticsDeviceStatus.videoOff,
-			p2: params.mediaParams.audio ? AnalyticsDeviceStatus.micOn : AnalyticsDeviceStatus.micOff,
+			p2: `chatUserCount_${params.userCounter}`,
 			p3: params.isCopilotActive ? AnalyticsAIStatus.aiOn : AnalyticsAIStatus.aiOff,
 			p5: `callId_${params.callId}`,
 		});
@@ -159,7 +159,7 @@ export class Analytics
 			type: params.callType,
 			status: params.status,
 			p1: params.mediaParams.video ? AnalyticsDeviceStatus.videoOn : AnalyticsDeviceStatus.videoOff,
-			p2: params.mediaParams.audio ? AnalyticsDeviceStatus.micOn : AnalyticsDeviceStatus.micOff,
+			p2: `chatUserCount_${params.associatedEntity?.userCounter}`,
 			p3: params.isCopilotActive ? AnalyticsAIStatus.aiOn : AnalyticsAIStatus.aiOff,
 			p5: `callId_${params.callId}`,
 		};
@@ -239,13 +239,15 @@ export class Analytics
 
 	onReconnect(params)
 	{
+		const reconnectionReasonInfo = params.reconnectionReasonInfo.substring(0, 100);
 		sendData({
 			tool: AnalyticsTool.im,
 			category: AnalyticsCategory.call,
 			event: AnalyticsEvent.reconnect,
 			type: params.callType,
 			c_section: AnalyticsSection.callWindow,
-			status: params.status,
+			status: params.reconnectionReason || '',
+			p3: `msg_${reconnectionReasonInfo}`,
 			p4: `attemptNumber_${params.reconnectionEventCount}`,
 			p5: `callId_${params.callId}`,
 		});

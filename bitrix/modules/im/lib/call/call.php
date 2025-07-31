@@ -540,6 +540,8 @@ class Call
 		// by settings or tariif
 		$enable = false;
 
+		Loader::includeModule('call');
+
 		if (
 			\Bitrix\Call\Integration\AI\CallAISettings::isCallAIEnable()
 			&& \Bitrix\Call\Integration\AI\CallAISettings::isAutoStartRecordingEnable()
@@ -645,7 +647,14 @@ class Call
 		);
 	}
 
-	public function sendInviteUsers(int $senderId, array $toUserIds, $isLegacyMobile, $video = false, $sendPush = true): void
+	public function sendInviteUsers(
+		int $senderId,
+		array $toUserIds,
+		$isLegacyMobile,
+		$video = false,
+		$sendPush = true,
+		string $sendMode = Signaling::MODE_ALL
+	): void
 	{
 		foreach ($toUserIds as $toUserId)
 		{
@@ -654,7 +663,8 @@ class Call
 				$toUserId,
 				$isLegacyMobile,
 				$video,
-				$sendPush
+				$sendPush,
+				$sendMode
 			);
 		}
 	}
@@ -695,11 +705,6 @@ class Call
 	}
 
 	public function finish(): void
-	{
-		$this->finishCall();
-	}
-
-	public function finishCall(): void
 	{
 		if ($this->endDate instanceof DateTime)
 		{
@@ -1121,6 +1126,8 @@ class Call
 		$instance->publicId = randString(10);
 		$instance->state = static::STATE_NEW;
 
+		Loader::includeModule('call');
+
 		if ($scheme && in_array($scheme, [self::SCHEME_CLASSIC, self::SCHEME_JWT], true))
 		{
 			$instance->scheme = $scheme;
@@ -1251,6 +1258,9 @@ class Call
 		$instance->endpoint = $fields['ENDPOINT'];
 
 		$instance->scheme = self::SCHEME_CLASSIC;
+
+		Loader::includeModule('call');
+
 		if (isset($fields['SCHEME']))
 		{
 			$instance->scheme = (int)($fields['SCHEME'] ?: self::SCHEME_CLASSIC);
@@ -1295,7 +1305,6 @@ class Call
 	public static function loadWithId($id): ?Call
 	{
 		$row = CallTable::getRowById($id);
-
 		if (is_array($row))
 		{
 			return static::createWithArray($row);
@@ -1306,15 +1315,11 @@ class Call
 
 	public static function loadWithUuid($uuid): ?Call
 	{
-		$searchParams = [
-			'filter' => [
-				'UUID' => $uuid,
-			],
+		$row = CallTable::getList([
+			'select' => ['*'],
+			'filter' => ['=UUID' => $uuid],
 			'limit' => 1,
-		];
-
-		$row = CallTable::getRow($searchParams);
-
+		])->fetch();
 		if (is_array($row))
 		{
 			return static::createWithArray($row);

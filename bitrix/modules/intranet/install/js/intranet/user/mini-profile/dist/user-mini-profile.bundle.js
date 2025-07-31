@@ -397,7 +397,11 @@ this.BX.Intranet = this.BX.Intranet || {};
 				@click="onUserClick(user)"
 			>
 				<div class="intranet-user-mini-profile__structure-view-department-block__user-avatar">
-					<Avatar :options="{ picPath: user.avatar, size: 28, title: user.name }"/>
+					<Avatar :options="{ 
+						picPath: user.avatar ? encodeURI(user.avatar) : undefined,
+						size: 28, 
+						title: user.name 
+					}"/>
 				</div>
 				<div class="intranet-user-mini-profile__structure-view-department-block__user-info">
 					<div 
@@ -1182,7 +1186,12 @@ this.BX.Intranet = this.BX.Intranet || {};
 					>
 						<Avatar 
 							:type="avatarType"
-							:options="{ userName: info.name, size: 72, title: info.name, picPath: info.avatar }"
+							:options="{
+								userName: info.name, 
+								size: 72, 
+								title: info.name, 
+								picPath: info.avatar ? encodeURI(info.avatar) : undefined,
+							}"
 						/>
 					</div>
 					<UserStatusIcon v-if="info.status" 
@@ -1376,7 +1385,11 @@ this.BX.Intranet = this.BX.Intranet || {};
 						:size="18"
 					/>
 					<Avatar v-else
-						:options="{ size: 24, title, picPath: image.imageSrc }"
+						:options="{
+							size: 24,
+							title,
+							picPath: image.imageSrc ? encodeURI(image.imageSrc) : undefined,
+						}"
 					/>
 				</div>
 				<div 

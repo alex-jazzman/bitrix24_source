@@ -246,11 +246,47 @@ export class Call {
 		Event.EventEmitter.subscribe('BX.Call.Logger:sendLog', (event) => {
 			this.setLog(event.data);
 		});
+
+		this.initConnectionEvent();
+	}
+
+	get remoteParticipantsCount()
+	{
+		return Object.keys(this.#privateProperties.remoteParticipants).length;
 	}
 
 	get isMediaMutedBySystem()
 	{
 		return this.#privateProperties.mediaMutedBySystem;
+	}
+
+	onChangeConnection(connection)
+	{
+		const rtt = connection.rtt;
+
+		if (!rtt && !this.#privateProperties.isReconnecting)
+		{
+			this.#beforeDisconnect();
+			this.#reconnect({
+				reconnectionReason: 'ON_CHANGE_CONNECTION',
+				reconnectionReasonInfo: `RTT: ${rtt}`,
+			});
+		}
+	}
+
+	initConnectionEvent()
+	{
+		const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+
+		if (!connection)
+		{
+			return;
+		}
+
+		connection.addEventListener('change', () =>
+		{
+			this.onChangeConnection(connection);
+		});
 	}
 
 	checkQosFeatureAndExecutionCallback(callback)
@@ -570,7 +606,10 @@ export class Call {
 			{
 				if (error.name !== 'AbortError' && !this.#privateProperties.abortController.signal.aborted)
 				{
-					this.#reconnect();
+					this.#reconnect({
+						reconnectionReason: 'GET_MEDIASERVER_INFO',
+						reconnectionReasonInfo: error?.name || '',
+					});
 				}
 				else if (this.#privateProperties.abortController.signal.aborted)
 				{
@@ -600,7 +639,7 @@ export class Call {
 		this.#privateProperties.socketConnect.onclose = (e) => this.socketOnCloseHandler(e);
 	};
 
-	#reconnect() {
+	#reconnect(data) {
 		this.#privateProperties.isReconnecting = true;
 		this.#privateProperties.videoQueue = VIDEO_QUEUE.INITIAL;
 
@@ -621,7 +660,8 @@ export class Call {
 				withCounter: true,
 			});
 		});
-		this.triggerEvents('Reconnecting');
+		
+		this.triggerEvents('Reconnecting', [data]);
 	};
 
 	#beforeDisconnect() {
@@ -758,7 +798,10 @@ export class Call {
 			{
 				this.setLog(`Sending an offer failed: ${e}`, LOG_LEVEL.ERROR);
 				this.#beforeDisconnect();
-				this.#reconnect();
+				this.#reconnect({
+					reconnectionReason: 'SENDING_OFFER',
+					reconnectionReasonInfo: `Sending an offer failed: ${e}`,
+				});
 			}
 		}
 	}
@@ -834,8 +877,6 @@ export class Call {
 
 			}
 
-			this.triggerEvents(connectedEvent);
-
 			this.checkQosFeatureAndExecutionCallback(() =>
 			{
 				if (connectedEvent === 'Reconnected' && this.monitoringEvents.length)
@@ -854,7 +895,7 @@ export class Call {
 				this.#setRemoteParticipant(p);
 			});
 			
-			if (connectedEvent === 'Reconnected') // task-601473
+			if (connectedEvent === 'Reconnected')
 			{
 				for (let userId in participantsToDelete)
 				{
@@ -879,7 +920,10 @@ export class Call {
 
 			this.#privateProperties.pingIntervalDuration = data.joinResponse.pingInterval * 1000
 			this.#privateProperties.pingTimeoutDuration = this.#privateProperties.pingIntervalDuration * 2
-			this.#startPingInterval()
+			 
+			this.#startPingInterval();
+			
+			this.triggerEvents(connectedEvent);
 		} else if (data?.participantJoined) {
 			this.setLog(`Adding a new participant with id ${data.participantJoined.participant.userId} (sid: ${data.participantJoined.participant.sid})`, LOG_LEVEL.INFO);
 			this.#setRemoteParticipant(data.participantJoined.participant);
@@ -1123,7 +1167,10 @@ export class Call {
 				data.leave.reason !== "SIGNALING_DUPLICATE_PARTICIPANT")
 			{
 				this.#privateProperties.lastReconnectionReason = ReconnectionReason.LeaveCommand;
-				this.#reconnect();
+				this.#reconnect({
+					reconnectionReason: 'GOT_LEAVE_SIGNAL',
+					reconnectionReasonInfo: `Leave reason ${data.leave.reason}`,
+				});
 			}
 			else
 			{
@@ -1141,7 +1188,6 @@ export class Call {
 		}
 		else if (data?.onActionSent)
 		{
-			console.warn('data?.onActionSent', data.onActionSent); // test_remove
 			if (data?.onActionSent.changeSettings)
 			{
 				this.#settingsChangedHandler(data.onActionSent.changeSettings);
@@ -1166,7 +1212,7 @@ export class Call {
 	};
 
 	socketOnOpenHandler() {
-		window.addEventListener('unload', this.sendLeaveBound)
+		window.addEventListener('unload', this.sendLeaveBound);
 	};
 
 	socketOnCloseHandler(e) {
@@ -1176,7 +1222,10 @@ export class Call {
 		{
 			this.setLog(`Socket closed with a code ${e.code}, reconnecting`, LOG_LEVEL.ERROR);
 			this.#privateProperties.lastReconnectionReason = ReconnectionReason.WsTransportClosed;
-			this.#reconnect();
+			this.#reconnect({
+				reconnectionReason: 'WS_CONNECTION_CLOSED',
+				reconnectionReasonInfo: `Socket closed with a code ${e.code}`,
+			});
 		}
 		else
 		{
@@ -1234,7 +1283,10 @@ export class Call {
 			if (this.#privateProperties.canReconnect)
 			{
 				this.#privateProperties.lastReconnectionReason = ReconnectionReason.PeerConnectionFailed;
-				this.#reconnect();
+				this.#reconnect({
+					reconnectionReason: 'ON_CONNECTION_STATE_CHANGED',
+					reconnectionReasonInfo: `State of ${subscriber ? 'recipient' : 'sender'} peer connection changed to ${state}`,
+				});
 			}
 		}
 	}
@@ -1248,7 +1300,10 @@ export class Call {
 			this.setLog('Ping signal was not received, reconnecting', LOG_LEVEL.WARNING);
 			this.#beforeDisconnect();
 			this.#privateProperties.lastReconnectionReason = ReconnectionReason.PingPongMissed;
-			this.#reconnect();
+			this.#reconnect({
+				reconnectionReason: 'PING_SIGNAL_NOT_RECEIVED',
+				reconnectionReasonInfo: ``,
+			});
 		}, this.#privateProperties.pingTimeoutDuration);
 	}
 
@@ -2933,8 +2988,11 @@ export class Call {
 	}
 
 	#sendLog(log, level) {
-		return true;
-
+		if (!Util.isKibanaLogsEnabled())
+		{
+			return true;
+		}
+		
 		const signal = {
 			sendLog: {
 				userName: `${this.#privateProperties.userId}`,
@@ -2992,7 +3050,10 @@ export class Call {
 			this.setLog(`Handling a remote answer failed: ${e}`, LOG_LEVEL.ERROR);
 			hasError = true;
 			this.#beforeDisconnect();
-			this.#reconnect();
+			this.#reconnect({
+				reconnectionReason: 'HANDLING_ANSWER',
+				reconnectionReasonInfo: `Handling a remote answer failed: ${e}`,
+			});
 			this.checkQosFeatureAndExecutionCallback(() =>
 			{
 				this.addMonitoringEvents({
@@ -3044,7 +3105,12 @@ export class Call {
 		{
 			this.setLog(`Handling a remote offer failed: ${e}`, LOG_LEVEL.ERROR);
 			this.#beforeDisconnect();
-			this.#reconnect();
+			
+			this.#reconnect({
+				reconnectionReason: 'HANDLING_OFFER',
+				reconnectionReasonInfo: `Handling a remote offer failed: ${e}`,
+			});
+			
 			this.checkQosFeatureAndExecutionCallback(() =>
 			{
 				this.addMonitoringEvents({

@@ -4,7 +4,12 @@
 jn.define('im/messenger/provider/services/component-code/service', (require, exports, module) => {
 	const { NotifyManager } = require('notify-manager');
 
-	const { ComponentCode, DialogType, UserRole } = require('im/messenger/const');
+	const {
+		ComponentCode,
+		DialogType,
+		UserRole,
+		ErrorType,
+	} = require('im/messenger/const');
 	const { ChatService } = require('im/messenger/provider/services/chat');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { DialogHelper } = require('im/messenger/lib/helper');
@@ -74,11 +79,6 @@ jn.define('im/messenger/provider/services/component-code/service', (require, exp
 				return fallbackCode;
 			}
 
-			if (dialogHelper.isCopilot && !Feature.isCopilotInDefaultTabAvailable)
-			{
-				return ComponentCode.imCopilotMessenger;
-			}
-
 			if (dialogHelper.isOpenChannel && dialogHelper.isCurrentUserGuest)
 			{
 				return ComponentCode.imChannelMessenger;
@@ -110,12 +110,17 @@ jn.define('im/messenger/provider/services/component-code/service', (require, exp
 		 */
 		static showToastByErrorCode(errorCode)
 		{
-			if (errorCode === 'ACCESS_DENIED')
+			if (errorCode === ErrorType.dialog.accessDenied)
 			{
 				Notification.showToast(ToastType.chatAccessDenied);
 			}
 
-			if (errorCode === 'NETWORK_ERROR')
+			if (errorCode === ErrorType.dialog.chatNotFound)
+			{
+				Notification.showToast(ToastType.chatAccessDenied);
+			}
+
+			if (errorCode === ErrorType.networkError)
 			{
 				Notification.showOfflineToast();
 			}

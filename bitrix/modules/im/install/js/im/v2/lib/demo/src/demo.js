@@ -34,13 +34,18 @@ export class DemoChatBuilder
 	addMessage(fields: Partial<ImModelMessage>): Partial<ImModelMessage>
 	{
 		const newMessage = {
-			id: IdGenerator.getNextMessageId(),
+			id: fields.id ?? IdGenerator.getNextMessageId(),
 			chatId: this.#chat.chatId ?? 0,
 			...fields,
 		};
 		this.#messages.push(newMessage);
 
 		return newMessage;
+	}
+
+	getNextMessageId(): number
+	{
+		return IdGenerator.getNextMessageId();
 	}
 
 	addUser(fields: Partial<ImModelUser>): Partial<ImModelUser>

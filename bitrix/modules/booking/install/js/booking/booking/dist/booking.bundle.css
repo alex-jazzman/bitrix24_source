@@ -495,6 +495,12 @@
 	background-color: rgba(var(--ui-color-palette-white-base-rgb), 0.5);
 }
 
+.booking--booking--crm-forms-popup--footer-buttons-bar {
+	display: flex;
+	justify-content: end;
+	gap: 12px;
+}
+
 .booking-booking-grid-left-panel-container {
 	position: relative;
 	min-width: var(--left-panel-width);
@@ -1035,6 +1041,84 @@
 	background: var(--ui-color-background-primary);
 }
 
+.booking--booking--crm-forms-popup__wrapper {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	flex-grow: 1;
+}
+
+.booking--booking--crm-forms-popup__header-title {
+	color: var(--ui-color-text-primary, #333);
+	font-size: 19px;
+	font-style: normal;
+	font-weight: var(--ui-font-weight-medium);
+	line-height: 26px;
+	letter-spacing: -0.2px;
+}
+
+.booking--booking--crm-forms-popup__header-description {
+	font-size: var(--ui-font-size-lg);
+	font-weight: var(--ui-font-weight-normal);
+	line-height: 18px;
+}
+
+.booking--booking--crm-forms-popup__toolbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+}
+
+.booking--booking-crm-forms-popup__list-wrapper {
+	background: var(--ui-color-palette-white-base, #FFF);
+	border-radius: 12px;
+	border: 1px solid rgba(var(--ui-color-palette-black-solid-rgb), 0.08);
+	display: flex;
+	flex-grow: 1;
+}
+
+.booking--booking--crm-forms-popup--list__container {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	padding: 8px;
+	width: 100%;
+	max-height: 198px;
+	overflow-y: auto;
+	scrollbar-width: thin;
+}
+
+.booking--booking--crm-forms-popup--list-items {
+	display: flex;
+	flex-direction: column;
+	gap: 9px;
+}
+
+.booking--booking--crm-forms-popup-sort {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 4px;
+	color: var(--ui-color-text-primary);
+	cursor: default;
+	font-size: var(--ui-font-size-lg);
+	font-style: normal;
+	font-weight: var(--ui-font-weight-normal);
+	line-height: 20px;
+	letter-spacing: -0.05px;
+}
+
+.booking--booking--crm-forms-popup-sort span {
+	border-bottom: 1px dashed color-mix(in srgb, var(--ui-color-text-primary) 28%, transparent);
+}
+
+.booking--booking--crm-forms-popup--sort-icon {
+	--ui-icon-set__icon-size: 18px;
+	--ui-icon-set__icon-color: var(--ui-color-text-primary);
+}
+
 .booking-booking-off-hours {
 	position: absolute;
 	z-index: 1;
@@ -1326,11 +1410,11 @@
 	pointer-events: none;
 }
 
-.booking-booking-booking.--overbooking {
+.booking-booking-booking.--overbooking-bg {
 	--booking-background-color: rgba(207, 172, 0, 1);
 }
 
-.booking-booking-booking.--overbooking.--expired {
+.booking-booking-booking.--overbooking-bg.--expired {
 	--booking-background-color: rgba(229, 211, 145);
 }
 
@@ -1343,7 +1427,7 @@
 }
 
 .booking-booking-booking.--resizing {
-	z-index: 10;
+	z-index: 10 !important;
 }
 
 .booking-booking-booking.--accent {
@@ -1358,11 +1442,11 @@
 	--outline-accent-color: rgba(138, 178, 16, .8);
 }
 
-.booking-booking-booking.--overbooking.--accent {
+.booking-booking-booking.--overbooking-bg.--accent {
 	--outline-accent-color: rgba(204, 138, 3, 1);
 }
 
-.booking-booking-booking.--overbooking.--expired.--accent {
+.booking-booking-booking.--overbooking-bg.--expired.--accent {
 	--outline-accent-color: rgba(204, 138, 3, .8);
 }
 
@@ -1828,6 +1912,92 @@
 
 .booking--booking--select-resources-dialog-footer__button:hover {
 	color: var(--ui-color-base-80);
+}
+
+.booking--booking--crm-forms-popup--list__placeholder-bg {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	background: rgba(255, 255, 255, 0.80);
+	filter: blur(13px);
+	width: 224px;
+	height: 113px;
+}
+
+.booking--booking--crm-forms-popup--list__placeholder {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	color: var(--ui-color-palette-gray-70, #828B95);
+	-webkit-user-select: none;
+	        user-select: none;
+}
+
+.booking--booking--crm-forms-popup--item {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	padding: 8px;
+	gap: 6px;
+}
+
+.booking--booking--crm-forms-popup--item__icon {
+	--ui-icon-set__icon-size: 20px;
+	--ui-icon-set__icon-color: var(--ui-color-g-content-blue-2, #0075FF);
+}
+
+.booking--booking--crm-forms-popup--item__name {
+	flex-grow: 1;
+}
+
+.booking--booking--crm-forms-popup--item__name span {
+	max-width: 15em;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	display: inline-block;
+	color: var(--ui-color-palette-black-base);
+	font-size: 14px;
+	font-weight: var(--ui-font-weight-normal);
+	line-height: 19px;
+	letter-spacing: -0.05px;
+}
+
+.booking--booking--crm-forms-popup--item__copy-btn {
+	--ui-icon-set__icon-color: var(--ui-color-palette-gray-70);
+	--ui-btn-border-color: var(--ui-color-design-outline-na-stroke);
+
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	color: var(--ui-color-palette-gray-70);
+	font-size: 10px;
+	font-weight: var(--ui-font-weight-normal);
+	line-height: 12px;
+	cursor: pointer;
+	padding: 2px 8px;
+	border: var(--ui-btn-border);
+	border-color: var(--ui-btn-border-color);
+	border-radius: var(--ui-border-radius-2xs, 5px);
+}
+
+.booking--booking--crm-forms-popup--item__copy-btn:hover {
+	--ui-btn-background: var(--ui-color-design-outline-na-bg);
+	--ui-btn-border-color: var(--ui-color-design-outline-na-stroke);
+	--ui-icon-set__icon-color: var(--ui-color-palette-gray-80);
+	--ui-btn-border-color-hover: color-mix(in srgb, var(--ui-btn-border-color) 100%, var(--ui-color-bg-state-hover-default-hex) var(--ui-color-bg-state-hover-default-opacity));
+	--ui-btn-background-hover: color-mix(in srgb, var(--ui-btn-background) 100%, var(--ui-color-bg-state-hover-default-hex) var(--ui-color-bg-state-hover-default-opacity) 3%
+	);
+
+	color: var(--ui-color-palette-gray-80);
+	border-color: var(--ui-btn-border-color-hover);
+	background-color: var(--ui-btn-background-hover);
+}
+
+.booking--booking--crm-forms-popup--item__copy-btn-icon {
+	--ui-icon-set__icon-size: 14px;
 }
 
 .booking-quick-filter-help-popup .booking-booking-sticky-popup-content {
@@ -2353,6 +2523,45 @@
 .booking-booking-resources-dialog-header-input-icon .ui-icon-set {
 	--ui-icon-set__icon-color: var(--ui-color-base-70);
 	--ui-icon-set__icon-size: 20px;
+}
+
+.booking--booking--crm-forms-popup--item-skeleton {
+	--skeleton-bg-color: rgb(var(--ui-color-palette-gray-04-rgb));
+
+	display: flex;
+	align-items: center;
+	height: 32px;
+	flex-shrink: 0;
+	gap: 8px;
+	border-radius: 8px;
+	border: 1px solid rgba(0, 0, 0, 0.03);
+	background: #FFF;
+	padding: 0 9px;
+}
+
+.booking--booking--crm-forms-popup--item-skeleton__circle {
+	width: 16px;
+	height: 16px;
+	flex-shrink: 0;
+	border-radius: 26px;
+	background: var(--skeleton-bg-color);
+}
+
+.booking--booking--crm-forms-popup--item-skeleton__line {
+	width: 156px;
+	height: 8px;
+	flex-shrink: 0;
+	border-radius: 26px;
+	background: var(--skeleton-bg-color);
+}
+
+.booking--booking--crm-forms-popup--item-skeleton__line.thin {
+	width: 63px;
+	height: 4px;
+}
+
+.booking--booking--crm-forms-popup--item-skeleton__space {
+	flex-grow: 1;
 }
 
 .booking-booking-booking-add-client {

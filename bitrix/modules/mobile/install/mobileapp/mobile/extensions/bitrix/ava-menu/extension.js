@@ -9,8 +9,8 @@ jn.define('ava-menu', (require, exports, module) => {
 	const { Sign } = require('ava-menu/sign');
 	const { Calendar } = require('ava-menu/calendar');
 	const { RunActionExecutor } = require('rest/run-action-executor');
+	const { UserProfile, fetchNewProfileFeatureEnabled } = require('user-profile');
 	const { WhatsNewUIManager } = require('whats-new/ui-manager');
-
 	const { throttle } = require('utils/function');
 
 	const entryTypes = {
@@ -152,7 +152,7 @@ jn.define('ava-menu', (require, exports, module) => {
 
 			if (!this.handleById(event))
 			{
-				this.handleByEntryParams(entryParams);
+				void this.handleByEntryParams(entryParams);
 			}
 		}
 
@@ -216,12 +216,26 @@ jn.define('ava-menu', (require, exports, module) => {
 			}
 		}
 
-		handleByEntryParams(entryParams)
-		{
+		handleByEntryParams = async (entryParams) => {
 			switch (entryParams?.type)
 			{
 				case entryTypes.component:
-					PageManager.openComponent('JSStackComponent', { canOpenInDefault: true, ...entryParams });
+					if (entryParams.componentCode === 'profile.view')
+					{
+						const isNewProfileFeatureEnabled = await fetchNewProfileFeatureEnabled();
+						if (isNewProfileFeatureEnabled)
+						{
+							void UserProfile.open({ openInComponent: true });
+
+							return;
+						}
+
+						PageManager.openComponent('JSStackComponent', { canOpenInDefault: true, ...entryParams });
+					}
+					else
+					{
+						PageManager.openComponent('JSStackComponent', { canOpenInDefault: true, ...entryParams });
+					}
 					break;
 
 				case entryTypes.page:
@@ -235,7 +249,7 @@ jn.define('ava-menu', (require, exports, module) => {
 				default:
 					break;
 			}
-		}
+		};
 	}
 
 	module.exports = {

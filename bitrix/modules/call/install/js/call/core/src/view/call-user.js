@@ -84,8 +84,9 @@ export class CallUser
 
 	constructor(config: CallUserParams = {})
 	{
+		this._onUserFieldChangedHandler = this._onUserFieldChanged.bind(this);
 		this.userModel = config.userModel;
-		this.userModel.subscribe('changed', this._onUserFieldChanged.bind(this));
+		this.userModel.subscribe('changed', this._onUserFieldChangedHandler);
 		this.parentContainer = config.parentContainer;
 		this.screenSharingUser = Type.isBoolean(config.screenSharingUser) ? config.screenSharingUser : false;
 		this.allowBackgroundItem = Type.isBoolean(config.allowBackgroundItem) ? config.allowBackgroundItem : true;
@@ -154,19 +155,7 @@ export class CallUser
 
 		this.removeAvatarPulseTimer = null;
 		this.hideUserNameTimer = null;
-
-		this.init();
 	};
-
-	initMouseMoveHandler()
-	{
-		this.onMouseMoveHandler = (evt) => {
-			if (!this._alwaysShowName)
-			{
-				this.showUserName();
-			}
-		};
-	}
 
 	initUserNameState()
 	{
@@ -174,12 +163,6 @@ export class CallUser
 		{
 			this.toggleStateUserName(true);
 		}
-	}
-
-	init()
-	{
-		this.initMouseMoveHandler();
-		document.addEventListener('mousemove', this.onMouseMoveHandler);
 	}
 
 	get id()
@@ -1248,7 +1231,7 @@ export class CallUser
 					}
 				});
 			}
-			
+
 			if (this.userModel.cameraState)
 			{
 				menuItems.push({
@@ -1261,7 +1244,7 @@ export class CallUser
 						this.callBacks.onTurnOffParticipantCam({userId: this.userModel.id});
 					}
 				});
-			}	
+			}
 			if (this.userModel.screenState)
 			{
 				menuItems.push({
@@ -1274,7 +1257,7 @@ export class CallUser
 						this.callBacks.onTurnOffParticipantScreenshare({userId: this.userModel.id});
 					}
 				});
-			}		
+			}
 		}
 		if (menuItems.length === 0)
 		{
@@ -1433,29 +1416,55 @@ export class CallUser
 			return;
 		}
 		const width = this.elements.root.offsetWidth;
+		const initialUpdate = !this.elements.panel.hasChildNodes();
 
-		Dom.clean(this.elements.panel);
-		if (this.userModel.localUser && this.allowBackgroundItem)
+		if (this.lastWIdth && this.lastWIdth === width && !initialUpdate)
+		{
+			return;
+		}
+
+		const canChangeBackground = this.userModel.localUser && this.allowBackgroundItem;
+		const needChangeBackgroundButton = this.lastWIdth
+			|| (this.lastWIdth <= 300 && width > 300)
+			|| (this.lastWIdth > 300 && width <= 300);
+		const needChangePinButton = this.userModel.pinned && Boolean(this.elements.buttonPin.parentElement);
+		const needChangeUnPinButton = !this.userModel.pinned && Boolean(this.elements.buttonUnPin.parentElement);
+		const needToUpdate = initialUpdate
+			|| (canChangeBackground && needChangeBackgroundButton)
+			|| needChangePinButton
+			|| needChangeUnPinButton;
+
+		this.lastWIdth = width;
+
+		if (needToUpdate)
+		{
+			Dom.clean(this.elements.panel);
+		}
+
+		if (canChangeBackground && (needChangeBackgroundButton || initialUpdate))
 		{
 			if (width > 300)
 			{
-				this.elements.panel.appendChild(this.elements.buttonBackground);
+				Dom.append(this.elements.buttonBackground, this.elements.panel);
 			}
 			else
 			{
-				this.elements.panel.appendChild(this.elements.buttonMenu);
+				Dom.append(this.elements.buttonMenu, this.elements.panel);
 			}
 		}
 
 		if (this.allowPinButton)
 		{
-			if (this.userModel.pinned)
+			if (initialUpdate || needChangePinButton || needChangeUnPinButton)
 			{
-				this.elements.panel.appendChild(this.elements.buttonUnPin);
-			}
-			else
-			{
-				this.elements.panel.appendChild(this.elements.buttonPin);
+				if (this.userModel.pinned)
+				{
+					Dom.append(this.elements.buttonUnPin, this.elements.panel);
+				}
+				else
+				{
+					Dom.append(this.elements.buttonPin, this.elements.panel);
+				}
 			}
 
 			if (width > 250)
@@ -1475,12 +1484,12 @@ export class CallUser
 			this.currentBitrixCall = Util.getCurrentBitrixCall();
 
 			this.isShowRemoteParticipantButtonMenu =
-			Util.isUserControlFeatureEnabled()
-			&& Util.canControlChangeSettings()
-			&& (this.userModel.microphoneState || this.userModel.cameraState || this.userModel.screenState)
-			&& this.currentBitrixCall
-			&& this.currentBitrixCall.provider !== Provider.Plain;
-            //&& !(this.currentBitrixCall.associatedEntity.type === 'chat' && this.currentBitrixCall.associatedEntity.advanced['chatType'] === 'videoconf');
+				Util.isUserControlFeatureEnabled()
+				&& Util.canControlChangeSettings()
+				&& (this.userModel.microphoneState || this.userModel.cameraState || this.userModel.screenState)
+				&& this.currentBitrixCall
+				&& this.currentBitrixCall.provider !== Provider.Plain;
+			//&& !(this.currentBitrixCall.associatedEntity.type === 'chat' && this.currentBitrixCall.associatedEntity.advanced['chatType'] === 'videoconf');
 
 			if (this.isShowRemoteParticipantButtonMenu && this.elements.remoteParticipantButtonMenu)
 			{
@@ -1491,16 +1500,10 @@ export class CallUser
 
 	playVideoElements(videoElement)
 	{
-		const hasVideoEl = !!videoElement;
-		const isCanPlaying = hasVideoEl && !!videoElement.srcObject;
-		const isPaused = hasVideoEl && videoElement.paused;
+		const hasVideoEl = Boolean(videoElement);
+		const isCanPlaying = hasVideoEl && Boolean(videoElement.srcObject);
 		const isReadyPlaying = hasVideoEl && videoElement.readyState >= videoElement.HAVE_CURRENT_DATA;
 		const isEnded = hasVideoEl && videoElement.ended;
-
-		if (hasVideoEl && !isPaused)
-		{
-			videoElement.pause();
-		}
 
 		if (isCanPlaying && isReadyPlaying && !isEnded)
 		{
@@ -1514,8 +1517,7 @@ export class CallUser
 
 		if (isCanPlaying && !isReadyPlaying && !isEnded && !videoElement.onloadeddata)
 		{
-			videoElement.onloadeddata = () =>
-			{
+			videoElement.onloadeddata = () => {
 				this.playVideoElements(videoElement);
 			};
 		}
@@ -1741,6 +1743,10 @@ export class CallUser
 			this.updatePanelDeferred();
 			return false;
 		}
+		else
+		{
+			this.checkAspectInterval = setInterval(this.checkVideoAspect.bind(this), 500);
+		}
 
 		parent.appendChild(this.elements.root);
 		this.update();
@@ -1754,6 +1760,7 @@ export class CallUser
 			return false;
 		}
 
+		clearInterval(this.checkAspectInterval);
 		this.toggleResizeObserver(false);
 		this.elements.video.srcObject = null;
 		this.elements.preview.srcObject = null;
@@ -1874,7 +1881,7 @@ export class CallUser
 		{
 			this.showRemoteParticipantMenu();
 		}
-		
+
 		this.updatePanelDeferred();
 	}
 
@@ -2092,29 +2099,6 @@ export class CallUser
 		}
 	}
 
-	showUserName()
-	{
-		if (this.hideUserNameTimer)
-		{
-			clearTimeout(this.hideUserNameTimer);
-			this.hideUserNameTimer = null;
-		}
-
-		if (!this.elements.nameContainer)
-		{
-			return;
-		}
-
-		this.toggleStateUserName(true);
-
-		if (!this._alwaysShowName)
-		{
-			this.hideUserNameTimer = setTimeout(() => {
-				this.toggleStateUserName(false);
-			}, 5000)
-		}
-	};
-
 	destroy()
 	{
 		if (this.hintManager)
@@ -2122,10 +2106,10 @@ export class CallUser
 			this.hintManager.hide();
 			this.hintManager = null;
 		}
+		this.userModel.unsubscribe('changed', this._onUserFieldChangedHandler);
 		this.releaseStream();
 		clearInterval(this.checkAspectInterval);
 		this.toggleResizeObserver(false);
-		document.removeEventListener('mousemove', this.onMouseMoveHandler);
 	};
 
 	addAvatarPulseTimer()

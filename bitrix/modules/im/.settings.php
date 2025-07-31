@@ -30,7 +30,10 @@ return [
 			],
 			'Im.Services.Promotion' => [
 				'className' => \Bitrix\Im\V2\Promotion\Promotion::class,
-			]
+			],
+			'Im.AccessService' => [
+				'className' => \Bitrix\Im\V2\Service\AccessService::class,
+			],
 		],
 		'readonly' => true,
 	],

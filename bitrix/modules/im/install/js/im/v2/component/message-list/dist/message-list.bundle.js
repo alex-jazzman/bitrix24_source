@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,im_v2_lib_utils,im_v2_lib_quote,im_v2_component_animation,im_v2_lib_messageComponent,ui_lottie,im_v2_lib_inputAction,im_v2_component_elements_userListPopup,im_v2_lib_user,im_v2_lib_logger,im_v2_lib_menu,main_polyfill_intersectionobserver,im_v2_component_elements_avatar,im_v2_lib_copilot,im_v2_lib_permission,im_v2_lib_notifier,main_core,main_core_events,im_v2_lib_analytics,im_v2_lib_feature,im_v2_application_core,im_v2_const,im_v2_lib_dateFormatter,im_v2_component_message_file,im_v2_component_message_default,im_v2_component_message_error,im_v2_component_message_callInvite,im_v2_component_message_deleted,im_v2_component_message_unsupported,im_v2_component_message_smile,im_v2_component_message_system,im_v2_component_message_creation_chat,im_v2_component_message_copilot_creation,im_v2_component_message_copilot_answer,im_v2_component_message_copilot_addedUsers,im_v2_component_message_support_vote,im_v2_component_message_support_sessionNumber,im_v2_component_message_support_chatCreation,im_v2_component_message_creation_conference,im_v2_component_message_supervisor_updateFeature,im_v2_component_message_supervisor_enableFeature,im_v2_component_message_sign,im_v2_component_message_checkIn,im_v2_component_message_creation_ownChat,im_v2_component_message_zoomInvite,im_v2_component_message_creation_generalChat,im_v2_component_message_creation_generalChannel,im_v2_component_message_creation_channel,imopenlines_v2_component_message_startDialog,imopenlines_v2_component_message_hidden,imopenlines_v2_component_message_feedbackForm,im_v2_component_message_call,im_v2_component_message_vote,im_v2_component_message_creation_taskChat) {
+(function (exports,im_v2_lib_utils,im_v2_lib_quote,im_v2_component_animation,im_v2_lib_messageComponent,ui_lottie,im_v2_lib_inputAction,im_v2_component_elements_userListPopup,im_v2_lib_user,im_v2_lib_logger,im_v2_lib_menu,main_polyfill_intersectionobserver,im_v2_component_elements_avatar,im_v2_lib_copilot,im_v2_lib_permission,im_v2_lib_notifier,main_core,main_core_events,im_v2_lib_analytics,im_v2_lib_feature,im_v2_application_core,im_v2_const,im_v2_lib_dateFormatter,im_v2_component_message_file,im_v2_component_message_default,im_v2_component_message_error,im_v2_component_message_callInvite,im_v2_component_message_deleted,im_v2_component_message_unsupported,im_v2_component_message_smile,im_v2_component_message_system,im_v2_component_message_creation_chat,im_v2_component_message_copilot_creation,im_v2_component_message_copilot_answer,im_v2_component_message_copilot_addedUsers,im_v2_component_message_support_vote,im_v2_component_message_support_sessionNumber,im_v2_component_message_support_chatCreation,im_v2_component_message_creation_conference,im_v2_component_message_supervisor_updateFeature,im_v2_component_message_supervisor_enableFeature,im_v2_component_message_sign,im_v2_component_message_checkIn,im_v2_component_message_creation_ownChat,im_v2_component_message_zoomInvite,im_v2_component_message_creation_generalChat,im_v2_component_message_creation_generalChannel,im_v2_component_message_creation_channel,imopenlines_v2_component_message_startDialog,imopenlines_v2_component_message_hidden,imopenlines_v2_component_message_feedbackForm,im_v2_component_message_call,im_v2_component_message_vote,im_v2_component_message_creation_taskChat,im_v2_component_message_collab_convert,im_v2_component_message_aiAssistant_answer) {
 	'use strict';
 
 	var fr = 60;
@@ -7372,6 +7372,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	var _dialogId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("dialogId");
 	var _observer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("observer");
 	var _initObserver = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initObserver");
+	var _isMessageBottomVisible = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isMessageBottomVisible");
 	var _sendVisibleEvent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendVisibleEvent");
 	var _sendNotVisibleEvent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendNotVisibleEvent");
 	var _getThreshold = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getThreshold");
@@ -7389,6 +7390,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    });
 	    Object.defineProperty(this, _sendVisibleEvent, {
 	      value: _sendVisibleEvent2
+	    });
+	    Object.defineProperty(this, _isMessageBottomVisible, {
+	      value: _isMessageBottomVisible2
 	    });
 	    Object.defineProperty(this, _initObserver, {
 	      value: _initObserver2
@@ -7419,10 +7423,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        return;
 	      }
 	      const messageIsFullyVisible = entry.isIntersecting && entry.intersectionRatio >= 0.99;
-	      const messageTakesHalfOfViewport = entry.intersectionRect.height >= entry.rootBounds.height / 2.2;
-	      // const messageIsBiggerThanViewport = entry.boundingClientRect.height + 20 > entry.rootBounds.height;
-	      // const messageCountsAsVisible = messageIsBiggerThanViewport && messageTakesMostOfViewport;
-	      if (messageIsFullyVisible || messageTakesHalfOfViewport) {
+	      if (messageIsFullyVisible || babelHelpers.classPrivateFieldLooseBase(this, _isMessageBottomVisible)[_isMessageBottomVisible](entry)) {
 	        babelHelpers.classPrivateFieldLooseBase(this, _sendVisibleEvent)[_sendVisibleEvent](messageId);
 	      } else {
 	        babelHelpers.classPrivateFieldLooseBase(this, _sendNotVisibleEvent)[_sendNotVisibleEvent](messageId);
@@ -7431,6 +7432,16 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }, {
 	    threshold: babelHelpers.classPrivateFieldLooseBase(this, _getThreshold)[_getThreshold]()
 	  });
+	}
+	function _isMessageBottomVisible2(entry) {
+	  const wholeMessage = entry.boundingClientRect;
+	  const visibleMessagePart = entry.intersectionRect;
+	  if (visibleMessagePart.height === 0) {
+	    return false;
+	  }
+
+	  // +1 to offset browser floating point calculations
+	  return wholeMessage.bottom <= visibleMessagePart.bottom + 1;
 	}
 	function _sendVisibleEvent2(messageId) {
 	  main_core_events.EventEmitter.emit(im_v2_const.EventType.dialog.onMessageIsVisible, {
@@ -8144,6 +8155,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  OwnChatCreationMessage: im_v2_component_message_creation_ownChat.OwnChatCreationMessage,
 	  ChatCopilotCreationMessage: im_v2_component_message_copilot_creation.ChatCopilotCreationMessage,
 	  CopilotMessage: im_v2_component_message_copilot_answer.CopilotMessage,
+	  AiAssistantMessage: im_v2_component_message_aiAssistant_answer.AiAssistantMessage,
 	  SupportVoteMessage: im_v2_component_message_support_vote.SupportVoteMessage,
 	  SupportSessionNumberMessage: im_v2_component_message_support_sessionNumber.SupportSessionNumberMessage,
 	  SupportChatCreationMessage: im_v2_component_message_support_chatCreation.SupportChatCreationMessage,
@@ -8162,7 +8174,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  FeedbackFormMessage: imopenlines_v2_component_message_feedbackForm.FeedbackFormMessage,
 	  HiddenMessage: imopenlines_v2_component_message_hidden.HiddenMessage,
 	  VoteMessage: im_v2_component_message_vote.VoteMessage,
-	  TaskChatCreationMessage: im_v2_component_message_creation_taskChat.TaskChatCreationMessage
+	  TaskChatCreationMessage: im_v2_component_message_creation_taskChat.TaskChatCreationMessage,
+	  ConvertToCollabMessage: im_v2_component_message_collab_convert.ConvertToCollabMessage
 	};
 
 	// @vue/component
@@ -8393,5 +8406,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.MessageComponents = MessageComponents;
 	exports.CollectionManager = CollectionManager;
 
-}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Animation??{},BX?.Messenger?.v2?.Lib??{},BX?.UI??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX??{},BX?.Event??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Application??{},BX?.Messenger?.v2?.Const??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.OpenLines?.v2?.Component?.Message??{},BX?.OpenLines?.v2?.Component?.Message??{},BX?.OpenLines?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{}));
+}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Animation??{},BX?.Messenger?.v2?.Lib??{},BX?.UI??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX??{},BX?.Event??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Application??{},BX?.Messenger?.v2?.Const??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.OpenLines?.v2?.Component?.Message??{},BX?.OpenLines?.v2?.Component?.Message??{},BX?.OpenLines?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.IM?.V2?.Component?.Message?.Collab??{},BX?.Messenger?.v2?.Component?.Message??{}));
 //# sourceMappingURL=message-list.bundle.js.map

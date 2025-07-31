@@ -20,7 +20,7 @@ class BalancerClient
 		'eu' => 'https://slb-de.webrtc.bitrix.info',
 		'us' => 'https://slb-us.webrtc.bitrix.info',
 	];
-	private const REGION_RU = ['ru', 'by', 'kz'];
+	private const REGION_RU = ['ru', 'by', 'kz', 'uz'];
 	private const REGION_EU = ['de', 'eu', 'fr', 'it', 'pl', 'tr', 'uk'];
 
 	private array $httpClientParameters = [];

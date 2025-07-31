@@ -29,7 +29,7 @@ this.BX.Booking = this.BX.Booking || {};
 	    clocking: Boolean,
 	    waiting: Boolean,
 	    dataset: Object,
-	    buttonClass: String
+	    buttonClass: [String, Array]
 	  },
 	  created() {
 	    this.button = new ui_buttons.Button({
@@ -44,7 +44,7 @@ this.BX.Booking = this.BX.Booking || {};
 	        this.$emit('click');
 	      },
 	      dataset: this.dataset,
-	      className: this.buttonClass
+	      className: main_core.Type.isArray(this.buttonClass) ? this.buttonClass.join(' ') : this.buttonClass
 	    });
 	  },
 	  mounted() {
@@ -128,8 +128,10 @@ this.BX.Booking = this.BX.Booking || {};
 	`
 	};
 
+	exports.AirButtonStyle = ui_buttons.AirButtonStyle;
 	exports.ButtonColor = ui_buttons.ButtonColor;
 	exports.ButtonSize = ui_buttons.ButtonSize;
+	exports.ButtonStyle = ui_buttons.ButtonStyle;
 	exports.ButtonIcon = ui_buttons.ButtonIcon;
 	exports.Button = Button;
 

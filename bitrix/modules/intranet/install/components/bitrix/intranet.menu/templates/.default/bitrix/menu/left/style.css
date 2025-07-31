@@ -450,7 +450,7 @@ html {
 	min-width: 36px;
 }
 
-.intranet__desktop-menu_popup-item.--selected .intranet__desktop-menu_user-avatar {
+.intranet__desktop-menu_popup-item.--connected .intranet__desktop-menu_user-avatar {
 	border: 1px solid #282e39;
 	box-shadow: 0 0 0 1px var(--ui-color-palette-blue-60);
 	position: relative;

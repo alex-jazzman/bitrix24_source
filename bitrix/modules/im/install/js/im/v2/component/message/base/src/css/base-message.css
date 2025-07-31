@@ -109,10 +109,6 @@
 	box-shadow: var(--im-message-base__box-shadow);
 }
 
-.bx-im-message-base__wrap .bx-im-message-base__body {
-	max-width: calc(100% - var(--im-message-base__offset_context-menu));
-}
-
 .bx-im-message-base__wrap.--is-bulk-actions-mode .bx-im-message-base__body {
 	max-width: 100%;
 }

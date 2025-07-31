@@ -23,6 +23,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			this.startCallPromise = null;
 			this.localVideoPromise = null;
 			this.localVideoStream = null;
+			this.localVideoRequired = true;
 
 			this.callProvider = null;
 			this._currentCall = null;
@@ -208,11 +209,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 						? Analytics.AnalyticsEvent.cameraOn
 						: Analytics.AnalyticsEvent.cameraOff,
 				)
-				.setP2(
-					this.currentCall.isMuted()
-						? Analytics.AnalyticsEvent.micOff
-						: Analytics.AnalyticsEvent.micOn,
-				)
+				.setP2(`chatUserCount_${this.currentCall.associatedEntity?.userCounter}`)
 				.setP3(
 					this.currentCall.isCopilotActive
 						? Analytics.AnalyticsAIStatus.aiOn
@@ -314,7 +311,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			analytics.send();
 		}
 
-		sendStartCopilotRecordAnalytics(errorCode = null)
+		sendStartCopilotRecordAnalytics({ errorCode = null, isAutostart = false })
 		{
 			const errorCodes = {
 				AI_UNAVAILABLE_ERROR: Analytics.AnalyticsStatus.errorB24,
@@ -330,6 +327,8 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				.setType(this.getCallType())
 				.setStatus(errorCode ? errorCodes[errorCode] : Analytics.AnalyticsStatus.success)
 				.setSection(Analytics.AnalyticsSection.callFollowup)
+				.setP1(isAutostart ? 'launchType_auto' : 'launchType_manual')
+				.setP2(`chatUserCount_${this.currentCall.associatedEntity?.userCounter}`)
 				.setP5(`callId_${this._getCallIdentifier(this.currentCall)}`)
 			;
 
@@ -386,12 +385,14 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			this.localVideoPromise = new Promise((resolve, reject) => {
 				if (!show)
 				{
-					return resolve();
+					resolve();
+
+					return;
 				}
 
 				MediaDevices.getUserMedia({ audio: true, video: true }).then((stream) => {
 					this.localVideoStream = stream;
-					if (!this.startCallPromise)
+					if (!this.startCallPromise || !this.localVideoRequired)
 					{
 						this.stopLocalVideoStream(true);
 					}
@@ -414,16 +415,18 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				{
 					MediaDevices.stopStreaming();
 					this.localVideoStream = null;
+
 					return;
 				}
 
 				MediaDevices.stopCapture();
+				this.localVideoStream = null;
 			}
 		}
 
-		startCall(dialogId, video, associatedDialogData = {}, userData = {})
+		startCall(dialogId, isVideoEnabled, associatedDialogData = {}, userData = {})
 		{
-			console.log('CallController.startCall', dialogId, video, associatedDialogData);
+			console.log('CallController.startCall', dialogId, isVideoEnabled, associatedDialogData);
 			if (!CallUtil.isDeviceSupported())
 			{
 				CallUtil.error(BX.message('MOBILE_CALL_UNSUPPORTED_VERSION'));
@@ -459,7 +462,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			if (call)
 			{
 				this.joinCall({
-					video,
+					isVideoEnabled,
 					callId: call.id,
 					callUuid: call.uuid,
 					associatedEntity: call.associatedEntity,
@@ -467,6 +470,8 @@ jn.define('call/calls/controller', (require, exports, module) => {
 
 				return;
 			}
+
+			this.localVideoRequired = isVideoEnabled;
 
 			let provider = BX.Call.Provider.Plain;
 			const isGroupChat = dialogId.toString().slice(0, 4) === 'chat';
@@ -498,10 +503,10 @@ jn.define('call/calls/controller', (require, exports, module) => {
 
 			if (isGroupChat && callEngine.isBitrixCallServerEnabled())
 			{
-				this.startCallPromise = this.requestDeviceAccess(video).then(() => {
+				this.startCallPromise = this.requestDeviceAccess(isVideoEnabled).then(() => {
 					// we have to start media stream retrieving
 					// so we can use it in the callView before we connect to the call
-					this.maybeShowLocalVideo(video);
+					this.maybeShowLocalVideo(isVideoEnabled);
 
 					return this.openCallView({
 						status: 'outgoing',
@@ -509,11 +514,11 @@ jn.define('call/calls/controller', (require, exports, module) => {
 						associatedEntityName: associatedDialogData.name,
 						associatedEntityAvatar: associatedDialogData.avatar,
 						associatedEntityAvatarColor: associatedDialogData.avatarColor,
-						cameraState: video,
+						cameraState: isVideoEnabled,
 						chatCounter: this.chatCounter,
 						copilotAvailable: CallUtil.isAIServiceEnabled(associatedDialogData.type === 'videoconf'),
 						copilotEnabled: false, // will be changed after the backend's response
-					}, video);
+					}, isVideoEnabled);
 				}).then(() => {
 					CallUtil.setUserData(userData);
 					this.callView.updateUserData(userData);
@@ -524,17 +529,18 @@ jn.define('call/calls/controller', (require, exports, module) => {
 					this.bindViewEvents();
 					media.audioPlayer().playSound('call_start');
 
-					return this.maybeShowLocalVideo(video);
+					return this.maybeShowLocalVideo(isVideoEnabled);
 				}).then(() => {
+					this.localVideoPromise = null;
 					this.callProvider = provider;
 					const callConfig = {
 						type: associatedDialogData.type === 'videoconf' ? BX.Call.Type.Permanent : BX.Call.Type.Instant,
 						entityType: 'chat',
 						entityId: dialogId,
 						provider,
-						videoEnabled: Boolean(video),
+						videoEnabled: Boolean(isVideoEnabled),
 						joinExisting: isGroupChat,
-						chatInfo: associatedDialogData
+						chatInfo: associatedDialogData,
 					};
 
 					return isLegacyCall
@@ -580,6 +586,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 								this.sendStartCopilotRecordAnalytics();
 							}
 
+							this.currentCall.setVideoEnabled(this.localVideoRequired);
 							this.currentCall.inviteUsers();
 						}
 						else
@@ -607,8 +614,9 @@ jn.define('call/calls/controller', (require, exports, module) => {
 								status: 'call',
 							});
 
+							this.currentCall.setVideoEnabled(this.localVideoRequired);
 							this.currentCall.answer({
-								useVideo: video,
+								useVideo: isVideoEnabled,
 							});
 						}
 					})
@@ -620,7 +628,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 
 						if (error instanceof DeviceAccessError)
 						{
-							CallUtil.showDeviceAccessConfirm(video, () => Application.openSettings());
+							CallUtil.showDeviceAccessConfirm(isVideoEnabled, () => Application.openSettings());
 							errorCode = error.name;
 						}
 						else if (error instanceof CallJoinedElseWhereError)
@@ -645,10 +653,10 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				return;
 			}
 
-			this.startCallPromise = this.requestDeviceAccess(video).then(() => {
+			this.startCallPromise = this.requestDeviceAccess(isVideoEnabled).then(() => {
 				// we have to start media stream retrieving
 				// so we can use it in the callView before we connect to the call
-				this.maybeShowLocalVideo(video);
+				this.maybeShowLocalVideo(isVideoEnabled);
 
 				return this.openCallView({
 					status: 'outgoing',
@@ -656,28 +664,29 @@ jn.define('call/calls/controller', (require, exports, module) => {
 					associatedEntityName: associatedDialogData.name,
 					associatedEntityAvatar: associatedDialogData.avatar,
 					associatedEntityAvatarColor: associatedDialogData.avatarColor,
-					cameraState: video,
+					cameraState: isVideoEnabled,
 					chatCounter: this.chatCounter,
 					copilotAvailable: CallUtil.isAIServiceEnabled(false),
 					copilotEnabled: false,
-				}, video);
+				}, isVideoEnabled);
 			}).then(() => {
 				BX.postComponentEvent('CallEvents::viewOpened', []);
 				BX.postWebEvent('CallEvents::viewOpened', {});
 				this.bindViewEvents();
 				media.audioPlayer().playSound('call_start');
 
-				return this.maybeShowLocalVideo(video);
+				return this.maybeShowLocalVideo(isVideoEnabled);
 			}).then(() => {
+				this.localVideoPromise = null;
 				this.callProvider = provider;
 				isLegacyCall = CallUtil.isLegacyCall(provider);
 				const callConfig = {
+					provider,
 					entityType: 'chat',
 					entityId: dialogId,
-					provider,
-					videoEnabled: Boolean(video),
+					videoEnabled: Boolean(isVideoEnabled),
 					joinExisting: isGroupChat,
-					chatInfo: associatedDialogData
+					chatInfo: associatedDialogData,
 				};
 
 				return isLegacyCall
@@ -705,6 +714,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 					if (createResult.isNew)
 					{
 						this.sendStartCallAnalytics();
+
 						this.currentCall.inviteUsers();
 
 						if (this.currentCall.isCopilotActive)
@@ -727,7 +737,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 						});
 
 						this.currentCall.answer({
-							useVideo: video,
+							useVideo: isVideoEnabled,
 						});
 					}
 				})
@@ -737,7 +747,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 					let errorCode = error.code;
 					if (error instanceof DeviceAccessError)
 					{
-						CallUtil.showDeviceAccessConfirm(video, () => Application.openSettings());
+						CallUtil.showDeviceAccessConfirm(isVideoEnabled, () => Application.openSettings());
 						errorCode = error.name;
 					}
 					else if (error instanceof CallJoinedElseWhereError)
@@ -760,7 +770,6 @@ jn.define('call/calls/controller', (require, exports, module) => {
 
 					if (errorCode !== 'user_is_busy')
 					{
-
 						this.sendStartCallErrorAnalytics(errorCode);
 					}
 
@@ -803,7 +812,10 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				return;
 			}
 
-			this.requestDeviceAccess(callInfo.video).then(() => {
+			const isVideoEnabled = Boolean(callInfo.isVideoEnabled);
+			this.localVideoRequired = isVideoEnabled;
+
+			this.requestDeviceAccess(isVideoEnabled).then(() => {
 				this.onConnectToCallClick = Date.now();
 
 				const callConfig = {
@@ -811,7 +823,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 					type: callInfo.associatedEntity.type === 'videoconf' ? BX.Call.Type.Permanent : BX.Call.Type.Instant,
 					entityType: 'chat',
 					entityId: callInfo.associatedEntity.id,
-					videoEnabled: Boolean(callInfo.video),
+					videoEnabled: isVideoEnabled,
 					joinExisting: isGroupChat,
 					roomId: callInfo.callUuid,
 					chatInfo: callInfo.associatedEntity,
@@ -866,7 +878,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				this.bindCallEvents();
 
 				this.currentCall.answer({
-					useVideo: !!callInfo.video,
+					useVideo: isVideoEnabled,
 				});
 			})
 				.catch((error) => {
@@ -883,7 +895,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 					}
 					else if (error instanceof DeviceAccessError)
 					{
-						CallUtil.showDeviceAccessConfirm(callInfo.video, () => Application.openSettings());
+						CallUtil.showDeviceAccessConfirm(isVideoEnabled, () => Application.openSettings());
 						errorCode = error.name;
 					}
 					else
@@ -954,7 +966,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				{
 					// do nothing
 				}
-				else if (this.currentCall.uuid === newCall.parentUuid || (this.currentCall.id && (this.currentCall.id === newCall.parentId)))
+				else if (this.currentCall.uuid === newCall.parentUuid || (this.currentCall.id === newCall.parentId))
 				{
 					if (!this.childCall)
 					{
@@ -1124,7 +1136,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				if (!useVideo)
 				{
 					this.onCallLocalMediaStopped();
-					this.stopLocalVideoStream(true);
+					this.stopLocalVideoStream(false);
 				}
 				this.currentCall.answer({
 					useVideo,
@@ -1222,6 +1234,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			}).then(() => {
 				return this.maybeShowLocalVideo(params.video);
 			}).then(() => {
+				this.localVideoPromise = null;
 				if (!this.currentCall)
 				{
 					return Promise.reject(new Error('ALREADY_FINISHED'));
@@ -1320,8 +1333,8 @@ jn.define('call/calls/controller', (require, exports, module) => {
 						if (button == startCallWithVideo || button == startCallWithoutVideo)
 						{
 							this.joinCall({
-								video: button == startCallWithVideo,
-								...callInfo
+								isVideoEnabled: button == startCallWithVideo,
+								...callInfo,
 							});
 						}
 					},
@@ -1721,6 +1734,10 @@ jn.define('call/calls/controller', (require, exports, module) => {
 		onAppActive()
 		{
 			this.isAppPaused = false;
+			if (this.callView)
+			{
+				this.callView.setAppActiveState(true);
+			}
 			CallUtil.log('onAppActive');
 			if (!this.currentCall)
 			{
@@ -1775,6 +1792,10 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			if (!this.currentCall)
 			{
 				return;
+			}
+			if (this.callView)
+			{
+				this.callView.setAppActiveState(false);
 			}
 
 			CallUtil.log('onAppPaused');
@@ -1840,8 +1861,65 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			}
 		}
 
+		toggleCameraBeforeCallJoined()
+		{
+			const startRequired = (!this.localVideoPromise && this.localVideoRequired && !this.localVideoStream)
+				|| (!this.localVideoPromise && !this.localVideoRequired && !this.localVideoStream);
+			const pauseRequired = (this.localVideoPromise && this.localVideoRequired)
+				|| (!this.localVideoPromise && this.localVideoRequired && this.localVideoStream);
+			const resumeRequired = this.localVideoPromise && !this.localVideoRequired;
+
+			if (startRequired)
+			{
+				this.localVideoRequired = true;
+				this.switchCameraDeviceState(true);
+				this.maybeShowLocalVideo(true).then(() => {
+					this.localVideoPromise = null;
+				}).catch((error) => {
+					CallUtil.error(error);
+					if (error instanceof DeviceAccessError)
+					{
+						CallUtil.showDeviceAccessConfirm(true, () => Application.openSettings());
+						this.switchCameraDeviceState(false);
+					}
+				});
+			}
+			else if (pauseRequired)
+			{
+				this.localVideoRequired = false;
+				this.switchCameraDeviceState(false);
+				this.callView.setVideoStream(env.userId, null);
+				if (!this.localVideoPromise)
+				{
+					this.stopLocalVideoStream(true);
+				}
+			}
+			else if (resumeRequired)
+			{
+				this.localVideoRequired = true;
+				this.switchCameraDeviceState(true);
+			}
+			else
+			{
+				this.switchCameraDeviceState(false);
+				this.callView.setVideoStream(env.userId, null);
+				this.stopLocalVideoStream(true);
+			}
+		}
+
 		onCameraButtonClick()
 		{
+			const isCallCreating = this.startCallPromise && !this.currentCall;
+			const isCallConnecting = this.currentCall?.joinStatus !== BX.Call.JoinStatus.Local;
+			const isCallInitializing = isCallCreating || isCallConnecting;
+
+			if (isCallInitializing)
+			{
+				this.toggleCameraBeforeCallJoined();
+
+				return;
+			}
+
 			if (!this.currentCall)
 			{
 				return;
@@ -2037,9 +2115,9 @@ jn.define('call/calls/controller', (require, exports, module) => {
 
 		onToggleSubscriptionRemoteVideo(toggleList)
 		{
-			if (this.currentCall.toggleSubscriptionRemoteVideoHandler)
+			if (this.currentCall.toggleSubscriptionRemoteVideo)
 			{
-				this.currentCall.toggleSubscriptionRemoteVideoHandler(toggleList);
+				this.currentCall.toggleSubscriptionRemoteVideo(toggleList);
 			}
 		}
 
@@ -2378,6 +2456,15 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			if (e.local)
 			{
 				CallUtil.warn('joined local call');
+				// camera state may be changed since call was created,
+				// so we need to set correct value for it manually
+				const isVideoEnabled = this.localVideoRequired;
+				this.localVideoRequired = false;
+
+				if (this.currentCall.provider !== BX.Call.Provider.Plain)
+				{
+					this.currentCall.setVideoEnabled(isVideoEnabled);
+				}
 
 				return;
 			}
@@ -2471,14 +2558,15 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			}
 		}
 
-		switchCameraDeviceState(state){
+		switchCameraDeviceState(state)
+		{
 			if (!CallUtil.havePermissionToBroadcast('cam') && state)
 			{
 				return;
 			}
 			MediaDevices.requestCameraAccess().then(() => {
-				this.currentCall.setVideoEnabled(state);
-				this.callView.setCameraState(state); // should we update button state only if we received local video?
+				this.currentCall?.setVideoEnabled(state);
+				this.callView?.setCameraState(state); // should we update button state only if we received local video?
 				this.changeProximitySensorStatus(this.canProximitySensorBeEnabled, null, state);
 			}).catch(() => {
 				navigator.notification.alert(
@@ -2754,6 +2842,11 @@ jn.define('call/calls/controller', (require, exports, module) => {
 
 		onRecorderStatusChanged({ status, error })
 		{
+			if (!this.currentCall.isCopilotInitialized && this.currentCall.initiatorId === this.currentCall.userId)
+			{
+				this.sendStartCopilotRecordAnalytics({ isAutostart: true });
+			}
+
 			this.onUpdateCallCopilotState({
 				isTrackRecordOn: status,
 				senderId: error ? env.userId : '',
@@ -2883,6 +2976,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			}
 
 			this.stopLocalVideoStream(true);
+			this.localVideoRequired = true;
 			this.callView = null;
 			this.removeViewEvents();
 			this.stopCheckOutputDevice();

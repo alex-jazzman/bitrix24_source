@@ -32,6 +32,7 @@ jn.define('layout/ui/qr-invite', (require, exports, module) => {
 		{
 			super(props);
 			this.state = {
+				uri: props.uri ?? null,
 				loadingError: null,
 				qrCode: null,
 			};
@@ -44,14 +45,15 @@ jn.define('layout/ui/qr-invite', (require, exports, module) => {
 			};
 		}
 
-		componentDidMount()
+		async componentDidMount()
 		{
+			await this.#loadUriIfNeeded();
 			this.#generateQr();
 		}
 
 		get uri()
 		{
-			const { uri } = this.props;
+			const { uri } = this.state;
 
 			return withCurrentDomain(uri) || '';
 		}
@@ -84,6 +86,27 @@ jn.define('layout/ui/qr-invite', (require, exports, module) => {
 
 			return Type.isObject(entity?.borderColor) ?? false;
 		}
+
+		#loadUriIfNeeded = () => {
+			return new Promise((resolve, reject) => {
+				const { uri, loadUri } = this.props;
+				if (uri)
+				{
+					resolve();
+
+					return;
+				}
+
+				loadUri?.()
+					.then((newUri) => {
+						this.setState({ uri: newUri }, () => resolve());
+					})
+					.catch((e) => {
+						console.error(e);
+						reject();
+					});
+			});
+		};
 
 		#handleQrResponse(response)
 		{

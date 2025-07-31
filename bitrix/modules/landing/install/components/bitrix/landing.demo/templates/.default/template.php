@@ -344,23 +344,27 @@ if (!$component->isAjax())
 	</div>
 <?php endif; ?>
 
-<?if (
-	Manager::isB24()
-	&& $arParams['TYPE'] !== 'PAGE'
-):?>
+<?php
+if (Manager::isB24() && $arParams['TYPE'] !== 'PAGE') {
+	$link = ($arParams['TYPE'] === 'KNOWLEDGE' || $arParams['TYPE'] === 'GROUP')
+		? SITE_DIR . 'market/category/vertical_knowledge_bases/'
+		: SITE_DIR . 'market/category/site_shops/';
+	?>
 	<a
 		class="landing-license-banner"
 		href="javascript:void(0)"
-		onclick="BX.SidePanel.Instance.open('<?= SITE_DIR;?>market/category/vertical_knowledge_bases/');"
+		onclick="BX.SidePanel.Instance.open('<?= $link; ?>');"
 	>
 		<div class="landing-license-banner-icon">
 			<div class="landing-license-banner-icon-arrow"></div>
 		</div>
 		<div class="landing-license-banner-title">
-			<?= Loc::getMessage('LANDING_TPL_LOAD_APP_TEMPLATE_2_MSGVER_1');?>
+			<?= Loc::getMessage('LANDING_TPL_LOAD_APP_TEMPLATE_2_MSGVER_1'); ?>
 		</div>
 	</a>
-<?endif;?>
+	<?php
+}
+?>
 
 <script>
 	BX.ready(function ()

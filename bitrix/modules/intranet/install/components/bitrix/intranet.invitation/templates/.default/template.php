@@ -36,7 +36,7 @@ Extension::load([
 	'ui.entity-selector',
 	'intranet.selector-button',
 	'intranet.invitation-input',
-	'ui.fonts.inter',
+	'intranet.department-control',
 	'ui.notification',
 ]);
 
@@ -45,6 +45,7 @@ CJSCore::Init(['phone_number']);
 $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass . ' ' : '') . 'no-background invite-body');
 
+\Bitrix\UI\Toolbar\Facade\Toolbar::deleteFavoriteStar();
 $menuContainerId = 'invitation-form-menu-' . $this->randString();
 $contentContainerId = 'invitation-form-content-' . $this->randString();
 
@@ -60,7 +61,7 @@ $APPLICATION->IncludeComponent(
 	'',
 	[
 		'ID' => 'intranet-invitation',
-		'VIEW_TARGET' => 'inside_pagetitle',
+		'VIEW_TARGET' => null,
 		'FORMS' => [
 			['zones' => ['com.br'], 'id' => '259', 'lang' => 'br', 'sec' => 'wfjn1i'],
 			['zones' => ['es'], 'id' => '257', 'lang' => 'la', 'sec' => 'csaico'],
@@ -69,6 +70,8 @@ $APPLICATION->IncludeComponent(
 			['zones' => ['ru', 'kz', 'by'], 'id' => '261', 'lang' => 'ru', 'sec' => 'sieyyr'],
 			['zones' => ['en'], 'id' => '253', 'lang' => 'en', 'sec' => 'wg6548'],
 		],
+		'air' => true,
+		'USE_UI_TOOLBAR' => 'Y',
 	]
 );
 

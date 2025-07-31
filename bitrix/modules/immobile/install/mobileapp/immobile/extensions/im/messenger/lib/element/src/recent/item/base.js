@@ -358,7 +358,7 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		 */
 		createAvatarStyle()
 		{
-			if (Feature.isImageInRecentAvatarStyleAvailable && Feature.isMessagesAutoDeleteAvailable)
+			if (Feature.isImageInRecentAvatarStyleAvailable)
 			{
 				const isMessagesAutoDeleteEnabled = this.getDialogHelper()?.isMessagesAutoDeleteDelayEnabled;
 
@@ -599,6 +599,9 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 			return this;
 		}
 
+		/**
+		 * @return {DialoguesModelState}
+		 */
 		getDialogById(dialogId)
 		{
 			return serviceLocator.get('core').getStore().getters['dialoguesModel/getById'](dialogId);
@@ -610,6 +613,15 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		getModelItem()
 		{
 			return this.params.model.recent;
+		}
+
+		/**
+		 * {number} dialogId
+		 * @return {?UsersModelState}
+		 */
+		getUserModelByDialogId(dialogId)
+		{
+			return serviceLocator.get('core').getStore().getters['usersModel/getById'](dialogId);
 		}
 
 		/**

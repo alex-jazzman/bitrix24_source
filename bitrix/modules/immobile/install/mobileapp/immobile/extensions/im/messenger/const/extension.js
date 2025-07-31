@@ -2,6 +2,7 @@
  * @module im/messenger/const
  */
 jn.define('im/messenger/const', (require, exports, module) => {
+	const { AiAssistantButtonType } = require('im/messenger/const/ai-assistant-button');
 	const { AppStatus } = require('im/messenger/const/app-status');
 	const {
 		AttachType,
@@ -104,6 +105,7 @@ jn.define('im/messenger/const', (require, exports, module) => {
 	const { PinCount } = require('im/messenger/const/pin');
 
 	module.exports = {
+		AiAssistantButtonType,
 		AppStatus,
 		Analytics,
 		AttachType,

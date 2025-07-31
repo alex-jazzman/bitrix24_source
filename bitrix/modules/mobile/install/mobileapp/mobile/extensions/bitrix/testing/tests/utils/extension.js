@@ -74,10 +74,18 @@
 		});
 
 		test('camelize', () => {
-			expect(StringUtils.camelize('hello world')).toBe('helloWorld');
-			expect(StringUtils.camelize('helloWorld')).toBe('helloWorld');
-			expect(StringUtils.camelize('Hello world')).toBe('helloWorld');
-			expect(StringUtils.camelize('hello_world')).toBe('helloWorld');
+			expect(StringUtils.camelize('emoji👍_test')).toBe('emoji👍Test');
+			expect(StringUtils.camelize('  foo  bar  spaces ')).toBe('FooBarSpaces');
+			expect(StringUtils.camelize(null)).toBe('');
+			expect(StringUtils.camelize('hello world1')).toBe('helloWorld1');
+			expect(StringUtils.camelize('hello worldEverything works')).toBe('helloWorldEverythingWorks');
+			expect(StringUtils.camelize('hello worldEverythingWorks')).toBe('helloWorldEverythingWorks');
+			expect(StringUtils.camelize('hello worldEverything Works')).toBe('helloWorldEverythingWorks');
+			expect(StringUtils.camelize('hello world Everything Works')).toBe('helloWorldEverythingWorks');
+			expect(StringUtils.camelize('hello world everything Works')).toBe('helloWorldEverythingWorks');
+			expect(StringUtils.camelize('helloWorld2')).toBe('helloWorld2');
+			expect(StringUtils.camelize('Hello world3')).toBe('helloWorld3');
+			expect(StringUtils.camelize('hello_world4')).toBe('helloWorld4');
 			expect(StringUtils.camelize('hello')).toBe('hello');
 			expect(StringUtils.camelize('')).toBe('');
 			expect(StringUtils.camelize('Hello')).toBe('hello');

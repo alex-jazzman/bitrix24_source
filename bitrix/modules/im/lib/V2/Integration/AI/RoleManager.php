@@ -172,13 +172,6 @@ class RoleManager
 			return $result;
 		}
 
-		if ($chat->getType() !== Chat::IM_TYPE_COPILOT)
-		{
-			$result->addError(new CopilotError(CopilotError::WRONG_CHAT_TYPE));
-
-			return $result;
-		}
-
 		if (!isset($roleCode))
 		{
 			$roleCode = self::getDefaultRoleCode();
@@ -187,7 +180,7 @@ class RoleManager
 		$roleData = $this->getRoles([$roleCode]);
 		if (empty($roleData))
 		{
-			$result->addError(new CopilotError(CopilotError::ROLE_NOT_FOUNT));
+			$result->addError(new CopilotError(CopilotError::ROLE_NOT_FOUND));
 
 			return $result;
 		}

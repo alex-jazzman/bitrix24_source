@@ -73,8 +73,7 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 	}
 
 	/**
-	 * @deprecated
-	 * @use \Bitrix\Intranet\Controller\User::fireAction
+	 * @deprecated use \Bitrix\Intranet\Infrastructure\Controller\User::fireAction
 	 */
 	public function fireUserAction()
 	{
@@ -96,8 +95,7 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 	}
 
 	/**
-	 * @deprecated
-	 * @use \Bitrix\Intranet\Controller\User::restoreAction
+	 * @deprecated use \Bitrix\Intranet\Infrastructure\Controller\User::restoreAction
 	 */
 	public function hireUserAction()
 	{
@@ -115,6 +113,9 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 		return Invitation::confirmUserRequest((int)$userId, $isAccept === 'Y')->isSuccess();
 	}
 
+	/**
+	 * @deprecated use \Bitrix\Intranet\Infrastructure\Controller\User::deleteAction
+	 */
 	public function deleteUserAction()
 	{
 		global $APPLICATION;
@@ -451,16 +452,10 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 
 		//prepare groups
 		$arGroups = [1];
-		$rsGroups = CGroup::GetList(
-			'',
-			'',
-			[
-				"STRING_ID" => "PORTAL_ADMINISTRATION_" . SITE_ID,
-			],
-		);
-		while($arGroup = $rsGroups->Fetch())
+		$groupId = CGroup::GetIDByCode("PORTAL_ADMINISTRATION_" . SITE_ID);
+		if ($groupId)
 		{
-			$arGroups[] = $arGroup["ID"];
+			$arGroups[] = $groupId;
 		}
 
 		$integratorGroupId = \Bitrix\Bitrix24\Integrator::getIntegratorGroupId();
@@ -558,4 +553,5 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 			],
 		);
 	}
+
 }

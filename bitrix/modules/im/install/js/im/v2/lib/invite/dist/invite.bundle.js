@@ -45,25 +45,30 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  cancelInvite(userId) {
 	    InviteService.cancelInvite(userId);
 	  },
-	  openInviteSlider() {
+	  openInviteSlider(analyticsContext = '') {
 	    const sidePanel = main_sidepanel.SidePanel.Instance;
 	    const sliderOptions = {
 	      cacheable: false,
 	      allowChangeHistory: false,
 	      width: 1100
 	    };
-	    sidePanel.open(getInviteSliderLink(), sliderOptions);
+	    sidePanel.open(getInviteSliderLink(analyticsContext), sliderOptions);
 	  }
 	};
-	const getInviteSliderLink = () => {
+	const getInviteSliderLink = analyticsContext => {
 	  const AJAX_PATH = '/bitrix/services/main/ajax.php';
 	  const COMPONENT_NAME = 'bitrix:intranet.invitation';
 	  const ACTION_NAME = 'getSliderContent';
+	  const analytics = {};
+	  if (analyticsContext) {
+	    analytics['analyticsLabel[source]'] = analyticsContext;
+	  }
 	  const params = new URLSearchParams({
 	    action: ACTION_NAME,
 	    site_id: im_v2_application_core.Core.getSiteId(),
 	    c: COMPONENT_NAME,
-	    mode: 'ajax'
+	    mode: 'ajax',
+	    ...analytics
 	  });
 	  return `${AJAX_PATH}?${params.toString()}`;
 	};

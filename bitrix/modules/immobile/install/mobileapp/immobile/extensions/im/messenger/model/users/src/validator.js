@@ -1,6 +1,3 @@
-/* eslint-disable no-param-reassign */
-/* global ChatUtils */
-
 /**
  * @module im/messenger/model/users/validator
  */
@@ -32,17 +29,17 @@ jn.define('im/messenger/model/users/validator', (require, exports, module) => {
 
 		if (Type.isStringFilled(fields.firstName))
 		{
-			result.firstName = ChatUtils.htmlspecialcharsback(fields.firstName);
+			result.firstName = jnComponent.convertHtmlEntities(fields.firstName);
 		}
 
 		if (Type.isStringFilled(fields.lastName))
 		{
-			result.lastName = ChatUtils.htmlspecialcharsback(fields.lastName);
+			result.lastName = jnComponent.convertHtmlEntities(fields.lastName);
 		}
 
 		if (Type.isStringFilled(fields.name))
 		{
-			fields.name = ChatUtils.htmlspecialcharsback(fields.name);
+			fields.name = jnComponent.convertHtmlEntities(fields.name);
 			result.name = fields.name;
 		}
 
@@ -90,7 +87,7 @@ jn.define('im/messenger/model/users/validator', (require, exports, module) => {
 
 		if (Type.isStringFilled(fields.workPosition))
 		{
-			result.workPosition = ChatUtils.htmlspecialcharsback(fields.workPosition);
+			result.workPosition = jnComponent.convertHtmlEntities(fields.workPosition);
 		}
 
 		if (Type.isStringFilled(fields.gender))
@@ -128,10 +125,6 @@ jn.define('im/messenger/model/users/validator', (require, exports, module) => {
 				type: fields.bot_data.type,
 				backgroundId: fields.bot_data.background_id,
 			};
-		}
-		else
-		{
-			result.botData = {};
 		}
 
 		if (Type.isObject(fields.botData))

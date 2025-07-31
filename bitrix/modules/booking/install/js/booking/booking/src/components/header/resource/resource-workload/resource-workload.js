@@ -19,6 +19,10 @@ type BookingDuration = {
 // @vue/component
 export const ResourceWorkload = {
 	name: 'ResourceWorkload',
+	components: {
+		BatteryIcon,
+		WorkloadPopup,
+	},
 	props: {
 		resourceId: {
 			type: Number,
@@ -53,10 +57,11 @@ export const ResourceWorkload = {
 			}
 
 			const slotsDuration = this.slotSize * this.slotsCount;
-
-			return this.bookings.reduce((acc, booking: BookingDuration) => {
-				return acc + Math.round(booking.duration * 100 / slotsDuration);
+			const percent = this.bookings.reduce((acc, booking: BookingDuration) => {
+				return acc + booking.duration * 100 / slotsDuration;
 			}, 0);
+
+			return Math.round(percent);
 		},
 		slotSize(): number
 		{
@@ -73,7 +78,7 @@ export const ResourceWorkload = {
 			);
 
 			return Math.floor(slotRanges.reduce((sum, slotRange) => {
-				return sum + (slotRange.to - slotRange.from) / this.slotSize;
+				return sum + Math.round((slotRange.to - slotRange.from) / this.slotSize);
 			}, 0));
 		},
 		bookings(): BookingDuration[]
@@ -88,10 +93,6 @@ export const ResourceWorkload = {
 						duration: (booking.dateToTs - booking.dateFromTs) / 60000,
 					};
 				});
-		},
-		bookingCount(): number
-		{
-			return this.bookings.length;
 		},
 		bookingsDuration(): number
 		{
@@ -113,6 +114,15 @@ export const ResourceWorkload = {
 		bookingsCount(): number
 		{
 			return this.bookings.length;
+		},
+	},
+	watch: {
+		bookingsCount(newCount: number, previousCount: number): void
+		{
+			if (this.isGrid && newCount > previousCount && ahaMoments.shouldShow(AhaMoment.ResourceWorkload))
+			{
+				void this.showAhaMoment();
+			}
 		},
 	},
 	methods: {
@@ -146,19 +156,6 @@ export const ResourceWorkload = {
 
 			ahaMoments.setShown(AhaMoment.ResourceWorkload);
 		},
-	},
-	watch: {
-		bookingsCount(newCount: number, previousCount: number): void
-		{
-			if (this.isGrid && newCount > previousCount && ahaMoments.shouldShow(AhaMoment.ResourceWorkload))
-			{
-				void this.showAhaMoment();
-			}
-		},
-	},
-	components: {
-		BatteryIcon,
-		WorkloadPopup,
 	},
 	template: `
 		<div

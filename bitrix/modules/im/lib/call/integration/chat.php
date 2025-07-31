@@ -373,7 +373,7 @@ class Chat extends AbstractEntity
 			}
 
 			$componentParams['MESSAGE_TEXT'] = $message;
-			$this->sendMessageDeferred($message, $mute, $skipCounterInc, $componentParams);
+			$this->sendMessage($message, $mute, $skipCounterInc, $componentParams);
 		}
 	}
 
@@ -395,7 +395,7 @@ class Chat extends AbstractEntity
 			'MESSAGE_TEXT' => $message,
 		];
 
-		$this->sendMessageDeferred($message, self::MUTE_MESSAGE, true, $componentParams);
+		$this->sendMessage($message, self::MUTE_MESSAGE, true, $componentParams);
 	}
 
 	public function sendMessageDeferred($message, $muted = false, $skipCounterInc = false, $componentParams = [])
@@ -426,6 +426,7 @@ class Chat extends AbstractEntity
 		}
 
 		\CIMMessenger::add([
+			'WAIT_FULL_EXECUTION' => 'N',
 			'TO_CHAT_ID' => $chatId,
 			'MESSAGE_TYPE' => $this->isPrivateChat() ? IM_MESSAGE_PRIVATE : IM_MESSAGE_CHAT,
 			'FROM_USER_ID' => $initiator,

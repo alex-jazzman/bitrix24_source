@@ -2,6 +2,7 @@ import { ChatTitle } from 'im.v2.component.elements.chat-title';
 import { ChatAvatar, AvatarSize } from 'im.v2.component.elements.avatar';
 
 import { CopilotRole } from '../../../elements/copilot-role/copilot-role';
+import { CopilotAIModel } from '../../../elements/copilot-engine/copilot-ai-model';
 import { MuteChat } from '../../../elements/mute-chat/mute-chat';
 import { ChatMembersAvatars } from '../../../elements/chat-members-avatars/chat-members-avatars';
 
@@ -12,7 +13,7 @@ import type { ImModelChat } from 'im.v2.model';
 // @vue/component
 export const CopilotPreview = {
 	name: 'CopilotPreview',
-	components: { ChatAvatar, ChatTitle, MuteChat, ChatMembersAvatars, CopilotRole },
+	components: { ChatAvatar, ChatTitle, MuteChat, ChatMembersAvatars, CopilotRole, CopilotAIModel },
 	props: {
 		dialogId: {
 			type: String,
@@ -51,6 +52,7 @@ export const CopilotPreview = {
 			</div>
 			<div class="bx-im-sidebar-copilot-preview-group-chat__settings">
 				<CopilotRole :dialogId="dialogId" />
+				<CopilotAIModel :dialogId="dialogId" />
 				<MuteChat :dialogId="dialogId" />
 			</div>
 		</div>

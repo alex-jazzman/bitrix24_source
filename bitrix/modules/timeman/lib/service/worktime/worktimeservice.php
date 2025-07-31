@@ -285,6 +285,8 @@ class WorktimeService extends BaseService
 				)
 			);
 
+			(new \CPHPCache)->cleanDir('/timeman/work-time-data/' . $actualRecord->getUserId());
+
 			return (new WorktimeServiceResult())
 				->setWorktimeRecord($actualRecord)
 				->setSchedule($actionListResult->getSchedule())

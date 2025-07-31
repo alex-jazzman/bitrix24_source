@@ -94,7 +94,7 @@ jn.define('im/messenger/provider/services/message/load', (require, exports, modu
 
 				try
 				{
-					loadFromDbResult = await this.#loadUnreadMessagesFromDb();
+					loadFromDbResult = await this.#loadUnreadMessagesFromDb(lastUnreadMessageId);
 				}
 				catch (error)
 				{

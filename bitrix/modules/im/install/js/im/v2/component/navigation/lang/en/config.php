@@ -1,7 +1,4 @@
 <?php
-$MESS["IM_CONTENT_COPILOT_PROMO_HINT_ACTION"] = "Chat with CoPilot";
-$MESS["IM_CONTENT_COPILOT_PROMO_HINT_DESCRIPTION"] = "Accessing it is now even more convenient.";
-$MESS["IM_CONTENT_COPILOT_PROMO_HINT_TITLE"] = "CoPilot is now here, in the chats";
 $MESS["IM_NAVIGATION_CALLS_V2"] = "Telephony";
 $MESS["IM_NAVIGATION_CHANNELS"] = "Channels";
 $MESS["IM_NAVIGATION_CHATS"] = "Chats";

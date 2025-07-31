@@ -3,6 +3,7 @@
 namespace Bitrix\Call;
 
 use Bitrix\Call\Integration\AI\ChatMessage;
+use Bitrix\Call\Analytics\FollowUpAnalytics;
 use Bitrix\Im\Call\Call;
 use Bitrix\Im\V2\Chat;
 use Bitrix\Im\V2\Chat\ChatFactory;
@@ -72,7 +73,7 @@ class NotifyService
 
 					$this->sendMessageDeferred($chat, $message, $sendingConfig);
 
-					(new \Bitrix\Call\Analytics\FollowUpAnalytics($call))->addFollowUpErrorMessage($error->getCode());
+					(new FollowUpAnalytics($call))->addFollowUpErrorMessage($error->getCode());
 				}
 			}
 		}
@@ -98,7 +99,7 @@ class NotifyService
 			{
 				$this->sendError($chat, $errorMessage);
 
-				(new \Bitrix\Call\Analytics\FollowUpAnalytics($call))->addFollowUpErrorMessage($error->getCode());
+				(new FollowUpAnalytics($call))->addFollowUpErrorMessage($error->getCode());
 			}
 		}
 	}

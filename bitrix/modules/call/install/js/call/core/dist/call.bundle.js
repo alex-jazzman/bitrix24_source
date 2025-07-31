@@ -226,6 +226,7 @@ this.BX = this.BX || {};
 	  return Logger;
 	}();
 
+	function _regeneratorRuntime() { /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ _regeneratorRuntime = function _regeneratorRuntime() { return exports; }; var exports = {}, Op = Object.prototype, hasOwn = Op.hasOwnProperty, defineProperty = Object.defineProperty || function (obj, key, desc) { obj[key] = desc.value; }, $Symbol = "function" == typeof Symbol ? Symbol : {}, iteratorSymbol = $Symbol.iterator || "@@iterator", asyncIteratorSymbol = $Symbol.asyncIterator || "@@asyncIterator", toStringTagSymbol = $Symbol.toStringTag || "@@toStringTag"; function define(obj, key, value) { return Object.defineProperty(obj, key, { value: value, enumerable: !0, configurable: !0, writable: !0 }), obj[key]; } try { define({}, ""); } catch (err) { define = function define(obj, key, value) { return obj[key] = value; }; } function wrap(innerFn, outerFn, self, tryLocsList) { var protoGenerator = outerFn && outerFn.prototype instanceof Generator ? outerFn : Generator, generator = Object.create(protoGenerator.prototype), context = new Context(tryLocsList || []); return defineProperty(generator, "_invoke", { value: makeInvokeMethod(innerFn, self, context) }), generator; } function tryCatch(fn, obj, arg) { try { return { type: "normal", arg: fn.call(obj, arg) }; } catch (err) { return { type: "throw", arg: err }; } } exports.wrap = wrap; var ContinueSentinel = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var IteratorPrototype = {}; define(IteratorPrototype, iteratorSymbol, function () { return this; }); var getProto = Object.getPrototypeOf, NativeIteratorPrototype = getProto && getProto(getProto(values([]))); NativeIteratorPrototype && NativeIteratorPrototype !== Op && hasOwn.call(NativeIteratorPrototype, iteratorSymbol) && (IteratorPrototype = NativeIteratorPrototype); var Gp = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(IteratorPrototype); function defineIteratorMethods(prototype) { ["next", "throw", "return"].forEach(function (method) { define(prototype, method, function (arg) { return this._invoke(method, arg); }); }); } function AsyncIterator(generator, PromiseImpl) { function invoke(method, arg, resolve, reject) { var record = tryCatch(generator[method], generator, arg); if ("throw" !== record.type) { var result = record.arg, value = result.value; return value && "object" == babelHelpers["typeof"](value) && hasOwn.call(value, "__await") ? PromiseImpl.resolve(value.__await).then(function (value) { invoke("next", value, resolve, reject); }, function (err) { invoke("throw", err, resolve, reject); }) : PromiseImpl.resolve(value).then(function (unwrapped) { result.value = unwrapped, resolve(result); }, function (error) { return invoke("throw", error, resolve, reject); }); } reject(record.arg); } var previousPromise; defineProperty(this, "_invoke", { value: function value(method, arg) { function callInvokeWithMethodAndArg() { return new PromiseImpl(function (resolve, reject) { invoke(method, arg, resolve, reject); }); } return previousPromise = previousPromise ? previousPromise.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); } }); } function makeInvokeMethod(innerFn, self, context) { var state = "suspendedStart"; return function (method, arg) { if ("executing" === state) throw new Error("Generator is already running"); if ("completed" === state) { if ("throw" === method) throw arg; return doneResult(); } for (context.method = method, context.arg = arg;;) { var delegate = context.delegate; if (delegate) { var delegateResult = maybeInvokeDelegate(delegate, context); if (delegateResult) { if (delegateResult === ContinueSentinel) continue; return delegateResult; } } if ("next" === context.method) context.sent = context._sent = context.arg;else if ("throw" === context.method) { if ("suspendedStart" === state) throw state = "completed", context.arg; context.dispatchException(context.arg); } else "return" === context.method && context.abrupt("return", context.arg); state = "executing"; var record = tryCatch(innerFn, self, context); if ("normal" === record.type) { if (state = context.done ? "completed" : "suspendedYield", record.arg === ContinueSentinel) continue; return { value: record.arg, done: context.done }; } "throw" === record.type && (state = "completed", context.method = "throw", context.arg = record.arg); } }; } function maybeInvokeDelegate(delegate, context) { var methodName = context.method, method = delegate.iterator[methodName]; if (undefined === method) return context.delegate = null, "throw" === methodName && delegate.iterator["return"] && (context.method = "return", context.arg = undefined, maybeInvokeDelegate(delegate, context), "throw" === context.method) || "return" !== methodName && (context.method = "throw", context.arg = new TypeError("The iterator does not provide a '" + methodName + "' method")), ContinueSentinel; var record = tryCatch(method, delegate.iterator, context.arg); if ("throw" === record.type) return context.method = "throw", context.arg = record.arg, context.delegate = null, ContinueSentinel; var info = record.arg; return info ? info.done ? (context[delegate.resultName] = info.value, context.next = delegate.nextLoc, "return" !== context.method && (context.method = "next", context.arg = undefined), context.delegate = null, ContinueSentinel) : info : (context.method = "throw", context.arg = new TypeError("iterator result is not an object"), context.delegate = null, ContinueSentinel); } function pushTryEntry(locs) { var entry = { tryLoc: locs[0] }; 1 in locs && (entry.catchLoc = locs[1]), 2 in locs && (entry.finallyLoc = locs[2], entry.afterLoc = locs[3]), this.tryEntries.push(entry); } function resetTryEntry(entry) { var record = entry.completion || {}; record.type = "normal", delete record.arg, entry.completion = record; } function Context(tryLocsList) { this.tryEntries = [{ tryLoc: "root" }], tryLocsList.forEach(pushTryEntry, this), this.reset(!0); } function values(iterable) { if (iterable) { var iteratorMethod = iterable[iteratorSymbol]; if (iteratorMethod) return iteratorMethod.call(iterable); if ("function" == typeof iterable.next) return iterable; if (!isNaN(iterable.length)) { var i = -1, next = function next() { for (; ++i < iterable.length;) if (hasOwn.call(iterable, i)) return next.value = iterable[i], next.done = !1, next; return next.value = undefined, next.done = !0, next; }; return next.next = next; } } return { next: doneResult }; } function doneResult() { return { value: undefined, done: !0 }; } return GeneratorFunction.prototype = GeneratorFunctionPrototype, defineProperty(Gp, "constructor", { value: GeneratorFunctionPrototype, configurable: !0 }), defineProperty(GeneratorFunctionPrototype, "constructor", { value: GeneratorFunction, configurable: !0 }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, toStringTagSymbol, "GeneratorFunction"), exports.isGeneratorFunction = function (genFun) { var ctor = "function" == typeof genFun && genFun.constructor; return !!ctor && (ctor === GeneratorFunction || "GeneratorFunction" === (ctor.displayName || ctor.name)); }, exports.mark = function (genFun) { return Object.setPrototypeOf ? Object.setPrototypeOf(genFun, GeneratorFunctionPrototype) : (genFun.__proto__ = GeneratorFunctionPrototype, define(genFun, toStringTagSymbol, "GeneratorFunction")), genFun.prototype = Object.create(Gp), genFun; }, exports.awrap = function (arg) { return { __await: arg }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, asyncIteratorSymbol, function () { return this; }), exports.AsyncIterator = AsyncIterator, exports.async = function (innerFn, outerFn, self, tryLocsList, PromiseImpl) { void 0 === PromiseImpl && (PromiseImpl = Promise); var iter = new AsyncIterator(wrap(innerFn, outerFn, self, tryLocsList), PromiseImpl); return exports.isGeneratorFunction(outerFn) ? iter : iter.next().then(function (result) { return result.done ? result.value : iter.next(); }); }, defineIteratorMethods(Gp), define(Gp, toStringTagSymbol, "Generator"), define(Gp, iteratorSymbol, function () { return this; }), define(Gp, "toString", function () { return "[object Generator]"; }), exports.keys = function (val) { var object = Object(val), keys = []; for (var key in object) keys.push(key); return keys.reverse(), function next() { for (; keys.length;) { var key = keys.pop(); if (key in object) return next.value = key, next.done = !1, next; } return next.done = !0, next; }; }, exports.values = values, Context.prototype = { constructor: Context, reset: function reset(skipTempReset) { if (this.prev = 0, this.next = 0, this.sent = this._sent = undefined, this.done = !1, this.delegate = null, this.method = "next", this.arg = undefined, this.tryEntries.forEach(resetTryEntry), !skipTempReset) for (var name in this) "t" === name.charAt(0) && hasOwn.call(this, name) && !isNaN(+name.slice(1)) && (this[name] = undefined); }, stop: function stop() { this.done = !0; var rootRecord = this.tryEntries[0].completion; if ("throw" === rootRecord.type) throw rootRecord.arg; return this.rval; }, dispatchException: function dispatchException(exception) { if (this.done) throw exception; var context = this; function handle(loc, caught) { return record.type = "throw", record.arg = exception, context.next = loc, caught && (context.method = "next", context.arg = undefined), !!caught; } for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i], record = entry.completion; if ("root" === entry.tryLoc) return handle("end"); if (entry.tryLoc <= this.prev) { var hasCatch = hasOwn.call(entry, "catchLoc"), hasFinally = hasOwn.call(entry, "finallyLoc"); if (hasCatch && hasFinally) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } else if (hasCatch) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); } else { if (!hasFinally) throw new Error("try statement without catch or finally"); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } } } }, abrupt: function abrupt(type, arg) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc <= this.prev && hasOwn.call(entry, "finallyLoc") && this.prev < entry.finallyLoc) { var finallyEntry = entry; break; } } finallyEntry && ("break" === type || "continue" === type) && finallyEntry.tryLoc <= arg && arg <= finallyEntry.finallyLoc && (finallyEntry = null); var record = finallyEntry ? finallyEntry.completion : {}; return record.type = type, record.arg = arg, finallyEntry ? (this.method = "next", this.next = finallyEntry.finallyLoc, ContinueSentinel) : this.complete(record); }, complete: function complete(record, afterLoc) { if ("throw" === record.type) throw record.arg; return "break" === record.type || "continue" === record.type ? this.next = record.arg : "return" === record.type ? (this.rval = this.arg = record.arg, this.method = "return", this.next = "end") : "normal" === record.type && afterLoc && (this.next = afterLoc), ContinueSentinel; }, finish: function finish(finallyLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.finallyLoc === finallyLoc) return this.complete(entry.completion, entry.afterLoc), resetTryEntry(entry), ContinueSentinel; } }, "catch": function _catch(tryLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc === tryLoc) { var record = entry.completion; if ("throw" === record.type) { var thrown = record.arg; resetTryEntry(entry); } return thrown; } } throw new Error("illegal catch attempt"); }, delegateYield: function delegateYield(iterable, resultName, nextLoc) { return this.delegate = { iterator: values(iterable), resultName: resultName, nextLoc: nextLoc }, "next" === this.method && (this.arg = undefined), ContinueSentinel; } }, exports; }
 	var lsKey = {
 	  defaultMicrophone: 'bx-im-settings-default-microphone',
 	  defaultCamera: 'bx-im-settings-default-camera',
@@ -266,9 +267,9 @@ this.BX = this.BX || {};
 	      if (this.initPromise) {
 	        return this.initPromise;
 	      }
+	      this._checkPermissions();
 	      this.initPromise = new Promise(function (resolve, reject) {
-	        _this2.enumerateDevices().then(function (deviceList) {
-	          _this2._currentDeviceList = _this2.filterDeviceList(deviceList);
+	        _this2.getCurrentDeviceList().then(function () {
 	          navigator.mediaDevices.addEventListener('devicechange', BX.debounce(_this2.onNavigatorDeviceChanged.bind(_this2), 500));
 	          _this2.initialized = true;
 	          _this2.initPromise = null;
@@ -282,27 +283,87 @@ this.BX = this.BX || {};
 	      return this.initPromise;
 	    }
 	  }, {
+	    key: "_checkPermissions",
+	    value: function () {
+	      var _checkPermissions2 = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee() {
+	        var _this3 = this;
+	        var cameraPermission, microphonePermission;
+	        return _regeneratorRuntime().wrap(function _callee$(_context) {
+	          while (1) switch (_context.prev = _context.next) {
+	            case 0:
+	              _context.next = 2;
+	              return navigator.permissions.query({
+	                name: 'camera'
+	              });
+	            case 2:
+	              cameraPermission = _context.sent;
+	              _context.next = 5;
+	              return navigator.permissions.query({
+	                name: 'microphone'
+	              });
+	            case 5:
+	              microphonePermission = _context.sent;
+	              cameraPermission.onchange = function (status) {
+	                _this3.getCurrentDeviceList();
+	              };
+	              microphonePermission.onchange = function (status) {
+	                _this3.getCurrentDeviceList();
+	              };
+	            case 8:
+	            case "end":
+	              return _context.stop();
+	          }
+	        }, _callee);
+	      }));
+	      function _checkPermissions() {
+	        return _checkPermissions2.apply(this, arguments);
+	      }
+	      return _checkPermissions;
+	    }()
+	  }, {
 	    key: "enumerateDevices",
-	    value: function enumerateDevices() {
-	      return new Promise(function (resolve, reject) {
-	        if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
-	          return reject("NO_WEBRTC");
-	        }
-	        navigator.mediaDevices.enumerateDevices().then(function (devices) {
-	          return resolve(devices);
-	        });
-	      });
-	    }
+	    value: function () {
+	      var _enumerateDevices = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee2() {
+	        var error, devices;
+	        return _regeneratorRuntime().wrap(function _callee2$(_context2) {
+	          while (1) switch (_context2.prev = _context2.next) {
+	            case 0:
+	              if (!(!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices)) {
+	                _context2.next = 4;
+	                break;
+	              }
+	              error = new Error("NO_WEBRTC");
+	              error.code = "NO_WEBRTC";
+	              throw error;
+	            case 4:
+	              _context2.prev = 4;
+	              _context2.next = 7;
+	              return navigator.mediaDevices.enumerateDevices();
+	            case 7:
+	              devices = _context2.sent;
+	              return _context2.abrupt("return", devices);
+	            case 11:
+	              _context2.prev = 11;
+	              _context2.t0 = _context2["catch"](4);
+	              throw _context2.t0;
+	            case 14:
+	            case "end":
+	              return _context2.stop();
+	          }
+	        }, _callee2, null, [[4, 11]]);
+	      }));
+	      function enumerateDevices() {
+	        return _enumerateDevices.apply(this, arguments);
+	      }
+	      return enumerateDevices;
+	    }()
 	  }, {
 	    key: "setIsCameraOn",
-	    /* 
-	    
-	    the setter "isCameraOn" is duplicated by that function  
+	    /*
+	    	the setter "isCameraOn" is duplicated by that function
 	    to emit additional params in "onChangeCameraOn" event
-	    
-	    for task-565624 off all participants mic/cam/screenshare
-	    
-	    */
+	    	for task-565624 off all participants mic/cam/screenshare
+	    	*/
 	    value: function setIsCameraOn(options) {
 	      if (this._isCameraOn !== options.isCameraOn) {
 	        this._isCameraOn = options.isCameraOn;
@@ -311,14 +372,11 @@ this.BX = this.BX || {};
 	    }
 	  }, {
 	    key: "setIsMicrophoneMuted",
-	    /* 
-	    
-	    the setter "isMicrophoneMuted" is duplicated by that function  
+	    /*
+	    	the setter "isMicrophoneMuted" is duplicated by that function
 	    to emit additional params in "onChangeMicrophoneMuted" event
-	    
-	    for task-565624 off all participants mic/cam/screenshare
-	    
-	    */
+	    	for task-565624 off all participants mic/cam/screenshare
+	    	*/
 	    value: function setIsMicrophoneMuted(options) {
 	      if (this._isMicrophoneMuted !== options.isMicrophoneMuted) {
 	        this._isMicrophoneMuted = options.isMicrophoneMuted;
@@ -379,7 +437,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "updateDeviceList",
 	    value: function updateDeviceList(e) {
-	      var _this3 = this;
+	      var _this4 = this;
 	      if (this.updating) {
 	        return;
 	      }
@@ -390,7 +448,7 @@ this.BX = this.BX || {};
 	        return deviceInfo.deviceId == "" && deviceInfo.label == "";
 	      });
 	      navigator.mediaDevices.enumerateDevices().then(function (devices) {
-	        devices = _this3.filterDeviceList(devices);
+	        devices = _this4.filterDeviceList(devices);
 	        devices.forEach(function (deviceInfo) {
 	          var index = removedDevices.findIndex(function (dev) {
 	            return dev.kind === deviceInfo.kind && dev.deviceId === deviceInfo.deviceId && dev.groupId === deviceInfo.groupId;
@@ -402,26 +460,26 @@ this.BX = this.BX || {};
 	            addedDevices.push(deviceInfo);
 	          }
 	        });
-	        _this3._currentDeviceList = devices;
+	        _this4._currentDeviceList = devices;
 	        if (!shouldSkipDeviceChangedEvent) {
-	          _this3.emit(Events.deviceChanged, {
+	          _this4.emit(Events.deviceChanged, {
 	            added: addedDevices,
 	            removed: removedDevices
 	          });
 	        }
-	        _this3.updating = false;
+	        _this4.updating = false;
 	      });
 	    }
 	  }, {
 	    key: "filterDeviceList",
 	    value: function filterDeviceList(browserDeviceList) {
-	      var _this4 = this;
+	      var _this5 = this;
 	      return browserDeviceList.filter(function (device) {
 	        switch (device.kind) {
 	          case "audioinput":
-	            return device.deviceId !== "communications" && !_this4.isDeviceInBlackList(device);
+	            return device.deviceId !== "communications" && !_this5.isDeviceInBlackList(device);
 	          case "audiooutput":
-	            return device.deviceId !== "communications" && !_this4.isDeviceInBlackList(device);
+	            return device.deviceId !== "communications" && !_this5.isDeviceInBlackList(device);
 	          default:
 	            return true;
 	        }
@@ -502,11 +560,11 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "getCurrentDeviceList",
 	    value: function getCurrentDeviceList() {
-	      var _this5 = this;
+	      var _this6 = this;
 	      return new Promise(function (resolve, reject) {
-	        _this5.enumerateDevices().then(function (deviceList) {
-	          _this5._currentDeviceList = _this5.filterDeviceList(deviceList);
-	          resolve();
+	        _this6.enumerateDevices().then(function (deviceList) {
+	          _this6._currentDeviceList = _this6.filterDeviceList(deviceList);
+	          resolve(_this6._currentDeviceList, deviceList);
 	        });
 	      });
 	    }
@@ -993,12 +1051,10 @@ this.BX = this.BX || {};
 	  babelHelpers.inherits(UserRegistry, _EventEmitter);
 	  function UserRegistry() {
 	    var _this;
-	    var config = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 	    babelHelpers.classCallCheck(this, UserRegistry);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(UserRegistry).call(this));
 	    _this.setEventNamespace('BX.Call.UserRegistry');
-	    _this.users = main_core.Type.isArray(config.users) ? config.users : [];
-	    _this._sort();
+	    _this.users = new Map();
 	    return _this;
 	  }
 	  babelHelpers.createClass(UserRegistry, [{
@@ -1009,12 +1065,7 @@ this.BX = this.BX || {};
 	     * @returns {UserModel|null}
 	     */
 	    value: function get(userId) {
-	      for (var i = 0; i < this.users.length; i++) {
-	        if (this.users[i].id == userId) {
-	          return this.users[i];
-	        }
-	      }
-	      return null;
+	      return this.users.get(Number(userId)) || null;
 	    }
 	  }, {
 	    key: "push",
@@ -1022,8 +1073,7 @@ this.BX = this.BX || {};
 	      if (!(user instanceof UserModel)) {
 	        throw Error("user should be instance of UserModel");
 	      }
-	      this.users.push(user);
-	      this._sort();
+	      this.users.set(Number(user.id), user);
 	      user.subscribe("changed", this._onUserChanged.bind(this));
 	      this.emit("userAdded", {
 	        user: user
@@ -1040,9 +1090,9 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "_sort",
 	    value: function _sort() {
-	      this.users = this.users.sort(function (a, b) {
-	        return a.order - b.order;
-	      });
+	      this.users = new Map(babelHelpers.toConsumableArray(this.users).sort(function (a, b) {
+	        return a[1].order - b[1].order;
+	      }));
 	    }
 	  }]);
 	  return UserRegistry;
@@ -1090,6 +1140,13 @@ this.BX = this.BX || {};
 	      } else {
 	        return BX.message("IM_M_CALL_WITH").replace("#USER_NAME#", prettyName);
 	      }
+	    }
+	  }, {
+	    key: "update",
+	    value: function update(config) {
+	      this.text = main_core.Type.isStringFilled(config.text) ? config.text : '';
+	      this.isGroupCall = config.isGroupCall;
+	      this.elements.root.innerHTML = this.getTitle();
 	    }
 	  }]);
 	  return TitleButton;
@@ -1525,21 +1582,28 @@ this.BX = this.BX || {};
 	  function WaterMarkButton(config) {
 	    babelHelpers.classCallCheck(this, WaterMarkButton);
 	    this.language = config.language;
+	    this.elements = {
+	      root: null
+	    };
 	  }
 	  babelHelpers.createClass(WaterMarkButton, [{
 	    key: "render",
 	    value: function render() {
-	      return main_core.Dom.create("div", {
+	      if (this.elements.root) {
+	        return this.elements.root;
+	      }
+	      this.elements.root = main_core.Dom.create('div', {
 	        props: {
-	          className: "bx-messenger-videocall-watermark"
+	          className: 'bx-messenger-videocall-watermark'
 	        },
-	        children: [main_core.Dom.create("img", {
+	        children: [main_core.Dom.create('img', {
 	          props: {
-	            className: "bx-messenger-videocall-watermark-img",
+	            className: 'bx-messenger-videocall-watermark-img',
 	            src: this.getWatermarkUrl(this.language)
 	          }
 	        })]
 	      });
+	      return this.elements.root;
 	    }
 	  }, {
 	    key: "getWatermarkUrl",
@@ -1559,15 +1623,17 @@ this.BX = this.BX || {};
 	var TopButton = /*#__PURE__*/function () {
 	  function TopButton(config) {
 	    babelHelpers.classCallCheck(this, TopButton);
-	    this.iconClass = BX.prop.getString(config, "iconClass", "");
-	    this.text = BX.prop.getString(config, "text", "");
+	    this.iconClass = BX.prop.getString(config, 'iconClass', '');
+	    this.text = BX.prop.getString(config, 'text', '');
 	    this.elements = {
-	      root: null
+	      root: null,
+	      icon: null,
+	      text: null
 	    };
 	    this.callbacks = {
-	      onClick: BX.prop.getFunction(config, "onClick", BX.DoNothing),
-	      onMouseOver: BX.prop.getFunction(config, "onMouseOver", BX.DoNothing),
-	      onMouseOut: BX.prop.getFunction(config, "onMouseOut", BX.DoNothing)
+	      onClick: BX.prop.getFunction(config, 'onClick', BX.DoNothing),
+	      onMouseOver: BX.prop.getFunction(config, 'onMouseOver', BX.DoNothing),
+	      onMouseOut: BX.prop.getFunction(config, 'onMouseOut', BX.DoNothing)
 	    };
 	  }
 	  babelHelpers.createClass(TopButton, [{
@@ -1576,17 +1642,17 @@ this.BX = this.BX || {};
 	      if (this.elements.root) {
 	        return this.elements.root;
 	      }
-	      this.elements.root = main_core.Dom.create("div", {
+	      this.elements.root = main_core.Dom.create('div', {
 	        props: {
-	          className: "bx-messenger-videocall-top-button"
+	          className: 'bx-messenger-videocall-top-button'
 	        },
-	        children: [main_core.Dom.create("div", {
+	        children: [this.elements.icon = main_core.Dom.create('div', {
 	          props: {
-	            className: "bx-messenger-videocall-top-button-icon " + this.iconClass
+	            className: "bx-messenger-videocall-top-button-icon ".concat(this.iconClass)
 	          }
-	        }), main_core.Dom.create("div", {
+	        }), this.elements.text = main_core.Dom.create('div', {
 	          props: {
-	            className: "bx-messenger-videocall-top-button-text " + this.iconClass
+	            className: "bx-messenger-videocall-top-button-text ".concat(this.iconClass)
 	          },
 	          text: this.text
 	        })],
@@ -1598,44 +1664,66 @@ this.BX = this.BX || {};
 	      });
 	      return this.elements.root;
 	    }
+	  }, {
+	    key: "update",
+	    value: function update(config) {
+	      var iconClass = BX.prop.getString(config, 'iconClass', this.iconClass);
+	      var text = BX.prop.getString(config, 'text', this.text);
+	      if (this.iconClass !== iconClass) {
+	        this.iconClass = iconClass;
+	        this.elements.icon.className = "bx-messenger-videocall-top-button-icon ".concat(this.iconClass);
+	      }
+	      if (this.text !== text) {
+	        this.text = text;
+	        this.elements.text.innerText = this.text;
+	        this.elements.text.className = "bx-messenger-videocall-top-button-text ".concat(this.iconClass);
+	      }
+	    }
 	  }]);
 	  return TopButton;
 	}();
 	var TopFramelessButton = /*#__PURE__*/function () {
 	  function TopFramelessButton(config) {
 	    babelHelpers.classCallCheck(this, TopFramelessButton);
-	    this.iconClass = BX.prop.getString(config, "iconClass", "");
-	    this.textClass = BX.prop.getString(config, "textClass", "");
-	    this.text = BX.prop.getString(config, "text", "");
+	    this.iconClass = BX.prop.getString(config, 'iconClass', '');
+	    this.textClass = BX.prop.getString(config, 'textClass', '');
+	    this.text = BX.prop.getString(config, 'text', '');
+	    this.elements = {
+	      root: null
+	    };
 	    this.callbacks = {
-	      onClick: BX.prop.getFunction(config, "onClick", BX.DoNothing),
-	      onMouseOver: BX.prop.getFunction(config, "onMouseOver", BX.DoNothing),
-	      onMouseOut: BX.prop.getFunction(config, "onMouseOut", BX.DoNothing)
+	      onClick: BX.prop.getFunction(config, 'onClick', BX.DoNothing),
+	      onMouseOver: BX.prop.getFunction(config, 'onMouseOver', BX.DoNothing),
+	      onMouseOut: BX.prop.getFunction(config, 'onMouseOut', BX.DoNothing)
 	    };
 	  }
 	  babelHelpers.createClass(TopFramelessButton, [{
 	    key: "render",
 	    value: function render() {
-	      return main_core.Dom.create("div", {
+	      if (this.elements.root) {
+	        return this.elements.root;
+	      }
+	      this.elements.root = main_core.Dom.create('div', {
 	        props: {
-	          className: "bx-messenger-videocall-top-button-frameless"
+	          className: 'bx-messenger-videocall-top-button-frameless'
 	        },
-	        children: [main_core.Dom.create("div", {
+	        children: [main_core.Dom.create('div', {
 	          props: {
-	            className: "bx-messenger-videocall-top-button-icon " + this.iconClass
+	            className: "bx-messenger-videocall-top-button-icon ".concat(this.iconClass)
 	          }
-	        }), this.text != "" ? main_core.Dom.create("div", {
+	        }), this.text === '' ? null : main_core.Dom.create('div', {
 	          props: {
-	            className: "bx-messenger-videocall-top-button-text " + this.textClass
+	            className: "bx-messenger-videocall-top-button-text ".concat(this.textClass)
 	          },
 	          text: this.text
-	        }) : null],
+	        })],
 	        events: {
 	          click: this.callbacks.onClick,
 	          mouseover: this.callbacks.onMouseOver,
 	          mouseout: this.callbacks.onMouseOut
 	        }
 	      });
+	      return this.elements.root;
 	    }
 	  }]);
 	  return TopFramelessButton;
@@ -2557,7 +2645,7 @@ this.BX = this.BX || {};
 	function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 	function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
 	function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
-	function _regeneratorRuntime() { /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ _regeneratorRuntime = function _regeneratorRuntime() { return exports; }; var exports = {}, Op = Object.prototype, hasOwn = Op.hasOwnProperty, defineProperty = Object.defineProperty || function (obj, key, desc) { obj[key] = desc.value; }, $Symbol = "function" == typeof Symbol ? Symbol : {}, iteratorSymbol = $Symbol.iterator || "@@iterator", asyncIteratorSymbol = $Symbol.asyncIterator || "@@asyncIterator", toStringTagSymbol = $Symbol.toStringTag || "@@toStringTag"; function define(obj, key, value) { return Object.defineProperty(obj, key, { value: value, enumerable: !0, configurable: !0, writable: !0 }), obj[key]; } try { define({}, ""); } catch (err) { define = function define(obj, key, value) { return obj[key] = value; }; } function wrap(innerFn, outerFn, self, tryLocsList) { var protoGenerator = outerFn && outerFn.prototype instanceof Generator ? outerFn : Generator, generator = Object.create(protoGenerator.prototype), context = new Context(tryLocsList || []); return defineProperty(generator, "_invoke", { value: makeInvokeMethod(innerFn, self, context) }), generator; } function tryCatch(fn, obj, arg) { try { return { type: "normal", arg: fn.call(obj, arg) }; } catch (err) { return { type: "throw", arg: err }; } } exports.wrap = wrap; var ContinueSentinel = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var IteratorPrototype = {}; define(IteratorPrototype, iteratorSymbol, function () { return this; }); var getProto = Object.getPrototypeOf, NativeIteratorPrototype = getProto && getProto(getProto(values([]))); NativeIteratorPrototype && NativeIteratorPrototype !== Op && hasOwn.call(NativeIteratorPrototype, iteratorSymbol) && (IteratorPrototype = NativeIteratorPrototype); var Gp = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(IteratorPrototype); function defineIteratorMethods(prototype) { ["next", "throw", "return"].forEach(function (method) { define(prototype, method, function (arg) { return this._invoke(method, arg); }); }); } function AsyncIterator(generator, PromiseImpl) { function invoke(method, arg, resolve, reject) { var record = tryCatch(generator[method], generator, arg); if ("throw" !== record.type) { var result = record.arg, value = result.value; return value && "object" == babelHelpers["typeof"](value) && hasOwn.call(value, "__await") ? PromiseImpl.resolve(value.__await).then(function (value) { invoke("next", value, resolve, reject); }, function (err) { invoke("throw", err, resolve, reject); }) : PromiseImpl.resolve(value).then(function (unwrapped) { result.value = unwrapped, resolve(result); }, function (error) { return invoke("throw", error, resolve, reject); }); } reject(record.arg); } var previousPromise; defineProperty(this, "_invoke", { value: function value(method, arg) { function callInvokeWithMethodAndArg() { return new PromiseImpl(function (resolve, reject) { invoke(method, arg, resolve, reject); }); } return previousPromise = previousPromise ? previousPromise.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); } }); } function makeInvokeMethod(innerFn, self, context) { var state = "suspendedStart"; return function (method, arg) { if ("executing" === state) throw new Error("Generator is already running"); if ("completed" === state) { if ("throw" === method) throw arg; return doneResult(); } for (context.method = method, context.arg = arg;;) { var delegate = context.delegate; if (delegate) { var delegateResult = maybeInvokeDelegate(delegate, context); if (delegateResult) { if (delegateResult === ContinueSentinel) continue; return delegateResult; } } if ("next" === context.method) context.sent = context._sent = context.arg;else if ("throw" === context.method) { if ("suspendedStart" === state) throw state = "completed", context.arg; context.dispatchException(context.arg); } else "return" === context.method && context.abrupt("return", context.arg); state = "executing"; var record = tryCatch(innerFn, self, context); if ("normal" === record.type) { if (state = context.done ? "completed" : "suspendedYield", record.arg === ContinueSentinel) continue; return { value: record.arg, done: context.done }; } "throw" === record.type && (state = "completed", context.method = "throw", context.arg = record.arg); } }; } function maybeInvokeDelegate(delegate, context) { var methodName = context.method, method = delegate.iterator[methodName]; if (undefined === method) return context.delegate = null, "throw" === methodName && delegate.iterator["return"] && (context.method = "return", context.arg = undefined, maybeInvokeDelegate(delegate, context), "throw" === context.method) || "return" !== methodName && (context.method = "throw", context.arg = new TypeError("The iterator does not provide a '" + methodName + "' method")), ContinueSentinel; var record = tryCatch(method, delegate.iterator, context.arg); if ("throw" === record.type) return context.method = "throw", context.arg = record.arg, context.delegate = null, ContinueSentinel; var info = record.arg; return info ? info.done ? (context[delegate.resultName] = info.value, context.next = delegate.nextLoc, "return" !== context.method && (context.method = "next", context.arg = undefined), context.delegate = null, ContinueSentinel) : info : (context.method = "throw", context.arg = new TypeError("iterator result is not an object"), context.delegate = null, ContinueSentinel); } function pushTryEntry(locs) { var entry = { tryLoc: locs[0] }; 1 in locs && (entry.catchLoc = locs[1]), 2 in locs && (entry.finallyLoc = locs[2], entry.afterLoc = locs[3]), this.tryEntries.push(entry); } function resetTryEntry(entry) { var record = entry.completion || {}; record.type = "normal", delete record.arg, entry.completion = record; } function Context(tryLocsList) { this.tryEntries = [{ tryLoc: "root" }], tryLocsList.forEach(pushTryEntry, this), this.reset(!0); } function values(iterable) { if (iterable) { var iteratorMethod = iterable[iteratorSymbol]; if (iteratorMethod) return iteratorMethod.call(iterable); if ("function" == typeof iterable.next) return iterable; if (!isNaN(iterable.length)) { var i = -1, next = function next() { for (; ++i < iterable.length;) if (hasOwn.call(iterable, i)) return next.value = iterable[i], next.done = !1, next; return next.value = undefined, next.done = !0, next; }; return next.next = next; } } return { next: doneResult }; } function doneResult() { return { value: undefined, done: !0 }; } return GeneratorFunction.prototype = GeneratorFunctionPrototype, defineProperty(Gp, "constructor", { value: GeneratorFunctionPrototype, configurable: !0 }), defineProperty(GeneratorFunctionPrototype, "constructor", { value: GeneratorFunction, configurable: !0 }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, toStringTagSymbol, "GeneratorFunction"), exports.isGeneratorFunction = function (genFun) { var ctor = "function" == typeof genFun && genFun.constructor; return !!ctor && (ctor === GeneratorFunction || "GeneratorFunction" === (ctor.displayName || ctor.name)); }, exports.mark = function (genFun) { return Object.setPrototypeOf ? Object.setPrototypeOf(genFun, GeneratorFunctionPrototype) : (genFun.__proto__ = GeneratorFunctionPrototype, define(genFun, toStringTagSymbol, "GeneratorFunction")), genFun.prototype = Object.create(Gp), genFun; }, exports.awrap = function (arg) { return { __await: arg }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, asyncIteratorSymbol, function () { return this; }), exports.AsyncIterator = AsyncIterator, exports.async = function (innerFn, outerFn, self, tryLocsList, PromiseImpl) { void 0 === PromiseImpl && (PromiseImpl = Promise); var iter = new AsyncIterator(wrap(innerFn, outerFn, self, tryLocsList), PromiseImpl); return exports.isGeneratorFunction(outerFn) ? iter : iter.next().then(function (result) { return result.done ? result.value : iter.next(); }); }, defineIteratorMethods(Gp), define(Gp, toStringTagSymbol, "Generator"), define(Gp, iteratorSymbol, function () { return this; }), define(Gp, "toString", function () { return "[object Generator]"; }), exports.keys = function (val) { var object = Object(val), keys = []; for (var key in object) keys.push(key); return keys.reverse(), function next() { for (; keys.length;) { var key = keys.pop(); if (key in object) return next.value = key, next.done = !1, next; } return next.done = !0, next; }; }, exports.values = values, Context.prototype = { constructor: Context, reset: function reset(skipTempReset) { if (this.prev = 0, this.next = 0, this.sent = this._sent = undefined, this.done = !1, this.delegate = null, this.method = "next", this.arg = undefined, this.tryEntries.forEach(resetTryEntry), !skipTempReset) for (var name in this) "t" === name.charAt(0) && hasOwn.call(this, name) && !isNaN(+name.slice(1)) && (this[name] = undefined); }, stop: function stop() { this.done = !0; var rootRecord = this.tryEntries[0].completion; if ("throw" === rootRecord.type) throw rootRecord.arg; return this.rval; }, dispatchException: function dispatchException(exception) { if (this.done) throw exception; var context = this; function handle(loc, caught) { return record.type = "throw", record.arg = exception, context.next = loc, caught && (context.method = "next", context.arg = undefined), !!caught; } for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i], record = entry.completion; if ("root" === entry.tryLoc) return handle("end"); if (entry.tryLoc <= this.prev) { var hasCatch = hasOwn.call(entry, "catchLoc"), hasFinally = hasOwn.call(entry, "finallyLoc"); if (hasCatch && hasFinally) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } else if (hasCatch) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); } else { if (!hasFinally) throw new Error("try statement without catch or finally"); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } } } }, abrupt: function abrupt(type, arg) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc <= this.prev && hasOwn.call(entry, "finallyLoc") && this.prev < entry.finallyLoc) { var finallyEntry = entry; break; } } finallyEntry && ("break" === type || "continue" === type) && finallyEntry.tryLoc <= arg && arg <= finallyEntry.finallyLoc && (finallyEntry = null); var record = finallyEntry ? finallyEntry.completion : {}; return record.type = type, record.arg = arg, finallyEntry ? (this.method = "next", this.next = finallyEntry.finallyLoc, ContinueSentinel) : this.complete(record); }, complete: function complete(record, afterLoc) { if ("throw" === record.type) throw record.arg; return "break" === record.type || "continue" === record.type ? this.next = record.arg : "return" === record.type ? (this.rval = this.arg = record.arg, this.method = "return", this.next = "end") : "normal" === record.type && afterLoc && (this.next = afterLoc), ContinueSentinel; }, finish: function finish(finallyLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.finallyLoc === finallyLoc) return this.complete(entry.completion, entry.afterLoc), resetTryEntry(entry), ContinueSentinel; } }, "catch": function _catch(tryLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc === tryLoc) { var record = entry.completion; if ("throw" === record.type) { var thrown = record.arg; resetTryEntry(entry); } return thrown; } } throw new Error("illegal catch attempt"); }, delegateYield: function delegateYield(iterable, resultName, nextLoc) { return this.delegate = { iterator: values(iterable), resultName: resultName, nextLoc: nextLoc }, "next" === this.method && (this.arg = undefined), ContinueSentinel; } }, exports; }
+	function _regeneratorRuntime$1() { /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ _regeneratorRuntime$1 = function _regeneratorRuntime() { return exports; }; var exports = {}, Op = Object.prototype, hasOwn = Op.hasOwnProperty, defineProperty = Object.defineProperty || function (obj, key, desc) { obj[key] = desc.value; }, $Symbol = "function" == typeof Symbol ? Symbol : {}, iteratorSymbol = $Symbol.iterator || "@@iterator", asyncIteratorSymbol = $Symbol.asyncIterator || "@@asyncIterator", toStringTagSymbol = $Symbol.toStringTag || "@@toStringTag"; function define(obj, key, value) { return Object.defineProperty(obj, key, { value: value, enumerable: !0, configurable: !0, writable: !0 }), obj[key]; } try { define({}, ""); } catch (err) { define = function define(obj, key, value) { return obj[key] = value; }; } function wrap(innerFn, outerFn, self, tryLocsList) { var protoGenerator = outerFn && outerFn.prototype instanceof Generator ? outerFn : Generator, generator = Object.create(protoGenerator.prototype), context = new Context(tryLocsList || []); return defineProperty(generator, "_invoke", { value: makeInvokeMethod(innerFn, self, context) }), generator; } function tryCatch(fn, obj, arg) { try { return { type: "normal", arg: fn.call(obj, arg) }; } catch (err) { return { type: "throw", arg: err }; } } exports.wrap = wrap; var ContinueSentinel = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var IteratorPrototype = {}; define(IteratorPrototype, iteratorSymbol, function () { return this; }); var getProto = Object.getPrototypeOf, NativeIteratorPrototype = getProto && getProto(getProto(values([]))); NativeIteratorPrototype && NativeIteratorPrototype !== Op && hasOwn.call(NativeIteratorPrototype, iteratorSymbol) && (IteratorPrototype = NativeIteratorPrototype); var Gp = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(IteratorPrototype); function defineIteratorMethods(prototype) { ["next", "throw", "return"].forEach(function (method) { define(prototype, method, function (arg) { return this._invoke(method, arg); }); }); } function AsyncIterator(generator, PromiseImpl) { function invoke(method, arg, resolve, reject) { var record = tryCatch(generator[method], generator, arg); if ("throw" !== record.type) { var result = record.arg, value = result.value; return value && "object" == babelHelpers["typeof"](value) && hasOwn.call(value, "__await") ? PromiseImpl.resolve(value.__await).then(function (value) { invoke("next", value, resolve, reject); }, function (err) { invoke("throw", err, resolve, reject); }) : PromiseImpl.resolve(value).then(function (unwrapped) { result.value = unwrapped, resolve(result); }, function (error) { return invoke("throw", error, resolve, reject); }); } reject(record.arg); } var previousPromise; defineProperty(this, "_invoke", { value: function value(method, arg) { function callInvokeWithMethodAndArg() { return new PromiseImpl(function (resolve, reject) { invoke(method, arg, resolve, reject); }); } return previousPromise = previousPromise ? previousPromise.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); } }); } function makeInvokeMethod(innerFn, self, context) { var state = "suspendedStart"; return function (method, arg) { if ("executing" === state) throw new Error("Generator is already running"); if ("completed" === state) { if ("throw" === method) throw arg; return doneResult(); } for (context.method = method, context.arg = arg;;) { var delegate = context.delegate; if (delegate) { var delegateResult = maybeInvokeDelegate(delegate, context); if (delegateResult) { if (delegateResult === ContinueSentinel) continue; return delegateResult; } } if ("next" === context.method) context.sent = context._sent = context.arg;else if ("throw" === context.method) { if ("suspendedStart" === state) throw state = "completed", context.arg; context.dispatchException(context.arg); } else "return" === context.method && context.abrupt("return", context.arg); state = "executing"; var record = tryCatch(innerFn, self, context); if ("normal" === record.type) { if (state = context.done ? "completed" : "suspendedYield", record.arg === ContinueSentinel) continue; return { value: record.arg, done: context.done }; } "throw" === record.type && (state = "completed", context.method = "throw", context.arg = record.arg); } }; } function maybeInvokeDelegate(delegate, context) { var methodName = context.method, method = delegate.iterator[methodName]; if (undefined === method) return context.delegate = null, "throw" === methodName && delegate.iterator["return"] && (context.method = "return", context.arg = undefined, maybeInvokeDelegate(delegate, context), "throw" === context.method) || "return" !== methodName && (context.method = "throw", context.arg = new TypeError("The iterator does not provide a '" + methodName + "' method")), ContinueSentinel; var record = tryCatch(method, delegate.iterator, context.arg); if ("throw" === record.type) return context.method = "throw", context.arg = record.arg, context.delegate = null, ContinueSentinel; var info = record.arg; return info ? info.done ? (context[delegate.resultName] = info.value, context.next = delegate.nextLoc, "return" !== context.method && (context.method = "next", context.arg = undefined), context.delegate = null, ContinueSentinel) : info : (context.method = "throw", context.arg = new TypeError("iterator result is not an object"), context.delegate = null, ContinueSentinel); } function pushTryEntry(locs) { var entry = { tryLoc: locs[0] }; 1 in locs && (entry.catchLoc = locs[1]), 2 in locs && (entry.finallyLoc = locs[2], entry.afterLoc = locs[3]), this.tryEntries.push(entry); } function resetTryEntry(entry) { var record = entry.completion || {}; record.type = "normal", delete record.arg, entry.completion = record; } function Context(tryLocsList) { this.tryEntries = [{ tryLoc: "root" }], tryLocsList.forEach(pushTryEntry, this), this.reset(!0); } function values(iterable) { if (iterable) { var iteratorMethod = iterable[iteratorSymbol]; if (iteratorMethod) return iteratorMethod.call(iterable); if ("function" == typeof iterable.next) return iterable; if (!isNaN(iterable.length)) { var i = -1, next = function next() { for (; ++i < iterable.length;) if (hasOwn.call(iterable, i)) return next.value = iterable[i], next.done = !1, next; return next.value = undefined, next.done = !0, next; }; return next.next = next; } } return { next: doneResult }; } function doneResult() { return { value: undefined, done: !0 }; } return GeneratorFunction.prototype = GeneratorFunctionPrototype, defineProperty(Gp, "constructor", { value: GeneratorFunctionPrototype, configurable: !0 }), defineProperty(GeneratorFunctionPrototype, "constructor", { value: GeneratorFunction, configurable: !0 }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, toStringTagSymbol, "GeneratorFunction"), exports.isGeneratorFunction = function (genFun) { var ctor = "function" == typeof genFun && genFun.constructor; return !!ctor && (ctor === GeneratorFunction || "GeneratorFunction" === (ctor.displayName || ctor.name)); }, exports.mark = function (genFun) { return Object.setPrototypeOf ? Object.setPrototypeOf(genFun, GeneratorFunctionPrototype) : (genFun.__proto__ = GeneratorFunctionPrototype, define(genFun, toStringTagSymbol, "GeneratorFunction")), genFun.prototype = Object.create(Gp), genFun; }, exports.awrap = function (arg) { return { __await: arg }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, asyncIteratorSymbol, function () { return this; }), exports.AsyncIterator = AsyncIterator, exports.async = function (innerFn, outerFn, self, tryLocsList, PromiseImpl) { void 0 === PromiseImpl && (PromiseImpl = Promise); var iter = new AsyncIterator(wrap(innerFn, outerFn, self, tryLocsList), PromiseImpl); return exports.isGeneratorFunction(outerFn) ? iter : iter.next().then(function (result) { return result.done ? result.value : iter.next(); }); }, defineIteratorMethods(Gp), define(Gp, toStringTagSymbol, "Generator"), define(Gp, iteratorSymbol, function () { return this; }), define(Gp, "toString", function () { return "[object Generator]"; }), exports.keys = function (val) { var object = Object(val), keys = []; for (var key in object) keys.push(key); return keys.reverse(), function next() { for (; keys.length;) { var key = keys.pop(); if (key in object) return next.value = key, next.done = !1, next; } return next.done = !0, next; }; }, exports.values = values, Context.prototype = { constructor: Context, reset: function reset(skipTempReset) { if (this.prev = 0, this.next = 0, this.sent = this._sent = undefined, this.done = !1, this.delegate = null, this.method = "next", this.arg = undefined, this.tryEntries.forEach(resetTryEntry), !skipTempReset) for (var name in this) "t" === name.charAt(0) && hasOwn.call(this, name) && !isNaN(+name.slice(1)) && (this[name] = undefined); }, stop: function stop() { this.done = !0; var rootRecord = this.tryEntries[0].completion; if ("throw" === rootRecord.type) throw rootRecord.arg; return this.rval; }, dispatchException: function dispatchException(exception) { if (this.done) throw exception; var context = this; function handle(loc, caught) { return record.type = "throw", record.arg = exception, context.next = loc, caught && (context.method = "next", context.arg = undefined), !!caught; } for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i], record = entry.completion; if ("root" === entry.tryLoc) return handle("end"); if (entry.tryLoc <= this.prev) { var hasCatch = hasOwn.call(entry, "catchLoc"), hasFinally = hasOwn.call(entry, "finallyLoc"); if (hasCatch && hasFinally) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } else if (hasCatch) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); } else { if (!hasFinally) throw new Error("try statement without catch or finally"); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } } } }, abrupt: function abrupt(type, arg) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc <= this.prev && hasOwn.call(entry, "finallyLoc") && this.prev < entry.finallyLoc) { var finallyEntry = entry; break; } } finallyEntry && ("break" === type || "continue" === type) && finallyEntry.tryLoc <= arg && arg <= finallyEntry.finallyLoc && (finallyEntry = null); var record = finallyEntry ? finallyEntry.completion : {}; return record.type = type, record.arg = arg, finallyEntry ? (this.method = "next", this.next = finallyEntry.finallyLoc, ContinueSentinel) : this.complete(record); }, complete: function complete(record, afterLoc) { if ("throw" === record.type) throw record.arg; return "break" === record.type || "continue" === record.type ? this.next = record.arg : "return" === record.type ? (this.rval = this.arg = record.arg, this.method = "return", this.next = "end") : "normal" === record.type && afterLoc && (this.next = afterLoc), ContinueSentinel; }, finish: function finish(finallyLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.finallyLoc === finallyLoc) return this.complete(entry.completion, entry.afterLoc), resetTryEntry(entry), ContinueSentinel; } }, "catch": function _catch(tryLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc === tryLoc) { var record = entry.completion; if ("throw" === record.type) { var thrown = record.arg; resetTryEntry(entry); } return thrown; } } throw new Error("illegal catch attempt"); }, delegateYield: function delegateYield(iterable, resultName, nextLoc) { return this.delegate = { iterator: values(iterable), resultName: resultName, nextLoc: nextLoc }, "next" === this.method && (this.arg = undefined), ContinueSentinel; } }, exports; }
 	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
 	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
@@ -2880,8 +2968,33 @@ this.BX = this.BX || {};
 	    main_core.Event.EventEmitter.subscribe('BX.Call.Logger:sendLog', function (event) {
 	      _this.setLog(event.data);
 	    });
+	    this.initConnectionEvent();
 	  }
 	  babelHelpers.createClass(Call, [{
+	    key: "onChangeConnection",
+	    value: function onChangeConnection(connection) {
+	      var rtt = connection.rtt;
+	      if (!rtt && !babelHelpers.classPrivateFieldGet(this, _privateProperties).isReconnecting) {
+	        _classPrivateMethodGet(this, _beforeDisconnect, _beforeDisconnect2).call(this);
+	        _classPrivateMethodGet(this, _reconnect, _reconnect2).call(this, {
+	          reconnectionReason: 'ON_CHANGE_CONNECTION',
+	          reconnectionReasonInfo: "RTT: ".concat(rtt)
+	        });
+	      }
+	    }
+	  }, {
+	    key: "initConnectionEvent",
+	    value: function initConnectionEvent() {
+	      var _this2 = this;
+	      var connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+	      if (!connection) {
+	        return;
+	      }
+	      connection.addEventListener('change', function () {
+	        _this2.onChangeConnection(connection);
+	      });
+	    }
+	  }, {
 	    key: "checkQosFeatureAndExecutionCallback",
 	    value: function checkQosFeatureAndExecutionCallback(callback) {
 	      return;
@@ -3011,50 +3124,50 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "fillDefaultValueMonitoringMetrics",
 	    value: function fillDefaultValueMonitoringMetrics() {
-	      var _this2 = this;
+	      var _this3 = this;
 	      return Object.entries(MONITORING_METRICS_NAME_LIST).reduce(function (acc, _ref4) {
 	        var _ref5 = babelHelpers.slicedToArray(_ref4, 2),
 	          key = _ref5[0],
 	          value = _ref5[1];
-	        acc[value] = _this2.getDefaultValueMonitoringMetric(key);
+	        acc[value] = _this3.getDefaultValueMonitoringMetric(key);
 	        return acc;
 	      }, {});
 	    }
 	  }, {
 	    key: "startAggregateMonitoringEvents",
 	    value: function startAggregateMonitoringEvents() {
-	      var _this3 = this;
+	      var _this4 = this;
 	      this.startTimestampGrabMetrics = Date.now();
 	      this.setClearValuesForCurrentMonitoringEventsObject();
 	      this.monitoringInterval = setInterval(function () {
-	        var _this3$getCountRemote = _this3.getCountRemoteTracks(),
-	          countVideoTracks = _this3$getCountRemote.countVideoTracks,
-	          countAudioTracks = _this3$getCountRemote.countAudioTracks;
-	        _this3.currentMonitoringEventsObject.metrics[MONITORING_METRICS_NAME_LIST.COUNT_TRACKS] = {
+	        var _this4$getCountRemote = _this4.getCountRemoteTracks(),
+	          countVideoTracks = _this4$getCountRemote.countVideoTracks,
+	          countAudioTracks = _this4$getCountRemote.countAudioTracks;
+	        _this4.currentMonitoringEventsObject.metrics[MONITORING_METRICS_NAME_LIST.COUNT_TRACKS] = {
 	          video: countVideoTracks,
 	          audio: countAudioTracks
 	        };
 	      }, this.monitoringIntervalTime);
 	      this.monitoringTimeout = setTimeout(function () {
-	        clearTimeout(_this3.monitoringTimeout);
-	        _this3.monitoringTimeout = null;
-	        if (babelHelpers.classPrivateFieldGet(_this3, _privateProperties).isReconnecting) {
+	        clearTimeout(_this4.monitoringTimeout);
+	        _this4.monitoringTimeout = null;
+	        if (babelHelpers.classPrivateFieldGet(_this4, _privateProperties).isReconnecting) {
 	          return;
 	        }
-	        _this3.sendMonitoringEvents();
+	        _this4.sendMonitoringEvents();
 	      }, this.monitoringDelayTime);
 	    }
 	  }, {
 	    key: "sendLogMonitoringErrors",
 	    value: function sendLogMonitoringErrors() {
-	      var _this4 = this;
+	      var _this5 = this;
 	      var isErrorsListNotEmpty = !!Object.keys(this.currentMonitoringErrorsObject);
 	      if (isErrorsListNotEmpty) {
 	        Object.entries(this.currentMonitoringErrorsObject).forEach(function (_ref6) {
 	          var _ref7 = babelHelpers.slicedToArray(_ref6, 2),
 	            key = _ref7[0],
 	            value = _ref7[1];
-	          _this4.setLog("Monitoring errors for key - ".concat(key, ".\n").concat(JSON.stringify(value)), LOG_LEVEL.ERROR);
+	          _this5.setLog("Monitoring errors for key - ".concat(key, ".\n").concat(JSON.stringify(value)), LOG_LEVEL.ERROR);
 	        });
 	      }
 	      this.currentMonitoringErrorsObject = {};
@@ -3117,7 +3230,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "onPublishFailed",
 	    value: function onPublishFailed(kind) {
-	      var _this5 = this;
+	      var _this6 = this;
 	      this.triggerEvents('PublishFailed', [kind]);
 	      var eventName;
 	      if (kind === MediaStreamsKinds.Camera) {
@@ -3128,7 +3241,7 @@ this.BX = this.BX || {};
 	        eventName = MONITORING_EVENTS_NAME_LIST.LOCAL_SCREEN_STREAM_PUBLICATION_FAILED;
 	      }
 	      this.checkQosFeatureAndExecutionCallback(function () {
-	        _this5.addMonitoringEvents({
+	        _this6.addMonitoringEvents({
 	          name: eventName,
 	          withCounter: true
 	        });
@@ -3137,10 +3250,10 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "connect",
 	    value: function () {
-	      var _connect = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee(options) {
-	        var _this6 = this;
+	      var _connect = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$1().mark(function _callee(options) {
+	        var _this7 = this;
 	        var key, canConnect, mediaServerInfo;
-	        return _regeneratorRuntime().wrap(function _callee$(_context) {
+	        return _regeneratorRuntime$1().wrap(function _callee$(_context) {
 	          while (1) switch (_context.prev = _context.next) {
 	            case 0:
 	              this.setLog("Connecting to the call (desktop: ".concat(Util.isDesktop(), ")"), LOG_LEVEL.INFO);
@@ -3194,7 +3307,10 @@ this.BX = this.BX || {};
 	              _context.prev = 23;
 	              _context.t0 = _context["catch"](15);
 	              if (_context.t0.name !== 'AbortError' && !babelHelpers.classPrivateFieldGet(this, _privateProperties).abortController.signal.aborted) {
-	                _classPrivateMethodGet(this, _reconnect, _reconnect2).call(this);
+	                _classPrivateMethodGet(this, _reconnect, _reconnect2).call(this, {
+	                  reconnectionReason: 'GET_MEDIASERVER_INFO',
+	                  reconnectionReasonInfo: (_context.t0 === null || _context.t0 === void 0 ? void 0 : _context.t0.name) || ''
+	                });
 	              } else if (babelHelpers.classPrivateFieldGet(this, _privateProperties).abortController.signal.aborted) {
 	                this.triggerEvents('Failed', [_context.t0]);
 	              }
@@ -3210,16 +3326,16 @@ this.BX = this.BX || {};
 	              babelHelpers.classPrivateFieldGet(this, _privateProperties).abortController.signal.addEventListener('abort', this.beforeDisconnectBound);
 	              babelHelpers.classPrivateFieldGet(this, _privateProperties).socketConnect = new WebSocket("".concat(babelHelpers.classPrivateFieldGet(this, _privateProperties).mediaServerUrl, "?auto_subscribe=1&sdk=js&version=1.6.7&protocol=8") + "&roomData=".concat(babelHelpers.classPrivateFieldGet(this, _privateProperties).roomData) + "&clientVersion=".concat(ClientVersion) + "&clientPlatform=".concat(ClientPlatform));
 	              babelHelpers.classPrivateFieldGet(this, _privateProperties).socketConnect.onmessage = function (e) {
-	                return _this6.socketOnMessageHandler(e);
+	                return _this7.socketOnMessageHandler(e);
 	              };
 	              babelHelpers.classPrivateFieldGet(this, _privateProperties).socketConnect.onopen = function () {
-	                return _this6.socketOnOpenHandler();
+	                return _this7.socketOnOpenHandler();
 	              };
 	              babelHelpers.classPrivateFieldGet(this, _privateProperties).socketConnect.onerror = function () {
-	                return _this6.socketOnErrorHandler();
+	                return _this7.socketOnErrorHandler();
 	              };
 	              babelHelpers.classPrivateFieldGet(this, _privateProperties).socketConnect.onclose = function (e) {
-	                return _this6.socketOnCloseHandler(e);
+	                return _this7.socketOnCloseHandler(e);
 	              };
 	            case 36:
 	            case "end":
@@ -3235,7 +3351,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "getMediaServerInfo",
 	    value: function getMediaServerInfo() {
-	      var _this7 = this;
+	      var _this8 = this;
 	      var request = null;
 	      if (babelHelpers.classPrivateFieldGet(this, _privateProperties).isLegacy) {
 	        var url = "".concat(babelHelpers.classPrivateFieldGet(this, _privateProperties).endpoint, "/join");
@@ -3245,7 +3361,7 @@ this.BX = this.BX || {};
 	        request = new Promise(function (resolve, reject) {
 	          fetch(url, {
 	            method: 'GET',
-	            signal: babelHelpers.classPrivateFieldGet(_this7, _privateProperties).abortController.signal
+	            signal: babelHelpers.classPrivateFieldGet(_this8, _privateProperties).abortController.signal
 	          }).then(function (response) {
 	            return response.json();
 	          }).then(function (data) {
@@ -3277,13 +3393,13 @@ this.BX = this.BX || {};
 	          });
 	        })["catch"](function (error) {
 	          if (error.code && isErrorPreventingReconnection(error.code) || error.name === 'AbortError' || error.name === 'SyntaxError') {
-	            babelHelpers.classPrivateFieldGet(_this7, _privateProperties).abortController.abort();
+	            babelHelpers.classPrivateFieldGet(_this8, _privateProperties).abortController.abort();
 	            reject({
 	              name: 'MEDIASERVER_UNEXPECTED_ANSWER',
 	              message: error.message
 	            });
 	          } else {
-	            babelHelpers.classPrivateFieldGet(_this7, _privateProperties).lastReconnectionReason = error.code ? ReconnectionReason.JoinResponseError : ReconnectionReason.NetworkError;
+	            babelHelpers.classPrivateFieldGet(_this8, _privateProperties).lastReconnectionReason = error.code ? ReconnectionReason.JoinResponseError : ReconnectionReason.NetworkError;
 	            reject({
 	              name: 'MEDIASERVER_ERROR',
 	              message: "Reason: ".concat(error.message)
@@ -3295,9 +3411,9 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "sendOffer",
 	    value: function () {
-	      var _sendOffer = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee2() {
+	      var _sendOffer = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$1().mark(function _callee2() {
 	        var offer;
-	        return _regeneratorRuntime().wrap(function _callee2$(_context2) {
+	        return _regeneratorRuntime$1().wrap(function _callee2$(_context2) {
 	          while (1) switch (_context2.prev = _context2.next) {
 	            case 0:
 	              if (!(babelHelpers.classPrivateFieldGet(this, _privateProperties).offersStack > 0 && !babelHelpers.classPrivateFieldGet(this, _privateProperties).isWaitAnswer)) {
@@ -3332,7 +3448,10 @@ this.BX = this.BX || {};
 	              _context2.t0 = _context2["catch"](4);
 	              this.setLog("Sending an offer failed: ".concat(_context2.t0), LOG_LEVEL.ERROR);
 	              _classPrivateMethodGet(this, _beforeDisconnect, _beforeDisconnect2).call(this);
-	              _classPrivateMethodGet(this, _reconnect, _reconnect2).call(this);
+	              _classPrivateMethodGet(this, _reconnect, _reconnect2).call(this, {
+	                reconnectionReason: 'SENDING_OFFER',
+	                reconnectionReasonInfo: "Sending an offer failed: ".concat(_context2.t0)
+	              });
 	            case 20:
 	            case "end":
 	              return _context2.stop();
@@ -3347,9 +3466,9 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "startStream",
 	    value: function () {
-	      var _startStream = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee3() {
+	      var _startStream = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$1().mark(function _callee3() {
 	        var videoTrack, audioTrack;
-	        return _regeneratorRuntime().wrap(function _callee3$(_context3) {
+	        return _regeneratorRuntime$1().wrap(function _callee3$(_context3) {
 	          while (1) switch (_context3.prev = _context3.next) {
 	            case 0:
 	              _context3.next = 2;
@@ -3399,11 +3518,11 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "socketOnMessageHandler",
 	    value: function () {
-	      var _socketOnMessageHandler = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee4(event) {
+	      var _socketOnMessageHandler = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$1().mark(function _callee4(event) {
 	        var _data,
 	          _data2,
 	          _data3,
-	          _this8 = this,
+	          _this9 = this,
 	          _data4,
 	          _data5,
 	          _data6,
@@ -3417,7 +3536,7 @@ this.BX = this.BX || {};
 	          _data14,
 	          _data15;
 	        var data, connectedEvent, participantsToDelete, userId, participant, recorderStatus, _participantId, _participant, pendingSubscriptions, _trackId, _participantId2, cid, track, _trackId2, timeout, _participant2, ontrackData, _babelHelpers$classPr, _Object$values, _participantId3, _trackId3, pendingSubscription, _participant3, _track, message, _message, _participant4, participants, participantsToUpdate, reasonsToReconnect, _data16, _data17, _data18, _data19, _data20;
-	        return _regeneratorRuntime().wrap(function _callee4$(_context4) {
+	        return _regeneratorRuntime$1().wrap(function _callee4$(_context4) {
 	          while (1) switch (_context4.prev = _context4.next) {
 	            case 0:
 	              if (!(typeof event.data !== 'string')) {
@@ -3480,10 +3599,9 @@ this.BX = this.BX || {};
 	                Util.setRoomPermissions(data.joinResponse.roomState);
 	                Util.setUserPermissionsByRoomPermissions(data.joinResponse.roomState);
 	              }
-	              this.triggerEvents(connectedEvent);
 	              this.checkQosFeatureAndExecutionCallback(function () {
-	                if (connectedEvent === 'Reconnected' && _this8.monitoringEvents.length) {
-	                  _this8.sendMonitoringEvents();
+	                if (connectedEvent === 'Reconnected' && _this9.monitoringEvents.length) {
+	                  _this9.sendMonitoringEvents();
 	                }
 	              });
 	              participantsToDelete = _objectSpread({}, babelHelpers.classPrivateFieldGet(this, _privateProperties).remoteParticipants);
@@ -3491,20 +3609,18 @@ this.BX = this.BX || {};
 	                if (participantsToDelete[p.userId]) {
 	                  delete participantsToDelete[p.userId];
 	                }
-	                _this8.setLog("Adding an early connected participant with id ".concat(p.userId, " (sid: ").concat(p.sid, ")"), LOG_LEVEL.INFO);
-	                _classPrivateMethodGet(_this8, _setRemoteParticipant, _setRemoteParticipant2).call(_this8, p);
+	                _this9.setLog("Adding an early connected participant with id ".concat(p.userId, " (sid: ").concat(p.sid, ")"), LOG_LEVEL.INFO);
+	                _classPrivateMethodGet(_this9, _setRemoteParticipant, _setRemoteParticipant2).call(_this9, p);
 	              });
-	              if (connectedEvent === 'Reconnected')
-	                // task-601473
-	                {
-	                  for (userId in participantsToDelete) {
-	                    participant = babelHelpers.classPrivateFieldGet(this, _privateProperties).remoteParticipants[userId];
-	                    this.setLog("Deleting a missing participant with id ".concat(participant.userId, " (sid: ").concat(participant.sid, ")"), LOG_LEVEL.INFO);
-	                    this.triggerEvents('ParticipantLeaved', [participant]);
-	                    delete babelHelpers.classPrivateFieldGet(this, _privateProperties).remoteTracks[userId];
-	                    delete babelHelpers.classPrivateFieldGet(this, _privateProperties).remoteParticipants[userId];
-	                  }
+	              if (connectedEvent === 'Reconnected') {
+	                for (userId in participantsToDelete) {
+	                  participant = babelHelpers.classPrivateFieldGet(this, _privateProperties).remoteParticipants[userId];
+	                  this.setLog("Deleting a missing participant with id ".concat(participant.userId, " (sid: ").concat(participant.sid, ")"), LOG_LEVEL.INFO);
+	                  this.triggerEvents('ParticipantLeaved', [participant]);
+	                  delete babelHelpers.classPrivateFieldGet(this, _privateProperties).remoteTracks[userId];
+	                  delete babelHelpers.classPrivateFieldGet(this, _privateProperties).remoteParticipants[userId];
 	                }
+	              }
 	              if ('recorderStatus' in data.joinResponse) {
 	                recorderStatus = {
 	                  code: data.joinResponse.recorderStatus
@@ -3517,6 +3633,7 @@ this.BX = this.BX || {};
 	              babelHelpers.classPrivateFieldGet(this, _privateProperties).pingIntervalDuration = data.joinResponse.pingInterval * 1000;
 	              babelHelpers.classPrivateFieldGet(this, _privateProperties).pingTimeoutDuration = babelHelpers.classPrivateFieldGet(this, _privateProperties).pingIntervalDuration * 2;
 	              _classPrivateMethodGet(this, _startPingInterval, _startPingInterval2).call(this);
+	              this.triggerEvents(connectedEvent);
 	              _context4.next = 162;
 	              break;
 	            case 45:
@@ -3756,25 +3873,25 @@ this.BX = this.BX || {};
 	              participantsToUpdate = _objectSpread({}, babelHelpers.classPrivateFieldGet(this, _privateProperties).remoteParticipants);
 	              data.connectionQuality.updates.forEach(function (participant) {
 	                Object.values(participantsToUpdate).forEach(function (remoteParticipant) {
-	                  var hasGoodQuality = participant.score > babelHelpers.classPrivateFieldGet(_this8, _privateProperties).minimalConnectionQuality;
+	                  var hasGoodQuality = participant.score > babelHelpers.classPrivateFieldGet(_this9, _privateProperties).minimalConnectionQuality;
 	                  if (participant.participantSid === remoteParticipant.sid && (!remoteParticipant.isMutedVideo || !remoteParticipant.connectionQuality) && !remoteParticipant.screenSharingEnabled) {
 	                    participants[remoteParticipant.userId] = participant.score;
 	                    // commented out for now, since a lot of log generated by this
 	                    //this.setLog(`Quality of connection with a participant with id ${remoteParticipant.userId} (sid: ${remoteParticipant.sid}) changed to ${participant.score}`, hasGoodQuality ? LOG_LEVEL.INFO : LOG_LEVEL.WARNING);
-	                    babelHelpers.classPrivateFieldGet(_this8, _privateProperties).remoteParticipants[remoteParticipant.userId].connectionQuality = participant.score;
+	                    babelHelpers.classPrivateFieldGet(_this9, _privateProperties).remoteParticipants[remoteParticipant.userId].connectionQuality = participant.score;
 	                  }
-	                  var isLocalVideoMuted = babelHelpers.classPrivateFieldGet(_this8, _privateProperties).localTracks[MediaStreamsKinds.Camera] && babelHelpers.classPrivateFieldGet(_this8, _privateProperties).localTracks[MediaStreamsKinds.Camera].muted;
-	                  _this8.checkQosFeatureAndExecutionCallback(function () {
-	                    if (participant.participantSid === babelHelpers.classPrivateFieldGet(_this8, _privateProperties).localParticipantSid) {
-	                      _this8.addValidatedMonitoringMetricWithLogging({
+	                  var isLocalVideoMuted = babelHelpers.classPrivateFieldGet(_this9, _privateProperties).localTracks[MediaStreamsKinds.Camera] && babelHelpers.classPrivateFieldGet(_this9, _privateProperties).localTracks[MediaStreamsKinds.Camera].muted;
+	                  _this9.checkQosFeatureAndExecutionCallback(function () {
+	                    if (participant.participantSid === babelHelpers.classPrivateFieldGet(_this9, _privateProperties).localParticipantSid) {
+	                      _this9.addValidatedMonitoringMetricWithLogging({
 	                        metricKey: MONITORING_METRICS_NAME_LIST.CONN_SCORE_CURRENT,
 	                        metricValue: participant.score
 	                      });
 	                    }
 	                  });
-	                  if (participant.participantSid === babelHelpers.classPrivateFieldGet(_this8, _privateProperties).localParticipantSid && (!isLocalVideoMuted || !babelHelpers.classPrivateFieldGet(_this8, _privateProperties).localConnectionQuality) && !babelHelpers.classPrivateFieldGet(_this8, _privateProperties).localTracks[MediaStreamsKinds.Screen]) {
-	                    participants[babelHelpers.classPrivateFieldGet(_this8, _privateProperties).userId] = participant.score;
-	                    babelHelpers.classPrivateFieldGet(_this8, _privateProperties).localConnectionQuality = participant.score;
+	                  if (participant.participantSid === babelHelpers.classPrivateFieldGet(_this9, _privateProperties).localParticipantSid && (!isLocalVideoMuted || !babelHelpers.classPrivateFieldGet(_this9, _privateProperties).localConnectionQuality) && !babelHelpers.classPrivateFieldGet(_this9, _privateProperties).localTracks[MediaStreamsKinds.Screen]) {
+	                    participants[babelHelpers.classPrivateFieldGet(_this9, _privateProperties).userId] = participant.score;
+	                    babelHelpers.classPrivateFieldGet(_this9, _privateProperties).localConnectionQuality = participant.score;
 	                    // commented out for now, since a lot of log generated by this
 	                    //this.setLog(`Quality of connection with a mediaserver changed to ${participant.score}`, hasGoodQuality ? LOG_LEVEL.INFO : LOG_LEVEL.WARNING);
 	                    // this.#toggleRemoteParticipantVideo(Object.keys(participantsToUpdate), hasGoodQuality);
@@ -3795,7 +3912,10 @@ this.BX = this.BX || {};
 	                reasonsToReconnect = ['CHANGING_MEDIA_SERVER', 'FULL_RECONNECT_NEEDED', 'STATE_MISMATCH'];
 	                if ((data.leave.canReconnect || reasonsToReconnect.includes(data.leave.reason)) && data.leave.reason !== "SIGNALING_DUPLICATE_PARTICIPANT") {
 	                  babelHelpers.classPrivateFieldGet(this, _privateProperties).lastReconnectionReason = ReconnectionReason.LeaveCommand;
-	                  _classPrivateMethodGet(this, _reconnect, _reconnect2).call(this);
+	                  _classPrivateMethodGet(this, _reconnect, _reconnect2).call(this, {
+	                    reconnectionReason: 'GOT_LEAVE_SIGNAL',
+	                    reconnectionReasonInfo: "Leave reason ".concat(data.leave.reason)
+	                  });
 	                } else {
 	                  babelHelpers.classPrivateFieldGet(this, _privateProperties).canReconnect = false;
 	                  this.triggerEvents('Failed', [{
@@ -3809,7 +3929,6 @@ this.BX = this.BX || {};
 	              } else if ((_data14 = data) !== null && _data14 !== void 0 && _data14.onErrorResponse) {
 	                this.setLog("Got signaling error: ".concat(data.onErrorResponse.message), LOG_LEVEL.ERROR);
 	              } else if ((_data15 = data) !== null && _data15 !== void 0 && _data15.onActionSent) {
-	                console.warn('data?.onActionSent', data.onActionSent); // test_remove
 	                if ((_data16 = data) !== null && _data16 !== void 0 && _data16.onActionSent.changeSettings) {
 	                  _classPrivateMethodGet(this, _settingsChangedHandler, _settingsChangedHandler2).call(this, data.onActionSent.changeSettings);
 	                } else if ((_data17 = data) !== null && _data17 !== void 0 && _data17.onActionSent.givePermissions) {
@@ -3845,7 +3964,10 @@ this.BX = this.BX || {};
 	      if (e !== null && e !== void 0 && e.code && (e === null || e === void 0 ? void 0 : e.code) !== 1005) {
 	        this.setLog("Socket closed with a code ".concat(e.code, ", reconnecting"), LOG_LEVEL.ERROR);
 	        babelHelpers.classPrivateFieldGet(this, _privateProperties).lastReconnectionReason = ReconnectionReason.WsTransportClosed;
-	        _classPrivateMethodGet(this, _reconnect, _reconnect2).call(this);
+	        _classPrivateMethodGet(this, _reconnect, _reconnect2).call(this, {
+	          reconnectionReason: 'WS_CONNECTION_CLOSED',
+	          reconnectionReasonInfo: "Socket closed with a code ".concat(e.code)
+	        });
 	      } else {
 	        this.setLog("Socket closed with a code ".concat(e.code), LOG_LEVEL.ERROR);
 	      }
@@ -3858,10 +3980,10 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "onIceCandidate",
 	    value: function () {
-	      var _onIceCandidate = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee5(target, event) {
+	      var _onIceCandidate = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$1().mark(function _callee5(target, event) {
 	        var _event$candidate, _event$candidate2, _event$candidate3;
 	        var trickle;
-	        return _regeneratorRuntime().wrap(function _callee5$(_context5) {
+	        return _regeneratorRuntime$1().wrap(function _callee5$(_context5) {
 	          while (1) switch (_context5.prev = _context5.next) {
 	            case 0:
 	              if (event.candidate) {
@@ -3904,7 +4026,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "onConnectionStateChange",
 	    value: function onConnectionStateChange(subscriber) {
-	      var _this9 = this;
+	      var _this10 = this;
 	      var state = subscriber ? this.recipient.connectionState : this.sender.connectionState;
 	      if (state === 'failed' && !babelHelpers.classPrivateFieldGet(this, _privateProperties).isReconnecting) {
 	        this.setLog("State of ".concat(subscriber ? 'recipient' : 'sender', " peer connection changed to ").concat(state, ", reconnecting"), LOG_LEVEL.WARNING);
@@ -3913,7 +4035,7 @@ this.BX = this.BX || {};
 	        }
 	        babelHelpers.classPrivateFieldGet(this, _privateProperties).peerConnectionFailed = true;
 	        this.checkQosFeatureAndExecutionCallback(function () {
-	          _this9.addMonitoringEvents({
+	          _this10.addMonitoringEvents({
 	            name: MONITORING_EVENTS_NAME_LIST.PEER_CONNECTION_REFUSED,
 	            withCounter: true
 	          });
@@ -3921,7 +4043,10 @@ this.BX = this.BX || {};
 	        _classPrivateMethodGet(this, _beforeDisconnect, _beforeDisconnect2).call(this);
 	        if (babelHelpers.classPrivateFieldGet(this, _privateProperties).canReconnect) {
 	          babelHelpers.classPrivateFieldGet(this, _privateProperties).lastReconnectionReason = ReconnectionReason.PeerConnectionFailed;
-	          _classPrivateMethodGet(this, _reconnect, _reconnect2).call(this);
+	          _classPrivateMethodGet(this, _reconnect, _reconnect2).call(this, {
+	            reconnectionReason: 'ON_CONNECTION_STATE_CHANGED',
+	            reconnectionReasonInfo: "State of ".concat(subscriber ? 'recipient' : 'sender', " peer connection changed to ").concat(state)
+	          });
 	        }
 	      }
 	    }
@@ -3959,7 +4084,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "setBitrate",
 	    value: function setBitrate(bitrate, MediaStreamKind) {
-	      var _this10 = this;
+	      var _this11 = this;
 	      this.setLog('Start setting bitrate', LOG_LEVEL.INFO);
 	      var track;
 	      var isSimulcast;
@@ -3979,24 +4104,24 @@ this.BX = this.BX || {};
 	      senders.forEach(function (sender) {
 	        var params = sender.getParameters();
 	        if (!params || !params.encodings || params.encodings.length === 0) {
-	          _this10.setLog('Setting bitrate failed: has no encodings in the sender parameters', LOG_LEVEL.WARNING);
+	          _this11.setLog('Setting bitrate failed: has no encodings in the sender parameters', LOG_LEVEL.WARNING);
 	        } else {
 	          params.encodings.forEach(function (encoding) {
 	            if (isSimulcast) {
-	              encoding.maxBitrate = bitrate < babelHelpers.classPrivateFieldGet(_this10, _privateProperties).defaultSimulcastBitrate[encoding.rid] ? bitrate : babelHelpers.classPrivateFieldGet(_this10, _privateProperties).defaultSimulcastBitrate[encoding.rid];
+	              encoding.maxBitrate = bitrate < babelHelpers.classPrivateFieldGet(_this11, _privateProperties).defaultSimulcastBitrate[encoding.rid] ? bitrate : babelHelpers.classPrivateFieldGet(_this11, _privateProperties).defaultSimulcastBitrate[encoding.rid];
 	            } else {
 	              encoding.maxBitrate = bitrate;
 	            }
 	          });
 	          sender.setParameters(params);
-	          _this10.setLog('Setting bitrate succeeded', LOG_LEVEL.INFO);
+	          _this11.setLog('Setting bitrate succeeded', LOG_LEVEL.INFO);
 	        }
 	      });
 	    }
 	  }, {
 	    key: "setCodec",
 	    value: function setCodec(transceiver) {
-	      var _this11 = this;
+	      var _this12 = this;
 	      if (!('getCapabilities' in RTCRtpReceiver)) {
 	        return;
 	      }
@@ -4011,14 +4136,14 @@ this.BX = this.BX || {};
 	          matched.push(c);
 	          return;
 	        }
-	        var matchesVideoCodec = codec === "video/".concat(babelHelpers.classPrivateFieldGet(_this11, _privateProperties).codec);
+	        var matchesVideoCodec = codec === "video/".concat(babelHelpers.classPrivateFieldGet(_this12, _privateProperties).codec);
 	        if (!matchesVideoCodec) {
 	          unmatched.push(c);
 	          return;
 	        }
 	        // for h264 codecs that have sdpFmtpLine available, use only if the
 	        // profile-level-id is 42e01f for cross-browser compatibility
-	        if (babelHelpers.classPrivateFieldGet(_this11, _privateProperties).codec === 'h264') {
+	        if (babelHelpers.classPrivateFieldGet(_this12, _privateProperties).codec === 'h264') {
 	          if (c.sdpFmtpLine && c.sdpFmtpLine.includes('profile-level-id=42e01f')) {
 	            matched.push(c);
 	          } else {
@@ -4036,7 +4161,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "publishTrack",
 	    value: function () {
-	      var _publishTrack = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee6(MediaStreamKind, MediaStreamTrack) {
+	      var _publishTrack = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$1().mark(function _callee6(MediaStreamKind, MediaStreamTrack) {
 	        var StreamQualityOptions,
 	          keys,
 	          source,
@@ -4052,7 +4177,7 @@ this.BX = this.BX || {};
 	          _width2,
 	          _height2,
 	          _args6 = arguments;
-	        return _regeneratorRuntime().wrap(function _callee6$(_context6) {
+	        return _regeneratorRuntime$1().wrap(function _callee6$(_context6) {
 	          while (1) switch (_context6.prev = _context6.next) {
 	            case 0:
 	              StreamQualityOptions = _args6.length > 2 && _args6[2] !== undefined ? _args6[2] : {};
@@ -4238,12 +4363,12 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "changeStreamQuality",
 	    value: function () {
-	      var _changeStreamQuality = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee7(StreamQualityOptions) {
+	      var _changeStreamQuality = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$1().mark(function _callee7(StreamQualityOptions) {
 	        var key, kind, _kind;
-	        return _regeneratorRuntime().wrap(function _callee7$(_context7) {
+	        return _regeneratorRuntime$1().wrap(function _callee7$(_context7) {
 	          while (1) switch (_context7.prev = _context7.next) {
 	            case 0:
-	              _context7.t0 = _regeneratorRuntime().keys(StreamQualityOptions);
+	              _context7.t0 = _regeneratorRuntime$1().keys(StreamQualityOptions);
 	            case 1:
 	              if ((_context7.t1 = _context7.t0()).done) {
 	                _context7.next = 18;
@@ -4294,9 +4419,9 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "republishTrack",
 	    value: function () {
-	      var _republishTrack = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee8(MediaStreamKind) {
+	      var _republishTrack = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$1().mark(function _callee8(MediaStreamKind) {
 	        var track;
-	        return _regeneratorRuntime().wrap(function _callee8$(_context8) {
+	        return _regeneratorRuntime$1().wrap(function _callee8$(_context8) {
 	          while (1) switch (_context8.prev = _context8.next) {
 	            case 0:
 	              this.setLog("Start republishing a track with kind ".concat(MediaStreamKind), LOG_LEVEL.INFO);
@@ -4334,9 +4459,9 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "unpublishTrack",
 	    value: function () {
-	      var _unpublishTrack = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee9(MediaStreamKind) {
+	      var _unpublishTrack = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$1().mark(function _callee9(MediaStreamKind) {
 	        var sender;
-	        return _regeneratorRuntime().wrap(function _callee9$(_context9) {
+	        return _regeneratorRuntime$1().wrap(function _callee9$(_context9) {
 	          while (1) switch (_context9.prev = _context9.next) {
 	            case 0:
 	              this.setLog("Start unpublishing a track with kind ".concat(MediaStreamKind), LOG_LEVEL.INFO);
@@ -4525,14 +4650,14 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "enableAudio",
 	    value: function () {
-	      var _enableAudio = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee10() {
+	      var _enableAudio = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$1().mark(function _callee10() {
 	        var _babelHelpers$classPr6, _track2;
 	        var disabled,
 	          track,
 	          canUseUnpauseSignal,
 	          needToGetNewTrack,
 	          _args10 = arguments;
-	        return _regeneratorRuntime().wrap(function _callee10$(_context10) {
+	        return _regeneratorRuntime$1().wrap(function _callee10$(_context10) {
 	          while (1) switch (_context10.prev = _context10.next) {
 	            case 0:
 	              disabled = _args10.length > 0 && _args10[0] !== undefined ? _args10[0] : false;
@@ -4610,11 +4735,11 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "disableVideo",
 	    value: function () {
-	      var _disableVideo = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee11(options) {
+	      var _disableVideo = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$1().mark(function _callee11(options) {
 	        var _babelHelpers$classPr7,
-	          _this12 = this;
+	          _this13 = this;
 	        var bySystem, calledFrom, hasQueue, track;
-	        return _regeneratorRuntime().wrap(function _callee11$(_context11) {
+	        return _regeneratorRuntime$1().wrap(function _callee11$(_context11) {
 	          while (1) switch (_context11.prev = _context11.next) {
 	            case 0:
 	              bySystem = (options === null || options === void 0 ? void 0 : options.bySystem) || false;
@@ -4648,7 +4773,7 @@ this.BX = this.BX || {};
 	              babelHelpers.classPrivateFieldGet(this, _privateProperties).mediaMutedBySystem = false;
 	              track.stop();
 	              this.checkQosFeatureAndExecutionCallback(function () {
-	                _this12.addMonitoringEvents({
+	                _this13.addMonitoringEvents({
 	                  name: MONITORING_EVENTS_NAME_LIST.USER_CAMERA_DISABLED,
 	                  withCounter: true
 	                });
@@ -4663,7 +4788,7 @@ this.BX = this.BX || {};
 	                babelHelpers.classPrivateFieldGet(this, _privateProperties).videoQueue = VIDEO_QUEUE.INITIAL;
 	                track.stop();
 	                this.checkQosFeatureAndExecutionCallback(function () {
-	                  _this12.addMonitoringEvents({
+	                  _this13.addMonitoringEvents({
 	                    name: MONITORING_EVENTS_NAME_LIST.USER_CAMERA_DISABLED,
 	                    withCounter: true
 	                  });
@@ -4689,10 +4814,10 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "enableVideo",
 	    value: function () {
-	      var _enableVideo = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee12(options) {
+	      var _enableVideo = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$1().mark(function _callee12(options) {
 	        var _babelHelpers$classPr8;
 	        var skipUnpause, calledFrom, hasQueue, hasTrack, track;
-	        return _regeneratorRuntime().wrap(function _callee12$(_context12) {
+	        return _regeneratorRuntime$1().wrap(function _callee12$(_context12) {
 	          while (1) switch (_context12.prev = _context12.next) {
 	            case 0:
 	              skipUnpause = (options === null || options === void 0 ? void 0 : options.skipUnpause) || false;
@@ -4793,9 +4918,9 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "startScreenShare",
 	    value: function () {
-	      var _startScreenShare = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee13() {
+	      var _startScreenShare = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$1().mark(function _callee13() {
 	        var tracks, videoTrack, audioTrack;
-	        return _regeneratorRuntime().wrap(function _callee13$(_context13) {
+	        return _regeneratorRuntime$1().wrap(function _callee13$(_context13) {
 	          while (1) switch (_context13.prev = _context13.next) {
 	            case 0:
 	              if (Util.havePermissionToBroadcast('screenshare')) {
@@ -4844,8 +4969,8 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "stopScreenShare",
 	    value: function () {
-	      var _stopScreenShare = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee14() {
-	        return _regeneratorRuntime().wrap(function _callee14$(_context14) {
+	      var _stopScreenShare = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$1().mark(function _callee14() {
+	        return _regeneratorRuntime$1().wrap(function _callee14$(_context14) {
 	          while (1) switch (_context14.prev = _context14.next) {
 	            case 0:
 	              this.setLog('Start disabling screen sharing', LOG_LEVEL.INFO);
@@ -5054,9 +5179,9 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "getLocalVideo",
 	    value: function () {
-	      var _getLocalVideo = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee15() {
+	      var _getLocalVideo = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$1().mark(function _callee15() {
 	        var _babelHelpers$classPr9, _babelHelpers$classPr10;
-	        return _regeneratorRuntime().wrap(function _callee15$(_context15) {
+	        return _regeneratorRuntime$1().wrap(function _callee15$(_context15) {
 	          while (1) switch (_context15.prev = _context15.next) {
 	            case 0:
 	              if (!(((_babelHelpers$classPr9 = babelHelpers.classPrivateFieldGet(this, _privateProperties).cameraStream) === null || _babelHelpers$classPr9 === void 0 ? void 0 : _babelHelpers$classPr9.getVideoTracks()[0].readyState) !== 'live')) {
@@ -5081,9 +5206,9 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "getLocalAudio",
 	    value: function () {
-	      var _getLocalAudio = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee16() {
+	      var _getLocalAudio = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$1().mark(function _callee16() {
 	        var _babelHelpers$classPr11;
-	        return _regeneratorRuntime().wrap(function _callee16$(_context16) {
+	        return _regeneratorRuntime$1().wrap(function _callee16$(_context16) {
 	          while (1) switch (_context16.prev = _context16.next) {
 	            case 0:
 	              if (babelHelpers.classPrivateFieldGet(this, _privateProperties).microphoneStream) {
@@ -5108,9 +5233,9 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "getLocalScreen",
 	    value: function () {
-	      var _getLocalScreen = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee17() {
+	      var _getLocalScreen = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$1().mark(function _callee17() {
 	        var _babelHelpers$classPr12, _babelHelpers$classPr13;
-	        return _regeneratorRuntime().wrap(function _callee17$(_context17) {
+	        return _regeneratorRuntime$1().wrap(function _callee17$(_context17) {
 	          while (1) switch (_context17.prev = _context17.next) {
 	            case 0:
 	              if (babelHelpers.classPrivateFieldGet(this, _privateProperties).screenStream) {
@@ -5138,11 +5263,11 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "getTrack",
 	    value: function () {
-	      var _getTrack = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee18(MediaStreamKind) {
+	      var _getTrack = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$1().mark(function _callee18(MediaStreamKind) {
 	        var _babelHelpers$classPr14,
-	          _this13 = this;
+	          _this14 = this;
 	        var track, _babelHelpers$classPr15, _babelHelpers$classPr16, _babelHelpers$classPr17, interrupted;
-	        return _regeneratorRuntime().wrap(function _callee18$(_context18) {
+	        return _regeneratorRuntime$1().wrap(function _callee18$(_context18) {
 	          while (1) switch (_context18.prev = _context18.next) {
 	            case 0:
 	              if (!(MediaStreamKind === MediaStreamsKinds.Camera && ((_babelHelpers$classPr14 = babelHelpers.classPrivateFieldGet(this, _privateProperties).cameraStream) === null || _babelHelpers$classPr14 === void 0 ? void 0 : _babelHelpers$classPr14.getVideoTracks().readyState) !== 'live')) {
@@ -5209,10 +5334,10 @@ this.BX = this.BX || {};
 	              if (track && !track.onended) {
 	                interrupted = MediaStreamKind === MediaStreamsKinds.Microphone || MediaStreamKind === MediaStreamsKinds.Camera;
 	                track.onended = function () {
-	                  if (babelHelpers.classPrivateFieldGet(_this13, _privateProperties).localTracks[MediaStreamKind]) {
-	                    babelHelpers.classPrivateFieldGet(_this13, _privateProperties).localTracks[MediaStreamKind].muted = true;
+	                  if (babelHelpers.classPrivateFieldGet(_this14, _privateProperties).localTracks[MediaStreamKind]) {
+	                    babelHelpers.classPrivateFieldGet(_this14, _privateProperties).localTracks[MediaStreamKind].muted = true;
 	                  }
-	                  _this13.triggerEvents('PublishEnded', [MediaStreamKind, interrupted]);
+	                  _this14.triggerEvents('PublishEnded', [MediaStreamKind, interrupted]);
 	                };
 	              }
 	              return _context18.abrupt("return", track);
@@ -5230,10 +5355,10 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "switchActiveAudioDevice",
 	    value: function () {
-	      var _switchActiveAudioDevice = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee20(deviceId, force) {
-	        var _this14 = this;
+	      var _switchActiveAudioDevice = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$1().mark(function _callee20(deviceId, force) {
+	        var _this15 = this;
 	        var error, fulfilled, promise;
-	        return _regeneratorRuntime().wrap(function _callee20$(_context20) {
+	        return _regeneratorRuntime$1().wrap(function _callee20$(_context20) {
 	          while (1) switch (_context20.prev = _context20.next) {
 	            case 0:
 	              if (!(babelHelpers.classPrivateFieldGet(this, _privateProperties).switchActiveAudioDeviceInProgress && !force)) {
@@ -5247,16 +5372,16 @@ this.BX = this.BX || {};
 	              fulfilled = false;
 	              this.setLog("Start switching an audio device to ".concat(deviceId), LOG_LEVEL.INFO);
 	              promise = new Promise( /*#__PURE__*/function () {
-	                var _ref8 = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee19(resolve, reject) {
+	                var _ref8 = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$1().mark(function _callee19(resolve, reject) {
 	                  var prevStream, _babelHelpers$classPr18, prevTrack, prevTrackEnabledState, prevTrackId, audioTrack, sender, _deviceId;
-	                  return _regeneratorRuntime().wrap(function _callee19$(_context19) {
+	                  return _regeneratorRuntime$1().wrap(function _callee19$(_context19) {
 	                    while (1) switch (_context19.prev = _context19.next) {
 	                      case 0:
-	                        babelHelpers.classPrivateFieldGet(_this14, _privateProperties).audioDeviceId = deviceId;
-	                        prevStream = babelHelpers.classPrivateFieldGet(_this14, _privateProperties).microphoneStream;
+	                        babelHelpers.classPrivateFieldGet(_this15, _privateProperties).audioDeviceId = deviceId;
+	                        prevStream = babelHelpers.classPrivateFieldGet(_this15, _privateProperties).microphoneStream;
 	                        _context19.prev = 2;
-	                        prevTrack = (_babelHelpers$classPr18 = babelHelpers.classPrivateFieldGet(_this14, _privateProperties).microphoneStream) === null || _babelHelpers$classPr18 === void 0 ? void 0 : _babelHelpers$classPr18.getAudioTracks()[0];
-	                        babelHelpers.classPrivateFieldGet(_this14, _privateProperties).microphoneStream = null;
+	                        prevTrack = (_babelHelpers$classPr18 = babelHelpers.classPrivateFieldGet(_this15, _privateProperties).microphoneStream) === null || _babelHelpers$classPr18 === void 0 ? void 0 : _babelHelpers$classPr18.getAudioTracks()[0];
+	                        babelHelpers.classPrivateFieldGet(_this15, _privateProperties).microphoneStream = null;
 	                        prevTrackEnabledState = true;
 	                        prevTrackId = '';
 	                        if (prevTrack) {
@@ -5265,45 +5390,45 @@ this.BX = this.BX || {};
 	                          prevTrack.stop();
 	                        }
 	                        _context19.next = 10;
-	                        return _this14.getLocalAudio();
+	                        return _this15.getLocalAudio();
 	                      case 10:
 	                        audioTrack = _context19.sent;
 	                        audioTrack.source = MediaStreamsKinds.Microphone;
 	                        audioTrack.enabled = prevTrackEnabledState;
-	                        sender = _classPrivateMethodGet(_this14, _getSender, _getSender2).call(_this14, MediaStreamsKinds.Microphone);
-	                        if (!(sender && (_this14.isAudioPublished() || sender.track.id !== audioTrack.id || audioTrack.id !== prevTrackId))) {
+	                        sender = _classPrivateMethodGet(_this15, _getSender, _getSender2).call(_this15, MediaStreamsKinds.Microphone);
+	                        if (!(sender && (_this15.isAudioPublished() || sender.track.id !== audioTrack.id || audioTrack.id !== prevTrackId))) {
 	                          _context19.next = 18;
 	                          break;
 	                        }
-	                        _this14.setLog('Have sender for audio, start replacing track', LOG_LEVEL.INFO);
+	                        _this15.setLog('Have sender for audio, start replacing track', LOG_LEVEL.INFO);
 	                        _context19.next = 18;
 	                        return sender.replaceTrack(audioTrack);
 	                      case 18:
-	                        _this14.setLog('Switching an audio device succeeded', LOG_LEVEL.INFO);
+	                        _this15.setLog('Switching an audio device succeeded', LOG_LEVEL.INFO);
 	                        _context19.next = 26;
 	                        break;
 	                      case 21:
 	                        _context19.prev = 21;
 	                        _context19.t0 = _context19["catch"](2);
 	                        error = _context19.t0;
-	                        _this14.setLog("Switching an audio device failed: ".concat(_context19.t0), LOG_LEVEL.ERROR);
-	                        if (!babelHelpers.classPrivateFieldGet(_this14, _privateProperties).microphoneStream) {
-	                          babelHelpers.classPrivateFieldGet(_this14, _privateProperties).microphoneStream = prevStream;
+	                        _this15.setLog("Switching an audio device failed: ".concat(_context19.t0), LOG_LEVEL.ERROR);
+	                        if (!babelHelpers.classPrivateFieldGet(_this15, _privateProperties).microphoneStream) {
+	                          babelHelpers.classPrivateFieldGet(_this15, _privateProperties).microphoneStream = prevStream;
 	                        }
 	                      case 26:
 	                        _context19.prev = 26;
-	                        if (!babelHelpers.classPrivateFieldGet(_this14, _privateProperties).switchActiveAudioDevicePending) {
+	                        if (!babelHelpers.classPrivateFieldGet(_this15, _privateProperties).switchActiveAudioDevicePending) {
 	                          _context19.next = 33;
 	                          break;
 	                        }
-	                        _deviceId = babelHelpers.classPrivateFieldGet(_this14, _privateProperties).switchActiveAudioDevicePending;
-	                        babelHelpers.classPrivateFieldGet(_this14, _privateProperties).switchActiveAudioDevicePending = null;
-	                        resolve(_this14.switchActiveAudioDevice(_deviceId, true));
+	                        _deviceId = babelHelpers.classPrivateFieldGet(_this15, _privateProperties).switchActiveAudioDevicePending;
+	                        babelHelpers.classPrivateFieldGet(_this15, _privateProperties).switchActiveAudioDevicePending = null;
+	                        resolve(_this15.switchActiveAudioDevice(_deviceId, true));
 	                        _context19.next = 36;
 	                        break;
 	                      case 33:
 	                        fulfilled = true;
-	                        babelHelpers.classPrivateFieldGet(_this14, _privateProperties).switchActiveAudioDeviceInProgress = null;
+	                        babelHelpers.classPrivateFieldGet(_this15, _privateProperties).switchActiveAudioDeviceInProgress = null;
 	                        return _context19.abrupt("return", error ? reject(error) : resolve());
 	                      case 36:
 	                        return _context19.finish(26);
@@ -5335,10 +5460,10 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "switchActiveVideoDevice",
 	    value: function () {
-	      var _switchActiveVideoDevice = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee22(deviceId, force) {
-	        var _this15 = this;
+	      var _switchActiveVideoDevice = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$1().mark(function _callee22(deviceId, force) {
+	        var _this16 = this;
 	        var error, fulfilled, promise;
-	        return _regeneratorRuntime().wrap(function _callee22$(_context22) {
+	        return _regeneratorRuntime$1().wrap(function _callee22$(_context22) {
 	          while (1) switch (_context22.prev = _context22.next) {
 	            case 0:
 	              if (!(babelHelpers.classPrivateFieldGet(this, _privateProperties).switchActiveVideoDeviceInProgress && !force)) {
@@ -5352,57 +5477,57 @@ this.BX = this.BX || {};
 	              fulfilled = false;
 	              this.setLog("Start switching a video device to ".concat(deviceId), LOG_LEVEL.INFO);
 	              promise = new Promise( /*#__PURE__*/function () {
-	                var _ref9 = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee21(resolve, reject) {
+	                var _ref9 = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$1().mark(function _callee21(resolve, reject) {
 	                  var prevStream, sender, _babelHelpers$classPr19, videoTrack, _deviceId2;
-	                  return _regeneratorRuntime().wrap(function _callee21$(_context21) {
+	                  return _regeneratorRuntime$1().wrap(function _callee21$(_context21) {
 	                    while (1) switch (_context21.prev = _context21.next) {
 	                      case 0:
-	                        babelHelpers.classPrivateFieldGet(_this15, _privateProperties).videoDeviceId = deviceId;
-	                        prevStream = babelHelpers.classPrivateFieldGet(_this15, _privateProperties).cameraStream;
+	                        babelHelpers.classPrivateFieldGet(_this16, _privateProperties).videoDeviceId = deviceId;
+	                        prevStream = babelHelpers.classPrivateFieldGet(_this16, _privateProperties).cameraStream;
 	                        _context21.prev = 2;
-	                        sender = _classPrivateMethodGet(_this15, _getSender, _getSender2).call(_this15, MediaStreamsKinds.Camera);
-	                        if (!(sender && _this15.isVideoPublished())) {
+	                        sender = _classPrivateMethodGet(_this16, _getSender, _getSender2).call(_this16, MediaStreamsKinds.Camera);
+	                        if (!(sender && _this16.isVideoPublished())) {
 	                          _context21.next = 15;
 	                          break;
 	                        }
-	                        _this15.setLog('Have sender for video, start replacing track', LOG_LEVEL.INFO);
-	                        (_babelHelpers$classPr19 = babelHelpers.classPrivateFieldGet(_this15, _privateProperties).cameraStream) === null || _babelHelpers$classPr19 === void 0 ? void 0 : _babelHelpers$classPr19.getVideoTracks()[0].stop();
-	                        babelHelpers.classPrivateFieldGet(_this15, _privateProperties).cameraStream = null;
+	                        _this16.setLog('Have sender for video, start replacing track', LOG_LEVEL.INFO);
+	                        (_babelHelpers$classPr19 = babelHelpers.classPrivateFieldGet(_this16, _privateProperties).cameraStream) === null || _babelHelpers$classPr19 === void 0 ? void 0 : _babelHelpers$classPr19.getVideoTracks()[0].stop();
+	                        babelHelpers.classPrivateFieldGet(_this16, _privateProperties).cameraStream = null;
 	                        _context21.next = 10;
-	                        return _this15.getLocalVideo();
+	                        return _this16.getLocalVideo();
 	                      case 10:
 	                        videoTrack = _context21.sent;
 	                        videoTrack.source = MediaStreamsKinds.Camera;
 	                        _context21.next = 14;
 	                        return sender.replaceTrack(videoTrack);
 	                      case 14:
-	                        _classPrivateMethodGet(_this15, _updateVideoEncodings, _updateVideoEncodings2).call(_this15, sender, videoTrack);
+	                        _classPrivateMethodGet(_this16, _updateVideoEncodings, _updateVideoEncodings2).call(_this16, sender, videoTrack);
 	                      case 15:
-	                        _this15.setLog('Switching a video device succeeded', LOG_LEVEL.INFO);
+	                        _this16.setLog('Switching a video device succeeded', LOG_LEVEL.INFO);
 	                        _context21.next = 23;
 	                        break;
 	                      case 18:
 	                        _context21.prev = 18;
 	                        _context21.t0 = _context21["catch"](2);
 	                        error = _context21.t0;
-	                        _this15.setLog("Switching a video device failed: ".concat(_context21.t0), LOG_LEVEL.ERROR);
-	                        if (!babelHelpers.classPrivateFieldGet(_this15, _privateProperties).cameraStream) {
-	                          babelHelpers.classPrivateFieldGet(_this15, _privateProperties).cameraStream = prevStream;
+	                        _this16.setLog("Switching a video device failed: ".concat(_context21.t0), LOG_LEVEL.ERROR);
+	                        if (!babelHelpers.classPrivateFieldGet(_this16, _privateProperties).cameraStream) {
+	                          babelHelpers.classPrivateFieldGet(_this16, _privateProperties).cameraStream = prevStream;
 	                        }
 	                      case 23:
 	                        _context21.prev = 23;
-	                        if (!babelHelpers.classPrivateFieldGet(_this15, _privateProperties).switchActiveVideoDevicePending) {
+	                        if (!babelHelpers.classPrivateFieldGet(_this16, _privateProperties).switchActiveVideoDevicePending) {
 	                          _context21.next = 30;
 	                          break;
 	                        }
-	                        _deviceId2 = babelHelpers.classPrivateFieldGet(_this15, _privateProperties).switchActiveVideoDevicePending;
-	                        babelHelpers.classPrivateFieldGet(_this15, _privateProperties).switchActiveVideoDevicePending = null;
-	                        resolve(_this15.switchActiveVideoDevice(_deviceId2, true));
+	                        _deviceId2 = babelHelpers.classPrivateFieldGet(_this16, _privateProperties).switchActiveVideoDevicePending;
+	                        babelHelpers.classPrivateFieldGet(_this16, _privateProperties).switchActiveVideoDevicePending = null;
+	                        resolve(_this16.switchActiveVideoDevice(_deviceId2, true));
 	                        _context21.next = 33;
 	                        break;
 	                      case 30:
 	                        fulfilled = true;
-	                        babelHelpers.classPrivateFieldGet(_this15, _privateProperties).switchActiveVideoDeviceInProgress = null;
+	                        babelHelpers.classPrivateFieldGet(_this16, _privateProperties).switchActiveVideoDeviceInProgress = null;
 	                        return _context21.abrupt("return", error ? reject(error) : resolve());
 	                      case 33:
 	                        return _context21.finish(23);
@@ -5512,6 +5637,11 @@ this.BX = this.BX || {};
 	      babelHelpers.classPrivateFieldGet(this, _privateProperties).isloggingEnable = enable;
 	    }
 	  }, {
+	    key: "remoteParticipantsCount",
+	    get: function get() {
+	      return Object.keys(babelHelpers.classPrivateFieldGet(this, _privateProperties).remoteParticipants).length;
+	    }
+	  }, {
 	    key: "isMediaMutedBySystem",
 	    get: function get() {
 	      return babelHelpers.classPrivateFieldGet(this, _privateProperties).mediaMutedBySystem;
@@ -5519,23 +5649,23 @@ this.BX = this.BX || {};
 	  }]);
 	  return Call;
 	}();
-	function _reconnect2() {
-	  var _this16 = this;
+	function _reconnect2(data) {
+	  var _this17 = this;
 	  babelHelpers.classPrivateFieldGet(this, _privateProperties).isReconnecting = true;
 	  babelHelpers.classPrivateFieldGet(this, _privateProperties).videoQueue = VIDEO_QUEUE.INITIAL;
 	  var reconnect = function reconnect() {
-	    var reconnectionDelay = babelHelpers.classPrivateFieldGet(_this16, _privateProperties).lastReconnectionReason !== ReconnectionReason.JoinResponseError ? babelHelpers.classPrivateFieldGet(_this16, _privateProperties).fastReconnectionDelay : babelHelpers.classPrivateFieldGet(_this16, _privateProperties).reconnectionDelay;
-	    _this16.setLog("Reconnecting attempt: ".concat(++babelHelpers.classPrivateFieldGet(_this16, _privateProperties).reconnectionAttempt), LOG_LEVEL.WARNING);
-	    babelHelpers.classPrivateFieldGet(_this16, _privateProperties).reconnectionTimeout = setTimeout(_this16.connect.bind(_this16), reconnectionDelay);
+	    var reconnectionDelay = babelHelpers.classPrivateFieldGet(_this17, _privateProperties).lastReconnectionReason !== ReconnectionReason.JoinResponseError ? babelHelpers.classPrivateFieldGet(_this17, _privateProperties).fastReconnectionDelay : babelHelpers.classPrivateFieldGet(_this17, _privateProperties).reconnectionDelay;
+	    _this17.setLog("Reconnecting attempt: ".concat(++babelHelpers.classPrivateFieldGet(_this17, _privateProperties).reconnectionAttempt), LOG_LEVEL.WARNING);
+	    babelHelpers.classPrivateFieldGet(_this17, _privateProperties).reconnectionTimeout = setTimeout(_this17.connect.bind(_this17), reconnectionDelay);
 	  };
 	  reconnect();
 	  this.checkQosFeatureAndExecutionCallback(function () {
-	    _this16.addMonitoringEvents({
+	    _this17.addMonitoringEvents({
 	      name: MONITORING_EVENTS_NAME_LIST.USER_RECONNECTED,
 	      withCounter: true
 	    });
 	  });
-	  this.triggerEvents('Reconnecting');
+	  this.triggerEvents('Reconnecting', [data]);
 	}
 	function _beforeDisconnect2() {
 	  window.removeEventListener('unload', this.sendLeaveBound);
@@ -5556,16 +5686,19 @@ this.BX = this.BX || {};
 	  }
 	}
 	function _resetPingTimeout2() {
-	  var _this17 = this;
+	  var _this18 = this;
 	  _classPrivateMethodGet(this, _clearPingTimeout, _clearPingTimeout2).call(this);
 	  if (!babelHelpers.classPrivateFieldGet(this, _privateProperties).pingTimeoutDuration) {
 	    return;
 	  }
 	  babelHelpers.classPrivateFieldGet(this, _privateProperties).pingTimeout = setTimeout(function () {
-	    _this17.setLog('Ping signal was not received, reconnecting', LOG_LEVEL.WARNING);
-	    _classPrivateMethodGet(_this17, _beforeDisconnect, _beforeDisconnect2).call(_this17);
-	    babelHelpers.classPrivateFieldGet(_this17, _privateProperties).lastReconnectionReason = ReconnectionReason.PingPongMissed;
-	    _classPrivateMethodGet(_this17, _reconnect, _reconnect2).call(_this17);
+	    _this18.setLog('Ping signal was not received, reconnecting', LOG_LEVEL.WARNING);
+	    _classPrivateMethodGet(_this18, _beforeDisconnect, _beforeDisconnect2).call(_this18);
+	    babelHelpers.classPrivateFieldGet(_this18, _privateProperties).lastReconnectionReason = ReconnectionReason.PingPongMissed;
+	    _classPrivateMethodGet(_this18, _reconnect, _reconnect2).call(_this18, {
+	      reconnectionReason: 'PING_SIGNAL_NOT_RECEIVED',
+	      reconnectionReasonInfo: ""
+	    });
 	  }, babelHelpers.classPrivateFieldGet(this, _privateProperties).pingTimeoutDuration);
 	}
 	function _clearPingTimeout2() {
@@ -5574,14 +5707,14 @@ this.BX = this.BX || {};
 	  }
 	}
 	function _startPingInterval2() {
-	  var _this18 = this;
+	  var _this19 = this;
 	  _classPrivateMethodGet(this, _clearPingInterval, _clearPingInterval2).call(this);
 	  _classPrivateMethodGet(this, _resetPingTimeout, _resetPingTimeout2).call(this);
 	  if (!babelHelpers.classPrivateFieldGet(this, _privateProperties).pingIntervalDuration) {
 	    return;
 	  }
 	  babelHelpers.classPrivateFieldGet(this, _privateProperties).pingPongInterval = setInterval(function () {
-	    _classPrivateMethodGet(_this18, _sendPing, _sendPing2).call(_this18);
+	    _classPrivateMethodGet(_this19, _sendPing, _sendPing2).call(_this19);
 	  }, babelHelpers.classPrivateFieldGet(this, _privateProperties).pingIntervalDuration);
 	}
 	function _clearPingInterval2() {
@@ -5599,16 +5732,16 @@ this.BX = this.BX || {};
 	  });
 	}
 	function _addPendingPublication2(trackId, source) {
-	  var _this19 = this;
+	  var _this20 = this;
 	  babelHelpers.classPrivateFieldGet(this, _privateProperties).pendingPublications[trackId] = setTimeout(function () {
-	    delete babelHelpers.classPrivateFieldGet(_this19, _privateProperties).pendingPublications[trackId];
-	    _this19.onPublishFailed(source);
+	    delete babelHelpers.classPrivateFieldGet(_this20, _privateProperties).pendingPublications[trackId];
+	    _this20.onPublishFailed(source);
 	  }, babelHelpers.classPrivateFieldGet(this, _privateProperties).publicationTimeout);
 	}
 	function _addPendingSubscription2(participant, track, tries) {
 	  var _babelHelpers$classPr22,
 	    _babelHelpers$classPr23,
-	    _this20 = this;
+	    _this21 = this;
 	  clearTimeout((_babelHelpers$classPr22 = babelHelpers.classPrivateFieldGet(this, _privateProperties).pendingSubscriptions[participant.userId]) === null || _babelHelpers$classPr22 === void 0 ? void 0 : (_babelHelpers$classPr23 = _babelHelpers$classPr22[track.sid]) === null || _babelHelpers$classPr23 === void 0 ? void 0 : _babelHelpers$classPr23.timeout);
 	  if (!babelHelpers.classPrivateFieldGet(this, _privateProperties).pendingSubscriptions[participant.userId]) {
 	    babelHelpers.classPrivateFieldGet(this, _privateProperties).pendingSubscriptions[participant.userId] = {};
@@ -5617,25 +5750,25 @@ this.BX = this.BX || {};
 	    tries = babelHelpers.classPrivateFieldGet(this, _privateProperties).subscriptionTries;
 	  }
 	  var timeout = setTimeout(function () {
-	    _this20.setLog("Track ".concat(track.sid, " with kind ").concat(track.source, " for a participant with id ").concat(participant.userId, " (sid: ").concat(participant.sid, ") was not received, trying to subscribe to it"), LOG_LEVEL.WARNING);
-	    _this20.checkQosFeatureAndExecutionCallback(function () {
-	      _this20.addMonitoringEvents({
+	    _this21.setLog("Track ".concat(track.sid, " with kind ").concat(track.source, " for a participant with id ").concat(participant.userId, " (sid: ").concat(participant.sid, ") was not received, trying to subscribe to it"), LOG_LEVEL.WARNING);
+	    _this21.checkQosFeatureAndExecutionCallback(function () {
+	      _this21.addMonitoringEvents({
 	        name: MONITORING_EVENTS_NAME_LIST.TRACK_SUBSCRIPTION_DELAY,
 	        withCounter: true
 	      });
 	    });
 	    if (tries) {
-	      _classPrivateMethodGet(_this20, _addPendingSubscription, _addPendingSubscription2).call(_this20, participant, track, tries - 1);
-	      _classPrivateMethodGet(_this20, _changeSubscriptionToTrack, _changeSubscriptionToTrack2).call(_this20, track.sid, participant.sid, true);
+	      _classPrivateMethodGet(_this21, _addPendingSubscription, _addPendingSubscription2).call(_this21, participant, track, tries - 1);
+	      _classPrivateMethodGet(_this21, _changeSubscriptionToTrack, _changeSubscriptionToTrack2).call(_this21, track.sid, participant.sid, true);
 	    } else {
-	      _this20.setLog("Subscription to track ".concat(track.sid, " with kind ").concat(track.source, " for a participant with id ").concat(participant.userId, " (sid: ").concat(participant.sid, ") failed"), LOG_LEVEL.ERROR);
-	      _this20.checkQosFeatureAndExecutionCallback(function () {
-	        _this20.addMonitoringEvents({
+	      _this21.setLog("Subscription to track ".concat(track.sid, " with kind ").concat(track.source, " for a participant with id ").concat(participant.userId, " (sid: ").concat(participant.sid, ") failed"), LOG_LEVEL.ERROR);
+	      _this21.checkQosFeatureAndExecutionCallback(function () {
+	        _this21.addMonitoringEvents({
 	          name: MONITORING_EVENTS_NAME_LIST.TRACK_SUBSCRIPTION_FAILED,
 	          withCounter: true
 	        });
 	      });
-	      _this20.triggerEvents('TrackSubscriptionFailed', [{
+	      _this21.triggerEvents('TrackSubscriptionFailed', [{
 	        participant: participant,
 	        track: track
 	      }]);
@@ -5671,13 +5804,13 @@ this.BX = this.BX || {};
 	  return encodings;
 	}
 	function _getLayersFromEncodings2(width, height, encodings) {
-	  var _this21 = this;
+	  var _this22 = this;
 	  return encodings.map(function (encoding, index) {
 	    return {
 	      quality: index,
 	      width: width / encoding.scaleResolutionDownBy,
 	      height: height / encoding.scaleResolutionDownBy,
-	      bitrate: babelHelpers.classPrivateFieldGet(_this21, _privateProperties).defaultSimulcastBitrate[encoding.rid]
+	      bitrate: babelHelpers.classPrivateFieldGet(_this22, _privateProperties).defaultSimulcastBitrate[encoding.rid]
 	    };
 	  });
 	}
@@ -5739,37 +5872,37 @@ this.BX = this.BX || {};
 	  return quality;
 	}
 	function _changeRoomStreamsQuality2(userId, kind) {
-	  var _this22 = this;
+	  var _this23 = this;
 	  this.setLog("Start changing a streams quality", LOG_LEVEL.INFO);
 	  Object.values(this.getParticipants()).forEach(function (p) {
-	    var quality = babelHelpers.classPrivateFieldGet(_this22, _privateProperties).defaultRemoteStreamsQuality;
+	    var quality = babelHelpers.classPrivateFieldGet(_this23, _privateProperties).defaultRemoteStreamsQuality;
 	    if (userId) {
 	      var exactUser = userId == p.userId;
 	      quality = exactUser && kind === MediaStreamsKinds.Camera ? STREAM_QUALITY.HIGH : STREAM_QUALITY.MEDIUM;
 	      if (exactUser) {
-	        babelHelpers.classPrivateFieldGet(_this22, _privateProperties).mainStream = {
+	        babelHelpers.classPrivateFieldGet(_this23, _privateProperties).mainStream = {
 	          userId: userId,
 	          kind: kind
 	        };
 	      }
 	    } else {
-	      babelHelpers.classPrivateFieldGet(_this22, _privateProperties).mainStream = {};
+	      babelHelpers.classPrivateFieldGet(_this23, _privateProperties).mainStream = {};
 	    }
 	    p.setStreamQuality(quality);
-	    _this22.setLog("Quality of video for a participant with id ".concat(p.userId, " (sid: ").concat(p.sid, ") was changed to ").concat(quality), LOG_LEVEL.INFO);
+	    _this23.setLog("Quality of video for a participant with id ".concat(p.userId, " (sid: ").concat(p.sid, ") was changed to ").concat(quality), LOG_LEVEL.INFO);
 	  });
 	}
 	function _toggleRemoteParticipantVideo2(participantIds, showVideo) {
-	  var _this23 = this;
+	  var _this24 = this;
 	  var isPaginateToggle = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
 	  participantIds.forEach(function (participantId) {
-	    var remoteParticipant = babelHelpers.classPrivateFieldGet(_this23, _privateProperties).remoteParticipants[participantId];
+	    var remoteParticipant = babelHelpers.classPrivateFieldGet(_this24, _privateProperties).remoteParticipants[participantId];
 	    if (remoteParticipant && remoteParticipant.tracks[MediaStreamsKinds.Camera] && remoteParticipant.isLocalVideoMute === showVideo) {
 	      remoteParticipant.isLocalVideoMute = !showVideo;
 	      if (remoteParticipant.isMutedVideo) {
 	        return;
 	      }
-	      _classPrivateMethodGet(_this23, _pauseRemoteTrack, _pauseRemoteTrack2).call(_this23, remoteParticipant.userId, remoteParticipant.tracks[MediaStreamsKinds.Camera].id, remoteParticipant.tracks[MediaStreamsKinds.Camera].source, remoteParticipant.isLocalVideoMute);
+	      _classPrivateMethodGet(_this24, _pauseRemoteTrack, _pauseRemoteTrack2).call(_this24, remoteParticipant.userId, remoteParticipant.tracks[MediaStreamsKinds.Camera].id, remoteParticipant.tracks[MediaStreamsKinds.Camera].source, remoteParticipant.isLocalVideoMute);
 	    }
 	  });
 	  if (!isPaginateToggle) {
@@ -5794,13 +5927,13 @@ this.BX = this.BX || {};
 	  return _getUserMedia3.apply(this, arguments);
 	}
 	function _getUserMedia3() {
-	  _getUserMedia3 = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee25(options) {
-	    var _this31 = this;
+	  _getUserMedia3 = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$1().mark(function _callee25(options) {
+	    var _this32 = this;
 	    var fallbackMode,
 	      constraints,
 	      stream,
 	      _args25 = arguments;
-	    return _regeneratorRuntime().wrap(function _callee25$(_context25) {
+	    return _regeneratorRuntime$1().wrap(function _callee25$(_context25) {
 	      while (1) switch (_context25.prev = _context25.next) {
 	        case 0:
 	          fallbackMode = _args25.length > 1 && _args25[1] !== undefined ? _args25[1] : false;
@@ -5871,7 +6004,7 @@ this.BX = this.BX || {};
 	            break;
 	          }
 	          this.checkQosFeatureAndExecutionCallback(function () {
-	            _this31.addMonitoringEvents({
+	            _this32.addMonitoringEvents({
 	              name: MONITORING_EVENTS_NAME_LIST.LOCAL_VIDEO_STREAM_RECEIVING_FAILED,
 	              withCounter: true
 	            });
@@ -5883,7 +6016,7 @@ this.BX = this.BX || {};
 	        case 25:
 	          if (options.audio) {
 	            this.checkQosFeatureAndExecutionCallback(function () {
-	              _this31.addMonitoringEvents({
+	              _this32.addMonitoringEvents({
 	                name: MONITORING_EVENTS_NAME_LIST.LOCAL_MICROPHONE_STREAM_RECEIVING_FAILED,
 	                withCounter: true
 	              });
@@ -5891,7 +6024,7 @@ this.BX = this.BX || {};
 	          }
 	          this.setLog("Getting user media with constraints: ".concat(JSON.stringify(constraints), " failed: ").concat(_context25.t0), LOG_LEVEL.ERROR);
 	          this.checkQosFeatureAndExecutionCallback(function () {
-	            _this31.addMonitoringEvents({
+	            _this32.addMonitoringEvents({
 	              name: MONITORING_EVENTS_NAME_LIST.GET_LOCAL_TRACK_ERROR,
 	              value: {
 	                type: 'main'
@@ -5914,10 +6047,10 @@ this.BX = this.BX || {};
 	  return _getDisplayMedia3.apply(this, arguments);
 	}
 	function _getDisplayMedia3() {
-	  _getDisplayMedia3 = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee26() {
-	    var _this32 = this;
+	  _getDisplayMedia3 = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$1().mark(function _callee26() {
+	    var _this33 = this;
 	    var stream;
-	    return _regeneratorRuntime().wrap(function _callee26$(_context26) {
+	    return _regeneratorRuntime$1().wrap(function _callee26$(_context26) {
 	      while (1) switch (_context26.prev = _context26.next) {
 	        case 0:
 	          this.setLog('Start getting display media', LOG_LEVEL.INFO);
@@ -5968,7 +6101,7 @@ this.BX = this.BX || {};
 	          _context26.t0 = _context26["catch"](2);
 	          this.setLog("Getting display media failed: ".concat(_context26.t0), LOG_LEVEL.ERROR);
 	          this.checkQosFeatureAndExecutionCallback(function () {
-	            _this32.addMonitoringEvents({
+	            _this33.addMonitoringEvents({
 	              name: MONITORING_EVENTS_NAME_LIST.LOCAL_SCREEN_STREAM_RECEIVING_FAILED,
 	              withCounter: true
 	            });
@@ -5985,32 +6118,34 @@ this.BX = this.BX || {};
 	  return _getDisplayMedia3.apply(this, arguments);
 	}
 	function _addTrackMuteHandlers2(track) {
-	  var _this24 = this;
+	  var _this25 = this;
 	  track.onmute = function (event) {
-	    babelHelpers.classPrivateFieldGet(_this24, _privateProperties).mediaMutedBySystem = false;
-	    _this24.disableVideo({
+	    babelHelpers.classPrivateFieldGet(_this25, _privateProperties).mediaMutedBySystem = false;
+	    _this25.disableVideo({
 	      calledFrom: 'track.onmute',
 	      bySystem: true
 	    });
-	    _this24.disableAudio(true);
-	    babelHelpers.classPrivateFieldGet(_this24, _privateProperties).mediaMutedBySystem = true;
-	    _this24.triggerEvents('MediaMutedBySystem', [true]);
+	    _this25.disableAudio(true);
+	    babelHelpers.classPrivateFieldGet(_this25, _privateProperties).mediaMutedBySystem = true;
+	    _this25.triggerEvents('MediaMutedBySystem', [true]);
 	  };
 	  track.onunmute = function (event) {
-	    if (babelHelpers.classPrivateFieldGet(_this24, _privateProperties).mediaMutedBySystem) {
-	      babelHelpers.classPrivateFieldGet(_this24, _privateProperties).mediaMutedBySystem = false;
-	      _this24.triggerEvents('MediaMutedBySystem', [false]);
+	    if (babelHelpers.classPrivateFieldGet(_this25, _privateProperties).mediaMutedBySystem) {
+	      babelHelpers.classPrivateFieldGet(_this25, _privateProperties).mediaMutedBySystem = false;
+	      _this25.triggerEvents('MediaMutedBySystem', [false]);
 	    }
-	    _this24.enableVideo({
+	    _this25.enableVideo({
 	      calledFrom: 'track.onunmute'
 	    });
-	    if (babelHelpers.classPrivateFieldGet(_this24, _privateProperties).needToEnableAudioAfterSystemMuted) {
-	      _this24.enableAudio();
+	    if (babelHelpers.classPrivateFieldGet(_this25, _privateProperties).needToEnableAudioAfterSystemMuted) {
+	      _this25.enableAudio();
 	    }
 	  };
 	}
 	function _sendLog2(log, level) {
-	  return true;
+	  if (!Util.isKibanaLogsEnabled()) {
+	    return true;
+	  }
 	  var signal = {
 	    sendLog: {
 	      userName: "".concat(babelHelpers.classPrivateFieldGet(this, _privateProperties).userId),
@@ -6034,10 +6169,10 @@ this.BX = this.BX || {};
 	  return _answerHandler3.apply(this, arguments);
 	}
 	function _answerHandler3() {
-	  _answerHandler3 = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee27(data) {
-	    var _this33 = this;
+	  _answerHandler3 = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$1().mark(function _callee27(data) {
+	    var _this34 = this;
 	    var hasError;
-	    return _regeneratorRuntime().wrap(function _callee27$(_context27) {
+	    return _regeneratorRuntime$1().wrap(function _callee27$(_context27) {
 	      while (1) switch (_context27.prev = _context27.next) {
 	        case 0:
 	          this.setLog('Start handling a remote answer', LOG_LEVEL.INFO);
@@ -6050,8 +6185,8 @@ this.BX = this.BX || {};
 	          return this.sender.setRemoteDescription(data.answer);
 	        case 6:
 	          babelHelpers.classPrivateFieldGet(this, _privateProperties).pendingCandidates.sender.forEach(function (candidate) {
-	            _this33.sender.addIceCandidate(candidate);
-	            _this33.setLog('Added a deferred ICE candidate', LOG_LEVEL.INFO);
+	            _this34.sender.addIceCandidate(candidate);
+	            _this34.setLog('Added a deferred ICE candidate', LOG_LEVEL.INFO);
 	          });
 	          babelHelpers.classPrivateFieldGet(this, _privateProperties).pendingCandidates.sender = [];
 	          _context27.next = 17;
@@ -6062,9 +6197,12 @@ this.BX = this.BX || {};
 	          this.setLog("Handling a remote answer failed: ".concat(_context27.t0), LOG_LEVEL.ERROR);
 	          hasError = true;
 	          _classPrivateMethodGet(this, _beforeDisconnect, _beforeDisconnect2).call(this);
-	          _classPrivateMethodGet(this, _reconnect, _reconnect2).call(this);
+	          _classPrivateMethodGet(this, _reconnect, _reconnect2).call(this, {
+	            reconnectionReason: 'HANDLING_ANSWER',
+	            reconnectionReasonInfo: "Handling a remote answer failed: ".concat(_context27.t0)
+	          });
 	          this.checkQosFeatureAndExecutionCallback(function () {
-	            _this33.addMonitoringEvents({
+	            _this34.addMonitoringEvents({
 	              name: MONITORING_EVENTS_NAME_LIST.PEER_CONNECTION_ISSUES,
 	              value: 1
 	            });
@@ -6093,10 +6231,10 @@ this.BX = this.BX || {};
 	  return _offerHandler3.apply(this, arguments);
 	}
 	function _offerHandler3() {
-	  _offerHandler3 = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee28(data) {
-	    var _this34 = this;
+	  _offerHandler3 = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$1().mark(function _callee28(data) {
+	    var _this35 = this;
 	    var answer;
-	    return _regeneratorRuntime().wrap(function _callee28$(_context28) {
+	    return _regeneratorRuntime$1().wrap(function _callee28$(_context28) {
 	      while (1) switch (_context28.prev = _context28.next) {
 	        case 0:
 	          this.setLog('Handling a remote offer', LOG_LEVEL.INFO);
@@ -6108,8 +6246,8 @@ this.BX = this.BX || {};
 	          return this.recipient.setRemoteDescription(data.offer);
 	        case 5:
 	          babelHelpers.classPrivateFieldGet(this, _privateProperties).pendingCandidates.recipient.forEach(function (candidate) {
-	            _this34.recipient.addIceCandidate(candidate);
-	            _this34.setLog('Added a deferred ICE candidate', LOG_LEVEL.INFO);
+	            _this35.recipient.addIceCandidate(candidate);
+	            _this35.setLog('Added a deferred ICE candidate', LOG_LEVEL.INFO);
 	          });
 	          babelHelpers.classPrivateFieldGet(this, _privateProperties).pendingCandidates.recipient = [];
 	          _context28.next = 9;
@@ -6136,9 +6274,12 @@ this.BX = this.BX || {};
 	          _context28.t0 = _context28["catch"](1);
 	          this.setLog("Handling a remote offer failed: ".concat(_context28.t0), LOG_LEVEL.ERROR);
 	          _classPrivateMethodGet(this, _beforeDisconnect, _beforeDisconnect2).call(this);
-	          _classPrivateMethodGet(this, _reconnect, _reconnect2).call(this);
+	          _classPrivateMethodGet(this, _reconnect, _reconnect2).call(this, {
+	            reconnectionReason: 'HANDLING_OFFER',
+	            reconnectionReasonInfo: "Handling a remote offer failed: ".concat(_context28.t0)
+	          });
 	          this.checkQosFeatureAndExecutionCallback(function () {
-	            _this34.addMonitoringEvents({
+	            _this35.addMonitoringEvents({
 	              name: MONITORING_EVENTS_NAME_LIST.PEER_CONNECTION_ISSUES,
 	              value: 2
 	            });
@@ -6152,7 +6293,7 @@ this.BX = this.BX || {};
 	  return _offerHandler3.apply(this, arguments);
 	}
 	function _addIceCandidate2(trickle) {
-	  var _this25 = this;
+	  var _this26 = this;
 	  this.setLog('Start adding an ICE candidate', LOG_LEVEL.INFO);
 	  try {
 	    var candidate = JSON.parse(trickle.candidateInit);
@@ -6179,7 +6320,7 @@ this.BX = this.BX || {};
 	  } catch (e) {
 	    this.setLog("Adding an ICE candidate failed: ".concat(e), LOG_LEVEL.ERROR);
 	    this.checkQosFeatureAndExecutionCallback(function () {
-	      _this25.addMonitoringEvents({
+	      _this26.addMonitoringEvents({
 	        name: MONITORING_EVENTS_NAME_LIST.PEER_CONNECTION_ISSUES,
 	        value: 3
 	      });
@@ -6195,7 +6336,7 @@ this.BX = this.BX || {};
 	  }
 	}
 	function _setRemoteParticipant2(participant) {
-	  var _this26 = this;
+	  var _this27 = this;
 	  var userId = participant.userId;
 	  var participantEvent = babelHelpers.classPrivateFieldGet(this, _privateProperties).remoteParticipants[userId] ? 'ParticipantStateUpdated' : 'ParticipantJoined';
 	  var remoteParticipant = new Participant(participant, babelHelpers.classPrivateFieldGet(this, _privateProperties).socketConnect);
@@ -6204,7 +6345,7 @@ this.BX = this.BX || {};
 	  if (participant.participantTracks) {
 	    Object.values(participant.participantTracks).forEach(function (track) {
 	      track.userId = userId;
-	      babelHelpers.classPrivateFieldGet(_this26, _privateProperties).tracksDataFromSocket[track.sid] = track;
+	      babelHelpers.classPrivateFieldGet(_this27, _privateProperties).tracksDataFromSocket[track.sid] = track;
 	      if (track.muted && track.source === MediaStreamsKinds.Microphone) {
 	        remoteParticipant.isMutedAudio = true;
 	      }
@@ -6222,13 +6363,13 @@ this.BX = this.BX || {};
 	          remoteParticipant.screenSharingEnabled = true;
 	          break;
 	      }
-	      _this26.setLog("A participant with id ".concat(userId, " (sid: ").concat(participant.sid, ") has a track info with kind ").concat(track.source, " (sid: ").concat(track.sid, ", waiting for it"), LOG_LEVEL.INFO);
-	      var ontrackData = babelHelpers.classPrivateFieldGet(_this26, _privateProperties).ontrackData[track.sid];
-	      delete babelHelpers.classPrivateFieldGet(_this26, _privateProperties).ontrackData[track.sid];
+	      _this27.setLog("A participant with id ".concat(userId, " (sid: ").concat(participant.sid, ") has a track info with kind ").concat(track.source, " (sid: ").concat(track.sid, ", waiting for it"), LOG_LEVEL.INFO);
+	      var ontrackData = babelHelpers.classPrivateFieldGet(_this27, _privateProperties).ontrackData[track.sid];
+	      delete babelHelpers.classPrivateFieldGet(_this27, _privateProperties).ontrackData[track.sid];
 	      if (ontrackData) {
-	        _classPrivateMethodGet(_this26, _createRemoteTrack, _createRemoteTrack2).call(_this26, track.sid, ontrackData);
+	        _classPrivateMethodGet(_this27, _createRemoteTrack, _createRemoteTrack2).call(_this27, track.sid, ontrackData);
 	      } else {
-	        _classPrivateMethodGet(_this26, _addPendingSubscription, _addPendingSubscription2).call(_this26, participant, track);
+	        _classPrivateMethodGet(_this27, _addPendingSubscription, _addPendingSubscription2).call(_this27, participant, track);
 	      }
 	    });
 	  }
@@ -6236,7 +6377,7 @@ this.BX = this.BX || {};
 	    var kindArray = babelHelpers.toConsumableArray(babelHelpers.classPrivateFieldGet(this, _privateProperties).videoStreamSetupErrorList[userId]);
 	    delete babelHelpers.classPrivateFieldGet(this, _privateProperties).videoStreamSetupErrorList[userId];
 	    kindArray.forEach(function (kind) {
-	      _this26.setMainStream(userId, kind);
+	      _this27.setMainStream(userId, kind);
 	    });
 	  }
 	}
@@ -6244,7 +6385,7 @@ this.BX = this.BX || {};
 	  var _babelHelpers$classPr26,
 	    _babelHelpers$classPr27,
 	    _babelHelpers$classPr28,
-	    _this27 = this;
+	    _this28 = this;
 	  var trackData = babelHelpers.classPrivateFieldGet(this, _privateProperties).tracksDataFromSocket[trackId];
 	  var userId = trackData.userId;
 	  var participant = babelHelpers.classPrivateFieldGet(this, _privateProperties).remoteParticipants[userId];
@@ -6287,28 +6428,28 @@ this.BX = this.BX || {};
 	    ontrackData.streams[0].onremovetrack = function () {
 	      // we need to check if a participant is still exists
 	      // otherwise tracks were deleted when participant left room
-	      var participant = babelHelpers.classPrivateFieldGet(_this27, _privateProperties).remoteParticipants[userId];
+	      var participant = babelHelpers.classPrivateFieldGet(_this28, _privateProperties).remoteParticipants[userId];
 	      if ((participant === null || participant === void 0 ? void 0 : participant.streamRemovingId) === streamRemovingId) {
-	        _this27.setLog("Track with kind ".concat(track.source, " (sid: ").concat(track.id, ") for a participant with id ").concat(userId, " (sid: ").concat(participant.sid || 'unknown', ") was removed from peer connection"), LOG_LEVEL.WARNING);
-	        _this27.triggerEvents('RemoteMediaRemoved', [participant, remoteTrack]);
+	        _this28.setLog("Track with kind ".concat(track.source, " (sid: ").concat(track.id, ") for a participant with id ").concat(userId, " (sid: ").concat(participant.sid || 'unknown', ") was removed from peer connection"), LOG_LEVEL.WARNING);
+	        _this28.triggerEvents('RemoteMediaRemoved', [participant, remoteTrack]);
 	      } else {
-	        _this27.setLog("Track with kind ".concat(track.source, " (sid: ").concat(track.id, ") was removed from a disconnected participant with id ").concat(userId, " (sid: unknown) before it was removed from peer connection"), LOG_LEVEL.WARNING);
+	        _this28.setLog("Track with kind ".concat(track.source, " (sid: ").concat(track.id, ") was removed from a disconnected participant with id ").concat(userId, " (sid: unknown) before it was removed from peer connection"), LOG_LEVEL.WARNING);
 	      }
 	    };
 	  }
 	}
 	function _speakerChangedHandler2(data) {
-	  var _this28 = this;
+	  var _this29 = this;
 	  data.speakersChanged.speakers.forEach(function (speaker) {
-	    var participant = Object.values(babelHelpers.classPrivateFieldGet(_this28, _privateProperties).remoteParticipants).find(function (p) {
+	    var participant = Object.values(babelHelpers.classPrivateFieldGet(_this29, _privateProperties).remoteParticipants).find(function (p) {
 	      return p.sid === speaker.sid;
 	    });
-	    if (participant && (participant === null || participant === void 0 ? void 0 : participant.userId) != babelHelpers.classPrivateFieldGet(_this28, _privateProperties).userId) {
+	    if (participant && (participant === null || participant === void 0 ? void 0 : participant.userId) != babelHelpers.classPrivateFieldGet(_this29, _privateProperties).userId) {
 	      participant.isSpeaking = (speaker === null || speaker === void 0 ? void 0 : speaker.active) || false;
 	      if (speaker !== null && speaker !== void 0 && speaker.active) {
-	        _this28.triggerEvents('VoiceStarted', [participant]);
+	        _this29.triggerEvents('VoiceStarted', [participant]);
 	      } else {
-	        _this28.triggerEvents('VoiceEnded', [participant]);
+	        _this29.triggerEvents('VoiceEnded', [participant]);
 	      }
 	    }
 	  });
@@ -6576,7 +6717,7 @@ this.BX = this.BX || {};
 	  this.triggerEvents('RoomSettingsChanged', [data]);
 	}
 	function _createPeerConnection2() {
-	  var _this29 = this;
+	  var _this30 = this;
 	  _classPrivateMethodGet(this, _destroyPeerConnection, _destroyPeerConnection2).call(this);
 	  var config = {};
 	  if (babelHelpers.classPrivateFieldGet(this, _privateProperties).iceServers) {
@@ -6584,41 +6725,41 @@ this.BX = this.BX || {};
 	  }
 	  this.sender = new RTCPeerConnection(config);
 	  this.sender.addEventListener('icecandidate', function (e) {
-	    return _this29.onIceCandidate(null, e);
+	    return _this30.onIceCandidate(null, e);
 	  });
 	  this.sender.addEventListener('connectionstatechange', function (e) {
-	    return _this29.onConnectionStateChange();
+	    return _this30.onConnectionStateChange();
 	  });
 	  this.recipient = new RTCPeerConnection(config);
 	  this.recipient.ontrack = function (event) {
 	    var _babelHelpers$classPr29;
 	    var ids = event.streams[0].id.split('|');
 	    var trackId = ids[1];
-	    var userId = (_babelHelpers$classPr29 = babelHelpers.classPrivateFieldGet(_this29, _privateProperties).tracksDataFromSocket[trackId]) === null || _babelHelpers$classPr29 === void 0 ? void 0 : _babelHelpers$classPr29.userId;
-	    if (babelHelpers.classPrivateFieldGet(_this29, _privateProperties).remoteParticipants[userId] && babelHelpers.classPrivateFieldGet(_this29, _privateProperties).tracksDataFromSocket[trackId]) {
-	      _classPrivateMethodGet(_this29, _createRemoteTrack, _createRemoteTrack2).call(_this29, trackId, event);
+	    var userId = (_babelHelpers$classPr29 = babelHelpers.classPrivateFieldGet(_this30, _privateProperties).tracksDataFromSocket[trackId]) === null || _babelHelpers$classPr29 === void 0 ? void 0 : _babelHelpers$classPr29.userId;
+	    if (babelHelpers.classPrivateFieldGet(_this30, _privateProperties).remoteParticipants[userId] && babelHelpers.classPrivateFieldGet(_this30, _privateProperties).tracksDataFromSocket[trackId]) {
+	      _classPrivateMethodGet(_this30, _createRemoteTrack, _createRemoteTrack2).call(_this30, trackId, event);
 	    } else {
-	      _this29.setLog("Got a track with kind ".concat(event.track.kind, " (sid: ").concat(trackId, ") without a participant, saving it"), LOG_LEVEL.WARNING);
-	      babelHelpers.classPrivateFieldGet(_this29, _privateProperties).ontrackData[trackId] = event;
+	      _this30.setLog("Got a track with kind ".concat(event.track.kind, " (sid: ").concat(trackId, ") without a participant, saving it"), LOG_LEVEL.WARNING);
+	      babelHelpers.classPrivateFieldGet(_this30, _privateProperties).ontrackData[trackId] = event;
 	    }
 	  };
 	  this.recipient.addEventListener('icecandidate', function (e) {
-	    return _this29.onIceCandidate('SUBSCRIBER', e);
+	    return _this30.onIceCandidate('SUBSCRIBER', e);
 	  });
 	  this.recipient.addEventListener('connectionstatechange', function (e) {
-	    return _this29.onConnectionStateChange(true);
+	    return _this30.onConnectionStateChange(true);
 	  });
 	  var getStatsHandle = /*#__PURE__*/function () {
-	    var _ref10 = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee23() {
+	    var _ref10 = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$1().mark(function _callee23() {
 	      var statsAll, packetLostEventAdded;
-	      return _regeneratorRuntime().wrap(function _callee23$(_context23) {
+	      return _regeneratorRuntime$1().wrap(function _callee23$(_context23) {
 	        while (1) switch (_context23.prev = _context23.next) {
 	          case 0:
 	            _context23.prev = 0;
 	            statsAll = {};
 	            packetLostEventAdded = false;
 	            _context23.next = 5;
-	            return _this29.sender.getStats(null).then(function (stats) {
+	            return _this30.sender.getStats(null).then(function (stats) {
 	              var statsOutput = [];
 	              var codecs = {};
 	              var reportsWithoutCodecs = {};
@@ -6634,25 +6775,25 @@ this.BX = this.BX || {};
 	                if (report.type === 'remote-inbound-rtp') {
 	                  var reportId = report.localId;
 	                  if (reportsWithoutRemoteInfo[reportId]) {
-	                    var packetsLostData = Util.calcLocalPacketsLost(reportsWithoutRemoteInfo[reportId], babelHelpers.classPrivateFieldGet(_this29, _privateProperties).reportsForOutgoingTracks[reportId], report);
+	                    var packetsLostData = Util.calcLocalPacketsLost(reportsWithoutRemoteInfo[reportId], babelHelpers.classPrivateFieldGet(_this30, _privateProperties).reportsForOutgoingTracks[reportId], report);
 	                    var currentPercentPacketLost = packetsLostData.currentPercentPacketLost;
-	                    _this29.checkQosFeatureAndExecutionCallback(function () {
+	                    _this30.checkQosFeatureAndExecutionCallback(function () {
 	                      var _reportsWithoutRemote, _babelHelpers$classPr30, _babelHelpers$classPr31;
-	                      _this29.addValidatedMonitoringMetricWithLogging({
+	                      _this30.addValidatedMonitoringMetricWithLogging({
 	                        additionalData: {
 	                          currentReportPacketsSent: (_reportsWithoutRemote = reportsWithoutRemoteInfo[reportId]) === null || _reportsWithoutRemote === void 0 ? void 0 : _reportsWithoutRemote.packetsSent,
-	                          prevReportPacketsSent: (_babelHelpers$classPr30 = babelHelpers.classPrivateFieldGet(_this29, _privateProperties).reportsForOutgoingTracks[reportId]) === null || _babelHelpers$classPr30 === void 0 ? void 0 : _babelHelpers$classPr30.packetsSent,
-	                          prevReportPacketsLost: (_babelHelpers$classPr31 = babelHelpers.classPrivateFieldGet(_this29, _privateProperties).reportsForOutgoingTracks[reportId]) === null || _babelHelpers$classPr31 === void 0 ? void 0 : _babelHelpers$classPr31.packetsLost,
+	                          prevReportPacketsSent: (_babelHelpers$classPr30 = babelHelpers.classPrivateFieldGet(_this30, _privateProperties).reportsForOutgoingTracks[reportId]) === null || _babelHelpers$classPr30 === void 0 ? void 0 : _babelHelpers$classPr30.packetsSent,
+	                          prevReportPacketsLost: (_babelHelpers$classPr31 = babelHelpers.classPrivateFieldGet(_this30, _privateProperties).reportsForOutgoingTracks[reportId]) === null || _babelHelpers$classPr31 === void 0 ? void 0 : _babelHelpers$classPr31.packetsLost,
 	                          remoteReportPacketsLost: report === null || report === void 0 ? void 0 : report.packetsLost
 	                        },
 	                        metricKey: MONITORING_METRICS_NAME_LIST.PACKET_LOST_SEND,
 	                        metricValue: currentPercentPacketLost
 	                      });
 	                    });
-	                    if (!packetLostEventAdded && currentPercentPacketLost > babelHelpers.classPrivateFieldGet(_this29, _privateProperties).packetLostThreshold) {
+	                    if (!packetLostEventAdded && currentPercentPacketLost > babelHelpers.classPrivateFieldGet(_this30, _privateProperties).packetLostThreshold) {
 	                      packetLostEventAdded = true;
-	                      _this29.checkQosFeatureAndExecutionCallback(function () {
-	                        _this29.addMonitoringEvents({
+	                      _this30.checkQosFeatureAndExecutionCallback(function () {
+	                        _this30.addMonitoringEvents({
 	                          name: MONITORING_EVENTS_NAME_LIST.HIGH_PACKET_LOSS_SEND,
 	                          withCounter: true
 	                        });
@@ -6661,15 +6802,15 @@ this.BX = this.BX || {};
 	                    reportsWithoutRemoteInfo[reportId].packetsLostData = packetsLostData;
 	                    reportsWithoutRemoteInfo[reportId].packetsLost = packetsLostData.totalPacketsLost;
 	                    reportsWithoutRemoteInfo[reportId].packetsLostExtended = Util.formatPacketsLostData(packetsLostData);
-	                    babelHelpers.classPrivateFieldGet(_this29, _privateProperties).reportsForOutgoingTracks[reportId] = reportsWithoutRemoteInfo[reportId];
+	                    babelHelpers.classPrivateFieldGet(_this30, _privateProperties).reportsForOutgoingTracks[reportId] = reportsWithoutRemoteInfo[reportId];
 	                    delete reportsWithoutRemoteInfo[reportId];
 	                    return;
 	                  }
 	                  remoteReports[report.localId] = report;
 	                }
 	                if (report.type === 'outbound-rtp') {
-	                  report.bitrate = Util.calcBitrate(report, babelHelpers.classPrivateFieldGet(_this29, _privateProperties).reportsForOutgoingTracks[report.id], true);
-	                  report.userId = babelHelpers.classPrivateFieldGet(_this29, _privateProperties).userId;
+	                  report.bitrate = Util.calcBitrate(report, babelHelpers.classPrivateFieldGet(_this30, _privateProperties).reportsForOutgoingTracks[report.id], true);
+	                  report.userId = babelHelpers.classPrivateFieldGet(_this30, _privateProperties).userId;
 	                  if (report.kind === 'audio') {
 	                    report.source = MediaStreamsKinds.Microphone;
 	                  } else if (report.kind === 'video') {
@@ -6681,22 +6822,22 @@ this.BX = this.BX || {};
 	                    contentType: report.contentType
 	                  });
 	                  if (report.qualityLimitationReason && report.qualityLimitationReason !== 'none' && !isQualityLimitationSent) {
-	                    _this29.checkQosFeatureAndExecutionCallback(function () {
+	                    _this30.checkQosFeatureAndExecutionCallback(function () {
 	                      if (report.qualityLimitationReason === 'cpu') {
-	                        _this29.addMonitoringEvents({
+	                        _this30.addMonitoringEvents({
 	                          name: MONITORING_EVENTS_NAME_LIST.CPU_ISSUES,
 	                          withCounter: true
 	                        });
 	                      }
 	                      if (report.qualityLimitationReason === 'bandwidth') {
-	                        _this29.addMonitoringEvents({
+	                        _this30.addMonitoringEvents({
 	                          name: MONITORING_EVENTS_NAME_LIST.NETWORK_ISSUES,
 	                          withCounter: true
 	                        });
 	                      }
 	                    });
 	                    isQualityLimitationSent = true;
-	                    _this29.setLog("Local user have problems with sending video: ".concat(report.qualityLimitationReason, " (").concat(Object.entries(report.qualityLimitationDurations).reduce(function (accumulator, value, index) {
+	                    _this30.setLog("Local user have problems with sending video: ".concat(report.qualityLimitationReason, " (").concat(Object.entries(report.qualityLimitationDurations).reduce(function (accumulator, value, index) {
 	                      return accumulator + "".concat(index ? ', ' : '') + "".concat(value[0], ": ").concat(value[1]);
 	                    }, ''), ")"), LOG_LEVEL.WARNING);
 	                  }
@@ -6704,17 +6845,17 @@ this.BX = this.BX || {};
 	                    Util.saveReportWithoutCodecs(report, reportsWithoutCodecs);
 	                  }
 	                  if (Util.setLocalPacketsLostOrSaveReport(report, remoteReports, reportsWithoutRemoteInfo)) {
-	                    babelHelpers.classPrivateFieldGet(_this29, _privateProperties).reportsForOutgoingTracks[report.id] = report;
+	                    babelHelpers.classPrivateFieldGet(_this30, _privateProperties).reportsForOutgoingTracks[report.id] = report;
 	                  }
 	                }
 	              });
-	              _this29.checkQosFeatureAndExecutionCallback(function () {
-	                var bitrateSumOut = _this29.calcBitrateSumFromArray({
+	              _this30.checkQosFeatureAndExecutionCallback(function () {
+	                var bitrateSumOut = _this30.calcBitrateSumFromArray({
 	                  bitrateArray: totalBitrateOut
 	                });
 	                var formattedBitrateOut = Number.parseFloat((bitrateSumOut / 1000000).toFixed(2));
-	                if (_this29.currentMonitoringEventsObject.metrics[MONITORING_METRICS_NAME_LIST.BITRATE_OUT].length < _this29.countMetricsInMetricsInterval) {
-	                  _this29.addValidatedMonitoringMetricWithLogging({
+	                if (_this30.currentMonitoringEventsObject.metrics[MONITORING_METRICS_NAME_LIST.BITRATE_OUT].length < _this30.countMetricsInMetricsInterval) {
+	                  _this30.addValidatedMonitoringMetricWithLogging({
 	                    additionalData: {
 	                      bitrateList: totalBitrateOut,
 	                      bitrateSumOut: bitrateSumOut,
@@ -6729,7 +6870,7 @@ this.BX = this.BX || {};
 	            });
 	          case 5:
 	            _context23.next = 7;
-	            return _this29.recipient.getStats(null).then(function (stats) {
+	            return _this30.recipient.getStats(null).then(function (stats) {
 	              var statsOutput = [];
 	              var participantsWithLargeDataLoss = new Map();
 	              var codecs = {};
@@ -6764,11 +6905,11 @@ this.BX = this.BX || {};
 	                statsOutput.push(report);
 	                var needCheckPacketLosts = (report === null || report === void 0 ? void 0 : report.trackIdentifier) && report.hasOwnProperty('packetsLost') && report.hasOwnProperty('packetsReceived');
 	                if (needCheckPacketLosts) {
-	                  var packetsLostData = Util.calcRemotePacketsLost(report, babelHelpers.classPrivateFieldGet(_this29, _privateProperties).reportsForIncomingTracks[report.trackIdentifier]);
+	                  var packetsLostData = Util.calcRemotePacketsLost(report, babelHelpers.classPrivateFieldGet(_this30, _privateProperties).reportsForIncomingTracks[report.trackIdentifier]);
 	                  report.packetsLostExtended = Util.formatPacketsLostData(packetsLostData);
-	                  babelHelpers.classPrivateFieldGet(_this29, _privateProperties).reportsForIncomingTracks[report.trackIdentifier] = report;
-	                  var realTrackId = babelHelpers.classPrivateFieldGet(_this29, _privateProperties).realTracksIds[report.trackIdentifier];
-	                  var track = babelHelpers.classPrivateFieldGet(_this29, _privateProperties).tracksDataFromSocket[realTrackId];
+	                  babelHelpers.classPrivateFieldGet(_this30, _privateProperties).reportsForIncomingTracks[report.trackIdentifier] = report;
+	                  var realTrackId = babelHelpers.classPrivateFieldGet(_this30, _privateProperties).realTracksIds[report.trackIdentifier];
+	                  var track = babelHelpers.classPrivateFieldGet(_this30, _privateProperties).tracksDataFromSocket[realTrackId];
 	                  if (track) {
 	                    var prevReport = track.report || {};
 	                    track.report = report;
@@ -6787,16 +6928,16 @@ this.BX = this.BX || {};
 	                    if (!Util.setCodecToReport(report, codecs, reportsWithoutCodecs)) {
 	                      Util.saveReportWithoutCodecs(report, reportsWithoutCodecs);
 	                    }
-	                    report.inRemoteTracks = !!(babelHelpers.classPrivateFieldGet(_this29, _privateProperties).remoteTracks[track.userId] && babelHelpers.classPrivateFieldGet(_this29, _privateProperties).remoteTracks[track.userId][realTrackId]) ? 'Y' : 'N';
+	                    report.inRemoteTracks = !!(babelHelpers.classPrivateFieldGet(_this30, _privateProperties).remoteTracks[track.userId] && babelHelpers.classPrivateFieldGet(_this30, _privateProperties).remoteTracks[track.userId][realTrackId]) ? 'Y' : 'N';
 	                  }
-	                  if (packetsLostData.currentPercentPacketLost > babelHelpers.classPrivateFieldGet(_this29, _privateProperties).packetLostThreshold) {
-	                    var participant = Object.values(babelHelpers.classPrivateFieldGet(_this29, _privateProperties).remoteParticipants).find(function (p) {
+	                  if (packetsLostData.currentPercentPacketLost > babelHelpers.classPrivateFieldGet(_this30, _privateProperties).packetLostThreshold) {
+	                    var participant = Object.values(babelHelpers.classPrivateFieldGet(_this30, _privateProperties).remoteParticipants).find(function (p) {
 	                      var _p$tracks, _p$tracks$MediaStream, _p$tracks$MediaStream2;
 	                      return (p === null || p === void 0 ? void 0 : (_p$tracks = p.tracks) === null || _p$tracks === void 0 ? void 0 : (_p$tracks$MediaStream = _p$tracks[MediaStreamsKinds.Camera]) === null || _p$tracks$MediaStream === void 0 ? void 0 : (_p$tracks$MediaStream2 = _p$tracks$MediaStream.track) === null || _p$tracks$MediaStream2 === void 0 ? void 0 : _p$tracks$MediaStream2.id) === report.trackIdentifier;
 	                    });
-	                    if (participant && participant.userId != babelHelpers.classPrivateFieldGet(_this29, _privateProperties).userId) {
+	                    if (participant && participant.userId != babelHelpers.classPrivateFieldGet(_this30, _privateProperties).userId) {
 	                      participantsWithLargeDataLoss.set(participant.userId, "userId: ".concat(participant.userId, " (").concat(packetsLostData.currentPercentPacketLost, "%)"));
-	                      babelHelpers.classPrivateFieldGet(_this29, _privateProperties).prevParticipantsWithLargeDataLoss["delete"](participant.userId);
+	                      babelHelpers.classPrivateFieldGet(_this30, _privateProperties).prevParticipantsWithLargeDataLoss["delete"](participant.userId);
 	                    }
 	                  }
 	                }
@@ -6804,10 +6945,10 @@ this.BX = this.BX || {};
 	                  Util.processReportsWithoutCodecs(report, codecs, reportsWithoutCodecs);
 	                }
 	              });
-	              _this29.checkQosFeatureAndExecutionCallback(function () {
-	                var _this29$getCountRemot = _this29.getCountRemoteTracks(),
-	                  countVideoTracks = _this29$getCountRemot.countVideoTracks,
-	                  countAudioTracks = _this29$getCountRemot.countAudioTracks;
+	              _this30.checkQosFeatureAndExecutionCallback(function () {
+	                var _this30$getCountRemot = _this30.getCountRemoteTracks(),
+	                  countVideoTracks = _this30$getCountRemot.countVideoTracks,
+	                  countAudioTracks = _this30$getCountRemot.countAudioTracks;
 	                var round = function round(number, decimal) {
 	                  return Math.round(number * Math.pow(10, decimal)) / Math.pow(10, decimal);
 	                };
@@ -6818,16 +6959,16 @@ this.BX = this.BX || {};
 	                    _ref11$decimal = _ref11.decimal,
 	                    decimal = _ref11$decimal === void 0 ? 0 : _ref11$decimal,
 	                    interval = _ref11.interval;
-	                  if (_this29.currentMonitoringEventsObject.metrics[MONITORING_METRICS_NAME_LIST[metricsKey]].length >= _this29.countMetricsInMetricsInterval) {
+	                  if (_this30.currentMonitoringEventsObject.metrics[MONITORING_METRICS_NAME_LIST[metricsKey]].length >= _this30.countMetricsInMetricsInterval) {
 	                    return;
 	                  }
 	                  var inboundRtpStatsArraySumByKey = inboundRtpStatsArray[key].reduce(function (acc, number) {
 	                    return acc + number;
-	                  }, 0) / (interval ? babelHelpers.classPrivateFieldGet(_this29, _privateProperties).statsTimeout / 1000 : 1);
-	                  var prevInboundRtpStatsArraySumByKey = _this29.prevInboundRtpStatsSum[key];
+	                  }, 0) / (interval ? babelHelpers.classPrivateFieldGet(_this30, _privateProperties).statsTimeout / 1000 : 1);
+	                  var prevInboundRtpStatsArraySumByKey = _this30.prevInboundRtpStatsSum[key];
 	                  var diffInboundRtpStatsArraySumByKey = prevInboundRtpStatsArraySumByKey && !!isSum ? inboundRtpStatsArraySumByKey - prevInboundRtpStatsArraySumByKey : inboundRtpStatsArraySumByKey;
 	                  var metricValue = !!countVideoTracks ? diffInboundRtpStatsArraySumByKey / countVideoTracks : 0;
-	                  _this29.addValidatedMonitoringMetricWithLogging({
+	                  _this30.addValidatedMonitoringMetricWithLogging({
 	                    additionalData: {
 	                      inboundRtpStatsArrayByKey: inboundRtpStatsArray[key],
 	                      inboundRtpStatsArraySumByKey: inboundRtpStatsArraySumByKey,
@@ -6838,7 +6979,7 @@ this.BX = this.BX || {};
 	                    metricKey: metricsKey,
 	                    metricValue: round(metricValue, decimal)
 	                  });
-	                  _this29.prevInboundRtpStatsSum[key] = inboundRtpStatsArraySumByKey;
+	                  _this30.prevInboundRtpStatsSum[key] = inboundRtpStatsArraySumByKey;
 	                };
 	                addValueInboundRTCStatsToMetrics({
 	                  key: 'jitter',
@@ -6879,13 +7020,13 @@ this.BX = this.BX || {};
 	                });
 	                // addValueInboundRTCStatsToMetrics({ key: 'framesLoss', metricsKey: 'FRAMES_LOSS', isSum: true });
 
-	                if (_this29.currentMonitoringEventsObject.metrics[MONITORING_METRICS_NAME_LIST.FRAMES_LOSS].length < _this29.countMetricsInMetricsInterval) {
-	                  var currentFramesReceivedArray = _this29.currentMonitoringEventsObject.metrics[MONITORING_METRICS_NAME_LIST.FRAMES_RECEIVED];
-	                  var currentFramesDroppedArray = _this29.currentMonitoringEventsObject.metrics[MONITORING_METRICS_NAME_LIST.FRAMES_DROPPED];
+	                if (_this30.currentMonitoringEventsObject.metrics[MONITORING_METRICS_NAME_LIST.FRAMES_LOSS].length < _this30.countMetricsInMetricsInterval) {
+	                  var currentFramesReceivedArray = _this30.currentMonitoringEventsObject.metrics[MONITORING_METRICS_NAME_LIST.FRAMES_RECEIVED];
+	                  var currentFramesDroppedArray = _this30.currentMonitoringEventsObject.metrics[MONITORING_METRICS_NAME_LIST.FRAMES_DROPPED];
 	                  var currentFramesReceived = currentFramesReceivedArray.slice(-1)[0];
 	                  var currentFramesDropped = currentFramesDroppedArray.slice(-1)[0];
 	                  var currentFramesLoss = !!currentFramesReceived ? currentFramesDropped / currentFramesReceived : 0;
-	                  _this29.addValidatedMonitoringMetricWithLogging({
+	                  _this30.addValidatedMonitoringMetricWithLogging({
 	                    additionalData: {
 	                      currentFramesReceivedArray: currentFramesReceivedArray,
 	                      currentFramesDroppedArray: currentFramesDroppedArray,
@@ -6897,12 +7038,12 @@ this.BX = this.BX || {};
 	                    metricValue: currentFramesLoss > 0 ? round(currentFramesLoss * 100, 0) : 0
 	                  });
 	                }
-	                var bitrateSumIn = _this29.calcBitrateSumFromArray({
+	                var bitrateSumIn = _this30.calcBitrateSumFromArray({
 	                  bitrateArray: totalBitrateIn
 	                });
 	                var formattedBitrateIn = Number.parseFloat((bitrateSumIn / 1000000).toFixed(2));
-	                if (_this29.currentMonitoringEventsObject.metrics[MONITORING_METRICS_NAME_LIST.BITRATE_IN].length < _this29.countMetricsInMetricsInterval) {
-	                  _this29.addValidatedMonitoringMetricWithLogging({
+	                if (_this30.currentMonitoringEventsObject.metrics[MONITORING_METRICS_NAME_LIST.BITRATE_IN].length < _this30.countMetricsInMetricsInterval) {
+	                  _this30.addValidatedMonitoringMetricWithLogging({
 	                    additionalData: {
 	                      bitrateList: totalBitrateIn,
 	                      bitrateSumIn: bitrateSumIn,
@@ -6912,30 +7053,30 @@ this.BX = this.BX || {};
 	                    metricValue: formattedBitrateIn
 	                  });
 	                }
-	                if (_this29.currentMonitoringEventsObject.metrics[MONITORING_METRICS_NAME_LIST.PACKET_LOST_RECEIVE].length < _this29.countMetricsInMetricsInterval) {
-	                  _this29.addValidatedMonitoringMetricWithLogging({
+	                if (_this30.currentMonitoringEventsObject.metrics[MONITORING_METRICS_NAME_LIST.PACKET_LOST_RECEIVE].length < _this30.countMetricsInMetricsInterval) {
+	                  _this30.addValidatedMonitoringMetricWithLogging({
 	                    metricKey: MONITORING_METRICS_NAME_LIST.PACKET_LOST_RECEIVE,
 	                    metricValue: currentPacketLostReceiveCount
 	                  });
 	                }
-	                if (currentPacketLostReceiveCount > babelHelpers.classPrivateFieldGet(_this29, _privateProperties).packetLostThreshold) {
-	                  _this29.addMonitoringEvents({
+	                if (currentPacketLostReceiveCount > babelHelpers.classPrivateFieldGet(_this30, _privateProperties).packetLostThreshold) {
+	                  _this30.addMonitoringEvents({
 	                    name: MONITORING_EVENTS_NAME_LIST.HIGH_PACKET_LOSS_RECEIVE,
 	                    withCounter: true
 	                  });
 	                }
 	              });
 	              statsAll.recipient = statsOutput;
-	              if (participantsWithLargeDataLoss.size || babelHelpers.classPrivateFieldGet(_this29, _privateProperties).prevParticipantsWithLargeDataLoss.size) {
+	              if (participantsWithLargeDataLoss.size || babelHelpers.classPrivateFieldGet(_this30, _privateProperties).prevParticipantsWithLargeDataLoss.size) {
 	                if (participantsWithLargeDataLoss.size) {
-	                  _this29.setLog("Have high packetsLost on users: ".concat(babelHelpers.toConsumableArray(participantsWithLargeDataLoss.values())), LOG_LEVEL.WARNING);
+	                  _this30.setLog("Have high packetsLost on users: ".concat(babelHelpers.toConsumableArray(participantsWithLargeDataLoss.values())), LOG_LEVEL.WARNING);
 	                }
-	                _this29.triggerEvents('UpdatePacketLoss', [babelHelpers.toConsumableArray(participantsWithLargeDataLoss.keys())]);
+	                _this30.triggerEvents('UpdatePacketLoss', [babelHelpers.toConsumableArray(participantsWithLargeDataLoss.keys())]);
 	              }
-	              babelHelpers.classPrivateFieldGet(_this29, _privateProperties).prevParticipantsWithLargeDataLoss = participantsWithLargeDataLoss;
+	              babelHelpers.classPrivateFieldGet(_this30, _privateProperties).prevParticipantsWithLargeDataLoss = participantsWithLargeDataLoss;
 	            });
 	          case 7:
-	            _this29.triggerEvents('CallStatsReceived', [statsAll]);
+	            _this30.triggerEvents('CallStatsReceived', [statsAll]);
 	            _context23.next = 12;
 	            break;
 	          case 10:
@@ -6952,11 +7093,11 @@ this.BX = this.BX || {};
 	    };
 	  }();
 	  getStatsHandle()["finally"](function () {
-	    _this29.checkQosFeatureAndExecutionCallback(function () {
-	      _this29.startAggregateMonitoringEvents();
+	    _this30.checkQosFeatureAndExecutionCallback(function () {
+	      _this30.startAggregateMonitoringEvents();
 	    });
-	    babelHelpers.classPrivateFieldGet(_this29, _privateProperties).callStatsInterval = setInterval( /*#__PURE__*/babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee24() {
-	      return _regeneratorRuntime().wrap(function _callee24$(_context24) {
+	    babelHelpers.classPrivateFieldGet(_this30, _privateProperties).callStatsInterval = setInterval( /*#__PURE__*/babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$1().mark(function _callee24() {
+	      return _regeneratorRuntime$1().wrap(function _callee24$(_context24) {
 	        while (1) switch (_context24.prev = _context24.next) {
 	          case 0:
 	            _context24.next = 2;
@@ -6966,7 +7107,7 @@ this.BX = this.BX || {};
 	            return _context24.stop();
 	        }
 	      }, _callee24);
-	    })), babelHelpers.classPrivateFieldGet(_this29, _privateProperties).statsTimeout);
+	    })), babelHelpers.classPrivateFieldGet(_this30, _privateProperties).statsTimeout);
 	  });
 	}
 	function _destroyPeerConnection2() {
@@ -7036,7 +7177,7 @@ this.BX = this.BX || {};
 	}
 	function _sendLeave2() {
 	  var _babelHelpers$classPr36,
-	    _this30 = this;
+	    _this31 = this;
 	  if (((_babelHelpers$classPr36 = babelHelpers.classPrivateFieldGet(this, _privateProperties).socketConnect) === null || _babelHelpers$classPr36 === void 0 ? void 0 : _babelHelpers$classPr36.readyState) === 1) {
 	    _classPrivateMethodGet(this, _sendSignal, _sendSignal2).call(this, {
 	      leave: {
@@ -7044,7 +7185,7 @@ this.BX = this.BX || {};
 	      }
 	    });
 	    this.checkQosFeatureAndExecutionCallback(function () {
-	      _this30.sendMonitoringEvents(false);
+	      _this31.sendMonitoringEvents(false);
 	    });
 	  }
 	}
@@ -7163,8 +7304,9 @@ this.BX = this.BX || {};
 	    var config = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 	    babelHelpers.classCallCheck(this, CallUser);
 	    babelHelpers.defineProperty(this, "elements", {});
+	    this._onUserFieldChangedHandler = this._onUserFieldChanged.bind(this);
 	    this.userModel = config.userModel;
-	    this.userModel.subscribe('changed', this._onUserFieldChanged.bind(this));
+	    this.userModel.subscribe('changed', this._onUserFieldChangedHandler);
 	    this.parentContainer = config.parentContainer;
 	    this.screenSharingUser = main_core.Type.isBoolean(config.screenSharingUser) ? config.screenSharingUser : false;
 	    this.allowBackgroundItem = main_core.Type.isBoolean(config.allowBackgroundItem) ? config.allowBackgroundItem : true;
@@ -7225,30 +7367,13 @@ this.BX = this.BX || {};
 	    this.avatarBackground = config.avatarBackground || Util.getAvatarBackground();
 	    this.removeAvatarPulseTimer = null;
 	    this.hideUserNameTimer = null;
-	    this.init();
 	  }
 	  babelHelpers.createClass(CallUser, [{
-	    key: "initMouseMoveHandler",
-	    value: function initMouseMoveHandler() {
-	      var _this = this;
-	      this.onMouseMoveHandler = function (evt) {
-	        if (!_this._alwaysShowName) {
-	          _this.showUserName();
-	        }
-	      };
-	    }
-	  }, {
 	    key: "initUserNameState",
 	    value: function initUserNameState() {
 	      if (this._alwaysShowName) {
 	        this.toggleStateUserName(true);
 	      }
-	    }
-	  }, {
-	    key: "init",
-	    value: function init() {
-	      this.initMouseMoveHandler();
-	      document.addEventListener('mousemove', this.onMouseMoveHandler);
 	    }
 	  }, {
 	    key: "isVisibleMediaStateIcon",
@@ -7290,7 +7415,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "render",
 	    value: function render() {
-	      var _this2 = this;
+	      var _this = this;
 	      if (this.elements.root) {
 	        return this.elements.root;
 	      }
@@ -7475,12 +7600,12 @@ this.BX = this.BX || {};
 	          events: {
 	            click: function click(e) {
 	              e.stopPropagation();
-	              _this2.connectionStatsVisible = !_this2.connectionStatsVisible;
-	              if (_this2.connectionStatsVisible) {
-	                _this2.showConnectionStats();
-	                _this2.elements.statsOverlay.classList.add('stats-overlay-visble');
+	              _this.connectionStatsVisible = !_this.connectionStatsVisible;
+	              if (_this.connectionStatsVisible) {
+	                _this.showConnectionStats();
+	                _this.elements.statsOverlay.classList.add('stats-overlay-visble');
 	              } else {
-	                _this2.elements.statsOverlay.classList.remove('stats-overlay-visble');
+	                _this.elements.statsOverlay.classList.remove('stats-overlay-visble');
 	              }
 	            }
 	          }
@@ -7494,10 +7619,10 @@ this.BX = this.BX || {};
 	            },
 	            events: {
 	              mouseover: function mouseover(e) {
-	                _this2.hintManager.show(e.currentTarget, BX.message('IM_M_CALL_POOR_CONNECTION_WITH_USER'));
+	                _this.hintManager.show(e.currentTarget, BX.message('IM_M_CALL_POOR_CONNECTION_WITH_USER'));
 	              },
 	              mouseout: function mouseout(e) {
-	                _this2.hintManager.hide();
+	                _this.hintManager.hide();
 	              }
 	            }
 	          })]
@@ -7606,7 +7731,7 @@ this.BX = this.BX || {};
 	        events: {
 	          click: function click(e) {
 	            e.stopPropagation();
-	            _this2.showMenu();
+	            _this.showMenu();
 	          }
 	        }
 	      });
@@ -7623,7 +7748,7 @@ this.BX = this.BX || {};
 	          events: {
 	            click: function click(e) {
 	              e.stopPropagation();
-	              _this2.showRemoteParticipantMenu();
+	              _this.showRemoteParticipantMenu();
 	            }
 	          }
 	        });
@@ -7645,8 +7770,8 @@ this.BX = this.BX || {};
 	        events: {
 	          click: function click(e) {
 	            e.stopPropagation();
-	            _this2.callBacks.onPin({
-	              userId: _this2.userModel.id
+	            _this.callBacks.onPin({
+	              userId: _this.userModel.id
 	            });
 	          }
 	        }
@@ -7668,7 +7793,7 @@ this.BX = this.BX || {};
 	        events: {
 	          click: function click(e) {
 	            e.stopPropagation();
-	            _this2.callBacks.onUnPin();
+	            _this.callBacks.onUnPin();
 	          }
 	        }
 	      });
@@ -7892,13 +8017,13 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "showMenu",
 	    value: function showMenu() {
-	      var _this3 = this;
+	      var _this2 = this;
 	      var menuItems = [];
 	      if (this.userModel.localUser && this.allowBackgroundItem) {
 	        menuItems.push({
 	          text: this.allowMaskItem ? BX.message('IM_CALL_CHANGE_BG_MASK') : BX.message('IM_CALL_CHANGE_BACKGROUND'),
 	          onclick: function onclick() {
-	            _this3.menu.close();
+	            _this2.menu.close();
 	            BackgroundDialog.open();
 	          }
 	        });
@@ -7931,7 +8056,7 @@ this.BX = this.BX || {};
 	        cacheable: false,
 	        events: {
 	          onPopupDestroy: function onPopupDestroy() {
-	            return _this3.menu = null;
+	            return _this2.menu = null;
 	          }
 	        }
 	      });
@@ -7940,7 +8065,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "showRemoteParticipantMenu",
 	    value: function showRemoteParticipantMenu() {
-	      var _this4 = this;
+	      var _this3 = this;
 	      if (this.remoteParticipantMenu) {
 	        this.remoteParticipantMenu.destroy();
 	        this.remoteParticipantMenu = null;
@@ -7953,9 +8078,9 @@ this.BX = this.BX || {};
 	            className: 'bx-call-remote-user-turn-off-mic',
 	            disabled: !this.userModel.microphoneState,
 	            onclick: function onclick() {
-	              _this4.remoteParticipantMenu.destroy();
-	              _this4.callBacks.onTurnOffParticipantMic({
-	                userId: _this4.userModel.id
+	              _this3.remoteParticipantMenu.destroy();
+	              _this3.callBacks.onTurnOffParticipantMic({
+	                userId: _this3.userModel.id
 	              });
 	            }
 	          });
@@ -7966,9 +8091,9 @@ this.BX = this.BX || {};
 	            className: 'bx-call-remote-user-turn-off-cam',
 	            disabled: !this.userModel.cameraState,
 	            onclick: function onclick() {
-	              _this4.remoteParticipantMenu.destroy();
-	              _this4.callBacks.onTurnOffParticipantCam({
-	                userId: _this4.userModel.id
+	              _this3.remoteParticipantMenu.destroy();
+	              _this3.callBacks.onTurnOffParticipantCam({
+	                userId: _this3.userModel.id
 	              });
 	            }
 	          });
@@ -7979,9 +8104,9 @@ this.BX = this.BX || {};
 	            className: 'bx-call-remote-user-turn-off-screenshare',
 	            disabled: !this.userModel.screenState,
 	            onclick: function onclick() {
-	              _this4.remoteParticipantMenu.destroy();
-	              _this4.callBacks.onTurnOffParticipantScreenshare({
-	                userId: _this4.userModel.id
+	              _this3.remoteParticipantMenu.destroy();
+	              _this3.callBacks.onTurnOffParticipantScreenshare({
+	                userId: _this3.userModel.id
 	              });
 	            }
 	          });
@@ -8018,11 +8143,11 @@ this.BX = this.BX || {};
 	          onShow: function onShow(event) {
 	            var popup = event.getTarget();
 	            popup.adjustPosition();
-	            _this4.elements.root.classList.add('bx-messenger-videocall-user-dropdown-menu-opened');
+	            _this3.elements.root.classList.add('bx-messenger-videocall-user-dropdown-menu-opened');
 	          },
 	          onPopupDestroy: function onPopupDestroy() {
-	            _this4.elements.root.classList.remove('bx-messenger-videocall-user-dropdown-menu-opened');
-	            _this4.remoteParticipantMenu = null;
+	            _this3.elements.root.classList.remove('bx-messenger-videocall-user-dropdown-menu-opened');
+	            _this3.remoteParticipantMenu = null;
 	          }
 	        }
 	      });
@@ -8121,19 +8246,33 @@ this.BX = this.BX || {};
 	        return;
 	      }
 	      var width = this.elements.root.offsetWidth;
-	      main_core.Dom.clean(this.elements.panel);
-	      if (this.userModel.localUser && this.allowBackgroundItem) {
+	      var initialUpdate = !this.elements.panel.hasChildNodes();
+	      if (this.lastWIdth && this.lastWIdth === width && !initialUpdate) {
+	        return;
+	      }
+	      var canChangeBackground = this.userModel.localUser && this.allowBackgroundItem;
+	      var needChangeBackgroundButton = this.lastWIdth || this.lastWIdth <= 300 && width > 300 || this.lastWIdth > 300 && width <= 300;
+	      var needChangePinButton = this.userModel.pinned && Boolean(this.elements.buttonPin.parentElement);
+	      var needChangeUnPinButton = !this.userModel.pinned && Boolean(this.elements.buttonUnPin.parentElement);
+	      var needToUpdate = initialUpdate || canChangeBackground && needChangeBackgroundButton || needChangePinButton || needChangeUnPinButton;
+	      this.lastWIdth = width;
+	      if (needToUpdate) {
+	        main_core.Dom.clean(this.elements.panel);
+	      }
+	      if (canChangeBackground && (needChangeBackgroundButton || initialUpdate)) {
 	        if (width > 300) {
-	          this.elements.panel.appendChild(this.elements.buttonBackground);
+	          main_core.Dom.append(this.elements.buttonBackground, this.elements.panel);
 	        } else {
-	          this.elements.panel.appendChild(this.elements.buttonMenu);
+	          main_core.Dom.append(this.elements.buttonMenu, this.elements.panel);
 	        }
 	      }
 	      if (this.allowPinButton) {
-	        if (this.userModel.pinned) {
-	          this.elements.panel.appendChild(this.elements.buttonUnPin);
-	        } else {
-	          this.elements.panel.appendChild(this.elements.buttonPin);
+	        if (initialUpdate || needChangePinButton || needChangeUnPinButton) {
+	          if (this.userModel.pinned) {
+	            main_core.Dom.append(this.elements.buttonUnPin, this.elements.panel);
+	          } else {
+	            main_core.Dom.append(this.elements.buttonPin, this.elements.panel);
+	          }
 	        }
 	        if (width > 250) {
 	          this.elements.buttonPin.classList.remove('no-text');
@@ -8156,15 +8295,11 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "playVideoElements",
 	    value: function playVideoElements(videoElement) {
-	      var _this5 = this;
-	      var hasVideoEl = !!videoElement;
-	      var isCanPlaying = hasVideoEl && !!videoElement.srcObject;
-	      var isPaused = hasVideoEl && videoElement.paused;
+	      var _this4 = this;
+	      var hasVideoEl = Boolean(videoElement);
+	      var isCanPlaying = hasVideoEl && Boolean(videoElement.srcObject);
 	      var isReadyPlaying = hasVideoEl && videoElement.readyState >= videoElement.HAVE_CURRENT_DATA;
 	      var isEnded = hasVideoEl && videoElement.ended;
-	      if (hasVideoEl && !isPaused) {
-	        videoElement.pause();
-	      }
 	      if (isCanPlaying && isReadyPlaying && !isEnded) {
 	        videoElement.play()["catch"](logPlaybackError);
 	      }
@@ -8173,7 +8308,7 @@ this.BX = this.BX || {};
 	      }
 	      if (isCanPlaying && !isReadyPlaying && !isEnded && !videoElement.onloadeddata) {
 	        videoElement.onloadeddata = function () {
-	          _this5.playVideoElements(videoElement);
+	          _this4.playVideoElements(videoElement);
 	        };
 	      }
 	    }
@@ -8348,6 +8483,8 @@ this.BX = this.BX || {};
 	      if (this.isMounted() && this.elements.root.parentElement == parent && !force) {
 	        this.updatePanelDeferred();
 	        return false;
+	      } else {
+	        this.checkAspectInterval = setInterval(this.checkVideoAspect.bind(this), 500);
 	      }
 	      parent.appendChild(this.elements.root);
 	      this.update();
@@ -8359,6 +8496,7 @@ this.BX = this.BX || {};
 	      if (!this.isMounted()) {
 	        return false;
 	      }
+	      clearInterval(this.checkAspectInterval);
 	      this.toggleResizeObserver(false);
 	      this.elements.video.srcObject = null;
 	      this.elements.preview.srcObject = null;
@@ -8573,7 +8711,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "_formatVideoStats",
 	    value: function _formatVideoStats(videoStats) {
-	      var _this6 = this;
+	      var _this5 = this;
 	      var result = '';
 	      var limitations = '';
 	      if (main_core.Type.isArray(videoStats)) {
@@ -8584,9 +8722,9 @@ this.BX = this.BX || {};
 	          if (videoStats.length > 1) {
 	            result += "Track ".concat(trackIndex + 1, "\n");
 	          }
-	          var _this6$_getVideoStats = _this6._getVideoStats(stats),
-	            resultString = _this6$_getVideoStats.resultString,
-	            limitationsString = _this6$_getVideoStats.limitationsString;
+	          var _this5$_getVideoStats = _this5._getVideoStats(stats),
+	            resultString = _this5$_getVideoStats.resultString,
+	            limitationsString = _this5$_getVideoStats.limitationsString;
 	          if (resultString) {
 	            result += resultString;
 	          }
@@ -8620,46 +8758,28 @@ this.BX = this.BX || {};
 	      }
 	    }
 	  }, {
-	    key: "showUserName",
-	    value: function showUserName() {
-	      var _this7 = this;
-	      if (this.hideUserNameTimer) {
-	        clearTimeout(this.hideUserNameTimer);
-	        this.hideUserNameTimer = null;
-	      }
-	      if (!this.elements.nameContainer) {
-	        return;
-	      }
-	      this.toggleStateUserName(true);
-	      if (!this._alwaysShowName) {
-	        this.hideUserNameTimer = setTimeout(function () {
-	          _this7.toggleStateUserName(false);
-	        }, 5000);
-	      }
-	    }
-	  }, {
 	    key: "destroy",
 	    value: function destroy() {
 	      if (this.hintManager) {
 	        this.hintManager.hide();
 	        this.hintManager = null;
 	      }
+	      this.userModel.unsubscribe('changed', this._onUserFieldChangedHandler);
 	      this.releaseStream();
 	      clearInterval(this.checkAspectInterval);
 	      this.toggleResizeObserver(false);
-	      document.removeEventListener('mousemove', this.onMouseMoveHandler);
 	    }
 	  }, {
 	    key: "addAvatarPulseTimer",
 	    value: function addAvatarPulseTimer() {
-	      var _this8 = this;
+	      var _this6 = this;
 	      if (this.removeAvatarPulseTimer) {
 	        clearTimeout(this.removeAvatarPulseTimer);
 	        this.removeAvatarPulseTimer = null;
 	      }
 	      this.removeAvatarPulseTimer = setTimeout(function () {
-	        _this8.elements.avatarContainer.classList.remove('bx-messenger-videocall-user-avatar-pulse');
-	        _this8.elements.root.classList.remove('bx-messenger-videocall-user-talking');
+	        _this6.elements.avatarContainer.classList.remove('bx-messenger-videocall-user-avatar-pulse');
+	        _this6.elements.root.classList.remove('bx-messenger-videocall-user-talking');
 	      }, 1000);
 	    }
 	  }, {
@@ -9680,6 +9800,7 @@ this.BX = this.BX || {};
 	  AI_SETTINGS_ERROR: 'AI_SETTINGS_ERROR',
 	  AI_AGREEMENT_ERROR: 'AI_AGREEMENT_ERROR',
 	  AI_NOT_ENOUGH_BAAS_ERROR: 'AI_NOT_ENOUGH_BAAS_ERROR',
+	  AI_MODULE_ERROR: 'AI_MODULE_ERROR',
 	  ENABLE_AI_INTERNAL_ERROR: 'ENABLE_AI_INTERNAL_ERROR',
 	  DISABLE_AI_INTERNAL_ERROR: 'DISABLE_AI_INTERNAL_ERROR'
 	};
@@ -9753,6 +9874,10 @@ this.BX = this.BX || {};
 	          break;
 	        case CopilotNotifyType.AI_UNAVAILABLE_ERROR:
 	          this.notifyText = BX.message('CALL_POPUP_AI_UNAVAILABLE_ERROR');
+	          this.notifyColor = '#FF5752';
+	          break;
+	        case CopilotNotifyType.AI_MODULE_ERROR:
+	          this.notifyText = BX.message('CALL_POPUP_AI_MODULE_ERROR').replace('#ERROR_CODE#', this.code);
 	          this.notifyColor = '#FF5752';
 	          break;
 	        case CopilotNotifyType.AI_SETTINGS_ERROR:
@@ -9874,6 +9999,7 @@ this.BX = this.BX || {};
 	}();
 
 	var CallAiError = {
+	  AI_MODULE_ERROR: 'AI_MODULE_ERROR',
 	  AI_UNAVAILABLE_ERROR: 'AI_UNAVAILABLE_ERROR',
 	  AI_SETTINGS_ERROR: 'AI_SETTINGS_ERROR',
 	  AI_AGREEMENT_ERROR: 'AI_AGREEMENT_ERROR',
@@ -9933,6 +10059,7 @@ this.BX = this.BX || {};
 	        case CallAiError.AI_UNAVAILABLE_ERROR:
 	          this.tariffAvailable = false;
 	          break;
+	        case CallAiError.AI_MODULE_ERROR:
 	        case CallAiError.AI_SETTINGS_ERROR:
 	          this.settingsEnabled = false;
 	          break;
@@ -10050,7 +10177,7 @@ this.BX = this.BX || {};
 	  return MediaRenderer;
 	}();
 
-	function _regeneratorRuntime$1() { /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ _regeneratorRuntime$1 = function _regeneratorRuntime() { return exports; }; var exports = {}, Op = Object.prototype, hasOwn = Op.hasOwnProperty, defineProperty = Object.defineProperty || function (obj, key, desc) { obj[key] = desc.value; }, $Symbol = "function" == typeof Symbol ? Symbol : {}, iteratorSymbol = $Symbol.iterator || "@@iterator", asyncIteratorSymbol = $Symbol.asyncIterator || "@@asyncIterator", toStringTagSymbol = $Symbol.toStringTag || "@@toStringTag"; function define(obj, key, value) { return Object.defineProperty(obj, key, { value: value, enumerable: !0, configurable: !0, writable: !0 }), obj[key]; } try { define({}, ""); } catch (err) { define = function define(obj, key, value) { return obj[key] = value; }; } function wrap(innerFn, outerFn, self, tryLocsList) { var protoGenerator = outerFn && outerFn.prototype instanceof Generator ? outerFn : Generator, generator = Object.create(protoGenerator.prototype), context = new Context(tryLocsList || []); return defineProperty(generator, "_invoke", { value: makeInvokeMethod(innerFn, self, context) }), generator; } function tryCatch(fn, obj, arg) { try { return { type: "normal", arg: fn.call(obj, arg) }; } catch (err) { return { type: "throw", arg: err }; } } exports.wrap = wrap; var ContinueSentinel = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var IteratorPrototype = {}; define(IteratorPrototype, iteratorSymbol, function () { return this; }); var getProto = Object.getPrototypeOf, NativeIteratorPrototype = getProto && getProto(getProto(values([]))); NativeIteratorPrototype && NativeIteratorPrototype !== Op && hasOwn.call(NativeIteratorPrototype, iteratorSymbol) && (IteratorPrototype = NativeIteratorPrototype); var Gp = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(IteratorPrototype); function defineIteratorMethods(prototype) { ["next", "throw", "return"].forEach(function (method) { define(prototype, method, function (arg) { return this._invoke(method, arg); }); }); } function AsyncIterator(generator, PromiseImpl) { function invoke(method, arg, resolve, reject) { var record = tryCatch(generator[method], generator, arg); if ("throw" !== record.type) { var result = record.arg, value = result.value; return value && "object" == babelHelpers["typeof"](value) && hasOwn.call(value, "__await") ? PromiseImpl.resolve(value.__await).then(function (value) { invoke("next", value, resolve, reject); }, function (err) { invoke("throw", err, resolve, reject); }) : PromiseImpl.resolve(value).then(function (unwrapped) { result.value = unwrapped, resolve(result); }, function (error) { return invoke("throw", error, resolve, reject); }); } reject(record.arg); } var previousPromise; defineProperty(this, "_invoke", { value: function value(method, arg) { function callInvokeWithMethodAndArg() { return new PromiseImpl(function (resolve, reject) { invoke(method, arg, resolve, reject); }); } return previousPromise = previousPromise ? previousPromise.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); } }); } function makeInvokeMethod(innerFn, self, context) { var state = "suspendedStart"; return function (method, arg) { if ("executing" === state) throw new Error("Generator is already running"); if ("completed" === state) { if ("throw" === method) throw arg; return doneResult(); } for (context.method = method, context.arg = arg;;) { var delegate = context.delegate; if (delegate) { var delegateResult = maybeInvokeDelegate(delegate, context); if (delegateResult) { if (delegateResult === ContinueSentinel) continue; return delegateResult; } } if ("next" === context.method) context.sent = context._sent = context.arg;else if ("throw" === context.method) { if ("suspendedStart" === state) throw state = "completed", context.arg; context.dispatchException(context.arg); } else "return" === context.method && context.abrupt("return", context.arg); state = "executing"; var record = tryCatch(innerFn, self, context); if ("normal" === record.type) { if (state = context.done ? "completed" : "suspendedYield", record.arg === ContinueSentinel) continue; return { value: record.arg, done: context.done }; } "throw" === record.type && (state = "completed", context.method = "throw", context.arg = record.arg); } }; } function maybeInvokeDelegate(delegate, context) { var methodName = context.method, method = delegate.iterator[methodName]; if (undefined === method) return context.delegate = null, "throw" === methodName && delegate.iterator["return"] && (context.method = "return", context.arg = undefined, maybeInvokeDelegate(delegate, context), "throw" === context.method) || "return" !== methodName && (context.method = "throw", context.arg = new TypeError("The iterator does not provide a '" + methodName + "' method")), ContinueSentinel; var record = tryCatch(method, delegate.iterator, context.arg); if ("throw" === record.type) return context.method = "throw", context.arg = record.arg, context.delegate = null, ContinueSentinel; var info = record.arg; return info ? info.done ? (context[delegate.resultName] = info.value, context.next = delegate.nextLoc, "return" !== context.method && (context.method = "next", context.arg = undefined), context.delegate = null, ContinueSentinel) : info : (context.method = "throw", context.arg = new TypeError("iterator result is not an object"), context.delegate = null, ContinueSentinel); } function pushTryEntry(locs) { var entry = { tryLoc: locs[0] }; 1 in locs && (entry.catchLoc = locs[1]), 2 in locs && (entry.finallyLoc = locs[2], entry.afterLoc = locs[3]), this.tryEntries.push(entry); } function resetTryEntry(entry) { var record = entry.completion || {}; record.type = "normal", delete record.arg, entry.completion = record; } function Context(tryLocsList) { this.tryEntries = [{ tryLoc: "root" }], tryLocsList.forEach(pushTryEntry, this), this.reset(!0); } function values(iterable) { if (iterable) { var iteratorMethod = iterable[iteratorSymbol]; if (iteratorMethod) return iteratorMethod.call(iterable); if ("function" == typeof iterable.next) return iterable; if (!isNaN(iterable.length)) { var i = -1, next = function next() { for (; ++i < iterable.length;) if (hasOwn.call(iterable, i)) return next.value = iterable[i], next.done = !1, next; return next.value = undefined, next.done = !0, next; }; return next.next = next; } } return { next: doneResult }; } function doneResult() { return { value: undefined, done: !0 }; } return GeneratorFunction.prototype = GeneratorFunctionPrototype, defineProperty(Gp, "constructor", { value: GeneratorFunctionPrototype, configurable: !0 }), defineProperty(GeneratorFunctionPrototype, "constructor", { value: GeneratorFunction, configurable: !0 }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, toStringTagSymbol, "GeneratorFunction"), exports.isGeneratorFunction = function (genFun) { var ctor = "function" == typeof genFun && genFun.constructor; return !!ctor && (ctor === GeneratorFunction || "GeneratorFunction" === (ctor.displayName || ctor.name)); }, exports.mark = function (genFun) { return Object.setPrototypeOf ? Object.setPrototypeOf(genFun, GeneratorFunctionPrototype) : (genFun.__proto__ = GeneratorFunctionPrototype, define(genFun, toStringTagSymbol, "GeneratorFunction")), genFun.prototype = Object.create(Gp), genFun; }, exports.awrap = function (arg) { return { __await: arg }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, asyncIteratorSymbol, function () { return this; }), exports.AsyncIterator = AsyncIterator, exports.async = function (innerFn, outerFn, self, tryLocsList, PromiseImpl) { void 0 === PromiseImpl && (PromiseImpl = Promise); var iter = new AsyncIterator(wrap(innerFn, outerFn, self, tryLocsList), PromiseImpl); return exports.isGeneratorFunction(outerFn) ? iter : iter.next().then(function (result) { return result.done ? result.value : iter.next(); }); }, defineIteratorMethods(Gp), define(Gp, toStringTagSymbol, "Generator"), define(Gp, iteratorSymbol, function () { return this; }), define(Gp, "toString", function () { return "[object Generator]"; }), exports.keys = function (val) { var object = Object(val), keys = []; for (var key in object) keys.push(key); return keys.reverse(), function next() { for (; keys.length;) { var key = keys.pop(); if (key in object) return next.value = key, next.done = !1, next; } return next.done = !0, next; }; }, exports.values = values, Context.prototype = { constructor: Context, reset: function reset(skipTempReset) { if (this.prev = 0, this.next = 0, this.sent = this._sent = undefined, this.done = !1, this.delegate = null, this.method = "next", this.arg = undefined, this.tryEntries.forEach(resetTryEntry), !skipTempReset) for (var name in this) "t" === name.charAt(0) && hasOwn.call(this, name) && !isNaN(+name.slice(1)) && (this[name] = undefined); }, stop: function stop() { this.done = !0; var rootRecord = this.tryEntries[0].completion; if ("throw" === rootRecord.type) throw rootRecord.arg; return this.rval; }, dispatchException: function dispatchException(exception) { if (this.done) throw exception; var context = this; function handle(loc, caught) { return record.type = "throw", record.arg = exception, context.next = loc, caught && (context.method = "next", context.arg = undefined), !!caught; } for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i], record = entry.completion; if ("root" === entry.tryLoc) return handle("end"); if (entry.tryLoc <= this.prev) { var hasCatch = hasOwn.call(entry, "catchLoc"), hasFinally = hasOwn.call(entry, "finallyLoc"); if (hasCatch && hasFinally) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } else if (hasCatch) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); } else { if (!hasFinally) throw new Error("try statement without catch or finally"); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } } } }, abrupt: function abrupt(type, arg) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc <= this.prev && hasOwn.call(entry, "finallyLoc") && this.prev < entry.finallyLoc) { var finallyEntry = entry; break; } } finallyEntry && ("break" === type || "continue" === type) && finallyEntry.tryLoc <= arg && arg <= finallyEntry.finallyLoc && (finallyEntry = null); var record = finallyEntry ? finallyEntry.completion : {}; return record.type = type, record.arg = arg, finallyEntry ? (this.method = "next", this.next = finallyEntry.finallyLoc, ContinueSentinel) : this.complete(record); }, complete: function complete(record, afterLoc) { if ("throw" === record.type) throw record.arg; return "break" === record.type || "continue" === record.type ? this.next = record.arg : "return" === record.type ? (this.rval = this.arg = record.arg, this.method = "return", this.next = "end") : "normal" === record.type && afterLoc && (this.next = afterLoc), ContinueSentinel; }, finish: function finish(finallyLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.finallyLoc === finallyLoc) return this.complete(entry.completion, entry.afterLoc), resetTryEntry(entry), ContinueSentinel; } }, "catch": function _catch(tryLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc === tryLoc) { var record = entry.completion; if ("throw" === record.type) { var thrown = record.arg; resetTryEntry(entry); } return thrown; } } throw new Error("illegal catch attempt"); }, delegateYield: function delegateYield(iterable, resultName, nextLoc) { return this.delegate = { iterator: values(iterable), resultName: resultName, nextLoc: nextLoc }, "next" === this.method && (this.arg = undefined), ContinueSentinel; } }, exports; }
+	function _regeneratorRuntime$2() { /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ _regeneratorRuntime$2 = function _regeneratorRuntime() { return exports; }; var exports = {}, Op = Object.prototype, hasOwn = Op.hasOwnProperty, defineProperty = Object.defineProperty || function (obj, key, desc) { obj[key] = desc.value; }, $Symbol = "function" == typeof Symbol ? Symbol : {}, iteratorSymbol = $Symbol.iterator || "@@iterator", asyncIteratorSymbol = $Symbol.asyncIterator || "@@asyncIterator", toStringTagSymbol = $Symbol.toStringTag || "@@toStringTag"; function define(obj, key, value) { return Object.defineProperty(obj, key, { value: value, enumerable: !0, configurable: !0, writable: !0 }), obj[key]; } try { define({}, ""); } catch (err) { define = function define(obj, key, value) { return obj[key] = value; }; } function wrap(innerFn, outerFn, self, tryLocsList) { var protoGenerator = outerFn && outerFn.prototype instanceof Generator ? outerFn : Generator, generator = Object.create(protoGenerator.prototype), context = new Context(tryLocsList || []); return defineProperty(generator, "_invoke", { value: makeInvokeMethod(innerFn, self, context) }), generator; } function tryCatch(fn, obj, arg) { try { return { type: "normal", arg: fn.call(obj, arg) }; } catch (err) { return { type: "throw", arg: err }; } } exports.wrap = wrap; var ContinueSentinel = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var IteratorPrototype = {}; define(IteratorPrototype, iteratorSymbol, function () { return this; }); var getProto = Object.getPrototypeOf, NativeIteratorPrototype = getProto && getProto(getProto(values([]))); NativeIteratorPrototype && NativeIteratorPrototype !== Op && hasOwn.call(NativeIteratorPrototype, iteratorSymbol) && (IteratorPrototype = NativeIteratorPrototype); var Gp = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(IteratorPrototype); function defineIteratorMethods(prototype) { ["next", "throw", "return"].forEach(function (method) { define(prototype, method, function (arg) { return this._invoke(method, arg); }); }); } function AsyncIterator(generator, PromiseImpl) { function invoke(method, arg, resolve, reject) { var record = tryCatch(generator[method], generator, arg); if ("throw" !== record.type) { var result = record.arg, value = result.value; return value && "object" == babelHelpers["typeof"](value) && hasOwn.call(value, "__await") ? PromiseImpl.resolve(value.__await).then(function (value) { invoke("next", value, resolve, reject); }, function (err) { invoke("throw", err, resolve, reject); }) : PromiseImpl.resolve(value).then(function (unwrapped) { result.value = unwrapped, resolve(result); }, function (error) { return invoke("throw", error, resolve, reject); }); } reject(record.arg); } var previousPromise; defineProperty(this, "_invoke", { value: function value(method, arg) { function callInvokeWithMethodAndArg() { return new PromiseImpl(function (resolve, reject) { invoke(method, arg, resolve, reject); }); } return previousPromise = previousPromise ? previousPromise.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); } }); } function makeInvokeMethod(innerFn, self, context) { var state = "suspendedStart"; return function (method, arg) { if ("executing" === state) throw new Error("Generator is already running"); if ("completed" === state) { if ("throw" === method) throw arg; return doneResult(); } for (context.method = method, context.arg = arg;;) { var delegate = context.delegate; if (delegate) { var delegateResult = maybeInvokeDelegate(delegate, context); if (delegateResult) { if (delegateResult === ContinueSentinel) continue; return delegateResult; } } if ("next" === context.method) context.sent = context._sent = context.arg;else if ("throw" === context.method) { if ("suspendedStart" === state) throw state = "completed", context.arg; context.dispatchException(context.arg); } else "return" === context.method && context.abrupt("return", context.arg); state = "executing"; var record = tryCatch(innerFn, self, context); if ("normal" === record.type) { if (state = context.done ? "completed" : "suspendedYield", record.arg === ContinueSentinel) continue; return { value: record.arg, done: context.done }; } "throw" === record.type && (state = "completed", context.method = "throw", context.arg = record.arg); } }; } function maybeInvokeDelegate(delegate, context) { var methodName = context.method, method = delegate.iterator[methodName]; if (undefined === method) return context.delegate = null, "throw" === methodName && delegate.iterator["return"] && (context.method = "return", context.arg = undefined, maybeInvokeDelegate(delegate, context), "throw" === context.method) || "return" !== methodName && (context.method = "throw", context.arg = new TypeError("The iterator does not provide a '" + methodName + "' method")), ContinueSentinel; var record = tryCatch(method, delegate.iterator, context.arg); if ("throw" === record.type) return context.method = "throw", context.arg = record.arg, context.delegate = null, ContinueSentinel; var info = record.arg; return info ? info.done ? (context[delegate.resultName] = info.value, context.next = delegate.nextLoc, "return" !== context.method && (context.method = "next", context.arg = undefined), context.delegate = null, ContinueSentinel) : info : (context.method = "throw", context.arg = new TypeError("iterator result is not an object"), context.delegate = null, ContinueSentinel); } function pushTryEntry(locs) { var entry = { tryLoc: locs[0] }; 1 in locs && (entry.catchLoc = locs[1]), 2 in locs && (entry.finallyLoc = locs[2], entry.afterLoc = locs[3]), this.tryEntries.push(entry); } function resetTryEntry(entry) { var record = entry.completion || {}; record.type = "normal", delete record.arg, entry.completion = record; } function Context(tryLocsList) { this.tryEntries = [{ tryLoc: "root" }], tryLocsList.forEach(pushTryEntry, this), this.reset(!0); } function values(iterable) { if (iterable) { var iteratorMethod = iterable[iteratorSymbol]; if (iteratorMethod) return iteratorMethod.call(iterable); if ("function" == typeof iterable.next) return iterable; if (!isNaN(iterable.length)) { var i = -1, next = function next() { for (; ++i < iterable.length;) if (hasOwn.call(iterable, i)) return next.value = iterable[i], next.done = !1, next; return next.value = undefined, next.done = !0, next; }; return next.next = next; } } return { next: doneResult }; } function doneResult() { return { value: undefined, done: !0 }; } return GeneratorFunction.prototype = GeneratorFunctionPrototype, defineProperty(Gp, "constructor", { value: GeneratorFunctionPrototype, configurable: !0 }), defineProperty(GeneratorFunctionPrototype, "constructor", { value: GeneratorFunction, configurable: !0 }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, toStringTagSymbol, "GeneratorFunction"), exports.isGeneratorFunction = function (genFun) { var ctor = "function" == typeof genFun && genFun.constructor; return !!ctor && (ctor === GeneratorFunction || "GeneratorFunction" === (ctor.displayName || ctor.name)); }, exports.mark = function (genFun) { return Object.setPrototypeOf ? Object.setPrototypeOf(genFun, GeneratorFunctionPrototype) : (genFun.__proto__ = GeneratorFunctionPrototype, define(genFun, toStringTagSymbol, "GeneratorFunction")), genFun.prototype = Object.create(Gp), genFun; }, exports.awrap = function (arg) { return { __await: arg }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, asyncIteratorSymbol, function () { return this; }), exports.AsyncIterator = AsyncIterator, exports.async = function (innerFn, outerFn, self, tryLocsList, PromiseImpl) { void 0 === PromiseImpl && (PromiseImpl = Promise); var iter = new AsyncIterator(wrap(innerFn, outerFn, self, tryLocsList), PromiseImpl); return exports.isGeneratorFunction(outerFn) ? iter : iter.next().then(function (result) { return result.done ? result.value : iter.next(); }); }, defineIteratorMethods(Gp), define(Gp, toStringTagSymbol, "Generator"), define(Gp, iteratorSymbol, function () { return this; }), define(Gp, "toString", function () { return "[object Generator]"; }), exports.keys = function (val) { var object = Object(val), keys = []; for (var key in object) keys.push(key); return keys.reverse(), function next() { for (; keys.length;) { var key = keys.pop(); if (key in object) return next.value = key, next.done = !1, next; } return next.done = !0, next; }; }, exports.values = values, Context.prototype = { constructor: Context, reset: function reset(skipTempReset) { if (this.prev = 0, this.next = 0, this.sent = this._sent = undefined, this.done = !1, this.delegate = null, this.method = "next", this.arg = undefined, this.tryEntries.forEach(resetTryEntry), !skipTempReset) for (var name in this) "t" === name.charAt(0) && hasOwn.call(this, name) && !isNaN(+name.slice(1)) && (this[name] = undefined); }, stop: function stop() { this.done = !0; var rootRecord = this.tryEntries[0].completion; if ("throw" === rootRecord.type) throw rootRecord.arg; return this.rval; }, dispatchException: function dispatchException(exception) { if (this.done) throw exception; var context = this; function handle(loc, caught) { return record.type = "throw", record.arg = exception, context.next = loc, caught && (context.method = "next", context.arg = undefined), !!caught; } for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i], record = entry.completion; if ("root" === entry.tryLoc) return handle("end"); if (entry.tryLoc <= this.prev) { var hasCatch = hasOwn.call(entry, "catchLoc"), hasFinally = hasOwn.call(entry, "finallyLoc"); if (hasCatch && hasFinally) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } else if (hasCatch) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); } else { if (!hasFinally) throw new Error("try statement without catch or finally"); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } } } }, abrupt: function abrupt(type, arg) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc <= this.prev && hasOwn.call(entry, "finallyLoc") && this.prev < entry.finallyLoc) { var finallyEntry = entry; break; } } finallyEntry && ("break" === type || "continue" === type) && finallyEntry.tryLoc <= arg && arg <= finallyEntry.finallyLoc && (finallyEntry = null); var record = finallyEntry ? finallyEntry.completion : {}; return record.type = type, record.arg = arg, finallyEntry ? (this.method = "next", this.next = finallyEntry.finallyLoc, ContinueSentinel) : this.complete(record); }, complete: function complete(record, afterLoc) { if ("throw" === record.type) throw record.arg; return "break" === record.type || "continue" === record.type ? this.next = record.arg : "return" === record.type ? (this.rval = this.arg = record.arg, this.method = "return", this.next = "end") : "normal" === record.type && afterLoc && (this.next = afterLoc), ContinueSentinel; }, finish: function finish(finallyLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.finallyLoc === finallyLoc) return this.complete(entry.completion, entry.afterLoc), resetTryEntry(entry), ContinueSentinel; } }, "catch": function _catch(tryLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc === tryLoc) { var record = entry.completion; if ("throw" === record.type) { var thrown = record.arg; resetTryEntry(entry); } return thrown; } } throw new Error("illegal catch attempt"); }, delegateYield: function delegateYield(iterable, resultName, nextLoc) { return this.delegate = { iterator: values(iterable), resultName: resultName, nextLoc: nextLoc }, "next" === this.method && (this.arg = undefined), ContinueSentinel; } }, exports; }
 	var PictureInPictureWindow = /*#__PURE__*/function () {
 	  function PictureInPictureWindow(config) {
 	    babelHelpers.classCallCheck(this, PictureInPictureWindow);
@@ -10149,12 +10276,21 @@ this.BX = this.BX || {};
 	      var hasUser = !!this.user;
 	      var isCurrentUser = this.userData.userModel.id === this.user.userModel.id;
 	      if (hasUser && !isCurrentUser) {
-	        this.user.dismount();
-	        this.user = null;
+	        this.destroyCurrentUser();
 	      }
 	      if (!hasUser || !isCurrentUser) {
 	        this.renderUserPanel();
 	      }
+	    }
+	  }, {
+	    key: "destroyCurrentUser",
+	    value: function destroyCurrentUser() {
+	      if (!this.user) {
+	        return;
+	      }
+	      this.user.dismount();
+	      this.user.destroy();
+	      this.user = null;
 	    }
 	  }, {
 	    key: "getCurrentUserId",
@@ -10176,6 +10312,7 @@ this.BX = this.BX || {};
 	    key: "setButtons",
 	    value: function setButtons(buttonsList) {
 	      this.buttons = buttonsList;
+	      return this;
 	    }
 	  }, {
 	    key: "updateButtons",
@@ -10253,6 +10390,7 @@ this.BX = this.BX || {};
 	                  buttonName: 'returnToCall',
 	                  event: event
 	                });
+	                window.focus();
 	              }
 	            });
 	            this.actionsPanel.appendChild(this.buttons.returnToCall.render());
@@ -10269,6 +10407,7 @@ this.BX = this.BX || {};
 	                  buttonName: 'stop-screen',
 	                  event: event
 	                });
+	                window.focus();
 	              }
 	            });
 	            this.actionsPanel.appendChild(this.buttons.stopScreen.render());
@@ -10306,6 +10445,7 @@ this.BX = this.BX || {};
 	              buttonName: 'returnToCall',
 	              event: event
 	            });
+	            window.focus();
 	          }
 	        });
 	        this.user.mount(this.userPanel);
@@ -10730,10 +10870,10 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "checkAvailableAndCreate",
 	    value: function () {
-	      var _checkAvailableAndCreate = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$1().mark(function _callee() {
+	      var _checkAvailableAndCreate = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$2().mark(function _callee() {
 	        var _window$documentPictu,
 	          _this7 = this;
-	        return _regeneratorRuntime$1().wrap(function _callee$(_context) {
+	        return _regeneratorRuntime$2().wrap(function _callee$(_context) {
 	          while (1) switch (_context.prev = _context.next) {
 	            case 0:
 	              if (!this.pictureWindow) {
@@ -10749,7 +10889,7 @@ this.BX = this.BX || {};
 	              this.render();
 	              _context.next = 6;
 	              return window.documentPictureInPicture.requestWindow({
-	                disallowReturnToOpener: true,
+	                disallowReturnToOpener: false,
 	                width: 370,
 	                height: 215,
 	                preferInitialWindowPlacement: false
@@ -10800,6 +10940,8 @@ this.BX = this.BX || {};
 	      if (this.template) {
 	        BX.remove(this.template);
 	      }
+	      this.destroyCurrentUser();
+	      this.close();
 	      this.pictureWindow = null;
 	      this.template = null;
 	      this.toggleEvents(false);
@@ -11044,6 +11186,12 @@ this.BX = this.BX || {};
 	  return AhaMomentNotify;
 	}();
 
+	function _createForOfIteratorHelper$1(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$1(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+	function _unsupportedIterableToArray$1(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$1(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$1(o, minLen); }
+	function _arrayLikeToArray$1(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
+	function _classPrivateMethodInitSpec$1(obj, privateSet) { _checkPrivateRedeclaration$1(obj, privateSet); privateSet.add(obj); }
+	function _checkPrivateRedeclaration$1(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$1(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var Layouts = {
 	  Grid: 1,
 	  Centered: 2,
@@ -11111,7 +11259,8 @@ this.BX = this.BX || {};
 	  onAllowSpeakPermission: 'onAllowSpeakPermission',
 	  onDisallowSpeakPermission: 'onDisallowSpeakPermission',
 	  onToggleSubscribe: 'onToggleSubscribe',
-	  onUnfold: 'onUnfold'
+	  onUnfold: 'onUnfold',
+	  onPiPClose: 'onPiPClose'
 	};
 	var beginingPosition = -1;
 	var newUserPosition = 999;
@@ -11126,10 +11275,16 @@ this.BX = this.BX || {};
 	var CHANGE_VIDEO_RERENDER_DELAY = 3000;
 	var WAITING_VIDEO_DELAY = 3000;
 	var CALLCONTROL_PROMO_ID = 'call:callcontrol-notify-promo:07052025:all';
+	var DocumentVisibilityState = {
+	  hidden: 'hidden',
+	  visible: 'visible'
+	};
+	var _getViewVisibilityChange = /*#__PURE__*/new WeakSet();
 	var View = /*#__PURE__*/function () {
 	  function View(config) {
 	    var _this = this;
 	    babelHelpers.classCallCheck(this, View);
+	    _classPrivateMethodInitSpec$1(this, _getViewVisibilityChange);
 	    babelHelpers.defineProperty(this, "setCameraState", function (event) {
 	      if (_this.isCameraOn == event.data.isCameraOn) {
 	        return;
@@ -11214,7 +11369,10 @@ this.BX = this.BX || {};
 	      name: this.userData[this.userId] ? this.userData[this.userId].name : '',
 	      avatar: this.userData[this.userId] ? this.userData[this.userId].avatar_hr : ''
 	    });
-	    this.userRegistry.push(localUserModel);
+	    if (this.userId) {
+	      this.userRegistry.push(localUserModel);
+	    }
+	    this.cache = new Map();
 	    this.localUser = new CallUser({
 	      parentContainer: this.container,
 	      userModel: localUserModel,
@@ -11234,6 +11392,7 @@ this.BX = this.BX || {};
 	    this.centralUserMobile = null;
 	    this.pinnedUser = null;
 	    this.presenterId = null;
+	    this.localUserRecivedStats = false;
 	    this.returnToGridAfterScreenStopped = false;
 	    this.mediaSelectionBlocked = config.mediaSelectionBlocked === true;
 	    this.visible = false;
@@ -11307,6 +11466,10 @@ this.BX = this.BX || {};
 	      more: null,
 	      hangupOptions: null
 	    };
+	    this.previousTopButtonList = [];
+	    this.needToRerenderTopButtonList = false;
+	    this.previousButtonList = [];
+	    this.needToRerenderButtonList = false;
 	    this.size = Size.Full;
 	    this.maxWidth = null;
 	    this.isMuted = Hardware.isMicrophoneMuted;
@@ -11390,6 +11553,10 @@ this.BX = this.BX || {};
 	    this.isWindowFocus = config.isWindowFocus || false;
 	    this.isDocumentHidden = false;
 	    this._isActivePiPFromController = false;
+	    var pictureInPictureUpdateButtonHandler = function pictureInPictureUpdateButtonHandler() {
+	      _this.pictureInPictureCallWindow && _this.pictureInPictureCallWindow.setButtons(_this.getPictureInPictureCallWindowGetButtonsList()).updateButtons();
+	    };
+	    this.viewVisibility = _classPrivateMethodGet$1(this, _getViewVisibilityChange, _getViewVisibilityChange2).call(this, [pictureInPictureUpdateButtonHandler]);
 	    this.init();
 	    this.subscribeEvents(config);
 	    if (main_core.Type.isPlainObject(config.userStates)) {
@@ -11509,12 +11676,14 @@ this.BX = this.BX || {};
 	        clearTimeout(this.hideEarTimer);
 	        this.hideEarTimer = null;
 	      }
+	      main_core.Dom.addClass(this.elements.root, 'on-mouse-move');
 	      (_this$elements$ear$to = this.elements.ear.top) === null || _this$elements$ear$to === void 0 ? void 0 : _this$elements$ear$to.classList.add("force-visible");
 	      (_this$elements$ear$bo = this.elements.ear.bottom) === null || _this$elements$ear$bo === void 0 ? void 0 : _this$elements$ear$bo.classList.add("force-visible");
 	      (_this$elements$pageNa = this.elements.pageNavigatorLeft) === null || _this$elements$pageNa === void 0 ? void 0 : _this$elements$pageNa.classList.add("force-visible");
 	      (_this$elements$pageNa2 = this.elements.pageNavigatorRight) === null || _this$elements$pageNa2 === void 0 ? void 0 : _this$elements$pageNa2.classList.add("force-visible");
 	      this.hideEarTimer = setTimeout(function () {
 	        var _this2$elements$ear$t, _this2$elements$ear$b, _this2$elements$pageN, _this2$elements$pageN2;
+	        main_core.Dom.removeClass(_this2.elements.root, 'on-mouse-move');
 	        (_this2$elements$ear$t = _this2.elements.ear.top) === null || _this2$elements$ear$t === void 0 ? void 0 : _this2$elements$ear$t.classList.remove("force-visible");
 	        (_this2$elements$ear$b = _this2.elements.ear.bottom) === null || _this2$elements$ear$b === void 0 ? void 0 : _this2$elements$ear$b.classList.remove("force-visible");
 	        (_this2$elements$pageN = _this2.elements.pageNavigatorLeft) === null || _this2$elements$pageN === void 0 ? void 0 : _this2$elements$pageN.classList.remove("force-visible");
@@ -11607,6 +11776,7 @@ this.BX = this.BX || {};
 	      }
 	      this.container.appendChild(this.elements.audioContainer);
 	      this.container.appendChild(this.elements.screenAudioContainer);
+	      this.viewVisibility.startViewVisibilityChange();
 	    }
 	  }, {
 	    key: "subscribeEvents",
@@ -11687,9 +11857,8 @@ this.BX = this.BX || {};
 	          this.centralUserMobile.mount(this.elements.pinnedUserContainer);
 	        }
 	      }
-	      this.userRegistry.users.forEach(function (userModel) {
-	        return userModel.centralUser = userModel.id == userId;
-	      });
+	      this.userRegistry.get(previousCentralUser.id).centralUser = false;
+	      this.userRegistry.get(this.centralUser.id).centralUser = true;
 	      this.eventEmitter.emit(EventName.onSetCentralUser, {
 	        userId: userId,
 	        stream: userId == this.userId ? this.localUser.stream : this.users[userId].stream
@@ -11699,13 +11868,18 @@ this.BX = this.BX || {};
 	    key: "getLeftUser",
 	    value: function getLeftUser(userId) {
 	      var candidateUserId = null;
-	      for (var i = 0; i < this.userRegistry.users.length; i++) {
-	        var userModel = this.userRegistry.users[i];
-	        if (userModel.id == userId && candidateUserId) {
-	          return candidateUserId;
-	        }
-	        if (!userModel.localUser && userModel.state == UserState.Connected) {
+	      var keys = babelHelpers.toConsumableArray(this.userRegistry.users.keys());
+	      var index = keys.indexOf(userId);
+	      if (index === -1) {
+	        return candidateUserId;
+	      }
+	      var userModels = babelHelpers.toConsumableArray(this.userRegistry.users.values()).slice(0, index);
+	      var totalUserModels = userModels.length;
+	      for (var i = totalUserModels - 1; i >= 0; i--) {
+	        var userModel = userModels[i];
+	        if (!userModel.localUser && userModel.state === UserState.Connected) {
 	          candidateUserId = userModel.id;
+	          break;
 	        }
 	      }
 	      return candidateUserId;
@@ -11714,13 +11888,18 @@ this.BX = this.BX || {};
 	    key: "getRightUser",
 	    value: function getRightUser(userId) {
 	      var candidateUserId = null;
-	      for (var i = this.userRegistry.users.length - 1; i >= 0; i--) {
-	        var userModel = this.userRegistry.users[i];
-	        if (userModel.id == userId && candidateUserId) {
-	          return candidateUserId;
-	        }
-	        if (!userModel.localUser && userModel.state == UserState.Connected) {
+	      var keys = babelHelpers.toConsumableArray(this.userRegistry.users.keys());
+	      var index = keys.indexOf(userId);
+	      if (index === -1) {
+	        return candidateUserId;
+	      }
+	      var userModels = babelHelpers.toConsumableArray(this.userRegistry.users.values()).slice(index + 1);
+	      var totalUserModels = userModels.length;
+	      for (var i = 0; i < totalUserModels; i++) {
+	        var userModel = userModels[i];
+	        if (!userModel.localUser && userModel.state === UserState.Connected) {
 	          candidateUserId = userModel.id;
+	          break;
 	        }
 	      }
 	      return candidateUserId;
@@ -11745,64 +11924,82 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "getUsersWithVideo",
 	    value: function getUsersWithVideo() {
+	      var _this5 = this;
+	      if (this.cache.has('usersWithVideo')) {
+	        return this.cache.get('usersWithVideo');
+	      }
+	      var users = Object.keys(this.users);
 	      var result = [];
-	      for (var userId in this.users) {
-	        if (this.users[userId].hasVideo()) {
+	      users.forEach(function (userId) {
+	        if (_this5.users[userId].hasVideo()) {
 	          result.push(userId);
 	        }
-	      }
+	      });
+	      this.cache.set('usersWithVideo', result);
 	      return result;
 	    }
 	  }, {
 	    key: "getConnectedUsers",
 	    value: function getConnectedUsers() {
+	      var _this6 = this;
+	      if (this.cache.has('currentConnectedUser')) {
+	        return this.cache.get('currentConnectedUser');
+	      }
 	      var result = [];
-	      for (var i = 0; i < this.userRegistry.users.length; i++) {
-	        var userModel = this.userRegistry.users[i];
-	        if (userModel.id != this.userId && userModel.state == UserState.Connected) {
+	      var userModels = babelHelpers.toConsumableArray(this.userRegistry.users.values());
+	      userModels.forEach(function (userModel) {
+	        if (userModel.id != _this6.userId && userModel.state === UserState.Connected) {
 	          result.push(userModel.id);
 	        }
-	      }
+	      });
+	      this.cache.set('previousConnectedUserCount', 0);
+	      this.cache.set('currentConnectedUser', result);
 	      return result;
 	    }
 	  }, {
 	    key: "getDisplayedUsers",
 	    value: function getDisplayedUsers() {
+	      var _this7 = this;
 	      var result = [];
-	      for (var i = 0; i < this.userRegistry.users.length; i++) {
-	        var userModel = this.userRegistry.users[i];
-	        if (userModel.id != this.userId && (userModel.id != this.centralUser.id && this.layout === Layouts.Centered || this.layout !== Layouts.Centered) && (userModel.state == UserState.Connected || userModel.state == UserState.Connecting || userModel.state == UserState.Calling)) {
+	      var userModels = babelHelpers.toConsumableArray(this.userRegistry.users.values());
+	      userModels.forEach(function (userModel) {
+	        if (userModel.id != _this7.userId && (userModel.id != _this7.centralUser.id && _this7.layout === Layouts.Centered || _this7.layout !== Layouts.Centered) && [UserState.Connected, UserState.Connecting, UserState.Calling].includes(userModel.state)) {
 	          result.push(userModel.id);
 	        }
-	      }
+	      });
 	      return result;
 	    }
 	  }, {
 	    key: "getActiveUsers",
 	    value: function getActiveUsers() {
+	      var _this8 = this;
+	      if (this.cache.has('activeUsers')) {
+	        return this.cache.get('activeUsers');
+	      }
 	      var result = [];
-	      for (var i = 0; i < this.userRegistry.users.length; i++) {
-	        var userModel = this.userRegistry.users[i];
-	        if (this.isUserHasActiveState(userModel) && this.users.hasOwnProperty(userModel.id)) {
+	      var userModels = babelHelpers.toConsumableArray(this.userRegistry.users.values());
+	      userModels.forEach(function (userModel) {
+	        if (_this8.isUserHasActiveState(userModel) && Object.hasOwn(_this8.users, userModel.id)) {
 	          result.push(userModel.id);
 	        }
-	      }
+	      });
+	      this.cache.set('activeUsers', result);
 	      return result;
 	    }
 	  }, {
 	    key: "getUsersWithCamera",
 	    value: function getUsersWithCamera() {
-	      var _this5 = this;
+	      var _this9 = this;
 	      // since we don't receive streams from inactive pages
 	      // we can't use this.getUsersWithVideo() to get number of users with video
-	      return this.userRegistry.users.filter(function (el) {
-	        return el.id != _this5.userId && el.cameraState && _this5.isUserHasActiveState(el) && el.state !== UserState.Calling;
+	      return babelHelpers.toConsumableArray(this.userRegistry.users.values()).filter(function (userModel) {
+	        return userModel.id != _this9.userId && userModel.cameraState && _this9.isUserHasActiveState(userModel) && userModel.state !== UserState.Calling;
 	      });
 	    }
 	  }, {
 	    key: "hasUserWithScreenSharing",
 	    value: function hasUserWithScreenSharing() {
-	      return this.userRegistry.users.some(function (userModel) {
+	      return babelHelpers.toConsumableArray(this.userRegistry.users.values()).some(function (userModel) {
 	        return userModel.screenState;
 	      });
 	    }
@@ -11819,22 +12016,25 @@ this.BX = this.BX || {};
 	    key: "getPresenterUserId",
 	    value: function getPresenterUserId() {
 	      var currentPresenterId = this.presenterId || 0;
+	      if (!this.getConnectedUserCount()) {
+	        return null;
+	      }
 	      if (currentPresenterId == this.localUser.id) {
 	        currentPresenterId = 0;
 	      }
-	      var userId; // for usage in iterators
-
 	      var currentPresenterModel = this.userRegistry.get(currentPresenterId);
 
 	      // 1. Current user, who is sharing screen has top priority
-	      if (currentPresenterModel && currentPresenterModel.screenState === true) {
+	      if ((currentPresenterModel === null || currentPresenterModel === void 0 ? void 0 : currentPresenterModel.screenState) === true) {
 	        return currentPresenterId;
 	      }
 
 	      // 2. If current user is not sharing screen, but someone is sharing - he should become presenter
-	      for (userId in this.users) {
-	        if (this.users.hasOwnProperty(userId) && this.userRegistry.get(userId).screenState === true) {
-	          return parseInt(userId);
+	      var users = Object.keys(this.users);
+	      for (var _i = 0, _users = users; _i < _users.length; _i++) {
+	        var userId = _users[_i];
+	        if (Object.hasOwn(this.users, userId) && this.userRegistry.get(userId).screenState === true) {
+	          return parseInt(userId, 10);
 	        }
 	      }
 
@@ -11846,46 +12046,42 @@ this.BX = this.BX || {};
 	      // 4. Return currently talking user
 	      var minTalkingAgo = 0;
 	      var minTalkingAgoUserId = 0;
-	      for (userId in this.users) {
-	        if (!this.users.hasOwnProperty(userId)) {
+	      for (var _i2 = 0, _users2 = users; _i2 < _users2.length; _i2++) {
+	        var _userId = _users2[_i2];
+	        if (!Object.hasOwn(this.users, _userId)) {
 	          continue;
 	        }
-	        var userWasTalkingAgo = this.userRegistry.get(userId).wasTalkingAgo();
+	        var userWasTalkingAgo = this.userRegistry.get(_userId).wasTalkingAgo();
 	        if (userWasTalkingAgo < 1000) {
-	          return parseInt(userId);
+	          return parseInt(_userId, 10);
 	        }
 	        if (userWasTalkingAgo < minTalkingAgo) {
-	          minTalkingAgoUserId = parseInt(userId);
+	          minTalkingAgoUserId = parseInt(_userId, 10);
 	        }
 	      }
 
-	      // 5. Return last talking user
-	      if (minTalkingAgoUserId) {
-	        return minTalkingAgoUserId;
-	      }
-
-	      // return current user in center
-	      return this.centralUser.id;
+	      // Return last talking user or current user in center
+	      return minTalkingAgoUserId || this.centralUser.id;
 	    }
 	  }, {
 	    key: "switchPresenter",
 	    value: function switchPresenter() {
-	      var _this6 = this;
 	      var currentPresenterId = this.presenterId || 0;
 	      var newPresenterId = this.getPresenterUserId();
 	      if (!newPresenterId) {
 	        return;
 	      }
 	      this.presenterId = newPresenterId;
-	      this.userRegistry.users.forEach(function (userModel) {
-	        return userModel.presenter = userModel.id == _this6.presenterId;
-	      });
+	      if (currentPresenterId) {
+	        this.userRegistry.get(currentPresenterId).presenter = false;
+	      }
+	      this.userRegistry.get(newPresenterId).presenter = true;
 	      if (this.pictureInPictureCallWindow) {
 	        this.pictureInPictureCallWindow.setCurrentUser(this.getPictureInPictureCallWindowUser());
 	      }
 	      if (this.pinnedUser === null) {
 	        this.setCentralUser(newPresenterId);
-	        if (this.layout == Layouts.Centered && currentPresenterId !== newPresenterId) {
+	        if (this.layout === Layouts.Centered && currentPresenterId !== newPresenterId) {
 	          this.eventEmitter.emit(EventName.onHasMainStream, {
 	            userId: this.centralUser.id
 	          });
@@ -11943,22 +12139,20 @@ this.BX = this.BX || {};
 	        //this.centralUser.updateAvatarWidth();
 	      }
 
-	      if (this.layout == Layouts.Grid) {
-	        this.elements.root.classList.remove("bx-messenger-videocall-centered");
-	        this.elements.root.classList.add("bx-messenger-videocall-grid");
+	      if (this.layout === Layouts.Grid) {
+	        this.elements.root.classList.remove('bx-messenger-videocall-centered');
+	        this.elements.root.classList.add('bx-messenger-videocall-grid');
 	        this.elements.container.appendChild(this.elements.userList.container);
 	        this.elements.container.removeChild(this.elements.userBlock);
+	        this.centralUser.dismount();
 	        if (this.isFullScreen && this.buttons.participants) {
 	          this.buttons.participants.update({
 	            foldButtonState: ParticipantsButton.FoldButtonState.Hidden
 	          });
 	        }
 	        this.unpinUser();
-	        this.eventEmitter.emit(EventName.onHasMainStream, {
-	          userId: null
-	        });
 	      }
-	      if (this.layout == Layouts.Centered && this.isFullScreen) {
+	      if (this.layout === Layouts.Centered && this.isFullScreen) {
 	        this.setUserBlockFolded(true);
 	      }
 	      this.elements.root.classList.toggle("bx-messenger-videocall-fullscreen-mobile", this.layout == Layouts.Mobile);
@@ -12034,16 +12228,15 @@ this.BX = this.BX || {};
 	      if (!usersPerPage) {
 	        return 1000;
 	      }
-	      if (usersPerPage <= MAX_USERS_PER_PAGE) {
-	        return usersPerPage;
-	      } else {
+	      if (usersPerPage >= MAX_USERS_PER_PAGE) {
 	        // check if the last row should be filled up
 	        var elementSize = Util.findBestElementSize(containerSize.width, containerSize.height, MAX_USERS_PER_PAGE + 1, MIN_GRID_USER_WIDTH, MIN_GRID_USER_HEIGHT);
 	        // console.log('Optimal element size: width '+elementSize.width+' height '+elementSize.height);
 	        columns = Math.floor(containerSize.width / elementSize.width);
 	        rows = Math.floor(containerSize.height / elementSize.height);
-	        return columns * rows - 1;
+	        usersPerPage = columns * rows - 1;
 	      }
+	      return usersPerPage;
 	    }
 	  }, {
 	    key: "calculatePagesCount",
@@ -12133,6 +12326,7 @@ this.BX = this.BX || {};
 	      this.localUser.userModel.id = this.userId;
 	      this.localUser.userModel.name = this.userData[this.userId] ? this.userData[this.userId].name : '';
 	      this.localUser.userModel.avatar = this.userData[this.userId] ? this.userData[this.userId].avatar_hr : '';
+	      this.userRegistry.push(this.localUser.userModel);
 	    }
 	  }, {
 	    key: "setUserBlockFolded",
@@ -12180,12 +12374,12 @@ this.BX = this.BX || {};
 	      });
 	      this.userRegistry.push(userModel);
 	      if (!this.elements.audio[userId]) {
-	        this.elements.audio[userId] = main_core.Dom.create("audio");
-	        this.elements.audioContainer.appendChild(this.elements.audio[userId]);
+	        this.elements.audio[userId] = main_core.Dom.create('audio');
+	        main_core.Dom.append(this.elements.audio[userId], this.elements.audioContainer);
 	      }
 	      if (!this.elements.screenAudio[userId]) {
-	        this.elements.screenAudio[userId] = main_core.Dom.create("audio");
-	        this.elements.screenAudioContainer.appendChild(this.elements.audio[userId]);
+	        this.elements.screenAudio[userId] = main_core.Dom.create('audio');
+	        main_core.Dom.append(this.elements.screenAudio[userId], this.elements.screenAudioContainer);
 	      }
 	      this.users[userId] = new CallUser({
 	        parentContainer: this.container,
@@ -12206,7 +12400,13 @@ this.BX = this.BX || {};
 	        allowPinButton: false,
 	        screenSharingUser: true
 	      });
-	      if (this.elements.root) {
+	      if (this.elements.root && state !== UserState.Idle) {
+	        if (state === UserState.Connected) {
+	          var _this$cache$get;
+	          this.cache.set('previousConnectedUserCount', ((_this$cache$get = this.cache.get('currentConnectedUser')) === null || _this$cache$get === void 0 ? void 0 : _this$cache$get.length) || 0);
+	          this.cache["delete"]('currentConnectedUser');
+	          this.cache["delete"]('activeUsers');
+	        }
 	        this.updateUserList();
 	        this.updateButtons();
 	        this.updateUserButtons();
@@ -12234,10 +12434,16 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "setUserState",
 	    value: function setUserState(userId, newState) {
-	      var _this7 = this;
+	      var _this10 = this;
 	      var user = this.userRegistry.get(userId);
-	      if (!user) {
+	      if (!user || user.state === newState) {
 	        return;
+	      }
+	      if (user.state === UserState.Connected || newState === UserState.Connected) {
+	        var _this$cache$get2;
+	        this.cache.set('previousConnectedUserCount', ((_this$cache$get2 = this.cache.get('currentConnectedUser')) === null || _this$cache$get2 === void 0 ? void 0 : _this$cache$get2.length) || 0);
+	        this.cache["delete"]('currentConnectedUser');
+	        this.cache["delete"]('activeUsers');
 	      }
 	      if (newState === UserState.Connected && this.uiState === UiState.Calling) {
 	        this.setUiState(UiState.Connected);
@@ -12268,7 +12474,7 @@ this.BX = this.BX || {};
 	      }
 	      if (newState === UserState.Connected) {
 	        var timer = setTimeout(function () {
-	          _this7.waitingForUserMediaTimeouts["delete"](userId);
+	          _this10.waitingForUserMediaTimeouts["delete"](userId);
 	        }, WAITING_VIDEO_DELAY);
 	        this.waitingForUserMediaTimeouts.set(userId, timer);
 	      } else if (newState === UserState.Idle) {
@@ -12319,9 +12525,10 @@ this.BX = this.BX || {};
 	    key: "setUserTalking",
 	    value: function setUserTalking(userId, talking) {
 	      var user = this.userRegistry.get(userId);
-	      if (user) {
-	        user.talking = talking;
+	      if (!user) {
+	        return;
 	      }
+	      user.talking = talking;
 	      if (userId == this.userId) {
 	        return;
 	      }
@@ -12343,8 +12550,10 @@ this.BX = this.BX || {};
 	      }
 	      if (userId == this.localUser.id) {
 	        this.localUser.showStats(stats);
+	        this.localUserRecivedStats = true;
 	      }
 	      (_this$pictureInPictur = this.pictureInPictureCallWindow) === null || _this$pictureInPictur === void 0 ? void 0 : _this$pictureInPictur.setStats(userId, stats);
+	      this.updateButtons();
 	    }
 	  }, {
 	    key: "setTrackSubscriptionFailed",
@@ -12437,13 +12646,14 @@ this.BX = this.BX || {};
 	    key: "pinUser",
 	    value: function pinUser(userId) {
 	      if (!(userId in this.users) && userId !== Number(this.userId)) {
-	        console.error("User " + userId + " is not known");
+	        console.error("User ".concat(userId, " is not known"));
 	        return;
 	      }
-	      this.pinnedUser = !this.users[userId] ? this.localUser : this.users[userId];
-	      this.userRegistry.users.forEach(function (userModel) {
-	        return userModel.pinned = userModel.id == userId;
-	      });
+	      if (this.pinnedUser && this.userRegistry.users.has(this.pinnedUser.userModel.id)) {
+	        this.userRegistry.get(this.pinnedUser.userModel.id).pinned = false;
+	      }
+	      this.pinnedUser = this.users[userId] || this.localUser;
+	      this.userRegistry.get(this.pinnedUser.userModel.id).pinned = true;
 	      this.setCentralUser(userId);
 	      this.eventEmitter.emit(EventName.onUserPinned, {
 	        userId: userId
@@ -12455,11 +12665,14 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "unpinUser",
 	    value: function unpinUser() {
+	      if (this.pinnedUser && this.userRegistry.users.has(this.pinnedUser.userModel.id)) {
+	        this.userRegistry.get(this.pinnedUser.userModel.id).pinned = false;
+	      }
 	      this.pinnedUser = null;
-	      this.userRegistry.users.forEach(function (userModel) {
-	        return userModel.pinned = false;
-	      });
 	      this.eventEmitter.emit(EventName.onUserPinned, {
+	        userId: null
+	      });
+	      this.eventEmitter.emit(EventName.onHasMainStream, {
 	        userId: null
 	      });
 	      this.switchPresenterDeferred();
@@ -12488,7 +12701,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "showFloorRequestNotification",
 	    value: function showFloorRequestNotification(userId) {
-	      var _this8 = this;
+	      var _this11 = this;
 	      var userModel = this.userRegistry.get(userId);
 	      if (!userModel) {
 	        return;
@@ -12496,10 +12709,10 @@ this.BX = this.BX || {};
 	      var notification = FloorRequest.create({
 	        userModel: userModel,
 	        onAllowSpeakPermissionClicked: function onAllowSpeakPermissionClicked(_userModel) {
-	          _this8._onAllowSpeakPermissionClickedHandler(_userModel);
+	          _this11._onAllowSpeakPermissionClickedHandler(_userModel);
 	        },
 	        onDisallowSpeakPermissionClicked: function onDisallowSpeakPermissionClicked(_userModel) {
-	          _this8._onDisallowSpeakPermissionClickedHandler(_userModel);
+	          _this11._onDisallowSpeakPermissionClickedHandler(_userModel);
 	        }
 	      });
 	      notification.mount(this.elements.notificationPanel);
@@ -12615,6 +12828,7 @@ this.BX = this.BX || {};
 	      } else {
 	        this.updateUserList();
 	      }
+	      this.updateButtons();
 	    }
 	  }, {
 	    key: "setLocalStreamVideoTrack",
@@ -12663,7 +12877,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "updateRerenderQueue",
 	    value: function updateRerenderQueue(userId, reason) {
-	      var _this9 = this;
+	      var _this12 = this;
 	      if (!this.users[userId]) {
 	        throw Error("User " + userId + " is not a part of this call");
 	      }
@@ -12687,7 +12901,7 @@ this.BX = this.BX || {};
 	          } else {
 	            if (!this.rerenderTimeout) {
 	              this.rerenderTimeout = setTimeout(function () {
-	                _this9.renderUserList();
+	                _this12.renderUserList();
 	              }, this.videoRerenderDelay);
 	            }
 	            this.rerenderQueue.set(userId, {
@@ -12707,7 +12921,7 @@ this.BX = this.BX || {};
 	        } else {
 	          if (!this.rerenderTimeout) {
 	            this.rerenderTimeout = setTimeout(function () {
-	              _this9.renderUserList();
+	              _this12.renderUserList();
 	            }, this.videoRerenderDelay);
 	          }
 	          this.rerenderQueue.set(userId, {
@@ -12725,6 +12939,7 @@ this.BX = this.BX || {};
 	      if (!user) {
 	        throw Error("User " + userId + " is not a part of this call");
 	      }
+	      this.cache["delete"]('usersWithVideo');
 	      if (mediaRenderer === null) {
 	        var _this$pictureInPictur6;
 	        if (user.hasCameraVideo()) {
@@ -12755,29 +12970,31 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "setUserMedia",
 	    value: function setUserMedia(userId, kind, track) {
+	      var _this$pictureInPictur8, _this$pictureInPictur9;
 	      if (kind === 'audio') {
 	        this.users[userId].audioTrack = track;
 	      }
-	      if (kind === 'sharingAudio') {
-	        this.users[userId].screenAudioTrack = track;
-	      }
-	      if (kind === 'video') {
-	        var _this$pictureInPictur8;
-	        this.users[userId].videoTrack = track;
-	        (_this$pictureInPictur8 = this.pictureInPictureCallWindow) === null || _this$pictureInPictur8 === void 0 ? void 0 : _this$pictureInPictur8.setVideoRenderer(userId, new MediaRenderer({
-	          kind: 'video',
-	          track: track
-	        }));
-	      }
-	      if (kind === 'screen') {
-	        var _this$pictureInPictur9;
-	        this.screenUsers[userId].videoTrack = track;
-	        (_this$pictureInPictur9 = this.pictureInPictureCallWindow) === null || _this$pictureInPictur9 === void 0 ? void 0 : _this$pictureInPictur9.setVideoRenderer(userId, new MediaRenderer({
-	          kind: 'sharing',
-	          track: track
-	        }));
-	        this.updateUserList();
-	        this.setUserScreenState(userId, track !== null);
+	      switch (kind) {
+	        case 'sharingAudio':
+	          this.users[userId].screenAudioTrack = track;
+	          break;
+	        case 'video':
+	          this.users[userId].videoTrack = track;
+	          (_this$pictureInPictur8 = this.pictureInPictureCallWindow) === null || _this$pictureInPictur8 === void 0 ? void 0 : _this$pictureInPictur8.setVideoRenderer(userId, new MediaRenderer({
+	            kind: 'video',
+	            track: track
+	          }));
+	          break;
+	        case 'screen':
+	          this.screenUsers[userId].videoTrack = track;
+	          (_this$pictureInPictur9 = this.pictureInPictureCallWindow) === null || _this$pictureInPictur9 === void 0 ? void 0 : _this$pictureInPictur9.setVideoRenderer(userId, new MediaRenderer({
+	            kind: 'sharing',
+	            track: track
+	          }));
+	          this.updateUserList();
+	          this.setUserScreenState(userId, track !== null);
+	          break;
+	        default:
 	      }
 	    }
 	  }, {
@@ -12934,7 +13151,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "showDeviceSelector",
 	    value: function showDeviceSelector(bindElement) {
-	      var _this10 = this,
+	      var _this13 = this,
 	        _events;
 	      if (this.deviceSelector) {
 	        return;
@@ -12958,11 +13175,11 @@ this.BX = this.BX || {};
 	        switchCameraBlocked: this.blockedButtons['camera'],
 	        switchMicrophoneBlocked: this.blockedButtons['microphone'],
 	        events: (_events = {}, babelHelpers.defineProperty(_events, DeviceSelector.Events.onMicrophoneSelect, this._onMicrophoneSelected.bind(this)), babelHelpers.defineProperty(_events, DeviceSelector.Events.onMicrophoneSwitch, this._onMicrophoneButtonClick.bind(this)), babelHelpers.defineProperty(_events, DeviceSelector.Events.onCameraSelect, this._onCameraSelected.bind(this)), babelHelpers.defineProperty(_events, DeviceSelector.Events.onCameraSwitch, this._onCameraButtonClick.bind(this)), babelHelpers.defineProperty(_events, DeviceSelector.Events.onSpeakerSelect, this._onSpeakerSelected.bind(this)), babelHelpers.defineProperty(_events, DeviceSelector.Events.onSpeakerSwitch, this._onSpeakerButtonClick.bind(this)), babelHelpers.defineProperty(_events, DeviceSelector.Events.onChangeHdVideo, this._onChangeHdVideo.bind(this)), babelHelpers.defineProperty(_events, DeviceSelector.Events.onChangeMicAutoParams, this._onChangeMicAutoParams.bind(this)), babelHelpers.defineProperty(_events, DeviceSelector.Events.onChangeFaceImprove, this._onChangeFaceImprove.bind(this)), babelHelpers.defineProperty(_events, DeviceSelector.Events.onAdvancedSettingsClick, function () {
-	          return _this10.eventEmitter.emit(EventName.onOpenAdvancedSettings);
+	          return _this13.eventEmitter.emit(EventName.onOpenAdvancedSettings);
 	        }), babelHelpers.defineProperty(_events, DeviceSelector.Events.onDestroy, function () {
-	          return _this10.deviceSelector = null;
+	          return _this13.deviceSelector = null;
 	        }), babelHelpers.defineProperty(_events, DeviceSelector.Events.onShow, function () {
-	          return _this10.eventEmitter.emit(EventName.onDeviceSelectorShow, {});
+	          return _this13.eventEmitter.emit(EventName.onDeviceSelectorShow, {});
 	        }), _events)
 	      });
 	      this.deviceSelector.show();
@@ -12970,7 +13187,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "showCallMenu",
 	    value: function showCallMenu() {
-	      var _this11 = this;
+	      var _this14 = this;
 	      var menuItems = [{
 	        text: BX.message("IM_M_CALL_BTN_WANT_TO_SAY"),
 	        iconClass: "hand",
@@ -13011,8 +13228,8 @@ this.BX = this.BX || {};
 	        text: BX.message("IM_M_CALL_MOBILE_MENU_CHANGE_MY_NAME"),
 	        iconClass: "change-name",
 	        onClick: function onClick() {
-	          _this11.callMenu.close();
-	          setTimeout(_this11.showRenameSlider.bind(_this11), 100);
+	          _this14.callMenu.close();
+	          setTimeout(_this14.showRenameSlider.bind(_this14), 100);
 	        }
 	      } : null, {
 	        separator: true
@@ -13025,10 +13242,10 @@ this.BX = this.BX || {};
 	        parent: this.elements.root,
 	        items: menuItems,
 	        onClose: function onClose() {
-	          return _this11.callMenu.destroy();
+	          return _this14.callMenu.destroy();
 	        },
 	        onDestroy: function onDestroy() {
-	          return _this11.callMenu = null;
+	          return _this14.callMenu = null;
 	        }
 	      });
 	      this.callMenu.show();
@@ -13036,7 +13253,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "showUserMenu",
 	    value: function showUserMenu(userId) {
-	      var _this12 = this;
+	      var _this15 = this;
 	      var userModel = this.userRegistry.get(userId);
 	      if (!userModel) {
 	        return false;
@@ -13047,8 +13264,8 @@ this.BX = this.BX || {};
 	          text: BX.message("IM_M_CALL_MOBILE_MENU_UNPIN"),
 	          iconClass: "unpin",
 	          onClick: function onClick() {
-	            _this12.userMenu.close();
-	            _this12.unpinUser();
+	            _this15.userMenu.close();
+	            _this15.unpinUser();
 	          }
 	        };
 	      } else if (this.userId != userId) {
@@ -13056,8 +13273,8 @@ this.BX = this.BX || {};
 	          text: BX.message("IM_M_CALL_MOBILE_MENU_PIN"),
 	          iconClass: "pin",
 	          onClick: function onClick() {
-	            _this12.userMenu.close();
-	            _this12.pinUser(userId);
+	            _this15.userMenu.close();
+	            _this15.pinUser(userId);
 	          }
 	        };
 	      }
@@ -13070,8 +13287,8 @@ this.BX = this.BX || {};
 	        text: BX.message("IM_M_CALL_MOBILE_MENU_CHANGE_MY_NAME"),
 	        iconClass: "change-name",
 	        onClick: function onClick() {
-	          _this12.userMenu.close();
-	          setTimeout(_this12.showRenameSlider.bind(_this12), 100);
+	          _this15.userMenu.close();
+	          setTimeout(_this15.showRenameSlider.bind(_this15), 100);
 	        }
 	      } : null,
 	      /*{
@@ -13095,17 +13312,17 @@ this.BX = this.BX || {};
 	        text: BX.message("IM_M_CALL_MOBILE_MENU_CANCEL"),
 	        enabled: false,
 	        onClick: function onClick() {
-	          return _this12.userMenu.close();
+	          return _this15.userMenu.close();
 	        }
 	      }];
 	      this.userMenu = new MobileMenu({
 	        parent: this.elements.root,
 	        items: menuItems,
 	        onClose: function onClose() {
-	          return _this12.userMenu.destroy();
+	          return _this15.userMenu.destroy();
 	        },
 	        onDestroy: function onDestroy() {
-	          return _this12.userMenu = null;
+	          return _this15.userMenu = null;
 	        }
 	      });
 	      this.userMenu.show();
@@ -13113,21 +13330,20 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "showParticipantsMenu",
 	    value: function showParticipantsMenu() {
-	      var _this13 = this;
+	      var _this16 = this;
 	      if (this.participantsMenu) {
 	        return;
 	      }
-	      var menuItems = [];
-	      menuItems.push({
+	      var menuItems = [{
 	        userModel: this.localUser.userModel,
 	        showSubMenu: true,
-	        onClick: function () {
-	          this.participantsMenu.close();
-	          this.showUserMenu(this.localUser.userModel.id);
-	        }.bind(this)
-	      });
-	      this.userRegistry.users.forEach(function (userModel) {
-	        if (userModel.localUser || userModel.state != UserState.Connected) {
+	        onClick: function onClick() {
+	          _this16.participantsMenu.close();
+	          _this16.showUserMenu(_this16.localUser.userModel.id);
+	        }
+	      }];
+	      babelHelpers.toConsumableArray(this.userRegistry.users.values()).forEach(function (userModel) {
+	        if (userModel.localUser || userModel.state !== UserState.Connected) {
 	          return;
 	        }
 	        if (menuItems.length > 0) {
@@ -13139,8 +13355,8 @@ this.BX = this.BX || {};
 	          userModel: userModel,
 	          showSubMenu: true,
 	          onClick: function onClick() {
-	            _this13.participantsMenu.close();
-	            _this13.showUserMenu(userModel.id);
+	            _this16.participantsMenu.close();
+	            _this16.showUserMenu(userModel.id);
 	          }
 	        });
 	      });
@@ -13150,25 +13366,25 @@ this.BX = this.BX || {};
 	      this.participantsMenu = new MobileMenu({
 	        parent: this.elements.root,
 	        items: menuItems,
-	        header: BX.message("IM_M_CALL_PARTICIPANTS").replace("#COUNT#", this.getConnectedUserCount(true)),
+	        header: BX.message('IM_M_CALL_PARTICIPANTS').replace('#COUNT#', this.getConnectedUserCount(true)),
 	        largeIcons: true,
-	        onClose: function () {
-	          this.participantsMenu.destroy();
-	        }.bind(this),
-	        onDestroy: function () {
-	          this.participantsMenu = null;
-	        }.bind(this)
+	        onClose: function onClose() {
+	          _this16.participantsMenu.destroy();
+	        },
+	        onDestroy: function onDestroy() {
+	          _this16.participantsMenu = null;
+	        }
 	      });
 	      this.participantsMenu.show();
 	      return true;
 	    }
-	  }, {
-	    key: "showMessage",
 	    /**
 	     * @param {Object} params
 	     * @param {string} params.text
 	     * @param {string} [params.subText]
 	     */
+	  }, {
+	    key: "showMessage",
 	    value: function showMessage(params) {
 	      if (!this.elements.root) {
 	        this.render();
@@ -13238,7 +13454,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "renderReloadPageLayout",
 	    value: function renderReloadPageLayout() {
-	      var _this14 = this;
+	      var _this17 = this;
 	      if (!this.elements.root) {
 	        this.render();
 	        this.container.appendChild(this.elements.root);
@@ -13263,7 +13479,7 @@ this.BX = this.BX || {};
 	          text: BX.message('CALL_RELOAD_PAGE'),
 	          events: {
 	            click: function click() {
-	              _this14.destroy();
+	              _this17.destroy();
 	              location.reload();
 	            }
 	          }
@@ -13354,7 +13570,13 @@ this.BX = this.BX || {};
 	    value: function isButtonBlocked(buttonName) {
 	      switch (buttonName) {
 	        case 'camera':
-	          return this.uiState !== UiState.Preparing && this.uiState !== UiState.Connected || this.blockedButtons[buttonName] === true || !Util.havePermissionToBroadcast('cam');
+	          var isUiBlocked = this.uiState !== UiState.Preparing && this.uiState !== UiState.Connected;
+	          var isForceBlock = this.blockedButtons[buttonName] === true;
+	          var noCamPermission = !Util.havePermissionToBroadcast('cam');
+	          var isUserConnecting = this.localUser.userModel.state === UserState.Connecting;
+	          var localUserRecivedStats = this.isVideoconf ? true : this.localUserRecivedStats;
+	          var isButtonBlocked = isUiBlocked || isForceBlock || noCamPermission || isUserConnecting || !localUserRecivedStats;
+	          return isButtonBlocked;
 	        case 'chat':
 	          return !this.showChatButtons || this.blockedButtons[buttonName] === true;
 	        case 'microphone':
@@ -13429,7 +13651,7 @@ this.BX = this.BX || {};
 	              // show all buttons;
 	              this.overflownButtons = {};
 	            } else {
-	              for (var _i = 0; _i < countOfButtonsToShow; _i++) {
+	              for (var _i3 = 0; _i3 < countOfButtonsToShow; _i3++) {
 	                delete this.overflownButtons[Object.keys(this.overflownButtons)[0]];
 	              }
 	            }
@@ -13445,13 +13667,13 @@ this.BX = this.BX || {};
 	     * @param {string[]} buttons Array of buttons names to show
 	     */
 	    value: function showButtons(buttons) {
-	      var _this15 = this;
+	      var _this18 = this;
 	      if (!main_core.Type.isArray(buttons)) {
 	        console.error("buttons should be array");
 	      }
 	      buttons.forEach(function (buttonName) {
-	        if (_this15.hiddenButtons.hasOwnProperty(buttonName)) {
-	          delete _this15.hiddenButtons[buttonName];
+	        if (_this18.hiddenButtons.hasOwnProperty(buttonName)) {
+	          delete _this18.hiddenButtons[buttonName];
 	        }
 	      });
 	      this.updateButtons();
@@ -13462,12 +13684,12 @@ this.BX = this.BX || {};
 	     * @param {string[]} buttons Array of buttons names to hide
 	     */
 	    value: function hideButtons(buttons) {
-	      var _this16 = this;
+	      var _this19 = this;
 	      if (!main_core.Type.isArray(buttons)) {
 	        console.error("buttons should be array");
 	      }
 	      buttons.forEach(function (buttonName) {
-	        return _this16.hiddenButtons[buttonName] = true;
+	        return _this19.hiddenButtons[buttonName] = true;
 	      });
 	      this.updateButtons();
 	    }
@@ -13545,14 +13767,14 @@ this.BX = this.BX || {};
 	     * @param {string[]} buttons Array of buttons names to block
 	     */
 	    value: function blockButtons(buttons) {
-	      var _this17 = this;
+	      var _this20 = this;
 	      if (!main_core.Type.isArray(buttons)) {
 	        console.error("buttons should be array ");
 	      }
 	      buttons.forEach(function (buttonName) {
-	        _this17.blockedButtons[buttonName] = true;
-	        if (_this17.buttons[buttonName]) {
-	          _this17.buttons[buttonName].setBlocked(true);
+	        _this20.blockedButtons[buttonName] = true;
+	        if (_this20.buttons[buttonName]) {
+	          _this20.buttons[buttonName].setBlocked(true);
 	        }
 	      });
 	      if (this.pictureInPictureCallWindow) {
@@ -13565,14 +13787,14 @@ this.BX = this.BX || {};
 	     * @param {string[]} buttons Array of buttons names to unblock
 	     */
 	    value: function unblockButtons(buttons) {
-	      var _this18 = this;
+	      var _this21 = this;
 	      if (!main_core.Type.isArray(buttons)) {
 	        console.error("buttons should be array");
 	      }
 	      buttons.forEach(function (buttonName) {
-	        delete _this18.blockedButtons[buttonName];
-	        if (_this18.buttons[buttonName]) {
-	          _this18.buttons[buttonName].setBlocked(_this18.isButtonBlocked(buttonName));
+	        delete _this21.blockedButtons[buttonName];
+	        if (_this21.buttons[buttonName]) {
+	          _this21.buttons[buttonName].setBlocked(_this21.isButtonBlocked(buttonName));
 	        }
 	      });
 	      if (this.pictureInPictureCallWindow) {
@@ -13603,37 +13825,37 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "getButtonList",
 	    value: function getButtonList() {
-	      var _this19 = this;
-	      if (this.uiState == UiState.Error) {
-	        return ['close'];
-	      }
-	      if (this.uiState == UiState.Initializing) {
-	        return ['hangup'];
-	      }
-	      if (this.size == Size.Folded) {
-	        return ['title', 'spacer', 'returnToCall', 'hangup'];
-	      }
+	      var _this22 = this;
 	      var result = [];
-	      result.push('microphone');
-	      result.push('camera');
+	      if (this.uiState === UiState.Error) {
+	        result.push('close');
+	      }
+	      if (this.uiState === UiState.Initializing) {
+	        result.push('hangup');
+	      }
+	      if (this.size === Size.Folded) {
+	        result.push('title', 'spacer', 'returnToCall', 'hangup');
+	      }
+	      if (result.length > 0) {
+	        this.needToRerenderButtonList = this.previousButtonList.toString() !== result.toString();
+	        this.previousButtonList = result;
+	        return result;
+	      }
+	      result.push('microphone', 'camera');
 	      if (this.layout != Layouts.Mobile) {
 	        result.push('speaker');
 	      } else {
 	        result.push('mobileMenu');
 	      }
-	      result.push('chat');
-	      result.push('users');
+	      result.push('chat', 'users');
 	      if (this.layout != Layouts.Mobile) {
-	        result.push('floorRequest');
-	        result.push('screen');
-	        result.push('record');
-	        result.push('document');
+	        result.push('floorRequest', 'screen', 'record', 'document');
 	      }
 	      if (this.layout !== Layouts.Mobile && CallAI.serviceEnabled) {
 	        result.push('copilot');
 	      }
 	      result = result.filter(function (buttonCode) {
-	        return !_this19.hiddenButtons.hasOwnProperty(buttonCode) && !_this19.overflownButtons.hasOwnProperty(buttonCode);
+	        return !Object.prototype.hasOwnProperty.call(_this22.hiddenButtons, buttonCode) && !Object.prototype.hasOwnProperty.call(_this22.overflownButtons, buttonCode);
 	      });
 	      if (Object.keys(this.overflownButtons).length > 0) {
 	        result.push('more');
@@ -13643,15 +13865,17 @@ this.BX = this.BX || {};
 	      } else {
 	        result.push('hangup');
 	      }
-	      if (!this.hiddenButtons.hasOwnProperty('hangupOptions') && this.isIntranetOrExtranet) {
+	      if (!Object.prototype.hasOwnProperty.call(this.hiddenButtons, 'hangupOptions') && this.isIntranetOrExtranet) {
 	        result.push('hangupOptions');
 	      }
+	      this.needToRerenderButtonList = this.previousButtonList.toString() !== result.toString();
+	      this.previousButtonList = result;
 	      return result;
 	    }
 	  }, {
 	    key: "getTopButtonList",
 	    value: function getTopButtonList() {
-	      var _this20 = this;
+	      var _this23 = this;
 	      var result = [];
 	      if (this.layout == Layouts.Mobile) {
 	        return ['participantsMobile'];
@@ -13681,14 +13905,16 @@ this.BX = this.BX || {};
 	          return true;
 	        }
 	        previousButtonCode = buttonCode;
-	        return !_this20.hiddenTopButtons.hasOwnProperty(buttonCode);
+	        return !_this23.hiddenTopButtons.hasOwnProperty(buttonCode);
 	      });
+	      this.needToRerenderTopButtonList = this.previousTopButtonList.toString() !== result.toString();
+	      this.previousTopButtonList = result;
 	      return result;
 	    }
 	  }, {
 	    key: "render",
 	    value: function render() {
-	      var _this21 = this;
+	      var _this24 = this;
 	      this.elements.root = main_core.Dom.create("div", {
 	        props: {
 	          className: "bx-messenger-videocall bx-messenger-videocall-scope"
@@ -13857,7 +14083,7 @@ this.BX = this.BX || {};
 	        events: {
 	          scroll: main_core.Runtime.debounce(this.toggleEars.bind(this), 300),
 	          wheel: function wheel(e) {
-	            return _this21.elements.userList.container.scrollTop += e.deltaY;
+	            return _this24.elements.userList.container.scrollTop += e.deltaY;
 	          }
 	        }
 	      });
@@ -13882,8 +14108,8 @@ this.BX = this.BX || {};
 	        this.eventEmitter.emit(EventName.onHasMainStream, {
 	          userId: this.centralUser.id
 	        });
-	        this.elements.root.classList.add("bx-messenger-videocall-centered");
-	        if (this.layout != Layouts.Mobile) {
+	        this.elements.root.classList.add('bx-messenger-videocall-centered');
+	        if (this.layout !== Layouts.Mobile) {
 	          this.elements.container.appendChild(this.elements.userBlock);
 	        }
 	      }
@@ -13910,35 +14136,32 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "getOrderingRules",
 	    value: function getOrderingRules() {
-	      var _this22 = this;
-	      var rules = {
-	        videoEnabled: [],
-	        videoDisabled: [],
-	        userDisconnected: null
-	      };
+	      var _rules,
+	        _this25 = this;
+	      var rules = (_rules = {}, babelHelpers.defineProperty(_rules, RerenderReason.VideoEnabled, []), babelHelpers.defineProperty(_rules, RerenderReason.VideoDisabled, []), babelHelpers.defineProperty(_rules, RerenderReason.UserDisconnected, null), _rules);
 	      this.rerenderQueue.forEach(function (el) {
-	        if (el.reason === RerenderReason.UserDisconnected) {
-	          rules.userDisconnected = {
-	            id: el.userId,
-	            order: _this22.userRegistry.get(el.userId).prevOrder
-	          };
-	        } else if (el.reason === RerenderReason.VideoEnabled) {
-	          rules.videoEnabled.push({
-	            id: el.userId,
-	            order: _this22.userRegistry.get(el.userId).order
-	          });
-	        } else if (el.reason === RerenderReason.VideoDisabled) {
-	          rules.videoDisabled.push({
-	            id: el.userId,
-	            order: _this22.userRegistry.get(el.userId).order
-	          });
+	        switch (el.reason) {
+	          case RerenderReason.UserDisconnected:
+	            rules[el.reason] = {
+	              id: el.userId,
+	              order: _this25.userRegistry.get(el.userId).prevOrder
+	            };
+	            break;
+	          case RerenderReason.VideoEnabled:
+	          case RerenderReason.VideoDisabled:
+	            rules[el.reason].push({
+	              id: el.userId,
+	              order: _this25.userRegistry.get(el.userId).order
+	            });
+	            break;
+	          default:
 	        }
 	      });
 	      this.rerenderQueue.clear();
-	      rules.videoEnabled.sort(function (a, b) {
+	      rules[RerenderReason.VideoEnabled].sort(function (a, b) {
 	        return a.order - b.order;
 	      });
-	      rules.videoDisabled.sort(function (a, b) {
+	      rules[RerenderReason.VideoDisabled].sort(function (a, b) {
 	        return a.order - b.order;
 	      });
 	      return rules;
@@ -13946,16 +14169,19 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "applyOrderChanges",
 	    value: function applyOrderChanges(changes) {
+	      var _this26 = this;
 	      if (!main_core.Type.isArray(changes)) {
 	        return;
 	      }
 	      changes.forEach(function (change) {
 	        if (change.type === SwapType.Direct) {
 	          change.to.userModel.order = change.to.order;
+	          _this26.cache["delete"]('activeUsers');
 	        } else if (change.type === SwapType.Replace && change.to && change.from) {
 	          change.to.userModel.order = change.from.order;
 	          change.to.userModel.prevOrder = 0;
 	          change.from.userModel.order = change.to.order;
+	          _this26.cache["delete"]('activeUsers');
 	        }
 	      });
 	    }
@@ -13967,14 +14193,14 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "processVideoRules",
 	    value: function processVideoRules(rules, params) {
-	      var _this23 = this;
-	      var diffBetweenChanges = rules.videoEnabled.length - rules.videoDisabled.length;
-	      var lessChangesField = diffBetweenChanges > 0 ? 'videoDisabled' : 'videoEnabled';
-	      var moreChangesField = diffBetweenChanges > 0 ? 'videoEnabled' : 'videoDisabled';
-	      if (rules.videoEnabled.length && rules.videoDisabled.length) {
+	      var _this27 = this;
+	      var diffBetweenChanges = rules[RerenderReason.VideoEnabled].length - rules[RerenderReason.VideoDisabled].length;
+	      var lessChangesField = diffBetweenChanges > 0 ? RerenderReason.VideoDisabled : RerenderReason.VideoEnabled;
+	      var moreChangesField = diffBetweenChanges > 0 ? RerenderReason.VideoEnabled : RerenderReason.VideoDisabled;
+	      if (rules[RerenderReason.VideoEnabled].length > 0 && rules[RerenderReason.VideoDisabled].length > 0) {
 	        rules[lessChangesField].forEach(function (el, index) {
-	          var toUser = _this23.userRegistry.get(el.id);
-	          var fromUser = _this23.userRegistry.get(rules[moreChangesField][index].id);
+	          var toUser = _this27.userRegistry.get(el.id);
+	          var fromUser = _this27.userRegistry.get(rules[moreChangesField][index].id);
 	          params.orderChanges.push({
 	            type: SwapType.Replace,
 	            to: {
@@ -13990,33 +14216,33 @@ this.BX = this.BX || {};
 	      }
 	      this.applyOrderChanges(params.orderChanges);
 	      params.orderChanges.length = 0;
-	      if (diffBetweenChanges !== 0) {
+	      if (diffBetweenChanges === 0) {
+	        rules[RerenderReason.VideoEnabled].length = 0;
+	        rules[RerenderReason.VideoDisabled].length = 0;
+	      } else {
 	        rules[moreChangesField].splice(0, rules[moreChangesField].length - Math.abs(diffBetweenChanges));
 	        rules[lessChangesField].length = 0;
-	        if (moreChangesField === 'videoEnabled') {
-	          rules.videoEnabled.forEach(function (el) {
+	        if (moreChangesField === RerenderReason.VideoEnabled) {
+	          rules[moreChangesField].forEach(function (el) {
 	            params.orderChanges.push({
 	              type: SwapType.Replace,
 	              from: {
-	                userModel: _this23.userRegistry.get(el.id),
-	                order: _this23.userRegistry.get(el.id).order
+	                userModel: _this27.userRegistry.get(el.id),
+	                order: _this27.userRegistry.get(el.id).order
 	              }
 	            });
 	            params.incompleteSwaps.push(params.orderChanges.length);
 	          });
 	        }
-	      } else {
-	        rules.videoEnabled.length = 0;
-	        rules.videoDisabled.length = 0;
 	      }
 	    }
 	  }, {
 	    key: "processDisconnectRules",
 	    value: function processDisconnectRules(rules, params) {
-	      if (!rules.userDisconnected) {
+	      if (!rules[RerenderReason.UserDisconnected]) {
 	        return;
 	      }
-	      var userModel = this.userRegistry.get(rules.userDisconnected.id);
+	      var userModel = this.userRegistry.get(rules[RerenderReason.UserDisconnected].id);
 	      if (userModel.prevCameraState) {
 	        params.disconnectedUserHadVideo = true;
 	      }
@@ -14027,7 +14253,8 @@ this.BX = this.BX || {};
 	      var swapRemains = params.incompleteSwaps.length;
 	      if (userModel.state === UserState.Calling) {
 	        return;
-	      } else if (params.usersWithEnabledVideo.includes(userModel.id)) {
+	      }
+	      if (params.usersWithEnabledVideo.includes(userModel.id)) {
 	        params.incompleteSwaps.pop();
 	        params.usersWithEnabledVideo.splice(params.usersWithEnabledVideo.indexOf(userModel.id), 1);
 	        params.usersToKeepActive.push(userModel.id);
@@ -14056,18 +14283,18 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "completeVideoDisabledSwap",
 	    value: function completeVideoDisabledSwap(rules, params) {
-	      var _this24 = this;
-	      var usersProceed = 0;
-	      rules.videoDisabled.forEach(function (el, index) {
-	        var userWithoutVideo = _this24.userRegistry.get(el.id);
+	      var _this28 = this;
+	      var usersProcessed = 0;
+	      rules[RerenderReason.VideoDisabled].forEach(function (el) {
+	        var userWithoutVideo = _this28.userRegistry.get(el.id);
 	        var userWithoutVideoIndex = params.activeUsers.indexOf(el.id);
-	        var userWithoutVideoPage = Math.ceil((userWithoutVideoIndex + 1) / _this24.usersPerPage);
-	        var skipUsers = (userWithoutVideoPage - 1) * _this24.usersPerPage;
+	        var userWithoutVideoPage = Math.ceil((userWithoutVideoIndex + 1) / _this28.usersPerPage);
+	        var skipUsers = (userWithoutVideoPage - 1) * _this28.usersPerPage;
 	        var numberOfUsersWithVideoForSwap = params.usersWithVideo.length - skipUsers;
-	        var userToSwap = params.usersWithVideo[params.usersWithVideo.length - 1 - index];
+	        var userToSwap = params.usersWithVideo[params.usersWithVideo.length - 1 - usersProcessed];
 	        var canCompleteVideoSwap = userToSwap && userToSwap.order > el.order;
-	        if (canCompleteVideoSwap && numberOfUsersWithVideoForSwap - usersProceed >= rules.videoDisabled.length - index) {
-	          usersProceed++;
+	        if (canCompleteVideoSwap && numberOfUsersWithVideoForSwap - usersProcessed >= 0) {
+	          usersProcessed++;
 	          params.orderChanges.push({
 	            type: SwapType.Replace,
 	            to: {
@@ -14080,18 +14307,19 @@ this.BX = this.BX || {};
 	            }
 	          });
 	          var userToSwapIndex = params.activeUsers.indexOf(userToSwap.id);
-	          var userToSwapPage = Math.ceil((userToSwapIndex + 1) / _this24.usersPerPage);
-	          if (userWithoutVideoPage === _this24.currentPage && userToSwapPage > _this24.currentPage) {
+	          var userToSwapPage = Math.ceil((userToSwapIndex + 1) / _this28.usersPerPage);
+	          if (userWithoutVideoPage === _this28.currentPage && userToSwapPage > _this28.currentPage) {
 	            params.usersToKeepActive.push(userToSwap.id);
 	            params.usersToForceDeactivation.push(el.id);
 	            params.usersToDeactivate++;
-	          } else if (userToSwapPage === _this24.currentPage && userToSwapPage > userWithoutVideoPage) {
+	          } else if (userToSwapPage === _this28.currentPage && userToSwapPage > userWithoutVideoPage) {
 	            params.usersToKeepActive.push(el.id);
 	            params.usersToForceDeactivation.push(userToSwap.id);
 	            params.usersToDeactivate++;
 	          }
 	        }
 	      });
+	      this.applyOrderChanges(params.orderChanges);
 	    }
 	  }, {
 	    key: "calculateUserActive",
@@ -14110,32 +14338,37 @@ this.BX = this.BX || {};
 	    key: "completeDisconnectSwap",
 	    value: function completeDisconnectSwap(rules, params) {
 	      var _this$userRegistry$ge, _this$userRegistry$ge2;
+	      var disconnectedUser = rules[RerenderReason.UserDisconnected];
+	      if (!disconnectedUser) {
+	        return;
+	      }
 	      var lowerOrderOnCurrentPage = (_this$userRegistry$ge = this.userRegistry.get(params.possibleActiveUsers[0])) === null || _this$userRegistry$ge === void 0 ? void 0 : _this$userRegistry$ge.order;
 	      var higherOrderOnCurrentPage = (_this$userRegistry$ge2 = this.userRegistry.get(params.possibleActiveUsers[params.possibleActiveUsers.length - 1])) === null || _this$userRegistry$ge2 === void 0 ? void 0 : _this$userRegistry$ge2.order;
 	      var disconnectedUserFromCurrentPage = false;
 	      if (this.currentPage === 1) {
-	        disconnectedUserFromCurrentPage = rules.userDisconnected.order < lowerOrderOnCurrentPage || rules.userDisconnected.order > lowerOrderOnCurrentPage && rules.userDisconnected.order < higherOrderOnCurrentPage;
+	        disconnectedUserFromCurrentPage = disconnectedUser.order < lowerOrderOnCurrentPage || disconnectedUser.order > lowerOrderOnCurrentPage && disconnectedUser.order < higherOrderOnCurrentPage;
 	      } else {
-	        var skipUsers = this.currentPage > 1 ? (this.currentPage - 2) * this.usersPerPage : 0;
+	        var skipUsers = (this.currentPage - 2) * this.usersPerPage;
 	        var activeUsersFromPreviousPage = params.activeUsers.slice(skipUsers, skipUsers + this.usersPerPage);
 	        var lastActiveUserFromPreviousPage = this.userRegistry.get(activeUsersFromPreviousPage[activeUsersFromPreviousPage.length - 1]);
-	        disconnectedUserFromCurrentPage = rules.userDisconnected.order > lowerOrderOnCurrentPage && rules.userDisconnected.order < higherOrderOnCurrentPage || rules.userDisconnected.order < lowerOrderOnCurrentPage && rules.userDisconnected.order > (lastActiveUserFromPreviousPage === null || lastActiveUserFromPreviousPage === void 0 ? void 0 : lastActiveUserFromPreviousPage.order);
+	        disconnectedUserFromCurrentPage = disconnectedUser.order > lowerOrderOnCurrentPage && disconnectedUser.order < higherOrderOnCurrentPage || disconnectedUser.order < lowerOrderOnCurrentPage && disconnectedUser.order > (lastActiveUserFromPreviousPage === null || lastActiveUserFromPreviousPage === void 0 ? void 0 : lastActiveUserFromPreviousPage.order);
 	      }
 	      var userToSwap = params.disconnectedUserHadVideo ? params.usersWithVideo[params.usersWithVideo.length - 1] : this.userRegistry.get(params.activeUsers[params.activeUsers.length - 1]);
-	      if (!userToSwap || userToSwap.order <= rules.userDisconnected.order) {
+	      if (!userToSwap || userToSwap.order <= disconnectedUser.order) {
 	        return;
 	      }
 	      params.orderChanges.push({
 	        type: SwapType.Direct,
 	        to: {
 	          userModel: userToSwap,
-	          order: rules.userDisconnected.order
+	          order: disconnectedUser.order
 	        }
 	      });
 	      if (this.currentPage !== this.pagesCount && disconnectedUserFromCurrentPage && !params.possibleActiveUsers.includes(userToSwap.id)) {
 	        params.usersToKeepActive.push(userToSwap.id);
 	        params.usersToDeactivate++;
 	      }
+	      this.applyOrderChanges(params.orderChanges);
 	    }
 	  }, {
 	    key: "renderAddUserButtonInList",
@@ -14150,7 +14383,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "renderUserList",
 	    value: function renderUserList(pageChange) {
-	      var _this25 = this;
+	      var _this29 = this;
 	      clearTimeout(this.rerenderTimeout);
 	      this.rerenderTimeout = null;
 	      this.activeUsers = [];
@@ -14181,139 +14414,147 @@ this.BX = this.BX || {};
 	      if (this.layout === Layouts.Grid) {
 	        this.processVideoRules(orderingRules, orderingParams);
 	        this.processDisconnectRules(orderingRules, orderingParams);
-	        orderingParams.usersWithEnabledVideo = orderingRules.videoEnabled.map(function (el) {
+	        orderingParams.usersWithEnabledVideo = orderingRules[RerenderReason.VideoEnabled].map(function (el) {
 	          return el.id;
 	        });
-	        orderingParams.usersWithDisabledVideo = orderingRules.videoDisabled.map(function (el) {
+	        orderingParams.usersWithDisabledVideo = orderingRules[RerenderReason.VideoDisabled].map(function (el) {
 	          return el.id;
 	        });
 	        orderingParams.activeUsers = this.getActiveUsers();
 	        orderingParams.possibleActiveUsers = orderingParams.activeUsers.slice(skipUsers, skipUsers + this.usersPerPage);
 	        orderingParams.usersWithVideo = this.getUsersWithCamera();
 	        this.completeVideoDisabledSwap(orderingRules, orderingParams);
-	        if (orderingRules.userDisconnected) {
-	          this.completeDisconnectSwap(orderingRules, orderingParams);
-	        }
+	        this.completeDisconnectSwap(orderingRules, orderingParams);
+	        orderingParams.activeUsers = this.getActiveUsers();
+	        orderingParams.possibleActiveUsers = orderingParams.activeUsers.slice(skipUsers, skipUsers + this.usersPerPage);
 	      } else if (this.layout === Layouts.Centered) {
 	        // new grid logic is applied only in the Layouts.Grid layout
 	        // so we need to save some rules for later
-	        orderingRules.videoEnabled.forEach(function (user) {
-	          return _this25.shelvedRerenderQueue.set(user.id, {
+	        orderingRules[RerenderReason.VideoEnabled].forEach(function (user) {
+	          return _this29.shelvedRerenderQueue.set(user.id, {
 	            userId: user.id,
 	            reason: RerenderReason.VideoEnabled
 	          });
 	        });
-	        orderingRules.videoDisabled.forEach(function (user) {
-	          return _this25.shelvedRerenderQueue.set(user.id, {
+	        orderingRules[RerenderReason.VideoDisabled].forEach(function (user) {
+	          return _this29.shelvedRerenderQueue.set(user.id, {
 	            userId: user.id,
 	            reason: RerenderReason.VideoDisabled
 	          });
 	        });
 	      }
-	      for (var i = 0; i < this.userRegistry.users.length; i++) {
-	        var userModel = this.userRegistry.users[i];
-	        var userId = userModel.id;
-	        if (!this.users.hasOwnProperty(userId)) {
-	          continue;
-	        }
-	        var user = this.users[userId];
-	        var screenUser = this.screenUsers[userId];
-	        if (userId == this.centralUser.id && (this.layout == Layouts.Centered || this.layout == Layouts.Mobile)) {
-	          if (this.layout == Layouts.Centered) {
-	            this.activeUsers.push(userId);
+	      var userModels = babelHelpers.toConsumableArray(this.userRegistry.users.values());
+	      var _iterator = _createForOfIteratorHelper$1(userModels),
+	        _step;
+	      try {
+	        for (_iterator.s(); !(_step = _iterator.n()).done;) {
+	          var userModel = _step.value;
+	          var userId = userModel.id;
+	          if (!this.users.hasOwnProperty(userId)) {
+	            continue;
 	          }
-	          this.unobserveIntersections(user);
-	          if (screenUser.hasVideo()) {
-	            screenUser.mount(this.elements.center);
-	            screenUser.visible = true;
-	            user.mount(this.elements.userList.container);
-	          } else {
-	            user.visible = true;
-	            user.mount(this.elements.center);
-	            screenUser.dismount();
+	          var user = this.users[userId];
+	          var screenUser = this.screenUsers[userId];
+	          if (userId == this.centralUser.id && (this.layout == Layouts.Centered || this.layout == Layouts.Mobile)) {
+	            if (this.layout == Layouts.Centered) {
+	              this.activeUsers.push(userId);
+	            }
+	            this.unobserveIntersections(user);
+	            if (screenUser.hasVideo()) {
+	              screenUser.mount(this.elements.center);
+	              screenUser.visible = true;
+	              user.mount(this.elements.userList.container);
+	            } else {
+	              user.visible = true;
+	              user.mount(this.elements.center);
+	              screenUser.dismount();
+	            }
+	            continue;
 	          }
-	          continue;
-	        }
-	        var userActive = this.isUserHasActiveState(userModel);
-	        var userSkipped = false;
-	        if (userActive && skipUsers > 0 && skippedUsers < skipUsers) {
-	          // skip users on previous pages
-	          skippedUsers++;
-	          userActive = false;
-	          userSkipped = true;
-	        }
-	        if (userActive && this.layout === Layouts.Grid && this.usersPerPage > 0 && renderedUsers < this.usersPerPage) {
-	          orderingParams.currentPageUsers.push(userModel);
-	        }
-	        if (this.layout === Layouts.Grid) {
-	          if (orderingRules.videoEnabled.length) {
-	            if ((userActive || userSkipped) && orderingParams.incompleteSwaps.length) {
-	              var _orderingParams$possi, _orderingParams$possi2;
-	              var previousIncompleteSwaps = orderingParams.incompleteSwaps.length;
-	              var index = orderingParams.incompleteSwaps[0] - 1;
-	              var userEnabledVideo = orderingParams.orderChanges[index].from;
-	              var currentUserFromCurrentPage = (_orderingParams$possi = orderingParams.possibleActiveUsers) === null || _orderingParams$possi === void 0 ? void 0 : _orderingParams$possi.includes(userModel.id);
-	              var changedUserFromCurrentPage = (_orderingParams$possi2 = orderingParams.possibleActiveUsers) === null || _orderingParams$possi2 === void 0 ? void 0 : _orderingParams$possi2.includes(userEnabledVideo.userModel.id);
-	              var currentUserFromNextPage = userModel.order > orderingParams.possibleActiveUsers[orderingParams.possibleActiveUsers.length - 1].order;
-	              this.completeVideoEnableSwap(userModel, orderingRules, orderingParams);
-	              var swapCompleted = previousIncompleteSwaps !== orderingParams.incompleteSwaps.length;
-	              if (swapCompleted && userActive && !changedUserFromCurrentPage && !orderingParams.usersToKeepActive.includes(userModel.id)) {
+	          var userActive = this.isUserHasActiveState(userModel);
+	          var userSkipped = false;
+	          if (userActive && skipUsers > 0 && skippedUsers < skipUsers) {
+	            // skip users on previous pages
+	            skippedUsers++;
+	            userActive = false;
+	            userSkipped = true;
+	          }
+	          if (userActive && this.layout === Layouts.Grid && this.usersPerPage > 0 && renderedUsers < this.usersPerPage) {
+	            orderingParams.currentPageUsers.push(userModel);
+	          }
+	          if (this.layout === Layouts.Grid) {
+	            if (orderingRules[RerenderReason.VideoEnabled].length > 0) {
+	              if ((userActive || userSkipped) && orderingParams.incompleteSwaps.length > 0) {
+	                var _orderingParams$possi, _orderingParams$possi2;
+	                var previousIncompleteSwaps = orderingParams.incompleteSwaps.length;
+	                var index = orderingParams.incompleteSwaps[0] - 1;
+	                var userEnabledVideo = orderingParams.orderChanges[index].from;
+	                var currentUserFromCurrentPage = (_orderingParams$possi = orderingParams.possibleActiveUsers) === null || _orderingParams$possi === void 0 ? void 0 : _orderingParams$possi.includes(userModel.id);
+	                var changedUserFromCurrentPage = (_orderingParams$possi2 = orderingParams.possibleActiveUsers) === null || _orderingParams$possi2 === void 0 ? void 0 : _orderingParams$possi2.includes(userEnabledVideo.userModel.id);
+	                this.completeVideoEnableSwap(userModel, orderingRules, orderingParams);
+	                var swapCompleted = previousIncompleteSwaps !== orderingParams.incompleteSwaps.length;
+	                if (swapCompleted && userActive && !changedUserFromCurrentPage && !orderingParams.usersToKeepActive.includes(userModel.id)) {
+	                  userActive = false;
+	                } else if (swapCompleted && (!userSkipped && !currentUserFromCurrentPage || userSkipped && changedUserFromCurrentPage)) {
+	                  userActive = true;
+	                }
+	              }
+	              if (orderingParams.usersToDeactivate) {
+	                userActive = this.calculateUserActive(userModel, userActive, userSkipped, orderingParams);
+	              }
+	              if (orderingParams.usersToForceDeactivation.includes(userModel.id)) {
 	                userActive = false;
-	              } else if (swapCompleted && (!userSkipped && !currentUserFromCurrentPage || userSkipped && changedUserFromCurrentPage)) {
+	              }
+	            } else if (orderingRules[RerenderReason.VideoDisabled].length > 0) {
+	              if (orderingParams.usersToKeepActive.includes(userModel.id)) {
 	                userActive = true;
+	                orderingParams.usersToDeactivate--;
+	              } else if (orderingParams.usersToForceDeactivation.includes(userModel.id) || orderingParams.currentPageUsers.length + orderingParams.usersToDeactivate > this.usersPerPage) {
+	                userActive = false;
+	                orderingParams.currentPageUsers.pop();
+	              }
+	            } else if (orderingRules[RerenderReason.UserDisconnected]) {
+	              if (orderingParams.usersToKeepActive.includes(userModel.id)) {
+	                userActive = true;
+	                orderingParams.usersToDeactivate--;
+	              } else if (orderingParams.currentPageUsers.length + orderingParams.usersToDeactivate > this.usersPerPage) {
+	                userActive = false;
+	                orderingParams.currentPageUsers.pop();
 	              }
 	            }
-	            if (orderingParams.usersToDeactivate) {
-	              userActive = this.calculateUserActive(userModel, userActive, userSkipped, orderingParams);
-	            }
-	            if (orderingParams.usersToForceDeactivation.includes(userModel.id)) {
-	              userActive = false;
-	            }
-	          } else if (orderingRules.videoDisabled.length) {
-	            if (orderingParams.usersToKeepActive.includes(userModel.id)) {
-	              userActive = true;
-	              orderingParams.usersToDeactivate--;
-	            } else if (orderingParams.usersToForceDeactivation.includes(userModel.id) || orderingParams.currentPageUsers.length + orderingParams.usersToDeactivate > this.usersPerPage) {
-	              userActive = false;
-	              orderingParams.currentPageUsers.pop();
-	            }
-	          } else if (orderingRules.userDisconnected) {
-	            if (orderingParams.usersToKeepActive.includes(userModel.id)) {
-	              userActive = true;
-	              orderingParams.usersToDeactivate--;
-	            } else if (orderingParams.currentPageUsers.length + orderingParams.usersToDeactivate > this.usersPerPage) {
-	              userActive = false;
-	              orderingParams.currentPageUsers.pop();
-	            }
 	          }
-	        }
-	        if (userActive && (this.layout === Layouts.Grid || this.layout === Layouts.Centered) && this.usersPerPage > 0 && renderedUsers >= this.usersPerPage) {
-	          // skip users on following pages
-	          userActive = false;
-	        }
-	        if (userActive) {
-	          this.activeUsers.push(userId);
-	        } else {
-	          this.inactiveUsers.push(userId);
-	        }
-	        if (!userActive) {
-	          user.dismount();
-	          this.unobserveIntersections(user);
-	          screenUser.dismount();
-	          continue;
-	        }
-	        if (screenUser.hasVideo()) {
-	          screenUser.mount(this.elements.userList.container);
+	          if (userActive && (this.layout === Layouts.Grid || this.layout === Layouts.Centered) && this.usersPerPage > 0 && renderedUsers >= this.usersPerPage) {
+	            // skip users on following pages
+	            userActive = false;
+	          }
+	          if (userActive) {
+	            this.activeUsers.push(userId);
+	          } else {
+	            this.inactiveUsers.push(userId);
+	          }
+	          if (!userActive) {
+	            user.dismount();
+	            this.unobserveIntersections(user);
+	            screenUser.dismount();
+	            continue;
+	          }
+	          if (screenUser.hasVideo()) {
+	            screenUser.mount(this.elements.userList.container);
+	            userCount++;
+	          } else {
+	            screenUser.dismount();
+	          }
+	          user.mount(this.elements.userList.container);
+	          if (!this.isPreparing) {
+	            this.observeIntersections(user);
+	          }
+	          renderedUsers++;
 	          userCount++;
-	        } else {
-	          screenUser.dismount();
 	        }
-	        user.mount(this.elements.userList.container);
-	        if (!this.isPreparing) {
-	          this.observeIntersections(user);
-	        }
-	        renderedUsers++;
-	        userCount++;
+	      } catch (err) {
+	        _iterator.e(err);
+	      } finally {
+	        _iterator.f();
 	      }
 	      this.applyOrderChanges(orderingParams.orderChanges);
 	      if (showLocalUser) {
@@ -14401,46 +14642,57 @@ this.BX = this.BX || {};
 	    }
 	  }, {
 	    key: "renderButtons",
-	    value: function renderButtons(buttons) {
-	      var _this26 = this;
+	    value: function renderButtons(buttons, rerender) {
+	      var _this30 = this;
 	      var panelInner, left, center, right;
-	      panelInner = main_core.Dom.create("div", {
-	        props: {
-	          className: "bx-messenger-videocall-panel-inner"
-	        }
-	      });
+	      if (rerender) {
+	        panelInner = main_core.Dom.create('div', {
+	          props: {
+	            className: 'bx-messenger-videocall-panel-inner'
+	          }
+	        });
+	      }
 	      if (this.layout === Layouts.Mobile || this.size === Size.Folded) {
 	        left = panelInner;
 	        center = panelInner;
 	        right = panelInner;
-	      } else {
-	        left = main_core.Dom.create("div", {
+	      } else if (rerender) {
+	        left = main_core.Dom.create('div', {
 	          props: {
-	            className: "bx-messenger-videocall-panel-inner-left"
+	            className: 'bx-messenger-videocall-panel-inner-left'
 	          }
 	        });
-	        center = main_core.Dom.create("div", {
+	        center = main_core.Dom.create('div', {
 	          props: {
-	            className: "bx-messenger-videocall-panel-inner-center"
+	            className: 'bx-messenger-videocall-panel-inner-center'
 	          }
 	        });
-	        right = main_core.Dom.create("div", {
+	        right = main_core.Dom.create('div', {
 	          props: {
-	            className: "bx-messenger-videocall-panel-inner-right"
+	            className: 'bx-messenger-videocall-panel-inner-right'
 	          }
 	        });
-	        panelInner.appendChild(left);
-	        panelInner.appendChild(center);
-	        panelInner.appendChild(right);
+	        main_core.Dom.append(left, panelInner);
+	        main_core.Dom.append(center, panelInner);
+	        main_core.Dom.append(right, panelInner);
 	      }
 	      for (var i = 0; i < buttons.length; i++) {
 	        switch (buttons[i]) {
-	          case "title":
-	            this.buttons.title = new TitleButton({
-	              text: this.title,
-	              isGroupCall: Object.keys(this.users).length > 1
-	            });
-	            left.appendChild(this.buttons.title.render());
+	          case 'title':
+	            if (this.buttons.title) {
+	              this.buttons.title.update({
+	                text: this.title,
+	                isGroupCall: Object.keys(this.users).length > 1
+	              });
+	            } else {
+	              this.buttons.title = new TitleButton({
+	                text: this.title,
+	                isGroupCall: Object.keys(this.users).length > 1
+	              });
+	            }
+	            if (rerender) {
+	              main_core.Dom.append(this.buttons.title.render(), left);
+	            }
 	            break;
 	          /*case "grid":
 	          	this.buttons.grid = new SimpleButton({
@@ -14458,128 +14710,151 @@ this.BX = this.BX || {};
 	          	});
 	          	leftSubPanel.appendChild(this.buttons.add.render());
 	          	break;*/
-	          case "share":
-	            this.buttons.share = new SimpleButton({
-	              "class": "share",
-	              text: BX.message("IM_M_CALL_BTN_LINK"),
-	              onClick: this._onShareButtonClick.bind(this)
-	            });
-	            center.appendChild(this.buttons.share.render());
+	          case 'share':
+	            if (rerender) {
+	              this.buttons.share = new SimpleButton({
+	                "class": 'share',
+	                text: BX.message('IM_M_CALL_BTN_LINK'),
+	                onClick: this._onShareButtonClick.bind(this)
+	              });
+	              main_core.Dom.append(this.buttons.share.render(), center);
+	            }
 	            break;
-	          case "microphone":
-	            this.buttons.microphone = new DeviceButton({
-	              "class": "microphone",
-	              text: BX.message("IM_M_CALL_BTN_MIC"),
-	              enabled: !Hardware.isMicrophoneMuted,
-	              arrowHidden: this.layout == Layouts.Mobile,
-	              arrowEnabled: this.isMediaSelectionAllowed(),
-	              showPointer: true,
-	              //todo
-	              blocked: this.isButtonBlocked("microphone"),
-	              showLevel: true,
-	              sideIcon: this.getMicrophoneSideIcon(this.roomState),
-	              onClick: function onClick(e) {
-	                _this26._onMicrophoneButtonClick(e);
-	                _this26._showMicrophoneHint(e);
-	              },
-	              onArrowClick: this._onMicrophoneArrowClick.bind(this),
-	              onMouseOver: this._showMicrophoneHint.bind(this),
-	              onMouseOut: function onMouseOut() {
-	                return _this26._destroyHotKeyHint();
-	              },
-	              onSideIconClick: this._onMicrophoneSideIconClick.bind(this)
-	            });
-	            left.appendChild(this.buttons.microphone.render());
+	          case 'microphone':
+	            if (this.buttons.microphone) {
+	              this.buttons.microphone.setBlocked(this.isButtonBlocked('microphone'));
+	            } else {
+	              this.buttons.microphone = new DeviceButton({
+	                "class": 'microphone',
+	                text: BX.message('IM_M_CALL_BTN_MIC'),
+	                enabled: !Hardware.isMicrophoneMuted,
+	                arrowHidden: this.layout === Layouts.Mobile,
+	                arrowEnabled: this.isMediaSelectionAllowed(),
+	                showPointer: true,
+	                //todo
+	                blocked: this.isButtonBlocked('microphone'),
+	                showLevel: true,
+	                sideIcon: this.getMicrophoneSideIcon(this.roomState),
+	                onClick: function onClick(e) {
+	                  _this30._onMicrophoneButtonClick(e);
+	                  _this30._showMicrophoneHint(e);
+	                },
+	                onArrowClick: this._onMicrophoneArrowClick.bind(this),
+	                onMouseOver: this._showMicrophoneHint.bind(this),
+	                onMouseOut: function onMouseOut() {
+	                  return _this30._destroyHotKeyHint();
+	                },
+	                onSideIconClick: this._onMicrophoneSideIconClick.bind(this)
+	              });
+	            }
+	            if (rerender) {
+	              main_core.Dom.append(this.buttons.microphone.render(), left);
+	            }
 	            break;
-	          case "camera":
-	            this.buttons.camera = new DeviceButton({
-	              "class": "camera",
-	              text: BX.message("IM_M_CALL_BTN_CAMERA"),
-	              enabled: Hardware.isCameraOn,
-	              arrowHidden: this.layout == Layouts.Mobile,
-	              arrowEnabled: this.isMediaSelectionAllowed(),
-	              blocked: this.isButtonBlocked("camera"),
-	              onClick: this._onCameraButtonClick.bind(this),
-	              onArrowClick: this._onCameraArrowClick.bind(this),
-	              onMouseOver: function onMouseOver(e) {
-	                _this26._showHotKeyHint(e.currentTarget.firstChild, "camera", _this26.keyModifier + " + V");
-	              },
-	              onMouseOut: function onMouseOut() {
-	                _this26._destroyHotKeyHint();
-	              }
-	            });
-	            left.appendChild(this.buttons.camera.render());
+	          case 'camera':
+	            if (this.buttons.camera) {
+	              this.buttons.camera.setBlocked(this.isButtonBlocked('camera'));
+	            } else {
+	              this.buttons.camera = new DeviceButton({
+	                "class": 'camera',
+	                text: BX.message('IM_M_CALL_BTN_CAMERA'),
+	                enabled: Hardware.isCameraOn,
+	                arrowHidden: this.layout === Layouts.Mobile,
+	                arrowEnabled: this.isMediaSelectionAllowed(),
+	                blocked: this.isButtonBlocked('camera'),
+	                onClick: this._onCameraButtonClick.bind(this),
+	                onArrowClick: this._onCameraArrowClick.bind(this),
+	                onMouseOver: function onMouseOver(e) {
+	                  _this30._showHotKeyHint(e.currentTarget.firstChild, 'camera', "".concat(_this30.keyModifier, " + V"));
+	                },
+	                onMouseOut: function onMouseOut() {
+	                  _this30._destroyHotKeyHint();
+	                }
+	              });
+	            }
+	            if (rerender) {
+	              main_core.Dom.append(this.buttons.camera.render(), left);
+	            }
 	            break;
-	          case "screen":
-	            if (!this.buttons.screen) {
+	          case 'screen':
+	            if (this.buttons.screen) {
+	              this.buttons.screen.setBlocked(this.isButtonBlocked('screen'));
+	            } else {
 	              this.buttons.screen = new SimpleButton({
-	                "class": "screen",
-	                backgroundClass: "bx-messenger-videocall-panel-background-screen",
-	                text: BX.message("IM_M_CALL_BTN_SCREEN"),
-	                blocked: this.isButtonBlocked("screen"),
+	                "class": 'screen',
+	                backgroundClass: 'bx-messenger-videocall-panel-background-screen',
+	                text: BX.message('IM_M_CALL_BTN_SCREEN'),
+	                blocked: this.isButtonBlocked('screen'),
 	                onClick: this._onScreenButtonClick.bind(this),
 	                onMouseOver: function onMouseOver(e) {
-	                  _this26._showHotKeyHint(e.currentTarget, "screen", _this26.keyModifier + " + S");
+	                  _this30._showHotKeyHint(e.currentTarget, 'screen', "".concat(_this30.keyModifier, " + S"));
 	                },
 	                onMouseOut: function onMouseOut() {
-	                  _this26._destroyHotKeyHint();
+	                  _this30._destroyHotKeyHint();
 	                }
 	              });
-	            } else {
-	              this.buttons.screen.setBlocked(this.isButtonBlocked("screen"));
 	            }
-	            center.appendChild(this.buttons.screen.render());
+	            if (rerender) {
+	              main_core.Dom.append(this.buttons.screen.render(), center);
+	            }
 	            break;
-	          case "record":
-	            if (!this.buttons.record) {
+	          case 'record':
+	            if (this.buttons.record) {
+	              this.buttons.record.setBlocked(this.isButtonBlocked('record'));
+	            } else {
 	              this.buttons.record = new SimpleButton({
-	                "class": "record",
-	                backgroundClass: "bx-messenger-videocall-panel-background-record",
-	                text: this.recordState.state === View.RecordState.Started || this.recordState.state === View.RecordState.Resumed ? BX.message("CALL_M_BTN_TITLE_STOP_RECORD") : BX.message("IM_M_CALL_BTN_RECORD"),
-	                blocked: this.isButtonBlocked("record"),
+	                "class": 'record',
+	                backgroundClass: 'bx-messenger-videocall-panel-background-record',
+	                text: ['View.RecordState.Started', 'View.RecordState.Resumed'].includes(this.recordState.state) ? BX.message('CALL_M_BTN_TITLE_STOP_RECORD') : BX.message('IM_M_CALL_BTN_RECORD'),
+	                blocked: this.isButtonBlocked('record'),
 	                onClick: this._onRecordToggleClick.bind(this),
 	                onMouseOver: function onMouseOver(e) {
-	                  if (_this26.isRecordingHotKeySupported()) {
-	                    _this26._showHotKeyHint(e.currentTarget, "record", _this26.keyModifier + " + R");
+	                  if (_this30.isRecordingHotKeySupported()) {
+	                    _this30._showHotKeyHint(e.currentTarget, 'record', "".concat(_this30.keyModifier, " + R"));
 	                  }
 	                },
 	                onMouseOut: function onMouseOut() {
-	                  if (_this26.isRecordingHotKeySupported()) {
-	                    _this26._destroyHotKeyHint();
+	                  if (_this30.isRecordingHotKeySupported()) {
+	                    _this30._destroyHotKeyHint();
 	                  }
 	                }
 	              });
-	            } else {
-	              this.buttons.record.setBlocked(this.isButtonBlocked('record'));
 	            }
-	            center.appendChild(this.buttons.record.render());
+	            if (rerender) {
+	              main_core.Dom.append(this.buttons.record.render(), center);
+	            }
 	            break;
-	          case "document":
-	            if (!this.buttons.document) {
+	          case 'document':
+	            if (this.buttons.document) {
+	              this.buttons.document.setBlocked(this.isButtonBlocked('document'));
+	            } else {
 	              this.buttons.document = new SimpleButton({
-	                "class": "document",
-	                backgroundClass: "bx-messenger-videocall-panel-background-document",
-	                text: BX.message("IM_M_CALL_BTN_DOCUMENT"),
-	                blocked: this.isButtonBlocked("document"),
+	                "class": 'document',
+	                backgroundClass: 'bx-messenger-videocall-panel-background-document',
+	                text: BX.message('IM_M_CALL_BTN_DOCUMENT'),
+	                blocked: this.isButtonBlocked('document'),
 	                onClick: this._onDocumentButtonClick.bind(this)
 	              });
-	            } else {
-	              this.buttons.document.setBlocked(this.isButtonBlocked('document'));
 	            }
-	            center.appendChild(this.buttons.document.render());
+	            if (rerender) {
+	              main_core.Dom.append(this.buttons.document.render(), center);
+	            }
 	            break;
-	          case "copilot":
-	            if (!this.buttons.copilot) {
+	          case 'copilot':
+	            if (this.buttons.copilot) {
+	              this.buttons.copilot.setBlocked(this.isButtonBlocked('copilot'));
+	              this.buttons.copilot.setActive(this.isCopilotActive);
+	            } else {
 	              this.buttons.copilot = new SimpleButton({
-	                "class": "copilot",
-	                backgroundClass: "bx-messenger-videocall-panel-background-copilot",
-	                text: BX.message("CALL_BUTTON_COPILOT_TITLE"),
-	                blocked: this.isButtonBlocked("copilot"),
+	                "class": 'copilot',
+	                backgroundClass: 'bx-messenger-videocall-panel-background-copilot',
+	                text: BX.message('CALL_BUTTON_COPILOT_TITLE'),
+	                blocked: this.isButtonBlocked('copilot'),
 	                onClick: this._onCopilotButtonClick.bind(this),
 	                isComingSoon: !this.isCopilotFeaturesEnabled,
 	                onMouseOver: function onMouseOver(e) {
-	                  _this26.hintManager.popupParameters.events = null;
-	                  _this26.hintManager.popupParameters.events = {
+	                  _this30.hintManager.popupParameters.events = null;
+	                  _this30.hintManager.popupParameters.events = {
 	                    onShow: function onShow(event) {
 	                      var _e$currentTarget, _popup$getPopupContai;
 	                      var popup = event.getTarget();
@@ -14594,58 +14869,63 @@ this.BX = this.BX || {};
 	                      });
 	                    }
 	                  };
-	                  var hintText = _this26.isCopilotActive ? main_core.Loc.getMessage('CALL_COPILOT_BUTTON_ON_HINT_V2') : main_core.Loc.getMessage('CALL_COPILOT_BUTTON_OFF_HINT');
-	                  _this26.hintManager.show(e.currentTarget, hintText);
+	                  var hintText = _this30.isCopilotActive ? main_core.Loc.getMessage('CALL_COPILOT_BUTTON_ON_HINT_V2') : main_core.Loc.getMessage('CALL_COPILOT_BUTTON_OFF_HINT');
+	                  _this30.hintManager.show(e.currentTarget, hintText);
 	                },
 	                onMouseOut: function onMouseOut(e) {
 	                  if (!e.relatedTarget || !e.currentTarget.contains(e.relatedTarget)) {
-	                    _this26.hintManager.hide();
+	                    _this30.hintManager.hide();
 	                  }
 	                }
 	              });
-	            } else {
-	              this.buttons.copilot.setBlocked(this.isButtonBlocked('copilot'));
 	            }
-	            if (this.isCopilotActive) {
-	              this.buttons.copilot.setActive(true);
+	            if (rerender) {
+	              main_core.Dom.append(this.buttons.copilot.render(), center);
 	            }
-	            center.appendChild(this.buttons.copilot.render());
 	            break;
-	          case "returnToCall":
-	            this.buttons.returnToCall = new SimpleButton({
-	              "class": "returnToCall",
-	              text: BX.message("IM_M_CALL_BTN_RETURN_TO_CALL"),
-	              onClick: this._onBodyClick.bind(this)
-	            });
-	            right.appendChild(this.buttons.returnToCall.render());
+	          case 'returnToCall':
+	            if (rerender) {
+	              this.buttons.returnToCall = new SimpleButton({
+	                "class": 'returnToCall',
+	                text: BX.message('IM_M_CALL_BTN_RETURN_TO_CALL'),
+	                onClick: this._onBodyClick.bind(this)
+	              });
+	              main_core.Dom.append(this.buttons.returnToCall.render(), right);
+	            }
 	            break;
-	          case "hangup":
-	            this.buttons.hangup = new SimpleButton({
-	              "class": "hangup",
-	              backgroundClass: "bx-messenger-videocall-panel-icon-background-hangup",
-	              text: Object.keys(this.users).length > 1 ? BX.message("IM_M_CALL_BTN_DISCONNECT") : BX.message("IM_M_CALL_BTN_HANGUP"),
-	              onClick: this._onHangupButtonClick.bind(this)
-	            });
-	            right.appendChild(this.buttons.hangup.render());
+	          case 'hangup':
+	            if (rerender) {
+	              this.buttons.hangup = new SimpleButton({
+	                "class": 'hangup',
+	                backgroundClass: 'bx-messenger-videocall-panel-icon-background-hangup',
+	                text: Object.keys(this.users).length > 1 ? BX.message('IM_M_CALL_BTN_DISCONNECT') : BX.message('IM_M_CALL_BTN_HANGUP'),
+	                onClick: this._onHangupButtonClick.bind(this)
+	              });
+	              main_core.Dom.append(this.buttons.hangup.render(), right);
+	            }
 	            break;
-	          case "hangupOptions":
-	            this.buttons.hangupOptions = new SimpleButton({
-	              "class": "hangup-options",
-	              backgroundClass: "bx-messenger-videocall-panel-icon-background-hangup-options",
-	              onClick: this._onHangupOptionsButtonClick.bind(this)
-	            });
-	            right.appendChild(this.buttons.hangupOptions.render());
+	          case 'hangupOptions':
+	            if (rerender) {
+	              this.buttons.hangupOptions = new SimpleButton({
+	                "class": 'hangup-options',
+	                backgroundClass: 'bx-messenger-videocall-panel-icon-background-hangup-options',
+	                onClick: this._onHangupOptionsButtonClick.bind(this)
+	              });
+	              main_core.Dom.append(this.buttons.hangupOptions.render(), right);
+	            }
 	            break;
-	          case "close":
-	            this.buttons.close = new SimpleButton({
-	              "class": "close",
-	              backgroundClass: "bx-messenger-videocall-panel-icon-background-hangup",
-	              text: BX.message("IM_M_CALL_BTN_CLOSE"),
-	              onClick: this._onCloseButtonClick.bind(this)
-	            });
-	            right.appendChild(this.buttons.close.render());
+	          case 'close':
+	            if (rerender) {
+	              this.buttons.close = new SimpleButton({
+	                "class": 'close',
+	                backgroundClass: 'bx-messenger-videocall-panel-icon-background-hangup',
+	                text: BX.message('IM_M_CALL_BTN_CLOSE'),
+	                onClick: this._onCloseButtonClick.bind(this)
+	              });
+	              main_core.Dom.append(this.buttons.close.render(), right);
+	            }
 	            break;
-	          case "speaker":
+	          case 'speaker':
 	            /*this.buttons.speaker = new Buttons.DeviceButton({
 	            	class: "speaker",
 	            	text: BX.message("IM_M_CALL_BTN_SPEAKER"),
@@ -14656,71 +14936,81 @@ this.BX = this.BX || {};
 	            });
 	            rightSubPanel.appendChild(this.buttons.speaker.render());*/
 	            break;
-	          case "mobileMenu":
-	            if (!this.buttons.mobileMenu) {
-	              this.buttons.mobileMenu = new SimpleButton({
-	                "class": "sandwich",
-	                text: BX.message("IM_M_CALL_BTN_MENU"),
-	                onClick: this._onMobileMenuButtonClick.bind(this)
-	              });
+	          case 'mobileMenu':
+	            if (rerender) {
+	              if (!this.buttons.mobileMenu) {
+	                this.buttons.mobileMenu = new SimpleButton({
+	                  "class": 'sandwich',
+	                  text: BX.message('IM_M_CALL_BTN_MENU'),
+	                  onClick: this._onMobileMenuButtonClick.bind(this)
+	                });
+	              }
+	              main_core.Dom.append(this.buttons.mobileMenu.render(), center);
 	            }
-	            center.appendChild(this.buttons.mobileMenu.render());
 	            break;
-	          case "chat":
-	            if (!this.buttons.chat) {
+	          case 'chat':
+	            if (this.buttons.chat) {
+	              this.buttons.chat.setBlocked(this.isButtonBlocked('chat'));
+	            } else {
 	              this.buttons.chat = new SimpleButton({
-	                "class": "chat",
-	                backgroundClass: "bx-messenger-videocall-panel-background-chat",
-	                text: BX.message("IM_M_CALL_BTN_CHAT"),
-	                blocked: this.isButtonBlocked("chat"),
+	                "class": 'chat',
+	                backgroundClass: 'bx-messenger-videocall-panel-background-chat',
+	                text: BX.message('IM_M_CALL_BTN_CHAT'),
+	                blocked: this.isButtonBlocked('chat'),
 	                onClick: this._onChatButtonClick.bind(this),
 	                onMouseOver: function onMouseOver(e) {
-	                  _this26._showHotKeyHint(e.currentTarget, "chat", _this26.keyModifier + " + C");
+	                  _this30._showHotKeyHint(e.currentTarget, 'chat', "".concat(_this30.keyModifier, " + C"));
 	                },
 	                onMouseOut: function onMouseOut() {
-	                  _this26._destroyHotKeyHint();
+	                  _this30._destroyHotKeyHint();
 	                }
 	              });
-	            } else {
-	              this.buttons.chat.setBlocked(this.isButtonBlocked('chat'));
 	            }
-	            center.appendChild(this.buttons.chat.render());
+	            if (rerender) {
+	              main_core.Dom.append(this.buttons.chat.render(), center);
+	            }
 	            break;
-	          case "floorRequest":
+	          case 'floorRequest':
 	            if (!this.buttons.floorRequest) {
 	              this.buttons.floorRequest = new SimpleButton({
-	                "class": "floor-request",
-	                backgroundClass: "bx-messenger-videocall-panel-background-floor-request",
-	                text: BX.message("IM_M_CALL_BTN_WANT_TO_SAY"),
-	                blocked: this.isButtonBlocked("floorRequest"),
+	                "class": 'floor-request',
+	                backgroundClass: 'bx-messenger-videocall-panel-background-floor-request',
+	                text: BX.message('IM_M_CALL_BTN_WANT_TO_SAY'),
+	                blocked: this.isButtonBlocked('floorRequest'),
 	                onClick: this._onFloorRequestButtonClick.bind(this),
 	                onMouseOver: function onMouseOver(e) {
-	                  _this26._showHotKeyHint(e.currentTarget, "floorRequest", _this26.keyModifier + " + H");
+	                  _this30._showHotKeyHint(e.currentTarget, 'floorRequest', "".concat(_this30.keyModifier, " + H"));
 	                },
 	                onMouseOut: function onMouseOut() {
-	                  return _this26._destroyHotKeyHint();
+	                  return _this30._destroyHotKeyHint();
 	                }
 	              });
 	            } else {
 	              this.buttons.floorRequest.setBlocked(this.isButtonBlocked('floorRequest'));
 	            }
-	            center.appendChild(this.buttons.floorRequest.render());
-	            break;
-	          case "more":
-	            if (!this.buttons.more) {
-	              this.buttons.more = new SimpleButton({
-	                "class": "more",
-	                onClick: this._onMoreButtonClick.bind(this)
-	              });
+	            if (rerender) {
+	              main_core.Dom.append(this.buttons.floorRequest.render(), center);
 	            }
-	            center.appendChild(this.buttons.more.render());
 	            break;
-	          case "spacer":
-	            panelInner.appendChild(main_core.Dom.create("div", {
-	              props: {
-	                className: "bx-messenger-videocall-panel-spacer"
+	          case 'more':
+	            if (rerender) {
+	              if (!this.buttons.more) {
+	                this.buttons.more = new SimpleButton({
+	                  "class": 'more',
+	                  onClick: this._onMoreButtonClick.bind(this)
+	                });
 	              }
-	            }));
+	              main_core.Dom.append(this.buttons.more.render(), center);
+	            }
+	            break;
+	          case 'spacer':
+	            if (rerender) {
+	              panelInner.appendChild(main_core.Dom.create('div', {
+	                props: {
+	                  className: 'bx-messenger-videocall-panel-spacer'
+	                }
+	              }));
+	            }
 	            break;
 	          /*case "history":
 	          	this.buttons.history = new Buttons.SimpleButton({
@@ -14737,33 +15027,40 @@ this.BX = this.BX || {};
 	    }
 	  }, {
 	    key: "renderTopButtons",
-	    value: function renderTopButtons(buttons) {
-	      var _this27 = this;
-	      var result = BX.createFragment();
+	    value: function renderTopButtons(buttons, rerender) {
+	      var _this31 = this;
 	      for (var i = 0; i < buttons.length; i++) {
 	        switch (buttons[i]) {
-	          case "watermark":
-	            this.buttons.waterMark = new WaterMarkButton({
-	              language: this.language
-	            });
-	            result.appendChild(this.buttons.waterMark.render());
+	          case 'watermark':
+	            if (!this.buttons.waterMark) {
+	              this.buttons.waterMark = new WaterMarkButton({
+	                language: this.language
+	              });
+	            }
+	            if (rerender) {
+	              main_core.Dom.append(this.buttons.waterMark.render(), this.elements.topPanel);
+	            }
 	            break;
-	          case "protected":
-	            this.buttons["protected"] = new TopFramelessButton({
-	              iconClass: "protected",
-	              textClass: "protected",
-	              text: BX.message("IM_M_CALL_PROTECTED").toLowerCase(),
-	              onMouseOver: function onMouseOver(e) {
-	                _this27.hintManager.popupParameters.events = null;
-	                _this27.hintManager.show(e.currentTarget, BX.message("IM_M_CALL_PROTECTED_HINT"));
-	              },
-	              onMouseOut: function onMouseOut() {
-	                _this27.hintManager.hide();
-	              }
-	            });
-	            result.appendChild(this.buttons["protected"].render());
+	          case 'protected':
+	            if (!this.buttons["protected"]) {
+	              this.buttons["protected"] = new TopFramelessButton({
+	                iconClass: 'protected',
+	                textClass: 'protected',
+	                text: BX.message('IM_M_CALL_PROTECTED').toLowerCase(),
+	                onMouseOver: function onMouseOver(e) {
+	                  _this31.hintManager.popupParameters.events = null;
+	                  _this31.hintManager.show(e.currentTarget, BX.message('IM_M_CALL_PROTECTED_HINT'));
+	                },
+	                onMouseOut: function onMouseOut() {
+	                  _this31.hintManager.hide();
+	                }
+	              });
+	            }
+	            if (rerender) {
+	              main_core.Dom.append(this.buttons["protected"].render(), this.elements.topPanel);
+	            }
 	            break;
-	          case "recordStatus":
+	          case 'recordStatus':
 	            if (this.buttons.recordStatus) {
 	              this.buttons.recordStatus.updateView();
 	            } else {
@@ -14776,98 +15073,133 @@ this.BX = this.BX || {};
 	                onMouseOut: this._onRecordMouseOut.bind(this)
 	              });
 	            }
-	            result.appendChild(this.buttons.recordStatus.render());
+	            if (rerender) {
+	              main_core.Dom.append(this.buttons.recordStatus.render(), this.elements.topPanel);
+	            }
 	            break;
-	          case "grid":
-	            this.buttons.grid = new TopButton({
-	              iconClass: this.layout == Layouts.Grid ? "speaker" : "grid",
-	              text: this.layout == Layouts.Grid ? BX.message("IM_M_CALL_SPEAKER_MODE") : BX.message("IM_M_CALL_GRID_MODE"),
-	              onClick: this._onGridButtonClick.bind(this),
-	              onMouseOver: function onMouseOver(e) {
-	                _this27._showHotKeyHint(e.currentTarget, "grid", _this27.keyModifier + " + W", {
-	                  position: "bottom"
-	                });
-	              },
-	              onMouseOut: function onMouseOut() {
-	                _this27._destroyHotKeyHint();
-	              }
-	            });
-	            result.appendChild(this.buttons.grid.render());
+	          case 'grid':
+	            if (this.buttons.grid) {
+	              this.buttons.grid.update({
+	                iconClass: this.layout === Layouts.Grid ? 'speaker' : 'grid',
+	                text: this.layout === Layouts.Grid ? BX.message('IM_M_CALL_SPEAKER_MODE') : BX.message('IM_M_CALL_GRID_MODE')
+	              });
+	            } else {
+	              this.buttons.grid = new TopButton({
+	                iconClass: this.layout === Layouts.Grid ? 'speaker' : 'grid',
+	                text: this.layout === Layouts.Grid ? BX.message('IM_M_CALL_SPEAKER_MODE') : BX.message('IM_M_CALL_GRID_MODE'),
+	                onClick: this._onGridButtonClick.bind(this),
+	                onMouseOver: function onMouseOver(e) {
+	                  _this31._showHotKeyHint(e.currentTarget, 'grid', "".concat(_this31.keyModifier, " + W"), {
+	                    position: 'bottom'
+	                  });
+	                },
+	                onMouseOut: function onMouseOut() {
+	                  _this31._destroyHotKeyHint();
+	                }
+	              });
+	            }
+	            if (rerender) {
+	              main_core.Dom.append(this.buttons.grid.render(), this.elements.topPanel);
+	            }
 	            break;
-	          case "fullscreen":
-	            this.buttons.fullscreen = new TopButton({
-	              iconClass: this.isFullScreen ? "fullscreen-leave" : "fullscreen-enter",
-	              text: this.isFullScreen ? BX.message("IM_M_CALL_WINDOW_MODE") : BX.message("IM_M_CALL_FULLSCREEN_MODE"),
-	              onClick: this._onFullScreenButtonClick.bind(this)
-	            });
-	            result.appendChild(this.buttons.fullscreen.render());
+	          case 'fullscreen':
+	            if (this.buttons.fullscreen) {
+	              this.buttons.fullscreen.update({
+	                iconClass: this.isFullScreen ? 'fullscreen-leave' : 'fullscreen-enter',
+	                text: this.isFullScreen ? BX.message('IM_M_CALL_WINDOW_MODE') : BX.message('IM_M_CALL_FULLSCREEN_MODE')
+	              });
+	            } else {
+	              this.buttons.fullscreen = new TopButton({
+	                iconClass: this.isFullScreen ? 'fullscreen-leave' : 'fullscreen-enter',
+	                text: this.isFullScreen ? BX.message('IM_M_CALL_WINDOW_MODE') : BX.message('IM_M_CALL_FULLSCREEN_MODE'),
+	                onClick: this._onFullScreenButtonClick.bind(this)
+	              });
+	            }
+	            if (rerender) {
+	              main_core.Dom.append(this.buttons.fullscreen.render(), this.elements.topPanel);
+	            }
 	            break;
-	          case "feedback":
-	            this.buttons.feedback = new TopButton({
-	              iconClass: 'feedback',
-	              text: BX.message('IM_OL_COMMENT_HEAD_BUTTON_VOTE'),
-	              onClick: this._onFeedbackButtonClick.bind(this)
-	            });
-	            result.appendChild(this.buttons.feedback.render());
+	          case 'feedback':
+	            if (!this.buttons.feedback) {
+	              this.buttons.feedback = new TopButton({
+	                iconClass: 'feedback',
+	                text: BX.message('IM_OL_COMMENT_HEAD_BUTTON_VOTE'),
+	                onClick: this._onFeedbackButtonClick.bind(this)
+	              });
+	            }
+	            if (rerender) {
+	              main_core.Dom.append(this.buttons.feedback.render(), this.elements.topPanel);
+	            }
 	            break;
-	          case "callcontrol":
-	            this.buttons.callcontrol = new TopButton({
-	              iconClass: 'callcontrol',
-	              text: BX.message('CALL_CALLCONTROL_BUTTON_LABEL'),
-	              onClick: this._onCallcontrolButtonClick.bind(this)
-	            });
-	            result.appendChild(this.buttons.callcontrol.render(), this.elements.topPanel);
+	          case 'callcontrol':
+	            if (!this.buttons.callcontrol) {
+	              this.buttons.callcontrol = new TopButton({
+	                iconClass: 'callcontrol',
+	                text: BX.message('CALL_CALLCONTROL_BUTTON_LABEL'),
+	                onClick: this._onCallcontrolButtonClick.bind(this)
+	              });
+	            }
+	            if (rerender) {
+	              main_core.Dom.append(this.buttons.callcontrol.render(), this.elements.topPanel);
+	            }
 	            break;
-	          case "participants":
-	            var foldButtonState = void 0;
-	            if (this.isFullScreen && this.layout == Layouts.Centered) {
+	          case 'participants':
+	            var foldButtonState = ParticipantsButton.FoldButtonState.Hidden;
+	            if (this.isFullScreen && this.layout === Layouts.Centered) {
 	              foldButtonState = this.isUserBlockFolded ? ParticipantsButton.FoldButtonState.Unfold : ParticipantsButton.FoldButtonState.Fold;
 	            } else if (this.showUsersButton) {
 	              foldButtonState = ParticipantsButton.FoldButtonState.Active;
-	            } else {
-	              foldButtonState = ParticipantsButton.FoldButtonState.Hidden;
 	            }
 	            if (this.buttons.participants) {
 	              this.buttons.participants.update({
 	                foldButtonState: foldButtonState,
-	                allowAdding: !this.isButtonBlocked("add"),
+	                allowAdding: !this.isButtonBlocked('add'),
 	                count: this.getConnectedUserCount(true)
 	              });
 	            } else {
 	              this.buttons.participants = new ParticipantsButton({
 	                foldButtonState: foldButtonState,
-	                allowAdding: !this.isButtonBlocked("add"),
+	                allowAdding: !this.isButtonBlocked('add'),
 	                count: this.getConnectedUserCount(true),
 	                onListClick: this._onParticipantsButtonListClick.bind(this),
 	                onAddClick: this._onAddButtonClick.bind(this)
 	              });
 	            }
-	            result.appendChild(this.buttons.participants.render());
+	            if (rerender) {
+	              main_core.Dom.append(this.buttons.participants.render(), this.elements.topPanel);
+	            }
 	            break;
-	          case "participantsMobile":
-	            this.buttons.participantsMobile = new ParticipantsButtonMobile({
-	              count: this.getConnectedUserCount(true),
-	              onClick: this._onParticipantsButtonMobileListClick.bind(this)
-	            });
-	            result.appendChild(this.buttons.participantsMobile.render());
+	          case 'participantsMobile':
+	            if (!this.buttons.participantsMobile) {
+	              this.buttons.participantsMobile = new ParticipantsButtonMobile({
+	                count: this.getConnectedUserCount(true),
+	                onClick: this._onParticipantsButtonMobileListClick.bind(this)
+	              });
+	            }
+	            if (rerender) {
+	              main_core.Dom.append(this.buttons.participantsMobile.render(), this.elements.topPanel);
+	            }
 	            break;
-	          case "separator":
-	            result.appendChild(main_core.Dom.create("div", {
-	              props: {
-	                className: "bx-messenger-videocall-top-separator"
-	              }
-	            }));
+	          case 'separator':
+	            if (rerender) {
+	              this.elements.topPanel.appendChild(main_core.Dom.create('div', {
+	                props: {
+	                  className: 'bx-messenger-videocall-top-separator'
+	                }
+	              }));
+	            }
 	            break;
-	          case "spacer":
-	            result.appendChild(main_core.Dom.create("div", {
-	              props: {
-	                className: "bx-messenger-videocall-top-panel-spacer"
-	              }
-	            }));
+	          case 'spacer':
+	            if (rerender) {
+	              this.elements.topPanel.appendChild(main_core.Dom.create('div', {
+	                props: {
+	                  className: 'bx-messenger-videocall-top-panel-spacer'
+	                }
+	              }));
+	            }
 	            break;
 	        }
 	      }
-	      return result;
 	    }
 	  }, {
 	    key: "updateCopilotState",
@@ -14927,7 +15259,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "createCopilotNotify",
 	    value: function createCopilotNotify(notifyType, callId) {
-	      var _this28 = this;
+	      var _this32 = this;
 	      if (!this.buttons.copilot) {
 	        return null;
 	      }
@@ -14935,7 +15267,7 @@ this.BX = this.BX || {};
 	        type: notifyType,
 	        bindElement: this.buttons.copilot.elements.root,
 	        onClose: function onClose() {
-	          _this28.copilotNotify = null;
+	          _this32.copilotNotify = null;
 	        },
 	        callId: callId
 	      });
@@ -14943,7 +15275,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "createAhaMomentNotifyCallcontrol",
 	    value: function createAhaMomentNotifyCallcontrol() {
-	      var _this29 = this;
+	      var _this33 = this;
 	      if (!this.buttons.callcontrol) {
 	        return;
 	      }
@@ -14957,8 +15289,8 @@ this.BX = this.BX || {};
 	        bindElement: this.buttons.callcontrol.elements.root,
 	        promoId: CALLCONTROL_PROMO_ID,
 	        onClose: function onClose() {
-	          _this29.needToShowCallcontrolPromo = false;
-	          _this29.ahaMomentNotifyCallcontrol = null;
+	          _this33.needToShowCallcontrolPromo = false;
+	          _this33.ahaMomentNotifyCallcontrol = null;
 	        }
 	      });
 	      this.ahaMomentNotifyCallcontrol.show();
@@ -15000,7 +15332,8 @@ this.BX = this.BX || {};
 	      if (this.getButtonActive('screen')) {
 	        buttonsList.push("stop-screen");
 	      }
-	      if (this.size === View.Size.Folded || this.isDocumentHidden) {
+	      var isViewHidden = this.viewVisibility.getCurrentVisibility() === DocumentVisibilityState.hidden;
+	      if (this.size === View.Size.Folded || this.isDocumentHidden || isViewHidden) {
 	        buttonsList.push("returnToCall");
 	      }
 
@@ -15071,9 +15404,14 @@ this.BX = this.BX || {};
 	      return blockedButtons;
 	    }
 	  }, {
+	    key: "_onPiPClose",
+	    value: function _onPiPClose() {
+	      this.eventEmitter.emit(EventName.onPiPClose);
+	    }
+	  }, {
 	    key: "toggleStatePictureInPictureCallWindow",
 	    value: function toggleStatePictureInPictureCallWindow(isActive) {
-	      var _this30 = this;
+	      var _this34 = this;
 	      if (isActive && !this.pictureInPictureCallWindow && Util.isPictureInPictureFeatureEnabled()) {
 	        this.pictureInPictureCallWindow = new PictureInPictureWindow({
 	          currentUser: this.getPictureInPictureCallWindowUser(),
@@ -15086,24 +15424,25 @@ this.BX = this.BX || {};
 	          preferInitialWindowPlacement: this.preferInitialWindowPlacementPictureInPicture,
 	          floorRequestNotifications: this.floorRequestNotifications,
 	          onClose: function onClose() {
-	            _this30.pictureInPictureCallWindow = null;
-	            _this30.currentPiPUserId = null;
+	            _this34.pictureInPictureCallWindow = null;
+	            _this34.currentPiPUserId = null;
+	            _this34._onPiPClose();
 	          },
 	          onButtonClick: function onButtonClick(_ref) {
 	            var buttonName = _ref.buttonName,
 	              event = _ref.event;
 	            switch (buttonName) {
 	              case "microphone":
-	                _this30._onMicrophoneButtonClick(event);
+	                _this34._onMicrophoneButtonClick(event);
 	                break;
 	              case "camera":
-	                _this30._onCameraButtonClick(event);
+	                _this34._onCameraButtonClick(event);
 	                break;
 	              case "returnToCall":
-	                _this30._onBodyClick(event);
+	                _this34._onBodyClick(event);
 	                break;
 	              case "stop-screen":
-	                _this30._onScreenButtonClick(event);
+	                _this34._onScreenButtonClick(event);
 	                break;
 	              default:
 	                break;
@@ -15111,7 +15450,7 @@ this.BX = this.BX || {};
 	          }
 	        });
 	        this.pictureInPictureCallWindow.checkAvailableAndCreate().then(function () {
-	          _this30.preferInitialWindowPlacementPictureInPicture = false;
+	          _this34.preferInitialWindowPlacementPictureInPicture = false;
 	        });
 	      }
 	      if (!isActive && this.pictureInPictureCallWindow) {
@@ -15149,7 +15488,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "updateUserList",
 	    value: function updateUserList(useShelvedRerenderQueue) {
-	      var _this31 = this;
+	      var _this35 = this;
 	      if (this.layout == Layouts.Mobile) {
 	        if (this.localUser != this.centralUser) {
 	          if (this.localUser.hasVideo()) {
@@ -15177,9 +15516,9 @@ this.BX = this.BX || {};
 	      if (useShelvedRerenderQueue) {
 	        this.shelvedRerenderQueue.forEach(function (el) {
 	          if (el.reason === RerenderReason.VideoEnabled) {
-	            _this31.updateRerenderQueue(el.userId, el.reason);
+	            _this35.updateRerenderQueue(el.userId, el.reason);
 	          } else if (el.reason === RerenderReason.VideoDisabled) {
-	            _this31.updateRerenderQueue(el.userId, el.reason);
+	            _this35.updateRerenderQueue(el.userId, el.reason);
 	          }
 	        });
 	        this.shelvedRerenderQueue.clear();
@@ -15200,7 +15539,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "showOverflownButtonsPopup",
 	    value: function showOverflownButtonsPopup() {
-	      var _this32 = this;
+	      var _this36 = this;
 	      if (this.overflownButtonsPopup) {
 	        this.overflownButtonsPopup.show();
 	        return;
@@ -15210,7 +15549,7 @@ this.BX = this.BX || {};
 	        id: 'bx-call-buttons-popup',
 	        bindElement: bindElement,
 	        targetContainer: this.container,
-	        content: this.renderButtons(Object.keys(this.overflownButtons)),
+	        content: this.renderButtons(Object.keys(this.overflownButtons), true),
 	        cacheable: false,
 	        closeIcon: false,
 	        autoHide: true,
@@ -15229,8 +15568,8 @@ this.BX = this.BX || {};
 	        contentBackground: 'unset',
 	        events: {
 	          onPopupDestroy: function onPopupDestroy() {
-	            _this32.overflownButtonsPopup = null;
-	            _this32.buttons.more.setActive(false);
+	            _this36.overflownButtonsPopup = null;
+	            _this36.buttons.more.setActive(false);
 	          }
 	        }
 	      });
@@ -15250,27 +15589,42 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "updateUserButtons",
 	    value: function updateUserButtons() {
+	      var currentConnectedUserCount = this.getConnectedUserCount();
+	      var previousConnectedUserCount = this.cache.get('previousConnectedUserCount');
+	      if (currentConnectedUserCount > 1 && previousConnectedUserCount > 1) {
+	        return;
+	      }
 	      for (var userId in this.users) {
 	        if (this.users.hasOwnProperty(userId)) {
-	          this.users[userId].allowPinButton = this.getConnectedUserCount() > 1;
+	          this.users[userId].allowPinButton = currentConnectedUserCount > 1;
 	        }
 	      }
 	    }
 	  }, {
 	    key: "updateButtons",
 	    value: function updateButtons() {
-	      var _this33 = this;
+	      var _this37 = this;
 	      var skippedElementsList = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
 	      if (!this.elements.panel) {
 	        return;
 	      }
 	      if (!skippedElementsList.includes('panel')) {
-	        main_core.Dom.clean(this.elements.panel);
-	        this.elements.panel.appendChild(this.renderButtons(this.getButtonList()));
+	        var buttonList = this.getButtonList();
+	        if (this.needToRerenderButtonList) {
+	          main_core.Dom.clean(this.elements.panel);
+	          main_core.Dom.append(this.renderButtons(buttonList, this.needToRerenderButtonList), this.elements.panel);
+	          this.needToRerenderButtonList = false;
+	        } else {
+	          this.renderButtons(buttonList);
+	        }
 	      }
-	      main_core.Dom.clean(this.elements.topPanel);
 	      if (this.elements.topPanel) {
-	        this.elements.topPanel.appendChild(this.renderTopButtons(this.getTopButtonList()));
+	        var topButtonList = this.getTopButtonList();
+	        if (this.needToRerenderTopButtonList) {
+	          main_core.Dom.clean(this.elements.topPanel);
+	        }
+	        this.renderTopButtons(topButtonList, this.needToRerenderTopButtonList);
+	        this.needToRerenderTopButtonList = false;
 	      }
 	      if (this.buttons.participantsMobile) {
 	        this.buttons.participantsMobile.setCount(this.getConnectedUserCount(true));
@@ -15283,8 +15637,8 @@ this.BX = this.BX || {};
 	      }
 	      if (this.needToShowCallcontrolPromo) {
 	        this.showCallcontrolPromoPopupTimeout = setTimeout(function () {
-	          if (_this33.size !== View.Size.Folded) {
-	            _this33.createAhaMomentNotifyCallcontrol();
+	          if (_this37.size !== View.Size.Folded) {
+	            _this37.createAhaMomentNotifyCallcontrol();
 	          }
 	        }, 1500);
 	      }
@@ -15377,19 +15731,19 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "scrollUserListUp",
 	    value: function scrollUserListUp() {
-	      var _this34 = this;
+	      var _this38 = this;
 	      this.stopScroll();
 	      this.scrollInterval = setInterval(function () {
-	        return _this34.elements.userList.container.scrollTop -= 10;
+	        return _this38.elements.userList.container.scrollTop -= 10;
 	      }, 20);
 	    }
 	  }, {
 	    key: "scrollUserListDown",
 	    value: function scrollUserListDown() {
-	      var _this35 = this;
+	      var _this39 = this;
 	      this.stopScroll();
 	      this.scrollInterval = setInterval(function () {
-	        return _this35.elements.userList.container.scrollTop += 10;
+	        return _this39.elements.userList.container.scrollTop += 10;
 	      }, 20);
 	    }
 	  }, {
@@ -15786,26 +16140,26 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "_onRecordToggleClick",
 	    value: function _onRecordToggleClick(e) {
-	      var _this36 = this;
+	      var _this40 = this;
 	      var limitObj = this.getRecordLimitation();
 	      this.onClickButtonWithLimit(limitObj, function () {
-	        if (_this36.recordState.state === View.RecordState.Stopped) {
-	          _this36._onRecordStartClick(e);
+	        if (_this40.recordState.state === View.RecordState.Stopped) {
+	          _this40._onRecordStartClick(e);
 	        } else {
-	          _this36._onRecordStopClick(e);
+	          _this40._onRecordStopClick(e);
 	        }
 	      });
 	    }
 	  }, {
 	    key: "_onForceRecordToggleClick",
 	    value: function _onForceRecordToggleClick(e) {
-	      var _this37 = this;
+	      var _this41 = this;
 	      var limitObj = this.getRecordLimitation();
 	      this.onClickButtonWithLimit(limitObj, function () {
-	        if (_this37.recordState.state === View.RecordState.Stopped) {
-	          _this37._onForceRecordStartClick(View.RecordType.Video);
+	        if (_this41.recordState.state === View.RecordState.Stopped) {
+	          _this41._onForceRecordStartClick(View.RecordType.Video);
 	        } else {
-	          _this37._onRecordStopClick(e);
+	          _this41._onRecordStopClick(e);
 	        }
 	      });
 	    }
@@ -16026,11 +16380,11 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "_onScreenButtonClick",
 	    value: function _onScreenButtonClick(e) {
-	      var _this38 = this;
+	      var _this42 = this;
 	      e.stopPropagation();
 	      var limitObj = this.getScreenSharingLimitation();
 	      this.onClickButtonWithLimit(limitObj, function () {
-	        _this38.eventEmitter.emit(EventName.onButtonClick, {
+	        _this42.eventEmitter.emit(EventName.onButtonClick, {
 	          buttonName: 'toggleScreenSharing',
 	          node: e.target
 	        });
@@ -16166,7 +16520,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "_onParticipantsListButtonClick",
 	    value: function _onParticipantsListButtonClick(e) {
-	      var _this39 = this;
+	      var _this43 = this;
 	      e.stopPropagation();
 	      var viewEvent = new main_core_events.BaseEvent({
 	        data: {
@@ -16185,7 +16539,7 @@ this.BX = this.BX || {};
 	        userList: Object.values(this.users),
 	        current: this.centralUser.id,
 	        onSelect: function onSelect(userId) {
-	          return _this39.setCentralUser(userId);
+	          return _this43.setCentralUser(userId);
 	        }
 	      }).show();
 	    }
@@ -16220,23 +16574,23 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "showRenameSlider",
 	    value: function showRenameSlider() {
-	      var _this40 = this;
+	      var _this44 = this;
 	      if (!this.renameSlider) {
 	        this.renameSlider = new MobileSlider({
 	          parent: this.elements.root,
 	          content: this.renderRenameSlider(),
 	          onClose: function onClose() {
-	            return _this40.renameSlider.destroy();
+	            return _this44.renameSlider.destroy();
 	          },
 	          onDestroy: function onDestroy() {
-	            return _this40.renameSlider = null;
+	            return _this44.renameSlider = null;
 	          }
 	        });
 	      }
 	      this.renameSlider.show();
 	      setTimeout(function () {
-	        _this40.elements.renameSlider.input.focus();
-	        _this40.elements.renameSlider.input.select();
+	        _this44.elements.renameSlider.input.focus();
+	        _this44.elements.renameSlider.input.select();
 	      }, 400);
 	    }
 	  }, {
@@ -16349,19 +16703,19 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "_applyMaxWidth",
 	    value: function _applyMaxWidth(animateUnsetProperty) {
-	      var _this41 = this;
+	      var _this45 = this;
 	      var containerDimensions = this.container.getBoundingClientRect();
 	      if (this.maxWidth !== null) {
 	        if (!this.elements.root.style.maxWidth && animateUnsetProperty) {
 	          this.elements.root.style.maxWidth = containerDimensions.width + 'px';
 	        }
 	        setTimeout(function () {
-	          return _this41.elements.root.style.maxWidth = Math.max(_this41.maxWidth, MIN_WIDTH) + 'px';
+	          return _this45.elements.root.style.maxWidth = Math.max(_this45.maxWidth, MIN_WIDTH) + 'px';
 	        }, 0);
 	      } else {
 	        this.elements.root.style.maxWidth = containerDimensions.width + 'px';
 	        this.elements.root.addEventListener('transitionend', function () {
-	          return _this41.elements.root.style.removeProperty('max-width');
+	          return _this45.elements.root.style.removeProperty('max-width');
 	        }, {
 	          once: true
 	        });
@@ -16399,7 +16753,7 @@ this.BX = this.BX || {};
 	        this.ahaMomentNotifyCallcontrol.close();
 	        this.ahaMomentNotifyCallcontrol = null;
 	      }
-	    }
+	    } // 594840
 	  }, {
 	    key: "destroy",
 	    value: function destroy() {
@@ -16450,6 +16804,7 @@ this.BX = this.BX || {};
 	      Hardware.unsubscribe(Hardware.Events.onChangeMicrophoneMuted, this.setMuted);
 	      Hardware.unsubscribe(Hardware.Events.onChangeCameraOn, this.setCameraState);
 	      this.clearCallcontrolPromo();
+	      this.viewVisibility.stopViewVisibilityChange();
 	    }
 	  }, {
 	    key: "isActivePiPFromController",
@@ -16479,6 +16834,40 @@ this.BX = this.BX || {};
 	  }]);
 	  return View;
 	}();
+	function _getViewVisibilityChange2() {
+	  var listners = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
+	  var handler = function handler(event) {
+	    var _iterator2 = _createForOfIteratorHelper$1(listners),
+	      _step2;
+	    try {
+	      for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
+	        var listner = _step2.value;
+	        listner(event, document.visibilityState);
+	      }
+	    } catch (err) {
+	      _iterator2.e(err);
+	    } finally {
+	      _iterator2.f();
+	    }
+	  };
+	  var startViewVisibilityChange = function startViewVisibilityChange() {
+	    document.addEventListener('visibilitychange', handler, {
+	      capture: true
+	    });
+	  };
+	  var stopViewVisibilityChange = function stopViewVisibilityChange() {
+	    document.removeEventListener('visibilitychange', handler, {
+	      capture: true
+	    });
+	  };
+	  return {
+	    startViewVisibilityChange: startViewVisibilityChange,
+	    stopViewVisibilityChange: stopViewVisibilityChange,
+	    getCurrentVisibility: function getCurrentVisibility() {
+	      return document.visibilityState;
+	    }
+	  };
+	}
 	babelHelpers.defineProperty(View, "Layout", Layouts);
 	babelHelpers.defineProperty(View, "Size", Size);
 	babelHelpers.defineProperty(View, "RecordState", RecordState);
@@ -16492,6 +16881,7 @@ this.BX = this.BX || {};
 	babelHelpers.defineProperty(View, "DeviceSelector", DeviceSelector);
 	babelHelpers.defineProperty(View, "NotificationManager", NotificationManager);
 	babelHelpers.defineProperty(View, "MIN_WIDTH", MIN_WIDTH);
+	babelHelpers.defineProperty(View, "DocumentVisibilityState", DocumentVisibilityState);
 
 	var VOLUME_THRESHOLD = 0.02;
 	var INACTIVITY_TIME = 2000;
@@ -16620,10 +17010,10 @@ this.BX = this.BX || {};
 	  return SimpleVAD;
 	}();
 
-	function _classPrivateFieldInitSpec$1(obj, privateMap, value) { _checkPrivateRedeclaration$1(obj, privateMap); privateMap.set(obj, value); }
-	function _classPrivateMethodInitSpec$1(obj, privateSet) { _checkPrivateRedeclaration$1(obj, privateSet); privateSet.add(obj); }
-	function _checkPrivateRedeclaration$1(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet$1(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _classPrivateFieldInitSpec$1(obj, privateMap, value) { _checkPrivateRedeclaration$2(obj, privateMap); privateMap.set(obj, value); }
+	function _classPrivateMethodInitSpec$2(obj, privateSet) { _checkPrivateRedeclaration$2(obj, privateSet); privateSet.add(obj); }
+	function _checkPrivateRedeclaration$2(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$2(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var ajaxActions = {
 	  decline: 'call.Call.decline'
 	};
@@ -16714,32 +17104,32 @@ this.BX = this.BX || {};
 	    var _this;
 	    babelHelpers.classCallCheck(this, ServerPlainCall);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(ServerPlainCall).call(this, _params));
-	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _beforeLeaveCall);
-	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onUnload);
-	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onPeerRTCQualityChanged);
-	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onPeerRTCStatsReceived);
-	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onPeerInviteTimeout);
-	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onPeerStateChanged);
-	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onPullEventCallCustomMessage);
-	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onPullEventFinish);
-	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onPullEventAssociatedEntityReplaced);
-	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onPullEventRecordState);
-	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onPullEventVideoPaused);
-	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onPullEventCameraState);
-	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onPullEventMicrophoneState);
-	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onPullEventVoiceStopped);
-	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onPullEventVoiceStarted);
-	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onPullEventIceCandidate);
-	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onPullEventConnectionAnswer);
-	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onPullEventConnectionOffer);
-	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onPullEventNegotiationNeeded);
-	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onPullEventHangup);
-	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onPullEventAnswerSelf);
-	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onPullEventAnswer);
-	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onPullEventUsersInvited);
-	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onPullEventUsersJoined);
-	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onNoAnswer);
-	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _changeRecordState);
+	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _beforeLeaveCall);
+	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _onUnload);
+	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _onPeerRTCQualityChanged);
+	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _onPeerRTCStatsReceived);
+	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _onPeerInviteTimeout);
+	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _onPeerStateChanged);
+	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _onPullEventCallCustomMessage);
+	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _onPullEventFinish);
+	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _onPullEventAssociatedEntityReplaced);
+	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _onPullEventRecordState);
+	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _onPullEventVideoPaused);
+	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _onPullEventCameraState);
+	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _onPullEventMicrophoneState);
+	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _onPullEventVoiceStopped);
+	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _onPullEventVoiceStarted);
+	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _onPullEventIceCandidate);
+	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _onPullEventConnectionAnswer);
+	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _onPullEventConnectionOffer);
+	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _onPullEventNegotiationNeeded);
+	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _onPullEventHangup);
+	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _onPullEventAnswerSelf);
+	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _onPullEventAnswer);
+	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _onPullEventUsersInvited);
+	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _onPullEventUsersJoined);
+	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _onNoAnswer);
+	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _changeRecordState);
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "setVideoEnabled", function (event) {
 	      if (_this.videoEnabled == event.data.isCameraOn) {
 	        return;
@@ -16824,31 +17214,31 @@ this.BX = this.BX || {};
 	        }
 	        var eventName = message.eventName;
 	        if (eventName === clientEvents.connectionOffer) {
-	          _classPrivateMethodGet$1(babelHelpers.assertThisInitialized(_this), _onPullEventConnectionOffer, _onPullEventConnectionOffer2).call(babelHelpers.assertThisInitialized(_this), message);
+	          _classPrivateMethodGet$2(babelHelpers.assertThisInitialized(_this), _onPullEventConnectionOffer, _onPullEventConnectionOffer2).call(babelHelpers.assertThisInitialized(_this), message);
 	        } else if (eventName === clientEvents.connectionAnswer) {
-	          _classPrivateMethodGet$1(babelHelpers.assertThisInitialized(_this), _onPullEventConnectionAnswer, _onPullEventConnectionAnswer2).call(babelHelpers.assertThisInitialized(_this), message);
+	          _classPrivateMethodGet$2(babelHelpers.assertThisInitialized(_this), _onPullEventConnectionAnswer, _onPullEventConnectionAnswer2).call(babelHelpers.assertThisInitialized(_this), message);
 	        } else if (eventName === clientEvents.negotiationNeeded) {
-	          _classPrivateMethodGet$1(babelHelpers.assertThisInitialized(_this), _onPullEventNegotiationNeeded, _onPullEventNegotiationNeeded2).call(babelHelpers.assertThisInitialized(_this), message);
+	          _classPrivateMethodGet$2(babelHelpers.assertThisInitialized(_this), _onPullEventNegotiationNeeded, _onPullEventNegotiationNeeded2).call(babelHelpers.assertThisInitialized(_this), message);
 	        } else if (eventName === clientEvents.iceCandidate) {
-	          _classPrivateMethodGet$1(babelHelpers.assertThisInitialized(_this), _onPullEventIceCandidate, _onPullEventIceCandidate2).call(babelHelpers.assertThisInitialized(_this), message);
+	          _classPrivateMethodGet$2(babelHelpers.assertThisInitialized(_this), _onPullEventIceCandidate, _onPullEventIceCandidate2).call(babelHelpers.assertThisInitialized(_this), message);
 	        } else if (eventName === clientEvents.microphoneState) {
-	          _classPrivateMethodGet$1(babelHelpers.assertThisInitialized(_this), _onPullEventMicrophoneState, _onPullEventMicrophoneState2).call(babelHelpers.assertThisInitialized(_this), message);
+	          _classPrivateMethodGet$2(babelHelpers.assertThisInitialized(_this), _onPullEventMicrophoneState, _onPullEventMicrophoneState2).call(babelHelpers.assertThisInitialized(_this), message);
 	        } else if (eventName === clientEvents.cameraState) {
-	          _classPrivateMethodGet$1(babelHelpers.assertThisInitialized(_this), _onPullEventCameraState, _onPullEventCameraState2).call(babelHelpers.assertThisInitialized(_this), message);
+	          _classPrivateMethodGet$2(babelHelpers.assertThisInitialized(_this), _onPullEventCameraState, _onPullEventCameraState2).call(babelHelpers.assertThisInitialized(_this), message);
 	        } else if (eventName === clientEvents.voiceStarted) {
-	          _classPrivateMethodGet$1(babelHelpers.assertThisInitialized(_this), _onPullEventVoiceStarted, _onPullEventVoiceStarted2).call(babelHelpers.assertThisInitialized(_this), message);
+	          _classPrivateMethodGet$2(babelHelpers.assertThisInitialized(_this), _onPullEventVoiceStarted, _onPullEventVoiceStarted2).call(babelHelpers.assertThisInitialized(_this), message);
 	        } else if (eventName === clientEvents.voiceStopped) {
-	          _classPrivateMethodGet$1(babelHelpers.assertThisInitialized(_this), _onPullEventVoiceStopped, _onPullEventVoiceStopped2).call(babelHelpers.assertThisInitialized(_this), message);
+	          _classPrivateMethodGet$2(babelHelpers.assertThisInitialized(_this), _onPullEventVoiceStopped, _onPullEventVoiceStopped2).call(babelHelpers.assertThisInitialized(_this), message);
 	        } else if (eventName === clientEvents.videoPaused) {
-	          _classPrivateMethodGet$1(babelHelpers.assertThisInitialized(_this), _onPullEventVideoPaused, _onPullEventVideoPaused2).call(babelHelpers.assertThisInitialized(_this), message);
+	          _classPrivateMethodGet$2(babelHelpers.assertThisInitialized(_this), _onPullEventVideoPaused, _onPullEventVideoPaused2).call(babelHelpers.assertThisInitialized(_this), message);
 	        } else if (eventName === clientEvents.recordState) {
-	          _classPrivateMethodGet$1(babelHelpers.assertThisInitialized(_this), _onPullEventRecordState, _onPullEventRecordState2).call(babelHelpers.assertThisInitialized(_this), message);
+	          _classPrivateMethodGet$2(babelHelpers.assertThisInitialized(_this), _onPullEventRecordState, _onPullEventRecordState2).call(babelHelpers.assertThisInitialized(_this), message);
 	        } else if (eventName === clientEvents.customMessage) {
 	          _this.runCallback(CallEvent.onCustomMessage, {
 	            message: message.message
 	          });
 	        } else if (eventName === clientEvents.usersInvited) {
-	          _classPrivateMethodGet$1(babelHelpers.assertThisInitialized(_this), _onPullEventUsersInvited, _onPullEventUsersInvited2).call(babelHelpers.assertThisInitialized(_this), message);
+	          _classPrivateMethodGet$2(babelHelpers.assertThisInitialized(_this), _onPullEventUsersInvited, _onPullEventUsersInvited2).call(babelHelpers.assertThisInitialized(_this), message);
 	        } else {
 	          _this.log("Unknown scenario event " + eventName);
 	        }
@@ -16910,7 +17300,7 @@ this.BX = this.BX || {};
 	    _this.turnServerLogin = BX.message('turn_server_login') || 'bitrix';
 	    _this.turnServerPassword = BX.message('turn_server_password') || 'bitrix';
 	    _this.userData = _params.userData;
-	    _this._onUnloadHandler = _classPrivateMethodGet$1(babelHelpers.assertThisInitialized(_this), _onUnload, _onUnload2).bind(babelHelpers.assertThisInitialized(_this));
+	    _this._onUnloadHandler = _classPrivateMethodGet$2(babelHelpers.assertThisInitialized(_this), _onUnload, _onUnload2).bind(babelHelpers.assertThisInitialized(_this));
 	    _this.enableMicAutoParameters = _params.enableMicAutoParameters !== false;
 	    _this.microphoneLevelInterval = null;
 	    _this.mediaMutedBySystem = false;
@@ -16948,10 +17338,10 @@ this.BX = this.BX || {};
 	        onMediaStopped: function onMediaStopped(e) {
 	          _this2.runCallback(CallEvent.onRemoteMediaStopped, e);
 	        },
-	        onStateChanged: _classPrivateMethodGet$1(this, _onPeerStateChanged, _onPeerStateChanged2).bind(this),
-	        onInviteTimeout: _classPrivateMethodGet$1(this, _onPeerInviteTimeout, _onPeerInviteTimeout2).bind(this),
-	        onRTCStatsReceived: _classPrivateMethodGet$1(this, _onPeerRTCStatsReceived, _onPeerRTCStatsReceived2).bind(this),
-	        onRTCQualityChanged: _classPrivateMethodGet$1(this, _onPeerRTCQualityChanged, _onPeerRTCQualityChanged2).bind(this),
+	        onStateChanged: _classPrivateMethodGet$2(this, _onPeerStateChanged, _onPeerStateChanged2).bind(this),
+	        onInviteTimeout: _classPrivateMethodGet$2(this, _onPeerInviteTimeout, _onPeerInviteTimeout2).bind(this),
+	        onRTCStatsReceived: _classPrivateMethodGet$2(this, _onPeerRTCStatsReceived, _onPeerRTCStatsReceived2).bind(this),
+	        onRTCQualityChanged: _classPrivateMethodGet$2(this, _onPeerRTCQualityChanged, _onPeerRTCQualityChanged2).bind(this),
 	        onNetworkProblem: function onNetworkProblem(e) {
 	          _this2.runCallback(CallEvent.onNetworkProblem, e);
 	        },
@@ -17041,7 +17431,7 @@ this.BX = this.BX || {};
 	    key: "sendRecordState",
 	    value: function sendRecordState(recordState) {
 	      recordState.senderId = this.userId;
-	      if (!_classPrivateMethodGet$1(this, _changeRecordState, _changeRecordState2).call(this, recordState)) {
+	      if (!_classPrivateMethodGet$2(this, _changeRecordState, _changeRecordState2).call(this, recordState)) {
 	        return false;
 	      }
 	      var users = [this.userId].concat(this.users);
@@ -17074,12 +17464,12 @@ this.BX = this.BX || {};
 	        return _this3.attachToConference();
 	      }).then(function () {
 	        if (!_this3.ready) {
-	          _classPrivateMethodGet$1(_this3, _beforeLeaveCall, _beforeLeaveCall2).call(_this3);
+	          _classPrivateMethodGet$2(_this3, _beforeLeaveCall, _beforeLeaveCall2).call(_this3);
 	          return;
 	        }
 	        clearTimeout(_this3.waitForAnswerTimeout);
 	        _this3.waitForAnswerTimeout = setTimeout(function () {
-	          _classPrivateMethodGet$1(_this3, _onNoAnswer, _onNoAnswer2).call(_this3);
+	          _classPrivateMethodGet$2(_this3, _onNoAnswer, _onNoAnswer2).call(_this3);
 	        }, invitePeriod);
 	        for (var i = 0; i < users.length; i++) {
 	          var userId = Number(users[i]);
@@ -17095,7 +17485,7 @@ this.BX = this.BX || {};
 	        }
 	      })["catch"](function (e) {
 	        console.error(e);
-	        _classPrivateMethodGet$1(_this3, _beforeLeaveCall, _beforeLeaveCall2).call(_this3);
+	        _classPrivateMethodGet$2(_this3, _beforeLeaveCall, _beforeLeaveCall2).call(_this3);
 	        _this3.runCallback(CallEvent.onCallFailure, e);
 	      });
 	    }
@@ -17689,12 +18079,12 @@ this.BX = this.BX || {};
 	          return _this9.attachToConference();
 	        }).then(function () {
 	          if (!_this9.ready) {
-	            _classPrivateMethodGet$1(_this9, _beforeLeaveCall, _beforeLeaveCall2).call(_this9);
+	            _classPrivateMethodGet$2(_this9, _beforeLeaveCall, _beforeLeaveCall2).call(_this9);
 	            return;
 	          }
 	          resolve();
 	        })["catch"](function (e) {
-	          _classPrivateMethodGet$1(_this9, _beforeLeaveCall, _beforeLeaveCall2).call(_this9);
+	          _classPrivateMethodGet$2(_this9, _beforeLeaveCall, _beforeLeaveCall2).call(_this9);
 	          _this9.runCallback(CallEvent.onCallFailure, e);
 	          reject(e);
 	        });
@@ -17739,7 +18129,7 @@ this.BX = this.BX || {};
 	        for (var userId in _this11.peers) {
 	          _this11.peers[userId].disconnect();
 	        }
-	        _classPrivateMethodGet$1(_this11, _beforeLeaveCall, _beforeLeaveCall2).call(_this11);
+	        _classPrivateMethodGet$2(_this11, _beforeLeaveCall, _beforeLeaveCall2).call(_this11);
 	        _this11.runCallback(CallEvent.onLeave, {
 	          local: true
 	        });
@@ -17886,12 +18276,12 @@ this.BX = this.BX || {};
 	    key: "__onPullEvent",
 	    value: function __onPullEvent(command, params, extra) {
 	      var handlers = {
-	        'Call::answer': _classPrivateMethodGet$1(this, _onPullEventAnswer, _onPullEventAnswer2).bind(this),
-	        'Call::hangup': _classPrivateMethodGet$1(this, _onPullEventHangup, _onPullEventHangup2).bind(this),
-	        'Call::usersJoined': _classPrivateMethodGet$1(this, _onPullEventUsersJoined, _onPullEventUsersJoined2).bind(this),
-	        'Call::associatedEntityReplaced': _classPrivateMethodGet$1(this, _onPullEventAssociatedEntityReplaced, _onPullEventAssociatedEntityReplaced2).bind(this),
-	        'Call::finish': _classPrivateMethodGet$1(this, _onPullEventFinish, _onPullEventFinish2).bind(this),
-	        'Call::customMessage': _classPrivateMethodGet$1(this, _onPullEventCallCustomMessage, _onPullEventCallCustomMessage2).bind(this)
+	        'Call::answer': _classPrivateMethodGet$2(this, _onPullEventAnswer, _onPullEventAnswer2).bind(this),
+	        'Call::hangup': _classPrivateMethodGet$2(this, _onPullEventHangup, _onPullEventHangup2).bind(this),
+	        'Call::usersJoined': _classPrivateMethodGet$2(this, _onPullEventUsersJoined, _onPullEventUsersJoined2).bind(this),
+	        'Call::associatedEntityReplaced': _classPrivateMethodGet$2(this, _onPullEventAssociatedEntityReplaced, _onPullEventAssociatedEntityReplaced2).bind(this),
+	        'Call::finish': _classPrivateMethodGet$2(this, _onPullEventFinish, _onPullEventFinish2).bind(this),
+	        'Call::customMessage': _classPrivateMethodGet$2(this, _onPullEventCallCustomMessage, _onPullEventCallCustomMessage2).bind(this)
 	      };
 	      if (handlers[command]) {
 	        if (command !== 'Call::ping') {
@@ -17914,7 +18304,7 @@ this.BX = this.BX || {};
 	          this.peers[userId].destroy();
 	        }
 	      }
-	      _classPrivateMethodGet$1(this, _beforeLeaveCall, _beforeLeaveCall2).call(this, finishCall);
+	      _classPrivateMethodGet$2(this, _beforeLeaveCall, _beforeLeaveCall2).call(this, finishCall);
 	      this.runCallback(CallEvent.onLeave, {
 	        local: true
 	      });
@@ -17990,7 +18380,7 @@ this.BX = this.BX || {};
 	function _onPullEventAnswer2(params) {
 	  var senderId = Number(params.senderId);
 	  if (senderId == this.userId) {
-	    return _classPrivateMethodGet$1(this, _onPullEventAnswerSelf, _onPullEventAnswerSelf2).call(this, params);
+	    return _classPrivateMethodGet$2(this, _onPullEventAnswerSelf, _onPullEventAnswerSelf2).call(this, params);
 	  }
 	  if (!this.ready) {
 	    return;
@@ -18248,8 +18638,8 @@ this.BX = this.BX || {};
 	var Signaling = /*#__PURE__*/function () {
 	  function Signaling(params) {
 	    babelHelpers.classCallCheck(this, Signaling);
-	    _classPrivateMethodInitSpec$1(this, _runRestAction);
-	    _classPrivateMethodInitSpec$1(this, _sendMessage);
+	    _classPrivateMethodInitSpec$2(this, _runRestAction);
+	    _classPrivateMethodInitSpec$2(this, _sendMessage);
 	    this.call = params.call;
 	  }
 	  babelHelpers.createClass(Signaling, [{
@@ -18260,42 +18650,42 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "sendUsersInvited",
 	    value: function sendUsersInvited(data) {
-	      _classPrivateMethodGet$1(this, _sendMessage, _sendMessage2).call(this, clientEvents.usersInvited, data);
+	      _classPrivateMethodGet$2(this, _sendMessage, _sendMessage2).call(this, clientEvents.usersInvited, data);
 	    }
 	  }, {
 	    key: "sendConnectionOffer",
 	    value: function sendConnectionOffer(data) {
-	      return _classPrivateMethodGet$1(this, _sendMessage, _sendMessage2).call(this, clientEvents.connectionOffer, data);
+	      return _classPrivateMethodGet$2(this, _sendMessage, _sendMessage2).call(this, clientEvents.connectionOffer, data);
 	    }
 	  }, {
 	    key: "sendConnectionAnswer",
 	    value: function sendConnectionAnswer(data) {
-	      return _classPrivateMethodGet$1(this, _sendMessage, _sendMessage2).call(this, clientEvents.connectionAnswer, data);
+	      return _classPrivateMethodGet$2(this, _sendMessage, _sendMessage2).call(this, clientEvents.connectionAnswer, data);
 	    }
 	  }, {
 	    key: "sendIceCandidate",
 	    value: function sendIceCandidate(data) {
-	      return _classPrivateMethodGet$1(this, _sendMessage, _sendMessage2).call(this, clientEvents.iceCandidate, data);
+	      return _classPrivateMethodGet$2(this, _sendMessage, _sendMessage2).call(this, clientEvents.iceCandidate, data);
 	    }
 	  }, {
 	    key: "sendNegotiationNeeded",
 	    value: function sendNegotiationNeeded(data) {
-	      return _classPrivateMethodGet$1(this, _sendMessage, _sendMessage2).call(this, clientEvents.negotiationNeeded, data);
+	      return _classPrivateMethodGet$2(this, _sendMessage, _sendMessage2).call(this, clientEvents.negotiationNeeded, data);
 	    }
 	  }, {
 	    key: "sendVoiceStarted",
 	    value: function sendVoiceStarted(data) {
-	      return _classPrivateMethodGet$1(this, _sendMessage, _sendMessage2).call(this, clientEvents.voiceStarted, data);
+	      return _classPrivateMethodGet$2(this, _sendMessage, _sendMessage2).call(this, clientEvents.voiceStarted, data);
 	    }
 	  }, {
 	    key: "sendVoiceStopped",
 	    value: function sendVoiceStopped(data) {
-	      return _classPrivateMethodGet$1(this, _sendMessage, _sendMessage2).call(this, clientEvents.voiceStopped, data);
+	      return _classPrivateMethodGet$2(this, _sendMessage, _sendMessage2).call(this, clientEvents.voiceStopped, data);
 	    }
 	  }, {
 	    key: "sendMicrophoneState",
 	    value: function sendMicrophoneState(users, microphoneState) {
-	      return _classPrivateMethodGet$1(this, _sendMessage, _sendMessage2).call(this, clientEvents.microphoneState, {
+	      return _classPrivateMethodGet$2(this, _sendMessage, _sendMessage2).call(this, clientEvents.microphoneState, {
 	        userId: users,
 	        microphoneState: microphoneState
 	      });
@@ -18303,7 +18693,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "sendCameraState",
 	    value: function sendCameraState(users, cameraState) {
-	      return _classPrivateMethodGet$1(this, _sendMessage, _sendMessage2).call(this, clientEvents.cameraState, {
+	      return _classPrivateMethodGet$2(this, _sendMessage, _sendMessage2).call(this, clientEvents.cameraState, {
 	        userId: users,
 	        cameraState: cameraState
 	      });
@@ -18311,7 +18701,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "sendVideoPaused",
 	    value: function sendVideoPaused(users, videoPaused) {
-	      return _classPrivateMethodGet$1(this, _sendMessage, _sendMessage2).call(this, clientEvents.videoPaused, {
+	      return _classPrivateMethodGet$2(this, _sendMessage, _sendMessage2).call(this, clientEvents.videoPaused, {
 	        userId: users,
 	        videoPaused: videoPaused
 	      });
@@ -18319,7 +18709,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "sendRecordState",
 	    value: function sendRecordState(users, recordState) {
-	      return _classPrivateMethodGet$1(this, _sendMessage, _sendMessage2).call(this, clientEvents.recordState, {
+	      return _classPrivateMethodGet$2(this, _sendMessage, _sendMessage2).call(this, clientEvents.recordState, {
 	        userId: users,
 	        recordState: recordState
 	      });
@@ -18327,7 +18717,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "sendCustomMessage",
 	    value: function sendCustomMessage(data) {
-	      return _classPrivateMethodGet$1(this, _sendMessage, _sendMessage2).call(this, clientEvents.customMessage, data);
+	      return _classPrivateMethodGet$2(this, _sendMessage, _sendMessage2).call(this, clientEvents.customMessage, data);
 	    }
 	  }]);
 	  return Signaling;
@@ -18359,18 +18749,18 @@ this.BX = this.BX || {};
 	var Peer = /*#__PURE__*/function () {
 	  function Peer(params) {
 	    babelHelpers.classCallCheck(this, Peer);
-	    _classPrivateMethodInitSpec$1(this, _onLostSignalingConnection);
-	    _classPrivateMethodInitSpec$1(this, _updateTracks);
-	    _classPrivateMethodInitSpec$1(this, _onVideoTrackEnded);
-	    _classPrivateMethodInitSpec$1(this, _onVideoTrackUnMuted);
-	    _classPrivateMethodInitSpec$1(this, _onVideoTrackMuted);
-	    _classPrivateMethodInitSpec$1(this, _onPeerConnectionRemoveStream);
-	    _classPrivateMethodInitSpec$1(this, _onPeerConnectionTrack);
-	    _classPrivateMethodInitSpec$1(this, _onPeerConnectionNegotiationNeeded);
-	    _classPrivateMethodInitSpec$1(this, _onPeerConnectionSignalingStateChange);
-	    _classPrivateMethodInitSpec$1(this, _onPeerConnectionIceGatheringStateChange);
-	    _classPrivateMethodInitSpec$1(this, _onPeerConnectionConnectionStateChange);
-	    _classPrivateMethodInitSpec$1(this, _createPeerConnection$1);
+	    _classPrivateMethodInitSpec$2(this, _onLostSignalingConnection);
+	    _classPrivateMethodInitSpec$2(this, _updateTracks);
+	    _classPrivateMethodInitSpec$2(this, _onVideoTrackEnded);
+	    _classPrivateMethodInitSpec$2(this, _onVideoTrackUnMuted);
+	    _classPrivateMethodInitSpec$2(this, _onVideoTrackMuted);
+	    _classPrivateMethodInitSpec$2(this, _onPeerConnectionRemoveStream);
+	    _classPrivateMethodInitSpec$2(this, _onPeerConnectionTrack);
+	    _classPrivateMethodInitSpec$2(this, _onPeerConnectionNegotiationNeeded);
+	    _classPrivateMethodInitSpec$2(this, _onPeerConnectionSignalingStateChange);
+	    _classPrivateMethodInitSpec$2(this, _onPeerConnectionIceGatheringStateChange);
+	    _classPrivateMethodInitSpec$2(this, _onPeerConnectionConnectionStateChange);
+	    _classPrivateMethodInitSpec$2(this, _createPeerConnection$1);
 	    this.call = params.call;
 	    this.userId = params.userId;
 	    this.ready = params.ready === true;
@@ -18474,13 +18864,13 @@ this.BX = this.BX || {};
 
 	    // event handlers
 	    this._onPeerConnectionIceCandidateHandler = this._onPeerConnectionIceCandidate.bind(this);
-	    this._onPeerConnectionConnectionStateChangeHandler = _classPrivateMethodGet$1(this, _onPeerConnectionConnectionStateChange, _onPeerConnectionConnectionStateChange2).bind(this);
-	    this._onPeerConnectionIceGatheringStateChangeHandler = _classPrivateMethodGet$1(this, _onPeerConnectionIceGatheringStateChange, _onPeerConnectionIceGatheringStateChange2).bind(this);
-	    this._onPeerConnectionSignalingStateChangeHandler = _classPrivateMethodGet$1(this, _onPeerConnectionSignalingStateChange, _onPeerConnectionSignalingStateChange2).bind(this);
+	    this._onPeerConnectionConnectionStateChangeHandler = _classPrivateMethodGet$2(this, _onPeerConnectionConnectionStateChange, _onPeerConnectionConnectionStateChange2).bind(this);
+	    this._onPeerConnectionIceGatheringStateChangeHandler = _classPrivateMethodGet$2(this, _onPeerConnectionIceGatheringStateChange, _onPeerConnectionIceGatheringStateChange2).bind(this);
+	    this._onPeerConnectionSignalingStateChangeHandler = _classPrivateMethodGet$2(this, _onPeerConnectionSignalingStateChange, _onPeerConnectionSignalingStateChange2).bind(this);
 	    //this._onPeerConnectionNegotiationNeededHandler = this._onPeerConnectionNegotiationNeeded.bind(this);
-	    this._onPeerConnectionTrackHandler = _classPrivateMethodGet$1(this, _onPeerConnectionTrack, _onPeerConnectionTrack2).bind(this);
-	    this._onPeerConnectionRemoveStreamHandler = _classPrivateMethodGet$1(this, _onPeerConnectionRemoveStream, _onPeerConnectionRemoveStream2).bind(this);
-	    this._updateTracksDebounced = main_core.Runtime.debounce(_classPrivateMethodGet$1(this, _updateTracks, _updateTracks2).bind(this), 50);
+	    this._onPeerConnectionTrackHandler = _classPrivateMethodGet$2(this, _onPeerConnectionTrack, _onPeerConnectionTrack2).bind(this);
+	    this._onPeerConnectionRemoveStreamHandler = _classPrivateMethodGet$2(this, _onPeerConnectionRemoveStream, _onPeerConnectionRemoveStream2).bind(this);
+	    this._updateTracksDebounced = main_core.Runtime.debounce(_classPrivateMethodGet$2(this, _updateTracks, _updateTracks2).bind(this), 50);
 	    this._waitTurnCandidatesTimeout = null;
 	    this.prevPercentPacketLostList = {
 	      incomingPacketLost: [],
@@ -18535,7 +18925,7 @@ this.BX = this.BX || {};
 	      }
 	      if (!this.peerConnection) {
 	        var connectionId = Util.getUuidv4();
-	        _classPrivateMethodGet$1(this, _createPeerConnection$1, _createPeerConnection2$1).call(this, connectionId);
+	        _classPrivateMethodGet$2(this, _createPeerConnection$1, _createPeerConnection2$1).call(this, connectionId);
 	      }
 	      this.updateOutgoingTracks();
 	      if (!skipOffer) {
@@ -19101,7 +19491,7 @@ this.BX = this.BX || {};
 	    key: "refreshSignalingTimeout",
 	    value: function refreshSignalingTimeout() {
 	      clearTimeout(this.signalingConnectionTimeout);
-	      this.signalingConnectionTimeout = setTimeout(_classPrivateMethodGet$1(this, _onLostSignalingConnection, _onLostSignalingConnection2).bind(this), signalingConnectionRefreshPeriod);
+	      this.signalingConnectionTimeout = setTimeout(_classPrivateMethodGet$2(this, _onLostSignalingConnection, _onLostSignalingConnection2).bind(this), signalingConnectionRefreshPeriod);
 	    }
 	  }, {
 	    key: "_onConnectionOfferReplyTimeout",
@@ -19134,10 +19524,10 @@ this.BX = this.BX || {};
 	      if (this.peerConnection) {
 	        if (this.peerConnectionId !== connectionId) {
 	          this._destroyPeerConnection();
-	          _classPrivateMethodGet$1(this, _createPeerConnection$1, _createPeerConnection2$1).call(this, connectionId);
+	          _classPrivateMethodGet$2(this, _createPeerConnection$1, _createPeerConnection2$1).call(this, connectionId);
 	        }
 	      } else {
-	        _classPrivateMethodGet$1(this, _createPeerConnection$1, _createPeerConnection2$1).call(this, connectionId);
+	        _classPrivateMethodGet$2(this, _createPeerConnection$1, _createPeerConnection2$1).call(this, connectionId);
 	      }
 	      this.applyOfferAndSendAnswer(sdp);
 	    }
@@ -19486,9 +19876,9 @@ this.BX = this.BX || {};
 	function _onPeerConnectionTrack2(e) {
 	  this.log("User " + this.userId + ": media track received: ", e.track.id + " (" + e.track.kind + ")");
 	  if (e.track.kind === "video") {
-	    e.track.addEventListener("mute", _classPrivateMethodGet$1(this, _onVideoTrackMuted, _onVideoTrackMuted2).bind(this));
-	    e.track.addEventListener("unmute", _classPrivateMethodGet$1(this, _onVideoTrackUnMuted, _onVideoTrackUnMuted2).bind(this));
-	    e.track.addEventListener("ended", _classPrivateMethodGet$1(this, _onVideoTrackEnded, _onVideoTrackEnded2).bind(this));
+	    e.track.addEventListener("mute", _classPrivateMethodGet$2(this, _onVideoTrackMuted, _onVideoTrackMuted2).bind(this));
+	    e.track.addEventListener("unmute", _classPrivateMethodGet$2(this, _onVideoTrackUnMuted, _onVideoTrackUnMuted2).bind(this));
+	    e.track.addEventListener("ended", _classPrivateMethodGet$2(this, _onVideoTrackEnded, _onVideoTrackEnded2).bind(this));
 	    if (this.trackList[e.track.id] === 'screen') {
 	      this.incomingScreenTrack = e.track;
 	    } else {
@@ -19556,13 +19946,29 @@ this.BX = this.BX || {};
 	  this.setSignalingConnected(false);
 	}
 
+	var UnsupportedBrowserFeatures = /*#__PURE__*/function () {
+	  function UnsupportedBrowserFeatures() {
+	    babelHelpers.classCallCheck(this, UnsupportedBrowserFeatures);
+	  }
+	  babelHelpers.createClass(UnsupportedBrowserFeatures, null, [{
+	    key: "isNotSupportDevicesListBeforeStream",
+	    get: function get() {
+	      return this.listOfDevicesBeforeStream.some(function (browser) {
+	        return browser;
+	      });
+	    }
+	  }]);
+	  return UnsupportedBrowserFeatures;
+	}();
+	babelHelpers.defineProperty(UnsupportedBrowserFeatures, "listOfDevicesBeforeStream", [BX.browser.IsFirefox()]);
+
 	var _MediaKinds;
 	function ownKeys$1(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
 	function _objectSpread$1(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$1(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$1(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
-	function _classPrivateFieldInitSpec$2(obj, privateMap, value) { _checkPrivateRedeclaration$2(obj, privateMap); privateMap.set(obj, value); }
-	function _classPrivateMethodInitSpec$2(obj, privateSet) { _checkPrivateRedeclaration$2(obj, privateSet); privateSet.add(obj); }
-	function _checkPrivateRedeclaration$2(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet$2(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _classPrivateFieldInitSpec$2(obj, privateMap, value) { _checkPrivateRedeclaration$3(obj, privateMap); privateMap.set(obj, value); }
+	function _classPrivateMethodInitSpec$3(obj, privateSet) { _checkPrivateRedeclaration$3(obj, privateSet); privateSet.add(obj); }
+	function _checkPrivateRedeclaration$3(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$3(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 
 	/**
 	 * Implements Call interface
@@ -19668,25 +20074,25 @@ this.BX = this.BX || {};
 	    var _this;
 	    babelHelpers.classCallCheck(this, BitrixCall);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(BitrixCall).call(this, config));
-	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _onNoAnswer$1);
-	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _changeRecordState$1);
-	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _onCallFailed);
-	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _onCallConnected);
-	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _setPublishingState);
+	    _classPrivateMethodInitSpec$3(babelHelpers.assertThisInitialized(_this), _onNoAnswer$1);
+	    _classPrivateMethodInitSpec$3(babelHelpers.assertThisInitialized(_this), _changeRecordState$1);
+	    _classPrivateMethodInitSpec$3(babelHelpers.assertThisInitialized(_this), _onCallFailed);
+	    _classPrivateMethodInitSpec$3(babelHelpers.assertThisInitialized(_this), _onCallConnected);
+	    _classPrivateMethodInitSpec$3(babelHelpers.assertThisInitialized(_this), _setPublishingState);
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "setMuted", function (event) {
 	      if (_this.muted === event.data.isMicrophoneMuted) {
 	        return;
 	      }
 	      _this.muted = event.data.isMicrophoneMuted;
 	      if (_this.BitrixCall) {
-	        if (!event.data.calledProgrammatically) {
+	        if (!event.data.calledProgrammatically && _this.muted) {
 	          _this.signaling.sendMicrophoneState(!_this.muted);
 	        }
 	        if (_this.muted) {
 	          _this.BitrixCall.disableAudio();
 	        } else {
 	          if (!_this.BitrixCall.isAudioPublished()) {
-	            _classPrivateMethodGet$2(babelHelpers.assertThisInitialized(_this), _setPublishingState, _setPublishingState2).call(babelHelpers.assertThisInitialized(_this), MediaStreamsKinds.Microphone, true);
+	            _classPrivateMethodGet$3(babelHelpers.assertThisInitialized(_this), _setPublishingState, _setPublishingState2).call(babelHelpers.assertThisInitialized(_this), MediaStreamsKinds.Microphone, true);
 	          }
 	          _this.BitrixCall.enableAudio();
 	        }
@@ -19703,7 +20109,7 @@ this.BX = this.BX || {};
 	        }
 	        if (_this.videoEnabled) {
 	          if (!_this.BitrixCall.isVideoPublished()) {
-	            _classPrivateMethodGet$2(babelHelpers.assertThisInitialized(_this), _setPublishingState, _setPublishingState2).call(babelHelpers.assertThisInitialized(_this), MediaStreamsKinds.Camera, true);
+	            _classPrivateMethodGet$3(babelHelpers.assertThisInitialized(_this), _setPublishingState, _setPublishingState2).call(babelHelpers.assertThisInitialized(_this), MediaStreamsKinds.Camera, true);
 	          }
 	          _this.localVideoShown = true;
 	          _this.BitrixCall.enableVideo({
@@ -19773,23 +20179,17 @@ this.BX = this.BX || {};
 	          description: 'GOT A #onPullEventHangup from user',
 	          pullEvent: '#onPullEventHangup'
 	        });
-
-	        //peer.participant = null; // task-605993 (task-601473)
-	        //peer.setReady(false);
-
-	        if (!peer.participant)
-	          // task-605993
-	          {
-	            if (params.code == 603) {
-	              peer.setDeclined(true);
-	            } else if (params.code == 486) {
-	              peer.setBusy(true);
-	              console.warn("user ".concat(senderId, " is busy"));
-	            }
-	            if (_this.ready && _this.type === CallType.Instant && !_this.isAnyoneParticipating()) {
-	              _this.hangup();
-	            }
+	        if (!peer.participant) {
+	          if (params.code == 603) {
+	            peer.setDeclined(true);
+	          } else if (params.code == 486) {
+	            peer.setBusy(true);
+	            console.warn("user ".concat(senderId, " is busy"));
 	          }
+	          if (_this.ready && _this.type === CallType.Instant && !_this.isAnyoneParticipating()) {
+	            _this.hangup();
+	          }
+	        }
 	      }
 	    });
 	    _classPrivateFieldInitSpec$2(babelHelpers.assertThisInitialized(_this), _onPullEventFinish$1, {
@@ -19816,6 +20216,7 @@ this.BX = this.BX || {};
 	          return;
 	        }
 	        _this.log('__onLocalMediaRendererAdded', kind);
+	        var isNotSupportDevicesListBeforeStream = UnsupportedBrowserFeatures.isNotSupportDevicesListBeforeStream;
 	        switch (e) {
 	          case MediaStreamsKinds.Camera:
 	            _this.BitrixCall.getLocalVideo().then(function (track) {
@@ -19831,6 +20232,9 @@ this.BX = this.BX || {};
 	                tag: 'main',
 	                stream: mediaRenderer.stream
 	              });
+	              if (isNotSupportDevicesListBeforeStream) {
+	                _this.runCallback(CallEvent.onGetUserMediaEnded, {});
+	              }
 	            });
 	            break;
 	          case MediaStreamsKinds.Screen:
@@ -19850,13 +20254,25 @@ this.BX = this.BX || {};
 	            });
 	            break;
 	          case MediaStreamsKinds.Microphone:
+	            if (!_this.BitrixCall) {
+	              return;
+	            }
+	            _this.signaling.sendMicrophoneState(true);
 	            _this.BitrixCall.getLocalAudio().then(function (track) {
-	              _classPrivateMethodGet$2(babelHelpers.assertThisInitialized(_this), _setPublishingState, _setPublishingState2).call(babelHelpers.assertThisInitialized(_this), MediaStreamsKinds.Microphone, false);
+	              _classPrivateMethodGet$3(babelHelpers.assertThisInitialized(_this), _setPublishingState, _setPublishingState2).call(babelHelpers.assertThisInitialized(_this), MediaStreamsKinds.Microphone, false);
 	              babelHelpers.classPrivateFieldGet(babelHelpers.assertThisInitialized(_this), _onMicAccessResult).call(babelHelpers.assertThisInitialized(_this), {
 	                result: true,
 	                stream: new MediaStream([track])
 	              });
+	              if (isNotSupportDevicesListBeforeStream) {
+	                _this.runCallback(CallEvent.onGetUserMediaEnded, {});
+	              }
 	            });
+	            if (Hardware.isMicrophoneMuted)
+	              // task-597518
+	              {
+	                _this.BitrixCall.disableAudio();
+	              }
 	            break;
 	        }
 	      }
@@ -19865,9 +20281,10 @@ this.BX = this.BX || {};
 	      writable: true,
 	      value: function value(e) {
 	        if (e === MediaStreamsKinds.Microphone) {
-	          _classPrivateMethodGet$2(babelHelpers.assertThisInitialized(_this), _setPublishingState, _setPublishingState2).call(babelHelpers.assertThisInitialized(_this), MediaStreamsKinds.Microphone, false);
+	          _classPrivateMethodGet$3(babelHelpers.assertThisInitialized(_this), _setPublishingState, _setPublishingState2).call(babelHelpers.assertThisInitialized(_this), MediaStreamsKinds.Microphone, false);
+	          _this.signaling.sendMicrophoneState(false);
 	        } else if (e === MediaStreamsKinds.Camera) {
-	          _classPrivateMethodGet$2(babelHelpers.assertThisInitialized(_this), _setPublishingState, _setPublishingState2).call(babelHelpers.assertThisInitialized(_this), MediaStreamsKinds.Camera, false);
+	          _classPrivateMethodGet$3(babelHelpers.assertThisInitialized(_this), _setPublishingState, _setPublishingState2).call(babelHelpers.assertThisInitialized(_this), MediaStreamsKinds.Camera, false);
 	        }
 	      }
 	    });
@@ -19922,9 +20339,6 @@ this.BX = this.BX || {};
 	        if (options.video) {
 	          _this.signaling.sendCameraState(true);
 	        }
-	        if (options.audio) {
-	          _this.signaling.sendMicrophoneState(true);
-	        }
 	      }
 	    });
 	    _classPrivateFieldInitSpec$2(babelHelpers.assertThisInitialized(_this), _onGetUserMediaEnded, {
@@ -19958,7 +20372,7 @@ this.BX = this.BX || {};
 	            });
 	            break;
 	          case MediaStreamsKinds.Microphone:
-	            _classPrivateMethodGet$2(babelHelpers.assertThisInitialized(_this), _setPublishingState, _setPublishingState2).call(babelHelpers.assertThisInitialized(_this), MediaStreamsKinds.Microphone, false);
+	            _classPrivateMethodGet$3(babelHelpers.assertThisInitialized(_this), _setPublishingState, _setPublishingState2).call(babelHelpers.assertThisInitialized(_this), MediaStreamsKinds.Microphone, false);
 	            _this.signaling.sendMicrophoneState(false);
 	            break;
 	          case MediaStreamsKinds.Screen:
@@ -20187,7 +20601,11 @@ this.BX = this.BX || {};
 	    });
 	    _classPrivateFieldInitSpec$2(babelHelpers.assertThisInitialized(_this), _onCallReconnecting$1, {
 	      writable: true,
-	      value: function value() {
+	      value: function value(params) {
+	        if (_this._reconnectionEventCount === 0) {
+	          params.reconnectionEventCount = _this.reconnectionEventCount + 1;
+	          _this.runCallback(CallEvent.onReconnecting, params);
+	        }
 	        if (_this.reconnectionEventCount++) {
 	          return;
 	        }
@@ -20214,15 +20632,14 @@ this.BX = this.BX || {};
 	        _this.log("Call reconnected");
 	        _this.sendTelemetryEvent("reconnect");
 	        _this.localUserState = UserState.Connected;
-	        _this.signaling.sendMicrophoneState(!Hardware.isMicrophoneMuted);
 	        if (!_this.BitrixCall.isAudioPublished()) {
-	          _classPrivateMethodGet$2(babelHelpers.assertThisInitialized(_this), _setPublishingState, _setPublishingState2).call(babelHelpers.assertThisInitialized(_this), MediaStreamsKinds.Microphone, true);
+	          _classPrivateMethodGet$3(babelHelpers.assertThisInitialized(_this), _setPublishingState, _setPublishingState2).call(babelHelpers.assertThisInitialized(_this), MediaStreamsKinds.Microphone, true);
 	        }
 	        _this.BitrixCall.enableAudio(Hardware.isMicrophoneMuted);
 	        _this.signaling.sendCameraState(Hardware.isCameraOn);
 	        if (Hardware.isCameraOn) {
 	          if (!_this.BitrixCall.isVideoPublished()) {
-	            _classPrivateMethodGet$2(babelHelpers.assertThisInitialized(_this), _setPublishingState, _setPublishingState2).call(babelHelpers.assertThisInitialized(_this), MediaStreamsKinds.Camera, true);
+	            _classPrivateMethodGet$3(babelHelpers.assertThisInitialized(_this), _setPublishingState, _setPublishingState2).call(babelHelpers.assertThisInitialized(_this), MediaStreamsKinds.Camera, true);
 	          }
 	          _this.BitrixCall.enableVideo({
 	            calledFrom: 'onCallReconnected'
@@ -20585,10 +21002,11 @@ this.BX = this.BX || {};
 	    _classPrivateFieldInitSpec$2(babelHelpers.assertThisInitialized(_this), _onRecorderStatusChanged, {
 	      writable: true,
 	      value: function value(status) {
-	        var ignoreError = status.code === RecorderStatus.DESTROYED;
+	        var ignoreError = status.code === RecorderStatus.DESTROYED || status.code === RecorderStatus.UNAVAILABLE;
 	        var error = ignoreError ? '' : status.errMsg;
 	        _this._recorderState = error ? _this._recorderState : status.code;
 	        var isCopilotActive = _this._recorderState === RecorderStatus.ENABLED;
+	        _this._recorderStateHasChange = true;
 	        _this.runCallback(CallEvent.onRecorderStatusChanged, {
 	          error: error,
 	          status: isCopilotActive
@@ -20631,6 +21049,7 @@ this.BX = this.BX || {};
 	      'Call::switchTrackRecordStatus': babelHelpers.classPrivateFieldGet(babelHelpers.assertThisInitialized(_this), _onPullEventSwitchTrackRecordStatus)
 	    };
 	    _this._recorderState = RecorderStatus.UNAVAILABLE;
+	    _this._recorderStateHasChange = false;
 	    _this._isCopilotFeaturesEnabled = true;
 	    _this._isRecordWhenCopilotActivePopupAlreadyShow = false;
 	    _this._isBoostExpired = false;
@@ -20727,7 +21146,7 @@ this.BX = this.BX || {};
 	          return;
 	        }
 	        if (this.BitrixCall.isVideoPublished()) {
-	          _classPrivateMethodGet$2(this, _setPublishingState, _setPublishingState2).call(this, MediaStreamsKinds.Camera, true);
+	          _classPrivateMethodGet$3(this, _setPublishingState, _setPublishingState2).call(this, MediaStreamsKinds.Camera, true);
 	        }
 	        this.BitrixCall.switchActiveVideoDevice(this.cameraId).then(function () {
 	          if (Hardware.isCameraOn) {
@@ -20745,13 +21164,13 @@ this.BX = this.BX || {};
 	                });
 	              })["finally"](function () {
 	                if (_this4.BitrixCall.isVideoPublished()) {
-	                  _classPrivateMethodGet$2(_this4, _setPublishingState, _setPublishingState2).call(_this4, MediaStreamsKinds.Camera, false);
+	                  _classPrivateMethodGet$3(_this4, _setPublishingState, _setPublishingState2).call(_this4, MediaStreamsKinds.Camera, false);
 	                }
 	              });
 	            } else if (!_this4.canChangeMediaDevices()) {
 	              _this4.runCallback(CallEvent.onNeedResetMediaDevicesState);
 	            } else {
-	              _classPrivateMethodGet$2(_this4, _setPublishingState, _setPublishingState2).call(_this4, MediaStreamsKinds.Camera, true);
+	              _classPrivateMethodGet$3(_this4, _setPublishingState, _setPublishingState2).call(_this4, MediaStreamsKinds.Camera, true);
 	              _this4.localVideoShown = true;
 	              _this4.BitrixCall.enableVideo({
 	                calledFrom: 'switchActiveVideoDevice',
@@ -20759,7 +21178,7 @@ this.BX = this.BX || {};
 	              });
 	            }
 	          } else {
-	            _classPrivateMethodGet$2(_this4, _setPublishingState, _setPublishingState2).call(_this4, MediaStreamsKinds.Camera, false);
+	            _classPrivateMethodGet$3(_this4, _setPublishingState, _setPublishingState2).call(_this4, MediaStreamsKinds.Camera, false);
 	          }
 	        })["catch"](function (e) {
 	          _this4.log(e);
@@ -20781,7 +21200,7 @@ this.BX = this.BX || {};
 	          babelHelpers.classPrivateFieldGet(this, _onBeforeLocalMediaRendererRemoved).call(this, MediaStreamsKinds.Microphone);
 	          return;
 	        }
-	        _classPrivateMethodGet$2(this, _setPublishingState, _setPublishingState2).call(this, MediaStreamsKinds.Microphone, true);
+	        _classPrivateMethodGet$3(this, _setPublishingState, _setPublishingState2).call(this, MediaStreamsKinds.Microphone, true);
 	        babelHelpers.classPrivateFieldGet(this, _onEndpointVoiceEnd).call(this, {
 	          userId: this.userId
 	        });
@@ -20800,7 +21219,7 @@ this.BX = this.BX || {};
 	            microphoneState: false
 	          });
 	        })["finally"](function () {
-	          _classPrivateMethodGet$2(_this5, _setPublishingState, _setPublishingState2).call(_this5, MediaStreamsKinds.Microphone, false);
+	          _classPrivateMethodGet$3(_this5, _setPublishingState, _setPublishingState2).call(_this5, MediaStreamsKinds.Microphone, false);
 	          if (Hardware.isMicrophoneMuted && !_this5.canChangeMediaDevices()) {
 	            _this5.BitrixCall.disableAudio();
 	          }
@@ -20868,7 +21287,7 @@ this.BX = this.BX || {};
 	    key: "sendRecordState",
 	    value: function sendRecordState(recordState) {
 	      recordState.senderId = this.userId;
-	      if (!_classPrivateMethodGet$2(this, _changeRecordState$1, _changeRecordState2$1).call(this, recordState)) {
+	      if (!_classPrivateMethodGet$3(this, _changeRecordState$1, _changeRecordState2$1).call(this, recordState)) {
 	        return;
 	      }
 	      this.runCallback(CallEvent.onUserRecordState, {
@@ -20960,7 +21379,7 @@ this.BX = this.BX || {};
 	        if (_this6.type === CallType.Instant) {
 	          clearTimeout(_this6.waitForAnswerTimeout);
 	          _this6.waitForAnswerTimeout = setTimeout(function () {
-	            _classPrivateMethodGet$2(_this6, _onNoAnswer$1, _onNoAnswer2$1).call(_this6);
+	            _classPrivateMethodGet$3(_this6, _onNoAnswer$1, _onNoAnswer2$1).call(_this6);
 	          }, invitePeriod$1);
 	        }
 	        _this6.state = CallState.Connected;
@@ -21140,9 +21559,12 @@ this.BX = this.BX || {};
 	        try {
 	          _this10.localUserState = UserState.Connecting;
 	          _this10.BitrixCall = new Call(_this10.userId);
-	          if (Hardware.isCameraOn) {
-	            _this10.localVideoShown = true;
-	          }
+
+	          /*if (Hardware.isCameraOn) // transfered to #onCallConnected
+	          {
+	          	this.localVideoShown = true;
+	          }*/
+
 	          _this10.joinedAsViewer = joinAsViewer;
 	          if (!_this10.BitrixCall) {
 	            _this10.log("Error: could not create Bitrix call");
@@ -21156,11 +21578,11 @@ this.BX = this.BX || {};
 	          _this10.bindCallEvents();
 	          _this10.subscribeHardwareChanges();
 	          _this10.BitrixCall.on('Connected', function () {
-	            _classPrivateMethodGet$2(_this10, _onCallConnected, _onCallConnected2).call(_this10);
+	            _classPrivateMethodGet$3(_this10, _onCallConnected, _onCallConnected2).call(_this10);
 	            resolve();
 	          });
 	          _this10.BitrixCall.on('Failed', function (e) {
-	            _classPrivateMethodGet$2(_this10, _onCallFailed, _onCallFailed2).call(_this10, e);
+	            _classPrivateMethodGet$3(_this10, _onCallFailed, _onCallFailed2).call(_this10, e);
 	            reject(e);
 	          });
 	          if (!_this10.ready) {
@@ -21415,7 +21837,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "isCopilotInitialized",
 	    get: function get() {
-	      return this._recorderState !== RecorderStatus.UNAVAILABLE;
+	      return this._recorderState !== RecorderStatus.UNAVAILABLE || this._recorderStateHasChange;
 	    }
 	  }, {
 	    key: "isCopilotActive",
@@ -21480,11 +21902,6 @@ this.BX = this.BX || {};
 	      return this._reconnectionEventCount;
 	    },
 	    set: function set(newValue) {
-	      if (this._reconnectionEventCount === 0 && newValue > 0) {
-	        this.runCallback(CallEvent.onReconnecting, {
-	          reconnectionEventCount: newValue
-	        });
-	      }
 	      if (newValue === 0) {
 	        this.runCallback(CallEvent.onReconnected);
 	      }
@@ -21509,6 +21926,12 @@ this.BX = this.BX || {};
 	  this.log("Call connected");
 	  this.sendTelemetryEvent("connect");
 	  this.localUserState = UserState.Connected;
+	  var MAX_USERS_WITH_VIDEO = Util.countDisableCameraNewJoinedUsersFeature();
+	  if (Util.isDisableCameraNewJoinedUsersFeatureEnabled() && this.BitrixCall.remoteParticipantsCount >= MAX_USERS_WITH_VIDEO)
+	    // task-596223
+	    {
+	      Hardware.isCameraOn = false;
+	    }
 	  if (!Util.havePermissionToBroadcast('cam')) {
 	    Hardware.isCameraOn = false;
 	  }
@@ -21516,15 +21939,15 @@ this.BX = this.BX || {};
 	    Hardware.isMicrophoneMuted = true;
 	  }
 	  this.BitrixCall.on('Failed', babelHelpers.classPrivateFieldGet(this, _onCallDisconnected$1));
-	  this.signaling.sendMicrophoneState(!Hardware.isMicrophoneMuted);
 	  this.signaling.sendCameraState(Hardware.isCameraOn);
 	  if (!this.BitrixCall.isAudioPublished()) {
-	    _classPrivateMethodGet$2(this, _setPublishingState, _setPublishingState2).call(this, MediaStreamsKinds.Microphone, true);
+	    _classPrivateMethodGet$3(this, _setPublishingState, _setPublishingState2).call(this, MediaStreamsKinds.Microphone, true);
 	  }
 	  this.BitrixCall.enableAudio(Hardware.isMicrophoneMuted);
 	  if (Hardware.isCameraOn) {
+	    this.localVideoShown = true;
 	    if (!this.BitrixCall.isVideoPublished()) {
-	      _classPrivateMethodGet$2(this, _setPublishingState, _setPublishingState2).call(this, MediaStreamsKinds.Camera, true);
+	      _classPrivateMethodGet$3(this, _setPublishingState, _setPublishingState2).call(this, MediaStreamsKinds.Camera, true);
 	    }
 	    this.BitrixCall.enableVideo({
 	      calledFrom: 'onCallConnected'
@@ -21594,54 +22017,54 @@ this.BX = this.BX || {};
 	var Signaling$1 = /*#__PURE__*/function () {
 	  function Signaling(params) {
 	    babelHelpers.classCallCheck(this, Signaling);
-	    _classPrivateMethodInitSpec$2(this, _runRestAction$1);
-	    _classPrivateMethodInitSpec$2(this, _sendMessage$1);
+	    _classPrivateMethodInitSpec$3(this, _runRestAction$1);
+	    _classPrivateMethodInitSpec$3(this, _sendMessage$1);
 	    this.call = params.call;
 	  }
 	  babelHelpers.createClass(Signaling, [{
 	    key: "inviteUsers",
 	    value: function inviteUsers(data) {
-	      return _classPrivateMethodGet$2(this, _runRestAction$1, _runRestAction2$1).call(this, ajaxActions$1.invite, data);
+	      return _classPrivateMethodGet$3(this, _runRestAction$1, _runRestAction2$1).call(this, ajaxActions$1.invite, data);
 	    }
 	  }, {
 	    key: "sendUsersInvited",
 	    value: function sendUsersInvited(data) {
-	      _classPrivateMethodGet$2(this, _sendMessage$1, _sendMessage2$1).call(this, clientEvents$1.usersInvited, {
+	      _classPrivateMethodGet$3(this, _sendMessage$1, _sendMessage2$1).call(this, clientEvents$1.usersInvited, {
 	        users: data.userData
 	      });
 	    }
 	  }, {
 	    key: "sendCameraState",
 	    value: function sendCameraState(cameraState) {
-	      return _classPrivateMethodGet$2(this, _sendMessage$1, _sendMessage2$1).call(this, clientEvents$1.cameraState, {
+	      return _classPrivateMethodGet$3(this, _sendMessage$1, _sendMessage2$1).call(this, clientEvents$1.cameraState, {
 	        cameraState: cameraState ? "Y" : "N"
 	      });
 	    }
 	  }, {
 	    key: "sendVideoPaused",
 	    value: function sendVideoPaused(videoPaused) {
-	      return _classPrivateMethodGet$2(this, _sendMessage$1, _sendMessage2$1).call(this, clientEvents$1.videoPaused, {
+	      return _classPrivateMethodGet$3(this, _sendMessage$1, _sendMessage2$1).call(this, clientEvents$1.videoPaused, {
 	        videoPaused: videoPaused ? "Y" : "N"
 	      });
 	    }
 	  }, {
 	    key: "sendMicrophoneState",
 	    value: function sendMicrophoneState(microphoneState) {
-	      return _classPrivateMethodGet$2(this, _sendMessage$1, _sendMessage2$1).call(this, clientEvents$1.microphoneState, {
+	      return _classPrivateMethodGet$3(this, _sendMessage$1, _sendMessage2$1).call(this, clientEvents$1.microphoneState, {
 	        microphoneState: microphoneState ? "Y" : "N"
 	      });
 	    }
 	  }, {
 	    key: "sendScreenState",
 	    value: function sendScreenState(screenState) {
-	      return _classPrivateMethodGet$2(this, _sendMessage$1, _sendMessage2$1).call(this, clientEvents$1.screenState, {
+	      return _classPrivateMethodGet$3(this, _sendMessage$1, _sendMessage2$1).call(this, clientEvents$1.screenState, {
 	        screenState: screenState ? "Y" : "N"
 	      });
 	    }
 	  }, {
 	    key: "sendRecordState",
 	    value: function sendRecordState(userId, recordState) {
-	      _classPrivateMethodGet$2(this, _sendMessage$1, _sendMessage2$1).call(this, clientEvents$1.recordState, {
+	      _classPrivateMethodGet$3(this, _sendMessage$1, _sendMessage2$1).call(this, clientEvents$1.recordState, {
 	        senderId: userId,
 	        recordState: recordState
 	      });
@@ -21649,7 +22072,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "sendCustomMessage",
 	    value: function sendCustomMessage(message, repeatOnConnect) {
-	      return _classPrivateMethodGet$2(this, _sendMessage$1, _sendMessage2$1).call(this, clientEvents$1.customMessage, {
+	      return _classPrivateMethodGet$3(this, _sendMessage$1, _sendMessage2$1).call(this, clientEvents$1.customMessage, {
 	        message: message,
 	        repeatOnConnect: !!repeatOnConnect
 	      });
@@ -21657,24 +22080,24 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "sendShowUsers",
 	    value: function sendShowUsers(users) {
-	      return _classPrivateMethodGet$2(this, _sendMessage$1, _sendMessage2$1).call(this, clientEvents$1.showUsers, {
+	      return _classPrivateMethodGet$3(this, _sendMessage$1, _sendMessage2$1).call(this, clientEvents$1.showUsers, {
 	        users: users
 	      });
 	    }
 	  }, {
 	    key: "sendShowAll",
 	    value: function sendShowAll() {
-	      return _classPrivateMethodGet$2(this, _sendMessage$1, _sendMessage2$1).call(this, clientEvents$1.showAll, {});
+	      return _classPrivateMethodGet$3(this, _sendMessage$1, _sendMessage2$1).call(this, clientEvents$1.showAll, {});
 	    }
 	  }, {
 	    key: "sendHideAll",
 	    value: function sendHideAll() {
-	      return _classPrivateMethodGet$2(this, _sendMessage$1, _sendMessage2$1).call(this, clientEvents$1.hideAll, {});
+	      return _classPrivateMethodGet$3(this, _sendMessage$1, _sendMessage2$1).call(this, clientEvents$1.hideAll, {});
 	    }
 	  }, {
 	    key: "sendUserInviteTimeout",
 	    value: function sendUserInviteTimeout(data) {
-	      return _classPrivateMethodGet$2(this, _sendMessage$1, _sendMessage2$1).call(this, clientEvents$1.userInviteTimeout, {
+	      return _classPrivateMethodGet$3(this, _sendMessage$1, _sendMessage2$1).call(this, clientEvents$1.userInviteTimeout, {
 	        data: data
 	      });
 	    }
@@ -21969,10 +22392,10 @@ this.BX = this.BX || {};
 
 	function ownKeys$2(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
 	function _objectSpread$2(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$2(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$2(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
-	function _regeneratorRuntime$2() { /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ _regeneratorRuntime$2 = function _regeneratorRuntime() { return exports; }; var exports = {}, Op = Object.prototype, hasOwn = Op.hasOwnProperty, defineProperty = Object.defineProperty || function (obj, key, desc) { obj[key] = desc.value; }, $Symbol = "function" == typeof Symbol ? Symbol : {}, iteratorSymbol = $Symbol.iterator || "@@iterator", asyncIteratorSymbol = $Symbol.asyncIterator || "@@asyncIterator", toStringTagSymbol = $Symbol.toStringTag || "@@toStringTag"; function define(obj, key, value) { return Object.defineProperty(obj, key, { value: value, enumerable: !0, configurable: !0, writable: !0 }), obj[key]; } try { define({}, ""); } catch (err) { define = function define(obj, key, value) { return obj[key] = value; }; } function wrap(innerFn, outerFn, self, tryLocsList) { var protoGenerator = outerFn && outerFn.prototype instanceof Generator ? outerFn : Generator, generator = Object.create(protoGenerator.prototype), context = new Context(tryLocsList || []); return defineProperty(generator, "_invoke", { value: makeInvokeMethod(innerFn, self, context) }), generator; } function tryCatch(fn, obj, arg) { try { return { type: "normal", arg: fn.call(obj, arg) }; } catch (err) { return { type: "throw", arg: err }; } } exports.wrap = wrap; var ContinueSentinel = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var IteratorPrototype = {}; define(IteratorPrototype, iteratorSymbol, function () { return this; }); var getProto = Object.getPrototypeOf, NativeIteratorPrototype = getProto && getProto(getProto(values([]))); NativeIteratorPrototype && NativeIteratorPrototype !== Op && hasOwn.call(NativeIteratorPrototype, iteratorSymbol) && (IteratorPrototype = NativeIteratorPrototype); var Gp = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(IteratorPrototype); function defineIteratorMethods(prototype) { ["next", "throw", "return"].forEach(function (method) { define(prototype, method, function (arg) { return this._invoke(method, arg); }); }); } function AsyncIterator(generator, PromiseImpl) { function invoke(method, arg, resolve, reject) { var record = tryCatch(generator[method], generator, arg); if ("throw" !== record.type) { var result = record.arg, value = result.value; return value && "object" == babelHelpers["typeof"](value) && hasOwn.call(value, "__await") ? PromiseImpl.resolve(value.__await).then(function (value) { invoke("next", value, resolve, reject); }, function (err) { invoke("throw", err, resolve, reject); }) : PromiseImpl.resolve(value).then(function (unwrapped) { result.value = unwrapped, resolve(result); }, function (error) { return invoke("throw", error, resolve, reject); }); } reject(record.arg); } var previousPromise; defineProperty(this, "_invoke", { value: function value(method, arg) { function callInvokeWithMethodAndArg() { return new PromiseImpl(function (resolve, reject) { invoke(method, arg, resolve, reject); }); } return previousPromise = previousPromise ? previousPromise.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); } }); } function makeInvokeMethod(innerFn, self, context) { var state = "suspendedStart"; return function (method, arg) { if ("executing" === state) throw new Error("Generator is already running"); if ("completed" === state) { if ("throw" === method) throw arg; return doneResult(); } for (context.method = method, context.arg = arg;;) { var delegate = context.delegate; if (delegate) { var delegateResult = maybeInvokeDelegate(delegate, context); if (delegateResult) { if (delegateResult === ContinueSentinel) continue; return delegateResult; } } if ("next" === context.method) context.sent = context._sent = context.arg;else if ("throw" === context.method) { if ("suspendedStart" === state) throw state = "completed", context.arg; context.dispatchException(context.arg); } else "return" === context.method && context.abrupt("return", context.arg); state = "executing"; var record = tryCatch(innerFn, self, context); if ("normal" === record.type) { if (state = context.done ? "completed" : "suspendedYield", record.arg === ContinueSentinel) continue; return { value: record.arg, done: context.done }; } "throw" === record.type && (state = "completed", context.method = "throw", context.arg = record.arg); } }; } function maybeInvokeDelegate(delegate, context) { var methodName = context.method, method = delegate.iterator[methodName]; if (undefined === method) return context.delegate = null, "throw" === methodName && delegate.iterator["return"] && (context.method = "return", context.arg = undefined, maybeInvokeDelegate(delegate, context), "throw" === context.method) || "return" !== methodName && (context.method = "throw", context.arg = new TypeError("The iterator does not provide a '" + methodName + "' method")), ContinueSentinel; var record = tryCatch(method, delegate.iterator, context.arg); if ("throw" === record.type) return context.method = "throw", context.arg = record.arg, context.delegate = null, ContinueSentinel; var info = record.arg; return info ? info.done ? (context[delegate.resultName] = info.value, context.next = delegate.nextLoc, "return" !== context.method && (context.method = "next", context.arg = undefined), context.delegate = null, ContinueSentinel) : info : (context.method = "throw", context.arg = new TypeError("iterator result is not an object"), context.delegate = null, ContinueSentinel); } function pushTryEntry(locs) { var entry = { tryLoc: locs[0] }; 1 in locs && (entry.catchLoc = locs[1]), 2 in locs && (entry.finallyLoc = locs[2], entry.afterLoc = locs[3]), this.tryEntries.push(entry); } function resetTryEntry(entry) { var record = entry.completion || {}; record.type = "normal", delete record.arg, entry.completion = record; } function Context(tryLocsList) { this.tryEntries = [{ tryLoc: "root" }], tryLocsList.forEach(pushTryEntry, this), this.reset(!0); } function values(iterable) { if (iterable) { var iteratorMethod = iterable[iteratorSymbol]; if (iteratorMethod) return iteratorMethod.call(iterable); if ("function" == typeof iterable.next) return iterable; if (!isNaN(iterable.length)) { var i = -1, next = function next() { for (; ++i < iterable.length;) if (hasOwn.call(iterable, i)) return next.value = iterable[i], next.done = !1, next; return next.value = undefined, next.done = !0, next; }; return next.next = next; } } return { next: doneResult }; } function doneResult() { return { value: undefined, done: !0 }; } return GeneratorFunction.prototype = GeneratorFunctionPrototype, defineProperty(Gp, "constructor", { value: GeneratorFunctionPrototype, configurable: !0 }), defineProperty(GeneratorFunctionPrototype, "constructor", { value: GeneratorFunction, configurable: !0 }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, toStringTagSymbol, "GeneratorFunction"), exports.isGeneratorFunction = function (genFun) { var ctor = "function" == typeof genFun && genFun.constructor; return !!ctor && (ctor === GeneratorFunction || "GeneratorFunction" === (ctor.displayName || ctor.name)); }, exports.mark = function (genFun) { return Object.setPrototypeOf ? Object.setPrototypeOf(genFun, GeneratorFunctionPrototype) : (genFun.__proto__ = GeneratorFunctionPrototype, define(genFun, toStringTagSymbol, "GeneratorFunction")), genFun.prototype = Object.create(Gp), genFun; }, exports.awrap = function (arg) { return { __await: arg }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, asyncIteratorSymbol, function () { return this; }), exports.AsyncIterator = AsyncIterator, exports.async = function (innerFn, outerFn, self, tryLocsList, PromiseImpl) { void 0 === PromiseImpl && (PromiseImpl = Promise); var iter = new AsyncIterator(wrap(innerFn, outerFn, self, tryLocsList), PromiseImpl); return exports.isGeneratorFunction(outerFn) ? iter : iter.next().then(function (result) { return result.done ? result.value : iter.next(); }); }, defineIteratorMethods(Gp), define(Gp, toStringTagSymbol, "Generator"), define(Gp, iteratorSymbol, function () { return this; }), define(Gp, "toString", function () { return "[object Generator]"; }), exports.keys = function (val) { var object = Object(val), keys = []; for (var key in object) keys.push(key); return keys.reverse(), function next() { for (; keys.length;) { var key = keys.pop(); if (key in object) return next.value = key, next.done = !1, next; } return next.done = !0, next; }; }, exports.values = values, Context.prototype = { constructor: Context, reset: function reset(skipTempReset) { if (this.prev = 0, this.next = 0, this.sent = this._sent = undefined, this.done = !1, this.delegate = null, this.method = "next", this.arg = undefined, this.tryEntries.forEach(resetTryEntry), !skipTempReset) for (var name in this) "t" === name.charAt(0) && hasOwn.call(this, name) && !isNaN(+name.slice(1)) && (this[name] = undefined); }, stop: function stop() { this.done = !0; var rootRecord = this.tryEntries[0].completion; if ("throw" === rootRecord.type) throw rootRecord.arg; return this.rval; }, dispatchException: function dispatchException(exception) { if (this.done) throw exception; var context = this; function handle(loc, caught) { return record.type = "throw", record.arg = exception, context.next = loc, caught && (context.method = "next", context.arg = undefined), !!caught; } for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i], record = entry.completion; if ("root" === entry.tryLoc) return handle("end"); if (entry.tryLoc <= this.prev) { var hasCatch = hasOwn.call(entry, "catchLoc"), hasFinally = hasOwn.call(entry, "finallyLoc"); if (hasCatch && hasFinally) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } else if (hasCatch) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); } else { if (!hasFinally) throw new Error("try statement without catch or finally"); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } } } }, abrupt: function abrupt(type, arg) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc <= this.prev && hasOwn.call(entry, "finallyLoc") && this.prev < entry.finallyLoc) { var finallyEntry = entry; break; } } finallyEntry && ("break" === type || "continue" === type) && finallyEntry.tryLoc <= arg && arg <= finallyEntry.finallyLoc && (finallyEntry = null); var record = finallyEntry ? finallyEntry.completion : {}; return record.type = type, record.arg = arg, finallyEntry ? (this.method = "next", this.next = finallyEntry.finallyLoc, ContinueSentinel) : this.complete(record); }, complete: function complete(record, afterLoc) { if ("throw" === record.type) throw record.arg; return "break" === record.type || "continue" === record.type ? this.next = record.arg : "return" === record.type ? (this.rval = this.arg = record.arg, this.method = "return", this.next = "end") : "normal" === record.type && afterLoc && (this.next = afterLoc), ContinueSentinel; }, finish: function finish(finallyLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.finallyLoc === finallyLoc) return this.complete(entry.completion, entry.afterLoc), resetTryEntry(entry), ContinueSentinel; } }, "catch": function _catch(tryLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc === tryLoc) { var record = entry.completion; if ("throw" === record.type) { var thrown = record.arg; resetTryEntry(entry); } return thrown; } } throw new Error("illegal catch attempt"); }, delegateYield: function delegateYield(iterable, resultName, nextLoc) { return this.delegate = { iterator: values(iterable), resultName: resultName, nextLoc: nextLoc }, "next" === this.method && (this.arg = undefined), ContinueSentinel; } }, exports; }
-	function _classPrivateMethodInitSpec$3(obj, privateSet) { _checkPrivateRedeclaration$3(obj, privateSet); privateSet.add(obj); }
-	function _checkPrivateRedeclaration$3(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet$3(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _regeneratorRuntime$3() { /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ _regeneratorRuntime$3 = function _regeneratorRuntime() { return exports; }; var exports = {}, Op = Object.prototype, hasOwn = Op.hasOwnProperty, defineProperty = Object.defineProperty || function (obj, key, desc) { obj[key] = desc.value; }, $Symbol = "function" == typeof Symbol ? Symbol : {}, iteratorSymbol = $Symbol.iterator || "@@iterator", asyncIteratorSymbol = $Symbol.asyncIterator || "@@asyncIterator", toStringTagSymbol = $Symbol.toStringTag || "@@toStringTag"; function define(obj, key, value) { return Object.defineProperty(obj, key, { value: value, enumerable: !0, configurable: !0, writable: !0 }), obj[key]; } try { define({}, ""); } catch (err) { define = function define(obj, key, value) { return obj[key] = value; }; } function wrap(innerFn, outerFn, self, tryLocsList) { var protoGenerator = outerFn && outerFn.prototype instanceof Generator ? outerFn : Generator, generator = Object.create(protoGenerator.prototype), context = new Context(tryLocsList || []); return defineProperty(generator, "_invoke", { value: makeInvokeMethod(innerFn, self, context) }), generator; } function tryCatch(fn, obj, arg) { try { return { type: "normal", arg: fn.call(obj, arg) }; } catch (err) { return { type: "throw", arg: err }; } } exports.wrap = wrap; var ContinueSentinel = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var IteratorPrototype = {}; define(IteratorPrototype, iteratorSymbol, function () { return this; }); var getProto = Object.getPrototypeOf, NativeIteratorPrototype = getProto && getProto(getProto(values([]))); NativeIteratorPrototype && NativeIteratorPrototype !== Op && hasOwn.call(NativeIteratorPrototype, iteratorSymbol) && (IteratorPrototype = NativeIteratorPrototype); var Gp = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(IteratorPrototype); function defineIteratorMethods(prototype) { ["next", "throw", "return"].forEach(function (method) { define(prototype, method, function (arg) { return this._invoke(method, arg); }); }); } function AsyncIterator(generator, PromiseImpl) { function invoke(method, arg, resolve, reject) { var record = tryCatch(generator[method], generator, arg); if ("throw" !== record.type) { var result = record.arg, value = result.value; return value && "object" == babelHelpers["typeof"](value) && hasOwn.call(value, "__await") ? PromiseImpl.resolve(value.__await).then(function (value) { invoke("next", value, resolve, reject); }, function (err) { invoke("throw", err, resolve, reject); }) : PromiseImpl.resolve(value).then(function (unwrapped) { result.value = unwrapped, resolve(result); }, function (error) { return invoke("throw", error, resolve, reject); }); } reject(record.arg); } var previousPromise; defineProperty(this, "_invoke", { value: function value(method, arg) { function callInvokeWithMethodAndArg() { return new PromiseImpl(function (resolve, reject) { invoke(method, arg, resolve, reject); }); } return previousPromise = previousPromise ? previousPromise.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); } }); } function makeInvokeMethod(innerFn, self, context) { var state = "suspendedStart"; return function (method, arg) { if ("executing" === state) throw new Error("Generator is already running"); if ("completed" === state) { if ("throw" === method) throw arg; return doneResult(); } for (context.method = method, context.arg = arg;;) { var delegate = context.delegate; if (delegate) { var delegateResult = maybeInvokeDelegate(delegate, context); if (delegateResult) { if (delegateResult === ContinueSentinel) continue; return delegateResult; } } if ("next" === context.method) context.sent = context._sent = context.arg;else if ("throw" === context.method) { if ("suspendedStart" === state) throw state = "completed", context.arg; context.dispatchException(context.arg); } else "return" === context.method && context.abrupt("return", context.arg); state = "executing"; var record = tryCatch(innerFn, self, context); if ("normal" === record.type) { if (state = context.done ? "completed" : "suspendedYield", record.arg === ContinueSentinel) continue; return { value: record.arg, done: context.done }; } "throw" === record.type && (state = "completed", context.method = "throw", context.arg = record.arg); } }; } function maybeInvokeDelegate(delegate, context) { var methodName = context.method, method = delegate.iterator[methodName]; if (undefined === method) return context.delegate = null, "throw" === methodName && delegate.iterator["return"] && (context.method = "return", context.arg = undefined, maybeInvokeDelegate(delegate, context), "throw" === context.method) || "return" !== methodName && (context.method = "throw", context.arg = new TypeError("The iterator does not provide a '" + methodName + "' method")), ContinueSentinel; var record = tryCatch(method, delegate.iterator, context.arg); if ("throw" === record.type) return context.method = "throw", context.arg = record.arg, context.delegate = null, ContinueSentinel; var info = record.arg; return info ? info.done ? (context[delegate.resultName] = info.value, context.next = delegate.nextLoc, "return" !== context.method && (context.method = "next", context.arg = undefined), context.delegate = null, ContinueSentinel) : info : (context.method = "throw", context.arg = new TypeError("iterator result is not an object"), context.delegate = null, ContinueSentinel); } function pushTryEntry(locs) { var entry = { tryLoc: locs[0] }; 1 in locs && (entry.catchLoc = locs[1]), 2 in locs && (entry.finallyLoc = locs[2], entry.afterLoc = locs[3]), this.tryEntries.push(entry); } function resetTryEntry(entry) { var record = entry.completion || {}; record.type = "normal", delete record.arg, entry.completion = record; } function Context(tryLocsList) { this.tryEntries = [{ tryLoc: "root" }], tryLocsList.forEach(pushTryEntry, this), this.reset(!0); } function values(iterable) { if (iterable) { var iteratorMethod = iterable[iteratorSymbol]; if (iteratorMethod) return iteratorMethod.call(iterable); if ("function" == typeof iterable.next) return iterable; if (!isNaN(iterable.length)) { var i = -1, next = function next() { for (; ++i < iterable.length;) if (hasOwn.call(iterable, i)) return next.value = iterable[i], next.done = !1, next; return next.value = undefined, next.done = !0, next; }; return next.next = next; } } return { next: doneResult }; } function doneResult() { return { value: undefined, done: !0 }; } return GeneratorFunction.prototype = GeneratorFunctionPrototype, defineProperty(Gp, "constructor", { value: GeneratorFunctionPrototype, configurable: !0 }), defineProperty(GeneratorFunctionPrototype, "constructor", { value: GeneratorFunction, configurable: !0 }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, toStringTagSymbol, "GeneratorFunction"), exports.isGeneratorFunction = function (genFun) { var ctor = "function" == typeof genFun && genFun.constructor; return !!ctor && (ctor === GeneratorFunction || "GeneratorFunction" === (ctor.displayName || ctor.name)); }, exports.mark = function (genFun) { return Object.setPrototypeOf ? Object.setPrototypeOf(genFun, GeneratorFunctionPrototype) : (genFun.__proto__ = GeneratorFunctionPrototype, define(genFun, toStringTagSymbol, "GeneratorFunction")), genFun.prototype = Object.create(Gp), genFun; }, exports.awrap = function (arg) { return { __await: arg }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, asyncIteratorSymbol, function () { return this; }), exports.AsyncIterator = AsyncIterator, exports.async = function (innerFn, outerFn, self, tryLocsList, PromiseImpl) { void 0 === PromiseImpl && (PromiseImpl = Promise); var iter = new AsyncIterator(wrap(innerFn, outerFn, self, tryLocsList), PromiseImpl); return exports.isGeneratorFunction(outerFn) ? iter : iter.next().then(function (result) { return result.done ? result.value : iter.next(); }); }, defineIteratorMethods(Gp), define(Gp, toStringTagSymbol, "Generator"), define(Gp, iteratorSymbol, function () { return this; }), define(Gp, "toString", function () { return "[object Generator]"; }), exports.keys = function (val) { var object = Object(val), keys = []; for (var key in object) keys.push(key); return keys.reverse(), function next() { for (; keys.length;) { var key = keys.pop(); if (key in object) return next.value = key, next.done = !1, next; } return next.done = !0, next; }; }, exports.values = values, Context.prototype = { constructor: Context, reset: function reset(skipTempReset) { if (this.prev = 0, this.next = 0, this.sent = this._sent = undefined, this.done = !1, this.delegate = null, this.method = "next", this.arg = undefined, this.tryEntries.forEach(resetTryEntry), !skipTempReset) for (var name in this) "t" === name.charAt(0) && hasOwn.call(this, name) && !isNaN(+name.slice(1)) && (this[name] = undefined); }, stop: function stop() { this.done = !0; var rootRecord = this.tryEntries[0].completion; if ("throw" === rootRecord.type) throw rootRecord.arg; return this.rval; }, dispatchException: function dispatchException(exception) { if (this.done) throw exception; var context = this; function handle(loc, caught) { return record.type = "throw", record.arg = exception, context.next = loc, caught && (context.method = "next", context.arg = undefined), !!caught; } for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i], record = entry.completion; if ("root" === entry.tryLoc) return handle("end"); if (entry.tryLoc <= this.prev) { var hasCatch = hasOwn.call(entry, "catchLoc"), hasFinally = hasOwn.call(entry, "finallyLoc"); if (hasCatch && hasFinally) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } else if (hasCatch) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); } else { if (!hasFinally) throw new Error("try statement without catch or finally"); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } } } }, abrupt: function abrupt(type, arg) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc <= this.prev && hasOwn.call(entry, "finallyLoc") && this.prev < entry.finallyLoc) { var finallyEntry = entry; break; } } finallyEntry && ("break" === type || "continue" === type) && finallyEntry.tryLoc <= arg && arg <= finallyEntry.finallyLoc && (finallyEntry = null); var record = finallyEntry ? finallyEntry.completion : {}; return record.type = type, record.arg = arg, finallyEntry ? (this.method = "next", this.next = finallyEntry.finallyLoc, ContinueSentinel) : this.complete(record); }, complete: function complete(record, afterLoc) { if ("throw" === record.type) throw record.arg; return "break" === record.type || "continue" === record.type ? this.next = record.arg : "return" === record.type ? (this.rval = this.arg = record.arg, this.method = "return", this.next = "end") : "normal" === record.type && afterLoc && (this.next = afterLoc), ContinueSentinel; }, finish: function finish(finallyLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.finallyLoc === finallyLoc) return this.complete(entry.completion, entry.afterLoc), resetTryEntry(entry), ContinueSentinel; } }, "catch": function _catch(tryLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc === tryLoc) { var record = entry.completion; if ("throw" === record.type) { var thrown = record.arg; resetTryEntry(entry); } return thrown; } } throw new Error("illegal catch attempt"); }, delegateYield: function delegateYield(iterable, resultName, nextLoc) { return this.delegate = { iterator: values(iterable), resultName: resultName, nextLoc: nextLoc }, "next" === this.method && (this.arg = undefined), ContinueSentinel; } }, exports; }
+	function _classPrivateMethodInitSpec$4(obj, privateSet) { _checkPrivateRedeclaration$4(obj, privateSet); privateSet.add(obj); }
+	function _checkPrivateRedeclaration$4(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$4(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var CallState = {
 	  Idle: 'Idle',
 	  Proceeding: 'Proceeding',
@@ -22108,21 +22531,21 @@ this.BX = this.BX || {};
 	var Engine = /*#__PURE__*/function () {
 	  function Engine() {
 	    babelHelpers.classCallCheck(this, Engine);
-	    _classPrivateMethodInitSpec$3(this, _getCallFactory);
-	    _classPrivateMethodInitSpec$3(this, _isCallAppInitialized);
-	    _classPrivateMethodInitSpec$3(this, _onCallDestroy);
-	    _classPrivateMethodInitSpec$3(this, _onCallV2AvailabilityChanged);
-	    _classPrivateMethodInitSpec$3(this, _onCallTokenClear);
-	    _classPrivateMethodInitSpec$3(this, _onCallTokenUpdate);
-	    _classPrivateMethodInitSpec$3(this, _onPullIncomingCall);
-	    _classPrivateMethodInitSpec$3(this, _onPullEvent);
+	    _classPrivateMethodInitSpec$4(this, _getCallFactory);
+	    _classPrivateMethodInitSpec$4(this, _isCallAppInitialized);
+	    _classPrivateMethodInitSpec$4(this, _onCallDestroy);
+	    _classPrivateMethodInitSpec$4(this, _onCallV2AvailabilityChanged);
+	    _classPrivateMethodInitSpec$4(this, _onCallTokenClear);
+	    _classPrivateMethodInitSpec$4(this, _onCallTokenUpdate);
+	    _classPrivateMethodInitSpec$4(this, _onPullIncomingCall);
+	    _classPrivateMethodInitSpec$4(this, _onPullEvent);
 	    babelHelpers.defineProperty(this, "handlers", {
-	      'Call::incoming': _classPrivateMethodGet$3(this, _onPullIncomingCall, _onPullIncomingCall2).bind(this)
+	      'Call::incoming': _classPrivateMethodGet$4(this, _onPullIncomingCall, _onPullIncomingCall2).bind(this)
 	    });
 	    babelHelpers.defineProperty(this, "jwtPullHandlers", {
-	      'callTokenUpdate': _classPrivateMethodGet$3(this, _onCallTokenUpdate, _onCallTokenUpdate2).bind(this),
-	      'Call::clearCallTokens': _classPrivateMethodGet$3(this, _onCallTokenClear, _onCallTokenClear2).bind(this),
-	      'Call::callV2AvailabilityChanged': _classPrivateMethodGet$3(this, _onCallV2AvailabilityChanged, _onCallV2AvailabilityChanged2).bind(this)
+	      'Call::callTokenUpdate': _classPrivateMethodGet$4(this, _onCallTokenUpdate, _onCallTokenUpdate2).bind(this),
+	      'Call::clearCallTokens': _classPrivateMethodGet$4(this, _onCallTokenClear, _onCallTokenClear2).bind(this),
+	      'Call::callV2AvailabilityChanged': _classPrivateMethodGet$4(this, _onCallV2AvailabilityChanged, _onCallV2AvailabilityChanged2).bind(this)
 	    });
 	    this.debugFlag = false;
 	    this.calls = {};
@@ -22132,13 +22555,20 @@ this.BX = this.BX || {};
 	    this.restClient = null;
 	    this.pullClient = null;
 	    this.finishedCalls = new Set();
+	    this.multiBroadcastClient = new MultiChannel('call_engine_channel');
 	    this.init();
 	  }
 	  babelHelpers.createClass(Engine, [{
 	    key: "init",
 	    value: function init() {
-	      BX.addCustomEvent("onPullEvent-call", _classPrivateMethodGet$3(this, _onPullEvent, _onPullEvent2).bind(this));
-	      BX.addCustomEvent("onPullEvent-im", _classPrivateMethodGet$3(this, _onPullEvent, _onPullEvent2).bind(this));
+	      var _this = this;
+	      BX.addCustomEvent("onPullEvent-call", _classPrivateMethodGet$4(this, _onPullEvent, _onPullEvent2).bind(this));
+	      BX.addCustomEvent("onPullEvent-im", _classPrivateMethodGet$4(this, _onPullEvent, _onPullEvent2).bind(this));
+	      this.multiBroadcastClient.executer(function () {
+	        return Object.values(_this.calls).some(function (call) {
+	          return Boolean(call.BitrixCall);
+	        });
+	      });
 	    }
 	  }, {
 	    key: "getSiteId",
@@ -22195,38 +22625,38 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "createCall",
 	    value: function createCall(config) {
-	      var _this = this;
+	      var _this2 = this;
 	      return new Promise( /*#__PURE__*/function () {
-	        var _ref = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$2().mark(function _callee(resolve, reject) {
+	        var _ref = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$3().mark(function _callee(resolve, reject) {
 	          var _data, _data$result, _data2, _data2$result;
 	          var callType, callProvider, callId, _call, data, instanceId, aiSettings, callFactory, call;
-	          return _regeneratorRuntime$2().wrap(function _callee$(_context) {
+	          return _regeneratorRuntime$3().wrap(function _callee$(_context) {
 	            while (1) switch (_context.prev = _context.next) {
 	              case 0:
 	                callType = config.type || CallType.Instant;
-	                callProvider = config.provider || _this.getDefaultProvider();
+	                callProvider = config.provider || _this2.getDefaultProvider();
 	                if (!config.joinExisting) {
 	                  _context.next = 15;
 	                  break;
 	                }
-	                _context.t0 = _regeneratorRuntime$2().keys(_this.calls);
+	                _context.t0 = _regeneratorRuntime$3().keys(_this2.calls);
 	              case 4:
 	                if ((_context.t1 = _context.t0()).done) {
 	                  _context.next = 15;
 	                  break;
 	                }
 	                callId = _context.t1.value;
-	                if (!_this.calls.hasOwnProperty(callId)) {
+	                if (!_this2.calls.hasOwnProperty(callId)) {
 	                  _context.next = 13;
 	                  break;
 	                }
-	                _call = _this.calls[callId];
+	                _call = _this2.calls[callId];
 	                if (!(_call.provider === config.provider && _call.associatedEntity.type === config.chatInfo.entityType && _call.associatedEntity.id === config.chatInfo.entityId)) {
 	                  _context.next = 13;
 	                  break;
 	                }
-	                _this.log(callId, "Found existing call, attaching to it");
-	                _this.onCallCreated(_call);
+	                _this2.log(callId, "Found existing call, attaching to it");
+	                _this2.onCallCreated(_call);
 	                Hardware.isCameraOn = config.videoEnabled === true;
 	                return _context.abrupt("return", resolve({
 	                  call: _call,
@@ -22271,26 +22701,26 @@ this.BX = this.BX || {};
 	                if (aiSettings.serviceEnabled) {
 	                  CallAI.setup(aiSettings);
 	                }
-	                if (!_this.calls[data.result.roomId]) {
+	                if (!_this2.calls[data.result.roomId]) {
 	                  _context.next = 36;
 	                  break;
 	                }
-	                if (!(_this.calls[data.result.roomId] instanceof CallStub)) {
+	                if (!(_this2.calls[data.result.roomId] instanceof CallStub)) {
 	                  _context.next = 34;
 	                  break;
 	                }
-	                _this.calls[data.result.roomId].destroy();
+	                _this2.calls[data.result.roomId].destroy();
 	                _context.next = 36;
 	                break;
 	              case 34:
 	                console.warn("Call ".concat(data.result.roomId, " already exists, returning it instead of creating a new one"));
 	                return _context.abrupt("return", resolve({
-	                  call: _this.calls[data.result.roomId],
+	                  call: _this2.calls[data.result.roomId],
 	                  isNew: false
 	                }));
 	              case 36:
 	                Hardware.isCameraOn = config.videoEnabled === true;
-	                callFactory = _classPrivateMethodGet$3(_this, _getCallFactory, _getCallFactory2).call(_this, callProvider);
+	                callFactory = _classPrivateMethodGet$4(_this2, _getCallFactory, _getCallFactory2).call(_this2, callProvider);
 	                call = callFactory.createCall({
 	                  uuid: data.result.roomId,
 	                  instanceId: instanceId,
@@ -22298,9 +22728,9 @@ this.BX = this.BX || {};
 	                  enableMicAutoParameters: config.enableMicAutoParameters !== false,
 	                  associatedEntity: config.chatInfo,
 	                  type: callType,
-	                  startDate: data.result.startDate,
+	                  startDate: new Date(data.result.startDate * 1000),
 	                  events: {
-	                    onDestroy: _classPrivateMethodGet$3(_this, _onCallDestroy, _onCallDestroy2).bind(_this)
+	                    onDestroy: _classPrivateMethodGet$4(_this2, _onCallDestroy, _onCallDestroy2).bind(_this2)
 	                  },
 	                  debug: config.debug === true,
 	                  connectionData: {
@@ -22309,8 +22739,8 @@ this.BX = this.BX || {};
 	                  },
 	                  scheme: data.result.scheme
 	                });
-	                _this.calls[call.uuid] = call;
-	                _this.onCallCreated(call);
+	                _this2.calls[call.uuid] = call;
+	                _this2.onCallCreated(call);
 	                resolve({
 	                  call: call,
 	                  isNew: data.result.isNew
@@ -22329,19 +22759,19 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "createChildCall",
 	    value: function createChildCall(parentCall, newProvider, newUsers, config) {
-	      var _this2 = this;
+	      var _this3 = this;
 	      return new Promise(function (resolve, reject) {
 	        var callParameters = {
 	          callUuid: parentCall.uuid,
 	          newProvider: newProvider,
 	          users: newUsers
 	        };
-	        _this2.getRestClient().callMethod(ajaxActions$2.createChatForChildCall, callParameters).then(function (response) {
+	        _this3.getRestClient().callMethod(ajaxActions$2.createChatForChildCall, callParameters).then(function (response) {
 	          var createCallResponse = response.data();
 	          var token = createCallResponse.token;
 	          var chatId = createCallResponse.chatId;
 	          var callType = CallType.Instant;
-	          var callFactory = _classPrivateMethodGet$3(_this2, _getCallFactory, _getCallFactory2).call(_this2, newProvider);
+	          var callFactory = _classPrivateMethodGet$4(_this3, _getCallFactory, _getCallFactory2).call(_this3, newProvider);
 	          var instanceId = Util.getUuidv4();
 	          Util.getCallConnectionData({
 	            callToken: token,
@@ -22361,14 +22791,14 @@ this.BX = this.BX || {};
 	            var call = callFactory.createCall({
 	              uuid: data.result.roomId,
 	              instanceId: instanceId,
-	              initiatorId: _this2.userId,
+	              initiatorId: _this3.userId,
 	              parentUuid: parentCall.uuid,
 	              direction: Direction.Outgoing,
 	              enableMicAutoParameters: parentCall.enableMicAutoParameters !== false,
 	              type: callType,
 	              startDate: data.result.startDate,
 	              events: {
-	                onDestroy: _classPrivateMethodGet$3(_this2, _onCallDestroy, _onCallDestroy2).bind(_this2)
+	                onDestroy: _classPrivateMethodGet$4(_this3, _onCallDestroy, _onCallDestroy2).bind(_this3)
 	              },
 	              logToken: createCallResponse.logToken,
 	              connectionData: {
@@ -22378,7 +22808,7 @@ this.BX = this.BX || {};
 	              debug: config.debug,
 	              scheme: data.result.scheme
 	            });
-	            _this2.calls[call.uuid] = call;
+	            _this3.calls[call.uuid] = call;
 	            resolve({
 	              call: call,
 	              isNew: data.result.startDate
@@ -22409,7 +22839,7 @@ this.BX = this.BX || {};
 	      if (callToken) {
 	        call_lib_callTokenManager.CallTokenManager.setToken(associatedEntity.chatId, callToken);
 	      }
-	      var callFactory = _classPrivateMethodGet$3(this, _getCallFactory, _getCallFactory2).call(this, callFields['PROVIDER']);
+	      var callFactory = _classPrivateMethodGet$4(this, _getCallFactory, _getCallFactory2).call(this, callFields['PROVIDER']);
 	      var call = callFactory.createCall({
 	        uuid: callUuid,
 	        instanceId: Util.getUuidv4(),
@@ -22424,7 +22854,7 @@ this.BX = this.BX || {};
 	        logToken: logToken,
 	        scheme: callFields['SCHEME'],
 	        events: {
-	          onDestroy: _classPrivateMethodGet$3(this, _onCallDestroy, _onCallDestroy2).bind(this)
+	          onDestroy: _classPrivateMethodGet$4(this, _onCallDestroy, _onCallDestroy2).bind(this)
 	        }
 	      });
 	      this.calls[call.uuid] = call;
@@ -22531,57 +22961,86 @@ this.BX = this.BX || {};
 	    }
 	  }
 	}
-	function _onPullIncomingCall2(params, extra) {
-	  console.log('#onPullIncomingCall', location.href);
-	  if (extra.server_time_ago > 30) {
-	    console.error("Call was started too long time ago");
-	    return;
-	  }
-	  var callFields = params.call;
-	  var callUuid = callFields.uuid;
-	  var call;
-	  CallAI.setup(params.aiSettings);
-	  if (this.finishedCalls.has(callUuid)) {
-	    this.log(callUuid, 'Got "Call::incoming" after "Call::finish"');
-	    return;
-	  }
-	  call_lib_callTokenManager.CallTokenManager.setToken(callFields.associatedEntity.chatId, params.callToken);
-	  if (this.calls[callUuid]) {
-	    call = this.calls[callUuid];
-	    if (!Object.keys(call.associatedEntity).length) {
-	      call.addDialogInfo(callFields.associatedEntity);
-	      this.onCallCreated(call);
-	    }
-	  } else {
-	    var callFactory = _classPrivateMethodGet$3(this, _getCallFactory, _getCallFactory2).call(this, callFields.provider);
-	    var instanceId = Util.getUuidv4();
-	    call = callFactory.createCall({
-	      uuid: callUuid,
-	      instanceId: instanceId,
-	      parentUuid: callFields.parentUuid || null,
-	      callFromMobile: params.isLegacyMobile === true,
-	      direction: Direction.Incoming,
-	      initiatorId: callFields.initiatorId,
-	      associatedEntity: callFields.associatedEntity,
-	      type: callFields.type,
-	      startDate: callFields.startDate,
-	      logToken: callFields.logToken,
-	      events: {
-	        onDestroy: _classPrivateMethodGet$3(this, _onCallDestroy, _onCallDestroy2).bind(this)
-	      },
-	      scheme: callFields.scheme
-	    });
-	    this.calls[callUuid] = call;
-	    this.onCallCreated(call);
-	  }
-	  if (call) {
-	    BX.onCustomEvent(window, "CallEvents::incomingCall", [{
-	      call: call,
-	      video: params.video === true,
-	      isLegacyMobile: params.isLegacyMobile === true
-	    }]);
-	  }
-	  this.log(call.uuid, "Incoming call " + call.uuid);
+	function _onPullIncomingCall2(_x4, _x5) {
+	  return _onPullIncomingCall3.apply(this, arguments);
+	}
+	function _onPullIncomingCall3() {
+	  _onPullIncomingCall3 = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$3().mark(function _callee3(params, extra) {
+	    var callFields, callUuid, call, callFactory, instanceId, broadcastResponse, hasActiveCalls;
+	    return _regeneratorRuntime$3().wrap(function _callee3$(_context3) {
+	      while (1) switch (_context3.prev = _context3.next) {
+	        case 0:
+	          console.log('#onPullIncomingCall', location.href);
+	          if (!(extra.server_time_ago > 30)) {
+	            _context3.next = 4;
+	            break;
+	          }
+	          console.error("Call was started too long time ago");
+	          return _context3.abrupt("return");
+	        case 4:
+	          callFields = params.call;
+	          callUuid = callFields.uuid;
+	          CallAI.setup(params.aiSettings);
+	          if (!this.finishedCalls.has(callUuid)) {
+	            _context3.next = 10;
+	            break;
+	          }
+	          this.log(callUuid, 'Got "Call::incoming" after "Call::finish"');
+	          return _context3.abrupt("return");
+	        case 10:
+	          call_lib_callTokenManager.CallTokenManager.setToken(callFields.associatedEntity.chatId, params.callToken);
+	          if (this.calls[callUuid]) {
+	            call = this.calls[callUuid];
+	            if (!Object.keys(call.associatedEntity).length) {
+	              call.addDialogInfo(callFields.associatedEntity);
+	              this.onCallCreated(call);
+	            }
+	          } else {
+	            callFactory = _classPrivateMethodGet$4(this, _getCallFactory, _getCallFactory2).call(this, callFields.provider);
+	            instanceId = Util.getUuidv4();
+	            call = callFactory.createCall({
+	              uuid: callUuid,
+	              instanceId: instanceId,
+	              parentUuid: callFields.parentUuid || null,
+	              callFromMobile: params.isLegacyMobile === true,
+	              direction: Direction.Incoming,
+	              initiatorId: callFields.initiatorId,
+	              associatedEntity: callFields.associatedEntity,
+	              type: callFields.type,
+	              startDate: callFields.startDate,
+	              logToken: callFields.logToken,
+	              events: {
+	                onDestroy: _classPrivateMethodGet$4(this, _onCallDestroy, _onCallDestroy2).bind(this)
+	              },
+	              scheme: callFields.scheme
+	            });
+	            this.calls[callUuid] = call;
+	            this.onCallCreated(call);
+	          }
+	          _context3.next = 14;
+	          return this.multiBroadcastClient.broadcastRequest(callUuid, {
+	            timeout: 500
+	          });
+	        case 14:
+	          broadcastResponse = _context3.sent;
+	          hasActiveCalls = broadcastResponse.some(function (res) {
+	            return res;
+	          });
+	          if (call && !hasActiveCalls) {
+	            BX.onCustomEvent(window, "CallEvents::incomingCall", [{
+	              call: call,
+	              video: params.video === true,
+	              isLegacyMobile: params.isLegacyMobile === true
+	            }]);
+	          }
+	          this.log(call.uuid, "Incoming call " + call.uuid);
+	        case 18:
+	        case "end":
+	          return _context3.stop();
+	      }
+	    }, _callee3, this);
+	  }));
+	  return _onPullIncomingCall3.apply(this, arguments);
 	}
 	function _onCallTokenUpdate2(params, extra) {
 	  call_lib_callTokenManager.CallTokenManager.setToken(params.chatId, params.callToken);
@@ -22597,13 +23056,13 @@ this.BX = this.BX || {};
 	  }
 	}
 	function _onCallDestroy2(e) {
-	  var _this3 = this;
+	  var _this6 = this;
 	  var callId = e.call.uuid;
 	  this.calls[callId] = new CallStub({
 	    callId: callId,
 	    onDelete: function onDelete() {
-	      if (_this3.calls[callId]) {
-	        delete _this3.calls[callId];
+	      if (_this6.calls[callId]) {
+	        delete _this6.calls[callId];
 	      }
 	    }
 	  });
@@ -22643,11 +23102,108 @@ this.BX = this.BX || {};
 	  }]);
 	  return BitrixCallFactory;
 	}();
+	var MultiChannel = /*#__PURE__*/function () {
+	  function MultiChannel(name) {
+	    var _this4 = this;
+	    babelHelpers.classCallCheck(this, MultiChannel);
+	    this.channel = new BroadcastChannel(name);
+	    this.senderId = Math.random().toString(36).slice(2);
+	    this.requests = new Map();
+	    this.channel.onmessage = function (event) {
+	      var _event$data = event.data,
+	        type = _event$data.type,
+	        requestId = _event$data.requestId,
+	        senderId = _event$data.senderId,
+	        payload = _event$data.payload;
+	      if (type === 'response' && _this4.requests.has(requestId)) {
+	        var req = _this4.requests.get(requestId);
+	        if (!req.responders.has(senderId)) {
+	          req.responders.add(senderId);
+	          req.responses.push(payload);
+	          if (Date.now() > req.deadline) {
+	            req.resolve(req.responses);
+	            _this4.requests["delete"](requestId);
+	          }
+	        }
+	      }
+	      if (type === 'request' && senderId !== _this4.senderId) {
+	        var result = _this4.handle();
+	        if (result !== undefined) {
+	          _this4.channel.postMessage({
+	            type: 'response',
+	            requestId: requestId,
+	            senderId: _this4.senderId,
+	            payload: result
+	          });
+	        }
+	      }
+	    };
+	  }
+	  babelHelpers.createClass(MultiChannel, [{
+	    key: "executer",
+	    value: function executer(handler) {
+	      this.handle = handler;
+	    }
+	  }, {
+	    key: "broadcastRequest",
+	    value: function () {
+	      var _broadcastRequest = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$3().mark(function _callee2(callUuid) {
+	        var _this5 = this;
+	        var _ref2,
+	          _ref2$timeout,
+	          timeout,
+	          requestId,
+	          _args2 = arguments;
+	        return _regeneratorRuntime$3().wrap(function _callee2$(_context2) {
+	          while (1) switch (_context2.prev = _context2.next) {
+	            case 0:
+	              _ref2 = _args2.length > 1 && _args2[1] !== undefined ? _args2[1] : {}, _ref2$timeout = _ref2.timeout, timeout = _ref2$timeout === void 0 ? 100 : _ref2$timeout;
+	              requestId = Math.random().toString(36).slice(2);
+	              return _context2.abrupt("return", new Promise(function (resolve) {
+	                _this5.requests.set(requestId, {
+	                  resolve: resolve,
+	                  responses: [],
+	                  responders: new Set(),
+	                  deadline: Date.now() + timeout
+	                });
+	                _this5.channel.postMessage({
+	                  type: 'request',
+	                  requestId: requestId,
+	                  senderId: _this5.senderId,
+	                  payload: callUuid
+	                });
+	                setTimeout(function () {
+	                  if (_this5.requests.has(requestId)) {
+	                    resolve(_this5.requests.get(requestId).responses);
+	                    _this5.requests["delete"](requestId);
+	                  }
+	                }, timeout);
+	              }));
+	            case 3:
+	            case "end":
+	              return _context2.stop();
+	          }
+	        }, _callee2);
+	      }));
+	      function broadcastRequest(_x3) {
+	        return _broadcastRequest.apply(this, arguments);
+	      }
+	      return broadcastRequest;
+	    }()
+	  }, {
+	    key: "destroy",
+	    value: function destroy() {
+	      this.channel.close();
+	      this.requests.clear();
+	    }
+	  }]);
+	  return MultiChannel;
+	}();
 	var CallEngine = new Engine();
 
-	function _classPrivateMethodInitSpec$4(obj, privateSet) { _checkPrivateRedeclaration$4(obj, privateSet); privateSet.add(obj); }
-	function _checkPrivateRedeclaration$4(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet$4(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _classPrivateMethodInitSpec$5(obj, privateSet) { _checkPrivateRedeclaration$5(obj, privateSet); privateSet.add(obj); }
+	function _checkPrivateRedeclaration$5(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$5(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var ajaxActions$3 = {
 	  invite: 'im.call.invite',
 	  cancel: 'im.call.cancel',
@@ -22739,6 +23295,7 @@ this.BX = this.BX || {};
 	var _onPeerRTCStatsReceived$1 = /*#__PURE__*/new WeakSet();
 	var _onPeerRTCQualityChanged$1 = /*#__PURE__*/new WeakSet();
 	var _onUnload$1 = /*#__PURE__*/new WeakSet();
+	var _onOnline = /*#__PURE__*/new WeakSet();
 	var _beforeLeaveCall$1 = /*#__PURE__*/new WeakSet();
 	var PlainCall = /*#__PURE__*/function (_AbstractCall) {
 	  babelHelpers.inherits(PlainCall, _AbstractCall);
@@ -22746,34 +23303,35 @@ this.BX = this.BX || {};
 	    var _this;
 	    babelHelpers.classCallCheck(this, PlainCall);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(PlainCall).call(this, _params));
-	    _classPrivateMethodInitSpec$4(babelHelpers.assertThisInitialized(_this), _beforeLeaveCall$1);
-	    _classPrivateMethodInitSpec$4(babelHelpers.assertThisInitialized(_this), _onUnload$1);
-	    _classPrivateMethodInitSpec$4(babelHelpers.assertThisInitialized(_this), _onPeerRTCQualityChanged$1);
-	    _classPrivateMethodInitSpec$4(babelHelpers.assertThisInitialized(_this), _onPeerRTCStatsReceived$1);
-	    _classPrivateMethodInitSpec$4(babelHelpers.assertThisInitialized(_this), _onPeerInviteTimeout$2);
-	    _classPrivateMethodInitSpec$4(babelHelpers.assertThisInitialized(_this), _onPeerStateChanged$2);
-	    _classPrivateMethodInitSpec$4(babelHelpers.assertThisInitialized(_this), _onPullEventCallCustomMessage$1);
-	    _classPrivateMethodInitSpec$4(babelHelpers.assertThisInitialized(_this), _onPullEventRepeatAnswer);
-	    _classPrivateMethodInitSpec$4(babelHelpers.assertThisInitialized(_this), _onPullEventFinish$2);
-	    _classPrivateMethodInitSpec$4(babelHelpers.assertThisInitialized(_this), _onPullEventAssociatedEntityReplaced$1);
-	    _classPrivateMethodInitSpec$4(babelHelpers.assertThisInitialized(_this), _onPullEventRecordState$1);
-	    _classPrivateMethodInitSpec$4(babelHelpers.assertThisInitialized(_this), _onPullEventVideoPaused$1);
-	    _classPrivateMethodInitSpec$4(babelHelpers.assertThisInitialized(_this), _onPullEventCameraState$1);
-	    _classPrivateMethodInitSpec$4(babelHelpers.assertThisInitialized(_this), _onPullEventMicrophoneState$1);
-	    _classPrivateMethodInitSpec$4(babelHelpers.assertThisInitialized(_this), _onPullEventVoiceStopped$1);
-	    _classPrivateMethodInitSpec$4(babelHelpers.assertThisInitialized(_this), _onPullEventVoiceStarted$1);
-	    _classPrivateMethodInitSpec$4(babelHelpers.assertThisInitialized(_this), _onPullEventIceCandidate$1);
-	    _classPrivateMethodInitSpec$4(babelHelpers.assertThisInitialized(_this), _onPullEventConnectionAnswer$1);
-	    _classPrivateMethodInitSpec$4(babelHelpers.assertThisInitialized(_this), _onPullEventConnectionOffer$1);
-	    _classPrivateMethodInitSpec$4(babelHelpers.assertThisInitialized(_this), _onPullEventNegotiationNeeded$1);
-	    _classPrivateMethodInitSpec$4(babelHelpers.assertThisInitialized(_this), _onPullEventPing);
-	    _classPrivateMethodInitSpec$4(babelHelpers.assertThisInitialized(_this), _onPullEventHangup$2);
-	    _classPrivateMethodInitSpec$4(babelHelpers.assertThisInitialized(_this), _onPullEventAnswerSelf$1);
-	    _classPrivateMethodInitSpec$4(babelHelpers.assertThisInitialized(_this), _onPullEventAnswer$2);
-	    _classPrivateMethodInitSpec$4(babelHelpers.assertThisInitialized(_this), _onPullEventUserInviteTimeout);
-	    _classPrivateMethodInitSpec$4(babelHelpers.assertThisInitialized(_this), _onPullEventUsersInvited$1);
-	    _classPrivateMethodInitSpec$4(babelHelpers.assertThisInitialized(_this), _onPullEventUsersJoined$1);
-	    _classPrivateMethodInitSpec$4(babelHelpers.assertThisInitialized(_this), _changeRecordState$2);
+	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _beforeLeaveCall$1);
+	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _onOnline);
+	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _onUnload$1);
+	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _onPeerRTCQualityChanged$1);
+	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _onPeerRTCStatsReceived$1);
+	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _onPeerInviteTimeout$2);
+	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _onPeerStateChanged$2);
+	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _onPullEventCallCustomMessage$1);
+	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _onPullEventRepeatAnswer);
+	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _onPullEventFinish$2);
+	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _onPullEventAssociatedEntityReplaced$1);
+	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _onPullEventRecordState$1);
+	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _onPullEventVideoPaused$1);
+	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _onPullEventCameraState$1);
+	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _onPullEventMicrophoneState$1);
+	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _onPullEventVoiceStopped$1);
+	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _onPullEventVoiceStarted$1);
+	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _onPullEventIceCandidate$1);
+	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _onPullEventConnectionAnswer$1);
+	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _onPullEventConnectionOffer$1);
+	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _onPullEventNegotiationNeeded$1);
+	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _onPullEventPing);
+	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _onPullEventHangup$2);
+	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _onPullEventAnswerSelf$1);
+	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _onPullEventAnswer$2);
+	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _onPullEventUserInviteTimeout);
+	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _onPullEventUsersInvited$1);
+	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _onPullEventUsersJoined$1);
+	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _changeRecordState$2);
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "setVideoEnabled", function (event) {
 	      if (_this.videoEnabled == event.data.isCameraOn) {
 	        return;
@@ -22827,7 +23385,8 @@ this.BX = this.BX || {};
 	    _this.pingBackendInterval = setInterval(_this.pingBackend.bind(babelHelpers.assertThisInitialized(_this)), backendPingPeriod);
 	    _this.reinviteTimeout = null;
 	    _this.userData = _params.userData;
-	    _this._onUnloadHandler = _classPrivateMethodGet$4(babelHelpers.assertThisInitialized(_this), _onUnload$1, _onUnload2$1).bind(babelHelpers.assertThisInitialized(_this));
+	    _this._onUnloadHandler = _classPrivateMethodGet$5(babelHelpers.assertThisInitialized(_this), _onUnload$1, _onUnload2$1).bind(babelHelpers.assertThisInitialized(_this));
+	    _this._onOnlineHandler = _classPrivateMethodGet$5(babelHelpers.assertThisInitialized(_this), _onOnline, _onOnline2).bind(babelHelpers.assertThisInitialized(_this));
 	    _this.enableMicAutoParameters = _params.enableMicAutoParameters !== false;
 	    _this.microphoneLevelInterval = null;
 	    _this.mediaMutedBySystem = false;
@@ -22836,7 +23395,8 @@ this.BX = this.BX || {};
 	    _this._isCopilotFeaturesEnabled = false;
 	    _this._isRecordWhenCopilotActivePopupAlreadyShow = null;
 	    _this._isBoostExpired = false;
-	    window.addEventListener("unload", _this._onUnloadHandler);
+	    window.addEventListener('unload', _this._onUnloadHandler);
+	    window.addEventListener('online', _this._onOnlineHandler);
 	    return _this;
 	  }
 	  babelHelpers.createClass(PlainCall, [{
@@ -22868,10 +23428,10 @@ this.BX = this.BX || {};
 	        onMediaStopped: function onMediaStopped(e) {
 	          _this2.runCallback(CallEvent.onRemoteMediaStopped, e);
 	        },
-	        onStateChanged: _classPrivateMethodGet$4(this, _onPeerStateChanged$2, _onPeerStateChanged2$1).bind(this),
-	        onInviteTimeout: _classPrivateMethodGet$4(this, _onPeerInviteTimeout$2, _onPeerInviteTimeout2$1).bind(this),
-	        onRTCStatsReceived: _classPrivateMethodGet$4(this, _onPeerRTCStatsReceived$1, _onPeerRTCStatsReceived2$1).bind(this),
-	        onRTCQualityChanged: _classPrivateMethodGet$4(this, _onPeerRTCQualityChanged$1, _onPeerRTCQualityChanged2$1).bind(this),
+	        onStateChanged: _classPrivateMethodGet$5(this, _onPeerStateChanged$2, _onPeerStateChanged2$1).bind(this),
+	        onInviteTimeout: _classPrivateMethodGet$5(this, _onPeerInviteTimeout$2, _onPeerInviteTimeout2$1).bind(this),
+	        onRTCStatsReceived: _classPrivateMethodGet$5(this, _onPeerRTCStatsReceived$1, _onPeerRTCStatsReceived2$1).bind(this),
+	        onRTCQualityChanged: _classPrivateMethodGet$5(this, _onPeerRTCQualityChanged$1, _onPeerRTCQualityChanged2$1).bind(this),
 	        onNetworkProblem: function onNetworkProblem(e) {
 	          _this2.runCallback(CallEvent.onNetworkProblem, e);
 	        },
@@ -22965,7 +23525,7 @@ this.BX = this.BX || {};
 	    key: "sendRecordState",
 	    value: function sendRecordState(recordState) {
 	      recordState.senderId = this.userId;
-	      if (!_classPrivateMethodGet$4(this, _changeRecordState$2, _changeRecordState2$2).call(this, recordState)) {
+	      if (!_classPrivateMethodGet$5(this, _changeRecordState$2, _changeRecordState2$2).call(this, recordState)) {
 	        return false;
 	      }
 	      var users = [this.userId].concat(this.users);
@@ -22996,7 +23556,7 @@ this.BX = this.BX || {};
 	      }
 	      this.getLocalMediaStream("main", true).then(function () {
 	        if (!_this3.ready) {
-	          _classPrivateMethodGet$4(_this3, _beforeLeaveCall$1, _beforeLeaveCall2$1).call(_this3);
+	          _classPrivateMethodGet$5(_this3, _beforeLeaveCall$1, _beforeLeaveCall2$1).call(_this3);
 	          return;
 	        }
 	        _this3.subscribeHardwareChanges();
@@ -23581,7 +24141,7 @@ this.BX = this.BX || {};
 	      return new Promise(function (resolve, reject) {
 	        _this9.getLocalMediaStream("main", true).then(function () {
 	          if (!_this9.ready) {
-	            _classPrivateMethodGet$4(_this9, _beforeLeaveCall$1, _beforeLeaveCall2$1).call(_this9);
+	            _classPrivateMethodGet$5(_this9, _beforeLeaveCall$1, _beforeLeaveCall2$1).call(_this9);
 	            return;
 	          }
 	          _this9.subscribeHardwareChanges();
@@ -23641,7 +24201,7 @@ this.BX = this.BX || {};
 	        for (var userId in _this11.peers) {
 	          _this11.peers[userId].disconnect();
 	        }
-	        _classPrivateMethodGet$4(_this11, _beforeLeaveCall$1, _beforeLeaveCall2$1).call(_this11);
+	        _classPrivateMethodGet$5(_this11, _beforeLeaveCall$1, _beforeLeaveCall2$1).call(_this11);
 	        _this11.runCallback(CallEvent.onLeave, {
 	          local: true
 	        });
@@ -23810,26 +24370,26 @@ this.BX = this.BX || {};
 	    key: "__onPullEvent",
 	    value: function __onPullEvent(command, params, extra) {
 	      var handlers = {
-	        'Call::answer': _classPrivateMethodGet$4(this, _onPullEventAnswer$2, _onPullEventAnswer2$1).bind(this),
-	        'Call::hangup': _classPrivateMethodGet$4(this, _onPullEventHangup$2, _onPullEventHangup2$1).bind(this),
-	        'Call::ping': _classPrivateMethodGet$4(this, _onPullEventPing, _onPullEventPing2).bind(this),
-	        'Call::negotiationNeeded': _classPrivateMethodGet$4(this, _onPullEventNegotiationNeeded$1, _onPullEventNegotiationNeeded2$1).bind(this),
-	        'Call::connectionOffer': _classPrivateMethodGet$4(this, _onPullEventConnectionOffer$1, _onPullEventConnectionOffer2$1).bind(this),
-	        'Call::connectionAnswer': _classPrivateMethodGet$4(this, _onPullEventConnectionAnswer$1, _onPullEventConnectionAnswer2$1).bind(this),
-	        'Call::iceCandidate': _classPrivateMethodGet$4(this, _onPullEventIceCandidate$1, _onPullEventIceCandidate2$1).bind(this),
-	        'Call::voiceStarted': _classPrivateMethodGet$4(this, _onPullEventVoiceStarted$1, _onPullEventVoiceStarted2$1).bind(this),
-	        'Call::voiceStopped': _classPrivateMethodGet$4(this, _onPullEventVoiceStopped$1, _onPullEventVoiceStopped2$1).bind(this),
-	        'Call::microphoneState': _classPrivateMethodGet$4(this, _onPullEventMicrophoneState$1, _onPullEventMicrophoneState2$1).bind(this),
-	        'Call::cameraState': _classPrivateMethodGet$4(this, _onPullEventCameraState$1, _onPullEventCameraState2$1).bind(this),
-	        'Call::videoPaused': _classPrivateMethodGet$4(this, _onPullEventVideoPaused$1, _onPullEventVideoPaused2$1).bind(this),
-	        'Call::recordState': _classPrivateMethodGet$4(this, _onPullEventRecordState$1, _onPullEventRecordState2$1).bind(this),
-	        'Call::usersJoined': _classPrivateMethodGet$4(this, _onPullEventUsersJoined$1, _onPullEventUsersJoined2$1).bind(this),
-	        'Call::usersInvited': _classPrivateMethodGet$4(this, _onPullEventUsersInvited$1, _onPullEventUsersInvited2$1).bind(this),
-	        'Call::userInviteTimeout': _classPrivateMethodGet$4(this, _onPullEventUserInviteTimeout, _onPullEventUserInviteTimeout2).bind(this),
-	        'Call::associatedEntityReplaced': _classPrivateMethodGet$4(this, _onPullEventAssociatedEntityReplaced$1, _onPullEventAssociatedEntityReplaced2$1).bind(this),
-	        'Call::finish': _classPrivateMethodGet$4(this, _onPullEventFinish$2, _onPullEventFinish2$1).bind(this),
-	        'Call::repeatAnswer': _classPrivateMethodGet$4(this, _onPullEventRepeatAnswer, _onPullEventRepeatAnswer2).bind(this),
-	        'Call::customMessage': _classPrivateMethodGet$4(this, _onPullEventCallCustomMessage$1, _onPullEventCallCustomMessage2$1).bind(this)
+	        'Call::answer': _classPrivateMethodGet$5(this, _onPullEventAnswer$2, _onPullEventAnswer2$1).bind(this),
+	        'Call::hangup': _classPrivateMethodGet$5(this, _onPullEventHangup$2, _onPullEventHangup2$1).bind(this),
+	        'Call::ping': _classPrivateMethodGet$5(this, _onPullEventPing, _onPullEventPing2).bind(this),
+	        'Call::negotiationNeeded': _classPrivateMethodGet$5(this, _onPullEventNegotiationNeeded$1, _onPullEventNegotiationNeeded2$1).bind(this),
+	        'Call::connectionOffer': _classPrivateMethodGet$5(this, _onPullEventConnectionOffer$1, _onPullEventConnectionOffer2$1).bind(this),
+	        'Call::connectionAnswer': _classPrivateMethodGet$5(this, _onPullEventConnectionAnswer$1, _onPullEventConnectionAnswer2$1).bind(this),
+	        'Call::iceCandidate': _classPrivateMethodGet$5(this, _onPullEventIceCandidate$1, _onPullEventIceCandidate2$1).bind(this),
+	        'Call::voiceStarted': _classPrivateMethodGet$5(this, _onPullEventVoiceStarted$1, _onPullEventVoiceStarted2$1).bind(this),
+	        'Call::voiceStopped': _classPrivateMethodGet$5(this, _onPullEventVoiceStopped$1, _onPullEventVoiceStopped2$1).bind(this),
+	        'Call::microphoneState': _classPrivateMethodGet$5(this, _onPullEventMicrophoneState$1, _onPullEventMicrophoneState2$1).bind(this),
+	        'Call::cameraState': _classPrivateMethodGet$5(this, _onPullEventCameraState$1, _onPullEventCameraState2$1).bind(this),
+	        'Call::videoPaused': _classPrivateMethodGet$5(this, _onPullEventVideoPaused$1, _onPullEventVideoPaused2$1).bind(this),
+	        'Call::recordState': _classPrivateMethodGet$5(this, _onPullEventRecordState$1, _onPullEventRecordState2$1).bind(this),
+	        'Call::usersJoined': _classPrivateMethodGet$5(this, _onPullEventUsersJoined$1, _onPullEventUsersJoined2$1).bind(this),
+	        'Call::usersInvited': _classPrivateMethodGet$5(this, _onPullEventUsersInvited$1, _onPullEventUsersInvited2$1).bind(this),
+	        'Call::userInviteTimeout': _classPrivateMethodGet$5(this, _onPullEventUserInviteTimeout, _onPullEventUserInviteTimeout2).bind(this),
+	        'Call::associatedEntityReplaced': _classPrivateMethodGet$5(this, _onPullEventAssociatedEntityReplaced$1, _onPullEventAssociatedEntityReplaced2$1).bind(this),
+	        'Call::finish': _classPrivateMethodGet$5(this, _onPullEventFinish$2, _onPullEventFinish2$1).bind(this),
+	        'Call::repeatAnswer': _classPrivateMethodGet$5(this, _onPullEventRepeatAnswer, _onPullEventRepeatAnswer2).bind(this),
+	        'Call::customMessage': _classPrivateMethodGet$5(this, _onPullEventCallCustomMessage$1, _onPullEventCallCustomMessage2$1).bind(this)
 	      };
 	      if (handlers[command]) {
 	        if (command === 'Call::ping') {
@@ -23856,7 +24416,10 @@ this.BX = this.BX || {};
 	          this.peers[userId].destroy();
 	        }
 	      }
-	      _classPrivateMethodGet$4(this, _beforeLeaveCall$1, _beforeLeaveCall2$1).call(this);
+	      _classPrivateMethodGet$5(this, _beforeLeaveCall$1, _beforeLeaveCall2$1).call(this);
+	      this.runCallback(CallEvent.onLeave, {
+	        local: true
+	      });
 	      return babelHelpers.get(babelHelpers.getPrototypeOf(PlainCall.prototype), "destroy", this).call(this);
 	    }
 	  }, {
@@ -23971,7 +24534,7 @@ this.BX = this.BX || {};
 	function _onPullEventAnswer2$1(params) {
 	  var senderId = Number(params.senderId);
 	  if (senderId == this.userId) {
-	    return _classPrivateMethodGet$4(this, _onPullEventAnswerSelf$1, _onPullEventAnswerSelf2$1).call(this, params);
+	    return _classPrivateMethodGet$5(this, _onPullEventAnswerSelf$1, _onPullEventAnswerSelf2$1).call(this, params);
 	  }
 	  if (!this.ready) {
 	    return;
@@ -24220,6 +24783,12 @@ this.BX = this.BX || {};
 	    this.peers[userId].disconnect();
 	  }
 	}
+	function _onOnline2() {
+	  var peers = Object.values(this.peers);
+	  peers.forEach(function (peer) {
+	    peer.reconnect();
+	  });
+	}
 	function _beforeLeaveCall2$1() {
 	  // stop media streams
 	  this.unsubscribeHardwareChanges();
@@ -24239,7 +24808,8 @@ this.BX = this.BX || {};
 	  }
 
 	  // remove all event listeners
-	  window.removeEventListener("unload", this._onUnloadHandler);
+	  window.removeEventListener('unload', this._onUnloadHandler);
+	  window.removeEventListener('online', this._onOnlineHandler);
 	  clearInterval(this.statsInterval);
 	  clearInterval(this.pingUsersInterval);
 	  clearInterval(this.pingBackendInterval);
@@ -24251,8 +24821,8 @@ this.BX = this.BX || {};
 	var Signaling$2 = /*#__PURE__*/function () {
 	  function Signaling(params) {
 	    babelHelpers.classCallCheck(this, Signaling);
-	    _classPrivateMethodInitSpec$4(this, _runRestAction$2);
-	    _classPrivateMethodInitSpec$4(this, _sendPullEvent);
+	    _classPrivateMethodInitSpec$5(this, _runRestAction$2);
+	    _classPrivateMethodInitSpec$5(this, _sendPullEvent);
 	    this.call = params.call;
 	  }
 	  babelHelpers.createClass(Signaling, [{
@@ -24263,72 +24833,72 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "inviteUsers",
 	    value: function inviteUsers(data) {
-	      return _classPrivateMethodGet$4(this, _runRestAction$2, _runRestAction2$2).call(this, ajaxActions$3.invite, data);
+	      return _classPrivateMethodGet$5(this, _runRestAction$2, _runRestAction2$2).call(this, ajaxActions$3.invite, data);
 	    }
 	  }, {
 	    key: "sendAnswer",
 	    value: function sendAnswer(data, repeated) {
 	      if (repeated && CallEngine.getPullClient().isPublishingSupported()) {
-	        return _classPrivateMethodGet$4(this, _sendPullEvent, _sendPullEvent2).call(this, pullEvents.answer, data);
+	        return _classPrivateMethodGet$5(this, _sendPullEvent, _sendPullEvent2).call(this, pullEvents.answer, data);
 	      } else {
-	        return _classPrivateMethodGet$4(this, _runRestAction$2, _runRestAction2$2).call(this, ajaxActions$3.answer, data);
+	        return _classPrivateMethodGet$5(this, _runRestAction$2, _runRestAction2$2).call(this, ajaxActions$3.answer, data);
 	      }
 	    }
 	  }, {
 	    key: "sendConnectionOffer",
 	    value: function sendConnectionOffer(data) {
 	      if (CallEngine.getPullClient().isPublishingSupported()) {
-	        return _classPrivateMethodGet$4(this, _sendPullEvent, _sendPullEvent2).call(this, pullEvents.connectionOffer, data);
+	        return _classPrivateMethodGet$5(this, _sendPullEvent, _sendPullEvent2).call(this, pullEvents.connectionOffer, data);
 	      } else {
-	        return _classPrivateMethodGet$4(this, _runRestAction$2, _runRestAction2$2).call(this, ajaxActions$3.connectionOffer, data);
+	        return _classPrivateMethodGet$5(this, _runRestAction$2, _runRestAction2$2).call(this, ajaxActions$3.connectionOffer, data);
 	      }
 	    }
 	  }, {
 	    key: "sendConnectionAnswer",
 	    value: function sendConnectionAnswer(data) {
 	      if (CallEngine.getPullClient().isPublishingSupported()) {
-	        return _classPrivateMethodGet$4(this, _sendPullEvent, _sendPullEvent2).call(this, pullEvents.connectionAnswer, data);
+	        return _classPrivateMethodGet$5(this, _sendPullEvent, _sendPullEvent2).call(this, pullEvents.connectionAnswer, data);
 	      } else {
-	        return _classPrivateMethodGet$4(this, _runRestAction$2, _runRestAction2$2).call(this, ajaxActions$3.connectionAnswer, data);
+	        return _classPrivateMethodGet$5(this, _runRestAction$2, _runRestAction2$2).call(this, ajaxActions$3.connectionAnswer, data);
 	      }
 	    }
 	  }, {
 	    key: "sendIceCandidate",
 	    value: function sendIceCandidate(data) {
 	      if (CallEngine.getPullClient().isPublishingSupported()) {
-	        return _classPrivateMethodGet$4(this, _sendPullEvent, _sendPullEvent2).call(this, pullEvents.iceCandidate, data);
+	        return _classPrivateMethodGet$5(this, _sendPullEvent, _sendPullEvent2).call(this, pullEvents.iceCandidate, data);
 	      } else {
-	        return _classPrivateMethodGet$4(this, _runRestAction$2, _runRestAction2$2).call(this, ajaxActions$3.iceCandidate, data);
+	        return _classPrivateMethodGet$5(this, _runRestAction$2, _runRestAction2$2).call(this, ajaxActions$3.iceCandidate, data);
 	      }
 	    }
 	  }, {
 	    key: "sendNegotiationNeeded",
 	    value: function sendNegotiationNeeded(data) {
 	      if (CallEngine.getPullClient().isPublishingSupported()) {
-	        return _classPrivateMethodGet$4(this, _sendPullEvent, _sendPullEvent2).call(this, pullEvents.negotiationNeeded, data);
+	        return _classPrivateMethodGet$5(this, _sendPullEvent, _sendPullEvent2).call(this, pullEvents.negotiationNeeded, data);
 	      } else {
-	        return _classPrivateMethodGet$4(this, _runRestAction$2, _runRestAction2$2).call(this, ajaxActions$3.negotiationNeeded, data);
+	        return _classPrivateMethodGet$5(this, _runRestAction$2, _runRestAction2$2).call(this, ajaxActions$3.negotiationNeeded, data);
 	      }
 	    }
 	  }, {
 	    key: "sendVoiceStarted",
 	    value: function sendVoiceStarted(data) {
 	      if (CallEngine.getPullClient().isPublishingSupported()) {
-	        return _classPrivateMethodGet$4(this, _sendPullEvent, _sendPullEvent2).call(this, pullEvents.voiceStarted, data);
+	        return _classPrivateMethodGet$5(this, _sendPullEvent, _sendPullEvent2).call(this, pullEvents.voiceStarted, data);
 	      }
 	    }
 	  }, {
 	    key: "sendVoiceStopped",
 	    value: function sendVoiceStopped(data) {
 	      if (CallEngine.getPullClient().isPublishingSupported()) {
-	        return _classPrivateMethodGet$4(this, _sendPullEvent, _sendPullEvent2).call(this, pullEvents.voiceStopped, data);
+	        return _classPrivateMethodGet$5(this, _sendPullEvent, _sendPullEvent2).call(this, pullEvents.voiceStopped, data);
 	      }
 	    }
 	  }, {
 	    key: "sendMicrophoneState",
 	    value: function sendMicrophoneState(users, microphoneState) {
 	      if (CallEngine.getPullClient().isPublishingSupported()) {
-	        return _classPrivateMethodGet$4(this, _sendPullEvent, _sendPullEvent2).call(this, pullEvents.microphoneState, {
+	        return _classPrivateMethodGet$5(this, _sendPullEvent, _sendPullEvent2).call(this, pullEvents.microphoneState, {
 	          userId: users,
 	          microphoneState: microphoneState
 	        }, 0);
@@ -24338,7 +24908,7 @@ this.BX = this.BX || {};
 	    key: "sendCameraState",
 	    value: function sendCameraState(users, cameraState) {
 	      if (CallEngine.getPullClient().isPublishingSupported()) {
-	        return _classPrivateMethodGet$4(this, _sendPullEvent, _sendPullEvent2).call(this, pullEvents.cameraState, {
+	        return _classPrivateMethodGet$5(this, _sendPullEvent, _sendPullEvent2).call(this, pullEvents.cameraState, {
 	          userId: users,
 	          cameraState: cameraState
 	        }, 0);
@@ -24348,7 +24918,7 @@ this.BX = this.BX || {};
 	    key: "sendVideoPaused",
 	    value: function sendVideoPaused(users, videoPaused) {
 	      if (CallEngine.getPullClient().isPublishingSupported()) {
-	        return _classPrivateMethodGet$4(this, _sendPullEvent, _sendPullEvent2).call(this, pullEvents.videoPaused, {
+	        return _classPrivateMethodGet$5(this, _sendPullEvent, _sendPullEvent2).call(this, pullEvents.videoPaused, {
 	          userId: users,
 	          videoPaused: videoPaused
 	        }, 0);
@@ -24358,7 +24928,7 @@ this.BX = this.BX || {};
 	    key: "sendRecordState",
 	    value: function sendRecordState(users, recordState) {
 	      if (CallEngine.getPullClient().isPublishingSupported()) {
-	        return _classPrivateMethodGet$4(this, _sendPullEvent, _sendPullEvent2).call(this, pullEvents.recordState, {
+	        return _classPrivateMethodGet$5(this, _sendPullEvent, _sendPullEvent2).call(this, pullEvents.recordState, {
 	          userId: users,
 	          recordState: recordState
 	        }, 0);
@@ -24368,21 +24938,21 @@ this.BX = this.BX || {};
 	    key: "sendPingToUsers",
 	    value: function sendPingToUsers(data) {
 	      if (CallEngine.getPullClient().isPublishingEnabled()) {
-	        _classPrivateMethodGet$4(this, _sendPullEvent, _sendPullEvent2).call(this, pullEvents.ping, data, 5);
+	        _classPrivateMethodGet$5(this, _sendPullEvent, _sendPullEvent2).call(this, pullEvents.ping, data, 5);
 	      }
 	    }
 	  }, {
 	    key: "sendCustomMessage",
 	    value: function sendCustomMessage(data) {
 	      if (CallEngine.getPullClient().isPublishingEnabled()) {
-	        _classPrivateMethodGet$4(this, _sendPullEvent, _sendPullEvent2).call(this, pullEvents.customMessage, data, 5);
+	        _classPrivateMethodGet$5(this, _sendPullEvent, _sendPullEvent2).call(this, pullEvents.customMessage, data, 5);
 	      }
 	    }
 	  }, {
 	    key: "sendPingToBackend",
 	    value: function sendPingToBackend() {
 	      var retransmit = !CallEngine.getPullClient().isPublishingEnabled();
-	      _classPrivateMethodGet$4(this, _runRestAction$2, _runRestAction2$2).call(this, ajaxActions$3.ping, {
+	      _classPrivateMethodGet$5(this, _runRestAction$2, _runRestAction2$2).call(this, ajaxActions$3.ping, {
 	        retransmit: retransmit
 	      });
 	    }
@@ -24390,19 +24960,19 @@ this.BX = this.BX || {};
 	    key: "sendUserInviteTimeout",
 	    value: function sendUserInviteTimeout(data) {
 	      if (CallEngine.getPullClient().isPublishingEnabled()) {
-	        _classPrivateMethodGet$4(this, _sendPullEvent, _sendPullEvent2).call(this, pullEvents.userInviteTimeout, data, 0);
+	        _classPrivateMethodGet$5(this, _sendPullEvent, _sendPullEvent2).call(this, pullEvents.userInviteTimeout, data, 0);
 	      }
 	    }
 	  }, {
 	    key: "sendHangup",
 	    value: function sendHangup(data) {
 	      if (CallEngine.getPullClient().isPublishingSupported()) {
-	        _classPrivateMethodGet$4(this, _sendPullEvent, _sendPullEvent2).call(this, pullEvents.hangup, data, 3600);
+	        _classPrivateMethodGet$5(this, _sendPullEvent, _sendPullEvent2).call(this, pullEvents.hangup, data, 3600);
 	        data.retransmit = false;
-	        return _classPrivateMethodGet$4(this, _runRestAction$2, _runRestAction2$2).call(this, ajaxActions$3.hangup, data);
+	        return _classPrivateMethodGet$5(this, _runRestAction$2, _runRestAction2$2).call(this, ajaxActions$3.hangup, data);
 	      } else {
 	        data.retransmit = true;
-	        return _classPrivateMethodGet$4(this, _runRestAction$2, _runRestAction2$2).call(this, ajaxActions$3.hangup, data);
+	        return _classPrivateMethodGet$5(this, _runRestAction$2, _runRestAction2$2).call(this, ajaxActions$3.hangup, data);
 	      }
 	    }
 	  }]);
@@ -24458,18 +25028,18 @@ this.BX = this.BX || {};
 	var Peer$2 = /*#__PURE__*/function () {
 	  function Peer(params) {
 	    babelHelpers.classCallCheck(this, Peer);
-	    _classPrivateMethodInitSpec$4(this, _onLostSignalingConnection$1);
-	    _classPrivateMethodInitSpec$4(this, _updateTracks$1);
-	    _classPrivateMethodInitSpec$4(this, _onVideoTrackEnded$1);
-	    _classPrivateMethodInitSpec$4(this, _onVideoTrackUnMuted$1);
-	    _classPrivateMethodInitSpec$4(this, _onVideoTrackMuted$1);
-	    _classPrivateMethodInitSpec$4(this, _onPeerConnectionRemoveStream$1);
-	    _classPrivateMethodInitSpec$4(this, _onPeerConnectionTrack$1);
-	    _classPrivateMethodInitSpec$4(this, _onPeerConnectionNegotiationNeeded$1);
-	    _classPrivateMethodInitSpec$4(this, _onPeerConnectionSignalingStateChange$1);
-	    _classPrivateMethodInitSpec$4(this, _onPeerConnectionIceGatheringStateChange$1);
-	    _classPrivateMethodInitSpec$4(this, _onPeerConnectionConnectionStateChange$1);
-	    _classPrivateMethodInitSpec$4(this, _createPeerConnection$2);
+	    _classPrivateMethodInitSpec$5(this, _onLostSignalingConnection$1);
+	    _classPrivateMethodInitSpec$5(this, _updateTracks$1);
+	    _classPrivateMethodInitSpec$5(this, _onVideoTrackEnded$1);
+	    _classPrivateMethodInitSpec$5(this, _onVideoTrackUnMuted$1);
+	    _classPrivateMethodInitSpec$5(this, _onVideoTrackMuted$1);
+	    _classPrivateMethodInitSpec$5(this, _onPeerConnectionRemoveStream$1);
+	    _classPrivateMethodInitSpec$5(this, _onPeerConnectionTrack$1);
+	    _classPrivateMethodInitSpec$5(this, _onPeerConnectionNegotiationNeeded$1);
+	    _classPrivateMethodInitSpec$5(this, _onPeerConnectionSignalingStateChange$1);
+	    _classPrivateMethodInitSpec$5(this, _onPeerConnectionIceGatheringStateChange$1);
+	    _classPrivateMethodInitSpec$5(this, _onPeerConnectionConnectionStateChange$1);
+	    _classPrivateMethodInitSpec$5(this, _createPeerConnection$2);
 	    this.call = params.call;
 	    this.userId = params.userId;
 	    this.ready = params.ready === true;
@@ -24573,13 +25143,13 @@ this.BX = this.BX || {};
 
 	    // event handlers
 	    this._onPeerConnectionIceCandidateHandler = this._onPeerConnectionIceCandidate.bind(this);
-	    this._onPeerConnectionConnectionStateChangeHandler = _classPrivateMethodGet$4(this, _onPeerConnectionConnectionStateChange$1, _onPeerConnectionConnectionStateChange2$1).bind(this);
-	    this._onPeerConnectionIceGatheringStateChangeHandler = _classPrivateMethodGet$4(this, _onPeerConnectionIceGatheringStateChange$1, _onPeerConnectionIceGatheringStateChange2$1).bind(this);
-	    this._onPeerConnectionSignalingStateChangeHandler = _classPrivateMethodGet$4(this, _onPeerConnectionSignalingStateChange$1, _onPeerConnectionSignalingStateChange2$1).bind(this);
+	    this._onPeerConnectionConnectionStateChangeHandler = _classPrivateMethodGet$5(this, _onPeerConnectionConnectionStateChange$1, _onPeerConnectionConnectionStateChange2$1).bind(this);
+	    this._onPeerConnectionIceGatheringStateChangeHandler = _classPrivateMethodGet$5(this, _onPeerConnectionIceGatheringStateChange$1, _onPeerConnectionIceGatheringStateChange2$1).bind(this);
+	    this._onPeerConnectionSignalingStateChangeHandler = _classPrivateMethodGet$5(this, _onPeerConnectionSignalingStateChange$1, _onPeerConnectionSignalingStateChange2$1).bind(this);
 	    //this._onPeerConnectionNegotiationNeededHandler = this._onPeerConnectionNegotiationNeeded.bind(this);
-	    this._onPeerConnectionTrackHandler = _classPrivateMethodGet$4(this, _onPeerConnectionTrack$1, _onPeerConnectionTrack2$1).bind(this);
-	    this._onPeerConnectionRemoveStreamHandler = _classPrivateMethodGet$4(this, _onPeerConnectionRemoveStream$1, _onPeerConnectionRemoveStream2$1).bind(this);
-	    this._updateTracksDebounced = main_core.Runtime.debounce(_classPrivateMethodGet$4(this, _updateTracks$1, _updateTracks2$1).bind(this), 50);
+	    this._onPeerConnectionTrackHandler = _classPrivateMethodGet$5(this, _onPeerConnectionTrack$1, _onPeerConnectionTrack2$1).bind(this);
+	    this._onPeerConnectionRemoveStreamHandler = _classPrivateMethodGet$5(this, _onPeerConnectionRemoveStream$1, _onPeerConnectionRemoveStream2$1).bind(this);
+	    this._updateTracksDebounced = main_core.Runtime.debounce(_classPrivateMethodGet$5(this, _updateTracks$1, _updateTracks2$1).bind(this), 50);
 	    this._waitTurnCandidatesTimeout = null;
 	    this.prevPercentPacketLostList = {
 	      incomingPacketLost: [],
@@ -24634,7 +25204,7 @@ this.BX = this.BX || {};
 	      }
 	      if (!this.peerConnection) {
 	        var connectionId = Util.getUuidv4();
-	        _classPrivateMethodGet$4(this, _createPeerConnection$2, _createPeerConnection2$2).call(this, connectionId);
+	        _classPrivateMethodGet$5(this, _createPeerConnection$2, _createPeerConnection2$2).call(this, connectionId);
 	      }
 	      this.updateOutgoingTracks();
 	      if (!skipOffer) {
@@ -25200,7 +25770,7 @@ this.BX = this.BX || {};
 	    key: "refreshSignalingTimeout",
 	    value: function refreshSignalingTimeout() {
 	      clearTimeout(this.signalingConnectionTimeout);
-	      this.signalingConnectionTimeout = setTimeout(_classPrivateMethodGet$4(this, _onLostSignalingConnection$1, _onLostSignalingConnection2$1).bind(this), signalingConnectionRefreshPeriod$1);
+	      this.signalingConnectionTimeout = setTimeout(_classPrivateMethodGet$5(this, _onLostSignalingConnection$1, _onLostSignalingConnection2$1).bind(this), signalingConnectionRefreshPeriod$1);
 	    }
 	  }, {
 	    key: "_onConnectionOfferReplyTimeout",
@@ -25233,10 +25803,10 @@ this.BX = this.BX || {};
 	      if (this.peerConnection) {
 	        if (this.peerConnectionId !== connectionId) {
 	          this._destroyPeerConnection();
-	          _classPrivateMethodGet$4(this, _createPeerConnection$2, _createPeerConnection2$2).call(this, connectionId);
+	          _classPrivateMethodGet$5(this, _createPeerConnection$2, _createPeerConnection2$2).call(this, connectionId);
 	        }
 	      } else {
-	        _classPrivateMethodGet$4(this, _createPeerConnection$2, _createPeerConnection2$2).call(this, connectionId);
+	        _classPrivateMethodGet$5(this, _createPeerConnection$2, _createPeerConnection2$2).call(this, connectionId);
 	      }
 	      this.applyOfferAndSendAnswer(sdp);
 	    }
@@ -25585,9 +26155,9 @@ this.BX = this.BX || {};
 	function _onPeerConnectionTrack2$1(e) {
 	  this.log("User " + this.userId + ": media track received: ", e.track.id + " (" + e.track.kind + ")");
 	  if (e.track.kind === "video") {
-	    e.track.addEventListener("mute", _classPrivateMethodGet$4(this, _onVideoTrackMuted$1, _onVideoTrackMuted2$1).bind(this));
-	    e.track.addEventListener("unmute", _classPrivateMethodGet$4(this, _onVideoTrackUnMuted$1, _onVideoTrackUnMuted2$1).bind(this));
-	    e.track.addEventListener("ended", _classPrivateMethodGet$4(this, _onVideoTrackEnded$1, _onVideoTrackEnded2$1).bind(this));
+	    e.track.addEventListener("mute", _classPrivateMethodGet$5(this, _onVideoTrackMuted$1, _onVideoTrackMuted2$1).bind(this));
+	    e.track.addEventListener("unmute", _classPrivateMethodGet$5(this, _onVideoTrackUnMuted$1, _onVideoTrackUnMuted2$1).bind(this));
+	    e.track.addEventListener("ended", _classPrivateMethodGet$5(this, _onVideoTrackEnded$1, _onVideoTrackEnded2$1).bind(this));
 	    if (this.trackList[e.track.id] === 'screen') {
 	      this.incomingScreenTrack = e.track;
 	    } else {
@@ -25658,10 +26228,10 @@ this.BX = this.BX || {};
 	var _MediaKinds$1;
 	function ownKeys$3(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
 	function _objectSpread$3(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$3(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$3(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
-	function _classPrivateFieldInitSpec$3(obj, privateMap, value) { _checkPrivateRedeclaration$5(obj, privateMap); privateMap.set(obj, value); }
-	function _classPrivateMethodInitSpec$5(obj, privateSet) { _checkPrivateRedeclaration$5(obj, privateSet); privateSet.add(obj); }
-	function _checkPrivateRedeclaration$5(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet$5(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _classPrivateFieldInitSpec$3(obj, privateMap, value) { _checkPrivateRedeclaration$6(obj, privateMap); privateMap.set(obj, value); }
+	function _classPrivateMethodInitSpec$6(obj, privateSet) { _checkPrivateRedeclaration$6(obj, privateSet); privateSet.add(obj); }
+	function _checkPrivateRedeclaration$6(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$6(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 
 	/**
 	 * Implements Call interface
@@ -25780,10 +26350,10 @@ this.BX = this.BX || {};
 	    var _this;
 	    babelHelpers.classCallCheck(this, BitrixCallLegacy);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(BitrixCallLegacy).call(this, config));
-	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _changeRecordState$3);
-	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _onCallFailed$1);
-	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _onCallConnected$1);
-	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _setPublishingState$1);
+	    _classPrivateMethodInitSpec$6(babelHelpers.assertThisInitialized(_this), _changeRecordState$3);
+	    _classPrivateMethodInitSpec$6(babelHelpers.assertThisInitialized(_this), _onCallFailed$1);
+	    _classPrivateMethodInitSpec$6(babelHelpers.assertThisInitialized(_this), _onCallConnected$1);
+	    _classPrivateMethodInitSpec$6(babelHelpers.assertThisInitialized(_this), _setPublishingState$1);
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "setMuted", function (event) {
 	      if (_this.muted === event.data.isMicrophoneMuted) {
 	        return;
@@ -25797,7 +26367,7 @@ this.BX = this.BX || {};
 	          _this.BitrixCall.disableAudio();
 	        } else {
 	          if (!_this.BitrixCall.isAudioPublished()) {
-	            _classPrivateMethodGet$5(babelHelpers.assertThisInitialized(_this), _setPublishingState$1, _setPublishingState2$1).call(babelHelpers.assertThisInitialized(_this), MediaStreamsKinds.Microphone, true);
+	            _classPrivateMethodGet$6(babelHelpers.assertThisInitialized(_this), _setPublishingState$1, _setPublishingState2$1).call(babelHelpers.assertThisInitialized(_this), MediaStreamsKinds.Microphone, true);
 	          }
 	          _this.BitrixCall.enableAudio();
 	        }
@@ -25814,7 +26384,7 @@ this.BX = this.BX || {};
 	        }
 	        if (_this.videoEnabled) {
 	          if (!_this.BitrixCall.isVideoPublished()) {
-	            _classPrivateMethodGet$5(babelHelpers.assertThisInitialized(_this), _setPublishingState$1, _setPublishingState2$1).call(babelHelpers.assertThisInitialized(_this), MediaStreamsKinds.Camera, true);
+	            _classPrivateMethodGet$6(babelHelpers.assertThisInitialized(_this), _setPublishingState$1, _setPublishingState2$1).call(babelHelpers.assertThisInitialized(_this), MediaStreamsKinds.Camera, true);
 	          }
 	          _this.localVideoShown = true;
 	          _this.BitrixCall.enableVideo();
@@ -26043,7 +26613,7 @@ this.BX = this.BX || {};
 	            break;
 	          case MediaStreamsKinds.Microphone:
 	            _this.BitrixCall.getLocalAudio().then(function (track) {
-	              _classPrivateMethodGet$5(babelHelpers.assertThisInitialized(_this), _setPublishingState$1, _setPublishingState2$1).call(babelHelpers.assertThisInitialized(_this), MediaStreamsKinds.Microphone, false);
+	              _classPrivateMethodGet$6(babelHelpers.assertThisInitialized(_this), _setPublishingState$1, _setPublishingState2$1).call(babelHelpers.assertThisInitialized(_this), MediaStreamsKinds.Microphone, false);
 	              babelHelpers.classPrivateFieldGet(babelHelpers.assertThisInitialized(_this), _onMicAccessResult$1).call(babelHelpers.assertThisInitialized(_this), {
 	                result: true,
 	                stream: new MediaStream([track])
@@ -26057,9 +26627,9 @@ this.BX = this.BX || {};
 	      writable: true,
 	      value: function value(e) {
 	        if (e === MediaStreamsKinds.Microphone) {
-	          _classPrivateMethodGet$5(babelHelpers.assertThisInitialized(_this), _setPublishingState$1, _setPublishingState2$1).call(babelHelpers.assertThisInitialized(_this), MediaStreamsKinds.Microphone, false);
+	          _classPrivateMethodGet$6(babelHelpers.assertThisInitialized(_this), _setPublishingState$1, _setPublishingState2$1).call(babelHelpers.assertThisInitialized(_this), MediaStreamsKinds.Microphone, false);
 	        } else if (e === MediaStreamsKinds.Camera) {
-	          _classPrivateMethodGet$5(babelHelpers.assertThisInitialized(_this), _setPublishingState$1, _setPublishingState2$1).call(babelHelpers.assertThisInitialized(_this), MediaStreamsKinds.Camera, false);
+	          _classPrivateMethodGet$6(babelHelpers.assertThisInitialized(_this), _setPublishingState$1, _setPublishingState2$1).call(babelHelpers.assertThisInitialized(_this), MediaStreamsKinds.Camera, false);
 	        }
 	      }
 	    });
@@ -26150,7 +26720,7 @@ this.BX = this.BX || {};
 	            });
 	            break;
 	          case MediaStreamsKinds.Microphone:
-	            _classPrivateMethodGet$5(babelHelpers.assertThisInitialized(_this), _setPublishingState$1, _setPublishingState2$1).call(babelHelpers.assertThisInitialized(_this), MediaStreamsKinds.Microphone, false);
+	            _classPrivateMethodGet$6(babelHelpers.assertThisInitialized(_this), _setPublishingState$1, _setPublishingState2$1).call(babelHelpers.assertThisInitialized(_this), MediaStreamsKinds.Microphone, false);
 	            _this.signaling.sendMicrophoneState(false);
 	            break;
 	          case MediaStreamsKinds.Screen:
@@ -26365,13 +26935,13 @@ this.BX = this.BX || {};
 	        _this.localUserState = UserState.Connected;
 	        _this.signaling.sendMicrophoneState(!Hardware.isMicrophoneMuted);
 	        if (!_this.BitrixCall.isAudioPublished()) {
-	          _classPrivateMethodGet$5(babelHelpers.assertThisInitialized(_this), _setPublishingState$1, _setPublishingState2$1).call(babelHelpers.assertThisInitialized(_this), MediaStreamsKinds.Microphone, true);
+	          _classPrivateMethodGet$6(babelHelpers.assertThisInitialized(_this), _setPublishingState$1, _setPublishingState2$1).call(babelHelpers.assertThisInitialized(_this), MediaStreamsKinds.Microphone, true);
 	        }
 	        _this.BitrixCall.enableAudio(Hardware.isMicrophoneMuted);
 	        _this.signaling.sendCameraState(Hardware.isCameraOn);
 	        if (Hardware.isCameraOn) {
 	          if (!_this.BitrixCall.isVideoPublished()) {
-	            _classPrivateMethodGet$5(babelHelpers.assertThisInitialized(_this), _setPublishingState$1, _setPublishingState2$1).call(babelHelpers.assertThisInitialized(_this), MediaStreamsKinds.Camera, true);
+	            _classPrivateMethodGet$6(babelHelpers.assertThisInitialized(_this), _setPublishingState$1, _setPublishingState2$1).call(babelHelpers.assertThisInitialized(_this), MediaStreamsKinds.Camera, true);
 	          }
 	          _this.BitrixCall.enableVideo();
 	        }
@@ -26878,7 +27448,7 @@ this.BX = this.BX || {};
 	          return;
 	        }
 	        if (this.BitrixCall.isVideoPublished()) {
-	          _classPrivateMethodGet$5(this, _setPublishingState$1, _setPublishingState2$1).call(this, MediaStreamsKinds.Camera, true);
+	          _classPrivateMethodGet$6(this, _setPublishingState$1, _setPublishingState2$1).call(this, MediaStreamsKinds.Camera, true);
 	        }
 	        this.BitrixCall.switchActiveVideoDevice(this.cameraId).then(function () {
 	          if (Hardware.isCameraOn) {
@@ -26896,18 +27466,18 @@ this.BX = this.BX || {};
 	                });
 	              })["finally"](function () {
 	                if (_this4.BitrixCall.isVideoPublished()) {
-	                  _classPrivateMethodGet$5(_this4, _setPublishingState$1, _setPublishingState2$1).call(_this4, MediaStreamsKinds.Camera, false);
+	                  _classPrivateMethodGet$6(_this4, _setPublishingState$1, _setPublishingState2$1).call(_this4, MediaStreamsKinds.Camera, false);
 	                }
 	              });
 	            } else if (!_this4.canChangeMediaDevices()) {
 	              _this4.runCallback(CallEvent.onNeedResetMediaDevicesState);
 	            } else {
-	              _classPrivateMethodGet$5(_this4, _setPublishingState$1, _setPublishingState2$1).call(_this4, MediaStreamsKinds.Camera, true);
+	              _classPrivateMethodGet$6(_this4, _setPublishingState$1, _setPublishingState2$1).call(_this4, MediaStreamsKinds.Camera, true);
 	              _this4.localVideoShown = true;
 	              _this4.BitrixCall.enableVideo(true);
 	            }
 	          } else {
-	            _classPrivateMethodGet$5(_this4, _setPublishingState$1, _setPublishingState2$1).call(_this4, MediaStreamsKinds.Camera, false);
+	            _classPrivateMethodGet$6(_this4, _setPublishingState$1, _setPublishingState2$1).call(_this4, MediaStreamsKinds.Camera, false);
 	          }
 	        })["catch"](function (e) {
 	          _this4.log(e);
@@ -26929,7 +27499,7 @@ this.BX = this.BX || {};
 	          babelHelpers.classPrivateFieldGet(this, _onBeforeLocalMediaRendererRemoved$1).call(this, MediaStreamsKinds.Microphone);
 	          return;
 	        }
-	        _classPrivateMethodGet$5(this, _setPublishingState$1, _setPublishingState2$1).call(this, MediaStreamsKinds.Microphone, true);
+	        _classPrivateMethodGet$6(this, _setPublishingState$1, _setPublishingState2$1).call(this, MediaStreamsKinds.Microphone, true);
 	        babelHelpers.classPrivateFieldGet(this, _onEndpointVoiceEnd$1).call(this, {
 	          userId: this.userId
 	        });
@@ -26948,7 +27518,7 @@ this.BX = this.BX || {};
 	            microphoneState: false
 	          });
 	        })["finally"](function () {
-	          _classPrivateMethodGet$5(_this5, _setPublishingState$1, _setPublishingState2$1).call(_this5, MediaStreamsKinds.Microphone, false);
+	          _classPrivateMethodGet$6(_this5, _setPublishingState$1, _setPublishingState2$1).call(_this5, MediaStreamsKinds.Microphone, false);
 	          if (Hardware.isMicrophoneMuted && !_this5.canChangeMediaDevices()) {
 	            _this5.BitrixCall.disableAudio();
 	          }
@@ -27005,7 +27575,7 @@ this.BX = this.BX || {};
 	    key: "sendRecordState",
 	    value: function sendRecordState(recordState) {
 	      recordState.senderId = this.userId;
-	      if (!_classPrivateMethodGet$5(this, _changeRecordState$3, _changeRecordState2$3).call(this, recordState)) {
+	      if (!_classPrivateMethodGet$6(this, _changeRecordState$3, _changeRecordState2$3).call(this, recordState)) {
 	        return;
 	      }
 	      this.runCallback(CallEvent.onUserRecordState, {
@@ -27285,9 +27855,12 @@ this.BX = this.BX || {};
 	        try {
 	          _this11.localUserState = UserState.Connecting;
 	          _this11.BitrixCall = new Call(_this11.userId);
-	          if (Hardware.isCameraOn) {
-	            _this11.localVideoShown = true;
-	          }
+
+	          /*if (Hardware.isCameraOn) // transfered to #onCallConnected
+	          {
+	          	this.localVideoShown = true;
+	          }*/
+
 	          _this11.joinedAsViewer = joinAsViewer;
 	          if (!_this11.BitrixCall) {
 	            _this11.log("Error: could not create Bitrix call");
@@ -27301,11 +27874,11 @@ this.BX = this.BX || {};
 	          _this11.bindCallEvents();
 	          _this11.subscribeHardwareChanges();
 	          _this11.BitrixCall.on('Connected', function () {
-	            _classPrivateMethodGet$5(_this11, _onCallConnected$1, _onCallConnected2$1).call(_this11);
+	            _classPrivateMethodGet$6(_this11, _onCallConnected$1, _onCallConnected2$1).call(_this11);
 	            resolve();
 	          });
 	          _this11.BitrixCall.on('Failed', function (e) {
-	            _classPrivateMethodGet$5(_this11, _onCallFailed$1, _onCallFailed2$1).call(_this11, e);
+	            _classPrivateMethodGet$6(_this11, _onCallFailed$1, _onCallFailed2$1).call(_this11, e);
 	            reject(e);
 	          });
 	          if (!_this11.ready) {
@@ -27670,16 +28243,23 @@ this.BX = this.BX || {};
 	  this.log("Call connected");
 	  this.sendTelemetryEvent("connect");
 	  this.localUserState = UserState.Connected;
+	  var MAX_USERS_WITH_VIDEO = Util.countDisableCameraNewJoinedUsersFeature();
+	  if (Util.isDisableCameraNewJoinedUsersFeatureEnabled() && this.BitrixCall.remoteParticipantsCount >= MAX_USERS_WITH_VIDEO)
+	    // task-596223
+	    {
+	      Hardware.isCameraOn = false;
+	    }
 	  this.BitrixCall.on('Failed', babelHelpers.classPrivateFieldGet(this, _onCallDisconnected$2));
 	  this.signaling.sendMicrophoneState(!Hardware.isMicrophoneMuted);
 	  this.signaling.sendCameraState(Hardware.isCameraOn);
 	  if (!this.BitrixCall.isAudioPublished()) {
-	    _classPrivateMethodGet$5(this, _setPublishingState$1, _setPublishingState2$1).call(this, MediaStreamsKinds.Microphone, true);
+	    _classPrivateMethodGet$6(this, _setPublishingState$1, _setPublishingState2$1).call(this, MediaStreamsKinds.Microphone, true);
 	  }
 	  this.BitrixCall.enableAudio(Hardware.isMicrophoneMuted);
 	  if (Hardware.isCameraOn) {
+	    this.localVideoShown = true;
 	    if (!this.BitrixCall.isVideoPublished()) {
-	      _classPrivateMethodGet$5(this, _setPublishingState$1, _setPublishingState2$1).call(this, MediaStreamsKinds.Camera, true);
+	      _classPrivateMethodGet$6(this, _setPublishingState$1, _setPublishingState2$1).call(this, MediaStreamsKinds.Camera, true);
 	    }
 	    this.BitrixCall.enableVideo();
 	  }
@@ -27743,81 +28323,81 @@ this.BX = this.BX || {};
 	var Signaling$3 = /*#__PURE__*/function () {
 	  function Signaling(params) {
 	    babelHelpers.classCallCheck(this, Signaling);
-	    _classPrivateMethodInitSpec$5(this, _runRestAction$3);
-	    _classPrivateMethodInitSpec$5(this, _sendMessage$2);
-	    _classPrivateMethodInitSpec$5(this, _sendPullEvent$1);
+	    _classPrivateMethodInitSpec$6(this, _runRestAction$3);
+	    _classPrivateMethodInitSpec$6(this, _sendMessage$2);
+	    _classPrivateMethodInitSpec$6(this, _sendPullEvent$1);
 	    this.call = params.call;
 	  }
 	  babelHelpers.createClass(Signaling, [{
 	    key: "inviteUsers",
 	    value: function inviteUsers(data) {
-	      return _classPrivateMethodGet$5(this, _runRestAction$3, _runRestAction2$3).call(this, ajaxActions$4.invite, data);
+	      return _classPrivateMethodGet$6(this, _runRestAction$3, _runRestAction2$3).call(this, ajaxActions$4.invite, data);
 	    }
 	  }, {
 	    key: "sendAnswer",
 	    value: function sendAnswer(data, repeated) {
 	      if (repeated && CallEngineLegacy.getPullClient().isPublishingEnabled()) {
-	        _classPrivateMethodGet$5(this, _sendPullEvent$1, _sendPullEvent2$1).call(this, pullEvents$1.answer, data);
+	        _classPrivateMethodGet$6(this, _sendPullEvent$1, _sendPullEvent2$1).call(this, pullEvents$1.answer, data);
 	      } else {
-	        return _classPrivateMethodGet$5(this, _runRestAction$3, _runRestAction2$3).call(this, ajaxActions$4.answer, data);
+	        return _classPrivateMethodGet$6(this, _runRestAction$3, _runRestAction2$3).call(this, ajaxActions$4.answer, data);
 	      }
 	    }
 	  }, {
 	    key: "sendHangup",
 	    value: function sendHangup(data) {
 	      if (CallEngineLegacy.getPullClient().isPublishingEnabled()) {
-	        _classPrivateMethodGet$5(this, _sendPullEvent$1, _sendPullEvent2$1).call(this, pullEvents$1.hangup, data);
+	        _classPrivateMethodGet$6(this, _sendPullEvent$1, _sendPullEvent2$1).call(this, pullEvents$1.hangup, data);
 	        data.retransmit = false;
-	        _classPrivateMethodGet$5(this, _runRestAction$3, _runRestAction2$3).call(this, ajaxActions$4.hangup, data);
+	        _classPrivateMethodGet$6(this, _runRestAction$3, _runRestAction2$3).call(this, ajaxActions$4.hangup, data);
 	      } else {
 	        data.retransmit = true;
-	        _classPrivateMethodGet$5(this, _runRestAction$3, _runRestAction2$3).call(this, ajaxActions$4.hangup, data);
+	        _classPrivateMethodGet$6(this, _runRestAction$3, _runRestAction2$3).call(this, ajaxActions$4.hangup, data);
 	      }
 	    }
 	  }, {
 	    key: "sendFinish",
 	    value: function sendFinish(data) {
 	      if (CallEngineLegacy.getPullClient().isPublishingEnabled()) {
-	        _classPrivateMethodGet$5(this, _sendPullEvent$1, _sendPullEvent2$1).call(this, pullEvents$1.hangup, data);
+	        _classPrivateMethodGet$6(this, _sendPullEvent$1, _sendPullEvent2$1).call(this, pullEvents$1.hangup, data);
 	        data.retransmit = false;
-	        _classPrivateMethodGet$5(this, _runRestAction$3, _runRestAction2$3).call(this, ajaxActions$4.finish, data);
+	        _classPrivateMethodGet$6(this, _runRestAction$3, _runRestAction2$3).call(this, ajaxActions$4.finish, data);
 	      } else {
 	        data.retransmit = true;
-	        _classPrivateMethodGet$5(this, _runRestAction$3, _runRestAction2$3).call(this, ajaxActions$4.finish, data);
+	        _classPrivateMethodGet$6(this, _runRestAction$3, _runRestAction2$3).call(this, ajaxActions$4.finish, data);
 	      }
 	    }
 	  }, {
 	    key: "sendCameraState",
 	    value: function sendCameraState(cameraState) {
-	      return _classPrivateMethodGet$5(this, _sendMessage$2, _sendMessage2$2).call(this, clientEvents$2.cameraState, {
+	      return _classPrivateMethodGet$6(this, _sendMessage$2, _sendMessage2$2).call(this, clientEvents$2.cameraState, {
 	        cameraState: cameraState ? "Y" : "N"
 	      });
 	    }
 	  }, {
 	    key: "sendVideoPaused",
 	    value: function sendVideoPaused(videoPaused) {
-	      return _classPrivateMethodGet$5(this, _sendMessage$2, _sendMessage2$2).call(this, clientEvents$2.videoPaused, {
+	      return _classPrivateMethodGet$6(this, _sendMessage$2, _sendMessage2$2).call(this, clientEvents$2.videoPaused, {
 	        videoPaused: videoPaused ? "Y" : "N"
 	      });
 	    }
 	  }, {
 	    key: "sendMicrophoneState",
 	    value: function sendMicrophoneState(microphoneState) {
-	      return _classPrivateMethodGet$5(this, _sendMessage$2, _sendMessage2$2).call(this, clientEvents$2.microphoneState, {
+	      return _classPrivateMethodGet$6(this, _sendMessage$2, _sendMessage2$2).call(this, clientEvents$2.microphoneState, {
 	        microphoneState: microphoneState ? "Y" : "N"
 	      });
 	    }
 	  }, {
 	    key: "sendScreenState",
 	    value: function sendScreenState(screenState) {
-	      return _classPrivateMethodGet$5(this, _sendMessage$2, _sendMessage2$2).call(this, clientEvents$2.screenState, {
+	      return _classPrivateMethodGet$6(this, _sendMessage$2, _sendMessage2$2).call(this, clientEvents$2.screenState, {
 	        screenState: screenState ? "Y" : "N"
 	      });
 	    }
 	  }, {
 	    key: "sendRecordState",
 	    value: function sendRecordState(userId, recordState) {
-	      _classPrivateMethodGet$5(this, _sendMessage$2, _sendMessage2$2).call(this, clientEvents$2.recordState, {
+	      _classPrivateMethodGet$6(this, _sendMessage$2, _sendMessage2$2).call(this, clientEvents$2.recordState, {
 	        senderId: userId,
 	        recordState: recordState
 	      });
@@ -27825,7 +28405,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "sendCustomMessage",
 	    value: function sendCustomMessage(message, repeatOnConnect) {
-	      return _classPrivateMethodGet$5(this, _sendMessage$2, _sendMessage2$2).call(this, clientEvents$2.customMessage, {
+	      return _classPrivateMethodGet$6(this, _sendMessage$2, _sendMessage2$2).call(this, clientEvents$2.customMessage, {
 	        message: message,
 	        repeatOnConnect: !!repeatOnConnect
 	      });
@@ -27833,31 +28413,31 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "sendShowUsers",
 	    value: function sendShowUsers(users) {
-	      return _classPrivateMethodGet$5(this, _sendMessage$2, _sendMessage2$2).call(this, clientEvents$2.showUsers, {
+	      return _classPrivateMethodGet$6(this, _sendMessage$2, _sendMessage2$2).call(this, clientEvents$2.showUsers, {
 	        users: users
 	      });
 	    }
 	  }, {
 	    key: "sendShowAll",
 	    value: function sendShowAll() {
-	      return _classPrivateMethodGet$5(this, _sendMessage$2, _sendMessage2$2).call(this, clientEvents$2.showAll, {});
+	      return _classPrivateMethodGet$6(this, _sendMessage$2, _sendMessage2$2).call(this, clientEvents$2.showAll, {});
 	    }
 	  }, {
 	    key: "sendHideAll",
 	    value: function sendHideAll() {
-	      return _classPrivateMethodGet$5(this, _sendMessage$2, _sendMessage2$2).call(this, clientEvents$2.hideAll, {});
+	      return _classPrivateMethodGet$6(this, _sendMessage$2, _sendMessage2$2).call(this, clientEvents$2.hideAll, {});
 	    }
 	  }, {
 	    key: "sendPingToUsers",
 	    value: function sendPingToUsers(data) {
 	      if (CallEngineLegacy.getPullClient().isPublishingEnabled()) {
-	        _classPrivateMethodGet$5(this, _sendPullEvent$1, _sendPullEvent2$1).call(this, pullEvents$1.ping, data, 0);
+	        _classPrivateMethodGet$6(this, _sendPullEvent$1, _sendPullEvent2$1).call(this, pullEvents$1.ping, data, 0);
 	      }
 	    }
 	  }, {
 	    key: "sendPingToBackend",
 	    value: function sendPingToBackend() {
-	      _classPrivateMethodGet$5(this, _runRestAction$3, _runRestAction2$3).call(this, ajaxActions$4.ping, {
+	      _classPrivateMethodGet$6(this, _runRestAction$3, _runRestAction2$3).call(this, ajaxActions$4.ping, {
 	        retransmit: false
 	      });
 	    }
@@ -27865,7 +28445,7 @@ this.BX = this.BX || {};
 	    key: "sendUserInviteTimeout",
 	    value: function sendUserInviteTimeout(data) {
 	      if (CallEngineLegacy.getPullClient().isPublishingEnabled()) {
-	        _classPrivateMethodGet$5(this, _sendPullEvent$1, _sendPullEvent2$1).call(this, pullEvents$1.userInviteTimeout, data, 0);
+	        _classPrivateMethodGet$6(this, _sendPullEvent$1, _sendPullEvent2$1).call(this, pullEvents$1.userInviteTimeout, data, 0);
 	      }
 	    }
 	  }]);
@@ -28163,9 +28743,9 @@ this.BX = this.BX || {};
 
 	function ownKeys$4(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
 	function _objectSpread$4(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$4(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$4(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
-	function _classPrivateMethodInitSpec$6(obj, privateSet) { _checkPrivateRedeclaration$6(obj, privateSet); privateSet.add(obj); }
-	function _checkPrivateRedeclaration$6(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet$6(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _classPrivateMethodInitSpec$7(obj, privateSet) { _checkPrivateRedeclaration$7(obj, privateSet); privateSet.add(obj); }
+	function _checkPrivateRedeclaration$7(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$7(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var CallType$1 = {
 	  Instant: 1,
 	  Permanent: 2
@@ -28205,15 +28785,15 @@ this.BX = this.BX || {};
 	var EngineLegacy = /*#__PURE__*/function () {
 	  function EngineLegacy() {
 	    babelHelpers.classCallCheck(this, EngineLegacy);
-	    _classPrivateMethodInitSpec$6(this, _getCallFactory$1);
-	    _classPrivateMethodInitSpec$6(this, _isCallAppInitialized$1);
-	    _classPrivateMethodInitSpec$6(this, _onCallDestroy$1);
-	    _classPrivateMethodInitSpec$6(this, _onUnknownCallPing);
-	    _classPrivateMethodInitSpec$6(this, _onPullIncomingCall$1);
-	    _classPrivateMethodInitSpec$6(this, _onPullClientEvent);
-	    _classPrivateMethodInitSpec$6(this, _onPullEvent$1);
+	    _classPrivateMethodInitSpec$7(this, _getCallFactory$1);
+	    _classPrivateMethodInitSpec$7(this, _isCallAppInitialized$1);
+	    _classPrivateMethodInitSpec$7(this, _onCallDestroy$1);
+	    _classPrivateMethodInitSpec$7(this, _onUnknownCallPing);
+	    _classPrivateMethodInitSpec$7(this, _onPullIncomingCall$1);
+	    _classPrivateMethodInitSpec$7(this, _onPullClientEvent);
+	    _classPrivateMethodInitSpec$7(this, _onPullEvent$1);
 	    babelHelpers.defineProperty(this, "handlers", {
-	      'Call::incoming': _classPrivateMethodGet$6(this, _onPullIncomingCall$1, _onPullIncomingCall2$1).bind(this)
+	      'Call::incoming': _classPrivateMethodGet$7(this, _onPullIncomingCall$1, _onPullIncomingCall2$1).bind(this)
 	    });
 	    this.debugFlag = false;
 	    this.calls = {};
@@ -28228,9 +28808,9 @@ this.BX = this.BX || {};
 	  babelHelpers.createClass(EngineLegacy, [{
 	    key: "init",
 	    value: function init() {
-	      BX.addCustomEvent("onPullEvent-call", _classPrivateMethodGet$6(this, _onPullEvent$1, _onPullEvent2$1).bind(this));
-	      BX.addCustomEvent("onPullEvent-im", _classPrivateMethodGet$6(this, _onPullEvent$1, _onPullEvent2$1).bind(this));
-	      BX.addCustomEvent("onPullClientEvent-im", _classPrivateMethodGet$6(this, _onPullClientEvent, _onPullClientEvent2).bind(this));
+	      BX.addCustomEvent("onPullEvent-call", _classPrivateMethodGet$7(this, _onPullEvent$1, _onPullEvent2$1).bind(this));
+	      BX.addCustomEvent("onPullEvent-im", _classPrivateMethodGet$7(this, _onPullEvent$1, _onPullEvent2$1).bind(this));
+	      BX.addCustomEvent("onPullClientEvent-im", _classPrivateMethodGet$7(this, _onPullClientEvent, _onPullClientEvent2).bind(this));
 	    }
 	  }, {
 	    key: "getSiteId",
@@ -28340,7 +28920,7 @@ this.BX = this.BX || {};
 	              });
 	            }
 	          }
-	          var callFactory = _classPrivateMethodGet$6(_this, _getCallFactory$1, _getCallFactory2$1).call(_this, callFields['PROVIDER']);
+	          var callFactory = _classPrivateMethodGet$7(_this, _getCallFactory$1, _getCallFactory2$1).call(_this, callFields['PROVIDER']);
 	          Hardware.isCameraOn = config.videoEnabled === true;
 	          var call = callFactory.createCall({
 	            id: parseInt(callFields['ID']),
@@ -28353,7 +28933,7 @@ this.BX = this.BX || {};
 	            type: callFields.TYPE,
 	            startDate: callFields.START_DATE,
 	            events: {
-	              onDestroy: _classPrivateMethodGet$6(_this, _onCallDestroy$1, _onCallDestroy2$1).bind(_this)
+	              onDestroy: _classPrivateMethodGet$7(_this, _onCallDestroy$1, _onCallDestroy2$1).bind(_this)
 	            },
 	            debug: config.debug === true,
 	            logToken: createCallResponse.logToken,
@@ -28404,7 +28984,7 @@ this.BX = this.BX || {};
 	        _this2.getRestClient().callMethod(ajaxActions$5.createChildCall, callParameters, function (response) {
 	          var createCallResponse = response.data();
 	          var callFields = createCallResponse.call;
-	          var callFactory = _classPrivateMethodGet$6(_this2, _getCallFactory$1, _getCallFactory2$1).call(_this2, callFields['PROVIDER']);
+	          var callFactory = _classPrivateMethodGet$7(_this2, _getCallFactory$1, _getCallFactory2$1).call(_this2, callFields['PROVIDER']);
 	          var call = callFactory.createCall({
 	            id: parseInt(callFields['ID']),
 	            uuid: callFields['UUID'],
@@ -28418,7 +28998,7 @@ this.BX = this.BX || {};
 	            type: callFields.TYPE,
 	            startDate: callFields.START_DATE,
 	            events: {
-	              onDestroy: _classPrivateMethodGet$6(_this2, _onCallDestroy$1, _onCallDestroy2$1).bind(_this2)
+	              onDestroy: _classPrivateMethodGet$7(_this2, _onCallDestroy$1, _onCallDestroy2$1).bind(_this2)
 	            },
 	            logToken: createCallResponse.logToken,
 	            connectionData: createCallResponse.connectionData,
@@ -28447,7 +29027,7 @@ this.BX = this.BX || {};
 	        console.error("Call " + callFields['ID'] + " already exists");
 	        return this.calls[callFields['ID']];
 	      }
-	      var callFactory = _classPrivateMethodGet$6(this, _getCallFactory$1, _getCallFactory2$1).call(this, callFields['PROVIDER']);
+	      var callFactory = _classPrivateMethodGet$7(this, _getCallFactory$1, _getCallFactory2$1).call(this, callFields['PROVIDER']);
 	      var call = callFactory.createCall({
 	        id: parseInt(callFields['ID']),
 	        uuid: callFields['UUID'],
@@ -28470,7 +29050,7 @@ this.BX = this.BX || {};
 	        // endpoint: callFields['ENDPOINT'],
 
 	        events: {
-	          onDestroy: _classPrivateMethodGet$6(this, _onCallDestroy$1, _onCallDestroy2$1).bind(this)
+	          onDestroy: _classPrivateMethodGet$7(this, _onCallDestroy$1, _onCallDestroy2$1).bind(this)
 	        }
 	      });
 	      this.calls[callFields['ID']] = call;
@@ -28591,7 +29171,7 @@ this.BX = this.BX || {};
 	      this.log(callId, 'Got "Call::finish" before "Call::incoming"');
 	      this.finishedCalls.add(callId);
 	    } else if (command === 'Call::ping') {
-	      _classPrivateMethodGet$6(this, _onUnknownCallPing, _onUnknownCallPing2).call(this, params, extra).then(function (result) {
+	      _classPrivateMethodGet$7(this, _onUnknownCallPing, _onUnknownCallPing2).call(this, params, extra).then(function (result) {
 	        if (result && _this4.calls[callId]) {
 	          _this4.calls[callId].__onPullEvent(command, params, extra);
 	        }
@@ -28606,7 +29186,7 @@ this.BX = this.BX || {};
 	    if (this.calls[callId]) {
 	      this.calls[callId].__onPullEvent(command, params, extra);
 	    } else if (command === 'Call::ping') {
-	      _classPrivateMethodGet$6(this, _onUnknownCallPing, _onUnknownCallPing2).call(this, params, extra).then(function (result) {
+	      _classPrivateMethodGet$7(this, _onUnknownCallPing, _onUnknownCallPing2).call(this, params, extra).then(function (result) {
 	        if (result && _this5.calls[callId]) {
 	          _this5.calls[callId].__onPullEvent(command, params, extra);
 	        }
@@ -28636,7 +29216,7 @@ this.BX = this.BX || {};
 	  if (this.calls[callId]) {
 	    call = this.calls[callId];
 	  } else {
-	    var callFactory = _classPrivateMethodGet$6(this, _getCallFactory$1, _getCallFactory2$1).call(this, callFields.PROVIDER);
+	    var callFactory = _classPrivateMethodGet$7(this, _getCallFactory$1, _getCallFactory2$1).call(this, callFields.PROVIDER);
 	    call = callFactory.createCall({
 	      id: callId,
 	      uuid: callFields.UUID,
@@ -28653,7 +29233,7 @@ this.BX = this.BX || {};
 	      logToken: params.logToken,
 	      connectionData: params.connectionData,
 	      events: {
-	        onDestroy: _classPrivateMethodGet$6(this, _onCallDestroy$1, _onCallDestroy2$1).bind(this)
+	        onDestroy: _classPrivateMethodGet$7(this, _onCallDestroy$1, _onCallDestroy2$1).bind(this)
 	      },
 	      isCopilotActive: callFields['RECORD_AUDIO'],
 	      scheme: callFields['SCHEME']
@@ -28683,7 +29263,7 @@ this.BX = this.BX || {};
 	    this.log(callId, "Error: Ping was sent too long time ago");
 	    return Promise.resolve(false);
 	  }
-	  if (!_classPrivateMethodGet$6(this, _isCallAppInitialized$1, _isCallAppInitialized2$1).call(this)) {
+	  if (!_classPrivateMethodGet$7(this, _isCallAppInitialized$1, _isCallAppInitialized2$1).call(this)) {
 	    return Promise.resolve(false);
 	  }
 	  if (this.unknownCalls[callId]) {
@@ -28763,7 +29343,7 @@ this.BX = this.BX || {};
 	}();
 	var CallEngineLegacy = new EngineLegacy();
 
-	function _regeneratorRuntime$3() { /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ _regeneratorRuntime$3 = function _regeneratorRuntime() { return exports; }; var exports = {}, Op = Object.prototype, hasOwn = Op.hasOwnProperty, defineProperty = Object.defineProperty || function (obj, key, desc) { obj[key] = desc.value; }, $Symbol = "function" == typeof Symbol ? Symbol : {}, iteratorSymbol = $Symbol.iterator || "@@iterator", asyncIteratorSymbol = $Symbol.asyncIterator || "@@asyncIterator", toStringTagSymbol = $Symbol.toStringTag || "@@toStringTag"; function define(obj, key, value) { return Object.defineProperty(obj, key, { value: value, enumerable: !0, configurable: !0, writable: !0 }), obj[key]; } try { define({}, ""); } catch (err) { define = function define(obj, key, value) { return obj[key] = value; }; } function wrap(innerFn, outerFn, self, tryLocsList) { var protoGenerator = outerFn && outerFn.prototype instanceof Generator ? outerFn : Generator, generator = Object.create(protoGenerator.prototype), context = new Context(tryLocsList || []); return defineProperty(generator, "_invoke", { value: makeInvokeMethod(innerFn, self, context) }), generator; } function tryCatch(fn, obj, arg) { try { return { type: "normal", arg: fn.call(obj, arg) }; } catch (err) { return { type: "throw", arg: err }; } } exports.wrap = wrap; var ContinueSentinel = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var IteratorPrototype = {}; define(IteratorPrototype, iteratorSymbol, function () { return this; }); var getProto = Object.getPrototypeOf, NativeIteratorPrototype = getProto && getProto(getProto(values([]))); NativeIteratorPrototype && NativeIteratorPrototype !== Op && hasOwn.call(NativeIteratorPrototype, iteratorSymbol) && (IteratorPrototype = NativeIteratorPrototype); var Gp = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(IteratorPrototype); function defineIteratorMethods(prototype) { ["next", "throw", "return"].forEach(function (method) { define(prototype, method, function (arg) { return this._invoke(method, arg); }); }); } function AsyncIterator(generator, PromiseImpl) { function invoke(method, arg, resolve, reject) { var record = tryCatch(generator[method], generator, arg); if ("throw" !== record.type) { var result = record.arg, value = result.value; return value && "object" == babelHelpers["typeof"](value) && hasOwn.call(value, "__await") ? PromiseImpl.resolve(value.__await).then(function (value) { invoke("next", value, resolve, reject); }, function (err) { invoke("throw", err, resolve, reject); }) : PromiseImpl.resolve(value).then(function (unwrapped) { result.value = unwrapped, resolve(result); }, function (error) { return invoke("throw", error, resolve, reject); }); } reject(record.arg); } var previousPromise; defineProperty(this, "_invoke", { value: function value(method, arg) { function callInvokeWithMethodAndArg() { return new PromiseImpl(function (resolve, reject) { invoke(method, arg, resolve, reject); }); } return previousPromise = previousPromise ? previousPromise.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); } }); } function makeInvokeMethod(innerFn, self, context) { var state = "suspendedStart"; return function (method, arg) { if ("executing" === state) throw new Error("Generator is already running"); if ("completed" === state) { if ("throw" === method) throw arg; return doneResult(); } for (context.method = method, context.arg = arg;;) { var delegate = context.delegate; if (delegate) { var delegateResult = maybeInvokeDelegate(delegate, context); if (delegateResult) { if (delegateResult === ContinueSentinel) continue; return delegateResult; } } if ("next" === context.method) context.sent = context._sent = context.arg;else if ("throw" === context.method) { if ("suspendedStart" === state) throw state = "completed", context.arg; context.dispatchException(context.arg); } else "return" === context.method && context.abrupt("return", context.arg); state = "executing"; var record = tryCatch(innerFn, self, context); if ("normal" === record.type) { if (state = context.done ? "completed" : "suspendedYield", record.arg === ContinueSentinel) continue; return { value: record.arg, done: context.done }; } "throw" === record.type && (state = "completed", context.method = "throw", context.arg = record.arg); } }; } function maybeInvokeDelegate(delegate, context) { var methodName = context.method, method = delegate.iterator[methodName]; if (undefined === method) return context.delegate = null, "throw" === methodName && delegate.iterator["return"] && (context.method = "return", context.arg = undefined, maybeInvokeDelegate(delegate, context), "throw" === context.method) || "return" !== methodName && (context.method = "throw", context.arg = new TypeError("The iterator does not provide a '" + methodName + "' method")), ContinueSentinel; var record = tryCatch(method, delegate.iterator, context.arg); if ("throw" === record.type) return context.method = "throw", context.arg = record.arg, context.delegate = null, ContinueSentinel; var info = record.arg; return info ? info.done ? (context[delegate.resultName] = info.value, context.next = delegate.nextLoc, "return" !== context.method && (context.method = "next", context.arg = undefined), context.delegate = null, ContinueSentinel) : info : (context.method = "throw", context.arg = new TypeError("iterator result is not an object"), context.delegate = null, ContinueSentinel); } function pushTryEntry(locs) { var entry = { tryLoc: locs[0] }; 1 in locs && (entry.catchLoc = locs[1]), 2 in locs && (entry.finallyLoc = locs[2], entry.afterLoc = locs[3]), this.tryEntries.push(entry); } function resetTryEntry(entry) { var record = entry.completion || {}; record.type = "normal", delete record.arg, entry.completion = record; } function Context(tryLocsList) { this.tryEntries = [{ tryLoc: "root" }], tryLocsList.forEach(pushTryEntry, this), this.reset(!0); } function values(iterable) { if (iterable) { var iteratorMethod = iterable[iteratorSymbol]; if (iteratorMethod) return iteratorMethod.call(iterable); if ("function" == typeof iterable.next) return iterable; if (!isNaN(iterable.length)) { var i = -1, next = function next() { for (; ++i < iterable.length;) if (hasOwn.call(iterable, i)) return next.value = iterable[i], next.done = !1, next; return next.value = undefined, next.done = !0, next; }; return next.next = next; } } return { next: doneResult }; } function doneResult() { return { value: undefined, done: !0 }; } return GeneratorFunction.prototype = GeneratorFunctionPrototype, defineProperty(Gp, "constructor", { value: GeneratorFunctionPrototype, configurable: !0 }), defineProperty(GeneratorFunctionPrototype, "constructor", { value: GeneratorFunction, configurable: !0 }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, toStringTagSymbol, "GeneratorFunction"), exports.isGeneratorFunction = function (genFun) { var ctor = "function" == typeof genFun && genFun.constructor; return !!ctor && (ctor === GeneratorFunction || "GeneratorFunction" === (ctor.displayName || ctor.name)); }, exports.mark = function (genFun) { return Object.setPrototypeOf ? Object.setPrototypeOf(genFun, GeneratorFunctionPrototype) : (genFun.__proto__ = GeneratorFunctionPrototype, define(genFun, toStringTagSymbol, "GeneratorFunction")), genFun.prototype = Object.create(Gp), genFun; }, exports.awrap = function (arg) { return { __await: arg }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, asyncIteratorSymbol, function () { return this; }), exports.AsyncIterator = AsyncIterator, exports.async = function (innerFn, outerFn, self, tryLocsList, PromiseImpl) { void 0 === PromiseImpl && (PromiseImpl = Promise); var iter = new AsyncIterator(wrap(innerFn, outerFn, self, tryLocsList), PromiseImpl); return exports.isGeneratorFunction(outerFn) ? iter : iter.next().then(function (result) { return result.done ? result.value : iter.next(); }); }, defineIteratorMethods(Gp), define(Gp, toStringTagSymbol, "Generator"), define(Gp, iteratorSymbol, function () { return this; }), define(Gp, "toString", function () { return "[object Generator]"; }), exports.keys = function (val) { var object = Object(val), keys = []; for (var key in object) keys.push(key); return keys.reverse(), function next() { for (; keys.length;) { var key = keys.pop(); if (key in object) return next.value = key, next.done = !1, next; } return next.done = !0, next; }; }, exports.values = values, Context.prototype = { constructor: Context, reset: function reset(skipTempReset) { if (this.prev = 0, this.next = 0, this.sent = this._sent = undefined, this.done = !1, this.delegate = null, this.method = "next", this.arg = undefined, this.tryEntries.forEach(resetTryEntry), !skipTempReset) for (var name in this) "t" === name.charAt(0) && hasOwn.call(this, name) && !isNaN(+name.slice(1)) && (this[name] = undefined); }, stop: function stop() { this.done = !0; var rootRecord = this.tryEntries[0].completion; if ("throw" === rootRecord.type) throw rootRecord.arg; return this.rval; }, dispatchException: function dispatchException(exception) { if (this.done) throw exception; var context = this; function handle(loc, caught) { return record.type = "throw", record.arg = exception, context.next = loc, caught && (context.method = "next", context.arg = undefined), !!caught; } for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i], record = entry.completion; if ("root" === entry.tryLoc) return handle("end"); if (entry.tryLoc <= this.prev) { var hasCatch = hasOwn.call(entry, "catchLoc"), hasFinally = hasOwn.call(entry, "finallyLoc"); if (hasCatch && hasFinally) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } else if (hasCatch) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); } else { if (!hasFinally) throw new Error("try statement without catch or finally"); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } } } }, abrupt: function abrupt(type, arg) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc <= this.prev && hasOwn.call(entry, "finallyLoc") && this.prev < entry.finallyLoc) { var finallyEntry = entry; break; } } finallyEntry && ("break" === type || "continue" === type) && finallyEntry.tryLoc <= arg && arg <= finallyEntry.finallyLoc && (finallyEntry = null); var record = finallyEntry ? finallyEntry.completion : {}; return record.type = type, record.arg = arg, finallyEntry ? (this.method = "next", this.next = finallyEntry.finallyLoc, ContinueSentinel) : this.complete(record); }, complete: function complete(record, afterLoc) { if ("throw" === record.type) throw record.arg; return "break" === record.type || "continue" === record.type ? this.next = record.arg : "return" === record.type ? (this.rval = this.arg = record.arg, this.method = "return", this.next = "end") : "normal" === record.type && afterLoc && (this.next = afterLoc), ContinueSentinel; }, finish: function finish(finallyLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.finallyLoc === finallyLoc) return this.complete(entry.completion, entry.afterLoc), resetTryEntry(entry), ContinueSentinel; } }, "catch": function _catch(tryLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc === tryLoc) { var record = entry.completion; if ("throw" === record.type) { var thrown = record.arg; resetTryEntry(entry); } return thrown; } } throw new Error("illegal catch attempt"); }, delegateYield: function delegateYield(iterable, resultName, nextLoc) { return this.delegate = { iterator: values(iterable), resultName: resultName, nextLoc: nextLoc }, "next" === this.method && (this.arg = undefined), ContinueSentinel; } }, exports; }
+	function _regeneratorRuntime$4() { /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ _regeneratorRuntime$4 = function _regeneratorRuntime() { return exports; }; var exports = {}, Op = Object.prototype, hasOwn = Op.hasOwnProperty, defineProperty = Object.defineProperty || function (obj, key, desc) { obj[key] = desc.value; }, $Symbol = "function" == typeof Symbol ? Symbol : {}, iteratorSymbol = $Symbol.iterator || "@@iterator", asyncIteratorSymbol = $Symbol.asyncIterator || "@@asyncIterator", toStringTagSymbol = $Symbol.toStringTag || "@@toStringTag"; function define(obj, key, value) { return Object.defineProperty(obj, key, { value: value, enumerable: !0, configurable: !0, writable: !0 }), obj[key]; } try { define({}, ""); } catch (err) { define = function define(obj, key, value) { return obj[key] = value; }; } function wrap(innerFn, outerFn, self, tryLocsList) { var protoGenerator = outerFn && outerFn.prototype instanceof Generator ? outerFn : Generator, generator = Object.create(protoGenerator.prototype), context = new Context(tryLocsList || []); return defineProperty(generator, "_invoke", { value: makeInvokeMethod(innerFn, self, context) }), generator; } function tryCatch(fn, obj, arg) { try { return { type: "normal", arg: fn.call(obj, arg) }; } catch (err) { return { type: "throw", arg: err }; } } exports.wrap = wrap; var ContinueSentinel = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var IteratorPrototype = {}; define(IteratorPrototype, iteratorSymbol, function () { return this; }); var getProto = Object.getPrototypeOf, NativeIteratorPrototype = getProto && getProto(getProto(values([]))); NativeIteratorPrototype && NativeIteratorPrototype !== Op && hasOwn.call(NativeIteratorPrototype, iteratorSymbol) && (IteratorPrototype = NativeIteratorPrototype); var Gp = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(IteratorPrototype); function defineIteratorMethods(prototype) { ["next", "throw", "return"].forEach(function (method) { define(prototype, method, function (arg) { return this._invoke(method, arg); }); }); } function AsyncIterator(generator, PromiseImpl) { function invoke(method, arg, resolve, reject) { var record = tryCatch(generator[method], generator, arg); if ("throw" !== record.type) { var result = record.arg, value = result.value; return value && "object" == babelHelpers["typeof"](value) && hasOwn.call(value, "__await") ? PromiseImpl.resolve(value.__await).then(function (value) { invoke("next", value, resolve, reject); }, function (err) { invoke("throw", err, resolve, reject); }) : PromiseImpl.resolve(value).then(function (unwrapped) { result.value = unwrapped, resolve(result); }, function (error) { return invoke("throw", error, resolve, reject); }); } reject(record.arg); } var previousPromise; defineProperty(this, "_invoke", { value: function value(method, arg) { function callInvokeWithMethodAndArg() { return new PromiseImpl(function (resolve, reject) { invoke(method, arg, resolve, reject); }); } return previousPromise = previousPromise ? previousPromise.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); } }); } function makeInvokeMethod(innerFn, self, context) { var state = "suspendedStart"; return function (method, arg) { if ("executing" === state) throw new Error("Generator is already running"); if ("completed" === state) { if ("throw" === method) throw arg; return doneResult(); } for (context.method = method, context.arg = arg;;) { var delegate = context.delegate; if (delegate) { var delegateResult = maybeInvokeDelegate(delegate, context); if (delegateResult) { if (delegateResult === ContinueSentinel) continue; return delegateResult; } } if ("next" === context.method) context.sent = context._sent = context.arg;else if ("throw" === context.method) { if ("suspendedStart" === state) throw state = "completed", context.arg; context.dispatchException(context.arg); } else "return" === context.method && context.abrupt("return", context.arg); state = "executing"; var record = tryCatch(innerFn, self, context); if ("normal" === record.type) { if (state = context.done ? "completed" : "suspendedYield", record.arg === ContinueSentinel) continue; return { value: record.arg, done: context.done }; } "throw" === record.type && (state = "completed", context.method = "throw", context.arg = record.arg); } }; } function maybeInvokeDelegate(delegate, context) { var methodName = context.method, method = delegate.iterator[methodName]; if (undefined === method) return context.delegate = null, "throw" === methodName && delegate.iterator["return"] && (context.method = "return", context.arg = undefined, maybeInvokeDelegate(delegate, context), "throw" === context.method) || "return" !== methodName && (context.method = "throw", context.arg = new TypeError("The iterator does not provide a '" + methodName + "' method")), ContinueSentinel; var record = tryCatch(method, delegate.iterator, context.arg); if ("throw" === record.type) return context.method = "throw", context.arg = record.arg, context.delegate = null, ContinueSentinel; var info = record.arg; return info ? info.done ? (context[delegate.resultName] = info.value, context.next = delegate.nextLoc, "return" !== context.method && (context.method = "next", context.arg = undefined), context.delegate = null, ContinueSentinel) : info : (context.method = "throw", context.arg = new TypeError("iterator result is not an object"), context.delegate = null, ContinueSentinel); } function pushTryEntry(locs) { var entry = { tryLoc: locs[0] }; 1 in locs && (entry.catchLoc = locs[1]), 2 in locs && (entry.finallyLoc = locs[2], entry.afterLoc = locs[3]), this.tryEntries.push(entry); } function resetTryEntry(entry) { var record = entry.completion || {}; record.type = "normal", delete record.arg, entry.completion = record; } function Context(tryLocsList) { this.tryEntries = [{ tryLoc: "root" }], tryLocsList.forEach(pushTryEntry, this), this.reset(!0); } function values(iterable) { if (iterable) { var iteratorMethod = iterable[iteratorSymbol]; if (iteratorMethod) return iteratorMethod.call(iterable); if ("function" == typeof iterable.next) return iterable; if (!isNaN(iterable.length)) { var i = -1, next = function next() { for (; ++i < iterable.length;) if (hasOwn.call(iterable, i)) return next.value = iterable[i], next.done = !1, next; return next.value = undefined, next.done = !0, next; }; return next.next = next; } } return { next: doneResult }; } function doneResult() { return { value: undefined, done: !0 }; } return GeneratorFunction.prototype = GeneratorFunctionPrototype, defineProperty(Gp, "constructor", { value: GeneratorFunctionPrototype, configurable: !0 }), defineProperty(GeneratorFunctionPrototype, "constructor", { value: GeneratorFunction, configurable: !0 }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, toStringTagSymbol, "GeneratorFunction"), exports.isGeneratorFunction = function (genFun) { var ctor = "function" == typeof genFun && genFun.constructor; return !!ctor && (ctor === GeneratorFunction || "GeneratorFunction" === (ctor.displayName || ctor.name)); }, exports.mark = function (genFun) { return Object.setPrototypeOf ? Object.setPrototypeOf(genFun, GeneratorFunctionPrototype) : (genFun.__proto__ = GeneratorFunctionPrototype, define(genFun, toStringTagSymbol, "GeneratorFunction")), genFun.prototype = Object.create(Gp), genFun; }, exports.awrap = function (arg) { return { __await: arg }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, asyncIteratorSymbol, function () { return this; }), exports.AsyncIterator = AsyncIterator, exports.async = function (innerFn, outerFn, self, tryLocsList, PromiseImpl) { void 0 === PromiseImpl && (PromiseImpl = Promise); var iter = new AsyncIterator(wrap(innerFn, outerFn, self, tryLocsList), PromiseImpl); return exports.isGeneratorFunction(outerFn) ? iter : iter.next().then(function (result) { return result.done ? result.value : iter.next(); }); }, defineIteratorMethods(Gp), define(Gp, toStringTagSymbol, "Generator"), define(Gp, iteratorSymbol, function () { return this; }), define(Gp, "toString", function () { return "[object Generator]"; }), exports.keys = function (val) { var object = Object(val), keys = []; for (var key in object) keys.push(key); return keys.reverse(), function next() { for (; keys.length;) { var key = keys.pop(); if (key in object) return next.value = key, next.done = !1, next; } return next.done = !0, next; }; }, exports.values = values, Context.prototype = { constructor: Context, reset: function reset(skipTempReset) { if (this.prev = 0, this.next = 0, this.sent = this._sent = undefined, this.done = !1, this.delegate = null, this.method = "next", this.arg = undefined, this.tryEntries.forEach(resetTryEntry), !skipTempReset) for (var name in this) "t" === name.charAt(0) && hasOwn.call(this, name) && !isNaN(+name.slice(1)) && (this[name] = undefined); }, stop: function stop() { this.done = !0; var rootRecord = this.tryEntries[0].completion; if ("throw" === rootRecord.type) throw rootRecord.arg; return this.rval; }, dispatchException: function dispatchException(exception) { if (this.done) throw exception; var context = this; function handle(loc, caught) { return record.type = "throw", record.arg = exception, context.next = loc, caught && (context.method = "next", context.arg = undefined), !!caught; } for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i], record = entry.completion; if ("root" === entry.tryLoc) return handle("end"); if (entry.tryLoc <= this.prev) { var hasCatch = hasOwn.call(entry, "catchLoc"), hasFinally = hasOwn.call(entry, "finallyLoc"); if (hasCatch && hasFinally) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } else if (hasCatch) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); } else { if (!hasFinally) throw new Error("try statement without catch or finally"); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } } } }, abrupt: function abrupt(type, arg) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc <= this.prev && hasOwn.call(entry, "finallyLoc") && this.prev < entry.finallyLoc) { var finallyEntry = entry; break; } } finallyEntry && ("break" === type || "continue" === type) && finallyEntry.tryLoc <= arg && arg <= finallyEntry.finallyLoc && (finallyEntry = null); var record = finallyEntry ? finallyEntry.completion : {}; return record.type = type, record.arg = arg, finallyEntry ? (this.method = "next", this.next = finallyEntry.finallyLoc, ContinueSentinel) : this.complete(record); }, complete: function complete(record, afterLoc) { if ("throw" === record.type) throw record.arg; return "break" === record.type || "continue" === record.type ? this.next = record.arg : "return" === record.type ? (this.rval = this.arg = record.arg, this.method = "return", this.next = "end") : "normal" === record.type && afterLoc && (this.next = afterLoc), ContinueSentinel; }, finish: function finish(finallyLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.finallyLoc === finallyLoc) return this.complete(entry.completion, entry.afterLoc), resetTryEntry(entry), ContinueSentinel; } }, "catch": function _catch(tryLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc === tryLoc) { var record = entry.completion; if ("throw" === record.type) { var thrown = record.arg; resetTryEntry(entry); } return thrown; } } throw new Error("illegal catch attempt"); }, delegateYield: function delegateYield(iterable, resultName, nextLoc) { return this.delegate = { iterator: values(iterable), resultName: resultName, nextLoc: nextLoc }, "next" === this.method && (this.arg = undefined), ContinueSentinel; } }, exports; }
 	function ownKeys$5(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
 	function _objectSpread$5(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$5(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$5(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	var blankAvatar = '/bitrix/js/im/images/blank.gif';
@@ -29432,17 +30012,17 @@ this.BX = this.BX || {};
 	  return BX.message('conference_chat_enabled');
 	};
 	var getCallConnectionData = /*#__PURE__*/function () {
-	  var _ref = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$3().mark(function _callee2(callOptions, chatId) {
-	    return _regeneratorRuntime$3().wrap(function _callee2$(_context2) {
+	  var _ref = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$4().mark(function _callee2(callOptions, chatId) {
+	    return _regeneratorRuntime$4().wrap(function _callee2$(_context2) {
 	      while (1) switch (_context2.prev = _context2.next) {
 	        case 0:
 	          if (!main_core.Type.isPlainObject(callOptions)) {
 	            callOptions = {};
 	          }
 	          return _context2.abrupt("return", new Promise( /*#__PURE__*/function () {
-	            var _ref2 = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$3().mark(function _callee(resolve, reject) {
+	            var _ref2 = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$4().mark(function _callee(resolve, reject) {
 	              var callBalancerUrl, roomType, url, userToken, data;
-	              return _regeneratorRuntime$3().wrap(function _callee$(_context) {
+	              return _regeneratorRuntime$4().wrap(function _callee$(_context) {
 	                while (1) switch (_context.prev = _context.next) {
 	                  case 0:
 	                    abortController = new AbortController();
@@ -29503,9 +30083,9 @@ this.BX = this.BX || {};
 	  };
 	}();
 	var getCallConnectionDataById = /*#__PURE__*/function () {
-	  var _ref3 = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$3().mark(function _callee3(callUuid) {
+	  var _ref3 = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$4().mark(function _callee3(callUuid) {
 	    var call;
-	    return _regeneratorRuntime$3().wrap(function _callee3$(_context3) {
+	    return _regeneratorRuntime$4().wrap(function _callee3$(_context3) {
 	      while (1) switch (_context3.prev = _context3.next) {
 	        case 0:
 	          _context3.prev = 0;
@@ -29517,7 +30097,6 @@ this.BX = this.BX || {};
 	            callType: call.call.type,
 	            instanceId: call.call.instanceId,
 	            provider: call.call.provider,
-	            roomId: call.call.uuid,
 	            callToken: call_lib_callTokenManager.CallTokenManager.getTokenCached(call.call.associatedEntity.chatId)
 	          }, call.call.associatedEntity.chatId));
 	        case 7:
@@ -29564,21 +30143,33 @@ this.BX = this.BX || {};
 	  var _Extension$getSetting2;
 	  return (_Extension$getSetting2 = main_core.Extension.getSettings('call.core')) === null || _Extension$getSetting2 === void 0 ? void 0 : _Extension$getSetting2.isUserControlFeatureEnabled;
 	};
-	var isPictureInPictureFeatureEnabled = function isPictureInPictureFeatureEnabled() {
+	var isDisableCameraNewJoinedUsersFeatureEnabled = function isDisableCameraNewJoinedUsersFeatureEnabled() {
 	  var _Extension$getSetting3;
-	  return (_Extension$getSetting3 = main_core.Extension.getSettings('call.core')) === null || _Extension$getSetting3 === void 0 ? void 0 : _Extension$getSetting3.isPictureInPictureFeatureEnabled;
+	  return (_Extension$getSetting3 = main_core.Extension.getSettings('call.core')) === null || _Extension$getSetting3 === void 0 ? void 0 : _Extension$getSetting3.isDisableCameraNewJoinedUsersFeatureEnabled;
+	};
+	var countDisableCameraNewJoinedUsersFeature = function countDisableCameraNewJoinedUsersFeature() {
+	  var _Extension$getSetting4;
+	  return (_Extension$getSetting4 = main_core.Extension.getSettings('call.core')) === null || _Extension$getSetting4 === void 0 ? void 0 : _Extension$getSetting4.countDisableCameraNewJoinedUsersFeature;
+	};
+	var isPictureInPictureFeatureEnabled = function isPictureInPictureFeatureEnabled() {
+	  var _Extension$getSetting5;
+	  return (_Extension$getSetting5 = main_core.Extension.getSettings('call.core')) === null || _Extension$getSetting5 === void 0 ? void 0 : _Extension$getSetting5.isPictureInPictureFeatureEnabled;
 	};
 	var isNewQOSEnabled = function isNewQOSEnabled() {
-	  var _Extension$getSetting4;
-	  return (_Extension$getSetting4 = main_core.Extension.getSettings('call.core')) === null || _Extension$getSetting4 === void 0 ? void 0 : _Extension$getSetting4.isNewQOSEnabled;
+	  var _Extension$getSetting6;
+	  return (_Extension$getSetting6 = main_core.Extension.getSettings('call.core')) === null || _Extension$getSetting6 === void 0 ? void 0 : _Extension$getSetting6.isNewQOSEnabled;
 	};
 	var isNewFollowUpSliderEnabled = function isNewFollowUpSliderEnabled() {
-	  var _Extension$getSetting5;
-	  return (_Extension$getSetting5 = main_core.Extension.getSettings('call.core')) === null || _Extension$getSetting5 === void 0 ? void 0 : _Extension$getSetting5.isNewFollowUpSliderEnabled;
+	  var _Extension$getSetting7;
+	  return (_Extension$getSetting7 = main_core.Extension.getSettings('call.core')) === null || _Extension$getSetting7 === void 0 ? void 0 : _Extension$getSetting7.isNewFollowUpSliderEnabled;
+	};
+	var isKibanaLogsEnabled = function isKibanaLogsEnabled() {
+	  var _Extension$getSetting8;
+	  return (_Extension$getSetting8 = main_core.Extension.getSettings('call.core')) === null || _Extension$getSetting8 === void 0 ? void 0 : _Extension$getSetting8.isKibanaLogsEnabled;
 	};
 	var isChatMountInPage = function isChatMountInPage() {
-	  var _Extension$getSetting6, _Extension$getSetting7;
-	  return ((_Extension$getSetting6 = main_core.Extension.getSettings('call.core')) === null || _Extension$getSetting6 === void 0 ? void 0 : _Extension$getSetting6.isAirDesignEnabled) && ((_Extension$getSetting7 = main_core.Extension.getSettings('call.core')) === null || _Extension$getSetting7 === void 0 ? void 0 : _Extension$getSetting7.shouldHideQuickAccess);
+	  var _Extension$getSetting9, _Extension$getSetting10;
+	  return ((_Extension$getSetting9 = main_core.Extension.getSettings('call.core')) === null || _Extension$getSetting9 === void 0 ? void 0 : _Extension$getSetting9.isAirDesignEnabled) && ((_Extension$getSetting10 = main_core.Extension.getSettings('call.core')) === null || _Extension$getSetting10 === void 0 ? void 0 : _Extension$getSetting10.shouldHideQuickAccess);
 	};
 
 	/* ws logger */
@@ -29671,12 +30262,15 @@ this.BX = this.BX || {};
 	  setCurrentUserRole: setCurrentUserRole,
 	  UsersRoles: UsersRoles,
 	  isRegularUser: isRegularUser,
-	  getUserRoleByUserId: getUserRoleByUserId
+	  getUserRoleByUserId: getUserRoleByUserId,
+	  isDisableCameraNewJoinedUsersFeatureEnabled: isDisableCameraNewJoinedUsersFeatureEnabled,
+	  countDisableCameraNewJoinedUsersFeature: countDisableCameraNewJoinedUsersFeature,
+	  isKibanaLogsEnabled: isKibanaLogsEnabled
 	};
 
-	function _classPrivateMethodInitSpec$7(obj, privateSet) { _checkPrivateRedeclaration$7(obj, privateSet); privateSet.add(obj); }
-	function _checkPrivateRedeclaration$7(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet$7(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _classPrivateMethodInitSpec$8(obj, privateSet) { _checkPrivateRedeclaration$8(obj, privateSet); privateSet.add(obj); }
+	function _checkPrivateRedeclaration$8(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$8(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var Events$1 = {
 	  onClose: 'onClose',
 	  onDestroy: 'onDestroy',
@@ -29696,9 +30290,9 @@ this.BX = this.BX || {};
 	    var _this;
 	    babelHelpers.classCallCheck(this, IncomingNotification);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(IncomingNotification).call(this));
-	    _classPrivateMethodInitSpec$7(babelHelpers.assertThisInitialized(_this), _onContentReady);
-	    _classPrivateMethodInitSpec$7(babelHelpers.assertThisInitialized(_this), _onButtonClick);
-	    _classPrivateMethodInitSpec$7(babelHelpers.assertThisInitialized(_this), _subscribeEvents);
+	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _onContentReady);
+	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _onButtonClick);
+	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _subscribeEvents);
 	    _this.setEventNamespace('BX.Call.IncomingNotification');
 	    _this.popup = null;
 	    _this.window = null;
@@ -29717,10 +30311,10 @@ this.BX = this.BX || {};
 	    _this.postponedEvents = [];
 	    _this.microphoneState = _config.microphoneState;
 	    _this.cameraState = _config.cameraState;
-	    _classPrivateMethodGet$7(babelHelpers.assertThisInitialized(_this), _subscribeEvents, _subscribeEvents2).call(babelHelpers.assertThisInitialized(_this), _config);
+	    _classPrivateMethodGet$8(babelHelpers.assertThisInitialized(_this), _subscribeEvents, _subscribeEvents2).call(babelHelpers.assertThisInitialized(_this), _config);
 	    if (im_v2_lib_desktopApi.DesktopApi.isDesktop()) {
-	      _this.onButtonClickHandler = _classPrivateMethodGet$7(babelHelpers.assertThisInitialized(_this), _onButtonClick, _onButtonClick2).bind(babelHelpers.assertThisInitialized(_this));
-	      _this.onContentReadyHandler = _classPrivateMethodGet$7(babelHelpers.assertThisInitialized(_this), _onContentReady, _onContentReady2).bind(babelHelpers.assertThisInitialized(_this));
+	      _this.onButtonClickHandler = _classPrivateMethodGet$8(babelHelpers.assertThisInitialized(_this), _onButtonClick, _onButtonClick2).bind(babelHelpers.assertThisInitialized(_this));
+	      _this.onContentReadyHandler = _classPrivateMethodGet$8(babelHelpers.assertThisInitialized(_this), _onContentReady, _onContentReady2).bind(babelHelpers.assertThisInitialized(_this));
 	      im_v2_lib_desktopApi.DesktopApi.subscribe(InternalEvents.onButtonClick, _this.onButtonClickHandler);
 	      im_v2_lib_desktopApi.DesktopApi.subscribe(InternalEvents.contentReady, _this.onContentReadyHandler);
 	    }
@@ -29918,13 +30512,13 @@ this.BX = this.BX || {};
 	    var _this4;
 	    babelHelpers.classCallCheck(this, IncomingNotificationContent);
 	    _this4 = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(IncomingNotificationContent).call(this));
-	    _classPrivateMethodInitSpec$7(babelHelpers.assertThisInitialized(_this4), _onDeclineButtonClick);
-	    _classPrivateMethodInitSpec$7(babelHelpers.assertThisInitialized(_this4), _onAnswerWithVideoButtonClick);
-	    _classPrivateMethodInitSpec$7(babelHelpers.assertThisInitialized(_this4), _onAnswerButtonClick);
-	    _classPrivateMethodInitSpec$7(babelHelpers.assertThisInitialized(_this4), _onCameraSettingClick);
-	    _classPrivateMethodInitSpec$7(babelHelpers.assertThisInitialized(_this4), _onMicrophoneSettingClick);
-	    _classPrivateMethodInitSpec$7(babelHelpers.assertThisInitialized(_this4), _onHasCamera);
-	    _classPrivateMethodInitSpec$7(babelHelpers.assertThisInitialized(_this4), _subscribeEvents3);
+	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this4), _onDeclineButtonClick);
+	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this4), _onAnswerWithVideoButtonClick);
+	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this4), _onAnswerButtonClick);
+	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this4), _onCameraSettingClick);
+	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this4), _onMicrophoneSettingClick);
+	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this4), _onHasCamera);
+	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this4), _subscribeEvents3);
 	    _this4.setEventNamespace('BX.Call.IncomingNotificationContent');
 	    _this4.video = !!_config2.video;
 	    _this4.hasCamera = !!_config2.hasCamera;
@@ -29942,9 +30536,9 @@ this.BX = this.BX || {};
 	        answerVideo: null
 	      }
 	    };
-	    _classPrivateMethodGet$7(babelHelpers.assertThisInitialized(_this4), _subscribeEvents3, _subscribeEvents4).call(babelHelpers.assertThisInitialized(_this4), _config2);
+	    _classPrivateMethodGet$8(babelHelpers.assertThisInitialized(_this4), _subscribeEvents3, _subscribeEvents4).call(babelHelpers.assertThisInitialized(_this4), _config2);
 	    if (im_v2_lib_desktopApi.DesktopApi.isDesktop()) {
-	      _this4.onHasCameraHandler = _classPrivateMethodGet$7(babelHelpers.assertThisInitialized(_this4), _onHasCamera, _onHasCamera2).bind(babelHelpers.assertThisInitialized(_this4));
+	      _this4.onHasCameraHandler = _classPrivateMethodGet$8(babelHelpers.assertThisInitialized(_this4), _onHasCamera, _onHasCamera2).bind(babelHelpers.assertThisInitialized(_this4));
 	      im_v2_lib_desktopApi.DesktopApi.subscribe(InternalEvents.setHasCamera, _this4.onHasCameraHandler);
 	      im_v2_lib_desktopApi.DesktopApi.emitToMainWindow(InternalEvents.contentReady, []);
 	    }
@@ -30102,7 +30696,7 @@ this.BX = this.BX || {};
 	              text: BX.message("IM_M_CALL_BTN_MIC")
 	            })],
 	            events: {
-	              click: _classPrivateMethodGet$7(this, _onMicrophoneSettingClick, _onMicrophoneSettingClick2).bind(this)
+	              click: _classPrivateMethodGet$8(this, _onMicrophoneSettingClick, _onMicrophoneSettingClick2).bind(this)
 	            }
 	          }), main_core.Dom.create("div", {
 	            props: {
@@ -30123,7 +30717,7 @@ this.BX = this.BX || {};
 	              text: BX.message("IM_M_CALL_BTN_CAMERA")
 	            })],
 	            events: {
-	              click: _classPrivateMethodGet$7(this, _onCameraSettingClick, _onCameraSettingClick2).bind(this)
+	              click: _classPrivateMethodGet$8(this, _onCameraSettingClick, _onCameraSettingClick2).bind(this)
 	            }
 	          })]
 	        })]
@@ -30139,7 +30733,7 @@ this.BX = this.BX || {};
 	          }
 	        })],
 	        events: {
-	          click: _classPrivateMethodGet$7(this, _onDeclineButtonClick, _onDeclineButtonClick2).bind(this)
+	          click: _classPrivateMethodGet$8(this, _onDeclineButtonClick, _onDeclineButtonClick2).bind(this)
 	        }
 	      }), this.elements.buttons.answer = main_core.Dom.create("div", {
 	        props: {
@@ -30152,7 +30746,7 @@ this.BX = this.BX || {};
 	          }
 	        })],
 	        events: {
-	          click: _classPrivateMethodGet$7(this, _onAnswerButtonClick, _onAnswerButtonClick2).bind(this)
+	          click: _classPrivateMethodGet$8(this, _onAnswerButtonClick, _onAnswerButtonClick2).bind(this)
 	        }
 	      })]);
 	      return this.elements.root;
@@ -31193,7 +31787,7 @@ this.BX = this.BX || {};
 	              props: {
 	                className: "bx-call-promo-title"
 	              },
-	              text: BX.message("IM_CALL_DOCUMENT_PROMO_TITLE")
+	              text: BX.message("IM_CALL_DOCUMENT_PROMO_TITLE_MSGVER_2")
 	            }), main_core.Dom.create("div", {
 	              props: {
 	                className: "bx-call-promo-text"
@@ -31804,10 +32398,10 @@ this.BX = this.BX || {};
 	  return WebScreenSharePopup;
 	}();
 
-	function _classPrivateFieldInitSpec$4(obj, privateMap, value) { _checkPrivateRedeclaration$8(obj, privateMap); privateMap.set(obj, value); }
-	function _classPrivateMethodInitSpec$8(obj, privateSet) { _checkPrivateRedeclaration$8(obj, privateSet); privateSet.add(obj); }
-	function _checkPrivateRedeclaration$8(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet$8(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _classPrivateFieldInitSpec$4(obj, privateMap, value) { _checkPrivateRedeclaration$9(obj, privateMap); privateMap.set(obj, value); }
+	function _classPrivateMethodInitSpec$9(obj, privateSet) { _checkPrivateRedeclaration$9(obj, privateSet); privateSet.add(obj); }
+	function _checkPrivateRedeclaration$9(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$9(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 
 	/**
 	 * Implements Call interface
@@ -31915,11 +32509,11 @@ this.BX = this.BX || {};
 	    var _this;
 	    babelHelpers.classCallCheck(this, VoximplantCall);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(VoximplantCall).call(this, config));
-	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _setEndpointForUser);
-	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _onCallFailed$2);
-	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _onCallConnected$2);
-	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _hideLocalVideo);
-	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _showLocalVideo);
+	    _classPrivateMethodInitSpec$9(babelHelpers.assertThisInitialized(_this), _setEndpointForUser);
+	    _classPrivateMethodInitSpec$9(babelHelpers.assertThisInitialized(_this), _onCallFailed$2);
+	    _classPrivateMethodInitSpec$9(babelHelpers.assertThisInitialized(_this), _onCallConnected$2);
+	    _classPrivateMethodInitSpec$9(babelHelpers.assertThisInitialized(_this), _hideLocalVideo);
+	    _classPrivateMethodInitSpec$9(babelHelpers.assertThisInitialized(_this), _showLocalVideo);
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "setMuted", function (event) {
 	      if (_this.muted == event.data.isMicrophoneMuted) {
 	        return;
@@ -31941,7 +32535,7 @@ this.BX = this.BX || {};
 	      _this.videoEnabled = event.data.isCameraOn;
 	      if (_this.voximplantCall) {
 	        if (_this.videoEnabled) {
-	          _classPrivateMethodGet$8(babelHelpers.assertThisInitialized(_this), _showLocalVideo, _showLocalVideo2).call(babelHelpers.assertThisInitialized(_this));
+	          _classPrivateMethodGet$9(babelHelpers.assertThisInitialized(_this), _showLocalVideo, _showLocalVideo2).call(babelHelpers.assertThisInitialized(_this));
 	        } else {
 	          if (_this.localVideoShown) {
 	            VoxImplant.Hardware.StreamManager.get().hideLocalVideo().then(function () {
@@ -32221,7 +32815,7 @@ this.BX = this.BX || {};
 	        _this.ready = false;
 	        _this.joinedAsViewer = false;
 	        _this.reinitPeers();
-	        _classPrivateMethodGet$8(babelHelpers.assertThisInitialized(_this), _hideLocalVideo, _hideLocalVideo2).call(babelHelpers.assertThisInitialized(_this));
+	        _classPrivateMethodGet$9(babelHelpers.assertThisInitialized(_this), _hideLocalVideo, _hideLocalVideo2).call(babelHelpers.assertThisInitialized(_this));
 	        _this.removeCallEvents();
 	        _this.unsubscribeHardwareChanges();
 	        _this.voximplantCall = null;
@@ -32254,7 +32848,7 @@ this.BX = this.BX || {};
 	        _this.ready = false;
 	        _this.localUserState = UserState.Failed;
 	        _this.reinitPeers();
-	        _classPrivateMethodGet$8(babelHelpers.assertThisInitialized(_this), _hideLocalVideo, _hideLocalVideo2).call(babelHelpers.assertThisInitialized(_this)).then(function () {
+	        _classPrivateMethodGet$9(babelHelpers.assertThisInitialized(_this), _hideLocalVideo, _hideLocalVideo2).call(babelHelpers.assertThisInitialized(_this)).then(function () {
 	          if (_this.voximplantCall) {
 	            _this.removeCallEvents();
 	            _this.unsubscribeHardwareChanges();
@@ -32292,14 +32886,14 @@ this.BX = this.BX || {};
 	        _this.log("__onCallEndpointAdded (" + userName + ")", e.endpoint);
 	        console.log("__onCallEndpointAdded (" + userName + ")", e.endpoint);
 	        if (main_core.Type.isStringFilled(userName) && userName.startsWith('user')) {
-	          _classPrivateMethodGet$8(babelHelpers.assertThisInitialized(_this), _setEndpointForUser, _setEndpointForUser2).call(babelHelpers.assertThisInitialized(_this), userName, endpoint);
+	          _classPrivateMethodGet$9(babelHelpers.assertThisInitialized(_this), _setEndpointForUser, _setEndpointForUser2).call(babelHelpers.assertThisInitialized(_this), userName, endpoint);
 	        } else {
 	          endpoint.addEventListener(VoxImplant.EndpointEvents.InfoUpdated, function (e) {
 	            var endpoint = e.endpoint;
 	            var userName = endpoint.userName;
 	            _this.log("VoxImplant.EndpointEvents.InfoUpdated (" + userName + ")", e.endpoint);
 	            if (main_core.Type.isStringFilled(userName) && userName.startsWith('user')) {
-	              _classPrivateMethodGet$8(babelHelpers.assertThisInitialized(_this), _setEndpointForUser, _setEndpointForUser2).call(babelHelpers.assertThisInitialized(_this), userName, endpoint);
+	              _classPrivateMethodGet$9(babelHelpers.assertThisInitialized(_this), _setEndpointForUser, _setEndpointForUser2).call(babelHelpers.assertThisInitialized(_this), userName, endpoint);
 	            }
 	          });
 	          _this.log('Unknown endpoint ' + userName);
@@ -33000,7 +33594,7 @@ this.BX = this.BX || {};
 	        console.error("Tried to hangup, but this.voximplantCall points nowhere");
 	      }
 	      this.screenShared = false;
-	      _classPrivateMethodGet$8(this, _hideLocalVideo, _hideLocalVideo2).call(this);
+	      _classPrivateMethodGet$9(this, _hideLocalVideo, _hideLocalVideo2).call(this);
 	    }
 	  }, {
 	    key: "attachToConference",
@@ -33029,7 +33623,7 @@ this.BX = this.BX || {};
 	            });
 	          }
 	          if (Hardware.isCameraOn) {
-	            _classPrivateMethodGet$8(_this13, _showLocalVideo, _showLocalVideo2).call(_this13);
+	            _classPrivateMethodGet$9(_this13, _showLocalVideo, _showLocalVideo2).call(_this13);
 	          }
 	          try {
 	            if (!_this13.ready) {
@@ -33073,13 +33667,13 @@ this.BX = this.BX || {};
 	          _this13.bindCallEvents();
 	          _this13.subscribeHardwareChanges();
 	          _this13.voximplantCall.on(VoxImplant.CallEvents.Connected, function () {
-	            _classPrivateMethodGet$8(_this13, _onCallConnected$2, _onCallConnected2$2).call(_this13);
+	            _classPrivateMethodGet$9(_this13, _onCallConnected$2, _onCallConnected2$2).call(_this13);
 	            resolve();
 	          }, {
 	            once: true
 	          });
 	          _this13.voximplantCall.on(VoxImplant.CallEvents.Failed, function (e) {
-	            _classPrivateMethodGet$8(_this13, _onCallFailed$2, _onCallFailed2$2).call(_this13, e);
+	            _classPrivateMethodGet$9(_this13, _onCallFailed$2, _onCallFailed2$2).call(_this13, e);
 	            reject(e);
 	          }, {
 	            once: true
@@ -33289,7 +33883,7 @@ this.BX = this.BX || {};
 	    value: function destroy() {
 	      this.ready = false;
 	      this.joinedAsViewer = false;
-	      _classPrivateMethodGet$8(this, _hideLocalVideo, _hideLocalVideo2).call(this);
+	      _classPrivateMethodGet$9(this, _hideLocalVideo, _hideLocalVideo2).call(this);
 	      if (this.localVAD) {
 	        this.localVAD.destroy();
 	        this.localVAD = null;
@@ -33433,89 +34027,89 @@ this.BX = this.BX || {};
 	var Signaling$4 = /*#__PURE__*/function () {
 	  function Signaling(params) {
 	    babelHelpers.classCallCheck(this, Signaling);
-	    _classPrivateMethodInitSpec$8(this, _runRestAction$4);
-	    _classPrivateMethodInitSpec$8(this, _sendMessage$3);
-	    _classPrivateMethodInitSpec$8(this, _sendPullEvent$2);
+	    _classPrivateMethodInitSpec$9(this, _runRestAction$4);
+	    _classPrivateMethodInitSpec$9(this, _sendMessage$3);
+	    _classPrivateMethodInitSpec$9(this, _sendPullEvent$2);
 	    this.call = params.call;
 	  }
 	  babelHelpers.createClass(Signaling, [{
 	    key: "inviteUsers",
 	    value: function inviteUsers(data) {
-	      return _classPrivateMethodGet$8(this, _runRestAction$4, _runRestAction2$4).call(this, ajaxActions$6.invite, data);
+	      return _classPrivateMethodGet$9(this, _runRestAction$4, _runRestAction2$4).call(this, ajaxActions$6.invite, data);
 	    }
 	  }, {
 	    key: "sendAnswer",
 	    value: function sendAnswer(data, repeated) {
 	      if (repeated && CallEngine.getPullClient().isPublishingEnabled()) {
-	        _classPrivateMethodGet$8(this, _sendPullEvent$2, _sendPullEvent2$2).call(this, pullEvents$2.answer, data);
+	        _classPrivateMethodGet$9(this, _sendPullEvent$2, _sendPullEvent2$2).call(this, pullEvents$2.answer, data);
 	      } else {
-	        return _classPrivateMethodGet$8(this, _runRestAction$4, _runRestAction2$4).call(this, ajaxActions$6.answer, data);
+	        return _classPrivateMethodGet$9(this, _runRestAction$4, _runRestAction2$4).call(this, ajaxActions$6.answer, data);
 	      }
 	    }
 	  }, {
 	    key: "sendCancel",
 	    value: function sendCancel(data) {
-	      return _classPrivateMethodGet$8(this, _runRestAction$4, _runRestAction2$4).call(this, ajaxActions$6.cancel, data);
+	      return _classPrivateMethodGet$9(this, _runRestAction$4, _runRestAction2$4).call(this, ajaxActions$6.cancel, data);
 	    }
 	  }, {
 	    key: "sendHangup",
 	    value: function sendHangup(data) {
 	      if (CallEngine.getPullClient().isPublishingEnabled()) {
-	        _classPrivateMethodGet$8(this, _sendPullEvent$2, _sendPullEvent2$2).call(this, pullEvents$2.hangup, data);
+	        _classPrivateMethodGet$9(this, _sendPullEvent$2, _sendPullEvent2$2).call(this, pullEvents$2.hangup, data);
 	        data.retransmit = false;
-	        _classPrivateMethodGet$8(this, _runRestAction$4, _runRestAction2$4).call(this, ajaxActions$6.hangup, data);
+	        _classPrivateMethodGet$9(this, _runRestAction$4, _runRestAction2$4).call(this, ajaxActions$6.hangup, data);
 	      } else {
 	        data.retransmit = true;
-	        _classPrivateMethodGet$8(this, _runRestAction$4, _runRestAction2$4).call(this, ajaxActions$6.hangup, data);
+	        _classPrivateMethodGet$9(this, _runRestAction$4, _runRestAction2$4).call(this, ajaxActions$6.hangup, data);
 	      }
 	    }
 	  }, {
 	    key: "sendVoiceStarted",
 	    value: function sendVoiceStarted(data) {
-	      return _classPrivateMethodGet$8(this, _sendMessage$3, _sendMessage2$3).call(this, clientEvents$3.voiceStarted, data);
+	      return _classPrivateMethodGet$9(this, _sendMessage$3, _sendMessage2$3).call(this, clientEvents$3.voiceStarted, data);
 	    }
 	  }, {
 	    key: "sendVoiceStopped",
 	    value: function sendVoiceStopped(data) {
-	      return _classPrivateMethodGet$8(this, _sendMessage$3, _sendMessage2$3).call(this, clientEvents$3.voiceStopped, data);
+	      return _classPrivateMethodGet$9(this, _sendMessage$3, _sendMessage2$3).call(this, clientEvents$3.voiceStopped, data);
 	    }
 	  }, {
 	    key: "sendMicrophoneState",
 	    value: function sendMicrophoneState(microphoneState) {
-	      return _classPrivateMethodGet$8(this, _sendMessage$3, _sendMessage2$3).call(this, clientEvents$3.microphoneState, {
+	      return _classPrivateMethodGet$9(this, _sendMessage$3, _sendMessage2$3).call(this, clientEvents$3.microphoneState, {
 	        microphoneState: microphoneState ? "Y" : "N"
 	      });
 	    }
 	  }, {
 	    key: "sendCameraState",
 	    value: function sendCameraState(cameraState) {
-	      return _classPrivateMethodGet$8(this, _sendMessage$3, _sendMessage2$3).call(this, clientEvents$3.cameraState, {
+	      return _classPrivateMethodGet$9(this, _sendMessage$3, _sendMessage2$3).call(this, clientEvents$3.cameraState, {
 	        cameraState: cameraState ? "Y" : "N"
 	      });
 	    }
 	  }, {
 	    key: "sendScreenState",
 	    value: function sendScreenState(screenState) {
-	      return _classPrivateMethodGet$8(this, _sendMessage$3, _sendMessage2$3).call(this, clientEvents$3.screenState, {
+	      return _classPrivateMethodGet$9(this, _sendMessage$3, _sendMessage2$3).call(this, clientEvents$3.screenState, {
 	        screenState: screenState ? "Y" : "N"
 	      });
 	    }
 	  }, {
 	    key: "sendRecordState",
 	    value: function sendRecordState(recordState) {
-	      return _classPrivateMethodGet$8(this, _sendMessage$3, _sendMessage2$3).call(this, clientEvents$3.recordState, recordState);
+	      return _classPrivateMethodGet$9(this, _sendMessage$3, _sendMessage2$3).call(this, clientEvents$3.recordState, recordState);
 	    }
 	  }, {
 	    key: "sendFloorRequest",
 	    value: function sendFloorRequest(requestActive) {
-	      return _classPrivateMethodGet$8(this, _sendMessage$3, _sendMessage2$3).call(this, clientEvents$3.floorRequest, {
+	      return _classPrivateMethodGet$9(this, _sendMessage$3, _sendMessage2$3).call(this, clientEvents$3.floorRequest, {
 	        requestActive: requestActive ? "Y" : "N"
 	      });
 	    }
 	  }, {
 	    key: "sendEmotion",
 	    value: function sendEmotion(toUserId, emotion) {
-	      return _classPrivateMethodGet$8(this, _sendMessage$3, _sendMessage2$3).call(this, clientEvents$3.emotion, {
+	      return _classPrivateMethodGet$9(this, _sendMessage$3, _sendMessage2$3).call(this, clientEvents$3.emotion, {
 	        toUserId: toUserId,
 	        emotion: emotion
 	      });
@@ -33523,7 +34117,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "sendCustomMessage",
 	    value: function sendCustomMessage(message, repeatOnConnect) {
-	      return _classPrivateMethodGet$8(this, _sendMessage$3, _sendMessage2$3).call(this, clientEvents$3.customMessage, {
+	      return _classPrivateMethodGet$9(this, _sendMessage$3, _sendMessage2$3).call(this, clientEvents$3.customMessage, {
 	        message: message,
 	        repeatOnConnect: !!repeatOnConnect
 	      });
@@ -33531,31 +34125,31 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "sendShowUsers",
 	    value: function sendShowUsers(users) {
-	      return _classPrivateMethodGet$8(this, _sendMessage$3, _sendMessage2$3).call(this, clientEvents$3.showUsers, {
+	      return _classPrivateMethodGet$9(this, _sendMessage$3, _sendMessage2$3).call(this, clientEvents$3.showUsers, {
 	        users: users
 	      });
 	    }
 	  }, {
 	    key: "sendShowAll",
 	    value: function sendShowAll() {
-	      return _classPrivateMethodGet$8(this, _sendMessage$3, _sendMessage2$3).call(this, clientEvents$3.showAll, {});
+	      return _classPrivateMethodGet$9(this, _sendMessage$3, _sendMessage2$3).call(this, clientEvents$3.showAll, {});
 	    }
 	  }, {
 	    key: "sendHideAll",
 	    value: function sendHideAll() {
-	      return _classPrivateMethodGet$8(this, _sendMessage$3, _sendMessage2$3).call(this, clientEvents$3.hideAll, {});
+	      return _classPrivateMethodGet$9(this, _sendMessage$3, _sendMessage2$3).call(this, clientEvents$3.hideAll, {});
 	    }
 	  }, {
 	    key: "sendPingToUsers",
 	    value: function sendPingToUsers(data) {
 	      if (CallEngine.getPullClient().isPublishingEnabled()) {
-	        _classPrivateMethodGet$8(this, _sendPullEvent$2, _sendPullEvent2$2).call(this, pullEvents$2.ping, data, 0);
+	        _classPrivateMethodGet$9(this, _sendPullEvent$2, _sendPullEvent2$2).call(this, pullEvents$2.ping, data, 0);
 	      }
 	    }
 	  }, {
 	    key: "sendPingToBackend",
 	    value: function sendPingToBackend() {
-	      _classPrivateMethodGet$8(this, _runRestAction$4, _runRestAction2$4).call(this, ajaxActions$6.ping, {
+	      _classPrivateMethodGet$9(this, _runRestAction$4, _runRestAction2$4).call(this, ajaxActions$6.ping, {
 	        retransmit: false
 	      });
 	    }
@@ -33563,32 +34157,32 @@ this.BX = this.BX || {};
 	    key: "sendUserInviteTimeout",
 	    value: function sendUserInviteTimeout(data) {
 	      if (CallEngine.getPullClient().isPublishingEnabled()) {
-	        _classPrivateMethodGet$8(this, _sendPullEvent$2, _sendPullEvent2$2).call(this, pullEvents$2.userInviteTimeout, data, 0);
+	        _classPrivateMethodGet$9(this, _sendPullEvent$2, _sendPullEvent2$2).call(this, pullEvents$2.userInviteTimeout, data, 0);
 	      }
 	    }
 	  }, {
 	    key: "sendJoinRoom",
 	    value: function sendJoinRoom(roomId) {
-	      return _classPrivateMethodGet$8(this, _sendMessage$3, _sendMessage2$3).call(this, clientEvents$3.joinRoom, {
+	      return _classPrivateMethodGet$9(this, _sendMessage$3, _sendMessage2$3).call(this, clientEvents$3.joinRoom, {
 	        roomId: roomId
 	      });
 	    }
 	  }, {
 	    key: "sendLeaveRoom",
 	    value: function sendLeaveRoom(roomId) {
-	      return _classPrivateMethodGet$8(this, _sendMessage$3, _sendMessage2$3).call(this, clientEvents$3.leaveRoom, {
+	      return _classPrivateMethodGet$9(this, _sendMessage$3, _sendMessage2$3).call(this, clientEvents$3.leaveRoom, {
 	        roomId: roomId
 	      });
 	    }
 	  }, {
 	    key: "sendListRooms",
 	    value: function sendListRooms() {
-	      return _classPrivateMethodGet$8(this, _sendMessage$3, _sendMessage2$3).call(this, clientEvents$3.listRooms);
+	      return _classPrivateMethodGet$9(this, _sendMessage$3, _sendMessage2$3).call(this, clientEvents$3.listRooms);
 	    }
 	  }, {
 	    key: "sendRequestRoomSpeaker",
 	    value: function sendRequestRoomSpeaker(roomId) {
-	      return _classPrivateMethodGet$8(this, _sendMessage$3, _sendMessage2$3).call(this, clientEvents$3.requestRoomSpeaker, {
+	      return _classPrivateMethodGet$9(this, _sendMessage$3, _sendMessage2$3).call(this, clientEvents$3.requestRoomSpeaker, {
 	        roomId: roomId
 	      });
 	    }
@@ -34297,20 +34891,6 @@ this.BX = this.BX || {};
 	    value: function getPopupTemplate() {
 	      var _this = this;
 	      var getButton = function getButton() {
-	        if (_this.isCopilotActive) {
-	          return {
-	            props: {
-	              className: 'bx-call-copilot-popup__button bx-call-copilot-popup__button_gray'
-	            },
-	            text: BX.message('CALL_COPILOT_POPUP_BUTTON_DISABLE'),
-	            events: {
-	              click: function click() {
-	                _this.callbacks.updateCopilotState();
-	                _this.close();
-	              }
-	            }
-	          };
-	        }
 	        if (!_this.isCopilotFeaturesEnabled) {
 	          _this.sendAnalytics('private_coming_soon');
 	          return {
@@ -34318,6 +34898,15 @@ this.BX = this.BX || {};
 	              className: 'bx-call-copilot-popup__button bx-call-copilot-popup__button_transparent'
 	            },
 	            text: BX.message('CALL_COPILOT_POPUP_BUTTON_COMING_SOON')
+	          };
+	        }
+	        if (!CallAI.settingsEnabled) {
+	          _this.sendAnalytics('error_turnedoff');
+	          return {
+	            props: {
+	              className: 'bx-call-copilot-popup__button bx-call-copilot-popup__button_transparent'
+	            },
+	            text: main_core.Loc.getMessage('CALL_COPILOT_POPUP_SETTINGS_DISABLED')
 	          };
 	        }
 	        if (!CallAI.tariffAvailable) {
@@ -34335,15 +34924,6 @@ this.BX = this.BX || {};
 	            }
 	          };
 	        }
-	        if (!CallAI.settingsEnabled) {
-	          _this.sendAnalytics('error_turnedoff');
-	          return {
-	            props: {
-	              className: 'bx-call-copilot-popup__button bx-call-copilot-popup__button_transparent'
-	            },
-	            text: main_core.Loc.getMessage('CALL_COPILOT_POPUP_SETTINGS_DISABLED')
-	          };
-	        }
 	        if (!CallAI.agreementAccepted) {
 	          _this.sendAnalytics('agreement_limit');
 	          return {
@@ -34351,6 +34931,20 @@ this.BX = this.BX || {};
 	              className: 'bx-call-copilot-popup__button bx-call-copilot-popup__button_transparent'
 	            },
 	            text: BX.message('CALL_COPILOT_POPUP_CONCERN_NOT_ACCEPTED')
+	          };
+	        }
+	        if (_this.isCopilotActive) {
+	          return {
+	            props: {
+	              className: 'bx-call-copilot-popup__button bx-call-copilot-popup__button_gray'
+	            },
+	            text: BX.message('CALL_COPILOT_POPUP_BUTTON_DISABLE'),
+	            events: {
+	              click: function click() {
+	                _this.callbacks.updateCopilotState();
+	                _this.close();
+	              }
+	            }
 	          };
 	        }
 	        if (!CallAI.baasAvailable) {
@@ -34939,12 +35533,12 @@ this.BX = this.BX || {};
 	  return ParticipantsPermissionSwitcher;
 	}();
 
-	function _regeneratorRuntime$4() { /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ _regeneratorRuntime$4 = function _regeneratorRuntime() { return exports; }; var exports = {}, Op = Object.prototype, hasOwn = Op.hasOwnProperty, defineProperty = Object.defineProperty || function (obj, key, desc) { obj[key] = desc.value; }, $Symbol = "function" == typeof Symbol ? Symbol : {}, iteratorSymbol = $Symbol.iterator || "@@iterator", asyncIteratorSymbol = $Symbol.asyncIterator || "@@asyncIterator", toStringTagSymbol = $Symbol.toStringTag || "@@toStringTag"; function define(obj, key, value) { return Object.defineProperty(obj, key, { value: value, enumerable: !0, configurable: !0, writable: !0 }), obj[key]; } try { define({}, ""); } catch (err) { define = function define(obj, key, value) { return obj[key] = value; }; } function wrap(innerFn, outerFn, self, tryLocsList) { var protoGenerator = outerFn && outerFn.prototype instanceof Generator ? outerFn : Generator, generator = Object.create(protoGenerator.prototype), context = new Context(tryLocsList || []); return defineProperty(generator, "_invoke", { value: makeInvokeMethod(innerFn, self, context) }), generator; } function tryCatch(fn, obj, arg) { try { return { type: "normal", arg: fn.call(obj, arg) }; } catch (err) { return { type: "throw", arg: err }; } } exports.wrap = wrap; var ContinueSentinel = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var IteratorPrototype = {}; define(IteratorPrototype, iteratorSymbol, function () { return this; }); var getProto = Object.getPrototypeOf, NativeIteratorPrototype = getProto && getProto(getProto(values([]))); NativeIteratorPrototype && NativeIteratorPrototype !== Op && hasOwn.call(NativeIteratorPrototype, iteratorSymbol) && (IteratorPrototype = NativeIteratorPrototype); var Gp = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(IteratorPrototype); function defineIteratorMethods(prototype) { ["next", "throw", "return"].forEach(function (method) { define(prototype, method, function (arg) { return this._invoke(method, arg); }); }); } function AsyncIterator(generator, PromiseImpl) { function invoke(method, arg, resolve, reject) { var record = tryCatch(generator[method], generator, arg); if ("throw" !== record.type) { var result = record.arg, value = result.value; return value && "object" == babelHelpers["typeof"](value) && hasOwn.call(value, "__await") ? PromiseImpl.resolve(value.__await).then(function (value) { invoke("next", value, resolve, reject); }, function (err) { invoke("throw", err, resolve, reject); }) : PromiseImpl.resolve(value).then(function (unwrapped) { result.value = unwrapped, resolve(result); }, function (error) { return invoke("throw", error, resolve, reject); }); } reject(record.arg); } var previousPromise; defineProperty(this, "_invoke", { value: function value(method, arg) { function callInvokeWithMethodAndArg() { return new PromiseImpl(function (resolve, reject) { invoke(method, arg, resolve, reject); }); } return previousPromise = previousPromise ? previousPromise.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); } }); } function makeInvokeMethod(innerFn, self, context) { var state = "suspendedStart"; return function (method, arg) { if ("executing" === state) throw new Error("Generator is already running"); if ("completed" === state) { if ("throw" === method) throw arg; return doneResult(); } for (context.method = method, context.arg = arg;;) { var delegate = context.delegate; if (delegate) { var delegateResult = maybeInvokeDelegate(delegate, context); if (delegateResult) { if (delegateResult === ContinueSentinel) continue; return delegateResult; } } if ("next" === context.method) context.sent = context._sent = context.arg;else if ("throw" === context.method) { if ("suspendedStart" === state) throw state = "completed", context.arg; context.dispatchException(context.arg); } else "return" === context.method && context.abrupt("return", context.arg); state = "executing"; var record = tryCatch(innerFn, self, context); if ("normal" === record.type) { if (state = context.done ? "completed" : "suspendedYield", record.arg === ContinueSentinel) continue; return { value: record.arg, done: context.done }; } "throw" === record.type && (state = "completed", context.method = "throw", context.arg = record.arg); } }; } function maybeInvokeDelegate(delegate, context) { var methodName = context.method, method = delegate.iterator[methodName]; if (undefined === method) return context.delegate = null, "throw" === methodName && delegate.iterator["return"] && (context.method = "return", context.arg = undefined, maybeInvokeDelegate(delegate, context), "throw" === context.method) || "return" !== methodName && (context.method = "throw", context.arg = new TypeError("The iterator does not provide a '" + methodName + "' method")), ContinueSentinel; var record = tryCatch(method, delegate.iterator, context.arg); if ("throw" === record.type) return context.method = "throw", context.arg = record.arg, context.delegate = null, ContinueSentinel; var info = record.arg; return info ? info.done ? (context[delegate.resultName] = info.value, context.next = delegate.nextLoc, "return" !== context.method && (context.method = "next", context.arg = undefined), context.delegate = null, ContinueSentinel) : info : (context.method = "throw", context.arg = new TypeError("iterator result is not an object"), context.delegate = null, ContinueSentinel); } function pushTryEntry(locs) { var entry = { tryLoc: locs[0] }; 1 in locs && (entry.catchLoc = locs[1]), 2 in locs && (entry.finallyLoc = locs[2], entry.afterLoc = locs[3]), this.tryEntries.push(entry); } function resetTryEntry(entry) { var record = entry.completion || {}; record.type = "normal", delete record.arg, entry.completion = record; } function Context(tryLocsList) { this.tryEntries = [{ tryLoc: "root" }], tryLocsList.forEach(pushTryEntry, this), this.reset(!0); } function values(iterable) { if (iterable) { var iteratorMethod = iterable[iteratorSymbol]; if (iteratorMethod) return iteratorMethod.call(iterable); if ("function" == typeof iterable.next) return iterable; if (!isNaN(iterable.length)) { var i = -1, next = function next() { for (; ++i < iterable.length;) if (hasOwn.call(iterable, i)) return next.value = iterable[i], next.done = !1, next; return next.value = undefined, next.done = !0, next; }; return next.next = next; } } return { next: doneResult }; } function doneResult() { return { value: undefined, done: !0 }; } return GeneratorFunction.prototype = GeneratorFunctionPrototype, defineProperty(Gp, "constructor", { value: GeneratorFunctionPrototype, configurable: !0 }), defineProperty(GeneratorFunctionPrototype, "constructor", { value: GeneratorFunction, configurable: !0 }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, toStringTagSymbol, "GeneratorFunction"), exports.isGeneratorFunction = function (genFun) { var ctor = "function" == typeof genFun && genFun.constructor; return !!ctor && (ctor === GeneratorFunction || "GeneratorFunction" === (ctor.displayName || ctor.name)); }, exports.mark = function (genFun) { return Object.setPrototypeOf ? Object.setPrototypeOf(genFun, GeneratorFunctionPrototype) : (genFun.__proto__ = GeneratorFunctionPrototype, define(genFun, toStringTagSymbol, "GeneratorFunction")), genFun.prototype = Object.create(Gp), genFun; }, exports.awrap = function (arg) { return { __await: arg }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, asyncIteratorSymbol, function () { return this; }), exports.AsyncIterator = AsyncIterator, exports.async = function (innerFn, outerFn, self, tryLocsList, PromiseImpl) { void 0 === PromiseImpl && (PromiseImpl = Promise); var iter = new AsyncIterator(wrap(innerFn, outerFn, self, tryLocsList), PromiseImpl); return exports.isGeneratorFunction(outerFn) ? iter : iter.next().then(function (result) { return result.done ? result.value : iter.next(); }); }, defineIteratorMethods(Gp), define(Gp, toStringTagSymbol, "Generator"), define(Gp, iteratorSymbol, function () { return this; }), define(Gp, "toString", function () { return "[object Generator]"; }), exports.keys = function (val) { var object = Object(val), keys = []; for (var key in object) keys.push(key); return keys.reverse(), function next() { for (; keys.length;) { var key = keys.pop(); if (key in object) return next.value = key, next.done = !1, next; } return next.done = !0, next; }; }, exports.values = values, Context.prototype = { constructor: Context, reset: function reset(skipTempReset) { if (this.prev = 0, this.next = 0, this.sent = this._sent = undefined, this.done = !1, this.delegate = null, this.method = "next", this.arg = undefined, this.tryEntries.forEach(resetTryEntry), !skipTempReset) for (var name in this) "t" === name.charAt(0) && hasOwn.call(this, name) && !isNaN(+name.slice(1)) && (this[name] = undefined); }, stop: function stop() { this.done = !0; var rootRecord = this.tryEntries[0].completion; if ("throw" === rootRecord.type) throw rootRecord.arg; return this.rval; }, dispatchException: function dispatchException(exception) { if (this.done) throw exception; var context = this; function handle(loc, caught) { return record.type = "throw", record.arg = exception, context.next = loc, caught && (context.method = "next", context.arg = undefined), !!caught; } for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i], record = entry.completion; if ("root" === entry.tryLoc) return handle("end"); if (entry.tryLoc <= this.prev) { var hasCatch = hasOwn.call(entry, "catchLoc"), hasFinally = hasOwn.call(entry, "finallyLoc"); if (hasCatch && hasFinally) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } else if (hasCatch) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); } else { if (!hasFinally) throw new Error("try statement without catch or finally"); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } } } }, abrupt: function abrupt(type, arg) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc <= this.prev && hasOwn.call(entry, "finallyLoc") && this.prev < entry.finallyLoc) { var finallyEntry = entry; break; } } finallyEntry && ("break" === type || "continue" === type) && finallyEntry.tryLoc <= arg && arg <= finallyEntry.finallyLoc && (finallyEntry = null); var record = finallyEntry ? finallyEntry.completion : {}; return record.type = type, record.arg = arg, finallyEntry ? (this.method = "next", this.next = finallyEntry.finallyLoc, ContinueSentinel) : this.complete(record); }, complete: function complete(record, afterLoc) { if ("throw" === record.type) throw record.arg; return "break" === record.type || "continue" === record.type ? this.next = record.arg : "return" === record.type ? (this.rval = this.arg = record.arg, this.method = "return", this.next = "end") : "normal" === record.type && afterLoc && (this.next = afterLoc), ContinueSentinel; }, finish: function finish(finallyLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.finallyLoc === finallyLoc) return this.complete(entry.completion, entry.afterLoc), resetTryEntry(entry), ContinueSentinel; } }, "catch": function _catch(tryLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc === tryLoc) { var record = entry.completion; if ("throw" === record.type) { var thrown = record.arg; resetTryEntry(entry); } return thrown; } } throw new Error("illegal catch attempt"); }, delegateYield: function delegateYield(iterable, resultName, nextLoc) { return this.delegate = { iterator: values(iterable), resultName: resultName, nextLoc: nextLoc }, "next" === this.method && (this.arg = undefined), ContinueSentinel; } }, exports; }
+	function _regeneratorRuntime$5() { /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ _regeneratorRuntime$5 = function _regeneratorRuntime() { return exports; }; var exports = {}, Op = Object.prototype, hasOwn = Op.hasOwnProperty, defineProperty = Object.defineProperty || function (obj, key, desc) { obj[key] = desc.value; }, $Symbol = "function" == typeof Symbol ? Symbol : {}, iteratorSymbol = $Symbol.iterator || "@@iterator", asyncIteratorSymbol = $Symbol.asyncIterator || "@@asyncIterator", toStringTagSymbol = $Symbol.toStringTag || "@@toStringTag"; function define(obj, key, value) { return Object.defineProperty(obj, key, { value: value, enumerable: !0, configurable: !0, writable: !0 }), obj[key]; } try { define({}, ""); } catch (err) { define = function define(obj, key, value) { return obj[key] = value; }; } function wrap(innerFn, outerFn, self, tryLocsList) { var protoGenerator = outerFn && outerFn.prototype instanceof Generator ? outerFn : Generator, generator = Object.create(protoGenerator.prototype), context = new Context(tryLocsList || []); return defineProperty(generator, "_invoke", { value: makeInvokeMethod(innerFn, self, context) }), generator; } function tryCatch(fn, obj, arg) { try { return { type: "normal", arg: fn.call(obj, arg) }; } catch (err) { return { type: "throw", arg: err }; } } exports.wrap = wrap; var ContinueSentinel = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var IteratorPrototype = {}; define(IteratorPrototype, iteratorSymbol, function () { return this; }); var getProto = Object.getPrototypeOf, NativeIteratorPrototype = getProto && getProto(getProto(values([]))); NativeIteratorPrototype && NativeIteratorPrototype !== Op && hasOwn.call(NativeIteratorPrototype, iteratorSymbol) && (IteratorPrototype = NativeIteratorPrototype); var Gp = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(IteratorPrototype); function defineIteratorMethods(prototype) { ["next", "throw", "return"].forEach(function (method) { define(prototype, method, function (arg) { return this._invoke(method, arg); }); }); } function AsyncIterator(generator, PromiseImpl) { function invoke(method, arg, resolve, reject) { var record = tryCatch(generator[method], generator, arg); if ("throw" !== record.type) { var result = record.arg, value = result.value; return value && "object" == babelHelpers["typeof"](value) && hasOwn.call(value, "__await") ? PromiseImpl.resolve(value.__await).then(function (value) { invoke("next", value, resolve, reject); }, function (err) { invoke("throw", err, resolve, reject); }) : PromiseImpl.resolve(value).then(function (unwrapped) { result.value = unwrapped, resolve(result); }, function (error) { return invoke("throw", error, resolve, reject); }); } reject(record.arg); } var previousPromise; defineProperty(this, "_invoke", { value: function value(method, arg) { function callInvokeWithMethodAndArg() { return new PromiseImpl(function (resolve, reject) { invoke(method, arg, resolve, reject); }); } return previousPromise = previousPromise ? previousPromise.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); } }); } function makeInvokeMethod(innerFn, self, context) { var state = "suspendedStart"; return function (method, arg) { if ("executing" === state) throw new Error("Generator is already running"); if ("completed" === state) { if ("throw" === method) throw arg; return doneResult(); } for (context.method = method, context.arg = arg;;) { var delegate = context.delegate; if (delegate) { var delegateResult = maybeInvokeDelegate(delegate, context); if (delegateResult) { if (delegateResult === ContinueSentinel) continue; return delegateResult; } } if ("next" === context.method) context.sent = context._sent = context.arg;else if ("throw" === context.method) { if ("suspendedStart" === state) throw state = "completed", context.arg; context.dispatchException(context.arg); } else "return" === context.method && context.abrupt("return", context.arg); state = "executing"; var record = tryCatch(innerFn, self, context); if ("normal" === record.type) { if (state = context.done ? "completed" : "suspendedYield", record.arg === ContinueSentinel) continue; return { value: record.arg, done: context.done }; } "throw" === record.type && (state = "completed", context.method = "throw", context.arg = record.arg); } }; } function maybeInvokeDelegate(delegate, context) { var methodName = context.method, method = delegate.iterator[methodName]; if (undefined === method) return context.delegate = null, "throw" === methodName && delegate.iterator["return"] && (context.method = "return", context.arg = undefined, maybeInvokeDelegate(delegate, context), "throw" === context.method) || "return" !== methodName && (context.method = "throw", context.arg = new TypeError("The iterator does not provide a '" + methodName + "' method")), ContinueSentinel; var record = tryCatch(method, delegate.iterator, context.arg); if ("throw" === record.type) return context.method = "throw", context.arg = record.arg, context.delegate = null, ContinueSentinel; var info = record.arg; return info ? info.done ? (context[delegate.resultName] = info.value, context.next = delegate.nextLoc, "return" !== context.method && (context.method = "next", context.arg = undefined), context.delegate = null, ContinueSentinel) : info : (context.method = "throw", context.arg = new TypeError("iterator result is not an object"), context.delegate = null, ContinueSentinel); } function pushTryEntry(locs) { var entry = { tryLoc: locs[0] }; 1 in locs && (entry.catchLoc = locs[1]), 2 in locs && (entry.finallyLoc = locs[2], entry.afterLoc = locs[3]), this.tryEntries.push(entry); } function resetTryEntry(entry) { var record = entry.completion || {}; record.type = "normal", delete record.arg, entry.completion = record; } function Context(tryLocsList) { this.tryEntries = [{ tryLoc: "root" }], tryLocsList.forEach(pushTryEntry, this), this.reset(!0); } function values(iterable) { if (iterable) { var iteratorMethod = iterable[iteratorSymbol]; if (iteratorMethod) return iteratorMethod.call(iterable); if ("function" == typeof iterable.next) return iterable; if (!isNaN(iterable.length)) { var i = -1, next = function next() { for (; ++i < iterable.length;) if (hasOwn.call(iterable, i)) return next.value = iterable[i], next.done = !1, next; return next.value = undefined, next.done = !0, next; }; return next.next = next; } } return { next: doneResult }; } function doneResult() { return { value: undefined, done: !0 }; } return GeneratorFunction.prototype = GeneratorFunctionPrototype, defineProperty(Gp, "constructor", { value: GeneratorFunctionPrototype, configurable: !0 }), defineProperty(GeneratorFunctionPrototype, "constructor", { value: GeneratorFunction, configurable: !0 }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, toStringTagSymbol, "GeneratorFunction"), exports.isGeneratorFunction = function (genFun) { var ctor = "function" == typeof genFun && genFun.constructor; return !!ctor && (ctor === GeneratorFunction || "GeneratorFunction" === (ctor.displayName || ctor.name)); }, exports.mark = function (genFun) { return Object.setPrototypeOf ? Object.setPrototypeOf(genFun, GeneratorFunctionPrototype) : (genFun.__proto__ = GeneratorFunctionPrototype, define(genFun, toStringTagSymbol, "GeneratorFunction")), genFun.prototype = Object.create(Gp), genFun; }, exports.awrap = function (arg) { return { __await: arg }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, asyncIteratorSymbol, function () { return this; }), exports.AsyncIterator = AsyncIterator, exports.async = function (innerFn, outerFn, self, tryLocsList, PromiseImpl) { void 0 === PromiseImpl && (PromiseImpl = Promise); var iter = new AsyncIterator(wrap(innerFn, outerFn, self, tryLocsList), PromiseImpl); return exports.isGeneratorFunction(outerFn) ? iter : iter.next().then(function (result) { return result.done ? result.value : iter.next(); }); }, defineIteratorMethods(Gp), define(Gp, toStringTagSymbol, "Generator"), define(Gp, iteratorSymbol, function () { return this; }), define(Gp, "toString", function () { return "[object Generator]"; }), exports.keys = function (val) { var object = Object(val), keys = []; for (var key in object) keys.push(key); return keys.reverse(), function next() { for (; keys.length;) { var key = keys.pop(); if (key in object) return next.value = key, next.done = !1, next; } return next.done = !0, next; }; }, exports.values = values, Context.prototype = { constructor: Context, reset: function reset(skipTempReset) { if (this.prev = 0, this.next = 0, this.sent = this._sent = undefined, this.done = !1, this.delegate = null, this.method = "next", this.arg = undefined, this.tryEntries.forEach(resetTryEntry), !skipTempReset) for (var name in this) "t" === name.charAt(0) && hasOwn.call(this, name) && !isNaN(+name.slice(1)) && (this[name] = undefined); }, stop: function stop() { this.done = !0; var rootRecord = this.tryEntries[0].completion; if ("throw" === rootRecord.type) throw rootRecord.arg; return this.rval; }, dispatchException: function dispatchException(exception) { if (this.done) throw exception; var context = this; function handle(loc, caught) { return record.type = "throw", record.arg = exception, context.next = loc, caught && (context.method = "next", context.arg = undefined), !!caught; } for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i], record = entry.completion; if ("root" === entry.tryLoc) return handle("end"); if (entry.tryLoc <= this.prev) { var hasCatch = hasOwn.call(entry, "catchLoc"), hasFinally = hasOwn.call(entry, "finallyLoc"); if (hasCatch && hasFinally) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } else if (hasCatch) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); } else { if (!hasFinally) throw new Error("try statement without catch or finally"); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } } } }, abrupt: function abrupt(type, arg) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc <= this.prev && hasOwn.call(entry, "finallyLoc") && this.prev < entry.finallyLoc) { var finallyEntry = entry; break; } } finallyEntry && ("break" === type || "continue" === type) && finallyEntry.tryLoc <= arg && arg <= finallyEntry.finallyLoc && (finallyEntry = null); var record = finallyEntry ? finallyEntry.completion : {}; return record.type = type, record.arg = arg, finallyEntry ? (this.method = "next", this.next = finallyEntry.finallyLoc, ContinueSentinel) : this.complete(record); }, complete: function complete(record, afterLoc) { if ("throw" === record.type) throw record.arg; return "break" === record.type || "continue" === record.type ? this.next = record.arg : "return" === record.type ? (this.rval = this.arg = record.arg, this.method = "return", this.next = "end") : "normal" === record.type && afterLoc && (this.next = afterLoc), ContinueSentinel; }, finish: function finish(finallyLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.finallyLoc === finallyLoc) return this.complete(entry.completion, entry.afterLoc), resetTryEntry(entry), ContinueSentinel; } }, "catch": function _catch(tryLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc === tryLoc) { var record = entry.completion; if ("throw" === record.type) { var thrown = record.arg; resetTryEntry(entry); } return thrown; } } throw new Error("illegal catch attempt"); }, delegateYield: function delegateYield(iterable, resultName, nextLoc) { return this.delegate = { iterator: values(iterable), resultName: resultName, nextLoc: nextLoc }, "next" === this.method && (this.arg = undefined), ContinueSentinel; } }, exports; }
 	function ownKeys$6(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
 	function _objectSpread$6(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$6(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$6(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
-	function _classPrivateMethodInitSpec$9(obj, privateSet) { _checkPrivateRedeclaration$9(obj, privateSet); privateSet.add(obj); }
-	function _checkPrivateRedeclaration$9(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet$9(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _classPrivateMethodInitSpec$a(obj, privateSet) { _checkPrivateRedeclaration$a(obj, privateSet); privateSet.add(obj); }
+	function _checkPrivateRedeclaration$a(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$a(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var Events$6 = {
 	  onViewStateChanged: 'onViewStateChanged',
 	  onOpenVideoConference: 'onOpenVideoConference',
@@ -34990,12 +35584,12 @@ this.BX = this.BX || {};
 	    var _this;
 	    babelHelpers.classCallCheck(this, CallController);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(CallController).call(this));
-	    _classPrivateMethodInitSpec$9(babelHelpers.assertThisInitialized(_this), _getCallDetail);
-	    _classPrivateMethodInitSpec$9(babelHelpers.assertThisInitialized(_this), _setUserMedia);
-	    _classPrivateMethodInitSpec$9(babelHelpers.assertThisInitialized(_this), _switchToChildCall);
-	    _classPrivateMethodInitSpec$9(babelHelpers.assertThisInitialized(_this), _onChildCallFirstUserJoined);
-	    _classPrivateMethodInitSpec$9(babelHelpers.assertThisInitialized(_this), _onChildCallFirstMedia);
-	    _classPrivateMethodInitSpec$9(babelHelpers.assertThisInitialized(_this), _subscribeEvents$1);
+	    _classPrivateMethodInitSpec$a(babelHelpers.assertThisInitialized(_this), _getCallDetail);
+	    _classPrivateMethodInitSpec$a(babelHelpers.assertThisInitialized(_this), _setUserMedia);
+	    _classPrivateMethodInitSpec$a(babelHelpers.assertThisInitialized(_this), _switchToChildCall);
+	    _classPrivateMethodInitSpec$a(babelHelpers.assertThisInitialized(_this), _onChildCallFirstUserJoined);
+	    _classPrivateMethodInitSpec$a(babelHelpers.assertThisInitialized(_this), _onChildCallFirstMedia);
+	    _classPrivateMethodInitSpec$a(babelHelpers.assertThisInitialized(_this), _subscribeEvents$1);
 	    _this.setEventNamespace('BX.Call.Controller');
 	    var needInit = BX.prop.getBoolean(_config, "init", true);
 	    _this.language = _config.language || 'en';
@@ -35092,8 +35686,8 @@ this.BX = this.BX || {};
 	    _this._onBeforeUnloadHandler = _this._onBeforeUnload.bind(babelHelpers.assertThisInitialized(_this));
 	    _this._onImTabChangeHandler = _this._onImTabChange.bind(babelHelpers.assertThisInitialized(_this));
 	    _this._onUpdateChatCounterHandler = _this._onUpdateChatCounter.bind(babelHelpers.assertThisInitialized(_this));
-	    _this._onChildCallFirstMediaHandler = _classPrivateMethodGet$9(babelHelpers.assertThisInitialized(_this), _onChildCallFirstMedia, _onChildCallFirstMedia2).bind(babelHelpers.assertThisInitialized(_this));
-	    _this._onChildCallFirstUserJoinedHandler = _classPrivateMethodGet$9(babelHelpers.assertThisInitialized(_this), _onChildCallFirstUserJoined, _onChildCallFirstUserJoined2).bind(babelHelpers.assertThisInitialized(_this));
+	    _this._onChildCallFirstMediaHandler = _classPrivateMethodGet$a(babelHelpers.assertThisInitialized(_this), _onChildCallFirstMedia, _onChildCallFirstMedia2).bind(babelHelpers.assertThisInitialized(_this));
+	    _this._onChildCallFirstUserJoinedHandler = _classPrivateMethodGet$a(babelHelpers.assertThisInitialized(_this), _onChildCallFirstUserJoined, _onChildCallFirstUserJoined2).bind(babelHelpers.assertThisInitialized(_this));
 	    _this._onWindowFocusHandler = _this._onWindowFocus.bind(babelHelpers.assertThisInitialized(_this));
 	    _this._onWindowBlurHandler = _this._onWindowBlur.bind(babelHelpers.assertThisInitialized(_this));
 	    _this._onDocumentBodyClickHandler = _this._onDocumentBodyClick.bind(babelHelpers.assertThisInitialized(_this));
@@ -35128,9 +35722,10 @@ this.BX = this.BX || {};
 	    _this.isFileChooserActive = false;
 	    _this.pictureInPictureDebounceForOpen = null;
 	    _this.isWindowFocus = true;
+	    _this.isCallHangupButtonPressed = false;
 	    if (needInit) {
 	      _this.init();
-	      _classPrivateMethodGet$9(babelHelpers.assertThisInitialized(_this), _subscribeEvents$1, _subscribeEvents2$1).call(babelHelpers.assertThisInitialized(_this), _config);
+	      _classPrivateMethodGet$a(babelHelpers.assertThisInitialized(_this), _subscribeEvents$1, _subscribeEvents2$1).call(babelHelpers.assertThisInitialized(_this), _config);
 	    }
 	    return _this;
 	  }
@@ -35531,6 +36126,7 @@ this.BX = this.BX || {};
 	      this.callView.setCallback(View.Event.onDisallowSpeakPermission, this._onCallViewDisallowSpeakPermission.bind(this));
 	      this.callView.setCallback(View.Event.onToggleSubscribe, this._onCallToggleSubscribe.bind(this));
 	      this.callView.setCallback(View.Event.onUserClick, this._onCallUserClick.bind(this));
+	      this.callView.setCallback(View.Event.onPiPClose, this._onPipClose.bind(this));
 	    }
 	  }, {
 	    key: "updateCallViewUsers",
@@ -35977,8 +36573,10 @@ this.BX = this.BX || {};
 	          _this8._onUpdateCallCopilotState(_this8.currentCall.isCopilotActive);
 	        }
 	        _this8.log("Call creation time: " + (debug2 - debug1) / 1000 + " seconds");
-	        if (_this8.currentCall.isCopilotActive) {
-	          _this8.sendStartCopilotRecordAnalytics();
+	        if (_this8.currentCall.isCopilotActive && isLegacyCall) {
+	          _this8.sendStartCopilotRecordAnalytics({
+	            isAutostart: true
+	          });
 	        }
 	        _this8.currentCall.useHdVideo(Hardware.preferHdQuality);
 	        if (Hardware.defaultMicrophone) {
@@ -36410,7 +37008,14 @@ this.BX = this.BX || {};
 	    key: "togglePictureInPictureCallWindow",
 	    value: function togglePictureInPictureCallWindow() {
 	      var config = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-	      var isActiveStatePictureInPictureCallWindow = this.currentCall && (this.folded || this.currentCall.isScreenSharingStarted() || config.isForceOpen) && !config.isForceClose;
+	      var hasActiveCall = Boolean(this.currentCall);
+	      var isFolded = this.folded;
+	      var isScreenSharing = hasActiveCall && this.currentCall.isScreenSharingStarted();
+	      var isForceOpen = config.isForceOpen;
+	      var isForceClose = config.isForceClose;
+	      var shouldOpenPiP = isFolded || isScreenSharing || isForceOpen;
+	      var canStayOpen = shouldOpenPiP && !isForceClose;
+	      var isActiveStatePictureInPictureCallWindow = hasActiveCall && canStayOpen;
 	      if (!this.callView) {
 	        return;
 	      }
@@ -36477,7 +37082,7 @@ this.BX = this.BX || {};
 	      var resumesArticleCode = Util.getResumesArticleCode();
 	      var documentsArticleCode = Util.getDocumentsArticleCode();
 	      var menuItems = [{
-	        text: BX.message('IM_M_CALL_MENU_CREATE_RESUME'),
+	        text: BX.message('IM_M_CALL_MENU_CREATE_RESUME_MSGVER_2'),
 	        onclick: function onclick() {
 	          _this11.documentsMenu.close();
 	          _this11.onDocumentCreateAnalyticsEvent(call_lib_analytics.Analytics.AnalyticsType.resume);
@@ -36521,7 +37126,7 @@ this.BX = this.BX || {};
 	      }];
 	      if (!resumesArticleCode) {
 	        menuItems.push({
-	          text: BX.message('IM_M_CALL_MENU_OPEN_LAST_RESUME'),
+	          text: BX.message('IM_M_CALL_MENU_OPEN_LAST_RESUME_MSGVER_2'),
 	          cacheable: true,
 	          items: [{
 	            id: "loading",
@@ -36613,7 +37218,7 @@ this.BX = this.BX || {};
 	        } else {
 	          menuItem.getSubMenu().addMenuItem({
 	            id: 'nothing',
-	            text: BX.message('IM_M_CALL_MENU_NO_RESUME'),
+	            text: BX.message('IM_M_CALL_MENU_NO_RESUME_MSGVER_2'),
 	            disabled: true
 	          });
 	        }
@@ -37097,21 +37702,21 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "_onCallNotificationButtonClick",
 	    value: function () {
-	      var _onCallNotificationButtonClick2 = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$4().mark(function _callee(e) {
+	      var _onCallNotificationButtonClick2 = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$5().mark(function _callee(e) {
 	        var _this20 = this;
 	        var data, _this$currentCall2, _this$currentCall3, _this$currentCall4, callParams, callId;
-	        return _regeneratorRuntime$4().wrap(function _callee$(_context) {
+	        return _regeneratorRuntime$5().wrap(function _callee$(_context) {
 	          while (1) switch (_context.prev = _context.next) {
 	            case 0:
 	              data = e.data;
 	              clearTimeout(this.hideIncomingCallTimeout);
 	              this.callNotification.close();
 	              _context.t0 = data.button;
-	              _context.next = _context.t0 === "answer" ? 6 : _context.t0 === "decline" ? 18 : 20;
+	              _context.next = _context.t0 === "answer" ? 6 : _context.t0 === "decline" ? 22 : 24;
 	              break;
 	            case 6:
 	              if (!(this.currentCall && !this.answeredOrDeclinedCalls.has(this._getCallIdentifier(this.currentCall)))) {
-	                _context.next = 17;
+	                _context.next = 21;
 	                break;
 	              }
 	              this.answeredOrDeclinedCalls.add(this._getCallIdentifier(this.currentCall));
@@ -37127,33 +37732,33 @@ this.BX = this.BX || {};
 	              this.onAnswerButtonClick(data.mediaParams, callParams);
 	              return _context.abrupt("return");
 	            case 12:
-	              im_v2_lib_desktopApi.DesktopApi.showBrowserWindow();
+	              _context.next = 14;
+	              return im_v2_lib_desktopApi.DesktopApi.showBrowserWindow();
+	            case 14:
 	              if (!im_v2_lib_desktopApi.DesktopApi.isFeatureSupported(im_v2_lib_desktopApi.DesktopFeature.portalTabActivation.id)) {
-	                _context.next = 16;
+	                _context.next = 17;
 	                break;
 	              }
-	              _context.next = 16;
+	              _context.next = 17;
 	              return im_v2_lib_desktopApi.DesktopApi.handlePortalTabActivation();
-	            case 16:
-	              // delay is needed because desktop window activation takes some time
-	              // to complete and method is not async by its nature
-	              setTimeout(function () {
-	                if (!im_v2_lib_desktopApi.DesktopApi.isTabWithChatPageActive() && im_v2_lib_desktopApi.DesktopApi.hasTabWithChatPage()) {
-	                  im_v2_lib_desktopApi.DesktopApi.setTabWithChatPageActive();
-	                }
-	                setTimeout(function () {
-	                  im_v2_lib_desktop.DesktopBroadcastManager.getInstance().sendActionMessage({
-	                    action: im_v2_const.DesktopBroadcastAction.answerButtonClick,
-	                    params: {
-	                      mediaParams: data.mediaParams,
-	                      callParams: callParams
-	                    }
-	                  });
-	                }, im_v2_const.WINDOW_ACTIVATION_DELAY);
-	              }, im_v2_const.WINDOW_ACTIVATION_DELAY);
 	            case 17:
-	              return _context.abrupt("break", 20);
-	            case 18:
+	              if (!im_v2_lib_desktopApi.DesktopApi.shouldActivateTabWithChatPage()) {
+	                _context.next = 20;
+	                break;
+	              }
+	              _context.next = 20;
+	              return im_v2_lib_desktopApi.DesktopApi.setTabWithChatPageActive();
+	            case 20:
+	              im_v2_lib_desktop.DesktopBroadcastManager.getInstance().sendActionMessage({
+	                action: im_v2_const.DesktopBroadcastAction.answerButtonClick,
+	                params: {
+	                  mediaParams: data.mediaParams,
+	                  callParams: callParams
+	                }
+	              });
+	            case 21:
+	              return _context.abrupt("break", 24);
+	            case 22:
 	              if (this.currentCall) {
 	                callId = this._getCallIdentifier(this._getCallIdentifier(this.currentCall));
 	                this.answeredOrDeclinedCalls.add(callId);
@@ -37180,8 +37785,8 @@ this.BX = this.BX || {};
 	                  clearTimeout(this.promotedToAdminTimeout);
 	                }
 	              }
-	              return _context.abrupt("break", 20);
-	            case 20:
+	              return _context.abrupt("break", 24);
+	            case 24:
 	            case "end":
 	              return _context.stop();
 	          }
@@ -37405,6 +38010,13 @@ this.BX = this.BX || {};
 	      }
 	    }
 	  }, {
+	    key: "_onPipClose",
+	    value: function _onPipClose() {
+	      if (this.folded) {
+	        this.unfold();
+	      }
+	    }
+	  }, {
 	    key: "_onCallViewButtonClick",
 	    value: function _onCallViewButtonClick(e) {
 	      var buttonName = e.buttonName;
@@ -37459,6 +38071,7 @@ this.BX = this.BX || {};
 	      var menuItems = [{
 	        text: BX.message("CALL_M_BTN_HANGUP_OPTION_FINISH"),
 	        onclick: function onclick() {
+	          var _this22$hangupOptions;
 	          call_lib_analytics.Analytics.getInstance().onFinishCall({
 	            callId: _this22._getCallIdentifier(_this22.currentCall),
 	            callType: _this22.getCallType(),
@@ -37467,11 +38080,14 @@ this.BX = this.BX || {};
 	            callUsersCount: _this22.getMaxActiveCallUsers().length,
 	            callLength: Util.getTimeInSeconds(_this22.currentCall.startDate)
 	          });
+	          _this22.isCallHangupButtonPressed = true;
+	          (_this22$hangupOptions = _this22.hangupOptionsMenu) === null || _this22$hangupOptions === void 0 ? void 0 : _this22$hangupOptions.destroy();
 	          _this22.leaveCurrentCall(false, true);
 	        }
 	      }, {
 	        text: BX.message("CALL_M_BTN_HANGUP_OPTION_LEAVE"),
 	        onclick: function onclick() {
+	          var _this22$hangupOptions2;
 	          call_lib_analytics.Analytics.getInstance().onDisconnectCall({
 	            callId: _this22._getCallIdentifier(_this22.currentCall),
 	            callType: _this22.getCallType(),
@@ -37481,6 +38097,7 @@ this.BX = this.BX || {};
 	              audio: !Hardware.isMicrophoneMuted
 	            }
 	          });
+	          (_this22$hangupOptions2 = _this22.hangupOptionsMenu) === null || _this22$hangupOptions2 === void 0 ? void 0 : _this22$hangupOptions2.destroy();
 	          _this22.leaveCurrentCall();
 	        }
 	      }];
@@ -37841,7 +38458,7 @@ this.BX = this.BX || {};
 	      var _this27 = this;
 	      if (this.currentCall.isCopilotActive) {
 	        call_lib_analytics.Analytics.getInstance().copilot.onClickAIOff({
-	          callId: this.currentCall.id,
+	          callId: this._getCallIdentifier(this.currentCall),
 	          callType: this.getCallType()
 	        });
 	        this.deleteCopilotRecordPopup = new RecordWithCopilotPopup({
@@ -37850,14 +38467,14 @@ this.BX = this.BX || {};
 	          },
 	          onClickYesButton: function onClickYesButton() {
 	            call_lib_analytics.Analytics.getInstance().copilot.onSelectAIOff({
-	              callId: _this27.currentCall.id,
+	              callId: _this27._getCallIdentifier(_this27.currentCall),
 	              callType: _this27.getCallType()
 	            });
 	            _this27._onChangeStateCopilotAction(RecorderStatus.PAUSED);
 	          },
 	          onClickNoButton: function onClickNoButton() {
 	            call_lib_analytics.Analytics.getInstance().copilot.onSelectAIDelete({
-	              callId: _this27.currentCall.id,
+	              callId: _this27._getCallIdentifier(_this27.currentCall),
 	              callType: _this27.getCallType()
 	            });
 	            _this27._onChangeStateCopilotAction(RecorderStatus.DESTROYED);
@@ -37871,11 +38488,6 @@ this.BX = this.BX || {};
 	        return;
 	      }
 	      this._onChangeStateCopilotAction(RecorderStatus.ENABLED);
-	      call_lib_analytics.Analytics.getInstance().copilot.onAIRecordStatusChanged({
-	        isAIOn: true,
-	        callId: this._getCallIdentifier(this.currentCall),
-	        callType: this.getCallType()
-	      });
 	    }
 	  }, {
 	    key: "_onChangeStateCopilotAction",
@@ -37902,10 +38514,17 @@ this.BX = this.BX || {};
 	        }).then(function () {
 	          var newCopilotState = !_this28.currentCall.isCopilotActive;
 	          _this28._onUpdateCallCopilotState(newCopilotState);
+	          call_lib_analytics.Analytics.getInstance().copilot.onAIRecordStatusChanged({
+	            isAIOn: newCopilotState,
+	            callId: _this28._getCallIdentifier(_this28.currentCall),
+	            callType: _this28.getCallType()
+	          });
 	          if (!newCopilotState) {
 	            _this28.showCopilotResultNotify();
 	          } else {
-	            _this28.sendStartCopilotRecordAnalytics();
+	            _this28.sendStartCopilotRecordAnalytics({
+	              isAutostart: false
+	            });
 	          }
 	        })["catch"](function (error) {
 	          var errorCode = error.errors[0].code;
@@ -37919,7 +38538,10 @@ this.BX = this.BX || {};
 	            callType: _this28.getCallType(),
 	            error: errorCode
 	          });
-	          _this28.sendStartCopilotRecordAnalytics(errorCode);
+	          _this28.sendStartCopilotRecordAnalytics({
+	            errorCode: errorCode,
+	            isAutostart: false
+	          });
 	        });
 	      } else {
 	        var _newCopilotState = !this.currentCall.isCopilotActive;
@@ -37934,7 +38556,9 @@ this.BX = this.BX || {};
 	        if (!_newCopilotState) {
 	          this.showCopilotResultNotify();
 	        } else {
-	          this.sendStartCopilotRecordAnalytics();
+	          this.sendStartCopilotRecordAnalytics({
+	            isAutostart: false
+	          });
 	        }
 	      }
 	    }
@@ -37947,7 +38571,7 @@ this.BX = this.BX || {};
 	        return;
 	      }
 	      var isPlainCall = this.currentCall.provider === Provider.Plain;
-	      if (!isPlainCall && !CallAI.tariffAvailable) {
+	      if (!isPlainCall && CallAI.settingsEnabled && !CallAI.tariffAvailable) {
 	        Util.openArticle(CallAI.helpSlider);
 	        return;
 	      }
@@ -38000,6 +38624,10 @@ this.BX = this.BX || {};
 	      var status = _ref2.status,
 	        error = _ref2.error;
 	      this._onUpdateCallCopilotState(status);
+	      if (!CallAI.tariffAvailable) {
+	        this.callView.unblockButtons(['copilot']);
+	        return;
+	      }
 	      if (this.currentCall.isCopilotInitialized) {
 	        if (!this.currentCall.initiatorId && status) {
 	          this.sendStartCopilotRecordAnalytics({
@@ -38014,7 +38642,10 @@ this.BX = this.BX || {};
 	          var errorType = status ? CopilotNotifyType.DISABLE_AI_INTERNAL_ERROR : CopilotNotifyType.ENABLE_AI_INTERNAL_ERROR;
 	          this.callView.showCopilotErrorNotify(errorType);
 	        }
-	        this.sendStartCopilotRecordAnalytics(error);
+	        this.sendStartCopilotRecordAnalytics({
+	          error: error,
+	          isAutostart: false
+	        });
 	      } else if (status) {
 	        this.showCopilotNotify();
 	      } else {
@@ -38047,12 +38678,17 @@ this.BX = this.BX || {};
 	    }
 	  }, {
 	    key: "sendStartCopilotRecordAnalytics",
-	    value: function sendStartCopilotRecordAnalytics() {
-	      var errorCode = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
+	    value: function sendStartCopilotRecordAnalytics(_ref3) {
+	      var _this$currentCall5;
+	      var _ref3$errorCode = _ref3.errorCode,
+	        errorCode = _ref3$errorCode === void 0 ? null : _ref3$errorCode,
+	        isAutostart = _ref3.isAutostart;
 	      var params = {
 	        callId: this._getCallIdentifier(this.currentCall),
 	        callType: this.getCallType(),
-	        errorCode: errorCode
+	        errorCode: errorCode,
+	        chatUserCount: (_this$currentCall5 = this.currentCall) === null || _this$currentCall5 === void 0 ? void 0 : _this$currentCall5.associatedEntity.userCounter,
+	        isAutostart: isAutostart
 	      };
 	      var userCount = this.getActiveCallUsers().length;
 	      if (userCount) {
@@ -38383,7 +39019,7 @@ this.BX = this.BX || {};
 	      if (this.currentCall) {
 	        this.removeVideoStrategy();
 	        this.removeCallEvents();
-	        callDetails = _classPrivateMethodGet$9(this, _getCallDetail, _getCallDetail2).call(this, this.currentCall);
+	        callDetails = _classPrivateMethodGet$a(this, _getCallDetail, _getCallDetail2).call(this, this.currentCall);
 	        this.currentCall = null;
 	      }
 	      if (this.promotedToAdminTimeout) {
@@ -38767,7 +39403,7 @@ this.BX = this.BX || {};
 	        console.log("%c[debug] Time from click to the first media received: ".concat(Date.now() - this.onConnectToCallClick, " ms"), _style);
 	        this.onConnectToCallClick = null;
 	      }
-	      _classPrivateMethodGet$9(this, _setUserMedia, _setUserMedia2).call(this, e);
+	      _classPrivateMethodGet$a(this, _setUserMedia, _setUserMedia2).call(this, e);
 	    }
 	  }, {
 	    key: "_onCallRemoteMediaStopped",
@@ -38821,16 +39457,20 @@ this.BX = this.BX || {};
 	          ideal: 720
 	        };
 	      }
+	      var isNotSupportDevicesListBeforeStream = UnsupportedBrowserFeatures.isNotSupportDevicesListBeforeStream;
 	      var constraints = {
-	        audio: false,
+	        audio: isNotSupportDevicesListBeforeStream,
 	        video: video
 	      };
 	      navigator.mediaDevices.getUserMedia(constraints).then(function (stream) {
 	        _this33.localStream = stream;
-	        if (!_this33.initCallPromise) {
+	        if (!_this33.initCallPromise || !Hardware.isCameraOn) {
 	          _this33._stopLocalStream();
 	        } else if (_this33.callView) {
 	          _this33._setLocalStream(provider);
+	        }
+	        if (isNotSupportDevicesListBeforeStream) {
+	          _this33._onGetUserMediaEnded();
 	        }
 	      })["catch"](function (error) {
 	        _this33.log("Attempt to get video (fallback: ".concat(!!fallback, ") for call before it has been created failed"), error);
@@ -39504,6 +40144,8 @@ this.BX = this.BX || {};
 	      call_lib_analytics.Analytics.getInstance().onReconnect({
 	        callId: this._getCallIdentifier(this.currentCall),
 	        callType: this.getCallType(),
+	        reconnectionReason: e.reconnectionReason,
+	        reconnectionReasonInfo: e.reconnectionReasonInfo,
 	        reconnectionEventCount: e.reconnectionEventCount
 	      });
 
@@ -39596,9 +40238,10 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "_onCallJoin",
 	    value: function _onCallJoin(e) {
-	      // this.clickLinkInterceptor = this.getClickLinkInterceptor();
-	      // this.clickLinkInterceptor.startIntercepting();
-
+	      if (this.callView && !this.clickLinkInterceptor) {
+	        this.clickLinkInterceptor = this.getClickLinkInterceptor();
+	        this.clickLinkInterceptor.startIntercepting();
+	      }
 	      if (e.local) {
 	        // self answer
 	        if (this.currentCall && this.currentCall instanceof VoximplantCall) {
@@ -39639,6 +40282,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "_onCallLeave",
 	    value: function _onCallLeave(e) {
+	      var _this$hangupOptionsMe;
 	      console.log("_onCallLeave", e);
 	      if (!e.local && this.currentCall && this.currentCall.ready) {
 	        this.log(new Error("received remote leave with active call!"));
@@ -39652,7 +40296,7 @@ this.BX = this.BX || {};
 	      this.callRecordType = View.RecordType.None;
 	      this.docCreatedForCurrentCall = false;
 	      var callDetails;
-	      if (!this.getActiveCallUsers().length) {
+	      if (!this.getActiveCallUsers().length && Boolean(this.callView) && !this.isCallHangupButtonPressed) {
 	        call_lib_analytics.Analytics.getInstance().onFinishCall({
 	          callId: this._getCallIdentifier(this.currentCall),
 	          callType: this.getCallType(),
@@ -39661,11 +40305,12 @@ this.BX = this.BX || {};
 	          callUsersCount: this.getMaxActiveCallUsers().length,
 	          callLength: Util.getTimeInSeconds(this.currentCall.startDate)
 	        });
+	        this.isCallHangupButtonPressed = false;
 	      }
 	      if (this.currentCall && this.currentCall.associatedEntity) {
 	        this.removeVideoStrategy();
 	        this.removeCallEvents();
-	        callDetails = _classPrivateMethodGet$9(this, _getCallDetail, _getCallDetail2).call(this, this.currentCall);
+	        callDetails = _classPrivateMethodGet$a(this, _getCallDetail, _getCallDetail2).call(this, this.currentCall);
 	        this.currentCall = null;
 	      }
 	      if (this.promotedToAdminTimeout) {
@@ -39717,7 +40362,11 @@ this.BX = this.BX || {};
 	      this._closeParticipantsVideoBaloon();
 	      this.messengerFacade.stopRepeatSound('dialtone');
 	      this.messengerFacade.stopRepeatSound(this.audioRingtone);
-	      if (this.clickLinkInterceptor) ;
+	      (_this$hangupOptionsMe = this.hangupOptionsMenu) === null || _this$hangupOptionsMe === void 0 ? void 0 : _this$hangupOptionsMe.destroy();
+	      if (this.clickLinkInterceptor) {
+	        this.clickLinkInterceptor.stopIntercepting();
+	        this.clickLinkInterceptor = null;
+	      }
 	      this.emit(Events$6.onCallLeft, {
 	        callDetails: callDetails
 	      });
@@ -40826,14 +41475,14 @@ this.BX = this.BX || {};
 	  if (!this.childCall) {
 	    return;
 	  }
-	  _classPrivateMethodGet$9(this, _switchToChildCall, _switchToChildCall2).call(this);
-	  _classPrivateMethodGet$9(this, _setUserMedia, _setUserMedia2).call(this, e);
+	  _classPrivateMethodGet$a(this, _switchToChildCall, _switchToChildCall2).call(this);
+	  _classPrivateMethodGet$a(this, _setUserMedia, _setUserMedia2).call(this, e);
 	}
 	function _onChildCallFirstUserJoined2(e) {
 	  if (!this.childCall) {
 	    return;
 	  }
-	  _classPrivateMethodGet$9(this, _switchToChildCall, _switchToChildCall2).call(this);
+	  _classPrivateMethodGet$a(this, _switchToChildCall, _switchToChildCall2).call(this);
 	  this._onCallUserJoined(e);
 	}
 	function _switchToChildCall2() {

@@ -111,12 +111,18 @@ class CounterRepository implements CounterRepositoryInterface
 		$this->deleteByFilter($filter);
 	}
 
-	public function getUsersByCounterType(int $entityId, CounterDictionary $type): array
+	public function getUsersByCounterType(array $entityIds, array $types): array
 	{
+		if (empty($entityIds) || empty($types))
+		{
+			return [];
+		}
+
 		return ScorerTable::query()
 			->setSelect(['USER_ID'])
-			->where('TYPE', '=', $type->value)
-			->where('ENTITY_ID', '=', $entityId)
+			->setDistinct()
+			->whereIn('TYPE', array_map(static fn (CounterDictionary $type) => $type->value, $types))
+			->whereIn('ENTITY_ID', $entityIds)
 			->exec()
 			->fetchAll()
 		;

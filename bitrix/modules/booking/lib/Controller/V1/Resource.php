@@ -68,11 +68,6 @@ class Resource extends BaseController
 			return null;
 		}
 
-		if (BookingFeature::canTurnOnTrial())
-		{
-			BookingFeature::turnOnTrial();
-		}
-
 		try
 		{
 			$resource = Entity\Resource\Resource::mapFromArray($resource);

@@ -29,6 +29,7 @@ jn.define('im/messenger/lib/converter/ui/message', (require, exports, module) =>
 		GalleryMessageFactory,
 		CallMessageFactory,
 		VoteMessageFactory,
+		AiAssistantMessage,
 	} = require('im/messenger/lib/element');
 	const { Feature } = require('im/messenger/lib/feature');
 	const { MessageHelper } = require('im/messenger/lib/helper');
@@ -92,6 +93,11 @@ jn.define('im/messenger/lib/converter/ui/message', (require, exports, module) =>
 				files,
 			);
 
+			if (messageHelper.isAiAssistant && Feature.isAiAssistantMessageSupported)
+			{
+				return new AiAssistantMessage(modelMessage, options);
+			}
+
 			if (messageHelper.isSystem)
 			{
 				return new SystemTextMessage(modelMessage, { ...options, showCommentInfo: false });
@@ -114,7 +120,7 @@ jn.define('im/messenger/lib/converter/ui/message', (require, exports, module) =>
 
 			if (modelMessage.params?.componentId === MessageParams.ComponentId.ConvertToCollabMessage)
 			{
-				return new TextMessage(modelMessage, options);
+				return new SystemTextMessage(modelMessage, { ...options, showCommentInfo: false });
 			}
 
 			if (CheckInMessageFactory.checkSuitableForDisplay(modelMessage))
@@ -256,7 +262,7 @@ jn.define('im/messenger/lib/converter/ui/message', (require, exports, module) =>
 			const options = {
 				dialogCode: this.dialogCode,
 			};
-			if (dialog.type === DialogType.user)
+			if (dialog.type === DialogType.user || dialog.type === DialogType.private)
 			{
 				options.showUsername = false;
 				options.showAvatar = false;

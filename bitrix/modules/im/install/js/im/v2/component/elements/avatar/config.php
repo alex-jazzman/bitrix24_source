@@ -13,7 +13,6 @@ return [
 		'im.v2.lib.channel',
 		'ui.avatar',
 		'im.v2.lib.copilot',
-		'im.v2.lib.feature',
 		'main.core',
 		'im.v2.const',
 	],

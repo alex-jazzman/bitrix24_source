@@ -38,11 +38,11 @@ class Features
 		public readonly bool $inviteByLinkAvailable,
 		public readonly bool $documentSignAvailable,
 		public readonly bool $intranetInviteAvailable,
+		public readonly bool $changeInviteLanguageAvailable,
 		public readonly bool $voteCreationAvailable,
-		public readonly bool $messagesAutoDeleteAvailable,
-		public readonly bool $copilotInDefaultTabAvailable,
 		public readonly bool $messagesAutoDeleteEnabled,
 		public readonly bool $isNotificationsStandalone,
+		public readonly bool $isCopilotSelectModelAvailable,
 		public readonly bool $teamsInStructureAvailable,
 		public readonly bool $isDesktopRedirectAvailable,
 	){}
@@ -78,11 +78,11 @@ class Features
 			self::isInviteByLinkAvailable(),
 			DocumentSign::isAvailable(),
 			Invitation::isAvailable(),
+			Invitation::isChangeLanguageAvailable(),
 			self::isVoteCreationAvailable(),
-			self::isMessagesAutoDeleteAvailable(),
-			self::isCopilotInDefaultTabAvailable(),
 			self::isMessagesAutoDeleteEnabled(),
 			self::isNotificationsStandalone(),
+			self::isCopilotSelectModelAvailable(),
 			Structure::isTeamsAvailable(),
 			self::isDesktopRedirectAvailable(),
 		);
@@ -126,21 +126,6 @@ class Features
 		;
 	}
 
-	public static function isMessagesAutoDeleteAvailable(): bool
-	{
-		return Option::get('im', 'auto_delete_messages_activated', 'N') === 'Y';
-	}
-
-	public static function isCopilotInDefaultTabAvailable(): bool
-	{
-		if (!CopilotChat::isActive() || !CopilotChat::isAvailable())
-		{
-			return false;
-		}
-
-		return \Bitrix\Main\Config\Option::get('im', 'copilot_in_default_tab_activated', 'N') === 'Y';
-	}
-
 	private static function isNotificationsStandalone(): bool
 	{
 		return Option::get('im', '~is_notifications_standalone', 'N') === 'Y';
@@ -149,6 +134,11 @@ class Features
 	public static function isMessagesAutoDeleteEnabled(): bool
 	{
 		return Option::get('im', 'isAutoDeleteMessagesEnabled', 'Y') === 'Y';
+	}
+
+	public static function isCopilotSelectModelAvailable(): bool
+	{
+		return Option::get('im', 'copilot_select_model_activated', 'N') === 'Y';
 	}
 
 	public static function isDesktopRedirectAvailable(): bool

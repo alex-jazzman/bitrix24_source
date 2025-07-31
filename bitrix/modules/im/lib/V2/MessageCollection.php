@@ -5,7 +5,6 @@ namespace Bitrix\Im\V2;
 use Bitrix\Im\V2\Chat\Copilot\CopilotPopupItem;
 use Bitrix\Im\V2\Chat\ChannelChat;
 use Bitrix\Im\V2\Chat\Comment\CommentPopupItem;
-use Bitrix\Im\V2\Chat\Copilot\Entity;
 use Bitrix\Im\V2\Entity\File\FilePopupItem;
 use Bitrix\Im\V2\Entity\Url\UrlCollection;
 use Bitrix\Im\V2\Entity\User\UserPopupItem;
@@ -144,11 +143,9 @@ class MessageCollection extends Collection implements RestConvertible, PopupData
 		return $id;
 	}
 
-	public function getCommonChat(): ?Chat
+	public function getCommonChat(): Chat
 	{
-		$chatId = $this->getCommonChatId();
-
-		return $chatId ? Chat::getInstance($chatId) : null;
+		return Chat::getInstance($this->getCommonChatId());
 	}
 
 	//endregion
@@ -641,7 +638,7 @@ class MessageCollection extends Collection implements RestConvertible, PopupData
 		return $reactions;
 	}
 
-	protected function getCopilotRoles(): array
+	public function getCopilotRoles(): array
 	{
 		$this->fillParams();
 		$copilotRoles = [];
@@ -687,9 +684,8 @@ class MessageCollection extends Collection implements RestConvertible, PopupData
 		$popup = [
 			new UserPopupItem($this->getUserIds()),
 			new FilePopupItem($this->getFiles()),
-			//new ReminderPopupItem($this->getReminders()),
 			new AdditionalMessagePopupItem($additionalMessageIds),
-			new CopilotPopupItem($this->getCopilotRoles(), Entity::Messages),
+			CopilotPopupItem::getInstanceByMessages($this),
 		];
 
 		if (!in_array(ReactionPopupItem::class, $excludedList, true))
@@ -697,9 +693,12 @@ class MessageCollection extends Collection implements RestConvertible, PopupData
 			$popup[] = new ReactionPopupItem($this->getReactions());
 		}
 
-		$chat = $this->getAny()?->getChat();
+		$chat = $this->getCommonChat();
 
-		if ($chat instanceof ChannelChat)
+		if (
+			!in_array(CommentPopupItem::class, $excludedList, true)
+			&& $chat instanceof ChannelChat
+		)
 		{
 			$popup[] = new CommentPopupItem($chat->getId(), $this->getIds());
 		}

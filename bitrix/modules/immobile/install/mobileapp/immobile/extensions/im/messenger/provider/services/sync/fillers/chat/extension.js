@@ -5,7 +5,6 @@ jn.define('im/messenger/provider/services/sync/fillers/chat', (require, exports,
 	const { SyncFillerBase } = require('im/messenger/provider/services/sync/fillers/base');
 	const { EventType, ComponentCode, WaitingEntity } = require('im/messenger/const');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
-	const { Feature } = require('im/messenger/lib/feature');
 	const { getLogger } = require('im/messenger/lib/logger');
 	const logger = getLogger('sync-service');
 
@@ -26,12 +25,7 @@ jn.define('im/messenger/provider/services/sync/fillers/chat', (require, exports,
 		 */
 		prepareResult(result)
 		{
-			if (Feature.isCopilotInDefaultTabAvailable)
-			{
-				return result;
-			}
-
-			return this.filterWithoutCopilot(result);
+			return result;
 		}
 
 		/**
@@ -65,42 +59,6 @@ jn.define('im/messenger/provider/services/sync/fillers/chat', (require, exports,
 					error: `SyncFillerChat.fillData error: ${error.message}`,
 				}, ComponentCode.imMessenger);
 			}
-		}
-
-		/**
-		 * @param {SyncListResult} syncListResult
-		 * @return {SyncListResult}
-		 */
-		filterWithoutCopilot(syncListResult)
-		{
-			const copilotChatIds = this.findCopilotChatIds(syncListResult.addedChats);
-
-			syncListResult.addedRecent = syncListResult.addedRecent.filter((recentItem) => {
-				return !(copilotChatIds.includes(recentItem.chat_id));
-			});
-
-			syncListResult.addedChats = syncListResult.addedChats.filter((chat) => {
-				return !(copilotChatIds.includes(chat.id));
-			});
-
-			syncListResult.messages.messages = syncListResult.messages.messages.filter((message) => {
-				return !(copilotChatIds.includes(message.chat_id));
-			});
-
-			syncListResult.messages.files = syncListResult.messages.files.filter((file) => {
-				return !(copilotChatIds.includes(file.chatId));
-			});
-
-			syncListResult.messages.users = syncListResult.messages.users.filter((user) => {
-				if (!user.botData)
-				{
-					return true;
-				}
-
-				return user.botData.code !== 'copilot';
-			});
-
-			return syncListResult;
 		}
 
 		getUuidPrefix()

@@ -1,4 +1,12 @@
-import { Button as UIButton, ButtonColor, ButtonSize, ButtonState, ButtonIcon } from 'ui.buttons';
+import {
+	Button as UIButton,
+	AirButtonStyle,
+	ButtonColor,
+	ButtonSize,
+	ButtonState,
+	ButtonStyle,
+	ButtonIcon,
+} from 'ui.buttons';
 import { Type } from 'main.core';
 
 export const Button = {
@@ -27,7 +35,7 @@ export const Button = {
 		clocking: Boolean,
 		waiting: Boolean,
 		dataset: Object,
-		buttonClass: String,
+		buttonClass: [String, Array],
 	},
 	created(): void
 	{
@@ -43,7 +51,7 @@ export const Button = {
 				this.$emit('click');
 			},
 			dataset: this.dataset,
-			className: this.buttonClass,
+			className: Type.isArray(this.buttonClass) ? this.buttonClass.join(' ') : this.buttonClass,
 		});
 	},
 	mounted(): void
@@ -132,4 +140,4 @@ export const Button = {
 	`,
 };
 
-export { ButtonColor, ButtonSize, ButtonIcon };
+export { AirButtonStyle, ButtonColor, ButtonSize, ButtonStyle, ButtonIcon };

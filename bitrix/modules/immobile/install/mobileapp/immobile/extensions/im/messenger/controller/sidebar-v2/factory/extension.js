@@ -3,8 +3,6 @@
  */
 jn.define('im/messenger/controller/sidebar-v2/factory', (require, exports, module) => {
 	const { DialogHelper } = require('im/messenger/lib/helper');
-	const { MessengerParams } = require('im/messenger/lib/params');
-	const featureEnabled = MessengerParams.getSidebarV2Features();
 
 	const SidebarType = {
 		notes: 'notes',
@@ -26,17 +24,6 @@ jn.define('im/messenger/controller/sidebar-v2/factory', (require, exports, modul
 		[SidebarType.copilot]: 'im:messenger/controller/sidebar-v2/controller/copilot',
 		[SidebarType.bot]: 'im:messenger/controller/sidebar-v2/controller/bot',
 		[SidebarType.comments]: 'im:messenger/controller/sidebar-v2/controller/comment',
-	};
-
-	const SidebarEnabled = {
-		[SidebarType.notes]: featureEnabled.notesSidebar,
-		[SidebarType.directChat]: featureEnabled.directChatSidebar,
-		[SidebarType.groupChat]: featureEnabled.groupChatSidebar,
-		[SidebarType.collab]: featureEnabled.collabSidebar,
-		[SidebarType.channel]: featureEnabled.channelSidebar,
-		[SidebarType.copilot]: featureEnabled.copilotSidebar,
-		[SidebarType.bot]: featureEnabled.directChatSidebar,
-		[SidebarType.comments]: featureEnabled.commentsSidebar,
 	};
 
 	class SidebarLazyFactory
@@ -66,11 +53,6 @@ jn.define('im/messenger/controller/sidebar-v2/factory', (require, exports, modul
 			if (!SidebarImplementation[type])
 			{
 				return Promise.reject(new Error(`Sidebar V2: cannot resolve implementation for type ${type}`));
-			}
-
-			if (!SidebarEnabled[type])
-			{
-				return Promise.reject(new Error(`Sidebar V2: type ${type} is not supported yet`));
 			}
 
 			this.openingRegistry.add(dialogId);

@@ -11,10 +11,11 @@ return [
 	'js' => 'dist/update-banner.bundle.js',
 	'rel' => [
 		'main.core',
-		'im.v2.lib.desktop-api',
+		'ui.vue3.components.rich-loc',
 		'im.v2.lib.analytics',
-		'im.v2.lib.helpdesk',
+		'im.v2.lib.desktop-api',
 		'im.v2.lib.utils',
+		'im.v2.lib.helpdesk',
 	],
 	'skip_core' => false,
 	'settings' => [

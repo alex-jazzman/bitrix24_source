@@ -29,6 +29,8 @@ import { FeedbackFormMessage } from 'imopenlines.v2.component.message.feedback-f
 import { CallMessage } from 'im.v2.component.message.call';
 import { VoteMessage } from 'im.v2.component.message.vote';
 import { TaskChatCreationMessage } from 'im.v2.component.message.creation.task-chat';
+import { ConvertToCollabMessage } from 'im.v2.component.message.collab.convert';
+import { AiAssistantMessage } from 'im.v2.component.message.ai-assistant.answer';
 
 export const MessageComponents = {
 	DefaultMessage,
@@ -43,6 +45,7 @@ export const MessageComponents = {
 	OwnChatCreationMessage,
 	ChatCopilotCreationMessage,
 	CopilotMessage,
+	AiAssistantMessage,
 	SupportVoteMessage,
 	SupportSessionNumberMessage,
 	SupportChatCreationMessage,
@@ -62,4 +65,5 @@ export const MessageComponents = {
 	HiddenMessage,
 	VoteMessage,
 	TaskChatCreationMessage,
+	ConvertToCollabMessage,
 };

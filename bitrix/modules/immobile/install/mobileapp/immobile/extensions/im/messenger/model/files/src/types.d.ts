@@ -37,6 +37,9 @@ export type FilesModelState = {
 	init: boolean,
 	viewerAttrs: Object,
 	localUrl?: string,
+	mediaUrl?: {
+		preview?: Record<number, string>
+	}
 
 	uploadData?: {
 		byteSent?: 0,

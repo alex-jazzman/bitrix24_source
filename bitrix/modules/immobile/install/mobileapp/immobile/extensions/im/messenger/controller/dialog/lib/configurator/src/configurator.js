@@ -5,7 +5,12 @@ jn.define('im/messenger/controller/dialog/lib/configurator/configurator', (requi
 	const { Type } = require('type');
 	const { mergeImmutable, get } = require('utils/object');
 
+	const {
+		DialogHelper,
+		MessageHelper,
+	} = require('im/messenger/lib/helper');
 	const { getLogger } = require('im/messenger/lib/logger');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
 	const {
 		defaultConfig,
@@ -31,6 +36,9 @@ jn.define('im/messenger/controller/dialog/lib/configurator/configurator', (requi
 				baseDialogConfig.header.buttons.controller.extensionName,
 				baseDialogConfig.message.contextMenu.controller.extensionName,
 			]);
+
+			/** @type {MessengerCoreStore} */
+			this.store = serviceLocator.get('core').getStore();
 		}
 
 		/**
@@ -73,6 +81,41 @@ jn.define('im/messenger/controller/dialog/lib/configurator/configurator', (requi
 			return this.getControllerClass('message.contextMenu.controller');
 		}
 
+		/**
+		 * @param {number} messageId
+		 * @return {Promise<IMessageContextMenu>}
+		 */
+		async getMessageContextMenuControllerClassByMessageId(messageId)
+		{
+			const contextMenuController = this.getMessageContextMenuControllerClass();
+			const messageHelper = MessageHelper.createById(messageId);
+			if (!messageHelper)
+			{
+				return contextMenuController;
+			}
+
+			const dialogHelper = DialogHelper.createByChatId(messageHelper.messageModel.chatId);
+			if (!dialogHelper)
+			{
+				return contextMenuController;
+			}
+
+			const isInitialPostForComment = messageHelper.isInitialPostForComment;
+
+			const isMessageFromCustomizableDialog = !(
+				dialogHelper.isChannel
+				|| dialogHelper.isComment
+				|| isInitialPostForComment
+				|| dialogHelper.isCopilot
+			);
+			if (isMessageFromCustomizableDialog)
+			{
+				return contextMenuController;
+			}
+
+			return this.getBaseMessageContextMenuControllerClass();
+		}
+
 		checkIsHeaderTitleControllerClassLoaded()
 		{
 			const { extensionName } = this.getControllerConfigByPath('header.title.controller');
@@ -97,6 +140,15 @@ jn.define('im/messenger/controller/dialog/lib/configurator/configurator', (requi
 		get isSidebarEnabled()
 		{
 			return this.config.sidebar.enabled;
+		}
+
+		/**
+		 * @private
+		 * @return {Promise<IMessageContextMenu>}
+		 */
+		async getBaseMessageContextMenuControllerClass()
+		{
+			return this.getControllerClassByConfig(this.baseConfig, 'message.contextMenu.controller');
 		}
 
 		/**

@@ -14,6 +14,7 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 	const {
 		DialogType,
 		BotType,
+		BotCode,
 		UserType,
 		UserInputAction,
 	} = require('im/messenger/const');
@@ -202,7 +203,7 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 
 		setMessagesAutoDeleteDelay()
 		{
-			if (!Feature.isTitleIconsInDialogHeaderAvailable || !Feature.isMessagesAutoDeleteAvailable)
+			if (!Feature.isTitleIconsInDialogHeaderAvailable)
 			{
 				return;
 			}
@@ -308,6 +309,11 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 			if (user.bot === true)
 			{
 				this.nameColor = Theme.colors.accentSoftElementViolet;
+			}
+
+			if (user?.botData?.code === BotCode.aiAssistant)
+			{
+				this.nameColor = Theme.colors.base1;
 			}
 		}
 

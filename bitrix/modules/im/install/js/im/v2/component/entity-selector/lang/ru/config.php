@@ -22,3 +22,6 @@ $MESS["IM_ENTITY_SELECTOR_ADD_TO_COLLAB_INVITE_BY_PHONE_OR_EMAIL"] = "По но�
 $MESS["IM_ENTITY_SELECTOR_ADD_TO_COLLAB_INVITE_BY_EMAIL"] = "По e-mail";
 $MESS["IM_ENTITY_SELECTOR_ADD_TO_COLLAB_HELPDESK_LINK"] = "Подробнее";
 $MESS["IM_ENTITY_SELECTOR_ADD_TO_COLLAB_LINK_UPDATE_HINT"] = "Обновите ссылку для приглашения, если хотите закрыть доступ по старой";
+$MESS["IM_ENTITY_SELECTOR_ADD_TO_COLLAB_INVITE_LANGUAGE_TITLE"] = "Язык приглашения:";
+$MESS["IM_ENTITY_SELECTOR_ADD_TO_COLLAB_DEFAULT_LANGUAGE_TITLE"] = "#LANG_NAME# (по умолчанию)";
+$MESS["IM_ENTITY_SELECTOR_ADD_TO_COLLAB_LANGUAGE_SELECTOR_HINT"] = "Выберите язык приглашения и интерфейса гостя. Для других участников язык не изменится";

@@ -19,6 +19,7 @@ enum StructureAction: string
 	case RemoveMemberAction = 'removeMember';
 	case InviteUserAction = 'inviteUser';
 	case EditSettingsAction = 'editSettings';
+	case CommunicationEditAction = 'CommunicationEdit';
 
 	use ValuesTrait;
 
@@ -71,6 +72,10 @@ enum StructureAction: string
 				actionId: StructureActionDictionary::ACTION_USER_INVITE,
 				permissionId: PermissionDictionary::HUMAN_RESOURCES_USER_INVITE,
 			),
+			self::CommunicationEditAction => new AccessInfo(
+				actionId: StructureActionDictionary::ACTION_DEPARTMENT_COMMUNICATION_EDIT,
+				permissionId: PermissionDictionary::HUMAN_RESOURCES_DEPARTMENT_COMMUNICATION_EDIT,
+			),
 			default => throw new \InvalidArgumentException('Unavailable structure action for department'),
 		};
 	}
@@ -106,6 +111,10 @@ enum StructureAction: string
 			self::EditSettingsAction => new AccessInfo(
 				actionId: StructureActionDictionary::ACTION_TEAM_SETTINGS_EDIT,
 				permissionId: PermissionDictionary::HUMAN_RESOURCES_TEAM_SETTINGS_EDIT,
+			),
+			self::CommunicationEditAction => new AccessInfo(
+				actionId: StructureActionDictionary::ACTION_TEAM_COMMUNICATION_EDIT,
+				permissionId: PermissionDictionary::HUMAN_RESOURCES_TEAM_COMMUNICATION_EDIT,
 			),
 			default => throw new \InvalidArgumentException('Unavailable structure action for team'),
 		};

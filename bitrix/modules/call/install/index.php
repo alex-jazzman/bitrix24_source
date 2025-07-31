@@ -142,6 +142,17 @@ class call extends \CModule
 			\ConvertTimeStamp(time()+\CTimeZone::GetOffset() + rand(4320, 86400), 'FULL')
 		);
 
+		/** @see \Bitrix\Call\Call::finishOldCallsAgent */
+		\CAgent::AddAgent(
+			'Bitrix\Call\Call::finishOldCallsAgent();',
+			'call',
+			'N',
+			3600,
+			'',
+			'Y',
+			\ConvertTimeStamp(time()+\CTimeZone::GetOffset() + rand(4320, 86400), 'FULL')
+		);
+
 		/** @see \Bitrix\Call\Settings::registerPortalKeyAgent() */
 		\CAgent::AddAgent(
 			'Bitrix\Call\Settings::registerPortalKeyAgent();',

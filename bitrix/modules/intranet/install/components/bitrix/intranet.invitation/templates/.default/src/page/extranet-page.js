@@ -132,6 +132,11 @@ export class ExtranetPage extends Page
 		});
 	}
 
+	onInviteSuccess(event: BaseEvent)
+	{
+		this.render().querySelector('form')?.reset();
+	}
+
 	getSubmitButtonText(): ?string
 	{
 		return Loc.getMessage('BX24_INVITE_DIALOG_ACTION_INVITE');

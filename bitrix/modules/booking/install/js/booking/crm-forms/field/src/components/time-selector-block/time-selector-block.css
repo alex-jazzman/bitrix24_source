@@ -13,7 +13,7 @@
 
 .booking--crm-forms--time-selector-block-resource-name {
 	overflow: hidden;
-	color: rgb(var(--booking--crm-forms--title-color-rgb));
+	color: var(--booking--crm-forms--title-color);
 	text-overflow: ellipsis;
 	font-size: 17px;
 	font-style: normal;
@@ -23,7 +23,8 @@
 
 .booking--crm-forms--time-selector-block-resource-type-name {
 	overflow: hidden;
-	color: rgba(0, 0, 0, 0.30);
+	color: var(--booking--crm-forms--resource-type-name-color);
+	opacity: var(--booking--crm-forms--resource-type-name-opacity);
 	text-overflow: ellipsis;
 	font-size: 12px;
 	font-style: normal;

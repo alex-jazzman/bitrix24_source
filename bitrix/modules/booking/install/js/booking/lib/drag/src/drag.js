@@ -256,21 +256,19 @@ export class Drag
 			return;
 		}
 
-		const additionalResourcesIds = booking.resourcesIds.includes(cell.resourceId)
+		const resourceIds = booking.resourcesIds.includes(cell.resourceId)
 			? booking.resourcesIds
-			: booking.resourcesIds.filter((id: number) => id !== resourceId)
+			: [
+				cell.resourceId,
+				...booking.resourcesIds.filter((id: number) => id !== resourceId),
+			]
 		;
 
 		await bookingService.update({
 			id: booking.id,
 			dateFromTs: cell.fromTs,
 			dateToTs: cell.toTs,
-			resourcesIds: [
-				...new Set([
-					cell.resourceId,
-					...additionalResourcesIds,
-				]),
-			],
+			resourcesIds: [...new Set(resourceIds)],
 			timezoneFrom: booking.timezoneFrom,
 			timezoneTo: booking.timezoneTo,
 		});

@@ -33,24 +33,20 @@ export class BxLinkHandler
 				return;
 			}
 
-			DesktopApi.showBrowserWindow();
+			await DesktopApi.showBrowserWindow();
 
 			if (DesktopApi.isFeatureSupported(DesktopFeature.portalTabActivation.id))
 			{
 				await DesktopApi.handlePortalTabActivation();
 			}
 
-			// delay is needed because desktop window activation takes some time
-			// to complete and method is not async by its nature
-			setTimeout(() => {
-				DesktopBroadcastManager.getInstance().sendActionMessage({
-					action: DesktopBroadcastAction.bxLink,
-					params: {
-						command,
-						rawParams,
-					},
-				});
-			}, WINDOW_ACTIVATION_DELAY);
+			DesktopBroadcastManager.getInstance().sendActionMessage({
+				action: DesktopBroadcastAction.bxLink,
+				params: {
+					command,
+					rawParams,
+				},
+			});
 		});
 	}
 

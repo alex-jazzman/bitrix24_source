@@ -164,12 +164,16 @@ class CIntranetUserProfileComponent extends UserProfile
 		$this->arResult['ADDITIONAL_BLOCKS'] = $this->getAdditionalBlocks();
 		$this->arResult['IS_ADDITIONAL_BLOCK'] = !empty($this->arResult['ADDITIONAL_BLOCKS']);
 
+		$userService = \Bitrix\Intranet\Service\ServiceContainer::getInstance()->getUserService();
 		$access = UserAccessController::createByDefault();
-		$userAccessModel = TargetUserModel::createFromArray($this->arResult['User']);
-		$this->arResult['ACTIONS_AVAILABILITY'] = $access->batchCheck(
-			\Bitrix\Intranet\User\Access\UserActionDictionary::valuesForBatchCheck(),
+		$userEntity = \Bitrix\Intranet\Entity\User::initByArray($this->arResult['User']);
+		$userAccessModel = TargetUserModel::createFromUserEntity($userEntity);
+		$availableActions = $userService->getAvailableActions($userEntity);
+		$availableActions = $access->batchCheck(
+			\Bitrix\Intranet\User\Access\UserActionDictionary::valuesForBatchCheck($availableActions),
 			$userAccessModel,
 		);
+		$this->arResult['ACTIONS_AVAILABILITY'] = $availableActions;
 
 		$this->processShowYear();
 
@@ -179,6 +183,20 @@ class CIntranetUserProfileComponent extends UserProfile
 		{
 			$APPLICATION->SetTitle(\CUser::FormatName(\CSite::GetNameFormat(), $this->arResult["User"], true));
 		}
+
+		$rootDepartment = \Bitrix\Intranet\Integration\HumanResources\PermissionInvitation::createByCurrentUser()
+			->findFirstPossibleAvailableDepartment();
+		$this->arResult["ROOT_DEPARTMENT"] = null;
+		if ($rootDepartment)
+		{
+			$this->arResult["ROOT_DEPARTMENT"] = [
+				'id' => $rootDepartment->getId(),
+				'name' => $rootDepartment->getName(),
+				'accessCode' => $rootDepartment->getAccessCode(),
+			];
+		}
+
+
 
 		$this->includeComponentTemplate();
 	}

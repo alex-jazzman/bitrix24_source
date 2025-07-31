@@ -1,5 +1,3 @@
-// @vue/component
-
 import { Dom, Event } from 'main.core';
 import { Popup, PopupOptions } from 'main.popup';
 import { mapGetters } from 'ui.vue3.vuex';
@@ -23,6 +21,7 @@ const ResizeDirection = Object.freeze({
 const minDuration = Duration.getUnitDurations().i * 5;
 const minInitialDuration = Duration.getUnitDurations().i * 15;
 
+// @vue/component
 export const Resize = {
 	name: 'BookingResize',
 	props: {

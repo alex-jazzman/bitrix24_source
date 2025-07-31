@@ -129,11 +129,31 @@ class CallFactory
 			->whereIn('STATE', [\Bitrix\Im\Call\Call::STATE_NEW, \Bitrix\Im\Call\Call::STATE_INVITING])
 			->where('START_DATE', '>=', $date)
 			->where('CALL_USER.USER_ID', $userId)
-			->whereIn('CALL_USER.STATE', [\Bitrix\Im\Call\CallUser::STATE_READY, \Bitrix\Im\Call\CallUser::STATE_CALLING])
 		;
 		$activeCalls = $query->exec()->fetchAll();
 
 		return $activeCalls ?: [];
+	}
+
+	/**
+	 * Checks if user has active call.
+	 * @return bool
+	 */
+	public static function hasUserActiveCalls(int $userId, int $depthHours = 12): bool
+	{
+		$date = (new DateTime())->add("-{$depthHours} hour");
+
+		$query = CallTable::query()
+			->addSelect('ID')
+			->whereIn('STATE', [\Bitrix\Im\Call\Call::STATE_NEW, \Bitrix\Im\Call\Call::STATE_INVITING])
+			->where('START_DATE', '>=', $date)
+			->where('CALL_USER.USER_ID', $userId)
+			->whereIn('CALL_USER.STATE', [\Bitrix\Im\Call\CallUser::STATE_READY, \Bitrix\Im\Call\CallUser::STATE_CALLING])
+			->setLimit(1)
+		;
+		$activeCall = $query->exec()->fetchAll();
+
+		return (bool)$activeCall;
 	}
 
 	/**

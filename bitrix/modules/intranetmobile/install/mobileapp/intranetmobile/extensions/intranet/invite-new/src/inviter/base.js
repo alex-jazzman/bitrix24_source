@@ -261,6 +261,23 @@ jn.define('intranet/invite-new/src/inviter/base', (require, exports, module) => 
 			);
 		};
 
+		renderSecondaryButton = () => {
+			const inviteCase = this.getInviteCase();
+
+			return Button(
+				{
+					testId: this.getTestId(`by-${inviteCase}-button`),
+					text: Loc.getMessage(`INTRANET_INVITE_BY_${inviteCase.toUpperCase()}_BUTTON_TEXT`),
+					size: ButtonSize.M,
+					design: ButtonDesign.PLAN_ACCENT,
+					stretched: true,
+					onClick: () => {
+						this.openInviter();
+					},
+				},
+			);
+		};
+
 		getItemForUIMenu = () => {
 			const inviteCase = this.getInviteCase();
 

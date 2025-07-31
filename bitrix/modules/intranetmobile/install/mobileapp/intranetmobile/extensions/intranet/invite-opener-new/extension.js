@@ -8,7 +8,6 @@ jn.define('intranet/invite-opener-new', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { InviteStatusBox } = require('intranet/invite-status-box');
 	const { Tourist } = require('tourist');
-	const { ButtonDesign } = require('ui-system/form/buttons/button');
 
 	const ErrorCode = {
 		POSSIBILITIES_RESTRICTED: 'Invite possibilities restricted',
@@ -51,26 +50,15 @@ jn.define('intranet/invite-opener-new', (require, exports, module) => {
 	const processGetInviteSettingsFulfilled = (response, params) => {
 		setUserVisitedInvitations();
 
-		const responseHasErrors = response.errors && response.errors.length > 0;
-		if (responseHasErrors)
+		const { errors, data } = response;
+		if (errors && errors.length > 0)
 		{
-			handleErrors(response.errors, params.onInviteError);
+			handleErrors(errors, params.onInviteError);
 
 			return;
 		}
 
-		const {
-			canCurrentUserInvite,
-			isBitrix24Included,
-		} = response.data;
-
-		if (!isBitrix24Included && !env.isAdmin)
-		{
-			handleOnlyAdminCanInvite(params.onInviteError, params.parentLayout, params.analytics);
-
-			return;
-		}
-
+		const { canCurrentUserInvite } = data;
 		if (!canCurrentUserInvite)
 		{
 			handleUserHasNoPermissionsToInvite(params.onInviteError, params.parentLayout);
@@ -79,7 +67,7 @@ jn.define('intranet/invite-opener-new', (require, exports, module) => {
 		}
 
 		openInviteWidget({
-			...extractResponseData(response.data),
+			...extractResponseData(data),
 			...params,
 		});
 	};
@@ -104,26 +92,6 @@ jn.define('intranet/invite-opener-new', (require, exports, module) => {
 				return Promise.resolve();
 			})
 			.catch(console.error);
-	};
-
-	const handleOnlyAdminCanInvite = (onInviteError, parentLayout = PageManager, analytics = {}) => {
-		const inviteAnalytics = new IntranetInviteAnalytics({ analytics });
-		inviteAnalytics.sendProhibitInviteEvent();
-
-		InviteStatusBox.open({
-			backdropTitle: Loc.getMessage('INTRANET_INVITE_OPENER_TITLE_MSGVER_1'),
-			testId: 'status-box-no-permission',
-			imageName: 'user-locked.svg',
-			parentWidget: parentLayout,
-			description: Loc.getMessage('INTRANET_INVITE_ADMIN_ONLY_BOX_TEXT'),
-			buttonText: Loc.getMessage('INTRANET_INVITE_DISABLED_BOX_BUTTON_TEXT'),
-			buttonDesign: ButtonDesign.OUTLINE,
-		});
-
-		if (onInviteError)
-		{
-			onInviteError([new Error(ErrorCode.PERMISSIONS_RESTRICTED)]);
-		}
 	};
 
 	const handleUserHasNoPermissionsToInvite = (onInviteError, parentLayout = PageManager) => {

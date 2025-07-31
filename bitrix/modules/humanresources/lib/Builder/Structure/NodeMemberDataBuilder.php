@@ -222,7 +222,7 @@ final class NodeMemberDataBuilder extends BaseDataBuilder
 	 * @throws SystemException
 	 * @throws WrongStructureItemException
 	 */
-	public function getList(Query $query): NodeMemberCollection
+	protected function getList(Query $query): NodeMemberCollection
 	{
 		$result = $query->fetchAll();
 

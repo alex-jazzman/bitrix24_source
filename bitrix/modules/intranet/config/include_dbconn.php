@@ -2,7 +2,7 @@
 
 if (isset($portalLangs) && is_array($portalLangs) && !empty($portalLangs))
 {
-	define('INTRANET_SHOW_LANG_SELECTOR', true);
+	define('INTRANET_LANGUAGE_ID_CHANGE_AVAILABLE', true);
 
 	if (!preg_match("~^/bitrix/admin/~i", $_SERVER["REQUEST_URI"]))
 	{

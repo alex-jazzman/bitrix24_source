@@ -184,44 +184,39 @@ jn.define('im/messenger/db/table/message', (require, exports, module) => {
 			return this.prepareListResult(result, shouldRestoreRows);
 		}
 
-		async add(messageList, replace = true)
+		/**
+		 * @param {Array} items
+		 * @param {boolean} replace
+		 * @param {boolean} ignoreErrors
+		 * @return {Promise<{lastInsertId: number, columns: *[], changes: number, rows: *[], errors: Error[]} | void>}
+		 */
+		async add(items, replace = true, ignoreErrors = false)
 		{
-			const messageIdCollection = {};
-			messageList.forEach((message) => {
-				messageIdCollection[message.id] = true;
-			});
-
-			const messagesToUpdatePrevious = [];
-			messageList.forEach((message) => {
-				if (messageIdCollection[message.previousId])
-				{
-					return;
-				}
-
-				messagesToUpdatePrevious.push(message);
-			});
-
-			const updatePromiseList = [];
-			messagesToUpdatePrevious.forEach((message) => {
-				const updatePromise = this.updatePreviousMessageByNextMessage(message);
-				updatePromiseList.push(updatePromise);
-			});
-
-			try
+			if (!this.isSupported || this.readOnly || !Feature.isLocalStorageEnabled)
 			{
-				await Promise.all(updatePromiseList);
-			}
-			catch (error)
-			{
-				logger.error(
-					'MessageTable.updatePreviousMessageByNextMessage: error: ',
-					messagesToUpdatePrevious,
-					updatePromiseList,
-					error,
-				);
+				return Promise.resolve();
 			}
 
-			return super.add(messageList, replace);
+			if (!Type.isArrayFilled(items))
+			{
+				logger.log(`Table.add: ${this.getName()} nothing to add.`);
+
+				return Promise.resolve({
+					changes: 0,
+					columns: [],
+					rows: [],
+					lastInsertId: -1,
+					errors: [
+						new Error('NOTHING_TO_ADD'),
+					],
+				});
+			}
+
+			await this.#updateBoundMessages(items);
+
+			const chatId = items[0].chatId;
+
+			return this.#upsertChatMessages(items, chatId);
 		}
 
 		/**
@@ -315,6 +310,92 @@ jn.define('im/messenger/db/table/message', (require, exports, module) => {
 			logger.log(`MessageTable.deleteByIdList complete: ${this.getName()}`, idList);
 
 			return Promise.resolve({});
+		}
+
+		async #upsertChatMessages(items, chatId)
+		{
+			const columnNames = this.table.getMap().map((desc) => desc.name);
+			const data = this.table.prepareInsert(Array.isArray(items) ? items : [items]);
+			const columnValueParameters = data.values.map((item) => `(${item.join(',')})`);
+			const values = data.binding;
+			const columnsWithoutUpsert = this.#getFieldsWithoutUpsert();
+			const upsertingColumns = columnNames.filter((column) => !(columnsWithoutUpsert.has(column)));
+			const messageTableName = this.getName();
+
+			const query = `
+				WITH bounds AS (
+					SELECT
+						COALESCE(MIN(id), 0) AS minId,
+						COALESCE(MAX(id), 0) AS maxId
+					FROM ${messageTableName}
+					WHERE chatId = ${chatId}
+				)
+				INSERT INTO ${messageTableName} (${columnNames.join(', ')})
+					VALUES ${columnValueParameters.join(',')}
+				ON CONFLICT (id) DO UPDATE SET
+					${upsertingColumns.map((column) => `${column} = excluded.${column},`).join('\n')}
+					previousId = CASE
+						WHEN excluded.previousId != 0 THEN excluded.previousId
+						WHEN excluded.id = (SELECT minId FROM bounds) THEN 0
+						ELSE ${messageTableName}.previousId
+					END,
+					nextId = CASE
+						WHEN excluded.nextId != 0 THEN excluded.nextId
+						WHEN excluded.id = (SELECT maxId FROM bounds) THEN 0
+						ELSE ${messageTableName}.nextId
+					END
+			`;
+
+			return this.executeSql({
+				query,
+				values,
+			});
+		}
+
+		async #updateBoundMessages(messageList)
+		{
+			const messageIdCollection = {};
+			messageList.forEach((message) => {
+				messageIdCollection[message.id] = true;
+			});
+
+			const messagesToUpdatePrevious = [];
+			messageList.forEach((message) => {
+				if (messageIdCollection[message.previousId])
+				{
+					return;
+				}
+
+				messagesToUpdatePrevious.push(message);
+			});
+
+			const updatePromiseList = [];
+			messagesToUpdatePrevious.forEach((message) => {
+				const updatePromise = this.updatePreviousMessageByNextMessage(message);
+				updatePromiseList.push(updatePromise);
+			});
+
+			try
+			{
+				await Promise.all(updatePromiseList);
+			}
+			catch (error)
+			{
+				logger.error(
+					'MessageTable.updatePreviousMessageByNextMessage: error: ',
+					messagesToUpdatePrevious,
+					updatePromiseList,
+					error,
+				);
+			}
+		}
+
+		#getFieldsWithoutUpsert()
+		{
+			return new Set([
+				this.getFieldsCollection().previousId.name,
+				this.getFieldsCollection().nextId.name,
+			]);
 		}
 	}
 

@@ -11,6 +11,8 @@ import { BasePullHandler } from './base-pull-handler';
 
 export class WaitListItemPullHandler extends BasePullHandler
 {
+	#delayTimeout: number | null = null;
+
 	constructor(props)
 	{
 		super(props);
@@ -61,6 +63,20 @@ export class WaitListItemPullHandler extends BasePullHandler
 
 	async #updateCounters(): Promise<void>
 	{
-		await mainPageService.fetchCounters();
+		if (this.#delayTimeout)
+		{
+			return;
+		}
+
+		this.#delayTimeout = setTimeout(async () => {
+			try
+			{
+				await mainPageService.fetchCounters();
+			}
+			finally
+			{
+				this.#delayTimeout = null;
+			}
+		}, 0);
 	}
 }

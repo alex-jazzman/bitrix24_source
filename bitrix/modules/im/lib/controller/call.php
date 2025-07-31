@@ -64,8 +64,7 @@ class Call extends Engine\Controller
 
 		if (!$call && ($provider == \Bitrix\Im\Call\Call::PROVIDER_PLAIN))
 		{
-			$opponentActiveCalls = CallFactory::getUserActiveCalls((int)$entityId);
-			if (!empty($opponentActiveCalls))
+			if (CallFactory::hasUserActiveCalls((int)$entityId))
 			{
 				$chat = ChatFactory::getInstance()->getPrivateChat($currentUserId, (int)$entityId);
 				if ($chat->getId() > 0)

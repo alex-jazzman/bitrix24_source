@@ -59,8 +59,46 @@ jn.define('utils/skeleton', (require, exports, module) => {
 		),
 	);
 
+	function CircleStack({ count, size = 24, offsetRatio = 0.6 })
+	{
+		const offset = size * offsetRatio;
+		const containerWidth = size + offset * (count - 1);
+
+		return View(
+			{
+				style: {
+					position: 'relative',
+					width: containerWidth,
+					height: size,
+				},
+			},
+			...Array.from({ length: count }, (_, index) => View(
+				{
+					key: index.toString(),
+					style: {
+						position: 'absolute',
+						left: index * offset,
+						zIndex: index,
+					},
+				},
+				ShimmerView(
+					{ animating: true },
+					View({
+						style: {
+							width: size,
+							height: size,
+							borderRadius: size / 2,
+							backgroundColor: DEFAULT_BG,
+						},
+					}),
+				),
+			)),
+		);
+	}
+
 	module.exports = {
 		Line,
 		Circle,
+		CircleStack,
 	};
 });

@@ -39,10 +39,12 @@ jn.define('im/messenger/lib/element/recent/item/chat/channel', (require, exports
 
 			this.dialog = this.params.model.dialog;
 
+			const postsCountWithCounters = serviceLocator.get('core').getStore()
+				.getters['commentModel/getPostsCountWithCounters'](this.dialog?.chatId);
+
 			this.params.model = {
 				...this.params.model,
-				commentsCounter: serviceLocator.get('core').getStore()
-					.getters['commentModel/getChannelCounters'](this.dialog?.chatId),
+				commentsCounter: postsCountWithCounters,
 			};
 
 			return this;

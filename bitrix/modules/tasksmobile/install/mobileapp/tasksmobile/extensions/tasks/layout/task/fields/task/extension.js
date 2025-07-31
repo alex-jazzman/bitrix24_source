@@ -23,9 +23,14 @@ jn.define('tasks/layout/task/fields/task', (require, exports, module) => {
 
 			return {
 				...config,
-				selectorType: (config.selectorType === '' ? 'task' : config.selectorType),
+				selectorType: (config.selectorType === '' ? this.getDefaultSelectorType() : config.selectorType),
 				canOpenEntity: BX.prop.getBoolean(config, 'canOpenEntity', true),
 			};
+		}
+
+		getDefaultSelectorType()
+		{
+			return 'task';
 		}
 
 		getCurrentTaskId()

@@ -1,5 +1,7 @@
 <?php
 
+use Bitrix\Main\UserField\Types\FileType;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -50,5 +52,8 @@ return [
 		"ui.entity-selector",
 		"ui.design-tokens",
 		"ui.fonts.opensans",
+	],
+	'settings' => [
+		'isFileUserFieldViewingModesAvailable' => method_exists(FileType::class, 'isAvailableDefaultView'),
 	],
 ];

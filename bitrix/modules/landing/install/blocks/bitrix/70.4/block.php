@@ -15,12 +15,12 @@
 			</div>
 		</div>
 		<div
-			class="landing-block-node-card-container d-grid"
-			style="grid-template-columns: repeat(auto-fit, minmax(265px, 1fr)); gap: 13px;"
+			class="landing-block-node-card-container d-flex justify-content-center"
+			style="gap: 13px; flex-wrap: wrap;"
 		>
 			<div
 				class="landing-block-node-card d-flex flex-column justify-content-center g-px-17 g-py-15 g-bg g-brd-2 g-rounded-15 g-cursor-pointer g-border-color g-border-color--hover g-transition-0_3 g-brd-1 g-brd-style-solid g-brd-transparent g-text-decoration-none"
-				style="--bg: #ffffff; --border-color: hsla(0, 0%, 0%, 0); --border-color--hover: var(--primary); box-shadow: 0 4px 9px 0 rgba(0, 0, 0, 0.06);"
+				style="--bg: #ffffff; --border-color: hsla(0, 0%, 0%, 0); --border-color--hover: var(--primary); max-width: 265px; width: 100%; box-shadow: 0 4px 9px 0 rgba(0, 0, 0, 0.06);"
 			>
 				<a
 					class="landing-block-node-card-link g-pos-rel text-decoration-none"
@@ -47,7 +47,7 @@
 			</div>
 			<div
 				class="landing-block-node-card d-flex flex-column justify-content-center g-px-17 g-py-15 g-bg g-brd-2 g-rounded-15 g-cursor-pointer g-border-color g-border-color--hover g-transition-0_3 g-brd-1 g-brd-style-solid g-brd-transparent g-text-decoration-none"
-				style="--bg: #ffffff; --border-color: hsla(0, 0%, 0%, 0); --border-color--hover: var(--primary); box-shadow: 0 4px 9px 0 rgba(0, 0, 0, 0.06);"
+				style="--bg: #ffffff; --border-color: hsla(0, 0%, 0%, 0); --border-color--hover: var(--primary); max-width: 265px; width: 100%; box-shadow: 0 4px 9px 0 rgba(0, 0, 0, 0.06);"
 			>
 				<a
 					class="landing-block-node-card-link g-pos-rel text-decoration-none"
@@ -74,7 +74,7 @@
 			</div>
 			<div
 				class="landing-block-node-card d-flex flex-column justify-content-center g-px-17 g-py-15 g-bg g-brd-2 g-rounded-15 g-cursor-pointer g-border-color g-border-color--hover g-transition-0_3 g-brd-1 g-brd-style-solid g-brd-transparent g-text-decoration-none"
-				style="--bg: #ffffff; --border-color: hsla(0, 0%, 0%, 0); --border-color--hover: var(--primary); box-shadow: 0 4px 9px 0 rgba(0, 0, 0, 0.06);"
+				style="--bg: #ffffff; --border-color: hsla(0, 0%, 0%, 0); --border-color--hover: var(--primary); max-width: 265px; width: 100%; box-shadow: 0 4px 9px 0 rgba(0, 0, 0, 0.06);"
 			>
 				<a
 					class="landing-block-node-card-link g-pos-rel text-decoration-none"
@@ -101,7 +101,7 @@
 			</div>
 			<div
 				class="landing-block-node-card d-flex flex-column justify-content-center g-px-17 g-py-15 g-bg g-brd-2 g-rounded-15 g-cursor-pointer g-border-color g-border-color--hover g-transition-0_3 g-brd-1 g-brd-style-solid g-brd-transparent g-text-decoration-none"
-				style="--bg: #ffffff; --border-color: hsla(0, 0%, 0%, 0); --border-color--hover: var(--primary); box-shadow: 0 4px 9px 0 rgba(0, 0, 0, 0.06);"
+				style="--bg: #ffffff; --border-color: hsla(0, 0%, 0%, 0); --border-color--hover: var(--primary); max-width: 265px; width: 100%; box-shadow: 0 4px 9px 0 rgba(0, 0, 0, 0.06);"
 			>
 				<a
 					class="landing-block-node-card-link g-pos-rel text-decoration-none"

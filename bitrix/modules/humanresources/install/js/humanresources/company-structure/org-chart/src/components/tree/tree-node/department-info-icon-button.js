@@ -81,7 +81,7 @@ export const DepartmentInfoIconButton = {
 			{
 				this.showPopup = false;
 				EventEmitter.unsubscribe(events.HR_DEPARTMENT_MENU_CLOSE, this.onClose);
-				EventEmitter.unsubscribe(events.HR_DRAG_DEPARTMENT, this.onClose);
+				EventEmitter.unsubscribe(events.HR_DRAG_ENTITY, this.onClose);
 			}
 		},
 		onOpen(): void
@@ -90,7 +90,7 @@ export const DepartmentInfoIconButton = {
 			{
 				this.showPopup = true;
 				EventEmitter.subscribe(events.HR_DEPARTMENT_MENU_CLOSE, this.onClose);
-				EventEmitter.subscribe(events.HR_DRAG_DEPARTMENT, this.onClose);
+				EventEmitter.subscribe(events.HR_DRAG_ENTITY, this.onClose);
 			}
 		},
 		addDescription(): void

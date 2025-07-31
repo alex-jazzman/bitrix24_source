@@ -18,6 +18,7 @@ class PermissionDictionary extends Main\Access\Permission\PermissionDictionary
 	public const HUMAN_RESOURCES_EMPLOYEE_ADD_TO_DEPARTMENT = '205';
 	public const HUMAN_RESOURCES_EMPLOYEE_REMOVE_FROM_DEPARTMENT = '206';
 	public const HUMAN_RESOURCES_FIRE_EMPLOYEE = '207';
+	public const HUMAN_RESOURCES_DEPARTMENT_COMMUNICATION_EDIT = '208';
 
 	public const HUMAN_RESOURCES_TEAM_VIEW = '301';
 	public const HUMAN_RESOURCES_TEAM_CREATE = '302';
@@ -27,6 +28,7 @@ class PermissionDictionary extends Main\Access\Permission\PermissionDictionary
 	public const HUMAN_RESOURCES_TEAM_MEMBER_REMOVE = '306';
 	public const HUMAN_RESOURCES_TEAM_SETTINGS_EDIT = '307';
 	public const HUMAN_RESOURCES_TEAM_ACCESS_EDIT = '308';
+	public const HUMAN_RESOURCES_TEAM_COMMUNICATION_EDIT = '309';
 
 	public static function getHint(int $permissionId): ?string
 	{
@@ -138,6 +140,7 @@ class PermissionDictionary extends Main\Access\Permission\PermissionDictionary
 				self::HUMAN_RESOURCES_EMPLOYEE_ADD_TO_DEPARTMENT,
 				self::HUMAN_RESOURCES_EMPLOYEE_REMOVE_FROM_DEPARTMENT,
 				self::HUMAN_RESOURCES_USER_INVITE,
+				self::HUMAN_RESOURCES_DEPARTMENT_COMMUNICATION_EDIT,
 			],
 			true,
 		);
@@ -155,6 +158,7 @@ class PermissionDictionary extends Main\Access\Permission\PermissionDictionary
 				self::HUMAN_RESOURCES_TEAM_MEMBER_ADD,
 				self::HUMAN_RESOURCES_TEAM_MEMBER_REMOVE,
 				self::HUMAN_RESOURCES_TEAM_SETTINGS_EDIT,
+				self::HUMAN_RESOURCES_TEAM_COMMUNICATION_EDIT,
 			],
 			true,
 		);

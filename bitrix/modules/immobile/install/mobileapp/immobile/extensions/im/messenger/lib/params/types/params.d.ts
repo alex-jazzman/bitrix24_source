@@ -21,8 +21,6 @@ declare type ImFeatures = {
 	zoomActive: boolean,
 	zoomAvailable: boolean,
 	intranetInviteAvailable: boolean,
-	messagesAutoDeleteAvailable: boolean,
-	copilotInDefaultTabAvailable: boolean,
 	messagesAutoDeleteEnabled: boolean,
 	voteCreationAvailable: boolean,
 }
@@ -37,14 +35,4 @@ declare type Permissions = {
 	byUserType: object,
 	actionGroups: object,
 	actionGroupsDefaults: object,
-}
-
-declare type SidebarV2Features = {
-	directChatSidebar: boolean,
-	groupChatSidebar: boolean,
-	collabSidebar: boolean,
-	channelSidebar: boolean,
-	copilotSidebar: boolean,
-	commentsSidebar: boolean,
-	notesSidebar: boolean,
 }

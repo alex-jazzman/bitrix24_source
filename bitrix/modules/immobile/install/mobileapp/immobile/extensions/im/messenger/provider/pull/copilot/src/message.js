@@ -24,7 +24,7 @@ jn.define('im/messenger/provider/pull/copilot/message', (require, exports, modul
 
 		setWritingTimer(value)
 		{
-			this.writingTimer = value;
+			this.inputActionTimer = value;
 		}
 
 		handleMessage(params, extra, command)
@@ -97,11 +97,6 @@ jn.define('im/messenger/provider/pull/copilot/message', (require, exports, modul
 		getNewMessageManager(params, extra = {})
 		{
 			return new CopilotNewMessageManager(params, extra);
-		}
-
-		needUpdateCopilotCounter(isCopilotChat)
-		{
-			return false;
 		}
 	}
 

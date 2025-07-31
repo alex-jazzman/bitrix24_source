@@ -10,6 +10,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/comment', (require, exp
 	const { SidebarMediaTab } = require('im/messenger/controller/sidebar-v2/tabs/media');
 	const { Loc } = require('im/messenger/controller/sidebar-v2/loc');
 	const { createSearchButton } = require('im/messenger/controller/sidebar-v2/ui/primary-button/factory');
+	const { SIDEBAR_DEFAULT_TOAST_OFFSET } = require('im/messenger/controller/sidebar-v2/const');
 	const { Notification } = require('im/messenger/lib/ui/notification');
 	const { Icon } = require('assets/icons');
 	const { isOnline } = require('device/connection');
@@ -65,7 +66,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/comment', (require, exp
 		{
 			if (!isOnline())
 			{
-				Notification.showOfflineToast();
+				Notification.showOfflineToast({ offset: SIDEBAR_DEFAULT_TOAST_OFFSET });
 
 				return;
 			}

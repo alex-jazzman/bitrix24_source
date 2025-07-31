@@ -11,10 +11,12 @@
 		</div>
 	</div>
 	<div
-		class="landing-block-node-card-container d-grid g-bg g-rounded-100 g-px-25 g-py-25"
-		style="--bg: #edf7ff; grid-template-columns: repeat(auto-fit, minmax(265px, 1fr)); gap: 13px;"
+		class="landing-block-node-card-container d-flex justify-content-center g-bg g-rounded-100 g-px-25 g-py-25"
+		style="--bg: #edf7ff; gap: 13px; flex-wrap: wrap;"
 	>
-		<div class="landing-block-node-card g-cursor-pointer">
+		<div
+			style="max-width: 265px; width: 100%;"
+			class="landing-block-node-card g-cursor-pointer">
 			<a
 				class="landing-block-node-card-link g-flex-centered justify-content-start g-bg g-bg--hover g-color g-color--hover g-rounded-50 g-px-12 g-py-12 u-shadow-v20 g-font-size-16 g-font-weight-500 text-decoration-none g-transition-0_3 bg-hover color-hover"
 				style="--bg: #ffffff; --bg-hover: var(--primary); --color: #333333; --color-hover: #ffffff;"
@@ -30,7 +32,9 @@
 				</span>
 			</a>
 		</div>
-		<div class="landing-block-node-card g-cursor-pointer">
+		<div
+			style="max-width: 265px; width: 100%;"
+			class="landing-block-node-card g-cursor-pointer">
 			<a
 				class="landing-block-node-card-link g-flex-centered justify-content-start g-bg g-bg--hover g-color g-color--hover g-rounded-50 g-px-12 g-py-12 u-shadow-v20 g-font-size-16 g-font-weight-500 text-decoration-none g-transition-0_3 bg-hover color-hover"
 				style="--bg: #ffffff; --bg-hover: var(--primary); --color: #333333; --color-hover: #ffffff;"
@@ -46,7 +50,9 @@
 				</span>
 			</a>
 		</div>
-		<div class="landing-block-node-card g-cursor-pointer">
+		<div
+			style="max-width: 265px; width: 100%;"
+			class="landing-block-node-card g-cursor-pointer">
 			<a
 				class="landing-block-node-card-link g-flex-centered justify-content-start g-bg g-bg--hover g-color g-color--hover g-rounded-50 g-px-12 g-py-12 u-shadow-v20 g-font-size-16 g-font-weight-500 text-decoration-none g-transition-0_3 bg-hover color-hover"
 				style="--bg: #ffffff; --bg-hover: var(--primary); --color: #333333; --color-hover: #ffffff;"
@@ -62,7 +68,9 @@
 				</span>
 			</a>
 		</div>
-		<div class="landing-block-node-card g-cursor-pointer">
+		<div
+			style="max-width: 265px; width: 100%;"
+			class="landing-block-node-card g-cursor-pointer">
 			<a
 				class="landing-block-node-card-link g-flex-centered justify-content-start g-bg g-bg--hover g-color g-color--hover g-rounded-50 g-px-12 g-py-12 u-shadow-v20 g-font-size-16 g-font-weight-500 text-decoration-none g-transition-0_3 bg-hover color-hover"
 				style="--bg: #ffffff; --bg-hover: var(--primary); --color: #333333; --color-hover: #ffffff;"

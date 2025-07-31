@@ -2,7 +2,7 @@
 
 namespace Bitrix\HumanResources\Repository;
 
-use Bitrix\HumanResources\Contract\Service\EventSenderService;
+use Bitrix\HumanResources\Service\EventSenderService;
 use Bitrix\HumanResources\Exception\CreationFailedException;
 use Bitrix\HumanResources\Exception\DeleteFailedException;
 use Bitrix\HumanResources\Exception\WrongStructureItemException;
@@ -29,11 +29,10 @@ class NodeRelationRepository implements Contract\Repository\NodeRelationReposito
 	private readonly NodeRepository $nodeRepository;
 
 	public function __construct(
-		?EventSenderService $eventSenderService = null,
 		?NodeRepository $nodeRepository = null,
 	)
 	{
-		$this->eventSenderService = $eventSenderService ?? Container::getEventSenderService();
+		$this->eventSenderService = Container::getEventSenderService();
 		$this->nodeRepository = $nodeRepository ?? Container::getNodeRepository();
 	}
 
@@ -145,6 +144,11 @@ class NodeRelationRepository implements Contract\Repository\NodeRelationReposito
 		if (!$nodeRelation->id)
 		{
 			return;
+		}
+
+		if (!$nodeRelation->node)
+		{
+			$nodeRelation->node = $this->nodeRepository->getById($nodeRelation->nodeId);
 		}
 
 		$result = NodeRelationTable::delete($nodeRelation->id);
@@ -267,6 +271,25 @@ class NodeRelationRepository implements Contract\Repository\NodeRelationReposito
 		$nodeRelations->setTotalCount(
 			$count['CNT'] ?? 0
 		);
+
+		return $nodeRelations;
+	}
+
+	/**
+	 * @throws SqlQueryException
+	 * @throws WrongStructureItemException
+	 */
+	public function findRelationsByNodeId(
+		int $nodeId,
+		int $limit = 100,
+		int $offset = 0,
+	): Item\Collection\NodeRelationCollection
+	{
+		$query = $this->prepareFindRelationByNodeIdQuery(
+			'DISTINCT nr.*',
+			$nodeId,
+		);
+		$nodeRelations = $this->getLimitedNodeRelationCollection($query, $offset, $limit);
 
 		return $nodeRelations;
 	}
@@ -401,13 +424,22 @@ SQL;
 	private function prepareFindRelationByNodeIdQuery(
 		string $select,
 		int $nodeId,
-		RelationEntityType $relationEntityType,
+		RelationEntityType $relationEntityType = null,
 	): string
 	{
-		$relationEntityType = $relationEntityType->value;
+		$relationEntityType = $relationEntityType?->value;
 		$nodeTableName = Model\NodeTable::getTableName();
 		$nodePathTableName = Model\NodePathTable::getTableName();
 		$nodeRelationTableName = Model\NodeRelationTable::getTableName();
+
+		$helper = Application::getConnection()->getSqlHelper();
+
+		$relationEntityTypeCondition = '';
+		if ($relationEntityType !== null)
+		{
+			$relationEntityTypeValue = $helper->forSql($relationEntityType);
+			$relationEntityTypeCondition = "nr.ENTITY_TYPE = '$relationEntityTypeValue' AND ";
+		}
 
 		return <<<SQL
 SELECT $select
@@ -420,7 +452,7 @@ SELECT $select
 	  nr.WITH_CHILD_NODES = 'N' AND nr.NODE_ID = n.ID
 	  )
   WHERE
-	  nr.ENTITY_TYPE = '$relationEntityType' AND
+	  $relationEntityTypeCondition
 	  n.ID = $nodeId
 SQL;
 	}
@@ -522,5 +554,29 @@ SQL;
 		}
 		catch (\Exception)
 		{}
+	}
+
+	public function getByEntityIdsAndNodeIdAndType(
+		int $nodeId,
+		array $entityIds,
+		RelationEntityType $entityType
+	): Item\Collection\NodeRelationCollection
+	{
+		$relations =
+			NodeRelationTable::query()
+				->setSelect(['*'])
+				->where('NODE_ID', $nodeId)
+				->where('ENTITY_TYPE', $entityType->value)
+				->whereIn('ENTITY_ID', $entityIds)
+				->fetchAll()
+		;
+
+		$nodeRelations = new Item\Collection\NodeRelationCollection();
+		foreach ($relations as $nodeRelationEntity)
+		{
+			$nodeRelations->add($this->convertModelToItemFromArray($nodeRelationEntity));
+		}
+
+		return $nodeRelations;
 	}
 }

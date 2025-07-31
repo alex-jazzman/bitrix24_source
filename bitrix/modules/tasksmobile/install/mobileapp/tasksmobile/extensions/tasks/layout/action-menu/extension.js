@@ -78,11 +78,12 @@ jn.define('tasks/layout/action-menu', (require, exports, module) => {
 
 			Object.keys(ActionMeta).forEach((actionId) => {
 				const { title, getData, handleAction } = ActionMeta[actionId];
+				const { outlineIconContent } = getData();
 
 				actions[actionId] = {
 					...ActionMeta[actionId],
 					title: title(this.task),
-					data: getData(),
+					icon: outlineIconContent,
 					onClickCallback: async () => {
 						if (actionsToCloseMenu.has(actionId))
 						{

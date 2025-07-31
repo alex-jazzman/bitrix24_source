@@ -17,7 +17,6 @@ return [
 		'./dist/desktop-api.bundle.js',
 	],
 	'rel' => [
-		'im.v2.lib.desktop-api',
 		'im.v2.lib.utils',
 		'im.v2.lib.logger',
 		'main.core',

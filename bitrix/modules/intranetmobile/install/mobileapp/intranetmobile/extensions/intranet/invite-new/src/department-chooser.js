@@ -100,7 +100,7 @@ jn.define('intranet/invite-new/src/department-chooser', (require, exports, modul
 				widgetParams: {
 					title: Loc.getMessage('INTRANET_INVITE_DEPARTMENT_SELECTOR_TITLE'),
 					backdrop: {
-						mediumPositionPercent: 70,
+						mediumPositionHeight: 460,
 						horizontalSwipeAllowed: false,
 					},
 				},

@@ -1,6 +1,7 @@
 import { useChartStore } from 'humanresources.company-structure.chart-store';
-import { memberRoles, postData } from 'humanresources.company-structure.api';
+import { memberRoles } from 'humanresources.company-structure.api';
 import { EntityTypes } from 'humanresources.company-structure.utils';
+import { chartAPI } from './api';
 import type { TreeItem } from './types';
 import type { UserData } from 'humanresources.company-structure.utils';
 
@@ -107,11 +108,7 @@ export const OrgChartActions = {
 		departments.set(parentId, { ...parentDepartment, children: newChildren });
 		try
 		{
-			await postData('humanresources.api.Structure.Node.changeOrder', {
-				nodeId: draggedId,
-				direction,
-				count,
-			});
+			await chartAPI.changeOrder(draggedId, direction, count);
 
 			return true;
 		}

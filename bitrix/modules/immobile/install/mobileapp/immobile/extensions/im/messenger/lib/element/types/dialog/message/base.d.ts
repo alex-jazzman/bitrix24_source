@@ -4,3 +4,11 @@ declare type MessageRichLink = {
 	previewUrl: string,
 	link: string,
 }
+
+declare type MessageButton = {
+	id: string,
+	text: string,
+	leftIcon?: string,
+	editable: boolean,
+	code?: string,
+}

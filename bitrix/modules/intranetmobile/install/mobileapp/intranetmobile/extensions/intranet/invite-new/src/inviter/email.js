@@ -27,6 +27,7 @@ jn.define('intranet/invite-new/src/inviter/email', (require, exports, module) =>
 				this.props.isInviteWithLocalEmailAppEnabled
 				&& this.props.canInviteByLink
 				&& this.#canInviteByLocalEmailClient()
+				&& this.inviteLink
 			)
 			{
 				this.inviteSwitcherBoxInstance = await EmailInviteSwitcherBox.open({

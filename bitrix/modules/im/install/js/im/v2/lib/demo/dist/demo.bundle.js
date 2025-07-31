@@ -71,14 +71,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    return babelHelpers.classPrivateFieldLooseBase(this, _chat)[_chat];
 	  }
 	  addMessage(fields) {
-	    var _babelHelpers$classPr;
+	    var _fields$id, _babelHelpers$classPr;
 	    const newMessage = {
-	      id: IdGenerator.getNextMessageId(),
+	      id: (_fields$id = fields.id) != null ? _fields$id : IdGenerator.getNextMessageId(),
 	      chatId: (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _chat)[_chat].chatId) != null ? _babelHelpers$classPr : 0,
 	      ...fields
 	    };
 	    babelHelpers.classPrivateFieldLooseBase(this, _messages)[_messages].push(newMessage);
 	    return newMessage;
+	  }
+	  getNextMessageId() {
+	    return IdGenerator.getNextMessageId();
 	  }
 	  addUser(fields) {
 	    const newUser = {

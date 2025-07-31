@@ -1,7 +1,7 @@
 import { PermissionActions, PermissionChecker } from 'humanresources.company-structure.permission-checker';
 import { EntityTypes } from 'humanresources.company-structure.utils';
 import { Reflection } from 'main.core';
-import { ResponsiveHint } from '../responsive-hint/responsive-hint';
+import { ResponsiveHint } from 'humanresources.company-structure.structure-components';
 
 export const Entities = {
 	props: {
@@ -28,13 +28,14 @@ export const Entities = {
 		this.hintHideTimeout = null;
 
 		const permissionChecker = PermissionChecker.getInstance();
+
 		const hasTeamCreatePermission = this.parentId === 0
-			? permissionChecker.hasPermissionWithAnyNode(PermissionActions.teamCreate)
+			? permissionChecker.hasPermissionOfAction(PermissionActions.teamCreate)
 			: permissionChecker.hasPermission(PermissionActions.teamCreate, this.parentId)
 		;
 
 		const hasDepartmentCreatePermission = this.parentId === 0
-			? permissionChecker.hasPermissionWithAnyNode(PermissionActions.departmentCreate)
+			? permissionChecker.hasPermissionOfAction(PermissionActions.departmentCreate)
 			: permissionChecker.hasPermission(PermissionActions.departmentCreate, this.parentId)
 		;
 

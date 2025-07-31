@@ -19,7 +19,7 @@ jn.define('calendar/event-list-view/layout/event', (require, exports, module) =>
 	const { SectionManager } = require('calendar/data-managers/section-manager');
 	const { EventMeetingStatus, CalendarType, Counters } = require('calendar/enums');
 	const { RecursionModeMenu } = require('calendar/layout/menu/recursion-mode');
-	const { AppRatingManager } = require('app-rating-manager');
+	const { AppRatingClient } = require('calendar/app-rating-client');
 
 	const { dispatch } = require('statemanager/redux/store');
 	const { setMeetingStatus } = require('calendar/statemanager/redux/slices/events');
@@ -435,7 +435,7 @@ jn.define('calendar/event-list-view/layout/event', (require, exports, module) =>
 		};
 
 		onEventViewFormClose = () => {
-			void AppRatingManager.tryOpenAppRating({
+			AppRatingClient.tryOpenAppRatingAfterCalendarEventViewed({
 				parentWidget: this.props.layout,
 			});
 		};

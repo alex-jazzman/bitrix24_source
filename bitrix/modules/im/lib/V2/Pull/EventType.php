@@ -10,4 +10,5 @@ enum EventType: string
 	case ChatFieldsUpdate = 'chatFieldsUpdate';
 	case UpdateFeature = 'updateFeature';
 	case PromotionUpdated = 'promotionUpdated';
+	case ChangeEngine = 'changeEngine';
 }

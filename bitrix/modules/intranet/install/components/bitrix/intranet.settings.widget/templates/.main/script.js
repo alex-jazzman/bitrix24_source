@@ -122,7 +122,7 @@ this.BX = this.BX || {};
 	  getElement() {
 	    if (!babelHelpers.classPrivateFieldLooseBase(this, _requisiteElement)[_requisiteElement]) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _requisiteElement)[_requisiteElement] = main_core.Tag.render(_t || (_t = _`
-				<div class="intranet-settings-widget__business-card intranet-settings-widget_box">
+				<div class="intranet-settings-widget__business-card intranet-settings-widget_box" data-testid="settings-widget-block-requisite">
 					<div class="intranet-settings-widget__business-card_head intranet-settings-widget_inner">
 						<div class="intranet-settings-widget_icon-box --gray">
 							<div class="ui-icon-set --customer-card-1"></div>
@@ -780,7 +780,7 @@ this.BX = this.BX || {};
 			</div>
 		`), label.render());
 	  const element = main_core.Tag.render(_t7 || (_t7 = _$1`
-			<div onclick="${0}" class="intranet-settings-widget_box --clickable">
+			<div onclick="${0}" class="intranet-settings-widget_box --clickable" data-testid="settings-widget-block-main-page">
 				<div class="intranet-settings-widget_inner">
 					<div class="intranet-settings-widget_icon-box --green">
 						<div class="ui-icon-set --home-page"></div>
@@ -869,7 +869,7 @@ this.BX = this.BX || {};
 			</div>
 		`));
 	  const element = main_core.Tag.render(_t11 || (_t11 = _$1`
-			<div class="intranet-settings-widget__branch" onclick="${0}">
+			<div class="intranet-settings-widget__branch" onclick="${0}" data-testid="settings-widget-block-filial-network">
 				<div class="intranet-settings-widget__branch-icon_box">
 					<div class="ui-icon-set intranet-settings-widget__branch-icon --filial-network"></div>
 					${0}
@@ -898,7 +898,7 @@ this.BX = this.BX || {};
 	    BX.SidePanel.Instance.open(babelHelpers.classPrivateFieldLooseBase(this, _settingsUrl)[_settingsUrl] + '?page=security&analyticContext=widget_settings_settings');
 	  };
 	  const element = main_core.Tag.render(_t13 || (_t13 = _$1`
-			<span onclick="${0}" class="intranet-settings-widget_box --clickable">
+			<span onclick="${0}" class="intranet-settings-widget_box --clickable" data-testid="settings-widget-block-security">
 				<div class="intranet-settings-widget_inner">
 					<div class="intranet-settings-widget_icon-box ${0}">
 						<div class="ui-icon-set --shield"></div>
@@ -918,7 +918,7 @@ this.BX = this.BX || {};
 	    BX.SidePanel.Instance.open(babelHelpers.classPrivateFieldLooseBase(this, _settingsUrl)[_settingsUrl] + '?analyticContext=widget_settings_settings');
 	  };
 	  const element = main_core.Tag.render(_t14 || (_t14 = _$1`
-			<span onclick="${0}" class="intranet-settings-widget_box --clickable">
+			<span onclick="${0}" class="intranet-settings-widget_box --clickable" data-testid="settings-widget-block-general-settings">
 				<div class="intranet-settings-widget_inner">
 					<div class="intranet-settings-widget_icon-box --gray">
 						<div class="ui-icon-set --settings-2"></div>
@@ -938,7 +938,7 @@ this.BX = this.BX || {};
 	    BX.SidePanel.Instance.open(`${babelHelpers.classPrivateFieldLooseBase(this, _marketUrl)[_marketUrl]}category/migration/`);
 	  };
 	  const element = main_core.Tag.render(_t15 || (_t15 = _$1`
-			<div onclick="${0}" class="intranet-settings-widget_box --clickable">
+			<div onclick="${0}" class="intranet-settings-widget_box --clickable" data-testid="settings-widget-block-migrate">
 				<div class="intranet-settings-widget_inner">
 					<div class="intranet-settings-widget_icon-box --gray">
 						<div class="ui-icon-set --market-1"></div>

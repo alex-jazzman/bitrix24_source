@@ -1105,7 +1105,7 @@ class Manager
 	{
 		if (!defined('LANDING_PREVIEW_URL'))
 		{
-			define('LANDING_PREVIEW_URL', 'https://preview.bitrix24.site');
+			define('LANDING_PREVIEW_URL', self::getRegionPreviewDomain());
 		}
 
 		return LANDING_PREVIEW_URL;
@@ -1120,7 +1120,8 @@ class Manager
 	{
 		if (!defined('LANDING_PREVIEW_WEBHOOK'))
 		{
-			define('LANDING_PREVIEW_WEBHOOK', 'https://preview.bitrix24.site/rest/1/gvsn3ngrn7vb4t1m/');
+			$host = self::getRegionPreviewDomain();
+			define('LANDING_PREVIEW_WEBHOOK', $host . '/rest/1/gvsn3ngrn7vb4t1m/');
 		}
 
 		return LANDING_PREVIEW_WEBHOOK;
@@ -1537,5 +1538,23 @@ class Manager
 	 */
 	public static function setTheme()
 	{
+	}
+
+
+	/**
+	 * Get preview domain based on region.
+	 * @return string
+	 */
+	private static function getRegionPreviewDomain(): string
+	{
+		$region = Application::getInstance()->getLicense()->getRegion();
+
+		if (in_array($region, ['ru', 'by', 'kz', 'uz'], true))
+		{
+			return 'https://preview.bitrix24.tech';
+		}
+
+		// Default global domain
+		return 'https://preview.bitrix24.site';
 	}
 }

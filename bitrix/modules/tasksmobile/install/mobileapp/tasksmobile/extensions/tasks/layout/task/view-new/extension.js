@@ -79,7 +79,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 	const { updateTaskStage } = require('tasks/statemanager/redux/slices/tasks-stages/thunk');
 	const { selectTaskStageByTaskIdOrGuid } = require('tasks/statemanager/redux/slices/tasks-stages');
 	const { getUniqId, selectStages } = require('tasks/statemanager/redux/slices/kanban-settings');
-	const { AppRatingManager, UserEvent } = require('app-rating-manager');
+	const { AppRatingClient } = require('tasks/app-rating-client');
 
 	/**
 	 * @class TaskView
@@ -106,7 +106,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 
 					newLayout.showComponent(taskViewComponent);
 
-					void AppRatingManager.increaseCounter(UserEvent.TASKS_VIEWED);
+					void AppRatingClient.increaseTaskViewedCounter();
 				})
 				.catch(console.error)
 			;
@@ -243,7 +243,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 		}
 
 		onViewRemoved = () => {
-			AppRatingManager.tryOpenAppRating({
+			AppRatingClient.tryOpenAppRatingAfterTaskViewed({
 				parentWidget: this.props.parentWidget,
 			});
 		};
@@ -295,6 +295,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 				loading: false,
 				isForbidden: false,
 				checklistLoading: selectHasChecklist(this.#task),
+				reactionsLoading: selectIsCreating(this.#task),
 			};
 
 			if (this.props.shouldOpenComments)
@@ -346,9 +347,13 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 				new AnalyticsEvent(this.analyticsLabel).setStatus('success').send();
 				this.layout.setTitle({ useProgress: false }, true);
 
-				if (this.state.loading || this.state.checklistLoading)
+				if (this.state.loading || this.state.checklistLoading || this.state.reactionsLoading)
 				{
-					this.setState({ loading: false, checklistLoading: false }, () => shouldOpenComments && this.openComments());
+					this.setState({
+						loading: false,
+						checklistLoading: false,
+						reactionsLoading: false,
+					}, () => shouldOpenComments && this.openComments());
 				}
 			}
 		}
@@ -513,6 +518,12 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 					this.layout.setTitle({ useProgress: false }, true);
 					this.formRef?.flushOriginalValues();
 					this.checklistController.setTaskId(this.#taskId);
+
+					this.#getTaskData({ withResultData: true, withChecklistData: true })
+						.then(() => {
+							this.setState({ checklistLoading: false, reactionsLoading: false });
+						})
+						.catch((error) => console.error(error));
 				}
 
 				if (prevTask && !nextTask)
@@ -1063,7 +1074,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 						onChange: this.onChangeField,
 						onBlur: this.onBlurField,
 						scrollableProvider: this.scrollableProvider,
-						renderAfterCompactBar: this.renderLikes,
+						renderAfterCompactBar: this.renderLikes.bind(this),
 						onChangeProjectField: this.onChangeProjectField,
 						onChangeSubTaskField: this.onChangeSubTaskField,
 						onChangeRelatedTaskField: this.onChangeRelatedTaskField,
@@ -1138,6 +1149,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 					userId: Number(this.props.userId),
 					taskId: this.#taskId,
 					testId: this.getTestId('LikesPanel'),
+					isLoadingAfterCreation: this.state.reactionsLoading,
 				});
 			}
 

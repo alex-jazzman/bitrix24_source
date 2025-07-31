@@ -9,13 +9,15 @@ use Bitrix\Intranet\Enum\InvitationStatus;
 use Bitrix\Intranet\Service\ServiceContainer;
 use Bitrix\Main\Access\AccessibleItem;
 use Bitrix\Main\Access\Exception\AccessException;
-use Bitrix\Main\Access\Exception\UnknownActionException;
 
 final class TargetUserModel implements AccessibleItem
 {
-	private ?User $user = null;
+	private static array $cachedTargetUserModel = [];
 
-	private static $cachedTargetUserModel = [];
+	private function __construct(
+		private User $user,
+	)
+	{}
 
 	public static function createFromId(int $itemId): TargetUserModel
 	{
@@ -24,9 +26,10 @@ final class TargetUserModel implements AccessibleItem
 			return self::$cachedTargetUserModel[$itemId];
 		}
 
-		$model = new self();
 		$userRepository = ServiceContainer::getInstance()->userRepository();
-		$model->user = $userRepository->getUserById($itemId);
+		$model = new TargetUserModel(
+			$userRepository->getUserById($itemId)
+		);
 		self::$cachedTargetUserModel[$itemId] = $model;
 
 		return $model;
@@ -44,8 +47,9 @@ final class TargetUserModel implements AccessibleItem
 			return self::$cachedTargetUserModel[$user['ID']];
 		}
 
-		$model = new self();
-		$model->user = User::initByArray($user);
+		$model = new TargetUserModel(
+			User::initByArray($user)
+		);
 		self::$cachedTargetUserModel[$user['ID']] = $model;
 
 		return $model;
@@ -63,8 +67,7 @@ final class TargetUserModel implements AccessibleItem
 			return self::$cachedTargetUserModel[$user->getId()];
 		}
 
-		$model = new self();
-		$model->user = $user;
+		$model = new TargetUserModel($user);
 		self::$cachedTargetUserModel[$user->getId()] = $model;
 
 		return $model;
@@ -72,22 +75,26 @@ final class TargetUserModel implements AccessibleItem
 
 	public function getId(): int
 	{
-		return $this->user?->getId() ?? 0;
+		return $this->user->getId() ?? 0;
 	}
 
 	public function isIntegrator(): bool
 	{
-		return $this->user?->isIntegrator() ?? false;
+		return $this->user->isIntegrator() ?? false;
 	}
 
 	public function isAdmin(): bool
 	{
-		return $this->user?->isAdmin() ?? false;
+		return $this->user->isAdmin() ?? false;
 	}
 
 	public function getInviteStatus(): ?InvitationStatus
 	{
-		$a = $this->user?->getInviteStatus();
-		return $this->user?->getInviteStatus();
+		return $this->user->getInviteStatus();
+	}
+
+	public function getUserEntity(): User
+	{
+		return $this->user;
 	}
 }

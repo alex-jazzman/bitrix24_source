@@ -9,6 +9,7 @@ import { isNotes, notesConfig } from './configs/notes';
 import { isLines, linesConfig } from './configs/lines';
 import { isCollab, collabConfig } from './configs/collab';
 import { isSupport, supportConfig } from './configs/support';
+import { isAiAssistant, aiAssistantConfig } from './configs/aiassistant';
 import { isComment, commentConfig } from './configs/comment';
 import { isChannel, channelConfig } from './configs/channel';
 import { isCopilot, copilotConfig } from './configs/copilot';
@@ -78,6 +79,7 @@ export class SidebarManager
 		this.#defaultConfigMap.set(isChannel, channelConfig);
 		this.#defaultConfigMap.set(isComment, commentConfig);
 		this.#defaultConfigMap.set(isSupport, supportConfig);
+		this.#defaultConfigMap.set(isAiAssistant, aiAssistantConfig);
 		this.#defaultConfigMap.set(isBot, botConfig);
 		this.#defaultConfigMap.set(isNotes, notesConfig);
 		this.#defaultConfigMap.set(isLines, linesConfig);

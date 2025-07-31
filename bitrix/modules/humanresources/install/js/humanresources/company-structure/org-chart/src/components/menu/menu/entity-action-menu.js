@@ -26,8 +26,6 @@ export class EntityActionMenu extends AbstractActionMenu
 			return [
 				new EditDepartmentMenuItem(this.entityType),
 				new AddDepartmentMenuItem(this.entityType),
-				new EditEmployeesMenuItem(this.entityType, null),
-				new TeamRightsMenuItem(),
 				new AddEmployeeMenuItem(this.entityType),
 				new RemoveDepartmentMenuItem(this.entityType),
 			];
@@ -37,7 +35,6 @@ export class EntityActionMenu extends AbstractActionMenu
 			new EditDepartmentMenuItem(this.entityType),
 			new AddDepartmentMenuItem(this.entityType),
 			new AddEmployeeMenuItem(this.entityType),
-			new EditEmployeesMenuItem(this.entityType, null),
 			new MoveEmployeeMenuItem(),
 			new UserInviteMenuItem(),
 			new RemoveDepartmentMenuItem(this.entityType),

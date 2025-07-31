@@ -43,6 +43,7 @@ jn.define('statemanager/redux/slices/whats-new', (require, exports, module) => {
 		selectHasReadNews,
 		selectLastNewsCheckTime,
 		selectHasUnsupportedFeatures,
+		selectErrorStatus,
 	} = require('statemanager/redux/slices/whats-new/selector');
 	const { createOptimisticUiSliceReducer } = require('statemanager/redux/optimistic-ui');
 
@@ -101,8 +102,9 @@ jn.define('statemanager/redux/slices/whats-new', (require, exports, module) => {
 
 					whatsNewAdapter.upsertMany(state, mappedArticles);
 				})
-				.addCase(fetchWhatsNewThunk.rejected, (state) => {
+				.addCase(fetchWhatsNewThunk.rejected, (state, action) => {
 					state.status = STATUS.failed;
+					state.errorStatus = action.payload.errorStatus;
 				})
 				.addCase(fetchUrlParamsThunk.fulfilled, (state, action) => {
 					const {
@@ -229,6 +231,7 @@ jn.define('statemanager/redux/slices/whats-new', (require, exports, module) => {
 		selectHasReadNews,
 		selectLastNewsCheckTime,
 		selectHasUnsupportedFeatures,
+		selectErrorStatus,
 
 		INITIAL_BLOCK_PAGE,
 	};

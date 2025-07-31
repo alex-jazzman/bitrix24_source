@@ -4,7 +4,6 @@
 jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 	const { confirmDestructiveAction } = require('alert');
 	const { Icon } = require('ui-system/blocks/icon');
-	const { downloadImages } = require('asset-manager');
 	const { Haptics } = require('haptics');
 	const { Loc } = require('tasks/loc');
 	const { Dod } = require('tasks/layout/dod');
@@ -31,7 +30,7 @@ jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 	const { truncate } = require('utils/string');
 	const { throttle } = require('utils/function');
 	const { copyToClipboard } = require('utils/copy');
-	const { AppRatingManager, UserEvent } = require('app-rating-manager');
+	const { AppRatingClient } = require('tasks/app-rating-client');
 	const throttledShowSafeToast = throttle(showSafeToast, 4000);
 
 	const {
@@ -286,9 +285,9 @@ jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 							})
 							.catch(console.error);
 
-						void AppRatingManager.increaseCounter(UserEvent.TASKS_COMPLETED)
+						AppRatingClient.increaseTaskCompletedCounter()
 							.then(() => {
-								AppRatingManager.tryOpenAppRating({
+								AppRatingClient.tryOpenAppRatingAfterTaskCompleted({
 									parentWidget: layoutWidget,
 								});
 							})
@@ -712,56 +711,6 @@ jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 		},
 	};
 
-	const pathToIcons = '/bitrix/mobileapp/tasksmobile/extensions/tasks/layout/action-menu/images';
-	const iconPrefix = `${currentDomain}${pathToIcons}/tasksmobile-layout-action-menu-`;
-	const actionIconMap = {
-		[ActionId.START_TIMER]: `${iconPrefix}start.svg`,
-		[ActionId.PAUSE_TIMER]: `${iconPrefix}pause.svg`,
-		[ActionId.START]: `${iconPrefix}start.svg`,
-		[ActionId.PAUSE]: `${iconPrefix}pause.svg`,
-		[ActionId.COMPLETE]: `${iconPrefix}complete.svg`,
-		[ActionId.RENEW]: `${iconPrefix}renew.svg`,
-		[ActionId.APPROVE]: `${iconPrefix}approve.svg`,
-		[ActionId.DISAPPROVE]: `${iconPrefix}disapprove.svg`,
-		[ActionId.UNFOLLOW]: `${iconPrefix}unfollow.svg`,
-		[ActionId.REMOVE]: `${iconPrefix}remove.svg`,
-		[ActionId.PIN]: `${iconPrefix}pin.svg`,
-		[ActionId.UNPIN]: `${iconPrefix}unpin.svg`,
-		[ActionId.MUTE]: `${iconPrefix}mute.svg`,
-		[ActionId.UNMUTE]: `${iconPrefix}unmute.svg`,
-		[ActionId.SHARE]: `${iconPrefix}share.svg`,
-		[ActionId.READ]: `${iconPrefix}read.svg`,
-		[ActionId.PING]: `${iconPrefix}ping.svg`,
-	};
-
-	const pathToOutlineIcons = `${currentDomain}${pathToIcons}/outline/`;
-	const outlineIconMap = {
-		[ActionId.COPY_ID]: `${pathToOutlineIcons}copy.svg`,
-		[ActionId.START_TIMER]: `${pathToOutlineIcons}play.svg`,
-		[ActionId.PAUSE_TIMER]: `${pathToOutlineIcons}pause.svg`,
-		[ActionId.START]: `${pathToOutlineIcons}play.svg`,
-		[ActionId.PAUSE]: `${pathToOutlineIcons}pause.svg`,
-		[ActionId.FOLLOW]: `${pathToOutlineIcons}follow.svg`,
-		[ActionId.UNFOLLOW]: `${pathToOutlineIcons}unfollow.svg`,
-		[ActionId.DEFER]: `${pathToOutlineIcons}delay.svg`,
-		[ActionId.RENEW]: `${pathToOutlineIcons}renew.svg`,
-		[ActionId.DELEGATE]: `${pathToOutlineIcons}delegate.svg`,
-		[ActionId.REMOVE]: `${pathToOutlineIcons}remove.svg`,
-		[ActionId.PIN]: `${pathToOutlineIcons}pin.svg`,
-		[ActionId.UNPIN]: `${pathToOutlineIcons}unpin.svg`,
-		[ActionId.MUTE]: `${pathToOutlineIcons}mute.svg`,
-		[ActionId.UNMUTE]: `${pathToOutlineIcons}unmute.svg`,
-		[ActionId.COPY]: `${pathToOutlineIcons}duplicate.svg`,
-		[ActionId.SHARE]: `${pathToOutlineIcons}share.svg`,
-		[ActionId.COMPLETE]: `${pathToOutlineIcons}complete.svg`,
-		[ActionId.APPROVE]: `${pathToOutlineIcons}approve.svg`,
-		[ActionId.DISAPPROVE]: `${pathToOutlineIcons}disapprove.svg`,
-		[ActionId.PING]: `${pathToOutlineIcons}ping.svg`,
-		[ActionId.READ]: `${pathToOutlineIcons}chatsWithCheck.svg`,
-		[ActionId.EXTRA_SETTINGS]: `${pathToOutlineIcons}settings.svg`,
-	};
-	const outlineLockIcon = `${pathToOutlineIcons}lock.svg`;
-
 	const outlineInlineIconMap = {
 		[ActionId.START_TIMER]: Icon.PLAY,
 		[ActionId.PAUSE_TIMER]: Icon.PAUSE,
@@ -808,9 +757,7 @@ jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 			...currentAction,
 			sectionCode,
 			getData: () => ({
-				svgUri: actionIconMap[actionId],
-				outlineIconUri: (isRestricted?.() ? outlineLockIcon : outlineIconMap[actionId]),
-				outlineIconContent: outlineInlineIconMap[actionId],
+				outlineIconContent: isRestricted?.() ? Icon.LOCK : outlineInlineIconMap[actionId],
 			}),
 			/**
 			 * @param {object} [task]
@@ -848,7 +795,7 @@ jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 							showSuccessToast({
 								actionId,
 								message: successToastPhrase(taskRedux),
-								iconUrl: outlineIconMap[actionId],
+								icon: outlineInlineIconMap[actionId],
 								layout,
 							});
 						}
@@ -939,7 +886,7 @@ jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 		return handleAction();
 	};
 
-	const showSuccessToast = ({ actionId, message, iconUrl, layout }) => {
+	const showSuccessToast = ({ actionId, message, icon, layout }) => {
 		if (!message || message.length === 0)
 		{
 			return;
@@ -948,14 +895,8 @@ jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 		const params = {
 			message,
 			code: actionId,
+			icon,
 		};
-
-		if (iconUrl)
-		{
-			params.svg = {
-				url: iconUrl,
-			};
-		}
 
 		throttledShowSafeToast(params, layout);
 	};
@@ -1014,17 +955,6 @@ jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 			await DialogOpener.open({ dialogId: `chat${response.data}` });
 		}
 	};
-
-	// prefetch assets with timeout to not affect core queries
-	setTimeout(() => {
-		const menuIcons = Object.values(actionIconMap).filter((icon) => icon !== null);
-		const outlineIcons = Object.values({ ...outlineIconMap, outlineLockIcon }).filter(Boolean);
-
-		void downloadImages([
-			...menuIcons,
-			...outlineIcons,
-		]);
-	}, 1000);
 
 	module.exports = { ActionId, ActionMeta, ActionMenuError };
 });

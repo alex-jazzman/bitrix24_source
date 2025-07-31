@@ -170,7 +170,7 @@ class Engine
 	};
 
 	jwtPullHandlers = {
-		'callTokenUpdate': this.#onCallTokenUpdate.bind(this),
+		'Call::callTokenUpdate': this.#onCallTokenUpdate.bind(this),
 		'Call::clearCallTokens': this.#onCallTokenClear.bind(this),
 		'Call::callV2AvailabilityChanged': this.#onCallV2AvailabilityChanged.bind(this),
 	};
@@ -189,6 +189,8 @@ class Engine
 
 		this.finishedCalls = new Set();
 
+		this.multiBroadcastClient = new MultiChannel('call_engine_channel');
+
 		this.init();
 	};
 
@@ -196,6 +198,10 @@ class Engine
 	{
 		BX.addCustomEvent("onPullEvent-call", this.#onPullEvent.bind(this));
 		BX.addCustomEvent("onPullEvent-im", this.#onPullEvent.bind(this));
+
+		this.multiBroadcastClient.executer(() =>
+			Object.values(this.calls).some(call => Boolean(call.BitrixCall)),
+		);
 	};
 
 	getSiteId()
@@ -338,7 +344,7 @@ class Engine
 				enableMicAutoParameters: (config.enableMicAutoParameters !== false),
 				associatedEntity: config.chatInfo,
 				type: callType,
-				startDate: data.result.startDate,
+				startDate: new Date(data.result.startDate * 1000),
 				events: {
 					onDestroy: this.#onCallDestroy.bind(this)
 				},
@@ -549,7 +555,7 @@ class Engine
 		}
 	};
 
-	#onPullIncomingCall(params, extra)
+	async #onPullIncomingCall(params, extra)
 	{
 		console.log('#onPullIncomingCall', location.href);
 		if (extra.server_time_ago > 30)
@@ -609,7 +615,10 @@ class Engine
 			this.onCallCreated(call);
 		}
 
-		if (call)
+		const broadcastResponse = await this.multiBroadcastClient.broadcastRequest(callUuid, { timeout: 500 });
+		const hasActiveCalls = broadcastResponse.some(res => res);
+
+		if (call && !hasActiveCalls)
 		{
 			BX.onCustomEvent(window, "CallEvents::incomingCall", [{
 				call: call,
@@ -762,6 +771,80 @@ class BitrixCallFactory
 	static createCall(config): BitrixCall
 	{
 		return new BitrixCall(config);
+	}
+}
+
+class MultiChannel {
+	constructor(name) {
+		this.channel = new BroadcastChannel(name);
+		this.senderId = Math.random().toString(36).slice(2);
+		this.requests = new Map();
+
+		this.channel.onmessage = (event) => {
+			const { type, requestId, senderId, payload } = event.data;
+
+			if (type === 'response' && this.requests.has(requestId)) {
+				const req = this.requests.get(requestId);
+
+				if (!req.responders.has(senderId)) {
+					req.responders.add(senderId);
+					req.responses.push(payload);
+
+					if (Date.now() > req.deadline) {
+						req.resolve(req.responses);
+						this.requests.delete(requestId);
+					}
+				}
+			}
+
+			if (type === 'request' && senderId !== this.senderId) {
+				const result = this.handle();
+				if (result !== undefined) {
+					this.channel.postMessage({
+						type: 'response',
+						requestId,
+						senderId: this.senderId,
+						payload: result
+					});
+				}
+			}
+		};
+	}
+
+	executer(handler) {
+		this.handle = handler;
+	}
+
+	async broadcastRequest(callUuid, { timeout = 100 } = {}) {
+		const requestId = Math.random().toString(36).slice(2);
+
+		return new Promise((resolve) => {
+			this.requests.set(requestId, {
+				resolve,
+				responses: [],
+				responders: new Set(),
+				deadline: Date.now() + timeout
+			});
+
+			this.channel.postMessage({
+				type: 'request',
+				requestId,
+				senderId: this.senderId,
+				payload: callUuid
+			});
+
+			setTimeout(() => {
+				if (this.requests.has(requestId)) {
+					resolve(this.requests.get(requestId).responses);
+					this.requests.delete(requestId);
+				}
+			}, timeout);
+		});
+	}
+
+	destroy() {
+		this.channel.close();
+		this.requests.clear();
 	}
 }
 

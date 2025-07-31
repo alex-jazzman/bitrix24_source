@@ -2,7 +2,7 @@ import { Text, Type } from 'main.core';
 import { BIcon, Outline as OutlineIcons } from 'ui.icon-set.api.vue';
 
 import { Core } from 'im.v2.application.core';
-import { ChatType, Settings, UserType, Color } from 'im.v2.const';
+import { ChatType, Settings, UserType, Color, BotCode } from 'im.v2.const';
 
 import { DialogSpecialType, ChatTitleType, TitleIcons } from './const/const';
 
@@ -76,13 +76,15 @@ export const ChatTitle = {
 		},
 		botType(): string
 		{
+			const EXCLUDED_BOT_CODES = [BotCode.aiAssistant];
+
 			if (!this.isUser)
 			{
 				return '';
 			}
 
 			const bot: ?ImModelBot = this.$store.getters['users/bots/getByUserId'](this.dialogId);
-			if (!bot)
+			if (!bot || EXCLUDED_BOT_CODES.includes(bot.code))
 			{
 				return '';
 			}

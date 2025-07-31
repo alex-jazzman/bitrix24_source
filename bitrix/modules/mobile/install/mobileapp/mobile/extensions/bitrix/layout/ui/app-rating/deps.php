@@ -20,14 +20,15 @@ return [
 		'ui-system/typography/text',
 		'ui-system/typography/heading',
 		'ui-system/blocks/status-block',
-
-		'im:messenger/api/dialog-opener',
 	],
 	'bundle' => [
 		'./src/box-strategy',
-		'./src/support-chat-strategy',
-		'./src/go-to-store-strategy',
 		'./src/rating-constants',
 		'./src/analytics',
+		'./src/strategies/strategy',
+		'./src/strategies/strategy-factory',
+		'./src/strategies/support-chat-strategy',
+		'./src/strategies/feedback-form-strategy',
+		'./src/strategies/store-redirect-strategy',
 	],
 ];

@@ -14,7 +14,7 @@ class Library
 	{
 		$url = match (\Bitrix\Main\Application::getInstance()->getLicense()->getRegion() ?: $region)
 		{
-			'ru','by','kz' => self::SELF_TEST_UTL['ru'],
+			'ru','by','kz','uz' => self::SELF_TEST_UTL['ru'],
 			default => self::SELF_TEST_UTL['en'],
 		};
 		$url .= '?hl='. \Bitrix\Main\Localization\Loc::getCurrentLang();

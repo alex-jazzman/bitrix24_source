@@ -430,7 +430,7 @@ jn.define('collab/create', (require, exports, module) => {
 		{
 			const chatFeatureClass = require('im/messenger/lib/feature')?.Feature;
 
-			return this.settings.autoDeleteFeatureAvailable && chatFeatureClass.isMessagesAutoDeleteNativeAvailable;
+			return chatFeatureClass.isMessagesAutoDeleteNativeAvailable;
 		}
 
 		enablePendingForEditScreen = () => {

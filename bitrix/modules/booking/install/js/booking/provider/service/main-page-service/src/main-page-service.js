@@ -66,6 +66,7 @@ class MainPageService
 			Core.getStore().dispatch(`${Model.Clients}/upsertMany`, extractor.getClients()),
 			Core.getStore().dispatch(`${Model.Clients}/setProviderModuleId`, extractor.getClientsProviderModuleId()),
 			Core.getStore().dispatch(`${Model.Interface}/setIsCurrentSenderAvailable`, extractor.getIsCurrentSenderAvailable()),
+			Core.getStore().dispatch(`${Model.FormsMenu}/setFormsMenu`, extractor.getFormsMenu()),
 		]);
 	}
 

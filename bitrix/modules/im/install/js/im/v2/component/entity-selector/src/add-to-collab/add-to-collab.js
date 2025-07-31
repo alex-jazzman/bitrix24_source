@@ -149,6 +149,8 @@ export const AddToCollab = {
 					@close="$emit('close')"
 					@openHelpdeskSlider="disableAutoHide"
 					@closeHelpdeskSlider="enableAutoHide"
+					@openLanguageSelector="disableAutoHide"
+					@closeLanguageSelector="enableAutoHide"
 				/>
 			</KeepAlive>
 		</MessengerPopup>

@@ -21,6 +21,7 @@ jn.define('im/messenger/const/dialog-action-type', (require, exports, module) =>
 
 		mention: 'mention',
 		reply: 'reply',
+		goToMessage: 'goToMessage',
 		readMessage: 'readMessage',
 		openComments: 'openComments',
 		followComments: 'followComments',

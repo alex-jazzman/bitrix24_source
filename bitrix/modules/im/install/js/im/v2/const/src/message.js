@@ -36,6 +36,8 @@ export const MessageComponent = Object.freeze({
 	callMessage: 'CallMessage',
 	voteMessage: 'VoteMessage',
 	taskChatCreationMessage: 'TaskChatCreationMessage',
+	convertToCollabMessage: 'ConvertToCollabMessage',
+	aiAssistantMessage: 'AiAssistantMessage',
 	...OpenLinesMessageComponent,
 });
 

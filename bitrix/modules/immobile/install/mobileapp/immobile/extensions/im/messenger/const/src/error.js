@@ -17,6 +17,7 @@ jn.define('im/messenger/const/error', (require, exports, module) => {
 		recent: {
 			maxPin: 'MAX_PINNED_CHATS_ERROR',
 		},
+		networkError: 'NETWORK_ERROR',
 	};
 
 	const ErrorCode = {

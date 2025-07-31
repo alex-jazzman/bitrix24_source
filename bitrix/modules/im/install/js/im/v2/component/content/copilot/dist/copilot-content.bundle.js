@@ -83,9 +83,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    };
 	  },
 	  mounted() {
-	    const needCopilotInRecentTabHint = im_v2_lib_promo.PromoManager.getInstance().needToShow(im_v2_const.PromoId.copilotInRecentTab);
-	    const needAddUsersToChatHint = im_v2_lib_promo.PromoManager.getInstance().needToShow(im_v2_const.PromoId.addUsersToCopilotChat);
-	    this.showAddToChatHint = !needCopilotInRecentTabHint && needAddUsersToChatHint;
+	    this.showAddToChatHint = im_v2_lib_promo.PromoManager.getInstance().needToShow(im_v2_const.PromoId.addUsersToCopilotChat);
 	  },
 	  methods: {
 	    openAddToChatPopup() {
@@ -268,8 +266,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  template: `
 		<ChatTextarea
 			:dialogId="dialogId"
-			:placeholder="this.loc('IM_CONTENT_COPILOT_TEXTAREA_PLACEHOLDER')"
-			:withCreateMenu="false"
+			:placeholder="loc('IM_CONTENT_COPILOT_TEXTAREA_PLACEHOLDER')"
 			:withMarket="false"
 			:withEdit="false"
 			:withUploadMenu="false"

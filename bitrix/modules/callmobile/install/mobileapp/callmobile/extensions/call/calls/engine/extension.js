@@ -249,8 +249,14 @@
 
 		onActiveCallsReceived(activeCalls)
 		{
-			const removeEventSubscription = (call) =>
-			{
+			const callsToInstantiate = new Map(Object.entries(activeCalls));
+
+			const removeEventSubscription = (call) => {
+				if (!BX.type.isFunction(call.off))
+				{
+					return;
+				}
+
 				call.off(BX.Call.Event.onDestroy, this._onCallDestroyHandler);
 				call.off(BX.Call.Event.onJoin, this._onCallJoinHandler);
 				call.off(BX.Call.Event.onLeave, this._onCallLeaveHandler);
@@ -258,24 +264,48 @@
 				call.off(BX.Call.Event.onActive, this._onCallActiveHandler);
 			};
 
-			Object.keys(this.legacyCalls)
-				.forEach(key => {
-					const call = this.legacyCalls[key];
+			const tryToRemoveCall = (call) => {
+				if (!call)
+				{
+					return;
+				}
+
+				if (callsToInstantiate.has(call.id))
+				{
+					callsToInstantiate.delete(call.id);
+
+					return;
+				}
+
+				const isLegacyCall = CallUtil.isLegacyCall(call.provider, call.scheme);
+
+				if (isLegacyCall)
+				{
 					this._onCallInactive({ callId: call.id });
-					removeEventSubscription(call);
+					delete this.legacyCalls[call.id];
+				}
+				else
+				{
+					this._onCallInactive({ callUuid: call.uuid });
+					delete this.jwtCalls[call.uuid];
+				}
+
+				removeEventSubscription(call);
+			};
+
+			Object.keys(this.legacyCalls)
+				.forEach((key) => {
+					const call = this.legacyCalls[key];
+					tryToRemoveCall(call);
 				});
 
 			Object.keys(this.jwtCalls)
-				.forEach(key => {
+				.forEach((key) => {
 					const call = this.jwtCalls[key];
-					this._onCallInactive({ callUuid: call.uuid });
-					removeEventSubscription(call);
+					tryToRemoveCall(call);
 				});
 
-			this.legacyCalls = {};
-			this.jwtCalls = {};
-
-			Object.values(activeCalls).forEach(call => {
+			callsToInstantiate.forEach(call => {
 				const instantiatedCall = this._instantiateCall(
 					call,
 					call.CONNECTION_DATA,
@@ -548,6 +578,7 @@
 						call.setConnectionData({
 							mediaServerUrl: data.result.mediaServerUrl,
 							roomData: data.result.roomData,
+							roomType: data.result.roomType,
 						});
 						return resolve({
 							call,
@@ -575,6 +606,7 @@
 					connectionData: {
 						mediaServerUrl: data.result.mediaServerUrl,
 						roomData: data.result.roomData,
+						roomType: data.result.roomType,
 					},
 					debug: config.debug === true,
 					scheme: BX.Call.Scheme.jwt,
@@ -845,7 +877,6 @@
 						callType: call.type,
 						provider: call.provider,
 						instanceId: call.instanceId,
-						roomId: call.uuid,
 					};
 
 					return CallUtil.getCallConnectionData(callOptions, chatId);
@@ -854,6 +885,7 @@
 					call.setConnectionData({
 						mediaServerUrl: data.result.mediaServerUrl,
 						roomData: data.result.roomData,
+						roomType: data.result.roomType,
 					});
 
 					return resolve();
@@ -961,7 +993,7 @@
 				chatUserAdd: this.#onChatUserChange.bind(this),
 				chatUserLeave: this.#onChatUserChange.bind(this),
 				'Call::incoming': this._onPullIncomingCall.bind(this),
-				'callTokenUpdate': this._onCallTokenUpdate.bind(this, false),
+				'Call::callTokenUpdate': this._onCallTokenUpdate.bind(this, false),
 				'Call::clearCallTokens': this._onCallTokenClear.bind(this),
 				'Call::callV2AvailabilityChanged': this._onCallV2AvailabilityChanged.bind(this),
 			};
@@ -2320,7 +2352,6 @@
 					callType: call.type,
 					instanceId: call.instanceId,
 					provider: call.provider,
-					roomId: call.uuid,
 					callToken: tokenManager.getTokenCached(call.associatedEntity.chatId),
 				}, call.associatedEntity.chatId);
 			}

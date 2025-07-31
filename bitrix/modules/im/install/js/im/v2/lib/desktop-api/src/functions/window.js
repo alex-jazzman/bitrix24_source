@@ -1,7 +1,6 @@
 import { Dom, Event, Extension, Type } from 'main.core';
 
-import { Path } from 'im.v2.const';
-import { DesktopApi, DesktopFeature } from 'im.v2.lib.desktop-api';
+import { Path, WINDOW_ACTIVATION_DELAY } from 'im.v2.const';
 import { Utils } from 'im.v2.lib.utils';
 
 import { settingsFunctions } from './settings';
@@ -17,6 +16,12 @@ type TabsList = {
 }
 
 export const windowFunctions = {
+	wait(ms: number): Promise
+	{
+		return new Promise((resolve) => {
+			setTimeout(resolve, ms);
+		});
+	},
 	async handlePortalTabActivation(): Promise
 	{
 		const hasActiveTab = await this.hasActivePortalTab();
@@ -38,21 +43,20 @@ export const windowFunctions = {
 	{
 		return BXDesktopSystem.HasActiveTab();
 	},
-	setTabWithChatPageActive()
+	async setTabWithChatPageActive(): Promise<void>
 	{
 		this.setActiveTabUrl(`${location.origin}${Path.online}`);
+		await this.wait(WINDOW_ACTIVATION_DELAY);
 	},
-	isTabWithChatPageActive(): boolean
+	shouldActivateTabWithChatPage(): boolean
 	{
 		const tabsList = this.getTabsList();
 
-		return tabsList.some((tab) => tab.visible && tab.url.includes(Path.online));
-	},
-	hasTabWithChatPage(): TabsList
-	{
-		const tabsList = this.getTabsList();
+		const tabsWithChatPage = tabsList.filter((tab) => tab.url.includes(Path.online));
 
-		return tabsList.some((tab) => tab.url.includes(Path.online));
+		const hasTabsWithVisibleChatPage = tabsWithChatPage.some((tab) => tab.visible);
+
+		return tabsWithChatPage.length > 0 && !hasTabsWithVisibleChatPage;
 	},
 	getTabsList(): TabsList[]
 	{
@@ -88,9 +92,10 @@ export const windowFunctions = {
 			&& BXDesktopSystem.IsActiveTab()
 		);
 	},
-	showBrowserWindow()
+	async showBrowserWindow()
 	{
 		BXDesktopWindow.ExecuteCommand('show.main');
+		await this.wait(WINDOW_ACTIVATION_DELAY);
 	},
 	setActiveTab(target = window)
 	{
@@ -114,13 +119,7 @@ export const windowFunctions = {
 	},
 	activateWindow(target = window)
 	{
-		// all tabs with the same URL are activated when a call is received, since
-		// the setActiveTab method does not work correctly yet
-		if (!DesktopApi.isAirDesignEnabledInDesktop())
-		{
-			this.setActiveTab(target);
-		}
-
+		this.setActiveTab(target);
 		this.showWindow(target);
 	},
 	hideWindow(target = window)

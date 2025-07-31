@@ -658,6 +658,8 @@ this.BX = this.BX || {};
 	babelHelpers.defineProperty(ButtonIcon, "CHEVRON_LEFT_S", 'ui-btn-icon-chevron-left-s');
 	babelHelpers.defineProperty(ButtonIcon, "CHEVRON_RIGHT_S", 'ui-btn-icon-chevron-right-s');
 	babelHelpers.defineProperty(ButtonIcon, "REFRESH", 'ui-btn-icon-refresh');
+	babelHelpers.defineProperty(ButtonIcon, "APPS", 'ui-btn-icon-apps');
+	babelHelpers.defineProperty(ButtonIcon, "IMAGE", 'ui-btn-icon-image');
 	babelHelpers.defineProperty(ButtonIcon, "CITY", 'ui-btn-icon-city');
 	babelHelpers.defineProperty(ButtonIcon, "TWO_PERSONS", 'ui-btn-icon-two-persons');
 	babelHelpers.defineProperty(ButtonIcon, "COPILOT", 'ui-btn-icon-copilot');

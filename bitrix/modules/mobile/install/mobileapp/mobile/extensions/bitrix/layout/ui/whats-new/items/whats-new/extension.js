@@ -63,7 +63,11 @@ jn.define('layout/ui/whats-new/items/whats-new', (require, exports, module) => {
 		renderFinishNoveltyContent()
 		{
 			return View(
-				{},
+				{
+					style: {
+						backgroundColor: Color.accentSoftBlue3.toHex(),
+					},
+				},
 				Card(
 					{
 						testId: `${this.testId}-finish-novelty`,
@@ -114,7 +118,11 @@ jn.define('layout/ui/whats-new/items/whats-new', (require, exports, module) => {
 		renderErrorContent()
 		{
 			return View(
-				{},
+				{
+					style: {
+						backgroundColor: Color.accentSoftBlue3.toHex(),
+					},
+				},
 				Card(
 					{
 						testId: `${this.testId}-error`,
@@ -168,7 +176,11 @@ jn.define('layout/ui/whats-new/items/whats-new', (require, exports, module) => {
 		renderEmptyContent()
 		{
 			return View(
-				{},
+				{
+					style: {
+						backgroundColor: Color.accentSoftBlue3.toHex(),
+					},
+				},
 				Card(
 					{
 						testId: `${this.testId}-empty`,

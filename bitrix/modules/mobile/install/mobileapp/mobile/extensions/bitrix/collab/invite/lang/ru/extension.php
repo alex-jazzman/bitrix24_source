@@ -33,7 +33,6 @@ $MESS["COLLAB_INVITE_INVALID_PHONE_NUMBER_ALERT_DESCRIPTION"] = "Эти номе
 $MESS["COLLAB_INVITE_INVALID_EMAIL_ALERT_TITLE"] = "Не можем отправить приглашения на некоторые e-mail";
 $MESS["COLLAB_INVITE_INVALID_EMAIL_ALERT_DESCRIPTION"] = "Эти e-mail указаны в неправильном формате: #emailString#";
 $MESS["COLLAB_INVITE_DETAILS_LINK_TEXT"] = "Подробнее";
-$MESS["COLLAB_INVITE_SHARING_MESSAGE_TEXT"] = "Присоединяйтесь к коллабе. Здесь мы общаемся в чате, созваниваемся и вместе идём к результату #link#";
 
 $MESS['COLLAB_INVITE_NAME_CHECKER_CLOSE_ALERT_TITLE'] = 'Пригласить участников позже?';
 $MESS['COLLAB_INVITE_NAME_CHECKER_CLOSE_ALERT_DESCRIPTION'] = 'Приглашения ещё не отправлены. Вы в любой момент можете пригласить этих и других участников в коллабу';
@@ -50,3 +49,7 @@ $MESS['COLLAB_GUEST_INVITE_RESTRICTIONS_BOX_STATUS_BLOCK_DESCRIPTION'] = "Обр
 $MESS['COLLAB_GUEST_INVITE_RESTRICTIONS_BOX_STATUS_BLOCK_DESCRIPTION_FOR_ADMIN'] = "Вы можете включить эту возможность\nв настройках Битрикс24\nна своем компьютере";
 $MESS['COLLAB_GUEST_INVITE_RESTRICTIONS_BOX_BUTTON_TEXT'] = 'Закрыть';
 $MESS['COLLAB_GUEST_INVITE_RESTRICTIONS_BOX_DETAILS_BUTTON_TEXT'] = "Подробнее";
+
+$MESS['COLLAB_GUEST_INVITE_LANGUAGE_CHOOSER_TEXT'] = "Язык приглашения: [COLOR=#COLOR#][URL]#LANGUAGE#[/URL][/COLOR]";
+$MESS['COLLAB_INVITE_LANGUAGE_CHOOSER_MENU_SECTION_TITLE'] = "по умолчанию";
+$MESS['COLLAB_INVITE_LANGUAGE_CHOOSER_AHA_MOMENT_TEXT'] = "Выберите язык приглашения и интерфейса гостя. Для других участников язык не изменится";

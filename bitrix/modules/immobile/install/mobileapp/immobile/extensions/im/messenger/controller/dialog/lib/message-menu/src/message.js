@@ -183,7 +183,10 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message', (require, e
 		{
 			if (this.isDialogCopilot())
 			{
-				return this.#isYour() && !this.#isDeleted() && !this.#isSystem() && !this.#isForward()
+				return this.#isYour()
+					&& !this.#isDeleted()
+					&& !this.#isSystem()
+					&& !this.#isForward()
 					&& !this.#isMessageToCopilot();
 			}
 

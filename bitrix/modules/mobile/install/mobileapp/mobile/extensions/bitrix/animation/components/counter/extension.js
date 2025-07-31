@@ -18,6 +18,7 @@ jn.define('animation/components/counter', (require, exports, module) => {
 	{
 		/**
 		 * @param {{
+		 *     testId: string,
 		 *     value: number,
 		 *     typography?: Typography,
 		 *     color?: Color,
@@ -80,6 +81,14 @@ jn.define('animation/components/counter', (require, exports, module) => {
 			this.#resetPositions(length, this.state.currentValue < this.memorizedValue);
 			this.#resetOpacities(length);
 			this.setState({ targetValue: this.memorizedValue }, () => this.#startAnimation());
+		}
+
+		/**
+		 * @return {string}
+		 */
+		get testId()
+		{
+			return this.props.testId;
 		}
 
 		/**
@@ -308,6 +317,7 @@ jn.define('animation/components/counter', (require, exports, module) => {
 						justifyContent: 'flex-end',
 						alignItems: 'center',
 					},
+					testId: `${this.testId}-${this.state.currentValue}`,
 				},
 				...Array.from({ length: this.currentValue.length }).map((_, index) => (
 					View(
@@ -355,6 +365,7 @@ jn.define('animation/components/counter', (require, exports, module) => {
 	};
 
 	AnimatedCounter.propTypes = {
+		testId: PropTypes.string.isRequired,
 		value: PropTypes.number.isRequired,
 		typography: PropTypes.instanceOf(Typography),
 		color: PropTypes.instanceOf(Color),

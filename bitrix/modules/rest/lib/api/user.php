@@ -271,7 +271,7 @@ class User extends \IRestService
 				'user.admin' => array(__CLASS__, 'isAdmin'),
 				'user.access' => array(__CLASS__, 'hasAccess'),
 				'access.name' => array(__CLASS__, 'getAccess'),
-			)
+			),
 		);
 
 		if(ModuleManager::isModuleInstalled('intranet'))
@@ -450,7 +450,7 @@ class User extends \IRestService
 
 		$langMessages = array_merge(
 			IncludeModuleLangFile('/bitrix/modules/main/admin/user_edit.php', false, true),
-			IncludeModuleLangFile('/bitrix/modules/main/admin/user_admin.php', false, true)
+			IncludeModuleLangFile('/bitrix/modules/main/admin/user_admin.php', false, true),
 		);
 		$fieldsList = $USER_FIELD_MANAGER->getUserFields('USER', 0, LANGUAGE_ID);
 		if (!is_null($server))
@@ -573,8 +573,8 @@ class User extends \IRestService
 			[
 				'HAS_DEPARTAMENT',
 				'NAME_SEARCH',
-				'FIND'
-			]
+				'FIND',
+			],
 		);
 
 		if (isset($filter['NAME_SEARCH']) || isset($filter['FIND']))
@@ -584,7 +584,7 @@ class User extends \IRestService
 			unset($filter['FIND']);
 
 			$filter = array_merge($filter, \Bitrix\Main\UserUtils::getUserSearchFilter(Array(
-				'FIND' => $nameSearch
+				'FIND' => $nameSearch,
 			)));
 		}
 		else if ($server->getMethod() == "user.search")
@@ -625,7 +625,7 @@ class User extends \IRestService
 						$filter[] = [
 							'LOGIC' => 'OR',
 							'!UF_DEPARTMENT' => false,
-							'ID' => $filteredUserIDs
+							'ID' => $filteredUserIDs,
 						];
 					}
 					else
@@ -682,7 +682,7 @@ class User extends \IRestService
 			{
 				$allowedAllUF = array_filter(
 					$allowedFields,
-					static fn($value) => $value && str_starts_with($value, 'UF_')
+					static fn($value) => $value && str_starts_with($value, 'UF_'),
 				);
 			}
 
@@ -698,7 +698,7 @@ class User extends \IRestService
 				'offset' => $navParams['offset'],
 				'data_doubling' => false,
 				'count_total' => $nav !== -1,
-			]
+			],
 		);
 
 		$result = [];
@@ -745,8 +745,8 @@ class User extends \IRestService
 				$result,
 				[
 					'count' => $count,
-					'offset' => $navParams['offset']
-				]
+					'offset' => $navParams['offset'],
+				],
 			);
 		}
 
@@ -759,7 +759,7 @@ class User extends \IRestService
 			'filter' => array(
 				'IS_ONLINE' => 'Y',
 			),
-			'select' => array('ID')
+			'select' => array('ID'),
 		));
 
 		$onlineUsers = array();
@@ -840,6 +840,8 @@ class User extends \IRestService
 
 				unset($userFields["EXTRANET"]);
 			}
+
+			self::checkTypeFields($userFields);
 
 			$inviteFields = self::prepareSaveData($userFields);
 
@@ -928,6 +930,23 @@ class User extends \IRestService
 		return $res;
 	}
 
+	private static function checkTypeFields($fields): void
+	{
+		$notStringTypeField = ['PERSONAL_PHOTO', 'WORK_LOGO'];
+		foreach ($fields as $key => $field)
+		{
+			$fieldMustBeString = str_contains($key, 'WORK_')
+				|| str_contains($key, 'PERSONAL_')
+				&& !in_array($key, $notStringTypeField, true)
+			;
+
+			if ($fieldMustBeString && !is_string($field))
+			{
+				throw new ArgumentException('invalid_type_field', $key);
+			}
+		}
+	}
+
 	public static function userUpdate($userFields, $nav = 0, \CRestServer $server = null)
 	{
 		if (!is_null($server) && !static::isMainScope($server))
@@ -1010,7 +1029,7 @@ class User extends \IRestService
 						{
 							$result = [
 								'old_id' => $id,
-								'del' => 'Y'
+								'del' => 'Y',
 							];
 						}
 					}
@@ -1035,14 +1054,14 @@ class User extends \IRestService
 								{
 									$result[$key] = [
 										'old_id' => $id,
-										'del' => 'Y'
+										'del' => 'Y',
 									];
 								}
 								elseif ($value > 0)
 								{
 									$result[$key] = [
 										'old_id' => $value,
-										'error' => 'Y'
+										'error' => 'Y',
 									];
 								}
 							}
@@ -1117,7 +1136,7 @@ class User extends \IRestService
 				if(!is_array($value) && !empty($value))
 				{
 					$value = [
-						$value
+						$value,
 					];
 				}
 				break;
@@ -1304,8 +1323,8 @@ class User extends \IRestService
 												'entity' => static::$entityUser,
 												'id' => $userFields['ID'],
 												'field' => $key,
-												'value' => $userFields[$key]
-											]
+												'value' => $userFields[$key],
+											],
 										),
 										'downloadData' => [
 											'id' => $userFields['ID'],
@@ -1325,14 +1344,14 @@ class User extends \IRestService
 											'entity' => static::$entityUser,
 											'id' => $userFields['ID'],
 											'field' => $key,
-											'value' => $userFields[$key]
-										]
+											'value' => $userFields[$key],
+										],
 									),
 									'downloadData' => [
 										'id' => $userFields['ID'],
 										'field' => $key,
-										'value' => $userFields[$key]
-									]
+										'value' => $userFields[$key],
+									],
 								];
 							}
 						}

@@ -40,7 +40,7 @@ final class NodeFilter extends BaseFilter
 		int $id,
 	): self
 	{
-		return new static(
+		return new self(
 			idFilter: IdFilter::fromId($id),
 		);
 	}

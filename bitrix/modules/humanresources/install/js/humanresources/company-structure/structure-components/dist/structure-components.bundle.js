@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Humanresources = this.BX.Humanresources || {};
-(function (exports,main_popup,ui_iconSet_api_vue,ui_hint,ui_entitySelector,ui_iconSet_actions,humanresources_companyStructure_utils,main_core) {
+(function (exports,main_popup,ui_iconSet_api_vue,ui_entitySelector,ui_iconSet_actions,humanresources_companyStructure_utils,main_core) {
 	'use strict';
 
 	const POPUP_CONTAINER_PREFIX = '#popup-window-content-';
@@ -1040,6 +1040,100 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  };
 	};
 
+	/**
+	 * ui.hint with reactive content
+	 */
+	const ResponsiveHint = {
+	  name: 'ResponsiveHint',
+	  props: {
+	    content: {
+	      type: String,
+	      required: true
+	    },
+	    width: {
+	      type: Number,
+	      default: 300
+	    },
+	    extraClasses: {
+	      type: Object
+	    },
+	    top: {
+	      type: Boolean,
+	      default: false
+	    },
+	    alignCenter: {
+	      type: Boolean,
+	      default: false
+	    }
+	  },
+	  created() {
+	    this.hint = null;
+	  },
+	  mounted() {
+	    const container = this.$refs['hint-container'];
+	    const parameters = {
+	      width: this.width
+	    };
+	    if (this.top) {
+	      parameters.bindOptions = {
+	        position: 'top'
+	      };
+	    }
+	    if (this.alignCenter) {
+	      parameters.offsetLeft = container.offsetWidth / 2 - this.width / 2 + 39;
+	      parameters.angle = {
+	        offset: this.width / 2 - 33 / 2
+	      };
+	    }
+	    main_core.Event.bind(this.$refs['hint-container'], 'mouseenter', () => {
+	      this.hint = main_core.Reflection.getClass('BX.UI.Hint').createInstance({
+	        popupParameters: {
+	          ...parameters
+	        } // destruct parameters to recreate hint
+	      });
+
+	      this.hint.show(this.$refs['hint-container'], this.content);
+	    });
+	    main_core.Event.bind(this.$refs['hint-container'], 'mouseleave', () => {
+	      var _this$hint;
+	      (_this$hint = this.hint) == null ? void 0 : _this$hint.hide(); // hide() function also destroys popup
+	    });
+	  },
+
+	  unmounted() {
+	    var _this$hint2;
+	    (_this$hint2 = this.hint) == null ? void 0 : _this$hint2.hide();
+	  },
+	  template: `
+		<span class="ui-hint" ref="hint-container" :class="extraClasses">
+			<slot/>
+		</span>
+	`
+	};
+
+	// @vue/component
+	const DefaultHint = {
+	  name: 'DefaultHint',
+	  components: {
+	    ResponsiveHint
+	  },
+	  props: {
+	    content: {
+	      type: String,
+	      required: true
+	    },
+	    width: {
+	      type: Number,
+	      default: 300
+	    }
+	  },
+	  template: `
+		<ResponsiveHint :content=content>
+			<span class="ui-hint-icon"/>
+		</ResponsiveHint>
+	`
+	};
+
 	exports.BasePopup = BasePopup;
 	exports.BaseActionMenu = BaseActionMenu;
 	exports.RouteActionMenu = RouteActionMenu;
@@ -1052,6 +1146,8 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	exports.getChannelDialogEntity = getChannelDialogEntity;
 	exports.getChatRecentTabOptions = getChatRecentTabOptions;
 	exports.ChatTypeDict = ChatTypeDict;
+	exports.ResponsiveHint = ResponsiveHint;
+	exports.DefaultHint = DefaultHint;
 
-}((this.BX.Humanresources.CompanyStructure = this.BX.Humanresources.CompanyStructure || {}),BX.Main,BX.UI.IconSet,BX,BX.UI.EntitySelector,BX,BX.Humanresources.CompanyStructure,BX));
+}((this.BX.Humanresources.CompanyStructure = this.BX.Humanresources.CompanyStructure || {}),BX.Main,BX.UI.IconSet,BX.UI.EntitySelector,BX,BX.Humanresources.CompanyStructure,BX));
 //# sourceMappingURL=structure-components.bundle.js.map

@@ -1166,7 +1166,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            microphoneState: !Call.Hardware.isMicrophoneMuted
 	          });
 	          if (e.isNew) {
-	            var _this17$currentCall;
+	            var _this17$currentCall, _this17$currentCall$a;
 	            call_lib_analytics.Analytics.getInstance().onStartVideoconf({
 	              callId: (_this17$currentCall = _this17.currentCall) === null || _this17$currentCall === void 0 ? void 0 : _this17$currentCall.uuid,
 	              withVideo: videoEnabled,
@@ -1175,7 +1175,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	                audio: !Call.Hardware.isMicrophoneMuted
 	              },
 	              status: call_lib_analytics.Analytics.AnalyticsStatus.success,
-	              isCopilotActive: _this17.currentCall.isCopilotActive
+	              isCopilotActive: _this17.currentCall.isCopilotActive,
+	              userCounter: (_this17$currentCall$a = _this17.currentCall.associatedEntity) === null || _this17$currentCall$a === void 0 ? void 0 : _this17$currentCall$a.userCounter
 	            });
 	            _this17.currentCall.inviteUsers();
 	          } else {
@@ -2031,12 +2032,12 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      if (!e.muted && !(Call.Hardware !== null && Call.Hardware !== void 0 && Call.Hardware.hasMicrophone())) {
 	        return;
 	      }
-	      var currentRoom = this.currentCall.currentRoom && this.currentCall.currentRoom();
+	      var currentRoom = this.currentCall && this.currentCall.currentRoom && this.currentCall.currentRoom();
 	      if (currentRoom && currentRoom.speaker != this.userId && !e.muted) {
 	        this.currentCall.requestRoomSpeaker();
 	        return;
 	      }
-	      if (!this.currentCall.microphoneId && !e.muted) {
+	      if (this.currentCall && !this.currentCall.microphoneId && !e.muted) {
 	        this.currentCall.setMicrophoneId(Call.Hardware.defaultMicrophone);
 	      }
 	      Call.Hardware.setIsMicrophoneMuted({
@@ -2065,6 +2066,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        this.updateCallUser(this.currentCall.userId, {
 	          microphoneState: !e.muted
 	        });
+	      }
+	      if (!this.currentCall) {
+	        this.template.$emit('setMicState', !e.muted);
 	      }
 	    }
 	  }, {
@@ -2171,7 +2175,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      if (!e.video) {
 	        this.callView.releaseLocalMedia();
 	      }
-	      if (!this.currentCall.cameraId && e.video) {
+	      if (this.currentCall && !this.currentCall.cameraId && e.video) {
 	        this.currentCall.setCameraId(Call.Hardware.defaultCamera);
 	      }
 	      if (!this.currentCall) {
@@ -3906,6 +3910,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      call_lib_analytics.Analytics.getInstance().onReconnect({
 	        callId: this.currentCall.uuid,
 	        callType: call_lib_analytics.Analytics.AnalyticsType.videoconf,
+	        reconnectionReason: e.reconnectionReason,
+	        reconnectionReasonInfo: e.reconnectionReasonInfo,
 	        reconnectionEventCount: e.reconnectionEventCount
 	      });
 
@@ -4104,6 +4110,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "getCallConfig",
 	    value: function getCallConfig(videoEnabled, callUuid) {
+	      var _this$getDialogData;
 	      var callConfig = {
 	        videoEnabled: videoEnabled,
 	        type: Call.Type.Permanent,
@@ -4127,7 +4134,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          id: this.getDialogId(),
 	          chatId: this.getChatId(),
 	          name: this.params.conferenceTitle,
-	          type: 'chat'
+	          type: 'chat',
+	          userCounter: (_this$getDialogData = this.getDialogData()) === null || _this$getDialogData === void 0 ? void 0 : _this$getDialogData.userCounter
 	        }
 	      };
 	      if (callUuid) {

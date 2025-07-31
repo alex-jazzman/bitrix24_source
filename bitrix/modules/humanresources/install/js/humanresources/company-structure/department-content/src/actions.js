@@ -1,6 +1,7 @@
 import { useChartStore } from 'humanresources.company-structure.chart-store';
 import { getMemberRoles } from 'humanresources.company-structure.api';
 import { Type } from 'main.core';
+import type { ChatOrChannelDetailed } from 'humanresources.company-structure.utils';
 
 export const DepartmentContentActions = {
 	moveUserToDepartment: (departmentId, userId, targetDepartmentId, role): void => {
@@ -103,8 +104,8 @@ export const DepartmentContentActions = {
 	},
 	setChatsAndChannels: (
 		nodeId: number,
-		chats: Array,
-		channels: Array,
+		chats: Array<ChatOrChannelDetailed>,
+		channels: Array<ChatOrChannelDetailed>,
 	): void => {
 		const store = useChartStore();
 		const department = store.departments.get(nodeId);
@@ -113,8 +114,8 @@ export const DepartmentContentActions = {
 			return;
 		}
 
-		department.channels = channels;
-		department.chats = chats;
+		department.channelsDetailed = channels;
+		department.chatsDetailed = chats;
 		department.chatAndChannelsCount = (chats.length + channels.length);
 	},
 	removeUserFromAllDepartments: async (userId): Promise<void> => {
@@ -142,5 +143,17 @@ export const DepartmentContentActions = {
 		}
 
 		return store.refreshDepartments(departmentsToUpdate);
+	},
+	unbindChatFromNode: (nodeId: number, chatId: number): void => {
+		const store = useChartStore();
+		const department = store.departments.get(nodeId);
+		if (!department)
+		{
+			return;
+		}
+
+		department.channelsDetailed = department.channelsDetailed.filter((chat) => chat.id !== chatId);
+		department.chatsDetailed = department.chatsDetailed.filter((chat) => chat.id !== chatId);
+		department.chatAndChannelsCount--;
 	},
 };

@@ -3,6 +3,7 @@
 namespace Bitrix\Call\Controller;
 
 use Bitrix\Call\Idempotence;
+use Bitrix\Call\Signaling;
 use Bitrix\Main\Application;
 use Bitrix\Main\Engine\AutoWire\ExactParameter;
 use Bitrix\Main\Loader;
@@ -56,6 +57,11 @@ class Call extends JwtController
 					return $userRequest;
 				}
 			),
+			new ExactParameter(
+				DTO\CallPushRequest::class,
+				'pushRequest',
+				$this->decodeJwtParameter()
+			),
 		], parent::getAutoWiredParameters());
 	}
 
@@ -81,6 +87,11 @@ class Call extends JwtController
 				'+prefilters' => [
 					new UniqueRequestFilter(),
 				],
+			],
+			'startPush' => [
+				'+prefilters' => [
+					new UniqueRequestFilter()
+				]
 			],
 		];
 	}
@@ -111,10 +122,11 @@ class Call extends JwtController
 	 */
 	public function startCallAction(DTO\CallRequest $callRequest): array|null
 	{
+		Loader::includeModule('im');
+
 		try
 		{
 			$tokenVersion = JwtCall::getTokenVersion($callRequest->chatId);
-
 			if ($tokenVersion > $callRequest->tokenVersion)
 			{
 				$this->addError(new Error('Call token version deprecated',  'call_token_version_deprecated'));
@@ -126,17 +138,36 @@ class Call extends JwtController
 				];
 			}
 
-			Loader::includeModule('im');
-
 			$userId = $callRequest->initiatorUserId;
+			$roomId = $callRequest->roomId ?: $callRequest->callUuid;
+			$entityId = \Bitrix\Im\Dialog::getDialogId($callRequest->chatId, $userId);
+
+			$prevCall = CallFactory::searchActiveCall(
+				type: $callRequest->callType,
+				provider: $callRequest->provider,
+				entityType: EntityType::CHAT,
+				entityId: $entityId,
+			);
+			if ($prevCall instanceof \Bitrix\Im\Call\Call)
+			{
+				if ($prevCall->isAiAnalyzeEnabled())
+				{
+					$prevCall
+						->disableAudioRecord()
+						->disableAiAnalyze()
+						->save()
+					;
+				}
+				$prevCall->finish();
+			}
 
 			$call = CallFactory::createWithEntity(
 				type: $callRequest->callType,
 				provider: $callRequest->provider,
 				entityType: EntityType::CHAT,
-				entityId: \Bitrix\Im\Dialog::getDialogId($callRequest->chatId, $userId),
+				entityId: $entityId,
 				initiatorId: $userId,
-				callUuid: $callRequest->roomId ?: $callRequest->callUuid,
+				callUuid: $roomId,
 				scheme: \Bitrix\Im\Call\Call::SCHEME_JWT,
 			);
 
@@ -153,6 +184,10 @@ class Call extends JwtController
 				$call,
 				$users,
 				$callRequest->video,
+				'N',
+				'Y',
+				'N',
+				Signaling::MODE_WEB
 			);
 
 			$callAIError = CallAISettings::isAIAvailableInCall();
@@ -170,6 +205,64 @@ class Call extends JwtController
 				'AIErrorCode' => $callAIError?->getCode(),
 				'AIErrorMessage' => $callAIError?->getMessage(),
 			];
+		}
+		catch (\Throwable $e)
+		{
+			$this->addError(new \Bitrix\Main\Error($e->getMessage(), $e->getCode()));
+			return null;
+		}
+	}
+
+	/**
+	 * @restMethod call.Call.startPush
+	 *
+	 * @param DTO\CallPushRequest $pushRequest
+	 * @return array|null
+	 */
+	public function startPushAction(DTO\CallPushRequest $pushRequest): ?array
+	{
+		try {
+			Loader::includeModule('im');
+
+			$callUuid = $pushRequest->roomId ?: $pushRequest->callUuid;
+			$call = Registry::getCallWithUuid($callUuid);
+
+			if (!$call)
+			{
+				$this->addError(new Error(Loc::getMessage('IM_REST_CALL_ERROR_CALL_NOT_FOUND'), 'call_not_found'));
+				return null;
+			}
+
+			if ($pushRequest->requestId)
+			{
+				Idempotence::addKey($pushRequest->requestId);
+			}
+
+			$excluded = array_merge(
+				array_map('intval', $pushRequest->usersIds),
+				[$pushRequest->initiatorUserId]
+			);
+
+			$allUsers = array_map('intval', $call->getUsers());
+			$userIds = array_diff($allUsers, $excluded);
+
+			$userIds = array_filter($userIds, function ($userId) use ($call) {
+				return $call->checkAccess($userId);
+			});
+
+			if (!empty($userIds))
+			{
+				$call->sendInviteUsers(
+					$pushRequest->initiatorUserId,
+					$userIds,
+					$pushRequest->legacyMobile,
+					$pushRequest->video,
+					true,
+					Signaling::MODE_ALL
+				);
+			}
+
+			return ['result' => true];
 		}
 		catch (\Throwable $e)
 		{
@@ -203,7 +296,7 @@ class Call extends JwtController
 		}
 
 		$call->save();
-		$call->finishCall();
+		$call->finish();
 
 		if ($callRequest->requestId)
 		{
@@ -223,7 +316,8 @@ class Call extends JwtController
 		$isVideo = 'N',
 		$isLegacyMobile = 'N',
 		$isShow = 'Y',
-		$isRepeated = 'N'
+		$isRepeated = 'N',
+		string $sendMode = Signaling::MODE_ALL
 	): void
 	{
 		$usersToInvite = [];
@@ -266,17 +360,8 @@ class Call extends JwtController
 		}
 
 		$sendPush = $isRepeated !== true;
+		$this->sendPushNotifications($call, $usersToInvite, $isLegacyMobile, $isVideo, $sendPush, $sendMode);
 
-		// send invite to the ones being invited.
-		$call->sendInviteUsers(
-			$this->getCurrentUser()->getId(),
-			$usersToInvite,
-			$isLegacyMobile,
-			$isVideo,
-			$sendPush
-		);
-
-		// send userInvited to everyone else.
 		$allUsers = $call->getUsers();
 		$otherUsers = array_diff($allUsers, $userIds);
 		$call->getSignaling()->sendUsersInvited(
@@ -290,6 +375,25 @@ class Call extends JwtController
 		{
 			$call->updateState(\Bitrix\Im\Call\Call::STATE_INVITING);
 		}
+	}
+
+	protected function sendPushNotifications(
+		\Bitrix\Im\Call\Call $call,
+		array $usersToInvite,
+		$isLegacyMobile,
+		$isVideo,
+		bool $sendPush,
+		string $sendMode = Signaling::MODE_ALL
+	): void
+	{
+		$call->sendInviteUsers(
+			$this->getCurrentUser()->getId(),
+			$usersToInvite,
+			$isLegacyMobile,
+			$isVideo,
+			$sendPush,
+			$sendMode
+		);
 	}
 
 	/**
@@ -717,6 +821,7 @@ class Call extends JwtController
 	 */
 	public function tryJoinCallAction(DTO\UserRequest $userRequest): ?array
 	{
+		Loader::includeModule('im');
 		$currentUserId = $this->getCurrentUser()->getId();
 		$call = CallFactory::searchActiveCall(
 			$userRequest->callType,

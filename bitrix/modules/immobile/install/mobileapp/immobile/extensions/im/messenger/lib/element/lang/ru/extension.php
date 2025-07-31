@@ -110,6 +110,9 @@ $MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_COPILOT_BANNER_TITLE_ADD_USERS'] = 'До�
 $MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_COPILOT_BANNER_TEXT_ADD_USERS_MORE'] = '#USERNAME_1# и #LINK_START#еще +#USERS_COUNT##LINK_END#';
 $MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_COPILOT_BANNER_DESC_ADD_USERS'] = 'Нажмите @ или +, чтобы упомянуть участника';
 
+$MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_AI_ASSISTANT_BUTTON_COPY'] = 'Копировать';
+$MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_AI_ASSISTANT_FOOT_NOTE_TEXT'] = 'Ответы Марты AI могут быть неточны, проверяйте важную информацию. [U]Подробнее[/U]';
+
 $MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_CHAT_CREATE_BANNER_DESC'] = 'Общайтесь, делитесь файлами, комментируйте сообщения коллег и ставьте лайки';
 $MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_CHAT_CREATE_BANNER_ADD_USERS'] = 'Добавить участников';
 

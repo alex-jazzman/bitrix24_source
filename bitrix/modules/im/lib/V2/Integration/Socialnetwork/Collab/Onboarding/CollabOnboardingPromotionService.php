@@ -40,6 +40,11 @@ class CollabOnboardingPromotionService implements PromotionServiceInterface
 	{
 		$promotions = new PromotionList();
 
+		if ($type === DeviceType::MOBILE)
+		{
+			return $promotions;
+		}
+
 		$userId = (int)User::getCurrent()->getId();
 		if ($userId <= 0)
 		{

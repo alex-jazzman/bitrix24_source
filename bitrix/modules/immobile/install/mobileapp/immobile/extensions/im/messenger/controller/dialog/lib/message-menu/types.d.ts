@@ -3,7 +3,7 @@ import { FilesModelState } from '../../../../model/files/src/types';
 import { DialoguesModelState } from '../../../../model/dialogues/src/types';
 import { UsersModelState } from '../../../../model/users/src/types';
 
-declare type MessageContextMenuButton = {
+type MessageContextMenuButton = {
 	id: string,
 	testId: string,
 	type: 'button',
@@ -31,23 +31,41 @@ interface IMessageMenuMessage {
 	isUserSubscribed: boolean;
 
 	isPossibleReact(): boolean;
+
 	isPossibleReply(): boolean;
+
 	isPossibleCopy(): boolean;
+
 	isPossibleCopyLink(): boolean;
+
 	isPossiblePin(): boolean;
+
 	isPossibleUnpin(): boolean;
+
 	isPossibleForward(): boolean;
+
 	isPossibleCreate(): boolean;
+
 	isPossibleSaveToLibrary(): boolean;
+
 	isPossibleShowProfile(): boolean;
+
 	isPossibleCallFeedback(): boolean;
+
 	isPossibleMultiselect(): boolean;
+
 	isPossibleEdit(): boolean;
+
 	isPossibleDelete(): boolean;
+
 	isPossibleSubscribe(): boolean;
+
 	isPossibleUnsubscribe(): boolean;
+
 	isPossibleResend(): boolean;
+
 	isDialogCopilot(): boolean;
+
 	isAdmin(): boolean;
 }
 
@@ -56,6 +74,15 @@ interface IMessageMenuView {
 	actionList: Array<Object>;
 
 	addReaction(reaction: string): this;
+
 	addSeparator(): this;
+
 	addAction(action: Object): this;
 }
+
+type MessageMenuControllerCreateParams = {
+	serviceLocator: DialogLocator,
+	getDialog: () => DialoguesModelState,
+}
+
+export { MessageContextMenuButton }

@@ -6,7 +6,12 @@ namespace Bitrix\Booking\Entity\ResourceType;
 
 use Bitrix\Booking\Entity\EntityInterface;
 use Bitrix\Booking\Entity\Enum\Notification\ReminderNotificationDelay;
-use Bitrix\Booking\Internals\Service\Notifications\NotificationTemplateType;
+use Bitrix\Booking\Entity\Enum\TemplateType\TemplateTypeConfirmation;
+use Bitrix\Booking\Entity\Enum\TemplateType\TemplateTypeDelayed;
+use Bitrix\Booking\Entity\Enum\TemplateType\TemplateTypeFeedback;
+use Bitrix\Booking\Entity\Enum\TemplateType\TemplateTypeInfo;
+use Bitrix\Booking\Entity\Enum\TemplateType\TemplateTypeReminder;
+use Bitrix\Booking\Internals\Exception\InvalidArgumentException;
 
 class ResourceType implements EntityInterface
 {
@@ -16,6 +21,7 @@ class ResourceType implements EntityInterface
 	private string|null $moduleId = null;
 	private string|null $code = null;
 	private string|null $name = null;
+	private int|null $resourcesCnt = 0;
 
 	private bool $isInfoNotificationOn = true;
 	private string $templateTypeInfo;
@@ -38,11 +44,11 @@ class ResourceType implements EntityInterface
 
 	public function __construct()
 	{
-		$this->templateTypeInfo = NotificationTemplateType::Inanimate->value;
-		$this->templateTypeConfirmation = NotificationTemplateType::Inanimate->value;
-		$this->templateTypeReminder = NotificationTemplateType::Base->value;
-		$this->templateTypeFeedback = NotificationTemplateType::Inanimate->value;
-		$this->templateTypeDelayed = NotificationTemplateType::Inanimate->value;
+		$this->templateTypeInfo = TemplateTypeInfo::InAnimate->value;
+		$this->templateTypeConfirmation = TemplateTypeConfirmation::InAnimate->value;
+		$this->templateTypeReminder = TemplateTypeReminder::Base->value;
+		$this->templateTypeFeedback = TemplateTypeFeedback::InAnimate->value;
+		$this->templateTypeDelayed = TemplateTypeDelayed::InAnimate->value;
 
 		$this->reminderNotificationDelay = ReminderNotificationDelay::Morning->value;
 	}
@@ -223,6 +229,11 @@ class ResourceType implements EntityInterface
 
 	public function setTemplateTypeInfo(string $templateTypeInfo): self
 	{
+		if (!TemplateTypeInfo::isValid($templateTypeInfo))
+		{
+			throw new InvalidArgumentException('Invalid value for templateTypeInfo');
+		}
+
 		$this->templateTypeInfo = $templateTypeInfo;
 
 		return $this;
@@ -235,6 +246,11 @@ class ResourceType implements EntityInterface
 
 	public function setTemplateTypeConfirmation(string $templateTypeConfirmation): self
 	{
+		if (!TemplateTypeConfirmation::isValid($templateTypeConfirmation))
+		{
+			throw new InvalidArgumentException('Invalid value for templateTypeConfirmation');
+		}
+
 		$this->templateTypeConfirmation = $templateTypeConfirmation;
 
 		return $this;
@@ -247,6 +263,11 @@ class ResourceType implements EntityInterface
 
 	public function setTemplateTypeReminder(string $templateTypeReminder): self
 	{
+		if (!TemplateTypeReminder::isValid($templateTypeReminder))
+		{
+			throw new InvalidArgumentException('Invalid value for templateTypeReminder');
+		}
+
 		$this->templateTypeReminder = $templateTypeReminder;
 
 		return $this;
@@ -259,6 +280,11 @@ class ResourceType implements EntityInterface
 
 	public function setTemplateTypeFeedback(string $templateTypeFeedback): self
 	{
+		if (!TemplateTypeFeedback::isValid($templateTypeFeedback))
+		{
+			throw new InvalidArgumentException('Invalid value for templateTypeFeedback');
+		}
+
 		$this->templateTypeFeedback = $templateTypeFeedback;
 
 		return $this;
@@ -283,6 +309,11 @@ class ResourceType implements EntityInterface
 
 	public function setTemplateTypeDelayed(string $templateTypeDelayed): self
 	{
+		if (!TemplateTypeDelayed::isValid($templateTypeDelayed))
+		{
+			throw new InvalidArgumentException('Invalid value for templateTypeDelayed');
+		}
+
 		$this->templateTypeDelayed = $templateTypeDelayed;
 
 		return $this;
@@ -319,6 +350,7 @@ class ResourceType implements EntityInterface
 			'moduleId' => $this->moduleId,
 			'code' => $this->code,
 			'name' => $this->name,
+			'resourcesCnt' => $this->resourcesCnt,
 			'isInfoNotificationOn' => $this->isInfoNotificationOn,
 			'templateTypeInfo' => $this->templateTypeInfo,
 			'infoNotificationDelay' => $this->infoNotificationDelay,
@@ -428,5 +460,12 @@ class ResourceType implements EntityInterface
 		}
 
 		return $resourceType;
+	}
+
+	public function setResourcesCnt(int|null $resourcesCnt): ResourceType
+	{
+		$this->resourcesCnt = $resourcesCnt;
+
+		return $this;
 	}
 }

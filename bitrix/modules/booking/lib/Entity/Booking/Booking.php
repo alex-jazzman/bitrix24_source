@@ -59,7 +59,6 @@ class Booking implements
 	private int|null $createdBy = null;
 	private int|null $createdAt = null;
 	private int|null $updatedAt = null;
-
 	private string|null $note = null;
 
 	public function __construct()
@@ -218,16 +217,9 @@ class Booking implements
 		return $this;
 	}
 
-	/**
-	 * Returns primary resource from resource collection
-	 * Primary resource is used for obtaining notification settings for a certain booking
-	 * We are currently expecting that the first item from resource collection is primary
-	 *
-	 * @return Resource|null
-	 */
 	public function getPrimaryResource(): Resource|null
 	{
-		return $this->resourceCollection->getFirstCollectionItem();
+		return $this->resourceCollection->getPrimary();
 	}
 
 	public function getResourceCollection(): ResourceCollection

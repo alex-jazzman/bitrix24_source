@@ -7,6 +7,8 @@ import { ConfirmationPopup } from './components/popup/confirmation-popup';
 import { Hint } from './directives/hint';
 import { ManagementDialog } from './components/management-dialog/management-dialog';
 import { getChatDialogEntity, getChannelDialogEntity, getChatRecentTabOptions, ChatTypeDict } from './options/selectors';
+import { ResponsiveHint } from './components/responsive-hint/responsive-hint';
+import { DefaultHint } from './components/responsive-hint/default-hint';
 
 export {
 	BasePopup,
@@ -21,4 +23,6 @@ export {
 	getChannelDialogEntity,
 	getChatRecentTabOptions,
 	ChatTypeDict,
+	ResponsiveHint,
+	DefaultHint,
 };

@@ -73,6 +73,9 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	  getIsCurrentSenderAvailable() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _response)[_response].isCurrentSenderAvailable;
 	  }
+	  getFormsMenu() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _response)[_response].formsMenu;
+	  }
 	}
 	function _extractClients2(code) {
 	  const module = babelHelpers.classPrivateFieldLooseBase(this, _response)[_response].clients.providerModuleId;
@@ -188,7 +191,7 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	  });
 	  const extractor = new MainPageDataExtractor(data);
 	  booking_lib_resourcesDateCache.resourcesDateCache.upsertIds(dateTs, extractor.getFavoriteIds());
-	  await Promise.all([booking_core.Core.getStore().dispatch(`${booking_const.Model.Favorites}/set`, extractor.getFavoriteIds()), booking_core.Core.getStore().dispatch(`${booking_const.Model.Interface}/setResourcesIds`, extractor.getFavoriteIds()), booking_core.Core.getStore().dispatch(`${booking_const.Model.Interface}/setIntersectionMode`, extractor.getIntersectionMode()), booking_core.Core.getStore().dispatch(`${booking_const.Model.Resources}/upsertMany`, extractor.getResources()), booking_core.Core.getStore().dispatch(`${booking_const.Model.ResourceTypes}/upsertMany`, extractor.getResourceTypes()), booking_core.Core.getStore().dispatch(`${booking_const.Model.Counters}/set`, extractor.getCounters()), booking_core.Core.getStore().dispatch(`${booking_const.Model.Bookings}/upsertMany`, extractor.getBookings()), booking_core.Core.getStore().dispatch(`${booking_const.Model.WaitList}/upsertMany`, extractor.getWaitListItems()), booking_core.Core.getStore().dispatch(`${booking_const.Model.Clients}/upsertMany`, extractor.getClients()), booking_core.Core.getStore().dispatch(`${booking_const.Model.Clients}/setProviderModuleId`, extractor.getClientsProviderModuleId()), booking_core.Core.getStore().dispatch(`${booking_const.Model.Interface}/setIsCurrentSenderAvailable`, extractor.getIsCurrentSenderAvailable())]);
+	  await Promise.all([booking_core.Core.getStore().dispatch(`${booking_const.Model.Favorites}/set`, extractor.getFavoriteIds()), booking_core.Core.getStore().dispatch(`${booking_const.Model.Interface}/setResourcesIds`, extractor.getFavoriteIds()), booking_core.Core.getStore().dispatch(`${booking_const.Model.Interface}/setIntersectionMode`, extractor.getIntersectionMode()), booking_core.Core.getStore().dispatch(`${booking_const.Model.Resources}/upsertMany`, extractor.getResources()), booking_core.Core.getStore().dispatch(`${booking_const.Model.ResourceTypes}/upsertMany`, extractor.getResourceTypes()), booking_core.Core.getStore().dispatch(`${booking_const.Model.Counters}/set`, extractor.getCounters()), booking_core.Core.getStore().dispatch(`${booking_const.Model.Bookings}/upsertMany`, extractor.getBookings()), booking_core.Core.getStore().dispatch(`${booking_const.Model.WaitList}/upsertMany`, extractor.getWaitListItems()), booking_core.Core.getStore().dispatch(`${booking_const.Model.Clients}/upsertMany`, extractor.getClients()), booking_core.Core.getStore().dispatch(`${booking_const.Model.Clients}/setProviderModuleId`, extractor.getClientsProviderModuleId()), booking_core.Core.getStore().dispatch(`${booking_const.Model.Interface}/setIsCurrentSenderAvailable`, extractor.getIsCurrentSenderAvailable()), booking_core.Core.getStore().dispatch(`${booking_const.Model.FormsMenu}/setFormsMenu`, extractor.getFormsMenu())]);
 	}
 	async function _requestDataForBooking2(dateTs) {
 	  const bookingId = booking_core.Core.getParams().editingBookingId;

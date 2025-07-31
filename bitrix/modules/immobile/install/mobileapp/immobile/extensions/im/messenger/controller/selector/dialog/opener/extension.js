@@ -10,17 +10,19 @@ jn.define('im/messenger/controller/selector/dialog/opener', (require, exports, m
 	 * @param {Object} options
 	 * @param {string} options.title
 	 * @param {Object} [options.providerOptions]
-	 * @param {boolean} options.allowMultipleSelection
-	 * @param {boolean} options.integrateSelectorToParentLayout=false,
-	 * @param {Function} options.onItemSelected
-	 * @param {Function} options.onClose
-	 * @param {PageManager} parentWidget
+	 * @param {boolean} [options.allowMultipleSelection]
+	 * @param {boolean} [options.integrateSelectorToParentLayout=false]
+	 * @param {Function} [options.onItemSelected]
+	 * @param {Function} [options.onClose]
+	 * @param {boolean} [options.closeOnSelect=true]
+	 * @param {PageManager} [parentWidget]
 	 */
 	function openDialogSelector({
 		title,
 		providerOptions,
 		allowMultipleSelection = false,
 		integrateSelectorToParentLayout = false,
+		closeOnSelect = true,
 		onItemSelected,
 		onClose,
 		initSelectedIds,
@@ -38,29 +40,25 @@ jn.define('im/messenger/controller/selector/dialog/opener', (require, exports, m
 					onlyMediumPosition: true,
 				},
 			},
-
 			events: {
 				onItemSelected,
 				onClose,
 			},
-
 			provider: {
 				class: DialogSelectorProvider,
 				options: providerOptions ?? {},
 			},
-
 			sectionTitles: {
 				recent: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_SELECTOR_SEARCH_PLACEHOLDER'),
 			},
-
 			entityIds: ['dialog'],
 			initSelectedIds,
 			allowMultipleSelection,
-			closeOnSelect: true,
+			closeOnSelect,
 			integrateSelectorToParentLayout,
 		});
 
-		entitySelectorWidget.show({}, parentWidget);
+		return entitySelectorWidget.show({}, parentWidget);
 	}
 
 	module.exports = { openDialogSelector };

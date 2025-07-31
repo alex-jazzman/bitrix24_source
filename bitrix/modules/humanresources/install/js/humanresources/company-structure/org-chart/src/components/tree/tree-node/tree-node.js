@@ -7,15 +7,10 @@ import { EventEmitter } from 'main.core.events';
 import { events } from '../../../consts';
 import { EntityTypes } from 'humanresources.company-structure.utils';
 import { HeadList } from './head-list';
-import { DragAndDrop } from './directives/drag-and-drop';
 import { DepartmentMenuButton } from './department-menu-button';
 import { DepartmentInfoIconButton } from './department-info-icon-button';
 import { SubdivisionAddButton } from './subdivision-add-button';
-import {
-	PermissionActions,
-	PermissionChecker,
-	PermissionLevels,
-} from 'humanresources.company-structure.permission-checker';
+import { PermissionActions, PermissionChecker } from 'humanresources.company-structure.permission-checker';
 import type { MountedDepartment, TreeItem, TreeNodeData } from '../../../types';
 import './style.css';
 
@@ -30,7 +25,7 @@ export const TreeNode = {
 		DepartmentInfoIconButton,
 	},
 
-	directives: { hint: Hint, dnd: DragAndDrop },
+	directives: { hint: Hint },
 
 	inject: ['getTreeBounds'],
 
@@ -228,24 +223,23 @@ export const TreeNode = {
 
 	async mounted(): Promise<void>
 	{
+		let editAction = '';
+		let viewAction = '';
 		if (this.isTeamEntity)
 		{
-			this.showInfo = PermissionChecker.getInstance().hasPermission(PermissionActions.teamView, this.nodeId);
+			viewAction = PermissionActions.teamView;
+			editAction = PermissionActions.teamEdit;
 		}
 		else
 		{
-			this.showInfo = PermissionChecker.getInstance().hasPermission(PermissionActions.structureView, this.nodeId);
+			viewAction = PermissionActions.structureView;
+			editAction = PermissionActions.departmentEdit;
 		}
 
-		this.showDnd =	PermissionChecker.getInstance().hasPermission(
-			PermissionActions.departmentEdit,
-			this.nodeData.parentId,
-			PermissionLevels.selfAndSub,
-		) && PermissionChecker.getInstance().hasPermission(
-			PermissionActions.structureView,
-			this.nodeData.parentId,
-			PermissionLevels.selfAndSub,
-		);
+		const permissionChecker = PermissionChecker.getInstance();
+		this.showInfo = permissionChecker.hasPermission(viewAction, this.nodeId);
+		this.showDnd =	permissionChecker.hasPermission(editAction, this.nodeId)
+			&& permissionChecker.hasPermission(editAction, this.nodeData.parentId);
 
 		this.$emit('calculatePosition', this.nodeId);
 		await this.$nextTick();
@@ -492,7 +486,6 @@ export const TreeNode = {
 			></div>
 			<div
 				v-if="hasChildren"
-				v-dnd="canvasZoom"
 				ref="childrenNode"
 				class="humanresources-tree__node_children"
 				:style="childNodeStyle"

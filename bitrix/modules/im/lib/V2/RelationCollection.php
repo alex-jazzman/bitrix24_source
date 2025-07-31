@@ -332,6 +332,11 @@ class RelationCollection extends Collection implements RestConvertible, PopupDat
 
 	public function onAfterRelationDelete(int $chatId, int $userId): void
 	{
+		$relation = $this->getByUserId($userId, $chatId);
+		if ($relation)
+		{
+			unset($this[$relation->getId()]);
+		}
 		unset($this->relationsByUserId[$chatId][$userId]);
 		unset(self::$startIdStaticCache[$chatId][$userId]);
 	}

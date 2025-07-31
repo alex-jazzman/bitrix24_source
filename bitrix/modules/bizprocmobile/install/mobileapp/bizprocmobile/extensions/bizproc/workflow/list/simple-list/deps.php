@@ -31,5 +31,6 @@ return [
 		'bizproc:task/buttons',
 		'bizproc:task/task-constants',
 		'bizproc:workflow/list/view-mode',
+		'bizproc:app-rating-client',
 	],
 ];

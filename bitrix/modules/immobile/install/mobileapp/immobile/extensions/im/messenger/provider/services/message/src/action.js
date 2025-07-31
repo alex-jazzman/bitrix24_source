@@ -456,10 +456,7 @@ jn.define('im/messenger/provider/services/message/action', (require, exports, mo
 
 		saveShareDialogCache()
 		{
-			this.shareDialogCache.saveRecentItemList()
-				.catch((error) => {
-					Logger.error(`${this.constructor.name} Saving recent items for share dialog failed..`, error);
-				});
+			this.shareDialogCache.saveRecentItemListThrottled();
 		}
 
 		/**

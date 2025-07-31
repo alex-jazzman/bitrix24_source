@@ -16,7 +16,6 @@ import { MessageService } from 'im.v2.provider.service.message';
 import { SoundNotificationManager } from 'im.v2.lib.sound-notification';
 import { isSendMessageCombination, isNewLineCombination } from 'im.v2.lib.hotkey';
 import { Textarea } from 'im.v2.lib.textarea';
-import { ChannelManager } from 'im.v2.lib.channel';
 import { InputAction } from 'im.v2.lib.input-action';
 
 import { MentionManager, MentionManagerEvents } from './classes/mention-manager';
@@ -67,10 +66,6 @@ export const ChatTextarea = {
 		placeholder: {
 			type: String,
 			default: '',
-		},
-		withCreateMenu: {
-			type: Boolean,
-			default: true,
 		},
 		withMarket: {
 			type: Boolean,
@@ -181,10 +176,6 @@ export const ChatTextarea = {
 
 			return settings.get('maxLength');
 		},
-		isChannelType(): boolean
-		{
-			return ChannelManager.isChannel(this.dialogId);
-		},
 		isEmptyText(): boolean
 		{
 			return this.text === '';
@@ -291,13 +282,9 @@ export const ChatTextarea = {
 		},
 		handlePanelAction(text: string)
 		{
-			if (this.editMode && text === '')
+			if (this.editMode)
 			{
-				this.getMessageService().deleteMessages([this.panelContext.messageId]);
-			}
-			else if (this.editMode && text !== '')
-			{
-				this.getMessageService().editMessageText(this.panelContext.messageId, text);
+				this.handleEditAction(text);
 			}
 			else if (this.forwardMode)
 			{
@@ -319,6 +306,25 @@ export const ChatTextarea = {
 					replyId: this.panelContext.messageId,
 				});
 			}
+		},
+		handleEditAction(text: string): void
+		{
+			if (text === '' && !this.messageHasFiles(this.panelContext.messageId))
+			{
+				return this.getMessageService().deleteMessages([this.panelContext.messageId]);
+			}
+
+			return this.getMessageService().editMessageText(this.panelContext.messageId, text);
+		},
+		messageHasFiles(messageId: number): boolean
+		{
+			const message = this.$store.getters['messages/getById'](messageId);
+			if (!message)
+			{
+				return false;
+			}
+
+			return message.files.length > 0;
 		},
 		clear()
 		{

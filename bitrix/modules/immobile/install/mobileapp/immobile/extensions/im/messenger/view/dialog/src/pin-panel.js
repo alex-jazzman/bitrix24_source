@@ -3,7 +3,7 @@
  */
 jn.define('im/messenger/view/dialog/pin-panel', (require, exports, module) => {
 	const { EventFilterType } = require('im/messenger/const');
-
+	const { StateManager } = require('im/messenger/view/lib/state-manager');
 	const { ProxyView } = require('im/messenger/view/lib/proxy-view');
 	const { Feature } = require('im/messenger/lib/feature');
 
@@ -12,6 +12,28 @@ jn.define('im/messenger/view/dialog/pin-panel', (require, exports, module) => {
 	 */
 	class DialogPinPanel extends ProxyView
 	{
+		/**
+		 * @constructor
+		 * @param {JNBaseClassInterface} ui
+		 * @param {EventFilter} eventFilter
+		 */
+		constructor(ui, eventFilter)
+		{
+			super(ui, eventFilter);
+
+			this.initStateManager();
+		}
+
+		initStateManager()
+		{
+			const state = {
+				isShow: false,
+				pinPanelParams: null,
+			};
+
+			this.stateManager = new StateManager(state);
+		}
+
 		/**
 		 * @return {AvailableEventCollection}
 		 */
@@ -27,8 +49,12 @@ jn.define('im/messenger/view/dialog/pin-panel', (require, exports, module) => {
 		 */
 		show(pinPanelParams)
 		{
-			if (this.isUiAvailable())
+			const newState = { isShow: true, pinPanelParams };
+			const hasChanges = this.stateManager.hasChanges(newState);
+
+			if (this.isUiAvailable() && hasChanges)
 			{
+				this.stateManager.updateState(newState);
 				this.ui.show(pinPanelParams);
 			}
 		}
@@ -38,8 +64,12 @@ jn.define('im/messenger/view/dialog/pin-panel', (require, exports, module) => {
 		 */
 		hide()
 		{
-			if (this.isUiAvailable())
+			const newState = { isShow: false };
+			const hasChanges = this.stateManager.hasChanges(newState);
+
+			if (this.isUiAvailable() && hasChanges)
 			{
+				this.stateManager.updateState(newState);
 				this.ui.hide();
 			}
 		}
@@ -49,9 +79,13 @@ jn.define('im/messenger/view/dialog/pin-panel', (require, exports, module) => {
 		 */
 		update(pinPanelParams)
 		{
-			if (this.isUiAvailable() && Feature.isPinPanelNewAPIAvailable)
+			const newState = { pinPanelParams };
+			const hasChanges = this.stateManager.hasChanges(newState);
+
+			if (this.isUiAvailable() && Feature.isPinPanelNewAPIAvailable && hasChanges)
 			{
 				this.ui.update(pinPanelParams);
+				this.stateManager.updateState(newState);
 			}
 		}
 

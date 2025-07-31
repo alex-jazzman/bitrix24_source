@@ -12,6 +12,7 @@ class EmailMessage implements SendableContract
 		private array $templateParams,
 		private ?int $messageId,
 		private ?bool $isDuplicate = null,
+		private string $userLang = LANGUAGE_ID,
 	)
 	{
 
@@ -25,6 +26,8 @@ class EmailMessage implements SendableContract
 			$this->templateParams,
 			$this->isDuplicate,
 			$this->messageId,
+			[],
+			$this->userLang,
 		);
 	}
 
@@ -36,6 +39,8 @@ class EmailMessage implements SendableContract
 			$this->templateParams,
 			$this->isDuplicate,
 			$this->messageId,
+			[],
+			$this->userLang
 		);
 	}
 }

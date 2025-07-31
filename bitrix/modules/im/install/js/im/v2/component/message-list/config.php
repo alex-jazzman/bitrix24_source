@@ -68,6 +68,8 @@ return [
 		'im.v2.component.message.call',
 		'im.v2.component.message.vote',
 		'im.v2.component.message.creation.task-chat',
+		'im.v2.component.message.collab.convert',
+		'im.v2.component.message.ai-assistant.answer',
 	],
 	'skip_core' => false,
 	'settings' => [

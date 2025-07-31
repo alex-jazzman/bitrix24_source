@@ -72,6 +72,7 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 
 		constructor(dialogId, options = {})
 		{
+			this.options = options;
 			this.store = serviceLocator.get('core').getStore();
 			this.messengerStore = serviceLocator.get('core').getMessengerStore();
 			this.#avatar = null;
@@ -168,7 +169,7 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 
 			if (this.type === DialogType.copilot)
 			{
-				this.avatar = this.getCopilotRoleAvatar(dialogModel.dialogId) || `${ChatAvatar.getImagePath()}avatar_copilot_assistant.png`;
+				this.avatar = this.getCopilotMainRoleAvatar(dialogModel.dialogId) || `${ChatAvatar.getImagePath()}avatar_copilot_assistant.png`;
 			}
 		}
 
@@ -263,6 +264,16 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 			avatarProps.placeholder.letters.fontSize = 15;
 
 			return avatarProps;
+		}
+
+		/**
+		 * @return {string}
+		 */
+		getMessageCopilotPromptAvatarUrl()
+		{
+			const roleData = this.#getCopilotRoleData();
+
+			return withCurrentDomain(roleData?.avatar?.medium || roleData?.avatar?.small);
 		}
 
 		/**
@@ -438,7 +449,7 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 
 				case DialogType.copilot:
 				{
-					return this.#getAvatarCopilotFields();
+					return this.#getAvatarMainRoleCopilotFields();
 				}
 
 				case DialogType.channel:
@@ -545,8 +556,29 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 		 * @private
 		 * @return {AvatarDetail}
 		 */
+		#getAvatarMainRoleCopilotFields()
+		{
+			const defaultFields = this.#getAvatarDefaultFields();
+
+			return {
+				...defaultFields,
+				...this.#getCopilotFields(),
+			};
+		}
+
+		/**
+		 * @private
+		 * @return {AvatarDetail}
+		 */
 		#getAvatarCopilotFields()
 		{
+			const copilotRoleData = this.#getCopilotRoleData();
+			const smallRoleAvatar = copilotRoleData?.avatar?.small;
+			if (smallRoleAvatar)
+			{
+				this.avatar = encodeURI(smallRoleAvatar);
+			}
+
 			const defaultFields = this.#getAvatarDefaultFields();
 
 			return {
@@ -621,7 +653,7 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 		 */
 		#getCopilotFields()
 		{
-			if (!Feature.isChatAvatarAccentTypePurpleAvailable || !Feature.isCopilotInDefaultTabAvailable)
+			if (!Feature.isChatAvatarAccentTypePurpleAvailable)
 			{
 				return {};
 			}
@@ -752,7 +784,7 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 		 * @return {string|null}
 		 * @private
 		 */
-		getCopilotRoleAvatar(dialogId)
+		getCopilotMainRoleAvatar(dialogId)
 		{
 			const copilotMainRole = this.store.getters['dialoguesModel/copilotModel/getMainRoleByDialogId'](dialogId);
 
@@ -828,6 +860,16 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 			}
 
 			return null;
+		}
+
+		/**
+		 * @private
+		 * @return {object|null}
+		 */
+		#getCopilotRoleData()
+		{
+			return serviceLocator.get('core')
+				.getStore().getters['dialoguesModel/copilotModel/getRoleByMessageId'](`chat${this.options?.chatId}`, this.options?.messageId);
 		}
 
 		#getDefaultUserNamedIcon()

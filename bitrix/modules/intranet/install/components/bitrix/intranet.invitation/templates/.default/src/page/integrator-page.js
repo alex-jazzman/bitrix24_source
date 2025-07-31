@@ -144,4 +144,9 @@ export class IntegratorPage extends Page
 	{
 		return Loc.getMessage('BX24_INVITE_DIALOG_ACTION_INVITE');
 	}
+
+	onInviteSuccess(event: BaseEvent)
+	{
+		this.render().querySelector('form')?.reset();
+	}
 }

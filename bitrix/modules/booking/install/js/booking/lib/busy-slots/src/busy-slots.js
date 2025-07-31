@@ -7,6 +7,7 @@ import type { BookingModel, OverbookingMap } from 'booking.model.bookings';
 import type { ResourceModel, SlotRange } from 'booking.model.resources';
 import type { Intersections } from 'booking.model.interface';
 
+import { getIntersectionBusySlots } from './lib';
 import type { BusySlotDto, Range } from './types';
 
 export type { BusySlotDto };
@@ -193,41 +194,15 @@ class BusySlots
 
 		const bookingRanges = this.#getBookings()
 			.filter((booking: BookingModel) => booking.resourcesIds.includes(resourceId))
-			.map((booking: BookingModel) => this.#calculateMinutesRange(booking))
-		;
-
-		const overbookingMap = this.#getOverbookingMap();
-		const intersectionOverbookingList: { resourceId: number, bookingId: number }[] = [];
-		bookingRanges.forEach((bookingRange) => {
-			const overbooking = overbookingMap.get(bookingRange.id);
-			if (!overbooking)
-			{
-				return;
-			}
-
-			const items = overbooking.items
-				.filter((item) => item.resourceId !== resourceId)
-				.flatMap((item) => item.intersections
-					.map(({ id }) => {
-						return { id, resourceId: item.resourceId };
-					}))
-			;
-
-			intersectionOverbookingList.push(...items);
-		});
+			.map((booking: BookingModel) => this.#calculateMinutesRange(booking));
 
 		const intersectingBookings = this.#getIntersectingBookings(intersectingResourcesIds)
 			.filter((booking: BookingModel) => {
 				const notCurrentResource = !booking.resourcesIds.includes(resourceId);
 				const isNotDragged = booking.id !== this.#draggedBookingId;
-				const isOverbooking = overbookingMap.has(booking.id);
-				const isIntersectionOverbooking = intersectionOverbookingList.some(({ id }) => {
-					return id === booking.id;
-				});
 
-				return notCurrentResource && isNotDragged && (isOverbooking || isIntersectionOverbooking);
-			})
-		;
+				return notCurrentResource && isNotDragged;
+			});
 
 		const intersectingBookingRanges = intersectingBookings
 			.map((booking: BookingModel) => this.#calculateMinutesRange(booking))
@@ -246,26 +221,13 @@ class BusySlots
 			return this.#subtractRanges(intersectingRange, bookingRanges);
 		});
 
-		return busyRanges.map(({ from, to, id }): BusySlotDto => {
-			const fromTs = new Date(this.#selectedDateTs).setMinutes(from);
-			const toTs = new Date(this.#selectedDateTs).setMinutes(to);
-			const type = BusySlot.Intersection;
-
-			const booking = intersectingBookings.find((intersectingBooking) => intersectingBooking.id === id);
-
-			const intersectingResourceId = booking
-				? booking.resourcesIds.find((it) => intersectingResourcesIds.includes(it))
-				: 0
-			;
-
-			return {
-				id: `${resourceId}-${fromTs}-${toTs}`,
-				fromTs,
-				toTs,
-				resourceId,
-				intersectingResourceId,
-				type,
-			};
+		return getIntersectionBusySlots({
+			resourceId,
+			busyRanges,
+			overbookingMap: this.#getOverbookingMap(),
+			selectedDateTs: this.#selectedDateTs,
+			intersectingBookings,
+			intersectingResourcesIds,
 		});
 	}
 
@@ -292,25 +254,23 @@ class BusySlots
 		let remainingRanges = [{ ...range }];
 
 		bookingRanges.forEach((bookingRange) => {
-			const fullBookingRange = this.#sliceOverbookingFromBookingRange(bookingRange, bookingRanges);
-
 			remainingRanges = remainingRanges.flatMap((remainingRange) => {
-				if (this.#rangesOverlap(remainingRange, fullBookingRange))
+				if (this.#rangesOverlap(remainingRange, bookingRange))
 				{
 					const parts = [];
-					if (remainingRange.from < fullBookingRange.from)
+					if (remainingRange.from < bookingRange.from)
 					{
 						parts.push({
 							from: remainingRange.from,
-							to: fullBookingRange.from,
+							to: bookingRange.from,
 							id: remainingRange.id,
 						});
 					}
 
-					if (remainingRange.to > fullBookingRange.to)
+					if (remainingRange.to > bookingRange.to)
 					{
 						parts.push({
-							from: fullBookingRange.to,
+							from: bookingRange.to,
 							to: remainingRange.to,
 							id: remainingRange.id,
 						});
@@ -334,23 +294,6 @@ class BusySlots
 		return range1.from < range2.to && range2.from < range1.to;
 	}
 
-	#sliceOverbookingFromBookingRange(bookingRange: Range, bookingRanges: Range[]): Range
-	{
-		const overbooking = bookingRanges.find(({ from, to, id }) => {
-			return bookingRange.from < to && bookingRange.to > from && bookingRange.id !== id;
-		});
-		if (!overbooking)
-		{
-			return bookingRange;
-		}
-
-		return {
-			from: Math.max(bookingRange.from, overbooking.from),
-			to: Math.min(bookingRange.to, overbooking.to),
-			id: bookingRange.id,
-		};
-	}
-
 	filterSlotRanges(slotRanges: { from: number, to: number }[]): { from: number, to: number }[]
 	{
 		return slotRanges
@@ -372,8 +315,7 @@ class BusySlots
 
 				return acc;
 			}, [])
-			.filter(({ from, to }) => to - from > 0)
-		;
+			.filter(({ from, to }) => to - from > 0);
 	}
 
 	#getResource(resourceId: number): ResourceModel

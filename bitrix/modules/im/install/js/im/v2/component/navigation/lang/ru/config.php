@@ -23,6 +23,3 @@ $MESS["IM_USER_SETTINGS_CONNECT_BITRIX24"] = "+Подключить";
 $MESS["IM_USER_SETTINGS_DESKTOP_CONTEXT_MENU_CONNECT_V2"] = "Перейти";
 $MESS["IM_USER_SETTINGS_DESKTOP_CONTEXT_MENU_DISCONNECT_V2"] = "Выйти";
 $MESS["IM_USER_SETTINGS_DESKTOP_CONTEXT_MENU_DELETE_V2"] = "Убрать из списка";
-$MESS["IM_CONTENT_COPILOT_PROMO_HINT_TITLE"] = "CoPilot теперь в общем списке чатов";
-$MESS["IM_CONTENT_COPILOT_PROMO_HINT_DESCRIPTION"] = "Обсудить с ним вопрос или придумать идею стало ещё проще";
-$MESS["IM_CONTENT_COPILOT_PROMO_HINT_ACTION"] = "Создать новый чат с CoPilot";

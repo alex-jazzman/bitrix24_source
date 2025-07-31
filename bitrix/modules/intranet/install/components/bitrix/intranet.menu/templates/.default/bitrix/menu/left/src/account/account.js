@@ -54,11 +54,16 @@ export class Account
 		return sum;
 	}
 
+	getTabUses(): []
+	{
+		return ('undefined' !== typeof BXDesktopSystem) ? BXDesktopSystem.TabList() : [];
+	}
+
 	reload(): void
 	{
-		const currentUserId = Loc.getMessage('USER_ID');
+		const currentUserId = parseInt(Loc.getMessage('USER_ID'), 10);
 		this.accounts = ('undefined' !== typeof BXDesktopSystem) ? DesktopApi.getAccountList() : [];
-		this.currentUser = this.accounts.find((account) => account.id === currentUserId && account.portal === location.hostname);
+		this.currentUser = this.accounts.find((account) => parseInt(account.id, 10) === currentUserId && account.portal === location.hostname);
 
 		this.viewPopupAccounts();
 	}
@@ -140,15 +145,23 @@ export class Account
 	{
 		const block = document.getElementsByClassName('intranet__desktop-menu_user')[0];
 		const counters = this.getSumCounters();
-		const countersView = counters > 99 ? '99+' : counters;
+
+		let counterBlock = null;
+		if (counters > 0)
+		{
+			const countersView = counters > 99 ? '99+' : counters;
+			counterBlock = Tag.render`
+				<div class="intranet__desktop-menu_user-counter ui-counter ui-counter-md ui-counter-danger">
+					<div class="ui-counter-inner" data-role="counter">${countersView}</div>
+				</div>`;
+		}
+
 		this.removeElements('intranet__desktop-menu_user-block');
 
 		let userData = Tag.render`<div class="intranet__desktop-menu_user-block ${ counters > 0 ? 'intranet__desktop-menu_item_counters' : ''}">
 				<span class="intranet__desktop-menu_user-avatar ui-icon ui-icon-common-user ui-icon-common-user-desktop">
 					<i></i>
-					<div class="intranet__desktop-menu_user-counter ui-counter ui-counter-md ui-counter-danger">
-						<div class="ui-counter-inner" data-role="counter">${countersView}</div>
-					</div>
+					${counterBlock}
 				</span>
 				<span class="intranet__desktop-menu_user-inner">
 					<span class="intranet__desktop-menu_user-name">${this.currentUser.portal}</span>
@@ -211,18 +224,25 @@ export class Account
 		this.removeElements('intranet__desktop-menu_popup-item-account');
 
 		let index = 0;
+		const users = this.getTabUses();
 		for (let account of this.accounts)
 		{
 			let currentUserClass = '';
+			let currentUserConnected = '';
 			let counters = 0;
-			if (account.id === this.currentUser.id && account.portal === this.currentUser.portal)
+			const isSelected = users.some(x => parseInt(x.id, 10) === parseInt(account.id, 10) && x.portal === account.portal);
+			if (isSelected)
 			{
-				counters = this.getSumCounters();
-				currentUserClass = '--selected';
+				if (parseInt(account.id, 10) === parseInt(this.currentUser.id, 10) && account.portal === this.currentUser.portal)
+				{
+					counters = this.getSumCounters();
+					currentUserConnected = '--selected';
+				}
+				currentUserClass = '--connected';
 			}
 			const countersView = counters > 99 ? '99+' : counters;
 
-			let item = Tag.render`<li class="intranet__desktop-menu_popup-item intranet__desktop-menu_popup-item-account ${ counters > 0 ? 'intranet__desktop-menu_item_counters' : ''} ${currentUserClass}">
+			let item = Tag.render`<li class="intranet__desktop-menu_popup-item intranet__desktop-menu_popup-item-account ${ counters > 0 ? 'intranet__desktop-menu_item_counters' : ''} ${currentUserClass} ${currentUserConnected}">
 					<span class="intranet__desktop-menu_user-avatar ui-icon ui-icon-common-user ui-icon-common-user-${index}">
 						<i></i>
 						<div class="intranet__desktop-menu_user-counter ui-counter ui-counter-md ui-counter-danger">
@@ -238,7 +258,7 @@ export class Account
 
 			Dom.insertBefore(item, block.children[index]);
 
-			this.addContextMenu(account, index);
+			this.addContextMenu(account, index, isSelected);
 
 			let userAvatar = document.getElementsByClassName('ui-icon-common-user-' + index)[0];
 			let previewUserImage = this.getAvatarUrl(account);
@@ -248,7 +268,7 @@ export class Account
 		}
 	}
 
-	addContextMenu(account: DesktopAccount, index: number): void
+	addContextMenu(account: DesktopAccount, index: number, isSelected: boolean): void
 	{
 		const button = document.getElementById(`ui-icon-set-${index}`);
 		const popup = this.popup;
@@ -261,7 +281,7 @@ export class Account
 			bindElement: button,
 			className: 'intranet__desktop-menu_context',
 			items: [
-				account.id === this.currentUser.id && account.portal === this.currentUser.portal ?
+				isSelected ?
 					{
 						text: Loc.getMessage('MENU_ACCOUNT_POPUP_DISCONNECT'),
 						onclick: function(event, item) {

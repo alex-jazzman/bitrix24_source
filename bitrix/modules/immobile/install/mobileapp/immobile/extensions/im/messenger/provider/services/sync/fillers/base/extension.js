@@ -3,6 +3,7 @@
  */
 jn.define('im/messenger/provider/services/sync/fillers/base', (require, exports, module) => {
 	const { Type } = require('type');
+	const { Feature } = require('im/messenger/lib/feature');
 	const { DialogType, EventType } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { UserManager } = require('im/messenger/lib/user-manager');
@@ -147,6 +148,7 @@ jn.define('im/messenger/provider/services/sync/fillers/base', (require, exports,
 			const filteredUsers = [...users, ...pinnedUsers, ...recentUsers].filter((user) => user.id !== 0);
 			const usersUniqueCollection = [...new Map(filteredUsers.map((user) => [user.id, user])).values()];
 			const usersPromise = this.store.dispatch('usersModel/set', usersUniqueCollection);
+			logger.log(`${this.constructor.name}.updateModels usersModel/set is create promise`, usersPromise);
 
 			const formattedMessagesAutoDeleteConfigs = {};
 			messagesAutoDeleteConfigs.forEach((item) => {
@@ -172,10 +174,15 @@ jn.define('im/messenger/provider/services/sync/fillers/base', (require, exports,
 			});
 
 			const dialoguesPromise = this.store.dispatch('dialoguesModel/set', addedChatsWithDialogIds);
+			logger.log(`${this.constructor.name}.updateModels dialoguesModel/set is create promise`, dialoguesPromise);
+
 			const filesPromise = this.store.dispatch('filesModel/set', [...files, ...pinnedFiles]);
+			logger.log(`${this.constructor.name}.updateModels filesModel/set is create promise`, filesPromise);
+
 			const reactionPromise = this.store.dispatch('messagesModel/reactionsModel/set', {
 				reactions,
 			});
+			logger.log(`${this.constructor.name}.updateModels reactionsModel/set is create promise`, reactionPromise);
 
 			const pinPromises = [
 				this.store.dispatch('messagesModel/pinModel/deleteByIdList', {
@@ -186,6 +193,7 @@ jn.define('im/messenger/provider/services/sync/fillers/base', (require, exports,
 					messages: addedPins.additionalMessages ?? [],
 				}),
 			];
+			logger.log(`${this.constructor.name}.updateModels pinPromises are created`, reactionPromise);
 
 			await Promise.all([
 				usersPromise,
@@ -195,8 +203,19 @@ jn.define('im/messenger/provider/services/sync/fillers/base', (require, exports,
 			]);
 
 			await Promise.all(pinPromises);
+			logger.log(`${this.constructor.name}.updateModels store dispatch promise.all fulfilled`);
 
-			await this.store.dispatch('recentModel/update', addedRecent);
+			if (Feature.isChatBetaEnabled)
+			{
+				await this.store.dispatch('recentModel/set', addedRecent);
+				logger.log(`${this.constructor.name}.updateModels recentModel/set promise fulfilled`);
+			}
+			else
+			{
+				await this.store.dispatch('recentModel/update', addedRecent);
+				logger.log(`${this.constructor.name}.updateModels recentModel/update promise fulfilled`);
+			}
+
 			const messagesPromise = [];
 
 			const openChatIdList = this.getOpenChatsToAddMessages();
@@ -224,6 +243,7 @@ jn.define('im/messenger/provider/services/sync/fillers/base', (require, exports,
 			);
 
 			await Promise.all(messagesPromise);
+			logger.log(`${this.constructor.name}.updateModels store dispatch messagesPromise fulfilled`);
 
 			this.closeDeletedCommentsChats(completeDeletedMessages);
 			await this.processDeletedChats(ChatDataProvider.source.model, deletedChats);

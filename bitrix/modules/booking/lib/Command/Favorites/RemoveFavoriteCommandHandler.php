@@ -8,6 +8,7 @@ use Bitrix\Booking\Internals\Exception\Favorites\RemoveFavoritesException;
 use Bitrix\Booking\Internals\Container;
 use Bitrix\Booking\Internals\Repository\FavoritesRepositoryInterface;
 use Bitrix\Booking\Internals\Repository\ResourceRepositoryInterface;
+use Bitrix\Booking\Provider\Params\Resource\ResourceSelect;
 use Bitrix\Main\ORM\Query\Filter\ConditionTree;
 
 class RemoveFavoriteCommandHandler
@@ -28,6 +29,7 @@ class RemoveFavoriteCommandHandler
 				filter: (new ConditionTree())
 					->whereIn('ID', $command->resourcesIds)
 					->where('IS_MAIN', '=', true),
+				select: new ResourceSelect(),
 			)
 			->getEntityIds()
 		;

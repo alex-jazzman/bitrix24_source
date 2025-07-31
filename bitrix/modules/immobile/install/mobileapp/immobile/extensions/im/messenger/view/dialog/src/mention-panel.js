@@ -4,6 +4,7 @@
 jn.define('im/messenger/view/dialog/mention-panel', (require, exports, module) => {
 	const { EventFilterType } = require('im/messenger/const');
 
+	const { StateManager } = require('im/messenger/view/lib/state-manager');
 	const { ProxyView } = require('im/messenger/view/lib/proxy-view');
 
 	/**
@@ -11,6 +12,29 @@ jn.define('im/messenger/view/dialog/mention-panel', (require, exports, module) =
 	 */
 	class DialogMentionPanel extends ProxyView
 	{
+		/**
+		 * @constructor
+		 * @param {JNBaseClassInterface} ui
+		 * @param {EventFilter} eventFilter
+		 */
+		constructor(ui, eventFilter)
+		{
+			super(ui, eventFilter);
+
+			this.initStateManager();
+		}
+
+		initStateManager()
+		{
+			const state = {
+				isOpen: false,
+				isShowLoader: false,
+				items: null,
+			};
+
+			this.stateManager = new StateManager(state);
+		}
+
 		/**
 		 * @return {AvailableEventCollection}
 		 */
@@ -26,8 +50,12 @@ jn.define('im/messenger/view/dialog/mention-panel', (require, exports, module) =
 		 */
 		open(items)
 		{
-			if (this.isUiAvailable())
+			const newState = { items, isOpen: true };
+			const hasChanges = this.stateManager.hasChanges(newState);
+
+			if (this.isUiAvailable() && hasChanges)
 			{
+				this.stateManager.updateState(newState);
 				this.ui.open(items);
 			}
 		}
@@ -37,8 +65,12 @@ jn.define('im/messenger/view/dialog/mention-panel', (require, exports, module) =
 		 */
 		close()
 		{
-			if (this.isUiAvailable())
+			const newState = { isOpen: false };
+			const hasChanges = this.stateManager.hasChanges(newState);
+
+			if (this.isUiAvailable() && hasChanges)
 			{
+				this.stateManager.updateState(newState);
 				this.ui.close();
 			}
 		}
@@ -48,9 +80,13 @@ jn.define('im/messenger/view/dialog/mention-panel', (require, exports, module) =
 		 */
 		setItems(items)
 		{
-			if (this.isUiAvailable())
+			const newState = { items };
+			const hasChanges = this.stateManager.hasChanges(newState);
+
+			if (this.isUiAvailable() && hasChanges)
 			{
 				this.ui.setItems(items);
+				this.stateManager.updateState(newState);
 			}
 		}
 
@@ -59,8 +95,12 @@ jn.define('im/messenger/view/dialog/mention-panel', (require, exports, module) =
 		 */
 		showLoader()
 		{
-			if (this.isUiAvailable())
+			const newState = { isShowLoader: true };
+			const hasChanges = this.stateManager.hasChanges(newState);
+
+			if (this.isUiAvailable() && hasChanges)
 			{
+				this.stateManager.updateState(newState);
 				this.ui.showLoader();
 			}
 		}
@@ -70,8 +110,12 @@ jn.define('im/messenger/view/dialog/mention-panel', (require, exports, module) =
 		 */
 		hideLoader()
 		{
-			if (this.isUiAvailable())
+			const newState = { isShowLoader: false };
+			const hasChanges = this.stateManager.hasChanges(newState);
+
+			if (this.isUiAvailable() && hasChanges)
 			{
+				this.stateManager.updateState(newState);
 				this.ui.hideLoader();
 			}
 		}

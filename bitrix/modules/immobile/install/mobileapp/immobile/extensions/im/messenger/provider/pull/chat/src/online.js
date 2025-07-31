@@ -2,7 +2,7 @@
  * @module im/messenger/provider/pull/chat/online
  */
 jn.define('im/messenger/provider/pull/chat/online', (require, exports, module) => {
-	const { clone } = require('utils/object');
+	const { clone, merge } = require('utils/object');
 	const { RecentDataConverter } = require('im/messenger/lib/converter/data/recent');
 	const { BasePullHandler } = require('im/messenger/provider/pull/base');
 	const { getLogger } = require('im/messenger/lib/logger');
@@ -72,9 +72,7 @@ jn.define('im/messenger/provider/pull/chat/online', (require, exports, module) =
 					return;
 				}
 
-				recentItem = ChatUtils.objectMerge(recentItem, {
-					user: RecentDataConverter.getUserDataFormat(userCollection[userId]),
-				});
+				recentItem = merge(recentItem, { user: RecentDataConverter.getUserDataFormat(userCollection[userId]) });
 
 				this.store.dispatch('recentModel/set', [recentItem]);
 				this.store.dispatch('usersModel/update', userCollection[userId]);

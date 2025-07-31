@@ -161,9 +161,7 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 				zoomActive: false,
 				zoomAvailable: false,
 				intranetInviteAvailable: false,
-				messagesAutoDeleteAvailable: false,
 				messagesAutoDeleteEnabled: false,
-				copilotInDefaultTabAvailable: false,
 				voteCreationAvailable: false,
 			});
 		}
@@ -183,22 +181,6 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 			});
 
 			this.set('IM_FEATURES', actualFeatures);
-		}
-
-		/**
-		 * @return {SidebarV2Features}
-		 */
-		getSidebarV2Features()
-		{
-			return this.get('SIDEBAR_V2_FEATURES', {
-				directChatSidebar: false,
-				groupChatSidebar: false,
-				collabSidebar: false,
-				channelSidebar: false,
-				copilotSidebar: false,
-				commentsSidebar: false,
-				notesSidebar: false,
-			});
 		}
 
 		/**

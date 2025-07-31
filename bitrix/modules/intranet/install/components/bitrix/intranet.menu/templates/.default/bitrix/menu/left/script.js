@@ -6,7 +6,8 @@ this.BX = this.BX || {};
 	let _ = t => t,
 	  _t,
 	  _t2,
-	  _t3;
+	  _t3,
+	  _t4;
 	class Account {
 	  constructor(allCounters) {
 	    this.accounts = [];
@@ -41,10 +42,13 @@ this.BX = this.BX || {};
 	    }
 	    return sum;
 	  }
+	  getTabUses() {
+	    return 'undefined' !== typeof BXDesktopSystem ? BXDesktopSystem.TabList() : [];
+	  }
 	  reload() {
-	    const currentUserId = main_core.Loc.getMessage('USER_ID');
+	    const currentUserId = parseInt(main_core.Loc.getMessage('USER_ID'), 10);
 	    this.accounts = 'undefined' !== typeof BXDesktopSystem ? im_v2_lib_desktopApi.DesktopApi.getAccountList() : [];
-	    this.currentUser = this.accounts.find(account => account.id === currentUserId && account.portal === location.hostname);
+	    this.currentUser = this.accounts.find(account => parseInt(account.id, 10) === currentUserId && account.portal === location.hostname);
 	    this.viewPopupAccounts();
 	  }
 	  initPopup() {
@@ -103,20 +107,25 @@ this.BX = this.BX || {};
 	  viewDesktopUser() {
 	    const block = document.getElementsByClassName('intranet__desktop-menu_user')[0];
 	    const counters = this.getSumCounters();
-	    const countersView = counters > 99 ? '99+' : counters;
+	    let counterBlock = null;
+	    if (counters > 0) {
+	      const countersView = counters > 99 ? '99+' : counters;
+	      counterBlock = main_core.Tag.render(_t || (_t = _`
+				<div class="intranet__desktop-menu_user-counter ui-counter ui-counter-md ui-counter-danger">
+					<div class="ui-counter-inner" data-role="counter">${0}</div>
+				</div>`), countersView);
+	    }
 	    this.removeElements('intranet__desktop-menu_user-block');
-	    let userData = main_core.Tag.render(_t || (_t = _`<div class="intranet__desktop-menu_user-block ${0}">
+	    let userData = main_core.Tag.render(_t2 || (_t2 = _`<div class="intranet__desktop-menu_user-block ${0}">
 				<span class="intranet__desktop-menu_user-avatar ui-icon ui-icon-common-user ui-icon-common-user-desktop">
 					<i></i>
-					<div class="intranet__desktop-menu_user-counter ui-counter ui-counter-md ui-counter-danger">
-						<div class="ui-counter-inner" data-role="counter">${0}</div>
-					</div>
+					${0}
 				</span>
 				<span class="intranet__desktop-menu_user-inner">
 					<span class="intranet__desktop-menu_user-name">${0}</span>
 					<span class="intranet__desktop-menu_user-post">${0}</span>
 				</span>
-			</div>`), counters > 0 ? 'intranet__desktop-menu_item_counters' : '', countersView, this.currentUser.portal, this.currentUser.work_position);
+			</div>`), counters > 0 ? 'intranet__desktop-menu_item_counters' : '', counterBlock, this.currentUser.portal, this.currentUser.work_position);
 	    main_core.Dom.append(userData, block);
 	    const avatar = document.getElementsByClassName('ui-icon-common-user-desktop')[0];
 	    const previewImage = this.getAvatarUrl(this.currentUser);
@@ -138,7 +147,7 @@ this.BX = this.BX || {};
 	      position = `<span class="intranet__desktop-menu_popup-post">${this.currentUser.work_position}</span>`;
 	    }
 	    this.removeElements('intranet__desktop-menu_popup-header');
-	    let item = main_core.Tag.render(_t2 || (_t2 = _`<div class="intranet__desktop-menu_popup-header">
+	    let item = main_core.Tag.render(_t3 || (_t3 = _`<div class="intranet__desktop-menu_popup-header">
 			<span class="intranet__desktop-menu_user-avatar ui-icon ui-icon-common-user ui-icon-common-user-popup">
 				<i></i>
 			</span>
@@ -155,15 +164,21 @@ this.BX = this.BX || {};
 	    const block = document.getElementsByClassName('intranet__desktop-menu_popup-list')[0];
 	    this.removeElements('intranet__desktop-menu_popup-item-account');
 	    let index = 0;
+	    const users = this.getTabUses();
 	    for (let account of this.accounts) {
 	      let currentUserClass = '';
+	      let currentUserConnected = '';
 	      let counters = 0;
-	      if (account.id === this.currentUser.id && account.portal === this.currentUser.portal) {
-	        counters = this.getSumCounters();
-	        currentUserClass = '--selected';
+	      const isSelected = users.some(x => parseInt(x.id, 10) === parseInt(account.id, 10) && x.portal === account.portal);
+	      if (isSelected) {
+	        if (parseInt(account.id, 10) === parseInt(this.currentUser.id, 10) && account.portal === this.currentUser.portal) {
+	          counters = this.getSumCounters();
+	          currentUserConnected = '--selected';
+	        }
+	        currentUserClass = '--connected';
 	      }
 	      const countersView = counters > 99 ? '99+' : counters;
-	      let item = main_core.Tag.render(_t3 || (_t3 = _`<li class="intranet__desktop-menu_popup-item intranet__desktop-menu_popup-item-account ${0} ${0}">
+	      let item = main_core.Tag.render(_t4 || (_t4 = _`<li class="intranet__desktop-menu_popup-item intranet__desktop-menu_popup-item-account ${0} ${0} ${0}">
 					<span class="intranet__desktop-menu_user-avatar ui-icon ui-icon-common-user ui-icon-common-user-${0}">
 						<i></i>
 						<div class="intranet__desktop-menu_user-counter ui-counter ui-counter-md ui-counter-danger">
@@ -175,16 +190,16 @@ this.BX = this.BX || {};
 						<span class="intranet__desktop-menu_popup-post">${0}</span>
 					</span>
 					<span class="intranet__desktop-menu_popup-btn ui-icon-set --more" id="ui-icon-set-${0}"></span>
-				</li>`), counters > 0 ? 'intranet__desktop-menu_item_counters' : '', currentUserClass, index, countersView, account.portal, account.login, index);
+				</li>`), counters > 0 ? 'intranet__desktop-menu_item_counters' : '', currentUserClass, currentUserConnected, index, countersView, account.portal, account.login, index);
 	      main_core.Dom.insertBefore(item, block.children[index]);
-	      this.addContextMenu(account, index);
+	      this.addContextMenu(account, index, isSelected);
 	      let userAvatar = document.getElementsByClassName('ui-icon-common-user-' + index)[0];
 	      let previewUserImage = this.getAvatarUrl(account);
 	      main_core.Dom.style(userAvatar, '--ui-icon-service-bg-image', previewUserImage);
 	      index++;
 	    }
 	  }
-	  addContextMenu(account, index) {
+	  addContextMenu(account, index, isSelected) {
 	    const button = document.getElementById(`ui-icon-set-${index}`);
 	    const popup = this.popup;
 	    const contextPopup = this.contextPopup;
@@ -194,7 +209,7 @@ this.BX = this.BX || {};
 	    contextPopup[index] = new main_popup.Menu({
 	      bindElement: button,
 	      className: 'intranet__desktop-menu_context',
-	      items: [account.id === this.currentUser.id && account.portal === this.currentUser.portal ? {
+	      items: [isSelected ? {
 	        text: main_core.Loc.getMessage('MENU_ACCOUNT_POPUP_DISCONNECT'),
 	        onclick: function (event, item) {
 	          var _BXDesktopSystem;
@@ -346,11 +361,13 @@ this.BX = this.BX || {};
 
 	class Counters {
 	  init() {
-	    BX.addCustomEvent("onPullEvent-main", (command, params) => {
-	      const key = 'SITE_ID';
-	      const siteId = BX.message(key);
-	      if (command === "user_counter" && params[siteId]) {
-	        let counters = BX.clone(params[siteId]);
+	    // All Counters
+	    main_core_events.EventEmitter.subscribe('onPullEvent-main', event => {
+	      const [command, params] = event.getCompatData();
+	      if (command === 'user_counter' && params[Loc.getMessage('SITE_ID')]) {
+	        const counters = {
+	          ...params[Loc.getMessage('SITE_ID')]
+	        };
 	        this.updateCounters(counters, false);
 	      }
 	    });
@@ -366,11 +383,16 @@ this.BX = this.BX || {};
 	        this.updateCounters(counters, false);
 	      }
 	    });
-	    BX.addCustomEvent(window, "onImUpdateCounter", counters => {
-	      if (!counters) return;
-	      this.updateCounters(BX.clone(counters), false);
+
+	    // All Counters from IM
+	    main_core_events.EventEmitter.subscribe('onImUpdateCounter', event => {
+	      const [counters] = event.getCompatData();
+	      this.updateCounters(counters, false);
 	    });
-	    BX.addCustomEvent("onImUpdateCounterMessage", counter => {
+
+	    // Messenger counter
+	    main_core_events.EventEmitter.subscribe('onImUpdateCounterMessage', event => {
+	      const [counter] = event.getCompatData();
 	      this.updateCounters({
 	        'im-message': counter
 	      }, false);
@@ -384,8 +406,11 @@ this.BX = this.BX || {};
 	        }
 	      });
 	    }
-	    BX.addCustomEvent("onCounterDecrement", iDecrement => {
-	      this.decrementCounter(BX("menu-counter-live-feed"), iDecrement);
+
+	    // Live Feed Counter
+	    main_core_events.EventEmitter.subscribe('onCounterDecrement', event => {
+	      const [decrement] = event.getCompatData();
+	      this.decrementCounter(document.getElementById('menu-counter-live-feed'), decrement);
 	    });
 	  }
 	  updateCounters(counters, send) {
@@ -749,27 +774,6 @@ this.BX = this.BX || {};
 	    if (counters['**'] !== undefined) {
 	      counters['live-feed'] = counters['**'];
 	      delete counters['**'];
-	    }
-	    let workgroupsCounterUpdated = false;
-	    if (!main_core.Type.isUndefined(counters['**SG0'])) {
-	      this.workgroupsCounterData['livefeed'] = counters['**SG0'];
-	      delete counters['**SG0'];
-	      workgroupsCounterUpdated = true;
-	    }
-	    if (!main_core.Type.isUndefined(counters[main_core.Loc.getMessage('COUNTER_PROJECTS_MAJOR')])) {
-	      this.workgroupsCounterData[main_core.Loc.getMessage('COUNTER_PROJECTS_MAJOR')] = counters[main_core.Loc.getMessage('COUNTER_PROJECTS_MAJOR')];
-	      delete counters[main_core.Loc.getMessage('COUNTER_PROJECTS_MAJOR')];
-	      workgroupsCounterUpdated = true;
-	    }
-	    if (!main_core.Type.isUndefined(counters[main_core.Loc.getMessage('COUNTER_SCRUM_TOTAL_COMMENTS')])) {
-	      this.workgroupsCounterData[main_core.Loc.getMessage('COUNTER_SCRUM_TOTAL_COMMENTS')] = counters[main_core.Loc.getMessage('COUNTER_SCRUM_TOTAL_COMMENTS')];
-	      delete counters[main_core.Loc.getMessage('COUNTER_SCRUM_TOTAL_COMMENTS')];
-	      workgroupsCounterUpdated = true;
-	    }
-	    if (workgroupsCounterUpdated) {
-	      counters['workgroups'] = Object.entries(this.workgroupsCounterData).reduce((prevValue, [, curValue]) => {
-	        return prevValue + Number(curValue);
-	      }, 0);
 	    }
 	    if (counters['live-feed']) {
 	      if (counters['live-feed'] <= 0) {

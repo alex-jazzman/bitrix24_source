@@ -335,6 +335,21 @@ input.ui-entity-editor-header-title-text {
 .ui-entity-new-field-addiction-flex-row {
 	display: flex;
 	align-items: center;
+	justify-content: space-between;
+}
+
+.ui-entity-editor-userfield-file-default-view {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.ui-entity-editor-userfield-file-default-view .ui-btn:not(.--air):after,
+.ui-entity-editor-userfield-file-default-view .ui-btn-split:not(.--air) .ui-btn-main:after {
+	width: 20px;
+	height: 20px;
+	left: 8px;
+	background-size: cover;
 }
 
 /* remove btn*/

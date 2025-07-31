@@ -199,7 +199,7 @@ jn.define('tasks/layout/simple-list/items/task-redux/task-content', (require, ex
 			const formatter = new DynamicDateFormatter({
 				config: {
 					[DynamicDateFormatter.periods.DAY]: shortTime(),
-					[DynamicDateFormatter.deltas.WEEK]: 'E',
+					[DynamicDateFormatter.periods.WEEK]: 'E',
 					[DynamicDateFormatter.periods.YEAR]: dayShortMonth(),
 				},
 				defaultFormat: date(),

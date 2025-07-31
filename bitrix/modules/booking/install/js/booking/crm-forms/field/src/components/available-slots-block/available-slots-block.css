@@ -7,3 +7,8 @@
 .booking--crm-forms--field-group--available-slots-block__btn-show-more {
 	width: 160px
 }
+
+.booking--crm-forms--available-slots-block__empty-slots {
+	margin: 4em 0;
+	text-align: center;
+}

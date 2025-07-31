@@ -372,7 +372,7 @@ export class SettingsWidget extends EventEmitter
 		`;
 
 		const element = Tag.render`
-			<div onclick="${onclick}" class="intranet-settings-widget_box --clickable">
+			<div onclick="${onclick}" class="intranet-settings-widget_box --clickable" data-testid="settings-widget-block-main-page">
 				<div class="intranet-settings-widget_inner">
 					<div class="intranet-settings-widget_icon-box --green">
 						<div class="ui-icon-set --home-page"></div>
@@ -500,7 +500,7 @@ export class SettingsWidget extends EventEmitter
 		`;
 
 		const element = Tag.render`
-			<div class="intranet-settings-widget__branch" onclick="${onclickOpen}">
+			<div class="intranet-settings-widget__branch" onclick="${onclickOpen}" data-testid="settings-widget-block-filial-network">
 				<div class="intranet-settings-widget__branch-icon_box">
 					<div class="ui-icon-set intranet-settings-widget__branch-icon --filial-network"></div>
 					${!this.#holding.canBeHolding ? lockIcon : ''}
@@ -535,7 +535,7 @@ export class SettingsWidget extends EventEmitter
 		};
 
 		const element = Tag.render`
-			<span onclick="${onclick}" class="intranet-settings-widget_box --clickable">
+			<span onclick="${onclick}" class="intranet-settings-widget_box --clickable" data-testid="settings-widget-block-security">
 				<div class="intranet-settings-widget_inner">
 					<div class="intranet-settings-widget_icon-box ${this.#otp.IS_ACTIVE === 'Y' ? '--green' : '--yellow'}">
 						<div class="ui-icon-set --shield"></div>
@@ -559,7 +559,7 @@ export class SettingsWidget extends EventEmitter
 		};
 
 		const element = Tag.render`
-			<span onclick="${onclick}" class="intranet-settings-widget_box --clickable">
+			<span onclick="${onclick}" class="intranet-settings-widget_box --clickable" data-testid="settings-widget-block-general-settings">
 				<div class="intranet-settings-widget_inner">
 					<div class="intranet-settings-widget_icon-box --gray">
 						<div class="ui-icon-set --settings-2"></div>
@@ -583,7 +583,7 @@ export class SettingsWidget extends EventEmitter
 		};
 
 		const element = Tag.render`
-			<div onclick="${onclick}" class="intranet-settings-widget_box --clickable">
+			<div onclick="${onclick}" class="intranet-settings-widget_box --clickable" data-testid="settings-widget-block-migrate">
 				<div class="intranet-settings-widget_inner">
 					<div class="intranet-settings-widget_icon-box --gray">
 						<div class="ui-icon-set --market-1"></div>

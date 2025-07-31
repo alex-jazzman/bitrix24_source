@@ -17,6 +17,7 @@ import { CollabContent } from '../../content/collab/collab';
 import { MultidialogContent } from '../../content/multidialog/multidialog';
 import { NotesContent } from '../../content/notes/notes-content';
 import { DefaultChatContent } from '../../content/default/default';
+import { AiAssistantContent } from '../../content/aiassistant/aiassistant';
 import { BaseEmptyState as EmptyState } from './components/empty-state/base';
 import { ChannelEmptyState } from './components/empty-state/channel';
 import { EmbeddedChatPromoEmptyState } from './components/empty-state/chat/embedded-promo';
@@ -28,6 +29,11 @@ import './css/default-chat-content.css';
 
 import type { BitrixVueComponentProps } from 'ui.vue3';
 import type { ImModelChat, ImModelLayout } from 'im.v2.model';
+
+type ContentComponentConfigItem = {
+	condition: boolean,
+	component: BitrixVueComponentProps
+};
 
 // @vue/component
 export const ChatOpener = {
@@ -84,9 +90,50 @@ export const ChatOpener = {
 		{
 			return Number.parseInt(this.dialogId, 10) === Core.getUserId();
 		},
+		isAiAssistant(): boolean
+		{
+			return this.$store.getters['users/bots/isAiAssistant'](this.dialogId);
+		},
 		isGuest(): boolean
 		{
 			return this.dialog.role === UserRole.guest;
+		},
+		contentComponentConfig(): ContentComponentConfigItem[]
+		{
+			return [
+				{
+					condition: this.isChannel,
+					component: ChannelContent,
+				},
+				{
+					condition: this.isCollab,
+					component: CollabContent,
+				},
+				{
+					condition: this.isMultidialog,
+					component: MultidialogContent,
+				},
+				{
+					condition: this.isNotes,
+					component: NotesContent,
+				},
+				{
+					condition: this.isAiAssistant,
+					component: AiAssistantContent,
+				},
+				{
+					condition: this.isRecentChat,
+					component: DefaultChatContent,
+				},
+			];
+		},
+		contentComponent(): BitrixVueComponentProps
+		{
+			const matchingItem: ContentComponentConfigItem = this.contentComponentConfig.find((item) => {
+				return item.condition === true;
+			});
+
+			return matchingItem ? matchingItem.component : BaseChatContent;
 		},
 		emptyStateComponent(): BitrixVueComponentProps
 		{
@@ -245,12 +292,7 @@ export const ChatOpener = {
 	template: `
 		<div class="bx-im-content-default-chat__container">
 			<component :is="emptyStateComponent" v-if="!dialogId" />
-			<ChannelContent v-else-if="isChannel" :dialogId="dialogId" />
-			<CollabContent v-else-if="isCollab" :dialogId="dialogId" />
-			<MultidialogContent v-else-if="isMultidialog" :dialogId="dialogId" />
-			<NotesContent v-else-if="isNotes" :dialogId="dialogId" />
-			<DefaultChatContent v-else-if="isRecentChat" :dialogId="dialogId" />
-			<BaseChatContent v-else :dialogId="dialogId" />
+			<component :is="contentComponent" v-else :dialogId="dialogId" />
 		</div>
 	`,
 };

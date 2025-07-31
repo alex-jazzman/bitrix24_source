@@ -109,7 +109,6 @@ class Calendar extends BaseController
 				bookingCollection: $bookings,
 				dateFrom: $dateFrom,
 				dateTo: $dateTo,
-				withCounters: false,
 			),
 			foundDatesWithCounters: $this->getBookingsDates(
 				bookingCollection: $bookings,

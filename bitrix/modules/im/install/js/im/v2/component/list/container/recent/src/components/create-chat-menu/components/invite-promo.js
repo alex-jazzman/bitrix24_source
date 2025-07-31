@@ -1,3 +1,4 @@
+import { Analytics } from 'im.v2.lib.analytics';
 import { InviteManager } from 'im.v2.lib.invite';
 import { PromoManager } from 'im.v2.lib.promo';
 import { PromoId } from 'im.v2.const';
@@ -12,7 +13,8 @@ export const InvitePromo = {
 	{
 		onContainerClick(): void
 		{
-			InviteManager.openInviteSlider();
+			const analyticsContext = Analytics.getInstance().sliderInvite.getRecentCreateMenuContext();
+			InviteManager.openInviteSlider(analyticsContext);
 		},
 		onCloseClick(): void
 		{

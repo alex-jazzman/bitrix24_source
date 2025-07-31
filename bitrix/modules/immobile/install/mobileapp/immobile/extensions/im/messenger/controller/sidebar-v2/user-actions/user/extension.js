@@ -3,13 +3,21 @@
  */
 jn.define('im/messenger/controller/sidebar-v2/user-actions/user', (require, exports, module) => {
 	const { getLogger } = require('im/messenger/lib/logger');
-	const { EventType, BBCode, ComponentCode } = require('im/messenger/const');
+	const {
+		EventType,
+		BBCode,
+		ComponentCode,
+		ErrorType,
+	} = require('im/messenger/const');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { ChatService } = require('im/messenger/provider/services/chat');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
+	const { Notification } = require('im/messenger/lib/ui/notification');
 	const { backToRecentChats } = require('im/messenger/controller/sidebar-v2/user-actions/navigation');
 	const { resolveLeaveDialogConfirmFn } = require('im/messenger/controller/sidebar-v2/user-actions/alerts');
+	const { Loc } = require('im/messenger/controller/sidebar-v2/loc');
+	const { SIDEBAR_DEFAULT_TOAST_OFFSET } = require('im/messenger/controller/sidebar-v2/const');
 
 	const logger = getLogger('SidebarV2.UserActions');
 
@@ -31,7 +39,22 @@ jn.define('im/messenger/controller/sidebar-v2/user-actions/user', (require, expo
 	{
 		(new ChatService()).leaveFromChat(dialogId)
 			.then(() => backToRecentChats())
-			.catch((error) => logger.error('Failed to leave from chat', error));
+			.catch((error) => {
+				logger.error('Failed to leave from chat', error);
+
+				const errorType = error?.getError()?.error ?? '';
+				const errorMessage = (errorType === ErrorType.dialog.delete.userInvitedFromStructure)
+					? Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_LEAVE_CHAT_ERROR_USER_INVITED_FROM_STRUCTURE')
+					: Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_LEAVE_CHAT_ERROR_DEFAULT');
+
+				if (errorMessage)
+				{
+					Notification.showErrorToast({
+						message: errorMessage,
+						offset: SIDEBAR_DEFAULT_TOAST_OFFSET,
+					});
+				}
+			});
 	}
 
 	/**

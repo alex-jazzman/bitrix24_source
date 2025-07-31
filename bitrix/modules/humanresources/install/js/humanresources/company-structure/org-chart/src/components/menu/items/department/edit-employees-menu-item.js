@@ -80,6 +80,7 @@ export class EditEmployeesMenuItem extends AbstractMenuItem
 		EventEmitter.emit(events.HR_ENTITY_SHOW_WIZARD, {
 			nodeId: entityId,
 			isEditMode: true,
+			showEntitySelector: false,
 			type: 'employees',
 			source: analyticSource,
 		});

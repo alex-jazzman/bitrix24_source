@@ -236,6 +236,7 @@ jn.define('selector/widget', (require, exports, module) => {
 
 					this.widget.on('send', () => this.close());
 					this.widget.on('onViewShown', this.onViewShown);
+					this.widget.on('onInfoIconClicked', this.onInfoIconClicked);
 
 					this.widget.setListener((eventName, data) => {
 						const callbackName = `${eventName}Listener`;
@@ -264,6 +265,18 @@ jn.define('selector/widget', (require, exports, module) => {
 					.catch(reject);
 			});
 		}
+
+		onInfoIconClicked = ({ item, text, scope }) => {
+			this.handleOnEventsCallback('onInfoIconClicked', { item, text, scope });
+		};
+
+		getAllowMultipleSelection = () => {
+			return this.allowMultipleSelection;
+		};
+
+		setShouldSetInitiallySelectedItems = (value) => {
+			this.shouldSetInitiallySelectedItems = value;
+		};
 
 		// region widget event listeners
 

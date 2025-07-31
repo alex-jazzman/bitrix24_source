@@ -11,6 +11,7 @@ enum EventName implements Contract\Enum\EventName
 	case OnMemberDeleted;
 	case OnRelationAdded;
 	case OnRelationDeleted;
+	case OnRelationPartDeleted;
 	case OnNodeAdded;
 	case OnNodeUpdated;
 	case OnNodeDeleted;

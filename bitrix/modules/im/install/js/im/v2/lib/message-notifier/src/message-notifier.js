@@ -192,21 +192,17 @@ export class MessageNotifierManager
 				return;
 			}
 
-			DesktopApi.showBrowserWindow();
+			await DesktopApi.showBrowserWindow();
 
 			if (DesktopApi.isFeatureSupported(DesktopFeature.portalTabActivation.id))
 			{
 				await DesktopApi.handlePortalTabActivation();
 			}
 
-			// delay is needed because desktop window activation takes some time
-			// to complete and method is not async by its nature
-			setTimeout(() => {
-				DesktopBroadcastManager.getInstance().sendActionMessage({
-					action: DesktopBroadcastAction.notification,
-					params: event.getData(),
-				});
-			}, WINDOW_ACTIVATION_DELAY);
+			DesktopBroadcastManager.getInstance().sendActionMessage({
+				action: DesktopBroadcastAction.notification,
+				params: event.getData(),
+			});
 		});
 
 		Notifier.subscribe('action', (event: BaseEvent<NotifierActionParams>) => {

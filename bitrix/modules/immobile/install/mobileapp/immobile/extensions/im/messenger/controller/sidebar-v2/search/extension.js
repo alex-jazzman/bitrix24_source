@@ -293,8 +293,11 @@ jn.define('im/messenger/controller/sidebar-v2/search', (require, exports, module
 			{
 				return null;
 			}
-
-			const chatAvatar = ChatAvatar.createFromDialogId(authorId);
+			// put options with messageId and chatId, for get avatar copilot role
+			const chatAvatar = ChatAvatar.createFromDialogId(
+				authorId,
+				{ messageId: message.id, chatId: message.chat_id || this.dialogModel?.chatId },
+			);
 			const chatTitle = ChatTitle.createFromDialogId(authorId);
 			const displayedDate = DateFormatter.getRecentFormat(new Date(message.date));
 

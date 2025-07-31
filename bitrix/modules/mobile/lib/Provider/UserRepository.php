@@ -4,14 +4,12 @@ namespace Bitrix\Mobile\Provider;
 
 use Bitrix\Extranet\Service\ServiceContainer;
 use Bitrix\Main\Loader;
-use Bitrix\Main\Type\Collection;
 use Bitrix\Main\UserTable;
 
 class UserRepository
 {
-	static private ?array $adminIdMap = null;
-	static private ?array $intranetUsers = null;
-	static private array $usersData = [];
+	private static ?array $adminIdMap = null;
+	private static array $usersData = [];
 
 	public static function getDefaultFieldsForSelect(): array
 	{
@@ -25,6 +23,8 @@ class UserRepository
 			'WORK_POSITION',
 			'EMAIL',
 			'WORK_PHONE',
+			'LAST_ACTIVITY_DATE',
+			'PERSONAL_GENDER',
 		];
 	}
 
@@ -81,6 +81,12 @@ class UserRepository
 		$user['actions'] = ['delete', 'fire'];
 		$mobileContext = new \Bitrix\Mobile\Context();
 
+		if (!empty($user["LAST_ACTIVITY_DATE"]))
+		{
+			$timeZone = $user["LAST_ACTIVITY_DATE"]->getTimezone();
+			$lastActivityDate = $user["LAST_ACTIVITY_DATE"]->toString();
+		}
+
 		return new CommonUserDto(
 			id: $userId,
 			login: $user['LOGIN'] ?? null,
@@ -99,6 +105,9 @@ class UserRepository
 			isExtranet: self::isExtranet($userId),
 			personalMobile: $user['PERSONAL_MOBILE'] ?? null,
 			personalPhone: $user['PERSONAL_PHONE'] ?? null,
+			lastActivityDate: $lastActivityDate ?? null,
+			timezone: $timeZone ?? null,
+			personalGender: $user['PERSONAL_GENDER'] ?? null,
 		);
 	}
 
@@ -116,18 +125,14 @@ class UserRepository
 
 	private static function isExtranet(int $userId): bool
 	{
-		if (!Loader::includeModule('extranet'))
+		if (!Loader::includeModule('extranet') || $userId <= 0)
 		{
 			return false;
 		}
 
-		if (!is_array(self::$intranetUsers))
-		{
-			self::$intranetUsers = \CExtranet::GetIntranetUsers();
-			Collection::normalizeArrayValuesByInt(self::$intranetUsers);
-		}
+		$serviceContainer = class_exists(ServiceContainer::class) ? ServiceContainer::getInstance() : null;
 
-		return !in_array($userId, self::$intranetUsers, true);
+		return $serviceContainer?->getUserService()?->isCurrentExtranetUserById($userId) ?? false;
 	}
 
 	private static function isAdmin($userId): bool
@@ -159,7 +164,7 @@ class UserRepository
 				'SECOND_NAME' => $user['SECOND_NAME'] ?? '',
 			],
 			true,
-			false
+			false,
 		);
 	}
 

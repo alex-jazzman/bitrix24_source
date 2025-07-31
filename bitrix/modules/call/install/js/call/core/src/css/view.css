@@ -18,6 +18,10 @@
 	transition: max-width .3s;
 }
 
+.bx-messenger-videocall.on-mouse-move .bx-messenger-videocall-user-name-container {
+	opacity: 1;
+}
+
 .bx-messenger-content-item-call {
 	text-align: center;
 	padding: 80px 0 27px;
@@ -1213,7 +1217,7 @@
 	position: relative;
 }
 
-.bx-messenger-videocall-panel-item-with-arrow.blocked .bx-messenger-videocall-panel-item-with-arrow-left, 
+.bx-messenger-videocall-panel-item-with-arrow.blocked .bx-messenger-videocall-panel-item-with-arrow-left,
 .bx-messenger-videocall-panel-item-with-arrow.blocked .bx-messenger-videocall-panel-text {
 	filter: brightness(.6) grayscale(1);
 	pointer-events: none;
@@ -4483,7 +4487,7 @@ bx-messenger-videocall-page-navigator.left.active.force-visible{
 	margin-right: 10px;
 	white-space-collapse: preserve;
 }
- 
+
 .bx-call-view-floor-request-notification .ui-btn:after,
 .bx-call-view-popup-call-hint-buttons-container .ui-btn:after {
     position: absolute;

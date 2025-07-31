@@ -39,6 +39,7 @@ return [
 		'im.v2.lib.layout',
 		'im.v2.component.entity-selector',
 		'im.v2.lib.notifier',
+		'im.v2.lib.copilot',
 		'im.v2.lib.menu',
 		'im.v2.lib.call',
 		'im.v2.provider.service.chat',

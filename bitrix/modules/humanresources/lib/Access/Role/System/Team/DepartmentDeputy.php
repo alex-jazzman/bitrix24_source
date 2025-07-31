@@ -48,6 +48,10 @@ class DepartmentDeputy extends Base
 				PermissionDictionary::HUMAN_RESOURCES_TEAM_MEMBER_REMOVE,
 				PermissionValueType::DepartmentValue,
 			) => PermissionVariablesDictionary::VARIABLE_SELF_DEPARTMENTS,
+			TeamPermissionMapper::makeTeamPermissionId(
+				PermissionDictionary::HUMAN_RESOURCES_TEAM_COMMUNICATION_EDIT,
+				PermissionValueType::DepartmentValue,
+			) => PermissionVariablesDictionary::VARIABLE_SELF_DEPARTMENTS,
 
 			PermissionDictionary::HUMAN_RESOURCES_TEAM_ACCESS_EDIT => PermissionDictionaryAlias::VALUE_NO,
 		];

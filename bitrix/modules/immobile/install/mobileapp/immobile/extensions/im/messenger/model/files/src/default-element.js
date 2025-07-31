@@ -30,6 +30,7 @@ jn.define('im/messenger/model/files/default-element', (require, exports, module)
 			byteSent: 0,
 			byteTotal: 0,
 		},
+		mediaUrl: {},
 	});
 
 	module.exports = {

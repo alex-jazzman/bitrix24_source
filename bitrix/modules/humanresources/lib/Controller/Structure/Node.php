@@ -330,11 +330,19 @@ final class Node extends Controller
 		return $result;
 	}
 
-	#[Attribute\StructureActionAccess(
-		permission: StructureActionDictionary::ACTION_DEPARTMENT_EDIT,
-		itemType: AccessibleItemType::NODE,
-		itemIdRequestKey: 'nodeId',
-		itemParentIdRequestKey: 'parentId',
+	#[LogicOr(
+		new StructureActionAccess(
+			permission: StructureActionDictionary::ACTION_DEPARTMENT_EDIT,
+			itemType: AccessibleItemType::NODE,
+			itemIdRequestKey: 'nodeId',
+			itemParentIdRequestKey: 'parentId',
+		),
+		new StructureActionAccess(
+			permission: StructureActionDictionary::ACTION_TEAM_EDIT,
+			itemType: AccessibleItemType::NODE,
+			itemIdRequestKey: 'nodeId',
+			itemParentIdRequestKey: 'parentId',
+		),
 	)]
 	public function changeOrderAction(Item\Node $node, int $direction, int $count): array
 	{

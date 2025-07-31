@@ -17,6 +17,7 @@ return [
 		'im:messenger/lib/di/service-locator',
 		'im:messenger/lib/emitter',
 		'im:messenger/controller/sidebar-v2/user-actions/base',
+		'im:messenger/controller/selector/member',
 	],
 	'bundle' => [
 		'./src/participants-selector',

@@ -55,6 +55,9 @@ use Bitrix\Tasks\Scrum\Service\DefinitionOfDoneService;
 use Bitrix\Tasks\Scrum\Service\TaskService;
 use Bitrix\Tasks\UI;
 use Bitrix\Tasks\Util\Type\DateTime;
+use Bitrix\Tasks\V2\FormV2Feature;
+use Bitrix\Tasks\V2\Public\Command\Task\Kanban\MoveTaskCommand;
+use Bitrix\Tasks\V2\Internal\Entity\Task\Scenario;
 use Bitrix\TasksMobile\Dto\DiskFileDto;
 use Bitrix\TasksMobile\Dto\TaskDto;
 use Bitrix\TasksMobile\Dto\TaskRequestFilter;
@@ -1166,6 +1169,7 @@ final class TaskProvider
 				ActionDictionary::ACTION_TASK_DISAPPROVE => 'CAN_DISAPPROVE',
 				ActionDictionary::ACTION_TASK_DEFER => 'CAN_DEFER',
 				ActionDictionary::ACTION_TASK_TAKE => 'CAN_TAKE',
+				ActionDictionary::ACTION_TASK_CREATE => 'CAN_CREATE',
 			];
 			$taskModel = TaskModel::createFromId($id);
 			$accessController = new TaskAccessController($this->userId);
@@ -1967,11 +1971,13 @@ final class TaskProvider
 
 	private function processScenario(array $fields): array
 	{
-		$fields['SCENARIO_NAME'] = [ScenarioTable::SCENARIO_MOBILE];
+		/** @see Scenario::Mobile */
+		$fields['SCENARIO_NAME'] = ['mobile'];
 
 		if (!empty($fields[CRM\UserField::getMainSysUFCode()]))
 		{
-			$fields['SCENARIO_NAME'][] = ScenarioTable::SCENARIO_CRM;
+			/** @see Scenario::Crm */
+			$fields['SCENARIO_NAME'][] = 'crm';
 		}
 
 		return $fields;
@@ -2015,7 +2021,17 @@ final class TaskProvider
 				{
 					if ((int)$row['STAGE_ID'] !== $stageId)
 					{
-						TaskStageTable::update($row['ID'], ['STAGE_ID' => $stageId]);
+						if (FormV2Feature::isOn('move'))
+						{
+							(new MoveTaskCommand(
+								relationId: (int)$row['ID'],
+								stageId: $stageId
+							))->run();
+						}
+						else
+						{
+							TaskStageTable::update($row['ID'], ['STAGE_ID' => $stageId]);
+						}
 					}
 				}
 			}
@@ -2190,7 +2206,7 @@ final class TaskProvider
 			return null;
 		}
 
-		$nextFileIds = TaskObject::wakeUpObject(['ID' => $taskId])->fillUtsData()?->getUfTaskWebdavFiles();
+		$nextFileIds = TaskObject::wakeUpObject(['ID' => $taskId])->fillUtsData()?->getUfTaskWebdavFiles() ?? [];
 		$diffFiles = array_diff($nextFileIds, $prevFileIds);
 		$newFileId = reset($diffFiles);
 

@@ -7,7 +7,6 @@ export const PromoId = Object.freeze({
 	changeRoleCopilot: 'im:change-role-copilot-chat:09042024:all',
 	collabHelpdeskSidebar: 'im:collab-helpdesk-sidebar:30102024:all',
 	downloadSeveralFiles: 'im:download-several-files:22112024:all',
-	copilotInRecentTab: 'im:copilot-in-default-tab:11032025:all',
 	embeddedChatEmptyState: 'im:air-chat-empty-state:29042025:all',
 	collabEntities: 'socialnetwork:CreatedTaskOrMeetingOrFileThreeDays-collab',
 	membersNotInvitedOneDayToCollab: 'socialnetwork:MembersNotInvitedOneDay-collab',

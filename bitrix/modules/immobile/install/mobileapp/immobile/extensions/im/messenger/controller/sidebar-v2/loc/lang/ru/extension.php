@@ -78,4 +78,7 @@ $MESS['IMMOBILE_SIDEBAR_V2_COMMON_CHAT_INFO_PARENT_CHANNEL'] = '[color]Кана�
 $MESS['IMMOBILE_SIDEBAR_V2_COMMON_COLLAB_DELETE_ERROR_NOT_EMPTY'] = 'Нельзя удалить коллабу, пока в ней есть файлы, задачи и встречи';
 $MESS['IMMOBILE_SIDEBAR_V2_COMMON_COLLAB_DELETE_ERROR_DEFAULT'] = 'Не удалось удалить коллабу, попробуйте позже';
 
+$MESS['IMMOBILE_SIDEBAR_V2_COMMON_LEAVE_CHAT_ERROR_USER_INVITED_FROM_STRUCTURE'] = 'Из этого чата нельзя выйти, в него добавлен ваш отдел';
+$MESS['IMMOBILE_SIDEBAR_V2_COMMON_LEAVE_CHAT_ERROR_DEFAULT'] = 'Не удалось покинуть чат, попробуйте позже';
+
 $MESS['IMMOBILE_SIDEBAR_V2_TAB_ITEM_DATE_AT_TIME'] = '#DATE# в #TIME#';

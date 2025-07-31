@@ -28,6 +28,7 @@ import { Vote } from './classes/vote-create';
 import { MessagePins } from './classes/message-pins';
 import { MessageForward } from './classes/message-forward';
 import { DesktopUpdateBanner } from './classes/desktop-update-banner';
+import { SliderInvite } from './classes/slider-invite';
 
 import type { ImModelChat } from 'im.v2.model';
 
@@ -62,6 +63,7 @@ export class Analytics
 	messagePins: MessagePins = new MessagePins();
 	messageForward: MessageForward = new MessageForward();
 	desktopUpdateBanner: DesktopUpdateBanner = new DesktopUpdateBanner();
+	sliderInvite: SliderInvite = new SliderInvite();
 
 	static #instance: Analytics;
 

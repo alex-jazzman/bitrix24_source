@@ -5,12 +5,34 @@ jn.define('im/messenger/view/dialog/selector', (require, exports, module) => {
 	const { EventFilterType, EventType } = require('im/messenger/const');
 
 	const { ProxyView } = require('im/messenger/view/lib/proxy-view');
+	const { StateManager } = require('im/messenger/view/lib/state-manager');
 
 	/**
 	 * @class DialogSelector
 	 */
 	class DialogSelector extends ProxyView
 	{
+		/**
+		 * @constructor
+		 * @param {JNBaseClassInterface} ui
+		 * @param {EventFilter} eventFilter
+		 */
+		constructor(ui, eventFilter)
+		{
+			super(ui, eventFilter);
+
+			this.initStateManager();
+		}
+
+		initStateManager()
+		{
+			const state = {
+				isEnabled: false,
+			};
+
+			this.stateManager = new StateManager(state);
+		}
+
 		/**
 		 * @return {AvailableEventCollection}
 		 */
@@ -31,8 +53,13 @@ jn.define('im/messenger/view/dialog/selector', (require, exports, module) => {
 		 */
 		async setEnabled(value, animated)
 		{
-			if (this.isUiAvailable())
+			const newState = { isEnabled: value };
+			const hasChanges = this.stateManager.hasChanges(newState);
+
+			if (this.isUiAvailable() && hasChanges)
 			{
+				this.stateManager.updateState(newState);
+
 				return this.ui.setEnabled(value, animated);
 			}
 

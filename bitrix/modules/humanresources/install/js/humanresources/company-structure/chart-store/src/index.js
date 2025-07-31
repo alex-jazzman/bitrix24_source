@@ -1,5 +1,37 @@
+import { Type } from 'main.core';
 import { defineStore } from 'ui.vue3.pinia';
 import { getData } from 'humanresources.company-structure.api';
+import {
+	EntityTypes,
+	WizardApiEntityChangedDict,
+	NodeSettingsTypes,
+	type ChatOrChannelDetailed,
+	type UserData,
+	type NodeColorSettingsType,
+} from 'humanresources.company-structure.utils';
+
+export type DepartmentData = {
+	id: number;
+	name: string;
+	description: string;
+	parentId: number;
+	heads: Array<UserData>;
+	employees: Array<UserData>;
+	userCount: number;
+	chats: Array<number>,
+	chatsDetailed: Array<ChatOrChannelDetailed>,
+	channels: Array<number>,
+	channelsDetailed: Array<ChatOrChannelDetailed>,
+	createDefaultChat: boolean,
+	createDefaultChannel: boolean,
+	teamColor: NodeColorSettingsType,
+	settings: {
+		[NodeSettingsTypes.businessProcAuthority]: Set,
+		[NodeSettingsTypes.reportsAuthority]: Set,
+	},
+	entityType: EntityTypes.department | EntityTypes.team | EntityTypes.company,
+	apiEntityChanged: WizardApiEntityChangedDict.department | WizardApiEntityChangedDict.employees,
+};
 
 export const useChartStore = defineStore('hr-org-chart', {
 	state: () => ({
@@ -71,6 +103,29 @@ export const useChartStore = defineStore('hr-org-chart', {
 					this.departments.set(departmentId, { ...department, heads: heads[departmentId] });
 				}
 			});
+		},
+		updateDepartment(departmentData: DepartmentData, position: ?number): void
+		{
+			const { id, parentId } = departmentData;
+			const oldData = this.departments.get(id);
+			const prevParent = this.departments.get(oldData.parentId);
+			this.departments.set(id, { ...oldData, ...departmentData });
+			if (parentId !== 0 && prevParent.id !== parentId)
+			{
+				prevParent.children = prevParent.children.filter((childId) => childId !== id);
+				const newParent = this.departments.get(parentId);
+				newParent.children = newParent.children ?? [];
+				if (Type.isNumber(position))
+				{
+					newParent.children.splice(position, 0, id);
+				}
+				else
+				{
+					newParent.children.push(id);
+				}
+
+				this.departments.set(id, { ...this.departments.get(id), prevParentId: prevParent.id });
+			}
 		},
 	},
 });
