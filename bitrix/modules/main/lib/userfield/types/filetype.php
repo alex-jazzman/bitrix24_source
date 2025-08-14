@@ -19,9 +19,14 @@ Loc::loadMessages(__FILE__);
  */
 class FileType extends BaseType
 {
-	public const
-		USER_TYPE_ID = 'file',
-		RENDER_COMPONENT = 'bitrix:main.field.file';
+	public const USER_TYPE_ID = 'file';
+	public const RENDER_COMPONENT = 'bitrix:main.field.file';
+
+	private const AVAILABLE_VIEWS = [
+		'tile',
+		'list',
+		'adaptive',
+	];
 
 	/**
 	 * @return array
@@ -85,6 +90,9 @@ class FileType extends BaseType
 
 		$targetBlank = (($userField['SETTINGS']['TARGET_BLANK'] ?? 'Y') === 'N' ? 'N' : 'Y');
 
+		$defaultView = $userField['SETTINGS']['DEFAULT_VIEW'] ?? null;
+		$defaultView = self::isAvailableDefaultView($defaultView) ? $defaultView : null;
+
 		return [
 			'SIZE' => ($size <= 1 ? 20 : ($size > 255 ? 225 : $size)),
 			'LIST_WIDTH' => (int)($userField['SETTINGS']['LIST_WIDTH'] ?? 0),
@@ -92,7 +100,8 @@ class FileType extends BaseType
 			'MAX_SHOW_SIZE' => (int)($userField['SETTINGS']['MAX_SHOW_SIZE'] ?? 0),
 			'MAX_ALLOWED_SIZE' => (int)($userField['SETTINGS']['MAX_ALLOWED_SIZE'] ?? 0),
 			'EXTENSIONS' => $resultExtensions,
-			'TARGET_BLANK' => $targetBlank
+			'TARGET_BLANK' => $targetBlank,
+			'DEFAULT_VIEW' => $defaultView,
 		];
 	}
 
@@ -465,5 +474,10 @@ class FileType extends BaseType
 		}
 
 		return true;
+	}
+
+	public static function isAvailableDefaultView(mixed $view): bool
+	{
+		return in_array($view, self::AVAILABLE_VIEWS, true);
 	}
 }

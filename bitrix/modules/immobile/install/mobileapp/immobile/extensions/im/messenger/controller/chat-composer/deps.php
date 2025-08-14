@@ -2,7 +2,6 @@
 
 return [
 	'extensions' => [
-		'loc',
 		'tokens',
 		'type',
 		'haptics',
@@ -26,9 +25,11 @@ return [
 		'ui-system/blocks/icon',
 		'ui-system/typography',
 		'ui-system/blocks/avatar',
+		'ui-system/form/inputs/string',
 		'selector/widget/entity/tree-selectors/nested-department-selector',
 		'layout/ui/context-menu',
 		'im:lib/theme',
+		'im:messenger/loc',
 		'im:messenger/assets/common',
 		'im:messenger/const',
 		'im:messenger/lib/feature',

@@ -1,7 +1,8 @@
 import type { BitrixVueComponentProps } from 'ui.vue3';
 import { DashboardType, type Dashboard } from '../type';
-import { BaseEvent } from 'main.core.events';
+import { BaseEvent, EventEmitter } from 'main.core.events';
 import { Dialog, Item } from 'ui.entity-selector';
+import { Store } from '../store';
 
 export const DashboardSelector: BitrixVueComponentProps = {
 	props: {
@@ -11,6 +12,12 @@ export const DashboardSelector: BitrixVueComponentProps = {
 			required: true,
 		},
 	},
+	data()
+	{
+		return {
+			initialDashboardIds: [],
+		};
+	},
 	mounted()
 	{
 		this.initDialog();
@@ -18,6 +25,7 @@ export const DashboardSelector: BitrixVueComponentProps = {
 	methods: {
 		onAddDashboardClick()
 		{
+			this.initialDashboardIds = this.dashboards.map((dashboard: Dashboard) => dashboard.id);
 			this.dialog.show();
 		},
 		initDialog()
@@ -63,6 +71,19 @@ export const DashboardSelector: BitrixVueComponentProps = {
 						const item = event.data.item;
 						this.$store.commit('removeDashboard', item.getId());
 						this.$emit('onDashboardsChange');
+					},
+					onHide: (event: BaseEvent): void => {
+						const wasChanged: boolean = !Store.areSetsEqual(
+							new Set(this.initialDashboardIds),
+							new Set(this.dashboards.map((dashboard: Dashboard) => dashboard.id)),
+						);
+
+						EventEmitter.emit(
+							'BIConnector.GroupPopup.DashboardSelector:onDialogHide',
+							{
+								isDashboardListEdited: wasChanged,
+							},
+						);
 					},
 				},
 			});

@@ -847,6 +847,22 @@ class CBPCrmSendEmailActivity extends CBPActivity
 		);
 	}
 
+	public function collectUsages()
+	{
+		$properties = $this->arProperties;
+		$message = $this->getRawProperty('MessageText');
+		if ($this->MessageTextEncoded)
+		{
+			$message = self::decodeMessageText($message);
+			$properties['MessageText'] = $message;
+		}
+
+		$usages = [];
+		$this->collectUsagesRecursive($properties, $usages);
+
+		return $usages;
+	}
+
 	private static function encodeMessageText($text)
 	{
 		return 'base64,'.base64_encode($text);

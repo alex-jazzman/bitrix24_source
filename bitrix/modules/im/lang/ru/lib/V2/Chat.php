@@ -21,3 +21,4 @@ $MESS["IM_CHAT_AVATAR_CHANGE_M"] = "#USER_NAME# изменил иконку ча
 $MESS["IM_CHAT_AVATAR_CHANGE_F"] = "#USER_NAME# изменила иконку чата";
 $MESS["IM_CHANNEL_AVATAR_CHANGE_M"] = "#USER_NAME# изменил иконку канала";
 $MESS["IM_CHANNEL_AVATAR_CHANGE_F"] = "#USER_NAME# изменила иконку канала";
+$MESS["IM_CHAT_OVERFLOW_DELETE_MESSAGE"] = "Сообщения об исключении и выходе из чата отключены, потому что в чате больше #USER_COUNT# участников. Это поможет сократить количество уведомлений";

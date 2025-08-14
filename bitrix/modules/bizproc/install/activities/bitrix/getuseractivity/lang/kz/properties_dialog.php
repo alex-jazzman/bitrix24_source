@@ -7,6 +7,7 @@ $MESS["BPCRU_PD_SKIP_RESERVE"] = "Резервтегілерге қолдану"
 $MESS["BPCRU_PD_SKIP_TIMEMAN"] = "Аяқталған жұмыс күнімен өткізіп жіберу";
 $MESS["BPCRU_PD_TYPE"] = "Түрі";
 $MESS["BPCRU_PD_TYPE_BOSS"] = "басшы";
+$MESS["BPCRU_PD_TYPE_LEAD"] = "топ басшысы";
 $MESS["BPCRU_PD_TYPE_ORDER"] = "тізбекті";
 $MESS["BPCRU_PD_TYPE_RANDOM"] = "кездейсоқ";
 $MESS["BPCRU_PD_USER2"] = "Резервтік пайдаланушылар";

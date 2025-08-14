@@ -2,7 +2,7 @@
  * @module im/messenger/controller/chat-composer/create/group-chat
  */
 jn.define('im/messenger/controller/chat-composer/create/group-chat', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Color } = require('tokens');
 	const { NotifyManager } = require('notify-manager');
 	const { isEqual } = require('utils/object');

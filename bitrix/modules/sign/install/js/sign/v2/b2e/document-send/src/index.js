@@ -1,14 +1,14 @@
 import { Tag, Loc, Type, Dom } from 'main.core';
 import { EventEmitter, type BaseEvent } from 'main.core.events';
+import { Timezone } from 'main.date';
 import { type DocumentDetails } from 'sign.v2.document-setup';
 import { isTemplateMode } from 'sign.v2.sign-settings';
 import { UserParty } from 'sign.v2.b2e.user-party';
 import { ReminderSelector, type Options as ReminderOptions } from 'sign.v2.b2e.reminder-selector';
 import type { MemberRoleType, DocumentModeType } from 'sign.type';
-import { MemberRole, Reminder } from 'sign.type';
+import { MemberRole, Reminder, ProviderCode } from 'sign.type';
 import { Item, EntityTypes } from './item';
 import { Api, type Provider } from 'sign.v2.api';
-import { ProviderCode } from 'sign.type';
 import { DocumentSummary } from 'sign.v2.document-summary';
 import { LangSelector } from 'sign.v2.lang-selector';
 import { DatetimeLimitSelector } from 'sign.v2.datetime-limit-selector';
@@ -37,8 +37,6 @@ const ReminderSelectorOptionsByRole: Record<MemberRoleType, ReminderOptions> = {
 };
 
 const idleCommunication: CommunicationType = 'idle';
-
-const fallbackDefaultMonths = 3;
 
 export class DocumentSend extends EventEmitter
 {
@@ -87,6 +85,7 @@ export class DocumentSend extends EventEmitter
 	#documentMode: DocumentModeType;
 	#isExistingTemplate: boolean = false;
 	#isOpenedFromRobot: boolean = false;
+	#templateFolderId: number = 0;
 
 	#analytics: ?Analytics;
 
@@ -115,12 +114,13 @@ export class DocumentSend extends EventEmitter
 				},
 			},
 		});
-		const { region, languages, documentMode, isOpenedFromRobot, analytics } = documentSendConfig;
+		const { region, languages, documentMode, isOpenedFromRobot, analytics, templateFolderId } = documentSendConfig;
 		this.#isOpenedFromRobot = isOpenedFromRobot;
 		this.#langSelector = new LangSelector(region, languages);
 		this.#documentData = {};
 		this.#analytics = analytics;
 		this.#documentMode = documentMode;
+		this.#templateFolderId = templateFolderId;
 		this.#ui.employeesTitle = Tag.render`
 			<p class="sign-b2e-send__party_signing-employees">
 				${Loc.getMessage('SIGN_SEND_SIGNING_EMPLOYEES', { '#CNT#': 0 })}
@@ -150,19 +150,14 @@ export class DocumentSend extends EventEmitter
 
 		if (!this.#isTemplateMode())
 		{
-			const defaultDate = new Date();
-			defaultDate.setMonth(defaultDate.getMonth() + fallbackDefaultMonths);
-			this.#dateTimeLimitSelector = new DatetimeLimitSelector(defaultDate);
+			this.#dateTimeLimitSelector = new DatetimeLimitSelector();
 
 			this.#dateTimeLimitSelector
-				.subscribe('beforeDateModify', (event) => {
+				.subscribe('beforeDateModify', () => {
 					this.emit('disableComplete');
 				})
-				.subscribe('afterDateModify', (event) => {
-					if (event.data.isValid === true)
-					{
-						this.emit('enableComplete');
-					}
+				.subscribe('afterDateModify', () => {
+					this.emit('enableComplete');
 				})
 			;
 		}
@@ -187,7 +182,7 @@ export class DocumentSend extends EventEmitter
 
 		this.#documentData = documentData;
 
-		const uids = [...documentData.values()].map(data => data.uid);
+		const uids = [...documentData.values()].map((data) => data.uid);
 		const lastUid = [...documentData.values()].pop().uid;
 		const documentGroupUids = [...documentData.keys()];
 
@@ -197,10 +192,10 @@ export class DocumentSend extends EventEmitter
 		{
 			this.#dateTimeLimitSelector.setDocumentUids(uids);
 
-			if (Type.isNull(this.#dateTimeLimitSelector.getSelectedDate()))
+			const untilDate = documentData?.values().next().value?.dateSignUntilUserTime;
+			if (untilDate)
 			{
-				const untilDate = this.#getDateSignUntilFromDocumentDetails(documentData?.values().next().value);
-				this.#dateTimeLimitSelector.setDate(untilDate);
+				this.#dateTimeLimitSelector.setDate(new Date(untilDate));
 			}
 		}
 
@@ -209,14 +204,6 @@ export class DocumentSend extends EventEmitter
 
 		this.#hcmLinkPartyChecker?.setDocumentGroupUids(documentGroupUids);
 		void this.#hcmLinkPartyChecker?.check();
-	}
-
-	#getDateSignUntilFromDocumentDetails(documentDetails: DocumentDetails): Date
-	{
-		return documentDetails?.dateSignUntil
-			? new Date(documentDetails?.dateSignUntil)
-			: new Date(new Date().setMonth(new Date().getMonth() + fallbackDefaultMonths))
-		;
 	}
 
 	#getProgressAnimateLayout(): HTMLElement
@@ -605,10 +592,20 @@ export class DocumentSend extends EventEmitter
 			this.emit('disableBack');
 			await this.#saveReminderTypesForRoles();
 
+			if (this.#dateTimeLimitSelector)
+			{
+				await this.#dateTimeLimitSelector.saveSelectedDateForUids();
+			}
 			this.#showProgressOverlay();
 			if (this.#isTemplateMode())
 			{
-				const { template: { id: templateId } } = await api.template.completeTemplate(this.documentData.values().next().value.templateUid);
+				const documentTemplateId = this.documentData.values().next().value.templateUid;
+				const {
+					template:
+						{
+							id: templateId,
+						},
+				} = await api.template.completeTemplate(documentTemplateId, this.#templateFolderId);
 				this.emit('onTemplateComplete', { templateId });
 			}
 			else if (this.#isGroupDocuments())

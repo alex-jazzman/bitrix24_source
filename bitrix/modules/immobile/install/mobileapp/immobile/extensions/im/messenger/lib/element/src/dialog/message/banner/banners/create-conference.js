@@ -3,7 +3,7 @@
  */
 jn.define('im/messenger/lib/element/dialog/message/banner/banners/create-conference', (require, exports, module) => {
 	const { BannerMessage } = require('im/messenger/lib/element/dialog/message/banner/message');
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Theme } = require('im/lib/theme');
 
 	class CreateChatConferenceBanner extends BannerMessage

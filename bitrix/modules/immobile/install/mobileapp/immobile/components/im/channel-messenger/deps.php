@@ -4,7 +4,6 @@ return [
 	'extensions' => [
 		'im:messenger/component/messenger-base',
 		'type',
-		'loc',
 		'entity-ready',
 		'utils/object',
 		'list/selector',
@@ -13,6 +12,7 @@ return [
 		'statemanager/vuex-manager',
 		'im:chat/timer',
 		'im:chat/selector/adapter/dialog-list',
+		'im:messenger/loc',
 		'im:messenger/const',
 		'im:messenger/lib/helper',
 		'im:messenger/lib/quick-recent-load',

@@ -9,6 +9,7 @@ final class SaveTemplateRequest
 		public readonly array $parameters,
 		public readonly array $fields,
 		public readonly \CBPWorkflowTemplateUser $user,
+		public readonly bool $checkAccess = true,
 	)
 	{}
 }

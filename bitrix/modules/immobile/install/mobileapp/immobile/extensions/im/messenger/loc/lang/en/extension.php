@@ -1,0 +1,2 @@
+<?php
+$MESS["IMMOBILE_MESSENGER_COMMON_TITLE"] = "Messenger";

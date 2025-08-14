@@ -144,8 +144,7 @@ else
 
 $request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
 if (
-	Feature::enabled(Feature\PermissionsLayoutV2::class)
-	&& $request->getRequestMethod() === 'GET'
+	$request->getRequestMethod() === 'GET'
 	&& !isset($_GET['nr'])
 )
 {

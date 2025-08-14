@@ -19,6 +19,8 @@
 .sign-b2e-document-filling__item-title {
 	font: 16px / 22px var(--font_os_regular);
 	color: var(--ui-color-palette-black-base);
+	overflow-wrap: anywhere;
+	width: 95%;
 }
 
 .sign-b2e-settings__date-row {
@@ -109,4 +111,39 @@
 
 .sign-b2e-document-filling-reg-number-input.--error:hover {
 	border: 1px solid var(--ui-color-background-on-alert);
+}
+
+.sign-b2e-document-filling__notice {
+	border-radius: 8px;
+	background: var(--ui-color-palette-blue-15);
+	color: var(--ui-color-base-90);
+	font-size: var(--ui-font-size-sm);
+	line-height: var(--ui-font-line-height-2xs);
+	padding: 12px;
+	margin: 16px 0 0;
+}
+
+
+.sign-b2e-document-filling__remove-btn {
+	position: absolute;
+	top: 8px;
+	right: 8px;
+	width: 24px;
+	height: 24px;
+	border: none;
+	cursor: pointer;
+	padding: 0;
+	z-index: 1;
+	background-color: transparent;
+	background-image: url('./images/remove-template-card-cross.svg');
+	background-repeat: no-repeat;
+	background-position: center;
+}
+
+.sign-b2e-document-filling__remove-btn:hover {
+	opacity: 0.8;
+}
+
+.sign-b2e-document-filling__header {
+	display: flex;
 }

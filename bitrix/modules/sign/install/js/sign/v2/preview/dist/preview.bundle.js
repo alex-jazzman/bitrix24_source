@@ -232,6 +232,7 @@ this.BX.Sign = this.BX.Sign || {};
 	  if (!isLoaded) {
 	    await new Promise(resolve => main_core.Event.bindOnce(babelHelpers.classPrivateFieldLooseBase(this, _page)[_page], 'load', resolve));
 	  }
+	  main_core.Dom.clean(babelHelpers.classPrivateFieldLooseBase(this, _blocksContainer)[_blocksContainer]);
 	  const {
 	    blocksTemplate,
 	    blocks

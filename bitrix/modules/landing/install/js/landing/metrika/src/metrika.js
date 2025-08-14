@@ -1,5 +1,5 @@
-import {Dom, Type, Text, Event, Runtime} from 'main.core';
-import type {AnalyticsOptions} from './types';
+import { Dom, Type, Text, Event, Runtime } from 'main.core';
+import type { AnalyticsOptions } from './types';
 
 /**
  * @memberOf BX.Landing
@@ -8,6 +8,7 @@ export class Metrika
 {
 	static TOOL_NAME = 'landing';
 
+	tool: string;
 	formSelector: string;
 	widgetBlockItemSelector: string;
 	siteType: ?string;
@@ -17,8 +18,10 @@ export class Metrika
 	widgetOpened: boolean;
 	widgetBlockHover: boolean;
 
-	constructor(light: boolean)
+	constructor(light: boolean, tool: ?string = null)
 	{
+		this.tool = tool || Metrika.TOOL_NAME;
+
 		this.sendedLabel = [];
 
 		if (light === true)
@@ -128,7 +131,7 @@ export class Metrika
 							this.sendLabel(widgetHost, 'chatOpened');
 						}
 					}
-				}
+				},
 
 			});
 		});
@@ -147,11 +150,11 @@ export class Metrika
 
 			if (disabled)
 			{
-				this.sendLabel(address, 'formDisabledLoad', id+ '|' + sec);
+				this.sendLabel(address, 'formDisabledLoad', id + '|' + sec);
 			}
 			else
 			{
-				this.sendLabel(address, 'formSuccessLoad', id+ '|' + sec);
+				this.sendLabel(address, 'formSuccessLoad', id + '|' + sec);
 			}
 		});
 
@@ -166,7 +169,7 @@ export class Metrika
 						this.sendLabel(
 							null,
 							'formFailLoad',
-							formData[1] ? formData[0] + '|' + formData[1] : formData[0]
+							formData[1] ? formData[0] + '|' + formData[1] : formData[0],
 						);
 					}
 				}
@@ -217,7 +220,7 @@ export class Metrika
 			.loadExtension('ui.analytics')
 			.then(exports => {
 				const preparedData = {
-					tool: Metrika.TOOL_NAME,
+					tool: this.tool,
 				};
 
 				[
@@ -236,22 +239,18 @@ export class Metrika
 					}
 				});
 
-				if (data.params && Type.isObject(data.params))
+				for (let pos = 1; pos <= 5; pos++)
 				{
-					let i = 1;
-					const maxParams = 5;
-					Object.keys(data.params).forEach(param => {
-						if (i <= maxParams)
-						{
-							const key = 'p' + i++;
-							Text.toCamelCase(param);
-							preparedData[key] = Text.toCamelCase(param) + '_' + Text.toCamelCase(data.params[param]);
-						}
-					});
-					delete preparedData.params;
+					const key = `p${pos}`;
+					const param = data[key];
+					if (param && Type.isArray(param) && param.length === 2)
+					{
+						preparedData[key] = `${Text.toCamelCase(param[0])}_${Text.toCamelCase(param[1])}`;
+					}
 				}
 
 				const {sendData} = exports;
+
 				sendData(preparedData);
 			})
 			.catch(err => {

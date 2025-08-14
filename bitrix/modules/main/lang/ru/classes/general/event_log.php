@@ -33,4 +33,7 @@ $MESS["MAIN_EVENTLOG_MP_MODULE_DOWNLOADED"] = "Решение Маркетпле
 $MESS["MAIN_EVENTLOG_USER_BLOCKED"] = "Пользователь заблокирован";
 $MESS["MAIN_EVENTLOG_USER_PERMISSIONS_FAIL"] = "Ошибка доступа к файлу";
 $MESS["MAIN_EVENTLOG_SECURITY_WWALL_COMMON"] = "Попытка эксплуатации уязвимости";
+$MESS['MAIN_EVENTLOG_GROUP_ADDED'] = 'Группа добавлена';
+$MESS['MAIN_EVENTLOG_GROUP_UPDATED'] = 'Группа обновлена';
+$MESS['MAIN_EVENTLOG_GROUP_DELETED'] = 'Группа удалена';
 ?>

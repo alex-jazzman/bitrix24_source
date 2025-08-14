@@ -22,6 +22,7 @@ export type SliderOptions = {
 	overlayClassName?: string,
 	overlayOpacity?: number,
 	overlayBgColor?: string,
+	overlayBgCallback?: (state: { opacity: number, progress: number, intensity: number }) => string,
 	typeLoader?: string, // compatibility
 	data?: JsonObject,
 	minimizeOptions?: MinimizeOptions,

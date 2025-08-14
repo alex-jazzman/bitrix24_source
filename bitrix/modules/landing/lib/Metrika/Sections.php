@@ -11,4 +11,6 @@ enum Sections: string
 	case siteEditor = 'site_editor';
 	case siteDesigner = 'site_designer';
 	case siteSettings = 'site_settings';
+	case marketMain = 'market_main';
+	case marketCollection = 'market_collection';
 }

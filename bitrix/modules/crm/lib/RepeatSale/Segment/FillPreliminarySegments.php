@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\RepeatSale\Segment;
 
+use Bitrix\Crm\Feature;
 use Bitrix\Crm\RepeatSale\Logger;
 use Bitrix\Crm\RepeatSale\Segment\Controller\RepeatSaleSegmentController;
 use Bitrix\Crm\Service\Container;
@@ -70,7 +71,7 @@ final class FillPreliminarySegments
 		$resolver = $fieldRepository->getDefaultStageIdResolver($entityTypeId);
 
 		$params = [
-			'isEnabled' => false,
+			'isEnabled' => Feature::enabled(Feature\RepeatSaleForceMode::class),
 			'entityTypeId' => $entityTypeId,
 			'entityCategoryId' => $factory?->getDefaultCategory()?->getId() ?? 0,
 			'entityStageId' => $resolver(),

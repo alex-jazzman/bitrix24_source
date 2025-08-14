@@ -3,7 +3,7 @@
  */
 
 jn.define('im/messenger/lib/element/dialog/message/banner/banners/sign/configuration', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const {
 		Await,
 		Success,

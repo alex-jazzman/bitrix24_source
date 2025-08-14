@@ -2,7 +2,7 @@
  * @module im/messenger/lib/element/dialog/message/element/comment-info/comment-info
  */
 jn.define('im/messenger/lib/element/dialog/message/element/comment-info/comment-info', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Type } = require('type');
 
 	const { defaultUserIcon } = require('im/messenger/assets/common');
@@ -45,6 +45,9 @@ jn.define('im/messenger/lib/element/dialog/message/element/comment-info/comment-
 			this.#channelId = channelId;
 		}
 
+		/**
+		 * @return {CommentInfoMessageFormat}
+		 */
 		toMessageFormat()
 		{
 			if (!this.#commentInfo)
@@ -109,7 +112,7 @@ jn.define('im/messenger/lib/element/dialog/message/element/comment-info/comment-
 
 		#getTotalCounter()
 		{
-			// remove first system message from count
+			// remove a first system message from count
 			return this.#commentInfo.messageCount > 0
 				? this.#commentInfo.messageCount - 1
 				: 0

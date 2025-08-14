@@ -20,13 +20,14 @@ use Bitrix\Crm\Traits\Singleton;
 use Bitrix\Main\Analytics\AnalyticsEvent;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Error;
+use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
 
 final class Executor
 {
 	use Singleton;
 
-	private const ENTITY_ITEMS_LIMIT = 100;
+	private const ENTITY_ITEMS_LIMIT = 300;
 	private const ENTITY_ITEMS_ONLY_CALC_LIMIT = 500;
 	private const MAX_RETRY_COUNT = 3;
 	private ?RepeatSaleQueueController $controller = null;
@@ -203,12 +204,20 @@ final class Executor
 
 		if ($item->getRetryCount() > self::MAX_RETRY_COUNT)
 		{
-			$logger->error('The number of attempts for the queue item has been exceeded', $loggerContext);
+			$logger->error(
+				'The number of attempts for the queue item has been exceeded. JobId: ' . $item->getJobId(),
+				$loggerContext,
+			);
+
+			$this->sendItemExecuteAnalytics('rs-delete-failed-queue-item', $item);
 
 			return;
 		}
 
-		$logger->error('An attempt to process an item from the queue failed', $loggerContext);
+		$logger->error(
+			'An attempt to process an item from the queue failed. JobId: ' . $item->getJobId(),
+			$loggerContext,
+		);
 
 		$item
 			->setStatus(Status::Waiting)
@@ -216,6 +225,8 @@ final class Executor
 		;
 
 		$this->addToQueue($item);
+
+		$this->sendItemExecuteAnalytics('rs-fail-queue-item', $item);
 	}
 
 	private function checkSegment(int $segmentId): bool
@@ -254,7 +265,7 @@ final class Executor
 
 	private function onQueueItemCompleted(QueueItem $queueItem, Result $result): void
 	{
-		$itemsCount = $queueItem->getItemsCount() + $result->getSegmentData()->getItemsCount();
+		$itemsCount = $this->getItemsCount($queueItem, $result);
 
 		$jobId = $queueItem->getJobId();
 		$job = RepeatSaleJobController::getInstance()->getById($jobId);
@@ -265,9 +276,11 @@ final class Executor
 		{
 			$this->tryUpdateFlow(true, $itemsCount);
 		}
+
+		$this->sendItemExecuteAnalytics('rs-success-queue-item', $queueItem);
 	}
 
-	private function tryUpdateFlow(bool $isDropStartBannerStatistics = false, int $itemsCount = 0): void
+	private function tryUpdateFlow(bool $isDropStartBannerStatistics = false, ?int $itemsCount = null): void
 	{
 		$availabilityChecker = $this->getAvailabilityChecker();
 
@@ -290,17 +303,51 @@ final class Executor
 				(new StartBanner())->dropShowedStatisticsData();
 			}
 
-			$this->sendAnalytics($itemsCount);
+			if ($itemsCount !== null)
+			{
+				$this->sendItemsCountAnalytics($itemsCount);
+			}
 		}
 	}
 
-	private function sendAnalytics(int $count = 0): void
+	private function sendItemsCountAnalytics(int $count): void
 	{
 		$event = new AnalyticsEvent('banner_prepare', Dictionary::TOOL_CRM, Dictionary::CATEGORY_BANNERS);
-		$event
-			->setP1('count-deals-' . $count)
-			->send()
-		;
+
+		try
+		{
+			$event
+				->setP1('count-deals-' . $count)
+				->send()
+			;
+		}
+		catch (\Exception $e)
+		{
+
+		}
+	}
+
+	private function sendItemExecuteAnalytics(string $eventName, QueueItem $item): void
+	{
+		$event = new AnalyticsEvent($eventName, Dictionary::TOOL_CRM, Dictionary::CATEGORY_SYSTEM_INFORM);
+
+		$timestamp = $item->getParams()['date'] ?? null;
+		$date = $timestamp ? Date::createFromTimestamp($timestamp) : null;
+
+		try
+		{
+			$event->setType(Dictionary::TYPE_AGENT);
+			if ($date)
+			{
+				$event->setP2($date->format('Y-m-d'));
+			}
+
+			$event->send();
+		}
+		catch (\Exception $e)
+		{
+
+		}
 	}
 
 	private function deleteFromQueue(QueueItem $item): void
@@ -342,6 +389,6 @@ final class Executor
 
 	private function getItemsCount(QueueItem $item, Result $result): int
 	{
-		return $item->getItemsCount() + $result->getSegmentData()->getItemsCount();
+		return $item->getItemsCount() + $result->getSegmentData()?->getItemsCount();
 	}
 }

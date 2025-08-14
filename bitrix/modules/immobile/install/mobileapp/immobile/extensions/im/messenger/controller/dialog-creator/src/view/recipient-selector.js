@@ -4,7 +4,7 @@
 jn.define('im/messenger/controller/dialog-creator/recipient-selector/view', (require, exports, module) => {
 	const { UserSearchController } = require('im/messenger/controller/search');
 	const { MultiSelector } = require('im/messenger/lib/ui/selector');
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { MessengerParams } = require('im/messenger/lib/params');
 
 	class RecipientSelectorView extends LayoutComponent

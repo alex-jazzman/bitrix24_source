@@ -990,7 +990,7 @@ class Manager
 
 		if ($zone === 'ru')
 		{
-			if (!in_array(self::getZone(), ['ru', 'by', 'kz']))
+			if (!in_array(self::getZone(), ['ru', 'by', 'kz', 'uz']))
 			{
 				$available = false;
 			}
@@ -1012,6 +1012,7 @@ class Manager
 			case 'form_minisite':
 				$minisites = [
 					'ru' => 18108954,
+					'uz' => 18108954,
 					'by' => 18108962,
 					'kz' => 18108964,
 					'en' => 18108970,
@@ -1296,7 +1297,7 @@ class Manager
 
 	public static function isFreePublicAllowed(): bool
 	{
-		return in_array(self::getZone(), ['ru', 'by', 'kz', 'es', 'la', 'mx', 'co', 'br', 'in', 'hi']);
+		return in_array(self::getZone(), ['ru', 'by', 'kz', 'uz', 'es', 'la', 'mx', 'co', 'br', 'in', 'hi']);
 	}
 
 	/**

@@ -4019,18 +4019,24 @@ if (typeof(BX.Main.interfaceButtons) === 'undefined')
 
 			this.closeChildMenu();
 			this.destroyItemEditMenu();
-
-			if (this.isListItem(this.dragItem))
-			{
-				this.showMoreMenu();
-			}
-
 			this.setDragStyles();
 
-			if (!this.isEditEnabled())
-			{
-				this.enableEdit();
-			}
+			setTimeout(() => {
+				if (!this.onDragStarted)
+				{
+					return;
+				}
+
+				if (this.isListItem(this.dragItem))
+				{
+					this.showMoreMenu();
+				}
+
+				if (!this.isEditEnabled())
+				{
+					this.enableEdit();
+				}
+			}, 300);
 		},
 
 		/**

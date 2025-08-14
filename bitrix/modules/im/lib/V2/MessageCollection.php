@@ -249,16 +249,16 @@ class MessageCollection extends Collection implements RestConvertible, PopupData
 				$message->getParams(true)->load([]);
 			}
 
-			$paramsCollection = MessageParamTable::query()
+			$result = MessageParamTable::query()
 				->setSelect(['*'])
 				->whereIn('MESSAGE_ID', $this->getIds())
 				->whereNot('PARAM_NAME', 'LIKE')
-				->fetchCollection()
+				->exec()
 			;
 
-			foreach ($paramsCollection as $paramRow)
+			while ($row = $result->fetch())
 			{
-				$this[$paramRow->getMessageId()]->getParams(true)->load($paramRow);
+				$this[$row['MESSAGE_ID']]->getParams(true)->load([$row]);
 			}
 
 			$this->isParamsFilled = true;
@@ -409,6 +409,11 @@ class MessageCollection extends Collection implements RestConvertible, PopupData
 		$urlIdByMessageIds = [];
 		foreach ($this as $message)
 		{
+			if (!$message->getParams()->isSet(Params::URL_ID))
+			{
+				continue;
+			}
+
 			$urlId = $message->getParams()->get(Params::URL_ID)->getValue()[0] ?? null;
 			if (isset($urlId))
 			{

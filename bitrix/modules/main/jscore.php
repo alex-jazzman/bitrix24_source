@@ -449,7 +449,7 @@ $arJSCoreConfig = array(
 \Bitrix\Main\Page\Asset::getInstance()->addJsKernelInfo(
 	'main',
 	array(
-		'/bitrix/js/main/pageobject/pageobject.js',
+		'/bitrix/js/main/pageobject/dist/pageobject.bundle.js',
 		'/bitrix/js/main/core/core.js',
 		'/bitrix/js/main/core/core_tooltip.js',
 		'/bitrix/js/main/date/main.date.js',

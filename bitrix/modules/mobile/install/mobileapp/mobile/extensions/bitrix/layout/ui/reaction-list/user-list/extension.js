@@ -6,7 +6,7 @@ jn.define('layout/ui/reaction-list/user-list', (require, exports, module) => {
 	const { Component } = require('tokens');
 	const { StatefulList } = require('layout/ui/stateful-list');
 	const { ListItemType, ListItemsFactory } = require('layout/ui/reaction-list/user-list/src/reaction-items-factory');
-	const { openUserProfile } = require('user/profile/src/backdrop-profile');
+	const { UserProfile } = require('user-profile');
 	const { usersUpserted, usersAdded } = require('statemanager/redux/slices/users');
 	const { batchActions } = require('statemanager/redux/batched-actions');
 	const { fetchUsersIfNotLoaded } = require('statemanager/redux/slices/users/thunk');
@@ -162,7 +162,10 @@ jn.define('layout/ui/reaction-list/user-list', (require, exports, module) => {
 
 		itemDetailOpenHandler(userId)
 		{
-			void openUserProfile({ parentWidget: this.parentWidget, userId, isBackdrop: true });
+			void UserProfile.open({
+				ownerId: userId,
+				parentWidget: this.parentWidget,
+			});
 		}
 
 		bindRef = (ref) => {

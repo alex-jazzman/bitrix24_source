@@ -587,12 +587,7 @@ class Router
 	 */
 	public function getPermissionsUrl(): ?Uri
 	{
-		if (Feature::enabled(Feature\PermissionsLayoutV2::class))
-		{
-			return (new AllSelection())->getUrl();
-		}
-
-		return new Uri('/crm/configs/perms/');
+		return (new AllSelection())->getUrl();
 	}
 
 	/**

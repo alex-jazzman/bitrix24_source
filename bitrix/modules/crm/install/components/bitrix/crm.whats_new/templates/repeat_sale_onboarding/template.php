@@ -16,6 +16,7 @@ Extension::load('crm.repeat-sale.onboarding-popup');
 		const onboardingPopup = new BX.Crm.RepeatSale.OnboardingPopup({
 			closeOptionCategory: '<?= $arParams['CLOSE_OPTION_CATEGORY'] ?? '' ?>',
 			closeOptionName: '<?= $arParams['CLOSE_OPTION_NAME'] ?? '' ?>',
+			analytics: <?= \Bitrix\Main\Web\Json::encode($arParams['OPTIONS']['ANALYTICS'] ?? []) ?>,
 		});
 
 		onboardingPopup.show();

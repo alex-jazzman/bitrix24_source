@@ -139,7 +139,7 @@ final class Segment extends JsonController
 			$this->addErrors($result->getErrors());
 		}
 
-		if ($availabilityChecker->isEnablePending())
+		if ($isEnabledValue && $availabilityChecker->isEnablePending())
 		{
 			(new Flow())->enableAction();
 			$this->sendAnalytics();

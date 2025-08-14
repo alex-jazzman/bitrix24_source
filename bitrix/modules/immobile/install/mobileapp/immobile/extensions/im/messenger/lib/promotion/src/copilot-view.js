@@ -3,7 +3,7 @@
  */
 jn.define('im/messenger/lib/promotion/copilot-view', (require, exports, module) => {
 	const { Color } = require('tokens');
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Icon, IconView } = require('ui-system/blocks/icon');
 
 	const { PromotionAsset } = require('im/messenger/assets/promotion');

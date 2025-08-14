@@ -28,6 +28,7 @@ import type {
 	DeleteReactionParams,
 	MessageDeleteCompletePreparedParams,
 	PrepareDeleteMessageParams,
+	EngineUpdateParams,
 } from '../../types/message';
 import type { PullExtraParams, RawFile, RawUser, RawMessage, RawChat } from '../../types/common';
 
@@ -53,7 +54,7 @@ export class MessagePullHandler
 		this.#setFiles(params);
 		this.#setAdditionalEntities(params);
 		this.#setCommentInfo(params);
-		this.#setCopilotRole(params);
+		this.#setCopilotData(params);
 		this.#setMessagesAutoDeleteConfig(params);
 
 		const messageWithTemplateId = this.#store.getters['messages/isInChatCollection']({
@@ -105,6 +106,20 @@ export class MessagePullHandler
 		});
 
 		this.#updateDialog(params);
+	}
+
+	handleChangeEngine(params: EngineUpdateParams)
+	{
+		Logger.warn('MessagePullHandler: handleChangeEngine', params);
+		const { chatId, engineCode } = params;
+		const dialog: ImModelChat = this.#store.getters['chats/getByChatId'](chatId);
+
+		if (!dialog)
+		{
+			return;
+		}
+
+		this.#store.dispatch('copilot/chats/updateModel', { dialogId: dialog.dialogId, aiModel: engineCode });
 	}
 
 	handleMessageUpdate(params: MessageUpdateParams)
@@ -482,7 +497,7 @@ export class MessagePullHandler
 		return this.#store.getters['chats/get'](dialogId, temporary);
 	}
 
-	#setCopilotRole(params)
+	#setCopilotData(params)
 	{
 		if (!params.copilot)
 		{

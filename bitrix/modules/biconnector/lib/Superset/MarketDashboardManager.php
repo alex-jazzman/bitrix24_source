@@ -83,16 +83,26 @@ final class MarketDashboardManager
 			'select' => ['ID', 'CODE'],
 			'filter' => ['=ID' => $appId],
 		]);
-		$appCode = $appRow['CODE'];
+		$appCode = $appRow['CODE'] ?? null;
 
 		$result = new Result();
+		if (!$appCode)
+		{
+			$result->addError(new Error(Loc::getMessage('BI_CONNECTOR_SUPERSET_ERROR_INSTALL_PROXY')));
+			MarketDashboardLogger::logErrors($result->getErrors(), [
+				'message' => 'Empty app code',
+			]);
+
+			return $result;
+		}
+
 		$response = $this->integrator->importDashboard($filePath, $appCode);
 
 		if ($response->hasErrors())
 		{
 			if (self::isSystemAppByAppCode($appCode))
 			{
-				MarketDashboardLogger::logErrors($response->getErrors(),[
+				MarketDashboardLogger::logErrors($response->getErrors(), [
 					'message' => 'System dashboard installation error',
 					'app_code' => $appCode,
 				]);

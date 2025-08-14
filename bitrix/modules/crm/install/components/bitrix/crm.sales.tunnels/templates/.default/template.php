@@ -86,9 +86,8 @@ $APPLICATION->includeComponent(
 
 		robotsUrl: '<?=$arResult['robotsUrl']?>',
 		generatorUrl: '<?=$arResult['generatorUrl']?>',
-		permissionEditUrl: '<?= \CUtil::JSEscape(Feature::enabled(Feature\PermissionsLayoutV2::class)
-			? \Bitrix\Crm\Service\Container::getInstance()->getRouter()->getEntityPermissionsUrl((int)$arResult['entityTypeId'])
-			: \Bitrix\Crm\Service\Container::getInstance()->getRouter()->getPermissionsUrl()
+		permissionEditUrl: '<?= \CUtil::JSEscape(
+			\Bitrix\Crm\Service\Container::getInstance()->getRouter()->getEntityPermissionsUrl((int)$arResult['entityTypeId'])
 		)
 		?>',
 		allowWrite: true,

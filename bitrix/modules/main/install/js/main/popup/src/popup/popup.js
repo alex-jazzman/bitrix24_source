@@ -1232,6 +1232,7 @@ export default class Popup extends EventEmitter
 
 	setDraggable(draggable: PopupDraggable): void
 	{
+		this.params.draggable = draggable;
 		const element = draggable?.element ?? this.titleBar;
 		if (!draggable || !element)
 		{

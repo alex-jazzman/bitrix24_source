@@ -72,6 +72,8 @@ final class Document implements Arrayable
 			'externalIdSourceType' => $this->document->externalIdSourceType->value,
 			'hcmLinkExternalIdSettingId' => $this->document->hcmLinkExternalIdSettingId,
 			'hcmLinkDocumentTypeSettingId' => $this->document->hcmLinkDocumentTypeSettingId,
+
+			'dateSignUntilUserTime' => $this->document->dateSignUntil?->toUserTime()->format('Y-m-d H:i:s'),
 		];
 	}
 }

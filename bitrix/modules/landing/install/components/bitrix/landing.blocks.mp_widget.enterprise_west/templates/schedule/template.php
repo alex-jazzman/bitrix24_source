@@ -53,11 +53,11 @@ if (!in_array($region, ['ru', 'kz', 'by', 'uz']))
 >
 	<div class="g-pl-25 g-pr-25 g-pt-55 g-pb-55">
 		<div style="display: flex; flex-direction: column; justify-content: center; min-height: 170px;">
-			<?php if (in_array($zone, ['en', 'eu', 'uk', 'br'])): ?>
+			<?php if (false): ?>
 				<a href="<?= $hrefButtonTalk ?>" target="_blank">
 					<button
 						style="--color: var(--theme-color-strict-inverse); --bg: var(--primary); --color-hover: var(--theme-color-strict-inverse); --bg-hover: var(--primary-lighten-1);"
-						class="g-btn-primary g-mb-13 g-height-45 g-px-25 g-font-weight-500 g-font-size-20 g-rounded-25 btn g-brd-none g-color g-bg g-color--hover g-bg--hover g-cursor-pointer">
+						class="g-btn-primary g-mb-13 g-height-45 g-px-25 g-py-0 g-font-weight-500 g-font-size-20 g-rounded-25 btn g-brd-none g-color g-bg g-color--hover g-bg--hover g-cursor-pointer">
 						<?= $textButtonTalk ?>
 					</button>
 				</a>
@@ -72,7 +72,7 @@ if (!in_array($region, ['ru', 'kz', 'by', 'uz']))
 								<button
 									style="--color: var(--theme-color-strict-inverse); --bg: var(--primary); --color-hover: var(--theme-color-strict-inverse); --bg-hover: var(--primary-lighten-1);"
 									id="trialButton"
-									class="g-btn-primary g-mb-13 g-height-45 g-px-25 g-font-weight-500 g-font-size-20 g-rounded-25 btn g-brd-none g-color g-bg g-color--hover g-bg--hover g-cursor-pointer">
+									class="g-btn-primary g-mb-13 g-height-45 g-px-25 g-py-0 g-font-weight-500 g-font-size-20 g-rounded-25 btn g-brd-none g-color g-bg g-color--hover g-bg--hover g-cursor-pointer">
 									<?= $textButtonTrial ?>
 								</button>
 							</div>
@@ -92,7 +92,7 @@ if (!in_array($region, ['ru', 'kz', 'by', 'uz']))
 							<a href="/settings/license_all.php" target="_blank">
 								<button
 									style="--color: var(--theme-color-strict-inverse); --bg: var(--primary); --color-hover: var(--theme-color-strict-inverse); --bg-hover: var(--primary-lighten-1);"
-									class="g-btn-primary g-height-45 g-font-weight-500 g-font-size-20 g-rounded-25 btn g-brd-none g-color g-bg g-color--hover g-bg--hover g-cursor-pointer landing-widget-ent-west-button">
+									class="g-btn-primary g-height-45 g-px-25 g-py-0 g-font-weight-500 g-font-size-20 g-rounded-25 btn g-brd-none g-color g-bg g-color--hover g-bg--hover g-cursor-pointer landing-widget-ent-west-button">
 									<?= $textButtonPrice ?>
 								</button>
 							</a>
@@ -121,7 +121,7 @@ if (!in_array($region, ['ru', 'kz', 'by', 'uz']))
 					<a href="/settings/license_all.php" target="_blank">
 						<button
 							style="--color: var(--theme-color-strict-inverse); --bg: var(--primary); --color-hover: var(--theme-color-strict-inverse); --bg-hover: var(--primary-lighten-1);"
-							class="g-btn-primary g-height-45 g-font-weight-500 g-font-size-20 g-rounded-25 btn g-brd-none g-color g-bg g-color--hover g-bg--hover g-cursor-pointer landing-widget-ent-west-button">
+							class="g-btn-primary g-height-45 g-px-25 g-py-0 g-font-weight-500 g-font-size-20 g-rounded-25 btn g-brd-none g-color g-bg g-color--hover g-bg--hover g-cursor-pointer landing-widget-ent-west-button">
 							<?= $textButtonPrice ?>
 						</button>
 					</a>

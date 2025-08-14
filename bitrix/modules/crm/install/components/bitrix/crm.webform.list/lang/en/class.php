@@ -53,4 +53,4 @@ $MESS["CRM_WEBFORM_LIST_VIEWS_CONVERSION_MENU_HINT"] = "Form submission rate (fo
 $MESS["CRM_WEBFORM_LIST_VIEWS_SUBMITS_MENU"] = "Changes";
 $MESS["CRM_WEBFORM_LIST_VIEWS_SUBMITS_MENU_HINT"] = "Compare the number of forms submitted over the last two weeks with the same value two weeks before";
 $MESS["TASKS_GRID_STUB_NO_DATA_DESCRIPTION"] = "Try resetting the filter or change the search phrase.";
-$MESS["TASKS_GRID_STUB_NO_DATA_TITLE"] = "Your search request returned no results.";
+$MESS["TASKS_GRID_STUB_NO_DATA_TITLE"] = "Your search request returned no results";

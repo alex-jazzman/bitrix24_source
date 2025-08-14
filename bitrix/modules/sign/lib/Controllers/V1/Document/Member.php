@@ -77,6 +77,14 @@ class Member extends \Bitrix\Sign\Engine\Controller
 			->getMemberRepository()
 			->listByDocumentId($document->id)
 		;
+
+		if (!$document->isTemplated())
+		{
+			$members = $members->filter(
+				static fn(\Bitrix\Sign\Item\Member $member): bool => $member->entityType !== EntityType::ROLE,
+			);
+		}
+
 		$result = [];
 		$isCrmModuleIncluded = Loader::includeModule('crm');
 		foreach ($members as $member)
@@ -502,6 +510,15 @@ class Member extends \Bitrix\Sign\Engine\Controller
 			return [];
 		}
 
+		$document = $this->documentService->getByUid($documentUid);
+
+		if (!$document)
+		{
+			$this->addError(new Error(Loc::getMessage('SIGN_CONTROLLER_MEMBER_DOCUMENT_NOT_FOUND')));
+
+			return [];
+		}
+
 		$result = (new ValidateEntitySelectorMembers($members))->launch();
 		if (!$result instanceof ValidateEntitySelectorMembersResult)
 		{
@@ -514,6 +531,13 @@ class Member extends \Bitrix\Sign\Engine\Controller
 		$memberCollection = $result->members;
 		$departmentEntities = $result->departments;
 		$assigneeEntityType = $result->assigneeEntityType;
+
+		if (!$document->isTemplated())
+		{
+			$memberCollection = $memberCollection->filter(
+				static fn(\Bitrix\Sign\Item\Member $member): bool => $member->entityType !== EntityType::ROLE,
+			);
+		}
 
 		$result = $this->memberService->setupB2eMembers($documentUid, $memberCollection, $representativeId);
 		if (!$result->isSuccess())

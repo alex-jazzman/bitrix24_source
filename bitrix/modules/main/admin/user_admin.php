@@ -35,19 +35,20 @@ use Bitrix\Main\Type\DateTime;
 
 IncludeModuleLangFile(__FILE__);
 
-//authorize as user
-if(isset($_REQUEST["action"]) && $_REQUEST["action"] == "authorize" && check_bitrix_sessid() && $USER->CanDoOperation('edit_php'))
+if (isset($_REQUEST["action"], $_REQUEST["ID"]) && $_REQUEST["ID"] > 0)
 {
-	$USER->Logout();
-	$USER->Authorize(intval($_REQUEST["ID"] ?? 0), false, true, null, false);
-	LocalRedirect("user_admin.php?lang=".LANGUAGE_ID);
-}
-
-//logout user
-if(isset($_REQUEST["action"]) && $_REQUEST["action"] == "logout_user" && check_bitrix_sessid() && $USER->CanDoOperation('edit_php'))
-{
-	\Bitrix\Main\UserAuthActionTable::addLogoutAction($_REQUEST["ID"] ?? 0);
-	LocalRedirect("user_admin.php?lang=".LANGUAGE_ID);
+	if (check_bitrix_sessid() && $USER->CanDoOperation('edit_php'))
+	{
+		if ($_REQUEST["action"] == "authorize")
+		{
+			$USER->LoginAs((int)$_REQUEST["ID"]);
+		}
+		elseif ($_REQUEST["action"] == "logout_user")
+		{
+			\Bitrix\Main\UserAuthActionTable::addLogoutAction($_REQUEST["ID"]);
+		}
+		LocalRedirect("user_admin.php?lang=" . LANGUAGE_ID);
+	}
 }
 
 $sTableID = "tbl_user";

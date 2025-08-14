@@ -1,5 +1,5 @@
 <?php
-$MESS["DELETE_PAYMENT_ALT"] = "Жою";
+$MESS['DELETE_PAYMENT_ALT'] = "Жою";
 $MESS["DELETE_PAYMENT_CONFIRM"] = "Белгіленген жазбаларды жойғыңыз келетініне сенімдісіз бе?";
 $MESS["EDIT_PAYMENT_ALT"] = "Өзгерту";
 $MESS["PAYMENT_ACCOUNT_NUM"] = "Тапсырыс нөмірі";

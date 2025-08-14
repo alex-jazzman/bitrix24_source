@@ -2,7 +2,7 @@
  * @module im/messenger/lib/element/recent/item/base
  */
 jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Color } = require('tokens');
 	const { Type } = require('type');
 	const { Theme } = require('im/lib/theme');
@@ -13,7 +13,7 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
-	const { DateHelper, } = require('im/messenger/lib/helper');
+	const { DateHelper } = require('im/messenger/lib/helper');
 	const { DateFormatter } = require('im/messenger/lib/date-formatter');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const {
@@ -121,6 +121,34 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 				.createPinnedStyle()
 				.createCounterTestId()
 			;
+		}
+
+		/**
+		 * @return {RecentWidgetItem}
+		 */
+		toRecentWidgetItem()
+		{
+			return {
+				id: this.id,
+				title: this.title,
+				subtitle: this.subtitle,
+				avatar: this.avatar,
+				imageUrl: this.imageUrl,
+				color: this.color,
+				backgroundColor: this.backgroundColor,
+				date: this.date,
+				displayedDate: this.displayedDate,
+				messageCount: this.messageCount,
+				counterTestId: this.counterTestId,
+				unread: this.unread,
+				sectionCode: this.sectionCode,
+				sortValues: this.sortValues,
+				menuMode: this.menuMode,
+				actions: this.actions,
+				params: this.params,
+				styles: this.styles,
+				isSuperEllipseIcon: this.isSuperEllipseIcon,
+			};
 		}
 
 		/**
@@ -273,7 +301,10 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 			if (dialog && dialog.counter)
 			{
 				const chatId = dialog.chatId;
-				const hasMentions = serviceLocator.get('core').getStore().getters['anchorModel/hasAnchorsByType'](chatId, AnchorType.mention);
+				const hasMentions = serviceLocator.get('core').getStore().getters['anchorModel/hasAnchorsByType'](
+					chatId,
+					AnchorType.mention,
+				);
 
 				this.messageCount = (dialog.counter === 1 && hasMentions) ? 0 : dialog.counter;
 			}
@@ -445,7 +476,10 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 			let tintColor = '';
 
 			const chatId = this.getDialogItem()?.chatId;
-			const liked = serviceLocator.get('core').getStore().getters['anchorModel/hasAnchorsByType'](chatId, AnchorType.reaction);
+			const liked = serviceLocator.get('core').getStore().getters['anchorModel/hasAnchorsByType'](
+				chatId,
+				AnchorType.reaction,
+			);
 
 			if (liked)
 			{
@@ -523,7 +557,10 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		{
 			const chatId = this.getDialogItem()?.chatId;
 
-			const hasMention = serviceLocator.get('core').getStore().getters['anchorModel/hasAnchorsByType'](chatId, AnchorType.mention);
+			const hasMention = serviceLocator.get('core').getStore().getters['anchorModel/hasAnchorsByType'](
+				chatId,
+				AnchorType.mention,
+			);
 
 			if (hasMention)
 			{
@@ -541,7 +578,6 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		}
 
 		/**
-		 * @abstract
 		 * @returns {RecentItem}
 		 */
 		createCommentsStyle()
@@ -725,16 +761,25 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 			return this.params.model.dialog;
 		}
 
+		/**
+		 * @return {RecentWidgetItemAction}
+		 */
 		getMuteAction()
 		{
 			return this.isMute ? UnmuteAction : MuteAction;
 		}
 
+		/**
+		 * @return {RecentWidgetItemAction}
+		 */
 		getHideAction()
 		{
 			return HideAction;
 		}
 
+		/**
+		 * @return {RecentWidgetItemAction}
+		 */
 		getPinAction()
 		{
 			const item = this.getModelItem();
@@ -742,6 +787,9 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 			return item.pinned === true ? UnpinAction : PinAction;
 		}
 
+		/**
+		 * @return {RecentWidgetItemAction}
+		 */
 		getReadAction()
 		{
 			const item = this.getModelItem();
@@ -750,6 +798,9 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 			return (item.unread === true || dialog?.counter > 0) ? ReadAction : UnreadAction;
 		}
 
+		/**
+		 * @return {RecentWidgetItemAction}
+		 */
 		getProfileAction()
 		{
 			return ProfileAction;

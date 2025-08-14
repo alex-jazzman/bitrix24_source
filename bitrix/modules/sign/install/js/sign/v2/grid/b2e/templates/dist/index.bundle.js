@@ -229,7 +229,7 @@ this.BX.Sign.V2.Grid = this.BX.Sign.V2.Grid || {};
 	      id: 0
 	    };
 	    const rootFolder = babelHelpers.classPrivateFieldLooseBase(this, _createFolderItem)[_createFolderItem](rootFolderData);
-	    main_core.Dom.addClass(rootFolder, 'selected-folder');
+	    main_core.Dom.addClass(rootFolder, 'sign-b2e-grid-templates-popup__selected-folder');
 	    main_core.Dom.append(rootFolder, folderList);
 	    this.emit('folderSelected', rootFolderData);
 	    const subFolderContainer = babelHelpers.classPrivateFieldLooseBase(this, _createSubFolderContainer)[_createSubFolderContainer]();
@@ -242,15 +242,15 @@ this.BX.Sign.V2.Grid = this.BX.Sign.V2.Grid || {};
 	  }
 	}
 	function _createFolderListContainer2() {
-	  return main_core.Tag.render(_t || (_t = _`<div class="folder-list-container"></div>`));
+	  return main_core.Tag.render(_t || (_t = _`<div class="sign-b2e-grid-templates-popup__folder-list-container"></div>`));
 	}
 	function _createSubFolderContainer2() {
-	  return main_core.Tag.render(_t2 || (_t2 = _`<div class="sub-folder-container"></div>`));
+	  return main_core.Tag.render(_t2 || (_t2 = _`<div class="sign-b2e-grid-templates-popup__sub-folder-container"></div>`));
 	}
 	function _createFolderItem2(folder) {
 	  const listItem = main_core.Tag.render(_t3 || (_t3 = _`
-			<div class="folder-item">
-				<span class="folder-icon-folder-list-popup"></span>
+			<div class="sign-b2e-grid-templates-popup__folder-item">
+				<span class="sign-b2e-grid-templates-popup__folder-icon-folder-list"></span>
 				<span>${0}</span>
 			</div>
 		`), main_core.Text.encode(folder.title));
@@ -261,12 +261,12 @@ this.BX.Sign.V2.Grid = this.BX.Sign.V2.Grid || {};
 	  return listItem;
 	}
 	function _selectAndHighlightFolder2(selectedItem, folder) {
-	  const folderListContainer = selectedItem.closest('.folder-list-container');
+	  const folderListContainer = selectedItem.closest('.sign-b2e-grid-templates-popup__folder-list-container');
 	  if (folderListContainer) {
-	    folderListContainer.querySelectorAll('.folder-item').forEach(child => {
-	      main_core.Dom.removeClass(child, 'selected-folder');
+	    folderListContainer.querySelectorAll('.sign-b2e-grid-templates-popup__folder-item').forEach(child => {
+	      main_core.Dom.removeClass(child, 'sign-b2e-grid-templates-popup__selected-folder');
 	    });
-	    main_core.Dom.addClass(selectedItem, 'selected-folder');
+	    main_core.Dom.addClass(selectedItem, 'sign-b2e-grid-templates-popup__selected-folder');
 	    this.emit('folderSelected', folder);
 	  }
 	}
@@ -303,6 +303,8 @@ this.BX.Sign.V2.Grid = this.BX.Sign.V2.Grid || {};
 	let _$1 = t => t,
 	  _t$1;
 	var _gridId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("gridId");
+	var _addNewTemplateLink = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("addNewTemplateLink");
+	var _urlsForReload = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("urlsForReload");
 	var _analytics = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("analytics");
 	var _api$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("api");
 	var _changeVisibilityForTemplate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("changeVisibilityForTemplate");
@@ -315,7 +317,7 @@ this.BX.Sign.V2.Grid = this.BX.Sign.V2.Grid || {};
 	var _getSelectedItems = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getSelectedItems");
 	var _onGridTreeAttributesMutate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onGridTreeAttributesMutate");
 	class Templates {
-	  constructor(gridId) {
+	  constructor(gridId, addNewTemplateLink, urlsForReload) {
 	    Object.defineProperty(this, _onGridTreeAttributesMutate, {
 	      value: _onGridTreeAttributesMutate2
 	    });
@@ -347,6 +349,14 @@ this.BX.Sign.V2.Grid = this.BX.Sign.V2.Grid || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    Object.defineProperty(this, _addNewTemplateLink, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _urlsForReload, {
+	      writable: true,
+	      value: void 0
+	    });
 	    Object.defineProperty(this, _analytics, {
 	      writable: true,
 	      value: new sign_v2_analytics.Analytics()
@@ -356,6 +366,8 @@ this.BX.Sign.V2.Grid = this.BX.Sign.V2.Grid || {};
 	      value: new sign_v2_api.Api()
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _gridId)[_gridId] = gridId;
+	    babelHelpers.classPrivateFieldLooseBase(this, _addNewTemplateLink)[_addNewTemplateLink] = addNewTemplateLink;
+	    babelHelpers.classPrivateFieldLooseBase(this, _urlsForReload)[_urlsForReload] = urlsForReload;
 	  }
 	  renderSendButton(entityId, entityType, templateIds, blockParams) {
 	    if (entityId <= 0) {
@@ -504,11 +516,11 @@ this.BX.Sign.V2.Grid = this.BX.Sign.V2.Grid || {};
 	      }
 	    });
 	  }
-	  reloadAfterSliderClose(addNewTemplateLink, urlListForReloadAfterSliderClose) {
+	  reloadAfterSliderClose() {
 	    const context = window === top ? window : top;
 	    context.BX.Event.EventEmitter.subscribe('SidePanel.Slider:onCloseComplete', async event => {
 	      const closedSliderUrl = event.getData()[0].getSlider().getUrl();
-	      if (babelHelpers.classPrivateFieldLooseBase(this, _shouldReloadAfterClose)[_shouldReloadAfterClose](closedSliderUrl, addNewTemplateLink, urlListForReloadAfterSliderClose)) {
+	      if (babelHelpers.classPrivateFieldLooseBase(this, _shouldReloadAfterClose)[_shouldReloadAfterClose](closedSliderUrl)) {
 	        await this.reload();
 	      }
 	    });
@@ -533,11 +545,15 @@ this.BX.Sign.V2.Grid = this.BX.Sign.V2.Grid || {};
 	  }
 	  async copyTemplate(templateId, folderId) {
 	    try {
-	      await babelHelpers.classPrivateFieldLooseBase(this, _api$1)[_api$1].template.copy(templateId, folderId);
+	      const response = await babelHelpers.classPrivateFieldLooseBase(this, _api$1)[_api$1].template.copy(templateId, folderId);
+	      const copyTemplateId = response.template.id;
 	      await this.reload();
 	      window.top.BX.UI.Notification.Center.notify({
 	        content: main_core.Loc.getMessage('SIGN_TEMPLATE_GRID_COPY_HINT_SUCCESS')
 	      });
+	      if (window.top.BX.SidePanel && babelHelpers.classPrivateFieldLooseBase(this, _addNewTemplateLink)[_addNewTemplateLink] && copyTemplateId) {
+	        window.top.BX.SidePanel.Instance.open(`${babelHelpers.classPrivateFieldLooseBase(this, _addNewTemplateLink)[_addNewTemplateLink]}&templateId=${copyTemplateId}&stepId=changePartner&noRedirect=Y`);
+	      }
 	    } catch (error) {
 	      console.error('Error copying template:', error);
 	      window.top.BX.UI.Notification.Center.notify({
@@ -605,7 +621,7 @@ this.BX.Sign.V2.Grid = this.BX.Sign.V2.Grid || {};
 	              await this.reload();
 	            }
 	          },
-	          className: 'move-to-button'
+	          className: 'sign-b2e-grid-templates-popup__move-to-button'
 	        }), new BX.UI.Button({
 	          text: main_core.Loc.getMessage('SIGN_TEMPLATE_GRID_MOVE_TO_FOLDER_POPUP_CANCEL_BUTTON_TEXT'),
 	          color: BX.UI.Button.Color.LINK,
@@ -671,10 +687,10 @@ this.BX.Sign.V2.Grid = this.BX.Sign.V2.Grid || {};
 	  var _BX$Main$gridManager$;
 	  return (_BX$Main$gridManager$ = BX.Main.gridManager.getById(babelHelpers.classPrivateFieldLooseBase(this, _gridId)[_gridId])) == null ? void 0 : _BX$Main$gridManager$.instance;
 	}
-	function _shouldReloadAfterClose2(closedSliderUrl, addNewTemplateLink, urlListForReloadAfterSliderClose) {
+	function _shouldReloadAfterClose2(closedSliderUrl) {
 	  const uri = new main_core.Uri(closedSliderUrl);
 	  const path = uri.getPath();
-	  return closedSliderUrl === addNewTemplateLink || closedSliderUrl === 'sign-settings-template-created' || urlListForReloadAfterSliderClose.some(url => path.startsWith(new main_core.Uri(url).getPath()));
+	  return closedSliderUrl === babelHelpers.classPrivateFieldLooseBase(this, _addNewTemplateLink)[_addNewTemplateLink] || closedSliderUrl === 'sign-settings-template-created' || babelHelpers.classPrivateFieldLooseBase(this, _urlsForReload)[_urlsForReload].some(url => path.startsWith(new main_core.Uri(url).getPath()));
 	}
 	function _downloadStringLikeFile2(data, filename, mimeType) {
 	  const blob = new Blob([data], {

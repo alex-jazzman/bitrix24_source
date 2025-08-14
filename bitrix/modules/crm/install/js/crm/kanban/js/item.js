@@ -547,6 +547,7 @@ BX.CRM.Kanban.Item.prototype = {
 				class="crm-kanban-item-last-activity-by-userpic"
 				href="${BX.Text.encode(href)}"
 			 	bx-tooltip-user-id="${BX.Text.toInteger(lastActivityBy.id)}"
+			 	bx-tooltip-context="b24"
 				${pictureStyle}
 			></a>
 		`;
@@ -892,8 +893,15 @@ BX.CRM.Kanban.Item.prototype = {
 			{
 				userPic = ` style="background-image: url('${encodeURI(BX.Text.encode(value.picture))}')"`;
 			}
-			itemUserPic = `<a class="crm-kanban-item-fields-item-value-userpic" href="${value.link}"${userPic}></a>`;
-			itemUserName = `<a class="crm-kanban-item-fields-item-value-name" href="${value.link}">${value.title}</a>`;
+
+			const tooltip = (
+				value.id
+					? `bx-tooltip-user-id="${BX.Text.toInteger(value.id)}" bx-tooltip-context="b24"`
+					: null
+			);
+
+			itemUserPic = `<a class="crm-kanban-item-fields-item-value-userpic" ${tooltip} href="${value.link}"${userPic}></a>`;
+			itemUserName = `<a class="crm-kanban-item-fields-item-value-name" ${tooltip} href="${value.link}">${value.title}</a>`;
 		}
 
 		return {

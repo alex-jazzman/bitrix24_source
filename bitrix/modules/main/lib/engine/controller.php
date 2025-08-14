@@ -6,6 +6,7 @@ use Bitrix\Main\Application;
 use Bitrix\Main\Component\ParameterSigner;
 use Bitrix\Main\Config\Configuration;
 use Bitrix\Main\Diag\ExceptionHandlerFormatter;
+use Bitrix\Main\Engine\ActionFilter\FilterType;
 use Bitrix\Main\Engine\AutoWire\BinderArgumentException;
 use Bitrix\Main\Engine\AutoWire\Parameter;
 use Bitrix\Main\Engine\Contract\Controllerable;
@@ -24,6 +25,7 @@ use Bitrix\Main\Request;
 use Bitrix\Main\Response;
 use Bitrix\Main\Security\Sign\BadSignatureException;
 use Bitrix\Main\SystemException;
+use Bitrix\Main\Validation\ValidationException;
 use Bitrix\Main\Web\Uri;
 
 class Controller implements Errorable, Controllerable
@@ -738,21 +740,21 @@ class Controller implements Errorable, Controllerable
 			$config = [];
 		}
 
-		if (!isset($config['prefilters']))
+		if (!isset($config[FilterType::Prefilter->value]))
 		{
-			$config['prefilters'] = $this->configurator->wrapFiltersClosure(
+			$config[FilterType::Prefilter->value] = $this->configurator->wrapFiltersClosure(
 				$this->getDefaultPreFilters()
 			);
 		}
-		if (!isset($config['postfilters']))
+		if (!isset($config[FilterType::Postfilter->value]))
 		{
-			$config['postfilters'] = $this->configurator->wrapFiltersClosure(
+			$config[FilterType::Postfilter->value] = $this->configurator->wrapFiltersClosure(
 				$this->getDefaultPostFilters()
 			);
 		}
 
 		$hasPostMethod = $hasCsrfCheck = false;
-		foreach ($config['prefilters'] as $filter)
+		foreach ($config[FilterType::Prefilter->value] as $filter)
 		{
 			if ($filter instanceof ActionFilter\HttpMethod && $filter->containsPostMethod())
 			{
@@ -766,27 +768,31 @@ class Controller implements Errorable, Controllerable
 
 		if ($hasPostMethod && !$hasCsrfCheck && $this->request->isPost())
 		{
-			$config['prefilters'][] = new ActionFilter\Csrf;
+			$config[FilterType::Prefilter->value][] = new ActionFilter\Csrf;
 		}
 
-		if (!empty($config['-prefilters']))
+		if (!empty($config[FilterType::DisablePrefilter->value]))
 		{
-			$config['prefilters'] = $this->removeFilters($config['prefilters'], $config['-prefilters']);
+			$config[FilterType::Prefilter->value] =
+				$this->removeFilters($config[FilterType::Prefilter->value], $config[FilterType::DisablePrefilter->value]);
 		}
 
-		if (!empty($config['-postfilters']))
+		if (!empty($config[FilterType::DisablePostfilter->value]))
 		{
-			$config['postfilters'] = $this->removeFilters($config['postfilters'], $config['-postfilters']);
+			$config[FilterType::Postfilter->value] =
+				$this->removeFilters($config[FilterType::Postfilter->value], $config[FilterType::DisablePostfilter->value]);
 		}
 
-		if (!empty($config['+prefilters']))
+		if (!empty($config[FilterType::EnablePrefilter->value]))
 		{
-			$config['prefilters'] = $this->appendFilters($config['prefilters'], $config['+prefilters']);
+			$config[FilterType::Prefilter->value] =
+				$this->appendFilters($config[FilterType::Prefilter->value], $config[FilterType::EnablePrefilter->value]);
 		}
 
-		if (!empty($config['+postfilters']))
+		if (!empty($config[FilterType::EnablePostfilter->value]))
 		{
-			$config['postfilters'] = $this->appendFilters($config['postfilters'], $config['+postfilters']);
+			$config[FilterType::Postfilter->value] =
+				$this->appendFilters($config[FilterType::Postfilter->value], $config[FilterType::EnablePostfilter->value]);
 		}
 
 		return $config;
@@ -828,7 +834,7 @@ class Controller implements Errorable, Controllerable
 		);
 
 		$eventManager = EventManager::getInstance();
-		foreach ($modifiedConfig['prefilters'] as $filter)
+		foreach ($modifiedConfig[FilterType::Prefilter->value] as $filter)
 		{
 			/** @var $filter ActionFilter\Base */
 			if (!in_array($this->getScope(), $filter->listAllowedScopes(), true))
@@ -838,14 +844,14 @@ class Controller implements Errorable, Controllerable
 
 			$filter->bindAction($action);
 
-			$this->eventHandlersIds['prefilters'][] = $eventManager->addEventHandler(
+			$this->eventHandlersIds[FilterType::Prefilter->value][] = $eventManager->addEventHandler(
 				'main',
 				static::getFullEventName(static::EVENT_ON_BEFORE_ACTION),
 				[$filter, 'onBeforeAction']
 			);
 		}
 
-		foreach ($modifiedConfig['postfilters'] as $filter)
+		foreach ($modifiedConfig[FilterType::Postfilter->value] as $filter)
 		{
 			/** @var $filter ActionFilter\Base */
 			if (!in_array($this->getScope(), $filter->listAllowedScopes(), true))
@@ -856,7 +862,7 @@ class Controller implements Errorable, Controllerable
 			/** @var $filter ActionFilter\Base */
 			$filter->bindAction($action);
 
-			$this->eventHandlersIds['postfilters'][] = $eventManager->addEventHandler(
+			$this->eventHandlersIds[FilterType::Postfilter->value][] = $eventManager->addEventHandler(
 				'main',
 				static::getFullEventName(static::EVENT_ON_AFTER_ACTION),
 				[$filter, 'onAfterAction']
@@ -873,7 +879,7 @@ class Controller implements Errorable, Controllerable
 	final protected function detachPreFilters(Action $action): void
 	{
 		$eventManager = EventManager::getInstance();
-		foreach ($this->eventHandlersIds['prefilters'] as $handlerId)
+		foreach ($this->eventHandlersIds[FilterType::Prefilter->value] as $handlerId)
 		{
 			$eventManager->removeEventHandler(
 				'main',
@@ -882,13 +888,13 @@ class Controller implements Errorable, Controllerable
 			);
 		}
 
-		$this->eventHandlersIds['prefilters'] = [];
+		$this->eventHandlersIds[FilterType::Prefilter->value] = [];
 	}
 
 	final protected function detachPostFilters(Action $action): void
 	{
 		$eventManager = EventManager::getInstance();
-		foreach ($this->eventHandlersIds['postfilters'] as $handlerId)
+		foreach ($this->eventHandlersIds[FilterType::Postfilter->value] as $handlerId)
 		{
 			$eventManager->removeEventHandler(
 				'main',
@@ -897,7 +903,7 @@ class Controller implements Errorable, Controllerable
 			);
 		}
 
-		$this->eventHandlersIds['postfilters'] = [];
+		$this->eventHandlersIds[FilterType::Postfilter->value] = [];
 	}
 
 	final protected function getActionConfig($actionName): ?array
@@ -925,6 +931,10 @@ class Controller implements Errorable, Controllerable
 		if ($throwable instanceof BinderArgumentException)
 		{
 			$this->runProcessingBinderThrowable($throwable);
+		}
+		elseif ($throwable instanceof ValidationException)
+		{
+			$this->runProcessingValidationException($throwable);
 		}
 		elseif ($throwable instanceof \Exception)
 		{
@@ -972,6 +982,22 @@ class Controller implements Errorable, Controllerable
 		else
 		{
 			$this->runProcessingException($e);
+		}
+	}
+
+	protected function runProcessingValidationException(ValidationException $e): void
+	{
+		$validationErrors = $e->getValidationErrors();
+		if (empty($validationErrors))
+		{
+			$this->runProcessingException($e);
+
+			return;
+		}
+
+		foreach ($validationErrors as $validationError)
+		{
+			$this->addError($validationError);
 		}
 	}
 

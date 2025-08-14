@@ -3,6 +3,7 @@
 return [
 	'components' => [
 		'user-profile-tabs',
+		'user.profile',
 	],
 	'extensions' => [
 		'error',
@@ -11,5 +12,7 @@ return [
 		'require-lazy',
 		'user-profile/api',
 		'user-profile/const',
+		'assets/icons',
+		'user/profile',
 	],
 ];

@@ -18,42 +18,67 @@ class GroupFieldAssembler extends FieldAssembler
 			return '';
 		}
 
-		$hintMore = null;
-		if (count($value) > 3)
+		$availableGroupIds = $this->getSettings()->getAvailableGroupIds();
+		if (empty($availableGroupIds))
 		{
-			$groupsToShow = array_slice($value, 0, 2);
-			$groupsToHide = array_slice($value, 2);
+			return '';
+		}
+		$groups = array_filter(
+			$value,
+			static fn($item) => in_array($item['ID'], $availableGroupIds, true)
+		);
+		$groupNames = array_column($groups, 'NAME');
+
+		if (count($groupNames) > 3)
+		{
+			$groupsToShow = array_slice($groupNames, 0, 2);
+			$groupsToHide = array_slice($groupNames, 2);
 
 			$shownPart = htmlspecialcharsbx(
 				implode(', ', $groupsToShow)
 				. ' ',
 			);
 			$hiddenPart = htmlspecialcharsbx(implode(', ', $groupsToHide));
-			$hintMoreText = Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_GROUP_MORE', [
-				'#COUNT#' => count($groupsToHide),
-			]);
-			$hintMore = <<<HTML
-				<span
-					data-hint="{$hiddenPart}" 
-					data-hint-no-icon
-					data-hint-interactivity
-					data-hint-center
-					class="biconnector-grid-scope-hint-more"
-				>
-					$hintMoreText
-				</span>
-				HTML;
+
+			$result = Loc::getMessage(
+				'BICONNECTOR_SUPERSET_DASHBOARD_GRID_GROUPS',
+				[
+					'#FIRST_GROUPS#' => $shownPart,
+					'[hint]' => <<<HTML
+						<span
+							data-hint='{$hiddenPart}' 
+							data-hint-no-icon
+							data-hint-interactivity
+							data-hint-center
+							class="biconnector-grid-scope-hint-more"
+						>
+						HTML,
+					'#COUNT#' => count($groupsToHide),
+					'[/hint]' => '</span>',
+				]
+			);
 		}
 		else
 		{
-			$shownPart = htmlspecialcharsbx(implode(', ', $value));
+			$result = htmlspecialcharsbx(implode(', ', $groupNames));
 		}
 
-		return <<<HTML
-			<span>
-				{$shownPart}
-				{$hintMore}
-			</span>
-		HTML;
+		return $result;
+	}
+
+	protected function prepareRow(array $row): array
+	{
+		if (empty($this->getColumnIds()))
+		{
+			return $row;
+		}
+
+		$row['columns'] ??= [];
+		foreach ($this->getColumnIds() as $columnId)
+		{
+			$row['columns'][$columnId] = $this->prepareColumn($row['data']['GROUPS']);
+		}
+
+		return $row;
 	}
 }

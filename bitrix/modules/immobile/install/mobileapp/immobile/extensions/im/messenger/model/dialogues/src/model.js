@@ -13,6 +13,7 @@ jn.define('im/messenger/model/dialogues/model', (require, exports, module) => {
 	const { collabModel } = require('im/messenger/model/dialogues/collab/model');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { ChatPermission } = require('im/messenger/lib/permission-manager');
+	const { ModelUtils } = require('im/messenger/lib/utils');
 
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const logger = LoggerManager.getInstance().getLogger('model--dialogues');
@@ -169,14 +170,18 @@ jn.define('im/messenger/model/dialogues/model', (require, exports, module) => {
 				});
 			},
 
+			/**
+			 * @function dialoguesModel/setFromSync
+			 */
+			setFromSync: (store, dialogList) => {
+				return store.dispatch('set', { itemList: dialogList, actionName: 'setFromSync' });
+			},
+
 			/** @function dialoguesModel/set */
 			set: (store, payload) => {
-				if (!Array.isArray(payload) && Type.isPlainObject(payload))
-				{
-					payload = [payload];
-				}
+				const { itemList, actionName = 'set' } = ModelUtils.normalizeItemListPayload(payload);
 
-				payload.map((element) => {
+				itemList.map((element) => {
 					return validate(element);
 				}).forEach((element) => {
 					/** @type {DialoguesModelState} */
@@ -184,7 +189,7 @@ jn.define('im/messenger/model/dialogues/model', (require, exports, module) => {
 					if (existingItem)
 					{
 						store.commit('update', {
-							actionName: 'set',
+							actionName,
 							data: {
 								dialogId: element.dialogId,
 								fields: element,
@@ -194,7 +199,7 @@ jn.define('im/messenger/model/dialogues/model', (require, exports, module) => {
 					else
 					{
 						store.commit('add', {
-							actionName: 'set',
+							actionName,
 							data: {
 								dialogId: element.dialogId,
 								fields: mergeImmutable(dialogDefaultElement, element),

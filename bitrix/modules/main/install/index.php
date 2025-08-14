@@ -156,6 +156,7 @@ class main extends CModule
 		RegisterModuleDependences("main", "OnBeforeUserTypeAdd", "main", '\Bitrix\Main\UserField\Internal\UserFieldHelper', "OnBeforeUserTypeAdd");
 		RegisterModuleDependences("main", "OnAfterUserTypeAdd", "main", '\Bitrix\Main\UserField\Internal\UserFieldHelper', "onAfterUserTypeAdd");
 		RegisterModuleDependences("main", "OnBeforeUserTypeDelete", "main", '\Bitrix\Main\UserField\Internal\UserFieldHelper', "OnBeforeUserTypeDelete");
+		RegisterModuleDependences("main", "OnAfterUserTypeDelete", "main", '\Bitrix\Main\UserField\Internal\UserFieldHelper', "OnAfterUserTypeDelete");
 		RegisterModuleDependences("main", "OnAuthProvidersBuildList", "main", "\\Bitrix\\Main\\Access\\Auth\\AccessAuthProvider", "getProviders");
 		RegisterModuleDependences("iblock", "OnBeforeIBlockSectionUpdate", "main", "\\Bitrix\\Main\\Access\\Auth\\AccessEventHandler", "onBeforeIBlockSectionUpdate");
 		RegisterModuleDependences("iblock", "OnBeforeIBlockSectionAdd", "main", "\\Bitrix\\Main\\Access\\Auth\\AccessEventHandler", "onBeforeIBlockSectionAdd");
@@ -717,15 +718,15 @@ class main extends CModule
 		COption::SetOptionString("main", "rating_authority_rating", $ratingId);
 
 		// set default rating vote group config
-		$rsGroup = $DB->Query("SELECT * FROM b_group WHERE STRING_ID='RATING_VOTE'", true);
-		if ($arGroup = $rsGroup->Fetch())
+		$groupId = CGroup::GetIDByCode('RATING_VOTE');
+		if ($groupId)
 		{
 			$arVoteGroup[] = [
 				'GROUP_ID' => 1,
 				'TYPE' => "'R'",
 			];
 			$arVoteGroup[] = [
-				'GROUP_ID' => $arGroup['ID'],
+				'GROUP_ID' => $groupId,
 				'TYPE' => "'R'",
 			];
 			foreach ($arVoteGroup as $arField)
@@ -749,7 +750,7 @@ class main extends CModule
 				'ACTION_NAME' => 'ADD_TO_GROUP',
 				'ACTION_CONFIG' => [
 					'ADD_TO_GROUP' => [
-						'GROUP_ID' => $arGroup['ID'],
+						'GROUP_ID' => $groupId,
 					],
 				],
 				'ACTIVATE' => 'N',
@@ -781,7 +782,7 @@ class main extends CModule
 				'ACTION_NAME' => 'REMOVE_FROM_GROUP',
 				'ACTION_CONFIG' => [
 					'REMOVE_FROM_GROUP' => [
-						'GROUP_ID' => $arGroup['ID'],
+						'GROUP_ID' => $groupId,
 					],
 				],
 				'ACTIVATE' => 'N',
@@ -799,17 +800,18 @@ class main extends CModule
 
 			COption::SetOptionString("main", "rating_assign_rating_group_add", 1);
 			COption::SetOptionString("main", "rating_assign_rating_group_delete", 1);
-			COption::SetOptionString("main", "rating_assign_rating_group", $arGroup['ID']);
+			COption::SetOptionString("main", "rating_assign_rating_group", $groupId);
 		}
-		$rsGroup = $DB->Query("SELECT * FROM b_group WHERE STRING_ID='RATING_VOTE_AUTHORITY'", true);
-		if ($arGroup = $rsGroup->Fetch())
+
+		$groupId = CGroup::GetIDByCode('RATING_VOTE_AUTHORITY');
+		if ($groupId)
 		{
 			$arVoteGroup[] = [
 				'GROUP_ID' => 1,
 				'TYPE' => "'A'",
 			];
 			$arVoteGroup[] = [
-				'GROUP_ID' => $arGroup['ID'],
+				'GROUP_ID' => $groupId,
 				'TYPE' => "'A'",
 			];
 			foreach ($arVoteGroup as $arField)
@@ -833,7 +835,7 @@ class main extends CModule
 				'ACTION_NAME' => 'ADD_TO_GROUP',
 				'ACTION_CONFIG' => [
 					'ADD_TO_GROUP' => [
-						'GROUP_ID' => $arGroup['ID'],
+						'GROUP_ID' => $groupId,
 					],
 				],
 				'ACTIVATE' => 'N',
@@ -865,7 +867,7 @@ class main extends CModule
 				'ACTION_NAME' => 'REMOVE_FROM_GROUP',
 				'ACTION_CONFIG' => [
 					'REMOVE_FROM_GROUP' => [
-						'GROUP_ID' => $arGroup['ID'],
+						'GROUP_ID' => $groupId,
 					],
 				],
 				'ACTIVATE' => 'N',
@@ -883,7 +885,7 @@ class main extends CModule
 
 			COption::SetOptionString("main", "rating_assign_authority_group_add", 2);
 			COption::SetOptionString("main", "rating_assign_authority_group_delete", 2);
-			COption::SetOptionString("main", "rating_assign_authority_group", $arGroup['ID']);
+			COption::SetOptionString("main", "rating_assign_authority_group", $groupId);
 		}
 
 		// auto authority vote

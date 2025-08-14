@@ -174,10 +174,12 @@ class CBPWorkflowTemplateLoader
 				throw new CBPArgumentNullException("NAME");
 		}
 
-		if ($addMode && !isset($arFields["TEMPLATE"]))
-			throw new CBPArgumentNullException("TEMPLATE");
+		if ($addMode && !isset($arFields['TEMPLATE']))
+		{
+			throw new CBPArgumentNullException('TEMPLATE');
+		}
 
-		if (isset($arFields["TEMPLATE"]))
+		if (array_key_exists('TEMPLATE', $arFields))
 		{
 			if (!is_array($arFields["TEMPLATE"]))
 			{
@@ -374,6 +376,8 @@ class CBPWorkflowTemplateLoader
 			}
 			else
 			{
+				$this->templateType = WorkflowTemplateType::Default->value; // Not enough data to determine type
+
 				return;
 			}
 		}

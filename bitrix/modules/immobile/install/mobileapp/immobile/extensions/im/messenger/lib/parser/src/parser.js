@@ -4,9 +4,8 @@
  * @module im/messenger/lib/parser/parser
  */
 jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Type } = require('type');
-	const { Feature } = require('im/messenger/lib/feature');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { parserUrl } = require('im/messenger/lib/parser/functions/url');
@@ -58,20 +57,12 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 			text = parserMention.decode(text);
 			text = parserAction.decodePut(text);
 			text = parserAction.decodeSend(text);
-
-			if (Feature.isChatDialogWidgetSupportsSendPutCallBbCodes)
-			{
-				text = parserCall.simplifyPch(text);
-				text = parserCall.decode(text);
-			}
-			else
-			{
-				text = parserCall.simplify(text);
-			}
-
+			text = parserCall.simplifyPch(text);
+			text = parserCall.decode(text);
 			text = parserQuote.decodeArrowQuote(text);
 			text = parserQuote.decodeQuote(text, options);
 			text = parserQuote.decodeCode(text);
+			text = parserImage.decodeIcon(text);
 			text = parserQuote.decodeTextAroundQuotes(text);
 
 			const elementList = parsedElements.getOrderedList(text);

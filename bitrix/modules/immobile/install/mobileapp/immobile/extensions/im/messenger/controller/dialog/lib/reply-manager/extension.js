@@ -5,7 +5,7 @@
  * @module im/messenger/controller/dialog/lib/reply-manager
  */
 jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Type } = require('type');
 	const { clone } = require('utils/object');
 	const {

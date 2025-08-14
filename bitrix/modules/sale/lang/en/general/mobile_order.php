@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["SMOB_PUSH_MES_ORDER_CHECK_ERROR"] = "Error printing receipt ##CHECK_ID# for order ##ACCOUNT_NUMBER#";
 $MESS["SMOB_ORDERS_MANAGEMENT"] = "Manage orders";
 $MESS["SMOB_ORDERS_LIST"] = "Orders";
@@ -93,4 +93,3 @@ $MESS["SMOB_FILTER_DEDUCTED_N"] = "Not fulfilled";
 $MESS["SMOB_FILTER_MARKED"] = "Order problem status";
 $MESS["SMOB_FILTER_MARKED_Y"] = "Yes";
 $MESS["SMOB_FILTER_MARKED_N"] = "No";
-?>

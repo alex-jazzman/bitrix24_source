@@ -23,6 +23,7 @@ return [
 		'sign.v2.sign-settings',
 		'ui.sidepanel.layout',
 		'ui.uploader.core',
+		'sign.v2.b2e.sign-dropdown',
 	],
 	'skip_core' => false,
 ];

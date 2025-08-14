@@ -2,7 +2,7 @@
 
 return [
 	'extensions' => [
-		'loc',
+		'im:messenger/loc',
 		'im:messenger/api/dialog-opener',
 	],
 ];

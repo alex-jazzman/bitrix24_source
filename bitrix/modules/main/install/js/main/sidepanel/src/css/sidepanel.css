@@ -24,7 +24,15 @@
 }
 
 .side-panel-overlay.--hidden {
-	background-color: transparent !important;
+	background: transparent !important;
+}
+
+.side-panel-overlay.--invisible {
+	visibility: hidden;
+}
+
+.side-panel-overlay.--invisible .side-panel-labels {
+	display: none;
 }
 
 .side-panel-container {

@@ -3,7 +3,7 @@
  */
 jn.define('im/messenger/lib/element/dialog/message/banner/banners/invite-users-copilot', (require, exports, module) => {
 	const { BannerMessage } = require('im/messenger/lib/element/dialog/message/banner/message');
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 
 	class InviteUsersCopilotBanner extends BannerMessage
 	{

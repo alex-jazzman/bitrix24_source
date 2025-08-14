@@ -57,12 +57,25 @@ else
 					'START_DATE' => $purchasedPackage->getStartDate(),
 					'EXPIRE_DATE' => $purchasedPackage->getExpirationDate(),
 					'BALANCE' => '',
+					'LOGS' => ''
 				], '');
 
 				$row->AddViewField(
 					'BALANCE',
 					implode('<br />', $balance)
 				);
+				if ($purchasedService->getCurrentValue() < $purchasedService->getInitialValue() && $purchasedService->getInitialValue() > 1)
+				{
+					$row->AddViewField(
+					'LOGS',
+					'<a href="javascript:void(0);" 
+							data-action="download-logs" 
+							data-package-code="' . $purchasedPackage->getPackageCode(). '"
+							data-purchase-code="'. $purchasedPackage->getCode() . '"
+							data-service-code="'. $purchasedService->getServiceCode() . '"
+						>' . Loc::getMessage('BAAS_PACKAGE_LOGS_ROW_DOWNLOAD') . '</a>'
+					);
+				}
 
 				$row->setConfig([
 					'editable' => false,
@@ -76,6 +89,7 @@ else
 		['id' => 'START_DATE', 'content' => Loc::getMessage('BAAS_PACKAGE_HEADER_START_DATE'), 'default' => false],
 		['id' => 'EXPIRE_DATE', 'content' => Loc::getMessage('BAAS_PACKAGE_HEADER_EXPIRE_DATE'), 'default' => true],
 		['id' => 'BALANCE', 'content' => Loc::getMessage('BAAS_PACKAGE_HEADER_BALANCE'), 'default' => true],
+		['id' => 'LOGS', 'content' => ' ', 'default' => true],
 	]);
 	// $lAdmin->AddAdminContextMenu([
 	// 	[
@@ -115,38 +129,33 @@ else
 		});
 	};
 
-	document
-		.querySelector('input[type=button][name="refresh-portal"]')
-		.addEventListener('click', async (event) => {
-			BX.ajax.runAction('baas.Host.refresh', {data: {}})
-				.then((response) => { showNotification(response); })
-				.catch((response) => { showResponse(response); });
-		})
-	;
-	const node = document.querySelector('input[type=button][name="show-widget"]');
-	const cb = function() {
-		BX.loadExt('baas.store').then(function(exports) {
-			BX.Baas.Store.Widget.getInstance().bind(node, exports.Analytics.CONTEXT_LICENSE_WIDGET).show();
+	document.querySelectorAll('a[data-action="download-logs"]').forEach((node) => {
+
+		BX.bind(node, 'click', async () => {
+			BX.ajax.runAction('baas.Host.getPurchaseReport', {data: {
+				packageCode: node.dataset.packageCode,
+				purchaseCode: node.dataset.purchaseCode,
+				serviceCode: node.dataset.serviceCode,
+			}})
+			.then((response) => { downloadAsFile(response.data); })
+			.catch((response) => { showResponse(response); });
 		});
+		return false;
+	});
+	const downloadAsFile = function downloadAsFile(data) {
+		const fileData = ['<table>'];
+
+		Array.from(data).forEach((item) => {
+			fileData.push(['<tr><td>', item.datetime, '</td><td>', item.value, '</td></tr>'].join(''));
+		});
+		fileData.push(['</table>']);
+
+		let a = document.createElement("a");
+		let file = new Blob([fileData.join('')], {type: 'application/json'});
+		a.href = URL.createObjectURL(file);
+		a.download = "logs.xls";
+		a.click();
 	};
-	BX.bind(node, 'click', cb);
-	function openPurchaseUrl(purchaseUrl)
-	{
-		if (purchaseUrl.indexOf('http') === 0)
-		{
-			window.open(purchaseUrl);
-		}
-		else
-		{
-			BX.SidePanel.Instance.open(
-				purchaseUrl,
-				{
-					width: 1250,
-					cacheable: false,
-				},
-			);
-		}
-	}
 </script><?php
 
 require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_admin.php');

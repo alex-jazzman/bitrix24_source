@@ -38,12 +38,13 @@ class ChatOnlyProvider extends RecentProvider
 	 */
 	protected function getDefaultDialogItems(): array
 	{
-		$chatIds = $this->getCommonChatQuery()
+		$chatIds = $this->getCommonChatQueryWithOrder()
 			->fetchCollection()
-			->getIdList()
+			?->getIdList()
+			?? []
 		;
 
-		return array_map(fn (int $chatId) => 'chat' . $chatId, $chatIds);
+		return array_map(static fn (int $chatId): string => 'chat' . $chatId, $chatIds);
 	}
 
 	protected function getAllowedChatTypesForQuery(): array

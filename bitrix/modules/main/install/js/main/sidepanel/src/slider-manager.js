@@ -373,7 +373,7 @@ export class SliderManager
 		}
 	}
 
-	getTopSlider(): Slider
+	getTopSlider(): Slider | null
 	{
 		const count = this.openSliders.length;
 
@@ -909,6 +909,26 @@ export class SliderManager
 		this.setBrowserHistory(event.getSlider());
 		this.updateBrowserTitle();
 		event.getSlider().setAnimation('sliding');
+
+		const openSliders = this.getOpenSliders();
+		const topSlider = event.getSlider();
+		for (let i = openSliders.length - 1; i >= 0; i--)
+		{
+			const slider = openSliders[i];
+			if (topSlider === slider)
+			{
+				continue;
+			}
+
+			if (topSlider.getContainer().offsetLeft <= slider.getContainer().offsetLeft)
+			{
+				Dom.addClass(slider.getOverlay(), '--invisible');
+			}
+			else
+			{
+				break;
+			}
+		}
 	}
 
 	/**
@@ -934,6 +954,23 @@ export class SliderManager
 		this.getOpenSliders().forEach((slider, index, openSliders) => {
 			slider.getLabel().moveAt(openSliders.length - index - 2); // move up
 		});
+
+		let visibleSlider = null;
+		const openSliders = this.getOpenSliders();
+		for (let i = openSliders.length - 1; i >= 0; i--)
+		{
+			const slider = openSliders[i];
+			if (event.getSlider() === slider)
+			{
+				continue;
+			}
+
+			if (visibleSlider === null || slider.getContainer().offsetLeft < visibleSlider.getContainer().offsetLeft)
+			{
+				Dom.removeClass(slider.getOverlay(), '--invisible');
+				visibleSlider = slider;
+			}
+		}
 
 		if (previousSlider)
 		{

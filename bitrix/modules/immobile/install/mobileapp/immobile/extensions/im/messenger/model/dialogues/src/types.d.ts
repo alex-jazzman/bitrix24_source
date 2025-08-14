@@ -124,6 +124,7 @@ export type DialoguesMessengerModel = MessengerModel<DialoguesModelCollection>;
 export type DialoguesModelActions =
 	'dialoguesModel/setState'
 	| 'dialoguesModel/set'
+	| 'dialoguesModel/setFromSync'
 	| 'dialoguesModel/setFromLocalDatabase'
 	| 'dialoguesModel/setCollectionFromLocalDatabase'
 	| 'dialoguesModel/setFromPush'

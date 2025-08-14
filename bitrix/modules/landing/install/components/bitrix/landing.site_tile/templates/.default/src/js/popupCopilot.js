@@ -62,6 +62,7 @@ export default class PopupCopilot
 		if (!this.container)
 		{
 			this.container = new Popup({
+				darkMode: true,
 				bindElement: window,
 				content: this.getContent(),
 				width: 670,
@@ -105,16 +106,11 @@ export default class PopupCopilot
 					new Button({
 						text: Loc.getMessage('LANDING_SITE_TILE_POPUP_COPILOT_BUTTON'),
 						color: Button.Color.SUCCESS,
-						size: Button.Size.LARGE,
-						className: 'landing-site_title-popup-btn',
-						noCaps: true,
-						round: true,
-						onclick: (event) => {
-							const button = event.button;
-							if (button)
-							{
-								Dom.addClass(button, 'ui-btn-wait');
-							}
+						size: Button.Size.EXTRA_LARGE,
+						useAirDesign: true,
+						style: Button.AirStyle.FILLED_SUCCESS,
+						onclick: (button: Button) => {
+							button.setWaiting();
 
 							BX.ajax.runAction('bitrix24.license.demolicense.activate')
 								.then(() => {

@@ -4,8 +4,8 @@ return [
 	'extensions' => [
 		'im:messenger/provider/pull/chat',
 		'type',
-		'loc',
 		'utils/object',
+		'im:messenger/loc',
 		'im:messenger/lib/di/service-locator',
 		'im:messenger/const',
 		'im:messenger/lib/element',

@@ -5,6 +5,8 @@
 jn.define('im/messenger/model/files/model', (require, exports, module) => {
 	const { Type } = require('type');
 
+	const { ModelUtils } = require('im/messenger/lib/utils');
+
 	const { fileDefaultElement } = require('im/messenger/model/files/default-element');
 	const { validate } = require('im/messenger/model/files/validator');
 
@@ -117,32 +119,27 @@ jn.define('im/messenger/model/files/model', (require, exports, module) => {
 				});
 			},
 
+			/** @function filesModel/setFromSync */
+			setFromSync: (store, fileList) => {
+				return store.dispatch('set', { itemList: fileList, actionName: 'setFromSync' });
+			},
+
 			/** @function filesModel/set */
 			set: (store, payload) => {
-				let fileList = [];
-				if (Type.isArray(payload))
-				{
-					fileList = payload.map((file) => {
-						const result = validate(store, { ...file });
+				const { itemList, actionName = 'set' } = ModelUtils.normalizeItemListPayload(payload);
 
-						return {
-							...fileDefaultElement,
-							...result,
-						};
-					});
-				}
-				else
-				{
-					const result = validate(store, { ...payload });
-					fileList.push({
+				itemList.map((file) => {
+					const result = validate(store, { ...file });
+
+					return {
 						...fileDefaultElement,
 						...result,
-					});
-				}
+					};
+				});
 
 				const existingFileList = [];
 				const newFileList = [];
-				fileList.forEach((file) => {
+				itemList.forEach((file) => {
 					if (store.getters.hasFile(file.id))
 					{
 						existingFileList.push(file);
@@ -156,7 +153,7 @@ jn.define('im/messenger/model/files/model', (require, exports, module) => {
 				if (existingFileList.length > 0)
 				{
 					store.commit('update', { // TODO this update will be recovery default fields ( if fields not has)
-						actionName: 'set',
+						actionName,
 						data: {
 							fileList: existingFileList,
 						},
@@ -166,7 +163,7 @@ jn.define('im/messenger/model/files/model', (require, exports, module) => {
 				if (newFileList.length > 0)
 				{
 					store.commit('add', {
-						actionName: 'set',
+						actionName,
 						data: {
 							fileList: newFileList,
 						},

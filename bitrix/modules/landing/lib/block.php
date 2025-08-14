@@ -1835,7 +1835,7 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 			// detect translated messages
 			$lang = null;
 			$langPortal = LANGUAGE_ID;
-			if (in_array($langPortal, ['ru', 'kz', 'by']))
+			if (in_array($langPortal, ['ru', 'kz', 'by', 'uz']))
 			{
 				$langPortal = 'ru';
 			}

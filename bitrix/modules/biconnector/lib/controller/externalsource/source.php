@@ -6,6 +6,7 @@ use Bitrix\BIConnector;
 use Bitrix\BIConnector\ExternalSource;
 use Bitrix\BIConnector\ExternalSource\Internal\ExternalSourceRestConnectorTable;
 use Bitrix\BIConnector\ExternalSource\SourceManager;
+use Bitrix\BIConnector\Integration\Superset\SupersetInitializer;
 use Bitrix\BIConnector\Superset\ActionFilter;
 use Bitrix\Crm;
 use Bitrix\Intranet\ActionFilter\IntranetUser;
@@ -232,7 +233,12 @@ class Source extends Controller
 			return null;
 		}
 
-		return $saveResult->getData();
+		$supersetIsReady = !(SupersetInitializer::isSupersetLoading() || SupersetInitializer::isSupersetUnavailable());
+
+		return [
+			'connection' => $saveResult->getData()['connection'],
+			'supersetIsReady' => $supersetIsReady,
+		];
 	}
 
 	public function updateCommentAction(string $id, string $value): ?bool

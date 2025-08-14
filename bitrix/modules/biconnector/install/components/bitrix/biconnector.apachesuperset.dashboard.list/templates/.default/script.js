@@ -152,6 +152,11 @@
 	     */
 	    value: function showCreationMenu(event) {
 	      var _this = this;
+	      var openedMenu = main_popup.MenuManager.getMenuById('biconnector-creation-menu');
+	      if (openedMenu) {
+	        openedMenu.close();
+	        return;
+	      }
 	      var items = [];
 	      if (babelHelpers.classPrivateFieldGet(this, _properties).isAvailableDashboardCreation) {
 	        items.push({
@@ -179,7 +184,8 @@
 	          creationMenu.close();
 	        }
 	      });
-	      var creationMenu = new main_popup.Menu({
+	      var creationMenu = main_popup.MenuManager.create({
+	        id: 'biconnector-creation-menu',
 	        closeByEsc: false,
 	        closeIcon: false,
 	        cacheable: false,
@@ -423,6 +429,7 @@
 	          color: ui_buttons.ButtonColor.DANGER,
 	          text: main_core.Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_GROUP_POPUP_CAPTION_YES'),
 	          onclick: function onclick(button) {
+	            biconnector_apacheSupersetAnalytics.PermissionsAnalytics.sendGroupDeleteAnalytics(biconnector_apacheSupersetAnalytics.PermissionsAnalyticsSource.grid);
 	            button.setWaiting();
 	            babelHelpers.classPrivateFieldGet(_this7, _dashboardManager).deleteGroup(groupId).then(function () {
 	              _this7.getGrid().reload();
@@ -458,11 +465,13 @@
 	        return;
 	      }
 	      babelHelpers.classPrivateFieldGet(this, _dashboardManager).showCreationGroupPopup();
+	      biconnector_apacheSupersetAnalytics.PermissionsAnalytics.sendClickGroupActionAnalytics(biconnector_apacheSupersetAnalytics.PermissionsAnalyticsSource.grid, true);
 	    }
 	  }, {
 	    key: "showGroupSettingsPopup",
 	    value: function showGroupSettingsPopup(groupId) {
 	      var _this8 = this;
+	      biconnector_apacheSupersetAnalytics.PermissionsAnalytics.sendClickGroupActionAnalytics(biconnector_apacheSupersetAnalytics.PermissionsAnalyticsSource.grid, false);
 	      babelHelpers.classPrivateFieldGet(this, _grid).tableFade();
 	      babelHelpers.classPrivateFieldGet(this, _dashboardManager).showGroupSettingsPopup(groupId).then(function () {
 	        babelHelpers.classPrivateFieldGet(_this8, _grid).tableUnfade();
@@ -849,8 +858,41 @@
 	  main_core_events.EventEmitter.subscribe('BIConnector.AccessRights:onRightsSaved', function () {
 	    babelHelpers.classPrivateFieldGet(_this15, _grid).reload();
 	  });
-	  main_core_events.EventEmitter.subscribe('BIConnector.GroupPopup:onGroupSaved', function () {
+	  main_core_events.EventEmitter.subscribe('BIConnector.GroupPopup:onGroupSaved', function (event) {
+	    var _eventData$group;
+	    var eventData = event.getData();
+	    var groupId = eventData === null || eventData === void 0 ? void 0 : (_eventData$group = eventData.group) === null || _eventData$group === void 0 ? void 0 : _eventData$group.id;
+	    var isTitleEdited = eventData === null || eventData === void 0 ? void 0 : eventData.isTitleEdited;
+	    var isDashboardListEdited = eventData === null || eventData === void 0 ? void 0 : eventData.isDashboardListEdited;
+	    var isScopeListEdited = eventData === null || eventData === void 0 ? void 0 : eventData.isScopeListEdited;
+	    if (groupId && (isTitleEdited || isDashboardListEdited || isScopeListEdited)) {
+	      biconnector_apacheSupersetAnalytics.PermissionsAnalytics.sendGroupActionAnalytics(biconnector_apacheSupersetAnalytics.PermissionsAnalyticsSource.grid, main_core.Type.isString(groupId) ? groupId.startsWith('new_') : false, isDashboardListEdited, isScopeListEdited);
+	    }
 	    babelHelpers.classPrivateFieldGet(_this15, _grid).reload();
+	  });
+	  main_core_events.EventEmitter.subscribe('BIConnector.GroupPopup.DashboardScopeSelector:onDialogHide', function (event) {
+	    var _event$getData;
+	    if (!((_event$getData = event.getData()) !== null && _event$getData !== void 0 && _event$getData.isScopeListEdited)) {
+	      return;
+	    }
+	    biconnector_apacheSupersetAnalytics.PermissionsAnalytics.sendGroupDashboardScopeEditAnalytics(biconnector_apacheSupersetAnalytics.PermissionsAnalyticsSource.grid);
+	  });
+	  main_core_events.EventEmitter.subscribe('BIConnector.GroupPopup.ScopeSelector:onDialogHide', function (event) {
+	    var _event$getData2;
+	    if (!((_event$getData2 = event.getData()) !== null && _event$getData2 !== void 0 && _event$getData2.isScopeListEdited)) {
+	      return;
+	    }
+	    biconnector_apacheSupersetAnalytics.PermissionsAnalytics.sendGroupScopeEditAnalytics(biconnector_apacheSupersetAnalytics.PermissionsAnalyticsSource.grid);
+	  });
+	  main_core_events.EventEmitter.subscribe('BIConnector.GroupPopup.DashboardSelector:onDialogHide', function (event) {
+	    var _event$getData3;
+	    if (!((_event$getData3 = event.getData()) !== null && _event$getData3 !== void 0 && _event$getData3.isDashboardListEdited)) {
+	      return;
+	    }
+	    biconnector_apacheSupersetAnalytics.PermissionsAnalytics.sendGroupDashboardEditAnalytics(biconnector_apacheSupersetAnalytics.PermissionsAnalyticsSource.grid);
+	  });
+	  main_core_events.EventEmitter.subscribe('BIConnector.GroupPopup.DashboardList:onDashboardRemove', function () {
+	    biconnector_apacheSupersetAnalytics.PermissionsAnalytics.sendGroupDashboardEditAnalytics(biconnector_apacheSupersetAnalytics.PermissionsAnalyticsSource.grid);
 	  });
 	}
 	function _initHints2() {

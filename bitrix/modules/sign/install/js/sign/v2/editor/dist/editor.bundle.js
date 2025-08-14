@@ -5635,9 +5635,11 @@ this.BX.Sign = this.BX.Sign || {};
 	var _analytics = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("analytics");
 	var _isTemplateMode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isTemplateMode");
 	var _disableB2eDocumentSection = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("disableB2eDocumentSection");
+	var _onSliderOpenCompleteHandler = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onSliderOpenCompleteHandler");
 	var _isB2e = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isB2e");
 	var _getArticleCode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getArticleCode");
 	var _covertRoleToBlockParty = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("covertRoleToBlockParty");
+	var _handleSliderOnOpenComplete = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleSliderOnOpenComplete");
 	var _render = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("render");
 	var _createHeader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createHeader");
 	var _onSaveBtnClick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onSaveBtnClick");
@@ -5697,6 +5699,9 @@ this.BX.Sign = this.BX.Sign || {};
 	    });
 	    Object.defineProperty(this, _render, {
 	      value: _render2
+	    });
+	    Object.defineProperty(this, _handleSliderOnOpenComplete, {
+	      value: _handleSliderOnOpenComplete2
 	    });
 	    Object.defineProperty(this, _covertRoleToBlockParty, {
 	      value: _covertRoleToBlockParty2
@@ -5782,6 +5787,10 @@ this.BX.Sign = this.BX.Sign || {};
 	    Object.defineProperty(this, _disableB2eDocumentSection, {
 	      writable: true,
 	      value: true
+	    });
+	    Object.defineProperty(this, _onSliderOpenCompleteHandler, {
+	      writable: true,
+	      value: babelHelpers.classPrivateFieldLooseBase(this, _handleSliderOnOpenComplete)[_handleSliderOnOpenComplete].bind(this)
 	    });
 	    this.setEventNamespace('BX.Sign.V2.Editor');
 	    const {
@@ -5890,11 +5899,8 @@ this.BX.Sign = this.BX.Sign || {};
 	    } = babelHelpers.classPrivateFieldLooseBase(this, _blocksManager)[_blocksManager];
 	    main_core.Dom.append(resizeArea.getLayout(), babelHelpers.classPrivateFieldLooseBase(this, _documentLayout$1)[_documentLayout$1]);
 	    await Promise.all(promises);
-	    main_core_events.EventEmitter.unsubscribeAll('SidePanel.Slider:onOpenComplete');
-	    main_core_events.EventEmitter.subscribeOnce('SidePanel.Slider:onOpenComplete', () => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _blocksManager)[_blocksManager].initPagesRect();
-	      babelHelpers.classPrivateFieldLooseBase(this, _blocksManager)[_blocksManager].initBlocks(babelHelpers.classPrivateFieldLooseBase(this, _documentData)[_documentData].blocks.filter(block => babelHelpers.classPrivateFieldLooseBase(this, _isBlockCanBeInitialized)[_isBlockCanBeInitialized](block)));
-	    });
+	    main_core_events.EventEmitter.unsubscribe('SidePanel.Slider:onOpenComplete', babelHelpers.classPrivateFieldLooseBase(this, _onSliderOpenCompleteHandler)[_onSliderOpenCompleteHandler]);
+	    main_core_events.EventEmitter.subscribeOnce('SidePanel.Slider:onOpenComplete', babelHelpers.classPrivateFieldLooseBase(this, _onSliderOpenCompleteHandler)[_onSliderOpenCompleteHandler]);
 	  }
 	  show() {
 	    return new Promise(resolve => {
@@ -5955,6 +5961,10 @@ this.BX.Sign = this.BX.Sign || {};
 	    default:
 	      return part;
 	  }
+	}
+	function _handleSliderOnOpenComplete2() {
+	  babelHelpers.classPrivateFieldLooseBase(this, _blocksManager)[_blocksManager].initPagesRect();
+	  babelHelpers.classPrivateFieldLooseBase(this, _blocksManager)[_blocksManager].initBlocks(babelHelpers.classPrivateFieldLooseBase(this, _documentData)[_documentData].blocks.filter(block => babelHelpers.classPrivateFieldLooseBase(this, _isBlockCanBeInitialized)[_isBlockCanBeInitialized](block)));
 	}
 	function _render2() {
 	  main_core.Dom.clean(babelHelpers.classPrivateFieldLooseBase(this, _dom)[_dom]);

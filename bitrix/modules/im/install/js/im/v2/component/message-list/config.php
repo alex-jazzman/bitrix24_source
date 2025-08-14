@@ -24,6 +24,7 @@ return [
 		'im.v2.component.elements.user-list-popup',
 		'im.v2.lib.user',
 		'im.v2.lib.logger',
+		'ui.vue3.components.rich-loc',
 		'im.v2.lib.menu',
 		'main.polyfill.intersectionobserver',
 		'im.v2.component.elements.avatar',

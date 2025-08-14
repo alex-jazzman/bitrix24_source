@@ -445,7 +445,12 @@ class ParticipantsPermissionSwitcher
 	render()
 	{
 		return Dom.create('div', {
-			props: {className: 'bx-call-view-participants-permissions-switch-wrapper'},
+			props: {
+				className: 'bx-call-view-participants-permissions-switch-wrapper',
+			},
+			dataset: {
+				id: 'call-participants-permissions-switch-' + this.typeOfSetting,
+			},
 			children: [
 				Dom.create('span', {
 					props: {className: 'bx-call-view-participants-permissions-label'},

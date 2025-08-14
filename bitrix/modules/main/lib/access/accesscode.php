@@ -35,7 +35,9 @@ class AccessCode
 		AC_ACCESS_TEAM_EMPLOYEE = '^(' . self::ACCESS_TEAM_EMPLOYEE . ')(\d+)?$',
 		AC_ACCESS_TEAM_DEPUTY = '^(' . self::ACCESS_TEAM_DEPUTY . ')(\d+)?$',
 		AC_STRUCTURE_TEAM = '^(SNT)(\d+)$',
-		AC_ALL_STRUCTURE_TEAM = '^(SNTR)(\d+)$';
+		AC_ALL_STRUCTURE_TEAM = '^(SNTR)(\d+)$',
+		AC_STRUCTURE_DEPARTMENT = '^(SND)(\d+)$',
+		AC_ALL_STRUCTURE_DEPARTMENT = '^(SNDR)(\d+)$';
 
 	public const
 		TYPE_USER = 'users',
@@ -51,7 +53,8 @@ class AccessCode
 		TYPE_ACCESS_TEAM_DEPUTY = 'access_team_deputy',
 		TYPE_CHAT = 'chat',
 		TYPE_OTHER = 'other',
-		TYPE_STRUCTURE_TEAM = 'structureteams';
+		TYPE_STRUCTURE_TEAM = 'structureteams',
+		TYPE_STRUCTURE_DEPARTMENT = 'structuredepartments';
 
 	public static $map = [
 		self::AC_DEPARTMENT 		=> self::TYPE_DEPARTMENT,
@@ -70,6 +73,8 @@ class AccessCode
 		self::AC_ACCESS_TEAM_DEPUTY		=> self::TYPE_ACCESS_TEAM_DEPUTY,
 		self::AC_STRUCTURE_TEAM		=> self::TYPE_STRUCTURE_TEAM,
 		self::AC_ALL_STRUCTURE_TEAM	=> self::TYPE_STRUCTURE_TEAM,
+		self::AC_STRUCTURE_DEPARTMENT	=> self::TYPE_STRUCTURE_DEPARTMENT,
+		self::AC_ALL_STRUCTURE_DEPARTMENT => self::TYPE_STRUCTURE_DEPARTMENT,
 	];
 
 	private $accessCode;

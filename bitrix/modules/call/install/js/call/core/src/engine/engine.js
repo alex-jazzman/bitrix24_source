@@ -578,6 +578,10 @@ class Engine
 
 		CallTokenManager.setToken(callFields.associatedEntity.chatId, params.callToken);
 
+		if (this.calls[callUuid] instanceof CallStub) {
+			return;
+		}
+
 		if (this.calls[callUuid])
 		{
 			call = this.calls[callUuid];

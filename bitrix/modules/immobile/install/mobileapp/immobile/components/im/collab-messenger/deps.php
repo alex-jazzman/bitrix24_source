@@ -3,13 +3,13 @@
 return [
 	'extensions' => [
 		'type',
-		'loc',
 		'entity-ready',
 		'utils/object',
 		'list/selector',
 		'pull/client/events',
 		'statemanager/vuex',
 		'statemanager/vuex-manager',
+		'im:messenger/loc',
 		'im:messenger/component/messenger-base',
 		'im:chat/timer',
 		'im:chat/selector/adapter/dialog-list',

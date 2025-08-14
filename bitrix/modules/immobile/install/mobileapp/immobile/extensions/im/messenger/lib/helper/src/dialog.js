@@ -295,7 +295,7 @@ jn.define('im/messenger/lib/helper/dialog', (require, exports, module) => {
 
 		get canBeDeleted()
 		{
-			return ChatPermission.isCanDeleteChat(this.dialogModel);
+			return ChatPermission.сanDeleteChat(this.dialogModel);
 		}
 
 		get canCopyChatLink()

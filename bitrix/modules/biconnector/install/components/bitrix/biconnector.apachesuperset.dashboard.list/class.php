@@ -32,8 +32,6 @@ use Bitrix\UI\Buttons\JsCode;
 
 class ApacheSupersetDashboardListComponent extends CBitrixComponent
 {
-	private const GRID_ID = 'biconnector_superset_dashboard_grid';
-
 	private DashboardGrid $grid;
 	private SupersetController $supersetController;
 
@@ -80,7 +78,7 @@ class ApacheSupersetDashboardListComponent extends CBitrixComponent
 	private function initGrid(): void
 	{
 		$settings = new DashboardSettings([
-			'ID' => self::GRID_ID,
+			'ID' => DashboardGrid::SUPERSET_DASHBOARD_GRID_ID,
 			'SHOW_ROW_CHECKBOXES' => false,
 			'SHOW_SELECTED_COUNTER' => false,
 			'SHOW_TOTAL_COUNTER' => true,
@@ -255,7 +253,7 @@ class ApacheSupersetDashboardListComponent extends CBitrixComponent
 			return $result;
 		}
 
-		$groupIdFilter = $groupFilter['=ID'];
+		$groupIdFilter = $groupFilter['=ID'] ?? [];
 
 		if (isset($currentFilter['GROUPS.ID']) && is_array($currentFilter['GROUPS.ID']))
 		{

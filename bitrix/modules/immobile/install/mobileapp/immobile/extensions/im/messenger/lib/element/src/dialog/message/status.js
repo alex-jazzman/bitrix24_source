@@ -2,11 +2,10 @@
  * @module im/messenger/lib/element/dialog/message/status
  */
 jn.define('im/messenger/lib/element/dialog/message/status', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Type } = require('type');
 	const { Moment } = require('utils/date');
 	const { FriendlyDate } = require('layout/ui/friendly-date');
-	const { Feature } = require('im/messenger/lib/feature');
 
 	/**
 	 * @class StatusField
@@ -61,18 +60,6 @@ jn.define('im/messenger/lib/element/dialog/message/status', (require, exports, m
 		buildTextForGroup(lastMessageViews)
 		{
 			const firstUserName = lastMessageViews.firstViewer.userName || '';
-			const isMoreOneViews = lastMessageViews.countOfViewers > 1;
-
-			if (!Feature.isSupportedAdditionalTextInStatusField && isMoreOneViews)
-			{
-				return Loc.getMessage(
-					'IMMOBILE_ELEMENT_DIALOG_MESSAGE_VIEWED_MORE',
-					{
-						'#USERNAME#': firstUserName,
-						'#USERS_COUNT#': this.getUsersCount(lastMessageViews),
-					},
-				);
-			}
 
 			return Loc.getMessage(
 				'IMMOBILE_ELEMENT_DIALOG_MESSAGE_VIEWED_ONE',
@@ -111,7 +98,7 @@ jn.define('im/messenger/lib/element/dialog/message/status', (require, exports, m
 		 */
 		buildAdditionalText(lastMessageViews)
 		{
-			if (this.getUsersCount(lastMessageViews) === 0 || !Feature.isSupportedAdditionalTextInStatusField)
+			if (this.getUsersCount(lastMessageViews) === 0)
 			{
 				return '';
 			}

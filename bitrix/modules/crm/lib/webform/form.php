@@ -1677,15 +1677,18 @@ class Form
 					);
 					$event->send();
 
-					$resultList = $event->getResults();
-					if (is_array($resultList))
+					if (empty($redirectUrl))
 					{
-						foreach ($resultList as $eventResult)
+						$resultList = $event->getResults();
+						if (is_array($resultList))
 						{
-							$bookingUrl = $eventResult->getParameters();
-							if ($bookingUrl !== null)
+							foreach ($resultList as $eventResult)
 							{
-								$redirectUrl = $bookingUrl;
+								$bookingUrl = $eventResult->getParameters();
+								if ($bookingUrl !== null)
+								{
+									$redirectUrl = $bookingUrl;
+								}
 							}
 						}
 					}

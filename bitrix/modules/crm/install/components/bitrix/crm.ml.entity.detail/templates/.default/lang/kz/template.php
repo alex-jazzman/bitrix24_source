@@ -7,7 +7,6 @@ $MESS["CRM_ML_DEAL_SCORING_DISABLE"] = "Осы иірім үшін мәміле�
 $MESS["CRM_ML_DEAL_SUCCESS_PROBABILITY"] = "Сәттілік ықтималдығы";
 $MESS["CRM_ML_DISABLE_DEAL_SCORING"] = "Осы иірім үшін мәмілелер скорингін өшіру керек пе?";
 $MESS["CRM_ML_DISABLE_LEAD_SCORING"] = "Лидтер скорингін өшіру керек пе?";
-$MESS["CRM_ML_FEEDBACK"] = "Кері байланыс";
 $MESS["CRM_ML_FORECAST_DYNAMICS"] = "Болжамның өзгеру динамикасы";
 $MESS["CRM_ML_HELP"] = "Көмек";
 $MESS["CRM_ML_INFLUENCING_EVENT"] = "Әсер еткен оқиғалар";

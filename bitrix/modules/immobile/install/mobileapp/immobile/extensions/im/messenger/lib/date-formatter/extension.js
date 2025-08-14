@@ -3,7 +3,7 @@
  */
 jn.define('im/messenger/lib/date-formatter', (require, exports, module) => {
 	const { Type } = require('type');
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Moment } = require('utils/date');
 
 	const DateFormat = Object.freeze({

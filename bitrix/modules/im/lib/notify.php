@@ -703,6 +703,8 @@ class Notify
 			}
 		}
 
+		$newParams = array_diff($newParams, $params[$maxId] ?? []);
+
 		unset($messageIds[$maxId]);
 		CIMNotify::deleteList($messageIds, ['NOTIFY_TAG' => $notifyTag]);
 
@@ -713,7 +715,7 @@ class Notify
 		else
 		{
 			unset($newParams[$maxAuthorId ?? 0]);
-			CIMMessageParam::Set($maxId, ['USERS' => array_values($newParams)]);
+			self::saveNotifyParams($maxId, ['USERS' => array_values($newParams)]);
 		}
 
 		return $currentMessageId < $maxId ? $result : $result->setResult(array_values($newParams));
@@ -736,9 +738,16 @@ class Notify
 		$params = [];
 		while ($row = $query->fetch())
 		{
-			$params[$row['MESSAGE_ID']][] = $row['PARAM_VALUE'];
+			$params[$row['MESSAGE_ID']][(int)$row['PARAM_VALUE']] = (int)$row['PARAM_VALUE'];
 		}
 
 		return $params;
+	}
+
+	public static function saveNotifyParams(int $messageId, array $values): void
+	{
+		$params = (new Params())->setMessageId($messageId);
+		$params->load($values);
+		$params->save();
 	}
 }

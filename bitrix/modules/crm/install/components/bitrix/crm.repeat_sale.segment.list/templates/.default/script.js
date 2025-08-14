@@ -147,7 +147,7 @@
 	      },
 	      analyticsLabel: {
 	        tool: 'crm',
-	        category: 'settings_master',
+	        category: 'editor',
 	        event: 'scenario_enable',
 	        c_element: "".concat(isEnabled ? 'on' : 'off')
 	      }

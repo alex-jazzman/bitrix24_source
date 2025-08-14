@@ -2,7 +2,7 @@
  * @module im/messenger/lib/element/dialog/message/copilot
  */
 jn.define('im/messenger/lib/element/dialog/message/copilot', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 
 	const { MessageType } = require('im/messenger/const');
 	const { TextMessage } = require('im/messenger/lib/element/dialog/message/text');
@@ -14,6 +14,7 @@ jn.define('im/messenger/lib/element/dialog/message/copilot', (require, exports, 
 		{
 			super(modelMessage, options);
 
+			/** @type {CopilotMessageCopilotData} */
 			this.copilot = {};
 
 			this
@@ -22,6 +23,17 @@ jn.define('im/messenger/lib/element/dialog/message/copilot', (require, exports, 
 				.setCanBeQuoted(false)
 				.setCanBeChecked(false)
 			;
+		}
+
+		/**
+		 * @return {CopilotDialogWidgetItem}
+		 */
+		toDialogWidgetItem()
+		{
+			return {
+				...super.toDialogWidgetItem(),
+				copilot: this.copilot,
+			};
 		}
 
 		getType()

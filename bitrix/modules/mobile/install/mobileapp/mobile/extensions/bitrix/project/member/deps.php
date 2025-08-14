@@ -1,5 +1,7 @@
 <?php
 
 return [
-	'user/profile',
+	'extensions' => [
+		'user-profile',
+	],
 ];

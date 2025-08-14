@@ -1,4 +1,4 @@
-import { Dom, Loc, Tag, Text as TextFormat, Event, Extension } from 'main.core';
+import { Dom, Loc, Tag, Text as TextFormat, Event } from 'main.core';
 import type { Loader } from 'main.loader';
 import { Helpdesk } from 'sign.v2.helper';
 import { Dialog, TagSelector, TagItem } from 'ui.entity-selector';

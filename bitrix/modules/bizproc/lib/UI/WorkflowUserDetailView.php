@@ -135,6 +135,7 @@ class WorkflowUserDetailView extends WorkflowUserView
 				'controls' => $isRunning ? $this->getTaskControls($task) : [],
 				'isRunning' => $isRunning,
 				'activityName' => $task['~ACTIVITY_NAME'],
+				'activity' => $task['~ACTIVITY'],
 				'saveVariables' => $task['~PARAMETERS']['SaveVariables'] ?? false,
 				'delegationType' => $task['~DELEGATION_TYPE'] ?? null,
 			];

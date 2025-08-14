@@ -4,7 +4,7 @@
 
 jn.define('im/messenger/controller/sidebar/collab/profile-buttons-controller', (require, exports, module) => {
 	/* global InAppNotifier */
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Type } = require('type');
 	const { isOnline } = require('device/connection');
 

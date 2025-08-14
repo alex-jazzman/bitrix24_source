@@ -30,6 +30,7 @@ jn.define('im/messenger/controller/recent/lib/renderer', (require, exports, modu
 			this.ACTION_ADD = 'add';
 			this.ACTION_ADD_PREPARED_ITEMS = 'addPreparedItems';
 			this.ACTION_UPDATE = 'update';
+			this.ACTION_UPDATE_PREPARED_ITEMS = 'updatePreparedItems';
 			this.ACTION_FIND_ITEM = 'findItem';
 			this.ACTION_REMOVE = 'remove';
 			this.ACTION_REMOVE_CALL = 'removeCall';
@@ -119,13 +120,31 @@ jn.define('im/messenger/controller/recent/lib/renderer', (require, exports, modu
 			return true;
 		}
 
+		/**
+		 * @param {Array<object>} itemList
+		 * @return {boolean}
+		 */
 		update(itemList)
 		{
-			const viewItemList = this.#prepareViewItemList(itemList);
+			return this.updatePreparedItems(RecentUiConverter.toList(itemList));
+		}
 
-			if (viewItemList.length > 0)
+		/**
+		 * @param {Array<object>} preparedItems
+		 * @return {boolean}
+		 */
+		updatePreparedItems(preparedItems)
+		{
+			const formattedItems = preparedItems
+				.map((item) => ({
+					filter: { id: item.id.toString() },
+					element: item,
+				}))
+				.filter((item) => !this.#hasEqualItemInRecent(item.element));
+
+			if (formattedItems.length > 0)
 			{
-				this.view.updateItems(viewItemList);
+				this.view.updateItems(formattedItems);
 
 				return true;
 			}
@@ -247,6 +266,7 @@ jn.define('im/messenger/controller/recent/lib/renderer', (require, exports, modu
 				this.ACTION_ADD,
 				this.ACTION_ADD_PREPARED_ITEMS,
 				this.ACTION_UPDATE,
+				this.ACTION_UPDATE_PREPARED_ITEMS,
 				this.ACTION_FIND_ITEM,
 				this.ACTION_REMOVE,
 				this.ACTION_REMOVE_CALL,
@@ -259,21 +279,6 @@ jn.define('im/messenger/controller/recent/lib/renderer', (require, exports, modu
 		isActionSupported(action)
 		{
 			return this.getSupportedActions().has(action);
-		}
-
-		/**
-		 * @param {RecentModelState[]} itemList
-		 * @returns {{filter: {id: string}, element: RecentItem}[]}
-		 */
-		#prepareViewItemList(itemList)
-		{
-			return RecentUiConverter
-				.toList(itemList)
-				.map((item) => ({
-					filter: { id: item.id.toString() },
-					element: item,
-				}))
-				.filter((item) => !this.#hasEqualItemInRecent(item.element));
 		}
 
 		/**

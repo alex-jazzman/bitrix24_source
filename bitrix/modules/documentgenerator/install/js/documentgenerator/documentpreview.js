@@ -424,27 +424,6 @@
 		}
 	};
 
-	BX.DocumentGenerator.Feedback =
-	{
-		open: function(provider, templateName, templateCode)
-		{
-			var url = '/bitrix/components/bitrix/documentgenerator.feedback/slider.php';
-			url = BX.util.add_url_param(url, {
-				provider: provider || '',
-				templateName: templateName || '',
-				templateCode: templateCode || ''
-			});
-			if(BX.SidePanel)
-			{
-				BX.SidePanel.Instance.open(url, {width: 735});
-			}
-			else
-			{
-				location.href = url;
-			}
-		}
-	};
-
 	BX.DocumentGenerator.parseUrl = function(url, key)
 	{
 		var parser = document.createElement('a'),

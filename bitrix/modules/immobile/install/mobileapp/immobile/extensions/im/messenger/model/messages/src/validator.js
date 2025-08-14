@@ -169,10 +169,6 @@ jn.define('im/messenger/model/messages/validator', (require, exports, module) =>
 			});
 		}
 
-		if (Type.isArray(fields.replaces))
-		{
-			result.replaces = fields.replaces;
-		}
 
 		if (Type.isBoolean(fields.sending))
 		{

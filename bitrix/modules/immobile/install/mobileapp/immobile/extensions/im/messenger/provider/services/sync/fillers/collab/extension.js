@@ -8,6 +8,7 @@ jn.define('im/messenger/provider/services/sync/fillers/collab', (require, export
 		ComponentCode,
 		WaitingEntity,
 		DialogType,
+		BotCode,
 	} = require('im/messenger/const');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { LoggerManager } = require('im/messenger/lib/logger');
@@ -20,9 +21,7 @@ jn.define('im/messenger/provider/services/sync/fillers/collab', (require, export
 	{
 		/**
 		 * @override
-		 * @param {object} data
-		 * @param {string} data.uuid
-		 * @param {SyncListResult} data.result
+		 * @param {SyncRequestResultReceivedEvent} data
 		 */
 		async fillData(data)
 		{
@@ -63,7 +62,10 @@ jn.define('im/messenger/provider/services/sync/fillers/collab', (require, export
 		 */
 		prepareResult(result)
 		{
-			return this.filterOnlyCollab(result);
+			const filteredResult = this.filterOnlyCollab(result);
+			logger.log(`${this.constructor.name}.prepareResult after filterOnlyCollab:`, filteredResult);
+
+			return this.filterUsers(filteredResult);
 		}
 
 		/**
@@ -72,36 +74,43 @@ jn.define('im/messenger/provider/services/sync/fillers/collab', (require, export
 		 */
 		filterOnlyCollab(syncListResult)
 		{
-			const collabChatIds = this.findCollabChatIds(syncListResult.addedChats);
+			const collabChatIds = this.findCollabChatIds(syncListResult.chats);
+			const collabChatIdsSet = new Set(collabChatIds);
 
-			syncListResult.addedRecent = syncListResult.addedRecent.filter((recentItem) => {
-				return (collabChatIds.includes(recentItem.chat_id));
-			});
+			const filteredMessages = syncListResult.messages.filter(
+				(message) => collabChatIdsSet.has(message.chat_id),
+			) || [];
+			const messageIds = new Set(filteredMessages.map((message) => message.id));
+			const dialogIds = Object.fromEntries(
+				Object.entries(syncListResult.dialogIds || {})
+					.filter(([chatId]) => collabChatIdsSet.has(Number(chatId))),
+			);
 
-			syncListResult.addedChats = syncListResult.addedChats.filter((chat) => {
-				return (collabChatIds.includes(chat.id));
-			});
-
-			syncListResult.messages.messages = syncListResult.messages.messages.filter((message) => {
-				return (collabChatIds.includes(message.chat_id));
-			});
-
-			syncListResult.messages.files = syncListResult.messages.files.filter((file) => {
-				return (collabChatIds.includes(file.chatId));
-			});
-
-			return syncListResult;
+			return {
+				...syncListResult,
+				messages: filteredMessages,
+				dialogIds,
+				recentItems: syncListResult.recentItems.filter((item) => collabChatIdsSet.has(item.chatId)),
+				chats: syncListResult.chats.filter((chat) => collabChatIdsSet.has(chat.id)),
+				reactions: syncListResult.reactions.filter((reaction) => messageIds.has(reaction.messageId)),
+				files: syncListResult.files.filter((file) => collabChatIdsSet.has(file.chatId)),
+				pins: syncListResult.pins.filter((pin) => collabChatIdsSet.has(pin.chatId)),
+				users: syncListResult.users.filter((user) => user.botData?.code !== BotCode.copilot),
+				messagesAutoDeleteConfigs: syncListResult.messagesAutoDeleteConfigs.filter((config) => {
+					return collabChatIdsSet.has(config.chatId);
+				}),
+			};
 		}
 
 		/**
 		 *
-		 * @param {Array<RawChat>} addedChats
+		 * @param {Array<SyncRawChat>} chats
 		 * @return {Array<number>}
 		 */
-		findCollabChatIds(addedChats)
+		findCollabChatIds(chats)
 		{
 			const result = [];
-			for (const chat of addedChats)
+			for (const chat of chats)
 			{
 				if (chat.type === DialogType.collab)
 				{

@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\RepeatSale\Schedule;
 
+use Bitrix\Crm\Integration\Analytics\Dictionary;
 use Bitrix\Crm\RepeatSale\Job\Controller\RepeatSaleJobController;
 use Bitrix\Crm\RepeatSale\Queue\Controller\RepeatSaleQueueController;
 use Bitrix\Crm\RepeatSale\Queue\QueueItem;
@@ -9,6 +10,7 @@ use Bitrix\Crm\RepeatSale\Service\Handler\ConfigurableHandler;
 use Bitrix\Crm\RepeatSale\Service\Handler\SystemHandler;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Traits\Singleton;
+use Bitrix\Main\Analytics\AnalyticsEvent;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\ORM\Objectify\Collection;
 use Bitrix\Main\Type\Date;
@@ -54,6 +56,8 @@ final class Scheduler
 			]);
 
 			$queueController->add($queueItem);
+
+			$this->sendAnalytics();
 		}
 
 		if ($this->isOnlyCalc)
@@ -83,5 +87,22 @@ final class Scheduler
 		}
 
 		return RepeatSaleJobController::getInstance()->getList($params);
+	}
+
+	private function sendAnalytics(): void
+	{
+		$event = new AnalyticsEvent('rs-add-queue-item', Dictionary::TOOL_CRM, Dictionary::CATEGORY_SYSTEM_INFORM);
+
+		try
+		{
+			$event
+				->setType(Dictionary::TYPE_AGENT)
+				->send()
+			;
+		}
+		catch (\Exception $e)
+		{
+
+		}
 	}
 }

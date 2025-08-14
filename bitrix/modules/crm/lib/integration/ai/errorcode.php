@@ -85,10 +85,12 @@ final class ErrorCode
 		);
 	}
 
-	public static function getAILimitOfRequestsExceededError(array $customData = null): Error
+	public static function getAILimitOfRequestsExceededError(array $customData = null, string $message = null): Error
 	{
+		$errormessage = $message ?? Loc::getMessage('CRM_INTEGRATION_AI_ERROR_ENGINE_LIMIT_EXCEEDED');
+
 		return new Error(
-			Loc::getMessage('CRM_INTEGRATION_AI_ERROR_ENGINE_LIMIT_EXCEEDED'),
+			$errormessage,
 			self::AI_ENGINE_LIMIT_EXCEEDED,
 			$customData
 		);

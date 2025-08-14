@@ -46,7 +46,7 @@ jn.define('im/messenger/lib/permission-manager/user-permission', (require, expor
 		 * @param {boolean} [verbose=false] - prop for verbose response, returns object with key
 		 * @return {boolean|object}
 		 */
-		isCanCall(userData, verbose = false)
+		canCall(userData, verbose = false)
 		{
 			if (!this.setUserData(userData))
 			{
@@ -57,12 +57,12 @@ jn.define('im/messenger/lib/permission-manager/user-permission', (require, expor
 			const isBot = this.isBot();
 			const isNetwork = this.isNetwork();
 			const isLive = this.isLive();
-			const isCanCall = !isYou && !isBot && !isNetwork && isLive;
+			const canCall = !isYou && !isBot && !isNetwork && isLive;
 
 			if (verbose)
 			{
 				return {
-					isCanCall,
+					canCall,
 					isYou,
 					isBot,
 					isNetwork,
@@ -70,7 +70,7 @@ jn.define('im/messenger/lib/permission-manager/user-permission', (require, expor
 				};
 			}
 
-			return isCanCall;
+			return canCall;
 		}
 
 		/**

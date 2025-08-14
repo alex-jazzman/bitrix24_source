@@ -1,5 +1,5 @@
 // eslint-disable-next-line no-var
-var REVISION = 19; // API revision – sync with im/lib/revision.php
+var REVISION = 20; // API revision – sync with im/lib/revision.php
 
 /* region Environment variables */
 
@@ -22,11 +22,17 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	/* region import */
 	const require = (ext) => jn.require(ext); // for IDE hints
 
+	/**
+	 * @description Import MessengerParams and waiting should be higher than other imports.
+	 */
+	const { MessengerParams } = require('im/messenger/lib/params');
+	await MessengerParams.waitSharedParamsInit();
+
 	const { QuickRecentLoader } = require('im/messenger/lib/quick-recent-load');
 	QuickRecentLoader.renderItemsOnViewLoaded();
 
 	const { Type } = require('type');
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { get, isEqual, clone } = require('utils/object');
 	const { Feature: MobileFeature } = require('feature');
 	const { EntityReady } = require('entity-ready');
@@ -95,7 +101,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	const { VotePullHandler } = require('im/messenger/provider/pull/vote');
 
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
-	const { MessengerParams } = require('im/messenger/lib/params');
 
 	const { ChatRecent } = require('im/messenger/controller/recent/chat');
 	const { RecentView } = require('im/messenger/view/recent');
@@ -371,8 +376,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 					break;
 
 				default:
-					// headerTitle = Loc.getMessage('IMMOBILE_COMMON_MESSENGER_HEADER');
-					headerTitle = MessengerParams.getMessengerTitle();
+					headerTitle = Loc.getMessage('IMMOBILE_MESSENGER_COMMON_TITLE');
 					useProgress = false;
 					break;
 			}
@@ -1048,7 +1052,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 				revision,
 			);
 
-			reloadAllScripts();
+			Application.relogin();
 
 			return false;
 		}

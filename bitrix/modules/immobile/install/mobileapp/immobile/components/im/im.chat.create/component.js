@@ -304,10 +304,7 @@ ChatCreate.event.onInviteEmployees = function(event)
 {
 	console.log('ChatCreate.event.onInviteEmployees', event);
 
-	if (
-		Application.getApiVersion() < 34
-		|| !Feature.isIntranetInvitationAvailable
-	)
+	if (!Feature.isIntranetInvitationAvailable)
 	{
 		return false;
 	}

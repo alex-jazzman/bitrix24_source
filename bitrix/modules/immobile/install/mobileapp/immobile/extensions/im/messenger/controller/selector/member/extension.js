@@ -4,7 +4,7 @@
 jn.define('im/messenger/controller/selector/member', (require, exports, module) => {
 	const { openDialogSelector } = require('im/messenger/controller/selector/dialog/opener');
 
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 
 	class MemberSelector
 	{

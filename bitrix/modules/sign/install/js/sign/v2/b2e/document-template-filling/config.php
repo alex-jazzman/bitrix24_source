@@ -16,8 +16,9 @@ return [
 	'js' => 'dist/document-template-filling.bundle.js',
 	'rel' => [
 		'ui.vue3',
-		'main.core.events',
 		'main.core',
+		'main.date',
+		'sign.type',
 		'sign.v2.b2e.sign-settings-templates',
 		'ui.vue3.pinia',
 		'crm.router',

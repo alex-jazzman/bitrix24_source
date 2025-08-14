@@ -12,6 +12,7 @@ use Bitrix\Crm\RepeatSale\Job\Controller\RepeatSaleJobController;
 use Bitrix\Crm\RepeatSale\Log\LogReport;
 use Bitrix\Crm\RepeatSale\Segment\Controller\RepeatSaleSegmentController;
 use Bitrix\Crm\RepeatSale\Segment\Entity\RepeatSaleSegment;
+use Bitrix\Crm\RepeatSale\Statistics\PeriodType;
 use Bitrix\Crm\RepeatSale\Widget\WidgetManager;
 use Bitrix\Crm\Router\ResponseHelper;
 use Bitrix\Crm\Service\Container;
@@ -664,6 +665,7 @@ HTML;
 
 		$showConfetti = $config['showConfetti'] ?? false;
 		$showConfettiValue = $showConfetti ? 'true' : 'false';
+		$periodTypeId = $config['periodTypeId'] ?? PeriodType::Day30->value;
 
 		$parameters = [
 			'isWithFavoriteStar' => true,
@@ -681,6 +683,8 @@ HTML;
 								{
 									showSettingsButton: false,
 									showConfetti: {$showConfettiValue},
+									periodTypeId: {$periodTypeId},
+									isRepeatSaleGrid: true,
 								},
 								event
 							)",

@@ -7,6 +7,7 @@ return [
 		'im:messenger/lib/logger',
 		'im:messenger/lib/helper',
 		'im:messenger/lib/feature',
+		'im:messenger/lib/utils',
 	],
 	'bundle' => [
 		'./src/model',

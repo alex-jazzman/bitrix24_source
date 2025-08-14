@@ -56,6 +56,7 @@ declare type FilesModelCollection = {
 export type FilesModelActions =
 	'filesModel/setState'
 	| 'filesModel/set'
+	| 'filesModel/setFromSync'
 	| 'filesModel/setFromLocalDatabase'
 	| 'filesModel/setFromPush'
 	| 'filesModel/updateWithId'

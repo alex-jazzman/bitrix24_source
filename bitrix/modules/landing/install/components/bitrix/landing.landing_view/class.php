@@ -667,7 +667,6 @@ class LandingViewComponent extends LandingBaseComponent
 				$options['ai_image_available'] = $arResult['AI_IMAGE_AVAILABLE'];
 				$options['ai_image_active'] = $arResult['AI_IMAGE_ACTIVE'];
 				$options['ai_unactive_info_code'] = $arResult['AI_UNACTIVE_INFO_CODE'];
-				$options['google_images_available'] = Manager::isB24();
 				$options['allow_minisites'] = \Bitrix\Landing\Restriction\Form::isMinisitesAllowed();
 				$options['folder_id'] = $landing->getFolderId();
 				$options['version'] = Manager::getVersion();
@@ -1357,8 +1356,6 @@ class LandingViewComponent extends LandingBaseComponent
 				}
 				$urlAddParamsStyle = $urlAddParams;
 
-				$urlAddParams['context_section'] = 'page_view';
-				$urlAddParams['context_element'] = 'create_page_link';
 				$this->arParams['PAGE_URL_LANDING_ADD'] =
 					$metrika
 						->setSection(Metrika\Sections::page)
@@ -1367,8 +1364,6 @@ class LandingViewComponent extends LandingBaseComponent
 				;
 
 				$urlAddParamsStyle['replaceLid'] = $this->arParams['LANDING_ID'];
-				$urlAddParamsStyle['context_section'] = Metrika\Sections::blockStyle->value;
-				$urlAddParamsStyle['context_element'] = 'create_template_button';
 				$urlAddStyle = $this->getUrlAdd(
 					false,
 					$urlAddParamsStyle,

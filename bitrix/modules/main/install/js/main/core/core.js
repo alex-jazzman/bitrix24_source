@@ -6385,11 +6385,18 @@ window._main_polyfill_core = true;
 
 	const ajaxController = 'main.bitrix.main.controller.loadext.getextensions';
 	function loadAssets(options) {
-	  return new Promise(resolve => {
-	    // eslint-disable-next-line
+	  return new Promise((resolve, reject) => {
+	    const getParameters = {
+	      e: ((options === null || options === void 0 ? void 0 : options.extension) || []).join(',')
+	    };
 	    BX.ajax.runAction(ajaxController, {
-	      data: options
-	    }).then(resolve);
+	      data: options,
+	      getParameters
+	    }).then(result => {
+	      resolve(result === null || result === void 0 ? void 0 : result.data);
+	    }).catch(err => {
+	      reject(err);
+	    });
 	  });
 	}
 
@@ -6437,129 +6444,103 @@ window._main_polyfill_core = true;
 	  });
 	}
 
-	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	const defaultOptions = {
-	  loaded: false
-	};
-	var _state = /*#__PURE__*/new WeakMap();
-	var _name = /*#__PURE__*/new WeakMap();
-	var _namespace = /*#__PURE__*/new WeakMap();
-	var _promise = /*#__PURE__*/new WeakMap();
-	let Extension = /*#__PURE__*/function () {
-	  function Extension(options) {
-	    babelHelpers.classCallCheck(this, Extension);
-	    _classPrivateFieldInitSpec(this, _state, {
-	      writable: true,
-	      value: Extension.State.LOADING
-	    });
-	    _classPrivateFieldInitSpec(this, _name, {
-	      writable: true,
-	      value: ''
-	    });
-	    _classPrivateFieldInitSpec(this, _namespace, {
-	      writable: true,
-	      value: ''
-	    });
-	    _classPrivateFieldInitSpec(this, _promise, {
-	      writable: true,
-	      value: null
-	    });
-	    const preparedOptions = {
-	      ...defaultOptions,
-	      ...options
-	    };
-	    babelHelpers.classPrivateFieldSet(this, _name, preparedOptions.name);
-	    babelHelpers.classPrivateFieldSet(this, _namespace, Type.isStringFilled(preparedOptions.namespace) ? preparedOptions.namespace : 'window');
-	    if (preparedOptions.loaded) {
-	      babelHelpers.classPrivateFieldSet(this, _state, Extension.State.LOADED);
+	function parseExtensionHtml(html) {
+	  const result = window.BX.processHTML(html);
+	  const inlinePreScripts = [];
+	  const inlineAfterScripts = [];
+	  result.SCRIPT.reduce((accumulator, element) => {
+	    return fetchInlineScripts(accumulator, element);
+	  }, []).forEach(script => {
+	    if (script.startsWith('BX.Runtime.registerExtension')) {
+	      inlineAfterScripts.push(script);
+	    } else {
+	      inlinePreScripts.push(script);
 	    }
-	  }
-	  babelHelpers.createClass(Extension, [{
-	    key: "load",
-	    value: function load() {
-	      if (babelHelpers.classPrivateFieldGet(this, _state) === Extension.State.LOADED && !babelHelpers.classPrivateFieldGet(this, _promise)) {
-	        babelHelpers.classPrivateFieldSet(this, _promise, Promise.resolve(Reflection.getClass(babelHelpers.classPrivateFieldGet(this, _namespace))));
-	      }
-	      if (babelHelpers.classPrivateFieldGet(this, _promise)) {
-	        return babelHelpers.classPrivateFieldGet(this, _promise);
-	      }
-	      babelHelpers.classPrivateFieldSet(this, _state, Extension.State.LOADING);
-	      babelHelpers.classPrivateFieldSet(this, _promise, new Promise(resolve => {
-	        void loadAssets({
-	          extension: [babelHelpers.classPrivateFieldGet(this, _name)]
-	        }).then(assetsResult => {
-	          if (!Type.isArrayFilled(assetsResult.data)) {
-	            resolve(window);
-	          }
-	          const extensionData = assetsResult.data.at(0);
-	          if (Type.isPlainObject(extensionData.config) && Type.isStringFilled(extensionData.config.namespace)) {
-	            babelHelpers.classPrivateFieldSet(this, _namespace, extensionData.config.namespace);
-	          }
-	          const result = BX.processHTML(extensionData.html || '');
-	          const inlineScripts = result.SCRIPT.reduce(fetchInlineScripts, []);
-	          const externalScripts = result.SCRIPT.reduce(fetchExternalScripts, []);
-	          const externalStyles = result.STYLE.reduce(fetchExternalStyles, []);
-	          const settingsScripts = fetchExtensionSettings(result.HTML);
-	          settingsScripts.forEach(entry => {
-	            document.body.insertAdjacentHTML('beforeend', entry.script);
-	          });
-	          const runScriptsBefore = inlineScripts.filter(script => {
-	            return !script.startsWith('BX.Runtime.registerExtension');
-	          });
-	          const runScriptsAfter = inlineScripts.filter(script => {
-	            return script.startsWith('BX.Runtime.registerExtension');
-	          });
-	          runScriptsBefore.forEach(script => {
-	            BX.evalGlobal(script);
-	          });
-	          void Promise.all([loadAll(externalScripts), loadAll(externalStyles)]).then(() => {
-	            babelHelpers.classPrivateFieldSet(this, _state, Extension.State.LOADED);
-	            runScriptsAfter.forEach(script => {
-	              BX.evalGlobal(script);
-	            });
-	            if (babelHelpers.classPrivateFieldGet(this, _namespace)) {
-	              return Reflection.getClass(babelHelpers.classPrivateFieldGet(this, _namespace));
-	            }
-	            return window;
-	          }).then(exports => {
-	            resolve(exports);
-	          });
-	        });
-	      }));
-	      return babelHelpers.classPrivateFieldGet(this, _promise);
-	    }
-	  }]);
-	  return Extension;
-	}();
-	babelHelpers.defineProperty(Extension, "State", {
-	  LOADED: 'LOADED',
-	  LOADING: 'LOADING'
-	});
+	  });
+	  return {
+	    inlinePreScripts,
+	    inlineAfterScripts,
+	    externalScripts: result.SCRIPT.reduce((accumulator, element) => {
+	      return fetchExternalScripts(accumulator, element);
+	    }, []),
+	    externalStyles: result.STYLE.reduce((accumulator, element) => {
+	      return fetchExternalStyles(accumulator, element);
+	    }, []),
+	    settingsScripts: fetchExtensionSettings(result.HTML)
+	  };
+	}
 
-	async function loadExtension(...extensionName) {
-	  const extensionNames = extensionName.flat();
-	  const result = extensionNames.map(name => {
-	    if (extensionsStorage.has(name)) {
-	      return extensionsStorage.get(name).load();
-	    }
-	    const extension = new Extension({
-	      name
+	async function processExtensions(map) {
+	  const loadableExtensions = [...map.keys()];
+	  const rawAssets = await loadAssets({
+	    extension: loadableExtensions
+	  });
+	  rawAssets.forEach(rawAsset => {
+	    var _rawAsset$html;
+	    const preparedHtml = (_rawAsset$html = rawAsset.html) !== null && _rawAsset$html !== void 0 ? _rawAsset$html : '';
+	    const extensionAssets = parseExtensionHtml(preparedHtml);
+	    extensionAssets.settingsScripts.forEach(({
+	      script
+	    }) => {
+	      document.body.insertAdjacentHTML('beforeend', script);
 	    });
-	    extensionsStorage.set(name, extension);
-	    return extension.load();
+	    extensionAssets.inlinePreScripts.forEach(script => {
+	      window.BX.evalGlobal(script);
+	    });
+	    const loadableExtensionEntry = map.get(rawAsset.extension);
+	    void Promise.all([loadAll(extensionAssets.externalScripts), loadAll(extensionAssets.externalStyles)]).then(() => {
+	      var _rawAsset$config$name, _rawAsset$config;
+	      extensionAssets.inlineAfterScripts.forEach(script => {
+	        window.BX.evalGlobal(script);
+	      });
+	      const namespace = (_rawAsset$config$name = rawAsset === null || rawAsset === void 0 ? void 0 : (_rawAsset$config = rawAsset.config) === null || _rawAsset$config === void 0 ? void 0 : _rawAsset$config.namespace) !== null && _rawAsset$config$name !== void 0 ? _rawAsset$config$name : 'window';
+	      loadableExtensionEntry.resolve(namespace);
+	    }).catch(error => {
+	      loadableExtensionEntry.reject(error);
+	    });
 	  });
-	  return Promise.all(result).then(exports => {
-	    return exports.reduce((acc, currentExports) => {
-	      if (Type.isObject(currentExports)) {
-	        return {
-	          ...acc,
-	          ...currentExports
-	        };
-	      }
-	      return acc;
-	    }, {});
+	}
+
+	const queue = new Map();
+	let timerId = null;
+	async function loadExtension(...name) {
+	  if (Type.isNumber(timerId)) {
+	    clearTimeout(timerId);
+	  }
+	  const requestedNames = name.flat();
+	  const extensionsToLoad = requestedNames.filter(extensionName => {
+	    return !extensionsStorage.has(extensionName);
 	  });
+	  extensionsToLoad.forEach(extensionName => {
+	    let resolve = null;
+	    let reject = null;
+	    const loadableExtensionEntry = {
+	      // eslint-disable-next-line promise/param-names
+	      promise: new Promise((sourceResolve, sourceReject) => {
+	        resolve = sourceResolve;
+	        reject = sourceReject;
+	      }),
+	      resolve,
+	      reject
+	    };
+	    extensionsStorage.set(extensionName, loadableExtensionEntry.promise);
+	    queue.set(extensionName, loadableExtensionEntry);
+	  });
+	  timerId = setTimeout(() => {
+	    if (queue.size > 0) {
+	      void processExtensions(new Map(queue.entries()));
+	      queue.clear();
+	    }
+	  });
+	  const namespaces = await Promise.all(requestedNames.map(extensionName => {
+	    return extensionsStorage.get(extensionName);
+	  }));
+	  return namespaces.reduce((acc, namespace) => {
+	    return {
+	      ...acc,
+	      ...Reflection.getClass(namespace)
+	    };
+	  }, {});
 	}
 
 	const cloneableTags = ['[object Object]', '[object Array]', '[object RegExp]', '[object Arguments]', '[object Date]', '[object Error]', '[object Map]', '[object Set]', '[object ArrayBuffer]', '[object DataView]', '[object Float32Array]', '[object Float64Array]', '[object Int8Array]', '[object Int16Array]', '[object Int32Array]', '[object Uint8Array]', '[object Uint16Array]', '[object Uint32Array]', '[object Uint8ClampedArray]'];
@@ -6668,7 +6649,9 @@ window._main_polyfill_core = true;
 
 	function registerExtension(options) {
 	  if (!extensionsStorage.has(options.name)) {
-	    extensionsStorage.set(options.name, new Extension(options));
+	    var _options$namespace;
+	    const namespace = (_options$namespace = options === null || options === void 0 ? void 0 : options.namespace) !== null && _options$namespace !== void 0 ? _options$namespace : 'window';
+	    extensionsStorage.set(options.name, Promise.resolve(namespace));
 	  }
 	}
 
@@ -8640,15 +8623,19 @@ window._main_polyfill_core = true;
 	      if (Type.isElementNode(element)) {
 	        if (Type.isString(_attr)) {
 	          if (!Type.isNil(value)) {
-	            return element.setAttribute(_attr, encodeAttributeValue(value));
+	            if (Type.isObjectLike(value)) {
+	              element.setAttribute(_attr, encodeAttributeValue(value));
+	            } else {
+	              element.setAttribute(_attr, value);
+	            }
+	          } else if (Type.isNull(value)) {
+	            element.removeAttribute(_attr);
+	          } else {
+	            return decodeAttributeValue(element.getAttribute(_attr));
 	          }
-	          if (Type.isNull(value)) {
-	            return element.removeAttribute(_attr);
-	          }
-	          return decodeAttributeValue(element.getAttribute(_attr));
 	        }
 	        if (Type.isPlainObject(_attr)) {
-	          return Object.entries(_attr).forEach(([attrKey, attrValue]) => {
+	          Object.entries(_attr).forEach(([attrKey, attrValue]) => {
 	            Dom.attr(element, attrKey, attrValue);
 	          });
 	        }
@@ -10281,7 +10268,7 @@ window._main_polyfill_core = true;
 	}
 
 	const settingsStorage = new Map();
-	let Extension$1 = /*#__PURE__*/function () {
+	let Extension = /*#__PURE__*/function () {
 	  function Extension() {
 	    babelHelpers.classCallCheck(this, Extension);
 	  }
@@ -10313,8 +10300,8 @@ window._main_polyfill_core = true;
 	}();
 
 	let _Symbol$iterator;
-	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration$1(obj, privateSet); privateSet.add(obj); }
-	function _checkPrivateRedeclaration$1(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
+	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _searchIndexToInsert = /*#__PURE__*/new WeakSet();
 	_Symbol$iterator = Symbol.iterator;
@@ -10783,9 +10770,9 @@ window._main_polyfill_core = true;
 	}
 	babelHelpers.defineProperty(ZIndexManager, "stacks", new WeakMap());
 
-	function _classPrivateMethodInitSpec$1(obj, privateSet) { _checkPrivateRedeclaration$2(obj, privateSet); privateSet.add(obj); }
-	function _classPrivateFieldInitSpec$1(obj, privateMap, value) { _checkPrivateRedeclaration$2(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration$2(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodInitSpec$1(obj, privateSet) { _checkPrivateRedeclaration$1(obj, privateSet); privateSet.add(obj); }
+	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration$1(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$1(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet$1(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 
 	// eslint-disable-next-line @bitrix24/bitrix24-rules/no-typeof
@@ -10797,11 +10784,11 @@ window._main_polyfill_core = true;
 	  function WeakRefMap() {
 	    babelHelpers.classCallCheck(this, WeakRefMap);
 	    _classPrivateMethodInitSpec$1(this, _cleanupCallback);
-	    _classPrivateFieldInitSpec$1(this, _refs, {
+	    _classPrivateFieldInitSpec(this, _refs, {
 	      writable: true,
 	      value: new Map()
 	    });
-	    _classPrivateFieldInitSpec$1(this, _registry, {
+	    _classPrivateFieldInitSpec(this, _registry, {
 	      writable: true,
 	      value: null
 	    });
@@ -11200,7 +11187,7 @@ window._main_polyfill_core = true;
 	exports.Validation = Validation;
 	exports.Cache = Cache;
 	exports.BaseError = BaseError;
-	exports.Extension = Extension$1;
+	exports.Extension = Extension;
 	exports.ZIndexManager = ZIndexManager;
 	exports.Collections = collections;
 	exports.getClass = getClass;

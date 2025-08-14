@@ -2,6 +2,7 @@
  * @module im/messenger/db/repository/user
  */
 jn.define('im/messenger/db/repository/user', (require, exports, module) => {
+	/* global ChatUtils */
 	const { Type } = require('type');
 
 	const {
@@ -164,6 +165,11 @@ jn.define('im/messenger/db/repository/user', (require, exports, module) => {
 				result.workPosition = jnComponent.convertHtmlEntities(user.work_position);
 			}
 
+			if (Type.isStringFilled(user.workPosition))
+			{
+				result.workPosition = ChatUtils.htmlspecialcharsback(user.workPosition);
+			}
+
 			if (Type.isPlainObject(user.phones))
 			{
 				result.phones = user.phones;
@@ -181,6 +187,11 @@ jn.define('im/messenger/db/repository/user', (require, exports, module) => {
 			if (Type.isStringFilled(user.external_auth_id))
 			{
 				result.externalAuthId = user.external_auth_id;
+			}
+
+			if (Type.isStringFilled(user.externalAuthId))
+			{
+				result.externalAuthId = user.externalAuthId;
 			}
 
 			if (Type.isBoolean(user.extranet))
@@ -218,6 +229,10 @@ jn.define('im/messenger/db/repository/user', (require, exports, module) => {
 					type: user.bot_data.type,
 					backgroundId: user.bot_data.background_id,
 				};
+			}
+			else if (Type.isObject(user.botData))
+			{
+				result.botData = user.botData;
 			}
 			else
 			{

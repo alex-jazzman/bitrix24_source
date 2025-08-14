@@ -60,6 +60,10 @@ class CCrmSmsSendComponent extends CBitrixComponent
 
 		global $APPLICATION;
 		$APPLICATION->SetTitle(Loc::getMessage('CRM_SMS_SEND_COMPONENT_TITLE'));
+		if (Loader::includeModule('ui'))
+		{
+			\Bitrix\UI\Toolbar\Facade\Toolbar::deleteFavoriteStar();
+		}
 
 		$this->includeComponentTemplate();
 	}

@@ -522,7 +522,7 @@ class User
 		$count = UserTable::query()
 			->setSelect(['ID'])
 			->where('ACTIVE', true)
-			->where('IS_REAL_USER', true)
+			->where('REAL_USER', 'expr', true)
 			->whereNotNull('LAST_LOGIN')
 			->setLimit(self::INVITE_MAX_USER_NOTIFY + 1)
 			->fetchCollection()

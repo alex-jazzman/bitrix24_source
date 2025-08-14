@@ -166,17 +166,7 @@ ChatDataConverter.getElementFormat = function(element)
 
 	item.messageCount = element.counter;
 
-	if (Application.getApiVersion() < 34)
-	{
-		if (!element.counter && element.unread)
-		{
-			item.messageCount = 1;
-		}
-	}
-	else
-	{
-		item.unread = !element.counter && element.unread;
-	}
+	item.unread = !element.counter && element.unread;
 
 	item.backgroundColor = element.pinned ? '#f6f6f6' : '#ffffff';
 

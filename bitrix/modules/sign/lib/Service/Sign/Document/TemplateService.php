@@ -95,6 +95,15 @@ final class TemplateService
 	}
 
 	/**
+	 * @param list<int> $updatableEntityIds
+	 * @return Result
+	 */
+	public function updateParent(int $parentId, array $updatableEntityIds, EntityType $entityType): Result
+	{
+		return $this->templateFolderRelationRepository->updateParent($parentId, $updatableEntityIds, $entityType);
+	}
+
+	/**
 	 * @param array<array{entityType: string, id: int}> $entities
 	 * @return list<int>
 	 */

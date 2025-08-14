@@ -1,6 +1,6 @@
 import { MessagesModelState } from '../types/messages';
 import { MessengerModel, PayloadData } from '../../../base';
-import { RawMessage, RawPin } from '../../../../provider/service/src/types/sync-list-result';
+import { SyncRawMessage, SyncRawPin } from '../../../../provider/services/sync/types/sync-list-result';
 
 declare type PinModelState = {
 	id: number,
@@ -21,18 +21,20 @@ declare type PinModelCollection = {
 export type PinMessengerModel = MessengerModel<PinModelCollection>;
 
 declare type PinSetChatCollectionPayload = {
-	pins?: Array<RawPin>
-	messages?: Array<RawMessage>
+	pins?: Array<SyncRawPin>
+	messages?: Array<SyncRawMessage>
 }
 
 declare type PinSetPayload = {
-	pin: RawPin,
-	messages: Array<RawMessage>,
+	pin: SyncRawPin,
+	messages: Array<SyncRawMessage>,
+	actionName?: string,
 }
 
 declare type PinSetListPayload = {
-	pins: Array<RawPin>,
-	messages: Array<RawMessage>,
+	pins: Array<SyncRawPin>,
+	messages: Array<SyncRawMessage>,
+	actionName?: string,
 }
 
 declare type PinDeletePayload = {
@@ -45,8 +47,10 @@ export type PinModelActions =
 	| 'messagesModel/pinModel/setFromLocalDatabase'
 	| 'messagesModel/pinModel/set'
 	| 'messagesModel/pinModel/setList'
+	| 'messagesModel/pinModel/setListFromSync'
 	| 'messagesModel/pinModel/delete'
 	| 'messagesModel/pinModel/deleteByIdList'
+	| 'messagesModel/pinModel/deleteByIdListFromSync'
 	| 'messagesModel/pinModel/updateMessage'
 	| 'messagesModel/pinModel/updateMessages'
 	| 'messagesModel/pinModel/deleteMessagesByChatId'

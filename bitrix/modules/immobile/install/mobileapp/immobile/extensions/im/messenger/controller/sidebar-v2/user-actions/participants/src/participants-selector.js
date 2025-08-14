@@ -4,7 +4,7 @@
 jn.define(
 	'im/messenger/controller/sidebar-v2/user-actions/participants/src/participants-selector',
 	(require, exports, module) => {
-		const { Loc } = require('loc');
+		const { Loc } = require('im/messenger/loc');
 		const { Type } = require('type');
 		const { getLogger } = require('im/messenger/lib/logger');
 		const { AnalyticsService } = require('im/messenger/provider/services/analytics');

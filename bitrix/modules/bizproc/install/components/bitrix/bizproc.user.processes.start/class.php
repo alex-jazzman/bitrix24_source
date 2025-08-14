@@ -461,34 +461,44 @@ class BizprocUserProcessesStart
 		return null;
 	}
 
-	private function addPins(array $iBlocks): array
+	private function addPins(array $iblocks): array
 	{
-		$iBlockTypeId = ProcessService::getIBlockTypeId();
+		$iblockTypeId = ProcessService::getIBlockTypeId();
+		$documentComplexTypeTree = [];
 
-		foreach ($iBlocks as &$iBlock)
+		foreach ($iblocks as $iblock)
 		{
-			$iBlock['PIN'] = $this->checkOption(
-				BizprocDocument::generateDocumentComplexType($iBlockTypeId, $iBlock['ID']),
-				DocumentTypeUserOptionTable::PINNED,
-			);
+			$documentComplexType = BizprocDocument::generateDocumentComplexType($iblockTypeId, $iblock['ID']);
+			$documentComplexTypeTree[$documentComplexType[0]][$documentComplexType[1]][] = $documentComplexType[2];
 		}
 
-		return $iBlocks;
-	}
+		$pinned = [];
+		foreach ($documentComplexTypeTree as $moduleId => $entities)
+		{
+			foreach ($entities as $entity => $types)
+			{
+				$documentTypes = DocumentTypeUserOptionTable::getList([
+					'select' => ['DOCUMENT_TYPE'],
+					'filter' => [
+						'=MODULE_ID' => $moduleId,
+						'=ENTITY' => $entity,
+						'=USER_ID' => $this->getCurrentUserId(),
+						'=OPTION_CODE' => DocumentTypeUserOptionTable::PINNED,
+					],
+				])->fetchAll();
+				$pinned[$moduleId][$entity] = array_column($documentTypes, 'DOCUMENT_TYPE');
+			}
+		}
 
-	private function checkOption(array $documentComplexType, int $optionCode): bool
-	{
-		return (bool)DocumentTypeUserOptionTable::getList([
-			'select' => ['ID'],
-			'filter' => [
-				'=MODULE_ID' => $documentComplexType[0],
-				'=ENTITY' => $documentComplexType[1],
-				'=DOCUMENT_TYPE' => $documentComplexType[2],
-				'=USER_ID' => $this->getCurrentUserId(),
-				'=OPTION_CODE' => $optionCode,
-			],
-			'limit' => 1,
-		])->fetch();
+		foreach ($iblocks as &$iblock)
+		{
+			$documentComplexType = BizprocDocument::generateDocumentComplexType($iblockTypeId, $iblock['ID']);
+			$iblock['PIN'] =
+				isset($pinned[$documentComplexType[0]][$documentComplexType[1]])
+				&& (in_array($documentComplexType[2], $pinned[$documentComplexType[0]][$documentComplexType[1]], true));
+		}
+
+		return $iblocks;
 	}
 
 	private function getOrderedCatalog(array $catalog): array

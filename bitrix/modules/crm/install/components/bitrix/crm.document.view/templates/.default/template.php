@@ -71,20 +71,11 @@ if (\Bitrix\Main\Loader::includeModule('ui'))
 		,
 	);
 
-	if (Bitrix24Manager::isEnabled())
-	{
-		$escapedProvider = \CUtil::JSEscape($arResult['PROVIDER']);
-		$escapedTemplateName = \CUtil::JSEscape($arResult['TEMPLATE_NAME']);
-		$escapedTemplateCode = \CUtil::JSEscape($arResult['TEMPLATE_CODE']);
-
-		Toolbar::addButton(
-			new \Bitrix\UI\Buttons\Button([
-				'color' => \Bitrix\UI\Buttons\Color::LIGHT_BORDER,
-				'text' => Loc::getMessage('CRM_DOCUMENT_VIEW_FEEDBACK'),
-				'onclick' => new \Bitrix\UI\Buttons\JsCode("BX.DocumentGenerator.Feedback.open('{$escapedProvider}', '{$escapedTemplateName}', '{$escapedTemplateCode}')"),
-			])
-		);
-	}
+	Bitrix24Manager::addFeedbackButtonToToolbar(
+		$arResult['PROVIDER'] ?? '',
+		$arResult['TEMPLATE_NAME'] ?? '',
+		$arResult['TEMPLATE_CODE'] ?? '',
+	);
 
 	$downloadButton = \Bitrix\UI\Buttons\Split\Button::create([
 		'color' => \Bitrix\UI\Buttons\Color::LIGHT_BORDER,

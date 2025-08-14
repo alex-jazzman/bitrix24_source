@@ -20,7 +20,6 @@ $MESS['TASKS_FLOW_LIST_BI_ANALYTICS_EMPTY_DASHBOARDS'] = 'Отчёт недос�
 
 $MESS['TASKS_FLOW_LIST_COLUMN_DEMO_LABEL'] = 'Не назначен';
 $MESS['TASKS_FLOW_LIST_GUIDE_BTN'] = 'Потоки: как автоматизировать работу с задачами';
-$MESS['TASKS_FLOW_LIST_ANALYTICS_BTN'] = 'Аналитика';
 
 $MESS['TASKS_FLOW_LIST_FLOW_OFF'] = 'Поток выключен';
 

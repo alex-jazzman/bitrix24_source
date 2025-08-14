@@ -6,7 +6,6 @@ return [
 		'loc',
 		'apptheme',
 		'require-lazy',
-		'user/profile',
 		'assets/common',
 		'layout/ui/fields/entity-selector',
 		'selector/recipient',
@@ -15,6 +14,7 @@ return [
 		'utils/phone',
 		'assets/icons',
 		'ui-system/blocks/avatar',
-		'statemanager/redux/slices/users'
+		'statemanager/redux/slices/users',
+		'user-profile',
 	],
 ];

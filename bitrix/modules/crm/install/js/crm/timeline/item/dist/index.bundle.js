@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,rest_client,ui_analytics,crm_field_colorSelector,ui_vue3_directives_hint,ui_label,ui_cnt,location_core,main_loader,crm_timeline_editors_commentEditor,ui_textEditor,ui_bbcode_formatter_htmlFormatter,ui_lottie,ui_vue3,ui_icons_generator,crm_audioPlayer,ui_iconSet_api_vue,ui_iconSet_actions,crm_field_itemSelector,currency_currencyCore,ui_alerts,ui_avatar,crm_field_pingSelector,bizproc_types,im_public,main_date,crm_timeline_tools,ai_engine,ui_feedback_form,crm_activity_fileUploaderPopup,ui_entitySelector,ui_sidepanel,crm_entityEditor_field_paymentDocuments,pull_client,calendar_util,main_popup,calendar_sharing_interface,crm_ai_call,ui_hint,main_core_events,ui_imageStackSteps,ui_iconSet_main,ui_designTokens,crm_timeline_item,crm_router,main_core,ui_buttons,ui_dialogs_messagebox,ui_infoHelper,ui_notification) {
+(function (exports,rest_client,ui_analytics,crm_field_colorSelector,ui_vue3_directives_hint,ui_label,ui_cnt,location_core,main_loader,crm_timeline_editors_commentEditor,ui_textEditor,ui_bbcode_formatter_htmlFormatter,ui_lottie,ui_vue3,ui_icons_generator,crm_audioPlayer,ui_iconSet_api_vue,ui_iconSet_actions,crm_field_itemSelector,currency_currencyCore,ui_alerts,ui_avatar,crm_field_pingSelector,bizproc_types,im_public,main_date,crm_timeline_tools,ai_engine,ui_feedback_form,crm_activity_fileUploaderPopup,ui_entitySelector,ui_sidepanel,crm_entityEditor_field_paymentDocuments,pull_client,calendar_util,main_popup,calendar_sharing_interface,crm_ai_call,ui_hint,crm_integration_analytics,main_core_events,ui_imageStackSteps,ui_iconSet_main,ui_designTokens,crm_timeline_item,crm_router,main_core,ui_buttons,ui_dialogs_messagebox,ui_infoHelper,ui_notification) {
 	'use strict';
 
 	var crm_timeline_item__default = 'default' in crm_timeline_item ? crm_timeline_item['default'] : crm_timeline_item;
@@ -1943,6 +1943,7 @@ this.BX.Crm = this.BX.Crm || {};
 			@mouseover="showTooltip"
 			@mouseleave="hideTooltip"
 			@click="executeAction"
+			data-hint-interactivity
 		></div>
 	`
 	};
@@ -7170,7 +7171,9 @@ this.BX.Crm = this.BX.Crm || {};
 	function _modifyDocument2({
 	  documentId
 	}) {
-	  return crm_router.Router.openSlider(`/sign/b2e/doc/0/?docId=${documentId}&stepId=changePartner&noRedirect=Y`);
+	  return crm_router.Router.openSlider(`/sign/b2e/doc/0/?docId=${documentId}&stepId=changePartner&noRedirect=Y`, {
+	    width: 1250
+	  });
 	}
 	function _previewDocument2({
 	  documentId
@@ -10388,16 +10391,35 @@ this.BX.Crm = this.BX.Crm || {};
 	function _checkPrivateRedeclaration$u(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet$r(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _resendWhatsApp = /*#__PURE__*/new WeakSet();
+	var _buildAnalyticsData = /*#__PURE__*/new WeakSet();
 	let WhatsApp = /*#__PURE__*/function (_Base) {
 	  babelHelpers.inherits(WhatsApp, _Base);
 	  function WhatsApp(...args) {
 	    var _this;
 	    babelHelpers.classCallCheck(this, WhatsApp);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(WhatsApp).call(this, ...args));
+	    _classPrivateMethodInitSpec$r(babelHelpers.assertThisInitialized(_this), _buildAnalyticsData);
 	    _classPrivateMethodInitSpec$r(babelHelpers.assertThisInitialized(_this), _resendWhatsApp);
 	    return _this;
 	  }
 	  babelHelpers.createClass(WhatsApp, [{
+	    key: "getDeleteActionMethod",
+	    value: function getDeleteActionMethod() {
+	      return 'crm.timeline.activity.delete';
+	    }
+	  }, {
+	    key: "getDeleteActionCfg",
+	    value: function getDeleteActionCfg(recordId, ownerTypeId, ownerId) {
+	      return {
+	        data: {
+	          activityId: recordId,
+	          ownerTypeId,
+	          ownerId,
+	          analytics: _classPrivateMethodGet$r(this, _buildAnalyticsData, _buildAnalyticsData2).call(this)
+	        }
+	      };
+	    }
+	  }, {
 	    key: "onItemAction",
 	    value: function onItemAction(item, actionParams) {
 	      const {
@@ -10455,6 +10477,9 @@ this.BX.Crm = this.BX.Crm || {};
 	  } else {
 	    goToEditor();
 	  }
+	}
+	function _buildAnalyticsData2(ownerTypeId) {
+	  return crm_integration_analytics.Builder.Communication.DeleteEvent.createDefault(ownerTypeId).setElement(crm_integration_analytics.Dictionary.ELEMENT_WA_MESSAGE_DELETE).buildData();
 	}
 
 	const ICON_COLORS = Object.freeze({
@@ -10927,7 +10952,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    cacheable: false,
 	    requestMethod: 'post',
 	    requestParams: {
-	      readOnly: true,
 	      analytics: {
 	        section: 'deal_section'
 	      }
@@ -11126,5 +11150,5 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.ControllerManager = ControllerManager;
 	exports.BaseController = Base;
 
-}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX,BX.UI.Analytics,BX.Crm.Field,BX.Vue3.Directives,BX.UI,BX.UI,BX.Location.Core,BX,BX.Crm.Timeline.Editors,BX.UI.TextEditor,BX.UI.BBCode.Formatter,BX.UI,BX.Vue3,BX.UI.Icons.Generator,BX.Crm,BX.UI.IconSet,BX,BX.Crm.Field,BX.Currency,BX.UI,BX.UI,BX.Crm.Field,BX.Bizproc,BX.Messenger.v2.Lib,BX.Main,BX.Crm.Timeline,BX.AI,BX.UI.Feedback,BX.Crm.Activity,BX.UI.EntitySelector,BX,BX.Crm,BX,BX.Calendar,BX.Main,BX.Calendar.Sharing,BX.Crm.AI,BX,BX.Event,BX.UI,BX,BX,BX.Crm.Timeline,BX.Crm,BX,BX.UI,BX.UI.Dialogs,BX.UI,BX));
+}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX,BX.UI.Analytics,BX.Crm.Field,BX.Vue3.Directives,BX.UI,BX.UI,BX.Location.Core,BX,BX.Crm.Timeline.Editors,BX.UI.TextEditor,BX.UI.BBCode.Formatter,BX.UI,BX.Vue3,BX.UI.Icons.Generator,BX.Crm,BX.UI.IconSet,BX,BX.Crm.Field,BX.Currency,BX.UI,BX.UI,BX.Crm.Field,BX.Bizproc,BX.Messenger.v2.Lib,BX.Main,BX.Crm.Timeline,BX.AI,BX.UI.Feedback,BX.Crm.Activity,BX.UI.EntitySelector,BX,BX.Crm,BX,BX.Calendar,BX.Main,BX.Calendar.Sharing,BX.Crm.AI,BX,BX.Crm.Integration.Analytics,BX.Event,BX.UI,BX,BX,BX.Crm.Timeline,BX.Crm,BX,BX.UI,BX.UI.Dialogs,BX.UI,BX));
 //# sourceMappingURL=index.bundle.js.map

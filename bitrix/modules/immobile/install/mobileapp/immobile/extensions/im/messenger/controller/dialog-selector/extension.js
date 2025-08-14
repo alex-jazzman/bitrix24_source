@@ -3,7 +3,7 @@
  */
 jn.define('im/messenger/controller/dialog-selector', (require, exports, module) => {
 	const { Type } = require('type');
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { clone } = require('utils/object');
 	const { ChatSelector } = require('im/chat/selector/chat');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');

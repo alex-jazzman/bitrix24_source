@@ -452,9 +452,23 @@ abstract class FactoryBased extends BaseComponent implements Controllerable, Sup
 	{
 		$guid = $this->getEntityName().'_details';
 
+		$categoryId = 0;
 		if ($this->categoryId > 0)
 		{
-			$guid .= '_C'.$this->categoryId;
+			$categoryId = $this->categoryId;
+		}
+		elseif (
+			isset($this->arParams['categoryId'])
+			&& is_numeric($this->arParams['categoryId'])
+			&& $this->arParams['categoryId'] > 0
+		)
+		{
+			$categoryId = $this->arParams['categoryId'];
+		}
+
+		if ($categoryId > 0)
+		{
+			$guid .= '_C' . $categoryId;
 		}
 
 		return $guid;

@@ -53,6 +53,7 @@ export const RestMethod = Object.freeze({
 	imV2RecentChannelTail: 'im.v2.Recent.Channel.Tail',
 	imV2RecentCollabTail: 'im.v2.Recent.Collab.Tail',
 	imV2ChatCopilotUpdateRole: 'im.v2.Chat.Copilot.updateRole',
+	imV2ChatCopilotUpdateAiModel: 'im.v2.Chat.Copilot.updateEngine',
 	imV2AccessCheck: 'im.v2.Access.check',
 	imV2ChatMemberEntitiesList: 'im.v2.Chat.MemberEntities.list',
 	imV2ChatInputActionNotify: 'im.v2.Chat.InputAction.notify',

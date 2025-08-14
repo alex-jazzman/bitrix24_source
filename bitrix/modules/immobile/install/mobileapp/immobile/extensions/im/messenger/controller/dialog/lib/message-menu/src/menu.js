@@ -3,14 +3,13 @@
  */
 jn.define('im/messenger/controller/dialog/lib/message-menu/menu', (require, exports, module) => {
 	const { Type } = require('type');
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Alert, confirmDestructiveAction } = require('alert');
 	const { Icon } = require('assets/icons');
 	const { isOnline } = require('device/connection');
 	const { EventType, MessageMenuActionType, PinCount } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
-	const { Feature } = require('im/messenger/lib/feature');
 	const { Notification, ToastType } = require('im/messenger/lib/ui/notification');
 	const { showDeleteChannelPostAlert } = require('im/messenger/lib/ui/alert');
 	const { UserProfile } = require('im/messenger/controller/user-profile');
@@ -164,7 +163,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/menu', (require, expo
 		 */
 		addCopyLinkAction(menu, message)
 		{
-			if (Feature.isMessageMenuAirIconSupported && message.isPossibleCopyLink())
+			if (message.isPossibleCopyLink())
 			{
 				menu.addAction(CopyLinkAction);
 			}

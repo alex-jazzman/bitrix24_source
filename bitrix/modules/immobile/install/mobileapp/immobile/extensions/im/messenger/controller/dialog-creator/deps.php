@@ -3,15 +3,16 @@
 return [
 	'extensions' => [
 		'type',
-		'loc',
 		'tokens',
 		'require-lazy',
 		'files/entry',
 		'files/converter',
 		'utils/color',
 		'utils/object',
+		'assets/icons',
 		'im:lib/theme',
 		'im:chat/selector/chat',
+		'im:messenger/loc',
 		'im:messenger/lib/di/service-locator',
 		'im:messenger/assets/common',
 		'im:messenger/const',
@@ -23,7 +24,6 @@ return [
 		'im:messenger/lib/params',
 		'im:messenger/lib/feature',
 		'im:messenger/lib/rest',
-		'im:messenger/lib/feature',
 		'im:messenger/lib/search/adapters/base',
 		'im:messenger/lib/ui/selector',
 		'im:messenger/lib/ui/base/buttons',
@@ -37,6 +37,7 @@ return [
 		'ui-system/typography/text',
 		'im:messenger/provider/services/chat',
 		'im:messenger/provider/services/analytics',
+		'module',
 	],
 	'bundle' => [
 		'./src/dialog-creator',

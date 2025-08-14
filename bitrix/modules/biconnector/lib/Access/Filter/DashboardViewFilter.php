@@ -37,14 +37,17 @@ class DashboardViewFilter extends AbstractAccessFilter
 				'select' => ['ID', 'TYPE', 'OWNER_ID'],
 				'filter' => [
 					'LOGIC' => 'OR',
-					'!STATUS' => SupersetDashboardTable::DASHBOARD_STATUS_DRAFT,
+					'!=STATUS' => SupersetDashboardTable::DASHBOARD_STATUS_DRAFT,
 					[
-						'STATUS' => SupersetDashboardTable::DASHBOARD_STATUS_DRAFT,
-						'OWNER_ID' => $this->user->getUserId(),
+						'=STATUS' => SupersetDashboardTable::DASHBOARD_STATUS_DRAFT,
+						'=OWNER_ID' => $this->user->getUserId(),
 					],
 				],
 				'cache' => ['ttl' => 3600],
-			])->fetchAll();
+			])
+				->fetchAll()
+			;
+
 			$allowedDashboardIds = array_filter(
 				$dashboards,
 				fn(array $dashboard) => $this->controller->check($action, DashboardAccessItem::createFromArray([

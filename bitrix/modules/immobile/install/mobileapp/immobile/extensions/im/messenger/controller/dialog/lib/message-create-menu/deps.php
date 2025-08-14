@@ -2,10 +2,10 @@
 
 return [
 	'extensions' => [
-		'loc',
 		'assets/icons',
 		'module',
 		'layout/ui/context-menu',
+		'im:messenger/loc',
 		'im:messenger/lib/logger',
 		'im:messenger/lib/rest',
 		'im:messenger/lib/params',

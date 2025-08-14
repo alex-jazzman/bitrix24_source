@@ -4,16 +4,17 @@
 jn.define('im/messenger/controller/vote/result/user-list', (require, exports, module) => {
 	const { StatefulList } = require('layout/ui/stateful-list');
 	const { Color, Component } = require('tokens');
-	const { ProfileView } = require('user/profile');
-	const { Loc } = require('loc');
+	const { dispatch } = require('statemanager/redux/store');
+	const { usersAdded, usersUpserted } = require('statemanager/redux/slices/users');
+	const { UserProfile } = require('user-profile');
+
+	const { Loc } = require('im/messenger/loc');
 	const { RestMethod } = require('im/messenger/const');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const {
 		UserListItemsFactory,
 		USER_LIST_ITEM_TYPE,
 	} = require('im/messenger/controller/vote/result/user-list-item-factory');
-	const { dispatch } = require('statemanager/redux/store');
-	const { usersAdded, usersUpserted } = require('statemanager/redux/slices/users');
-	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
 	class UserList extends LayoutComponent
 	{
@@ -162,7 +163,10 @@ jn.define('im/messenger/controller/vote/result/user-list', (require, exports, mo
 
 		itemDetailOpenHandler(userId)
 		{
-			ProfileView.openInBottomSheet(userId, this.parentWidget);
+			void UserProfile.open({
+				ownerId: userId,
+				parentWidget: this.parentWidget,
+			});
 		}
 	}
 

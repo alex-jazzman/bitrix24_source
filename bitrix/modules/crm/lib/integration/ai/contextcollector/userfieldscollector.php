@@ -13,6 +13,7 @@ final class UserFieldsCollector implements ContextCollector
 	private UserPermissions\EntityPermissions\Type $permissions;
 	private ?Factory $factory;
 	private UserFieldsSettings $settings;
+	private UserFieldsReceiveStrategy $userFieldsReceiveStrategy;
 
 	public function __construct(
 		private readonly int $entityTypeId,
@@ -23,11 +24,19 @@ final class UserFieldsCollector implements ContextCollector
 		$this->permissions = Container::getInstance()->getUserPermissions($this->context->userId())->entityType();
 
 		$this->settings = new UserFieldsSettings();
+		$this->userFieldsReceiveStrategy = new UserFieldsReceiveStrategy\ViaFactory($this->factory);
 	}
 
 	public function setSettings(UserFieldsSettings $settings): self
 	{
 		$this->settings = $settings;
+
+		return $this;
+	}
+
+	public function setUserFieldsReceiveStrategy(UserFieldsReceiveStrategy $strategy): self
+	{
+		$this->userFieldsReceiveStrategy = $strategy;
 
 		return $this;
 	}
@@ -40,7 +49,7 @@ final class UserFieldsCollector implements ContextCollector
 		}
 
 		$result = [];
-		foreach ($this->factory->getUserFieldsCollection() as $field)
+		foreach ($this->userFieldsReceiveStrategy->getAll() as $field)
 		{
 			$info = [
 				'title' => $field->getTitle(),

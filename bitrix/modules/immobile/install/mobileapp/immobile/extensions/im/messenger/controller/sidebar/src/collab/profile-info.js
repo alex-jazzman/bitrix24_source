@@ -2,7 +2,7 @@
  * @module im/messenger/controller/sidebar/collab/profile-info
  */
 jn.define('im/messenger/controller/sidebar/collab/profile-info', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 
 	const { Theme } = require('im/lib/theme');
 	const { SidebarProfileInfo } = require('im/messenger/controller/sidebar/chat/sidebar-profile-info');

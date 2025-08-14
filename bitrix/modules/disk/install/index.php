@@ -3,6 +3,7 @@ global $MESS;
 
 use Bitrix\Disk\Configuration;
 use Bitrix\Disk\Document\BitrixHandler;
+use Bitrix\Disk\Document\DocumentHandlersManager;
 use Bitrix\Disk\Document\Models\DocumentSessionTable;
 use Bitrix\Disk\Document\OnlyOffice\OnlyOfficeHandler;
 use Bitrix\Disk\UserConfiguration;
@@ -234,6 +235,7 @@ Class disk extends CModule
 		$eventManager = \Bitrix\Main\EventManager::getInstance();
 		$eventManager->registerEventHandler("main", "onFileTransformationComplete", "disk", "\\Bitrix\\Disk\\Integration\\TransformerManager", "resetCacheInUfAfterTransformation");
 		$eventManager->registerEventHandler('disk', 'OnRetrievingUserRights', 'disk', "\\Bitrix\\Disk\\Integration\\Collab\\CollabHandlers", 'onRetrievingUserRights');
+		$eventManager->registerEventHandler('main', 'onPreviewRendererBuildList', 'disk', DocumentHandlersManager::class, 'additionalPreviewManagersList');
 	}
 
 	function UnInstallDB($arParams = Array())
@@ -306,6 +308,7 @@ Class disk extends CModule
 		$eventManager = \Bitrix\Main\EventManager::getInstance();
 		$eventManager->unRegisterEventHandler("main", "onFileTransformationComplete", "disk", "\\Bitrix\\Disk\\Integration\\TransformerManager", "resetCacheInUfAfterTransformation");
 		$eventManager->unRegisterEventHandler('disk', 'OnRetrievingUserRights', 'disk', "\\Bitrix\\Disk\\Integration\\Collab\\CollabHandlers", 'onRetrievingUserRights');
+		$eventManager->unRegisterEventHandler('main', 'onPreviewRendererBuildList', 'disk', DocumentHandlersManager::class, 'additionalPreviewManagersList');
 
 		UnRegisterModule("disk");
 

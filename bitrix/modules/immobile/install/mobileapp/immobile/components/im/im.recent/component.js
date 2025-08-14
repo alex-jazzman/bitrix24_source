@@ -12,7 +12,7 @@ var { Theme } = jn.require('im/lib/theme');
 var { Feature } = jn.require('im/messenger/lib/feature');
 const { getTopMenuNotificationsButton: _getTopMenuNotificationsButton } = jn.require('im/messenger/api/notifications-opener');
 
-var REVISION = 19; // api revision - sync with im/lib/revision.php
+var REVISION = 20; // api revision - sync with im/lib/revision.php
 
 /* Clean session variables after page restart */
 BX.message.LIMIT_ONLINE = BX.componentParameters.get('LIMIT_ONLINE', 1380);
@@ -583,8 +583,12 @@ RecentList.openUserProfile = function(userId, userData = {})
 			url: `${currentDomain}/mobile/users/?user_id=${userId}&FROM_DIALOG=Y`,
 		};
 	}
-	const { ProfileView } = jn.require('user/profile');
-	ProfileView.open(params);
+
+	const { UserProfile } = jn.require('user-profile');
+	void UserProfile.open({
+		ownerId: params.userId,
+		widgetParams: params,
+	});
 };
 
 RecentList.callUser = function(userId, action, number)

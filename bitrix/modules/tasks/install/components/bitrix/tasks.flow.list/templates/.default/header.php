@@ -113,12 +113,6 @@ $isTrial = $arResult['isFeatureTrialable'] ? 'Y' : 'N';
 				<?=Loc::getMessage("TASKS_FLOW_LIST_GUIDE_BTN")?>
 			</span>
 		</div>
-		<?php
-		if ($arResult['isBiAnalyticsAvailable'])
-		{
-			include_once ('bi-analytics.php');
-		}
-		?>
 	</div>
 </div>
 

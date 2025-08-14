@@ -335,6 +335,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 			{
 				logger.log(`${this.constructor.name}.setMessageList.pushPlanLimitMessage`);
 				this.sendAnalyticsIsHistoryLimitExceeded(this.dialogId, Analytics.Section.chatStart);
+
 				await this.view.pushMessages([this.getPlanLimitMessage()]);
 			}
 		}
@@ -522,6 +523,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 			const updateMessage = viewMessageListToPush.shift();
 			this.putMessageIdToStackStart(viewMessageListToPush);
 			await this.updateViewMessages([updateMessage]);
+
 			await this.view.pushMessages(viewMessageListToPush);
 
 			viewMessageListWithTemplate.forEach((message) => {
@@ -562,6 +564,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 				const updateMessageList = viewMessageListToAdd.slice(viewMessageListWithTemplate.length);
 				await this.updateViewMessages(updateMessageList);
 				const addMessageList = viewMessageListToAdd.slice(0, viewMessageListWithTemplate.length);
+
 				await this.view.addMessages(addMessageList);
 				viewMessageListWithTemplate.forEach((message) => {
 					this.viewMessageCollection[message.id] = message;

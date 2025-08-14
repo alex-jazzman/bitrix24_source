@@ -1,4 +1,6 @@
 import { Extension, Loc } from 'main.core';
+import { Timezone } from 'main.date';
+import { ProviderCode } from 'sign.type';
 import { type LoadedDocumentData } from 'sign.v2.api';
 import type { DocumentSettings } from 'sign.v2.b2e.sign-settings-templates';
 import {
@@ -53,6 +55,10 @@ export const DocumentFillingApp = {
 		{
 			return mapState(useDocumentTemplateFillingStore, ['documents']).documents();
 		},
+		ruRegionFieldsVisible(): boolean
+		{
+			return mapState(useDocumentTemplateFillingStore, ['ruRegionFieldsVisible']).ruRegionFieldsVisible();
+		},
 		documentPreviewList(): DocumentPreviewData[]
 		{
 			return this.documents.map((doc: LoadedDocumentData) => ({
@@ -73,6 +79,10 @@ export const DocumentFillingApp = {
 			const settings = Extension.getSettings('sign.v2.b2e.document-template-filling');
 
 			return settings.get('signingMaxMonth', 3);
+		},
+		switcherAllHint(): string
+		{
+			return this.ruRegionFieldsVisible ? this.loc('SIGN_B2E_DOCUMENT_FILLING_APPLY_FOR_ALL_HINT') : '';
 		},
 	},
 	watch: {
@@ -127,6 +137,10 @@ export const DocumentFillingApp = {
 		this.commonSettings = this.makeDefaultDocumentSettings();
 	},
 	methods: {
+		removeDocument(uid: string): void
+		{
+			useDocumentTemplateFillingStore().removeDocument(uid);
+		},
 		selectCreationDate(uid: string, date: Date): void
 		{
 			if (this.documentsSettings[uid])
@@ -261,22 +275,18 @@ export const DocumentFillingApp = {
 		},
 		makeDefaultDocumentSettings(doc: LoadedDocumentData | null): DocumentSettings
 		{
-			const signingDate = new Date();
-			const defaultRegistrationNumber = this.getDefaultRegistrationNumber();
-			signingDate.setMonth(signingDate.getMonth() + defaultSigningDateMonth);
-
 			return {
-				registrationNumber: defaultRegistrationNumber,
-				creationDate: new Date(),
-				signingDate: doc
-					? new Date(doc.dateSignUntil)
+				registrationNumber: this.getDefaultRegistrationNumber(),
+				creationDate: Timezone.UserTime.getDate(),
+				signingDate: doc && doc.dateSignUntilUserTime
+					? new Date(doc.dateSignUntilUserTime)
 					: this.getFallbackSignigningDate()
 				,
 			};
 		},
 		getFallbackSignigningDate(): Date
 		{
-			const signingDate = new Date();
+			const signingDate = Timezone.UserTime.getDate();
 			signingDate.setMonth(signingDate.getMonth() + defaultSigningDateMonth);
 
 			return signingDate;
@@ -339,6 +349,15 @@ export const DocumentFillingApp = {
 
 			return new Date(year, month, day, hours, minutes, 0, 0);
 		},
+		isGosKeyProvider(doc?: LoadedDocumentData): boolean
+		{
+			if (doc)
+			{
+				return doc.providerCode === ProviderCode.goskey;
+			}
+
+			return this.documents.some((item: LoadedDocumentData) => item.providerCode === ProviderCode.goskey);
+		},
 	},
 	template: `
 		<h1 class="sign-b2e-settings__header">
@@ -350,7 +369,7 @@ export const DocumentFillingApp = {
 				<Switcher
 					v-model="isApplySettingsForAll"
 					:title="loc('SIGN_B2E_DOCUMENT_FILLING_APPLY_FOR_ALL_TITLE')"
-					:hint="loc('SIGN_B2E_DOCUMENT_FILLING_APPLY_FOR_ALL_HINT')"
+					:hint="switcherAllHint"
 				/>
 
 				<template v-if="isApplySettingsForAll">
@@ -362,23 +381,24 @@ export const DocumentFillingApp = {
 						:max-preview-count="7"
 					/>
 					<div class="sign-b2e-document-filling__item-content">
-						<span class="sign-b2e-document-filling__item-text">
-							{{ loc('SIGN_B2E_DOCUMENT_FILLING_INPUT_REG_NUMBER_LABEL') }}
-						</span>
-						<input
-							v-model="commonSettings.registrationNumber"
-							:title="areAllExternalIdsFromIntegration()
-								? loc('SIGN_B2E_DOCUMENT_FILLING_INPUT_REG_NUMBER_HCMLINK_HINT')
-								: ''"
-							:disabled="areAllExternalIdsFromIntegration()"
-							type="text"
-							class="ui-ctl-element sign-b2e-document-filling-reg-number-input"
-							:class="{ '--error': isApplySettingsForAll && !isValid }"
-							maxlength="255"
-						>
-
+						<div v-if="ruRegionFieldsVisible">
+							<span class="sign-b2e-document-filling__item-text">
+								{{ loc('SIGN_B2E_DOCUMENT_FILLING_INPUT_REG_NUMBER_LABEL') }}
+							</span>
+							<input
+								v-model="commonSettings.registrationNumber"
+								:title="areAllExternalIdsFromIntegration()
+									? loc('SIGN_B2E_DOCUMENT_FILLING_INPUT_REG_NUMBER_HCMLINK_HINT')
+									: ''"
+								:disabled="areAllExternalIdsFromIntegration()"
+								type="text"
+								class="ui-ctl-element sign-b2e-document-filling-reg-number-input"
+								:class="{ '--error': isApplySettingsForAll && !isValid }"
+								maxlength="255"
+							>
+						</div>
 						<div class="sign-b2e-settings__date-row">
-							<div class="sign-b2e-settings__date-item">
+							<div class="sign-b2e-settings__date-item" v-if="ruRegionFieldsVisible">
 								<span class="sign-b2e-document-filling__item-text-date">
 									{{ loc('SIGN_B2E_DOCUMENT_FILLING_DATE_CREATE_LABEL') }}
 								</span>
@@ -403,7 +423,7 @@ export const DocumentFillingApp = {
 									{{ loc('SIGN_B2E_DOCUMENT_FILLING_DATE_EXPIRE_LABEL') }}
 								</span>
 								<DateSelector
-									:value="commonSettings.signingDate" 
+									:value="commonSettings.signingDate"
 									showTime
 									@onSelect="date => selectSigningDateForAll(date)"
 									class="sign-b2e-settings__date-selector"
@@ -414,6 +434,9 @@ export const DocumentFillingApp = {
 								{{ signUntilDateErrorCommon }}
 							</div>
 						</div>
+						<p v-if="isGosKeyProvider()" class="sign-b2e-document-filling__notice">
+							{{ loc('SIGN_DOCUMENT_SEND_DATETIME_LIMIT_SELECTOR_GOSKEY_ALERT') }}
+						</p>
 					</div>
 				</template>
 			</div>
@@ -436,10 +459,18 @@ export const DocumentFillingApp = {
 						/>
 					</div>
 					<div class="sign-b2e-document-filling__item-content">
-						<span class="sign-b2e-document-filling__item-title">
-							{{ doc.title }}
-						</span>
-						<div>
+						<div class="sign-b2e-document-filling__header">
+							<span class="sign-b2e-document-filling__item-title">
+								{{ doc.title }}
+							</span>
+							<button
+								v-if="documents.length > 1"
+								class="sign-b2e-document-filling__remove-btn"
+								@click="removeDocument(doc.uid)"
+								:title="loc('SIGN_B2E_DOCUMENT_FILLING_REMOVE_TEMPLATE')"
+							></button>
+						</div>
+						<div v-if="ruRegionFieldsVisible">
 							<span class="sign-b2e-document-filling__item-text">
 								{{ loc('SIGN_B2E_DOCUMENT_FILLING_INPUT_REG_NUMBER_LABEL') }}
 							</span>
@@ -457,7 +488,7 @@ export const DocumentFillingApp = {
 						</div>
 
 						<div class="sign-b2e-settings__date-row">
-							<div class="sign-b2e-settings__date-item">
+							<div class="sign-b2e-settings__date-item" v-if="ruRegionFieldsVisible">
 								<span class="sign-b2e-document-filling__item-text-date">
 									{{ loc('SIGN_B2E_DOCUMENT_FILLING_DATE_CREATE_LABEL') }}
 								</span>
@@ -490,6 +521,9 @@ export const DocumentFillingApp = {
 								/>
 							</div>
 						</div>
+						<p v-if="isGosKeyProvider(doc)" class="sign-b2e-document-filling__notice">
+							{{ loc('SIGN_DOCUMENT_SEND_DATETIME_LIMIT_SELECTOR_GOSKEY_ALERT') }}
+						</p>
 						<div v-if="signUntilDateErrorByDoc[doc.uid]" class="sign-b2e-settings__date-error --individual">
 							{{ signUntilDateErrorByDoc[doc.uid] }}
 						</div>

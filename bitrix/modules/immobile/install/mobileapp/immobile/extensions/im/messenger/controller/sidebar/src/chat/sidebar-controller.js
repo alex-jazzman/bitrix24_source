@@ -6,7 +6,7 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-controller', (require, e
 	const { isOnline } = require('device/connection');
 
 	const { Type } = require('type');
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { chevronRight } = require('assets/common');
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const logger = LoggerManager.getInstance().getLogger('sidebar--sidebar-controller');
@@ -198,8 +198,8 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-controller', (require, e
 					dialogData = await this.sidebarRestService.getDialogById();
 				}
 
-				this.permission = ChatPermission.isCanCall(dialogData, true);
-				this.isDisableCallButton = !this.permission.isCanCall;
+				this.permission = ChatPermission.canCall(dialogData, true);
+				this.isDisableCallButton = !this.permission.canCall;
 			}
 			else
 			{
@@ -214,8 +214,8 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-controller', (require, e
 					userData = await this.sidebarRestService.getUserById();
 				}
 
-				this.permission = UserPermission.isCanCall(userData, true);
-				this.isDisableCallButton = !this.permission.isCanCall;
+				this.permission = UserPermission.canCall(userData, true);
+				this.isDisableCallButton = !this.permission.canCall;
 				this.isBot = this.permission.isBot;
 				this.isNetwork = this.permission.isNetwork;
 			}
@@ -512,7 +512,7 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-controller', (require, e
 				return;
 			}
 
-			if (this.permission.isCanCall)
+			if (this.permission.canCall)
 			{
 				CallManager.getInstance().sendAnalyticsEvent(this.dialogId, Analytics.Element.videocall, Analytics.Section.chatSidebar);
 				CallManager.getInstance().createVideoCall(this.dialogId);
@@ -562,7 +562,7 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-controller', (require, e
 				return;
 			}
 
-			if (this.permission.isCanCall)
+			if (this.permission.canCall)
 			{
 				CallManager.getInstance().sendAnalyticsEvent(this.dialogId, Analytics.Element.audiocall, Analytics.Section.chatSidebar);
 				CallManager.getInstance().createAudioCall(this.dialogId);

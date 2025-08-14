@@ -17,6 +17,6 @@ $MESS["CRM_TOOLBAR_COMPONENT_ADD_CLIENT_FOR_EMAIL_SEND_QUOTE"] = "Add a customer
 $MESS["CRM_TOOLBAR_COMPONENT_ADD_CLIENT_FOR_EMAIL_SEND_SMART_INVOICE"] = "Add a customer with an email address to this invoice to send an email.";
 $MESS["CRM_TOOLBAR_COMPONENT_ROBOTS_GUIDE_TEXT"] = "Edit triggers and automation rules here";
 $MESS["CRM_TOOLBAR_COMPONENT_ROBOTS_GUIDE_TEXT_1"] = "Edit automation rules and triggers here";
-$MESS["CRM_TOOLBAR_COMPONENT_SCRIPTS_GUIDE_TEXT"] = "Edit SPA here";
+$MESS["CRM_TOOLBAR_COMPONENT_SCRIPTS_GUIDE_TEXT"] = "Edit smart scripts here";
 $MESS["CRM_TOOLBAR_COMPONENT_TELEPHONY_NOT_SUPPORTED"] = "The Instant Messenger module is required to make calls. Please contact your Bitrix24 administrator.";
 $MESS["CRM_TOOLBAR_COMPONENT_TELEPHONY_NOT_SUPPORTED_OK"] = "OK";

@@ -68,6 +68,22 @@ abstract class AbstractOperation
 		$this->scenario = Scenario::FULL_SCENARIO;
 	}
 
+	public static function isAccessGranted(int $userId, ItemIdentifier $target): bool
+	{
+		return $userId > 0
+			&& in_array(
+				$target->getEntityTypeId(),
+				[
+					CCrmOwnerType::Lead,
+					CCrmOwnerType::Deal,
+					CCrmOwnerType::Activity,
+					CCrmOwnerType::CopilotCallAssessment,
+				],
+				true
+			)
+		;
+	}
+
 	public static function isSuitableTarget(ItemIdentifier $target): bool
 	{
 		return true;
@@ -199,6 +215,25 @@ abstract class AbstractOperation
 			);
 
 			$result->addError(ErrorCode::getAIDisabledError(['sliderCode' => Scenario::SLIDER_CODE_MAP[$this->scenario]]));
+
+			static::notifyAboutJobError($result, false);
+
+			return $result;
+		}
+
+		if (!static::isAccessGranted($this->userId, $this->target))
+		{
+			AIManager::logger()->error(
+				'{date}: {class}: User with ID {userId} has no access to the target {target} for this operation {operationType}' . PHP_EOL,
+				[
+					'class' => static::class,
+					'userId' => $this->userId,
+					'target' => $this->target,
+					'operationType' => static::TYPE_ID,
+				],
+			);
+
+			$result->addError(\Bitrix\Crm\Controller\ErrorCode::getAccessDeniedError());
 
 			static::notifyAboutJobError($result, false);
 
@@ -558,7 +593,12 @@ abstract class AbstractOperation
 
 	protected function getContextLanguageId(): string
 	{
-		return Config::getDefaultLanguageId();
+		$currentLang = \Bitrix\Main\Context::getCurrent()
+			?->getLanguageObject()
+			?->getCode()
+		;
+
+		return $currentLang ?? Config::getDefaultLanguageId();
 	}
 
 	private function getAIEngineContext(): Context

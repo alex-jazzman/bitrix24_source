@@ -43,20 +43,9 @@ if (\Bitrix\Main\Loader::includeModule('ui'))
 	Toolbar::deleteFavoriteStar();
 	Toolbar::addFilter($arResult['FILTER']);
 
-	if (Bitrix24Manager::isEnabled())
-	{
-		$escapedProvider = \CUtil::JSEscape($arParams['PROVIDER']);
-
-		Toolbar::addButton(
-			new \Bitrix\UI\Buttons\Button([
-				'color' => \Bitrix\UI\Buttons\Color::LIGHT_BORDER,
-				'text' => Loc::getMessage('DOCGEN_TEMPLATE_LIST_FEEDBACK'),
-				'onclick' => new \Bitrix\UI\Buttons\JsCode(
-					"BX.DocumentGenerator.Feedback.open('{$escapedProvider}');"
-				),
-			])
-		);
-	}
+	Bitrix24Manager::addFeedbackButtonToToolbar(
+		$arParams['PROVIDER'] ?? '',
+	);
 
 	Toolbar::addButton(
 		(new \Bitrix\UI\Buttons\SettingsButton())

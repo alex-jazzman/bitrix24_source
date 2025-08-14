@@ -23,6 +23,10 @@ jn.define('im/messenger/model/recent/validator', (require, exports, module) => {
 		{
 			result.id = fields.id.toString();
 		}
+		else if (Type.isNumber(fields.dialogId) || Type.isStringFilled(fields.dialogId))
+		{
+			result.id = fields.dialogId;
+		}
 
 		if (Type.isBoolean(fields.pinned))
 		{
@@ -188,11 +192,15 @@ jn.define('im/messenger/model/recent/validator', (require, exports, module) => {
 
 		if (Type.isBoolean(fields.message.file) || Type.isPlainObject(fields.message.file))
 		{
-			params.withFile = fields.message.file;
+			params.withFile = Boolean(fields.message.file);
 		}
 		else if (Type.isBoolean(fields.message.params?.withFile) || Type.isPlainObject(fields.message.params?.withFile))
 		{
 			params.withFile = fields.message.params.withFile;
+		}
+		else if (Type.isArrayFilled(fields.message.params?.FILE_ID))
+		{
+			params.withFile = fields.message.params.FILE_ID;
 		}
 
 		if (Type.isDate(fields.message.date) || Type.isString(fields.message.date))

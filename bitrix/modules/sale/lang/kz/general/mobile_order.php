@@ -1,5 +1,5 @@
 <?php
-$MESS["SMOB_ADDRESS"] = "Жеткізу мекенжайы";
+$MESS['SMOB_ADDRESS'] = "Жеткізу мекенжайы";
 $MESS["SMOB_ALLOWED"] = "Рұқсат етілген";
 $MESS["SMOB_ALL_ORDERS"] = "Барлық тапсырыстар";
 $MESS["SMOB_BUYER"] = "Сатып алушы";

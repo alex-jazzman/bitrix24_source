@@ -6,7 +6,7 @@ return [
 		'im:messenger/lib/di/service-locator',
 		'utils/function',
 		'utils/url',
-		'loc',
+		'im:messenger/loc',
 		'im:messenger/controller/search/experimental',
 		'im:messenger/lib/element',
 		'im:messenger/lib/helper',

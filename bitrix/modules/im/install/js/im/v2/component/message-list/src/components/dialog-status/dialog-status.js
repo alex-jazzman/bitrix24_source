@@ -1,5 +1,5 @@
 import { InputActions } from './components/input-actions';
-import { ReadStatus } from './components/read-status';
+import { ReadStatus } from './components/read-status/read-status';
 
 import './css/dialog-status.css';
 

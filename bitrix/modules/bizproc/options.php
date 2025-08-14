@@ -29,6 +29,7 @@ if ($bizprocPerms >= "R") :
 		COption::RemoveOption("bizproc");
 	}
 
+	$defaultValue = \Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24') ? 'Y' : 'N';
 	$arAllOptions = [
 		["log_cleanup_days", GetMessage("BIZPROC_LOG_CLEANUP_DAYS"), "90", ["text", 3]],
 		["search_cleanup_days", GetMessage("BIZPROC_SEARCH_CLEANUP_DAYS"), "180", ["text", 3]],
@@ -40,6 +41,7 @@ if ($bizprocPerms >= "R") :
 		["limit_simultaneous_processes", GetMessage("BIZPROC_LIMIT_SIMULTANEOUS_PROCESSES"), "", ["text", 3]],
 		["employee_compatible_mode", GetMessage("BIZPROC_EMPLOYEE_COMPATIBLE_MODE"), "N", ["checkbox"]],
 		["limit_while_iterations", GetMessage("BIZPROC_LIMIT_WHILE_ITERATIONS"), "1000", ["text", 5]],
+		['enable_getdocument_select', GetMessage('BIZPROC_OPT_ENABLE_GETDOCUMENT_SELECT'), $defaultValue, ['checkbox']]
 	];
 
 	$strWarning = "";
@@ -72,6 +74,7 @@ if ($bizprocPerms >= "R") :
 		COption::SetOptionString("bizproc", "limit_while_iterations", ($limit_while_iterations ?? 1000));
 		COption::SetOptionString("bizproc", "log_skip_types", ($log_skip_types ?? '') ? implode(',', $log_skip_types) : "");
 		COption::SetOptionString("bizproc", "automation_no_forced_tracking", ($automation_no_forced_tracking ?? 'N') === "Y" ? "Y" : "N");
+		COption::SetOptionString('bizproc', 'enable_getdocument_select', ($enable_getdocument_select ?? 'N') === 'Y' ? 'Y' : 'N');
 
 		\Bitrix\Main\Config\Option::set("bizproc", "use_gzip_compression", $_REQUEST["use_gzip_compression"]);
 		\Bitrix\Main\Config\Option::set("bizproc", "locked_wi_path", $_REQUEST["locked_wi_path"]);

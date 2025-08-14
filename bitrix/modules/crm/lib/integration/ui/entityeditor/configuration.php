@@ -103,6 +103,9 @@ final class Configuration
 		return $this;
 	}
 
+	/**
+	 * @return Element[]
+	 */
 	public function getElements(): array
 	{
 		$elements = [];

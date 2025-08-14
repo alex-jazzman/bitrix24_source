@@ -1276,14 +1276,15 @@
 	position: absolute;
 	left: 50%;
 	top: -7px;
-	font-size: 11px;
-	line-height: 16px;
-	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
-	font-weight: var(--ui-font-weight-medium, 500);
-	color: #FFFFFF;
-	border-radius: 8px;
-	background: #559BE6;
 	padding: 0 7px;
+	border-radius: 8px;
+	color: #FFFFFF;
+	background: #559BE6;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-size: 11px;
+	font-weight: var(--ui-font-weight-medium, 500);
+	line-height: 16px;
+	white-space: nowrap;
 }
 
 .bx-messenger-videocall-panel-item-coming-soon[data-visible="N"] {

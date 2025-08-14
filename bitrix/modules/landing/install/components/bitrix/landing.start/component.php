@@ -379,7 +379,8 @@ $agreements = array(
 $virtualLangs = array(
 	'ua' => 'ru',
 	'by' => 'ru',
-	'kz' => 'ru'
+	'kz' => 'ru',
+	'uz' => 'ru',
 );
 
 if (isset($agreements['es']))
@@ -388,7 +389,7 @@ if (isset($agreements['es']))
 }
 
 // lang zone is in CIS
-$cis = $currentZone == 'by' || $currentZone == 'kz';
+$cis = $currentZone === 'by' || $currentZone === 'kz' || $currentZone === 'uz';
 
 // actual from lang-file
 foreach ($agreements as $lng => $item)

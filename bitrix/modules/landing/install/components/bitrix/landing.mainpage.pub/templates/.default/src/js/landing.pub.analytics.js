@@ -41,24 +41,22 @@ export class Analytics
 			return;
 		}
 
-		let widgetId = '';
+		let code = '';
 		const blockWrapper = event.currentTarget;
 		blockWrapper.classList.forEach(className => {
 			if (className !== 'block-wrapper')
 			{
-				widgetId += className;
+				code += className;
 			}
 		});
-		widgetId = widgetId.replace('block-', '');
+		code = code.replace('block-', '');
 
 		const metrika = new Metrika(true);
 		metrika.sendData({
 			category: 'vibe',
 			event: 'click_on_button',
 			c_section: this.isPublished ? 'active_page' : 'preview_page',
-			params: {
-				'widget-id': widgetId,
-			},
+			p2: ['widgetId', code],
 		});
 	}
 }

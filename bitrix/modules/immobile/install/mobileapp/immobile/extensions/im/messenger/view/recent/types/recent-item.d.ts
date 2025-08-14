@@ -1,5 +1,9 @@
-export type NativeRecentItem = {
-	actions: Array<any>,
+import {AvatarDetail} from "../../../lib/element/types/chat-avatar";
+import {RecentWidgetItemAction} from "../../../lib/element/types/dialog/recent/base";
+
+export type RecentWidgetItem = {
+	actions: Array<RecentWidgetItemAction>,
+	avatar: AvatarDetail,
 	backgroundColor: string,
 	color: string,
 	date: number,
@@ -12,13 +16,13 @@ export type NativeRecentItem = {
 	params: { options: object, id: string, useLetterImage: boolean },
 	sectionCode: string,
 	sortValues: { order: number },
-	styles: NativeRecentItemStyles,
+	styles: RecentWidgetItemStyles,
 	subtitle: string,
 	title: string,
 	unread: boolean,
 }
 
-export type NativeRecentItemStyles = {
+export type RecentWidgetItemStyles = {
 	avatar: object,
 	counter: { backgroundColor?: string },
 	date: {

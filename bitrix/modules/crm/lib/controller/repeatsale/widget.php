@@ -16,9 +16,4 @@ final class Widget extends Base
 	{
 		(new StartBanner())->incrementShowedCount();
 	}
-
-	public function finalizeShowedFlowStartAction(): void
-	{
-		(new StartBanner())->setShowedCountToMax();
-	}
 }

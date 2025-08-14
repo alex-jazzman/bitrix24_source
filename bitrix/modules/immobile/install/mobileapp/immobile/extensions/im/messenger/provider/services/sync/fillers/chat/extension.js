@@ -3,7 +3,7 @@
  */
 jn.define('im/messenger/provider/services/sync/fillers/chat', (require, exports, module) => {
 	const { SyncFillerBase } = require('im/messenger/provider/services/sync/fillers/base');
-	const { EventType, ComponentCode, WaitingEntity } = require('im/messenger/const');
+	const { EventType, ComponentCode, WaitingEntity, BotCode } = require('im/messenger/const');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { getLogger } = require('im/messenger/lib/logger');
 	const logger = getLogger('sync-service');
@@ -30,9 +30,7 @@ jn.define('im/messenger/provider/services/sync/fillers/chat', (require, exports,
 
 		/**
 		 * @override
-		 * @param {object} data
-		 * @param {string} data.uuid
-		 * @param {SyncListResult} data.result
+		 * @param {SyncRequestResultReceivedEvent} data
 		 */
 		async fillData(data)
 		{

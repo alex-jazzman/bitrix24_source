@@ -7,6 +7,7 @@ return [
 		'type',
 		'utils/logger',
 		'require-lazy',
+		'assets/icons',
 		'layout/ui/banners/banner-button',
 		'statemanager/vuex',
 		'statemanager/vuex-manager',

@@ -1,17 +1,14 @@
 <?php
-namespace Bitrix\Crm\Filter;
 
-use Bitrix\Crm\Service\Container;
-use Bitrix\Crm\Service\ParentFieldManager;
-use Bitrix\Crm\UI\EntitySelector;
-use Bitrix\Main;
-use Bitrix\Main\Config\Option;
-use Bitrix\Main\Localization\Loc;
+namespace Bitrix\Crm\Filter;
 
 use Bitrix\Crm;
 use Bitrix\Crm\Counter\EntityCounterType;
-use Bitrix\Crm\PhaseSemantics;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\ParentFieldManager;
+use Bitrix\Crm\UI\EntitySelector;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
@@ -428,6 +425,7 @@ class QuoteDataProvider extends EntityDataProvider implements FactoryOptionable
 					'referenceClass' => $referenceClass,
 					'isEnableAllUsers' => $isEnableAllUsers,
 					'isEnableOtherUsers' => $isEnableOtherUsers,
+					'isEnableStructureNode' => true,
 				]
 			);
 		}

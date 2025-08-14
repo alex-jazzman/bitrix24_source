@@ -3,8 +3,8 @@
 return [
 	'extensions' => [
 		'haptics',
-		'loc',
 		'im:lib/theme',
+		'im:messenger/loc',
 		'im:messenger/assets/common',
 		'im:messenger/lib/ui/base/item',
 		'im:messenger/lib/emitter',

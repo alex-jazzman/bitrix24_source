@@ -9,12 +9,12 @@ jn.define('im/messenger/controller/sidebar-v2/controller/chat/src/permission-man
 	{
 		canCall()
 		{
-			return this.userPermission.isCanCall(this.dialogId);
+			return this.userPermission.canCall(this.dialogId);
 		}
 
 		getCallForbiddenReason()
 		{
-			const currentContext = this.userPermission.isCanCall(this.dialogId, true);
+			const currentContext = this.userPermission.canCall(this.dialogId, true);
 
 			if (currentContext && currentContext.isLive === false)
 			{

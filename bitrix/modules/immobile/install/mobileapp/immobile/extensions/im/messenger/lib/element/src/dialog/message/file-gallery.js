@@ -29,6 +29,17 @@ jn.define('im/messenger/lib/element/dialog/message/file-gallery', (require, expo
 		}
 
 		/**
+		 * @return {FileGalleryDialogWidgetItem}
+		 */
+		toDialogWidgetItem()
+		{
+			return {
+				...super.toDialogWidgetItem(),
+				fileList: this.fileList,
+			};
+		}
+
+		/**
 		 * @protected
 		 * @return {string}
 		 */

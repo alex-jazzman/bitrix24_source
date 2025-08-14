@@ -114,7 +114,7 @@
 	-webkit-box-align: center;
 	    -ms-flex-align: center;
 	        align-items: center;
-	margin-left: 2px;
+	margin-left: 9px;
 	padding-bottom: 2px;
 }
 
@@ -151,21 +151,19 @@
 	color: var(--ui-color-palette-gray-90);
 }
 
-.scope-list,
-.group-dashboard-scopes {
-	margin-left: 4px;
-	margin-right: 5px;
+.group-scope-title {
+	color: var(--ui-color-palette-gray-90);
+	cursor: default;
+}
+
+.scope-list.scope-list-dashboard,
+.scope-list.scope-list-group {
 	color: var(--ui-color-link-primary-base);
 	cursor: pointer;
 }
 
-.scope-list.scope-list-system,
-.group-dashboard-scopes.group-dashboard-scopes-more {
-	color: var(--ui-color-palette-gray-50);
-	cursor: default;
-}
-
-.scope-list.scope-list-more {
+.scope-list.scope-list-more,
+.scope-list-system {
 	display: inline-block;
 	color: var(--ui-color-palette-gray-50);
 	cursor: default;

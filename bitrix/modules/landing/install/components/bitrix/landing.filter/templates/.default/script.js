@@ -51,11 +51,22 @@
 			&& BX.Landing.Component.Filter.createButton
 		)
 		{
-			BX.Runtime.loadExtension(['ai.copilot-promo-popup', 'ui.banner-dispatcher'])
-				.then(exports => {
+			BX.Runtime.loadExtension([
+				'ai.copilot-promo-popup',
+				'ui.banner-dispatcher',
+				'landing.metrika',
+			])
+				.then((exports) => {
 					const createButton = BX.Landing.Component.Filter.createButton.button;
-					const { CopilotPromoPopup, BannerDispatcher } = exports;
-					BannerDispatcher.normal.toQueue(onDone => {
+					const { CopilotPromoPopup, BannerDispatcher, Metrika } = exports;
+					BannerDispatcher.high.toQueue((onDone) => {
+						const metrika = new Metrika(true);
+						metrika.sendData({
+							category: 'site',
+							event: 'creating_scenario_hint_show',
+							type: 'standart',
+						});
+
 						const popup = CopilotPromoPopup.createByPresetId({
 							presetId: CopilotPromoPopup.Preset.SITE_WITH_COPILOT,
 							targetOptions: createButton,
@@ -68,7 +79,8 @@
 						popup.show();
 						BX.userOptions.save('landing', 'site-ai-popup', 'isShow', 'Y');
 					});
-				});
+				})
+				.catch(() => {});
 		}
 
 		BX.addCustomEvent('BX.Main.Filter:apply', BX.delegate(BX.Landing.Component.Filter.onFilterCallback));

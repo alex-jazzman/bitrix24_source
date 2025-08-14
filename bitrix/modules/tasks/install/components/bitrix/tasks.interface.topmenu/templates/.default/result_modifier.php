@@ -329,65 +329,13 @@ $portalSettings = Settings::getInstance();
 if (!$isCollaber)
 {
 	$taskBI = TaskBIAnalytics::getInstance();
-
-	$tasksEfficiencyBIMenuItem = $taskBI->getTasksEfficiencyDashboardsMenuItems();
 	$tasksBIMenuItem = $taskBI->getTasksDashboardsMenuItems();
-
-	$flowBI = FlowBIAnalytics::getInstance();
-
-	$flowsBIMenuItem = $flowBI->getFlowsDashboardsMenuItems();
 
 	$efficiencyItemId = 'view_effective';
 
 	$isEfficiencyAvailable = $portalSettings->isToolAvailableByMenuId($efficiencyItemId);
 
 	$efficiencyCounter = $isEfficiencyAvailable ? (int)$arResult['EFFECTIVE_COUNTER'] . '%' : '';
-
-	$efficiencyMenu = [
-		'ID' => $efficiencyItemId . '_menu',
-		'TEXT' => Loc::getMessage('TASKS_PANEL_TAB_EFFECTIVE'),
-		'ITEMS' => $tasksEfficiencyBIMenuItem['ITEMS'] ?? [],
-		'SUPER_TITLE' => [
-			'TEXT' => $efficiencyCounter,
-			'CLASS' => 'tasks-counter-wrapper',
-		],
-	];
-
-	/** @var string[] $efficiencyItemsIds */
-	$efficiencyItemsIds = array_column($efficiencyMenu['ITEMS'], 'ID');
-	foreach ($efficiencyItemsIds as &$efficiencyItemsId)
-	{
-		$pos = strrpos($efficiencyItemsId, '_');
-		if ($pos !== false)
-		{
-			$tail = substr($efficiencyItemsId, $pos + 1);
-			if (!empty($tail))
-			{
-				$efficiencyItemsId = $tail;
-			}
-		}
-	}
-
-	$efficiencyMenu['ITEMS'] = array_merge(
-		$efficiencyMenu['ITEMS'],
-		array_filter(
-			$flowsBIMenuItem,
-			function ($item) use ($efficiencyItemsIds) {
-				$itemId = $item['ID'] ?? '';
-				$pos = strrpos($itemId, '_');
-				if ($pos !== false)
-				{
-					$tail = substr($itemId, $pos + 1);
-					if (!empty($tail))
-					{
-						return !in_array($tail, $efficiencyItemsIds, true);
-					}
-				}
-
-				return true;
-			}
-		)
-	);
 
 	$efficiencyItem = [
 		'TEXT' => Loc::getMessage('TASKS_PANEL_TAB_EFFECTIVE'),
@@ -405,21 +353,9 @@ if (!$isCollaber)
 		unset($efficiencyItem['COUNTER']);
 	}
 
-	if (!empty($efficiencyMenu['ITEMS']))
+	if ($isEfficiencyAvailable)
 	{
-		if ($isEfficiencyAvailable)
-		{
-			$efficiencyMenu['ITEMS'][] = $efficiencyItem;
-		}
-	}
-	elseif ($isEfficiencyAvailable)
-	{
-		$efficiencyMenu = $efficiencyItem;
-	}
-
-	if (!empty($efficiencyMenu['ITEMS']) || $isEfficiencyAvailable)
-	{
-		$arResult['ITEMS'][] = $efficiencyMenu;
+		$arResult['ITEMS'][] = $efficiencyItem;
 	}
 
 	if (!empty($tasksBIMenuItem))

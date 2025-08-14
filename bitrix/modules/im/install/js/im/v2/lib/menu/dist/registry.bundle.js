@@ -975,7 +975,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	class ChannelMessageMenu extends MessageMenu {
 	  getMenuItems() {
-	    return [this.getCopyItem(), this.getCopyLinkItem(), this.getCopyFileItem(), this.getPinItem(), this.getForwardItem(), this.getDelimiter(), this.getMarkItem(), this.getFavoriteItem(), this.getDelimiter(), this.getDownloadFileItem(), this.getSaveToDiskItem(), this.getDelimiter(), this.getEditItem(), this.getDeleteItem(), this.getDelimiter(), this.getSelectItem()];
+	    return [this.getCopyItem(), this.getEditItem(), this.getPinItem(), this.getForwardItem(), ...this.getAdditionalItems(), this.getDeleteItem(), this.getDelimiter(), this.getSelectItem()];
+	  }
+	  getNestedItems() {
+	    return [this.getCopyLinkItem(), this.getCopyFileItem(), this.getMarkItem(), this.getFavoriteItem(), this.getDownloadFileItem(), this.getSaveToDiskItem()];
 	  }
 	}
 

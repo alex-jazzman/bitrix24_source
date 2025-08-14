@@ -230,8 +230,6 @@ export class Start extends Base
 		else
 		{
 			this.#showReadMore();
-
-			void Ajax.runAction('crm.repeatsale.widget.finalizeShowedFlowStart');
 		}
 	}
 
@@ -256,7 +254,7 @@ export class Start extends Base
 
 	getFetchUrl(): string
 	{
-		return 'crm.repeatsale.statistics.getInitData';
+		return 'crm.repeatsale.start.getData';
 	}
 
 	getFetchParams(): Object

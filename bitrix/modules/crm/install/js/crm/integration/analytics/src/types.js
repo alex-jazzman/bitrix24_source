@@ -159,15 +159,105 @@ export type BlockLinkEvent = {
 	p1: CrmMode,
 }
 
+export type WhatsAppFormEvent = {
+	tool: Dictionary.TOOL_CRM,
+	category: Dictionary.CATEGORY_COMMUNICATION_OPERATIONS,
+	event: Dictionary.EVENT_WA_UPDATE | Dictionary.EVENT_WA_POPUP,
+	type: Dictionary.TYPE_WA_EDIT,
+	c_section: Dictionary.SECTION_LEAD
+		| Dictionary.SECTION_DEAL
+		| Dictionary.SECTION_CONTACT
+		| Dictionary.SECTION_COMPANY
+		| Dictionary.SECTION_DYNAMIC
+		| Dictionary.SECTION_CUSTOM
+		| Dictionary.SECTION_MYCOMPANY
+		| Dictionary.SECTION_SMART_DOCUMENT_CONTACT
+		| Dictionary.SECTION_CATALOG_CONTRACTOR_CONTACT
+	,
+	c_sub_section: Dictionary.SUB_SECTION_LIST
+		| Dictionary.SUB_SECTION_KANBAN
+		| Dictionary.SUB_SECTION_ACTIVITIES
+		| Dictionary.SUB_SECTION_DEADLINES
+		| Dictionary.SUB_SECTION_DETAILS
+		| Dictionary.SUB_SECTION_CALENDAR
+	,
+	c_element: Dictionary.ELEMENT_WA_PREVIEW
+		| Dictionary.ELEMENT_WA_HELP
+		| Dictionary.ELEMENT_WA_TEMPLATE_SELECTOR
+		| Dictionary.ELEMENT_WA_TEMPLATE_OFFER
+		| Dictionary.ELEMENT_WA_POPUP_GUIDE
+		| Dictionary.ELEMENT_WA_POPUP_CLOSE
+	,
+	p1: CrmMode,
+}
+
+export type WhatsAppSendEvent = {
+	tool: Dictionary.TOOL_CRM,
+	category: Dictionary.CATEGORY_COMMUNICATION_OPERATIONS,
+	event: Dictionary.EVENT_WA_SEND | Dictionary.EVENT_WA_POPUP,
+	type: Dictionary.TYPE_WA_EDIT,
+	c_section: Dictionary.SECTION_LEAD
+		| Dictionary.SECTION_DEAL
+		| Dictionary.SECTION_CONTACT
+		| Dictionary.SECTION_COMPANY
+		| Dictionary.SECTION_DYNAMIC
+		| Dictionary.SECTION_CUSTOM
+		| Dictionary.SECTION_MYCOMPANY
+		| Dictionary.SECTION_SMART_DOCUMENT_CONTACT
+		| Dictionary.SECTION_CATALOG_CONTRACTOR_CONTACT
+	,
+	c_sub_section: Dictionary.SUB_SECTION_LIST
+		| Dictionary.SUB_SECTION_KANBAN
+		| Dictionary.SUB_SECTION_ACTIVITIES
+		| Dictionary.SUB_SECTION_DEADLINES
+		| Dictionary.SUB_SECTION_DETAILS
+		| Dictionary.SUB_SECTION_CALENDAR
+	,
+	c_element: Dictionary.ELEMENT_WA_SEND
+		| Dictionary.ELEMENT_WA_CANCEL
+		| Dictionary.ELEMENT_WA_RESEND
+		| Dictionary.ELEMENT_WA_NOTE
+		| Dictionary.ELEMENT_WA_NOTE_PIN
+	,
+	p1: CrmMode,
+	p2?: number,
+	p3?: number,
+	p4?: string
+}
+
+export type WhatsAppDeleteEvent = {
+	tool: Dictionary.TOOL_CRM,
+	category: Dictionary.CATEGORY_COMMUNICATION_OPERATIONS,
+	event: Dictionary.EVENT_WA_DELETE,
+	type: Dictionary.TYPE_WA_ACTIVITY_DELETE,
+	c_section: Dictionary.SECTION_LEAD
+		| Dictionary.SECTION_DEAL
+		| Dictionary.SECTION_CONTACT
+		| Dictionary.SECTION_COMPANY
+		| Dictionary.SECTION_DYNAMIC
+		| Dictionary.SECTION_CUSTOM
+		| Dictionary.SECTION_MYCOMPANY
+		| Dictionary.SECTION_SMART_DOCUMENT_CONTACT
+		| Dictionary.SECTION_CATALOG_CONTRACTOR_CONTACT
+	,
+	c_sub_section: Dictionary.SUB_SECTION_DETAILS,
+	c_element: Dictionary.ELEMENT_WA_MESSAGE_DELETE
+		| Dictionary.ELEMENT_WA_NOTE_DELETE
+	,
+	p1: CrmMode,
+}
+
 export type RepeatSaleBannerViewEvent = {
 	tool: Dictionary.TOOL_CRM,
 	category: Dictionary.CATEGORY_BANNERS,
 	event: Dictionary.EVENT_REPEAT_SALE_BANNER_VIEW,
 	type: Dictionary.TYPE_REPEAT_SALE_BANNER_START
 		| Dictionary.TYPE_REPEAT_SALE_BANNER_START_EMPTY
+		| Dictionary.TYPE_REPEAT_SALE_BANNER_START_FORCE
 		| Dictionary.TYPE_REPEAT_SALE_BANNER_STATISTICS
+		| Dictionary.TYPE_REPEAT_SALE_BANNER_NULL
 	,
-	c_section: Dictionary.SECTION_DEAL,
+	c_section: Dictionary.SECTION_DEAL | Dictionary.SECTION_CONTACT | Dictionary.SECTION_COMPANY,
 	c_sub_section: Dictionary.SUB_SECTION_LIST
 		| Dictionary.SUB_SECTION_KANBAN
 		| Dictionary.SUB_SECTION_ACTIVITIES
@@ -184,9 +274,11 @@ export type RepeatSaleBannerClickEvent = {
 	event: Dictionary.EVENT_REPEAT_SALE_BANNER_CLICK,
 	type: Dictionary.TYPE_REPEAT_SALE_BANNER_START
 		| Dictionary.TYPE_REPEAT_SALE_BANNER_START_EMPTY
+		| Dictionary.TYPE_REPEAT_SALE_BANNER_START_FORCE
 		| Dictionary.TYPE_REPEAT_SALE_BANNER_STATISTICS
+		| Dictionary.TYPE_REPEAT_SALE_BANNER_NULL
 	,
-	c_section: Dictionary.SECTION_DEAL,
+	c_section: Dictionary.SECTION_DEAL | Dictionary.SECTION_CONTACT | Dictionary.SECTION_COMPANY,
 	c_sub_section: Dictionary.SUB_SECTION_LIST
 		| Dictionary.SUB_SECTION_KANBAN
 		| Dictionary.SUB_SECTION_ACTIVITIES
@@ -205,9 +297,11 @@ export type RepeatSaleBannerCloseEvent = {
 	event: Dictionary.EVENT_REPEAT_SALE_BANNER_CLOSE,
 	type: Dictionary.TYPE_REPEAT_SALE_BANNER_START
 		| Dictionary.TYPE_REPEAT_SALE_BANNER_START_EMPTY
+		| Dictionary.TYPE_REPEAT_SALE_BANNER_START_FORCE
 		| Dictionary.TYPE_REPEAT_SALE_BANNER_STATISTICS
+		| Dictionary.TYPE_REPEAT_SALE_BANNER_NULL
 	,
-	c_section: Dictionary.SECTION_DEAL,
+	c_section: Dictionary.SECTION_DEAL | Dictionary.SECTION_CONTACT | Dictionary.SECTION_COMPANY,
 	c_sub_section: Dictionary.SUB_SECTION_LIST
 		| Dictionary.SUB_SECTION_KANBAN
 		| Dictionary.SUB_SECTION_ACTIVITIES

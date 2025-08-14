@@ -10,6 +10,7 @@ $MESS["MAIN_EMAIL_FROM"] = "Сайт әкімшісінің Email-ы (әдепк
 $MESS["MAIN_ERROR_REPORTING"] = "Қателерді шығару режимі (error_reporting):";
 $MESS["MAIN_EVENT_LOG_CLEANUP_DAYS"] = "Оқиғаларды қанша күн сақтау керек:";
 $MESS["MAIN_EVENT_LOG_FILE_ACCESS"] = "Файлға қолжетімділіктің өзгеруін жазу:";
+$MESS["MAIN_EVENT_LOG_GROUP_EDIT"] = "Топты редакциялауды жазыңыз:";
 $MESS["MAIN_EVENT_LOG_GROUP_POLICY"] = "Топтың қауіпсіздік саясатының өзгеруін жазу:";
 $MESS["MAIN_EVENT_LOG_LOGIN_FAIL"] = "Кіру қателерін жазу:";
 $MESS["MAIN_EVENT_LOG_LOGIN_SUCCESS"] = "Сәтті кіруді жазу:";
@@ -149,7 +150,7 @@ $MESS["MAIN_OPTION_USE_SECURE_PASSWORD_COOKIE1"] = "Кук авторлану ү
 $MESS["MAIN_OPT_APPLY"] = "Қолдану";
 $MESS["MAIN_OPT_APPLY_TITLE"] = "Өзгерістерді сақтау және нысанда қалу";
 $MESS["MAIN_OPT_BX_FAST_DOWNLOAD"] = "Nginx арқылы файлдарды жылдам қайтару:";
-$MESS["MAIN_OPT_BX_FAST_DOWNLOAD_HINT"] = "<a href=\"https://dev.1c-bitrix.ru/learning/course/index.php?COURSE_ID=32&CHAPTER_ID=04900\">Веб-сервердің екі деңгейлі конфигурациясы</a> <a href=\"http://wiki.nginx.org/X-accel\">Nginx</a> көмегімен пайдаланушы файлдарының қайтарылуын жылдамдатуға мүмкіндік береді. <a href=\"/bitrix/admin/site_checker.php\">Жүйені тексеру</a> арқылы бұл мүмкіндік сіздің серверіңізге қолжетімді екенін анықтауға болады. <a href=\"https://www.1c-bitrix.ru/products/vmbitrix/index.php\">&quot;1С-Битрикс&quot; виртуалды машинасында</a> бұл мүмкіндік әдепкі бойынша жұмыс жасайды.";
+$MESS["MAIN_OPT_BX_FAST_DOWNLOAD_HINT"] = "<a href=\"https://dev.1c-bitrix.ru/learning/course/index.php?COURSE_ID=32&CHAPTER_ID=04900\">Веб-сервердің екі деңгейлі конфигурациясы</a> <a href=\"http://wiki.nginx.org/X-accel\">Nginx</a> көмегімен пайдаланушы файлдарының қайтарылуын жылдамдатуға мүмкіндік береді. <a href=\"/bitrix/admin/site_checker.php\">Жүйені тексеру</a> арқылы бұл мүмкіндік сіздің серверіңізге қолжетімді екенін анықтауға болады. <a href=\"https://www.1c-bitrix.ru/download/vmbitrix.php\">&quot;1С-Битрикс&quot; виртуалды машинасында</a> бұл мүмкіндік әдепкі бойынша жұмыс жасайды.";
 $MESS["MAIN_OPT_CANCEL"] = "Болдырмау";
 $MESS["MAIN_OPT_CANCEL_TITLE"] = "Өзгерістерді сақтамау және оралу";
 $MESS["MAIN_OPT_DIGEST_NOTE"] = "Назар аударыңыз, HTTP Digest авторлануы тек кіріктірілген авторлану үшін қолданыла алады.";

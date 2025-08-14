@@ -1,6 +1,7 @@
-import { Loc, Tag, Dom, Event } from 'main.core';
+import { Extension, Loc, Tag, Dom, Text } from 'main.core';
+import { UI } from 'ui.notification';
 import { EventEmitter } from 'main.core.events';
-import { Timezone, DateTimeFormat } from 'main.date';
+import { DateTimeFormat, Timezone } from 'main.date';
 import { Api } from 'sign.v2.api';
 import './style.css';
 import 'ui.design-tokens';
@@ -11,8 +12,10 @@ export class DatetimeLimitSelector extends EventEmitter
 	#documentUids: Array<string>;
 	#documentDateField: HTMLElement;
 	#selectedDate: Date | null = null;
+	#signingMinMinutes: number;
+	#signingMaxMonth: number;
 
-	constructor(date: Date = new Date())
+	constructor()
 	{
 		super();
 		this.setEventNamespace('BX.Sign.V2.DatetimeLimitSelector');
@@ -21,7 +24,14 @@ export class DatetimeLimitSelector extends EventEmitter
 		this.#api = new Api();
 
 		this.#documentDateField = this.#getDateField();
-		this.setDate(date);
+
+		const settings = Extension.getSettings('sign.v2.datetime-limit-selector');
+
+		const defaultSignUntilDate = settings.get('defaultSignUntilDate', null);
+		this.setDate(defaultSignUntilDate ? new Date(defaultSignUntilDate) : new Date());
+
+		this.#signingMinMinutes = settings.get('signingMinMinutes', 5);
+		this.#signingMaxMonth = settings.get('signingMaxMonth', 3);
 	}
 
 	getLayout(): HTMLElement
@@ -52,22 +62,34 @@ export class DatetimeLimitSelector extends EventEmitter
 						callback: (date) => {
 							this.emit('beforeDateModify');
 
-							this.#saveSelectedDate(date).then(
-								() => {
-									Dom.removeClass(this.#documentDateField, '--invalid');
+							if (!this.#isDatePassMinValidation(date))
+							{
+								const validationErrorMessage = Loc.getMessagePlural('PERIOD_TOO_SHORT', this.#signingMinMinutes, {
+									'#MIN_PERIOD#': this.#signingMinMinutes,
+								});
 
-									this.emit('afterDateModify', new Event.BaseEvent({
-										data: { isValid: true },
-									}));
-								},
-								() => {
-									Dom.addClass(this.#documentDateField, '--invalid');
+								UI.Notification.Center.notify({
+									content: Text.encode(validationErrorMessage),
+									autoHideDelay: 4000,
+								});
 
-									this.emit('afterDateModify', new Event.BaseEvent({
-										data: { isValid: false },
-									}));
-								},
-							);
+								return false;
+							}
+
+							if (!this.#isDatePassMaxValidation(date))
+							{
+								const validationErrorMessage = Loc.getMessagePlural('PERIOD_TOO_LONG', this.#signingMaxMonth, {
+									'#MONTH#': this.#signingMaxMonth,
+								});
+
+								UI.Notification.Center.notify({
+									content: Text.encode(validationErrorMessage),
+									autoHideDelay: 4000,
+								});
+
+								return false;
+							}
+							this.emit('afterDateModify');
 
 							return true;
 						},
@@ -80,18 +102,6 @@ export class DatetimeLimitSelector extends EventEmitter
 				<span class="sign-datetime-limit-selector_field-text"></span>
 			</div>
 		`;
-	}
-
-	#saveSelectedDate(datetime: Date): Promise<any[]>
-	{
-		const timestamp = Timezone.UserTime.toUTCTimestamp(datetime);
-
-		return Promise.all(this.#documentUids.map((uid) => this.#api.modifyDateSignUntil(uid, timestamp)));
-	}
-
-	setDocumentUids(uids: Array<string>)
-	{
-		this.#documentUids = uids;
 	}
 
 	getSelectedDate(): Date | null
@@ -117,5 +127,52 @@ export class DatetimeLimitSelector extends EventEmitter
 	isValid(): boolean
 	{
 		return !Dom.hasClass(this.#documentDateField, '--invalid');
+	}
+
+	#isDatePassMinValidation(date: Date): boolean
+	{
+		const minValidDateTime = Timezone.UserTime.getDate();
+		minValidDateTime.setMinutes(minValidDateTime.getMinutes() + this.#signingMinMinutes);
+
+		return date.getTime() > minValidDateTime.getTime();
+	}
+
+	#isDatePassMaxValidation(date: Date): boolean
+	{
+		const maxValidDateTime = Timezone.UserTime.getDate();
+		maxValidDateTime.setMonth(maxValidDateTime.getMonth() + this.#signingMaxMonth);
+
+		return date.getTime() < maxValidDateTime.getTime();
+	}
+
+	setValidClass(): void
+	{
+		Dom.removeClass(this.#documentDateField, '--invalid');
+	}
+
+	setInvalidClass(): void
+	{
+		Dom.addClass(this.#documentDateField, '--invalid');
+	}
+
+	async saveSelectedDateForUids(): Promise<void>
+	{
+		const timestamp = Timezone.UserTime.toUTCTimestamp(this.#selectedDate);
+
+		try
+		{
+			await Promise.all(this.#documentUids.map((uid) => this.#api.modifyDateSignUntil(uid, timestamp)));
+			this.setValidClass();
+		}
+		catch (error)
+		{
+			this.setInvalidClass();
+			throw error;
+		}
+	}
+
+	setDocumentUids(uids: Array<string>): void
+	{
+		this.#documentUids = uids;
 	}
 }

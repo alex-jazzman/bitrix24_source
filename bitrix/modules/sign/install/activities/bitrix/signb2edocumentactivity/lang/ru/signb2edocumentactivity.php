@@ -1,6 +1,7 @@
 <?php
 $MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_TEMPLATE_ID"] = "Добавьте готовый шаблон документа или создайте новый";
 $MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_REPRESENTATIVE"] = "Кто будет подписывать от лица компании";
+$MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_RESPONSIBLE"] = "Кто будет ответственным";
 $MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_REVIEWER"] = "Кто будет согласовывать";
 $MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_EDITOR"] = "Кто будет заполнять";
 $MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_EMPLOYEE"] = "Сотрудники, которые будут подписывать документ";
@@ -8,6 +9,8 @@ $MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_EMPLOYEE"] = "Сотрудники, к�
 $MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_ERROR_EMPTY_TEMPLATE_ID"] = "Не выбран шаблон документа";
 $MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_ERROR_INVALID_TEMPLATE_TYPE"] = "Неверный тип шаблона документа";
 $MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_ERROR_EMPLOYEE_NOT_SET"] = "Выберите сотрудников, которые будут подписывать документ";
+$MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_ERROR_RESPONSIBLE_NOT_SET"] = "Выберите сотрудника, который будет ответственным за документ";
+$MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_ERROR_RESPONSIBLE_FOR_SMART_DOCUMENT_NOT_SET"] = "Не удалось назначить ответственного за документ сотрудника";
 $MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_ERROR_UNAVAILABLE"] = "Робот недоступен";
 $MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_ERROR_INVALID_SMART_DOCUMENT_ENTITY_TYPE"] = "Не удалось определить тип исходного документа";
 $MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_ERROR_INVALID_SMART_DOCUMENT_ENTITY_ID"] = "Не удалось определить ID исходного документа";

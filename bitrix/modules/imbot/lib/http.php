@@ -72,14 +72,11 @@ class Http
 		}
 		else
 		{
-			if (in_array($region, ['ru', 'by', 'kz', 'uz'], true))
+			$serviceEndpoint = match ($region)
 			{
-				$serviceEndpoint = self::SERVICE_MAP['ru'];
-			}
-			else
-			{
-				$serviceEndpoint = self::SERVICE_MAP['eu'];
-			}
+				'ru','by','kz','am','az','ge','kg','uz' => self::SERVICE_MAP['ru'],
+				default => self::SERVICE_MAP['eu'],
+			};
 		}
 
 		return $serviceEndpoint;

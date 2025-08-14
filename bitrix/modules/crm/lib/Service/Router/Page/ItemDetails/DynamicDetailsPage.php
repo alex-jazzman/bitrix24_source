@@ -37,7 +37,7 @@ class DynamicDetailsPage extends AbstractPage
 		$this->entityId = is_numeric($ENTITY_ID) ? (int)$ENTITY_ID : static::DEFAULT_ENTITY_ID;
 	}
 
-	protected function component(): Contract\Component
+	public function component(): Contract\Component
 	{
 		return new Component(
 			name: $this->getRenderComponentName(),

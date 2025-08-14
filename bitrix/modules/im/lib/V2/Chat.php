@@ -34,6 +34,7 @@ use Bitrix\Im\V2\Rest\PopupDataAggregatable;
 use Bitrix\Im\V2\Rest\RestEntity;
 use Bitrix\Main;
 use Bitrix\Main\Application;
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Engine\Response\Converter;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Data\DataManager;
@@ -88,7 +89,9 @@ abstract class Chat implements RegistryEntry, ActiveRecord, RestEntity, PopupDat
 		IM_TYPE_OPEN = 'O',
 		IM_TYPE_COPILOT = 'A',
 		IM_TYPE_COLLAB = 'B',
-		IM_TYPE_EXTERNAL = 'X'
+		IM_TYPE_EXTERNAL = 'X',
+		IM_TYPE_AI_ASSISTANT = 'Q',
+		IM_TYPE_AI_ASSISTANT_ENTITY = 'E'
 	;
 
 	public const IM_TYPES = [
@@ -103,6 +106,8 @@ abstract class Chat implements RegistryEntry, ActiveRecord, RestEntity, PopupDat
 		self::IM_TYPE_COPILOT,
 		self::IM_TYPE_COLLAB,
 		self::IM_TYPE_EXTERNAL,
+		self::IM_TYPE_AI_ASSISTANT,
+		self::IM_TYPE_AI_ASSISTANT_ENTITY,
 	];
 
 	public const IM_TYPES_TRANSLATE = [
@@ -181,6 +186,7 @@ abstract class Chat implements RegistryEntry, ActiveRecord, RestEntity, PopupDat
 
 	private const CHUNK_SIZE = 1000;
 	protected const EXTRANET_CAN_SEE_HISTORY = true;
+	protected const MAX_USERS_TO_DISABLE_DELETE_MESSAGE = 50;
 
 	/**
 	 * @var static[]
@@ -250,6 +256,7 @@ abstract class Chat implements RegistryEntry, ActiveRecord, RestEntity, PopupDat
 	protected ?int $messageCount = null;
 
 	protected ?int $userCount = null;
+	protected ?int $userCounter = null;
 
 	protected ?int $prevMessageId = null;
 
@@ -488,6 +495,21 @@ abstract class Chat implements RegistryEntry, ActiveRecord, RestEntity, PopupDat
 
 		return $this->markedId;
 	}
+
+	public function setMarkedId(?int $markedId): self
+	{
+		$this->markedId = $markedId;
+		return $this;
+	}
+
+	public function markFilledNonCachedData(bool $isFilledNonCachedData): self
+	{
+		$this->isFilledNonCachedData = $isFilledNonCachedData;
+
+		return $this;
+	}
+
+
 
 	public function getRole(): string
 	{
@@ -2228,7 +2250,7 @@ abstract class Chat implements RegistryEntry, ActiveRecord, RestEntity, PopupDat
 
 	public function getStorageId(): int
 	{
-		return (int)\Bitrix\Main\Config\Option::get('im', 'disk_storage_id', 0);
+		return (int)Option::get('im', 'disk_storage_id', 0);
 	}
 
 	public function getDiskFolder(): ?Folder
@@ -2329,6 +2351,22 @@ abstract class Chat implements RegistryEntry, ActiveRecord, RestEntity, PopupDat
 		$this->fillNonCachedData();
 
 		return $this->userCount;
+	}
+
+	public function setUserCounter(?int $userCounter): self
+	{
+		$this->userCounter = $userCounter;
+		return $this;
+	}
+
+	public function getUserCounter(): ?int
+	{
+		if ($this->userCounter === null)
+		{
+			$this->userCounter = $this->getReadService()->getCounterService()->getByChat($this->getChatId());
+		}
+
+		return $this->userCounter;
 	}
 
 	// prev Message Id
@@ -2822,6 +2860,7 @@ abstract class Chat implements RegistryEntry, ActiveRecord, RestEntity, PopupDat
 		{
 			$this->sendMessageUsersAdd($changes->getNewMembers(), $config);
 		}
+		$this->disableUserDeleteMessage($config->skipRecent);
 		$this->sendEventUsersAdd($changes->getNewRelations());
 
 		return $this;
@@ -2914,14 +2953,15 @@ abstract class Chat implements RegistryEntry, ActiveRecord, RestEntity, PopupDat
 		}
 
 		\CIMChat::AddMessage([
-			"TO_CHAT_ID" => $this->getId(),
-			"MESSAGE" => $messageText,
-			"FROM_USER_ID" => $currentUserId,
-			"SYSTEM" => 'Y',
-			"RECENT_ADD" => $config->skipRecent ? 'N' : 'Y',
-			"PARAMS" => $params,
-			"PUSH" => 'N',
-			"SKIP_USER_CHECK" => 'Y',
+			'TO_CHAT_ID' => $this->getId(),
+			'MESSAGE' => $messageText,
+			'FROM_USER_ID' => $currentUserId,
+			'SYSTEM' => 'Y',
+			'RECENT_ADD' => $config->skipRecent ? 'N' : 'Y',
+			'PARAMS' => $params,
+			'PUSH' => 'N',
+			'SKIP_USER_CHECK' => 'Y',
+			'SKIP_COUNTER_INCREMENTS' => 'Y',
 		]);
 	}
 
@@ -3158,6 +3198,7 @@ abstract class Chat implements RegistryEntry, ActiveRecord, RestEntity, PopupDat
 		$this->updateStateAfterUserDelete($userId, $config)->save();
 		$this->sendPushUserDelete($userId, $relations);
 		$this->sendEventUserDelete($userId);
+		$this->disableUserDeleteMessage($config->skipRecent);
 		$this->sendMessageUserDelete($userId, $config);
 		$this->sendNotificationUserDelete($userId, $config);
 
@@ -3189,11 +3230,12 @@ abstract class Chat implements RegistryEntry, ActiveRecord, RestEntity, PopupDat
 
 	protected function sendMessageUserDelete(int $userId, DeleteUserConfig $config): void
 	{
-		if (!$config->withMessage || !$this->needToSendMessageUserDelete())
-		{
-			return;
-		}
-		if ($this->getEntityType() === 'ANNOUNCEMENT')
+		if (
+			!$config->withMessage
+			|| !$this->needToSendMessageUserDelete()
+			|| $this->getChatParams()->get(Params::USER_DELETE_MESSAGE_DISABLED)?->getValue() ?? false
+			|| $this->getEntityType() === 'ANNOUNCEMENT'
+		)
 		{
 			return;
 		}
@@ -3218,6 +3260,7 @@ abstract class Chat implements RegistryEntry, ActiveRecord, RestEntity, PopupDat
 			'PARAMS' => ['CODE' => 'CHAT_LEAVE', 'NOTIFY' => 'N'],
 			'PUSH' => 'N',
 			'SKIP_USER_CHECK' => 'Y',
+			'SKIP_COUNTER_INCREMENTS' => 'Y',
 		];
 	}
 
@@ -3608,6 +3651,7 @@ abstract class Chat implements RegistryEntry, ActiveRecord, RestEntity, PopupDat
 			'textFieldEnabled' => $this->getTextFieldEnabled()->get(),
 			'backgroundId' => $this->getBackground()->get(),
 		];
+
 		if ($option['CHAT_WITH_DATE_MESSAGE'] ?? false)
 		{
 			$commonFields['dateMessage'] = $this->dateMessage;
@@ -3618,8 +3662,8 @@ abstract class Chat implements RegistryEntry, ActiveRecord, RestEntity, PopupDat
 		}
 
 		$additionalFields = [
-			'counter' => $this->getReadService()->getCounterService()->getByChat($this->getChatId()),
-			'dateCreate' => $this->getDateCreate() === null ? null : $this->getDateCreate()->format('c'),
+			'counter' => $this->getUserCounter(),
+			'dateCreate' => $this->getDateCreate()?->format('c'),
 			'lastMessageId' => $this->getLastMessageId(),
 			'lastMessageViews' => Im\Common::toJson($this->getLastMessageViews()),
 			'lastId' => $this->getLastId(),
@@ -3676,9 +3720,19 @@ abstract class Chat implements RegistryEntry, ActiveRecord, RestEntity, PopupDat
 		return [];
 	}
 
-	public function getManagerList(): array
+	public function getManagerList(bool $fullList = true): array
 	{
-		return array_values($this->getRelationFacade()?->getManagerOnly()->getUserIds() ?? []);
+		if ($fullList)
+		{
+			return array_values($this->getRelationFacade()?->getManagerOnly()->getUserIds() ?? []);
+		}
+
+		if ($this->getSelfRelation()?->getManager() ?? false)
+		{
+			return [$this->getContext()->getUserId()];
+		}
+
+		return [];
 	}
 
 	protected function getMuteList(bool $fullList = false): array
@@ -3730,7 +3784,7 @@ abstract class Chat implements RegistryEntry, ActiveRecord, RestEntity, PopupDat
 		);
 	}
 
-	protected function getUnreadId(): int
+	public function getUnreadId(): int
 	{
 		$selfRelation = $this->getSelfRelation();
 		if ($selfRelation === null)
@@ -3741,7 +3795,7 @@ abstract class Chat implements RegistryEntry, ActiveRecord, RestEntity, PopupDat
 		return $selfRelation->getUnreadId() ?? 0;
 	}
 
-	protected function getLastId(): int
+	public function getLastId(): int
 	{
 		$selfRelation = $this->getSelfRelation();
 		if ($selfRelation === null)
@@ -3889,6 +3943,43 @@ abstract class Chat implements RegistryEntry, ActiveRecord, RestEntity, PopupDat
 			],
 			"PUSH" => 'N',
 			"SKIP_USER_CHECK" => "Y",
+		]);
+	}
+
+	protected function disableUserDeleteMessage(bool $skipRecent = false): void
+	{
+		if (
+			$this->canDisableUserDeleteMessage()
+			&& $this->needToSendMessageUserDelete()
+			&& $this->getChatParams()->get(Params::USER_DELETE_MESSAGE_DISABLED)?->getValue() !== true
+			&& $this->getRelationFacade()?->getUserCount() > self::MAX_USERS_TO_DISABLE_DELETE_MESSAGE
+		)
+		{
+			$this->getChatParams()->addParamByName(Params::USER_DELETE_MESSAGE_DISABLED, true);
+			$this->sendMessageOnUserDeleteMessageDisabled($skipRecent);
+		}
+	}
+
+	protected function canDisableUserDeleteMessage(): bool
+	{
+		return Option::get('im', 'chat_user_deletion_message_disabled', 'N') === 'Y';
+	}
+
+	protected function sendMessageOnUserDeleteMessageDisabled(bool $skipRecent): void
+	{
+		$userCount = self::MAX_USERS_TO_DISABLE_DELETE_MESSAGE;
+
+		\CIMChat::AddMessage([
+			'TO_CHAT_ID' => $this->getId(),
+			'MESSAGE' => Loc::getMessage('IM_CHAT_OVERFLOW_DELETE_MESSAGE', ['#USER_COUNT#' => $userCount]),
+			'SYSTEM' => 'Y',
+			'RECENT_ADD' => $skipRecent ? 'N' : 'Y',
+			'PUSH' => 'N',
+			'SKIP_USER_CHECK' => 'Y',
+			'SKIP_COUNTER_INCREMENTS' => 'Y',
+			'PARAMS' => [
+				Im\V2\Message\Params::NOTIFY => 'N',
+			],
 		]);
 	}
 

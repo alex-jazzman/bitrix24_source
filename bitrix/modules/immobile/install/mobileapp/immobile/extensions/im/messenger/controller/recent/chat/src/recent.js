@@ -79,7 +79,11 @@ jn.define('im/messenger/controller/recent/chat/recent', (require, exports, modul
 			{
 				if (recentItem.params.canJoin)
 				{
-					this.joinCall(recentItem.params.call.id, recentItem.params.call.uuid, recentItem.params.call.associatedEntity);
+					this.joinCall(
+						recentItem.params.call.id,
+						recentItem.params.call.uuid,
+						recentItem.params.call.associatedEntity,
+					);
 				}
 				else
 				{
@@ -125,6 +129,10 @@ jn.define('im/messenger/controller/recent/chat/recent', (require, exports, modul
 			CallManager.getInstance().joinCall(callId, callUuid, associatedEntity);
 		}
 
+		/**
+		 * @param {RecentCallData} call
+		 * @param {RecentCallStatus} callStatus
+		 */
 		addCall(call, callStatus)
 		{
 			let status = callStatus;

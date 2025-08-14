@@ -29,9 +29,9 @@ abstract class KeyValueEngine implements CacheEngineInterface, CacheEngineStatIn
 	protected static int $clusterGroup = 0;
 
 	/** Cache stat */
-	private int $written = 0;
-	private int $read = 0;
-	private string $path = '';
+	protected int $written = 0;
+	protected int $read = 0;
+	protected string $path = '';
 
 	abstract public function getConnectionName(): string;
 	abstract public static function getConnectionClass();
@@ -302,6 +302,11 @@ abstract class KeyValueEngine implements CacheEngineInterface, CacheEngineStatIn
 		return $this->sid . '|BDV:' . sha1($baseDir);
 	}
 
+	protected function getKeyPrefix($baseDirVersion, $initDirVersion): string
+	{
+		return $this->sid . '|' . sha1($baseDirVersion . '|' . $initDirVersion);
+	}
+
 	/**
 	 * Return InitDirVersion
 	 *
@@ -381,8 +386,7 @@ abstract class KeyValueEngine implements CacheEngineInterface, CacheEngineStatIn
 			}
 		}
 
-		$dir = sha1($baseDirVersion . '|' . $initDirVersion);
-		$key = $this->sid . '|' . $dir . '|' . $filename;
+		$key = $this->getKeyPrefix($baseDirVersion, $initDirVersion) . '|' . $filename;
 
 		if ($this->useLock)
 		{
@@ -432,8 +436,7 @@ abstract class KeyValueEngine implements CacheEngineInterface, CacheEngineStatIn
 		$baseDirVersion = $this->getBaseDirVersion($baseDir);
 		$initDirVersion = $this->getInitDirVersion($baseDir, $initDir);
 
-		$dir = sha1($baseDirVersion . '|' . $initDirVersion);
-		$keyPrefix = $this->sid . '|' . $dir;
+		$keyPrefix = $this->getKeyPrefix($baseDirVersion, $initDirVersion);
 		$key = $keyPrefix . '|' . $filename;
 
 		$exp = $this->ttlMultiplier * (int) $ttl;
@@ -493,8 +496,7 @@ abstract class KeyValueEngine implements CacheEngineInterface, CacheEngineStatIn
 			return;
 		}
 
-		$dir = sha1($baseDirVersion . '|' . $initDirVersion);
-		$keyPrefix = $this->sid . '|' . $dir;
+		$keyPrefix = $this->getKeyPrefix($baseDirVersion, $initDirVersion);
 		$initListKey = $keyPrefix . '|' . self::BX_INIT_DIR_LIST;
 
 		if ($filename <> '')

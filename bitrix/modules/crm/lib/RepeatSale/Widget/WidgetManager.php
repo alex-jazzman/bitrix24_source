@@ -3,12 +3,15 @@
 namespace Bitrix\Crm\RepeatSale\Widget;
 
 use Bitrix\Bitrix24\LicenseScanner\Manager;
+use Bitrix\Crm\Feature;
+use Bitrix\Crm\RepeatSale\Statistics\PeriodType;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Tour\Config;
 use Bitrix\Crm\Traits\Singleton;
 use Bitrix\Main\Loader;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
+use CUserOptions;
 
 final class WidgetManager
 {
@@ -25,9 +28,11 @@ final class WidgetManager
 		$type = $widgetConfig['type'] ?? null;
 		$executeImmediately = $widgetConfig['executeImmediately'] ?? false;
 		$showConfetti = $widgetConfig['showConfetti'] ?? false;
+		$periodTypeId = $widgetConfig['periodTypeId'] ?? PeriodType::Day30->value;
 
 		$params = Json::encode([
 			'showConfetti' => $showConfetti,
+			'periodTypeId' => $periodTypeId,
 		]);
 
 		if ($type && $executeImmediately):
@@ -73,7 +78,7 @@ final class WidgetManager
 		$repeatSalePermission = Container::getInstance()->getUserPermissions()->repeatSale();
 		if ($isEnablePending)
 		{
-			if (!$repeatSalePermission->canEdit())
+			if (!$repeatSalePermission->canEdit() && !Feature::enabled(Feature\RepeatSaleForceMode::class))
 			{
 				return null;
 			}
@@ -81,7 +86,7 @@ final class WidgetManager
 			$isNeedShowStartBanner = (new StartBanner())->isNeedShowImmediately();
 
 			return [
-				'type' => 'start',
+				'type' => Feature::enabled(Feature\RepeatSaleForceMode::class) ? 'forceStart' : 'start',
 				'executeImmediately' => $isNeedShowStartBanner && !Config::isToursDeactivated('crm.tour'),
 			];
 		}
@@ -90,10 +95,23 @@ final class WidgetManager
 		{
 			$isNeedShowConfetti = (new Confetti())->isNeedShowConfetti();
 
+			$periodTypeId = null;
+			$options = CUserOptions::GetOption('crm', 'repeat-sale');
+			if ($options)
+			{
+				$periodTypeId = $options['statistics-period-type-id'] ?? null;
+			}
+
+			if ($periodTypeId === null)
+			{
+				$periodTypeId = PeriodType::Day30->value;
+			}
+
 			return [
 				'type' => 'statistics',
 				'executeImmediately' => $isNeedShowConfetti && !Config::isToursDeactivated('crm.tour'),
 				'showConfetti' => $isNeedShowConfetti,
+				'periodTypeId' => $periodTypeId,
 			];
 		}
 

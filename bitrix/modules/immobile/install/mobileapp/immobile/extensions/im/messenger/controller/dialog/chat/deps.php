@@ -3,7 +3,6 @@
 return [
 	'extensions' => [
 		'type',
-		'loc',
 		'tokens',
 		'haptics',
 		'apptheme',
@@ -22,6 +21,7 @@ return [
 		'collab/service/access',
 		'communication/phone-menu',
 		'im:lib/theme',
+		'im:messenger/loc',
 		'im:messenger/assets/common',
 		'im:messenger/lib/di/service-locator',
 		'im:messenger/lib/visibility-manager',
@@ -59,7 +59,6 @@ return [
 		'im:messenger/provider/services/anchor',
 		'im:messenger/view/dialog',
 		'im:messenger/lib/ui/alert',
-		'im:messenger/lib/feature',
 		'im:messenger/lib/open-dialog-check',
 		'im:messenger/controller/dialog/lib/attach-manager',
 		'im:messenger/controller/dialog/lib/keyboard-manager',

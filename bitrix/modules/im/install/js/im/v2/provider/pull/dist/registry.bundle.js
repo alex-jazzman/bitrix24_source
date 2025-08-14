@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
-(function (exports,im_v2_lib_uuid,im_v2_provider_service_message,main_core_events,im_v2_lib_layout,im_v2_lib_copilot,im_v2_lib_inputAction,im_v2_lib_roleManager,im_v2_lib_analytics,im_v2_lib_notifier,ui_vue3_vuex,im_v2_lib_counter,im_public,im_v2_lib_slider,im_v2_lib_utils,im_v2_model,im_v2_lib_channel,im_v2_lib_user,im_v2_lib_desktopApi,im_v2_lib_messageNotifier,im_v2_lib_desktop,im_v2_lib_call,im_v2_lib_localStorage,im_v2_lib_soundNotification,main_core,im_v2_lib_logger,im_v2_provider_pull,im_v2_const,im_v2_lib_promo,im_v2_application_core) {
+(function (exports,im_v2_lib_uuid,im_v2_provider_service_message,main_core_events,im_v2_lib_copilot,im_v2_lib_inputAction,im_v2_lib_roleManager,im_v2_lib_analytics,im_v2_lib_notifier,ui_vue3_vuex,im_v2_lib_counter,main_sidepanel,im_public,im_v2_lib_slider,im_v2_lib_layout,im_v2_lib_utils,im_v2_model,im_v2_lib_channel,im_v2_lib_user,im_v2_lib_desktopApi,im_v2_lib_messageNotifier,im_v2_lib_desktop,im_v2_lib_call,im_v2_lib_localStorage,im_v2_lib_soundNotification,main_core,im_v2_lib_logger,im_v2_provider_pull,im_v2_const,im_v2_lib_promo,im_v2_application_core) {
 	'use strict';
 
 	var _store = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
@@ -127,7 +127,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	var _updateMessageViewsRegistry = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateMessageViewsRegistry");
 	var _sendScrollEvent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendScrollEvent");
 	var _getDialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDialog");
-	var _setCopilotRole = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setCopilotRole");
+	var _setCopilotData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setCopilotData");
 	var _setMessagesAutoDeleteConfig = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setMessagesAutoDeleteConfig");
 	var _prepareDeleteMessageParams = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareDeleteMessageParams");
 	class MessagePullHandler {
@@ -138,8 +138,8 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    Object.defineProperty(this, _setMessagesAutoDeleteConfig, {
 	      value: _setMessagesAutoDeleteConfig2
 	    });
-	    Object.defineProperty(this, _setCopilotRole, {
-	      value: _setCopilotRole2
+	    Object.defineProperty(this, _setCopilotData, {
+	      value: _setCopilotData2
 	    });
 	    Object.defineProperty(this, _getDialog, {
 	      value: _getDialog2
@@ -205,7 +205,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _setFiles)[_setFiles](params);
 	    babelHelpers.classPrivateFieldLooseBase(this, _setAdditionalEntities)[_setAdditionalEntities](params);
 	    babelHelpers.classPrivateFieldLooseBase(this, _setCommentInfo)[_setCommentInfo](params);
-	    babelHelpers.classPrivateFieldLooseBase(this, _setCopilotRole)[_setCopilotRole](params);
+	    babelHelpers.classPrivateFieldLooseBase(this, _setCopilotData)[_setCopilotData](params);
 	    babelHelpers.classPrivateFieldLooseBase(this, _setMessagesAutoDeleteConfig)[_setMessagesAutoDeleteConfig](params);
 	    const messageWithTemplateId = babelHelpers.classPrivateFieldLooseBase(this, _store$2)[_store$2].getters['messages/isInChatCollection']({
 	      messageId: params.message.templateId
@@ -251,6 +251,21 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	      dialogId: params.dialogId
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _updateDialog)[_updateDialog](params);
+	  }
+	  handleChangeEngine(params) {
+	    im_v2_lib_logger.Logger.warn('MessagePullHandler: handleChangeEngine', params);
+	    const {
+	      chatId,
+	      engineCode
+	    } = params;
+	    const dialog = babelHelpers.classPrivateFieldLooseBase(this, _store$2)[_store$2].getters['chats/getByChatId'](chatId);
+	    if (!dialog) {
+	      return;
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _store$2)[_store$2].dispatch('copilot/chats/updateModel', {
+	      dialogId: dialog.dialogId,
+	      aiModel: engineCode
+	    });
 	  }
 	  handleMessageUpdate(params) {
 	    im_v2_lib_logger.Logger.warn('MessagePullHandler: handleMessageUpdate', params);
@@ -550,7 +565,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	function _getDialog2(dialogId, temporary = false) {
 	  return babelHelpers.classPrivateFieldLooseBase(this, _store$2)[_store$2].getters['chats/get'](dialogId, temporary);
 	}
-	function _setCopilotRole2(params) {
+	function _setCopilotData2(params) {
 	  if (!params.copilot) {
 	    return;
 	  }
@@ -951,11 +966,16 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  }
 	}
 
+	var _isChatFocused = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isChatFocused");
 	class ApplicationPullHandler {
+	  constructor() {
+	    Object.defineProperty(this, _isChatFocused, {
+	      value: _isChatFocused2
+	    });
+	  }
 	  handleApplicationOpenChat(params) {
 	    im_v2_lib_logger.Logger.warn('ApplicationPullHandler: handleOpenChat', params);
-	    const hasFocus = document.hasFocus();
-	    if (!hasFocus) {
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _isChatFocused)[_isChatFocused]()) {
 	      return;
 	    }
 	    if (im_v2_lib_desktop.DesktopManager.isDesktop()) {
@@ -965,11 +985,24 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	      void im_public.Messenger.openChat(params.dialogId);
 	      return;
 	    }
-	    if (!im_v2_lib_slider.MessengerSlider.getInstance().isFocused()) {
-	      return;
-	    }
 	    void im_public.Messenger.openChat(params.dialogId);
 	  }
+	}
+	function _isChatFocused2() {
+	  if (!document.hasFocus()) {
+	    return false;
+	  }
+	  const sidePanelManager = main_sidepanel.SidePanel.Instance;
+	  const hasOpenSliders = sidePanelManager.getOpenSlidersCount() > 0;
+	  const isEmbeddedMode = im_v2_lib_layout.LayoutManager.getInstance().isEmbeddedMode();
+	  if (isEmbeddedMode && hasOpenSliders) {
+	    return false;
+	  }
+	  const isChatSliderFocused = im_v2_lib_slider.MessengerSlider.getInstance().isFocused();
+	  if (!isEmbeddedMode && !isChatSliderFocused) {
+	    return false;
+	  }
+	  return true;
 	}
 
 	class CollabPullHandler {
@@ -1072,6 +1105,9 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  }
 	  handleMessageChat(params) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _messageHandler)[_messageHandler].handleMessageAdd(params);
+	  }
+	  handleChangeEngine(params) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _messageHandler)[_messageHandler].handleChangeEngine(params);
 	  }
 	  handleMessageUpdate(params) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _messageHandler)[_messageHandler].handleMessageUpdate(params);
@@ -2358,5 +2394,5 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	exports.AnchorPullHandler = AnchorPullHandler;
 	exports.NewMessageManager = NewMessageManager;
 
-}((this.BX.Messenger.v2.Provider.Pull = this.BX.Messenger.v2.Provider.Pull || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Vue3.Vuex,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Model,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Provider.Pull,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Application));
+}((this.BX.Messenger.v2.Provider.Pull = this.BX.Messenger.v2.Provider.Pull || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Vue3.Vuex,BX.Messenger.v2.Lib,BX.SidePanel,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Model,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Provider.Pull,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Application));
 //# sourceMappingURL=registry.bundle.js.map

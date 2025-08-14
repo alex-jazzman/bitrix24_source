@@ -39,7 +39,7 @@ enum TemplateRegions: string
 			case Templates::Enterprise:
 				$portalZone = \CBitrix24::getPortalZone();
 				$lang = Application::getInstance()->getContext()->getLanguage();
-				if (in_array($portalZone, ['ru', 'by', 'kz']))
+				if (in_array($portalZone, ['ru', 'by', 'kz', 'uz']))
 				{
 					$regionCode = self::EnterpriseRu;
 				}

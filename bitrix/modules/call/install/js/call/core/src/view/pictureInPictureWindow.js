@@ -1,12 +1,15 @@
 import { Dom } from 'main.core';
-import '../css/picture-in-picture-window.css'
-import { Hardware } from '../hardware';
+import { BaseEvent, EventEmitter } from 'main.core.events';
+import { Popup } from 'main.popup';
+import { Utils } from 'im.v2.lib.utils';
+
 import * as Buttons from './buttons';
-import {BaseEvent, EventEmitter} from 'main.core.events';
 import { CallUser } from './call-user';
 import { FloorRequest } from './floor-request';
-import { Utils } from 'im.v2.lib.utils';
-import { Popup } from 'main.popup';
+
+import '../css/picture-in-picture-window.css'
+import { UnsupportedBrowserFeatures } from '../engine/unsupported_features_in_browsers';
+import { Hardware } from '../hardware';
 
 export class PictureInPictureWindow {
 	constructor(config)
@@ -812,34 +815,50 @@ export class PictureInPictureWindow {
 		{
 			this.render();
 
-			this.pictureWindow = await window.documentPictureInPicture.requestWindow({
-				disallowReturnToOpener: false,
-				width: 370,
-				height: 215,
-				preferInitialWindowPlacement: false,
-			});
+			try
+			{
+				this.pictureWindow = await window.documentPictureInPicture.requestWindow({
+					disallowReturnToOpener: false,
+					width: 370,
+					height: 215,
+					preferInitialWindowPlacement: false,
+				});
 
-			this.toggleEvents(true);
+				this.toggleEvents(true);
 
-			[...document.styleSheets].forEach((styleSheet) => {
-				try {
-					const cssRules = [...styleSheet.cssRules].map((rule) => rule.cssText).join('');
-					const style = document.createElement('style');
+				[...document.styleSheets].forEach((styleSheet) => {
+					try {
+						const cssRules = [...styleSheet.cssRules].map((rule) => rule.cssText).join('');
+						const style = document.createElement('style');
 
-					style.textContent = cssRules;
-					this.pictureWindow.document.head.appendChild(style);
-				} catch (e) {
-					const link = document.createElement('link');
+						style.textContent = cssRules;
+						this.pictureWindow.document.head.appendChild(style);
+					} catch (e) {
+						const link = document.createElement('link');
 
-					link.rel = 'stylesheet';
-					link.type = styleSheet.type;
-					link.media = styleSheet.media;
-					link.href = styleSheet.href;
-					this.pictureWindow.document.head.appendChild(link);
+						link.rel = 'stylesheet';
+						link.type = styleSheet.type;
+						link.media = styleSheet.media;
+						link.href = styleSheet.href;
+						this.pictureWindow.document.head.appendChild(link);
+					}
+				});
+
+				this.pictureWindow.document.body.append(this.template);
+			}
+			catch (error)
+			{
+				if (error.name === "NotAllowedError")
+				{
+					console.warn(
+						'It seems you closed the Picture-in-Picture window while selecting a screen to share. ' +
+						'We cannot reopen it without your permission. ' +
+						'If you need PiP again, please reopen it manually.'
+					);
 				}
-			});
+				this.onClose();
+			}
 
-			this.pictureWindow.document.body.append(this.template);
 		} else {
 			this.onClose();
 		}
@@ -872,5 +891,10 @@ export class PictureInPictureWindow {
 		{
 			this.pictureWindow.close();
 		}
+	}
+
+	static get isAvailable(): boolean
+	{
+		return UnsupportedBrowserFeatures.isPiPAvailable
 	}
 }

@@ -24,6 +24,7 @@ use Bitrix\Sign\Type;
 use Bitrix\Sign\Type\Access\AccessibleItemType;
 use Bitrix\Sign\Type\DocumentScenario;
 use Bitrix\Sign\Type\Document\InitiatedByType;
+use Bitrix\Sign\Type\Template\EntityType;
 
 class Document extends Controller
 {
@@ -49,6 +50,8 @@ class Document extends Controller
 		?string $scenarioType = null,
 		bool $asTemplate = false,
 		int $chatId = 0,
+		int $templateFolderId = 0,
+		?string $initiatedByType = null,
 	): array
 	{
 		$scenarioType ??= Type\DocumentScenario::SCENARIO_TYPE_B2B;
@@ -81,12 +84,19 @@ class Document extends Controller
 		}
 
 		$createdById = (int)CurrentUser::get()->getId();
+		if($createdById < 1)
+		{
+			$this->addError(new Error('User not found'));
+
+			return [];
+		}
 
 		$result = $this->documentService->register(
 			blankId: $blankId,
+			createdById: $createdById,
 			entityType: Type\Document\EntityType::getByScenarioType($scenarioType),
 			asTemplate: $asTemplate,
-			createdById: $createdById,
+			initiatedByType: InitiatedByType::tryFrom($initiatedByType ?? '') ?? InitiatedByType::COMPANY,
 			chatId: $chatId,
 		);
 		$resultData = $result->getData();
@@ -104,6 +114,13 @@ class Document extends Controller
 		{
 			$this->addErrorByMessage('Template not found');
 
+			return [];
+		}
+
+		$result = $this->templateService->updateParent($templateFolderId, [$template?->id], EntityType::TEMPLATE);
+		if (!$result->isSuccess())
+		{
+			$this->addError(new Error('Update parent id error'));
 			return [];
 		}
 

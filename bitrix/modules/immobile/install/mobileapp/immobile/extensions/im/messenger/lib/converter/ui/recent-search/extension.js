@@ -3,7 +3,6 @@
  */
 jn.define('im/messenger/lib/converter/ui/recent-search', (require, exports, module) => {
 	const AppTheme = require('apptheme');
-	const { Feature } = require('im/messenger/lib/feature');
 	const { UserHelper } = require('im/messenger/lib/helper');
 	const { ChatTitle, ChatAvatar } = require('im/messenger/lib/element');
 
@@ -162,7 +161,7 @@ jn.define('im/messenger/lib/converter/ui/recent-search', (require, exports, modu
 				},
 			};
 			// for native support styles (isSuperEllipseIcon key will be deleted)
-			if (item.isSuperEllipseIcon && Feature.isAvatarBorderStylesSupported)
+			if (item.isSuperEllipseIcon)
 			{
 				item.styles.image = { image: { borderRadius: 15 } }; // borderRadius - is percent, no int
 			}

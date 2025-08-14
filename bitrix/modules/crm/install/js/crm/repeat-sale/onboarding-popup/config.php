@@ -15,9 +15,11 @@ return [
 	'css' => 'dist/onboarding-popup.bundle.css',
 	'js' => 'dist/onboarding-popup.bundle.js',
 	'rel' => [
+		'crm.integration.analytics',
 		'crm.integration.ui.banner-dispatcher',
 		'main.core',
 		'main.popup',
+		'ui.analytics',
 		'ui.buttons',
 		'ui.icon-set.api.core',
 		'ui.icon-set.actions',

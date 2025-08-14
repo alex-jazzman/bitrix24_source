@@ -2,7 +2,7 @@
  * @module im/messenger/controller/chat-composer/update/channel
  */
 jn.define('im/messenger/controller/chat-composer/update/channel', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { DialogType, WidgetTitleParamsType } = require('im/messenger/const');
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const logger = LoggerManager.getInstance().getLogger('chat-composer--channel');

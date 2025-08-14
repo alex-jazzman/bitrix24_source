@@ -1,3 +1,4 @@
+import { EventEmitter } from 'main.core.events';
 import type { BitrixVueComponentProps } from 'ui.vue3';
 // eslint-disable-next-line no-unused-vars
 import { DashboardType, type Dashboard } from '../type';
@@ -35,6 +36,12 @@ export const DashboardItem: BitrixVueComponentProps = {
 	methods: {
 		onRemoveClick(): void
 		{
+			EventEmitter.emit(
+				'BIConnector.GroupPopup.DashboardList:onDashboardRemove',
+				{
+					isDashboardListEdited: true,
+				},
+			);
 			this.$emit('onDashboardRemove', { dashboardId: this.dashboard.id });
 			this.emitDashboardChange();
 		},

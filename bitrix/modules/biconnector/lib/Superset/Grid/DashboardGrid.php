@@ -19,6 +19,8 @@ use Bitrix\Main\Grid\Row\Rows;
  */
 final class DashboardGrid extends Grid
 {
+	public const SUPERSET_DASHBOARD_GRID_ID = 'biconnector_superset_dashboard_grid';
+
 	public function __construct(\Bitrix\Main\Grid\Settings $settings)
 	{
 		parent::__construct($settings);
@@ -79,7 +81,7 @@ final class DashboardGrid extends Grid
 		$supersetController = new SupersetController(Integrator::getInstance());
 
 		$settings = new DashboardSettings([
-			'ID' => 'biconnector_superset_dashboard_grid',
+			'ID' => self::SUPERSET_DASHBOARD_GRID_ID,
 			'IS_SUPERSET_AVAILABLE' => $supersetController->isExternalServiceAvailable(),
 		]);
 

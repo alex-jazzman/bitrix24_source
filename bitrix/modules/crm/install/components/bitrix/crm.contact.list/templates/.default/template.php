@@ -687,7 +687,12 @@ $isDefaultCategory = $arResult['IS_DEFAULT_CATEGORY'] ?? false;
 
 if ($isDefaultCategory)
 {
-	print OnboardingPopup::getInstance()->build();
+	$analytics = [
+		'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_CONTACT,
+		'c_sub_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_LIST,
+	];
+
+	print OnboardingPopup::getInstance()->setAnalytics($analytics)->build();
 }
 
 $APPLICATION->IncludeComponent(

@@ -11,6 +11,7 @@ class MessagesAutoDeleteConfigs implements PopupDataItem
 	 * @var int[]
 	 */
 	protected array $chatIds = [];
+	protected bool $showDefaultValues = false;
 
 	public function __construct(array $chatIds)
 	{
@@ -27,6 +28,12 @@ class MessagesAutoDeleteConfigs implements PopupDataItem
 		return $this;
 	}
 
+	public function showDefaultValues(): self
+	{
+		$this->showDefaultValues = true;
+		return $this;
+	}
+
 	public static function getRestEntityName(): string
 	{
 		return 'messagesAutoDeleteConfigs';
@@ -35,13 +42,12 @@ class MessagesAutoDeleteConfigs implements PopupDataItem
 	public function toRestFormat(array $option = []): ?array
 	{
 		$rest = [];
-		$showDefaultValues = isset($option['WITH_DEFAULT_VALUES']) && $option['WITH_DEFAULT_VALUES'];
 
 		foreach ($this->chatIds as $chatId)
 		{
 			$chat = Chat::getInstance($chatId);
 
-			if ($showDefaultValues || $chat->getMessagesAutoDeleteDelay())
+			if ($this->showDefaultValues || $chat->getMessagesAutoDeleteDelay())
 			{
 				$rest[] = [
 					'delay' => $chat->getMessagesAutoDeleteDelay(),

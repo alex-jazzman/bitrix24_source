@@ -72,8 +72,10 @@ export const Dictionary = Object.freeze({
 	TYPE_WA_ACTIVITY_CREATE: 'wa_activity_create',
 	TYPE_WA_ACTIVITY_DELETE: 'wa_activity_delete',
 	TYPE_REPEAT_SALE_SEGMENT: 'repeat_sale',
+	TYPE_REPEAT_SALE_BANNER_NULL: 'repeat_sale_null',
 	TYPE_REPEAT_SALE_BANNER_START_EMPTY: 'repeat_sale_start_empty',
 	TYPE_REPEAT_SALE_BANNER_START: 'repeat_sale_start',
+	TYPE_REPEAT_SALE_BANNER_START_FORCE: 'repeat_sale_force_start',
 	TYPE_REPEAT_SALE_BANNER_STATISTICS: 'repeat_sale_statistics',
 	// endregion
 

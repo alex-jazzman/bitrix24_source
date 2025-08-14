@@ -6,6 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Landing\Copilot;
 use Bitrix\Landing\Manager;
+use Bitrix\Landing\Metrika;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
@@ -24,6 +25,19 @@ class SiteCopilotComponent extends LandingBaseComponent
 	 */
 	public function executeComponent(): void
 	{
+		$this->init();
+
+		// Analytic
+		$metrika = new Metrika\Metrika(
+			Metrika\Categories::SiteGeneration,
+			Metrika\Events::open,
+			Metrika\Tools::ai,
+		);
+		if ($this->request('st_section'))
+		{
+			$metrika->setSection(Metrika\Sections::tryfrom((string)$this->request('st_section')));
+		}
+
 		$isAvailable = Copilot\Manager::isAvailable();
 		$isEnabled = Copilot\Manager::isFeatureEnabled();
 		$isActive = Copilot\Manager::isActive();
@@ -44,8 +58,11 @@ class SiteCopilotComponent extends LandingBaseComponent
 				]);
 			}
 
+			$metrika->setStatus(Metrika\Statuses::ErrorTurnedOff)->send();
+
 			\localRedirect($url->getUri());
 		}
+		$metrika->send();
 
 		if (Loader::includeModule('ai'))
 		{

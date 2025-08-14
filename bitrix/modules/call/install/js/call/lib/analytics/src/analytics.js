@@ -239,7 +239,11 @@ export class Analytics
 
 	onReconnect(params)
 	{
-		const reconnectionReasonInfo = params.reconnectionReasonInfo.substring(0, 100);
+		const reconnectionReasonInfo = 
+			params.reconnectionReasonInfo?.replace(`Handling a remote offer failed: InvalidAccessError: `, '*')
+				.replace(/_/g, '')
+				.substring(0, 100);
+
 		sendData({
 			tool: AnalyticsTool.im,
 			category: AnalyticsCategory.call,

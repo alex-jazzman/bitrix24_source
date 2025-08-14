@@ -50,6 +50,7 @@ final class Send implements Contract\Operation
 
 	public function __construct(
 		private readonly Template $template,
+		private readonly int $responsibleUserId,
 		private readonly array $fields = [],
 		private readonly ?int $sendFromUserId = null,
 		private readonly ?int $representativeUserId = null,
@@ -89,6 +90,11 @@ final class Send implements Contract\Operation
 			return Result::createByErrorData(message: 'Send from user is not set');
 		}
 
+		if ($this->responsibleUserId < 1)
+		{
+			return Result::createByErrorData(message: 'Responsible user id not set');
+		}
+
 		$document = $this->documentRepository->getByTemplateId($this->template->id);
 		if ($document === null)
 		{
@@ -116,7 +122,7 @@ final class Send implements Contract\Operation
 
 		$result = (new Operation\Document\Copy(
 			document: $document,
-			createdByUserId: $this->getSendFromUserId(),
+			createdByUserId: $this->responsibleUserId,
 			bindings: $this->bindings,
 		))->launch();
 		if (!$result instanceof CreateDocumentResult)

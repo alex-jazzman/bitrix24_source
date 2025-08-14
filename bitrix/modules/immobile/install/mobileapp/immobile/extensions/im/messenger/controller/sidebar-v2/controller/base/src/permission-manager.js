@@ -3,7 +3,6 @@
  */
 jn.define('im/messenger/controller/sidebar-v2/controller/base/src/permission-manager', (require, exports, module) => {
 	const { ChatPermission, UserPermission } = require('im/messenger/lib/permission-manager');
-	const { Feature } = require('im/messenger/lib/feature');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Loc } = require('im/messenger/controller/sidebar-v2/loc');
 
@@ -25,17 +24,17 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base/src/permission-man
 
 		canCall()
 		{
-			return this.chatPermission.isCanCall(this.dialogId);
+			return this.chatPermission.canCall(this.dialogId);
 		}
 
 		canEdit()
 		{
-			return Feature.isChatComposerSupported && this.chatPermission.isCanEditDialog(this.dialogId);
+			return this.chatPermission.сanEditDialog(this.dialogId);
 		}
 
 		canLeave()
 		{
-			return this.chatPermission.isCanLeaveFromChat(this.dialogId);
+			return this.chatPermission.сanLeaveFromChat(this.dialogId);
 		}
 
 		canDelete()
@@ -50,22 +49,27 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base/src/permission-man
 
 		canRemoveUserById(userId, dialogData)
 		{
-			return ChatPermission.isCanRemoveUserById(userId, dialogData);
+			return ChatPermission.сanRemoveUserById(userId, dialogData);
 		}
 
 		canRemoveParticipants()
 		{
-			return ChatPermission.isCanRemoveParticipants(this.dialogId);
+			return ChatPermission.canRemoveParticipants(this.dialogId);
 		}
 
 		canMention()
 		{
-			return ChatPermission.isCanMention(this.dialogId);
+			return ChatPermission.сanMention(this.dialogId);
 		}
 
 		canAddParticipants()
 		{
-			return this.chatPermission.isCanAddParticipants(this.dialogId);
+			return this.chatPermission.canAddParticipants(this.dialogId);
+		}
+
+		canChangeOwner()
+		{
+			return this.chatPermission.сanChangeOwner();
 		}
 
 		/**
@@ -73,7 +77,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base/src/permission-man
 		 */
 		getCallForbiddenReason()
 		{
-			const currentContext = this.chatPermission.isCanCall(this.dialogId, true);
+			const currentContext = this.chatPermission.canCall(this.dialogId, true);
 
 			if (currentContext)
 			{

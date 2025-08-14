@@ -3,7 +3,7 @@
  */
 jn.define('im/messenger/controller/dialog-creator/recipient-selector', (require, exports, module) => {
 
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { DialogInfo } = require('im/messenger/controller/dialog-creator/dialog-info');
 	const { RecipientSelectorView } = require('im/messenger/controller/dialog-creator/recipient-selector/view');
 	const { Theme } = require('im/lib/theme');

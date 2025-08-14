@@ -3,7 +3,7 @@
  */
 
 jn.define('im/messenger/lib/element/dialog/message/copilot-prompt', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 
 	const { MessageType } = require('im/messenger/const');
 	const { TextMessage } = require('im/messenger/lib/element/dialog/message/text');
@@ -19,17 +19,14 @@ jn.define('im/messenger/lib/element/dialog/message/copilot-prompt', (require, ex
 			super(modelMessage, options);
 
 			this.dialogId = `chat${modelMessage.chatId}`;
-			/**
-			 *
-			 * @type {{promt: {title: string, text: string}, buttons: Array<CopilotButton>}}
-			 */
+
+			/** @type {CopilotMessageCopilotData} */
 			this.copilot = {
 				promt: { title: '', text: '' },
 				buttons: [],
 			};
-			/**
-			 * @type {Array<{code: string, promptType: string, title: string, text: string}>}
-			 */
+
+			/** @type {Array<InitialPromptMessageData>} */
 			this.initialPrompt = [];
 
 			this.setCopilotPromptAvatar(modelMessage.chatId, modelMessage.id)
@@ -39,6 +36,18 @@ jn.define('im/messenger/lib/element/dialog/message/copilot-prompt', (require, ex
 				.setShowAvatarForce(false)
 				.setCanBeQuoted(false)
 				.setCanBeChecked(false);
+		}
+
+		/**
+		 * @return {CopilotPromptDialogWidgetItem}
+		 */
+		toDialogWidgetItem()
+		{
+			return {
+				...super.toDialogWidgetItem(),
+				copilot: this.copilot,
+				initialPrompt: this.initialPrompt,
+			};
 		}
 
 		/**
@@ -106,6 +115,9 @@ jn.define('im/messenger/lib/element/dialog/message/copilot-prompt', (require, ex
 			return this;
 		}
 
+		/**
+		 * @return {Array<CopilotMessageButtonsData>}
+		 */
 		getRoleButtons()
 		{
 			const btns = [];
@@ -185,6 +197,9 @@ jn.define('im/messenger/lib/element/dialog/message/copilot-prompt', (require, ex
 			return this;
 		}
 
+		/**
+		 * @return {Array<CopilotMessageButtonsData>}
+		 */
 		getBasicButtons()
 		{
 			return [

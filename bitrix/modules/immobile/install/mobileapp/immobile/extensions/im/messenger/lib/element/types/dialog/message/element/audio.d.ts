@@ -1,4 +1,4 @@
-import { AudioRate } from '../../../../../../model/types/application';
+import { AudioRate } from '../../../../../../model/application/src/types';
 
 export type MessageAudio = {
 	id: string | number,

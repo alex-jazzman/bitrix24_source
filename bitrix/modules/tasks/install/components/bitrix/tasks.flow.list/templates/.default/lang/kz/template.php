@@ -1,7 +1,6 @@
 <?php
 $MESS["TASKS_FLOW_ADD_BUTTON"] = "Ағынды жасау";
 $MESS["TASKS_FLOW_LIST_ABOUT_EFFICIENCY"] = "Тиімділік уақытында орындалған міндеттердің<br> пайызын көрсетеді";
-$MESS["TASKS_FLOW_LIST_ANALYTICS_BTN"] = "Аналитика";
 $MESS["TASKS_FLOW_LIST_BI_ANALYTICS_BADLY"] = "Нашар";
 $MESS["TASKS_FLOW_LIST_BI_ANALYTICS_EMPTY_DASHBOARDS"] = "Есеп қолжетімcіз";
 $MESS["TASKS_FLOW_LIST_BI_ANALYTICS_GREAT"] = "Өте жақсы";

@@ -57,6 +57,14 @@ jn.define('im/messenger/model/messages/reactions/model', (require, exports, modu
 					},
 				});
 			},
+
+			/**
+			 * @function messagesModel/reactionsModel/setFromSync
+			 */
+			setFromSync: (store, payload) => {
+				return store.dispatch('set', { ...payload, actionName: 'setFromSync' });
+			},
+
 			/**
 			 * @function messagesModel/reactionsModel/set
 			 * @param store
@@ -64,6 +72,7 @@ jn.define('im/messenger/model/messages/reactions/model', (require, exports, modu
 			 */
 			set: (store, payload) => {
 				const reactionList = prepareSetPayload(payload);
+				const { actionName = 'set' } = payload;
 
 				if (reactionList.length === 0)
 				{
@@ -71,7 +80,7 @@ jn.define('im/messenger/model/messages/reactions/model', (require, exports, modu
 				}
 
 				store.commit('set', {
-					actionName: 'set',
+					actionName,
 					data: {
 						reactionList,
 					},

@@ -1735,18 +1735,28 @@ class EditorAdapter
 		return $this->srcItemProductsEntityData;
 	}
 
+	public function getProductRowSummaryItemFieldsToSelect(): array
+	{
+		return [
+			Item::FIELD_NAME_ID,
+			Item::FIELD_NAME_CATEGORY_ID,
+			Item::FIELD_NAME_PRODUCTS,
+			Item::FIELD_NAME_CURRENCY_ID,
+			Item::FIELD_NAME_OPPORTUNITY,
+			Item::FIELD_NAME_COMPANY_ID,
+			Item::FIELD_NAME_LOCATION_ID,
+		];
+	}
+
 	protected function getProductsSummaryEntityData(Item $item, int $mode = ComponentMode::VIEW): array
 	{
-		$entityTypeId = $item->getEntityTypeId();
-		$entityId = $item->getId();
-
 		$isReadOnly = true;
 		if (
 			(
 				$mode === ComponentMode::MODIFICATION
-				&& EntityAuthorization::checkUpdatePermission($entityTypeId, $entityId)
+				&& Container::getInstance()->getUserPermissions()->item()->canUpdateItem($item)
 			)
-			|| EntityAuthorization::checkCreatePermission($entityTypeId)
+			|| Container::getInstance()->getUserPermissions()->item()->canAddItem($item)
 		)
 		{
 			$isReadOnly = false;

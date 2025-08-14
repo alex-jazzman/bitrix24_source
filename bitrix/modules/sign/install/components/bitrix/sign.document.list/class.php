@@ -729,6 +729,8 @@ class SignUserDocumentListComponent extends SignBaseComponent implements Control
 			$this->prepareFilterForCompanyFilterField($filter, $requestFilter);
 		}
 
+		$filter->where('ENTITY_TYPE', '!=', EntityType::ROLE);
+
 		return $filter;
 	}
 

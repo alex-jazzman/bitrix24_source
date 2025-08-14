@@ -7,8 +7,9 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 	const { Type } = require('type');
 	const { Uuid } = require('utils/uuid');
 
-	const { ChatTypes } = require('im/messenger/const');
+	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { DateFormatter } = require('im/messenger/lib/date-formatter');
+	const { ModelUtils } = require('im/messenger/lib/utils');
 	const { searchModel } = require('im/messenger/model/recent/search/model');
 	const { recentDefaultElement } = require('im/messenger/model/recent/default-element');
 	const { validate } = require('im/messenger/model/recent/validator');
@@ -99,7 +100,8 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 				}
 
 				const dialog = rootGetters['dialoguesModel/getById'](dialogId);
-				if (!dialog || dialog.type !== ChatTypes.user)
+				const isDirectType = DialogHelper.createByModel(dialog)?.isDirect;
+				if (!isDirectType)
 				{
 					return false;
 				}
@@ -128,7 +130,8 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 				}
 
 				const dialog = rootGetters['dialoguesModel/getById'](dialogId);
-				if (!dialog || dialog.type !== ChatTypes.user)
+				const isDirectType = DialogHelper.createByModel(dialog)?.isDirect;
+				if (!isDirectType)
 				{
 					return false;
 				}
@@ -148,7 +151,8 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 				}
 
 				const dialog = rootGetters['dialoguesModel/getById'](dialogId);
-				if (!dialog || dialog.type !== ChatTypes.user)
+				const isDirectType = DialogHelper.createByModel(dialog)?.isDirect;
+				if (!isDirectType)
 				{
 					return false;
 				}
@@ -177,7 +181,8 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 				}
 
 				const dialog = rootGetters['dialoguesModel/getById'](dialogId);
-				if (!dialog || dialog.type !== ChatTypes.user)
+				const isDirectType = DialogHelper.createByModel(dialog)?.isDirect;
+				if (!isDirectType)
 				{
 					return false;
 				}
@@ -211,16 +216,21 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 				}
 			},
 
+			/** @function recentModel/setFromSync */
+			setFromSync: (store, recentList) => {
+				return store.dispatch('set', { itemList: recentList, actionName: 'setFromSync' });
+			},
+
 			/** @function recentModel/set */
 			set: (store, payload) => {
 				/**
 				 * @type {Array<RecentModelState>}
 				 */
 				const result = [];
-
-				if (Type.isArray(payload))
+				const { itemList, actionName = 'set' } = ModelUtils.normalizeItemListPayload(payload);
+				if (Type.isArray(itemList))
 				{
-					payload.forEach((recentItem) => {
+					itemList.forEach((recentItem) => {
 						if (Type.isPlainObject(recentItem))
 						{
 							checkUploadingState(store, recentItem);
@@ -239,7 +249,7 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 				if (newItems.length > 0)
 				{
 					store.commit('add', {
-						actionName: 'set',
+						actionName,
 						data: {
 							recentItemList: newItems,
 						},
@@ -249,7 +259,7 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 				if (existingItems.length > 0)
 				{
 					store.commit('update', {
-						actionName: 'set',
+						actionName,
 						data: {
 							recentItemList: existingItems,
 						},
@@ -558,7 +568,7 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 		const result = {};
 
 		const elementIndex = store.state.collection.findIndex((element, index) => {
-			return element.id.toString() === id.toString();
+			return String(element.id) === String(id);
 		});
 
 		if (elementIndex !== -1)

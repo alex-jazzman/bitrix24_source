@@ -75,10 +75,9 @@ class TaskCreateBlocks extends TaskStep
 			Metrika\Categories::Site,
 			Metrika\Events::createTemplate,
 		);
+		$siteId = $this->siteData->getSiteId() ?? 0;
 		$metrika->setType(Metrika\Types::ai)
-			->setParams([
-				'siteId' => $this->siteData->getSiteId() ?? 0,
-			])
+			->setParam(3, 'siteId', (string)$siteId)
 			->send()
 		;
 

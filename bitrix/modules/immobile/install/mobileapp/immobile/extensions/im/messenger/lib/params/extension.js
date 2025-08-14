@@ -1,33 +1,86 @@
 /**
  * @module im/messenger/lib/params
  */
+
 jn.define('im/messenger/lib/params', (require, exports, module) => {
-	const { Loc } = require('loc');
 	const { Type } = require('type');
+	const { MemoryStorage } = require('native/memorystore');
+	const { EntityReady } = require('entity-ready');
 	const { ComponentCode } = require('im/messenger/const');
+
+	const sharedParamsStorage = new MemoryStorage('immobileMessengerSharedParams');
+	const entityReadySharedParamsId = 'immobile:sharedParams::ready';
 
 	/**
 	 * @class MessengerParams
 	 */
 	class MessengerParams
 	{
+		#entityReadySharedParamsKey = 'immobile:sharedParams::ready';
+		#isReadySharedParams = false;
+		#wasSharedParamsSaved = false;
+
 		constructor()
 		{
-			const configMessages = this.get('MESSAGES', {});
+			this.sharedParamsStorage = sharedParamsStorage;
 
-			Object.keys(configMessages).forEach((messageId) => {
-				Loc.setMessage(messageId, configMessages[messageId]);
-			});
+			EntityReady.addCondition(this.#entityReadySharedParamsKey, () => this.#isReadySharedParams);
 		}
 
+		async initSharedParams()
+		{
+			const sharedParams = this.get('SHARED_PARAMS');
+
+			if (!sharedParams)
+			{
+				return;
+			}
+
+			await this.sharedParamsStorage.set('sharedParams', sharedParams);
+			this.setSharedParamsFromStorage();
+
+			this.#isReadySharedParams = true;
+			EntityReady.ready(this.#entityReadySharedParamsKey);
+		}
+
+		async waitSharedParamsInit()
+		{
+			if (this.#wasSharedParamsSaved)
+			{
+				return;
+			}
+
+			await EntityReady.wait(entityReadySharedParamsId);
+			this.#isReadySharedParams = true;
+
+			this.setSharedParamsFromStorage();
+		}
+
+		/**
+		 * @param {string} key
+		 * @param defaultValue
+		 * @returns {*}
+		 */
 		get(key, defaultValue)
 		{
 			return BX.componentParameters.get(key, defaultValue);
 		}
 
+		/**
+		 * @param {string} key
+		 * @param {*} value
+		 */
 		set(key, value)
 		{
 			BX.componentParameters.set(key, value);
+		}
+
+		setSharedParamsFromStorage()
+		{
+			const sharedParamsFromStorage = this.sharedParamsStorage.getSync('sharedParams') ?? {};
+			const sharedParamsFromStorageKeys = Object.keys(sharedParamsFromStorage);
+			sharedParamsFromStorageKeys.forEach((key) => this.set(key, sharedParamsFromStorage[key]));
+			this.#wasSharedParamsSaved = true;
 		}
 
 		getSiteDir()
@@ -43,14 +96,6 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 		getGeneralChatId()
 		{
 			return Number(this.get('IM_GENERAL_CHAT_ID', 0));
-		}
-
-		/**
-		 * @return {string}
-		 */
-		getMessengerTitle()
-		{
-			return this.get('MESSAGES', { COMPONENT_TITLE: '' }).COMPONENT_TITLE;
 		}
 
 		/**
@@ -119,7 +164,7 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 		}
 
 		/**
-		 * @param {PlanLimits} limits
+		* @param {PlanLimits} limits
 		* @return void
 		*/
 		setPlanLimits(limits)

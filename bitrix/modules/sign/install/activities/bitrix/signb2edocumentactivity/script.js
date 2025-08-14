@@ -10,6 +10,7 @@ this.BX = this.BX || {};
 	  HEAD: '1',
 	  DEPUTY_HEAD: '3'
 	};
+	const responsibleSelector = '#id_responsible';
 	const assigneeSelector = '#id_representative';
 	const reviewerSelector = '#id_reviewer';
 	const editorSelector = '#id_editor';
@@ -184,6 +185,7 @@ this.BX = this.BX || {};
 	}
 	function _getUserSelectorsMap2() {
 	  return {
+	    responsible: responsibleSelector,
 	    assignee: assigneeSelector,
 	    reviewer: reviewerSelector,
 	    editor: editorSelector
@@ -235,6 +237,7 @@ this.BX = this.BX || {};
 	}
 	function _selectMembers2(selectedItem) {
 	  if (selectedItem) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _setSelectorValues)[_setSelectorValues]([selectedItem.responsibleSelectorValue], responsibleSelector);
 	    babelHelpers.classPrivateFieldLooseBase(this, _setSelectorValues)[_setSelectorValues]([selectedItem.assigneeSelectorValue], assigneeSelector);
 	    babelHelpers.classPrivateFieldLooseBase(this, _setSelectorValues)[_setSelectorValues](selectedItem.reviewerSelectorValue, reviewerSelector);
 	    babelHelpers.classPrivateFieldLooseBase(this, _setSelectorValues)[_setSelectorValues]([selectedItem.editorSelectorValue], editorSelector);

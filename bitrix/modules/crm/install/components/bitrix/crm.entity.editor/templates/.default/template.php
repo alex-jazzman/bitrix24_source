@@ -430,29 +430,19 @@ if (!empty($htmlEditorConfigs))
 			{
 				newSectionTitle: "<?=GetMessageJS('CRM_ENTITY_ED_NEW_SECTION_TITLE')?>",
 				inlineEditHint: "<?=GetMessageJS('CRM_ENTITY_ED_INLINE_EDIT_HINT')?>",
-				resetConfig: "<?=GetMessageJS('CRM_ENTITY_ED_RESET_CONFIG_2')?>",
-				forceCommonConfigForAllUsers: "<?=GetMessageJS('CRM_ENTITY_ED_FORCE_COMMON_CONFIG_FOR_ALL')?>",
-				switchToPersonalConfig: "<?=GetMessageJS('CRM_ENTITY_ED_SWITCH_TO_PERSONAL_CONFIG')?>",
-				switchToCommonConfig: "<?=GetMessageJS('CRM_ENTITY_ED_SWITCH_TO_COMMON_CONFIG')?>",
 				couldNotFindEntityIdError: "<?=GetMessageJS('CRM_ENTITY_ED_COULD_NOT_FIND_ENTITY_ID')?>",
 				titleEdit: "<?=GetMessageJS('CRM_ENTITY_ED_TITLE_EDIT')?>",
 				titleEditUnsavedChanges: "<?=GetMessageJS('CRM_ENTITY_ED_TITLE_EDIT_UNSAVED_CHANGES')?>",
 				checkScope: "<?=GetMessageJS('CRM_ENTITY_ED_CHECK_SCOPE')?>",
-				createScope: "<?=GetMessageJS('CRM_ENTITY_ED_CREATE_SCOPE')?>",
-				updateScope: "<?=GetMessageJS('CRM_ENTITY_ED_UPDATE_SCOPE')?>",
 				copyPageUrl: "<?= \CUtil::JSEscape($arResult['MESSAGES']['COPY_PAGE_URL']) ?>",
 				pageUrlCopied: "<?= \CUtil::JSEscape($arResult['MESSAGES']['PAGE_URL_COPIED']) ?>",
 			};
 
 			BX.Crm.EntityEditorScopeConfig.messages =
 			{
-				createScope: "<?=GetMessageJS('CRM_ENTITY_ED_CREATE_SCOPE')?>",
-				scopeName: "<?=GetMessageJS('CRM_ENTITY_ED_CONFIG_SCOPE_NAME')?>",
 				scopeNamePlaceholder: "<?=GetMessageJS('CRM_ENTITY_ED_CONFIG_SCOPE_NAME_PLACEHOLDER')?>",
-				scopeMembers: "<?=GetMessageJS('CRM_ENTITY_ED_CONFIG_SCOPE_MEMBERS')?>",
 				scopeSave: "<?=GetMessageJS('CRM_ENTITY_ED_CONFIG_SCOPE_SAVE')?>",
 				scopeCancel: "<?=GetMessageJS('CRM_ENTITY_ED_CONFIG_SCOPE_CANCEL')?>",
-				scopeSaved: "<?=GetMessageJS('CRM_ENTITY_ED_CONFIG_SCOPE_SAVED')?>",
 			};
 
 			BX.UI.EntityUserFieldManager.messages =

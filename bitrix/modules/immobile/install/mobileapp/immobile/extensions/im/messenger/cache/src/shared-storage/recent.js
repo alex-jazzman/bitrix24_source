@@ -29,7 +29,7 @@ jn.define('im/messenger/cache/shared-storage/recent', (require, exports, module)
 
 		/**
 		 * @param {Array<JNListWidgetSectionItem>} sections
-		 * @param {Array<NativeRecentItem>} itemList
+		 * @param {Array<RecentWidgetItem>} itemList
 		 */
 		save(sections, itemList)
 		{

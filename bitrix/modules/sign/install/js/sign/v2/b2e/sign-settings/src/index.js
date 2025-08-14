@@ -26,6 +26,7 @@ import { Uploader, UploaderEvent, UploaderFile } from 'ui.uploader.core';
 import type { Metadata } from 'ui.wizard';
 import { B2EFeatureConfig } from './type';
 import { EntityType } from 'sign.type';
+import { SignDropdown } from 'sign.v2.b2e.sign-dropdown';
 
 import './style.css';
 
@@ -69,6 +70,7 @@ export class B2ESignSettings extends SignSettings
 	#saveButton: SaveButton;
 	#isMultiDocumentSaveProcessGone: boolean = false;
 	#needSkipEditorStep: boolean;
+	#previewDocumentDropdown: HTMLElement | null = null;
 
 	constructor(containerId: string, signOptions: SignOptions)
 	{
@@ -118,19 +120,33 @@ export class B2ESignSettings extends SignSettings
 			this.documentSend.setProvider(event.data.provider);
 			this.#regionalSettings.isIntegrationEnabled = this.#isIntegrationEnabled(event.data?.provider?.code);
 		});
+		this.#createPreviewDocumentDropdown();
 	}
 
 	#prepareConfig(signOptions: SignOptions): SignOptionsConfig
 	{
-		const { config, documentMode, fromRobot, fromTemplateFolder, b2eDocumentLimitCount } = signOptions;
+		const {
+			config,
+			documentMode,
+			fromRobot,
+			fromTemplateFolder,
+			b2eDocumentLimitCount,
+			templateFolderId,
+			isOpenedAsFolder,
+			initiatedByType,
+		} = signOptions;
 
 		const { blankSelectorConfig, documentSendConfig } = config;
 		blankSelectorConfig.documentMode = documentMode;
 		blankSelectorConfig.isOpenedFromRobot = fromRobot;
 		blankSelectorConfig.b2eDocumentLimitCount = b2eDocumentLimitCount;
 		blankSelectorConfig.isOpenedFromTemplateFolder = fromTemplateFolder;
+		blankSelectorConfig.templateFolderId = templateFolderId;
+		blankSelectorConfig.isOpenedAsFolder = isOpenedAsFolder;
+		blankSelectorConfig.initiatedByType = initiatedByType;
 		documentSendConfig.documentMode = documentMode;
 		documentSendConfig.isOpenedFromRobot = fromRobot;
+		documentSendConfig.templateFolderId = templateFolderId;
 
 		return config;
 	}
@@ -139,7 +155,46 @@ export class B2ESignSettings extends SignSettings
 	{
 		super.subscribeOnEvents();
 		this.documentSend.subscribe('changeTitle', ({ data }) => {
-			this.documentSetup.setDocumentTitle(data.title);
+			const title = data?.title;
+			if (!title)
+			{
+				return;
+			}
+
+			const uid = data?.uid;
+			if (!uid)
+			{
+				return;
+			}
+
+			const encodedTitle = Text.encode(title);
+
+			this.documentSetup.setDocumentTitle(encodedTitle);
+			if (!this.isGroupDocuments())
+			{
+				return;
+			}
+
+			if (this.documentsGroup.has(uid) === false)
+			{
+				return;
+			}
+
+			const documentDetails = this.documentsGroup.get(uid);
+			documentDetails.title = encodedTitle;
+			this.documentsGroup.set(uid, documentDetails);
+
+			this.documentSetup.updateDocumentBlock(documentDetails.id);
+			this.addInDocumentsGroupUids(documentDetails.uid);
+			this.#regionalSettings.documentsGroup = this.documentsGroup;
+			const selectedItemUid = this.#previewDocumentDropdown.getSelectedId();
+			this.#setPreviewDocumentDropdownItems();
+			if (!selectedItemUid)
+			{
+				return;
+			}
+
+			this.#previewDocumentDropdown.setItemSelected(selectedItemUid);
 		});
 		this.documentSend.subscribe('disableBack', () => {
 			this.wizard.toggleBtnActiveState('back', true);
@@ -189,13 +244,23 @@ export class B2ESignSettings extends SignSettings
 				}
 			},
 		);
+		this.editor.subscribe('save', ({ data }) => {
+			const uid = data.uid;
+
+			if (this.documentsGroup.has(uid) === false)
+			{
+				return;
+			}
+
+			this.#previewDocumentDropdown.selectItem(uid);
+		});
 	}
 
 	async #editDocumentData(uid: string): Promise<void>
 	{
-		if (this.editedDocument)
+		if (this.documentsGroup.has(uid) === false)
 		{
-			await this.#saveUpdatedDocumentData(this.editedDocument.uid);
+			return;
 		}
 
 		if (!this.documentSetup.editMode)
@@ -205,10 +270,109 @@ export class B2ESignSettings extends SignSettings
 
 			return;
 		}
+
+		if (this.editedDocument && this.isGroupDocuments())
+		{
+			this.#setPreviewDocumentDropdownItems();
+		}
+
 		this.editedDocument = this.documentsGroup.get(uid);
 		this.documentSetup.setAvailabilityDocumentSection(true);
-		this.documentSetup.setDocumentTitle(this.editedDocument.title);
 		this.#scrollToDown();
+		this.documentSetup.setDocumentTitle(this.editedDocument.title);
+
+		if (this.isGroupDocuments() === false)
+		{
+			return;
+		}
+
+		await this.renderPages(this.editedDocument, true, false);
+		this.#previewDocumentDropdown.setItemSelected(uid);
+	}
+
+	getLayoutTemplate(header: HTMLElement, wizard: HTMLElement, preview: HTMLElement): HTMLElement
+	{
+		const previewDocumentDropdown = this.#previewDocumentDropdown.getLayout();
+		this.#togglePreviewDocumentDropdown();
+
+		return Tag.render`
+			<div class="sign-settings__scope sign-settings --b2e">
+				<div class="sign-settings__sidebar">
+					${header}
+					${wizard}
+				</div>
+				<div class="sing-settings-preview-block">
+					${previewDocumentDropdown}
+					${preview}
+				</div>
+			</div>
+		`;
+	}
+
+	#createPreviewDocumentDropdown(): void
+	{
+		this.#previewDocumentDropdown = new SignDropdown({
+			tabs: [{ id: 'sign-preview-document-dropdown', title: ' ' }],
+			entities: [],
+			className: 'sign-preview-document-dropdown',
+			withCaption: true,
+			isEnableSearch: false,
+			width: 444,
+		});
+
+		this.#togglePreviewDocumentDropdown();
+
+		this.#previewDocumentDropdown.subscribe(
+			'onSelect',
+			(item: BaseEvent) => {
+				const uidFromEvent = item.data?.item?.id;
+
+				if (uidFromEvent === null)
+				{
+					return;
+				}
+
+				if (this.documentsGroup.has(uidFromEvent) === false)
+				{
+					return;
+				}
+				const documentDetails = this.documentsGroup.get(uidFromEvent);
+				this.documentSetup.resetEditMode();
+				this.#resetDocument();
+				this.documentSetup.setDocumentTitle(documentDetails.title);
+
+				this.renderPages(documentDetails, true, false);
+			},
+		);
+	}
+
+	#setPreviewDocumentDropdownItems(): void
+	{
+		const selectedUid = this.documentSetup?.setupData?.uid;
+
+		if (selectedUid === null)
+		{
+			return;
+		}
+
+		this.#previewDocumentDropdown.removeItems();
+		this.documentsGroupUids.forEach((uid) => {
+			if (this.documentsGroup.has(uid) === false)
+			{
+				return;
+			}
+
+			const documentDetails = this.documentsGroup.get(uid);
+			this.#previewDocumentDropdown.addItem({
+				id: documentDetails.uid,
+				title: documentDetails.title,
+				entityId: 'b2e-document-detail',
+				tabs: 'sign-preview-document-dropdown',
+				deselectable: false,
+			});
+		});
+
+		this.#previewDocumentDropdown.setItemSelected(selectedUid);
 	}
 
 	async setDocumentsGroup(): Promise<void>
@@ -232,11 +396,27 @@ export class B2ESignSettings extends SignSettings
 
 			if (this.editedDocument)
 			{
-				await this.#handleEditedDocument(documentData);
+				let uid = documentData.uid;
+				if (
+					(this.documentSetup.blankIsNotSelected || documentData.blankId === this.editedDocument.blankId)
+					&& !this.documentSetup.isFileAdded
+				)
+				{
+					uid = this.editedDocument.uid;
+				}
+				await this.#handleEditedDocument(documentData).then(() => {
+					this.#previewDocumentDropdown.selectItem(uid);
+				}).catch(() => {});
 			}
 			else
 			{
 				this.documentSetup.renderDocumentBlock(documentData);
+				if (this.isGroupDocuments())
+				{
+					this.#setPreviewDocumentDropdownItems();
+				}
+
+				this.#togglePreviewDocumentDropdown();
 			}
 		}
 		catch
@@ -260,10 +440,17 @@ export class B2ESignSettings extends SignSettings
 
 	async #handleEditedDocument(documentData): Promise<void>
 	{
-		if (this.documentSetup.blankIsNotSelected || !this.documentSetup.isFileAdded)
+		if (
+			(this.documentSetup.blankIsNotSelected || documentData.blankId === this.editedDocument.blankId)
+			&& !this.documentSetup.isFileAdded
+		)
 		{
 			this.documentSetup.resetEditMode();
 			await this.#saveUpdatedDocumentData(this.editedDocument.uid);
+			if (this.isGroupDocuments())
+			{
+				await this.#setPreviewDocumentDropdownItems();
+			}
 
 			return;
 		}
@@ -294,6 +481,7 @@ export class B2ESignSettings extends SignSettings
 		{
 			return;
 		}
+
 		this.documentsGroupUids.splice(index, 1);
 	}
 
@@ -341,10 +529,27 @@ export class B2ESignSettings extends SignSettings
 		}
 	}
 
-	async #deleteDocument(data: { blankId: number, deletedButton: HTMLElement, id: number, uid: string }): string
+	#togglePreviewDocumentDropdown(): void
+	{
+		if (this.isGroupDocuments())
+		{
+			this.#previewDocumentDropdown.show();
+
+			return;
+		}
+
+		this.#previewDocumentDropdown.hide();
+	}
+
+	async #deleteDocument(data: { blankId: number, deletedButton: HTMLElement, id: number, uid: string }): Promise<void>
 	{
 		const { id, uid, blankId, deleteButton } = data;
 		this.documentSetup.ready = false;
+
+		if (this.documentsGroup.has(uid) === false)
+		{
+			return;
+		}
 
 		try
 		{
@@ -362,7 +567,7 @@ export class B2ESignSettings extends SignSettings
 			this.deleteFromDocumentsGroupUids(uid);
 			this.documentSetup.blankSelector.enableSelectedBlank(blankId);
 			this.documentSetup.deleteDocumentFromList(blankId);
-			this.documentSetup.documentCounters.update(this.documentsGroup.size);
+			this.documentSetup.documentCounters?.update(this.documentsGroup.size);
 			this.documentSetup.resetEditMode();
 
 			if (this.documentsGroup.size === 0)
@@ -373,6 +578,22 @@ export class B2ESignSettings extends SignSettings
 			{
 				this.documentSetup.setupData = this.getFirstDocumentDataFromGroup();
 			}
+
+			if (this.documentsGroup.size === 0)
+			{
+				return;
+			}
+
+			const lastDocumentDetails = [...this.documentsGroup.values()].pop();
+			await this.renderPages(lastDocumentDetails, false, false);
+
+			if (this.isGroupDocuments())
+			{
+				this.#setPreviewDocumentDropdownItems();
+			}
+
+			this.#togglePreviewDocumentDropdown();
+
 			this.#resetDocument();
 		}
 		catch
@@ -551,7 +772,7 @@ export class B2ESignSettings extends SignSettings
 				this.documentSetup.blankSelector.disableSelectedBlank(updatedItem.blankId);
 			}
 			this.groupId = setupData.groupId;
-			this.documentSetup.documentCounters.update(this.documentsGroup.size);
+			this.documentSetup.documentCounters?.update(this.documentsGroup.size);
 			this.#resetDocument();
 		}
 		else
@@ -580,7 +801,7 @@ export class B2ESignSettings extends SignSettings
 		}
 
 		const parsedMembers = this.#parseMembers(members);
-		const { signers = [], reviewers = [], editors = [], assignees = [] } = parsedMembers;
+		const { signers = [], assignees = [] } = parsedMembers;
 
 		this.#companyParty.setEntityId(entityId);
 		if (companyUid)
@@ -655,10 +876,28 @@ export class B2ESignSettings extends SignSettings
 					return false;
 				}
 
-				await this.#addDocumentInGroup(setupData);
+				await this.#addDocumentInGroup(setupData).then(() => {
+					if (this.isGroupDocuments())
+					{
+						this.#setPreviewDocumentDropdownItems();
+					}
+
+					this.#togglePreviewDocumentDropdown();
+				}).catch(() => {});
 				if (this.editedDocument)
 				{
-					await this.#handleEditedDocument(setupData);
+					let uid = setupData.uid;
+					if (
+						(this.documentSetup.blankIsNotSelected || setupData.blankId === this.editedDocument.blankId)
+						&& !this.documentSetup.isFileAdded
+					)
+					{
+						uid = this.editedDocument.uid;
+					}
+
+					await this.#handleEditedDocument(setupData).then(() => {
+						this.#previewDocumentDropdown.selectItem(uid);
+					}).catch(() => {});
 				}
 
 				this.#resetDocument();
@@ -730,6 +969,11 @@ export class B2ESignSettings extends SignSettings
 					{
 						this.#executeDocumentSendActions();
 						this.#regionalSettings.isIntegrationVisible = !this.#isInitiatedByEmployee();
+
+						if (!this.#isRegionalSettingsStepEnabled())
+						{
+							await this.#executeTemplateSetupPartyActions();
+						}
 					}
 				}
 				catch (e)
@@ -769,15 +1013,7 @@ export class B2ESignSettings extends SignSettings
 
 				if (this.isTemplateMode())
 				{
-					const { uid } = this.documentSetup.setupData;
-					const isB2eDocumentSectionDisabled = !this.documentSetup.isRuRegion() || this.#isInitiatedByEmployee();
-					this.editor.setIsB2eDocumentSectionDisabled(isB2eDocumentSectionDisabled);
-					this.editor.entityData = await this.#setupParties();
-					const { isTemplate, entityId } = this.documentSetup.setupData;
-					const blocks = await this.documentSetup.loadBlocks(uid);
-
-					const editorData = { isTemplate, uid, blocks, entityId };
-					this.#executeEditorActions(editorData);
+					await this.#executeTemplateSetupPartyActions();
 				}
 
 				return true;
@@ -926,6 +1162,7 @@ export class B2ESignSettings extends SignSettings
 	async init(uid: ?string, templateUid: string)
 	{
 		await super.init(uid, templateUid);
+		this.#setPreviewDocumentDropdownItems();
 
 		if (this.isEditMode() && !Type.isNull(this.getAfterPreviewLayout()))
 		{
@@ -1118,9 +1355,9 @@ export class B2ESignSettings extends SignSettings
 
 	async #processSetupData(): Promise<void>
 	{
-		const firstDocumentData = this.getFirstDocumentDataFromGroup();
-		this.#companyParty.setInitiatedByType(firstDocumentData.initiatedByType);
-		this.#companyParty.setEntityId(firstDocumentData.entityId);
+		const setupData = this.getDocumentSetupData();
+		this.#companyParty.setInitiatedByType(setupData.initiatedByType);
+		this.#companyParty.setEntityId(setupData.entityId);
 		if (this.isTemplateMode())
 		{
 			this.#companyParty.reloadCompanyProviders();
@@ -1136,6 +1373,11 @@ export class B2ESignSettings extends SignSettings
 	async #addDocumentInGroup(setupData: DocumentDetails): Promise<void>
 	{
 		if (this.documentSetup.blankIsNotSelected)
+		{
+			return;
+		}
+
+		if (this.documentsGroup.has(setupData.uid))
 		{
 			return;
 		}
@@ -1407,7 +1649,7 @@ export class B2ESignSettings extends SignSettings
 
 		if ((allFilesWithNew.length + this.documentsGroup.size) > this.#maxDocumentCount)
 		{
-			alert(Loc.getMessage('SIGN_V2_B2E_SIGN_SETTINGS_MAX_DOCUMENTS_COUNT_EXCEEDED'));
+			alert(Loc.getMessage('SIGN_V2_B2E_SIGN_SETTINGS_MAX_DOCUMENTS_COUNT_EXCEEDED_NOTICE'));
 			event.preventDefault();
 
 			return;
@@ -1443,5 +1685,18 @@ export class B2ESignSettings extends SignSettings
 	#isIntegrationEnabled(code: ProviderCodeType): boolean
 	{
 		return code && code !== ProviderCode.sesRu;
+	}
+
+	async #executeTemplateSetupPartyActions(): Promise<void>
+	{
+		const { uid } = this.documentSetup.setupData;
+		const isB2eDocumentSectionDisabled = !this.documentSetup.isRuRegion() || this.#isInitiatedByEmployee();
+		this.editor.setIsB2eDocumentSectionDisabled(isB2eDocumentSectionDisabled);
+		this.editor.entityData = await this.#setupParties();
+		const { isTemplate, entityId } = this.documentSetup.setupData;
+		const blocks = await this.documentSetup.loadBlocks(uid);
+
+		const editorData = { isTemplate, uid, blocks, entityId };
+		this.#executeEditorActions(editorData);
 	}
 }

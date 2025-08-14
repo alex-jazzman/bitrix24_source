@@ -10,16 +10,18 @@
 namespace Bitrix\Main\Web\Http;
 
 use Bitrix\Main\Diag;
+use Bitrix\Main\Web\HttpDebug;
 use Psr\Log;
 use Psr\Http\Message\RequestInterface;
 
-class Handler implements Log\LoggerAwareInterface, DebugInterface
+abstract class Handler implements Log\LoggerAwareInterface, DebugInterface
 {
 	use Log\LoggerAwareTrait;
 	use DebugInterfaceTrait;
 
 	protected bool $waitResponse = true;
 	protected int $bodyLengthMax = 0;
+	protected bool $async = false;
 
 	protected RequestInterface $request;
 	protected ResponseBuilderInterface $responseBuilder;
@@ -45,6 +47,10 @@ class Handler implements Log\LoggerAwareInterface, DebugInterface
 		if (isset($options['bodyLengthMax']))
 		{
 			$this->bodyLengthMax = (int)$options['bodyLengthMax'];
+		}
+		if (isset($options['async']))
+		{
+			$this->async = (bool)$options['async'];
 		}
 	}
 
@@ -99,6 +105,20 @@ class Handler implements Log\LoggerAwareInterface, DebugInterface
 		}
 	}
 
+	public function logDiagnostics(): void
+	{
+		if ($this->debugLevel & HttpDebug::DIAGNOSTICS)
+		{
+			$this->log(
+				"\n***TIME connect={connect}, handshake={handshake}, request={request}, total={total}\n",
+				HttpDebug::DIAGNOSTICS,
+				$this->getDiagnostics()
+			);
+		}
+	}
+
+	abstract protected function getDiagnostics(): array;
+
 	/**
 	 * Sets a callback called before fetching a message body.
 	 *
@@ -109,4 +129,6 @@ class Handler implements Log\LoggerAwareInterface, DebugInterface
 	{
 		$this->shouldFetchBody = $callback;
 	}
+
+	abstract public function execute(): Response;
 }

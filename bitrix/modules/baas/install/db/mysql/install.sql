@@ -23,7 +23,7 @@ create table if not exists b_baas_services
 
 	LANGUAGE_INFO text,
 
-	STATE_NUMBER INT DEFAULT NULL,
+	STATE_NUMBER BIGINT UNSIGNED NULL,
 
 	primary key (ID),
 	unique index `ux_baas_services_code` (`CODE`)
@@ -124,5 +124,6 @@ create table if not exists b_baas_service_in_purchased_pack
 	STATE_NUMBER INT DEFAULT NULL,
 
 	primary key (ID),
-	unique index `ux_baas_pps_pack_service` (`PURCHASED_PACKAGE_CODE`, `SERVICE_CODE`)
+	unique index `ux_baas_pps_pack_service` (`PURCHASED_PACKAGE_CODE`, `SERVICE_CODE`),
+	index `ix_baas_psc_pack_service` (`SERVICE_CODE`, `CURRENT_VALUE`)
 );

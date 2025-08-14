@@ -4,7 +4,7 @@
 jn.define('im/messenger/controller/dialog-creator/navigation-button', (require, exports, module) => {
 	const { Theme } = require('im/lib/theme');
 	const { withPressed } = require('utils/color');
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { BadgeCounter, BadgeCounterDesign } = require('ui-system/blocks/badges/counter');
 	const { Text5 } = require('ui-system/typography/text');
 	const { Color } = require('tokens');

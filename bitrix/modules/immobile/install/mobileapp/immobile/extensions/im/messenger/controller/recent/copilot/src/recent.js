@@ -7,7 +7,6 @@ jn.define('im/messenger/controller/recent/copilot/recent', (require, exports, mo
 	const { clone } = require('utils/object');
 	const { Type } = require('type');
 
-	const { Feature } = require('im/messenger/lib/feature');
 	const { CounterHelper } = require('im/messenger/lib/helper');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { BaseRecent } = require('im/messenger/controller/recent/lib');
@@ -212,15 +211,7 @@ jn.define('im/messenger/controller/recent/copilot/recent', (require, exports, mo
 				}
 			});
 
-			try
-			{
-				const uniqueMap = new Map(result.users.map((userObj) => [userObj.id, userObj]));
-				result.users = [...uniqueMap.values()];
-			}
-			catch (error)
-			{
-				logger.error(`${this.constructor.name}.prepareDataForModels.filter users catch:`, error);
-			}
+			result.users = this.getUniqueUsers(result.users);
 
 			return result;
 		}

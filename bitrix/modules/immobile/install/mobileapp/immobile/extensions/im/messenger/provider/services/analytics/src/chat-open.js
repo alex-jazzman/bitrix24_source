@@ -55,7 +55,11 @@ jn.define('im/messenger/provider/services/analytics/chat-open', (require, export
 					: (Analytics.Category[chatData.type] || Analytics.Category.chat)
 				;
 
-				const type = Analytics.Type[chatData?.type] ?? Analytics.Type.custom;
+				const isNotes = chatHelper?.isNotes;
+				const type = isNotes
+					? Analytics.Type.notes
+					: Analytics.Type[chatData?.type] || Analytics.Type.custom
+				;
 
 				let section = Analytics.Section.chatTab;
 				switch (MessengerParams.getComponentCode())
@@ -88,8 +92,12 @@ jn.define('im/messenger/provider/services/analytics/chat-open', (require, export
 					.setSection(section)
 					.setElement(element)
 					.setP2(AnalyticsHelper.getP2ByUserType())
-					.setP5(AnalyticsHelper.getFormattedChatId(chatData.chatId))
 				;
+
+				if (!isNotes)
+				{
+					analytics.setP5(AnalyticsHelper.getFormattedChatId(chatData.chatId));
+				}
 
 				if (chatHelper.isCollab)
 				{

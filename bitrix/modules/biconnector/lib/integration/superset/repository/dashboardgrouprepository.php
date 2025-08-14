@@ -113,7 +113,7 @@ final class DashboardGroupRepository extends DashboardRepository
 		{
 			$dashboard->getOrmObject()->fillGroups();
 		}
-		$row['GROUPS'] = $dashboard->getOrmObject()->getGroups()->getNameList();
+		$row['GROUPS'] = $dashboard->getOrmObject()->getGroups()->collectValues();
 
 		if (!$dashboard->getOrmObject()->isScopeFilled())
 		{

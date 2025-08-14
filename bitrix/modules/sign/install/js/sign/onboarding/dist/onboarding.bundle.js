@@ -10,7 +10,7 @@ this.BX = this.BX || {};
 	  _t2;
 	const b2bHelpdeskCode = 16571388;
 	const b2eCreateHelpdeskCode = 20338910;
-	const b2eTemplatesHelpdeskCode = 23174934;
+	const b2eTemplatesHelpdeskCode = 24354462;
 	const b2ePopupTourId = 'sign-b2e-onboarding-tour-id';
 	var _backend = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("backend");
 	var _getB2eByEmployeeGuide = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getB2eByEmployeeGuide");
@@ -76,14 +76,14 @@ this.BX = this.BX || {};
 	      welcomePopup.show();
 	    });
 	  }
-	  async startB2eWelcomeOnboarding(options) {
+	  async startB2eWelcomeOnboarding(byEmployee, options) {
 	    const startOnboarding = await babelHelpers.classPrivateFieldLooseBase(this, _shouldStartB2eOnboarding)[_shouldStartB2eOnboarding]();
 	    if (!startOnboarding) {
 	      return;
 	    }
 	    ui_bannerDispatcher.BannerDispatcher.high.toQueue(onDone => {
-	      const guide = babelHelpers.classPrivateFieldLooseBase(this, _getB2eWelcomeGuide)[_getB2eWelcomeGuide](options, onDone);
-	      const welcomePopup = babelHelpers.classPrivateFieldLooseBase(this, _createB2eWelcomePopup)[_createB2eWelcomePopup](guide);
+	      const guide = babelHelpers.classPrivateFieldLooseBase(this, _getB2eWelcomeGuide)[_getB2eWelcomeGuide](byEmployee, options, onDone);
+	      const welcomePopup = babelHelpers.classPrivateFieldLooseBase(this, _createB2eWelcomePopup)[_createB2eWelcomePopup](guide, options);
 	      babelHelpers.classPrivateFieldLooseBase(this, _backend)[_backend].saveVisit(b2ePopupTourId);
 	      welcomePopup.show();
 	    });
@@ -120,7 +120,7 @@ this.BX = this.BX || {};
 	    steps: [babelHelpers.classPrivateFieldLooseBase(this, _createB2eKanbanRouteStep)[_createB2eKanbanRouteStep]('.ui-toolbar-after-title-buttons > button.sign-b2e-onboarding-route'), babelHelpers.classPrivateFieldLooseBase(this, _createB2eTemplatesStep)[_createB2eTemplatesStep](babelHelpers.classPrivateFieldLooseBase(this, _isTemplateBtnVisible)[_isTemplateBtnVisible]() ? 'div#sign_sign_b2e_employee_template_list' : 'div#sign_more_button')]
 	  });
 	}
-	function _getB2eWelcomeGuide2(options, onFinish) {
+	function _getB2eWelcomeGuide2(byEmployee, options, onFinish) {
 	  var _options$tourId2;
 	  return new sign_tour.Guide({
 	    id: (_options$tourId2 = options.tourId) != null ? _options$tourId2 : 'sign-tour-guide-sign-start-kanban-b2e-by-employee',
@@ -129,7 +129,7 @@ this.BX = this.BX || {};
 	    events: {
 	      onFinish
 	    },
-	    steps: [babelHelpers.classPrivateFieldLooseBase(this, _createB2eNewDocumentButtonStep)[_createB2eNewDocumentButtonStep]('.ui-toolbar-after-title-buttons > .sign-b2e-onboarding-create', options.region), babelHelpers.classPrivateFieldLooseBase(this, _createB2eKanbanRouteStep)[_createB2eKanbanRouteStep]('.ui-toolbar-after-title-buttons > .sign-b2e-onboarding-route'), babelHelpers.classPrivateFieldLooseBase(this, _createB2eTemplatesStep)[_createB2eTemplatesStep](babelHelpers.classPrivateFieldLooseBase(this, _isTemplateBtnVisible)[_isTemplateBtnVisible]() ? 'div#sign_sign_b2e_employee_template_list' : 'div#sign_more_button')]
+	    steps: [babelHelpers.classPrivateFieldLooseBase(this, _createB2eNewDocumentButtonStep)[_createB2eNewDocumentButtonStep]('.ui-toolbar-after-title-buttons > .sign-b2e-onboarding-create', options.region), ...(byEmployee ? [babelHelpers.classPrivateFieldLooseBase(this, _createB2eKanbanRouteStep)[_createB2eKanbanRouteStep]('.ui-toolbar-after-title-buttons > .sign-b2e-onboarding-route')] : []), babelHelpers.classPrivateFieldLooseBase(this, _createB2eTemplatesStep)[_createB2eTemplatesStep](babelHelpers.classPrivateFieldLooseBase(this, _isTemplateBtnVisible)[_isTemplateBtnVisible]() ? 'div#sign_sign_b2e_employee_template_list' : 'div#sign_more_button')]
 	  });
 	}
 	function _getB2eFallbackGuide2(options, onFinish) {
@@ -175,7 +175,8 @@ this.BX = this.BX || {};
 	  });
 	  return popup;
 	}
-	function _createB2eWelcomePopup2(guide) {
+	function _createB2eWelcomePopup2(guide, options) {
+	  const popupTitle = options.region === 'ru' ? main_core.Loc.getMessage('SIGN_ONBOARDING_B2E_WELCOME_POPUP_TITLE') : main_core.Loc.getMessage('SIGN_ONBOARDING_B2E_WELCOME_POPUP_TITLE_WEST');
 	  const popup = new main_popup.Popup({
 	    className: 'sign__b2e-onboarding-welcome-popup',
 	    closeIcon: false,
@@ -213,7 +214,7 @@ this.BX = this.BX || {};
 						${0}
 					</div>
 				</div>
-			`), babelHelpers.classPrivateFieldLooseBase(this, _renderIcon)[_renderIcon](), main_core.Loc.getMessage('SIGN_ONBOARDING_B2E_WELCOME_POPUP_TITLE'), b2eWelcomeGif, main_core.Loc.getMessage('SIGN_ONBOARDING_B2E_WELCOME_POPUP_TEXT'))
+			`), babelHelpers.classPrivateFieldLooseBase(this, _renderIcon)[_renderIcon](), popupTitle, b2eWelcomeGif, main_core.Loc.getMessage('SIGN_ONBOARDING_B2E_WELCOME_POPUP_TEXT'))
 	  });
 	  return popup;
 	}
@@ -239,8 +240,8 @@ this.BX = this.BX || {};
 	function _createB2eTemplatesStep2(target) {
 	  return {
 	    target,
-	    title: main_core.Loc.getMessage('SIGN_ONBOARDING_B2E_STEP_TEMPLATES_TITLE'),
-	    text: main_core.Loc.getMessage('SIGN_ONBOARDING_B2E_STEP_TEMPLATES_TEXT'),
+	    title: main_core.Loc.getMessage('SIGN_ONBOARDING_B2E_STEP_TEMPLATES_TITLE_V1'),
+	    text: main_core.Loc.getMessage('SIGN_ONBOARDING_B2E_STEP_TEMPLATES_TEXT_V1'),
 	    article: b2eTemplatesHelpdeskCode
 	  };
 	}

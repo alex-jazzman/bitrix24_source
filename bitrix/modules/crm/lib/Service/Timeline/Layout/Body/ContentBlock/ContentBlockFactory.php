@@ -32,10 +32,16 @@ class ContentBlockFactory
 	public static function createFromHtmlString(
 		string $html,
 		string $idPrefix = '',
-		array $textProperties = []
+		array $textProperties = [],
+		?string $delimiter = null,
 	): LineOfTextBlocks
 	{
 		$lineOfTextBlocks = new LineOfTextBlocks();
+		if (isset($delimiter))
+		{
+			$lineOfTextBlocks->setDelimiter($delimiter);
+		}
+
 		preg_match_all('/<([^\s>]+)(.*?)>((.*?)<\/\1>)?|(?<=^|>)(.+?)(?=$|<)/i',$html,$result);
 		// assign the result to the variable
 		foreach ($result[0] as $index => $text)

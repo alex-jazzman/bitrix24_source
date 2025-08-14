@@ -265,6 +265,14 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/media/src/content', (require,
 		};
 
 		onItemClick = ({ fileId, type, customData }) => {
+			const mediaList = this.getItems().map((item) => {
+				return {
+					...item.file,
+					id: item.data.fileId,
+					messageId: item.data.messageId,
+				};
+			}).reverse();
+
 			DialogMediaGallery.open({
 				messageId: customData.messageId,
 				direction: 'right',
@@ -278,6 +286,7 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/media/src/content', (require,
 					// To have time to see the result of the action after closing the widget
 					await this.#pause(500);
 				},
+				mediaList,
 			});
 		};
 

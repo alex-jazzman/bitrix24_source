@@ -282,6 +282,7 @@ final class PlaceholderProvider extends BaseProvider
 							'',
 							$leave['VALUE']
 						),
+						'text' => $parentTitle . ': ' . $leave['TITLE'],
 					],
 				];
 			}

@@ -400,7 +400,7 @@ class SignMasterComponent extends SignBaseComponent
 	{
 		$mode = self::MODE_DOCUMENT;
 
-		if (!Feature::instance()->isSendDocumentByEmployeeEnabled())
+		if (!Feature::instance()->isDocumentTemplatesAvailable())
 		{
 			return $mode;
 		}
@@ -431,9 +431,12 @@ class SignMasterComponent extends SignBaseComponent
 			return $document->initiatedByType;
 		}
 
-		return $this->getDocumentMode() === self::MODE_TEMPLATE
-			? InitiatedByType::EMPLOYEE
-			: InitiatedByType::COMPANY;
+		if ($this->getDocumentMode() === self::MODE_TEMPLATE && Feature::instance()->isSendDocumentByEmployeeEnabled())
+		{
+			return InitiatedByType::EMPLOYEE;
+		}
+
+		return InitiatedByType::COMPANY;
 	}
 
 	private function getTemplateUid(): ?string

@@ -261,6 +261,13 @@
 	background-color: #289D37;
 }
 
+.salescenter-yandexcheckout-sber_loan-icon { width: 97px; }
+.salescenter-yandexcheckout-sber_loan-icon i {
+	background-image: url(images/yandexcheckout_sber_loan.svg);
+	background-size: 85% auto;
+	background-color: #289D37;
+}
+
 .salescenter-yandexcheckout-embedded-icon { width: 97px; }
 .salescenter-yandexcheckout-embedded-icon i {
 	background-image: url(images/yandexcheckout_embedded.svg);
@@ -273,13 +280,6 @@
 	background-image: url(images/yandexcheckout_tinkoff_bank.svg);
 	background-size: 85% auto;
 	background-color: #FFE52B;
-}
-
-.salescenter-yandexcheckout-installments-icon { width: 97px; }
-.salescenter-yandexcheckout-installments-icon i {
-	background-image: url(images/yandexcheckout_installments.svg);
-	background-size: 75% auto;
-	background-color: #00EEBC;
 }
 
 .salescenter-yandexcheckout-sbp-icon { width: 97px; }

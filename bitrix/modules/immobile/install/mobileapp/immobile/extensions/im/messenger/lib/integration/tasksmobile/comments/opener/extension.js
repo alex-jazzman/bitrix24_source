@@ -2,7 +2,7 @@
  * @module im/messenger/lib/integration/tasksmobile/comments/opener
  */
 jn.define('im/messenger/lib/integration/tasksmobile/comments/opener', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { DialogOpener } = require('im/messenger/api/dialog-opener');
 
 	/**

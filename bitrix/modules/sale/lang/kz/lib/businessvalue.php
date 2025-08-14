@@ -1,5 +1,5 @@
 <?php
-$MESS["BIZVAL_CODE_1C_REKV_ADD"] = "Реквизит қосу";
+$MESS['BIZVAL_CODE_1C_REKV_ADD'] = "Реквизит қосу";
 $MESS["BIZVAL_CODE_ACTIVE"] = "Белсенділік күйі";
 $MESS["BIZVAL_CODE_ADDRESS"] = "Мекенжай";
 $MESS["BIZVAL_CODE_AGENT_NAME"] = "Агенттің ТАӘ";

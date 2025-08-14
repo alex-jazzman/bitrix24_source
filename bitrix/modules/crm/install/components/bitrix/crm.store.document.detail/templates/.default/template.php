@@ -80,22 +80,6 @@ if (
 
 Toolbar::deleteFavoriteStar();
 
-/*
-if (isset($arResult['TOOLBAR_ID']))
-{
-	$APPLICATION->IncludeComponent(
-		'bitrix:crm.interface.toolbar',
-		'slider',
-		[
-			'TOOLBAR_ID' => $arResult['TOOLBAR_ID'],
-			'BUTTONS' => $arResult['BUTTONS'] ?? []
-		],
-		$component,
-		['HIDE_ICONS' => 'Y']
-	);
-}
-*/
-
 $insidePageTitleConfig = [
 	'enablePageLink' => false,
 	'enableStatusLabel' => false,
@@ -139,26 +123,6 @@ if ($documentId > 0)
 	;
 	Toolbar::addUnderTitleHtml($underText);
 	unset($underText);
-
-	/*
-	$this->SetViewTarget('in_pagetitle');
-	?>
-	<div class="catalog-title-buttons-wrapper">
-	<span id="pagetitle_btn_wrapper" class="pagetitile-button-container">
-		<span id="page_url_copy_btn" class="page-link-btn"></span>
-	</span>
-		<span class="ui-label ui-label-lg document-status-label ui-label-fill <?= $labelColorClass ?>">
-		<span class="ui-label-inner">
-			<?= $labelText ?>
-		</span>
-	</span>
-	</div>
-	<div class="catalog-title-document-type">
-		<?= Loc::getMessage('CRM_STORE_DOCUMENT_DETAIL_DOC_TYPE_SHORT_SHIPMENT') ?>
-	</div>
-	<?php
-	$this->EndViewTarget();
-	*/
 }
 
 if (is_array($arResult['CRM_DOCUMENT_BUTTON_CONFIG']))

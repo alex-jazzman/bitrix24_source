@@ -238,6 +238,27 @@ class WorkflowTemplateService
 	{
 		$response = new WorkflowTemplateResponse\SaveTemplateResponse();
 
+		$documentType = $this->getDocumentType($request->parameters);
+		if (is_null($documentType))
+		{
+			$errorMsg = ErrorMessage::INVALID_PARAM_ARG->getError([
+				'#PARAM#' => 'DOCUMENT_TYPE',
+				'#VALUE#' => $documentType
+			]);
+			$response->addError($errorMsg);
+
+			return $response;
+		}
+
+		if ($request->checkAccess && !$this->accessService->canCreateWorkflow($documentType, $request->user->getId()))
+		{
+			$response->addError(
+				ErrorMessage::ACCESS_DENIED->getError()
+			);
+
+			return $response;
+		}
+
 		try {
 			$template = WorkflowTemplate::createFromRequest($request);
 			$templateId = $template->getTemplateId();
@@ -252,7 +273,7 @@ class WorkflowTemplateService
 				$response->setTemplateId(\CBPWorkflowTemplateLoader::add($fields));
 			}
 
-			$this->handleTrackOnOption($templateId, $template->getFields());
+			$this->handleTrackOnOption($response->getTemplateId(), $template->getFields());
 		}
 		catch (\Throwable $exception)
 		{
@@ -416,6 +437,27 @@ class WorkflowTemplateService
 	): WorkflowTemplateResponse\SaveTemplateDraftResponse
 	{
 		$response = new WorkflowTemplateResponse\SaveTemplateDraftResponse();
+
+		$documentType = $this->getDocumentType($request->parameters);
+		if (is_null($documentType))
+		{
+			$errorMsg = ErrorMessage::INVALID_PARAM_ARG->getError([
+				'#PARAM#' => 'DOCUMENT_TYPE',
+				'#VALUE#' => $documentType
+			]);
+			$response->addError($errorMsg);
+
+			return $response;
+		}
+
+		if ($request->checkAccess && !$this->accessService->canCreateWorkflow($documentType, $request->user->getId()))
+		{
+			$response->addError(
+				ErrorMessage::ACCESS_DENIED->getError()
+			);
+
+			return $response;
+		}
 
 		try
 		{

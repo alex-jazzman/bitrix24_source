@@ -19,6 +19,7 @@ jn.define('im/messenger/lib/element/dialog/message/call/message', (require, expo
 		{
 			super(modelMessage, options);
 
+			/** @type {CallMessageData} */
 			this.call = {
 				title: '',
 				description: '',
@@ -37,6 +38,17 @@ jn.define('im/messenger/lib/element/dialog/message/call/message', (require, expo
 		static getComponentId()
 		{
 			return MessageParams.ComponentId.CallMessage;
+		}
+
+		/**
+		 * @return {CallDialogWidgetItem}
+		 */
+		toDialogWidgetItem()
+		{
+			return {
+				...super.toDialogWidgetItem(),
+				call: this.call,
+			};
 		}
 
 		getType()

@@ -1,53 +1,70 @@
 import {MessagesAutoDeleteConfigs} from "../../../pull/base/types/message";
+import {UserRole} from "../../../../model/users/src/types";
+import {DialogType} from "../../../../model/dialogues/src/types";
+import {
+	ChatsCopilotDataItem,
+	CopilotRoleData,
+	MessageCopilotDataItem
+} from "../../../../model/dialogues/src/copilot/types";
 
 declare type SyncListResult = {
-	addedChats: Array<RawChat>,
-	messages: {
-		additionalMessages: Array<any>,
-		files: Array<RawFile>,
-		messages: Array<RawMessage>,
-		reactions: Array<RawReaction>,
-		reminders: [],
-		users: Array<RawUser>,
-		usersShort: Array<RawShortUser>,
-	},
-	updatedMessages: {
-		additionalMessages: Array<any>,
-		files: Array<RawFile>,
-		messages: Array<RawMessage>,
-		reactions: Array<RawReaction>,
-		reminders: [],
-		users: Array<RawUser>,
-		usersShort: Array<RawShortUser>,
-	},
-	addedPins: {
-		additionalMessages: Array<RawMessage>,
-		files: Array<RawFile>,
-		reactions: Array<RawReaction>,
-		pins: Array<RawPin>,
-		users: Array<RawUser>,
-	},
-	addedRecent: Array<RawRecentItem>,
-	completeDeletedMessages: Record<number, number>,
-	deletedChats: Record<number, number>,
-	completeDeletedChats: Record<number, number>,
-	deletedMessages: [],
-	deletedPins: [] | Record<number, number>,
-	dialogIds: Record<string, string>,
+	chatSync: {
+		addedChats: Record<string, number> | [],
+		addedRecent: Record<string, number> | [],
+		completeDeletedChats: Record<string, number> | [],
+		deletedChats: Record<string, number> | [],
+	}
+	chats: Array<SyncRawChat>,
+	copilot: null | CopilotSyncData,
+	dialogIds: Record<number, string> | [],
 	hasMore: boolean,
-	lastId: number,
-	lastServerDate: string,
-	messagesAutoDeleteConfigs: Array<MessagesAutoDeleteConfigs>
+	lastServerDate: string | null, // null only when the log is empty on server
+	files: Array<SyncRawFile>,
+	reactions: Array<SyncRawReaction>,
+	messages: Array<SyncRawMessage>,
+	additionalMessages: Array<SyncRawMessage>,
+	messagesAutoDeleteConfigs: Array<MessagesAutoDeleteConfigs>, // use only in vuex
+	messageSync: {
+		addedMessages: Record<number, number> | [],
+		completeDeletedMessages: Record<number, number> | [],
+		updatedMessages: Record<number, number> | []
+	},
+	pinSync: {
+		addedPins: Record<number, number> | [],
+		deletedPins: Record<number, number> | [],
+	}
+	pins: Array<SyncRawPin>,
+
+	recentItems: Array<SyncRawRecentItem>,
+	users: Array<SyncRawUser>,
+	usersShort: Array<SyncRawShortUser>,
 }
 
-export type RawMessage = {
+export type SyncRequestResultReceivedEvent = {
+	uuid: string,
+	result: SyncListResult,
+}
+
+export type CopilotSyncData = {
+	aiProvider: string
+	chats: Array<ChatsCopilotDataItem> | null,
+	messages: Array<MessageCopilotDataItem> | null,
+	roles: Record<string, CopilotRoleData> | null,
+}
+
+export type SyncRawMessage = {
 	author_id: number,
 	chat_id: number,
 	date: string,
+	forward: {
+		id: string,
+		userId: number,
+		chatTitle: string | null,
+		chatType: DialogType,
+	}
 	id: number,
 	isSystem: boolean,
 	params: Object,
-	replaces: [],
 	text: string,
 	unread: boolean,
 	uuid: string | null,
@@ -55,10 +72,11 @@ export type RawMessage = {
 	viewedByOthers: boolean
 };
 
-export type RawChat = {
+export type SyncRawChat = {
 	avatar: string,
 	color: string,
 	counter: number,
+	containsCollaber: boolean,
 	dateCreate: string,
 	description: string,
 	dialogId: string,
@@ -68,8 +86,10 @@ export type RawChat = {
 	entityData3: string,
 	entityId: string,
 	entityType: string,
+	entityLink: { type: string, url: string },
 	extranet: boolean,
 	id: number,
+	isNew: boolean,
 	lastId: number,
 	lastMessageId: number,
 	lastMessageViews: {
@@ -87,40 +107,36 @@ export type RawChat = {
 	messageType: string,
 	muteList: number[],
 	name: string,
+	optionalParams: []
 	owner: number,
+	parentChatId: number,
+	parentMessageId: number,
+	permissions: {
+		canPost: UserRole,
+		manageUsersAdd: UserRole,
+		manageUsersDelete: UserRole,
+		manageUi: UserRole,
+		manageSettings: UserRole,
+		manageMessages: UserRole
+	}
 	public: string,
-	restrictions: RawRestrictions,
 	role: string,
-	type: string,
+	type: DialogType
 	unreadId: number,
-    userCounter: number
-    parentChatId: number,
-    parentMessageId: number,
-    parent_chat_id: number, // Pull only
-    parent_message_id: number, // Pull only
-	messagesAutoDeleteDelay: number,
+	userCounter: number
 };
 
-export type RawRestrictions = {
-	avatar: boolean,
-	call: boolean,
-	extend: boolean,
-	leave: boolean,
-	leaveOwner: boolean,
-	mute: boolean,
-	rename: boolean,
-	send: boolean,
-	userList: boolean,
-};
-
-export type RawFile = {
+export type SyncRawFile = {
 	authorId: number,
 	authorName: string,
 	chatId: number,
 	date: string,
 	extension: string,
 	id: number,
-	image: boolean,
+	image: {
+		height: number,
+		width: number,
+	},
 	name: string,
 	progress: number,
 	size: number,
@@ -135,28 +151,29 @@ export type RawFile = {
 		objectId: string,
 		src: string,
 		title: string,
-		viewer: null,
+		viewer: null | string,
 		viewerGroupBy: string,
+		viewerResized: null | string,
 		viewerType: string
 	}
 };
 
-export type RawPin = {
+export type SyncRawPin = {
+	authorId: number,
+	chatId: number,
+	dateCreate: string,
 	id: number,
 	messageId: number,
-	chatId: number,
-	authorId: number,
-	dateCreate: string,
 };
 
-export type RawReaction = {
+export type SyncRawReaction = {
 	messageId: number,
-	reactionCounters: {[reactionType: string]: number},
-	reactionUsers: {[reactionType: string]: number[]},
-	ownReactions?: []
+	ownReactions?: Array<string>,
+	reactionCounters: { [reactionType: string]: number },
+	reactionUsers: { [reactionType: string]: Array<number> },
 };
 
-export type RawUser = {
+export type SyncRawUser = {
 	absent: false | string,
 	active: boolean,
 	avatar: string,
@@ -172,7 +189,7 @@ export type RawUser = {
 	}
 	color: string,
 	connector: boolean,
-	departments: number[],
+	departments: Array<number>,
 	desktopLastDate: false | string,
 	externalAuthId: string,
 	extranet: boolean,
@@ -185,51 +202,32 @@ export type RawUser = {
 	mobileLastDate: false | string,
 	name: string,
 	network: boolean,
-	phones: false | number[],
+	phones: false | { personal_mobile: string },
 	status: string,
-	workPosition: string
+	workPosition: string,
+	type: string,
 };
 
-export type RawShortUser = {
+export type SyncRawShortUser = {
 	id: number,
 	name: string,
-	avatar: string
+	avatar: string,
+	color: string,
+	type: string,
 };
 
-export type RawRecentItem = {
-	id: string, // dialogId
-	chat_id: number,
-	type: string,
-	title: string,
-	avatar: {
-		url: string,
-		color: string
-	},
-	counter: number,
+export type SyncRawRecentItem = {
+	chatId: number,
+	dateLastActivity: string,
+	dateUpdate: string,
+	dialogId: string,
+	messageId: number,
 	pinned: boolean,
 	unread: boolean,
-	last_id: number,
-	date_update: string,
-	date_last_activity: string,
-	message: {
-		attach: boolean,
-		author_id: number,
-		date: string,
-		file: boolean | {},
-		id: number,
-		status: string,
-		text: string,
-		uuid: string,
-	},
-	chat: {},
-	user: {},
-	has_reminder: boolean,
-	options: [],
 };
 
 export type SyncLoadServiceLoadPageResult = {
 	hasMore: boolean,
-	lastId: number,
 	lastServerDate: string,
 	addedMessageIdList: Array<number>,
 	deletedChatIdList: Array<number>,

@@ -649,7 +649,7 @@ class SignStartComponent extends SignBaseComponent
 		}
 
 		if (
-			Feature::instance()->isSendDocumentByEmployeeEnabled()
+			Feature::instance()->isDocumentTemplatesAvailable()
 			&& $this->accessController->check(ActionDictionary::ACTION_B2E_TEMPLATE_READ)
 		)
 		{
@@ -704,7 +704,7 @@ class SignStartComponent extends SignBaseComponent
 		}
 
 		if (
-			Feature::instance()->isSendDocumentByEmployeeEnabled()
+			Feature::instance()->isDocumentTemplatesAvailable()
 			&& $this->accessController->check(ActionDictionary::ACTION_B2E_MEMBER_DYNAMIC_FIELDS_DELETE)
 		)
 		{
@@ -803,7 +803,7 @@ class SignStartComponent extends SignBaseComponent
 		if ($showTariffSlider)
 		{
 			$splitButton
-				->addClass('ui-btn-icon-lock')
+				->setIcon(\Bitrix\UI\Buttons\Icon::LOCK)
 				->addClass('sign-b2e-js-tarriff-slider-trigger')
 				->setTag('button');
 		}

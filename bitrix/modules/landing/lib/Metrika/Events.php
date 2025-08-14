@@ -8,6 +8,7 @@ enum Events: string
 	case open = 'open';
 	case save = 'save';
 	case cancel = 'cancel';
+	case start = 'start';
 	case openStartPage = 'open_start_page';
 	case openSettingsMain = 'open_settings_main';
 	case openMarket = 'open_market';

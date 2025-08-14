@@ -4,7 +4,7 @@
  * Bitrix Framework
  * @package bitrix
  * @subpackage main
- * @copyright 2001-2024 Bitrix
+ * @copyright 2001-2025 Bitrix
  */
 
 namespace Bitrix\Main\Web\Http\Curl;
@@ -17,6 +17,8 @@ use Bitrix\Main\Web\Uri;
 
 class Handler extends Http\Handler
 {
+	protected static ?\CurlHandle $sharedHandle = null;
+
 	protected \CurlHandle $handle;
 	protected $logFileHandle;
 
@@ -27,16 +29,32 @@ class Handler extends Http\Handler
 	 */
 	public function __construct(RequestInterface $request, Http\ResponseBuilderInterface $responseBuilder, array $options = [])
 	{
-		Http\Handler::__construct($request, $responseBuilder, $options);
+		parent::__construct($request, $responseBuilder, $options);
 
-		$this->handle = curl_init();
+		if ($this->async)
+		{
+			// multihandle
+			$this->handle = curl_init();
+		}
+		else
+		{
+			// one shared handle for sync requests
+			if (static::$sharedHandle === null)
+			{
+				static::$sharedHandle = curl_init();
+			}
+			$this->handle = static::$sharedHandle;
+		}
 
 		$this->setOptions($options);
 	}
 
 	public function __destruct()
 	{
-		curl_close($this->handle);
+		if ($this->async)
+		{
+			curl_close($this->handle);
+		}
 
 		if (is_resource($this->logFileHandle))
 		{
@@ -130,6 +148,11 @@ class Handler extends Http\Handler
 			$curlOptions[CURLOPT_VERBOSE] = true;
 		}
 
+		if (!$this->async)
+		{
+			// shared handle
+			curl_reset($this->handle);
+		}
 		curl_setopt_array($this->handle, $curlOptions);
 	}
 
@@ -239,7 +262,7 @@ class Handler extends Http\Handler
 		return $this->handle;
 	}
 
-	public function getInfo(): array
+	protected function getDiagnostics(): array
 	{
 		$stat = curl_getinfo($this->handle);
 
@@ -255,5 +278,44 @@ class Handler extends Http\Handler
 			'request' => round($stat['pretransfer_time'] ?? 0.0, 6),
 			'total' => round($stat['total_time'] ?? 0.0, 6),
 		];
+	}
+
+	public function execute(): Http\Response
+	{
+		$fetchBody = true;
+		try
+		{
+			$status = curl_exec($this->handle);
+		}
+		catch (SkipBodyException)
+		{
+			$fetchBody = false;
+		}
+
+		if ($status !== false)
+		{
+			if ($fetchBody)
+			{
+				if ($this->debugLevel & HttpDebug::RESPONSE_BODY)
+				{
+					$this->log($this->response->getBody(), HttpDebug::RESPONSE_BODY);
+				}
+
+				// need to ajust the response headers (PSR-18)
+				$this->response->adjustHeaders();
+			}
+
+			$this->logDiagnostics();
+
+			return $this->response;
+		}
+		else
+		{
+			$error = curl_error($this->handle);
+
+			$this->getLogger()?->error($error . "\n");
+
+			throw new Http\NetworkException($this->request, $error);
+		}
 	}
 }

@@ -22,6 +22,7 @@ $APPLICATION->IncludeComponent(
 		'POPUP_COMPONENT_PARAMS' => [
 			"NUMERATOR_ID" => $request->get('NUMERATOR_ID'),
 		],
+		'USE_UI_TOOLBAR' => 'Y',
 	)
 );
 

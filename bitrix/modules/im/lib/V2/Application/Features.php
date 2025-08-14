@@ -6,6 +6,7 @@ use Bitrix\Im\Call\Integration\Zoom;
 use Bitrix\Im\Integration\Disk\Documents;
 use Bitrix\Im\Settings;
 use Bitrix\Im\V2\Chat\CopilotChat;
+use Bitrix\Im\V2\Integration\AiAssistant\AiAssistantService;
 use Bitrix\Im\V2\Integration\Extranet\CollaberService;
 use Bitrix\Im\V2\Integration\HumanResources\Structure;
 use Bitrix\Im\V2\Integration\Intranet\Invitation;
@@ -13,6 +14,7 @@ use Bitrix\Im\V2\Integration\Sign\DocumentSign;
 use Bitrix\Im\V2\Integration\Socialnetwork\Collab\Collab;
 use Bitrix\ImBot\Bot\Giphy;
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Loader;
 
 class Features
@@ -45,6 +47,7 @@ class Features
 		public readonly bool $isCopilotSelectModelAvailable,
 		public readonly bool $teamsInStructureAvailable,
 		public readonly bool $isDesktopRedirectAvailable,
+		public readonly bool $isAiAssistantAvailable,
 	){}
 
 	public static function get(): self
@@ -85,6 +88,7 @@ class Features
 			self::isCopilotSelectModelAvailable(),
 			Structure::isTeamsAvailable(),
 			self::isDesktopRedirectAvailable(),
+			self::isAiAssistantAvailable(),
 		);
 	}
 
@@ -144,5 +148,10 @@ class Features
 	public static function isDesktopRedirectAvailable(): bool
 	{
 		return Option::get('im', 'desktop_redirect_available', 'N') === 'Y';
+	}
+
+	public static function isAiAssistantAvailable(): bool
+	{
+		return ServiceLocator::getInstance()->get(AiAssistantService::class)->isAssistantAvailable();
 	}
 }

@@ -89,12 +89,17 @@ jn.define('im/messenger/provider/services/sync/fillers/counter', (require, expor
 			/** @type {CounterStateCollection} */
 			const counterCollection = {};
 
-			syncListResult.addedChats.forEach((dialog) => {
+			const addedChatsIdSet = new Set(Object.values(syncListResult.chatSync.addedChats));
+			const addedChats = syncListResult.chats.filter((chat) => {
+				return addedChatsIdSet.has(chat.id);
+			});
+
+			addedChats.forEach((dialog) => {
 				const chatId = dialog.id;
 				counterCollection[chatId] = {
 					chatId,
 					counter: dialog.counter,
-					parentChatId: dialog.parent_chat_id,
+					parentChatId: dialog.parentChatId,
 					type: CounterHelper.getCounterTypeByDialogType(dialog.type),
 				};
 			});
@@ -109,8 +114,8 @@ jn.define('im/messenger/provider/services/sync/fillers/counter', (require, expor
 		#prepareChatIdListToDelete(syncListResult)
 		{
 			return [
-				...Object.values(syncListResult.deletedChats),
-				...Object.values(syncListResult.completeDeletedChats),
+				...Object.values(syncListResult.chatSync.deletedChats),
+				...Object.values(syncListResult.chatSync.completeDeletedChats),
 			];
 		}
 	}

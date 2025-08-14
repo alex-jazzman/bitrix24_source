@@ -3,7 +3,6 @@
 return [
 	'extensions' => [
 		'type',
-		'loc',
 		'in-app-url',
 		'notify-manager',
 		'assets/common',
@@ -24,6 +23,7 @@ return [
 		'ui-system/blocks/badges/counter',
 
 		'im:lib/theme',
+		'im:messenger/loc',
 		'im:messenger/const',
 		'im:messenger/assets/common',
 

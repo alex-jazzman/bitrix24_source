@@ -135,8 +135,8 @@ jn.define('im/messenger/db/repository/pin-message', (require, exports, module) =
 				pinListToAdd.push(pinToAdd);
 			});
 
-			this.pinTable.add(pinListToAdd, true);
-			this.pinMessageTable.add(messageListToAdd, true);
+			await this.pinTable.add(pinListToAdd, true);
+			await this.pinMessageTable.add(messageListToAdd, true);
 		}
 
 		/**
@@ -154,8 +154,8 @@ jn.define('im/messenger/db/repository/pin-message', (require, exports, module) =
 				.map((message) => this.pinMessageTable.validate(validateMessage(message)))
 			;
 
-			this.pinTable.add(pinsToAdd, true);
-			this.pinMessageTable.add(messageToAdd, true);
+			await this.pinTable.add(pinsToAdd, true);
+			await this.pinMessageTable.add(messageToAdd, true);
 		}
 
 		/**

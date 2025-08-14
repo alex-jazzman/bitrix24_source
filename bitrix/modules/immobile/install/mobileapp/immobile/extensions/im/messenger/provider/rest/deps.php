@@ -11,6 +11,7 @@ return [
 		'im:messenger/lib/ui/notification',
 		'im:messenger/const',
 		'im:messenger/provider/rest',
+		'im:messenger/provider/services/analytics',
 	],
 	'bundle' => [
 		'./src/dialog',

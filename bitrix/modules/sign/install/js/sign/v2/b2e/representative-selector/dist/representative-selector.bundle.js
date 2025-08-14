@@ -441,6 +441,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	  }
 	  babelHelpers.classPrivateFieldLooseBase(this, _data)[_data].name = item.title;
 	  babelHelpers.classPrivateFieldLooseBase(this, _data)[_data].avatarLink = defaultAvatarLink;
+	  babelHelpers.classPrivateFieldLooseBase(this, _data)[_data].position = '';
 	  babelHelpers.classPrivateFieldLooseBase(this, _refreshView)[_refreshView]();
 	}
 	function _refreshView2() {

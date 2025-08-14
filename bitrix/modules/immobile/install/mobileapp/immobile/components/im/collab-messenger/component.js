@@ -1,5 +1,5 @@
 // eslint-disable-next-line no-var,no-implicit-globals
-var REVISION = 19; // API revision - sync with im/lib/revision.php
+var REVISION = 20; // API revision - sync with im/lib/revision.php
 
 /* region Environment variables */
 
@@ -22,11 +22,17 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	/* region import */
 	const require = (ext) => jn.require(ext); // for IDE hints
 
+	/**
+	 * @description Import MessengerParams and waiting should be higher than other imports.
+	 */
+	const { MessengerParams } = require('im/messenger/lib/params');
+	await MessengerParams.waitSharedParamsInit();
+
 	const { QuickRecentLoader } = require('im/messenger/lib/quick-recent-load');
 	QuickRecentLoader.renderItemsOnViewLoaded();
 
 	const { Type } = require('type');
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { isEqual, clone } = require('utils/object');
 	const { EntityReady } = require('entity-ready');
 
@@ -91,7 +97,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	const { RecentSelector } = require('im/messenger/controller/search/experimental');
 	const { SmileManager } = require('im/messenger/lib/smile-manager');
 	const { MessengerBase } = require('im/messenger/component/messenger-base');
-	const { MessengerParams } = require('im/messenger/lib/params');
 	const { SyncFillerCollab } = require('im/messenger/provider/services/sync/fillers/collab');
 	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
 	const { SidebarLazyFactory } = require('im/messenger/controller/sidebar-v2/factory');
@@ -289,7 +294,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 					break;
 
 				default:
-					headerTitle = MessengerParams.getMessengerTitle();
+					headerTitle = Loc.getMessage('IMMOBILE_MESSENGER_COMMON_TITLE');
 					useProgress = false;
 					break;
 			}
@@ -318,7 +323,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			BX.PULL.subscribe(new CollabDialogPullHandler());
 			BX.PULL.subscribe(new CollabMessagePullHandler());
 			// deprecated. delete after counters in memoryStorage go to prod
-			//BX.PULL.subscribe(new CollabCounterPullHandler());
+			// BX.PULL.subscribe(new CollabCounterPullHandler());
 			BX.PULL.subscribe(new CollabFilePullHandler());
 			BX.PULL.subscribe(new CollabUserPullHandler());
 			BX.PULL.subscribe(new CollabInfoPullHandler());
@@ -586,6 +591,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			Logger.log(`${this.constructor.name}.updatePlanLimitsData`, planLimits);
 			MessengerParams.setPlanLimits(planLimits);
 		}
+
 		/* endregion legacy dialog integration */
 
 		/* endregion event handlers */
@@ -611,7 +617,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 				revision,
 			);
 
-			reloadAllScripts();
+			// reloadAllScripts();
 
 			return false;
 		}

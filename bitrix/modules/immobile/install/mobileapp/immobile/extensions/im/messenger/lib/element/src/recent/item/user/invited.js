@@ -2,7 +2,7 @@
  * @module im/messenger/lib/element/recent/item/user/invited
  */
 jn.define('im/messenger/lib/element/recent/item/user/invited', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 
 	const { Theme } = require('im/lib/theme');
 	const { UserItem } = require('im/messenger/lib/element/recent/item/user');

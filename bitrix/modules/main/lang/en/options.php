@@ -10,6 +10,7 @@ $MESS["MAIN_EMAIL_FROM"] = "Website administrator e-mail (default \"From\" addre
 $MESS["MAIN_ERROR_REPORTING"] = "Error reporting mode:";
 $MESS["MAIN_EVENT_LOG_CLEANUP_DAYS"] = "Number of days to keep events:";
 $MESS["MAIN_EVENT_LOG_FILE_ACCESS"] = "Changes in file access permissions:";
+$MESS["MAIN_EVENT_LOG_GROUP_EDIT"] = "Log user group updates:";
 $MESS["MAIN_EVENT_LOG_GROUP_POLICY"] = "User group security policy updates:";
 $MESS["MAIN_EVENT_LOG_LOGIN_FAIL"] = "Failed logins:";
 $MESS["MAIN_EVENT_LOG_LOGIN_SUCCESS"] = "Successful logins:";

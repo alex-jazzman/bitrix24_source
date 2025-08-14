@@ -1613,8 +1613,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 						}
 
 						$result['items'][] = [
-							'name' => $handlerDescription['NAME'] ?? $handlerList['SYSTEM'][$systemHandler],
-							'psModeName' => $psModeList[$psMode],
+							'name' => $psModeList[$psMode] ?? $handlerDescription['NAME'] ?? $handlerList['SYSTEM'][$systemHandler],
 							'img' => $psModeImage,
 							'info' => Loc::getMessage(
 								'SALESCENTER_APP_PAYSYSTEM_MODE_INFO',

@@ -2,7 +2,7 @@
  * @module im/messenger/controller/dialog/lib/helper/text
  */
 jn.define('im/messenger/controller/dialog/lib/helper/text', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Type } = require('type');
 	const { Icon } = require('assets/icons');
 	const { copyToClipboard } = require('utils/copy');

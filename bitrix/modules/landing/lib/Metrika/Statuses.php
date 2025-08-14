@@ -9,4 +9,5 @@ enum Statuses: string
 	case Error = 'error';
 	case ErrorB24 = 'error_b24';
 	case ErrorMarket = 'error_market';
+	case ErrorTurnedOff = 'error_turnedoff';
 }

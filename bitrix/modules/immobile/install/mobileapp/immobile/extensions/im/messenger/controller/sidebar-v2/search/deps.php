@@ -13,7 +13,7 @@ return [
 		'im:messenger/lib/logger',
 		'im:messenger/const/analytics',
 		'im:messenger/lib/feature',
-		'loc',
+		'im:messenger/loc',
 		'tokens',
 		'type',
 		'utils/array',

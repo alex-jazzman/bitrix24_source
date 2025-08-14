@@ -39,6 +39,16 @@ final class FillRepeatSaleTips extends AbstractOperation
 	protected const PAYLOAD_CLASS = FillRepeatSaleTipsPayload::class;
 	protected const ENGINE_CODE = EventHandler::SETTINGS_REPEAT_SALE_ENGINE_CODE;
 
+	public static function isAccessGranted(int $userId, ItemIdentifier $target): bool
+	{
+		return parent::isAccessGranted($userId, $target)
+			&& CCrmActivity::CheckItemUpdatePermission(
+				['ID' => $target->getEntityId()],
+				Container::getInstance()->getUserPermissions($userId)->getCrmPermissions(),
+			)
+		;
+	}
+
 	public static function isSuitableTarget(ItemIdentifier $target): bool
 	{
 		if ($target->getEntityTypeId() === CCrmOwnerType::Activity)

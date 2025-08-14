@@ -2,7 +2,7 @@
  * @module im/messenger/lib/utils/user
  */
 jn.define('im/messenger/lib/utils/user', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Moment } = require('utils/date');
 	const { DateUtils } = require('im/messenger/lib/utils/date');
 	const { longDate, dayMonth, shortTime } = require('utils/date/formats');

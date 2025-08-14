@@ -45,6 +45,9 @@ Bitrix24Manager::getInstance()->addIntegrationRequestButtonToToolbar(
 <div class="salescenter-cashbox-title"><?=Loc::getMessage('SCP_SALESCENTER_OFFILINE_CASHBOX_SUB_TITLE')?></div>
 <div id="salescenter-offline-cashbox" class="salescenter-cashbox"></div>
 
+<div class="salescenter-cashbox-title"><?=Loc::getMessage('SCP_SALESCENTER_OTHERS_CASHBOX_SUB_TITLE')?></div>
+<div id="salescenter-other-cashbox" class="salescenter-cashbox"></div>
+
 <script>
 	BX.ready(function()
 	{
@@ -72,6 +75,18 @@ Bitrix24Manager::getInstance()->addIntegrationRequestButtonToToolbar(
 
 		BX.SaleCenterCashbox.init({
 			cashboxParams: offlineCashboxParams,
+		});
+
+		// other cashbox
+		var otherCashboxParams = <?=CUtil::PhpToJSObject($arResult['otherCashboxPanelParams']);?>;
+		otherCashboxParams.container = document.getElementById('salescenter-other-cashbox');
+		otherCashboxParams.sizeRatio = "55%";
+		otherCashboxParams.itemMinWidth = 200;
+		otherCashboxParams.tileMargin = 7;
+		otherCashboxParams.itemType = 'BX.SaleCenterCashbox.TileGrid';
+
+		BX.SaleCenterCashbox.init({
+			cashboxParams: otherCashboxParams,
 		});
 	});
 </script>

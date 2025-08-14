@@ -2,7 +2,7 @@
  * @module im/messenger/lib/element/recent/item/call
  */
 jn.define('im/messenger/lib/element/recent/item/call', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Type } = require('type');
 
 	const { Theme } = require('im/lib/theme');
@@ -13,6 +13,11 @@ jn.define('im/messenger/lib/element/recent/item/call', (require, exports, module
 	 */
 	class CallItem
 	{
+		/**
+		 * @constructor
+		 * @param {RecentCallData} call
+		 * @param {RecentCallStatus} callStatus
+		 */
 		constructor(callStatus, call)
 		{
 			const dialogId = call.associatedEntity.id;
@@ -122,6 +127,10 @@ jn.define('im/messenger/lib/element/recent/item/call', (require, exports, module
 			}
 		}
 
+		/**
+		 * @param {string} url
+		 * @return {string}
+		 */
 		prepareAvatarUrl(url)
 		{
 			if (!url || url.includes('/bitrix/js/im/images/blank.gif'))
@@ -129,10 +138,31 @@ jn.define('im/messenger/lib/element/recent/item/call', (require, exports, module
 				return '';
 			}
 
-			// eslint-disable-next-line no-param-reassign
-			url = url.indexOf('http') === 0 ? url : currentDomain + url;
+			const formattedUrl = url.indexOf('http') === 0 ? url : currentDomain + url;
 
-			return encodeURI(url);
+			return encodeURI(formattedUrl);
+		}
+
+		/**
+		 * @return {RecentWidgetCallItem}
+		 */
+		toRecentWidgetItem()
+		{
+			return {
+				backgroundColor: this.backgroundColor,
+				color: this.color,
+				id: this.id,
+				imageUrl: this.imageUrl,
+				params: this.params,
+				sectionCode: this.sectionCode,
+				styles: this.styles,
+				subtitle: this.subtitle,
+				title: this.title,
+				unselectable: this.unselectable,
+				useBackgroundColor: this.useBackgroundColor,
+				useColor: this.useColor,
+				useLetterImage: this.useLetterImage,
+			};
 		}
 	}
 

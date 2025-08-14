@@ -5,7 +5,6 @@ jn.define('im/messenger/lib/element/dialog/message/call/factory', (require, expo
 	const { CustomMessageFactory } = require('im/messenger/lib/element/dialog/message/custom/factory');
 	const { CallMessage } = require('im/messenger/lib/element/dialog/message/call/message');
 	const { TextMessage } = require('im/messenger/lib/element/dialog/message/text');
-	const { Feature } = require('im/messenger/lib/feature');
 	const { Logger } = require('im/messenger/lib/logger');
 
 	/**
@@ -29,7 +28,7 @@ jn.define('im/messenger/lib/element/dialog/message/call/factory', (require, expo
 
 		static checkSuitableForDisplay(modelMessage)
 		{
-			return Feature.isCallMessageSupported && modelMessage.params?.componentId === CallMessageFactory.getComponentId();
+			return modelMessage.params?.componentId === CallMessageFactory.getComponentId();
 		}
 
 		static getComponentId()

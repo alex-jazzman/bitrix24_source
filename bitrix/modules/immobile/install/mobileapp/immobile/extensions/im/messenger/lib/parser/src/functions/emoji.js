@@ -5,7 +5,7 @@
  */
 jn.define('im/messenger/lib/parser/functions/emoji', (require, exports, module) => {
 
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Type } = require('type');
 	const {
 		FileType,

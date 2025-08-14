@@ -30,7 +30,7 @@ jn.define('im/messenger/lib/quick-recent-load', (require, exports, module) => {
 
 		/**
 		 * @param {Array<JNListWidgetSectionItem>} sections
-		 * @param {Array<NativeRecentItem>} items
+		 * @param {Array<RecentWidgetItem>} items
 		 */
 		saveCache(sections, items)
 		{

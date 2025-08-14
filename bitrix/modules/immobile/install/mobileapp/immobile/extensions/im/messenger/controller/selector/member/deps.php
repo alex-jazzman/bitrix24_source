@@ -3,6 +3,6 @@
 return [
 	'extensions' => [
 		'im:messenger/controller/selector/dialog/opener',
-		'loc',
+		'im:messenger/loc',
 	],
 ];

@@ -1274,4 +1274,9 @@ if (!empty($arResult['RESTRICTED_FIELDS_ENGINE']))
 
 \Bitrix\Crm\Integration\NotificationsManager::showSignUpFormOnCrmShopCreated();
 
-print OnboardingPopup::getInstance()->build();
+$analytics = [
+	'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_DEAL,
+	'c_sub_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_LIST,
+];
+
+print OnboardingPopup::getInstance()->setAnalytics($analytics)->build();

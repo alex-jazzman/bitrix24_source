@@ -57,10 +57,10 @@ if ($arResult['IS_PERMITTED'])
 	{
 		$permissions = (isset($_POST['ROLE_PERMS']) && is_array($_POST['ROLE_PERMS'])) ? $_POST['ROLE_PERMS'] : [];
 		$bVarsFromForm = true;
-		$arFields = array(
+		$arFields = [
 			'NAME' => $_POST['NAME'],
-			'RELATION' => $permissions
-		);
+			'PERMISSIONS' => $permissions,
+		];
 
 		$CCrmRole = new CcrmRole();
 		if ($arParams['ROLE_ID'] > 0)

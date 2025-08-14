@@ -1,5 +1,5 @@
 <?php
-$MESS["CRM_NOTIFY_SCHEME_ACTIVITY_EMAIL_INCOMING"] = "There are new e-mails";
+$MESS["CRM_NOTIFY_SCHEME_ACTIVITY_EMAIL_INCOMING"] = "New email received";
 $MESS["CRM_NOTIFY_SCHEME_CALLBACK"] = "Callback requested";
 $MESS["CRM_NOTIFY_SCHEME_ENTITY_ASSIGNED_BY"] = "You were assigned as a responsible person";
 $MESS["CRM_NOTIFY_SCHEME_ENTITY_OBSERVER"] = "You were added as an observer";

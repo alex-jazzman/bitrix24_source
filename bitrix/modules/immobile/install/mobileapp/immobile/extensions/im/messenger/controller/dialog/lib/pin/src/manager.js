@@ -2,7 +2,7 @@
  * @module im/messenger/controller/dialog/lib/pin/manager
  */
 jn.define('im/messenger/controller/dialog/lib/pin/manager', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Type } = require('type');
 	const { isEqual } = require('utils/object');
 	const { intersection } = require('utils/array');
@@ -54,7 +54,7 @@ jn.define('im/messenger/controller/dialog/lib/pin/manager', (require, exports, m
 			this.pinnedMessagesState = [];
 			this.discussionMessageId = null;
 			this.isShowDiscussionPanel = false;
-			this.isCanEditPin = false;
+			this.сanEditPin = false;
 			this.bindStoreEventHandlers();
 			this.bindViewEventHandlers();
 		}
@@ -598,9 +598,9 @@ jn.define('im/messenger/controller/dialog/lib/pin/manager', (require, exports, m
 		 */
 		getButtonType()
 		{
-			this.isCanEditPin = ChatPermission.isCanPost(this.dialogId);
+			this.сanEditPin = ChatPermission.сanPost(this.dialogId);
 
-			if (!this.isCanEditPin)
+			if (!this.сanEditPin)
 			{
 				return null;
 			}
@@ -894,7 +894,7 @@ jn.define('im/messenger/controller/dialog/lib/pin/manager', (require, exports, m
 		 */
 		onUpdateDialog({ payload })
 		{
-			if (this.isCanEditPin === ChatPermission.isCanPost(payload.data.dialogId))
+			if (this.сanEditPin === ChatPermission.сanPost(payload.data.dialogId))
 			{
 				return;
 			}

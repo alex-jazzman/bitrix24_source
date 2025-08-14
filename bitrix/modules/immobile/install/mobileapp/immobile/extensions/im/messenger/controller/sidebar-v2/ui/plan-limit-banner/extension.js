@@ -3,7 +3,7 @@
  */
 jn.define('im/messenger/controller/sidebar-v2/ui/plan-limit-banner', (require, exports, module) => {
 	const { Color } = require('tokens');
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { AnalyticsEvent } = require('analytics');
 	const { IconView, Icon } = require('ui-system/blocks/icon');
 	const { planLimitLock } = require('im/messenger/assets/common');

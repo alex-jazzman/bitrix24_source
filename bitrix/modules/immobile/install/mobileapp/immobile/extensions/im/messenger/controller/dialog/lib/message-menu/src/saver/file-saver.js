@@ -2,7 +2,7 @@
  * @module im/messenger/controller/dialog/lib/message-menu/src/saver/file-saver
  */
 jn.define('im/messenger/controller/dialog/lib/message-menu/src/saver/file-saver', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Type } = require('type');
 	const { fileSaver: fileSaverUtility } = require('utils/file');
 	const { Alert, ButtonType } = require('alert');

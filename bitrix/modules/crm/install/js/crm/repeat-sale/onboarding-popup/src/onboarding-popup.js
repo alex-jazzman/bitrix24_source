@@ -1,11 +1,12 @@
+import { Builder, Dictionary } from 'crm.integration.analytics';
 import { BannerDispatcher, Priority } from 'crm.integration.ui.banner-dispatcher';
 import { Dom, Extension, Loc, Tag } from 'main.core';
 import type { PopupOptions } from 'main.popup';
 import { Popup } from 'main.popup';
+import { sendData } from 'ui.analytics';
 import { AirButtonStyle, Button as UiButton } from 'ui.buttons';
 import { Icon, Outline as OutlineIconSet } from 'ui.icon-set.api.core';
 import 'ui.icon-set.actions';
-
 import 'ui.design-tokens';
 import 'ui.design-tokens.air';
 import './onboarding-popup.css';
@@ -15,6 +16,7 @@ const MAX_STEP_NUMBER = 3;
 type OnboardingPopupOptions = {
 	closeOptionName: string;
 	closeOptionCategory: string;
+	analytics?: Object;
 };
 
 export class OnboardingPopup
@@ -26,11 +28,13 @@ export class OnboardingPopup
 	#step: number = 0;
 	#closeOptionName: ?string = null;
 	#closeOptionCategory: ?string = null;
+	#analytics: ?Object = null;
 
 	constructor(params: OnboardingPopupOptions)
 	{
 		this.#closeOptionName = params?.closeOptionName ?? null;
 		this.#closeOptionCategory = params?.closeOptionCategory ?? null;
+		this.#analytics = params?.analytics ?? {};
 	}
 
 	show(): void
@@ -87,9 +91,14 @@ export class OnboardingPopup
 			animation: 'fading-slide',
 			autoHide: false,
 			events: {
+				onFirstShow: () => {
+					this.#sendViewAnalytics();
+				},
 				onclose: () => {
 					this.#resetTargetOverflow();
 					BX.userOptions.save(this.#closeOptionCategory, this.#closeOptionName, 'closed', 'Y');
+
+					this.#sendCloseAnalytics();
 				},
 			},
 		};
@@ -218,6 +227,8 @@ export class OnboardingPopup
 			document.querySelector('.crm-repeat-sale__onboarding-popup-step-container'),
 			this.#getStepContent(),
 		);
+
+		this.#sendClickAnalytics();
 	}
 
 	#setTargetOverflow(value: string): void
@@ -245,5 +256,47 @@ export class OnboardingPopup
 		}
 
 		return this.#targetContainer;
+	}
+
+	#sendViewAnalytics(): void
+	{
+		this.#sendAnalytics('view');
+	}
+
+	#sendCloseAnalytics(): void
+	{
+		this.#sendAnalytics('close');
+	}
+
+	#sendClickAnalytics(): void
+	{
+		this.#sendAnalytics('click');
+	}
+
+	#sendAnalytics(eventName: string): void
+	{
+		const type = Dictionary.TYPE_REPEAT_SALE_BANNER_NULL;
+		const subSection = this.#analytics.c_sub_section ?? Dictionary.SUB_SECTION_KANBAN;
+
+		let instance = null;
+		if (eventName === 'view')
+		{
+			instance = Builder.RepeatSale.Banner.ViewEvent.createDefault(type, subSection);
+		}
+		else if (eventName === 'close')
+		{
+			instance = Builder.RepeatSale.Banner.CloseEvent.createDefault(type, subSection);
+		}
+		else if (eventName === 'click')
+		{
+			instance = Builder.RepeatSale.Banner.ClickEvent.createDefault(type, subSection);
+		}
+
+		if (instance)
+		{
+			const section = this.#analytics.c_section ?? '';
+
+			sendData(instance.setSection(section).buildData());
+		}
 	}
 }

@@ -9,6 +9,7 @@ use Bitrix\Crm\RepeatSale\Widget\WidgetManager;
 
 $settings = [
 	'feedbackFormParams' => WidgetManager::getInstance()->getFeedbackFormParams(),
+	// @todo check force feature enabled
 ];
 
 return [
@@ -17,6 +18,7 @@ return [
 	'rel' => [
 		'ui.confetti',
 		'ui.notification',
+		'crm.timeline.tools',
 		'ui.feedback.form',
 		'crm.integration.analytics',
 		'main.core',

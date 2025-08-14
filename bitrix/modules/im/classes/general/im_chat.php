@@ -3365,6 +3365,8 @@ class CIMChat
 			Chat::IM_TYPE_OPEN_CHANNEL,
 			Chat::IM_TYPE_COLLAB,
 			Chat::IM_TYPE_EXTERNAL,
+			Chat::IM_TYPE_AI_ASSISTANT,
+			Chat::IM_TYPE_AI_ASSISTANT_ENTITY,
 		];
 	}
 

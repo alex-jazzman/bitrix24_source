@@ -6,8 +6,9 @@ namespace Bitrix\Main\Command;
 
 use Bitrix\Main\Command\Exception\CommandException;
 use Bitrix\Main\Command\Exception\CommandValidationException;
-use Bitrix\Main\Error;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Result;
+use Bitrix\Main\Validation\ValidationResult;
 
 abstract class AbstractCommand implements CommandInterface
 {
@@ -16,9 +17,10 @@ abstract class AbstractCommand implements CommandInterface
 	 */
 	final public function run(): Result
 	{
-		if (!$this->validate())
+		$validationResult = $this->validate();
+		if (!$validationResult->isSuccess())
 		{
-			throw new CommandValidationException($this->getValidationErrors());
+			throw new CommandValidationException($validationResult->getErrors());
 		}
 
 		if ($errorResult = $this->beforeRun())
@@ -42,9 +44,9 @@ abstract class AbstractCommand implements CommandInterface
 
 	abstract protected function execute(): Result;
 
-	protected function validate(): bool
+	protected function validate(): ValidationResult
 	{
-		return true;
+		return ServiceLocator::getInstance()->get('main.validation.service')->validate($this);
 	}
 
 	/**
@@ -57,13 +59,5 @@ abstract class AbstractCommand implements CommandInterface
 
 	protected function afterRun(): void
 	{
-	}
-
-	/**
-	 * @return Error[]
-	 */
-	private function getValidationErrors(): array
-	{
-		return [];
 	}
 }

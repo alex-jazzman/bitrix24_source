@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,main_core_cache,main_core_zIndexManager,main_core,main_core_events,main_popup) {
+(function (exports,main_core_cache,main_core_zIndexManager,main_core,main_core_events,main_popup,main_pageobject) {
 	'use strict';
 
 	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
@@ -525,6 +525,7 @@ this.BX = this.BX || {};
 	    this.animationDuration = main_core.Type.isNumber(options.animationDuration) ? options.animationDuration : 200;
 	    this.overlayBgColor = main_core.Type.isStringFilled(options.overlayBgColor) && /^#[\dA-Za-f]{6}$/.test(options.overlayBgColor) ? options.overlayBgColor : '#000000';
 	    this.overlayOpacity = main_core.Type.isNumber(options.overlayOpacity) ? Math.min(Math.max(options.overlayOpacity, 0), 100) : 40;
+	    this.overlayBgCallback = main_core.Type.isFunction(options.overlayBgCallback) ? options.overlayBgCallback : null;
 	    babelHelpers.classPrivateFieldSet(this, _startPosition, ['right', 'bottom', 'top'].includes(options.startPosition) ? options.startPosition : babelHelpers.classPrivateFieldGet(this, _startPosition));
 	    babelHelpers.classPrivateFieldSet(this, _outerBoundary, main_core.Type.isPlainObject(options.outerBoundary) ? options.outerBoundary : {});
 	    babelHelpers.classPrivateFieldSet(this, _startAnimationState, _classPrivateMethodGet$1(this, _getAnimationState, _getAnimationState2).call(this, 'start'));
@@ -1394,8 +1395,13 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "setOverlayBackground",
 	    value: function setOverlayBackground() {
-	      const opacity = parseInt(this.overlayOpacity / 100 * 255, 10).toString(16).padStart(2, 0);
-	      main_core.Dom.style(this.getOverlay(), 'background-color', `${this.overlayBgColor}${opacity}`);
+	      if (this.overlayBgCallback === null) {
+	        const opacity = parseInt(this.overlayOpacity / 100 * 255, 10).toString(16).padStart(2, 0);
+	        main_core.Dom.style(this.getOverlay(), 'background-color', `${this.overlayBgColor}${opacity}`);
+	      } else {
+	        const state = _classPrivateMethodGet$1(this, _getAnimationState, _getAnimationState2).call(this, 'end');
+	        main_core.Dom.style(this.getOverlay(), 'background', this.overlayBgCallback(state, this));
+	      }
 	    }
 	  }, {
 	    key: "setOverlayAnimation",
@@ -1408,6 +1414,16 @@ this.BX = this.BX || {};
 	    key: "getOverlayAnimation",
 	    value: function getOverlayAnimation() {
 	      return this.overlayAnimation;
+	    }
+	  }, {
+	    key: "getOverlayBgColor",
+	    value: function getOverlayBgColor() {
+	      return this.overlayBgColor;
+	    }
+	  }, {
+	    key: "getOverlayOpacity",
+	    value: function getOverlayOpacity() {
+	      return this.overlayOpacity;
 	    }
 	  }, {
 	    key: "getContainer",
@@ -1803,8 +1819,12 @@ this.BX = this.BX || {};
 	        main_core.Dom.style(this.getContainer(), 'transform', `translate(${state.translateX}%, ${state.translateY}%)`);
 	      }
 	      if (this.getOverlayAnimation()) {
-	        const opacity = parseInt(state.opacity / 100 * 255, 10).toString(16).padStart(2, 0);
-	        main_core.Dom.style(this.getOverlay(), 'background-color', `${this.overlayBgColor}${opacity}`);
+	        if (this.overlayBgCallback === null) {
+	          const opacity = parseInt(state.opacity / 100 * 255, 10).toString(16).padStart(2, 0);
+	          main_core.Dom.style(this.getOverlay(), 'background-color', `${this.overlayBgColor}${opacity}`);
+	        } else {
+	          main_core.Dom.style(this.getOverlay(), 'background', this.overlayBgCallback(state, this));
+	        }
 	      }
 	    }
 	    /**
@@ -2279,13 +2299,17 @@ this.BX = this.BX || {};
 	        translateX: 100,
 	        translateY: 0,
 	        opacity: 0,
-	        scale: 0
+	        scale: 0,
+	        progress: 0,
+	        intensity: 0
 	      },
 	      end: {
 	        translateX: 0,
 	        translateY: 0,
 	        opacity: this.overlayOpacity,
-	        scale: 100
+	        scale: 100,
+	        progress: 100,
+	        intensity: 255
 	      }
 	    },
 	    bottom: {
@@ -2293,13 +2317,17 @@ this.BX = this.BX || {};
 	        translateX: 0,
 	        translateY: 100,
 	        opacity: 0,
-	        scale: 0
+	        scale: 0,
+	        progress: 0,
+	        intensity: 0
 	      },
 	      end: {
 	        translateX: 0,
 	        translateY: 0,
 	        opacity: this.overlayOpacity,
-	        scale: 100
+	        scale: 100,
+	        progress: 100,
+	        intensity: 255
 	      }
 	    },
 	    top: {
@@ -2307,13 +2335,17 @@ this.BX = this.BX || {};
 	        translateX: 0,
 	        translateY: -100,
 	        opacity: 0,
-	        scale: 0
+	        scale: 0,
+	        progress: 0,
+	        intensity: 0
 	      },
 	      end: {
 	        translateX: 0,
 	        translateY: 0,
 	        opacity: this.overlayOpacity,
-	        scale: 100
+	        scale: 100,
+	        progress: 100,
+	        intensity: 255
 	      }
 	    }
 	  };
@@ -2326,7 +2358,7 @@ this.BX = this.BX || {};
 
 	let instance = null;
 	function getInstance() {
-	  const topWindow = BX.PageObject.getRootWindow();
+	  const topWindow = main_pageobject.PageObject.getRootWindow();
 	  if (topWindow !== window) {
 	    return topWindow.BX.SidePanel.Instance;
 	  }
@@ -3902,6 +3934,19 @@ this.BX = this.BX || {};
 	      this.setBrowserHistory(event.getSlider());
 	      this.updateBrowserTitle();
 	      event.getSlider().setAnimation('sliding');
+	      const openSliders = this.getOpenSliders();
+	      const topSlider = event.getSlider();
+	      for (let i = openSliders.length - 1; i >= 0; i--) {
+	        const slider = openSliders[i];
+	        if (topSlider === slider) {
+	          continue;
+	        }
+	        if (topSlider.getContainer().offsetLeft <= slider.getContainer().offsetLeft) {
+	          main_core.Dom.addClass(slider.getOverlay(), '--invisible');
+	        } else {
+	          break;
+	        }
+	      }
 	    }
 	    /**
 	     * @private
@@ -3922,6 +3967,18 @@ this.BX = this.BX || {};
 	        slider.getLabel().moveAt(openSliders.length - index - 2); // move up
 	      });
 
+	      let visibleSlider = null;
+	      const openSliders = this.getOpenSliders();
+	      for (let i = openSliders.length - 1; i >= 0; i--) {
+	        const slider = openSliders[i];
+	        if (event.getSlider() === slider) {
+	          continue;
+	        }
+	        if (visibleSlider === null || slider.getContainer().offsetLeft < visibleSlider.getContainer().offsetLeft) {
+	          main_core.Dom.removeClass(slider.getOverlay(), '--invisible');
+	          visibleSlider = slider;
+	        }
+	      }
 	      if (previousSlider) {
 	        previousSlider.unhideOverlay();
 	        previousSlider.hideShadow();
@@ -4688,5 +4745,5 @@ this.BX = this.BX || {};
 	exports.Label = Label;
 	exports.Dictionary = Dictionary;
 
-}((this.BX.SidePanel = this.BX.SidePanel || {}),BX.Cache,BX,BX,BX.Event,BX.Main));
+}((this.BX.SidePanel = this.BX.SidePanel || {}),BX.Cache,BX,BX,BX.Event,BX.Main,BX));
 //# sourceMappingURL=side-panel.bundle.js.map

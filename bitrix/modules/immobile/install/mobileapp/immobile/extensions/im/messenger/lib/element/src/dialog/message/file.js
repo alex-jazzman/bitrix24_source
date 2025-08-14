@@ -33,6 +33,21 @@ jn.define('im/messenger/lib/element/dialog/message/file', (require, exports, mod
 			/* end region */
 		}
 
+		/**
+		 * @return {FileDialogWidgetItem}
+		 */
+		toDialogWidgetItem()
+		{
+			return {
+				...super.toDialogWidgetItem(),
+				file: this.file,
+				fileName: this.fileName,
+				fileSize: this.fileSize,
+				fileIconDownloadSvg: this.fileIconDownloadSvg,
+				fileIconSvg: this.fileIconSvg,
+			};
+		}
+
 		getType()
 		{
 			return MessageType.file;

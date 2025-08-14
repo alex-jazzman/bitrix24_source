@@ -59,6 +59,16 @@ class FillItemFieldsFromCallTranscription extends AbstractOperation
 		parent::__construct($target, $userId, $parentJobId);
 	}
 
+	public static function isAccessGranted(int $userId, ItemIdentifier $target): bool
+	{
+		return parent::isAccessGranted($userId, $target)
+			&& Container::getInstance()->getUserPermissions($userId)->item()->canUpdate(
+				$target->getEntityTypeId(),
+				$target->getEntityId()
+			)
+		;
+	}
+
 	public static function isSuitableTarget(ItemIdentifier $target): bool
 	{
 		return in_array($target->getEntityTypeId(), self::SUPPORTED_TARGET_ENTITY_TYPE_IDS, true);

@@ -2,7 +2,7 @@
  * @module im/messenger/controller/sidebar/chat/tabs/participants/participants-service
  */
 jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-service', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Type } = require('type');
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const logger = LoggerManager.getInstance().getLogger('sidebar--participants-service');

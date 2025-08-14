@@ -273,7 +273,6 @@ class ApacheSupersetControlPanel extends CBitrixComponent implements Errorable
 			$result[] = [
 				'ID' => "DASHBOARD_{$dashboard->getId()}",
 				'TEXT' => $dashboard->getTitle(),
-				'URL' => $url,
 				'ON_CLICK' => "window.open(`{$url}`, '_blank');"
 			];
 		}

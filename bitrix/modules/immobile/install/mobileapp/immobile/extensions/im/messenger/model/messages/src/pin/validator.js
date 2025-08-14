@@ -11,7 +11,7 @@ jn.define('im/messenger/model/messages/pin/validator', (require, exports, module
 	/**
 	 *
 	 * @param field
-	 * @return {Pin}
+	 * @return {PinModelState}
 	 */
 	function validate(field)
 	{

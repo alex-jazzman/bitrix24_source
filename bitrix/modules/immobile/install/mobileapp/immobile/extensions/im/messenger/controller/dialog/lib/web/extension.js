@@ -5,7 +5,7 @@
  */
 jn.define('im/messenger/controller/dialog/lib/web', (require, exports, module) => {
 	const { Type } = require('type');
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { clone } = require('utils/object');
 
 	const AppTheme = require('apptheme');

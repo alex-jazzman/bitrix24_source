@@ -8,7 +8,6 @@ jn.define('im/messenger/lib/visibility-manager/visibility-manager', (require, ex
 
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { createPromiseWithResolvers } = require('im/messenger/lib/utils');
-	const { Feature } = require('im/messenger/lib/feature');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { LoggerManager } = require('im/messenger/lib/logger');
 
@@ -40,11 +39,6 @@ jn.define('im/messenger/lib/visibility-manager/visibility-manager', (require, ex
 		static getNavigationContext()
 		{
 			return new Promise((resolve, reject) => {
-				if (!Feature.isNavigationContextSupportsGetStack)
-				{
-					reject(new Error('getStack is not supported'));
-				}
-
 				PageManager.getNavigator().getNavigationContext()
 					.then((context) => resolve(context))
 					.catch((error) => reject(error))

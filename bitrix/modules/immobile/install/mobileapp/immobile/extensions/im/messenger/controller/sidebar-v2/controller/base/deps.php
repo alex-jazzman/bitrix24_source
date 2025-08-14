@@ -19,7 +19,6 @@ return [
 		'im:messenger/lib/utils',
 		'im:messenger/lib/logger',
 		'im:messenger/lib/permission-manager',
-		'im:messenger/lib/feature',
 		'im:messenger/lib/rest-manager',
 		'im:messenger/lib/element',
 		'im:messenger/lib/helper',

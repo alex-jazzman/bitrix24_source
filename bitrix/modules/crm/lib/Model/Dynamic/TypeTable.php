@@ -734,7 +734,6 @@ class TypeTable extends UserField\Internal\TypeDataManager
 			array_key_exists('CUSTOM_SECTION_ID', $oldData)
 			&& array_key_exists('CUSTOM_SECTION_ID', $data)
 			&& $oldAutomatedSolutionId !== $newAutomatedSolutionId
-			&& Feature::enabled(Feature\PermissionsLayoutV2::class)
 		)
 		{
 			$entityTypeId = Container::getInstance()->getType($id)?->getEntityTypeId();

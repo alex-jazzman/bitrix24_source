@@ -5,7 +5,7 @@ jn.define('im/messenger/lib/ui/notification', (require, exports, module) => {
 	/* global InAppNotifier, include  */
 	include('InAppNotifier');
 
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { transparent } = require('utils/color');
 
 	const { Theme } = require('im/lib/theme');

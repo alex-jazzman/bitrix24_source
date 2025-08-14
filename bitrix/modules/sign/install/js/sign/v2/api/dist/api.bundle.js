@@ -100,9 +100,10 @@ this.BX.Sign = this.BX.Sign || {};
 	  getList() {
 	    return post('sign.api_v1.b2e.document.template.list');
 	  }
-	  completeTemplate(templateUid) {
+	  completeTemplate(templateUid, folderId) {
 	    return post('sign.api_v1.b2e.document.template.complete', {
-	      uid: templateUid
+	      uid: templateUid,
+	      folderId
 	    });
 	  }
 	  send(templateUid, fields) {
@@ -206,12 +207,14 @@ this.BX.Sign = this.BX.Sign || {};
 	    this.template = new TemplateApi();
 	    this.templateFolder = new TemplateFolderApi();
 	  }
-	  register(blankId, scenarioType = null, asTemplate = false, chatId = 0) {
+	  register(blankId, scenarioType = null, asTemplate = false, chatId = 0, templateFolderId = 0, initiatedByType = null) {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _post)[_post]('sign.api_v1.document.register', {
 	      blankId,
 	      scenarioType,
 	      asTemplate,
-	      chatId
+	      chatId,
+	      templateFolderId,
+	      initiatedByType
 	    });
 	  }
 	  upload(uid) {

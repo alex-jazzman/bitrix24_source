@@ -2,7 +2,7 @@
  * @module im/messenger/controller/chat-composer/lib/area/messages-auto-delete
  */
 jn.define('im/messenger/controller/chat-composer/lib/area/messages-auto-delete', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Icon, IconView } = require('ui-system/blocks/icon');
 	const { Theme } = require('im/lib/theme');
 	const { MessagesAutoDeleteContextMenu } = require('im/messenger/lib/ui/context-menu/messages-auto-delete');

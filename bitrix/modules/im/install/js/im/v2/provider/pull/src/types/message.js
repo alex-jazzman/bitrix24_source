@@ -234,6 +234,12 @@ export type DeleteReactionParams = {
 	userId: number
 };
 
+export type EngineUpdateParams = {
+	chatId: number,
+	engineCode: string,
+	engineName: string,
+};
+
 type ReactionType = $Values<typeof Reaction>;
 
 type RawReaction = {

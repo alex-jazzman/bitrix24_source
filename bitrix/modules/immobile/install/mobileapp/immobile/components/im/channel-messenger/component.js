@@ -1,5 +1,5 @@
 // eslint-disable-next-line no-var
-var REVISION = 19; // API revision - sync with im/lib/revision.php
+var REVISION = 20; // API revision - sync with im/lib/revision.php
 
 /* region Environment variables */
 
@@ -22,12 +22,18 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	/* region import */
 	const require = (ext) => jn.require(ext); // for IDE hints
 
+	/**
+	 * @description Import MessengerParams and waiting should be higher than other imports.
+	 */
+	const { MessengerParams } = require('im/messenger/lib/params');
+	await MessengerParams.waitSharedParamsInit();
+
 	const { QuickRecentLoader } = require('im/messenger/lib/quick-recent-load');
 	QuickRecentLoader.renderItemsOnViewLoaded();
 
 	const DialogList = dialogList;
 	const { Type } = require('type');
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { isEqual, clone } = require('utils/object');
 	const { EntityReady } = require('entity-ready');
 
@@ -93,7 +99,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	const { Communication } = require('im/messenger/lib/integration/mobile/communication');
 	const { RecentSelector } = require('im/messenger/controller/search/experimental');
 	const { SmileManager } = require('im/messenger/lib/smile-manager');
-	const { MessengerParams } = require('im/messenger/lib/params');
 	const { MessengerBase } = require('im/messenger/component/messenger-base');
 	const { SidebarLazyFactory } = require('im/messenger/controller/sidebar-v2/factory');
 	/* endregion import */
@@ -264,8 +269,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 					break;
 
 				default:
-					// headerTitle = Loc.getMessage('IMMOBILE_COMMON_MESSENGER_HEADER');
-					headerTitle = MessengerParams.getMessengerTitle();
+					headerTitle = Loc.getMessage('IMMOBILE_MESSENGER_COMMON_TITLE');
 					useProgress = false;
 					break;
 			}
@@ -554,13 +558,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		{
 			Logger.log(`${this.constructor.name}.createChat`);
 
-			if (!Feature.isChatComposerSupported)
-			{
-				Feature.showUnsupportedWidget();
-
-				return;
-			}
-
 			const createChannel = new CreateChannel();
 			createChannel.open();
 
@@ -653,7 +650,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 				revision,
 			);
 
-			reloadAllScripts();
+			// reloadAllScripts();
 
 			return false;
 		}

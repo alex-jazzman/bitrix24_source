@@ -2,12 +2,14 @@
 
 namespace Bitrix\Crm\RepeatSale\Log\Controller;
 
+use Bitrix\Crm\Integration\Analytics\Dictionary;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Crm\RepeatSale\Log\Entity\RepeatSaleLog;
 use Bitrix\Crm\RepeatSale\Log\Entity\RepeatSaleLogTable;
 use Bitrix\Crm\RepeatSale\Log\LogItem;
 use Bitrix\Crm\Traits\Singleton;
+use Bitrix\Main\Analytics\AnalyticsEvent;
 use Bitrix\Main\Application;
 use Bitrix\Main\DB\Result;
 use Bitrix\Main\ORM\Data\AddResult;
@@ -31,25 +33,54 @@ class RepeatSaleLogController
 		return RepeatSaleLogTable::update($id, $this->getFields($logItem));
 	}
 
-	final public function updateStageSemanticId(string $stageSemanticId, int $entityId, int $entityTypeId): void
+	final public function updateStageSemanticId(
+		string $stageSemanticId,
+		ItemIdentifier $itemIdentifier,
+	): void
 	{
 		if (!PhaseSemantics::isDefined($stageSemanticId))
 		{
 			return;
 		}
 
-		$connection = Application::getInstance()->getConnection();
-		$queryHelper = $connection->getSqlHelper();
-		$tableName = $queryHelper->forSql(RepeatSaleLogTable::getTableName());
+		$repeatSaleLogItem = RepeatSaleLogController::getInstance()->getByItemIdentifier($itemIdentifier);
+		if (!$repeatSaleLogItem)
+		{
+			return;
+		}
 
-		$stageSemanticId = $queryHelper->forSql($stageSemanticId);
-		$dateTime = $queryHelper->convertToDbDateTime(new DateTime());
+		$repeatSaleLogItem->setStageSemanticId($stageSemanticId);
+		$repeatSaleLogItem->setUpdatedAt(new DateTime());
+		$repeatSaleLogItem->save();
 
-		$connection->query("
-			UPDATE {$tableName} SET STAGE_SEMANTIC_ID = '{$stageSemanticId}', UPDATED_AT = {$dateTime} WHERE ENTITY_TYPE_ID = {$entityTypeId} AND ENTITY_ID = {$entityId}
-		");
+		$this->sendAnalytics($stageSemanticId);
+	}
 
-		RepeatSaleLogTable::cleanCache();
+	private function sendAnalytics(string $stageSemanticId): void
+	{
+		$availableIds = [PhaseSemantics::SUCCESS, PhaseSemantics::FAILURE];
+		if (!in_array($stageSemanticId, $availableIds, true))
+		{
+			return;
+		}
+
+		$event = new AnalyticsEvent(
+			'rs-close-queue-item',
+			Dictionary::TOOL_CRM,
+			Dictionary::CATEGORY_SYSTEM_INFORM,
+		);
+
+		try
+		{
+			$event
+				->setElement($stageSemanticId === PhaseSemantics::SUCCESS ? 'won' : 'lose')
+				->send()
+			;
+		}
+		catch (\Exception $e)
+		{
+
+		}
 	}
 
 	private function getFields(LogItem $logItem): array

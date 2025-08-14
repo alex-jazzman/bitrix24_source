@@ -924,8 +924,12 @@ this.BX.Crm = this.BX.Crm || {};
 	  },
 	  computed: {
 	    currentSectionTitle() {
-	      var _this$sections$find$N, _this$sections$find;
-	      return (_this$sections$find$N = (_this$sections$find = this.sections.find(section => section.ID === this.selectedSectionId)) === null || _this$sections$find === void 0 ? void 0 : _this$sections$find.NAME) !== null && _this$sections$find$N !== void 0 ? _this$sections$find$N : '';
+	      var _this$sections$find$N, _this$sections$find, _this$sections$find$N2, _this$sections$find2;
+	      const title = (_this$sections$find$N = (_this$sections$find = this.sections.find(section => section.ID === this.selectedSectionId)) === null || _this$sections$find === void 0 ? void 0 : _this$sections$find.NAME) !== null && _this$sections$find$N !== void 0 ? _this$sections$find$N : null;
+	      if (title) {
+	        return title;
+	      }
+	      return (_this$sections$find$N2 = (_this$sections$find2 = this.sections.find(section => section.DEFAULT)) === null || _this$sections$find2 === void 0 ? void 0 : _this$sections$find2.NAME) !== null && _this$sections$find$N2 !== void 0 ? _this$sections$find$N2 : '';
 	    },
 	    hasSections() {
 	      return main_core.Type.isArrayFilled(this.sections);
@@ -1066,9 +1070,20 @@ this.BX.Crm = this.BX.Crm || {};
 	          var _response$data, _data$config$readOnly;
 	          this.config = (_response$data = response.data) !== null && _response$data !== void 0 ? _response$data : {};
 	          this.sectionSelectorReadOnly = (_data$config$readOnly = data.config.readOnly) !== null && _data$config$readOnly !== void 0 ? _data$config$readOnly : false;
+	          const hasSelectedSection = this.config.sections.some(section => section.ID === this.sectionId);
+	          if (this.sectionSelectorReadOnly && !hasSelectedSection) {
+	            var _this$plannerInstance;
+	            (_this$plannerInstance = this.plannerInstance) === null || _this$plannerInstance === void 0 ? void 0 : _this$plannerInstance.setReadonly();
+	          }
 	          if (main_core.Type.isNil(data.sectionId)) {
 	            const defaultSection = data.config.sections.find(section => section.DEFAULT === true);
-	            this.sectionId = defaultSection ? defaultSection.ID : data.config.sections[0].ID;
+	            if (main_core.Type.isObject(defaultSection)) {
+	              this.sectionId = defaultSection.ID;
+	            } else {
+	              var _firstUserSection$ID;
+	              const firstUserSection = data.config.sections.find(section => section.OWNER_ID === data.ownerId);
+	              this.sectionId = (_firstUserSection$ID = firstUserSection === null || firstUserSection === void 0 ? void 0 : firstUserSection.ID) !== null && _firstUserSection$ID !== void 0 ? _firstUserSection$ID : 0;
+	            }
 	          }
 	        });
 	      }
@@ -1091,7 +1106,8 @@ this.BX.Crm = this.BX.Crm || {};
 	          minHeight: 104,
 	          height: 104,
 	          width: 770,
-	          entryTimezone: this.timezoneName
+	          entryTimezone: this.timezoneName,
+	          readonly: this.sectionSelectorReadOnly
 	        });
 	      }
 	      return this.plannerInstance;
@@ -1261,7 +1277,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        multiple: true,
 	        dropdownMode: true,
 	        showAvatars: true,
-	        enableSearch: true,
+	        enableSearch: !this.sectionSelectorReadOnly,
 	        width: 450,
 	        zIndex: 2500,
 	        entities: [{
@@ -1270,10 +1286,17 @@ this.BX.Crm = this.BX.Crm || {};
 	        preselectedItems,
 	        undeselectedItems,
 	        events: {
+	          'Item:onBeforeSelect': this.onBeforeSelectUser,
+	          'Item:onBeforeDeselect': this.onBeforeSelectUser,
 	          'Item:onSelect': this.onSelectUser,
 	          'Item:onDeselect': this.onDeselectUser
 	        }
 	      });
+	    },
+	    onBeforeSelectUser(event) {
+	      if (this.sectionSelectorReadOnly) {
+	        event.preventDefault();
+	      }
 	    },
 	    onSelectUser({
 	      data: {

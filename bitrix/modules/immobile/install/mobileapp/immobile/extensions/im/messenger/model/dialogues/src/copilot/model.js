@@ -7,6 +7,8 @@ jn.define('im/messenger/model/dialogues/copilot/model', (require, exports, modul
 	const { Type } = require('type');
 	const { clone } = require('utils/object');
 
+	const { ModelUtils } = require('im/messenger/lib/utils');
+
 	const { validate, prepareMergeProperty } = require('im/messenger/model/dialogues/copilot/validator');
 	const { copilotDefaultElement } = require('im/messenger/model/dialogues/copilot/default-element');
 
@@ -129,17 +131,18 @@ jn.define('im/messenger/model/dialogues/copilot/model', (require, exports, modul
 			},
 		},
 		actions: {
+			/** @function dialoguesModel/copilotModel/setFromSync */
+			setFromSync: (store, copilotList) => {
+				return store.dispatch('setCollection', { itemList: copilotList, actionName: 'setFromSync' });
+			},
+
 			/** @function dialoguesModel/copilotModel/setCollection */
 			setCollection: (store, payload) => {
-				if (!Array.isArray(payload) && Type.isPlainObject(payload))
-				{
-					// eslint-disable-next-line no-param-reassign
-					payload = [payload];
-				}
+				const { itemList, actionName = 'setCollection' } = ModelUtils.normalizeItemListPayload(payload);
 
 				const updateItems = [];
 				const addItems = [];
-				payload.forEach((element) => {
+				itemList.forEach((element) => {
 					/** @type {CopilotModelState} */
 					const existingItem = store.state.collection[element.dialogId];
 					const validElement = validate(element);
@@ -167,7 +170,7 @@ jn.define('im/messenger/model/dialogues/copilot/model', (require, exports, modul
 				if (updateItems.length > 0)
 				{
 					store.commit('updateCollection', {
-						actionName: 'setCollection',
+						actionName,
 						data: { updateItems },
 					});
 				}
@@ -175,7 +178,7 @@ jn.define('im/messenger/model/dialogues/copilot/model', (require, exports, modul
 				if (addItems.length > 0)
 				{
 					store.commit('addCollection', {
-						actionName: 'setCollection',
+						actionName,
 						data: { addItems },
 					});
 				}
@@ -289,7 +292,6 @@ jn.define('im/messenger/model/dialogues/copilot/model', (require, exports, modul
 			},
 		},
 	};
-
 
 	module.exports = { copilotModel };
 });

@@ -1,6 +1,6 @@
 import { Builder, Dictionary } from 'crm.integration.analytics';
 import 'ui.design-tokens';
-import { ajax as Ajax, Loc, Tag } from 'main.core';
+import { ajax as Ajax, Loc, Reflection, Tag } from 'main.core';
 import { PopupManager } from 'main.popup';
 import { sendData } from 'ui.analytics';
 import { Lottie } from 'ui.lottie';
@@ -10,6 +10,8 @@ import { PeriodType, WidgetType } from '../widget';
 import { Base } from './base';
 
 import 'ui.hint';
+
+const UserOptions = Reflection.namespace('BX.userOptions');
 
 export class Statistics extends Base
 {
@@ -22,6 +24,7 @@ export class Statistics extends Base
 		super(params);
 
 		this.#showSettingsButton = params.showSettingsButton ?? true;
+		this.#periodType = params.periodTypeId ?? PeriodType.day30;
 	}
 
 	getType(): WidgetTypeEnum
@@ -204,7 +207,9 @@ export class Statistics extends Base
 	{
 		let code = null;
 
-		switch (this.#periodType)
+		const periodType = Number(this.#periodType);
+
+		switch (periodType)
 		{
 			case PeriodType.day30:
 				code = 'CRM_REPEAT_SALE_WIDGET_STATISTICS_POPUP_PERIOD_DAY_30';
@@ -219,7 +224,7 @@ export class Statistics extends Base
 				code = 'CRM_REPEAT_SALE_WIDGET_STATISTICS_POPUP_PERIOD_YEAR';
 				break;
 			default:
-				throw new RangeError('unknown period type');
+				throw new RangeError(`Unknown period type: ${periodType}`);
 		}
 
 		return Loc.getMessage(code);
@@ -266,6 +271,8 @@ export class Statistics extends Base
 				nextPeriodTypeId = index + 1;
 			}
 		}
+
+		this.#savePeriodTypeId(nextPeriodTypeId);
 
 		const data = {
 			periodTypeId: nextPeriodTypeId,
@@ -315,6 +322,11 @@ export class Statistics extends Base
 				this.showError();
 			})
 		;
+	}
+
+	#savePeriodTypeId(periodTypeId: PeriodType.day30 | PeriodType.quarter | PeriodType.halfYear | PeriodType.year): void
+	{
+		UserOptions.save('crm', 'repeat-sale', 'statistics-period-type-id', periodTypeId);
 	}
 
 	#showHint(event: Event): void

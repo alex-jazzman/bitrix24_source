@@ -43,8 +43,8 @@ class EntityEditorConfigScope
 			Loc::loadMessages(__FILE__);
 
 			self::$captions[LANGUAGE_ID] = array(
-				self::PERSONAL => Loc::getMessage('CRM_ENTITY_ED_CONFIG_SCOPE_PERSONAL'),
-				self::COMMON => Loc::getMessage('CRM_ENTITY_ED_CONFIG_SCOPE_COMMON')
+				self::PERSONAL => Loc::getMessage('CRM_ENTITY_ED_CONFIG_SCOPE_PERSONAL_MSGVER_1'),
+				self::COMMON => Loc::getMessage('CRM_ENTITY_ED_CONFIG_SCOPE_COMMON_MSGVER_1')
 			);
 
 			$customScopes = method_exists(\Bitrix\Ui\EntityForm\Scope::class, 'getAllUserScopes')
@@ -97,4 +97,3 @@ class EntityEditorConfigScope
 		return "[{$scope}]";
 	}
 }
-

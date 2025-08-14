@@ -59,7 +59,7 @@ class RepeatSale extends BaseFeature
 		);
 
 		$jobExecutorAgentName = 'Bitrix\Crm\Agent\RepeatSale\JobExecutorAgent::run();';
-		if (\CAgent::GetList(null, ['NAME' => $jobExecutorAgentName, 'MODULE_ID' => 'crm'])->Fetch())
+		if (\CAgent::GetList([], ['NAME' => $jobExecutorAgentName, 'MODULE_ID' => 'crm'])->Fetch())
 		{
 			return;
 		}
@@ -93,7 +93,7 @@ class RepeatSale extends BaseFeature
 		);
 
 		$aiQueueBufferAgentName = 'Bitrix\Crm\Agent\Copilot\AiQueueBufferAgent::run();';
-		if (\CAgent::GetList(null, ['NAME' => $aiQueueBufferAgentName, 'MODULE_ID' => 'crm'])->Fetch())
+		if (\CAgent::GetList([], ['NAME' => $aiQueueBufferAgentName, 'MODULE_ID' => 'crm'])->Fetch())
 		{
 			return;
 		}

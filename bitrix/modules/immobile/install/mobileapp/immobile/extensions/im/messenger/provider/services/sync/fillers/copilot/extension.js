@@ -8,7 +8,6 @@ jn.define('im/messenger/provider/services/sync/fillers/copilot', (require, expor
 		ComponentCode,
 		BotCode,
 		WaitingEntity,
-		DialogType,
 	} = require('im/messenger/const');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { getLogger } = require('im/messenger/lib/logger');
@@ -21,9 +20,7 @@ jn.define('im/messenger/provider/services/sync/fillers/copilot', (require, expor
 	{
 		/**
 		 * @override
-		 * @param {object} data
-		 * @param {string} data.uuid
-		 * @param {SyncListResult} data.result
+		 * @param {SyncRequestResultReceivedEvent} data
 		 */
 		async fillData(data)
 		{
@@ -64,63 +61,58 @@ jn.define('im/messenger/provider/services/sync/fillers/copilot', (require, expor
 		 */
 		prepareResult(result)
 		{
-			return this.filterOnlyCopilot(result);
+			const filteredResult = this.filterOnlyCopilot(result);
+			logger.log(`${this.constructor.name}.prepareResult after filterOnlyCopilot:`, filteredResult);
+
+			return this.filterUsers(filteredResult);
 		}
 
 		/**
 		 * @param {SyncListResult} syncListResult
 		 * @return {SyncListResult}
 		 */
-		filterOnlyCopilot(syncListResult)
-		{
-			const copilotChatIds = this.findCopilotChatIds(syncListResult.addedChats);
-			// const copilotMessageIds = this.findCopilotMessageIds(syncListResult.messages.messages, copilotChatIds);
-
-			syncListResult.addedRecent = syncListResult.addedRecent.filter((recentItem) => {
-				return (copilotChatIds.includes(recentItem.chat_id));
-			});
-
-			syncListResult.addedChats = syncListResult.addedChats.filter((chat) => {
-				return (copilotChatIds.includes(chat.id));
-			});
-
-			syncListResult.messages.messages = syncListResult.messages.messages.filter((message) => {
-				return (copilotChatIds.includes(message.chat_id));
-			});
-
-			syncListResult.messages.files = syncListResult.messages.files.filter((file) => {
-				return (copilotChatIds.includes(file.chatId));
-			});
-
-			syncListResult.messages.users = syncListResult.messages.users.filter((user) => {
-				if (!user.botData)
-				{
-					return false;
-				}
-
-				return user.botData.code === BotCode.copilot;
-			});
-
-			return syncListResult;
-		}
-
-		/**
-		 *
-		 * @param {Array<RawChat>} addedChats
-		 * @return {Array<number>}
-		 */
-		findCopilotChatIds(addedChats)
-		{
-			const result = [];
-			for (const chat of addedChats)
+		filterOnlyCopilot(syncListResult) {
+			if (!syncListResult.copilot)
 			{
-				if (chat.type === DialogType.copilot)
-				{
-					result.push(chat.id);
-				}
+				return {
+					...syncListResult,
+					recentItems: [],
+					chats: [],
+					messages: [],
+					dialogIds: [],
+					files: [],
+					pins: [],
+					reactions: [],
+					messagesAutoDeleteConfigs: [],
+					users: syncListResult.users.filter((user) => user.botData?.code === BotCode.copilot),
+				};
 			}
 
-			return result;
+			const copilotChatIds = this.findCopilotChatIds(syncListResult.chats);
+			const copilotChatIdsSet = new Set(copilotChatIds);
+
+			const filteredMessages = syncListResult.messages.filter(
+				(message) => copilotChatIdsSet.has(message.chat_id),
+			) || [];
+			const messageIds = new Set(filteredMessages.map((message) => message.id));
+
+			return {
+				...syncListResult,
+				messages: filteredMessages,
+				dialogIds: Object.fromEntries(
+					Object.entries(syncListResult.dialogIds || {})
+						.filter(([chatId]) => copilotChatIdsSet.has(Number(chatId))),
+				),
+				recentItems: syncListResult.recentItems.filter((item) => copilotChatIdsSet.has(item.chatId)),
+				chats: syncListResult.chats.filter((chat) => copilotChatIdsSet.has(chat.id)),
+				files: syncListResult.files.filter((file) => copilotChatIdsSet.has(file.chatId)),
+				pins: syncListResult.pins.filter((pin) => copilotChatIdsSet.has(pin.chatId)),
+				reactions: syncListResult.reactions.filter((reaction) => messageIds.has(reaction.messageId)),
+				users: syncListResult.users.filter((user) => user.botData?.code === BotCode.copilot),
+				messagesAutoDeleteConfigs: syncListResult.messagesAutoDeleteConfigs.filter((config) => {
+					return copilotChatIdsSet.has(config.chatId);
+				}),
+			};
 		}
 	}
 

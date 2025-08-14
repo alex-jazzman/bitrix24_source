@@ -39,6 +39,20 @@ jn.define('im/messenger/lib/element/dialog/message/audio', (require, exports, mo
 			/* end region */
 		}
 
+		/**
+		 * @return {AudioDialogWidgetItem}
+		 */
+		toDialogWidgetItem()
+		{
+			return {
+				...super.toDialogWidgetItem(),
+				audio: this.audio,
+				audioUrl: this.audioUrl,
+				localAudioUrl: this.localAudioUrl,
+				size: this.size,
+			};
+		}
+
 		getType()
 		{
 			return MessageType.audio;

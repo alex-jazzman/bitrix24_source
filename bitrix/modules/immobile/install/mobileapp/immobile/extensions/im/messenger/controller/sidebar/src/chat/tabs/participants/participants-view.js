@@ -2,13 +2,12 @@
  * @module im/messenger/controller/sidebar/chat/tabs/participants/participants-view
  */
 jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-view', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Type } = require('type');
 	const { Icon } = require('assets/icons');
 	const { withPressed } = require('utils/color');
 
 	const { Theme } = require('im/lib/theme');
-	const { buttonIcons } = require('im/messenger/assets/common');
 	const {
 		SidebarActionType,
 		ErrorType,
@@ -51,9 +50,9 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 			this.state = {
 				participants: this.participantsService.getParticipantsFromStore(),
 				permissions: {
-					isCanRemoveParticipants: ChatPermission.isCanRemoveParticipants(props.dialogId),
-					isCanAddParticipants: ChatPermission.isCanAddParticipants(props.dialogId),
-					isCanLeave: ChatPermission.isCanLeaveFromChat(props.dialogId),
+					canRemoveParticipants: ChatPermission.canRemoveParticipants(props.dialogId),
+					canAddParticipants: ChatPermission.canAddParticipants(props.dialogId),
+					сanLeave: ChatPermission.сanLeaveFromChat(props.dialogId),
 				},
 			};
 
@@ -237,7 +236,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 
 		buildItems()
 		{
-			const { participants, permissions: { isCanAddParticipants: isCanAdd } } = this.state;
+			const { participants, permissions: { canAddParticipants: сanAdd } } = this.state;
 			const doneItems = [];
 
 			if (participants.length === 0)
@@ -245,7 +244,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 				return doneItems;
 			}
 
-			if (isCanAdd)
+			if (сanAdd)
 			{
 				doneItems.push({
 					type: 'addrow',
@@ -375,8 +374,6 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 				text = Loc.getMessage('IMMOBILE_DIALOG_SIDEBAR_PARTICIPANTS_ADD_ROW_GROUP');
 			}
 
-			const buttonIcon = buttonIcons.specialAdd();
-
 			return View(
 				{
 					style: {
@@ -399,17 +396,26 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 						},
 					},
 					View(
-						{},
-						Image({
+						{
 							style: {
-								width: 44,
-								height: 44,
+								alignItems: 'center',
+								justifyContent: 'center',
+								width: 40,
+								height: 40,
 								marginBottom: 6,
 								marginTop: 6,
 								marginHorizontal: 2,
-								borderRadius: 22,
+								borderRadius: 20,
+								backgroundColor: Theme.colors.bgContentTertiary,
 							},
-							svg: { content: buttonIcon },
+						},
+						Image({
+							style: {
+								width: 30,
+								height: 30,
+							},
+							tintColor: Theme.colors.base3,
+							named: Icon.PLUS.getIconName(),
 							onFailure: () => {
 								logger.error('SidebarParticipantsView.getAddParticipantRow.Image.onFailure');
 							},
@@ -616,7 +622,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 						icon: Icon.FLAG,
 						testId: 'SIDEBAR_USER_CONTEXT_MENU_NOTES',
 					});
-					if (this.state.permissions.isCanLeave)
+					if (this.state.permissions.сanLeave)
 					{
 						// TODO copilot dialog always is group chat, then need check count participants
 						if (this.props.isCopilot && participantsCount > 2)
@@ -683,8 +689,8 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 						}
 					}
 
-					const isCanDelete = this.state.permissions.isCanRemoveParticipants;
-					if (isCanDelete && ChatPermission.isCanRemoveUserById(userId, this.props.dialogId))
+					const сanDelete = this.state.permissions.canRemoveParticipants;
+					if (сanDelete && ChatPermission.сanRemoveUserById(userId, this.props.dialogId))
 					{
 						actionsItems.push({
 							id: SidebarActionType.remove,

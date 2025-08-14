@@ -18,6 +18,7 @@ $MESS["IM_CHAT_KICK_NOTIFICATION_M"] = "#USER_NAME# removed you from chat.";
 $MESS["IM_CHAT_LEAVE_F_MSGVER_1"] = "[USER=#USER_ID#][/USER] left the chat.";
 $MESS["IM_CHAT_LEAVE_M_MSGVER_1"] = "[USER=#USER_ID#][/USER] left the chat.";
 $MESS["IM_CHAT_NAME_FORMAT"] = "#COLOR# Chat ##NUMBER#";
+$MESS["IM_CHAT_OVERFLOW_DELETE_MESSAGE"] = "This chat now has over #USER_COUNT# members. The user removed from/left the chat notifications have been muted to reduce unwanted messages.";
 $MESS["IM_CHAT_SELF_JOIN"] = "#USERS_NAME# have joined the chat.";
 $MESS["IM_CHAT_SELF_JOIN_F"] = "#USER_NAME# has joined the chat.";
 $MESS["IM_CHAT_SELF_JOIN_M"] = "#USER_NAME# has joined the chat.";

@@ -65,6 +65,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      return this.showLastMessage && this.message.authorId === im_v2_application_core.Core.getUserId();
 	    },
 	    messageText() {
+	      if (this.message.isDeleted) {
+	        return this.loc('IM_LIST_RECENT_DELETED_MESSAGE');
+	      }
 	      const formattedText = im_v2_lib_parser.Parser.purifyRecent(this.recentItem);
 	      if (!this.showLastMessage || !formattedText) {
 	        return this.hiddenMessageText;
@@ -124,9 +127,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 						{{ loc('IM_LIST_RECENT_VACATION', {'#VACATION_END_DATE#': formattedVacationEndDate}) }}
 					</span>
 				</span>
-				<template v-else-if="message.isDeleted">
-					{{ loc('IM_LIST_RECENT_DELETED_MESSAGE') }}
-				</template>
 				<template v-else>
 					<span v-if="isLastMessageAuthor" class="bx-im-list-recent-item__self_author-icon"></span>
 					<MessageAvatar

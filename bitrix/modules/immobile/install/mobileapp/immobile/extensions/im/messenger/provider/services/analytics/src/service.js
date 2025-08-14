@@ -20,9 +20,11 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 	const { EntityManager } = require('im/messenger/provider/services/analytics/entity-manager');
 	const { ImagePicker } = require('im/messenger/provider/services/analytics/image-picker');
 	const { MessagePin } = require('im/messenger/provider/services/analytics/message-pin');
+	const { MessageType } = require('im/messenger/provider/services/analytics/message-type');
 	const { VoteAnalytics } = require('im/messenger/provider/services/analytics/vote');
 	const { MessageCreateMenu } = require('im/messenger/provider/services/analytics/message-create-menu');
 	const { ChatOpen } = require('im/messenger/provider/services/analytics/chat-open');
+	const { ChatPin } = require('im/messenger/provider/services/analytics/chat-pin');
 	const { NavigationTab } = require('im/messenger/provider/services/analytics/navigation-tab');
 
 	const { AnalyticsHelper } = require('im/messenger/provider/services/analytics/helper');
@@ -59,6 +61,8 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 		#imagePicker;
 		/** @type {MessagePin} */
 		#messagePin;
+		/** @type {MessageType} */
+		#messageType;
 		/** @type {VoteAnalytics} */
 		#vote;
 		/** @type {Messenger} */
@@ -67,6 +71,8 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 		#messageCreateMenu;
 		/** @type {ChatOpen} */
 		#chatOpen;
+		/** @type {ChatPin} */
+		#chatPin;
 		/** @type {NavigationTab} */
 		#navigationTab;
 
@@ -174,6 +180,14 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 		}
 
 		/** @protected */
+		get messageType()
+		{
+			this.#messageType = this.#messageType ?? new MessageType();
+
+			return this.#messageType;
+		}
+
+		/** @protected */
 		get vote()
 		{
 			this.#vote = this.#vote ?? new VoteAnalytics();
@@ -203,6 +217,14 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 			this.#chatOpen = this.#chatOpen ?? new ChatOpen();
 
 			return this.#chatOpen;
+		}
+
+		/** @protected */
+		get chatPin()
+		{
+			this.#chatPin = this.#chatPin ?? new ChatPin();
+
+			return this.#chatPin;
 		}
 
 		/** @protected */
@@ -269,6 +291,11 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 		sendChatOpen({ dialogId, context })
 		{
 			return this.chatOpen.sendChatOpen({ dialogId, context });
+		}
+
+		sendPinChatNotes()
+		{
+			return this.chatPin.sendPinChatNotes();
 		}
 
 		/**
@@ -429,6 +456,11 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 		sendMessageUnpin({ dialogId, chatId })
 		{
 			return this.messagePin.sendMessageUnpin({ dialogId, chatId });
+		}
+
+		sendTypeMessageChatNotes()
+		{
+			return this.messageType.sendTypeMessageChatNotes();
 		}
 
 		/**

@@ -80,7 +80,7 @@
 	        if (babelHelpers.classPrivateFieldGet(_this, _props).closeAfterCreate) {
 	          _classPrivateMethodGet(_this, _closeSlider, _closeSlider2).call(_this);
 	        } else {
-	          _classPrivateMethodGet(_this, _showSaveSuccessPopup, _showSaveSuccessPopup2).call(_this, response.data.connection);
+	          _classPrivateMethodGet(_this, _showSaveSuccessPopup, _showSaveSuccessPopup2).call(_this, response.data.connection, response.data.supersetIsReady);
 	          saveButton.setWaiting(false);
 	        }
 	      })["catch"](function (response) {
@@ -207,9 +207,9 @@
 	function _onChangeType2(event) {
 	  var _connector$type;
 	  var value = event.target.value;
-	  var connector = babelHelpers.classPrivateFieldGet(this, _props).supportedDatabases.filter(function (database) {
+	  var connector = babelHelpers.classPrivateFieldGet(this, _props).supportedDatabases.find(function (database) {
 	    return database.code === value;
-	  })[0];
+	  });
 	  babelHelpers.classPrivateFieldGet(this, _props).sourceFields.code = value;
 	  babelHelpers.classPrivateFieldGet(this, _props).sourceFields.type = (_connector$type = connector.type) !== null && _connector$type !== void 0 ? _connector$type : null;
 	  main_core.Dom.clean(babelHelpers.classPrivateFieldGet(this, _node).querySelector('.hint-wrapper'));
@@ -279,13 +279,13 @@
 	    });
 	  });
 	}
-	function _showSaveSuccessPopup2(connection) {
+	function _showSaveSuccessPopup2(connection, supersetIsReady) {
 	  var _this5 = this,
 	    _babelHelpers$classPr11;
 	  var popup = null;
 
-	  // show for new or active sources only
-	  var showCreateDatasetButton = !Object.hasOwn(babelHelpers.classPrivateFieldGet(this, _props).sourceFields, 'id') || babelHelpers.classPrivateFieldGet(this, _props).sourceFields.active;
+	  // show for (new or active sources) and ready superset only
+	  var showCreateDatasetButton = supersetIsReady && (!Object.hasOwn(babelHelpers.classPrivateFieldGet(this, _props).sourceFields, 'id') || babelHelpers.classPrivateFieldGet(this, _props).sourceFields.active);
 	  var createDatasetButton = showCreateDatasetButton ? main_core.Tag.render(_templateObject9 || (_templateObject9 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<a class=\"ui-btn ui-btn-md ui-btn-primary\">\n\t\t\t\t", "\n\t\t\t</a>\n\t\t"])), main_core.Loc.getMessage('EXTERNAL_CONNECTION_CREATE_DATASET')) : false;
 	  var closeButton = main_core.Tag.render(_templateObject10 || (_templateObject10 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<a class=\"ui-btn ui-btn-md ui-btn-light-border\">\n\t\t\t\t", "\n\t\t\t</a>\n\t\t"])), main_core.Loc.getMessage('EXTERNAL_CONNECTION_CLOSE'));
 	  var onPopupClose = function onPopupClose() {

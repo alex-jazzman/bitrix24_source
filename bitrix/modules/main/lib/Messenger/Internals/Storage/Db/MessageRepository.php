@@ -114,7 +114,7 @@ class MessageRepository
 		/** @var MessengerMessageTable $tableClass */
 		$tableClass = $this->tableEntity->getDataClass();
 
-		$thresholdDate = DateTime::createFromText('-2 day');
+		$thresholdDate = DateTime::createFromTimestamp(time() - 2 * 86400);
 
 		$query = $tableClass::query();
 

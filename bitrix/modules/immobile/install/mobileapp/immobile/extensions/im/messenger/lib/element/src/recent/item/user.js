@@ -2,9 +2,8 @@
  * @module im/messenger/lib/element/recent/item/user
  */
 jn.define('im/messenger/lib/element/recent/item/user', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Type } = require('type');
-	const { Color } = require('tokens');
 	const { merge } = require('utils/object');
 
 	const { Theme } = require('im/lib/theme');
@@ -30,22 +29,22 @@ jn.define('im/messenger/lib/element/recent/item/user', (require, exports, module
 
 		createTitleStyle()
 		{
-			if (this.checkNeedsVacationIcon())
+			if (this.checkNeedsBirthdayIcon())
 			{
 				this.styles.title = merge(this.styles.title, {
 					image: {
-						name: 'name_status_vacation',
+						name: 'name_status_birthday',
 					},
 				});
 
 				return this;
 			}
 
-			if (this.checkNeedsBirthdayIcon())
+			if (this.checkNeedsVacationIcon())
 			{
 				this.styles.title = merge(this.styles.title, {
 					image: {
-						name: 'name_status_birthday',
+						name: 'name_status_vacation',
 					},
 				});
 

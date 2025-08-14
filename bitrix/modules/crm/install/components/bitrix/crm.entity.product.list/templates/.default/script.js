@@ -3439,7 +3439,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	        return '';
 	      }
 	      var format = currency_currencyCore.CurrencyCore.getCurrencyFormat(currencyId);
-	      return format && format.FORMAT_STRING.replace(/(^|[^&])#/, '$1').trim() || '';
+	      return format && format.FORMAT_STRING.replace(/(^|[^&])#/, '$1').trim() || currencyId;
 	    }
 	  }, {
 	    key: "getDataFieldName",

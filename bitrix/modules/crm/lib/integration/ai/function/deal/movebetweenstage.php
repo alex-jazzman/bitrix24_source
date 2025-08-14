@@ -94,11 +94,7 @@ final class MoveBetweenStage implements AIFunction
 			],
 		];
 
-		return $this->factory->getItemsFilteredByPermissions(
-			$params,
-			$this->currentUserId,
-			UserPermissions::OPERATION_UPDATE,
-		);
+		return $this->factory->getItems($params);
 	}
 
 	private function getUpdateOperation(Deal $deal): Update

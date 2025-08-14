@@ -32,6 +32,7 @@ use Bitrix\Sign\Service\Container;
 use Bitrix\Sign\Service\Sign\Document\Template\AccessService;
 use Bitrix\Sign\Service\Sign\Document\TemplateFolderService;
 use Bitrix\Sign\Service\Sign\Document\TemplateService;
+use Bitrix\Sign\Service\Sign\UrlGeneratorService;
 use Bitrix\Sign\Type\Document\InitiatedByType;
 use Bitrix\Sign\Type\Member\EntityType;
 use Bitrix\Sign\Type\Member\Role;
@@ -53,7 +54,6 @@ final class SignB2eEmployeeTemplateListComponent extends SignBaseComponent
 	private const SEND_TEMPLATE_MODE_NAVIGATION_KEY = 'sign-b2e-employee-template-list-send-mode';
 	private const DEFAULT_NAVIGATION_KEY = 'sign-b2e-employee-template-list';
 	private const DEFAULT_PAGE_SIZE = 10;
-	private const ADD_NEW_TEMPLATE_LINK = '/sign/b2e/doc/0/?mode=template';
 	private readonly TemplateFolderService $templateFolderService;
 	private readonly TemplateService $templateService;
 	private readonly TemplateGridRepository $templateGridRepository;
@@ -62,6 +62,8 @@ final class SignB2eEmployeeTemplateListComponent extends SignBaseComponent
 	private readonly UserRepository $userRepository;
 	private readonly MemberRepository $memberRepository;
 	private readonly AccessService $templateAccessService;
+	private readonly UrlGeneratorService $urlGeneratorService;
+	private readonly int $folderId;
 
 	public function __construct($component = null)
 	{
@@ -74,6 +76,8 @@ final class SignB2eEmployeeTemplateListComponent extends SignBaseComponent
 		$this->memberRepository = Container::instance()->getMemberRepository();
 		$this->templateAccessService = Container::instance()->getTemplateAccessService();
 		$this->pageNavigation = $this->getPageNavigation();
+		$this->urlGeneratorService = Container::instance()->getUrlGeneratorService();
+		$this->folderId = $this->getCurrentFolderId();
 	}
 
 	public function executeComponent(): void
@@ -106,7 +110,7 @@ final class SignB2eEmployeeTemplateListComponent extends SignBaseComponent
 			return;
 		}
 
-		if (!Feature::instance()->isSendDocumentByEmployeeEnabled())
+		if (!Feature::instance()->isDocumentTemplatesAvailable())
 		{
 			showError((string)Loc::getMessage('SIGN_B2E_EMPLOYEE_TEMPLATE_LIST_TO_EMPLOYEE_NOT_ACTIVATED'));
 
@@ -153,7 +157,7 @@ final class SignB2eEmployeeTemplateListComponent extends SignBaseComponent
 		$this->installPresetTemplatesIfNeed();
 		$this->setResult('NAVIGATION_KEY', $this->pageNavigation->getId());
 		$this->setResult('CURRENT_PAGE', $this->getNavigation()->getCurrentPage());
-		$this->setParam('ADD_NEW_TEMPLATE_LINK', self::ADD_NEW_TEMPLATE_LINK);
+		$this->setParam('ADD_NEW_TEMPLATE_LINK', $this->getCreateTemplateLink());
 		$this->setParam('COLUMNS', $this->getGridColumnList());
 		$this->setParam('FILTER_FIELDS', $this->getFilterFieldList());
 		$this->setParam('FILTER_PRESETS', $this->getFilterPresets());
@@ -167,7 +171,7 @@ final class SignB2eEmployeeTemplateListComponent extends SignBaseComponent
 		$this->setResult('SHOW_TARIFF_SLIDER', B2eTariff::instance()->isB2eRestrictedInCurrentTariff());
 		$this->setResult('CAN_ADD_TEMPLATE', $this->canAddTemplate());
 		$this->setResult('CAN_EXPORT_BLANK', $this->canExportBlank());
-		$this->setResult('FOLDER_ID', $this->getCurrentFolderId());
+		$this->setResult('FOLDER_ID', $this->folderId);
 		$this->setResult('IS_FOLDER_CONTENT_MODE', $this->isFolderContentMode());
 		$this->setResult('CREATE_TEMPLATE_ENTITY_BUTTON', $this->getCreateTemplateEntityButton());
 		$this->collectAnalytics();
@@ -396,6 +400,11 @@ final class SignB2eEmployeeTemplateListComponent extends SignBaseComponent
 				'canEdit' => $this->canCurrentUserEditTemplate($row),
 				'canDelete' => $this->canCurrentUserDeleteTemplate($row),
 				'canCreate' => $this->canCurrentUserCreateTemplate($row),
+				'canMoveToFolder' => $row->entityType->isTemplate()
+					&& Feature::instance()->isTemplateFolderGroupingAllowed()
+					&& $document?->initiatedByType?->isCompany()
+					&& $this->canCurrentUserEditTemplate($row)
+				,
 			],
 		];
 
@@ -868,7 +877,15 @@ final class SignB2eEmployeeTemplateListComponent extends SignBaseComponent
 
 	private function installPresetTemplatesIfNeed(): void
 	{
-		$result = (new \Bitrix\Sign\Operation\Document\Template\InstallPresetTemplates())->launch();
+		$createdById = (int)CurrentUser::get()->getId();
+		if($createdById < 1)
+		{
+			return;
+		}
+
+		$result = (new \Bitrix\Sign\Operation\Document\Template\InstallPresetTemplates(
+			createdById: $createdById,
+		))->launch();
 		if (!$result instanceof \Bitrix\Sign\Result\Operation\Document\Template\InstallPresetTemplatesResult)
 		{
 			$this->logWithErrorsFromResult('preset install errors: ', $result);
@@ -877,6 +894,7 @@ final class SignB2eEmployeeTemplateListComponent extends SignBaseComponent
 		}
 
 		$operation = new \Bitrix\Sign\Operation\Document\Template\FixDismissalPresetTemplate(
+			createdById: $createdById,
 			isOptionsReloaded: $result->isOptionsReloaded,
 		);
 
@@ -1014,16 +1032,12 @@ final class SignB2eEmployeeTemplateListComponent extends SignBaseComponent
 			return null;
 		}
 
-		if ($this->isFolderContentMode())
-		{
-			return null;
-		}
-
-		if (!Feature::instance()->isTemplateFolderGroupingAllowed())
+		$createTemplateLink = $this->getCreateTemplateLink();
+		if (!Feature::instance()->isTemplateFolderGroupingAllowed() || $this->isFolderContentMode())
 		{
 			return (new \Bitrix\UI\Buttons\CreateButton([]))
 				->setText(Loc::getMessage('SIGN_B2E_EMPLOYEE_TEMPLATE_LIST_ADD_NEW_TEMPLATE_MAIN_TITLE') ?? '')
-				->setLink(self::ADD_NEW_TEMPLATE_LINK)
+				->setLink($createTemplateLink)
 			;
 		}
 
@@ -1034,7 +1048,7 @@ final class SignB2eEmployeeTemplateListComponent extends SignBaseComponent
 		$menuItems = [
 			[
 				'text' => Loc::getMessage('SIGN_B2E_EMPLOYEE_TEMPLATE_LIST_ADD_NEW_TEMPLATE_ITEM_TITLE'),
-				'href' => self::ADD_NEW_TEMPLATE_LINK,
+				'href' => $createTemplateLink,
 				'onclick' => new \Bitrix\UI\Buttons\JsCode('this.close()'),
 			],
 			[
@@ -1046,7 +1060,7 @@ final class SignB2eEmployeeTemplateListComponent extends SignBaseComponent
 		$showTariffSlider = B2eTariff::instance()->isB2eRestrictedInCurrentTariff();
 		if (!$showTariffSlider)
 		{
-			$buttonParams['mainButton'] = ['link' =>  self::ADD_NEW_TEMPLATE_LINK];
+			$buttonParams['mainButton'] = ['link' => $createTemplateLink];
 			$buttonParams['menu'] = ['items' => $menuItems];
 
 		}
@@ -1062,5 +1076,10 @@ final class SignB2eEmployeeTemplateListComponent extends SignBaseComponent
 	private function fromCompanyTemplateSendMode(): bool
 	{
 		return $this->isFolderIdProvided() && $this->getCurrentFolderId() === 0;
+	}
+
+	private function getCreateTemplateLink(): string
+	{
+		return $this->urlGeneratorService->makeCreateTemplateLink($this->isFolderIdProvided(), $this->folderId);
 	}
 }

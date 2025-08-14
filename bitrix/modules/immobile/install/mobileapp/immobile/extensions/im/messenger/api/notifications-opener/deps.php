@@ -5,6 +5,6 @@ return [
 		'im:im.notify.legacy',
 	],
 	'extensions' => [
-		'loc',
+		'im:messenger/loc',
 	],
 ];

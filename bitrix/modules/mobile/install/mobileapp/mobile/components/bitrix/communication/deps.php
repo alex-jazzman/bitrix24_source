@@ -12,6 +12,6 @@ return [
 		'utils',
 		'ava-menu',
 		'type',
+		'user-profile',
 	],
-	'components' => ['user.profile'],
 ];

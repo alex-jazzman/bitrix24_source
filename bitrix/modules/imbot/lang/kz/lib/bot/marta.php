@@ -1,7 +1,9 @@
 <?php
 $MESS["IMBOT_BOT_CHANGE_LANG"] = "Енді мен орысша сөйлеймін :{}";
 $MESS["IMBOT_BOT_DISABLE_WELCOME"] = "Өте өкінішті #USER_NAME#... Мен жай ғана саған көмектескім келді :cry: https://marta.bitrix.info/upload/disable.gif";
+$MESS["IMBOT_BOT_DISABLE_WELCOME_MSGVER_1"] = "Өте өкінішті #USER_NAME#... Мен сізге көмектескім келді:cry: https://marta.#URL#/upload/disable.gif";
 $MESS["IMBOT_BOT_ENABLE_WELCOME"] = "Алақай! Рахмет #USER_NAME#! Мен көңіліңізді қалдырмаймын :{} https://marta.bitrix.info/upload/enable.gif";
+$MESS["IMBOT_BOT_ENABLE_WELCOME_MSGVER_1"] = "Ураа! Рахмет #USER_NAME#! Үмітіңізді ақтаймын:{} https://marta.#URL#/upload/enable.gif";
 $MESS["IMBOT_BOT_MESSAGE_CALEND_1_1"] = "Сізде бүгінге жоспарланғандар:";
 $MESS["IMBOT_BOT_MESSAGE_CALEND_1_2"] = "Ұмытпаңыз, бүгін сізде жоспар бойынша:";
 $MESS["IMBOT_BOT_MESSAGE_CALEND_1_3"] = "Бүгін жіберіп алмаңыз:";

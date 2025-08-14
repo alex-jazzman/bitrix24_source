@@ -2,7 +2,7 @@
  * @module im/messenger/controller/file-download-menu/src/server-download
  */
 jn.define('im/messenger/controller/file-download-menu/src/server-download', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Color, Indent } = require('tokens');
 	const { Text5 } = require('ui-system/typography');
 	const { IconView, Icon } = require('ui-system/blocks/icon');

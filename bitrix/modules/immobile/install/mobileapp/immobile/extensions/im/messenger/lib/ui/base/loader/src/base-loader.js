@@ -2,7 +2,7 @@
  * @module im/messenger/lib/ui/base/loader/src/base-loader
  */
 jn.define('im/messenger/lib/ui/base/loader/src/base-loader', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Type } = require('type');
 	const { Theme } = require('im/lib/theme');
 

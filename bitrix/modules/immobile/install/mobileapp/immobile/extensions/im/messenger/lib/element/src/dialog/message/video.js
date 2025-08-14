@@ -38,6 +38,21 @@ jn.define('im/messenger/lib/element/dialog/message/video', (require, exports, mo
 			/* end region */
 		}
 
+		/**
+		 * @return {VideoDialogWidgetItem}
+		 */
+		toDialogWidgetItem()
+		{
+			return {
+				...super.toDialogWidgetItem(),
+				video: this.video,
+				videoUrl: this.videoUrl,
+				localVideoUrl: this.localVideoUrl,
+				previewImage: this.previewImage,
+				previewParams: this.previewParams,
+			};
+		}
+
 		getType()
 		{
 			return MessageType.video;

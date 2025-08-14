@@ -42,7 +42,7 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 		 * @param {boolean} [verbose=false] - prop for verbose response, returns an object with a key
 		 * @return {boolean|object}
 		 */
-		isCanCall(dialogData, verbose = false)
+		canCall(dialogData, verbose = false)
 		{
 			if (!this.setDialogData(dialogData))
 			{
@@ -52,14 +52,14 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 			const userLimit = this.getCallUsersLimit();
 			const isMoreOne = this.dialogData.userCounter > 1;
 			const isLimit = this.dialogData.userCounter > userLimit;
-			const isEntityType = this.isCanCallByEntityType(this.dialogData.entityType);
-			const isDialogType = this.isCanCallByDialogType(this.dialogData.type);
-			const isCanCall = isMoreOne && !isLimit && isEntityType && isDialogType;
+			const isEntityType = this.canCallByEntityType(this.dialogData.entityType);
+			const isDialogType = this.canCallByDialogType(this.dialogData.type);
+			const canCall = isMoreOne && !isLimit && isEntityType && isDialogType;
 
 			if (verbose)
 			{
 				return {
-					isCanCall,
+					canCall,
 					isMoreOne,
 					isLimit,
 					isEntityType,
@@ -67,7 +67,7 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 				};
 			}
 
-			return isCanCall;
+			return canCall;
 		}
 
 		/**
@@ -75,7 +75,7 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 		 * @param {DialoguesModelState|string} dialogData
 		 * @return {boolean}
 		 */
-		isCanAddParticipants(dialogData)
+		canAddParticipants(dialogData)
 		{
 			if (!this.setDialogData(dialogData))
 			{
@@ -84,7 +84,7 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 
 			if (this.dialogData.permissions)
 			{
-				return this.iaCanAddBySettingChat() && this.iaCanAddByTypeChat();
+				return this.iaCanAddBySettingChat() && this.canAddByTypeChat();
 			}
 
 			return this.isOwner();
@@ -105,7 +105,7 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 		 * @desc Check is can add participant by role type chat
 		 * @return {boolean}
 		 */
-		iaCanAddByTypeChat()
+		canAddByTypeChat()
 		{
 			const rolesByChatType = this.getDefaultRolesByChatType();
 			const installedMinimalRole = rolesByChatType[DialogActionType.extend];
@@ -152,7 +152,7 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 		 * @param {DialoguesModelState|string} dialogData
 		 * @return {boolean}
 		 */
-		isCanRemoveParticipants(dialogData)
+		canRemoveParticipants(dialogData)
 		{
 			if (!this.setDialogData(dialogData))
 			{
@@ -161,17 +161,37 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 
 			if (this.dialogData.permissions)
 			{
-				return this.isCanRemoveBySettingChat() && this.isCanRemoveByTypeChat();
+				return this.сanRemoveBySettingChat() && this.сanRemoveByTypeChat();
 			}
 
 			return this.isOwner();
 		}
 
 		/**
+		 * @desc Check is can change owner for chat
+		 * @param {DialoguesModelState|string} dialogData
+		 * @return {boolean}
+		 */
+		сanChangeOwner(dialogData)
+		{
+			if (!this.setDialogData(dialogData))
+			{
+				return false;
+			}
+
+			if (this.dialogData.permissions)
+			{
+				return this.сanChangeOwnerByTypeChat();
+			}
+
+			return false;
+		}
+
+		/**
 		 * @desc Check is can remove participants by setting chat
 		 * @return {boolean}
 		 */
-		isCanRemoveBySettingChat()
+		сanRemoveBySettingChat()
 		{
 			const installedRole = this.dialogData.permissions.manageUsersDelete;
 
@@ -182,10 +202,22 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 		 * @desc Check is can remove participant by role type chat
 		 * @return {boolean}
 		 */
-		isCanRemoveByTypeChat()
+		сanRemoveByTypeChat()
 		{
 			const rolesByChatType = this.getDefaultRolesByChatType();
 			const installedMinimalRole = rolesByChatType[DialogActionType.kick];
+
+			return this.getRightByLowRole(installedMinimalRole);
+		}
+
+		/**
+		 * @desc Check is can change owner by role type chat
+		 * @return {boolean}
+		 */
+		сanChangeOwnerByTypeChat()
+		{
+			const rolesByChatType = this.getDefaultRolesByChatType();
+			const installedMinimalRole = rolesByChatType[DialogActionType.changeOwner];
 
 			return this.getRightByLowRole(installedMinimalRole);
 		}
@@ -195,7 +227,7 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 		 * @param {DialoguesModelState|string} dialogData
 		 * @return {boolean}
 		 */
-		isCanEditDialog(dialogData)
+		сanEditDialog(dialogData)
 		{
 			if (!this.setDialogData(dialogData))
 			{
@@ -208,19 +240,19 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 				return false;
 			}
 
-			if (this.iaCanUpdateDialogByRole(dialogData))
+			if (this.сanUpdateDialogByRole(dialogData))
 			{
 				return true;
 			}
 
-			return this.iaCanManageUIDialog(dialogData);
+			return this.сanManageUIDialog(dialogData);
 		}
 
 		/**
 		 * @param {DialoguesModelState|string} dialogData
 		 * @return {boolean}
 		 */
-		iaCanUpdateDialogByRole(dialogData)
+		сanUpdateDialogByRole(dialogData)
 		{
 			if (!this.setDialogData(dialogData))
 			{
@@ -237,7 +269,7 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 		 * @param {DialoguesModelState|string} dialogData
 		 * @return {boolean}
 		 */
-		iaCanManageUIDialog(dialogData)
+		сanManageUIDialog(dialogData)
 		{
 			if (!this.setDialogData(dialogData))
 			{
@@ -254,7 +286,7 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 		 * @param {DialoguesModelState|string} dialogData
 		 * @return {boolean}
 		 */
-		isCanLeaveFromChat(dialogData)
+		сanLeaveFromChat(dialogData)
 		{
 			if (!this.setDialogData(dialogData))
 			{
@@ -263,7 +295,7 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 
 			if (this.dialogData)
 			{
-				return this.iaCanLeaveByTypeChat();
+				return this.сanLeaveByTypeChat();
 			}
 
 			return false;
@@ -274,7 +306,7 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 		 * @return {boolean}
 		 * @private
 		 */
-		iaCanLeaveByTypeChat()
+		сanLeaveByTypeChat()
 		{
 			const rolesByChatType = this.getDefaultRolesByChatType();
 			let actionType = DialogActionType.leave;
@@ -295,7 +327,7 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 		 * @param {DialoguesModelState|string} dialogData
 		 * @return {boolean}
 		 */
-		isCanRemoveUserById(userId, dialogData)
+		сanRemoveUserById(userId, dialogData)
 		{
 			if (!this.setDialogData(dialogData))
 			{
@@ -431,7 +463,7 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 		 * @param {string} entityType
 		 * @return {boolean}
 		 */
-		isCanCallByEntityType(entityType)
+		canCallByEntityType(entityType)
 		{
 			const userChatOptions = this.getChatOptions();
 			if (entityType in userChatOptions)
@@ -465,7 +497,7 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 		 * @param {string} type
 		 * @return {boolean}
 		 */
-		isCanCallByDialogType(type)
+		canCallByDialogType(type)
 		{
 			return ![
 				DialogType.copilot,
@@ -494,7 +526,7 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 		 * @param {DialoguesModelState|string} dialogData
 		 * @return {boolean}
 		 */
-		isCanPost(dialogData)
+		сanPost(dialogData)
 		{
 			if (!this.setDialogData(dialogData))
 			{
@@ -512,7 +544,7 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 			return this.getRightByLowRole(this.dialogData.permissions.manageMessages);
 		}
 
-		isCanReply(dialogData)
+		сanReply(dialogData)
 		{
 			if (!this.setDialogData(dialogData))
 			{
@@ -524,10 +556,10 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 				return false;
 			}
 
-			return this.isCanPost(dialogData);
+			return this.сanPost(dialogData);
 		}
 
-		isCanMention(dialogData)
+		сanMention(dialogData)
 		{
 			if (!this.setDialogData(dialogData))
 			{
@@ -539,10 +571,10 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 				return false;
 			}
 
-			return this.isCanPost(dialogData);
+			return this.сanPost(dialogData);
 		}
 
-		isCanOpenMessageMenu(dialogData)
+		сanOpenMessageMenu(dialogData)
 		{
 			if (!this.setDialogData(dialogData))
 			{
@@ -553,7 +585,7 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 			return this.#checkMinimalRole(minimalRole, this.dialogData.role);
 		}
 
-		isCanOpenAvatarMenu(dialogData)
+		сanOpenAvatarMenu(dialogData)
 		{
 			if (!this.setDialogData(dialogData))
 			{
@@ -564,7 +596,7 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 			return this.#checkMinimalRole(minimalRole, this.dialogData.role);
 		}
 
-		isCanDeleteOtherMessage(dialogData)
+		сanDeleteOtherMessage(dialogData)
 		{
 			if (!this.setDialogData(dialogData))
 			{
@@ -577,7 +609,7 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 			return this.getRightByLowRole(installedMinimalRole);
 		}
 
-		isCanDeleteChat(dialogData)
+		сanDeleteChat(dialogData)
 		{
 			if (!this.setDialogData(dialogData))
 			{
@@ -588,6 +620,21 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 			const installedMinimalRole = rolesByChatType[DialogActionType.delete];
 
 			return this.getRightByLowRole(installedMinimalRole);
+		}
+
+		/**
+		 * @param {DialoguesModelState|string} dialogData
+		 * @return {boolean}
+		 */
+		сanSetReaction(dialogData)
+		{
+			if (!this.setDialogData(dialogData))
+			{
+				return false;
+			}
+			const minimalRole = MinimalRoleForAction[DialogActionType.setReaction];
+
+			return this.#checkMinimalRole(minimalRole, this.dialogData.role);
 		}
 
 		#checkMinimalRole(minimalRole, roleToCheck)

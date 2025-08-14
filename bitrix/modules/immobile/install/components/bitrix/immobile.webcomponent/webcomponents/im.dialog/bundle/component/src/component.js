@@ -1,6 +1,6 @@
 "use strict";
 
-let REVISION = 19; // api version - sync with im/lib/revision.php
+let REVISION = 20; // api version - sync with im/lib/revision.php
 
 /* Recent list API */
 let ChatDialog = {

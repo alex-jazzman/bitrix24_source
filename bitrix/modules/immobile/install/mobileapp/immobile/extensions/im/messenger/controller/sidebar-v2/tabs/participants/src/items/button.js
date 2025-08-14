@@ -2,7 +2,7 @@
  * @module im/messenger/controller/sidebar-v2/tabs/participants/src/items/button
  */
 jn.define('im/messenger/controller/sidebar-v2/tabs/participants/src/items/button', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Color } = require('tokens');
 	const { Icon } = require('assets/icons');
 	const { Avatar } = require('ui-system/blocks/avatar');

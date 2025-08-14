@@ -18,6 +18,9 @@ use CCrmOwnerType;
 final class RolePreset {
 
 	public const ADMIN = 'ADMIN';
+	public const ADMIN_WEB_FORM = 'ADMIN_WEB_FORM';
+	public const ADMIN_SITE_BUTTON = 'ADMIN_SITE_BUTTON';
+	public const ADMIN_AUTOMATED_SOLUTION = 'ADMIN_AUTOMATED_SOLUTION';
 	public const HEAD = 'HEAD';
 	public const DEPUTY = 'DEPUTY';
 	public const MANAGER = 'MANAGER';
@@ -25,11 +28,13 @@ final class RolePreset {
 
 	public static function GetDefaultRolesPreset(): array
 	{
+		$relationHelper = new RoleRelationHelper();
+
 		return [
 			self::MANAGER => [
 				'NAME' => Loc::getMessage('CRM_ROLE_MANAGER'),
 				'CODE' => self::MANAGER,
-				'RELATION' => [
+				'PERMISSIONS' => [
 					'LEAD' => self::getManagerPermissionSetForEntity(new CategoryIdentifier(CCrmOwnerType::Lead)),
 					'DEAL' => self::getManagerPermissionSetForEntity(new CategoryIdentifier(CCrmOwnerType::Deal)),
 					'CONTACT' => self::getManagerPermissionSetForEntity(new CategoryIdentifier(CCrmOwnerType::Contact)),
@@ -37,14 +42,6 @@ final class RolePreset {
 					'QUOTE' => self::getManagerPermissionSetForEntity(new CategoryIdentifier(CCrmOwnerType::Quote)),
 					'INVOICE' => self::getManagerPermissionSetForEntity(new CategoryIdentifier(CCrmOwnerType::Invoice)),
 
-					'WEBFORM' => [
-						'READ' => ['-' => 'X'],
-						'WRITE' => ['-' => 'X'],
-					],
-					'BUTTON' => [
-						'READ' => ['-' => 'X'],
-						'WRITE' => ['-' => 'X'],
-					],
                     'SALETARGET' => [
                         'READ' => ['-' => 'A'],
                     ],
@@ -65,7 +62,7 @@ final class RolePreset {
 			self::HEAD => [
 				'NAME' => Loc::getMessage('CRM_ROLE_HEAD'),
 				'CODE' => self::HEAD,
-				'RELATION' => [
+				'PERMISSIONS' => [
 					'LEAD' => self::getHeadPermissionSetForEntity(new CategoryIdentifier(CCrmOwnerType::Lead)),
 					'DEAL' => self::getHeadPermissionSetForEntity(new CategoryIdentifier(CCrmOwnerType::Deal)),
 					'CONTACT' => self::getHeadPermissionSetForEntity(new CategoryIdentifier(CCrmOwnerType::Contact)),
@@ -73,14 +70,6 @@ final class RolePreset {
 					'QUOTE' => self::getHeadPermissionSetForEntity(new CategoryIdentifier(CCrmOwnerType::Quote)),
 					'INVOICE' => self::getHeadPermissionSetForEntity(new CategoryIdentifier(CCrmOwnerType::Invoice)),
 
-					'WEBFORM' => [
-						'READ' => ['-' => 'X'],
-						'WRITE' => ['-' => 'X'],
-					],
-					'BUTTON' => [
-						'READ' => ['-' => 'X'],
-						'WRITE' => ['-' => 'X'],
-					],
                     'SALETARGET' => [
                         'READ' => ['-' => 'X'],
                         'WRITE' => ['-' => 'X'],
@@ -103,7 +92,7 @@ final class RolePreset {
 			self::DEPUTY => [
 				'NAME' => Loc::getMessage('CRM_ROLE_DEPUTY'),
 				'CODE' => self::DEPUTY,
-				'RELATION' => [
+				'PERMISSIONS' => [
 					'LEAD' => self::getDeputyPermissionSetForEntity(new CategoryIdentifier(CCrmOwnerType::Lead)),
 					'DEAL' => self::getDeputyPermissionSetForEntity(new CategoryIdentifier(CCrmOwnerType::Deal)),
 					'CONTACT' => self::getDeputyPermissionSetForEntity(new CategoryIdentifier(CCrmOwnerType::Contact)),
@@ -111,14 +100,6 @@ final class RolePreset {
 					'QUOTE' => self::getDeputyPermissionSetForEntity(new CategoryIdentifier(CCrmOwnerType::Quote)),
 					'INVOICE' => self::getDeputyPermissionSetForEntity(new CategoryIdentifier(CCrmOwnerType::Invoice)),
 
-					'WEBFORM' => [
-						'READ' => ['-' => 'X'],
-						'WRITE' => ['-' => 'X'],
-					],
-					'BUTTON' => [
-						'READ' => ['-' => 'X'],
-						'WRITE' => ['-' => 'X'],
-					],
                     'SALETARGET' => [
                         'READ' => ['-' => 'D'],
                         'WRITE' => ['-' => 'X'],
@@ -141,7 +122,7 @@ final class RolePreset {
 			self::OBSERVER => [
 				'NAME' => Loc::getMessage('CRM_ROLE_OBSERVER'),
 				'CODE' => self::OBSERVER,
-				'RELATION' => [
+				'PERMISSIONS' => [
 					'LEAD' => self::getObserverPermissionSetForEntity(new CategoryIdentifier(CCrmOwnerType::Lead)),
 					'DEAL' => self::getObserverPermissionSetForEntity(new CategoryIdentifier(CCrmOwnerType::Deal)),
 					'CONTACT' => self::getObserverPermissionSetForEntity(new CategoryIdentifier(CCrmOwnerType::Contact)),
@@ -153,22 +134,13 @@ final class RolePreset {
 			self::ADMIN => [
 				'NAME' => Loc::getMessage('CRM_ROLE_ADMIN'),
 				'CODE' => self::ADMIN,
-				'RELATION' => [
+				'PERMISSIONS' => [
 					'LEAD' => self::getMaxPermissionSetForEntity(new CategoryIdentifier(CCrmOwnerType::Lead)),
 					'DEAL' => self::getMaxPermissionSetForEntity(new CategoryIdentifier(CCrmOwnerType::Deal)),
 					'CONTACT' => self::getMaxPermissionSetForEntity(new CategoryIdentifier(CCrmOwnerType::Contact)),
 					'COMPANY' => self::getMaxPermissionSetForEntity(new CategoryIdentifier(CCrmOwnerType::Company)),
 					'QUOTE' => self::getMaxPermissionSetForEntity(new CategoryIdentifier(CCrmOwnerType::Quote)),
 					'INVOICE' => self::getMaxPermissionSetForEntity(new CategoryIdentifier(CCrmOwnerType::Invoice)),
-
-					'WEBFORM' => [
-						'READ' => ['-' => 'X'],
-						'WRITE' => ['-' => 'X'],
-					],
-					'BUTTON' => [
-						'READ' => ['-' => 'X'],
-						'WRITE' => ['-' => 'X'],
-					],
 					'CONFIG' => [
 						'WRITE' => ['-' => 'X'],
 					],
@@ -189,6 +161,61 @@ final class RolePreset {
 						'READ' => ['-' => 'X'],
 						'WRITE' => ['-' => 'X'],
 					],
+				],
+				'RELATIONS' => [
+					$relationHelper->getAdminGroupRelationAccessCode(),
+					$relationHelper->getAllUsersGroupRelationAccessCode(),
+				],
+			],
+			self::ADMIN_WEB_FORM => [
+				'NAME' => Loc::getMessage('CRM_ROLE_ADMIN'),
+				'CODE' => self::ADMIN_WEB_FORM,
+				'GROUP_CODE' => GroupCodeGenerator::getCrmFormGroupCode(),
+				'PERMISSIONS' => [
+					'WEBFORM' => [
+						'READ' => ['-' => 'X'],
+						'WRITE' => ['-' => 'X'],
+					],
+					'WEBFORM_CONFIG' => [
+						'WRITE' => ['-' => 'X'],
+					],
+				],
+				'RELATIONS' => [
+					$relationHelper->getAdminGroupRelationAccessCode(),
+					$relationHelper->getAllUsersGroupRelationAccessCode(),
+				],
+			],
+			self::ADMIN_SITE_BUTTON => [
+				'NAME' => Loc::getMessage('CRM_ROLE_ADMIN'),
+				'CODE' => self::ADMIN_SITE_BUTTON,
+				'GROUP_CODE' => GroupCodeGenerator::getWidgetGroupCode(),
+				'PERMISSIONS' => [
+					'BUTTON' => [
+						'READ' => ['-' => 'X'],
+						'WRITE' => ['-' => 'X'],
+					],
+					'BUTTON_CONFIG' => [
+						'WRITE' => ['-' => 'X'],
+					],
+				],
+				'RELATIONS' => [
+					$relationHelper->getAdminGroupRelationAccessCode(),
+					$relationHelper->getAllUsersGroupRelationAccessCode(),
+				],
+			],
+			self::ADMIN_AUTOMATED_SOLUTION => [
+				'NAME' => Loc::getMessage('CRM_ROLE_ADMIN'),
+				'CODE' => self::ADMIN_AUTOMATED_SOLUTION,
+				'GROUP_CODE' => GroupCodeGenerator::getAutomatedSolutionListCode(),
+				'PERMISSIONS' => [
+					'AUTOMATED_SOLUTION' => [
+						'CONFIG' => ['-' => 'X'],
+						'WRITE' => ['-' => 'X'],
+					],
+				],
+				'RELATIONS' => [
+					$relationHelper->getAdminGroupRelationAccessCode(),
+					$relationHelper->getAllUsersGroupRelationAccessCode(),
 				],
 			],
 		];

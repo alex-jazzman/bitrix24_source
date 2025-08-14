@@ -1,12 +1,21 @@
 'use strict';
+
 /* global tabs */
 (async () => {
 	console.log('Navigation is loaded.');
 	const require = jn.require;
 
+	/**
+	 * @description Import MessengerParams and initSharedParams should be higher than other imports.
+	 */
+	const { MessengerParams } = require('im/messenger/lib/params');
+	await MessengerParams.initSharedParams();
+
 	const { EntityReady } = require('entity-ready');
+
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { NavigationApplication } = require('im/messenger/core/navigation');
+
 	const core = new NavigationApplication({
 		localStorage: {
 			enable: true,
@@ -72,25 +81,19 @@
 
 			this.visibilityManager = VisibilityManager.getInstance();
 			this.counterHandler = NavigationCounterHandler.getInstance();
-			void this.saveActiveTabInfo();
-
-			// navigation
-			tabs.on('onTabSelected', this.onTabSelected.bind(this));
-			BX.addCustomEvent('onTabChange', this.onTabChange.bind(this));
-
-			// counters
-			BX.addCustomEvent('ImRecent::counter::list', this.onUpdateCounters.bind(this));
-			BX.addCustomEvent('onUpdateCounters', this.onUpdateCounters.bind(this));
-			BX.addCustomEvent(EventType.navigation.broadCastEventWithTabChange, this.onBroadcastEventTabChange.bind(this));
-			BX.addCustomEvent(EventType.navigation.broadCastEventCheckTabPreload, this.onBroadcastEventCheckTabPreload.bind(this));
-			BX.addCustomEvent(EventType.navigation.changeTab, this.changeTabHandler.bind(this));
-			BX.addCustomEvent(EventType.app.active, this.onAppActive.bind(this));
-			BX.postComponentEvent('requestCounters', [{ component: 'im.navigation' }], 'communication');
-			BX.addCustomEvent(EventType.navigation.onRootTabsSelected, this.onRootTabsSelected.bind(this));
-			BX.addCustomEvent(EventType.navigation.closeAll, this.closeAll.bind(this));
-			BX.addCustomEvent(EventType.app.changeStatus, this.onAppStatusChange.bind(this));
-
 			this.connectionService = ConnectionService.getInstance();
+
+			this.init();
+
+			this.isReady = true;
+			this.currentTabOptions = {};
+		}
+
+		init()
+		{
+			void this.saveActiveTabInfo();
+			this.bindMethods();
+			this.subscribeEvents();
 
 			EntityReady.ready('im.navigation');
 
@@ -98,9 +101,46 @@
 			{
 				this.sendAnalyticsChangeTab();
 			}
+		}
 
-			this.isReady = true;
-			this.currentTabOptions = {};
+		/**
+		 * @override
+		 */
+		bindMethods()
+		{
+			this.onTabSelected = this.onTabSelected.bind(this);
+			this.onTabChange = this.onTabChange.bind(this);
+			this.onUpdateCounters = this.onUpdateCounters.bind(this);
+			this.onUpdateCounters = this.onUpdateCounters.bind(this);
+			this.onBroadcastEventTabChange = this.onBroadcastEventTabChange.bind(this);
+			this.onBroadcastEventCheckTabPreload = this.onBroadcastEventCheckTabPreload.bind(this);
+			this.changeTabHandler = this.changeTabHandler.bind(this);
+			this.onAppActive = this.onAppActive.bind(this);
+			this.onRootTabsSelected = this.onRootTabsSelected.bind(this);
+			this.closeAll = this.closeAll.bind(this);
+			this.onAppStatusChange = this.onAppStatusChange.bind(this);
+		}
+
+		/**
+		 * @override
+		 */
+		subscribeEvents()
+		{
+			// navigation
+			tabs.on('onTabSelected', this.onTabSelected);
+			BX.addCustomEvent('onTabChange', this.onTabChange);
+
+			// counters
+			BX.addCustomEvent('ImRecent::counter::list', this.onUpdateCounters);
+			BX.addCustomEvent('onUpdateCounters', this.onUpdateCounters);
+			BX.addCustomEvent(EventType.navigation.broadCastEventWithTabChange, this.onBroadcastEventTabChange);
+			BX.addCustomEvent(EventType.navigation.broadCastEventCheckTabPreload, this.onBroadcastEventCheckTabPreload);
+			BX.addCustomEvent(EventType.navigation.changeTab, this.changeTabHandler);
+			BX.addCustomEvent(EventType.app.active, this.onAppActive);
+			BX.postComponentEvent('requestCounters', [{ component: 'im.navigation' }], 'communication');
+			BX.addCustomEvent(EventType.navigation.onRootTabsSelected, this.onRootTabsSelected);
+			BX.addCustomEvent(EventType.navigation.closeAll, this.closeAll.bind(this));
+			BX.addCustomEvent(EventType.app.changeStatus, this.onAppStatusChange);
 		}
 
 		set currentTab(tab)
@@ -181,30 +221,32 @@
 				return;
 			}
 
-			if (
-				componentCode === ComponentCode.imCollabMessenger
-				&& !Feature.isCollabSupported
-			)
+			this.currentTabOptions = options;
+
+			if (Application.getApiVersion() >= 61)
 			{
-				this.handleCollabsAreNotSupported();
+				PageManager.getNavigator().makeTabActive()
+					.then(() => {
+						tabs.setActiveItem(NavigationTabByComponent[componentCode]);
+
+						BX.postComponentEvent(EventType.navigation.changeTabResult, [{
+							componentCode,
+						}]);
+					})
+					.catch((error) => {
+						console.error(error);
+					});
+			}
+			else
+			{
+				tabs.setActiveItem(NavigationTabByComponent[componentCode]);
+
+				PageManager.getNavigator().makeTabActive();
 
 				BX.postComponentEvent(EventType.navigation.changeTabResult, [{
 					componentCode,
-					errorText: `im.navigation: Error changing tab, tab ${componentCode} is disabled.`,
 				}]);
-
-				return;
 			}
-
-			this.currentTabOptions = options;
-
-			tabs.setActiveItem(NavigationTabByComponent[componentCode]);
-
-			PageManager.getNavigator().makeTabActive();
-
-			BX.postComponentEvent(EventType.navigation.changeTabResult, [{
-				componentCode,
-			}]);
 		}
 
 		async closeAll()
@@ -237,16 +279,6 @@
 				console.log(`${this.constructor.name}.onTabSelected selected tab is equal current, this.currentTab:`, this.currentTab, item.id);
 
 				return true;
-			}
-
-			if (
-				item.id === NavigationTab.imCollabMessenger
-				&& !Feature.isCollabSupported
-			)
-			{
-				this.handleCollabsAreNotSupported();
-
-				return;
 			}
 
 			this.previousTab = this.currentTab;
@@ -397,18 +429,7 @@
 			}
 			console.info(`${this.constructor.name}.onBroadcastEventTabChange params:`, params);
 
-			if (
-				componentCodeByTab === ComponentCode.imCollabMessenger
-				&& !Feature.isCollabSupported
-			)
-			{
-				this.handleCollabsAreNotSupported();
-			}
-			else
-			{
-				await this.handleBroadcastEventSetActiveItem(params.toTab, componentCodeByTab);
-			}
-
+			await this.handleBroadcastEventSetActiveItem(params.toTab, componentCodeByTab);
 			MessengerEmitter.emit(params.broadCastEvent, params.data, componentCodeByTab);
 		}
 
@@ -443,15 +464,6 @@
 			}
 
 			MessengerEmitter.emit(params.broadCastEvent, params.data, componentCodeByTab);
-		}
-
-		handleCollabsAreNotSupported()
-		{
-			console.log(`${this.constructor.name}.handleCollabsAreNotSupported`);
-
-			tabs.setActiveItem(NavigationTabByComponent[ComponentCode.imMessenger]);
-			Feature.showUnsupportedWidget();
-			this.currentTab = NavigationTab.imMessenger;
 		}
 
 		/**

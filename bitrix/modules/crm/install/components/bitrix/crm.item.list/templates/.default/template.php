@@ -28,8 +28,14 @@ Extension::load([
 	'crm.activity.grid-activities-manager',
 	'crm.badge',
 	'ui.design-tokens',
+	'ui.tooltip',
 	'crm.entity-list.binder',
 ]);
+
+if ($arResult['customSectionId'] > 0)
+{
+	echo (\Bitrix\Crm\Tour\MobilePromoter\MobilePromoterCustomSection::getInstance()->setCustomSection($arResult['customSectionId'])->build());
+}
 
 $assets = Asset::getInstance();
 $assets->addJs('/bitrix/js/crm/progress_control.js');

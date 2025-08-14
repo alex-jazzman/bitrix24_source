@@ -6,17 +6,17 @@ export type ChatAvatarTitleParams = {
 
 export type AvatarDetail = {
 	type: 'hexagon' | 'circle' | 'square',
-	polygonAngle: number, // only IOS
+	polygonAngle?: number, // only IOS
 	radius: number,
 	accentType: 'blue' | 'green' | 'orange',
-	accentColorGradient: { // only IOS
+	accentColorGradient?: { // only IOS
 		start: string,
 		middle: string,
 		end: string,
 		angle: number,
 	},
 	backBorderWidth: number,
-	backColor: string, // only IOS
+	backColor?: string, // only IOS
 	hideOutline: true,
 	uri: string,
 	title: string,

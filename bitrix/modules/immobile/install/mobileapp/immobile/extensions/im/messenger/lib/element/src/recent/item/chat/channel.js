@@ -9,7 +9,6 @@ jn.define('im/messenger/lib/element/recent/item/chat/channel', (require, exports
 	} = require('im/messenger/const');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { ChatItem } = require('im/messenger/lib/element/recent/item/chat');
-	const { Feature } = require('im/messenger/lib/feature');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Color } = require('tokens');
 	const { Icon } = require('assets/icons');
@@ -38,7 +37,6 @@ jn.define('im/messenger/lib/element/recent/item/chat/channel', (require, exports
 			super.initParams(modelItem, options);
 
 			this.dialog = this.params.model.dialog;
-
 			const postsCountWithCounters = serviceLocator.get('core').getStore()
 				.getters['commentModel/getPostsCountWithCounters'](this.dialog?.chatId);
 
@@ -51,19 +49,34 @@ jn.define('im/messenger/lib/element/recent/item/chat/channel', (require, exports
 		}
 
 		/**
+		 * @return RecentItem
+		 */
+		createUnread()
+		{
+			if (MessengerParams.getComponentCode() === ComponentCode.imChannelMessenger)
+			{
+				this.unread = false;
+
+				return this;
+			}
+
+			this.unread = this.getModelItem().unread;
+
+			return this;
+		}
+
+		/**
 		 * @deprecated use to AvatarDetail
 		 */
 		setSuperEllipseIcon()
 		{
 			this.isSuperEllipseIcon = true;
 			// for native support styles (isSuperEllipseIcon key will be deleted)
-			if (Feature.isAvatarBorderStylesSupported)
-			{
-				const roundingRadiusByDesign = Theme.corner.M.toNumber();
-				const heightIcon = 56;
-				const borderPercent = Math.round((roundingRadiusByDesign / heightIcon) * 100);
-				this.styles.image = { image: { borderRadius: borderPercent } };
-			}
+
+			const roundingRadiusByDesign = Theme.corner.M.toNumber();
+			const heightIcon = 56;
+			const borderPercent = Math.round((roundingRadiusByDesign / heightIcon) * 100);
+			this.styles.image = { image: { borderRadius: borderPercent } };
 		}
 
 		createMessageCount()
@@ -125,6 +138,11 @@ jn.define('im/messenger/lib/element/recent/item/chat/channel', (require, exports
 				return this;
 			}
 
+			if (this.unread)
+			{
+				this.styles.counter.backgroundColor = Theme.colors.accentMainPrimaryalt;
+			}
+
 			return this;
 		}
 
@@ -178,6 +196,7 @@ jn.define('im/messenger/lib/element/recent/item/chat/channel', (require, exports
 				this.getMuteAction(),
 				this.getHideAction(),
 				this.getPinAction(),
+				this.getReadAction(),
 			];
 
 			return this;

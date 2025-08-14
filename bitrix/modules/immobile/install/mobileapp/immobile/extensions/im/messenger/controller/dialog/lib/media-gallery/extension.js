@@ -41,7 +41,7 @@ jn.define('im/messenger/controller/dialog/lib/media-gallery', (require, exports,
 		}
 
 		/**
-		 * @returns {Promise<MediaMenu>}
+		 * @returns {MediaMenu}
 		 */
 		createMediaMenu()
 		{
@@ -67,8 +67,9 @@ jn.define('im/messenger/controller/dialog/lib/media-gallery', (require, exports,
 
 		async openMediaCollection()
 		{
-			const mediaMenu = await this.createMediaMenu().catch(console.error);
-			this.gallery = await MediaGallery.open(this.createMediaCollection(mediaMenu)).catch(console.error);
+			const mediaMenu = this.createMediaMenu();
+			const mediaCollection = this.createMediaCollection(mediaMenu);
+			this.gallery = await MediaGallery.open(mediaCollection).catch(console.error);
 			mediaMenu.setGalleryWidget(this.gallery);
 		}
 
@@ -88,7 +89,7 @@ jn.define('im/messenger/controller/dialog/lib/media-gallery', (require, exports,
 				description: parser.simplify({ text: media.description }),
 				header: {
 					title: media.authorName,
-					subtitle: DateFormatter.getMediaFormat(media.date),
+					subtitle: DateFormatter.getMediaFormat(new Date(media.date)),
 				},
 				customData: {
 					mediaId,
@@ -106,6 +107,12 @@ jn.define('im/messenger/controller/dialog/lib/media-gallery', (require, exports,
 		 */
 		getMediaList()
 		{
+			const { mediaList } = this.props;
+			if (mediaList)
+			{
+				return mediaList;
+			}
+
 			return this.getMessageList()
 				.flatMap((message) => {
 					if (isEmpty(message.files))

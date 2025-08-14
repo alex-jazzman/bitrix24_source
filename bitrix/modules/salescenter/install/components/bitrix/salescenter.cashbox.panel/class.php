@@ -8,6 +8,7 @@ use Bitrix\Main,
 	Bitrix\Sale,
 	Bitrix\SalesCenter\Integration\SaleManager,
 	Bitrix\SalesCenter\Integration\Bitrix24Manager;
+use Bitrix\SalesCenter\Integration;
 
 Loc::loadMessages(__FILE__);
 
@@ -18,6 +19,7 @@ class SalesCenterCashboxPanel extends CBitrixComponent implements Controllerable
 {
 	private $cashboxPanelId = 'salescenter-cashbox';
 	private $offlineCashboxPanelId = 'salescenter-offline-cashbox';
+	private const MARKET_CATEGORY_CASHBOX = 'integration_cashbox';
 
 	/**
 	 * @param $arParams
@@ -57,10 +59,6 @@ class SalesCenterCashboxPanel extends CBitrixComponent implements Controllerable
 
 		// online cashbox
 		$cashboxItems = $this->getCashboxItems();
-		if (Bitrix24Manager::getInstance()->isEnabled())
-		{
-			$cashboxItems[] = $this->getRecommendItem();
-		}
 
 		$this->arResult['cashboxPanelParams'] = [
 			'id' => $this->cashboxPanelId,
@@ -74,11 +72,46 @@ class SalesCenterCashboxPanel extends CBitrixComponent implements Controllerable
 			'items' => $offlineCashboxItems,
 		];
 
+		$this->arResult['otherCashboxPanelParams'] = [
+			'id' => $this->offlineCashboxPanelId,
+			'items' => $this->getAdditionalCashboxItems(),
+		];
+
 		$activeCashboxHandlersByCountry = $this->getActiveCashboxHandlersByCountry();
 		$this->arResult['activeCashboxHandlersByCountry'] = $activeCashboxHandlersByCountry;
 		$this->arResult['isCashboxCountryConflict'] = !(empty($activeCashboxHandlersByCountry['RU']) || empty($activeCashboxHandlersByCountry['UA']));
 
 		$this->includeComponentTemplate();
+	}
+
+	protected function getAdditionalCashboxItems()
+	{
+		$result = [];
+
+		if (Integration\RestManager::getInstance()->isEnabled())
+		{
+			$appsCount =
+				Integration\RestManager::getInstance()
+					->getMarketplaceAppsCount(static::MARKET_CATEGORY_CASHBOX)
+			;
+			$result[] = [
+				'id' => 'counter',
+				'title' => Loc::getMessage('SCP_CASHBOX_APP_TOTAL_APPLICATIONS'),
+				'data' => [
+					'type' => 'counter',
+					'connectPath' => ' /market/category/' . static::MARKET_CATEGORY_CASHBOX . '/',
+					'count' => $appsCount,
+					'description' => Loc::getMessage('SCP_CASHBOX_APP_SEE_ALL'),
+				],
+			];
+		}
+
+		if (Bitrix24Manager::getInstance()->isEnabled())
+		{
+			$result[] = $this->getRecommendItem();
+		}
+
+		return $result;
 	}
 
 	/**

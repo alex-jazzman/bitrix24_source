@@ -921,6 +921,22 @@ class CBPMailActivity extends CBPActivity
 		return $mailText;
 	}
 
+	public function collectUsages()
+	{
+		$properties = $this->arProperties;
+		$message = $this->getRawProperty('MailText');
+		if ($this->MailMessageEncoded)
+		{
+			$message = self::decodeMailText($message);
+			$properties['MailText'] = $message;
+		}
+
+		$usages = [];
+		$this->collectUsagesRecursive($properties, $usages);
+
+		return $usages;
+	}
+
 	private static function encodeMailText($text)
 	{
 		return 'base64,' . base64_encode($text);

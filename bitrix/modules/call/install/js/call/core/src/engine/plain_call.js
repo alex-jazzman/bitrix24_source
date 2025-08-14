@@ -230,11 +230,13 @@ export class PlainCall extends AbstractCall
 			{
 				this.runCallback(CallEvent.onNetworkProblem, e)
 			},
-			onReconnecting: () =>
+			onReconnecting: (e) =>
 			{
 				this._reconnectionEventCount++;
 				this.runCallback(CallEvent.onReconnecting, {
 					reconnectionEventCount: this._reconnectionEventCount,
+					reconnectionReason: e.reconnectionReason,
+					reconnectionReasonInfo: e.reconnectionReasonInfo,
 				});
 			},
 			onReconnected: () =>
@@ -3202,11 +3204,6 @@ class Peer
 				this.callbacks.onNetworkProblem();
 			}
 
-			if (!this.hasTurn && !this.hasStun)
-			{
-
-			}
-
 			if (!this.getSignaling().isIceTricklingAllowed())
 			{
 				if (this.localIceCandidates.length > 0)
@@ -3705,7 +3702,10 @@ class Peer
 			return;
 		}
 
-		this.callbacks.onReconnecting();
+		this.callbacks.onReconnecting({
+			reconnectionReason: 'TRYING_RESTORE_ICE_CONNECTION',
+			reconnectionReasonInfo: '',
+		});
 
 		this.log("Trying to restore ICE connection. Attempt " + this.connectionAttempt);
 		if (this.isInitiator())

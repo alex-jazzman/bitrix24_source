@@ -3,7 +3,7 @@
  */
 
 jn.define('im/messenger/lib/ui/context-menu/messages-auto-delete', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Icon } = require('assets/icons');
 	const { UIMenu } = require('layout/ui/menu');
 

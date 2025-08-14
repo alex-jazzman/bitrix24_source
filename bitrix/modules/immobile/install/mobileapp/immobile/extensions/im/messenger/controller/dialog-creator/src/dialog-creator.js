@@ -26,7 +26,6 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 	const { Logger } = require('im/messenger/lib/logger');
 	const { AnalyticsEvent } = require('analytics');
 	const { CopilotRoleSelector } = require('layout/ui/copilot-role-selector');
-	const { Feature } = require('im/messenger/lib/feature');
 
 	class DialogCreator
 	{
@@ -62,13 +61,6 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 
 		async createCollab()
 		{
-			if (!Feature.isCollabSupported)
-			{
-				Feature.showUnsupportedWidget();
-
-				return;
-			}
-
 			try
 			{
 				const { openCollabCreate } = await requireLazy('collab/create');

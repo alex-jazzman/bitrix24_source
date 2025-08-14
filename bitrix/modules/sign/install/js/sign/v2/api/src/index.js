@@ -1,3 +1,4 @@
+import type { DocumentInitiatedType } from 'sign.type';
 import { post } from './request';
 import { TemplateApi } from './template/template-api';
 import { TemplateFolderApi } from './template/template-folder-api';
@@ -31,6 +32,8 @@ export class Api
 		scenarioType: string | null = null,
 		asTemplate: boolean = false,
 		chatId: number = 0,
+		templateFolderId: number = 0,
+		initiatedByType: ?DocumentInitiatedType = null,
 	): Promise<{
 		uid: string,
 		templateUid: string | null,
@@ -38,7 +41,7 @@ export class Api
 		chatId: number,
 	}>
 	{
-		return this.#post('sign.api_v1.document.register', { blankId, scenarioType, asTemplate, chatId });
+		return this.#post('sign.api_v1.document.register', { blankId, scenarioType, asTemplate, chatId, templateFolderId, initiatedByType });
 	}
 
 	upload(uid: string): Promise<[]>

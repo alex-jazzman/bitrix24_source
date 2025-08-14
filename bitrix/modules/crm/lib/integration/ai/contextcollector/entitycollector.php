@@ -51,24 +51,26 @@ final class EntityCollector implements ContextCollector
 	{
 		$collectors = [];
 
-		if ($this->settings->userFields()->isCollect())
-		{
-			$collectors['user_fields'] = (new UserFieldsCollector($this->entityTypeId, $this->context))
-				->setSettings($this->settings->userFields());
-		}
-
 		if ($this->factory->isCategoriesSupported())
 		{
 			if ($this->settings->isCollectCategories())
 			{
 				$collectors['categories'] = (new CategoriesCollector($this->entityTypeId, $this->context))
-					->setStageSettings($this->settings->stages());
+					->setStageSettings($this->settings->stages())
+					->setUserFieldsSettings($this->settings->userFields());
 			}
+
+			return $collectors;
 		}
-		elseif (
-			$this->factory->isStagesSupported()
-			&& $this->settings->stages()->isCollect()
-		)
+
+		if ($this->settings->userFields()->isCollect())
+		{
+			$collectors['user_fields'] = (new UserFieldsCollector($this->entityTypeId, $this->context))
+				->setUserFieldsReceiveStrategy(new UserFieldsReceiveStrategy\ViaFactory($this->factory))
+				->setSettings($this->settings->userFields());
+		}
+
+		if ($this->factory->isStagesSupported() && $this->settings->stages()->isCollect())
 		{
 			$collectors['stages'] = (new StagesCollector($this->entityTypeId, null, $this->context))
 				->setSettings($this->settings->stages());

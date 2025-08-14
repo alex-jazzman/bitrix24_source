@@ -25,13 +25,16 @@ final class ScopeService
 	public const BIC_SCOPE_BIZPROC = 'bizproc';
 	public const BIC_SCOPE_WORKFLOW_TEMPLATE = 'workflow_template';
 	public const BIC_SCOPE_TASKS = 'tasks';
-	public const BIC_SCOPE_TASKS_EFFICIENCY = 'tasks_efficiency';
 	public const BIC_SCOPE_AUTOMATED_SOLUTION_PREFIX = 'automated_solution_';
 	public const BIC_SCOPE_PROFILE = 'profile';
 	public const BIC_SCOPE_SHOP = 'shop';
 	public const BIC_SCOPE_STORE = 'store';
-	public const BIC_SCOPE_TASKS_FLOWS = 'tasks_flows';
 	public const BIC_SCOPE_TASKS_FLOWS_FLOW = 'tasks_flows_flow';
+
+	/** @deprecated  */
+	public const BIC_SCOPE_TASKS_EFFICIENCY = 'tasks_efficiency';
+	/** @deprecated  */
+	public const BIC_SCOPE_TASKS_FLOWS = 'tasks_flows';
 
 	private static ?ScopeService $instance = null;
 	private static array $scopeNameMap = [];
@@ -89,6 +92,8 @@ final class ScopeService
 	 */
 	public function saveDashboardScopes(int $dashboardId, array $scopeCodes): Result
 	{
+		$scopeCodes = $this->normalizeScopes($scopeCodes);
+
 		$result = new Result();
 		$db = Application::getConnection();
 		try
@@ -124,6 +129,37 @@ final class ScopeService
 		{
 			$db->rollbackTransaction();
 			$result->addError(new Error($e->getMessage()));
+		}
+
+		return $result;
+	}
+
+	private function normalizeScopes(array $scopes): array
+	{
+		$result = [];
+		$hasTasksScope = false;
+		$hasIncompatibleTaskScopes = false;
+
+		foreach ($scopes as $scope)
+		{
+			if (in_array($scope, [self::BIC_SCOPE_TASKS_EFFICIENCY, self::BIC_SCOPE_TASKS_FLOWS]))
+			{
+				$hasIncompatibleTaskScopes = true;
+
+				continue;
+			}
+
+			if ($scope === self::BIC_SCOPE_TASKS)
+			{
+				$hasTasksScope = true;
+			}
+
+			$result[] = $scope;
+		}
+
+		if (!$hasTasksScope && $hasIncompatibleTaskScopes)
+		{
+			$result[] = self::BIC_SCOPE_TASKS;
 		}
 
 		return $result;
@@ -205,12 +241,10 @@ final class ScopeService
 			self::BIC_SCOPE_BIZPROC,
 			self::BIC_SCOPE_CRM,
 			self::BIC_SCOPE_TASKS,
-			self::BIC_SCOPE_TASKS_EFFICIENCY,
 			self::BIC_SCOPE_WORKFLOW_TEMPLATE,
 			self::BIC_SCOPE_PROFILE,
 			self::BIC_SCOPE_SHOP,
 			self::BIC_SCOPE_STORE,
-			self::BIC_SCOPE_TASKS_FLOWS,
 			self::BIC_SCOPE_TASKS_FLOWS_FLOW,
 		];
 

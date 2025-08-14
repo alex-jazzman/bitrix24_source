@@ -29,4 +29,3 @@ $MESS["USER_INVITED_2"] = "Приглашение не принято";
 $MESS["CALL_STATUS_JOIN"] = "Подключиться к звонку";
 $MESS["CALL_STATUS_REMOTE"] = "Звонок на другом устройстве";
 $MESS["CALL_STATUS_OPEN"] = "Перейти к звонку";
-?>

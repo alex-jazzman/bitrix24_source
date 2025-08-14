@@ -2,7 +2,7 @@
  * @module im/messenger/lib/helper/file
  */
 jn.define('im/messenger/lib/helper/file', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { FileType } = require('im/messenger/const');
 	const {
 		FileType: FileIconType,

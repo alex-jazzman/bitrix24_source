@@ -120,7 +120,10 @@ echo Tour\Permissions\AutomatedSolution::getInstance()
 $repeatSaleEntityTypeIds = [\CCrmOwnerType::Deal, \CCrmOwnerType::Contact, \CCrmOwnerType::Company];
 if (in_array($entityTypeId, $repeatSaleEntityTypeIds, true))
 {
-	print OnboardingPopup::getInstance()->build();
+	print OnboardingPopup::getInstance()->setAnalytics([
+		'c_section' => $section,
+		'c_sub_section' => $subSection,
+	])->build();
 }
 
 if (defined('AIR_SITE_TEMPLATE'))

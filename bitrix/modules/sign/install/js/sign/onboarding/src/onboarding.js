@@ -15,7 +15,7 @@ type OnboardingOptions = {
 
 const b2bHelpdeskCode = 16571388;
 const b2eCreateHelpdeskCode = 20338910;
-const b2eTemplatesHelpdeskCode = 23174934;
+const b2eTemplatesHelpdeskCode = 24354462;
 
 const b2ePopupTourId = 'sign-b2e-onboarding-tour-id';
 
@@ -41,7 +41,7 @@ export class Onboarding
 		});
 	}
 
-	async startB2eWelcomeOnboarding(options: OnboardingOptions): Promise<void>
+	async startB2eWelcomeOnboarding(byEmployee: boolean, options: OnboardingOptions): Promise<void>
 	{
 		const startOnboarding = await this.#shouldStartB2eOnboarding();
 		if (!startOnboarding)
@@ -50,8 +50,8 @@ export class Onboarding
 		}
 
 		BannerDispatcher.high.toQueue((onDone) => {
-			const guide = this.#getB2eWelcomeGuide(options, onDone);
-			const welcomePopup = this.#createB2eWelcomePopup(guide);
+			const guide = this.#getB2eWelcomeGuide(byEmployee, options, onDone);
+			const welcomePopup = this.#createB2eWelcomePopup(guide, options);
 
 			this.#backend.saveVisit(b2ePopupTourId);
 
@@ -81,13 +81,13 @@ export class Onboarding
 				this.#createB2eTemplatesStep(
 					this.#isTemplateBtnVisible()
 						? 'div#sign_sign_b2e_employee_template_list'
-						: 'div#sign_more_button'
+						: 'div#sign_more_button',
 				),
 			],
 		});
 	}
 
-	#getB2eWelcomeGuide(options: OnboardingOptions, onFinish: ?Function): Guide
+	#getB2eWelcomeGuide(byEmployee: boolean, options: OnboardingOptions, onFinish: ?Function): Guide
 	{
 		return new Guide({
 			id: options.tourId ?? 'sign-tour-guide-sign-start-kanban-b2e-by-employee',
@@ -98,11 +98,11 @@ export class Onboarding
 			},
 			steps: [
 				this.#createB2eNewDocumentButtonStep('.ui-toolbar-after-title-buttons > .sign-b2e-onboarding-create', options.region),
-				this.#createB2eKanbanRouteStep('.ui-toolbar-after-title-buttons > .sign-b2e-onboarding-route'),
+				...(byEmployee ? [this.#createB2eKanbanRouteStep('.ui-toolbar-after-title-buttons > .sign-b2e-onboarding-route')] : []),
 				this.#createB2eTemplatesStep(
 					this.#isTemplateBtnVisible()
 						? 'div#sign_sign_b2e_employee_template_list'
-						: 'div#sign_more_button'
+						: 'div#sign_more_button',
 				),
 			],
 		});
@@ -176,8 +176,12 @@ export class Onboarding
 		return popup;
 	}
 
-	#createB2eWelcomePopup(guide: Guide): Popup
+	#createB2eWelcomePopup(guide: Guide, options: OnboardingOptions): Popup
 	{
+		const popupTitle = options.region === 'ru'
+			? Loc.getMessage('SIGN_ONBOARDING_B2E_WELCOME_POPUP_TITLE')
+			: Loc.getMessage('SIGN_ONBOARDING_B2E_WELCOME_POPUP_TITLE_WEST')
+		;
 		const popup = new Popup({
 			className: 'sign__b2e-onboarding-welcome-popup',
 			closeIcon: false,
@@ -207,7 +211,7 @@ export class Onboarding
 							${this.#renderIcon()}
 						</div>
 						<div class="sign__onboarding-popup-content_header-title">
-							${Loc.getMessage('SIGN_ONBOARDING_B2E_WELCOME_POPUP_TITLE')}
+							${popupTitle}
 						</div>
 					</div>
 					<div class="sign__onboarding-popup-content_promo-video-wrapper">
@@ -260,8 +264,8 @@ export class Onboarding
 	{
 		return {
 			target,
-			title: Loc.getMessage('SIGN_ONBOARDING_B2E_STEP_TEMPLATES_TITLE'),
-			text: Loc.getMessage('SIGN_ONBOARDING_B2E_STEP_TEMPLATES_TEXT'),
+			title: Loc.getMessage('SIGN_ONBOARDING_B2E_STEP_TEMPLATES_TITLE_V1'),
+			text: Loc.getMessage('SIGN_ONBOARDING_B2E_STEP_TEMPLATES_TEXT_V1'),
 			article: b2eTemplatesHelpdeskCode,
 		};
 	}

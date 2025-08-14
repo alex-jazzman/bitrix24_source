@@ -1,12 +1,17 @@
 /* eslint-disable no-param-reassign */
+import { Runtime } from 'main.core';
 import { createStore } from 'ui.vue3.vuex';
 import { type Group, type Dashboard, type Scope, GroupType, GroupAppState } from './type';
 
 export class Store
 {
+	static initialGroup: Group;
+
 	// eslint-disable-next-line max-lines-per-function
 	static buildStore(defaultValues: GroupAppState)
 	{
+		Store.initialGroup = Runtime.clone(defaultValues.group);
+
 		return createStore({
 			state(): GroupAppState
 			{
@@ -200,7 +205,43 @@ export class Store
 				{
 					return state.isNeedShowDeletionWarningPopup;
 				},
+				isTitleEdited(state: GroupAppState): boolean
+				{
+					return state.group.name !== Store.initialGroup.name;
+				},
+				isDashboardListEdited(state: GroupAppState): boolean
+				{
+					return !Store.areSetsEqual(
+						new Set(Store.initialGroup.dashboardIds),
+						new Set(state.group.dashboardIds),
+					);
+				},
+				isScopeListEdited(state: GroupAppState): boolean
+				{
+					return !Store.areSetsEqual(
+						new Set(Store.initialGroup.scopes.map((scope: Scope) => scope.code)),
+						new Set(state.group.scopes.map((scope: Scope) => scope.code)),
+					);
+				},
 			},
 		});
+	}
+
+	static areSetsEqual(setA: Set, setB: Set): boolean
+	{
+		if (setA.size !== setB.size)
+		{
+			return false;
+		}
+
+		for (const item of setA)
+		{
+			if (!setB.has(item))
+			{
+				return false;
+			}
+		}
+
+		return true;
 	}
 }

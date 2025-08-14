@@ -65,7 +65,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message', (require, e
 				return false;
 			}
 
-			return ChatPermission.isCanReply(this.dialogModel);
+			return ChatPermission.сanReply(this.dialogModel);
 		}
 
 		isPossibleCopy()
@@ -90,7 +90,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message', (require, e
 				return false;
 			}
 
-			if (!ChatPermission.isCanPost(this.dialogModel))
+			if (!ChatPermission.сanPost(this.dialogModel))
 			{
 				return false;
 			}
@@ -105,7 +105,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message', (require, e
 				return false;
 			}
 
-			if (!ChatPermission.isCanPost(this.dialogModel))
+			if (!ChatPermission.сanPost(this.dialogModel))
 			{
 				return false;
 			}
@@ -161,11 +161,6 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message', (require, e
 
 		isPossibleMultiselect()
 		{
-			if (!Feature.isMultiSelectAvailable)
-			{
-				return false;
-			}
-
 			if (this.dialogModel.type === DialogType.comment)
 			{
 				return false;
@@ -200,7 +195,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message', (require, e
 				return !this.#isDeleted();
 			}
 
-			if (ChatPermission.isCanDeleteOtherMessage(this.dialogModel))
+			if (ChatPermission.сanDeleteOtherMessage(this.dialogModel))
 			{
 				return !this.#isDeleted();
 			}

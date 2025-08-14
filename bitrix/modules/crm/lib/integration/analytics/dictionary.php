@@ -2,6 +2,9 @@
 
 namespace Bitrix\Crm\Integration\Analytics;
 
+use Bitrix\Crm\Integration\Catalog\Contractor\CategoryRepository;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\Factory\SmartDocument;
 use CCrmOwnerType;
 
 final class Dictionary
@@ -18,6 +21,7 @@ final class Dictionary
 	public const CATEGORY_ACTIVITY_OPERATIONS = 'activity_operations';
 	public const CATEGORY_COMMUNICATION = 'communication';
 	public const CATEGORY_BANNERS = 'banners';
+	public const CATEGORY_SYSTEM_INFORM = 'system_inform';
 
 	// region Event const
 	public const EVENT_ENTITY_ADD_OPEN = 'entity_add_open';
@@ -53,17 +57,24 @@ final class Dictionary
 	public const EVENT_BLOCK_LINK = 'block_link';
 
 	public const EVENT_SETTINGS_VIEW = 'settings_view';
+	public const EVENT_WA_CONNECT = 'wa_connect';
+	public const EVENT_WA_TIMELINE = 'wa_timeline';
+	public const EVENT_WA_DELETE = 'wa_delete';
 	// endregion
 
 	// region Type const
 	public const TYPE_MANUAL = 'manual';
 	public const TYPE_AUTO = 'auto';
+	public const TYPE_AGENT = 'agent';
 	public const TYPE_AUTOMATED_SOLUTION = 'automated_solution';
 	public const TYPE_DEAL = 'deal';
 	public const TYPE_DYNAMIC = 'dynamic';
 
 	public const TYPE_CONTACT_CENTER = 'contact_center';
 	public const TYPE_ITEM_INDUSTRY = 'item_industry';
+	public const TYPE_WA_CONNECT = 'wa_connect';
+	public const TYPE_WA_ACTIVITY_CREATE = 'wa_activity_create';
+	public const TYPE_WA_ACTIVITY_DELETE = 'wa_activity_delete';
 
 	// endregion
 
@@ -98,6 +109,7 @@ final class Dictionary
 	public const SECTION_WEBFORM = 'webform';
 	public const SECTION_SITE_WIDGET = 'site_widget_section';
 	public const SECTION_REPEAT_SALE = 'rs';
+	public const SIGN_CONTACT_SECTION = 'sign_contact_section';
 	// endregion
 
 	// region Sub Section const
@@ -146,6 +158,12 @@ final class Dictionary
 	public const ELEMENT_CONTACT_CENTER_IMPORTEXCEL = 'contact_center_importexcel';
 	public const ELEMENT_ITEM_CONTACT_CENTER = 'item_contact_center';
 	public const ELEMENT_ITEM_INDUSTRY_BUTTON = 'item_industry_button';
+	public const ELEMENT_STREAM_CONTENT_WA = 'stream_content_wa';
+	public const ELEMENT_WA_NOTE_PIN = 'wa_note_pin';
+	public const ELEMENT_WA_NOTE_UNPIN = 'wa_note_unpin';
+	public const ELEMENT_WA_NOTE = 'wa_note';
+	public const ELEMENT_WA_NOTE_DELETE = 'wa_note_delete';
+	public const ELEMENT_WA_MESSAGE_DELETE = 'wa_message_delete';
 	// endregion
 
 	// region Status const
@@ -186,12 +204,58 @@ final class Dictionary
 		return mb_strtolower(
 			CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId)
 				? CCrmOwnerType::CommonDynamicName
-				: CCrmOwnerType::ResolveName($entityTypeId)
+				: CCrmOwnerType::ResolveName($entityTypeId),
 		);
 	}
 
 	public static function getCrmMode(): string
 	{
 		return 'crmMode_' . mb_strtolower(\Bitrix\Crm\Settings\Mode::getCurrentName());
+	}
+
+	public static function getSectionByCategoryId(int $entityTypeId, ?int $categoryId): ?string
+	{
+		if (!$categoryId)
+		{
+			return null;
+		}
+
+		$section = null;
+
+		if ($entityTypeId === \CCrmOwnerType::Contact)
+		{
+			$smartDocumentCategory = Container::getInstance()
+				->getFactory(\CCrmOwnerType::Contact)
+				->getCategoryByCode(SmartDocument::CONTACT_CATEGORY_CODE)
+			;
+			$contractorCategory = Container::getInstance()
+				->getFactory(\CCrmOwnerType::Contact)
+				->getCategoryByCode(CategoryRepository::CATALOG_CONTRACTOR_CONTACT)
+			;
+
+			if ($smartDocumentCategory)
+			{
+				$section = 'sign_contact_section';
+			}
+			elseif ($contractorCategory)
+			{
+				$section = self::SIGN_CONTACT_SECTION;
+			}
+		}
+
+		if ($entityTypeId === \CCrmOwnerType::Company)
+		{
+			$contractorCategory = Container::getInstance()
+				->getFactory(\CCrmOwnerType::Contact)
+				->getCategoryByCode(CategoryRepository::CATALOG_CONTRACTOR_COMPANY)
+			;
+
+			if ($contractorCategory)
+			{
+				$section = self::SECTION_CATALOG_CONTRACTOR_COMPANY;
+			}
+		}
+
+		return $section;
 	}
 }

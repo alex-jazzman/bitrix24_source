@@ -13,6 +13,7 @@ use Bitrix\Main\Type\Collection;
 use Bitrix\Main\GroupTable;
 use Bitrix\Main\UserGroupTable;
 use Bitrix\Main\Type\DateTime;
+use Bitrix\Main\ORM\Fields\ExpressionField;
 
 class CAllGroup
 {
@@ -20,7 +21,7 @@ class CAllGroup
 
 	public function Add($arFields)
 	{
-		global $DB, $APPLICATION;
+		global $APPLICATION;
 
 		if (!$this->CheckFields($arFields))
 		{
@@ -49,7 +50,11 @@ class CAllGroup
 			$arFields["ACTIVE"] = "N";
 		}
 
-		$ID = $DB->Add("b_group", $arFields);
+		$fields = $arFields;
+		unset($fields["USER_ID"]);
+
+		$result = GroupTable::add($fields);
+		$ID = $result->getId();
 
 		if (!empty($arFields["USER_ID"]) && is_array($arFields["USER_ID"]))
 		{
@@ -60,10 +65,13 @@ class CAllGroup
 
 		foreach (GetModuleEvents("main", "OnAfterGroupAdd", true) as $arEvent)
 		{
-			ExecuteModuleEventEx($arEvent, [&$arFields]);
+			ExecuteModuleEventEx($arEvent, [$arFields]);
 		}
 
-		GroupTable::cleanCache();
+		if (COption::GetOptionString("main", "event_log_group_edit", "N") === "Y")
+		{
+			CEventLog::Log(CEventLog::SEVERITY_SECURITY, "GROUP_ADDED", "main", $ID);
+		}
 
 		return $ID;
 	}
@@ -837,45 +845,30 @@ class CAllGroup
 
 	public static function GetByID($ID, $SHOW_USERS_AMOUNT = "N")
 	{
-		global $DB;
-
-		$ID = intval($ID);
-
-		$strSql = "SELECT G.ID, G.ACTIVE, G.C_SORT, G.ANONYMOUS, G.NAME, G.STRING_ID, G.DESCRIPTION, " . $DB->DateToCharFunction("G.TIMESTAMP_X") . " as TIMESTAMP_X ";
+		$params = [
+			'select' => ['ID', 'ACTIVE', 'C_SORT', 'ANONYMOUS', 'NAME', 'STRING_ID', 'DESCRIPTION', 'TIMESTAMP_X'],
+		];
 
 		if ($SHOW_USERS_AMOUNT == "Y")
 		{
-			$strSql .= ", count(distinct U.USER_ID) USERS ";
+			$params['select'][] = 'USERS';
+			$params['runtime'] = [new ExpressionField('USERS', 'COUNT(%s)', 'USER_GROUP.USER_ID')];
 		}
 		else
 		{
-			$strSql .= ", G.SECURITY_POLICY ";
+			$params['select'][] = 'SECURITY_POLICY';
 		}
 
-		$strSql .= "FROM b_group G ";
+		$result = GroupTable::getByPrimary($ID, $params);
 
-		if ($SHOW_USERS_AMOUNT == "Y")
-		{
-			$strSql .= "LEFT JOIN b_user_group U ON (U.GROUP_ID=G.ID AND ((U.DATE_ACTIVE_FROM IS NULL) OR (U.DATE_ACTIVE_FROM <= " . $DB->CurrentTimeFunction() . ")) AND ((U.DATE_ACTIVE_TO IS NULL) OR (U.DATE_ACTIVE_TO >= " . $DB->CurrentTimeFunction() . "))) ";
-		}
-
-		$strSql .= "WHERE G.ID = " . $ID . " ";
-
-		if ($SHOW_USERS_AMOUNT == "Y")
-		{
-			$strSql .= "GROUP BY G.ID, G.ACTIVE, G.C_SORT, G.TIMESTAMP_X, G.ANONYMOUS, G.NAME, G.STRING_ID, G.DESCRIPTION";
-		}
-
-		$z = $DB->Query($strSql);
-		return $z;
+		return new CDBResult($result);
 	}
 
 	public function CheckFields($arFields, $ID = false)
 	{
-		global $DB;
 		$this->LAST_ERROR = "";
 
-		if (is_set($arFields, "NAME") && $arFields["NAME"] == '')
+		if (isset($arFields["NAME"]) && $arFields["NAME"] == '')
 		{
 			$this->LAST_ERROR .= GetMessage("BAD_GROUP_NAME") . "<br>";
 		}
@@ -888,32 +881,37 @@ class CAllGroup
 				{
 					if ($arUser["DATE_ACTIVE_FROM"] <> '' && !CheckDateTime($arUser["DATE_ACTIVE_FROM"]))
 					{
-						$error = str_replace("#USER_ID#", $arUser["USER_ID"], GetMessage("WRONG_USER_DATE_ACTIVE_FROM"));
-						$this->LAST_ERROR .= $error . "<br>";
+						$this->LAST_ERROR .= GetMessage("WRONG_USER_DATE_ACTIVE_FROM", ["#USER_ID#" => $arUser["USER_ID"]]) . "<br>";
 					}
 
 					if ($arUser["DATE_ACTIVE_TO"] <> '' && !CheckDateTime($arUser["DATE_ACTIVE_TO"]))
 					{
-						$error = str_replace("#USER_ID#", $arUser["USER_ID"], GetMessage("WRONG_USER_DATE_ACTIVE_TO"));
-						$this->LAST_ERROR .= $error . "<br>";
+						$this->LAST_ERROR .= GetMessage("WRONG_USER_DATE_ACTIVE_TO", ["#USER_ID#" => $arUser["USER_ID"]]) . "<br>";
 					}
 				}
 			}
 		}
+
 		if (isset($arFields['STRING_ID']) && $arFields['STRING_ID'] <> '')
 		{
-			$sql_str = "SELECT G.ID
-					FROM b_group G
-					WHERE G.STRING_ID='" . $DB->ForSql($arFields['STRING_ID']) . "'";
-			$z = $DB->Query($sql_str);
-			if ($r = $z->Fetch())
+			$res = GroupTable::getRow([
+				'select' => ['ID'],
+				'filter' => ['=STRING_ID' => $arFields['STRING_ID']],
+			]);
+			if ($res)
 			{
-				if ($ID === false || $ID != $r['ID'])
+				if ($ID === false || $ID != $res['ID'])
 				{
 					$this->LAST_ERROR .= GetMessage('MAIN_ERROR_STRING_ID') . "<br>";
 				}
 			}
 		}
+
+		if (isset($arFields["TIMESTAMP_X"]) && !CheckDateTime($arFields["TIMESTAMP_X"]))
+		{
+			$this->LAST_ERROR .= GetMessage('MAIN_GROUP_INCORRECT_TIMESTAMP') . "<br>";
+		}
+
 		if ($this->LAST_ERROR <> '')
 		{
 			return false;
@@ -924,7 +922,7 @@ class CAllGroup
 
 	public function Update($ID, $arFields)
 	{
-		global $DB, $APPLICATION;
+		global $APPLICATION;
 
 		$ID = intval($ID);
 
@@ -955,6 +953,7 @@ class CAllGroup
 			unset($arFields["ACTIVE"]);
 		}
 
+		$activeChanged = false;
 		if (isset($arFields["ACTIVE"]))
 		{
 			if ($arFields["ACTIVE"] != "Y")
@@ -963,21 +962,15 @@ class CAllGroup
 			}
 
 			// check whether the group was activated or deactivated
-			$res = $DB->Query("SELECT ACTIVE FROM b_group WHERE ID=" . $ID);
-			if (($res_arr = $res->Fetch()) && $res_arr["ACTIVE"] != $arFields["ACTIVE"])
+			$res = GroupTable::getRowById($ID, ['select' => ['ACTIVE']]);
+			if ($res && $res["ACTIVE"] != $arFields["ACTIVE"])
 			{
 				CGroupAuthProvider::RecalculateForGroup($ID, ($arFields["ACTIVE"] == "Y"));
+				$activeChanged = true;
 			}
 		}
 
-		$strUpdate = $DB->PrepareUpdate("b_group", $arFields);
-
-		if (!isset($arFields["TIMESTAMP_X"]))
-		{
-			$strUpdate .= ", TIMESTAMP_X = " . $DB->GetNowFunction();
-		}
-
-		$strSql = "UPDATE b_group SET $strUpdate WHERE ID=" . $ID;
+		$arFields["TIMESTAMP_X"] = new DateTime($arFields["TIMESTAMP_X"] ?? null);
 
 		if (isset($arFields["SECURITY_POLICY"]))
 		{
@@ -985,10 +978,10 @@ class CAllGroup
 			{
 				//get old security policy
 				$aPrevPolicy = [];
-				$res = $DB->Query("SELECT SECURITY_POLICY FROM b_group WHERE ID=" . $ID);
-				if (($res_arr = $res->Fetch()) && $res_arr["SECURITY_POLICY"] <> '')
+				$res = GroupTable::getRowById($ID, ['select' => ['SECURITY_POLICY']]);
+				if ($res && $res["SECURITY_POLICY"] != '')
 				{
-					$aPrevPolicy = unserialize($res_arr["SECURITY_POLICY"], ['allowed_classes' => false]);
+					$aPrevPolicy = unserialize($res["SECURITY_POLICY"], ['allowed_classes' => false]);
 				}
 				//compare with new one
 				$aNewPolicy = [];
@@ -1003,19 +996,15 @@ class CAllGroup
 				}
 				if (!empty($aDiff))
 				{
-					$log = [
-						'prevPolicy' => $aPrevPolicy,
-						'newPolicy' => $aNewPolicy,
-					];
-					CEventLog::Log(CEventLog::SEVERITY_SECURITY, "GROUP_POLICY_CHANGED", "main", $ID, json_encode($log));
+					CEventLog::Log(CEventLog::SEVERITY_SECURITY, "GROUP_POLICY_CHANGED", "main", $ID, ['before' => $aPrevPolicy, 'after' => $aNewPolicy]);
 				}
 			}
-			$DB->QueryBind($strSql, ["SECURITY_POLICY" => $arFields["SECURITY_POLICY"]]);
 		}
-		else
-		{
-			$DB->Query($strSql);
-		}
+
+		$fields = $arFields;
+		unset($fields["USER_ID"]);
+
+		GroupTable::update($ID, $fields);
 
 		if (isset($arFields["USER_ID"]) && is_array($arFields["USER_ID"]) && $ID != 2)
 		{
@@ -1040,18 +1029,26 @@ class CAllGroup
 
 		foreach (GetModuleEvents("main", "OnAfterGroupUpdate", true) as $arEvent)
 		{
-			ExecuteModuleEventEx($arEvent, [$ID, &$arFields]);
+			ExecuteModuleEventEx($arEvent, [$ID, $arFields]);
 		}
 
-		GroupTable::cleanCache();
-		ModuleGroupTable::cleanCache();
+		if ($activeChanged)
+		{
+			// cached join with groups and GROUP.ACTIVE='Y'
+			ModuleGroupTable::cleanCache();
+		}
+
+		if (COption::GetOptionString("main", "event_log_group_edit", "N") === "Y")
+		{
+			CEventLog::Log(CEventLog::SEVERITY_SECURITY, "GROUP_UPDATED", "main", $ID);
+		}
 
 		return true;
 	}
 
 	public static function Delete($ID)
 	{
-		global $APPLICATION, $DB;
+		global $APPLICATION;
 
 		$ID = intval($ID);
 		if ($ID <= 2)
@@ -1086,11 +1083,14 @@ class CAllGroup
 
 		CUser::clearUserGroupCache();
 
-		$res = $DB->Query("DELETE FROM b_group WHERE ID=" . $ID);
+		GroupTable::delete($ID);
 
-		GroupTable::cleanCache();
+		if (COption::GetOptionString("main", "event_log_group_edit", "N") === "Y")
+		{
+			CEventLog::Log(CEventLog::SEVERITY_SECURITY, "GROUP_DELETED", "main", $ID);
+		}
 
-		return $res;
+		return true;
 	}
 
 	public static function GetGroupUser($ID)
@@ -1271,7 +1271,7 @@ class CAllGroup
 			}
 			if (!empty($aDiff))
 			{
-				CEventLog::Log(CEventLog::SEVERITY_SECURITY, "MODULE_RIGHTS_CHANGED", "main", $ID, "(" . implode(", ", $arOldTasks) . ") => (" . implode(", ", $aNewTasks) . ")");
+				CEventLog::Log(CEventLog::SEVERITY_SECURITY, "MODULE_RIGHTS_CHANGED", "main", $ID, ['before' => $arOldTasks, 'after' => $aNewTasks]);
 			}
 		}
 
@@ -1366,14 +1366,14 @@ class CAllGroup
 			{
 				if ($task_id <> $arGroupTask[$gr_id]['ID'])
 				{
-					CEventLog::Log(CEventLog::SEVERITY_SECURITY, "MODULE_RIGHTS_CHANGED", "main", $gr_id, $module_id . ": (" . $task_id . ") => (" . $arGroupTask[$gr_id]['ID'] . ")");
+					CEventLog::Log(CEventLog::SEVERITY_SECURITY, "MODULE_RIGHTS_CHANGED", "main", $gr_id, ['before' => [$module_id => $task_id], 'after' => [$module_id => $arGroupTask[$gr_id]['ID']]]);
 				}
 			}
 			foreach ($arGroupTask as $gr_id => $oTask)
 			{
 				if (intval($oTask['ID']) > 0 && !array_key_exists($gr_id, $arOldTasks))
 				{
-					CEventLog::Log(CEventLog::SEVERITY_SECURITY, "MODULE_RIGHTS_CHANGED", "main", $gr_id, $module_id . ": () => (" . $oTask['ID'] . ")");
+					CEventLog::Log(CEventLog::SEVERITY_SECURITY, "MODULE_RIGHTS_CHANGED", "main", $gr_id, ['before' => [$module_id => ''], 'after' => [$module_id => $oTask['ID']]]);
 				}
 			}
 		}
@@ -1487,11 +1487,16 @@ class CAllGroup
 		}
 	}
 
+	/**
+	 * Returns group ID by its STRING_ID, cached query.
+	 * @param string $code
+	 * @return false|int
+	 */
 	public static function GetIDByCode($code)
 	{
 		if (strval(intval($code)) == $code && $code > 0)
 		{
-			return $code;
+			return (int)$code;
 		}
 
 		if (strtolower($code) == 'administrators')
@@ -1504,14 +1509,15 @@ class CAllGroup
 			return 2;
 		}
 
-		global $DB;
+		$res = GroupTable::getRow([
+			'select' => ['ID'],
+			'filter' => ['=STRING_ID' => $code],
+			'cache' => ['ttl' => 86400],
+		]);
 
-		$strSql = "SELECT G.ID FROM b_group G WHERE G.STRING_ID='" . $DB->ForSQL($code) . "'";
-		$db_res = $DB->Query($strSql);
-
-		if ($ar_res = $db_res->Fetch())
+		if ($res)
 		{
-			return $ar_res["ID"];
+			return (int)$res['ID'];
 		}
 
 		return false;

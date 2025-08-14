@@ -33,6 +33,7 @@ export type CopilotModelActions =
 	'dialoguesModel/copilotModel/update'
 	| 'dialoguesModel/copilotModel/updateRole'
 	| 'dialoguesModel/copilotModel/setCollection'
+	| 'dialoguesModel/copilotModel/setFromSync'
 
 export type CopilotModelMutation =
 	'dialoguesModel/copilotModel/add'

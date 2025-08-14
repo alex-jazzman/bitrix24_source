@@ -2,10 +2,9 @@
  * @module im/messenger/lib/element/recent/item/action/action
  */
 jn.define('im/messenger/lib/element/recent/item/action/action', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Theme } = require('im/lib/theme');
 	const { Icon } = require('assets/icons');
-	const { Feature } = require('im/messenger/lib/feature');
 
 	const InviteResendAction = {
 		title: Loc.getMessage('IMMOBILE_ELEMENT_RECENT_ACTION_INVITE_RESEND'),
@@ -76,7 +75,7 @@ jn.define('im/messenger/lib/element/recent/item/action/action', (require, export
 
 	const HideAction = {
 		title: Loc.getMessage('IMMOBILE_ELEMENT_RECENT_ACTION_HIDE'),
-		iconName: Feature.isIconBoxWithLidAvailable ? Icon.BOX_WITH_LID.getIconName() : Icon.TRASHCAN.getIconName(),
+		iconName: Icon.BOX_WITH_LID.getIconName(),
 		identifier: 'hide',
 		color: Theme.colors.accentMainAlert,
 	};

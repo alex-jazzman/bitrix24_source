@@ -1,5 +1,4 @@
 import { BitrixVue, VueCreateAppResult } from 'ui.vue3';
-import { EventEmitter } from 'main.core.events';
 import { DocumentFillingApp } from './app';
 import type { DocumentFillingOptions } from './type';
 

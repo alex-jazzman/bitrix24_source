@@ -25,6 +25,17 @@ jn.define('im/messenger/lib/element/dialog/message/banner/message', (require, ex
 		}
 
 		/**
+		 * @return {BannerDialogWidgetItem}
+		 */
+		toDialogWidgetItem()
+		{
+			return {
+				...super.toDialogWidgetItem(),
+				banner: this.banner,
+			};
+		}
+
+		/**
 		 * @return {CoreApplication}
 		 */
 		getCore()

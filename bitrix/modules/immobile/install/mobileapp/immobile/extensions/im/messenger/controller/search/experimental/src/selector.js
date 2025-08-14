@@ -3,7 +3,7 @@
  */
 jn.define('im/messenger/controller/search/experimental/selector', (require, exports, module) => {
 	const { EventType } = require('im/messenger/const');
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { RecentProvider } = require('im/messenger/controller/search/experimental/provider');
 	const { RecentSearchUiConverter } = require('im/messenger/lib/converter/ui/recent-search');
 	const { Logger } = require('im/messenger/lib/logger');

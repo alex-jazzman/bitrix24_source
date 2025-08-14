@@ -2,7 +2,7 @@
  * @module im/messenger/controller/sidebar-v2/tabs/participants/src/menu/group
  */
 jn.define('im/messenger/controller/sidebar-v2/tabs/participants/src/menu/group', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Color } = require('tokens');
 	const { Icon } = require('assets/icons');
 	const { UserHelper } = require('im/messenger/lib/helper');
@@ -41,7 +41,7 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/participants/src/menu/group',
 
 		ownerAction()
 		{
-			if (!this.isOwner())
+			if (!this.canChangeOwner())
 			{
 				return null;
 			}
@@ -101,6 +101,11 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/participants/src/menu/group',
 		isManager()
 		{
 			return this.dialogHelper.dialogModel.managerList.includes(this.getUserId());
+		}
+
+		canChangeOwner()
+		{
+			return this.permissionManager.canChangeOwner() && this.isOwner();
 		}
 
 		onAddManager = () => onAddManager(this.getDialogId(), this.getUserId());

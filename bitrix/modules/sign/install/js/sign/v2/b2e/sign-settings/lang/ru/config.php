@@ -1,7 +1,7 @@
 <?php
 
 $MESS['SIGN_SETTINGS_B2E_BEFORE_PREVIEW'] = 'Добавить папку с файлами';
-$MESS['SIGN_V2_B2E_SIGN_SETTINGS_MAX_DOCUMENTS_COUNT_EXCEEDED'] = 'Превышел лимит количества документов';
+$MESS['SIGN_V2_B2E_SIGN_SETTINGS_MAX_DOCUMENTS_COUNT_EXCEEDED_NOTICE'] = 'Превышен лимит количества документов';
 $MESS['SIGN_V2_B2E_SIGN_SETTINGS_MAX_TOTAL_FILE_SIZE_EXCEEDED'] = 'Превышен максимальный суммарный размер файлов';
 $MESS['SIGN_V2_B2E_SIGN_SETTINGS_NO_FILES_SELECTED'] = 'Не выбрано ни одного файла';
 $MESS['SIGN_V2_B2E_SIGN_SETTINGS_LOAD_FROM_DIRS'] = 'Загрузить все файлы из папки';

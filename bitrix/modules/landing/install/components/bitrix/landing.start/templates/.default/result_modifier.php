@@ -163,10 +163,7 @@ elseif (in_array($this->getPageName(), ['template', 'site_show']))
 		&& $arResult['ACCESS_PAGE_NEW'] === 'Y'
 	)
 	{
-		$link = $getComponent()->getUrlAdd(false, [
-			'context_section' => 'pages_list',
-			'context_element' => 'top_button',
-		]);
+		$link = $getComponent()->getUrlAdd(false);
 		$metrika
 			->setSection(Metrika\Sections::page)
 			->setSubSection('from_page_list')
@@ -176,10 +173,7 @@ elseif (in_array($this->getPageName(), ['template', 'site_show']))
 	}
 	else if ($arResult['ACCESS_SITE_NEW'] === 'Y')
 	{
-		$link = $getComponent()->getUrlAdd(true, [
-			'context_section' => 'site_list',
-			'context_element' => 'top_button',
-		]);
+		$link = $getComponent()->getUrlAdd(true);
 		$metrika->setSection(Metrika\Sections::site);
 		$link = $metrika->parametrizeUri($link);
 		$title = Loc::getMessage('LANDING_TPL_ADD_SITE_2');

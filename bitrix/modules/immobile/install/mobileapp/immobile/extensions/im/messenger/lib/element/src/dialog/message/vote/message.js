@@ -5,7 +5,7 @@ jn.define('im/messenger/lib/element/dialog/message/vote/message', (require, expo
 	const { MessageType, MessageParams } = require('im/messenger/const');
 	const { VoteButton } = require('im/messenger/lib/element/dialog/message/vote/enum/button');
 	const { CustomMessage } = require('im/messenger/lib/element/dialog/message/custom/message');
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 
 	/**
 	 * @class VoteMessage
@@ -20,6 +20,7 @@ jn.define('im/messenger/lib/element/dialog/message/vote/message', (require, expo
 		{
 			super(modelMessage, options);
 
+			/** @type {VoteMessageData} */
 			this.vote = {};
 
 			const storeMessageModel = this.getModelMessage();
@@ -39,6 +40,17 @@ jn.define('im/messenger/lib/element/dialog/message/vote/message', (require, expo
 		static getComponentId()
 		{
 			return MessageParams.ComponentId.VoteMessage;
+		}
+
+		/**
+		 * @return {VoteDialogWidgetItem}
+		 */
+		toDialogWidgetItem()
+		{
+			return {
+				...super.toDialogWidgetItem(),
+				vote: this.vote,
+			};
 		}
 
 		getType()

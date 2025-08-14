@@ -52,6 +52,11 @@ export class BasePullHandler
 		this.#messageHandler.handleMessageAdd(params);
 	}
 
+	handleChangeEngine(params)
+	{
+		this.#messageHandler.handleChangeEngine(params);
+	}
+
 	handleMessageUpdate(params)
 	{
 		this.#messageHandler.handleMessageUpdate(params);

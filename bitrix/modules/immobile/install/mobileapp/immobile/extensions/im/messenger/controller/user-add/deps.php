@@ -3,9 +3,9 @@
 return [
 	'extensions' => [
 		'type',
-		'loc',
 		'utils/object',
 		'im:lib/theme',
+		'im:messenger/loc',
 		'im:messenger/lib/di/service-locator',
 		'im:messenger/provider/services/chat',
 		'im:messenger/const',

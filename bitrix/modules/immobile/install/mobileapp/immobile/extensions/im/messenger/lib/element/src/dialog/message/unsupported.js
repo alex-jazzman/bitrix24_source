@@ -2,7 +2,7 @@
  * @module im/messenger/lib/element/dialog/message/unsupported
  */
 jn.define('im/messenger/lib/element/dialog/message/unsupported', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Type } = require('type');
 	const { Color } = require('tokens');
 

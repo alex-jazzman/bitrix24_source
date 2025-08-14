@@ -67,6 +67,11 @@ class CEventLog
 			? \Bitrix\Main\Application::getInstance()->getSession()
 			: null;
 
+		if ($arFields["DESCRIPTION"] !== false && !is_string($arFields["DESCRIPTION"]))
+		{
+			$arFields["DESCRIPTION"] = json_encode($arFields["DESCRIPTION"], JSON_UNESCAPED_UNICODE);
+		}
+
 		$arFields = [
 			"SEVERITY" => isset($arSeverity[$arFields["SEVERITY"] ?? null]) ? $arFields["SEVERITY"] : "UNKNOWN",
 			"AUDIT_TYPE_ID" => $arFields["AUDIT_TYPE_ID"] == '' ? "UNKNOWN" : $arFields["AUDIT_TYPE_ID"],
@@ -373,6 +378,9 @@ class CEventLog
 			"USER_REGISTER" => "[USER_REGISTER] " . GetMessage("MAIN_EVENTLOG_USER_REGISTER"),
 			"USER_REGISTER_FAIL" => "[USER_REGISTER_FAIL] " . GetMessage("MAIN_EVENTLOG_USER_REGISTER_FAIL"),
 			"USER_GROUP_CHANGED" => "[USER_GROUP_CHANGED] " . GetMessage("MAIN_EVENTLOG_GROUP"),
+			"GROUP_ADDED" => "[GROUP_ADDED] " . GetMessage('MAIN_EVENTLOG_GROUP_ADDED'),
+			"GROUP_UPDATED" => "[GROUP_UPDATED] " . GetMessage('MAIN_EVENTLOG_GROUP_UPDATED'),
+			"GROUP_DELETED" => "[GROUP_DELETED] " . GetMessage('MAIN_EVENTLOG_GROUP_DELETED'),
 			"GROUP_POLICY_CHANGED" => "[GROUP_POLICY_CHANGED] " . GetMessage("MAIN_EVENTLOG_GROUP_POLICY"),
 			"MODULE_RIGHTS_CHANGED" => "[MODULE_RIGHTS_CHANGED] " . GetMessage("MAIN_EVENTLOG_MODULE"),
 			"FILE_PERMISSION_CHANGED" => "[FILE_PERMISSION_CHANGED] " . GetMessage("MAIN_EVENTLOG_FILE"),

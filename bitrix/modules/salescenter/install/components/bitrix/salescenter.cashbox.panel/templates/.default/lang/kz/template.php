@@ -10,4 +10,5 @@ $MESS["SCP_POPUP_BUTTON_STAY"] = "Қалу";
 $MESS["SCP_POPUP_CONTENT_MSGVER_1"] = "Сіз өзгерістерді сақтамадыңыз. Баптауларды жапқыңыз келетініне сенімдісіз бе?";
 $MESS["SCP_SALESCENTER_CASHBOX_SUB_TITLE"] = "Онлайн-кассалар";
 $MESS["SCP_SALESCENTER_OFFILINE_CASHBOX_SUB_TITLE"] = "Офлайн-касса";
+$MESS["SCP_SALESCENTER_OTHERS_CASHBOX_SUB_TITLE"] = "Басқа онлайн кассалар";
 $MESS["SCP_SALESCENTER_TITLE"] = "Онлайн-кассаны таңдау";

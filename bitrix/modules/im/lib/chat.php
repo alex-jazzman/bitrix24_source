@@ -72,6 +72,14 @@ class Chat
 		{
 			$result = 'COLLAB';
 		}
+		else if ($messageType === \Bitrix\Im\V2\Chat::IM_TYPE_AI_ASSISTANT)
+		{
+			$result = 'AI_ASSISTANT';
+		}
+		else if ($messageType === \Bitrix\Im\V2\Chat::IM_TYPE_AI_ASSISTANT_ENTITY)
+		{
+			$result = 'AI_ASSISTANT_ENTITY';
+		}
 		else if ($messageType === \Bitrix\Im\V2\Chat::IM_TYPE_CHANNEL)
 		{
 			$result = 'CHANNEL';

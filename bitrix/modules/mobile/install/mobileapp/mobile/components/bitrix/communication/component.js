@@ -5,6 +5,7 @@
 	const { EntityReady } = require('entity-ready');
 	const { AvaMenu } = require('ava-menu');
 	const { Type } = require('type');
+	const { UserProfile } = require('user-profile');
 
 	if (typeof window.SocketConnection === 'undefined')
 	{
@@ -762,46 +763,10 @@
 	BX.addCustomEvent('onUserProfileOpen', (userId, options = {}) => {
 		console.log('onUserProfileOpen', userId, options);
 
-		let url = '/mobile/mobile_component/user.profile/?version=1';
-
-		if (availableComponents && availableComponents['user.profile'])
-		{
-			url = availableComponents['user.profile'].publicUrl;
-		}
-
-		let backdropOptions = {};
-		let isBackdrop = false;
-		if (options.backdrop)
-		{
-			if (typeof options.backdrop === 'object' && options.backdrop)
-			{
-				backdropOptions = { backdrop: options.backdrop };
-				isBackdrop = true;
-			}
-			else if (typeof options.backdrop === 'boolean' && options.backdrop)
-			{
-				backdropOptions = { backdrop: {} };
-				isBackdrop = true;
-			}
-		}
-
-		PageManager.openComponent(
-			'JSStackComponent',
-			{
-				scriptPath: url,
-				params: { userId, isBackdrop },
-				canOpenInDefault: true,
-				rootWidget: {
-					name: 'list',
-					groupStyle: true,
-					settings: {
-						objectName: 'form',
-						groupStyle: true,
-						...backdropOptions,
-					},
-				},
-			},
-		);
+		void UserProfile.open({
+			ownerId: userId,
+			openInComponent: true,
+		});
 	});
 
 	window.Counters = new AppCounters();

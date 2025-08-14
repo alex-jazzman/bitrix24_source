@@ -83,8 +83,12 @@ class Permission
 			Action::Mute->value => Chat::ROLE_NONE,
 			Action::Leave->value => Chat::ROLE_NONE,
 			Action::LeaveOwner->value => Chat::ROLE_NONE,
+			Action::Kick->value => Chat::ROLE_NONE,
 			Action::UserList->value => Chat::ROLE_NONE,
 			Action::ChangeMessagesAutoDeleteDelay->value => Chat::ROLE_MEMBER,
+			Action::ChangeRight->value => Chat::ROLE_NONE,
+			Action::ChangeOwner->value => Chat::ROLE_NONE,
+			Action::ChangeManagers->value => Chat::ROLE_NONE,
 		];
 
 		self::$permissionsByChatTypes[Type::General->value] = [
@@ -249,6 +253,7 @@ class Permission
 			Action::Mute->value => Chat::ROLE_MEMBER,
 			Action::Leave->value => Chat::ROLE_MEMBER,
 			Action::LeaveOwner->value => Chat::ROLE_MEMBER,
+			Action::Kick->value => Chat::ROLE_GUEST,
 			Action::Send->value => Chat::ROLE_MEMBER,
 			Action::UserList->value => Chat::ROLE_MEMBER,
 			Action::CreateTask->value => Chat::ROLE_MEMBER,
@@ -262,6 +267,9 @@ class Permission
 			Action::ChangeMessagesAutoDeleteDelay->value => Chat::ROLE_NONE,
 			Action::PinChat->value => Chat::ROLE_MEMBER,
 			Action::HideChat->value => Chat::ROLE_MEMBER,
+			Action::ChangeRight->value => Chat::ROLE_GUEST,
+			Action::ChangeOwner->value => Chat::ROLE_GUEST,
+			Action::ChangeManagers->value => Chat::ROLE_GUEST,
 		];
 	}
 

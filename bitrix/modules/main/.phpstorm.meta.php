@@ -25,6 +25,7 @@ namespace PHPSTORM_META
 		'abtest',
 		'advertising',
 		'ai',
+		'aiassistant',
 		'assistant',
 		'b24connector',
 		'b24manager',

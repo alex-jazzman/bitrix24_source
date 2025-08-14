@@ -8,6 +8,7 @@ jn.define('im/messenger/provider/services/sync/fillers/channel', (require, expor
 		EventType,
 		ComponentCode,
 		WaitingEntity,
+		BotCode,
 	} = require('im/messenger/const');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { LoggerManager } = require('im/messenger/lib/logger');
@@ -25,19 +26,7 @@ jn.define('im/messenger/provider/services/sync/fillers/channel', (require, expor
 	{
 		/**
 		 * @override
-		 * @param {SyncListResult} result
-		 * @return {SyncListResult}
-		 */
-		prepareResult(result)
-		{
-			return this.filterWithOnlyOpenChannels(result);
-		}
-
-		/**
-		 * @override
-		 * @param {object} data
-		 * @param {string} data.uuid
-		 * @param {SyncListResult} data.result
+		 * @param {SyncRequestResultReceivedEvent} data
 		 */
 		async fillData(data)
 		{
@@ -67,48 +56,60 @@ jn.define('im/messenger/provider/services/sync/fillers/channel', (require, expor
 		}
 
 		/**
+		 * @override
+		 * @param {SyncListResult} result
+		 * @return {SyncListResult}
+		 */
+		prepareResult(result)
+		{
+			const filteredResult = this.filterWithOnlyOpenChannels(result);
+			logger.log(`${this.constructor.name}.prepareResult after filterWithOnlyOpenChannels:`, filteredResult);
+
+			return this.filterUsers(filteredResult);
+		}
+
+		/**
 		 * @param {SyncListResult} syncListResult
 		 * @return {SyncListResult}
 		 */
 		filterWithOnlyOpenChannels(syncListResult)
 		{
-			const openChannelsChatIds = this.findOpenChannelsChatIds(syncListResult.addedChats);
+			const openChannelsChatIds = this.findOpenChannelsChatIds(syncListResult.chats);
+			const openChatIdsSet = new Set(openChannelsChatIds);
 
-			syncListResult.addedRecent = []; // the channel recent should not be updated on synchronization
+			const filteredMessages = syncListResult.messages.filter(
+				(message) => openChatIdsSet.has(message.chat_id),
+			) || [];
+			const messageIds = new Set(filteredMessages.map((message) => message.id));
 
-			syncListResult.addedChats = syncListResult.addedChats.filter((chat) => {
-				return openChannelsChatIds.includes(chat.id);
-			});
-
-			syncListResult.messages.messages = syncListResult.messages.messages.filter((message) => {
-				return openChannelsChatIds.includes(message.chat_id);
-			});
-
-			syncListResult.messages.files = syncListResult.messages.files.filter((file) => {
-				return openChannelsChatIds.includes(file.chatId);
-			});
-
-			syncListResult.messages.users = syncListResult.messages.users.filter((user) => {
-				if (!user.botData)
-				{
-					return true;
-				}
-
-				return user.botData.code !== 'copilot';
-			});
-
-			return syncListResult;
+			return {
+				...syncListResult,
+				messages: filteredMessages,
+				dialogIds: Object.fromEntries(
+					Object.entries(syncListResult.dialogIds || {})
+						.filter(([chatId]) => openChatIdsSet.has(Number(chatId))),
+				),
+				recentItems: syncListResult.recentItems.filter((item) => openChatIdsSet.has(item.chatId)),
+				chats: syncListResult.chats.filter((chat) => openChatIdsSet.has(chat.id)),
+				reactions: syncListResult.reactions.filter((reaction) => messageIds.has(reaction.messageId)),
+				files: syncListResult.files.filter((file) => openChatIdsSet.has(file.chatId)),
+				pins: syncListResult.pins.filter((pin) => openChatIdsSet.has(pin.chatId)),
+				users: syncListResult.users.filter((user) => user.botData?.code !== BotCode.copilot),
+				messagesAutoDeleteConfigs: syncListResult.messagesAutoDeleteConfigs.filter((config) => {
+					return openChatIdsSet.has(config.chatId);
+				}),
+			};
 		}
 
 		/**
 		 *
-		 * @param {Array<RawChat>} addedChats
+		 * @param {Array<SyncRawChat>} chats
 		 * @return {Array<number>}
 		 */
-		findOpenChannelsChatIds(addedChats)
+		findOpenChannelsChatIds(chats)
 		{
 			const result = [];
-			for (const chat of addedChats)
+			for (const chat of chats)
 			{
 				if (chat.type === DialogType.openChannel)
 				{
@@ -117,6 +118,15 @@ jn.define('im/messenger/provider/services/sync/fillers/channel', (require, expor
 			}
 
 			return result;
+		}
+
+		/**
+		 * @param {SyncRawMessage} message
+		 * @return message
+		 */
+		fillMessageStatus(message)
+		{
+			return message;
 		}
 
 		getUuidPrefix()

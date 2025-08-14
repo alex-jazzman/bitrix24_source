@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Landing = this.BX.Landing || {};
-(function (exports,ui_designTokens,ui_dialogs_messagebox,main_core_events,ui_notification,main_core,main_popup,ui_buttons) {
+(function (exports,ui_designTokens,ui_dialogs_messagebox,main_core_events,ui_notification,main_core,main_popup,ui_buttons,landing_metrika) {
 	'use strict';
 
 	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5;
@@ -412,8 +412,8 @@ this.BX.Landing = this.BX.Landing || {};
 	        });
 	        var buttOpen = main_core.Tag.render(_templateObject15 || (_templateObject15 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span href=\"", "\" class=\"ui-btn ui-btn-light-border ui-btn-round\">\n\t\t\t\t\t", "\n\t\t\t\t</span>\n\t\t\t"])), this.ordersUrl, main_core.Loc.getMessage('LANDING_SITE_TILE_NOT_PUBLISHED_BUTTON_OPEN'));
 	        main_core.Event.bind(buttOpen, 'click', function () {
-	          // todo: loader?
 	          if (_this2.indexEditUrl) {
+	            main_core.Dom.addClass(buttOpen, 'ui-btn-wait');
 	            window.location.href = _this2.indexEditUrl;
 	          }
 	        });
@@ -1214,6 +1214,7 @@ this.BX.Landing = this.BX.Landing || {};
 	      var _this = this;
 	      if (!this.container) {
 	        this.container = new main_popup.Popup({
+	          darkMode: true,
 	          bindElement: window,
 	          content: this.getContent(),
 	          width: 670,
@@ -1254,15 +1255,11 @@ this.BX.Landing = this.BX.Landing || {};
 	          buttons: [new ui_buttons.Button({
 	            text: main_core.Loc.getMessage('LANDING_SITE_TILE_POPUP_COPILOT_BUTTON'),
 	            color: ui_buttons.Button.Color.SUCCESS,
-	            size: ui_buttons.Button.Size.LARGE,
-	            className: 'landing-site_title-popup-btn',
-	            noCaps: true,
-	            round: true,
-	            onclick: function onclick(event) {
-	              var button = event.button;
-	              if (button) {
-	                main_core.Dom.addClass(button, 'ui-btn-wait');
-	              }
+	            size: ui_buttons.Button.Size.EXTRA_LARGE,
+	            useAirDesign: true,
+	            style: ui_buttons.Button.AirStyle.FILLED_SUCCESS,
+	            onclick: function onclick(button) {
+	              button.setWaiting();
 	              BX.ajax.runAction('bitrix24.license.demolicense.activate').then(function () {
 	                window.location.href = '/sites/ai/';
 	              })["catch"](function (err) {
@@ -1304,6 +1301,7 @@ this.BX.Landing = this.BX.Landing || {};
 	var _templateObject$7;
 	var SiteTile = /*#__PURE__*/function () {
 	  function SiteTile(options) {
+	    var _this = this;
 	    babelHelpers.classCallCheck(this, SiteTile);
 	    this.renderTo = options.renderTo || null;
 	    this.items = options.items || [];
@@ -1317,11 +1315,25 @@ this.BX.Landing = this.BX.Landing || {};
 	      videoSrc = '/bitrix/components/bitrix/landing.site_tile/templates/.default/video/ru/siteWithCopilot.webm';
 	    }
 	    if (options.isNeedCreateCopilotPopup) {
-	      this.popupCopilot = new PopupCopilot({
-	        id: 'popupCopilot',
-	        videoSrc: videoSrc
-	      });
-	      this.popupCopilot.showPopup(1000);
+	      main_core.Runtime.loadExtension(['ui.banner-dispatcher']).then(function (exports) {
+	        var BannerDispatcher = exports.BannerDispatcher;
+	        BannerDispatcher.critical.toQueue(function (onDone) {
+	          var metrika = new landing_metrika.Metrika(true);
+	          metrika.sendData({
+	            category: 'site',
+	            event: 'creating_scenario_hint_show',
+	            type: 'preset'
+	          });
+	          _this.popupCopilot = new PopupCopilot({
+	            id: 'popupCopilot',
+	            videoSrc: videoSrc
+	          });
+	          _this.popupCopilot.showPopup(1000);
+	          _this.popupCopilot.getPopup().subscribe('onAfterClose', function () {
+	            onDone();
+	          });
+	        });
+	      })["catch"](function () {});
 	    }
 	    this.setData(this.items);
 	    this.init();
@@ -1334,7 +1346,7 @@ this.BX.Landing = this.BX.Landing || {};
 	  }, {
 	    key: "setData",
 	    value: function setData(data) {
-	      var _this = this;
+	      var _this2 = this;
 	      this.siteTileItems = data.map(function (item) {
 	        if (item.type === 'itemMarketing') {
 	          return new ItemMarketing({
@@ -1366,11 +1378,11 @@ this.BX.Landing = this.BX.Landing || {};
 	          domainStatusMessage: item.domainStatusMessage || null,
 	          menuItems: item.menuItems || null,
 	          menuBottomItems: item.menuBottomItems || null,
-	          notPublishedText: _this.notPublishedText || null,
+	          notPublishedText: _this2.notPublishedText || null,
 	          access: item.access || {},
 	          error: item.error || {},
 	          articles: item.articles || null,
-	          grid: _this,
+	          grid: _this2,
 	          copilotProcess: item.copilotProcess
 	        });
 	      });
@@ -1418,5 +1430,5 @@ this.BX.Landing = this.BX.Landing || {};
 
 	exports.SiteTile = SiteTile;
 
-}((this.BX.Landing.Component = this.BX.Landing.Component || {}),BX,BX.UI.Dialogs,BX.Event,BX,BX,BX.Main,BX.UI));
+}((this.BX.Landing.Component = this.BX.Landing.Component || {}),BX,BX.UI.Dialogs,BX.Event,BX,BX,BX.Main,BX.UI,BX.Landing));
 //# sourceMappingURL=script.js.map

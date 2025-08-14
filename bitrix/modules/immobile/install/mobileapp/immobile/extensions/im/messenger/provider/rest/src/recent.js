@@ -3,10 +3,12 @@
  */
 jn.define('im/messenger/provider/rest/recent', (require, exports, module) => {
 	const { Type } = require('type');
-	const { DialogHelper } = require('im/messenger/lib/helper');
+
 	const { RestMethod } = require('im/messenger/const');
+	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { runAction } = require('im/messenger/lib/rest');
 	const { callMethod } = require('im/messenger/lib/rest');
+	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
 
 	/**
 	 * @class RecentRest
@@ -96,6 +98,12 @@ jn.define('im/messenger/provider/rest/recent', (require, exports, module) => {
 			if (!DialogHelper.isDialogId(dialogId) && !DialogHelper.isChatId(dialogId))
 			{
 				throw new Error(`${this.constructor.name}: dialogId is invalid.`);
+			}
+
+			const isNotes = DialogHelper.createByDialogId(dialogId)?.isNotes;
+			if (isNotes)
+			{
+				AnalyticsService.getInstance().sendPinChatNotes();
 			}
 
 			const data = { dialogId };

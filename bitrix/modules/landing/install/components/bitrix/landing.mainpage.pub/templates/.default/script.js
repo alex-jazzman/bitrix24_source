@@ -90,22 +90,20 @@ this.BX.Landing = this.BX.Landing || {};
 	      if (!(target.tagName.toLowerCase() === 'a' || target.parentNode && target.parentNode.tagName.toLowerCase() === 'a' || target.firstElementChild && target.firstElementChild.tagName.toLowerCase() === 'a' || target.tagName.toLowerCase() === 'button' || target.hasAttribute('data-pseudo-url'))) {
 	        return;
 	      }
-	      var widgetId = '';
+	      var code = '';
 	      var blockWrapper = event.currentTarget;
 	      blockWrapper.classList.forEach(function (className) {
 	        if (className !== 'block-wrapper') {
-	          widgetId += className;
+	          code += className;
 	        }
 	      });
-	      widgetId = widgetId.replace('block-', '');
+	      code = code.replace('block-', '');
 	      var metrika = new landing_metrika.Metrika(true);
 	      metrika.sendData({
 	        category: 'vibe',
 	        event: 'click_on_button',
 	        c_section: this.isPublished ? 'active_page' : 'preview_page',
-	        params: {
-	          'widget-id': widgetId
-	        }
+	        p2: ['widgetId', code]
 	      });
 	    }
 	  }]);

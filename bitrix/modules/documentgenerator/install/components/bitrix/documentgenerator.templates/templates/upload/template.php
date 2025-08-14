@@ -32,21 +32,11 @@ if (\Bitrix\Main\Loader::includeModule('ui'))
 {
 	Toolbar::deleteFavoriteStar();
 
-	if (Bitrix24Manager::isEnabled())
-	{
-		$escapedTemplateName = \CUtil::JSEscape($arResult['TEMPLATE']['NAME']);
-		$escapedDefaultCode = \CUtil::JSEscape($arResult['params']['defaultCode'] ?? '');
-
-		Toolbar::addButton(
-			new \Bitrix\UI\Buttons\Button([
-				'color' => \Bitrix\UI\Buttons\Color::LIGHT_BORDER,
-				'text' => Loc::getMessage('DOCGEN_TEMPLATE_ADD_FEEDBACK'),
-				'onclick' => new \Bitrix\UI\Buttons\JsCode(
-					"BX.DocumentGenerator.Feedback.open('', '{$escapedTemplateName}', '{$escapedDefaultCode}');",
-				),
-			]),
-		);
-	}
+	Bitrix24Manager::addFeedbackButtonToToolbar(
+		'',
+		$arResult['TEMPLATE']['NAME'] ?? '',
+		$arResult['params']['defaultCode'] ?? '',
+	);
 }
 
 ?>

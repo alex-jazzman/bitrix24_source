@@ -1,5 +1,5 @@
 <?php
-$MESS["SOD_HIST_AFFILIATE_ID"] = "Аффилиат коды";
+$MESS['SOD_HIST_AFFILIATE_ID'] = "Аффилиат коды";
 $MESS["SOD_HIST_ALL"] = "(барлығы)";
 $MESS["SOD_HIST_ALLOW_DELIVERY"] = "Жеткізу";
 $MESS["SOD_HIST_CANCELED"] = "Болдырмау";

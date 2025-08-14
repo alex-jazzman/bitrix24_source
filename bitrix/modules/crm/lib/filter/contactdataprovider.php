@@ -435,6 +435,7 @@ class ContactDataProvider extends EntityDataProvider implements FactoryOptionabl
 					'referenceClass' => $referenceClass,
 					'isEnableAllUsers' => $isEnableAllUsers,
 					'isEnableOtherUsers' => $isEnableOtherUsers,
+					'isEnableStructureNode' => true,
 				]
 			);
 		}

@@ -92,3 +92,4 @@ CREATE TABLE IF NOT EXISTS b_baas_service_in_purchased_pack (
 	PRIMARY KEY (ID)
 );
 CREATE UNIQUE INDEX ux_b_baas_service_in_purchased_pack_purchased_package_code_serv ON b_baas_service_in_purchased_pack (purchased_package_code, service_code);
+CREATE INDEX ix_b_baas_service_in_purchased_pack_service_code_curv ON b_baas_service_in_purchased_pack (service_code, current_value);

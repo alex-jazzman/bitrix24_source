@@ -201,9 +201,9 @@ type SidebarParticipantsViewProps = {
 type SidebarParticipantsViewState = {
 	participants: Array<object>,
 	permissions: {
-		isCanRemoveParticipants: boolean,
-		isCanAddParticipants: boolean,
-		isCanLeave: boolean,
+		canRemoveParticipants: boolean,
+		canAddParticipants: boolean,
+		сanLeave: boolean,
 	},
 }
 

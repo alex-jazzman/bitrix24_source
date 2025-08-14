@@ -2,12 +2,12 @@
 
 return [
 	'extensions' => [
-		'loc',
 		'utils/file',
 		'tokens',
 		'layout/ui/context-menu',
 		'ui-system/typography',
 		'ui-system/blocks/icon',
+		'im:messenger/loc',
 		'im:messenger/const',
 		'im:messenger/lib/logger',
 		'im:messenger/provider/services/disk',

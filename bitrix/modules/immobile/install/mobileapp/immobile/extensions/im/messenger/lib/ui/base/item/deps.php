@@ -3,9 +3,10 @@
 return [
 	'extensions' => [
 		'im:lib/theme',
-		'loc',
 		'utils/color',
 		'utils/object',
+		'assets/icons',
+		'im:messenger/loc',
 		'im:messenger/lib/ui/base/avatar',
 		'im:messenger/assets/common',
 	],

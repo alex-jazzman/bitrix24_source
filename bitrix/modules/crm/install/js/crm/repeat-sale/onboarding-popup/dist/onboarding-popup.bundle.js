@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,crm_integration_ui_bannerDispatcher,main_core,main_popup,ui_buttons,ui_iconSet_api_core) {
+(function (exports,crm_integration_analytics,crm_integration_ui_bannerDispatcher,main_core,main_popup,ui_analytics,ui_buttons,ui_iconSet_api_core) {
 	'use strict';
 
 	let _ = t => t,
@@ -16,6 +16,7 @@ this.BX.Crm = this.BX.Crm || {};
 	var _step = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("step");
 	var _closeOptionName = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("closeOptionName");
 	var _closeOptionCategory = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("closeOptionCategory");
+	var _analytics = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("analytics");
 	var _getPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getPopup");
 	var _createPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createPopup");
 	var _getPopupParams = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getPopupParams");
@@ -30,9 +31,25 @@ this.BX.Crm = this.BX.Crm || {};
 	var _setTargetOverflow = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setTargetOverflow");
 	var _resetTargetOverflow = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("resetTargetOverflow");
 	var _getTarget = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getTarget");
+	var _sendViewAnalytics = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendViewAnalytics");
+	var _sendCloseAnalytics = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendCloseAnalytics");
+	var _sendClickAnalytics = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendClickAnalytics");
+	var _sendAnalytics = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendAnalytics");
 	class OnboardingPopup {
 	  constructor(params) {
-	    var _params$closeOptionNa, _params$closeOptionCa;
+	    var _params$closeOptionNa, _params$closeOptionCa, _params$analytics;
+	    Object.defineProperty(this, _sendAnalytics, {
+	      value: _sendAnalytics2
+	    });
+	    Object.defineProperty(this, _sendClickAnalytics, {
+	      value: _sendClickAnalytics2
+	    });
+	    Object.defineProperty(this, _sendCloseAnalytics, {
+	      value: _sendCloseAnalytics2
+	    });
+	    Object.defineProperty(this, _sendViewAnalytics, {
+	      value: _sendViewAnalytics2
+	    });
 	    Object.defineProperty(this, _getTarget, {
 	      value: _getTarget2
 	    });
@@ -103,8 +120,13 @@ this.BX.Crm = this.BX.Crm || {};
 	      writable: true,
 	      value: null
 	    });
+	    Object.defineProperty(this, _analytics, {
+	      writable: true,
+	      value: null
+	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _closeOptionName)[_closeOptionName] = (_params$closeOptionNa = params == null ? void 0 : params.closeOptionName) != null ? _params$closeOptionNa : null;
 	    babelHelpers.classPrivateFieldLooseBase(this, _closeOptionCategory)[_closeOptionCategory] = (_params$closeOptionCa = params == null ? void 0 : params.closeOptionCategory) != null ? _params$closeOptionCa : null;
+	    babelHelpers.classPrivateFieldLooseBase(this, _analytics)[_analytics] = (_params$analytics = params == null ? void 0 : params.analytics) != null ? _params$analytics : {};
 	  }
 	  show() {
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _getPopup)[_getPopup]().isShown()) {
@@ -146,9 +168,13 @@ this.BX.Crm = this.BX.Crm || {};
 	    animation: 'fading-slide',
 	    autoHide: false,
 	    events: {
+	      onFirstShow: () => {
+	        babelHelpers.classPrivateFieldLooseBase(this, _sendViewAnalytics)[_sendViewAnalytics]();
+	      },
 	      onclose: () => {
 	        babelHelpers.classPrivateFieldLooseBase(this, _resetTargetOverflow)[_resetTargetOverflow]();
 	        BX.userOptions.save(babelHelpers.classPrivateFieldLooseBase(this, _closeOptionCategory)[_closeOptionCategory], babelHelpers.classPrivateFieldLooseBase(this, _closeOptionName)[_closeOptionName], 'closed', 'Y');
+	        babelHelpers.classPrivateFieldLooseBase(this, _sendCloseAnalytics)[_sendCloseAnalytics]();
 	      }
 	    }
 	  };
@@ -243,6 +269,7 @@ this.BX.Crm = this.BX.Crm || {};
 	function _goToNextStep2() {
 	  babelHelpers.classPrivateFieldLooseBase(this, _step)[_step]++;
 	  main_core.Dom.replace(document.querySelector('.crm-repeat-sale__onboarding-popup-step-container'), babelHelpers.classPrivateFieldLooseBase(this, _getStepContent)[_getStepContent]());
+	  babelHelpers.classPrivateFieldLooseBase(this, _sendClickAnalytics)[_sendClickAnalytics]();
 	}
 	function _setTargetOverflow2(value) {
 	  babelHelpers.classPrivateFieldLooseBase(this, _originalOverflowValue)[_originalOverflowValue] = main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _getTarget)[_getTarget](), 'overflow');
@@ -261,8 +288,35 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	  return babelHelpers.classPrivateFieldLooseBase(this, _targetContainer)[_targetContainer];
 	}
+	function _sendViewAnalytics2() {
+	  babelHelpers.classPrivateFieldLooseBase(this, _sendAnalytics)[_sendAnalytics]('view');
+	}
+	function _sendCloseAnalytics2() {
+	  babelHelpers.classPrivateFieldLooseBase(this, _sendAnalytics)[_sendAnalytics]('close');
+	}
+	function _sendClickAnalytics2() {
+	  babelHelpers.classPrivateFieldLooseBase(this, _sendAnalytics)[_sendAnalytics]('click');
+	}
+	function _sendAnalytics2(eventName) {
+	  var _babelHelpers$classPr;
+	  const type = crm_integration_analytics.Dictionary.TYPE_REPEAT_SALE_BANNER_NULL;
+	  const subSection = (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _analytics)[_analytics].c_sub_section) != null ? _babelHelpers$classPr : crm_integration_analytics.Dictionary.SUB_SECTION_KANBAN;
+	  let instance = null;
+	  if (eventName === 'view') {
+	    instance = crm_integration_analytics.Builder.RepeatSale.Banner.ViewEvent.createDefault(type, subSection);
+	  } else if (eventName === 'close') {
+	    instance = crm_integration_analytics.Builder.RepeatSale.Banner.CloseEvent.createDefault(type, subSection);
+	  } else if (eventName === 'click') {
+	    instance = crm_integration_analytics.Builder.RepeatSale.Banner.ClickEvent.createDefault(type, subSection);
+	  }
+	  if (instance) {
+	    var _babelHelpers$classPr2;
+	    const section = (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _analytics)[_analytics].c_section) != null ? _babelHelpers$classPr2 : '';
+	    ui_analytics.sendData(instance.setSection(section).buildData());
+	  }
+	}
 
 	exports.OnboardingPopup = OnboardingPopup;
 
-}((this.BX.Crm.RepeatSale = this.BX.Crm.RepeatSale || {}),BX.Crm.Integration.UI,BX,BX.Main,BX.UI,BX.UI.IconSet));
+}((this.BX.Crm.RepeatSale = this.BX.Crm.RepeatSale || {}),BX.Crm.Integration.Analytics,BX.Crm.Integration.UI,BX,BX.Main,BX.UI.Analytics,BX.UI,BX.UI.IconSet));
 //# sourceMappingURL=onboarding-popup.bundle.js.map

@@ -33,6 +33,8 @@
 .sign-b2e-document-filling__item-title {
 	font: 16px / 22px var(--font_os_regular);
 	color: var(--ui-color-palette-black-base);
+	overflow-wrap: anywhere;
+	width: 95%;
 }
 
 .sign-b2e-settings__date-row {
@@ -148,6 +150,43 @@
 
 .sign-b2e-document-filling-reg-number-input.--error:hover {
 	border: 1px solid var(--ui-color-background-on-alert);
+}
+
+.sign-b2e-document-filling__notice {
+	border-radius: 8px;
+	background: var(--ui-color-palette-blue-15);
+	color: var(--ui-color-base-90);
+	font-size: var(--ui-font-size-sm);
+	line-height: var(--ui-font-line-height-2xs);
+	padding: 12px;
+	margin: 16px 0 0;
+}
+
+
+.sign-b2e-document-filling__remove-btn {
+	position: absolute;
+	top: 8px;
+	right: 8px;
+	width: 24px;
+	height: 24px;
+	border: none;
+	cursor: pointer;
+	padding: 0;
+	z-index: 1;
+	background-color: transparent;
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='24' height='24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M8.461 7.54a.65.65 0 00-.92.92L11.083 12l-3.54 3.54a.65.65 0 10.92.92l3.54-3.541 3.54 3.54a.65.65 0 10.919-.92L12.92 12l3.54-3.54a.65.65 0 10-.92-.919l-3.54 3.54-3.54-3.54z' fill='%23A8ADB4'/%3E%3C/svg%3E");
+	background-repeat: no-repeat;
+	background-position: center;
+}
+
+.sign-b2e-document-filling__remove-btn:hover {
+	opacity: 0.8;
+}
+
+.sign-b2e-document-filling__header {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
 }
 .sign-b2e-regional-settings_apply_for_all_list {
 	padding: 8px 5px 8px 5px !important;

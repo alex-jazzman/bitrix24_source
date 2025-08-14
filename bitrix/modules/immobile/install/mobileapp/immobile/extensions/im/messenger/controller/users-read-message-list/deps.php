@@ -2,11 +2,11 @@
 
 return [
 	'extensions' => [
-		'loc',
 		'type',
 		'utils/date',
 		'layout/ui/friendly-date',
 		'im:lib/theme',
+		'im:messenger/loc',
 		'im:messenger/assets/common',
 		'im:messenger/cache',
 		'im:messenger/const',
@@ -19,7 +19,7 @@ return [
 		'im:messenger/lib/helper/dialog',
 		'im:messenger/lib/params',
 		'im:messenger/lib/rest',
-		
+
 	],
 	'bundle' => [
 		'./src/view',

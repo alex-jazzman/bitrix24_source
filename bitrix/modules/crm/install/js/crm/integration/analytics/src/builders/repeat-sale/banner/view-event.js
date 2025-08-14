@@ -7,8 +7,9 @@ import type { RepeatSaleBannerViewEvent } from '../../../types';
  */
 export class ViewEvent
 {
-	#type: RepeatSaleBannerViewEvent['type'];
+	#section: RepeatSaleBannerViewEvent['c_section'] = Dictionary.SECTION_DEAL;
 	#subSection: RepeatSaleBannerViewEvent['c_sub_section'] = Dictionary.SUB_SECTION_KANBAN;
+	#type: RepeatSaleBannerViewEvent['type'];
 
 	static createDefault(
 		type: RepeatSaleBannerViewEvent['type'],
@@ -23,6 +24,13 @@ export class ViewEvent
 		return self;
 	}
 
+	setSection(section: RepeatSaleBannerViewEvent['c_section']): ViewEvent
+	{
+		this.#section = section;
+
+		return this;
+	}
+
 	buildData(): ?RepeatSaleBannerViewEvent
 	{
 		return filterOutNilValues({
@@ -30,7 +38,7 @@ export class ViewEvent
 			category: Dictionary.CATEGORY_BANNERS,
 			event: Dictionary.EVENT_REPEAT_SALE_BANNER_VIEW,
 			type: this.#type,
-			c_section: Dictionary.SECTION_DEAL,
+			c_section: this.#section,
 			c_sub_section: this.#subSection,
 			p1: getCrmMode(),
 		});

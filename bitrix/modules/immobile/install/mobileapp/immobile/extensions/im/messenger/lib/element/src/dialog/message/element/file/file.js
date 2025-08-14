@@ -8,7 +8,6 @@ jn.define('im/messenger/lib/element/dialog/message/element/file/file', (require,
 		resolveFileIcon,
 	} = require('assets/icons');
 
-	const { getArrowInCircle } = require('im/messenger/assets/common');
 	const {
 		formatFileSize,
 		getShortFileName,
@@ -41,12 +40,12 @@ jn.define('im/messenger/lib/element/dialog/message/element/file/file', (require,
 		{
 			return {
 				id: this.#getId(),
+				testId: this.#getOriginalName(),
 				type: this.#getMessageElementType(),
 				name: this.#getName(),
 				size: this.#getSize(),
 				iconDownloadName: this.#getIconDownloadName(),
 				iconDownloadFallbackUrl: this.#getIconDownloadFallbackUrl(),
-				iconDownloadSvg: this.#getIconDownloadSvg(),
 				iconSvg: this.#getIconSvg(),
 				sizeBytes: this.#getSizeBytes(),
 				url: this.#getDownloadUrl(),
@@ -132,14 +131,6 @@ jn.define('im/messenger/lib/element/dialog/message/element/file/file', (require,
 		#getIcon()
 		{
 			return Icon.DOWNLOAD;
-		}
-
-		/**
-		 * @return {MessageFile['iconDownloadSvg']}
-		 */
-		#getIconDownloadSvg()
-		{
-			return getArrowInCircle();
 		}
 
 		/**

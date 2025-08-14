@@ -2,7 +2,7 @@
  * @module im/messenger/lib/element/dialog/message/ai-assistant
  */
 jn.define('im/messenger/lib/element/dialog/message/ai-assistant', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 
 	const { Theme } = require('im/lib/theme');
 	const { AiAssistantButtonType } = require('im/messenger/const');
@@ -20,6 +20,18 @@ jn.define('im/messenger/lib/element/dialog/message/ai-assistant', (require, expo
 				.setCanBeQuoted(true)
 				.setCanBeChecked(true)
 			;
+		}
+
+		/**
+		 * @returns {AiAssistantDialogWidgetItem}
+		 */
+		toDialogWidgetItem()
+		{
+			return {
+				...super.toDialogWidgetItem(),
+				buttons: this.buttons,
+				footnote: this.footnote,
+			};
 		}
 
 		setButtons()

@@ -22,12 +22,6 @@ Extension::load([
 	'main.popup',
 ]);
 
-//todo: when no site has been created yet, we display a banner but simply without a button
-// if (!$arParams['ITEMS'] && !$arParams['PAGE_URL_SITE_ADD'])
-// {
-// 	return;
-// }
-
 $isAjax = $component->isAjax();
 $request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
 $zone = \Bitrix\Landing\Manager::getZone();

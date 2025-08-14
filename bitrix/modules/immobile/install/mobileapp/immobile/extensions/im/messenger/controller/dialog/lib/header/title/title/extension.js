@@ -2,7 +2,7 @@
  * @module im/messenger/controller/dialog/lib/header/title/title
  */
 jn.define('im/messenger/controller/dialog/lib/header/title/title', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 
 	const { AppStatus, DialogType } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');

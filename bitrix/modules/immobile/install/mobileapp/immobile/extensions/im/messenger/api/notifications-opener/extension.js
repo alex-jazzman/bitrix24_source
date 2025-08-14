@@ -2,7 +2,7 @@
  * @module im/messenger/api/notifications-opener
  */
 jn.define('im/messenger/api/notifications-opener', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 
 	function getTopMenuNotificationsButton(parentWidget)
 	{

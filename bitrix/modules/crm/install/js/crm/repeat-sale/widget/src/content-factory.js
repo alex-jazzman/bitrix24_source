@@ -1,4 +1,5 @@
 import { Base } from './content/base';
+import { ForceStart } from './content/force-start';
 import { Start } from './content/start';
 import { Statistics } from './content/statistics';
 import type { WidgetParams, WidgetTypeEnum } from './widget';
@@ -12,6 +13,8 @@ export class ContentFactory
 		{
 			case WidgetType.start:
 				return new Start(params);
+			case WidgetType.forceStart:
+				return new ForceStart(params);
 			case WidgetType.statistics:
 				return new Statistics(params);
 			default:

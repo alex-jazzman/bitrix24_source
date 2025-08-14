@@ -13,13 +13,15 @@ jn.define('layout/ui/gratitude-list', (require, exports, module) => {
 	{
 		/**
 		 * @param {Object} props
-		 * @param {Object} props.parentLayout
+		 * @param {Object} props.parentWidget
 		 * @param {string} props.title
 		 * @param {number} props.ownerId
 		 * @returns {Promise<void>}
 		 */
 		static openInComponentWithRedux(props)
 		{
+			const parentWidget = props.parentWidget ?? PageManager;
+
 			const config = {
 				enableNavigationBarBorder: false,
 				titleParams: {
@@ -30,13 +32,12 @@ jn.define('layout/ui/gratitude-list', (require, exports, module) => {
 					readyLayout.showComponent(new GratitudeList({
 						withRedux: true,
 						layout: readyLayout,
-						parentLayout: props?.parentLayout ?? null,
 						ownerId: props.ownerId ?? null,
 					}));
 				},
 			};
 
-			PageManager.openWidget('layout', config);
+			parentWidget.openWidget('layout', config);
 		}
 	}
 

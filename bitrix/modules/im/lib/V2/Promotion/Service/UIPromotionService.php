@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Bitrix\Im\V2\Promotion\Service;
 
 use Bitrix\Im\Common;
-use Bitrix\Im\Settings;
 use Bitrix\Im\V2\Application\Features;
 use Bitrix\Im\V2\Common\SingletonTrait;
 use Bitrix\Im\V2\Promotion\Entity\Promotion;
@@ -38,9 +37,9 @@ class UIPromotionService implements PromotionServiceInterface
 			return $promoList;
 		}
 
-		foreach (self::getConfig() as $config)
+		foreach ($this->getConfig() as $config)
 		{
-			$tour = self::getTour($config, $type);
+			$tour = $this->getTour($config, $type);
 			if (!$tour || !$tour->isAvailable())
 			{
 				continue;
@@ -53,7 +52,7 @@ class UIPromotionService implements PromotionServiceInterface
 		return $promoList;
 	}
 
-	private static function getConfig(): array
+	private function getConfig(): array
 	{
 		$result = [];
 
@@ -65,7 +64,7 @@ class UIPromotionService implements PromotionServiceInterface
 		$result[] = [
 			"ID" => 'im:group-chat-create:20062023:all',
 			"USER_TYPE" => UserType::ALL->value,
-			"DEVICE_TYPE" => DeviceType::ALL->value,
+			"DEVICE_TYPE" => DeviceType::WEB->value,
 			"LIFETIME" => self::ENDLESS_LIFETIME,
 			"END_DATE" => (new DateTime('01.11.2025', 'd.m.Y'))->getTimestamp()
 		];
@@ -73,7 +72,7 @@ class UIPromotionService implements PromotionServiceInterface
 		$result[] = [
 			"ID" => 'im:conference-create:24082023:all',
 			"USER_TYPE" =>  UserType::ALL->value,
-			"DEVICE_TYPE" => DeviceType::ALL->value,
+			"DEVICE_TYPE" => DeviceType::WEB->value,
 			"LIFETIME" => self::ENDLESS_LIFETIME,
 			"END_DATE" => (new DateTime('01.11.2025', 'd.m.Y'))->getTimestamp()
 		];
@@ -81,7 +80,7 @@ class UIPromotionService implements PromotionServiceInterface
 		$result[] = [
 			"ID" => 'im:channel-create:04032024:all',
 			"USER_TYPE" =>  UserType::ALL->value,
-			"DEVICE_TYPE" => DeviceType::ALL->value,
+			"DEVICE_TYPE" => DeviceType::WEB->value,
 			"LIFETIME" => self::ENDLESS_LIFETIME,
 			"END_DATE" => (new DateTime('01.11.2025', 'd.m.Y'))->getTimestamp()
 		];
@@ -89,48 +88,49 @@ class UIPromotionService implements PromotionServiceInterface
 		$result[] = [
 			"ID" => 'im:collab-create:12092024:all',
 			"USER_TYPE" =>  UserType::ALL->value,
-			"DEVICE_TYPE" => DeviceType::ALL->value,
-			"LIFETIME" => self::ONE_MONTH * 2, // 2 months
+			"DEVICE_TYPE" => DeviceType::WEB->value,
+			"LIFETIME" => self::ONE_MONTH * 2,
+		];
+
+		$result[] = [
+			"ID" => 'im:add-users-to-copilot-chat:09042024:all',
+			"USER_TYPE" =>  UserType::ALL->value,
+			"DEVICE_TYPE" => DeviceType::WEB->value,
+			"LIFETIME" => self::ENDLESS_LIFETIME,
+			"END_DATE" => (new DateTime('01.11.2025', 'd.m.Y'))->getTimestamp()
+		];
+
+		$result[] = [
+			"ID" => 'im:change-role-copilot-chat:09042024:all',
+			"USER_TYPE" =>  UserType::ALL->value,
+			"DEVICE_TYPE" => DeviceType::WEB->value,
+			"LIFETIME" => self::ENDLESS_LIFETIME,
+			"END_DATE" => (new DateTime('01.11.2025', 'd.m.Y'))->getTimestamp()
 		];
 
 		$result[] = [
 			"ID" => 'im:collab-helpdesk-sidebar:30102024:all',
 			"USER_TYPE" =>  UserType::ALL->value,
-			"DEVICE_TYPE" => DeviceType::ALL->value,
+			"DEVICE_TYPE" => DeviceType::WEB->value,
 			"LIFETIME" => self::ENDLESS_LIFETIME,
-		];
-
-		if (!Settings::isLegacyChatActivated())
-		{
-			$result[] = [
-				"ID" => 'immobile:chat-v2:16112023:mobile',
-				"USER_TYPE" =>  UserType::ALL->value,
-				"DEVICE_TYPE" => DeviceType::MOBILE->value,
-			];
-		}
-
-		$result[] = [
-			"ID" => 'immobile:chat-v2:26042024:mobile',
-			"USER_TYPE" =>  UserType::ALL->value,
-			"DEVICE_TYPE" => DeviceType::MOBILE->value,
 		];
 
 		$result[] = [
 			"ID" => 'call:copilot-call-button:29102024:all',
 			"USER_TYPE" =>  UserType::ALL->value,
-			"DEVICE_TYPE" => DeviceType::ALL->value,
+			"DEVICE_TYPE" => DeviceType::WEB->value,
 		];
 
 		$result[] = [
 			"ID" => 'call:copilot-notify-warning:21112024:all',
 			"USER_TYPE" =>  UserType::ALL->value,
-			"DEVICE_TYPE" => DeviceType::ALL->value,
+			"DEVICE_TYPE" => DeviceType::WEB->value,
 		];
 
 		$result[] = [
 			"ID" => 'call:copilot-notify-promo:21112024:all',
 			"USER_TYPE" =>  UserType::ALL->value,
-			"DEVICE_TYPE" => DeviceType::ALL->value,
+			"DEVICE_TYPE" => DeviceType::WEB->value,
 		];
 
 		$result[] = [
@@ -142,14 +142,14 @@ class UIPromotionService implements PromotionServiceInterface
 		$result[] = [
 			"ID" => 'im:download-several-files:22112024:all',
 			"USER_TYPE" =>  UserType::ALL->value,
-			"DEVICE_TYPE" => DeviceType::ALL->value,
+			"DEVICE_TYPE" => DeviceType::WEB->value,
 			"LIFETIME" => self::ENDLESS_LIFETIME,
 		];
 
 		$result[] = [
 			"ID" => 'call:copilot-notify-result:24112024:all',
 			"USER_TYPE" =>  UserType::ALL->value,
-			"DEVICE_TYPE" => DeviceType::ALL->value,
+			"DEVICE_TYPE" => DeviceType::WEB->value,
 		];
 
 		$result[] = [
@@ -226,44 +226,17 @@ class UIPromotionService implements PromotionServiceInterface
 		return $result;
 	}
 
-	private static function getTour($config, $type = DeviceType::ALL): bool|Tour|null
+	private function getTour(array $config, DeviceType $type = DeviceType::ALL): bool|Tour|null
 	{
 		if (!Loader::includeModule('ui'))
 		{
 			return null;
 		}
 
-		if ($type === DeviceType::WEB)
+		$deviceType = (string)$config['DEVICE_TYPE'];
+		if (!$type->isDeviceTypeAvailable($deviceType))
 		{
-			if (!(
-				$config['DEVICE_TYPE'] === DeviceType::ALL->value
-				|| $config['DEVICE_TYPE'] === DeviceType::BROWSER->value
-				|| $config['DEVICE_TYPE'] === DeviceType::DESKTOP->value
-			))
-			{
-				return false;
-			}
-		}
-		else if ($type === DeviceType::MOBILE)
-		{
-			if (
-				$config['DEVICE_TYPE'] !== DeviceType::MOBILE->value
-				&& $config['DEVICE_TYPE'] !== DeviceType::ALL->value
-			)
-			{
-				return false;
-			}
-		}
-		else if ($type !== DeviceType::ALL)
-		{
-			if (
-				$config['DEVICE_TYPE'] !== DeviceType::ALL->value
-				&& $config['DEVICE_TYPE'] !== DeviceType::WEB->value
-				&& $config['DEVICE_TYPE'] !== $type->value
-			)
-			{
-				return false;
-			}
+			return false;
 		}
 
 		$tour = new Tour($config["ID"]);
@@ -289,11 +262,11 @@ class UIPromotionService implements PromotionServiceInterface
 
 	public function getTourById(string $id): ?Tour
 	{
-		foreach (self::getConfig() as $config)
+		foreach ($this->getConfig() as $config)
 		{
 			if ($config['ID'] === $id)
 			{
-				return self::getTour($config);
+				return $this->getTour($config);
 			}
 		}
 

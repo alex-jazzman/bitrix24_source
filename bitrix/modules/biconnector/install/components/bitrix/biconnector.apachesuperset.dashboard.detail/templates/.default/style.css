@@ -186,7 +186,7 @@
 }
 
 .ui-info-error {
-	height: 100%;
+	height: 100vh !important;
 }
 
 .ui-info-error-inner {

@@ -3,13 +3,14 @@
  * Bitrix Framework
  * @package bitrix
  * @subpackage main
- * @copyright 2001-2018 Bitrix
+ * @copyright 2001-2025 Bitrix
  */
 namespace Bitrix\Main\Controller;
 
 use Bitrix\Main;
 use Bitrix\Main\Component;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Authentication\Method;
 use Bitrix\Security\Mfa;
 
 class AuthCode extends Main\Engine\Controller
@@ -72,7 +73,7 @@ class AuthCode extends Main\Engine\Controller
 		{
 			$params = Component\ParameterSigner::unsignParameters(self::SIGNATURE_SALT, $signedData);
 		}
-		catch(Main\SystemException $e)
+		catch(Main\SystemException)
 		{
 			$this->addError(new Main\Error(Loc::getMessage("main_authcode_incorrect_request"), "ERR_SIGNATURE"));
 			return null;
@@ -104,7 +105,7 @@ class AuthCode extends Main\Engine\Controller
 			{
 				if(Main\Loader::includeModule("security"))
 				{
-					if(Mfa\Otp::verifyUser(["USER_ID" => $params["userId"]]) == false)
+					if(!Mfa\Otp::verifyUser(["USER_ID" => $params["userId"]]))
 					{
 						$this->addError(new Main\Error(Loc::getMessage("main_authcode_otp_required"), 'ERR_OTP_REQUIRED'));
 
@@ -113,7 +114,8 @@ class AuthCode extends Main\Engine\Controller
 						return null;
 					}
 				}
-				$USER->Authorize($params["userId"]);
+				$context->setMethod(Method::EmailCode);
+				$USER->Authorize($context);
 			}
 			return true;
 		}

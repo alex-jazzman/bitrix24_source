@@ -18,8 +18,10 @@ use Bitrix\Sign\Item\Document;
 use Bitrix\Sign\Operation\Document\Template\Send;
 use Bitrix\Sign\Result\Operation\Document\Template\SendResult;
 use Bitrix\Sign\Service\Container;
+use Bitrix\Crm\Service\Context;
 
 /**
+ * @property string[] $responsible
  * @property string[] $employee
  * @property string[] $representative
  * @property string[] $reviewer
@@ -32,6 +34,7 @@ use Bitrix\Sign\Service\Container;
 class CBPSignB2EDocumentActivity extends CBPActivity implements IBPEventActivity, IBPActivityExternalEventListener
 {
 	public const PARAM_TEMPLATE_ID = 'templateId';
+	public const PARAM_RESPONSIBLE = 'responsible';
 	public const PARAM_EMPLOYEE = 'employee';
 	public const PARAM_REPRESENTATIVE = 'representative';
 	public const PARAM_REVIEWER = 'reviewer';
@@ -54,6 +57,7 @@ class CBPSignB2EDocumentActivity extends CBPActivity implements IBPEventActivity
 	private int $createdDocumentId = 0;
 	private int $smartDocumentEntityId = 0;
 	private int $smartDocumentEntityType = 0;
+	private int $smartDocumentCreatedById = 0;
 
 	public function __construct($name)
 	{
@@ -62,6 +66,9 @@ class CBPSignB2EDocumentActivity extends CBPActivity implements IBPEventActivity
 		$this->setPropertiesTypes([
 			self::PARAM_TEMPLATE_ID => [
 				'Type' => FieldType::INT,
+			],
+			self::PARAM_RESPONSIBLE => [
+				'Type' => FieldType::USER,
 			],
 			self::PARAM_EMPLOYEE => [
 				'Type' => FieldType::USER,
@@ -91,6 +98,7 @@ class CBPSignB2EDocumentActivity extends CBPActivity implements IBPEventActivity
 
 		$this->arProperties = [
 			'Title' => Loc::getMessage('SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_ROBOT_TITLE'),
+			self::PARAM_RESPONSIBLE => null,
 			self::PARAM_EMPLOYEE => null,
 			self::PARAM_REPRESENTATIVE => null,
 			self::PARAM_REVIEWER => null,
@@ -261,8 +269,26 @@ class CBPSignB2EDocumentActivity extends CBPActivity implements IBPEventActivity
 			return CBPActivityExecutionStatus::Closed;
 		}
 
+		$responsibleUserId = CBPHelper::extractFirstUser($this->responsible, $docId);
+		if ($responsibleUserId === null)
+		{
+			$memberService = Container::instance()->getMemberService();
+			$assignee = $memberService->getAssignee($document);
+			$responsibleUserId = $memberService->getUserIdForMember($assignee) ?? $this->smartDocumentCreatedById;
+		}
+
+		if ((int)$responsibleUserId < 1)
+		{
+			$this->trackError(
+				Loc::getMessage('SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_ERROR_RESPONSIBLE_NOT_SET'),
+			);
+
+			return CBPActivityExecutionStatus::Closed;
+		}
+
 		$sendOperation = new Send(
 			template: $template,
+			responsibleUserId: $responsibleUserId,
 			sendFromUserId: $sendFromUserId,
 			representativeUserId: $representativeUserId,
 			memberList: $prepareMemberListForTemplateSendOperationResult->members,
@@ -286,6 +312,40 @@ class CBPSignB2EDocumentActivity extends CBPActivity implements IBPEventActivity
 					$error->getMessage(),
 				);
 			}
+
+			return CBPActivityExecutionStatus::Closed;
+		}
+
+		$newDocumentEntityTypeId = (int)$sendOperationResult->newDocument->entityTypeId;
+		if ($newDocumentEntityTypeId === \CCrmOwnerType::Undefined)
+		{
+			$this->trackError(
+				Loc::getMessage('SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_ERROR_INVALID_SMART_DOCUMENT_ENTITY_TYPE'),
+			);
+
+			return CBPActivityExecutionStatus::Closed;
+		}
+
+		$newDocumentEntityId = (int)$sendOperationResult->newDocument->entityId;
+		if ($newDocumentEntityId < 1)
+		{
+			$this->trackError(
+				Loc::getMessage('SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_ERROR_INVALID_SMART_DOCUMENT_ENTITY_ID'),
+			);
+
+			return CBPActivityExecutionStatus::Closed;
+		}
+
+		$result = Sign\Integration\CRM\Entity::updateEntityResponsible(
+			$newDocumentEntityTypeId,
+			$newDocumentEntityId,
+			$responsibleUserId
+			);
+		if (!$result->isSuccess())
+		{
+			$this->trackError(
+				Loc::getMessage('SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_ERROR_RESPONSIBLE_FOR_SMART_DOCUMENT_NOT_SET'),
+			);
 
 			return CBPActivityExecutionStatus::Closed;
 		}
@@ -375,6 +435,14 @@ class CBPSignB2EDocumentActivity extends CBPActivity implements IBPEventActivity
 	public static function validateProperties($properties = [], CBPWorkflowTemplateUser $user = null): array
     {
 		$errors = [];
+		if (empty($properties[self::PARAM_RESPONSIBLE]))
+		{
+			$errors[] = [
+				"code" => "NotExist",
+				"parameter" => self::PARAM_RESPONSIBLE,
+				"message" => Loc::getMessage('SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_ERROR_RESPONSIBLE_NOT_SET'),
+			];
+		}
 		if (empty($properties[self::PARAM_EMPLOYEE]))
 		{
 			$errors[] = [
@@ -463,6 +531,7 @@ class CBPSignB2EDocumentActivity extends CBPActivity implements IBPEventActivity
 			$result[$template->uid] = [
 				'title' => $template->title,
 				'document_uid' => $document->uid,
+				'responsibleSelectorValue' => self::getSelectorCurrentValue($document, Role::ASSIGNEE),
 				'assigneeSelectorValue' => self::getSelectorCurrentValue($document, Role::ASSIGNEE),
 				'reviewerSelectorValue' => self::getSelectorCurrentValues($document, Role::REVIEWER),
 				'editorSelectorValue' => self::getSelectorCurrentValue($document, Role::EDITOR),
@@ -552,6 +621,12 @@ class CBPSignB2EDocumentActivity extends CBPActivity implements IBPEventActivity
 				'Options' => [], // gets content with AJAX
 				'Required' => true,
 			],
+			self::PARAM_RESPONSIBLE => [
+				'Name' => Loc::getMessage('SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_RESPONSIBLE'),
+				'FieldName' => self::PARAM_RESPONSIBLE,
+				'Type' => FieldType::USER,
+				'Required' => true,
+			],
 			self::PARAM_EMPLOYEE => [
 				'Name' => Loc::getMessage('SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_EMPLOYEE'),
 				'FieldName' => self::PARAM_EMPLOYEE,
@@ -621,6 +696,12 @@ class CBPSignB2EDocumentActivity extends CBPActivity implements IBPEventActivity
     {
 		$arErrors = [];
 		$arProperties = [
+			self::PARAM_RESPONSIBLE => self::getPropertyValue(
+				self::PARAM_RESPONSIBLE,
+				$arCurrentValues,
+				$documentType,
+				$arErrors,
+			),
 			self::PARAM_EMPLOYEE => CBPHelper::usersStringToArray(
 				$arCurrentValues[self::PARAM_EMPLOYEE] ?? '',
 				$documentType,
@@ -881,6 +962,9 @@ class CBPSignB2EDocumentActivity extends CBPActivity implements IBPEventActivity
 				Loc::getMessage('SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_ERROR_INVALID_SMART_DOCUMENT_ENTITY_ID'),
 			));
 		}
+
+		$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory($this->smartDocumentEntityType);
+		$this->smartDocumentCreatedById = (int)$factory?->getItem($this->smartDocumentEntityId)?->getCreatedBy();
 
 		return $result;
 	}

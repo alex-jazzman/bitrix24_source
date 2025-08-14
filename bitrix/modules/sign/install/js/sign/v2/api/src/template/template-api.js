@@ -14,9 +14,9 @@ export class TemplateApi
 		return post('sign.api_v1.b2e.document.template.list');
 	}
 
-	completeTemplate(templateUid: string): Promise<{ template: { id: number } }>
+	completeTemplate(templateUid: string, folderId: number): Promise<{ template: { id: number } }>
 	{
-		return post('sign.api_v1.b2e.document.template.complete', { uid: templateUid });
+		return post('sign.api_v1.b2e.document.template.complete', { uid: templateUid, folderId });
 	}
 
 	send(templateUid: string, fields: FieldValue[]): Promise<{
@@ -47,7 +47,7 @@ export class TemplateApi
 		return post('sign.api_v1.b2e.document.template.changeVisibility', { templateId, visibility });
 	}
 
-	copy(templateId: number, folderId: number): Promise<void>
+	copy(templateId: number, folderId: number): Promise<{ template: { id: number } }>
 	{
 		return post('sign.api_v1.b2e.document.template.copy', { templateId, folderId });
 	}

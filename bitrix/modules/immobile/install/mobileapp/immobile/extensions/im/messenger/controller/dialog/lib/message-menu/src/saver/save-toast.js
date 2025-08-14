@@ -2,7 +2,7 @@
  * @module im/messenger/controller/dialog/lib/message-menu/src/saver/save-toast
  */
 jn.define('im/messenger/controller/dialog/lib/message-menu/src/saver/save-toast', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Icon } = require('assets/icons');
 	const { FileDownloadType } = require('im/messenger/const');
 	const { Notification } = require('im/messenger/lib/ui/notification');

@@ -988,15 +988,13 @@ elseif($action === 'SAVE')
 					$factory = Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Deal);
 					if ($factory)
 					{
-						$itemBeforeSave = $factory->getItem($ID);
-						if (!$itemBeforeSave)
+						$itemBeforeSave = $factory->createItem();
+						$itemBeforeSave->set('ID', $previousFields['ID']);
+						$itemBeforeSave->setFromCompatibleData($previousFields);
+
+						if (!empty($originalProductRows))
 						{
-							$itemBeforeSave = $factory->createItem();
-							$oldFields = CCrmDeal::GetByID($ID);
-							if ($oldFields)
-							{
-								$itemBeforeSave->setFromCompatibleData($oldFields);
-							}
+							$itemBeforeSave->setFromCompatibleData([Crm\Item::FIELD_NAME_PRODUCTS => $originalProductRows]);
 						}
 
 						$inventoryManagementChecker = new Crm\Reservation\Component\InventoryManagementChecker($itemBeforeSave);
@@ -1080,7 +1078,6 @@ elseif($action === 'SAVE')
 		if (!$isFactoryEnabled)
 		{
 			$factory = Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Deal);
-
 			if (!$isExternal && $enableProductRows && (!$isNew || !empty($productRows)))
 			{
 				$saveProductRowsResult = \CCrmDeal::SaveProductRows($ID, $productRows, true, true, false);
@@ -1100,7 +1097,18 @@ elseif($action === 'SAVE')
 				&& $factory
 			)
 			{
-				$itemAfterSave = $factory->getItem($ID);
+				$itemAfterSave = $factory->getItem(
+					$ID,
+					[
+						Crm\Item::FIELD_NAME_ID,
+						Crm\Item::FIELD_NAME_CATEGORY_ID,
+						Crm\Item::FIELD_NAME_STAGE_ID,
+						Crm\Item::FIELD_NAME_STAGE_SEMANTIC_ID,
+						Crm\Item::FIELD_NAME_PRODUCTS . '.ID',
+						Crm\Item::FIELD_NAME_PRODUCTS . '.QUANTITY',
+						Crm\Item::FIELD_NAME_PRODUCTS . '.' . Crm\Item::FIELD_NAME_PRODUCT_RESERVATION . '.STORE_ID',
+					],
+				);
 				if ($itemAfterSave)
 				{
 					if (

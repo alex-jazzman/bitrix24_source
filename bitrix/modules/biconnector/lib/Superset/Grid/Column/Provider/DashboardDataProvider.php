@@ -59,7 +59,7 @@ class DashboardDataProvider extends DataProvider
 				->setType(Type::TAGS)
 				->setName(Loc::getMessage('BICONNECTOR_SUPERSET_GRID_COLUMN_TITLE_TAGS'))
 				->setAlign('left')
-				->setDefault(true)
+				->setDefault(false)
 		;
 
 		$result[] =

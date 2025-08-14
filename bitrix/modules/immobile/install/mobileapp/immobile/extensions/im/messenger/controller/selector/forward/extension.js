@@ -5,7 +5,7 @@ jn.define('im/messenger/controller/selector/forward', (require, exports, module)
 	const { openDialogSelector } = require('im/messenger/controller/selector/dialog/opener');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { EventType } = require('im/messenger/const');
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const REPLY_MANAGER_KEY = 'reply-manager';
 
 	class ForwardSelector

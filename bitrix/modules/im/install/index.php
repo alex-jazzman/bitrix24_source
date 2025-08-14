@@ -381,7 +381,7 @@ class im extends \CModule
 		$usersQuery =
 			\Bitrix\Main\UserTable::query()
 				->addSelect('ID')
-				->where('IS_REAL_USER', 'Y')
+				->where('REAL_USER', 'expr', true)
 		;
 
 		$userBindings = [];

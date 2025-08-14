@@ -1,6 +1,7 @@
 <?
 use Bitrix\Im\Integration\Imopenlines;
 use Bitrix\Im\Message;
+use Bitrix\Im\Notify;
 use Bitrix\Im\Text;
 use Bitrix\Im\V2\Analytics\MessageAnalytics;
 use Bitrix\Im\V2\Chat;
@@ -1746,7 +1747,7 @@ class CIMMessenger
 
 					if ($withTagNotify)
 					{
-						$result = \Bitrix\Im\Notify::deleteOldNotifyByTag($messageID, $arParams);
+						$result = Notify::deleteOldNotifyByTag($messageID, $arParams);
 						if (!$result->hasResult())
 						{
 							return false;
@@ -1759,7 +1760,7 @@ class CIMMessenger
 
 					if (!empty($arFields['PARAMS']))
 					{
-						CIMMessageParam::Set($messageID, $arFields['PARAMS']);
+						Notify::saveNotifyParams($messageID, $arFields['PARAMS']);
 					}
 
 					\Bitrix\Im\Model\ChatTable::update($chatId, Array(

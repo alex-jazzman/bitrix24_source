@@ -3,7 +3,7 @@
  */
 jn.define('im/messenger/controller/sidebar/chat/sidebar-user-service', (require, exports, module) => {
 	const { Type } = require('type');
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { ChatTitle, ChatAvatar, UserStatus } = require('im/messenger/lib/element');
 	const { bookmarkAvatar } = require('im/messenger/assets/common');

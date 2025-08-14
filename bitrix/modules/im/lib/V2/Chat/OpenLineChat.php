@@ -540,8 +540,9 @@ class OpenLineChat extends EntityChat
 			'SYSTEM' => 'Y',
 			'RECENT_ADD' => $skipRecent ? 'N' : 'Y',
 			'PARAMS' => ['CODE' => 'CHAT_LEAVE', 'NOTIFY' => 'Y'],
-			"PUSH" => 'N',
+			'PUSH' => 'N',
 			'SKIP_USER_CHECK' => 'Y',
+			'SKIP_COUNTER_INCREMENTS' => 'Y',
 		];
 	}
 

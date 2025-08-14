@@ -25,6 +25,7 @@ jn.define('im/messenger/lib/element/dialog/message/check-in/message', (require, 
 		{
 			super(modelMessage, options);
 
+			/** @type {CheckInMessageData}  */
 			this.checkIn = {
 				imageUrl: '',
 				chipsText: null,
@@ -43,6 +44,17 @@ jn.define('im/messenger/lib/element/dialog/message/check-in/message', (require, 
 		static getComponentId()
 		{
 			return MessageParams.ComponentId.CheckInMessage;
+		}
+
+		/**
+		 * @return {CheckInDialogWidgetItem}
+		 */
+		toDialogWidgetItem()
+		{
+			return {
+				...super.toDialogWidgetItem(),
+				checkIn: this.checkIn,
+			};
 		}
 
 		getType()

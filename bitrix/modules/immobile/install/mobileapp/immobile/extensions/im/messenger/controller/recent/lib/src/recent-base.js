@@ -379,9 +379,7 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 						this.view.showLoader();
 					}
 				})
-				.catch((err) => {
-					this.logger.error(`${this.constructor.name}.updatePageFromServer data.recentList is invalid`, err, recentList);
-				});
+				.catch((err) => this.logger.error(`${this.constructor.name}.pageHandler.catch:`, err));
 		}
 
 		/**
@@ -609,7 +607,8 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 			const callback = (foundItem) => {
 				if (foundItem)
 				{
-					this.renderer.do('update', { filter: { id: item.id }, element: item });
+					const actionName = useRecentUiConverter ? 'update' : 'updatePreparedItems';
+					this.renderer.do(actionName, item);
 					if (!this.recentService.pageNavigation.hasNextPage && this.view.isLoaderShown)
 					{
 						this.view.hideLoader();
@@ -744,10 +743,9 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 		}
 
 		/**
-		 * @param {immobileTabChatLoadResult.recentList} recentData
+		 * @param {immobileTabChatLoadResult['recentList']} recentData
 		 * @return {object}
 		 */
-		// eslint-disable-next-line sonarjs/cognitive-complexity
 		prepareDataForModels(recentData)
 		{
 			const result = {
@@ -769,7 +767,7 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 			});
 
 			recentData.items.forEach((item) => {
-				if (item.user && item.user.id > 0)
+				if (item.user && item.user.id > 0) // this important check for "anonymous" user type, not removing
 				{
 					result.users.push(item.user);
 				}
@@ -871,12 +869,32 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 				result.copilot.push(copilotItem);
 			});
 
+			result.users = this.getUniqueUsers(result.users);
+
 			return result;
 		}
 
 		recentDeleteHandler(mutation)
 		{
 			this.removeItem({ id: mutation.payload.data.id });
+		}
+
+		/**
+		 * @param {Array<UsersModelState>} users
+		 * @return {Array<UsersModelState>}
+		 */
+		getUniqueUsers(users)
+		{
+			try
+			{
+				return uniqBy(users, 'id');
+			}
+			catch (error)
+			{
+				console.error(`${this.constructor.name}.getUniqueUsers catch:`, error);
+
+				return users;
+			}
 		}
 	}
 

@@ -1,5 +1,5 @@
 <?php
-$MESS["SALE_REPORT"] = "Баспа нысандарын баптау";
+$MESS['SALE_REPORT'] = "Баспа нысандарын баптау";
 $MESS["SPS_JCITY"] = "қала";
 $MESS["SPS_JCOUNTRY"] = "мемлекет";
 $MESS["SPS_ORDER_CURRENCY"] = "Валюта";

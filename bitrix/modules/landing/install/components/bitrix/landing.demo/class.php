@@ -195,6 +195,7 @@ class LandingSiteDemoComponent extends LandingBaseComponent
 			$uriEdit = new Uri($redirect);
 			$uriEdit->addParams([
 				'IFRAME' => ($this->arParams['DONT_LEAVE_FRAME'] != 'Y') ? 'N' : 'Y',
+				'newLanding' => 'Y',
 			]);
 			\localRedirect($uriEdit->getUri(), true);
 		}
@@ -1043,9 +1044,8 @@ class LandingSiteDemoComponent extends LandingBaseComponent
 				$metrika
 					->setType(Metrika\Types::template)
 					->setSection(Metrika\Sections::page)
-					->setParams([
-						'code' => $code,
-					])
+					->setParam(1, 'appCode', $code)
+					->setParam(3, 'siteId', $this->arParams['SITE_ID'])
 					->send()
 				;
 
@@ -1465,11 +1465,11 @@ class LandingSiteDemoComponent extends LandingBaseComponent
 					Metrika\Categories::getBySiteType($this->arParams['TYPE']),
 					Metrika\Events::createTemplate,
 				);
-				$metrika->setType(Metrika\Types::template)
+				$metrika
+					->setType(Metrika\Types::template)
 					->setSection(Metrika\Sections::page)
-					->setParams([
-						'code' => $code,
-					])
+					->setParam(1, 'appCode', $code)
+					->setParam(3, 'siteId', $siteData['ID'])
 					->send()
 				;
 
@@ -1622,7 +1622,7 @@ class LandingSiteDemoComponent extends LandingBaseComponent
 			// detect translated messages
 			$translate = null;
 			$langPortal = LANGUAGE_ID;
-			if (in_array($langPortal, ['ru', 'kz', 'by']))
+			if (in_array($langPortal, ['ru', 'kz', 'by', 'uz']))
 			{
 				$langPortal = 'ru';
 			}
@@ -1833,7 +1833,6 @@ class LandingSiteDemoComponent extends LandingBaseComponent
 					}
 				}
 			}
-
 			return $data;
 		};
 
@@ -1879,12 +1878,6 @@ class LandingSiteDemoComponent extends LandingBaseComponent
 				&& in_array($this->arParams['TYPE'], $typesUseMarket)
 			;
 			$hasMarket = false;
-
-			if ($this->arResult['MARKET_DISABLE'])
-			{
-				$useMarket = false;
-			}
-
 			if ($useMarket)
 			{
 				$hasMarket =
@@ -2842,13 +2835,6 @@ class LandingSiteDemoComponent extends LandingBaseComponent
 		{
 			$init = false;
 			$this->addError('ACCESS_DENIED', '', true);
-		}
-
-		$this->arResult['MARKET_DISABLE'] = false;
-		if (!Manager::isB24() && $this->arParams['TYPE'] === 'PAGE')
-		{
-			// todo: open
-			$this->arResult['MARKET_DISABLE'] = true;
 		}
 
 		// if all ok
@@ -3915,7 +3901,7 @@ class LandingSiteDemoComponent extends LandingBaseComponent
 		}
 
 		$currentZone = Manager::getZone();
-		$subDirLang = in_array($currentZone, ['ru', 'kz', 'by']) ? 'ru' : 'en';
+		$subDirLang = in_array($currentZone, ['ru', 'kz', 'by', 'uz']) ? 'ru' : 'en';
 		$xmlPath .= '/'.$subDirLang;
 
 		$xmlPath .= '/'.$this->getCurrentXml().'.xml';

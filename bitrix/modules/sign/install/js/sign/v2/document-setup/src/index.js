@@ -34,6 +34,7 @@ export class DocumentSetup extends EventEmitter
 	#documentMode: DocumentModeType;
 	#chatId: 0;
 	#actionMode: ActionMode = 'create';
+	#templateFolderId: number;
 
 	constructor(blankSelectorConfig: BlankSelectorConfig)
 	{
@@ -52,13 +53,14 @@ export class DocumentSetup extends EventEmitter
 				clearFiles: () => this.emit('clearFiles'),
 			},
 		});
-		const { type, portalConfig, documentMode, chatId } = blankSelectorConfig;
+		const { type, portalConfig, documentMode, chatId, templateFolderId } = blankSelectorConfig;
 		this.setupData = null;
 		this.blankIsNotSelected = true;
 		this.#scenarioType = type;
 		this.#api = new Api();
 		this.#uids = new Map();
 		this.#documentMode = documentMode;
+		this.#templateFolderId = templateFolderId;
 		this.#chatId = chatId;
 		this.initLayout();
 		this.#initNotifications(portalConfig);
@@ -105,7 +107,12 @@ export class DocumentSetup extends EventEmitter
 		Dom.append(warning.getContainer(), this.#notificationContainer);
 	}
 
-	async #register(blankId: string, isTemplateMode: boolean = false, chatId: number = 0): Promise<{
+	async #register(
+		blankId: string,
+		isTemplateMode: boolean = false,
+		chatId: number = 0,
+		initiatedByType: ?DocumentInitiatedType = null,
+	): Promise<{
 		uid: string,
 		templateUid: string | null,
 		templateId: number | null,
@@ -117,6 +124,8 @@ export class DocumentSetup extends EventEmitter
 			this.#scenarioType,
 			isTemplateMode,
 			chatId,
+			this.#templateFolderId,
+			initiatedByType,
 		);
 
 		return data ?? {};
@@ -265,6 +274,7 @@ export class DocumentSetup extends EventEmitter
 		uid: ?string,
 		isTemplateMode: boolean = false,
 		copyBlocksFromPreviousBlank: boolean = false,
+		initiatedByType: ?DocumentInitiatedType = null,
 	): Promise<void>
 	{
 		this.#actionMode = Type.isStringFilled(uid) ? 'edit' : 'create';
@@ -327,7 +337,7 @@ export class DocumentSetup extends EventEmitter
 
 					const { uid, templateUid } = isRegistered
 						? await this.#changeDocumentBlank(this.#uids.get(blankId), blankId, copyBlocksFromPreviousBlank)
-						: await this.#register(blankId, isTemplateMode, this.#chatId);
+						: await this.#register(blankId, isTemplateMode, this.#chatId, initiatedByType);
 
 					documentUid = uid;
 					documentTemplateUid = templateUid;
@@ -350,13 +360,18 @@ export class DocumentSetup extends EventEmitter
 		this.ready = true;
 	}
 
-	async waitForPagesList(documentData, cb?: (urls: string[]) => void, preparedPages: boolean = false)
+	async waitForPagesList(
+		documentData,
+		cb?: (urls: string[]) => void,
+		preparedPages: boolean = false,
+		isSelectBlank: boolean = true,
+	)
 	{
 		let interval = 0;
 		let isPagesReady = false;
 		const requestTime = 10 * 1000;
 		const { uid, blankId, isTemplate } = documentData;
-		if (!isTemplate)
+		if (!isTemplate && isSelectBlank)
 		{
 			this.blankSelector.selectBlank(blankId);
 		}
@@ -408,10 +423,14 @@ export class DocumentSetup extends EventEmitter
 		}
 
 		const urls = await Promise.race(promises);
-		if (!isTemplate)
+		if (!isTemplate && urls.length > 0)
 		{
 			const blank = this.blankSelector.getBlank(blankId);
-			blank.setPreview(urls[0].url);
+
+			if (!Type.isNil(blank))
+			{
+				blank.setPreview(urls[0].url);
+			}
 		}
 
 		let blocks = null;

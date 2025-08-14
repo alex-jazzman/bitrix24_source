@@ -1,5 +1,5 @@
 <?php
-$MESS["ERROR_NO_NAME"] = "Мәртебенің атауы тілде көрсетілмеген";
+$MESS['ERROR_NO_NAME'] = "Мәртебенің атауы тілде көрсетілмеген";
 $MESS["SALE_CODE_LEN"] = "латын әріптері";
 $MESS["SALE_EDIT_RECORD"] = "#ID# мәртебесін өзгерту";
 $MESS["SALE_NEW_RECORD"] = "Жаңа мәртебе";

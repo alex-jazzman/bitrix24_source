@@ -5,6 +5,8 @@ namespace Bitrix\Im\V2\Chat;
 use Bitrix\Im\Model\ChatTable;
 use Bitrix\Im\V2\Analytics\ChatAnalytics;
 use Bitrix\Im\V2\Chat;
+use Bitrix\Im\V2\Chat\Ai\AiAssistantChat;
+use Bitrix\Im\V2\Chat\Ai\AiAssistantEntityChat;
 use Bitrix\Im\V2\Chat\Ai\AiAssistantPrivateChat;
 use Bitrix\Im\V2\Common\ContextCustomer;
 use Bitrix\Im\V2\Integration\AiAssistant\AiAssistantService;
@@ -206,6 +208,8 @@ class ChatFactory
 			$type === Chat::IM_TYPE_COPILOT => new CopilotChat($params),
 			$type === Chat::IM_TYPE_COLLAB => new CollabChat($params),
 			$type === Chat::IM_TYPE_EXTERNAL => new ExternalChat($params),
+			$type === Chat::IM_TYPE_AI_ASSISTANT => new AiAssistantChat($params),
+			$type === Chat::IM_TYPE_AI_ASSISTANT_ENTITY => new AiAssistantEntityChat($params),
 			default => new NullChat(),
 		};
 

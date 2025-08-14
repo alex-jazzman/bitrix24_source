@@ -2,7 +2,7 @@
  * @module im/in-app-url/routes
  */
 jn.define('im/in-app-url/routes', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Type } = require('type');
 	const { NotifyManager } = require('notify-manager');
 	const { Haptics } = require('haptics');

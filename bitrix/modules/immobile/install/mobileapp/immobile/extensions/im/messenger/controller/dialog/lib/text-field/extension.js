@@ -2,7 +2,7 @@
  * @module im/messenger/controller/dialog/lib/text-field
  */
 jn.define('im/messenger/controller/dialog/lib/text-field', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Type } = require('type');
 	const { transparent } = require('utils/color');
 
@@ -142,10 +142,10 @@ jn.define('im/messenger/controller/dialog/lib/text-field', (require, exports, mo
 		 */
 		#shouldHideByPermissions()
 		{
-			const isCanPost = ChatPermission.isCanPost(this.dialogId);
+			const сanPost = ChatPermission.сanPost(this.dialogId);
 			const isGroupDialog = DialogHelper.isDialogId(this.dialogId);
 
-			return !isCanPost && isGroupDialog;
+			return !сanPost && isGroupDialog;
 		}
 
 		/**

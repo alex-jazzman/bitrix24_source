@@ -116,7 +116,7 @@ final class Group extends Controller
 			return [];
 		}
 
-		$documentList = Container::instance()->getDocumentGroupService()->getDocumentList($groupId);
+		$documentList = Container::instance()->getDocumentGroupService()->getDraftDocumentList($groupId);
 
 		return array_map(
 			fn(Document $document) => (new \Bitrix\Sign\Ui\ViewModel\Wizard\Document($document))->toArray(),

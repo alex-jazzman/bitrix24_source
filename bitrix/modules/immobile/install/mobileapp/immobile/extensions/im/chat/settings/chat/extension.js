@@ -55,7 +55,7 @@
 		{
 			this.values = Application.storage.getObject('settings.chat', {
 				quoteEnable: true,
-				quoteFromRight: Application.getApiVersion() < 31,
+				quoteFromRight: false,
 				historyShow: true,
 				autoplayVideo: true,
 				backgroundType: SettingsChat.BackgroundType.lightGray,
@@ -115,7 +115,7 @@
 				;
 			}
 
-			const localStorageEnableSwitch = FormItem.create('localStorageEnable', FormItemType.SWITCH, BX.message('SE_CHAT_LOCAL_STORAGE_ENABLE_TITLE'))
+			const localStorageEnableSwitch = FormItem.create('localStorageEnable', FormItemType.SWITCH, BX.message('SE_CHAT_LOCAL_STORAGE_ENABLE_TITLE_MSGVER_1'))
 				.setValue(this.values.localStorageEnable)
 			;
 
@@ -135,13 +135,12 @@
 			const isLocalStorageSupported = isSupportedAndroid || isSupportedIos;
 
 			if (
-				Application.getApiVersion() >= 52
-				&& isLocalStorageSupported
+				isLocalStorageSupported
 				&& settings.IS_CHAT_LOCAL_STORAGE_AVAILABLE === true
 			)
 			{
 				localStorageSection = FormSection
-					.create('localStorage', '', BX.message('SE_CHAT_LOCAL_STORAGE_ENABLE_DESCRIPTION'))
+					.create('localStorage', '', BX.message('SE_CHAT_LOCAL_STORAGE_ENABLE_DESCRIPTION_MSGVER_1'))
 					.addItems([localStorageEnableSwitch])
 				;
 			}
@@ -157,7 +156,7 @@
 
 			return Form.create(this.providerId, this.providerTitle).addSections([
 				FormSection.create('history', BX.message('SE_CHAT_HISTORY_TITLE')).addItems([
-					FormItem.create('historyShow', FormItemType.SWITCH, BX.message('SE_CHAT_HISTORY_SHOW_TITLE_V2')).setValue(this.values.historyShow),
+					FormItem.create('historyShow', FormItemType.SWITCH, BX.message('SE_CHAT_HISTORY_SHOW_TITLE_V2_MSGVER_1')).setValue(this.values.historyShow),
 				]),
 				localStorageSection,
 				autoplayVideoSection,
@@ -244,10 +243,7 @@
 	 */
 
 	BX.addCustomEvent('onRegisterProvider', (provider) => {
-		if (
-			Application.getApiVersion() < 29
-			|| !Application.isWebComponentSupported()
-		)
+		if (!Application.isWebComponentSupported())
 		{
 			return false;
 		}

@@ -9,6 +9,8 @@ jn.define('lists/element-creation-guide/detail-step', (require, exports, module)
 	const { DetailStepComponent } = require('lists/element-creation-guide/detail-step/component');
 	const { FocusManager } = require('layout/ui/fields/focus-manager');
 	const { NotifyManager } = require('notify-manager');
+	const { AnalyticsEvent } = require('analytics');
+	const { Type } = require('type');
 
 	class DetailStep extends WizardStep
 	{
@@ -190,8 +192,27 @@ jn.define('lists/element-creation-guide/detail-step', (require, exports, module)
 			await NotifyManager.showLoadingIndicator();
 
 			return new Promise((resolve) => {
+
+				const sendAnalytics = (isSuccess, errors = []) => {
+					let status = isSuccess ? 'success' : 'error';
+					if (!Type.isArrayFilled(errors))
+					{
+						status += errors[0]?.code ? `_${errors[0]?.code}` : '';
+					}
+
+					new AnalyticsEvent({
+						tool: 'automation',
+						category: 'bizproc_operations',
+						event: 'process_run',
+						type: 'run',
+						c_section: this.analyticsSection,
+						status,
+					}).send();
+				};
+
 				const failedMove = (errors) => {
 					console.error(errors);
+					sendAnalytics(false, errors);
 					NotifyManager.hideLoadingIndicator(false);
 
 					if (Array.isArray(errors))
@@ -204,6 +225,7 @@ jn.define('lists/element-creation-guide/detail-step', (require, exports, module)
 
 				const successMove = () => {
 					NotifyManager.hideLoadingIndicator(true);
+					sendAnalytics(true);
 					resolve({ finish: true, next: true });
 				};
 

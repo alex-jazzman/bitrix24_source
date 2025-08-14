@@ -6,7 +6,7 @@ jn.define('layout/ui/user-list/src/list-item', (require, exports, module) => {
 	const { Avatar } = require('ui-system/blocks/avatar');
 	const { UserName } = require('layout/ui/user/user-name');
 	const { Text2, Text5 } = require('ui-system/typography/text');
-	const { ProfileView } = require('user/profile');
+	const { UserProfile } = require('user-profile');
 
 	class ListItem extends LayoutComponent
 	{
@@ -105,21 +105,10 @@ jn.define('layout/ui/user-list/src/list-item', (require, exports, module) => {
 
 		#openUserProfile(userId)
 		{
-			this.getParentWidget().openWidget(
-				'list',
-				{
-					groupStyle: true,
-					backdrop: {
-						bounceEnable: false,
-						swipeAllowed: true,
-						showOnTop: true,
-						hideNavigationBar: false,
-						horizontalSwipeAllowed: false,
-					},
-				},
-			).then((list) => {
-				ProfileView.open({ userId, isBackdrop: true }, list);
-			}).catch(console.error);
+			void UserProfile.open({
+				ownerId: userId,
+				parentWidget: this.getParentWidget(),
+			});
 		}
 	}
 

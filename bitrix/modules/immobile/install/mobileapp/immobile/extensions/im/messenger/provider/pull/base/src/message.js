@@ -5,7 +5,7 @@
  */
 jn.define('im/messenger/provider/pull/base/message', (require, exports, module) => {
 	/* global ChatMessengerCommon */
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Type } = require('type');
 	const { clone } = require('utils/object');
 

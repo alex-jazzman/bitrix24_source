@@ -8,25 +8,25 @@ export class ChannelMessageMenu extends MessageMenu
 	{
 		return [
 			this.getCopyItem(),
-			this.getCopyLinkItem(),
-			this.getCopyFileItem(),
+			this.getEditItem(),
 			this.getPinItem(),
 			this.getForwardItem(),
-			this.getDelimiter(),
-
-			this.getMarkItem(),
-			this.getFavoriteItem(),
-			this.getDelimiter(),
-
-			this.getDownloadFileItem(),
-			this.getSaveToDiskItem(),
-			this.getDelimiter(),
-
-			this.getEditItem(),
+			...this.getAdditionalItems(),
 			this.getDeleteItem(),
 			this.getDelimiter(),
-
 			this.getSelectItem(),
+		];
+	}
+
+	getNestedItems(): MenuItem[]
+	{
+		return [
+			this.getCopyLinkItem(),
+			this.getCopyFileItem(),
+			this.getMarkItem(),
+			this.getFavoriteItem(),
+			this.getDownloadFileItem(),
+			this.getSaveToDiskItem(),
 		];
 	}
 }

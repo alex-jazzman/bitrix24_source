@@ -2,14 +2,14 @@
 
 return [
 	'extensions' => [
+		'type',
 		'utils/array',
 		'im:messenger/lib/logger',
 		'im:messenger/lib/helper',
 		'im:messenger/controller/sidebar-v2/loc',
 		'im:messenger/const',
 		'im:messenger/lib/rest',
-		'loc',
-		'type',
+		'im:messenger/loc',
 		'im:messenger/provider/services/analytics',
 		'im:messenger/provider/services/chat',
 		'selector/widget/entity/socialnetwork/user',

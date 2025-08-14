@@ -167,6 +167,11 @@ export class RecentDataExtractor
 
 		const { birthdayList = [] } = this.#restResult;
 		birthdayList.forEach((item) => {
+			if (Core.getUserId() === item.id)
+			{
+				return;
+			}
+
 			if (!this.#users[item.id])
 			{
 				this.#users[item.id] = item;

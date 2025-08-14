@@ -520,25 +520,25 @@ class crm extends CModule
 			$CCrmRole = new CCrmRole();
 			$roles = RolePreset::GetDefaultRolesPreset();
 
-			$adminRoleID = null;
-			foreach ($roles as $presetKey => $role)
+			$rolesRelations = [];
+			foreach ($roles as $role)
 			{
-				if ($presetKey === RolePreset::ADMIN)
+				$roleId = $CCrmRole->Add($role);
+				if ($roleId && $role['RELATIONS'] ?? false)
 				{
-					$adminRoleID = $CCrmRole->Add($roles[RolePreset::ADMIN]);
-					continue;
+					foreach ($role['RELATIONS'] as $relation)
+					{
+						if (!isset($rolesRelations[$relation]))
+						{
+							$rolesRelations[$relation] = [];
+						}
+						$rolesRelations[$relation][] = $roleId;
+					}
 				}
-
-				$CCrmRole->Add($role);
 			}
-
-			$dbGroup = CGroup::GetList('', '', ['STRING_ID' => 'MARKETING_AND_SALES']);
-			$arGroup = $dbGroup->Fetch();
-			if ($adminRoleID && $arGroup)
+			if (!empty($rolesRelations))
 			{
-				$CCrmRole->SetRelation(
-					['G' . $arGroup['ID'] => [$adminRoleID]]
-				);
+				$CCrmRole->SetRelation($rolesRelations);
 			}
 
 			(new \Bitrix\Crm\Copilot\CallAssessment\FillPreliminaryCallAssessments())->execute();
@@ -1709,10 +1709,10 @@ class crm extends CModule
 
 		$eventManager->registerEventHandler(
 			'booking',
-			'onBookingComingSoonNotificationSent',
+			'onBookingStatusUpdated',
 			'crm',
 			'\Bitrix\Crm\Integration\Booking\EventHandler',
-			'onBookingComingSoonNotificationSent'
+			'onBookingStatusUpdated'
 		);
 	}
 
@@ -2623,10 +2623,10 @@ class crm extends CModule
 
 		$eventManager->unRegisterEventHandler(
 			'booking',
-			'onBookingComingSoonNotificationSent',
+			'onBookingStatusUpdated',
 			'crm',
 			'\Bitrix\Crm\Integration\Booking\EventHandler',
-			'onBookingComingSoonNotificationSent'
+			'onBookingStatusUpdated'
 		);
 
 		$eventManager->unRegisterEventHandler(

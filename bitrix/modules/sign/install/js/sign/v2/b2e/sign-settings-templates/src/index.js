@@ -1,7 +1,7 @@
-import { Dom, Loc, Tag, Type, Text } from 'main.core';
+import { Dom, Loc, Tag, Type, Text, Extension } from 'main.core';
 import { MemoryCache } from 'main.core.cache';
 import { BaseEvent, EventEmitter } from 'main.core.events';
-import { DateTimeFormat } from 'main.date';
+import { DateTimeFormat, Timezone } from 'main.date';
 import { BitrixVue } from 'ui.vue3';
 import { createPinia } from 'ui.vue3.pinia';
 import { Slider } from 'main.sidepanel';
@@ -49,17 +49,20 @@ export class B2ETemplatesSignSettings
 	#bypassSliderCloseCheck: boolean = false;
 	#container: ?HTMLElement = null;
 	#confirmPopup: ?MessageBox = null;
+	#region: string;
 
 	constructor(
 		templateIds: number[] = [],
 		sliderUrl: string = '',
 	)
 	{
+		this.#region = Extension.getSettings('sign.v2.b2e.sign-settings-templates').get('region');
 		this.#templateIds = templateIds;
 		this.#store = createPinia();
 		this.#api = new Api();
 		this.#piniaInitStubApp = BitrixVue.createApp({});
 		this.#piniaInitStubApp.use(this.#store);
+		useDocumentTemplateFillingStore().setRuRegionFieldsVisible(this.#isRuRegionFieldsVisible());
 		this.#documentSend = new DocumentTemplateSend(this.#store);
 		this.#documentSend.subscribe('close', () => this.#closeSlider());
 
@@ -137,12 +140,15 @@ export class B2ETemplatesSignSettings
 	async #updateDocumentSettings(document: LoadedDocumentData, settings: DocumentSettings): Promise<void>
 	{
 		const uid = document.uid;
-		if (settings.registrationNumber.length > 0 && document.externalIdSourceType !== 'hcmlink')
+		if (this.#isRuRegionFieldsVisible()
+			&& settings.registrationNumber.length > 0
+			&& document.externalIdSourceType !== 'hcmlink'
+		)
 		{
 			await this.#api.changeExternalId(uid, settings.registrationNumber);
 		}
 
-		if (document.externalDateCreateSourceType !== 'hcmlink')
+		if (this.#isRuRegionFieldsVisible() && document.externalDateCreateSourceType !== 'hcmlink')
 		{
 			const formattedDate = DateTimeFormat.format(
 				DateTimeFormat.getFormat('SHORT_DATE_FORMAT'),
@@ -152,7 +158,8 @@ export class B2ETemplatesSignSettings
 			await this.#api.changeExternalDate(uid, formattedDate);
 		}
 
-		await this.#api.modifyDateSignUntil(uid, Math.round(settings.signingDate.getTime() / 1000));
+		const tsFromUserTime = Timezone.UserTime.toUTCTimestamp(settings.signingDate);
+		await this.#api.modifyDateSignUntil(uid, tsFromUserTime);
 	}
 
 	#getEmployeeSelectionStep(): Metadata[string]
@@ -710,5 +717,10 @@ export class B2ETemplatesSignSettings
 	#closeConfimPopup(): void
 	{
 		this.#confirmPopup?.close();
+	}
+
+	#isRuRegionFieldsVisible(): boolean
+	{
+		return this.#region === 'ru';
 	}
 }

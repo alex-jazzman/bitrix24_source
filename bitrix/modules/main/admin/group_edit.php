@@ -224,9 +224,14 @@ if($z->ExtractFields())
 }
 else
 {
-	$ID=0;
-	$str_ACTIVE="Y";
+	$ID = 0;
+	$str_ACTIVE = "Y";
 	$str_C_SORT = 100;
+	$str_TIMESTAMP_X = '';
+	$str_NAME = '';
+	$str_STRING_ID = '';
+	$str_DESCRIPTION = '';
+	$str_SECURITY_POLICY = '';
 }
 
 if ($strError <> '')
@@ -535,7 +540,7 @@ $arBXGroupPolicy = [
 				$arRes['ID'] = intval($arRes['ID']);
 				if ($arRes['ID'] == $ID)
 					continue;
-				if($strError <> '' && is_array($_REQUEST["subordinate_groups"]))
+				if($strError <> '' && is_array($_REQUEST["subordinate_groups"] ?? null))
 				{
 					$bSel = (in_array($arRes['ID'], $_REQUEST["subordinate_groups"]));
 				}

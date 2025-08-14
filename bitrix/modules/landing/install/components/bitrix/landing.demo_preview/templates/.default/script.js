@@ -117,7 +117,7 @@
 			this.showPreview();
 			this.buildHeader();
 
-			if (top.BX.SidePanel.Instance.isReload === true)
+			if (BX.SidePanel.Instance.isReload === true)
 			{
 				this.createButton.click();
 			}
@@ -448,7 +448,10 @@
 		 */
 		getCreateUrl: function ()
 		{
-			return addQueryParams(this.createButton.getAttribute("href"), this.getValue());
+			const values = this.getValue();
+			values.newLanding = 'Y';
+
+			return addQueryParams(this.createButton.getAttribute("href"), values);
 		},
 
 		/**
@@ -472,7 +475,7 @@
 			if (BX.Dom.hasClass(this.createButton.parentNode, 'needed-market-subscription'))
 			{
 				const metrikaParams = this.getMetrikaParams(this.getMetrikaCreateEvent(), 'error_market');
-				metrikaParams.params.errorType = 'need_market_subscription';
+				metrikaParams.p5 = ['errorType', 'need_market_subscription'];
 				this.metrika.sendData(metrikaParams);
 
 				top.BX.UI.InfoHelper.show('limit_subscription_market_templates');
@@ -633,9 +636,9 @@
 
 			if (this.appCode)
 			{
-				metrikaParams.params = {
-					appCode: this.appCode,
-				};
+				metrikaParams.p1 = [
+					'appCode', this.appCode,
+				];
 			}
 
 			if (this.isMainpage())
@@ -648,11 +651,6 @@
 				if (this.siteId !== 0)
 				{
 					metrikaParams.c_section = 'page';
-				}
-				if (this.isCrmForm && this.replaceLid > 0)
-				{
-					metrikaParams.c_section = 'block_style';
-					metrikaParams.c_element = 'create_template_button';
 				}
 			}
 
@@ -697,7 +695,9 @@
 				'dataType': 'json',
 				'url': this.ajaxUrl,
 				'data':  BX.ajax.prepareData(this.ajaxParams),
-				'onsuccess': BX.proxy(this.createCatalogResult, this)
+				'onsuccess': (result) => {
+					this.createCatalogResult(result);
+				},
 			})
 		},
 
@@ -735,6 +735,7 @@
 					add['additional[' + name + ']'] = value[name];
 				}
 
+				add['additional[appCode]'] = this.appCode;
 				add['additional[siteId]'] = this.siteId;
 				add['additional[folderId]'] = this.folderId;
 				if (this.replaceLid > 0)
@@ -753,10 +754,6 @@
 				if (metrikaParams.c_element)
 				{
 					add['additional[st_element]'] = metrikaParams.c_element;
-				}
-				if (metrikaParams.params)
-				{
-					add['additional[st_params]'] = JSON.stringify(metrikaParams.params);
 				}
 
 				// 'form' is for analytic

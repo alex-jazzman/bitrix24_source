@@ -3,7 +3,7 @@
  */
 
 jn.define('im/messenger/controller/selector/dialog/provider', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Type } = require('type');
 	const { withCurrentDomain } = require('utils/url');
 

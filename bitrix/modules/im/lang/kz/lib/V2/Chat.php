@@ -21,6 +21,7 @@ $MESS["IM_CHAT_KICK_NOTIFICATION_M"] = "#USER_NAME# сізді чаттан шы
 $MESS["IM_CHAT_LEAVE_F_MSGVER_1"] = "[USER=#USER_ID#][/USER] чаттан шықты";
 $MESS["IM_CHAT_LEAVE_M_MSGVER_1"] = "[USER=#USER_ID#][/USER] чаттан шықты";
 $MESS["IM_CHAT_NAME_FORMAT"] = "№#NUMBER# #COLOR# чат";
+$MESS["IM_CHAT_OVERFLOW_DELETE_MESSAGE"] = "Чаттан алып тастау және шығарып жіберу туралы хабарламалар өшірілген, себебі чатта #USER_COUNT# қатысушадан көп адам бар. Бұл мәлімдемелердің  санын азайтуға көмектеседі";
 $MESS["IM_CHAT_SELF_JOIN"] = "Чатқа #USERS_NAME# қосылды (бірнеше адам)";
 $MESS["IM_CHAT_SELF_JOIN_F"] = "Чатқа #USERS_NAME# қосылды";
 $MESS["IM_CHAT_SELF_JOIN_M"] = "Чатқа #USERS_NAME# қосылды";

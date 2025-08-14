@@ -3,7 +3,6 @@
  */
 jn.define('im/messenger/provider/services/sync/service', (require, exports, module) => {
 	const { Type } = require('type');
-	const { unique } = require('utils/array');
 
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { AppStatus, ComponentCode, EventType } = require('im/messenger/const');
@@ -14,7 +13,6 @@ jn.define('im/messenger/provider/services/sync/service', (require, exports, modu
 	const { getLogger } = require('im/messenger/lib/logger');
 	const logger = getLogger('sync-service');
 
-	const LAST_SYNC_ID_OPTION = 'SYNC_SERVICE_LAST_ID';
 	const LAST_SYNC_SERVER_DATE_OPTION = 'SYNC_SERVICE_LAST_SERVER_DATE';
 
 	const BACKGROUND_SYNC_INTERVAL = 120_000;
@@ -49,9 +47,6 @@ jn.define('im/messenger/provider/services/sync/service', (require, exports, modu
 			this.lastSyncTime = null;
 			this.status = AppStatus.sync;
 			this.backgroundTimerId = null;
-			this.addedMessageIds = new Set();
-			this.deletedChatIds = new Set();
-			this.deletedMessageIds = new Set();
 			/**
 			 * @private
 			 * @type {MessageRepository}
@@ -111,12 +106,10 @@ jn.define('im/messenger/provider/services/sync/service', (require, exports, modu
 			this.syncStartDate = Date.now();
 			this.syncInProgress = true;
 
-			const lastSyncId = await serviceLocator.get('core').getRepository().option.get(LAST_SYNC_ID_OPTION);
 			const lastSyncServerDate = await serviceLocator.get('core').getRepository().option.get(LAST_SYNC_SERVER_DATE_OPTION);
 			const lastSyncDate = await this.dateService.getLastSyncDate();
 
 			const changeLogOption = {
-				fromId: Type.isNumber(lastSyncId) || Type.isStringFilled(lastSyncId) ? Number(lastSyncId) : null,
 				fromDate: lastSyncDate,
 				fromServerDate: lastSyncServerDate,
 			};
@@ -201,100 +194,17 @@ jn.define('im/messenger/provider/services/sync/service', (require, exports, modu
 		}
 
 		/**
-		 * @deprecated
-		 */
-		storePullEvent(params, extra, command)
-		{
-			return;
-
-			logger.info('SyncService.storePullEvent: ', params, extra, command);
-
-			this.pullEventQueue.enqueue({ params, extra, command });
-		}
-
-		/**
-		 * @private
-		 * @deprecated This queue was needed to eliminate a potential data race with
-		 * the last page of the synchronization service.
-		 * A large queue of pools caused the entire application to hang, temporarily disabled.
-		 */
-		async emitStoredPullEvents()
-		{
-			return;
-
-			logger.log('SyncService.emitStoredPullEvents: pullEventQueue', [...this.pullEventQueue.queue]);
-
-			while (this.pullEventQueue.isEmpty() === false)
-			{
-				const {
-					params,
-					/** @type {PullExtraParams} */
-					extra,
-					command,
-				} = this.pullEventQueue.dequeue();
-
-				if (
-					this.status === AppStatus.sync
-					&& (command === 'messageChat' || command === 'message')
-				)
-				{
-					const messageId = params.message.id;
-
-					if (this.addedMessageIds.has(messageId))
-					{
-						continue;
-					}
-
-					if (this.deletedChatIds.has(params.chatId))
-					{
-						continue;
-					}
-
-					if (this.deletedMessageIds.has(messageId))
-					{
-						continue;
-					}
-				}
-
-				extra.fromSyncService = true;
-
-				try
-				{
-					BX.PULL.emit({
-						type: BX.PullClient.SubscriptionType.Server,
-						moduleId: 'im',
-						data: { params, extra, command },
-					});
-				}
-				catch (error)
-				{
-					logger.error('SyncService.emitStoredPullEvents error:', error);
-				}
-			}
-		}
-
-		/**
 		 * @private
 		 */
-		async loadChangelog({ fromDate, fromId, fromServerDate })
+		async loadChangelog({ fromDate, fromServerDate })
 		{
 			const result = await this.loadService.loadPage({
 				fromDate,
-				fromId,
 				fromServerDate,
 				isBackgroundSync: this.isBackground,
 			});
-
-			const lastSyncId = result.lastId;
 			const lastServerDate = result.lastServerDate;
-
-			const hasMore = result.hasMore === true && Type.isNumber(lastSyncId);
-
-			if (Type.isNumber(lastSyncId))
-			{
-				logger.log('SyncService.loadChangelog: save last sync id', lastSyncId);
-				await serviceLocator.get('core').getRepository().option.set(LAST_SYNC_ID_OPTION, lastSyncId);
-			}
+			const hasMore = result.hasMore === true && Type.isStringFilled(lastServerDate);
 
 			if (Type.isStringFilled(lastServerDate))
 			{
@@ -302,25 +212,9 @@ jn.define('im/messenger/provider/services/sync/service', (require, exports, modu
 				await serviceLocator.get('core').getRepository().option.set(LAST_SYNC_SERVER_DATE_OPTION, lastServerDate);
 			}
 
-			if (Type.isArrayFilled(result.addedMessageIdList))
-			{
-				this.addedMessageIds = new Set([...this.addedMessageIds, ...result.addedMessageIdList]);
-			}
-
-			if (Type.isArrayFilled(result.deletedChatIdList))
-			{
-				this.deletedChatIds = new Set([...this.deletedChatIds, ...result.deletedChatIdList]);
-			}
-
-			if (Type.isArrayFilled(result.deletedChatIdList))
-			{
-				this.deletedMessageIds = new Set([...this.deletedMessageIds, ...result.deletedChatIdList]);
-			}
-
 			if (hasMore === true)
 			{
 				await this.loadChangelog({
-					fromId: lastSyncId,
 					fromServerDate: lastServerDate,
 				});
 			}
@@ -339,7 +233,6 @@ jn.define('im/messenger/provider/services/sync/service', (require, exports, modu
 			await this.dateService.updateLastSyncDate();
 
 			await this.messageRepository.clearPushMessages();
-			this.emitStoredPullEvents();
 			this.syncInProgress = false;
 
 			this.syncFinishDate = Date.now();
@@ -360,9 +253,6 @@ jn.define('im/messenger/provider/services/sync/service', (require, exports, modu
 			logger.warn(`SyncService: synchronization completed in ${this.lastSyncTime / 1000} seconds.`);
 			this.syncStartDate = null;
 			this.syncFinishDate = null;
-			this.addedMessageIds = new Set();
-			this.deletedChatIds = new Set();
-			this.deletedMessageIds = new Set();
 		}
 
 		/**

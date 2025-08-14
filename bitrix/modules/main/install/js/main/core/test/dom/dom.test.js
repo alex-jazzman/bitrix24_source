@@ -633,14 +633,11 @@ describe('Dom', () => {
 
 		it('Should set/get string value with special chars', () => {
 			const attr = 'data-test';
-			const value = `<div class="test"></div>`;
+			const value = '<div class="test"></div>';
 
 			Dom.attr(element, attr, value);
 
-			// Should be encoded and not equal the source value
-			assert.ok(element.getAttribute(attr) !== value);
-
-			// Should decoded and equal the source value
+			assert.ok(element.getAttribute(attr) === value);
 			assert.ok(Dom.attr(element, attr) === value);
 		});
 

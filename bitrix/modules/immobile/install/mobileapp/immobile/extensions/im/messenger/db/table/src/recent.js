@@ -371,11 +371,17 @@ jn.define('im/messenger/db/table/recent', (require, exports, module) => {
 		 */
 		getFilesIdsFromRecentItems(recentItems)
 		{
-			const filesIds = [];
+			let filesIds = [];
 			recentItems.forEach((item) => {
-				if (!Type.isBoolean(item.message?.params?.withFile))
+				if (!Type.isNil(item.message?.params?.withFile?.id))
 				{
-					filesIds.push(item.message.params?.withFile.id);
+					filesIds.push(Number(item.message.params.withFile.id));
+				}
+
+				if (Type.isArrayFilled(item.message?.params?.withFile))
+				{
+					const ids = item.message.params?.withFile.map((id) => Number(id));
+					filesIds = [...filesIds, ...ids];
 				}
 			});
 

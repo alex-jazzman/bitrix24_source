@@ -49,9 +49,12 @@ class DashboardRowAssembler extends RowAssembler
 				],
 				$this->settings,
 			),
-			new Field\Dashboard\GroupFieldAssembler([
-				'GROUPS',
-			]),
+			new Field\Dashboard\GroupFieldAssembler(
+				[
+					'GROUPS',
+				],
+				$this->settings,
+			),
 			new Field\Dashboard\ScopeFieldAssembler([
 				'SCOPE',
 			]),

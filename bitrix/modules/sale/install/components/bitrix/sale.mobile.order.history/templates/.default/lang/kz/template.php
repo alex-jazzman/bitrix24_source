@@ -1,5 +1,5 @@
 <?php
-$MESS["SMOH_ALLOW_DELIVERY"] = "Жеткізуге рұқсат етілген";
+$MESS['SMOH_ALLOW_DELIVERY'] = "Жеткізуге рұқсат етілген";
 $MESS["SMOH_CANCELED"] = "Жойылды";
 $MESS["SMOH_DELIVERY_ID"] = "Жеткізу қызметі";
 $MESS["SMOH_DESCRIPTION"] = "Толығырақ";

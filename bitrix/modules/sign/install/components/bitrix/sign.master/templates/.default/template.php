@@ -102,6 +102,8 @@ if ((!$document && \Bitrix\Sign\Config\Storage::instance()->isNewSignEnabled()) 
 				templateUid: '<?= CUtil::JSEscape($arResult['TEMPLATE_UID'] ?? '') ?>',
 				initiatedByType: '<?= CUtil::JSEscape($arResult['INITIATED_BY_TYPE'])?>',
 				chatId: <?= (int)($arResult['CHAT_ID'] ?? 0) ?>,
+				templateFolderId: <?= $arParams['TEMPLATE_FOLDER_ID'] ?? 0 ?>,
+				isOpenedAsFolder: <?= $arParams['IS_OPENED_AS_FOLDER'] ? 'true' : 'false' ?>,
 				fromTemplateFolder: <?= $arResult['FROM_TEMPLATE_FOLDER'] ? 'true' : 'false' ?>,
 				fromRobot: <?= \Bitrix\Main\Application::getInstance()->getContext()->getRequest()->get('FROM_ROBOT') ? 'true' : 'false' ?>,
 					b2eDocumentLimitCount: <?= (int)($arResult['MAX_DOCUMENT_COUNT'] ?? 20) ?>,

@@ -94,6 +94,15 @@ export class ChatsModel extends BuilderModel
 					store.commit('add', preparedChat);
 				});
 			},
+			/** @function copilot/chats/updateModel */
+			updateModel: (store, payload: { dialogId: string, aiModel: string }) => {
+				if (!payload || !store.state.collection[payload.dialogId])
+				{
+					return;
+				}
+
+				store.commit('updateModel', payload);
+			},
 		};
 	}
 
@@ -103,6 +112,10 @@ export class ChatsModel extends BuilderModel
 			add: (state, payload) => {
 				const { dialogId } = payload;
 				state.collection[dialogId] = payload;
+			},
+			updateModel: (state, payload) => {
+				const { dialogId, aiModel } = payload;
+				state.collection[dialogId].aiModel = aiModel;
 			},
 		};
 	}

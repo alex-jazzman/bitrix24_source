@@ -8,13 +8,13 @@ jn.define('im/messenger/controller/sidebar-v2/controller/collab/src/permission-m
 	{
 		canEdit()
 		{
-			return this.chatPermission.iaCanUpdateDialogByRole(this.dialogId);
+			return this.chatPermission.сanUpdateDialogByRole(this.dialogId);
 		}
 
 		canLeave()
 		{
 			return this.userPermission.canLeaveFromCollab(this.userId)
-				&& this.chatPermission.isCanLeaveFromChat(this.dialogId);
+				&& this.chatPermission.сanLeaveFromChat(this.dialogId);
 		}
 	}
 

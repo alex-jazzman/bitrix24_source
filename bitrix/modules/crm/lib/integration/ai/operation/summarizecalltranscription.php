@@ -17,6 +17,8 @@ use Bitrix\Crm\Integration\Analytics\Builder\AI\SummaryEvent;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Timeline\AI\Call\Controller;
+use CCrmActivity;
+use CCrmOwnerType;
 
 class SummarizeCallTranscription extends AbstractOperation
 {
@@ -24,7 +26,7 @@ class SummarizeCallTranscription extends AbstractOperation
 	public const CONTEXT_ID = 'summarize_call_transcription';
 
 	public const SUPPORTED_TARGET_ENTITY_TYPE_IDS = [
-		\CCrmOwnerType::Activity,
+		CCrmOwnerType::Activity,
 	];
 
 	protected const PAYLOAD_CLASS = SummarizeCallTranscriptionPayload::class;
@@ -39,9 +41,19 @@ class SummarizeCallTranscription extends AbstractOperation
 		parent::__construct($target, $userId, $parentJobId);
 	}
 
+	public static function isAccessGranted(int $userId, ItemIdentifier $target): bool
+	{
+		return parent::isAccessGranted($userId, $target)
+			&& CCrmActivity::CheckItemUpdatePermission(
+				['ID' => $target->getEntityId()],
+				Container::getInstance()->getUserPermissions($userId)->getCrmPermissions(),
+			)
+		;
+	}
+
 	public static function isSuitableTarget(ItemIdentifier $target): bool
 	{
-		if ($target->getEntityTypeId() === \CCrmOwnerType::Activity)
+		if ($target->getEntityTypeId() === CCrmOwnerType::Activity)
 		{
 			$activity = Container::getInstance()->getActivityBroker()->getById($target->getEntityId());
 			if (

@@ -2,7 +2,7 @@
  * @module im/messenger/lib/element/dialog/message/check-in/const/configuration
  */
 jn.define('im/messenger/lib/element/dialog/message/check-in/const/configuration', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { CheckInType } = require('im/messenger/lib/element/dialog/message/check-in/const/type');
 
 	/**

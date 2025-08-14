@@ -65,19 +65,9 @@ $metrika
 	->setSubSection('from_page_list')
 ;
 $arParams['PAGE_URL_LANDING_ADD_PLUS_BUTTON'] =
-	$metrika->parametrizeUri(
-		$component->getUrlAdd(false, [
-			'context_section' => Metrika\Sections::page->value,
-			'context_element' => 'plus_button',
-		])
-	);
+	$metrika->parametrizeUri($component->getUrlAdd(false));
 $arParams['PAGE_URL_LANDING_ADD_FOLDER_MENU'] =
-	$metrika->parametrizeUri(
-		$component->getUrlAdd(false, [
-			'context_section' => Metrika\Sections::page->value,
-			'context_element' => 'folder_menu_link',
-		])
-	);
+	$metrika->parametrizeUri($component->getUrlAdd(false));
 $arParams['PAGE_URL_LANDING_ADD_SIDEPANEL_CONDITION'] = $component->getUrlAddSidepanelCondition(false);
 
 $sliderConditions = [

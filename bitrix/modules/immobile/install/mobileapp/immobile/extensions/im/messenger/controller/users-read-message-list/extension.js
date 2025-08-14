@@ -2,13 +2,13 @@
  * @module im/messenger/controller/users-read-message-list
  */
 jn.define('im/messenger/controller/users-read-message-list', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Type } = require('type');
 	const { FriendlyDate } = require('layout/ui/friendly-date');
 	const { Moment } = require('utils/date');
 
 	const { Theme } = require('im/lib/theme');
-	const { atomIcons } = require('im/messenger/assets/common');
+	const { Icon } = require('assets/icons/src/main');
 	const { RestMethod, EventType } = require('im/messenger/const');
 	const { UserProfile } = require('im/messenger/controller/user-profile');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
@@ -213,7 +213,7 @@ jn.define('im/messenger/controller/users-read-message-list', (require, exports, 
 					color: userData.color,
 					title: userData.name,
 					subtitle: dateText,
-					iconSubtitle: atomIcons.doubleCheck(),
+					iconSubtitle: Icon.DOUBLE_CHECK.getIconName(),
 					avatarUri,
 					avatarColor: userData.color,
 					avatar: ChatAvatar.createFromDialogId(userData.id).getListItemAvatarProps(),
@@ -261,11 +261,11 @@ jn.define('im/messenger/controller/users-read-message-list', (require, exports, 
 								align: 'baseline',
 							},
 							iconSubtitleStyle: {
-								width: 14,
-								height: 12,
-								marginTop: 2,
+								width: 22,
+								height: 22,
 								marginRight: 4,
 								alignSelf: 'center',
+								color: Theme.colors.base4,
 							},
 						},
 					},

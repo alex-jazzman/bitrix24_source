@@ -21,6 +21,7 @@ Loc::loadLanguageFile(__DIR__ . '/template.php');
 	'sign.v2.grid.b2e.templates',
 ]);
 
+$byEmployeeEnabled = $arResult['BY_EMPLOYEE_ENABLED'] ?? false;
 $showWelcomeTour = $arResult['SHOW_WELCOME_TOUR'] ?? false;
 $showByEmployeeTour = $arResult['SHOW_BY_EMPLOYEE_TOUR'] ?? false;
 $showBtnCreateTour = $arResult['SHOW_TOUR_BTN_CREATE'] ?? false;
@@ -66,7 +67,7 @@ endif;
 <?php if ($showWelcomeTour): ?>
 	<script>
 		BX.ready(() => {
-			new BX.Sign.Onboarding().startB2eWelcomeOnboarding({
+			new BX.Sign.Onboarding().startB2eWelcomeOnboarding(<?= $byEmployeeEnabled ? 'true' : 'false' ?>, {
 				region: '<?= CUtil::JSescape($portalRegion) ?>',
 				tourId: '<?= CUtil::JSescape($tourId) ?>',
 			});

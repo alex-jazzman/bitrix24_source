@@ -2,8 +2,8 @@
 
 return [
 	'extensions' => [
-		'loc',
 		'entity-ready',
+		'im:messenger/loc',
 		'im:messenger/lib/helper',
 		'im:messenger/const',
 		'im:messenger/lib/rest-manager',

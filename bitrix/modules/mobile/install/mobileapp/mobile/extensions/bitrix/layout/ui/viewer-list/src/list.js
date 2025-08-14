@@ -5,7 +5,7 @@ jn.define('layout/ui/viewer-list/src/list', (require, exports, module) => {
 	const { Color } = require('tokens');
 	const { StatefulList } = require('layout/ui/stateful-list');
 	const { ListItemsFactory, ListItemType } = require('layout/ui/viewer-list/src/list-items-factory');
-	const { openUserProfile } = require('user/profile/src/backdrop-profile');
+	const { UserProfile } = require('user-profile');
 	const { fetchUsersIfNotLoaded } = require('statemanager/redux/slices/users/thunk');
 	const { usersUpserted } = require('statemanager/redux/slices/users');
 	const store = require('statemanager/redux/store');
@@ -145,7 +145,10 @@ jn.define('layout/ui/viewer-list/src/list', (require, exports, module) => {
 
 		itemDetailOpenHandler(userId)
 		{
-			void openUserProfile({ userId, isBackdrop: true });
+			void UserProfile.open({
+				ownerId: userId,
+				parentWidget: this.parentWidget,
+			});
 		}
 	}
 

@@ -204,8 +204,8 @@ use Bitrix\Main\Loader;
 
 <script>
 	BX.ready(() => {
-		BX.SidePanel.Instance.getSliderByWindow(window).setPrintable(true);
-		BX.SidePanel.Instance.getSliderByWindow(window).setTitle('<?= CUtil::JSEscape(($workflow['typeName'] ?? Loc::getMessage('BPWFI_SLIDER_TASK'))) ?>');
+		BX.SidePanel.Instance.getSliderByWindow(window)?.setPrintable(true);
+		BX.SidePanel.Instance.getSliderByWindow(window)?.setTitle('<?= CUtil::JSEscape(($workflow['typeName'] ?? Loc::getMessage('BPWFI_SLIDER_TASK'))) ?>');
 
 		BX.message({
 			BPWFI_SLIDER_BUTTON_DELEGATE: '<?= CUtil::JSEscape(Loc::getMessage('BPWFI_SLIDER_BUTTON_DELEGATE')) ?>',

@@ -11,6 +11,7 @@ use Bitrix\BIConnector\Access\Component\PermissionConfig;
 use Bitrix\BIConnector\Access\Permission\PermissionDictionary;
 use Bitrix\BIConnector\Access\Service\DashboardGroupService;
 use Bitrix\BIConnector\Access\Service\RolePermissionService;
+use Bitrix\BIConnector\Analytics\AnalyticsManager;
 use Bitrix\BIConnector\Superset\ActionFilter\BIConstructorAccess;
 use Bitrix\Bitrix24\Feature;
 use Bitrix\Main\Loader;
@@ -57,13 +58,6 @@ class ApacheSupersetConfigPermissionsAjaxController extends \Bitrix\Main\Engine\
 			return null;
 		}
 
-		if (!$userGroups)
-		{
-			$this->errorCollection[] = new Error(Loc::getMessage('BICONNECTOR_APACHESUPERSET_CONFIG_ALL_ROLE_DELETE'));
-
-			return null;
-		}
-
 		if (!empty($deletedUserGroups))
 		{
 			$deleteResult = $this->deleteRoles($deletedUserGroups);
@@ -106,6 +100,8 @@ class ApacheSupersetConfigPermissionsAjaxController extends \Bitrix\Main\Engine\
 
 			return null;
 		}
+
+		AnalyticsManager::sendSavePermissionsAnalytics(AnalyticsManager::GROUP_PERMISSION_SECTION);
 
 		return $this->loadData();
 	}

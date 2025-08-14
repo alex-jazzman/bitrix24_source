@@ -16,6 +16,7 @@ use Bitrix\Crm\Integration\AI\Result;
 use Bitrix\Crm\Integration\Analytics\Builder\AI\AIBaseEvent;
 use Bitrix\Crm\Integration\Analytics\Builder\AI\ExtractScoringCriteriaEvent;
 use Bitrix\Crm\ItemIdentifier;
+use Bitrix\Crm\Service\Container;
 use CCrmOwnerType;
 
 final class ExtractScoringCriteria extends AbstractOperation
@@ -34,6 +35,13 @@ final class ExtractScoringCriteria extends AbstractOperation
 	)
 	{
 		parent::__construct($target, $userId, $parentJobId);
+	}
+
+	public static function isAccessGranted(int $userId, ItemIdentifier $target): bool
+	{
+		return parent::isAccessGranted($userId, $target)
+			&& Container::getInstance()->getUserPermissions($userId)->copilotCallAssessment()->canEdit()
+		;
 	}
 
 	public static function isSuitableTarget(ItemIdentifier $target): bool

@@ -629,7 +629,7 @@ class Chat extends BaseController
 		}
 
 		return [
-			'messagesAutoDeleteConfigs' => $result->getResult()?->toRestFormat(['WITH_DEFAULT_VALUES' => true]) ?? [],
+			'messagesAutoDeleteConfigs' => $result->getResult()?->showDefaultValues()?->toRestFormat() ?? [],
 		];
 	}
 
@@ -810,6 +810,7 @@ class Chat extends BaseController
 			'CHANNEL' => \Bitrix\Im\V2\Chat::IM_TYPE_CHANNEL,
 			'COPILOT' => \Bitrix\Im\V2\Chat::IM_TYPE_COPILOT,
 			'COLLAB' => \Bitrix\Im\V2\Chat::IM_TYPE_COLLAB,
+			'AI_ASSISTANT' => \Bitrix\Im\V2\Chat::IM_TYPE_AI_ASSISTANT,
 			default => \Bitrix\Im\V2\Chat::IM_TYPE_CHAT,
 		};
 	}

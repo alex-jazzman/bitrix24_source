@@ -3,15 +3,21 @@
 namespace Bitrix\Crm\Controller\RepeatSale;
 
 use Bitrix\Crm\Controller\ErrorCode;
+use Bitrix\Crm\Feature;
+use Bitrix\Crm\Integration\Analytics\Dictionary;
 use Bitrix\Crm\RepeatSale\AgentsManager;
+use Bitrix\Crm\RepeatSale\AvailabilityChecker;
 use Bitrix\Crm\RepeatSale\FlowController;
 use Bitrix\Crm\RepeatSale\Logger;
 use Bitrix\Crm\RepeatSale\Queue\Controller\RepeatSaleQueueController;
 use Bitrix\Crm\RepeatSale\Segment\Controller\RepeatSaleSegmentController;
 use Bitrix\Crm\RepeatSale\Segment\SegmentItem;
-use Bitrix\Crm\RepeatSale\Segment\SystemSegmentCode;
+use Bitrix\Crm\RepeatSale\Segment\SegmentManager;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\Context;
+use Bitrix\Main\Analytics\AnalyticsEvent;
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\Type\DateTime;
 
 final class Flow extends Base
 {
@@ -20,18 +26,14 @@ final class Flow extends Base
 	{
 		$availabilityChecker = Container::getInstance()->getRepeatSaleAvailabilityChecker();
 
-		if (
-			!$availabilityChecker->isAvailable()
-			|| !$availabilityChecker->hasPermission()
-			|| !Container::getInstance()->getUserPermissions()->repeatSale()->canEdit()
-		)
+		if (!$this->hasPermissions($availabilityChecker))
 		{
 			$this->addError(ErrorCode::getAccessDeniedError());
 
 			return false;
 		}
 
-		if (!$availabilityChecker->isEnablePending()) // flow was enabled on earlier
+		if (FlowController::getInstance()->getEnableDate() !== null) // flow was enabled on earlier
 		{
 			return false;
 		}
@@ -44,11 +46,58 @@ final class Flow extends Base
 		$this->saveFlowEnableDate();
 
 		$userId = $this->getCurrentUser()?->getId() ?? Container::getInstance()->getContext()->getUserId();
-		(new Logger())->info('Flow have been enabled', ['userId' => $userId]);
+
+		$message = 'Flow have been enabled';
+		if ($this->isScopeIsAutomation())
+		{
+			$message .= ' on force';
+		}
+
+		(new Logger())->info($message, ['userId' => $userId]);
+
+		return true;
+	}
+
+	public function saveExpectedEnableDateAction(): bool
+	{
+		$availabilityChecker = Container::getInstance()->getRepeatSaleAvailabilityChecker();
+
+		if (!$this->hasPermissions($availabilityChecker))
+		{
+			$this->addError(ErrorCode::getAccessDeniedError());
+
+			return false;
+		}
+
+		if (!$availabilityChecker->isEnablePending()) // flow was enabled on earlier
+		{
+			return false;
+		}
+
+		$expectedDate = (new DateTime())->add('1 day')->disableUserTime();
+		$this->saveFlowExpectedOptions($expectedDate, $this->getCurrentUser()?->getId() ?? 1);
+		$this->addFlowEnablerAgent();
+		$this->sendFlowEnablerAnalyticsEvent();
 
 		return true;
 	}
 	// endregion
+
+	private function hasPermissions(AvailabilityChecker $availabilityChecker): bool
+	{
+		return $availabilityChecker->isAvailable()
+			&& $availabilityChecker->hasPermission()
+			&& (
+				Container::getInstance()->getUserPermissions()->repeatSale()->canEdit()
+				|| $this->isScopeIsAutomation()
+			)
+		;
+	}
+
+	private function isScopeIsAutomation(): bool
+	{
+		return Container::getInstance()->getContext()->getScope() === Context::SCOPE_AUTOMATION;
+	}
 
 	private function cleanQueue(): void
 	{
@@ -71,29 +120,34 @@ final class Flow extends Base
 			'filter' => [
 				'!=CODE' => null,
 			],
-			'limit' => 0,
+			'limit' => 0, // for all segments
 		]);
 
-		$userId = $this->getCurrentUser()?->getId() ?? 1;
+		if (Feature::enabled(Feature\RepeatSale::class))
+		{
+			$userId = FlowController::getInstance()->getExpectedUserId();
+		}
+		else
+		{
+			$userId = $this->getCurrentUser()?->getId() ?? Container::getInstance()->getContext()->getUserId();
+		}
 
-		$defaultEnableSegments = [
-			SystemSegmentCode::DEAL_EVERY_MONTH->value,
-			SystemSegmentCode::DEAL_EVERY_HALF_YEAR->value,
-			SystemSegmentCode::DEAL_EVERY_YEAR->value,
-		];
+		if ($userId <= 0)
+		{
+			$userId = 1;
+		}
+
+		$defaultEnableSegments = SegmentManager::getDefaultEnableSegmentCodes();
+		$isForceMode = Feature::enabled(Feature\RepeatSaleForceMode::class);
 
 		foreach ($segments as $segment)
 		{
-			$segmentItem = (SegmentItem::createFromEntity($segment))
+			$segmentItem = SegmentItem::createFromEntity($segment)
 				->setClientCoverage(null)
+				->setAssignmentUserIds([$userId])
 			;
 
-			if (empty($segmentItem->getAssignmentUserIds()))
-			{
-				$segmentItem->setAssignmentUserIds([$userId]);
-			}
-
-			if (in_array($segmentItem->getCode(), $defaultEnableSegments, true))
+			if (!$isForceMode && in_array($segmentItem->getCode(), $defaultEnableSegments, true))
 			{
 				$segmentItem->setIsEnabled(true);
 			}
@@ -114,6 +168,34 @@ final class Flow extends Base
 
 	private function saveFlowEnableDate(): void
 	{
-		FlowController::getInstance()->saveEnableDate();
+		$date = (new DateTime())->disableUserTime();
+
+		FlowController::getInstance()->saveEnableDate($date);
+	}
+
+	private function saveFlowExpectedOptions(DateTime $date, int $userId): void
+	{
+		$flowController = FlowController::getInstance();
+
+		if ($flowController->getExpectedEnableDate() === null)
+		{
+			$flowController->saveExpectedEnableDate($date);
+			$flowController->saveExpectedUserId($userId);
+		}
+	}
+
+	private function addFlowEnablerAgent(): void
+	{
+		AgentsManager::getInstance()->addFlowEnablerAgent(24 * 60 * 60);
+	}
+
+	private function sendFlowEnablerAnalyticsEvent(): void
+	{
+		$event = new AnalyticsEvent(
+			'rs-force-enable-flow-prepare',
+			Dictionary::TOOL_CRM,
+			Dictionary::CATEGORY_SYSTEM_INFORM,
+		);
+		$event->send();
 	}
 }

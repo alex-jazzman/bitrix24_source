@@ -35,21 +35,31 @@ export class DocumentSetup extends BaseDocumentSetup
 	#currentEditBlock: HTMLElement;
 	#isOpenedFromRobot: boolean = false;
 	#isOpenedFromTemplateFolder: boolean = false;
+	#isOpenedAsFolder: boolean = false;
 	documentSectionLayout: HTMLElement;
 	documentSectionInnerLayout: HTMLElement;
+	#initiatedByType: DocumentInitiatedType;
 
 	constructor(blankSelectorConfig: BlankSelectorConfig)
 	{
 		super(blankSelectorConfig);
-		const { region, b2eDocumentLimitCount, isOpenedFromRobot, isOpenedFromTemplateFolder } = blankSelectorConfig;
+		const {
+			region,
+			b2eDocumentLimitCount,
+			isOpenedFromRobot,
+			isOpenedFromTemplateFolder,
+			isOpenedAsFolder,
+			initiatedByType,
+		} = blankSelectorConfig;
 		this.#api = new Api();
 		this.#region = region;
-		this.#senderDocumentTypes = Object.values(DocumentInitiated);
 		this.#b2eDocumentLimitCount = b2eDocumentLimitCount;
 		this.editMode = false;
 		this.onClickShowHintPopup = this.showHintPopup.bind(this);
 		this.#isOpenedFromRobot = isOpenedFromRobot;
 		this.#isOpenedFromTemplateFolder = isOpenedFromTemplateFolder;
+		this.#isOpenedAsFolder = isOpenedAsFolder;
+		this.#senderDocumentTypes = this.#getSenderDocumentTypes();
 
 		this.#documentTitleInput = Tag.render`
 			<input
@@ -59,6 +69,7 @@ export class DocumentSetup extends BaseDocumentSetup
 				oninput="${({ target }) => this.setDocumentTitle(target.value)}"
 			/>
 		`;
+		this.#initiatedByType = initiatedByType;
 
 		this.#disableDocumentInputs();
 		this.disableAddButton();
@@ -82,11 +93,7 @@ export class DocumentSetup extends BaseDocumentSetup
 			</div>
 		`;
 
-		if (!this.#isOpenedFromTemplateFolder)
-		{
-			Dom.append(this.#getDocumentSenderTypeLayout(), this.layout);
-		}
-
+		Dom.append(this.#getDocumentSenderTypeLayout(), this.layout);
 		Dom.append(titleLayout, this.layout);
 
 		if (!this.isTemplateMode() && FeatureStorage.isGroupSendingEnabled())
@@ -102,6 +109,16 @@ export class DocumentSetup extends BaseDocumentSetup
 		Hint.create(this.layout);
 
 		this.#subscribeOnEvents();
+	}
+
+	#getSenderDocumentTypes(): DocumentInitiatedType[]
+	{
+		if (this.#isOpenedFromTemplateFolder || this.#isOpenedAsFolder)
+		{
+			return [DocumentInitiated.company];
+		}
+
+		return Object.values(DocumentInitiated);
 	}
 
 	#subscribeOnEvents(): void
@@ -157,6 +174,7 @@ export class DocumentSetup extends BaseDocumentSetup
 
 		const handleEvent = () => {
 			this.setDocumentTitle(data.title);
+
 			if (data.selected)
 			{
 				this.enableDocumentInputs();
@@ -306,7 +324,7 @@ export class DocumentSetup extends BaseDocumentSetup
 
 	#getDocumentSenderTypeLayout(): HTMLElement | null
 	{
-		if (!this.isTemplateMode() || !this.isSenderTypeAvailable() || this.#isOpenedFromRobot)
+		if (this.#shouldHideSenderTypeLayout())
 		{
 			return null;
 		}
@@ -320,6 +338,17 @@ export class DocumentSetup extends BaseDocumentSetup
 				${this.#getHelpLink()}
 			</div>
 		`;
+	}
+
+	#shouldHideSenderTypeLayout(): boolean
+	{
+		return (
+			!this.isTemplateMode()
+			|| !this.isSenderTypeAvailable()
+			|| this.#isOpenedFromRobot
+			|| this.#isOpenedFromTemplateFolder
+			|| this.#isOpenedAsFolder
+		);
 	}
 
 	#getHelpLink(): HTMLElement
@@ -416,7 +445,10 @@ export class DocumentSetup extends BaseDocumentSetup
 	#setDocumentLimitNoticeText(): void
 	{
 		Dom.addClass(this.getAddDocumentNotice(), '--warning');
-		this.getAddDocumentNotice().textContent = Loc.getMessage('SIGN_DOCUMENT_SETUP_DOCUMENT_LIMIT_NOTICE');
+		this.getAddDocumentNotice().textContent = Loc.getMessage(
+			'SIGN_DOCUMENT_SETUP_DOCUMENT_GROUP_LIMIT_NOTICE',
+			{ '%limit%': this.#b2eDocumentLimitCount },
+		);
 	}
 
 	#setAddDocumentNoticeText(): void
@@ -592,10 +624,25 @@ export class DocumentSetup extends BaseDocumentSetup
 			return Promise.resolve();
 		}
 
-		const senderType = this.#documentSenderTypeDropdown.getSelectedId();
+		const senderType = this.#getDocumentSenderType();
 		this.setupData.initiatedByType = senderType;
 
 		return this.#api.changeSenderDocumentType(uid, senderType);
+	}
+
+	#getDocumentSenderType(): ?DocumentInitiatedType
+	{
+		if (!this.isTemplateMode())
+		{
+			return null;
+		}
+
+		if (!this.isSenderTypeAvailable())
+		{
+			return this.#initiatedByType;
+		}
+
+		return this.#documentSenderTypeDropdown.getSelectedId();
 	}
 
 	setDocumentTitle(title: string = ''): void
@@ -696,7 +743,12 @@ export class DocumentSetup extends BaseDocumentSetup
 				&& this.isTemplateMode()
 				&& this.blankSelector.isFilesReadyForUpload();
 
-			await super.setup(uid, this.isTemplateMode(), copyBlocksFromPreviousBlank);
+			await super.setup(
+				uid,
+				this.isTemplateMode(),
+				copyBlocksFromPreviousBlank,
+				this.#getDocumentSenderType(),
+			);
 			if (!this.setupData || this.blankIsNotSelected)
 			{
 				this.ready = true;

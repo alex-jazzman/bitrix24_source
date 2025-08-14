@@ -1,10 +1,10 @@
 import { Loc, Type, Tag, Reflection, Dom, Text, Event, Runtime } from 'main.core';
-import { Menu } from 'main.popup';
+import { Menu, MenuManager } from 'main.popup';
 import { DateTimeFormat } from 'main.date';
 import { DashboardManager } from 'biconnector.apache-superset-dashboard-manager';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { MessageBox } from 'ui.dialogs.messagebox';
-import { ApacheSupersetAnalytics } from 'biconnector.apache-superset-analytics';
+import { ApacheSupersetAnalytics, PermissionsAnalytics, PermissionsAnalyticsSource } from 'biconnector.apache-superset-analytics';
 import type { DashboardAnalyticInfo } from 'biconnector.apache-superset-analytics';
 import { Dialog } from 'ui.entity-selector';
 import { Guide } from 'ui.tour';
@@ -168,9 +168,76 @@ class SupersetDashboardGridManager
 			this.#grid.reload();
 		});
 
-		EventEmitter.subscribe('BIConnector.GroupPopup:onGroupSaved', () => {
+		EventEmitter.subscribe('BIConnector.GroupPopup:onGroupSaved', (event: BaseEvent) => {
+			const eventData = event.getData();
+			const groupId = eventData?.group?.id;
+			const isTitleEdited = eventData?.isTitleEdited;
+			const isDashboardListEdited = eventData?.isDashboardListEdited;
+			const isScopeListEdited = eventData?.isScopeListEdited;
+
+			if (groupId && (isTitleEdited || isDashboardListEdited || isScopeListEdited))
+			{
+				PermissionsAnalytics.sendGroupActionAnalytics(
+					PermissionsAnalyticsSource.grid,
+					Type.isString(groupId) ? groupId.startsWith('new_') : false,
+					isDashboardListEdited,
+					isScopeListEdited,
+				);
+			}
+
 			this.#grid.reload();
 		});
+
+		EventEmitter.subscribe(
+			'BIConnector.GroupPopup.DashboardScopeSelector:onDialogHide',
+			(event: BaseEvent) => {
+				if (!event.getData()?.isScopeListEdited)
+				{
+					return;
+				}
+
+				PermissionsAnalytics.sendGroupDashboardScopeEditAnalytics(
+					PermissionsAnalyticsSource.grid,
+				);
+			},
+		);
+
+		EventEmitter.subscribe(
+			'BIConnector.GroupPopup.ScopeSelector:onDialogHide',
+			(event: BaseEvent) => {
+				if (!event.getData()?.isScopeListEdited)
+				{
+					return;
+				}
+
+				PermissionsAnalytics.sendGroupScopeEditAnalytics(
+					PermissionsAnalyticsSource.grid,
+				);
+			},
+		);
+
+		EventEmitter.subscribe(
+			'BIConnector.GroupPopup.DashboardSelector:onDialogHide',
+			(event: BaseEvent) => {
+				if (!event.getData()?.isDashboardListEdited)
+				{
+					return;
+				}
+
+				PermissionsAnalytics.sendGroupDashboardEditAnalytics(
+					PermissionsAnalyticsSource.grid,
+				);
+			},
+		);
+
+		EventEmitter.subscribe(
+			'BIConnector.GroupPopup.DashboardList:onDashboardRemove',
+			() => {
+				PermissionsAnalytics.sendGroupDashboardEditAnalytics(
+					PermissionsAnalyticsSource.grid,
+				);
+			},
+		);
 	}
 
 	#initHints(): void
@@ -334,6 +401,14 @@ class SupersetDashboardGridManager
 	 */
 	showCreationMenu(event: PointerEvent): void
 	{
+		const openedMenu: ?Menu = MenuManager.getMenuById('biconnector-creation-menu');
+		if (openedMenu)
+		{
+			openedMenu.close();
+
+			return;
+		}
+
 		const items = [];
 
 		if (this.#properties.isAvailableDashboardCreation)
@@ -373,8 +448,8 @@ class SupersetDashboardGridManager
 			},
 		);
 
-		const creationMenu = new Menu({
-
+		const creationMenu = MenuManager.create({
+			id: 'biconnector-creation-menu',
 			closeByEsc: false,
 			closeIcon: false,
 			cacheable: false,
@@ -679,6 +754,7 @@ class SupersetDashboardGridManager
 					color: ButtonColor.DANGER,
 					text: Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_GROUP_POPUP_CAPTION_YES'),
 					onclick: (button) => {
+						PermissionsAnalytics.sendGroupDeleteAnalytics(PermissionsAnalyticsSource.grid);
 						button.setWaiting();
 						this.#dashboardManager.deleteGroup(groupId)
 							.then(() => {
@@ -720,6 +796,11 @@ class SupersetDashboardGridManager
 		}
 
 		this.#dashboardManager.showCreationGroupPopup();
+
+		PermissionsAnalytics.sendClickGroupActionAnalytics(
+			PermissionsAnalyticsSource.grid,
+			true,
+		);
 	}
 
 	#onNewDashboardCreated(event: Event): void
@@ -887,6 +968,11 @@ class SupersetDashboardGridManager
 
 	showGroupSettingsPopup(groupId: number): void
 	{
+		PermissionsAnalytics.sendClickGroupActionAnalytics(
+			PermissionsAnalyticsSource.grid,
+			false,
+		);
+
 		this.#grid.tableFade();
 		this.#dashboardManager.showGroupSettingsPopup(groupId)
 			.then(() => {

@@ -5,7 +5,7 @@ jn.define('im/messenger/provider/services/message/action', (require, exports, mo
 	/* global ChatMessengerCommon */
 	const { Type } = require('type');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { clone } = require('utils/object');
 	const { ShareDialogCache } = require('im/messenger/cache/share-dialog');

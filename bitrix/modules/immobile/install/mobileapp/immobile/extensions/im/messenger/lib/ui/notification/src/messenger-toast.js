@@ -3,7 +3,7 @@
  */
 jn.define('im/messenger/lib/ui/notification/messenger-toast', (require, exports, module) => {
 	const { Theme } = require('im/lib/theme');
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Icon } = require('assets/icons');
 	const { showSafeToast, showOfflineToast, showErrorToast, Position } = require('toast');
 	const { mergeImmutable } = require('utils/object');

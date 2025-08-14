@@ -58,6 +58,8 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		setOptions: 'set_options',
 		isMultipleChoice: 'is_multiple_choice',
 		setCancelVote: 'set_cancel_vote',
+		pinChat: 'pin_chat',
+		typeMessage: 'type_message',
 	});
 
 	const Tool = Object.freeze({
@@ -111,6 +113,7 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		custom: 'custom', // case for custom dialog type
 		limitOfficeChatingHistory: 'limit_office_chating_history',
 		collab: 'collab',
+		notes: 'notes',
 
 		/* region call type */
 		privateCall: 'private',
@@ -211,6 +214,7 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		mail: 'chatType_mail',
 		sonetGroup: 'chatType_sonetGroup',
 		copilot: 'chatType_copilot',
+		notes: 'chatType_notes',
 	});
 
 	/**

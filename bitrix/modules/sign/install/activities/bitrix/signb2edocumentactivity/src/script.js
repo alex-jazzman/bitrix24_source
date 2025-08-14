@@ -10,6 +10,7 @@ const roles = {
 	DEPUTY_HEAD: '3',
 };
 
+const responsibleSelector = '#id_responsible';
 const assigneeSelector = '#id_representative';
 const reviewerSelector = '#id_reviewer';
 const editorSelector = '#id_editor';
@@ -17,6 +18,7 @@ const editorSelector = '#id_editor';
 type DocumentData = {
 	title: string;
 	document_uid: string;
+	responsibleSelectorValue: number | string | null;
 	assigneeSelectorValue: number | string | null;
 	editorSelectorValue?: number | string | null;
 	reviewerSelectorValue?: number | string | null;
@@ -160,6 +162,7 @@ export class SignB2EDocumentActivity extends EventEmitter
 	#getUserSelectorsMap(): Record<string, string>
 	{
 		return {
+			responsible: responsibleSelector,
 			assignee: assigneeSelector,
 			reviewer: reviewerSelector,
 			editor: editorSelector,
@@ -230,6 +233,7 @@ export class SignB2EDocumentActivity extends EventEmitter
 	{
 		if (selectedItem)
 		{
+			this.#setSelectorValues([selectedItem.responsibleSelectorValue], responsibleSelector);
 			this.#setSelectorValues([selectedItem.assigneeSelectorValue], assigneeSelector);
 			this.#setSelectorValues(selectedItem.reviewerSelectorValue, reviewerSelector);
 			this.#setSelectorValues([selectedItem.editorSelectorValue], editorSelector);

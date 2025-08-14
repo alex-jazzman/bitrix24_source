@@ -91,10 +91,13 @@ final class EntityDataCollector extends AbstractDataCollector
 		$latestItemFound = false;
 		$latestItem = null;
 		$successDealSum = 0;
+		$successDealCnt = 0;
+		$failedDealCnt = 0;
 
 		foreach ($items as $item)
 		{
-			if ($latestItemFound === false
+			if (
+				$latestItemFound === false
 				&& $item[Item::FIELD_NAME_STAGE_SEMANTIC_ID] !== PhaseSemantics::FAILURE
 			)
 			{
@@ -105,6 +108,12 @@ final class EntityDataCollector extends AbstractDataCollector
 			if ($item[Item::FIELD_NAME_STAGE_SEMANTIC_ID] === PhaseSemantics::SUCCESS)
 			{
 				$successDealSum += $item[Item::FIELD_NAME_OPPORTUNITY];
+				$successDealCnt++;
+			}
+
+			if ($item[Item::FIELD_NAME_STAGE_SEMANTIC_ID] === PhaseSemantics::FAILURE)
+			{
+				$failedDealCnt++;
 			}
 		}
 
@@ -116,7 +125,9 @@ final class EntityDataCollector extends AbstractDataCollector
 		return [
 			'latest_purchase_deal_id' => $latestItem[Item::FIELD_NAME_ID],
 			'latest_purchase_date' => $latestItem['DATE_CREATE'],
-			'all_successful_deals_sum' => $successDealSum,
+			'successful_deals_sum' => $successDealSum,
+			'successful_deals_count' => $successDealCnt,
+			'failed_deals_count' => $failedDealCnt,
 		];
 	}
 

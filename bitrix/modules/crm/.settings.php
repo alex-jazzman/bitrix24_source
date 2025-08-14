@@ -31,20 +31,6 @@ $uiEntitySelectorConfig = [
 				'entityId' => 'contact',
 				'provider' => [
 					'moduleId' => 'crm',
-					'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\CompanyProvider',
-				],
-			],
-			[
-				'entityId' => 'user',
-				'provider' => [
-					'moduleId' => 'crm',
-					'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\CompanyProvider',
-				],
-			],
-			[
-				'entityId' => 'contact',
-				'provider' => [
-					'moduleId' => 'crm',
 					'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\ContactProvider',
 				],
 			],

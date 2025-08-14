@@ -58,6 +58,7 @@ jn.define('lists/element-creation-guide', (require, exports, module) => {
 			this.wizard = null;
 			this.isClosing = false;
 			this.isChanged = false;
+			this.analyticsSection = props.analyticsSection;
 
 			this.selectedIBlockId = null;
 

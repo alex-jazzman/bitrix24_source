@@ -44,6 +44,7 @@ class RecentProvider extends BaseProvider
 	protected const ENTITY_ID = 'im-recent-v2';
 
 	protected const LIMIT = 30;
+	protected const TECHNICAL_LIMIT = 1000;
 	private const ENTITY_TYPE_USER = 'im-user';
 	private const ENTITY_TYPE_CHAT = 'im-chat';
 	private const WITH_CHAT_BY_USERS_OPTION = 'withChatByUsers';
@@ -174,10 +175,12 @@ class RecentProvider extends BaseProvider
 	public function getItems(array $ids): array
 	{
 		$this->sortEnable = false;
-		$ids = array_slice($ids, 0, self::LIMIT);
 		$this->setUserAndChatIds($ids);
 		$items = $this->getItemsWithDates();
 		$this->fillItems($items);
+
+		$this->chatIds = [];
+		$this->userIds = [];
 
 		return $items;
 	}
@@ -408,7 +411,7 @@ class RecentProvider extends BaseProvider
 			return [];
 		}
 
-		$result = $this->getCommonChatQuery()->whereIn('ID', $this->chatIds)->fetchAll();
+		$result = $this->getCommonChatQuery(limit: self::TECHNICAL_LIMIT)->whereIn('ID', $this->chatIds)->fetchAll();
 
 		return $this->getChatItemsByRawResult($result);
 	}
@@ -421,9 +424,8 @@ class RecentProvider extends BaseProvider
 		}
 
 		$result = $this
-			->getCommonChatQuery()
+			->getCommonChatQueryWithOrder()
 			->whereMatch('INDEX.SEARCH_TITLE', $this->preparedSearchString)
-			->setOrder(['IS_MEMBER' => 'DESC', 'LAST_MESSAGE_ID' => 'DESC', 'DATE_CREATE' => 'DESC'])
 			->fetchAll()
 		;
 
@@ -438,8 +440,7 @@ class RecentProvider extends BaseProvider
 		}
 
 		$result = $this
-			->getCommonChatQuery(Join::TYPE_INNER)
-			->setOrder(['LAST_MESSAGE_ID' => 'DESC', 'DATE_CREATE' => 'DESC'])
+			->getCommonChatQueryWithOrder(Join::TYPE_INNER)
 			->registerRuntimeField(
 				'CHAT_SEARCH',
 				(new Reference(
@@ -506,7 +507,14 @@ class RecentProvider extends BaseProvider
 		return $result;
 	}
 
-	protected function getCommonChatQuery(string $joinType = Join::TYPE_LEFT): Query
+	protected function getCommonChatQueryWithOrder(string $joinType = Join::TYPE_LEFT, int $limit = self::LIMIT): Query
+	{
+		return $this->getCommonChatQuery($joinType, $limit)
+			->setOrder(['IS_MEMBER' => 'DESC', 'LAST_MESSAGE_ID' => 'DESC', 'DATE_CREATE' => 'DESC'])
+		;
+	}
+
+	protected function getCommonChatQuery(string $joinType = Join::TYPE_LEFT, int $limit = self::LIMIT): Query
 	{
 		$query = ChatTable::query()
 			->setSelect(['ID', 'IS_MEMBER', 'MESSAGE_DATE_CREATE' => 'MESSAGE.DATE_CREATE', 'DATE_CREATE'])
@@ -534,7 +542,7 @@ class RecentProvider extends BaseProvider
 					['RELATION.ID']
 				))->configureValueType(BooleanField::class)
 			)
-			->setLimit(self::LIMIT)
+			->setLimit($limit)
 			->whereIn('TYPE', $this->getAllowedChatTypesForQuery())
 		;
 		if ($joinType === Join::TYPE_LEFT)
@@ -578,6 +586,7 @@ class RecentProvider extends BaseProvider
 			Chat::IM_TYPE_OPEN_CHANNEL,
 			Chat::IM_TYPE_COLLAB,
 			Chat::IM_TYPE_COPILOT,
+			Chat::IM_TYPE_AI_ASSISTANT,
 		];
 
 		return $types;
@@ -618,7 +627,6 @@ class RecentProvider extends BaseProvider
 					['join_type' => Join::TYPE_LEFT]
 				)
 			)
-			->setLimit(self::LIMIT)
 		;
 
 		if (isset($this->preparedSearchString))
@@ -626,11 +634,12 @@ class RecentProvider extends BaseProvider
 			$query
 				->whereMatch('INDEX.SEARCH_USER_CONTENT', $this->preparedSearchString)
 				->setOrder(['RECENT.DATE_MESSAGE' => 'DESC', 'IS_INTRANET_USER' => 'DESC', 'DATE_CREATE' => 'DESC'])
+				->setLimit(self::LIMIT)
 			;
 		}
 		elseif (isset($this->userIds) && !empty($this->userIds))
 		{
-			$query->whereIn('ID', $this->userIds);
+			$query->whereIn('ID', $this->userIds)->setLimit(self::TECHNICAL_LIMIT);
 		}
 		else
 		{

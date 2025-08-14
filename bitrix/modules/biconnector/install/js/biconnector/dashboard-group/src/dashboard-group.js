@@ -1,3 +1,4 @@
+import { EventEmitter } from 'main.core.events';
 import { Popup } from 'main.popup';
 import { Loc } from 'main.core';
 import { BitrixVue } from 'ui.vue3';
@@ -23,6 +24,8 @@ export class DashboardGroup
 			content: '<div id="app"></div>',
 			events: {
 				onPopupClose: () => {
+					EventEmitter.emit('BIConnector.Internal.GroupPopup:onPopupClose');
+
 					app.unmount();
 				},
 			},

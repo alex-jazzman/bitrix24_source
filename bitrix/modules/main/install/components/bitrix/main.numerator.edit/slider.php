@@ -26,6 +26,7 @@ $APPLICATION->IncludeComponent(
 			"IS_SHOW_CHANGE_NUMBER" => $request->get('IS_SHOW_CHANGE_NUMBER'),
 			"NUMERATOR_ID" => $request->get('ID'),
 		],
+		'USE_UI_TOOLBAR' => 'Y',
 	)
 );
 

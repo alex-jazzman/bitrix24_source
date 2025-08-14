@@ -2,10 +2,11 @@
  * @module im/messenger/controller/sidebar-v2/tabs/participants/src/items/user
  */
 jn.define('im/messenger/controller/sidebar-v2/tabs/participants/src/items/user', (require, exports, module) => {
-	const { Loc } = require('loc');
 	const { Color } = require('tokens');
 	const { isEmpty } = require('utils/object');
-	const { openUserProfile } = require('user/profile');
+	const { UserProfile } = require('user-profile');
+
+	const { Loc } = require('im/messenger/loc');
 	const { UserHelper } = require('im/messenger/lib/helper');
 	const { UserStatus } = require('im/messenger/lib/element');
 	const { ParticipantBaseItem } = require('im/messenger/controller/sidebar-v2/tabs/participants/src/items/base');
@@ -100,9 +101,8 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/participants/src/items/user',
 				return;
 			}
 
-			void openUserProfile({
-				isBackdrop: true,
-				userId: this.getUserId(),
+			void UserProfile.open({
+				ownerId: this.getUserId(),
 			});
 		}
 

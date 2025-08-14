@@ -3,7 +3,6 @@
 namespace Bitrix\Sign\Operation\Document;
 
 use Bitrix\Main;
-use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Sign\Contract;
 use Bitrix\Sign\Item;
 use Bitrix\Sign\Item\Document;
@@ -84,14 +83,13 @@ final class Copy implements Contract\Operation
 
 	private function registerAndUploadDocument(): CreateDocumentResult|Main\Result
 	{
-		$createdById = (int)CurrentUser::get()->getId();
 		$result = $this->documentService->register(
-			$this->document->blankId,
-			$this->document->title,
+			blankId: $this->document->blankId,
+			createdById: $this->createdByUserId,
+			title: $this->document->title,
 			entityType: $this->document->entityType,
 			asTemplate: false,
 			initiatedByType: $this->document->initiatedByType,
-			createdById: $createdById,
 			templateId: $this->templateId,
 			bindings: $this->bindings,
 		);

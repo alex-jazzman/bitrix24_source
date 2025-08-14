@@ -3,7 +3,7 @@
  */
 jn.define('im/messenger/lib/ui/alert', (require, exports, module) => {
 	const { confirmDestructiveAction, confirmDefaultAction } = require('alert');
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 
 	/**
 	 * @param {function} deleteCallback

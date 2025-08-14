@@ -8,8 +8,6 @@ $MESS['CRM_REPEAT_SALE_SEGMENT_MANUAL_STAGE_TITLE'] = 'Стадия';
 $MESS['CRM_REPEAT_SALE_SEGMENT_PLACEHOLDER_WITH_COPILOT'] = 'Подробно опишите, что нужно сделать менеджеру, или нажмите пробел для запуска CoPilot';
 $MESS['CRM_REPEAT_SALE_SEGMENT_PLACEHOLDER'] = 'Подробно опишите, что нужно сделать менеджеру';
 
-$MESS['CRM_REPEAT_SALE_SEGMENT_DEAL_TITLE'] = 'Создание сделок';
-$MESS['CRM_REPEAT_SALE_SEGMENT_DEAL_DESCRIPTION'] = 'По этому сценарию всегда будут создаваться новые сделки. AI поможет увеличить повторные продажи';
 $MESS['CRM_REPEAT_SALE_SEGMENT_DEAL_HELP'] = 'Как это будет работать в сделках';
 $MESS['CRM_REPEAT_SALE_SEGMENT_DEAL_NAME_PATTERN_TITLE'] = 'Название для новых сделок';
 $MESS['CRM_REPEAT_SALE_SEGMENT_DEAL_ASSIGNED_TITLE'] = 'Ответственные';

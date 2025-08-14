@@ -52,11 +52,6 @@ class CBPWhileActivity extends CBPCompositeActivity implements IBPActivityEventL
 				}
 			}
 
-			if ($this->arProperties['Condition'] == null)
-			{
-				throw new Exception(GetMessage("BPWA_NO_CONDITION"));
-			}
-
 			$this->arProperties['Title'] = $arParams['Title'] ?? '';
 		}
 	}
@@ -117,6 +112,11 @@ class CBPWhileActivity extends CBPCompositeActivity implements IBPActivityEventL
 
 	private function TryNextIteration()
 	{
+		if (!$this->Condition instanceof CBPActivityCondition)
+		{
+			return false;
+		}
+
 		if (!$this->checkIterationsLimit())
 		{
 			return false;

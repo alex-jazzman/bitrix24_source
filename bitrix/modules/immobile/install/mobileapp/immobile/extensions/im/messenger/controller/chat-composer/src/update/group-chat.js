@@ -2,7 +2,7 @@
  * @module im/messenger/controller/chat-composer/update/group-chat
  */
 jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Type } = require('type');
 	const { Haptics } = require('haptics');
 	const { unique } = require('utils/array');
@@ -107,7 +107,7 @@ jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, e
 		setPermissions()
 		{
 			this.permissions = {
-				update: ChatPermission.iaCanUpdateDialogByRole(this.dialogModel),
+				update: ChatPermission.сanUpdateDialogByRole(this.dialogModel),
 			};
 		}
 

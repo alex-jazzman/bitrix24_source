@@ -24,10 +24,14 @@ type Grid = BX.Main.grid;
 export class Templates
 {
 	#gridId: string;
+	#addNewTemplateLink: string;
+	#urlsForReload: string[];
 
-	constructor(gridId: string)
+	constructor(gridId: string, addNewTemplateLink: string, urlsForReload: string[])
 	{
 		this.#gridId = gridId;
+		this.#addNewTemplateLink = addNewTemplateLink;
+		this.#urlsForReload = urlsForReload;
 	}
 
 	#analytics = new Analytics();
@@ -283,32 +287,28 @@ export class Templates
 		return BX.Main.gridManager.getById(this.#gridId)?.instance;
 	}
 
-	reloadAfterSliderClose(addNewTemplateLink: string, urlListForReloadAfterSliderClose: string[]): void
+	reloadAfterSliderClose(): void
 	{
 		const context = window === top ? window : top;
 
 		context.BX.Event.EventEmitter.subscribe('SidePanel.Slider:onCloseComplete', async (event) => {
 			const closedSliderUrl = event.getData()[0].getSlider().getUrl();
 
-			if (this.#shouldReloadAfterClose(closedSliderUrl, addNewTemplateLink, urlListForReloadAfterSliderClose))
+			if (this.#shouldReloadAfterClose(closedSliderUrl))
 			{
 				await this.reload();
 			}
 		});
 	}
 
-	#shouldReloadAfterClose(
-		closedSliderUrl: string,
-		addNewTemplateLink: string,
-		urlListForReloadAfterSliderClose: string[],
-	): boolean
+	#shouldReloadAfterClose(closedSliderUrl: string): boolean
 	{
 		const uri = new Uri(closedSliderUrl);
 		const path = uri.getPath();
 
-		return closedSliderUrl === addNewTemplateLink
+		return closedSliderUrl === this.#addNewTemplateLink
 			|| closedSliderUrl === 'sign-settings-template-created'
-			|| urlListForReloadAfterSliderClose.some((url) => path.startsWith(new Uri(url).getPath()));
+			|| this.#urlsForReload.some((url) => path.startsWith(new Uri(url).getPath()));
 	}
 
 	async exportBlank(templateId: number): Promise<void>
@@ -350,11 +350,21 @@ export class Templates
 	{
 		try
 		{
-			await this.#api.template.copy(templateId, folderId);
+			const response = await this.#api.template.copy(templateId, folderId);
+			const copyTemplateId = response.template.id;
+
 			await this.reload();
+
 			window.top.BX.UI.Notification.Center.notify({
 				content: Loc.getMessage('SIGN_TEMPLATE_GRID_COPY_HINT_SUCCESS'),
 			});
+
+			if (window.top.BX.SidePanel && this.#addNewTemplateLink && copyTemplateId)
+			{
+				window.top.BX.SidePanel.Instance.open(
+					`${this.#addNewTemplateLink}&templateId=${copyTemplateId}&stepId=changePartner&noRedirect=Y`,
+				);
+			}
 		}
 		catch (error)
 		{
@@ -463,7 +473,7 @@ export class Templates
 								await this.reload();
 							}
 						},
-						className: 'move-to-button',
+						className: 'sign-b2e-grid-templates-popup__move-to-button',
 					}),
 					new BX.UI.Button({
 						text: Loc.getMessage('SIGN_TEMPLATE_GRID_MOVE_TO_FOLDER_POPUP_CANCEL_BUTTON_TEXT'),

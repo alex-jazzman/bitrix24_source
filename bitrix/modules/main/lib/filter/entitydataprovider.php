@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Main\Filter;
 
+use Bitrix\HumanResources\Integration\UI\DepartmentProvider;
 use Bitrix\Main;
 
 abstract class EntityDataProvider extends DataProvider
@@ -48,6 +49,21 @@ abstract class EntityDataProvider extends DataProvider
 				]
 			],
 		];
+
+		$isEnableStructureNode = Main\Loader::includeModule('humanresources')
+			&& isset($params['isEnableStructureNode'])
+			&& $params['isEnableStructureNode'] === true
+		;
+		if ($isEnableStructureNode)
+		{
+			$entities[] = [
+				'id' => DepartmentProvider::ENTITY_ID,
+				'options' => [
+					'selectMode' => DepartmentProvider::MODE_USERS_ONLY,
+					'allowFlatDepartments' => true,
+				],
+			];
+		}
 
 		if (class_exists(\Bitrix\Socialnetwork\Integration\UI\EntitySelector\FiredUserProvider::class))
 		{

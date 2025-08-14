@@ -15,7 +15,10 @@ final class SignUntilService
 
 	public function calcDefaultSignUntilDate(DateTime $forDate): DateTime
 	{
-		return (clone $forDate)->add('+ ' . $this->getDefaultSigningPeriod()->format('%m') . ' months');
+		return (clone $forDate)
+			->add('+ ' . $this->getDefaultSigningPeriod()->format('%m') . ' months')
+			->add('-1 day') // safety buffer
+		;
 	}
 
 	public function isSignUntilDateInPast(DateTime $dateSignUntil): bool

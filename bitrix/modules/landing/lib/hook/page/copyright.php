@@ -18,7 +18,7 @@ class Copyright extends \Bitrix\Landing\Hook\Page
 	protected const PAGE_TYPE_PAGE = 'PAGE';
 	protected const PAGE_TYPE_STORE = 'STORE';
 
-	protected const REGIONS_RU_LANG = ['ru', 'by', 'kz'];
+	protected const REGIONS_RU_LANG = ['ru', 'by', 'kz', 'uz'];
 
 	private $lang;
 	private $siteId;
@@ -354,6 +354,9 @@ class Copyright extends \Bitrix\Landing\Hook\Page
 			],
 			'by' => [
 				'report' => 'https://www.bitrix24.by/abuse/',
+			],
+			'uz' => [
+				'report' => 'https://www.bitrix24.uz/abuse/',
 			],
 		];
 

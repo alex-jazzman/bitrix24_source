@@ -8,6 +8,7 @@ import type { RepeatSaleBannerClickEvent } from '../../../types';
 export class ClickEvent
 {
 	#type: RepeatSaleBannerClickEvent['type'];
+	#section: RepeatSaleBannerClickEvent['c_section'] = Dictionary.SECTION_DEAL;
 	#subSection: RepeatSaleBannerClickEvent['c_sub_section'] = Dictionary.SUB_SECTION_KANBAN;
 	#element: RepeatSaleBannerClickEvent['c_element'];
 	#period: number;
@@ -39,6 +40,13 @@ export class ClickEvent
 		return this;
 	}
 
+	setSection(section: RepeatSaleBannerClickEvent['c_section']): ClickEvent
+	{
+		this.#section = section;
+
+		return this;
+	}
+
 	buildData(): ?RepeatSaleBannerClickEvent
 	{
 		return filterOutNilValues({
@@ -46,7 +54,7 @@ export class ClickEvent
 			category: Dictionary.CATEGORY_BANNERS,
 			event: Dictionary.EVENT_REPEAT_SALE_BANNER_CLICK,
 			type: this.#type,
-			c_section: Dictionary.SECTION_DEAL,
+			c_section: this.#section,
 			c_sub_section: this.#subSection,
 			c_element: this.#element,
 			p1: getCrmMode(),

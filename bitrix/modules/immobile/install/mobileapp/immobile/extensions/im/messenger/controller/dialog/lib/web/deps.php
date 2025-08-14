@@ -2,9 +2,9 @@
 
 return [
 	'extensions' => [
-		'loc',
 		'type',
 		'utils/object',
+		'im:messenger/loc',
 		'im:messenger/lib/di/service-locator',
 		'im:messenger/lib/element',
 		'im:messenger/lib/helper',

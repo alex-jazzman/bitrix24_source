@@ -34,6 +34,14 @@ jn.define('im/messenger/lib/element/dialog/message/media-gallery', (require, exp
 		}
 
 		/**
+		 * @return {MediaGalleryDialogWidgetItem}
+		 */
+		toDialogWidgetItem()
+		{
+			return { ...super.toDialogWidgetItem(), mediaList: this.mediaList };
+		}
+
+		/**
 		 * @protected
 		 * @return {string}
 		 */

@@ -4,7 +4,7 @@
 jn.define('im/messenger/controller/reaction-viewer/reaction-item', (require, exports, module) => {
 	/* global JNEventEmitter */
 	const { Theme } = require('im/lib/theme');
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 
 	const sharedEmitter = new JNEventEmitter();
 	/**

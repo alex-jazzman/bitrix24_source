@@ -3,7 +3,7 @@
  */
 
 jn.define('im/messenger/controller/sidebar/chat/tabs/files/context-menu', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Filesystem, utils } = require('native/filesystem');
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const logger = LoggerManager.getInstance().getLogger('sidebar--files-context-menu');

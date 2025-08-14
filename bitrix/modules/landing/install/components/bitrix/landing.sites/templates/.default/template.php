@@ -334,11 +334,8 @@ if ($arParams['TYPE'] !== 'KNOWLEDGE' && $arParams['TYPE'] !== 'GROUP' && $isCrm
 	}
 	else
 	{
-		$urlCreatePage = $component->getUrlAdd(false, [
-			'context_section' => Metrika\Sections::site->value,
-			'context_element' => 'tile_menu_link',
-		]);
-		$urlCreatePage = $metrika->parametrizeUri($urlCreatePage);
+		$urlCreatePage = $component->getUrlAdd(false);
+		$urlCreatePage = $metrikaMarket->parametrizeUri($urlCreatePage);
 		$urlCreatePage = str_replace('%23', '#', $urlCreatePage);
 		$menuItems = [
 			[
@@ -406,10 +403,7 @@ if ($arParams['TYPE'] !== 'KNOWLEDGE' && $arParams['TYPE'] !== 'GROUP' && $isCrm
 
 	if ($arResult['ACCESS_SITE_NEW'] === 'Y' && !$arResult['IS_DELETED'])
 	{
-		$urlAddParams = [
-			'context_section' => Metrika\Sections::site->value,
-			'context_element' => 'banner',
-		];
+		$urlAddParams = [];
 		if ($arParams['TYPE'] === 'STORE')
 		{
 			$urlAddParams['super'] = 'Y';

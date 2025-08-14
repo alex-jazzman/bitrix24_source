@@ -67,7 +67,24 @@ elseif (($showChecksCorrection = $request->get('show_checks_correction')) && $sh
 }
 else
 {
-	$isPlainView = $isUsePadding = ($request->get('handler') !== 'offline');
+	if (\Bitrix\Main\Loader::includeModule('ui'))
+	{
+		\Bitrix\UI\Toolbar\Facade\Toolbar::deleteFavoriteStar();
+	}
+
+	if ($request->get('handler') === 'offline')
+	{
+		$isPlainView = false;
+		$isUsePadding = false;
+		$useUiToolbar = 'Y';
+	}
+	else
+	{
+		$isPlainView = true;
+		$isUsePadding = true;
+		$useUiToolbar = 'N';
+	}
+
 	$APPLICATION->IncludeComponent(
 		'bitrix:ui.sidepanel.wrapper',
 		'',
@@ -85,7 +102,8 @@ else
 			],
 			'PLAIN_VIEW' => $isPlainView,
 			'USE_PADDING' => $isUsePadding,
-		]
+			'USE_UI_TOOLBAR' => $useUiToolbar,
+		],
 	);
 }
 

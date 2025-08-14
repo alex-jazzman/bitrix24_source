@@ -16,6 +16,7 @@
 	border-radius: 4px;
 	transition: all 200ms ease;
 	pointer-events: none;
+	z-index: 10;
 }
 
 .--has-error .bx-im-message-image__container:not(.--has-text) .bx-im-message-media-content__container::after {

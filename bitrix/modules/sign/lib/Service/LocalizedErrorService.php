@@ -13,10 +13,7 @@ final class LocalizedErrorService
 {
 	public function getLocalizedError(Error $error): Error
 	{
-		$localizedMessage = $error->getCode()
-			? Loc::getMessage((string)$error->getCode(), $this->getReplacements($error))
-			: null
-		;
+		$localizedMessage = $error->getCode() ? $this->getMessage($error) : null;
 
 		return new Main\Error(
 			$localizedMessage ?? $error->getMessage(),
@@ -39,26 +36,37 @@ final class LocalizedErrorService
 		return $localizedErrors;
 	}
 
+	private function getMessage(Error $error): string
+	{
+		$code = (string)$error->getCode();
+		return match ($code)
+		{
+			'PERIOD_TOO_LONG', 'PERIOD_TOO_SHORT' => Loc::getMessagePlural(
+				$code,
+				$this->getPluralValue($code, $error->getCustomData()),
+				$this->getReplacements($error),
+			),
+			default => Loc::getMessage($code, $this->getReplacements($error)),
+		};
+	}
+
+	private function getPluralValue(string $code, array $customData): ?int
+	{
+		return match ($code)
+		{
+			'PERIOD_TOO_LONG' => $customData['MAX_PERIOD_MONTHS'] ?? 0,
+			'PERIOD_TOO_SHORT' => $customData['MIN_PERIOD_MINUTES'] ?? 0,
+			default => null,
+		};
+	}
+
 	private function getReplacements(Error $error): array
 	{
-		switch ($error->getCode())
+		return match ($error->getCode())
 		{
-			case 'PERIOD_TOO_LONG':
-				$customData = $error->getCustomData();
-				$months = $customData['MAX_PERIOD_MONTHS'] ?? 0;
-				return [
-					'#MAX_PERIOD#' => Loc::getMessagePlural('PARAM_MAX_PERIOD_MONTHS', (int)$months, ['#NUM#' => $months]),
-				];
-
-			case 'PERIOD_TOO_SHORT':
-				$customData = $error->getCustomData();
-				$minutes = $customData['MIN_PERIOD_MINUTES'] ?? 0;
-				return [
-					'#MIN_PERIOD#' => Loc::getMessagePlural('PARAM_MIN_PERIOD_MINUTES', (int)$minutes, ['#NUM#' => $minutes]),
-				];
-
-			default:
-				return [];
-		}
+			'PERIOD_TOO_LONG' => ['#MONTH#' => $this->getPluralValue($error->getCode(), $error->getCustomData())],
+			'PERIOD_TOO_SHORT' => ['#MIN#' => $this->getPluralValue($error->getCode(), $error->getCustomData())],
+			default => [],
+		};
 	}
 }

@@ -28,7 +28,8 @@ class Params extends Registry
 		BACKGROUND_ID = 'BACKGROUND_ID',
 		CONTAINS_COLLABER = 'CONTAINS_COLLABER',
 		MANAGE_MESSAGES_AUTO_DELETE = 'MANAGE_MESSAGES_AUTO_DELETE',
-		COPILOT_ENGINE_CODE = 'COPILOT_ENGINE_CODE'
+		COPILOT_ENGINE_CODE = 'COPILOT_ENGINE_CODE',
+		USER_DELETE_MESSAGE_DISABLED = 'USER_DELETE_MESSAGE_DISABLED'
 	;
 
 	public const CHAT_PARAMS = [
@@ -40,6 +41,7 @@ class Params extends Registry
 		self::BACKGROUND_ID,
 		self::MANAGE_MESSAGES_AUTO_DELETE,
 		self::COPILOT_ENGINE_CODE,
+		self::USER_DELETE_MESSAGE_DISABLED,
 	];
 
 	protected int $chatId;
@@ -79,7 +81,8 @@ class Params extends Registry
 		return match ($paramName) {
 			self::CONTAINS_COLLABER,
 			self::TEXT_FIELD_ENABLED,
-			self::IS_COPILOT => (new Param())->setType(Param::TYPE_BOOL),
+			self::IS_COPILOT,
+			self::USER_DELETE_MESSAGE_DISABLED => (new Param())->setType(Param::TYPE_BOOL),
 			default => (new Param())->setType(Param::TYPE_STRING),
 		};
 	}

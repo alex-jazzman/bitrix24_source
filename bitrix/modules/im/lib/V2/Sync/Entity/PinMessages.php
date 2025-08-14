@@ -2,9 +2,7 @@
 
 namespace Bitrix\Im\V2\Sync\Entity;
 
-use Bitrix\Im\V2\Chat\Comment\CommentPopupItem;
 use Bitrix\Im\V2\Link\Pin\PinCollection;
-use Bitrix\Im\V2\Rest\RestAdapter;
 use Bitrix\Im\V2\Sync\Entity;
 use Bitrix\Im\V2\Sync\Event;
 
@@ -28,20 +26,22 @@ class PinMessages implements Entity
 		}
 	}
 
-	public function getPins(): PinCollection
+	public function getPinCollection(): PinCollection
 	{
 		$this->pins ??= new PinCollection($this->pinIds);
 
 		return $this->pins;
 	}
 
-	public function getData(): array
+	public static function getRestEntityName(): string
 	{
-		$fullPin = $this->getPins();
-		$option = ['POPUP_DATA_EXCLUDE' => [CommentPopupItem::class]];
+		return 'pinSync';
+	}
 
+	public function toRestFormat(array $option = []): ?array
+	{
 		return [
-			'addedPins' => (new RestAdapter($fullPin))->toRestFormat($option),
+			'addedPins' => $this->pinIds,
 			'deletedPins' => $this->deletedPinIds,
 		];
 	}

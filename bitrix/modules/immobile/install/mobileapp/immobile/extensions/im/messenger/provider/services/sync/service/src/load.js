@@ -53,11 +53,10 @@ jn.define('im/messenger/provider/services/sync/service/load', (require, exports,
 
 		/**
 		 * @param fromDate
-		 * @param fromId
 		 * @param fromServerDate
 		 * @return {Promise<Partial<SyncLoadServiceLoadPageResult>>}
 		 */
-		async loadPage({ fromDate, fromId, fromServerDate })
+		async loadPage({ fromDate, fromServerDate })
 		{
 			const syncListOptions = {
 				filter: {},
@@ -67,10 +66,6 @@ jn.define('im/messenger/provider/services/sync/service/load', (require, exports,
 			if (Type.isStringFilled(fromServerDate))
 			{
 				syncListOptions.filter.lastDate = fromServerDate;
-			}
-			else if (Type.isNumber(fromId))
-			{
-				syncListOptions.filter.lastId = fromId;
 			}
 			else
 			{
@@ -117,6 +112,7 @@ jn.define('im/messenger/provider/services/sync/service/load', (require, exports,
 			const messengerRequestResultSavedUuid = `${WaitingEntity.sync.filler.chat}-${Uuid.getV4()}`;
 			const copilotRequestResultSavedUuid = `${WaitingEntity.sync.filler.copilot}-${Uuid.getV4()}`;
 			const channelRequestResultSavedUuid = `${WaitingEntity.sync.filler.channel}-${Uuid.getV4()}`;
+			const collabRequestResultSavedUuid = `${WaitingEntity.sync.filler.collab}-${Uuid.getV4()}`;
 			const counterRequestResultSavedUuid = `${WaitingEntity.sync.filler.counter}-${Uuid.getV4()}`;
 
 			const fillerOptions = this.getFillerOptions();
@@ -141,22 +137,27 @@ jn.define('im/messenger/provider/services/sync/service/load', (require, exports,
 				expectedRequestResultSavedIdList.push(channelRequestResultSavedUuid);
 			}
 
+			if (fillerOptions.shouldFillCollab)
+			{
+				expectedRequestResultSavedIdList.push(collabRequestResultSavedUuid);
+			}
+
 			if (fillerOptions.shouldFillCounter)
 			{
 				expectedRequestResultSavedIdList.push(counterRequestResultSavedUuid);
 			}
 
-			const requestResultSavedIdList = [];
+			const requestResultSavedIdList = new Set();
 			const noResponseCheckTimeout = setTimeout(() => {
-				if (!(isEqual(expectedRequestResultSavedIdList.sort(), requestResultSavedIdList.sort())))
+				if (!(isEqual(expectedRequestResultSavedIdList.sort(), [...requestResultSavedIdList].sort())))
 				{
 					const noResponseIdList = expectedRequestResultSavedIdList
-						.filter((id) => !requestResultSavedIdList.includes(id))
+						.filter((id) => !requestResultSavedIdList.has(id))
 					;
-
 					const errorMessage = `SyncService: no response from [${noResponseIdList}] in 5 seconds`;
-					logger.warn(errorMessage);
+
 					this.errorList.push(errorMessage);
+					logger.error(errorMessage);
 				}
 			}, 5000);
 			const fillCompleteHandler = (data) => {
@@ -166,7 +167,7 @@ jn.define('im/messenger/provider/services/sync/service/load', (require, exports,
 				} = data;
 				logger.log('SyncService received a response from SyncFiller', uuid, data);
 
-				requestResultSavedIdList.push(uuid);
+				requestResultSavedIdList.add(uuid);
 				if (error)
 				{
 					this.errorList.push(error);
@@ -175,18 +176,14 @@ jn.define('im/messenger/provider/services/sync/service/load', (require, exports,
 					return;
 				}
 
-				if (isEqual(expectedRequestResultSavedIdList.sort(), requestResultSavedIdList.sort()))
+				if (isEqual(expectedRequestResultSavedIdList.sort(), [...requestResultSavedIdList].sort()))
 				{
 					clearTimeout(noResponseCheckTimeout);
 					BX.removeCustomEvent(EventType.sync.requestResultSaved, fillCompleteHandler);
 
 					resolveSyncListPromise({
 						hasMore: result.hasMore,
-						lastId: result.lastId,
 						lastServerDate: result.lastServerDate,
-						addedMessageIdList: this.getAddedMessageIdList(result),
-						deletedChatIdList: this.getDeletedChatIdList(result),
-						deletedMessageIdList: this.getDeletedMessageIdList(result),
 					});
 				}
 			};
@@ -225,6 +222,14 @@ jn.define('im/messenger/provider/services/sync/service/load', (require, exports,
 				}, ComponentCode.imChannelMessenger);
 			}
 
+			if (fillerOptions.shouldFillCollab)
+			{
+				MessengerEmitter.emit(EventType.sync.requestResultReceived, {
+					uuid: collabRequestResultSavedUuid,
+					result,
+				}, ComponentCode.imCollabMessenger);
+			}
+
 			if (fillerOptions.shouldFillCounter)
 			{
 				MessengerEmitter.emit(EventType.sync.requestResultReceived, {
@@ -255,6 +260,7 @@ jn.define('im/messenger/provider/services/sync/service/load', (require, exports,
 				shouldFillChat: false,
 				shouldFillCopilot: false,
 				shouldFillChannel: false,
+				shouldFillCollab: false,
 				shouldFillCounter: false,
 			};
 
@@ -272,6 +278,11 @@ jn.define('im/messenger/provider/services/sync/service/load', (require, exports,
 				&& this.isEntityReady(`${ComponentCode.imCopilotMessenger}::ready`)
 			;
 
+			options.shouldFillCollab = Feature.isCollabAvailable
+				&& this.syncMode === AppStatus.sync
+				&& this.isEntityReady(`${ComponentCode.imCollabMessenger}::ready`)
+			;
+
 			return options;
 		}
 
@@ -286,48 +297,6 @@ jn.define('im/messenger/provider/services/sync/service/load', (require, exports,
 		resetSyncMode()
 		{
 			this.syncMode = AppStatus.sync;
-		}
-
-		/**
-		 * @param {SyncListResult} result
-		 * @return {Array<number>}
-		 */
-		getAddedMessageIdList(result)
-		{
-			if (!Type.isArrayFilled(result.messages.messages))
-			{
-				return [];
-			}
-
-			return result.messages.messages.map((message) => message.id);
-		}
-
-		/**
-		 * @param {SyncListResult} result
-		 * @return {Array<number>}
-		 */
-		getDeletedChatIdList(result)
-		{
-			if (!Type.isPlainObject(result.completeDeletedChats))
-			{
-				return [];
-			}
-
-			return Object.values(result.completeDeletedChats);
-		}
-
-		/**
-		 * @param {SyncListResult} result
-		 * @return {Array<number>}
-		 */
-		getDeletedMessageIdList(result)
-		{
-			if (!Type.isPlainObject(result.completeDeletedMessages))
-			{
-				return [];
-			}
-
-			return Object.values(result.completeDeletedMessages);
 		}
 	}
 

@@ -26,7 +26,6 @@ export type MessagesModelState = {
 	text: string,
 	loadText: string,
 	params?: MessageParams,
-	replaces: Array<Object>,
 	files: Array<number | string>,
 	unread: boolean,
 	viewed: boolean,
@@ -166,12 +165,14 @@ export type MessagesModelActions =
 	| 'messagesModel/storeToLocalDatabase'
 	| 'messagesModel/setFromLocalDatabase'
 	| 'messagesModel/setFromPush'
+	| 'messagesModel/setFromSync'
 	| 'messagesModel/add'
 	| 'messagesModel/addToChatCollection'
 	| 'messagesModel/setPinned'
 	| 'messagesModel/updateWithId'
 	| 'messagesModel/update'
 	| 'messagesModel/updateList'
+	| 'messagesModel/updateListFromSync'
 	| 'messagesModel/updateParams'
 	| 'messagesModel/delete'
 	| 'messagesModel/readMessages'

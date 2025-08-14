@@ -4,7 +4,7 @@
 jn.define('im/messenger/controller/sidebar-v2/utils/file', (require, exports, module) => {
 	const { Filesystem, utils } = require('native/filesystem');
 
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { NotifyManager } = require('notify-manager');
 	const { showToast, showErrorToast } = require('toast');
 	const { withCurrentDomain } = require('utils/url');

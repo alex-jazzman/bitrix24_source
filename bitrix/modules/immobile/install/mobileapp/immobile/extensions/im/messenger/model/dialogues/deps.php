@@ -9,6 +9,7 @@ return [
 		'im:messenger/lib/logger',
 		'im:messenger/lib/params',
 		'im:messenger/lib/permission-manager',
+		'im:messenger/lib/utils',
 		'utils/array',
 	],
 	'bundle' => [

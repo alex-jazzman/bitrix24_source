@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,ui_notification,ui_iconSet_actions,ui_iconSet_main,ui_iconSet_social,ui_iconSet_api_core,crm_clientSelector,calendar_sharing_interface,calendar_sharing_analytics,crm_messagesender,ui_buttons,main_loader,crm_template_editor,ui_entitySelector,ui_dialogs_messagebox,ui_sidepanel,main_popup,ui_tour,crm_activity_todoEditorV2,main_core_events,ui_designTokens,crm_zoom,ui_vue3,crm_integration_ui_bannerDispatcher,crm_tourManager,main_core,ui_analytics) {
+(function (exports,ui_notification,ui_iconSet_actions,ui_iconSet_main,ui_iconSet_social,ui_iconSet_api_core,crm_clientSelector,calendar_sharing_interface,calendar_sharing_analytics,crm_messagesender,ui_buttons,main_loader,crm_integration_analytics,crm_template_editor,ui_entitySelector,ui_dialogs_messagebox,ui_sidepanel,main_popup,ui_tour,crm_activity_todoEditorV2,main_core_events,ui_designTokens,crm_zoom,ui_vue3,crm_integration_ui_bannerDispatcher,crm_tourManager,main_core,ui_analytics) {
 	'use strict';
 
 	var _entityTypeId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityTypeId");
@@ -5924,6 +5924,10 @@ this.BX.Crm = this.BX.Crm || {};
 	var _toEntityId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("toEntityId");
 	var _unViewedTourList = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("unViewedTourList");
 	var _fetchConfigPromise = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("fetchConfigPromise");
+	var _isHelpShown = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isHelpShown");
+	var _isTemplateSelectorShown = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isTemplateSelectorShown");
+	var _isSuggestTemplateShown = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isSuggestTemplateShown");
+	var _isResendTry = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isResendTry");
 	var _prepareParams$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareParams");
 	var _prepareToResend$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareToResend");
 	var _subscribeToReceiversChanges$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("subscribeToReceiversChanges");
@@ -5954,9 +5958,41 @@ this.BX.Crm = this.BX.Crm || {};
 	var _getFooterData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getFooterData");
 	var _isTourAvailable = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isTourAvailable");
 	var _isClientPhoneNotSet = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isClientPhoneNotSet");
+	var _onPreviewTemplate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onPreviewTemplate");
+	var _submitHelpShowAnalytics = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("submitHelpShowAnalytics");
+	var _submitSendMessageAnalytics = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("submitSendMessageAnalytics");
+	var _submitSuggestTemplateAnalytics = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("submitSuggestTemplateAnalytics");
+	var _submitTemplateSelectAnalytics = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("submitTemplateSelectAnalytics");
+	var _submitCancelButtonAnalytics = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("submitCancelButtonAnalytics");
+	var _submitPreviewTemplateAnalytics = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("submitPreviewTemplateAnalytics");
+	var _submitAnalyticsData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("submitAnalyticsData");
 	class Whatsapp extends Item {
 	  constructor(...args) {
 	    super(...args);
+	    Object.defineProperty(this, _submitAnalyticsData, {
+	      value: _submitAnalyticsData2
+	    });
+	    Object.defineProperty(this, _submitPreviewTemplateAnalytics, {
+	      value: _submitPreviewTemplateAnalytics2
+	    });
+	    Object.defineProperty(this, _submitCancelButtonAnalytics, {
+	      value: _submitCancelButtonAnalytics2
+	    });
+	    Object.defineProperty(this, _submitTemplateSelectAnalytics, {
+	      value: _submitTemplateSelectAnalytics2
+	    });
+	    Object.defineProperty(this, _submitSuggestTemplateAnalytics, {
+	      value: _submitSuggestTemplateAnalytics2
+	    });
+	    Object.defineProperty(this, _submitSendMessageAnalytics, {
+	      value: _submitSendMessageAnalytics2
+	    });
+	    Object.defineProperty(this, _submitHelpShowAnalytics, {
+	      value: _submitHelpShowAnalytics2
+	    });
+	    Object.defineProperty(this, _onPreviewTemplate, {
+	      value: _onPreviewTemplate2
+	    });
 	    Object.defineProperty(this, _isClientPhoneNotSet, {
 	      value: _isClientPhoneNotSet2
 	    });
@@ -6151,6 +6187,22 @@ this.BX.Crm = this.BX.Crm || {};
 	      writable: true,
 	      value: null
 	    });
+	    Object.defineProperty(this, _isHelpShown, {
+	      writable: true,
+	      value: false
+	    });
+	    Object.defineProperty(this, _isTemplateSelectorShown, {
+	      writable: true,
+	      value: false
+	    });
+	    Object.defineProperty(this, _isSuggestTemplateShown, {
+	      writable: true,
+	      value: false
+	    });
+	    Object.defineProperty(this, _isResendTry, {
+	      writable: true,
+	      value: false
+	    });
 	  }
 	  /**
 	   * @override
@@ -6293,6 +6345,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      // eslint-disable-next-line promise/catch-or-return
 	      babelHelpers.classPrivateFieldLooseBase(this, _fetchConfigPromise)[_fetchConfigPromise].then(() => babelHelpers.classPrivateFieldLooseBase(this, _prepareToResend$1)[_prepareToResend$1](template, fromId, clientData));
 	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _isResendTry)[_isResendTry] = true;
 	  }
 	  // endregion
 
@@ -6300,8 +6353,6 @@ this.BX.Crm = this.BX.Crm || {};
 	  getTemplate() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _isDemoTemplateSet)[_isDemoTemplateSet] ? null : babelHelpers.classPrivateFieldLooseBase(this, _template)[_template];
 	  }
-
-	  // endregion
 	}
 	function _prepareParams2$1(data) {
 	  const {
@@ -6403,9 +6454,11 @@ this.BX.Crm = this.BX.Crm || {};
 				</button>
 			`), main_core.Loc.getMessage('CRM_TIMELINE_CANCEL_BTN'));
 	    main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _cancelButton)[_cancelButton], 'click', () => {
+	      var _babelHelpers$classPr;
 	      babelHelpers.classPrivateFieldLooseBase(this, _setTemplate)[_setTemplate](main_core.Runtime.clone(this.getSetting('demoTemplate')));
 	      babelHelpers.classPrivateFieldLooseBase(this, _selectTplDlg)[_selectTplDlg] = null;
 	      this.emitFinishEditEvent();
+	      babelHelpers.classPrivateFieldLooseBase(this, _submitCancelButtonAnalytics)[_submitCancelButtonAnalytics]((_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _template)[_template]) == null ? void 0 : _babelHelpers$classPr.ORIGINAL_ID);
 	    });
 	    return main_core.Tag.render(_t8$2 || (_t8$2 = _$5`
 				${0}
@@ -6522,6 +6575,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _initTemplateSelectDialog)[_initTemplateSelectDialog]();
 	  }
 	  babelHelpers.classPrivateFieldLooseBase(this, _selectTplDlg)[_selectTplDlg].show();
+	  babelHelpers.classPrivateFieldLooseBase(this, _submitTemplateSelectAnalytics)[_submitTemplateSelectAnalytics]();
 	}
 	function _handleSettingsMenuClick2() {
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _toPhone)[_toPhone] === null) {
@@ -6537,6 +6591,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  if (top.BX.Helper && code > 0) {
 	    top.BX.Helper.show(`redirect=detail&code=${code}`);
 	  }
+	  babelHelpers.classPrivateFieldLooseBase(this, _submitHelpShowAnalytics)[_submitHelpShowAnalytics]();
 	}
 	function _handleShowSubMenu2(event, items) {
 	  var _target$getSubMenu2;
@@ -6569,11 +6624,11 @@ this.BX.Crm = this.BX.Crm || {};
 	  babelHelpers.classPrivateFieldLooseBase(this, _settingsMenu)[_settingsMenu].close();
 	}
 	function _handleApplyPlaceholder2(params) {
-	  var _babelHelpers$classPr, _babelHelpers$classPr2;
+	  var _babelHelpers$classPr2, _babelHelpers$classPr3;
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _isDemoTemplateSet)[_isDemoTemplateSet]) {
 	    return;
 	  }
-	  createOrUpdatePlaceholder((_babelHelpers$classPr = (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _template)[_template]) == null ? void 0 : _babelHelpers$classPr2.ORIGINAL_ID) != null ? _babelHelpers$classPr : null, this.getEntityTypeId(), this.getEntityCategoryId(), params).catch(error => console.error(error));
+	  createOrUpdatePlaceholder((_babelHelpers$classPr2 = (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _template)[_template]) == null ? void 0 : _babelHelpers$classPr3.ORIGINAL_ID) != null ? _babelHelpers$classPr2 : null, this.getEntityTypeId(), this.getEntityCategoryId(), params).catch(error => console.error(error));
 	}
 	function _handleSendButtonClick2() {
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _isClientPhoneNotSet)[_isClientPhoneNotSet]()) {
@@ -6605,6 +6660,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    TO_ENTITY_TYPE_ID: babelHelpers.classPrivateFieldLooseBase(this, _toEntityTypeId)[_toEntityTypeId],
 	    TO_ENTITY_ID: babelHelpers.classPrivateFieldLooseBase(this, _toEntityId)[_toEntityId]
 	  }, babelHelpers.classPrivateFieldLooseBase(this, _handleSendSuccess)[_handleSendSuccess].bind(this), babelHelpers.classPrivateFieldLooseBase(this, _handleSendFailure)[_handleSendFailure].bind(this)).then(() => this.setLocked(false), () => this.setLocked(false)).catch(() => this.setLocked(false));
+	  babelHelpers.classPrivateFieldLooseBase(this, _submitSendMessageAnalytics)[_submitSendMessageAnalytics](babelHelpers.classPrivateFieldLooseBase(this, _template)[_template].ORIGINAL_ID);
 	}
 	function _handleSendSuccess2(data) {
 	  babelHelpers.classPrivateFieldLooseBase(this, _isSendRequestRunning)[_isSendRequestRunning] = false;
@@ -6634,6 +6690,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  };
 	  babelHelpers.classPrivateFieldLooseBase(this, _tplEditor)[_tplEditor] = new crm_template_editor.Editor(editorParams).setPlaceholders(babelHelpers.classPrivateFieldLooseBase(this, _placeholders)[_placeholders]).setFilledPlaceholders(babelHelpers.classPrivateFieldLooseBase(this, _filledPlaceholders)[_filledPlaceholders]);
 	  babelHelpers.classPrivateFieldLooseBase(this, _tplEditor)[_tplEditor].setBody(preview); // @todo will support other positions too, not only Preview
+	  main_core_events.EventEmitter.subscribeOnce('BX.Crm.Template.Editor:shown', babelHelpers.classPrivateFieldLooseBase(this, _onPreviewTemplate)[_onPreviewTemplate].bind(this));
 	}
 	function _initTemplateSelectDialog2(additionalOptions) {
 	  const entityTypeId = this.getEntityTypeId();
@@ -6740,6 +6797,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        sec: 'culzcq'
 	      }]
 	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _submitSuggestTemplateAnalytics)[_submitSuggestTemplateAnalytics]();
 	  };
 	  return [main_core.Tag.render(_t13$1 || (_t13$1 = _$5`<span style="width: 100%;"></span>`)), main_core.Tag.render(_t14$1 || (_t14$1 = _$5`
 				<span onclick="${0}" class="ui-selector-footer-link">
@@ -6755,6 +6813,59 @@ this.BX.Crm = this.BX.Crm || {};
 	    return true;
 	  }
 	  return !main_core.Type.isArrayFilled(babelHelpers.classPrivateFieldLooseBase(this, _communications)[_communications][0].phones);
+	}
+	function _onPreviewTemplate2() {
+	  babelHelpers.classPrivateFieldLooseBase(this, _submitPreviewTemplateAnalytics)[_submitPreviewTemplateAnalytics]();
+	}
+	function _submitHelpShowAnalytics2() {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _isHelpShown)[_isHelpShown]) {
+	    return;
+	  }
+	  const analyticsData = crm_integration_analytics.Builder.Communication.FormEvent.createDefault(this.getEntityTypeId()).setElement(crm_integration_analytics.Dictionary.ELEMENT_WA_HELP);
+	  babelHelpers.classPrivateFieldLooseBase(this, _isHelpShown)[_isHelpShown] = true;
+	  babelHelpers.classPrivateFieldLooseBase(this, _submitAnalyticsData)[_submitAnalyticsData](analyticsData);
+	}
+	function _submitSendMessageAnalytics2(templateId = null) {
+	  const analyticsData = crm_integration_analytics.Builder.Communication.SendEvent.createDefault(this.getEntityTypeId()).setElement(crm_integration_analytics.Dictionary.ELEMENT_WA_SEND).setContactsCount(1);
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _isResendTry)[_isResendTry]) {
+	    analyticsData.setResend();
+	    babelHelpers.classPrivateFieldLooseBase(this, _isResendTry)[_isResendTry] = false;
+	  }
+	  if (templateId) {
+	    analyticsData.setTemplateId(templateId);
+	  }
+	  babelHelpers.classPrivateFieldLooseBase(this, _submitAnalyticsData)[_submitAnalyticsData](analyticsData);
+	}
+	function _submitSuggestTemplateAnalytics2() {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _isSuggestTemplateShown)[_isSuggestTemplateShown]) {
+	    return;
+	  }
+	  const analyticsData = crm_integration_analytics.Builder.Communication.FormEvent.createDefault(this.getEntityTypeId()).setElement(crm_integration_analytics.Dictionary.ELEMENT_WA_TEMPLATE_OFFER);
+	  babelHelpers.classPrivateFieldLooseBase(this, _isSuggestTemplateShown)[_isSuggestTemplateShown] = true;
+	  babelHelpers.classPrivateFieldLooseBase(this, _submitAnalyticsData)[_submitAnalyticsData](analyticsData);
+	}
+	function _submitTemplateSelectAnalytics2() {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _isTemplateSelectorShown)[_isTemplateSelectorShown]) {
+	    return;
+	  }
+	  const analyticsData = crm_integration_analytics.Builder.Communication.FormEvent.createDefault(this.getEntityTypeId()).setElement(crm_integration_analytics.Dictionary.ELEMENT_WA_TEMPLATE_SELECTOR);
+	  babelHelpers.classPrivateFieldLooseBase(this, _isTemplateSelectorShown)[_isTemplateSelectorShown] = true;
+	  babelHelpers.classPrivateFieldLooseBase(this, _submitAnalyticsData)[_submitAnalyticsData](analyticsData);
+	}
+	function _submitCancelButtonAnalytics2(templateId = null) {
+	  const analyticsData = crm_integration_analytics.Builder.Communication.SendEvent.createDefault(this.getEntityTypeId()).setElement(crm_integration_analytics.Dictionary.ELEMENT_WA_CANCEL);
+	  if (templateId) {
+	    analyticsData.setTemplateId(templateId);
+	  }
+	  babelHelpers.classPrivateFieldLooseBase(this, _submitAnalyticsData)[_submitAnalyticsData](analyticsData);
+	}
+	function _submitPreviewTemplateAnalytics2() {
+	  const analyticsData = crm_integration_analytics.Builder.Communication.FormEvent.createDefault(this.getEntityTypeId()).setElement(crm_integration_analytics.Dictionary.ELEMENT_WA_PREVIEW);
+	  babelHelpers.classPrivateFieldLooseBase(this, _submitAnalyticsData)[_submitAnalyticsData](analyticsData);
+	}
+	function _submitAnalyticsData2(analyticsData) {
+	  analyticsData.setEvent(crm_integration_analytics.Dictionary.EVENT_WA_TIMELINE).setSubSection(crm_integration_analytics.Dictionary.SUB_SECTION_DETAILS);
+	  ui_analytics.sendData(analyticsData.buildData());
 	}
 
 	class Task extends Item {
@@ -8179,5 +8290,5 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.MenuBar = MenuBar;
 	exports.Item = Item;
 
-}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX,BX,BX,BX,BX.UI.IconSet,BX.Crm,BX.Calendar.Sharing,BX.Calendar.Sharing,BX.Crm.MessageSender,BX.UI,BX,BX.Crm.Template,BX.UI.EntitySelector,BX.UI.Dialogs,BX,BX.Main,BX.UI.Tour,BX.Crm.Activity,BX.Event,BX,BX.Crm,BX.Vue3,BX.Crm.Integration.UI,BX.Crm,BX,BX.UI.Analytics));
+}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX,BX,BX,BX,BX.UI.IconSet,BX.Crm,BX.Calendar.Sharing,BX.Calendar.Sharing,BX.Crm.MessageSender,BX.UI,BX,BX.Crm.Integration.Analytics,BX.Crm.Template,BX.UI.EntitySelector,BX.UI.Dialogs,BX,BX.Main,BX.UI.Tour,BX.Crm.Activity,BX.Event,BX,BX.Crm,BX.Vue3,BX.Crm.Integration.UI,BX.Crm,BX,BX.UI.Analytics));
 //# sourceMappingURL=toolbar.bundle.js.map

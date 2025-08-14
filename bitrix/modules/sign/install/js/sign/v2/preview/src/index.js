@@ -93,6 +93,8 @@ export class Preview
 			await new Promise((resolve) => Event.bindOnce(this.#page, 'load', resolve));
 		}
 
+		Dom.clean(this.#blocksContainer);
+
 		const { blocksTemplate, blocks } = blocksData.reduce((acc, block) => {
 			const node = Tag.render`
 				<div class="sign-preview__block"></div>
@@ -112,14 +114,14 @@ export class Preview
 			const { page } = block.position;
 			blocks.set(page, [
 				...(blocks.get(page) ?? []),
-				node
+				node,
 			]);
 			Dom.append(node, blocksTemplate);
 
 			return acc;
 		}, {
 			blocks: new Map(),
-			blocksTemplate: new DocumentFragment()
+			blocksTemplate: new DocumentFragment(),
 		});
 		Dom.append(blocksTemplate, this.#blocksContainer);
 
@@ -335,7 +337,7 @@ export class Preview
 	{
 		this.#urls = urls.length ? [
 			...this.#urls,
-			...urls
+			...urls,
 		] : [];
 		this.#renderContent();
 		this.#renderControls();
@@ -363,6 +365,7 @@ export class Preview
 	async setBlocks(blocks = [])
 	{
 		Dom.clean(this.#blocksContainer);
+
 		if (!blocks?.length)
 		{
 			return;

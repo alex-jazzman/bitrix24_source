@@ -2,6 +2,8 @@
 $MESS["SCP_ACCESS_DENIED"] = "Қолжетімділікке тыйым салынған.";
 $MESS["SCP_CASHBOX_ADD"] = "Кассаны қосу";
 $MESS["SCP_CASHBOX_APP_RECOMMEND"] = "Ұсыну";
+$MESS["SCP_CASHBOX_APP_SEE_ALL"] = "Барлығын көрсету";
+$MESS["SCP_CASHBOX_APP_TOTAL_APPLICATIONS"] = "Барлық шешімдер";
 $MESS["SCP_CASHBOX_ATOL"] = "Атол";
 $MESS["SCP_CASHBOX_ATOL_FFD_12"] = "Атол (ФФД 1.2)";
 $MESS["SCP_CASHBOX_BUSINESS_RU_ATOL"] = "АТОЛ";

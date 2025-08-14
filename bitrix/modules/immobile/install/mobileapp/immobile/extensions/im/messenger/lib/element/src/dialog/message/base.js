@@ -3,7 +3,7 @@
  */
 jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, module) => {
 	const { Type } = require('type');
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const AppTheme = require('apptheme');
 	const { Color } = require('tokens');
 
@@ -62,11 +62,11 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 			this.likeCount = 0;
 			this.meLiked = false;
 			this.read = true;
-			this.quoteMessage = null;
 			this.showReaction = true;
 			this.canBeQuoted = true;
 			this.canBeChecked = true;
 			this.align = null;
+			this.status = null;
 			this.statusText = '';
 			this.forwardText = '';
 			this.loadText = '';
@@ -77,8 +77,7 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 				roundedCorners: true,
 			};
 			this.reactions = [];
-			/** @deprecated */
-			this.ownReactions = []; // TODO delete after the new format is supported on iOS
+			this.showAvatar = false;
 			this.showAvatarsInReaction = true;
 
 			/** @type {MessageRichLink || null} */
@@ -95,6 +94,8 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 			this.isAuthorTopMessage = false;
 
 			this.commentInfo = null;
+			this.message = [];
+			this.testId = '';
 
 			this
 				.setId(modelMessage.id)
@@ -121,11 +122,53 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 				.setRoundedCorners(true)
 				.setMarginTop(options.marginTop)
 				.setMarginBottom(options.marginBottom)
-				.setRichLink(modelMessage)
 				.setAttach(modelMessage)
 				.setKeyboard(modelMessage)
 				.setCommentInfo(modelMessage, Boolean(options.showCommentInfo))
 			;
+		}
+
+		/**
+		 * @return {DialogWidgetItem}
+		 */
+		toDialogWidgetItem()
+		{
+			return {
+				align: this.align,
+				attach: this.attach,
+				avatar: this.avatar,
+				avatarUrl: this.avatarUrl,
+				canBeChecked: this.canBeChecked,
+				canBeQuoted: this.canBeQuoted,
+				commentInfo: this.commentInfo,
+				forwardText: this.forwardText,
+				id: this.id,
+				isAuthorBottomMessage: this.isAuthorBottomMessage,
+				isAuthorTopMessage: this.isAuthorTopMessage,
+				isBackgroundWide: this.isBackgroundWide,
+				keyboard: this.keyboard,
+				likeCount: this.likeCount,
+				loadText: this.loadText,
+				me: this.me,
+				meLiked: this.meLiked,
+				message: this.message,
+				reactions: this.reactions,
+				read: this.read,
+				richLink: this.richLink,
+				showAvatar: this.showAvatar,
+				showAvatarsInReaction: this.showAvatarsInReaction,
+				showReaction: this.showReaction,
+				showUsername: this.showUsername,
+				status: this.status,
+				statusText: this.statusText,
+				style: this.style,
+				testId: this.testId,
+				time: this.time,
+				title: this.title,
+				type: this.type,
+				userColor: this.userColor,
+				username: this.username,
+			};
 		}
 
 		/**
@@ -316,35 +359,7 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 		setMessage(text = '', options = {})
 		{
 			let messageText = text;
-
-			// TODO: remove after native support for attachments
 			const modelMessage = serviceLocator.get('core').getStore().getters['messagesModel/getById'](this.id);
-
-			const attach = modelMessage?.params?.ATTACH ? modelMessage.params.ATTACH[0] : null;
-
-			const attachWithOnlyRichLink = Boolean(
-				attach?.BLOCKS.length === 1
-				&& attach.BLOCKS[0].RICH_LINK,
-			);
-
-			if (attach && !attachWithOnlyRichLink && !Feature.isMessageAttachSupported)
-			{
-				if (Type.isStringFilled(text))
-				{
-					messageText += '\n\n';
-				}
-
-				if (Type.isStringFilled(attach.DESCRIPTION) && attach.DESCRIPTION !== 'SKIP_MESSAGE')
-				{
-					messageText += `${attach.DESCRIPTION}\n`;
-				}
-
-				const openAttachText = Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_ATTACH_SHOW');
-				// link to avoid processing by the general rules for /mobile/ (open in full screen widget)
-				const openAttachUrl = `${serviceLocator.get('core').getHost()}/immobile/in-app/message-attach/${modelMessage.id}`;
-				const attachIcon = String.fromCodePoint(128_206);
-				messageText += `${attachIcon} [b][url=${openAttachUrl}]${openAttachText}[/url][/b]`;
-			}
 
 			if (
 				Feature.isDevelopmentEnvironment
@@ -418,13 +433,10 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 			const colorUtils = new ColorUtils();
 			if (!reactionsList)
 			{
-				this.ownReactions = [];
 				this.reactions = [];
 
 				return this;
 			}
-
-			this.ownReactions = [...reactionsList.ownReactions]; // TODO delete after the new format is supported on iOS
 
 			const reactions = [];
 			Object.values(ReactionType)
@@ -529,75 +541,8 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 			return this;
 		}
 
-		/**
-		 * @deprecated
-		 * @param {MessagesModelState} messageModel
-		 * @return {Message}
-		 */
-		setRichLink(messageModel)
-		{
-			if (Feature.isMessageAttachSupported)
-			{
-				return this;
-			}
-
-			const urlId = messageModel.richLinkId;
-
-			if (!urlId)
-			{
-				return this;
-			}
-
-			const attach = messageModel.attach.find((attachConfig) => {
-				return Number(attachConfig.id) === urlId;
-			});
-
-			if (!attach)
-			{
-				return this;
-			}
-
-			/** @type {AttachRichItem || null} */
-			let richLink = null;
-			const blockWithRich = attach.blocks.find((attachBlock) => attachBlock.richLink);
-
-			if (blockWithRich?.richLink.length > 0)
-			{
-				richLink = blockWithRich.richLink[0];
-			}
-
-			if (richLink)
-			{
-				let previewUrl = richLink.preview ?? null;
-
-				if (Type.isString(previewUrl) && !previewUrl.startsWith('http'))
-				{
-					previewUrl = currentDomain + previewUrl;
-				}
-
-				this.richLink = {
-					link: richLink.link ?? '',
-					description: richLink.desc ?? '',
-					name: richLink.name ?? '',
-					attachId: attach.id,
-					previewUrl,
-					previewSize: {
-						height: richLink?.previewSize?.height ?? 0,
-						width: richLink?.previewSize?.width ?? 0,
-					},
-				};
-			}
-
-			return this;
-		}
-
 		setAttach(modelMessage)
 		{
-			if (!Feature.isMessageAttachSupported)
-			{
-				return this;
-			}
-
 			if (Type.isArrayFilled(modelMessage.attach))
 			{
 				this.attach = Attach
@@ -611,11 +556,6 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 
 		setKeyboard(modelMessage)
 		{
-			if (!Feature.isMessageKeyboardSupported)
-			{
-				return this;
-			}
-
 			if (Type.isArrayFilled(modelMessage.keyboard))
 			{
 				this.keyboard = Keyboard

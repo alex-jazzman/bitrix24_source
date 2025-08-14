@@ -836,7 +836,7 @@ class CAutoCheck
 								{
 									$arMessage .= GetMessage("NO_SHOWTITLE", ["#template#" => $dir]) . "\n";
 								}
-								if (!in_array($dir, ['mobile_app', 'desktop_app', 'empty', 'learning_10_0_0', 'call_app', 'mail_join', 'dashboard_detail']) && empty($arShowPanel))
+								if (!in_array($dir, ['mobile_app', 'desktop_app', 'empty', 'learning_10_0_0', 'call_app', 'mail_join', 'dashboard_detail', 'booking_pub']) && empty($arShowPanel))
 								{
 									$arMessage .= GetMessage("NO_SHOWPANEL", ["#template#" => $dir]) . "\n";
 								}

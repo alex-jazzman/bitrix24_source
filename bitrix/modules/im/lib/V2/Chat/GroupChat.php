@@ -28,7 +28,6 @@ use Bitrix\Im\V2\Rest\PopupData;
 use Bitrix\Im\V2\Rest\PopupDataAggregatable;
 use Bitrix\Im\V2\Result;
 use Bitrix\Im\V2\Service\Context;
-use Bitrix\Imbot\Bot\CopilotChatBot;
 use Bitrix\ImBot\Bot\Network;
 use Bitrix\ImBot\Bot\Support24;
 use Bitrix\ImBot\Bot\SupportBox;
@@ -188,7 +187,7 @@ class GroupChat extends Chat implements PopupDataAggregatable
 
 	protected function onUserAddAfterChatAdd(array $addedUsers): void
 	{
-		return;
+		$this->disableUserDeleteMessage();
 	}
 
 	protected function filterParams(array $params): array

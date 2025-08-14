@@ -2,7 +2,7 @@
  * @module im/messenger/controller/chat-composer/create/channel
  */
 jn.define('im/messenger/controller/chat-composer/create/channel', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Color } = require('tokens');
 	const { Icon } = require('assets/icons');
 	const { NotifyManager } = require('notify-manager');

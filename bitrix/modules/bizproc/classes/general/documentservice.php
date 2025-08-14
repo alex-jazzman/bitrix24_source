@@ -36,12 +36,14 @@ class CBPDocumentService extends CBPRuntimeService
 		[$moduleId, $entity, $documentId] = CBPHelper::ParseDocumentId($parameterDocumentId);
 
 		$documentType = ($parameterDocumentType && is_array($parameterDocumentType)) ? $parameterDocumentType[2] : null;
+		$defaultValue = \Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24') ? 'Y' : 'N';
+		$selectEnabled = \Bitrix\Main\Config\Option::get('bizproc', 'enable_getdocument_select', $defaultValue) === 'Y';
 
 		$k = $moduleId."@".$entity."@".$documentId.($documentType ? '@'.$documentType : '');
-		//if (!empty($select))
-		//{
-		//	$k .= '@' . implode('@', $select);
-		//}
+		if ($selectEnabled && !empty($select))
+		{
+			$k .= '@' . implode('@', $select);
+		}
 
 		if (array_key_exists($k, $this->arDocumentsCache))
 		{
@@ -55,11 +57,15 @@ class CBPDocumentService extends CBPRuntimeService
 
 		if (class_exists($entity) && method_exists($entity, 'GetDocument'))
 		{
+			$args = [$documentId, $documentType];
+			if ($selectEnabled)
+			{
+				$args[] = $select;
+			}
+
 			$this->arDocumentsCache[$k] = call_user_func(
 				[$entity, "GetDocument"],
-				$documentId,
-				$documentType,
-				//$select,
+				...$args
 			);
 
 			return $this->arDocumentsCache[$k];

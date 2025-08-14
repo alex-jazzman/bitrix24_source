@@ -347,10 +347,7 @@ Toolbar::deleteFavoriteStar();
 		}
 
 		<?php
-			$createUrl = $component->getUrlAdd(false, [
-				'context_section' => Metrika\Sections::page->value,
-				'context_element' => 'create_page_link',
-			]);
+			$createUrl = $component->getUrlAdd(false);
 			$metrika = new Metrika\Metrika(
 				Metrika\Categories::getBySiteType($arParams['TYPE']),
 				Metrika\Events::openMarket,

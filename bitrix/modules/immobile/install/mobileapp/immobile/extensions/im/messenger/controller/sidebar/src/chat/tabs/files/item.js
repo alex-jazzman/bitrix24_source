@@ -2,7 +2,7 @@
  * @module im/messenger/controller/sidebar/chat/tabs/files/item
  */
 jn.define('im/messenger/controller/sidebar/chat/tabs/files/item', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { resolveFileIcon } = require('assets/icons');
 	const { Moment } = require('utils/date');
 	const { getExtension } = require('utils/file');
@@ -12,7 +12,6 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/files/item', (require, expo
 	const { Theme } = require('im/lib/theme');
 	const { ChatAvatar } = require('im/messenger/lib/element');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { Avatar: MessengerAvatarLegacy } = require('im/messenger/lib/ui/base/avatar');
 	const {
 		formatFileSize,
 		getFileIconTypeByExtension,

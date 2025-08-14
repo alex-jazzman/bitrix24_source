@@ -8,7 +8,7 @@ use CUserOptions;
 final class StartBanner
 {
 	private const SHOWED_OPTION_NAME = 'repeat-sale-showed-start-banner';
-	private const MAX_SHOWED_COUNT = 3;
+	private const MAX_SHOWED_COUNT = 6;
 	private const INTERVAL_SHOWED = '-1 day';
 
 	private ?array $showedStatisticsData = null;
@@ -31,17 +31,6 @@ final class StartBanner
 			[
 				'lastShowedTimestamp' => $currentTimestamp,
 				'showedCount' => $showedCount + 1,
-			],
-		);
-	}
-
-	public function setShowedCountToMax(): void
-	{
-		CUserOptions::SetOption(
-			'crm',
-			self::SHOWED_OPTION_NAME,
-			[
-				'showedCount' => self::MAX_SHOWED_COUNT + 1,
 			],
 		);
 	}

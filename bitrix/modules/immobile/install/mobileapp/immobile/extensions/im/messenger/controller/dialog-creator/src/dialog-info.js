@@ -5,7 +5,7 @@ jn.define('im/messenger/controller/dialog-creator/dialog-info', (require, export
 	include('media');
 	include('InAppNotifier');
 
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { EventType, ComponentCode, OpenDialogContextType } = require('im/messenger/const');
 	const { getFile } = require('files/entry');

@@ -3,7 +3,7 @@
  */
 
 jn.define('im/messenger/controller/sidebar/collab/sidebar-controller', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Icon } = require('assets/icons');
 
 	const { CollabSidebarView } = require('im/messenger/controller/sidebar/collab/sidebar-view');
@@ -97,19 +97,19 @@ jn.define('im/messenger/controller/sidebar/collab/sidebar-controller', (require,
 
 		canEdit()
 		{
-			return ChatPermission.iaCanUpdateDialogByRole(this.dialogId);
+			return ChatPermission.сanUpdateDialogByRole(this.dialogId);
 		}
 
 		canLeave()
 		{
 			const userId = serviceLocator.get('core').getUserId();
 
-			return UserPermission.canLeaveFromCollab(userId) && ChatPermission.isCanLeaveFromChat(this.dialogId);
+			return UserPermission.canLeaveFromCollab(userId) && ChatPermission.сanLeaveFromChat(this.dialogId);
 		}
 
 		canDelete()
 		{
-			return ChatPermission.isCanDeleteChat(this.dialogId);
+			return ChatPermission.сanDeleteChat(this.dialogId);
 		}
 
 		async onHeaderMenuEditDialog()

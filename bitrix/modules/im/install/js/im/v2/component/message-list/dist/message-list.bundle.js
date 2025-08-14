@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,im_v2_lib_utils,im_v2_lib_quote,im_v2_component_animation,im_v2_lib_messageComponent,ui_lottie,im_v2_lib_inputAction,im_v2_component_elements_userListPopup,im_v2_lib_user,im_v2_lib_logger,im_v2_lib_menu,main_polyfill_intersectionobserver,im_v2_component_elements_avatar,im_v2_lib_copilot,im_v2_lib_permission,im_v2_lib_notifier,main_core,main_core_events,im_v2_lib_analytics,im_v2_lib_feature,im_v2_application_core,im_v2_const,im_v2_lib_dateFormatter,im_v2_component_message_file,im_v2_component_message_default,im_v2_component_message_error,im_v2_component_message_callInvite,im_v2_component_message_deleted,im_v2_component_message_unsupported,im_v2_component_message_smile,im_v2_component_message_system,im_v2_component_message_creation_chat,im_v2_component_message_copilot_creation,im_v2_component_message_copilot_answer,im_v2_component_message_copilot_addedUsers,im_v2_component_message_support_vote,im_v2_component_message_support_sessionNumber,im_v2_component_message_support_chatCreation,im_v2_component_message_creation_conference,im_v2_component_message_supervisor_updateFeature,im_v2_component_message_supervisor_enableFeature,im_v2_component_message_sign,im_v2_component_message_checkIn,im_v2_component_message_creation_ownChat,im_v2_component_message_zoomInvite,im_v2_component_message_creation_generalChat,im_v2_component_message_creation_generalChannel,im_v2_component_message_creation_channel,imopenlines_v2_component_message_startDialog,imopenlines_v2_component_message_hidden,imopenlines_v2_component_message_feedbackForm,im_v2_component_message_call,im_v2_component_message_vote,im_v2_component_message_creation_taskChat,im_v2_component_message_collab_convert,im_v2_component_message_aiAssistant_answer) {
+(function (exports,im_v2_lib_utils,im_v2_lib_quote,im_v2_component_animation,im_v2_lib_messageComponent,ui_lottie,im_v2_lib_inputAction,im_v2_component_elements_userListPopup,im_v2_lib_user,im_v2_lib_logger,ui_vue3_components_richLoc,im_v2_lib_menu,main_polyfill_intersectionobserver,im_v2_component_elements_avatar,im_v2_lib_copilot,im_v2_lib_permission,im_v2_lib_notifier,main_core,main_core_events,im_v2_lib_analytics,im_v2_lib_feature,im_v2_application_core,im_v2_const,im_v2_lib_dateFormatter,im_v2_component_message_file,im_v2_component_message_default,im_v2_component_message_error,im_v2_component_message_callInvite,im_v2_component_message_deleted,im_v2_component_message_unsupported,im_v2_component_message_smile,im_v2_component_message_system,im_v2_component_message_creation_chat,im_v2_component_message_copilot_creation,im_v2_component_message_copilot_answer,im_v2_component_message_copilot_addedUsers,im_v2_component_message_support_vote,im_v2_component_message_support_sessionNumber,im_v2_component_message_support_chatCreation,im_v2_component_message_creation_conference,im_v2_component_message_supervisor_updateFeature,im_v2_component_message_supervisor_enableFeature,im_v2_component_message_sign,im_v2_component_message_checkIn,im_v2_component_message_creation_ownChat,im_v2_component_message_zoomInvite,im_v2_component_message_creation_generalChat,im_v2_component_message_creation_generalChannel,im_v2_component_message_creation_channel,imopenlines_v2_component_message_startDialog,imopenlines_v2_component_message_hidden,imopenlines_v2_component_message_feedbackForm,im_v2_component_message_call,im_v2_component_message_vote,im_v2_component_message_creation_taskChat,im_v2_component_message_collab_convert,im_v2_component_message_aiAssistant_answer) {
 	'use strict';
 
 	var fr = 60;
@@ -7108,10 +7108,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      type: String,
 	      required: true
 	    },
-	    show: {
-	      type: Boolean,
-	      required: true
-	    },
 	    bindElement: {
 	      type: Object,
 	      required: true
@@ -7130,13 +7126,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      return this.$store.getters['chats/get'](this.dialogId, true);
 	    }
 	  },
-	  watch: {
-	    show(newValue, oldValue) {
-	      if (!oldValue && newValue) {
-	        this.showPopup = true;
-	        void this.loadUsers();
-	      }
-	    }
+	  mounted() {
+	    this.showPopup = true;
+	    void this.loadUsers();
 	  },
 	  methods: {
 	    async loadUsers() {
@@ -7181,13 +7173,76 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	`
 	};
 
-	const MORE_USERS_CSS_CLASS = 'bx-im-dialog-chat-status__user-count';
+	// @vue/component
+	const UserRead = {
+	  name: 'UserRead',
+	  props: {
+	    dialogId: {
+	      required: true,
+	      type: String
+	    }
+	  },
+	  computed: {
+	    dialog() {
+	      return this.$store.getters['chats/get'](this.dialogId, true);
+	    },
+	    formattedStatus() {
+	      const {
+	        date
+	      } = this.dialog.lastMessageViews.firstViewer;
+	      return this.loc('IM_MESSAGE_LIST_STATUS_READ_USER_MSGVER_1', {
+	        '#DATE#': im_v2_lib_dateFormatter.DateFormatter.formatByTemplate(date, im_v2_lib_dateFormatter.DateTemplate.messageReadStatus)
+	      });
+	    }
+	  },
+	  methods: {
+	    loc(phraseCode, replacements = {}) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
+	    }
+	  },
+	  template: `
+		<div class="bx-im-dialog-chat-status__text">{{ formattedStatus }}</div>
+	`
+	};
 
 	// @vue/component
-	const ReadStatus = {
-	  name: 'ReadStatus',
+	const ChatSingleRead = {
+	  name: 'ChatSingleRead',
+	  props: {
+	    dialogId: {
+	      required: true,
+	      type: String
+	    }
+	  },
+	  computed: {
+	    dialog() {
+	      return this.$store.getters['chats/get'](this.dialogId, true);
+	    },
+	    formattedStatus() {
+	      const {
+	        firstViewer
+	      } = this.dialog.lastMessageViews;
+	      return this.loc('IM_MESSAGE_LIST_STATUS_READ_CHAT', {
+	        '#USER#': firstViewer.userName
+	      });
+	    }
+	  },
+	  methods: {
+	    loc(phraseCode, replacements = {}) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
+	    }
+	  },
+	  template: `
+		<div class="bx-im-dialog-chat-status__text">{{ formattedStatus }}</div>
+	`
+	};
+
+	// @vue/component
+	const ChatMultipleRead = {
+	  name: 'ChatMultipleRead',
 	  components: {
-	    AdditionalUsers
+	    AdditionalUsers,
+	    RichLoc: ui_vue3_components_richLoc.RichLoc
 	  },
 	  props: {
 	    dialogId: {
@@ -7197,9 +7252,68 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  },
 	  data() {
 	    return {
-	      showAdditionalUsers: false,
-	      additionalUsersLinkElement: null
+	      showAdditionalUsers: false
 	    };
+	  },
+	  computed: {
+	    dialog() {
+	      return this.$store.getters['chats/get'](this.dialogId, true);
+	    },
+	    formattedStatus() {
+	      const {
+	        countOfViewers,
+	        firstViewer
+	      } = this.dialog.lastMessageViews;
+	      return this.loc('IM_MESSAGE_LIST_STATUS_READ_CHAT_PLURAL_MSGVER_2', {
+	        '#USERS#': firstViewer.userName,
+	        '#COUNT#': countOfViewers - 1
+	      });
+	    }
+	  },
+	  methods: {
+	    onMoreUsersClick() {
+	      this.showAdditionalUsers = true;
+	    },
+	    onUsersPopupClose() {
+	      this.showAdditionalUsers = false;
+	    },
+	    loc(phraseCode, replacements = {}) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
+	    }
+	  },
+	  template: `
+		<div class="bx-im-dialog-chat-status__text">
+			<RichLoc :text="formattedStatus" placeholder="[link]">
+				<template #link="{ text }">
+					<span class="bx-im-dialog-chat-status__user-count" @click="onMoreUsersClick" ref="moreUsers">
+						{{ text }}
+					</span>
+				</template>
+			</RichLoc>
+		</div>
+		<AdditionalUsers
+			v-if="showAdditionalUsers"
+			:dialogId="dialogId"
+			:bindElement="$refs['moreUsers'] || {}"
+			@close="onUsersPopupClose"
+		/>
+	`
+	};
+
+	// @vue/component
+	const ReadStatus = {
+	  name: 'ReadStatus',
+	  components: {
+	    UserRead,
+	    ChatSingleRead,
+	    ChatMultipleRead,
+	    AdditionalUsers
+	  },
+	  props: {
+	    dialogId: {
+	      required: true,
+	      type: String
+	    }
 	  },
 	  computed: {
 	    dialog() {
@@ -7211,67 +7325,16 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    lastMessageViews() {
 	      return this.dialog.lastMessageViews;
 	    },
-	    readStatusText() {
-	      if (this.isUser) {
-	        return this.formatUserViewStatus();
-	      }
-	      return this.formatChatViewStatus();
-	    }
-	  },
-	  methods: {
-	    formatUserViewStatus() {
-	      const {
-	        date
-	      } = this.lastMessageViews.firstViewer;
-	      return this.loc('IM_MESSAGE_LIST_STATUS_READ_USER_MSGVER_1', {
-	        '#DATE#': im_v2_lib_dateFormatter.DateFormatter.formatByTemplate(date, im_v2_lib_dateFormatter.DateTemplate.messageReadStatus)
-	      });
-	    },
-	    formatChatViewStatus() {
-	      const {
-	        countOfViewers,
-	        firstViewer
-	      } = this.lastMessageViews;
-	      if (countOfViewers === 1) {
-	        return this.loc('IM_MESSAGE_LIST_STATUS_READ_CHAT', {
-	          '#USER#': main_core.Text.encode(firstViewer.userName)
-	        });
-	      }
-	      return this.loc('IM_MESSAGE_LIST_STATUS_READ_CHAT_PLURAL', {
-	        '#USERS#': main_core.Text.encode(firstViewer.userName),
-	        '#LINK_START#': `<span class="${MORE_USERS_CSS_CLASS}">`,
-	        '#COUNT#': countOfViewers - 1,
-	        '#LINK_END#': '</span>'
-	      });
-	    },
-	    onClick(event) {
-	      if (!event.target.matches(`.${MORE_USERS_CSS_CLASS}`)) {
-	        return;
-	      }
-	      this.openUsersPopup();
-	    },
-	    openUsersPopup() {
-	      this.additionalUsersLinkElement = document.querySelector(`.${MORE_USERS_CSS_CLASS}`);
-	      this.showAdditionalUsers = true;
-	    },
-	    onUsersPopupClose() {
-	      this.showAdditionalUsers = false;
-	      this.additionalUsersLinkElement = null;
-	    },
-	    loc(phraseCode, replacements = {}) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
+	    countOfViewers() {
+	      return this.lastMessageViews.countOfViewers;
 	    }
 	  },
 	  template: `
 		<div class="bx-im-dialog-chat-status__content">
 			<div class="bx-im-dialog-chat-status__icon --read"></div>
-			<div v-html="readStatusText" @click="onClick" class="bx-im-dialog-chat-status__text"></div>
-			<AdditionalUsers
-				:dialogId="dialogId"
-				:show="showAdditionalUsers"
-				:bindElement="additionalUsersLinkElement || {}"
-				@close="onUsersPopupClose"
-			/>
+			<UserRead v-if="isUser" :dialogId="dialogId" />
+			<ChatSingleRead v-else-if="countOfViewers === 1" :dialogId="dialogId" />
+			<ChatMultipleRead v-else :dialogId="dialogId" />
 		</div>
 	`
 	};
@@ -8406,5 +8469,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.MessageComponents = MessageComponents;
 	exports.CollectionManager = CollectionManager;
 
-}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Animation??{},BX?.Messenger?.v2?.Lib??{},BX?.UI??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX??{},BX?.Event??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Application??{},BX?.Messenger?.v2?.Const??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.OpenLines?.v2?.Component?.Message??{},BX?.OpenLines?.v2?.Component?.Message??{},BX?.OpenLines?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.IM?.V2?.Component?.Message?.Collab??{},BX?.Messenger?.v2?.Component?.Message??{}));
+}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Animation??{},BX?.Messenger?.v2?.Lib??{},BX?.UI??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.UI?.Vue3?.Components??{},BX?.Messenger?.v2?.Lib??{},BX??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX??{},BX?.Event??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Application??{},BX?.Messenger?.v2?.Const??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.OpenLines?.v2?.Component?.Message??{},BX?.OpenLines?.v2?.Component?.Message??{},BX?.OpenLines?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.IM?.V2?.Component?.Message?.Collab??{},BX?.Messenger?.v2?.Component?.Message??{}));
 //# sourceMappingURL=message-list.bundle.js.map

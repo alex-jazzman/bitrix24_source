@@ -209,7 +209,7 @@ class LandingBaseComponent extends \CBitrixComponent
 					['zones' => ['es', 'la'], 'id' => '315','lang' => 'la', 'sec' => 'd3jam4'],
 					['zones' => ['de'], 'id' => '319','lang' => 'de', 'sec' => 'pr1z8q'],
 					['zones' => ['ua'], 'id' => '321','lang' => 'ua', 'sec' => 'm6etjp'],
-					['zones' => ['ru', 'by', 'kz'], 'id' => '311','lang' => 'ru', 'sec' => 'b8sbcz'],
+					['zones' => ['ru', 'by', 'kz', 'uz'], 'id' => '311','lang' => 'ru', 'sec' => 'b8sbcz'],
 					['zones' => ['en'], 'id' => '313','lang' => 'en', 'sec' => '9hdvqb']
 				],
 				'PRESETS' => [
@@ -224,7 +224,7 @@ class LandingBaseComponent extends \CBitrixComponent
 					['zones' => ['es', 'la'], 'id' => '277','lang' => 'la', 'sec' => 'eytrfo'],
 					['zones' => ['de'], 'id' => '281','lang' => 'de', 'sec' => '167ch0'],
 					['zones' => ['ua'], 'id' => '283','lang' => 'ua', 'sec' => 'ggoa61'],
-					['zones' => ['ru', 'by', 'kz'], 'id' => '273','lang' => 'ru', 'sec' => 'z71z93'],
+					['zones' => ['ru', 'by', 'kz', 'uz'], 'id' => '273','lang' => 'ru', 'sec' => 'z71z93'],
 					['zones' => ['en'], 'id' => '275','lang' => 'en', 'sec' => '5cs6v2']
 				],
 				'PRESETS' => [
@@ -252,7 +252,7 @@ class LandingBaseComponent extends \CBitrixComponent
 					['zones' => ['vn'], 'id' => '964','lang' => 'vn', 'sec' => '01bk91'],
 					['zones' => ['hi'], 'id' => '965','lang' => 'hi', 'sec' => 'io8koq'],
 					['zones' => ['ua'], 'id' => '969','lang' => 'ua', 'sec' => 'e5se9x'],
-					['zones' => ['ru'], 'id' => '891','lang' => 'ru', 'sec' => 'h208n3'],
+					['zones' => ['ru', 'uz'], 'id' => '891','lang' => 'ru', 'sec' => 'h208n3'],
 					['zones' => ['kz'], 'id' => '968','lang' => 'ru', 'sec' => '1312ws'],
 					['zones' => ['by'], 'id' => '971','lang' => 'ru', 'sec' => '023nxk']
 				],
@@ -276,7 +276,7 @@ class LandingBaseComponent extends \CBitrixComponent
 					['zones' => ['pl'], 'id' => '1392','lang' => 'pl', 'sec' => 'ib6p6u'],
 					['zones' => ['pt'], 'id' => '1394','lang' => 'pt', 'sec' => 'sfzq02'],
 					['zones' => ['ua'], 'id' => '1373','lang' => 'ua', 'sec' => 'p4xpwb'],
-					['zones' => ['ru'], 'id' => '1368','lang' => 'ru', 'sec' => '0rb92n'],
+					['zones' => ['ru', 'uz'], 'id' => '1368','lang' => 'ru', 'sec' => '0rb92n'],
 					['zones' => ['kz'], 'id' => '1372','lang' => 'ru', 'sec' => 'o32l7z'],
 					['zones' => ['by'], 'id' => '1378','lang' => 'ru', 'sec' => 'naegic']
 				],
@@ -299,7 +299,7 @@ class LandingBaseComponent extends \CBitrixComponent
 					['zones' => ['fr'], 'id' => '1968','lang' => 'fr', 'sec' => '8rao53'],
 					['zones' => ['pl'], 'id' => '1967','lang' => 'pl', 'sec' => 'hg6mms'],
 					['zones' => ['pt'], 'id' => '1964','lang' => 'pt', 'sec' => 'n4evxs'],
-					['zones' => ['ru'], 'id' => '1291','lang' => 'ru', 'sec' => 'a9byq4'],
+					['zones' => ['ru', 'uz'], 'id' => '1291','lang' => 'ru', 'sec' => 'a9byq4'],
 					['zones' => ['kz'], 'id' => '1298','lang' => 'ru', 'sec' => '6xe72g'],
 					['zones' => ['by'], 'id' => '1297','lang' => 'ru', 'sec' => 'b9rrf5'],
 					['zones' => ['it'], 'id' => '1969','lang' => 'it', 'sec' => 'o13tam'],
@@ -319,7 +319,7 @@ class LandingBaseComponent extends \CBitrixComponent
 				'ID' => 'landing-feedback-mainpage',
 				'VIEW_TARGET' => null,
 				'FORMS' => [
-					['zones' => ['ru'], 'id' => 2767, 'lang' => 'ru', 'sec' => '8ybuip'],
+					['zones' => ['ru', 'uz'], 'id' => 2767, 'lang' => 'ru', 'sec' => '8ybuip'],
 					['zones' => ['kz'], 'id' => 2768, 'lang' => 'ru', 'sec' => 'ga494z'],
 					['zones' => ['by'], 'id' => 2769, 'lang' => 'ru', 'sec' => 'gs4uy1'],
 					['zones' => ['en'], 'id' => 2770, 'lang' => 'en', 'sec' => 'af0ljd'],

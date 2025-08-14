@@ -3,11 +3,13 @@
 return [
 	'extensions' => [
 		'type',
-		'loc',
 		'alert',
 		'utils/object',
 		'utils/array',
 		'device/connection',
+		'user-profile',
+
+		'im:messenger/loc',
 		'im:messenger/lib/di/service-locator',
 		'im:messenger/const',
 		'im:messenger/cache/share-dialog',

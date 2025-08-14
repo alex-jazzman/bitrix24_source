@@ -6,8 +6,6 @@ use Bitrix\Crm\Binding\DealContactTable;
 use Bitrix\Crm\DealTable;
 use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Crm\Service\Communication\Utils\Common;
-use Bitrix\Main\Application;
-use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Main\Type\Date;
 
@@ -45,21 +43,7 @@ abstract class BasePeriodCollector extends BaseCollector
 
 	private function getEveryPeriodCompaniesQuery(array $filter, bool $isNextDayIntervals = false): Query
 	{
-		$query = DealTable::query();
-
-		$query->setSelect(['COMPANY_ID'])
-			->where('COMPANY_ID', '>', $filter['>ID'] ?? 0)
-			->setLimit($this->limit)
-			->setOrder(['COMPANY_ID' => 'ASC'])
-			->setDistinct()
-		;
-
-		foreach ($this->getIntervals() as $interval)
-		{
-			$query->whereExists($this->getSqlExpression($query, $interval, 'COMPANY_ID', $isNextDayIntervals));
-		}
-
-		return $query;
+		return $this->getQuery('COMPANY_ID', 'COMPANY_ID', $filter, $isNextDayIntervals);
 	}
 
 	protected function getCompanyIdsFromQuery(Query $query): array
@@ -113,19 +97,64 @@ abstract class BasePeriodCollector extends BaseCollector
 
 	private function getEveryPeriodDealsQuery(array $filter, bool $isNextDayIntervals = false): Query
 	{
-		$query = DealTable::query()
-			->setSelect(['ID'])
-			->where('CONTACT_ID', '>', $filter['>ID'] ?? 0)
-			->setLimit($this->limit)
-			->setOrder(['CONTACT_ID' => 'ASC'])
+		return $this->getQuery('ID', 'CONTACT_ID', $filter, $isNextDayIntervals);
+	}
+
+	private function getQuery(
+		string $resultFieldName,
+		string $filterFieldName,
+		array $filter,
+		bool $isNextDayIntervals = false,
+	): Query
+	{
+		$offset = $this->getOffset();
+		$period = $this->getPeriod();
+
+		$buildPeriod = static function ($interval, $isNextDay) use ($offset, $period) {
+			$start = (new Date())->add($offset)->add($interval);
+			$finish = (new Date())->add($offset)->add($interval)->add($period);
+
+			if ($isNextDay)
+			{
+				$start->add('1 day');
+			}
+
+			return [$start, $finish];
+		};
+
+		$intervals = $this->getIntervals();
+		[$periodStart, $periodFinish] = $buildPeriod(end($intervals), $isNextDayIntervals);
+
+		$subQuery = DealTable::query()
+			->setSelect([$filterFieldName])
+			->where('STAGE_SEMANTIC_ID', PhaseSemantics::SUCCESS)
+			->where('DATE_CREATE', '>=', $periodStart)
+			->where('DATE_CREATE', '<', $periodFinish)
+			->where($filterFieldName, '>', $filter['>ID'] ?? 0)
 		;
 
-		foreach ($this->getIntervals() as $interval)
+		for ($i = count($intervals) - 2; $i >= 0; $i--)
 		{
-			$query->whereExists($this->getSqlExpression($query, $interval, 'CONTACT_ID', $isNextDayIntervals));
+			[$periodStart, $periodFinish] = $buildPeriod($intervals[$i], $isNextDayIntervals);
+
+			$subQuery = DealTable::query()
+				->setDistinct()
+				->setSelect(array_unique([$resultFieldName, $filterFieldName]))
+				->where('STAGE_SEMANTIC_ID', PhaseSemantics::SUCCESS)
+				->where('DATE_CREATE', '>=', $periodStart)
+				->where('DATE_CREATE', '<', $periodFinish)
+				->whereIn($filterFieldName, $subQuery)
+			;
 		}
 
-		return $query;
+		$finalQuery = new Query($subQuery);
+		$finalQuery
+			->setSelect([$resultFieldName])
+			->setOrder([$filterFieldName => 'ASC'])
+			->setLimit($this->limit)
+		;
+
+		return $finalQuery;
 	}
 
 	protected function getEveryPeriodDealIds(Query $query): array
@@ -155,33 +184,6 @@ abstract class BasePeriodCollector extends BaseCollector
 			->whereIn('CONTACT_ID', $everyPeriodDealContactIds)
 			->setDistinct()
 		;
-	}
-
-	private function getSqlExpression(
-		Query $query,
-		string $interval,
-		string $fieldName,
-		bool $isNextDayPeriod,
-	): SqlExpression
-	{
-		$sqlHelper = Application::getConnection()->getSqlHelper();
-
-		$periodStart = (new Date())->add($this->getOffset())->add($interval);
-		$periodFinish = (new Date())->add($this->getOffset())->add($interval)->add($this->getPeriod());
-
-		if ($isNextDayPeriod)
-		{
-			$periodStart->add('1 day');
-		}
-
-		return new SqlExpression("
-			SELECT 1
-			FROM " . DealTable::getTableName() . "
-			WHERE
-				" . $fieldName . " = " . $query->getInitAlias() . "." . $fieldName . "
-				AND STAGE_SEMANTIC_ID = '" . $sqlHelper->forSql(PhaseSemantics::SUCCESS) . "' 
-				AND DATE_CREATE BETWEEN " . $sqlHelper->convertToDbDateTime($periodStart) . " AND " . $sqlHelper->convertToDbDateTime($periodFinish),
-		);
 	}
 
 	protected function getNextItemsMinId(int $entityTypeId, array $filter): ?int

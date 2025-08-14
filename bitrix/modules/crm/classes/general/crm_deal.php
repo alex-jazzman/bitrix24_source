@@ -3739,10 +3739,15 @@ class CAllCrmDeal
 					}
 				}
 
-				if (Container::getInstance()->getRepeatSaleAvailabilityChecker()->isAvailable())
+				if (
+					($stageSemanticsId !== ($arRow['STAGE_SEMANTIC_ID'] ?? null))
+					&& Container::getInstance()->getRepeatSaleAvailabilityChecker()->isAvailable()
+				)
 				{
-					$repeatSaleController = RepeatSaleLogController::getInstance();
-					$repeatSaleController->updateStageSemanticId($stageSemanticsId, $ID, \CCrmOwnerType::Deal);
+					RepeatSaleLogController::getInstance()->updateStageSemanticId(
+						$stageSemanticsId,
+						new ItemIdentifier(\CCrmOwnerType::Deal, $ID),
+					);
 				}
 			}
 

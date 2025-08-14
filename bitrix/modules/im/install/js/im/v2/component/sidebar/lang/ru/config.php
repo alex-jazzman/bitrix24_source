@@ -96,6 +96,11 @@ $MESS['IM_SIDEBAR_SUPPORT_TICKET_STATUS_CLOSE'] = "закрыт";
 $MESS['IM_SIDEBAR_ADD_BUTTON_TEXT'] = "Добавить";
 $MESS['IM_SIDEBAR_SUPPORT_TICKET_ADD_BUTTON_TEXT'] = "Открыть новый";
 
+// ai models
+$MESS['IM_SIDEBAR_AI_MODEL_POPUP_MARKET'] = "Выбрать в маркете";
+$MESS['IM_SIDEBAR_AI_MODEL_POPUP_SETTINGS'] = "Настройки";
+$MESS['IM_SIDEBAR_AI_MODEL_POPUP_HELP'] = "Что выбрать?";
+
 $MESS['IM_SIDEBAR_SUPPORT_TICKET_LIMIT'] = "Превышено число вопросов в поддержку, которые ждут решения.";
 $MESS['IM_SIDEBAR_COPILOT_CHANGE_ROLE_DIALOG_TITLE'] = "Изменить роль";
 $MESS['IM_SIDEBAR_COPILOT_CHANGE_ROLE_PROMO_TEXT'] = "Выберите роль [copilot_color]CoPilot[/copilot_color] для более точных ответов в нужной области";

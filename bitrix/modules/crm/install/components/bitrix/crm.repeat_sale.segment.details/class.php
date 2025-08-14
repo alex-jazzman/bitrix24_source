@@ -83,9 +83,7 @@ class CCrmRepeatSaleSegmentDetailsComponent extends Base
 		];
 
 		$this->arResult['copilotSettings'] = $this->getCopilotSettings();
-
-		$isReadOnly = (bool)$this->request->getPost('readOnly');
-		$this->arResult['readOnly'] = $isReadOnly || !$userPermissions->repeatSale()->canEdit();
+		$this->arResult['readOnly'] = !$userPermissions->repeatSale()->canEdit();
 
 		$analytics = $this->request->getPost('analytics') ?? [];
 		$this->arResult['analytics'] = $this->getPreparedAnalytics($analytics);

@@ -2,6 +2,7 @@ import { Loc, Runtime } from 'main.core';
 import type { BitrixVueComponentProps } from 'ui.vue3';
 import { EventEmitter, BaseEvent } from 'main.core.events';
 import { DashboardGroup, type Group, type Dashboard, GroupType } from 'biconnector.dashboard-group';
+import { PermissionsAnalytics, PermissionsAnalyticsSource } from 'biconnector.apache-superset-analytics';
 
 export const PermissionsApp: BitrixVueComponentProps = {
 	props: {},
@@ -14,6 +15,11 @@ export const PermissionsApp: BitrixVueComponentProps = {
 		EventEmitter.subscribe('BX.UI.AccessRights.V2:afterSave', this.afterSaveRights);
 		EventEmitter.subscribe('BX.UI.AccessRights.V2:onResetState', this.handleResetState);
 		EventEmitter.subscribe('BIConnector.GroupPopup:onGroupUpdated', this.handleGroupChange);
+		EventEmitter.subscribe('BIConnector.GroupPopup:onPopupClose', this.handleGroupPopupClose);
+		EventEmitter.subscribe('BIConnector.GroupPopup.DashboardScopeSelector:onDialogHide', this.handleDashboardScopeSelectorClose);
+		EventEmitter.subscribe('BIConnector.GroupPopup.ScopeSelector:onDialogHide', this.handleScopeSelectorClose);
+		EventEmitter.subscribe('BIConnector.GroupPopup.DashboardSelector:onDialogHide', this.handleDashboardListEdit);
+		EventEmitter.subscribe('BIConnector.GroupPopup.DashboardList:onDashboardRemove', this.handleDashboardListEdit);
 	},
 	beforeUnmount(): void
 	{
@@ -24,11 +30,74 @@ export const PermissionsApp: BitrixVueComponentProps = {
 		EventEmitter.unsubscribe('BX.UI.AccessRights.V2:afterSave', this.afterSaveRights);
 		EventEmitter.unsubscribe('BX.UI.AccessRights.V2:onResetState', this.handleResetState);
 		EventEmitter.unsubscribe('BIConnector.GroupPopup:onGroupUpdated', this.handleGroupChange);
+		EventEmitter.unsubscribe('BIConnector.GroupPopup:onPopupClose', this.handleGroupPopupClose);
+		EventEmitter.unsubscribe('BIConnector.GroupPopup.DashboardScopeSelector:onDialogHide', this.handleDashboardScopeSelectorClose);
+		EventEmitter.unsubscribe('BIConnector.GroupPopup.ScopeSelector:onDialogHide', this.handleScopeSelectorClose);
+		EventEmitter.unsubscribe('BIConnector.GroupPopup.DashboardSelector:onDialogHide', this.handleDashboardListEdit);
+		EventEmitter.unsubscribe('BIConnector.GroupPopup.DashboardList:onDashboardRemove', this.handleDashboardListEdit);
 	},
 	computed: {},
 	methods: {
+		handleDashboardScopeSelectorClose(event: BaseEvent): void
+		{
+			if (!event.getData()?.isScopeListEdited)
+			{
+				return;
+			}
+
+			PermissionsAnalytics.sendGroupDashboardScopeEditAnalytics(
+				PermissionsAnalyticsSource.permissionsSlider,
+			);
+		},
+		handleDashboardListEdit(event: BaseEvent): void
+		{
+			if (!event.getData()?.isDashboardListEdited)
+			{
+				return;
+			}
+
+			PermissionsAnalytics.sendGroupDashboardEditAnalytics(
+				PermissionsAnalyticsSource.permissionsSlider,
+			);
+		},
+		handleScopeSelectorClose(event: BaseEvent): void
+		{
+			if (!event.getData()?.isScopeListEdited)
+			{
+				return;
+			}
+
+			PermissionsAnalytics.sendGroupScopeEditAnalytics(
+				PermissionsAnalyticsSource.permissionsSlider,
+			);
+		},
+		handleGroupPopupClose(event: BaseEvent): void
+		{
+			const eventData = event.getData();
+			const group = eventData?.group;
+			const isTitleEdited = eventData?.isTitleEdited;
+			const isDashboardListEdited = eventData?.isDashboardListEdited;
+			const isScopeListEdited = eventData?.isScopeListEdited;
+
+			if (!group || (!isTitleEdited && !isDashboardListEdited && !isScopeListEdited))
+			{
+				return;
+			}
+
+			PermissionsAnalytics.sendGroupActionAnalytics(
+				PermissionsAnalyticsSource.permissionsSlider,
+				false,
+				isDashboardListEdited,
+				isScopeListEdited,
+			);
+		},
 		handleOnSectionHeaderClick(event: BaseEvent): void
 		{
+			PermissionsAnalytics.sendClickGroupActionAnalytics(
+				PermissionsAnalyticsSource.permissionsSlider,
+				true,
+			);
+
 			const eventData = event.getData();
 			if (eventData.section.sectionCode === 'SECTION_RIGHTS_GROUP')
 			{
@@ -66,6 +135,11 @@ export const PermissionsApp: BitrixVueComponentProps = {
 		},
 		handleOnRightClick(event: BaseEvent): void
 		{
+			PermissionsAnalytics.sendClickGroupActionAnalytics(
+				PermissionsAnalyticsSource.permissionsSlider,
+				false,
+			);
+
 			const eventData = event.getData();
 			if (eventData.right)
 			{
@@ -83,6 +157,8 @@ export const PermissionsApp: BitrixVueComponentProps = {
 		},
 		handleOnRightDelete(event: BaseEvent): void
 		{
+			PermissionsAnalytics.sendGroupDeleteAnalytics(PermissionsAnalyticsSource.permissionsSlider);
+
 			const eventData = event.getData();
 			if (eventData.right)
 			{

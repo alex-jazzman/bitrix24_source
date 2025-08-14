@@ -31,12 +31,12 @@ class User
 			'TABLE_NAME' => 'b_user',
 			'TABLE_ALIAS' => 'U',
 			'FILTER' => [
-				'=IS_EXTERNAL' => 'N',
+				'!=EXTERNAL_AUTH_ID' => \Bitrix\Main\UserTable::getExternalUserTypes(),
 			],
 			'FILTER_FIELDS' => [
-				'IS_EXTERNAL' => [
+				'EXTERNAL_AUTH_ID' => [
 					'IS_METRIC' => 'N',
-					'FIELD_NAME' => "CASE WHEN EXTERNAL_AUTH_ID IN ('" . implode("', '", \Bitrix\Main\UserTable::getExternalUserTypes()) . "') THEN 'Y' ELSE 'N' END",
+					'FIELD_NAME' => 'U.EXTERNAL_AUTH_ID',
 					'FIELD_TYPE' => 'string',
 				],
 			],

@@ -5282,7 +5282,8 @@ export class View
 
 	toggleStatePictureInPictureCallWindow(isActive)
 	{
-		if (isActive && !this.pictureInPictureCallWindow && Util.isPictureInPictureFeatureEnabled())
+		const isPiPAvailable = Util.isPictureInPictureFeatureEnabled() && PictureInPictureWindow.isAvailable;
+		if (isActive && !this.pictureInPictureCallWindow && isPiPAvailable)
 		{
 			this.pictureInPictureCallWindow = new PictureInPictureWindow({
 				currentUser: this.getPictureInPictureCallWindowUser(),

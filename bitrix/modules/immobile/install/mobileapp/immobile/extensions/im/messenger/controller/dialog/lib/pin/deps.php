@@ -2,11 +2,11 @@
 
 return [
 	'extensions' => [
-		'loc',
 		'type',
 		'utils/object',
 		'utils/array',
 		'device/connection',
+		'im:messenger/loc',
 		'im:messenger/lib/feature',
 		'im:messenger/lib/di/service-locator',
 		'im:messenger/lib/parser',

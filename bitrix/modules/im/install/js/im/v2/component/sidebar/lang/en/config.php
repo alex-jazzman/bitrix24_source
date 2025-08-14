@@ -1,5 +1,8 @@
 <?php
 $MESS["IM_SIDEBAR_ADD_BUTTON_TEXT"] = "Add";
+$MESS["IM_SIDEBAR_AI_MODEL_POPUP_HELP"] = "Which provider is best for me?";
+$MESS["IM_SIDEBAR_AI_MODEL_POPUP_MARKET"] = "Select in Market";
+$MESS["IM_SIDEBAR_AI_MODEL_POPUP_SETTINGS"] = "Settings";
 $MESS["IM_SIDEBAR_AUDIO_EMPTY"] = "There are no audio files.";
 $MESS["IM_SIDEBAR_AUTODELETE_NO_PERMISSION"] = "Insufficient permission to change auto delete preferences. [helpdesklink]Learn more[/helpdesklink]";
 $MESS["IM_SIDEBAR_AUTODELETE_STATUS_1D"] = "1 day";

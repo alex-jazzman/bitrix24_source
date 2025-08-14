@@ -90,7 +90,10 @@ class Logger
 			return true;
 		}
 
-		if ($chat instanceof Chat\NullChat)
+		if (
+			$chat instanceof Chat\NullChat
+			|| $chat instanceof Chat\NotifyChat
+		)
 		{
 			return false;
 		}
@@ -273,7 +276,7 @@ class Logger
 			->setSelect(['ID'])
 			->whereIn('ID', $userIds)
 			->where('ACTIVE', true)
-			->where('IS_REAL_USER', true)
+			->where('REAL_USER', 'expr', true)
 			->fetchCollection()
 			->getIdList()
 		;

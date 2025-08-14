@@ -111,6 +111,8 @@ export class Slider
 				: 40
 		);
 
+		this.overlayBgCallback = Type.isFunction(options.overlayBgCallback) ? options.overlayBgCallback : null;
+
 		this.#startPosition = (
 			['right', 'bottom', 'top'].includes(options.startPosition)
 				? options.startPosition
@@ -417,16 +419,58 @@ export class Slider
 	{
 		const states = {
 			right: {
-				start: { translateX: 100, translateY: 0, opacity: 0, scale: 0 },
-				end: { translateX: 0, translateY: 0, opacity: this.overlayOpacity, scale: 100 },
+				start: {
+					translateX: 100,
+					translateY: 0,
+					opacity: 0,
+					scale: 0,
+					progress: 0,
+					intensity: 0,
+				},
+				end: {
+					translateX: 0,
+					translateY: 0,
+					opacity: this.overlayOpacity,
+					scale: 100,
+					progress: 100,
+					intensity: 255,
+				},
 			},
 			bottom: {
-				start: { translateX: 0, translateY: 100, opacity: 0, scale: 0 },
-				end: { translateX: 0, translateY: 0, opacity: this.overlayOpacity, scale: 100 },
+				start: {
+					translateX: 0,
+					translateY: 100,
+					opacity: 0,
+					scale: 0,
+					progress: 0,
+					intensity: 0,
+				},
+				end: {
+					translateX: 0,
+					translateY: 0,
+					opacity: this.overlayOpacity,
+					scale: 100,
+					progress: 100,
+					intensity: 255,
+				},
 			},
 			top: {
-				start: { translateX: 0, translateY: -100, opacity: 0, scale: 0 },
-				end: { translateX: 0, translateY: 0, opacity: this.overlayOpacity, scale: 100 },
+				start: {
+					translateX: 0,
+					translateY: -100,
+					opacity: 0,
+					scale: 0,
+					progress: 0,
+					intensity: 0,
+				},
+				end: {
+					translateX: 0,
+					translateY: 0,
+					opacity: this.overlayOpacity,
+					scale: 100,
+					progress: 100,
+					intensity: 255,
+				},
 			},
 		};
 
@@ -1173,8 +1217,16 @@ export class Slider
 
 	setOverlayBackground(): void
 	{
-		const opacity = parseInt(this.overlayOpacity / 100 * 255, 10).toString(16).padStart(2, 0);
-		Dom.style(this.getOverlay(), 'background-color', `${this.overlayBgColor}${opacity}`);
+		if (this.overlayBgCallback === null)
+		{
+			const opacity = parseInt(this.overlayOpacity / 100 * 255, 10).toString(16).padStart(2, 0);
+			Dom.style(this.getOverlay(), 'background-color', `${this.overlayBgColor}${opacity}`);
+		}
+		else
+		{
+			const state = this.#getAnimationState('end');
+			Dom.style(this.getOverlay(), 'background', this.overlayBgCallback(state, this));
+		}
 	}
 
 	setOverlayAnimation(animate: boolean): void
@@ -1188,6 +1240,16 @@ export class Slider
 	getOverlayAnimation(): boolean
 	{
 		return this.overlayAnimation;
+	}
+
+	getOverlayBgColor(): string
+	{
+		return this.overlayBgColor;
+	}
+
+	getOverlayOpacity(): number
+	{
+		return this.overlayOpacity;
 	}
 
 	getContainer(): HTMLElement
@@ -1736,8 +1798,15 @@ export class Slider
 
 		if (this.getOverlayAnimation())
 		{
-			const opacity = parseInt(state.opacity / 100 * 255, 10).toString(16).padStart(2, 0);
-			Dom.style(this.getOverlay(), 'background-color', `${this.overlayBgColor}${opacity}`);
+			if (this.overlayBgCallback === null)
+			{
+				const opacity = parseInt(state.opacity / 100 * 255, 10).toString(16).padStart(2, 0);
+				Dom.style(this.getOverlay(), 'background-color', `${this.overlayBgColor}${opacity}`);
+			}
+			else
+			{
+				Dom.style(this.getOverlay(), 'background', this.overlayBgCallback(state, this));
+			}
 		}
 	}
 

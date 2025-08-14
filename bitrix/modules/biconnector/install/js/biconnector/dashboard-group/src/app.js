@@ -12,7 +12,13 @@ import type { Dashboard } from './type';
 
 export const App: BitrixVueComponentProps = {
 	mounted(): void
-	{},
+	{
+		EventEmitter.subscribe('BIConnector.Internal.GroupPopup:onPopupClose', this.onGroupPopupClose);
+	},
+	beforeUnmount(): void
+	{
+		EventEmitter.unsubscribe('BIConnector.Internal.GroupPopup:onPopupClose', this.onGroupPopupClose);
+	},
 	data(): Object
 	{
 		return {
@@ -131,6 +137,9 @@ export const App: BitrixVueComponentProps = {
 					EventEmitter.emit('BIConnector.GroupPopup:onGroupSaved', {
 						group: Runtime.clone(this.$store.getters.groupData),
 						dashboards: Runtime.clone(this.$store.getters.dashboards),
+						isTitleEdited: this.$store.getters.isTitleEdited,
+						isDashboardListEdited: this.$store.getters.isDashboardListEdited,
+						isScopeListEdited: this.$store.getters.isScopeListEdited,
 					});
 				})
 				.catch((response) => {
@@ -145,6 +154,15 @@ export const App: BitrixVueComponentProps = {
 		{
 			const popup: Popup = PopupManager.getPopupById('biconnector-dashboard-group');
 			popup.close();
+		},
+		onGroupPopupClose(): void
+		{
+			EventEmitter.emit('BIConnector.GroupPopup:onPopupClose', {
+				group: this.$store.getters.groupData,
+				isTitleEdited: this.$store.getters.isTitleEdited,
+				isDashboardListEdited: this.$store.getters.isDashboardListEdited,
+				isScopeListEdited: this.$store.getters.isScopeListEdited,
+			});
 		},
 	},
 	components: {
@@ -172,9 +190,7 @@ export const App: BitrixVueComponentProps = {
 			<div class="group-button-wrapper">
 				<DashboardSelector :dashboards="dashboards" @on-dashboards-change="updateRight"/>
 			</div>
-			<div class="group-scope-selector">
-				<GroupScopeSelector @on-group-scope-add="onGroupScopeAdd" @on-group-scope-remove="onGroupScopeRemove" :can-edit="!isSystemGroup"/>
-			</div>
+			<GroupScopeSelector @on-group-scope-add="onGroupScopeAdd" @on-group-scope-remove="onGroupScopeRemove" :can-edit="!isSystemGroup"/>
 		</div>
 		<div class="group-dashboard-empty" v-if="isNoDashboards">
 			<img class="group-dashboard-empty-image" src="/bitrix/images/biconnector/dashboard-groups/empty-state.svg" alt="No dashboards">
@@ -182,10 +198,11 @@ export const App: BitrixVueComponentProps = {
 			<div class="group-dashboard-empty-subtitle">{{ $Bitrix.Loc.getMessage('BI_GROUP_EMPTY_SUBTITLE') }}</div>
 		</div>
 		<div class="group-dashboard-list" :class="{'group-dashboard-list-scroll': isDashboardListScrollable}" v-else>
-			<DashboardItem 
-				v-for="dashboard of dashboards" 
-				ref="dashboardItem" 
-				:dashboard="dashboard" 
+			<DashboardItem
+				v-for="dashboard of dashboards"
+				:key="dashboard.id"
+				ref="dashboardItem"
+				:dashboard="dashboard"
 				@on-dashboard-change="updateRight"
 				@on-dashboard-remove="onDashboardRemove"
 			/>

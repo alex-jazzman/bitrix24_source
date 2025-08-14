@@ -2107,18 +2107,8 @@ class CCrmDealDetailsComponent
 		//region Responsible
 		if(isset($this->entityData['ASSIGNED_BY_ID']) && $this->entityData['ASSIGNED_BY_ID'] > 0)
 		{
-			$dbUsers = \CUser::GetList(
-				'ID',
-				'ASC',
-				array('ID' => $this->entityData['ASSIGNED_BY_ID']),
-				array(
-					'FIELDS' => array(
-						'ID',  'LOGIN', 'PERSONAL_PHOTO',
-						'NAME', 'SECOND_NAME', 'LAST_NAME'
-					)
-				)
-			);
-			$user = is_object($dbUsers) ? $dbUsers->Fetch() : null;
+			$user = Container::getInstance()->getUserBroker()->getById($this->entityData['ASSIGNED_BY_ID']);
+
 			if(is_array($user))
 			{
 				$this->entityData['ASSIGNED_BY_LOGIN'] = $user['LOGIN'];
@@ -2144,7 +2134,7 @@ class CCrmDealDetailsComponent
 			{
 				continue;
 			}
-			
+
 			$isEmptyField = true;
 			$fieldParams = $fieldData['data']['fieldInfo'];
 
@@ -2164,7 +2154,7 @@ class CCrmDealDetailsComponent
 				$fieldParams['VALUE'] = $fieldValue;
 				$isEmptyField = false;
 			}
-			
+
 			$fieldSignature = $this->userFieldDispatcher->getSignature($fieldParams);
 			if ($isEmptyField)
 			{
@@ -2180,7 +2170,7 @@ class CCrmDealDetailsComponent
 					'SIGNATURE' => $fieldSignature,
 					'IS_EMPTY' => false,
 				];
-				
+
 				if($fieldData['data']['fieldInfo']['USER_TYPE_ID'] === 'file')
 				{
 					$values = is_array($fieldValue) ? $fieldValue : [$fieldValue];
@@ -2675,7 +2665,7 @@ class CCrmDealDetailsComponent
 			}
 			else if($entityId > 0)
 			{
-				$item = $this->factory->getItem($entityId);
+				$item = $this->factory->getItem($entityId, $this->editorAdapter->getProductRowSummaryItemFieldsToSelect());
 			}
 
 			if(!$item)

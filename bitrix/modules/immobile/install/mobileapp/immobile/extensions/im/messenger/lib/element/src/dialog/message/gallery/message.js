@@ -19,7 +19,7 @@ jn.define('im/messenger/lib/element/dialog/message/gallery/message', (require, e
 		}
 
 		/**
-		 * @description not used for fake gallery
+		 * @description not used for a fake gallery
 		 * @return {string}
 		 */
 		static getComponentId()

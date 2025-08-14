@@ -6,7 +6,7 @@
 jn.define('im/messenger/controller/chat-creator/chat-creator', (require, exports, module) => {
 	/* global PageManager, ChatSearchScopes, ChatDataConverter */
 	const { Type } = require('type');
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { clone } = require('utils/object');
 
 	const { Feature } = require('im/messenger/lib/feature');

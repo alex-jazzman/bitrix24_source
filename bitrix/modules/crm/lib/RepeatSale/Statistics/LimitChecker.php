@@ -2,11 +2,10 @@
 
 namespace Bitrix\Crm\RepeatSale\Statistics;
 
-use Bitrix\Crm\CompanyTable;
-use Bitrix\Crm\ContactTable;
-use Bitrix\Crm\DealTable;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Traits\Singleton;
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\Data\Cache;
 
 final class LimitChecker
 {
@@ -16,26 +15,54 @@ final class LimitChecker
 	private const ENTITY_ITEMS_COUNT_LIMIT = 300000;
 	private const TTL = 86400;
 
+	private static ?bool $isLimitExceeded = null;
+
 	public function isLimitExceeded(): bool
 	{
 		$limit = $this->getEntityItemsCountLimit();
-		$cache = ['ttl' => self::TTL];
 
-		$dealsCount = DealTable::getCount([], $cache);
-		if ($dealsCount >= $limit)
+		if (self::$isLimitExceeded === null)
 		{
-			return true;
+			$cache = Cache::createInstance();
+			if ($cache->initCache(
+				self::TTL,
+				'crm.repeatsale.statistics.limit',
+				'/crm/repeatsale/statistics/limit/',
+			))
+			{
+				self::$isLimitExceeded = $cache->getVars();
+
+				return self::$isLimitExceeded;
+			}
 		}
 
-		$contactsCount = ContactTable::getCount([], $cache);
-		if ($contactsCount >= $limit)
+		if (self::$isLimitExceeded === null)
 		{
-			return true;
+			$container = Container::getInstance();
+			$isLimitExceeded = false;
+
+			if ($container->getFactory(\CCrmOwnerType::Deal)?->checkIfTotalItemsCountExceeded($limit))
+			{
+				$isLimitExceeded = true;
+			}
+
+			if (!$isLimitExceeded && $container->getFactory(\CCrmOwnerType::Contact)?->checkIfTotalItemsCountExceeded($limit))
+			{
+				$isLimitExceeded = true;
+			}
+
+			if (!$isLimitExceeded && $container->getFactory(\CCrmOwnerType::Company)?->checkIfTotalItemsCountExceeded($limit))
+			{
+				$isLimitExceeded = true;
+			}
+
+			self::$isLimitExceeded = $isLimitExceeded;
+
+			$cache->startDataCache();
+			$cache->endDataCache(self::$isLimitExceeded);
 		}
 
-		$companiesCount = CompanyTable::getCount([], $cache);
-
-		return $companiesCount >= $limit;
+		return self::$isLimitExceeded;
 	}
 
 	private function getEntityItemsCountLimit(): int

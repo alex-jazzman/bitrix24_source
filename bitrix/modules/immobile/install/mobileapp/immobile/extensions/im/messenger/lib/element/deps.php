@@ -2,7 +2,6 @@
 
 return [
 	'extensions' => [
-		'loc',
 		'type',
 		'tokens',
 		'apptheme',
@@ -22,6 +21,7 @@ return [
 		'ui-system/blocks/avatar',
 		'ui-system/blocks/icon',
 		'im:lib/theme',
+		'im:messenger/loc',
 		'im:messenger/lib/di/service-locator',
 		'im:messenger/assets/common',
 		'im:messenger/assets/copilot',

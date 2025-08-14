@@ -1223,7 +1223,10 @@ final class Integrator
 			self::PROXY_ACTION_CREATE_DATASET => true,
 			self::PROXY_ACTION_UPDATE_DATASET => true,
 			self::PROXY_ACTION_DELETE_DATASET => true,
+			self::PROXY_ACTION_GET_UNUSED_ELEMENTS => false,
+			self::PROXY_ACTION_DELETE_UNUSED_ELEMENTS => false,
 		];
+		// TODO Add other actions and create middleware which will check action existing in this list.
 
 		if (!array_key_exists($action, $actions))
 		{

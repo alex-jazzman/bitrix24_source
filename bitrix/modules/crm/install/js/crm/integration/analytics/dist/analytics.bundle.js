@@ -71,8 +71,10 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 	  TYPE_WA_ACTIVITY_CREATE: 'wa_activity_create',
 	  TYPE_WA_ACTIVITY_DELETE: 'wa_activity_delete',
 	  TYPE_REPEAT_SALE_SEGMENT: 'repeat_sale',
+	  TYPE_REPEAT_SALE_BANNER_NULL: 'repeat_sale_null',
 	  TYPE_REPEAT_SALE_BANNER_START_EMPTY: 'repeat_sale_start_empty',
 	  TYPE_REPEAT_SALE_BANNER_START: 'repeat_sale_start',
+	  TYPE_REPEAT_SALE_BANNER_START_FORCE: 'repeat_sale_force_start',
 	  TYPE_REPEAT_SALE_BANNER_STATISTICS: 'repeat_sale_statistics',
 	  // endregion
 
@@ -1170,6 +1172,7 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 	}
 
 	var _type$4 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("type");
+	var _section$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("section");
 	var _subSection$8 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("subSection");
 	var _element$e = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("element");
 	var _period = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("period");
@@ -1181,6 +1184,10 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 	    Object.defineProperty(this, _type$4, {
 	      writable: true,
 	      value: void 0
+	    });
+	    Object.defineProperty(this, _section$2, {
+	      writable: true,
+	      value: Dictionary.SECTION_DEAL
 	    });
 	    Object.defineProperty(this, _subSection$8, {
 	      writable: true,
@@ -1209,13 +1216,17 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _period)[_period] = period;
 	    return this;
 	  }
+	  setSection(section) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _section$2)[_section$2] = section;
+	    return this;
+	  }
 	  buildData() {
 	    return filterOutNilValues({
 	      tool: Dictionary.TOOL_CRM,
 	      category: Dictionary.CATEGORY_BANNERS,
 	      event: Dictionary.EVENT_REPEAT_SALE_BANNER_CLICK,
 	      type: babelHelpers.classPrivateFieldLooseBase(this, _type$4)[_type$4],
-	      c_section: Dictionary.SECTION_DEAL,
+	      c_section: babelHelpers.classPrivateFieldLooseBase(this, _section$2)[_section$2],
 	      c_sub_section: babelHelpers.classPrivateFieldLooseBase(this, _subSection$8)[_subSection$8],
 	      c_element: babelHelpers.classPrivateFieldLooseBase(this, _element$e)[_element$e],
 	      p1: getCrmMode(),
@@ -1225,6 +1236,7 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 	}
 
 	var _type$5 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("type");
+	var _section$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("section");
 	var _subSection$9 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("subSection");
 	var _element$f = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("element");
 	/**
@@ -1235,6 +1247,10 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 	    Object.defineProperty(this, _type$5, {
 	      writable: true,
 	      value: void 0
+	    });
+	    Object.defineProperty(this, _section$3, {
+	      writable: true,
+	      value: Dictionary.SECTION_DEAL
 	    });
 	    Object.defineProperty(this, _subSection$9, {
 	      writable: true,
@@ -1251,13 +1267,17 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 	    babelHelpers.classPrivateFieldLooseBase(self, _subSection$9)[_subSection$9] = subSection;
 	    return self;
 	  }
+	  setSection(section) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _section$3)[_section$3] = section;
+	    return this;
+	  }
 	  buildData() {
 	    return filterOutNilValues({
 	      tool: Dictionary.TOOL_CRM,
 	      category: Dictionary.CATEGORY_BANNERS,
-	      event: Dictionary.EVENT_REPEAT_SALE_BANNER_VIEW,
+	      event: Dictionary.EVENT_REPEAT_SALE_BANNER_CLOSE,
 	      type: babelHelpers.classPrivateFieldLooseBase(this, _type$5)[_type$5],
-	      c_section: Dictionary.SECTION_DEAL,
+	      c_section: babelHelpers.classPrivateFieldLooseBase(this, _section$3)[_section$3],
 	      c_sub_section: babelHelpers.classPrivateFieldLooseBase(this, _subSection$9)[_subSection$9],
 	      c_element: babelHelpers.classPrivateFieldLooseBase(this, _element$f)[_element$f],
 	      p1: getCrmMode()
@@ -1265,20 +1285,25 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 	  }
 	}
 
-	var _type$6 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("type");
+	var _section$4 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("section");
 	var _subSection$a = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("subSection");
+	var _type$6 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("type");
 	/**
 	 * @memberof BX.Crm.Integration.Analytics.Builder.RepeatSale.Banner
 	 */
 	class ViewEvent {
 	  constructor() {
-	    Object.defineProperty(this, _type$6, {
+	    Object.defineProperty(this, _section$4, {
 	      writable: true,
-	      value: void 0
+	      value: Dictionary.SECTION_DEAL
 	    });
 	    Object.defineProperty(this, _subSection$a, {
 	      writable: true,
 	      value: Dictionary.SUB_SECTION_KANBAN
+	    });
+	    Object.defineProperty(this, _type$6, {
+	      writable: true,
+	      value: void 0
 	    });
 	  }
 	  static createDefault(type, subSection) {
@@ -1287,33 +1312,37 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 	    babelHelpers.classPrivateFieldLooseBase(self, _subSection$a)[_subSection$a] = subSection;
 	    return self;
 	  }
+	  setSection(section) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _section$4)[_section$4] = section;
+	    return this;
+	  }
 	  buildData() {
 	    return filterOutNilValues({
 	      tool: Dictionary.TOOL_CRM,
 	      category: Dictionary.CATEGORY_BANNERS,
 	      event: Dictionary.EVENT_REPEAT_SALE_BANNER_VIEW,
 	      type: babelHelpers.classPrivateFieldLooseBase(this, _type$6)[_type$6],
-	      c_section: Dictionary.SECTION_DEAL,
+	      c_section: babelHelpers.classPrivateFieldLooseBase(this, _section$4)[_section$4],
 	      c_sub_section: babelHelpers.classPrivateFieldLooseBase(this, _subSection$a)[_subSection$a],
 	      p1: getCrmMode()
 	    });
 	  }
 	}
 
-	var _section$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("section");
+	var _section$5 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("section");
 	/**
 	 * @memberof BX.Crm.Integration.Analytics.Builder.RepeatSale.Segment
 	 */
 	class CancelEvent {
 	  constructor() {
-	    Object.defineProperty(this, _section$2, {
+	    Object.defineProperty(this, _section$5, {
 	      writable: true,
 	      value: Dictionary.SECTION_DEAL
 	    });
 	  }
 	  static createDefault(section) {
 	    const self = new CancelEvent();
-	    babelHelpers.classPrivateFieldLooseBase(self, _section$2)[_section$2] = section;
+	    babelHelpers.classPrivateFieldLooseBase(self, _section$5)[_section$5] = section;
 	    return self;
 	  }
 	  buildData() {
@@ -1322,13 +1351,13 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 	      category: Dictionary.CATEGORY_EDITOR,
 	      event: Dictionary.EVENT_REPEAT_SALE_SEGMENT_CANCEL,
 	      type: Dictionary.TYPE_REPEAT_SALE_SEGMENT,
-	      c_section: babelHelpers.classPrivateFieldLooseBase(this, _section$2)[_section$2],
+	      c_section: babelHelpers.classPrivateFieldLooseBase(this, _section$5)[_section$5],
 	      p1: getCrmMode()
 	    });
 	  }
 	}
 
-	var _section$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("section");
+	var _section$6 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("section");
 	var _isActivityTextChanged = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isActivityTextChanged");
 	var _isEntityTitlePatternChanged = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isEntityTitlePatternChanged");
 	var _isCopilotEnabled = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isCopilotEnabled");
@@ -1342,7 +1371,7 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 	    Object.defineProperty(this, _getP, {
 	      value: _getP2
 	    });
-	    Object.defineProperty(this, _section$3, {
+	    Object.defineProperty(this, _section$6, {
 	      writable: true,
 	      value: Dictionary.SECTION_DEAL
 	    });
@@ -1365,7 +1394,7 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 	  }
 	  static createDefault(section) {
 	    const self = new EditEvent$2();
-	    babelHelpers.classPrivateFieldLooseBase(self, _section$3)[_section$3] = section;
+	    babelHelpers.classPrivateFieldLooseBase(self, _section$6)[_section$6] = section;
 	    return self;
 	  }
 	  setIsCopilotEnabled(isCopilotEnabled) {
@@ -1394,9 +1423,9 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 	    return filterOutNilValues({
 	      tool: Dictionary.TOOL_CRM,
 	      category: Dictionary.CATEGORY_EDITOR,
-	      event: Dictionary.EVENT_REPEAT_SALE_SEGMENT_CANCEL,
+	      event: Dictionary.EVENT_REPEAT_SALE_SEGMENT_EDIT,
 	      type: Dictionary.TYPE_REPEAT_SALE_SEGMENT,
-	      c_section: babelHelpers.classPrivateFieldLooseBase(this, _section$3)[_section$3],
+	      c_section: babelHelpers.classPrivateFieldLooseBase(this, _section$6)[_section$6],
 	      p1,
 	      p2: babelHelpers.classPrivateFieldLooseBase(this, _isActivityTextChanged)[_isActivityTextChanged] ? 'scenario-text-deal-box' : null,
 	      p3: babelHelpers.classPrivateFieldLooseBase(this, _isEntityTitlePatternChanged)[_isEntityTitlePatternChanged] ? 'scenario-deal-name' : null,
@@ -1421,20 +1450,20 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 	  }
 	}
 
-	var _section$4 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("section");
+	var _section$7 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("section");
 	/**
 	 * @memberof BX.Crm.Integration.Analytics.Builder.RepeatSale.Segment
 	 */
 	class ViewEvent$1 {
 	  constructor() {
-	    Object.defineProperty(this, _section$4, {
+	    Object.defineProperty(this, _section$7, {
 	      writable: true,
 	      value: Dictionary.SECTION_DEAL
 	    });
 	  }
 	  static createDefault(section) {
 	    const self = new ViewEvent$1();
-	    babelHelpers.classPrivateFieldLooseBase(self, _section$4)[_section$4] = section;
+	    babelHelpers.classPrivateFieldLooseBase(self, _section$7)[_section$7] = section;
 	    return self;
 	  }
 	  buildData() {
@@ -1443,8 +1472,216 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 	      category: Dictionary.CATEGORY_EDITOR,
 	      event: Dictionary.EVENT_REPEAT_SALE_SEGMENT_VIEW,
 	      type: Dictionary.TYPE_REPEAT_SALE_SEGMENT,
-	      c_section: babelHelpers.classPrivateFieldLooseBase(this, _section$4)[_section$4],
+	      c_section: babelHelpers.classPrivateFieldLooseBase(this, _section$7)[_section$7],
 	      p1: getCrmMode()
+	    });
+	  }
+	}
+
+	var _entityType$6 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityType");
+	var _element$g = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("element");
+	/**
+	 * @memberof BX.Crm.Integration.Analytics.Builder.Communication
+	 */
+	class DeleteEvent$2 {
+	  constructor() {
+	    Object.defineProperty(this, _entityType$6, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _element$g, {
+	      writable: true,
+	      value: void 0
+	    });
+	  }
+	  static createDefault(entityType) {
+	    const self = new DeleteEvent$2();
+	    babelHelpers.classPrivateFieldLooseBase(self, _entityType$6)[_entityType$6] = entityType;
+	    return self;
+	  }
+	  setElement(element) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _element$g)[_element$g] = element;
+	    return this;
+	  }
+	  buildData() {
+	    const type = getAnalyticsEntityType(babelHelpers.classPrivateFieldLooseBase(this, _entityType$6)[_entityType$6]);
+	    if (!type) {
+	      console.error('crm.integration.analytics: Unknown entity type');
+	      return null;
+	    }
+	    return filterOutNilValues({
+	      tool: Dictionary.TOOL_CRM,
+	      category: Dictionary.CATEGORY_COMMUNICATION_OPERATIONS,
+	      event: Dictionary.EVENT_WA_DELETE,
+	      type: Dictionary.TYPE_WA_ACTIVITY_DELETE,
+	      c_section: `${type}_section`,
+	      c_sub_section: Dictionary.SUB_SECTION_DETAILS,
+	      c_element: babelHelpers.classPrivateFieldLooseBase(this, _element$g)[_element$g],
+	      p1: getCrmMode()
+	    });
+	  }
+	}
+
+	var _entityType$7 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityType");
+	var _event = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("event");
+	var _element$h = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("element");
+	var _subSection$b = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("subSection");
+	/**
+	 * @memberof BX.Crm.Integration.Analytics.Builder.Communication
+	 */
+	class FormEvent {
+	  constructor() {
+	    Object.defineProperty(this, _entityType$7, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _event, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _element$h, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _subSection$b, {
+	      writable: true,
+	      value: void 0
+	    });
+	  }
+	  static createDefault(entityType) {
+	    const self = new FormEvent();
+	    babelHelpers.classPrivateFieldLooseBase(self, _entityType$7)[_entityType$7] = entityType;
+	    return self;
+	  }
+	  setSubSection(subSection) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _subSection$b)[_subSection$b] = subSection;
+	    return this;
+	  }
+	  setElement(element) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _element$h)[_element$h] = element;
+	    return this;
+	  }
+	  setEvent(event) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _event)[_event] = event;
+	    return this;
+	  }
+	  buildData() {
+	    const type = getAnalyticsEntityType(babelHelpers.classPrivateFieldLooseBase(this, _entityType$7)[_entityType$7]);
+	    if (!type) {
+	      console.error('crm.integration.analytics: Unknown entity type');
+	      return null;
+	    }
+	    return filterOutNilValues({
+	      tool: Dictionary.TOOL_CRM,
+	      category: Dictionary.CATEGORY_COMMUNICATION_OPERATIONS,
+	      event: babelHelpers.classPrivateFieldLooseBase(this, _event)[_event],
+	      type: Dictionary.TYPE_WA_EDIT,
+	      c_section: `${type}_section`,
+	      c_sub_section: babelHelpers.classPrivateFieldLooseBase(this, _subSection$b)[_subSection$b],
+	      c_element: babelHelpers.classPrivateFieldLooseBase(this, _element$h)[_element$h],
+	      p1: getCrmMode()
+	    });
+	  }
+	}
+
+	var _entityType$8 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityType");
+	var _event$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("event");
+	var _element$i = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("element");
+	var _subSection$c = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("subSection");
+	var _contactsCount = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("contactsCount");
+	var _templateId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("templateId");
+	var _resend = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("resend");
+	/**
+	 * @memberof BX.Crm.Integration.Analytics.Builder.Communication
+	 */
+	class SendEvent {
+	  constructor() {
+	    Object.defineProperty(this, _entityType$8, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _event$1, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _element$i, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _subSection$c, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _contactsCount, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _templateId, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _resend, {
+	      writable: true,
+	      value: false
+	    });
+	  }
+	  static createDefault(entityType) {
+	    const self = new SendEvent();
+	    babelHelpers.classPrivateFieldLooseBase(self, _entityType$8)[_entityType$8] = entityType;
+	    return self;
+	  }
+	  setSubSection(subSection) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _subSection$c)[_subSection$c] = subSection;
+	    return this;
+	  }
+	  setElement(element) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _element$i)[_element$i] = element;
+	    return this;
+	  }
+	  setEvent(event) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _event$1)[_event$1] = event;
+	    return this;
+	  }
+	  setContactsCount(count) {
+	    if (count === 'all') {
+	      babelHelpers.classPrivateFieldLooseBase(this, _contactsCount)[_contactsCount] = 'all';
+	    } else {
+	      babelHelpers.classPrivateFieldLooseBase(this, _contactsCount)[_contactsCount] = main_core.Text.toInteger(count);
+	      if (babelHelpers.classPrivateFieldLooseBase(this, _contactsCount)[_contactsCount] <= 0) {
+	        babelHelpers.classPrivateFieldLooseBase(this, _contactsCount)[_contactsCount] = null;
+	      }
+	    }
+	    return this;
+	  }
+	  setTemplateId(id) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _templateId)[_templateId] = main_core.Text.toInteger(id);
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _templateId)[_templateId] <= 0) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _templateId)[_templateId] = null;
+	    }
+	    return this;
+	  }
+	  setResend() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _resend)[_resend] = true;
+	    return this;
+	  }
+	  buildData() {
+	    const type = getAnalyticsEntityType(babelHelpers.classPrivateFieldLooseBase(this, _entityType$8)[_entityType$8]);
+	    if (!type) {
+	      console.error('crm.integration.analytics: Unknown entity type');
+	      return null;
+	    }
+	    return filterOutNilValues({
+	      tool: Dictionary.TOOL_CRM,
+	      category: Dictionary.CATEGORY_COMMUNICATION_OPERATIONS,
+	      event: babelHelpers.classPrivateFieldLooseBase(this, _event$1)[_event$1],
+	      type: Dictionary.TYPE_WA_ACTIVITY_CREATE,
+	      c_section: `${type}_section`,
+	      c_sub_section: babelHelpers.classPrivateFieldLooseBase(this, _subSection$c)[_subSection$c],
+	      c_element: babelHelpers.classPrivateFieldLooseBase(this, _element$i)[_element$i],
+	      p1: getCrmMode(),
+	      p2: babelHelpers.classPrivateFieldLooseBase(this, _contactsCount)[_contactsCount],
+	      p3: babelHelpers.classPrivateFieldLooseBase(this, _templateId)[_templateId],
+	      p4: babelHelpers.classPrivateFieldLooseBase(this, _resend)[_resend] ? 'resend' : null
 	    });
 	  }
 	}
@@ -1475,6 +1712,11 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 	    CloseEvent: CloseEvent,
 	    EnableEvent: EnableEvent,
 	    LinkEvent: LinkEvent
+	  },
+	  Communication: {
+	    DeleteEvent: DeleteEvent$2,
+	    FormEvent: FormEvent,
+	    SendEvent: SendEvent
 	  },
 	  RepeatSale: {
 	    Banner: {

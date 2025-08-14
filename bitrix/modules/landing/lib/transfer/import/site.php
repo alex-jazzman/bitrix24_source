@@ -884,19 +884,11 @@ class Site
 				{
 					$metrika->setSection(Metrika\Sections::tryFrom($additional['st_section']));
 				}
-				$params = [];
-				try
-				{
-					if (array_key_exists('st_params', $additional))
-					{
-						$params = Json::decode(htmlspecialcharsback($additional['st_params']));
-					}
-				}
-				catch (\Exception $e){}
-				$params['siteId'] = $siteId;
-				$metrika->setParams($params);
-
-				$metrika->send();
+				$metrika
+					->setParam(1, 'appCode', $additional['appCode'] ?? '')
+					->setParam(3, 'siteId', $siteId)
+					->send()
+				;
 			}
 
 			return [

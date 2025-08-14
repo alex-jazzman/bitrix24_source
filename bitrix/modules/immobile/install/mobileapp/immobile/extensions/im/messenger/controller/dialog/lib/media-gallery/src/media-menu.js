@@ -3,7 +3,7 @@
  */
 jn.define('im/messenger/controller/dialog/lib/media-gallery/src/media-menu', (require, exports, module) => {
 	const { Color } = require('tokens');
-	const { isFunction } = require('utils/object');
+	const { isFunction, isEmpty } = require('utils/object');
 	const { MessageHelper } = require('im/messenger/lib/helper');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { PropTypes } = require('utils/validation');
@@ -39,9 +39,9 @@ jn.define('im/messenger/controller/dialog/lib/media-gallery/src/media-menu', (re
 
 		/**
 		 * @param {mediaMenuProps} props
-		 * @returns {Promise<MediaMenu>}
+		 * @returns {MediaMenu}
 		 */
-		static async create(props)
+		static create(props)
 		{
 			return new MediaMenu(props);
 		}
@@ -239,7 +239,7 @@ jn.define('im/messenger/controller/dialog/lib/media-gallery/src/media-menu', (re
 		getItems(messageId)
 		{
 			const messageModel = this.getMessageModel(messageId);
-			if (!messageId && !messageModel)
+			if (!messageId || isEmpty(messageModel))
 			{
 				return [];
 			}

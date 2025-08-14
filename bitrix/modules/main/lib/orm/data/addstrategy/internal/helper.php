@@ -71,6 +71,12 @@ final class Helper
 
 		$connection->queryExecute($sql);
 
+		if ($connection->getType() === 'pgsql')
+		{
+			// If table hasn't autoincrement key, PostgreSQL returns wrong last inserted id - from previous insert query in a table with autoincrement
+			return 0;
+		}
+
 		return $connection->getInsertedId();
 	}
 

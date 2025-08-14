@@ -465,7 +465,8 @@ this.BX.Call = this.BX.Call || {};
 	    ui_analytics.sendData(resultData);
 	  }
 	  onReconnect(params) {
-	    const reconnectionReasonInfo = params.reconnectionReasonInfo.substring(0, 100);
+	    var _params$reconnectionR;
+	    const reconnectionReasonInfo = (_params$reconnectionR = params.reconnectionReasonInfo) == null ? void 0 : _params$reconnectionR.replace(`Handling a remote offer failed: InvalidAccessError: `, '*').replace(/_/g, '').substring(0, 100);
 	    ui_analytics.sendData({
 	      tool: AnalyticsTool.im,
 	      category: AnalyticsCategory.call,

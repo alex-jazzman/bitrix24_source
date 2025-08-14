@@ -9,6 +9,7 @@ $MESS["BIZPROC_LOG_SKIP_TYPES_1_1"] = "activity start";
 $MESS["BIZPROC_LOG_SKIP_TYPES_2_1"] = "activity end";
 $MESS["BIZPROC_NAME_TEMPLATE"] = "Name display format";
 $MESS["BIZPROC_OPTIONS_NAME_IN_SITE_FORMAT"] = "Website format";
+$MESS["BIZPROC_OPT_ENABLE_GETDOCUMENT_SELECT"] = "Optimize field loading";
 $MESS["BIZPROC_OPT_LOCKED_WI_PATH"] = "Hung workflows list path";
 $MESS["BIZPROC_OPT_TIME_LIMIT"] = "Minimum response timeout";
 $MESS["BIZPROC_OPT_TIME_LIMIT_D"] = "days";

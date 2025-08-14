@@ -52,6 +52,7 @@ export type UsersModelActions =
 	| 'usersModel/merge'
 	| 'usersModel/addShort'
 	| 'usersModel/setFromLocalDatabase'
+	| 'usersModel/setFromSync'
 
 export type UsersModelMutation =
 	'usersModel/set'

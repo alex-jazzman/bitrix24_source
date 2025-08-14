@@ -931,11 +931,6 @@ class Message implements ArrayAccess, RegistryEntry, ActiveRecord, RestEntity, P
 		return $quotedMessage;
 	}
 
-	public function getReplaceMap(): array
-	{
-		return Im\Text::getReplaceMap($this->getFormattedMessage());
-	}
-
 	// formatted rich message to output
 	public function setMessageOut(?string $value): self
 	{
@@ -1800,7 +1795,6 @@ class Message implements ArrayAccess, RegistryEntry, ActiveRecord, RestEntity, P
 			'date' => isset($dateCreate) ? $dateCreate->format('c') : null,
 			'text' => $this->getFormattedMessage(),
 			'isSystem' => $this->isSystem(),
-			'replaces' => $this->getReplaceMap(),
 			'uuid' => $this->getUuid(),
 			'forward' => $this->getForwardInfo(),
 			'params' => $this->getEnrichedParams(!$messageShortInfo)->toRestFormat(),
@@ -1955,19 +1949,35 @@ class Message implements ArrayAccess, RegistryEntry, ActiveRecord, RestEntity, P
 		$roles = [];
 		$messageRole = $this->getCopilotRole();
 		$roles[] = $messageRole;
-		$chatRoleInfo = null;
+		$chatData = null;
+		$engineData = null;
 
 		if ($chat instanceof Im\V2\Chat\CopilotChat)
 		{
+			$engineManager = new Im\V2\Integration\AI\EngineManager();
+			$engineCode = $chat->getEngineCode() ?: null;
+			$engineName = isset($engineCode) ? $engineManager->getEngineNameByCode($engineCode) : null;
+
 			$chatRole = $roleManager->getMainRole($this->getChatId());
 			$roles[] = $chatRole;
-			$chatRoleInfo = [['dialogId' => $this->getChat()->getDialogId(), 'role' => $chatRole]];
+			$chatData = [[
+				'dialogId' => $this->getChat()->getDialogId(),
+				'role' => $chatRole,
+				'engine' => $engineCode,
+			]];
+
+			$engineData =
+				isset($engineCode, $engineName)
+					? [['code' => $engineCode, 'name' => $engineName]]
+					: null
+			;
 		}
 
 		return [
-			'chats' => $chatRoleInfo,
+			'chats' => $chatData,
 			'messages' => $messageRole ? [['id' => $this->getId(), 'role' => $messageRole]] : null,
 			'roles' => $roleManager->getRoles($roles),
+			'engines' => $engineData,
 		];
 	}
 

@@ -13,13 +13,13 @@ return [
 		'ui-system/typography/text',
 		'ui-system/blocks/avatar',
 		'ui-system/blocks/reaction/icon',
-		'user/profile/src/backdrop-profile',
 
 		'statemanager/redux/slices/users',
 		'statemanager/redux/batched-actions',
 		'statemanager/redux/store',
 		'statemanager/redux/connect',
 		'statemanager/redux/slices/users/thunk',
+		'user-profile',
 	],
 	'bundle' => [
 		'./src/reaction-items-factory',

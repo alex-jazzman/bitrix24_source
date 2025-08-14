@@ -463,6 +463,7 @@ export class RepresentativeSelector
 
 		this.#data.name = item.title;
 		this.#data.avatarLink = defaultAvatarLink;
+		this.#data.position = '';
 
 		this.#refreshView();
 	}

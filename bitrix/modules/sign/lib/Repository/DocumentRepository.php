@@ -3,7 +3,6 @@
 namespace Bitrix\Sign\Repository;
 
 use Bitrix\Main\ArgumentException;
-use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Entity\UpdateResult;
 use Bitrix\Main\Error;
 use Bitrix\Main;
@@ -73,8 +72,8 @@ class DocumentRepository
 			->setEntityType($item->entityType)
 			->setExternalId($item->externalId)
 			->setMeta($this->getModelMetaByItem($item))
-			->setCreatedById(CurrentUser::get()->getId())
-			->setModifiedById(CurrentUser::get()->getId())
+			->setCreatedById($item->createdById)
+			->setModifiedById($item->createdById)
 			->setDateCreate($now)
 			->setDateModify($now)
 			->setScenario($scenarioId)

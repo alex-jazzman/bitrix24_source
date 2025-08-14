@@ -370,7 +370,8 @@ class TaskService
 			$task['IS_LAST_TASK_FOR_USER'] = \CBPTaskService::isLastTaskForUserByActivity(
 				$task['ACTIVITY_NAME'],
 				$request->userId,
-				$task['TEMPLATE_ID']
+				$task['TEMPLATE_ID'],
+				$task['ACTIVITY']
 			);
 		}
 		$response->setTask($task);

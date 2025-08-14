@@ -1,5 +1,5 @@
 <?php
-$MESS["SOG_ACCOUNT_NUMBER"] = "Банк шотының нөмірі";
+$MESS['SOG_ACCOUNT_NUMBER'] = "Банк шотының нөмірі";
 $MESS["SOG_ADDRESS_FULL"] = "Толық мекенжай";
 $MESS["SOG_AGENT_NAME"] = "Атауы";
 $MESS["SOG_BIRTHDAY"] = "Туған күні";

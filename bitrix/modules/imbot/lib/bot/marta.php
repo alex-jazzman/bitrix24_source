@@ -296,7 +296,7 @@ class Marta extends Base
 		{
 			if ($messageFields['COMMAND_PARAMS'] == 'welcome')
 			{
-				$message = Loc::getMessage('IMBOT_BOT_ENABLE_WELCOME', Array('#USER_NAME#' => $userName));
+				$message = Loc::getMessage('IMBOT_BOT_ENABLE_WELCOME_MSGVER_1', ['#USER_NAME#' => $userName, '#URL#'=> (new \Bitrix\Main\License\UrlProvider)->getTechDomain()]);
 				$dateNow = new \Bitrix\Main\Type\DateTime();
 				self::setBotOption($messageFields['DIALOG_ID'], 'planner_message', $dateNow->format('Ymd'));
 			}
@@ -309,7 +309,7 @@ class Marta extends Base
 		{
 			if ($messageFields['COMMAND_PARAMS'] == 'welcome')
 			{
-				$message = Loc::getMessage('IMBOT_BOT_DISABLE_WELCOME', Array('#USER_NAME#' => $userName));
+				$message = Loc::getMessage('IMBOT_BOT_DISABLE_WELCOME_MSGVER_1', ['#USER_NAME#' => $userName, '#URL#'=> (new \Bitrix\Main\License\UrlProvider)->getTechDomain()]);
 				self::setBotOption($messageFields['DIALOG_ID'], 'planner_message', '20290219');
 			}
 			else

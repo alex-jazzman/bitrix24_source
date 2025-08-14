@@ -101,9 +101,11 @@ class NavigationBar
 		]);
 
 		$showConfetti = $config['showConfetti'] ?? false;
+		$periodTypeId = $config['periodTypeId'] ?? null;
 
 		$params = Json::encode([
 			'showConfetti' => $showConfetti,
+			'periodTypeId' => $periodTypeId,
 		]);
 
 		return new Button([

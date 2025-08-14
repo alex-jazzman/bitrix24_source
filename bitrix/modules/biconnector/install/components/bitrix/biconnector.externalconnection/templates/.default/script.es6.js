@@ -214,7 +214,7 @@ class ExternalConnectionForm
 	{
 		const value = event.target.value;
 
-		const connector = this.#props.supportedDatabases.filter(database => database.code === value)[0];
+		const connector = this.#props.supportedDatabases.find((database) => database.code === value);
 		this.#props.sourceFields.code = value;
 		this.#props.sourceFields.type = connector.type ?? null;
 		Dom.clean(this.#node.querySelector('.hint-wrapper'));
@@ -345,7 +345,7 @@ class ExternalConnectionForm
 				}
 				else
 				{
-					this.#showSaveSuccessPopup(response.data.connection);
+					this.#showSaveSuccessPopup(response.data.connection, response.data.supersetIsReady);
 					saveButton.setWaiting(false);
 				}
 			})
@@ -361,12 +361,17 @@ class ExternalConnectionForm
 			});
 	}
 
-	#showSaveSuccessPopup(connection: { id: any, name: string, type: string })
+	#showSaveSuccessPopup(connection: { id: any, name: string, type: string }, supersetIsReady: boolean)
 	{
 		let popup: ?Popup = null;
 
-		// show for new or active sources only
-		const showCreateDatasetButton = !(Object.hasOwn(this.#props.sourceFields, 'id')) || this.#props.sourceFields.active;
+		// show for (new or active sources) and ready superset only
+		const showCreateDatasetButton = supersetIsReady
+			&& (
+				!(Object.hasOwn(this.#props.sourceFields, 'id'))
+				|| this.#props.sourceFields.active
+			)
+		;
 		const createDatasetButton = showCreateDatasetButton ? Tag.render`
 			<a class="ui-btn ui-btn-md ui-btn-primary">
 				${Loc.getMessage('EXTERNAL_CONNECTION_CREATE_DATASET')}

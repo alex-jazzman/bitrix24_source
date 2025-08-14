@@ -11,6 +11,7 @@ use Bitrix\Crm\Filter\FieldsTransform;
 use Bitrix\Crm\Filter\UiFilterOptions;
 use Bitrix\Crm\Integration;
 use Bitrix\Crm\Integration\Analytics\Builder\Entity\CopyOpenEvent;
+use Bitrix\Crm\Integration\IntranetManager;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Model\LastCommunicationTable;
@@ -125,6 +126,8 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList implements \Bit
 			[FieldRestrictionManagerTypes::OBSERVERS, FieldRestrictionManagerTypes::ACTIVITY],
 			$this->entityTypeId
 		);
+
+		$this->arResult['customSectionId'] = IntranetManager::getCustomSectionByEntityTypeId($this->entityTypeId)?->getId();
 	}
 
 	public function executeComponent()
@@ -1276,11 +1279,6 @@ js,
 			}
 			if ($fakeItem->hasField($field))
 			{
-				if (in_array($field, LastCommunicationTable::getCodeList(true), true))
-				{
-					$field = 'LAST_COMMUNICATION.LAST_COMMUNICATION_TIME';
-				}
-
 				$result[$field] = $direction;
 			}
 		}

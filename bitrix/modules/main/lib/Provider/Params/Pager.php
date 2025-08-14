@@ -28,7 +28,7 @@ class Pager implements PagerInterface
 	 */
 	public static function buildFromPageNavigation(PageNavigation $pageNavigation): static
 	{
-		return new static($pageNavigation->getOffset() ?: 0, $pageNavigation->getLimit() ?: 50);
+		return new static(limit: $pageNavigation->getLimit() ?: 50, offset: $pageNavigation->getOffset() ?: 0);
 	}
 
 	public function getLimit(): int

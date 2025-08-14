@@ -68,3 +68,8 @@ $APPLICATION->IncludeComponent(
 	],
 	$component
 );
+
+if ($arResult['customSectionId'] > 0)
+{
+	echo (\Bitrix\Crm\Tour\MobilePromoter\MobilePromoterCustomSection::getInstance()->setCustomSection($arResult['customSectionId'])->build());
+}

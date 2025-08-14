@@ -31,7 +31,7 @@ export type LoadedDocumentData = {
 	uid: string;
 	version: number;
 	providerCode: ProviderCodeType;
-	dateSignUntil: string;
+	dateSignUntilUserTime: string | null;
 	previewUrl?: string;
 	externalDateCreateSourceType: SourceType;
 	externalIdSourceType: SourceType;

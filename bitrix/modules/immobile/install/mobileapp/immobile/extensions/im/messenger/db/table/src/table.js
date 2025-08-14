@@ -337,6 +337,8 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 		{
 			if (!this.isSupported || this.readOnly || !Feature.isLocalStorageEnabled)
 			{
+				logger.log(`Table.add method in ${this.getName()} is not available`);
+
 				return Promise.resolve();
 			}
 

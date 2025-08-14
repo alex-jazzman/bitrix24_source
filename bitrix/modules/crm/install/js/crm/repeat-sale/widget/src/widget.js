@@ -4,7 +4,7 @@ import 'ui.design-tokens';
 import 'ui.design-tokens.air';
 import './widget.css';
 
-export type WidgetTypeEnum = WidgetType.start | WidgetType.statistics;
+export type WidgetTypeEnum = WidgetType.start | WidgetType.forceStart | WidgetType.statistics;
 
 export const PeriodType = Object.freeze({
 	day30: 0,
@@ -15,12 +15,15 @@ export const PeriodType = Object.freeze({
 
 export const WidgetType = Object.freeze({
 	start: 'start',
+	forceStart: 'forceStart',
 	statistics: 'statistics',
 });
 
 export type WidgetParams = {
 	showSettingsButton?: boolean,
 	showConfetti?: boolean,
+	isRepeatSaleGrid?: boolean,
+	periodTypeId?: PeriodType.day30 | PeriodType.quarter | PeriodType.halfYear | PeriodType.year,
 }
 
 export class Widget

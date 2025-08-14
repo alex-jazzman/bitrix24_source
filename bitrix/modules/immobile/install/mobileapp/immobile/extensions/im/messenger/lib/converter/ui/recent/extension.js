@@ -47,7 +47,7 @@ jn.define('im/messenger/lib/converter/ui/recent', (require, exports, module) => 
 			const listItems = [];
 
 			recentItems.forEach((item) => {
-				listItems.push(this.#prepareItemToNative(this.toItem(item)));
+				listItems.push(this.toItem(item));
 			});
 
 			return listItems;
@@ -182,40 +182,14 @@ jn.define('im/messenger/lib/converter/ui/recent', (require, exports, module) => 
 			return new UserItem(modelItem);
 		}
 
+		/**
+		 * @param {RecentCallData} call
+		 * @param {RecentCallStatus} callStatus
+		 * @return {CallItem}
+		 */
 		toCallItem(callStatus, call)
 		{
 			return new CallItem(callStatus, call);
-		}
-
-		/**
-		 * @param {RecentItem} recentItem
-		 * @return NativeRecentItem
-		 */
-		#prepareItemToNative(recentItem)
-		{
-			const removeProperty = (item, propToRemove) => {
-				if (Array.isArray(item))
-				{
-					return item.map((elem) => removeProperty(elem, propToRemove));
-				}
-
-				if (item !== null && typeof item === 'object')
-				{
-					return Object.keys(item).reduce((acc, key) => {
-						if (key !== propToRemove)
-						{
-							// eslint-disable-next-line no-param-reassign
-							acc[key] = removeProperty(item[key], propToRemove);
-						}
-
-						return acc;
-					}, {});
-				}
-
-				return item;
-			};
-
-			return removeProperty(recentItem, 'model');
 		}
 	}
 

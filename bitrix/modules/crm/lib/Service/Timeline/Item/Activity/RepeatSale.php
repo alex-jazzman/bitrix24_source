@@ -234,7 +234,8 @@ final class RepeatSale extends Activity
 						'color' => ContentBlock\Text::COLOR_BASE_50,
 						'size' => ContentBlock\Text::FONT_SIZE_SM,
 					],
-				]
+				],
+				''
 			);
 		}
 

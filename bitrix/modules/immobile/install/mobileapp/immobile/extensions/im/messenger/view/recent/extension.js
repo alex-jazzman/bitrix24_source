@@ -5,13 +5,11 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 	const { AnalyticsEvent } = require('analytics');
 	const AppTheme = require('apptheme');
 	const { Runtime } = require('runtime');
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Icon } = require('assets/icons');
-	const { isEqual } = require('utils/object');
+	const { RecentItem } = require('im/messenger/lib/element');
 
 	const { getTopMenuNotificationsButton } = require('im/messenger/api/notifications-opener');
-
-	const { openIntranetInviteWidget } = require('intranet/invite-opener-new');
 
 	const {
 		EventType,
@@ -158,13 +156,10 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 					}
 				}
 
-				if (Feature.isDevModeEnabled && event === 'onItemSelected')
+				if (Feature.isDevModeEnabled && event === 'onItemSelected' && item.id === 'developer-console')
 				{
-					if (item.id === 'developer-console')
-					{
-						const { Console } = await requireLazy('im:messenger/lib/dev/tools');
-						Console.open();
-					}
+					const { Console } = await requireLazy('im:messenger/lib/dev/tools');
+					Console.open();
 				}
 			};
 
@@ -384,13 +379,13 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 		}
 
 		/**
-		 * @param {Array<NativeRecentItem>} items
+		 * @param {Array<RecentWidgetItem>} items
 		 */
 		setItems(items)
 		{
 			logger.log(`${this.constructor.name}.setItems`, items);
 
-			this.ui.setItems(items);
+			this.ui.setItems(this.#prepareElementsToRecentWidgetItem(items));
 			items.forEach((item) => {
 				this.itemCollection[item.id] = item;
 			});
@@ -399,14 +394,14 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 		}
 
 		/**
-		 * @param {Array<NativeRecentItem>} items
+		 * @param {Array<RecentWidgetItem>} items
 		 * @param {boolean} [isAnimated=false]
 		 */
 		addItems(items, isAnimated = false)
 		{
 			logger.log(`${this.constructor.name}.addItems`, items);
 
-			this.ui.addItems(items, isAnimated);
+			this.ui.addItems(this.#prepareElementsToRecentWidgetItem(items), isAnimated);
 			items.forEach((item) => {
 				this.itemCollection[item.id] = item;
 			});
@@ -418,7 +413,14 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 		{
 			logger.log(`${this.constructor.name}.updateItems`, items);
 
-			this.ui.updateItems(items);
+			const preparedItems = items.map((item) => {
+				return {
+					element: this.#prepareElementToRecentWidgetItem(item.element),
+					filter: item.filter,
+				};
+			});
+
+			this.ui.updateItems(preparedItems);
 			items.forEach((item) => {
 				if (!this.itemCollection[item.element.id])
 				{
@@ -432,11 +434,15 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 			this.updateSharedStorageRecentCache();
 		}
 
+		/**
+		 * @param {object} filter
+		 * @param {object} fields
+		 */
 		updateItem(filter, fields)
 		{
 			logger.log(`${this.constructor.name}.updateItem`, filter, fields);
 
-			this.ui.updateItem(filter, fields);
+			this.ui.updateItem(filter, this.#prepareElementToRecentWidgetItem(fields));
 			if (!this.itemCollection[fields.id])
 			{
 				logger.error(`${this.constructor.name}.updateItem: updating item not found`, fields.id);
@@ -552,9 +558,12 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 					upperText: Loc.getMessage('IMMOBILE_RECENT_VIEW_EMPTY_TEXT_1'),
 					lowerText: Loc.getMessage('IMMOBILE_RECENT_VIEW_EMPTY_TEXT_INVITE'),
 					iconName: 'ws_employees',
-					listener: () => openIntranetInviteWidget({
-						analytics: new AnalyticsEvent().setSection('chat'),
-					}),
+					listener: () => {
+						const { openIntranetInviteWidget } = require('intranet/invite-opener-new');
+						openIntranetInviteWidget?.({
+							analytics: new AnalyticsEvent().setSection('chat'),
+						});
+					},
 				};
 			}
 			else
@@ -620,6 +629,29 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 		createChatButtonTapHandler()
 		{
 			this.emitCustomEvent(EventType.recent.createChat);
+		}
+
+		/**
+		 * @param {Array<RecentItem>|RecentItem|Object} recentElementData
+		 * @return {Array<RecentWidgetItem>|RecentWidgetItem|Object}
+		 */
+		#prepareElementsToRecentWidgetItem(recentElementData)
+		{
+			return recentElementData.map((recentElement) => this.#prepareElementToRecentWidgetItem(recentElement));
+		}
+
+		/**
+		 * @param {RecentItem|Object} recentElementData
+		 * @return {DialogWidgetItem|Object}
+		 */
+		#prepareElementToRecentWidgetItem(recentElementData)
+		{
+			if (recentElementData.id === this.loadNextPageItemId)
+			{
+				return recentElementData;
+			}
+
+			return recentElementData.toRecentWidgetItem();
 		}
 	}
 

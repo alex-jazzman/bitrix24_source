@@ -2,6 +2,7 @@
 
 namespace Bitrix\Im\V2\Chat;
 
+use Bitrix\Im\Model\RelationTable;
 use Bitrix\Im\Model\RecentTable;
 use Bitrix\Im\User;
 use Bitrix\Im\Recent;
@@ -17,7 +18,6 @@ use Bitrix\Im\V2\Message\Send\SendingConfig;
 use Bitrix\Im\V2\MessageCollection;
 use Bitrix\Im\V2\Relation;
 use Bitrix\Im\V2\Relation\AddUsersConfig;
-use Bitrix\Im\V2\Relation\Reason;
 use Bitrix\Im\V2\Rest\PopupData;
 use Bitrix\Im\V2\Rest\PopupDataAggregatable;
 use Bitrix\Im\V2\Result;
@@ -32,10 +32,19 @@ use Bitrix\Pull\Event;
 class PrivateChat extends Chat implements PopupDataAggregatable
 {
 	protected const EXTRANET_CAN_SEE_HISTORY = true;
+	protected array $dialogIdCache = [];
 
 	protected function getDefaultType(): string
 	{
 		return self::IM_TYPE_PRIVATE;
+	}
+
+	public function setDialogId(string $dialogId): self
+	{
+		parent::setDialogId($dialogId);
+		$this->dialogIdCache[$this->getContext()->getUserId()] = $dialogId;
+
+		return $this;
 	}
 
 	protected function checkAccessInternal(int $userId): Result
@@ -84,9 +93,18 @@ class PrivateChat extends Chat implements PopupDataAggregatable
 
 	public function getDialogId(?int $contextUserId = null): ?string
 	{
-		$this->dialogId = $this->getCompanion($contextUserId)->getId();
+		$userId = $contextUserId ?? $this->getContext()->getUserId();
+		if (!isset($this->dialogIdCache[$userId]))
+		{
+			$this->dialogIdCache[$userId] = $this->getCompanion($contextUserId)->getId();
+		}
 
-		return $this->dialogId;
+		return $this->dialogIdCache[$userId];
+	}
+
+	public function hasDialogId(): bool
+	{
+		return $this->dialogId !== null;
 	}
 
 	public function getDialogContextId(): ?string
@@ -562,5 +580,30 @@ class PrivateChat extends Chat implements PopupDataAggregatable
 			->add(new Chat\MessagesAutoDelete\MessagesAutoDeleteConfigs([$this->getChatId()]))
 			->add(new CallToken($this->getId(), $userId))
 		;
+	}
+
+	public static function getDialogIds(array $chatIds, int $contextUserId): array
+	{
+		$dialogIds = [];
+
+		if (empty($chatIds))
+		{
+			return [];
+		}
+
+		$result = RelationTable::query()
+			->setSelect(['CHAT_ID', 'USER_ID'])
+			->whereIn('CHAT_ID', $chatIds)
+			->where('MESSAGE_TYPE', Chat::IM_TYPE_PRIVATE)
+			->whereNot('USER_ID', $contextUserId)
+			->fetchAll()
+		;
+
+		foreach ($result as $row)
+		{
+			$dialogIds[(int)$row['CHAT_ID']] = $row['USER_ID'];
+		}
+
+		return $dialogIds;
 	}
 }

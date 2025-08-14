@@ -29,7 +29,7 @@ use Bitrix\Main\Security\Random;
 use CCrmOwnerType;
 use Psr\Log\LoggerInterface;
 
-final class AIManager
+class AIManager
 {
 	public const AI_COPILOT_FEATURE_NAME = 'crm_copilot';
 	
@@ -81,7 +81,7 @@ final class AIManager
 
 	public static function isEnabledInGlobalSettings(string|GlobalSetting $code = GlobalSetting::FillItemFromCall): bool
 	{
-		if (!self::isAvailable())
+		if (!static::isAvailable())
 		{
 			return false;
 		}
@@ -94,7 +94,7 @@ final class AIManager
 
 		if (
 			$setting === GlobalSetting::FillCrmText
-			&& !self::isEngineAvailable(EventHandler::ENGINE_CATEGORY)
+			&& !static::isEngineAvailable(EventHandler::ENGINE_CATEGORY)
 		)
 		{
 			return false;
@@ -113,7 +113,7 @@ final class AIManager
 
 	public static function isEngineAvailable(string $type): bool
 	{
-		if (!self::isAvailable())
+		if (!static::isAvailable())
 		{
 			return false;
 		}
@@ -133,7 +133,7 @@ final class AIManager
 
 		if (is_null($result))
 		{
-			$result = self::isAvailable()
+			$result = static::isAvailable()
 				&& Bitrix24Manager::isFeatureEnabled(self::AI_COPILOT_FEATURE_NAME)
 			;
 		}
@@ -144,11 +144,11 @@ final class AIManager
 	public static function isAiCallAutomaticProcessingAllowed(): bool
 	{
 		return
-			self::isAiCallProcessingEnabled()
+			static::isAiCallProcessingEnabled()
 			&& Option::get(
 				'crm',
 				self::AI_CALL_PROCESSING_AUTOMATICALLY_OPTION_NAME,
-				self::isBaasServiceAvailable()
+				static::isBaasServiceAvailable()
 			)
 		;
 	}
@@ -178,7 +178,7 @@ final class AIManager
 			return self::$baasService->isAvailable();
 		}
 
-		return self::isBaasServiceIgnored();
+		return static::isBaasServiceIgnored();
 	}
 
 	public static function isBaasServiceHasPackage(): bool
@@ -196,12 +196,12 @@ final class AIManager
 			return self::$baasService->hasPackage() && self::$baasService->canConsume();
 		}
 
-		return self::isBaasServiceIgnored();
+		return static::isBaasServiceIgnored();
 	}
 
 	public static function isAILicenceAccepted(int $userId = null): bool
 	{
-		if (self::isAvailable())
+		if (static::isAvailable())
 		{
 			// check for box instances
 			if (\Bitrix\Crm\Settings\Crm::isBox())
@@ -282,7 +282,7 @@ final class AIManager
 	{
 		$result = new Result(TranscribeCallRecording::TYPE_ID);
 
-		if (!self::isAvailable() || !self::isAiCallProcessingEnabled())
+		if (!static::isAvailable() || !static::isAiCallProcessingEnabled())
 		{
 			return $result->addError(ErrorCode::getAINotAvailableError());
 		}
@@ -336,7 +336,7 @@ final class AIManager
 	{
 		$result = new Result(ExtractScoringCriteria::TYPE_ID);
 
-		if (!self::isAvailable() || !self::isAiCallProcessingEnabled())
+		if (!static::isAvailable() || !static::isAiCallProcessingEnabled())
 		{
 			return $result->addError(ErrorCode::getAINotAvailableError());
 		}
@@ -367,7 +367,7 @@ final class AIManager
 	{
 		$result = new Result(FillRepeatSaleTips::TYPE_ID);
 
-		if (!self::isAvailable() || !self::isAiCallProcessingEnabled())
+		if (!static::isAvailable() || !static::isAiCallProcessingEnabled())
 		{
 			return $result->addError(ErrorCode::getAINotAvailableError());
 		}
@@ -409,13 +409,17 @@ final class AIManager
 	public static function fetchLimitError(Error $error): ?Error
 	{
 		$errorCode = $error->getCode();
+		$errorMessage = $error->getMessage();
 		$customData = $error->getCustomData();
 
 		if ($errorCode === 'RATE_LIMIT' && !empty($customData['sliderCode']))
 		{
-			return ErrorCode::getAILimitOfRequestsExceededError([
-				'sliderCode' => $customData['sliderCode'],
-			]);
+			return ErrorCode::getAILimitOfRequestsExceededError(
+				[
+					'sliderCode' => $customData['sliderCode']
+				],
+				$errorMessage
+			);
 		}
 
 		if (!str_starts_with($errorCode, 'LIMIT_IS_EXCEEDED'))
@@ -463,7 +467,7 @@ final class AIManager
 
 	public static function getAvailableLanguageList(): array
 	{
-		if (self::isAvailable())
+		if (static::isAvailable())
 		{
 			return Language::getAvailable();
 		}

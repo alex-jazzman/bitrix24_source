@@ -2,7 +2,7 @@
  * @module im/messenger/lib/element/dialog/message/banner/const/configuration
  */
 jn.define('im/messenger/lib/element/dialog/message/banner/const/configuration', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { transparent } = require('utils/color');
 	const { AnalyticsEvent } = require('analytics');
 	const { ButtonSize } = require('ui-system/form/buttons');

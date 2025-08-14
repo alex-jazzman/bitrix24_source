@@ -1132,6 +1132,7 @@ this.BX = this.BX || {};
 	    key: "setDraggable",
 	    value: function setDraggable(draggable) {
 	      var _draggable$element;
+	      this.params.draggable = draggable;
 	      var element = (_draggable$element = draggable === null || draggable === void 0 ? void 0 : draggable.element) !== null && _draggable$element !== void 0 ? _draggable$element : this.titleBar;
 	      if (!draggable || !element) {
 	        return;

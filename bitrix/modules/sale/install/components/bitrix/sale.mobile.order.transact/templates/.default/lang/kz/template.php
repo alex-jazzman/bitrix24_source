@@ -1,5 +1,5 @@
 <?php
-$MESS["SMOT_COMMENTS"] = "Пікірлер";
+$MESS['SMOT_COMMENTS'] = "Пікірлер";
 $MESS["SMOT_DATE"] = "Күні";
 $MESS["SMOT_DESCRIPTION"] = "Сипаттама";
 $MESS["SMOT_HISTORY"] = "Тарих";

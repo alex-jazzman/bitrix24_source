@@ -2,7 +2,7 @@
  * @module im/messenger/lib/element/recent/item/copilot
  */
 jn.define('im/messenger/lib/element/recent/item/copilot', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { merge } = require('utils/object');
 
 	const { RecentItem } = require('im/messenger/lib/element/recent/item/base');

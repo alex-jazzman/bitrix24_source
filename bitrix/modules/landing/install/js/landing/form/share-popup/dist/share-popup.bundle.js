@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Landing = this.BX.Landing || {};
 (function (exports,main_core,main_core_events,landing_featuresPopup,landing_loc,landing_pageobject,landing_env,crm_form_embed,ui_feedback_form,bitrix24_phoneverify) {
@@ -129,7 +130,7 @@ this.BX.Landing = this.BX.Landing || {};
 	                  id: 1847,
 	                  lang: 'ru',
 	                  sec: 'bbih83',
-	                  zones: ['ru']
+	                  zones: ['ru', 'uz']
 	                }, {
 	                  id: 1852,
 	                  lang: 'kz',
@@ -228,5 +229,5 @@ this.BX.Landing = this.BX.Landing || {};
 
 	exports.SharePopup = SharePopup;
 
-}((this.BX.Landing.Form = this.BX.Landing.Form || {}),BX,BX.Event,BX.Landing,BX.Landing,BX.Landing,BX.Landing,BX.Crm.Form,BX,BX.Bitrix24));
+}((this.BX.Landing.Form = this.BX.Landing.Form || {}),BX,BX.Event,BX.Landing,BX.Landing,BX.Landing,BX.Landing,BX.Crm.Form,BX.UI.Feedback,BX.Bitrix24));
 //# sourceMappingURL=share-popup.bundle.js.map

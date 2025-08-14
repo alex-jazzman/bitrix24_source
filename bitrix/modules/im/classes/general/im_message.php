@@ -1,6 +1,7 @@
 <?
 
 use Bitrix\Im\V2\Chat;
+use Bitrix\Im\V2\Integration\AI\EngineManager;
 use Bitrix\Im\V2\Integration\AI\RoleManager;
 use Bitrix\Im\V2\Message\Counter\CounterType;
 use Bitrix\Im\V2\Recent\Config\RecentConfigManager;
@@ -1420,25 +1421,40 @@ class CIMMessage
 			$messageRole = RoleManager::getDefaultRoleCode();
 		}
 
+		$engineData = null;
 		if ($isCopilotChat)
 		{
-			$chatRole = [[
+			$chat = Chat::getInstance($chatId);
+			$engineManager = new EngineManager();
+			$engineCode = $chat instanceof Chat\CopilotChat ? $chat->getEngineCode() : null;
+			$engineName = isset($engineCode) ? $engineManager->getEngineNameByCode($engineCode) : null;
+
+			$chatData = [[
 				'dialogId' => \Bitrix\Im\Dialog::getDialogId($chatId),
 				'role' => $roleManager->getMainRole($chatId),
+				'engine' => $engineCode,
 			]];
+
+			$engineData =
+				isset($engineCode, $engineName)
+					? [['code' => $engineCode, 'name' => $engineName]]
+					: null
+			;
 		}
 
-		$messageId = isset($arParams['PARAMS']['FORWARD_ID'])
-			? (int)$arParams['PARAMS']['FORWARD_ID']
-			: (int)$arParams['ID']
+		$messageId =
+			isset($arParams['PARAMS']['FORWARD_ID'])
+				? (int)$arParams['PARAMS']['FORWARD_ID']
+				: (int)$arParams['ID']
 		;
 
 		return [
-			'chats' => $chatRole ?? null,
+			'chats' => $chatData ?? null,
 			'messages' => !empty($messageRole) ? [['id' => $messageId, 'role' => $messageRole]] : null,
 			'roles' => $roleManager->getRoles(
 				$isCopilotChat ? [$roleManager->getMainRole($chatId), $messageRole] : [$messageRole]
 			),
+			'engines' => $engineData,
 		];
 	}
 

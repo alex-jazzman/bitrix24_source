@@ -79,7 +79,7 @@ class GeneralChat extends GroupChat
 		return Option::get('im', self::DISABLE_GENERAL_CHAT_OPTION, 'N') === 'N';
 	}
 
-	public function getManagerList(): array
+	public function getManagerList(bool $fullList = true): array
 	{
 		$cache = static::getCache(self::MANAGERS_CACHE_ID);
 
@@ -600,6 +600,11 @@ class GeneralChat extends GroupChat
 		Recent::raiseChat($this, $this->getRelationsByUserIds($usersToAdd), new DateTime());
 
 		return $result;
+	}
+
+	protected function disableUserDeleteMessage(bool $skipRecent = false): void
+	{
+		return;
 	}
 
 	private static function getCache(string $cacheId): Cache

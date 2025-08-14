@@ -4,7 +4,7 @@
 jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { Type } = require('type');
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { isModuleInstalled } = require('module');
 
 	const { Icon } = require('ui-system/blocks/icon');
@@ -491,7 +491,7 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			const options = this.getSetMessagesContextOptions(messagesOptions);
 			this.unreadSeparatorAdded = messageList.some((message) => message.id === UnreadSeparatorMessage.getDefaultId());
 			logger.log(`${this.constructor.name}.setMessages:`, messageList, options);
-			await this.ui.setMessages(messageList, options);
+			await this.ui.setMessages(this.#prepareMessagesToDialogWidgetItem(messageList), options);
 			this.setMessageList(messageList);
 
 			if (options.targetMessageId && options.withMessageHighlight)
@@ -563,7 +563,7 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 				this.hideWelcomeScreen();
 			}
 
-			await this.ui.pushMessages(messageList);
+			await this.ui.pushMessages(this.#prepareMessagesToDialogWidgetItem(messageList));
 			this.pushMessageList(messageList);
 		}
 
@@ -579,7 +579,7 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 
 			this.disableShowScrollButton();
 
-			await this.ui.addMessages(messageList);
+			await this.ui.addMessages(this.#prepareMessagesToDialogWidgetItem(messageList));
 			this.addMessageList(messageList);
 			this.visibilityManager.checkIsDialogVisible({ dialogCode: this.dialogCode })
 				.then((isDialogVisible) => {
@@ -613,7 +613,7 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 
 				return;
 			}
-			await this.ui.insertMessages(pointedId, messageList, position);
+			await this.ui.insertMessages(pointedId, this.#prepareMessagesToDialogWidgetItem(messageList), position);
 
 			this.insertMessageList(pointedId, messageList);
 		}
@@ -634,11 +634,11 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 		{
 			if (section)
 			{
-				await this.ui.updateMessageById(id, message, [section]);
+				await this.ui.updateMessageById(id, this.#prepareMessageToDialogWidgetItem(message), [section]);
 			}
 			else
 			{
-				await this.ui.updateMessageById(id, message);
+				await this.ui.updateMessageById(id, this.#prepareMessageToDialogWidgetItem(message));
 			}
 
 			this.updateMessageListById(id, message);
@@ -927,7 +927,7 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 		{
 			if (InputQuoteType[type])
 			{
-				if (Feature.isMultiSelectAvailable && title && text)
+				if (title && text)
 				{
 					this.textField.setQuote(message, type, openKeyboard, title, text);
 				}
@@ -1454,34 +1454,31 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 				},
 			};
 
-			if (Feature.isImagePickerCustomFieldsSupported)
+			if (isModuleInstalled('tasks'))
 			{
-				if (isModuleInstalled('tasks'))
-				{
-					imagePickerParams.settings.attachButton.items.push({
-						id: AttachPickerId.task,
-						name: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_VIEW_INPUT_ATTACH_TASK'),
-						iconName: Icon.TASK.getIconName(),
-					});
-				}
+				imagePickerParams.settings.attachButton.items.push({
+					id: AttachPickerId.task,
+					name: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_VIEW_INPUT_ATTACH_TASK'),
+					iconName: Icon.TASK.getIconName(),
+				});
+			}
 
-				if (isModuleInstalled('calendar'))
-				{
-					imagePickerParams.settings.attachButton.items.push({
-						id: AttachPickerId.meeting,
-						name: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_VIEW_INPUT_ATTACH_MEETING'),
-						iconName: Icon.CALENDAR_WITH_SLOTS.getIconName(),
-					});
-				}
+			if (isModuleInstalled('calendar'))
+			{
+				imagePickerParams.settings.attachButton.items.push({
+					id: AttachPickerId.meeting,
+					name: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_VIEW_INPUT_ATTACH_MEETING'),
+					iconName: Icon.CALENDAR_WITH_SLOTS.getIconName(),
+				});
+			}
 
-				if (Feature.isVoteMessageAvailable && !DialogHelper.createByDialogId(this.dialogId).isDirect)
-				{
-					imagePickerParams.settings.attachButton.items.push({
-						id: AttachPickerId.vote,
-						name: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_VIEW_INPUT_ATTACH_VOTE'),
-						iconName: Icon.POLL.getIconName(),
-					});
-				}
+			if (Feature.isVoteMessageAvailable && !DialogHelper.createByDialogId(this.dialogId).isDirect)
+			{
+				imagePickerParams.settings.attachButton.items.push({
+					id: AttachPickerId.vote,
+					name: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_VIEW_INPUT_ATTACH_VOTE'),
+					iconName: Icon.POLL.getIconName(),
+				});
 			}
 
 			AnalyticsService.getInstance().sendShowImagePicker(this.dialogId);
@@ -1836,6 +1833,24 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 
 			this.emitCustomEvent(EventType.dialog.visibleMessagesChanged, { indexList, messageList });
 			this.readVisibleUnreadMessages(messageList);
+		}
+
+		/**
+		 * @param {Array<Message>|Message} messageData
+		 * @return {Array<DialogWidgetItem>|DialogWidgetItem}
+		 */
+		#prepareMessagesToDialogWidgetItem(messageData)
+		{
+			return messageData.map((message) => this.#prepareMessageToDialogWidgetItem(message));
+		}
+
+		/**
+		 * @param {Message} messageData
+		 * @return {DialogWidgetItem}
+		 */
+		#prepareMessageToDialogWidgetItem(messageData)
+		{
+			return messageData.toDialogWidgetItem();
 		}
 	}
 

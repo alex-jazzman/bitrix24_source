@@ -2,7 +2,7 @@
  * @module im/messenger/controller/dialog/lib/message-create-menu
  */
 jn.define('im/messenger/controller/dialog/lib/message-create-menu', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { isModuleInstalled } = require('module');
 
 	const { ContextMenu } = require('layout/ui/context-menu');

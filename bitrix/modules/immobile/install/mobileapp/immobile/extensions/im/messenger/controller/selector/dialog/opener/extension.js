@@ -4,7 +4,7 @@
 jn.define('im/messenger/controller/selector/dialog/opener', (require, exports, module) => {
 	const { EntitySelectorWidget } = require('selector/widget');
 	const { DialogSelectorProvider } = require('im/messenger/controller/selector/dialog/provider');
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 
 	/**
 	 * @param {Object} options

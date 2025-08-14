@@ -2,7 +2,7 @@
  * @module im/messenger/controller/dialog/lib/pin/list
  */
 jn.define('im/messenger/controller/dialog/lib/pin/list', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Color } = require('tokens');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { EventType } = require('im/messenger/const');

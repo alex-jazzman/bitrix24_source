@@ -2,10 +2,11 @@
  * @module im/messenger/controller/dialog/lib/header/buttons/buttons/button-configuration
  */
 jn.define('im/messenger/controller/dialog/lib/header/buttons/buttons/button-configuration', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Theme } = require('im/lib/theme');
 
-	const { buttonIcons } = require('im/messenger/assets/common');
+	const { Icon } = require('assets/icons');
+	const { Url } = require('im/messenger/lib/helper');
 
 	/** @type DialogHeaderButton */
 	const CallAudioButton = {
@@ -47,9 +48,9 @@ jn.define('im/messenger/controller/dialog/lib/header/buttons/buttons/button-conf
 	const AddUsersButton = {
 		id: 'add_users',
 		testId: 'DIALOG_HEADER_ADD_USERS_BUTTON',
-		type: 'add_users',
+		type: Icon.ADD_PERSON.getIconName(),
 		badgeCode: 'add_users',
-		svg: { content: buttonIcons.copilotHeaderAddInline() },
+		color: Theme.colors.base1,
 	};
 
 	/** @type DialogHeaderButton */

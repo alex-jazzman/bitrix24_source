@@ -13,3 +13,10 @@ type CheckInMetaDataValue = {
 }
 
 export type CheckInMetaData = Record<keyof typeof CheckInType, CheckInMetaDataValue>
+
+export type CheckInMessageData = {
+	imageUrl: string,
+	chipsText: null | string,
+	addressText: null | string,
+	buttonText: string,
+}

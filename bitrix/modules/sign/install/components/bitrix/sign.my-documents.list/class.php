@@ -84,7 +84,7 @@ class SignMyDocumentsComponent extends SignBaseComponent
 		$button->addClass(self::SIGN_B2E_MY_DOCUMENTS_CREATE_BUTTON_CLASS);
 		if (B2eTariff::instance()->isB2eRestrictedInCurrentTariff())
 		{
-			$button->addClass('ui-btn-icon-lock');
+			$button->setIcon(\Bitrix\UI\Buttons\Icon::LOCK);
 			$button->setTag('button');
 		}
 

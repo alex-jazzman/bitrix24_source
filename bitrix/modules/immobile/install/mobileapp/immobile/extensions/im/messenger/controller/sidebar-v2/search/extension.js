@@ -2,7 +2,7 @@
  * @module im/messenger/controller/sidebar-v2/search
  */
 jn.define('im/messenger/controller/sidebar-v2/search', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Color } = require('tokens');
 	const { Type } = require('type');
 	const { uniqBy } = require('utils/array');

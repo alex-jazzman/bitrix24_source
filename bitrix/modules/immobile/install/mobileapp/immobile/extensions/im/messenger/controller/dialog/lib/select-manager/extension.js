@@ -2,7 +2,7 @@
  * @module im/messenger/controller/dialog/lib/select-manager
  */
 jn.define('im/messenger/controller/dialog/lib/select-manager', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Haptics } = require('haptics');
 	const { isEqual } = require('utils/object');
 	const { Color } = require('tokens');

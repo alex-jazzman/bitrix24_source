@@ -44,6 +44,7 @@ class DataProvider
 			AccessCode::TYPE_ACCESS_TEAM_DIRECTOR => Entity\AccessTeamDirector::class,
 			AccessCode::TYPE_ACCESS_TEAM_DEPUTY => Entity\AccessTeamDeputy::class,
 			AccessCode::TYPE_ACCESS_TEAM_EMPLOYEE => Entity\AccessTeamEmployee::class,
+			AccessCode::TYPE_STRUCTURE_DEPARTMENT => Entity\StructureDepartment::class,
 			default => null,
 		};
 	}

@@ -88,6 +88,11 @@ jn.define('im/messenger/db/repository/file', (require, exports, module) => {
 				result.chatId = Number(file.chatId);
 			}
 
+			if (Type.isStringFilled(file.dialogId))
+			{
+				result.dialogId = file.dialogId;
+			}
+
 			if (Type.isStringFilled(file.date))
 			{
 				result.date = DateHelper.cast(file.date).toISOString();

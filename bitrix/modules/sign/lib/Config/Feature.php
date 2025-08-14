@@ -85,7 +85,7 @@ final class Feature
 
 	public function isSenderTypeAvailable(): bool
 	{
-		return Option::get("sign", "is_sender_type_available", 'Y') === 'Y';
+		return $this->isB2eRobotEnabled() && $this->isSendDocumentByEmployeeEnabled();
 	}
 
 	public function isMultiDocumentLoadingEnabled(): bool
@@ -95,7 +95,7 @@ final class Feature
 
 	public function isGroupSendingEnabled(): bool
 	{
-		return Option::get("sign", "is_group_sending_enabled", 'N') === 'Y';
+		return Option::get("sign", "is_group_sending_enabled", 'Y') === 'Y';
 	}
 
 	public function isDocumentsInSignersSelectorEnabled(): bool

@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Service\Router;
 
 use Bitrix\Crm\Service\Router\Component\SidePanelWrapper;
+use Bitrix\Crm\Service\Router\Contract\Page\HasComponent;
 use Bitrix\Crm\Service\Router\Enum\Scope;
 use Bitrix\Crm\Service\Router\PageValidator\ScopeAvailabilityValidator;
 use Bitrix\Crm\Tour\Base;
@@ -10,7 +11,7 @@ use Bitrix\Main\HttpRequest;
 use Bitrix\Main\Page\Asset;
 use CCrmViewHelper;
 
-abstract class AbstractPage implements Contract\Page\StaticPage
+abstract class AbstractPage implements Contract\Page\StaticPage, HasComponent
 {
 	protected bool $isPlainView = false;
 	protected ?string $title = null;
@@ -24,7 +25,7 @@ abstract class AbstractPage implements Contract\Page\StaticPage
 	{
 	}
 
-	abstract protected function component(): Contract\Component;
+	abstract public function component(): Contract\Component;
 
 	final public function render(?\CBitrixComponent $parentComponent = null): void
 	{
@@ -51,7 +52,10 @@ abstract class AbstractPage implements Contract\Page\StaticPage
 			echo $tour->build();
 		}
 
-		$this->getPreparedComponent()->render();
+		$this
+			->getPreparedComponent()
+			->setParent($parentComponent)
+			->render();
 	}
 
 	/**

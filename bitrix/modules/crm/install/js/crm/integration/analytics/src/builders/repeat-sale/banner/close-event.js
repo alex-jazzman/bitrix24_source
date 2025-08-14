@@ -8,6 +8,7 @@ import type { RepeatSaleBannerCloseEvent } from '../../../types';
 export class CloseEvent
 {
 	#type: RepeatSaleBannerCloseEvent['type'];
+	#section: RepeatSaleBannerCloseEvent['c_section'] = Dictionary.SECTION_DEAL;
 	#subSection: RepeatSaleBannerCloseEvent['c_sub_section'] = Dictionary.SUB_SECTION_KANBAN;
 	#element: RepeatSaleBannerCloseEvent['c_element'] = Dictionary.ELEMENT_CLOSE_BUTTON;
 
@@ -24,14 +25,21 @@ export class CloseEvent
 		return self;
 	}
 
+	setSection(section: RepeatSaleBannerCloseEvent['c_section']): CloseEvent
+	{
+		this.#section = section;
+
+		return this;
+	}
+
 	buildData(): ?RepeatSaleBannerCloseEvent
 	{
 		return filterOutNilValues({
 			tool: Dictionary.TOOL_CRM,
 			category: Dictionary.CATEGORY_BANNERS,
-			event: Dictionary.EVENT_REPEAT_SALE_BANNER_VIEW,
+			event: Dictionary.EVENT_REPEAT_SALE_BANNER_CLOSE,
 			type: this.#type,
-			c_section: Dictionary.SECTION_DEAL,
+			c_section: this.#section,
 			c_sub_section: this.#subSection,
 			c_element: this.#element,
 			p1: getCrmMode(),

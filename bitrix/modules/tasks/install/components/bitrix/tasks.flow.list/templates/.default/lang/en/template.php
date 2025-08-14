@@ -1,7 +1,6 @@
 <?php
 $MESS["TASKS_FLOW_ADD_BUTTON"] = "New flow";
 $MESS["TASKS_FLOW_LIST_ABOUT_EFFICIENCY"] = "Efficiency is the percentage of the tasks <br>completed within the time allotted.";
-$MESS["TASKS_FLOW_LIST_ANALYTICS_BTN"] = "Analytics";
 $MESS["TASKS_FLOW_LIST_BI_ANALYTICS_BADLY"] = "Bad";
 $MESS["TASKS_FLOW_LIST_BI_ANALYTICS_EMPTY_DASHBOARDS"] = "Dashboard is not available.";
 $MESS["TASKS_FLOW_LIST_BI_ANALYTICS_GREAT"] = "Excellent";

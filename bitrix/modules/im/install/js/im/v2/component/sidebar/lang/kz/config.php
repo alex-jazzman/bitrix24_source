@@ -1,5 +1,8 @@
 <?php
 $MESS["IM_SIDEBAR_ADD_BUTTON_TEXT"] = "Қосу";
+$MESS["IM_SIDEBAR_AI_MODEL_POPUP_HELP"] = "Нені таңдау керек?";
+$MESS["IM_SIDEBAR_AI_MODEL_POPUP_MARKET"] = "Маркетте таңдау";
+$MESS["IM_SIDEBAR_AI_MODEL_POPUP_SETTINGS"] = "Баптаулар";
 $MESS["IM_SIDEBAR_AUDIO_EMPTY"] = "Аудио жоқ";
 $MESS["IM_SIDEBAR_AUTODELETE_NO_PERMISSION"] = "Автожоюмен жұмыс істеуге құқықтар жеткіліксіз. [helpdesklink]Толығырақ[/helpdesklink]";
 $MESS["IM_SIDEBAR_AUTODELETE_STATUS_1D"] = "1 күннен кейін";

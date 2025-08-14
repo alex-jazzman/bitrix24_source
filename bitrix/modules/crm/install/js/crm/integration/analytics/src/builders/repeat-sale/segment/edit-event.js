@@ -84,7 +84,7 @@ export class EditEvent
 		return filterOutNilValues({
 			tool: Dictionary.TOOL_CRM,
 			category: Dictionary.CATEGORY_EDITOR,
-			event: Dictionary.EVENT_REPEAT_SALE_SEGMENT_CANCEL,
+			event: Dictionary.EVENT_REPEAT_SALE_SEGMENT_EDIT,
 			type: Dictionary.TYPE_REPEAT_SALE_SEGMENT,
 			c_section: this.#section,
 			p1,

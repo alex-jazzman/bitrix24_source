@@ -9,6 +9,7 @@ $MESS["BIZPROC_LOG_SKIP_TYPES_1_1"] = "әрекетті іске қосу";
 $MESS["BIZPROC_LOG_SKIP_TYPES_2_1"] = "әрекетті аяқтау";
 $MESS["BIZPROC_NAME_TEMPLATE"] = "Атын көрсету пішімі";
 $MESS["BIZPROC_OPTIONS_NAME_IN_SITE_FORMAT"] = "Сайттың пішімі";
+$MESS["BIZPROC_OPT_ENABLE_GETDOCUMENT_SELECT"] = "Құжат өрістерін жүктеуді оңтайландыруды қосу";
 $MESS["BIZPROC_OPT_LOCKED_WI_PATH"] = "Тұрып қалған бизнес-процестер тізіміне жол";
 $MESS["BIZPROC_OPT_TIME_LIMIT"] = "Әрекет үшін ең аз күту уақыты";
 $MESS["BIZPROC_OPT_TIME_LIMIT_D"] = "күн";

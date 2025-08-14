@@ -638,7 +638,7 @@ export default class Dom
 		element: ?HTMLElement,
 		attr: string | {[key: string]: any},
 		value?: any,
-	)
+	): any
 	{
 		if (Type.isElementNode(element))
 		{
@@ -646,20 +646,30 @@ export default class Dom
 			{
 				if (!Type.isNil(value))
 				{
-					return element.setAttribute(attr, encodeAttributeValue(value));
+					if (Type.isObjectLike(value))
+					{
+						element.setAttribute(attr, encodeAttributeValue(value));
+					}
+					else
+					{
+						element.setAttribute(attr, value);
+					}
 				}
-
-				if (Type.isNull(value))
+				else if (Type.isNull(value))
 				{
-					return element.removeAttribute(attr);
+					element.removeAttribute(attr);
 				}
-
-				return decodeAttributeValue(element.getAttribute(attr));
+				else
+				{
+					return decodeAttributeValue(
+						element.getAttribute(attr),
+					);
+				}
 			}
 
 			if (Type.isPlainObject(attr))
 			{
-				return Object.entries(attr).forEach(([attrKey, attrValue]) => {
+				Object.entries(attr).forEach(([attrKey, attrValue]) => {
 					Dom.attr(element, attrKey, attrValue);
 				});
 			}

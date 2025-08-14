@@ -53,6 +53,7 @@ export type RecentModelState = {
 export type RecentModelActions =
 	'recentModel/setState'
 	| 'recentModel/set'
+	| 'recentModel/setFromSync'
 	| 'recentModel/like'
 	| 'recentModel/setFromPush'
 	| 'recentModel/delete'

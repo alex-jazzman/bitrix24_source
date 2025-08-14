@@ -4,7 +4,7 @@
 jn.define('im/messenger/controller/sidebar/channel/sidebar-controller', (require, exports, module) => {
 	/* global InAppNotifier */
 	const { isOnline } = require('device/connection');
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Type } = require('type');
 	const { Theme } = require('im/lib/theme');
 	const { Icon } = require('assets/icons');
@@ -150,7 +150,7 @@ jn.define('im/messenger/controller/sidebar/channel/sidebar-controller', (require
 			{
 				this.isGeneral = dialogState.type === DialogType.generalChannel;
 			}
-			this.isCanLeave = ChatPermission.isCanLeaveFromChat(this.dialogId);
+			this.сanLeave = ChatPermission.сanLeaveFromChat(this.dialogId);
 		}
 
 		initTabsData()
@@ -239,7 +239,7 @@ jn.define('im/messenger/controller/sidebar/channel/sidebar-controller', (require
 		 */
 		createButtons()
 		{
-			const disable = this.isGeneral || !this.isCanLeave;
+			const disable = this.isGeneral || !this.сanLeave;
 
 			return [
 				this.createMuteButton(),

@@ -2,16 +2,17 @@
 
 return [
 	'extensions' => [
-		'loc',
 		'type',
 		'tokens',
 		'alert',
 		'assets/icons',
-		'user/profile',
 		'utils/object',
 		'ui-system/typography',
 		'ui-system/blocks/icon',
 		'ui-system/blocks/avatar',
+		'user-profile',
+
+		'im:messenger/loc',
 		'im:messenger/const',
 		'im:messenger/lib/element',
 		'im:messenger/lib/emitter',

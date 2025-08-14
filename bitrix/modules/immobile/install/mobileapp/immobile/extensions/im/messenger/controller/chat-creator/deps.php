@@ -3,8 +3,8 @@
 return [
 	'extensions' => [
 		'type',
-		'loc',
 		'utils/object',
+		'im:messenger/loc',
 		'im:messenger/lib/di/service-locator',
 		'im:messenger/lib/params',
 		'im:messenger/lib/feature',

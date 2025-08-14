@@ -5,7 +5,7 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { Color } = require('tokens');
 	const { Type } = require('type');
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Icon } = require('assets/icons');
 
 	const { Feature } = require('im/messenger/lib/feature');

@@ -7,9 +7,10 @@ jn.define('im/messenger/db/repository/validators/message', (require, exports, mo
 	const { ObjectUtils } = require('im/messenger/lib/utils');
 	const { clone } = require('utils/object');
 
-	function validate(message)
+	function validate(messageData)
 	{
 		const result = {};
+		const message = clone(messageData);
 
 		if (Type.isNumber(message.id))
 		{

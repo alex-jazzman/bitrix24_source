@@ -16,7 +16,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 	/* region mobile import */
 	const AppTheme = require('apptheme');
 	const { Type } = require('type');
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Haptics } = require('haptics');
 	const { inAppUrl } = require('in-app-url');
 	const { clone, isEmpty } = require('utils/object');
@@ -120,7 +120,6 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 	const { CommentButton } = require('im/messenger/controller/dialog/lib/comment-button');
 	const { DialogEmitter } = require('im/messenger/controller/dialog/lib/emitter');
 	const { DialogTextHelper } = require('im/messenger/controller/dialog/lib/helper/text');
-	const { checkIsOpenDialogSupported } = require('im/messenger/lib/open-dialog-check');
 	const { EntityManager } = require('im/messenger/controller/dialog/lib/entity-manager');
 	const { SelectManager } = require('im/messenger/controller/dialog/lib/select-manager');
 	const { VisibilityManager } = require('im/messenger/lib/visibility-manager');
@@ -491,8 +490,6 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			/** @private */
 			this.messageDoubleTapHandler = this.messageDoubleTapHandler.bind(this);
 			/** @private */
-			this.messageFileDownloadTapHandler = this.messageFileDownloadTapHandler.bind(this);
-			/** @private */
 			this.fileDownloadTapHandler = this.fileDownloadTapHandler.bind(this);
 			/** @private */
 			this.messageFileUploadCancelTapHandler = this.messageFileUploadCancelTapHandler.bind(this);
@@ -609,7 +606,6 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				.on(EventType.dialog.messageQuoteTap, this.messageQuoteTapHandler)
 				.on(EventType.dialog.messageDoubleTap, this.messageDoubleTapHandler)
 				.on(EventType.dialog.fileDownloadTap, this.fileDownloadTapHandler)
-				.on(EventType.dialog.messageFileDownloadTap, this.messageFileDownloadTapHandler)
 				.on(EventType.dialog.messageFileUploadCancelTap, this.messageFileUploadCancelTapHandler)
 				.on(EventType.dialog.reactionTap, this.reactionTapHandler)
 				.on(EventType.dialog.reactionLongTap, this.reactionLongTapHandler)
@@ -929,15 +925,6 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				actionsAfterOpen,
 			} = options;
 
-			// early exit if the dialog data is in local storage
-			const isSupportedDialog = await checkIsOpenDialogSupported(dialogId);
-			if (isSupportedDialog === false)
-			{
-				Feature.showUnsupportedWidget();
-
-				return;
-			}
-
 			this.dialogId = dialogId;
 
 			if (this.getDialogType() === DialogWidgetType.collab)
@@ -981,7 +968,6 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			if (
 				!Feature.isChatV2Enabled
 				|| isOpenlinesChat
-				|| (this.isBot() && !Feature.isChatDialogWidgetSupportsBots)
 			)
 			{
 				this.openWebDialog(options);
@@ -1209,6 +1195,15 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		}
 
 		/**
+		 * @param {DialoguesModelState} [dialogData=this.getDialog()]
+		 * @return {boolean}
+		 */
+		isNotes(dialogData = this.getDialog())
+		{
+			return Boolean(DialogHelper.createByModel(dialogData)?.isNotes);
+		}
+
+		/**
 		 * @param {DialoguesModelState} dialogData
 		 * @return {boolean}
 		 */
@@ -1426,6 +1421,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			this.subscribeViewEvents();
 			this.subscribeStoreEvents();
 			this.subscribeExternalEvents();
+			this.updateReactionRestriction();
 
 			if ((this.isComment()) && this.getChatId() > 0)
 			{
@@ -1441,19 +1437,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			this.loadChatWithMessages()
 				.then(() => this.handleLoadChatWithMessages())
 				.catch((error) => this.handleLoadChatWithMessagesError(error))
-				.finally(async () => {
-					// if at the time of open there was no chat data in the local storage
-					const isSupportedDialog = await checkIsOpenDialogSupported(this.dialogId);
-					if (isSupportedDialog === false)
-					{
-						this.view.once(EventType.view.close, () => {
-							Feature.showUnsupportedWidget();
-						});
-						this.view.back();
-
-						return;
-					}
-
+				.finally(() => {
 					this.handleMessageNotFoundError();
 					this.view.readDelayedMessageList();
 				})
@@ -2071,10 +2055,10 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		 */
 		isNeedHideTextFieldByPermission()
 		{
-			const isCanPost = ChatPermission.isCanPost(this.getDialog());
+			const сanPost = ChatPermission.сanPost(this.getDialog());
 			const isGroupDialog = DialogHelper.isDialogId(this.getDialogId());
 
-			return !isCanPost && isGroupDialog;
+			return !сanPost && isGroupDialog;
 		}
 
 		isNeedDeleteMessages()
@@ -2253,7 +2237,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				await this.contextManager.goToLastReadMessageContext();
 				this.needScrollToBottom = true;
 			}
-		}
+		};
 
 		/**
 		 * @private
@@ -2789,6 +2773,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			if (dialog.role === UserRole.guest)
 			{
 				this.joinUserChat();
+				this.updateReactionRestriction();
 
 				return;
 			}
@@ -2862,14 +2847,14 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				return;
 			}
 
-			if (!ChatPermission.isCanOpenAvatarMenu(this.getDialog()))
+			if (!ChatPermission.сanOpenAvatarMenu(this.getDialog()))
 			{
 				return;
 			}
 
 			MessageAvatarMenu.createByAuthorId(authorId, {
 				isBot: user.bot,
-				isCanMention: ChatPermission.isCanMention(this.getDialog()),
+				сanMention: ChatPermission.сanMention(this.getDialog()),
 				dialogId: this.getDialogId(),
 			}).open();
 			Haptics.impactMedium();
@@ -2897,6 +2882,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			if (text && !ObjectUtils.isStringFullSpace(text))
 			{
 				this.startWriting();
+				this.sendAnalyticsTypeMessageIfChatIsNotes();
 			}
 
 			this.updateDraft(text);
@@ -2908,6 +2894,12 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		updateDraft(text)
 		{
 			this.draftManager.changeTextHandler(text);
+		}
+
+		updateReactionRestriction()
+		{
+			const сanSetReaction = ChatPermission.сanSetReaction(this.getDialogId());
+			this.view.updateRestrictions({ reaction: сanSetReaction });
 		}
 
 		/**
@@ -3481,27 +3473,6 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		}
 
 		/**
-		 * @deprecated
-		 * @private
-		 */
-		messageFileDownloadTapHandler(index, message)
-		{
-			if (Feature.isChatDialogWidgetFileDownloadTapEventSupported)
-			{
-				return;
-			}
-
-			logger.log(`${this.constructor.name}.messageFileDownloadTapHandler: `, index, message);
-			const fileList = this.store.getters['messagesModel/getMessageFiles'](message.id);
-			if (!Type.isArrayFilled(fileList))
-			{
-				return;
-			}
-
-			this.fileDownloadTapHandler(fileList[0].id, message.id);
-		}
-
-		/**
 		 * @private
 		 */
 		fileDownloadTapHandler(fileId, messageId)
@@ -3565,7 +3536,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				return;
 			}
 
-			if (!ChatPermission.isCanReply(this.getDialog()))
+			if (!ChatPermission.сanReply(this.getDialog()))
 			{
 				return;
 			}
@@ -3588,7 +3559,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		 */
 		readyToReplyHandler(index, message)
 		{
-			if (!ChatPermission.isCanReply(this.getDialog()))
+			if (!ChatPermission.сanReply(this.getDialog()))
 			{
 				Haptics.notifyFailure();
 
@@ -3939,6 +3910,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			)
 			{
 				this.textField.update();
+				this.updateReactionRestriction();
 			}
 
 			if (!Type.isUndefined(mutation.payload.data?.fields?.textFieldEnabled)
@@ -4836,6 +4808,15 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		sendAnalyticsShowBannerByStart()
 		{
 			AnalyticsService.getInstance().sendAnalyticsShowBannerByStart({ dialog: this.getDialog() });
+		}
+
+		sendAnalyticsTypeMessageIfChatIsNotes()
+		{
+			const draftModel = this.store.getters['draftModel/getById'](this.getDialogId());
+			if (!draftModel && this.isNotes())
+			{
+				AnalyticsService.getInstance().sendTypeMessageChatNotes();
+			}
 		}
 
 		onShowScrollToNewMessageButton = () => {

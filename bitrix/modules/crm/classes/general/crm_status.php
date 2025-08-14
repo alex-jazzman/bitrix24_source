@@ -285,6 +285,9 @@ class CCrmStatus
 					'ENTITY_TYPE_ID' => $type->getEntityTypeId(),
 					'IS_ENABLED' => $type->getIsStagesEnabled(),
 					'CATEGORY_ID' => $category->getId(),
+					'CATEGORY_NAME' => $category->getName(),
+					'CATEGORY_SORT' => $category->getSort(),
+					'IS_DEFAULT_CATEGORY' => $category->getIsDefault(),
 				];
 			}
 		}

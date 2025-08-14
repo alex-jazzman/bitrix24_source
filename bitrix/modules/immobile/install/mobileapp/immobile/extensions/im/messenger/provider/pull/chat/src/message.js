@@ -291,7 +291,7 @@ jn.define('im/messenger/provider/pull/chat/message', (require, exports, module) 
 		updateCopilotModel(params)
 		{
 			const isCopilot = params.chat[params.chatId]?.type === DialogType.copilot;
-			if (!isCopilot)
+			if (!isCopilot || !params.copilot)
 			{
 				return;
 			}

@@ -3,7 +3,7 @@
  */
 jn.define('im/messenger/controller/user-add', (require, exports, module) => {
 	const { Type } = require('type');
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { clone } = require('utils/object');
 
 	const { Logger } = require('im/messenger/lib/logger');

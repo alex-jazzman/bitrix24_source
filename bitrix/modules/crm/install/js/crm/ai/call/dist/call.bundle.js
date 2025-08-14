@@ -401,7 +401,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      return main_core.Type.isStringFilled(this.errorText) ? this.errorText : main_core.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_ERROR_TEXT');
 	    }
 	  },
-	  template: "\n\t\t<div class=\"call-quality__explanation\">\n\t\t\t<div class=\"call-quality__explanation__container --error\">\n\t\t\t\t<div class=\"call-quality__explanation-title\">\n\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_ERROR_TITLE') }}\n\t\t\t\t</div>\n\t\t\t\t<div class=\"call-quality__explanation-text\">\n\t\t\t\t\t{{ explanationText }}\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t"
+	  template: "\n\t\t<div class=\"call-quality__explanation\">\n\t\t\t<div class=\"call-quality__explanation__container --error\">\n\t\t\t\t<div class=\"call-quality__explanation-title\">\n\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_ERROR_TITLE') }}\n\t\t\t\t</div>\n\t\t\t\t<div \n\t\t\t\t\tclass=\"call-quality__explanation-text\"\n\t\t\t\t\tv-html=\"explanationText\"\n\t\t\t\t></div>\n\t\t\t</div>\n\t\t</div>\n\t"
 	};
 
 	var NotAssessmentScriptBlock = {

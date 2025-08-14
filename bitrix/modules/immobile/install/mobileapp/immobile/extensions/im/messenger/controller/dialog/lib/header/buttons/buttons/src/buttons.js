@@ -157,7 +157,7 @@ jn.define('im/messenger/controller/dialog/lib/header/buttons/buttons/buttons', (
 		{
 			const userData = this.store.getters['usersModel/getById'](this.dialogId);
 
-			if (!UserPermission.isCanCall(userData))
+			if (!UserPermission.canCall(userData))
 			{
 				return [];
 			}
@@ -211,7 +211,7 @@ jn.define('im/messenger/controller/dialog/lib/header/buttons/buttons/buttons', (
 		getDefaultChatButtons()
 		{
 			const dialogData = this.store.getters['dialoguesModel/getById'](this.dialogId);
-			if (!dialogData || !ChatPermission.isCanCall(dialogData))
+			if (!dialogData || !ChatPermission.canCall(dialogData))
 			{
 				return [];
 			}
@@ -273,7 +273,7 @@ jn.define('im/messenger/controller/dialog/lib/header/buttons/buttons/buttons', (
 		renderAddUserButton()
 		{
 			const dialogData = this.store.getters['dialoguesModel/getById'](this.dialogId);
-			if (!dialogData || !ChatPermission.isCanAddParticipants(dialogData))
+			if (!dialogData || !ChatPermission.canAddParticipants(dialogData))
 			{
 				return [];
 			}

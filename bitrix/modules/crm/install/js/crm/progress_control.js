@@ -1,4 +1,4 @@
-/* eslint-disable no-underscore-dangle, @bitrix24/bitrix24-rules/no-pseudo-private */
+/* eslint-disable */
 if(typeof(BX.CrmDealStageManager) === "undefined")
 {
 	BX.CrmDealStageManager = function() {};
@@ -12,10 +12,6 @@ if(typeof(BX.CrmDealStageManager) === "undefined")
 				typeId = "category_0";
 			}
 			return (BX.type.isArray(BX.CrmDealStageManager.infos[typeId]) ? BX.CrmDealStageManager.infos[typeId] : []);
-		},
-		isMultiType: function()
-		{
-			return true;
 		},
 		getMessage: function(name)
 		{
@@ -50,10 +46,6 @@ if(typeof(BX.CrmDealRecurringStageManager) === "undefined")
 			{
 				return [];
 			},
-			isMultiType: function()
-			{
-				return false;
-			},
 			getMessage: function(name)
 			{
 				return "";
@@ -77,10 +69,6 @@ if(typeof(BX.CrmLeadStatusManager) === "undefined")
 	BX.CrmLeadStatusManager.prototype =
 	{
 		getInfos: function(typeId) { return BX.CrmLeadStatusManager.infos; },
-		isMultiType: function()
-		{
-			return false;
-		},
 		getMessage: function(name)
 		{
 			return BX.prop.getString(BX.CrmLeadStatusManager.messages, name, name);
@@ -378,10 +366,6 @@ if(typeof(BX.CrmQuoteStatusManager) === "undefined")
 	BX.CrmQuoteStatusManager.prototype =
 	{
 		getInfos: function(typeId) { return BX.CrmQuoteStatusManager.infos; },
-		isMultiType: function()
-		{
-			return false;
-		},
 		getMessage: function(name)
 		{
 			var msgs = BX.CrmQuoteStatusManager.messages;
@@ -411,10 +395,6 @@ if(typeof(BX.CrmOrderShipmentStatusManager) === "undefined")
 	BX.CrmOrderShipmentStatusManager.prototype =
 		{
 			getInfos: function(typeId) { return BX.CrmOrderShipmentStatusManager.infos; },
-			isMultiType: function()
-			{
-				return false;
-			},
 			getMessage: function(name)
 			{
 				var msgs = BX.CrmOrderShipmentStatusManager.messages;
@@ -448,10 +428,6 @@ if(typeof(BX.CrmOrderStatusManager) === "undefined")
 			{
 				return (typeof(BX.CrmOrderStatusManager.settings[name]) !== 'undefined') ?
 					BX.CrmOrderStatusManager.settings[name] : defaultval;
-			},
-			isMultiType: function()
-			{
-				return false;
 			},
 			setSetting: function(name, val)
 			{
@@ -1094,10 +1070,6 @@ if(typeof(BX.CrmItemStatusManager) === "undefined")
 				}
 				return (BX.type.isArray(BX.CrmItemStatusManager.infos[typeId]) ? BX.CrmItemStatusManager.infos[typeId] : []);
 			},
-			isMultiType: function()
-			{
-				return false;
-			},
 			getMessage: function(name)
 			{
 				var messages = BX.CrmItemStatusManager.messages;
@@ -1115,49 +1087,33 @@ if(typeof(BX.CrmItemStatusManager) === "undefined")
 	BX.CrmItemStatusManager.infos = [];
 }
 
-if(typeof(BX.CrmProgressManager) === "undefined")
+if (BX.Type.isUndefined(BX.CrmProgressManager))
 {
 	BX.CrmProgressManager = function() {};
 	BX.CrmProgressManager.prototype =
 	{
 		resolve: function(entityTypeId)
 		{
-			if(entityTypeId === BX.CrmEntityType.enumeration.deal)
+			switch (entityTypeId)
 			{
-				return BX.CrmDealStageManager.current;
+				case BX.CrmEntityType.enumeration.deal:
+					return BX.CrmDealStageManager.current;
+				case BX.CrmEntityType.enumeration.dealrecurring:
+					return BX.CrmDealRecurringStageManager.current;
+				case BX.CrmEntityType.enumeration.quote:
+					return BX.CrmQuoteStatusManager.current;
+				case BX.CrmEntityType.enumeration.lead:
+					return BX.CrmLeadStatusManager.current;
+				case BX.CrmEntityType.enumeration.order:
+					return BX.CrmOrderStatusManager.current;
+				case BX.CrmEntityType.enumeration.ordershipment:
+					return BX.CrmOrderShipmentStatusManager.current;
+				default:
+					return null;
 			}
-			else if(entityTypeId === BX.CrmEntityType.enumeration.dealrecurring)
-			{
-				return BX.CrmDealRecurringStageManager.current;
-			}
-			else if(entityTypeId === BX.CrmEntityType.enumeration.quote)
-			{
-				return BX.CrmQuoteStatusManager.current;
-			}
-			else if(entityTypeId === BX.CrmEntityType.enumeration.lead)
-			{
-				return BX.CrmLeadStatusManager.current;
-			}
-			else if(entityTypeId === BX.CrmEntityType.enumeration.order)
-			{
-				return BX.CrmOrderStatusManager.current;
-			}
-			else if(entityTypeId === BX.CrmEntityType.enumeration.ordershipment)
-			{
-				return  BX.CrmOrderShipmentStatusManager.current;
-			}
-			return null;
-		},
-		isMultiType: function(entityTypeId)
-		{
-			var manager = this.resolve(entityTypeId);
-			if(!manager)
-			{
-				return false;
-			}
-			return BX.type.isFunction(manager.isMultiType) && manager.isMultiType();
 		}
 	};
+
 	BX.CrmProgressManager.current = new BX.CrmProgressManager();
 }
 

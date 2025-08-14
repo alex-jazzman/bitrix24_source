@@ -7,8 +7,12 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Sign\Service\Container;
 use Bitrix\Sign\Type\Template\EntityType;
 use Bitrix\Sign\Ui\TemplateGrid\ActionMenu;
+use Bitrix\UI\Buttons\BaseButton;
+use Bitrix\UI\Buttons\Button;
+use Bitrix\UI\Buttons\Color;
 use Bitrix\UI\Toolbar\ButtonLocation;
 use Bitrix\Sign\Type\Document\InitiatedByType;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
@@ -40,7 +44,7 @@ $rootGridTitle = (string)Loc::getMessage('SIGN_B2E_EMPLOYEE_TEMPLATE_LIST_TITLE'
 $gridTitle = htmlspecialcharsbx($arParams['CURRENT_FOLDER_TITLE']) ? : $rootGridTitle;
 $APPLICATION->SetTitle($gridTitle);
 
-\Bitrix\UI\Toolbar\Facade\Toolbar::addFilter([
+Toolbar::addFilter([
 	'GRID_ID' => $arParams['GRID_ID'] ?? '',
 	'FILTER_ID' => $arParams['FILTER_ID'] ?? '',
 	'FILTER' => $arParams['FILTER_FIELDS'] ?? [],
@@ -54,7 +58,7 @@ $APPLICATION->SetTitle($gridTitle);
 $createTemplateEntityButton = $arResult['CREATE_TEMPLATE_ENTITY_BUTTON'] ?? false;
 $showTariffSlider = $arResult['SHOW_TARIFF_SLIDER'] ?? false;
 
-if ( $createTemplateEntityButton instanceof \Bitrix\UI\Buttons\BaseButton  && $showTariffSlider)
+if ($createTemplateEntityButton instanceof BaseButton  && $showTariffSlider)
 {
 	$createTemplateEntityButton
 		->setIcon(\Bitrix\UI\Buttons\Icon::LOCK)
@@ -63,16 +67,16 @@ if ( $createTemplateEntityButton instanceof \Bitrix\UI\Buttons\BaseButton  && $s
 	;
 }
 
-if ( $createTemplateEntityButton instanceof \Bitrix\UI\Buttons\BaseButton  && $arResult['CAN_ADD_TEMPLATE'] && !$arResult['IS_FOLDER_CONTENT_MODE'] ?? false)
+if ($createTemplateEntityButton instanceof BaseButton  && $arResult['CAN_ADD_TEMPLATE'])
 {
-	\Bitrix\UI\Toolbar\Facade\Toolbar::addButton($createTemplateEntityButton, ButtonLocation::AFTER_TITLE);
+	Toolbar::addButton($createTemplateEntityButton, ButtonLocation::AFTER_TITLE);
 }
 
 if (($arResult['CAN_ADD_TEMPLATE'] ?? false) && ($arResult['CAN_EXPORT_BLANK'] ?? false) && !$arResult['IS_FOLDER_CONTENT_MODE'])
 {
-	\Bitrix\UI\Toolbar\Facade\Toolbar::addButton(
-		(new \Bitrix\UI\Buttons\Button([]))
-			->setColor(\Bitrix\UI\Buttons\Color::PRIMARY)
+	Toolbar::addButton(
+		(new Button([]))
+			->setColor(Color::PRIMARY)
 			->setText(Loc::getMessage('SIGN_B2E_EMPLOYEE_TEMPLATE_LIST_ACTION_IMPORT'))
 			->addClass('sign-b2e-js-import-blank'),
 		ButtonLocation::AFTER_FILTER,
@@ -112,7 +116,7 @@ $getAddMetadataForFrontendFunction = static function(array $templateData) use (
 	return static function(mixed $wrappedLayout) use ($getInitiatedByTypeForView, $templateData, $buildDataAttributes) {
 		$id = (int)$templateData['columns']['ID'];
 		$entityType = $templateData['entityType'];
-		$initiatedByType = $templateData['columns']['TYPE'];
+		$initiatedByType = $templateData['columns']['TYPE'] ?? null;
 
 		$initiatedByTypeValue = $getInitiatedByTypeForView($initiatedByType, $entityType);
 		$dataAttributes = $buildDataAttributes(
@@ -214,11 +218,12 @@ $getSwitcherTemplate = static function (array $templatesData): string
 	return (string)ob_get_clean();
 };
 
-$getLinkTemplate = static function (array $templatesData, bool $showTariffSlider = false): string
+$getLinkTemplate = static function (array $templatesData, bool $showTariffSlider = false) use ($arResult): string
 {
 
 	$entityId = (int)$templatesData['columns']['ID'];
-	$editTemplateLink = Container::instance()->getUrlGeneratorService()->makeEditTemplateLink($entityId);
+	$folderId = $arResult['FOLDER_ID'] ?? 0;
+	$editTemplateLink = Container::instance()->getUrlGeneratorService()->makeEditTemplateLink($entityId, $folderId);
 	$title = $templatesData['columns']['TITLE'];
 	$id = $templatesData['columns']['ID'];
 	$entityType = $templatesData['entityType'];
@@ -328,7 +333,8 @@ foreach ($arResult["DOCUMENT_TEMPLATES"] as $templatesData)
 	$addMetadataToLayout = $getAddMetadataForFrontendFunction($templatesData);
 	$dateModify = $templatesData['columns']['DATE_MODIFY'] ?? null;
 	$entityId = (int)$templatesData['columns']['ID'];
-	$editTemplateLink = Container::instance()->getUrlGeneratorService()->makeEditTemplateLink($entityId);
+	$folderId = (int)$arResult['FOLDER_ID'] ?? 0;
+	$editTemplateLink = Container::instance()->getUrlGeneratorService()->makeEditTemplateLink($entityId, $folderId);
 
 	$gridRow = [
 		'data' => [
@@ -365,11 +371,12 @@ foreach ($arResult["DOCUMENT_TEMPLATES"] as $templatesData)
 
 	if (($templatesData['access']['canCreate'] ?? false) && $templatesData['entityType']->isTemplate())
 	{
-		$folderId = $arResult['FOLDER_ID'];
 		$gridRow['actions'][] = [
 			'text' => (string)Loc::getMessage('SIGN_B2E_EMPLOYEE_TEMPLATE_LIST_ACTION_COPY'),
 			'icon' => '/bitrix/js/ui/actionpanel/images/ui_icon_actionpanel_copy.svg',
-			'onclick' => "templateGrid.copyTemplate({$entityId}, {$folderId})",
+			'onclick' => $showTariffSlider
+				? "top.BX.UI.InfoHelper.show('limit_office_e_signature')"
+				: "templateGrid.copyTemplate({$entityId}, {$folderId})",
 		];
 	}
 
@@ -390,11 +397,7 @@ foreach ($arResult["DOCUMENT_TEMPLATES"] as $templatesData)
 		];
 	}
 
-	$canMoveTemplateToFolder = $templatesData['entityType']->isTemplate()
-		&& ($templatesData['columns']['TYPE']?->isCompany() ?? false)
-		&& ($templatesData['access']['canEdit'] ?? false)
-		&& Feature::instance()->isTemplateFolderGroupingAllowed();
-	if($canMoveTemplateToFolder)
+	if ($templatesData['access']['canMoveToFolder'] ?? false)
 	{
 		$gridRow['actions'][] = [
 			'text' => (string)Loc::getMessage('SIGN_B2E_EMPLOYEE_TEMPLATE_LIST_ACTION_MOVE_TO_FOLDER'),
@@ -441,9 +444,11 @@ $APPLICATION->IncludeComponent(
 ?>
 
 <script>
-	const templateGrid = new BX.Sign.V2.Grid.B2e.Templates('<?= CUtil::JSEscape($arParams['GRID_ID'] ?? '') ?>');
-	const addNewTemplateLink = '<?= CUtil::JSEscape($arParams['ADD_NEW_TEMPLATE_LINK']) ?>';
-	const urlListForReloadAfterSliderClose = <?= Json::encode($arParams['URL_LIST_FOR_RELOAD']) ?>;
+	const templateGrid = new BX.Sign.V2.Grid.B2e.Templates(
+		'<?= CUtil::JSEscape($arParams['GRID_ID'] ?? '') ?>',
+		'<?= CUtil::JSEscape($arParams['ADD_NEW_TEMPLATE_LINK'] ?? '') ?>',
+		<?= Json::encode($arParams['URL_LIST_FOR_RELOAD'] ?? []) ?>,
+	);
 
 	const toolbarElement = document.querySelector('.page-toolbar');
 	if (toolbarElement)
@@ -452,8 +457,7 @@ $APPLICATION->IncludeComponent(
 		toolbarElement.style.marginLeft = '0';
 	}
 	templateGrid.subscribeOnGridEvents();
-
-	templateGrid.reloadAfterSliderClose(addNewTemplateLink, urlListForReloadAfterSliderClose);
+	templateGrid.reloadAfterSliderClose();
 
 	<?php if (($arResult['CAN_ADD_TEMPLATE'] ?? false) && ($arResult['CAN_EXPORT_BLANK'] ?? false)): ?>
 		const el = document.getElementsByClassName('sign-b2e-js-import-blank');

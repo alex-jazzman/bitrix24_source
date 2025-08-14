@@ -8,7 +8,9 @@ this.BX = this.BX || {};
 	 */
 	var Metrika = /*#__PURE__*/function () {
 	  function Metrika(light) {
+	    var tool = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
 	    babelHelpers.classCallCheck(this, Metrika);
+	    this.tool = tool || Metrika.TOOL_NAME;
 	    this.sendedLabel = [];
 	    if (light === true) {
 	      return;
@@ -181,26 +183,22 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "sendData",
 	    value: function sendData(data) {
+	      var _this4 = this;
 	      main_core.Runtime.loadExtension('ui.analytics').then(function (exports) {
 	        var preparedData = {
-	          tool: Metrika.TOOL_NAME
+	          tool: _this4.tool
 	        };
 	        ['category', 'event', 'type', 'c_section', 'c_sub_section', 'c_element', 'status'].forEach(function (key) {
 	          if (data[key]) {
 	            preparedData[key] = data[key];
 	          }
 	        });
-	        if (data.params && main_core.Type.isObject(data.params)) {
-	          var i = 1;
-	          var maxParams = 5;
-	          Object.keys(data.params).forEach(function (param) {
-	            if (i <= maxParams) {
-	              var key = 'p' + i++;
-	              main_core.Text.toCamelCase(param);
-	              preparedData[key] = main_core.Text.toCamelCase(param) + '_' + main_core.Text.toCamelCase(data.params[param]);
-	            }
-	          });
-	          delete preparedData.params;
+	        for (var pos = 1; pos <= 5; pos++) {
+	          var key = "p".concat(pos);
+	          var param = data[key];
+	          if (param && main_core.Type.isArray(param) && param.length === 2) {
+	            preparedData[key] = "".concat(main_core.Text.toCamelCase(param[0]), "_").concat(main_core.Text.toCamelCase(param[1]));
+	          }
 	        }
 	        var sendData = exports.sendData;
 	        sendData(preparedData);

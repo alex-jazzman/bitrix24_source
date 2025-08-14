@@ -14,11 +14,12 @@ use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\Entity;
 use Bitrix\Main\ORM\Objectify\EntityObject;
 use Bitrix\Main\SystemException;
-use Bitrix\Main\Text\Emoji;
 use Bitrix\Main\Web\Json;
 
 class MessageMapper
 {
+	private const ENCODING_FLAGS = Json::DEFAULT_OPTIONS ^ JSON_UNESCAPED_UNICODE;
+
 	private string $tableClass;
 
 	public function __construct(Entity $tableEntity)
@@ -35,7 +36,14 @@ class MessageMapper
 		/** @var EO_MessengerMessage $ormModel */
 		$class = $ormModel->getClass();
 
-		if (!(class_exists($class) && is_subclass_of($class, MessageInterface::class)))
+		if (!class_exists($class))
+		{
+			throw new MappingException(
+				sprintf('The class "%s" does not exist', $class)
+			);
+		}
+
+		if (!is_subclass_of($class, MessageInterface::class))
 		{
 			throw new MappingException(
 				sprintf('The class "%s" does not implement "%s"', $class, MessageInterface::class)
@@ -43,7 +51,7 @@ class MessageMapper
 		}
 
 		/** @var MessageInterface $class */
-		$message = $class::createFromData(Json::decode(Emoji::decode($ormModel->getPayload())));
+		$message = $class::createFromData(Json::decode($ormModel->getPayload()));
 
 		$messageBox = new MessageBox($message);
 
@@ -75,7 +83,7 @@ class MessageMapper
 			->setQueueId($messageBox->getQueueId())
 			->setItemId($messageBox->getItemId())
 			->setClass($messageBox->getClassName())
-			->setPayload(Emoji::encode(Json::encode($messageBox->getMessage())))
+			->setPayload(Json::encode($messageBox->getMessage(), self::ENCODING_FLAGS))
 			->setCreatedAt($messageBox->getCreatedAt())
 			->setTtl($messageBox->getTtl())
 			->setAvailableAt($messageBox->getAvailableAt());

@@ -9,18 +9,19 @@ use Bitrix\Main\Web\Uri;
 
 class Metrika
 {
-	private const TOOL = 'landing';
 	private const ERROR_PARAM = 'errorType';
 
 	private array $data = [];
 	private AnalyticsEvent $event;
 
-	public function __construct(Categories $category, Events $event)
+	public function __construct(Categories $category, Events $event, ?Tools $tool = null)
 	{
-		$this->event = new AnalyticsEvent($event->value, self::TOOL, $category->value);
+		$toolValue = isset($tool) ? $tool->value : Tools::landing->value;
+
+		$this->event = new AnalyticsEvent($event->value, $toolValue, $category->value);
 		$this->event->setStatus(Statuses::Success->value);
 
-		$this->data['tool'] = self::TOOL;
+		$this->data['tool'] = $toolValue;
 		$this->data['status'] = Statuses::Success->value;
 		$this->data['category'] = $category->value;
 		$this->data['event'] = $event->value;
@@ -81,17 +82,17 @@ class Metrika
 		return $this;
 	}
 
-	public function setParams(array $params): self
+	public function setParam(int $position, string $param, string $value): self
 	{
-		$params = array_slice($params, 0, 5);
-		$i = 1;
-		foreach ($params as $param => $value)
+		if ($position <= 0 || $position > 5)
 		{
-			$paramString = $param . '_' . str_replace(['_', ' '], '-', (string)$value);
-			$this->event->{'setP' . $i++}($paramString);
+			return $this;
 		}
 
-		$this->data['params'] = $params;
+		$param = str_replace(['_', ' '], '-', $param);
+		$value = str_replace(['_', ' '], '-', $value);
+		$this->data['p' . $position] = [$param, $value];
+		$this->event->{'setP' . $position}("{$param}_{$value}");
 
 		return $this;
 	}
@@ -103,16 +104,11 @@ class Metrika
 	 */
 	public function setError(string $error, ?Statuses $status = null): self
 	{
-		$params = $this->data['params'] ?? [];
-		if (count($params) >= 5)
-		{
-			$params = array_slice($params, 0, 4);
-		}
-		$params[self::ERROR_PARAM] = $error;
-
-		$this->setStatus($status ?? Statuses::Error);
-
-		return $this->setParams($params);
+		return
+			$this
+				->setStatus($status ?? Statuses::Error)
+				->setParam(5, self::ERROR_PARAM, $error)
+		;
 	}
 
 	public function send(): void
@@ -123,6 +119,7 @@ class Metrika
 	public function getSendingScript(bool $addTag = false): string
 	{
 		$data = Json::encode($this->data);
+
 		$script = <<<script
 			if (typeof BX.Landing.Metrika !== 'undefined')
 			{

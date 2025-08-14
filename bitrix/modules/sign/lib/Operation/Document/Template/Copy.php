@@ -43,8 +43,7 @@ final class Copy implements Contract\Operation
 
 	public function launch(): Main\Result
 	{
-		$currentUserId = (int)CurrentUser::get()->getId();
-		if (!$currentUserId)
+		if ($this->createdByUserId < 1)
 		{
 			return Result::createByErrorMessage('User not found');
 		}
@@ -94,7 +93,7 @@ final class Copy implements Contract\Operation
 		$newTemplateFolderRelation = new TemplateFolderRelation(
 			entityId: $template->id,
 			entityType: EntityType::TEMPLATE,
-			createdById: $currentUserId,
+			createdById: $this->createdByUserId,
 			parentId: $this->folderId,
 			depthLevel: $isFolderMode ? $depthLevelForTemplate : 0,
 		);

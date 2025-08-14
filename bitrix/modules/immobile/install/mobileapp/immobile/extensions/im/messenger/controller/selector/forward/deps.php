@@ -4,7 +4,7 @@ return [
 	'extensions' => [
 		'im:messenger/controller/selector/dialog/opener',
 		'type',
-		'loc',
+		'im:messenger/loc',
 		'im:messenger/lib/emitter',
 		'im:messenger/const',
 	],

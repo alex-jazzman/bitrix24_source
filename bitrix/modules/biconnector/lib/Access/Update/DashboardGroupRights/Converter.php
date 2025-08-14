@@ -30,6 +30,7 @@ final class Converter
 		private readonly PermissionCollection  $permissions,
 		private readonly SupersetDashboardGroupCollection $dashboardGroups,
 		private readonly SupersetDashboardCollection $dashboards,
+		private readonly bool $isExportEnabled = true,
 	)
 	{
 	}
@@ -53,6 +54,8 @@ final class Converter
 			->fetchCollection()
 		;
 
+		self::prepareSystemDashboardScopes();
+
 		$dashboards = SupersetDashboardTable::getList([
 			'select' => ['*', 'SCOPE'],
 		])
@@ -62,7 +65,8 @@ final class Converter
 		$converter = new Converter(
 			$permissions,
 			$groups,
-			$dashboards
+			$dashboards,
+			MarketDashboardManager::getInstance()->isExportEnabled(),
 		);
 
 		$convertedItems = $converter->convert();
@@ -77,7 +81,6 @@ final class Converter
 	 */
 	public function convert(): array
 	{
-		$this->prepareSystemDashboardScopes();
 		$activeRoles = $this->prepareActiveRoles();
 		$groupingRoles = $this->groupRolesByDashboards($activeRoles);
 		$mapDashboardAction = $this->mapDashboardActions($groupingRoles);
@@ -89,7 +92,7 @@ final class Converter
 		);
 	}
 
-	private function prepareSystemDashboardScopes(): void
+	private static function prepareSystemDashboardScopes(): void
 	{
 		$emptySystemScopeDashboards = SupersetDashboardTable::getList([
 			'select' => ['APP_ID', 'SCOPE', 'ID'],
@@ -107,12 +110,11 @@ final class Converter
 			{
 				'bitrix.bic_taskdeadline',
 				'bitrix.bic_flow',
+				'bitrix.bic_taskeff',
 				'bitrix.bic_taskload',
 				'bitrix.bic_actual_time',
 				'bitrix.bic_emp_season',
 				'bitrix.bic_emp_season_west' => ScopeService::BIC_SCOPE_TASKS,
-
-				'bitrix.bic_taskeff' => ScopeService::BIC_SCOPE_TASKS_EFFICIENCY,
 
 				'bitrix.bic_throughput_flow',
 				'bitrix.bic_flow_param' => ScopeService::BIC_SCOPE_TASKS_FLOWS_FLOW,
@@ -259,7 +261,7 @@ final class Converter
 			PermissionDictionary::BIC_DASHBOARD_DELETE,
 		];
 
-		if (MarketDashboardManager::getInstance()->isExportEnabled())
+		if ($this->isExportEnabled)
 		{
 			$result[] = PermissionDictionary::BIC_DASHBOARD_EXPORT;
 		}

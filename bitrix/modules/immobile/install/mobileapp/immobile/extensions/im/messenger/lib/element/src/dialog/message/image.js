@@ -37,6 +37,19 @@ jn.define('im/messenger/lib/element/dialog/message/image', (require, exports, mo
 			/* end region */
 		}
 
+		/**
+		 * @return {ImageDialogWidgetItem}
+		 */
+		toDialogWidgetItem()
+		{
+			return {
+				...super.toDialogWidgetItem(),
+				image: this.image,
+				imageUrl: this.imageUrl,
+				previewParams: this.previewParams,
+			};
+		}
+
 		getType()
 		{
 			return MessageType.image;

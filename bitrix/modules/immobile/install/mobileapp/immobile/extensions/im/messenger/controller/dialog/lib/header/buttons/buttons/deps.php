@@ -2,11 +2,11 @@
 
 return [
 	'extensions' => [
-		'loc',
 		'device/connection',
+		'assets/icons',
 		'im:lib/theme',
+		'im:messenger/loc',
 		'im:messenger/const',
-		'im:messenger/assets/common',
 		'im:messenger/lib/di/service-locator',
 		'im:messenger/controller/user-add',
 		'im:messenger/lib/di/service-locator',

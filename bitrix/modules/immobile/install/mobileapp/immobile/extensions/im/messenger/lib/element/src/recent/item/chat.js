@@ -3,7 +3,7 @@
  */
 jn.define('im/messenger/lib/element/recent/item/chat', (require, exports, module) => {
 	const { Type } = require('type');
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 
 	const { RecentItem } = require('im/messenger/lib/element/recent/item/base');
 	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');

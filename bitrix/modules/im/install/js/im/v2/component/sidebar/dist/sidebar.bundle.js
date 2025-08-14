@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,im_v2_lib_localStorage,im_v2_lib_sidebar,ui_vue3_directives_lazyload,ui_label,main_date,im_v2_lib_channel,im_v2_component_elements_toggle,im_v2_component_elements_autoDelete,im_v2_lib_autoDelete,ui_vue3_directives_hint,im_v2_component_elements_copilotRolesDialog,im_v2_lib_rest,ui_promoVideoPopup,ui_manual,im_v2_lib_promo,im_v2_lib_feature,ui_viewer,im_v2_provider_service_disk,im_v2_model,im_v2_component_elements_audioplayer,ui_icons,ui_notification,rest_client,ui_vue3_vuex,im_v2_lib_market,im_v2_lib_entityCreator,im_v2_lib_analytics,im_v2_lib_layout,im_v2_component_entitySelector,im_v2_lib_notifier,im_v2_lib_copilot,im_v2_lib_menu,im_v2_lib_call,im_v2_provider_service_chat,im_v2_lib_permission,im_v2_lib_confirm,im_v2_provider_service_message,im_v2_lib_logger,im_v2_lib_parser,im_v2_lib_textHighlighter,im_v2_component_elements_searchInput,main_core,im_v2_lib_utils,im_v2_component_elements_chatTitle,im_v2_component_elements_avatar,im_v2_lib_user,im_v2_application_core,main_core_events,im_public,im_v2_const,im_v2_component_elements_loader,im_v2_component_elements_button,im_v2_lib_dateFormatter) {
+(function (exports,im_v2_lib_localStorage,im_v2_lib_sidebar,ui_vue3_directives_lazyload,ui_label,main_date,im_v2_lib_channel,im_v2_component_elements_toggle,im_v2_component_elements_autoDelete,im_v2_lib_autoDelete,ui_vue3_directives_hint,im_v2_component_elements_copilotRolesDialog,ui_promoVideoPopup,im_v2_component_elements_popup,im_v2_lib_helpdesk,im_v2_lib_rest,ui_manual,im_v2_lib_promo,im_v2_lib_feature,ui_viewer,im_v2_provider_service_disk,im_v2_model,im_v2_component_elements_audioplayer,ui_icons,ui_notification,rest_client,ui_vue3_vuex,im_v2_lib_market,im_v2_lib_entityCreator,im_v2_lib_analytics,im_v2_lib_layout,im_v2_component_entitySelector,im_v2_lib_notifier,im_v2_lib_copilot,im_v2_lib_menu,im_v2_lib_call,im_v2_provider_service_chat,im_v2_lib_permission,im_v2_lib_confirm,im_v2_provider_service_message,im_v2_lib_logger,im_v2_lib_parser,im_v2_lib_textHighlighter,im_v2_component_elements_searchInput,main_core,im_v2_lib_utils,im_v2_component_elements_chatTitle,im_v2_component_elements_avatar,im_v2_lib_user,im_v2_application_core,main_core_events,im_public,im_v2_const,im_v2_component_elements_loader,im_v2_component_elements_button,im_v2_lib_dateFormatter) {
 	'use strict';
 
 	function getChatId(dialogId) {
@@ -3065,9 +3065,216 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	`
 	};
 
+	var _sendRequest$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendRequest");
+	class CopilotAiModelService {
+	  constructor() {
+	    Object.defineProperty(this, _sendRequest$1, {
+	      value: _sendRequest2$1
+	    });
+	  }
+	  updateAIModel({
+	    dialogId,
+	    aiModelCode
+	  }) {
+	    im_v2_lib_logger.Logger.warn('CopilotService: update ai model', dialogId, aiModelCode);
+	    void im_v2_application_core.Core.getStore().dispatch('copilot/chats/updateModel', {
+	      dialogId,
+	      aiModel: aiModelCode
+	    });
+	    return babelHelpers.classPrivateFieldLooseBase(this, _sendRequest$1)[_sendRequest$1]({
+	      dialogId,
+	      engineCode: aiModelCode
+	    });
+	  }
+	}
+	function _sendRequest2$1({
+	  dialogId,
+	  engineCode
+	}) {
+	  const requestParams = {
+	    data: {
+	      dialogId,
+	      engineCode
+	    }
+	  };
+	  return im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2ChatCopilotUpdateAiModel, requestParams);
+	}
+
 	// @vue/component
-	const CopilotAIModel = {
-	  name: 'CopilotAIModel',
+	const AiModelItem = {
+	  name: 'AiModelItem',
+	  props: {
+	    text: {
+	      type: String,
+	      required: true
+	    },
+	    icon: {
+	      type: String,
+	      default: ''
+	    },
+	    selected: {
+	      type: Boolean,
+	      default: false
+	    }
+	  },
+	  computed: {
+	    iconClass() {
+	      return ['bx-im-ai-model-popup-content__item_icon', `--${this.icon}`];
+	    }
+	  },
+	  template: `
+		<div class="bx-im-ai-model-popup-content__item">
+			<template v-if="icon">
+				<div :class="iconClass"></div>
+			</template>
+			<div class="--line-clamp-2">{{ text }}</div>
+			<template v-if="selected">
+				<div class="bx-im-ai-model-popup-content__item_icon --check"></div>
+			</template>
+		</div>
+	`
+	};
+
+	const SETTINGS_PAGE = '/settings/configs/?page=ai';
+	const MARKET_PAGE = '/market/collection/ai_provider_partner_crm/';
+
+	// @vue/component
+	const AIModelPopupContent = {
+	  name: 'AIModelPopupContent',
+	  components: {
+	    AiModelItem
+	  },
+	  props: {
+	    dialogId: {
+	      type: String,
+	      required: true
+	    }
+	  },
+	  emits: ['close'],
+	  computed: {
+	    isAdmin() {
+	      const user = im_v2_application_core.Core.getStore().getters['users/get'](im_v2_application_core.Core.getUserId());
+	      return user.isAdmin;
+	    },
+	    selectedAIModelCode() {
+	      return this.$store.getters['copilot/chats/getAIModel'](this.dialogId).code;
+	    },
+	    aiModelsItems() {
+	      return im_v2_application_core.Core.getStore().getters['copilot/getAIModels'];
+	    }
+	  },
+	  methods: {
+	    openSettings() {
+	      BX.SidePanel.Instance.open(`${window.location.origin}${SETTINGS_PAGE}`);
+	    },
+	    openMarket() {
+	      BX.SidePanel.Instance.open(`${window.location.origin}${MARKET_PAGE}`);
+	    },
+	    openHelpCenter() {
+	      const ARTICLE_CODE = '20267044';
+	      im_v2_lib_helpdesk.openHelpdeskArticle(ARTICLE_CODE);
+	    },
+	    isSelectedAIModel(aiModelCode) {
+	      return this.selectedAIModelCode === aiModelCode;
+	    },
+	    async selectAIModel(aiModelCode) {
+	      const service = new CopilotAiModelService();
+	      void service.updateAIModel({
+	        dialogId: this.dialogId,
+	        aiModelCode
+	      });
+	      this.$emit('close');
+	    },
+	    loc(phraseCode) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode);
+	    }
+	  },
+	  template: `
+		<div class="bx-im-ai-model-popup-content__container" ref="ai-model-content">
+			<AiModelItem
+				v-for="model in aiModelsItems"
+				:key="model.name"
+				:text="model.name"
+				:selected="isSelectedAIModel(model.code)"
+				@click="selectAIModel(model.code)"
+			/>
+			<template v-if="isAdmin">
+				<div class="bx-im-ai-model-popup-content__separator"></div>
+				<AiModelItem
+					:text="loc('IM_SIDEBAR_AI_MODEL_POPUP_MARKET')"
+					@click="openMarket"
+				/>
+				<AiModelItem
+					:text="loc('IM_SIDEBAR_AI_MODEL_POPUP_SETTINGS')"
+					@click="openSettings"
+				/>
+			</template>
+			<div class="bx-im-ai-model-popup-content__separator"></div>
+			<AiModelItem
+				:text="loc('IM_SIDEBAR_AI_MODEL_POPUP_HELP')"
+				icon="info"
+				class="bx-im-ai-model-popup-content__item_info"
+				@click="openHelpCenter"
+			/>
+		</div>
+	`
+	};
+
+	const POPUP_ID = 'im-ai-model-popup';
+
+	// @vue/component
+	const AIModelPopup = {
+	  name: 'AIModelPopup',
+	  components: {
+	    MessengerPopup: im_v2_component_elements_popup.MessengerPopup,
+	    AIModelPopupContent
+	  },
+	  props: {
+	    bindElement: {
+	      type: Object,
+	      required: true
+	    },
+	    dialogId: {
+	      type: String,
+	      required: true
+	    }
+	  },
+	  emits: ['close'],
+	  computed: {
+	    POPUP_ID: () => POPUP_ID,
+	    config() {
+	      return {
+	        width: 224,
+	        bindElement: this.bindElement,
+	        offsetTop: 2,
+	        offsetLeft: 0,
+	        fixed: true,
+	        bindOptions: {
+	          position: 'bottom'
+	        },
+	        className: 'bx-im-ai-model-popup__scope'
+	      };
+	    }
+	  },
+	  template: `
+		<MessengerPopup
+			:config="config"
+			:id="POPUP_ID"
+		>
+			<AIModelPopupContent
+				:dialogId="dialogId"
+				@close="$emit('close')"
+			/>
+		</MessengerPopup>
+	`
+	};
+
+	// @vue/component
+	const AIModel = {
+	  name: 'AIModel',
+	  components: {
+	    AIModelPopup
+	  },
 	  props: {
 	    dialogId: {
 	      type: String,
@@ -3076,41 +3283,35 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  },
 	  data() {
 	    return {
-	      showAIModelsDialog: false
+	      showAIModelPopup: false
 	    };
 	  },
 	  computed: {
-	    aiModels() {
-	      return im_v2_application_core.Core.getStore().getters['copilot/getAIModels'];
-	    },
-	    currentAIModelCode() {
-	      return this.$store.getters['copilot/chats/getAIModel'](this.dialogId);
-	    },
 	    currentAIModelName() {
-	      return this.aiModels.find(item => item.code === this.currentAIModelCode.code).name;
-	    },
-	    isAIModelChangeAllowed() {
-	      return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isAIModelChangeAllowed);
+	      return this.$store.getters['copilot/chats/getAIModel'](this.dialogId).name;
 	    }
 	  },
 	  methods: {
-	    toggleAIModelList() {
-	      this.showAIModelsDialog = !this.showAIModelsDialog;
+	    toggleAIModelPopup() {
+	      this.showAIModelPopup = !this.showAIModelPopup;
+	    },
+	    closeAIModelPopup() {
+	      this.showAIModelPopup = false;
 	    }
 	  },
 	  template: `
-		<div v-if="isAIModelChangeAllowed" class="bx-im-sidebar-copilot-ai-model__container" @click="toggleAIModelList" ref="change-ai-model">
-			<div class="bx-im-sidebar-copilot-ai-model__title">
+		<div class="bx-im-sidebar-ai-model__container" @click="toggleAIModelPopup" ref="change-ai-model">
+			<div class="--line-clamp-2">
 				{{ currentAIModelName }}
 			</div>
-			<div class="bx-im-sidebar-copilot-ai-model__arrow-icon"></div>
+			<div class="bx-im-sidebar-ai-model__arrow-icon"></div>
 		</div>
-		<!--CopilotAIModelListPopup
-			v-if="showAIModelsDialog"
-			:bindElement="$refs['change-ai-model']"
+		<AIModelPopup
+			v-if="showAIModelPopup"
 			:dialogId="dialogId"
-			@close="closeAIModelsListPopup"
-		/-->
+			:bindElement="$refs['change-ai-model']"
+			@close="closeAIModelPopup"
+		/>
 	`
 	};
 
@@ -3123,7 +3324,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    MuteChat,
 	    ChatMembersAvatars,
 	    CopilotRole,
-	    CopilotAIModel
+	    AIModel
 	  },
 	  props: {
 	    dialogId: {
@@ -3141,6 +3342,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    },
 	    showMembers() {
 	      return this.dialog.userCounter > 2;
+	    },
+	    isAIModelChangeAllowed() {
+	      return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isAIModelChangeAllowed);
 	    }
 	  },
 	  template: `
@@ -3159,7 +3363,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			</div>
 			<div class="bx-im-sidebar-copilot-preview-group-chat__settings">
 				<CopilotRole :dialogId="dialogId" />
-				<CopilotAIModel :dialogId="dialogId" />
+				<AIModel v-if="isAIModelChangeAllowed" :dialogId="dialogId" />
 				<MuteChat :dialogId="dialogId" />
 			</div>
 		</div>
@@ -8685,5 +8889,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.ChatSidebar = ChatSidebar;
 
-}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Vue3.Directives,BX.UI,BX.Main,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Vue3.Directives,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.UI,BX.UI.Manual,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.UI.Viewer,BX.Messenger.v2.Service,BX.Messenger.v2.Model,BX.Messenger.v2.Component.Elements,BX,BX,BX,BX.Vue3.Vuex,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.EntitySelector,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib));
+}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Vue3.Directives,BX.UI,BX.Main,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Vue3.Directives,BX.Messenger.v2.Component.Elements,BX.UI,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.UI.Manual,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.UI.Viewer,BX.Messenger.v2.Service,BX.Messenger.v2.Model,BX.Messenger.v2.Component.Elements,BX,BX,BX,BX.Vue3.Vuex,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.EntitySelector,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib));
 //# sourceMappingURL=sidebar.bundle.js.map

@@ -8,11 +8,15 @@
 	height: var(--main-ui-filter-height);
 	margin-top: 0;
 	margin-bottom: 0;
-	background: var(--ui-color-design-outline-bg-alt);
 	border-color: var(--ui-color-design-outline-stroke);
 	border-radius: var(--ui-border-radius-sm);
-	-webkit-backdrop-filter: var(--ui-bg-blur-default);
-	backdrop-filter: var(--ui-bg-blur-default);
+
+	background:
+		linear-gradient(to right, var(--ui-color-design-outline-bg-alt), var(--ui-color-design-outline-bg-alt)),
+		var(--main-ui-filter-custom-background, none)
+	;
+	-webkit-backdrop-filter: var(--main-ui-filter-custom-backdrop-filter, var(--ui-bg-blur-content));
+	backdrop-filter: var(--main-ui-filter-custom-backdrop-filter, var(--ui-bg-blur-content));
 }
 
 .main-ui-filter-theme-air.main-ui-filter-search.main-ui-filter-search--showed,

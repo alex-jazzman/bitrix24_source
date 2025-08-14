@@ -13,6 +13,7 @@ enum Categories: string
 	case Vibe = 'vibe';
 	case CrmForms = 'crm_forms';
 	case ExternalPictureEditor = 'external_picture_editor';
+	case SiteGeneration = 'site_generation';
 
 	public static function getBySiteType(string $siteType): Categories
 	{

@@ -138,7 +138,7 @@ export class SharePopup extends EventEmitter
 											id: 'form-editor-feedback-form',
 											portalUri: 'https://bitrix24.team',
 											forms: [
-												{id: 1847, lang: 'ru', sec: 'bbih83', zones: ['ru']},
+												{id: 1847, lang: 'ru', sec: 'bbih83', zones: ['ru', 'uz']},
 												{id: 1852, lang: 'kz', sec: 'dtw568', zones: ['kz']},
 												{id: 1851, lang: 'by', sec: 'nnz05i', zones: ['by']},
 												{id: 1855, lang: 'en', sec: '6lxt2y', zones: ['en', 'eu', 'in', 'uk']},

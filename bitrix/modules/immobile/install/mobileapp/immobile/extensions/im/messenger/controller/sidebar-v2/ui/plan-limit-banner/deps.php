@@ -2,10 +2,10 @@
 
 return [
 	'extensions' => [
-		'loc',
 		'tokens',
 		'analytics',
 		'ui-system/blocks/icon',
+		'im:messenger/loc',
 		'im:messenger/assets/common',
 		'im:messenger/lib/params',
 		'im:messenger/const',

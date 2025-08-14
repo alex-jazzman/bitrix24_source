@@ -5,23 +5,23 @@
  */
 jn.define('im/messenger/controller/recent/lib/item-action', (require, exports, module) => {
 	/* global InAppNotifier  */
-	const { Loc } = require('loc');
-	const { Type } = require('type');
-	const { clone } = require('utils/object');
 	const { Alert, ButtonType } = require('alert');
+	const { clone } = require('utils/object');
+	const { isOnline } = require('device/connection');
+	const { Loc } = require('im/messenger/loc');
+	const { Type } = require('type');
+	const { UserProfile } = require('user-profile');
 
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { EventType, ErrorType } = require('im/messenger/const');
 	const { TabCounters } = require('im/messenger/lib/counters/tab-counters');
-	const { isOnline } = require('device/connection');
 	const {
 		RecentRest,
 		ChatRest,
 		UserRest,
 	} = require('im/messenger/provider/rest');
-	const { ProfileView } = require('user/profile');
 	const { getLogger } = require('im/messenger/lib/logger');
 	const { Notification } = require('im/messenger/lib/ui/notification');
 	const {
@@ -436,7 +436,9 @@ jn.define('im/messenger/controller/recent/lib/item-action', (require, exports, m
 
 		openUserProfile(itemId)
 		{
-			ProfileView.open({ userId: itemId });
+			void UserProfile.open({
+				ownerId: itemId,
+			});
 		}
 
 		getRecentItemById(id)

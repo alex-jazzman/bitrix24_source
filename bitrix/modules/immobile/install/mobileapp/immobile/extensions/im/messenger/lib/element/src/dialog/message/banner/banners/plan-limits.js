@@ -6,7 +6,7 @@ jn.define('im/messenger/lib/element/dialog/message/banner/banners/plan-limits', 
 	const { BannerMessageConfiguration } = require('im/messenger/lib/element/dialog/message/banner/configuration');
 	const { MessageParams } = require('im/messenger/const');
 	const { MessengerParams } = require('im/messenger/lib/params');
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 
 	/**
 	 * @class PlanLimitsBanner

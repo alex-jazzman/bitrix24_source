@@ -22,9 +22,11 @@ final class TemplateDocument implements Arrayable
 	{
 		$viewData = (new Document($this->document))->toArray();
 
-		$dateCreate = new Main\Type\DateTime();
-		$viewData['dateCreate'] = $dateCreate;
-		$viewData['dateSignUntil'] = $this->signUntilService->calcDefaultSignUntilDate($dateCreate);
+		$viewData['dateSignUntilUserTime'] = $this->signUntilService
+			->calcDefaultSignUntilDate(new Main\Type\DateTime())
+			->toUserTime()
+			->format('Y-m-d H:i:s')
+		;
 
 		return $viewData;
 	}

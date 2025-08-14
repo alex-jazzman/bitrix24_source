@@ -119,9 +119,12 @@ class EngineManager
 	protected function sendUpdateEngineMessage(Chat $chat, string $engineCode): void
 	{
 		$engineName = $this->getEngineNameByCode($engineCode);
-		$userId = $chat->getContext()->getUserId();
+		$user = $chat->getContext()->getUser();
+		$genderSuffix = $user->getGender() === 'F' ? '_F' : '';
+		$userId = $user->getId();
+
 		$message = Loc::getMessage(
-			'IM_COPILOT_UPDATE_ENGINE',
+			'IM_COPILOT_UPDATE_ENGINE' . $genderSuffix,
 			['#USER_ID#' => $userId, '#ENGINE#' => $engineName]
 		) ?? '';
 

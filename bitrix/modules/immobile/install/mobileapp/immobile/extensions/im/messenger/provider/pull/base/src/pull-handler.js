@@ -16,8 +16,6 @@ jn.define('im/messenger/provider/pull/base/pull-handler', (require, exports, mod
 	{
 		constructor(options = {})
 		{
-			/** @type {MessengerCoreStore} */
-			this.store = serviceLocator.get('core').getStore();
 			/** @type {Logger} */
 			this.logger = options.logger || Logger;
 		}
@@ -46,8 +44,6 @@ jn.define('im/messenger/provider/pull/base/pull-handler', (require, exports, mod
 			const syncService = SyncService.getInstance();
 			if (syncService.checkPullEventNeedsIntercept(params, extra, command))
 			{
-				syncService.storePullEvent(params, extra, command);
-
 				return true;
 			}
 
@@ -61,6 +57,11 @@ jn.define('im/messenger/provider/pull/base/pull-handler', (require, exports, mod
 		getClassName()
 		{
 			return this.constructor.name;
+		}
+
+		get store()
+		{
+			return serviceLocator.get('core').getStore();
 		}
 	}
 

@@ -195,21 +195,37 @@ jn.define('im/messenger/model/users/model', (require, exports, module) => {
 				return true;
 			},
 
+			/**
+			 * @function usersModel/setFromSync
+			 */
+			setFromSync: async (store, userList) => {
+				return store.dispatch('set', { userList, actionName: 'setFromSync' });
+			},
+
 			/** @function usersModel/set */
 			set: (store, payload) => {
-				let result = [];
+				let userList = [];
+				let actionName = 'set';
+				if (!Type.isArray(payload) && Type.isPlainObject(payload))
+				{
+					userList = payload.userList;
+					actionName = payload.actionName;
+				}
+
 				if (Type.isArray(payload))
 				{
-					result = payload.map((user) => {
-						const existingItem = store.state.collection[user.id];
-						const mergeItem = existingItem || userDefaultElement;
-
-						return {
-							...mergeItem,
-							...validate(user),
-						};
-					});
+					userList = payload;
 				}
+
+				const result = userList.map((user) => {
+					const existingItem = store.state.collection[user.id];
+					const mergeItem = existingItem || userDefaultElement;
+
+					return {
+						...mergeItem,
+						...validate(user),
+					};
+				});
 
 				if (result.length === 0)
 				{
@@ -217,7 +233,7 @@ jn.define('im/messenger/model/users/model', (require, exports, module) => {
 				}
 
 				store.commit('set', {
-					actionName: 'set',
+					actionName,
 					data: {
 						userList: result,
 					},

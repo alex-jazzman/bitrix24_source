@@ -27,7 +27,7 @@ final class DetailsPage extends AbstractPage
 		parent::__construct($request, $currentScope);
 	}
 
-	protected function component(): Contract\Component
+	public function component(): Contract\Component
 	{
 		return new Component(
 			name: self::COMPONENT_NAME,
@@ -39,7 +39,6 @@ final class DetailsPage extends AbstractPage
 
 	protected function configureSidePanel(SidePanelWrapper $sidePanel): void
 	{
-		$sidePanel->isUseToolbar = false;
 		$sidePanel->pageMode = false;
 		$sidePanel->pageModeBackUrl = Container::getInstance()->getRouter()->getAutomatedSolutionListUrl();
 	}

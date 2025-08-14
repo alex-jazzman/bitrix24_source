@@ -130,6 +130,13 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 					return [];
 				}
 
+				if (!Type.isArray(state.collection[messageId].files))
+				{
+					logger.error('messagesModel/getMessageFiles error: property files corrupted', messageId, state.collection[messageId].files);
+
+					return [];
+				}
+
 				return state.collection[messageId].files
 					.map((fileId) => rootGetters['filesModel/getById'](fileId))
 					.filter((file) => Type.isPlainObject(file));
@@ -409,15 +416,26 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 				await handlersComplete;
 			},
 
+			/**
+			 * @function messagesModel/setFromSync
+			 */
+			setFromSync: (store, payload) => {
+				return store.dispatch('setChatCollection', { ...payload, actionName: 'setFromSync' });
+			},
+
 			/** @function messagesModel/setChatCollection */
-			setChatCollection: async (store, { messages, clearCollection }) => {
-				const actionName = 'setChatCollection';
+			setChatCollection: async (store, { messages, clearCollection, actionName = 'setChatCollection' }) => {
 				const waiter = new MessengerMutationHandlersWaiter(MODULE_NAME_MESSAGES_MODEL, actionName);
 
 				clearCollection = clearCollection || false;
 				if (!Array.isArray(messages) && Type.isPlainObject(messages))
 				{
 					messages = [messages];
+				}
+
+				if (!Type.isArrayFilled(messages))
+				{
+					return;
 				}
 
 				messages = messages.map((message) => {
@@ -802,8 +820,15 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 				});
 			},
 
+			/**
+			 * @function messagesModel/updateListFromSync
+			 */
+			updateListFromSync: (store, payload) => {
+				return store.dispatch('updateList', { ...payload, actionName: 'setFromSync' });
+			},
+
 			/** @function messagesModel/updateList */
-			updateList: (store, { messageList }) => {
+			updateList: (store, { messageList, actionName = 'update' }) => {
 				if (!Type.isArrayFilled(messageList))
 				{
 					return false;
@@ -823,7 +848,7 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 					)
 					{
 						store.commit('deleteFromUploadingCollection', {
-							actionName: 'update',
+							actionName,
 							data: {
 								id: updateMessageData.id,
 							},
@@ -842,7 +867,7 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 				};
 
 				store.commit('update', {
-					actionName: 'updateList',
+					actionName,
 					data,
 				});
 

@@ -4,7 +4,7 @@
  * Bitrix Framework
  * @package bitrix
  * @subpackage main
- * @copyright 2001-2024 Bitrix
+ * @copyright 2001-2025 Bitrix
  */
 
 namespace Bitrix\Main\Web;
@@ -949,15 +949,9 @@ class HttpClient implements Log\LoggerAwareInterface, ClientInterface, Http\Debu
 
 		$this->request = $this->buildRequest($request);
 
-		$queue = $this->createQueue(false);
-
 		$handler = $this->createHandler($this->request);
 
-		$promise = $this->createPromise($handler, $queue);
-
-		$queue->add($promise);
-
-		$this->response = $promise->wait();
+		$this->response = $handler->execute();
 
 		return $this->response;
 	}
@@ -1060,16 +1054,15 @@ class HttpClient implements Log\LoggerAwareInterface, ClientInterface, Http\Debu
 	}
 
 	/**
-	 * @param bool $backgroundJob
 	 * @return Http\Curl\Queue | Http\Socket\Queue
 	 */
-	protected function createQueue(bool $backgroundJob = true)
+	protected function createQueue()
 	{
 		if ($this->useCurl)
 		{
-			return new Http\Curl\Queue($backgroundJob);
+			return new Http\Curl\Queue();
 		}
-		return new Http\Socket\Queue($backgroundJob);
+		return new Http\Socket\Queue();
 	}
 
 	/**

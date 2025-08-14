@@ -17,6 +17,7 @@ jn.define('im/messenger/const/message', (require, exports, module) => {
 		unsupported: 'unsupported',
 		copilot: 'copilot',
 		copilotError: 'copilot-error',
+		error: 'error',
 		copilotPrompt: 'copilot-promt',
 		banner: 'banner',
 		checkIn: 'check-in',

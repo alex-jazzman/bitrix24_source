@@ -70,6 +70,8 @@ export class Editor extends EventEmitter
 
 	#disableB2eDocumentSection: boolean = true;
 
+	#onSliderOpenCompleteHandler = this.#handleSliderOnOpenComplete.bind(this);
+
 	constructor(wizardType: string, options: EditorOptions)
 	{
 		super();
@@ -193,6 +195,16 @@ export class Editor extends EventEmitter
 		}
 	}
 
+	#handleSliderOnOpenComplete()
+	{
+		this.#blocksManager.initPagesRect();
+		this.#blocksManager.initBlocks(
+			this.#documentData.blocks
+				.filter((block) => this.#isBlockCanBeInitialized(block))
+			,
+		);
+	}
+
 	async renderDocument()
 	{
 		Dom.clean(this.#documentLayout);
@@ -218,15 +230,8 @@ export class Editor extends EventEmitter
 		const { resizeArea } = this.#blocksManager;
 		Dom.append(resizeArea.getLayout(), this.#documentLayout);
 		await Promise.all(promises);
-		EventEmitter.unsubscribeAll('SidePanel.Slider:onOpenComplete');
-		EventEmitter.subscribeOnce('SidePanel.Slider:onOpenComplete', () => {
-			this.#blocksManager.initPagesRect();
-			this.#blocksManager.initBlocks(
-				this.#documentData.blocks
-					.filter((block) => this.#isBlockCanBeInitialized(block))
-				,
-			);
-		});
+		EventEmitter.unsubscribe('SidePanel.Slider:onOpenComplete', this.#onSliderOpenCompleteHandler);
+		EventEmitter.subscribeOnce('SidePanel.Slider:onOpenComplete', this.#onSliderOpenCompleteHandler);
 	}
 
 	show(): Promise

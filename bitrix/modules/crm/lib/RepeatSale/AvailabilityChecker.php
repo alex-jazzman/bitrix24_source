@@ -6,6 +6,7 @@ use Bitrix\Crm\Feature;
 use Bitrix\Crm\RepeatSale\Statistics\LimitChecker;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Main\Application;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\UserTable;
@@ -29,6 +30,12 @@ class AvailabilityChecker
 
 	public function isEnabled(): bool
 	{
+		$region = mb_strtolower(Application::getInstance()->getLicense()->getRegion() ?? 'en');
+		if ($region === 'cn')
+		{
+			return false;
+		}
+
 		$isFeatureEnabled = Feature::enabled(Feature\RepeatSale::class);
 		$intranetToolManager = Container::getInstance()->getIntranetToolsManager();
 

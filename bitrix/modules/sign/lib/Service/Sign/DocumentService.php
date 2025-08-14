@@ -2,7 +2,6 @@
 
 namespace Bitrix\Sign\Service\Sign;
 
-use Bitrix\HumanResources\Type\HcmLink\FieldType;
 use Bitrix\Main;
 use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
@@ -114,18 +113,22 @@ class DocumentService
 	 */
 	public function register(
 		int $blankId,
+		int $createdById,
 		string $title = '',
 		?int $entityId = null,
 		?string $entityType = null,
 		bool $asTemplate = false,
 		InitiatedByType $initiatedByType = InitiatedByType::COMPANY,
-		int $createdById = 0,
 		int $chatId = 0,
 		?int $templateId = null,
 		?BindingCollection $bindings = null,
 	): Main\Result
 	{
 		$result = new Main\Result();
+		if($createdById < 1)
+		{
+			return $result->addError(new Main\Error(Loc::getMessage('SIGN_SERVICE_DOCUMENT_USER_NOT_FOUND')));
+		}
 
 		try
 		{
@@ -1475,7 +1478,6 @@ class DocumentService
 			return $result;
 		}
 
-		$document->initiatedByType = Type\Document\InitiatedByType::EMPLOYEE;
 		$document->templateId = $template->id;
 
 		return new CreateTemplateResult($template);

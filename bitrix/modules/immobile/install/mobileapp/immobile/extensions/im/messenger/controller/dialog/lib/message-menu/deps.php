@@ -3,7 +3,6 @@
 return [
 	'extensions' => [
 		'apptheme',
-		'loc',
 		'type',
 		'alert',
 		'haptics',
@@ -15,6 +14,7 @@ return [
 		'device/connection',
 		'layout/ui/feedback-form-opener',
 		'im:lib/theme',
+		'im:messenger/loc',
 		'im:messenger/assets/common',
 		'im:messenger/const',
 		'im:messenger/controller/user-profile',
@@ -37,7 +37,6 @@ return [
 	],
 	'bundle' => [
 		'./src/action',
-		'./src/icons',
 		'./src/menu',
 		'./src/controller',
 		'./src/message',

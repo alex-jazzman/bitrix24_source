@@ -3,7 +3,7 @@
  */
 jn.define('im/messenger/controller/chat-composer/lib/user-list-builder', (require, exports, module) => {
 	const { Type } = require('type');
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { ChatTitle, ChatAvatar, UserStatus } = require('im/messenger/lib/element');

@@ -3539,12 +3539,18 @@ a.crm-widget-employee-position:hover {
 .crm-entity-widget-content-inner { }
 
 .crm-entity-widget-content-block-field-container-inner {
-	padding: 11px 26px 8px 10px;
+	padding: 11px 10px 8px 10px;
 	border: 1px solid #e9ecf1;
 	border-radius: var(--ui-border-radius-2xs, 1px);
 	-webkit-box-flex: 1;
 	-ms-flex: 1;
 	flex: 1;
+	box-sizing: border-box;
+	width: 100%;
+}
+
+.crm-entity-widget-content-block-field-container-inner:has(.crm-entity-widget-content-search-row + .crm-entity-widget-content-search-row) {
+	padding-right: 26px;
 }
 
 .crm-entity-widget-content-inner-row {

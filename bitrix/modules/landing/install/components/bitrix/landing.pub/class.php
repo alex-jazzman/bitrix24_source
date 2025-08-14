@@ -147,6 +147,7 @@ class LandingPubComponent extends LandingBaseComponent
 				'ua' => '/features/sites.php',
 				'by' => '/features/sites.php',
 				'kz' => '/features/sites.php',
+				'uz' => '/features/sites.php',
 				'en' => '/tools/websites/'
 			],
 			'crm' => [
@@ -154,6 +155,7 @@ class LandingPubComponent extends LandingBaseComponent
 				'ua' => '/features/',
 				'by' => '/features/',
 				'kz' => '/features/',
+				'uz' => '/features/',
 				'en' => '/tools/crm/'
 			]
 		];

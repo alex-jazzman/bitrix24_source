@@ -9,6 +9,7 @@ return [
 	'js' => 'dist/document-send.bundle.js',
 	'rel' => [
 		'main.core.events',
+		'main.date',
 		'sign.v2.sign-settings',
 		'sign.v2.b2e.user-party',
 		'sign.v2.b2e.reminder-selector',

@@ -2,7 +2,7 @@
  * @module im/messenger/controller/sidebar-v2/tabs/participants/src/content
  */
 jn.define('im/messenger/controller/sidebar-v2/tabs/participants/src/content', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Type } = require('type');
 	const { isEmpty } = require('utils/object');
 	const { DialogType } = require('im/messenger/const');

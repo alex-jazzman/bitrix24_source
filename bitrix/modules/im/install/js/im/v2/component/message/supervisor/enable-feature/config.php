@@ -9,11 +9,11 @@ return [
 	'js' => 'dist/enable-feature.bundle.js',
 	'rel' => [
 		'im.v2.component.elements.button',
-		'im.v2.component.message.supervisor.base',
 		'main.core',
 		'im.v2.lib.analytics',
 		'im.v2.lib.helpdesk',
 		'stafftrack.user-statistics-link',
+		'im.v2.component.message.supervisor.base',
 	],
 	'skip_core' => false,
 ];

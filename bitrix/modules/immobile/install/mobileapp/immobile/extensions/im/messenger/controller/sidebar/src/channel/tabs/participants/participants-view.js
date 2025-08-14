@@ -2,7 +2,7 @@
  * @module im/messenger/controller/sidebar/channel/tabs/participants/participants-view
  */
 jn.define('im/messenger/controller/sidebar/channel/tabs/participants/participants-view', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Icon } = require('assets/icons');
 	const { SidebarActionType } = require('im/messenger/const');
 	const { DialogHelper } = require('im/messenger/lib/helper');
@@ -88,7 +88,7 @@ jn.define('im/messenger/controller/sidebar/channel/tabs/participants/participant
 					icon: Icon.FLAG,
 					testId: 'SIDEBAR_USER_CONTEXT_MENU_NOTES',
 				});
-				if (this.state.permissions.isCanLeave)
+				if (this.state.permissions.сanLeave)
 				{
 					actionsItems.push({
 						id: SidebarActionType.leaveFromChannel,
@@ -101,7 +101,7 @@ jn.define('im/messenger/controller/sidebar/channel/tabs/participants/participant
 			}
 			else
 			{
-				if (ChatPermission.isCanMention(this.props.dialogId))
+				if (ChatPermission.сanMention(this.props.dialogId))
 				{
 					actionsItems.push({
 						id: SidebarActionType.mention,
@@ -143,8 +143,8 @@ jn.define('im/messenger/controller/sidebar/channel/tabs/participants/participant
 					}
 				}
 
-				const isCanDelete = this.state.permissions.isCanRemoveParticipants;
-				if (isCanDelete && ChatPermission.isCanRemoveUserById(userId, this.props.dialogId))
+				const сanDelete = this.state.permissions.canRemoveParticipants;
+				if (сanDelete && ChatPermission.сanRemoveUserById(userId, this.props.dialogId))
 				{
 					actionsItems.push({
 						id: SidebarActionType.removeFromChannel,

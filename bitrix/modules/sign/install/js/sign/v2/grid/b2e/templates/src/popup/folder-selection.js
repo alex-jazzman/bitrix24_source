@@ -23,7 +23,7 @@ export class FolderSelectionPopup extends EventEmitter
 			id: 0,
 		};
 		const rootFolder = this.#createFolderItem(rootFolderData);
-		Dom.addClass(rootFolder, 'selected-folder');
+		Dom.addClass(rootFolder, 'sign-b2e-grid-templates-popup__selected-folder');
 		Dom.append(rootFolder, folderList);
 
 		this.emit('folderSelected', rootFolderData);
@@ -41,19 +41,19 @@ export class FolderSelectionPopup extends EventEmitter
 
 	#createFolderListContainer(): HTMLDivElement
 	{
-		return Tag.render`<div class="folder-list-container"></div>`;
+		return Tag.render`<div class="sign-b2e-grid-templates-popup__folder-list-container"></div>`;
 	}
 
 	#createSubFolderContainer(): HTMLDivElement
 	{
-		return Tag.render`<div class="sub-folder-container"></div>`;
+		return Tag.render`<div class="sign-b2e-grid-templates-popup__sub-folder-container"></div>`;
 	}
 
 	#createFolderItem(folder: Folder): HTMLDivElement
 	{
 		const listItem = Tag.render`
-			<div class="folder-item">
-				<span class="folder-icon-folder-list-popup"></span>
+			<div class="sign-b2e-grid-templates-popup__folder-item">
+				<span class="sign-b2e-grid-templates-popup__folder-icon-folder-list"></span>
 				<span>${Text.encode(folder.title)}</span>
 			</div>
 		`;
@@ -68,14 +68,14 @@ export class FolderSelectionPopup extends EventEmitter
 
 	#selectAndHighlightFolder(selectedItem: HTMLDivElement, folder: Folder): void
 	{
-		const folderListContainer = selectedItem.closest('.folder-list-container');
+		const folderListContainer = selectedItem.closest('.sign-b2e-grid-templates-popup__folder-list-container');
 		if (folderListContainer)
 		{
-			folderListContainer.querySelectorAll('.folder-item').forEach((child) => {
-				Dom.removeClass(child, 'selected-folder');
+			folderListContainer.querySelectorAll('.sign-b2e-grid-templates-popup__folder-item').forEach((child) => {
+				Dom.removeClass(child, 'sign-b2e-grid-templates-popup__selected-folder');
 			});
 
-			Dom.addClass(selectedItem, 'selected-folder');
+			Dom.addClass(selectedItem, 'sign-b2e-grid-templates-popup__selected-folder');
 			this.emit('folderSelected', folder);
 		}
 	}

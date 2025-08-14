@@ -10,6 +10,7 @@ use Bitrix\Main\Validation\Rule\ClassValidationAttributeInterface;
 use Bitrix\Main\Validation\Rule\Recursive\Validatable;
 use Bitrix\Main\Validation\Rule\PropertyValidationAttributeInterface;
 use Generator;
+use ReflectionAttribute;
 use ReflectionClass;
 use ReflectionParameter;
 use ReflectionProperty;
@@ -33,7 +34,8 @@ final class ValidationService
 	{
 		$result = new ValidationResult();
 
-		$attributes = $parameter->getAttributes();
+		$attributes = $this->getValidationAttributes($parameter);
+
 		$name = $parameter->getName();
 
 		$generator = $this->validateValue($value, $name, $attributes);
@@ -47,7 +49,7 @@ final class ValidationService
 		$result = new ValidationResult();
 
 		$class = new ReflectionClass($object);
-		$attributes = $class->getAttributes();
+		$attributes = $class->getAttributes(ClassValidationAttributeInterface::class, ReflectionAttribute::IS_INSTANCEOF);
 
 		if (empty($attributes))
 		{
@@ -57,11 +59,8 @@ final class ValidationService
 		foreach ($attributes as $attribute)
 		{
 			$attributeInstance = $attribute->newInstance();
-			if ($attributeInstance instanceof ClassValidationAttributeInterface)
-			{
-				$attributeErrors = $attributeInstance->validateObject($object)->getErrors();
-				$result->addErrors($attributeErrors);
-			}
+			$attributeErrors = $attributeInstance->validateObject($object)->getErrors();
+			$result->addErrors($attributeErrors);
 		}
 
 		return $result;
@@ -108,7 +107,7 @@ final class ValidationService
 
 	private function validateProperty(ReflectionProperty $property, object $object): Generator
 	{
-		$attributes = $property->getAttributes();
+		$attributes = $this->getValidationAttributes($property);
 
 		$name = $property->getName();
 		$value = $property->getValue($object);
@@ -187,5 +186,13 @@ final class ValidationService
 
 			yield $error;
 		}
+	}
+
+	private function getValidationAttributes(ReflectionParameter|ReflectionProperty $parameter): array
+	{
+		return array_merge(
+			$parameter->getAttributes(Validatable::class, ReflectionAttribute::IS_INSTANCEOF),
+			$parameter->getAttributes(PropertyValidationAttributeInterface::class, ReflectionAttribute::IS_INSTANCEOF)
+		);
 	}
 }

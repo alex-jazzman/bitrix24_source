@@ -47,6 +47,22 @@ class AgentsManager
 		$this->logger = new Logger();
 	}
 
+	public function addFlowEnablerAgent(int $offset): void
+	{
+		/**
+		 * @see \Bitrix\Crm\Agent\RepeatSale\FlowEnablerAgent
+		 */
+		$this->cAgent::AddAgent(
+			'Bitrix\Crm\Agent\RepeatSale\FlowEnablerAgent::run();',
+			'crm',
+			'N',
+			3600,
+			'',
+			'Y',
+			\ConvertTimeStamp(time() + \CTimeZone::GetOffset() + $offset, 'FULL'),
+		);
+	}
+
 	public function addOnlyCalcSchedulerAgent(): void
 	{
 		$this->cAgent::AddAgent(

@@ -57,7 +57,10 @@ class CAllCrmContact
 	private static $FIELD_INFOS = null;
 	const DEFAULT_FORM_ID = 'CRM_CONTACT_SHOW_V12';
 
-	private static ?\Bitrix\Crm\Entity\Compatibility\Adapter $lastActivityAdapter = null;
+	/**
+	 * @var \Bitrix\Crm\Entity\Compatibility\Adapter[]
+	 */
+	private static array $lastActivityAdapter = [];
 	private static ?Crm\Entity\Compatibility\Adapter $commentsAdapter = null;
 
 	/** @var Crm\Entity\Compatibility\Adapter */
@@ -143,16 +146,16 @@ class CAllCrmContact
 		return $compatibilityAdapter;
 	}
 
-	private static function getLastActivityAdapter(): Crm\Entity\Compatibility\Adapter
+	private static function getLastActivityAdapter(string $tableAlias = self::TABLE_ALIAS): Crm\Entity\Compatibility\Adapter
 	{
-		if (!self::$lastActivityAdapter)
+		if (!isset(self::$lastActivityAdapter[$tableAlias]))
 		{
 			$factory = Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Contact);
-			self::$lastActivityAdapter = new Crm\Entity\Compatibility\Adapter\LastActivity($factory);
-			self::$lastActivityAdapter->setTableAlias(self::TABLE_ALIAS);
+			self::$lastActivityAdapter[$tableAlias] = new Crm\Entity\Compatibility\Adapter\LastActivity($factory);
+			self::$lastActivityAdapter[$tableAlias]->setTableAlias($tableAlias);
 		}
 
-		return self::$lastActivityAdapter;
+		return self::$lastActivityAdapter[$tableAlias];
 	}
 
 	private static function getCommentsAdapter(): Crm\Entity\Compatibility\Adapter\Comments
@@ -388,7 +391,8 @@ class CAllCrmContact
 		$tableAliasName =
 			(isset($arOptions['TABLE_ALIAS']) && is_string($arOptions['TABLE_ALIAS']) && $arOptions['TABLE_ALIAS'] !== '')
 				? $arOptions['TABLE_ALIAS']
-				: 'L';
+				: self::TABLE_ALIAS
+		;
 
 		$assignedByJoin = 'LEFT JOIN b_user U ON ' . $tableAliasName . '.ASSIGNED_BY_ID = U.ID';
 		$createdByJoin = 'LEFT JOIN b_user U2 ON ' . $tableAliasName . '.CREATED_BY_ID = U2.ID';
@@ -460,7 +464,6 @@ class CAllCrmContact
 			'ORIGIN_ID' => ['FIELD' => $tableAliasName . '.ORIGIN_ID', 'TYPE' => 'string'], //ITEM ID IN EXTERNAL SYSTEM
 			'ORIGIN_VERSION' => ['FIELD' => $tableAliasName . '.ORIGIN_VERSION', 'TYPE' => 'string'], //ITEM VERSION IN EXTERNAL SYSTEM
 			'FACE_ID' => ['FIELD' => $tableAliasName . '.FACE_ID', 'TYPE' => 'int'],
-			'LAST_ACTIVITY_TIME' => ['FIELD' => $tableAliasName . '.LAST_ACTIVITY_TIME', 'TYPE' => 'datetime'],
 
 			'CATEGORY_ID' => ['FIELD' => $tableAliasName . '.CATEGORY_ID', 'TYPE' => 'int'],
 		];
@@ -547,7 +550,7 @@ class CAllCrmContact
 			LastCommunicationTable::getFieldsByEntityTypeId(CCrmOwnerType::Contact, true),
 		);
 
-		$result += self::getLastActivityAdapter()->getFields();
+		$result += self::getLastActivityAdapter($tableAliasName)->getFields();
 
 		return $result;
 	}

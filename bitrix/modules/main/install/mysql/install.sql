@@ -237,7 +237,8 @@ CREATE TABLE b_user
 	INDEX ix_b_user_activity_date (LAST_ACTIVITY_DATE),
 	INDEX IX_B_USER_XML_ID (XML_ID),
 	INDEX ix_user_last_login(LAST_LOGIN),
-	INDEX ix_user_date_register(DATE_REGISTER)
+	INDEX ix_user_date_register(DATE_REGISTER),
+	INDEX ix_b_user_external_auth_id_active (EXTERNAL_AUTH_ID, ACTIVE)
 );
 
 CREATE TABLE b_user_password

@@ -2,7 +2,7 @@
  * @module im/messenger/lib/ui/base/loader/src/spinner-loader
  */
 jn.define('im/messenger/lib/ui/base/loader/src/spinner-loader', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { Type } = require('type');
 	const { Indent, Color } = require('tokens');
 	const { Text2 } = require('ui-system/typography/text');

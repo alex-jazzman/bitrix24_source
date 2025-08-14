@@ -186,6 +186,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    birthdayList = []
 	  } = babelHelpers.classPrivateFieldLooseBase(this, _restResult)[_restResult];
 	  birthdayList.forEach(item => {
+	    if (im_v2_application_core.Core.getUserId() === item.id) {
+	      return;
+	    }
 	    if (!babelHelpers.classPrivateFieldLooseBase(this, _users)[_users][item.id]) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _users)[_users][item.id] = item;
 	    }

@@ -2,9 +2,6 @@
 
 namespace Bitrix\Im\V2\Sync\Entity;
 
-use Bitrix\Im\V2\Chat\Comment\CommentPopupItem;
-use Bitrix\Im\V2\MessageCollection;
-use Bitrix\Im\V2\Rest\RestAdapter;
 use Bitrix\Im\V2\Sync\Entity;
 use Bitrix\Im\V2\Sync\Event;
 
@@ -14,7 +11,6 @@ class Messages implements Entity
 	private array $addedMessageIds = [];
 	private array $updatedMessageIds = [];
 	private array $completeDeletedMessageIds = [];
-	private MessageCollection $fullMessages;
 
 	public function add(Event $event): void
 	{
@@ -43,35 +39,22 @@ class Messages implements Entity
 		}
 	}
 
-	public function getFullMessages(): MessageCollection
+	public function getMessageIds(): array
 	{
-		$this->fullMessages ??= new MessageCollection($this->messageIds);
-
-		return $this->fullMessages;
+		return $this->messageIds;
 	}
 
-	public function getData(): array
+	public static function getRestEntityName(): string
 	{
-		$fullMessages = $this->getFullMessages();
-		[$messages, $updatedMessages] = $this->divideByEventType($fullMessages);
-		$option = ['POPUP_DATA_EXCLUDE' => [CommentPopupItem::class]];
+		return 'messageSync';
+	}
 
+	public function toRestFormat(array $option = []): ?array
+	{
 		return [
-			'messages' => (new RestAdapter($messages))->toRestFormat($option),
-			'updatedMessages' => (new RestAdapter($updatedMessages))->toRestFormat($option),
+			'addedMessages' => array_diff($this->addedMessageIds, $this->updatedMessageIds),
+			'updatedMessages' => array_diff($this->updatedMessageIds, $this->completeDeletedMessageIds),
 			'completeDeletedMessages' => $this->completeDeletedMessageIds,
 		];
-	}
-
-	protected function divideByEventType(MessageCollection $messageCollection): array
-	{
-		$messageCollection->fillAllForRest();
-		$addedMessages = clone $messageCollection;
-		$updatedMessages = clone $messageCollection;
-
-		$addedMessages->unsetByKeys(array_diff($this->messageIds, $this->addedMessageIds));
-		$updatedMessages->unsetByKeys(array_diff($this->messageIds, $this->updatedMessageIds));
-
-		return [$addedMessages, $updatedMessages];
 	}
 }

@@ -189,7 +189,12 @@ export class SignB2eDocument extends Base
 
 	#modifyDocument({ documentId }): Promise
 	{
-		return Router.openSlider(`/sign/b2e/doc/0/?docId=${documentId}&stepId=changePartner&noRedirect=Y`);
+		return Router.openSlider(
+			`/sign/b2e/doc/0/?docId=${documentId}&stepId=changePartner&noRedirect=Y`,
+			{
+				width: 1250,
+			},
+		);
 	}
 
 	#previewDocument({ documentId }): Promise

@@ -3,7 +3,7 @@
 return [
 	'extensions' => [
 		'type',
-		'loc',
+		'im:messenger/loc',
 		'im:messenger/lib/di/service-locator',
 		'im:messenger/lib/helper',
 		'im:messenger/lib/logger',

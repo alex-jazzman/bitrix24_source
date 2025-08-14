@@ -257,15 +257,15 @@ if ($arParams['FOLDER_SITE_ID'])
 
 <?php
 // AI site first popup
-$isShownSiteAIPopup = true;
+$isNeedShowSiteAIPopup = false;
 $option = \CUserOptions::GetOption('landing', 'site-ai-popup');
 if (!isset($option['isShow']))
 {
-	$isShownSiteAIPopup = false;
+	$isNeedShowSiteAIPopup = true;
 }
 if (
 	$arParams['TYPE'] === 'PAGE'
-	&& !$isShownSiteAIPopup
+	&& $isNeedShowSiteAIPopup
 	&& \Bitrix\Landing\Copilot\Manager::isAvailable()
 )
 {

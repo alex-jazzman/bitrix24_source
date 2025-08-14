@@ -7986,6 +7986,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          };
 	          store.commit('add', preparedChat);
 	        });
+	      },
+	      /** @function copilot/chats/updateModel */
+	      updateModel: (store, payload) => {
+	        if (!payload || !store.state.collection[payload.dialogId]) {
+	          return;
+	        }
+	        store.commit('updateModel', payload);
 	      }
 	    };
 	  }
@@ -7996,6 +8003,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          dialogId
 	        } = payload;
 	        state.collection[dialogId] = payload;
+	      },
+	      updateModel: (state, payload) => {
+	        const {
+	          dialogId,
+	          aiModel
+	        } = payload;
+	        state.collection[dialogId].aiModel = aiModel;
 	      }
 	    };
 	  }

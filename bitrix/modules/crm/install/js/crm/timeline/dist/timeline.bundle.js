@@ -3656,6 +3656,7 @@ this.BX.Crm = this.BX.Crm || {};
 			@mouseover="showTooltip"
 			@mouseleave="hideTooltip"
 			@click="executeAction"
+			data-hint-interactivity
 		></div>
 	`
 	};

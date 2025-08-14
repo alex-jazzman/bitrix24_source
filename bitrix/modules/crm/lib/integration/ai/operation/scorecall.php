@@ -32,6 +32,7 @@ use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Timeline\Monitor;
 use Bitrix\Crm\Timeline\AI\Call\Controller;
 use Bitrix\Main;
+use CCrmActivity;
 use CCrmOwnerType;
 
 final class ScoreCall extends AbstractOperation
@@ -59,6 +60,16 @@ final class ScoreCall extends AbstractOperation
 		);
 
 		parent::__construct($target, $userId, $parentJobId);
+	}
+
+	public static function isAccessGranted(int $userId, ItemIdentifier $target): bool
+	{
+		return parent::isAccessGranted($userId, $target)
+			&& CCrmActivity::CheckItemUpdatePermission(
+				['ID' => $target->getEntityId()],
+				Container::getInstance()->getUserPermissions($userId)->getCrmPermissions(),
+			)
+		;
 	}
 
 	public static function isSuitableTarget(ItemIdentifier $target): bool
@@ -155,9 +166,12 @@ final class ScoreCall extends AbstractOperation
 	// region notify
 	protected static function notifyTimelineAfterSuccessfulLaunch(Result $result): void
 	{
-		$nextTarget = (new Orchestrator())->findPossibleFillFieldsTarget($result->getTarget()?->getEntityId());
+		$activityId = $result->getTarget()?->getEntityId();
+		$nextTarget = (new Orchestrator())->findPossibleFillFieldsTarget($activityId);
 		if ($nextTarget)
 		{
+			self::notifyTimelinesAboutActivityUpdate($activityId, true);
+			
 			Controller::getInstance()->onStartCallScoring(
 				$nextTarget,
 				$result->getTarget()?->getEntityId(),

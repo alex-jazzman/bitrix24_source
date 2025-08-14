@@ -40,7 +40,7 @@ class SupportBox extends Network implements SupportBot, SupportQuestion
 	;
 
 	protected const
-		AVATAR = 'https://helpdesk.bitrix24.com/images/support/bot.png',
+		AVATAR = '/images/support/bot.png',
 		HELP_DESK_CODE = '7577357';
 
 
@@ -1456,7 +1456,8 @@ class SupportBox extends Network implements SupportBot, SupportQuestion
 	 */
 	public static function getBotAvatar(): string
 	{
-		return Option::get(self::MODULE_ID, self::OPTION_BOT_AVATAR, self::AVATAR);
+		$domain = (new \Bitrix\UI\Helpdesk\Url())->getDomain()->get();
+		return Option::get(self::MODULE_ID, self::OPTION_BOT_AVATAR, $domain . self::AVATAR);
 	}
 
 	/**

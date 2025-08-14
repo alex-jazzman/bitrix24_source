@@ -4,7 +4,7 @@
  * @module im/messenger/component/messenger-base
  */
 jn.define('im/messenger/component/messenger-base', async (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 
 	const { Worker } = require('im/messenger/lib/helper');
 	const { EventType } = require('im/messenger/const');

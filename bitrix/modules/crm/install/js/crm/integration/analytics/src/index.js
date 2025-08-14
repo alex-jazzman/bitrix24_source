@@ -20,6 +20,10 @@ import { CancelEvent as RepeatSaleSegmentCancelBuilder } from './builders/repeat
 import { EditEvent as RepeatSaleSegmentEditBuilder } from './builders/repeat-sale/segment/edit-event';
 import { ViewEvent as RepeatSaleSegmentViewBuilder } from './builders/repeat-sale/segment/view-event';
 
+import { DeleteEvent as CommunicationDeleteEvent } from './builders/communication/delete-event';
+import { FormEvent as CommunicationFormEvent } from './builders/communication/form-event';
+import { SendEvent as CommunicationSendEvent } from './builders/communication/send-event';
+
 import { Dictionary } from './dictionary';
 import { getCrmMode } from './helpers';
 
@@ -64,6 +68,11 @@ const Builder = Object.freeze({
 		CloseEvent: BlockCloseEvent,
 		EnableEvent: BlockEnableEvent,
 		LinkEvent: BlockLinkEvent,
+	},
+	Communication: {
+		DeleteEvent: CommunicationDeleteEvent,
+		FormEvent: CommunicationFormEvent,
+		SendEvent: CommunicationSendEvent,
 	},
 	RepeatSale: {
 		Banner: {

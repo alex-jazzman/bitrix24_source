@@ -220,7 +220,11 @@ class User extends \CBPRuntimeService
 			);
 			foreach ($nodes as $parent)
 			{
-				$chain[] = DepartmentBackwardAccessCode::extractIdFromCode($parent->accessCode);
+				$idByAccessCode = DepartmentBackwardAccessCode::extractIdFromCode($parent->accessCode);
+				if ($idByAccessCode !== null)
+				{
+					$chain[] = $idByAccessCode;
+				}
 			}
 		}
 

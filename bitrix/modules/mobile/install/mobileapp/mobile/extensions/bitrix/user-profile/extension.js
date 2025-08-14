@@ -7,6 +7,8 @@ jn.define('user-profile', (require, exports, module) => {
 	const { NotifyManager } = require('notify-manager');
 	const { TabType } = require('user-profile/const');
 	const { fetchTabs, fetchNewProfileFeatureEnabled } = require('user-profile/api');
+	const { Icon } = require('assets/icons');
+	const { openUserProfile, ProfileView } = require('user/profile');
 
 	/**
 	 * @class UserProfile
@@ -25,8 +27,23 @@ jn.define('user-profile', (require, exports, module) => {
 			selectedTabId = TabType.COMMON,
 			openInComponent = false,
 			parentWidget = PageManager,
+			widgetParams = {},
 		} = {})
 		{
+			if (!ownerId)
+			{
+				return null;
+			}
+
+			return UserProfile.openLegacyProfile(ownerId, openInComponent, parentWidget, widgetParams);
+
+			const isEnabled = await fetchNewProfileFeatureEnabled();
+
+			if (!isEnabled)
+			{
+				return UserProfile.openLegacyProfile(ownerId, openInComponent, parentWidget, widgetParams);
+			}
+
 			void NotifyManager.showLoadingIndicator();
 			const response = await fetchTabs({ ownerId, selectedTabId });
 			NotifyManager.hideLoadingIndicatorWithoutFallback();
@@ -34,7 +51,7 @@ jn.define('user-profile', (require, exports, module) => {
 			{
 				void ajaxPublicErrorHandler(response);
 
-				return;
+				return null;
 			}
 
 			const { tabs, selectedTabId: selectedTabIdFromResponse } = response.data;
@@ -69,24 +86,57 @@ jn.define('user-profile', (require, exports, module) => {
 					},
 				});
 
-				return;
+				return null;
 			}
 
-			parentWidget
-				.openWidget('tabs', {
-					titleParams: {
-						text: Loc.getMessage('M_PROFILE_TITLE'),
-					},
-					grabTitle: false,
-					tabs: {
-						items: preparedTabs,
-					},
-				})
-				.then((widget) => {
-					initTabWidgets(widget.nestedWidgets(), params);
-				})
-				.catch(console.error)
-			;
+			return new Promise((resolve) => {
+				parentWidget
+					.openWidget('tabs', {
+						titleParams: {
+							text: Loc.getMessage('M_PROFILE_TITLE'),
+						},
+						grabTitle: false,
+						modal: true,
+						leftButtons: [{
+							svg: {
+								uri: `${currentDomain}${Icon.CHEVRON_DOWN_SIZE_M?.getPath()}`,
+							},
+							isCloseButton: true,
+						}],
+						tabs: {
+							items: preparedTabs,
+						},
+					})
+					.then((widget) => {
+						initTabWidgets(
+							widget.nestedWidgets(),
+							Object.fromEntries(
+								Object.entries(params).map(([tab, tabParams]) => [tab, { ...tabParams, parentWidget: widget }]),
+							),
+						);
+						resolve(widget);
+					})
+					.catch(console.error)
+				;
+			});
+		}
+
+		static async openLegacyProfile(userId, openInComponent, parentWidget, widgetParams)
+		{
+			if (openInComponent)
+			{
+				ProfileView.openComponent({
+					userId,
+				});
+
+				return null;
+			}
+
+			return openUserProfile({
+				parentWidget,
+				userId,
+				...widgetParams,
+			});
 		}
 	}
 

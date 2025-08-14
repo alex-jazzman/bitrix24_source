@@ -3,12 +3,11 @@
  */
 jn.define('im/messenger/lib/element/dialog/message/gallery/factory', (require, exports, module) => {
 	const { Type } = require('type');
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 
 	const {
 		FileType,
 	} = require('im/messenger/const');
-	const { Feature } = require('im/messenger/lib/feature');
 	const { CustomMessageFactory } = require('im/messenger/lib/element/dialog/message/custom/factory');
 	const { GalleryMessage } = require('im/messenger/lib/element/dialog/message/gallery/message');
 	const { ImageMessage } = require('im/messenger/lib/element/dialog/message/image');
@@ -147,20 +146,6 @@ jn.define('im/messenger/lib/element/dialog/message/gallery/factory', (require, e
 			}
 
 			return messageText;
-		}
-
-		/**
-		 * @abstract
-		 * @return {boolean}
-		 */
-		static checkSuitableForDisplay(modelMessage)
-		{
-			if (Feature.isGalleryMessageSupported)
-			{
-				return false;
-			}
-
-			return Type.isArray(modelMessage.files) && modelMessage.files.length > 1;
 		}
 
 		/**

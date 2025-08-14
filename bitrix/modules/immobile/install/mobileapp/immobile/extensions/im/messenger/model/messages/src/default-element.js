@@ -15,7 +15,6 @@ jn.define('im/messenger/model/messages/default-element', (require, exports, modu
 		loadText: '',
 		uploadFileId: '',
 		params: {},
-		replaces: [],
 		files: [],
 		unread: false,
 		viewed: true,

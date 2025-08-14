@@ -41,6 +41,9 @@ jn.define('im/messenger/db/repository/copilot', (require, exports, module) => {
 			return copilotItems;
 		}
 
+		/**
+		 * @param {Array<CopilotModelState>} copilotItems
+		 */
 		async saveFromModel(copilotItems)
 		{
 			const copilotItemsToAdd = [];
@@ -53,6 +56,14 @@ jn.define('im/messenger/db/repository/copilot', (require, exports, module) => {
 			logger.log(`${this.constructor.name}.saveFromModel.items:`, copilotItemsToAdd);
 
 			return this.copilotTable.add(copilotItemsToAdd, true);
+		}
+
+		/**
+		 * @param {Array<CopilotModelState>} copilotItems
+		 */
+		async saveFromRest(copilotItems)
+		{
+			return this.saveFromModel(copilotItems);
 		}
 
 		/**

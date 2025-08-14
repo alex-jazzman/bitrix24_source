@@ -5665,12 +5665,12 @@ window._main_polyfill_core = true;
 	  return Object.prototype.toString.call(value);
 	}
 
-	var objectCtorString = Function.prototype.toString.call(Object);
+	const objectCtorString = Function.prototype.toString.call(Object);
 
 	/**
 	 * @memberOf BX
 	 */
-	var Type = /*#__PURE__*/function () {
+	let Type = /*#__PURE__*/function () {
 	  function Type() {
 	    babelHelpers.classCallCheck(this, Type);
 	  }
@@ -5712,7 +5712,7 @@ window._main_polyfill_core = true;
 	  }, {
 	    key: "isObject",
 	    value: function isObject(value) {
-	      return !!value && (babelHelpers["typeof"](value) === 'object' || typeof value === 'function');
+	      return !!value && (typeof value === 'object' || typeof value === 'function');
 	    }
 	    /**
 	     * Checks that value is object like
@@ -5722,7 +5722,7 @@ window._main_polyfill_core = true;
 	  }, {
 	    key: "isObjectLike",
 	    value: function isObjectLike(value) {
-	      return !!value && babelHelpers["typeof"](value) === 'object';
+	      return !!value && typeof value === 'object';
 	    }
 	    /**
 	     * Checks that value is plain object
@@ -5735,11 +5735,11 @@ window._main_polyfill_core = true;
 	      if (!Type.isObjectLike(value) || getTag(value) !== '[object Object]') {
 	        return false;
 	      }
-	      var proto = Object.getPrototypeOf(value);
+	      const proto = Object.getPrototypeOf(value);
 	      if (proto === null) {
 	        return true;
 	      }
-	      var ctor = proto.hasOwnProperty('constructor') && proto.constructor;
+	      const ctor = proto.hasOwnProperty('constructor') && proto.constructor;
 	      return typeof ctor === 'function' && Function.prototype.toString.call(ctor) === objectCtorString;
 	    }
 	    /**
@@ -5960,7 +5960,7 @@ window._main_polyfill_core = true;
 	  }, {
 	    key: "isTypedArray",
 	    value: function isTypedArray(value) {
-	      var regExpTypedTag = /^\[object (?:Float(?:32|64)|(?:Int|Uint)(?:8|16|32)|Uint8Clamped)]$/;
+	      const regExpTypedTag = /^\[object (?:Float(?:32|64)|(?:Int|Uint)(?:8|16|32)|Uint8Clamped)]$/;
 	      return Type.isObjectLike(value) && regExpTypedTag.test(getTag(value));
 	    }
 	    /**
@@ -6000,7 +6000,7 @@ window._main_polyfill_core = true;
 	/**
 	 * @memberOf BX
 	 */
-	var Reflection = /*#__PURE__*/function () {
+	let Reflection = /*#__PURE__*/function () {
 	  function Reflection() {
 	    babelHelpers.classCallCheck(this, Reflection);
 	  }
@@ -6013,11 +6013,11 @@ window._main_polyfill_core = true;
 	     */
 	    value: function getClass(className) {
 	      if (Type.isString(className) && !!className) {
-	        var classFn = null;
-	        var currentNamespace = window;
-	        var namespaces = className.split('.');
-	        for (var i = 0; i < namespaces.length; i += 1) {
-	          var namespace = namespaces[i];
+	        let classFn = null;
+	        let currentNamespace = window;
+	        const namespaces = className.split('.');
+	        for (let i = 0; i < namespaces.length; i += 1) {
+	          const namespace = namespaces[i];
 	          if (!currentNamespace[namespace]) {
 	            return null;
 	          }
@@ -6039,12 +6039,12 @@ window._main_polyfill_core = true;
 	  }, {
 	    key: "namespace",
 	    value: function namespace(namespaceName) {
-	      var parts = namespaceName.split('.');
-	      var parent = window.BX;
+	      let parts = namespaceName.split('.');
+	      let parent = window.BX;
 	      if (parts[0] === 'BX') {
 	        parts = parts.slice(1);
 	      }
-	      for (var i = 0; i < parts.length; i += 1) {
+	      for (let i = 0; i < parts.length; i += 1) {
 	        if (Type.isUndefined(parent[parts[i]])) {
 	          parent[parts[i]] = {};
 	        }
@@ -6056,16 +6056,16 @@ window._main_polyfill_core = true;
 	  return Reflection;
 	}();
 
-	var reEscape = /[&<>'"]/g;
-	var reUnescape = /&(?:amp|#38|lt|#60|gt|#62|apos|#39|quot|#34);/g;
-	var escapeEntities = {
+	const reEscape = /[&<>'"]/g;
+	const reUnescape = /&(?:amp|#38|lt|#60|gt|#62|apos|#39|quot|#34);/g;
+	const escapeEntities = {
 	  '&': '&amp;',
 	  '<': '&lt;',
 	  '>': '&gt;',
 	  "'": '&#39;',
 	  '"': '&quot;'
 	};
-	var unescapeEntities = {
+	const unescapeEntities = {
 	  '&amp;': '&',
 	  '&#38;': '&',
 	  '&lt;': '<',
@@ -6081,7 +6081,7 @@ window._main_polyfill_core = true;
 	/**
 	 * @memberOf BX
 	 */
-	var Text = /*#__PURE__*/function () {
+	let Text = /*#__PURE__*/function () {
 	  function Text() {
 	    babelHelpers.classCallCheck(this, Text);
 	  }
@@ -6094,9 +6094,7 @@ window._main_polyfill_core = true;
 	     */
 	    value: function encode(value) {
 	      if (Type.isString(value)) {
-	        return value.replace(reEscape, function (item) {
-	          return escapeEntities[item];
-	        });
+	        return value.replace(reEscape, item => escapeEntities[item]);
 	      }
 	      return value;
 	    }
@@ -6109,25 +6107,20 @@ window._main_polyfill_core = true;
 	    key: "decode",
 	    value: function decode(value) {
 	      if (Type.isString(value)) {
-	        return value.replace(reUnescape, function (item) {
-	          return unescapeEntities[item];
-	        });
+	        return value.replace(reUnescape, item => unescapeEntities[item]);
 	      }
 	      return value;
 	    }
 	  }, {
 	    key: "getRandom",
-	    value: function getRandom() {
-	      var length = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 8;
+	    value: function getRandom(length = 8) {
 	      // eslint-disable-next-line
-	      return babelHelpers.toConsumableArray(Array(length)).map(function () {
-	        return (~~(Math.random() * 36)).toString(36);
-	      }).join('');
+	      return [...Array(length)].map(() => (~~(Math.random() * 36)).toString(36)).join('');
 	    }
 	  }, {
 	    key: "toNumber",
 	    value: function toNumber(value) {
-	      var parsedValue = Number.parseFloat(value);
+	      const parsedValue = Number.parseFloat(value);
 	      if (Type.isNumber(parsedValue)) {
 	        return parsedValue;
 	      }
@@ -6140,10 +6133,9 @@ window._main_polyfill_core = true;
 	    }
 	  }, {
 	    key: "toBoolean",
-	    value: function toBoolean(value) {
-	      var trueValues = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
-	      var transformedValue = Type.isString(value) ? value.toLowerCase() : value;
-	      return ['true', 'y', '1', 1, true].concat(babelHelpers.toConsumableArray(trueValues)).includes(transformedValue);
+	    value: function toBoolean(value, trueValues = []) {
+	      const transformedValue = Type.isString(value) ? value.toLowerCase() : value;
+	      return ['true', 'y', '1', 1, true, ...trueValues].includes(transformedValue);
 	    }
 	  }, {
 	    key: "toCamelCase",
@@ -6151,7 +6143,7 @@ window._main_polyfill_core = true;
 	      if (!Type.isStringFilled(str)) {
 	        return str;
 	      }
-	      var regex = /[-_\s]+(.)?/g;
+	      const regex = /[-_\s]+(.)?/g;
 	      if (!regex.test(str)) {
 	        return str.match(/^[A-Z]+$/) ? str.toLowerCase() : str[0].toLowerCase() + str.slice(1);
 	      }
@@ -6175,13 +6167,11 @@ window._main_polyfill_core = true;
 	      if (!Type.isStringFilled(str)) {
 	        return str;
 	      }
-	      var matches = str.match(/[A-Z]{2,}(?=[A-Z][a-z]+[0-9]*|\b)|[A-Z]?[a-z]+[0-9]*|[A-Z]|[0-9]+/g);
+	      const matches = str.match(/[A-Z]{2,}(?=[A-Z][a-z]+[0-9]*|\b)|[A-Z]?[a-z]+[0-9]*|[A-Z]|[0-9]+/g);
 	      if (!matches) {
 	        return str;
 	      }
-	      return matches.map(function (x) {
-	        return x.toLowerCase();
-	      }).join('-');
+	      return matches.map(x => x.toLowerCase()).join('-');
 	    }
 	  }, {
 	    key: "capitalize",
@@ -6195,7 +6185,7 @@ window._main_polyfill_core = true;
 	  return Text;
 	}();
 
-	var aliases = {
+	const aliases = {
 	  mousewheel: ['DOMMouseScroll'],
 	  bxchange: ['change', 'cut', 'paste', 'drop', 'keyup'],
 	  animationend: ['animationend', 'oAnimationEnd', 'webkitAnimationEnd', 'MSAnimationEnd'],
@@ -6204,7 +6194,7 @@ window._main_polyfill_core = true;
 	  fullscreenerror: ['fullscreenerror', 'webkitfullscreenerror', 'mozfullscreenerror', 'MSFullscreenError']
 	};
 
-	var Registry = /*#__PURE__*/function () {
+	let Registry = /*#__PURE__*/function () {
 	  function Registry() {
 	    babelHelpers.classCallCheck(this, Registry);
 	    babelHelpers.defineProperty(this, "registry", new WeakMap());
@@ -6212,7 +6202,7 @@ window._main_polyfill_core = true;
 	  babelHelpers.createClass(Registry, [{
 	    key: "set",
 	    value: function set(target, event, listener) {
-	      var events = this.get(target);
+	      const events = this.get(target);
 	      if (!Type.isSet(events[event])) {
 	        events[event] = new Set();
 	      }
@@ -6239,20 +6229,20 @@ window._main_polyfill_core = true;
 	        return;
 	      }
 	      if (Type.isString(event) && Type.isFunction(listener)) {
-	        var events = this.registry.get(target);
+	        const events = this.registry.get(target);
 	        if (Type.isPlainObject(events) && Type.isSet(events[event])) {
-	          events[event]["delete"](listener);
+	          events[event].delete(listener);
 	        }
 	        return;
 	      }
 	      if (Type.isString(event)) {
-	        var _events = this.registry.get(target);
-	        if (Type.isPlainObject(_events) && Type.isSet(_events[event])) {
-	          _events[event] = new Set();
+	        const events = this.registry.get(target);
+	        if (Type.isPlainObject(events) && Type.isSet(events[event])) {
+	          events[event] = new Set();
 	        }
 	        return;
 	      }
-	      this.registry["delete"](target);
+	      this.registry.delete(target);
 	    }
 	  }]);
 	  return Registry;
@@ -6260,10 +6250,10 @@ window._main_polyfill_core = true;
 	var registry = new Registry();
 
 	function isOptionSupported(name) {
-	  var isSupported = false;
+	  let isSupported = false;
 	  try {
-	    var options = Object.defineProperty({}, name, {
-	      get: function get() {
+	    const options = Object.defineProperty({}, name, {
+	      get() {
 	        isSupported = true;
 	        return undefined;
 	      }
@@ -6278,7 +6268,7 @@ window._main_polyfill_core = true;
 	  if (!Type.isPlainObject(options)) {
 	    return options;
 	  }
-	  return Object.keys(options).reduce(function (acc, name) {
+	  return Object.keys(options).reduce((acc, name) => {
 	    if (isOptionSupported(name)) {
 	      acc[name] = options[name];
 	    }
@@ -6290,9 +6280,9 @@ window._main_polyfill_core = true;
 	  if (!Type.isObject(target) || !Type.isFunction(target.addEventListener)) {
 	    return;
 	  }
-	  var listenerOptions = fetchSupportedListenerOptions(options);
+	  const listenerOptions = fetchSupportedListenerOptions(options);
 	  if (eventName in aliases) {
-	    aliases[eventName].forEach(function (key) {
+	    aliases[eventName].forEach(key => {
 	      target.addEventListener(key, handler, listenerOptions);
 	      registry.set(target, eventName, handler);
 	    });
@@ -6306,22 +6296,22 @@ window._main_polyfill_core = true;
 	  if (!Type.isObject(target) || !Type.isFunction(target.removeEventListener)) {
 	    return;
 	  }
-	  var listenerOptions = fetchSupportedListenerOptions(options);
+	  const listenerOptions = fetchSupportedListenerOptions(options);
 	  if (eventName in aliases) {
-	    aliases[eventName].forEach(function (key) {
+	    aliases[eventName].forEach(key => {
 	      target.removeEventListener(key, handler, listenerOptions);
-	      registry["delete"](target, key, handler);
+	      registry.delete(target, key, handler);
 	    });
 	    return;
 	  }
 	  target.removeEventListener(eventName, handler, listenerOptions);
-	  registry["delete"](target, eventName, handler);
+	  registry.delete(target, eventName, handler);
 	}
 
 	function unbindAll(target, eventName) {
-	  var events = registry.get(target);
-	  Object.keys(events).forEach(function (currentEvent) {
-	    events[currentEvent].forEach(function (handler) {
+	  const events = registry.get(target);
+	  Object.keys(events).forEach(currentEvent => {
+	    events[currentEvent].forEach(handler => {
 	      if (!Type.isString(eventName) || eventName === currentEvent) {
 	        unbind(target, currentEvent, handler);
 	      }
@@ -6330,15 +6320,15 @@ window._main_polyfill_core = true;
 	}
 
 	function bindOnce(target, eventName, handler, options) {
-	  var once = function once() {
+	  const once = function once(...args) {
 	    unbind(target, eventName, once, options);
-	    handler.apply(void 0, arguments);
+	    handler(...args);
 	  };
 	  bind(target, eventName, once, options);
 	}
 
 	// eslint-disable-next-line
-	var debugState = true;
+	let debugState = true;
 	function enableDebug() {
 	  debugState = true;
 	}
@@ -6348,12 +6338,9 @@ window._main_polyfill_core = true;
 	function isDebugEnabled() {
 	  return debugState;
 	}
-	function debug() {
+	function debug(...args) {
 	  if (isDebugEnabled() && Type.isObject(window.console)) {
 	    if (Type.isFunction(window.console.log)) {
-	      for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
-	        args[_key] = arguments[_key];
-	      }
 	      window.console.log('BX.debug: ', args.length > 0 ? args : args[0]);
 	      if (args[0] instanceof Error && args[0].stack) {
 	        window.console.log('BX.debug error stack trace', args[0].stack);
@@ -6366,15 +6353,30 @@ window._main_polyfill_core = true;
 	  }
 	}
 
-	var extensionsStorage = new Map();
+	var debugNs = /*#__PURE__*/Object.freeze({
+		get debugState () { return debugState; },
+		enableDebug: enableDebug,
+		disableDebug: disableDebug,
+		isDebugEnabled: isDebugEnabled,
+		default: debug
+	});
 
-	var ajaxController = 'main.bitrix.main.controller.loadext.getextensions';
+	const extensionsStorage = new Map();
+
+	const ajaxController = 'main.bitrix.main.controller.loadext.getextensions';
 	function loadAssets(options) {
-	  return new Promise(function (resolve) {
-	    // eslint-disable-next-line
+	  return new Promise((resolve, reject) => {
+	    const getParameters = {
+	      e: ((options === null || options === void 0 ? void 0 : options.extension) || []).join(',')
+	    };
 	    BX.ajax.runAction(ajaxController, {
-	      data: options
-	    }).then(resolve);
+	      data: options,
+	      getParameters
+	    }).then(result => {
+	      resolve(result === null || result === void 0 ? void 0 : result.data);
+	    }).catch(err => {
+	      reject(err);
+	    });
 	  });
 	}
 
@@ -6398,15 +6400,13 @@ window._main_polyfill_core = true;
 	}
 	function fetchExtensionSettings(html) {
 	  if (Type.isStringFilled(html)) {
-	    var scripts = html.match(/<script type="extension\/settings" \b[^>]*>([\s\S]*?)<\/script>/g);
+	    const scripts = html.match(/<script type="extension\/settings" \b[^>]*>([\s\S]*?)<\/script>/g);
 	    if (Type.isArrayFilled(scripts)) {
-	      return scripts.map(function (script) {
-	        var _script$match = script.match(/data-extension="(.[a-z0-9_.-]+)"/),
-	          _script$match2 = babelHelpers.slicedToArray(_script$match, 2),
-	          extension = _script$match2[1];
+	      return scripts.map(script => {
+	        const [, extension] = script.match(/data-extension="(.[a-z0-9_.-]+)"/);
 	        return {
-	          extension: extension,
-	          script: script
+	          extension,
+	          script
 	        };
 	      });
 	    }
@@ -6414,167 +6414,118 @@ window._main_polyfill_core = true;
 	  return [];
 	}
 	function loadAll(items) {
-	  var itemsList = Type.isArray(items) ? items : [items];
+	  const itemsList = Type.isArray(items) ? items : [items];
 	  if (!itemsList.length) {
 	    return Promise.resolve();
 	  }
-	  return new Promise(function (resolve) {
+	  return new Promise(resolve => {
 	    // eslint-disable-next-line
 	    BX.load(itemsList, resolve);
 	  });
 	}
 
-	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
-	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	var defaultOptions = {
-	  loaded: false
-	};
-	var _state = /*#__PURE__*/new WeakMap();
-	var _name = /*#__PURE__*/new WeakMap();
-	var _namespace = /*#__PURE__*/new WeakMap();
-	var _promise = /*#__PURE__*/new WeakMap();
-	var Extension = /*#__PURE__*/function () {
-	  function Extension(options) {
-	    babelHelpers.classCallCheck(this, Extension);
-	    _classPrivateFieldInitSpec(this, _state, {
-	      writable: true,
-	      value: Extension.State.LOADING
-	    });
-	    _classPrivateFieldInitSpec(this, _name, {
-	      writable: true,
-	      value: ''
-	    });
-	    _classPrivateFieldInitSpec(this, _namespace, {
-	      writable: true,
-	      value: ''
-	    });
-	    _classPrivateFieldInitSpec(this, _promise, {
-	      writable: true,
-	      value: null
-	    });
-	    var preparedOptions = _objectSpread(_objectSpread({}, defaultOptions), options);
-	    babelHelpers.classPrivateFieldSet(this, _name, preparedOptions.name);
-	    babelHelpers.classPrivateFieldSet(this, _namespace, Type.isStringFilled(preparedOptions.namespace) ? preparedOptions.namespace : 'window');
-	    if (preparedOptions.loaded) {
-	      babelHelpers.classPrivateFieldSet(this, _state, Extension.State.LOADED);
+	function parseExtensionHtml(html) {
+	  const result = window.BX.processHTML(html);
+	  const inlinePreScripts = [];
+	  const inlineAfterScripts = [];
+	  result.SCRIPT.reduce((accumulator, element) => {
+	    return fetchInlineScripts(accumulator, element);
+	  }, []).forEach(script => {
+	    if (script.startsWith('BX.Runtime.registerExtension')) {
+	      inlineAfterScripts.push(script);
+	    } else {
+	      inlinePreScripts.push(script);
 	    }
+	  });
+	  return {
+	    inlinePreScripts,
+	    inlineAfterScripts,
+	    externalScripts: result.SCRIPT.reduce((accumulator, element) => {
+	      return fetchExternalScripts(accumulator, element);
+	    }, []),
+	    externalStyles: result.STYLE.reduce((accumulator, element) => {
+	      return fetchExternalStyles(accumulator, element);
+	    }, []),
+	    settingsScripts: fetchExtensionSettings(result.HTML)
+	  };
+	}
+
+	async function processExtensions(map) {
+	  const loadableExtensions = [...map.keys()];
+	  const rawAssets = await loadAssets({
+	    extension: loadableExtensions
+	  });
+	  rawAssets.forEach(rawAsset => {
+	    var _rawAsset$html;
+	    const preparedHtml = (_rawAsset$html = rawAsset.html) !== null && _rawAsset$html !== void 0 ? _rawAsset$html : '';
+	    const extensionAssets = parseExtensionHtml(preparedHtml);
+	    extensionAssets.settingsScripts.forEach(({
+	      script
+	    }) => {
+	      document.body.insertAdjacentHTML('beforeend', script);
+	    });
+	    extensionAssets.inlinePreScripts.forEach(script => {
+	      window.BX.evalGlobal(script);
+	    });
+	    const loadableExtensionEntry = map.get(rawAsset.extension);
+	    void Promise.all([loadAll(extensionAssets.externalScripts), loadAll(extensionAssets.externalStyles)]).then(() => {
+	      var _rawAsset$config$name, _rawAsset$config;
+	      extensionAssets.inlineAfterScripts.forEach(script => {
+	        window.BX.evalGlobal(script);
+	      });
+	      const namespace = (_rawAsset$config$name = rawAsset === null || rawAsset === void 0 ? void 0 : (_rawAsset$config = rawAsset.config) === null || _rawAsset$config === void 0 ? void 0 : _rawAsset$config.namespace) !== null && _rawAsset$config$name !== void 0 ? _rawAsset$config$name : 'window';
+	      loadableExtensionEntry.resolve(namespace);
+	    }).catch(error => {
+	      loadableExtensionEntry.reject(error);
+	    });
+	  });
+	}
+
+	const queue = new Map();
+	let timerId = null;
+	async function loadExtension(...name) {
+	  if (Type.isNumber(timerId)) {
+	    clearTimeout(timerId);
 	  }
-	  babelHelpers.createClass(Extension, [{
-	    key: "load",
-	    value: function load() {
-	      var _this = this;
-	      if (babelHelpers.classPrivateFieldGet(this, _state) === Extension.State.LOADED && !babelHelpers.classPrivateFieldGet(this, _promise)) {
-	        babelHelpers.classPrivateFieldSet(this, _promise, Promise.resolve(Reflection.getClass(babelHelpers.classPrivateFieldGet(this, _namespace))));
-	      }
-	      if (babelHelpers.classPrivateFieldGet(this, _promise)) {
-	        return babelHelpers.classPrivateFieldGet(this, _promise);
-	      }
-	      babelHelpers.classPrivateFieldSet(this, _state, Extension.State.LOADING);
-	      babelHelpers.classPrivateFieldSet(this, _promise, new Promise(function (resolve) {
-	        void loadAssets({
-	          extension: [babelHelpers.classPrivateFieldGet(_this, _name)]
-	        }).then(function (assetsResult) {
-	          if (!Type.isArrayFilled(assetsResult.data)) {
-	            resolve(window);
-	          }
-	          var extensionData = assetsResult.data.at(0);
-	          if (Type.isPlainObject(extensionData.config) && Type.isStringFilled(extensionData.config.namespace)) {
-	            babelHelpers.classPrivateFieldSet(_this, _namespace, extensionData.config.namespace);
-	          }
-	          var result = BX.processHTML(extensionData.html || '');
-	          var inlineScripts = result.SCRIPT.reduce(fetchInlineScripts, []);
-	          var externalScripts = result.SCRIPT.reduce(fetchExternalScripts, []);
-	          var externalStyles = result.STYLE.reduce(fetchExternalStyles, []);
-	          var settingsScripts = fetchExtensionSettings(result.HTML);
-	          settingsScripts.forEach(function (entry) {
-	            document.body.insertAdjacentHTML('beforeend', entry.script);
-	          });
-	          var runScriptsBefore = inlineScripts.filter(function (script) {
-	            return !script.startsWith('BX.Runtime.registerExtension');
-	          });
-	          var runScriptsAfter = inlineScripts.filter(function (script) {
-	            return script.startsWith('BX.Runtime.registerExtension');
-	          });
-	          runScriptsBefore.forEach(function (script) {
-	            BX.evalGlobal(script);
-	          });
-	          void Promise.all([loadAll(externalScripts), loadAll(externalStyles)]).then(function () {
-	            babelHelpers.classPrivateFieldSet(_this, _state, Extension.State.LOADED);
-	            runScriptsAfter.forEach(function (script) {
-	              BX.evalGlobal(script);
-	            });
-	            if (babelHelpers.classPrivateFieldGet(_this, _namespace)) {
-	              return Reflection.getClass(babelHelpers.classPrivateFieldGet(_this, _namespace));
-	            }
-	            return window;
-	          }).then(function (exports) {
-	            resolve(exports);
-	          });
-	        });
-	      }));
-	      return babelHelpers.classPrivateFieldGet(this, _promise);
+	  const requestedNames = name.flat();
+	  const extensionsToLoad = requestedNames.filter(extensionName => {
+	    return !extensionsStorage.has(extensionName);
+	  });
+	  extensionsToLoad.forEach(extensionName => {
+	    let resolve = null;
+	    let reject = null;
+	    const loadableExtensionEntry = {
+	      // eslint-disable-next-line promise/param-names
+	      promise: new Promise((sourceResolve, sourceReject) => {
+	        resolve = sourceResolve;
+	        reject = sourceReject;
+	      }),
+	      resolve,
+	      reject
+	    };
+	    extensionsStorage.set(extensionName, loadableExtensionEntry.promise);
+	    queue.set(extensionName, loadableExtensionEntry);
+	  });
+	  timerId = setTimeout(() => {
+	    if (queue.size > 0) {
+	      void processExtensions(new Map(queue.entries()));
+	      queue.clear();
 	    }
-	  }]);
-	  return Extension;
-	}();
-	babelHelpers.defineProperty(Extension, "State", {
-	  LOADED: 'LOADED',
-	  LOADING: 'LOADING'
-	});
-
-	function _regeneratorRuntime() { /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ _regeneratorRuntime = function _regeneratorRuntime() { return exports; }; var exports = {}, Op = Object.prototype, hasOwn = Op.hasOwnProperty, defineProperty = Object.defineProperty || function (obj, key, desc) { obj[key] = desc.value; }, $Symbol = "function" == typeof Symbol ? Symbol : {}, iteratorSymbol = $Symbol.iterator || "@@iterator", asyncIteratorSymbol = $Symbol.asyncIterator || "@@asyncIterator", toStringTagSymbol = $Symbol.toStringTag || "@@toStringTag"; function define(obj, key, value) { return Object.defineProperty(obj, key, { value: value, enumerable: !0, configurable: !0, writable: !0 }), obj[key]; } try { define({}, ""); } catch (err) { define = function define(obj, key, value) { return obj[key] = value; }; } function wrap(innerFn, outerFn, self, tryLocsList) { var protoGenerator = outerFn && outerFn.prototype instanceof Generator ? outerFn : Generator, generator = Object.create(protoGenerator.prototype), context = new Context(tryLocsList || []); return defineProperty(generator, "_invoke", { value: makeInvokeMethod(innerFn, self, context) }), generator; } function tryCatch(fn, obj, arg) { try { return { type: "normal", arg: fn.call(obj, arg) }; } catch (err) { return { type: "throw", arg: err }; } } exports.wrap = wrap; var ContinueSentinel = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var IteratorPrototype = {}; define(IteratorPrototype, iteratorSymbol, function () { return this; }); var getProto = Object.getPrototypeOf, NativeIteratorPrototype = getProto && getProto(getProto(values([]))); NativeIteratorPrototype && NativeIteratorPrototype !== Op && hasOwn.call(NativeIteratorPrototype, iteratorSymbol) && (IteratorPrototype = NativeIteratorPrototype); var Gp = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(IteratorPrototype); function defineIteratorMethods(prototype) { ["next", "throw", "return"].forEach(function (method) { define(prototype, method, function (arg) { return this._invoke(method, arg); }); }); } function AsyncIterator(generator, PromiseImpl) { function invoke(method, arg, resolve, reject) { var record = tryCatch(generator[method], generator, arg); if ("throw" !== record.type) { var result = record.arg, value = result.value; return value && "object" == babelHelpers["typeof"](value) && hasOwn.call(value, "__await") ? PromiseImpl.resolve(value.__await).then(function (value) { invoke("next", value, resolve, reject); }, function (err) { invoke("throw", err, resolve, reject); }) : PromiseImpl.resolve(value).then(function (unwrapped) { result.value = unwrapped, resolve(result); }, function (error) { return invoke("throw", error, resolve, reject); }); } reject(record.arg); } var previousPromise; defineProperty(this, "_invoke", { value: function value(method, arg) { function callInvokeWithMethodAndArg() { return new PromiseImpl(function (resolve, reject) { invoke(method, arg, resolve, reject); }); } return previousPromise = previousPromise ? previousPromise.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); } }); } function makeInvokeMethod(innerFn, self, context) { var state = "suspendedStart"; return function (method, arg) { if ("executing" === state) throw new Error("Generator is already running"); if ("completed" === state) { if ("throw" === method) throw arg; return doneResult(); } for (context.method = method, context.arg = arg;;) { var delegate = context.delegate; if (delegate) { var delegateResult = maybeInvokeDelegate(delegate, context); if (delegateResult) { if (delegateResult === ContinueSentinel) continue; return delegateResult; } } if ("next" === context.method) context.sent = context._sent = context.arg;else if ("throw" === context.method) { if ("suspendedStart" === state) throw state = "completed", context.arg; context.dispatchException(context.arg); } else "return" === context.method && context.abrupt("return", context.arg); state = "executing"; var record = tryCatch(innerFn, self, context); if ("normal" === record.type) { if (state = context.done ? "completed" : "suspendedYield", record.arg === ContinueSentinel) continue; return { value: record.arg, done: context.done }; } "throw" === record.type && (state = "completed", context.method = "throw", context.arg = record.arg); } }; } function maybeInvokeDelegate(delegate, context) { var methodName = context.method, method = delegate.iterator[methodName]; if (undefined === method) return context.delegate = null, "throw" === methodName && delegate.iterator["return"] && (context.method = "return", context.arg = undefined, maybeInvokeDelegate(delegate, context), "throw" === context.method) || "return" !== methodName && (context.method = "throw", context.arg = new TypeError("The iterator does not provide a '" + methodName + "' method")), ContinueSentinel; var record = tryCatch(method, delegate.iterator, context.arg); if ("throw" === record.type) return context.method = "throw", context.arg = record.arg, context.delegate = null, ContinueSentinel; var info = record.arg; return info ? info.done ? (context[delegate.resultName] = info.value, context.next = delegate.nextLoc, "return" !== context.method && (context.method = "next", context.arg = undefined), context.delegate = null, ContinueSentinel) : info : (context.method = "throw", context.arg = new TypeError("iterator result is not an object"), context.delegate = null, ContinueSentinel); } function pushTryEntry(locs) { var entry = { tryLoc: locs[0] }; 1 in locs && (entry.catchLoc = locs[1]), 2 in locs && (entry.finallyLoc = locs[2], entry.afterLoc = locs[3]), this.tryEntries.push(entry); } function resetTryEntry(entry) { var record = entry.completion || {}; record.type = "normal", delete record.arg, entry.completion = record; } function Context(tryLocsList) { this.tryEntries = [{ tryLoc: "root" }], tryLocsList.forEach(pushTryEntry, this), this.reset(!0); } function values(iterable) { if (iterable) { var iteratorMethod = iterable[iteratorSymbol]; if (iteratorMethod) return iteratorMethod.call(iterable); if ("function" == typeof iterable.next) return iterable; if (!isNaN(iterable.length)) { var i = -1, next = function next() { for (; ++i < iterable.length;) if (hasOwn.call(iterable, i)) return next.value = iterable[i], next.done = !1, next; return next.value = undefined, next.done = !0, next; }; return next.next = next; } } return { next: doneResult }; } function doneResult() { return { value: undefined, done: !0 }; } return GeneratorFunction.prototype = GeneratorFunctionPrototype, defineProperty(Gp, "constructor", { value: GeneratorFunctionPrototype, configurable: !0 }), defineProperty(GeneratorFunctionPrototype, "constructor", { value: GeneratorFunction, configurable: !0 }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, toStringTagSymbol, "GeneratorFunction"), exports.isGeneratorFunction = function (genFun) { var ctor = "function" == typeof genFun && genFun.constructor; return !!ctor && (ctor === GeneratorFunction || "GeneratorFunction" === (ctor.displayName || ctor.name)); }, exports.mark = function (genFun) { return Object.setPrototypeOf ? Object.setPrototypeOf(genFun, GeneratorFunctionPrototype) : (genFun.__proto__ = GeneratorFunctionPrototype, define(genFun, toStringTagSymbol, "GeneratorFunction")), genFun.prototype = Object.create(Gp), genFun; }, exports.awrap = function (arg) { return { __await: arg }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, asyncIteratorSymbol, function () { return this; }), exports.AsyncIterator = AsyncIterator, exports.async = function (innerFn, outerFn, self, tryLocsList, PromiseImpl) { void 0 === PromiseImpl && (PromiseImpl = Promise); var iter = new AsyncIterator(wrap(innerFn, outerFn, self, tryLocsList), PromiseImpl); return exports.isGeneratorFunction(outerFn) ? iter : iter.next().then(function (result) { return result.done ? result.value : iter.next(); }); }, defineIteratorMethods(Gp), define(Gp, toStringTagSymbol, "Generator"), define(Gp, iteratorSymbol, function () { return this; }), define(Gp, "toString", function () { return "[object Generator]"; }), exports.keys = function (val) { var object = Object(val), keys = []; for (var key in object) keys.push(key); return keys.reverse(), function next() { for (; keys.length;) { var key = keys.pop(); if (key in object) return next.value = key, next.done = !1, next; } return next.done = !0, next; }; }, exports.values = values, Context.prototype = { constructor: Context, reset: function reset(skipTempReset) { if (this.prev = 0, this.next = 0, this.sent = this._sent = undefined, this.done = !1, this.delegate = null, this.method = "next", this.arg = undefined, this.tryEntries.forEach(resetTryEntry), !skipTempReset) for (var name in this) "t" === name.charAt(0) && hasOwn.call(this, name) && !isNaN(+name.slice(1)) && (this[name] = undefined); }, stop: function stop() { this.done = !0; var rootRecord = this.tryEntries[0].completion; if ("throw" === rootRecord.type) throw rootRecord.arg; return this.rval; }, dispatchException: function dispatchException(exception) { if (this.done) throw exception; var context = this; function handle(loc, caught) { return record.type = "throw", record.arg = exception, context.next = loc, caught && (context.method = "next", context.arg = undefined), !!caught; } for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i], record = entry.completion; if ("root" === entry.tryLoc) return handle("end"); if (entry.tryLoc <= this.prev) { var hasCatch = hasOwn.call(entry, "catchLoc"), hasFinally = hasOwn.call(entry, "finallyLoc"); if (hasCatch && hasFinally) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } else if (hasCatch) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); } else { if (!hasFinally) throw new Error("try statement without catch or finally"); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } } } }, abrupt: function abrupt(type, arg) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc <= this.prev && hasOwn.call(entry, "finallyLoc") && this.prev < entry.finallyLoc) { var finallyEntry = entry; break; } } finallyEntry && ("break" === type || "continue" === type) && finallyEntry.tryLoc <= arg && arg <= finallyEntry.finallyLoc && (finallyEntry = null); var record = finallyEntry ? finallyEntry.completion : {}; return record.type = type, record.arg = arg, finallyEntry ? (this.method = "next", this.next = finallyEntry.finallyLoc, ContinueSentinel) : this.complete(record); }, complete: function complete(record, afterLoc) { if ("throw" === record.type) throw record.arg; return "break" === record.type || "continue" === record.type ? this.next = record.arg : "return" === record.type ? (this.rval = this.arg = record.arg, this.method = "return", this.next = "end") : "normal" === record.type && afterLoc && (this.next = afterLoc), ContinueSentinel; }, finish: function finish(finallyLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.finallyLoc === finallyLoc) return this.complete(entry.completion, entry.afterLoc), resetTryEntry(entry), ContinueSentinel; } }, "catch": function _catch(tryLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc === tryLoc) { var record = entry.completion; if ("throw" === record.type) { var thrown = record.arg; resetTryEntry(entry); } return thrown; } } throw new Error("illegal catch attempt"); }, delegateYield: function delegateYield(iterable, resultName, nextLoc) { return this.delegate = { iterator: values(iterable), resultName: resultName, nextLoc: nextLoc }, "next" === this.method && (this.arg = undefined), ContinueSentinel; } }, exports; }
-	function ownKeys$1(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-	function _objectSpread$1(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$1(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$1(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
-	function loadExtension() {
-	  return _loadExtension.apply(this, arguments);
-	}
-	function _loadExtension() {
-	  _loadExtension = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee() {
-	    var _len,
-	      extensionName,
-	      _key,
-	      extensionNames,
-	      result,
-	      _args = arguments;
-	    return _regeneratorRuntime().wrap(function _callee$(_context) {
-	      while (1) switch (_context.prev = _context.next) {
-	        case 0:
-	          for (_len = _args.length, extensionName = new Array(_len), _key = 0; _key < _len; _key++) {
-	            extensionName[_key] = _args[_key];
-	          }
-	          extensionNames = extensionName.flat();
-	          result = extensionNames.map(function (name) {
-	            if (extensionsStorage.has(name)) {
-	              return extensionsStorage.get(name).load();
-	            }
-	            var extension = new Extension({
-	              name: name
-	            });
-	            extensionsStorage.set(name, extension);
-	            return extension.load();
-	          });
-	          return _context.abrupt("return", Promise.all(result).then(function (exports) {
-	            return exports.reduce(function (acc, currentExports) {
-	              if (Type.isObject(currentExports)) {
-	                return _objectSpread$1(_objectSpread$1({}, acc), currentExports);
-	              }
-	              return acc;
-	            }, {});
-	          }));
-	        case 4:
-	        case "end":
-	          return _context.stop();
-	      }
-	    }, _callee);
+	  });
+	  const namespaces = await Promise.all(requestedNames.map(extensionName => {
+	    return extensionsStorage.get(extensionName);
 	  }));
-	  return _loadExtension.apply(this, arguments);
+	  return namespaces.reduce((acc, namespace) => {
+	    return {
+	      ...acc,
+	      ...Reflection.getClass(namespace)
+	    };
+	  }, {});
 	}
 
-	var cloneableTags = ['[object Object]', '[object Array]', '[object RegExp]', '[object Arguments]', '[object Date]', '[object Error]', '[object Map]', '[object Set]', '[object ArrayBuffer]', '[object DataView]', '[object Float32Array]', '[object Float64Array]', '[object Int8Array]', '[object Int16Array]', '[object Int32Array]', '[object Uint8Array]', '[object Uint16Array]', '[object Uint32Array]', '[object Uint8ClampedArray]'];
+	const cloneableTags = ['[object Object]', '[object Array]', '[object RegExp]', '[object Arguments]', '[object Date]', '[object Error]', '[object Map]', '[object Set]', '[object ArrayBuffer]', '[object DataView]', '[object Float32Array]', '[object Float64Array]', '[object Int8Array]', '[object Int16Array]', '[object Int32Array]', '[object Uint8Array]', '[object Uint16Array]', '[object Uint32Array]', '[object Uint8ClampedArray]'];
 	function isCloneable(value) {
-	  var isCloneableValue = Type.isObjectLike(value) && cloneableTags.includes(getTag(value));
+	  const isCloneableValue = Type.isObjectLike(value) && cloneableTags.includes(getTag(value));
 	  return isCloneableValue || Type.isDomNode(value);
 	}
 	function internalClone(value, map) {
@@ -6583,9 +6534,9 @@ window._main_polyfill_core = true;
 	  }
 	  if (isCloneable(value)) {
 	    if (Type.isArray(value)) {
-	      var cloned = Array.from(value);
+	      const cloned = Array.from(value);
 	      map.set(value, cloned);
-	      value.forEach(function (item, index) {
+	      value.forEach((item, index) => {
 	        cloned[index] = internalClone(item, map);
 	      });
 	      return map.get(value);
@@ -6594,38 +6545,38 @@ window._main_polyfill_core = true;
 	      return value.cloneNode(true);
 	    }
 	    if (Type.isMap(value)) {
-	      var _result = new Map();
-	      map.set(value, _result);
-	      value.forEach(function (item, key) {
-	        _result.set(internalClone(key, map), internalClone(item, map));
+	      const result = new Map();
+	      map.set(value, result);
+	      value.forEach((item, key) => {
+	        result.set(internalClone(key, map), internalClone(item, map));
 	      });
-	      return _result;
+	      return result;
 	    }
 	    if (Type.isSet(value)) {
-	      var _result2 = new Set();
-	      map.set(value, _result2);
-	      value.forEach(function (item) {
-	        _result2.add(internalClone(item, map));
+	      const result = new Set();
+	      map.set(value, result);
+	      value.forEach(item => {
+	        result.add(internalClone(item, map));
 	      });
-	      return _result2;
+	      return result;
 	    }
 	    if (Type.isDate(value)) {
 	      return new Date(value);
 	    }
 	    if (Type.isRegExp(value)) {
-	      var regExpFlags = /\w*$/;
-	      var flags = regExpFlags.exec(value);
-	      var _result3 = new RegExp(value.source);
+	      const regExpFlags = /\w*$/;
+	      const flags = regExpFlags.exec(value);
+	      let result = new RegExp(value.source);
 	      if (flags && Type.isArray(flags)) {
-	        _result3 = new RegExp(value.source, flags[0]);
+	        result = new RegExp(value.source, flags[0]);
 	      }
-	      _result3.lastIndex = value.lastIndex;
-	      return _result3;
+	      result.lastIndex = value.lastIndex;
+	      return result;
 	    }
-	    var proto = Object.getPrototypeOf(value);
-	    var result = Object.assign(Object.create(proto), value);
+	    const proto = Object.getPrototypeOf(value);
+	    const result = Object.assign(Object.create(proto), value);
 	    map.set(value, result);
-	    Object.keys(value).forEach(function (key) {
+	    Object.keys(value).forEach(key => {
 	      result[key] = internalClone(value[key], map);
 	    });
 	    return result;
@@ -6643,10 +6594,7 @@ window._main_polyfill_core = true;
 	}
 
 	function merge(current, target) {
-	  return Object.entries(target).reduce(function (acc, _ref) {
-	    var _ref2 = babelHelpers.slicedToArray(_ref, 2),
-	      key = _ref2[0],
-	      value = _ref2[1];
+	  return Object.entries(target).reduce((acc, [key, value]) => {
 	    if (!Type.isDomNode(acc[key]) && Type.isObjectLike(acc[key]) && Type.isObjectLike(value)) {
 	      acc[key] = merge(acc[key], value);
 	      return acc;
@@ -6656,16 +6604,15 @@ window._main_polyfill_core = true;
 	  }, current);
 	}
 
-	function createComparator(fields) {
-	  var orders = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
-	  return function (a, b) {
-	    var field = fields[0];
-	    var order = orders[0] || 'asc';
+	function createComparator(fields, orders = []) {
+	  return (a, b) => {
+	    const field = fields[0];
+	    const order = orders[0] || 'asc';
 	    if (Type.isUndefined(field)) {
 	      return 0;
 	    }
-	    var valueA = a[field];
-	    var valueB = b[field];
+	    let valueA = a[field];
+	    let valueB = b[field];
 	    if (Type.isString(valueA) && Type.isString(valueB)) {
 	      valueA = valueA.toLowerCase();
 	      valueB = valueB.toLowerCase();
@@ -6682,50 +6629,41 @@ window._main_polyfill_core = true;
 
 	function registerExtension(options) {
 	  if (!extensionsStorage.has(options.name)) {
-	    extensionsStorage.set(options.name, new Extension(options));
+	    var _options$namespace;
+	    const namespace = (_options$namespace = options === null || options === void 0 ? void 0 : options.namespace) !== null && _options$namespace !== void 0 ? _options$namespace : 'window';
+	    extensionsStorage.set(options.name, Promise.resolve(namespace));
 	  }
 	}
 
 	/**
 	 * @memberOf BX
 	 */
-	var Runtime = /*#__PURE__*/function () {
+	let Runtime = /*#__PURE__*/function () {
 	  function Runtime() {
 	    babelHelpers.classCallCheck(this, Runtime);
 	  }
 	  babelHelpers.createClass(Runtime, null, [{
 	    key: "debounce",
-	    value: function debounce(func) {
-	      var wait = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
-	      var context = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
-	      var timeoutId;
-	      return function debounced() {
-	        var _this = this;
-	        for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
-	          args[_key] = arguments[_key];
-	        }
+	    value: function debounce(func, wait = 0, context = null) {
+	      let timeoutId;
+	      return function debounced(...args) {
 	        if (Type.isNumber(timeoutId)) {
 	          clearTimeout(timeoutId);
 	        }
-	        timeoutId = setTimeout(function () {
-	          func.apply(context || _this, args);
+	        timeoutId = setTimeout(() => {
+	          func.apply(context || this, args);
 	        }, wait);
 	      };
 	    }
 	  }, {
 	    key: "throttle",
-	    value: function throttle(func) {
-	      var wait = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
-	      var context = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
-	      var timer = 0;
-	      var invoke;
-	      return function wrapper() {
-	        for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
-	          args[_key2] = arguments[_key2];
-	        }
+	    value: function throttle(func, wait = 0, context = null) {
+	      let timer = 0;
+	      let invoke;
+	      return function wrapper(...args) {
 	        invoke = true;
 	        if (!timer) {
-	          var q = function q() {
+	          const q = function q() {
 	            if (invoke) {
 	              func.apply(context || this, args);
 	              invoke = false;
@@ -6740,17 +6678,16 @@ window._main_polyfill_core = true;
 	    }
 	  }, {
 	    key: "html",
-	    value: function html(node, _html) {
-	      var params = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+	    value: function html(node, _html, params = {}) {
 	      if (Type.isNil(_html) && Type.isDomNode(node)) {
 	        return node.innerHTML;
 	      }
 
 	      // eslint-disable-next-line
-	      var parsedHtml = BX.processHTML(_html);
-	      var externalCss = parsedHtml.STYLE.reduce(fetchExternalStyles, []);
-	      var externalJs = parsedHtml.SCRIPT.reduce(fetchExternalScripts, []);
-	      var inlineJs = parsedHtml.SCRIPT.reduce(fetchInlineScripts, []);
+	      const parsedHtml = BX.processHTML(_html);
+	      const externalCss = parsedHtml.STYLE.reduce(fetchExternalStyles, []);
+	      const externalJs = parsedHtml.SCRIPT.reduce(fetchExternalScripts, []);
+	      const inlineJs = parsedHtml.SCRIPT.reduce(fetchInlineScripts, []);
 	      if (Type.isDomNode(node)) {
 	        if (params.htmlFirst || !externalJs.length && !externalCss.length) {
 	          if (params.useAdjacentHTML) {
@@ -6760,7 +6697,7 @@ window._main_polyfill_core = true;
 	          }
 	        }
 	      }
-	      return Promise.all([loadAll(externalJs), loadAll(externalCss)]).then(function () {
+	      return Promise.all([loadAll(externalJs), loadAll(externalCss)]).then(() => {
 	        if (Type.isDomNode(node) && (externalJs.length > 0 || externalCss.length > 0)) {
 	          if (params.useAdjacentHTML) {
 	            node.insertAdjacentHTML('beforeend', parsedHtml.HTML);
@@ -6770,9 +6707,7 @@ window._main_polyfill_core = true;
 	        }
 
 	        // eslint-disable-next-line
-	        inlineJs.forEach(function (script) {
-	          return BX.evalGlobal(script);
-	        });
+	        inlineJs.forEach(script => BX.evalGlobal(script));
 	        if (Type.isFunction(params.callback)) {
 	          params.callback();
 	        }
@@ -6785,48 +6720,42 @@ window._main_polyfill_core = true;
 	     */
 	  }, {
 	    key: "merge",
-	    value: function merge$$1() {
-	      for (var _len3 = arguments.length, targets = new Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
-	        targets[_key3] = arguments[_key3];
-	      }
+	    value: function merge$$1(...targets) {
 	      if (Type.isArray(targets[0])) {
 	        targets.unshift([]);
 	      } else if (Type.isObject(targets[0])) {
 	        targets.unshift({});
 	      }
-	      return targets.reduce(function (acc, item) {
+	      return targets.reduce((acc, item) => {
 	        return merge(acc, item);
 	      }, targets[0]);
 	    }
 	  }, {
 	    key: "orderBy",
-	    value: function orderBy(collection) {
-	      var fields = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
-	      var orders = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [];
-	      var comparator = createComparator(fields, orders);
+	    value: function orderBy(collection, fields = [], orders = []) {
+	      const comparator = createComparator(fields, orders);
 	      return Object.values(collection).sort(comparator);
 	    }
 	  }, {
 	    key: "destroy",
-	    value: function destroy(target) {
-	      var errorMessage = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'Object is destroyed';
+	    value: function destroy(target, errorMessage = 'Object is destroyed') {
 	      if (Type.isObject(target)) {
-	        var onPropertyAccess = function onPropertyAccess() {
+	        const onPropertyAccess = () => {
 	          throw new Error(errorMessage);
 	        };
-	        var ownProperties = Object.keys(target);
-	        var prototypeProperties = function () {
-	          var targetPrototype = Object.getPrototypeOf(target);
+	        const ownProperties = Object.keys(target);
+	        const prototypeProperties = (() => {
+	          const targetPrototype = Object.getPrototypeOf(target);
 	          if (Type.isObject(targetPrototype)) {
 	            return Object.getOwnPropertyNames(targetPrototype);
 	          }
 	          return [];
-	        }();
-	        var uniquePropertiesList = babelHelpers.toConsumableArray(new Set([].concat(ownProperties, babelHelpers.toConsumableArray(prototypeProperties))));
-	        uniquePropertiesList.filter(function (name) {
-	          var descriptor = Object.getOwnPropertyDescriptor(target, name);
+	        })();
+	        const uniquePropertiesList = [...new Set([...ownProperties, ...prototypeProperties])];
+	        uniquePropertiesList.filter(name => {
+	          const descriptor = Object.getOwnPropertyDescriptor(target, name);
 	          return !/__(.+)__/.test(name) && (!Type.isObject(descriptor) || descriptor.configurable === true);
-	        }).forEach(function (name) {
+	        }).forEach(name => {
 	          Object.defineProperty(target, name, {
 	            get: onPropertyAccess,
 	            set: onPropertyAccess,
@@ -6844,12 +6773,12 @@ window._main_polyfill_core = true;
 	babelHelpers.defineProperty(Runtime, "registerExtension", registerExtension);
 	babelHelpers.defineProperty(Runtime, "clone", clone);
 
-	var _isError = Symbol["for"]('BX.BaseError.isError');
+	const _isError = Symbol.for('BX.BaseError.isError');
 
 	/**
 	 * @memberOf BX
 	 */
-	var BaseError = /*#__PURE__*/function () {
+	let BaseError = /*#__PURE__*/function () {
 	  function BaseError(message, code, customData) {
 	    babelHelpers.classCallCheck(this, BaseError);
 	    this[_isError] = true;
@@ -6929,16 +6858,16 @@ window._main_polyfill_core = true;
 	  }, {
 	    key: "toString",
 	    value: function toString() {
-	      var code = this.getCode();
-	      var message = this.getMessage();
+	      const code = this.getCode();
+	      const message = this.getMessage();
 	      if (!Type.isStringFilled(code) && !Type.isStringFilled(message)) {
 	        return '';
 	      } else if (!Type.isStringFilled(code)) {
-	        return "Error: ".concat(message);
+	        return `Error: ${message}`;
 	      } else if (!Type.isStringFilled(message)) {
 	        return code;
 	      } else {
-	        return "".concat(code, ": ").concat(message);
+	        return `${code}: ${message}`;
 	      }
 	    }
 	    /**
@@ -6958,11 +6887,10 @@ window._main_polyfill_core = true;
 	/**
 	 * Implements base event object interface
 	 */
-	var BaseEvent = /*#__PURE__*/function () {
-	  function BaseEvent() {
-	    var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {
-	      data: {}
-	    };
+	let BaseEvent = /*#__PURE__*/function () {
+	  function BaseEvent(options = {
+	    data: {}
+	  }) {
 	    babelHelpers.classCallCheck(this, BaseEvent);
 	    this.type = '';
 	    this.data = null;
@@ -7118,18 +7046,16 @@ window._main_polyfill_core = true;
 	  return BaseEvent;
 	}();
 
-	var EventStore = /*#__PURE__*/function () {
-	  function EventStore() {
-	    var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+	let EventStore = /*#__PURE__*/function () {
+	  function EventStore(options = {}) {
 	    babelHelpers.classCallCheck(this, EventStore);
 	    this.defaultMaxListeners = Type.isNumber(options.defaultMaxListeners) ? options.defaultMaxListeners : 10;
 	    this.eventStore = new WeakMap();
 	  }
 	  babelHelpers.createClass(EventStore, [{
 	    key: "add",
-	    value: function add(target) {
-	      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-	      var record = this.getRecordScheme();
+	    value: function add(target, options = {}) {
+	      const record = this.getRecordScheme();
 	      if (Type.isNumber(options.maxListeners)) {
 	        record.maxListeners = options.maxListeners;
 	      }
@@ -7143,14 +7069,13 @@ window._main_polyfill_core = true;
 	    }
 	  }, {
 	    key: "getOrAdd",
-	    value: function getOrAdd(target) {
-	      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+	    value: function getOrAdd(target, options = {}) {
 	      return this.get(target) || this.add(target, options);
 	    }
 	  }, {
 	    key: "delete",
 	    value: function _delete(context) {
-	      this.eventStore["delete"](context);
+	      this.eventStore.delete(context);
 	    }
 	  }, {
 	    key: "getRecordScheme",
@@ -7171,7 +7096,7 @@ window._main_polyfill_core = true;
 	  return EventStore;
 	}();
 
-	var WarningStore = /*#__PURE__*/function () {
+	let WarningStore = /*#__PURE__*/function () {
 	  function WarningStore() {
 	    babelHelpers.classCallCheck(this, WarningStore);
 	    this.warnings = new Map();
@@ -7180,7 +7105,7 @@ window._main_polyfill_core = true;
 	  babelHelpers.createClass(WarningStore, [{
 	    key: "add",
 	    value: function add(target, eventName, listeners) {
-	      var contextWarnings = this.warnings.get(target);
+	      let contextWarnings = this.warnings.get(target);
 	      if (!contextWarnings) {
 	        contextWarnings = Object.create(null);
 	        this.warnings.set(target, contextWarnings);
@@ -7197,8 +7122,8 @@ window._main_polyfill_core = true;
 	  }, {
 	    key: "print",
 	    value: function print() {
-	      this.warnings.forEach(function (warnings) {
-	        for (var eventName in warnings) {
+	      this.warnings.forEach(warnings => {
+	        for (let eventName in warnings) {
 	          console.groupCollapsed('Possible BX.Event.EventEmitter memory leak detected. ' + warnings[eventName].size + ' "' + eventName + '" listeners added. ' + 'Use emitter.setMaxListeners() to increase limit.');
 	          console.dir(warnings[eventName].errors);
 	          console.groupEnd();
@@ -7218,38 +7143,38 @@ window._main_polyfill_core = true;
 	  return WarningStore;
 	}();
 
-	var eventStore = new EventStore({
+	const eventStore = new EventStore({
 	  defaultMaxListeners: 10
 	});
-	var warningStore = new WarningStore();
-	var aliasStore = new Map();
-	var globalTarget = {
+	const warningStore = new WarningStore();
+	const aliasStore = new Map();
+	const globalTarget = {
 	  GLOBAL_TARGET: 'GLOBAL_TARGET' // this key only for debugging purposes
 	};
 
 	eventStore.add(globalTarget, {
 	  maxListeners: 25
 	});
-	var isEmitterProperty = Symbol["for"]('BX.Event.EventEmitter.isEmitter');
-	var namespaceProperty = Symbol('namespaceProperty');
-	var targetProperty = Symbol('targetProperty');
-	var EventEmitter = /*#__PURE__*/function () {
+	const isEmitterProperty = Symbol.for('BX.Event.EventEmitter.isEmitter');
+	const namespaceProperty = Symbol('namespaceProperty');
+	const targetProperty = Symbol('targetProperty');
+	let EventEmitter = /*#__PURE__*/function () {
 	  /** @private */
 
-	  function EventEmitter() {
+	  function EventEmitter(...args) {
 	    babelHelpers.classCallCheck(this, EventEmitter);
 	    this[targetProperty] = null;
 	    this[namespaceProperty] = null;
 	    this[isEmitterProperty] = true;
-	    var target = this;
-	    if (Object.getPrototypeOf(this) === EventEmitter.prototype && arguments.length > 0)
+	    let target = this;
+	    if (Object.getPrototypeOf(this) === EventEmitter.prototype && args.length > 0)
 	      //new EventEmitter(obj) case
 	      {
-	        if (!Type.isObject(arguments.length <= 0 ? undefined : arguments[0])) {
-	          throw new TypeError("The \"target\" argument must be an object.");
+	        if (!Type.isObject(args[0])) {
+	          throw new TypeError(`The "target" argument must be an object.`);
 	        }
-	        target = arguments.length <= 0 ? undefined : arguments[0];
-	        this.setEventNamespace(arguments.length <= 1 ? undefined : arguments[1]);
+	        target = args[0];
+	        this.setEventNamespace(args[1]);
 	      }
 	    this[targetProperty] = target;
 	  }
@@ -7299,10 +7224,9 @@ window._main_polyfill_core = true;
 	  }, {
 	    key: "subscribeFromOptions",
 	    value: function subscribeFromOptions(options, aliases, compatMode) {
-	      var _this = this;
 	      if (Type.isArrayFilled(options)) {
-	        options.forEach(function (events) {
-	          _this.subscribeFromOptions(events);
+	        options.forEach(events => {
+	          this.subscribeFromOptions(events);
 	        });
 	        return;
 	      }
@@ -7310,16 +7234,18 @@ window._main_polyfill_core = true;
 	        return;
 	      }
 	      aliases = Type.isPlainObject(aliases) ? EventEmitter.normalizeAliases(aliases) : {};
-	      Object.keys(options).forEach(function (eventName) {
-	        var listener = EventEmitter.normalizeListener(options[eventName]);
+	      Object.keys(options).forEach(eventName => {
+	        const listener = EventEmitter.normalizeListener(options[eventName]);
 	        eventName = EventEmitter.normalizeEventName(eventName);
 	        if (aliases[eventName]) {
-	          var actualName = aliases[eventName].eventName;
-	          EventEmitter.subscribe(_this, actualName, listener, {
+	          const {
+	            eventName: actualName
+	          } = aliases[eventName];
+	          EventEmitter.subscribe(this, actualName, listener, {
 	            compatMode: compatMode !== false
 	          });
 	        } else {
-	          EventEmitter.subscribe(_this, eventName, listener, {
+	          EventEmitter.subscribe(this, eventName, listener, {
 	            compatMode: compatMode === true
 	          });
 	        }
@@ -7444,11 +7370,8 @@ window._main_polyfill_core = true;
 	     * @return {this}
 	     * @param args
 	     */
-	    value: function setMaxListeners() {
-	      for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
-	        args[_key] = arguments[_key];
-	      }
-	      EventEmitter.setMaxListeners.apply(EventEmitter, [this].concat(args));
+	    value: function setMaxListeners(...args) {
+	      EventEmitter.setMaxListeners(this, ...args);
 	      return this;
 	    }
 	    /**
@@ -7494,11 +7417,8 @@ window._main_polyfill_core = true;
 	     * this.incrementMaxListeners('onClose') - adds one max listener for onClose event
 	     * this.incrementMaxListeners('onClose', 2) - adds two max listeners for onClose event
 	     */
-	    value: function incrementMaxListeners() {
-	      for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
-	        args[_key2] = arguments[_key2];
-	      }
-	      return EventEmitter.incrementMaxListeners.apply(EventEmitter, [this].concat(args));
+	    value: function incrementMaxListeners(...args) {
+	      return EventEmitter.incrementMaxListeners(this, ...args);
 	    }
 	    /**
 	     * Decreases max listeners count
@@ -7522,11 +7442,8 @@ window._main_polyfill_core = true;
 	     * this.decrementMaxListeners('onClose') - subtracts one max listener for onClose event
 	     * this.decrementMaxListeners('onClose', 2) - subtracts two max listeners for onClose event
 	     */
-	    value: function decrementMaxListeners() {
-	      for (var _len3 = arguments.length, args = new Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
-	        args[_key3] = arguments[_key3];
-	      }
-	      return EventEmitter.decrementMaxListeners.apply(EventEmitter, [this].concat(args));
+	    value: function decrementMaxListeners(...args) {
+	      return EventEmitter.decrementMaxListeners(this, ...args);
 	    }
 	    /**
 	     * @private
@@ -7551,7 +7468,7 @@ window._main_polyfill_core = true;
 	    key: "getFullEventName",
 	    value: function getFullEventName(eventName) {
 	      if (!Type.isStringFilled(eventName)) {
-	        throw new TypeError("The \"eventName\" argument must be a string.");
+	        throw new TypeError(`The "eventName" argument must be a string.`);
 	      }
 	      return EventEmitter.makeFullEventName(this.getEventNamespace(), eventName);
 	    }
@@ -7571,19 +7488,16 @@ window._main_polyfill_core = true;
 	      if (EventEmitter.isEventEmitter(target)) {
 	        throw new TypeError('The "target" is an event emitter already.');
 	      }
-	      var targetProto = Object.getPrototypeOf(target);
-	      var emitter = new EventEmitter();
+	      const targetProto = Object.getPrototypeOf(target);
+	      const emitter = new EventEmitter();
 	      emitter.setEventNamespace(namespace);
 	      Object.setPrototypeOf(emitter, targetProto);
 	      Object.setPrototypeOf(target, emitter);
-	      Object.getOwnPropertyNames(EventEmitter.prototype).forEach(function (method) {
+	      Object.getOwnPropertyNames(EventEmitter.prototype).forEach(method => {
 	        if (['constructor'].includes(method)) {
 	          return;
 	        }
-	        emitter[method] = function () {
-	          for (var _len4 = arguments.length, args = new Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
-	            args[_key4] = arguments[_key4];
-	          }
+	        emitter[method] = function (...args) {
 	          return EventEmitter.prototype[method].apply(target, args);
 	        };
 	      });
@@ -7598,39 +7512,40 @@ window._main_polyfill_core = true;
 	        target = this.GLOBAL_TARGET;
 	      }
 	      if (!Type.isObject(target)) {
-	        throw new TypeError("The \"target\" argument must be an object.");
+	        throw new TypeError(`The "target" argument must be an object.`);
 	      }
 	      eventName = this.normalizeEventName(eventName);
 	      if (!Type.isStringFilled(eventName)) {
-	        throw new TypeError("The \"eventName\" argument must be a string.");
+	        throw new TypeError(`The "eventName" argument must be a string.`);
 	      }
 	      listener = this.normalizeListener(listener);
 	      options = Type.isPlainObject(options) ? options : {};
-	      var fullEventName = this.resolveEventName(eventName, target, options.useGlobalNaming === true);
-	      var _eventStore$getOrAdd = eventStore.getOrAdd(target),
-	        eventsMap = _eventStore$getOrAdd.eventsMap,
-	        onceMap = _eventStore$getOrAdd.onceMap;
-	      var onceListeners = onceMap.get(fullEventName);
-	      var listeners = eventsMap.get(fullEventName);
+	      const fullEventName = this.resolveEventName(eventName, target, options.useGlobalNaming === true);
+	      const {
+	        eventsMap,
+	        onceMap
+	      } = eventStore.getOrAdd(target);
+	      const onceListeners = onceMap.get(fullEventName);
+	      let listeners = eventsMap.get(fullEventName);
 	      if (listeners && listeners.has(listener) || onceListeners && onceListeners.has(listener)) {
-	        console.error("You cannot subscribe the same \"".concat(fullEventName, "\" event listener twice."));
+	        console.error(`You cannot subscribe the same "${fullEventName}" event listener twice.`);
 	      } else {
 	        if (listeners) {
 	          listeners.set(listener, {
-	            listener: listener,
-	            options: options,
+	            listener,
+	            options,
 	            sort: this.getNextSequenceValue()
 	          });
 	        } else {
 	          listeners = new Map([[listener, {
-	            listener: listener,
-	            options: options,
+	            listener,
+	            options,
 	            sort: this.getNextSequenceValue()
 	          }]]);
 	          eventsMap.set(fullEventName, listeners);
 	        }
 	      }
-	      var maxListeners = this.getMaxListeners(target, eventName);
+	      const maxListeners = this.getMaxListeners(target, eventName);
 	      if (listeners.size > maxListeners) {
 	        warningStore.add(target, fullEventName, listeners);
 	        warningStore.printDelayed();
@@ -7639,33 +7554,33 @@ window._main_polyfill_core = true;
 	  }, {
 	    key: "subscribeOnce",
 	    value: function subscribeOnce(target, eventName, listener) {
-	      var _this2 = this;
 	      if (Type.isString(target)) {
 	        listener = eventName;
 	        eventName = target;
 	        target = this.GLOBAL_TARGET;
 	      }
 	      if (!Type.isObject(target)) {
-	        throw new TypeError("The \"target\" argument must be an object.");
+	        throw new TypeError(`The "target" argument must be an object.`);
 	      }
 	      eventName = this.normalizeEventName(eventName);
 	      if (!Type.isStringFilled(eventName)) {
-	        throw new TypeError("The \"eventName\" argument must be a string.");
+	        throw new TypeError(`The "eventName" argument must be a string.`);
 	      }
 	      listener = this.normalizeListener(listener);
-	      var fullEventName = this.resolveEventName(eventName, target);
-	      var _eventStore$getOrAdd2 = eventStore.getOrAdd(target),
-	        eventsMap = _eventStore$getOrAdd2.eventsMap,
-	        onceMap = _eventStore$getOrAdd2.onceMap;
-	      var listeners = eventsMap.get(fullEventName);
-	      var onceListeners = onceMap.get(fullEventName);
+	      const fullEventName = this.resolveEventName(eventName, target);
+	      const {
+	        eventsMap,
+	        onceMap
+	      } = eventStore.getOrAdd(target);
+	      const listeners = eventsMap.get(fullEventName);
+	      let onceListeners = onceMap.get(fullEventName);
 	      if (listeners && listeners.has(listener) || onceListeners && onceListeners.has(listener)) {
-	        console.error("You cannot subscribe the same \"".concat(fullEventName, "\" event listener twice."));
+	        console.error(`You cannot subscribe the same "${fullEventName}" event listener twice.`);
 	      } else {
-	        var once = function once() {
-	          _this2.unsubscribe(target, eventName, once);
-	          onceListeners["delete"](listener);
-	          listener.apply(void 0, arguments);
+	        const once = (...args) => {
+	          this.unsubscribe(target, eventName, once);
+	          onceListeners.delete(listener);
+	          listener(...args);
 	        };
 	        if (onceListeners) {
 	          onceListeners.set(listener, once);
@@ -7686,22 +7601,22 @@ window._main_polyfill_core = true;
 	      }
 	      eventName = this.normalizeEventName(eventName);
 	      if (!Type.isStringFilled(eventName)) {
-	        throw new TypeError("The \"eventName\" argument must be a string.");
+	        throw new TypeError(`The "eventName" argument must be a string.`);
 	      }
 	      listener = this.normalizeListener(listener);
 	      options = Type.isPlainObject(options) ? options : {};
-	      var fullEventName = this.resolveEventName(eventName, target, options.useGlobalNaming === true);
-	      var targetInfo = eventStore.get(target);
-	      var listeners = targetInfo && targetInfo.eventsMap.get(fullEventName);
-	      var onceListeners = targetInfo && targetInfo.onceMap.get(fullEventName);
+	      const fullEventName = this.resolveEventName(eventName, target, options.useGlobalNaming === true);
+	      const targetInfo = eventStore.get(target);
+	      const listeners = targetInfo && targetInfo.eventsMap.get(fullEventName);
+	      const onceListeners = targetInfo && targetInfo.onceMap.get(fullEventName);
 	      if (listeners) {
-	        listeners["delete"](listener);
+	        listeners.delete(listener);
 	      }
 	      if (onceListeners) {
-	        var once = onceListeners.get(listener);
+	        const once = onceListeners.get(listener);
 	        if (once) {
-	          onceListeners["delete"](listener);
-	          listeners["delete"](once);
+	          onceListeners.delete(listener);
+	          listeners.delete(once);
 	        }
 	      }
 	    }
@@ -7713,18 +7628,18 @@ window._main_polyfill_core = true;
 	        target = this.GLOBAL_TARGET;
 	      }
 	      if (Type.isStringFilled(eventName)) {
-	        var targetInfo = eventStore.get(target);
+	        const targetInfo = eventStore.get(target);
 	        if (targetInfo) {
 	          options = Type.isPlainObject(options) ? options : {};
-	          var fullEventName = this.resolveEventName(eventName, target, options.useGlobalNaming === true);
-	          targetInfo.eventsMap["delete"](fullEventName);
-	          targetInfo.onceMap["delete"](fullEventName);
+	          const fullEventName = this.resolveEventName(eventName, target, options.useGlobalNaming === true);
+	          targetInfo.eventsMap.delete(fullEventName);
+	          targetInfo.onceMap.delete(fullEventName);
 	        }
 	      } else if (Type.isNil(eventName)) {
 	        if (target === this.GLOBAL_TARGET) {
 	          console.error('You cannot unsubscribe all global listeners.');
 	        } else {
-	          eventStore["delete"](target);
+	          eventStore.delete(target);
 	        }
 	      }
 	    }
@@ -7738,47 +7653,48 @@ window._main_polyfill_core = true;
 	        target = this.GLOBAL_TARGET;
 	      }
 	      if (!Type.isObject(target)) {
-	        throw new TypeError("The \"target\" argument must be an object.");
+	        throw new TypeError(`The "target" argument must be an object.`);
 	      }
 	      eventName = this.normalizeEventName(eventName);
 	      if (!Type.isStringFilled(eventName)) {
-	        throw new TypeError("The \"eventName\" argument must be a string.");
+	        throw new TypeError(`The "eventName" argument must be a string.`);
 	      }
 	      options = Type.isPlainObject(options) ? options : {};
-	      var fullEventName = this.resolveEventName(eventName, target, options.useGlobalNaming === true);
-	      var globalEvents = eventStore.get(this.GLOBAL_TARGET);
-	      var globalListeners = globalEvents && globalEvents.eventsMap.get(fullEventName) || new Map();
-	      var targetListeners = new Set();
+	      const fullEventName = this.resolveEventName(eventName, target, options.useGlobalNaming === true);
+	      const globalEvents = eventStore.get(this.GLOBAL_TARGET);
+	      const globalListeners = globalEvents && globalEvents.eventsMap.get(fullEventName) || new Map();
+	      let targetListeners = new Set();
 	      if (target !== this.GLOBAL_TARGET) {
-	        var targetEvents = eventStore.get(target);
+	        const targetEvents = eventStore.get(target);
 	        targetListeners = targetEvents && targetEvents.eventsMap.get(fullEventName) || new Map();
 	      }
-	      var listeners = [].concat(babelHelpers.toConsumableArray(globalListeners.values()), babelHelpers.toConsumableArray(targetListeners.values()));
+	      const listeners = [...globalListeners.values(), ...targetListeners.values()];
 	      listeners.sort(function (a, b) {
 	        return a.sort - b.sort;
 	      });
-	      var preparedEvent = this.prepareEvent(target, fullEventName, event);
-	      var result = [];
-	      for (var i = 0; i < listeners.length; i++) {
+	      const preparedEvent = this.prepareEvent(target, fullEventName, event);
+	      const result = [];
+	      for (let i = 0; i < listeners.length; i++) {
 	        if (preparedEvent.isImmediatePropagationStopped()) {
 	          break;
 	        }
-	        var _listeners$i = listeners[i],
-	          listener = _listeners$i.listener,
-	          listenerOptions = _listeners$i.options;
+	        const {
+	          listener,
+	          options: listenerOptions
+	        } = listeners[i];
 
 	        //A previous listener could remove a current listener.
 	        if (globalListeners.has(listener) || targetListeners.has(listener)) {
-	          var listenerResult = void 0;
+	          let listenerResult;
 	          if (listenerOptions.compatMode) {
-	            var params = [];
-	            var compatData = preparedEvent.getCompatData();
+	            let params = [];
+	            const compatData = preparedEvent.getCompatData();
 	            if (compatData !== null) {
 	              params = options.cloneData === true ? Runtime.clone(compatData) : compatData;
 	            } else {
 	              params = [preparedEvent];
 	            }
-	            var context = Type.isUndefined(options.thisArg) ? target : options.thisArg;
+	            const context = Type.isUndefined(options.thisArg) ? target : options.thisArg;
 	            listenerResult = listener.apply(context, params);
 	          } else {
 	            listenerResult = Type.isUndefined(options.thisArg) ? listener(preparedEvent) : listener.call(options.thisArg, preparedEvent);
@@ -7801,7 +7717,7 @@ window._main_polyfill_core = true;
 	  }, {
 	    key: "prepareEvent",
 	    value: function prepareEvent(target, eventName, event) {
-	      var preparedEvent = event;
+	      let preparedEvent = event;
 	      if (!(event instanceof BaseEvent)) {
 	        preparedEvent = new BaseEvent();
 	        preparedEvent.setData(event);
@@ -7830,40 +7746,33 @@ window._main_polyfill_core = true;
 	     */
 	  }, {
 	    key: "setMaxListeners",
-	    value: function setMaxListeners() {
-	      var target = this.GLOBAL_TARGET;
-	      var eventName = null;
-	      var count = undefined;
-	      for (var _len5 = arguments.length, args = new Array(_len5), _key5 = 0; _key5 < _len5; _key5++) {
-	        args[_key5] = arguments[_key5];
-	      }
+	    value: function setMaxListeners(...args) {
+	      let target = this.GLOBAL_TARGET;
+	      let eventName = null;
+	      let count = undefined;
 	      if (args.length === 1) {
 	        count = args[0];
 	      } else if (args.length === 2) {
 	        if (Type.isString(args[0])) {
-	          eventName = args[0];
-	          count = args[1];
+	          [eventName, count] = args;
 	        } else {
-	          target = args[0];
-	          count = args[1];
+	          [target, count] = args;
 	        }
 	      } else if (args.length >= 3) {
-	        target = args[0];
-	        eventName = args[1];
-	        count = args[2];
+	        [target, eventName, count] = args;
 	      }
 	      if (!Type.isObject(target)) {
-	        throw new TypeError("The \"target\" argument must be an object.");
+	        throw new TypeError(`The "target" argument must be an object.`);
 	      }
 	      if (eventName !== null && !Type.isStringFilled(eventName)) {
-	        throw new TypeError("The \"eventName\" argument must be a string.");
+	        throw new TypeError(`The "eventName" argument must be a string.`);
 	      }
 	      if (!Type.isNumber(count) || count < 0) {
-	        throw new TypeError("The value of \"count\" is out of range. It must be a non-negative number. Received ".concat(count, "."));
+	        throw new TypeError(`The value of "count" is out of range. It must be a non-negative number. Received ${count}.`);
 	      }
-	      var targetInfo = eventStore.getOrAdd(target);
+	      const targetInfo = eventStore.getOrAdd(target);
 	      if (Type.isStringFilled(eventName)) {
-	        var fullEventName = this.resolveEventName(eventName, target);
+	        const fullEventName = this.resolveEventName(eventName, target);
 	        targetInfo.eventsMaxListeners.set(fullEventName, count);
 	      } else {
 	        targetInfo.maxListeners = count;
@@ -7879,13 +7788,13 @@ window._main_polyfill_core = true;
 	        target = this.GLOBAL_TARGET;
 	      }
 	      if (!Type.isObject(target)) {
-	        throw new TypeError("The \"target\" argument must be an object.");
+	        throw new TypeError(`The "target" argument must be an object.`);
 	      }
-	      var targetInfo = eventStore.get(target);
+	      const targetInfo = eventStore.get(target);
 	      if (targetInfo) {
-	        var maxListeners = targetInfo.maxListeners;
+	        let maxListeners = targetInfo.maxListeners;
 	        if (Type.isStringFilled(eventName)) {
-	          var fullEventName = this.resolveEventName(eventName, target);
+	          const fullEventName = this.resolveEventName(eventName, target);
 	          maxListeners = targetInfo.eventsMaxListeners.get(fullEventName) || maxListeners;
 	        }
 	        return maxListeners;
@@ -7894,13 +7803,9 @@ window._main_polyfill_core = true;
 	    }
 	  }, {
 	    key: "addMaxListeners",
-	    value: function addMaxListeners() {
-	      var _this$destructMaxList = this.destructMaxListenersArgs.apply(this, arguments),
-	        _this$destructMaxList2 = babelHelpers.slicedToArray(_this$destructMaxList, 3),
-	        target = _this$destructMaxList2[0],
-	        eventName = _this$destructMaxList2[1],
-	        increment = _this$destructMaxList2[2];
-	      var maxListeners = Math.max(this.getMaxListeners(target, eventName) + increment, 0);
+	    value: function addMaxListeners(...args) {
+	      const [target, eventName, increment] = this.destructMaxListenersArgs(...args);
+	      const maxListeners = Math.max(this.getMaxListeners(target, eventName) + increment, 0);
 	      if (Type.isStringFilled(eventName)) {
 	        EventEmitter.setMaxListeners(target, eventName, maxListeners);
 	      } else {
@@ -7923,33 +7828,22 @@ window._main_polyfill_core = true;
 	     */
 	  }, {
 	    key: "incrementMaxListeners",
-	    value: function incrementMaxListeners() {
-	      var _this$destructMaxList3 = this.destructMaxListenersArgs.apply(this, arguments),
-	        _this$destructMaxList4 = babelHelpers.slicedToArray(_this$destructMaxList3, 3),
-	        target = _this$destructMaxList4[0],
-	        eventName = _this$destructMaxList4[1],
-	        increment = _this$destructMaxList4[2];
+	    value: function incrementMaxListeners(...args) {
+	      const [target, eventName, increment] = this.destructMaxListenersArgs(...args);
 	      return this.addMaxListeners(target, eventName, Math.abs(increment));
 	    }
 	  }, {
 	    key: "decrementMaxListeners",
-	    value: function decrementMaxListeners() {
-	      var _this$destructMaxList5 = this.destructMaxListenersArgs.apply(this, arguments),
-	        _this$destructMaxList6 = babelHelpers.slicedToArray(_this$destructMaxList5, 3),
-	        target = _this$destructMaxList6[0],
-	        eventName = _this$destructMaxList6[1],
-	        increment = _this$destructMaxList6[2];
+	    value: function decrementMaxListeners(...args) {
+	      const [target, eventName, increment] = this.destructMaxListenersArgs(...args);
 	      return this.addMaxListeners(target, eventName, -Math.abs(increment));
 	    }
 	  }, {
 	    key: "destructMaxListenersArgs",
-	    value: function destructMaxListenersArgs() {
-	      var eventName = null;
-	      var increment = 1;
-	      var target = this.GLOBAL_TARGET;
-	      for (var _len6 = arguments.length, args = new Array(_len6), _key6 = 0; _key6 < _len6; _key6++) {
-	        args[_key6] = arguments[_key6];
-	      }
+	    value: function destructMaxListenersArgs(...args) {
+	      let eventName = null;
+	      let increment = 1;
+	      let target = this.GLOBAL_TARGET;
 	      if (args.length === 1) {
 	        if (Type.isNumber(args[0])) {
 	          increment = args[0];
@@ -7960,28 +7854,23 @@ window._main_polyfill_core = true;
 	        }
 	      } else if (args.length === 2) {
 	        if (Type.isString(args[0])) {
-	          eventName = args[0];
-	          increment = args[1];
+	          [eventName, increment] = args;
 	        } else if (Type.isString(args[1])) {
-	          target = args[0];
-	          eventName = args[1];
+	          [target, eventName] = args;
 	        } else {
-	          target = args[0];
-	          increment = args[1];
+	          [target, increment] = args;
 	        }
 	      } else if (args.length >= 3) {
-	        target = args[0];
-	        eventName = args[1];
-	        increment = args[2];
+	        [target, eventName, increment] = args;
 	      }
 	      if (!Type.isObject(target)) {
-	        throw new TypeError("The \"target\" argument must be an object.");
+	        throw new TypeError(`The "target" argument must be an object.`);
 	      }
 	      if (eventName !== null && !Type.isStringFilled(eventName)) {
-	        throw new TypeError("The \"eventName\" argument must be a string.");
+	        throw new TypeError(`The "eventName" argument must be a string.`);
 	      }
 	      if (!Type.isNumber(increment)) {
-	        throw new TypeError("The value of \"increment\" must be a number.");
+	        throw new TypeError(`The value of "increment" must be a number.`);
 	      }
 	      return [target, eventName, increment];
 	    }
@@ -7998,24 +7887,24 @@ window._main_polyfill_core = true;
 	        target = this.GLOBAL_TARGET;
 	      }
 	      if (!Type.isObject(target)) {
-	        throw new TypeError("The \"target\" argument must be an object.");
+	        throw new TypeError(`The "target" argument must be an object.`);
 	      }
 	      eventName = this.normalizeEventName(eventName);
 	      if (!Type.isStringFilled(eventName)) {
-	        throw new TypeError("The \"eventName\" argument must be a string.");
+	        throw new TypeError(`The "eventName" argument must be a string.`);
 	      }
-	      var targetInfo = eventStore.get(target);
+	      const targetInfo = eventStore.get(target);
 	      if (!targetInfo) {
 	        return new Map();
 	      }
-	      var fullEventName = this.resolveEventName(eventName, target);
+	      const fullEventName = this.resolveEventName(eventName, target);
 	      return targetInfo.eventsMap.get(fullEventName) || new Map();
 	    }
 	  }, {
 	    key: "registerAliases",
 	    value: function registerAliases(aliases) {
 	      aliases = this.normalizeAliases(aliases);
-	      Object.keys(aliases).forEach(function (alias) {
+	      Object.keys(aliases).forEach(alias => {
 	        aliasStore.set(alias, {
 	          eventName: aliases[alias].eventName,
 	          namespace: aliases[alias].namespace
@@ -8031,19 +7920,19 @@ window._main_polyfill_core = true;
 	    key: "normalizeAliases",
 	    value: function normalizeAliases(aliases) {
 	      if (!Type.isPlainObject(aliases)) {
-	        throw new TypeError("The \"aliases\" argument must be an object.");
+	        throw new TypeError(`The "aliases" argument must be an object.`);
 	      }
-	      var result = Object.create(null);
-	      for (var _alias in aliases) {
-	        if (!Type.isStringFilled(_alias)) {
-	          throw new TypeError("The alias must be an non-empty string.");
+	      const result = Object.create(null);
+	      for (let alias in aliases) {
+	        if (!Type.isStringFilled(alias)) {
+	          throw new TypeError(`The alias must be an non-empty string.`);
 	        }
-	        var options = aliases[_alias];
+	        const options = aliases[alias];
 	        if (!options || !Type.isStringFilled(options.eventName) || !Type.isStringFilled(options.namespace)) {
-	          throw new TypeError("The alias options must set the \"eventName\" and the \"namespace\".");
+	          throw new TypeError(`The alias options must set the "eventName" and the "namespace".`);
 	        }
-	        _alias = this.normalizeEventName(_alias);
-	        result[_alias] = {
+	        alias = this.normalizeEventName(alias);
+	        result[alias] = {
 	          eventName: options.eventName,
 	          namespace: options.namespace
 	        };
@@ -8056,32 +7945,31 @@ window._main_polyfill_core = true;
 	  }, {
 	    key: "mergeEventAliases",
 	    value: function mergeEventAliases(aliases) {
-	      var _this3 = this;
-	      var globalEvents = eventStore.get(this.GLOBAL_TARGET);
+	      const globalEvents = eventStore.get(this.GLOBAL_TARGET);
 	      if (!globalEvents) {
 	        return;
 	      }
-	      Object.keys(aliases).forEach(function (alias) {
-	        var options = aliases[alias];
-	        alias = _this3.normalizeEventName(alias);
-	        var fullEventName = _this3.makeFullEventName(options.namespace, options.eventName);
-	        var aliasListeners = globalEvents.eventsMap.get(alias);
+	      Object.keys(aliases).forEach(alias => {
+	        const options = aliases[alias];
+	        alias = this.normalizeEventName(alias);
+	        const fullEventName = this.makeFullEventName(options.namespace, options.eventName);
+	        const aliasListeners = globalEvents.eventsMap.get(alias);
 	        if (aliasListeners) {
-	          var listeners = globalEvents.eventsMap.get(fullEventName) || new Map();
-	          globalEvents.eventsMap.set(fullEventName, new Map([].concat(babelHelpers.toConsumableArray(listeners), babelHelpers.toConsumableArray(aliasListeners))));
-	          globalEvents.eventsMap["delete"](alias);
+	          const listeners = globalEvents.eventsMap.get(fullEventName) || new Map();
+	          globalEvents.eventsMap.set(fullEventName, new Map([...listeners, ...aliasListeners]));
+	          globalEvents.eventsMap.delete(alias);
 	        }
-	        var aliasOnceListeners = globalEvents.onceMap.get(alias);
+	        const aliasOnceListeners = globalEvents.onceMap.get(alias);
 	        if (aliasOnceListeners) {
-	          var onceListeners = globalEvents.onceMap.get(fullEventName) || new Map();
-	          globalEvents.onceMap.set(fullEventName, new Map([].concat(babelHelpers.toConsumableArray(onceListeners), babelHelpers.toConsumableArray(aliasOnceListeners))));
-	          globalEvents.onceMap["delete"](alias);
+	          const onceListeners = globalEvents.onceMap.get(fullEventName) || new Map();
+	          globalEvents.onceMap.set(fullEventName, new Map([...onceListeners, ...aliasOnceListeners]));
+	          globalEvents.onceMap.delete(alias);
 	        }
-	        var aliasMaxListeners = globalEvents.eventsMaxListeners.get(alias);
+	        const aliasMaxListeners = globalEvents.eventsMaxListeners.get(alias);
 	        if (aliasMaxListeners) {
-	          var eventMaxListeners = globalEvents.eventsMaxListeners.get(fullEventName) || 0;
+	          const eventMaxListeners = globalEvents.eventsMaxListeners.get(fullEventName) || 0;
 	          globalEvents.eventsMaxListeners.set(fullEventName, Math.max(eventMaxListeners, aliasMaxListeners));
-	          globalEvents.eventsMaxListeners["delete"](alias);
+	          globalEvents.eventsMaxListeners.delete(alias);
 	        }
 	      });
 	    }
@@ -8118,7 +8006,7 @@ window._main_polyfill_core = true;
 	        listener = Reflection.getClass(listener);
 	      }
 	      if (!Type.isFunction(listener)) {
-	        throw new TypeError("The \"listener\" argument must be of type Function. Received type ".concat(babelHelpers["typeof"](listener), "."));
+	        throw new TypeError(`The "listener" argument must be of type Function. Received type ${typeof listener}.`);
 	      }
 	      return listener;
 	    }
@@ -8131,21 +8019,21 @@ window._main_polyfill_core = true;
 	     */
 	  }, {
 	    key: "resolveEventName",
-	    value: function resolveEventName(eventName, target) {
-	      var useGlobalNaming = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
+	    value: function resolveEventName(eventName, target, useGlobalNaming = false) {
 	      eventName = this.normalizeEventName(eventName);
 	      if (!Type.isStringFilled(eventName)) {
 	        return '';
 	      }
 	      if (this.isEventEmitter(target) && useGlobalNaming !== true) {
 	        if (target.getEventNamespace() !== null && eventName.includes('.')) {
-	          console.warn("Possible the wrong event name \"".concat(eventName, "\"."));
+	          console.warn(`Possible the wrong event name "${eventName}".`);
 	        }
 	        eventName = target.getFullEventName(eventName);
 	      } else if (aliasStore.has(eventName)) {
-	        var _aliasStore$get = aliasStore.get(eventName),
-	          namespace = _aliasStore$get.namespace,
-	          actualEventName = _aliasStore$get.eventName;
+	        const {
+	          namespace,
+	          eventName: actualEventName
+	        } = aliasStore.get(eventName);
 	        eventName = this.makeFullEventName(namespace, actualEventName);
 	      }
 	      return eventName;
@@ -8159,7 +8047,7 @@ window._main_polyfill_core = true;
 	  }, {
 	    key: "makeFullEventName",
 	    value: function makeFullEventName(namespace, eventName) {
-	      var fullName = Type.isStringFilled(namespace) ? "".concat(namespace, ":").concat(eventName) : eventName;
+	      const fullName = Type.isStringFilled(namespace) ? `${namespace}:${eventName}` : eventName;
 	      return Type.isStringFilled(fullName) ? fullName.toLowerCase() : '';
 	    }
 	  }]);
@@ -8169,7 +8057,7 @@ window._main_polyfill_core = true;
 	babelHelpers.defineProperty(EventEmitter, "DEFAULT_MAX_LISTENERS", eventStore.getDefaultMaxListeners());
 	babelHelpers.defineProperty(EventEmitter, "sequenceValue", 1);
 
-	var stack = [];
+	let stack = [];
 	/**
 	 * For compatibility only
 	 * @type {boolean}
@@ -8186,9 +8074,9 @@ window._main_polyfill_core = true;
 	    stack.push(handler);
 	  }
 	}
-	bindOnce(document, 'DOMContentLoaded', function () {
+	bindOnce(document, 'DOMContentLoaded', () => {
 	  exports.isReady = true;
-	  stack.forEach(function (handler) {
+	  stack.forEach(handler => {
 	    handler();
 	  });
 	  stack = [];
@@ -8197,7 +8085,7 @@ window._main_polyfill_core = true;
 	/**
 	 * @memberOf BX
 	 */
-	var Event = function Event() {
+	let Event = function Event() {
 	  babelHelpers.classCallCheck(this, Event);
 	};
 	babelHelpers.defineProperty(Event, "bind", bind);
@@ -8217,8 +8105,8 @@ window._main_polyfill_core = true;
 
 	function decodeAttributeValue(value) {
 	  if (Type.isString(value)) {
-	    var decodedValue = Text.decode(value);
-	    var result;
+	    const decodedValue = Text.decode(value);
+	    let result;
 	    try {
 	      result = JSON.parse(decodedValue);
 	    } catch (e) {
@@ -8238,14 +8126,15 @@ window._main_polyfill_core = true;
 	}
 
 	function getPageScroll() {
-	  var _document = document,
-	    documentElement = _document.documentElement,
-	    body = _document.body;
-	  var scrollTop = Math.max(window.pageYOffset || 0, documentElement ? documentElement.scrollTop : 0, body ? body.scrollTop : 0);
-	  var scrollLeft = Math.max(window.pageXOffset || 0, documentElement ? documentElement.scrollLeft : 0, body ? body.scrollLeft : 0);
+	  const {
+	    documentElement,
+	    body
+	  } = document;
+	  const scrollTop = Math.max(window.pageYOffset || 0, documentElement ? documentElement.scrollTop : 0, body ? body.scrollTop : 0);
+	  const scrollLeft = Math.max(window.pageXOffset || 0, documentElement ? documentElement.scrollLeft : 0, body ? body.scrollLeft : 0);
 	  return {
-	    scrollTop: scrollTop,
-	    scrollLeft: scrollLeft
+	    scrollTop,
+	    scrollLeft
 	  };
 	}
 
@@ -8254,7 +8143,7 @@ window._main_polyfill_core = true;
 	/**
 	 * @memberOf BX
 	 */
-	var Dom = /*#__PURE__*/function () {
+	let Dom = /*#__PURE__*/function () {
 	  function Dom() {
 	    babelHelpers.classCallCheck(this, Dom);
 	  }
@@ -8324,7 +8213,7 @@ window._main_polyfill_core = true;
 	    value: function insertAfter(current, target) {
 	      if (Type.isDomNode(current) && Type.isDomNode(target)) {
 	        if (Type.isDomNode(target.parentNode)) {
-	          var parent = target.parentNode;
+	          const parent = target.parentNode;
 	          if (Type.isDomNode(target.nextSibling)) {
 	            parent.insertBefore(current, target.nextSibling);
 	            return;
@@ -8372,27 +8261,21 @@ window._main_polyfill_core = true;
 	    value: function hasClass(element, className) {
 	      if (Type.isElementNode(element)) {
 	        if (Type.isString(className)) {
-	          var preparedClassName = className.trim();
+	          const preparedClassName = className.trim();
 	          if (preparedClassName.length > 0) {
 	            if (preparedClassName.includes(' ')) {
-	              return preparedClassName.split(' ').every(function (name) {
-	                return Dom.hasClass(element, name);
-	              });
+	              return preparedClassName.split(' ').every(name => Dom.hasClass(element, name));
 	            }
 	            if ('classList' in element) {
 	              return element.classList.contains(preparedClassName);
 	            }
 	            if (Type.isObject(element.className) && Type.isString(element.className.baseVal)) {
-	              return element.getAttribute('class').split(' ').some(function (name) {
-	                return name === preparedClassName;
-	              });
+	              return element.getAttribute('class').split(' ').some(name => name === preparedClassName);
 	            }
 	          }
 	        }
 	        if (Type.isArray(className) && className.length > 0) {
-	          return className.every(function (name) {
-	            return Dom.hasClass(element, name);
-	          });
+	          return className.every(name => Dom.hasClass(element, name));
 	        }
 	      }
 	      return false;
@@ -8407,7 +8290,7 @@ window._main_polyfill_core = true;
 	    value: function addClass(element, className) {
 	      if (Type.isElementNode(element)) {
 	        if (Type.isString(className)) {
-	          var preparedClassName = className.trim();
+	          const preparedClassName = className.trim();
 	          if (preparedClassName.length > 0) {
 	            if (preparedClassName.includes(' ')) {
 	              Dom.addClass(element, preparedClassName.split(' '));
@@ -8422,7 +8305,7 @@ window._main_polyfill_core = true;
 	                element.className.baseVal = preparedClassName;
 	                return;
 	              }
-	              var names = element.className.baseVal.split(' ');
+	              const names = element.className.baseVal.split(' ');
 	              if (!names.includes(preparedClassName)) {
 	                names.push(preparedClassName);
 	                element.className.baseVal = names.join(' ').trim();
@@ -8433,9 +8316,7 @@ window._main_polyfill_core = true;
 	          }
 	        }
 	        if (Type.isArray(className)) {
-	          className.forEach(function (name) {
-	            return Dom.addClass(element, name);
-	          });
+	          className.forEach(name => Dom.addClass(element, name));
 	        }
 	      }
 	    }
@@ -8449,7 +8330,7 @@ window._main_polyfill_core = true;
 	    value: function removeClass(element, className) {
 	      if (Type.isElementNode(element)) {
 	        if (Type.isString(className)) {
-	          var preparedClassName = className.trim();
+	          const preparedClassName = className.trim();
 	          if (preparedClassName.length > 0) {
 	            if (preparedClassName.includes(' ')) {
 	              Dom.removeClass(element, preparedClassName.split(' '));
@@ -8460,18 +8341,14 @@ window._main_polyfill_core = true;
 	              return;
 	            }
 	            if (Type.isObject(element.className) && Type.isString(element.className.baseVal)) {
-	              var names = element.className.baseVal.split(' ').filter(function (name) {
-	                return name !== preparedClassName;
-	              });
+	              const names = element.className.baseVal.split(' ').filter(name => name !== preparedClassName);
 	              element.className.baseVal = names.join(' ');
 	              return;
 	            }
 	          }
 	        }
 	        if (Type.isArray(className)) {
-	          className.forEach(function (name) {
-	            return Dom.removeClass(element, name);
-	          });
+	          className.forEach(name => Dom.removeClass(element, name));
 	        }
 	      }
 	    }
@@ -8484,10 +8361,10 @@ window._main_polyfill_core = true;
 	      if (!Type.isElementNode(element) || !Type.isStringFilled(className) && !Type.isArrayFilled(className)) {
 	        return;
 	      }
-	      [className].flat().flatMap(function (it) {
+	      [className].flat().flatMap(it => {
 	        var _it$trim;
 	        return it === null || it === void 0 ? void 0 : (_it$trim = it.trim) === null || _it$trim === void 0 ? void 0 : _it$trim.call(it).split(' ');
-	      }).forEach(function (token) {
+	      }).forEach(token => {
 	        if (Type.isStringFilled(token)) {
 	          element.classList.toggle(token, Type.isBoolean(force) ? force : undefined);
 	        }
@@ -8505,17 +8382,15 @@ window._main_polyfill_core = true;
 	          return element;
 	        }
 	        if (Type.isPlainObject(prop)) {
-	          Object.entries(prop).forEach(function (item) {
-	            var _item = babelHelpers.slicedToArray(item, 2),
-	              currentKey = _item[0],
-	              currentValue = _item[1];
+	          Object.entries(prop).forEach(item => {
+	            const [currentKey, currentValue] = item;
 	            Dom.style(element, currentKey, currentValue);
 	          });
 	          return element;
 	        }
 	        if (Type.isString(prop)) {
 	          if (Type.isUndefined(value) && element.nodeType !== Node.DOCUMENT_NODE) {
-	            var computedStyle = getComputedStyle(element);
+	            const computedStyle = getComputedStyle(element);
 	            if (prop in computedStyle) {
 	              return computedStyle[prop];
 	            }
@@ -8555,18 +8430,17 @@ window._main_polyfill_core = true;
 	     */
 	  }, {
 	    key: "adjust",
-	    value: function adjust(target) {
-	      var data = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+	    value: function adjust(target, data = {}) {
 	      if (!target.nodeType) {
 	        return null;
 	      }
-	      var element = target;
+	      let element = target;
 	      if (target.nodeType === Node.DOCUMENT_NODE) {
 	        element = target.body;
 	      }
 	      if (Type.isPlainObject(data)) {
 	        if (Type.isPlainObject(data.attrs)) {
-	          Object.keys(data.attrs).forEach(function (key) {
+	          Object.keys(data.attrs).forEach(key => {
 	            if (key === 'class' || key.toLowerCase() === 'classname') {
 	              element.className = data.attrs[key];
 	              return;
@@ -8584,17 +8458,17 @@ window._main_polyfill_core = true;
 	          Dom.style(element, data.style);
 	        }
 	        if (Type.isPlainObject(data.props)) {
-	          Object.keys(data.props).forEach(function (key) {
+	          Object.keys(data.props).forEach(key => {
 	            element[key] = data.props[key];
 	          });
 	        }
 	        if (Type.isPlainObject(data.events)) {
-	          Object.keys(data.events).forEach(function (key) {
+	          Object.keys(data.events).forEach(key => {
 	            Event.bind(element, key, data.events[key]);
 	          });
 	        }
 	        if (Type.isPlainObject(data.dataset)) {
-	          Object.keys(data.dataset).forEach(function (key) {
+	          Object.keys(data.dataset).forEach(key => {
 	            element.dataset[key] = data.dataset[key];
 	          });
 	        }
@@ -8602,7 +8476,7 @@ window._main_polyfill_core = true;
 	          data.children = [data.children];
 	        }
 	        if (Type.isArray(data.children) && data.children.length > 0) {
-	          data.children.forEach(function (item) {
+	          data.children.forEach(item => {
 	            if (Type.isDomNode(item)) {
 	              Dom.append(item, element);
 	            }
@@ -8631,11 +8505,9 @@ window._main_polyfill_core = true;
 	     */
 	  }, {
 	    key: "create",
-	    value: function create(tag) {
-	      var data = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-	      var context = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : document;
-	      var tagName = tag;
-	      var options = data;
+	    value: function create(tag, data = {}, context = document) {
+	      let tagName = tag;
+	      let options = data;
 	      if (Type.isObjectLike(tag)) {
 	        options = tag;
 	        tagName = tag.tag;
@@ -8700,10 +8572,11 @@ window._main_polyfill_core = true;
 	    key: "getPosition",
 	    value: function getPosition(element) {
 	      if (Type.isDomNode(element)) {
-	        var elementRect = element.getBoundingClientRect();
-	        var _getPageScroll = getPageScroll(),
-	          scrollLeft = _getPageScroll.scrollLeft,
-	          scrollTop = _getPageScroll.scrollTop;
+	        const elementRect = element.getBoundingClientRect();
+	        const {
+	          scrollLeft,
+	          scrollTop
+	        } = getPageScroll();
 	        return new DOMRect(elementRect.left + scrollLeft, elementRect.top + scrollTop, elementRect.width, elementRect.height);
 	      }
 	      return new DOMRect();
@@ -8718,8 +8591,8 @@ window._main_polyfill_core = true;
 	    key: "getRelativePosition",
 	    value: function getRelativePosition(element, relationElement) {
 	      if (Type.isDomNode(element) && Type.isDomNode(relationElement)) {
-	        var elementPosition = Dom.getPosition(element);
-	        var relationElementPosition = Dom.getPosition(relationElement);
+	        const elementPosition = Dom.getPosition(element);
+	        const relationElementPosition = Dom.getPosition(relationElement);
 	        return new DOMRect(elementPosition.left - relationElementPosition.left, elementPosition.top - relationElementPosition.top, elementPosition.width, elementPosition.height);
 	      }
 	      return new DOMRect();
@@ -8730,18 +8603,19 @@ window._main_polyfill_core = true;
 	      if (Type.isElementNode(element)) {
 	        if (Type.isString(_attr)) {
 	          if (!Type.isNil(value)) {
-	            return element.setAttribute(_attr, encodeAttributeValue(value));
+	            if (Type.isObjectLike(value)) {
+	              element.setAttribute(_attr, encodeAttributeValue(value));
+	            } else {
+	              element.setAttribute(_attr, value);
+	            }
+	          } else if (Type.isNull(value)) {
+	            element.removeAttribute(_attr);
+	          } else {
+	            return decodeAttributeValue(element.getAttribute(_attr));
 	          }
-	          if (Type.isNull(value)) {
-	            return element.removeAttribute(_attr);
-	          }
-	          return decodeAttributeValue(element.getAttribute(_attr));
 	        }
 	        if (Type.isPlainObject(_attr)) {
-	          return Object.entries(_attr).forEach(function (_ref) {
-	            var _ref2 = babelHelpers.slicedToArray(_ref, 2),
-	              attrKey = _ref2[0],
-	              attrValue = _ref2[1];
+	          Object.entries(_attr).forEach(([attrKey, attrValue]) => {
 	            Dom.attr(element, attrKey, attrValue);
 	          });
 	        }
@@ -8752,12 +8626,12 @@ window._main_polyfill_core = true;
 	  return Dom;
 	}();
 
-	var UA = navigator.userAgent.toLowerCase();
+	const UA = navigator.userAgent.toLowerCase();
 
 	/**
 	 * @memberOf BX
 	 */
-	var Browser = /*#__PURE__*/function () {
+	let Browser = /*#__PURE__*/function () {
 	  function Browser() {
 	    babelHelpers.classCallCheck(this, Browser);
 	  }
@@ -8817,7 +8691,7 @@ window._main_polyfill_core = true;
 	      if (Browser.isOpera() || Browser.isSafari() || Browser.isFirefox() || Browser.isChrome()) {
 	        return -1;
 	      }
-	      var rv = -1;
+	      let rv = -1;
 	      if (!!window.MSStream && !window.ActiveXObject && 'ActiveXObject' in window) {
 	        rv = 11;
 	      } else if (Browser.isIE10()) {
@@ -8829,8 +8703,8 @@ window._main_polyfill_core = true;
 	      }
 	      if (rv === -1 || rv === 8) {
 	        if (navigator.appName === 'Microsoft Internet Explorer') {
-	          var re = new RegExp('MSIE ([0-9]+[.0-9]*)');
-	          var res = navigator.userAgent.match(re);
+	          const re = new RegExp('MSIE ([0-9]+[.0-9]*)');
+	          const res = navigator.userAgent.match(re);
 	          if (Type.isArrayLike(res) && res.length > 0) {
 	            rv = parseFloat(res[1]);
 	          }
@@ -8838,11 +8712,11 @@ window._main_polyfill_core = true;
 	        if (navigator.appName === 'Netscape') {
 	          // Alternative check for IE 11
 	          rv = 11;
-	          var _re = new RegExp('Trident/.*rv:([0-9]+[.0-9]*)');
-	          if (_re.exec(navigator.userAgent) != null) {
-	            var _res = navigator.userAgent.match(_re);
-	            if (Type.isArrayLike(_res) && _res.length > 0) {
-	              rv = parseFloat(_res[1]);
+	          const re = new RegExp('Trident/.*rv:([0-9]+[.0-9]*)');
+	          if (re.exec(navigator.userAgent) != null) {
+	            const res = navigator.userAgent.match(re);
+	            if (Type.isArrayLike(res) && res.length > 0) {
+	              rv = parseFloat(res[1]);
 	            }
 	          }
 	        }
@@ -8907,7 +8781,7 @@ window._main_polyfill_core = true;
 	  }, {
 	    key: "isDoctype",
 	    value: function isDoctype(target) {
-	      var doc = target || document;
+	      const doc = target || document;
 	      if (doc.compatMode) {
 	        return doc.compatMode === 'CSS1Compat';
 	      }
@@ -8927,7 +8801,7 @@ window._main_polyfill_core = true;
 	  }, {
 	    key: "addGlobalClass",
 	    value: function addGlobalClass(target) {
-	      var globalClass = 'bx-core';
+	      let globalClass = 'bx-core';
 	      target = Type.isElementNode(target) ? target : document.documentElement;
 	      if (Dom.hasClass(target, globalClass)) {
 	        return;
@@ -8957,9 +8831,9 @@ window._main_polyfill_core = true;
 	  }, {
 	    key: "detectAndroidVersion",
 	    value: function detectAndroidVersion() {
-	      var re = new RegExp('Android ([0-9]+[.0-9]*)');
+	      const re = new RegExp('Android ([0-9]+[.0-9]*)');
 	      if (re.exec(navigator.userAgent) != null) {
-	        var res = navigator.userAgent.match(re);
+	        const res = navigator.userAgent.match(re);
 	        if (Type.isArrayLike(res) && res.length > 0) {
 	          return parseFloat(res[1]);
 	        }
@@ -8973,36 +8847,26 @@ window._main_polyfill_core = true;
 	        return false;
 	      }
 	      function getCssName(propertyName) {
-	        return propertyName.replace(/([A-Z])/g, function () {
-	          for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
-	            args[_key] = arguments[_key];
-	          }
-	          return "-".concat(args[1].toLowerCase());
-	        });
+	        return propertyName.replace(/([A-Z])/g, (...args) => `-${args[1].toLowerCase()}`);
 	      }
 	      function getJsName(cssName) {
-	        var reg = /(\\-([a-z]))/g;
+	        const reg = /(\\-([a-z]))/g;
 	        if (reg.test(cssName)) {
-	          return cssName.replace(reg, function () {
-	            for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
-	              args[_key2] = arguments[_key2];
-	            }
-	            return args[2].toUpperCase();
-	          });
+	          return cssName.replace(reg, (...args) => args[2].toUpperCase());
 	        }
 	        return cssName;
 	      }
-	      var property = jsProperty.includes('-') ? getJsName(jsProperty) : jsProperty;
-	      var bReturnCSSName = !!returnCSSName;
-	      var ucProperty = property.charAt(0).toUpperCase() + property.slice(1);
-	      var props = ['Webkit', 'Moz', 'O', 'ms'].join("".concat(ucProperty, " "));
-	      var properties = "".concat(property, " ").concat(props, " ").concat(ucProperty).split(' ');
-	      var obj = document.body || document.documentElement;
-	      for (var i = 0; i < properties.length; i += 1) {
-	        var prop = properties[i];
+	      const property = jsProperty.includes('-') ? getJsName(jsProperty) : jsProperty;
+	      const bReturnCSSName = !!returnCSSName;
+	      const ucProperty = property.charAt(0).toUpperCase() + property.slice(1);
+	      const props = ['Webkit', 'Moz', 'O', 'ms'].join(`${ucProperty} `);
+	      const properties = `${property} ${props} ${ucProperty}`.split(' ');
+	      const obj = document.body || document.documentElement;
+	      for (let i = 0; i < properties.length; i += 1) {
+	        const prop = properties[i];
 	        if (obj && 'style' in obj && prop in obj.style) {
-	          var lowerProp = prop.substr(0, prop.length - property.length).toLowerCase();
-	          var prefix = prop === property ? '' : "-".concat(lowerProp, "-");
+	          const lowerProp = prop.substr(0, prop.length - property.length).toLowerCase();
+	          const prefix = prop === property ? '' : `-${lowerProp}-`;
 	          return bReturnCSSName ? prefix + getCssName(property) : prop;
 	        }
 	      }
@@ -9014,10 +8878,10 @@ window._main_polyfill_core = true;
 	      if (!Type.isArray(features)) {
 	        return;
 	      }
-	      var classNames = [];
-	      for (var i = 0; i < features.length; i += 1) {
-	        var support = !!Browser.isPropertySupported(features[i]);
-	        classNames.push("bx-".concat(support ? '' : 'no-').concat(features[i].toLowerCase()));
+	      const classNames = [];
+	      for (let i = 0; i < features.length; i += 1) {
+	        const support = !!Browser.isPropertySupported(features[i]);
+	        classNames.push(`bx-${support ? '' : 'no-'}${features[i].toLowerCase()}`);
 	      }
 	      Dom.addClass(document.documentElement, classNames.join(' '));
 	    }
@@ -9025,9 +8889,7 @@ window._main_polyfill_core = true;
 	  return Browser;
 	}();
 
-	function ownKeys$2(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-	function _objectSpread$2(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$2(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$2(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
-	var Cookie = /*#__PURE__*/function () {
+	let Cookie = /*#__PURE__*/function () {
 	  function Cookie() {
 	    babelHelpers.classCallCheck(this, Cookie);
 	  }
@@ -9038,16 +8900,8 @@ window._main_polyfill_core = true;
 	     * @return {object}
 	     */
 	    value: function getList() {
-	      return document.cookie.split(';').map(function (item) {
-	        return item.split('=');
-	      }).map(function (item) {
-	        return item.map(function (subItem) {
-	          return subItem.trim();
-	        });
-	      }).reduce(function (acc, item) {
-	        var _item = babelHelpers.slicedToArray(item, 2),
-	          key = _item[0],
-	          value = _item[1];
+	      return document.cookie.split(';').map(item => item.split('=')).map(item => item.map(subItem => subItem.trim())).reduce((acc, item) => {
+	        const [key, value] = item;
 	        acc[decodeURIComponent(key)] = decodeURIComponent(value);
 	        return acc;
 	      }, {});
@@ -9060,7 +8914,7 @@ window._main_polyfill_core = true;
 	  }, {
 	    key: "get",
 	    value: function get(name) {
-	      var cookiesList = Cookie.getList();
+	      const cookiesList = Cookie.getList();
 	      if (name in cookiesList) {
 	        return cookiesList[name];
 	      }
@@ -9074,29 +8928,29 @@ window._main_polyfill_core = true;
 	     */
 	  }, {
 	    key: "set",
-	    value: function set(name, value) {
-	      var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
-	      var attributes = _objectSpread$2({
-	        expires: ''
-	      }, options);
+	    value: function set(name, value, options = {}) {
+	      const attributes = {
+	        expires: '',
+	        ...options
+	      };
 	      if (Type.isNumber(attributes.expires)) {
-	        var now = +new Date();
-	        var days = attributes.expires;
-	        var dayInMs = 864e+5;
+	        const now = +new Date();
+	        const days = attributes.expires;
+	        const dayInMs = 864e+5;
 	        attributes.expires = new Date(now + days * dayInMs);
 	      }
 	      if (Type.isDate(attributes.expires)) {
 	        attributes.expires = attributes.expires.toUTCString();
 	      }
-	      var safeName = decodeURIComponent(String(name)).replace(/%(23|24|26|2B|5E|60|7C)/g, decodeURIComponent).replace(/[()]/g, escape);
-	      var safeValue = encodeURIComponent(String(value)).replace(/%(23|24|26|2B|3A|3C|3E|3D|2F|3F|40|5B|5D|5E|60|7B|7D|7C)/g, decodeURIComponent);
-	      var stringifiedAttributes = Object.keys(attributes).reduce(function (acc, key) {
-	        var attributeValue = attributes[key];
+	      const safeName = decodeURIComponent(String(name)).replace(/%(23|24|26|2B|5E|60|7C)/g, decodeURIComponent).replace(/[()]/g, escape);
+	      const safeValue = encodeURIComponent(String(value)).replace(/%(23|24|26|2B|3A|3C|3E|3D|2F|3F|40|5B|5D|5E|60|7B|7D|7C)/g, decodeURIComponent);
+	      const stringifiedAttributes = Object.keys(attributes).reduce((acc, key) => {
+	        const attributeValue = attributes[key];
 	        if (!attributeValue) {
 	          return acc;
 	        }
 	        if (attributeValue === true) {
-	          return "".concat(acc, "; ").concat(key);
+	          return `${acc}; ${key}`;
 	        }
 
 	        /**
@@ -9107,9 +8961,9 @@ window._main_polyfill_core = true;
 	         * Consume the characters of the unparsed-attributes up to,
 	         * not including, the first %x3B (';') character.
 	         */
-	        return "".concat(acc, "; ").concat(key, "=").concat(attributeValue.split(';')[0]);
+	        return `${acc}; ${key}=${attributeValue.split(';')[0]}`;
 	      }, '');
-	      document.cookie = "".concat(safeName, "=").concat(safeValue).concat(stringifiedAttributes);
+	      document.cookie = `${safeName}=${safeValue}${stringifiedAttributes}`;
 	    }
 	    /**
 	     * Removes cookie
@@ -9118,19 +8972,17 @@ window._main_polyfill_core = true;
 	     */
 	  }, {
 	    key: "remove",
-	    value: function remove(name) {
-	      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-	      Cookie.set(name, '', _objectSpread$2(_objectSpread$2({}, options), {}, {
+	    value: function remove(name, options = {}) {
+	      Cookie.set(name, '', {
+	        ...options,
 	        expires: -1
-	      }));
+	      });
 	    }
 	  }]);
 	  return Cookie;
 	}();
 
-	function objectToFormData(source) {
-	  var formData = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : new FormData();
-	  var pre = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+	function objectToFormData(source, formData = new FormData(), pre = null) {
 	  if (Type.isUndefined(source)) {
 	    return formData;
 	  }
@@ -9138,26 +8990,26 @@ window._main_polyfill_core = true;
 	    formData.append(pre, '');
 	  } else if (Type.isArray(source)) {
 	    if (!source.length) {
-	      var _key = "".concat(pre, "[]");
-	      formData.append(_key, '');
+	      const key = `${pre}[]`;
+	      formData.append(key, '');
 	    } else {
-	      source.forEach(function (value, index) {
-	        var key = "".concat(pre, "[").concat(index, "]");
+	      source.forEach((value, index) => {
+	        const key = `${pre}[${index}]`;
 	        objectToFormData(value, formData, key);
 	      });
 	    }
 	  } else if (Type.isDate(source)) {
 	    formData.append(pre, source.toISOString());
 	  } else if (Type.isObject(source) && !Type.isFile(source) && !Type.isBlob(source)) {
-	    Object.keys(source).forEach(function (property) {
-	      var value = source[property];
-	      var preparedProperty = property;
+	    Object.keys(source).forEach(property => {
+	      const value = source[property];
+	      let preparedProperty = property;
 	      if (Type.isArray(value)) {
 	        while (preparedProperty.length > 2 && preparedProperty.lastIndexOf('[]') === preparedProperty.length - 2) {
 	          preparedProperty = preparedProperty.substring(0, preparedProperty.length - 2);
 	        }
 	      }
-	      var key = pre ? "".concat(pre, "[").concat(preparedProperty, "]") : preparedProperty;
+	      const key = pre ? `${pre}[${preparedProperty}]` : preparedProperty;
 	      objectToFormData(value, formData, key);
 	    });
 	  } else {
@@ -9166,7 +9018,7 @@ window._main_polyfill_core = true;
 	  return formData;
 	}
 
-	var Data = /*#__PURE__*/function () {
+	let Data = /*#__PURE__*/function () {
 	  function Data() {
 	    babelHelpers.classCallCheck(this, Data);
 	  }
@@ -9187,7 +9039,7 @@ window._main_polyfill_core = true;
 	/**
 	 * @memberOf BX
 	 */
-	var Http = function Http() {
+	let Http = function Http() {
 	  babelHelpers.classCallCheck(this, Http);
 	};
 	babelHelpers.defineProperty(Http, "Cookie", Cookie);
@@ -9201,21 +9053,23 @@ window._main_polyfill_core = true;
 	        compatData: [value]
 	      }));
 	      if (Type.isNil(message[value])) {
-	        Runtime.debug("message undefined: ".concat(value));
+	        Runtime.debug(`message undefined: ${value}`);
 	        message[value] = '';
 	      }
 	    }
 	  }
 	  if (Type.isPlainObject(value)) {
-	    Object.keys(value).forEach(function (key) {
+	    Object.keys(value).forEach(key => {
 	      message[key] = value[key];
 	    });
 	  }
 	  return message[value];
 	}
 	if (!Type.isNil(window.BX) && Type.isFunction(window.BX.message)) {
-	  Object.keys(window.BX.message).forEach(function (key) {
-	    message(babelHelpers.defineProperty({}, key, window.BX.message[key]));
+	  Object.keys(window.BX.message).forEach(key => {
+	    message({
+	      [key]: window.BX.message[key]
+	    });
 	  });
 	}
 
@@ -9223,7 +9077,7 @@ window._main_polyfill_core = true;
 	 * Implements interface for works with language messages
 	 * @memberOf BX
 	 */
-	var Loc = /*#__PURE__*/function () {
+	let Loc = /*#__PURE__*/function () {
 	  function Loc() {
 	    babelHelpers.classCallCheck(this, Loc);
 	  }
@@ -9235,16 +9089,13 @@ window._main_polyfill_core = true;
 	     * @param {object} replacements
 	     * @return {?string}
 	     */
-	    value: function getMessage(messageId) {
-	      var replacements = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
-	      var mess = message(messageId);
+	    value: function getMessage(messageId, replacements = null) {
+	      let mess = message(messageId);
 	      if (Type.isString(mess) && Type.isPlainObject(replacements)) {
-	        var _escape = function _escape(str) {
-	          return String(str).replace(/[\\^$*+?.()|[\]{}]/g, '\\$&');
-	        };
-	        Object.keys(replacements).forEach(function (replacement) {
-	          var globalRegexp = new RegExp(_escape(replacement), 'gi');
-	          mess = mess.replace(globalRegexp, function () {
+	        const escape = str => String(str).replace(/[\\^$*+?.()|[\]{}]/g, '\\$&');
+	        Object.keys(replacements).forEach(replacement => {
+	          const globalRegexp = new RegExp(escape(replacement), 'gi');
+	          mess = mess.replace(globalRegexp, () => {
 	            return Type.isNil(replacements[replacement]) ? '' : String(replacements[replacement]);
 	          });
 	        });
@@ -9265,7 +9116,9 @@ window._main_polyfill_core = true;
 	    key: "setMessage",
 	    value: function setMessage(id, value) {
 	      if (Type.isString(id) && Type.isString(value)) {
-	        message(babelHelpers.defineProperty({}, id, value));
+	        message({
+	          [id]: value
+	        });
 	      }
 	      if (Type.isObject(id)) {
 	        message(id);
@@ -9280,14 +9133,13 @@ window._main_polyfill_core = true;
 	     */
 	  }, {
 	    key: "getMessagePlural",
-	    value: function getMessagePlural(messageId, value) {
-	      var replacements = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
-	      var result = '';
+	    value: function getMessagePlural(messageId, value, replacements = null) {
+	      let result = '';
 	      if (Type.isNumber(value)) {
-	        if (this.hasMessage("".concat(messageId, "_PLURAL_").concat(this.getPluralForm(value)))) {
-	          result = this.getMessage("".concat(messageId, "_PLURAL_").concat(this.getPluralForm(value)), replacements);
+	        if (this.hasMessage(`${messageId}_PLURAL_${this.getPluralForm(value)}`)) {
+	          result = this.getMessage(`${messageId}_PLURAL_${this.getPluralForm(value)}`, replacements);
 	        } else {
-	          result = this.getMessage("".concat(messageId, "_PLURAL_1"), replacements);
+	          result = this.getMessage(`${messageId}_PLURAL_1`, replacements);
 	        }
 	      } else {
 	        result = this.getMessage(messageId, replacements);
@@ -9304,7 +9156,7 @@ window._main_polyfill_core = true;
 	  }, {
 	    key: "getPluralForm",
 	    value: function getPluralForm(value, languageId) {
-	      var pluralForm;
+	      let pluralForm;
 	      if (!Type.isStringFilled(languageId)) {
 	        languageId = message('LANGUAGE_ID');
 	      }
@@ -9394,21 +9246,21 @@ window._main_polyfill_core = true;
 	  return Loc;
 	}();
 
-	var voidElements = ['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr'];
+	const voidElements = ['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr'];
 	function isVoidElement(element) {
 	  return voidElements.includes(element);
 	}
 
-	var matchers = {
+	const matchers = {
 	  tag: /<[a-zA-Z0-9\-\!\/](?:"[^"]*"|'[^']*'|[^'">])*>|{{uid[0-9]+}}/g,
 	  comment: /<!--(?!<!)[^\[>].*?-->/g,
 	  tagName: /<\/?([^\s]+?)[/\s>]/,
-	  attributes: /\s([\w\-_:.]+)\s?\n?=\s?\n?"([^"]+)?"|\s([\w\-_:.]+)\s?\n?=\s?\n?'([^']+)?'|\s([\w\-_:.]+)/g,
+	  attributes: /\s([\w\-_:.]+)\s?\n?=\s?\n?"([^"]+)?"|\s([\w\-_:.]+)\s?\n?=\s?\n?'([^']+)?'|\s([\w\-_:.]+)/gs,
 	  placeholder: /{{uid[0-9]+}}/g
 	};
 
 	function parseTag(tag) {
-	  var tagResult = {
+	  const tagResult = {
 	    type: 'tag',
 	    name: '',
 	    svg: false,
@@ -9417,43 +9269,37 @@ window._main_polyfill_core = true;
 	    voidElement: false
 	  };
 	  if (tag.startsWith('<!--')) {
-	    var endIndex = tag.indexOf('-->');
-	    var openTagLength = '<!--'.length;
+	    const endIndex = tag.indexOf('-->');
+	    const openTagLength = '<!--'.length;
 	    return {
 	      type: 'comment',
 	      content: endIndex !== -1 ? tag.slice(openTagLength, endIndex) : ''
 	    };
 	  }
-	  var tagNameMatch = tag.match(matchers.tagName);
+	  const tagNameMatch = tag.match(matchers.tagName);
 	  if (Type.isArrayFilled(tagNameMatch)) {
-	    var _tagNameMatch = babelHelpers.slicedToArray(tagNameMatch, 2),
-	      tagName = _tagNameMatch[1];
+	    const [, tagName] = tagNameMatch;
 	    tagResult.name = tagName;
 	    tagResult.svg = tagName === 'svg';
 	    tagResult.voidElement = isVoidElement(tagName) || tag.trim().endsWith('/>');
 	  }
-	  var reg = new RegExp(matchers.attributes);
+	  const reg = new RegExp(matchers.attributes);
 	  for (;;) {
-	    var result = reg.exec(tag);
+	    const result = reg.exec(tag);
 	    if (!Type.isNil(result)) {
 	      // Attributes with double quotes
-	      var _result = babelHelpers.slicedToArray(result, 3),
-	        attrName = _result[1],
-	        attrValue = _result[2];
+	      const [, attrName, attrValue] = result;
 	      if (!Type.isNil(attrName)) {
 	        tagResult.attrs[attrName] = Type.isStringFilled(attrValue) ? attrValue : '';
 	      } else {
 	        // Attributes with single quotes
-	        var _result2 = babelHelpers.slicedToArray(result, 5),
-	          _attrName = _result2[3],
-	          _attrValue = _result2[4];
-	        if (!Type.isNil(_attrName)) {
-	          tagResult.attrs[_attrName] = Type.isStringFilled(_attrValue) ? _attrValue : '';
+	        const [,,, attrName, attrValue] = result;
+	        if (!Type.isNil(attrName)) {
+	          tagResult.attrs[attrName] = Type.isStringFilled(attrValue) ? attrValue : '';
 	        } else {
 	          // Attributes without value
-	          var _result3 = babelHelpers.slicedToArray(result, 6),
-	            _attrName2 = _result3[5];
-	          tagResult.attrs[_attrName2] = '';
+	          const [,,,,, attrName] = result;
+	          tagResult.attrs[attrName] = '';
 	        }
 	      }
 	    } else {
@@ -9464,12 +9310,12 @@ window._main_polyfill_core = true;
 	}
 
 	function parseText(input) {
-	  var preparedText = input.replace(/[\n\r\t]$/, '');
-	  var placeholders = preparedText.match(matchers.placeholder);
-	  return preparedText.split(matchers.placeholder).reduce(function (acc, item, index) {
+	  const preparedText = input.replace(/[\n\r\t]$/, '');
+	  const placeholders = preparedText.match(matchers.placeholder);
+	  return preparedText.split(matchers.placeholder).reduce((acc, item, index) => {
 	    if (Type.isStringFilled(item)) {
-	      acc.push.apply(acc, babelHelpers.toConsumableArray(item.split(/\n/).reduce(function (textAcc, text) {
-	        var preparedItemText = text.replace(/[\t\r]/g, '');
+	      acc.push(...item.split(/\n/).reduce((textAcc, text) => {
+	        const preparedItemText = text.replace(/[\t\r]/g, '');
 	        if (Type.isStringFilled(preparedItemText)) {
 	          textAcc.push({
 	            type: 'text',
@@ -9477,7 +9323,7 @@ window._main_polyfill_core = true;
 	          });
 	        }
 	        return textAcc;
-	      }, [])));
+	      }, []));
 	    }
 	    if (placeholders && placeholders[index]) {
 	      acc.push({
@@ -9490,27 +9336,27 @@ window._main_polyfill_core = true;
 	}
 
 	function parse(html, substitutions) {
-	  var result = [];
+	  const result = [];
 	  if (html.indexOf('<') !== 0 && !html.startsWith('{{')) {
-	    var end = html.indexOf('<');
-	    result.push.apply(result, babelHelpers.toConsumableArray(parseText(end === -1 ? html : html.slice(0, end))));
+	    const end = html.indexOf('<');
+	    result.push(...parseText(end === -1 ? html : html.slice(0, end)));
 	  }
-	  var commentsContent = [];
-	  var commentIndex = -1;
-	  html = html.replace(matchers.comment, function (tag) {
+	  const commentsContent = [];
+	  let commentIndex = -1;
+	  html = html.replace(matchers.comment, tag => {
 	    commentIndex += 1;
 	    commentsContent.push(tag.replace(/^<!--|-->$/g, ''));
-	    return "<!--{{cUid".concat(commentIndex, "}}-->");
+	    return `<!--{{cUid${commentIndex}}}-->`;
 	  });
-	  var arr = [];
-	  var level = -1;
-	  var current;
-	  html.replace(matchers.tag, function (tag, index) {
-	    var start = index + tag.length;
-	    var nextChar = html.charAt(start);
-	    var parent;
+	  const arr = [];
+	  let level = -1;
+	  let current;
+	  html.replace(matchers.tag, (tag, index) => {
+	    const start = index + tag.length;
+	    const nextChar = html.charAt(start);
+	    let parent;
 	    if (tag.startsWith('<!--')) {
-	      var comment = parseTag(tag, substitutions);
+	      const comment = parseTag(tag, substitutions);
 	      comment.content = commentsContent[tag.replace(/<!--{{cUid|}}-->/g, '')];
 	      if (level < 0) {
 	        result.push(comment);
@@ -9521,9 +9367,7 @@ window._main_polyfill_core = true;
 	      return result;
 	    }
 	    if (tag.startsWith('{{')) {
-	      var _parseText = parseText(tag),
-	        _parseText2 = babelHelpers.slicedToArray(_parseText, 1),
-	        placeholder = _parseText2[0];
+	      const [placeholder] = parseText(tag);
 	      if (level < 0) {
 	        result.push(placeholder);
 	        return result;
@@ -9536,8 +9380,7 @@ window._main_polyfill_core = true;
 	      level++;
 	      current = parseTag(tag, substitutions);
 	      if (!current.voidElement && nextChar && nextChar !== '<') {
-	        var _current$children;
-	        (_current$children = current.children).push.apply(_current$children, babelHelpers.toConsumableArray(parseText(html.slice(start, html.indexOf('<', start)))));
+	        current.children.push(...parseText(html.slice(start, html.indexOf('<', start))));
 	      }
 	      if (level === 0) {
 	        result.push(current);
@@ -9558,11 +9401,10 @@ window._main_polyfill_core = true;
 	      }
 	      if (nextChar && nextChar !== '<') {
 	        parent = level === -1 ? result : arr[level].children;
-	        var _end = html.indexOf('<', start);
-	        var content = html.slice(start, _end === -1 ? undefined : _end);
-	        if (_end > -1 && level + parent.length >= 0 || content !== ' ') {
-	          var _parent;
-	          (_parent = parent).push.apply(_parent, babelHelpers.toConsumableArray(parseText(content)));
+	        const end = html.indexOf('<', start);
+	        const content = html.slice(start, end === -1 ? undefined : end);
+	        if (end > -1 && level + parent.length >= 0 || content !== ' ') {
+	          parent.push(...parseText(content));
 	        }
 	      }
 	    }
@@ -9570,7 +9412,7 @@ window._main_polyfill_core = true;
 	  return result;
 	}
 
-	var appendElement = function appendElement(current, target) {
+	const appendElement = (current, target) => {
 	  if (Type.isDomNode(current) && Type.isDomNode(target)) {
 	    if (target.nodeName !== 'TEMPLATE') {
 	      Dom.append(current, target);
@@ -9581,42 +9423,40 @@ window._main_polyfill_core = true;
 	  }
 	};
 	function renderNode(options) {
-	  var node = options.node,
-	    parentElement = options.parentElement,
-	    substitutions = options.substitutions,
-	    _options$refs = options.refs,
-	    refs = _options$refs === void 0 ? [] : _options$refs;
+	  const {
+	    node,
+	    parentElement,
+	    substitutions,
+	    refs = []
+	  } = options;
 	  if (node.type === 'tag') {
-	    var element = function () {
+	    const element = (() => {
 	      if (node.svg) {
 	        return document.createElementNS('http://www.w3.org/2000/svg', node.name);
 	      }
 	      return document.createElement(node.name);
-	    }();
+	    })();
 	    if (Object.hasOwn(node.attrs, 'ref')) {
 	      refs.push([node.attrs.ref, element]);
 	      delete node.attrs.ref;
 	    }
-	    Object.entries(node.attrs).forEach(function (_ref) {
-	      var _ref2 = babelHelpers.slicedToArray(_ref, 2),
-	        key = _ref2[0],
-	        value = _ref2[1];
+	    Object.entries(node.attrs).forEach(([key, value]) => {
 	      if (key.startsWith('on') && new RegExp(matchers.placeholder).test(value)) {
-	        var substitution = substitutions[parseInt(value.replace(/{{uid|}}/, '')) - 1];
+	        const substitution = substitutions[parseInt(value.replace(/{{uid|}}/, '')) - 1];
 	        if (Type.isFunction(substitution)) {
-	          var bindFunctionName = key.endsWith('once') ? 'bindOnce' : 'bind';
+	          const bindFunctionName = key.endsWith('once') ? 'bindOnce' : 'bind';
 	          Event[bindFunctionName](element, key.replace(/^on|once$/g, ''), substitution);
 	        } else {
 	          element.setAttribute(key, substitution);
 	        }
 	      } else {
 	        if (new RegExp(matchers.placeholder).test(value)) {
-	          var preparedValue = value.split(/{{|}}/).reduce(function (acc, item) {
+	          const preparedValue = value.split(/{{|}}/).reduce((acc, item) => {
 	            if (item.startsWith('uid')) {
-	              var _substitution = substitutions[parseInt(item.replace('uid', '')) - 1];
-	              return "".concat(acc).concat(_substitution);
+	              const substitution = substitutions[parseInt(item.replace('uid', '')) - 1];
+	              return `${acc}${substitution}`;
 	            }
-	            return "".concat(acc).concat(item);
+	            return `${acc}${item}`;
 	          }, '');
 	          element.setAttribute(key, preparedValue);
 	        } else {
@@ -9624,15 +9464,15 @@ window._main_polyfill_core = true;
 	        }
 	      }
 	    });
-	    node.children.forEach(function (childNode) {
-	      var result = renderNode({
+	    node.children.forEach(childNode => {
+	      const result = renderNode({
 	        node: childNode,
 	        parentElement: element,
-	        substitutions: substitutions,
-	        refs: refs
+	        substitutions,
+	        refs
 	      });
 	      if (Type.isArray(result)) {
-	        result.forEach(function (subChildElement) {
+	        result.forEach(subChildElement => {
 	          appendElement(subChildElement, element);
 	        });
 	      } else {
@@ -9660,74 +9500,66 @@ window._main_polyfill_core = true;
 	  }
 	}
 
-	function render(sections) {
-	  for (var _len = arguments.length, substitutions = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
-	    substitutions[_key - 1] = arguments[_key];
-	  }
-	  var html = sections.reduce(function (acc, item, index) {
+	function render(sections, ...substitutions) {
+	  const html = sections.reduce((acc, item, index) => {
 	    if (index > 0) {
-	      var substitution = substitutions[index - 1];
+	      const substitution = substitutions[index - 1];
 	      if (Type.isString(substitution) || Type.isNumber(substitution)) {
-	        return "".concat(acc).concat(substitution).concat(item);
+	        return `${acc}${substitution}${item}`;
 	      }
-	      return "".concat(acc, "{{uid").concat(index, "}}").concat(item);
+	      return `${acc}{{uid${index}}}${item}`;
 	    }
 	    return acc;
 	  }, sections[0]).replace(/^[\r\n\t\s]+/gm, '').replace(/>[\n]+/g, '>').replace(/[}][\n]+/g, '}');
-	  var ast = parse(html);
+	  const ast = parse(html);
 	  if (ast.length === 1) {
-	    var refs = [];
-	    var renderedNode = renderNode({
+	    const refs = [];
+	    const renderedNode = renderNode({
 	      node: ast[0],
-	      substitutions: substitutions,
-	      refs: refs
+	      substitutions,
+	      refs
 	    });
 	    if (Type.isArrayFilled(refs)) {
-	      return Object.fromEntries([['root', renderedNode]].concat(refs));
+	      return Object.fromEntries([['root', renderedNode], ...refs]);
 	    }
 	    return renderedNode;
 	  }
 	  if (ast.length > 1) {
-	    var _refs = [];
-	    var renderedNodes = ast.map(function (node) {
+	    const refs = [];
+	    const renderedNodes = ast.map(node => {
 	      return renderNode({
-	        node: node,
-	        substitutions: substitutions,
-	        refs: _refs
+	        node,
+	        substitutions,
+	        refs
 	      });
 	    });
-	    if (Type.isArrayFilled(_refs)) {
-	      return Object.fromEntries([['root', renderedNodes]].concat(_refs));
+	    if (Type.isArrayFilled(refs)) {
+	      return Object.fromEntries([['root', renderedNodes], ...refs]);
 	    }
 	    return renderedNodes;
 	  }
 	  return false;
 	}
 
-	function parseProps(sections) {
-	  for (var _len = arguments.length, substitutions = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
-	    substitutions[_key - 1] = arguments[_key];
-	  }
-	  return substitutions.reduce(function (acc, item, index) {
-	    var nextSectionIndex = index + 1;
+	function parseProps(sections, ...substitutions) {
+	  return substitutions.reduce((acc, item, index) => {
+	    const nextSectionIndex = index + 1;
 	    if (!Type.isPlainObject(item) && !Type.isArray(item)) {
 	      return acc + item + sections[nextSectionIndex];
 	    }
-	    return "".concat(acc, "__s").concat(index).concat(sections[nextSectionIndex]);
-	  }, sections[0]).replace(/[\r\t]/gm, '').split(';\n').map(function (item) {
-	    return item.replace(/\n/, '');
-	  }).reduce(function (acc, item) {
+	    return `${acc}__s${index}${sections[nextSectionIndex]}`;
+	  }, sections[0]).replace(/[\r\t]/gm, '').split(';\n').map(item => item.replace(/\n/, '')).reduce((acc, item) => {
 	    if (item !== '') {
-	      var matches = item.match(/^[\w-. ]+:/);
-	      var splitted = item.split(/^[\w-. ]+:/);
-	      var _key2 = matches[0].replace(':', '').trim();
-	      var value = splitted[1].trim();
-	      var substitutionPlaceholderExp = /^__s\d+/;
+	      const matches = item.match(/^[\w-. ]+:/);
+	      const splitted = item.split(/^[\w-. ]+:/);
+	      const key = matches[0].replace(':', '').trim();
+	      const value = splitted[1].trim();
+	      const substitutionPlaceholderExp = /^__s\d+/;
 	      if (substitutionPlaceholderExp.test(value)) {
-	        acc[_key2] = substitutions[value.replace('__s', '')];
+	        acc[key] = substitutions[value.replace('__s', '')];
 	        return acc;
 	      }
-	      acc[_key2] = value;
+	      acc[key] = value;
 	    }
 	    return acc;
 	  }, {});
@@ -9736,7 +9568,7 @@ window._main_polyfill_core = true;
 	/**
 	 * @memberOf BX
 	 */
-	var Tag = /*#__PURE__*/function () {
+	let Tag = /*#__PURE__*/function () {
 	  function Tag() {
 	    babelHelpers.classCallCheck(this, Tag);
 	  }
@@ -9748,13 +9580,8 @@ window._main_polyfill_core = true;
 	     * @param substitutions
 	     * @return {string}
 	     */
-	    value: function safe(sections) {
-	      for (var _len2 = arguments.length, substitutions = new Array(_len2 > 1 ? _len2 - 1 : 0), _key3 = 1; _key3 < _len2; _key3++) {
-	        substitutions[_key3 - 1] = arguments[_key3];
-	      }
-	      return substitutions.reduce(function (acc, item, index) {
-	        return acc + Text.encode(item) + sections[index + 1];
-	      }, sections[0]);
+	    value: function safe(sections, ...substitutions) {
+	      return substitutions.reduce((acc, item, index) => acc + Text.encode(item) + sections[index + 1], sections[0]);
 	    }
 	    /**
 	     * Decodes all substitutions
@@ -9764,13 +9591,8 @@ window._main_polyfill_core = true;
 	     */
 	  }, {
 	    key: "unsafe",
-	    value: function unsafe(sections) {
-	      for (var _len3 = arguments.length, substitutions = new Array(_len3 > 1 ? _len3 - 1 : 0), _key4 = 1; _key4 < _len3; _key4++) {
-	        substitutions[_key4 - 1] = arguments[_key4];
-	      }
-	      return substitutions.reduce(function (acc, item, index) {
-	        return acc + Text.decode(item) + sections[index + 1];
-	      }, sections[0]);
+	    value: function unsafe(sections, ...substitutions) {
+	      return substitutions.reduce((acc, item, index) => acc + Text.decode(item) + sections[index + 1], sections[0]);
 	    }
 	    /**
 	     * Adds styles to specified element
@@ -9783,8 +9605,8 @@ window._main_polyfill_core = true;
 	      if (!Type.isDomNode(element)) {
 	        throw new Error('element is not HTMLElement');
 	      }
-	      return function styleTagHandler() {
-	        Dom.style(element, parseProps.apply(void 0, arguments));
+	      return function styleTagHandler(...args) {
+	        Dom.style(element, parseProps(...args));
 	      };
 	    }
 	    /**
@@ -9795,13 +9617,8 @@ window._main_polyfill_core = true;
 	     */
 	  }, {
 	    key: "message",
-	    value: function message(sections) {
-	      for (var _len4 = arguments.length, substitutions = new Array(_len4 > 1 ? _len4 - 1 : 0), _key5 = 1; _key5 < _len4; _key5++) {
-	        substitutions[_key5 - 1] = arguments[_key5];
-	      }
-	      return substitutions.reduce(function (acc, item, index) {
-	        return acc + Loc.getMessage(item) + sections[index + 1];
-	      }, sections[0]);
+	    value: function message(sections, ...substitutions) {
+	      return substitutions.reduce((acc, item, index) => acc + Loc.getMessage(item) + sections[index + 1], sections[0]);
 	    }
 	  }, {
 	    key: "attrs",
@@ -9814,8 +9631,8 @@ window._main_polyfill_core = true;
 	      if (!Type.isDomNode(element)) {
 	        throw new Error('element is not HTMLElement');
 	      }
-	      return function attrsTagHandler() {
-	        Dom.attr(element, parseProps.apply(void 0, arguments));
+	      return function attrsTagHandler(...args) {
+	        Dom.attr(element, parseProps(...args));
 	      };
 	    }
 	  }]);
@@ -9824,14 +9641,12 @@ window._main_polyfill_core = true;
 	babelHelpers.defineProperty(Tag, "render", render);
 	babelHelpers.defineProperty(Tag, "attr", Tag.attrs);
 
-	function ownKeys$3(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-	function _objectSpread$3(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$3(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$3(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	function getParser(format) {
 	  switch (format) {
 	    case 'index':
-	      return function (sourceKey, value, accumulator) {
-	        var result = /\[(\w*)\]$/.exec(sourceKey);
-	        var key = sourceKey.replace(/\[\w*\]$/, '');
+	      return (sourceKey, value, accumulator) => {
+	        const result = /\[(\w*)\]$/.exec(sourceKey);
+	        const key = sourceKey.replace(/\[\w*\]$/, '');
 	        if (Type.isNil(result)) {
 	          accumulator[key] = value;
 	          return;
@@ -9842,9 +9657,9 @@ window._main_polyfill_core = true;
 	        accumulator[key][result[1]] = value;
 	      };
 	    case 'bracket':
-	      return function (sourceKey, value, accumulator) {
-	        var result = /(\[\])$/.exec(sourceKey);
-	        var key = sourceKey.replace(/\[\]$/, '');
+	      return (sourceKey, value, accumulator) => {
+	        const result = /(\[\])$/.exec(sourceKey);
+	        const key = sourceKey.replace(/\[\]$/, '');
 	        if (Type.isNil(result)) {
 	          accumulator[key] = value;
 	          return;
@@ -9856,8 +9671,8 @@ window._main_polyfill_core = true;
 	        accumulator[key] = [].concat(accumulator[key], value);
 	      };
 	    default:
-	      return function (sourceKey, value, accumulator) {
-	        var key = sourceKey.replace(/\[\]$/, '');
+	      return (sourceKey, value, accumulator) => {
+	        const key = sourceKey.replace(/\[\]$/, '');
 	        accumulator[key] = value;
 	      };
 	  }
@@ -9878,30 +9693,26 @@ window._main_polyfill_core = true;
 	  if (!Type.isString(input)) {
 	    return {};
 	  }
-	  var url = input.trim().replace(/^[?#&]/, '');
+	  const url = input.trim().replace(/^[?#&]/, '');
 	  if (!url) {
 	    return {};
 	  }
-	  return _objectSpread$3({}, url.split('&').reduce(function (acc, param) {
-	    var _param$replace$split = param.replace(/\+/g, ' ').split('='),
-	      _param$replace$split2 = babelHelpers.slicedToArray(_param$replace$split, 2),
-	      key = _param$replace$split2[0],
-	      value = _param$replace$split2[1];
-	    if (isAllowedKey(key)) {
-	      var keyFormat = getKeyFormat(key);
-	      var formatter = getParser(keyFormat);
-	      formatter(key, value, acc);
-	    }
-	    return acc;
-	  }, Object.create(null)));
+	  return {
+	    ...url.split('&').reduce((acc, param) => {
+	      const [key, value] = param.replace(/\+/g, ' ').split('=');
+	      if (isAllowedKey(key)) {
+	        const keyFormat = getKeyFormat(key);
+	        const formatter = getParser(keyFormat);
+	        formatter(key, value, acc);
+	      }
+	      return acc;
+	    }, Object.create(null))
+	  };
 	}
-	var urlExp = /^((\w+):)?(\/\/((\w+)?(:(\w+))?@)?([^\/\?:]+)(:(\d+))?)?(\/?([^\/\?#][^\?#]*)?)?(\?([^#]+))?(#((?:[\w-?/:@.~!$&'()*+,;=]|%\w{2})*))?/;
+	const urlExp = /^((\w+):)?(\/\/((\w+)?(:(\w+))?@)?([^\/\?:]+)(:(\d+))?)?(\/?([^\/\?#][^\?#]*)?)?(\?([^#]+))?(#((?:[\w-?/:@.~!$&'()*+,;=]|%\w{2})*))?/;
 	function prepareParams(params) {
-	  var paramsEntries = Object.entries(params);
-	  return paramsEntries.reduce(function (acc, _ref) {
-	    var _ref2 = babelHelpers.slicedToArray(_ref, 2),
-	      key = _ref2[0],
-	      value = _ref2[1];
+	  const paramsEntries = Object.entries(params);
+	  return paramsEntries.reduce((acc, [key, value]) => {
 	    if (Type.isNil(value)) {
 	      acc[key] = '';
 	    } else if (Type.isPlainObject(value)) {
@@ -9913,10 +9724,10 @@ window._main_polyfill_core = true;
 	  }, {});
 	}
 	function parseUrl(url) {
-	  var result = url.match(urlExp);
+	  const result = url.match(urlExp);
 	  if (Type.isArray(result)) {
-	    var sourceParams = parseQuery(result[14]);
-	    var preparedParams = prepareParams(sourceParams);
+	    const sourceParams = parseQuery(result[14]);
+	    const preparedParams = prepareParams(sourceParams);
 	    return {
 	      useShort: /^\/\//.test(url),
 	      href: result[0] || '',
@@ -9940,24 +9751,23 @@ window._main_polyfill_core = true;
 	  if (Type.isNil(value)) {
 	    return param;
 	  }
-	  return "".concat(param, "=").concat(value);
+	  return `${param}=${value}`;
 	}
 
-	function buildQueryString() {
-	  var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-	  var queryString = Object.keys(params).reduce(function (acc, key) {
+	function buildQueryString(params = {}) {
+	  const queryString = Object.keys(params).reduce((acc, key) => {
 	    if (Type.isArray(params[key])) {
 	      if (Type.isArrayFilled(params[key])) {
-	        params[key].forEach(function (paramValue) {
-	          acc.push(renderParam("".concat(key, "[]"), paramValue));
+	        params[key].forEach(paramValue => {
+	          acc.push(renderParam(`${key}[]`, paramValue));
 	        });
 	      } else {
-	        acc.push(renderParam("".concat(key, "[]"), null));
+	        acc.push(renderParam(`${key}[]`, null));
 	      }
 	    }
 	    if (Type.isPlainObject(params[key])) {
-	      Object.keys(params[key]).forEach(function (paramIndex) {
-	        acc.push(renderParam("".concat(key, "[").concat(paramIndex, "]"), params[key][paramIndex]));
+	      Object.keys(params[key]).forEach(paramIndex => {
+	        acc.push(renderParam(`${key}[${paramIndex}]`, params[key][paramIndex]));
 	      });
 	    }
 	    if (!Type.isObject(params[key]) && !Type.isArray(params[key])) {
@@ -9966,50 +9776,43 @@ window._main_polyfill_core = true;
 	    return acc;
 	  }, []).join('&');
 	  if (queryString.length > 0) {
-	    return "?".concat(queryString);
+	    return `?${queryString}`;
 	  }
 	  return queryString;
 	}
 
-	function ownKeys$4(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-	function _objectSpread$4(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$4(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$4(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	function prepareParamValue(value) {
 	  if (Type.isArray(value)) {
-	    return value.map(function (item) {
-	      return String(item);
-	    });
+	    return value.map(item => String(item));
 	  }
 	  if (Type.isPlainObject(value)) {
-	    return _objectSpread$4({}, value);
+	    return {
+	      ...value
+	    };
 	  }
 	  return String(value);
 	}
 
-	function ownKeys$5(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-	function _objectSpread$5(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$5(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$5(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
-	var map = new WeakMap();
+	const map = new WeakMap();
 
 	/**
 	 * Implements interface for works with URI
 	 * @memberOf BX
 	 */
-	var Uri = /*#__PURE__*/function () {
+	let Uri = /*#__PURE__*/function () {
 	  babelHelpers.createClass(Uri, null, [{
 	    key: "addParam",
-	    value: function addParam(url) {
-	      var params = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+	    value: function addParam(url, params = {}) {
 	      return new Uri(url).setQueryParams(params).toString();
 	    }
 	  }, {
 	    key: "removeParam",
 	    value: function removeParam(url, params) {
-	      var _Uri;
-	      var removableParams = Type.isArray(params) ? params : [params];
-	      return (_Uri = new Uri(url)).removeQueryParam.apply(_Uri, babelHelpers.toConsumableArray(removableParams)).toString();
+	      const removableParams = Type.isArray(params) ? params : [params];
+	      return new Uri(url).removeQueryParam(...removableParams).toString();
 	    }
 	  }]);
-	  function Uri() {
-	    var url = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
+	  function Uri(url = '') {
 	    babelHelpers.classCallCheck(this, Uri);
 	    map.set(this, parseUrl(url));
 	  }
@@ -10055,7 +9858,7 @@ window._main_polyfill_core = true;
 	    key: "setPath",
 	    value: function setPath(path) {
 	      if (!/^\//.test(path)) {
-	        map.get(this).path = "/".concat(String(path));
+	        map.get(this).path = `/${String(path)}`;
 	        return this;
 	      }
 	      map.get(this).path = String(path);
@@ -10069,7 +9872,7 @@ window._main_polyfill_core = true;
 	  }, {
 	    key: "getQueryParam",
 	    value: function getQueryParam(key) {
-	      var params = this.getQueryParams();
+	      const params = this.getQueryParams();
 	      if (Object.hasOwn(params, key)) {
 	        return params[key];
 	      }
@@ -10077,8 +9880,7 @@ window._main_polyfill_core = true;
 	    }
 	  }, {
 	    key: "setQueryParam",
-	    value: function setQueryParam(key) {
-	      var value = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
+	    value: function setQueryParam(key, value = '') {
 	      map.get(this).queryParams[key] = prepareParamValue(value);
 	      map.get(this).sourceQueryParams[key] = prepareParamValue(value);
 	      return this;
@@ -10086,21 +9888,20 @@ window._main_polyfill_core = true;
 	  }, {
 	    key: "getQueryParams",
 	    value: function getQueryParams() {
-	      return _objectSpread$5({}, map.get(this).queryParams);
+	      return {
+	        ...map.get(this).queryParams
+	      };
 	    }
 	  }, {
 	    key: "setQueryParams",
-	    value: function setQueryParams() {
-	      var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+	    value: function setQueryParams(params = {}) {
 	      if (Type.isPlainObject(params)) {
-	        var _map$get = map.get(this),
-	          queryParams = _map$get.queryParams,
-	          sourceQueryParams = _map$get.sourceQueryParams;
-	        Object.entries(params).forEach(function (_ref) {
-	          var _ref2 = babelHelpers.slicedToArray(_ref, 2),
-	            key = _ref2[0],
-	            value = _ref2[1];
-	          var preparedValue = prepareParamValue(value);
+	        const {
+	          queryParams,
+	          sourceQueryParams
+	        } = map.get(this);
+	        Object.entries(params).forEach(([key, value]) => {
+	          const preparedValue = prepareParamValue(value);
 	          queryParams[key] = preparedValue;
 	          sourceQueryParams[key] = preparedValue;
 	        });
@@ -10109,14 +9910,12 @@ window._main_polyfill_core = true;
 	    }
 	  }, {
 	    key: "removeQueryParam",
-	    value: function removeQueryParam() {
-	      var _map$get2 = map.get(this),
-	        queryParams = _map$get2.queryParams,
-	        sourceQueryParams = _map$get2.sourceQueryParams;
-	      for (var _len = arguments.length, keys = new Array(_len), _key = 0; _key < _len; _key++) {
-	        keys[_key] = arguments[_key];
-	      }
-	      keys.forEach(function (key) {
+	    value: function removeQueryParam(...keys) {
+	      const {
+	        queryParams,
+	        sourceQueryParams
+	      } = map.get(this);
+	      keys.forEach(key => {
 	        delete queryParams[key];
 	        delete sourceQueryParams[key];
 	      });
@@ -10136,7 +9935,9 @@ window._main_polyfill_core = true;
 	  }, {
 	    key: "serialize",
 	    value: function serialize() {
-	      var serialized = _objectSpread$5({}, map.get(this));
+	      const serialized = {
+	        ...map.get(this)
+	      };
 	      delete serialized.sourceQueryParams;
 	      serialized.href = this.toString();
 	      return serialized;
@@ -10144,22 +9945,24 @@ window._main_polyfill_core = true;
 	  }, {
 	    key: "toString",
 	    value: function toString() {
-	      var data = _objectSpread$5({}, map.get(this));
-	      var protocol = data.schema ? "".concat(data.schema, "://") : '';
+	      const data = {
+	        ...map.get(this)
+	      };
+	      let protocol = data.schema ? `${data.schema}://` : '';
 	      if (data.useShort) {
 	        protocol = '//';
 	      }
-	      var port = function () {
+	      const port = (() => {
 	        if (Type.isString(data.port) && !['', '80'].includes(data.port)) {
-	          return ":".concat(data.port);
+	          return `:${data.port}`;
 	        }
 	        return '';
-	      }();
-	      var host = this.getHost();
-	      var path = this.getPath();
-	      var query = buildQueryString(data.sourceQueryParams);
-	      var hash = data.hash ? "#".concat(data.hash) : '';
-	      return "".concat(host ? protocol : '').concat(host).concat(host ? port : '').concat(path).concat(query).concat(hash);
+	      })();
+	      const host = this.getHost();
+	      const path = this.getPath();
+	      const query = buildQueryString(data.sourceQueryParams);
+	      const hash = data.hash ? `#${data.hash}` : '';
+	      return `${host ? protocol : ''}${host}${host ? port : ''}${path}${query}${hash}`;
 	    }
 	  }]);
 	  return Uri;
@@ -10168,7 +9971,7 @@ window._main_polyfill_core = true;
 	/**
 	 * @memberOf BX
 	 */
-	var Validation = /*#__PURE__*/function () {
+	let Validation = /*#__PURE__*/function () {
 	  function Validation() {
 	    babelHelpers.classCallCheck(this, Validation);
 	  }
@@ -10180,14 +9983,14 @@ window._main_polyfill_core = true;
 	     * @return {boolean}
 	     */
 	    value: function isEmail(value) {
-	      var exp = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+	      const exp = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
 	      return exp.test(String(value).toLowerCase());
 	    }
 	  }]);
 	  return Validation;
 	}();
 
-	var BaseCache = /*#__PURE__*/function () {
+	let BaseCache = /*#__PURE__*/function () {
 	  function BaseCache() {
 	    babelHelpers.classCallCheck(this, BaseCache);
 	    babelHelpers.defineProperty(this, "storage", new Map());
@@ -10222,7 +10025,7 @@ window._main_polyfill_core = true;
 	  }, {
 	    key: "delete",
 	    value: function _delete(key) {
-	      this.storage["delete"](key);
+	      this.storage.delete(key);
 	    }
 	    /**
 	     * Checks that storage contains entry with specified key
@@ -10261,7 +10064,7 @@ window._main_polyfill_core = true;
 	  }, {
 	    key: "keys",
 	    value: function keys() {
-	      return babelHelpers.toConsumableArray(this.storage.keys());
+	      return [...this.storage.keys()];
 	    }
 	    /**
 	     * Gets storage values
@@ -10269,29 +10072,25 @@ window._main_polyfill_core = true;
 	  }, {
 	    key: "values",
 	    value: function values() {
-	      return babelHelpers.toConsumableArray(this.storage.values());
+	      return [...this.storage.values()];
 	    }
 	  }]);
 	  return BaseCache;
 	}();
 
-	var MemoryCache = /*#__PURE__*/function (_BaseCache) {
+	let MemoryCache = /*#__PURE__*/function (_BaseCache) {
 	  babelHelpers.inherits(MemoryCache, _BaseCache);
-	  function MemoryCache() {
-	    var _babelHelpers$getProt;
+	  function MemoryCache(...args) {
 	    var _this;
 	    babelHelpers.classCallCheck(this, MemoryCache);
-	    for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
-	      args[_key] = arguments[_key];
-	    }
-	    _this = babelHelpers.possibleConstructorReturn(this, (_babelHelpers$getProt = babelHelpers.getPrototypeOf(MemoryCache)).call.apply(_babelHelpers$getProt, [this].concat(args)));
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(MemoryCache).call(this, ...args));
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "storage", new Map());
 	    return _this;
 	  }
 	  return MemoryCache;
 	}(BaseCache);
 
-	var LsStorage = /*#__PURE__*/function () {
+	let LsStorage = /*#__PURE__*/function () {
 	  function LsStorage() {
 	    babelHelpers.classCallCheck(this, LsStorage);
 	    babelHelpers.defineProperty(this, "stackKey", 'BX.Cache.Storage.LsStorage.stack');
@@ -10306,9 +10105,9 @@ window._main_polyfill_core = true;
 	      if (Type.isPlainObject(this.stack)) {
 	        return this.stack;
 	      }
-	      var stack = localStorage.getItem(this.stackKey);
+	      const stack = localStorage.getItem(this.stackKey);
 	      if (Type.isString(stack) && stack !== '') {
-	        var parsedStack = JSON.parse(stack);
+	        const parsedStack = JSON.parse(stack);
 	        if (Type.isPlainObject(parsedStack)) {
 	          this.stack = parsedStack;
 	          return this.stack;
@@ -10324,27 +10123,27 @@ window._main_polyfill_core = true;
 	    key: "saveStack",
 	    value: function saveStack() {
 	      if (Type.isPlainObject(this.stack)) {
-	        var preparedStack = JSON.stringify(this.stack);
+	        const preparedStack = JSON.stringify(this.stack);
 	        localStorage.setItem(this.stackKey, preparedStack);
 	      }
 	    }
 	  }, {
 	    key: "get",
 	    value: function get(key) {
-	      var stack = this.getStack();
+	      const stack = this.getStack();
 	      return stack[key];
 	    }
 	  }, {
 	    key: "set",
 	    value: function set(key, value) {
-	      var stack = this.getStack();
+	      const stack = this.getStack();
 	      stack[key] = value;
 	      this.saveStack();
 	    }
 	  }, {
 	    key: "delete",
 	    value: function _delete(key) {
-	      var stack = this.getStack();
+	      const stack = this.getStack();
 	      if (key in stack) {
 	        delete stack[key];
 	      }
@@ -10352,41 +10151,37 @@ window._main_polyfill_core = true;
 	  }, {
 	    key: "has",
 	    value: function has(key) {
-	      var stack = this.getStack();
+	      const stack = this.getStack();
 	      return key in stack;
 	    }
 	  }, {
 	    key: "keys",
 	    value: function keys() {
-	      var stack = this.getStack();
+	      const stack = this.getStack();
 	      return Object.keys(stack);
 	    }
 	  }, {
 	    key: "values",
 	    value: function values() {
-	      var stack = this.getStack();
+	      const stack = this.getStack();
 	      return Object.values(stack);
 	    }
 	  }, {
 	    key: "size",
-	    get: function get() {
-	      var stack = this.getStack();
+	    get: function () {
+	      const stack = this.getStack();
 	      return Object.keys(stack).length;
 	    }
 	  }]);
 	  return LsStorage;
 	}();
 
-	var LocalStorageCache = /*#__PURE__*/function (_BaseCache) {
+	let LocalStorageCache = /*#__PURE__*/function (_BaseCache) {
 	  babelHelpers.inherits(LocalStorageCache, _BaseCache);
-	  function LocalStorageCache() {
-	    var _babelHelpers$getProt;
+	  function LocalStorageCache(...args) {
 	    var _this;
 	    babelHelpers.classCallCheck(this, LocalStorageCache);
-	    for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
-	      args[_key] = arguments[_key];
-	    }
-	    _this = babelHelpers.possibleConstructorReturn(this, (_babelHelpers$getProt = babelHelpers.getPrototypeOf(LocalStorageCache)).call.apply(_babelHelpers$getProt, [this].concat(args)));
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(LocalStorageCache).call(this, ...args));
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "storage", new LsStorage());
 	    return _this;
 	  }
@@ -10396,22 +10191,21 @@ window._main_polyfill_core = true;
 	/**
 	 * @memberOf BX
 	 */
-	var Cache = function Cache() {
+	let Cache = function Cache() {
 	  babelHelpers.classCallCheck(this, Cache);
 	};
 	babelHelpers.defineProperty(Cache, "BaseCache", BaseCache);
 	babelHelpers.defineProperty(Cache, "MemoryCache", MemoryCache);
 	babelHelpers.defineProperty(Cache, "LocalStorageCache", LocalStorageCache);
 
-	var _Symbol$iterator;
-	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration$1(obj, privateSet); privateSet.add(obj); }
-	function _checkPrivateRedeclaration$1(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	let _Symbol$iterator;
+	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
+	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _searchIndexToInsert = /*#__PURE__*/new WeakSet();
 	_Symbol$iterator = Symbol.iterator;
-	var OrderedArray = /*#__PURE__*/function () {
-	  function OrderedArray() {
-	    var comparator = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
+	let OrderedArray = /*#__PURE__*/function () {
+	  function OrderedArray(comparator = null) {
 	    babelHelpers.classCallCheck(this, OrderedArray);
 	    _classPrivateMethodInitSpec(this, _searchIndexToInsert);
 	    babelHelpers.defineProperty(this, "comparator", null);
@@ -10421,7 +10215,7 @@ window._main_polyfill_core = true;
 	  babelHelpers.createClass(OrderedArray, [{
 	    key: "add",
 	    value: function add(item) {
-	      var index = -1;
+	      let index = -1;
 	      if (this.comparator) {
 	        index = _classPrivateMethodGet(this, _searchIndexToInsert, _searchIndexToInsert2).call(this, item);
 	        this.items.splice(index, 0, item);
@@ -10444,7 +10238,7 @@ window._main_polyfill_core = true;
 	    key: "getByIndex",
 	    value: function getByIndex(index) {
 	      if (Type.isNumber(index) && index >= 0) {
-	        var item = this.items[index];
+	        const item = this.items[index];
 	        return Type.isUndefined(item) ? null : item;
 	      }
 	      return null;
@@ -10452,13 +10246,13 @@ window._main_polyfill_core = true;
 	  }, {
 	    key: "getFirst",
 	    value: function getFirst() {
-	      var first = this.items[0];
+	      const first = this.items[0];
 	      return Type.isUndefined(first) ? null : first;
 	    }
 	  }, {
 	    key: "getLast",
 	    value: function getLast() {
-	      var last = this.items[this.count() - 1];
+	      const last = this.items[this.count() - 1];
 	      return Type.isUndefined(last) ? null : last;
 	    }
 	  }, {
@@ -10469,7 +10263,7 @@ window._main_polyfill_core = true;
 	  }, {
 	    key: "delete",
 	    value: function _delete(item) {
-	      var index = this.getIndex(item);
+	      const index = this.getIndex(item);
 	      if (index !== -1) {
 	        this.items.splice(index, 1);
 	        return true;
@@ -10483,7 +10277,7 @@ window._main_polyfill_core = true;
 	    }
 	  }, {
 	    key: _Symbol$iterator,
-	    value: function value() {
+	    value: function () {
 	      return this.items[Symbol.iterator]();
 	    }
 	  }, {
@@ -10504,8 +10298,7 @@ window._main_polyfill_core = true;
 	  }, {
 	    key: "sort",
 	    value: function sort() {
-	      var _this = this;
-	      var comparator = this.getComparator();
+	      const comparator = this.getComparator();
 	      if (comparator === null) {
 	        return;
 	      }
@@ -10518,31 +10311,31 @@ window._main_polyfill_core = true;
 	      */
 
 	      // For stable sorting https://v8.dev/features/stable-sort
-	      var length = this.items.length;
-	      var indexes = new Array(length);
-	      for (var i = 0; i < length; i++) {
+	      const length = this.items.length;
+	      const indexes = new Array(length);
+	      for (let i = 0; i < length; i++) {
 	        indexes[i] = i;
 	      }
 
 	      // If the comparator returns zero, use the original indexes
-	      indexes.sort(function (index1, index2) {
-	        return comparator(_this.items[index1], _this.items[index2]) || index1 - index2;
+	      indexes.sort((index1, index2) => {
+	        return comparator(this.items[index1], this.items[index2]) || index1 - index2;
 	      });
-	      for (var _i = 0; _i < length; _i++) {
-	        indexes[_i] = this.items[indexes[_i]];
+	      for (let i = 0; i < length; i++) {
+	        indexes[i] = this.items[indexes[i]];
 	      }
-	      for (var _i2 = 0; _i2 < length; _i2++) {
-	        this.items[_i2] = indexes[_i2];
+	      for (let i = 0; i < length; i++) {
+	        this.items[i] = indexes[i];
 	      }
 	    }
 	  }]);
 	  return OrderedArray;
 	}();
 	function _searchIndexToInsert2(value) {
-	  var low = 0;
-	  var high = this.items.length;
+	  let low = 0;
+	  let high = this.items.length;
 	  while (low < high) {
-	    var mid = Math.floor((low + high) / 2);
+	    const mid = Math.floor((low + high) / 2);
 	    if (this.comparator(this.items[mid], value) >= 0) {
 	      high = mid;
 	    } else {
@@ -10552,11 +10345,10 @@ window._main_polyfill_core = true;
 	  return low;
 	}
 
-	var ZIndexComponent = /*#__PURE__*/function (_EventEmitter) {
+	let ZIndexComponent = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(ZIndexComponent, _EventEmitter);
-	  function ZIndexComponent(element) {
+	  function ZIndexComponent(element, componentOptions = {}) {
 	    var _this;
-	    var componentOptions = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 	    babelHelpers.classCallCheck(this, ZIndexComponent);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(ZIndexComponent).call(this));
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "sort", 0);
@@ -10571,7 +10363,7 @@ window._main_polyfill_core = true;
 	      throw new Error('ZIndexManager.Component: The argument \'element\' must be a DOM element.');
 	    }
 	    _this.element = element;
-	    var options = Type.isPlainObject(componentOptions) ? componentOptions : {};
+	    const options = Type.isPlainObject(componentOptions) ? componentOptions : {};
 	    _this.setAlwaysOnTop(options.alwaysOnTop);
 	    _this.setOverlay(options.overlay);
 	    _this.setOverlayGap(options.overlayGap);
@@ -10619,7 +10411,7 @@ window._main_polyfill_core = true;
 	  }, {
 	    key: "setZIndex",
 	    value: function setZIndex(zIndex) {
-	      var changed = this.getZIndex() !== zIndex;
+	      const changed = this.getZIndex() !== zIndex;
 	      this.getElement().style.setProperty('z-index', zIndex, 'important');
 	      this.zIndex = zIndex;
 	      if (this.getOverlay() !== null) {
@@ -10680,7 +10472,7 @@ window._main_polyfill_core = true;
 	  return ZIndexComponent;
 	}(EventEmitter);
 
-	var ZIndexStack = /*#__PURE__*/function () {
+	let ZIndexStack = /*#__PURE__*/function () {
 	  function ZIndexStack(container) {
 	    babelHelpers.classCallCheck(this, ZIndexStack);
 	    babelHelpers.defineProperty(this, "container", null);
@@ -10693,8 +10485,8 @@ window._main_polyfill_core = true;
 	      throw new Error('ZIndexManager.Stack: The \'container\' argument must be a DOM element.');
 	    }
 	    this.container = container;
-	    var comparator = function comparator(componentA, componentB) {
-	      var result = (componentA.getAlwaysOnTop() || 0) - (componentB.getAlwaysOnTop() || 0);
+	    const comparator = (componentA, componentB) => {
+	      let result = (componentA.getAlwaysOnTop() || 0) - (componentB.getAlwaysOnTop() || 0);
 	      if (!result) {
 	        result = componentA.getSort() - componentB.getSort();
 	      }
@@ -10730,13 +10522,12 @@ window._main_polyfill_core = true;
 	    }
 	  }, {
 	    key: "register",
-	    value: function register(element) {
-	      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+	    value: function register(element, options = {}) {
 	      if (this.getComponent(element)) {
 	        console.warn('ZIndexManager: You cannot register the element twice.', element);
 	        return this.getComponent(element);
 	      }
-	      var component = new ZIndexComponent(element, options);
+	      const component = new ZIndexComponent(element, options);
 	      component.setStack(this);
 	      component.setSort(++this.sortCount);
 	      this.elements.set(element, component);
@@ -10747,9 +10538,9 @@ window._main_polyfill_core = true;
 	  }, {
 	    key: "unregister",
 	    value: function unregister(element) {
-	      var component = this.elements.get(element);
-	      this.components["delete"](component);
-	      this.elements["delete"](element);
+	      const component = this.elements.get(element);
+	      this.components.delete(component);
+	      this.elements.delete(element);
 	      this.sort();
 	    }
 	  }, {
@@ -10765,24 +10556,23 @@ window._main_polyfill_core = true;
 	  }, {
 	    key: "getMaxZIndex",
 	    value: function getMaxZIndex() {
-	      var last = this.components.getLast();
+	      const last = this.components.getLast();
 	      return last ? last.getZIndex() : this.baseIndex;
 	    }
 	  }, {
 	    key: "sort",
 	    value: function sort() {
-	      var _this = this;
 	      this.components.sort();
-	      var zIndex = this.baseIndex;
-	      this.components.forEach(function (component) {
+	      let zIndex = this.baseIndex;
+	      this.components.forEach(component => {
 	        component.setZIndex(zIndex);
-	        zIndex += _this.baseStep;
+	        zIndex += this.baseStep;
 	      });
 	    }
 	  }, {
 	    key: "bringToFront",
 	    value: function bringToFront(element) {
-	      var component = this.getComponent(element);
+	      const component = this.getComponent(element);
 	      if (!component) {
 	        console.error('ZIndexManager: element was not found in the stack.', element);
 	        return null;
@@ -10800,26 +10590,25 @@ window._main_polyfill_core = true;
 	/**
 	 * @memberof BX
 	 */
-	var ZIndexManager = /*#__PURE__*/function () {
+	let ZIndexManager = /*#__PURE__*/function () {
 	  function ZIndexManager() {
 	    babelHelpers.classCallCheck(this, ZIndexManager);
 	  }
 	  babelHelpers.createClass(ZIndexManager, null, [{
 	    key: "register",
-	    value: function register(element) {
-	      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-	      var parentNode = _classStaticPrivateMethodGet(this, ZIndexManager, _getParentNode).call(this, element);
+	    value: function register(element, options = {}) {
+	      const parentNode = _classStaticPrivateMethodGet(this, ZIndexManager, _getParentNode).call(this, element);
 	      if (!parentNode) {
 	        return null;
 	      }
-	      var stack = this.getOrAddStack(parentNode);
+	      const stack = this.getOrAddStack(parentNode);
 	      return stack.register(element, options);
 	    }
 	  }, {
 	    key: "unregister",
 	    value: function unregister(element) {
-	      var parentNode = _classStaticPrivateMethodGet(this, ZIndexManager, _getParentNode).call(this, element);
-	      var stack = this.getStack(parentNode);
+	      const parentNode = _classStaticPrivateMethodGet(this, ZIndexManager, _getParentNode).call(this, element);
+	      const stack = this.getStack(parentNode);
 	      if (stack) {
 	        stack.unregister(element);
 	      }
@@ -10827,7 +10616,7 @@ window._main_polyfill_core = true;
 	  }, {
 	    key: "addStack",
 	    value: function addStack(container) {
-	      var stack = new ZIndexStack(container);
+	      const stack = new ZIndexStack(container);
 	      this.stacks.set(container, stack);
 	      return stack;
 	    }
@@ -10844,18 +10633,18 @@ window._main_polyfill_core = true;
 	  }, {
 	    key: "getComponent",
 	    value: function getComponent(element) {
-	      var parentNode = _classStaticPrivateMethodGet(this, ZIndexManager, _getParentNode).call(this, element, true);
+	      const parentNode = _classStaticPrivateMethodGet(this, ZIndexManager, _getParentNode).call(this, element, true);
 	      if (!parentNode) {
 	        return null;
 	      }
-	      var stack = this.getStack(parentNode);
+	      const stack = this.getStack(parentNode);
 	      return stack ? stack.getComponent(element) : null;
 	    }
 	  }, {
 	    key: "bringToFront",
 	    value: function bringToFront(element) {
-	      var parentNode = _classStaticPrivateMethodGet(this, ZIndexManager, _getParentNode).call(this, element);
-	      var stack = this.getStack(parentNode);
+	      const parentNode = _classStaticPrivateMethodGet(this, ZIndexManager, _getParentNode).call(this, element);
+	      const stack = this.getStack(parentNode);
 	      if (stack) {
 	        return stack.bringToFront(element);
 	      }
@@ -10864,8 +10653,7 @@ window._main_polyfill_core = true;
 	  }]);
 	  return ZIndexManager;
 	}();
-	function _getParentNode(element) {
-	  var suppressWarnings = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+	function _getParentNode(element, suppressWarnings = false) {
 	  if (!Type.isElementNode(element)) {
 	    if (!suppressWarnings) {
 	      console.error('ZIndexManager: The argument \'element\' must be a DOM element.', element);
@@ -10883,8 +10671,8 @@ window._main_polyfill_core = true;
 
 	function convertPath(path) {
 	  if (Type.isStringFilled(path)) {
-	    return path.split('.').reduce(function (acc, item) {
-	      item.split(/\[['"]?(.+?)['"]?\]/g).forEach(function (key) {
+	    return path.split('.').reduce((acc, item) => {
+	      item.split(/\[['"]?(.+?)['"]?\]/g).forEach(key => {
 	        if (Type.isStringFilled(key)) {
 	          acc.push(key);
 	        }
@@ -10895,9 +10683,8 @@ window._main_polyfill_core = true;
 	  return [];
 	}
 
-	var SettingsCollection = /*#__PURE__*/function () {
-	  function SettingsCollection() {
-	    var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+	let SettingsCollection = /*#__PURE__*/function () {
+	  function SettingsCollection(options = {}) {
 	    babelHelpers.classCallCheck(this, SettingsCollection);
 	    if (Type.isPlainObject(options)) {
 	      Object.assign(this, options);
@@ -10905,10 +10692,9 @@ window._main_polyfill_core = true;
 	  }
 	  babelHelpers.createClass(SettingsCollection, [{
 	    key: "get",
-	    value: function get(path) {
-	      var defaultValue = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
-	      var convertedPath = convertPath(path);
-	      return convertedPath.reduce(function (acc, key) {
+	    value: function get(path, defaultValue = null) {
+	      const convertedPath = convertPath(path);
+	      return convertedPath.reduce((acc, key) => {
 	        if (!Type.isNil(acc) && acc !== defaultValue) {
 	          if (!Type.isUndefined(acc[key])) {
 	            return acc[key];
@@ -10924,7 +10710,7 @@ window._main_polyfill_core = true;
 
 	function deepFreeze(target) {
 	  if (Type.isObject(target)) {
-	    Object.values(target).forEach(function (value) {
+	    Object.values(target).forEach(value => {
 	      deepFreeze(value);
 	    });
 	    return Object.freeze(target);
@@ -10932,8 +10718,8 @@ window._main_polyfill_core = true;
 	  return target;
 	}
 
-	var settingsStorage = new Map();
-	var Extension$1 = /*#__PURE__*/function () {
+	const settingsStorage = new Map();
+	let Extension = /*#__PURE__*/function () {
 	  function Extension() {
 	    babelHelpers.classCallCheck(this, Extension);
 	  }
@@ -10944,16 +10730,16 @@ window._main_polyfill_core = true;
 	        if (settingsStorage.has(extensionName)) {
 	          return settingsStorage.get(extensionName);
 	        }
-	        var settingsScriptNode = document.querySelector("script[data-extension=\"".concat(extensionName, "\"]"));
+	        const settingsScriptNode = document.querySelector(`script[data-extension="${extensionName}"]`);
 	        if (Type.isDomNode(settingsScriptNode)) {
-	          var decodedSettings = function () {
+	          const decodedSettings = (() => {
 	            try {
 	              return new SettingsCollection(JSON.parse(settingsScriptNode.innerHTML));
 	            } catch (error) {
 	              return new SettingsCollection();
 	            }
-	          }();
-	          var frozenSettings = deepFreeze(decodedSettings);
+	          })();
+	          const frozenSettings = deepFreeze(decodedSettings);
 	          settingsStorage.set(extensionName, frozenSettings);
 	          return frozenSettings;
 	        }
@@ -10981,43 +10767,45 @@ window._main_polyfill_core = true;
 	  return window;
 	}
 
-	function ownKeys$6(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-	function _objectSpread$6(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$6(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$6(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
+	/* eslint-disable prefer-rest-params */
 
 	// BX.*
-	var getClass = Reflection.getClass,
-	  namespace = Reflection.namespace;
-	var message$1 = message;
+	const {
+	  getClass,
+	  namespace
+	} = Reflection;
+	const message$1 = message;
 
 	/**
 	 * @memberOf BX
 	 */
-	var replace = Dom.replace,
-	  remove = Dom.remove,
-	  clean = Dom.clean,
-	  insertBefore = Dom.insertBefore,
-	  insertAfter = Dom.insertAfter,
-	  append = Dom.append,
-	  prepend = Dom.prepend,
-	  style = Dom.style,
-	  adjust = Dom.adjust,
-	  create = Dom.create,
-	  isShown = Dom.isShown;
-	var addClass = function addClass() {
-	  Dom.addClass.apply(Dom, babelHelpers.toConsumableArray(Runtime.merge([], Array.from(arguments), [getElement(arguments[0])])));
+	const {
+	  replace,
+	  remove,
+	  clean,
+	  insertBefore,
+	  insertAfter,
+	  append,
+	  prepend,
+	  style,
+	  adjust,
+	  create,
+	  isShown
+	} = Dom;
+	const addClass = function addClass() {
+	  Dom.addClass(...Runtime.merge([], Array.from(arguments), [getElement(arguments[0])]));
 	};
-	var removeClass = function removeClass() {
-	  Dom.removeClass.apply(Dom, babelHelpers.toConsumableArray(Runtime.merge(Array.from(arguments), [getElement(arguments[0])])));
+	const removeClass = function removeClass() {
+	  Dom.removeClass(...Runtime.merge(Array.from(arguments), [getElement(arguments[0])]));
 	};
-	var hasClass = function hasClass() {
-	  return Dom.hasClass.apply(Dom, babelHelpers.toConsumableArray(Runtime.merge(Array.from(arguments), [getElement(arguments[0])])));
+	const hasClass = function hasClass() {
+	  return Dom.hasClass(...Runtime.merge(Array.from(arguments), [getElement(arguments[0])]));
 	};
-	var toggleClass = function toggleClass() {
-	  Dom.toggleClass.apply(Dom, babelHelpers.toConsumableArray(Runtime.merge(Array.from(arguments), [getElement(arguments[0])])));
+	const toggleClass = function toggleClass() {
+	  Dom.toggleClass(...Runtime.merge(Array.from(arguments), [getElement(arguments[0])]));
 	};
-	var cleanNode = function cleanNode(element) {
-	  var removeElement = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
-	  var currentElement = getElement(element);
+	const cleanNode = (element, removeElement = false) => {
+	  const currentElement = getElement(element);
 	  if (Type.isDomNode(currentElement)) {
 	    Dom.clean(currentElement);
 	    if (removeElement) {
@@ -11027,56 +10815,60 @@ window._main_polyfill_core = true;
 	  }
 	  return currentElement;
 	};
-	var getCookie = Http.Cookie.get;
-	var setCookie = function setCookie(name, value) {
-	  var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
-	  var attributes = _objectSpread$6({}, options);
+	const getCookie = Http.Cookie.get;
+	const setCookie = (name, value, options = {}) => {
+	  const attributes = {
+	    ...options
+	  };
 	  if (Type.isNumber(attributes.expires)) {
 	    attributes.expires /= 3600 * 24;
 	  }
 	  Http.Cookie.set(name, value, attributes);
 	};
-	var bind$1 = Event.bind,
-	  unbind$1 = Event.unbind,
-	  unbindAll$1 = Event.unbindAll,
-	  bindOnce$1 = Event.bindOnce,
-	  ready$1 = Event.ready;
-	var debugEnableFlag = debugState,
-	  debugStatus = isDebugEnabled,
-	  debug$1 = debug;
-	var debugEnable = function debugEnable(value) {
+	const {
+	  bind: bind$1,
+	  unbind: unbind$1,
+	  unbindAll: unbindAll$1,
+	  bindOnce: bindOnce$1,
+	  ready: ready$1
+	} = Event;
+	const {
+	  debugState: debugEnableFlag,
+	  isDebugEnabled: debugStatus,
+	  default: debug$1
+	} = debugNs;
+	const debugEnable = value => {
 	  if (value) {
 	    enableDebug();
 	  } else {
 	    disableDebug();
 	  }
 	};
-	var clone$1 = Runtime.clone,
-	  loadExt = Runtime.loadExtension,
-	  debounce = Runtime.debounce,
-	  throttle = Runtime.throttle,
-	  html = Runtime.html;
-	var type = _objectSpread$6(_objectSpread$6({}, Object.getOwnPropertyNames(Type).filter(function (key) {
-	  return !['name', 'length', 'prototype', 'caller', 'arguments'].includes(key);
-	}).reduce(function (acc, key) {
-	  acc[key] = Type[key];
-	  return acc;
-	}, {})), {}, {
-	  isNotEmptyString: function isNotEmptyString(value) {
-	    return Type.isString(value) && value !== '';
-	  },
-	  isNotEmptyObject: function isNotEmptyObject(value) {
-	    return Type.isObjectLike(value) && Object.keys(value).length > 0;
-	  },
+	const {
+	  clone: clone$1,
+	  loadExtension: loadExt,
+	  debounce,
+	  throttle,
+	  html
+	} = Runtime;
+
+	// BX.type
+	const type = {
+	  ...Object.getOwnPropertyNames(Type).filter(key => !['name', 'length', 'prototype', 'caller', 'arguments'].includes(key)).reduce((acc, key) => {
+	    acc[key] = Type[key];
+	    return acc;
+	  }, {}),
+	  isNotEmptyString: value => Type.isString(value) && value !== '',
+	  isNotEmptyObject: value => Type.isObjectLike(value) && Object.keys(value).length > 0,
 	  isMapKey: Type.isObject,
-	  stringToInt: function stringToInt(value) {
-	    var parsed = parseInt(value);
+	  stringToInt: value => {
+	    const parsed = parseInt(value);
 	    return !Number.isNaN(parsed) ? parsed : 0;
 	  }
-	});
+	};
 
 	// BX.browser
-	var browser = {
+	const browser = {
 	  IsOpera: Browser.isOpera,
 	  IsIE: Browser.isIE,
 	  IsIE6: Browser.isIE6,
@@ -11105,47 +10897,47 @@ window._main_polyfill_core = true;
 	};
 
 	// eslint-disable-next-line
-	var ajax = window.BX ? window.BX.ajax : function () {};
-	function GetWindowScrollSize() {
-	  var doc = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : document;
+	const ajax = window.BX ? window.BX.ajax : () => {};
+	function GetWindowScrollSize(doc = document) {
 	  return {
 	    scrollWidth: doc.documentElement.scrollWidth,
 	    scrollHeight: doc.documentElement.scrollHeight
 	  };
 	}
-	function GetWindowScrollPos() {
-	  var doc = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : document;
-	  var win = getWindow(doc);
+	function GetWindowScrollPos(doc = document) {
+	  const win = getWindow(doc);
 	  return {
 	    scrollLeft: win.pageXOffset,
 	    scrollTop: win.pageYOffset
 	  };
 	}
-	function GetWindowInnerSize() {
-	  var doc = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : document;
-	  var win = getWindow(doc);
+	function GetWindowInnerSize(doc = document) {
+	  const win = getWindow(doc);
 	  return {
 	    innerWidth: win.innerWidth,
 	    innerHeight: win.innerHeight
 	  };
 	}
-	function GetWindowSize() {
-	  var doc = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : document;
-	  return _objectSpread$6(_objectSpread$6(_objectSpread$6({}, GetWindowInnerSize(doc)), GetWindowScrollPos(doc)), GetWindowScrollSize(doc));
+	function GetWindowSize(doc = document) {
+	  return {
+	    ...GetWindowInnerSize(doc),
+	    ...GetWindowScrollPos(doc),
+	    ...GetWindowScrollSize(doc)
+	  };
 	}
 	function GetContext(node) {
 	  return getWindow(node);
 	}
-	function pos(element) {
-	  var relative = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+	function pos(element, relative = false) {
 	  if (!element) {
 	    return new DOMRect().toJSON();
 	  }
 	  if (element.ownerDocument === document && !relative) {
-	    var clientRect = element.getBoundingClientRect();
-	    var root = document.documentElement;
-	    var _document = document,
-	      body = _document.body;
+	    const clientRect = element.getBoundingClientRect();
+	    const root = document.documentElement;
+	    const {
+	      body
+	    } = document;
 	    return {
 	      top: Math.round(clientRect.top + (root.scrollTop || body.scrollTop)),
 	      left: Math.round(clientRect.left + (root.scrollLeft || body.scrollLeft)),
@@ -11155,11 +10947,11 @@ window._main_polyfill_core = true;
 	      bottom: Math.round(clientRect.bottom + (root.scrollTop || body.scrollTop))
 	    };
 	  }
-	  var x = 0;
-	  var y = 0;
-	  var w = element.offsetWidth;
-	  var h = element.offsetHeight;
-	  var first = true;
+	  let x = 0;
+	  let y = 0;
+	  const w = element.offsetWidth;
+	  const h = element.offsetHeight;
+	  let first = true;
 
 	  // eslint-disable-next-line no-param-reassign
 	  for (; element != null; element = element.offsetParent) {
@@ -11188,7 +10980,7 @@ window._main_polyfill_core = true;
 	    eventObject = EventEmitter.GLOBAL_TARGET;
 	  }
 	  if (!Type.isObject(eventObject)) {
-	    console.error('The "eventObject" argument must be an object. Received type ' + babelHelpers["typeof"](eventObject) + '.');
+	    console.error('The "eventObject" argument must be an object. Received type ' + typeof eventObject + '.');
 	    return;
 	  }
 	  if (!Type.isStringFilled(eventName)) {
@@ -11196,7 +10988,7 @@ window._main_polyfill_core = true;
 	    return;
 	  }
 	  if (!Type.isFunction(eventHandler)) {
-	    console.error('The "eventHandler" argument must be a function. Received type ' + babelHelpers["typeof"](eventHandler) + '.');
+	    console.error('The "eventHandler" argument must be a function. Received type ' + typeof eventHandler + '.');
 	    return;
 	  }
 	  eventName = eventName.toLowerCase();
@@ -11219,7 +11011,7 @@ window._main_polyfill_core = true;
 	    eventParams = [];
 	  }
 	  eventName = eventName.toLowerCase();
-	  var event = new BaseEvent();
+	  const event = new BaseEvent();
 	  event.setData(eventParams);
 	  event.setCompatData(eventParams);
 	  EventEmitter.emit(eventObject, eventName, event, {
@@ -11234,7 +11026,7 @@ window._main_polyfill_core = true;
 	    eventObject = EventEmitter.GLOBAL_TARGET;
 	  }
 	  if (!Type.isFunction(eventHandler)) {
-	    console.error('The "eventHandler" argument must be a function. Received type ' + babelHelpers["typeof"](eventHandler) + '.');
+	    console.error('The "eventHandler" argument must be a function. Received type ' + typeof eventHandler + '.');
 	    return;
 	  }
 	  if (eventObject === window) {
@@ -11276,7 +11068,7 @@ window._main_polyfill_core = true;
 	exports.Cache = Cache;
 	exports.BaseError = BaseError;
 	exports.ZIndexManager = ZIndexManager;
-	exports.Extension = Extension$1;
+	exports.Extension = Extension;
 	exports.getClass = getClass;
 	exports.namespace = namespace;
 	exports.message = message$1;

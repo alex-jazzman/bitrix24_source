@@ -133,10 +133,19 @@ class Template extends Controller
 			return [];
 		}
 
+		$createdById = (int)$user->getId();
+		if($createdById < 1)
+		{
+			$this->addError(new Main\Error('User not found'));
+
+			return [];
+		}
+
 		$result = (new Send(
 			template: $template,
+			responsibleUserId: $createdById,
 			fields: $fields,
-			sendFromUserId: (int)$user->getId(),
+			sendFromUserId: $createdById,
 		))->launch();
 		if (!$result instanceof SendResult)
 		{
@@ -165,7 +174,7 @@ class Template extends Controller
 		itemType: AccessibleItemType::TEMPLATE,
 		itemIdOrUidRequestKey: 'uid',
 	)]
-	public function completeAction(string $uid): array
+	public function completeAction(string $uid, int $folderId): array
 	{
 		$templateRepository = Container::instance()->getDocumentTemplateRepository();
 		$template = $templateRepository->getByUid($uid);
@@ -175,6 +184,8 @@ class Template extends Controller
 
 			return [];
 		}
+
+		$template->folderId = $folderId;
 
 		$result = (new Operation\Document\Template\Complete($template))->launch();
 		$this->addErrorsFromResult($result);
@@ -270,10 +281,28 @@ class Template extends Controller
 		}
 
 		$createdByUserId = (int)CurrentUser::get()->getId();
-		$result = (new Operation\Document\Template\Copy($template, $createdByUserId, $folderId))->launch();
-		$this->addErrorsFromResult($result);
+		if ($createdByUserId < 1)
+		{
+			$this->addErrorByMessage('User not found');
 
-		return [];
+			return [];
+		}
+
+		$copyTemplateResult = (new Operation\Document\Template\Copy($template, $createdByUserId, $folderId))->launch();
+		if (!$copyTemplateResult->isSuccess())
+		{
+			$this->addErrorsFromResult($copyTemplateResult);
+
+			return [];
+		}
+
+		$copyTemplate = $copyTemplateResult->getData()['copyTemplate'];
+
+		return [
+			'template' => [
+				'id' => $copyTemplate->id,
+			],
+		];
 	}
 
 	public function getFieldsAction(
@@ -392,7 +421,15 @@ class Template extends Controller
 			return [];
 		}
 
-		$result = (new ImportTemplate($result->blank))->launch();
+		$createdById = (int)CurrentUser::get()->getId();
+		if($createdById < 1)
+		{
+			$this->addError(new Main\Error('User not found'));
+
+			return [];
+		}
+
+		$result = (new ImportTemplate($result->blank, $createdById))->launch();
 		$this->addErrorsFromResult($result);
 
 		return [];
@@ -500,9 +537,17 @@ class Template extends Controller
 			return [];
 		}
 
+		$sendFromUserId = (int)$this->getCurrentUser()->getId();
+		if ($sendFromUserId < 1)
+		{
+			$this->addErrorByMessage('User not found');
+
+			return [];
+		}
+
 		$operation = new Operation\Document\Template\RegisterDocumentsByTemplates(
 			templates: $templates,
-			sendFromUserId: (int)$this->getCurrentUser()->getId(),
+			sendFromUserId: $sendFromUserId,
 			onlyInitiatedByType: InitiatedByType::COMPANY,
 		);
 

@@ -18,3 +18,12 @@ type CallMessageIconColor = {
 }
 
 export type CallMetaData = Record<keyof typeof CallMessageType, CallMetaDataValue>
+
+export type CallMessageData = {
+	title: string,
+	description: string,
+	iconName: string,
+	iconColor: string,
+	iconFallbackUrl: string,
+	iconBorderColor: string,
+}

@@ -1,4 +1,5 @@
 import type { BaseEvent } from 'main.core.events';
+import { DocumentInitiatedType } from 'sign.type';
 
 export type BlankSelectorConfig = {
 	events?: {
@@ -23,6 +24,7 @@ export type BlankSelectorConfig = {
 	documentMode?: 'template' | 'document',
 	isOpenedFromRobot?: boolean,
 	isOpenedFromTemplateFolder?: boolean,
+	initiatedByType?: DocumentInitiatedType,
 };
 
 export type BlankData = {

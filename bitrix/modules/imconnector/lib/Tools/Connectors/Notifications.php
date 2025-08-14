@@ -285,6 +285,11 @@ JS;
 	public static function getWidgetDisclaimerUrl($langId = LANGUAGE_ID)
 	{
 		// TODO: replace with actual url when known
+		$license = new \Bitrix\Main\License();
+		if ($license->isCis())
+		{
+			return 'https://bitrix24.ru';
+		}
 		return 'https://bitrix24.com';
 	}
 

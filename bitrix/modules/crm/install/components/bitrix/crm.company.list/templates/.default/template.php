@@ -730,7 +730,12 @@ if ($isDefaultCategory)
 		NavigationBarPanel::ID_REPEAT_SALE,
 	]);
 
-	print OnboardingPopup::getInstance()->build();
+	$analytics = [
+		'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_COMPANY,
+		'c_sub_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_LIST,
+	];
+
+	print OnboardingPopup::getInstance()->setAnalytics($analytics)->build();
 }
 
 $APPLICATION->IncludeComponent(

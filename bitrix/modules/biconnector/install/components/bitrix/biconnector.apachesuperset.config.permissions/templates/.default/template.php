@@ -21,6 +21,7 @@ Bitrix\Main\UI\Extension::load([
 	'ui.icon-set.api.vue',
 	'ui.icon-set.actions',
 	'ui.icons.disk',
+	'biconnector.apache-superset-analytics',
 	'biconnector.dashboard-group',
 ]);
 

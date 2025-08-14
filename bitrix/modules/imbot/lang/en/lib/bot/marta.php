@@ -1,8 +1,10 @@
 <?php
 $MESS["IMBOT_BOT_CHANGE_LANG"] = "Yes, I speak English too.";
 $MESS["IMBOT_BOT_COLOR"] = "PINK";
-$MESS["IMBOT_BOT_DISABLE_WELCOME"] = "I'm so sorry #USER_NAME#... I just wanted to be helpful. https://marta.bitrix.info/upload/disable.gif";
-$MESS["IMBOT_BOT_ENABLE_WELCOME"] = "Hey, what's up #USER_NAME#! I am here for you. https://marta.bitrix.info/upload/enable.gif";
+$MESS["IMBOT_BOT_DISABLE_WELCOME"] = "I'm so sorry #USER_NAME#... I just wanted to be helpful :cry: https://marta.bitrix.info/upload/disable.gif";
+$MESS["IMBOT_BOT_DISABLE_WELCOME_MSGVER_1"] = "I'm sorry I could not help you, #USER_NAME#. Maybe next time? https://marta.#URL#/upload/disable.gif";
+$MESS["IMBOT_BOT_ENABLE_WELCOME"] = "Hey, what's up #USER_NAME#! I am here for you :{} https://marta.bitrix.info/upload/enable.gif";
+$MESS["IMBOT_BOT_ENABLE_WELCOME_MSGVER_1"] = "Hey #USER_NAME#! I'll watch your six! https://marta.#URL#/upload/enable.gif";
 $MESS["IMBOT_BOT_MESSAGE_CALEND_1_1"] = "You have planned events:";
 $MESS["IMBOT_BOT_MESSAGE_CALEND_1_2"] = "Don't forget your today's events:";
 $MESS["IMBOT_BOT_MESSAGE_CALEND_1_3"] = "Don't miss today:";

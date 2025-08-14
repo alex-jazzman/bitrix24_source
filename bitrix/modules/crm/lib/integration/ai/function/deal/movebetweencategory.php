@@ -79,11 +79,7 @@ final class MoveBetweenCategory implements AIFunction
 			],
 		];
 
-		return $this->factory->getItemsFilteredByPermissions(
-			$parameters,
-			$this->currentUserId,
-			UserPermissions::OPERATION_UPDATE,
-		);
+		return $this->factory->getItems($parameters);
 	}
 
 	private function getOperation(Deal $deal): Update

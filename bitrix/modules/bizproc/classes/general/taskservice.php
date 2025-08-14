@@ -6,6 +6,7 @@ use Bitrix\Bizproc;
 class CBPTaskService extends CBPRuntimeService
 {
 	const COUNTERS_CACHE_TAG_PREFIX = 'b_bp_tasks_cnt_';
+	private static $taskUsers = [];
 
 	public function deleteTask($id)
 	{
@@ -107,33 +108,46 @@ class CBPTaskService extends CBPRuntimeService
 			throw new Exception("taskId");
 		}
 
+		$users = [];
 		$where = '';
 		foreach ($taskId as $id)
 		{
-			if ($where)
+			if (!isset(self::$taskUsers[$id]))
 			{
-				$where .= ' OR ';
+				if ($where)
+				{
+					$where .= ' OR ';
+				}
+				$where .= ' TASK_ID = '.$id;
+				self::$taskUsers[$id] = [];
 			}
-			$where .= ' TASK_ID = '.$id;
+			else
+			{
+				$users[$id] = self::$taskUsers[$id];
+			}
 		}
 
-		$dateUpdateSelect = $DB->DateToCharFunction('TU.DATE_UPDATE', 'FULL') . ' as DATE_UPDATE';
-
-		$users = [];
-		$iterator = $DB->Query(
-			'SELECT'
-			.' TU.ID, TU.USER_ID, TU.TASK_ID, TU.STATUS, TU.ORIGINAL_USER_ID, ' . $dateUpdateSelect . ','
-			.' U.PERSONAL_PHOTO, U.NAME, U.LAST_NAME, U.SECOND_NAME, U.LOGIN, U.TITLE'
-			.' FROM b_bp_task_user TU'
-			.' INNER JOIN b_user U ON (U.ID = TU.USER_ID)'
-			.' WHERE '.$where
-			.' ORDER BY TU.DATE_UPDATE DESC'
-		);
-
-		while ($user = $iterator->fetch())
+		if ($where)
 		{
-			$users[$user['TASK_ID']][] = $user;
+			$dateUpdateSelect = $DB->DateToCharFunction('TU.DATE_UPDATE', 'FULL') . ' as DATE_UPDATE';
+
+			$iterator = $DB->Query(
+				'SELECT'
+				.' TU.ID, TU.USER_ID, TU.TASK_ID, TU.STATUS, TU.ORIGINAL_USER_ID, ' . $dateUpdateSelect . ','
+				.' U.PERSONAL_PHOTO, U.NAME, U.LAST_NAME, U.SECOND_NAME, U.LOGIN, U.TITLE'
+				.' FROM b_bp_task_user TU'
+				.' INNER JOIN b_user U ON (U.ID = TU.USER_ID)'
+				.' WHERE '.$where
+				.' ORDER BY TU.DATE_UPDATE DESC'
+			);
+
+			while ($user = $iterator->fetch())
+			{
+				$users[$user['TASK_ID']][] = $user;
+				self::$taskUsers[$user['TASK_ID']][] = $user;
+			}
 		}
+
 		return $users;
 	}
 
@@ -448,6 +462,11 @@ class CBPTaskService extends CBPRuntimeService
 			$users = array_merge($users, array_keys($taskData['USERS_STATUSES']));
 		}
 		self::cleanCountersCache($users);
+
+		if (!empty($taskData['USERS_REMOVED']) || !empty($taskData['USERS_ADDED']))
+		{
+			unset(self::$taskUsers[$taskId]);
+		}
 
 		self::setSearchContent($status, $taskId, $taskData);
 
@@ -917,9 +936,9 @@ class CBPTaskService extends CBPRuntimeService
 		return $dbRes;
 	}
 
-	public static function isLastTaskForUserByActivity(string $activityName, int $userId, int $templateId): bool
+	public static function isLastTaskForUserByActivity(string $activityName, int $userId, int $templateId, ?string $activity = null): bool
 	{
-		$previousTasks = static::getPreviousTasks($activityName, $userId, $templateId);
+		$previousTasks = static::getPreviousTasks($activityName, $userId, $templateId, $activity);
 		$neededTask = static::getNeededTaskByActivityName($activityName, $previousTasks);
 
 		foreach ($previousTasks as $task)
@@ -939,18 +958,23 @@ class CBPTaskService extends CBPRuntimeService
 		return true;
 	}
 
-	private static function getPreviousTasks(string $activityName, int $userId, int $templateId): array
+	private static function getPreviousTasks(string $activityName, int $userId, int $templateId, ?string $activity = null): array
 	{
+		$filter = [
+			'=ACTIVITY_NAME' => $activityName,
+			'=TASK_USERS.USER_ID' => $userId,
+			'=WORKFLOW_STATE.WORKFLOW_TEMPLATE_ID' => $templateId,
+		];
+		if ($activity)
+		{
+			$filter['=ACTIVITY'] = $activity;
+		}
 		$previousWorkflowIdSubquery =
 			Bizproc\Workflow\Task\TaskTable::query()
 				->setSelect(['WORKFLOW_ID'])
-				->setFilter([
-					'=ACTIVITY_NAME' => $activityName,
-					'=TASK_USERS.USER_ID' => $userId,
-					'=WORKFLOW_STATE.WORKFLOW_TEMPLATE_ID' => $templateId,
-				])
+				->setFilter($filter)
 				->whereNull('WORKFLOW_INSTANCE.ID')
-				->setOrder(['ID' => 'DESC'])
+				->setOrder(['TASK_USERS.TASK_ID' => 'DESC'])
 				->setLimit(1)
 				->getQuery()
 		;

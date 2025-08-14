@@ -395,10 +395,6 @@
 	flex-shrink: 0;
 }
 
-.tasks-flow__bi-analytics-container {
-	padding-left: 13px;
-}
-
 .tasks-flow__list-analytics {
 	display: flex;
 	align-items: center;
@@ -536,14 +532,6 @@
 
 .tasks-flow__list-flow-highlighted td:not([style*="background-color"]) {
 	animation: highlightRowTd 900ms ease;
-}
-
-.tasks-flow__bi-analytics {
-	height: 27px;
-	background: rgba(255, 255, 255, .15);
-	line-height: 25px;
-	font-size: var(--ui-font-size-sm);
-	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 #tasks-flow-list .main-grid-cell-counter:empty {

@@ -4,6 +4,7 @@ import { IServiceLocator } from '../../../../lib/di/service-locator/types';
 import { DialogLocatorServices } from '../../types/dialog';
 import { FileType } from '../../../../model/files/src/types';
 import { DialoguesModelState } from '../../../../model/dialogues/src/types';
+import {AttachConfig} from "../../../../model/messages/src/types/attach";
 
 type galleryItemParams = {
 	messageId: MessageId
@@ -42,6 +43,7 @@ type mediaHandlerProps = {
 	dialogModel: DialoguesModelState,
 	forceDelete: string,
 	onBeforeAction: () => Promise<void>,
+	mediaList: Array<mediaListItem>,
 }
 
 export { mediaHandlerProps, galleryItemParams, mediaMenuProps, menuItemParams, mediaListItem };

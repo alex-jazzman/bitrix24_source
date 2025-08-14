@@ -161,6 +161,7 @@ jn.define('im/messenger/model/messages/pin/model', (require, exports, module) =>
 
 			/**
 			 * @function messagesModel/pinModel/set
+			 * @param {MessengerStore<PinMessengerModel>} store
 			 * @param {PinSetPayload} payload
 			 */
 			set: (store, payload) => {
@@ -182,7 +183,7 @@ jn.define('im/messenger/model/messages/pin/model', (require, exports, module) =>
 				if (!storedPin)
 				{
 					store.commit('add', {
-						actionName: 'add',
+						actionName: payload.actionName || 'add',
 						data: {
 							chatId: pin.chatId,
 							pin,
@@ -198,7 +199,7 @@ jn.define('im/messenger/model/messages/pin/model', (require, exports, module) =>
 					// local pin with id === null. need update
 
 					store.commit('updatePin', {
-						actionName: 'set',
+						actionName: payload.actionName || 'set',
 						data: {
 							chatId: pin.chatId,
 							pin,
@@ -207,9 +208,17 @@ jn.define('im/messenger/model/messages/pin/model', (require, exports, module) =>
 				}
 			},
 
+			/** @function messagesModel/pinModel/setListFromSync */
+			setListFromSync: (store, payload) => {
+				return store.dispatch(
+					'setList',
+					{ ...payload, actionName: 'setListFromSync' },
+				);
+			},
+
 			/**
 			 * @function messagesModel/pinModel/setList
-			 * @param store
+			 * @param {MessengerStore<PinMessengerModel>} store
 			 * @param {PinSetListPayload} payload
 			 * @return {Promise<void>}
 			 */
@@ -225,6 +234,7 @@ jn.define('im/messenger/model/messages/pin/model', (require, exports, module) =>
 					const setDispatch = store.dispatch('set', {
 						pin,
 						messages: payload.messages,
+						actionName: payload.actionName,
 					});
 
 					setDispatchList.push(setDispatch);
@@ -325,15 +335,24 @@ jn.define('im/messenger/model/messages/pin/model', (require, exports, module) =>
 				});
 			},
 
+			/** @function messagesModel/pinModel/deleteByIdList */
 			deleteByIdList: (store, payload) => {
-				const { idList } = payload;
+				const { idList, actionName = 'deleteByIdList' } = payload;
 
 				store.commit('deleteByIdList', {
-					actionName: 'deleteByIdList',
+					actionName,
 					data: {
 						idList,
 					},
 				});
+			},
+
+			/** @function messagesModel/pinModel/deleteByIdListFromSync */
+			deleteByIdListFromSync: (store, payload) => {
+				return store.dispatch(
+					'deleteByIdList',
+					{ ...payload, actionName: 'deleteByIdListFromSync' },
+				);
 			},
 
 			/**

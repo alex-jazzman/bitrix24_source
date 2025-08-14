@@ -2,8 +2,8 @@
 
 return [
 	'extensions' => [
-		'loc',
 		'type',
+		'im:messenger/loc',
 		'im:lib/theme',
 		'utils/validation',
 		'layout/ui/loaders/spinner',

@@ -10,14 +10,14 @@ use Bitrix\Main,
 	Bitrix\Rest,
 	Bitrix\SalesCenter;
 use Bitrix\Sale\Delivery\Services\Table;
-use Bitrix\SalesCenter\Integration\SaleManager;
+use Bitrix\SalesCenter\Integration;
 
 /**
  * Class SalesCenterDeliveryPanel
  */
 class SalesCenterDeliveryPanel extends CBitrixComponent implements Main\Engine\Contract\Controllerable
 {
-	private const MARKETPLACE_CATEGORY_DELIVERY = 'delivery';
+	private const MARKET_CATEGORY_DELIVERY = 'crm_delivery';
 	private const TITLE_LENGTH_LIMIT = 50;
 
 	protected $deliveryPanelId = 'salescenter-extra-delivery';
@@ -61,7 +61,7 @@ class SalesCenterDeliveryPanel extends CBitrixComponent implements Main\Engine\C
 		}
 		Loader::includeModule('sale');
 
-		if(!SaleManager::getInstance()->isManagerAccess(true))
+		if(!Integration\SaleManager::getInstance()->isManagerAccess(true))
 		{
 			$this->showError(Loc::getMessage('SDP_ACCESS_DENIED'));
 			return;
@@ -89,28 +89,58 @@ class SalesCenterDeliveryPanel extends CBitrixComponent implements Main\Engine\C
 
 		$items = array_merge($internalItems, $marketplaceItems);
 
-		if (Bitrix24Manager::getInstance()->isEnabled())
-		{
-			$items[] = $this->getRecommendItem();
-		}
-
-		if (RestManager::getInstance()->isEnabled())
-		{
-			foreach ($this->getActionboxItems() as $actionboxItem)
-			{
-				$items[] = $actionboxItem;
-			}
-		}
-
 		$this->arResult['deliveryPanelParams'] = [
 			'id' => $this->deliveryPanelId,
 			'items' => $items,
 		];
 
+		$this->arResult['otherDeliveryPanelParams'] = [
+			'id' => $this->deliveryPanelId,
+			'items' => $this->getAdditionalDeliveryItems(),
+		];
+
 		return $this->arResult;
 	}
 
-	/**
+	protected function getAdditionalDeliveryItems(): array
+	{
+		$result = [];
+
+		if (Integration\RestManager::getInstance()->isEnabled())
+		{
+			$appsCount =
+				Integration\RestManager::getInstance()
+					->getMarketplaceAppsCount(static::MARKET_CATEGORY_DELIVERY)
+			;
+			$result[] = [
+				'id' => 'counter',
+				'title' => Loc::getMessage('SCP_SALESCENTER_DELIVERY_APP_TOTAL_APPLICATIONS'),
+				'data' => [
+					'type' => 'counter',
+					'connectPath' => ' /market/category/' . static::MARKET_CATEGORY_DELIVERY . '/',
+					'count' => $appsCount,
+					'description' => Loc::getMessage('SCP_SALESCENTER_DELIVERY_APP_SEE_ALL'),
+				],
+			];
+		}
+
+		if (Bitrix24Manager::getInstance()->isEnabled())
+		{
+			$result[] = $this->getRecommendItem();
+		}
+
+		if (RestManager::getInstance()->isEnabled())
+		{
+			foreach ($this->getActionboxItems() as $item)
+			{
+				$result[] = $item;
+			}
+		}
+
+		return $result;
+	}
+
+		/**
 	 * @param $error
 	 */
 	protected function showError($error)
@@ -304,7 +334,7 @@ class SalesCenterDeliveryPanel extends CBitrixComponent implements Main\Engine\C
 			return $marketplaceInstalledApps;
 		}
 
-		$marketplaceAppCodeList = RestManager::getInstance()->getMarketplaceAppCodeList(self::MARKETPLACE_CATEGORY_DELIVERY);
+		$marketplaceAppCodeList = RestManager::getInstance()->getMarketplaceAppCodeList(self::MARKET_CATEGORY_DELIVERY);
 		$appIterator = Rest\AppTable::getList([
 			'select' => [
 				'ID',

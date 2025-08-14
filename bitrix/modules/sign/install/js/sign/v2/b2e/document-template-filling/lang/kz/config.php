@@ -17,4 +17,6 @@ $MESS["SIGN_B2E_DOCUMENT_FILLING_INPUT_REG_NUMBER_HCMLINK_HINT"] = "Тіркеу
 $MESS["SIGN_B2E_DOCUMENT_FILLING_INPUT_REG_NUMBER_LABEL"] = "Тіркеу нөмірі";
 $MESS["SIGN_B2E_DOCUMENT_FILLING_INPUT_REG_NUMBER_PLACEHOLDER"] = "н/ж";
 $MESS["SIGN_B2E_DOCUMENT_FILLING_INPUT_REG_NUMBER_PLACEHOLDER_HCMLINK"] = "1С-дан қосылды";
+$MESS["SIGN_B2E_DOCUMENT_FILLING_REMOVE_TEMPLATE"] = " Жөнелту үшін жиынтықтан қалыпты алып тастау";
 $MESS["SIGN_B2E_DOCUMENT_FILLING_TITLE_HEAD_LABEL"] = "Деректерді толтырыңыз";
+$MESS["SIGN_DOCUMENT_SEND_DATETIME_LIMIT_SELECTOR_GOSKEY_ALERT"] = "Мемлекеттік кілтке жіберілген құжаттар өкіл қол қойғаннан кейін келесі 24 сағат ішінде автоматты түрде орнатылмайды, тіпті егер сіз көрсеткен мерзім аяқталған болса да ";

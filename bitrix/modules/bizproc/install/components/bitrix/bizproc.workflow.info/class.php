@@ -244,7 +244,8 @@ class BizprocWorkflowInfo extends \CBitrixComponent
 				$fastClose = CBPTaskService::isLastTaskForUserByActivity(
 					$task['activityName'],
 					$userId,
-					$workflowState->getWorkflowTemplateId()
+					$workflowState->getWorkflowTemplateId(),
+					$task['activity']
 				);
 			}
 		}

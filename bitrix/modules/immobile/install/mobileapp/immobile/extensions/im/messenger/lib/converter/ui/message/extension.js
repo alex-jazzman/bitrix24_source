@@ -128,19 +128,14 @@ jn.define('im/messenger/lib/converter/ui/message', (require, exports, module) =>
 				return CheckInMessageFactory.create(modelMessage, options);
 			}
 
-			if (messageHelper.isMediaGallery && Feature.isGalleryMessageSupported)
+			if (messageHelper.isMediaGallery)
 			{
 				return new MediaGalleryMessage(modelMessage, options, files);
 			}
 
-			if (messageHelper.isFileGallery && Feature.isGalleryMessageSupported)
+			if (messageHelper.isFileGallery)
 			{
 				return new FileGalleryMessage(modelMessage, options, files);
-			}
-
-			if (GalleryMessageFactory.checkSuitableForDisplay(modelMessage))
-			{
-				return GalleryMessageFactory.create(modelMessage, options);
 			}
 
 			if (CallMessageFactory.checkSuitableForDisplay(modelMessage))
@@ -221,7 +216,6 @@ jn.define('im/messenger/lib/converter/ui/message', (require, exports, module) =>
 				text: recentMessage.text,
 				loadText: '',
 				params: {},
-				replaces: [],
 				files: [],
 				unread: false,
 				viewed: true,

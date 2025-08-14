@@ -4,7 +4,7 @@
  * Bitrix Framework
  * @package bitrix
  * @subpackage main
- * @copyright 2001-2023 Bitrix
+ * @copyright 2001-2025 Bitrix
  */
 
 namespace Bitrix\Main\Web\Http\Curl;
@@ -18,9 +18,9 @@ class Queue extends Http\Queue
 	protected array $promises = [];
 	protected \CurlMultiHandle $handle;
 
-	public function __construct(bool $backgroundJob = true)
+	public function __construct()
 	{
-		parent::__construct($backgroundJob);
+		parent::__construct();
 
 		$this->handle = curl_multi_init();
 	}
@@ -70,7 +70,7 @@ class Queue extends Http\Queue
 			{
 				$status = curl_multi_exec($this->handle, $active);
 			}
-			catch (SkipBodyException $e)
+			catch (SkipBodyException)
 			{
 				$fetchBody = false;
 			}
@@ -102,6 +102,8 @@ class Queue extends Http\Queue
 					$response->adjustHeaders();
 
 					$promise->fulfill($response);
+
+					$handler->logDiagnostics();
 				}
 				else
 				{
@@ -110,11 +112,6 @@ class Queue extends Http\Queue
 					$promise->reject(new Http\NetworkException($promise->getRequest(), $error));
 
 					$handler->getLogger()?->error($error . "\n");
-				}
-
-				if ($handler->getDebugLevel() & HttpDebug::DIAGNOSTICS)
-				{
-					$handler->log("\n***TIME connect={connect}, handshake={handshake}, request={request}, total={total}\n", HttpDebug::DIAGNOSTICS, $handler->getInfo());
 				}
 
 				// job done, the promise is fullfilled or rejected

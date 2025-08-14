@@ -98,7 +98,6 @@ export class RepeatSale extends Base
 				cacheable: false,
 				requestMethod: 'post',
 				requestParams: {
-					readOnly: true,
 					analytics: {
 						section: 'deal_section',
 					},

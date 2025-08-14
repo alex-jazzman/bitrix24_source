@@ -5,6 +5,6 @@ return [
 		'feature',
 		'project/utils',
 		'utils/url',
-		'user/profile',
+		'user-profile',
 	],
 ];

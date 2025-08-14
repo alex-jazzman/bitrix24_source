@@ -8,6 +8,7 @@ jn.define('lists/element-creation-guide/catalog-step/view', (require, exports, m
 	const { Stub } = require('lists/element-creation-guide/stub');
 	const { CatalogStepSkeleton } = require('lists/element-creation-guide/catalog-step/skeleton');
 	const { PureComponent } = require('layout/pure-component');
+	const { AnalyticsEvent } = require('analytics');
 
 	class CatalogStepView extends PureComponent
 	{
@@ -213,6 +214,17 @@ jn.define('lists/element-creation-guide/catalog-step/view', (require, exports, m
 
 				this.selectedItem.isSelected = false;
 				changedItems.push(this.selectedItem);
+			}
+
+			if (item.type === 'process')
+			{
+				new AnalyticsEvent({
+					tool: 'automation',
+					category: 'bizproc_operations',
+					event: 'process_start_attempt',
+					c_section: this.analyticsSection,
+					p1: `name_${item.title || 'custom'}`,
+				}).send();
 			}
 
 			this.customEventEmitter.emit('CatalogStepView:OnSelectItem', [item]);

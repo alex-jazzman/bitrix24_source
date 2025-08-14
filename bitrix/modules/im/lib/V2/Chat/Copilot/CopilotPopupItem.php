@@ -87,7 +87,7 @@ class CopilotPopupItem implements PopupDataItem
 			$this->messages->fillParams();
 			$messages->fillParams();
 
-			$this->messages->merge($messages);
+			$this->messages->mergeRegistry($messages);
 		}
 		elseif (isset($messages))
 		{

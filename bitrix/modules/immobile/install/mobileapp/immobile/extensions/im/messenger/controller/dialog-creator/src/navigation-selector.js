@@ -2,12 +2,11 @@
  * @module im/messenger/controller/dialog-creator/navigation-selector
  */
 jn.define('im/messenger/controller/dialog-creator/navigation-selector', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { AnalyticsEvent } = require('analytics');
 
 	const { Theme } = require('im/lib/theme');
 	const { CopilotRoleSelector } = require('layout/ui/copilot-role-selector');
-	const { openIntranetInviteWidget } = require('intranet/invite-opener-new');
 
 	const {
 		EventType,
@@ -19,9 +18,9 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector', (require
 	const { NavigationSelectorView } = require('im/messenger/controller/dialog-creator/navigation-selector/view');
 	const { CreateChannel, CreateGroupChat } = require('im/messenger/controller/chat-composer');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
-	const { Feature } = require('im/messenger/lib/feature');
 	const { ChatService } = require('im/messenger/provider/services/chat');
 	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
+	const { isModuleInstalled } = require('module');
 
 	class NavigationSelector
 	{
@@ -51,24 +50,12 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector', (require
 					this.layout.close();
 				},
 				onCreateChannel: () => {
-					if (!Feature.isChatComposerSupported)
-					{
-						Feature.showUnsupportedWidget({}, this.layout);
-
-						return;
-					}
 					this.sendAnalyticsStartCreate(Analytics.Category.channel, Analytics.Type.channel);
 
 					const createChannel = new CreateChannel();
 					createChannel.open({}, this.layout);
 				},
 				onCreatePrivateChat: () => {
-					if (!Feature.isChatComposerSupported)
-					{
-						Feature.showUnsupportedWidget({}, this.layout);
-
-						return;
-					}
 					this.sendAnalyticsStartCreate(Analytics.Category.chat, Analytics.Type.chat);
 
 					const createGroupChat = new CreateGroupChat();
@@ -77,13 +64,6 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector', (require
 					});
 				},
 				onCreateCollab: async () => {
-					if (!Feature.isCollabSupported)
-					{
-						Feature.showUnsupportedWidget({}, this.layout);
-
-						return;
-					}
-
 					try
 					{
 						const { openCollabCreate } = await requireLazy('collab/create');
@@ -136,11 +116,15 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector', (require
 						console.error(error);
 					}
 				},
-				onClickInviteButton: () => {
-					openIntranetInviteWidget({
-						analytics: new AnalyticsEvent().setSection('chat'),
-						parentLayout: this.layout,
-					});
+				onClickInviteButton: async () => {
+					if (isModuleInstalled('intranet'))
+					{
+						const { openIntranetInviteWidget } = require('intranet/invite-opener-new');
+						openIntranetInviteWidget?.({
+							analytics: new AnalyticsEvent().setSection('chat'),
+							parentLayout: this.layout,
+						});
+					}
 				},
 			});
 		}

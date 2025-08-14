@@ -2,7 +2,7 @@
  * @module im/messenger/lib/element/dialog/message/deleted
  */
 jn.define('im/messenger/lib/element/dialog/message/deleted', (require, exports, module) => {
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 
 	const { MessageType } = require('im/messenger/const');
 	const { Message } = require('im/messenger/lib/element/dialog/message/base');

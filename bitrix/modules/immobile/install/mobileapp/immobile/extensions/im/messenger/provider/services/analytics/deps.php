@@ -30,5 +30,7 @@ return [
 		'./src/message-create-menu',
 		'./src/chat-open',
 		'./src/navigation-tab',
+		'./src/chat-pin',
+		'./src/message-type',
 	],
 ];

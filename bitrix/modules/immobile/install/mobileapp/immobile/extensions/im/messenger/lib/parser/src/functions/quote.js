@@ -7,7 +7,7 @@
  */
 jn.define('im/messenger/lib/parser/functions/quote', (require, exports, module) => {
 
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { parsedElements, PLACEHOLDER } = require('im/messenger/lib/parser/utils/parsed-elements');
@@ -16,6 +16,7 @@ jn.define('im/messenger/lib/parser/functions/quote', (require, exports, module) 
 	const { QuoteInactive } = require('im/messenger/lib/parser/elements/dialog/message/quote-inactive');
 	const { Code } = require('im/messenger/lib/parser/elements/dialog/message/code');
 	const { parserUrl } = require('im/messenger/lib/parser/functions/url');
+	const { parserImage } = require('im/messenger/lib/parser/functions/image');
 
 	const QUOTE_SIGN = '>>';
 
@@ -50,6 +51,7 @@ jn.define('im/messenger/lib/parser/functions/quote', (require, exports, module) 
 					quoteText += '\n' + textLines[i];
 				}
 
+				quoteText = parserImage.simplifyIcon(quoteText);
 				const quoteEndIndex = i - 1;
 
 				textLines.splice(quoteStartIndex, quoteEndIndex - quoteStartIndex);
@@ -218,6 +220,8 @@ jn.define('im/messenger/lib/parser/functions/quote', (require, exports, module) 
 			}
 
 			let restoredTagQuoteText = parsedElements.restoreTags(quoteText);
+			restoredTagQuoteText = parserImage.decodeIcon(restoredTagQuoteText);
+
 			let quoteMark = '';
 			if (isActiveQuote)
 			{

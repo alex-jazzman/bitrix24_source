@@ -453,7 +453,7 @@ class Calendar
 
 		$crmSection = \CCalendar::GetCrmSection($userId, $autoCreate);
 
-		return is_string($crmSection) ? (int)$crmSection : null;
+		return is_numeric($crmSection) ? (int)$crmSection : null;
 	}
 
 	public static function createDefault(array $params = []): ?array
@@ -485,5 +485,21 @@ class Calendar
 		}
 
 		return array_unique($accessibility->getBusyUsersIds($userIds, $fromTs, $toTs));
+	}
+
+	public static function getChildEvents(int $parentEventId, int $userId): ?array
+	{
+		return \CCalendarEvent::GetList([
+			'arFilter' => [
+				'PARENT_ID' => $parentEventId,
+				'CREATED_BY' => $userId,
+				'IS_MEETING' => 1,
+				'DELETED' => 'N',
+			],
+			'parseRecursion' => false,
+			'fetchAttendees' => true,
+			'checkPermissions' => false,
+			'setDefaultLimit' => false,
+		]);
 	}
 }

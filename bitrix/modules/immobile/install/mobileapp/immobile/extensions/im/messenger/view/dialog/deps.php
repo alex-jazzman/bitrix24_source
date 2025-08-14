@@ -4,10 +4,10 @@ return [
 	'extensions' => [
 		'apptheme',
 		'type',
-		'loc',
 		'module',
 		'ui-system/blocks/icon',
 		'im:lib/theme',
+		'im:messenger/loc',
 		'im:messenger/const',
 		'im:messenger/params',
 		'im:messenger/view/base',

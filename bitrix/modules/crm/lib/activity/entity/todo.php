@@ -26,6 +26,7 @@ class ToDo extends BaseActivity
 	public function save(array $options = [], $useCurrentSettings = false): Result
 	{
 		$this->tryAppendTags();
+		$this->appendContextToOptions($options);
 
 		return parent::save($options, $useCurrentSettings);
 	}
@@ -84,5 +85,10 @@ class ToDo extends BaseActivity
 		);
 
 		return !empty($busyUsersIds);
+	}
+
+	private function appendContextToOptions(array &$options): void
+	{
+		$options['CONTEXT'] = $this->getContext();
 	}
 }

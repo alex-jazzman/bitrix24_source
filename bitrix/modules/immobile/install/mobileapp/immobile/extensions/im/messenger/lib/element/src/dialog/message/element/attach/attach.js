@@ -3,7 +3,7 @@
  */
 jn.define('im/messenger/lib/element/dialog/message/element/attach/attach', (require, exports, module) => {
 	const { Type } = require('type');
-	const { Loc } = require('loc');
+	const { Loc } = require('im/messenger/loc');
 	const { clone } = require('utils/object');
 	const {
 		AttachType,

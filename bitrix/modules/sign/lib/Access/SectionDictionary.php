@@ -58,9 +58,13 @@ class SectionDictionary
 		{
 			unset($map[self::B2E]);
 		}
-		elseif (!Feature::instance()->isSendDocumentByEmployeeEnabled())
+		if (!Feature::instance()->isDocumentTemplatesAvailable())
 		{
 			$map = self::removeSendByEmployeePermissions($map);
+		}
+		if (!Feature::instance()->isDocumentTemplatesAvailable())
+		{
+			$map = self::removeTemplatePermissions($map);
 		}
 
 		return $map;
@@ -102,22 +106,31 @@ class SectionDictionary
 
 	private static function removeSendByEmployeePermissions(array $map): array
 	{
+		return self::removeB2ePermissions($map, [
+			SignPermissionDictionary::SIGN_B2E_MEMBER_DYNAMIC_FIELDS_DELETE,
+		]);
+	}
+
+	private static function removeTemplatePermissions(array $map): array
+	{
+		return self::removeB2ePermissions($map, [
+			SignPermissionDictionary::SIGN_B2E_TEMPLATE_WRITE,
+			SignPermissionDictionary::SIGN_B2E_TEMPLATE_READ,
+			SignPermissionDictionary::SIGN_B2E_TEMPLATE_CREATE,
+			SignPermissionDictionary::SIGN_B2E_TEMPLATE_DELETE,
+		]);
+	}
+
+	private static function removeB2ePermissions(array $map, array $permissionsToDelete): array
+	{
 		if (!isset($map[self::B2E]))
 		{
 			return $map;
 		}
 
-		$sendByEmployeePermissions = [
-			SignPermissionDictionary::SIGN_B2E_MEMBER_DYNAMIC_FIELDS_DELETE,
-			SignPermissionDictionary::SIGN_B2E_TEMPLATE_WRITE,
-			SignPermissionDictionary::SIGN_B2E_TEMPLATE_READ,
-			SignPermissionDictionary::SIGN_B2E_TEMPLATE_CREATE,
-			SignPermissionDictionary::SIGN_B2E_TEMPLATE_DELETE,
-		];
-
 		foreach($map[self::B2E] as $key => $permission)
 		{
-			if (in_array($permission, $sendByEmployeePermissions, true))
+			if (in_array($permission, $permissionsToDelete, true))
 			{
 				unset($map[self::B2E][$key]);
 			}
