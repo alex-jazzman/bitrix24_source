@@ -9,5 +9,8 @@ return [
 		'task.priority' => 'transaction',
 		'task.status' => 'transaction',
 		'task.member' => 'transaction',
+		'task.reminder' => 'transaction',
+		'task.time.start' => 'transaction',
+		'task.time.stop' => 'transaction',
 	],
 ];

@@ -20,5 +20,6 @@ $MESS["CRM_REPEAT_SALE_SEGMENT_PLACEHOLDER"] = "Детально опишіть,
 $MESS["CRM_REPEAT_SALE_SEGMENT_PLACEHOLDER_WITH_COPILOT"] = "Докладно опишіть, що потрібно зробити менеджеру, або натисніть пробіл для запуску CoPilot";
 $MESS["CRM_REPEAT_SALE_SEGMENT_SAVE_ERROR"] = "Не вдалося зберегти сценарій. Спробуйте ще раз.";
 $MESS["CRM_REPEAT_SALE_SEGMENT_TITLE"] = "Налаштування сценарію повторних продажів";
+$MESS["CRM_REPEAT_SALE_SEGMENT_TITLE_READ_ONLY"] = "Сценарій повторних продажів";
 $MESS["CRM_REPEAT_SALE_SEGMENT_VALIDATE_ASSIGNMENT_USERS_ERROR"] = "У сценарії має бути хоча б один відповідальний.";
 $MESS["CRM_REPEAT_SALE_SEGMENT_VALIDATE_TEXT_ERROR"] = "У сценарії має бути заповнений текст справи CRM.";

@@ -10,7 +10,7 @@ return [
 	'rel' => [
 		'ui.vue3',
 		'ui.vue3.mixins.loc-mixin',
-		'tasks.v2.lib.side-panel-instance',
+		'tasks.v2.application.task-card',
 		'tasks.v2.component.elements.chip',
 		'tasks.v2.component.elements.field-list',
 		'tasks.v2.component.fields.title',

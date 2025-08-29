@@ -1,4 +1,4 @@
-<?
+<?php
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -16,7 +16,6 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 /** !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
 
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Tasks\Helper\Filter;
 use Bitrix\Tasks\Integration\Intranet;
 use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Util\User;
@@ -136,7 +135,6 @@ class TasksTopmenuComponent extends TasksBaseComponent
 		$this->arResult['USER_ID'] = (int)$this->userId;
 		$this->arResult['OWNER_ID'] = (int)$this->arParams['USER_ID'];
 
-		$this->arResult['ROLES'] = [];
 		$this->arResult['TOTAL'] = 0;
 		$this->arResult['PROJECTS_COUNTER'] = 0;
 		$this->arResult['SCRUM_COUNTER'] = 0;
@@ -151,11 +149,6 @@ class TasksTopmenuComponent extends TasksBaseComponent
 		{
 			$counter = Counter::getInstance($this->arParams['USER_ID']);
 
-			// tasks 23.500.0
-			if (!Filter::isRolesEnabled())
-			{
-				$this->arResult['ROLES'] = $this->getRoles();
-			}
 			$this->arResult['TOTAL'] = $counter->get(Counter\CounterDictionary::COUNTER_MEMBER_TOTAL);
 			$this->arResult['PROJECTS_COUNTER'] = $counter->get(Counter\CounterDictionary::COUNTER_SONET_TOTAL_EXPIRED)
 				+ $counter->get(Counter\CounterDictionary::COUNTER_SONET_TOTAL_COMMENTS);
@@ -204,45 +197,5 @@ class TasksTopmenuComponent extends TasksBaseComponent
 		}
 
 		return $result;
-	}
-
-	private function getRoles()
-	{
-		$roles = array();
-		$countersId = $this->roleCodeToCounterId();
-		foreach (Counter\Role::getRoles() as $roleId => $role)
-		{
-			$roles[$roleId] = array(
-				'TEXT' => $role['TITLE'],
-				'COUNTER' => $this->getCounter($role['CODE']),
-				'COUNTER_ID' => 'tasks_'.$countersId[$role['CODE']],
-				'IS_ACTIVE' => false,
-				'HREF' => $this->getRoleUrl($role['ID'])
-			);
-		}
-
-		return $roles;
-	}
-
-	private function roleCodeToCounterId()
-	{
-		return array(
-			Counter\Role::AUDITOR => Counter\CounterDictionary::COUNTER_AUDITOR,
-			Counter\Role::ACCOMPLICE => Counter\CounterDictionary::COUNTER_ACCOMPLICES,
-			Counter\Role::RESPONSIBLE => Counter\CounterDictionary::COUNTER_MY,
-			Counter\Role::ORIGINATOR => Counter\CounterDictionary::COUNTER_ORIGINATOR,
-		);
-	}
-
-	private function getCounter($roleCode)
-	{
-		$countersId = $this->roleCodeToCounterId();
-
-		return Counter::getInstance($this->arParams['USER_ID'])->get($countersId[$roleCode]);
-	}
-
-	private function getRoleUrl($roleId)
-	{
-		return 'F_CANCEL=Y&F_STATE=sR'.base_convert($roleId, 10, 32);
 	}
 }

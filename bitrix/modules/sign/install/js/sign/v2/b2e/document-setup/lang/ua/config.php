@@ -6,6 +6,7 @@ $MESS["SIGN_DOCUMENT_SETUP_ADD_DOCUMENT_NOTICE"] = "Можна надіслат�
 $MESS["SIGN_DOCUMENT_SETUP_DATE_LABEL"] = "Дата створення документа";
 $MESS["SIGN_DOCUMENT_SETUP_DOCUMENT_CANCEL_BUTTON"] = "Скасувати";
 $MESS["SIGN_DOCUMENT_SETUP_DOCUMENT_EDIT_BUTTON"] = "Змінити";
+$MESS["SIGN_DOCUMENT_SETUP_DOCUMENT_GROUP_LIMIT_NOTICE"] = "Ви можете одночасно надіслати на підпис максимум стільки документів: %limit%.";
 $MESS["SIGN_DOCUMENT_SETUP_DOCUMENT_LIMIT_NOTICE"] = "Ви можете надіслати на підпис до 20 документів одночасно.";
 $MESS["SIGN_DOCUMENT_SETUP_DOCUMENT_LIMIT_POPUP"] = "Ліміт за кількістю документів вичерпано.";
 $MESS["SIGN_DOCUMENT_SETUP_HEADER"] = "Підготуйте документ на підпис";

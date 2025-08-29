@@ -43,12 +43,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  getParams() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _params)[_params];
 	  }
-	  getParam(name) {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _params)[_params][name] || null;
-	  }
-	  setParams(params) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _params)[_params] = params;
-	  }
 	  getStore() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _store)[_store];
 	  }

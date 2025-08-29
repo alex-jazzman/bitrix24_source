@@ -145,6 +145,8 @@ if ($request->get('landing_mode') === 'edit')
 		;
 	}
 
+	$metrika->setParam(3, 'siteId', $arResult['LANDING']->getSiteId());
+
 	if ($arResult['FATAL'])
 	{
 		$metrika->setError('fatal');
@@ -341,7 +343,7 @@ if (!$request->offsetExists('landing_mode')):
 	$formCode = '';
 	if (!isset($arResult['LICENSE']) || $arResult['LICENSE'] != 'nfr')
 	{
-		$formCode = $isKnowledge ? 'knowledge' : 'developer';
+		$formCode = 'general';
 		?>
 		<div style="display: none">
 			<?$APPLICATION->includeComponent(
@@ -679,6 +681,15 @@ else
 <?= $component->getFontProxyUrlScript() ?>
 
 <?php
+// check accepted
+if (
+	$arParams['AGREEMENT_ACCEPTED'] === false
+	&& in_array($arParams['TYPE'], ['PAGE', 'STORE'])
+)
+{
+	return;
+}
+
 // editor frame
 if ($request->offsetExists('landing_mode'))
 {

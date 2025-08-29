@@ -1980,6 +1980,10 @@ h1.g-line-height-0, h2.g-line-height-0, h3.g-line-height-0, h4.g-line-height-0, 
   background: repeating-linear-gradient(to bottom, #fff, #fff 5px, #eee 5px, #eee 10px);
 }
 
+.g-bg-inherit {
+  background: inherit !important;
+}
+
 .g-bg {
   background: transparent !important;
   background: var(--bg) !important;
@@ -30207,6 +30211,42 @@ main:not(.landing-edit-mode) .block-store-menu-sidebar .landing-block {
 /* GRID */
 .d-grid {
   display: grid;
+}
+
+.d-grid-71-2 {
+  --grid-max-col-count: 3;
+  --grid-min-col-size: 340px;
+  --grid-gap: 16px;
+  --grid-col-size-calc: calc((100% - var(--grid-gap) * var(--grid-max-col-count)) / var(--grid-max-col-count));
+  --grid-col-min-size-calc: min(100%, max(var(--grid-min-col-size), var(--grid-col-size-calc)));
+  display: grid;
+  gap: var(--grid-gap);
+  grid-template-columns: repeat(auto-fit, minmax(var(--grid-col-min-size-calc), var(--grid-min-col-size)));
+  justify-content: center;
+}
+
+.d-grid-71-3 {
+  --grid-max-col-count: 4;
+  --grid-min-col-size: 270px;
+  --grid-gap: 12px;
+  --grid-col-size-calc: calc((100% - var(--grid-gap) * var(--grid-max-col-count)) / var(--grid-max-col-count));
+  --grid-col-min-size-calc: min(100%, max(var(--grid-min-col-size), var(--grid-col-size-calc)));
+  display: grid;
+  gap: var(--grid-gap);
+  grid-template-columns: repeat(auto-fit, minmax(var(--grid-col-min-size-calc), var(--grid-min-col-size)));
+  justify-content: center;
+}
+
+.d-grid-71-4 {
+  --grid-max-col-count: 3;
+  --grid-min-col-size: 300px;
+  --grid-gap: 12px;
+  --grid-col-size-calc: calc((100% - var(--grid-gap) * var(--grid-max-col-count)) / var(--grid-max-col-count));
+  --grid-col-min-size-calc: min(100%, max(var(--grid-min-col-size), var(--grid-col-size-calc)));
+  display: grid;
+  gap: var(--grid-gap);
+  grid-template-columns: repeat(auto-fit, minmax(var(--grid-col-min-size-calc), var(--grid-min-col-size)));
+  justify-content: center;
 }
 
 .bg-hover:hover .bg-hover-prev-white {

@@ -53,7 +53,7 @@ $tasksLinkParams = [
 	"name" => "tasks",
 	"counter_id" => "tasks_total",
 	"menu_item_id" => "menu_tasks",
-	"sub_link" => SITE_DIR."company/personal/user/".$userId."/tasks/task/edit/0/?ta_sec=left_menu&ta_el=create_button&miniform=true"
+	"sub_link" => SITE_DIR."company/personal/user/".$userId."/tasks/task/edit/0/?ta_sec=tasks&ta_el=left_menu&miniform=true"
 	,
 	"top_menu_id" => "tasks_panel_menu",
 ];

@@ -56,12 +56,12 @@ export class EntitySelectorDialog extends Dialog
 
 			if (!item.isSelected() && isSelected)
 			{
-				item.select();
+				item.select(true);
 			}
 
 			if (item.isSelected() && !isSelected)
 			{
-				item.deselect();
+				item.deselect(true);
 			}
 		});
 

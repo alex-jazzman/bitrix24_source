@@ -5,6 +5,7 @@ $MESS["CC_BBUS_EMPTYSTATE_OVER_LIMIT_DESCRIPTION_B24"] = "Максимальна
 $MESS["CC_BBUS_EMPTYSTATE_OVER_LIMIT_TITLE"] = "Немає запитів, які перевищили ліміт";
 $MESS["CC_BBUS_EMPTYSTATE_TITLE"] = "Тут буде статистика<br>використання BI-конектора";
 $MESS["CC_BBUS_ERROR_INCLUDE_MODULE"] = "Модуль biconnector не встановлено.";
+$MESS["CC_BBUS_ROWS_NO_DATA"] = "Немає даних";
 $MESS["CC_BBUS_SERVICE_GDS"] = "Looker Studio";
 $MESS["CC_BBUS_SERVICE_PBI"] = "Microsoft Power BI";
 $MESS["CC_BBUS_SERVICE_SUPERSET"] = "BI-конструктор";

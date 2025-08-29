@@ -21,18 +21,24 @@ class FireUserCommand extends AbstractCommand
 	{
 	}
 
-	protected function execute(): Result
+	protected function validate(): ValidationResult
 	{
-		$result = new Result();
-
+		$result = new ValidationResult();
 		$isActionAvailable = ServiceContainer::getInstance()
 			->getUserService()
 			->isActionAvailableForUser($this->user, UserActionDictionary::FIRE);
 
 		if (!$isActionAvailable)
 		{
-			return $result->addError(new Error('User already fired'));
+			$result->addError(new Error('User already fired'));
 		}
+
+		return $result;
+	}
+
+	protected function execute(): Result
+	{
+		$result = new Result();
 
 		try
 		{

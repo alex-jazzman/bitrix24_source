@@ -1,14 +1,17 @@
-import { Messenger } from 'im.public';
-
 export class ChatService
 {
 	static openMessenger(userId: number): void
 	{
-		Messenger?.openChat(String(userId));
+		top.BX.Messenger.Public?.openChat(String(userId));
 	}
 
 	static call(userId: number, withVideo: boolean): void
 	{
-		Messenger?.startVideoCall(String(userId), withVideo);
+		top.BX.Messenger.Public?.startVideoCall(String(userId), withVideo);
+	}
+
+	static isMessengerAvailable(): boolean
+	{
+		return Boolean(top.BX.Messenger.Public);
 	}
 }

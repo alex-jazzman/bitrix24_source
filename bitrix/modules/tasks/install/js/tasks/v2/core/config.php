@@ -25,5 +25,5 @@ return [
 		'tasks.v2.provider.pull.pull-manager',
 	],
 	'skip_core' => false,
-	'settings' => (new \Bitrix\Tasks\V2\Internals\Service\Extension\Config())->getCoreSettings(),
+	'settings' => (new \Bitrix\Tasks\V2\Internal\Service\Extension\Config())->getCoreSettings(),
 ];

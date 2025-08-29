@@ -1,2 +1,3 @@
 <?php
-define('ADMIN_MODULE_NAME', 'tasks');
+
+const ADMIN_MODULE_NAME = 'tasks';

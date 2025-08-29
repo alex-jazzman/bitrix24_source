@@ -1,5 +1,4 @@
-export { CheckList } from './check-list';
+export { CheckList } from './components/check-list/check-list';
 export { CheckListChip } from './check-list-chip';
-export { CheckListSheet } from './check-list-sheet';
-export { CheckListPopup } from './check-list-popup';
-export { checkListMeta } from './check-list-meta';
+export { CheckListList } from './components/check-list-list/check-list-list';
+export { checkListMeta } from './lib/check-list-meta';

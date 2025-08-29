@@ -1,50 +1,39 @@
-import { Event, Tag } from 'main.core';
+import { Event } from 'main.core';
 import type { Popup } from 'main.popup';
+import type { Slider } from 'main.sidepanel';
 
 import { BitrixVue, type VueCreateAppResult } from 'ui.vue3';
 import { locMixin } from 'ui.vue3.mixins.loc-mixin';
 
 import { Core } from 'tasks.v2.core';
 import { EventName } from 'tasks.v2.const';
-import { SidePanelInstance } from 'tasks.v2.lib.side-panel-instance';
 import type { Params } from 'tasks.v2.application.task-card';
 
 import { App } from './component/app';
 
 export class TaskFullCard
 {
-	#application: ?VueCreateAppResult = null;
-
 	#params: Params;
-	#container: HTMLElement;
+	#slider: Slider;
+	#application: ?VueCreateAppResult;
 
 	constructor(params: Params = {})
 	{
 		this.#params = params;
 	}
 
-	async showCard(): Promise<void>
+	async mountCard(slider: Slider): Promise<void>
 	{
-		return new Promise((resolve, reject) => {
-			this.#showSidePanel(resolve)
-				.then(() => {
-					resolve();
-				})
-				.catch((error) => {
-					reject(error);
-				});
-		});
-	}
+		if (!slider.isOpen())
+		{
+			return;
+		}
 
-	async mountCard(): Promise<HTMLElement>
-	{
+		this.#slider = slider;
+
 		this.#subscribe();
 
-		this.#container = this.#renderContainer();
-
-		await this.#mountApplication(this.#container);
-
-		return this.#container;
+		this.#application = await this.#mountApplication(slider.getContentContainer());
 	}
 
 	unmountCard(): void
@@ -54,41 +43,7 @@ export class TaskFullCard
 		this.#unsubscribe();
 	}
 
-	async #showSidePanel(): Promise<void>
-	{
-		const sidePanelId = `tasks-task-full-card-${this.#params.taskId ?? 0}`;
-		const maxWidth = 1510;
-
-		const card = await this.mountCard();
-
-		return new Promise((resolve) => {
-			SidePanelInstance.open(sidePanelId, {
-				customLeftBoundary: 0,
-				width: maxWidth,
-				cacheable: false,
-				contentClassName: 'tasks-full-card-slider-content',
-				customRightBoundary: 0,
-				events: {
-					onOpen: resolve,
-					onClose: this.#onSidePanelClose,
-				},
-				contentCallback: () => card,
-			});
-		});
-	}
-
-	#onSidePanelClose = (): void => {
-		this.unmountCard();
-	};
-
-	#renderContainer(): HTMLElement
-	{
-		return Tag.render`
-			<div class="tasks-full-card-container"></div>
-		`;
-	}
-
-	async #mountApplication(container: HTMLElement): Promise<void>
+	async #mountApplication(container: HTMLElement): Promise<VueCreateAppResult>
 	{
 		await Core.init();
 
@@ -101,12 +56,12 @@ export class TaskFullCard
 		application.use(Core.getStore());
 		application.mount(container);
 
-		this.#application = application;
+		return application;
 	}
 
 	#unmountApplication(): void
 	{
-		this.#application.unmount();
+		this.#application?.unmount();
 	}
 
 	#subscribe(): void
@@ -122,7 +77,7 @@ export class TaskFullCard
 	}
 
 	#onClose = (): void => {
-		SidePanelInstance.close();
+		this.#slider.close();
 	};
 
 	#handlePopupShow = (event): void => {

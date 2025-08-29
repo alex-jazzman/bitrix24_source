@@ -48,7 +48,7 @@ use Bitrix\Tasks\Internals\Task\MemberTable;
 use Bitrix\Tasks\Scrum\Form\EntityForm;
 use Bitrix\Tasks\Scrum\Internal\EntityTable;
 use Bitrix\Tasks\Scrum\Internal\ItemTable;
-use Bitrix\Tasks\V2\Internals\Model\TaskChatTable;
+use Bitrix\Tasks\V2\Internal\Model\TaskChatTable;
 use CUserTypeEntity;
 
 class TaskQueryBuilder implements QueryBuilderInterface

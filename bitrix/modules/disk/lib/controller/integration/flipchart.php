@@ -168,8 +168,26 @@ final class Flipchart extends Controller implements JwtHolder
 
 		$editAllowed = $session->getType() === DocumentSession::TYPE_EDIT;
 
+		// ANALYTICS
+		$isNewBoard = $_GET['newBoard'] ?? null;
+		$cElement = $_GET['c_element'] ?? null;
+
 		switch ($type)
 		{
+			case WebhookEventType::UserEntry->value:
+				if ($session->getUserId() > 0)
+				{
+					Application::getInstance()->addBackgroundJob(function() use ($session, $editAllowed) {
+						$event = new AnalyticsEvent('session_start', 'boards', 'boards');
+						$event->setType($editAllowed ? 'edit' : 'view');
+						$event->setUserId((int)$session->getUserId());
+						$event->setP4('fileId_' . $session->getObjectId());
+						$event->setP5('sessionId_' . sha1($session->getExternalHash()));
+						$event->send();
+					});
+				}
+				break;
+
 			case WebhookEventType::WasModified->value:
 				if (
 					$editAllowed
@@ -178,31 +196,91 @@ final class Flipchart extends Controller implements JwtHolder
 				{
 					$boardService->saveDocument();
 
-					Application::getInstance()->addBackgroundJob(function() {
+					Application::getInstance()->addBackgroundJob(function() use ($isNewBoard, $cElement) {
 						$event = new AnalyticsEvent('save_changes', 'boards', 'boards');
+						if ($isNewBoard)
+						{
+							$event->setSubSection('new_element');
+						}
+						else
+						{
+							$event->setSubSection('old_element');
+						}
+						if ($cElement)
+						{
+							$event->setElement($cElement);
+						}
 						$event->send();
 					});
 				}
 
 				break;
-				//			case WebhookEventType::UserLeft->value:
-				$boardService->closeSession();
-			//				if ($editAllowed){
-			//					$boardService->saveDocument();
-			//				}
 
-			//				break;
-			case WebhookEventType::LastUserLeftTheFlip->value:
-				if ($editAllowed)
-				{
+			case WebhookEventType::UserLeft->value:
+				$boardService->closeSession();
+
+				if ($editAllowed){
 					$boardService->saveDocument();
 
-					Application::getInstance()->addBackgroundJob(function() {
+					Application::getInstance()->addBackgroundJob(function() use ($isNewBoard, $cElement) {
 						$event = new AnalyticsEvent('save_changes', 'boards', 'boards');
+						if ($isNewBoard)
+						{
+							$event->setSubSection('new_element');
+						}
+						else
+						{
+							$event->setSubSection('old_element');
+						}
+						if ($cElement)
+						{
+							$event->setElement($cElement);
+						}
 						$event->send();
 					});
 				}
-				$boardService->closeSession();
+
+				if ($session->getUserId() > 0)
+				{
+					Application::getInstance()->addBackgroundJob(function() use ($session, $editAllowed) {
+						$event = new AnalyticsEvent('session_end', 'boards', 'boards');
+						$event->setType($editAllowed ? 'edit' : 'view');
+						$event->setUserId((int)$session->getUserId());
+						$event->setP4('fileId_' . $session->getObjectId());
+						$event->setP5('sessionId_' . sha1($session->getExternalHash()));
+						$event->send();
+					});
+				}
+
+				break;
+
+			case WebhookEventType::LastUserLeftTheFlip->value:
+				if ($session->getStatus() === DocumentSession::STATUS_ACTIVE)
+				{
+					if ($editAllowed)
+					{
+						$boardService->saveDocument();
+
+						Application::getInstance()->addBackgroundJob(function() use ($isNewBoard, $cElement) {
+							$event = new AnalyticsEvent('save_changes', 'boards', 'boards');
+							if ($isNewBoard)
+							{
+								$event->setSubSection('new_element');
+							}
+							else
+							{
+								$event->setSubSection('old_element');
+							}
+							if ($cElement)
+							{
+								$event->setElement($cElement);
+							}
+							$event->send();
+						});
+					}
+
+					$boardService->closeSession();
+				}
 
 				break;
 		}
@@ -216,7 +294,8 @@ final class Flipchart extends Controller implements JwtHolder
 		$data = DocumentSessionTable::getList(
 			[
 				'select' => [
-					'OBJECT_ID'
+					'OBJECT_ID',
+					'VERSION_ID',
 				],
 				'filter' => [
 					'=EXTERNAL_HASH' => $sessionId,
@@ -233,7 +312,7 @@ final class Flipchart extends Controller implements JwtHolder
 			return null;
 		}
 
-		$object = File::getById($document['OBJECT_ID'])->getFile();
+		$object = File::getById($document['OBJECT_ID']);
 		if (!$object)
 		{
 			$this->addError(new Error('File Not Found', 404));
@@ -241,7 +320,28 @@ final class Flipchart extends Controller implements JwtHolder
 			return null;
 		}
 
-		return new BFile($object);
+		$file = null;
+		if ($document['VERSION_ID'])
+		{
+			$version = $object->getVersion($document['VERSION_ID']);
+			if ($version)
+			{
+				$file = $version->getFile();
+			}
+		}
+		else
+		{
+			$file = $object->getFile();
+		}
+
+		if (!$file)
+		{
+			$this->addError(new Error('File Not Found', 404));
+
+			return null;
+		}
+
+		return new BFile($file);
 	}
 
 	/**
@@ -295,6 +395,13 @@ final class Flipchart extends Controller implements JwtHolder
 			return $this->getErrorPageResponse();
 		}
 
+		$versionId = $this->request->getQuery('versionId');
+
+		if ($versionId)
+		{
+			return $this->openDocumentVersion($file, $currentUser, (int)$versionId);
+		}
+
 		$manager = new SessionManager();
 		$manager->setFile($file);
 		$manager->setUserId((int)$currentUser->getId());
@@ -345,12 +452,83 @@ final class Flipchart extends Controller implements JwtHolder
 		return $this->viewDocumentAction($session, $currentUser, $file);
 	}
 
+	public function openDocumentVersion(?File $file, CurrentUser $currentUser, int $versionId): ?HttpResponse
+	{
+		if (!$file)
+		{
+			return $this->getErrorPageResponse();
+		}
+
+		$version = $file->getVersion($versionId);
+		if (!$version)
+		{
+			return $this->getErrorPageResponse();
+		}
+
+		$manager = new SessionManager();
+		$manager->setFile($file);
+		$manager->setVersion($version);
+		$manager->setUserId((int)$currentUser->getId());
+		$manager->setSessionContext(
+			new DocumentSessionContext(
+				(int)$file->getId(),
+				null,
+				null,
+			),
+		);
+		$session = $manager->findSession(true);
+
+		if ($session)
+		{
+			return $this->viewDocumentAction($session, $currentUser, $file);
+		}
+
+		$securityContext = $file->getStorage()->getCurrentUserSecurityContext();
+		$fileCanRead = $file->canRead($securityContext);
+
+		if (!$fileCanRead)
+		{
+			return $this->getErrorPageResponse();
+		}
+
+		$sessionType = DocumentSession::TYPE_VIEW;
+
+		$manager = new SessionManager();
+		$manager->setFile($file);
+		$manager->setVersion($version);
+		$manager->setUserId((int)$currentUser->getId());
+		$manager->setSessionType($sessionType);
+		$manager->setSessionContext(
+			new DocumentSessionContext(
+				(int)$file->getId(),
+				null,
+				null,
+			),
+		);
+
+		$session = $manager->findOrCreateSession();
+
+		if (!$session)
+		{
+			return $this->getErrorPageResponse();
+		}
+
+		return $this->viewDocumentAction($session, $currentUser, $file);
+	}
+
 	public function createDocumentAction(CurrentUser $currentUser): ?array
 	{
 		$userStorage = Driver::getInstance()->getStorageByUserId((int)$currentUser->getId());
 		$folder = $userStorage->getFolderForCreatedFiles();
 
 		$res = BoardService::createNewDocument(User::loadById($currentUser->getId()), $folder);
+
+		$st = $this->request->getQuery('st');
+		$cElement = null;
+		if ($st && $st['c_element'] ?? null)
+		{
+			$cElement = $st['c_element'];
+		}
 
 		if (!$res->isSuccess())
 		{
@@ -359,7 +537,7 @@ final class Flipchart extends Controller implements JwtHolder
 			return null;
 		}
 
-		$openUrl = Driver::getInstance()->getUrlManager()->getUrlForViewBoard($res->getData()['file']->getId());
+		$openUrl = Driver::getInstance()->getUrlManager()->getUrlForViewBoard($res->getData()['file']->getId(), false, $cElement);
 		$res->setData(
 			[
 				'viewUrl' => $openUrl,

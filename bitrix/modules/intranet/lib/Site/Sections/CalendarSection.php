@@ -32,13 +32,6 @@ class CalendarSection
 			$available = $available && CollaborationSection::isFeatureEnabled('calendar');
 		}
 
-		$counterNum = 0;
-		if ($available && Loader::includeModule('calendar'))
-		{
-			$userId = (int)CurrentUser::get()->getId();
-			$counterNum = \Bitrix\Calendar\Internals\Counter::getInstance($userId)->get(CounterDictionary::COUNTER_MY);
-		}
-
 		return [
 			'id' => 'my_calendar',
 			'title' => Loc::getMessage('INTRANET_CALENDAR_SECTION_MY_CALENDAR'),
@@ -47,7 +40,6 @@ class CalendarSection
 			'menuData' => [
 				'menu_item_id' => 'menu_my_calendar',
 				'counter_id' => 'calendar_my',
-				'counter_num' => $counterNum,
 			],
 		];
 	}

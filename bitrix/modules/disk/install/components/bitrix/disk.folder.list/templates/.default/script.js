@@ -2159,16 +2159,70 @@ BX.Disk.FolderListClass = (function (){
 			return;
 		}
 
-		BX.ajax.runAction('disk.api.commonActions.getArchiveLink', {
-			analyticsLabel: 'folder.list',
+		BX.ajax.runAction('disk.api.commonActions.checkFileLimit', {
 			data: {
-				objectCollection: selectedRows
+				objectCollection: selectedRows,
+			},
+		}).then((response) => {
+			if (response.data.isFileLimitExceeded === false)
+			{
+				BX.ajax.runAction('disk.api.commonActions.getArchiveLink', {
+					analyticsLabel: 'folder.list',
+					data: {
+						objectCollection: selectedRows,
+					},
+				}).then((responseSecond) => {
+					this.downloadFile(responseSecond.data.downloadArchiveUri);
+				}).catch((responseSecond) => {
+					BX.Disk.showModalWithStatusAction(responseSecond);
+				});
 			}
-		}).then(function(response){
-			document.location = response.data.downloadArchiveUri;
-		}).catch(function(response){
+			else
+			{
+				this.showErrorPopup();
+			}
+		}).catch((response) => {
 			BX.Disk.showModalWithStatusAction(response);
-		}.bind(this));
+		});
+	};
+
+	FolderListClass.prototype.checkFileLimit = async function(folderId, downloadArchiveUri)
+	{
+		BX.ajax.runAction('disk.api.folder.checkFileLimit', {
+			data: {
+				id: folderId,
+			},
+		}).then((response) => {
+			if (response.data.isFileLimitExceeded === false)
+			{
+				this.downloadFile(downloadArchiveUri);
+			}
+			else
+			{
+				this.showErrorPopup();
+			}
+		}).catch((response) => {
+			BX.Disk.showModalWithStatusAction(response);
+		});
+	}
+
+	FolderListClass.prototype.showErrorPopup = function ()
+	{
+		BX.Runtime.loadExtension('ui.dialogs.messagebox').then((exports) => {
+			exports.MessageBox.show({
+				message: BX.Loc.getMessage('DISK_FOLDER_LIST_ACT_DOWNLOAD_ERROR'),
+				buttons: exports.MessageBoxButtons.OK,
+				onOk(messageBox) {
+					messageBox.close();
+				},
+				useAirDesign: true,
+			});
+		});
+	};
+
+	FolderListClass.prototype.downloadFile = function(url)
+	{
+		window.location.href = url;
 	};
 
 	FolderListClass.prototype.openConfirmCopyGroup = function ()
@@ -5785,8 +5839,24 @@ BX.Disk.FolderListClass = (function (){
 					fileExtension = 'board'
 					break;
 
+				case 'odf':
+					fileExtension = 'odf';
+					break;
+
+				case 'odt':
+					fileExtension = 'odt';
+					break;
+
+				case 'ods':
+					fileExtension = 'ods';
+					break;
+
+				case 'odp':
+					fileExtension = 'odp';
+					break;
+
 				default:
-					fileExtension = 'empty'
+					fileExtension = 'empty';
 			}
 
 			this.isFolder ? fileExtension = 'folder' : null;

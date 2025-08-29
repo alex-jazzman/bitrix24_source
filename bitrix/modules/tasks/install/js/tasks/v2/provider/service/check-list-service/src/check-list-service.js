@@ -2,7 +2,7 @@ import { Store } from 'ui.vue3.vuex';
 import { Model } from 'tasks.v2.const';
 import { Core } from 'tasks.v2.core';
 import { ApiClient } from 'tasks.v2.lib.api-client';
-import type { CheckListModel } from 'tasks.v2.model.check-list';
+import { CheckList, type CheckListModel } from 'tasks.v2.model.check-list';
 
 import { prepareCheckLists } from './mappers';
 
@@ -20,8 +20,17 @@ class CheckListService
 					task: { id: taskId },
 				});
 
+				const checkListModel = new CheckList();
+				const defaultValues = checkListModel.getElementState();
+				const enrichedData = data.map((item: CheckListModel) => ({
+					...defaultValues,
+					...Object.fromEntries(
+						Object.entries(item).filter(([_, value]) => value !== null)
+					)
+				}));
+
 				await Promise.all([
-					this.$store.dispatch(`${Model.CheckList}/upsertMany`, data),
+					this.$store.dispatch(`${Model.CheckList}/upsertMany`, enrichedData),
 					this.$store.dispatch(`${Model.Tasks}/update`, {
 						id: taskId,
 						fields: {
@@ -55,16 +64,25 @@ class CheckListService
 					},
 				});
 
+				const checkListModel = new CheckList();
+				const defaultValues = checkListModel.getElementState();
+				const enrichedData = savedList.map((item: CheckListModel) => ({
+					...defaultValues,
+					...Object.fromEntries(
+						Object.entries(item).filter(([_, value]) => value !== null)
+					)
+				}));
+
 				const oldIds = checklists.map((item: CheckListModel) => item.id);
 
 				await Promise.all([
 					this.$store.dispatch(`${Model.CheckList}/deleteMany`, oldIds),
-					this.$store.dispatch(`${Model.CheckList}/upsertMany`, savedList),
+					this.$store.dispatch(`${Model.CheckList}/upsertMany`, enrichedData),
 					this.$store.dispatch(`${Model.Tasks}/update`, {
 						id: taskId,
 						fields: {
 							containsChecklist: true,
-							checklist: savedList.map((item) => item.id),
+							checklist: enrichedData.map((item) => item.id),
 						},
 					}),
 				]);

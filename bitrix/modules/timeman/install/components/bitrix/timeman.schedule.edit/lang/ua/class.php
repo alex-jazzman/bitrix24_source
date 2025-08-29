@@ -47,7 +47,6 @@ $MESS["TIMEMAN_SCHEDULE_EDIT_NAME_DEFAULT_FLEXTIME"] = "Вільний граф�
 $MESS["TIMEMAN_SCHEDULE_EDIT_NAME_DEFAULT_SHIFT"] = "Позмінний графік";
 $MESS["TIMEMAN_SCHEDULE_EDIT_NAME_TITLE"] = "Назва графіка";
 $MESS["TIMEMAN_SCHEDULE_EDIT_REPORT_ALLOWED_DEVICES_TITLE"] = "Дозволити відкривати та закривати робочий день";
-$MESS["TIMEMAN_SCHEDULE_EDIT_REPORT_ALLOW_B24_TIME"] = "через Bitrix24.Time";
 $MESS["TIMEMAN_SCHEDULE_EDIT_REPORT_ALLOW_BROWSER"] = "в браузері";
 $MESS["TIMEMAN_SCHEDULE_EDIT_REPORT_ALLOW_MOBILE_APP"] = "у мобільному застосунку";
 $MESS["TIMEMAN_SCHEDULE_EDIT_REPORT_DO_NOT_RECORD_LOCATION"] = "не враховувати місцезнаходження";

@@ -1,20 +1,18 @@
-import type { PopupOptions } from 'main.popup';
-import { Popup } from 'ui.vue3.components.popup';
-import { Dom, Text } from 'main.core';
+import { Dom } from 'main.core';
+import { hint, type HintParams } from 'ui.vue3.directives.hint';
+
 import './growing-text-area.css';
 
 // @vue/component
 export const GrowingTextArea = {
 	name: 'GrowingTextArea',
-	components: {
-		Popup,
-	},
+	directives: { hint },
 	props: {
-		initialValue: {
+		modelValue: {
 			type: String,
 			default: '',
 		},
-		placeholderValue: {
+		placeholder: {
 			type: String,
 			default: '',
 		},
@@ -40,7 +38,7 @@ export const GrowingTextArea = {
 		},
 	},
 	emits: [
-		'update',
+		'update:modelValue',
 		'input',
 		'focus',
 		'blur',
@@ -51,82 +49,35 @@ export const GrowingTextArea = {
 	data(): Object
 	{
 		return {
-			areaId: Text.getRandom(),
-			editableValue: this.initialValue,
 			focus: false,
-			mouseover: false,
 			isOverflowing: false,
 		};
 	},
 	computed: {
-		value: {
-			get(): string
-			{
-				if (this.readonlyPlaceholder)
-				{
-					return this.placeholderValue.trim();
-				}
-
-				return this.editableValue.trim();
-			},
-			set(name: string): void
-			{
-				this.editableValue = name;
-
-				this.$emit('input', this.value);
-			},
-		},
 		isEmpty(): boolean
 		{
-			return this.value.trim() === '';
+			return this.modelValue.trim() === '';
 		},
 		isDisplay(): boolean
 		{
-			return this.readonly || (this.isOverflowing && !this.isEmpty && !this.focus);
+			return this.isOverflowing && !this.isEmpty && !this.focus;
 		},
-		popupId(): string
+		tooltip(): Function
 		{
-			return `growing-text-area-value-hint-${this.areaId}`;
-		},
-		popupOptions(): PopupOptions
-		{
-			return {
-				bindElement: this.$refs.container,
-				offsetLeft: 40,
-				maxWidth: 440,
-				angle: {
-					offset: 40,
+			return (): HintParams => ({
+				text: this.modelValue,
+				popupOptions: {
+					className: 'b24-growing-text-area-popup',
+					bindElement: this.$el,
+					offsetLeft: 40,
+					maxWidth: 440,
+					angle: {
+						offset: 40,
+					},
+					darkMode: false,
+					targetContainer: document.body,
 				},
-				targetContainer: document.body,
-			};
-		},
-		showHint(): boolean
-		{
-			return (
-				this.focus === false
-				&& this.mouseover === true
-				&& this.isOverflowing === true
-			);
-		},
-		readonlyPlaceholder(): boolean
-		{
-			return this.readonly === true && this.initialValue === '';
-		},
-		color(): string
-		{
-			if (this.readonlyPlaceholder)
-			{
-				return 'var(--ui-color-base-4)';
-			}
-
-			return this.fontColor;
-		},
-	},
-	watch: {
-		initialValue(): void
-		{
-			this.editableValue = this.initialValue;
-			this.value = this.editableValue;
+			});
 		},
 	},
 	mounted(): void
@@ -159,20 +110,9 @@ export const GrowingTextArea = {
 			Dom.style(textarea, 'height', `${height}px`);
 			Dom.style(textarea, 'maxHeight', `${maxHeight}px`);
 		},
-		async focusToTextarea(): Promise<void>
-		{
-			this.focusToEnd();
-		},
-		clearValue(): void
-		{
-			this.$refs.textarea.value = '';
-			this.value = '';
-
-			void this.adjustTextareaHeight();
-		},
 		focusToEnd(): void
 		{
-			if (this.readonly === true)
+			if (this.readonly)
 			{
 				return;
 			}
@@ -185,7 +125,7 @@ export const GrowingTextArea = {
 		},
 		focusTextarea(): void
 		{
-			if (this.readonly === true)
+			if (this.readonly)
 			{
 				return;
 			}
@@ -215,9 +155,7 @@ export const GrowingTextArea = {
 		},
 		handleInput(event): void
 		{
-			this.value = event.target.value;
-
-			this.$emit('update', this.value);
+			this.$emit('input', event.target.value);
 
 			void this.adjustTextareaHeight();
 		},
@@ -232,7 +170,7 @@ export const GrowingTextArea = {
 
 			if (event.key === 'Enter')
 			{
-				this.$refs.textarea.dataset.enterBlur = 'true';
+				this.$emit('enterBlur', this.modelValue === '');
 
 				event.target.blur();
 				event.preventDefault();
@@ -251,7 +189,7 @@ export const GrowingTextArea = {
 			await this.adjustTextareaHeight();
 			this.focusToEnd();
 
-			if (this.value === '')
+			if (this.modelValue === '')
 			{
 				this.$emit('emptyFocus');
 			}
@@ -260,11 +198,11 @@ export const GrowingTextArea = {
 		},
 		async handleBlur(event: FocusEvent): Promise<void>
 		{
-			const wasEnterBlur = this.$refs.textarea?.dataset.enterBlur === 'true';
-			delete this.$refs.textarea?.dataset.enterBlur;
-
 			this.focus = false;
-			this.mouseover = false;
+			if (!this.$refs.textarea)
+			{
+				return;
+			}
 
 			if (!this.isOverflowing)
 			{
@@ -272,67 +210,57 @@ export const GrowingTextArea = {
 				this.scrollToBeginning();
 			}
 
-			if (this.value === '')
+			const value = this.$refs.textarea.value.trim();
+			if (value !== this.modelValue)
 			{
-				this.$emit('emptyBlur');
+				this.$emit('update:modelValue', value);
 			}
 
-			if (wasEnterBlur)
+			this.$refs.textarea.value = value;
+
+			if (value === '')
 			{
-				this.$emit('enterBlur', this.value === '');
+				this.$emit('emptyBlur');
 			}
 
 			this.$emit('blur', event);
 		},
 	},
 	template: `
-		<div ref="container" class="b24-growing-text-area-content">
+		<div class="b24-growing-text-area" :class="{ '--readonly': readonly }">
 			<div
 				v-if="isDisplay"
+				v-hint="tooltip"
 				class="b24-growing-text-area-display"
-				:class="{ '--readonly': readonly }"
-				:data-id="'b24-growing-text-area-display-' + areaId"
-				:style="{
-					lineHeight: lineHeight + 'px',
-					color: color,
-					fontSize: fontSize + 'px',
-					fontWeight: fontWeight,
-				}"
-				@click="focusTextarea"
-				@mouseover="mouseover = true"
-				@mouseleave="mouseover = false"
-			>
-				{{ value }}
-			</div>
-			<textarea
-				v-else
-				v-model="editableValue"
-				ref="textarea"
-				class="b24-growing-text-area-edit"
-				:placeholder="placeholderValue"
-				:data-id="'b24-growing-text-area-edit-' + areaId"
 				:style="{
 					lineHeight: lineHeight + 'px',
 					color: fontColor,
 					fontSize: fontSize + 'px',
 					fontWeight: fontWeight,
 				}"
+				@click="focusTextarea"
+			>
+				{{ modelValue }}
+			</div>
+			<textarea
+				v-else
+				class="b24-growing-text-area-edit"
 				rows="1"
+				:value="modelValue"
+				:placeholder="placeholder"
+				:style="{
+					lineHeight: lineHeight + 'px',
+					color: fontColor,
+					fontSize: fontSize + 'px',
+					fontWeight: fontWeight,
+				}"
+				:readonly="readonly"
+				ref="textarea"
 				@input="handleInput"
 				@keydown="handleKeyDown"
 				@focus="handleFocus"
 				@blur="handleBlur"
 			></textarea>
-			<Popup
-				v-if="showHint"
-				ref="hint"
-				:id="popupId"
-				:options="popupOptions"
-			>
-				<div class="b24-growing-text-area-popup-content">
-					{{ value }}
-				</div>
-			</Popup>
 		</div>
 	`,
 };

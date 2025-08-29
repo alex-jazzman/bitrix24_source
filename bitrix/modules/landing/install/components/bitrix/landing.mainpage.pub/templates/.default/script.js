@@ -66,30 +66,91 @@ this.BX.Landing = this.BX.Landing || {};
 	   * Constructor.
 	   */
 	  function Analytics(options) {
-	    var _this = this;
 	    babelHelpers.classCallCheck(this, Analytics);
 	    this.isPublished = options.isPublished;
-	    var blocks = [].slice.call(document.getElementsByClassName('block-wrapper'));
-	    if (main_core.Type.isArray(blocks) && blocks.length > 0) {
+	    this.templateCode = options.templateCode;
+	    this.metrika = new landing_metrika.Metrika(true);
+	    this.initEventListeners();
+	  }
+	  babelHelpers.createClass(Analytics, [{
+	    key: "initEventListeners",
+	    value: function initEventListeners() {
+	      var _this = this;
+	      var blocks = babelHelpers.toConsumableArray(document.getElementsByClassName('block-wrapper'));
 	      blocks.forEach(function (block) {
-	        block.addEventListener('click', _this.onClick.bind(_this));
+	        main_core.Event.bind(block, 'click', _this.onClick.bind(_this));
 	      });
 	    }
-	  }
-
-	  /**
-	   * Click callback.
-	   *
-	   * @param {MouseEvent} event
-	   * @return {void}
-	   */
-	  babelHelpers.createClass(Analytics, [{
+	    /**
+	     * Click callback.
+	     *
+	     * @param {MouseEvent} event
+	     * @return {void}
+	     */
+	  }, {
 	    key: "onClick",
 	    value: function onClick(event) {
 	      var target = event.target;
-	      if (!(target.tagName.toLowerCase() === 'a' || target.parentNode && target.parentNode.tagName.toLowerCase() === 'a' || target.firstElementChild && target.firstElementChild.tagName.toLowerCase() === 'a' || target.tagName.toLowerCase() === 'button' || target.hasAttribute('data-pseudo-url'))) {
+	      if (!this.isClickableElement(target)) {
 	        return;
 	      }
+	      var analyticsData = this.getAnalyticsData(event);
+	      this.metrika.sendData(analyticsData);
+	    }
+	  }, {
+	    key: "isClickableElement",
+	    value: function isClickableElement(element) {
+	      var tag = element.tagName.toLowerCase();
+	      return tag === 'a' || tag === 'button' || element.hasAttribute('data-pseudo-url') || element.parentElement && element.parentElement.tagName.toLowerCase() === 'a' || element.firstElementChild && element.firstElementChild.tagName.toLowerCase() === 'a';
+	    }
+	  }, {
+	    key: "getTrackingParameter",
+	    value: function getTrackingParameter(target) {
+	      var href = this.extractHrefFromPseudoUrl(target) || this.extractHrefFromElement(target);
+	      if (!href) {
+	        return '';
+	      }
+	      var sliderMatch = href.match(/BX\.Helper\.show\(["'].*?code=(\d+)["']\)/);
+	      if (sliderMatch) {
+	        return ['slider', sliderMatch[1]];
+	      }
+	      if (href.startsWith('/') || href.includes(window.location.origin)) {
+	        return ['b24url', href];
+	      }
+	      return ['otherurl', href];
+	    }
+	  }, {
+	    key: "extractHrefFromPseudoUrl",
+	    value: function extractHrefFromPseudoUrl(target) {
+	      if (!target.hasAttribute('data-pseudo-url')) {
+	        return null;
+	      }
+	      var raw = target.getAttribute('data-pseudo-url');
+	      if (!raw) {
+	        return null;
+	      }
+	      try {
+	        var data = JSON.parse(raw.replaceAll('&quot;', '"'));
+	        if (data && data.href && data.enabled) {
+	          if (!/^\/|^https?:\/\/|^#/.test(data.href)) {
+	            return '';
+	          }
+	          return data.href;
+	        }
+	      } catch (_unused) {
+	        console.warn('Invalid pseudo-url JSON:', raw);
+	      }
+	      return null;
+	    }
+	  }, {
+	    key: "extractHrefFromElement",
+	    value: function extractHrefFromElement(target) {
+	      var linkElement = target.closest('a');
+	      return linkElement ? linkElement.getAttribute('href') || null : null;
+	    }
+	  }, {
+	    key: "getAnalyticsData",
+	    value: function getAnalyticsData(event) {
 	      var code = '';
 	      var blockWrapper = event.currentTarget;
 	      blockWrapper.classList.forEach(function (className) {
@@ -98,13 +159,17 @@ this.BX.Landing = this.BX.Landing || {};
 	        }
 	      });
 	      code = code.replace('block-', '');
-	      var metrika = new landing_metrika.Metrika(true);
-	      metrika.sendData({
+	      code = code.replaceAll('-', '.');
+	      var isTrialButton = event.target.id === 'trialButton';
+	      var eventName = isTrialButton ? 'demo_activated' : 'click_on_button';
+	      return {
 	        category: 'vibe',
-	        event: 'click_on_button',
+	        event: eventName,
 	        c_section: this.isPublished ? 'active_page' : 'preview_page',
-	        p2: ['widgetId', code]
-	      });
+	        p1: ['templateCode', this.templateCode],
+	        p2: ['widgetId', code],
+	        p4: this.getTrackingParameter(event.target)
+	      };
 	    }
 	  }]);
 	  return Analytics;

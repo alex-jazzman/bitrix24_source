@@ -212,6 +212,14 @@ class tasks extends CModule
 		);
 
 		$eventManager->registerEventHandler(
+			'humanresources',
+			'OnNodeDeleted',
+			'tasks',
+			'\Bitrix\Tasks\Flow\Internal\Event\FlowEventListener',
+			'onAfterDepartmentDelete'
+		);
+
+		$eventManager->registerEventHandler(
 			'tasks',
 			'OnTaskAdd',
 			'tasks',
@@ -239,7 +247,21 @@ class tasks extends CModule
 		);
 
 		// chat integration
-		\Bitrix\Tasks\V2\Internals\Integration\Im\Chat::register();
+		$eventManager->registerEventHandler(
+			fromModuleId: 'im',
+			eventType: 'OnRegisterExternalChatTypes',
+			toModuleId: 'tasks',
+			toClass: '\Bitrix\Tasks\V2\Internal\Integration\Im\Chat',
+			toMethod: 'onRegisterType',
+		);
+
+		$eventManager->registerEventHandler(
+			fromModuleId: 'im',
+			eventType: 'OnFilterUsersByAccessExternalChatTasksTask',
+			toModuleId: 'tasks',
+			toClass: '\Bitrix\Tasks\V2\Internal\Integration\Im\Chat',
+			toMethod: 'onFilterUsersByAccess',
+		);
 
 		$this->InstallTasks();
 
@@ -534,7 +556,7 @@ class tasks extends CModule
 	{
 		$agents = [
 			[
-				'name' => '\Bitrix\Tasks\Util\AgentManager::sendReminder();',
+				'name' => \Bitrix\Tasks\V2\Infrastructure\Agent\Reminder::class,
 				'interval' => 60,
 			],
 			[
@@ -843,6 +865,14 @@ class tasks extends CModule
 		);
 
 		$eventManager->unRegisterEventHandler(
+			'humanresources',
+			'OnNodeDeleted',
+			'tasks',
+			'\Bitrix\Tasks\Flow\Internal\Event\FlowEventListener',
+			'onAfterDepartmentDelete'
+		);
+
+		$eventManager->unRegisterEventHandler(
 			'tasks',
 			'OnTaskAdd',
 			'tasks',
@@ -870,7 +900,21 @@ class tasks extends CModule
 		);
 
 		// chat integration
-		\Bitrix\Tasks\V2\Internals\Integration\Im\Chat::unRegister();
+		$eventManager->unRegisterEventHandler(
+			fromModuleId: 'im',
+			eventType: 'OnRegisterExternalChatTypes',
+			toModuleId: 'tasks',
+			toClass: '\Bitrix\Tasks\V2\Internal\Integration\Im\Chat',
+			toMethod: 'onRegisterType',
+		);
+
+		$eventManager->unRegisterEventHandler(
+			fromModuleId: 'im',
+			eventType: 'OnFilterUsersByAccessExternalChatTasksTask',
+			toModuleId: 'tasks',
+			toClass: '\Bitrix\Tasks\V2\Internal\Integration\Im\Chat',
+			toMethod: 'onFilterUsersByAccess',
+		);
 
 		// remove tasks from socnetlog table
 		if (

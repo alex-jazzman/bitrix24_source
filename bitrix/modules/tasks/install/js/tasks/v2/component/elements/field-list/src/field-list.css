@@ -15,6 +15,7 @@
 	color: var(--ui-color-base-3);
 	font-size: var(--ui-font-size-md);
 	min-width: 126px;
+	cursor: default;
 }
 
 .b24-field-list-title.--with-separator .b24-field-list-title-text {

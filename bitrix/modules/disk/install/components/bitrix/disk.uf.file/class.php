@@ -531,7 +531,7 @@ class CDiskUfFileComponent extends BaseComponent implements \Bitrix\Main\Engine\
 
 				if ($attachedModel->getObject()->getTypeFile() == TypeFile::FLIPCHART && $attachedModel->canRead($userId))
 				{
-					$openUrl = $this->getUrlManager()->getUrlForViewAttachedBoard($attachedModel->getId());
+					$openUrl = $this->getUrlManager()->getUrlForViewAttachedBoard($attachedModel->getId(), false, 'docs_attach');
 					$attr->addAction([
 						'type' => 'open',
 						'buttonIconClass' => ' ',

@@ -12,9 +12,9 @@ use Bitrix\Main\Access\AccessibleController;
 use Bitrix\Main\Access\BaseAccessController;
 use Bitrix\Tasks\Access\Model\TaskModel;
 use Bitrix\Main\Access\AccessibleItem;
-use Bitrix\Tasks\V2\Access\UserErrorInterface;
-use Bitrix\Tasks\V2\Access\UserErrorTrait;
-use Bitrix\Tasks\V2\Internals\Container;
+use Bitrix\Tasks\V2\Internal\Access\UserErrorInterface;
+use Bitrix\Tasks\V2\Internal\Access\UserErrorTrait;
+use Bitrix\Tasks\V2\Internal\DI\Container;
 
 class TaskAccessController extends BaseAccessController implements AccessErrorable, UserErrorInterface
 {

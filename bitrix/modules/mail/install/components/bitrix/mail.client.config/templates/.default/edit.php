@@ -4,6 +4,7 @@ use Bitrix\Mail\Helper\LicenseManager;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Json;
+use Bitrix\Main\Web\Uri;
 
 \Bitrix\Main\UI\Extension::load([
 	'mail.setting-selector',
@@ -278,10 +279,12 @@ $APPLICATION->includeComponent('bitrix:main.mail.confirm', '', array());
 					<div class="mail-connect-section-block">
 						<a
 								class="mail-connect-dashed-switch"
-								href="<?php echo \CHTTP::urlAddParams(
-									$arParams['PATH_TO_MAIL_CONFIG_DIRS'],
-									['mailboxId' => $mailbox['ID']]
-								) ?>"
+								href="<?=(new Uri($arParams['PATH_TO_MAIL_CONFIG_DIRS']))
+									->addParams([
+										'mailboxId' => (int)$mailbox['ID'],
+									])
+									->getUri()
+								?>"
 						>
 							<?=Loc::getMessage('MAIL_CLIENT_CONFIG_IMAP_DIRS_LINK') ?>
 						</a>
@@ -1506,11 +1509,15 @@ $arJsParams = [
 							<? else: ?>
 
 							if (json.data && json.data.id > 0) {
+								const url = BX.util.add_url_param(
+  									'<?=\CUtil::jsEscape($arParams['PATH_TO_MAIL_CONFIG_DIRS'])?>',
+  									{
+										mailboxId: json.data.id,
+										INIT: 'Y',
+									}
+								);
 								top.BX.SidePanel.Instance.open(
-									'<?=\CUtil::jsEscape(\CHTTP::urlAddParams(
-										$arParams['PATH_TO_MAIL_CONFIG_DIRS'],
-										['mailboxId' => '#id#', 'INIT' => 'Y']
-									)) ?>'.replace('#id#', json.data.id),
+									url,
 									{
 										width: 640,
 										cacheable: false,

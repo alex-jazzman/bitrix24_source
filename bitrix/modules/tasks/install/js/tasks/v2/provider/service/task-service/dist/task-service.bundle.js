@@ -312,6 +312,20 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	  async renew(id) {
 	    await babelHelpers.classPrivateFieldLooseBase(this, _updateStatus)[_updateStatus](id, 'Task.Status.renew', tasks_v2_const.TaskStatus.Pending);
 	  }
+	  async getLegacyCommentsByTaskId(id) {
+	    try {
+	      var _data$html;
+	      const data = await tasks_v2_lib_apiClient.apiClient.post('LegacyComment.get', {
+	        task: {
+	          id
+	        }
+	      });
+	      return (_data$html = data.html) != null ? _data$html : '';
+	    } catch (error) {
+	      console.error('TaskService: getLegacyCommentsByTaskId error', error);
+	      return '';
+	    }
+	  }
 	  get $store() {
 	    return tasks_v2_core.Core.getStore();
 	  }

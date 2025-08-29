@@ -13,7 +13,7 @@ export type CheckListModel = {
 	toggledDate: ?string,
 	accomplices: ?UserModel[],
 	auditors: ?UserModel[],
-	attachments: [],
+	attachments: Attachment[],
 	isComplete: ?boolean,
 	isImportant: ?boolean,
 	parentId: ?number,
@@ -24,8 +24,17 @@ export type CheckListModel = {
 		remove: boolean,
 		toggle: boolean
 	},
+	panelIsShown: boolean,
+	collapsed: boolean,
+	previewCollapsed: boolean,
+	hidden: boolean,
 	groupMode: {
 		active: boolean,
 		selected: boolean,
 	},
 };
+
+type Attachment = {
+	id: number | string,
+	fileId: number | string,
+}

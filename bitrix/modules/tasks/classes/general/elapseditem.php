@@ -27,7 +27,7 @@ final class CTaskElapsedItem extends CTaskSubItemAbstract
 	/**
 	 * @deprecated
 	 * @TasksV2
-	 * @use \Bitrix\Tasks\V2\Command\Task\Tracking\AddElapsedTimeCommand
+	 * @use \Bitrix\Tasks\V2\Public\Command\Task\Tracking\AddElapsedTimeCommand
 	 */
 	public static function add(CTaskItemInterface $task, array $fields)
 	{

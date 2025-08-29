@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,ui_analytics,ui_draganddrop_draggable,ui_switcherNested,ui_iconSet_crm,ui_uploader_stackWidget,ui_ears,ui_iconSet_social,ui_alerts,ui_form,ui_forms,ui_iconSet_actions,ui_iconSet_main,ui_formElements_view,ui_switcher,ui_entitySelector,ui_buttons,ui_icon_set,ui_section,sidepanel,ui_dialogs_messagebox,ui_formElements_field,main_core_events,main_popup,main_loader,main_core) {
+(function (exports,ui_analytics,ui_draganddrop_draggable,ui_switcherNested,ui_iconSet_crm,ui_uploader_stackWidget,ui_ears,intranet_themePicker_dialog,ui_iconSet_social,ui_alerts,ui_form,ui_forms,ui_iconSet_actions,ui_iconSet_main,ui_formElements_view,ui_switcher,ui_entitySelector,ui_buttons,ui_icon_set,ui_section,sidepanel,ui_dialogs_messagebox,ui_formElements_field,main_core_events,main_popup,main_loader,main_core) {
 	'use strict';
 
 	var _eventList = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("eventList");
@@ -2200,7 +2200,7 @@ this.BX = this.BX || {};
 	  main_core.Dom.removeClass(container, '--light --dark');
 	  main_core.Dom.addClass(container, '--' + lightning);
 	  if (main_core.Type.isStringFilled(theme.previewImage)) {
-	    container.style.backgroundImage = 'url("' + theme.previewImage + '")';
+	    container.style.backgroundImage = 'url("' + encodeURI(theme.previewImage) + '")';
 	    container.style.backgroundSize = 'cover';
 	  } else {
 	    container.style.removeProperty('backgroundImage');
@@ -2217,6 +2217,7 @@ this.BX = this.BX || {};
 	  _t2$5,
 	  _t3$3;
 	var _themePicker = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("themePicker");
+	var _themePickerDialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("themePickerDialog");
 	var _initThemePicker = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initThemePicker");
 	class ThemePickerElement extends ui_formElements_view.BaseField {
 	  constructor(_themePickerSettings) {
@@ -2232,11 +2233,15 @@ this.BX = this.BX || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    Object.defineProperty(this, _themePickerDialog, {
+	      writable: true,
+	      value: void 0
+	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _initThemePicker)[_initThemePicker](_themePickerSettings);
 	    this.applyTheme();
 	  }
 	  applyTheme(event) {
-	    const themeNode = event ? babelHelpers.classPrivateFieldLooseBase(this, _themePicker)[_themePicker].getItemNode(event) : null;
+	    const themeNode = event ? babelHelpers.classPrivateFieldLooseBase(this, _themePickerDialog)[_themePickerDialog].getItemNode(event) : null;
 	    let themeSettings = themeNode ? babelHelpers.classPrivateFieldLooseBase(this, _themePicker)[_themePicker].getTheme(themeNode.dataset.themeId) : babelHelpers.classPrivateFieldLooseBase(this, _themePicker)[_themePicker].getAppliedTheme();
 	    this.applyPortalThemePreview(themeSettings);
 	    if (event) {
@@ -2265,49 +2270,97 @@ this.BX = this.BX || {};
 	    const container = main_core.Tag.render(_t$9 || (_t$9 = _$9`
 		<div class="intranet-theme-settings ui-section__row">
 			<div class="ui-section__row theme-dialog-preview">
-				<section data-role="preview" style="background-color: #0a51ae;" class="intranet-settings__main-widget_section --preview">
-					<div class="intranet-settings__main-widget__bang"></div>
-					<aside class="intranet-settings__main-widget__aside">
-						<div class="intranet-settings__main-widget__aside_item --active"></div>
-						<div class="intranet-settings__main-widget__aside_item"></div>
-						<div class="intranet-settings__main-widget__aside_item"></div>
-						<div class="intranet-settings__main-widget__aside_item"></div>
-						<div class="intranet-settings__main-widget__aside_item"></div>
-					</aside>
-					<main class="intranet-settings__main-widget_main">
-						<div class="intranet-settings__main-widget_header --with-logo">
-							<div class="intranet-settings__main-widget_header_left">
-								<div class="intranet-settings__main-widget_logo" data-role="logo"></div>
-								<div class="intranet-settings__main-widget_name" data-role="title">Bitrix</div>
-								<div class="intranet-settings__main-widget_logo24" data-role="logo24">24</div>
+				
+				<section class="intranet-settings__preview --preview" data-role="preview">
+					<div class="preview__header">
+						<div class="preview__header-box">
+							<div class="preview__header-left-box">
+								<div class="preview__menu-switcher">
+									<span class="preview__menu-switcher__icon"></span>
+								</div>
+								<div class="preview__block-item"></div>
+								<div class="preview__block-item"></div>
+								<div class="preview__block-item"></div>
 							</div>
-							<div class="intranet-settings__main-widget_header_right">
-								<div class="intranet-settings__main-widget_lane_item"></div>
-								<div class="intranet-settings__main-widget_lane_item"></div>
-							</div>
-						</div>
-						<div class="intranet-settings__main-widget_lane_box">
-							<div class="intranet-settings__main-widget_lane_item"></div>
-							<div class="intranet-settings__main-widget_lane_inline --space-between">
-								<div class="intranet-settings__main-widget_lane_item --sm"></div>
-								<div class="intranet-settings__main-widget_lane_item --bg-30"></div>
-								<div class="intranet-settings__main-widget_lane_item --square"></div>
-							</div>
-							<div class="intranet-settings__main-widget_lane_inner">
-								<div class="intranet-settings__main-widget_lane_item"></div>
-								<div class="intranet-settings__main-widget_lane_item --bg-30"></div>
-								<div class="intranet-settings__main-widget_lane_item --bg-30"></div>
+							<div class="preview__header-right-box">
+								<div class="intranet-settings__logo-box">
+									<div class="intranet-settings__main-widget_logo" data-role="logo"></div>
+									<div class="intranet-settings__main-widget_name" data-role="title">Bitrix</div>
+									<div class="intranet-settings__logo24" data-role="logo24">
+										24
+									</div>
+								</div>	
+								<div class="preview__circle_container">	
+									<div class="preview__circle_item"></div>
+								</div>				
 							</div>
 						</div>
-					</main>
-					<aside class="intranet-settings__main-widget__aside --right-side">
-						<div class="intranet-settings__main-widget__aside_item --active"></div>
-						<div class="intranet-settings__main-widget__aside_item"></div>
-						<div class="intranet-settings__main-widget__aside_item"></div>
-						<div class="intranet-settings__main-widget__aside_item"></div>
-						<div class="intranet-settings__main-widget__aside_item"></div>
-					</aside>
+					</div>
+					<div class="preview__main">
+						<div class="preview__main-left">
+							<div class="preview__circle_container">
+								<div class="preview__circle_item-outline">
+									<div class="preview__circle_item --active"></div>
+								</div>
+							</div>	
+							<div class="preview__circle_container">	
+								<div class="preview__circle_item"></div>
+							</div>	
+							<div class="preview__circle_container">	
+								<div class="preview__circle_item"></div>
+							</div>	
+							<div class="preview__circle_container">	
+								<div class="preview__circle_item"></div>
+							</div>	
+							<div class="preview__circle_container">	
+								<div class="preview__circle_item"></div>
+							</div>	
+							<div class="preview__circle_container">	
+								<div class="preview__circle_item"></div>
+							</div>	
+						</div>
+						<div class="preview__main-center">
+							<div class="preview__main-row">
+								<div class="preview__main-row-left">
+									<div class="preview__block-item --w145"></div>
+									<div class="preview__block-item --opacity80 --w47"></div>
+									<div class="preview__block-item --w90"></div>
+								</div>
+								<div class="preview__main-row-right">
+									<div class="preview__block-item --w50"></div>
+								</div>
+							</div>
+							<div class="preview__main-row">
+								<div class="preview__main-row-left">
+									<div class="preview__block-item --w80"></div>
+									<div class="preview__block-item --w50"></div>
+								</div>
+								<div class="preview__main-row-right">
+									<div class="preview__block-item --w90"></div>
+								</div>
+							</div>
+							<div class="preview__main-column">
+								<div class="preview__main-header"></div>
+								<div class="preview__main-table"></div>
+							</div>
+						</div>
+						<div class="preview__main-right">
+							<div class="preview__circle_container">	
+								<div class="preview__circle_item --light"></div>
+							</div>	
+							<div class="preview__circle_container">	
+								<div class="preview__circle_item --light"></div>
+							</div>	
+							<div class="preview__circle_container">	
+								<div class="preview__circle_item --light"></div>
+							</div>	
+							<div class="preview__circle_container">	
+								<div class="preview__circle_item --light"></div>
+							</div>	
+						</div>
+					</div>
 				</section>
+				
 			</div>
 			<div class="ui-section__row theme-dialog-content" data-role="theme-container"></div>
 			<input type="hidden" name="themeId" value="" disabled>
@@ -2320,7 +2373,7 @@ this.BX = this.BX || {};
 		`), this.handleNewThemeButtonClick.bind(this), main_core.Loc.getMessage('INTRANET_SETTINGS_THEME_UPLOAD_BTN'));
 	    const themeContainer = container.querySelector('div[data-role="theme-container"]');
 	    Array.from(babelHelpers.classPrivateFieldLooseBase(this, _themePicker)[_themePicker].getThemes()).forEach(theme => {
-	      const itemNode = babelHelpers.classPrivateFieldLooseBase(this, _themePicker)[_themePicker].createItem(theme);
+	      const itemNode = babelHelpers.classPrivateFieldLooseBase(this, _themePickerDialog)[_themePickerDialog].createItem(theme);
 	      if (babelHelpers.classPrivateFieldLooseBase(this, _themePicker)[_themePicker].canSetDefaultTheme() !== true) {
 	        main_core.Event.unbindAll(itemNode, 'click');
 	        if (theme['default'] !== true) {
@@ -2345,7 +2398,7 @@ this.BX = this.BX || {};
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _themePicker)[_themePicker].canSetDefaultTheme() !== true) {
 	      return this.showBanner();
 	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _themePicker)[_themePicker].getNewThemeDialog().show();
+	    babelHelpers.classPrivateFieldLooseBase(this, _themePickerDialog)[_themePickerDialog].getNewThemeDialog().show();
 	  }
 	  handleLockButtonClick() {
 	    if (BX.getClass("BX.UI.InfoHelper")) {
@@ -2354,16 +2407,17 @@ this.BX = this.BX || {};
 	  }
 	}
 	function _initThemePicker2(themePickerSettings) {
-	  babelHelpers.classPrivateFieldLooseBase(this, _themePicker)[_themePicker] = new BX.Intranet.Bitrix24.ThemePicker(themePickerSettings);
+	  babelHelpers.classPrivateFieldLooseBase(this, _themePicker)[_themePicker] = new top.BX.Intranet.Bitrix24.ThemePicker(themePickerSettings);
 	  babelHelpers.classPrivateFieldLooseBase(this, _themePicker)[_themePicker].setThemes(themePickerSettings.themes);
 	  babelHelpers.classPrivateFieldLooseBase(this, _themePicker)[_themePicker].setBaseThemes(themePickerSettings.baseThemes);
-	  babelHelpers.classPrivateFieldLooseBase(this, _themePicker)[_themePicker].applyThemeAssets = () => {};
-	  babelHelpers.classPrivateFieldLooseBase(this, _themePicker)[_themePicker].getContentContainer = () => {
+	  babelHelpers.classPrivateFieldLooseBase(this, _themePickerDialog)[_themePickerDialog] = new intranet_themePicker_dialog.ThemePickerDialog(babelHelpers.classPrivateFieldLooseBase(this, _themePicker)[_themePicker]);
+	  babelHelpers.classPrivateFieldLooseBase(this, _themePickerDialog)[_themePickerDialog].applyThemeAssets = () => {};
+	  babelHelpers.classPrivateFieldLooseBase(this, _themePickerDialog)[_themePickerDialog].getContentContainer = () => {
 	    return this.render().querySelector('div[data-role="theme-container"]');
 	  };
-	  const closure = babelHelpers.classPrivateFieldLooseBase(this, _themePicker)[_themePicker].handleRemoveBtnClick.bind(babelHelpers.classPrivateFieldLooseBase(this, _themePicker)[_themePicker]);
-	  babelHelpers.classPrivateFieldLooseBase(this, _themePicker)[_themePicker].handleRemoveBtnClick = event => {
-	    const item = babelHelpers.classPrivateFieldLooseBase(this, _themePicker)[_themePicker].getItemNode(event);
+	  const closure = babelHelpers.classPrivateFieldLooseBase(this, _themePickerDialog)[_themePickerDialog].handleRemoveBtnClick.bind(babelHelpers.classPrivateFieldLooseBase(this, _themePickerDialog)[_themePickerDialog]);
+	  babelHelpers.classPrivateFieldLooseBase(this, _themePickerDialog)[_themePickerDialog].handleRemoveBtnClick = event => {
+	    const item = babelHelpers.classPrivateFieldLooseBase(this, _themePickerDialog)[_themePickerDialog].getItemNode(event);
 	    if (!item) {
 	      return;
 	    }
@@ -2373,13 +2427,13 @@ this.BX = this.BX || {};
 	    //TODO Shift all <td>
 	  };
 
-	  const handleItemClick = babelHelpers.classPrivateFieldLooseBase(this, _themePicker)[_themePicker].handleItemClick.bind(babelHelpers.classPrivateFieldLooseBase(this, _themePicker)[_themePicker]);
-	  babelHelpers.classPrivateFieldLooseBase(this, _themePicker)[_themePicker].handleItemClick = event => {
+	  const handleItemClick = babelHelpers.classPrivateFieldLooseBase(this, _themePickerDialog)[_themePickerDialog].handleItemClick.bind(babelHelpers.classPrivateFieldLooseBase(this, _themePickerDialog)[_themePickerDialog]);
+	  babelHelpers.classPrivateFieldLooseBase(this, _themePickerDialog)[_themePickerDialog].handleItemClick = event => {
 	    handleItemClick(event);
 	    this.applyTheme(event);
 	  };
-	  const addItem = babelHelpers.classPrivateFieldLooseBase(this, _themePicker)[_themePicker].addItem.bind(babelHelpers.classPrivateFieldLooseBase(this, _themePicker)[_themePicker]);
-	  babelHelpers.classPrivateFieldLooseBase(this, _themePicker)[_themePicker].addItem = theme => {
+	  const addItem = babelHelpers.classPrivateFieldLooseBase(this, _themePickerDialog)[_themePickerDialog].addItem.bind(babelHelpers.classPrivateFieldLooseBase(this, _themePickerDialog)[_themePickerDialog]);
+	  babelHelpers.classPrivateFieldLooseBase(this, _themePickerDialog)[_themePickerDialog].addItem = theme => {
 	    addItem(theme);
 	    this.applyPortalThemePreview(theme);
 	    this.showSaveButton();
@@ -2660,56 +2714,96 @@ this.BX = this.BX || {};
 	  render() {
 	    if (!babelHelpers.classPrivateFieldLooseBase(this, _container)[_container]) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _container)[_container] = main_core.Tag.render(_t$b || (_t$b = _$b`
-			<section class="intranet-settings__main-widget_section">
-				<div class="intranet-settings__main-widget__bang"></div>
-					<div class="intranet-settings__main-widget_bg"></div>
-					<div class="intranet-settings__main-widget_pos-box">
-						<aside class="intranet-settings__main-widget__aside">
-							<div class="intranet-settings__main-widget__aside_item --active"></div>
-							<div class="intranet-settings__main-widget__aside_item"></div>
-							<div class="intranet-settings__main-widget__aside_item"></div>
-							<div class="intranet-settings__main-widget__aside_item"></div>
-							<div class="intranet-settings__main-widget__aside_item"></div>
-							<div class="intranet-settings__main-widget__aside_item"></div>
-							<div class="intranet-settings__main-widget__aside_item"></div>
-							<div class="intranet-settings__main-widget__aside_item"></div>
-							<div class="intranet-settings__main-widget__aside_item"></div>
-							<div class="intranet-settings__main-widget__aside_item"></div>
-							<div class="intranet-settings__main-widget__aside_item"></div>
-							<div class="intranet-settings__main-widget__aside_item"></div>
-							<div class="intranet-settings__main-widget__aside_item"></div>
-						</aside>
-						<main class="intranet-settings__main-widget_main">
-						<div class="intranet-settings__main-widget_header"> 
-						<!-- statement class. depends of content --with-logo -->
-							<div class="intranet-settings__main-widget_logo" data-role="logo"></div>
-							<div class="intranet-settings__main-widget_name" data-role="title">Bitrix</div>
-							<div class="intranet-settings__main-widget_logo24" data-role="logo24">24</div>
-						</div>
-						<div class="intranet-settings__main-widget_lane_box">
-							<div class="intranet-settings__main-widget_lane_item"></div>
-							<div class="intranet-settings__main-widget_lane_inline">
-								<div class="intranet-settings__main-widget_lane_item --sm"></div>
-								<div class="intranet-settings__main-widget_lane_item --bg-30"></div>
+			<section class="intranet-settings__preview --preview" data-role="preview">
+				<div class="preview__header">
+					<div class="preview__header-box">
+						<div class="preview__header-left-box">
+							<div class="preview__menu-switcher">
+								<span class="preview__menu-switcher__icon"></span>
 							</div>
-							<div class="intranet-settings__main-widget_lane_inner">
-								<div class="intranet-settings__main-widget_lane_item"></div>
-								<div class="intranet-settings__main-widget_lane_item --bg-30"></div>
-								<div class="intranet-settings__main-widget_lane_item --bg-30"></div>
-								<div class="intranet-settings__main-widget_lane_item --bg-30"></div>
-								<div class="intranet-settings__main-widget_lane_item --bg-30"></div>
-								<div class="intranet-settings__main-widget_lane_item --bg-30"></div>
-								<div class="intranet-settings__main-widget_lane_item --bg-30"></div>
-								<div class="intranet-settings__main-widget_lane_item --bg-30"></div>
-								<div class="intranet-settings__main-widget_lane_item --bg-30"></div>
-								<div class="intranet-settings__main-widget_lane_item --bg-30"></div>
-								<div class="intranet-settings__main-widget_lane_item --bg-30"></div>
-								<div class="intranet-settings__main-widget_lane_item --bg-30"></div>
+							<div class="preview__block-item"></div>
+							<div class="preview__block-item"></div>
+							<div class="preview__block-item"></div>
+						</div>
+						<div class="preview__header-right-box">
+							<div class="intranet-settings__logo-box">
+								<div class="intranet-settings__main-widget_logo" data-role="logo"></div>
+								<div class="intranet-settings__main-widget_name" data-role="title">Bitrix</div>
+								<div class="intranet-settings__logo24" data-role="logo24">
+									24
+								</div>
+							</div>	
+							<div class="preview__circle_container">	
+								<div class="preview__circle_item"></div>
+							</div>				
+						</div>
+					</div>
+				</div>
+				<div class="preview__main">
+					<div class="preview__main-left">
+						<div class="preview__circle_container">
+							<div class="preview__circle_item-outline">
+								<div class="preview__circle_item --active"></div>
+							</div>
+						</div>	
+						<div class="preview__circle_container">	
+							<div class="preview__circle_item"></div>
+						</div>	
+						<div class="preview__circle_container">	
+							<div class="preview__circle_item"></div>
+						</div>	
+						<div class="preview__circle_container">	
+							<div class="preview__circle_item"></div>
+						</div>	
+						<div class="preview__circle_container">	
+							<div class="preview__circle_item"></div>
+						</div>	
+						<div class="preview__circle_container">	
+							<div class="preview__circle_item"></div>
+						</div>	
+					</div>
+					<div class="preview__main-center">
+						<div class="preview__main-row">
+							<div class="preview__main-row-left">
+								<div class="preview__block-item --w145"></div>
+								<div class="preview__block-item --opacity80 --w47"></div>
+								<div class="preview__block-item --w90"></div>
+							</div>
+							<div class="preview__main-row-right">
+								<div class="preview__block-item --w50"></div>
 							</div>
 						</div>
-					</main>
-					</div>				
-			</section>`));
+						<div class="preview__main-row">
+							<div class="preview__main-row-left">
+								<div class="preview__block-item --w80"></div>
+								<div class="preview__block-item --w50"></div>
+							</div>
+							<div class="preview__main-row-right">
+								<div class="preview__block-item --w90"></div>
+							</div>
+						</div>
+						<div class="preview__main-column">
+							<div class="preview__main-header"></div>
+							<div class="preview__main-table"></div>
+						</div>
+					</div>
+					<div class="preview__main-right">
+						<div class="preview__circle_container">	
+							<div class="preview__circle_item --light"></div>
+						</div>	
+						<div class="preview__circle_container">	
+							<div class="preview__circle_item --light"></div>
+						</div>	
+						<div class="preview__circle_container">	
+							<div class="preview__circle_item --light"></div>
+						</div>	
+						<div class="preview__circle_container">	
+							<div class="preview__circle_item --light"></div>
+						</div>	
+					</div>
+				</div>
+			</section>
+			`));
 	    }
 	    return babelHelpers.classPrivateFieldLooseBase(this, _container)[_container];
 	  }
@@ -2769,6 +2863,7 @@ this.BX = this.BX || {};
 	      parent: this,
 	      section: sectionView
 	    });
+
 	    // 1. This is a description on blue box
 	    sectionView.append(new ui_section.Row({
 	      content: new ui_alerts.Alert({
@@ -2779,24 +2874,34 @@ this.BX = this.BX || {};
 	      }).getContainer()
 	    }).render());
 
-	    //region 2. Tabs
+	    // 2.0 Widget
+	    const previewWidget = new SiteTitlePreviewWidget(portalSettings, portalThemeSettings);
+	    new ui_formElements_field.SettingsRow({
+	      row: new ui_section.Row({
+	        content: previewWidget.render(),
+	        className: 'intranet-settings__site-logo_subrow'
+	      }),
+	      parent: sectionField
+	    });
+
+	    //region 2.1 Tabs
 	    const siteLogoRow = new ui_formElements_field.SettingsRow({
 	      row: new ui_section.Row({
 	        className: 'intranet-settings__grid_box'
 	      }),
 	      parent: sectionField
 	    });
-	    const previewWidget = new SiteTitlePreviewWidget(portalSettings, portalThemeSettings);
 	    const tabsRow = new ui_formElements_field.SettingsRow({
 	      row: new ui_section.Row({
-	        className: 'intranet-settings__site-logo_subrow --no-padding --bottom-separator --block'
+	        className: 'intranet-settings__site-logo_subrow --bottom-separator --block'
 	      }),
-	      parent: siteLogoRow
+	      parent: sectionField
 	    });
 	    const tabsField = new ui_formElements_field.TabsField({
 	      parent: tabsRow
 	    });
-	    // 2.1 Tab Site name
+
+	    // 2.2 Tab Site name
 	    const siteTitleTab = new ui_formElements_field.TabField({
 	      parent: tabsField,
 	      tabsOptions: this.getValue('tabCompanyTitle')
@@ -2833,15 +2938,6 @@ this.BX = this.BX || {};
 	      child: siteLogoField
 	    });
 	    tabsField.activateTab(siteTitleTab);
-	    // 2.2 Widget
-
-	    new ui_formElements_field.SettingsRow({
-	      row: new ui_section.Row({
-	        content: previewWidget.render(),
-	        className: 'intranet-settings__site-logo_subrow --no-padding'
-	      }),
-	      parent: siteLogoRow
-	    });
 
 	    // 2.3 site_name
 
@@ -6703,5 +6799,5 @@ this.BX = this.BX || {};
 	exports.ServerDataSource = ServerDataSource;
 	exports.Permission = Permission;
 
-}((this.BX.Intranet = this.BX.Intranet || {}),BX.UI.Analytics,BX.UI.DragAndDrop,BX.UI,BX,BX.UI.Uploader,BX.UI,BX,BX.UI,BX,BX,BX,BX,BX.UI.FormElements,BX.UI,BX.UI.EntitySelector,BX.UI,BX,BX.UI,BX,BX.UI.Dialogs,BX.UI.FormElements,BX.Event,BX.Main,BX,BX));
+}((this.BX.Intranet = this.BX.Intranet || {}),BX.UI.Analytics,BX.UI.DragAndDrop,BX.UI,BX,BX.UI.Uploader,BX.UI,BX.Intranet.Bitrix24.ThemePicker,BX,BX.UI,BX,BX,BX,BX,BX.UI.FormElements,BX.UI,BX.UI.EntitySelector,BX.UI,BX,BX.UI,BX,BX.UI.Dialogs,BX.UI.FormElements,BX.Event,BX.Main,BX,BX));
 //# sourceMappingURL=script.js.map

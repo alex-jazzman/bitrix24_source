@@ -4,12 +4,8 @@ this.BX.Vue3 = this.BX.Vue3 || {};
 (function (exports,main_core,ui_buttons,ui_iconSet_api_core) {
 	'use strict';
 
-	const allIcons = {
-	  ...ui_buttons.ButtonIcon,
-	  ...ui_iconSet_api_core.Set,
-	  ...ui_iconSet_api_core.Outline
-	};
-	const iconValidator = val => main_core.Type.isNil(val) || Object.values(allIcons).includes(val);
+	const allIcons = new Set([ui_buttons.ButtonIcon, ui_iconSet_api_core.Set, ui_iconSet_api_core.Outline].flatMap(it => Object.values(it)));
+	const iconValidator = val => main_core.Type.isNil(val) || allIcons.has(val);
 
 	// @vue/component
 	const Button = {

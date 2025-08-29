@@ -15,13 +15,13 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 use Bitrix\Bitrix24\Feature;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Page\Asset;
 use Bitrix\Main\Page\FrameStatic;
-use Bitrix\Main\UI;
-use Bitrix\Main\Localization\Loc;
-use Bitrix\Socialnetwork\Integration\Calendar\ApiVersion;
+use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
+use Bitrix\Socialnetwork\Integration\Calendar\ApiVersion;
 use Bitrix\Socialnetwork\Integration\Intranet\Settings;
 
 $request = \Bitrix\Main\Context::getCurrent()->getRequest();
@@ -58,7 +58,7 @@ if (in_array('lists', $arResult['tabs'], true))
 	$extensionsList[] = 'lists';
 }
 
-UI\Extension::load($extensionsList);
+Extension::load($extensionsList);
 
 $APPLICATION->SetAdditionalCSS('/bitrix/components/bitrix/socialnetwork.log.ex/templates/.default/style.css');
 $APPLICATION->SetAdditionalCSS('/bitrix/components/bitrix/socialnetwork.blog.blog/templates/.default/style.css');
@@ -225,19 +225,22 @@ else
 	{
 		$limited = (
 			Loader::includeModule('bitrix24')
+			&& Loader::includeModule('ui')
 			&& !Feature::isFeatureEnabled('socialnetwork_livefeed_vote')
 		);
 
+		Extension::load('ui.info-helper');
+
 		$arTabs[] = [
-			"ID" => "vote",
-			"NAME" => Loc::getMessage("BLOG_TAB_VOTE"),
-			"ICON" => "feed-add-post-form-polls-link-icon",
-			"ONCLICK" => (
-			$limited
-				? "BX.UI.InfoHelper.show('limit_crm_interview');"
-				: ""
+			'ID' => 'vote',
+			'NAME' => Loc::getMessage('BLOG_TAB_VOTE'),
+			'ICON' => 'feed-add-post-form-polls-link-icon',
+			'ONCLICK' => (
+				$limited
+					? 'top?.BX?.UI?.FeaturePromotersRegistry.getPromoter({code: \'limit_crm_interview\', bindElement: event.target}).show();'
+					: ''
 			),
-			"LIMITED" => $limited ? 'Y' : 'N',
+			'LIMITED' => $limited ? 'Y' : 'N',
 		];
 	}
 
@@ -1007,8 +1010,6 @@ HTML;
 
 						if ($taskSubmitted)
 						{
-							CTaskNotifications::enableSonetLogNotifyAuthor();
-
 							$componentParameters = [
 								'ID' => 0,
 								'GROUP_ID' => $arParams['SOCNET_GROUP_ID'],
@@ -1049,8 +1050,6 @@ HTML;
 								null,
 								[ "HIDE_ICONS" => "Y" ]
 							);
-
-							CTaskNotifications::disableSonetLogNotifyAuthor();
 						}
 						?></div></div><?php
 				}

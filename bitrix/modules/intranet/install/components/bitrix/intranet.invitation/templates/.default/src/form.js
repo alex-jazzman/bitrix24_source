@@ -249,6 +249,7 @@ export default class Form extends EventEmitter
 
 		request.userOptions = this.userOptions;
 		request.analyticsData = this.analyticsLabel;
+		request.data["analyticsData"] = this.analyticsLabel;
 		// eslint-disable-next-line promise/catch-or-return
 		this.transport.send(request).then((response) => {
 			this.submitButton.ready();

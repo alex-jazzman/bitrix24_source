@@ -269,7 +269,6 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 		}
 
 		$this->arResult = array(
-			'CONTEXT' => $this->arParams['CONTEXT'] ?? Context::DEFAULT,
 			'GRID_INFORMATION' => $this->information,
 			'ERRORS_IN_GRID_ACTIONS' => $errorsInGridActions->toArray(),
 			'FILTER' => $folderListFilter->getConfig(),
@@ -594,7 +593,7 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 				}
 				elseif ($object->getTypeFile() == TypeFile::FLIPCHART)
 				{
-					$openUrl = $this->getUrlManager()->getUrlForViewBoard($objectId);
+					$openUrl = $this->getUrlManager()->getUrlForViewBoard($objectId, false, 'disk_page');
 					$openAction = [
 						'id' => 'open',
 						'text' => Loc::getMessage('DISK_FOLDER_LIST_ACT_OPEN'),
@@ -638,6 +637,10 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 						'icon' => '/bitrix/js/ui/actionpanel/images/ui_icon_actionpanel_download.svg',
 						'text' => Loc::getMessage('DISK_FOLDER_LIST_ACT_DOWNLOAD'),
 						'href' => $uriToDownloadArchive,
+						"onclick" => "
+							event.preventDefault();
+							BX.Disk.FolderListClass_{$this->getComponentId()}.checkFileLimit('" . $objectId . "', '" . $uriToDownloadArchive . "');
+						",
 					);
 				}
 
@@ -1072,7 +1075,7 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 
 				if ($object->getTypeFile() == TypeFile::FLIPCHART)
 				{
-					$openUrl = $this->getUrlManager()->getUrlForViewBoard($objectId);
+					$openUrl = $this->getUrlManager()->getUrlForViewBoard($objectId, false, 'disk_page');
 					$attr->addAction(
 						[
 							'type' => 'open',
@@ -1310,6 +1313,7 @@ HTML;
 				),
 			),
 		);
+		//
 		$downloadButton = array(
 			'ICON' => '/bitrix/js/ui/actionpanel/images/ui_icon_actionpanel_download.svg',
 			'TYPE' => Grid\Panel\Types::BUTTON,

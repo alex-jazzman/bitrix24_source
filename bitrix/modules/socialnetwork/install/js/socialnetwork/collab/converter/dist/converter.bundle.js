@@ -26,23 +26,15 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	var _getContentConfig = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getContentConfig");
 	var _getMultipleErrorsPopupConfig = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getMultipleErrorsPopupConfig");
 	var _getOnlyFlowErrorPopupConfig = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getOnlyFlowErrorPopupConfig");
-	var _getOnlyLandingErrorPopupConfig = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getOnlyLandingErrorPopupConfig");
 	var _hasMultipleErrors = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hasMultipleErrors");
 	var _hasOnlyFlowError = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hasOnlyFlowError");
-	var _hasOnlyLandingError = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hasOnlyLandingError");
 	class ErrorPopup {
 	  constructor(params) {
-	    Object.defineProperty(this, _hasOnlyLandingError, {
-	      value: _hasOnlyLandingError2
-	    });
 	    Object.defineProperty(this, _hasOnlyFlowError, {
 	      value: _hasOnlyFlowError2
 	    });
 	    Object.defineProperty(this, _hasMultipleErrors, {
 	      value: _hasMultipleErrors2
-	    });
-	    Object.defineProperty(this, _getOnlyLandingErrorPopupConfig, {
-	      value: _getOnlyLandingErrorPopupConfig2
 	    });
 	    Object.defineProperty(this, _getOnlyFlowErrorPopupConfig, {
 	      value: _getOnlyFlowErrorPopupConfig2
@@ -75,7 +67,6 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	      value: _prepareErrors2
 	    });
 	    this.ERROR_CODE_HAS_FLOWS = 10002;
-	    this.ERROR_CODE_LANDING_GROUP = 10003;
 	    Object.defineProperty(this, _groupId, {
 	      writable: true,
 	      value: void 0
@@ -96,9 +87,10 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	  }
 	}
 	function _prepareErrors2(errors) {
-	  const supportedErrors = errors.filter(error => [this.ERROR_CODE_HAS_FLOWS, this.ERROR_CODE_LANDING_GROUP].includes(error.code));
+	  const supportedCodes = new Set([this.ERROR_CODE_HAS_FLOWS]);
+	  const supportedErrors = errors.filter(error => supportedCodes.has(error.code));
 	  if (errors.length > supportedErrors.length) {
-	    const unsupportedErrors = errors.filter(error => ![this.ERROR_CODE_HAS_FLOWS, this.ERROR_CODE_LANDING_GROUP].includes(error.code));
+	    const unsupportedErrors = errors.filter(error => !supportedCodes.has(error.code));
 	    console.error('Unexpected errors', unsupportedErrors);
 	  }
 	  return supportedErrors;
@@ -193,8 +185,6 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	    config = babelHelpers.classPrivateFieldLooseBase(this, _getMultipleErrorsPopupConfig)[_getMultipleErrorsPopupConfig]();
 	  } else if (babelHelpers.classPrivateFieldLooseBase(this, _hasOnlyFlowError)[_hasOnlyFlowError]()) {
 	    config = babelHelpers.classPrivateFieldLooseBase(this, _getOnlyFlowErrorPopupConfig)[_getOnlyFlowErrorPopupConfig]();
-	  } else if (babelHelpers.classPrivateFieldLooseBase(this, _hasOnlyLandingError)[_hasOnlyLandingError]()) {
-	    config = babelHelpers.classPrivateFieldLooseBase(this, _getOnlyLandingErrorPopupConfig)[_getOnlyLandingErrorPopupConfig]();
 	  }
 	  return config;
 	}
@@ -250,47 +240,11 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	    buttons: [openFlowsButton, cancelButton]
 	  };
 	}
-	function _getOnlyLandingErrorPopupConfig2() {
-	  const openSettingsButton = new ui_buttons.Button({
-	    useAirDesign: true,
-	    noCaps: true,
-	    size: ui_buttons.ButtonSize.LARGE,
-	    text: main_core.Loc.getMessage('SN_COLLAB_CONVERTER_ERROR_POPUP_BUTTON_CONFIRM_LANDING'),
-	    link: `${main_core.Loc.getMessage('SN_COLLAB_CONVERTER_GROUP_URL')}group/${babelHelpers.classPrivateFieldLooseBase(this, _groupId)[_groupId]}/edit/`,
-	    onclick: () => {
-	      var _babelHelpers$classPr5;
-	      return (_babelHelpers$classPr5 = babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) == null ? void 0 : _babelHelpers$classPr5.close();
-	    }
-	  });
-	  const cancelButton = new ui_buttons.Button({
-	    useAirDesign: true,
-	    noCaps: true,
-	    style: ui_buttons.AirButtonStyle.OUTLINE,
-	    size: ui_buttons.ButtonSize.LARGE,
-	    text: main_core.Loc.getMessage('SN_COLLAB_CONVERTER_CANCEL'),
-	    onclick: () => {
-	      var _babelHelpers$classPr6;
-	      return (_babelHelpers$classPr6 = babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) == null ? void 0 : _babelHelpers$classPr6.close();
-	    }
-	  });
-	  return {
-	    header: main_core.Loc.getMessage('SN_COLLAB_CONVERTER_ERROR_POPUP_TITLE_LANDING'),
-	    descriptionParagraphs: [main_core.Loc.getMessage('SN_COLLAB_CONVERTER_ERROR_POPUP_CONTENT_LANDING_1', {
-	      '#ACCENT_START#': '<span class="socialnetwork-collab-converter-error-popup-description-paragraph-accent">',
-	      '#ACCENT_END#': '</span>'
-	    }), main_core.Loc.getMessage('SN_COLLAB_CONVERTER_ERROR_POPUP_CONTENT_LANDING_2')],
-	    helperCode: 22699004,
-	    buttons: [openSettingsButton, cancelButton]
-	  };
-	}
 	function _hasMultipleErrors2() {
 	  return babelHelpers.classPrivateFieldLooseBase(this, _errors)[_errors].length > 1;
 	}
 	function _hasOnlyFlowError2() {
 	  return babelHelpers.classPrivateFieldLooseBase(this, _errors)[_errors].length === 1 && babelHelpers.classPrivateFieldLooseBase(this, _errors)[_errors][0].code === this.ERROR_CODE_HAS_FLOWS;
-	}
-	function _hasOnlyLandingError2() {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _errors)[_errors].length === 1 && babelHelpers.classPrivateFieldLooseBase(this, _errors)[_errors][0].code === this.ERROR_CODE_LANDING_GROUP;
 	}
 
 	function mapMemberDtoToModel(memberDto) {

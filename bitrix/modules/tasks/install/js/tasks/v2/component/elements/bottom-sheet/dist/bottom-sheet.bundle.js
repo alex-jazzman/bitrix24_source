@@ -35,7 +35,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      }
 	      const previousElement = container.previousElementSibling;
 	      main_core.Dom.style(container, '--bottom-sheet-top', `${previousElement.offsetTop + previousElement.offsetHeight}px`);
-	    }
+	    },
+	    freeze() {},
+	    unfreeze() {}
 	  },
 	  template: `
 		<Transition name="b24-bottom-sheet">

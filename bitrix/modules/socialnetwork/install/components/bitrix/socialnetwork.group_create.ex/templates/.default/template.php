@@ -27,10 +27,10 @@ UI\Extension::load([
 	'ui.hint',
 	'ui.entity-selector',
 	'socialnetwork.common',
-	'intranet_theme_picker',
 	'ui.lottie',
 	'im.public.iframe',
 	'socialnetwork.limit',
+	'intranet.theme-picker',
 ]);
 
 $messages = Loc::loadLanguageFile(__FILE__);

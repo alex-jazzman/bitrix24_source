@@ -2,359 +2,150 @@
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
-(function (exports,main_core_events,main_popup,main_core,ui_system_skeleton) {
+(function (exports,main_popup,main_core,ui_system_skeleton) {
 	'use strict';
 
 	let _ = t => t,
-	  _t;
-	var _layout = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("layout");
-	class TaskCardSkeleton {
-	  constructor() {
-	    Object.defineProperty(this, _layout, {
-	      writable: true,
-	      value: void 0
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout] = {};
-	  }
-	  renderCompactCardSkeleton() {
-	    babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].compactCardSkeleton = main_core.Tag.render(_t || (_t = _`
-			<div class="tasks-task-compact-card-skeleton">
-				<div class="tasks-task-compact-card-skeleton-fields">
-					<div class="tasks-task-compact-card-skeleton-fields-title">
-						${0}
-						<div class="tasks-task-card-skeleton-group --icons">
-							${0}
-							${0}
-						</div>
-					</div>
-					<div class="tasks-task-compact-card-skeleton-fields-description">
-						${0}
-					</div>
-					<div class="tasks-task-compact-card-skeleton-fields-list">
-						<div class="tasks-task-compact-card-skeleton-fields-list-row">
-							<div class="tasks-task-card-skeleton-group">
-								${0}
-							</div>
-							<div class="tasks-task-card-skeleton-group">
-								${0}
-								${0}
-							</div>
-						</div>
-						<div class="tasks-task-compact-card-skeleton-fields-list-row">
-							<div class="tasks-task-card-skeleton-group">
-								${0}
-							</div>
-							<div class="tasks-task-card-skeleton-group">
-								${0}
-								${0}
-							</div>
-						</div>
-					</div>
-				</div>
-				<div class="tasks-task-compact-card-skeleton-chips">
+	  _t,
+	  _t2,
+	  _t3;
+	const Skeleton = () => main_core.Tag.render(_t || (_t = _`
+	<div class="task-skeleton" style="padding: 24px">
+		<div class="--title --row">
+			${0}
+			<div class="--fire">${0}</div>
+			${0}
+		</div>
+		<div class="--description">${0}</div>
+		<div style="margin-bottom: 17px">${0}</div>
+		${0}
+		<div class="--chips">${0}</div>
+		<div class="--buttons --row">
+			${0}
+			<div class="--cancel">${0}</div>
+			${0}
+		</div>
+	</div>
+`), line(240, 18, 99), circle(), circle(), line(80, 12, 99), FieldRow(), FieldRow(), line(null, 32), line(84, 34), line(84, 34), line(97, 12, 99));
+	const FieldRow = () => main_core.Tag.render(_t2 || (_t2 = _`
+	<div class="--row">
+		${0}
+		<div style="margin: 0 8px 0 41px">${0}</div>
+		${0}
+	</div>
+`), line(100, 12, 99), circle(22), line(130, 12, 99));
+	const FullSkeleton = () => main_core.Tag.render(_t3 || (_t3 = _`
+	<div class="task-skeleton --full">
+		<div class="--main">
+			<div style="padding: 28px 24px">
+				<div class="--full-title --row">
+					${0}
 					${0}
 				</div>
-				<div class="tasks-task-compact-card-skeleton-footer">
-					<div class="tasks-task-card-skeleton-group">
-						${0}
-						${0}
-					</div>
-					<div style="margin-right: 6px;">
-						${0}
-					</div>
+				<div class="--full-description">${0}</div>
+				${0}
+				<div style="margin: 12px 0">${0}</div>
+				${0}
+				<div class="--full-chips --row">
+					${0}
+					${0}
+					${0}
 				</div>
 			</div>
-		`), new ui_system_skeleton.Line({
-	      width: 240,
-	      height: 18,
-	      borderRadius: 60
-	    }).render(), new ui_system_skeleton.Circle({
-	      size: 18
-	    }).render(), new ui_system_skeleton.Circle({
-	      size: 18
-	    }).render(), new ui_system_skeleton.Line({
-	      width: 80,
-	      height: 12,
-	      borderRadius: 60
-	    }).render(), new ui_system_skeleton.Line({
-	      width: 100,
-	      height: 12,
-	      borderRadius: 60
-	    }).render(), new ui_system_skeleton.Circle({
-	      size: 22
-	    }).render(), new ui_system_skeleton.Line({
-	      width: 130,
-	      height: 12,
-	      borderRadius: 60
-	    }).render(), new ui_system_skeleton.Line({
-	      width: 100,
-	      height: 12,
-	      borderRadius: 60
-	    }).render(), new ui_system_skeleton.Circle({
-	      size: 22
-	    }).render(), new ui_system_skeleton.Line({
-	      width: 130,
-	      height: 12,
-	      borderRadius: 60
-	    }).render(), new ui_system_skeleton.Line({
-	      height: 34,
-	      borderRadius: 8
-	    }).render(), new ui_system_skeleton.Line({
-	      width: 84,
-	      height: 34,
-	      borderRadius: 8
-	    }).render(), new ui_system_skeleton.Line({
-	      width: 84,
-	      height: 34,
-	      borderRadius: 8
-	    }).render(), new ui_system_skeleton.Line({
-	      width: 97,
-	      height: 12,
-	      borderRadius: 60
-	    }).render());
-	    return babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].compactCardSkeleton;
-	  }
-	  removeCompactCardSkeleton() {
-	    main_core.Dom.remove(babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].compactCardSkeleton);
-	  }
-	}
-
-	let _$1 = t => t,
-	  _t$1,
-	  _t2;
-	var _params = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("params");
-	var _compactCardPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("compactCardPopup");
-	var _layout$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("layout");
-	var _taskCardSkeleton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("taskCardSkeleton");
-	var _taskCompactCard = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("taskCompactCard");
-	var _subscribe = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("subscribe");
-	var _unsubscribe = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("unsubscribe");
-	var _renderPopupContent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderPopupContent");
-	var _renderDragHandle = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderDragHandle");
-	var _handlePopupShow = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handlePopupShow");
-	var _closeCompactCard = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("closeCompactCard");
-	var _openFullCard = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("openFullCard");
-	var _adjustPosition = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("adjustPosition");
-	var _showOverlay = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showOverlay");
-	var _hideOverlay = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hideOverlay");
-	class TaskCard {
-	  constructor(params = {}) {
-	    Object.defineProperty(this, _renderDragHandle, {
-	      value: _renderDragHandle2
-	    });
-	    Object.defineProperty(this, _renderPopupContent, {
-	      value: _renderPopupContent2
-	    });
-	    Object.defineProperty(this, _unsubscribe, {
-	      value: _unsubscribe2
-	    });
-	    Object.defineProperty(this, _subscribe, {
-	      value: _subscribe2
-	    });
-	    Object.defineProperty(this, _params, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _compactCardPopup, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _layout$1, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _taskCardSkeleton, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _taskCompactCard, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _handlePopupShow, {
-	      writable: true,
-	      value: event => {
-	        var _babelHelpers$classPr, _babelHelpers$classPr2;
-	        (_babelHelpers$classPr2 = (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _handlePopupShow)[_handlePopupShow]).openedPopupsCount) != null ? _babelHelpers$classPr2 : _babelHelpers$classPr.openedPopupsCount = 0;
-	        const popup = event.getCompatData()[0];
-	        const onClose = () => {
-	          popup.unsubscribe('onClose', onClose);
-	          popup.unsubscribe('onDestroy', onClose);
-	          babelHelpers.classPrivateFieldLooseBase(this, _handlePopupShow)[_handlePopupShow].openedPopupsCount--;
-	          if (babelHelpers.classPrivateFieldLooseBase(this, _handlePopupShow)[_handlePopupShow].openedPopupsCount === 0) {
-	            main_core.Dom.removeClass(babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].dragHandle, '--disabled');
-	          }
-	        };
-	        popup.subscribe('onClose', onClose);
-	        popup.subscribe('onDestroy', onClose);
-	        babelHelpers.classPrivateFieldLooseBase(this, _handlePopupShow)[_handlePopupShow].openedPopupsCount++;
-	        main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].dragHandle, '--disabled');
-	      }
-	    });
-	    Object.defineProperty(this, _closeCompactCard, {
-	      writable: true,
-	      value: () => {
-	        babelHelpers.classPrivateFieldLooseBase(this, _compactCardPopup)[_compactCardPopup].close();
-	      }
-	    });
-	    Object.defineProperty(this, _openFullCard, {
-	      writable: true,
-	      value: async baseEvent => {
-	        const {
-	          TaskFullCard
-	        } = await main_core.Runtime.loadExtension('tasks.v2.application.task-full-card');
-	        babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].taskId = baseEvent.getData();
-	        await new TaskFullCard(babelHelpers.classPrivateFieldLooseBase(this, _params)[_params]).showCard();
-	        babelHelpers.classPrivateFieldLooseBase(this, _closeCompactCard)[_closeCompactCard]();
-	      }
-	    });
-	    Object.defineProperty(this, _adjustPosition, {
-	      writable: true,
-	      value: (baseEvent = null) => {
-	        var _baseEvent$getData;
-	        const {
-	          innerPopup,
-	          titleFieldHeight,
-	          animate
-	        } = (_baseEvent$getData = baseEvent == null ? void 0 : baseEvent.getData()) != null ? _baseEvent$getData : {};
-	        if (!innerPopup) {
-	          babelHelpers.classPrivateFieldLooseBase(this, _compactCardPopup)[_compactCardPopup].setOffset({
-	            offsetTop: 0
-	          });
-	          babelHelpers.classPrivateFieldLooseBase(this, _compactCardPopup)[_compactCardPopup].adjustPosition({
-	            forceBindPosition: true
-	          });
-	          return;
-	        }
-	        const innerPopupContainer = innerPopup.getPopupContainer();
-	        const heightDifference = innerPopupContainer.offsetHeight - babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].popupContainer.offsetHeight;
-	        const popupPaddingTop = 20;
-	        const offset = titleFieldHeight + heightDifference / 2 + popupPaddingTop * 2;
-	        main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].popupContainer, '--overlay-offset-top', `-${offset}px`);
-	        if (!animate) {
-	          babelHelpers.classPrivateFieldLooseBase(this, _compactCardPopup)[_compactCardPopup].adjustPosition({
-	            forceBindPosition: true
-	          });
-	          main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].popupContainer, 'transition', 'none');
-	          setTimeout(() => main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].popupContainer, 'transition', null));
-	        }
-	      }
-	    });
-	    Object.defineProperty(this, _showOverlay, {
-	      writable: true,
-	      value: () => {
-	        babelHelpers.classPrivateFieldLooseBase(this, _compactCardPopup)[_compactCardPopup].adjustPosition({
-	          forceBindPosition: true
-	        });
-	        main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _compactCardPopup)[_compactCardPopup].getPopupContainer(), '--overlay');
-	      }
-	    });
-	    Object.defineProperty(this, _hideOverlay, {
-	      writable: true,
-	      value: () => {
-	        main_core.Dom.removeClass(babelHelpers.classPrivateFieldLooseBase(this, _compactCardPopup)[_compactCardPopup].getPopupContainer(), '--overlay');
-	      }
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _params)[_params] = params;
-	    babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1] = {};
-	    babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].taskId = main_core.Type.isUndefined(babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].taskId) ? 0 : babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].taskId;
-	    babelHelpers.classPrivateFieldLooseBase(this, _taskCardSkeleton)[_taskCardSkeleton] = new TaskCardSkeleton();
-	  }
-	  static async init(params = {}) {
-	    const {
-	      taskId = null,
-	      groupId = null,
-	      deadlineTs = null,
-	      analytics = {}
-	    } = params;
-	    const card = taskId ? 'TaskFullCard' : 'TaskCompactCard';
-	    const extension = {
-	      TaskFullCard: 'tasks.v2.application.task-full-card',
-	      TaskCompactCard: 'tasks.v2.application.task-compact-card'
-	    };
-	    const exports = await main_core.Runtime.loadExtension(['tasks.v2.core', extension[card]]);
-	    return new exports[card]({
-	      taskId,
-	      groupId,
-	      deadlineTs,
-	      analytics
-	    });
-	  }
-	  showCompactCard() {
-	    const popupId = `tasks-compact-card-${babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].taskId}`;
-	    if (main_popup.PopupManager.getPopupById(popupId)) {
-	      return;
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _compactCardPopup)[_compactCardPopup] = new main_popup.Popup({
-	      id: popupId,
-	      cacheable: false,
-	      width: 580,
-	      borderRadius: '16px',
-	      angle: false,
-	      content: babelHelpers.classPrivateFieldLooseBase(this, _renderPopupContent)[_renderPopupContent](),
-	      closeByEsc: false,
-	      autoHide: false,
-	      closeIcon: false,
-	      noAllPaddings: true,
-	      contentBorderRadius: '8px',
-	      className: 'tasks-compact-card-popup',
-	      events: {
-	        onPopupAfterClose: async popup => {
-	          await babelHelpers.classPrivateFieldLooseBase(this, _taskCompactCard)[_taskCompactCard].unmountCard();
-	          babelHelpers.classPrivateFieldLooseBase(this, _unsubscribe)[_unsubscribe](babelHelpers.classPrivateFieldLooseBase(this, _taskCompactCard)[_taskCompactCard]);
-	          popup.destroy();
-	        },
-	        onAfterPopupShow: async popup => {
-	          babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].popupContainer = popup.getPopupContainer();
-	          babelHelpers.classPrivateFieldLooseBase(this, _taskCompactCard)[_taskCompactCard] = await TaskCard.init(babelHelpers.classPrivateFieldLooseBase(this, _params)[_params]);
-	          babelHelpers.classPrivateFieldLooseBase(this, _taskCardSkeleton)[_taskCardSkeleton].removeCompactCardSkeleton();
-	          await babelHelpers.classPrivateFieldLooseBase(this, _taskCompactCard)[_taskCompactCard].mountCard(babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].cardContainer);
-	          main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _renderDragHandle)[_renderDragHandle](), babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].cardContainer);
-	          babelHelpers.classPrivateFieldLooseBase(this, _subscribe)[_subscribe](babelHelpers.classPrivateFieldLooseBase(this, _taskCompactCard)[_taskCompactCard]);
-	        }
-	      },
-	      overlay: true,
-	      draggable: {
-	        element: babelHelpers.classPrivateFieldLooseBase(this, _renderDragHandle)[_renderDragHandle](),
-	        restrict: true
-	      }
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _compactCardPopup)[_compactCardPopup].show();
-	  }
-	}
-	function _subscribe2(taskCompactCard) {
-	  main_core_events.EventEmitter.subscribe('BX.Main.Popup:onShow', babelHelpers.classPrivateFieldLooseBase(this, _handlePopupShow)[_handlePopupShow]);
-	  taskCompactCard.subscribe('closeCard', babelHelpers.classPrivateFieldLooseBase(this, _closeCompactCard)[_closeCompactCard]);
-	  taskCompactCard.subscribe('openFullCard', babelHelpers.classPrivateFieldLooseBase(this, _openFullCard)[_openFullCard]);
-	  taskCompactCard.subscribe('adjustPosition', babelHelpers.classPrivateFieldLooseBase(this, _adjustPosition)[_adjustPosition]);
-	  taskCompactCard.subscribe('showOverlay', babelHelpers.classPrivateFieldLooseBase(this, _showOverlay)[_showOverlay]);
-	  taskCompactCard.subscribe('hideOverlay', babelHelpers.classPrivateFieldLooseBase(this, _hideOverlay)[_hideOverlay]);
-	}
-	function _unsubscribe2(taskCompactCard) {
-	  main_core_events.EventEmitter.unsubscribe('BX.Main.Popup:onShow', babelHelpers.classPrivateFieldLooseBase(this, _handlePopupShow)[_handlePopupShow]);
-	  taskCompactCard.unsubscribe('closeCard', babelHelpers.classPrivateFieldLooseBase(this, _closeCompactCard)[_closeCompactCard]);
-	  taskCompactCard.unsubscribe('openFullCard', babelHelpers.classPrivateFieldLooseBase(this, _openFullCard)[_openFullCard]);
-	  taskCompactCard.unsubscribe('adjustPosition', babelHelpers.classPrivateFieldLooseBase(this, _adjustPosition)[_adjustPosition]);
-	  taskCompactCard.unsubscribe('showOverlay', babelHelpers.classPrivateFieldLooseBase(this, _showOverlay)[_showOverlay]);
-	  taskCompactCard.unsubscribe('hideOverlay', babelHelpers.classPrivateFieldLooseBase(this, _hideOverlay)[_hideOverlay]);
-	}
-	function _renderPopupContent2() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].cardContainer = main_core.Tag.render(_t$1 || (_t$1 = _$1`
-			<div class="tasks-task-compact-card-popup-content">
+			<div class="--row --footer">
+				${0}
+				<div class="--more">${0}</div>
 				${0}
 			</div>
-		`), babelHelpers.classPrivateFieldLooseBase(this, _taskCardSkeleton)[_taskCardSkeleton].renderCompactCardSkeleton());
-	  return babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].cardContainer;
-	}
-	function _renderDragHandle2() {
-	  var _babelHelpers$classPr3, _babelHelpers$classPr4;
-	  (_babelHelpers$classPr4 = (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1]).dragHandle) != null ? _babelHelpers$classPr4 : _babelHelpers$classPr3.dragHandle = main_core.Tag.render(_t2 || (_t2 = _$1`
-			<div class="tasks-compact-card-popup-drag-handle"></div>
-		`));
-	  return babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].dragHandle;
+		</div>
+		<div class="--chat">
+			<div class="--chat-title --row">
+				${0}
+				<div class="--chat-info">
+					${0}
+					${0}
+				</div>
+				${0}
+				<div style="margin-left: 8px">${0}</div>
+			</div>
+			<div class="--chat-bg">
+				<div class="--textarea --row">
+					${0}
+					${0}
+				</div>
+			</div>
+		</div>
+	</div>
+`), line(350, 18), circle(), line(260, 18), line(null, 84), line(null, 84), line(null, 84), line(88, 32), line(88, 32), line(88, 32), line(85, 38), line(38, 38), line(131, 22), circle(40), line(110, 12), line(75, 10), circle(), circle(), line(null, 47), circle(44));
+	const line = ui_system_skeleton.Line;
+	const circle = ui_system_skeleton.Circle;
+
+	class TaskCard {
+	  static showCompactCard(params = {}) {
+	    const id = `tasks-compact-card-${params.taskId}`;
+	    if (main_popup.PopupManager.getPopupById(id)) {
+	      return;
+	    }
+	    let card;
+	    const popup = new main_popup.Popup({
+	      id,
+	      className: 'tasks-compact-card-popup',
+	      width: 580,
+	      borderRadius: '16px',
+	      noAllPaddings: true,
+	      content: Skeleton(),
+	      cacheable: false,
+	      events: {
+	        onAfterClose: () => card.unmountCard()
+	      },
+	      overlay: {
+	        opacity: 100,
+	        backgroundColor: '#0363',
+	        blur: 'blur(2px)'
+	      }
+	    });
+	    void BX.Runtime.loadExtension('tasks.v2.application.task-compact-card').then(({
+	      TaskCompactCard
+	    }) => {
+	      card = new TaskCompactCard({
+	        analytics: {},
+	        ...params
+	      });
+	      card.mountCard(popup);
+	    });
+	    popup.show();
+	  }
+	  static showFullCard(params = {}) {
+	    let card;
+	    BX.SidePanel.Instance.open(`tasks-full-card-${params.taskId}`, {
+	      contentClassName: 'tasks-full-card-slider-content',
+	      width: 1510,
+	      customLeftBoundary: 0,
+	      cacheable: false,
+	      contentCallback: slider => {
+	        void BX.Runtime.loadExtension('tasks.v2.application.task-full-card').then(({
+	          TaskFullCard
+	        }) => {
+	          card = new TaskFullCard({
+	            analytics: {},
+	            ...params
+	          });
+	          card.mountCard(slider);
+	        });
+	        return FullSkeleton();
+	      },
+	      events: {
+	        onClose: () => {
+	          var _card;
+	          return (_card = card) == null ? void 0 : _card.unmountCard();
+	        }
+	      }
+	    });
+	  }
 	}
 
+	exports.FullSkeleton = FullSkeleton;
 	exports.TaskCard = TaskCard;
 
-}((this.BX.Tasks.V2.Application = this.BX.Tasks.V2.Application || {}),BX.Event,BX.Main,BX,BX.UI.System));
+}((this.BX.Tasks.V2.Application = this.BX.Tasks.V2.Application || {}),BX.Main,BX,BX.UI.System));
 //# sourceMappingURL=task-card.bundle.js.map

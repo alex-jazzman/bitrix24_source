@@ -160,4 +160,12 @@ return [
 		'name' => Loc::getMessage('LD_BLOCK_SECTION_TILES_NEW2'),
 		'type' => ['mainpage'],
 	],
+	'widgets_columns' => [
+		'name' => Loc::getMessage('LD_BLOCK_SECTION_COLUMNS'),
+		'type' => ['mainpage'],
+	],
+	'widgets_text_image' => [
+		'name' => Loc::getMessage('LD_BLOCK_SECTION_TEXT_IMAGE'),
+		'type' => ['mainpage'],
+	],
 ];

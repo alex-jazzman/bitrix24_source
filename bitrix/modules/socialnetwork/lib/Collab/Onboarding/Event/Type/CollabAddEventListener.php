@@ -20,8 +20,8 @@ class CollabAddEventListener extends AbstractEventListener
 		$members = $collab->getUserMemberIds();
 
 		$jobCollection = (count($members) === 1)
-			? $this->getMemberNotInvitedJobs($collabId, $event->getCommand()->getInitiatorId())
-			: $this->getFirstMemberAddedJobs($collabId, $event->getCommand()->getInitiatorId())
+			? $this->getJobsMemberNotInvited($collabId, $event->getCommand()->getInitiatorId())
+			: $this->getJobsFirstMemberAdded($collabId, $event->getCommand()->getInitiatorId())
 		;
 
 		$this->queueService->add($jobCollection);
@@ -29,7 +29,7 @@ class CollabAddEventListener extends AbstractEventListener
 		return new EventResult(EventResult::SUCCESS);
 	}
 
-	private function getMemberNotInvitedJobs(int $collabId, int $userId): JobCollection
+	private function getJobsMemberNotInvited(int $collabId, int $userId): JobCollection
 	{
 		return new JobCollection(
 			JobFactory::create($collabId, $userId, Type::MembersNotInvitedOneDay->value),
@@ -39,7 +39,7 @@ class CollabAddEventListener extends AbstractEventListener
 		);
 	}
 
-	private function getFirstMemberAddedJobs(int $collabId, int $userId): JobCollection
+	private function getJobsFirstMemberAdded(int $collabId, int $userId): JobCollection
 	{
 		return new JobCollection(
 			JobFactory::create($collabId, $userId, Type::StartChattingOneDay->value),

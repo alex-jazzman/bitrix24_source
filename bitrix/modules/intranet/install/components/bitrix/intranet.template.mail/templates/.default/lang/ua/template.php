@@ -1,6 +1,10 @@
-<?
+<?php
 $MESS["INTRANET_BITRIX24"] = "Бітрікс24";
+$MESS["INTRANET_BITRIX24_PROMO"] = "Допомагає бізнесу працювати";
 $MESS["INTRANET_CHANGE_NOTIFY_SETTINGS"] = "Змінити налаштування сповіщень";
+$MESS["INTRANET_EXPLANATION_TEXT"] = "Якщо ви отримали цей лист помилково, проігноруйте його.";
+$MESS["INTRANET_INVITATION_JOIN"] = "Приєднатися";
+$MESS["INTRANET_INVITATION_JOIN_TEXT"] = "Наша команда чекає на вас у Бітрікс24";
 $MESS["INTRANET_INVITE_ACCEPT"] = "Прийняти запрошення";
 $MESS["INTRANET_INVITE_FOOTER"] = "Це автоматичне повідомлення. Ви отримали його, тому що ваш колега запросив вас в Бітрікс24. Коли приймете запрошення, то зможете керувати налаштуваннями всіх повідомлень.";
 $MESS["INTRANET_INVITE_IMG_LINK"] = "https://www.bitrix24.ru/images/content/mail/ua.png";
@@ -14,5 +18,6 @@ $MESS["INTRANET_MAIL_TITLE_IM_NEW_MESSAGE_GROUP"] = "Нові повідомле
 $MESS["INTRANET_MAIL_TITLE_IM_NEW_NOTIFY"] = "Нове сповіщення від #NAME#";
 $MESS["INTRANET_OPEN"] = "Подивитись";
 $MESS["INTRANET_OPEN_NOTIFY"] = "Перейти до сповіщень";
+$MESS["INTRANET_PERSONAL_DATA_TEXT"] = "Privacy Policy";
 $MESS["INTRANET_SITE_LINK"] = "https://www.bitrix24.ua/";
-?>
+$MESS["INTRANET_YOUR_BITRIX24"] = "Ваші Бітрікс24:";

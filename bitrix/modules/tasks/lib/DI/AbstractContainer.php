@@ -12,7 +12,8 @@ use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\Validation\ValidationService;
 use Bitrix\Tasks\DI\Attribute\Inject;
 use Bitrix\Tasks\Internals\Trait\SingletonTrait;
-use Bitrix\Tasks\V2\Internals\Exception\DI\CyclicDependencyException;
+use Bitrix\Tasks\V2\Internal\Exception\DI\CyclicDependencyException;
+use ReflectionAttribute;
 use ReflectionClass;
 use ReflectionParameter;
 
@@ -167,31 +168,29 @@ abstract class AbstractContainer
 
 	private function resolveLocatorCodeImplementation(ReflectionParameter|ReflectionClass $reflector): ?object
 	{
-		$attributes = $reflector->getAttributes();
+		$attributes = $reflector->getAttributes(Inject::class, ReflectionAttribute::IS_INSTANCEOF);
 		foreach ($attributes as $reflectionAttribute)
 		{
 			$attribute = $reflectionAttribute->newInstance();
-			if ($attribute instanceof Inject)
-			{
-				if ($attribute->externalModule !== null)
-				{
-					$isLoaded = Loader::includeModule($attribute->externalModule);
-					if (!$isLoaded)
-					{
-						throw new LoaderException('Cannot load module ' . $attribute->externalModule);
-					}
-				}
 
-				if ($attribute->locatorCode !== null)
+			if ($attribute->externalModule !== null)
+			{
+				$isLoaded = Loader::includeModule($attribute->externalModule);
+				if (!$isLoaded)
 				{
-					try
-					{
-						return $this->locator->get($attribute->locatorCode);
-					}
-					catch (ObjectNotFoundException)
-					{
-						return null;
-					}
+					throw new LoaderException('Cannot load module ' . $attribute->externalModule);
+				}
+			}
+
+			if ($attribute->locatorCode !== null)
+			{
+				try
+				{
+					return $this->locator->get($attribute->locatorCode);
+				}
+				catch (ObjectNotFoundException)
+				{
+					return null;
 				}
 			}
 		}

@@ -1,0 +1,23 @@
+<?php
+$MESS["PRESET_INFO_CANCEL"] = "Скасувати";
+$MESS["PRESET_INFO_SELECT"] = "Вибрати";
+$MESS["PRESET_INFO_SELECTED"] = "Вибрано";
+$MESS["PRESET_MANUAL_SETTINGS_BANNER_DESCRIPTION"] = "Додайте в меню потрібні пункти, інші будуть приховані в «Ще». Пункти можна перетягувати й розміщувати так, як вам зручно.";
+$MESS["PRESET_MANUAL_SETTINGS_BANNER_TITLE"] = "Створіть своє меню";
+$MESS["PRESET_MANUAL_SETTINGS_BUTTON_HIDE"] = "Приховати";
+$MESS["PRESET_MANUAL_SETTINGS_BUTTON_SAVE"] = "Готово";
+$MESS["PRESET_MANUAL_SETTINGS_BUTTON_SHOW"] = "Показати в меню";
+$MESS["PRESET_MANUAL_SETTINGS_SECTION_MENU_TITLE"] = "Пункти в нижньому меню";
+$MESS["PRESET_MANUAL_SETTINGS_SECTION_MORE_TITLE"] = "Пункти в «Ще»";
+$MESS["PRESET_MANUAL_SETTINGS_TITLE"] = "Своє меню";
+$MESS["TAB_PRESETS_NEW_APPLY_ERROR"] = "Не вдалося зберегти зміни, спробуйте ще раз";
+$MESS["TAB_PRESETS_NEW_BANNER_DESCRIPTION"] = "Ви зможете перемикатися між потрібними інструментами, інші будуть приховані в «Ще».";
+$MESS["TAB_PRESETS_NEW_BANNER_TITLE"] = "Виберіть нижнє меню";
+$MESS["TAB_PRESETS_NEW_CONFIRM_ACCEPT"] = "Змінити";
+$MESS["TAB_PRESETS_NEW_CONFIRM_CLOSE"] = "Скасувати";
+$MESS["TAB_PRESETS_NEW_CONFIRM_DESCRIPTION"] = "Ви завжди можете вибрати інше меню або створити своє.";
+$MESS["TAB_PRESETS_NEW_CONFIRM_TITLE"] = "Змінити нижнє меню?";
+$MESS["TAB_PRESETS_NEW_EDIT"] = "Змінити";
+$MESS["TAB_PRESETS_NEW_ERROR"] = "Не вдалося перейти до налаштувань, спробуйте ще раз. Якщо помилка повториться, зверніться до адміністратора вашого Бітрікс24.";
+$MESS["TAB_PRESETS_NEW_SELECT"] = "Вибрати";
+$MESS["TAB_PRESETS_NEW_SELECTED"] = "Вибрано";

@@ -22,7 +22,7 @@ class CTaskElapsedTime
 	/**
 	 * @deprecated
 	 * @TasksV2
-	 * @use \Bitrix\Tasks\V2\Command\Task\Tracking\AddElapsedTimeCommand
+	 * @use \Bitrix\Tasks\V2\Public\Command\Task\Tracking\AddElapsedTimeCommand
 	 */
 	function Add($arFields, $arParams = array())
 	{
@@ -66,13 +66,13 @@ class CTaskElapsedTime
 
 			if (\Bitrix\Tasks\V2\FormV2Feature::isOn('elapsed'))
 			{
-				$mapper = \Bitrix\Tasks\V2\Internals\Container::getInstance()->getElapsedTimeMapper();
+				$mapper = \Bitrix\Tasks\V2\Internal\DI\Container::getInstance()->getElapsedTimeMapper();
 
 				$arFields['CREATED_DATE'] = $createdDate;
 
 				$elapsedTime = $mapper->mapToEntity($arFields);
 
-				$result = (new \Bitrix\Tasks\V2\Command\Task\Tracking\AddElapsedTimeCommand(
+				$result = (new \Bitrix\Tasks\V2\Public\Command\Task\Tracking\AddElapsedTimeCommand(
 					elapsedTime: $elapsedTime,
 				))->run();
 
@@ -283,7 +283,7 @@ class CTaskElapsedTime
 				return false;
 		}
 
-		$deleteResult = \Bitrix\Tasks\ElapsedTimeTable::delete($ID);
+		$deleteResult = \Bitrix\Tasks\Internals\Task\ElapsedTimeTable::delete($ID);
 
 		$occurAsUserId = CTasksTools::getOccurAsUserId();
 		if ( ! $occurAsUserId )

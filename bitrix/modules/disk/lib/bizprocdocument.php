@@ -954,13 +954,10 @@ class BizProcDocument
 			if(ModuleManager::isModuleInstalled('bitrix24'))
 			{
 				$siteId = \CSite::getDefSite();
-				$employeeGroup = \CGroup::getList('', '', array(
-					'STRING_ID' => 'EMPLOYEES_' . $siteId,
-					'STRING_ID_EXACT_MATCH' => 'Y'
-				))->fetch();
+				$employeeGroup = \CGroup::GetIDByCode('EMPLOYEES_' . $siteId);
 				if($employeeGroup)
 				{
-					$employeeGroupId = (int)$employeeGroup['ID'];
+					$employeeGroupId = (int)$employeeGroup;
 					if(!in_array($employeeGroupId, $groupIds, true))
 					{
 						$groupIds[] = $employeeGroupId;

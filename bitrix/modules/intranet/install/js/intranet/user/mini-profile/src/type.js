@@ -63,7 +63,7 @@ export type UserStatusType = {
 };
 
 export type UserStatusCodeType = 'online' | 'offline' | 'dnd' | 'vacation' | 'fired';
-export const UserStatus = Object.freeze({
+export const UserStatus: Record<string, UserStatusCodeType> = Object.freeze({
 	Online: 'online',
 	Offline: 'offline',
 	DoNotDisturb: 'dnd',

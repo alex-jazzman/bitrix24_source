@@ -72,7 +72,6 @@ export const UserCustomTagSelector = {
 			user: null,
 			previousUser: null,
 			loading: true,
-			showAction: false,
 			isMenuShown: false,
 		};
 	},
@@ -288,19 +287,6 @@ export const UserCustomTagSelector = {
 							<UserAvatar :src="userAvatar" :type="userType"/>
 						</div>
 						<div class="b24-user-selector-user-name">{{ userName }}</div>
-					</div>
-					<div
-						v-show="!withActionMenu"
-						class="b24-user-selector-user-action"
-						:class="{'--show': showAction}"
-					>
-						<div
-							class="b24-user-selector-user-action-edit"
-							:data-id="'Edit-' + testId"
-							@click="showDialog"
-						>
-							<BIcon class="b24-user-selector-user-edit-icon" :name="Outline.EDIT_L"/>
-						</div>
 					</div>
 				</div>
 				<div

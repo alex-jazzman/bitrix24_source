@@ -48,7 +48,7 @@ this.BX = this.BX || {};
 	  reload() {
 	    const currentUserId = parseInt(main_core.Loc.getMessage('USER_ID'), 10);
 	    this.accounts = 'undefined' !== typeof BXDesktopSystem ? im_v2_lib_desktopApi.DesktopApi.getAccountList() : [];
-	    this.currentUser = this.accounts.find(account => parseInt(account.id, 10) === currentUserId && account.portal === location.hostname);
+	    this.currentUser = this.accounts.find(account => parseInt(account.id, 10) === currentUserId && account.portal === location.hostname) || null;
 	    this.viewPopupAccounts();
 	  }
 	  initPopup() {
@@ -87,15 +87,17 @@ this.BX = this.BX || {};
 	    }
 	    const sumCounters = this.getSumCounters();
 	    const block = document.getElementsByClassName('intranet__desktop-menu_user-block')[0];
-	    const counterNode = block.querySelector('[data-role="counter"]');
-	    if (sumCounters > 0) {
-	      counterNode.innerHTML = sumCounters > 99 ? '99+' : sumCounters;
-	      if (!main_core.Dom.hasClass(block, 'intranet__desktop-menu_item_counters')) {
+	    const counterNode = block == null ? void 0 : block.querySelector('[data-role="counter"]');
+	    if (counterNode) {
+	      if (sumCounters > 0) {
+	        counterNode.innerHTML = sumCounters > 99 ? '99+' : sumCounters;
+	        if (!main_core.Dom.hasClass(block, 'intranet__desktop-menu_item_counters')) {
+	          main_core.Dom.addClass(block, 'intranet__desktop-menu_item_counters');
+	        }
+	      } else {
+	        counterNode.innerHTML = '';
 	        main_core.Dom.addClass(block, 'intranet__desktop-menu_item_counters');
 	      }
-	    } else {
-	      counterNode.innerHTML = '';
-	      main_core.Dom.addClass(block, 'intranet__desktop-menu_item_counters');
 	    }
 	  }
 	  removeElements(className) {
@@ -105,6 +107,9 @@ this.BX = this.BX || {};
 	    });
 	  }
 	  viewDesktopUser() {
+	    if (this.currentUser === null) {
+	      return;
+	    }
 	    const block = document.getElementsByClassName('intranet__desktop-menu_user')[0];
 	    const counters = this.getSumCounters();
 	    let counterBlock = null;
@@ -141,6 +146,9 @@ this.BX = this.BX || {};
 	    return `url('${BX.util.htmlspecialchars(account.avatar === Account.defaultAvatar ? Account.defaultAvatarDesctop : BX.util.htmlspecialchars(avatarUrl))}')`;
 	  }
 	  viewPopupAccounts() {
+	    if (this.currentUser === null) {
+	      return;
+	    }
 	    const menuPopup = document.getElementsByClassName('intranet__desktop-menu_popup')[0];
 	    let position = '';
 	    if (this.currentUser.work_position !== '') {
@@ -270,94 +278,6 @@ this.BX = this.BX || {};
 	}
 	Account.defaultAvatar = '/bitrix/js/im/images/blank.gif';
 	Account.defaultAvatarDesctop = '/bitrix/js/ui/icons/b24/images/ui-user.svg?v2';
-
-	var _getThemePicker = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getThemePicker");
-	var _applyTheme = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("applyTheme");
-	var _applyPictureTheme = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("applyPictureTheme");
-	var _applyVideoTheme = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("applyVideoTheme");
-	class Theme {
-	  constructor() {
-	    var _babelHelpers$classPr;
-	    Object.defineProperty(this, _applyVideoTheme, {
-	      value: _applyVideoTheme2
-	    });
-	    Object.defineProperty(this, _applyPictureTheme, {
-	      value: _applyPictureTheme2
-	    });
-	    Object.defineProperty(this, _applyTheme, {
-	      value: _applyTheme2
-	    });
-	    Object.defineProperty(this, _getThemePicker, {
-	      value: _getThemePicker2
-	    });
-	    this.backgroundNode = null;
-	    const _theme = (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _getThemePicker)[_getThemePicker]()) == null ? void 0 : _babelHelpers$classPr.getAppliedTheme();
-	    this.backgroundNode = document.querySelector('body');
-	    if (_theme) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _applyTheme)[_applyTheme](_theme);
-	    }
-	    main_core_events.EventEmitter.subscribe('BX.Intranet.Bitrix24:ThemePicker:onThemeApply', event => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _applyTheme)[_applyTheme](event.data.theme);
-	    });
-	  }
-	}
-	function _getThemePicker2() {
-	  var _BX$Intranet$Bitrix, _BX$Intranet, _BX$Intranet$Bitrix2, _top$BX$Intranet, _top$BX$Intranet$Bitr;
-	  return (_BX$Intranet$Bitrix = (_BX$Intranet = BX.Intranet) == null ? void 0 : (_BX$Intranet$Bitrix2 = _BX$Intranet.Bitrix24) == null ? void 0 : _BX$Intranet$Bitrix2.ThemePicker.Singleton) != null ? _BX$Intranet$Bitrix : (_top$BX$Intranet = top.BX.Intranet) == null ? void 0 : (_top$BX$Intranet$Bitr = _top$BX$Intranet.Bitrix24) == null ? void 0 : _top$BX$Intranet$Bitr.ThemePicker.Singleton;
-	}
-	function _applyTheme2(theme) {
-	  theme.video ? babelHelpers.classPrivateFieldLooseBase(this, _applyVideoTheme)[_applyVideoTheme](theme) : babelHelpers.classPrivateFieldLooseBase(this, _applyPictureTheme)[_applyPictureTheme](theme);
-	  main_core.Dom.removeClass(this.backgroundNode, 'bitrix24-theme-default bitrix24-theme-dark bitrix24-theme-light');
-	  let themeClass = 'bitrix24-theme-default';
-	  if (theme.id !== 'default' && String(theme.id).indexOf('default:') !== 0) {
-	    themeClass = String(theme.id).indexOf('dark:') === 0 ? 'bitrix24-theme-dark' : 'bitrix24-theme-light';
-	  }
-	  main_core.Dom.addClass(this.backgroundNode, themeClass);
-	}
-	function _applyPictureTheme2(theme) {
-	  let bgImage = theme.previewImage;
-	  if (main_core.Type.isArrayFilled(theme.prefetchImages)) {
-	    bgImage = theme.prefetchImages[theme.prefetchImages.length - 1];
-	  }
-	  const imageUrl = `url('${main_core.Text.encode(bgImage)}')`;
-	  main_core.Dom.style(this.backgroundNode, 'backgroundImage', imageUrl);
-	}
-	function _applyVideoTheme2(theme) {
-	  const sources = [];
-	  for (let type in theme.video.sources) {
-	    sources.push(BX.create('source', {
-	      attrs: {
-	        type: `video/${type}`,
-	        src: theme.video.sources[type]
-	      }
-	    }));
-	  }
-	  const video = main_core.Dom.create('div', {
-	    props: {
-	      className: 'theme-video-container'
-	    },
-	    dataset: {
-	      themeId: theme.id
-	    },
-	    children: [main_core.Dom.create('video', {
-	      props: {
-	        className: 'theme-video'
-	      },
-	      attrs: {
-	        poster: theme.video.poster,
-	        autoplay: true,
-	        loop: true,
-	        muted: true,
-	        playsinline: true
-	      },
-	      dataset: {
-	        themeId: theme.id
-	      },
-	      children: sources
-	    })]
-	  });
-	  main_core.Dom.prepend(video, this.backgroundNode);
-	}
 
 	class Counters {
 	  init() {
@@ -730,16 +650,12 @@ this.BX = this.BX || {};
 	    });
 	    this.menuContainer = document.getElementById("menu-items-block");
 	    if (!this.menuContainer) {
-	      return false;
+	      return;
 	    }
-	    this.initTheme();
 	    this.getItemsController();
 	    this.getHistoryItems(isAir);
 	    this.showAccount(allCounters);
 	    this.runAPICounters();
-	  }
-	  initTheme() {
-	    this.theme = new Theme();
 	  }
 	  getItemsController() {
 	    return this.cache.remember('itemsMenuController', () => {

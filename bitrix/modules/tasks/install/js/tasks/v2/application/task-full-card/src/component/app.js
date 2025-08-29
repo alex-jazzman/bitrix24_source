@@ -4,6 +4,8 @@ import { mapActions, mapGetters } from 'ui.vue3.vuex';
 import { Outline } from 'ui.icon-set.api.core';
 import 'ui.icon-set.outline';
 
+import { FullSkeleton } from 'tasks.v2.application.task-card';
+import { Core } from 'tasks.v2.core';
 import { CardType, EventName, Model } from 'tasks.v2.const';
 import { Chip } from 'tasks.v2.component.elements.chip';
 import { FieldList } from 'tasks.v2.component.elements.field-list';
@@ -15,7 +17,7 @@ import { Responsible, responsibleMeta } from 'tasks.v2.component.fields.responsi
 import { Deadline, deadlineMeta } from 'tasks.v2.component.fields.deadline';
 import { Status, statusMeta } from 'tasks.v2.component.fields.status';
 import { Files, FilesSheet, FilesChip, filesMeta } from 'tasks.v2.component.fields.files';
-import { CheckList, CheckListChip, CheckListSheet, checkListMeta } from 'tasks.v2.component.fields.check-list';
+import { CheckList, CheckListChip, checkListMeta } from 'tasks.v2.component.fields.check-list';
 import { Group, GroupChip, groupMeta } from 'tasks.v2.component.fields.group';
 import { Flow, FlowChip, flowMeta } from 'tasks.v2.component.fields.flow';
 import { Accomplices, AccomplicesChip, accomplicesMeta } from 'tasks.v2.component.fields.accomplices';
@@ -42,7 +44,6 @@ export const App = {
 		Files,
 		FilesSheet,
 		CheckList,
-		CheckListSheet,
 		FieldList,
 		Chip,
 		Chat,
@@ -169,6 +170,7 @@ export const App = {
 					title: groupMeta.getTitle(this.task.groupId),
 					component: Group,
 					chip: GroupChip,
+					isEnabled: Core.getParams().features.isProjectsEnabled,
 				},
 				{
 					title: accomplicesMeta.title,
@@ -186,6 +188,7 @@ export const App = {
 					component: Flow,
 					chip: FlowChip,
 					withSeparator: true,
+					isEnabled: Core.getParams().features.isFlowEnabled,
 				},
 			];
 
@@ -236,7 +239,7 @@ export const App = {
 		},
 		chips(): any[]
 		{
-			return this.fields.filter(({ chip }) => chip).map(({ chip }) => chip);
+			return this.fields.filter(({ chip, isEnabled }) => chip && isEnabled !== false ).map(({ chip }) => chip);
 		},
 	},
 	watch: {
@@ -269,6 +272,7 @@ export const App = {
 	mounted(): void
 	{
 		this.tryStartObserver();
+		this.$refs.skeleton?.append(FullSkeleton());
 	},
 	beforeUnmount(): void
 	{
@@ -408,7 +412,7 @@ export const App = {
 							:isShown="isFilesSheetShown"
 							@close="closeFiles"
 						/>
-						<CheckListSheet
+						<CheckList
 							:taskId="taskId"
 							:checkListId="checkListId"
 							:isShown="isCheckListSheetShown"
@@ -443,7 +447,12 @@ export const App = {
 									class="tasks-full-card-field-container --custom"
 									data-field-container
 								>
-									<CheckList :taskId="taskId" @open="openCheckList"/>
+									<CheckList
+										:taskId="taskId"
+										:isPreview="true"
+										:isComponentShown="!isCheckListSheetShown"
+										@open="openCheckList"
+									/>
 								</div>
 								<div
 									v-if="projectFields.length > 0"
@@ -483,7 +492,7 @@ export const App = {
 				<Chat :taskId="taskId"/>
 			</template>
 			<template v-else>
-				Loading...
+				<div ref="skeleton" style="width: 100%;"></div>
 			</template>
 		</div>
 	`,

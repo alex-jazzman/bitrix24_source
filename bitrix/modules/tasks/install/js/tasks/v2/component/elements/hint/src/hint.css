@@ -2,13 +2,3 @@
 	color: var(--ui-color-base-8);
 	font-size: var(--ui-font-size-lg);
 }
-
-.tasks-hint span {
-	border-bottom: 1px dashed rgba(255, 255, 255, 0.5);
-	cursor: pointer;
-	transition: border-color 180ms;
-}
-
-.tasks-hint span:hover {
-	border-color: rgba(255, 255, 255, 0.8);
-}

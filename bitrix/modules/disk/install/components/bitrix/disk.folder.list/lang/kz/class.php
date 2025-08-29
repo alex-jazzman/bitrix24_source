@@ -8,6 +8,7 @@ $MESS["DISK_FOLDER_LIST_ACT_COPY"] = "Көшіру";
 $MESS["DISK_FOLDER_LIST_ACT_COPY_INTERNAL_LINK"] = "Ішкі сілтемені көшіру";
 $MESS["DISK_FOLDER_LIST_ACT_DETAILS"] = "Толығырақ";
 $MESS["DISK_FOLDER_LIST_ACT_DOWNLOAD"] = "Жүктеу";
+$MESS["DISK_FOLDER_LIST_ACT_DOWNLOAD_ERROR"] = "Жүктеу үшін мұрағат құру мүмкін болмады. Бума тым үлкен болуы мүмкін немесе сіз тым көп файлдарды таңдадыңыз. Көлемді азайтуға тырысыңыз және қайталап көріңіз.";
 $MESS["DISK_FOLDER_LIST_ACT_EDIT"] = "Редакциялау";
 $MESS["DISK_FOLDER_LIST_ACT_GET_EXT_LINK"] = "Жария сілтемені алу";
 $MESS["DISK_FOLDER_LIST_ACT_LOCK"] = "Бұғаттау";

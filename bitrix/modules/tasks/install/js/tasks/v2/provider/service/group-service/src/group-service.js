@@ -17,7 +17,7 @@ class GroupService
 
 		try
 		{
-			return apiClient.post('Group.getUrl', { id, type });
+			return apiClient.post('Group.Url.get', { group: { id, type } });
 		}
 		catch (error)
 		{

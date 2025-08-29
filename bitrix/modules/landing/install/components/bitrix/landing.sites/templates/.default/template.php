@@ -110,18 +110,7 @@ if (
 	(!isset($arResult['LICENSE']) || $arResult['LICENSE'] !== 'nfr')
 )
 {
-	if ($arParams['TYPE'] === 'KNOWLEDGE')
-	{
-		$formCode = 'knowledge';
-	}
-	else if ($arParams['TYPE'] === 'PAGE')
-	{
-		$formCode = 'developer';
-	}
-	else
-	{
-		$formCode = 'store';
-	}
+	$formCode = 'general';
 	$params = $component->getFeedbackParameters($formCode);
 	if (is_array($params))
 	{

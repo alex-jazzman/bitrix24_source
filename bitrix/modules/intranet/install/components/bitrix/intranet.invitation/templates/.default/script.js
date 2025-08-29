@@ -1929,7 +1929,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    const generateLinkBtnNode = babelHelpers.classPrivateFieldLooseBase(this, _container$7)[_container$7].querySelector("[data-role='selfRegenerateSecretButton']");
 	    this.generateLinkHint = null;
 	    main_core.Event.bind(generateLinkBtnNode, 'mouseover', event => {
-	      this.generateLinkHint = this.showHintPopup(main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LINK_UPDATE_WARNING'), generateLinkBtnNode);
+	      this.generateLinkHint = this.showHintPopup(main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_LINK_UPDATE_WARNING_MSGVER_1'), generateLinkBtnNode);
 	    });
 	    main_core.Event.bind(generateLinkBtnNode, 'mouseout', () => {
 	      var _this$generateLinkHin;
@@ -3168,6 +3168,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    }
 	    request.userOptions = this.userOptions;
 	    request.analyticsData = this.analyticsLabel;
+	    request.data["analyticsData"] = this.analyticsLabel;
 	    // eslint-disable-next-line promise/catch-or-return
 	    this.transport.send(request).then(response => {
 	      this.submitButton.ready();

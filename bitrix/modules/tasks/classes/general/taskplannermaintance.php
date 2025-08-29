@@ -260,20 +260,20 @@ class CTaskPlannerMaintance
 			$id = null;
 			if (($arActions['name'] ?? null) <> '')
 			{
-				$user = \Bitrix\Tasks\V2\Entity\User::mapFromId(self::$USER_ID);
+				$user = \Bitrix\Tasks\V2\Internal\Entity\User::mapFromId(self::$USER_ID);
 
-				$task = new \Bitrix\Tasks\V2\Entity\Task(
+				$task = new \Bitrix\Tasks\V2\Internal\Entity\Task(
 					title:              $arActions['name'],
 					creator:            $user,
 					responsible:        $user,
-					status:             \Bitrix\Tasks\V2\Entity\Task\Status::Pending,
+					status:             \Bitrix\Tasks\V2\Internal\Entity\Task\Status::Pending,
 					allowsTimeTracking: true,
 					siteId:             self::$SITE_ID,
 				);
 
-				$config = new \Bitrix\Tasks\V2\Internals\Control\Task\Action\Add\Config\AddConfig(self::$USER_ID);
+				$config = new \Bitrix\Tasks\V2\Internal\Service\Task\Action\Add\Config\AddConfig(self::$USER_ID);
 
-				$result = (new \Bitrix\Tasks\V2\Command\Task\AddTaskCommand(
+				$result = (new \Bitrix\Tasks\V2\Public\Command\Task\AddTaskCommand(
 					task: $task,
 					config: $config,
 				))->run();
@@ -292,7 +292,7 @@ class CTaskPlannerMaintance
 				$toAdd = array_merge($toAdd, [$id]);
 			}
 
-			$service = \Bitrix\Tasks\V2\Internals\Container::getInstance()->getPlannerService();
+			$service = \Bitrix\Tasks\V2\Internal\DI\Container::getInstance()->getPlannerService();
 
 			return $service->merge(self::$USER_ID, $toAdd, $toDelete);
 		}
@@ -521,7 +521,7 @@ class CTaskPlannerMaintance
 	/**
 	 * @deprecated
 	 * @TasksV2
-	 * @use \Bitrix\Tasks\V2\Internals\Service\Task\PlannerService
+	 * @use \Bitrix\Tasks\V2\Internal\Service\Task\PlannerService
 	 */
 	public static function getCurrentTasksList()
 	{
@@ -530,7 +530,7 @@ class CTaskPlannerMaintance
 			global $USER;
 			if ($USER instanceof CUser)
 			{
-				$service = \Bitrix\Tasks\V2\Internals\Container::getInstance()->getPlannerService();
+				$service = \Bitrix\Tasks\V2\Internal\DI\Container::getInstance()->getPlannerService();
 
 				return $service->syncAndGetActualUserTaskIds((int)$USER->getId());
 			}

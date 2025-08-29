@@ -248,7 +248,7 @@ if (
 						</a>
 						<?php
 					}
-					else
+					else if (isset($arResult["User"]["STATUS"]) && !in_array($arResult["User"]["STATUS"], ['visitor', 'email', 'shop'], true))
 					{
 						?>
 						<a

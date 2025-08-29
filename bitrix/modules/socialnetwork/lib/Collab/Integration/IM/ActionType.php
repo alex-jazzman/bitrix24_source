@@ -18,6 +18,7 @@ enum ActionType: string
 	case CopyLink = 'copy_link';
 	case RegenerateLink = 'regenerate_link';
 	case ConvertGroupToCollab = 'convert_group_to_collab';
+	case ConvertGroupToCollabRich = 'convert_group_to_collab_rich';
 
 	public static function values(): array
 	{

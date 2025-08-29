@@ -56,3 +56,5 @@ $MESS['TASKS_BTN_ADD_SCRUM_TASK']='Создать задачу';
 $MESS['TASKS_BTN_KANBAN_POPUP_TITLE_CONFIGURE_VIEW']='Настроить карточку просмотра';
 
 $MESS['TASKS_BTN_REPORTS']='Отчеты';
+
+$MESS['TASKS_ALL_ROLES'] = 'Все роли';

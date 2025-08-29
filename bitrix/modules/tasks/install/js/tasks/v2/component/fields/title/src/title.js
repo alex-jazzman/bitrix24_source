@@ -29,6 +29,19 @@ export const Title = {
 		};
 	},
 	computed: {
+		title: {
+			get(): string
+			{
+				return this.task.title;
+			},
+			set(title: string): void
+			{
+				void taskService.update(
+					this.taskId,
+					{ title },
+				);
+			},
+		},
 		task(): TaskModel
 		{
 			return this.$store.getters[`${Model.Tasks}/getById`](this.taskId);
@@ -47,33 +60,21 @@ export const Title = {
 		{
 			if (!this.isEdit)
 			{
-				this.updateTaskTitle(title);
+				this.title = title;
 			}
-		},
-		handleUpdate(title: string): void
-		{
-			this.updateTaskTitle(title);
-		},
-		updateTaskTitle(title: string): void
-		{
-			void taskService.update(
-				this.taskId,
-				{ title },
-			);
 		},
 	},
 	template: `
 		<GrowingTextArea
+			v-model="title"
 			class="tasks-field-title"
 			:data-task-id="taskId"
 			:data-task-field-id="titleMeta.id"
 			:data-task-field-value="task.title"
 			data-field-container
-			:initialValue="task.title"
-			:placeholderValue="loc('TASKS_V2_TITLE_PLACEHOLDER')"
-			:readonly="disabled"
+			:placeholder="loc('TASKS_V2_TITLE_PLACEHOLDER')"
+			:readonly="readonly || disabled"
 			@input="handleInput"
-			@update="handleUpdate"
 		/>
 	`,
 };

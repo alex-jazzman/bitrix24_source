@@ -14,7 +14,6 @@ return [
 		'ui.icon-set.outline',
 		'humanresources.company-structure.public',
 		'ui.vue3.components.menu',
-		'im.public',
 		'ui.icon-set.api.core',
 		'main.date',
 		'ui.notification',

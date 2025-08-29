@@ -24,8 +24,8 @@ this.BX = this.BX || {};
 	    };
 	    this.title = main_core.Type.isString(options.title) ? options.title : main_core.Loc.getMessage('UI_MOBILE_PROMOTER_TITLE');
 	    this.content = main_core.Type.isElementNode(options.content) ? options.content : null;
-	    this.analytic = main_core.Type.isObject(options.analytic) ? options.analytic : null;
-	    this.analyticParameters = {
+	    this.analytics = main_core.Type.isObject(options.analytics) ? options.analytics : null;
+	    this.analyticsParameters = {
 	      tool: 'intranet',
 	      category: 'activation'
 	    };
@@ -177,8 +177,8 @@ this.BX = this.BX || {};
 	      colorDark: '#000000',
 	      colorLight: '#ffffff'
 	    });
-	    if (this.analytic) {
-	      this.setAnalyticParameters(this.analytic);
+	    if (this.analytics) {
+	      this.setAnalyticParameters(this.analytics);
 	    }
 	    if (this.position) {
 	      this.getPopup().setFixed(true);
@@ -195,13 +195,13 @@ this.BX = this.BX || {};
 	    this.getPopup().close();
 	  }
 	  setAnalyticParameters(parameters) {
-	    this.analyticParameters = {
-	      ...this.analyticParameters,
+	    this.analyticsParameters = {
+	      ...this.analyticsParameters,
 	      ...parameters
 	    };
 	  }
 	  sendAnalytics() {
-	    ui_analytics.sendData(this.analyticParameters);
+	    ui_analytics.sendData(this.analyticsParameters);
 	  }
 	}
 

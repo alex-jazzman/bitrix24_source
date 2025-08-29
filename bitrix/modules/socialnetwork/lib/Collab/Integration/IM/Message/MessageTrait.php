@@ -117,7 +117,7 @@ trait MessageTrait
 		}
 	}
 
-	protected function sendMessage(string $message, int $senderId, int $groupId): int
+	protected function sendMessage(string $message, int $senderId, int $groupId, ?string $componentId = null): int
 	{
 		$fields = [
 			'MESSAGE' => $message,
@@ -130,6 +130,11 @@ trait MessageTrait
 				'NOTIFY' => 'N',
 			],
 		];
+
+		if ($componentId)
+		{
+			$fields['PARAMS']['COMPONENT_ID'] = $componentId;
+		}
 
 		$chat = $this->getChat();
 

@@ -34,28 +34,6 @@
 	overflow: hidden;
 }
 
-.b24-user-selector-user-action {
-	transition: opacity 200ms;
-	opacity: 0;
-}
-
-.b24-user-selector-user-action.--show {
-	opacity: 1;
-}
-
-.b24-user-selector-user-action-edit {
-	display: flex;
-	align-items: center;
-	color: var(--ui-color-base-3);
-	cursor: pointer;
-}
-
-.b24-user-selector-user-edit-icon {
-	margin: 0 1px 0 2px;
-	--ui-icon-set__icon-color: var(--ui-color-base-3);
-	--ui-icon-set__icon-size: 18px;
-}
-
 .b24-user-selector-user-add {
 	display: flex;
 	align-items: center;
@@ -69,7 +47,6 @@
 	gap: var(--ui-space-inline-xs);
 	align-items: center;
 	overflow: hidden;
-	cursor: pointer;
 }
 
 .b24-user-selector-user-image {

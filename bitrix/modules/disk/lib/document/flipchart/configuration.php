@@ -7,6 +7,7 @@ use Bitrix\Main\Config;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Engine\UrlManager;
 use Bitrix\Main\IO\File;
+use Bitrix\Main\Web\Json;
 
 class Configuration
 {
@@ -148,10 +149,13 @@ class Configuration
 			'kz',
 		]);
 
-		return (array)json_decode(
-			Option::get('disk', 'flipchart.allowed_languages', json_encode($default)),
-			true
-		);
+		$option = Option::get('disk', 'flipchart.allowed_languages');
+		if (!$option)
+		{
+			return (array)$default;
+		}
+
+		return (array)Json::decode($option);
 	}
 
 	public static function getDefaultLanguage(): string

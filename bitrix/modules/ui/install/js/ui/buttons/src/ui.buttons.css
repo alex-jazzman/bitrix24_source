@@ -62,7 +62,7 @@
 	height: var(--ui-btn-height);
 	border: var(--ui-btn-border);
 	border-color: var(--ui-btn-border-color);
-	background-color: var(--ui-btn-background);
+	background: var(--ui-btn-background);
 	box-shadow: var(--ui-btn-box-shadow);
 	text-shadow: var(--ui-btn-text-shadow);
 	cursor: pointer;

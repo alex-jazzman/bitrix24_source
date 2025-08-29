@@ -145,6 +145,7 @@ class Mainpage extends Scope
 			$allowedExt = [
 				'landing.widgetvue',
 				'landing_inline_video',
+				'landing_carousel',
 			];
 			$manifest['assets'] = [
 				'ext' => array_filter(

@@ -141,6 +141,8 @@
 					printable: true,
 				},
 				handler: async function(event, link) {
+					event.preventDefault();
+
 					const tasksSettings = BX.Extension.getSettings('intranet.sidepanel.bindings').get('tasks');
 					const groupId = parseInt(link.matches.groups.groupId, 10);
 					const isV2FromAllowedForGroup = tasksSettings.allowedGroups.includes(groupId);
@@ -149,56 +151,32 @@
 
 					if (taskId === 0 && tasksSettings.isV2MiniForm && params.miniform)
 					{
-						event.preventDefault();
-
 						const { TaskCard } = await BX.Runtime.loadExtension('tasks.v2.application.task-card');
 
-						(new TaskCard({
+						TaskCard.showCompactCard({
 							analytics: {
 								context: params.ta_sec,
 								element: params.ta_el,
 							},
-						})).showCompactCard();
+						});
 
 						return;
 					}
 
 					if (tasksSettings.isV2Form || isV2FromAllowedForGroup)
 					{
-						const sidePanelId = `tasks-task-full-card-${taskId}`;
-						const maxWidth = 1510;
+						const { TaskCard } = await BX.Runtime.loadExtension('tasks.v2.application.task-card');
 
-						BX.SidePanel.Instance.open(sidePanelId, {
-							customLeftBoundary: 0,
-							width: maxWidth,
-							cacheable: false,
-							contentClassName: 'tasks-full-card-slider-content',
-							customRightBoundary: 0,
-							contentCallback: async () => {
-								const { TaskCard } = await BX.Runtime.loadExtension('tasks.v2.application.task-card');
-
-								const taskCard = await TaskCard.init({ taskId });
-
-								BX.Event.EventEmitter.subscribeOnce(
-									'SidePanel.Slider:onCloseComplete',
-									(baseEvent) => {
-										if (baseEvent.target.url === sidePanelId)
-										{
-											taskCard.unmountCard();
-										}
-									},
-								);
-
-								return await taskCard.mountCard();
+						TaskCard.showFullCard({
+							taskId,
+							analytics: {
+								context: params.ta_sec,
+								element: params.ta_el,
 							},
 						});
-
-						event.preventDefault();
 					}
 					else
 					{
-						event.preventDefault();
-
 						BX.SidePanel.Instance.open(link.url, this.options);
 					}
 				},

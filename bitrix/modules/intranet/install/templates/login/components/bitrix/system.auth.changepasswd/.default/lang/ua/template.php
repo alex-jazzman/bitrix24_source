@@ -4,6 +4,7 @@ $MESS["AUTH_CAPTCHA_PROMT"] = "Введіть слово на картинці";
 $MESS["AUTH_CHANGE"] = "Змінити пароль";
 $MESS["AUTH_CHANGE_PASSWORD"] = "Зміна паролю";
 $MESS["AUTH_CHECKWORD"] = "Контрольний рядок";
+$MESS["AUTH_CHECKWORD_MSGVER_1"] = "Контрольний рядок";
 $MESS["AUTH_LOGIN"] = "Логін";
 $MESS["AUTH_NEW_PASSWORD"] = "Новий пароль";
 $MESS["AUTH_NEW_PASSWORD_CONFIRM"] = "Підтвердження паролю";

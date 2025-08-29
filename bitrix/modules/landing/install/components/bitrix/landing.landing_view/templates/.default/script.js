@@ -27,7 +27,7 @@
 			options
 		);
 		BX.Landing.Component.View.instance.setNewOptions(options);
-		BX.Landing.Component.View.instance.init();
+		BX.Landing.Component.View.instance.init(options);
 
 		return BX.Landing.Component.View.instance;
 	};
@@ -93,7 +93,7 @@
 		/**
 		 * Some init preparing.
 		 */
-		init: function()
+		init: function(options)
 		{
 			var viewInstance = BX.Landing.Component.View.getInstance();
 
@@ -183,7 +183,7 @@
 			// build top panel
 			if (this.topInit)
 			{
-				this.buildTop();
+				this.buildTop(options);
 				this.initSliders();
 				this.loadEditor();
 				this.hideEditorsPanelHandlers();
@@ -395,7 +395,7 @@
 		 */
 		buildTop: function(options)
 		{
-			options = options || {};
+			this.options = options;
 			this.urls = this.urls || {};
 
 			// direct id for some urls
@@ -1102,7 +1102,14 @@
 														events: {
 															click: function()
 															{
-																BX.fireEvent(BX(featuresButton.getAttribute('data-feedback')), 'click');
+																BX.UI.Feedback.Form.open({
+																	id: 'form-editor-feedback-form',
+																	portalUri: options.feedback.portalUri,
+																	forms: options.feedback.forms,
+																	presets: {
+																		source: 'landing',
+																	},
+																});
 															}
 														}
 													}),
@@ -1182,6 +1189,8 @@
 				this.formSharePopup = new BX.Landing.Form.SharePopup({
 					bindElement: event.currentTarget,
 					phoneVerified: phoneVerified,
+					portalUri: this.options.feedback.portalUri,
+					forms: this.options.feedback.forms,
 				});
 			}
 

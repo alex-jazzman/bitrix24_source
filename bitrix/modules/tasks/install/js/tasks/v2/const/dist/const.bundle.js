@@ -22,7 +22,9 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  AddProject: 'add_project',
 	  DescriptionTask: 'description_task',
 	  FillTaskFormView: 'full_task_form_view',
-	  ClickCreate: 'click_create'
+	  ClickCreate: 'click_create',
+	  RoleClick: 'role_click',
+	  RoleClickType: 'role_click_type'
 	});
 	const Type = Object.freeze({
 	  TaskMini: 'task_mini',
@@ -48,7 +50,13 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  DeadlinePreset: 'deadline_preset',
 	  ChangeButton: 'change_button',
 	  UploadButton: 'upload_button',
-	  CheckListButton: 'checklist_button'
+	  CheckListButton: 'checklist_button',
+	  RoleButton: 'role_button',
+	  RoleAllButton: 'role_all_button',
+	  RoleHelpButton: 'role_help_button',
+	  RoleDoingButton: 'role_doing_button',
+	  RoleAssignedButton: 'role_assigned_button',
+	  RoleWatchingButton: 'role_watching_button'
 	});
 	const Status = Object.freeze({
 	  Success: 'success',
@@ -66,7 +74,9 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  HasScroll: has => `scroll_${has ? 'true' : 'false'}`,
 	  FileSize: size => `size_${size}`,
 	  FilesCount: count => `filesCount_${count}`,
-	  FileExtension: extension => `ext_${extension}`
+	  FileExtension: extension => `ext_${extension}`,
+	  IsDemo: isDemo => `isDemo_${isDemo ? 'Y' : 'N'}`,
+	  FilterEnabled: enabled => `filter_${enabled ? 'on' : 'off'}`
 	});
 	const Analytics = Object.freeze({
 	  Tool,

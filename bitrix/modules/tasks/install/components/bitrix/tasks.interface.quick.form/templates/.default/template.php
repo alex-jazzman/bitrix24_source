@@ -127,15 +127,15 @@ $formattedUserName = CUser::FormatName(
 			if (quickFormButton)
 			{
 				quickFormButton.onclick = function(e) {
-					const groupId = <?= !empty($projectId > 0) ? $projectId : 'null' ?>;
-					(new BX.Tasks.V2.Application.TaskCard({
+					const groupId = <?= ($projectId > 0) ? $projectId : 'null' ?>;
+					BX.Tasks.V2.Application.TaskCard.showCompactCard({
 						groupId,
 						analytics: {
 							context: 'tasks',
 							additionalContext: '<?= ($arParams['SCOPE'] ?? null) === ScopeDictionary::SCOPE_TASKS_GANTT ? 'gantt' : 'list'?>',
 							element: 'quick_button',
 						},
-					})).showCompactCard();
+					});
 				};
 			}
 		})

@@ -53,7 +53,6 @@ $MESS["JS_UI_ACCESSRIGHTS_V2_SET_MIN_ACCESS_RIGHTS_SUBTITLE"] = "Для этой
 $MESS["JS_UI_ACCESSRIGHTS_V2_SET_MIN_ACCESS_RIGHTS_SUBTITLE_SECTION"] = "Для этой роли полностью закроется доступ ко всем элементам в разделе #SECTION#";
 $MESS["JS_UI_ACCESSRIGHTS_V2_SET_MIN_ACCESS_RIGHTS_ROW"] = "Запретить действие всем ролям";
 $MESS["JS_UI_ACCESSRIGHTS_V2_SET_MIN_ACCESS_RIGHTS_ROW_SUBTITLE"] = "Доступ к этому действию закроется всем видимым ролям";
-$MESS["JS_UI_ACCESSRIGHTS_V2_ACCESS"] = "Доступ";
 $MESS["JS_UI_ACCESSRIGHTS_V2_ACTIONS"] = "Действия";
 $MESS['JS_UI_ACCESSRIGHTS_V2_EXPAND_ALL_SECTIONS'] = 'Развернуть все разделы';
 $MESS['JS_UI_ACCESSRIGHTS_V2_COLLAPSE_ALL_SECTIONS'] = 'Свернуть все разделы';

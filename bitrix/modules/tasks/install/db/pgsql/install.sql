@@ -212,6 +212,8 @@ CREATE TABLE b_tasks_reminder (
   TYPE char(1) NOT NULL,
   TRANSPORT char(1) NOT NULL,
   RECEPIENT_TYPE char(1) DEFAULT 'S',
+  BEFORE_DEADLINE int     default null,
+  RRULE           text    default null,
   PRIMARY KEY (ID)
 );
 CREATE INDEX ix_b_tasks_reminder_user_id_task_id ON b_tasks_reminder (user_id, task_id);
@@ -951,7 +953,9 @@ create unique index ix_b_tasks_deadline_user_option_user_id on b_tasks_deadline_
 
 create table if not exists b_tasks_task_chat (
 	TASK_ID  INT NOT NULL,
-	CHAT_ID  INT NOT NULL
+	CHAT_ID  INT NOT NULL,
+
+	primary key (TASK_ID, CHAT_ID)
 );
 
 create index if not exists task_chat_index ON b_tasks_task_chat (TASK_ID, CHAT_ID);

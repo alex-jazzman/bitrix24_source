@@ -348,7 +348,7 @@ final class MessengerCall extends Engine\Controller
 		$text = Loc::getMessage("DISK_INTEGRATION_IM_CALL_CALL_DOCUMENT_CREATED");
 		if ($newFile->getCode() === Document\OnlyOffice\Templates\CreateDocumentByCallTemplateScenario::CODE_RESUME)
 		{
-			$text = Loc::getMessage("DISK_INTEGRATION_IM_CALL_CALL_RESUME_CREATED");
+			$text = Loc::getMessage("DISK_INTEGRATION_IM_CALL_CALL_RESUME_CREATED_MSGVER_1");
 		}
 
 		$result = Sender::sendFileToChat(

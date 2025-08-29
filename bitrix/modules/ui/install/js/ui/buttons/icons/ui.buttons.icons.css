@@ -79,8 +79,8 @@
 	display: none;
 }
 
-.ui-btn.--with-collapsed-icon.ui-btn-collapsed:after,
-.ui-btn-split.--with-collapsed-icon.ui-btn-collapsed .ui-btn-main:after {
+.ui-btn.--with-collapsed-icon.ui-btn-collapsed:not(.--air):after,
+.ui-btn-split.--with-collapsed-icon.ui-btn-collapsed:not(.--air) .ui-btn-main:after {
 	display: block;
 }
 
@@ -176,6 +176,12 @@
 .ui-btn-split.ui-btn-icon-add.--air .ui-btn-main,
 .ui-btn-split.--air .ui-btn-main.ui-btn-icon-add {
 	--ui-btn-icon: url(/bitrix/js/ui/buttons/icons/images/outline-plus-l.svg);
+}
+
+.ui-btn.ui-btn-icon-add-m.--air,
+.ui-btn-split.ui-btn-icon-add-m.--air .ui-btn-main,
+.ui-btn-split.--air .ui-btn-main.ui-btn-icon-add-m {
+	--ui-btn-icon: url(/bitrix/js/ui/buttons/icons/images/outline-plus-m.svg);
 }
 
 .ui-btn.ui-btn-icon-check.--air,

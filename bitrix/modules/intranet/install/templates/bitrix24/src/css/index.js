@@ -1,4 +1,5 @@
 import './root.css';
+import './scrollbar.css';
 import './app.css';
 import './typography.css';
 import './header.css';

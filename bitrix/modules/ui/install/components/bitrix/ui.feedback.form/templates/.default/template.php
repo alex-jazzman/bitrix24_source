@@ -5,13 +5,17 @@ use Bitrix\Main\Web\Json;
 use Bitrix\Main\UI\Extension;
 use Bitrix\UI\Buttons\AirButtonStyle;
 
-$this->setFrameMode(true);
+/**
+ * @var $arResult array
+ * @var $arParams array
+ */
 
+$this->setFrameMode(true);
 Extension::load(['sidepanel', 'ui.buttons', 'ui.feedback.form']);
-$buttonId = $arParams['ID'] . '-button';
 
 $title = $arResult['TITLE'];
 $jsParams = $arResult['JS_OBJECT_PARAMS'];
+$buttonId = $arParams['ID'] . '-button';
 $jsParams['button'] = $buttonId;
 
 if ($arParams['VIEW_TARGET'])

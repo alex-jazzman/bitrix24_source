@@ -1,6 +1,7 @@
 <?php
 
 $MESS['TASKS_V2_DEADLINE_TITLE'] = 'Крайний срок';
+$MESS['TASKS_V2_DEADLINE_FORMAT'] = '#DATE# #TIME#';
 $MESS['TASKS_V2_DEADLINE_EMPTY'] = 'Без срока';
 $MESS['TASKS_V2_DEADLINE_AUTO'] = 'Устанавливается автоматически';
 $MESS['TASKS_V2_DEADLINE_SELECT'] = 'Выбрать';

@@ -161,6 +161,7 @@ $MESS["INTRANET_INVITE_DIALOG_PLACEHOLDER_POSITION"] = "Должность";
 $MESS["INTRANET_INVITE_DIALOG_LINK_UPDATE_SUCCESS"] = "Ссылка обновлена";
 $MESS["INTRANET_INVITE_DIALOG_LINK_UPDATE_ERROR"] = "Ошибка обновления ссылки";
 $MESS["INTRANET_INVITE_DIALOG_LINK_UPDATE_WARNING"] = "Присоединиться к Битрикс24 по ранее<br>созданным ссылкам будет нельзя";
+$MESS["INTRANET_INVITE_DIALOG_LINK_UPDATE_WARNING_MSGVER_1"] = "Обновите ссылку для приглашения, <br> если хотите закрыть доступ по старой";
 $MESS["INTRANET_INVITE_DIALOG_SELF_CONFIRM_POPUP_TITLE"] = "Отключить регистрацию по ссылке?";
 $MESS["INTRANET_INVITE_DIALOG_SELF_CONFIRM_POPUP_TEXT"] = "Все отправленные ссылки перестанут работать, по ним нельзя будет присоединиться к вашему Битрикс24";
 $MESS["INTRANET_INVITE_DIALOG_SELF_CONFIRM_POPUP_OK"] = "Да, отключить";

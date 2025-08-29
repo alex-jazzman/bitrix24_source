@@ -1,8 +1,7 @@
-import {Cache, Type, Loc} from 'main.core';
+import {Cache } from 'main.core';
 import { Account } from './account/account';
-import Theme from './api/theme';
 import Counters from './api/counters';
-import ItemsController from './controllers/items-controller'
+import ItemsController from './controllers/items-controller';
 import { BrowserHistory } from './history/browser-history';
 
 export default class DesktopMenu
@@ -18,19 +17,13 @@ export default class DesktopMenu
 		this.menuContainer = document.getElementById("menu-items-block");
 		if (!this.menuContainer)
 		{
-			return false;
+			return;
 		}
 
-		this.initTheme();
 		this.getItemsController();
 		this.getHistoryItems(isAir);
 		this.showAccount(allCounters);
 		this.runAPICounters();
-	}
-
-	initTheme(): void
-	{
-		this.theme = new Theme();
 	}
 
 	getItemsController(): ItemsController

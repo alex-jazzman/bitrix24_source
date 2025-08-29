@@ -1,67 +1,104 @@
-.tasks-task-compact-card-skeleton {
+.task-skeleton.--full {
 	display: flex;
-	flex-direction: column;
-	gap: 20px;
-	padding: 24px;
+	height: 100%;
 }
 
-.tasks-task-card-skeleton-group {
-	display: flex;
-	gap: 8px;
-	align-items: center;
-}
-
-.tasks-task-card-skeleton-group.--icons {
-	margin-right: 4px;
-	gap: 14px;
-}
-
-.tasks-task-compact-card-skeleton-fields {
-	display: flex;
-	flex-direction: column;
-}
-
-.tasks-task-compact-card-skeleton-fields-title {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	height: 32px;
-}
-
-.tasks-task-compact-card-skeleton-fields-description {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	height: 24px;
-	margin: 11px 0 13px;
-}
-
-.tasks-task-compact-card-skeleton-fields-list {
-	display: flex;
-	flex-direction: column;
-	gap: 14px;
-	align-items: center;
-}
-
-.tasks-task-compact-card-skeleton-fields-list-row {
-	display: flex;
-	gap: 41px;
-	align-items: center;
-	width: 100%;
-	height: 25px;
-}
-
-.tasks-task-compact-card-skeleton-chips {
+.task-skeleton .--row {
 	display: flex;
 	align-items: center;
-	border-top: var(--ui-border-width-thin) solid var(--ui-color-divider-default);
-	height: 32px;
+}
+
+.task-skeleton .--chips {
+	margin: 21px 0 20px;
 	padding-top: 18px;
+	border-top: 1px solid #F0F0F0;
 }
 
-.tasks-task-compact-card-skeleton-footer {
-	display: flex;
-	align-items: center;
+.task-skeleton .--title {
+	padding: 7px 4px 7px 0;
+}
+
+.task-skeleton .--fire {
+	margin: 0 14px 0 auto;
+}
+
+.task-skeleton .--description {
+	margin: 17px 0 21px;
+}
+
+.task-skeleton .--buttons {
+	margin-right: 6px;
+}
+
+.task-skeleton .--cancel {
+	margin: 0 auto 0 8px;
+}
+
+
+
+.task-skeleton .--main {
+	display: grid;
+	width: 40%;
+	min-width: 512px;
+	max-width: 660px;
+}
+
+@media (min-width: 1600px) {
+	.task-skeleton .--main {
+		width: 42%;
+	}
+}
+
+.task-skeleton .--full-title {
 	justify-content: space-between;
-	height: 34px;
+}
+
+.task-skeleton .--full-description {
+	margin: 18px 0 20px;
+}
+
+.task-skeleton .--full-chips {
+	margin: 18px 0;
+	gap: 10px;
+}
+
+.task-skeleton .--footer {
+	margin-top: auto;
+	padding: 24px 22px;
+	background: #fff;
+	box-shadow: 0 -2px 6px #0001;
+}
+
+.task-skeleton .--more {
+	margin: 0 auto 0 12px;
+}
+
+.task-skeleton .--chat {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	border-left: 1px solid #0001;
+}
+
+.task-skeleton .--chat-title {
+	padding: 12px 16px;
+	gap: 10px;
+}
+
+.task-skeleton .--chat-info {
+	display: grid;
+	gap: 8px;
+	margin-right: auto;
+}
+
+.task-skeleton .--textarea {
+	margin-top: auto;
+	padding: 0 40px 12px 33px;
+	gap: 12px;
+}
+
+.task-skeleton .--chat-bg {
+	flex: 1;
+	display: grid;
+	background: url(/bitrix/js/im/images/chat-v2-background/pattern-white.svg) 100% 0, #9fcfff url(/bitrix/js/im/images/chat-v2-background/1.png) 50%/cover no-repeat;
 }

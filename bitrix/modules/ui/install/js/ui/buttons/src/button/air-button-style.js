@@ -17,4 +17,5 @@ export default class AirButtonStyle
 	static FILLED_COPILOT = '--style-filled-copilot';
 	static FILLED_SUCCESS = '--style-filled-success';
 	static FILLED_ALERT = '--style-filled-alert';
+	static FILLED_BOOST = '--style-filled-boost';
 }

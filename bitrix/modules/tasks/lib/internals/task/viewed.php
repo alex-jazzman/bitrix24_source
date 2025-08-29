@@ -22,7 +22,7 @@ use Bitrix\Tasks\Internals\TaskDataManager;
 use Bitrix\Tasks\Internals\TaskTable;
 use Bitrix\Tasks\MemberTable;
 use Bitrix\Tasks\Internals\Counter\CounterDictionary;
-use Bitrix\Tasks\V2\Command\Task\Attention\ViewCommand;
+use Bitrix\Tasks\V2\Public\Command\Task\Attention\ViewCommand;
 use Bitrix\Tasks\V2\FormV2Feature;
 use Throwable;
 

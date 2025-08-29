@@ -2,6 +2,7 @@
 
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ModuleManager;
 
 Loc::loadMessages(__FILE__);
 
@@ -132,7 +133,17 @@ class BizprocDocument extends CIBlockDocument
 
 		if (!empty($select))
 		{
+			$select = array_filter($select, fn($field) => !str_starts_with($field, 'PROPERTY_'));
 			$select = array_merge(['ID', 'IBLOCK_ID'], $select);
+
+			if (in_array('CREATED_BY', $select) && !in_array('CREATED_USER_NAME', $select))
+			{
+				$select[] = 'CREATED_USER_NAME';
+			}
+			if (in_array('MODIFIED_BY', $select) && !in_array('USER_NAME', $select))
+			{
+				$select[] = 'USER_NAME';
+			}
 		}
 
 		$userNameFields = [
@@ -915,7 +926,7 @@ class BizprocDocument extends CIBlockDocument
 
 		if(mb_strstr($fields["type"], ":") !== false)
 		{
-			list($fieldsTemporary["TYPE"], $fieldsTemporary["USER_TYPE"]) = explode(":", $fields["type"], 2);
+			[$fieldsTemporary["TYPE"], $fieldsTemporary["USER_TYPE"]] = explode(":", $fields["type"], 2);
 			if($fields["type"] == "E:EList")
 			{
 				$fieldsTemporary["LINK_IBLOCK_ID"] = $fields["options"] ?? null;
@@ -1131,7 +1142,7 @@ class BizprocDocument extends CIBlockDocument
 
 			if(mb_strstr($fields["type"], ":") !== false)
 			{
-				list($fieldData["TYPE"], $fieldData["USER_TYPE"]) = explode(":", $fields["type"], 2);
+				[$fieldData["TYPE"], $fieldData["USER_TYPE"]] = explode(":", $fields["type"], 2);
 				if($fields["type"] == "E:EList")
 				{
 					$fieldData["LINK_IBLOCK_ID"] = $fields["options"] ?? null;
@@ -3361,11 +3372,20 @@ class BizprocDocument extends CIBlockDocument
 
 	public static function getBizprocEditorUrl($documentType): ?string
 	{
-		$iblockId = intval(mb_substr($documentType[2], mb_strlen(self::DOCUMENT_TYPE_PREFIX)));
+		$iblockId = (int)mb_substr($documentType[2], mb_strlen(self::DOCUMENT_TYPE_PREFIX));
 		if ($iblockId > 0)
 		{
+			if ($documentType[1] === 'BizprocDocument')
+			{
+				return sprintf('/bizproc/processes/%d/bp_edit/#ID#/', $iblockId);
+			}
 
-			return sprintf('/bizproc/processes/%d/bp_edit/#ID#/', $iblockId);
+			if (ModuleManager::isModuleInstalled('bitrix24'))
+			{
+				return sprintf('/company/lists/%d/bp_edit/#ID#/', $iblockId);
+			}
+
+			return sprintf('/services/lists/%d/bp_edit/#ID#/', $iblockId);
 		}
 
 		return null;

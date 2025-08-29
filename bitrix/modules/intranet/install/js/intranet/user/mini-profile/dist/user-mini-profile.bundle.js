@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Intranet = this.BX.Intranet || {};
-(function (exports,main_core_cache,ui_vue3_components_button,ui_vue3,ui_iconSet_outline,humanresources_companyStructure_public,ui_vue3_components_menu,im_public,ui_iconSet_api_core,main_date,ui_notification,ui_vue3_components_richMenu,ui_iconSet_api_vue,ui_vue3_components_avatar,main_core_events,main_core,main_popup) {
+(function (exports,main_core_cache,ui_vue3_components_button,ui_vue3,ui_iconSet_outline,humanresources_companyStructure_public,ui_vue3_components_menu,ui_iconSet_api_core,main_date,ui_notification,ui_vue3_components_richMenu,ui_iconSet_api_vue,ui_vue3_components_avatar,main_core_events,main_core,main_popup) {
 	'use strict';
 
 	class Backend {
@@ -853,10 +853,15 @@ this.BX.Intranet = this.BX.Intranet || {};
 
 	class ChatService {
 	  static openMessenger(userId) {
-	    im_public.Messenger == null ? void 0 : im_public.Messenger.openChat(String(userId));
+	    var _top$BX$Messenger$Pub;
+	    (_top$BX$Messenger$Pub = top.BX.Messenger.Public) == null ? void 0 : _top$BX$Messenger$Pub.openChat(String(userId));
 	  }
 	  static call(userId, withVideo) {
-	    im_public.Messenger == null ? void 0 : im_public.Messenger.startVideoCall(String(userId), withVideo);
+	    var _top$BX$Messenger$Pub2;
+	    (_top$BX$Messenger$Pub2 = top.BX.Messenger.Public) == null ? void 0 : _top$BX$Messenger$Pub2.startVideoCall(String(userId), withVideo);
+	  }
+	  static isMessengerAvailable() {
+	    return Boolean(top.BX.Messenger.Public);
 	  }
 	}
 
@@ -920,6 +925,23 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  }
 	};
 
+	const UserStatus = Object.freeze({
+	  Online: 'online',
+	  Offline: 'offline',
+	  DoNotDisturb: 'dnd',
+	  Vacation: 'vacation',
+	  Fired: 'fired'
+	});
+
+	class StatusService {
+	  static isSupported(statusCode) {
+	    return Object.values(UserStatus).includes(statusCode);
+	  }
+	  static getFailoverStatus() {
+	    return UserStatus.Offline;
+	  }
+	}
+
 	// @vue/component
 	const UserStatusIcon = {
 	  name: 'UserStatusIcon',
@@ -937,7 +959,14 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  computed: {
 	    iconSetting() {
 	      var _IconSettingByStatus$;
-	      return (_IconSettingByStatus$ = IconSettingByStatus[this.status]) != null ? _IconSettingByStatus$ : null;
+	      let status = this.status;
+	      if (!main_core.Type.isStringFilled(status)) {
+	        return null;
+	      }
+	      if (!StatusService.isSupported(status)) {
+	        status = StatusService.getFailoverStatus();
+	      }
+	      return (_IconSettingByStatus$ = IconSettingByStatus[status]) != null ? _IconSettingByStatus$ : null;
 	    }
 	  },
 	  template: `
@@ -959,14 +988,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  fired: main_core.Loc.getMessage('INTRANET_USER_MINI_PROFILE_USER_STATUS_FIRED')
 	};
 
-	const UserStatus = Object.freeze({
-	  Online: 'online',
-	  Offline: 'offline',
-	  DoNotDisturb: 'dnd',
-	  Vacation: 'vacation',
-	  Fired: 'fired'
-	});
-
 	// @vue/component
 	const UserStatusDescription = {
 	  name: 'UserStatusDescription',
@@ -981,15 +1002,30 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  computed: {
 	    text() {
 	      var _StaticDescriptionByS;
-	      const staticText = (_StaticDescriptionByS = StaticDescriptionByStatus[this.status.code]) != null ? _StaticDescriptionByS : null;
+	      let {
+	        code
+	      } = this.status;
+	      if (!main_core.Type.isStringFilled(code)) {
+	        return '';
+	      }
+	      if (!StatusService.isSupported(code)) {
+	        code = StatusService.getFailoverStatus();
+	      }
+	      const staticText = (_StaticDescriptionByS = StaticDescriptionByStatus[code]) != null ? _StaticDescriptionByS : null;
 	      if (staticText) {
 	        return staticText;
 	      }
-	      if (this.status.code === UserStatus.Offline) {
-	        return this.formatTextForOfflineStatus(this.status);
+	      if (code === UserStatus.Offline) {
+	        return this.formatTextForOfflineStatus({
+	          ...this.status,
+	          code
+	        });
 	      }
-	      if (this.status.code === UserStatus.Vacation) {
-	        return this.formatTextForVacationStatus(this.status);
+	      if (code === UserStatus.Vacation) {
+	        return this.formatTextForVacationStatus({
+	          ...this.status,
+	          code
+	        });
 	      }
 	      return '';
 	    }
@@ -1156,6 +1192,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    shouldShowUserTime() {
 	      return [UserStatus.Online, UserStatus.DoNotDisturb].includes(this.info.status.code);
 	    },
+	    shouldShowMessengerActionButtons() {
+	      return ChatService.isMessengerAvailable() && this.canChat;
+	    },
 	    avatarType() {
 	      var _UserAvatarTypeByRole;
 	      return (_UserAvatarTypeByRole = UserAvatarTypeByRole[this.info.role]) != null ? _UserAvatarTypeByRole : 'round';
@@ -1220,7 +1259,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 					</div>
 				</div>
 			</div>
-			<div v-if="canChat"
+			<div v-if="shouldShowMessengerActionButtons"
 				class="intranet-user-mini-profile__base-info__actions"
 			>
 				<div class="intranet-user-mini-profile__base-info__action">
@@ -2042,6 +2081,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	let _ = t => t,
 	  _t;
 	const PopupPrefixId = 'intranet-user-mini-profile-';
+	const AngleWidth = 33;
 	var _options = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("options");
 	var _cache = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("cache");
 	var _tracking = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("tracking");
@@ -2130,13 +2170,14 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    return new main_popup.Popup({
 	      className: 'intranet-user-mini-profile-popup',
 	      content: babelHelpers.classPrivateFieldLooseBase(this, _getContainer)[_getContainer](),
+	      targetContainer: document.body,
 	      bindElement: babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].bindElement,
 	      maxWidth: 643,
 	      maxHeight: 497,
 	      padding: 0,
 	      contentNoPaddings: true,
 	      angle: {
-	        offset: babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].bindElement.offsetWidth / 2
+	        offset: babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].bindElement.offsetWidth / 2 + AngleWidth / 2
 	      },
 	      animation: 'fading',
 	      bindOptions: {
@@ -2223,5 +2264,5 @@ this.BX.Intranet = this.BX.Intranet || {};
 
 	exports.UserMiniProfileManager = UserMiniProfileManager;
 
-}((this.BX.Intranet.User = this.BX.Intranet.User || {}),BX.Cache,BX.Vue3.Components,BX.Vue3,BX,BX.Humanresources.CompanyStructure,BX.UI.Vue3.Components,BX.Messenger.v2.Lib,BX.UI.IconSet,BX.Main,BX,BX.UI.Vue3.Components,BX.UI.IconSet,BX.UI.Vue3.Components,BX.Event,BX,BX.Main));
+}((this.BX.Intranet.User = this.BX.Intranet.User || {}),BX.Cache,BX.Vue3.Components,BX.Vue3,BX,BX.Humanresources.CompanyStructure,BX.UI.Vue3.Components,BX.UI.IconSet,BX.Main,BX,BX.UI.Vue3.Components,BX.UI.IconSet,BX.UI.Vue3.Components,BX.Event,BX,BX.Main));
 //# sourceMappingURL=user-mini-profile.bundle.js.map

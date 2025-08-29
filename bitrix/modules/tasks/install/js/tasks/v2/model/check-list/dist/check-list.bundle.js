@@ -30,6 +30,10 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	        remove: true,
 	        toggle: true
 	      },
+	      panelIsShown: false,
+	      collapsed: false,
+	      previewCollapsed: true,
+	      hidden: false,
 	      groupMode: {
 	        active: false,
 	        selected: false

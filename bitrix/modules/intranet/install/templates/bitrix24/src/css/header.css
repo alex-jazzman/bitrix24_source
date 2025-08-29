@@ -48,8 +48,10 @@
 	bottom: 0;
 	left: 0;
 	right: 0;
-	backdrop-filter: var(--topbar-bg-blur);
-	background-color: var(--topbar-bg);
+	background:
+		linear-gradient(to right, var(--topbar-bg), var(--topbar-bg)),
+		var(--air-theme-background-blurred, none)
+	;
 	z-index: -1;
 }
 

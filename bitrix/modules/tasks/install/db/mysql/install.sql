@@ -205,16 +205,19 @@ CREATE TABLE b_tasks_elapsed_time (
 
 CREATE INDEX USER_ID ON b_tasks_elapsed_time(USER_ID);
 
-CREATE TABLE b_tasks_reminder (
-  ID int(11) NOT NULL AUTO_INCREMENT,
-  USER_ID int(11) NOT NULL,
-  TASK_ID int(11) NOT NULL,
-  REMIND_DATE datetime NOT NULL,
-  TYPE char(1) NOT NULL,
-  TRANSPORT char(1) NOT NULL,
-  RECEPIENT_TYPE char(1) default 'S',
-  KEY USER_ID (USER_ID,TASK_ID),
-  PRIMARY KEY pk_b_tasks_reminder(ID)
+create table if not exists b_tasks_reminder
+(
+	ID              int(11)  NOT NULL AUTO_INCREMENT,
+	USER_ID         int(11)  NOT NULL,
+	TASK_ID         int(11)  NOT NULL,
+	REMIND_DATE     datetime NOT NULL,
+	TYPE            char(1)  NOT NULL,
+	TRANSPORT       char(1)  NOT NULL,
+	RECEPIENT_TYPE  char(1) default 'S',
+	BEFORE_DEADLINE int     default null,
+	RRULE           text    default null,
+	KEY USER_ID (USER_ID, TASK_ID),
+	PRIMARY KEY pk_b_tasks_reminder (ID)
 );
 
 CREATE INDEX IX_TASKS_REMINDER_RD ON b_tasks_reminder(REMIND_DATE);
@@ -966,7 +969,8 @@ create table if not exists b_tasks_deadline_user_option
 );
 
 create table if not exists b_tasks_task_chat (
-	TASK_ID  INT(11) UNSIGNED NOT NULL,
-	CHAT_ID  INT(11) UNSIGNED NOT NULL,
+	TASK_ID  INT UNSIGNED NOT NULL,
+	CHAT_ID  INT UNSIGNED NOT NULL,
+	PRIMARY KEY (TASK_ID, CHAT_ID),
 	INDEX task_chat_index (TASK_ID, CHAT_ID)
 );

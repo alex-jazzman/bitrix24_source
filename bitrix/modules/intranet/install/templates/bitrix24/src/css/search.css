@@ -58,7 +58,7 @@
 	border-radius: 8px;
 	background: var(--ui-color-design-outline-bg-alt);
 	border: 1px solid var(--ui-color-design-outline-stroke);
-	backdrop-filter: var(--ui-bg-blur-accent);
+	/*backdrop-filter: var(--ui-bg-blur-accent);*/
 	color: var(--ui-color-base-1);
 
 	transition: width 0.2s, opacity 0.2s;

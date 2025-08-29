@@ -1,6 +1,8 @@
 <?php
+$MESS["INTRANET_SETTINGS_FIELD_HINT_ALLOW_AUTO_DELETE_TO_BE_ENABLED"] = "Учасники чатів зможуть керувати опцією автовидалення повідомлень. Повідомлення в чатах з увімкненим автовидаленням автоматично видалятимуться через вибраний проміжок часу.";
 $MESS["INTRANET_SETTINGS_FIELD_HINT_DISABLE_COPY"] = "За ввімкненого налаштування співробітники не зможуть копіювати текст у мобільному застосунку.";
 $MESS["INTRANET_SETTINGS_FIELD_HINT_DISABLE_SCREENSHOT"] = "За ввімкненого налаштування співробітники не зможуть робити знімки екрана в мобільному застосунку.";
+$MESS["INTRANET_SETTINGS_FIELD_LABEL_ALLOW_AUTO_DELETE_TO_BE_ENABLED"] = "Дозволити вмикати автовидалення повідомлень у чатах";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_DEVISE_HISTORY_CLEANUP_DAYS"] = "Скільки днів зберігати історію входів";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_DISABLE_COPY"] = "Заборонити копіювати текст";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_DISABLE_SCREENSHOT"] = "Заборонити робити знімки з екрана";

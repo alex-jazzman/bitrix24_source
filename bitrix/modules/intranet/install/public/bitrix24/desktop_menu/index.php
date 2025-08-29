@@ -1,10 +1,17 @@
 <?php
-define("BX_SKIP_USER_LIMIT_CHECK", true);
-require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_before.php");
-/** @var CMain $APPLICATION */
-global $APPLICATION;
+/** @global CMain $APPLICATION */
+/** @global CUser $USER */
 
+use Bitrix\Intranet\Integration\Templates\Air\AirTemplate;
+use Bitrix\Main\Loader;
 use Bitrix\Intranet;
+use Bitrix\Intranet\Integration\Templates\Bitrix24\ThemePicker;
+
+define("BX_SKIP_USER_LIMIT_CHECK", true);
+
+require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_before.php");
+
+Loader::includeModule('intranet');
 
 $siteTitle = Intranet\Portal::getInstance()->getSettings()->getTitle();
 ?>
@@ -15,11 +22,13 @@ $siteTitle = Intranet\Portal::getInstance()->getSettings()->getTitle();
 		<title><?= htmlspecialcharsbx($siteTitle) ?></title>
 		<?php
 
-		$APPLICATION->ShowHead();
+		$APPLICATION->ShowHead(false);
+		ThemePicker::getInstance()->showHeadAssets();
 		?>
 	</head>
-	<body style="height: 100%;margin: 0;padding: 0; background: #fff" id="workarea-content">
-	<?php
+	<body class="<?= AirTemplate::getBodyClasses() ?>" id="workarea-content"><?php
+
+	ThemePicker::getInstance()->showBodyAssets();
 	$APPLICATION->IncludeComponent(
 		'bitrix:intranet.menu',
 		'',
@@ -44,4 +53,3 @@ $siteTitle = Intranet\Portal::getInstance()->getSettings()->getTitle();
 	</html>
 <?php
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_after.php");
-?>

@@ -176,7 +176,7 @@ final class CTaskTimerManager
 	/**
 	 * @deprecated
 	 * @TasksV2
-	 * @use \Bitrix\Tasks\V2\Command\Task\Tracking\StartTimerCommand
+	 * @use \Bitrix\Tasks\V2\Public\Command\Task\Tracking\StartTimerCommand
 	 */
 	public function start($taskId)
 	{
@@ -196,7 +196,7 @@ final class CTaskTimerManager
 				return false;
 			}
 
-			$result = (new \Bitrix\Tasks\V2\Command\Task\Tracking\StartTimerCommand(
+			$result = (new \Bitrix\Tasks\V2\Public\Command\Task\Tracking\StartTimerCommand(
 				userId: $this->userId,
 				taskId: (int)$taskId,
 				syncPlan: $currentUserId === $this->userId,
@@ -209,7 +209,7 @@ final class CTaskTimerManager
 				return false;
 			}
 
-			/** @var \Bitrix\Tasks\V2\Entity\Task\Timer $timer */
+			/** @var \Bitrix\Tasks\V2\Internal\Entity\Task\Timer $timer */
 			$timer = $result->getObject();
 
 			return [
@@ -303,7 +303,7 @@ final class CTaskTimerManager
 	/**
 	 * @deprecated
 	 * @TasksV2
-	 * @use \Bitrix\Tasks\V2\Command\Task\Tracking\StopTimerCommand
+	 * @use \Bitrix\Tasks\V2\Public\Command\Task\Tracking\StopTimerCommand
 	 */
 	public function stop($taskId = 0)
 	{
@@ -321,7 +321,7 @@ final class CTaskTimerManager
 				}
 			}
 
-			$result = (new \Bitrix\Tasks\V2\Command\Task\Tracking\StopTimerCommand(
+			$result = (new \Bitrix\Tasks\V2\Public\Command\Task\Tracking\StopTimerCommand(
 				userId: $this->userId,
 				taskId: $taskId,
 			))->run();
@@ -331,7 +331,7 @@ final class CTaskTimerManager
 				return false;
 			}
 
-			/** @var \Bitrix\Tasks\V2\Entity\Task\Timer $timer */
+			/** @var \Bitrix\Tasks\V2\Internal\Entity\Task\Timer $timer */
 			$timer = $result->getObject();
 
 			return [

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Bitrix\Tasks\V2;
 
+use Bitrix\Main\Config\Configuration;
 use Bitrix\Main\Config\Option;
 
 class FormV2Feature
@@ -25,6 +26,11 @@ class FormV2Feature
 			return true;
 		}
 
+		if ($feature !== '' && static::isDevMode())
+		{
+			return true;
+		}
+
 		$feature = match ($feature)
 		{
 			'miniform' => 'tasks_form_v2_miniform',
@@ -40,6 +46,8 @@ class FormV2Feature
 			'planner' => 'tasks_form_v2_planner',
 			'elapsed' => 'tasks_form_v2_elapsed',
 			'view' => 'tasks_form_v2_view',
+			'move' => 'tasks_form_v2_move',
+			'reminder' => 'tasks_form_v2_reminder',
 			default => '',
 		};
 
@@ -56,5 +64,12 @@ class FormV2Feature
 		$groups = Option::get('tasks', 'tasks_form_v2_groups', '');
 
 		return array_map('intval', array_filter(explode(',', $groups)));
+	}
+
+	public static function isDevMode(): bool
+	{
+		$exceptionHandling = Configuration::getValue('exception_handling');
+
+		return !empty($exceptionHandling['debug']) && Option::get('tasks', 'tasks_api_v2', 'N') === 'Y';
 	}
 }

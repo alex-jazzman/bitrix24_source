@@ -20,6 +20,7 @@ return [
 		'ui.banner-dispatcher',
 		'main.popup',
 		'ui.buttons',
+		'ui.analytics',
 	],
 	'settings' => [
 		'inviteWidgetLink' => $inviteWidgetLink

@@ -13,4 +13,6 @@ export type TileWidgetOptions = {
 	events?: Object<string, (event: BaseEvent) => {}>,
 	hideDropArea: boolean,
 	compact: boolean,
+	readonly: boolean,
+	removeFromServer?: boolean,
 };

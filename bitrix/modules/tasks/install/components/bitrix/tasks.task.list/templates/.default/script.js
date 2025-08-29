@@ -2591,6 +2591,7 @@ BX(function() {
 					if (response.errors)
 					{
 						BX.Tasks.alert(response.errors);
+						BX.Tasks.GridActions.reloadGrid();
 					}
 				}.bind(this),
 			);

@@ -16,7 +16,7 @@ class AttachJwtTokenToUrlCommand
 	)
 	{}
 
-	static function createDefaultInstance(string $token): self
+	private static function getUri(): Uri
 	{
 		$serverName = Option::get('main', 'server_name');
 
@@ -38,7 +38,22 @@ class AttachJwtTokenToUrlCommand
 			$uri->addParams(['register' => 'yes']);
 		}
 
-		return new AttachJwtTokenToUrlCommand($uri, $token);
+		return $uri;
+	}
+
+	static function createDefaultInstance(string $token): self
+	{
+		$uri = self::getUri();
+
+		return new AttachJwtTokenToUrlCommand($uri, $token, 'invite_token');
+	}
+
+	static function createInstanceWithUserLang(string $token, string $userLang = LANGUAGE_ID): self
+	{
+		$uri = self::getUri();
+		$uri->addParams(['user_lang' => $userLang]);
+
+		return new AttachJwtTokenToUrlCommand($uri, $token, 'invite_token');
 	}
 
 	public function attach(): Uri

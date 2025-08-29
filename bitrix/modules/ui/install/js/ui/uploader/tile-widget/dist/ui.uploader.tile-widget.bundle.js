@@ -318,9 +318,11 @@ this.BX.UI = this.BX.UI || {};
 	        cacheable: false,
 	        animation: 'fading-slide',
 	        bindElement: targetNode,
+	        targetContainer: document.body,
 	        offsetTop: 0,
 	        bindOptions: {
-	          position: 'top'
+	          position: 'top',
+	          forceBindPosition: true
 	        },
 	        darkMode: true,
 	        events: {
@@ -441,6 +443,14 @@ this.BX.UI = this.BX.UI || {};
 	    readonly: {
 	      type: Boolean,
 	      default: false
+	    },
+	    viewerGroupBy: {
+	      type: [String, null],
+	      default: null
+	    },
+	    removeFromServer: {
+	      type: Boolean,
+	      default: true
 	    }
 	  },
 	  setup() {
@@ -556,6 +566,27 @@ this.BX.UI = this.BX.UI || {};
 	    },
 	    fileIconSize() {
 	      return this.widgetOptions.compact ? 24 : 36;
+	    },
+	    viewerAttrs() {
+	      const {
+	        viewerAttrs,
+	        previewUrl
+	      } = this.item;
+	      if (!viewerAttrs) {
+	        return {};
+	      }
+	      const params = {};
+	      for (const [key, value] of Object.entries(viewerAttrs)) {
+	        params[`data-${main_core.Text.toKebabCase(key)}`] = value;
+	      }
+	      params['data-viewer'] = true;
+	      if (previewUrl) {
+	        params['data-viewer-preview'] = previewUrl;
+	      }
+	      if (this.viewerGroupBy) {
+	        params['data-viewer-group-by'] = this.viewerGroupBy;
+	      }
+	      return params;
 	    }
 	  },
 	  created() {
@@ -572,7 +603,9 @@ this.BX.UI = this.BX.UI || {};
 	      if (this.readonly) {
 	        return;
 	      }
-	      this.uploader.removeFile(this.item.id);
+	      this.uploader.removeFile(this.item.id, {
+	        removeFromServer: this.removeFromServer
+	      });
 	    },
 	    handleMouseEnter(item) {
 	      if (item.error) {
@@ -594,11 +627,15 @@ this.BX.UI = this.BX.UI || {};
 	        this.menu = main_popup.MenuManager.create({
 	          id: this.menuId,
 	          bindElement: this.$refs.menu.$el,
+	          targetContainer: document.body,
 	          angle: true,
 	          offsetLeft: 13,
 	          minWidth: 100,
 	          cacheable: false,
 	          items: this.menuItems,
+	          bindOptions: {
+	            forceBindPosition: true
+	          },
 	          events: {
 	            onShow: () => {
 	              this.isMenuShown = true;
@@ -673,19 +710,25 @@ this.BX.UI = this.BX.UI || {};
 						</div>
 					</div>
 				</template>
-				<div class="ui-tile-uploader-item-preview">
-					<div
-						v-if="item.previewUrl"
-						class="ui-tile-uploader-item-image"
-						:class="{ 'ui-tile-uploader-item-image-default': item.previewUrl === null }"
-						:style="{ backgroundImage: item.previewUrl !== null ? 'url(' + item.previewUrl + ')' : '' }">
+				<div class="ui-tile-uploader-item-preview-content" v-bind="viewerAttrs">
+					<div class="ui-tile-uploader-item-preview">
+						<div
+							v-if="item.previewUrl"
+							class="ui-tile-uploader-item-image"
+							:class="{ 'ui-tile-uploader-item-image-default': item.previewUrl === null }"
+							:style="{ backgroundImage: item.previewUrl !== null ? 'url(' + item.previewUrl + ')' : '' }">
+						</div>
+						<FileIconComponent v-else :name="item.extension || '...'" :size="fileIconSize"/>
 					</div>
-					<FileIconComponent v-else :name="item.extension || '...'" :size="fileIconSize"/>
-				</div>
-				<div v-if="item.name" class="ui-tile-uploader-item-name-box" :title="item.name">
-					<div class="ui-tile-uploader-item-name">
-						<span class="ui-tile-uploader-item-name-title">{{clampedFileName}}</span>
-						<span v-if="item.extension" class="ui-tile-uploader-item-name-extension">.{{item.extension}}</span>
+					<div
+						v-if="item.name"
+						class="ui-tile-uploader-item-name-box"
+						:title="item.name"
+					>
+						<div class="ui-tile-uploader-item-name">
+							<span class="ui-tile-uploader-item-name-title">{{clampedFileName}}</span>
+							<span v-if="item.extension" class="ui-tile-uploader-item-name-extension">.{{item.extension}}</span>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -744,6 +787,14 @@ this.BX.UI = this.BX.UI || {};
 	    items: {
 	      type: Array,
 	      default: []
+	    },
+	    readonly: {
+	      type: Boolean,
+	      default: false
+	    },
+	    removeFromServer: {
+	      type: Boolean,
+	      default: true
 	    }
 	  },
 	  data: () => ({
@@ -798,6 +849,9 @@ this.BX.UI = this.BX.UI || {};
 	        return 0;
 	      }
 	      return lastIndex - firstIndex + 1;
+	    },
+	    groupBy() {
+	      return main_core.Text.getRandom(16);
 	    }
 	  },
 	  methods: {
@@ -835,13 +889,30 @@ this.BX.UI = this.BX.UI || {};
 	  template: `
 		<div class="ui-tile-uploader-items">
 			<transition-group name="ui-tile-uploader-item" type="animation">
-				<TileItem v-for="item in visibleItems" :key="item.id" :item="item" />
+				<TileItem
+					v-for="item in visibleItems"
+					:key="item.id" :item="item"
+					:readonly="readonly"
+					:viewerGroupBy="groupBy"
+					:removeFromServer="removeFromServer"
+				/>
 			</transition-group>
 			<transition name="ui-tile-uploader-item" type="animation">
-				<TileMoreItem v-if="hiddenFilesCount > 0" :hidden-files-count="hiddenFilesCount" @onClick="getMore"/>
+				<TileMoreItem
+					v-if="hiddenFilesCount > 0"
+					:hiddenFilesCount="hiddenFilesCount"
+					@onClick="getMore"
+				/>
 			</transition>
 			<transition-group name="ui-tile-uploader-item" type="animation">
-				<TileItem v-for="item in realtimeItems" :key="item.id" :item="item" />
+				<TileItem
+					v-for="item in realtimeItems"
+					:key="item.id"
+					:item="item"
+					:readonly="readonly"
+					:viewerGroupBy="groupBy"
+					:removeFromServer="removeFromServer"
+				/>
 			</transition-group>
 		</div>
 	`
@@ -851,6 +922,7 @@ this.BX.UI = this.BX.UI || {};
 	 * @memberof BX.UI.Uploader
 	 * @vue/component
 	 */
+	// @vue/component
 	const TileWidgetComponent = {
 	  name: 'TileWidget',
 	  components: {
@@ -940,9 +1012,11 @@ this.BX.UI = this.BX.UI || {};
 		>
 			<component :is="slots[TileWidgetSlot.BEFORE_TILE_LIST]"></component>
 			<TileList 
-				v-if="items.length !== 0" 
-				:items="items" 
-				:auto-collapse="autoCollapse" 
+				v-if="items.length !== 0"
+				:items="items"
+				:autoCollapse="autoCollapse"
+				:readonly="widgetOptions.readonly"
+				:removeFromServer="widgetOptions.removeFromServer"
 				@onUnmount="autoCollapse = false"
 			/>
 			<component :is="slots[TileWidgetSlot.AFTER_TILE_LIST]"></component>
@@ -954,7 +1028,7 @@ this.BX.UI = this.BX.UI || {};
 			v-if="uploaderError && isMounted"
 			:alignArrow="false"
 			:error="uploaderError"
-			:popup-options="errorPopupOptions"
+			:popupOptions="errorPopupOptions"
 			@onDestroy="handlePopupDestroy"
 		/>
 	`

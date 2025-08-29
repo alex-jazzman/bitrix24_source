@@ -1,11 +1,18 @@
+import { Extension } from 'main.core';
 import { sendData, type AnalyticsOptions } from 'ui.analytics';
 import { FileOrigin } from 'ui.uploader.core';
 
-import { Core } from 'tasks.v2.core';
 import { Analytics, CardType } from 'tasks.v2.const';
 import type { AnalyticsParams } from 'tasks.v2.application.task-card';
 
-export const analytics = new class
+const settings: AnalyticsSettings = Extension.getSettings('tasks.v2.lib.analytics');
+
+type AnalyticsSettings = {
+	userType: string,
+	isDemo: boolean,
+};
+
+export class AnalyticsSender
 {
 	sendOpenCard(params: AnalyticsParams, options: {
 		collabId: number,
@@ -18,7 +25,7 @@ export const analytics = new class
 			c_sub_section: params.additionalContext,
 			c_element: params.element,
 			status: Analytics.Status.Success,
-			p2: Core.getParams().analytics.userType,
+			p2: settings.userType,
 			...(options.collabId ? { p4: Analytics.Params.CollabId(options.collabId) } : {}),
 		});
 	}
@@ -49,7 +56,7 @@ export const analytics = new class
 			c_sub_section: params.additionalContext,
 			c_element: params.element,
 			status: options.isSuccess ? Analytics.Status.Success : Analytics.Status.Error,
-			p2: Core.getParams().analytics.userType,
+			p2: settings.userType,
 			p3: Analytics.Params.ViewersCount(options.viewersCount),
 			...(options.collabId ? { p4: Analytics.Params.CollabId(options.collabId) } : {}),
 			p5: Analytics.Params.CoexecutorsCount(options.coexecutorsCount),
@@ -71,7 +78,7 @@ export const analytics = new class
 			c_sub_section: params.additionalContext,
 			c_element: params.element,
 			status: Analytics.Status.Success,
-			p2: Core.getParams().analytics.userType,
+			p2: settings.userType,
 			p3: Analytics.Params.ViewersCount(options.viewersCount),
 			...(options.collabId ? { p4: Analytics.Params.CollabId(options.collabId) } : {}),
 			p5: Analytics.Params.ChecklistCount(options.checklistCount, options.checklistItemsCount),
@@ -161,7 +168,7 @@ export const analytics = new class
 			c_element: Analytics.Element.UploadButton,
 			status: Analytics.Status.Success,
 			p1: Analytics.Params.FileSize(options.fileSize),
-			p2: Core.getParams().analytics.userType,
+			p2: settings.userType,
 			p3: Analytics.Params.FilesCount(options.filesCount),
 			...(options.collabId ? { p4: Analytics.Params.CollabId(options.collabId) } : {}),
 			p5: Analytics.Params.FileExtension(options.fileExtension),
@@ -189,6 +196,42 @@ export const analytics = new class
 		});
 	}
 
+	sendRoleClick(params: AnalyticsParams): void
+	{
+		this.#sendData({
+			event: Analytics.Event.RoleClick,
+			type: Analytics.Type.Task,
+			c_section: params.context,
+			c_sub_section: params.additionalContext,
+			c_element: Analytics.Element.RoleButton,
+			p1: Analytics.Params.IsDemo(settings.isDemo),
+		});
+	}
+
+	sendRoleClickType(params: AnalyticsParams, options: {
+		role: string,
+		isFilterEnabled: boolean,
+	}): void
+	{
+		const element = {
+			view_all: Analytics.Element.RoleAllButton,
+			view_role_responsible: Analytics.Element.RoleDoingButton,
+			view_role_accomplice: Analytics.Element.RoleHelpButton,
+			view_role_auditor: Analytics.Element.RoleWatchingButton,
+			view_role_originator: Analytics.Element.RoleAssignedButton,
+		}[options.role];
+
+		this.#sendData({
+			event: Analytics.Event.RoleClickType,
+			type: Analytics.Type.Task,
+			c_section: params.context,
+			c_sub_section: params.additionalContext,
+			c_element: element,
+			p1: Analytics.Params.IsDemo(settings.isDemo),
+			p2: Analytics.Params.FilterEnabled(options.isFilterEnabled),
+		});
+	}
+
 	#sendData(data: AnalyticsOptions): void
 	{
 		sendData({
@@ -205,4 +248,6 @@ export const analytics = new class
 			[CardType.Full]: Analytics.Type.Task,
 		}[cardType];
 	}
-}();
+}
+
+export const analytics = new AnalyticsSender();

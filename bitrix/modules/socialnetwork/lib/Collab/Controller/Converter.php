@@ -12,7 +12,6 @@ use Bitrix\Main\Error;
 use Bitrix\SocialNetwork\Collab\Access\CollabAccessController;
 use Bitrix\Socialnetwork\Collab\Controller\Dto\CollabGetDto;
 use Bitrix\Socialnetwork\Collab\Controller\Dto\Converter\ConvertToCollabDto;
-use Bitrix\Socialnetwork\Collab\Controller\Dto\Converter\ConvertToGroupDto;
 use Bitrix\Socialnetwork\Collab\Controller\Filter\IntranetUserFilter;
 use Bitrix\Socialnetwork\Collab\Converter\Command\ConvertToCollabCommand;
 use Bitrix\Socialnetwork\Collab\Converter\ConverterFeature;
@@ -44,14 +43,6 @@ class Converter extends Controller
 					$request = $this->getRequest();
 
 					return ConvertToCollabDto::createFromRequest($request);
-				}
-			),
-			new Parameter(
-				ConvertToGroupDto::class,
-				function (): ConvertToGroupDto {
-					$request = $this->getRequest();
-
-					return ConvertToGroupDto::createFromRequest($request);
 				}
 			),
 		];

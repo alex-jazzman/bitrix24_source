@@ -254,15 +254,18 @@ export class Menu
 
 		return [
 			...(itemsBySection[baseSection]?.map((item) => item.render()) ?? []),
-			...(this.#options.sections?.flatMap((options: MenuSectionOptions) => {
+			...(this.#options.sections?.flatMap((options: MenuSectionOptions, index: number) => {
 				const items = itemsBySection[options.code];
 				if (!items)
 				{
 					return null;
 				}
 
+				const isFirstSection = !itemsBySection[baseSection] && index === 0;
+				const withoutTitle = !options.title;
+
 				return [
-					this.#renderSection(options),
+					!(isFirstSection && withoutTitle) && this.#renderSection(options),
 					...(items.map((item) => item.render()) ?? []),
 				];
 			}) ?? []).filter((it) => it),

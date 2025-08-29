@@ -620,7 +620,7 @@ final class Sharing extends Internals\Model
 			&& $sharingModel->getLinkObject()->getTypeFile() == TypeFile::FLIPCHART
 		)
 		{
-			$uri = Driver::getInstance()->getUrlManager()->getUrlForViewBoard($sharingModel->getLinkObjectId());
+			$uri = Driver::getInstance()->getUrlManager()->getUrlForViewBoard($sharingModel->getLinkObjectId(),false, 'disk_page');
 		}
 		else
 		{
@@ -660,7 +660,7 @@ final class Sharing extends Internals\Model
 
 					if ($isBoard)
 					{
-						$linkToViewDocument = Driver::getInstance()->getUrlManager()->getUrlForViewBoard($sharingModel->getLinkObjectId());
+						$linkToViewDocument = Driver::getInstance()->getUrlManager()->getUrlForViewBoard($sharingModel->getLinkObjectId(), false, 'disk_page');
 					}
 					else
 					{
@@ -1547,7 +1547,7 @@ final class Sharing extends Internals\Model
 
 			if ($isBoard)
 			{
-				$linkToViewDocument = Driver::getInstance()->getUrlManager()->getUrlForViewBoard($sharingModel->getLinkObjectId());
+				$linkToViewDocument = Driver::getInstance()->getUrlManager()->getUrlForViewBoard($sharingModel->getLinkObjectId(), false, 'disk_page');
 			}
 			else
 			{

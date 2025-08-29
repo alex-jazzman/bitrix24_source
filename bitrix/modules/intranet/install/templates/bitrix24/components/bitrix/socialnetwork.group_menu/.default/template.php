@@ -142,7 +142,7 @@ if (
 	});
 </script><?php
 
-?><div class="profile-menu profile-menu-group<?= ($arResult['inIframe'] ? ' profile-menu-iframe' : '') ?>">
+?><div class="profile-menu --air-context-blurred-bg profile-menu-group<?= ($arResult['inIframe'] ? ' profile-menu-iframe' : '') ?>">
 	<div class="profile-menu-inner">
 		<div class="profile-menu-top<?= ($arResult['Group']['IS_EXTRANET'] === 'Y' ? ' profile-menu-top-extranet' : '') ?>"><?php
 

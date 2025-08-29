@@ -10,7 +10,7 @@ import { EventName, Model } from 'tasks.v2.const';
 import type { TaskModel } from 'tasks.v2.model.tasks';
 import type { CheckListModel } from 'tasks.v2.model.check-list';
 
-import { checkListMeta } from './check-list-meta';
+import { checkListMeta } from './lib/check-list-meta';
 
 // @vue/component
 export const CheckListChip = {

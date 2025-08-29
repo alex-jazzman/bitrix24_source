@@ -27,7 +27,7 @@ class MainPageSettings extends AbstractSettings
 			$component = new $componentClass;
 			$feedbackParams =
 				$component
-					? $component->getFeedbackParameters('mainpage')
+					? $component->getFeedbackParameters('general')
 					: []
 			;
 			$feedbackParams = [

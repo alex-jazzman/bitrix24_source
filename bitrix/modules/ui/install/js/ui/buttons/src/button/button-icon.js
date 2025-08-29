@@ -6,6 +6,7 @@ export default class ButtonIcon
 	static UNFOLLOW = 'ui-btn-icon-unfollow';
 	static FOLLOW = 'ui-btn-icon-follow';
 	static ADD = 'ui-btn-icon-add';
+	static ADD_M = 'ui-btn-icon-add-m';
 	static STOP = 'ui-btn-icon-stop';
 	static START = 'ui-btn-icon-start';
 	static PAUSE = 'ui-btn-icon-pause';

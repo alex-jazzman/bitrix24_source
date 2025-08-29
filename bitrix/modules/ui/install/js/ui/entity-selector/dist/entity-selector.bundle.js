@@ -7018,10 +7018,10 @@ this.BX.UI = this.BX.UI || {};
 	  }, {
 	    key: "destroy",
 	    value: function destroy() {
-	      if (this.destroying) {
+	      if (this.destroyed) {
 	        return;
 	      }
-	      this.destroying = true;
+	      this.destroyed = true;
 	      this.emit('onDestroy');
 	      this.disconnectTabOverlapping();
 	      instances.delete(this.getId());
@@ -7034,6 +7034,7 @@ this.BX.UI = this.BX.UI || {};
 	        }
 	      }
 	      Object.setPrototypeOf(this, null);
+	      this.destroyed = true;
 	    }
 	  }, {
 	    key: "isOpen",
@@ -8297,6 +8298,9 @@ this.BX.UI = this.BX.UI || {};
 	        this.getTagSelector().lock();
 	      }
 	      setTimeout(() => {
+	        if (this.destroyed) {
+	          return;
+	        }
 	        if (this.isLoading()) {
 	          this.showLoader();
 	        }
@@ -8310,6 +8314,9 @@ this.BX.UI = this.BX.UI || {};
 	          context: this.getContext()
 	        }
 	      }).then(response => {
+	        if (this.destroyed) {
+	          return;
+	        }
 	        if (response && response.data && main_core.Type.isPlainObject(response.data.dialog)) {
 	          this.loadState = LoadState.DONE;
 	          const entities = main_core.Type.isArrayFilled(response.data.dialog.entities) ? response.data.dialog.entities : [];

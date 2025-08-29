@@ -22,6 +22,13 @@ use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\UI\Util;
 use Psr\Container\NotFoundExceptionInterface;
 
+/**
+ * Class RequestLimiter
+ *
+ * Handles checking and messaging for request quotas to AI services (CoPilot) within the Landing module.
+ * Supports both cloud (Bitrix24 module present) and box environments.
+ * Determines if request limits are exceeded and returns localized error messages or null if within limits.
+ */
 class RequestLimiter
 {
 	/** @see \Bitrix\AI\Engine::ERRORS (key 'LIMIT_IS_EXCEEDED') */
@@ -32,6 +39,10 @@ class RequestLimiter
 	protected const ERROR_CODE_DAILY = 'LIMIT_IS_EXCEEDED_DAILY';
 	protected const ERROR_CODE_MONTHLY = 'LIMIT_IS_EXCEEDED_MONTHLY';
 
+	/**
+	 * Slider feature promoter codes for various limit messages
+	 * @var string[]
+	 */
 	protected const SLIDER_CODES = [
 		'BOOST_COPILOT' => 'limit_boost_copilot',
 		'DAILY' => 'limit_copilot_max_number_daily_requests',
@@ -41,16 +52,32 @@ class RequestLimiter
 		'BOX' => 'limit_copilot_box',
 	];
 
+	/**
+	 * Helpdesk article codes for support links
+	 * @var string[]
+	 */
 	protected const HELPDESK_CODES = [
 		'RATE' => '24736310',
 	];
 
-	/** @see Usage::PERIODS */
+	/**
+	 * Promo limit codes matching Usage::PERIODS values
+	 * @var string[]
+	 *
+	 * @see Usage::PERIODS
+	 */
 	protected const PROMO_LIMIT_CODES = [
 		'DAILY' => 'Daily',
 		'MONTHLY' => 'Monthly',
 	];
 
+	/**
+	 * Checks whether an AI service error represents a quota exceed.
+	 *
+	 * @param Error $error Error instance returned from the AI service.
+	 *
+	 * @return string|null Localized error message if limit exceeded, or null otherwise.
+	 */
 	public function getTextFromError(Error $error): ?string
 	{
 		if (Loader::includeModule('bitrix24'))
@@ -61,6 +88,13 @@ class RequestLimiter
 		return $this->getTextFromLimitBoxError($error);
 	}
 
+	/**
+	 * Handles cloud-specific AI error codes for quota limits.
+	 *
+	 * @param Error $error Error object from the cloud AI engine.
+	 *
+	 * @return string|null Localized message for BAAS, daily, monthly or promo limits, or null if not a quota error.
+	 */
 	protected function getTextFromLimitCloudError(Error $error): ?string
 	{
 		$errorCode = $error->getCode();
@@ -107,6 +141,13 @@ class RequestLimiter
 		return null;
 	}
 
+	/**
+	 * Handles box AI error codes for quota limits.
+	 *
+	 * @param Error $error Error object containing code and optional custom data.
+	 *
+	 * @return string Localized message for rate, BAAS, monthly or promo limits.
+	 */
 	protected function getTextFromLimitBoxError(Error $error): string
 	{
 		$customData = $error->getCustomData();
@@ -150,6 +191,13 @@ class RequestLimiter
 		);
 	}
 
+	/**
+	 * Checks if a batch of AI requests can be sent without exceeding quotas.
+	 *
+	 * @param int $requestCount Number of AI requests planned.
+	 *
+	 * @return string|null Localized error message if quota would be exceeded, or null if allowed.
+	 */
 	public function getTextFromCheckLimit(int $requestCount): ?string
 	{
 		if (Loader::includeModule('bitrix24'))
@@ -160,6 +208,13 @@ class RequestLimiter
 		return $this->getTextFromCheckBoxLimit($requestCount);
 	}
 
+	/**
+	 * Cloud-side reservation of request quota.
+	 *
+	 * @param int $requestCount Number of requests to reserve.
+	 *
+	 * @return string|null Localized message for BAAS, promo, daily or monthly limits, or null if reserved.
+	 */
 	protected function getTextFromCheckCloudLimit(int $requestCount): ?string
 	{
 		$reservedRequest = (new LimitControlService())->reserveRequest(
@@ -213,6 +268,13 @@ class RequestLimiter
 		return null;
 	}
 
+	/**
+	 * On-premise (box) reservation of request quota.
+	 *
+	 * @param int $requestCount Number of requests to reserve.
+	 *
+	 * @return string|null Localized message for cloud registration, rate, BAAS, monthly or promo limits, or null if reserved.
+	 */
 	protected function getTextFromCheckBoxLimit(int $requestCount): ?string
 	{
 		$cloudConfiguration = new Cloud\Configuration();

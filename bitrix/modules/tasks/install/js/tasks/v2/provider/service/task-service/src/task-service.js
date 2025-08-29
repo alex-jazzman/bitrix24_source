@@ -195,6 +195,22 @@ class TaskService
 		await this.#updateStatus(id, 'Task.Status.renew', TaskStatus.Pending);
 	}
 
+	async getLegacyCommentsByTaskId(id: number): Promise<string>
+	{
+		try
+		{
+			const data = await apiClient.post('LegacyComment.get', { task: { id } });
+
+			return (data.html) ?? '';
+		}
+		catch (error)
+		{
+			console.error('TaskService: getLegacyCommentsByTaskId error', error);
+
+			return '';
+		}
+	}
+
 	async #updateStatus(id: number, action: string, status: string): Promise<void>
 	{
 		const taskBeforeUpdate = this.#getStoreTask(id);

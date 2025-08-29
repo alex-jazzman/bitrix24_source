@@ -120,12 +120,12 @@ $tasksSubLink = [
 if ($isV2Form)
 {
 	unset($tasksSubLink['URL']);
-	$analytics = [
+	$analytics = \Bitrix\Main\Web\Json::encode([
 		'context' => \Bitrix\Tasks\Helper\Analytics::SECTION['tasks'],
 		'additionalContext' => '',
 		'element' => \Bitrix\Tasks\Helper\Analytics::ELEMENT['horizontal_menu'],
-	];
-	$tasksSubLink['ON_CLICK'] = '(new BX.Tasks.V2.Application.TaskCard({ analytics: '. \Bitrix\Main\Web\Json::encode($analytics) .' })).showCompactCard();';
+	]);
+	$tasksSubLink['ON_CLICK'] = "BX.Tasks.V2.Application.TaskCard.showCompactCard({ analytics: $analytics });";
 }
 
 $arResult['ITEMS'][] = array(
@@ -139,36 +139,6 @@ $arResult['ITEMS'][] = array(
 	'COUNTER_ID' => Counter\CounterDictionary::COUNTER_MEMBER_TOTAL,
 	'COUNTER_ACTIVE' => 'Y'
 );
-
-// base items
-foreach ($arResult['ROLES'] as $roleId => $role)
-{
-	$arResult['ITEMS'][] = array(
-		'TEXT' => $role['TEXT'],
-		'URL' => $tasksLink.'?'.$role['HREF'].'&clear_filter=Y'.$strIframe2,
-		'ON_CLICK' => '',
-		//		'ON_CLICK'=>$arParams['USE_AJAX_ROLE_FILTER'] == 'N'
-		//			? null
-		//			: 'BX.Tasks.Component.TopMenu.getInstance("topmenu").filter("'.strtolower($roleId).'")',
-		'ID' => mb_strtolower($roleId),
-		'CLASS' => $arParams['PROJECT_VIEW'] === 'Y' ? '' : 'tasks_role_link',
-		'IS_ACTIVE' =>
-			(
-				isset($arParams['MARK_ACTIVE_ROLE'])
-				&& $arParams['MARK_ACTIVE_ROLE'] === 'Y'
-				&& array_key_exists('IS_ACTIVE', $role)
-				&& $role['IS_ACTIVE']
-			)
-			||
-			(
-				isset($arParams['DEFAULT_ROLEID'])
-				&& $arParams['DEFAULT_ROLEID'] === mb_strtolower($roleId)
-			),
-		'COUNTER' => $role['COUNTER'],
-		'COUNTER_ID' => $role['COUNTER_ID'],
-		'PARENT_ITEM_ID' => 'view_all',
-	);
-}
 
 $createGroupLink = CComponentEngine::makePathFromTemplate(
 	$arParams['TASKS_GROUP_CREATE_URL_TEMPLATE'],

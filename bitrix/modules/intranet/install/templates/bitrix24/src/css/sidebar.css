@@ -9,9 +9,8 @@
 
 
 	padding: 0 var(--sidebar-widget-inline-padding) 12px;
+	background: rgba(var(--ui-color-background-primary-rgb), 0.96);
 
-	background-color: rgba(var(--ui-color-background-primary-rgb), 0.92);
-	backdrop-filter: blur(var(--sidebar-widget-blur));
 	border-radius: var(--sidebar-widget-border-radius);
 	overflow: hidden;
 }

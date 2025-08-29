@@ -25,7 +25,7 @@
 					</div>
 				<?else:?>
 					<div class="login-item">
-						<span class="login-label"><?=GetMessage("AUTH_CHECKWORD")?></span><input class="login-inp" type="text"  name="USER_CHECKWORD" maxlength="50" value="<?=$arResult["USER_CHECKWORD"]?>" autocomplete="off"/>
+						<span class="login-label"><?=GetMessage("AUTH_CHECKWORD_MSGVER_1")?></span><input class="login-inp" type="text"  name="USER_CHECKWORD" maxlength="50" value="<?=$arResult["USER_CHECKWORD"]?>" autocomplete="off"/>
 					</div>
 				<?endif;?>
 				<div class="login-item">

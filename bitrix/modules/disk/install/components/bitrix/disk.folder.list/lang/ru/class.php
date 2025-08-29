@@ -84,6 +84,7 @@ $MESS['DISK_FOLDER_LIST_ACT_MARK_DELETED'] = "Удалить";
 $MESS['DISK_FOLDER_LIST_ACT_OPEN'] = "Открыть";
 $MESS['DISK_FOLDER_LIST_ACT_DETAILS'] = "Подробнее";
 $MESS['DISK_FOLDER_LIST_ACT_DOWNLOAD'] = "Скачать";
+$MESS['DISK_FOLDER_LIST_ACT_DOWNLOAD_ERROR'] = "Не удалось создать архив для скачивания. Возможно, папка слишком большая или вы выбрали слишком много файлов. Попробуйте уменьшить объем и повторите попытку.";
 $MESS['DISK_FOLDER_LIST_ACT_COPY'] = "Копировать";
 $MESS['DISK_FOLDER_LIST_ACT_LOCK'] = "Заблокировать";
 $MESS['DISK_FOLDER_LIST_ACT_UNLOCK'] = "Разблокировать";

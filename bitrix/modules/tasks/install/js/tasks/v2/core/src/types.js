@@ -6,7 +6,6 @@ export type CoreParams = InterfaceModelParams & {
 	chatType: string,
 	features: FeaturesParams,
 	paths: PathsParams,
-	analytics: AnalyticsParams,
 };
 
 type LimitsParams = {
@@ -24,8 +23,4 @@ type FeaturesParams = {
 
 type PathsParams = {
 	editPath: string,
-};
-
-type AnalyticsParams = {
-	userType: string,
 };

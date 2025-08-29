@@ -22,18 +22,25 @@ class DeleteUserCommand extends AbstractCommand
 	)
 	{
 	}
-	protected function execute(): Result
-	{
-		$result = new Result();
 
+	protected function validate(): ValidationResult
+	{
+		$result = new ValidationResult();
 		$isActionAvailable = ServiceContainer::getInstance()
 			->getUserService()
 			->isActionAvailableForUser($this->user, UserActionDictionary::DELETE);
 
 		if (!$isActionAvailable)
 		{
-			return $result->addError(new Error('You can only delete invited users who have never logged into the portal'));
+			$result->addError(new Error('You can only delete invited users who have never logged into the portal'));
 		}
+
+		return $result;
+	}
+
+	protected function execute(): Result
+	{
+		$result = new Result();
 
 		try
 		{

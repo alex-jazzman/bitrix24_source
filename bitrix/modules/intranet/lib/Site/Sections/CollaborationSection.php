@@ -2,8 +2,12 @@
 
 namespace Bitrix\Intranet\Site\Sections;
 
+use Bitrix\Intranet\Settings\Tools\Automation;
+use Bitrix\Intranet\Settings\Tools\BIConstructor;
+use Bitrix\Intranet\Settings\Tools\Tasks;
 use Bitrix\Intranet\Settings\Tools\TeamWork;
 use Bitrix\Intranet\Settings\Tools\ToolsManager;
+use Bitrix\Main\Application;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Data\Cache;
 use Bitrix\Main\Engine\CurrentUser;
@@ -15,7 +19,7 @@ class CollaborationSection
 	private static ?array $allowedFeatures = null;
 	private static ?TeamWork $teamWorkTools = null;
 	private const CACHE_TTL = 604800;
-	private const CACHE_PATH = '/bx/intranet/sections/collaboration/';
+	private const CACHE_PATH = '/bx/intranet/sections/collaboration2/';
 
 	public static function getMenuData(): array
 	{
@@ -29,7 +33,6 @@ class CollaborationSection
 				$item['url'] ?? '',
 				$item['extraUrls'] ?? [],
 				$menuData,
-				'',
 			];
 		}
 
@@ -45,15 +48,55 @@ class CollaborationSection
 		});
 
 		$counters = \CUserCounter::GetValues(CurrentUser::get()->getId());
+		self::setCounters($items, $counters);
+
+		return $items;
+	}
+
+	private static function setCounters(&$items, $counters): void
+	{
 		foreach ($items as &$item)
 		{
 			if (isset($item['menuData']['counter_id']))
 			{
 				$item['menuData']['counter_num'] = $counters[$item['menuData']['counter_id']] ?? 0;
 			}
+
+			if (isset($item['COUNTER_ID']))
+			{
+				$item['COUNTER'] = $counters[$item['COUNTER_ID']] ?? 0;
+			}
+
+			if (isset($item['menuData']['sub_menu']) && is_array($item['menuData']['sub_menu']))
+			{
+				self::setCounters($item['menuData']['sub_menu'], $counters);
+			}
+		}
+	}
+
+	// This method is used to prepare menu items for the main.interface.buttons component.
+	public static function getMenuItems(): array
+	{
+		$items = static::getItems();
+		$result = [];
+
+		foreach ($items as $item)
+		{
+			$menuData = $item['menuData'] ?? [];
+
+			$result[] = [
+				'ID' => $menuData['menu_item_id'] ?? $item['id'],
+				'TEXT' => $item['title'],
+				'URL' => $item['url'],
+				'COUNTER_ID' => $menuData['counter_id'] ?? '',
+				'COUNTER' => $menuData['counter_num'] ?? 0,
+				'SUB_LINK' => $menuData['sub_link'] ?? '',
+				'ITEMS' => empty($menuData['sub_menu']) ? [] : $menuData['sub_menu'],
+				'ON_CLICK' => $item['onclick'] ?? '',
+			];
 		}
 
-		return $items;
+		return $result;
 	}
 
 	private static function getItemsInternal(): array
@@ -72,16 +115,36 @@ class CollaborationSection
 			}
 		}
 
-		$items = [
-			static::getFeed(),
-			static::getMessenger(),
-			static::getCalendar(true),
-			static::getOnlineDocs(),
-			static::getBoards(),
-			static::getDisk(),
-			static::getMail(),
-			static::getWorkGroups(),
-		];
+		if (static::shouldShowNewStructure())
+		{
+			$items = [
+				static::getMessenger(true),
+				static::getTasks(),
+				static::getBoards(),
+				static::getNotifications(),
+				static::getCalendar(true),
+				static::getDisk(),
+				static::getOnlineDocs(),
+				static::getMail(),
+				static::getBIConstructor(),
+				static::getAutomation(),
+				static::getFeed(),
+				static::getWorkGroups(),
+			];
+		}
+		else
+		{
+			$items = [
+				static::getFeed(),
+				static::getMessenger(),
+				static::getCalendar(true),
+				static::getOnlineDocs(),
+				static::getBoards(),
+				static::getDisk(),
+				static::getMail(),
+				static::getWorkGroups(),
+			];
+		}
 
 		$cache->startDataCache();
 
@@ -95,6 +158,13 @@ class CollaborationSection
 		return $items;
 	}
 
+	public static function shouldShowNewStructure(): bool
+	{
+		$shouldShowNewMenu = \Bitrix\Main\Config\Option::get('intranet', 'should_show_new_collaboration_menu', 'N') === 'Y';
+
+		return $shouldShowNewMenu && self::isBitrix24Cloud();
+	}
+
 	public static function isFeatureEnabled(string $feature): bool
 	{
 		if (static::$allowedFeatures === null)
@@ -102,16 +172,16 @@ class CollaborationSection
 			static::$allowedFeatures = [];
 			if ($GLOBALS['USER']->isAuthorized() && Loader::includeModule('socialnetwork'))
 			{
-				$arUserActiveFeatures = \CSocNetFeatures::getActiveFeatures(SONET_ENTITY_USER, $GLOBALS["USER"]->GetID());
-				$arSocNetFeaturesSettings = \CSocNetAllowed::getAllowedFeatures();
-				foreach (['tasks', 'files', 'photo', 'blog', 'calendar'] as $feature)
+				$activeFeatures = \CSocNetFeatures::getActiveFeatures(SONET_ENTITY_USER, $GLOBALS["USER"]->GetID());
+				$socNetFeaturesSettings = \CSocNetAllowed::getAllowedFeatures();
+				foreach (['tasks', 'files', 'photo', 'blog', 'calendar'] as $featureName)
 				{
-					static::$allowedFeatures[$feature] = (
-						array_key_exists($feature, $arSocNetFeaturesSettings)
-						&& array_key_exists('allowed', $arSocNetFeaturesSettings[$feature])
-						&& in_array(SONET_ENTITY_USER, $arSocNetFeaturesSettings[$feature]['allowed'])
-						&& is_array($arUserActiveFeatures)
-						&& in_array($feature, $arUserActiveFeatures)
+					static::$allowedFeatures[$featureName] = (
+						array_key_exists($featureName, $socNetFeaturesSettings)
+						&& array_key_exists('allowed', $socNetFeaturesSettings[$featureName])
+						&& in_array(SONET_ENTITY_USER, $socNetFeaturesSettings[$featureName]['allowed'])
+						&& is_array($activeFeatures)
+						&& in_array($featureName, $activeFeatures)
 					);
 				}
 			}
@@ -132,10 +202,9 @@ class CollaborationSection
 
 	public static function isDiskEnabled(): bool
 	{
-		return (
+		return
 			ModuleManager::isModuleInstalled('disk')
-			&& Option::get('disk', 'successfully_converted', false)
-		);
+			&& Option::get('disk', 'successfully_converted', false);
 	}
 
 	private static function getTitle(string $id): string
@@ -148,13 +217,77 @@ class CollaborationSection
 		return static::$teamWorkTools->getSubgroupNameById($id);
 	}
 
+	public static function getNotifications(): array
+	{
+		return [
+			'id' => 'notification',
+			'title' => self::getTitle('notification'),
+			'available' => static::isToolAvailable('notification'),
+			// for messenger
+			'onclick' => "BX?.Messenger?.Public?.openNotifications();",
+			'menuData' => [
+				'menu_item_id' => 'menu_notifications',
+				'onclick' => "BX?.Messenger?.Public?.openNotifications();",
+				'counter_id' => 'notifications',
+			],
+		];
+	}
+
+	public static function getAutomation()
+	{
+		$automation = new Automation();
+		return [
+			'id' => $automation->getId(),
+			'title' => $automation->getName(),
+			'available' => $automation->isAvailable(),
+			'url' => $automation->getLeftMenuPath(),
+			'menuData' => [
+				'menu_item_id' => $automation->getMenuItemId(),
+				'counter_id' => 'automation',
+			],
+		];
+
+	}
+
+	public static function getBIConstructor(): array
+	{
+		$biConstructor = new BIConstructor();
+
+		return [
+			'id' =>  $biConstructor->getId(),
+			'title' => $biConstructor->getName(),
+			'available' => $biConstructor->isAvailable(),
+			'url' => $biConstructor->getLeftMenuPath(),
+			'menuData' => [
+				'menu_item_id' =>  $biConstructor->getMenuItemId(),
+				'counter_id' => 'report',
+			],
+		];
+	}
+
+	public static function getTasks()
+	{
+		$tasks = new Tasks();
+
+		return [
+			'id' => $tasks->getId(),
+			'title' => $tasks->getName(),
+			'available' => $tasks->isAvailable(),
+			'url' => str_replace('#USER_ID#', CurrentUser::get()->getId(), $tasks->getLeftMenuPath()),
+			'menuData' => [
+				'menu_item_id' => $tasks->getMenuItemId(),
+				'counter_id' => 'tasks',
+			],
+		];
+	}
+
 	public static function getFeed(): array
 	{
 		return [
 			'id' => 'news',
 			'title' => static::getTitle('news'),
 			'available' => static::isToolAvailable('news'),
-			'url' => '/stream/',
+			'url' => SITE_DIR . 'stream/',
 			'menuData' => [
 				'menu_item_id' => 'menu_live_feed',
 				'counter_id' => '**',
@@ -165,7 +298,7 @@ class CollaborationSection
 		];
 	}
 
-	public static function getMessenger(): array
+	public static function getMessenger(bool $includeSubMenu = false): array
 	{
 		$available = (
 			static::isToolAvailable('instant_messenger')
@@ -173,17 +306,47 @@ class CollaborationSection
 			&& \CBXFeatures::isFeatureEnabled('WebMessenger')
 		);
 
+		$subMenu = [];
+
+		if ($includeSubMenu)
+		{
+			foreach (ChatSection::getItems() as $item)
+			{
+				if ($item['id'] === 'notification') {
+					continue;
+				}
+				if ($item['available'])
+				{
+					$menuData = $item['menuData'] ?? [];
+					$subMenu[] = [
+						'ID' => $menuData['menu_item_id'] ?? $item['id'],
+						'TEXT' => $item['title'] ?? '',
+						'URL' => $item['url'] ?? '',
+						'ON_CLICK' => $item['onclick'] ?? '',
+						'COUNTER' => $menuData['counter_num'] ?? '',
+						'COUNTER_ID' => $menuData['counter_id'] ?? '',
+					];
+				}
+			}
+		}
+
+		$menuData = [
+			'menu_item_id' => 'menu_im_messenger',
+			'counter_id' => static::shouldShowNewStructure() ? '' : 'im-message',
+			'my_tools_section' => true,
+			'can_be_first_item' => defined('AIR_SITE_TEMPLATE'),
+		];
+
+		if (static::shouldShowNewStructure()) {
+			$menuData['sub_menu'] = $subMenu;
+		}
+
 		return [
 			'id' => 'instant_messenger',
 			'title' => static::getTitle('instant_messenger'),
 			'available' => $available,
 			'url' => SITE_DIR . 'online/',
-			'menuData' => [
-				'menu_item_id' => 'menu_im_messenger',
-				'counter_id' => 'im-message',
-				'my_tools_section' => true,
-				'can_be_first_item' => defined('AIR_SITE_TEMPLATE'),
-			],
+			'menuData' => $menuData,
 		];
 	}
 
@@ -285,16 +448,16 @@ class CollaborationSection
 		}
 
 		$url = (
-			static::isDiskEnabled()
-				? SITE_DIR . 'company/personal/user/' . CurrentUser::get()->getId() . '/disk/path/'
-				: SITE_DIR . 'company/personal/user/' . CurrentUser::get()->getId() . '/files/lib/'
+		static::isDiskEnabled()
+			? SITE_DIR . 'company/personal/user/' . CurrentUser::get()->getId() . '/disk/path/'
+			: SITE_DIR . 'company/personal/user/' . CurrentUser::get()->getId() . '/files/lib/'
 		);
 
 		return [
 			'id' => 'disk',
 			'title' => static::getTitle('disk'),
 			'available' => $available,
-			'url' => '/docs/',
+			'url' => SITE_DIR . 'docs/',
 			'menuData' => [
 				'real_link' => $url,
 				'menu_item_id' => 'menu_files',

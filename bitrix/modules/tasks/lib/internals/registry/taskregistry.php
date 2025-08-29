@@ -176,6 +176,7 @@ class TaskRegistry
 			->addSelect('CREATED_DATE')
 			->addSelect('START_DATE_PLAN')
 			->addSelect('END_DATE_PLAN')
+			->addSelect('SITE_ID')
 			->whereIn('ID', $taskIds)
 			->exec();
 

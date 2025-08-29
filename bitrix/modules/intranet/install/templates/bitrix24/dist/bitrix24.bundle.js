@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Intranet = this.BX.Intranet || {};
-(function (exports,main_sidepanel,ui_buttons,intranet_avatarWidget,timeman_workTimeStateIcon,bitrix24_licenseWidget,intranet_licenseWidget,ui_infoHelper,pull_client,main_core_cache,main_core_events,intranet_widgetLoader,intranet_invitationWidget,ui_cnt,main_core) {
+(function (exports,ui_buttons,intranet_avatarWidget,timeman_workTimeStateIcon,bitrix24_licenseWidget,intranet_licenseWidget,ui_infoHelper,pull_client,main_core_cache,main_core_events,intranet_widgetLoader,intranet_invitationWidget,ui_cnt,main_core) {
 	'use strict';
 
 	async function showPartnerConnectForm(params) {
@@ -260,14 +260,25 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    main_core_events.EventEmitter.subscribe('IM.Counters:onUpdate', babelHelpers.classPrivateFieldLooseBase(this, _handleCounterUpdate)[_handleCounterUpdate].bind(this));
 	    main_core_events.EventEmitter.subscribe('BX.Intranet.Bitrix24.ChatMenu:onSelect', babelHelpers.classPrivateFieldLooseBase(this, _handleChatMenuSelect)[_handleChatMenuSelect].bind(this));
 	  }
-	  getMenu() {
+	  getChatMenu() {
 	    /**
 	     *
 	     * @type {BX.Main.interfaceButtonsManager}
 	     */
 	    const menuManager = main_core.Reflection.getClass('BX.Main.interfaceButtonsManager');
 	    if (menuManager) {
-	      return menuManager.getById('chat-menu');
+	      return menuManager.getById('chat-menu') || null;
+	    }
+	    return null;
+	  }
+	  getCollaborationMenu() {
+	    /**
+	     *
+	     * @type {BX.Main.interfaceButtonsManager}
+	     */
+	    const menuManager = main_core.Reflection.getClass('BX.Main.interfaceButtonsManager');
+	    if (menuManager) {
+	      return menuManager.getById('top_menu_id_collaboration') || null;
 	    }
 	    return null;
 	  }
@@ -292,7 +303,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 	}
 	function _handleImLayoutChange2(event) {
 	  const data = event.getData();
-	  const menu = this.getMenu();
 	  let fromItemId = data.from.name.toLowerCase();
 	  if (fromItemId === 'market' && data.from.entityId) {
 	    fromItemId = `${fromItemId}_${data.from.entityId}`;
@@ -301,15 +311,33 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  if (toItemId === 'market' && data.to.entityId) {
 	    toItemId = `${toItemId}_${data.to.entityId}`;
 	  }
-	  menu == null ? void 0 : menu.unsetActive(fromItemId);
-	  menu == null ? void 0 : menu.setActive(toItemId);
-	  menu == null ? void 0 : menu.closeMoreMenu();
+	  const chatMenu = this.getChatMenu();
+	  if (chatMenu !== null) {
+	    chatMenu.unsetActive(fromItemId);
+	    chatMenu.setActive(toItemId);
+	    chatMenu.reset();
+	  }
+	  const collaborationMenu = this.getCollaborationMenu();
+	  const siteDir = main_core.Loc.getMessage('SITE_DIR') || '/';
+	  const isMessengerEmbedded = window.location.pathname.toString().startsWith(`${siteDir}online/`);
+	  if (collaborationMenu !== null) {
+	    if (isMessengerEmbedded) {
+	      collaborationMenu.unsetActive(fromItemId);
+	      collaborationMenu.setActive(toItemId);
+	    }
+	    collaborationMenu.reset();
+	  }
 	}
 	function _handleCounterUpdate2(event) {
 	  const counters = event.getData();
-	  const menu = this.getMenu();
-	  for (const [counterId, counterValue] of Object.entries(counters)) {
-	    menu == null ? void 0 : menu.updateCounter(counterId, counterValue);
+	  const menus = [this.getChatMenu(), this.getCollaborationMenu()];
+	  for (const menu of menus) {
+	    if (menu === null) {
+	      continue;
+	    }
+	    for (const [counterId, counterValue] of Object.entries(counters)) {
+	      menu.updateCounter(counterId, counterValue);
+	    }
 	  }
 	}
 
@@ -958,9 +986,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  }
 	}
 
-	const DEFAULT_SLIDER_BLUR = 'blur(6px)';
-	const IM_SLIDER_BLUR = 'blur(10px)';
-	const SIDEPANEL_BORDER_RADIUS = '18px 18px 0 0';
 	var _rightBar = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("rightBar");
 	var _header = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("header");
 	var _footer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("footer");
@@ -970,10 +995,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 	var _collaborationMenu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("collaborationMenu");
 	var _patchPopupMenu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("patchPopupMenu");
 	var _patchJSClock = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("patchJSClock");
-	var _fixSliderBorderRadius = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("fixSliderBorderRadius");
-	var _makeSliderBlurry = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("makeSliderBlurry");
-	var _setSliderBlur = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setSliderBlur");
-	var _resetSliderBlur = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("resetSliderBlur");
 	var _preventFromIframe = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("preventFromIframe");
 	var _applyUserAgentRules = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("applyUserAgentRules");
 	var _patchRestAPI = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("patchRestAPI");
@@ -987,18 +1008,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    });
 	    Object.defineProperty(this, _preventFromIframe, {
 	      value: _preventFromIframe2
-	    });
-	    Object.defineProperty(this, _resetSliderBlur, {
-	      value: _resetSliderBlur2
-	    });
-	    Object.defineProperty(this, _setSliderBlur, {
-	      value: _setSliderBlur2
-	    });
-	    Object.defineProperty(this, _makeSliderBlurry, {
-	      value: _makeSliderBlurry2
-	    });
-	    Object.defineProperty(this, _fixSliderBorderRadius, {
-	      value: _fixSliderBorderRadius2
 	    });
 	    Object.defineProperty(this, _patchJSClock, {
 	      value: _patchJSClock2
@@ -1035,7 +1044,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      value: null
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _preventFromIframe)[_preventFromIframe]();
-	    babelHelpers.classPrivateFieldLooseBase(this, _makeSliderBlurry)[_makeSliderBlurry]();
 	    babelHelpers.classPrivateFieldLooseBase(this, _patchPopupMenu)[_patchPopupMenu]();
 	    babelHelpers.classPrivateFieldLooseBase(this, _patchRestAPI)[_patchRestAPI]();
 	    babelHelpers.classPrivateFieldLooseBase(this, _patchJSClock)[_patchJSClock]();
@@ -1068,9 +1076,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  getCollaborationMenu() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _collaborationMenu)[_collaborationMenu];
 	  }
-	  canUseBlurry() {
-	    return !main_core.Dom.hasClass(document.documentElement, 'bx-integrated-gpu');
-	  }
 	}
 	function _patchPopupMenu2() {
 	  main_core_events.EventEmitter.subscribe('BX.Main.Menu:onInit', event => {
@@ -1097,94 +1102,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      cancelCheckClick: true
 	    });
 	  });
-	}
-	function _fixSliderBorderRadius2(slider, forceBgColor = null) {
-	  if (slider.isSelfContained()) {
-	    main_core.Dom.style(slider.getContainer(), 'background-color', '#eef2f4');
-	  } else {
-	    var _slider$getFrameWindo;
-	    const frameDocument = slider == null ? void 0 : (_slider$getFrameWindo = slider.getFrameWindow()) == null ? void 0 : _slider$getFrameWindo.document;
-	    if (frameDocument && frameDocument.body) {
-	      const bgColor = main_core.Dom.style(frameDocument.body, 'background-color');
-	      const bgImage = main_core.Dom.style(frameDocument.body, 'background-image');
-	      const foreBgColor = bgColor === 'rgba(0, 0, 0, 0)' && bgImage === 'none' ? '#eef2f4' : 'rgba(0, 0, 0, 0)';
-	      main_core.Dom.style(slider.getContainer(), 'background-color', forceBgColor === null ? foreBgColor : forceBgColor);
-	    } else {
-	      main_core.Dom.style(slider.getContainer(), 'background-color', forceBgColor === null ? '#eef2f4' : forceBgColor);
-	    }
-	  }
-	}
-	function _makeSliderBlurry2() {
-	  main_core_events.EventEmitter.subscribe('SidePanel.Slider:onOpenComplete', event => {
-	    const [sliderEvent] = event.getData();
-	    const slider = sliderEvent.getSlider();
-	    if (!slider.isLoaded()) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _fixSliderBorderRadius)[_fixSliderBorderRadius](slider, 'rgba(0, 0, 0, 0)');
-	    }
-	    const previousSlider = main_sidepanel.SidePanel.Instance.getPreviousSlider();
-	    if (previousSlider) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _resetSliderBlur)[_resetSliderBlur](previousSlider);
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _setSliderBlur)[_setSliderBlur](slider);
-	  });
-	  main_core_events.EventEmitter.subscribe('SidePanel.Slider:onClosing', event => {
-	    const [sliderEvent] = event.getData();
-	    const slider = sliderEvent.getSlider();
-	    const previousSlider = main_sidepanel.SidePanel.Instance.getPreviousSlider();
-	    if (previousSlider) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _setSliderBlur)[_setSliderBlur](previousSlider);
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _resetSliderBlur)[_resetSliderBlur](slider);
-	  });
-	  main_core_events.EventEmitter.subscribe('SidePanel.Slider:onOpening', () => {
-	    if (main_sidepanel.SidePanel.Instance.getOpenSlidersCount() === 1) {
-	      main_core.Dom.addClass(document.body, '--ui-reset-bg-blur');
-	    }
-	    // else
-	    // {
-	    // 	const previousSlider = SidePanel.Instance.getPreviousSlider();
-	    // 	const frameDocument = previousSlider?.getFrameWindow()?.document;
-	    // 	Dom.addClass(frameDocument?.body, '--ui-reset-bg-blur');
-	    // }
-	  });
-
-	  main_core_events.EventEmitter.subscribe('SidePanel.Slider:onClosing', () => {
-	    if (main_sidepanel.SidePanel.Instance.getOpenSlidersCount() === 1) {
-	      main_core.Dom.removeClass(document.body, '--ui-reset-bg-blur');
-	    }
-	    // else
-	    // {
-	    // 	const previousSlider = SidePanel.Instance.getPreviousSlider();
-	    // 	const frameDocument = previousSlider?.getFrameWindow()?.document;
-	    // 	Dom.removeClass(frameDocument?.body, '--ui-reset-bg-blur');
-	    // }
-	  });
-
-	  main_core_events.EventEmitter.subscribe('SidePanel.Slider:onLoad', event => {
-	    const [sliderEvent] = event.getData();
-	    const slider = sliderEvent.getSlider();
-	    babelHelpers.classPrivateFieldLooseBase(this, _fixSliderBorderRadius)[_fixSliderBorderRadius](slider);
-	    requestAnimationFrame(() => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _fixSliderBorderRadius)[_fixSliderBorderRadius](slider);
-	    });
-	  });
-	}
-	function _setSliderBlur2(slider) {
-	  if (!this.canUseBlurry()) {
-	    return;
-	  }
-	  const isMessenger = slider.getUrl().startsWith('im:slider');
-	  main_core.Dom.style(slider.getOverlay(), '-webkit-backdrop-filter', isMessenger ? IM_SLIDER_BLUR : DEFAULT_SLIDER_BLUR);
-	  main_core.Dom.style(slider.getOverlay(), 'backdrop-filter', isMessenger ? IM_SLIDER_BLUR : DEFAULT_SLIDER_BLUR);
-	  main_core.Dom.style(slider.getOverlay(), '--sidepanel-border-radius', SIDEPANEL_BORDER_RADIUS);
-	}
-	function _resetSliderBlur2(slider) {
-	  if (!this.canUseBlurry()) {
-	    return;
-	  }
-	  main_core.Dom.style(slider.getOverlay(), '-webkit-backdrop-filter', null);
-	  main_core.Dom.style(slider.getOverlay(), 'backdrop-filter', null);
-	  main_core.Dom.style(slider.getOverlay(), '--sidepanel-border-radius', null);
 	}
 	function _preventFromIframe2() {
 	  const iframeMode = window !== window.top;
@@ -2023,5 +1940,5 @@ this.BX.Intranet = this.BX.Intranet || {};
 	exports.LicenseButton = LicenseButton;
 	exports.AvatarButton = AvatarButton;
 
-}((this.BX.Intranet.Bitrix24 = this.BX.Intranet.Bitrix24 || {}),BX.SidePanel,BX.UI,BX.Intranet,BX.Timeman,BX.Bitrix24,BX.Intranet,BX.UI,BX,BX.Cache,BX.Event,BX.Intranet,BX.Intranet,BX.UI,BX));
+}((this.BX.Intranet.Bitrix24 = this.BX.Intranet.Bitrix24 || {}),BX.UI,BX.Intranet,BX.Timeman,BX.Bitrix24,BX.Intranet,BX.UI,BX,BX.Cache,BX.Event,BX.Intranet,BX.Intranet,BX.UI,BX));
 //# sourceMappingURL=bitrix24.bundle.js.map

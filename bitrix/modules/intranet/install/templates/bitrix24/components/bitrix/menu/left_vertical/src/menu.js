@@ -1466,7 +1466,7 @@ export default class Menu
 			size: Button.Size.SMALL,
 			text: Loc.getMessage('MENU_LICENSE_ALL'),
 			useAirDesign: true,
-			style: AirButtonStyle.FILLED_SUCCESS,
+			style: AirButtonStyle.FILLED_BOOST,
 			noCaps: true,
 			wide: true,
 			icon: 'o-rocket',

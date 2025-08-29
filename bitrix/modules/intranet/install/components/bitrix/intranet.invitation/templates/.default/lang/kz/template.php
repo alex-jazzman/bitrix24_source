@@ -130,6 +130,7 @@ $MESS["INTRANET_INVITE_DIALOG_INTEGRATOR_EMAIL"] = "Интегратордың e
 $MESS["INTRANET_INVITE_DIALOG_LINK_UPDATE_ERROR"] = "Сілтемені жаңарту қатесі";
 $MESS["INTRANET_INVITE_DIALOG_LINK_UPDATE_SUCCESS"] = "Сілтеме жаңартылды";
 $MESS["INTRANET_INVITE_DIALOG_LINK_UPDATE_WARNING"] = "Бұрын жасалған сілтемелер бойынша Битрикс24-ке<br>қосылу мүмкін болмайды";
+$MESS["INTRANET_INVITE_DIALOG_LINK_UPDATE_WARNING_MSGVER_1"] = "Егер ескі шақыруға кіруді жапқыңыз келсе <br> шақыру сілтемесін жаңартыңыз";
 $MESS["INTRANET_INVITE_DIALOG_LOCAL_MAIL_CONTENT_DESCRIPTION"] = "Шақырулар компьютерде орнатылған электрондық пошта қызметі арқылы жіберіледі (мысалы, корпоративтік пошта мекенжайынан жіберуге болады). Бұл сенімділікті арттырады және шақыруларды жекелендіреді.";
 $MESS["INTRANET_INVITE_DIALOG_LOCAL_MAIL_CONTENT_STEPS"] = "1. «Шақыру» батырмасын басыңыз<br/>
 						2. Жібермес бұрын өзгерту енгізуге болатын шақыру мәтіні бар поштаңыз ашылады<br/>

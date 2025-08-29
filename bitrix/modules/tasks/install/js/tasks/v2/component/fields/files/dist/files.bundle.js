@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
-(function (exports,main_core,ui_vue3_vuex,ui_iconSet_api_vue,tasks_v2_component_elements_bottomSheet,ui_uploader_core,ui_iconSet_api_core,ui_iconSet_animated,ui_iconSet_outline,tasks_v2_component_elements_chip,tasks_v2_const,tasks_v2_lib_fieldHighlighter,tasks_v2_lib_analytics,ui_vue3_components_popup,ui_vue3_components_button,disk_uploader_userFieldWidget,tasks_v2_provider_service_fileService) {
+(function (exports,main_core,ui_vue3_vuex,ui_iconSet_api_vue,tasks_v2_component_elements_bottomSheet,ui_uploader_core,ui_iconSet_animated,tasks_v2_component_elements_chip,tasks_v2_const,tasks_v2_lib_fieldHighlighter,tasks_v2_lib_analytics,ui_vue3_components_popup,ui_vue3_components_button,ui_iconSet_api_core,ui_iconSet_outline,disk_uploader_userFieldWidget,tasks_v2_provider_service_fileService) {
 	'use strict';
 
 	const filesMeta = Object.freeze({
@@ -246,6 +246,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      ButtonSize: ui_vue3_components_button.ButtonSize,
 	      AirButtonStyle: ui_vue3_components_button.AirButtonStyle,
 	      ButtonIcon: ui_vue3_components_button.ButtonIcon,
+	      Outline: ui_iconSet_api_core.Outline,
 	      uploaderAdapter: tasks_v2_provider_service_fileService.fileService.get(props.taskId).getAdapter()
 	    };
 	  },
@@ -262,7 +263,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      return {
 	        id: 'tasks-field-files-popup',
 	        bindElement: this.bindElement,
-	        minWidth: 350,
+	        minWidth: 380,
 	        maxHeight: 320,
 	        padding: 18,
 	        bindOptions: {
@@ -333,24 +334,24 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					<div class="tasks-field-files-popup-add-buttons">
 						<UiButton
 							:text="loc('TASKS_V2_FILES_UPLOAD_BUTTON')"
-							:size="ButtonSize.EXTRA_SMALL"
+							:size="ButtonSize.SMALL"
 							:style="AirButtonStyle.TINTED"
-							:leftIcon="ButtonIcon.DOWNLOAD"
+							:leftIcon="Outline.DOWNLOAD"
 							@click="handleUploadClick"
 						/>
 						<UiButton
 							:text="loc('TASKS_V2_FILES_MY_DRIVE')"
-							:size="ButtonSize.EXTRA_SMALL"
+							:size="ButtonSize.SMALL"
 							:style="AirButtonStyle.TINTED"
-							:leftIcon="ButtonIcon.CLOUD"
+							:leftIcon="Outline.UPLOAD"
 							@click="handleMyDriveClick"
 						/>
 					</div>
 					<UiButton
 						:text="loc('TASKS_V2_FILES_CLEAR')"
-						:size="ButtonSize.EXTRA_SMALL"
+						:size="ButtonSize.SMALL"
 						:style="AirButtonStyle.PLAIN_NO_ACCENT"
-						:leftIcon="ButtonIcon.REMOVE"
+						:leftIcon="Outline.TRASHCAN"
 						@click="handleClearClick"
 					/>
 				</div>
@@ -533,5 +534,5 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	exports.FilesChip = FilesChip;
 	exports.filesMeta = filesMeta;
 
-}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX,BX.Vue3.Vuex,BX.UI.IconSet,BX.Tasks.V2.Component.Elements,BX.UI.Uploader,BX.UI.IconSet,BX,BX,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Const,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.UI.Vue3.Components,BX.Vue3.Components,BX.Disk.Uploader,BX.Tasks.V2.Provider.Service));
+}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX,BX.Vue3.Vuex,BX.UI.IconSet,BX.Tasks.V2.Component.Elements,BX.UI.Uploader,BX,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Const,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.UI.Vue3.Components,BX.Vue3.Components,BX.UI.IconSet,BX,BX.Disk.Uploader,BX.Tasks.V2.Provider.Service));
 //# sourceMappingURL=files.bundle.js.map

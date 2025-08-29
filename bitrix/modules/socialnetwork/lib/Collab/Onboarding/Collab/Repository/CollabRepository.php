@@ -6,12 +6,15 @@ namespace Bitrix\Socialnetwork\Collab\Onboarding\Collab\Repository;
 
 use Bitrix\Socialnetwork\Collab\Onboarding\Collab\Entity\FirstAddedMemberData;
 use Bitrix\Socialnetwork\Collab\Onboarding\Collab\Repository\Cache\CollabCache;
+use Bitrix\Socialnetwork\Collab\Onboarding\Collab\Repository\Cache\CollabCacheInterface;
 use Bitrix\Socialnetwork\Helper\InstanceTrait;
 use Bitrix\Socialnetwork\UserToGroupTable;
 
 class CollabRepository
 {
 	use InstanceTrait;
+
+	private CollabCacheInterface $cache;
 
 	public function __construct()
 	{

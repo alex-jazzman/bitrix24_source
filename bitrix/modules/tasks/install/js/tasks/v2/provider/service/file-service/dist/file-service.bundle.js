@@ -26,6 +26,26 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	  };
 	}
 
+	const processCheckListFileIds = fileIds => {
+	  if (!Array.isArray(fileIds)) {
+	    return [];
+	  }
+	  return fileIds.reduce((result, item) => {
+	    if (typeof item === 'object' && item !== null && 'id' in item && 'fileId' in item) {
+	      result.push({
+	        id: item.id,
+	        fileId: item.fileId
+	      });
+	    } else if (typeof item === 'string' && item.startsWith('n')) {
+	      result.push({
+	        id: item,
+	        fileId: item
+	      });
+	    }
+	    return result;
+	  }, []);
+	};
+
 	const EntityTypes = Object.freeze({
 	  Task: 'task',
 	  CheckListItem: 'checkListItem'
@@ -294,10 +314,11 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _entityType)[_entityType] === EntityTypes.Task) {
 	    void tasks_v2_provider_service_taskService.taskService.update(babelHelpers.classPrivateFieldLooseBase(this, _entityId)[_entityId], data);
 	  } else if (babelHelpers.classPrivateFieldLooseBase(this, _entityType)[_entityType] === EntityTypes.CheckListItem) {
+	    const attachments = processCheckListFileIds(data.fileIds);
 	    void this.$store.dispatch(`${tasks_v2_const.Model.CheckList}/update`, {
 	      id: babelHelpers.classPrivateFieldLooseBase(this, _entityId)[_entityId],
 	      fields: {
-	        attachments: data.fileIds
+	        attachments
 	      }
 	    });
 	  }

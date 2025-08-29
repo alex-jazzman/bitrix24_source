@@ -1,5 +1,8 @@
-<?
+<?php
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\Localization\Loc;
 
 class CBPDiskAddFolderActivity
 	extends CBPActivity
@@ -105,13 +108,25 @@ class CBPDiskAddFolderActivity
 		if (!$createdBy)
 			$createdBy = \Bitrix\Disk\SystemUser::SYSTEM_USER_ID;
 
-		$newFolder = $folder->addSubFolder(array('NAME' => $folderName, 'CREATED_BY' => $createdBy));
+		try
+		{
+			$newFolder = $folder->addSubFolder([
+				'NAME' => $folderName,
+				'CREATED_BY' => $createdBy,
+			]);
+		}
+		catch (ArgumentException $exception)
+		{
+			$errorMessage = Loc::getMessage('DISK_FOLDER_ERROR_FOLDER_NAME_CAN_NOT_BE_EMPTY') ?? $exception->getMessage();
+			throw new ArgumentException($errorMessage);
+		}
+
 		if(!$newFolder && $folder->getErrorByCode(\Bitrix\Disk\BaseObject::ERROR_NON_UNIQUE_NAME))
 		{
-			$newFolder = \Bitrix\Disk\Folder::load(array(
+			$newFolder = \Bitrix\Disk\Folder::load([
 				'=NAME' => $folderName,
 				'PARENT_ID' => $folder->getId()
-			));
+			]);
 		}
 		if ($newFolder)
 		{

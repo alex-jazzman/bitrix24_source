@@ -1,6 +1,12 @@
+/* Firefox */
 @supports not selector(::-webkit-scrollbar) {
 	html {
-		/*scrollbar-color: rgba(255, 255, 255, 0.35) transparent;*/
+		scrollbar-color: rgba(0, 0, 0, 0.20) transparent;
+		scrollbar-width: thin;
+	}
+
+	html:has(body.--ui-context-edge-dark) {
+		scrollbar-color: rgba(255, 255, 255, 0.32) transparent;
 		scrollbar-width: thin;
 	}
 }
@@ -8,19 +14,23 @@
 body {
 	--scrollbar-thumb-color: rgba(0, 0, 0, 0.20);
 	--scrollbar-thumb-color-active: rgba(0, 0, 0, 0.35);
+	--scrollbar-background: rgba(0, 0, 0, 0);
 }
-/*
+
 body.--ui-context-edge-dark {
-	--scrollbar-thumb-color: rgba(255, 255, 255, 0.20);
-	--scrollbar-thumb-color-active: rgba(255, 255, 255, 0.35);
-}*/
+	--scrollbar-thumb-color: rgba(255, 255, 255, 0.32);
+	--scrollbar-thumb-color-active: rgba(255, 255, 255, 0.55);
+	--scrollbar-background: rgba(0, 0, 0, 0);
+}
+
+body.--ui-context-content-light {
+	--scrollbar-background: #eef2f4;
+}
 
 body::-webkit-scrollbar {
 	width: 14px;
-
 	appearance: none;
-	/*background-color: rgba(0, 0, 0, 0);*/
-	background-color: #eef2f4;
+	background-color: var(--scrollbar-background);
 }
 
 body::-webkit-scrollbar:horizontal {
@@ -51,5 +61,5 @@ body::-webkit-scrollbar-thumb:hover {
 }
 
 body::-webkit-scrollbar-corner  {
-	background-color: #eef2f4;
+	background-color: var(--scrollbar-background);
 }

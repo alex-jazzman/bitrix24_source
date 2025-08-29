@@ -95,7 +95,7 @@
 	height: 26px;
 }
 
-.tasks-compact-card-popup-drag-handle.--disabled {
+.tasks-compact-card-popup.--disable-drag .tasks-compact-card-popup-drag-handle {
 	pointer-events: none;
 }
 

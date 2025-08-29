@@ -138,7 +138,7 @@ export const Participant = {
 			:bindElement="$refs.container"
 			@close="closeHint"
 		>
-			<RichLoc :text="cantChangeHint" placeholder="[action]">
+			<RichLoc class="tasks-field-participant-cant-change" :text="cantChangeHint" placeholder="[action]">
 				<template #action="{ text }">
 					<span @click="handleHintClick">{{ text }}</span>
 				</template>

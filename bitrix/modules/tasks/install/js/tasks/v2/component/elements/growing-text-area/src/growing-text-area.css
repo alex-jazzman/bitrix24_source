@@ -1,4 +1,4 @@
-.b24-growing-text-area-content {
+.b24-growing-text-area {
 	display: flex;
 	width: 100%;
 }
@@ -39,14 +39,11 @@
 	word-break: break-word;
 }
 
-.b24-growing-text-area-display.--readonly {
+.b24-growing-text-area.--readonly .b24-growing-text-area-edit,
+.b24-growing-text-area.--readonly .b24-growing-text-area-display {
 	cursor: default;
 }
 
-.b24-growing-text-area-display.--readonly-placeholder {
-	color: var(--ui-color-base-4);
-}
-
-.b24-growing-text-area-popup-content {
+.b24-growing-text-area-popup {
 	word-break: break-word;
 }

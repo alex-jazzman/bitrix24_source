@@ -1,6 +1,6 @@
-import { Type } from 'main.core';
-import { EventEmitter } from 'main.core.events';
-import type { BaseEvent } from 'main.core.events';
+import { Dom, Runtime, Tag, Type } from 'main.core';
+import { EventEmitter, type BaseEvent } from 'main.core.events';
+import type { Popup } from 'main.popup';
 
 import { BitrixVue, type VueCreateAppResult } from 'ui.vue3';
 import { locMixin } from 'ui.vue3.mixins.loc-mixin';
@@ -12,28 +12,37 @@ import type { Params } from 'tasks.v2.application.task-card';
 
 import { App } from './component/app';
 
-export class TaskCompactCard extends EventEmitter
+export class TaskCompactCard
 {
 	#params: Params;
-	#application: ?VueCreateAppResult = null;
+	#popup: Popup;
+	#application: ?VueCreateAppResult;
+	#handlers: { [eventName: string]: Function };
 
 	constructor(params: Params = {})
 	{
-		super(params);
-
-		this.setEventNamespace('Tasks:TaskCompactCard');
-
 		this.#params = params;
 
 		this.#params.taskId = Type.isUndefined(this.#params.taskId) ? 0 : this.#params.taskId;
 	}
 
-	async mountCard(container: HTMLElement): Promise<HTMLElement>
+	async mountCard(popup: Popup): Promise<void>
 	{
-		await this.#mountApplication(container);
+		this.#popup = popup;
+
+		await this.#mountApplication(popup.getContentContainer());
 
 		this.#adjustPosition();
 		this.#subscribe();
+
+		const dragHandle = Tag.render`
+			<div class="tasks-compact-card-popup-drag-handle"></div>
+		`;
+		Dom.append(dragHandle, popup.getContentContainer());
+		this.#popup.setDraggable({
+			element: dragHandle,
+			restrict: true,
+		});
 	}
 
 	unmountCard(): void
@@ -63,32 +72,32 @@ export class TaskCompactCard extends EventEmitter
 
 	#subscribe(): void
 	{
-		EventEmitter.subscribe(`${EventName.CloseCard}:${this.#params.taskId}`, this.#closeCard);
-		EventEmitter.subscribe(`${EventName.OpenFullCard}:${this.#params.taskId}`, this.#openFullCard);
-		EventEmitter.subscribe(`${EventName.OpenSliderCard}:${this.#params.taskId}`, this.#openSliderCard);
-		EventEmitter.subscribe(`${EventName.ShowOverlay}:${this.#params.taskId}`, this.#showOverlay);
-		EventEmitter.subscribe(`${EventName.HideOverlay}:${this.#params.taskId}`, this.#hideOverlay);
-		EventEmitter.subscribe(`${EventName.AdjustPosition}:${this.#params.taskId}`, this.#adjustPosition);
+		this.#handlers = {
+			[`${EventName.CloseCard}:${this.#params.taskId}`]: this.#closeCard,
+			[`${EventName.OpenFullCard}:${this.#params.taskId}`]: this.#openFullCard,
+			[`${EventName.OpenSliderCard}:${this.#params.taskId}`]: this.#openSliderCard,
+			[`${EventName.ShowOverlay}:${this.#params.taskId}`]: this.#showOverlay,
+			[`${EventName.HideOverlay}:${this.#params.taskId}`]: this.#hideOverlay,
+			[`${EventName.AdjustPosition}:${this.#params.taskId}`]: this.#handleAdjustPosition,
+			'BX.Main.Popup:onShow': this.#handlePopupShow,
+		};
+
+		Object.entries(this.#handlers).forEach(([event, handler]) => EventEmitter.subscribe(event, handler));
 	}
 
 	#unsubscribe(): void
 	{
-		EventEmitter.unsubscribe(`${EventName.CloseCard}:${this.#params.taskId}`, this.#closeCard);
-		EventEmitter.unsubscribe(`${EventName.OpenFullCard}:${this.#params.taskId}`, this.#openFullCard);
-		EventEmitter.unsubscribe(`${EventName.OpenSliderCard}:${this.#params.taskId}`, this.#openSliderCard);
-		EventEmitter.unsubscribe(`${EventName.ShowOverlay}:${this.#params.taskId}`, this.#showOverlay);
-		EventEmitter.unsubscribe(`${EventName.HideOverlay}:${this.#params.taskId}`, this.#hideOverlay);
-		EventEmitter.unsubscribe(`${EventName.AdjustPosition}:${this.#params.taskId}`, this.#adjustPosition);
+		Object.entries(this.#handlers).forEach(([event, handler]) => EventEmitter.unsubscribe(event, handler));
 	}
 
-	#closeCard = (): void => {
-		this.emit('closeCard');
-	};
+	#openFullCard = async (baseEvent: BaseEvent): Promise<void> => {
+		this.#closeCard();
 
-	#openFullCard = (baseEvent: BaseEvent): void => {
+		const { TaskCard } = await Runtime.loadExtension('tasks.v2.application.task-card');
+
 		this.#params.taskId = baseEvent.getData();
 
-		this.emit('openFullCard', this.#params.taskId);
+		TaskCard.showFullCard(this.#params);
 	};
 
 	#openSliderCard = (baseEvent: BaseEvent): void => {
@@ -107,15 +116,74 @@ export class TaskCompactCard extends EventEmitter
 		this.#closeCard();
 	};
 
+	#closeCard = (): void => {
+		this.#popup.close();
+	};
+
 	#showOverlay = (): void => {
-		this.emit('showOverlay');
+		Dom.addClass(this.#popup.getPopupContainer(), '--overlay');
 	};
 
 	#hideOverlay = (): void => {
-		this.emit('hideOverlay');
+		Dom.removeClass(this.#popup.getPopupContainer(), '--overlay');
 	};
 
-	#adjustPosition = (baseEvent: BaseEvent = null): void => {
-		this.emit('adjustPosition', baseEvent?.getData() ?? {});
+	#handleAdjustPosition = (baseEvent?: BaseEvent): void => {
+		const { innerPopup, titleFieldHeight, animate } = baseEvent?.getData() ?? {};
+		if (!innerPopup)
+		{
+			this.#popup.setOffset({
+				offsetTop: 0,
+			});
+			this.#adjustPosition();
+
+			return;
+		}
+
+		const innerPopupContainer = innerPopup.getPopupContainer();
+		const popupContainer = this.#popup.getPopupContainer();
+
+		const heightDifference = innerPopupContainer.offsetHeight - popupContainer.offsetHeight;
+		const popupPaddingTop = 20;
+		const offset = titleFieldHeight + heightDifference / 2 + popupPaddingTop * 2;
+
+		Dom.style(popupContainer, '--overlay-offset-top', `-${offset}px`);
+		if (!animate)
+		{
+			this.#adjustPosition();
+			Dom.style(popupContainer, 'transition', 'none');
+			setTimeout(() => Dom.style(popupContainer, 'transition', null));
+		}
+	};
+
+	#adjustPosition(): void
+	{
+		this.#popup.adjustPosition({
+			forceBindPosition: true,
+		});
+	}
+
+	#handlePopupShow = (event): void => {
+		this.#handlePopupShow.openedPopupsCount ??= 0;
+
+		const popup: Popup = event.getCompatData()[0];
+		const popupContainer = this.#popup.getPopupContainer();
+
+		const onClose = (): void => {
+			popup.unsubscribe('onClose', onClose);
+			popup.unsubscribe('onDestroy', onClose);
+
+			this.#handlePopupShow.openedPopupsCount--;
+			if (this.#handlePopupShow.openedPopupsCount === 0)
+			{
+				Dom.removeClass(popupContainer, '--disable-drag');
+			}
+		};
+
+		popup.subscribe('onClose', onClose);
+		popup.subscribe('onDestroy', onClose);
+
+		this.#handlePopupShow.openedPopupsCount++;
+		Dom.addClass(popupContainer, '--disable-drag');
 	};
 }

@@ -2173,9 +2173,6 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 		}">
 			<slot/>
 			<div class="ui-access-rights-v2-cell-popup-header-toggle-container">
-				<span class="ui-access-rights-v2-cell-popup-header-toggle-caption">{{
-					$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_ACCESS')
-				}}</span>
 				<Switcher
 					:is-checked="isChecked"
 					@check="$emit('check')"

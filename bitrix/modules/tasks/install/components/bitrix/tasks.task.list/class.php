@@ -75,6 +75,7 @@ class TasksTaskListComponent extends TasksBaseComponent
 	);
 	protected $listParameters = array();
 
+	/** @var \Bitrix\Tasks\Util\Error\Collection */
 	protected $errorCollection;
 
 	public function configureActions()
@@ -294,7 +295,31 @@ class TasksTaskListComponent extends TasksBaseComponent
 			}
 		}
 
-		(new \Bitrix\Tasks\Control\Grid($this->userId))->sortTask($data);
+		try
+		{
+			(new \Bitrix\Tasks\Control\Grid($this->userId))->sortTask($data);
+		}
+		catch (\Exception $e)
+		{
+			if (
+				$e instanceof TasksException
+				&& $e->isSerialized()
+			)
+			{
+				$errors = unserialize($e->getMessage(), ['allowed_classes' => false]);
+				$error = $errors[0];
+				$this->errorCollection->add(
+					codeOrInstance: 'ACTION_ERROR.UNEXPECTED_ERROR',
+					message: $error['text'] ?? 'Unexpected error',
+				);
+			}
+			else
+			{
+				$this->errorCollection->add(Main\Error::createFromThrowable($e));
+			}
+
+			return null;
+		}
 
 		return $result;
 	}

@@ -15,6 +15,7 @@ use Bitrix\Main\ORM\Event;
 use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\StringField;
 use Bitrix\Main\SystemException;
+use Bitrix\Main\Type\Collection;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Tasks\Helper\Sort;
 use Bitrix\Tasks\Internals\Log\LogFacade;
@@ -25,8 +26,10 @@ use Bitrix\Main\ORM\Fields\ArrayField;
 use Bitrix\Tasks\Provider\Exception\InvalidGroupByException;
 use Bitrix\Tasks\Provider\TaskList;
 use Bitrix\Tasks\Provider\TaskQuery;
-use Bitrix\Tasks\Provider\TaskQueryBuilder;
 use Bitrix\Tasks\Util\User;
+use Bitrix\Tasks\V2\Public\Command\Task\Kanban\AddTaskStageRelationCommand;
+use Bitrix\Tasks\V2\Public\Command\Task\Kanban\ClearStageCommand;
+use Bitrix\Tasks\V2\Public\Command\Task\Kanban\DeleteTaskStageRelationCommand;
 use CTaskMembers;
 use CTasks;
 use CUserOptions;
@@ -219,14 +222,20 @@ class StagesTable extends DataManager
 					|| $entityType === self::WORK_MODE_ACTIVE_SPRINT
 				)
 				{
-					$resT = TaskStageTable::getList([
+					$rows = TaskStageTable::getList([
 						'filter' => [
 							'STAGE_ID' => $stage['ID'],
 						],
-					]);
-					while ($row = $resT->fetch())
+					])->fetchAll();
+
+					$ids = array_column($rows, 'ID');
+					Collection::normalizeArrayValuesByInt($ids, false);
+
+					if (!empty($ids))
 					{
-						TaskStageTable::delete($row['ID']);
+						(new DeleteTaskStageRelationCommand(
+							relationIds: $ids
+						))->run();
 					}
 				}
 			}
@@ -743,8 +752,6 @@ class StagesTable extends DataManager
 		{
 			$list = new TaskList();
 			$counts = $list->getList($query);
-
-			$sql = TaskQueryBuilder::getLastQuery();
 		}
 		catch (Exception $e)
 		{
@@ -914,13 +921,14 @@ class StagesTable extends DataManager
 							)->fetch()
 						)
 						{
-							try
+							$addResult = (new AddTaskStageRelationCommand(
+								taskId: $taskId,
+								stageId: self::getDefaultStageId($userId),
+							))->run();
+
+							if (!$addResult->isSuccess())
 							{
-								TaskStageTable::add($fields);
-							}
-							catch (Exception $exception)
-							{
-								LogFacade::logThrowable($exception);
+								LogFacade::logError($addResult->getError());
 							}
 						}
 					}
@@ -1160,7 +1168,10 @@ class StagesTable extends DataManager
 	public static function onDelete(Event $event): void
 	{
 		$primary = $event->getParameter('id');
-		TaskStageTable::clearStage($primary['ID']);
+
+		(new ClearStageCommand(
+			stageId: (int)$primary['ID']
+		))->run();
 	}
 
 	/**

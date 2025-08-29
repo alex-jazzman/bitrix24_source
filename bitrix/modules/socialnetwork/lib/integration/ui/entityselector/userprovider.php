@@ -1108,6 +1108,9 @@ class UserProvider extends BaseProvider
 		return $users->count() ? $users->getAll()[0] : null;
 	}
 
+	/**
+	 * @return list<Item>
+	 */
 	public static function makeItems(EO_User_Collection $users, array $options = []): array
 	{
 		$result = [];

@@ -9,7 +9,6 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
  * @var array $arResult
  */
 
-use Bitrix\Intranet;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
 
@@ -24,22 +23,6 @@ $style = '';
 if (!empty($arResult['avatar']))
 {
 	$style = "background: url('{$arResult['avatar']}') no-repeat center; background-size: cover;";
-}
-
-$workTimeAvailable = Intranet\Internal\Integration\Timeman\WorkTime::canUse();
-
-$workTimeState = '';
-$workTimeAction = '';
-if ($workTimeAvailable)
-{
-	$timeManUser = \CTimeManUser::instance();
-	$workTimeState = $timeManUser->state();
-
-	if ($workTimeState === 'CLOSED')
-	{
-		$workTimeAction = $timeManUser->openAction();
-		$workTimeAction = ($workTimeAction === false) ? '' : $workTimeAction;
-	}
 }
 
 ?>
@@ -63,9 +46,9 @@ $frame = $this->createFrame()->begin('');
 				skeleton: <?= Json::encode($arResult['skeleton']) ?>,
 				signDocumentsCounter: <?= (int)$arResult['signDocumentsCounter'] ?>,
 				signDocumentsPullEventName: '<?= \CUtil::JSEscape($arResult['signDocumentsPullEventName']) ?>',
-				workTimeAvailable: '<?= \CUtil::JSEscape($workTimeAvailable) ?>',
-				workTimeState: '<?= \CUtil::JSEscape($workTimeState) ?>',
-				workTimeAction: '<?= \CUtil::JSEscape($workTimeAction) ?>',
+				workTimeAvailable: '<?= \CUtil::JSEscape($arResult['workTimeData']['workTimeAvailable']) ?>',
+				workTimeState: '<?= \CUtil::JSEscape($arResult['workTimeData']['workTimeState']) ?>',
+				workTimeAction: '<?= \CUtil::JSEscape($arResult['workTimeData']['workTimeAction']) ?>',
 			});
 		})
 	</script>

@@ -262,12 +262,13 @@ export default class Dialog extends EventEmitter
 
 	destroy(): void
 	{
-		if (this.destroying)
+		if (this.destroyed)
 		{
 			return;
 		}
 
-		this.destroying = true;
+		this.destroyed = true;
+
 		this.emit('onDestroy');
 
 		this.disconnectTabOverlapping();
@@ -286,6 +287,8 @@ export default class Dialog extends EventEmitter
 		}
 
 		Object.setPrototypeOf(this, null);
+
+		this.destroyed = true;
 	}
 
 	isOpen(): boolean
@@ -1888,6 +1891,11 @@ export default class Dialog extends EventEmitter
 		}
 
 		setTimeout(() => {
+			if (this.destroyed)
+			{
+				return;
+			}
+
 			if (this.isLoading())
 			{
 				this.showLoader();
@@ -1905,6 +1913,11 @@ export default class Dialog extends EventEmitter
 				}
 			})
 			.then((response) => {
+				if (this.destroyed)
+				{
+					return;
+				}
+
 				if (response && response.data && Type.isPlainObject(response.data.dialog))
 				{
 					this.loadState = LoadState.DONE;

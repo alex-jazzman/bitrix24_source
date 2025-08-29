@@ -3237,6 +3237,20 @@ return [
 				],
 			],
 		],
+		'display-element' => [
+			'name' => Loc::getMessage('LANDING_BLOCK_STYLE_DISPLAY_ELEMENT'),
+			'type' => 'list',
+			'items' => [
+				[
+					'name' => Loc::getMessage('LANDING_BLOCK_STYLE_DISPLAY_ELEMENT_SHOW'),
+					'value' => 'd-flex',
+				],
+				[
+					'name' => Loc::getMessage('LANDING_BLOCK_STYLE_DISPLAY_ELEMENT_HIDE'),
+					'value' => 'd-none'
+				],
+			],
+		],
 	],
 	'group' => [
 		'block-default' => [
@@ -3390,7 +3404,6 @@ return [
 		'background-gradient' => ['background-color'],
 		'background-hover' => ['background-color-hover'],
 		// dont forget add new usage 'background' style in \Bitrix\Landing\Node\StyleImg::STYLES_WITH_IMAGE
-
-		'widget' => ['background', 'widget-type', 'margin-bottom'],
+		'widget' => ['background', 'widget-type', 'margin-top', 'margin-bottom', 'padding-top', 'padding-bottom'],
 	],
 ];

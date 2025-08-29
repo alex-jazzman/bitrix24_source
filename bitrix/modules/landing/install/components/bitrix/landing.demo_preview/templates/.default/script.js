@@ -117,7 +117,7 @@
 			this.showPreview();
 			this.buildHeader();
 
-			if (BX.SidePanel.Instance.isReload === true)
+			if (top.BX.SidePanel.Instance.isReload === true)
 			{
 				this.createButton.click();
 			}

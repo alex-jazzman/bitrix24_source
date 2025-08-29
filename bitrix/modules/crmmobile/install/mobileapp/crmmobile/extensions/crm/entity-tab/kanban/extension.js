@@ -400,7 +400,7 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 
 			let topSeparatorInstalled = false;
 
-			if (!permissions.crmMode && (entityTypeId === TypeId.Deal || entityTypeId === TypeId.Lead))
+			if (permissions.crmMode && (entityTypeId === TypeId.Deal || entityTypeId === TypeId.Lead))
 			{
 				topSeparatorInstalled = true;
 				menuActions.push(this.getCrmModeAction());

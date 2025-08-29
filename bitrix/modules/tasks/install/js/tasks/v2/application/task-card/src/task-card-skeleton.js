@@ -1,75 +1,77 @@
-import { Dom, Tag } from 'main.core';
+import { Tag } from 'main.core';
 import { Circle, Line } from 'ui.system.skeleton';
-
 import './task-card-skeleton.css';
 
-export class TaskCardSkeleton
-{
-	#layout: {
-		compactCardSkeleton: HTMLElement,
-	};
+export const Skeleton = (): HTMLElement => Tag.render`
+	<div class="task-skeleton" style="padding: 24px">
+		<div class="--title --row">
+			${line(240, 18, 99)}
+			<div class="--fire">${circle()}</div>
+			${circle()}
+		</div>
+		<div class="--description">${line(80, 12, 99)}</div>
+		<div style="margin-bottom: 17px">${FieldRow()}</div>
+		${FieldRow()}
+		<div class="--chips">${line(null, 32)}</div>
+		<div class="--buttons --row">
+			${line(84, 34)}
+			<div class="--cancel">${line(84, 34)}</div>
+			${line(97, 12, 99)}
+		</div>
+	</div>
+`;
 
-	constructor()
-	{
-		this.#layout = {};
-	}
+const FieldRow = (): HTMLElement => Tag.render`
+	<div class="--row">
+		${line(100, 12, 99)}
+		<div style="margin: 0 8px 0 41px">${circle(22)}</div>
+		${line(130, 12, 99)}
+	</div>
+`;
 
-	renderCompactCardSkeleton(): HTMLElement
-	{
-		this.#layout.compactCardSkeleton = Tag.render`
-			<div class="tasks-task-compact-card-skeleton">
-				<div class="tasks-task-compact-card-skeleton-fields">
-					<div class="tasks-task-compact-card-skeleton-fields-title">
-						${new Line({ width: 240, height: 18, borderRadius: 60 }).render()}
-						<div class="tasks-task-card-skeleton-group --icons">
-							${new Circle({ size: 18 }).render()}
-							${new Circle({ size: 18 }).render()}
-						</div>
-					</div>
-					<div class="tasks-task-compact-card-skeleton-fields-description">
-						${new Line({ width: 80, height: 12, borderRadius: 60 }).render()}
-					</div>
-					<div class="tasks-task-compact-card-skeleton-fields-list">
-						<div class="tasks-task-compact-card-skeleton-fields-list-row">
-							<div class="tasks-task-card-skeleton-group">
-								${new Line({ width: 100, height: 12, borderRadius: 60 }).render()}
-							</div>
-							<div class="tasks-task-card-skeleton-group">
-								${new Circle({ size: 22 }).render()}
-								${new Line({ width: 130, height: 12, borderRadius: 60 }).render()}
-							</div>
-						</div>
-						<div class="tasks-task-compact-card-skeleton-fields-list-row">
-							<div class="tasks-task-card-skeleton-group">
-								${new Line({ width: 100, height: 12, borderRadius: 60 }).render()}
-							</div>
-							<div class="tasks-task-card-skeleton-group">
-								${new Circle({ size: 22 }).render()}
-								${new Line({ width: 130, height: 12, borderRadius: 60 }).render()}
-							</div>
-						</div>
-					</div>
+export const FullSkeleton = (): HTMLElement => Tag.render`
+	<div class="task-skeleton --full">
+		<div class="--main">
+			<div style="padding: 28px 24px">
+				<div class="--full-title --row">
+					${line(350, 18)}
+					${circle()}
 				</div>
-				<div class="tasks-task-compact-card-skeleton-chips">
-					${new Line({ height: 34, borderRadius: 8 }).render()}
-				</div>
-				<div class="tasks-task-compact-card-skeleton-footer">
-					<div class="tasks-task-card-skeleton-group">
-						${new Line({ width: 84, height: 34, borderRadius: 8 }).render()}
-						${new Line({ width: 84, height: 34, borderRadius: 8 }).render()}
-					</div>
-					<div style="margin-right: 6px;">
-						${new Line({ width: 97, height: 12, borderRadius: 60 }).render()}
-					</div>
+				<div class="--full-description">${line(260, 18)}</div>
+				${line(null, 84)}
+				<div style="margin: 12px 0">${line(null, 84)}</div>
+				${line(null, 84)}
+				<div class="--full-chips --row">
+					${line(88, 32)}
+					${line(88, 32)}
+					${line(88, 32)}
 				</div>
 			</div>
-		`;
+			<div class="--row --footer">
+				${line(85, 38)}
+				<div class="--more">${line(38, 38)}</div>
+				${line(131, 22)}
+			</div>
+		</div>
+		<div class="--chat">
+			<div class="--chat-title --row">
+				${circle(40)}
+				<div class="--chat-info">
+					${line(110, 12)}
+					${line(75, 10)}
+				</div>
+				${circle()}
+				<div style="margin-left: 8px">${circle()}</div>
+			</div>
+			<div class="--chat-bg">
+				<div class="--textarea --row">
+					${line(null, 47)}
+					${circle(44)}
+				</div>
+			</div>
+		</div>
+	</div>
+`;
 
-		return this.#layout.compactCardSkeleton;
-	}
-
-	removeCompactCardSkeleton(): void
-	{
-		Dom.remove(this.#layout.compactCardSkeleton);
-	}
-}
+const line = Line;
+const circle = Circle;

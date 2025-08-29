@@ -9,3 +9,4 @@ $MESS["SONET_NS_MODERATORS_GROUP"] = "Топ модераторлары  тіз�
 $MESS["SONET_NS_OWNER_GROUP"] = "Топ иесін өзгерту";
 $MESS["SONET_NS_OWNER_GROUP_MSGVER_1"] = "Топ иесін өзгерту";
 $MESS["SONET_NS_SONET_GROUP_EVENT"] = "Топтағы белсенділік және жаңартулар";
+$MESS["SONET_NS_SONET_GROUP_TITLE"] = "Топтар мен жобалар";

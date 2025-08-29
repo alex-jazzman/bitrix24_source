@@ -776,13 +776,15 @@ this.BX.UI = this.BX.UI || {};
 	      [sectionCode]: [...sectionItems, item]
 	    };
 	  }, {});
-	  return [...((_itemsBySection$baseS = (_itemsBySection$baseS2 = itemsBySection[baseSection]) == null ? void 0 : _itemsBySection$baseS2.map(item => item.render())) != null ? _itemsBySection$baseS : []), ...((_babelHelpers$classPr14 = (_babelHelpers$classPr15 = babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].sections) == null ? void 0 : _babelHelpers$classPr15.flatMap(options => {
+	  return [...((_itemsBySection$baseS = (_itemsBySection$baseS2 = itemsBySection[baseSection]) == null ? void 0 : _itemsBySection$baseS2.map(item => item.render())) != null ? _itemsBySection$baseS : []), ...((_babelHelpers$classPr14 = (_babelHelpers$classPr15 = babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].sections) == null ? void 0 : _babelHelpers$classPr15.flatMap((options, index) => {
 	    var _items$map;
 	    const items = itemsBySection[options.code];
 	    if (!items) {
 	      return null;
 	    }
-	    return [babelHelpers.classPrivateFieldLooseBase(this, _renderSection)[_renderSection](options), ...((_items$map = items.map(item => item.render())) != null ? _items$map : [])];
+	    const isFirstSection = !itemsBySection[baseSection] && index === 0;
+	    const withoutTitle = !options.title;
+	    return [!(isFirstSection && withoutTitle) && babelHelpers.classPrivateFieldLooseBase(this, _renderSection)[_renderSection](options), ...((_items$map = items.map(item => item.render())) != null ? _items$map : [])];
 	  })) != null ? _babelHelpers$classPr14 : []).filter(it => it)];
 	}
 	function _renderSection2(options) {

@@ -7,6 +7,7 @@ abstract class Icon
 	public const UNFOLLOW = 'ui-btn-icon-unfollow';
 	public const FOLLOW = 'ui-btn-icon-follow';
 	public const ADD = 'ui-btn-icon-add';
+	public const ADD_M = 'ui-btn-icon-add-m';
 	public const STOP = 'ui-btn-icon-stop';
 	public const START = 'ui-btn-icon-start';
 	public const PAUSE = 'ui-btn-icon-pause';

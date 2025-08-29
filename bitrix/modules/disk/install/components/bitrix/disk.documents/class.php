@@ -144,7 +144,7 @@ class CDiskDocumentsComponent extends BaseComponent implements Controllerable
 				'EXT' => $file->getExtension(),
 				'TYPE' => $file->getType(),
 				'object' => $file,
-				'OPEN_DOCUMENT_LINK' => $this->getUrlManager()->getUrlForViewBoard($file->getId()),
+				'OPEN_DOCUMENT_LINK' => $this->getUrlManager()->getUrlForViewBoard($file->getId(), false, $this->variant === DocumentGridVariant::FlipchartList ? 'boards_page' : 'docs_page'),
 			];
 
 			$sourceUri = new Main\Web\Uri($urlManager->getUrlForDownloadFile($file));
@@ -183,11 +183,11 @@ class CDiskDocumentsComponent extends BaseComponent implements Controllerable
 			{
 				if ($file->getExtra()->get('ATTACHED_OBJECT_ID'))
 				{
-					$openUrl = Driver::getInstance()->getUrlManager()->getUrlForViewAttachedBoard($file->getExtra()->get('ATTACHED_OBJECT_ID'));
+					$openUrl = Driver::getInstance()->getUrlManager()->getUrlForViewAttachedBoard($file->getExtra()->get('ATTACHED_OBJECT_ID'), false, $this->variant === DocumentGridVariant::FlipchartList ? 'boards_page' : 'docs_page');
 				}
 				else
 				{
-					$openUrl = Driver::getInstance()->getUrlManager()->getUrlForViewBoard($fileId);
+					$openUrl = Driver::getInstance()->getUrlManager()->getUrlForViewBoard($fileId, false, $this->variant === DocumentGridVariant::FlipchartList ? 'boards_page' : 'docs_page');
 				}
 				$attr->addAction([
 					'type' => 'open',

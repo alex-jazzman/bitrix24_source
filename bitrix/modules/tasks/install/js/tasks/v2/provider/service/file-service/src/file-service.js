@@ -13,6 +13,7 @@ import { apiClient } from 'tasks.v2.lib.api-client';
 import { taskService } from 'tasks.v2.provider.service.task-service';
 
 import { mapDtoToModel } from './mappers';
+import { processCheckListFileIds } from './util';
 import type { FileId, FileDto } from './types';
 
 export type BrowseParams = {
@@ -299,11 +300,11 @@ export class FileService extends EventEmitter
 		}
 		else if (this.#entityType === EntityTypes.CheckListItem)
 		{
+			const attachments = processCheckListFileIds(data.fileIds);
+
 			void this.$store.dispatch(`${Model.CheckList}/update`, {
 				id: this.#entityId,
-				fields: {
-					attachments: data.fileIds,
-				},
+				fields: { attachments },
 			});
 		}
 	}

@@ -314,15 +314,30 @@ class CheckListFields
 			{
 				foreach ($result as $id => $fileId)
 				{
-					if (is_array($fileId) && isset($fileId['FILE_ID']))
+					if (
+						is_array($fileId)
+						&& isset($fileId['ID'])
+						&& isset($fileId['FILE_ID'])
+					)
 					{
-						$fileId = $fileId['FILE_ID'];
+						unset($result[$id]);
+
+						$id = $fileId['ID'];
+						$fileId = (string)$fileId['FILE_ID'];
+					}
+					else if (is_array($fileId) && isset($fileId['FILE_ID']))
+					{
+						$fileId = (string)$fileId['FILE_ID'];
 					}
 
-					$fileId = (string)($fileId[0] === 'n' ? $fileId : 'n'.$fileId);
+					if (is_string($fileId))
+					{
+						$fileId = ($fileId[0] === 'n' ? $fileId : 'n'.$fileId);
+					}
+
 					$result[$id] = $fileId;
 
-					if (!preg_match('/(^n\d+$)/', $fileId))
+					if (!is_string($fileId) || !preg_match('/(^n\d+$)/', $fileId))
 					{
 						unset($result[$id]);
 					}

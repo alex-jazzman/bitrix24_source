@@ -880,7 +880,7 @@
 					return;
 				}
 
-				if (params.data.TIMER.TIMER_STARTED_AT == 0)
+				if (Number(params.data.TIMER.TIMER_STARTED_AT) === 0)
 				{
 					// Task on pause
 					this.data = null;

@@ -112,7 +112,7 @@ $layoutMode = \Bitrix\Intranet\UI\LeftMenu\Menu::isCollapsed() ? ' menu-collapse
 	<div id="panel"><? $APPLICATION->showPanel() ?></div>
 	<? endif ?>
 	<div class="app<?= $layoutMode ?> js-app">
-		<div class="app__left-menu js-app__left-menu">
+		<div class="app__left-menu js-app__left-menu --air-context-blurred-bg">
 			<? $APPLICATION->includeComponent(
 				'bitrix:menu',
 				'left_vertical',
@@ -153,7 +153,7 @@ $layoutMode = \Bitrix\Intranet\UI\LeftMenu\Menu::isCollapsed() ? ' menu-collapse
 		</div>
 		<div class="app__main">
 			<header class="app__header">
-				<div class="air-header" id="header">
+				<div class="air-header --air-context-blurred-bg" id="header">
 					<div class="air-header__personal-info"><?php
 						$APPLICATION->includeComponent('bitrix:intranet.search.title', 'air', [
 							'CHECK_DATES' => 'N',

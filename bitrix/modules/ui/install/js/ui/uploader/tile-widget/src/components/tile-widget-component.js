@@ -14,6 +14,7 @@ import { ErrorPopup } from './error-popup';
  * @memberof BX.UI.Uploader
  * @vue/component
  */
+// @vue/component
 export const TileWidgetComponent: BitrixVueComponentProps = {
 	name: 'TileWidget',
 	components: {
@@ -125,9 +126,11 @@ export const TileWidgetComponent: BitrixVueComponentProps = {
 		>
 			<component :is="slots[TileWidgetSlot.BEFORE_TILE_LIST]"></component>
 			<TileList 
-				v-if="items.length !== 0" 
-				:items="items" 
-				:auto-collapse="autoCollapse" 
+				v-if="items.length !== 0"
+				:items="items"
+				:autoCollapse="autoCollapse"
+				:readonly="widgetOptions.readonly"
+				:removeFromServer="widgetOptions.removeFromServer"
 				@onUnmount="autoCollapse = false"
 			/>
 			<component :is="slots[TileWidgetSlot.AFTER_TILE_LIST]"></component>
@@ -139,7 +142,7 @@ export const TileWidgetComponent: BitrixVueComponentProps = {
 			v-if="uploaderError && isMounted"
 			:alignArrow="false"
 			:error="uploaderError"
-			:popup-options="errorPopupOptions"
+			:popupOptions="errorPopupOptions"
 			@onDestroy="handlePopupDestroy"
 		/>
 	`,

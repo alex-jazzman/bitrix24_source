@@ -1,9 +1,10 @@
 <?php
+
 /**
  * Bitrix Framework
  * @package bitrix
  * @subpackage main
- * @copyright 2001-2013 Bitrix
+ * @copyright 2001-2025 Bitrix
  */
 
 /**
@@ -35,7 +36,7 @@ use Bitrix\Main\Type\DateTime;
 
 IncludeModuleLangFile(__FILE__);
 
-if (isset($_REQUEST["action"], $_REQUEST["ID"]) && $_REQUEST["ID"] > 0)
+if (isset($_REQUEST["action"], $_REQUEST["ID"]) && $_REQUEST["ID"] > 0 && ($_REQUEST["action"] == "authorize" || $_REQUEST["action"] == "logout_user"))
 {
 	if (check_bitrix_sessid() && $USER->CanDoOperation('edit_php'))
 	{
@@ -43,7 +44,7 @@ if (isset($_REQUEST["action"], $_REQUEST["ID"]) && $_REQUEST["ID"] > 0)
 		{
 			$USER->LoginAs((int)$_REQUEST["ID"]);
 		}
-		elseif ($_REQUEST["action"] == "logout_user")
+		else
 		{
 			\Bitrix\Main\UserAuthActionTable::addLogoutAction($_REQUEST["ID"]);
 		}

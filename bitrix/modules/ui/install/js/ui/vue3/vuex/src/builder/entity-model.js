@@ -69,7 +69,8 @@ export class BuilderEntityModel<State, Item> extends BuilderModel
 			upsert: (state: State, item: ?Item): void => {
 				if (item)
 				{
-					state.collection[item.id] = { ...state.collection[item.id] ?? item, ...item };
+					state.collection[item.id] ??= target.getElementState?.();
+					state.collection[item.id] = { ...state.collection[item.id], ...item };
 				}
 			},
 			update: (state: State, { id, fields }: { id: number | string, fields: Item }): void => {

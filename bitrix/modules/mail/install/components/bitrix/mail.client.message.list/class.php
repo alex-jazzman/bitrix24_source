@@ -11,9 +11,9 @@ use Bitrix\Main\Mail\Address;
 use Bitrix\Main\ORM;
 use Bitrix\Main\Engine\Contract\Controllerable;
 use Bitrix\Main\Context;
-use Bitrix\Mail\Internals;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Mail\Helper\LicenseManager;
+use Bitrix\Main\Web\Uri;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
@@ -738,39 +738,48 @@ class CMailClientMessageListComponent extends CBitrixComponent implements Contro
 
 			$columns['SUBJECT'] = "<span class='mail-title-block mail-msg-list-cell-".$item['ID']." ".(!in_array($item['IS_SEEN'], ['Y', 'S']) ? 'mail-msg-list-cell-unseen' : '')." ".($item['IS_OLD'] === 'Y' ? 'mail-msg-list-cell-old' : '')." mail-msg-list-cell-flex'>".$columns['SUBJECT']."</span>";
 
-			$taskHref = \CHTTP::urlAddParams(
+			$taskUri = new Uri(
 				\CComponentEngine::makePathFromTemplate(
 					$this->arParams['PATH_TO_USER_TASKS_TASK'],
 					[
 						'action' => 'edit',
 						'task_id' => '0',
 					]
-				),
-				[
-					'TITLE' => rawurlencode(
-						Loc::getMessage('MAIL_MESSAGE_TASK_TITLE', ['#SUBJECT#' => $item['SUBJECT']])
-					),
-					'UF_MAIL_MESSAGE' => (int)$item['MID'],
-				]
+				)
 			);
 
-			$postHref = \CHTTP::urlAddParams(
+			$taskUri->addParams([
+				'TITLE' =>
+					Loc::getMessage(
+						'MAIL_MESSAGE_TASK_TITLE',
+						['#SUBJECT#' => $item['SUBJECT']]
+					)
+				,
+				'UF_MAIL_MESSAGE' => (int)$item['MID'],
+			]);
+
+			$taskHref = $taskUri->getUri();
+
+			$postUri = new Uri(
 				\CComponentEngine::makePathFromTemplate(
 					$this->arParams['PATH_TO_USER_BLOG_POST_EDIT'],
 					[
 						'post_id' => '0',
 					]
-				),
-				[
-					'TITLE' => rawurlencode(
-						Loc::getMessage(
-							'MAIL_MESSAGE_POST_TITLE',
-							['#SUBJECT#' => $item['SUBJECT']]
-						)
-					),
-					'UF_MAIL_MESSAGE' => (int)$item['MID'],
-				]
+				)
 			);
+
+			$postUri->addParams([
+				'TITLE' =>
+					Loc::getMessage(
+						'MAIL_MESSAGE_POST_TITLE',
+						['#SUBJECT#' => $item['SUBJECT']]
+					)
+				,
+				'UF_MAIL_MESSAGE' => (int)$item['MID'],
+			]);
+
+			$postHref = $postUri->getUri();
 
 			$bind = '<span class="mail-ui-binding-data js-bind-'.$item['MID'].'" message-id="'.$item['ID'].'" message-simple-id="'.$item['MID'].'" ';
 			$bindClose ='></span>';

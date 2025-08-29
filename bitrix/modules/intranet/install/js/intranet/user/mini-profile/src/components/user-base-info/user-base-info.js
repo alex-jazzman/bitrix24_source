@@ -91,6 +91,10 @@ export const UserBaseInfo = {
 		{
 			return [UserStatusDict.Online, UserStatusDict.DoNotDisturb].includes(this.info.status.code);
 		},
+		shouldShowMessengerActionButtons(): boolean
+		{
+			return ChatService.isMessengerAvailable() && this.canChat;
+		},
 		avatarType(): string
 		{
 			return UserAvatarTypeByRole[this.info.role] ?? 'round';
@@ -159,7 +163,7 @@ export const UserBaseInfo = {
 					</div>
 				</div>
 			</div>
-			<div v-if="canChat"
+			<div v-if="shouldShowMessengerActionButtons"
 				class="intranet-user-mini-profile__base-info__actions"
 			>
 				<div class="intranet-user-mini-profile__base-info__action">

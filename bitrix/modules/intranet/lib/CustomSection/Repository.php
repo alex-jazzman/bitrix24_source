@@ -30,6 +30,7 @@ class Repository
 	final public function clearCache(): void
 	{
 		$this->cache = null;
+		$this->dataManager::cleanCache();
 	}
 
 	/**
@@ -79,6 +80,7 @@ class Repository
 			],
 			'cache' => [
 				'ttl' => 3600,
+				'cache_joins' => true,
 			],
 		])->fetchObject();
 

@@ -36,6 +36,8 @@ export const BottomSheet = {
 			const previousElement = container.previousElementSibling;
 			Dom.style(container, '--bottom-sheet-top', `${previousElement.offsetTop + previousElement.offsetHeight}px`);
 		},
+		freeze(): void {},
+		unfreeze(): void {},
 	},
 	template: `
 		<Transition name="b24-bottom-sheet">

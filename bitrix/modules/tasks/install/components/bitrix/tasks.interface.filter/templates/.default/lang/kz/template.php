@@ -3,6 +3,7 @@ $MESS["TASKS_ADD_QUICK_TASK"] = "Жылдам міндетті құру";
 $MESS["TASKS_AJAX_EMPTY_TEMPLATES"] = "Міндет қалыптары жоқ";
 $MESS["TASKS_AJAX_ERROR_LOAD_TEMPLATES"] = "Тізімді жүктеу қатесі";
 $MESS["TASKS_AJAX_LOAD_TEMPLATES"] = "Тізімді жүктеу...";
+$MESS["TASKS_ALL_ROLES"] = "Барлық рөлдер";
 $MESS["TASKS_BTN_ADD_SCRUM_TASK"] = "Міндетті құру";
 $MESS["TASKS_BTN_ADD_TASK"] = "Міндетті қосу";
 $MESS["TASKS_BTN_ADD_TASK_BY_TASK"] = "Міндет";

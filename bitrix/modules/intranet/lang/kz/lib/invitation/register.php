@@ -1,6 +1,6 @@
 <?php
 $MESS["INTRANET_INVITATION_DAILY_EMAIL_LIMIT_EXCEEDED"] = "Күнделікті e-mail арқылы шақырулар санының шектеуі асып кетті.";
-$MESS["INTRANET_INVITATION_DAILY_PHONE_LIMIT_EXCEEDED"] = "Телефон нөмірі бойынша шақырулар санының күнделікті лимитінен асып кетті.";
+$MESS["INTRANET_INVITATION_DAILY_PHONE_LIMIT_EXCEEDED_MSGVER_1"] = "Телефон нөмірі бойынша шақырулар санының күнделікті лимитінен асып кетті.";
 $MESS["INTRANET_INVITATION_EMAIL_ERROR"] = "Email дұрыс емес енгізілді:";
 $MESS["INTRANET_INVITATION_EMAIL_LIMIT_EXCEEDED"] = "Шақырудағы e-mail мекенжайлары санының лимиті асып кетті.";
 $MESS["INTRANET_INVITATION_ERROR_USER_TRANSFER"] = "Пошта пайдаланушысын қайта құру мүмкін болмады";

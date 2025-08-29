@@ -1,9 +1,10 @@
-import { Loc } from 'main.core';
-import { Button } from 'ui.buttons';
+import { ButtonManager } from 'ui.buttons';
+import { Roles, type Params as RolesParams } from './roles';
 
 type Params = {
 	filterId: string,
 	createNode: HTMLElement,
+	roles: RolesParams,
 	showPresetTourGuide: boolean,
 	isV2Form: boolean,
 	groupId?: number,
@@ -19,6 +20,7 @@ export class TasksInterfaceFilter
 		this.#params = params;
 
 		this.#initAddButton();
+		this.#initRoles();
 		this.#showPresetTourGuide();
 	}
 
@@ -29,21 +31,16 @@ export class TasksInterfaceFilter
 			return;
 		}
 
-		const button = new Button({
-			className: 'ui-btn-main',
-			text: Loc.getMessage('TASKS_BTN_CREATE_TASK'),
-			onclick: () => {
-				(new BX.Tasks.V2.Application.TaskCard({
-					groupId: this.#params.groupId,
-					analytics: this.#params.analytics,
-				})).showCompactCard();
-			},
-			props: {
-				id: 'tasks-buttonAdd',
-			},
-		});
+		const button = ButtonManager.createFromNode(this.#params.createNode);
+		button.getMainButton().bindEvent('click', () => BX.Tasks.V2.Application.TaskCard.showCompactCard({
+			groupId: this.#params.groupId,
+			analytics: this.#params.analytics,
+		}));
+	}
 
-		this.#params.createNode.replaceWith(button.render());
+	#initRoles(): void
+	{
+		new Roles(this.#params.roles);
 	}
 
 	#showPresetTourGuide(): void

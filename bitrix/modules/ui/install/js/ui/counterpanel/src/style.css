@@ -52,9 +52,9 @@
 }
 
 .ui-counter-panel.--air {
-	background: none;
 	font: var(--ui-font-size-sm)/var(--ui-font-line-height-2xs) var(--ui-font-family-primary);
-	backdrop-filter: var(--ui-bg-blur-default);
+	backdrop-filter: var(--ui-counter-panel-custom-backdrop-filter, var(--ui-bg-blur-content));
+	background: var(--ui-counter-panel-custom-background, none);
 }
 
 .ui-counter-panel__item-separator {

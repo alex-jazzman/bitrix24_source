@@ -55,6 +55,7 @@ use Bitrix\Tasks\Scrum\Utility\StoryPoints;
 use Bitrix\Tasks\Scrum\Utility\ViewHelper;
 use Bitrix\Tasks\Util;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction;
+use Bitrix\Tasks\Helper\Analytics;
 
 class TasksScrumComponent extends \CBitrixComponent implements Controllerable, Errorable
 {
@@ -1212,11 +1213,33 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 					{
 						$kanbanService->addTasksToKanban($targetEntity->getId(), [$taskId]);
 						$kanbanService->addTasksToKanban($targetEntity->getId(), $subTaskIds);
+
+						// "MOVE_TO_SPRINT" analytics label
+						$isDemo = (Loader::includeModule('bitrix24') && \CBitrix24::IsDemoLicense()) ? 'Y' : 'N';
+
+						Analytics::getInstance($this->userId)->onTaskUpdate(
+							event: Analytics::EVENT['task_update'],
+							subSection: Analytics::SUB_SECTION['task_card'],
+							params: [
+								'p1' => 'isDemo_' . $isDemo,
+							],
+						);
 					}
 
 					if (!$sourceEntity->isEmpty() && $sourceEntity->isActiveSprint())
 					{
 						$kanbanService->removeTasksFromKanban($sourceEntity->getId(), $idsToMove);
+
+						// "MOVE_TO_BACKLOG" analytics label
+						$isDemo = (Loader::includeModule('bitrix24') && \CBitrix24::IsDemoLicense()) ? 'Y' : 'N';
+
+						Analytics::getInstance($this->userId)->onTaskUpdate(
+							event: Analytics::EVENT['task_update'],
+							subSection: Analytics::SUB_SECTION['task_card'],
+							params: [
+								'p1' => 'isDemo_' . $isDemo,
+							],
+						);
 					}
 
 					if($sourceEntity->getEntityType() !== $targetEntity->getEntityType())

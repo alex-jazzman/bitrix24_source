@@ -290,10 +290,12 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        return this.loc('TASKS_V2_DEADLINE_EMPTY');
 	      }
 	      const isThisYear = new Date(this.deadlineTs).getFullYear() === new Date().getFullYear();
-	      const dateFormat = main_date.DateTimeFormat.getFormat(isThisYear ? 'DAY_MONTH_FORMAT' : 'LONG_DATE_FORMAT');
-	      const timeFormat = main_date.DateTimeFormat.getFormat('SHORT_TIME_FORMAT');
+	      const format = this.loc('TASKS_V2_DEADLINE_FORMAT', {
+	        '#DATE#': main_date.DateTimeFormat.getFormat(isThisYear ? 'DAY_MONTH_FORMAT' : 'LONG_DATE_FORMAT'),
+	        '#TIME#': main_date.DateTimeFormat.getFormat('SHORT_TIME_FORMAT')
+	      });
 	      const offset = tasks_v2_lib_timezone.timezone.getOffset(this.deadlineTs);
-	      return main_date.DateTimeFormat.format(`${dateFormat} ${timeFormat}`, (this.deadlineTs + offset) / 1000);
+	      return main_date.DateTimeFormat.format(format, (this.deadlineTs + offset) / 1000);
 	    },
 	    iconName() {
 	      if (this.isFlowFilledOnAdd) {
@@ -364,7 +366,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		>
 			<div
 				class="tasks-field-deadline-main"
-				:class="{ '--readonly': readonly }"
+				:class="{ '--readonly': readonly, '--filled': deadlineTs }"
 				ref="deadline"
 				tabindex="0"
 				@click="handleClick"
@@ -372,12 +374,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			>
 				<BIcon class="tasks-field-deadline-icon" :name="iconName"/>
 				<div class="tasks-field-deadline-text">{{ deadlineFormatted }}</div>
-				<BIcon
-					v-if="deadlineTs && !readonly"
-					class="tasks-field-deadline-cross"
-					:name="Outline.CROSS_L"
-					@click.capture="handleCrossClick"
-				/>
+				<div v-if="deadlineTs && !readonly" class="tasks-field-deadline-cross" @click.capture="handleCrossClick">
+					<BIcon :name="Outline.CROSS_L"/>
+				</div>
 			</div>
 			<div v-if="isExpired" class="tasks-field-deadline-expired">{{ expiredFormatted }}</div>
 		</div>

@@ -274,6 +274,7 @@ class UserRepository implements UserRepositoryContract
 			'LOGIN',
 			'EMAIL',
 			'UF_DEPARTMENT',
+			'LANGUAGE_ID',
 		];
 		$userList = UserTable::query()
 			->whereIn('LOGIN', $emails)
@@ -351,7 +352,7 @@ class UserRepository implements UserRepositoryContract
 		];
 		$userList = UserTable::query()
 			->where('ACTIVE', true)
-			->where('IS_REAL_USER', true)
+			->where('REAL_USER', 'expr', true)
 			->where('LAST_ACTIVITY_DATE', '>=', $date->add('-' . $limitOnlineSeconds . ' seconds'))
 			->where('UF_DEPARTMENT', '!=', false)
 			->setSelect($fields)
@@ -368,7 +369,7 @@ class UserRepository implements UserRepositoryContract
 
 		return (int)UserTable::query()
 			->where('ACTIVE', true)
-			->where('IS_REAL_USER', true)
+			->where('REAL_USER', 'expr', true)
 			->where('LAST_ACTIVITY_DATE', '>=', $date->add('-' . $limitOnlineSeconds . ' seconds'))
 			->where('UF_DEPARTMENT', '!=', false)
 			->queryCountTotal()

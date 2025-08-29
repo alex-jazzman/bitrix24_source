@@ -65,7 +65,7 @@ use Bitrix\UI\Toolbar\Manager;
  *  * @method static addUnderTitleHtml(string $html)
  * @see \Bitrix\UI\Toolbar\Toolbar::addUnderTitleHtml
  *
- * @method static void setCopyLinkButton(array $params = []) Set params for copy link button. <br> <code>link</code> string, not required,<br> <code>successfulCopyMessage</code> string, not required.<br> <code>title</code> string, not required.
+ * @method static void setCopyLinkButton(?array $params = []) Set params for copy link button. <br> <code>link</code> string, not required,<br> <code>successfulCopyMessage</code> string, not required.<br> <code>title</code> string, not required.
  * @see \Bitrix\UI\Toolbar\Toolbar::setCopyLinkButton
  *
  * @method static void getCopyLinkButtonParams()

@@ -11,7 +11,7 @@ class LanguageRepository
 		return LanguageTable::getList([
 			'select' => ['ID', 'NAME'],
 			'filter'=> ['=ACTIVE' => 'Y'],
-			'order'=> ['SORT' => 'ASC'],
+			'order'=> ['NAME' => 'ASC'],
 			'cache' => ['ttl' => 8640000],
 		])->fetchAll();
 	}

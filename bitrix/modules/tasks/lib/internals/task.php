@@ -32,7 +32,7 @@ use Bitrix\Tasks\Internals\Task\UtsTasksTaskTable;
 use Bitrix\Tasks\Util\Entity\DateTimeField;
 use Bitrix\Tasks\Util\Type\DateTime;
 use Bitrix\Tasks\Util\UserField;
-use Bitrix\Tasks\V2\Internals\Model\TaskChatTable;
+use Bitrix\Tasks\V2\Internal\Model\TaskChatTable;
 
 Loc::loadMessages(__FILE__);
 

@@ -1,5 +1,4 @@
-<?
-$MESS["DISK_VOLUME_MODULE_SOCIALNETWORK"] = "Жива стрічка та групи";
-$MESS["DISK_VOLUME_MODULE_SONET_FIRED_M"] = "#USER_NAME# (звільнений)";
+<?php
+$MESS["DISK_VOLUME_MODULE_SOCIALNETWORK"] = "Стрічка та групи";
 $MESS["DISK_VOLUME_MODULE_SONET_FIRED_F"] = "#USER_NAME# (звільнена)";
-?>
+$MESS["DISK_VOLUME_MODULE_SONET_FIRED_M"] = "#USER_NAME# (звільнений)";

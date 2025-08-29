@@ -55,6 +55,7 @@ CREATE INDEX ix_b_disk_object_sync_update_time ON b_disk_object (sync_update_tim
 CREATE INDEX ix_b_disk_object_storage_id_global_content_version ON b_disk_object (storage_id, global_content_version);
 CREATE INDEX ix_b_disk_object_file_id ON b_disk_object (file_id);
 CREATE INDEX ix_b_disk_object_parent_id_storage_id_update_time ON b_disk_object (parent_id, storage_id, update_time);
+CREATE INDEX ix_b_disk_object_storage_id_sync_update_time ON b_disk_object (storage_id, sync_update_time);
 
 CREATE TABLE b_disk_object_head_index (
   OBJECT_ID int NOT NULL,

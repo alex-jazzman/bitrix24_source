@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
-(function (exports,tasks_v2_model_users,ui_vue3_vuex,tasks_v2_const,tasks_v2_core,tasks_v2_lib_apiClient) {
+(function (exports,tasks_v2_model_users,ui_vue3_vuex,tasks_v2_const,tasks_v2_core,tasks_v2_lib_apiClient,tasks_v2_model_checkList) {
 	'use strict';
 
 	function prepareCheckLists(checklist) {
@@ -93,7 +93,13 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	            id: taskId
 	          }
 	        });
-	        await Promise.all([this.$store.dispatch(`${tasks_v2_const.Model.CheckList}/upsertMany`, data), this.$store.dispatch(`${tasks_v2_const.Model.Tasks}/update`, {
+	        const checkListModel = new tasks_v2_model_checkList.CheckList();
+	        const defaultValues = checkListModel.getElementState();
+	        const enrichedData = data.map(item => ({
+	          ...defaultValues,
+	          ...Object.fromEntries(Object.entries(item).filter(([_, value]) => value !== null))
+	        }));
+	        await Promise.all([this.$store.dispatch(`${tasks_v2_const.Model.CheckList}/upsertMany`, enrichedData), this.$store.dispatch(`${tasks_v2_const.Model.Tasks}/update`, {
 	          id: taskId,
 	          fields: {
 	            containsChecklist: data.length > 0,
@@ -117,12 +123,18 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	            checklist: prepareCheckLists(checklists)
 	          }
 	        });
+	        const checkListModel = new tasks_v2_model_checkList.CheckList();
+	        const defaultValues = checkListModel.getElementState();
+	        const enrichedData = savedList.map(item => ({
+	          ...defaultValues,
+	          ...Object.fromEntries(Object.entries(item).filter(([_, value]) => value !== null))
+	        }));
 	        const oldIds = checklists.map(item => item.id);
-	        await Promise.all([this.$store.dispatch(`${tasks_v2_const.Model.CheckList}/deleteMany`, oldIds), this.$store.dispatch(`${tasks_v2_const.Model.CheckList}/upsertMany`, savedList), this.$store.dispatch(`${tasks_v2_const.Model.Tasks}/update`, {
+	        await Promise.all([this.$store.dispatch(`${tasks_v2_const.Model.CheckList}/deleteMany`, oldIds), this.$store.dispatch(`${tasks_v2_const.Model.CheckList}/upsertMany`, enrichedData), this.$store.dispatch(`${tasks_v2_const.Model.Tasks}/update`, {
 	          id: taskId,
 	          fields: {
 	            containsChecklist: true,
-	            checklist: savedList.map(item => item.id)
+	            checklist: enrichedData.map(item => item.id)
 	          }
 	        })]);
 	        resolve();
@@ -144,5 +156,5 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	exports.CheckListMappers = CheckListMappers;
 	exports.checkListService = checkListService;
 
-}((this.BX.Tasks.V2.Provider.Service = this.BX.Tasks.V2.Provider.Service || {}),BX.Tasks.V2.Model,BX.Vue3.Vuex,BX.Tasks.V2.Const,BX.Tasks.V2,BX.Tasks.V2.Lib));
+}((this.BX.Tasks.V2.Provider.Service = this.BX.Tasks.V2.Provider.Service || {}),BX.Tasks.V2.Model,BX.Vue3.Vuex,BX.Tasks.V2.Const,BX.Tasks.V2,BX.Tasks.V2.Lib,BX.Tasks.V2.Model));
 //# sourceMappingURL=check-list-service.bundle.js.map

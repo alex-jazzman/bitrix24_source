@@ -2,6 +2,8 @@ import type { PopupOptions } from 'main.popup';
 
 import { Popup } from 'ui.vue3.components.popup';
 import { Button as UiButton, AirButtonStyle, ButtonSize, ButtonIcon } from 'ui.vue3.components.button';
+import { Outline } from 'ui.icon-set.api.core';
+import 'ui.icon-set.outline';
 import type { VueUploaderAdapter } from 'ui.uploader.vue';
 
 import { UserFieldWidgetComponent, type UserFieldWidgetOptions } from 'disk.uploader.user-field-widget';
@@ -32,6 +34,7 @@ export const FilesPopup = {
 			ButtonSize,
 			AirButtonStyle,
 			ButtonIcon,
+			Outline,
 			uploaderAdapter: fileService.get(props.taskId).getAdapter(),
 		};
 	},
@@ -51,7 +54,7 @@ export const FilesPopup = {
 			return {
 				id: 'tasks-field-files-popup',
 				bindElement: this.bindElement,
-				minWidth: 350,
+				minWidth: 380,
 				maxHeight: 320,
 				padding: 18,
 				bindOptions: {
@@ -129,24 +132,24 @@ export const FilesPopup = {
 					<div class="tasks-field-files-popup-add-buttons">
 						<UiButton
 							:text="loc('TASKS_V2_FILES_UPLOAD_BUTTON')"
-							:size="ButtonSize.EXTRA_SMALL"
+							:size="ButtonSize.SMALL"
 							:style="AirButtonStyle.TINTED"
-							:leftIcon="ButtonIcon.DOWNLOAD"
+							:leftIcon="Outline.DOWNLOAD"
 							@click="handleUploadClick"
 						/>
 						<UiButton
 							:text="loc('TASKS_V2_FILES_MY_DRIVE')"
-							:size="ButtonSize.EXTRA_SMALL"
+							:size="ButtonSize.SMALL"
 							:style="AirButtonStyle.TINTED"
-							:leftIcon="ButtonIcon.CLOUD"
+							:leftIcon="Outline.UPLOAD"
 							@click="handleMyDriveClick"
 						/>
 					</div>
 					<UiButton
 						:text="loc('TASKS_V2_FILES_CLEAR')"
-						:size="ButtonSize.EXTRA_SMALL"
+						:size="ButtonSize.SMALL"
 						:style="AirButtonStyle.PLAIN_NO_ACCENT"
-						:leftIcon="ButtonIcon.REMOVE"
+						:leftIcon="Outline.TRASHCAN"
 						@click="handleClearClick"
 					/>
 				</div>

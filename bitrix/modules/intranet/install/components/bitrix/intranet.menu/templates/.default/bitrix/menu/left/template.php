@@ -102,7 +102,6 @@ $getCounterId = function($item): string
 	'main.popup',
 	'ui.counter',
 	'im.v2.lib.desktop-api',
-	'intranet.theme_picker',
 ]);
 
 Bitrix\Intranet\Integration\Templates\Bitrix24\ThemePicker::getInstance()->showHeadAssets();

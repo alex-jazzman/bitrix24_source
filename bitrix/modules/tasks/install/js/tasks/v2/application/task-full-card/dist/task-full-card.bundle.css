@@ -1,9 +1,9 @@
-.tasks-full-card-slider-content {
-	overflow: visible !important;
+:root {
+	--tasks-color-bg-drawer: #F6F8FA;
 }
 
-.tasks-full-card-container {
-	height: 100%;
+.tasks-full-card-slider-content {
+	overflow: visible !important;
 }
 
 .tasks-full-card {

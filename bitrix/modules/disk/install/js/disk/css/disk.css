@@ -112,6 +112,18 @@
 .bx-file-icon-container-small.bx-disk-file-icon.icon-xls {
 	background: url(./images/disk-xls.svg) -3px 0 no-repeat !important;
 }
+.bx-file-icon-container-small.bx-disk-file-icon.icon-odf {
+	background: url(./images/disk-odf.svg) -3px 0 no-repeat !important;
+}
+.bx-file-icon-container-small.bx-disk-file-icon.icon-odt {
+	background: url(./images/disk-odt.svg) -3px 0 no-repeat !important;
+}
+.bx-file-icon-container-small.bx-disk-file-icon.icon-ods {
+	background: url(./images/disk-ods.svg) -3px 0 no-repeat !important;
+}
+.bx-file-icon-container-small.bx-disk-file-icon.icon-odp {
+	background: url(./images/disk-odp.svg) -3px 0 no-repeat !important;
+}
 .bx-file-icon-container-small.bx-disk-file-icon.icon-php {
 	background: url(./images/disk-php.svg) -3px 0 no-repeat !important;
 }

@@ -12,7 +12,6 @@ use Bitrix\Landing\Assets;
 use Bitrix\Landing\Manager;
 use Bitrix\Landing\Mainpage;
 use Bitrix\Landing\Rights;
-use Bitrix\Landing\Site\Type;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Page\Asset;
@@ -27,11 +26,13 @@ $this->setFrameMode(true);
 $assets = Assets\Manager::getInstance();
 Asset::getInstance()->addCSS('/bitrix/components/bitrix/landing.mainpage.pub/templates/.default/style-widgets.css');
 
+$isAnalyticsEnabled = false;
 if (isset($arResult['LANDING']))
 {
 	/** @var \Bitrix\Landing\Landing $landing */
 	$landing = $arResult['LANDING'];
 	$b24Installed = \Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24');
+	$isAnalyticsEnabled = $b24Installed;
 	$masterFrame = $component->request('master') == 'Y' && Rights::hasAccessForSite(
 		$landing->getSiteId(), Rights::ACCESS_TYPES['edit']
 	);
@@ -89,7 +90,7 @@ if (!$isPublished)
 {
 	$extensions[] = 'ui.alerts';
 }
-if ($b24Installed)
+if ($isAnalyticsEnabled)
 {
 	$extensions[] = 'landing.metrika';
 }
@@ -167,9 +168,12 @@ Manager::initAssets($landing->getId());
 	BX.ready(function() {
 		void new BX.Landing.Mainpage.Public();
 
-		void new BX.Landing.Pub.Analytics({
-			isPublished: <?= $isPublished ? 'true' : 'false' ?>,
-		});
+		<?php if ($isAnalyticsEnabled): ?>
+			void new BX.Landing.Pub.Analytics({
+				isPublished: <?= $isPublished ? 'true' : 'false' ?>,
+				templateCode: '<?= $landing->getCode() ?>',
+			});
+		<?php endif; ?>
 
 		void new BX.Landing.Pub.Pseudolinks();
 	});

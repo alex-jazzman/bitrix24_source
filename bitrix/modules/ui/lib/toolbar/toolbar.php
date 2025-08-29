@@ -9,6 +9,7 @@ use Bitrix\UI\Buttons\BaseButton;
 use Bitrix\UI\Buttons\Button;
 use Bitrix\UI\Buttons\Color;
 use Bitrix\UI\Buttons\Size;
+use Bitrix\UI\Buttons\Icon;
 
 class Toolbar
 {
@@ -169,6 +170,15 @@ class Toolbar
 			if ($location === ButtonLocation::RIGHT && $button->getSize() === null)
 			{
 				$button->setSize(Size::SMALL);
+			}
+
+			if (
+				$location === ButtonLocation::AFTER_TITLE
+				&& $button->getStyle() === AirButtonStyle::FILLED_SUCCESS
+				&& $button->getIcon() === null
+			)
+			{
+				$button->setIcon(Icon::ADD_M);
 			}
 		}
 

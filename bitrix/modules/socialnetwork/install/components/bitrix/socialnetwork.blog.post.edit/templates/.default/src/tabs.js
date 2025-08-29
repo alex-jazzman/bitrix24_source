@@ -720,7 +720,7 @@ export default class PostFormTabs extends EventEmitter
 				analytics: {
 					tool: 'tasks',
 					category: 'task_operations',
-					event: 'task_create',
+					event: 'click_create',
 					type: 'task',
 					c_section: 'feed',
 					c_element: 'create_button',

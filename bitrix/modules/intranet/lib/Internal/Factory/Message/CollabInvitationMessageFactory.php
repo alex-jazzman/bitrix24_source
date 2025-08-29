@@ -40,7 +40,7 @@ class CollabInvitationMessageFactory implements InvitationMessageFactoryContract
 		}
 
 		$siteId = \CExtranet::GetExtranetSiteID();
-		$userLang = $this->user->getLanguageId();
+		$userLang = $this->user->getLanguageId() ?? LANGUAGE_ID;
 
 		$messageId = \CIntranetInviteDialog::getMessageId("COLLAB_INVITATION", $siteId, LANGUAGE_ID);
 		$eventName = 'COLLAB_INVITATION';
@@ -62,7 +62,7 @@ class CollabInvitationMessageFactory implements InvitationMessageFactoryContract
 			$params,
 			$messageId,
 			null,
-			$this->user->getLanguageId(),
+			$userLang,
 		);
 	}
 

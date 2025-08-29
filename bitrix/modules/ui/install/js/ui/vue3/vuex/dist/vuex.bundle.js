@@ -1102,9 +1102,10 @@ this.BX.Vue3 = this.BX.Vue3 || {};
 	    },
 	    upsert: (state, item) => {
 	      if (item) {
-	        var _state$collection$ite;
+	        var _state$collection2, _item$id2, _state$collection2$_i;
+	        (_state$collection2$_i = (_state$collection2 = state.collection)[_item$id2 = item.id]) != null ? _state$collection2$_i : _state$collection2[_item$id2] = target.getElementState == null ? void 0 : target.getElementState();
 	        state.collection[item.id] = {
-	          ...((_state$collection$ite = state.collection[item.id]) != null ? _state$collection$ite : item),
+	          ...state.collection[item.id],
 	          ...item
 	        };
 	      }

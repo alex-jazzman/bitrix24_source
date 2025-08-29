@@ -3,8 +3,1584 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
-(function (exports,main_popup,ui_entitySelector,tasks_v2_core,tasks_v2_lib_userSelectorDialog,tasks_v2_provider_service_checkListService,tasks_v2_component_elements_participantList,ui_notification,ui_iconSet_outline,tasks_v2_lib_fieldHighlighter,tasks_v2_component_elements_chip,tasks_v2_component_elements_bottomSheet,ui_vue3_components_menu,ui_uploader_core,disk_uploader_userFieldWidget,tasks_v2_component_elements_growingTextArea,tasks_v2_component_elements_userAvatarList,tasks_v2_provider_service_fileService,tasks_v2_component_elements_hint,main_core,main_core_events,ui_vue3_components_popup,ui_vue3_vuex,ui_vue3_components_button,ui_iconSet_api_vue,ui_iconSet_api_core,tasks_v2_const) {
+(function (exports,main_popup,ui_entitySelector,tasks_v2_component_elements_participantList,tasks_v2_core,tasks_v2_lib_entitySelectorDialog,ui_vue3_components_button,ui_vue3_components_popup,ui_vue3_vuex,tasks_v2_component_elements_bottomSheet,tasks_v2_provider_service_checkListService,ui_vue3_components_menu,tasks_v2_component_elements_progressBar,ui_uploader_core,disk_uploader_userFieldWidget,tasks_v2_component_elements_growingTextArea,tasks_v2_component_elements_userAvatarList,ui_vue3_directives_hint,ui_iconSet_api_vue,tasks_v2_component_elements_hint,main_core_events,ui_notification,main_core,ui_iconSet_api_core,ui_iconSet_outline,tasks_v2_lib_fieldHighlighter,tasks_v2_component_elements_chip,tasks_v2_provider_service_fileService,tasks_v2_const) {
 	'use strict';
+
+	// @vue/component
+	const CheckListStub = {
+	  name: 'CheckListStub',
+	  components: {
+	    UiButton: ui_vue3_components_button.Button
+	  },
+	  emits: ['click'],
+	  setup() {
+	    return {
+	      ButtonSize: ui_vue3_components_button.ButtonSize
+	    };
+	  },
+	  template: `
+		<div class="check-list-stub">
+			<div class="check-list-stub-title">
+				{{ loc('TASKS_V2_CHECK_LIST_STUB_TITLE') }}
+			</div>
+			<div class="check-list-stub-icon"></div>
+			<div class="check-list-stub-btn">
+				<UiButton
+					:text="loc('TASKS_V2_CHECK_LIST_STUB_BTN')"
+					:size="ButtonSize.MEDIUM"
+					@click="$emit('click')"
+				/>
+			</div>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const CheckListPopup = {
+	  name: 'TaskCheckListPopup',
+	  components: {
+	    Popup: ui_vue3_components_popup.Popup
+	  },
+	  inheritAttrs: false,
+	  props: {
+	    taskId: {
+	      type: [Number, String],
+	      required: true
+	    }
+	  },
+	  emits: ['show', 'close', 'resize'],
+	  setup() {
+	    return {
+	      resizeObserver: null
+	    };
+	  },
+	  computed: {
+	    popupId() {
+	      return `tasks-check-list-popup-${this.taskId}`;
+	    },
+	    popupOptions() {
+	      return {
+	        className: 'tasks-check-list-popup',
+	        width: 580,
+	        height: 500,
+	        borderRadius: '18px',
+	        offsetTop: 0,
+	        padding: 0,
+	        autoHide: true,
+	        closeByEsc: true,
+	        animation: {
+	          showClassName: 'tasks-check-list-popup-show',
+	          closeClassName: 'tasks-check-list-popup-close',
+	          closeAnimationType: 'animation'
+	        },
+	        events: {
+	          onClose: this.handleClose.bind(this)
+	        }
+	      };
+	    },
+	    ...ui_vue3_vuex.mapGetters({
+	      titleFieldOffsetHeight: `${tasks_v2_const.Model.Interface}/titleFieldOffsetHeight`
+	    })
+	  },
+	  watch: {
+	    async titleFieldOffsetHeight() {
+	      if (!this.$refs.childComponent) {
+	        return;
+	      }
+	      await this.$nextTick();
+	      this.resize();
+	    }
+	  },
+	  created() {
+	    this.resizeObserver = new ResizeObserver(entries => {
+	      for (const entry of entries) {
+	        if (entry.target === this.$refs.wrapper) {
+	          this.resize();
+	        }
+	      }
+	    });
+	  },
+	  mounted() {
+	    main_core.Event.bind(window, 'resize', this.resize);
+	  },
+	  beforeUnmount() {
+	    main_core.Event.unbind(window, 'resize', this.resize);
+	  },
+	  methods: {
+	    resize() {
+	      var _this$$refs$childComp;
+	      const popupInstance = (_this$$refs$childComp = this.$refs.childComponent) == null ? void 0 : _this$$refs$childComp.getPopupInstance();
+	      if (popupInstance) {
+	        this.$emit('resize');
+	        popupInstance.adjustPosition();
+	      }
+	    },
+	    handleShow() {
+	      var _this$$refs$childComp2;
+	      this.$emit('show', {
+	        popupInstance: this.$refs.childComponent.getPopupInstance()
+	      });
+	      (_this$$refs$childComp2 = this.$refs.childComponent) == null ? void 0 : _this$$refs$childComp2.getPopupInstance().adjustPosition();
+	      setTimeout(() => this.resizeObserver.observe(this.$parent.$refs.wrapper), 300);
+	    },
+	    handleClose() {
+	      this.resizeObserver.disconnect();
+	      this.$bitrix.eventEmitter.emit(tasks_v2_const.EventName.CloseCheckList);
+	      this.$emit('close');
+	    }
+	  },
+	  template: `
+		<Popup :options="popupOptions" ref="childComponent">
+			<slot
+				:handleShow="handleShow"
+				:handleClose="handleClose"
+			></slot>
+		</Popup>
+	`
+	};
+
+	// @vue/component
+	const CheckListSheet = {
+	  name: 'TaskCheckListSheet',
+	  components: {
+	    BottomSheet: tasks_v2_component_elements_bottomSheet.BottomSheet
+	  },
+	  props: {
+	    isShown: {
+	      type: Boolean,
+	      required: true
+	    }
+	  },
+	  emits: ['show', 'close', 'isShown'],
+	  data() {
+	    return {
+	      isExpanded: false
+	    };
+	  },
+	  computed: {
+	    ...ui_vue3_vuex.mapGetters({
+	      titleFieldOffsetHeight: `${tasks_v2_const.Model.Interface}/titleFieldOffsetHeight`
+	    })
+	  },
+	  watch: {
+	    titleFieldOffsetHeight() {
+	      var _this$$refs$childComp;
+	      (_this$$refs$childComp = this.$refs.childComponent) == null ? void 0 : _this$$refs$childComp.adjustPosition();
+	    },
+	    async isShown(value) {
+	      await this.$nextTick();
+	      this.$emit('isShown', value);
+	    }
+	  },
+	  methods: {
+	    handleShow() {
+	      this.$emit('show');
+	    },
+	    handleClose() {
+	      this.$emit('close');
+	    }
+	  },
+	  template: `
+		<BottomSheet
+			:isShown="isShown"
+			:isExpanded="isExpanded"
+			:class="'--check-list'"
+			ref="childComponent"
+		>
+			<slot
+				:handleShow="handleShow"
+				:handleClose="handleClose"
+			></slot>
+		</BottomSheet>
+	`
+	};
+
+	var _params = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("params");
+	var _getRootParent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getRootParent");
+	var _getCheckLists = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCheckLists");
+	class CheckListManager {
+	  constructor(params) {
+	    Object.defineProperty(this, _getCheckLists, {
+	      value: _getCheckLists2
+	    });
+	    Object.defineProperty(this, _getRootParent, {
+	      value: _getRootParent2
+	    });
+	    Object.defineProperty(this, _params, {
+	      writable: true,
+	      value: void 0
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _params)[_params] = params;
+	  }
+	  getItem(itemId) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _getCheckLists)[_getCheckLists]().find(item => item.id === itemId);
+	  }
+	  getItemsOnLevel(parentId) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _getCheckLists)[_getCheckLists]().filter(item => item.parentId === parentId).sort((a, b) => a.sortIndex - b.sortIndex);
+	  }
+	  getItemLevel(checkListItem) {
+	    let level = 0;
+	    let current = checkListItem;
+	    const visitedIds = new Set();
+	    const findParent = parentId => babelHelpers.classPrivateFieldLooseBase(this, _getCheckLists)[_getCheckLists]().find(item => item.id === parentId);
+	    while (current.parentId !== 0) {
+	      if (visitedIds.has(current.id)) {
+	        break;
+	      }
+	      visitedIds.add(current.id);
+	      current = findParent(current.parentId);
+	      if (!current) {
+	        break;
+	      }
+	      level++;
+	    }
+	    return level;
+	  }
+	  isItemDescendant(potentialAncestor, item) {
+	    if ((item == null ? void 0 : item.parentId) === (potentialAncestor == null ? void 0 : potentialAncestor.id)) {
+	      return true;
+	    }
+	    if ((item == null ? void 0 : item.parentId) === 0) {
+	      return false;
+	    }
+	    const parent = babelHelpers.classPrivateFieldLooseBase(this, _getCheckLists)[_getCheckLists]().find(i => i.id === (item == null ? void 0 : item.parentId));
+	    if (!parent) {
+	      return false;
+	    }
+	    return this.isItemDescendant(potentialAncestor, parent);
+	  }
+	  syncParentCompletionState(itemId, updateFn, parentItemId) {
+	    const changedItem = babelHelpers.classPrivateFieldLooseBase(this, _getCheckLists)[_getCheckLists]().find(item => item.id === itemId);
+	    if ((!changedItem || !changedItem.parentId) && !parentItemId) {
+	      return;
+	    }
+	    const parentId = parentItemId || changedItem.parentId;
+	    const parentItem = babelHelpers.classPrivateFieldLooseBase(this, _getCheckLists)[_getCheckLists]().find(item => item.id === parentId);
+	    if (!parentItem) {
+	      return;
+	    }
+	    const childrenItems = babelHelpers.classPrivateFieldLooseBase(this, _getCheckLists)[_getCheckLists]().filter(item => item.parentId === parentItem.id);
+	    const isEmptyParent = childrenItems.length === 0;
+	    const allChildrenCompleted = childrenItems.every(child => child.isComplete);
+	    const someChildrenIncomplete = childrenItems.some(child => !child.isComplete);
+	    const shouldUpdateParent = isEmptyParent || allChildrenCompleted && !parentItem.isComplete || someChildrenIncomplete && parentItem.isComplete;
+	    if (!shouldUpdateParent) {
+	      return;
+	    }
+	    updateFn(parentItem.id, {
+	      isComplete: allChildrenCompleted && !isEmptyParent
+	    });
+	    if (parentItem.parentId) {
+	      this.syncParentCompletionState(parentItem.id, updateFn);
+	    }
+	  }
+	  getAllGroupModeItems() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _getCheckLists)[_getCheckLists]().filter(item => {
+	      var _item$groupMode;
+	      return ((_item$groupMode = item.groupMode) == null ? void 0 : _item$groupMode.active) === true;
+	    });
+	  }
+	  getAllSelectedItems() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _getCheckLists)[_getCheckLists]().filter(item => {
+	      var _item$groupMode2;
+	      return item.parentId !== 0 && ((_item$groupMode2 = item.groupMode) == null ? void 0 : _item$groupMode2.selected) === true;
+	    });
+	  }
+	  getAllSelectedItemsWithChildren() {
+	    const result = new Map();
+	    const selectedItems = this.getAllSelectedItems();
+	    const allItems = babelHelpers.classPrivateFieldLooseBase(this, _getCheckLists)[_getCheckLists]();
+	    selectedItems.forEach(item => result.set(item.id, item));
+	    const getChildren = parentIds => {
+	      const children = allItems.filter(item => parentIds.includes(item.parentId) && !result.has(item.id));
+	      children.forEach(child => result.set(child.id, child));
+	      if (children.length > 0) {
+	        getChildren(children.map(child => child.id));
+	      }
+	    };
+	    getChildren(selectedItems.map(item => item.id));
+	    return Array.from(result.values());
+	  }
+	  getAllChildren(itemId) {
+	    const visited = new Set();
+	    const result = [];
+	    const collectChildren = currentId => {
+	      if (visited.has(currentId)) {
+	        return;
+	      }
+	      visited.add(currentId);
+	      const children = babelHelpers.classPrivateFieldLooseBase(this, _getCheckLists)[_getCheckLists]().filter(item => item.parentId === currentId).sort((a, b) => a.sortIndex - b.sortIndex);
+	      children.forEach(child => {
+	        if (!visited.has(child.id)) {
+	          result.push(child);
+	          collectChildren(child.id);
+	        }
+	      });
+	    };
+	    collectChildren(itemId);
+	    return result;
+	  }
+	  getAllCompletedChildrenChildren(itemId) {
+	    return this.getAllChildren(itemId).filter(item => item.isComplete === true);
+	  }
+	  getChildren(itemId) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _getCheckLists)[_getCheckLists]().filter(item => {
+	      return item.parentId === itemId;
+	    });
+	  }
+	  getSiblings(itemId, parentId) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _getCheckLists)[_getCheckLists]().filter(sibling => sibling.parentId === parentId && sibling.id !== itemId).sort((a, b) => a.sortIndex - b.sortIndex);
+	  }
+	  resortItemsOnLevel(parentId, updateFn) {
+	    const allItems = babelHelpers.classPrivateFieldLooseBase(this, _getCheckLists)[_getCheckLists]().filter(item => item.parentId === parentId);
+	    const sortedItems = [...allItems].sort((a, b) => a.sortIndex - b.sortIndex);
+	    const updates = sortedItems.map((item, newIndex) => ({
+	      ...item,
+	      sortIndex: newIndex
+	    }));
+	    if (updates.length > 0) {
+	      updateFn(updates);
+	    }
+	  }
+	  resortItemsAfterIndex(parentId, sortIndex, updateFn) {
+	    const allItems = babelHelpers.classPrivateFieldLooseBase(this, _getCheckLists)[_getCheckLists]().filter(item => item.parentId === parentId);
+	    const itemsToResort = allItems.filter(item => item.sortIndex >= sortIndex).sort((a, b) => a.sortIndex - b.sortIndex);
+	    const updates = itemsToResort.map(item => ({
+	      ...item,
+	      sortIndex: item.sortIndex + 1
+	    }));
+	    if (updates.length > 0) {
+	      updateFn(updates);
+	    }
+	  }
+	  moveRight(item, updateFn) {
+	    if (item.parentId === 0 || this.getItemLevel(item) > 5) {
+	      return;
+	    }
+	    const itemsOnLevel = this.getItemsOnLevel(item.parentId);
+	    const currentIndex = itemsOnLevel.findIndex(sibling => sibling.id === item.id);
+	    if (currentIndex <= 0) {
+	      return;
+	    }
+	    let newParent = null;
+	    for (let i = currentIndex - 1; i >= 0; i--) {
+	      const candidate = itemsOnLevel[i];
+	      if (!this.isItemDescendant(candidate, item)) {
+	        newParent = candidate;
+	        break;
+	      }
+	    }
+	    if (!newParent) {
+	      return;
+	    }
+	    const newParentChildren = babelHelpers.classPrivateFieldLooseBase(this, _getCheckLists)[_getCheckLists]().filter(child => child.parentId === newParent.id).sort((a, b) => a.sortIndex - b.sortIndex);
+	    const updates = itemsOnLevel.filter((sibling, index) => index > currentIndex).map(sibling => ({
+	      ...sibling,
+	      sortIndex: sibling.sortIndex - 1
+	    }));
+	    updates.push({
+	      ...item,
+	      parentId: newParent.id,
+	      parentNodeId: newParent.nodeId,
+	      sortIndex: newParentChildren.length > 0 ? newParentChildren[newParentChildren.length - 1].sortIndex + 1 : 0
+	    });
+	    updateFn(updates);
+	  }
+	  moveLeft(item, updateFn) {
+	    if (item.parentId === 0 || this.getItemLevel(item) <= 1) {
+	      return;
+	    }
+	    const currentParent = babelHelpers.classPrivateFieldLooseBase(this, _getCheckLists)[_getCheckLists]().find(parent => parent.id === item.parentId);
+	    if (!currentParent) {
+	      return;
+	    }
+	    const itemsOnLevel = this.getItemsOnLevel(currentParent.parentId);
+	    const parentInNewListIndex = itemsOnLevel.findIndex(sibling => sibling.id === currentParent.id);
+	    const currentSiblingsUpdates = babelHelpers.classPrivateFieldLooseBase(this, _getCheckLists)[_getCheckLists]().filter(sibling => sibling.parentId === item.parentId && sibling.sortIndex > item.sortIndex).map(sibling => ({
+	      ...sibling,
+	      sortIndex: sibling.sortIndex - 1
+	    }));
+	    let newSortIndex = 0;
+	    if (parentInNewListIndex === -1 || parentInNewListIndex === itemsOnLevel.length - 1) {
+	      newSortIndex = itemsOnLevel.length > 0 ? itemsOnLevel[itemsOnLevel.length - 1].sortIndex + 1 : 0;
+	    } else {
+	      newSortIndex = itemsOnLevel[parentInNewListIndex].sortIndex + 1;
+	      const shiftUpdates = itemsOnLevel.filter(sibling => sibling.sortIndex >= newSortIndex).map(sibling => ({
+	        ...sibling,
+	        sortIndex: sibling.sortIndex + 1
+	      }));
+	      currentSiblingsUpdates.push(...shiftUpdates);
+	    }
+	    const movedItemUpdate = {
+	      ...item,
+	      parentId: currentParent.parentId,
+	      parentNodeId: currentParent.parentNodeId || null,
+	      sortIndex: newSortIndex
+	    };
+	    updateFn([...currentSiblingsUpdates, movedItemUpdate]);
+	  }
+	  findNearestItem(initialItem, selected, excludeChildrenOf = []) {
+	    if (!initialItem) {
+	      return null;
+	    }
+	    const rootParent = babelHelpers.classPrivateFieldLooseBase(this, _getRootParent)[_getRootParent](initialItem);
+	    if (!rootParent) {
+	      return null;
+	    }
+	    const currentSortIndex = initialItem.sortIndex;
+	    const excludedParentIds = new Set(excludeChildrenOf.map(item => item.id));
+	    const eligibleItems = babelHelpers.classPrivateFieldLooseBase(this, _getCheckLists)[_getCheckLists]().sort((a, b) => a.sortIndex - b.sortIndex).filter(item => {
+	      var _item$groupMode3, _babelHelpers$classPr;
+	      const isChildOfExcluded = excludedParentIds.has(item.parentId);
+	      return item.id !== initialItem.id && item.parentId !== 0 && ((_item$groupMode3 = item.groupMode) == null ? void 0 : _item$groupMode3.selected) === selected && ((_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _getRootParent)[_getRootParent](item)) == null ? void 0 : _babelHelpers$classPr.id) === rootParent.id && !isChildOfExcluded;
+	    });
+	    if (eligibleItems.length === 0) {
+	      return null;
+	    }
+	    return eligibleItems.reduce((nearest, item) => {
+	      return item.sortIndex > currentSortIndex && (item.sortIndex < nearest.sortIndex || nearest.sortIndex <= currentSortIndex) ? item : nearest;
+	    });
+	  }
+	  getFirstChild(itemId) {
+	    const children = babelHelpers.classPrivateFieldLooseBase(this, _getCheckLists)[_getCheckLists]().filter(item => item.parentId === itemId).sort((a, b) => a.sortIndex - b.sortIndex);
+	    return children[0] || null;
+	  }
+	}
+	function _getRootParent2(item) {
+	  if (!item || item.parentId === 0) {
+	    return item || null;
+	  }
+	  const parentItem = babelHelpers.classPrivateFieldLooseBase(this, _getCheckLists)[_getCheckLists]().find(parent => parent.id === item.parentId);
+	  if (!parentItem) {
+	    return null;
+	  }
+	  return babelHelpers.classPrivateFieldLooseBase(this, _getRootParent)[_getRootParent](parentItem);
+	}
+	function _getCheckLists2() {
+	  var _babelHelpers$classPr2, _babelHelpers$classPr3, _babelHelpers$classPr4;
+	  return (_babelHelpers$classPr2 = (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _params)[_params]) == null ? void 0 : (_babelHelpers$classPr4 = _babelHelpers$classPr3.computed) == null ? void 0 : _babelHelpers$classPr4.checkLists()) != null ? _babelHelpers$classPr2 : [];
+	}
+
+	const checkListMeta = Object.freeze({
+	  id: 'checklist',
+	  title: main_core.Loc.getMessage('TASKS_V2_CHECK_LIST_TITLE')
+	});
+
+	// @vue/component
+	const CheckListList = {
+	  name: 'TaskCheckListList',
+	  components: {
+	    BIcon: ui_iconSet_api_vue.BIcon
+	  },
+	  props: {
+	    taskId: {
+	      type: [Number, String],
+	      required: true
+	    }
+	  },
+	  emits: ['open', 'addFastCheckList'],
+	  setup() {
+	    return {
+	      Animated: ui_iconSet_api_core.Animated,
+	      Outline: ui_iconSet_api_core.Outline,
+	      checkListMeta
+	    };
+	  },
+	  data() {
+	    return {
+	      checkListManager: null
+	    };
+	  },
+	  computed: {
+	    task() {
+	      return this.$store.getters[`${tasks_v2_const.Model.Tasks}/getById`](this.taskId);
+	    },
+	    checkLists() {
+	      return this.$store.getters[`${tasks_v2_const.Model.CheckList}/getByIds`](this.task.checklist);
+	    },
+	    isLoading() {
+	      return this.checkLists.length === 0;
+	    },
+	    containsChecklist() {
+	      return this.task.containsChecklist;
+	    }
+	  },
+	  async created() {
+	    this.checkListManager = new CheckListManager({
+	      computed: {
+	        checkLists: () => this.checkLists
+	      }
+	    });
+	    if (this.containsChecklist) {
+	      void this.loadData();
+	    }
+	  },
+	  methods: {
+	    async loadData() {
+	      await tasks_v2_provider_service_checkListService.checkListService.load(this.taskId);
+	    }
+	  },
+	  template: `
+		<div
+			:data-task-field-id="checkListMeta.id"
+			class="tasks-check-list-list"
+			:class="{ '--default': isLoading }"
+		>
+			<div
+				class="tasks-check-list-list-content"
+				:class="{ '--default': isLoading }"
+			>
+				<template v-if="isLoading">
+					<div class="tasks-check-list-list-content-row">
+						<BIcon :name="Animated.LOADER_WAIT"/>
+						<div class="tasks-check-list-list-content-text">
+							{{ loc('TASKS_V2_CHECK_LIST_LOADING') }}
+						</div>
+					</div>
+				</template>
+				<template v-else>
+					<slot></slot>
+					<div class="tasks-check-list-list-content-row --footer">
+						<div
+							class="tasks-check-list-list-content-btn"
+							@click="$emit('addFastCheckList')"
+						>
+							<BIcon :name="Outline.PLUS_L"/>
+							<div class="tasks-check-list-list-content-btn-text">
+								{{ loc('TASKS_V2_CHECK_LIST_ADD_LABEL') }}
+							</div>
+						</div>
+					</div>
+				</template>
+			</div>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const CheckListItemMixin = {
+	  props: {
+	    taskId: {
+	      type: [Number, String],
+	      required: true
+	    },
+	    id: {
+	      type: [Number, String],
+	      required: true
+	    },
+	    isPreview: {
+	      type: Boolean,
+	      default: false
+	    }
+	  },
+	  emits: ['update', 'addItem', 'removeItem', 'focus', 'blur', 'emptyBlur', 'show', 'hide'],
+	  data() {
+	    return {
+	      isHovered: false,
+	      scrollContainer: null
+	    };
+	  },
+	  computed: {
+	    task() {
+	      return this.$store.getters[`${tasks_v2_const.Model.Tasks}/getById`](this.taskId);
+	    },
+	    checkLists() {
+	      return this.$store.getters[`${tasks_v2_const.Model.CheckList}/getByIds`](this.task.checklist);
+	    },
+	    item() {
+	      return this.$store.getters[`${tasks_v2_const.Model.CheckList}/getById`](this.id);
+	    },
+	    canModify() {
+	      return this.item.actions.modify === true;
+	    },
+	    canRemove() {
+	      return this.item.actions.remove === true;
+	    },
+	    canToggle() {
+	      return this.item.actions.toggle === true;
+	    },
+	    hasAttachments() {
+	      return this.hasUsers;
+	    },
+	    hasUsers() {
+	      return this.hasAccomplices || this.hasAuditors;
+	    },
+	    hasAccomplices() {
+	      var _this$accomplices;
+	      return ((_this$accomplices = this.accomplices) == null ? void 0 : _this$accomplices.length) > 0;
+	    },
+	    hasAuditors() {
+	      var _this$auditors;
+	      return ((_this$auditors = this.auditors) == null ? void 0 : _this$auditors.length) > 0;
+	    },
+	    accomplices() {
+	      return this.item.accomplices;
+	    },
+	    auditors() {
+	      return this.item.auditors;
+	    },
+	    files() {
+	      return this.item.attachments;
+	    },
+	    textColor() {
+	      return this.item.isComplete ? 'var(--ui-color-base-4)' : 'var(--ui-color-base-1)';
+	    },
+	    groupMode() {
+	      var _this$item$groupMode;
+	      return ((_this$item$groupMode = this.item.groupMode) == null ? void 0 : _this$item$groupMode.active) === true;
+	    },
+	    groupModeSelected() {
+	      var _this$item$groupMode2;
+	      return ((_this$item$groupMode2 = this.item.groupMode) == null ? void 0 : _this$item$groupMode2.selected) === true;
+	    }
+	  },
+	  methods: {
+	    handleFocus() {
+	      this.$emit('focus', this.id);
+	    },
+	    handleBlur() {
+	      this.$emit('blur', this.id);
+	    },
+	    handleEmptyBlur() {
+	      this.$emit('emptyBlur', this.id);
+	    },
+	    updateTitle(title = '') {
+	      this.$store.dispatch(`${tasks_v2_const.Model.CheckList}/update`, {
+	        id: this.id,
+	        fields: {
+	          title
+	        }
+	      });
+	      this.$emit('update');
+	    },
+	    addItem(sort) {
+	      this.$emit('addItem', {
+	        id: this.id,
+	        sort: main_core.Type.isNumber(sort) ? sort : null
+	      });
+	    },
+	    removeItem() {
+	      this.$emit('removeItem', this.id);
+	    },
+	    getChildren(itemId) {
+	      return this.checkLists.filter(item => {
+	        return item.parentId === itemId;
+	      });
+	    }
+	  }
+	};
+
+	// @vue/component
+	const CheckListParentItem = {
+	  name: 'CheckListParentItem',
+	  components: {
+	    BIcon: ui_iconSet_api_vue.BIcon,
+	    BMenu: ui_vue3_components_menu.BMenu,
+	    GrowingTextArea: tasks_v2_component_elements_growingTextArea.GrowingTextArea,
+	    UserAvatarList: tasks_v2_component_elements_userAvatarList.UserAvatarList,
+	    ProgressBar: tasks_v2_component_elements_progressBar.ProgressBar
+	  },
+	  mixins: [CheckListItemMixin],
+	  inject: ['setItemsRef'],
+	  emits: ['toggleCompleted', 'startGroupMode', 'openCheckList'],
+	  setup() {
+	    return {
+	      Actions: ui_iconSet_api_core.Actions,
+	      Outline: ui_iconSet_api_core.Outline
+	    };
+	  },
+	  data() {
+	    return {
+	      isSticky: false,
+	      isMenuShown: false,
+	      menuRemoveSectionCode: 'removeSection',
+	      areCompletedCollapsed: false
+	    };
+	  },
+	  computed: {
+	    menuOptions() {
+	      return {
+	        id: `check-list-parent-item-action-menu-${main_core.Text.getRandom()}`,
+	        bindElement: this.$refs.more.$el,
+	        minWidth: 250,
+	        offsetLeft: -100,
+	        sections: [{
+	          code: this.menuRemoveSectionCode
+	        }],
+	        items: this.menuItems,
+	        targetContainer: document.body,
+	        closeByEsc: true
+	      };
+	    },
+	    menuItems() {
+	      const collapseItem = {
+	        title: this.areCompletedCollapsed ? this.loc('TASKS_V2_CHECK_LIST_ITEM_MENU_SHOW') : this.loc('TASKS_V2_CHECK_LIST_ITEM_MENU_HIDE'),
+	        icon: this.areCompletedCollapsed ? ui_iconSet_api_core.Outline.OBSERVER : ui_iconSet_api_core.Outline.CROSSED_EYE,
+	        dataset: {
+	          id: `MenuProfileHide-${this.id}`
+	        },
+	        onClick: () => {
+	          this.isMenuShown = false;
+	          this.areCompletedCollapsed = !this.areCompletedCollapsed;
+	          this.$emit('toggleCompleted', {
+	            itemId: this.id,
+	            collapsed: this.areCompletedCollapsed
+	          });
+	        }
+	      };
+	      const groupActionsItem = {
+	        title: this.loc('TASKS_V2_CHECK_LIST_ITEM_MENU_GROUP'),
+	        icon: ui_iconSet_api_core.Outline.MULTICHOICE_ON,
+	        dataset: {
+	          id: `MenuProfileGroup-${this.id}`
+	        },
+	        onClick: () => {
+	          if (this.item.collapsed === true) {
+	            this.collapseChildrenItems(this.id);
+	          }
+	          this.$emit('startGroupMode', this.id);
+	          this.isMenuShown = false;
+	        }
+	      };
+	      const editItem = {
+	        sectionCode: this.menuRemoveSectionCode,
+	        title: this.loc('TASKS_V2_CHECK_LIST_ITEM_MENU_EDIT'),
+	        icon: ui_iconSet_api_core.Outline.EDIT_L,
+	        dataset: {
+	          id: `MenuProfileEdit-${this.id}`
+	        },
+	        onClick: () => this.$emit('openCheckList', this.id)
+	      };
+	      const removeItem = {
+	        sectionCode: this.menuRemoveSectionCode,
+	        design: 'alert',
+	        title: this.loc('TASKS_V2_CHECK_LIST_ITEM_MENU_REMOVE'),
+	        icon: ui_iconSet_api_core.Outline.TRASHCAN,
+	        dataset: {
+	          id: `MenuProfileRemove-${this.id}`
+	        },
+	        onClick: this.removeItem.bind(this)
+	      };
+	      if (this.isPreview) {
+	        return [collapseItem, editItem, removeItem];
+	      } else {
+	        return [collapseItem, groupActionsItem, removeItem];
+	      }
+	    },
+	    itemIcon() {
+	      return this.item.isComplete ? ui_iconSet_api_core.Outline.CHECK_L : ui_iconSet_api_core.Outline.CHECK_LIST;
+	    },
+	    checkListStatus() {
+	      const label = this.loc('TASKS_V2_CHECK_LIST_STATUS_LABEL_NEW');
+	      return label.replace('#completed#', this.completedCount).replace('#total#', this.totalCount);
+	    },
+	    completedCount() {
+	      return this.checkLists.filter(checklist => {
+	        return checklist.parentId === this.id && checklist.isComplete;
+	      }).length;
+	    },
+	    totalCount() {
+	      return this.checkLists.filter(checklist => {
+	        return checklist.parentId === this.id;
+	      }).length;
+	    }
+	  },
+	  mounted() {
+	    var _this$$parent$$el;
+	    this.scrollContainer = (_this$$parent$$el = this.$parent.$el) == null ? void 0 : _this$$parent$$el.closest('[data-list]');
+	    if (this.setItemsRef) {
+	      this.setItemsRef(this.id, this);
+	    }
+	    if (this.scrollContainer) {
+	      main_core.Event.bind(this.scrollContainer, 'scroll', this.handleScroll);
+	      void this.$nextTick(this.checkSticky);
+	      this.mutationObserver = new MutationObserver(() => {
+	        this.checkSticky();
+	      });
+	      this.mutationObserver.observe(this.scrollContainer, {
+	        childList: true,
+	        subtree: true
+	      });
+	    }
+	  },
+	  beforeUnmount() {
+	    if (this.scrollContainer) {
+	      main_core.Event.unbind(this.scrollContainer, 'scroll', this.handleScroll);
+	    }
+	    if (this.mutationObserver) {
+	      this.mutationObserver.disconnect();
+	    }
+	    if (this.setItemsRef) {
+	      this.setItemsRef(this.id, null);
+	    }
+	  },
+	  methods: {
+	    handleScroll() {
+	      this.checkSticky();
+	      this.isMenuShown = false;
+	    },
+	    checkSticky() {
+	      if (!this.scrollContainer || !this.$refs.item) {
+	        return;
+	      }
+	      const stickyRect = this.$refs.item.getBoundingClientRect();
+	      const containerRect = this.scrollContainer.getBoundingClientRect();
+	      this.isSticky = stickyRect.top <= containerRect.top + stickyRect.height / 2;
+	    },
+	    showMenu() {
+	      this.isMenuShown = true;
+	    },
+	    collapseChildrenItems(itemId) {
+	      this.$store.dispatch(`${tasks_v2_const.Model.CheckList}/update`, {
+	        id: itemId,
+	        fields: {
+	          collapsed: !this.item.collapsed && !this.item.previewCollapsed,
+	          previewCollapsed: false
+	        }
+	      });
+	    },
+	    isCollapsed(item) {
+	      return item.collapsed === true || this.isPreview && item.previewCollapsed === true;
+	    }
+	  },
+	  template: `
+		<div
+			ref="item"
+			class="check-list-widget-parent-item"
+			:class="{
+				'--complete': item.isComplete,
+				'--collapsed': isCollapsed(item),
+				'--preview': isPreview,
+			}"
+			:data-id="id"
+			:data-parent="id"
+		>
+			<div class="check-list-widget-parent-item-label-container">
+				<BIcon :name="itemIcon"/>
+			</div>
+			<div class="check-list-widget-parent-item-title-container">
+				<GrowingTextArea
+					class="check-list-widget-parent-item-title"
+					:data-check-list-id="'check-list-parent-item-title-' + id"
+					:modelValue="item.title"
+					:placeholder="loc('TASKS_V2_CHECK_LIST_ITEM_PLACEHOLDER')"
+					:readonly="groupMode || isPreview"
+					:fontColor="textColor"
+					:fontSize="17"
+					:lineHeight="20"
+					:fontWeight="500"
+					@update:modelValue="updateTitle"
+					@focus="handleFocus"
+					@blur="handleBlur"
+					@emptyBlur="handleEmptyBlur"
+				/>
+				<template v-if="hasAttachments">
+					<div class="check-list-widget-item-attach --parent">
+						<div v-if="hasUsers" class="check-list-widget-item-attach-users">
+							<div v-if="hasAccomplices" class="check-list-widget-item-attach-users-list">
+								<BIcon :name="Outline.GROUP"/>
+								<UserAvatarList :users="accomplices"/>
+							</div>
+							<div v-if="hasAuditors" class="check-list-widget-item-attach-users-list">
+								<BIcon :name="Outline.OBSERVER"/>
+								<UserAvatarList :users="auditors"/>
+							</div>
+						</div>
+					</div>
+				</template>
+				<div class="check-list-widget-parent-item-title-status">
+					<div class="check-list-widget-parent-item-title-status-label">
+						{{ checkListStatus }}
+					</div>
+					<ProgressBar
+						:totalValue="totalCount"
+						:completedValue="completedCount"
+						:width="56"
+						:height="5"
+						color="var(--ui-color-accent-main-primary-alt)"
+						bgColor="var(--ui-color-base-7)"
+						:borderRadius="30"
+					/>
+				</div>
+			</div>
+			<div class="check-list-widget-parent-item-action">
+				<div class="check-list-widget-parent-item-main-action">
+					<BIcon ref="more" :name="Outline.MORE_L" @click="showMenu" />
+					<BIcon
+						:name="isCollapsed(item) ? Actions.CHEVRON_DOWN : Actions.CHEVRON_UP"
+						@click="collapseChildrenItems(this.id)"
+					/>
+				</div>
+				<div v-if="isSticky && !isPreview" class="check-list-widget-parent-item-empty"></div>
+			</div>
+			<BMenu v-if="isMenuShown" :options="menuOptions" @close="isMenuShown = false"/>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const CheckListChildItem = {
+	  name: 'CheckListChildItem',
+	  components: {
+	    BIcon: ui_iconSet_api_vue.BIcon,
+	    GrowingTextArea: tasks_v2_component_elements_growingTextArea.GrowingTextArea,
+	    UserAvatarList: tasks_v2_component_elements_userAvatarList.UserAvatarList,
+	    UserFieldWidgetComponent: disk_uploader_userFieldWidget.UserFieldWidgetComponent
+	  },
+	  mixins: [CheckListItemMixin],
+	  inject: ['setItemsRef'],
+	  props: {
+	    itemOffset: {
+	      type: String,
+	      default: '0'
+	    }
+	  },
+	  emits: ['toggleIsComplete', 'toggleGroupModeSelected'],
+	  setup(props) {
+	    return {
+	      Outline: ui_iconSet_api_core.Outline,
+	      fileService: tasks_v2_provider_service_fileService.fileService.get(props.id, tasks_v2_provider_service_fileService.EntityTypes.CheckListItem),
+	      uploaderAdapter: tasks_v2_provider_service_fileService.fileService.get(props.id, tasks_v2_provider_service_fileService.EntityTypes.CheckListItem).getAdapter()
+	    };
+	  },
+	  data() {
+	    return {
+	      uploadingFiles: this.fileService.getFiles()
+	    };
+	  },
+	  computed: {
+	    widgetOptions() {
+	      return {
+	        isEmbedded: true,
+	        withControlPanel: false,
+	        canCreateDocuments: false,
+	        tileWidgetOptions: {
+	          compact: true,
+	          hideDropArea: true,
+	          readonly: this.isPreview
+	        }
+	      };
+	    },
+	    hasAttachments() {
+	      return this.hasUsers || this.hasFilesAttach;
+	    },
+	    hasFilesAttach() {
+	      return this.hasFiles || this.isUploading || this.hasUploadingError;
+	    },
+	    hasFiles() {
+	      var _this$files;
+	      return ((_this$files = this.files) == null ? void 0 : _this$files.length) > 0;
+	    },
+	    isUploading() {
+	      return this.uploadingFiles.some(({
+	        status
+	      }) => [ui_uploader_core.FileStatus.UPLOADING, ui_uploader_core.FileStatus.LOADING].includes(status));
+	    },
+	    hasUploadingError() {
+	      return this.uploadingFiles.some(({
+	        status
+	      }) => [ui_uploader_core.FileStatus.UPLOAD_FAILED, ui_uploader_core.FileStatus.LOAD_FAILED].includes(status));
+	    },
+	    hasTrashcanIcon() {
+	      return this.isHovered && !this.item.panelIsShown && !this.groupMode && !this.isPreview;
+	    }
+	  },
+	  created() {
+	    if (this.hasFilesAttach) {
+	      void this.loadFiles();
+	    }
+	  },
+	  mounted() {
+	    if (this.setItemsRef) {
+	      this.setItemsRef(this.id, this);
+	    }
+	  },
+	  beforeUnmount() {
+	    if (this.setItemsRef) {
+	      this.setItemsRef(this.id, null);
+	    }
+	  },
+	  methods: {
+	    toggleIsComplete() {
+	      if (this.canToggle === false) {
+	        return;
+	      }
+	      this.$store.dispatch(`${tasks_v2_const.Model.CheckList}/update`, {
+	        id: this.id,
+	        fields: {
+	          isComplete: !this.item.isComplete
+	        }
+	      });
+	      this.$emit('toggleIsComplete', this.id);
+	    },
+	    toggleGroupModeSelected() {
+	      this.$store.dispatch(`${tasks_v2_const.Model.CheckList}/update`, {
+	        id: this.id,
+	        fields: {
+	          groupMode: {
+	            active: true,
+	            selected: !this.groupModeSelected
+	          }
+	        }
+	      });
+	      this.$emit('toggleGroupModeSelected', this.id);
+	    },
+	    focusToItem() {
+	      var _this$scrollContainer, _this$$parent$$el;
+	      (_this$scrollContainer = this.scrollContainer) != null ? _this$scrollContainer : this.scrollContainer = (_this$$parent$$el = this.$parent.$el) == null ? void 0 : _this$$parent$$el.closest('[data-list]');
+	      const offset = 200;
+	      this.scrollContainer.scrollTo({
+	        top: this.$refs.item.offsetTop - offset,
+	        behavior: 'smooth'
+	      });
+	    },
+	    focusToTextarea(event) {
+	      const ignoreList = new Set([this.$refs.checkbox]);
+	      if (!ignoreList.has(event.target)) {
+	        var _this$$refs$growingTe;
+	        (_this$$refs$growingTe = this.$refs.growingTextArea) == null ? void 0 : _this$$refs$growingTe.focusTextarea();
+	      }
+	    },
+	    async loadFiles() {
+	      var _this$files2;
+	      const ids = (_this$files2 = this.files) == null ? void 0 : _this$files2.map(file => {
+	        var _file$id;
+	        return (_file$id = file == null ? void 0 : file.id) != null ? _file$id : file;
+	      });
+	      await this.fileService.list(ids != null ? ids : []);
+	    },
+	    handleEnter() {
+	      if (!this.item) {
+	        return;
+	      }
+	      this.addItem(this.item.sortIndex + 1);
+	    },
+	    handleClick(event) {
+	      const filesWidget = this.$refs['files-widget'];
+	      if (this.isClickInsideFilesWidget(filesWidget == null ? void 0 : filesWidget.$el, event.target)) {
+	        return;
+	      }
+	      if (this.groupMode) {
+	        this.toggleGroupModeSelected();
+	      }
+	      if (this.isPreview) {
+	        this.toggleIsComplete();
+	      }
+	    },
+	    isClickInsideFilesWidget(filesNode, target) {
+	      if (!filesNode || !target) {
+	        return false;
+	      }
+	      const excludedClasses = ['ui-tile-uploader-items'];
+	      const isInsideWidget = filesNode.contains(target);
+	      if (!isInsideWidget) {
+	        return false;
+	      }
+	      const hasExcludedClass = excludedClasses.some(className => target.closest(`.${className}`) !== null);
+	      return !hasExcludedClass;
+	    }
+	  },
+	  template: `
+		<div
+			ref="item"
+			class="check-list-widget-child-item"
+			:class="{
+				'--extra-indent': hasUsers && !hasFilesAttach,
+				'--complete': item.isComplete,
+				'--group-mode': groupMode,
+				'--group-mode-selected': groupModeSelected,
+				'--preview': isPreview,
+			}"
+			:data-id="id"
+			:style="{ marginLeft: itemOffset }"
+			@mouseover="isHovered = true"
+			@mouseleave="isHovered = false"
+			@click="handleClick"
+		>
+			<div class="check-list-widget-child-item-base">
+				<label
+					class="check-list-widget-child-item-checkbox"
+					:class="{'--important': !item.isImportant}"
+				>
+					<input
+						ref="checkbox"
+						type="checkbox"
+						:checked="item.isComplete"
+						:disabled="!canToggle || groupMode"
+						@click.stop="toggleIsComplete"
+					>
+				</label>
+				<div
+					v-if="item.isImportant"
+					class="check-list-widget-child-item-important"
+				>
+					<BIcon :name="Outline.FIRE_SOLID" :hoverable="false"/>
+				</div>
+				<GrowingTextArea
+					ref="growingTextArea"
+					class="check-list-widget-child-item-title"
+					:data-check-list-id="'check-list-child-item-title-' + item.id"
+					:modelValue="item.title"
+					:placeholder="loc('TASKS_V2_CHECK_LIST_ITEM_PLACEHOLDER')"
+					:readonly="groupMode || isPreview"
+					:fontColor="textColor"
+					:fontSize="15"
+					:lineHeight="20"
+					@update:modelValue="updateTitle"
+					@focus="handleFocus"
+					@blur="handleBlur"
+					@emptyBlur="handleEmptyBlur"
+					@emptyFocus="focusToItem"
+					@enterBlur="handleEnter"
+				/>
+				<div
+					v-if="hasTrashcanIcon"
+					class="check-list-widget-child-item-action"
+					@click="removeItem"
+				>
+					<BIcon :name="Outline.TRASHCAN"/>
+				</div>
+				<div v-else-if="groupMode" class="check-list-widget-child-item-action-checkbox">
+					<input
+						ref="checkbox"
+						type="checkbox"
+						:checked="groupModeSelected"
+					>
+				</div>
+				<div v-else class="check-list-widget-child-item-action-stub"></div>
+			</div>
+			<template v-if="hasAttachments">
+				<div class="check-list-widget-item-attach">
+					<div v-if="hasUsers" class="check-list-widget-item-attach-users">
+						<div v-if="hasAccomplices" class="check-list-widget-item-attach-users-list">
+							<BIcon :name="Outline.GROUP"/>
+							<UserAvatarList :users="accomplices"/>
+						</div>
+						<div v-if="hasAuditors" class="check-list-widget-item-attach-users-list">
+							<BIcon :name="Outline.OBSERVER"/>
+							<UserAvatarList :users="auditors"/>
+						</div>
+					</div>
+					<div v-if="hasFilesAttach" class="check-list-widget-item-attach-files">
+						<div class="check-list-widget-item-attach-files-list">
+							<UserFieldWidgetComponent
+								ref="files-widget"
+								:uploaderAdapter="uploaderAdapter"
+								:widgetOptions="widgetOptions"
+							/>
+						</div>
+					</div>
+				</div>
+			</template>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const CheckListAddItem = {
+	  name: 'CheckListAddItem',
+	  components: {
+	    BIcon: ui_iconSet_api_vue.BIcon
+	  },
+	  props: {
+	    isPreview: {
+	      type: Boolean,
+	      default: false
+	    }
+	  },
+	  emits: ['addItem'],
+	  setup() {
+	    return {
+	      Outline: ui_iconSet_api_core.Outline
+	    };
+	  },
+	  template: `
+		<div
+			class="check-list-widget-add-item"
+			:class="{'--preview': isPreview}"
+			@click="$emit('addItem')"
+		>
+			<div class="check-list-widget-add-item-icon">
+				<BIcon :name="Outline.PLUS_L"/>
+			</div>
+			<div class="check-list-widget-add-item-title">
+				{{ loc('TASKS_V2_CHECK_LIST_ITEM_ADD_BTN') }}
+			</div>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const CheckListWidget = {
+	  name: 'CheckListWidget',
+	  components: {
+	    CheckListParentItem,
+	    CheckListChildItem,
+	    CheckListAddItem
+	  },
+	  props: {
+	    taskId: {
+	      type: [Number, String],
+	      required: true
+	    },
+	    checkListId: {
+	      type: [Number, String],
+	      default: 0
+	    },
+	    parentId: {
+	      type: [Number, String],
+	      default: 0
+	    },
+	    isPreview: {
+	      type: Boolean,
+	      default: false
+	    }
+	  },
+	  emits: ['beforeCreated', 'show', 'update', 'addItem', 'addItemFromBtn', 'removeItem', 'toggleIsComplete', 'focus', 'blur', 'emptyBlur', 'toggleCompleted', 'startGroupMode', 'toggleGroupModeSelected', 'openCheckList'],
+	  data() {
+	    return {};
+	  },
+	  computed: {
+	    task() {
+	      return this.$store.getters[`${tasks_v2_const.Model.Tasks}/getById`](this.taskId);
+	    },
+	    checkLists() {
+	      return this.$store.getters[`${tasks_v2_const.Model.CheckList}/getByIds`](this.task.checklist);
+	    },
+	    parentCheckLists() {
+	      return this.checkLists.filter(checkList => checkList.parentId === 0).sort((a, b) => a.sortIndex - b.sortIndex);
+	    },
+	    siblings() {
+	      return this.checkLists.filter(item => item.parentId === this.parentId).sort((a, b) => a.sortIndex - b.sortIndex);
+	    }
+	  },
+	  created() {
+	    this.$emit('beforeCreated');
+	    this.checkListManager = new CheckListManager({
+	      computed: {
+	        checkLists: () => this.checkLists
+	      }
+	    });
+	  },
+	  mounted() {
+	    if (this.checkListId) {
+	      var _this$$root$$el;
+	      this.scrollContainer = (_this$$root$$el = this.$root.$el) == null ? void 0 : _this$$root$$el.querySelector(['[data-list]']);
+	      const targetParentItem = this.scrollContainer.querySelector([`[data-parent="${this.checkListId}"]`]);
+	      setTimeout(() => {
+	        this.scrollContainer.scrollTop = targetParentItem.offsetTop;
+	      }, 0);
+	    }
+	    this.$emit('show');
+	  },
+	  methods: {
+	    getItemOffset(item) {
+	      if (item.parentId === 0) {
+	        return '0';
+	      }
+	      const level = this.checkListManager.getItemLevel(item);
+	      if (level === 1) {
+	        return '0';
+	      }
+	      return `${(level - 1) * 12}px`;
+	    },
+	    isFirstVisibleItem(index) {
+	      if (this.isPreview === true) {
+	        return false;
+	      }
+	      const siblings = this.siblings;
+	      const firstVisibleIndex = siblings.findIndex(item => !item.hidden);
+	      return firstVisibleIndex !== -1 && firstVisibleIndex === index;
+	    },
+	    getChildren(parent) {
+	      if (this.isCollapsed(parent)) {
+	        return [];
+	      }
+	      return this.checkListManager.getAllChildren(parent.id);
+	    },
+	    isCollapsed(item) {
+	      return item.collapsed === true || this.isPreview && item.previewCollapsed === true;
+	    }
+	  },
+	  template: `
+		<div class="check-list-widget-container">
+			<ul class="check-list-widget --parent" :class="{'--preview': isPreview}">
+				<template v-for="(parentItem, parentItemIndex) in parentCheckLists" :key="parentItem.id">
+					<li
+						class="check-list-widget-item --parent"
+						:class="{
+							'--first-visible': parentId === 0 && isFirstVisibleItem(parentItemIndex),
+							'--hidden': parentItem.hidden,
+							'--collapsed': isCollapsed(parentItem),
+							'--preview': isPreview,
+						}"
+					>
+						<CheckListParentItem
+							:id="parentItem.id"
+							:taskId="taskId"
+							:isPreview="isPreview"
+							@update="$emit('update')"
+							@removeItem="(id) => $emit('removeItem', id)"
+							@focus="(id) => $emit('focus', id)"
+							@blur="(id) => $emit('blur', id)"
+							@emptyBlur="(id) => $emit('emptyBlur', id)"
+							@toggleCompleted="(data) => $emit('toggleCompleted', data)"
+							@startGroupMode="(id) => $emit('startGroupMode', id)"
+							@openCheckList="(id) => $emit('openCheckList', id)"
+						/>
+						<TransitionGroup name="list" tag="ul" class="check-list-widget">
+							<template
+								v-for="childItem in getChildren(parentItem)"
+								:key="childItem.id
+							">
+								<li
+									class="check-list-widget-item"
+									:class="{
+										'--hidden': childItem.hidden,
+									}"
+								>
+									<CheckListChildItem
+										:id="childItem.id"
+										:taskId="taskId"
+										:itemOffset="getItemOffset(childItem)"
+										:isPreview="isPreview"
+										@update="$emit('update')"
+										@toggleIsComplete="(id) => $emit('toggleIsComplete', id)"
+										@addItem="(data) => $emit('addItem', data)"
+										@removeItem="(id) => $emit('removeItem', id)"
+										@focus="(id) => $emit('focus', id)"
+										@blur="(id) => $emit('blur', id)"
+										@emptyBlur="(id) => $emit('emptyBlur', id)"
+										@toggleGroupModeSelected="(id) => $emit('toggleGroupModeSelected', id)"
+									/>
+								</li>
+							</template>
+						</TransitionGroup>
+						<Transition name="addBtn" tag="div" class="check-list-widget-add-container">
+							<CheckListAddItem
+								v-if="!isCollapsed(parentItem)"
+								:isPreview="isPreview"
+								@addItem="$emit('addItemFromBtn', parentItem.id)"
+							/>
+						</Transition>
+					</li>
+				</template>
+			</ul>
+		</div>
+	`
+	};
+
+	const PanelSection = Object.freeze({
+	  Important: 'important',
+	  Attachments: 'attachments',
+	  Movement: 'movement',
+	  Accomplice: 'accomplice',
+	  Auditor: 'auditor',
+	  Forward: 'forward',
+	  Delete: 'delete',
+	  Cancel: 'cancel'
+	});
+	const PanelAction = Object.freeze({
+	  SetImportant: 'setImportant',
+	  AttachFile: 'attachFile',
+	  MoveRight: 'moveRight',
+	  MoveLeft: 'moveLeft',
+	  AssignAccomplice: 'assignAccomplice',
+	  AssignAuditor: 'assignAuditor',
+	  Forward: 'forward',
+	  Delete: 'delete',
+	  Cancel: 'cancel'
+	});
+	const PanelMeta = Object.freeze({
+	  defaultSections: [{
+	    name: PanelSection.Important,
+	    items: [{
+	      icon: ui_iconSet_api_core.Outline.FIRE,
+	      activeIcon: ui_iconSet_api_core.Outline.FIRE_SOLID,
+	      action: PanelAction.SetImportant,
+	      hint: 'TASKS_V2_CHECK_LIST_ITEM_IMPORTANT_HINT',
+	      className: '--important',
+	      hoverable: false
+	    }]
+	  }, {
+	    name: PanelSection.Attachments,
+	    items: [{
+	      icon: ui_iconSet_api_core.Outline.ATTACH,
+	      action: PanelAction.AttachFile,
+	      hint: 'TASKS_V2_CHECK_LIST_ITEM_ATTACH_HINT'
+	    }]
+	  }, {
+	    name: PanelSection.Movement,
+	    items: [{
+	      icon: ui_iconSet_api_core.Outline.POINT_RIGHT,
+	      action: PanelAction.MoveRight,
+	      hint: 'TASKS_V2_CHECK_LIST_ITEM_MOVE_RIGHT_HINT'
+	    }, {
+	      icon: ui_iconSet_api_core.Outline.POINT_LEFT,
+	      action: PanelAction.MoveLeft,
+	      hint: 'TASKS_V2_CHECK_LIST_ITEM_MOVE_LEFT_HINT'
+	    }]
+	  }, {
+	    name: PanelSection.Accomplice,
+	    items: [{
+	      icon: ui_iconSet_api_core.Outline.PERSON,
+	      action: PanelAction.AssignAccomplice,
+	      hint: 'TASKS_V2_CHECK_LIST_ITEM_ACCOMPLICE_HINT'
+	    }]
+	  }, {
+	    name: PanelSection.Auditor,
+	    items: [{
+	      icon: ui_iconSet_api_core.Outline.OBSERVER,
+	      action: PanelAction.AssignAuditor,
+	      hint: 'TASKS_V2_CHECK_LIST_ITEM_AUDITOR_HINT'
+	    }]
+	  }, {
+	    name: PanelSection.Forward,
+	    items: [{
+	      icon: ui_iconSet_api_core.Outline.FORWARD,
+	      action: PanelAction.Forward,
+	      hint: 'TASKS_V2_CHECK_LIST_ITEM_FORWARD_HINT'
+	    }]
+	  }, {
+	    name: PanelSection.Delete,
+	    items: [{
+	      icon: ui_iconSet_api_core.Outline.TRASHCAN,
+	      action: PanelAction.Delete,
+	      hint: 'TASKS_V2_CHECK_LIST_ITEM_REMOVE_HINT'
+	    }]
+	  }, {
+	    name: PanelSection.Cancel,
+	    items: [{
+	      icon: ui_iconSet_api_core.Outline.CROSS_L,
+	      action: PanelAction.Cancel,
+	      hint: 'TASKS_V2_CHECK_LIST_ITEM_CANCEL_HINT'
+	    }]
+	  }]
+	});
+
+	// @vue/component
+	const CheckListItemPanel = {
+	  name: 'CheckListItemPanel',
+	  components: {
+	    BIcon: ui_iconSet_api_vue.BIcon
+	  },
+	  directives: {
+	    hint: ui_vue3_directives_hint.hint
+	  },
+	  props: {
+	    /** @type VisibleActions */
+	    visibleSections: {
+	      type: Array,
+	      default: () => PanelMeta.defaultSections.map(section => section.name)
+	    },
+	    visibleActions: {
+	      type: Array,
+	      default: () => []
+	    },
+	    disabledActions: {
+	      type: Array,
+	      default: () => []
+	    },
+	    activeActions: {
+	      type: Array,
+	      default: () => []
+	    }
+	  },
+	  emits: ['action'],
+	  data() {
+	    return {
+	      currentHintElement: null,
+	      currentHintText: ''
+	    };
+	  },
+	  computed: {
+	    sections() {
+	      return PanelMeta.defaultSections.filter(section => this.visibleSections.includes(section.name)).map(section => ({
+	        ...section,
+	        items: section.items.filter(item => this.visibleActions.includes(item.action)).map(item => {
+	          var _item$hoverable;
+	          return {
+	            ...item,
+	            disabled: this.isItemDisabled(item),
+	            active: this.isItemActive(item),
+	            hoverable: (_item$hoverable = item.hoverable) != null ? _item$hoverable : true
+	          };
+	        })
+	      })).filter(section => section.items.length > 0);
+	    },
+	    tooltip() {
+	      return () => {
+	        var _this$currentHintElem, _this$currentHintElem2;
+	        return {
+	          text: this.currentHintText,
+	          timeout: 500,
+	          popupOptions: {
+	            className: 'tasks-hint',
+	            background: 'var(--ui-color-bg-content-inapp)',
+	            darkMode: false,
+	            offsetLeft: -((_this$currentHintElem = (_this$currentHintElem2 = this.currentHintElement) == null ? void 0 : _this$currentHintElem2.offsetWidth) != null ? _this$currentHintElem : 0),
+	            padding: 6,
+	            bindOptions: {
+	              forceBindPosition: true,
+	              forceTop: true,
+	              position: 'top'
+	            },
+	            targetContainer: document.body
+	          }
+	        };
+	      };
+	    }
+	  },
+	  methods: {
+	    isItemDisabled(item) {
+	      var _item$disabled;
+	      return (_item$disabled = item.disabled) != null ? _item$disabled : this.disabledActions.includes(item.action);
+	    },
+	    isItemActive(item) {
+	      var _item$active;
+	      return (_item$active = item.active) != null ? _item$active : this.activeActions.includes(item.action);
+	    },
+	    getItemIcon(item) {
+	      return item.active && item.activeIcon ? item.activeIcon : item.icon;
+	    },
+	    handleItemClick(event, item) {
+	      if (!item.disabled) {
+	        this.$emit('action', {
+	          action: item.action,
+	          node: event.currentTarget
+	        });
+	      }
+	    },
+	    handleItemMouseEnter(event, item) {
+	      this.currentHintElement = event.currentTarget;
+	      this.currentHintText = item.hint ? this.loc(item.hint) : null;
+	    }
+	  },
+	  template: `
+		<div v-if="sections.length > 0" class="check-list-widget-item-panel" @mousedown.prevent>
+			<template v-for="section in sections" :key="section.name">
+				<div class="check-list-widget-item-panel-section" :class="'--' + section.name">
+					<template v-for="item in section.items" :key="item.action" >
+						<div
+							v-hint="tooltip"
+							class="check-list-widget-item-panel-section-item"
+							:class="{
+								'--disabled': item.disabled,
+								'--active': item.active,
+								[item.className]: Boolean(item.className),
+							}"
+							@click="handleItemClick($event, item)"
+							@mouseenter="handleItemMouseEnter($event, item)"
+						>
+							<BIcon :name="getItemIcon(item)" :hoverable="item.hoverable"/>
+							<span v-if="item.label">{{ loc(item.label) }}</span>
+						</div>
+					</template>
+				</div>
+			</template>
+		</div>
+	`
+	};
 
 	var _interval = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("interval");
 	var _timerValue = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("timerValue");
@@ -95,101 +1671,62 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  return babelHelpers.classPrivateFieldLooseBase(this, _content)[_content].replace('#countdown#', babelHelpers.classPrivateFieldLooseBase(this, _counter)[_counter]);
 	}
 
-	const PanelSection = Object.freeze({
-	  Important: 'important',
-	  Attachments: 'attachments',
-	  Movement: 'movement',
-	  Accomplice: 'accomplice',
-	  Auditor: 'auditor',
-	  Forward: 'forward',
-	  Delete: 'delete',
-	  Cancel: 'cancel'
-	});
-	const PanelAction = Object.freeze({
-	  SetImportant: 'setImportant',
-	  AttachFile: 'attachFile',
-	  MoveRight: 'moveRight',
-	  MoveLeft: 'moveLeft',
-	  AssignAccomplice: 'assignAccomplice',
-	  AssignAuditor: 'assignAuditor',
-	  Forward: 'forward',
-	  Delete: 'delete',
-	  Cancel: 'cancel'
-	});
-	const PanelMeta = Object.freeze({
-	  defaultSections: [{
-	    name: PanelSection.Important,
-	    items: [{
-	      icon: ui_iconSet_api_core.Outline.FIRE,
-	      activeIcon: ui_iconSet_api_core.Outline.FIRE_SOLID,
-	      action: PanelAction.SetImportant,
-	      hint: 'TASKS_V2_CHECK_LIST_ITEM_IMPORTANT_HINT',
-	      className: '--important',
-	      hoverable: false
-	    }]
-	  }, {
-	    name: PanelSection.Attachments,
-	    items: [{
-	      icon: ui_iconSet_api_core.Outline.ATTACH,
-	      action: PanelAction.AttachFile,
-	      hint: 'TASKS_V2_CHECK_LIST_ITEM_ATTACH_HINT'
-	    }]
-	  }, {
-	    name: PanelSection.Movement,
-	    items: [{
-	      icon: ui_iconSet_api_core.Outline.POINT_RIGHT,
-	      action: PanelAction.MoveRight,
-	      hint: 'TASKS_V2_CHECK_LIST_ITEM_MOVE_RIGHT_HINT'
-	    }, {
-	      icon: ui_iconSet_api_core.Outline.POINT_LEFT,
-	      action: PanelAction.MoveLeft,
-	      hint: 'TASKS_V2_CHECK_LIST_ITEM_MOVE_LEFT_HINT'
-	    }]
-	  }, {
-	    name: PanelSection.Accomplice,
-	    items: [{
-	      icon: ui_iconSet_api_core.Outline.PERSON,
-	      action: PanelAction.AssignAccomplice,
-	      hint: 'TASKS_V2_CHECK_LIST_ITEM_ACCOMPLICE_HINT'
-	    }]
-	  }, {
-	    name: PanelSection.Auditor,
-	    items: [{
-	      icon: ui_iconSet_api_core.Outline.OBSERVER,
-	      action: PanelAction.AssignAuditor,
-	      hint: 'TASKS_V2_CHECK_LIST_ITEM_AUDITOR_HINT'
-	    }]
-	  }, {
-	    name: PanelSection.Forward,
-	    items: [{
-	      icon: ui_iconSet_api_core.Outline.FORWARD,
-	      action: PanelAction.Forward,
-	      hint: 'TASKS_V2_CHECK_LIST_ITEM_FORWARD_HINT'
-	    }]
-	  }, {
-	    name: PanelSection.Delete,
-	    items: [{
-	      icon: ui_iconSet_api_core.Outline.TRASHCAN,
-	      action: PanelAction.Delete,
-	      hint: 'TASKS_V2_CHECK_LIST_ITEM_REMOVE_HINT'
-	    }]
-	  }, {
-	    name: PanelSection.Cancel,
-	    items: [{
-	      icon: ui_iconSet_api_core.Outline.CROSS_L,
-	      action: PanelAction.Cancel,
-	      hint: 'TASKS_V2_CHECK_LIST_ITEM_CANCEL_HINT'
-	    }]
-	  }]
-	});
-
-	const CheckListMixin = {
+	// @vue/component
+	const CheckList = {
+	  name: 'TaskCheckList',
 	  components: {
+	    CheckListWidget,
+	    CheckListItemPanel,
+	    CheckListStub,
+	    UiButton: ui_vue3_components_button.Button,
+	    BIcon: ui_iconSet_api_vue.BIcon,
 	    BMenu: ui_vue3_components_menu.BMenu
+	  },
+	  provide() {
+	    return {
+	      setItemsRef: this.setItemsRef,
+	      getItemsRef: this.getItemsRef
+	    };
+	  },
+	  props: {
+	    taskId: {
+	      type: [Number, String],
+	      required: true
+	    },
+	    isAutonomous: {
+	      type: Boolean,
+	      default: false
+	    },
+	    isPreview: {
+	      type: Boolean,
+	      default: false
+	    },
+	    isComponentShown: {
+	      type: Boolean,
+	      default: true
+	    },
+	    checkListId: {
+	      type: [Number, String],
+	      default: 0
+	    },
+	    isShown: {
+	      type: Boolean,
+	      default: false
+	    }
+	  },
+	  emits: ['show', 'close', 'resize', 'open'],
+	  setup() {
+	    return {
+	      resizeObserver: null,
+	      AirButtonStyle: ui_vue3_components_button.AirButtonStyle,
+	      ButtonSize: ui_vue3_components_button.ButtonSize,
+	      ButtonIcon: ui_vue3_components_button.ButtonIcon,
+	      Outline: ui_iconSet_api_core.Outline
+	    };
 	  },
 	  data() {
 	    return {
-	      listShownItemPanels: [],
+	      checkListManager: null,
 	      itemPanelIsShown: false,
 	      checkListWasUpdated: false,
 	      itemId: null,
@@ -198,8 +1735,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        display: 'flex'
 	      },
 	      isItemPanelFreeze: false,
-	      itemPanelTopOffset: 0,
-	      itemPanelTopLimit: 0,
+	      itemPanelTopOffset: this.isAutonomous ? 5 : 2,
+	      itemPanelTopLimit: this.isAutonomous ? 450 : 700,
 	      itemsRefs: {},
 	      isForwardMenuShown: false,
 	      forwardMenuSectionCode: 'createSection',
@@ -209,13 +1746,21 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      shownPopups: new Set()
 	    };
 	  },
-	  provide() {
-	    return {
-	      setItemsRef: this.setItemsRef,
-	      getItemsRef: this.getItemsRef
-	    };
-	  },
 	  computed: {
+	    componentName() {
+	      if (this.isAutonomous) {
+	        return CheckListPopup;
+	      } else if (this.isPreview) {
+	        return CheckListList;
+	      }
+	      return CheckListSheet;
+	    },
+	    componentShown() {
+	      if (this.isPreview) {
+	        return this.isComponentShown;
+	      }
+	      return true;
+	    },
 	    isEdit() {
 	      return main_core.Type.isNumber(this.taskId) && this.taskId > 0;
 	    },
@@ -240,20 +1785,6 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        return false;
 	      }
 	      return ((_this$item$groupMode = this.item.groupMode) == null ? void 0 : _this$item$groupMode.selected) === true;
-	    },
-	    siblings() {
-	      if (!this.item) {
-	        return [];
-	      }
-	      return this.checkLists.filter(item => item.parentId === this.item.parentId);
-	    },
-	    children() {
-	      if (!this.item) {
-	        return [];
-	      }
-	      return this.checkLists.filter(item => {
-	        return item.parentId === this.item.id;
-	      });
 	    },
 	    visiblePanelActions() {
 	      if (!this.item) {
@@ -280,7 +1811,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        return [];
 	      }
 	      const disabledActions = [];
-	      const itemLevel = this.getItemLevel(this.item);
+	      const itemLevel = this.checkListManager.getItemLevel(this.item);
 	      const canModify = this.item.actions.modify === true;
 	      const canRemove = this.item.actions.remove === true;
 	      const conditionHandlers = {
@@ -348,7 +1879,11 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        },
 	        onClick: () => {
 	          this.hideItemPanel();
-	          void this.forwardToChecklist(checkList.id);
+	          if (this.itemGroupModeSelected) {
+	            void this.forwardGroupItemsToChecklist(checkList.id);
+	          } else {
+	            this.forwardToChecklist(checkList.id);
+	          }
 	        }
 	      }));
 	      return [...checklistItems, {
@@ -366,224 +1901,72 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    emptyList() {
 	      const siblings = this.parentCheckLists.filter(item => !this.itemsToDelete.includes(item.id));
 	      return siblings.length === 0;
+	    },
+	    contextClass() {
+	      if (this.isPreview) {
+	        return '--preview';
+	      }
+	      return this.isAutonomous ? '--popup' : '--sheet';
 	    }
 	  },
+	  watch: {
+	    async titleFieldOffsetHeight() {
+	      if (!this.$refs.popupComponent) {
+	        return;
+	      }
+	      await this.$nextTick();
+	      this.resize();
+	    },
+	    parentCheckLists() {
+	      if (this.isPreview) {
+	        this.unCollapseFirstParent();
+	      }
+	    },
+	    componentShown(value) {
+	      if (!this.isPreview) {
+	        return;
+	      }
+	      if (value) {
+	        this.subscribeToEvents();
+	      } else {
+	        this.unsubscribeFromEvents();
+	      }
+	    }
+	  },
+	  created() {
+	    this.checkListManager = new CheckListManager({
+	      computed: {
+	        checkLists: () => this.checkLists
+	      }
+	    });
+	  },
 	  mounted() {
-	    main_core.Event.bind(this.$refs.list, 'scroll', this.handleScroll);
+	    if (this.isAutonomous || this.isPreview) {
+	      this.subscribeToEvents();
+	    }
 	  },
 	  beforeUnmount() {
-	    main_core.Event.unbind(this.$refs.list, 'scroll', this.handleScroll);
+	    if (this.isAutonomous || this.isPreview) {
+	      this.unsubscribeFromEvents();
+	    }
 	  },
 	  methods: {
-	    handleScroll() {
-	      this.isForwardMenuShown = false;
-	      this.updatePanelPosition();
+	    subscribeToEvents() {
+	      main_core.Event.bind(this.$refs.list, 'scroll', this.handleScroll);
+	      main_core_events.EventEmitter.subscribe('BX.Main.Popup:onInit', this.handleInitPopup);
+	      main_core_events.EventEmitter.subscribe('BX.Main.Popup:onShow', this.handleShowPopup);
+	      main_core_events.EventEmitter.subscribe('BX.Main.Popup:onClose', this.handleClosePopup);
 	    },
-	    async saveCheckList() {
-	      if (this.checkListWasUpdated && this.isEdit) {
-	        await tasks_v2_provider_service_checkListService.checkListService.save(this.taskId, this.checkLists);
+	    unsubscribeFromEvents() {
+	      main_core.Event.unbind(this.$refs.list, 'scroll', this.handleScroll);
+	      main_core_events.EventEmitter.unsubscribe('BX.Main.Popup:onInit', this.handleInitPopup);
+	      main_core_events.EventEmitter.unsubscribe('BX.Main.Popup:onShow', this.handleShowPopup);
+	      main_core_events.EventEmitter.unsubscribe('BX.Main.Popup:onClose', this.handleClosePopup);
+	    },
+	    handleBeforeCreated() {
+	      if (this.isPreview) {
+	        this.unCollapseFirstParent();
 	      }
-	      if (!this.isDemoCheckListModified()) {
-	        this.removeChecklists();
-	      }
-	      this.checkListWasUpdated = false;
-	    },
-	    isDemoCheckListModified() {
-	      if (this.checkLists.length !== 1) {
-	        return true;
-	      }
-	      const [checkList] = this.checkLists;
-	      const demoTitle = this.loc('TASKS_V2_CHECK_LIST_TITLE_NUMBER', {
-	        '#number#': 1
-	      });
-	      return checkList.title !== demoTitle || checkList.accomplices.length > 0 || checkList.auditors.length > 0;
-	    },
-	    removeChecklists() {
-	      this.checkLists.filter(checklist => checklist.parentId === 0).forEach(item => {
-	        this.removeItem(item.id);
-	      });
-	    },
-	    async addCheckList(empty = false) {
-	      const parentId = main_core.Text.getRandom();
-	      const childId = main_core.Text.getRandom();
-	      const items = [this.getDataForNewCheckList(parentId)];
-	      if (!empty) {
-	        items.push({
-	          id: childId,
-	          nodeId: childId,
-	          parentId,
-	          sortIndex: 0
-	        });
-	      }
-	      await this.$store.dispatch(`${tasks_v2_const.Model.CheckList}/insertMany`, items);
-	      this.$store.dispatch(`${tasks_v2_const.Model.Tasks}/update`, {
-	        id: this.taskId,
-	        fields: {
-	          checklist: [...this.task.checklist, parentId, childId]
-	        }
-	      });
-	      return parentId;
-	    },
-	    addFastCheckList() {
-	      const parentId = main_core.Text.getRandom();
-	      this.$store.dispatch(`${tasks_v2_const.Model.CheckList}/insert`, this.getDataForNewCheckList(parentId));
-	      this.$store.dispatch(`${tasks_v2_const.Model.Tasks}/update`, {
-	        id: this.taskId,
-	        fields: {
-	          checklist: [...this.task.checklist, parentId]
-	        }
-	      });
-	      void this.saveCheckList();
-	    },
-	    showForwardMenu(node) {
-	      this.forwardBindElement = node;
-	      this.isForwardMenuShown = true;
-	    },
-	    getCheckListsNumber() {
-	      return this.checkLists.filter(checklist => {
-	        return checklist.parentId === 0 && !this.itemsToDelete.includes(checklist.id);
-	      }).length;
-	    },
-	    getDataForNewCheckList(parentId) {
-	      return {
-	        id: parentId,
-	        nodeId: parentId,
-	        title: this.loc('TASKS_V2_CHECK_LIST_TITLE_NUMBER', {
-	          '#number#': this.getCountForNewCheckList()
-	        }),
-	        sortIndex: this.getSortForNewCheckList()
-	      };
-	    },
-	    getSortForNewCheckList() {
-	      return this.getCheckListsNumber();
-	    },
-	    getCountForNewCheckList() {
-	      return this.getCheckListsNumber() + 1;
-	    },
-	    setItemsRef(id, ref) {
-	      this.itemsRefs[id] = ref;
-	    },
-	    getItemsRef(id) {
-	      return this.itemsRefs[id];
-	    },
-	    focusToItem(itemId) {
-	      void this.$nextTick(() => {
-	        var _this$getItemsRef, _this$getItemsRef$$re;
-	        (_this$getItemsRef = this.getItemsRef(itemId)) == null ? void 0 : (_this$getItemsRef$$re = _this$getItemsRef.$refs.growingTextArea) == null ? void 0 : _this$getItemsRef$$re.focusTextarea();
-	      });
-	    },
-	    showItem(itemId) {
-	      void this.$nextTick(() => {
-	        var _this$getItemsRef2;
-	        (_this$getItemsRef2 = this.getItemsRef(itemId)) == null ? void 0 : _this$getItemsRef2.show();
-	      });
-	    },
-	    hideItem(itemId) {
-	      void this.$nextTick(() => {
-	        var _this$getItemsRef3;
-	        (_this$getItemsRef3 = this.getItemsRef(itemId)) == null ? void 0 : _this$getItemsRef3.hide();
-	      });
-	    },
-	    addItem({
-	      id,
-	      sort
-	    }) {
-	      if (this.hasActiveGroupMode()) {
-	        return;
-	      }
-	      this.itemId = id;
-	      const childId = main_core.Text.getRandom();
-	      const sortIndex = sort != null ? sort : this.getSort();
-	      const parentId = this.item.parentId === 0 ? this.item.id : this.item.parentId;
-	      this.resortSiblingsItems(sortIndex);
-	      this.$store.dispatch(`${tasks_v2_const.Model.CheckList}/insert`, {
-	        id: childId,
-	        nodeId: childId,
-	        parentId,
-	        sortIndex
-	      });
-	      this.$store.dispatch(`${tasks_v2_const.Model.Tasks}/update`, {
-	        id: this.taskId,
-	        fields: {
-	          checklist: [...this.task.checklist, childId]
-	        }
-	      });
-	      this.syncParentCompletionState(childId);
-	    },
-	    removeItem(id, isRootCall = true) {
-	      var _this$item, _this$item2;
-	      if (!this.task) {
-	        return;
-	      }
-	      this.itemId = id;
-	      if ((_this$item = this.item) != null && _this$item.title) {
-	        this.checkListWasUpdated = true;
-	      }
-	      const parentId = ((_this$item2 = this.item) == null ? void 0 : _this$item2.parentId) || null;
-	      if (this.children.length > 0) {
-	        this.children.forEach(child => {
-	          this.removeItem(child.id, false);
-	        });
-	      }
-	      this.$store.dispatch(`${tasks_v2_const.Model.Tasks}/update`, {
-	        id: this.taskId,
-	        fields: {
-	          checklist: this.task.checklist.filter(itemId => itemId !== id)
-	        }
-	      });
-	      this.$store.dispatch(`${tasks_v2_const.Model.CheckList}/delete`, id);
-	      if (isRootCall) {
-	        this.resortSiblingsItems();
-	      }
-	      this.syncParentCompletionState(id, parentId);
-	      tasks_v2_provider_service_fileService.fileService.delete(id, tasks_v2_provider_service_fileService.EntityTypes.CheckListItem);
-	    },
-	    resortSiblingsItems(sortIndex) {
-	      const updates = [];
-	      if (main_core.Type.isUndefined(sortIndex)) {
-	        const siblings = this.siblings.sort((a, b) => {
-	          return a.sortIndex - b.sortIndex;
-	        });
-	        siblings.forEach((item, index) => {
-	          if (item.sortIndex !== index) {
-	            updates.push({
-	              ...item,
-	              sortIndex: index
-	            });
-	          }
-	        });
-	      } else {
-	        this.siblings.filter(item => item.sortIndex >= sortIndex).forEach(item => {
-	          updates.push({
-	            ...item,
-	            sortIndex: item.sortIndex + 1
-	          });
-	        });
-	      }
-	      if (updates.length > 0) {
-	        this.$store.dispatch(`${tasks_v2_const.Model.CheckList}/upsertMany`, updates);
-	      }
-	    },
-	    getSort() {
-	      if (this.item && this.item.parentId === 0) {
-	        return this.children.length;
-	      }
-	      return this.siblings.length;
-	    },
-	    toggleCompleted({
-	      itemId,
-	      collapsed
-	    }) {
-	      this.itemId = itemId;
-	      const children = this.getAllChildren();
-	      const completedChildren = children.filter(item => item.isComplete === true);
-	      completedChildren.forEach(item => {
-	        if (collapsed === false) {
-	          this.showItem(item.id);
-	        } else {
-	          this.hideItem(item.id);
-	        }
-	      });
 	    },
 	    handleUpdate() {
 	      this.checkListWasUpdated = true;
@@ -609,21 +1992,60 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      });
 	      notifier.showBalloonWithTimer();
 	    },
+	    handleScroll() {
+	      this.isForwardMenuShown = false;
+	      this.updatePanelPosition();
+	    },
+	    handleShow(data) {
+	      this.$emit('show', data);
+	    },
+	    async handleClose() {
+	      this.cancelGroupMode();
+	      this.$emit('close');
+	      await this.saveCheckList();
+	    },
+	    handleIsShown(isShown) {
+	      if (isShown) {
+	        this.subscribeToEvents();
+	      } else {
+	        this.unsubscribeFromEvents();
+	      }
+	    },
+	    handleInitPopup(baseEvent) {
+	      const data = baseEvent.getCompatData();
+	      const bindElement = data[1];
+	      const params = data[2];
+	      if (main_core.Type.isDomNode(bindElement)) {
+	        var _this$$refs$list;
+	        if ((_this$$refs$list = this.$refs.list) != null && _this$$refs$list.contains(bindElement)) {
+	          params.targetContainer = this.$refs.list;
+	        } else {
+	          params.targetContainer = document.body;
+	        }
+	      }
+	    },
+	    handleShowPopup(baseEvent) {
+	      const [popup] = baseEvent.getCompatData();
+	      this.shownPopups.add(popup.getId());
+	      this.freeze();
+	    },
+	    handleClosePopup(baseEvent) {
+	      const [popup] = baseEvent.getCompatData();
+	      this.shownPopups.delete(popup.getId());
+	      this.unfreeze();
+	    },
 	    async handleGroupRemove(itemId) {
 	      this.itemId = itemId;
 	      this.freeze();
 	      this.itemsToDelete = [...this.itemsToDelete, itemId];
 	      this.hideItemPanel(itemId);
-	      const allSelectedItems = this.getAllSelectedItems();
-	      const nearestItem = this.findNearestItem(false);
+	      const allSelectedItems = this.checkListManager.getAllSelectedItems();
+	      const nearestItem = this.checkListManager.findNearestItem(this.item, false);
 	      if (nearestItem) {
-	        await this.$store.dispatch(`${tasks_v2_const.Model.CheckList}/update`, {
-	          id: nearestItem.id,
-	          fields: {
-	            groupMode: {
-	              active: true,
-	              selected: true
-	            }
+	        await this.updateCheckList(nearestItem.id, {
+	          groupMode: {
+	            active: true,
+	            selected: true
 	          }
 	        });
 	        setTimeout(() => {
@@ -684,7 +2106,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    },
 	    handleGroupMode(itemId) {
 	      this.itemId = itemId;
-	      const firstChild = this.getFirstChild();
+	      const firstChild = this.checkListManager.getFirstChild(itemId);
 	      if (!firstChild) {
 	        return;
 	      }
@@ -699,60 +2121,6 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        this.showItemPanelOnNearestSelectedItem(itemId);
 	      }
 	    },
-	    showItemPanel(itemId) {
-	      this.itemId = itemId;
-	      this.itemPanelIsShown = true;
-	      if (!this.listShownItemPanels.includes(itemId)) {
-	        this.listShownItemPanels = [...this.listShownItemPanels, itemId];
-	      }
-	      void this.$nextTick(() => this.updatePanelPosition());
-	    },
-	    hideItemPanel(itemId) {
-	      this.itemPanelIsShown = false;
-	      if (this.hasActiveGroupMode() && this.getAllSelectedItems().length === 0) {
-	        this.deactivateGroupMode();
-	      }
-	      this.listShownItemPanels = this.listShownItemPanels.filter(id => id !== itemId);
-	      this.isItemPanelFreeze = false;
-	    },
-	    showItemPanelOnNearestSelectedItem(itemId) {
-	      // eslint-disable-next-line no-lonely-if
-	      const nearestSelectedItem = this.findNearestItem(true);
-	      if (nearestSelectedItem) {
-	        this.showItemPanel(nearestSelectedItem.id);
-	      } else {
-	        this.hideItemPanel(itemId);
-	      }
-	    },
-	    updatePanelPosition() {
-	      if (this.itemPanelIsShown === false) {
-	        return;
-	      }
-	      const itemRef = this.$refs.list.querySelector([`[data-id="${this.item.id}"]`]);
-	      const panelRect = main_core.Dom.getPosition(this.$refs.panel.$el);
-	      const itemRect = main_core.Dom.getRelativePosition(itemRef, this.$refs.list);
-	      const isParentItem = this.item.parentId === 0;
-	      const paddingOffset = 24;
-	      const panelWidth = panelRect.width === 0 ? 304 : panelRect.width;
-	      const top = itemRect.top - 10;
-	      if (isParentItem) {
-	        const left = itemRect.width - panelWidth - paddingOffset * 2 - 80;
-	        const display = top > -30 && top < this.itemPanelTopLimit ? 'flex' : 'none';
-	        this.itemPanelStyles = {
-	          top: `${top}px`,
-	          left: `${left}px`,
-	          display
-	        };
-	      } else {
-	        const left = itemRect.width - panelWidth - paddingOffset;
-	        const display = top > 40 && top < this.itemPanelTopLimit ? 'flex' : 'none';
-	        this.itemPanelStyles = {
-	          top: `${top}px`,
-	          left: `${left}px`,
-	          display
-	        };
-	      }
-	    },
 	    handlePanelAction({
 	      action,
 	      node
@@ -761,8 +2129,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      const actionHandlers = {
 	        [PanelAction.SetImportant]: n => this.setImportant(n),
 	        [PanelAction.AttachFile]: n => this.attachFile(n),
-	        [PanelAction.MoveRight]: n => this.handleMoveRight(n),
-	        [PanelAction.MoveLeft]: n => this.handleMoveLeft(n),
+	        [PanelAction.MoveRight]: n => this.moveGroupToRight(n),
+	        [PanelAction.MoveLeft]: n => this.moveGroupToLeft(n),
 	        [PanelAction.AssignAccomplice]: n => {
 	          if (!this.isItemPanelFreeze) {
 	            this.showParticipantDialog(n, 'accomplices');
@@ -779,19 +2147,311 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      };
 	      (_actionHandlers$actio = actionHandlers[action]) == null ? void 0 : _actionHandlers$actio.call(actionHandlers, node);
 	    },
+	    handleOpenCheckList(checkListId) {
+	      void this.updateCheckList(checkListId, {
+	        collapsed: false,
+	        previewCollapsed: false
+	      });
+	      this.$emit('open', checkListId);
+	    },
+	    updateCheckList(id, fields) {
+	      return this.$store.dispatch(`${tasks_v2_const.Model.CheckList}/update`, {
+	        id,
+	        fields
+	      });
+	    },
+	    updateTask(fields) {
+	      return this.$store.dispatch(`${tasks_v2_const.Model.Tasks}/update`, {
+	        id: this.taskId,
+	        fields
+	      });
+	    },
+	    upsertCheckLists(items) {
+	      return this.$store.dispatch(`${tasks_v2_const.Model.CheckList}/upsertMany`, items);
+	    },
+	    insertCheckList(item) {
+	      return this.$store.dispatch(`${tasks_v2_const.Model.CheckList}/insert`, item);
+	    },
+	    insertManyCheckLists(items) {
+	      return this.$store.dispatch(`${tasks_v2_const.Model.CheckList}/insertMany`, items);
+	    },
+	    deleteCheckList(id) {
+	      return this.$store.dispatch(`${tasks_v2_const.Model.CheckList}/delete`, id);
+	    },
+	    async saveCheckList() {
+	      if (this.checkListWasUpdated && this.isEdit) {
+	        await tasks_v2_provider_service_checkListService.checkListService.save(this.taskId, this.checkLists);
+	      }
+	      if (!this.isDemoCheckListModified()) {
+	        this.removeChecklists();
+	      }
+	      this.checkListWasUpdated = false;
+	    },
+	    isDemoCheckListModified() {
+	      if (this.checkLists.length !== 1) {
+	        return true;
+	      }
+	      const [checkList] = this.checkLists;
+	      const demoTitle = this.loc('TASKS_V2_CHECK_LIST_TITLE_NUMBER', {
+	        '#number#': 1
+	      });
+	      return checkList.title !== demoTitle || checkList.accomplices.length > 0 || checkList.auditors.length > 0;
+	    },
+	    removeChecklists() {
+	      this.checkLists.filter(checklist => checklist.parentId === 0).forEach(item => {
+	        this.removeItem(item.id);
+	      });
+	    },
+	    async addCheckList(empty = false) {
+	      const parentId = main_core.Text.getRandom();
+	      const childId = main_core.Text.getRandom();
+	      const items = [this.getDataForNewCheckList(parentId)];
+	      if (!empty) {
+	        items.push({
+	          id: childId,
+	          nodeId: childId,
+	          parentId,
+	          sortIndex: 0
+	        });
+	      }
+	      await this.insertManyCheckLists(items);
+	      void this.updateTask({
+	        checklist: [...this.task.checklist, parentId, childId]
+	      });
+	      return parentId;
+	    },
+	    async addFastCheckList() {
+	      const checkListId = await this.addCheckList();
+	      this.handleOpenCheckList(checkListId);
+	    },
+	    showForwardMenu(node) {
+	      this.forwardBindElement = node;
+	      this.isForwardMenuShown = true;
+	    },
+	    getCheckListsNumber() {
+	      return this.checkLists.filter(checklist => {
+	        return checklist.parentId === 0 && !this.itemsToDelete.includes(checklist.id);
+	      }).length;
+	    },
+	    getDataForNewCheckList(parentId) {
+	      return {
+	        id: parentId,
+	        nodeId: parentId,
+	        title: this.loc('TASKS_V2_CHECK_LIST_TITLE_NUMBER', {
+	          '#number#': this.getCountForNewCheckList()
+	        }),
+	        sortIndex: this.getSortForNewCheckList()
+	      };
+	    },
+	    getSortForNewCheckList() {
+	      return this.getCheckListsNumber();
+	    },
+	    getCountForNewCheckList() {
+	      return this.getCheckListsNumber() + 1;
+	    },
+	    setItemsRef(id, ref) {
+	      this.itemsRefs[id] = ref;
+	    },
+	    getItemsRef(id) {
+	      return this.itemsRefs[id];
+	    },
+	    focusToItem(itemId) {
+	      void this.$nextTick(() => {
+	        var _this$getItemsRef, _this$getItemsRef$$re;
+	        (_this$getItemsRef = this.getItemsRef(itemId)) == null ? void 0 : (_this$getItemsRef$$re = _this$getItemsRef.$refs.growingTextArea) == null ? void 0 : _this$getItemsRef$$re.focusTextarea();
+	      });
+	    },
+	    showItem(itemId) {
+	      void this.updateCheckList(itemId, {
+	        hidden: false
+	      });
+	      const children = this.checkListManager.getChildren(itemId);
+	      if (children.length > 0) {
+	        children.forEach(child => {
+	          this.showItem(child.id);
+	        });
+	      }
+	    },
+	    hideItem(itemId) {
+	      void this.updateCheckList(itemId, {
+	        hidden: true
+	      });
+	      const children = this.checkListManager.getChildren(itemId);
+	      if (children.length > 0) {
+	        children.forEach(child => {
+	          this.hideItem(child.id);
+	        });
+	      }
+	    },
+	    addItem({
+	      id,
+	      sort
+	    }) {
+	      if (this.hasActiveGroupMode()) {
+	        return;
+	      }
+	      this.itemId = id;
+	      const childId = main_core.Text.getRandom();
+	      const parentId = this.item.parentId;
+	      this.resortItemsAfterIndex(parentId, sort);
+	      void this.insertCheckList({
+	        id: childId,
+	        nodeId: childId,
+	        parentId,
+	        sortIndex: sort
+	      });
+	      void this.updateTask({
+	        checklist: [...this.task.checklist, childId]
+	      });
+	      this.syncParentCompletionState(childId);
+	    },
+	    addItemFromBtn(checkListId) {
+	      if (this.isPreview) {
+	        this.handleOpenCheckList(checkListId);
+	        return;
+	      }
+	      if (this.hasActiveGroupMode()) {
+	        return;
+	      }
+	      const childId = main_core.Text.getRandom();
+	      const sortIndex = this.checkListManager.getChildren(checkListId).length;
+	      void this.insertCheckList({
+	        id: childId,
+	        nodeId: childId,
+	        parentId: checkListId,
+	        sortIndex
+	      });
+	      void this.updateTask({
+	        checklist: [...this.task.checklist, childId]
+	      });
+	      this.syncParentCompletionState(childId);
+	    },
+	    removeItem(id, isRootCall = true) {
+	      var _this$item, _this$item2;
+	      if (!this.task) {
+	        return;
+	      }
+	      this.itemId = id;
+	      if ((_this$item = this.item) != null && _this$item.title) {
+	        this.checkListWasUpdated = true;
+	      }
+	      const parentId = ((_this$item2 = this.item) == null ? void 0 : _this$item2.parentId) || null;
+	      const children = this.checkListManager.getChildren(id);
+	      if (children.length > 0) {
+	        children.forEach(child => {
+	          this.removeItem(child.id, false);
+	        });
+	      }
+	      void this.updateTask({
+	        checklist: this.task.checklist.filter(itemId => itemId !== id)
+	      });
+	      void this.deleteCheckList(id);
+	      if (isRootCall) {
+	        this.resortItemsOnLevel(parentId);
+	      }
+	      this.syncParentCompletionState(id, parentId);
+	      tasks_v2_provider_service_fileService.fileService.delete(id, tasks_v2_provider_service_fileService.EntityTypes.CheckListItem);
+	    },
+	    resortItemsAfterIndex(parentId, sortIndex) {
+	      this.checkListManager.resortItemsAfterIndex(parentId, sortIndex, updates => {
+	        void this.upsertCheckLists(updates);
+	      });
+	    },
+	    resortItemsOnLevel(parentId) {
+	      this.checkListManager.resortItemsOnLevel(parentId, updates => this.upsertCheckLists(updates));
+	    },
+	    syncParentCompletionState(itemId, parentId) {
+	      this.checkListManager.syncParentCompletionState(itemId, (id, fields) => this.updateCheckList(id, fields), parentId);
+	    },
+	    toggleCompleted({
+	      itemId,
+	      collapsed
+	    }) {
+	      this.itemId = itemId;
+	      this.checkListManager.getAllCompletedChildrenChildren(itemId).forEach(item => {
+	        if (collapsed === false) {
+	          this.showItem(item.id);
+	        } else {
+	          this.hideItem(item.id);
+	        }
+	      });
+	    },
+	    showItemPanel(itemId) {
+	      if (this.isPreview) {
+	        return;
+	      }
+	      this.itemId = itemId;
+	      this.itemPanelIsShown = true;
+	      void this.updateCheckList(itemId, {
+	        panelIsShown: true
+	      });
+	      void this.$nextTick(() => this.updatePanelPosition());
+	    },
+	    hideItemPanel(itemId) {
+	      if (this.isPreview) {
+	        return;
+	      }
+	      this.itemPanelIsShown = false;
+	      if (this.hasActiveGroupMode() && this.checkListManager.getAllSelectedItems().length === 0) {
+	        this.deactivateGroupMode();
+	      }
+	      const item = this.checkListManager.getItem(itemId);
+	      if (item) {
+	        void this.updateCheckList(itemId, {
+	          panelIsShown: false
+	        });
+	      }
+	      this.isItemPanelFreeze = false;
+	    },
+	    showItemPanelOnNearestSelectedItem(itemId) {
+	      // eslint-disable-next-line no-lonely-if
+	      const nearestSelectedItem = this.checkListManager.findNearestItem(this.item, true);
+	      if (nearestSelectedItem) {
+	        this.showItemPanel(nearestSelectedItem.id);
+	      } else {
+	        this.hideItemPanel(itemId);
+	      }
+	    },
+	    updatePanelPosition() {
+	      if (this.itemPanelIsShown === false) {
+	        return;
+	      }
+	      const itemRef = this.$refs.list.querySelector([`[data-id="${this.item.id}"]`]);
+	      const panelRect = main_core.Dom.getPosition(this.$refs.panel.$el);
+	      const listRect = main_core.Dom.getPosition(this.$refs.list);
+	      const itemRect = main_core.Dom.getRelativePosition(itemRef, this.$refs.list);
+	      const isParentItem = this.item.parentId === 0;
+	      const paddingOffset = 18;
+	      const panelWidth = panelRect.width === 0 ? 304 : panelRect.width;
+	      const top = itemRect.top - 14;
+	      if (isParentItem) {
+	        const left = listRect.width - panelWidth - paddingOffset * 2 - 80;
+	        const display = top > -30 && top < this.itemPanelTopLimit ? 'flex' : 'none';
+	        this.itemPanelStyles = {
+	          top: `${top}px`,
+	          left: `${left}px`,
+	          display
+	        };
+	      } else {
+	        const left = listRect.width - panelWidth - paddingOffset;
+	        const display = top > 40 && top < this.itemPanelTopLimit ? 'flex' : 'none';
+	        this.itemPanelStyles = {
+	          top: `${top}px`,
+	          left: `${left}px`,
+	          display
+	        };
+	      }
+	    },
 	    setImportant() {
 	      if (this.itemGroupModeSelected) {
-	        const updates = this.getAllSelectedItems().map(item => ({
+	        const updates = this.checkListManager.getAllSelectedItems().map(item => ({
 	          ...item,
 	          isImportant: !item.isImportant
 	        }));
-	        this.$store.dispatch(`${tasks_v2_const.Model.CheckList}/upsertMany`, updates);
+	        void this.upsertCheckLists(updates);
 	      } else {
-	        this.$store.dispatch(`${tasks_v2_const.Model.CheckList}/update`, {
-	          id: this.item.id,
-	          fields: {
-	            isImportant: !this.item.isImportant
-	          }
+	        void this.updateCheckList(this.item.id, {
+	          isImportant: !this.item.isImportant
 	        });
 	      }
 	      this.checkListWasUpdated = true;
@@ -804,11 +2464,12 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      tasks_v2_provider_service_fileService.fileService.get(this.item.id, tasks_v2_provider_service_fileService.EntityTypes.CheckListItem).subscribeOnce('onFileComplete', () => {
 	        this.isItemPanelFreeze = false;
 	        this.focusToItem(this.item.id);
+	        this.checkListWasUpdated = true;
 	      });
 	    },
-	    handleMoveRight() {
+	    moveGroupToRight() {
 	      if (this.itemGroupModeSelected) {
-	        this.getAllSelectedItems().sort((a, b) => a.sortIndex - b.sortIndex).forEach(item => {
+	        this.checkListManager.getAllSelectedItems().sort((a, b) => a.sortIndex - b.sortIndex).forEach(item => {
 	          this.moveRight(item);
 	        });
 	      } else {
@@ -816,46 +2477,18 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      }
 	    },
 	    moveRight(item) {
-	      var _item$groupMode;
-	      if (item.parentId === 0 || this.getItemLevel(item) > 5) {
-	        return;
-	      }
-	      const siblings = this.checkLists.filter(sibling => sibling.parentId === item.parentId).sort((a, b) => (a.sortIndex || 0) - (b.sortIndex || 0));
-	      const currentIndex = siblings.findIndex(sibling => sibling.id === item.id);
-	      if (currentIndex <= 0) {
-	        return;
-	      }
-	      let newParent = null;
-	      for (let i = currentIndex - 1; i >= 0; i--) {
-	        const candidate = siblings[i];
-	        if (!this.isItemDescendant(candidate, item)) {
-	          newParent = candidate;
-	          break;
+	      this.checkListManager.moveRight(item, updates => {
+	        var _item$groupMode;
+	        void this.upsertCheckLists(updates);
+	        this.checkListWasUpdated = true;
+	        if (!((_item$groupMode = item.groupMode) != null && _item$groupMode.active)) {
+	          this.focusToItem(item.id);
 	        }
-	      }
-	      if (!newParent) {
-	        return;
-	      }
-	      const newParentChildren = this.checkLists.filter(child => child.parentId === newParent.id).sort((a, b) => a.sortIndex - b.sortIndex);
-	      const updates = siblings.filter((sibling, index) => index > currentIndex).map(sibling => ({
-	        ...sibling,
-	        sortIndex: sibling.sortIndex - 1
-	      }));
-	      updates.push({
-	        ...item,
-	        parentId: newParent.id,
-	        parentNodeId: newParent.nodeId,
-	        sortIndex: newParentChildren.length > 0 ? newParentChildren[newParentChildren.length - 1].sortIndex + 1 : 0
 	      });
-	      this.$store.dispatch(`${tasks_v2_const.Model.CheckList}/upsertMany`, updates);
-	      this.checkListWasUpdated = true;
-	      if (!((_item$groupMode = item.groupMode) != null && _item$groupMode.active)) {
-	        this.focusToItem(item.id);
-	      }
 	    },
-	    handleMoveLeft() {
+	    moveGroupToLeft() {
 	      if (this.itemGroupModeSelected) {
-	        this.getAllSelectedItems().sort((a, b) => b.sortIndex - a.sortIndex).forEach(item => {
+	        this.checkListManager.getAllSelectedItems().sort((a, b) => b.sortIndex - a.sortIndex).forEach(item => {
 	          this.moveLeft(item);
 	        });
 	      } else {
@@ -863,63 +2496,14 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      }
 	    },
 	    moveLeft(item) {
-	      var _item$groupMode2;
-	      if (item.parentId === 0 || this.getItemLevel(item) <= 1) {
-	        return;
-	      }
-	      const currentParent = this.checkLists.find(parent => parent.id === item.parentId);
-	      if (!currentParent) {
-	        return;
-	      }
-	      const newParentId = currentParent.parentId || 0;
-	      const newSiblings = this.checkLists.filter(sibling => sibling.parentId === newParentId).sort((a, b) => a.sortIndex - b.sortIndex);
-	      const parentInNewListIndex = newSiblings.findIndex(sibling => sibling.id === currentParent.id);
-	      const currentSiblingsUpdates = this.checkLists.filter(sibling => sibling.parentId === item.parentId && sibling.sortIndex > item.sortIndex).map(sibling => ({
-	        ...sibling,
-	        sortIndex: sibling.sortIndex - 1
-	      }));
-	      let newSortIndex = 0;
-	      if (parentInNewListIndex === -1 || parentInNewListIndex === newSiblings.length - 1) {
-	        newSortIndex = newSiblings.length > 0 ? newSiblings[newSiblings.length - 1].sortIndex + 1 : 0;
-	      } else {
-	        newSortIndex = newSiblings[parentInNewListIndex].sortIndex + 1;
-	        const shiftUpdates = newSiblings.filter(sibling => sibling.sortIndex >= newSortIndex).map(sibling => ({
-	          ...sibling,
-	          sortIndex: sibling.sortIndex + 1
-	        }));
-	        currentSiblingsUpdates.push(...shiftUpdates);
-	      }
-	      const movedItemUpdate = {
-	        ...item,
-	        parentId: newParentId,
-	        parentNodeId: currentParent.parentNodeId || null,
-	        sortIndex: newSortIndex
-	      };
-	      const updates = [...currentSiblingsUpdates, movedItemUpdate];
-	      this.$store.dispatch(`${tasks_v2_const.Model.CheckList}/upsertMany`, updates);
-	      this.checkListWasUpdated = true;
-	      if (!((_item$groupMode2 = item.groupMode) != null && _item$groupMode2.active)) {
-	        this.focusToItem(item.id);
-	      }
-	    },
-	    isItemDescendant(potentialAncestor, item) {
-	      if (item.parentId === potentialAncestor.id) {
-	        return true;
-	      }
-	      if (item.parentId === 0) {
-	        return false;
-	      }
-	      const parent = this.checkLists.find(i => i.id === item.parentId);
-	      if (!parent) {
-	        return false;
-	      }
-	      return this.isItemDescendant(potentialAncestor, parent);
-	    },
-	    assignAccomplice(node) {
-	      this.showParticipantDialog(node, 'accomplices');
-	    },
-	    assignAuditor(node) {
-	      this.showParticipantDialog(node, 'auditors');
+	      this.checkListManager.moveLeft(item, updates => {
+	        var _item$groupMode2;
+	        void this.upsertCheckLists(updates);
+	        this.checkListWasUpdated = true;
+	        if (!((_item$groupMode2 = item.groupMode) != null && _item$groupMode2.active)) {
+	          this.focusToItem(item.id);
+	        }
+	      });
 	    },
 	    async forward(node) {
 	      if (this.hasFewParentCheckLists) {
@@ -932,62 +2516,71 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    },
 	    async forwardToNewChecklist() {
 	      const newParentId = await this.addCheckList(true);
-	      void this.forwardToChecklist(newParentId);
-	    },
-	    async forwardToChecklist(parentId) {
 	      if (this.itemGroupModeSelected) {
-	        const allSelectedItems = this.getAllSelectedItems();
-	        const nearestItem = this.findNearestItem(false, allSelectedItems);
-	        if (nearestItem) {
-	          this.showItemPanel(nearestItem.id);
-	        } else {
-	          this.cancelGroupMode();
-	        }
-	        const allSelectedWithChildren = this.getAllSelectedItemsWithChildren();
-	        const selectedItemsIds = new Set(allSelectedItems.map(item => item.id));
-	        const updates = [];
-	        allSelectedItems.forEach(item => {
-	          const shouldUpdateParentId = !selectedItemsIds.has(item.parentId);
+	        void this.forwardGroupItemsToChecklist(newParentId);
+	      } else {
+	        this.forwardToChecklist(newParentId);
+	      }
+	    },
+	    forwardToChecklist(checkListId) {
+	      const finalSortIndex = this.checkListManager.getChildren(checkListId).length;
+	      void this.updateCheckList(this.item.id, {
+	        parentId: checkListId,
+	        sortIndex: finalSortIndex
+	      });
+	      this.resortItemsOnLevel(checkListId);
+	      this.resortItemsOnLevel(this.item.parentId);
+	    },
+	    async forwardGroupItemsToChecklist(checkListId) {
+	      const finalSortIndex = this.checkListManager.getChildren(checkListId).length;
+	      const checkListIdsFromWhichWereForwarded = new Set();
+	      const allSelectedItems = this.checkListManager.getAllSelectedItems();
+	      const nearestItem = this.checkListManager.findNearestItem(this.item, false, allSelectedItems);
+	      if (nearestItem) {
+	        this.showItemPanel(nearestItem.id);
+	      } else {
+	        this.cancelGroupMode();
+	      }
+	      const allSelectedWithChildren = this.checkListManager.getAllSelectedItemsWithChildren();
+	      const selectedItemsIds = new Set(allSelectedItems.map(item => item.id));
+	      const updates = [];
+	      allSelectedItems.forEach(item => {
+	        const shouldUpdateParentId = !selectedItemsIds.has(item.parentId);
+	        checkListIdsFromWhichWereForwarded.add(item.parentId);
+	        updates.push({
+	          ...item,
+	          parentId: shouldUpdateParentId ? checkListId : item.parentId,
+	          groupMode: {
+	            active: false,
+	            selected: false
+	          },
+	          sortIndex: shouldUpdateParentId ? finalSortIndex : item.sortIndex
+	        });
+	      });
+	      allSelectedWithChildren.forEach(item => {
+	        if (!selectedItemsIds.has(item.id)) {
 	          updates.push({
 	            ...item,
-	            parentId: shouldUpdateParentId ? parentId : item.parentId,
 	            groupMode: {
 	              active: false,
 	              selected: false
 	            }
 	          });
-	        });
-	        allSelectedWithChildren.forEach(item => {
-	          if (!selectedItemsIds.has(item.id)) {
-	            updates.push({
-	              ...item,
-	              groupMode: {
-	                active: false,
-	                selected: false
-	              }
-	            });
-	          }
-	        });
-	        await this.$store.dispatch(`${tasks_v2_const.Model.CheckList}/upsertMany`, updates);
-	        if (nearestItem) {
-	          void this.$store.dispatch(`${tasks_v2_const.Model.CheckList}/update`, {
-	            id: nearestItem.id,
-	            fields: {
-	              groupMode: {
-	                active: true,
-	                selected: true
-	              }
-	            }
-	          });
 	        }
-	      } else {
-	        this.$store.dispatch(`${tasks_v2_const.Model.CheckList}/update`, {
-	          id: this.item.id,
-	          fields: {
-	            parentId
+	      });
+	      await this.upsertCheckLists(updates);
+	      if (nearestItem) {
+	        void this.updateCheckList(nearestItem.id, {
+	          groupMode: {
+	            active: true,
+	            selected: true
 	          }
 	        });
 	      }
+	      this.resortItemsOnLevel(checkListId);
+	      checkListIdsFromWhichWereForwarded.forEach(id => {
+	        this.resortItemsOnLevel(id);
+	      });
 	    },
 	    delete() {
 	      if (this.itemGroupModeSelected) {
@@ -1002,121 +2595,76 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      this.hideItemPanel();
 	    },
 	    showParticipantDialog(targetNode, type) {
-	      var _this$selectors, _this$selectors2, _this$selectors2$sele;
+	      var _this$selector;
 	      this.isItemPanelFreeze = true;
-	      const itemId = this.item.id;
-	      const preselected = this.preselectedParticipants(type);
-	      (_this$selectors = this.selectors) != null ? _this$selectors : this.selectors = {};
-	      const selectorId = `${type}-${itemId}`;
-	      (_this$selectors2$sele = (_this$selectors2 = this.selectors)[selectorId]) != null ? _this$selectors2$sele : _this$selectors2[selectorId] = new tasks_v2_lib_userSelectorDialog.UserSelectorDialog({
-	        taskId: this.taskId,
-	        preselected,
-	        dialogOptions: {
-	          ...tasks_v2_component_elements_participantList.participantMeta.dialogOptions(this.taskId, `check-list-${selectorId}`),
-	          popupOptions: {
-	            events: {
-	              onShow: baseEvent => {
-	                const popup = baseEvent.getTarget();
-	                const popupWidth = popup.getPopupContainer().offsetWidth;
-	                const targetNodeWidth = 10;
-	                const offsetLeft = targetNodeWidth - popupWidth / 2;
-	                const angleShift = main_popup.Popup.getOption('angleLeftOffset') - main_popup.Popup.getOption('angleMinTop');
-	                popup.setAngle({
-	                  offset: popupWidth / 2 - angleShift
-	                });
-	                popup.setOffset({
-	                  offsetLeft: offsetLeft + main_popup.Popup.getOption('angleLeftOffset')
-	                });
-	              },
-	              onClose: () => {
-	                const users = this.selectors[selectorId].getDialog().getSelectedItems().map(item => ({
-	                  id: item.getId(),
-	                  name: item.getTitle(),
-	                  image: item.getAvatar(),
-	                  type: item.getEntityType()
-	                }));
-	                this.saveParticipants(itemId, type, users);
-	              }
+	      const preselected = this.item[type].map(user => ['user', user.id]);
+	      (_this$selector = this.selector) != null ? _this$selector : this.selector = new tasks_v2_lib_entitySelectorDialog.EntitySelectorDialog({
+	        ...tasks_v2_component_elements_participantList.participantMeta.dialogOptions(this.taskId, 'check-list'),
+	        preselectedItems: preselected,
+	        popupOptions: {
+	          events: {
+	            onShow: baseEvent => {
+	              const popup = baseEvent.getTarget();
+	              const popupWidth = popup.getPopupContainer().offsetWidth;
+	              const targetNodeWidth = 10;
+	              const offsetLeft = targetNodeWidth - popupWidth / 2;
+	              const angleShift = main_popup.Popup.getOption('angleLeftOffset') - main_popup.Popup.getOption('angleMinTop');
+	              popup.setAngle({
+	                offset: popupWidth / 2 - angleShift
+	              });
+	              popup.setOffset({
+	                offsetLeft: offsetLeft + main_popup.Popup.getOption('angleLeftOffset')
+	              });
+	            },
+	            onClose: () => {
+	              const users = this.selector.getSelectedItems().map(item => ({
+	                id: item.getId(),
+	                name: item.getTitle(),
+	                image: item.getAvatar(),
+	                type: item.getEntityType()
+	              }));
+	              this.saveParticipants(this.selector.params.itemId, this.selector.params.type, users);
 	            }
 	          }
 	        },
 	        events: {
 	          onHide: () => {
 	            this.isItemPanelFreeze = false;
-	            if (!this.itemGroupModeSelected) {
-	              this.focusToItem(itemId);
+	            if (!this.itemGroupModeSelected && this.item.id === this.selector.params.itemId) {
+	              this.focusToItem(this.selector.params.itemId);
 	            }
 	            this.updatePanelPosition();
 	          }
 	        }
 	      });
-	      this.selectors[selectorId].show(targetNode);
-	    },
-	    preselectedParticipants(type) {
-	      switch (type) {
-	        case 'accomplices':
-	          return this.item.accomplices.map(user => ['user', user.id]);
-	        case 'auditors':
-	          return this.item.auditors.map(user => ['user', user.id]);
-	        default:
-	          return [];
-	      }
+	      this.selector.selectItemsByIds(preselected);
+	      this.selector.params = {
+	        itemId: this.item.id,
+	        type
+	      };
+	      this.selector.showTo(targetNode);
 	    },
 	    saveParticipants(id, type, users) {
 	      if (this.itemGroupModeSelected) {
-	        const updates = this.getAllSelectedItems().map(item => ({
+	        const updates = this.checkListManager.getAllSelectedItems().map(item => ({
 	          ...item,
 	          [type]: users
 	        }));
-	        this.$store.dispatch(`${tasks_v2_const.Model.CheckList}/upsertMany`, updates);
+	        void this.upsertCheckLists(updates);
 	      } else {
-	        this.$store.dispatch(`${tasks_v2_const.Model.CheckList}/update`, {
-	          id,
-	          fields: {
-	            [type]: users
-	          }
+	        void this.updateCheckList(id, {
+	          [type]: users
 	        });
 	      }
 	      const ids = users.map(user => user.id);
 	      const fields = {
 	        [`${type}Ids`]: ids
 	      };
-	      this.$store.dispatch(`${tasks_v2_const.Model.Tasks}/update`, {
-	        id: this.taskId,
-	        fields
-	      });
-	    },
-	    syncParentCompletionState(itemId, parentItemId) {
-	      const changedItem = this.checkLists.find(item => item.id === itemId);
-	      if ((!changedItem || !changedItem.parentId) && !parentItemId) {
-	        return;
-	      }
-	      const parentId = parentItemId || changedItem.parentId;
-	      const parentItem = this.checkLists.find(item => item.id === parentId);
-	      if (!parentItem) {
-	        return;
-	      }
-	      const childrenItems = this.checkLists.filter(item => item.parentId === parentItem.id);
-	      const isEmptyParent = childrenItems.length === 0;
-	      const allChildrenCompleted = childrenItems.every(child => child.isComplete);
-	      const someChildrenIncomplete = childrenItems.some(child => !child.isComplete);
-	      const shouldUpdateParent = isEmptyParent || allChildrenCompleted && !parentItem.isComplete || someChildrenIncomplete && parentItem.isComplete;
-	      if (!shouldUpdateParent) {
-	        return;
-	      }
-	      this.$store.dispatch(`${tasks_v2_const.Model.CheckList}/update`, {
-	        id: parentItem.id,
-	        fields: {
-	          isComplete: allChildrenCompleted && !isEmptyParent
-	        }
-	      });
-	      if (parentItem.parentId) {
-	        this.syncParentCompletionState(parentItem.id);
-	      }
+	      void this.updateTask(fields);
 	    },
 	    activateGroupMode(parentItemId) {
 	      this.itemId = parentItemId;
-	      const updates = this.getAllChildren().map((item, index) => ({
+	      const updates = this.checkListManager.getAllChildren(parentItemId).map((item, index) => ({
 	        ...item,
 	        groupMode: {
 	          active: true,
@@ -1130,261 +2678,119 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	          selected: false
 	        }
 	      });
-	      this.$store.dispatch(`${tasks_v2_const.Model.CheckList}/upsertMany`, updates);
+	      void this.upsertCheckLists(updates);
 	    },
 	    deactivateGroupMode() {
-	      const updates = this.getAllGroupModeItems().map(item => ({
+	      const updates = this.checkListManager.getAllGroupModeItems().map(item => ({
 	        ...item,
 	        groupMode: {
 	          active: false,
 	          selected: false
 	        }
 	      }));
-	      this.$store.dispatch(`${tasks_v2_const.Model.CheckList}/upsertMany`, updates);
-	    },
-	    getRootParent(item) {
-	      if (!item || item.parentId === 0) {
-	        return item || null;
-	      }
-	      const parentItem = this.checkLists.find(parent => parent.id === item.parentId);
-	      if (!parentItem) {
-	        return null;
-	      }
-	      return this.getRootParent(parentItem);
-	    },
-	    getAllChildren() {
-	      if (!this.item) {
-	        return [];
-	      }
-	      const getAllChildren = parentId => {
-	        const directChildren = this.checkLists.filter(item => item.parentId === parentId).sort((a, b) => a.sortIndex - b.sortIndex);
-	        let allChildren = [...directChildren];
-	        directChildren.forEach(child => {
-	          allChildren = [...allChildren, ...getAllChildren(child.id)];
-	        });
-	        return allChildren;
-	      };
-	      return getAllChildren(this.item.id);
-	    },
-	    getFirstChild() {
-	      if (!this.item) {
-	        return null;
-	      }
-	      const children = this.checkLists.filter(item => item.parentId === this.item.id).sort((a, b) => a.sortIndex - b.sortIndex);
-	      return children[0] || null;
-	    },
-	    findNearestItem(selected, excludeChildrenOf = []) {
-	      if (!this.item) {
-	        return null;
-	      }
-	      const rootParent = this.getRootParent(this.item);
-	      if (!rootParent) {
-	        return null;
-	      }
-	      const currentSortIndex = this.item.sortIndex;
-	      const excludedParentIds = new Set(excludeChildrenOf.map(item => item.id));
-	      const eligibleItems = this.checkLists.sort((a, b) => a.sortIndex - b.sortIndex).filter(item => {
-	        var _item$groupMode3, _this$getRootParent;
-	        const isChildOfExcluded = excludedParentIds.has(item.parentId);
-	        return item.id !== this.item.id && item.parentId !== 0 && ((_item$groupMode3 = item.groupMode) == null ? void 0 : _item$groupMode3.selected) === selected && ((_this$getRootParent = this.getRootParent(item)) == null ? void 0 : _this$getRootParent.id) === rootParent.id && !isChildOfExcluded;
-	      });
-	      if (eligibleItems.length === 0) {
-	        return null;
-	      }
-	      return eligibleItems.reduce((nearest, item) => {
-	        return item.sortIndex > currentSortIndex && (item.sortIndex < nearest.sortIndex || nearest.sortIndex <= currentSortIndex) ? item : nearest;
-	      });
-	    },
-	    getAllGroupModeItems() {
-	      return this.checkLists.filter(item => {
-	        var _item$groupMode4;
-	        return ((_item$groupMode4 = item.groupMode) == null ? void 0 : _item$groupMode4.active) === true;
-	      });
-	    },
-	    getAllSelectedItems() {
-	      return this.checkLists.filter(item => {
-	        var _item$groupMode5;
-	        return item.parentId !== 0 && ((_item$groupMode5 = item.groupMode) == null ? void 0 : _item$groupMode5.selected) === true;
-	      });
-	    },
-	    getAllSelectedItemsWithChildren() {
-	      const selectedItems = this.checkLists.filter(item => {
-	        var _item$groupMode6;
-	        return item.parentId !== 0 && ((_item$groupMode6 = item.groupMode) == null ? void 0 : _item$groupMode6.selected) === true;
-	      });
-	      const getChildren = parentIds => {
-	        const children = this.checkLists.filter(item => parentIds.includes(item.parentId));
-	        return children.length > 0 ? [...children, ...getChildren(children.map(child => child.id))] : children;
-	      };
-	      return [...selectedItems, ...getChildren(selectedItems.map(item => item.id))];
+	      void this.upsertCheckLists(updates);
 	    },
 	    hasActiveGroupMode() {
-	      return this.getAllGroupModeItems().length > 0;
-	    },
-	    handleShowPopup(baseEvent) {
-	      const [popup] = baseEvent.getCompatData();
-	      this.shownPopups.add(popup.getId());
-	      this.freeze();
-	    },
-	    handleClosePopup(baseEvent) {
-	      const [popup] = baseEvent.getCompatData();
-	      this.shownPopups.delete(popup.getId());
-	      this.unfreeze();
+	      return this.checkListManager.getAllGroupModeItems().length > 0;
 	    },
 	    freeze() {
-	      var _this$$refs$popupComp;
-	      (_this$$refs$popupComp = this.$refs.popupComponent) == null ? void 0 : _this$$refs$popupComp.freeze();
+	      var _this$$refs$childComp, _this$$refs$childComp2, _this$$refs$childComp3;
+	      (_this$$refs$childComp = this.$refs.childComponent) == null ? void 0 : (_this$$refs$childComp2 = _this$$refs$childComp.$refs) == null ? void 0 : (_this$$refs$childComp3 = _this$$refs$childComp2.childComponent) == null ? void 0 : _this$$refs$childComp3.freeze();
 	    },
 	    unfreeze() {
 	      if (this.shownPopups.size === 0 && this.itemsToDelete.length === 0) {
-	        var _this$$refs$popupComp2;
-	        (_this$$refs$popupComp2 = this.$refs.popupComponent) == null ? void 0 : _this$$refs$popupComp2.unfreeze();
+	        var _this$$refs$childComp4, _this$$refs$childComp5, _this$$refs$childComp6;
+	        (_this$$refs$childComp4 = this.$refs.childComponent) == null ? void 0 : (_this$$refs$childComp5 = _this$$refs$childComp4.$refs) == null ? void 0 : (_this$$refs$childComp6 = _this$$refs$childComp5.childComponent) == null ? void 0 : _this$$refs$childComp6.unfreeze();
 	      }
 	    },
 	    setDefaultCheckListTitle(itemId) {
-	      this.$store.dispatch(`${tasks_v2_const.Model.CheckList}/update`, {
-	        id: itemId,
-	        fields: {
-	          title: this.loc('TASKS_V2_CHECK_LIST_TITLE_NUMBER', {
-	            '#number#': this.getCheckListsNumber()
-	          })
-	        }
+	      void this.updateCheckList(itemId, {
+	        title: this.loc('TASKS_V2_CHECK_LIST_TITLE_NUMBER', {
+	          '#number#': this.getCheckListsNumber()
+	        })
 	      });
-	    }
-	  }
-	};
-
-	const checkListMeta = Object.freeze({
-	  id: 'checklist',
-	  title: main_core.Loc.getMessage('TASKS_V2_CHECK_LIST_TITLE')
-	});
-
-	// @vue/component
-	const CheckList = {
-	  name: 'TaskCheckList',
-	  components: {
-	    BIcon: ui_iconSet_api_vue.BIcon
-	  },
-	  mixins: [CheckListMixin],
-	  props: {
-	    taskId: {
-	      type: [Number, String],
-	      required: true
-	    }
-	  },
-	  emits: ['open'],
-	  setup() {
-	    return {
-	      Animated: ui_iconSet_api_core.Animated,
-	      Outline: ui_iconSet_api_core.Outline,
-	      checkListMeta
-	    };
-	  },
-	  data() {
-	    return {};
-	  },
-	  computed: {
-	    task() {
-	      return this.$store.getters[`${tasks_v2_const.Model.Tasks}/getById`](this.taskId);
 	    },
-	    checkLists() {
-	      return this.$store.getters[`${tasks_v2_const.Model.CheckList}/getByIds`](this.task.checklist);
-	    },
-	    isLoading() {
-	      return this.checkLists.length === 0;
-	    },
-	    containsChecklist() {
-	      return this.task.containsChecklist;
-	    },
-	    parentCheckLists() {
-	      return this.checkLists.filter(checkList => checkList.parentId === 0);
-	    }
-	  },
-	  async created() {
-	    if (this.containsChecklist) {
-	      void this.loadData();
-	    }
-	  },
-	  methods: {
-	    async loadData() {
-	      await tasks_v2_provider_service_checkListService.checkListService.load(this.taskId);
-	    },
-	    getCompletedCount(parentId) {
-	      return this.checkLists.filter(checklist => {
-	        return checklist.parentId === parentId && checklist.isComplete;
-	      }).length;
-	    },
-	    getTotalCount(parentId) {
-	      return this.checkLists.filter(checklist => {
-	        return checklist.parentId === parentId;
-	      }).length;
-	    },
-	    showCheckList(checkListId) {
-	      this.$emit('open', checkListId);
-	    },
-	    renderCheckListStatus(checkListId) {
-	      return this.loc('TASKS_V2_CHECK_LIST_STATUS_LABEL', {
-	        '#completed#': this.getCompletedCount(checkListId),
-	        '#total#': this.getTotalCount(checkListId)
-	      });
+	    unCollapseFirstParent() {
+	      const firstParent = this.parentCheckLists[0];
+	      if (firstParent.previewCollapsed === true) {
+	        void this.updateCheckList(firstParent.id, {
+	          previewCollapsed: false
+	        });
+	      }
 	    }
 	  },
 	  template: `
-		<div
-			:data-task-field-id="checkListMeta.id"
-			class="tasks-field-check-list"
-			:class="{ '--default': isLoading }"
+		<component
+			v-if="componentShown"
+			ref="childComponent"
+			:is="componentName"
+			:taskId="taskId"
+			:isShown="isShown"
+			@show="handleShow"
+			@close="handleClose"
+			@isShown="handleIsShown"
+			@addFastCheckList="addFastCheckList"
+			@resize="$emit('resize')"
 		>
-			<div
-				class="tasks-field-check-list-content"
-				:class="{ '--default': isLoading }"
-			>
-				<template v-if="isLoading">
-					<div class="tasks-field-check-list-content-row">
-						<BIcon :name="Animated.LOADER_WAIT"/>
-						<div class="tasks-field-check-list-content-text">
-							{{ loc('TASKS_V2_CHECK_LIST_LOADING') }}
-						</div>
+			<template v-slot:default="{ handleShow, handleClose }">
+				<div ref="wrapper" class="tasks-check-list-wrapper" :class="contextClass">
+					<div v-if="!isPreview" class="tasks-check-list-close-icon" :class="contextClass">
+						<BIcon :name="Outline.CROSS_L" @click="handleClose"/>
 					</div>
-				</template>
-				<template v-else>
-					<div class="tasks-field-check-list-content-list">
-						<div
-							v-for="checklist in parentCheckLists"
-							:key="checklist.id"
-							class="tasks-field-check-list-content-list-item"
-							@click="() => this.showCheckList(checklist.id)"
-						>
-							<div class="tasks-field-check-list-content-list-item-icon">
-								<BIcon :name="Outline.CHECK_LIST"/>
-							</div>
-							<div class="tasks-field-check-list-content-list-item-title">
-								{{ checklist.title }}
-							</div>
-							<div
-								class="tasks-field-check-list-content-list-item-status"
-								v-html="renderCheckListStatus(checklist.id)"
-							>
-							</div>
-							<div class="tasks-field-check-list-content-list-item-arrow">
-								<BIcon :name="Outline.CHEVRON_RIGHT_L"/>
-							</div>
-						</div>
+					<div ref="list" data-list class="tasks-check-list-content" :class="contextClass">
+						<CheckListWidget
+							v-show="!stub"
+							:taskId="taskId"
+							:checkListId="checkListId"
+							:isPreview="isPreview"
+							@beforeCreated="handleBeforeCreated"
+							@update="handleUpdate"
+							@toggleIsComplete="handleToggleIsComplete"
+							@show="handleShow"
+							@addItem="addItem"
+							@addItemFromBtn="addItemFromBtn"
+							@removeItem="handleRemove"
+							@focus="handleFocus"
+							@blur="handleBlur"
+							@emptyBlur="handleEmptyBlur"
+							@toggleCompleted="toggleCompleted"
+							@startGroupMode="handleGroupMode"
+							@toggleGroupModeSelected="handleGroupModeSelect"
+							@openCheckList="handleOpenCheckList"
+						/>
+						<CheckListStub v-if="stub" @click="addCheckList" />
 					</div>
-					<div class="tasks-field-check-list-content-row --footer">
-						<div
-							class="tasks-field-check-list-content-btn"
-							@click="addFastCheckList"
-						>
-							<BIcon :name="Outline.PLUS_L"/>
-							<div class="tasks-field-check-list-content-btn-text">
-								{{ loc('TASKS_V2_CHECK_LIST_ADD_LABEL') }}
-							</div>
-						</div>
+					<div v-show="!stub && !isPreview" class="tasks-check-list-footer" :class="contextClass">
+						<UiButton
+							:text="loc('TASKS_V2_CHECK_LIST_NEW_BTN')"
+							:size="ButtonSize.MEDIUM"
+							:leftIcon="ButtonIcon.ADD"
+							:style="AirButtonStyle.PLAIN_NO_ACCENT"
+							@click="addCheckList"
+						/>
+						<UiButton
+							:text="loc('TASKS_V2_CHECK_LIST_READY_BTN')"
+							:size="ButtonSize.MEDIUM"
+							@click="handleClose"
+						/>
 					</div>
-				</template>
-			</div>
-		</div>
+					<CheckListItemPanel
+						v-if="itemPanelIsShown && !isPreview"
+						ref="panel"
+						:style="itemPanelStyles"
+						:visibleActions="visiblePanelActions"
+						:disabledActions="disabledPanelActions"
+						:activeActions="activePanelActions"
+						@action="handlePanelAction"
+					/>
+					<BMenu
+						v-if="isForwardMenuShown"
+						:options="forwardMenuOptions"
+						@close="isForwardMenuShown = false"
+					/>
+				</div>
+			</template>
+		</component>
 	`
 	};
 
@@ -1525,1274 +2931,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	`
 	};
 
-	// @vue/component
-	const CheckListStub = {
-	  name: 'CheckListStub',
-	  template: `
-		<div class="check-list-stub">
-			<div class="check-list-stub-title">
-				{{ loc('TASKS_V2_CHECK_LIST_STUB_TITLE') }}
-			</div>
-			<div class="check-list-stub-icon"></div>
-		</div>
-	`
-	};
-
-	const CheckListWidgetMixin = {
-	  methods: {
-	    getItemLevel(checkList) {
-	      let level = 0;
-	      let current = checkList;
-	      const findParent = parentId => this.checkLists.find(item => item.id === parentId);
-	      while (current.parentId !== 0) {
-	        current = findParent(current.parentId);
-	        if (!current) {
-	          break;
-	        }
-	        level++;
-	      }
-	      return level;
-	    }
-	  }
-	};
-
-	// @vue/component
-	const CheckListItemMixin = {
-	  props: {
-	    taskId: {
-	      type: [Number, String],
-	      required: true
-	    },
-	    id: {
-	      type: [Number, String],
-	      required: true
-	    },
-	    panelIsShown: {
-	      type: Boolean,
-	      default: false
-	    }
-	  },
-	  emits: ['update', 'addItem', 'removeItem', 'focus', 'blur', 'emptyBlur', 'show', 'hide'],
-	  data() {
-	    return {
-	      isHovered: false,
-	      scrollContainer: null
-	    };
-	  },
-	  computed: {
-	    task() {
-	      return this.$store.getters[`${tasks_v2_const.Model.Tasks}/getById`](this.taskId);
-	    },
-	    checkLists() {
-	      return this.$store.getters[`${tasks_v2_const.Model.CheckList}/getByIds`](this.task.checklist);
-	    },
-	    item() {
-	      return this.$store.getters[`${tasks_v2_const.Model.CheckList}/getById`](this.id);
-	    },
-	    canModify() {
-	      return this.item.actions.modify === true;
-	    },
-	    canRemove() {
-	      return this.item.actions.remove === true;
-	    },
-	    canToggle() {
-	      return this.item.actions.toggle === true;
-	    },
-	    hasAttachments() {
-	      return this.hasUsers;
-	    },
-	    hasUsers() {
-	      return this.hasAccomplices || this.hasAuditors;
-	    },
-	    hasAccomplices() {
-	      var _this$accomplices;
-	      return ((_this$accomplices = this.accomplices) == null ? void 0 : _this$accomplices.length) > 0;
-	    },
-	    hasAuditors() {
-	      var _this$auditors;
-	      return ((_this$auditors = this.auditors) == null ? void 0 : _this$auditors.length) > 0;
-	    },
-	    accomplices() {
-	      return this.item.accomplices;
-	    },
-	    auditors() {
-	      return this.item.auditors;
-	    },
-	    files() {
-	      return this.item.attachments;
-	    },
-	    textColor() {
-	      return this.item.isComplete ? 'var(--ui-color-base-4)' : 'var(--ui-color-base-1)';
-	    },
-	    groupMode() {
-	      var _this$item$groupMode;
-	      return ((_this$item$groupMode = this.item.groupMode) == null ? void 0 : _this$item$groupMode.active) === true;
-	    },
-	    groupModeSelected() {
-	      var _this$item$groupMode2;
-	      return ((_this$item$groupMode2 = this.item.groupMode) == null ? void 0 : _this$item$groupMode2.selected) === true;
-	    }
-	  },
-	  methods: {
-	    updateTitle(title = '') {
-	      this.$store.dispatch(`${tasks_v2_const.Model.CheckList}/update`, {
-	        id: this.id,
-	        fields: {
-	          title
-	        }
-	      });
-	      this.$emit('update');
-	    },
-	    clearTitle() {
-	      var _this$$refs$growingTe;
-	      (_this$$refs$growingTe = this.$refs.growingTextArea) == null ? void 0 : _this$$refs$growingTe.clearValue();
-	    },
-	    addItem(sort) {
-	      this.$emit('addItem', {
-	        id: this.id,
-	        sort: main_core.Type.isNumber(sort) ? sort : null
-	      });
-	    },
-	    removeItem() {
-	      this.$emit('removeItem', this.id);
-	    },
-	    handleFocus() {
-	      this.$emit('focus', this.id);
-	    },
-	    handleBlur() {
-	      this.$emit('blur', this.id);
-	    },
-	    handleEmptyBlur() {
-	      this.$emit('emptyBlur', this.id);
-	    },
-	    show() {
-	      this.$emit('show', this.id);
-	    },
-	    hide() {
-	      this.$emit('hide', this.id);
-	    }
-	  }
-	};
-
-	// @vue/component
-	const CheckListParentItem = {
-	  name: 'CheckListParentItem',
-	  components: {
-	    BIcon: ui_iconSet_api_vue.BIcon,
-	    BMenu: ui_vue3_components_menu.BMenu,
-	    GrowingTextArea: tasks_v2_component_elements_growingTextArea.GrowingTextArea,
-	    UserAvatarList: tasks_v2_component_elements_userAvatarList.UserAvatarList
-	  },
-	  mixins: [CheckListWidgetMixin, CheckListItemMixin],
-	  inject: ['setItemsRef'],
-	  emits: ['toggleCompleted', 'toggleCollapse', 'startGroupMode'],
-	  setup() {
-	    return {
-	      Actions: ui_iconSet_api_core.Actions,
-	      Outline: ui_iconSet_api_core.Outline
-	    };
-	  },
-	  data() {
-	    return {
-	      isSticky: false,
-	      isMenuShown: false,
-	      menuRemoveSectionCode: 'removeSection',
-	      areChildrenCollapsed: false,
-	      areCompletedCollapsed: false
-	    };
-	  },
-	  computed: {
-	    menuOptions() {
-	      return {
-	        id: `check-list-parent-item-action-menu-${this.id}`,
-	        bindElement: this.$refs.more.$el,
-	        minWidth: 250,
-	        offsetLeft: -100,
-	        sections: [{
-	          code: this.menuRemoveSectionCode
-	        }],
-	        items: this.menuItems,
-	        targetContainer: document.body,
-	        closeByEsc: true
-	      };
-	    },
-	    menuItems() {
-	      return [{
-	        title: this.areCompletedCollapsed ? this.loc('TASKS_V2_CHECK_LIST_ITEM_MENU_SHOW') : this.loc('TASKS_V2_CHECK_LIST_ITEM_MENU_HIDE'),
-	        icon: this.areCompletedCollapsed ? ui_iconSet_api_core.Outline.OBSERVER : ui_iconSet_api_core.Outline.CROSSED_EYE,
-	        dataset: {
-	          id: `MenuProfileHide-${this.id}`
-	        },
-	        onClick: () => {
-	          this.isMenuShown = false;
-	          this.areCompletedCollapsed = !this.areCompletedCollapsed;
-	          this.$emit('toggleCompleted', {
-	            itemId: this.id,
-	            collapsed: this.areCompletedCollapsed
-	          });
-	        }
-	      }, {
-	        title: this.loc('TASKS_V2_CHECK_LIST_ITEM_MENU_GROUP'),
-	        icon: ui_iconSet_api_core.Outline.MULTICHOICE_ON,
-	        dataset: {
-	          id: `MenuProfileGroup-${this.id}`
-	        },
-	        onClick: () => {
-	          if (this.areChildrenCollapsed === true) {
-	            this.collapseChildrenItems();
-	          }
-	          this.$emit('startGroupMode', this.id);
-	          this.isMenuShown = false;
-	        }
-	      }, {
-	        sectionCode: this.menuRemoveSectionCode,
-	        design: 'alert',
-	        title: this.loc('TASKS_V2_CHECK_LIST_ITEM_MENU_REMOVE'),
-	        icon: ui_iconSet_api_core.Outline.TRASHCAN,
-	        dataset: {
-	          id: `MenuProfileRemove-${this.id}`
-	        },
-	        onClick: this.removeItem.bind(this)
-	      }];
-	    },
-	    itemIcon() {
-	      return this.item.isComplete ? ui_iconSet_api_core.Outline.CHECK_L : ui_iconSet_api_core.Outline.CHECK_LIST;
-	    },
-	    checkListStatus() {
-	      const label = this.loc('TASKS_V2_CHECK_LIST_STATUS_LABEL');
-	      return label.replace('#completed#', this.getCompletedCount()).replace('#total#', this.getTotalCount());
-	    }
-	  },
-	  mounted() {
-	    var _this$$parent$$el;
-	    this.scrollContainer = (_this$$parent$$el = this.$parent.$el) == null ? void 0 : _this$$parent$$el.closest('[data-list]');
-	    if (this.setItemsRef) {
-	      this.setItemsRef(this.id, this);
-	    }
-	    if (this.scrollContainer) {
-	      main_core.Event.bind(this.scrollContainer, 'scroll', this.handleScroll);
-	      void this.$nextTick(this.checkSticky);
-	      this.mutationObserver = new MutationObserver(() => {
-	        this.checkSticky();
-	      });
-	      this.mutationObserver.observe(this.scrollContainer, {
-	        childList: true,
-	        subtree: true
-	      });
-	    }
-	  },
-	  beforeUnmount() {
-	    if (this.scrollContainer) {
-	      main_core.Event.unbind(this.scrollContainer, 'scroll', this.handleScroll);
-	    }
-	    if (this.mutationObserver) {
-	      this.mutationObserver.disconnect();
-	    }
-	    if (this.setItemsRef) {
-	      this.setItemsRef(this.id, null);
-	    }
-	  },
-	  methods: {
-	    handleScroll() {
-	      this.checkSticky();
-	      this.isMenuShown = false;
-	    },
-	    checkSticky() {
-	      if (!this.scrollContainer || !this.$refs.item) {
-	        return;
-	      }
-	      const stickyRect = this.$refs.item.getBoundingClientRect();
-	      const containerRect = this.scrollContainer.getBoundingClientRect();
-	      const paddingOffset = 18;
-	      this.isSticky = stickyRect.top <= containerRect.top + stickyRect.height - paddingOffset;
-	    },
-	    showMenu() {
-	      this.isMenuShown = true;
-	    },
-	    getCompletedCount() {
-	      return this.checkLists.filter(checklist => {
-	        return checklist.parentId === this.id && checklist.isComplete;
-	      }).length;
-	    },
-	    getTotalCount() {
-	      return this.checkLists.filter(checklist => {
-	        return checklist.parentId === this.id;
-	      }).length;
-	    },
-	    collapseChildrenItems() {
-	      this.areChildrenCollapsed = !this.areChildrenCollapsed;
-	      this.$emit('toggleCollapse', {
-	        parentId: this.id,
-	        areChildrenCollapsed: this.areChildrenCollapsed
-	      });
-	    }
-	  },
-	  template: `
-		<div
-			ref="item"
-			class="check-list-widget-parent-item"
-			:class="{
-				'--complete': item.isComplete,
-				'--collapsed': areChildrenCollapsed,
-			}"
-			:data-id="id"
-			:data-parent="id"
-		>
-			<div class="check-list-widget-parent-item-label-container">
-				<BIcon :name="itemIcon"/>
-			</div>
-			<div class="check-list-widget-parent-item-title-container">
-				<GrowingTextArea
-					class="check-list-widget-parent-item-title"
-					:data-check-list-id="'check-list-parent-item-title-' + id"
-					:initialValue="item.title"
-					:placeholderValue="loc('TASKS_V2_CHECK_LIST_ITEM_PLACEHOLDER')"
-					:readonly="groupMode"
-					:fontColor="textColor"
-					:fontSize="17"
-					:lineHeight="20"
-					:fontWeight="500"
-					@update="updateTitle"
-					@focus="handleFocus"
-					@blur="handleBlur"
-					@emptyBlur="handleEmptyBlur"
-				/>
-				<template v-if="hasAttachments">
-					<div class="check-list-widget-item-attach --parent">
-						<div v-if="hasUsers" class="check-list-widget-item-attach-users">
-							<div v-if="hasAccomplices" class="check-list-widget-item-attach-users-list">
-								<BIcon :name="Outline.GROUP"/>
-								<UserAvatarList :users="accomplices"/>
-							</div>
-							<div v-if="hasAuditors" class="check-list-widget-item-attach-users-list">
-								<BIcon :name="Outline.OBSERVER"/>
-								<UserAvatarList :users="auditors"/>
-							</div>
-						</div>
-					</div>
-				</template>
-				<div
-					class="check-list-widget-parent-item-title-status"
-					v-html="checkListStatus"
-				></div>
-			</div>
-			<div class="check-list-widget-parent-item-action">
-				<div class="check-list-widget-parent-item-main-action">
-					<BIcon ref="more" :name="Outline.MORE_L" @click="showMenu" />
-					<BIcon
-						:name="areChildrenCollapsed ? Actions.CHEVRON_DOWN : Actions.CHEVRON_UP"
-						@click="collapseChildrenItems"
-					/>
-				</div>
-				<div v-if="isSticky" class="check-list-widget-parent-item-empty"></div>
-			</div>
-			<BMenu v-if="isMenuShown" :options="menuOptions" @close="isMenuShown = false"/>
-		</div>
-	`
-	};
-
-	// @vue/component
-	const CheckListChildItem = {
-	  name: 'CheckListChildItem',
-	  components: {
-	    BIcon: ui_iconSet_api_vue.BIcon,
-	    GrowingTextArea: tasks_v2_component_elements_growingTextArea.GrowingTextArea,
-	    UserAvatarList: tasks_v2_component_elements_userAvatarList.UserAvatarList,
-	    UserFieldWidgetComponent: disk_uploader_userFieldWidget.UserFieldWidgetComponent
-	  },
-	  mixins: [CheckListWidgetMixin, CheckListItemMixin],
-	  inject: ['setItemsRef'],
-	  props: {
-	    itemOffset: {
-	      type: String,
-	      default: '0'
-	    }
-	  },
-	  emits: ['toggleIsComplete', 'toggleGroupModeSelected'],
-	  setup(props) {
-	    return {
-	      Outline: ui_iconSet_api_core.Outline,
-	      fileService: tasks_v2_provider_service_fileService.fileService.get(props.id, tasks_v2_provider_service_fileService.EntityTypes.CheckListItem),
-	      uploaderAdapter: tasks_v2_provider_service_fileService.fileService.get(props.id, tasks_v2_provider_service_fileService.EntityTypes.CheckListItem).getAdapter()
-	    };
-	  },
-	  data() {
-	    return {
-	      uploadingFiles: this.fileService.getFiles()
-	    };
-	  },
-	  computed: {
-	    widgetOptions() {
-	      return {
-	        isEmbedded: true,
-	        withControlPanel: false,
-	        canCreateDocuments: false,
-	        tileWidgetOptions: {
-	          compact: true,
-	          hideDropArea: true
-	        }
-	      };
-	    },
-	    hasAttachments() {
-	      return this.hasUsers || this.hasFilesAttach;
-	    },
-	    hasFilesAttach() {
-	      return this.hasFiles || this.isUploading || this.hasUploadingError;
-	    },
-	    hasFiles() {
-	      var _this$files;
-	      return ((_this$files = this.files) == null ? void 0 : _this$files.length) > 0;
-	    },
-	    isUploading() {
-	      return this.uploadingFiles.some(({
-	        status
-	      }) => [ui_uploader_core.FileStatus.UPLOADING, ui_uploader_core.FileStatus.LOADING].includes(status));
-	    },
-	    hasUploadingError() {
-	      return this.uploadingFiles.some(({
-	        status
-	      }) => [ui_uploader_core.FileStatus.UPLOAD_FAILED, ui_uploader_core.FileStatus.LOAD_FAILED].includes(status));
-	    }
-	  },
-	  created() {
-	    if (this.hasFilesAttach) {
-	      void this.loadFiles();
-	    }
-	  },
-	  mounted() {
-	    if (this.setItemsRef) {
-	      this.setItemsRef(this.id, this);
-	    }
-	  },
-	  beforeUnmount() {
-	    if (this.setItemsRef) {
-	      this.setItemsRef(this.id, null);
-	    }
-	  },
-	  methods: {
-	    toggleIsComplete() {
-	      if (this.canToggle === false) {
-	        return;
-	      }
-	      this.$store.dispatch(`${tasks_v2_const.Model.CheckList}/update`, {
-	        id: this.id,
-	        fields: {
-	          isComplete: !this.item.isComplete
-	        }
-	      });
-	      this.$emit('toggleIsComplete', this.id);
-	    },
-	    toggleGroupModeSelected() {
-	      this.$store.dispatch(`${tasks_v2_const.Model.CheckList}/update`, {
-	        id: this.id,
-	        fields: {
-	          groupMode: {
-	            active: true,
-	            selected: !this.groupModeSelected
-	          }
-	        }
-	      });
-	      this.$emit('toggleGroupModeSelected', this.id);
-	    },
-	    focusToItem() {
-	      var _this$scrollContainer, _this$$parent$$el;
-	      (_this$scrollContainer = this.scrollContainer) != null ? _this$scrollContainer : this.scrollContainer = (_this$$parent$$el = this.$parent.$el) == null ? void 0 : _this$$parent$$el.closest('[data-list]');
-	      const offset = 200;
-	      this.scrollContainer.scrollTo({
-	        top: this.$refs.item.offsetTop - offset,
-	        behavior: 'smooth'
-	      });
-	    },
-	    focusToTextarea(event) {
-	      const ignoreList = new Set([this.$refs.checkbox]);
-	      if (!ignoreList.has(event.target)) {
-	        var _this$$refs$growingTe;
-	        (_this$$refs$growingTe = this.$refs.growingTextArea) == null ? void 0 : _this$$refs$growingTe.focusTextarea();
-	      }
-	    },
-	    async loadFiles() {
-	      await this.fileService.list(this.files.map(file => {
-	        var _file$id;
-	        return (_file$id = file == null ? void 0 : file.id) != null ? _file$id : file;
-	      }));
-	    },
-	    handleEnter() {
-	      if (!this.item) {
-	        return;
-	      }
-	      this.addItem(this.item.sortIndex + 1);
-	    },
-	    handleClick() {
-	      if (this.groupMode) {
-	        this.toggleGroupModeSelected();
-	      }
-	    }
-	  },
-	  template: `
-		<div
-			ref="item"
-			class="check-list-widget-child-item"
-			:class="{
-				'--extra-indent': hasUsers && !hasFilesAttach,
-				'--complete': item.isComplete,
-				'--group-mode': groupMode,
-				'--group-mode-selected': groupModeSelected,
-			}"
-			:data-id="id"
-			:style="{ marginLeft: itemOffset }"
-			@mouseover="isHovered = true"
-			@mouseleave="isHovered = false"
-			@click="handleClick"
-		>
-			<div class="check-list-widget-child-item-base">
-				<label
-					class="check-list-widget-child-item-checkbox"
-					:class="{'--important': !item.isImportant}"
-					@mousedown.stop
-				>
-					<input
-						ref="checkbox"
-						type="checkbox"
-						:checked="item.isComplete"
-						:disabled="!canToggle || groupMode"
-						@change="toggleIsComplete"
-					>
-				</label>
-				<div
-					v-if="item.isImportant"
-					class="check-list-widget-child-item-important"
-				>
-					<BIcon :name="Outline.FIRE_SOLID" :hoverable="false"/>
-				</div>
-				<GrowingTextArea
-					ref="growingTextArea"
-					class="check-list-widget-child-item-title"
-					:data-check-list-id="'check-list-child-item-title-' + item.id"
-					:initialValue="item.title"
-					:placeholderValue="loc('TASKS_V2_CHECK_LIST_ITEM_PLACEHOLDER')"
-					:readonly="groupMode"
-					:fontColor="textColor"
-					:fontSize="15"
-					:lineHeight="20"
-					@update="updateTitle"
-					@focus="handleFocus"
-					@blur="handleBlur"
-					@emptyBlur="handleEmptyBlur"
-					@emptyFocus="focusToItem"
-					@enterBlur="handleEnter"
-				/>
-				<div
-					v-if="isHovered && !panelIsShown && !groupMode"
-					class="check-list-widget-child-item-action"
-					@click="removeItem"
-				>
-					<BIcon :name="Outline.TRASHCAN"/>
-				</div>
-				<div v-else-if="groupMode" class="check-list-widget-child-item-action-checkbox">
-					<input
-						ref="checkbox"
-						type="checkbox"
-						:checked="groupModeSelected"
-					>
-				</div>
-				<div v-else class="check-list-widget-child-item-action-stub"></div>
-			</div>
-			<template v-if="hasAttachments">
-				<div class="check-list-widget-item-attach">
-					<div v-if="hasUsers" class="check-list-widget-item-attach-users">
-						<div v-if="hasAccomplices" class="check-list-widget-item-attach-users-list">
-							<BIcon :name="Outline.GROUP"/>
-							<UserAvatarList :users="accomplices"/>
-						</div>
-						<div v-if="hasAuditors" class="check-list-widget-item-attach-users-list">
-							<BIcon :name="Outline.OBSERVER"/>
-							<UserAvatarList :users="auditors"/>
-						</div>
-					</div>
-					<div v-if="hasFilesAttach" class="check-list-widget-item-attach-files">
-						<div class="check-list-widget-item-attach-files-list">
-							<UserFieldWidgetComponent
-								:uploaderAdapter="uploaderAdapter"
-								:widgetOptions="widgetOptions"
-							/>
-						</div>
-					</div>
-				</div>
-			</template>
-		</div>
-	`
-	};
-
-	// @vue/component
-	const CheckListAddItem = {
-	  name: 'CheckListAddItem',
-	  components: {
-	    BIcon: ui_iconSet_api_vue.BIcon
-	  },
-	  mixins: [CheckListItemMixin],
-	  emits: ['addItem'],
-	  setup() {
-	    return {
-	      Outline: ui_iconSet_api_core.Outline
-	    };
-	  },
-	  template: `
-		<div
-			class="check-list-widget-add-item"
-			@click="addItem"
-		>
-			<div class="check-list-widget-add-item-icon">
-				<BIcon :name="Outline.PLUS_L"/>
-			</div>
-			<div class="check-list-widget-add-item-title">
-				{{ loc('TASKS_V2_CHECK_LIST_ITEM_ADD_BTN') }}
-			</div>
-		</div>
-	`
-	};
-
-	// @vue/component
-	const CheckListWidget = {
-	  name: 'CheckListWidget',
-	  components: {
-	    CheckListParentItem,
-	    CheckListChildItem,
-	    CheckListAddItem
-	  },
-	  mixins: [CheckListWidgetMixin],
-	  props: {
-	    taskId: {
-	      type: [Number, String],
-	      required: true
-	    },
-	    checkListId: {
-	      type: [Number, String],
-	      default: 0
-	    },
-	    parentId: {
-	      type: [Number, String],
-	      default: 0
-	    },
-	    listShownItemPanels: {
-	      type: Array,
-	      default: () => []
-	    }
-	  },
-	  emits: ['show', 'update', 'addItem', 'removeItem', 'toggleIsComplete', 'focus', 'blur', 'emptyBlur', 'toggleCompleted', 'startGroupMode', 'toggleGroupModeSelected'],
-	  data() {
-	    return {
-	      collapsedStates: {},
-	      hiddenStates: {}
-	    };
-	  },
-	  computed: {
-	    task() {
-	      return this.$store.getters[`${tasks_v2_const.Model.Tasks}/getById`](this.taskId);
-	    },
-	    checkLists() {
-	      return this.$store.getters[`${tasks_v2_const.Model.CheckList}/getByIds`](this.task.checklist);
-	    },
-	    siblings() {
-	      return this.checkLists.filter(item => item.parentId === this.parentId).sort((a, b) => a.sortIndex - b.sortIndex);
-	    },
-	    getCollapsedClassForItem() {
-	      return itemId => {
-	        return `check-list-widget-collapse ${this.collapsedStates[itemId] ? '--collapsed' : '--expanded'}`;
-	      };
-	    }
-	  },
-	  mounted() {
-	    if (this.checkListId) {
-	      var _this$$root$$el;
-	      this.scrollContainer = (_this$$root$$el = this.$root.$el) == null ? void 0 : _this$$root$$el.querySelector(['[data-list]']);
-	      const targetParentItem = this.scrollContainer.querySelector([`[data-parent="${this.checkListId}"]`]);
-	      const offset = 12;
-	      setTimeout(() => {
-	        this.scrollContainer.scrollTop = targetParentItem.offsetTop - offset;
-	      }, 0);
-	    }
-	    this.$emit('show');
-	  },
-	  methods: {
-	    getItemOffset(item) {
-	      if (item.parentId === 0) {
-	        return '0';
-	      }
-	      const level = this.getItemLevel(item);
-	      if (level === 1) {
-	        return '0';
-	      }
-	      return `${(level - 1) * 12}px`;
-	    },
-	    toggleCollapse({
-	      parentId,
-	      areChildrenCollapsed
-	    }) {
-	      this.collapsedStates[parentId] = areChildrenCollapsed;
-	    },
-	    handleShowItem(itemId) {
-	      this.hiddenStates[itemId] = false;
-	    },
-	    handleHideItem(itemId) {
-	      this.hiddenStates[itemId] = true;
-	    },
-	    isFirstVisibleItem(title, index) {
-	      const siblings = this.siblings;
-	      const firstVisibleIndex = siblings.findIndex(item => !this.hiddenStates[item.id]);
-	      return firstVisibleIndex !== -1 && firstVisibleIndex === index;
-	    }
-	  },
-	  template: `
-		<div class="check-list-widget-container">
-			<ul class="check-list-widget">
-				<li
-					v-for="(item, index) in siblings"
-					:key="item.id"
-					class="check-list-widget-item"
-					:class="{
-						'--first-visible': parentId === 0 && isFirstVisibleItem(item.title, index),
-						'--hidden': hiddenStates[item.id],
-						'--parent': parentId === 0
-					}"
-				>
-					<CheckListParentItem
-						v-if="item.parentId === 0"
-						:id="item.id"
-						:taskId="taskId"
-						:panelIsShown="listShownItemPanels.includes(item.id)"
-						@update="$emit('update')"
-						@removeItem="(id) => $emit('removeItem', id)"
-						@focus="(id) => $emit('focus', id)"
-						@blur="(id) => $emit('blur', id)"
-						@emptyBlur="(id) => $emit('emptyBlur', id)"
-						@toggleCompleted="(data) => $emit('toggleCompleted', data)"
-						@toggleCollapse="toggleCollapse"
-						@startGroupMode="(id) => $emit('startGroupMode', id)"
-						@show="handleShowItem"
-						@hide="handleHideItem"
-					/>
-					<CheckListChildItem
-						v-else
-						:id="item.id"
-						:taskId="taskId"
-						:itemOffset="getItemOffset(item)"
-						:panelIsShown="listShownItemPanels.includes(item.id)"
-						@update="$emit('update')"
-						@toggleIsComplete="(id) => $emit('toggleIsComplete', id)"
-						@addItem="(data) => $emit('addItem', data)"
-						@removeItem="(id) => $emit('removeItem', id)"
-						@focus="(id) => $emit('focus', id)"
-						@blur="(id) => $emit('blur', id)"
-						@emptyBlur="(id) => $emit('emptyBlur', id)"
-						@toggleGroupModeSelected="(id) => $emit('toggleGroupModeSelected', id)"
-						@show="handleShowItem"
-						@hide="handleHideItem"
-					/>
-					<CheckListWidget
-						v-if="checkLists.some(child => child.parentId === item.id)"
-						:taskId="taskId"
-						:parentId="item.id"
-						:listShownItemPanels="listShownItemPanels"
-						:class="getCollapsedClassForItem(item.id)"
-						@update="$emit('update')"
-						@toggleIsComplete="(id) => $emit('toggleIsComplete', id)"
-						@addItem="(data) => $emit('addItem', data)"
-						@removeItem="(id) => $emit('removeItem', id)"
-						@focus="(id) => $emit('focus', id)"
-						@blur="(id) => $emit('blur', id)"
-						@emptyBlur="(id) => $emit('emptyBlur', id)"
-						@toggleCompleted="(data) => $emit('toggleCompleted', data)"
-						@toggleCollapse="toggleCollapse"
-						@startGroupMode="(id) => $emit('startGroupMode', id)"
-						@toggleGroupModeSelected="(id) => $emit('toggleGroupModeSelected', id)"
-						@show="handleShowItem"
-						@hide="handleHideItem"
-					/>
-					<div class="check-list-widget-add-container" :class="getCollapsedClassForItem(item.id)">
-						<CheckListAddItem
-							v-if="item.parentId === 0"
-							:taskId="taskId"
-							:id="item.id"
-							@update="$emit('update')"
-							@addItem="(data) => $emit('addItem', data)"
-						/>
-					</div>
-				</li>
-			</ul>
-		</div>
-	`
-	};
-
-	// @vue/component
-	const CheckListItemPanel = {
-	  name: 'CheckListItemPanel',
-	  components: {
-	    BIcon: ui_iconSet_api_vue.BIcon,
-	    Hint: tasks_v2_component_elements_hint.Hint
-	  },
-	  props: {
-	    visibleSections: {
-	      type: Array,
-	      default: () => PanelMeta.defaultSections.map(section => section.name)
-	    },
-	    visibleActions: {
-	      type: Array,
-	      default: () => []
-	    },
-	    disabledActions: {
-	      type: Array,
-	      default: () => []
-	    },
-	    activeActions: {
-	      type: Array,
-	      default: () => []
-	    }
-	  },
-	  emits: ['action'],
-	  setup() {
-	    return {
-	      Outline: ui_iconSet_api_core.Outline
-	    };
-	  },
-	  data() {
-	    return {
-	      isHintShown: false,
-	      currentHintElement: null,
-	      currentHintText: '',
-	      hintTimeout: null
-	    };
-	  },
-	  computed: {
-	    hintOptions() {
-	      return {
-	        offsetLeft: this.currentHintElement ? -main_core.Dom.getPosition(this.currentHintElement).width : 0,
-	        bindOptions: {
-	          forceBindPosition: true,
-	          forceTop: true,
-	          position: 'top'
-	        },
-	        angle: false
-	      };
-	    },
-	    hasSections() {
-	      return this.sections.length > 0;
-	    },
-	    sections() {
-	      const visibleActions = this.visibleActions;
-	      return PanelMeta.defaultSections.filter(section => this.visibleSections.includes(section.name)).map(section => ({
-	        ...section,
-	        items: section.items.filter(item => visibleActions.includes(item.action)).map(item => ({
-	          ...item,
-	          disabled: this.isItemDisabled(item),
-	          active: this.isItemActive(item),
-	          hoverable: main_core.Type.isUndefined(item.hoverable) ? true : item.hoverable
-	        }))
-	      })).filter(section => section.items.length > 0);
-	    }
-	  },
-	  methods: {
-	    isItemDisabled(item) {
-	      if (!main_core.Type.isUndefined(item.disabled)) {
-	        return item.disabled;
-	      }
-	      return this.disabledActions.includes(item.action);
-	    },
-	    isItemActive(item) {
-	      if (!main_core.Type.isUndefined(item.active)) {
-	        return item.active;
-	      }
-	      return this.activeActions.includes(item.action);
-	    },
-	    getItemIcon(item) {
-	      return item.active && item.activeIcon ? item.activeIcon : item.icon;
-	    },
-	    getItemHint(item) {
-	      if (item.disabled === true && item.disabledHint) {
-	        return this.loc(item.disabledHint);
-	      }
-	      if (item.hint) {
-	        return this.loc(item.hint);
-	      }
-	      return '';
-	    },
-	    handleItemClick(event, item) {
-	      if (!item.disabled) {
-	        this.$emit('action', {
-	          action: item.action,
-	          node: event.currentTarget
-	        });
-	      }
-	    },
-	    showHint(event, item) {
-	      const hintText = this.getItemHint(item);
-	      if (!hintText) {
-	        return;
-	      }
-	      if (this.hintTimeout) {
-	        clearTimeout(this.hintTimeout);
-	        this.hintTimeout = null;
-	      }
-	      this.currentHintElement = event.currentTarget;
-	      this.currentHintText = hintText;
-	      this.hintTimeout = setTimeout(() => {
-	        this.isHintShown = true;
-	      }, 1000);
-	    },
-	    hideHint() {
-	      if (this.hintTimeout) {
-	        clearTimeout(this.hintTimeout);
-	        this.hintTimeout = null;
-	      }
-	      this.isHintShown = false;
-	      this.currentHintElement = null;
-	      this.currentHintText = '';
-	    }
-	  },
-	  template: `
-		<div v-if="hasSections" class="check-list-widget-item-panel" @mousedown.prevent>
-			<div 
-				v-for="section in sections" 
-				:key="section.name"
-				class="check-list-widget-item-panel-section"
-				:class="'--' + section.name"
-			>
-				<div 
-					v-for="item in section.items" 
-					:key="item.action" 
-					class="check-list-widget-item-panel-section-item"
-					:class="{
-						'--disabled': item.disabled, 
-						'--active': item.active,
-						[item.className]: !!item.className
-					}"
-					@mouseenter="showHint($event, item)"
-					@mouseleave="hideHint()"
-					@click="handleItemClick($event, item)"
-				>
-					<BIcon :name="getItemIcon(item)" :hoverable="item.hoverable"/>
-					<span v-if="item.label">{{ loc(item.label) }}</span>
-				</div>
-			</div>
-			<Hint
-				v-if="isHintShown"
-				:bindElement="currentHintElement"
-				:options="hintOptions"
-			>
-				{{ currentHintText }}
-			</Hint>
-		</div>
-	`
-	};
-
-	// @vue/component
-	const CheckListSheet = {
-	  name: 'TaskCheckListSheet',
-	  components: {
-	    BottomSheet: tasks_v2_component_elements_bottomSheet.BottomSheet,
-	    CheckListWidget,
-	    CheckListItemPanel,
-	    CheckListStub,
-	    UiButton: ui_vue3_components_button.Button,
-	    BIcon: ui_iconSet_api_vue.BIcon
-	  },
-	  mixins: [CheckListMixin, CheckListWidgetMixin],
-	  props: {
-	    taskId: {
-	      type: [Number, String],
-	      required: true
-	    },
-	    checkListId: {
-	      type: [Number, String],
-	      default: 0
-	    },
-	    isShown: {
-	      type: Boolean,
-	      required: true
-	    }
-	  },
-	  emits: ['close'],
-	  setup() {
-	    return {
-	      ButtonSize: ui_vue3_components_button.ButtonSize,
-	      ButtonIcon: ui_vue3_components_button.ButtonIcon,
-	      Outline: ui_iconSet_api_core.Outline
-	    };
-	  },
-	  data() {
-	    return {
-	      isExpanded: false,
-	      itemPanelTopOffset: 2,
-	      itemPanelTopLimit: 700
-	    };
-	  },
-	  computed: {
-	    ...ui_vue3_vuex.mapGetters({
-	      titleFieldOffsetHeight: `${tasks_v2_const.Model.Interface}/titleFieldOffsetHeight`
-	    }),
-	    task() {
-	      return this.$store.getters[`${tasks_v2_const.Model.Tasks}/getById`](this.taskId);
-	    },
-	    checkLists() {
-	      return this.$store.getters[`${tasks_v2_const.Model.CheckList}/getByIds`](this.task.checklist);
-	    }
-	  },
-	  watch: {
-	    titleFieldOffsetHeight() {
-	      var _this$$refs$bottomShe;
-	      (_this$$refs$bottomShe = this.$refs.bottomSheet) == null ? void 0 : _this$$refs$bottomShe.adjustPosition();
-	    },
-	    async isShown(value) {
-	      await this.$nextTick();
-	      if (value) {
-	        main_core.Event.bind(this.$refs.list, 'scroll', this.handleScroll);
-	      } else {
-	        main_core.Event.unbind(this.$refs.list, 'scroll', this.handleScroll);
-	      }
-	    }
-	  },
-	  methods: {
-	    handleClose() {
-	      this.cancelGroupMode();
-	      void this.saveCheckList();
-	      this.$emit('close');
-	    }
-	  },
-	  template: `
-		<BottomSheet
-			:isShown="isShown"
-			:isExpanded="isExpanded"
-			:class="'--check-list'"
-			ref="bottomSheet"
-		>
-			<div ref="wrapper" class="tasks-field-check-list-sheet">
-				<div ref="list" data-list class="tasks-field-check-list-list">
-					<CheckListWidget
-						v-show="!stub"
-						:taskId="taskId"
-						:checkListId="checkListId"
-						:listShownItemPanels="listShownItemPanels"
-						@update="handleUpdate"
-						@toggleIsComplete="handleToggleIsComplete"
-						@addItem="addItem"
-						@removeItem="handleRemove"
-						@focus="handleFocus"
-						@blur="handleBlur"
-						@emptyBlur="handleEmptyBlur"
-						@toggleCompleted="toggleCompleted"
-						@startGroupMode="handleGroupMode"
-						@toggleGroupModeSelected="handleGroupModeSelect"
-					/>
-					<CheckListStub v-if="stub" />
-					<div class="tasks-field-check-list-close-icon --sheet">
-						<BIcon :name="Outline.CROSS_L" @click="handleClose"/>
-					</div>
-				</div>
-				<div class="tasks-field-check-list-footer">
-					<UiButton
-						:text="loc('TASKS_V2_CHECK_LIST_ADD_BTN')"
-						:size="ButtonSize.MEDIUM"
-						:leftIcon="ButtonIcon.ADD"
-						@click="addCheckList"
-					/>
-				</div>
-				<CheckListItemPanel
-					v-if="itemPanelIsShown"
-					ref="panel"
-					:style="itemPanelStyles"
-					:visibleActions="visiblePanelActions"
-					:disabledActions="disabledPanelActions"
-					:activeActions="activePanelActions"
-					@action="handlePanelAction"
-				/>
-			</div>
-		</BottomSheet>
-	`
-	};
-
-	// @vue/component
-	const CheckListPopup = {
-	  name: 'TaskCheckListPopup',
-	  components: {
-	    Popup: ui_vue3_components_popup.Popup,
-	    CheckListWidget,
-	    CheckListItemPanel,
-	    CheckListStub,
-	    UiButton: ui_vue3_components_button.Button,
-	    BIcon: ui_iconSet_api_vue.BIcon
-	  },
-	  mixins: [CheckListMixin, CheckListWidgetMixin],
-	  props: {
-	    taskId: {
-	      type: [Number, String],
-	      required: true
-	    }
-	  },
-	  emits: ['show', 'close', 'resize'],
-	  setup() {
-	    return {
-	      resizeObserver: null,
-	      AirButtonStyle: ui_vue3_components_button.AirButtonStyle,
-	      ButtonSize: ui_vue3_components_button.ButtonSize,
-	      ButtonIcon: ui_vue3_components_button.ButtonIcon,
-	      Outline: ui_iconSet_api_core.Outline
-	    };
-	  },
-	  data() {
-	    return {
-	      itemPanelTopOffset: 5,
-	      itemPanelTopLimit: 450
-	    };
-	  },
-	  computed: {
-	    task() {
-	      return this.$store.getters[`${tasks_v2_const.Model.Tasks}/getById`](this.taskId);
-	    },
-	    checkLists() {
-	      return this.$store.getters[`${tasks_v2_const.Model.CheckList}/getByIds`](this.task.checklist);
-	    },
-	    popupId() {
-	      return `tasks-check-list-popup-${this.taskId}`;
-	    },
-	    popupOptions() {
-	      return {
-	        className: 'tasks-check-list-popup',
-	        width: 580,
-	        height: 500,
-	        borderRadius: '18px',
-	        offsetTop: 0,
-	        padding: 0,
-	        autoHide: true,
-	        closeByEsc: true,
-	        animation: {
-	          showClassName: 'tasks-check-list-popup-show',
-	          closeClassName: 'tasks-check-list-popup-close',
-	          closeAnimationType: 'animation'
-	        },
-	        events: {
-	          onClose: this.handleClose.bind(this)
-	        }
-	      };
-	    },
-	    ...ui_vue3_vuex.mapGetters({
-	      titleFieldOffsetHeight: `${tasks_v2_const.Model.Interface}/titleFieldOffsetHeight`
-	    })
-	  },
-	  watch: {
-	    async titleFieldOffsetHeight() {
-	      if (!this.$refs.popupComponent) {
-	        return;
-	      }
-	      await this.$nextTick();
-	      this.resize();
-	    }
-	  },
-	  created() {
-	    this.resizeObserver = new ResizeObserver(entries => {
-	      for (const entry of entries) {
-	        if (entry.target === this.$refs.wrapper) {
-	          this.resize();
-	        }
-	      }
-	    });
-	  },
-	  mounted() {
-	    main_core.Event.bind(window, 'resize', this.resize);
-	    main_core_events.EventEmitter.subscribe('BX.Main.Popup:onShow', this.handleShowPopup);
-	    main_core_events.EventEmitter.subscribe('BX.Main.Popup:onClose', this.handleClosePopup);
-	  },
-	  beforeUnmount() {
-	    main_core.Event.unbind(window, 'resize', this.resize);
-	    main_core_events.EventEmitter.unsubscribe('BX.Main.Popup:onShow', this.handleShowPopup);
-	    main_core_events.EventEmitter.unsubscribe('BX.Main.Popup:onClose', this.handleClosePopup);
-	  },
-	  methods: {
-	    resize() {
-	      var _this$$refs$popupComp;
-	      const popupInstance = (_this$$refs$popupComp = this.$refs.popupComponent) == null ? void 0 : _this$$refs$popupComp.getPopupInstance();
-	      if (popupInstance) {
-	        this.$emit('resize');
-	        popupInstance.adjustPosition();
-	      }
-	    },
-	    handleShow() {
-	      var _this$$refs$popupComp2;
-	      this.$emit('show', {
-	        popupInstance: this.$refs.popupComponent.getPopupInstance()
-	      });
-	      (_this$$refs$popupComp2 = this.$refs.popupComponent) == null ? void 0 : _this$$refs$popupComp2.getPopupInstance().adjustPosition();
-	      setTimeout(() => this.resizeObserver.observe(this.$refs.wrapper), 300);
-	    },
-	    handleClose() {
-	      this.cancelGroupMode();
-	      void this.saveCheckList();
-	      this.resizeObserver.disconnect();
-	      this.$bitrix.eventEmitter.emit(tasks_v2_const.EventName.CloseCheckList);
-	      this.$emit('close');
-	    }
-	  },
-	  template: `
-		<Popup :options="popupOptions" ref="popupComponent">
-			<div ref="wrapper" class="tasks-check-list-popup-wrapper">
-				<div ref="list" data-list class="tasks-check-list-popup-list">
-					<CheckListWidget
-						v-show="!stub"
-						:taskId="taskId"
-						:listShownItemPanels="listShownItemPanels"
-						@update="handleUpdate"
-						@toggleIsComplete="handleToggleIsComplete"
-						@show="handleShow"
-						@addItem="addItem"
-						@removeItem="handleRemove"
-						@focus="handleFocus"
-						@blur="handleBlur"
-						@emptyBlur="handleEmptyBlur"
-						@toggleCompleted="toggleCompleted"
-						@startGroupMode="handleGroupMode"
-						@toggleGroupModeSelected="handleGroupModeSelect"
-					/>
-					<CheckListStub v-if="stub" />
-					<div class="tasks-field-check-list-close-icon --popup">
-						<BIcon :name="Outline.CROSS_L" @click="handleClose"/>
-					</div>
-				</div>
-				<div class="tasks-check-list-popup-footer">
-					<UiButton
-						:text="loc('TASKS_V2_CHECK_LIST_NEW_BTN')"
-						:size="ButtonSize.MEDIUM"
-						:leftIcon="ButtonIcon.ADD"
-						:style="AirButtonStyle.PLAIN_NO_ACCENT"
-						@click="addCheckList"
-					/>
-					<UiButton
-						:text="loc('TASKS_V2_CHECK_LIST_READY_BTN')"
-						:size="ButtonSize.MEDIUM"
-						@click="handleClose"
-					/>
-				</div>
-				<CheckListItemPanel
-					v-if="itemPanelIsShown"
-					ref="panel"
-					:style="itemPanelStyles"
-					:visibleActions="visiblePanelActions"
-					:disabledActions="disabledPanelActions"
-					:activeActions="activePanelActions"
-					@action="handlePanelAction"
-				/>
-				<BMenu
-					v-if="isForwardMenuShown"
-					:options="forwardMenuOptions"
-					@close="isForwardMenuShown = false"
-				/>
-			</div>
-		</Popup>
-	`
-	};
-
 	exports.CheckList = CheckList;
 	exports.CheckListChip = CheckListChip;
-	exports.CheckListSheet = CheckListSheet;
-	exports.CheckListPopup = CheckListPopup;
+	exports.CheckListList = CheckListList;
 	exports.checkListMeta = checkListMeta;
 
-}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.Main,BX.UI.EntitySelector,BX.Tasks.V2,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Component.Elements,BX,BX,BX.Tasks.V2.Lib,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.UI.Vue3.Components,BX.UI.Uploader,BX.Disk.Uploader,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Component.Elements,BX,BX.Event,BX.UI.Vue3.Components,BX.Vue3.Vuex,BX.Vue3.Components,BX.UI.IconSet,BX.UI.IconSet,BX.Tasks.V2.Const));
+}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.Main,BX.UI.EntitySelector,BX.Tasks.V2.Component.Elements,BX.Tasks.V2,BX.Tasks.V2.Lib,BX.Vue3.Components,BX.UI.Vue3.Components,BX.Vue3.Vuex,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Provider.Service,BX.UI.Vue3.Components,BX.Tasks.V2.Component.Elements,BX.UI.Uploader,BX.Disk.Uploader,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.Vue3.Directives,BX.UI.IconSet,BX.Tasks.V2.Component.Elements,BX.Event,BX,BX,BX.UI.IconSet,BX,BX.Tasks.V2.Lib,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Const));
 //# sourceMappingURL=check-list.bundle.js.map

@@ -46,7 +46,7 @@ export class SelfRegister
 		this.generateLinkHint = null;
 		Event.bind(generateLinkBtnNode, 'mouseover', (event) => {
 			this.generateLinkHint = this.showHintPopup(
-				Loc.getMessage('INTRANET_INVITE_DIALOG_LINK_UPDATE_WARNING'),
+				Loc.getMessage('INTRANET_INVITE_DIALOG_LINK_UPDATE_WARNING_MSGVER_1'),
 				generateLinkBtnNode,
 			);
 		});

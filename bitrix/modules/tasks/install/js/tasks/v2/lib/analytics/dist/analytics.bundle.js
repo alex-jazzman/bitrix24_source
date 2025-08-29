@@ -2,11 +2,13 @@
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
-(function (exports,ui_analytics,ui_uploader_core,tasks_v2_core,tasks_v2_const) {
+(function (exports,main_core,ui_analytics,ui_uploader_core,tasks_v2_const) {
 	'use strict';
 
-	var _sendData, _getTypeFromCardType;
-	const analytics = new (_sendData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendData"), _getTypeFromCardType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getTypeFromCardType"), class {
+	const settings = main_core.Extension.getSettings('tasks.v2.lib.analytics');
+	var _sendData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendData");
+	var _getTypeFromCardType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getTypeFromCardType");
+	class AnalyticsSender {
 	  constructor() {
 	    Object.defineProperty(this, _getTypeFromCardType, {
 	      value: _getTypeFromCardType2
@@ -23,7 +25,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      c_sub_section: params.additionalContext,
 	      c_element: params.element,
 	      status: tasks_v2_const.Analytics.Status.Success,
-	      p2: tasks_v2_core.Core.getParams().analytics.userType,
+	      p2: settings.userType,
 	      ...(options.collabId ? {
 	        p4: tasks_v2_const.Analytics.Params.CollabId(options.collabId)
 	      } : {})
@@ -47,7 +49,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      c_sub_section: params.additionalContext,
 	      c_element: params.element,
 	      status: options.isSuccess ? tasks_v2_const.Analytics.Status.Success : tasks_v2_const.Analytics.Status.Error,
-	      p2: tasks_v2_core.Core.getParams().analytics.userType,
+	      p2: settings.userType,
 	      p3: tasks_v2_const.Analytics.Params.ViewersCount(options.viewersCount),
 	      ...(options.collabId ? {
 	        p4: tasks_v2_const.Analytics.Params.CollabId(options.collabId)
@@ -63,7 +65,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      c_sub_section: params.additionalContext,
 	      c_element: params.element,
 	      status: tasks_v2_const.Analytics.Status.Success,
-	      p2: tasks_v2_core.Core.getParams().analytics.userType,
+	      p2: settings.userType,
 	      p3: tasks_v2_const.Analytics.Params.ViewersCount(options.viewersCount),
 	      ...(options.collabId ? {
 	        p4: tasks_v2_const.Analytics.Params.CollabId(options.collabId)
@@ -126,7 +128,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      c_element: tasks_v2_const.Analytics.Element.UploadButton,
 	      status: tasks_v2_const.Analytics.Status.Success,
 	      p1: tasks_v2_const.Analytics.Params.FileSize(options.fileSize),
-	      p2: tasks_v2_core.Core.getParams().analytics.userType,
+	      p2: settings.userType,
 	      p3: tasks_v2_const.Analytics.Params.FilesCount(options.filesCount),
 	      ...(options.collabId ? {
 	        p4: tasks_v2_const.Analytics.Params.CollabId(options.collabId)
@@ -147,7 +149,35 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      p5: tasks_v2_const.Analytics.Params.CoexecutorsCount(options.coexecutorsCount)
 	    });
 	  }
-	})();
+	  sendRoleClick(params) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _sendData)[_sendData]({
+	      event: tasks_v2_const.Analytics.Event.RoleClick,
+	      type: tasks_v2_const.Analytics.Type.Task,
+	      c_section: params.context,
+	      c_sub_section: params.additionalContext,
+	      c_element: tasks_v2_const.Analytics.Element.RoleButton,
+	      p1: tasks_v2_const.Analytics.Params.IsDemo(settings.isDemo)
+	    });
+	  }
+	  sendRoleClickType(params, options) {
+	    const element = {
+	      view_all: tasks_v2_const.Analytics.Element.RoleAllButton,
+	      view_role_responsible: tasks_v2_const.Analytics.Element.RoleDoingButton,
+	      view_role_accomplice: tasks_v2_const.Analytics.Element.RoleHelpButton,
+	      view_role_auditor: tasks_v2_const.Analytics.Element.RoleWatchingButton,
+	      view_role_originator: tasks_v2_const.Analytics.Element.RoleAssignedButton
+	    }[options.role];
+	    babelHelpers.classPrivateFieldLooseBase(this, _sendData)[_sendData]({
+	      event: tasks_v2_const.Analytics.Event.RoleClickType,
+	      type: tasks_v2_const.Analytics.Type.Task,
+	      c_section: params.context,
+	      c_sub_section: params.additionalContext,
+	      c_element: element,
+	      p1: tasks_v2_const.Analytics.Params.IsDemo(settings.isDemo),
+	      p2: tasks_v2_const.Analytics.Params.FilterEnabled(options.isFilterEnabled)
+	    });
+	  }
+	}
 	function _sendData2(data) {
 	  ui_analytics.sendData({
 	    tool: tasks_v2_const.Analytics.Tool.Tasks,
@@ -161,8 +191,10 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    [tasks_v2_const.CardType.Full]: tasks_v2_const.Analytics.Type.Task
 	  }[cardType];
 	}
+	const analytics = new AnalyticsSender();
 
+	exports.AnalyticsSender = AnalyticsSender;
 	exports.analytics = analytics;
 
-}((this.BX.Tasks.V2.Lib = this.BX.Tasks.V2.Lib || {}),BX.UI.Analytics,BX.UI.Uploader,BX.Tasks.V2,BX.Tasks.V2.Const));
+}((this.BX.Tasks.V2.Lib = this.BX.Tasks.V2.Lib || {}),BX,BX.UI.Analytics,BX.UI.Uploader,BX.Tasks.V2.Const));
 //# sourceMappingURL=analytics.bundle.js.map

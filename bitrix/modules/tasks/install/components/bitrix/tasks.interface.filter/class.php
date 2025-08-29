@@ -7,12 +7,14 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Socialnetwork\WorkgroupTable;
+use Bitrix\Tasks\Helper\Filter;
 use Bitrix\Tasks\Integration\Intranet\Settings;
 use Bitrix\Tasks\Scrum\Service\SprintService;
 use Bitrix\Tasks\TourGuide\PresetsMoved;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\FilterLimit;
 use Bitrix\Tasks\Ui\Filter\Task;
 use Bitrix\Tasks\Internals\Routes\RouteDictionary;
+use Bitrix\Tasks\V2\Internal\DI\Container;
 
 Loader::includeModule('socialnetwork');
 
@@ -56,6 +58,8 @@ class TasksInterfaceFilterComponent extends TasksBaseComponent
 	public function executeComponent()
 	{
 		$this->arResult['showPresetTourGuide'] = $this->showPresetTourGuide();
+		$this->arResult['roles'] = $this->prepareRoles();
+
 		return parent::executeComponent();
 	}
 
@@ -545,4 +549,16 @@ class TasksInterfaceFilterComponent extends TasksBaseComponent
 		return $this->getTasksViewMode($viewCode);
 	}
 
+	private function prepareRoles(): array
+	{
+		$items = Container::getInstance()->getRoleProvider()->getItems($this->userId);
+		$groupId = $this->arParams['GROUP_ID'] ?? 0;
+		$selectedRoleId = Filter::getInstance($this->userId, $groupId)->getDefaultRoleId();
+
+		return [
+			'items' => $items,
+			'selectedRoleId' => $selectedRoleId,
+			'selectedRoleName' => $items[$selectedRoleId]['TEXT'] ?? null,
+		];
+	}
 }

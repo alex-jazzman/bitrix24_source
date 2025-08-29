@@ -32,6 +32,10 @@ export class CheckList extends BuilderEntityModel<CheckListModelState, CheckList
 				remove: true,
 				toggle: true,
 			},
+			panelIsShown: false,
+			collapsed: false,
+			previewCollapsed: true,
+			hidden: false,
 			groupMode: {
 				active: false,
 				selected: false,

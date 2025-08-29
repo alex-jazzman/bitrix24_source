@@ -32,6 +32,16 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    };
 	  },
 	  computed: {
+	    title: {
+	      get() {
+	        return this.task.title;
+	      },
+	      set(title) {
+	        void tasks_v2_provider_service_taskService.taskService.update(this.taskId, {
+	          title
+	        });
+	      }
+	    },
 	    task() {
 	      return this.$store.getters[`${tasks_v2_const.Model.Tasks}/getById`](this.taskId);
 	    },
@@ -45,30 +55,21 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  methods: {
 	    handleInput(title) {
 	      if (!this.isEdit) {
-	        this.updateTaskTitle(title);
+	        this.title = title;
 	      }
-	    },
-	    handleUpdate(title) {
-	      this.updateTaskTitle(title);
-	    },
-	    updateTaskTitle(title) {
-	      void tasks_v2_provider_service_taskService.taskService.update(this.taskId, {
-	        title
-	      });
 	    }
 	  },
 	  template: `
 		<GrowingTextArea
+			v-model="title"
 			class="tasks-field-title"
 			:data-task-id="taskId"
 			:data-task-field-id="titleMeta.id"
 			:data-task-field-value="task.title"
 			data-field-container
-			:initialValue="task.title"
-			:placeholderValue="loc('TASKS_V2_TITLE_PLACEHOLDER')"
-			:readonly="disabled"
+			:placeholder="loc('TASKS_V2_TITLE_PLACEHOLDER')"
+			:readonly="readonly || disabled"
 			@input="handleInput"
-			@update="handleUpdate"
 		/>
 	`
 	};

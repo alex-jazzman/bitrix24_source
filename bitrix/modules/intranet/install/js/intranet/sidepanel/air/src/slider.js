@@ -1,6 +1,7 @@
 import { Reflection, Dom, Event, Type, Browser, ZIndexManager } from 'main.core';
-import { Slider as BaseSlider, type OuterBoundary, type SliderOptions } from 'main.sidepanel';
+import { Slider as BaseSlider, SidePanel, type OuterBoundary, type SliderOptions } from 'main.sidepanel';
 import { ChatMenuBar } from './chat-menu-bar';
+import { type ThemePicker } from 'intranet.theme-picker';
 
 const MENU_COLLAPSED_WIDTH = 65;
 const MENU_EXPANDED_WIDTH = 240;
@@ -20,12 +21,6 @@ export class Slider extends BaseSlider
 		{
 			options.hideControls = false;
 			options.autoOffset = false;
-
-			const canUseBlurry = !Dom.hasClass(document.documentElement, 'bx-integrated-gpu');
-			if (!canUseBlurry)
-			{
-				options.overlayOpacity = 85;
-			}
 		}
 
 		super(url, options);
@@ -88,9 +83,38 @@ export class Slider extends BaseSlider
 			return true;
 		}
 
+		return Slider.isMessengerEmbedded();
+	}
+
+	static isMessengerEmbedded(): boolean
+	{
 		const LayoutManager = Reflection.getClass('BX.Messenger.v2.Lib.LayoutManager');
 
 		return LayoutManager && LayoutManager.getInstance().isEmbeddedMode();
+	}
+
+	static isMessengerOpenBeforeSlider(slider: Slider): boolean
+	{
+		if (Slider.isMessengerEmbedded())
+		{
+			return true;
+		}
+
+		const sliders = SidePanel.Instance.getOpenSliders();
+		for (const openSlider of sliders)
+		{
+			if (openSlider === slider)
+			{
+				return false;
+			}
+
+			if (openSlider?.isMessengerSlider())
+			{
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	isMessengerSlider(): boolean
@@ -132,7 +156,7 @@ export class Slider extends BaseSlider
 
 	calculateOuterBoundary(): OuterBoundary
 	{
-		if (this.isMessengerSlider() || Slider.isMessengerOpen())
+		if (this.isMessengerSlider() || Slider.isMessengerOpenBeforeSlider(this))
 		{
 			return {
 				top: this.isMessengerSlider() ? 58 : 18,
@@ -151,7 +175,7 @@ export class Slider extends BaseSlider
 
 	adjustBackgroundSize(): void
 	{
-		const themePicker = Reflection.getClass('BX.Intranet.Bitrix24.ThemePicker.Singleton');
+		const themePicker: ThemePicker = Reflection.getClass('BX.Intranet.Bitrix24.ThemePicker.Singleton');
 		if (!themePicker)
 		{
 			return;
@@ -181,12 +205,12 @@ export class Slider extends BaseSlider
 		const width = containerRatio > imgRatio ? containerHeight / imgRatio : containerWidth;
 		const height = containerRatio > imgRatio ? containerHeight : containerWidth * imgRatio;
 
-		Dom.style(document.body, 'background-size', `${width}px ${height}px`);
+		Dom.style(document.body, '--air-theme-bg-size', `${width}px ${height}px`);
 	}
 
 	adjustVideoSize(): void
 	{
-		const themePicker = Reflection.getClass('BX.Intranet.Bitrix24.ThemePicker.Singleton');
+		const themePicker: ThemePicker = Reflection.getClass('BX.Intranet.Bitrix24.ThemePicker.Singleton');
 		if (!themePicker)
 		{
 			return;
@@ -201,9 +225,9 @@ export class Slider extends BaseSlider
 
 	resetBackgroundSize(): void
 	{
-		Dom.style(document.body, 'background-size', null);
+		Dom.style(document.body, '--air-theme-bg-size', null);
 
-		const themePicker = Reflection.getClass('BX.Intranet.Bitrix24.ThemePicker.Singleton');
+		const themePicker: ThemePicker = Reflection.getClass('BX.Intranet.Bitrix24.ThemePicker.Singleton');
 		if (themePicker)
 		{
 			const videoContainer: HTMLElement = themePicker.getVideoContainer();

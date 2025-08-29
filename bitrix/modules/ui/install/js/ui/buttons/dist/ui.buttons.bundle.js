@@ -597,6 +597,7 @@ this.BX = this.BX || {};
 	babelHelpers.defineProperty(ButtonIcon, "UNFOLLOW", 'ui-btn-icon-unfollow');
 	babelHelpers.defineProperty(ButtonIcon, "FOLLOW", 'ui-btn-icon-follow');
 	babelHelpers.defineProperty(ButtonIcon, "ADD", 'ui-btn-icon-add');
+	babelHelpers.defineProperty(ButtonIcon, "ADD_M", 'ui-btn-icon-add-m');
 	babelHelpers.defineProperty(ButtonIcon, "STOP", 'ui-btn-icon-stop');
 	babelHelpers.defineProperty(ButtonIcon, "START", 'ui-btn-icon-start');
 	babelHelpers.defineProperty(ButtonIcon, "PAUSE", 'ui-btn-icon-pause');
@@ -710,6 +711,7 @@ this.BX = this.BX || {};
 	babelHelpers.defineProperty(AirButtonStyle, "FILLED_COPILOT", '--style-filled-copilot');
 	babelHelpers.defineProperty(AirButtonStyle, "FILLED_SUCCESS", '--style-filled-success');
 	babelHelpers.defineProperty(AirButtonStyle, "FILLED_ALERT", '--style-filled-alert');
+	babelHelpers.defineProperty(AirButtonStyle, "FILLED_BOOST", '--style-filled-boost');
 
 	let _$1 = t => t,
 	  _t$1;

@@ -585,9 +585,7 @@ create table if not exists b_sonet_onboarding_queue
 	CREATED_DATE timestamp(0) default now(),
 	PROCESSED_DATE timestamp(0) default null,
 	IS_PROCESSED smallint default 0,
-
-	primary key (ID),
-	index ix_b_sonet_onboarding_queue_execution_processed (next_execution, is_processed)
+	primary key (ID)
 );
 
 create unique index ix_b_sonet_onboarding_queue_collab_user_type  on b_sonet_onboarding_queue (COLLAB_ID, USER_ID, TYPE);

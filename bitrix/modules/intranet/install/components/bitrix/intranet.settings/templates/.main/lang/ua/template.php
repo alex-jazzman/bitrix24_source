@@ -1,5 +1,6 @@
 <?php
 $MESS["BITRIX24_PARTNER_ORDER_MSGVER_1"] = "Замовити впровадження";
+$MESS["BITRIX24_PARTNER_POPUP_TITLE"] = "Упровадження, установлення та налаштування Бітрікс24";
 $MESS["INTRANET_SETTINGS_ADDITIONAL_USER_ACCESS_IP"] = "Додати IP-адреси для інших користувачів";
 $MESS["INTRANET_SETTINGS_BLACK_LIST"] = "Чорний список";
 $MESS["INTRANET_SETTINGS_BUTTON_CREATE"] = "Створити сайт-візитку";

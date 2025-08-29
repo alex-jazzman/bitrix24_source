@@ -408,57 +408,56 @@ if (typeof BX.Tasks.ProjectSelector === "undefined")
 
 
 this.BX = this.BX || {};
-(function (exports,ui_tour,main_core,ui_buttons) {
+(function (exports,ui_tour,main_core,main_core_events,ui_buttons,ui_system_menu) {
 	'use strict';
 
-	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
-	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
-	var _filterId = /*#__PURE__*/new WeakMap();
-	var _filter = /*#__PURE__*/new WeakMap();
-	var _init = /*#__PURE__*/new WeakSet();
-	var _setFilter = /*#__PURE__*/new WeakSet();
-	var _setGuide = /*#__PURE__*/new WeakSet();
-	var _markViewed = /*#__PURE__*/new WeakSet();
-	var _log = /*#__PURE__*/new WeakSet();
-	var Preset = /*#__PURE__*/function () {
-	  function Preset(options) {
-	    babelHelpers.classCallCheck(this, Preset);
-	    _classPrivateMethodInitSpec(this, _log);
-	    _classPrivateMethodInitSpec(this, _markViewed);
-	    _classPrivateMethodInitSpec(this, _setGuide);
-	    _classPrivateMethodInitSpec(this, _setFilter);
-	    _classPrivateMethodInitSpec(this, _init);
-	    _classPrivateFieldInitSpec(this, _filterId, {
+	var _filterId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("filterId");
+	var _filter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("filter");
+	var _init = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("init");
+	var _setFilter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setFilter");
+	var _setGuide = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setGuide");
+	var _markViewed = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("markViewed");
+	var _log = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("log");
+	class Preset {
+	  constructor(options) {
+	    Object.defineProperty(this, _log, {
+	      value: _log2
+	    });
+	    Object.defineProperty(this, _markViewed, {
+	      value: _markViewed2
+	    });
+	    Object.defineProperty(this, _setGuide, {
+	      value: _setGuide2
+	    });
+	    Object.defineProperty(this, _setFilter, {
+	      value: _setFilter2
+	    });
+	    Object.defineProperty(this, _init, {
+	      value: _init2
+	    });
+	    Object.defineProperty(this, _filterId, {
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec(this, _filter, {
+	    Object.defineProperty(this, _filter, {
 	      writable: true,
 	      value: void 0
 	    });
-	    babelHelpers.classPrivateFieldSet(this, _filterId, options.filterId);
-	    _classPrivateMethodGet(this, _init, _init2).call(this);
+	    babelHelpers.classPrivateFieldLooseBase(this, _filterId)[_filterId] = options.filterId;
+	    babelHelpers.classPrivateFieldLooseBase(this, _init)[_init]();
 	  }
-	  babelHelpers.createClass(Preset, [{
-	    key: "payAttention",
-	    value: function payAttention() {
-	      var _this = this;
-	      setTimeout(function () {
-	        _this.guide.showNextStep();
-	        _classPrivateMethodGet(_this, _markViewed, _markViewed2).call(_this);
-	      }, Preset.DELAY);
-	    }
-	  }]);
-	  return Preset;
-	}();
+	  payAttention() {
+	    setTimeout(() => {
+	      this.guide.showNextStep();
+	      babelHelpers.classPrivateFieldLooseBase(this, _markViewed)[_markViewed]();
+	    }, Preset.DELAY);
+	  }
+	}
 	function _init2() {
-	  var _classPrivateMethodGe;
-	  _classPrivateMethodGet(_classPrivateMethodGe = _classPrivateMethodGet(this, _setFilter, _setFilter2).call(this), _setGuide, _setGuide2).call(_classPrivateMethodGe);
+	  babelHelpers.classPrivateFieldLooseBase(babelHelpers.classPrivateFieldLooseBase(this, _setFilter)[_setFilter](), _setGuide)[_setGuide]();
 	}
 	function _setFilter2() {
-	  babelHelpers.classPrivateFieldSet(this, _filter, BX.Main.filterManager.getById(babelHelpers.classPrivateFieldGet(this, _filterId)));
+	  babelHelpers.classPrivateFieldLooseBase(this, _filter)[_filter] = BX.Main.filterManager.getById(babelHelpers.classPrivateFieldLooseBase(this, _filterId)[_filterId]);
 	  return this;
 	}
 	function _setGuide2() {
@@ -466,7 +465,7 @@ this.BX = this.BX || {};
 	    simpleMode: true,
 	    onEvents: true,
 	    steps: [{
-	      target: babelHelpers.classPrivateFieldGet(this, _filter).getPopupBindElement(),
+	      target: babelHelpers.classPrivateFieldLooseBase(this, _filter)[_filter].getPopupBindElement(),
 	      title: main_core.Loc.getMessage('TASKS_INTERFACE_FILTER_PRESETS_MOVED_TITLE'),
 	      text: main_core.Loc.getMessage('TASKS_INTERFACE_FILTER_PRESETS_MOVED_TEXT'),
 	      position: 'bottom',
@@ -481,64 +480,199 @@ this.BX = this.BX || {};
 	  return this;
 	}
 	function _markViewed2() {
-	  var _this2 = this;
 	  main_core.ajax.runComponentAction('bitrix:tasks.interface.filter', 'markPresetAhaMomentViewed', {
 	    mode: 'class',
 	    data: {}
-	  })["catch"](function (error) {
-	    _classPrivateMethodGet(_this2, _log, _log2).call(_this2, error);
+	  }).catch(error => {
+	    babelHelpers.classPrivateFieldLooseBase(this, _log)[_log](error);
 	  });
 	}
 	function _log2(error) {
 	  console.log(error);
 	}
-	babelHelpers.defineProperty(Preset, "DELAY", 1000);
+	Preset.DELAY = 1000;
 
-	function _classPrivateMethodInitSpec$1(obj, privateSet) { _checkPrivateRedeclaration$1(obj, privateSet); privateSet.add(obj); }
-	function _classPrivateFieldInitSpec$1(obj, privateMap, value) { _checkPrivateRedeclaration$1(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration$1(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet$1(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
-	var _params = /*#__PURE__*/new WeakMap();
-	var _initAddButton = /*#__PURE__*/new WeakSet();
-	var _showPresetTourGuide = /*#__PURE__*/new WeakSet();
-	var TasksInterfaceFilter = function TasksInterfaceFilter(params) {
-	  babelHelpers.classCallCheck(this, TasksInterfaceFilter);
-	  _classPrivateMethodInitSpec$1(this, _showPresetTourGuide);
-	  _classPrivateMethodInitSpec$1(this, _initAddButton);
-	  _classPrivateFieldInitSpec$1(this, _params, {
-	    writable: true,
-	    value: void 0
+	const defaultRole = 'view_all';
+	var _selectedRoleId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("selectedRoleId");
+	var _roles = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("roles");
+	var _analytics = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("analytics");
+	var _button = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("button");
+	var _menu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("menu");
+	var _initButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initButton");
+	var _bindEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bindEvents");
+	var _handleFilterBeforeApply = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleFilterBeforeApply");
+	var _update = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("update");
+	var _menuItems = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("menuItems");
+	var _roleName = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("roleName");
+	var _sendAnalyticsClick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendAnalyticsClick");
+	var _sendAnalyticsApply = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendAnalyticsApply");
+	var _getAnalyticsSender = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getAnalyticsSender");
+	class Roles {
+	  constructor(params) {
+	    Object.defineProperty(this, _getAnalyticsSender, {
+	      value: _getAnalyticsSender2
+	    });
+	    Object.defineProperty(this, _sendAnalyticsApply, {
+	      value: _sendAnalyticsApply2
+	    });
+	    Object.defineProperty(this, _sendAnalyticsClick, {
+	      value: _sendAnalyticsClick2
+	    });
+	    Object.defineProperty(this, _roleName, {
+	      get: _get_roleName,
+	      set: void 0
+	    });
+	    Object.defineProperty(this, _menuItems, {
+	      get: _get_menuItems,
+	      set: void 0
+	    });
+	    Object.defineProperty(this, _update, {
+	      value: _update2
+	    });
+	    Object.defineProperty(this, _bindEvents, {
+	      value: _bindEvents2
+	    });
+	    Object.defineProperty(this, _initButton, {
+	      value: _initButton2
+	    });
+	    Object.defineProperty(this, _selectedRoleId, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _roles, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _analytics, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _button, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _menu, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _handleFilterBeforeApply, {
+	      writable: true,
+	      value: event => {
+	        const previousRoleId = babelHelpers.classPrivateFieldLooseBase(this, _selectedRoleId)[_selectedRoleId];
+	        babelHelpers.classPrivateFieldLooseBase(this, _selectedRoleId)[_selectedRoleId] = event.getData()[2].getFilterFieldsValues().ROLEID || defaultRole;
+	        babelHelpers.classPrivateFieldLooseBase(this, _update)[_update]();
+	        if (previousRoleId !== babelHelpers.classPrivateFieldLooseBase(this, _selectedRoleId)[_selectedRoleId]) {
+	          void babelHelpers.classPrivateFieldLooseBase(this, _sendAnalyticsApply)[_sendAnalyticsApply](babelHelpers.classPrivateFieldLooseBase(this, _selectedRoleId)[_selectedRoleId]);
+	        }
+	      }
+	    });
+	    if (!params.button) {
+	      return;
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _selectedRoleId)[_selectedRoleId] = params.selectedRoleId || defaultRole;
+	    babelHelpers.classPrivateFieldLooseBase(this, _roles)[_roles] = {
+	      [defaultRole]: {
+	        title: main_core.Loc.getMessage('TASKS_ALL_ROLES')
+	      },
+	      ...Object.fromEntries(Object.entries(params.items).map(([roleId, item]) => [roleId, {
+	        title: item.TEXT
+	      }]))
+	    };
+	    babelHelpers.classPrivateFieldLooseBase(this, _analytics)[_analytics] = params.analytics;
+	    babelHelpers.classPrivateFieldLooseBase(this, _initButton)[_initButton](params.button);
+	    babelHelpers.classPrivateFieldLooseBase(this, _bindEvents)[_bindEvents]();
+	  }
+	}
+	function _initButton2(button) {
+	  babelHelpers.classPrivateFieldLooseBase(this, _menu)[_menu] = new ui_system_menu.Menu({
+	    items: babelHelpers.classPrivateFieldLooseBase(this, _menuItems)[_menuItems],
+	    offsetTop: 6
 	  });
-	  babelHelpers.classPrivateFieldSet(this, _params, params);
-	  _classPrivateMethodGet$1(this, _initAddButton, _initAddButton2).call(this);
-	  _classPrivateMethodGet$1(this, _showPresetTourGuide, _showPresetTourGuide2).call(this);
-	};
+	  babelHelpers.classPrivateFieldLooseBase(this, _button)[_button] = ui_buttons.ButtonManager.createFromNode(button);
+	  babelHelpers.classPrivateFieldLooseBase(this, _button)[_button].bindEvent('click', () => {
+	    babelHelpers.classPrivateFieldLooseBase(this, _menu)[_menu].show(babelHelpers.classPrivateFieldLooseBase(this, _button)[_button].getContainer());
+	    void babelHelpers.classPrivateFieldLooseBase(this, _sendAnalyticsClick)[_sendAnalyticsClick]();
+	  });
+	}
+	function _bindEvents2() {
+	  main_core_events.EventEmitter.subscribe('BX.Main.Filter:beforeApply', babelHelpers.classPrivateFieldLooseBase(this, _handleFilterBeforeApply)[_handleFilterBeforeApply]);
+	}
+	function _update2() {
+	  babelHelpers.classPrivateFieldLooseBase(this, _button)[_button].setText(babelHelpers.classPrivateFieldLooseBase(this, _roleName)[_roleName]);
+	  babelHelpers.classPrivateFieldLooseBase(this, _menu)[_menu].updateItems(babelHelpers.classPrivateFieldLooseBase(this, _menuItems)[_menuItems]);
+	}
+	function _get_menuItems() {
+	  return Object.entries(babelHelpers.classPrivateFieldLooseBase(this, _roles)[_roles]).map(([roleId, role]) => ({
+	    title: role.title,
+	    isSelected: roleId === babelHelpers.classPrivateFieldLooseBase(this, _selectedRoleId)[_selectedRoleId],
+	    onClick: () => main_core_events.EventEmitter.emit('Tasks.TopMenu:onItem', new main_core_events.BaseEvent({
+	      data: [roleId],
+	      compatData: [roleId]
+	    }))
+	  }));
+	}
+	function _get_roleName() {
+	  return babelHelpers.classPrivateFieldLooseBase(this, _roles)[_roles][babelHelpers.classPrivateFieldLooseBase(this, _selectedRoleId)[_selectedRoleId]].title;
+	}
+	async function _sendAnalyticsClick2() {
+	  const analytics = await babelHelpers.classPrivateFieldLooseBase(this, _getAnalyticsSender)[_getAnalyticsSender]();
+	  analytics.sendRoleClick(babelHelpers.classPrivateFieldLooseBase(this, _analytics)[_analytics]);
+	}
+	async function _sendAnalyticsApply2(role) {
+	  const analytics = await babelHelpers.classPrivateFieldLooseBase(this, _getAnalyticsSender)[_getAnalyticsSender]();
+	  analytics.sendRoleClickType(babelHelpers.classPrivateFieldLooseBase(this, _analytics)[_analytics], {
+	    role,
+	    isFilterEnabled: role !== defaultRole
+	  });
+	}
+	async function _getAnalyticsSender2() {
+	  return (await main_core.Runtime.loadExtension('tasks.v2.lib.analytics')).analytics;
+	}
+
+	var _params = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("params");
+	var _initAddButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initAddButton");
+	var _initRoles = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initRoles");
+	var _showPresetTourGuide = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showPresetTourGuide");
+	class TasksInterfaceFilter {
+	  constructor(params) {
+	    Object.defineProperty(this, _showPresetTourGuide, {
+	      value: _showPresetTourGuide2
+	    });
+	    Object.defineProperty(this, _initRoles, {
+	      value: _initRoles2
+	    });
+	    Object.defineProperty(this, _initAddButton, {
+	      value: _initAddButton2
+	    });
+	    Object.defineProperty(this, _params, {
+	      writable: true,
+	      value: void 0
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _params)[_params] = params;
+	    babelHelpers.classPrivateFieldLooseBase(this, _initAddButton)[_initAddButton]();
+	    babelHelpers.classPrivateFieldLooseBase(this, _initRoles)[_initRoles]();
+	    babelHelpers.classPrivateFieldLooseBase(this, _showPresetTourGuide)[_showPresetTourGuide]();
+	  }
+	}
 	function _initAddButton2() {
-	  var _this = this;
-	  if (!babelHelpers.classPrivateFieldGet(this, _params).isV2Form || !babelHelpers.classPrivateFieldGet(this, _params).createNode) {
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].isV2Form || !babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].createNode) {
 	    return;
 	  }
-	  var button = new ui_buttons.Button({
-	    className: 'ui-btn-main',
-	    text: main_core.Loc.getMessage('TASKS_BTN_CREATE_TASK'),
-	    onclick: function onclick() {
-	      new BX.Tasks.V2.Application.TaskCard({
-	        groupId: babelHelpers.classPrivateFieldGet(_this, _params).groupId,
-	        analytics: babelHelpers.classPrivateFieldGet(_this, _params).analytics
-	      }).showCompactCard();
-	    },
-	    props: {
-	      id: 'tasks-buttonAdd'
-	    }
-	  });
-	  babelHelpers.classPrivateFieldGet(this, _params).createNode.replaceWith(button.render());
+	  const button = ui_buttons.ButtonManager.createFromNode(babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].createNode);
+	  button.getMainButton().bindEvent('click', () => BX.Tasks.V2.Application.TaskCard.showCompactCard({
+	    groupId: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].groupId,
+	    analytics: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].analytics
+	  }));
+	}
+	function _initRoles2() {
+	  new Roles(babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].roles);
 	}
 	function _showPresetTourGuide2() {
-	  if (!babelHelpers.classPrivateFieldGet(this, _params).showPresetTourGuide) {
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].showPresetTourGuide) {
 	    return;
 	  }
 	  BX.Tasks.Preset.Aha = new BX.Tasks.Preset({
-	    filterId: babelHelpers.classPrivateFieldGet(this, _params).filterId
+	    filterId: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].filterId
 	  });
 	  BX.Tasks.Preset.Aha.payAttention();
 	}
@@ -546,7 +680,7 @@ this.BX = this.BX || {};
 	exports.Preset = Preset;
 	exports.TasksInterfaceFilter = TasksInterfaceFilter;
 
-}((this.BX.Tasks = this.BX.Tasks || {}),BX.UI.Tour,BX,BX.UI));
+}((this.BX.Tasks = this.BX.Tasks || {}),BX.UI.Tour,BX,BX.Event,BX.UI,BX.UI.System));
 
 
 //# sourceMappingURL=script.js.map

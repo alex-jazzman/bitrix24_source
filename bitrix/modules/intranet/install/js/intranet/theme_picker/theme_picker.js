@@ -21,11 +21,6 @@ BX.Intranet.Bitrix24.ThemePicker = function(options)
 	this.allowSetDefaultTheme = options.allowSetDefaultTheme === true;
 	this.isVideo = options.isVideo === true;
 
-	if (BX.type.isDomNode(options.link))
-	{
-		BX.bind(options.link, "click", this.show.bind(this));
-	}
-
 	this.themes = [];
 	this.baseThemes = {};
 

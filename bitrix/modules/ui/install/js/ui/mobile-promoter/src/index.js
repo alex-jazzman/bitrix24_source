@@ -21,8 +21,8 @@ export class MobilePromoter
 		};
 		this.title = Type.isString(options.title) ? options.title : Loc.getMessage('UI_MOBILE_PROMOTER_TITLE');
 		this.content = Type.isElementNode(options.content) ? options.content : null;
-		this.analytic = Type.isObject(options.analytic) ? options.analytic : null;
-		this.analyticParameters = {
+		this.analytics = Type.isObject(options.analytics) ? options.analytics : null;
+		this.analyticsParameters = {
 			tool: 'intranet',
 			category: 'activation',
 		};
@@ -209,9 +209,9 @@ export class MobilePromoter
 			colorLight: '#ffffff',
 		});
 
-		if (this.analytic)
+		if (this.analytics)
 		{
-			this.setAnalyticParameters(this.analytic);
+			this.setAnalyticParameters(this.analytics);
 		}
 
 		if (this.position)
@@ -236,14 +236,14 @@ export class MobilePromoter
 
 	setAnalyticParameters(parameters: {[key: string]: string})
 	{
-		this.analyticParameters = {
-			...this.analyticParameters,
+		this.analyticsParameters = {
+			...this.analyticsParameters,
 			...parameters,
 		};
 	}
 
 	sendAnalytics(): void
 	{
-		sendData(this.analyticParameters);
+		sendData(this.analyticsParameters);
 	}
 }

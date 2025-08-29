@@ -8,6 +8,7 @@ import {UI} from 'ui.notification';
 import {RequestSender} from './request.sender';
 import { Filter } from './filter';
 
+import 'color_picker';
 import 'ui.design-tokens';
 import 'ui.fonts.opensans';
 import '../css/base.css';

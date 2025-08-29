@@ -1,15 +1,118 @@
-.tasks-field-check-list {
+.tasks-check-list-wrapper {
+	width: 100%;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	box-sizing: border-box;
+}
+
+.tasks-check-list-wrapper.--popup {
+	padding: 18px 0 22px 0;
+}
+
+.tasks-check-list-content {
+	position: relative;
+	overflow: auto;
+	scrollbar-width: none;
+	height: 100%;
+	box-sizing: border-box;
+}
+
+.tasks-check-list-footer {
+	position: relative;
+	display: flex;
+	justify-content: space-between;
+	margin-top: auto;
+}
+
+.tasks-check-list-footer.--popup {
+	padding: 25px 24px 8px 24px;
+}
+
+.tasks-check-list-footer.--sheet {
+	padding: 10px 24px 0 24px;
+}
+
+.tasks-check-list-footer.--preview {
+	padding: 10px 24px 0 24px;
+}
+
+.tasks-check-list-footer::before {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: 24px;
+	right: 24px;
+	border-top: var(--ui-border-width-thin) solid var(--ui-color-divider-default);
+}
+
+.tasks-check-list-close-icon {
+	position: absolute;
+	cursor: pointer;
+	z-index: 3;
+	right: 24px;
+}
+
+.tasks-check-list-close-icon.--popup {
+	top: 18px;
+}
+
+.tasks-check-list-close-icon.--sheet {
+	top: 15px;
+}
+
+.tasks-check-list-close-icon .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+}
+
+.tasks-check-list-close-icon:hover .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-color-base-3);
+}
+
+.check-list-stub {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	gap: 6px;
+	min-height: 100%;
+}
+
+.check-list-stub-title {
+	font-size: var(--ui-font-size-3xl);
+	font-weight: var(--ui-font-weight-medium);
+	color: var(--ui-color-base-2);
+	text-align: center;
+}
+
+.check-list-stub-text {
+	font-size: var(--ui-font-size-xl);
+	font-weight: var(--ui-font-weight-normal);
+	color: var(--ui-color-base-2);
+	text-align: center;
+}
+
+.check-list-stub-icon {
+	width: 330px;
+	height: 162px;
+	background: url('images/empty-stub.png') center / contain no-repeat;
+}
+
+.check-list-stub-btn {
+	margin-top: 30px;
+}
+.tasks-check-list-list {
 	display: flex;
 	align-items: center;
 	background: #FFFFFFAD;
 	border-radius: 10px;
 }
 
-.tasks-field-check-list.--default {
+.tasks-check-list-list.--default {
 	padding: 18px;
 }
 
-.tasks-field-check-list-content {
+.tasks-check-list-list-content {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
@@ -18,28 +121,28 @@
 	border-radius: 10px;
 }
 
-.tasks-field-check-list.--default,
-.tasks-field-check-list-content.--default {
+.tasks-check-list-list.--default,
+.tasks-check-list-list-content.--default {
 	background: var(--ui-color-base-8);
 }
 
-.tasks-field-check-list-content .ui-icon-set {
+.tasks-check-list-list-content-row .ui-icon-set {
 	margin-right: 6px;
-	--ui-icon-set__icon-base-color: var(--ui-color-accent-main-primary);
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
 }
 
-.tasks-field-check-list-content-text {
+.tasks-check-list-list-content-text {
 	font-weight: var(--ui-font-weight-medium);
 }
 
-.tasks-field-check-list-content-list {
+.tasks-check-list-list-content-list {
 	display: flex;
 	flex-direction: column;
 	gap: 2px;
 	width: 100%;
 }
 
-.tasks-field-check-list-content-list-item {
+.tasks-check-list-list-content-list-item {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
@@ -52,25 +155,25 @@
 	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
 }
 
-.tasks-field-check-list-content-list-item:first-child {
+.tasks-check-list-list-content-list-item:first-child {
 	border-top-left-radius: 10px;
 	border-top-right-radius: 10px;
 }
 
-.tasks-field-check-list-content-list-item:last-child {
+.tasks-check-list-list-content-list-item:last-child {
 	border-bottom-left-radius: 10px;
 	border-bottom-right-radius: 10px;
 }
 
-.tasks-field-check-list-content-list-item-icon {
+.tasks-check-list-list-content-list-item-icon {
 	display: flex;
 }
 
-.tasks-field-check-list-content-list-item-icon .ui-icon-set {
-	--ui-icon-set__icon-base-color: var(--ui-color-accent-main-primary);
+.tasks-check-list-list-content-list-item-icon .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
 }
 
-.tasks-field-check-list-content-list-item-title {
+.tasks-check-list-list-content-list-item-title {
 	display: block;
 	flex-grow: 1;
 	color: var(--ui-color-base-1);
@@ -80,7 +183,7 @@
 	text-overflow: ellipsis;
 }
 
-.tasks-field-check-list-content-list-item-status {
+.tasks-check-list-list-content-list-item-status {
 	display: flex;
 	gap: 3px;
 	margin-left: 12px;
@@ -88,93 +191,41 @@
 	font-size: var(--ui-font-size-sm);
 }
 
-.tasks-field-check-list-content-list-item-arrow {
+.tasks-check-list-list-content-list-item-arrow {
 	display: flex;
 	margin-left: 12px;
 }
 
-.tasks-field-check-list-content-list-item-arrow .ui-icon-set {
-	--ui-icon-set__icon-base-color: var(--ui-color-base-3);
+.tasks-check-list-list-content-list-item-arrow .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-color-base-3);
 }
 
-.tasks-field-check-list-content-row {
+.tasks-check-list-list-content-row {
 	display: flex;
 	align-items: center;
 	width: 100%;
 }
 
-.tasks-field-check-list-content-btn {
+.tasks-check-list-list-content-btn {
 	display: flex;
 	align-items: center;
 	box-sizing: border-box;
 	max-height: 34px;
-	padding: 6px 16px;
+	padding: 0 0 8px 10px;
 	cursor: pointer;
 }
 
-.tasks-field-check-list-content-row.--footer .ui-icon-set {
-	--ui-icon-set__icon-base-color: var(--ui-color-base-4);
+.tasks-check-list-list-content-row.--footer .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
 }
 
-.tasks-field-check-list-content-btn-text {
+.tasks-check-list-list-content-btn-text {
 	color: var(--ui-color-base-4);
 	font-size: var(--ui-font-size-sm);
 }
 
-.tasks-field-check-list-close-icon {
-	position: absolute;
-	cursor: pointer;
-	z-index: 3;
-}
-
-.tasks-field-check-list-close-icon.--popup {
-	top: 18px;
-	right: 24px;
-}
-
-.tasks-field-check-list-close-icon.--sheet {
-	top: 15px;
-	right: 24px;
-}
-
-.tasks-field-check-list-close-icon .ui-icon-set {
-	--ui-icon-set__icon-base-color: var(--ui-color-base-4);
-}
-
-.tasks-field-check-list-close-icon:hover .ui-icon-set {
-	--ui-icon-set__icon-base-color: var(--ui-color-base-3);
-}
-.tasks-field-check-list-sheet {
-	display: flex;
-	flex-direction: column;
-	height: 100%;
-	box-sizing: border-box;
-}
-
-.tasks-field-check-list-list {
-	overflow: auto;
-	scrollbar-width: none;
-	height: 100%;
-	box-sizing: border-box;
-}
-
-.tasks-field-check-list-footer {
-	display: flex;
-	justify-content: flex-end;
-	margin-top: auto;
-	padding: 10px 24px 0 24px;
-}
-
 .tasks-check-list-popup {
 	height: 100%;
-	box-sizing: border-box;
-}
-
-.tasks-check-list-popup-wrapper {
-	padding: 18px 0 22px 0;
-	height: 100%;
-	display: flex;
-	flex-direction: column;
 	box-sizing: border-box;
 }
 
@@ -210,70 +261,8 @@
 	}
 }
 
-.tasks-check-list-popup-list {
-	overflow: auto;
-	scrollbar-width: none;
-	height: 100%;
-	box-sizing: border-box;
-}
-
-.tasks-check-list-popup-footer {
-	position: relative;
-	display: flex;
-	justify-content: space-between;
-	margin-top: auto;
-	padding: 25px 24px 8px 24px;
-}
-
-.tasks-check-list-popup-footer::before {
-	content: '';
-	position: absolute;
-	top: 0;
-	left: 24px;
-	right: 24px;
-	border-top: var(--ui-border-width-thin) solid var(--ui-color-divider-default);
-}
 .check-list-widget-container {
 	width: 100%;
-}
-
-.check-list-widget-collapse {
-	--transition-duration: 0.3s;
-	overflow: hidden;
-	transition:
-		max-height calc(var(--transition-duration) * 1) ease-in-out,
-		opacity calc(var(--transition-duration) * 0.8) ease-in-out,
-		-webkit-clip-path var(--transition-duration) ease-in-out;
-	transition:
-		max-height calc(var(--transition-duration) * 1) ease-in-out,
-		clip-path var(--transition-duration) ease-in-out,
-		opacity calc(var(--transition-duration) * 0.8) ease-in-out;
-	transition:
-		max-height calc(var(--transition-duration) * 1) ease-in-out,
-		clip-path var(--transition-duration) ease-in-out,
-		opacity calc(var(--transition-duration) * 0.8) ease-in-out,
-		-webkit-clip-path var(--transition-duration) ease-in-out;
-	transition-delay: 0s, 0s, 0s;
-	-webkit-clip-path: inset(100% 0 0 0);
-	        clip-path: inset(100% 0 0 0);
-	opacity: 0;
-	max-height: 0;
-}
-
-.check-list-widget-collapse.--expanded {
-	transition-delay: 0s, 0s, calc(var(--transition-duration) * 0.3);
-	-webkit-clip-path: inset(0 0 0 0);
-	        clip-path: inset(0 0 0 0);
-	opacity: 1;
-	max-height: 100000px;
-}
-
-.check-list-widget-collapse.--collapsed {
-	transition-delay: 0s, 0s, calc(var(--transition-duration) * 0.3);
-	-webkit-clip-path: inset(0 0 0 0);
-	        clip-path: inset(0 0 0 0);
-	opacity: 0;
-	max-height: 0;
 }
 
 .check-list-widget {
@@ -284,14 +273,35 @@
 	margin-top: 0;
 }
 
+.check-list-widget.--parent {
+	gap: 54px;
+}
+
+.check-list-widget.--preview {
+	gap: 6px;
+}
+
 .check-list-widget-item {
 	display: flex;
 	flex-direction: column;
 	opacity: 1;
 }
 
+.check-list-widget-item.--parent.--preview {
+	padding: 0 12px 12px 12px;
+}
+
+.check-list-widget-item.--parent:not(.--collapsed) {
+	padding-bottom: 0;
+}
+
 .check-list-widget-item.--parent:not(.--hidden):not(.--first-visible) {
-	margin-top: 18px;
+	padding-top: 12px;
+}
+
+.check-list-widget-item.--parent.--preview {
+	background: var(--ui-color-base-8);
+	border-radius: 10px;
 }
 
 .check-list-widget-item.--hidden {
@@ -323,7 +333,7 @@
 }
 
 .check-list-widget-item-attach-users .ui-icon-set {
-	--ui-icon-set__icon-base-color: var(--ui-color-base-3);
+	--ui-icon-set__icon-color: var(--ui-color-base-3);
 }
 
 .check-list-widget-item-attach-users-list {
@@ -372,7 +382,6 @@
 	justify-content: space-between;
 	align-items: flex-start;
 	gap: 6px;
-	min-height: 57px;
 	position: -webkit-sticky;
 	position: sticky;
 	top: 0;
@@ -380,15 +389,23 @@
 	border-radius: 0;
 	z-index: 2;
 	will-change: transform;
-	padding: 0 24px 13px 24px;
 }
 
-.check-list-widget-parent-item::before {
+.check-list-widget-parent-item:not(.--preview) {
+	padding-left: 18px;
+	padding-right: 18px;
+}
+
+.check-list-widget-parent-item:not(.--collapsed) {
+	padding-bottom: 12px;
+}
+
+.check-list-widget-parent-item:not(.--collapsed)::before {
 	content: "";
 	position: absolute;
 	bottom: 0;
-	left: 24px;
-	right: 24px;
+	left: 12px;
+	right: 12px;
 	height: 1px;
 	background: rgba(0, 0, 0, 0.04);
 	box-shadow: 0 0 1px rgba(0, 0, 0, 0.04);
@@ -396,25 +413,31 @@
 }
 
 .check-list-widget-parent-item-label-container .ui-icon-set {
-	--ui-icon-set__icon-base-color: var(--ui-color-accent-main-primary);
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
 }
 
 .check-list-widget-parent-item-title-container {
 	display: flex;
 	flex-direction: column;
-	gap: 6px;
+	gap: 4px;
 	width: 100%;
 }
 
 .check-list-widget-parent-item-title-container .check-list-widget-parent-item-title {
-	min-height: 23px;
+	min-height: 24px;
 }
 
 .check-list-widget-parent-item-title-status {
 	display: flex;
-	gap: 3px;
+	align-items: center;
+	gap: 12px;
 	color: var(--ui-color-base-3);
 	font-size: var(--ui-font-size-sm);
+	min-height: 18px;
+}
+
+.check-list-widget-parent-item-title-status-label {
+	font-variant-numeric: tabular-nums;
 }
 
 .check-list-widget-parent-item-action {
@@ -431,7 +454,7 @@
 }
 
 .check-list-widget-parent-item-action .ui-icon-set {
-	--ui-icon-set__icon-base-color: var(--ui-color-base-4);
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
 	cursor: pointer;
 }
 
@@ -450,15 +473,20 @@
 	position: relative;
 	box-sizing: border-box;
 	min-height: 60px;
-	padding: 12px 24px;
+	padding: 12px 0;
+}
+
+.check-list-widget-child-item:not(.--preview) {
+	padding-left: 18px;
+	padding-right: 18px;
 }
 
 .check-list-widget-child-item::before {
 	content: '';
 	position: absolute;
 	bottom: 0;
-	left: 24px;
-	right: 24px;
+	left: 12px;
+	right: 12px;
 	border-bottom: var(--ui-border-width-thin) solid var(--ui-color-divider-default);
 }
 
@@ -486,6 +514,7 @@
 
 .check-list-widget-child-item-checkbox {
 	margin-top: 5px;
+	margin-left: 1px;
 	cursor: pointer;
 }
 
@@ -515,7 +544,7 @@
 
 .check-list-widget-child-item-important .ui-icon-set {
 	--ui-icon-set__icon-size: 24px;
-	--ui-icon-set__icon-base-color: radial-gradient(100.66% 100.66% at 50% 100.66%, #FAA72C 0%, #FF5752 67.91%);
+	--ui-icon-set__icon-color: radial-gradient(100.66% 100.66% at 50% 100.66%, #FAA72C 0%, #FF5752 67.91%);
 }
 
 .check-list-widget-child-item-action {
@@ -524,7 +553,7 @@
 }
 
 .check-list-widget-child-item-action .ui-icon-set {
-	--ui-icon-set__icon-base-color: var(--ui-color-base-4);
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
 }
 
 .check-list-widget-child-item-action-checkbox {
@@ -548,57 +577,34 @@
 	display: flex;
 	justify-content: flex-start;
 	align-items: center;
-	gap: 12px;
-	padding: 12px 24px;
+	gap: 10px;
+	padding: 12px 0;
 	cursor: pointer;
 }
 
-.check-list-widget-add-item::before {
+.check-list-widget-add-item:not(.--preview) {
+	padding-left: 18px;
+	padding-right: 18px;
+}
+
+.check-list-widget-add-item:not(.--preview)::before {
 	content: '';
 	position: absolute;
 	bottom: 0;
-	left: 24px;
-	right: 24px;
+	left: 12px;
+	right: 12px;
 	border-bottom: var(--ui-border-width-thin) solid var(--ui-color-divider-default);
 }
 
 .check-list-widget-add-item-icon .ui-icon-set {
-	--ui-icon-set__icon-base-color: var(--ui-color-base-3);
+	vertical-align: middle;
+	--ui-icon-set__icon-color: var(--ui-color-base-3);
 }
 
 .check-list-widget-add-item-title {
 	color: var(--ui-color-base-3);
 	font-size: var(--ui-font-size-lg);
 	font-weight: 400;
-}
-
-.check-list-stub {
-	display: flex;
-	flex-direction: column;
-	justify-content: center;
-	align-items: center;
-	gap: 6px;
-	padding: 75px 98px;
-}
-
-.check-list-stub-title {
-	font-size: var(--ui-font-size-3xl);
-	font-weight: var(--ui-font-weight-medium);
-	color: var(--ui-color-base-2);
-	text-align: center;
-}
-
-.check-list-stub-text {
-	font-size: var(--ui-font-size-xl);
-	font-weight: var(--ui-font-weight-normal);
-	color: var(--ui-color-base-2);
-	text-align: center;
-}
-
-.check-list-stub-icon {
-	width: 330px;
-	height: 162px;
-	background: url('images/stub.svg') center no-repeat;
 }
 
 .check-list-widget-item-panel {
@@ -656,9 +662,9 @@
 }
 
 .check-list-widget-item-panel-section-item .ui-icon-set {
-	--ui-icon-set__icon-base-color: var(--ui-color-base-4);
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
 }
 
 .check-list-widget-item-panel-section-item.--active.--important  .ui-icon-set {
-	--ui-icon-set__icon-base-color: radial-gradient(100.66% 100.66% at 50% 100.66%, #FAA72C 0%, #FF5752 67.91%);
+	--ui-icon-set__icon-color: radial-gradient(100.66% 100.66% at 50% 100.66%, #FAA72C 0%, #FF5752 67.91%);
 }

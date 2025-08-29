@@ -75,9 +75,9 @@
 	margin-right: 0;
 	border-radius: var(--ui-border-radius-sm);
 	font: var(--ui-font-size-sm)/var(--ui-font-line-height-2xs) var(--ui-font-family-primary);
-	-webkit-backdrop-filter: var(--ui-bg-blur-default);
-	        backdrop-filter: var(--ui-bg-blur-default);
-	background: transparent;
+	-webkit-backdrop-filter: var(--ui-nav-panel-custom-backdrop-filter, var(--ui-bg-blur-content));
+	        backdrop-filter: var(--ui-nav-panel-custom-backdrop-filter, var(--ui-bg-blur-content));
+	background: var(--ui-nav-panel-custom-background, transparent);
 }
 
 .ui-nav-panel__item {

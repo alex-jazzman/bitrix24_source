@@ -60,6 +60,9 @@ use \Bitrix\Tasks\Components\Kanban\Services\Time;
 use \Bitrix\Tasks\Components\Kanban\Services\Counters;
 
 use Bitrix\Tasks\TourGuide;
+use Bitrix\Tasks\V2\Public\Command\Task\Kanban\AddTaskStageRelationCommand;
+use Bitrix\Tasks\V2\Public\Command\Task\Kanban\DeleteTaskStageRelationCommand;
+use Bitrix\Tasks\V2\Public\Command\Task\Kanban\MoveTaskCommand;
 
 class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, Errorable
 {
@@ -2615,10 +2618,10 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 					$kanbanService = new KanbanService();
 					$kanbanService->removeTasksFromKanban($params['SPRINT_ID'], [$newId]);
 				}
-				TaskStageTable::add([
-					'TASK_ID' => $newId,
-					'STAGE_ID' => $columnId,
-				]);
+				(new AddTaskStageRelationCommand(
+					taskId: $newId,
+					stageId: (int)$columnId,
+				))->run();
 			}
 			// set sort
 			if ((int)$params['GROUP_ID'] === 0)
@@ -2798,9 +2801,10 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 							));
 							while ($rowStg = $resStg->fetch())
 							{
-								TaskStageTable::update($rowStg['ID'], array(
-									'STAGE_ID' => $columnId
-								));
+								(new MoveTaskCommand(
+									relationId: (int)$rowStg['ID'],
+									stageId: (int)$columnId
+								))->run();
 
 								if (
 									$this->arParams['PERSONAL'] === 'Y'
@@ -2875,6 +2879,17 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 			}
 		}
 
+		// "STAGE_ID" analytics label
+		$isDemo = (Loader::includeModule('bitrix24') && \CBitrix24::IsDemoLicense()) ? 'Y' : 'N';
+
+		Analytics::getInstance($this->userId)->onTaskUpdate(
+			event: Analytics::EVENT['task_update'],
+			subSection: Analytics::SUB_SECTION['task_card'],
+			params: [
+				'p1' => 'isDemo_' . $isDemo,
+			],
+		);
+
 		return array();
 	}
 
@@ -2905,9 +2920,13 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 				'STAGE.ENTITY_ID' => $this->arParams['STAGES_ENTITY_ID']
 			]
 		]);
+
 		while ($taskStage = $taskStageTable->fetch())
 		{
-			TaskStageTable::update($taskStage['ID'], ['STAGE_ID' => $finishColumnId]);
+			(new MoveTaskCommand(
+				relationId: (int)$taskStage['ID'],
+				stageId: (int)$finishColumnId
+			))->run();
 		}
 
 		$this->completeTask($taskId);
@@ -2945,9 +2964,13 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 				'STAGE.ENTITY_ID' => $this->arParams['STAGES_ENTITY_ID'],
 			]
 		]);
+
 		while ($taskStage = $taskStageTable->fetch())
 		{
-			TaskStageTable::update($taskStage['ID'], ['STAGE_ID' => $newColumnId]);
+			(new MoveTaskCommand(
+				relationId: (int)$taskStage['ID'],
+				stageId: (int)$newColumnId
+			))->run();
 		}
 
 		$this->renewTask($taskId);
@@ -3981,7 +4004,13 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 						$this->completeTask($taskId);
 						break;
 					case 'mute':
-						UserOption::add($taskId, $this->userId, UserOption\Option::MUTED);
+						try
+						{
+							UserOption::add($taskId, $this->userId, UserOption\Option::MUTED);
+						}
+						catch (\Bitrix\Main\DB\DuplicateEntryException)
+						{
+						}
 						break;
 					case 'unmute':
 						UserOption::delete($taskId, $this->userId, UserOption\Option::MUTED);
@@ -4195,18 +4224,21 @@ class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, 
 					if (is_array($checkTS[$row['ID']] ?? null) && count($checkTS[$row['ID']] ?? []) > 1)
 					{
 						array_pop($checkTS[$row['ID']]);
-						foreach ($checkTS[$row['ID']] as $tsId)
-						{
-							TaskStageTable::delete($tsId);
-						}
+
+						$toDelete = $checkTS[$row['ID']];
+						Collection::normalizeArrayValuesByInt($toDelete, false);
+
+						(new DeleteTaskStageRelationCommand(
+							relationIds: $toDelete
+						))->run();
 					}
 					// not exists in any stage - add in default
 					elseif (!isset($checkTS[$row['ID']]))
 					{
-						TaskStageTable::add(array(
-							'STAGE_ID' => $defaultStageId,
-							'TASK_ID' => $row['ID']
-						));
+						(new AddTaskStageRelationCommand(
+							taskId: (int)$row['ID'],
+							stageId: $defaultStageId,
+						))->run();
 					}
 					$lastId = $row['ID'];
 				}

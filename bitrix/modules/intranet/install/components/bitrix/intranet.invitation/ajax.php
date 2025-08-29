@@ -141,6 +141,7 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 			],
 			'massInvite' => [
 				'+prefilters' => [
+					Intranet\Infrastructure\Controller\ActionFilter\EmailDailyLimit::createByDefault(),
 					new Intranet\Infrastructure\Controller\ActionFilter\ActiveUserInvitation(
 						new UserRepository(),
 					),

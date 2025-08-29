@@ -22,13 +22,14 @@ use Bitrix\Tasks\Comments\Task\CommentPoster;
 use Bitrix\Tasks\Control\Exception\TaskAddException;
 use Bitrix\Tasks\Control\Exception\TaskNotFoundException;
 use Bitrix\Tasks\Control\Exception\TaskUpdateException;
-use Bitrix\Tasks\V2\Command\Task\AddTaskCommand;
-use Bitrix\Tasks\V2\Command\Task\DeleteTaskCommand;
-use Bitrix\Tasks\V2\Command\Task\UpdateTaskCommand;
-use Bitrix\Tasks\V2\Internals\Container;
-use Bitrix\Tasks\V2\Internals\Control\Task\Action\Add\Config\AddConfig;
-use Bitrix\Tasks\V2\Internals\Control\Task\Action\Delete\Config\DeleteConfig;
-use Bitrix\Tasks\V2\Internals\Control\Task\Action\Update\Config\UpdateConfig;
+use Bitrix\Tasks\V2\Public\Command\Task\AddTaskCommand;
+use Bitrix\Tasks\V2\Public\Command\Task\DeleteTaskCommand;
+use Bitrix\Tasks\V2\Public\Command\Task\UpdateTaskCommand;
+use Bitrix\Tasks\V2\Internal\Entity\Task\Scenario;
+use Bitrix\Tasks\V2\Internal\DI\Container;
+use Bitrix\Tasks\V2\Internal\Service\Task\Action\Add\Config\AddConfig;
+use Bitrix\Tasks\V2\Internal\Service\Task\Action\Delete\Config\DeleteConfig;
+use Bitrix\Tasks\V2\Internal\Service\Task\Action\Update\Config\UpdateConfig;
 use Bitrix\Tasks\Control\Handler\TaskFieldHandler;
 use Bitrix\Tasks\Control\Handler\TariffFieldHandler;
 use Bitrix\Tasks\Control\Handler\Exception\TaskFieldValidateException;
@@ -67,7 +68,6 @@ use Bitrix\Tasks\Internals\TaskObject;
 use Bitrix\Tasks\Internals\TaskTable;
 use Bitrix\Tasks\Internals\UserOption;
 use Bitrix\Tasks\Kanban\StagesTable;
-use Bitrix\Tasks\Kanban\TaskStageTable;
 use Bitrix\Tasks\Member\Service\TaskMemberService;
 use Bitrix\Tasks\Processor\Task\AutoCloser;
 use Bitrix\Tasks\Processor\Task\Scheduler;
@@ -80,7 +80,7 @@ use Bitrix\Tasks\UI;
 use Bitrix\Tasks\Util;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\V2\FormV2Feature;
-use Bitrix\Tasks\V2\Internals\ErrorCode;
+use Bitrix\Tasks\V2\Internal\Error\ErrorCode;
 use CAdminException;
 use CApplicationException;
 use CIBlock;
@@ -291,7 +291,7 @@ class Task
 			$entity = $mapper->mapToEntity($fields);
 			$command = new AddTaskCommand($entity, $config);
 
-			/** @var \Bitrix\Tasks\V2\Entity\Task $entity */
+			/** @var \Bitrix\Tasks\V2\Internal\Entity\Task $entity */
 			$entity = $command->run()->getObject();
 
 			return $mapper->mapToObject($entity);
@@ -423,7 +423,7 @@ class Task
 				throw new TaskUpdateException($result->getError()?->getMessage());
 			}
 
-			/** @var \Bitrix\Tasks\V2\Entity\Task $entity */
+			/** @var \Bitrix\Tasks\V2\Internal\Entity\Task $entity */
 			$entity = $result->getObject();
 
 			$this->legacyOperationResultData = $command->config->getRuntime()->getLegacyOperationResultData();
@@ -1184,7 +1184,8 @@ class Task
 
 		$this->getTask(true);
 		$scenarioObject = $this->task->getScenario();
-		$fields['SCENARIO'] = is_null($scenarioObject) ? ScenarioTable::SCENARIO_DEFAULT
+		$fields['SCENARIO'] = is_null($scenarioObject)
+			? Scenario::Default->value
 			: $scenarioObject->getScenario();
 
 		return $fields;
@@ -1275,6 +1276,19 @@ class Task
 			return;
 		}
 
+		$analyticsLabels = [
+			'PARENT_ID',
+			'CREATED_BY',
+			'START_DATE_PLAN',
+			'END_DATE_PLAN',
+			'DURATION_PLAN',
+			'DURATION_PLAN_SECONDS',
+			'TIME_ESTIMATE',
+			'TIME_SPENT_IN_LOGS',
+			'DEPENDS_ON',
+			'ALLOW_TIME_TRACKING',
+		];
+
 		foreach ($this->changes as $key => $value)
 		{
 			$arLogFields = [
@@ -1285,6 +1299,18 @@ class Task
 				"FROM_VALUE" => $value["FROM_VALUE"],
 				"TO_VALUE" => $value["TO_VALUE"],
 			];
+
+			if (in_array($key, $analyticsLabels, true))
+			{
+				$isDemo = (Loader::includeModule('bitrix24') && \CBitrix24::IsDemoLicense()) ? 'Y' : 'N';
+
+				Analytics::getInstance($this->userId)->onTaskUpdate(
+					event: Analytics::EVENT['task_update'],
+					params: [
+						'p1' => 'isDemo_' . $isDemo,
+					],
+				);
+			}
 
 			$log = new CTaskLog();
 			$log->Add($arLogFields);
@@ -1498,7 +1524,7 @@ class Task
 		FavoriteTable::deleteByTaskId($this->taskId, ['LOW_LEVEL' => true]);
 		SortingTable::deleteByTaskId($this->taskId);
 		UserOption::deleteByTaskId($this->taskId);
-		TaskStageTable::clearTask($this->taskId);
+		Container::getInstance()->getTaskStageRepository()->deleteByTaskId($this->taskId);
 		TaskCheckListFacade::deleteByEntityIdOnLowLevel($this->taskId);
 
 		(new ResultManager($this->userId))->deleteByTaskId($this->taskId);
@@ -2794,16 +2820,19 @@ class Task
 	 */
 	private function setScenario(array $fields): void
 	{
+		$scenarioService = Container::getInstance()->getScenarioService();
 		if (empty($fields[self::FIELD_SCENARIO]))
 		{
-			// set default scenario if none specified
-			ScenarioTable::insertIgnore($this->taskId, [ScenarioTable::SCENARIO_DEFAULT]);
+			$scenarioService->saveDefault($this->taskId);
+
 			return;
 		}
 
-		$scenarios = is_array($fields[self::FIELD_SCENARIO]) ? $fields[self::FIELD_SCENARIO]
+		$scenarios = is_array($fields[self::FIELD_SCENARIO])
+			? $fields[self::FIELD_SCENARIO]
 			: [$fields[self::FIELD_SCENARIO]];
-		ScenarioTable::insertIgnore($this->taskId, $scenarios);
+
+		$scenarioService->save($this->taskId, $scenarios);
 	}
 
 	/**

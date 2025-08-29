@@ -128,12 +128,6 @@ class UserAbsence
 	{
 		static $result;
 
-		$iblockId = self::getIblockId();
-		if ($iblockId <= 0 || !Loader::includeModule('iblock'))
-		{
-			return array();
-		}
-
 		if (!is_null($result))
 		{
 			return $result;
@@ -146,6 +140,15 @@ class UserAbsence
 		}
 		else
 		{
+			$iblockId = self::getIblockId();
+			if ($iblockId <= 0 || !Loader::includeModule('iblock'))
+			{
+				$cache->startDataCache();
+				$cache->endDataCache([]);
+
+				return [];
+			}
+
 			$typesList = Array();
 			$vacationTypes = Array();
 			$enums = \CIBlockPropertyEnum::GetList(Array("DEF"=>"DESC", "SORT"=>"ASC"), Array("IBLOCK_ID"=>self::getIblockId(), "CODE"=>"ABSENCE_TYPE"));

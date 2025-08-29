@@ -3089,9 +3089,9 @@ if(typeof BX.UI.EntityEditor === "undefined")
 			eventParams["entityTypeName"] = this._entityTypeName;
 			eventParams["isCancelled"] = false;
 
-			if(typeof(window.top.BX.Bitrix24) !== "undefined")
+			if(typeof(window.top.BX.SidePanel) !== "undefined")
 			{
-				var slider = window.top.BX.Bitrix24.Slider.getTopSlider();
+				var slider = window.top.BX.SidePanel.Instance.getTopSlider();
 				if(slider)
 				{
 					eventParams["sliderUrl"] = slider.getUrl();

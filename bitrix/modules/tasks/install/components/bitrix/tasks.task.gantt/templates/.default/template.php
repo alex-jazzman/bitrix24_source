@@ -359,7 +359,11 @@ else
 										this.settings.isDragged.push(parseInt(taskId));
 									}
 								}
-							}.bind(this));
+							}.bind(this))
+								.catch((response) => {
+									BX.UI.Notification.Center.notify({ content: response.errors[0]?.message });
+									BX.reload();
+								});
                         }
                         ganttAux.notificationRelease();
                     },

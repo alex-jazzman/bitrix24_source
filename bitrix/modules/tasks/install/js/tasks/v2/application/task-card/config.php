@@ -8,7 +8,6 @@ return [
 	'css' => 'dist/task-card.bundle.css',
 	'js' => 'dist/task-card.bundle.js',
 	'rel' => [
-		'main.core.events',
 		'main.popup',
 		'main.core',
 		'ui.system.skeleton',

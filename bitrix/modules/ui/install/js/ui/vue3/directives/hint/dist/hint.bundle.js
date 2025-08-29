@@ -77,12 +77,12 @@ this.BX.Vue3 = this.BX.Vue3 || {};
 	  async mounted(element, {
 	    value
 	  }) {
-	    var _value$interactivity;
+	    var _getParams$interactiv;
 	    if (!value) {
 	      return;
 	    }
 	    main_core.Event.bind(element, 'mouseenter', () => onMouseEnter(element, getParams(value)));
-	    const isInteractive = (_value$interactivity = value.interactivity) != null ? _value$interactivity : false;
+	    const isInteractive = (_getParams$interactiv = getParams(value).interactivity) != null ? _getParams$interactiv : false;
 	    main_core.Event.bind(element, 'mouseleave', () => hideTooltip(isInteractive));
 	    main_core.Event.bind(element, 'click', () => hideTooltip());
 	  }

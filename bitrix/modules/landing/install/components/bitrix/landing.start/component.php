@@ -359,15 +359,6 @@ if ($componentPage == 'domains' || $componentPage == 'domain_edit')
 
 // only AGREEMENTS below
 
-if (
-	$request->get('landing_mode') ||
-	!Manager::isB24()
-)
-{
-	$this->IncludeComponentTemplate($componentPage);
-	return;
-}
-
 $currentLang = LANGUAGE_ID;
 $currentZone = Manager::getZone();
 $agreementCode = 'landing_agreement';
@@ -478,6 +469,27 @@ while ($row = $res->fetch())
 	$agreements[$row['LANGUAGE_ID']]['ID'] = $row['ID'];
 }
 
+// check accepted
+$consentTableRes = ConsentTable::getList(array(
+	'filter' => array(
+		'USER_ID' => Manager::getUserId(),
+		'AGREEMENT_ID' => $agreementsId
+	)
+));
+if ($consentTableRes->fetch())
+{
+	$arResult['AGREEMENT_ACCEPTED'] = true;
+}
+
+if (
+	$request->get('landing_mode') ||
+	!Manager::isB24()
+)
+{
+	$this->IncludeComponentTemplate($componentPage);
+	return;
+}
+
 // add new to db
 foreach ($agreements as $lng => $agreement)
 {
@@ -527,16 +539,9 @@ else
 }
 
 // check accepted
-$res = ConsentTable::getList(array(
-	'filter' => array(
-		'USER_ID' => Manager::getUserId(),
-		'AGREEMENT_ID' => $agreementsId
-	)
-));
-if ($res->fetch())
+if ($consentTableRes->fetch())
 {
 	$redirectIfUnAccept = false;
-	$arResult['AGREEMENT_ACCEPTED'] = true;
 }
 
 // accept

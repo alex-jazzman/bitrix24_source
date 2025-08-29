@@ -50,28 +50,28 @@ interface CTaskItemInterface
 	/**
 	 * @deprecated
 	 * @TasksV2
-	 * @use \Bitrix\Tasks\V2\Command\Task\Status\StartTaskCommand
+	 * @use \Bitrix\Tasks\V2\Public\Command\Task\Status\StartTaskCommand
 	 */
 	public function startExecution();
 
 	/**
 	 * @deprecated
 	 * @TasksV2
-	 * @use \Bitrix\Tasks\V2\Command\Task\Status\PauseTaskCommand
+	 * @use \Bitrix\Tasks\V2\Public\Command\Task\Status\PauseTaskCommand
 	 */
 	public function pauseExecution();
 
 	/**
 	 * @deprecated
 	 * @TasksV2
-	 * @use \Bitrix\Tasks\V2\Command\Task\Status\DeferTaskCommand
+	 * @use \Bitrix\Tasks\V2\Public\Command\Task\Status\DeferTaskCommand
 	 */
 	public function defer();
 
 	/**
 	 * @deprecated
 	 * @TasksV2
-	 * @use \Bitrix\Tasks\V2\Command\Task\Status\CompleteTaskCommand
+	 * @use \Bitrix\Tasks\V2\Public\Command\Task\Status\CompleteTaskCommand
 	 */
 	public function complete();
 	public function delete();
@@ -86,7 +86,7 @@ interface CTaskItemInterface
 	/**
 	 * @deprecated
 	 * @TasksV2
-	 * @use \Bitrix\Tasks\V2\Command\Task\Stakeholder\DelegateCommand
+	 * @use \Bitrix\Tasks\V2\Public\Command\Task\Stakeholder\DelegateCommand
 	 */
 	public function delegate($newResponsibleId);
 
@@ -99,21 +99,21 @@ interface CTaskItemInterface
 	/**
 	 * @deprecated
 	 * @TasksV2
-	 * @use \Bitrix\Tasks\V2\Command\Task\Status\RenewTaskCommand
+	 * @use \Bitrix\Tasks\V2\Public\Command\Task\Status\RenewTaskCommand
 	 */
 	public function renew();
 
 	/**
 	 * @deprecated
 	 * @TasksV2
-	 * @use \Bitrix\Tasks\V2\Command\Task\Status\ApproveTaskCommand
+	 * @use \Bitrix\Tasks\V2\Public\Command\Task\Status\ApproveTaskCommand
 	 */
 	public function approve();
 
 	/**
 	 * @deprecated
 	 * @TasksV2
-	 * @use \Bitrix\Tasks\V2\Command\Task\Status\DisapproveTaskCommand
+	 * @use \Bitrix\Tasks\V2\Public\Command\Task\Status\DisapproveTaskCommand
 	 */
 	public function disapprove();
 	public function getId();		// returns tasks id
@@ -127,13 +127,13 @@ interface CTaskItemInterface
 	public function isActionAllowed($actionId);
 	/**
 	 * @deprecated
-	 * @use \Bitrix\Tasks\V2\Command\Task\Audit\UnwatchTaskCommand
+	 * @use \Bitrix\Tasks\V2\Public\Command\Task\Audit\UnwatchTaskCommand
 	 */
 	public function stopWatch();		// exclude itself from auditors
 
 	/**
 	 * @deprecated
-	 * @use \Bitrix\Tasks\V2\Command\Task\Audit\WatchTaskCommand
+	 * @use \Bitrix\Tasks\V2\Public\Command\Task\Audit\WatchTaskCommand
 	 */
 	public function startWatch();		// include itself to auditors
 	public function isUserRole($roleId);
@@ -1658,7 +1658,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 	/**
 	 * @deprecated
 	 * @TasksV2
-	 * @use \Bitrix\Tasks\V2\Command\Task\Stakeholder\DelegateCommand
+	 * @use \Bitrix\Tasks\V2\Public\Command\Task\Stakeholder\DelegateCommand
 	 */
 	public function delegate($newResponsibleId, array $params=array())
 	{
@@ -1682,7 +1682,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 
 			$config = $this->createConfig($params);
 
-			(new \Bitrix\Tasks\V2\Command\Task\Stakeholder\DelegateCommand(
+			(new \Bitrix\Tasks\V2\Public\Command\Task\Stakeholder\DelegateCommand(
 				taskId: $this->getId(),
 				responsibleId: (int)$newResponsibleId,
 				config: $config,
@@ -1715,7 +1715,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 	/**
 	 * @deprecated
 	 * @TasksV2
-	 * @use \Bitrix\Tasks\V2\Command\Task\Status\StartTaskCommand
+	 * @use \Bitrix\Tasks\V2\Public\Command\Task\Status\StartTaskCommand
 	 */
 	public function startExecution(array $params=array())
 	{
@@ -1725,7 +1725,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 
 			$config = $this->createConfig($params);
 
-			(new \Bitrix\Tasks\V2\Command\Task\Status\StartTaskCommand(
+			(new \Bitrix\Tasks\V2\Public\Command\Task\Status\StartTaskCommand(
 				taskId: $this->getId(),
 				config: $config,
 			))->run();
@@ -1758,7 +1758,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 	/**
 	 * @deprecated
 	 * @TasksV2
-	 * @use \Bitrix\Tasks\V2\Command\Task\Status\PauseTaskCommand
+	 * @use \Bitrix\Tasks\V2\Public\Command\Task\Status\PauseTaskCommand
 	 */
 	public function pauseExecution(array $params=array())
 	{
@@ -1768,7 +1768,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 
 			$config = $this->createConfig($params);
 
-			(new \Bitrix\Tasks\V2\Command\Task\Status\PauseTaskCommand(
+			(new \Bitrix\Tasks\V2\Public\Command\Task\Status\PauseTaskCommand(
 				taskId: $this->getId(),
 				config: $config,
 			))->run();
@@ -1784,7 +1784,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 	/**
 	 * @deprecated
 	 * @TasksV2
-	 * @use \Bitrix\Tasks\V2\Command\Task\Status\DeferTaskCommand
+	 * @use \Bitrix\Tasks\V2\Public\Command\Task\Status\DeferTaskCommand
 	 */
 	public function defer(array $params=array())
 	{
@@ -1794,7 +1794,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 
 			$config = $this->createConfig($params);
 
-			(new \Bitrix\Tasks\V2\Command\Task\Status\DeferTaskCommand(
+			(new \Bitrix\Tasks\V2\Public\Command\Task\Status\DeferTaskCommand(
 				taskId: $this->getId(),
 				config: $config,
 			))->run();
@@ -1810,7 +1810,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 	/**
 	 * @deprecated
 	 * @TasksV2
-	 * @use \Bitrix\Tasks\V2\Command\Task\Status\CompleteTaskCommand
+	 * @use \Bitrix\Tasks\V2\Public\Command\Task\Status\CompleteTaskCommand
 	 */
 	public function complete(array $params=array())
 	{
@@ -1847,7 +1847,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 
 			$config = $this->createConfig($params);
 
-			(new \Bitrix\Tasks\V2\Command\Task\Status\CompleteTaskCommand(
+			(new \Bitrix\Tasks\V2\Public\Command\Task\Status\CompleteTaskCommand(
 				taskId: $this->getId(),
 				config: $config
 			))->run();
@@ -1883,12 +1883,13 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 
 
 	/**
+	 * @param integer $userId
+	 *
+	 * @throws TasksException
 	 * @deprecated
-	 * @use \Bitrix\Tasks\V2\Command\Task\Audit\UnwatchTaskCommand
+	 * @use \Bitrix\Tasks\V2\Public\Command\Task\Audit\UnwatchTaskCommand
 	 * Remove $userId (or executive user) from the auditor list for the task
 	 *
-	 * @param integer $userId
-	 * @throws TasksException
 	 */
 	public function stopWatch($userId = 0)
 	{
@@ -1902,7 +1903,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 				static::throwExceptionVerbose();
 			}
 
-			$result = (new \Bitrix\Tasks\V2\Command\Task\Audit\UnwatchTaskCommand(
+			$result = (new \Bitrix\Tasks\V2\Public\Command\Task\Audit\UnwatchTaskCommand(
 				taskId: $this->getId(),
 				userId: $this->executiveUserId,
 				auditorId: $userId ?: $this->executiveUserId
@@ -1953,13 +1954,14 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 	}
 
 	/**
+	 * @param integer $userId
+	 *
+	 * @throws TasksException
 	 * @deprecated
-	 * @use \Bitrix\Tasks\V2\Command\Task\Audit\WatchTaskCommand
+	 * @use \Bitrix\Tasks\V2\Public\Command\Task\Audit\WatchTaskCommand
 	 *
 	 * Add $userId (or executive user) to the auditor list for the task
 	 *
-	 * @param integer $userId
-	 * @throws TasksException
 	 */
 	public function startWatch($userId = 0, $bSkipNotification = false)
 	{
@@ -1973,7 +1975,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 				static::throwExceptionVerbose();
 			}
 
-			$result = (new \Bitrix\Tasks\V2\Command\Task\Audit\WatchTaskCommand(
+			$result = (new \Bitrix\Tasks\V2\Public\Command\Task\Audit\WatchTaskCommand(
 				taskId: $this->getId(),
 				userId: $this->executiveUserId,
 				auditorId: $userId ?: $this->executiveUserId,
@@ -2036,7 +2038,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 	/**
 	 * @deprecated
 	 * @TasksV2
-	 * @use \Bitrix\Tasks\V2\Command\Task\Status\RenewTaskCommand
+	 * @use \Bitrix\Tasks\V2\Public\Command\Task\Status\RenewTaskCommand
 	 */
 	public function renew(array $params = array())
 	{
@@ -2046,7 +2048,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 
 			$config = $this->createConfig($params);
 
-			(new \Bitrix\Tasks\V2\Command\Task\Status\RenewTaskCommand(
+			(new \Bitrix\Tasks\V2\Public\Command\Task\Status\RenewTaskCommand(
 				taskId: $this->getId(),
 				config: $config,
 			))->run();
@@ -2062,7 +2064,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 	/**
 	 * @deprecated
 	 * @TasksV2
-	 * @use \Bitrix\Tasks\V2\Command\Task\Status\ApproveTaskCommand
+	 * @use \Bitrix\Tasks\V2\Public\Command\Task\Status\ApproveTaskCommand
 	 */
 	public function approve(array $params = array())
 	{
@@ -2072,7 +2074,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 
 			$config = $this->createConfig($params);
 
-			(new \Bitrix\Tasks\V2\Command\Task\Status\ApproveTaskCommand(
+			(new \Bitrix\Tasks\V2\Public\Command\Task\Status\ApproveTaskCommand(
 				taskId: $this->getId(),
 				config: $config,
 			))->run();
@@ -2088,7 +2090,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 	/**
 	 * @deprecated
 	 * @TasksV2
-	 * @use \Bitrix\Tasks\V2\Command\Task\Status\DisapproveTaskCommand
+	 * @use \Bitrix\Tasks\V2\Public\Command\Task\Status\DisapproveTaskCommand
 	 */
 	public function disapprove(array $params = array())
 	{
@@ -2098,7 +2100,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 
 			$config = $this->createConfig($params);
 
-			(new \Bitrix\Tasks\V2\Command\Task\Status\DisapproveTaskCommand(
+			(new \Bitrix\Tasks\V2\Public\Command\Task\Status\DisapproveTaskCommand(
 				taskId: $this->getId(),
 				config: $config,
 			))->run();
@@ -2470,7 +2472,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 	/**
 	 * @deprecated
 	 * @TasksV2
-	 * @use \Bitrix\Tasks\V2\Command\Task\UpdateTaskCommand
+	 * @use \Bitrix\Tasks\V2\Public\Command\Task\UpdateTaskCommand
 	 */
 	private function proceedActionEdit($arActionArguments, $arTaskData)
 	{
@@ -2558,7 +2560,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 
 	/**
 	 * @deprecated
-	 * @use \Bitrix\Tasks\V2\Command\Task\Favorite\ToggleFavoriteCommand
+	 * @use \Bitrix\Tasks\V2\Public\Command\Task\Favorite\ToggleFavoriteCommand
 	 */
 	private function proceedActionFavorite($arActionArguments)
 	{
@@ -2584,7 +2586,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 
 		if (\Bitrix\Tasks\V2\FormV2Feature::isOn('favorite'))
 		{
-			$result = (new \Bitrix\Tasks\V2\Command\Task\Favorite\ToggleFavoriteCommand(
+			$result = (new \Bitrix\Tasks\V2\Public\Command\Task\Favorite\ToggleFavoriteCommand(
 				taskId: $this->getId(),
 				userId: $this->executiveUserId,
 				notifyLivefeed: $tellSocnet
@@ -2776,7 +2778,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 			/**
 			 * @deprecated
 			 * @TasksV2
-			 * @use \Bitrix\Tasks\V2\Command\Task\Status\CompleteTaskCommand
+			 * @use \Bitrix\Tasks\V2\Public\Command\Task\Status\CompleteTaskCommand
 			 */
 			case ActionDictionary::ACTION_TASK_COMPLETE:
 				$isAdmin = User::isSuper($this->executiveUserId);
@@ -2812,7 +2814,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 			/**
 			 * @deprecated
 			 * @TasksV2
-			 * @use \Bitrix\Tasks\V2\Command\Task\Status\ApproveTaskCommand
+			 * @use \Bitrix\Tasks\V2\Public\Command\Task\Status\ApproveTaskCommand
 			 */
 			case ActionDictionary::ACTION_TASK_APPROVE:
 				$arNewFields['STATUS'] = Status::COMPLETED;
@@ -2821,7 +2823,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 			/**
 			 * @deprecated
 			 * @TasksV2
-			 * @use \Bitrix\Tasks\V2\Command\Task\Status\StartTaskCommand
+			 * @use \Bitrix\Tasks\V2\Public\Command\Task\Status\StartTaskCommand
 			 */
 			case ActionDictionary::ACTION_TASK_START:
 				$arNewFields['STATUS'] = Status::IN_PROGRESS;
@@ -2829,13 +2831,13 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 
 			case ActionDictionary::ACTION_TASK_TAKE:
 				$arNewFields['STATUS'] = Status::IN_PROGRESS;
-				$arNewFields['HIMSELF_FLOW_TAKE_USER_ID'] = $this->getExecutiveUserId();
+				$arNewFields['RESPONSIBLE_ID'] = $this->getExecutiveUserId();
 			break;
 
 			/**
 			 * @deprecated
 			 * @TasksV2
-			 * @use \Bitrix\Tasks\V2\Command\Task\Status\PauseTaskCommand
+			 * @use \Bitrix\Tasks\V2\Public\Command\Task\Status\PauseTaskCommand
 			 */
 			case ActionDictionary::ACTION_TASK_PAUSE:
 				$arNewFields['STATUS'] = Status::PENDING;
@@ -2891,7 +2893,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 			/**
 			 * @deprecated
 			 * @TasksV2
-			 * @use \Bitrix\Tasks\V2\Command\Task\Stakeholder\SetAccomplicesCommand
+			 * @use \Bitrix\Tasks\V2\Public\Command\Task\Stakeholder\SetAccomplicesCommand
 			 */
 			case ActionDictionary::ACTION_TASK_CHANGE_ACCOMPLICES:
 				if (!$arNewFields || !array_key_exists('ACCOMPLICES', $arNewFields))
@@ -2915,7 +2917,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 			/**
 			 * @deprecated
 			 * @TasksV2
-			 * @use \Bitrix\Tasks\V2\Command\Task\Status\DeferTaskCommand
+			 * @use \Bitrix\Tasks\V2\Public\Command\Task\Status\DeferTaskCommand
 			 */
 			case ActionDictionary::ACTION_TASK_DEFER:
 				$arNewFields['STATUS'] = Status::DEFERRED;
@@ -2924,8 +2926,8 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 			/**
 			 * @deprecated
 			 * @TasksV2
-			 * @use \Bitrix\Tasks\V2\Command\Task\Status\DisapproveTaskCommand
-			 * @use \Bitrix\Tasks\V2\Command\Task\Status\RenewTaskCommand
+			 * @use \Bitrix\Tasks\V2\Public\Command\Task\Status\DisapproveTaskCommand
+			 * @use \Bitrix\Tasks\V2\Public\Command\Task\Status\RenewTaskCommand
 			 */
 			case ActionDictionary::ACTION_TASK_DISAPPROVE:
 			case ActionDictionary::ACTION_TASK_RENEW:
@@ -4647,9 +4649,9 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 		$this->deleteProjectDependence($parentId);
 	}
 
-	private function createConfig(array $parameters = []): \Bitrix\Tasks\V2\Internals\Control\Task\Action\Update\Config\UpdateConfig
+	private function createConfig(array $parameters = []): \Bitrix\Tasks\V2\Internal\Service\Task\Action\Update\Config\UpdateConfig
 	{
-		return \Bitrix\Tasks\V2\Internals\Control\Task\Action\Update\Config\UpdateConfig::createFromArray(
+		return \Bitrix\Tasks\V2\Internal\Service\Task\Action\Update\Config\UpdateConfig::createFromArray(
 			userId: $this->executiveUserId,
 			parameters: $parameters,
 		);

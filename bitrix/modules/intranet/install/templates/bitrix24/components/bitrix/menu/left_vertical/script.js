@@ -4251,7 +4251,7 @@ this.BX = this.BX || {};
 	    size: ui_buttons.Button.Size.SMALL,
 	    text: main_core.Loc.getMessage('MENU_LICENSE_ALL'),
 	    useAirDesign: true,
-	    style: ui_buttons.AirButtonStyle.FILLED_SUCCESS,
+	    style: ui_buttons.AirButtonStyle.FILLED_BOOST,
 	    noCaps: true,
 	    wide: true,
 	    icon: 'o-rocket',

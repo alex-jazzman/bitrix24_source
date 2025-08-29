@@ -1,7 +1,9 @@
+import { Type } from 'main.core';
 import { BIcon } from 'ui.icon-set.api.vue';
 
 import { IconSetMixin } from '../../../../mixins/icon-set-mixin';
 import { IconSettingByStatus } from './const';
+import { StatusService } from '../../../../classes/status-service';
 
 import type { UserStatusIconSetting } from './const';
 
@@ -24,7 +26,18 @@ export const UserStatusIcon = {
 	computed: {
 		iconSetting(): UserStatusIconSetting | null
 		{
-			return IconSettingByStatus[this.status] ?? null;
+			let status = this.status;
+			if (!Type.isStringFilled(status))
+			{
+				return null;
+			}
+
+			if (!StatusService.isSupported(status))
+			{
+				status = StatusService.getFailoverStatus();
+			}
+
+			return IconSettingByStatus[status] ?? null;
 		},
 	},
 	template: `

@@ -243,6 +243,9 @@ class UserTable extends \Bitrix\Main\UserTable
 
 	public static function createInvitedQuery(): Query
 	{
-		return static::query()->addFilter('!CONFIRM_CODE', false)->where('IS_REAL_USER', true);
+		return static::query()
+			->addFilter('!CONFIRM_CODE', false)
+			->where('REAL_USER', 'expr', true)
+		;
 	}
 }

@@ -12,12 +12,11 @@
 	right: 0;
 	bottom: 0;
 	z-index: -1;
-
 	border-radius: 10px;
-
-	background-color: var(--ui-color-design-outline-na-bg);
-	-webkit-backdrop-filter: var(--ui-bg-blur-less);
-	backdrop-filter: var(--ui-bg-blur-less);
+	background:
+		linear-gradient(to right, var(--ui-color-design-outline-na-bg), var(--ui-color-design-outline-na-bg)),
+		var(--air-theme-background-blurred, none)
+	;
 }
 
 .profile-menu.profile-menu-iframe {
@@ -121,11 +120,6 @@
 	flex-wrap: wrap;
 	flex: 1 0 auto;
 	gap: 0 12px;
-}
-
-.profile-menu-group .profile-menu-button-container {
-	margin-left: 12px;
-	margin-right: 12px;
 }
 
 a.profile-menu-name:hover {

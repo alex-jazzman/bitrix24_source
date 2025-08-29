@@ -10,7 +10,7 @@ use Bitrix\Main\Validation\Rule\Min;
 use Bitrix\Tasks\Deadline\Configuration;
 use Bitrix\Tasks\Deadline\SkipNotificationPeriod;
 use Bitrix\Tasks\Integration\Calendar\Calendar;
-use Bitrix\Tasks\V2\Entity\AbstractEntity;
+use Bitrix\Tasks\V2\Internal\Entity\AbstractEntity;
 
 class DeadlineUserOption extends AbstractEntity
 {

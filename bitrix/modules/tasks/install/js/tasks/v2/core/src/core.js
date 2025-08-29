@@ -29,16 +29,6 @@ class CoreApplication
 		return this.#params;
 	}
 
-	getParam(name: string): any
-	{
-		return this.#params[name] || null;
-	}
-
-	setParams(params: CoreParams): void
-	{
-		this.#params = params;
-	}
-
 	getStore(): Store
 	{
 		return this.#store;

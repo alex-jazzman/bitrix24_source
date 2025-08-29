@@ -66,7 +66,7 @@ class UserMapper
 
 		if (!is_null($user->getGroupIds()))
 		{
-			$userData['GROUP_ID'] = $user->getPhoneNumber();
+			$userData['GROUP_ID'] = $user->getGroupIds();
 		}
 
 		if ($user->getPersonalMobile())

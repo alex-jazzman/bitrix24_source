@@ -20,7 +20,7 @@ final class CTaskTimerCore
 	 * @deprecated
 	 * @TasksV2
 	 * @internal
-	 * @use \Bitrix\Tasks\V2\Internals\Service\Task\TimerService
+	 * @use \Bitrix\Tasks\V2\Internal\Service\Task\TimerService
 	 */
 	public static function start($userId, $taskId)
 	{
@@ -32,7 +32,7 @@ final class CTaskTimerCore
 
 		if (\Bitrix\Tasks\V2\FormV2Feature::isOn('timer'))
 		{
-			$service = \Bitrix\Tasks\V2\Internals\Container::getInstance()->getTimerService();
+			$service = \Bitrix\Tasks\V2\Internal\DI\Container::getInstance()->getTimerService();
 
 			$timer = $service->start((int)$userId, (int)$taskId);
 
@@ -112,13 +112,13 @@ final class CTaskTimerCore
 	 * @deprecated
 	 * @TasksV2
 	 * @internal
-	 * @use \Bitrix\Tasks\V2\Internals\Service\Task\TimerService
+	 * @use \Bitrix\Tasks\V2\Internal\Service\Task\TimerService
 	 */
 	public static function stop($userId, $taskId = 0)
 	{
 		if (\Bitrix\Tasks\V2\FormV2Feature::isOn('timer'))
 		{
-			$service = \Bitrix\Tasks\V2\Internals\Container::getInstance()->getTimerService();
+			$service = \Bitrix\Tasks\V2\Internal\DI\Container::getInstance()->getTimerService();
 
 			$timer = $service->stop((int)$userId, (int)$taskId);
 			if ($timer === null)
@@ -173,13 +173,13 @@ final class CTaskTimerCore
 	 * @deprecated
 	 * @TasksV2
 	 * @internal
-	 * @use \Bitrix\Tasks\V2\Internals\Repository\TimerRepositoryInterface
+	 * @use \Bitrix\Tasks\V2\Internal\Repository\TimerRepositoryInterface
 	 */
 	public static function get($userId, $taskId = 0)
 	{
 		if (\Bitrix\Tasks\V2\FormV2Feature::isOn('timer'))
 		{
-			$repository = \Bitrix\Tasks\V2\Internals\Container::getInstance()->getTimerRepository();
+			$repository = \Bitrix\Tasks\V2\Internal\DI\Container::getInstance()->getTimerRepository();
 
 			$timer = $repository->get((int)$userId, (int)$taskId);
 			if ($timer === null)

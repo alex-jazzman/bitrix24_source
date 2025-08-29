@@ -280,7 +280,11 @@ body {
 	backdrop-filter: var(--ui-bg-blur-accent-more);
 }
 
-.landing-vibe-processing-content { }
+.landing-vibe-processing-content {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
 
 .landing-vibe-processing-animation {
 	position: relative;

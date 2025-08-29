@@ -321,7 +321,7 @@ BX.ready(function(){
 			const deadlineTs = dateTo - BX.Tasks.V2.Lib.timezone.getOffset(dateTo);
 			const groupId = <?= empty($currentGroupId) ? 'null' : (int)$currentGroupId ?>;
 
-			(new BX.Tasks.V2.Application.TaskCard({
+			BX.Tasks.V2.Application.TaskCard.showCompactCard({
 				deadlineTs,
 				groupId,
 				analytics: {
@@ -329,7 +329,7 @@ BX.ready(function(){
 					additionalContext: 'calendar',
 					element: 'quick_button',
 				},
-			})).showCompactCard();
+			});
 
 			<?php } else { ?>
 

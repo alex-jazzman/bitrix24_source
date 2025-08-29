@@ -655,14 +655,19 @@ class UrlManager implements IErrorable
 		return '/company/personal/user/'.$userId.'/disk/boards/' . $get;
 	}
 
-	public function getUrlForViewBoard(int $fileId, $absolute = false)
+	public function getUrlForViewBoard(int $fileId, $absolute = false, $c_element = null)
 	{
-		return ($absolute ? $this->getHostUrl() : '') . '/disk/boards/' . $fileId . '/open';
+		return ($absolute ? $this->getHostUrl() : '') . '/disk/boards/' . $fileId . '/open' . ($c_element ? '?c_element=' . $c_element : '');
 	}
 
-	public function getUrlForViewAttachedBoard(int $attachedFileId, $absolute = false)
+	public function getUrlForViewBoardVersion(int $fileId, int $versionId, $absolute = false)
 	{
-		return ($absolute ? $this->getHostUrl() : '') . '/disk/boards/' . $attachedFileId . '/openAttached';
+		return ($absolute ? $this->getHostUrl() : '') . '/disk/boards/' . $fileId . '/open?versionId=' . $versionId;
+	}
+
+	public function getUrlForViewAttachedBoard(int $attachedFileId, $absolute = false, $c_element = null)
+	{
+		return ($absolute ? $this->getHostUrl() : '') . '/disk/boards/' . $attachedFileId . '/openAttached' . ($c_element ? '?c_element=' . $c_element : '');
 	}
 
 	/**

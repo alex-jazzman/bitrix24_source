@@ -20,7 +20,6 @@ type PopupContentConfig = {
 export class ErrorPopup
 {
 	ERROR_CODE_HAS_FLOWS = 10002;
-	ERROR_CODE_LANDING_GROUP = 10003;
 
 	#groupId: number;
 	#errors: Array<Object>;
@@ -34,14 +33,16 @@ export class ErrorPopup
 
 	#prepareErrors(errors: Array<Object>): Array<Object>
 	{
+		const supportedCodes = new Set([this.ERROR_CODE_HAS_FLOWS]);
+
 		const supportedErrors = errors.filter(
-			(error) => [this.ERROR_CODE_HAS_FLOWS, this.ERROR_CODE_LANDING_GROUP].includes(error.code),
+			(error) => supportedCodes.has(error.code),
 		);
 
 		if (errors.length > supportedErrors.length)
 		{
 			const unsupportedErrors = errors.filter(
-				(error) => ![this.ERROR_CODE_HAS_FLOWS, this.ERROR_CODE_LANDING_GROUP].includes(error.code),
+				(error) => !supportedCodes.has(error.code),
 			);
 			console.error('Unexpected errors', unsupportedErrors);
 		}
@@ -174,10 +175,6 @@ export class ErrorPopup
 		{
 			config = this.#getOnlyFlowErrorPopupConfig();
 		}
-		else if (this.#hasOnlyLandingError())
-		{
-			config = this.#getOnlyLandingErrorPopupConfig();
-		}
 
 		return config;
 	}
@@ -245,43 +242,6 @@ export class ErrorPopup
 		};
 	}
 
-	#getOnlyLandingErrorPopupConfig(): PopupContentConfig
-	{
-		const openSettingsButton = new Button({
-			useAirDesign: true,
-			noCaps: true,
-			size: ButtonSize.LARGE,
-			text: Loc.getMessage('SN_COLLAB_CONVERTER_ERROR_POPUP_BUTTON_CONFIRM_LANDING'),
-			link: `${Loc.getMessage('SN_COLLAB_CONVERTER_GROUP_URL')}group/${this.#groupId}/edit/`,
-			onclick: () => this.#popup?.close(),
-		});
-
-		const cancelButton = new Button({
-			useAirDesign: true,
-			noCaps: true,
-			style: AirButtonStyle.OUTLINE,
-			size: ButtonSize.LARGE,
-			text: Loc.getMessage('SN_COLLAB_CONVERTER_CANCEL'),
-			onclick: () => this.#popup?.close(),
-		});
-
-		return {
-			header: Loc.getMessage('SN_COLLAB_CONVERTER_ERROR_POPUP_TITLE_LANDING'),
-			descriptionParagraphs: [
-				Loc.getMessage('SN_COLLAB_CONVERTER_ERROR_POPUP_CONTENT_LANDING_1', {
-					'#ACCENT_START#': '<span class="socialnetwork-collab-converter-error-popup-description-paragraph-accent">',
-					'#ACCENT_END#': '</span>',
-				}),
-				Loc.getMessage('SN_COLLAB_CONVERTER_ERROR_POPUP_CONTENT_LANDING_2'),
-			],
-			helperCode: 22_699_004,
-			buttons: [
-				openSettingsButton,
-				cancelButton,
-			],
-		};
-	}
-
 	#hasMultipleErrors(): boolean
 	{
 		return this.#errors.length > 1;
@@ -290,10 +250,5 @@ export class ErrorPopup
 	#hasOnlyFlowError(): boolean
 	{
 		return this.#errors.length === 1 && this.#errors[0].code === this.ERROR_CODE_HAS_FLOWS;
-	}
-
-	#hasOnlyLandingError(): boolean
-	{
-		return this.#errors.length === 1 && this.#errors[0].code === this.ERROR_CODE_LANDING_GROUP;
 	}
 }

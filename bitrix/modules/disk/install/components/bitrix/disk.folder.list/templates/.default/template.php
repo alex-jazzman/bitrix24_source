@@ -115,19 +115,17 @@ HTML
 
 }
 
-if ($arResult['CONTEXT'] !== Context::SPACES)
-{
-	Toolbar::addFilter([
-		'GRID_ID' => $arResult['GRID']['ID'],
-		'FILTER_ID' => $arResult['FILTER']['FILTER_ID'],
-		'FILTER' => $arResult['FILTER']['FILTER'],
-		'FILTER_PRESETS' => $arResult['FILTER']['FILTER_PRESETS'],
-		'ENABLE_LIVE_SEARCH' => $arResult['FILTER']['ENABLE_LIVE_SEARCH'],
-		'ENABLE_LABEL' => $arResult['FILTER']['ENABLE_LABEL'],
-		'RESET_TO_DEFAULT_MODE' => $arResult['FILTER']['RESET_TO_DEFAULT_MODE'],
-		'THEME' => Bitrix\Main\UI\Filter\Theme::MUTED,
-	]);
-}
+Toolbar::addFilter([
+	'GRID_ID' => $arResult['GRID']['ID'],
+	'FILTER_ID' => $arResult['FILTER']['FILTER_ID'],
+	'FILTER' => $arResult['FILTER']['FILTER'],
+	'FILTER_PRESETS' => $arResult['FILTER']['FILTER_PRESETS'],
+	'ENABLE_LIVE_SEARCH' => $arResult['FILTER']['ENABLE_LIVE_SEARCH'],
+	'ENABLE_LABEL' => $arResult['FILTER']['ENABLE_LABEL'],
+	'RESET_TO_DEFAULT_MODE' => $arResult['FILTER']['RESET_TO_DEFAULT_MODE'],
+	'THEME' => Bitrix\Main\UI\Filter\Theme::MUTED,
+]);
+
 $uri = new Main\Web\Uri(Bitrix\Main\Context::getCurrent()->getRequest()->getRequestUri());
 
 $uriToTileM = (clone $uri);
@@ -215,10 +213,7 @@ $inverseDirection = mb_strtolower($direction) == 'desc'? 'asc' : 'desc';
 $sortLabel = $arResult['GRID']['COLUMN_FOR_SORTING'][$byColumn]['LABEL'];
 $isMixSorting = $arResult['GRID']['SORT_MODE'] === FolderListOptions::SORT_MODE_MIX;
 
-if (
-	!empty($arResult['STORAGE']['FOR_SOCNET_GROUP'])
-	&& $arResult['CONTEXT'] !== Context::SPACES
-)
+if (!empty($arResult['STORAGE']['FOR_SOCNET_GROUP']))
 {
 	$connectBtn = new Button([
 		"color" => Color::LIGHT_BORDER,
@@ -240,10 +235,7 @@ if (
 	Toolbar::addButton($connectBtn);
 }
 
-if (
-	empty($arResult['IS_TRASH_MODE'])
-	&& $arResult['CONTEXT'] !== Context::SPACES
-)
+if (empty($arResult['IS_TRASH_MODE']))
 {
 	$trashBtn = new Button([
 		"color" => Color::LIGHT_BORDER,
@@ -261,46 +253,37 @@ if (
 	Toolbar::addButton($trashBtn);
 }
 
-?>
+Toolbar::addButton([
+	"className" => 'js-disk-settings-button',
+	"color" => Color::LIGHT_BORDER,
+	"icon" => Icon::SETTING,
+]);
 
-<?php if ($arResult['CONTEXT'] === Context::SPACES):?>
-
-<?php require_once __DIR__ . '/spaces_toolbar.php'; ?>
-
-<?php else: ?>
-
-<?php
-	Toolbar::addButton([
-		"className" => 'js-disk-settings-button',
-		"color" => Color::LIGHT_BORDER,
-		"icon" => Icon::SETTING,
+if (empty($arResult['IS_TRASH_MODE']))
+{
+	$filterJsAction = $arResult['STORAGE']['BLOCK_ADD_BUTTONS'] ? Bitrix24Manager::filterJsAction('disk_common_storage', '') : '';
+	$addBtn = new Button([
+		"color" => $isCollab ? Color::SUCCESS : Color::PRIMARY,
+		"className" => $filterJsAction? '' : 'js-disk-add-button',
+		"click" => new JsCode($filterJsAction),
+		"text" => Loc::getMessage('DISK_FOLDER_LIST_TITLE_ADD_COMPLEX'),
 	]);
+	$addBtn->addDataAttribute('hint-no-icon');
+	$addBtn->setDropdown();
 
-	if (empty($arResult['IS_TRASH_MODE']))
-	{
-		$filterJsAction = $arResult['STORAGE']['BLOCK_ADD_BUTTONS'] ? Bitrix24Manager::filterJsAction('disk_common_storage', '') : '';
-		$addBtn = new Button([
-			"color" => $isCollab ? Color::SUCCESS : Color::PRIMARY,
-			"className" => $filterJsAction? '' : 'js-disk-add-button',
-			"click" => new JsCode($filterJsAction),
-			"text" => Loc::getMessage('DISK_FOLDER_LIST_TITLE_ADD_COMPLEX'),
-		]);
-		$addBtn->addDataAttribute('hint-no-icon');
-		$addBtn->setDropdown();
-
-		Toolbar::addButton($addBtn, ButtonLocation::AFTER_TITLE);
-	}
-	else
-	{
-		Toolbar::addButton([
-			"color" => Color::PRIMARY,
-			"click" => new JsHandler(
-				"BX.Disk.FolderListClass_{$component->getComponentId()}.openConfirmEmptyTrash",
-				"BX.Disk.FolderListClass_{$component->getComponentId()}"
-			),
-			"text" => Loc::getMessage('DISK_FOLDER_LIST_TITLE_EMPTY_TRASH'),
-		]);
-	}
+	Toolbar::addButton($addBtn, ButtonLocation::AFTER_TITLE);
+}
+else
+{
+	Toolbar::addButton([
+		"color" => Color::PRIMARY,
+		"click" => new JsHandler(
+			"BX.Disk.FolderListClass_{$component->getComponentId()}.openConfirmEmptyTrash",
+			"BX.Disk.FolderListClass_{$component->getComponentId()}"
+		),
+		"text" => Loc::getMessage('DISK_FOLDER_LIST_TITLE_EMPTY_TRASH'),
+	]);
+}
 ?>
 
 <? $isBitrix24Template && $this->setViewTarget('below_pagetitle'); ?>
@@ -335,8 +318,6 @@ if (
 	</div>
 </div>
 <? $isBitrix24Template && $this->endViewTarget(); ?>
-
-<?php endif; ?>
 
 <? if($arResult['STATUS_BIZPROC'] && $arResult['WORKFLOW_TEMPLATES']) { ?>
 	<div style="display:none;">
@@ -521,6 +502,7 @@ BX.message({
 	DISK_FOLDER_LIST_SEARCH_PROGRESS_LABEL: '<?= GetMessageJS('DISK_FOLDER_LIST_SEARCH_PROGRESS_LABEL')?>',
 	DISK_FOLDER_LIST_COLLABER_HINT: '<?= GetMessageJS('DISK_FOLDER_LIST_COLLABER_HINT')?>',
 	DISK_FOLDER_LIST_COLLABER_TOUR_ON_ADD_BUTTON_TITLE: '<?= GetMessageJS('DISK_FOLDER_LIST_COLLABER_TOUR_ON_ADD_BUTTON_TITLE')?>',
+	DISK_FOLDER_LIST_ACT_DOWNLOAD_ERROR: '<?=GetMessageJS("DISK_FOLDER_LIST_ACT_DOWNLOAD_ERROR")?>',
 	DISK_FOLDER_LIST_COLLABER_TOUR_ON_ADD_BUTTON_TEXT: '<?= GetMessageJS('DISK_FOLDER_LIST_COLLABER_TOUR_ON_ADD_BUTTON_TEXT')?>'
 });
 </script>

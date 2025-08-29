@@ -594,16 +594,21 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	var _onUpdate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onUpdate");
 	var _onHide = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onHide");
 	var _createDialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createDialog");
-	var _upsertGroup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("upsertGroup");
+	var _handleHide = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleHide");
 	var _handleItemChange = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleItemChange");
+	var _insertSelectedGroup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("insertSelectedGroup");
 	var _items = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("items");
 	var _task = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("task");
+	var _insertGroup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("insertGroup");
 	var _updateGroup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateGroup");
 	var _clearOnUpdateOnce = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("clearOnUpdateOnce");
 	class GroupDialog {
 	  constructor() {
 	    Object.defineProperty(this, _updateGroup, {
 	      value: _updateGroup2
+	    });
+	    Object.defineProperty(this, _insertGroup, {
+	      value: _insertGroup2
 	    });
 	    Object.defineProperty(this, _task, {
 	      get: _get_task,
@@ -615,9 +620,6 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    });
 	    Object.defineProperty(this, _handleItemChange, {
 	      value: _handleItemChange2
-	    });
-	    Object.defineProperty(this, _upsertGroup, {
-	      value: _upsertGroup2
 	    });
 	    Object.defineProperty(this, _createDialog, {
 	      value: _createDialog2
@@ -642,6 +644,30 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      writable: true,
 	      value: null
 	    });
+	    Object.defineProperty(this, _handleHide, {
+	      writable: true,
+	      value: () => {
+	        var _babelHelpers$classPr, _babelHelpers$classPr2;
+	        (_babelHelpers$classPr = (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _onHide))[_onHide]) == null ? void 0 : _babelHelpers$classPr.call(_babelHelpers$classPr2);
+	        babelHelpers.classPrivateFieldLooseBase(this, _clearOnUpdateOnce)[_clearOnUpdateOnce]();
+	      }
+	    });
+	    Object.defineProperty(this, _insertSelectedGroup, {
+	      writable: true,
+	      value: async () => {
+	        const item = babelHelpers.classPrivateFieldLooseBase(this, _dialog)[_dialog].getSelectedItems()[0];
+	        if (!item) {
+	          return null;
+	        }
+	        await babelHelpers.classPrivateFieldLooseBase(this, _insertGroup)[_insertGroup]({
+	          id: item.getId(),
+	          name: item.getTitle(),
+	          image: item.getAvatar(),
+	          type: item.getEntityType()
+	        });
+	        return item;
+	      }
+	    });
 	    Object.defineProperty(this, _clearOnUpdateOnce, {
 	      writable: true,
 	      value: () => {
@@ -654,8 +680,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    return this;
 	  }
 	  async init() {
-	    var _babelHelpers$classPr, _babelHelpers$classPr2;
-	    (_babelHelpers$classPr2 = (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _dialog))[_dialog]) != null ? _babelHelpers$classPr2 : _babelHelpers$classPr[_dialog] = babelHelpers.classPrivateFieldLooseBase(this, _createDialog)[_createDialog]();
+	    var _babelHelpers$classPr3, _babelHelpers$classPr4;
+	    (_babelHelpers$classPr4 = (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _dialog))[_dialog]) != null ? _babelHelpers$classPr4 : _babelHelpers$classPr3[_dialog] = babelHelpers.classPrivateFieldLooseBase(this, _createDialog)[_createDialog]();
 	  }
 	  showTo(targetNode) {
 	    this.init();
@@ -686,33 +712,15 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    events: {
 	      'Item:onSelect': handleItemChangeDebounced,
 	      'Item:onDeselect': handleItemChangeDebounced,
-	      onHide: () => {
-	        babelHelpers.classPrivateFieldLooseBase(this, _onHide)[_onHide]();
-	        babelHelpers.classPrivateFieldLooseBase(this, _clearOnUpdateOnce)[_clearOnUpdateOnce]();
-	      },
+	      onHide: babelHelpers.classPrivateFieldLooseBase(this, _handleHide)[_handleHide],
 	      onDestroy: babelHelpers.classPrivateFieldLooseBase(this, _clearOnUpdateOnce)[_clearOnUpdateOnce],
-	      onLoad: async () => {
-	        babelHelpers.classPrivateFieldLooseBase(this, _upsertGroup)[_upsertGroup]();
-	      }
+	      onLoad: babelHelpers.classPrivateFieldLooseBase(this, _insertSelectedGroup)[_insertSelectedGroup]
 	    }
 	  });
 	}
-	async function _upsertGroup2() {
-	  const item = babelHelpers.classPrivateFieldLooseBase(this, _dialog)[_dialog].getSelectedItems()[0];
-	  if (item) {
-	    // Insert group into Vuex and wait for it to complete
-	    await tasks_v2_core.Core.getStore().dispatch(`${tasks_v2_const.Model.Groups}/insert`, {
-	      id: item.getId(),
-	      name: item.getTitle(),
-	      image: item.getAvatar(),
-	      type: item.getEntityType()
-	    });
-	  }
+	async function _handleItemChange2() {
+	  const item = await babelHelpers.classPrivateFieldLooseBase(this, _insertSelectedGroup)[_insertSelectedGroup]();
 	  babelHelpers.classPrivateFieldLooseBase(this, _updateGroup)[_updateGroup](item == null ? void 0 : item.getId());
-	}
-	function _handleItemChange2() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _upsertGroup)[_upsertGroup]();
-	  babelHelpers.classPrivateFieldLooseBase(this, _onUpdate)[_onUpdate]();
 	}
 	function _get_items() {
 	  return [[tasks_v2_const.EntitySelectorEntity.Project, babelHelpers.classPrivateFieldLooseBase(this, _task)[_task].groupId]];
@@ -720,13 +728,17 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	function _get_task() {
 	  return tasks_v2_core.Core.getStore().getters[`${tasks_v2_const.Model.Tasks}/getById`](babelHelpers.classPrivateFieldLooseBase(this, _taskId)[_taskId]);
 	}
+	function _insertGroup2(group) {
+	  return tasks_v2_core.Core.getStore().dispatch(`${tasks_v2_const.Model.Groups}/insert`, group);
+	}
 	function _updateGroup2(groupId) {
-	  var _babelHelpers$classPr3, _babelHelpers$classPr4;
+	  var _babelHelpers$classPr5, _babelHelpers$classPr6, _babelHelpers$classPr7, _babelHelpers$classPr8;
 	  void tasks_v2_provider_service_taskService.taskService.update(babelHelpers.classPrivateFieldLooseBase(this, _taskId)[_taskId], {
 	    groupId,
 	    stageId: 0
 	  });
-	  (_babelHelpers$classPr3 = (_babelHelpers$classPr4 = babelHelpers.classPrivateFieldLooseBase(this, _onUpdateOnce))[_onUpdateOnce]) == null ? void 0 : _babelHelpers$classPr3.call(_babelHelpers$classPr4);
+	  (_babelHelpers$classPr5 = (_babelHelpers$classPr6 = babelHelpers.classPrivateFieldLooseBase(this, _onUpdate))[_onUpdate]) == null ? void 0 : _babelHelpers$classPr5.call(_babelHelpers$classPr6);
+	  (_babelHelpers$classPr7 = (_babelHelpers$classPr8 = babelHelpers.classPrivateFieldLooseBase(this, _onUpdateOnce))[_onUpdateOnce]) == null ? void 0 : _babelHelpers$classPr7.call(_babelHelpers$classPr8);
 	  babelHelpers.classPrivateFieldLooseBase(this, _clearOnUpdateOnce)[_clearOnUpdateOnce]();
 	}
 	const groupDialog = new GroupDialog();

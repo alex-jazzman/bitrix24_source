@@ -54,9 +54,11 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	      return `/workgroups/group/${id}/`;
 	    }
 	    try {
-	      return tasks_v2_lib_apiClient.apiClient.post('Group.getUrl', {
-	        id,
-	        type
+	      return tasks_v2_lib_apiClient.apiClient.post('Group.Url.get', {
+	        group: {
+	          id,
+	          type
+	        }
 	      });
 	    } catch (error) {
 	      console.error('GroupService: getUrl error', error);

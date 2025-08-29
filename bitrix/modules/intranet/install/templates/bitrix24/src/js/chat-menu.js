@@ -1,4 +1,4 @@
-import { Reflection } from 'main.core';
+import { Loc, Reflection } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 
 export class ChatMenu
@@ -10,7 +10,7 @@ export class ChatMenu
 		EventEmitter.subscribe('BX.Intranet.Bitrix24.ChatMenu:onSelect', this.#handleChatMenuSelect.bind(this));
 	}
 
-	getMenu(): typeof(BX.Main.interfaceButtons) | null
+	getChatMenu(): typeof(BX.Main.interfaceButtons) | null
 	{
 		/**
 		 *
@@ -19,7 +19,22 @@ export class ChatMenu
 		const menuManager = Reflection.getClass('BX.Main.interfaceButtonsManager');
 		if (menuManager)
 		{
-			return menuManager.getById('chat-menu');
+			return menuManager.getById('chat-menu') || null;
+		}
+
+		return null;
+	}
+
+	getCollaborationMenu(): typeof(BX.Main.interfaceButtons) | null
+	{
+		/**
+		 *
+		 * @type {BX.Main.interfaceButtonsManager}
+		 */
+		const menuManager = Reflection.getClass('BX.Main.interfaceButtonsManager');
+		if (menuManager)
+		{
+			return menuManager.getById('top_menu_id_collaboration') || null;
 		}
 
 		return null;
@@ -42,7 +57,6 @@ export class ChatMenu
 	#handleImLayoutChange(event: BaseEvent): void
 	{
 		const data = event.getData();
-		const menu = this.getMenu();
 
 		let fromItemId = data.from.name.toLowerCase();
 		if (fromItemId === 'market' && data.from.entityId)
@@ -56,18 +70,44 @@ export class ChatMenu
 			toItemId = `${toItemId}_${data.to.entityId}`;
 		}
 
-		menu?.unsetActive(fromItemId);
-		menu?.setActive(toItemId);
-		menu?.closeMoreMenu();
+		const chatMenu = this.getChatMenu();
+		if (chatMenu !== null)
+		{
+			chatMenu.unsetActive(fromItemId);
+			chatMenu.setActive(toItemId);
+			chatMenu.reset();
+		}
+
+		const collaborationMenu = this.getCollaborationMenu();
+		const siteDir = Loc.getMessage('SITE_DIR') || '/';
+		const isMessengerEmbedded = window.location.pathname.toString().startsWith(`${siteDir}online/`);
+		if (collaborationMenu !== null)
+		{
+			if (isMessengerEmbedded)
+			{
+				collaborationMenu.unsetActive(fromItemId);
+				collaborationMenu.setActive(toItemId);
+			}
+
+			collaborationMenu.reset();
+		}
 	}
 
 	#handleCounterUpdate(event: BaseEvent): void
 	{
 		const counters: Object<string, number> = event.getData();
-		const menu = this.getMenu();
-		for (const [counterId, counterValue] of Object.entries(counters))
+		const menus = [this.getChatMenu(), this.getCollaborationMenu()];
+		for (const menu of menus)
 		{
-			menu?.updateCounter(counterId, counterValue);
+			if (menu === null)
+			{
+				continue;
+			}
+
+			for (const [counterId, counterValue] of Object.entries(counters))
+			{
+				menu.updateCounter(counterId, counterValue);
+			}
 		}
 	}
 }

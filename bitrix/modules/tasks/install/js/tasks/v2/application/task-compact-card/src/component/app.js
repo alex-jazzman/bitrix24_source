@@ -19,7 +19,7 @@ import { DescriptionInline } from 'tasks.v2.component.fields.description';
 import { FieldList } from 'tasks.v2.component.elements.field-list';
 import { Responsible, responsibleMeta } from 'tasks.v2.component.fields.responsible';
 import { Deadline, deadlineMeta } from 'tasks.v2.component.fields.deadline';
-import { CheckListChip, CheckListPopup } from 'tasks.v2.component.fields.check-list';
+import { CheckListChip, CheckList } from 'tasks.v2.component.fields.check-list';
 import { FilesChip } from 'tasks.v2.component.fields.files';
 import { GroupChip } from 'tasks.v2.component.fields.group';
 import { analytics } from 'tasks.v2.lib.analytics';
@@ -45,7 +45,7 @@ export const App = {
 		FieldList,
 		UiButton,
 		AddTaskButton,
-		CheckListPopup,
+		CheckList,
 		FullCardButton,
 		DropZone,
 	},
@@ -154,12 +154,8 @@ export const App = {
 			return [
 				FilesChip,
 				CheckListChip,
-				GroupChip,
+				...(Core.getParams().features.isProjectsEnabled ? [GroupChip] : []),
 			];
-		},
-		titleDisabled(): boolean
-		{
-			return !this.task.rights.edit || this.isCheckListPopupShown;
 		},
 	},
 	created(): void
@@ -288,8 +284,6 @@ export const App = {
 				return;
 			}
 
-			Event.EventEmitter.emit(`${EventName.OpenFullCard}:${this.taskId}`, id);
-
 			this.close();
 		},
 		sendAddTaskAnalytics(isSuccess: boolean): void
@@ -319,7 +313,8 @@ export const App = {
 		},
 		handleShowingPopup(event: BaseEvent): void
 		{
-			Event.EventEmitter.emit(`${EventName.ShowOverlay}:${this.taskId}`, { taskId: this.taskId });
+			Event.EventEmitter.emit(`${EventName.ShowOverlay}:${this.taskId}`);
+			Event.EventEmitter.emit(`${EventName.AdjustPosition}:${this.taskId}`);
 			this.externalPopup = event.popupInstance;
 			this.adjustCardPopup(true);
 			this.fileService.getAdapter().getUploader().unassignDropzone(this.$el);
@@ -431,7 +426,7 @@ export const App = {
 						:class="{'--no-gap': task.description.length > 0}"
 						ref="title"
 					>
-						<FieldTitle :taskId="taskId" :disabled="titleDisabled"/>
+						<FieldTitle :taskId="taskId" :disabled="isCheckListPopupShown"/>
 						<Importance :taskId="taskId"/>
 						<BIcon
 							class="tasks-compact-card-fields-close"
@@ -444,9 +439,10 @@ export const App = {
 					<div class="tasks-compact-card-fields-list">
 						<FieldList :fields="primaryFields"/>
 					</div>
-					<CheckListPopup
+					<CheckList
 						v-if="isCheckListPopupShown"
 						:taskId="taskId"
+						:isAutonomous="true"
 						@show="handleShowingPopup"
 						@close="handleHidingPopup(); closeCheckListPopup();"
 						@resize="handleResizingPopup"

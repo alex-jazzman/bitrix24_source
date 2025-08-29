@@ -1491,9 +1491,16 @@ class Site extends \Bitrix\Landing\Internals\BaseTable
 			Agent::addUniqueAgent('clearRecycleScope', [$currentScope]);
 		}
 
-		return Folder::update($id, [
+		$updateResult = Folder::update($id, [
 			'DELETED' => 'Y'
 		]);
+
+		if ($updateResult->isSuccess())
+		{
+			self::setDeletedStatusForFolderLandings($id, 'Y');
+		}
+
+		return $updateResult;
 	}
 
 	/**
@@ -1536,9 +1543,47 @@ class Site extends \Bitrix\Landing\Internals\BaseTable
 			}
 		}
 
-		return Folder::update($id, array(
+		$updateResult = Folder::update($id, array(
 			'DELETED' => 'N'
 		));
+
+		if ($updateResult->isSuccess())
+		{
+			self::setDeletedStatusForFolderLandings($id, 'N');
+		}
+
+		return $updateResult;
+	}
+
+	/**
+	 * Updates the DELETED status of all pages inside the folder and its subfolders.
+	 *
+	 * @param int $folderId
+	 * @param string $deletedValue 'Y' or 'N'
+	 *
+	 * @return void
+	 */
+	private static function setDeletedStatusForFolderLandings(int $folderId, string $deletedValue): void
+	{
+		$folderIds = [$folderId];
+		$subFolderIds = Folder::getSubFolderIds($folderId);
+		if (!empty($subFolderIds))
+		{
+			$folderIds = array_merge($folderIds, $subFolderIds);
+		}
+		$res = Landing::getList([
+			'select' => ['ID'],
+			'filter' => [
+				'FOLDER_ID' => $folderIds,
+				'=DELETED' => $deletedValue === 'Y' ? 'N' : 'Y'
+			]
+		]);
+		while ($row = $res->fetch())
+		{
+			Landing::update($row['ID'], [
+				'DELETED' => $deletedValue
+			]);
+		}
 	}
 
 	/**
@@ -1762,6 +1807,7 @@ class Site extends \Bitrix\Landing\Internals\BaseTable
 			$metrika->setType($params->type);
 			$metrika->setSubSection($params->subSection);
 			$metrika->setElement($params->element);
+			$metrika->setParam(3, 'siteId', $siteId);
 			if ($params->error)
 			{
 				$metrika->setError($params->error);

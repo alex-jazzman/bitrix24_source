@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Json;
 use Bitrix\Main\UI;
@@ -993,6 +994,14 @@ if (!empty($request->get('ta_sec')))
 	{
 		$params['p1'] = $request->get('p1');
 	}
+	else
+	{
+		$isDemo = (Loader::includeModule('bitrix24') && \CBitrix24::IsDemoLicense()) ? 'Y' : 'N';
+		$params['p1'] = 'isDemo_' . $isDemo;
+	}
+
+	$params['p3'] = 'viewersCount_' . (string)count($arResult["DATA"]["TASK"]["SE_AUDITOR"]);
+	$params['p5'] = 'coexecutorsCount_' . (string)count($arResult["DATA"]["TASK"]["SE_ACCOMPLICE"]);
 
 	Analytics::getInstance($arParams["USER_ID"])->onTaskView(
 		$request->get('ta_sec'),

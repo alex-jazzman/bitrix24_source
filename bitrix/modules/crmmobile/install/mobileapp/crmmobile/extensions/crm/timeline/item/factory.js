@@ -73,28 +73,22 @@ jn.define('crm/timeline/item/factory', (require, exports, module) => {
 		'StoreDocumentRealization:Creation',
 		'StoreDocumentConduction:Modification',
 		'Activity:Visit',
+		'Activity:BizprocTask',
+		'Activity:BizprocWorkflowCompleted',
+		'Activity:BizprocCommentAdded',
+		'BizprocWorkflowStarted',
+		'BizprocWorkflowCompleted',
+		'BizprocWorkflowTerminated',
+		'BizprocTaskCreation',
+		'BizprocTaskCompleted',
+		'BizprocTaskDelegated',
+		'BizprocCommentRead',
+		'BizprocCommentAdded',
 	];
 
 	if (TimelineSchedulerCommentProvider.isSupported())
 	{
 		SupportedTypes.push('Comment');
-	}
-
-	if (get(jnExtensionData.get('crm:timeline/item'), 'isBizprocActivityAvailable', false))
-	{
-		SupportedTypes.push(
-			'Activity:BizprocTask',
-			'Activity:BizprocWorkflowCompleted',
-			'Activity:BizprocCommentAdded',
-			'BizprocWorkflowStarted',
-			'BizprocWorkflowCompleted',
-			'BizprocWorkflowTerminated',
-			'BizprocTaskCreation',
-			'BizprocTaskCompleted',
-			'BizprocTaskDelegated',
-			'BizprocCommentRead',
-			'BizprocCommentAdded',
-		);
 	}
 
 	/**

@@ -7,11 +7,11 @@ import {
 	ButtonCounterColor,
 	ButtonTag,
 } from 'ui.buttons';
-import { Set, Outline } from 'ui.icon-set.api.core';
+import { Set as IconSet, Outline } from 'ui.icon-set.api.core';
 import type { BitrixVueComponentProps } from 'ui.vue3';
 
-const allIcons = { ...ButtonIcon, ...Set, ...Outline };
-const iconValidator = (val): boolean => Type.isNil(val) || Object.values(allIcons).includes(val);
+const allIcons = new Set([ButtonIcon, IconSet, Outline].flatMap((it) => Object.values(it)));
+const iconValidator = (val): boolean => Type.isNil(val) || allIcons.has(val);
 
 // @vue/component
 export const Button: BitrixVueComponentProps | { button: ?UIButton } = {

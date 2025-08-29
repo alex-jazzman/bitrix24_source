@@ -54,9 +54,11 @@ export const InsertIntoTextButton: BitrixVueComponentProps = {
 				cacheable: false,
 				animation: 'fading-slide',
 				bindElement: targetNode,
+				targetContainer: document.body,
 				offsetTop: 0,
 				bindOptions: {
 					position: 'top',
+					forceBindPosition: true,
 				},
 				darkMode: true,
 				events: {

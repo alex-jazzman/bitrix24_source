@@ -2212,6 +2212,7 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 		$metrika->setType($metrikaFields?->type);
 		$metrika->setSubSection($metrikaFields?->subSection);
 		$metrika->setElement($metrikaFields?->element);
+		$metrika->setParam(3, 'siteId', $this->siteId);
 
 		$metrika->send();
 

@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
-(function (exports,ui_vue3,ui_vue3_mixins_locMixin,tasks_v2_lib_sidePanelInstance,tasks_v2_component_elements_chip,tasks_v2_component_elements_fieldList,tasks_v2_component_fields_title,tasks_v2_component_fields_importance,tasks_v2_component_fields_description,tasks_v2_component_fields_creator,tasks_v2_component_fields_deadline,tasks_v2_component_fields_status,tasks_v2_component_fields_files,tasks_v2_component_fields_checkList,tasks_v2_component_fields_group,tasks_v2_component_fields_flow,tasks_v2_component_fields_accomplices,tasks_v2_component_fields_auditors,tasks_v2_provider_service_fileService,tasks_v2_provider_service_checkListService,main_core_events,im_public,im_v2_application_integration_task,tasks_v2_core,tasks_v2_component_addTaskButton,ui_vue3_components_button,main_core,ui_vue3_vuex,ui_vue3_components_menu,ui_iconSet_api_vue,ui_iconSet_api_core,ui_iconSet_outline,tasks_v2_const,tasks_v2_component_fields_responsible,tasks_v2_lib_entitySelectorDialog,tasks_v2_provider_service_taskService) {
+(function (exports,ui_vue3,ui_vue3_mixins_locMixin,tasks_v2_application_taskCard,tasks_v2_component_elements_chip,tasks_v2_component_elements_fieldList,tasks_v2_component_fields_title,tasks_v2_component_fields_importance,tasks_v2_component_fields_description,tasks_v2_component_fields_creator,tasks_v2_component_fields_deadline,tasks_v2_component_fields_status,tasks_v2_component_fields_files,tasks_v2_component_fields_checkList,tasks_v2_component_fields_group,tasks_v2_component_fields_flow,tasks_v2_component_fields_accomplices,tasks_v2_component_fields_auditors,tasks_v2_provider_service_fileService,tasks_v2_provider_service_checkListService,main_core_events,im_public,im_v2_application_integration_task,tasks_v2_core,tasks_v2_component_addTaskButton,ui_vue3_components_button,main_core,ui_vue3_vuex,ui_vue3_components_menu,ui_iconSet_api_vue,ui_iconSet_api_core,ui_iconSet_outline,tasks_v2_const,tasks_v2_component_fields_responsible,tasks_v2_lib_entitySelectorDialog,tasks_v2_provider_service_taskService) {
 	'use strict';
 
 	// @vue/component
@@ -75,6 +75,11 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      ButtonSize: ui_vue3_components_button.ButtonSize
 	    };
 	  },
+	  computed: {
+	    isTemplateEnabled() {
+	      return tasks_v2_core.Core.getParams().features.isTemplateEnabled;
+	    }
+	  },
 	  methods: {
 	    close() {
 	      main_core.Event.EventEmitter.emit(tasks_v2_const.EventName.CloseFullCard);
@@ -91,6 +96,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 				@click="close"
 			/>
 			<UiButton
+				v-if="isTemplateEnabled"
 				class="tasks-full-card-footer-template-button"
 				:text="loc('TASKS_V2_TASK_FULL_CARD_TEMPLATES')"
 				:size="ButtonSize.SMALL"
@@ -439,7 +445,6 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    Files: tasks_v2_component_fields_files.Files,
 	    FilesSheet: tasks_v2_component_fields_files.FilesSheet,
 	    CheckList: tasks_v2_component_fields_checkList.CheckList,
-	    CheckListSheet: tasks_v2_component_fields_checkList.CheckListSheet,
 	    FieldList: tasks_v2_component_elements_fieldList.FieldList,
 	    Chip: tasks_v2_component_elements_chip.Chip,
 	    Chat,
@@ -545,7 +550,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      }, {
 	        title: tasks_v2_component_fields_group.groupMeta.getTitle(this.task.groupId),
 	        component: tasks_v2_component_fields_group.Group,
-	        chip: tasks_v2_component_fields_group.GroupChip
+	        chip: tasks_v2_component_fields_group.GroupChip,
+	        isEnabled: tasks_v2_core.Core.getParams().features.isProjectsEnabled
 	      }, {
 	        title: tasks_v2_component_fields_accomplices.accomplicesMeta.title,
 	        component: tasks_v2_component_fields_accomplices.Accomplices,
@@ -559,7 +565,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	        title: tasks_v2_component_fields_flow.flowMeta.title,
 	        component: tasks_v2_component_fields_flow.Flow,
 	        chip: tasks_v2_component_fields_flow.FlowChip,
-	        withSeparator: true
+	        withSeparator: true,
+	        isEnabled: tasks_v2_core.Core.getParams().features.isFlowEnabled
 	      }];
 
 	      /* eslint-disable no-param-reassign */
@@ -602,8 +609,9 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    },
 	    chips() {
 	      return this.fields.filter(({
-	        chip
-	      }) => chip).map(({
+	        chip,
+	        isEnabled
+	      }) => chip && isEnabled !== false).map(({
 	        chip
 	      }) => chip);
 	    }
@@ -629,7 +637,9 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    }
 	  },
 	  mounted() {
+	    var _this$$refs$skeleton;
 	    this.tryStartObserver();
+	    (_this$$refs$skeleton = this.$refs.skeleton) == null ? void 0 : _this$$refs$skeleton.append(tasks_v2_application_taskCard.FullSkeleton());
 	  },
 	  beforeUnmount() {
 	    if (this.resizeObserver) {
@@ -738,7 +748,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 							:isShown="isFilesSheetShown"
 							@close="closeFiles"
 						/>
-						<CheckListSheet
+						<CheckList
 							:taskId="taskId"
 							:checkListId="checkListId"
 							:isShown="isCheckListSheetShown"
@@ -773,7 +783,12 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 									class="tasks-full-card-field-container --custom"
 									data-field-container
 								>
-									<CheckList :taskId="taskId" @open="openCheckList"/>
+									<CheckList
+										:taskId="taskId"
+										:isPreview="true"
+										:isComponentShown="!isCheckListSheetShown"
+										@open="openCheckList"
+									/>
 								</div>
 								<div
 									v-if="projectFields.length > 0"
@@ -813,20 +828,15 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 				<Chat :taskId="taskId"/>
 			</template>
 			<template v-else>
-				Loading...
+				<div ref="skeleton" style="width: 100%;"></div>
 			</template>
 		</div>
 	`
 	};
 
-	let _ = t => t,
-	  _t;
-	var _application = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("application");
 	var _params = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("params");
-	var _container = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("container");
-	var _showSidePanel = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showSidePanel");
-	var _onSidePanelClose = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onSidePanelClose");
-	var _renderContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderContainer");
+	var _slider = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("slider");
+	var _application = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("application");
 	var _mountApplication = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("mountApplication");
 	var _unmountApplication = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("unmountApplication");
 	var _subscribe = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("subscribe");
@@ -847,34 +857,22 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    Object.defineProperty(this, _mountApplication, {
 	      value: _mountApplication2
 	    });
-	    Object.defineProperty(this, _renderContainer, {
-	      value: _renderContainer2
-	    });
-	    Object.defineProperty(this, _showSidePanel, {
-	      value: _showSidePanel2
-	    });
-	    Object.defineProperty(this, _application, {
-	      writable: true,
-	      value: null
-	    });
 	    Object.defineProperty(this, _params, {
 	      writable: true,
 	      value: void 0
 	    });
-	    Object.defineProperty(this, _container, {
+	    Object.defineProperty(this, _slider, {
 	      writable: true,
 	      value: void 0
 	    });
-	    Object.defineProperty(this, _onSidePanelClose, {
+	    Object.defineProperty(this, _application, {
 	      writable: true,
-	      value: () => {
-	        this.unmountCard();
-	      }
+	      value: void 0
 	    });
 	    Object.defineProperty(this, _onClose, {
 	      writable: true,
 	      value: () => {
-	        tasks_v2_lib_sidePanelInstance.SidePanelInstance.close();
+	        babelHelpers.classPrivateFieldLooseBase(this, _slider)[_slider].close();
 	      }
 	    });
 	    Object.defineProperty(this, _handlePopupShow, {
@@ -894,50 +892,18 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _params)[_params] = params;
 	  }
-	  async showCard() {
-	    return new Promise((resolve, reject) => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _showSidePanel)[_showSidePanel](resolve).then(() => {
-	        resolve();
-	      }).catch(error => {
-	        reject(error);
-	      });
-	    });
-	  }
-	  async mountCard() {
+	  async mountCard(slider) {
+	    if (!slider.isOpen()) {
+	      return;
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _slider)[_slider] = slider;
 	    babelHelpers.classPrivateFieldLooseBase(this, _subscribe)[_subscribe]();
-	    babelHelpers.classPrivateFieldLooseBase(this, _container)[_container] = babelHelpers.classPrivateFieldLooseBase(this, _renderContainer)[_renderContainer]();
-	    await babelHelpers.classPrivateFieldLooseBase(this, _mountApplication)[_mountApplication](babelHelpers.classPrivateFieldLooseBase(this, _container)[_container]);
-	    return babelHelpers.classPrivateFieldLooseBase(this, _container)[_container];
+	    babelHelpers.classPrivateFieldLooseBase(this, _application)[_application] = await babelHelpers.classPrivateFieldLooseBase(this, _mountApplication)[_mountApplication](slider.getContentContainer());
 	  }
 	  unmountCard() {
 	    babelHelpers.classPrivateFieldLooseBase(this, _unmountApplication)[_unmountApplication]();
 	    babelHelpers.classPrivateFieldLooseBase(this, _unsubscribe)[_unsubscribe]();
 	  }
-	}
-	async function _showSidePanel2() {
-	  var _babelHelpers$classPr;
-	  const sidePanelId = `tasks-task-full-card-${(_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].taskId) != null ? _babelHelpers$classPr : 0}`;
-	  const maxWidth = 1510;
-	  const card = await this.mountCard();
-	  return new Promise(resolve => {
-	    tasks_v2_lib_sidePanelInstance.SidePanelInstance.open(sidePanelId, {
-	      customLeftBoundary: 0,
-	      width: maxWidth,
-	      cacheable: false,
-	      contentClassName: 'tasks-full-card-slider-content',
-	      customRightBoundary: 0,
-	      events: {
-	        onOpen: resolve,
-	        onClose: babelHelpers.classPrivateFieldLooseBase(this, _onSidePanelClose)[_onSidePanelClose]
-	      },
-	      contentCallback: () => card
-	    });
-	  });
-	}
-	function _renderContainer2() {
-	  return main_core.Tag.render(_t || (_t = _`
-			<div class="tasks-full-card-container"></div>
-		`));
 	}
 	async function _mountApplication2(container) {
 	  await tasks_v2_core.Core.init();
@@ -948,10 +914,11 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  application.mixin(ui_vue3_mixins_locMixin.locMixin);
 	  application.use(tasks_v2_core.Core.getStore());
 	  application.mount(container);
-	  babelHelpers.classPrivateFieldLooseBase(this, _application)[_application] = application;
+	  return application;
 	}
 	function _unmountApplication2() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _application)[_application].unmount();
+	  var _babelHelpers$classPr;
+	  (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _application)[_application]) == null ? void 0 : _babelHelpers$classPr.unmount();
 	}
 	function _subscribe2() {
 	  main_core.Event.EventEmitter.subscribe(tasks_v2_const.EventName.CloseFullCard, babelHelpers.classPrivateFieldLooseBase(this, _onClose)[_onClose]);
@@ -964,5 +931,5 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 
 	exports.TaskFullCard = TaskFullCard;
 
-}((this.BX.Tasks.V2.Application = this.BX.Tasks.V2.Application || {}),BX.Vue3,BX.Vue3.Mixins,BX.Tasks.V2.Lib,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Tasks.V2,BX.Tasks.V2.Component,BX.Vue3.Components,BX,BX.Vue3.Vuex,BX.UI.Vue3.Components,BX.UI.IconSet,BX.UI.IconSet,BX,BX.Tasks.V2.Const,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service));
+}((this.BX.Tasks.V2.Application = this.BX.Tasks.V2.Application || {}),BX.Vue3,BX.Vue3.Mixins,BX.Tasks.V2.Application,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Tasks.V2,BX.Tasks.V2.Component,BX.Vue3.Components,BX,BX.Vue3.Vuex,BX.UI.Vue3.Components,BX.UI.IconSet,BX.UI.IconSet,BX,BX.Tasks.V2.Const,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service));
 //# sourceMappingURL=task-full-card.bundle.js.map

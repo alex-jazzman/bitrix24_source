@@ -317,8 +317,7 @@ class Copyright extends \Bitrix\Landing\Hook\Page
 			'#a2#' => '</a>',
 		]);
 
-		$lang = $this->getLang();
-		$hintText = Loc::getMessage('LANDING_HOOK_COPYRIGHT_TEXT_CONTENT_LINK_REPORT_HINT', null, $lang);
+		$hintText = Loc::getMessage('LANDING_HOOK_COPYRIGHT_TEXT_CONTENT_LINK_REPORT_HINT');
 
 		return <<<HTML
 			<div class="bitrix-footer-terms">

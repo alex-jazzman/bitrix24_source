@@ -18,6 +18,8 @@ const Event = Object.freeze({
 	DescriptionTask: 'description_task',
 	FillTaskFormView: 'full_task_form_view',
 	ClickCreate: 'click_create',
+	RoleClick: 'role_click',
+	RoleClickType: 'role_click_type',
 });
 
 const Type = Object.freeze({
@@ -49,6 +51,12 @@ const Element = Object.freeze({
 	ChangeButton: 'change_button',
 	UploadButton: 'upload_button',
 	CheckListButton: 'checklist_button',
+	RoleButton: 'role_button',
+	RoleAllButton: 'role_all_button',
+	RoleHelpButton: 'role_help_button',
+	RoleDoingButton: 'role_doing_button',
+	RoleAssignedButton: 'role_assigned_button',
+	RoleWatchingButton: 'role_watching_button',
 });
 
 const Status = Object.freeze({
@@ -69,6 +77,8 @@ const Params = Object.freeze({
 	FileSize: (size: number): string => `size_${size}`,
 	FilesCount: (count: number): string => `filesCount_${count}`,
 	FileExtension: (extension: string): string => `ext_${extension}`,
+	IsDemo: (isDemo: string): string => `isDemo_${isDemo ? 'Y' : 'N'}`,
+	FilterEnabled: (enabled: string): string => `filter_${enabled ? 'on' : 'off'}`,
 });
 
 export const Analytics = Object.freeze({

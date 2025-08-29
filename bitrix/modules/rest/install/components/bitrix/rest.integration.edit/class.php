@@ -491,7 +491,7 @@ class RestIntegrationEditComponent extends CBitrixComponent implements Controlle
 		if (!empty($code))
 		{
 			$presetData = Element::get($code);
-			if (!empty($presetData['OPTIONS']))
+			if (!empty($presetData['OPTIONS']) && $presetData['ACTIVE'] === 'Y')
 			{
 				$saveData = [
 					'ELEMENT_CODE' => $presetData['ELEMENT_CODE'],

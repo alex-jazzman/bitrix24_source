@@ -28,8 +28,6 @@
 	position: absolute;
 	inset: 0;
 	background-color: var(--leftmenu-bg-expanded);
-	backdrop-filter: blur(var(--leftmenu-bg-blur-expanded));
-	transition: 0.2s ease-in-out backdrop-filter;
 	z-index: -1;
 }
 
@@ -41,13 +39,11 @@
 .menu-collapsed-mode .menu-items-block::before,
 .menu-animation-closing-mode .menu-items-block::before {
 	background-color: var(--leftmenu-bg);
-	backdrop-filter: var(--leftmenu-bg-blur);
 }
 
 .menu-items-block::before,
 .menu-collapsed-mode.menu-animation-opening-mode .menu-items-block::before {
 	background-color: var(--leftmenu-bg-expanded);
-	backdrop-filter: var(--leftmenu-bg-blur-expanded);
 }
 
 .menu-collapsed-mode.menu-sliding-mode .menu-items-block {

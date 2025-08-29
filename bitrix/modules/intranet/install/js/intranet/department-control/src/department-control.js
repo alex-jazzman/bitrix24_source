@@ -75,6 +75,10 @@ export default class DepartmentControl
 							item?.select();
 						}
 					},
+					'onLoad': (event: BaseEvent) => {
+						const dialog: Dialog = event.getTarget();
+						dialog.selectTab('structure-departments-tab');
+					},
 				},
 			},
 		});

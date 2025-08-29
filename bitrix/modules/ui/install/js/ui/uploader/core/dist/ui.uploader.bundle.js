@@ -460,6 +460,7 @@ this.BX.UI = this.BX.UI || {};
 	var _errors = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("errors");
 	var _progress = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("progress");
 	var _customData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("customData");
+	var _viewerAttrs = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("viewerAttrs");
 	var _uploadController = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("uploadController");
 	var _loadController = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("loadController");
 	var _removeController = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("removeController");
@@ -563,6 +564,10 @@ this.BX.UI = this.BX.UI || {};
 	    Object.defineProperty(this, _customData, {
 	      writable: true,
 	      value: Object.create(null)
+	    });
+	    Object.defineProperty(this, _viewerAttrs, {
+	      writable: true,
+	      value: null
 	    });
 	    Object.defineProperty(this, _uploadController, {
 	      writable: true,
@@ -933,6 +938,7 @@ this.BX.UI = this.BX.UI || {};
 	      this.setServerPreview(options.serverPreviewUrl, options.serverPreviewWidth, options.serverPreviewHeight);
 	      this.setDownloadUrl(options.downloadUrl);
 	      this.setCustomData(options.customData);
+	      this.setViewerAttrs(options.viewerAttrs);
 	      this.setLoadController(options.loadController);
 	      this.setUploadController(options.uploadController);
 	      this.setRemoveController(options.removeController);
@@ -1229,6 +1235,18 @@ this.BX.UI = this.BX.UI || {};
 	    }
 	    return undefined;
 	  }
+	  setViewerAttrs(viewerAttrs) {
+	    if (main_core.Type.isNull(viewerAttrs) || main_core.Type.isPlainObject(viewerAttrs)) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _viewerAttrs)[_viewerAttrs] = viewerAttrs;
+	      this.emit(FileEvent.STATE_CHANGE, {
+	        property: 'viewerAttrs',
+	        value: viewerAttrs
+	      });
+	    }
+	  }
+	  getViewerAttrs() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _viewerAttrs)[_viewerAttrs];
+	  }
 	  toJSON() {
 	    return {
 	      id: this.getId(),
@@ -1261,7 +1279,8 @@ this.BX.UI = this.BX.UI || {};
 	      serverPreviewWidth: this.getServerPreviewWidth(),
 	      serverPreviewHeight: this.getServerPreviewHeight(),
 	      downloadUrl: this.getDownloadUrl(),
-	      customData: this.getCustomData()
+	      customData: this.getCustomData(),
+	      viewerAttrs: this.getViewerAttrs()
 	    };
 	  }
 	}

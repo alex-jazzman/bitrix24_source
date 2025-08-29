@@ -153,11 +153,11 @@ final class DiskDocumentsController extends Disk\Internals\Engine\Controller
 		{
 			if ($trackedObject->getAttachedObjectId())
 			{
-				$openUrl = Driver::getInstance()->getUrlManager()->getUrlForViewAttachedBoard($trackedObject->getAttachedObjectId());
+				$openUrl = Driver::getInstance()->getUrlManager()->getUrlForViewAttachedBoard($trackedObject->getAttachedObjectId(), false, 'boards_page');
 			}
 			else
 			{
-				$openUrl = Driver::getInstance()->getUrlManager()->getUrlForViewBoard($trackedObject->getFileId());
+				$openUrl = Driver::getInstance()->getUrlManager()->getUrlForViewBoard($trackedObject->getFileId(), false, 'boards_page');
 			}
 			array_unshift(
 				$actions,

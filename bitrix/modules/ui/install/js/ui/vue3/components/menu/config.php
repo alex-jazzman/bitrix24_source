@@ -7,8 +7,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 return [
 	'js' => 'dist/menu.bundle.js',
 	'rel' => [
-		'main.core',
-		'ui.system.menu',
+		'main.polyfill.core',
+		'ui.system.menu.vue',
 	],
-	'skip_core' => false,
+	'skip_core' => true,
 ];

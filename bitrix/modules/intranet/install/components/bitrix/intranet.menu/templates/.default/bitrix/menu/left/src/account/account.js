@@ -63,7 +63,7 @@ export class Account
 	{
 		const currentUserId = parseInt(Loc.getMessage('USER_ID'), 10);
 		this.accounts = ('undefined' !== typeof BXDesktopSystem) ? DesktopApi.getAccountList() : [];
-		this.currentUser = this.accounts.find((account) => parseInt(account.id, 10) === currentUserId && account.portal === location.hostname);
+		this.currentUser = this.accounts.find((account) => parseInt(account.id, 10) === currentUserId && account.portal === location.hostname) || null;
 
 		this.viewPopupAccounts();
 	}
@@ -116,19 +116,22 @@ export class Account
 
 		const sumCounters = this.getSumCounters();
 		const block = document.getElementsByClassName('intranet__desktop-menu_user-block')[0];
-		const counterNode = block.querySelector('[data-role="counter"]');
-		if (sumCounters > 0)
+		const counterNode = block?.querySelector('[data-role="counter"]');
+		if (counterNode)
 		{
-			counterNode.innerHTML = sumCounters > 99 ? '99+' : sumCounters;
-			if (!Dom.hasClass(block, 'intranet__desktop-menu_item_counters'))
+			if (sumCounters > 0)
 			{
+				counterNode.innerHTML = sumCounters > 99 ? '99+' : sumCounters;
+				if (!Dom.hasClass(block, 'intranet__desktop-menu_item_counters'))
+				{
+					Dom.addClass(block, 'intranet__desktop-menu_item_counters');
+				}
+			}
+			else
+			{
+				counterNode.innerHTML = '';
 				Dom.addClass(block, 'intranet__desktop-menu_item_counters');
 			}
-		}
-		else
-		{
-			counterNode.innerHTML = '';
-			Dom.addClass(block, 'intranet__desktop-menu_item_counters');
 		}
 	}
 
@@ -143,6 +146,11 @@ export class Account
 
 	viewDesktopUser(): void
 	{
+		if (this.currentUser === null)
+		{
+			return;
+		}
+
 		const block = document.getElementsByClassName('intranet__desktop-menu_user')[0];
 		const counters = this.getSumCounters();
 
@@ -193,6 +201,11 @@ export class Account
 
 	viewPopupAccounts(): void
 	{
+		if (this.currentUser === null)
+		{
+			return;
+		}
+
 		const menuPopup = document.getElementsByClassName('intranet__desktop-menu_popup')[0];
 		let position = '';
 		if (this.currentUser.work_position !== '')

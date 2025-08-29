@@ -8,8 +8,8 @@ return [
 	'css' => 'dist/growing-text-area.bundle.css',
 	'js' => 'dist/growing-text-area.bundle.js',
 	'rel' => [
-		'ui.vue3.components.popup',
 		'main.core',
+		'ui.vue3.directives.hint',
 	],
 	'skip_core' => false,
 ];

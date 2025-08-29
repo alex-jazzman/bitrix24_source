@@ -346,6 +346,12 @@ class CDiskExternalLinkComponent extends DiskComponent
 		if($isFolder)
 		{
 			$rootFolder = $this->externalLink->getFolder();
+
+			if (!$rootFolder)
+			{
+				return;
+			}
+
 			[$targetFolder, $relativeItems] = $this->getTargetFolderData($rootFolder, $path);
 			if(!$targetFolder)
 			{
@@ -371,6 +377,16 @@ class CDiskExternalLinkComponent extends DiskComponent
 				), true),
 				'ID' => $this->externalLink->getObjectId(),
 			);
+
+			$securityContext = $rootFolder->getStorage()?->getSecurityContext($this->externalLink->getCreatedBy());
+			if ($securityContext !== null)
+			{
+				$this->arResult['FILE_LIMIT_EXCEEDED'] = ZipNginx\Archive::isFileLimitExceededByFolder($rootFolder, $securityContext);
+			}
+			else
+			{
+				$this->arResult['FILE_LIMIT_EXCEEDED'] = true;
+			}
 		}
 
 		$this->includeComponentTemplate($isFile? 'template' : 'folder');
@@ -1262,9 +1278,7 @@ class CDiskExternalLinkComponent extends DiskComponent
 		}
 
 		$securityContext = $storage->getSecurityContext($createdBy);
-
 		$zipArchive = ZipNginx\Archive::createFromFolder($folder, $securityContext);
-
 		$this->restartBuffer();
 		$zipArchive->send();
 		$this->end();

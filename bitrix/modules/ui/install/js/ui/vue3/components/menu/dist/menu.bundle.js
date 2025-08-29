@@ -2,62 +2,12 @@
 this.BX = this.BX || {};
 this.BX.UI = this.BX.UI || {};
 this.BX.UI.Vue3 = this.BX.UI.Vue3 || {};
-(function (exports,main_core,ui_system_menu) {
+(function (exports,ui_system_menu_vue) {
 	'use strict';
 
-	const BMenu = {
-	  name: 'BMenu',
-	  props: {
-	    id: {
-	      type: String,
-	      default: () => `ui-vue3-menu-${main_core.Text.getRandom()}`
-	    },
-	    options: {
-	      /** @type MenuOptions */
-	      type: Object,
-	      required: true
-	    }
-	  },
-	  emits: ['close'],
-	  computed: {
-	    menuOptions() {
-	      return {
-	        ...this.defaultOptions,
-	        ...this.options
-	      };
-	    },
-	    defaultOptions() {
-	      return {
-	        id: this.id,
-	        cacheable: false,
-	        animation: 'fading',
-	        events: {
-	          onClose: this.handleClose,
-	          onDestroy: this.handleClose
-	        }
-	      };
-	    }
-	  },
-	  mounted() {
-	    this.menu = new ui_system_menu.Menu(this.menuOptions);
-	    this.menu.show();
-	  },
-	  unmounted() {
-	    var _this$menu;
-	    (_this$menu = this.menu) == null ? void 0 : _this$menu.close();
-	  },
-	  methods: {
-	    handleClose() {
-	      this.$emit('close');
-	    }
-	  },
-	  template: `
-		<div v-if="false"></div>
-	`
-	};
+	// @deprecated
 
-	Object.keys(ui_system_menu).forEach(function (key) { exports[key] = ui_system_menu[key]; });
-	exports.BMenu = BMenu;
+	Object.keys(ui_system_menu_vue).forEach(function (key) { exports[key] = ui_system_menu_vue[key]; });
 
-}((this.BX.UI.Vue3.Components = this.BX.UI.Vue3.Components || {}),BX,BX.UI.System));
+}((this.BX.UI.Vue3.Components = this.BX.UI.Vue3.Components || {}),BX.UI.System.Menu));
 //# sourceMappingURL=menu.bundle.js.map

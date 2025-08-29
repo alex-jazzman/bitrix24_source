@@ -156,10 +156,13 @@
 		}
 
 		// add BLOCK ID to relative
-		carouselSelectors.forEach(function (s, i)
+		if (event.makeRelativeSelector)
 		{
-			carouselSelectors[i] = event.makeRelativeSelector(s);
-		});
+			carouselSelectors.forEach(function (s, i)
+			{
+				carouselSelectors[i] = event.makeRelativeSelector(s);
+			});
+		}
 
 		return carouselSelectors.join(',');
 	};

@@ -31,7 +31,7 @@ export const hint = {
 		}
 
 		Event.bind(element, 'mouseenter', () => onMouseEnter(element, getParams(value)));
-		const isInteractive = value.interactivity ?? false;
+		const isInteractive = getParams(value).interactivity ?? false;
 		Event.bind(element, 'mouseleave', () => hideTooltip(isInteractive));
 		Event.bind(element, 'click', () => hideTooltip());
 	},

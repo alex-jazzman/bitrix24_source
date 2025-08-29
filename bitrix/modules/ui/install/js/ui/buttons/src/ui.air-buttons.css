@@ -1,7 +1,24 @@
 .ui-btn.--air,
 .ui-btn-split.--air,
+.ui-btn-split.--air .ui-btn-menu,
+.ui-btn-split.--air .ui-btn-main {
+	--ui-btn-background: #868d95;
+	--ui-btn-background-hover: color-mix(in srgb, var(--ui-btn-background) 100%, var(--ui-color-bg-state-hover-default-hex) var(--ui-color-bg-state-hover-default-opacity));
+	--ui-btn-background-active: color-mix(in srgb, var(--ui-btn-background) 100%, var(--ui-color-bg-state-click-default-hex) var(--ui-color-bg-state-click-default-opacity));
+	--ui-btn-background-gradient: linear-gradient(180deg, var(--ui-btn-background) 0%, var(--ui-btn-background) 100%);
+	--ui-btn-background-gradient-hover: linear-gradient(180deg, var(--ui-btn-background-hover) 0%, var(--ui-btn-background-hover) 100%);
+	--ui-btn-background-gradient-active: linear-gradient(180deg, var(--ui-btn-background-active) 0%, var(--ui-btn-background-active) 100%);
+}
+
 .ui-btn-split.--air .ui-btn-main,
 .ui-btn-split.--air .ui-btn-menu {
+	--ui-btn-background: transparent;
+}
+
+.ui-btn.--air,
+.ui-btn-split.--air {
+	/* custom */
+	/*--ui-btn-custom-background: var(--ui-btn-custom-background, none);*/
 	/*size*/
 	--ui-btn-size-xss: 20px;
 	--ui-btn-size-xs: 24px;
@@ -18,10 +35,7 @@
 	--ui-btn-title-comensation: -1px;
 	--ui-btn-padding: 0 var(--ui-btn-padding-right) 0 var(--ui-btn-padding-left);
 	--ui-btn-min-width: 80px;
-	--ui-btn-background: #868d95;
-	--ui-btn-background-hover: color-mix(in srgb, var(--ui-btn-background) 100%, var(--ui-color-bg-state-hover-default-hex) var(--ui-color-bg-state-hover-default-opacity));
-	--ui-btn-background-active: color-mix(in srgb, var(--ui-btn-background) 100%, var(--ui-color-bg-state-click-default-hex) var(--ui-color-bg-state-click-default-opacity));
-	--ui-btn-border-color: var(--ui-btn-background);
+	--ui-btn-border-color: var(--ui-btn-border-color);
 	--ui-btn-border-color-hover: color-mix(in srgb, var(--ui-btn-border-color) 100%, var(--ui-color-bg-state-hover-default-hex) var(--ui-color-bg-state-hover-default-opacity));
 	--ui-btn-border-color-active: color-mix(in srgb, var(--ui-btn-border-color) 100%, var(--ui-color-bg-state-click-default-hex) var(--ui-color-bg-state-click-default-opacity));
 	--ui-btn-border-width: 0px;
@@ -68,12 +82,37 @@
 	transition-duration: 0s;
 	font-family: var(--ui-font-family-primary);
 	border-radius: var(--ui-btn-radius);
-	background-image: none;
 }
 
 .ui-btn.--air,
-.ui-btn-split.--air {
-	backdrop-filter: var(--ui-bg-blur-content);
+.ui-btn-split.--air,
+.ui-btn-split.--air .ui-btn-main,
+.ui-btn-split.--air .ui-btn-menu {
+	color: var(--ui-btn-color);
+	border-color: var(--ui-btn-border-color);
+}
+
+.ui-btn.--air,
+.ui-btn.--air.--with-left-icon,
+.ui-btn-split.--air,
+.ui-btn-split.--air.--with-left-icon {
+	background-image: none;
+	background-repeat: unset;
+	background-position: unset;
+	background-size: unset;
+	background: var(--ui-btn-background-gradient), var(--ui-btn-custom-background, none);
+}
+
+.ui-btn.--air:hover:not([disabled]),
+.ui-btn.--air:hover:not(.ui-btn-disabled) {
+	background: var(--ui-btn-background-gradient-hover), var(--ui-btn-custom-background, none);
+	border-color: var(--ui-btn-border-color-hover);
+}
+
+.ui-btn.--air:active:not([disabled]),
+.ui-btn.--air:active:not(.ui-btn-disabled) {
+	background: var(--ui-btn-background-gradient-active), var(--ui-btn-custom-background, none);
+	border-color: var(--ui-btn-border-color-active);
 }
 
 .ui-btn-split.--air .ui-btn-main {
@@ -94,7 +133,6 @@
 .ui-btn-split.--air .ui-btn-main,
 .ui-btn-split.--air[class*="ui-btn-icon-"] .ui-btn-main,
 .ui-btn-split.--air[class*="ui-btn-icon-"]:not(.--with-collapsed-icon) .ui-btn-main {
-	background-image: none;
 	margin-left: 0;
 	font-weight: var(--ui-btn-font-weight);
 	font-size: var(--ui-btn-font-size);
@@ -118,6 +156,59 @@
 .ui-btn-split.--air:not(.ui-btn-dropdown),
 .ui-btn-split.--air .ui-btn-menu:not(.ui-btn-dropdown) {
 	content: none;
+}
+
+.ui-btn.--air:hover,
+.ui-btn.--air:focus,
+a.ui-btn.--air:focus,
+.ui-btn.--air .ui-btn-main:hover,
+.ui-btn.--air .ui-btn-main:focus,
+.ui-btn.--air .ui-btn-extra:hover,
+.ui-btn.--air .ui-btn-menu:not(.--switcher):hover,
+.ui-btn.--air.ui-btn-hover,
+.ui-btn.--air.ui-btn-hover .ui-btn-main,
+.ui-btn.--air.ui-btn-hover .ui-btn-extra,
+.ui-btn.--air.ui-btn-hover .ui-btn-menu,
+.ui-btn.--air.ui-btn-main-hover .ui-btn-main,
+.ui-btn.--air.ui-btn-extra-hover .ui-btn-extra,
+.ui-btn.--air.ui-btn-menu-hover .ui-btn-menu {
+	border-color: var(--ui-btn-border-color-hover);
+	background: var(--ui-btn-background-gradient-hover);
+	color: var(--ui-btn-color-hover);
+}
+
+.ui-btn.--air:active,
+a.ui-btn.--air:focus,
+a.ui-btn-split.--air:focus,
+.ui-btn-split.--air .ui-btn-main:active,
+.ui-btn-split.--air .ui-btn-menu:not(.--switcher):active,
+.ui-btn-split.--air .ui-btn-extra:active,
+.ui-btn-wait.ui-btn.--air,
+.ui-btn-wait.ui-btn.--air .ui-btn-main,
+.ui-btn-clock.ui-btn.--air,
+.ui-btn.ui-btn-clock.--air .ui-btn-main,
+.ui-btn-active.ui-btn.--air,
+.ui-btn.--air.ui-btn-active .ui-btn-main,
+.ui-btn.--air.ui-btn-active .ui-btn-menu,
+.ui-btn.--air.ui-btn-active .ui-btn-extra,
+.ui-btn-main-active.--air .ui-btn-main,
+.ui-btn-menu-active.--air .ui-btn-menu,
+.ui-btn-extra-active.--air .ui-btn-extra,
+.ui-btn-wait.ui-btn.--air:hover,
+.ui-btn-wait.--air .ui-btn-main:hover,
+.ui-btn-clock.ui-btn.--air:hover,
+.ui-btn-clock.--air .ui-btn-main:hover,
+.ui-btn-active.--air.ui-btn:hover,
+.ui-btn-active.--air .ui-btn-main:hover,
+.ui-btn-active.--air .ui-btn-menu:not(.--switcher):hover,
+.ui-btn-active.--air .ui-btn-extra:hover,
+.ui-btn-main-active.--air .ui-btn-main:hover,
+.ui-btn-menu-active.--air .ui-btn-menu:not(.--switcher):hover,
+.ui-btn-extra-active.--air .ui-btn-extra:hover {
+	outline: none;
+	border-color: var(--ui-btn-border-color-active);
+	background: var(--ui-btn-background-gradient-active);
+	color: var(--ui-btn-color-active);
 }
 
 /*region Size*/
@@ -353,11 +444,9 @@
 
 /* default button color */
 .ui-btn.--air,
-.ui-btn-split.--air .ui-btn-main,
-.ui-btn-split.--air .ui-btn-menu,
+.ui-btn-split.--air,
 .ui-btn.--air.--style-filled,
-.ui-btn-split.--air.--style-filled .ui-btn-main,
-.ui-btn-split.--air.--style-filled .ui-btn-menu {
+.ui-btn-split.--air.--style-filled {
 	--ui-btn-background: var(--ui-color-design-filled-bg);
 	--ui-btn-border-color: var(--ui-color-design-filled-stroke);
 	--ui-btn-border-width: var(--ui-design-filled-stroke-weight);
@@ -366,8 +455,7 @@
 }
 
 .ui-btn.--air.--style-tinted,
-.ui-btn-split.--air.--style-tinted .ui-btn-main,
-.ui-btn-split.--air.--style-tinted .ui-btn-menu {
+.ui-btn-split.--air.--style-tinted {
 	--ui-btn-background: var(--ui-color-design-tinted-bg);
 	--ui-btn-border-color: var(--ui-color-design-tinted-stroke);
 	--ui-btn-border-width: var(--ui-design-tinted-stroke-weight);
@@ -376,8 +464,7 @@
 }
 
 .ui-btn.--air.--style-tinted-alert,
-.ui-btn-split.--air.--style-tinted-alert .ui-btn-main,
-.ui-btn-split.--air.--style-tinted-alert .ui-btn-menu {
+.ui-btn-split.--air.--style-tinted-alert {
 	--ui-btn-background: var(--ui-color-design-tinted-alert-bg);
 	--ui-btn-border-color: var(--ui-color-design-tinted-alert-stroke);
 	--ui-btn-border-width: var(--ui-design-tinted-alert-stroke-weight);
@@ -386,8 +473,7 @@
 }
 
 .ui-btn.--air.--style-outline-accent-1,
-.ui-btn-split.--air.--style-outline-accent-1 .ui-btn-main,
-.ui-btn-split.--air.--style-outline-accent-1 .ui-btn-menu {
+.ui-btn-split.--air.--style-outline-accent-1 {
 	--ui-btn-background: var(--ui-color-design-outline-a1-bg);
 	--ui-btn-border-color: var(--ui-color-design-outline-a1-stroke);
 	--ui-btn-border-width: var(--ui-design-outline-a1-stroke-weight);
@@ -396,8 +482,7 @@
 }
 
 .ui-btn.--air.--style-outline-accent-2,
-.ui-btn-split.--air.--style-outline-accent-2 .ui-btn-main,
-.ui-btn-split.--air.--style-outline-accent-2 .ui-btn-menu {
+.ui-btn-split.--air.--style-outline-accent-2 {
 	--ui-btn-background: var(--ui-color-design-outline-a2-bg);
 	--ui-btn-border-color: var(--ui-color-design-outline-a2-stroke);
 	--ui-btn-border-width: var(--ui-design-outline-a2-stroke-weight);
@@ -406,8 +491,7 @@
 }
 
 .ui-btn.--air.--style-outline,
-.ui-btn-split.--air.--style-outline .ui-btn-main,
-.ui-btn-split.--air.--style-outline .ui-btn-menu {
+.ui-btn-split.--air.--style-outline {
 	--ui-btn-background: var(--ui-color-design-outline-bg);
 	--ui-btn-border-color: var(--ui-color-design-outline-stroke);
 	--ui-btn-border-width: var(--ui-design-outline-stroke-weight);
@@ -416,8 +500,7 @@
 }
 
 .ui-btn.--air.--style-outline-no-accent,
-.ui-btn-split.--air.--style-outline-no-accent .ui-btn-main,
-.ui-btn-split.--air.--style-outline-no-accent .ui-btn-menu {
+.ui-btn-split.--air.--style-outline-no-accent {
 	--ui-btn-background: var(--ui-color-design-outline-na-bg);
 	--ui-btn-border-color: var(--ui-color-design-outline-na-stroke);
 	--ui-btn-border-width: var(--ui-design-outline-na-stroke-weight);
@@ -426,8 +509,7 @@
 }
 
 .ui-btn.--air.--style-plain-accent,
-.ui-btn-split.--air.--style-plain-accent .ui-btn-main,
-.ui-btn-split.--air.--style-plain-accent .ui-btn-menu {
+.ui-btn-split.--air.--style-plain-accent {
 	--ui-btn-background: var(--ui-color-design-plain-a-bg);
 	--ui-btn-border-color: var(--ui-color-design-plain-a-stroke);
 	--ui-btn-border-width: var(--ui-design-plain-a-stroke-weight);
@@ -436,8 +518,7 @@
 }
 
 .ui-btn.--air.--style-plain,
-.ui-btn-split.--air.--style-plain .ui-btn-main,
-.ui-btn-split.--air.--style-plain .ui-btn-menu {
+.ui-btn-split.--air.--style-plain {
 	--ui-btn-background: var(--ui-color-design-plain-bg);
 	--ui-btn-border-color: var(--ui-color-design-plain-stroke);
 	--ui-btn-border-width: var(--ui-design-plain-stroke-weight);
@@ -446,8 +527,7 @@
 }
 
 .ui-btn.--air.--style-plain-no-accent,
-.ui-btn-split.--air.--style-plain-no-accent .ui-btn-main,
-.ui-btn-split.--air.--style-plain-no-accent .ui-btn-menu {
+.ui-btn-split.--air.--style-plain-no-accent {
 	--ui-btn-background: var(--ui-color-design-plain-na-bg);
 	--ui-btn-border-color: var(--ui-color-design-plain-na-stroke);
 	--ui-btn-border-width: var(--ui-design-plain-na-stroke-weight);
@@ -456,8 +536,7 @@
 }
 
 .ui-btn.--air.--style-selection,
-.ui-btn-split.--air.--style-selection .ui-btn-main,
-.ui-btn-split.--air.--style-selection .ui-btn-menu {
+.ui-btn-split.--air.--style-selection {
 	--ui-btn-background: var(--ui-color-design-selection-bg);
 	--ui-btn-border-color: var(--ui-color-design-selection-stroke);
 	--ui-btn-border-width: var(--ui-design-selection-stroke-weight);
@@ -466,8 +545,7 @@
 }
 
 .ui-btn.--air.--style-filled-copilot,
-.ui-btn-split.--air.--style-filled-copilot .ui-btn-main,
-.ui-btn-split.--air.--style-filled-copilot .ui-btn-menu {
+.ui-btn-split.--air.--style-filled-copilot {
 	--ui-btn-background: var(--ui-color-design-filled-copilot-bg);
 	--ui-btn-border-color: var(--ui-color-design-filled-copilot-stroke);
 	--ui-btn-border-width: var(--ui-design-filled-copilot-stroke-weight);
@@ -476,8 +554,7 @@
 }
 
 .ui-btn.--air.--style-filled-success,
-.ui-btn-split.--air.--style-filled-success .ui-btn-main,
-.ui-btn-split.--air.--style-filled-success .ui-btn-menu {
+.ui-btn-split.--air.--style-filled-success {
 	--ui-btn-background: var(--ui-color-design-filled-success-bg);
 	--ui-btn-border-color: var(--ui-color-design-filled-success-stroke);
 	--ui-btn-border-width: var(--ui-design-filled-success-stroke-weight);
@@ -486,13 +563,34 @@
 }
 
 .ui-btn.--air.--style-filled-alert,
-.ui-btn-split.--air.--style-filled-alert .ui-btn-main,
-.ui-btn-split.--air.--style-filled-alert .ui-btn-menu {
+.ui-btn-split.--air.--style-filled-alert {
 	--ui-btn-background: var(--ui-color-design-filled-alert-bg);
 	--ui-btn-border-color: var(--ui-color-design-filled-alert-stroke);
 	--ui-btn-border-width: var(--ui-design-filled-success-stroke-weight);
 	--ui-btn-color: var(--ui-color-design-filled-alert-content);
 	--ui-btn-split-divider-color: var(--ui-color-design-filled-alert-content-divider);
+}
+
+.ui-btn.--air.--style-filled-boost,
+.ui-btn-split.--air.--style-filled-boost {
+	--ui-btn-background-gradient: radial-gradient(110.42% 110.42% at -10.42% 31.25%, var(--ui-color-design-filled-boost-bg-gradient-1) 0%, var(--ui-color-design-filled-boost-bg-gradient-2) 58.65%, var(--ui-color-design-filled-boost-bg-gradient-3) 100%);
+	--ui-btn-border-color: var(--ui-color-design-filled-boost-stroke);
+	--ui-btn-border-width: var(--ui-design-filled-boost-stroke-weight);
+	--ui-btn-color: var(--ui-color-design-filled-boost-content);
+	--ui-btn-split-divider-color: var(--ui-color-design-filled-boost-content-divider);
+}
+
+.ui-btn.--air.--style-filled-boost {
+	--hover-color-1: color-mix(in srgb, var(--ui-color-design-filled-boost-bg-gradient-1) 100%, var(--ui-color-bg-state-hover-default-hex) var(--ui-color-bg-state-hover-default-opacity));
+	--hover-color-2: color-mix(in srgb, var(--ui-color-design-filled-boost-bg-gradient-2) 100%, var(--ui-color-bg-state-hover-default-hex) var(--ui-color-bg-state-hover-default-opacity));
+	--hover-color-3: color-mix(in srgb, var(--ui-color-design-filled-boost-bg-gradient-3) 100%, var(--ui-color-bg-state-hover-default-hex) var(--ui-color-bg-state-hover-default-opacity));
+
+	--active-color-1: color-mix(in srgb, var(--ui-color-design-filled-boost-bg-gradient-1) 100%, var(--ui-color-bg-state-click-default-hex) var(--ui-color-bg-state-click-default-opacity));
+	--active-color-2: color-mix(in srgb, var(--ui-color-design-filled-boost-bg-gradient-2) 100%, var(--ui-color-bg-state-click-default-hex) var(--ui-color-bg-state-click-default-opacity));
+	--active-color-3: color-mix(in srgb, var(--ui-color-design-filled-boost-bg-gradient-3) 100%, var(--ui-color-bg-state-click-default-hex) var(--ui-color-bg-state-click-default-opacity));
+
+	--ui-btn-background-gradient-hover: radial-gradient(110.42% 110.42% at -10.42% 31.25%, var(--hover-color-1) 0%, var(--hover-color-2) 58.65%, var(--hover-color-3) 100%);
+	--ui-btn-background-gradient-active: radial-gradient(110.42% 110.42% at -10.42% 31.25%, var(--active-color-1) 0%, var(--active-color-2) 58.65%, var(--active-color-3) 100%);
 }
 
 .ui-btn-split.--air .ui-btn-menu::before {
@@ -523,10 +621,21 @@
 .ui-btn-split.--air[disabled]:not(.ui-btn-wait):not(.ui-btn-clock) .ui-btn-menu,
 .ui-btn-split.--air.ui-btn-disabled:not(.ui-btn-wait):not(.ui-btn-clock) .ui-btn-menu {
 	--ui-btn-background: var(--ui-color-design-disabled-bg);
+	--ui-btn-background-gradient: linear-gradient(180deg, var(--ui-btn-background) 0%, var(--ui-btn-background) 100%);
 	--ui-btn-border-color: var(--ui-color-design-disabled-stroke);
 	--ui-btn-color: var(--ui-color-design-disabled-content);
 
 	opacity: 1;
+}
+
+.ui-btn.--air.ui-btn-disabled,
+.ui-btn.--air.ui-btn-disabled:hover,
+.ui-btn.--air.ui-btn-disabled:active,
+.ui-btn.--air[disabled],
+.ui-btn.--air[disabled]:hover,
+.ui-btn.--air[disabled]:active {
+	background: var(--ui-btn-background-gradient);
+	border-color: var(--ui-btn-border-color);
 }
 
 .ui-btn-split[disabled].--air .ui-btn-main,
@@ -543,7 +652,7 @@
 .ui-btn-split.ui-btn-disabled.--air .ui-btn-menu:active {
 	opacity: initial;
 	cursor: not-allowed;
-	background-color: var(--ui-btn-background);
+	background: var(--ui-btn-background-gradient), var(--ui-btn-custom-background, none);
 	border-color: var(--ui-btn-border-color);
 }
 
@@ -608,8 +717,7 @@
 	mask-position: center center;
 	mask-repeat: no-repeat;
 	mask-size: contain;
-	background-color: var(--ui-btn-color);
-	background-image: none;
+	background: var(--ui-btn-color);
 	transform: none;
 	transition: none;
 }
@@ -665,8 +773,8 @@
 .ui-btn.--air.ui-btn-wait,
 .ui-btn-wait.--air .ui-btn-main,
 .ui-btn.--air.ui-btn-clock,
-.ui-btn-clock.--air .ui-btn-main{
-	background-image: none;
+.ui-btn-clock.--air .ui-btn-main {
+	background: var(--ui-btn-background-gradient);
 }
 
 .ui-btn.ui-btn-wait.--air::before,

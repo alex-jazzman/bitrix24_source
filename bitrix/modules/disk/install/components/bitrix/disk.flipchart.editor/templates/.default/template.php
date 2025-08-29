@@ -65,6 +65,10 @@ if ($arResult['SHOULD_SHOW_SHARING_BUTTON'])
 			'offsetTop' => 5,
 			'offsetLeft' => 0,
 			'animation' => 'fading-slide',
+			'overlay' => [
+				'opacity' => 0,
+			],
+			'disableScroll' => true,
 			'items' => $wayToSharing
 		]);
 
@@ -107,6 +111,11 @@ if ($arResult['SHOULD_SHOW_SHARING_BUTTON'])
 </div>
 
 <script>
+
+	let url = new URL(location.href);
+	url.searchParams.delete('c_element');
+	history.replaceState(null, '', url.toString());
+
 	new BX.Disk.Flipchart.Board({
 		panelButtonUniqIds: {
 			setupSharing: '<?= isset($setupSharingButton) ? $setupSharingButton->getUniqId() : '' ?>',
@@ -165,6 +174,8 @@ if ($arResult['SHOULD_SHOW_SHARING_BUTTON'])
 		if (e.data?.event === "waitSDKParams")
 		{
 			loader.hide();
+
+
 		}
 	})
 

@@ -83,9 +83,21 @@ $splitButton = new SplitButton([
 		'icon' => Buttons\Icon::SETTING,
 	],
 ]);
-$splitButton->getMainButton()->addAttribute('id', 'tasks-buttonAdd');
+$splitButton->addAttribute('id', 'tasks-buttonAdd');
 $splitButton->getMenuButton()->addAttribute('id', 'tasks-popupMenuAdd');
 Toolbar::addButton($splitButton, ButtonLocation::AFTER_TITLE);
+
+if (!$arResult['IS_SCRUM_PROJECT'])
+{
+	$rolesButton = (new Buttons\Button())
+		->setText($arResult['roles']['selectedRoleName'] ?? Loc::getMessage('TASKS_ALL_ROLES'))
+		->setStyle(Buttons\AirButtonStyle::OUTLINE)
+		->setDropdown()
+		->addAttribute('id', 'tasks-buttonRoles')
+	;
+	Toolbar::addButton($rolesButton, ButtonLocation::AFTER_TITLE);
+}
+
 ?>
 
 <script>

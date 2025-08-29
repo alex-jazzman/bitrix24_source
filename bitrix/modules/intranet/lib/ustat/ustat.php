@@ -222,7 +222,7 @@ class UStat
 
 		// get user departments
 		/** @var HrDepartmentRepository $repo */
-		$repo = ServiceLocator::getInstance()->get('intranet.repository.department');
+		$repo = ServiceLocator::getInstance()->get('intranet.repository.hr.department');
 		$departmentCollection = $repo->findAllByUserId($userId);
 		$userDepartmentIds = $departmentCollection->map(fn(\Bitrix\Intranet\Entity\Department $department) => $department->getId());
 		$departmentHitStat = new DepartmentHitStat($userDepartmentIds);

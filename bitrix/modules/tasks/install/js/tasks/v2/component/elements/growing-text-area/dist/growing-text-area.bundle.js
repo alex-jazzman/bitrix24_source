@@ -3,21 +3,21 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
-(function (exports,ui_vue3_components_popup,main_core) {
+(function (exports,main_core,ui_vue3_directives_hint) {
 	'use strict';
 
 	// @vue/component
 	const GrowingTextArea = {
 	  name: 'GrowingTextArea',
-	  components: {
-	    Popup: ui_vue3_components_popup.Popup
+	  directives: {
+	    hint: ui_vue3_directives_hint.hint
 	  },
 	  props: {
-	    initialValue: {
+	    modelValue: {
 	      type: String,
 	      default: ''
 	    },
-	    placeholderValue: {
+	    placeholder: {
 	      type: String,
 	      default: ''
 	    },
@@ -42,66 +42,35 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      default: false
 	    }
 	  },
-	  emits: ['update', 'input', 'focus', 'blur', 'emptyFocus', 'emptyBlur', 'enterBlur'],
+	  emits: ['update:modelValue', 'input', 'focus', 'blur', 'emptyFocus', 'emptyBlur', 'enterBlur'],
 	  data() {
 	    return {
-	      areaId: main_core.Text.getRandom(),
-	      editableValue: this.initialValue,
 	      focus: false,
-	      mouseover: false,
 	      isOverflowing: false
 	    };
 	  },
 	  computed: {
-	    value: {
-	      get() {
-	        if (this.readonlyPlaceholder) {
-	          return this.placeholderValue.trim();
-	        }
-	        return this.editableValue.trim();
-	      },
-	      set(name) {
-	        this.editableValue = name;
-	        this.$emit('input', this.value);
-	      }
-	    },
 	    isEmpty() {
-	      return this.value.trim() === '';
+	      return this.modelValue.trim() === '';
 	    },
 	    isDisplay() {
-	      return this.readonly || this.isOverflowing && !this.isEmpty && !this.focus;
+	      return this.isOverflowing && !this.isEmpty && !this.focus;
 	    },
-	    popupId() {
-	      return `growing-text-area-value-hint-${this.areaId}`;
-	    },
-	    popupOptions() {
-	      return {
-	        bindElement: this.$refs.container,
-	        offsetLeft: 40,
-	        maxWidth: 440,
-	        angle: {
-	          offset: 40
-	        },
-	        targetContainer: document.body
-	      };
-	    },
-	    showHint() {
-	      return this.focus === false && this.mouseover === true && this.isOverflowing === true;
-	    },
-	    readonlyPlaceholder() {
-	      return this.readonly === true && this.initialValue === '';
-	    },
-	    color() {
-	      if (this.readonlyPlaceholder) {
-	        return 'var(--ui-color-base-4)';
-	      }
-	      return this.fontColor;
-	    }
-	  },
-	  watch: {
-	    initialValue() {
-	      this.editableValue = this.initialValue;
-	      this.value = this.editableValue;
+	    tooltip() {
+	      return () => ({
+	        text: this.modelValue,
+	        popupOptions: {
+	          className: 'b24-growing-text-area-popup',
+	          bindElement: this.$el,
+	          offsetLeft: 40,
+	          maxWidth: 440,
+	          angle: {
+	            offset: 40
+	          },
+	          darkMode: false,
+	          targetContainer: document.body
+	        }
+	      });
 	    }
 	  },
 	  mounted() {
@@ -125,16 +94,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      main_core.Dom.style(textarea, 'height', `${height}px`);
 	      main_core.Dom.style(textarea, 'maxHeight', `${maxHeight}px`);
 	    },
-	    async focusToTextarea() {
-	      this.focusToEnd();
-	    },
-	    clearValue() {
-	      this.$refs.textarea.value = '';
-	      this.value = '';
-	      void this.adjustTextareaHeight();
-	    },
 	    focusToEnd() {
-	      if (this.readonly === true) {
+	      if (this.readonly) {
 	        return;
 	      }
 	      const textarea = this.$refs.textarea;
@@ -146,7 +107,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      this.scrollToEnd();
 	    },
 	    focusTextarea() {
-	      if (this.readonly === true) {
+	      if (this.readonly) {
 	        return;
 	      }
 	      this.focus = true;
@@ -168,8 +129,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      });
 	    },
 	    handleInput(event) {
-	      this.value = event.target.value;
-	      this.$emit('update', this.value);
+	      this.$emit('input', event.target.value);
 	      void this.adjustTextareaHeight();
 	    },
 	    handleKeyDown(event) {
@@ -178,7 +138,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        return;
 	      }
 	      if (event.key === 'Enter') {
-	        this.$refs.textarea.dataset.enterBlur = 'true';
+	        this.$emit('enterBlur', this.modelValue === '');
 	        event.target.blur();
 	        event.preventDefault();
 	      }
@@ -191,83 +151,71 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      this.focus = true;
 	      await this.adjustTextareaHeight();
 	      this.focusToEnd();
-	      if (this.value === '') {
+	      if (this.modelValue === '') {
 	        this.$emit('emptyFocus');
 	      }
 	      this.$emit('focus', event);
 	    },
 	    async handleBlur(event) {
-	      var _this$$refs$textarea, _this$$refs$textarea2;
-	      const wasEnterBlur = ((_this$$refs$textarea = this.$refs.textarea) == null ? void 0 : _this$$refs$textarea.dataset.enterBlur) === 'true';
-	      (_this$$refs$textarea2 = this.$refs.textarea) == null ? true : delete _this$$refs$textarea2.dataset.enterBlur;
 	      this.focus = false;
-	      this.mouseover = false;
+	      if (!this.$refs.textarea) {
+	        return;
+	      }
 	      if (!this.isOverflowing) {
 	        await this.adjustTextareaHeight();
 	        this.scrollToBeginning();
 	      }
-	      if (this.value === '') {
-	        this.$emit('emptyBlur');
+	      const value = this.$refs.textarea.value.trim();
+	      if (value !== this.modelValue) {
+	        this.$emit('update:modelValue', value);
 	      }
-	      if (wasEnterBlur) {
-	        this.$emit('enterBlur', this.value === '');
+	      this.$refs.textarea.value = value;
+	      if (value === '') {
+	        this.$emit('emptyBlur');
 	      }
 	      this.$emit('blur', event);
 	    }
 	  },
 	  template: `
-		<div ref="container" class="b24-growing-text-area-content">
+		<div class="b24-growing-text-area" :class="{ '--readonly': readonly }">
 			<div
 				v-if="isDisplay"
+				v-hint="tooltip"
 				class="b24-growing-text-area-display"
-				:class="{ '--readonly': readonly }"
-				:data-id="'b24-growing-text-area-display-' + areaId"
-				:style="{
-					lineHeight: lineHeight + 'px',
-					color: color,
-					fontSize: fontSize + 'px',
-					fontWeight: fontWeight,
-				}"
-				@click="focusTextarea"
-				@mouseover="mouseover = true"
-				@mouseleave="mouseover = false"
-			>
-				{{ value }}
-			</div>
-			<textarea
-				v-else
-				v-model="editableValue"
-				ref="textarea"
-				class="b24-growing-text-area-edit"
-				:placeholder="placeholderValue"
-				:data-id="'b24-growing-text-area-edit-' + areaId"
 				:style="{
 					lineHeight: lineHeight + 'px',
 					color: fontColor,
 					fontSize: fontSize + 'px',
 					fontWeight: fontWeight,
 				}"
+				@click="focusTextarea"
+			>
+				{{ modelValue }}
+			</div>
+			<textarea
+				v-else
+				class="b24-growing-text-area-edit"
 				rows="1"
+				:value="modelValue"
+				:placeholder="placeholder"
+				:style="{
+					lineHeight: lineHeight + 'px',
+					color: fontColor,
+					fontSize: fontSize + 'px',
+					fontWeight: fontWeight,
+				}"
+				:readonly="readonly"
+				ref="textarea"
 				@input="handleInput"
 				@keydown="handleKeyDown"
 				@focus="handleFocus"
 				@blur="handleBlur"
 			></textarea>
-			<Popup
-				v-if="showHint"
-				ref="hint"
-				:id="popupId"
-				:options="popupOptions"
-			>
-				<div class="b24-growing-text-area-popup-content">
-					{{ value }}
-				</div>
-			</Popup>
 		</div>
 	`
 	};
 
 	exports.GrowingTextArea = GrowingTextArea;
 
-}((this.BX.Tasks.V2.Component.Elements = this.BX.Tasks.V2.Component.Elements || {}),BX.UI.Vue3.Components,BX));
+}((this.BX.Tasks.V2.Component.Elements = this.BX.Tasks.V2.Component.Elements || {}),BX,BX.Vue3.Directives));
 //# sourceMappingURL=growing-text-area.bundle.js.map

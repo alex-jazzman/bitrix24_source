@@ -1,6 +1,7 @@
 <?php
 $MESS["INTRANET_INVITATION_DAILY_EMAIL_LIMIT_EXCEEDED"] = "Перевищено денний ліміт кількості запрошень за адресою ел. пошти.";
 $MESS["INTRANET_INVITATION_DAILY_PHONE_LIMIT_EXCEEDED"] = "Перевищено денний ліміт кількості запрошень за номером телефону.";
+$MESS["INTRANET_INVITATION_DAILY_PHONE_LIMIT_EXCEEDED_MSGVER_1"] = "Перевищено денний ліміт кількості запрошень за номером телефону.";
 $MESS["INTRANET_INVITATION_EMAIL_ERROR"] = "Неправильно введені email адреси:";
 $MESS["INTRANET_INVITATION_EMAIL_LIMIT_EXCEEDED"] = "Перевищено ліміт кількості email адрес у запрошенні.";
 $MESS["INTRANET_INVITATION_ERROR_USER_TRANSFER"] = "Не вдалося перетворити поштового користувача";

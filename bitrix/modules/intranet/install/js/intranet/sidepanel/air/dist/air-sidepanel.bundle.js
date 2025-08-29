@@ -57,28 +57,25 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    main_core_events.EventEmitter.subscribe(babelHelpers.classPrivateFieldLooseBase(this, _slider)[_slider], 'SidePanel.Slider:onClosing', babelHelpers.classPrivateFieldLooseBase(this, _handleSliderClosing)[_handleSliderClosing].bind(this));
 	    main_core_events.EventEmitter.subscribe(babelHelpers.classPrivateFieldLooseBase(this, _slider)[_slider], 'SidePanel.Slider:onCloseComplete', babelHelpers.classPrivateFieldLooseBase(this, _handleSliderCloseComplete)[_handleSliderCloseComplete].bind(this));
 	    main_core_events.EventEmitter.subscribe(babelHelpers.classPrivateFieldLooseBase(this, _slider)[_slider], 'SidePanel.Slider:onDestroy', babelHelpers.classPrivateFieldLooseBase(this, _handleSliderDestroy)[_handleSliderDestroy].bind(this));
-	    if (!this.canUseBlurry()) {
-	      main_core_events.EventEmitter.subscribe('SidePanel.Slider:onOpening', event => {
-	        const [sliderEvent] = event.getData();
-	        if (sliderEvent.getSlider() !== babelHelpers.classPrivateFieldLooseBase(this, _slider)[_slider]) {
-	          main_core.Dom.style(this.getContainer(), 'visibility', 'hidden');
-	        }
-	      });
-	      main_core_events.EventEmitter.subscribe('SidePanel.Slider:onCloseComplete', () => {
-	        if (babelHelpers.classPrivateFieldLooseBase(this, _slider)[_slider] === main_sidepanel.SidePanel.Instance.getTopSlider()) {
-	          main_core.Dom.style(this.getContainer(), 'visibility', null);
-	        }
-	      });
-	    }
+	    main_core_events.EventEmitter.subscribe('SidePanel.Slider:onOpening', event => {
+	      const [sliderEvent] = event.getData();
+	      if (sliderEvent.getSlider() !== babelHelpers.classPrivateFieldLooseBase(this, _slider)[_slider]) {
+	        main_core.Dom.style(this.getContainer(), 'background', babelHelpers.classPrivateFieldLooseBase(this, _slider)[_slider].getOverlayBgColor());
+	        main_core.Dom.style(this.getContainer(), 'box-shadow', `0px 0px 10px 3px ${babelHelpers.classPrivateFieldLooseBase(this, _slider)[_slider].getOverlayBgColor()}`);
+	      }
+	    });
+	    main_core_events.EventEmitter.subscribe('SidePanel.Slider:onClosing', () => {
+	      if (babelHelpers.classPrivateFieldLooseBase(this, _slider)[_slider] === main_sidepanel.SidePanel.Instance.getPreviousSlider()) {
+	        main_core.Dom.style(this.getContainer(), 'background', null);
+	        main_core.Dom.style(this.getContainer(), 'box-shadow', null);
+	      }
+	    });
 	    main_core_events.EventEmitter.subscribe('IM.Layout:onLayoutChange', () => {
 	      if (!babelHelpers.classPrivateFieldLooseBase(this, _loaded)[_loaded]) {
 	        babelHelpers.classPrivateFieldLooseBase(this, _loaded)[_loaded] = true;
 	        main_core.Dom.addClass(this.getContainer(), '--loaded');
 	      }
 	    });
-	  }
-	  canUseBlurry() {
-	    return !main_core.Dom.hasClass(document.documentElement, 'bx-integrated-gpu');
 	  }
 	  getContainer() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _container)[_container];
@@ -108,7 +105,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 	function _handleSliderOpening2() {
 	  this.setZIndex(babelHelpers.classPrivateFieldLooseBase(this, _slider)[_slider].getZIndexComponent().getZIndex() + 1);
 	  main_core.Dom.style(this.getContainer(), 'display', 'block');
-	  main_core.Dom.style(this.getContainer(), 'visibility', null);
+	  main_core.Dom.style(this.getContainer(), 'background', null);
+	  main_core.Dom.style(this.getContainer(), 'box-shadow', null);
 	  requestAnimationFrame(() => {
 	    main_core.Dom.addClass(this.getContainer(), '--open');
 	  });
@@ -119,7 +117,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 	}
 	function _handleSliderCloseComplete2() {
 	  main_core.Dom.style(this.getContainer(), 'display', 'none');
-	  main_core.Dom.style(this.getContainer(), 'visibility', null);
+	  main_core.Dom.style(this.getContainer(), 'background', null);
+	  main_core.Dom.style(this.getContainer(), 'box-shadow', null);
 	}
 	function _handleSliderDestroy2() {
 	  this.reset();
@@ -144,10 +143,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    if (isMessenger) {
 	      options.hideControls = false;
 	      options.autoOffset = false;
-	      const canUseBlurry = !main_core.Dom.hasClass(document.documentElement, 'bx-integrated-gpu');
-	      if (!canUseBlurry) {
-	        options.overlayOpacity = 85;
-	      }
 	    }
 	    super(url, options);
 	    Object.defineProperty(this, _handleWindowResize, {
@@ -201,8 +196,26 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    if (MessengerSlider && MessengerSlider.getInstance().isOpened()) {
 	      return true;
 	    }
+	    return Slider.isMessengerEmbedded();
+	  }
+	  static isMessengerEmbedded() {
 	    const LayoutManager = main_core.Reflection.getClass('BX.Messenger.v2.Lib.LayoutManager');
 	    return LayoutManager && LayoutManager.getInstance().isEmbeddedMode();
+	  }
+	  static isMessengerOpenBeforeSlider(slider) {
+	    if (Slider.isMessengerEmbedded()) {
+	      return true;
+	    }
+	    const sliders = main_sidepanel.SidePanel.Instance.getOpenSliders();
+	    for (const openSlider of sliders) {
+	      if (openSlider === slider) {
+	        return false;
+	      }
+	      if (openSlider != null && openSlider.isMessengerSlider()) {
+	        return true;
+	      }
+	    }
+	    return false;
 	  }
 	  isMessengerSlider() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _chatMenuBar)[_chatMenuBar] !== null;
@@ -226,7 +239,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  }
 	  calculateOuterBoundary() {
 	    var _this$getRightBar;
-	    if (this.isMessengerSlider() || Slider.isMessengerOpen()) {
+	    if (this.isMessengerSlider() || Slider.isMessengerOpenBeforeSlider(this)) {
 	      return {
 	        top: this.isMessengerSlider() ? 58 : 18,
 	        right: 18
@@ -260,7 +273,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    const containerRatio = containerHeight / containerWidth;
 	    const width = containerRatio > imgRatio ? containerHeight / imgRatio : containerWidth;
 	    const height = containerRatio > imgRatio ? containerHeight : containerWidth * imgRatio;
-	    main_core.Dom.style(document.body, 'background-size', `${width}px ${height}px`);
+	    main_core.Dom.style(document.body, '--air-theme-bg-size', `${width}px ${height}px`);
 	  }
 	  adjustVideoSize() {
 	    const themePicker = main_core.Reflection.getClass('BX.Intranet.Bitrix24.ThemePicker.Singleton');
@@ -273,7 +286,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    }
 	  }
 	  resetBackgroundSize() {
-	    main_core.Dom.style(document.body, 'background-size', null);
+	    main_core.Dom.style(document.body, '--air-theme-bg-size', null);
 	    const themePicker = main_core.Reflection.getClass('BX.Intranet.Bitrix24.ThemePicker.Singleton');
 	    if (themePicker) {
 	      const videoContainer = themePicker.getVideoContainer();
@@ -294,7 +307,21 @@ this.BX.Intranet = this.BX.Intranet || {};
 	main_sidepanel.SliderManager.registerSliderClass('BX.Intranet.Bitrix24.Slider', {
 	  startPosition: 'bottom',
 	  overlayBgColor: '#00204E',
-	  overlayOpacity: 52
+	  overlayBgCallback: (state, slider) => {
+	    const {
+	      intensity
+	    } = state;
+	    const overlayBgColor = slider.getOverlayBgColor();
+	    const overlayOpacity = slider.getOverlayOpacity();
+	    const start = Math.round(overlayOpacity * intensity / 100).toString(16).padStart(2, 0);
+	    const end = Math.round(100 * intensity / 100).toString(16).padStart(2, 0);
+	    if (slider.isMessengerSlider()) {
+	      return `linear-gradient(to bottom, ${overlayBgColor}${end} 0%, ${overlayBgColor}${end} 35px, ${overlayBgColor}${start} 145px, ${overlayBgColor}${end} 100%)`;
+	    }
+	    return `linear-gradient(to bottom, ${overlayBgColor}${start} 0%, ${overlayBgColor}${end} 100%)`;
+	  },
+	  overlayOpacity: 52,
+	  autoOffset: false
 	}, {
 	  animationDuration: 200,
 	  label: {

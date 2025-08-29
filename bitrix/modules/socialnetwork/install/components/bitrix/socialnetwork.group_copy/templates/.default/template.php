@@ -133,7 +133,7 @@ $APPLICATION->includeComponent(
 
 <div id="<?=$tagsFieldContainerId?>" class="<?=$customContainerClass?>">
 <?php
-$tags = explode(",", $arResult["GROUP"]["KEYWORDS"]);
+$tags = explode(",", ($arResult["GROUP"]["KEYWORDS"] ?? ''));
 $tags = array_map(
 	function ($tag)
 	{

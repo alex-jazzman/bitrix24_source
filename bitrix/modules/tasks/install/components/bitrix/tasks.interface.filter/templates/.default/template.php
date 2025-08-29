@@ -1,8 +1,8 @@
 <?php
 
 use Bitrix\Main\Loader;
-use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Web\Json;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
@@ -27,6 +27,7 @@ Extension::load([
 	'ui.tour',
 	'ui.design-tokens',
 	'spotlight',
+	'ui.system.menu',
 ]);
 
 if ($isV2Form)
@@ -84,22 +85,29 @@ if ($arParams["SHOW_QUICK_FORM_BUTTON"] !== "N")
 <script>
 	BX.ready(() => {
 		BX.message({
-			TASKS_BTN_CREATE_TASK: '<?= CUtil::JSEscape(Loc::getMessage('TASKS_BTN_CREATE_TASK'))?>',
-			TASKS_INTERFACE_FILTER_PRESETS_MOVED_TITLE: '<?= CUtil::JSEscape(Loc::getMessage('TASKS_INTERFACE_FILTER_PRESETS_MOVED_TITLE')) ?>',
-			TASKS_INTERFACE_FILTER_PRESETS_MOVED_TEXT: '<?= CUtil::JSEscape(Loc::getMessage('TASKS_INTERFACE_FILTER_PRESETS_MOVED_TEXT_V2')) ?> ',
+			TASKS_ALL_ROLES: '<?= GetMessageJS('TASKS_ALL_ROLES') ?>',
+			TASKS_INTERFACE_FILTER_PRESETS_MOVED_TITLE: '<?= GetMessageJS('TASKS_INTERFACE_FILTER_PRESETS_MOVED_TITLE') ?>',
+			TASKS_INTERFACE_FILTER_PRESETS_MOVED_TEXT: '<?= GetMessageJS('TASKS_INTERFACE_FILTER_PRESETS_MOVED_TEXT_V2') ?> ',
 		});
+
+		const analytics = {
+			context: '<?= CUtil::JSEscape($arResult['CREATE_BUTTON_ANALYTICS']['sectionType']) ?>',
+			additionalContext: '<?= CUtil::JSEscape($arResult['CREATE_BUTTON_ANALYTICS']['viewState']) ?>',
+			element: '<?= \Bitrix\Tasks\Helper\Analytics::ELEMENT['create_button'] ?>',
+		};
 
 		new BX.Tasks.TasksInterfaceFilter({
 			filterId: '<?= CUtil::JSEscape($arParams['FILTER_ID']) ?>',
 			createNode: document.getElementById('tasks-buttonAdd'),
+			roles: {
+				...<?= Json::encode($arResult['roles']) ?>,
+				button: document.getElementById('tasks-buttonRoles'),
+				analytics,
+			},
 			showPresetTourGuide: <?= $arResult['showPresetTourGuide'] ? 'true' : 'false' ?>,
 			isV2Form: <?= $isV2Form ? 'true' : 'false' ?>,
 			groupId: <?= !empty($arParams['GROUP_ID']) ? (int)$arParams['GROUP_ID'] : 'null' ?>,
-			analytics: {
-				context: '<?= CUtil::JSEscape($arResult['CREATE_BUTTON_ANALYTICS']['sectionType']) ?>',
-				additionalContext: '<?= CUtil::JSEscape($arResult['CREATE_BUTTON_ANALYTICS']['viewState']) ?>',
-				element: '<?= \Bitrix\Tasks\Helper\Analytics::ELEMENT['create_button'] ?>',
-			},
+			analytics,
 		});
 	})
 </script>

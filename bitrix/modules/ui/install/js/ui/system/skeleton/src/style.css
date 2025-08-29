@@ -1,35 +1,25 @@
-.ui-skeleton-line,
-.ui-skeleton-circle {
+.ui-skeleton {
 	position: relative;
 	overflow: hidden;
-	background-color: var(--ui-color-base-6);
+	width: var(--width, 100%);
+	height: var(--height, 12px);
+	border-radius: var(--radius, 8px);
+	background: var(--ui-color-base-6);
 }
 
-.ui-skeleton-line {
-	width: 100%;
-	height: 12px;
-	border-radius: 6px;
-}
-
-.ui-skeleton-circle {
-	border-radius: 50%;
-	aspect-ratio: 1/1;
-}
-
-.ui-skeleton-line::after,
-.ui-skeleton-circle::after {
+.ui-skeleton::after {
 	content: '';
 	position: absolute;
 	inset: 0;
-	background: linear-gradient(to right, transparent 0%, #ededed 50%, transparent 100%);
-	animation: ui-skeleton-shimmer 1.5s infinite;
+	background: linear-gradient(90deg, #0000, #eee 50%, #0000);
+	animation: ui-skeleton 1.5s infinite;
 }
 
-@keyframes ui-skeleton-shimmer {
+@keyframes ui-skeleton {
 	0% {
 		transform: translateX(-100%);
 	}
-	100% {
+	to {
 		transform: translateX(100%);
 	}
 }

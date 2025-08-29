@@ -6,16 +6,24 @@
 .tasks-field-deadline-main {
 	display: flex;
 	align-items: center;
-	border-radius: 10px;
+	max-width: max-content;
+	padding-right: 10px;
+	border-radius: var(--ui-border-radius-pill);
+	cursor: default;
+}
+
+.tasks-field-deadline-main.--filled {
 	padding-right: 5px;
+}
+
+.tasks-field-deadline-main:not(.--readonly):hover {
+	--hover-color: rgba(var(--ui-color-palette-black-solid-rgb), 0.03);
+	box-shadow: 0 0 0 2px var(--hover-color);
+	background: var(--hover-color);
 }
 
 .tasks-field-deadline-main:focus-visible {
 	outline: 2px solid var(--ui-color-design-outline-a1-content-divider);
-}
-
-.tasks-field-deadline-main:not(.--readonly) {
-	cursor: pointer;
 }
 
 .tasks-field-deadline-icon {
@@ -28,17 +36,28 @@
 }
 
 .tasks-field-deadline-cross {
-	margin-left: 6px;
-	--ui-icon-set__icon-color: var(--ui-color-base-5);
-	--ui-icon-set__icon-size: 18px;
-}
-
-.tasks-field-deadline-cross:hover {
-	--ui-icon-set__icon-color: var(--ui-color-base-4);
+	display: flex;
+	margin-right: -14px;
+	padding: 2px;
+	border-radius: var(--ui-border-radius-pill);
+	border: 1px solid var(--ui-color-base-7);
+	background: var(--ui-color-base-8);
+	box-shadow: 0 1px 1px rgba(var(--ui-color-palette-black-solid-rgb), 0.03);
+	transform: translate(2px, -4px);
+	cursor: pointer;
 }
 
 .tasks-field-deadline-main:not(:hover) .tasks-field-deadline-cross {
 	opacity: 0;
+}
+
+.tasks-field-deadline-cross .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-color-base-3);
+	--ui-icon-set__icon-size: 16px;
+}
+
+.tasks-field-deadline-cross:hover .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-color-base-2);
 }
 
 .tasks-field-deadline-text {

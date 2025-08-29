@@ -233,6 +233,11 @@
 	--menu-item-icon-active: url("../images/icons/menu-items/solid/main-page.svg");
 }
 
+.menu-contact-center .menu-item-icon {
+	--menu-item-icon-default: url("../images/icons/menu-items/outline/contact-center.svg");
+	--menu-item-icon-active: url("../images/icons/menu-items/solid/contact-center.svg");
+}
+
 .menu-expand .menu-item-icon {
 	--menu-item-icon-default: url("../images/icons/chevron-down.svg");
 	--menu-item-icon-active: url("../images/icons/chevron-down.svg");

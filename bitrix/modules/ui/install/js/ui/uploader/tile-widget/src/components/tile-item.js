@@ -32,6 +32,14 @@ export const TileItem: BitrixVueComponentProps = {
 			type: Boolean,
 			default: false,
 		},
+		viewerGroupBy: {
+			type: [String, null],
+			default: null,
+		},
+		removeFromServer: {
+			type: Boolean,
+			default: true,
+		},
 	},
 	setup(): Object
 	{
@@ -184,6 +192,36 @@ export const TileItem: BitrixVueComponentProps = {
 		{
 			return this.widgetOptions.compact ? 24 : 36;
 		},
+		viewerAttrs(): Object
+		{
+			const { viewerAttrs, previewUrl } = this.item;
+
+			if (!viewerAttrs)
+			{
+				return {};
+			}
+
+			const params = {};
+
+			for (const [key, value] of Object.entries(viewerAttrs))
+			{
+				params[`data-${Text.toKebabCase(key)}`] = value;
+			}
+
+			params['data-viewer'] = true;
+
+			if (previewUrl)
+			{
+				params['data-viewer-preview'] = previewUrl;
+			}
+
+			if (this.viewerGroupBy)
+			{
+				params['data-viewer-group-by'] = this.viewerGroupBy;
+			}
+
+			return params;
+		},
 	},
 	created(): void
 	{
@@ -205,7 +243,7 @@ export const TileItem: BitrixVueComponentProps = {
 				return;
 			}
 
-			this.uploader.removeFile(this.item.id);
+			this.uploader.removeFile(this.item.id, { removeFromServer: this.removeFromServer });
 		},
 
 		handleMouseEnter(item): void
@@ -237,11 +275,15 @@ export const TileItem: BitrixVueComponentProps = {
 				this.menu = MenuManager.create({
 					id: this.menuId,
 					bindElement: this.$refs.menu.$el,
+					targetContainer: document.body,
 					angle: true,
 					offsetLeft: 13,
 					minWidth: 100,
 					cacheable: false,
 					items: this.menuItems,
+					bindOptions: {
+						forceBindPosition: true,
+					},
 					events: {
 						onShow: (): void => {
 							this.isMenuShown = true;
@@ -320,19 +362,25 @@ export const TileItem: BitrixVueComponentProps = {
 						</div>
 					</div>
 				</template>
-				<div class="ui-tile-uploader-item-preview">
-					<div
-						v-if="item.previewUrl"
-						class="ui-tile-uploader-item-image"
-						:class="{ 'ui-tile-uploader-item-image-default': item.previewUrl === null }"
-						:style="{ backgroundImage: item.previewUrl !== null ? 'url(' + item.previewUrl + ')' : '' }">
+				<div class="ui-tile-uploader-item-preview-content" v-bind="viewerAttrs">
+					<div class="ui-tile-uploader-item-preview">
+						<div
+							v-if="item.previewUrl"
+							class="ui-tile-uploader-item-image"
+							:class="{ 'ui-tile-uploader-item-image-default': item.previewUrl === null }"
+							:style="{ backgroundImage: item.previewUrl !== null ? 'url(' + item.previewUrl + ')' : '' }">
+						</div>
+						<FileIconComponent v-else :name="item.extension || '...'" :size="fileIconSize"/>
 					</div>
-					<FileIconComponent v-else :name="item.extension || '...'" :size="fileIconSize"/>
-				</div>
-				<div v-if="item.name" class="ui-tile-uploader-item-name-box" :title="item.name">
-					<div class="ui-tile-uploader-item-name">
-						<span class="ui-tile-uploader-item-name-title">{{clampedFileName}}</span>
-						<span v-if="item.extension" class="ui-tile-uploader-item-name-extension">.{{item.extension}}</span>
+					<div
+						v-if="item.name"
+						class="ui-tile-uploader-item-name-box"
+						:title="item.name"
+					>
+						<div class="ui-tile-uploader-item-name">
+							<span class="ui-tile-uploader-item-name-title">{{clampedFileName}}</span>
+							<span v-if="item.extension" class="ui-tile-uploader-item-name-extension">.{{item.extension}}</span>
+						</div>
 					</div>
 				</div>
 			</div>

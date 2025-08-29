@@ -8,14 +8,14 @@ use Bitrix\Tasks\Internals\Notification\UserRepositoryInterface;
 use Bitrix\Tasks\Internals\Task\UserOptionTable;
 use Bitrix\Tasks\Internals\UserOption\Option;
 use Bitrix\Tasks\Util\Result;
-use Bitrix\Tasks\V2\Command\Task\Attention\MuteTaskCommand;
-use Bitrix\Tasks\V2\Command\Task\Attention\PinInGroupTaskCommand;
-use Bitrix\Tasks\V2\Command\Task\Attention\PinTaskCommand;
-use Bitrix\Tasks\V2\Command\Task\Attention\UnmuteTaskCommand;
-use Bitrix\Tasks\V2\Command\Task\Attention\UnpinInGroupTaskCommand;
-use Bitrix\Tasks\V2\Command\Task\Attention\UnpinTaskCommand;
+use Bitrix\Tasks\V2\Public\Command\Task\Attention\MuteTaskCommand;
+use Bitrix\Tasks\V2\Public\Command\Task\Attention\PinInGroupTaskCommand;
+use Bitrix\Tasks\V2\Public\Command\Task\Attention\PinTaskCommand;
+use Bitrix\Tasks\V2\Public\Command\Task\Attention\UnmuteTaskCommand;
+use Bitrix\Tasks\V2\Public\Command\Task\Attention\UnpinInGroupTaskCommand;
+use Bitrix\Tasks\V2\Public\Command\Task\Attention\UnpinTaskCommand;
 use Bitrix\Tasks\V2\FormV2Feature;
-use Bitrix\Tasks\V2\Internals\Container;
+use Bitrix\Tasks\V2\Internal\DI\Container;
 use Exception;
 use ReflectionClass;
 
@@ -144,7 +144,7 @@ class UserOption
 	{
 		if (FormV2Feature::isOn('option'))
 		{
-			$result = new \Bitrix\Tasks\V2\Result();
+			$result = new \Bitrix\Tasks\V2\Internal\Result\Result();
 
 			if ($option === Option::MUTED)
 			{
@@ -216,7 +216,7 @@ class UserOption
 	{
 		if (FormV2Feature::isOn('option'))
 		{
-			$result = new \Bitrix\Tasks\V2\Result();
+			$result = new \Bitrix\Tasks\V2\Internal\Result\Result();
 
 			if ($option === Option::MUTED)
 			{

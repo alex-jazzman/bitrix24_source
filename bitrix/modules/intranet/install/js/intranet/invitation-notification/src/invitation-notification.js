@@ -2,6 +2,7 @@ import { Extension, Type, Dom, Loc } from 'main.core';
 import { BannerDispatcher } from 'ui.banner-dispatcher';
 import { Popup, PopupManager } from 'main.popup';
 import { Button } from 'ui.buttons';
+import { sendData } from 'ui.analytics';
 import './style.css';
 
 export type NotificationOptions = {
@@ -141,7 +142,7 @@ export class InvitationNotification
 			className: 'intranet-notification-content__action',
 			onclick: () => {
 				this.#popup.close();
-
+				this.#sendAnalytics('button_click');
 				if (isReInviteNotification)
 				{
 					window.location.href = '/company/?INVITED=Y';
@@ -162,10 +163,33 @@ export class InvitationNotification
 			this.#popup = this.createNotificationBalloon(onDone);
 			this.#popup.show();
 			this.#popup.zIndexComponent.setZIndex(400);
+			this.#sendAnalytics('push_show');
 
 			this.invitationButton.addEventListener('click', () => {
 				this.#popup?.close();
 			});
 		});
+	}
+
+	#sendAnalytics(event: string): void
+	{
+		const typeMap = {
+			1: "common",
+			3: "tasks",
+			4: "crm",
+			5: "automatization",
+			6: "common",
+			7: "repeat_invite"
+		};
+		const type = typeMap[this.#options.type] || "unknown";
+
+		const params = {
+			tool: 'invitation',
+			category: 'onboarding',
+			event,
+			type: type,
+		};
+
+		sendData(params);
 	}
 }

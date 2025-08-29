@@ -1,6 +1,7 @@
 import { DateTimeFormat } from 'main.date';
 import { Type } from 'main.core';
 
+import { StatusService } from '../../../../classes/status-service';
 import { LocMixin } from '../../../../mixins/loc-mixin';
 import { StaticDescriptionByStatus } from './const';
 import { UserStatus } from '../../../../type';
@@ -23,20 +24,37 @@ export const UserStatusDescription = {
 	computed: {
 		text(): string
 		{
-			const staticText = StaticDescriptionByStatus[this.status.code] ?? null;
+			let { code } = this.status;
+			if (!Type.isStringFilled(code))
+			{
+				return '';
+			}
+
+			if (!StatusService.isSupported(code))
+			{
+				code = StatusService.getFailoverStatus();
+			}
+
+			const staticText = StaticDescriptionByStatus[code] ?? null;
 			if (staticText)
 			{
 				return staticText;
 			}
 
-			if (this.status.code === UserStatus.Offline)
+			if (code === UserStatus.Offline)
 			{
-				return this.formatTextForOfflineStatus(this.status);
+				return this.formatTextForOfflineStatus({
+					...this.status,
+					code,
+				});
 			}
 
-			if (this.status.code === UserStatus.Vacation)
+			if (code === UserStatus.Vacation)
 			{
-				return this.formatTextForVacationStatus(this.status);
+				return this.formatTextForVacationStatus({
+					...this.status,
+					code,
+				});
 			}
 
 			return '';

@@ -33,7 +33,6 @@ class ConvertToCollabCommand extends AbstractConverterCommand
 {
 	public const ERROR_CODE_WRONG_TYPE = 10001;
 	public const ERROR_CODE_HAS_FLOWS = 10002;
-	public const ERROR_CODE_LANDING_GROUP = 10003;
 	private const TURNED_OFF_FEATURES = [
 		'forum' => [
 			'full' => SONET_ROLES_NONE,
@@ -86,6 +85,7 @@ class ConvertToCollabCommand extends AbstractConverterCommand
 			new SetCollabOptionsHandler($collabOptions),
 			new UpdateChatHandler(),
 			new SendChatMessageHandler(ActionType::ConvertGroupToCollab),
+			new SendChatMessageHandler(ActionType::ConvertGroupToCollabRich),
 		];
 	}
 
@@ -117,11 +117,6 @@ class ConvertToCollabCommand extends AbstractConverterCommand
 		if ((new FlowService())->doesGroupHaveFlows($this->group->getId()))
 		{
 			$result->addError(new Error('The group should not have flows', self::ERROR_CODE_HAS_FLOWS));
-		}
-
-		if ($this->group->isLandingGroup())
-		{
-			$result->addError(new Error('The group should not have landing option enabled', self::ERROR_CODE_LANDING_GROUP));
 		}
 
 		return $result;

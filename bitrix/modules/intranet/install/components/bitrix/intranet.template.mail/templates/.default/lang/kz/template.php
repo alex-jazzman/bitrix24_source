@@ -1,6 +1,10 @@
 <?php
 $MESS["INTRANET_BITRIX24"] = "Битрикс24";
+$MESS["INTRANET_BITRIX24_PROMO"] = "Бизнеске жұмыс істеуге көмектеседі ";
 $MESS["INTRANET_CHANGE_NOTIFY_SETTINGS"] = "Мәлімдеме баптауларын өзгерту";
+$MESS["INTRANET_EXPLANATION_TEXT"] = " Егер бұл хатты қате алсаңыз, оны елемеңіз ";
+$MESS["INTRANET_INVITATION_JOIN"] = "Қосылу";
+$MESS["INTRANET_INVITATION_JOIN_TEXT"] = "Біздің команда сізді <br> Битрикс24-те күтеді ";
 $MESS["INTRANET_INVITE_ACCEPT"] = "Шақыруды қабылдау";
 $MESS["INTRANET_INVITE_FOOTER"] = "Бұл автоматты хабарлама. Сіз оны әріптесіңіз сізді Битрикс24-ке шақырғаны үшін алдыңыз. Шақыруды қабылдаған кезде сіз барлық мәлімдемелердің баптауларын басқара аласыз.";
 $MESS["INTRANET_INVITE_IMG_LINK"] = "https://www.bitrix24.ru/images/content/mail/b24_ru.png";
@@ -14,4 +18,6 @@ $MESS["INTRANET_MAIL_TITLE_IM_NEW_MESSAGE_GROUP"] = "#NAME#-нен жаңа ха
 $MESS["INTRANET_MAIL_TITLE_IM_NEW_NOTIFY"] = "#NAME#-нен жаңа мәлімдеме";
 $MESS["INTRANET_OPEN"] = "Қарап шығу";
 $MESS["INTRANET_OPEN_NOTIFY"] = "Мәлімдемелерге өту";
+$MESS["INTRANET_PERSONAL_DATA_TEXT"] = "Дербес деректерді өңдеу саясаты";
 $MESS["INTRANET_SITE_LINK"] = "https://www.bitrix24.kz/";
+$MESS["INTRANET_YOUR_BITRIX24"] = " Сіздің Битрикс24 ";

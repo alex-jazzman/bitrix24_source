@@ -83,6 +83,7 @@ $MESS["CALL_M_BTN_TITLE_STOP_RECORD"] = "Зупинити запис";
 $MESS["CALL_M_INCOMING_NOTIFICATION_SETTINGS_TITLE"] = "Налаштування";
 $MESS["CALL_POPUP_AI_AGREEMENT_ERROR"] = "Попросіть адміністратора вашого Бітрікс24 прийняти оновлену Ліцензійну угоду (Terms of Service).";
 $MESS["CALL_POPUP_AI_DEFAULT_TEXT"] = "Не вдалося під'єднати CoPilot до дзвінка. Спробуйте пізніше.";
+$MESS["CALL_POPUP_AI_MODULE_ERROR"] = "Для роботи CoPilot потрібен модуль «Інтеграція ШІ». Зверніться до адміністратора.";
 $MESS["CALL_POPUP_AI_NOT_ENOUGH_BAAS_ERROR"] = "Недостатньо бустів CoPilot для роботи з CoPilot Follow-up.";
 $MESS["CALL_POPUP_AI_SETTINGS_ERROR"] = "Увімкніть CoPilot Follow-up у налаштуваннях вашого Бітрікс24.";
 $MESS["CALL_POPUP_AI_UNAVAILABLE_ERROR"] = "CoPilot Follow-up недоступний на вашому тарифі. Виберіть відповідний тариф.";

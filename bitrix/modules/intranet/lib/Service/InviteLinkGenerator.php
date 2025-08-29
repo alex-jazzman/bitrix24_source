@@ -19,9 +19,16 @@ class InviteLinkGenerator
 
 	public static function createByPayload(array $payload): ?self
 	{
-		$inviteToken = ServiceContainer::getInstance()->inviteTokenService()->create($payload);
+		$inviteToken = self::createInviteToken($payload);
 
 		return new self(AttachJwtTokenToUrlCommand::createDefaultInstance($inviteToken));
+	}
+
+	public static function createByPayloadWithUserLang(array $payload, string $userLang = LANGUAGE_ID): ?self
+	{
+		$inviteToken = self::createInviteToken($payload);
+
+		return new self(AttachJwtTokenToUrlCommand::createInstanceWithUserLang($inviteToken, $userLang));
 	}
 
 	public static function createByCollabId(int $collabId, string $userLang = LANGUAGE_ID): ?self
@@ -44,10 +51,9 @@ class InviteLinkGenerator
 			'collab_name' => $entity->getName(),
 			'inviting_user_id' => CurrentUser::get()?->getId() ?? null,
 			'link_code' => $linkCodeGenerator->getOrGenerate()->getCode(),
-			'user_lang' => $userLang,
 		];
 
-		return self::createByPayload($payload);
+		return self::createByPayloadWithUserLang($payload, $userLang);
 	}
 
 	public static function createByDepartmentsIds(array $departmentsIds): ?self
@@ -66,6 +72,11 @@ class InviteLinkGenerator
 		];
 
 		return self::createByPayload($payload);
+	}
+
+	private static function createInviteToken($payload): string
+	{
+		return ServiceContainer::getInstance()->inviteTokenService()->create($payload);
 	}
 
 	private function create(): Uri

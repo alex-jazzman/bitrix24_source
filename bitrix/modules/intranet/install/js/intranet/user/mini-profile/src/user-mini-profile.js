@@ -12,6 +12,7 @@ import 'ui.design-tokens';
 import './style.css';
 
 export const PopupPrefixId = 'intranet-user-mini-profile-';
+const AngleWidth = 33;
 
 export class UserMiniProfile
 {
@@ -91,13 +92,14 @@ export class UserMiniProfile
 			return new Popup({
 				className: 'intranet-user-mini-profile-popup',
 				content: this.#getContainer(),
+				targetContainer: document.body,
 				bindElement: this.#options.bindElement,
 				maxWidth: 643,
 				maxHeight: 497,
 				padding: 0,
 				contentNoPaddings: true,
 				angle: {
-					offset: this.#options.bindElement.offsetWidth / 2,
+					offset: this.#options.bindElement.offsetWidth / 2 + AngleWidth / 2,
 				},
 				animation: 'fading',
 				bindOptions: {

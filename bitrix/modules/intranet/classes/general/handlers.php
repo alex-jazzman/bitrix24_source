@@ -1030,12 +1030,12 @@ class CIntranetEventHandlers
 			InvitationTable::update($invitationFields['ID'], [
 				'INITIALIZED' => 'Y'
 			]);
+		}
 
-			$user = (new UserRepository())->getUserById($userId);
-			if ($user->isCollaber())
-			{
-				static::sendCollabMail($user);
-			}
+		$user = (new UserRepository())->getUserById($userId);
+		if ($user->isCollaber())
+		{
+			static::sendCollabMail($user);
 		}
 
 		(new \Bitrix\Main\Event('intranet', 'onUserFirstInitialization', [
@@ -1192,12 +1192,12 @@ class CIntranetEventHandlers
 	{
 		if(array_key_exists('UF_DEPARTMENT', $fields))
 		{
+			$ufDepartment = is_array($fields['UF_DEPARTMENT']) ? $fields['UF_DEPARTMENT'] : [];
+			$cacheDepartment = is_array(self::$userDepartmentCache[$fields['ID']]) ? self::$userDepartmentCache[$fields['ID']] : [];
+
 			if(
-				is_array(self::$userDepartmentCache[$fields['ID']])
-				&& (
-					array_diff($fields['UF_DEPARTMENT'], self::$userDepartmentCache[$fields['ID']])
-					|| count($fields['UF_DEPARTMENT']) !== count(self::$userDepartmentCache[$fields['ID']])
-				)
+					array_diff($ufDepartment, $cacheDepartment)
+					|| count($ufDepartment) !== count($cacheDepartment)
 			)
 			{
 				$event = new Event("intranet", "onEmployeeDepartmentsChanged", array(
@@ -1242,7 +1242,11 @@ class CIntranetEventHandlers
 
 	public static function OnFillSocNetAllowedSubscribeEntityTypes(&$arSocNetAllowedSubscribeEntityTypes)
 	{
-		define("SONET_SUBSCRIBE_ENTITY_NEWS", "N");
+		if (!defined('SONET_SUBSCRIBE_ENTITY_NEWS'))
+		{
+			define('SONET_SUBSCRIBE_ENTITY_NEWS', 'N');
+		}
+
 		$arSocNetAllowedSubscribeEntityTypes[] = SONET_SUBSCRIBE_ENTITY_NEWS;
 
 		global $arSocNetAllowedSubscribeEntityTypesDesc;

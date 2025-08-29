@@ -11,6 +11,30 @@
 	--ui-font-family-secondary: var(--ui-font-family-system);
 }
 
+.--ui-context-edge-dark,
+.--ui-context-edge-light {
+	--ui-nav-panel-custom-backdrop-filter: none;
+	--ui-nav-panel-custom-background: var(--air-theme-background-blurred, none);
+	--ui-counter-panel-custom-backdrop-filter: none;
+	--ui-counter-panel-custom-background: var(--air-theme-background-blurred, none);
+	--ui-btn-custom-background: var(--air-theme-background-blurred, none);
+
+	--main-ui-filter-custom-backdrop-filter: none;
+	--main-ui-filter-custom-background: var(--air-theme-background-blurred, none);
+}
+
+.--ui-context-content-dark,
+.--ui-context-content-light,
+.--air-context-blurred-bg {
+	--ui-nav-panel-custom-backdrop-filter: initial;
+	--ui-nav-panel-custom-background: initial;
+	--ui-counter-panel-custom-backdrop-filter: initial;
+	--ui-counter-panel-custom-background: initial;
+	--ui-btn-custom-background: initial;
+	--main-ui-filter-custom-backdrop-filter: initial;
+	--main-ui-filter-custom-background: initial;
+}
+
 .bx-win:root,
 .bx-win body {
 	--ui-font-weight-bold: 600;

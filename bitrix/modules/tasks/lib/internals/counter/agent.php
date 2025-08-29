@@ -15,8 +15,11 @@ use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Internals\TaskObject;
 use Bitrix\Tasks\Util\Type\DateTime;
 use Bitrix\Tasks\V2\FormV2Feature;
-use Bitrix\Tasks\V2\Internals\Container;
-use Bitrix\Tasks\V2\Internals\Integration\Im\Chat;
+use Bitrix\Tasks\V2\Internal\DI\Container;
+use Bitrix\Tasks\V2\Internal\Integration\Im\Chat;
+use Bitrix\Tasks\V2\Internal\Integration\Im\ChatNotification;
+use Bitrix\Tasks\V2\Internal\Integration\Im\ChatNotificationInterface;
+use Bitrix\Tasks\V2\Internal\Integration\Im\NotificationType;
 use CAgent;
 use CTimeZone;
 
@@ -34,7 +37,7 @@ class Agent
 	private Controller $notificationController;
 	private TimeLineManager $timeLineManager;
 	private ?CommentPoster $commentPoster;
-	private Chat $chatIntegration;
+	private ChatNotificationInterface $chatNotification;
 
 	private string $eventType;
 	private array $taskData;
@@ -230,9 +233,10 @@ class Agent
 
 		if ($taskEntity)
 		{
-			$this->chatIntegration->notifyTaskOverdue(
+			$this->chatNotification->notify(
+				type: NotificationType::TaskOverdue,
 				task: $taskEntity,
-				triggeredBy: null,
+				args: ['triggeredBy' => null],
 			);
 		}
 
@@ -249,7 +253,7 @@ class Agent
 		$this->notificationController = new Controller();
 		$this->timeLineManager = new TimeLineManager($this->task->getId(), $this->task->getResponsibleId());
 		$this->commentPoster = CommentPoster::getInstance($this->task->getId(), $this->task->getCreatedBy());
-		$this->chatIntegration = new Chat();
+		$this->chatNotification = new ChatNotification();
 		$this->taskData = $this->task->toArray(true);
 	}
 

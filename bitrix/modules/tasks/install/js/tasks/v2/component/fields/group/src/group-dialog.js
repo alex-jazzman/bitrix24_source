@@ -1,9 +1,12 @@
 import { Runtime } from 'main.core';
+import type { Item } from 'ui.entity-selector';
+
 import { EntitySelectorDialog, type ItemId } from 'tasks.v2.lib.entity-selector-dialog';
 import { Core } from 'tasks.v2.core';
 import { EntitySelectorEntity, Model } from 'tasks.v2.const';
 import { taskService } from 'tasks.v2.provider.service.task-service';
 import type { TaskModel } from 'tasks.v2.model.tasks';
+import type { GroupModel } from 'tasks.v2.model.groups';
 
 class GroupDialog
 {
@@ -65,40 +68,40 @@ class GroupDialog
 			events: {
 				'Item:onSelect': handleItemChangeDebounced,
 				'Item:onDeselect': handleItemChangeDebounced,
-				onHide: () => {
-					this.#onHide();
-					this.#clearOnUpdateOnce();
-				},
+				onHide: this.#handleHide,
 				onDestroy: this.#clearOnUpdateOnce,
-				onLoad: async () => {
-					this.#upsertGroup();
-				},
+				onLoad: this.#insertSelectedGroup,
 			},
 		});
 	}
 
-	async #upsertGroup(): void
-	{
-		const item = this.#dialog.getSelectedItems()[0];
-		if (item)
-		{
-			// Insert group into Vuex and wait for it to complete
-			await Core.getStore().dispatch(`${Model.Groups}/insert`, {
-				id: item.getId(),
-				name: item.getTitle(),
-				image: item.getAvatar(),
-				type: item.getEntityType(),
-			});
-		}
+	#handleHide = (): void => {
+		this.#onHide?.();
+		this.#clearOnUpdateOnce();
+	};
 
+	async #handleItemChange(): Promise<void>
+	{
+		const item = await this.#insertSelectedGroup();
 		this.#updateGroup(item?.getId());
 	}
 
-	#handleItemChange(): void
-	{
-		this.#upsertGroup();
-		this.#onUpdate();
-	}
+	#insertSelectedGroup = async (): Promise<?Item> => {
+		const item = this.#dialog.getSelectedItems()[0];
+		if (!item)
+		{
+			return null;
+		}
+
+		await this.#insertGroup({
+			id: item.getId(),
+			name: item.getTitle(),
+			image: item.getAvatar(),
+			type: item.getEntityType(),
+		});
+
+		return item;
+	};
 
 	get #items(): ItemId[]
 	{
@@ -108,6 +111,11 @@ class GroupDialog
 	get #task(): TaskModel
 	{
 		return Core.getStore().getters[`${Model.Tasks}/getById`](this.#taskId);
+	}
+
+	#insertGroup(group: GroupModel): Promise<void>
+	{
+		return Core.getStore().dispatch(`${Model.Groups}/insert`, group);
 	}
 
 	#updateGroup(groupId: number): void
@@ -120,6 +128,7 @@ class GroupDialog
 			},
 		);
 
+		this.#onUpdate?.();
 		this.#onUpdateOnce?.();
 		this.#clearOnUpdateOnce();
 	}

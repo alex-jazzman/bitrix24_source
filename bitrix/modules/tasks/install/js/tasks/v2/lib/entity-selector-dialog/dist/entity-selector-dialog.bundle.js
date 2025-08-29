@@ -55,10 +55,10 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    this.getItems().forEach(item => {
 	      const isSelected = babelHelpers.classPrivateFieldLooseBase(this, _inIds)[_inIds](item, items);
 	      if (!item.isSelected() && isSelected) {
-	        item.select();
+	        item.select(true);
 	      }
 	      if (item.isSelected() && !isSelected) {
-	        item.deselect();
+	        item.deselect(true);
 	      }
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _isSelectProgrammatically)[_isSelectProgrammatically] = false;

@@ -259,7 +259,11 @@ abstract class AbstractGroupService
 		return $result;
 	}
 
-	private function runUpdateHandlers(UpdateCommand $command, Workgroup $entityBefore, Workgroup &$entityAfter): GroupResult
+	private function runUpdateHandlers(
+		UpdateCommand $command,
+		Workgroup $entityBefore,
+		Workgroup &$entityAfter,
+	): GroupResult
 	{
 		$id = $command->getId();
 

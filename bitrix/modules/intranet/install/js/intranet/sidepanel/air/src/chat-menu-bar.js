@@ -28,23 +28,22 @@ export class ChatMenuBar
 		EventEmitter.subscribe(this.#slider, 'SidePanel.Slider:onCloseComplete', this.#handleSliderCloseComplete.bind(this));
 		EventEmitter.subscribe(this.#slider, 'SidePanel.Slider:onDestroy', this.#handleSliderDestroy.bind(this));
 
-		if (!this.canUseBlurry())
-		{
-			EventEmitter.subscribe('SidePanel.Slider:onOpening', (event: BaseEvent) => {
-				const [sliderEvent] = event.getData();
-				if (sliderEvent.getSlider() !== this.#slider)
-				{
-					Dom.style(this.getContainer(), 'visibility', 'hidden');
-				}
-			});
+		EventEmitter.subscribe('SidePanel.Slider:onOpening', (event: BaseEvent) => {
+			const [sliderEvent] = event.getData();
+			if (sliderEvent.getSlider() !== this.#slider)
+			{
+				Dom.style(this.getContainer(), 'background', this.#slider.getOverlayBgColor());
+				Dom.style(this.getContainer(), 'box-shadow', `0px 0px 10px 3px ${this.#slider.getOverlayBgColor()}`);
+			}
+		});
 
-			EventEmitter.subscribe('SidePanel.Slider:onCloseComplete', () => {
-				if (this.#slider === SidePanel.Instance.getTopSlider())
-				{
-					Dom.style(this.getContainer(), 'visibility', null);
-				}
-			});
-		}
+		EventEmitter.subscribe('SidePanel.Slider:onClosing', () => {
+			if (this.#slider === SidePanel.Instance.getPreviousSlider())
+			{
+				Dom.style(this.getContainer(), 'background', null);
+				Dom.style(this.getContainer(), 'box-shadow', null);
+			}
+		});
 
 		EventEmitter.subscribe('IM.Layout:onLayoutChange', () => {
 			if (!this.#loaded)
@@ -53,11 +52,6 @@ export class ChatMenuBar
 				Dom.addClass(this.getContainer(), '--loaded');
 			}
 		});
-	}
-
-	canUseBlurry(): boolean
-	{
-		return !Dom.hasClass(document.documentElement, 'bx-integrated-gpu');
 	}
 
 	getContainer(): HTMLElement
@@ -99,7 +93,8 @@ export class ChatMenuBar
 	{
 		this.setZIndex(this.#slider.getZIndexComponent().getZIndex() + 1);
 		Dom.style(this.getContainer(), 'display', 'block');
-		Dom.style(this.getContainer(), 'visibility', null);
+		Dom.style(this.getContainer(), 'background', null);
+		Dom.style(this.getContainer(), 'box-shadow', null);
 
 		requestAnimationFrame(() => {
 			Dom.addClass(this.getContainer(), '--open');
@@ -115,7 +110,8 @@ export class ChatMenuBar
 	#handleSliderCloseComplete(): void
 	{
 		Dom.style(this.getContainer(), 'display', 'none');
-		Dom.style(this.getContainer(), 'visibility', null);
+		Dom.style(this.getContainer(), 'background', null);
+		Dom.style(this.getContainer(), 'box-shadow', null);
 	}
 
 	#handleSliderDestroy(): void

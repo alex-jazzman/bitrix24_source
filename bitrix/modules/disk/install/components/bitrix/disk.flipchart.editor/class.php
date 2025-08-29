@@ -31,15 +31,25 @@ class CDiskFlipchartViewerComponent extends DiskComponent
 	private bool $isEditMode = false;
 	private ?DocumentSession $session = null;
 
-	private function convertDocumentId(int | string $documentId): string
+	private function convertDocumentId(int | string $documentId, $versionId = null): string
 	{
-		return BoardService::convertDocumentIdToExternal($documentId);
+		return BoardService::convertDocumentIdToExternal($documentId, $versionId);
 	}
 
 	private function generateToken(): string
 	{
 		$session = $this->session;
 		$jwt = new JwtService($session->getUser());
+
+		if ($this->isNewElement())
+		{
+			$jwt->addWebhookGetParam('newBoard', '1');
+		}
+
+		if ($_GET['c_element'] ?? null)
+		{
+			$jwt->addWebhookGetParam('c_element', $_GET['c_element']);
+		}
 
 		return $jwt->generateToken(
 			$this->isViewMode,
@@ -49,10 +59,10 @@ class CDiskFlipchartViewerComponent extends DiskComponent
 				'avatar_url' => $this->arParams['AVATAR_URL'] ?? null,
 				'fileUrl' => $this->arParams['DOCUMENT_URL'],
 				'download_link' => $this->arParams['DOCUMENT_URL'],
-				'document_id' => $this->convertDocumentId($session->getObject()->getId()),
+				'document_id' => $this->convertDocumentId($session->getObject()->getId(), $session->getVersionId()),
 				'session_id' => $session->getExternalHash(),
 				'file_name' => $this->arParams['ORIGINAL_FILE']?->getNameWithoutExtension() ?? $session->getObject()->getNameWithoutExtension(),
-			]
+			],
 		);
 	}
 
@@ -61,7 +71,7 @@ class CDiskFlipchartViewerComponent extends DiskComponent
 		$session = $this->session;
 		$this->arResult['DOCUMENT_SESSION'] = $session;
 		$this->arResult['DOCUMENT_URL'] = $this->arParams['DOCUMENT_URL'];
-		$this->arResult['DOCUMENT_ID'] = $this->convertDocumentId($session->getObject()->getId());
+		$this->arResult['DOCUMENT_ID'] = $this->convertDocumentId($session->getObject()->getId(), $session->getVersionId());
 		$this->arResult['ORIGINAL_DOCUMENT_ID'] = $this->arParams['ORIGINAL_FILE']?->getId() ?? $session->getObject()->getId();
 		$this->arResult['DOCUMENT_NAME'] = $this->arParams['ORIGINAL_FILE']?->getName() ?? $session->getObject()->getName();
 		$this->arResult['DOCUMENT_NAME_WITHOUT_EXTENSION'] = $this->arParams['ORIGINAL_FILE']?->getNameWithoutExtension() ?? $this->arParams['DOCUMENT_NAME_WITHOUT_EXTENSION'] ?? $session->getObject()->getNameWithoutExtension();
@@ -109,14 +119,23 @@ class CDiskFlipchartViewerComponent extends DiskComponent
 		$this->sendAnalytics();
 	}
 
-	protected function sendAnalytics(): void
+	protected function isNewElement(): bool
 	{
 		/** @var ?File $originalFile */
 		$originalFile = $this->arParams['ORIGINAL_FILE'];
-		$isNewElement = $originalFile && time() - $originalFile->getCreateTime()->getTimestamp() < 30;
+		return $originalFile && time() - $originalFile->getCreateTime()->getTimestamp() < 30;;
+	}
+
+	protected function sendAnalytics(): void
+	{
+		$isNewElement = $this->isNewElement();
 
 		Application::getInstance()->addBackgroundJob(function() use ($isNewElement){
 			$event = new AnalyticsEvent('open', 'boards', 'boards');
+			if ($_GET['c_element'] ?? null)
+			{
+				$event->setElement($_GET['c_element']);
+			}
 			$event
 				->setSubSection($isNewElement ? 'new_element' : 'old_element')
 				->send()
