@@ -982,7 +982,7 @@ elseif($action === 'SAVE')
 					$saveOptions['REGISTER_STATISTICS'] = false;
 				}
 
-				// region InventoryManagement
+				// region Contractor
 				if (!$isFactoryEnabled)
 				{
 					$factory = Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Deal);

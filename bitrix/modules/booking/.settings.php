@@ -225,6 +225,7 @@ return [
 						'bookingResourceRepository' => \Bitrix\Booking\Internals\Container::getBookingResourceRepository(),
 						'resourceRepository' => \Bitrix\Booking\Internals\Container::getResourceRepository(),
 						'resourceTypeRepository' => \Bitrix\Booking\Internals\Container::getResourceTypeRepository(),
+						'resourceLinkedEntityRepository' => \Bitrix\Booking\Internals\Container::getResourceLinkedEntityRepository(),
 					];
 				},
 			],
@@ -248,6 +249,25 @@ return [
 						'bookingRepository' => \Bitrix\Booking\Internals\Container::getBookingRepository(),
 					];
 				},
+			],
+			'booking.internals.event_for_booking.service' => [
+				'className' => \Bitrix\Booking\Internals\Service\EventForBookingService::class,
+				'constructorParams' => static function() {
+					return [
+						'externalDataRepository' => \Bitrix\Booking\Internals\Container::getBookingExternalDataRepository(),
+					];
+				},
+			],
+			'booking.internals.delayed_task.repository' => [
+				'className' => \Bitrix\Booking\Internals\Repository\ORM\DelayedTaskRepository::class,
+				'constructorParams' => static function() {
+					return [
+						'mapper' => new \Bitrix\Booking\Internals\Repository\ORM\Mapper\DelayedTaskMapper(),
+					];
+				},
+			],
+			'booking.internals.resource_linked_entity.repository' => [
+				'className' => \Bitrix\Booking\Internals\Repository\ORM\ResourceLinkedEntityRepository::class,
 			],
 		],
 	],

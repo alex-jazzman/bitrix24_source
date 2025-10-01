@@ -51,13 +51,13 @@ export const MarketApps = {
 		onMarketClick()
 		{
 			this.$emit('clickMarketItem', {
-				id: Layout.market.name,
+				id: Layout.market,
 			});
 		},
 		onMarketItemClick(item: MarketMenuItem)
 		{
 			this.$emit('clickMarketItem', {
-				id: Layout.market.name,
+				id: Layout.market,
 				entityId: item.id,
 			});
 		},
@@ -70,7 +70,7 @@ export const MarketApps = {
 		},
 		isItemSelected(itemId: string): boolean
 		{
-			return this.layout.name === Layout.market.name && this.layout.entityId === itemId;
+			return this.layout.name === Layout.market && this.layout.entityId === itemId;
 		},
 		getIconClassNames(item: MarketMenuItem): string
 		{

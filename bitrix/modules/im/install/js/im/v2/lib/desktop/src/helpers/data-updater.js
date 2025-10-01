@@ -1,13 +1,13 @@
 import { ChatService } from 'im.v2.provider.service.chat';
 import { LayoutManager } from 'im.v2.lib.layout';
-import { RecentService } from 'im.v2.provider.service.recent';
+import { LegacyRecentService } from 'im.v2.provider.service.recent';
 
 import type { ImModelLayout } from 'im.v2.model';
 
 export const DesktopDataUpdater = {
 	async reloadChatInfo(): Promise<void>
 	{
-		await RecentService.getInstance().requestItems({ firstPage: true });
+		await LegacyRecentService.getInstance().requestItems({ firstPage: true });
 
 		const currentLayout = LayoutManager.getInstance().getLayout();
 

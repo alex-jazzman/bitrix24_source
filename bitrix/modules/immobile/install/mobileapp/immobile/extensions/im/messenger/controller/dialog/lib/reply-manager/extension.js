@@ -443,7 +443,6 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 
 		startEditingMessage(message)
 		{
-			// TODO: remove setTimeout 0 after fixing dialogView.getInput method. Works only on the UI thread.
 			const inputText = this.dialogView.getInput();
 			if (!this.isEditInProcess && inputText !== '')
 			{

@@ -14,6 +14,8 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 	const { MultiFieldDrawer, MultiFieldType } = require('crm/multi-field-drawer');
 	const { TypeId } = require('crm/type');
 	const { PlanRestriction } = require('layout/ui/plan-restriction');
+	const { Random } = require('utils/random');
+	const { Money } = require('money');
 
 	/**
 	 * @class DocumentList

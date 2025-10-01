@@ -1,3 +1,4 @@
+import { DesktopApi } from 'im.v2.lib.desktop-api';
 import { Extension } from 'main.core';
 import { EventEmitter, BaseEvent } from 'main.core.events';
 import { Store } from 'ui.vue3.vuex';
@@ -66,6 +67,21 @@ export class CallManager
 		const { callInstalled } = Extension.getSettings('im.v2.lib.call');
 
 		return callInstalled === true;
+	}
+
+	// TODO: add to a new file after separating call and im
+	async sendBroadcastRequest(callId): Promise<boolean[]> {
+		if (!this.isAvailable())
+		{
+			return Promise.resolve([])
+		}
+
+		if (!DesktopApi.isDesktop())
+		{
+			return Promise.resolve([])
+		}
+
+		return await this.#controller.callMultiBroadcastClient.broadcastRequest(callId, { timeout: 100 });
 	}
 
 	createBetaCallRoom(chatId: number)
@@ -505,7 +521,7 @@ export class CallManager
 	#getCurrentDialogId(): string
 	{
 		const layout = this.#store.getters['application/getLayout'];
-		if (layout.name !== Layout.chat.name)
+		if (layout.name !== Layout.chat)
 		{
 			return '';
 		}

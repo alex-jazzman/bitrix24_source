@@ -140,10 +140,20 @@ this.BX.Booking = this.BX.Booking || {};
 	      /** @function bookings/getByDate */
 	      getByDate: (state, getters) => dateTs => {
 	        const [dateFrom, dateTo] = dateToTsRange(dateTs);
+	        return getters.getByInterval(dateFrom, dateTo);
+	      },
+	      /** @function booking/getByInterval */
+	      getByInterval: (state, getters) => (fromTs, toTs) => {
 	        return getters.get.filter(({
-	          dateToTs,
-	          dateFromTs
-	        }) => dateToTs > dateFrom && dateTo > dateFromTs);
+	          dateFromTs,
+	          dateToTs
+	        }) => {
+	          return dateToTs > fromTs && dateFromTs < toTs;
+	        });
+	      },
+	      getFutureByResourceId: (state, getters) => resourceId => {
+	        const now = Date.now();
+	        return getters.get.filter(booking => booking.resourcesIds.includes(resourceId) && booking.dateFromTs > now);
 	      },
 	      overbookingMap: state => {
 	        const resourceBookings = Object.values(state.collection).reduce((acc, booking) => {

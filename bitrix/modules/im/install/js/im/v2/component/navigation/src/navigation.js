@@ -24,9 +24,9 @@ type MenuItem = {
 };
 
 const LayoutToAction = Object.freeze({
-	[Layout.market.name]: ActionByUserType.getMarket,
-	[Layout.openlines.name]: ActionByUserType.getOpenlines,
-	[Layout.channel.name]: ActionByUserType.getChannels,
+	[Layout.market]: ActionByUserType.getMarket,
+	[Layout.openlines]: ActionByUserType.getOpenlines,
+	[Layout.channel]: ActionByUserType.getChannels,
 });
 
 // @vue/component

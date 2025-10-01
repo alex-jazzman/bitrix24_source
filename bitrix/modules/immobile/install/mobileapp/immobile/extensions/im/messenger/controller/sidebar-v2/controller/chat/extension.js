@@ -57,6 +57,30 @@ jn.define('im/messenger/controller/sidebar-v2/controller/chat', (require, export
 			return Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_CHAT_TITLE');
 		}
 
+		/**
+		 * @return {SidebarViewDefaultProps}
+		 */
+		prepareViewProps()
+		{
+			return {
+				...super.prepareViewProps(),
+				callbacks: {
+					callUserProfile: this.callUserProfile,
+				},
+			};
+		}
+
+		/**
+		 * @desc Method call user profile component
+		 */
+		callUserProfile()
+		{
+			UserProfile.show(this.dialogId, {
+				backdrop: true,
+				openingDialogId: this.dialogId,
+			}).catch((err) => this.logger.error('callUserProfile.catch:', err));
+		}
+
 		// region context menu
 
 		getHeaderContextMenuItems()
@@ -84,12 +108,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/chat', (require, export
 					icon: Icon.PERSON,
 					testId: 'sidebar-context-menu-open-profile',
 					sort: SidebarContextMenuActionPosition.MIDDLE,
-					onItemSelected: () => {
-						UserProfile.show(this.dialogId, {
-							backdrop: true,
-							openingDialogId: this.dialogId,
-						}).catch((err) => this.logger.error('callUserProfile.catch:', err));
-					},
+					onItemSelected: () => this.callUserProfile(),
 				},
 				{
 					id: SidebarContextMenuActionId.OPEN_CALENDAR,

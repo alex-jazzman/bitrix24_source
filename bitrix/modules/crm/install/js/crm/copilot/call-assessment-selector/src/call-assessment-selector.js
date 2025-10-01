@@ -160,7 +160,7 @@ export class CallAssessmentSelector
 			const parentPopupContainer = this.#container.closest('body');
 
 			const dialogOptions: DialogOptions = {
-				...(this.#additionalSelectorOptions.dialog ?? {}),
+				...this.#additionalSelectorOptions.dialog,
 				targetNode: this.#container,
 				multiple: false,
 				dropdownMode: true,
@@ -176,12 +176,9 @@ export class CallAssessmentSelector
 						dynamicSearch: true,
 					},
 				],
-				popupOptions: {
-					targetContainer: parentPopupContainer,
-					...(this.#additionalSelectorOptions.popup ?? {}),
-				},
+				popupOptions: this.#additionalSelectorOptions.popup ?? {},
 				events: {
-					...(this.#additionalSelectorOptions.dialog?.events ?? {}),
+					...(this.#additionalSelectorOptions.dialog?.events),
 					onLoad: this.#onLoadDialog.bind(this),
 					'Item:onBeforeSelect': this.#onItemBeforeSelect.bind(this),
 					'Item:onBeforeDeselect': this.#onItemBeforeDeselect.bind(this),

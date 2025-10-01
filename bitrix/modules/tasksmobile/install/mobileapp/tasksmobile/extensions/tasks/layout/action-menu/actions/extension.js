@@ -547,11 +547,12 @@ jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 			id: ActionId.PIN,
 			title: () => Loc.getMessage('M_TASKS_ACTIONS_MENU_PIN'),
 			successToastPhrase: () => Loc.getMessage('M_TASKS_ACTIONS_MENU_PIN_SUCCESS'),
-			handleAction: (task, layoutWidget) => executeIfOnline(
+			handleAction: (task, layoutWidget, { projectId = null }) => executeIfOnline(
 				() => {
 					dispatch(
 						pin({
 							taskId: task.id,
+							projectId,
 						}),
 					);
 				},
@@ -562,11 +563,12 @@ jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 			id: ActionId.UNPIN,
 			title: () => Loc.getMessage('M_TASKS_ACTIONS_MENU_UNPIN'),
 			successToastPhrase: () => Loc.getMessage('M_TASKS_ACTIONS_MENU_UNPIN_SUCCESS'),
-			handleAction: (task, layoutWidget) => executeIfOnline(
+			handleAction: (task, layoutWidget, { projectId = null }) => executeIfOnline(
 				() => {
 					dispatch(
 						unpin({
 							taskId: task.id,
+							projectId,
 						}),
 					);
 				},
@@ -767,7 +769,7 @@ jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 			 * @param {object} [analyticsLabel]
 			 * @return {Promise<void>}
 			 */
-			handleAction: async ({ task, taskId, layout, options, analyticsLabel }) => {
+			handleAction: async ({ task, taskId, layout, options = {}, analyticsLabel }) => {
 				try
 				{
 					if (isRestricted?.())
@@ -777,7 +779,7 @@ jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 						return;
 					}
 
-					const taskRedux = task ?? selectByTaskIdOrGuid(store.getState(), taskId);
+					const taskRedux = task ?? selectByTaskIdOrGuid(store.getState(), taskId, options.ownerId);
 					const executeAction = async () => {
 						await currentAction.handleAction(taskRedux, layout, options, analyticsLabel);
 

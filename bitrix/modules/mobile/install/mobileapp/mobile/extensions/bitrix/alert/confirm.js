@@ -11,7 +11,6 @@ jn.define('alert/confirm', (require, exports, module) => {
 		CANCEL: 'cancel',
 	};
 
-	const MIN_API_VERSION = 42;
 	const isAndroid = Application.getPlatform() === 'android';
 
 	/**
@@ -75,11 +74,7 @@ jn.define('alert/confirm', (require, exports, module) => {
 				preparedButtons = [...others, first];
 			}
 
-			return (
-				Application.getApiVersion() >= MIN_API_VERSION
-					? preparedButtons
-					: preparedButtons.map(({ text }) => text)
-			);
+			return preparedButtons;
 		}
 
 		setButtonsTextByType(buttons)

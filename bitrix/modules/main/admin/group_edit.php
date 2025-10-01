@@ -41,8 +41,8 @@ while ($arSite = $rsSites->GetNext())
 	$arSites["reference"][] = "[".$arSite["ID"]."] ".$arSite["NAME"];
 }
 
-$USER_COUNT = CUser::GetCount();
 $USER_COUNT_MAX = 25;
+$USER_COUNT = CUser::GetCount($USER_COUNT_MAX + 1);
 
 $aTabs = array(
 	array("DIV" => "edit1", "TAB" => GetMessage("MAIN_TAB"), "ICON" => "group_edit", "TITLE" => GetMessage("MAIN_TAB_TITLE")),

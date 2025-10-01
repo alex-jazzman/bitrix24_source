@@ -9,7 +9,6 @@ use Bitrix\Crm\RepeatSale\Widget\WidgetManager;
 
 $settings = [
 	'feedbackFormParams' => WidgetManager::getInstance()->getFeedbackFormParams(),
-	// @todo check force feature enabled
 ];
 
 return [

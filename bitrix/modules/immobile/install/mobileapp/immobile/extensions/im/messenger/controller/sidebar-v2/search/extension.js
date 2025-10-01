@@ -9,7 +9,8 @@ jn.define('im/messenger/controller/sidebar-v2/search', (require, exports, module
 	const { debounce } = require('utils/function');
 
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { ChatAvatar, ChatTitle } = require('im/messenger/lib/element');
+	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
+	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 	const { DialogHelper } = require('im/messenger/lib/helper/dialog');
 	const { DateFormatter } = require('im/messenger/lib/date-formatter');
 	const { SidebarSearchAnalytics } = require('im/messenger/controller/sidebar-v2/search/src/analytics');

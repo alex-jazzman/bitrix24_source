@@ -301,6 +301,16 @@ jn.define('im/messenger/lib/feature', (require, exports, module) => {
 		{
 			return NativeFeature?.isFeatureEnabled('chat-error-message');
 		}
+
+		static get isRecentLikeAvailable()
+		{
+			return NativeFeature?.isFeatureEnabled('chat-recent-like') ?? false;
+		}
+
+		static get isDialogHeaderButtonIconSupported()
+		{
+			return Application.getApiVersion() >= 60;
+		}
 	}
 
 	module.exports = { Feature, MobileFeature };

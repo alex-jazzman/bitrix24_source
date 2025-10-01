@@ -23,8 +23,8 @@ if(!function_exists('restMenuBuildEventHandler'))
 	function restMenuBuildEventHandler($placement, $eventParam, &$menu)
 	{
 		$appList = \Bitrix\Rest\HandlerHelper::getApplicationList($placement);
-		$langInstall = \Bitrix\Main\Localization\Loc::getMessage('REST_AP_MENU_ITEM_TEXT_MORE_2');
-		$langMarket = \Bitrix\Main\Localization\Loc::getMessage('REST_AP_MENU_ITEM_TEXT_2');
+		$langInstall = \Bitrix\Main\Localization\Loc::getMessage('REST_AP_MENU_ITEM_TEXT_MORE_2_MSGVER_2');
+		$langMarket = \Bitrix\Main\Localization\Loc::getMessage('REST_AP_MENU_ITEM_TEXT_2_MSGVER_2');
 		if (\Bitrix\Rest\Integration\Market\Label::isRenamedMarket())
 		{
 			$langMarket = \Bitrix\Main\Localization\Loc::getMessage('REST_AP_MENU_ITEM_TEXT_2_MSGVER_1');

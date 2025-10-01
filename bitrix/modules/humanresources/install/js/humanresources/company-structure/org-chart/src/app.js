@@ -78,15 +78,21 @@ export const Chart = {
 	{
 		const slider = BX.SidePanel.Instance.getTopSlider();
 		slider?.showLoader();
-		const [departments, currentDepartments, userId] = await Promise.all([
+		const [departmentsData, currentDepartments, userId] = await Promise.all([
 			chartAPI.getDepartmentsData(),
 			chartAPI.getCurrentDepartments(),
 			chartAPI.getUserId(),
 		]);
 		slider?.closeLoader();
+		const departments = departmentsData.structure;
+		const structureMap = Object.entries(departmentsData.map).reduce((map, [id, value]) => {
+			map.set(Number(id), { id: Number(id), ...value });
+
+			return map;
+		}, new Map());
 		const parsedDepartments = chartAPI.createTreeDataStore(departments);
 		const availableDepartments = currentDepartments.filter((item) => parsedDepartments.has(item));
-		OrgChartActions.applyData(parsedDepartments, availableDepartments, userId);
+		OrgChartActions.applyData(parsedDepartments, availableDepartments, userId, structureMap);
 		this.rootOffset = 100;
 		this.transformCanvas();
 		this.canvas.shown = true;

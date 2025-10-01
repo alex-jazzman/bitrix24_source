@@ -12,19 +12,25 @@ export class Label
 	slider: Slider = null;
 	color = null;
 	bgColor = null;
+	className = '';
 	iconClass = '';
 	iconTitle = '';
 	onclick = null;
 	text = null;
+	hidden: boolean = false;
 	cache = new Cache.MemoryCache();
 
 	constructor(slider: Slider, labelOptions: LabelOptions)
 	{
 		this.slider = slider;
 		const options = Type.isPlainObject(labelOptions) ? labelOptions : {};
-		this.setBgColor(options.bgColor);
+
+		this.hidden = Type.isBoolean(options.hidden) ? options.hidden : this.hidden;
+
 		this.setColor(options.color);
+		this.setBgColor(options.bgColor);
 		this.setText(options.text);
+		this.setClassName(options.className);
 		this.setIconClass(options.iconClass);
 		this.setIconTitle(options.iconTitle);
 		this.setOnclick(options.onclick);
@@ -33,9 +39,20 @@ export class Label
 	getContainer(): HTMLElement
 	{
 		return this.cache.remember('container', () => {
+			const classes = ['side-panel-label'];
+			if (this.getClassName())
+			{
+				classes.push(this.getClassName());
+			}
+
+			if (this.isHidden())
+			{
+				classes.push('--hidden');
+			}
+
 			return Dom.create('div', {
 				props: {
-					className: 'side-panel-label',
+					className: classes.join(' '),
 				},
 				children: [
 					this.getIconBox(),
@@ -155,6 +172,7 @@ export class Label
 			this.color = color;
 
 			Dom.style(this.getTextContainer(), 'color', color);
+			Dom.style(this.getIconContainer(), '--ui-icon-set__icon-color', color);
 		}
 	}
 
@@ -186,12 +204,18 @@ export class Label
 			}
 
 			this.bgColor = bgColor;
-			Dom.style(this.getContainer(), 'background-color', bgColor);
+			Dom.style(this.getContainer(), '--ui-color', bgColor);
+
+			if (this.getColor() === null)
+			{
+				Dom.style(this.getIconContainer(), '--ui-icon-set__icon-color', '#fff');
+			}
 		}
 		else if (bgColor === null)
 		{
 			this.bgColor = null;
-			Dom.style(this.getContainer(), 'background-color', null);
+			Dom.style(this.getContainer(), '--ui-color', null);
+			Dom.style(this.getIconContainer(), '--ui-icon-set__icon-color', null);
 		}
 	}
 
@@ -217,6 +241,26 @@ export class Label
 	getText(): string | null
 	{
 		return this.text;
+	}
+
+	setClassName(className: string | null): void
+	{
+		if (Type.isStringFilled(className))
+		{
+			Dom.removeClass(this.getContainer(), this.className);
+			this.className = className;
+			Dom.addClass(this.getContainer(), this.className);
+		}
+		else if (className === null)
+		{
+			Dom.removeClass(this.getContainer(), this.className);
+			this.className = className;
+		}
+	}
+
+	getClassName(): string
+	{
+		return this.className;
 	}
 
 	setIconClass(iconClass: string | null): void
@@ -251,6 +295,23 @@ export class Label
 	getIconTitle(): void
 	{
 		return this.iconTitle;
+	}
+
+	isHidden(): boolean
+	{
+		return this.hidden;
+	}
+
+	hide(): void
+	{
+		this.hidden = true;
+		Dom.addClass(this.getContainer(), '--hidden');
+	}
+
+	show(): void
+	{
+		this.hidden = false;
+		Dom.removeClass(this.getContainer(), '--hidden');
 	}
 
 	setOnclick(fn: Function): void

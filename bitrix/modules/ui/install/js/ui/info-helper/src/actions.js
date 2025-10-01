@@ -203,6 +203,8 @@ export class Actions
 				BX.onCustomEvent('BX.UI.InfoHelper:onActivateDemoLicenseSuccess', {
 					result: response,
 				});
+
+				window.location.reload();
 			}
 		});
 	}

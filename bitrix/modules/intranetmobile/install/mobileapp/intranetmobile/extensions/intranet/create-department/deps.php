@@ -16,7 +16,6 @@ return [
 		'ui-system/form/inputs/string',
 		'ui-system/form/buttons/button',
 		'bottom-sheet',
-		'intranet:invite-status-box',
 		'asset-manager',
 		'layout/pure-component',
 		'ui-system/form/inputs/input',
@@ -28,6 +27,7 @@ return [
 		'statemanager/redux/batched-actions',
 		'statemanager/redux/store',
 		'rest/run-action-executor',
+		'layout/ui/status-box',
 	],
 	'bundle' => [
 		'./src/permissions-box',

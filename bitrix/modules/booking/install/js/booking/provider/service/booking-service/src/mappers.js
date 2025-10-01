@@ -56,7 +56,7 @@ export function mapDtoToModel(bookingDto: BookingDto): BookingModel
 	const booking = {
 		id: bookingDto.id,
 		updatedAt: bookingDto.updatedAt,
-		resourcesIds: bookingDto.resources.map(({ id }) => id),
+		resourcesIds: getSortedResourcesByPrimary(bookingDto),
 		primaryClient: clients?.[0],
 		clients,
 		counter: bookingDto.counter,
@@ -78,7 +78,18 @@ export function mapDtoToModel(bookingDto: BookingDto): BookingModel
 	return Object.fromEntries(Object.entries(booking).filter(([, value]) => !Type.isUndefined(value)));
 }
 
-export function mapModelToCreateFromWaitListItemDto(waitListItemId: number, booking: BookingModel): BookingFromWaitListItemDto
+function getSortedResourcesByPrimary({ resources }: BookingDto): number[]
+{
+	return [
+		resources.find((resource) => resource.isPrimary),
+		...resources.filter((resource) => !resource.isPrimary),
+	].map(({ id }) => id);
+}
+
+export function mapModelToCreateFromWaitListItemDto(
+	waitListItemId: number,
+	booking: BookingModel,
+): BookingFromWaitListItemDto
 {
 	return {
 		waitListItemId,

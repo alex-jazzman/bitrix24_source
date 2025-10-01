@@ -11,7 +11,6 @@ $MESS['BICONNECTOR_SUPERSET_SETTINGS_KEY_UPDATE_SUCCESS'] = 'Ключ успеш
 $MESS['BICONNECTOR_SUPERSET_SETTINGS_KEY_UPDATE_FAILED'] = 'При обновлении ключа произошла ошибка';
 $MESS['BICONNECTOR_SUPERSET_SETTINGS_DASHBOARD_RANGE_FIELD_HINT'] = 'Изменение периода повлияет только на этот отчёт';
 $MESS['BICONNECTOR_SUPERSET_SETTINGS_DASHBOARD_HINT_LINK'] = 'Подробнее';
-$MESS['BICONNECTOR_SUPERSET_SETTINGS_NEW_DASHBOARD_NOTIFICATION_HINT_LINK'] = 'Выберите сотрудников, которым будут приходить уведомления о новых системных отчётах и их обновлениях. #HINT_LINK#';
 $MESS['BICONNECTOR_SUPERSET_SETTINGS_OWNER_HINT_LINK'] = 'Владелец имеет полный доступ к отчёту. Если вы смените владельца, то можете потерять доступ к этому отчёту. #HINT_LINK#';
 $MESS['BICONNECTOR_SUPERSET_SETTINGS_CLEAR_CACHE_HINT_LINK'] = 'Данные обновятся во всех отчётах. Повторное обновление будет доступно через определённый период времени. #HINT_LINK#';
 $MESS['BICONNECTOR_SUPERSET_SETTINGS_CLEAR_CACHE_BUTTON'] = 'Обновить данные';

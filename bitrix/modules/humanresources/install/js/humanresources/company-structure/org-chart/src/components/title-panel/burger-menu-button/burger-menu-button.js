@@ -31,31 +31,25 @@ export const BurgerMenuButton = {
 	mounted(): void
 	{
 		const permissionChecker = PermissionChecker.getInstance();
+		const id = permissionChecker.hasPermissionOfAction(PermissionActions.accessEdit)
+			? MenuOption.accessRights
+			: MenuOption.teamAccessRights
+		;
 
 		this.dropdownItems = [
 			{
-				id: MenuOption.accessRights,
-				title: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_CONFIG_PERMISSION_TITLE_MSGVER_1'),
-				description: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_CONFIG_PERMISSION_DESCR_MSGVER_1'),
+				id,
+				title: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_CONFIG_PERMISSION'),
+				description: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_CONFIG_PERMISSION_DESCR_MSGVER_2'),
 				bIcon: {
 					name: Main.PERSONS_2,
 					size: 20,
 					color: getColorCode('paletteBlue50'),
 				},
 				dataTestId: 'hr-org-chart_title-panel__access-rights-button',
-				permission: permissionChecker.hasPermissionOfAction(PermissionActions.accessEdit),
-			},
-			{
-				id: MenuOption.teamAccessRights,
-				title: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_CONFIG_TEAM_PERMISSION_TITLE'),
-				description: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_CONFIG_TEAM_PERMISSION_DESCR'),
-				bIcon: {
-					name: Main.MY_PLAN,
-					size: 20,
-					color: getColorCode('paletteBlue50'),
-				},
-				dataTestId: 'hr-org-chart_title-panel__team-access-rights-button',
-				permission: permissionChecker.hasPermissionOfAction(PermissionActions.teamAccessEdit),
+				permission: permissionChecker.hasPermissionOfAction(PermissionActions.accessEdit)
+					|| permissionChecker.hasPermissionOfAction(PermissionActions.teamAccessEdit)
+				,
 			},
 		];
 	},

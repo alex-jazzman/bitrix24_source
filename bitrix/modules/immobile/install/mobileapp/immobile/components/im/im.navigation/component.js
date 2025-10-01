@@ -46,6 +46,21 @@
 	const { NavigationCounterHandler } = require('im/messenger/lib/counters/counter-manager/navigation');
 	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
 
+	// TODO remove after updating freeze debug
+	window.syncRequestResultDebugInfo = {
+		result: null,
+		isViewLoaded: null,
+		readyEntitiesCollection: [],
+		isSyncFillerReady: null,
+	};
+
+	BX.addCustomEvent(EventType.sync.requestResultReceived, (result) => {
+		window.syncRequestResultDebugInfo.result = result;
+		window.syncRequestResultDebugInfo.isViewLoaded = window.isViewLoaded;
+		window.syncRequestResultDebugInfo.readyEntitiesCollection = [...EntityReady.readyEntitiesCollection];
+		window.syncRequestResultDebugInfo.isSyncFillerReady = window?.Navigation?.counterHandler?.syncHandler?.isReady;
+	});
+
 	class NavigationManager
 	{
 		#currentTab;
@@ -534,6 +549,35 @@
 			core.setAppStatus(event.name, event.value);
 		}
 	}
+
+	window.showMessengerDeveloperMenu = () => {
+		jn.import('im:messenger/lib/dev/menu')
+			.then(() => {
+				const { showDeveloperMenu } = require('im/messenger/lib/dev/menu');
+				showDeveloperMenu();
+			})
+			.catch((error) => {
+				// eslint-disable-next-line no-console
+				console.error(error);
+			})
+		;
+	};
+
+	window.openMessengerDeveloperConsole = async (componentCode = MessengerParams.getComponentCode()) => {
+		if (componentCode === MessengerParams.getComponentCode())
+		{
+			const { Console } = await requireLazy('im:messenger/lib/dev/tools');
+			Console.open();
+
+			return;
+		}
+
+		BX.postComponentEvent(EventType.messenger.dev.openConsole, [], componentCode);
+	};
+
+	BX.addCustomEvent(EventType.messenger.dev.openConsole, () => {
+		window.openMessengerDeveloperConsole();
+	});
 
 	window.Navigation = new NavigationManager();
 })().catch((error) => {

@@ -6,7 +6,6 @@ jn.define('selector/widget/entity/intranet/department', (require, exports, modul
 	const { mergeImmutable, clone } = require('utils/object');
 	const { BaseSelectorEntity } = require('selector/widget/entity');
 	const { isModuleInstalled } = require('module');
-	const { DepartmentInfo } = require('intranet/department-info');
 
 	/**
 	 * @class DepartmentSelector
@@ -159,6 +158,8 @@ jn.define('selector/widget/entity/intranet/department', (require, exports, modul
 			const instance = super.make(mergeImmutable(props, {
 				events: {
 					onInfoIconClicked: ({ item, text, scope }) => {
+						const { DepartmentInfo } = require('intranet/department-info');
+
 						const departmentInfoInstance = DepartmentInfo.open({
 							departmentId: item.id,
 							parentWidget: instance.widget,
@@ -234,13 +235,17 @@ jn.define('selector/widget/entity/intranet/department', (require, exports, modul
 					}
 				});
 			}
+			else
+			{
+				selectorInstance.disableCreation();
+			}
 		}
 
 		static prepareItemForDrawing(item)
 		{
 			return {
 				...item,
-				showInfoIcon: true,
+				showInfoIcon: isModuleInstalled('intranet'),
 			};
 		}
 	}

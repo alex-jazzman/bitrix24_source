@@ -14,6 +14,7 @@ return [
 		'im:messenger/view/lib/proxy-view',
 		'im:messenger/lib/helper',
 		'im:messenger/lib/logger',
+		'im:messenger/lib/element/dialog',
 		'im:messenger/lib/visibility-manager',
 		'im:messenger/lib/feature',
 		'im:messenger/lib/di/service-locator',

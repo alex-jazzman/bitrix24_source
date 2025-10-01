@@ -9,6 +9,7 @@ return [
 		'./dist/call.bundle.js',
 	],
 	'rel' => [
+		'im.v2.lib.desktop-api',
 		'main.core.events',
 		'ui.vue3.vuex',
 		'call.core',

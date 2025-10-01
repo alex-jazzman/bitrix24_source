@@ -2,16 +2,17 @@
 
 return [
 	'extensions' => [
-		'selector/providers/base',
-		'im:messenger/lib/di/service-locator',
-		'utils/function',
-		'utils/url',
 		'im:messenger/loc',
-		'im:messenger/controller/search/experimental',
-		'im:messenger/lib/element',
-		'im:messenger/lib/helper',
 		'type',
+		'utils/url',
+		'utils/function',
+		'selector/providers/base',
 		'im:messenger/const',
+		'im:messenger/lib/helper',
+		'im:messenger/lib/di/service-locator',
+		'im:messenger/lib/element/chat-title',
+		'im:messenger/lib/element/chat-avatar',
+		'im:messenger/controller/search/experimental',
 	],
 	'bundle' => [
 	],

@@ -31,11 +31,13 @@ export class ApplicationInternalizer implements Transformer<Options, Readonly<Op
 					addUserGroupsProviderTab: Boolean(externalSource.additionalMembersParams?.addUserGroupsProviderTab ?? false),
 					addProjectsProviderTab: Boolean(externalSource.additionalMembersParams?.addProjectsProviderTab ?? true),
 					addStructureTeamsProviderTab: Boolean(externalSource.additionalMembersParams?.addStructureTeamsProviderTab ?? false),
+					addStructureRolesProviderTab: Boolean(externalSource.additionalMembersParams?.addStructureRolesProviderTab ?? false),
 				}
 				: {
 					addUserGroupsProviderTab: false,
 					addProjectsProviderTab: true,
 					addStructureTeamsProviderTab: false,
+					addStructureRolesProviderTab: false,
 				},
 			isSaveAccessRightsList: Type.isBoolean(externalSource.isSaveAccessRightsList)
 				? externalSource.isSaveAccessRightsList

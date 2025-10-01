@@ -158,7 +158,7 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 	      return this.message ? this.formatDate(this.message.date) : '';
 	    },
 	    isChatSelected() {
-	      if (this.layout.name !== im_v2_const.Layout.openlinesV2.name) {
+	      if (this.layout.name !== im_v2_const.Layout.openlinesV2) {
 	        return false;
 	      }
 	      return this.layout.entityId === this.recentItem.dialogId;

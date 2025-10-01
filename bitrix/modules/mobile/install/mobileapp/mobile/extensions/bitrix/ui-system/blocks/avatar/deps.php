@@ -22,9 +22,7 @@ return [
 		'utils/validation',
 	],
 	'bundle' => [
-		'./src/elements/base',
-		'./src/elements/native',
-		'./src/elements/layout',
+		'./src/elements/avatar-view',
 		'./src/enums/shape',
 		'./src/enums/empty-avatar',
 		'./src/enums/entity-type',
@@ -33,5 +31,5 @@ return [
 		'./src/enums/native-placeholder-type',
 		'./src/providers/redux',
 		'./src/providers/selector',
-	]
+	],
 ];

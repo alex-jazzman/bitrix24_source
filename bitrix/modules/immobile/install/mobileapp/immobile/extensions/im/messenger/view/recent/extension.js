@@ -7,7 +7,7 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 	const { Runtime } = require('runtime');
 	const { Loc } = require('im/messenger/loc');
 	const { Icon } = require('assets/icons');
-	const { RecentItem } = require('im/messenger/lib/element');
+	const { RecentItem } = require('im/messenger/lib/element/recent');
 
 	const { getTopMenuNotificationsButton } = require('im/messenger/api/notifications-opener');
 
@@ -667,6 +667,22 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 			})
 		;
 	};
+
+	window.openMessengerDeveloperConsole = async (componentCode = MessengerParams.getComponentCode()) => {
+		if (componentCode === MessengerParams.getComponentCode())
+		{
+			const { Console } = await requireLazy('im:messenger/lib/dev/tools');
+			Console.open();
+
+			return;
+		}
+
+		BX.postComponentEvent(EventType.messenger.dev.openConsole, [], componentCode);
+	};
+
+	BX.addCustomEvent(EventType.messenger.dev.openConsole, () => {
+		window.openMessengerDeveloperConsole();
+	});
 
 	module.exports = {
 		RecentView,

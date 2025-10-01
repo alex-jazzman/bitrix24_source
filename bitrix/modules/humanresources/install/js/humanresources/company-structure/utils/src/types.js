@@ -14,4 +14,7 @@ export type ChatOrChannelDetailed = {
 export type ChatListResponse = {
 	channels: ChatOrChannelDetailed[],
 	chats: ChatOrChannelDetailed[],
+	collabs: ChatOrChannelDetailed[],
+	channelsNoAccess: number,
+	chatsNoAccess: number,
 }

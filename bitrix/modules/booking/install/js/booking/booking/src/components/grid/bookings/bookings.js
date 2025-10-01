@@ -18,6 +18,7 @@ import './bookings.css';
 
 const { mapGetters: mapBookingsGetters } = createNamespacedHelpers(Model.Bookings);
 const { mapGetters: mapInterfaceGetters } = createNamespacedHelpers(Model.Interface);
+const { mapGetters: mapFilterGetters } = createNamespacedHelpers(Model.Filter);
 
 export const Bookings = {
 	name: 'Bookings',
@@ -34,16 +35,18 @@ export const Bookings = {
 		...mapInterfaceGetters({
 			resourcesIds: 'resourcesIds',
 			selectedDateTs: 'selectedDateTs',
-			isFilterMode: 'isFilterMode',
-			filteredBookingsIds: 'filteredBookingsIds',
 			selectedCells: 'selectedCells',
 			hoveredCell: 'hoveredCell',
 			busySlots: 'busySlots',
-			quickFilter: 'quickFilter',
 			isFeatureEnabled: 'isFeatureEnabled',
 			editingBookingId: 'editingBookingId',
 			embedItems: 'embedItems',
 			draggedBookingId: 'draggedBookingId',
+		}),
+		...mapFilterGetters({
+			filteredBookingsIds: 'filteredBookingsIds',
+			isFilterMode: 'isFilterMode',
+			quickFilter: 'quickFilter',
 		}),
 		resourcesHash(): string
 		{

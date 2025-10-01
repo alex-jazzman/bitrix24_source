@@ -31,6 +31,8 @@ export const Feature = {
 	isAIModelChangeAllowed: 'isCopilotSelectModelAvailable',
 	teamsInStructureAvailable: 'teamsInStructureAvailable',
 	isDesktopRedirectAvailable: 'isDesktopRedirectAvailable',
+	aiAssistantBotAvailable: 'aiAssistantAvailable',
+	aiAssistantChatAvailable: 'aiAssistantChatCreationAvailable',
 };
 
 export const FeatureManager = {

@@ -210,7 +210,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 			});
 
 			this.view = (!this.props.view || this.props.view === ViewMode.LIST) ? ViewMode.KANBAN : this.props.view;
-			this.kanbanOwnerId = this.view === ViewMode.PLANNER ? this.props.kanbanOwnerId : this.props.userId;
+			this.kanbanOwnerId = this.getKanbanOwnerId();
 			this.initialStageId = selectTaskStageByTaskIdOrGuid(
 				store.getState(),
 				this.#taskId,
@@ -239,7 +239,31 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 			}
 
 			this.#observeTaskState();
-			this.unsubscribeCreationErrorObserver = observeCreationError(store, this.onCreationErrorChange);
+			this.unsubscribeCreationErrorObserver = observeCreationError(
+				store,
+				this.onCreationErrorChange,
+				{ ownerId: this.props.kanbanOwnerId },
+			);
+		}
+
+		getKanbanOwnerId()
+		{
+			if (this.view === ViewMode.PLANNER)
+			{
+				return this.shouldShowPlannerStages() && this.props.kanbanOwnerId;
+			}
+
+			return this.props.userId;
+		}
+
+		shouldShowPlannerStages()
+		{
+			const kanbanOwnerId = Number(this.props.kanbanOwnerId);
+			const userId = Number(this.props.userId);
+
+			return Number.isInteger(kanbanOwnerId)
+				&& Number.isInteger(userId)
+				&& kanbanOwnerId === userId;
 		}
 
 		onViewRemoved = () => {
@@ -453,7 +477,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 			} = responseData || {};
 
 			const actions = [
-				tasks.length > 0 && tasksUpserted(tasks),
+				tasks.length > 0 && tasksUpserted({ tasks, ownerId: this.kanbanOwnerId }),
 				users.length > 0 && usersUpserted(users),
 				reactions.length > 0 && reactionsUpserted(reactions),
 				reactionsVoteSignToken && reactionsVoteSignTokenUpserted(reactionsVoteSignToken),
@@ -585,7 +609,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 		 */
 		get #task()
 		{
-			return selectByTaskIdOrGuid(store.getState(), this.props.taskId);
+			return selectByTaskIdOrGuid(store.getState(), this.props.taskId, this.kanbanOwnerId);
 		}
 
 		/**
@@ -598,7 +622,10 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 
 		get #actions()
 		{
-			return selectActions(this.#task);
+			return selectActions({
+				task: this.#task,
+				isCurrentUser: env.userId === this.props.userId,
+			});
 		}
 
 		shouldBlockUI()
@@ -653,6 +680,8 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 				},
 				engine: new TopMenuEngine(),
 				allowSuccessToasts: true,
+				projectId: this.props.projectId,
+				ownerId: this.kanbanOwnerId,
 			})).show();
 		}
 
@@ -1097,6 +1126,11 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 
 		#isStageSelectorInitiallyHidden()
 		{
+			if (this.view === ViewMode.PLANNER)
+			{
+				return !this.shouldShowPlannerStages();
+			}
+
 			return (this.view === ViewMode.KANBAN && !this.#task?.shouldShowKanbanStages);
 		}
 
@@ -1130,6 +1164,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 				layout: this.layout,
 				showDivider: form.hasCompactVisibleFields(),
 				analyticsLabel: this.props.analyticsLabel,
+				ownerId: this.kanbanOwnerId,
 			});
 		}
 

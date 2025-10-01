@@ -179,14 +179,7 @@ jn.define('selector/widget/entity/tree-selectors/directory-selector', (require, 
 		};
 
 		#setIsButtonActive = (state) => {
-			if (Application.getApiVersion() < 56)
-			{
-				this.getSelector().getWidget().setSendButtonEnabled(state);
-			}
-			else
-			{
-				this.getSelector().getWidget().setSendButtonVisible(state);
-			}
+			this.getSelector().getWidget().setSendButtonVisible(state);
 		};
 
 		onItemSelected = ({ item, text, scope }) => {

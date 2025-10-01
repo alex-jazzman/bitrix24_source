@@ -83,7 +83,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    }
 	    await im_v2_lib_slider.MessengerSlider.getInstance().openSlider();
 	    const layoutParams = {
-	      name: im_v2_const.Layout.chat.name,
+	      name: im_v2_const.Layout.chat,
 	      entityId: preparedDialogId
 	    };
 	    if (messageId > 0) {
@@ -102,7 +102,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    const preparedDialogId = dialogId.toString();
 	    await im_v2_lib_slider.MessengerSlider.getInstance().openSlider();
 	    const layoutParams = {
-	      name: im_v2_const.Layout.chat.name,
+	      name: im_v2_const.Layout.chat,
 	      entityId: preparedDialogId
 	    };
 	    await im_v2_lib_layout.LayoutManager.getInstance().setLayout(layoutParams);
@@ -128,7 +128,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    await im_v2_lib_slider.MessengerSlider.getInstance().openSlider();
 	    const optionOpenLinesV2Activated = im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.openLinesV2);
 	    return im_v2_lib_layout.LayoutManager.getInstance().setLayout({
-	      name: optionOpenLinesV2Activated ? im_v2_const.Layout.openlinesV2.name : im_v2_const.Layout.openlines.name,
+	      name: optionOpenLinesV2Activated ? im_v2_const.Layout.openlinesV2 : im_v2_const.Layout.openlines,
 	      entityId: preparedDialogId
 	    });
 	  },
@@ -136,7 +136,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    const preparedDialogId = dialogId.toString();
 	    await im_v2_lib_slider.MessengerSlider.getInstance().openSlider();
 	    return im_v2_lib_layout.LayoutManager.getInstance().setLayout({
-	      name: im_v2_const.Layout.copilot.name,
+	      name: im_v2_const.Layout.aiAssistant,
 	      entityId: preparedDialogId,
 	      contextId
 	    });
@@ -149,7 +149,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    }
 	    await im_v2_lib_slider.MessengerSlider.getInstance().openSlider();
 	    return im_v2_lib_layout.LayoutManager.getInstance().setLayout({
-	      name: im_v2_const.Layout.collab.name,
+	      name: im_v2_const.Layout.collab,
 	      entityId: preparedDialogId
 	    });
 	  },
@@ -172,7 +172,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  async openNotifications() {
 	    await im_v2_lib_slider.MessengerSlider.getInstance().openSlider();
 	    await im_v2_lib_layout.LayoutManager.getInstance().setLayout({
-	      name: im_v2_const.Layout.notification.name
+	      name: im_v2_const.Layout.notification
 	    });
 	    main_core_events.EventEmitter.emit(im_v2_const.EventType.layout.onOpenNotifications);
 	    return Promise.resolve();
@@ -180,7 +180,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  async openRecentSearch() {
 	    await im_v2_lib_slider.MessengerSlider.getInstance().openSlider();
 	    await im_v2_lib_layout.LayoutManager.getInstance().setLayout({
-	      name: im_v2_const.Layout.chat.name
+	      name: im_v2_const.Layout.chat
 	    });
 	    main_core_events.EventEmitter.emit(im_v2_const.EventType.recent.openSearch);
 	    return Promise.resolve();
@@ -189,7 +189,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    im_v2_lib_logger.Logger.warn('Slider: openSettings', sectionName);
 	    await im_v2_lib_slider.MessengerSlider.getInstance().openSlider();
 	    await im_v2_lib_layout.LayoutManager.getInstance().setLayout({
-	      name: im_v2_const.Layout.settings.name,
+	      name: im_v2_const.Layout.settings,
 	      entityId: sectionName
 	    });
 	    return Promise.resolve();
@@ -211,7 +211,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    im_v2_lib_createChat.CreateChatManager.getInstance().setOwnerId((_params$ownerId = params.ownerId) != null ? _params$ownerId : null);
 	    await im_v2_lib_slider.MessengerSlider.getInstance().openSlider();
 	    const layoutParams = {
-	      name: im_v2_const.Layout.createChat.name,
+	      name: im_v2_const.Layout.createChat,
 	      entityId: chatType
 	    };
 	    return im_v2_lib_layout.LayoutManager.getInstance().setLayout(layoutParams);

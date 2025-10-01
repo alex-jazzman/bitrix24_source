@@ -20,7 +20,16 @@ import { CopilotNotify, CopilotNotifyType } from './view/copilot-notify';
 import { RecordWithCopilotPopup } from './view/record-with-copilot-popup';
 import {WebScreenSharePopup} from './web_screenshare_popup';
 import {FloatingScreenShare} from './floating_screenshare';
-import { CallEngine, UserState, Provider, CallState, CallEvent, DisconnectReason, CallScheme } from './engine/engine';
+import {
+	CallEngine,
+	UserState,
+	Provider,
+	CallState,
+	CallEvent,
+	DisconnectReason,
+	CallScheme,
+	StartCallErrorCode,
+} from './engine/engine';
 import {CallEngineLegacy} from './engine/engine_legacy';
 import {BitrixCall} from './engine/bitrix_call_legacy'
 import {VoximplantCall} from './engine/voximplant_call'
@@ -39,6 +48,7 @@ import { RecorderStatus } from './call_api.js';
 import { ParticipantsPermissionPopup } from './view/participants-permission-popup';
 import {PictureInPictureWindow} from './view/pictureInPictureWindow';
 import { CallSettingsManager } from 'call.lib.settings-manager';
+import { CallMultiChannel } from './call_multi_channel';
 
 import './css/call-overlay.css';
 
@@ -184,6 +194,7 @@ export class CallController extends EventEmitter
 
 		this.callRecordState = View.RecordState.Stopped;
 		this.callRecordType = View.RecordType.None;
+		this.callRecordInitiatorId = null;
 		this.callRecordInfo = null;
 
 		this.autoCloseCallView = true;
@@ -307,6 +318,8 @@ export class CallController extends EventEmitter
 
 		this.isCallHangupButtonPressed = false;
 
+		this.callMultiBroadcastClient = null;
+
 		if (needInit)
 		{
 			this.init();
@@ -429,6 +442,27 @@ export class CallController extends EventEmitter
 		BX.addCustomEvent(window, "onImUpdateCounterMessage", this._onUpdateChatCounter.bind(this));
 
 		BX.garbage(this.destroy, this);
+
+		if (DesktopApi.isDesktop())
+		{
+			this.callMultiBroadcastClient = new CallMultiChannel('call_controller_multi_channel');
+
+			this.callMultiBroadcastClient.executer((callUuid) => {
+				const currentCallUuid = this.currentCall?.uuid;
+				const hasView = Boolean(this.callView);
+
+				const hasActiveCall = currentCallUuid === callUuid && hasView;
+
+				if (hasActiveCall)
+				{
+					BXDesktopSystem.SetActiveTab();
+				}
+
+				return hasActiveCall;
+			});
+		}
+
+		CallEngine.multiBroadcastClient.executer(() => Boolean(this.callView));
 
 		this.inited = true;
 	}
@@ -557,7 +591,7 @@ export class CallController extends EventEmitter
 
 		if (!isCurrentCallActive)
 		{
-			if (newCall.initiatorId == this.userId)
+			if ((newCall.initiatorId == this.userId) || CallEngineLegacy.calls[newCall.parentId])
 			{
 				return;
 			}
@@ -1026,18 +1060,14 @@ export class CallController extends EventEmitter
 		this.childCall = null;
 
 		let previousRecordType = View.RecordType.None;
+
 		if (this.isRecording())
 		{
 			previousRecordType = this.callRecordType;
-
-			BXDesktopSystem.CallRecordStop();
-			this.callRecordState = View.RecordState.Stopped;
-			this.callRecordType = View.RecordType.None;
-			this.callView.setRecordState(this.callView.getDefaultRecordState());
-			this.callView.setButtonActive('record', false);
+			this.#stopRecordCall();
 		}
 
-		this.callView.showButton('floorRequest');
+		this.callView.showButtons(['floorRequest', 'hangupOptions'])
 
 		newCall.removeEventListener(CallEvent.onUserJoined, this._onChildCallFirstMediaHandler);
 		newCall.removeEventListener(CallEvent.onRemoteMediaReceived, this._onChildCallFirstUserJoinedHandler);
@@ -1342,7 +1372,7 @@ export class CallController extends EventEmitter
 		const call = CallEngineLegacy.getCallWithDialogId(dialogId) || CallEngine.getCallWithDialogId(dialogId);
 		if (call)
 		{
-			this.joinCall(call.id, call.uuid, video, { chatInfo: call.associatedEntity });
+			this.joinCall(call.id, call.uuid, video, { chatInfo: call.associatedEntity, mustCreate: true });
 
 			return;
 		}
@@ -1639,7 +1669,12 @@ export class CallController extends EventEmitter
 		}
 	}
 
-	joinCall(callId: number, callUuid: string, video: boolean, options: {joinAsViewer?: boolean, chatInfo: {}})
+	joinCall(
+		callId: number,
+		callUuid: string,
+		video: boolean,
+		options: { joinAsViewer?: boolean, chatInfo: {}, mustCreate?: Boolean },
+	)
 	{
 		const joinAsViewer = BX.prop.getBoolean(options, "joinAsViewer", false);
 
@@ -1683,20 +1718,23 @@ export class CallController extends EventEmitter
 			: CallTokenManager.getToken(options.chatInfo.chatId);
 
 		this.initCallPromise
-			.then((callToken) =>
-			{
-				const config = {
-					provider,
-					entityType: 'chat',
-					entityId: options.chatInfo.id,
-					videoEnabled: Boolean(video),
-					enableMicAutoParameters: Hardware.enableMicAutoParameters,
-					joinExisting: true,
-					roomId: callUuid,
-					debug: this.debug,
-					token: callToken,
-					chatInfo: options.chatInfo,
-				};
+			.then((callToken) => {
+				let config = null;
+				if (options?.mustCreate)
+				{
+					config = {
+						provider,
+						entityType: 'chat',
+						entityId: options.chatInfo.id,
+						videoEnabled: Boolean(video),
+						enableMicAutoParameters: Hardware.enableMicAutoParameters,
+						joinExisting: true,
+						roomId: callUuid,
+						debug: this.debug,
+						token: callToken,
+						chatInfo: options.chatInfo,
+					};
+				}
 
 				return isLegacyCall
 					? CallEngineLegacy.getCallWithId(callId)
@@ -1836,8 +1874,7 @@ export class CallController extends EventEmitter
 
 				this.initCallPromise = null;
 			})
-			.catch((error) =>
-			{
+			.catch((error) => {
 				this.initCallPromise = null;
 				let errorCode = 'UNKNOWN_ERROR';
 				if (Type.isString(error))
@@ -2666,12 +2703,12 @@ export class CallController extends EventEmitter
 
 	getDocumentType()
 	{
-		if (this.docEditor.options.type === DocumentType.Resume)
+		if (this.docEditor?.options?.type === DocumentType.Resume)
 		{
 			return Analytics.AnalyticsType.resume;
 		}
 
-		switch (this.docEditor.options.typeFile)
+		switch (this.docEditor?.options?.typeFile)
 		{
 			case FILE_TYPE_DOCX:
 				return Analytics.AnalyticsType.doc;
@@ -2680,10 +2717,14 @@ export class CallController extends EventEmitter
 			case FILE_TYPE_PPTX:
 				return Analytics.AnalyticsType.presentation;
 		}
+		
+		return '';
 	}
 
-	unfold()
+	unfold(options = {})
 	{
+		const { fromPiP = false } = options;
+
 		if (this.detached)
 		{
 			this.container.style.removeProperty('width');
@@ -2695,6 +2736,7 @@ export class CallController extends EventEmitter
 				this.floatingWindow.hide();
 			}
 		}
+
 		if (this.folded)
 		{
 			this.folded = false;
@@ -2710,8 +2752,9 @@ export class CallController extends EventEmitter
 				}
 			}
 
-			this.togglePictureInPictureCallWindow();
+			this.togglePictureInPictureCallWindow({ isForceClose: fromPiP });
 		}
+
 		BX.onCustomEvent(this, "CallController::onUnfold", {});
 	}
 
@@ -2904,6 +2947,24 @@ export class CallController extends EventEmitter
 		this.callRecordState = View.RecordState.Started;
 	}
 
+	#stopRecordCall()
+	{
+		if (this.isRecording())
+		{
+			BXDesktopSystem.CallRecordStop();
+
+			this.callRecordState = View.RecordState.Stopped;
+			this.callRecordType = View.RecordType.None;
+			this.callView.setRecordState(this.callView.getDefaultRecordState());
+			this.callView.setButtonActive('record', false);
+
+			this.currentCall.sendRecordState({
+				action: View.RecordState.Stopped,
+				userId: this.userId,
+			});
+		}
+	}
+
 	// event handlers
 
 	_onCallNotificationClose()
@@ -3009,7 +3070,7 @@ export class CallController extends EventEmitter
 		const isLegacyCall= callParams.scheme === CallScheme.classic;
 		const currentCallPromise = isLegacyCall
 			? CallEngineLegacy.getCallWithId(callParams.id)
-			: CallEngine.getCallWithId(callParams.uuid, {})
+			: CallEngine.getCallWithId(callParams.uuid)
 		;
 
 		currentCallPromise.then(result => {
@@ -3276,9 +3337,10 @@ export class CallController extends EventEmitter
 
 	_onPipClose()
 	{
-		if (this.folded)
+		const isViewHidden = this.callView.viewVisibility.getCurrentVisibility() === View.DocumentVisibilityState.hidden;
+		if (this.folded && isViewHidden)
 		{
-			this.unfold();
+			this.unfold({ fromPiP: true });
 		}
 	}
 
@@ -3445,7 +3507,6 @@ export class CallController extends EventEmitter
 
 		const floorState = this.callView.getUserFloorRequestState(CallEngine.getCurrentUserId());
 		const talkingState = this.callView.getUserTalking(CallEngine.getCurrentUserId());
-
 		this.callView.setUserFloorRequestState(CallEngine.getCurrentUserId(), !floorState);
 
 		if (this.currentCall)
@@ -4139,7 +4200,7 @@ export class CallController extends EventEmitter
 
 		Hardware.setIsCameraOn({isCameraOn: e.video, calledProgrammatically: !!e.calledProgrammatically});
 
-		if (!e.video)
+		if (!e.video && !this.currentCall.isScreenSharingStarted())
 		{
 			this.callView.releaseLocalMedia();
 		}
@@ -4433,12 +4494,8 @@ export class CallController extends EventEmitter
 			this.invitePopup.close();
 		}
 
-		if (this.isRecording())
-		{
-			BXDesktopSystem.CallRecordStop();
-		}
-		this.callRecordState = View.RecordState.Stopped;
-		this.callRecordType = View.RecordType.None;
+		this.#stopRecordCall();
+
 		if (this.callRecordMenu)
 		{
 			this.callRecordMenu.close();
@@ -4597,6 +4654,14 @@ export class CallController extends EventEmitter
 						name: userData.name
 					}));
 				}.bind(this));*/
+
+			if (e.userId === this.callRecordInitiatorId)
+			{
+				this.callRecordState = View.RecordState.Stopped;
+				this.callRecordType = View.RecordType.None;
+				this.callView.setRecordState(this.callView.getDefaultRecordState());
+				this.callView.setButtonActive('record', false);
+			}
 		}
 		else if (e.state == UserState.Failed)
 		{
@@ -4908,6 +4973,11 @@ export class CallController extends EventEmitter
 	{
 		if (!this.callView)
 		{
+			Util.sendLog({
+				description: 'trying to do #setUserMedia, but callView is not initialized yet',
+				userId: e.userId,
+				kind: e.kind,
+			});
 			return;
 		}
 
@@ -5159,7 +5229,11 @@ export class CallController extends EventEmitter
 		if (this.callView)
 		{
 			this.callView.setUserTalking(e.userId, true);
-			this.callView.setUserFloorRequestState(e.userId, false);
+			if (e.userId == this.callView.localUser.id)
+			{
+				this.callView.setUserFloorRequestState(e.userId, false);
+			}
+
 		}
 		if (this.floatingWindow)
 		{
@@ -5690,10 +5764,15 @@ export class CallController extends EventEmitter
 	{
 		this.callRecordState = event.recordState.state;
 		this.callView.setRecordState(event.recordState);
+		this.callRecordInitiatorId = event.userId;
 
 		if (event.recordState.state !== View.RecordState.Stopped)
 		{
 			this.callRecordInfo = event.recordState;
+		}
+		else
+		{
+			this.callRecordInitiatorId = null;
 		}
 
 		if (!this.canRecord() || event.userId != BX.message['USER_ID'])
@@ -5733,7 +5812,6 @@ export class CallController extends EventEmitter
 				callType: this.getCallType(),
 			});
 
-			console.error('DIALOG ID', dialogId);
 			BXDesktopSystem.CallRecordStart({
 				windowId: windowId,
 				fileName: fileName,
@@ -5776,68 +5854,82 @@ export class CallController extends EventEmitter
 	{
 		const errorCode = e.code || e.name || e.error;
 
-		let errorMessage;
+		let errorMessage = '';
+		let isUnknownError = false;
 
-		if (e.name == "VoxConnectionError" || e.name == "AuthResult")
+		if (e.name === 'VoxConnectionError' || e.name === 'AuthResult')
 		{
 			Util.reportConnectionResult(e.call.id, false);
 		}
 
-		if (e.name == "AuthResult" || errorCode == "AUTHORIZE_ERROR")
+		switch (errorCode)
 		{
-			errorMessage = BX.message("IM_CALL_ERROR_AUTHORIZATION");
-		}
-		else if (e.name == "Failed" && errorCode == 403)
-		{
-			errorMessage = BX.message("IM_CALL_ERROR_HARDWARE_ACCESS_DENIED");
-		}
-		else if (errorCode == "ERROR_UNEXPECTED_ANSWER")
-		{
-			errorMessage = BX.message("IM_CALL_ERROR_UNEXPECTED_ANSWER");
-		}
-		else if (errorCode == "BLANK_ANSWER_WITH_ERROR_CODE")
-		{
-			errorMessage = BX.message("IM_CALL_ERROR_BLANK_ANSWER");
-		}
-		else if (errorCode == "BLANK_ANSWER")
-		{
-			errorMessage = BX.message("IM_CALL_ERROR_BLANK_ANSWER");
-		}
-		else if (errorCode == "ACCESS_DENIED")
-		{
-			errorMessage = BX.message("IM_CALL_ERROR_ACCESS_DENIED");
-		}
-		else if (errorCode == "NO_WEBRTC")
-		{
-			errorMessage = this.isHttps ? BX.message("IM_CALL_NO_WEBRT") : BX.message("IM_CALL_ERROR_HTTPS_REQUIRED");
-		}
-		else if (errorCode == "UNKNOWN_ERROR")
-		{
-			errorMessage = BX.message("IM_CALL_ERROR_UNKNOWN");
-		}
-		else if (errorCode == "NETWORK_ERROR")
-		{
-			errorMessage = BX.message("IM_CALL_ERROR_NETWORK");
-		}
-		else if (errorCode == "NotAllowedError")
-		{
-			errorMessage = BX.message("IM_CALL_ERROR_HARDWARE_ACCESS_DENIED");
-		}
-		else
-		{
-			//errorMessage = BX.message("IM_CALL_ERROR_HARDWARE_ACCESS_DENIED");
-			errorMessage = BX.message("IM_CALL_ERROR_UNKNOWN_WITH_CODE").replace("#ERROR_CODE#", errorCode);
+			case StartCallErrorCode.ErrorUnexpectedAnswer:
+				errorMessage = Loc.getMessage('IM_CALL_ERROR_UNEXPECTED_ANSWER');
+				break;
+
+			case StartCallErrorCode.BlankAnswerWithErrorCode:
+				errorMessage = Loc.getMessage('IM_CALL_ERROR_BLANK_ANSWER');
+				break;
+
+			case StartCallErrorCode.BlankAnswer:
+				errorMessage = Loc.getMessage('IM_CALL_ERROR_BLANK_ANSWER');
+				break;
+
+			case StartCallErrorCode.AccessDenied:
+				errorMessage = Loc.getMessage('IM_CALL_ERROR_ACCESS_DENIED');
+				break;
+
+			case StartCallErrorCode.NoWebrtc:
+				errorMessage = Loc.getMessage(this.isHttps ? 'IM_CALL_NO_WEBRT' : 'IM_CALL_ERROR_HTTPS_REQUIRED');
+				break;
+
+			case StartCallErrorCode.UnknownError:
+				isUnknownError = true;
+				errorMessage = Loc.getMessage('IM_CALL_ERROR_UNKNOWN');
+				break;
+
+			case StartCallErrorCode.NetworkError:
+				errorMessage = Loc.getMessage('IM_CALL_ERROR_NETWORK');
+				break;
+
+			case StartCallErrorCode.NotAllowedError:
+				errorMessage = Loc.getMessage('IM_CALL_ERROR_HARDWARE_ACCESS_DENIED');
+				break;
+
+			case StartCallErrorCode.NotReadableError:
+				errorMessage = Loc.getMessage('IM_CALL_ERROR_HARDWARE');
+				break;
+
+			default:
+				if (errorCode === StartCallErrorCode.AuthorizeError || e.name === 'AuthResult')
+				{
+					errorMessage = Loc.getMessage('IM_CALL_ERROR_AUTHORIZATION');
+				}
+				else if (errorCode == 403 && e.name === 'Failed')
+				{
+					errorMessage = Loc.getMessage('IM_CALL_ERROR_HARDWARE_ACCESS_DENIED');
+				}
+				else
+				{
+					isUnknownError = true;
+					errorMessage = Loc.getMessage('IM_CALL_ERROR_UNKNOWN_WITH_CODE', { '#ERROR_CODE#': errorCode });
+				}
 		}
 
 		if (this.callView)
 		{
-			if (errorCode === DisconnectReason.SecurityKeyChanged)
+			if (isUnknownError)
+			{
+				this.callView.showSelfTest();
+			}
+			else if (errorCode === DisconnectReason.SecurityKeyChanged)
 			{
 				this.callView.showSecurityKeyError();
 			}
 			else
 			{
-				this.callView.showFatalError();
+				this.callView.showFatalError({ text: errorMessage });
 			}
 		}
 		else
@@ -6074,12 +6166,8 @@ export class CallController extends EventEmitter
 
 		Hardware.isMicrophoneMuted = false;
 
-		if (this.isRecording())
-		{
-			BXDesktopSystem.CallRecordStop();
-		}
-		this.callRecordState = View.RecordState.Stopped;
-		this.callRecordType = View.RecordType.None;
+		this.#stopRecordCall();
+
 		this.docCreatedForCurrentCall = false;
 		let callDetails;
 
@@ -6625,6 +6713,9 @@ export class CallController extends EventEmitter
 			this.resizeObserver.disconnect();
 			this.resizeObserver = null;
 		}
+
+		this.callMultiBroadcastClient && this.callMultiBroadcastClient.destroy()
+
 		Hardware.unsubscribe(Hardware.Events.onChangeMirroringVideo, this._onCallLocalCameraFlipHandler);
 	}
 

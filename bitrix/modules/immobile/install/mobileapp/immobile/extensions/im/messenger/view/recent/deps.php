@@ -11,7 +11,7 @@ return [
 		'im:messenger/const',
 		'im:messenger/view/base',
 		'im:messenger/lib/params',
-		'im:messenger/lib/element',
+		'im:messenger/lib/element/recent',
 		'im:messenger/lib/logger',
 		'im:messenger/lib/feature',
 		'im:messenger/lib/quick-recent-load',

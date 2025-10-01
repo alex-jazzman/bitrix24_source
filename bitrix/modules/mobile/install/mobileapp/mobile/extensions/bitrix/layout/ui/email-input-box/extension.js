@@ -14,8 +14,6 @@ jn.define('layout/ui/email-input-box', (require, exports, module) => {
 	const { MultiEmailInput, ChipDesign, MultiEmailInputDesign } = require('ui-system/form/inputs/multi-email');
 	const { InviteButton } = require('layout/ui/email-input-box/src/invite-button');
 	const { createTestIdGenerator } = require('utils/test');
-	const { openEmailInputBoxOld } = require('layout/ui/email-input-box-old');
-	const { Feature } = require('feature');
 	const { Text5 } = require('ui-system/typography/text');
 
 	const layoutHeight = 285;
@@ -248,11 +246,6 @@ jn.define('layout/ui/email-input-box', (require, exports, module) => {
 	 * @return {Promise}
 	 */
 	const openEmailInputBox = (props) => {
-		if (!Feature.isMultiEmailInputSupported())
-		{
-			return openEmailInputBoxOld(props);
-		}
-
 		return new Promise((resolve) => {
 			const parentLayout = props.parentLayout || PageManager;
 			const controlInstance = new EmailInputBox(props);

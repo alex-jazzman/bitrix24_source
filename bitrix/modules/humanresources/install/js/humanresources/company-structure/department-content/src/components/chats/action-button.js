@@ -103,7 +103,7 @@ export const ChatListItemActionButton = {
 
 			try
 			{
-				await DepartmentAPI.saveChats(this.nodeId, [], [this.chat.id]);
+				await DepartmentAPI.updateChats(this.nodeId, [], [this.chat.id]);
 			}
 			catch (error)
 			{
@@ -124,6 +124,15 @@ export const ChatListItemActionButton = {
 			}
 
 			DepartmentContentActions.unbindChatFromNode(this.nodeId, this.chat.id);
+
+			const isOwnChat = !this.chat.originalNodeId || this.chat.originalNodeId === this.nodeId;
+
+			if (isOwnChat)
+			{
+				DepartmentContentActions.updateChatsInChildrenNodes(
+					this.nodeId,
+				);
+			}
 
 			UI.Notification.Center.notify({
 				content: this.loc(`HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_UNBIND_POPUP_${chatType}_FROM_${entityType}_SUCCESS`),

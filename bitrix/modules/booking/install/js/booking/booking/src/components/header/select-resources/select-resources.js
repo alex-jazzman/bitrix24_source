@@ -68,7 +68,7 @@ export const SelectResources = {
 			selectedDateTs: `${Model.Interface}/selectedDateTs`,
 			favoritesIds: `${Model.Favorites}/get`,
 			resources: `${Model.Resources}/get`,
-			isFilterMode: `${Model.Interface}/isFilterMode`,
+			isFilterMode: `${Model.Filter}/isFilterMode`,
 			isEditingBookingMode: `${Model.Interface}/isEditingBookingMode`,
 			isLoaded: `${Model.Interface}/isLoaded`,
 			mainResources: `${Model.MainResources}/resources`,
@@ -113,7 +113,8 @@ export const SelectResources = {
 			if (scrollTop + 10 >= maxScroll)
 			{
 				const loadedResourcesIds = resourcesDateCache.getIdsByDateTs(this.selectedDateTs / 1000);
-				const resourcesIds = this.resources.map((resource: ResourceModel) => resource.id);
+				const activeResources = this.resources.filter((resource: ResourceModel) => !resource.isDeleted);
+				const resourcesIds = activeResources.map((resource: ResourceModel) => resource.id);
 				const idsToLoad = resourcesIds
 					.filter((id: number) => !loadedResourcesIds.includes(id))
 					.slice(0, Limit.ResourcesDialog)
@@ -219,7 +220,12 @@ export const SelectResources = {
 		{
 			const loadedResourcesIds = resourcesDateCache.getIdsByDateTs(this.selectedDateTs / 1000);
 			const resource = this.getResource(id);
-			const visible = loadedResourcesIds.includes(id) && resource && this.selectedTypes[resource.typeId];
+
+			const visible =	loadedResourcesIds.includes(id)
+				&& resource
+				&& !resource.isDeleted
+				&& this.selectedTypes[resource.typeId]
+			;
 
 			return !visible;
 		},

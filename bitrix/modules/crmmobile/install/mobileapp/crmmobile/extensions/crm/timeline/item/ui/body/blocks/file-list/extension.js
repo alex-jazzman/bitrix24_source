@@ -309,7 +309,8 @@ jn.define('crm/timeline/item/ui/body/blocks/file-list', (require, exports, modul
 			const params = {
 				focused,
 				files: this.files.map((file) => ({
-					id: file.sourceFileId,
+					id: file.id,
+					sourceFileId: file.sourceFileId,
 					name: file.name,
 					type: file.extension,
 					url: file.viewUrl,

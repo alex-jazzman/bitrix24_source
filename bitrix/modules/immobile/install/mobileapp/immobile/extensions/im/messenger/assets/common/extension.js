@@ -45,6 +45,8 @@ jn.define('im/messenger/assets/common', (require, exports, module) => {
 		unsubscribe: `${currentDomain}/bitrix/mobileapp/immobile/extensions/im/messenger/assets/common/svg/crossed-eye.svg`,
 	};
 
+	const defaultGroupChatAvatar = `${currentDomain}/bitrix/mobileapp/immobile/extensions/im/messenger/assets/common/svg/avatar_chat_group_default.svg`;
+
 	const statusImage = {
 		owner: `${statusPath}status_user_owner.png`,
 	};
@@ -150,5 +152,6 @@ jn.define('im/messenger/assets/common', (require, exports, module) => {
 		ReactionAssets,
 		headerIconsPath,
 		planLimitLock,
+		defaultGroupChatAvatar,
 	};
 });

@@ -15,6 +15,7 @@ use Bitrix\Main\EventManager;
 use Bitrix\MobileApp\Mobile;
 use Bitrix\Im\V2\Chat\CopilotChat;
 use Bitrix\Tasks\Flow\Integration\AI\FlowCopilotFeature;
+use Bitrix\Tasks\Flow\FlowFeature;
 use Bitrix\Mobile\Feature\SupportFeature;
 use Bitrix\Mobile\Provider\SupportProvider;
 
@@ -80,87 +81,6 @@ $workgroupsComponentVersion = Manager::getComponentVersion("workgroups");
 
 $menuStructure = [];
 $favoriteItems = [];
-
-if (Mobile::getApiVersion() < 41)
-{
-	$favoriteItems[] = [
-		"hidden" => ($isExtranetUser || !ModuleManager::isModuleInstalled("bizproc")),
-		"title" => Loc::getMessage("MB_BP_MAIN_MENU_ITEM"),
-		"imageUrl" => $imageDir . "favorite/icon-bp.png",
-		"color" => "#33c3bd",
-		'imageName' => 'business_process',
-		"attrs" => [
-			"url" => $siteDir . "mobile/bp/?USER_STATUS=0",
-			"id" => "bp_list",
-			"counter" => "bp_tasks",
-		],
-	];
-}
-
-if (Loader::includeModule('signmobile')
-	&& class_exists(\Bitrix\SignMobile\Config\Feature::class)
-	&& method_exists(\Bitrix\SignMobile\Config\Feature::class, 'isMyDocumentsGridAvailable')
-	&& \Bitrix\SignMobile\Config\Feature::instance()->isMyDocumentsGridAvailable()
-)
-{
-	$counterId = 'sign_b2e_current';
-	if (enum_exists(\Bitrix\Sign\Type\CounterType::class))
-	{
-		$counterId = \Bitrix\Sign\Type\CounterType::SIGN_B2E_MY_DOCUMENTS->value;
-	}
-
-	$favoriteItems[] = [
-		"title" => Loc::getMessage("MENU_MY_DOCUMENTS"),
-		"imageUrl" => $imageDir . "sign/my-documents.png",
-		'imageName' => 'sign',
-		"color" => '#1F86FF',
-		"hidden" => false,
-		"attrs" => [
-			"id" => "signmobile",
-			"counter" => $counterId,
-			"onclick" => <<<JS
-				ComponentHelper.openLayout({
-					name: 'sign:sign.b2e.grid',
-					object: 'layout',
-					widgetParams: {
-						titleParams: {text: "{$hereDocGetMessage("MENU_MY_DOCUMENTS")}", type: "section"},
-					}
-				});
-			JS,
-		],
-	];
-}
-
-if (Mobile::getApiVersion() < 41)
-{
-	$favoriteItems[] = [
-		"title" => Loc::getMessage("MB_CURRENT_USER_FILES_MAIN_MENU_ITEM_NEW"),
-		"imageUrl" => $imageDir . "favorite/icon-mydisk.png",
-		"color" => "#20A1E7",
-		"attrs" => [
-			"onclick" => <<<JS
-
-				ComponentHelper.openList({
-					name:"user.disk",
-					object:"list",
-					version:"{$diskComponentVersion}",
-					componentParams:{userId: env.userId},
-					widgetParams:{
-						title:"{$hereDocGetMessage("MB_CURRENT_USER_FILES_MAIN_MENU_ITEM_NEW")}",
-						useSearch: true,
-						doNotHideSearchResult: true
-					}
-				});
-
-JS
-			,
-			"id" => "doc_user",
-		],
-		"hidden" => !$diskEnabled || !$allowedFeatures["files"],
-		"id" => "doc_user",
-	];
-}
-
 
 $favoriteItems[] = [
 	"imageUrl" => $imageDir . "favorite/icon-disk.png",
@@ -914,7 +834,7 @@ if (
 
 	if (Loader::includeModule('tasks') && Loader::includeModule('tasksmobile'))
 	{
-		$availableFeatures['flowCopilot'] = FlowCopilotFeature::isOn();
+		$availableFeatures['flowCopilot'] = FlowFeature::isOn() && FlowCopilotFeature::isOn();
 	}
 
 	$menuStructure[] = [
@@ -1037,27 +957,6 @@ JS,
 	];
 
 	$developerMenuItems[] = [
-		"title" => "Fields Test",
-		"imageUrl" => $imageDir . "catalog/icon-catalog-store.png",
-		"color" => '#8590a2',
-		"hidden" => false,
-		"attrs" => [
-			"id" => "fields.component",
-			"onclick" => <<<JS
-				ComponentHelper.openLayout({
-						name: "fields.test",
-						version: '1',
-						object: "layout",
-						componentParams: {},
-						widgetParams: {
-							title: "Fields Test"
-						}
-				});
-JS,
-		],
-	];
-
-	$developerMenuItems[] = [
 		"title" => "ListView benchmark",
 		"imageUrl" => $imageDir . "catalog/icon-catalog-store.png",
 		"color" => '#8590a2',
@@ -1125,14 +1024,12 @@ JS,
 	}
 }
 
-$useAssets = Mobile::getApiVersion() >= 54;
 $popupMenuItems = [
 	[
 		"title" => Loc::getMessage("MENU_CHANGE_ACCOUNT"),
 		"sectionCode" => "menu",
 		"id" => "switch_account",
 		"iconName" => "log_out",
-		"iconUrl" => !$useAssets ? $imageDir . "settings/change_account_popup.png?5" : null,
 		"onclick" => <<<JS
 				Application.exit();
 JS

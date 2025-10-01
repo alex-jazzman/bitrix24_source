@@ -3,6 +3,7 @@ export type BookingUIFilter = {
 	CONTACT?: string[],
 	COMPANY?: string[],
 	RESOURCE?: string[],
+	RESOURCE_label?: string[],
 	CONFIRMED?: 'Y' | 'N',
 	REQUIRE_ATTENTION?: string,
 };

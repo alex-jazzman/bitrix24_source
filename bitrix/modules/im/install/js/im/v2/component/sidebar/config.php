@@ -11,6 +11,7 @@ return [
 	'rel' => [
 		'im.v2.lib.local-storage',
 		'im.v2.lib.sidebar',
+		'ui.system.menu',
 		'ui.vue3.directives.lazyload',
 		'ui.label',
 		'main.date',

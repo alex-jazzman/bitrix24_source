@@ -19,11 +19,11 @@
 }
 
 .rest-market-section__item-img {
-	width: 190px;
-	height: 190px;
+	width: 185px;
+	height: 175px;
 	position: absolute;
 	right: 0;
-	bottom: -10px;
+	bottom: -3px;
 }
 
 .rest-market-section__item_export {

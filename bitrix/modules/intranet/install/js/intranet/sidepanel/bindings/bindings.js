@@ -1300,7 +1300,7 @@
 				options: {
 					cacheable: false,
 					allowChangeHistory: false,
-					width: 1250,
+					width: 1586,
 					customRightBoundary: 0,
 				},
 			},
@@ -1494,6 +1494,14 @@
 				options: {
 					width: detectCrmSliderWidth(),
 					cacheable: false,
+				},
+			},
+			{
+				condition: ['/task/comments/(\\d+)/'],
+				options: {
+					cacheable: true,
+					width: 900,
+					allowChangeHistory: false,
 				},
 			},
 		]

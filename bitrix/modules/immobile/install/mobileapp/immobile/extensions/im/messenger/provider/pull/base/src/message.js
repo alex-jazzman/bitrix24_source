@@ -11,7 +11,8 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 
 	const { BasePullHandler } = require('im/messenger/provider/pull/base/pull-handler');
 	const { Worker } = require('im/messenger/lib/helper');
-	const { ChatTitle, ChatAvatar } = require('im/messenger/lib/element');
+	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
+	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { TabCounters } = require('im/messenger/lib/counters/tab-counters');
@@ -636,8 +637,8 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 			});
 
 			await this.store.dispatch('messagesModel/updateList', {
-				messageList: preparedMessageList,
-			})
+					messageList: preparedMessageList,
+				})
 				.catch((error) => this.logger.error(`${this.getClassName()}.updateMessageListBySoftDelete.messagesModel/updateList.catch:`, error));
 		}
 
@@ -674,9 +675,9 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 			if (commentInfo)
 			{
 				this.store.dispatch('commentModel/deleteCommentByMessageId', {
-					messageId,
-					channelChatId: chatId,
-				})
+						messageId,
+						channelChatId: chatId,
+					})
 					.then(() => {
 						TabCounters.update();
 					})
@@ -861,10 +862,10 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 			}
 
 			this.store.dispatch('usersModel/update', [{
-				id: userId,
-				idle: false,
-				lastActivityDate: new Date(params.date),
-			}])
+					id: userId,
+					idle: false,
+					lastActivityDate: new Date(params.date),
+				}])
 				.catch((err) => this.logger.error(`${this.getClassName()}.updateMessageStatus.usersModel/update.catch:`, err));
 		}
 
@@ -894,8 +895,8 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 				if (isDialog && !hasViewerByUserId)
 				{
 					this.store.dispatch('dialoguesModel/incrementLastMessageViews', {
-						dialogId: params.dialogId,
-					})
+							dialogId: params.dialogId,
+						})
 						.then(() => {
 							this.#updateMessageViewsRegistry(params.userId, dialogModelState.lastMessageId);
 						})
@@ -978,12 +979,12 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 			}
 
 			this.store.dispatch('dialoguesModel/update', {
-				dialogId,
-				fields: {
-					// counter: params.counter,
-					lastId: params.lastId,
-				},
-			})
+					dialogId,
+					fields: {
+						// counter: params.counter,
+						lastId: params.lastId,
+					},
+				})
 				.then(() => this.store.dispatch('recentModel/set', [recentItem]))
 				.then(() => TabCounters.update())
 				.catch(
@@ -1066,18 +1067,18 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 			{
 				this.logger.warn(`${this.getClassName()}.New message pull handler: we already have this message`, params.message);
 				this.store.dispatch('messagesModel/update', {
-					id: params.message.id,
-					fields: params.message,
-				})
+						id: params.message.id,
+						fields: params.message,
+					})
 					.catch((err) => this.logger.error(`${this.getClassName()}.setMessage.messagesModel/update.catch:`, err));
 			}
 			else if (!messageWithRealId && messageWithTemplateId)
 			{
 				this.logger.warn(`${this.getClassName()}.New message pull handler: we already have the TEMPORARY message`, params.message);
 				this.store.dispatch('messagesModel/updateWithId', {
-					id: params.message.templateId,
-					fields: params.message,
-				})
+						id: params.message.templateId,
+						fields: params.message,
+					})
 					.catch((err) => this.logger.error(`${this.getClassName()}.setMessage.messagesModel/updateWithId.catch:`, err));
 			}
 			// it's an opponent message or our own message from somewhere else

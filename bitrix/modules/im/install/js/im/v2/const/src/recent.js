@@ -6,6 +6,7 @@ export const RecentCallStatus = {
 export const RecentType = {
 	default: 'default',
 	copilot: 'copilot',
+	aiAssistant: 'aiAssistant',
 	openChannel: 'openChannel',
 	collab: 'collab',
 };

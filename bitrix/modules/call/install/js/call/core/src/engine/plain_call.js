@@ -1657,7 +1657,7 @@ export class PlainCall extends AbstractCall
 		peer.setReady(true);
 		if (params.restart)
 		{
-			peer.reconnect()
+			peer.reconnect({reconnectionReason: 'GOT_PULL_EVENT_NEGOTIATION_NEEDED'});
 		}
 		else
 		{
@@ -1901,7 +1901,7 @@ export class PlainCall extends AbstractCall
 	{
 		const peers = Object.values(this.peers);
 		peers.forEach((peer) => {
-			peer.reconnect();
+			peer.reconnect({reconnectionReason: 'GOT_ONLINE_EVENT_FROM_BROWSER'});
 		});
 	}
 
@@ -2587,7 +2587,9 @@ class Peer
 		else
 		{
 			this.localStreams[tag] = this.call.getLocalStream(tag);
-			this.reconnect();
+			
+			const logMessage = 'Reconnect by replaceMediaStream';
+			this.reconnect({ reconnectionReasonInfo: logMessage });
 		}
 	};
 
@@ -3165,8 +3167,12 @@ class Peer
 		}
 		else if (this.peerConnection.connectionState === "failed")
 		{
-			this.log("peer connection failed. Trying to restore connection immediately");
-			this.reconnect();
+			const logMessage = 'Peer connection failed. Trying to restore connection immediately';
+			
+			this.reconnect({
+				reconnectionReason: 'PEER_CONNECTION_FAILED',
+				reconnectionReasonInfo: logMessage,
+			});
 		}
 		// else if (this.peerConnection.connectionState === "disconnected")
 		// {
@@ -3378,17 +3384,18 @@ class Peer
 
 	_onConnectionOfferReplyTimeout(connectionId)
 	{
-		this.log("did not receive connection answer for connection " + connectionId);
+		const logMessage = 'Did not receive connection answer for connection ' + connectionId;
+		
 		this.call.setPublishingState(MediaStreamsKinds.Camera, false);
 
-		this.reconnect();
+		this.reconnect({ reconnectionReasonInfo: logMessage });
 	};
 
 	_onNegotiationNeededReplyTimeout()
 	{
-		this.log("did not receive connection offer in time");
-
-		this.reconnect();
+		const logMessage = 'Did not receive connection offer in time';
+		
+		this.reconnect({ reconnectionReasonInfo: logMessage });
 	};
 
 	setConnectionOffer(connectionId, sdp, trackList)
@@ -3687,7 +3694,7 @@ class Peer
 		}
 	};
 
-	reconnect()
+	reconnect(reconnectInfoObject)
 	{
 		clearTimeout(this.reconnectAfterDisconnectTimeout);
 
@@ -3703,11 +3710,17 @@ class Peer
 		}
 
 		this.callbacks.onReconnecting({
-			reconnectionReason: 'TRYING_RESTORE_ICE_CONNECTION',
-			reconnectionReasonInfo: '',
+			reconnectionReason: reconnectInfoObject?.reconnectionReason || 'TRYING_RESTORE_ICE_CONNECTION',
+			reconnectionReasonInfo: reconnectInfoObject?.reconnectionReasonInfo || '',
 		});
+		
+		if (reconnectInfoObject && reconnectInfoObject.reconnectionReasonInfo)
+		{
+			this.log(reconnectInfoObject.reconnectionReasonInfo);
+		}
 
 		this.log("Trying to restore ICE connection. Attempt " + this.connectionAttempt);
+		
 		if (this.isInitiator())
 		{
 			this._destroyPeerConnection();
@@ -3715,7 +3728,7 @@ class Peer
 		}
 		else
 		{
-			this.sendNegotiationNeeded(true);
+			//this.sendNegotiationNeeded(true);
 		}
 	};
 

@@ -46,7 +46,7 @@ return [
 		'tasks:layout/flow/action-menu',
 
 		'require-lazy',
-		'user/profile',
+		'user-profile',
 	],
 	'bundle' => [
 		'./src/flow',

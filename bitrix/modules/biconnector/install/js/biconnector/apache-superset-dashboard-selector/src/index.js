@@ -1,6 +1,7 @@
-import { Event, Loc, Reflection, Tag, Type, Text } from 'main.core';
+import { DashboardManager } from 'biconnector.apache-superset-dashboard-manager';
+import { Event, Reflection, Type, Text } from 'main.core';
 import { EventEmitter } from 'main.core.events';
-import { Dialog } from 'ui.entity-selector';
+import { Item, Dialog } from 'ui.entity-selector';
 
 type Props = {
 	containerId: string,
@@ -76,30 +77,49 @@ class SupersetDashboardSelector
 	#onSelectItem(event): Promise
 	{
 		EventEmitter.emit('BiConnector:DashboardSelector.onSelect');
+		const item: Item = event.data.item;
+		this.#setTitle(item.getTitle());
 
+		return this.#installDashboard(item)
+			.then(() => this.#getDashboardEmbeddedData(item.id))
+			.then((response) => {
+				if (response.data.dashboard)
+				{
+					this.#setTitle(response.data.dashboard.title);
+					EventEmitter.emit('BiConnector:DashboardSelector.onSelectDataLoaded', {
+						item,
+						dashboardId: item.id,
+						credentials: response.data.dashboard,
+					});
+				}
+
+				return response;
+			})
+			.catch((response) => {
+				if (response.errors && Type.isStringFilled(response.errors[0]?.message))
+				{
+					BX.UI.Notification.Center.notify({
+						content: Text.encode(response.errors[0].message),
+					});
+				}
+				throw response;
+			});
+	}
+
+	#installDashboard(item: Item): Promise
+	{
 		return new Promise((resolve, reject) => {
-			this.#getDashboardEmbeddedData(event.data.item.id)
-				.then((response) => {
-					if (response.data.dashboard)
-					{
-						this.#setTitle(response.data.dashboard.title);
-						EventEmitter.emit('BiConnector:DashboardSelector.onSelectDataLoaded', {
-							item: event.data.item,
-							dashboardId: event.data.item.id,
-							credentials: response.data.dashboard,
-						});
-					}
-					resolve(response);
-				})
-				.catch((response) => {
-					if (response.errors && Type.isStringFilled(response.errors[0]?.message))
-					{
-						BX.UI.Notification.Center.notify({
-							content: Text.encode(response.errors[0].message),
-						});
-					}
-					reject(response);
-				});
+			const status = item.getCustomData().get('status');
+			if (status === 'N')
+			{
+				DashboardManager.installDashboard(item.id)
+					.then((response) => resolve(response))
+					.catch((error) => reject(error))
+				;
+
+				return;
+			}
+			resolve();
 		});
 	}
 
@@ -123,6 +143,7 @@ class SupersetDashboardSelector
 		const title = Text.encode(text);
 		this.#textNode.innerHTML = title;
 		this.#textNode.title = title;
+		document.title = title;
 	}
 
 	#handleCopyDashboard(event): Promise

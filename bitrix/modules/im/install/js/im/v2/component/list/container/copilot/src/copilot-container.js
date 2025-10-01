@@ -51,7 +51,7 @@ export const CopilotListContainer = {
 		},
 		onChatClick(dialogId)
 		{
-			this.$emit('selectEntity', { layoutName: Layout.copilot.name, entityId: dialogId });
+			this.$emit('selectEntity', { layoutName: Layout.aiAssistant, entityId: dialogId });
 		},
 		getCopilotService(): CopilotService
 		{

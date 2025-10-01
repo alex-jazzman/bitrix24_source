@@ -4,7 +4,8 @@ import { mapState } from 'ui.vue3.pinia';
 import { Event } from 'main.core';
 import { useChartStore } from 'humanresources.company-structure.chart-store';
 import { getMemberRoles, reportedErrorTypes } from 'humanresources.company-structure.api';
-import { SaveMode, StepIds, AuthorityTypes } from '../consts';
+import { DepartmentContentActions } from 'humanresources.company-structure.department-content';
+import { StepIds, AuthorityTypes } from '../consts';
 import { TreePreview } from './tree-preview/tree-preview';
 import { Department } from './steps/department';
 import { Employees } from './steps/employees';
@@ -21,6 +22,11 @@ import { EntityTypes, NodeColorsSettingsDict, WizardApiEntityChangedDict, NodeSe
 import 'ui.buttons';
 import 'ui.forms';
 import '../style.css';
+
+const SaveMode = Object.freeze({
+	moveUsers: 'moveUsers',
+	addUsers: 'addUsers',
+});
 
 export const ChartWizard = {
 	name: 'chartWizard',
@@ -75,6 +81,7 @@ export const ChartWizard = {
 				employees: [],
 				chats: [],
 				channels: [],
+				collabs: [],
 				userCount: 0,
 				createDefaultChat: false,
 				createDefaultChannel: false,
@@ -93,14 +100,17 @@ export const ChartWizard = {
 			},
 			initChats: [],
 			initChannels: [],
+			initCollabs: [],
 			shouldErrorHighlight: false,
 			steps: [],
 			saveMode: SaveMode.moveUsers,
+			permissionChecker: null,
 		};
 	},
 
 	created(): void
 	{
+		this.permissionChecker = PermissionChecker.getInstance();
 		this.init();
 	},
 
@@ -144,6 +154,15 @@ export const ChartWizard = {
 		{
 			return this.steps[this.stepIndex];
 		},
+		isDeputyApprovesBPAvailable(): boolean
+		{
+			if (!this.permissionChecker)
+			{
+				return false;
+			}
+
+			return this.permissionChecker.checkDeputyApprovalBPAvailable();
+		},
 		componentInfo(): { name: string, params?: Object }
 		{
 			if (!this.currentStep.isPermitted)
@@ -160,6 +179,7 @@ export const ChartWizard = {
 				heads,
 				entityType,
 				teamColor,
+				employees,
 			} = this.departmentData;
 
 			const components = {
@@ -189,11 +209,14 @@ export const ChartWizard = {
 					name: 'BindChat',
 					params: {
 						heads,
+						employees,
+						employeesIds: this.employeesIds,
 						name,
 						entityType,
 						isEditMode: this.isEditMode,
 						initChats: this.initChats,
 						initChannels: this.initChannels,
+						initCollabs: this.initCollabs,
 					},
 				},
 				[StepIds.teamRights]: {
@@ -201,6 +224,10 @@ export const ChartWizard = {
 					params: {
 						name,
 						settings: this.departmentSettings,
+						features: {
+							isDeputyApprovesBPAvailable: this.isDeputyApprovesBPAvailable,
+						},
+						shouldErrorHighlight: this.shouldErrorHighlight,
 					},
 				},
 				[StepIds.entities]: {
@@ -252,6 +279,19 @@ export const ChartWizard = {
 		{
 			return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 		},
+		mapRawSettings(rawSettings: number[]): Object<string, Set<(string)>>
+		{
+			return rawSettings.reduce((acc, { settingsType, settingsValue }) => {
+				if (!Object.hasOwn(acc, settingsType))
+				{
+					acc[settingsType] = new Set();
+				}
+
+				acc[settingsType].add(settingsValue);
+
+				return acc;
+			}, {});
+		},
 		async init(): Promise<void>
 		{
 			this.apiEntityChanged = new Set();
@@ -295,20 +335,18 @@ export const ChartWizard = {
 					createDefaultChannel: false,
 				};
 				const rawSettings = await WizardAPI.getSettings(this.nodeId);
-				this.departmentSettings = rawSettings.reduce((acc, { settingsType, settingsValue }) => {
-					if (!Object.hasOwn(acc, settingsType))
-					{
-						acc[settingsType] = new Set();
-					}
-					acc[settingsType].add(settingsValue);
+				const newSettings = this.mapRawSettings(rawSettings);
 
-					return acc;
-				}, { ...this.departmentSettings });
+				this.departmentSettings = {
+					...this.departmentSettings,
+					...newSettings,
+				};
 
 				// store directly bound chats and channels
 				const rawChatsAndChannels = await WizardAPI.getChatsAndChannels(this.nodeId);
 				this.initChats = rawChatsAndChannels.chats.filter((item) => !item.originalNodeId);
 				this.initChannels = rawChatsAndChannels.channels.filter((item) => !item.originalNodeId);
+				this.initCollabs = rawChatsAndChannels.collabs.filter((item) => !item.originalNodeId);
 
 				this.employeesIds = await WizardAPI.getEmployees(this.nodeId);
 
@@ -346,7 +384,7 @@ export const ChartWizard = {
 		},
 		move(buttonId: string = 'next'): void
 		{
-			if (buttonId === 'next' && !this.isValidStep)
+			if (!this.isValidStep)
 			{
 				this.shouldErrorHighlight = true;
 
@@ -384,6 +422,7 @@ export const ChartWizard = {
 		close(sendEvent: boolean = false): void
 		{
 			this.$emit('close');
+
 			if (sendEvent)
 			{
 				analyticsSendData({
@@ -491,7 +530,6 @@ export const ChartWizard = {
 		getAllSteps(entityType: string, departmentId: number = null): Step[]
 		{
 			const isTeamEntity = entityType === EntityTypes.team;
-			const permissionChecker = PermissionChecker.getInstance();
 
 			return {
 				entity: {
@@ -508,8 +546,8 @@ export const ChartWizard = {
 					hasBreadcrumbs: true,
 					hasTreePreview: true,
 					isEditPermitted: isTeamEntity
-						? permissionChecker.hasPermission(PermissionActions.teamEdit, departmentId)
-						: permissionChecker.hasPermission(PermissionActions.departmentEdit, departmentId),
+						? this.permissionChecker.hasPermission(PermissionActions.teamEdit, departmentId)
+						: this.permissionChecker.hasPermission(PermissionActions.departmentEdit, departmentId),
 					dataTestIdPart: 'department',
 				},
 				employees: {
@@ -519,19 +557,23 @@ export const ChartWizard = {
 					hasBreadcrumbs: true,
 					hasTreePreview: true,
 					isEditPermitted: isTeamEntity
-						? permissionChecker.hasPermission(PermissionActions.teamAddMember, departmentId)
-						: permissionChecker.hasPermission(PermissionActions.employeeAddToDepartment, departmentId),
+						? this.permissionChecker.hasPermission(PermissionActions.teamAddMember, departmentId)
+						: this.permissionChecker.hasPermission(PermissionActions.employeeAddToDepartment, departmentId),
 					dataTestIdPart: 'employees',
 				},
 				bindChat: {
 					id: StepIds.bindChat,
-					breadcrumbsTitleDepartment: 'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TITLE_BREADCRUMBS',
-					breadcrumbsTitleTeam: 'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_TITLE_BREADCRUMBS',
+					breadcrumbsTitleDepartment: this.permissionChecker.isCollabsAvailable
+						? 'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TITLE_BREADCRUMBS_W_COLLABS'
+						: 'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TITLE_BREADCRUMBS',
+					breadcrumbsTitleTeam: this.permissionChecker.isCollabsAvailable
+						? 'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_TITLE_BREADCRUMBS_W_COLLABS'
+						: 'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_TITLE_BREADCRUMBS',
 					hasBreadcrumbs: true,
 					hasTreePreview: false,
 					isEditPermitted: isTeamEntity
-						? permissionChecker.hasPermission(PermissionActions.teamCommunicationEdit, departmentId)
-						: permissionChecker.hasPermission(PermissionActions.departmentCommunicationEdit, departmentId),
+						? this.permissionChecker.hasPermission(PermissionActions.teamCommunicationEdit, departmentId)
+						: this.permissionChecker.hasPermission(PermissionActions.departmentCommunicationEdit, departmentId),
 					dataTestIdPart: 'bind-chat',
 				},
 				teamRights: {
@@ -540,8 +582,8 @@ export const ChartWizard = {
 					hasBreadcrumbs: true,
 					hasTreePreview: false,
 					isEditPermitted: isTeamEntity
-						? permissionChecker.hasPermission(PermissionActions.teamSettingsEdit, departmentId)
-						: permissionChecker.hasPermission(PermissionActions.departmentEdit, departmentId),
+						? this.permissionChecker.hasPermission(PermissionActions.teamSettingsEdit, departmentId)
+						: this.permissionChecker.hasPermission(PermissionActions.departmentEdit, departmentId),
 					dataTestIdPart: 'team-rights',
 				},
 			};
@@ -659,8 +701,10 @@ export const ChartWizard = {
 				description,
 				chats,
 				channels,
+				collabs,
 				createDefaultChat,
 				createDefaultChannel,
+				createDefaultCollab,
 				entityType,
 				teamColor,
 				settings,
@@ -671,46 +715,81 @@ export const ChartWizard = {
 			this.waiting = true;
 			try
 			{
-				const [newDepartment] = await WizardAPI.addDepartment(
-					name,
-					parentId,
-					description,
-					entityType,
-					teamColor?.name,
-				);
-				departmentId = newDepartment.id;
-				accessCode = newDepartment.accessCode;
+				const userIds = this.calculateEmployeeIds();
+				const { headsIds, deputiesIds, employeesIds } = userIds;
 
-				const data = await this.getUsersPromise(departmentId);
-				if (data?.updatedDepartmentIds)
-				{
-					chartWizardActions.refreshDepartments(data.updatedDepartmentIds);
-				}
-				else
-				{
-					chartWizardActions.tryToAddCurrentDepartment(this.departmentData, departmentId);
-				}
+				const departmentUserIds = {
+					[this.memberRoles.head]: headsIds,
+					[this.memberRoles.deputyHead]: deputiesIds,
+					[this.memberRoles.employee]: employeesIds,
+				};
 
-				await WizardAPI.saveChats(
-					departmentId,
-					{ chat: [...chats], channel: [...channels] },
-					{ chat: Number(createDefaultChat), channel: Number(createDefaultChannel) },
-					null,
-					parentId,
-				);
+				let settingsNode = {};
+				let newDepartment = {};
+				let updatedDepartmentIds = false;
+				let userMovedToRootIds = false;
 
 				if (entityType === EntityTypes.team)
 				{
-					await WizardAPI.createSettings(
-						departmentId,
+					settingsNode = {
+						[NodeSettingsTypes.businessProcAuthority]:
 						{
-							[NodeSettingsTypes.businessProcAuthority]: {
-								values: [...settings[NodeSettingsTypes.businessProcAuthority]],
-								replace: true,
-							},
+							values: [...settings[NodeSettingsTypes.businessProcAuthority]],
+							replace: true,
 						},
+					};
+
+					({
+						node: newDepartment,
+						updatedDepartmentIds = false,
+						userMovedToRootIds = false,
+					} = await WizardAPI.createTeam(
+						name,
 						parentId,
-					);
+						description,
+						teamColor.name,
+						departmentUserIds,
+						Number(createDefaultChat),
+						chats,
+						Number(createDefaultChannel),
+						channels,
+						Number(createDefaultCollab),
+						collabs,
+						settingsNode,
+					));
+				}
+				else if (entityType === EntityTypes.department)
+				{
+					({
+						node: newDepartment,
+						updatedDepartmentIds = false,
+						userMovedToRootIds = false,
+					} = await WizardAPI.createDepartment(
+						name,
+						parentId,
+						description,
+						departmentUserIds,
+						this.saveMode === SaveMode.moveUsers ? 1 : 0,
+						Number(createDefaultChat),
+						chats,
+						Number(createDefaultChannel),
+						channels,
+						Number(createDefaultCollab),
+						collabs,
+						settingsNode,
+					));
+				}
+
+				departmentId = newDepartment.id;
+				accessCode = newDepartment.accessCode;
+
+				if (updatedDepartmentIds)
+				{
+					chartWizardActions.refreshDepartments(updatedDepartmentIds);
+				}
+				else if (userMovedToRootIds)
+				{
+					chartWizardActions.tryToAddCurrentDepartment(this.departmentData, departmentId);
 				}
 			}
 			catch (error)
@@ -765,9 +844,11 @@ export const ChartWizard = {
 				teamColor,
 				settings,
 				chats,
-				channels,
 				createDefaultChat,
+				channels,
 				createDefaultChannel,
+				collabs,
+				createDefaultCollab,
 			} = this.departmentData;
 
 			const currentNode = this.departments.get(id);
@@ -807,16 +888,31 @@ export const ChartWizard = {
 						{
 							chat: chats.filter((chatId) => !this.initChats.some((chat) => chat.id === chatId)),
 							channel: channels.filter((channelId) => !this.initChannels.some((channel) => channel.id === channelId)),
+							collab: collabs.filter((collabId) => !this.initCollabs.some((collab) => Number(collab.id) === collabId)),
 						},
-						{ chat: Number(createDefaultChat), channel: Number(createDefaultChannel) },
-						[
-							...this.initChats.filter((chat) => !chats.includes(chat.id)).map((chat) => chat.id),
-							...this.initChannels.filter((channel) => !channels.includes(channel.id)).map((channel) => channel.id),
-						],
+						{
+							chat: Number(createDefaultChat),
+							channel: Number(createDefaultChannel),
+							collab: Number(createDefaultCollab),
+						},
+						{
+							chat: this.initChats.filter((chat) => !chats.includes(chat.id)).map((chat) => chat.id),
+							channel: this.initChannels
+								.filter((channel) => !channels.includes(channel.id))
+								.map((channel) => channel.id),
+							collab: this.initCollabs
+								.filter((collab) => !collabs.includes(Number(collab.id)))
+								.map((collab) => collab.id),
+						},
 					);
 
 					this.departmentData.chatsDetailed = null;
 					this.departmentData.channelsDetailed = null;
+
+					if (this.isEditMode && id && DepartmentContentActions?.updateChatsInChildrenNodes)
+					{
+						DepartmentContentActions.updateChatsInChildrenNodes(this.nodeId);
+					}
 				}
 
 				let userMovedToRootIds = [];
@@ -942,7 +1038,7 @@ export const ChartWizard = {
 
 	template: `
 		<div class="chart-wizard">
-			<div class="chart-wizard__dialog" :style="{ 'max-width': isFirstStep ? '580px' : '843px' }">
+			<div class="chart-wizard__dialog" :class="{ '--first-step': isFirstStep }">
 				<div v-if="currentStep.hasBreadcrumbs" class="chart-wizard__breadcrumbs-head">
 					<div class="chart-wizard__head_close --breadcrumbs" @click="closeWithConfirm(true)"></div>
 					<div class="chart-wizard__breadcrumbs-head_descr">

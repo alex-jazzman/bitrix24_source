@@ -4,7 +4,8 @@
 jn.define('im/messenger/controller/search/adapter/user', (require, exports, module) => {
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { SelectorDialogListAdapter } = require('im/chat/selector/adapter/dialog-list');
-	const { ChatTitle, ChatAvatar } = require('im/messenger/lib/element');
+	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
+	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 	const { ObjectUtils } = require('im/messenger/lib/utils');
 
 	class UserAdapter extends SelectorDialogListAdapter

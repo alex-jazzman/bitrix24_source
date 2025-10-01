@@ -4,6 +4,7 @@
 jn.define('tasks/project', (require, exports, module) => {
 	const { AvatarClass } = require('ui-system/blocks/avatar');
 	const { ErrorLogger } = require('utils/logger/error-logger');
+	const { RequestExecutor } = require('rest');
 
 	const logger = new ErrorLogger();
 

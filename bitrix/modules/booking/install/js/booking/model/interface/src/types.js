@@ -17,23 +17,21 @@ export type InterfaceModelState = {
 	selectedDateTs: number,
 	viewDateTs: number,
 	deletingBookings: { [key: number ]: number },
+	deletingResources: { [key: number ]: number },
 	deletingWaitListItemIds: { [key: number ]: number },
 	selectedCells: { [key: string ]: Object },
 	hoveredCell: CellDto,
 	busySlots: { [key: string ]: Object },
 	disabledBusySlots: { [key: string ]: Object },
 	resourcesIds: number[],
-	isFilterMode: boolean,
+	pinnedResourceIds: number[],
 	isIntersectionForAll: boolean,
-	filteredBookingsIds: number[],
-	filteredMarks: string[],
 	counterMarks: string[],
 	freeMarks: string[],
 	totalClients: number,
 	totalNewClientsToday: number,
 	moneyStatistics: MoneyStatistics | null,
 	intersections: Intersections,
-	quickFilter: QuickFilter,
 	timezone: string,
 	editingBookingId: number,
 	editingWaitListItemId: number,
@@ -51,18 +49,6 @@ export type InterfaceModelState = {
 
 export type Intersections = {
 	[resourceId: number | 0]: number[],
-};
-
-export type QuickFilter = {
-	hovered: {
-		[hour: number]: number,
-	},
-	active: {
-		[hour: number]: number,
-	},
-	ignoredBookingIds: {
-		[bookingId: number]: number,
-	},
 };
 
 export type MousePosition = {

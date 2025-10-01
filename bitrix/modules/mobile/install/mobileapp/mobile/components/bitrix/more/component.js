@@ -75,7 +75,7 @@
 					const counter = item.params.counter;
 					this.currentCounters[counter] = siteCounters[counter];
 
-					const isNewStyles = item.imageName && this.enableNewStyle();
+					const isNewStyles = item.imageName;
 
 					return {
 						filter: { 'params.counter': counter },
@@ -95,10 +95,6 @@
 				menu.updateItems(preparedItems);
 				Application.setBadges({ more: this.getTotalCounter(siteCounters) });
 			}
-		},
-		enableNewStyle()
-		{
-			return Application.getApiVersion() > 55;
 		},
 		initCache: function ()
 		{
@@ -180,7 +176,7 @@
 		prepareItemsBeforeRedraw(counters = {})
 		{
 			return items.map((item) => {
-				const isNewStyles = item.imageName && this.enableNewStyle();
+				const isNewStyles = item.imageName;
 				const counter = counters[item?.params?.counter];
 				const isNewItemWithTag = (item.isNew && item.tag);
 
@@ -304,19 +300,12 @@
 
 										if (item.imageName)
 										{
-											if (this.enableNewStyle())
-											{
-												item.color = null;
-												item.version = item.isNew ? 2 : 1;
-												item.styles = this.getItemStyles(
-													this.showHighlighted(item, this.currentCounters[item.params.counter]),
-													(item.isNew && item.tag),
-												);
-											}
-											else
-											{
-												item.imageName = null;
-											}
+											item.color = null;
+											item.version = item.isNew ? 2 : 1;
+											item.styles = this.getItemStyles(
+												this.showHighlighted(item, this.currentCounters[item.params.counter]),
+												(item.isNew && item.tag),
+											);
 										}
 
 										return item;

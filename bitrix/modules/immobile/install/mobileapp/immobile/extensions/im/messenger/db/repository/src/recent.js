@@ -287,7 +287,12 @@ jn.define('im/messenger/db/repository/recent', (require, exports, module) => {
 			{
 				params.withFile = fields.message.file;
 			}
-			else if (Type.isBoolean(fields.message.params?.withFile) || Type.isPlainObject(fields.message.params?.withFile))
+
+			if (
+				Type.isBoolean(fields.message.params?.withFile)
+				|| Type.isPlainObject(fields.message.params?.withFile)
+				|| Type.isArrayFilled(fields.message.params?.withFile)
+			)
 			{
 				params.withFile = fields.message.params.withFile;
 			}

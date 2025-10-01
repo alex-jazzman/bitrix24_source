@@ -90,6 +90,7 @@ export const AddToChatButton = {
 				popupOptions: {
 					offsetTop: 8,
 					offsetLeft: 9,
+					autoHide: true,
 					closeIcon: true,
 					closeIconSize: CloseIconSize.LARGE,
 				},

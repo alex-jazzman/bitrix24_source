@@ -19,6 +19,7 @@ export type Params = {
 	collabId?: number,
 	enableServerSave?: boolean,
 	formData: AccessRightsFormData,
+	isAllowedInviteCollabers: boolean,
 };
 
 export class AccessRights

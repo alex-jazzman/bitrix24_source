@@ -22,6 +22,7 @@ return [
 		'im.v2.lib.create-chat',
 		'im.v2.lib.feature',
 		'im.v2.provider.service.copilot',
+		'im.v2.provider.service.ai-assistant',
 		'im.v2.lib.helpdesk',
 		'main.core',
 		'im.v2.lib.analytics',

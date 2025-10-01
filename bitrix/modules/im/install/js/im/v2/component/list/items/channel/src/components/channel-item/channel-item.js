@@ -69,7 +69,7 @@ export const ChannelItem = {
 		},
 		isChatSelected(): boolean
 		{
-			if (this.layout.name !== Layout.channel.name)
+			if (this.layout.name !== Layout.channel)
 			{
 				return false;
 			}

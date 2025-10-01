@@ -25,4 +25,7 @@
 	const { AppRatingBackgroundClient } = require('app-rating-background-client');
 	AppRatingBackgroundClient.subscribeToUserEvents();
 	AppRatingBackgroundClient.subscribeToAppPausedEvent();
+
+	const { TimemanAnalytics } = require('timeman/analytics');
+	TimemanAnalytics.subscribeEvents();
 })();

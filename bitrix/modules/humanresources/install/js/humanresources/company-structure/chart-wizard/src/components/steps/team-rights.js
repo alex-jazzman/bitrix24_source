@@ -18,6 +18,15 @@ export const TeamRights = {
 			type: Object,
 			required: false,
 		},
+		/** @type {Record<string, boolean>} */
+		features: {
+			type: Object,
+			required: false,
+		},
+		shouldErrorHighlight: {
+			type: Boolean,
+			required: true,
+		},
 	},
 
 	created()
@@ -42,7 +51,7 @@ export const TeamRights = {
 	{
 		this.$emit('applyData', {
 			isDepartmentDataChanged: false,
-			isValid: true,
+			isValid: !this.isBusinessProcHeadNotSelected,
 		});
 	},
 
@@ -84,6 +93,7 @@ export const TeamRights = {
 				apiEntityChanged: WizardApiEntityChangedDict.settings,
 				settings: this.settings,
 				isDepartmentDataChanged: true,
+				isValid: !this.isBusinessProcHeadNotSelected,
 			});
 		},
 		getTagSelector(settingType: string, locked: boolean): TagSelector
@@ -127,11 +137,14 @@ export const TeamRights = {
 					},
 					width: 400,
 					height: 200,
+					tagMaxWidth: 400,
 					dropdownMode: true,
 					showAvatars: false,
 					selectedItems: this.getTagItems(locked).filter(((item) => this.settings[settingType].has(item.id))),
 					items: this.getTagItems(locked),
-					undeselectedItems: [['head-type', AuthorityTypes.departmentHead]],
+					undeselectedItems: this.features.isDeputyApprovesBPAvailable
+						? []
+						: [['head-type', AuthorityTypes.departmentHead]],
 				},
 			});
 		},
@@ -144,10 +157,12 @@ export const TeamRights = {
 			const departmentTagOptions = {
 				bgColor: '#ADE7E4',
 				textColor: '#207976',
+				maxWidth: 400,
 			};
 			const teamTagOptions = {
 				bgColor: '#CCE3FF',
 				textColor: '#3592FF',
+				maxWidth: 400,
 			};
 
 			const soonItemOptions = {
@@ -165,40 +180,51 @@ export const TeamRights = {
 				},
 			};
 
-			return [
-				{
-					id: AuthorityTypes.departmentHead,
-					entityId: 'head-type',
-					tabs: 'recents',
-					title: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_RIGHTS_DEPARTMENT_HEAD_ITEM'),
-					tagOptions: locked ? lockedTagOptions : departmentTagOptions,
-					customData: { selectable: true },
-				},
-				{
-					id: AuthorityTypes.teamHead,
-					entityId: 'head-type',
-					tabs: 'recents',
-					title: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_RIGHTS_TEAM_HEAD_ITEM'),
-					tagOptions: locked ? lockedTagOptions : teamTagOptions,
-					customData: { selectable: true },
-				},
-				{
-					id: AuthorityTypes.departmentDeputy,
-					entityId: 'head-type',
-					tabs: 'recents',
-					title: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_RIGHTS_DEPARTMENT_DEPUTY_ITEM'),
-					tagOptions: locked ? lockedTagOptions : departmentTagOptions,
-					...soonItemOptions,
-				},
-				{
-					id: AuthorityTypes.teamDeputy,
-					entityId: 'head-type',
-					tabs: 'recents',
-					title: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_RIGHTS_TEAM_DEPUTY_ITEM'),
-					tagOptions: locked ? lockedTagOptions : teamTagOptions,
-					...soonItemOptions,
-				},
-			];
+			const deputyOptions = this.features.isDeputyApprovesBPAvailable
+				? { customData: { selectable: true } }
+				: soonItemOptions
+			;
+
+			const departmentHead = {
+				id: AuthorityTypes.departmentHead,
+				entityId: 'head-type',
+				tabs: 'recents',
+				title: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_RIGHTS_DEPARTMENT_HEAD_ITEM'),
+				tagOptions: locked ? lockedTagOptions : departmentTagOptions,
+				customData: { selectable: true },
+			};
+
+			const teamHead = {
+				id: AuthorityTypes.teamHead,
+				entityId: 'head-type',
+				tabs: 'recents',
+				title: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_RIGHTS_TEAM_HEAD_ITEM'),
+				tagOptions: locked ? lockedTagOptions : teamTagOptions,
+				customData: { selectable: true },
+			};
+
+			const departmentDeputy = {
+				id: AuthorityTypes.departmentDeputy,
+				entityId: 'head-type',
+				tabs: 'recents',
+				title: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_RIGHTS_DEPARTMENT_DEPUTY_ITEM'),
+				tagOptions: locked ? lockedTagOptions : departmentTagOptions,
+				...deputyOptions,
+			};
+
+			const teamDeputy = {
+				id: AuthorityTypes.teamDeputy,
+				entityId: 'head-type',
+				tabs: 'recents',
+				title: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_RIGHTS_TEAM_DEPUTY_ITEM'),
+				tagOptions: locked ? lockedTagOptions : teamTagOptions,
+				...deputyOptions,
+			};
+
+			return this.features.isDeputyApprovesBPAvailable
+				? [departmentHead, departmentDeputy, teamHead, teamDeputy]
+				: [departmentHead, teamHead, departmentDeputy, teamDeputy]
+			;
 		},
 		goToBPHelp(event): void
 		{
@@ -223,6 +249,12 @@ export const TeamRights = {
 			return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_RIGHTS_REPORTS_DESCRIPTION', {
 				'#DEPARTMENT_NAME#': Text.encode(this.name),
 			});
+		},
+		isBusinessProcHeadNotSelected(): boolean
+		{
+			const bpSettings = this.settings[NodeSettingsTypes.businessProcAuthority];
+
+			return !bpSettings || bpSettings.size === 0;
 		},
 	},
 
@@ -262,9 +294,19 @@ export const TeamRights = {
 					</div>
 					<div
 						class="chart-wizard__team-rights__business-proc-selector"
+						:class="{ 'ui-ctl-warning': (isBusinessProcHeadNotSelected && shouldErrorHighlight) }"
 						ref="business-proc-selector"
 						data-test-id="hr-company-structure__team-rights__business-proc-selector"
 					/>
+					<div
+						v-if="shouldErrorHighlight && isBusinessProcHeadNotSelected"
+						class="chart-wizard__team-rights__item-options-error"
+					>
+						<div class="ui-icon-set --warning"></div>
+						<span class="chart-wizard__team-rights__item-options-error-message">
+							{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_RIGHTS_BUSINESS_PROC_HEAD_ERROR') }}
+						</span>
+					</div>
 				</div>
 				<div class="chart-wizard__team-rights__item-options">
 					<div class="chart-wizard__team-rights__item-options__item-content_title --soon"

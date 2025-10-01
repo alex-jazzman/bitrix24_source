@@ -130,6 +130,21 @@ class rest extends CModule
 			'\Bitrix\Rest\Marketplace\TagTable',
 			'onAfterUnRegisterModule'
 		);
+		$eventManager->registerEventHandler(
+			'mobile',
+			'onMobileMenuStructureBuilt',
+			'rest',
+			'Bitrix\Rest\MobileMenuManager',
+			'onMobileMenuStructureBuilt',
+		);
+
+		$eventManager->registerEventHandlerCompatible(
+			'im',
+			'OnGetNotifySchema',
+			'rest',
+			\Bitrix\Rest\Integration\Im\NotifySchema::class,
+			'onGetNotifySchema',
+		);
 
 		\CAgent::AddAgent("Bitrix\\Rest\\Marketplace\\Client::getNumUpdates();", "rest", "N", 86400);
 		\CAgent::AddAgent("Bitrix\\Rest\\EventOfflineTable::cleanProcessAgent();", "rest", "N", 86400);
@@ -214,6 +229,21 @@ class rest extends CModule
 			'rest',
 			'\Bitrix\Rest\Marketplace\TagTable',
 			'onAfterUnRegisterModule'
+		);
+		$eventManager->unRegisterEventHandler(
+			'mobile',
+			'onMobileMenuStructureBuilt',
+			'rest',
+			'Bitrix\Rest\MobileMenuManager',
+			'onMobileMenuStructureBuilt',
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'im',
+			'OnGetNotifySchema',
+			'rest',
+			\Bitrix\Rest\Integration\Im\NotifySchema::class,
+			'onGetNotifySchema',
 		);
 
 		CAgent::RemoveModuleAgents("rest");

@@ -27,6 +27,8 @@
 	const { ContextMenu } = require('layout/ui/context-menu');
 	const { CrmNavigator } = require('crm/navigator');
 	const { qrauth } = require('qrauth/utils');
+	const { Money } = require('money');
+	const { RunActionExecutor } = require('rest');
 
 	SkeletonFactory.alias('Kanban', ListItemType.CRM_ENTITY);
 

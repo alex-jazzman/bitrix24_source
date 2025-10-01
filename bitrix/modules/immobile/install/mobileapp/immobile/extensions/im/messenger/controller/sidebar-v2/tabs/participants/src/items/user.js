@@ -8,7 +8,7 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/participants/src/items/user',
 
 	const { Loc } = require('im/messenger/loc');
 	const { UserHelper } = require('im/messenger/lib/helper');
-	const { UserStatus } = require('im/messenger/lib/element');
+	const { UserStatus } = require('im/messenger/lib/element/user-status');
 	const { ParticipantBaseItem } = require('im/messenger/controller/sidebar-v2/tabs/participants/src/items/base');
 
 	/**

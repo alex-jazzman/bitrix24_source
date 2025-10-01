@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Booking = this.BX.Booking || {};
-(function (exports,main_core,main_popup,main_date,ui_draganddrop_draggable,booking_const,booking_core,booking_lib_busySlots,booking_lib_analytics,booking_provider_service_bookingService) {
+(function (exports,main_core,main_popup,main_date,ui_draganddrop_draggable,booking_const,booking_core,booking_lib_busySlots,booking_lib_analytics,booking_provider_service_bookingService,booking_component_nonDraggableBookingPopup) {
 	'use strict';
 
 	var _params = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("params");
@@ -21,6 +21,8 @@ this.BX.Booking = this.BX.Booking || {};
 	var _moveWaitListItem = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("moveWaitListItem");
 	var _setEditingBookingId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setEditingBookingId");
 	var _timeFormatted = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("timeFormatted");
+	var _showPopupOnNonDraggableBookingFromDeletedResource = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showPopupOnNonDraggableBookingFromDeletedResource");
+	var _getResourceById = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getResourceById");
 	var _draggedBooking = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("draggedBooking");
 	var _draggedDataTransfer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("draggedDataTransfer");
 	var _draggedBookingId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("draggedBookingId");
@@ -62,6 +64,12 @@ this.BX.Booking = this.BX.Booking || {};
 	    Object.defineProperty(this, _draggedBooking, {
 	      get: _get_draggedBooking,
 	      set: void 0
+	    });
+	    Object.defineProperty(this, _getResourceById, {
+	      value: _getResourceById2
+	    });
+	    Object.defineProperty(this, _showPopupOnNonDraggableBookingFromDeletedResource, {
+	      value: _showPopupOnNonDraggableBookingFromDeletedResource2
 	    });
 	    Object.defineProperty(this, _timeFormatted, {
 	      get: _get_timeFormatted,
@@ -206,13 +214,14 @@ this.BX.Booking = this.BX.Booking || {};
 	  }
 	  babelHelpers.classPrivateFieldLooseBase(this, _updateScroll)[_updateScroll](draggable, clientX, clientY);
 	}
-	async function _onDragEnd2() {
+	async function _onDragEnd2(event) {
+	  var _babelHelpers$classPr, _babelHelpers$classPr2;
 	  clearInterval(this.scrollTimeout);
 	  babelHelpers.classPrivateFieldLooseBase(this, _getDraggedElements)[_getDraggedElements](babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].container).forEach(element => {
 	    main_core.Dom.removeClass(element, '--drag-source');
 	    main_core.Dom.style(element, 'visibility', '');
 	  });
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _hoveredCell)[_hoveredCell]) {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _hoveredCell)[_hoveredCell] && !((_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _getResourceById)[_getResourceById](babelHelpers.classPrivateFieldLooseBase(this, _hoveredCell)[_hoveredCell].resourceId)) != null && _babelHelpers$classPr.isDeleted)) {
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _draggedKind)[_draggedKind] === booking_const.DraggedElementKind.Booking) {
 	      void babelHelpers.classPrivateFieldLooseBase(this, _moveBooking)[_moveBooking]({
 	        booking: babelHelpers.classPrivateFieldLooseBase(this, _draggedBooking)[_draggedBooking],
@@ -224,6 +233,13 @@ this.BX.Booking = this.BX.Booking || {};
 	        cell: babelHelpers.classPrivateFieldLooseBase(this, _hoveredCell)[_hoveredCell]
 	      });
 	    }
+	  }
+	  if ((_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _getResourceById)[_getResourceById](babelHelpers.classPrivateFieldLooseBase(this, _draggedBookingResourceId)[_draggedBookingResourceId])) != null && _babelHelpers$classPr2.isDeleted) {
+	    const bookingId = babelHelpers.classPrivateFieldLooseBase(this, _draggedBooking)[_draggedBooking].id;
+	    if (booking_core.Core.getStore().getters[`${booking_const.Model.Interface}/deletingBookings`][bookingId]) {
+	      return;
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _showPopupOnNonDraggableBookingFromDeletedResource)[_showPopupOnNonDraggableBookingFromDeletedResource](event.data.source, bookingId);
 	  }
 	  babelHelpers.classPrivateFieldLooseBase(this, _draggedKind)[_draggedKind] = null;
 	  babelHelpers.classPrivateFieldLooseBase(this, _draggedId)[_draggedId] = null;
@@ -336,14 +352,28 @@ this.BX.Booking = this.BX.Booking || {};
 	  await Promise.all([$store.dispatch(`${booking_const.Model.Interface}/setEditingBookingId`, id), $store.dispatch(`${booking_const.Model.Interface}/setEditingWaitListItemId`, null)]);
 	}
 	function _get_timeFormatted() {
-	  var _babelHelpers$classPr, _babelHelpers$classPr2, _babelHelpers$classPr3, _babelHelpers$classPr4;
+	  var _babelHelpers$classPr3, _babelHelpers$classPr4, _babelHelpers$classPr5, _babelHelpers$classPr6;
 	  const timeFormat = main_date.DateTimeFormat.getFormat('SHORT_TIME_FORMAT');
-	  const from = (_babelHelpers$classPr = (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _hoveredCell)[_hoveredCell]) == null ? void 0 : _babelHelpers$classPr2.fromTs) != null ? _babelHelpers$classPr : babelHelpers.classPrivateFieldLooseBase(this, _draggedBooking)[_draggedBooking].dateFromTs;
-	  const to = (_babelHelpers$classPr3 = (_babelHelpers$classPr4 = babelHelpers.classPrivateFieldLooseBase(this, _hoveredCell)[_hoveredCell]) == null ? void 0 : _babelHelpers$classPr4.toTs) != null ? _babelHelpers$classPr3 : babelHelpers.classPrivateFieldLooseBase(this, _draggedBooking)[_draggedBooking].dateToTs;
+	  const from = (_babelHelpers$classPr3 = (_babelHelpers$classPr4 = babelHelpers.classPrivateFieldLooseBase(this, _hoveredCell)[_hoveredCell]) == null ? void 0 : _babelHelpers$classPr4.fromTs) != null ? _babelHelpers$classPr3 : babelHelpers.classPrivateFieldLooseBase(this, _draggedBooking)[_draggedBooking].dateFromTs;
+	  const to = (_babelHelpers$classPr5 = (_babelHelpers$classPr6 = babelHelpers.classPrivateFieldLooseBase(this, _hoveredCell)[_hoveredCell]) == null ? void 0 : _babelHelpers$classPr6.toTs) != null ? _babelHelpers$classPr5 : babelHelpers.classPrivateFieldLooseBase(this, _draggedBooking)[_draggedBooking].dateToTs;
 	  return main_core.Loc.getMessage('BOOKING_BOOKING_TIME_RANGE', {
 	    '#FROM#': main_date.DateTimeFormat.format(timeFormat, (from + babelHelpers.classPrivateFieldLooseBase(this, _offset)[_offset]) / 1000),
 	    '#TO#': main_date.DateTimeFormat.format(timeFormat, (to + babelHelpers.classPrivateFieldLooseBase(this, _offset)[_offset]) / 1000)
 	  });
+	}
+	function _showPopupOnNonDraggableBookingFromDeletedResource2(bookingEl, bookingId) {
+	  const popupId = `booking-non-draggable-booking-${bookingId}`;
+	  const popup = new booking_component_nonDraggableBookingPopup.NonDraggableBookingPopup({
+	    id: popupId,
+	    bindElement: bookingEl
+	  });
+	  popup.show();
+	  setTimeout(() => {
+	    popup.destroy(popupId);
+	  }, 5000);
+	}
+	function _getResourceById2(resourceId) {
+	  return booking_core.Core.getStore().getters[`${booking_const.Model.Resources}/getById`](resourceId);
 	}
 	function _get_draggedBooking() {
 	  var _Core$getStore$getter;
@@ -373,5 +403,5 @@ this.BX.Booking = this.BX.Booking || {};
 
 	exports.Drag = Drag;
 
-}((this.BX.Booking.Lib = this.BX.Booking.Lib || {}),BX,BX.Main,BX.Main,BX.UI.DragAndDrop,BX.Booking.Const,BX.Booking,BX.Booking.Lib,BX.Booking.Lib,BX.Booking.Provider.Service));
+}((this.BX.Booking.Lib = this.BX.Booking.Lib || {}),BX,BX.Main,BX.Main,BX.UI.DragAndDrop,BX.Booking.Const,BX.Booking,BX.Booking.Lib,BX.Booking.Lib,BX.Booking.Provider.Service,BX.Booking.Component));
 //# sourceMappingURL=drag.bundle.js.map

@@ -379,7 +379,6 @@ jn.define('qrauth/src/auth', (require, exports, module) => {
 			return View(
 				{
 					style: {
-						position: 'relative',
 						width: 22,
 						height: 22,
 						borderWidth: 1,
@@ -394,10 +393,6 @@ jn.define('qrauth/src/auth', (require, exports, module) => {
 					size: 20,
 					icon: Icon.QR_CODE,
 					color: Color.base4,
-					style: {
-						position: 'absolute',
-						marginLeft: Indent.M.toNumber(),
-					},
 				}),
 			);
 		}

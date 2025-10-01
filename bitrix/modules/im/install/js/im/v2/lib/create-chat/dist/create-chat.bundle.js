@@ -66,7 +66,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      this.setCreationStatus(false);
 	    }
 	    void im_v2_lib_layout.LayoutManager.getInstance().setLayout({
-	      name: im_v2_const.Layout.createChat.name,
+	      name: im_v2_const.Layout.createChat,
 	      entityId: chatTypeToCreate
 	    });
 	  }

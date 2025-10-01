@@ -8,6 +8,7 @@ jn.define('layout/ui/audio-player', (require, exports, module) => {
 	const { AudioPlayerTimings } = require('layout/ui/audio-player/timings');
 	const { EventEmitter } = require('event-emitter');
 	const { RangeSlider } = require('layout/ui/range-slider');
+	const { Random } = require('utils/random');
 
 	const { Alert } = require('alert');
 

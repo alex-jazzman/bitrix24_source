@@ -140,6 +140,5 @@ $arResult =
 	);
 
 $arResult['EXCH_1C_SCRIPT_URL'] = ($GLOBALS['APPLICATION']->IsHTTPS() ? 'https://' : 'http://').$_SERVER['HTTP_HOST'].'/crm/1c_exchange.php';
-$arResult['EXCH_1C_INFORMATION_URL'] = ($GLOBALS['APPLICATION']->IsHTTPS() ? 'https://' : 'http://').'www.bitrix24.ru/blogs/howto/integration1c.php';
 
 $this->IncludeComponentTemplate($componentPage);

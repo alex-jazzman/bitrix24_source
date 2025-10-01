@@ -1,14 +1,15 @@
+import { mapState } from 'ui.vue3.pinia';
+
 import { getMemberRoles, type MemberRolesType } from 'humanresources.company-structure.api';
 import { UserListItemActionButton } from './action-button';
 import { useChartStore } from 'humanresources.company-structure.chart-store';
-import { mapState } from 'ui.vue3.pinia';
 
 import 'ui.tooltip';
 import './styles/item.css';
 
 export const UserListItem = {
 	name: 'userList',
-
+	emits: ['itemDragStart'],
 	props: {
 		user: {
 			type: Object,
@@ -22,6 +23,14 @@ export const UserListItem = {
 		entityType: {
 			type: String,
 			required: true,
+		},
+		listType: {
+			type: String,
+			required: true,
+		},
+		canDrag: {
+			type: Boolean,
+			default: false,
 		},
 	},
 
@@ -50,6 +59,17 @@ export const UserListItem = {
 				cacheable: false,
 			});
 		},
+		handleMouseDown(event: MouseEvent): void
+		{
+			event.preventDefault();
+
+			this.$emit('itemDragStart', {
+				userId: this.user.id,
+				initialListType: this.listType,
+				event,
+				element: this.$el,
+			});
+		},
 	},
 
 	template: `
@@ -59,10 +79,15 @@ export const UserListItem = {
 			:class="{ '--searched': user.id === selectedUserId }"
 			:data-id="'hr-department-detail-content__user-' + user.id + '-item'"
 		>
+			<span v-if="canDrag"
+				  @mousedown="handleMouseDown"
+				  class="hr-department-detail-content__dnd-icon ui-icon-set --more-points">
+			</span>
 			<div class="hr-department-detail-content__user-avatar-container" @click="handleUserClick(user)">
 				<img 
 					class="hr-department-detail-content__user-avatar-img"
 					:src="user.avatar ? encodeURI(user.avatar) : defaultAvatar"
+				    alt=""
 				/>
 				<div v-if="user.role === memberRoles.head" class="hr-department-detail-content__user-avatar-overlay"></div>
 			</div>

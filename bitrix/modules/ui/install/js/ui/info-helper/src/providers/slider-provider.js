@@ -48,6 +48,11 @@ export class SliderProvider extends BaseProvider
 				};
 				(new ProviderRequestFactory(providerRequestFactoryConfiguration)).getRequest()
 					.then((response) => {
+						if (!Type.isStringFilled(this.frameUrlTemplate))
+						{
+							this.frameUrlTemplate = response.data?.frameUrlTemplate ?? '';
+						}
+
 						frame.src = this.#buildUrl(code);
 
 						return this.#createContainerNode(this.getLoader(), frame);

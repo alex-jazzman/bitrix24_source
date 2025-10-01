@@ -367,7 +367,9 @@ export const Segment = {
 		},
 		title(): string
 		{
-			return this.$Bitrix.Loc.getMessage('CRM_REPEAT_SALE_SEGMENT_TITLE');
+			const code = this.readOnly ? 'CRM_REPEAT_SALE_SEGMENT_TITLE_READ_ONLY' : 'CRM_REPEAT_SALE_SEGMENT_TITLE';
+
+			return this.$Bitrix.Loc.getMessage(code);
 		},
 		currentCategory(): ?Object
 		{

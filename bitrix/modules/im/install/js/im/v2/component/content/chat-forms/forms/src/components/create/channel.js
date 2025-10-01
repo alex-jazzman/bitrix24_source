@@ -184,7 +184,7 @@ export const ChannelCreation = {
 		onLayoutChange(event: BaseEvent<OnLayoutChangeEvent>)
 		{
 			const { to } = event.getData();
-			if (to.name === Layout.createChat.name && to.entityId !== ChatType.channel)
+			if (to.name === Layout.createChat && to.entityId !== ChatType.channel)
 			{
 				this.exitByChatTypeSwitch = true;
 			}

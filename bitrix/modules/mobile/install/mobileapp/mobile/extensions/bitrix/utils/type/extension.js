@@ -1,4 +1,7 @@
-(() => {
+/**
+ * @module utils/type
+ */
+jn.define('utils/type', (require, exports, module) => {
 	/**
 	 * @param {any} value
 	 * @returns {Boolean}
@@ -36,21 +39,29 @@
 	}
 
 	/**
-	 * @module utils/type
+	 * @param {any} value
+	 * @return {boolean}
 	 */
-	jn.define('utils/type', (require, exports, module) => {
+	function isNotEmptyString(value)
+	{
+		return (typeof value === 'string') && value !== '';
+	}
 
-		function isBoolean(value)
-		{
-			return value === true || value === false;
-		}
+	/**
+	 * @param {any} value
+	 * @return {boolean}
+	 */
+	function isBoolean(value)
+	{
+		return value === true || value === false;
+	}
 
-		module.exports = {
-			isNil,
-			isRegExp,
-			isESClass,
-			isBoolean,
-			isValidDateObject,
-		};
-	});
-})();
+	module.exports = {
+		isNil,
+		isRegExp,
+		isESClass,
+		isBoolean,
+		isValidDateObject,
+		isNotEmptyString,
+	};
+});

@@ -47,7 +47,9 @@ jn.define('user-profile/tabs-preparer', (require, exports, module) => {
 			const widget = nestedWidgets[TabType.COMMON];
 			const widgetParams = params[TabType.COMMON];
 
-			widget.showComponent(CommonTab(widgetParams));
+			widget.showComponent(
+				CommonTab({ ...widgetParams, layout: widget }),
+			);
 		}
 	}
 

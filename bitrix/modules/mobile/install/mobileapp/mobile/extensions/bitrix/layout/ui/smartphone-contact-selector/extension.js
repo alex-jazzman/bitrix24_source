@@ -107,25 +107,6 @@ jn.define('layout/ui/smartphone-contact-selector', (require, exports, module) =>
 		}
 
 		open = async () => {
-			if (Feature.isSmartphoneContactsAPISupported())
-			{
-				await this.openNewSelector();
-
-				return;
-			}
-
-			if (Application.getPlatform() === 'android')
-			{
-				Feature.showDefaultUnsupportedWidget({}, this.parentLayout);
-
-				return;
-			}
-
-			await this.openOldNativeSelector();
-		};
-
-		async openNewSelector()
-		{
 			await Notify.showIndicatorLoading();
 			this.allContacts = await this.#getContacts();
 			Notify.hideCurrentIndicator();
@@ -169,7 +150,7 @@ jn.define('layout/ui/smartphone-contact-selector', (require, exports, module) =>
 			}
 
 			this.#initSelector();
-		}
+		};
 
 		#onPhoneInputBoxContinue = ({ phone, selectorInstance }) => {
 			const contact = {

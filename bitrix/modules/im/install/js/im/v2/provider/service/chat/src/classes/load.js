@@ -275,7 +275,7 @@ export class LoadService
 	#redirectToLayout(actionResult: ChatLoadRestResult): Promise
 	{
 		const extractor = new ChatDataExtractor(actionResult);
-		LayoutManager.getInstance().setLastOpenedElement(Layout.chat.name, '');
+		LayoutManager.getInstance().setLastOpenedElement(Layout.chat, '');
 
 		if (this.#needRedirectToOpenLinesLayout(actionResult))
 		{

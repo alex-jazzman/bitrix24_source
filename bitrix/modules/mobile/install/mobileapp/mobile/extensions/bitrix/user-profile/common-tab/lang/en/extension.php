@@ -1,5 +1,6 @@
 <?php
-$MESS["M_PROFILE_GRATITUDE_EMPTY"] = "This screen will show appreciations\nyou receive from your colleagues.";
+$MESS["M_PROFILE_EFFICIENCY_TITLE"] = "Efficiency";
+$MESS["M_PROFILE_GRATITUDE_EMPTY"] = "This screen will show appreciations\n received from others.";
 $MESS["M_PROFILE_GRATITUDE_MORE_QUANTITY"] = "#QUANTITY# more";
 $MESS["M_PROFILE_GRATITUDE_TITLE"] = "Appreciations";
 $MESS["M_PROFILE_HEADER_CHAT_BUTTON_FIRED_TEXT"] = "Chat history";

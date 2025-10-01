@@ -32,9 +32,9 @@ export const MainHeader = {
 	},
 	computed:
 	{
-		recentItem(): ImModelRecentItem
+		recentItem(): ?ImModelRecentItem
 		{
-			return this.$store.getters['recent/get'](this.dialogId, true);
+			return this.$store.getters['recent/get'](this.dialogId);
 		},
 		dialog(): ImModelChat
 		{
@@ -81,14 +81,14 @@ export const MainHeader = {
 		{
 			this.showAddToChatPopup = true;
 		},
-		onContextMenuClick(event)
+		onContextMenuClick(event: PointerEvent)
 		{
-			const item = {
+			const context = {
 				dialogId: this.dialogId,
-				...this.recentItem,
+				recentItem: this.recentItem,
 			};
 
-			this.contextMenu.openMenu(item, event.target);
+			this.contextMenu.openMenu(context, event.target);
 		},
 		onSidebarCloseClick()
 		{

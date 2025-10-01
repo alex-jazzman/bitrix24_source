@@ -13,4 +13,5 @@ export const Model = Object.freeze({
 	ResourceTypes: 'resourceTypes',
 	Resources: 'resources',
 	WaitList: 'wait-list',
+	Filter: 'filter',
 });

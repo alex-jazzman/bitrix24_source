@@ -10,12 +10,6 @@ jn.define('im/messenger/controller/sidebar-v2/controller/bot', (require, exports
 	const { SidebarAudioTab } = require('im/messenger/controller/sidebar-v2/tabs/audio');
 	const { SidebarMediaTab } = require('im/messenger/controller/sidebar-v2/tabs/media');
 	const { SidebarParticipantsTab } = require('im/messenger/controller/sidebar-v2/tabs/participants');
-	const {
-		SidebarContextMenuActionId,
-		SidebarContextMenuActionPosition,
-	} = require('im/messenger/controller/sidebar-v2/const');
-	const { Icon } = require('assets/icons');
-	const { onAddParticipants } = require('im/messenger/controller/sidebar-v2/user-actions/participants');
 	const { createSearchButton } = require('im/messenger/controller/sidebar-v2/ui/primary-button/factory');
 
 	class BotSidebarController extends SidebarBaseController
@@ -29,32 +23,6 @@ jn.define('im/messenger/controller/sidebar-v2/controller/bot', (require, exports
 		{
 			return Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_CHAT_TITLE');
 		}
-
-		// region context menu
-
-		getHeaderContextMenuItems()
-		{
-			return [
-				...super.getHeaderContextMenuItems(),
-				{
-					id: SidebarContextMenuActionId.ADD_PARTICIPANTS,
-					title: Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_ACTION_ADD_PARTICIPANTS'),
-					icon: Icon.ADD_PERSON,
-					testId: 'sidebar-context-menu-add-participants',
-					sort: SidebarContextMenuActionPosition.MIDDLE,
-					onItemSelected: () => {
-						onAddParticipants({
-							dialogId: this.dialogId,
-							store: this.store,
-						}).catch((error) => {
-							this.logger.log(`${this.constructor.name}.onAddParticipants`, error);
-						});
-					},
-				},
-			];
-		}
-
-		// endregion
 
 		// region primary actions
 

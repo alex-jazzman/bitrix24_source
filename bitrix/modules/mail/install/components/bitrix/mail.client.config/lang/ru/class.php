@@ -67,6 +67,9 @@ $MESS["MAIL_CLIENT_CONFIG_ACCESS_HINT_MSGVER_1"] = "Разрешите друг�
 $MESS["MAIL_CLIENT_CONFIG_ACCESS_MORE"] = "подробнее";
 $MESS["MAIL_CLIENT_CONFIG_ACCESS_ADD"] = "Добавить";
 
+$MESS["MAIL_CLIENT_CONFIG_OWNER"] = "Изменение владельца";
+$MESS["MAIL_CLIENT_CONFIG_OWNER_CHANGE"] = "Сменить";
+
 $MESS["MAIL_CLIENT_CONFIG_CRM"] = "Интеграция с CRM";
 $MESS["MAIL_CLIENT_CONFIG_CRM_ACTIVE"] = "Связать с CRM";
 $MESS["MAIL_CLIENT_CONFIG_CRM_AGE"] = "Обработать письма за #AGE#";

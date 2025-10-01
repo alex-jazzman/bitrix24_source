@@ -21,7 +21,6 @@ return [
 		'im:messenger/controller/recent/copilot',
 		'im:messenger/controller/dialog/copilot',
 		'im:messenger/controller/dialog/lib/assets',
-		'im:messenger/controller/chat-creator',
 		'im:messenger/controller/forward-selector',
 		'im:messenger/controller/dialog-creator',
 		'im:messenger/view/recent',

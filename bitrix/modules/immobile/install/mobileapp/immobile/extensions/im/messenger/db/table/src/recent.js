@@ -35,7 +35,7 @@ jn.define('im/messenger/db/table/recent', (require, exports, module) => {
 			return [
 				{ name: 'id', type: FieldType.text, unique: true, index: true },
 				{ name: 'lastActivityDate', type: FieldType.date, index: true },
-				{ name: 'message', type: FieldType.json },
+				{ name: 'message', type: FieldType.object },
 				{ name: 'dateMessage', type: FieldType.date },
 				{ name: 'unread', type: FieldType.boolean },
 				{ name: 'pinned', type: FieldType.boolean },

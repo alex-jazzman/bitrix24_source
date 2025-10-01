@@ -333,7 +333,7 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 	    },
 	    closeDialog() {
 	      void im_public.Messenger.openLines();
-	      im_v2_lib_layout.LayoutManager.getInstance().setLastOpenedElement(im_v2_const.Layout.openlinesV2.name, '');
+	      im_v2_lib_layout.LayoutManager.getInstance().setLastOpenedElement(im_v2_const.Layout.openlinesV2, '');
 	    },
 	    getStartService() {
 	      if (!this.startService) {
@@ -611,9 +611,21 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 	`
 	};
 
+	const MenuSectionCode = Object.freeze({
+	  main: 'main',
+	  select: 'select'
+	});
 	class OpenLinesMessageMenu extends im_v2_lib_menu.MessageMenu {
 	  getMenuItems() {
-	    return [this.getReplyItem(), this.getCopyItem(), this.getForwardItem(), this.getFavoriteItem(), this.getDelimiter(), this.getDownloadFileItem(), this.getDelimiter(), this.getEditItem(), this.getDelimiter(), this.getDeleteItem(), this.getDelimiter(), this.getMarkItem(), this.getDelimiter(), this.getSelectItem()];
+	    const mainGroupItems = [this.getReplyItem(), this.getCopyItem(), this.getMarkItem(), this.getForwardItem(), this.getFavoriteItem(), this.getDownloadFileItem(), this.getEditItem(), this.getDeleteItem()];
+	    return [...this.groupItems(mainGroupItems, MenuSectionCode.main), ...this.groupItems([this.getSelectItem()], MenuSectionCode.select)];
+	  }
+	  getMenuGroups() {
+	    return [{
+	      code: MenuSectionCode.main
+	    }, {
+	      code: MenuSectionCode.select
+	    }];
 	  }
 	}
 

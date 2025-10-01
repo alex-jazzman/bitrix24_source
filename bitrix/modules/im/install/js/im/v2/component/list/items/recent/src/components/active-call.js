@@ -71,7 +71,7 @@ export const ActiveCall = {
 	},
 	methods:
 	{
-		onJoinClick()
+		async onJoinClick()
 		{
 			EventEmitter.emit(EventType.call.onJoinFromRecentItem);
 
@@ -83,7 +83,17 @@ export const ActiveCall = {
 				Messenger.openConference({ code: this.dialog.public.code });
 				return
 			}
+
+			const hasThisActiveCall = await this.getCallManager().sendBroadcastRequest(this.activeCall.call.uuid);
+			if (hasThisActiveCall.some(call => call))
+			{
+				return;
+			}
+
 			this.getCallManager().joinCall(this.activeCall.call.id, this.activeCall.call.uuid, this.activeCall.dialogId);
+		},
+		onBackToCallClick() {
+			this.getCallManager().sendBroadcastRequest(this.activeCall.call.uuid);
 		},
 		onLeaveCallClick()
 		{
@@ -143,7 +153,7 @@ export const ActiveCall = {
 					</div>
 					<div v-else-if="hasJoined && !isTabWithActiveCall" class="bx-im-list-recent-active-call__actions_container">
 						<div class="bx-im-list-recent-active-call__actions_item --another-device">
-							<ChatButton :size="ButtonSize.M" :customColorScheme="anotherDeviceColorScheme" :isRounded="true" :text="loc('IM_LIST_RECENT_ACTIVE_CALL_ANOTHER_DEVICE')" />
+							<ChatButton :size="ButtonSize.M" @click.stop="onBackToCallClick" :customColorScheme="anotherDeviceColorScheme" :isRounded="true" :text="loc('IM_LIST_RECENT_ACTIVE_CALL_ANOTHER_DEVICE')" />
 						</div>
 					</div>
 				</div>

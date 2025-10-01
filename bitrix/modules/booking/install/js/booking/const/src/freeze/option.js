@@ -16,4 +16,5 @@ export const Option = Object.freeze({
 	AhaExpandGrid: 'aha_expand_grid',
 	AhaSelectResources: 'aha_select_resources',
 	AhaCyclePopup: 'aha_cycle_popup',
+	AhaSearchNavigation: 'aha_search_navigation',
 });

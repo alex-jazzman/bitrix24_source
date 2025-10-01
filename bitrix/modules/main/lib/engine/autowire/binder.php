@@ -219,12 +219,10 @@ class Binder
 		catch (\TypeError $exception)
 		{
 			throw $exception;
-//			$this->processException($exception);
 		}
 		catch (\ErrorException $exception)
 		{
 			throw $exception;
-//			$this->processException($exception);
 		}
 
 		return null;

@@ -132,6 +132,14 @@ jn.define('im/messenger/controller/dialog/lib/header/title/controller', (require
 
 			return this;
 		}
+
+		/**
+		 * @param {JNWidgetTitleParams} params
+		 */
+		setTitleParams(params)
+		{
+			this.titleParams = params;
+		}
 	}
 
 	module.exports = {

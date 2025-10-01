@@ -14,7 +14,8 @@ return [
 
 		'im:messenger/loc',
 		'im:messenger/const',
-		'im:messenger/lib/element',
+		'im:messenger/lib/element/user-status',
+		'im:messenger/lib/element/chat-title',
 		'im:messenger/lib/emitter',
 		'im:messenger/lib/logger',
 		'im:messenger/lib/helper',

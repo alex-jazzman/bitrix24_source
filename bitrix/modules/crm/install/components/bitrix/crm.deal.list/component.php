@@ -20,6 +20,7 @@ use Bitrix\Crm;
 use Bitrix\Crm\Category\DealCategory;
 use Bitrix\Crm\Component\EntityList\FieldRestrictionManager;
 use Bitrix\Crm\Component\EntityList\FieldRestrictionManagerTypes;
+use Bitrix\Crm\Component\EntityList\RepeatSaleDataProvider\Segments;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Display\Field;
@@ -1277,14 +1278,15 @@ Crm\Service\Container::getInstance()->getParentFieldManager()->prepareGridHeader
 );
 
 $factory = Container::getInstance()->getFactory(\CCrmOwnerType::Deal);
-
-if (
-	\Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled()
-	&& $factory
-	&& $factory->isLastActivityEnabled()
-)
+if ($factory?->isLastActivityEnabled())
 {
 	$arResult['HEADERS'][] = ['id' => Crm\Item::FIELD_NAME_LAST_ACTIVITY_TIME, 'name' => $factory->getFieldCaption(Crm\Item::FIELD_NAME_LAST_ACTIVITY_TIME), 'sort' => mb_strtolower(Crm\Item::FIELD_NAME_LAST_ACTIVITY_TIME), 'first_order' => 'desc', 'class' => 'datetime'];
+}
+
+$repeatSaleHeader = (new Crm\RepeatSale\Segment\Field())->getGridHeader();
+if (!empty($repeatSaleHeader))
+{
+	$arResult['HEADERS'][] = $repeatSaleHeader;
 }
 
 (new Crm\Filter\Field\LastCommunicationField())->addLastCommunicationGridHeader($arResult['HEADERS']);
@@ -2431,6 +2433,12 @@ if (!$bInternal || $isExtendedInternal === true)
 }
 $userDataProvider->appendResult($arResult['DEAL']);
 $observersDataProvider->appendResult($arResult['DEAL']);
+
+if ($isInExportMode)
+{
+	$segmentsDataProvider = new Segments(\CCrmOwnerType::Deal);
+	$segmentsDataProvider->prepareResult($arResult['DEAL']);
+}
 
 $parentFieldValues = Crm\Service\Container::getInstance()->getParentFieldManager()->loadParentElementsByChildren(
 	\CCrmOwnerType::Deal,

@@ -1615,7 +1615,7 @@ if (
 			{
 				if(
 					$bBizproc
-					&& $_REQUEST['BIZ_PROC_ADD_DEFAULT_TEMPLATES']=='Y'
+					&& ($_REQUEST['BIZ_PROC_ADD_DEFAULT_TEMPLATES'] ?? null) === 'Y'
 					&& CBPDocument::GetNumberOfWorkflowTemplatesForDocumentType(["iblock", "CIBlockDocument", "iblock_".$ID])<=0
 					&& $arFields["BIZPROC"] == "Y"
 				)
@@ -1869,7 +1869,7 @@ if($bVarsFromForm)
 		$str_OF_IBLOCK_NAME = $OF_IBLOCK_NAME;
 		$str_OF_IBLOCK_TYPE_ID = $OF_IBLOCK_TYPE_ID;
 		$str_OF_CREATE_IBLOCK_TYPE_ID = ('Y' != $OF_CREATE_IBLOCK_TYPE_ID ? 'N' : 'Y');
-		$str_OF_NEW_IBLOCK_TYPE_ID = $OF_NEW_IBLOCK_TYPE_ID;
+		$str_OF_NEW_IBLOCK_TYPE_ID = (string)($OF_NEW_IBLOCK_TYPE_ID ?? '');
 
 		$int_OFFERS_PROPERTY_COUNT = intval($OFFERS_PROPERTY_COUNT);
 		if (0 >= $int_OFFERS_PROPERTY_COUNT)

@@ -8,7 +8,7 @@ jn.define('im/messenger/lib/ui/base/item/item', (require, exports, module) => {
 	const { ItemInfo } = require('im/messenger/lib/ui/base/item/item-info');
 	const { styles: itemStyles } = require('im/messenger/lib/ui/base/item/style');
 	const { withPressed } = require('utils/color');
-	const { ChatTitle } = require('im/messenger/lib/element');
+	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { clone } = require('utils/object');
 

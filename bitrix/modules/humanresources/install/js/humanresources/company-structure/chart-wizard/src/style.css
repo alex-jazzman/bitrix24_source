@@ -26,16 +26,21 @@
 	position: relative;
 	padding-bottom: 19px;
 	z-index: 3;
-	max-width: 883px;
+	max-width: 843px;
 	height: 603px;
 	margin: 0 auto;
 	top: 50%;
 	transform: translateY(-50%);
 }
 
+.chart-wizard__dialog.--first-step {
+	max-width: 550px;
+	height: auto;
+}
+
 .chart-wizard__head {
 	position: relative;
-	padding: 19px 20px 20px 20px;
+	padding: 20px;
 }
 
 .chart-wizard__breadcrumbs-head {
@@ -184,7 +189,9 @@
 	vertical-align: text-bottom;
 }
 
-.chart-wizard__department_item-error {
+.chart-wizard__department_item-error,
+.chart-wizard__team-rights__item-options-error
+{
 	display: flex;
 	align-items: center;
 	font: 13px/16px var(--ui-font-family-primary, var(--ui-font-family-system));
@@ -192,7 +199,9 @@
 	margin-top: 3px;
 }
 
-.chart-wizard__department_item-error .ui-icon-set.--warning {
+.chart-wizard__department_item-error .ui-icon-set.--warning,
+.chart-wizard__team-rights__item-options-error .ui-icon-set.--warning
+{
 	--ui-icon-set__icon-size: 20px;
 	--ui-icon-set__icon-color: var(--ui-field-color-warning);
 }
@@ -207,6 +216,11 @@
 	margin-bottom: 20px;
 	margin-right: 7px;
 }
+
+.chart-wizard__entity:last-child {
+	margin-bottom: 26px;
+}
+
 .chart-wizard__entity.--enabled
 {
 	background: url('./images/entity-bg.svg') no-repeat left;
@@ -541,7 +555,7 @@
 .chart-wizard__team-rights__item-hint_text-item_icon {
 	background-image: url('./images/bind-chat/bind-chat-hint-text-icon.svg');
 	margin-right: 8px;
-	width: 17px;
+	min-width: 17px;
 	background-position: top;
 	background-repeat: no-repeat;
 	background-size: contain;
@@ -562,8 +576,16 @@
 	margin-top: 16px;
 }
 
-.chart-wizard__bind-chat__item-options:last-child {
+.chart-wizard__bind-chat__item-options {
 	margin-top: 12px;
+}
+
+.chart-wizard__bind-chat__item-options:first-child {
+	margin-top: 0;
+}
+
+.chart-wizard__bind-chat__item-options:last-child {
+	padding-bottom: 6px;
 }
 
 .chart-wizard__team-rights__item-options:last-child {
@@ -642,7 +664,9 @@
 	background-image: url('./images/bind-chat/bind-chat-choose-chat-logo.svg');
 }
 
-.chart-wizard__form .ui-ctl-warning .ui-tag-selector-outer-container {
+.chart-wizard__form .ui-ctl-warning .ui-tag-selector-outer-container,
+.chart-wizard__team-rights .ui-ctl-warning .ui-tag-selector-outer-container
+{
 	border-color: var(--ui-field-color-warning);
 }
 

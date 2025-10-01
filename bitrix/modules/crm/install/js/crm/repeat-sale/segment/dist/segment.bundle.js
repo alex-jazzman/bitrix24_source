@@ -40,7 +40,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  computed: {
 	    videoSrc() {
 	      let name = 'how-it-work-en';
-	      if (['kz', 'ru', 'by'].includes(this.region)) {
+	      if (['kz', 'ru', 'by', 'uz'].includes(this.region)) {
 	        name = 'how-it-work-ru';
 	      }
 	      return `/bitrix/js/crm/repeat-sale/segment/video/${name}.webm`;
@@ -1090,7 +1090,8 @@ this.BX.Crm = this.BX.Crm || {};
 	      return ['crm-repeat-sale__segment-section'];
 	    },
 	    title() {
-	      return this.$Bitrix.Loc.getMessage('CRM_REPEAT_SALE_SEGMENT_TITLE');
+	      const code = this.readOnly ? 'CRM_REPEAT_SALE_SEGMENT_TITLE_READ_ONLY' : 'CRM_REPEAT_SALE_SEGMENT_TITLE';
+	      return this.$Bitrix.Loc.getMessage(code);
 	    },
 	    currentCategory() {
 	      var _this$categories$find;

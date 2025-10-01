@@ -333,7 +333,7 @@ class Stream implements Tabable
 
 	public function getIconId(): string
 	{
-		return Mobile::getApiVersion() < 56 ? 'stream' : 'newsfeed';
+		return 'newsfeed';
 	}
 
 	private function pushBizprocTab(array &$tabs): void
@@ -353,7 +353,9 @@ class Stream implements Tabable
 			if ($bizprocTabData)
 			{
 				$component = $bizprocTabData['component'];
-				unset($component['params']);
+				$component['params'] = [
+					'analyticsSection' => 'stream',
+				];
 
 				$tabs[] = [
 					'id' => 'bp2',

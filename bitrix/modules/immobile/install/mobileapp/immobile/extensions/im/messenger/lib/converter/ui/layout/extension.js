@@ -2,7 +2,8 @@
  * @module im/messenger/lib/converter/ui/layout
  */
 jn.define('im/messenger/lib/converter/ui/layout', (require, exports, module) => {
-	const { ChatTitle, ChatAvatar } = require('im/messenger/lib/element');
+	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
+	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 
 	/**
 	 * @class ChatLayoutConverter

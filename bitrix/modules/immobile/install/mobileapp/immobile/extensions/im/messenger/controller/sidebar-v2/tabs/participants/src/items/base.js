@@ -3,7 +3,8 @@
  */
 jn.define('im/messenger/controller/sidebar-v2/tabs/participants/src/items/base', (require, exports, module) => {
 	const { isFunction } = require('utils/object');
-	const { ChatTitle, UserStatus } = require('im/messenger/lib/element');
+	const { UserStatus } = require('im/messenger/lib/element/user-status');
+	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
 	const { ListItem } = require('im/messenger/controller/sidebar-v2/ui/layout/list-item');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 

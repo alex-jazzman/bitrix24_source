@@ -1,4 +1,5 @@
 <?php
+$MESS["M_PROFILE_EFFICIENCY_TITLE"] = "Тиімділік";
 $MESS["M_PROFILE_GRATITUDE_EMPTY"] = "Мұнда әріптестердің құттықтаулары \nжәне алғыстары болады.";
 $MESS["M_PROFILE_GRATITUDE_MORE_QUANTITY"] = "тағы #QUANTITY#";
 $MESS["M_PROFILE_GRATITUDE_TITLE"] = "Алғыс";

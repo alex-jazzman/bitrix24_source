@@ -381,24 +381,16 @@ class SalesCenterDeliveryPanel extends CBitrixComponent implements Main\Engine\C
 
 	private function getRecommendItem(): array
 	{
-		$feedbackPath = \CComponentEngine::makeComponentPath('bitrix:salescenter.feedback');
-		$feedbackPath = getLocalPath('components'.$feedbackPath.'/slider.php');
-		$feedbackPath = new Main\Web\Uri($feedbackPath);
-
-		$queryParams = [
-			'lang' => LANGUAGE_ID,
-			'feedback_type' => 'delivery_offer',
-		];
-		$feedbackPath->addParams($queryParams);
-
 		return [
 			'id' => 'recommend',
 			'title' => Loc::getMessage('SDP_SALESCENTER_DELIVERY_RECOMMEND'),
 			'image' => $this->getImagePath().'recommend.svg',
 			'data' => [
 				'type' => 'recommend',
-				'connectPath' => $feedbackPath->getLocator(),
-			]
+				'feedbackConfig' => [
+					'feedback_type' => Bitrix24Manager::FEEDBACK_TYPE_DELIVERY_OFFER,
+				],
+			],
 		];
 	}
 

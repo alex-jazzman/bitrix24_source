@@ -132,7 +132,7 @@ jn.define('im/messenger/db/repository/validators/message', (require, exports, mo
 			result.richLinkId = message.richLinkId;
 		}
 
-		if (Type.isPlainObject(message.params))
+		if (Type.isPlainObject(message.params) || Type.isArray(message.params))
 		{
 			const { params, fileIds, attach, richLinkId, keyboard } = validateParams(message.params);
 			result.params = params;

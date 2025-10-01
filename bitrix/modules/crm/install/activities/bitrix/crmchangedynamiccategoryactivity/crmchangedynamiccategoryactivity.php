@@ -79,7 +79,6 @@ class CBPCrmChangeDynamicCategoryActivity extends CBPCrmCopyDynamicActivity
 
 		if ($updateResult->isSuccess())
 		{
-			// Send Operations Analytics
 			$documentType = $this->getDocumentType();
 			\CCrmBizProcHelper::sendOperationsAnalytics(
 				Dictionary::EVENT_ENTITY_EDIT,

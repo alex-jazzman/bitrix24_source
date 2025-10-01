@@ -11,6 +11,7 @@ return [
 		'notify',
 		'pull/client/events',
 		'project/utils',
+		'project/member.list',
 		'reload/listeners',
 		'rest',
 		'rest/run-action-executor',

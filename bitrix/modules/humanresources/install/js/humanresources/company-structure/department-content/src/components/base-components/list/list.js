@@ -1,6 +1,7 @@
-import { Type } from 'main.core';
+import { Event, Runtime, Type } from 'main.core';
 import { EmptyListItem } from './empty-list-item';
 import { ListActionButton } from './list-action-button';
+
 // eslint-disable-next-line no-unused-vars
 import type { TabListDataTestIds } from './types';
 import './styles/list.css';
@@ -56,6 +57,21 @@ export const TabList = {
 			required: false,
 			default: {},
 		},
+		isDropTarget: {
+			type: Boolean,
+			default: false,
+		},
+		listType: {
+			type: String,
+		},
+	},
+
+	data(): Object
+	{
+		return {
+			placeholderIndex: null,
+			boundHandleDragOverList: null,
+		};
 	},
 
 	computed: {
@@ -65,10 +81,87 @@ export const TabList = {
 		},
 	},
 
+	watch: {
+		isDropTarget(newValue, oldValue): void
+		{
+			if (newValue === oldValue)
+			{
+				return;
+			}
+			const itemsWrapper = this.$refs.itemsWrapper;
+			if (!itemsWrapper)
+			{
+				return;
+			}
+
+			if (newValue)
+			{
+				this.boundHandleDragOverList = Runtime.throttle(this.handleDragOverList.bind(this), 10);
+				Event.bind(itemsWrapper, 'mousemove', this.boundHandleDragOverList);
+
+				if (this.listItems.length === 0)
+				{
+					this.placeholderIndex = 0;
+				}
+			}
+			else
+			{
+				Event.unbind(itemsWrapper, 'mousemove', this.boundHandleDragOverList);
+				this.boundHandleDragOverList = null;
+				this.placeholderIndex = null;
+			}
+		},
+	},
+
 	methods: {
 		onActionMenuItemClick(actionId: string): void
 		{
 			this.$emit('tabListAction', actionId);
+		},
+		handleDragOverList(event: MouseEvent): void
+		{
+			if (!this.isDropTarget || !this.$refs.itemsWrapper)
+			{
+				if (this.placeholderIndex !== null)
+				{
+					this.placeholderIndex = null;
+				}
+
+				return;
+			}
+
+			const itemsWrapper = this.$refs.itemsWrapper;
+			const children = [...itemsWrapper.querySelectorAll('.hr-department-detail-content__user-container:not(.--dragging)')];
+			const mouseY = event.clientY;
+
+			if (children.length === 0)
+			{
+				if (this.placeholderIndex !== 0)
+				{
+					this.placeholderIndex = 0;
+				}
+
+				return;
+			}
+
+			let newIndex = children.length;
+
+			for (const [i, child] of children.entries())
+			{
+				const rect = child.getBoundingClientRect();
+				const childMidpointY = rect.top + rect.height / 2;
+
+				if (mouseY < childMidpointY)
+				{
+					newIndex = i;
+					break;
+				}
+			}
+
+			if (newIndex !== this.placeholderIndex)
+			{
+				this.placeholderIndex = newIndex;
+			}
 		},
 	},
 
@@ -79,7 +172,7 @@ export const TabList = {
 		>
 			<div class="hr-department-detail-content__tab-list_header-container">
 				<div class="hr-department-detail-content__tab-list_list-title">
-					{{ title}}
+					{{ title }}
 					<span
 						v-if="needToShowCount"
 						class="hr-department-detail-content__tab-list_header-count"
@@ -95,10 +188,20 @@ export const TabList = {
 					:dataTestIds="{buttonDataTestId: dataTestIds.listActionButtonDataTestId, containerDataTestId: dataTestIds.listActonMenuDataTestId}"
 				/>
 			</div>
-			<div class="hr-department-detail-content__tab_list-container">
-				<template v-for="(item) in listItems">
-					<slot :item="item"/>
+			<div class="hr-department-detail-content__tab_list-container" ref="itemsWrapper">
+				<div
+					v-if="placeholderIndex === 0 && isDropTarget"
+					class="hr-department-detail-content__drop-placeholder"
+				></div>
+				<template v-for="(item, index) in listItems" :key="item.id">
+					<slot :item="item"
+					/>
+					<div
+						v-if="placeholderIndex === (index + 1) && isDropTarget"
+						class="hr-department-detail-content__drop-placeholder"
+					></div>
 				</template>
+				<slot name="footer" />
 				<EmptyListItem v-if="emptyItemTitle && emptyItemImageClass && !listItems.length && !hideEmptyItem"
 					:title="emptyItemTitle"
 					:imageClass="emptyItemImageClass"

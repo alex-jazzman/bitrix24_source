@@ -27,7 +27,6 @@ return [
 		'layout/ui/email-input-box',
 		'layout/ui/name-checker-box',
 		'layout/ui/qr-invite',
-		'intranet:enum',
 		'ui-system/blocks/avatar',
 		'utils/phone',
 		'utils/type',
@@ -35,7 +34,6 @@ return [
 		'utils/object',
 		'utils/skeleton',
 		'notify-manager',
-		'intranet:invite-status-box',
 		'ui-system/form/buttons/button',
 		'selector/widget/factory',
 		'im:messenger/controller/selector/member',
@@ -44,11 +42,14 @@ return [
 		'ui-system/blocks/icon',
 		'ui-system/popups/aha-moment',
 		'rest/run-action-executor',
+		'utils/enums/base',
+		'layout/ui/status-box',
 	],
 	'bundle' => [
 		'./src/guests-tab-content',
 		'./src/api',
 		'./src/utils',
 		'./src/analytics',
+		'./src/enum',
 	]
 ];

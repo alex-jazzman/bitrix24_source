@@ -194,7 +194,12 @@ jn.define('im/messenger/model/recent/validator', (require, exports, module) => {
 		{
 			params.withFile = Boolean(fields.message.file);
 		}
-		else if (Type.isBoolean(fields.message.params?.withFile) || Type.isPlainObject(fields.message.params?.withFile))
+
+		if (
+			Type.isBoolean(fields.message.params?.withFile)
+			|| Type.isPlainObject(fields.message.params?.withFile)
+			|| Type.isArrayFilled(fields.message.params?.withFile)
+		)
 		{
 			params.withFile = fields.message.params.withFile;
 		}

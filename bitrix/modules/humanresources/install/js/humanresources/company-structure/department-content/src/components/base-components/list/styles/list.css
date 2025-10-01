@@ -109,3 +109,21 @@
 .hr-department-detail-content__tab-list_item-wrapper:hover .hr-department-detail-content__tab-list_item-action-btn {
 	opacity: 1;
 }
+
+.hr-department-detail-content__drop-placeholder {
+	border-radius: var(--ui-border-radius-md, 8px);
+	margin: 4px 0;
+	box-sizing: border-box;
+	transition: opacity 0.2s ease-in-out;
+	height: 59px;
+	width: 334px;
+	background-image:
+		repeating-linear-gradient(90deg, #c7f0fd 0, #c7f0fd 10px, transparent 10px, transparent 20px),
+		repeating-linear-gradient(180deg, #c7f0fd 0, #c7f0fd 10px, transparent 10px, transparent 20px),
+		repeating-linear-gradient(90deg, #c7f0fd 0, #c7f0fd 10px, transparent 10px, transparent 20px),
+		repeating-linear-gradient(180deg, #c7f0fd 0, #c7f0fd 10px, transparent 10px, transparent 20px);
+	background-repeat: repeat-x, repeat-y, repeat-x, repeat-y;
+	background-position: left top, right top, left bottom, left top;
+	background-size: 100% 1px, 1px 100%, 100% 1px, 1px 100%;
+	background-color: #f5fdff;
+}

@@ -4,13 +4,14 @@
 jn.define('lists/element-creation-guide/detail-step', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { WizardStep } = require('layout/ui/wizard/step');
-	const { ProgressBarNumber } = require('lists/wizard/progress-bar-number');
 	const { EventEmitter } = require('event-emitter');
-	const { DetailStepComponent } = require('lists/element-creation-guide/detail-step/component');
 	const { FocusManager } = require('layout/ui/fields/focus-manager');
 	const { NotifyManager } = require('notify-manager');
 	const { AnalyticsEvent } = require('analytics');
 	const { Type } = require('type');
+	const { Random } = require('utils/random');
+	const { ProgressBarNumber } = require('lists/wizard/progress-bar-number');
+	const { DetailStepComponent } = require('lists/element-creation-guide/detail-step/component');
 
 	class DetailStep extends WizardStep
 	{
@@ -27,7 +28,6 @@ jn.define('lists/element-creation-guide/detail-step', (require, exports, module)
 		{
 			super(props);
 
-			// eslint-disable-next-line no-undef
 			this.uid = props.uid || Random.getString();
 			this.customEventEmitter = EventEmitter.createWithUid(this.uid);
 

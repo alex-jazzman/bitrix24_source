@@ -91,7 +91,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	const { RecentView } = require('im/messenger/view/recent');
 	const { CopilotDialog } = require('im/messenger/controller/dialog/copilot');
 	const { CopilotAssets } = require('im/messenger/controller/dialog/lib/assets');
-	const { ChatCreator } = require('im/messenger/controller/chat-creator');
 	const { TabCounters } = require('im/messenger/lib/counters/tab-counters');
 	const { Communication } = require('im/messenger/lib/integration/mobile/communication');
 	const { CopilotPushMessageHandler } = require('im/messenger/provider/push/message-handler/copilot');
@@ -120,7 +119,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		 * @property {CopilotRecent} recent - recent chat list controller
 		 * @property {Dialog} dialog - chat controller
 		 * @property {DialogSelector} dialogSelector - chat search controller
-		 * @property {ChatCreator} chatCreator - chat creation dialog
 		 * @property {RestManager} restManager - collects requests to initialize the messenger into a batch and executes it
 		 */
 		constructor()
@@ -182,7 +180,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			});
 
 			this.searchSelector = new RecentSelector(DialogList);
-			this.chatCreator = new ChatCreator();
 			this.dialogCreator = new DialogCreator();
 		}
 
@@ -392,6 +389,8 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		 */
 		async refresh(params = {})
 		{
+			await EntityReady.wait('im.navigation');
+
 			const { shortMode = false } = params;
 
 			await this.core.setAppStatus(AppStatus.connection, true);

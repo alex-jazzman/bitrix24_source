@@ -6,28 +6,15 @@ jn.define('user-profile/common-tab', (require, exports, module) => {
 	const { AreaList } = require('ui-system/layout/area-list');
 	const { Area } = require('ui-system/layout/area');
 	const { createTestIdGenerator } = require('utils/test');
-	const { usersUpserted } = require('statemanager/redux/slices/users');
-	const { dispatch } = require('statemanager/redux/store');
 	const { Line } = require('utils/skeleton');
 	const { Indent, Component, Color } = require('tokens');
-	const { gratitudesUpserted } = require('statemanager/redux/slices/gratitude');
-	const { batchActions } = require('statemanager/redux/batched-actions');
-	const { HeaderBlock } = require('user-profile/common-tab/block/header');
-	const { Gratitude } = require('user-profile/common-tab/block/gratitude');
-	const { UserStatus } = require('user-profile/common-tab/enum/user-status');
 	const { fetchTabData } = require('user-profile/api');
+	const { ProfileBlockFactory } = require('user-profile/common-tab/src/block/factory');
+	const { ScrollView } = require('layout/ui/scroll-view');
 
 	/**
 	 * @typedef {Object} CommonTabProps
 	 * @property {number} ownerId
-	 * @property {string} [testId]
-	 * @property {boolean} [pending]
-	 * @property {string} [GMTString]
-	 * @property {Date} [lastSeenDate]
-	 * @property {string} [personalGender]
-	 * @property {string} [onVacationDateTo]
-	 * @property {string} [status]
-
 	 * @class CommonTab
 	 */
 	class CommonTab extends LayoutComponent
@@ -35,6 +22,7 @@ jn.define('user-profile/common-tab', (require, exports, module) => {
 		constructor(props)
 		{
 			super(props);
+
 			this.getTestId = createTestIdGenerator({
 				prefix: 'common-tab',
 				context: this,
@@ -47,37 +35,36 @@ jn.define('user-profile/common-tab', (require, exports, module) => {
 			const { ownerId } = this.props;
 
 			const response = await fetchTabData({ ownerId });
-			const {
-				GMTString,
-				lastSeenDate,
-				personalGender,
-				onVacationDateTo,
-				status,
-				gratitudeTotalCount,
-			} = this.#prepareDataFromResponse(response);
 
 			this.setState({
 				pending: false,
-				GMTString,
-				lastSeenDate,
-				personalGender,
-				onVacationDateTo,
-				status: UserStatus.getEnum(status),
-				gratitudeTotalCount,
+				fullResponse: response,
 			});
+		}
+
+		get blocks()
+		{
+			const { ownerId, parentWidget } = this.props;
+			const { fullResponse } = this.state;
+
+			if (!fullResponse || fullResponse.status === 'error')
+			{
+				return [];
+			}
+
+			const options = {
+				...fullResponse.data,
+				ownerId,
+				parentWidget,
+			};
+
+			return ProfileBlockFactory.getAll(options);
 		}
 
 		render()
 		{
-			const { ownerId } = this.props;
 			const {
 				pending,
-				GMTString,
-				lastSeenDate,
-				personalGender,
-				onVacationDateTo,
-				status,
-				gratitudeTotalCount,
 			} = this.state;
 
 			if (pending)
@@ -85,45 +72,28 @@ jn.define('user-profile/common-tab', (require, exports, module) => {
 				return this.#renderSkeleton();
 			}
 
-			return Box(
+			return ScrollView(
 				{
 					testId: this.getTestId('box'),
 					safeArea: {
 						bottom: true,
 					},
+					style: {
+						flex: 1,
+						backgroundColor: Color.bgContentSecondary.toHex(),
+					},
 				},
-				AreaList(
+				View(
 					{
-						testId: this.getTestId('area-list'),
+						testId: this.getTestId('block-list-view'),
 						style: {
-							backgroundColor: Color.bgContentSecondary.toHex(),
+							flexDirection: 'row',
+							flexWrap: 'wrap',
+							justifyContent: 'center',
+							paddingBottom: Component.cardListGap.toNumber(),
 						},
 					},
-					HeaderBlock({
-						ownerId,
-						GMTString,
-						lastSeenDate,
-						personalGender,
-						onVacationDateTo,
-						status,
-					}),
-					Area(
-						{},
-						View(
-							{
-								style: {
-									flexDirection: 'row',
-									alignItems: 'center',
-									justifyContent: 'space-between',
-								},
-							},
-							Gratitude({
-								ownerId,
-								gratitudeTotalCount,
-							}),
-							// TODO: Add Efficiency block here
-						),
-					),
+					...this.blocks,
 				),
 			);
 		}
@@ -131,47 +101,14 @@ jn.define('user-profile/common-tab', (require, exports, module) => {
 		#initState = (props) => {
 			const {
 				pending = true,
-				GMTString = null,
-				lastSeenDate = null,
-				onVacationDateTo = null,
-				status = '',
-				gratitudeTotalCount = null,
-				personalGender = null,
+				fullResponse = null,
 			} = props;
 
 			this.state = {
 				pending,
-				GMTString,
-				lastSeenDate,
-				onVacationDateTo,
-				status: UserStatus.getEnum(status),
-				gratitudeTotalCount,
-				personalGender,
+				fullResponse,
 			};
 		};
-
-		#prepareDataFromResponse(response)
-		{
-			if (response?.status === 'success')
-			{
-				const { user, gratitude, statusData = {} } = response.data;
-
-				const actions = [
-					gratitude?.items?.length > 0 && gratitudesUpserted(gratitude.items),
-					user && usersUpserted([user]),
-				].filter(Boolean);
-
-				dispatch(batchActions(actions));
-
-				return {
-					...statusData,
-					personalGender: user.personalGender,
-					gratitudeTotalCount: gratitude?.totalCount,
-				};
-			}
-
-			return {};
-		}
 
 		#renderSkeleton = () => {
 			return Box(

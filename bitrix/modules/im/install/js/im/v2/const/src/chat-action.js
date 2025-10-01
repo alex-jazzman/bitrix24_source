@@ -45,6 +45,7 @@ export const ActionByUserType = Object.freeze({
 	getOpenlines: 'getOpenlines',
 	createCollab: 'createCollab',
 	createCopilot: 'createCopilot',
+	createAiAssistant: 'createAiAssistant',
 	createChannel: 'createChannel',
 	createChat: 'createChat',
 	createConference: 'createConference',

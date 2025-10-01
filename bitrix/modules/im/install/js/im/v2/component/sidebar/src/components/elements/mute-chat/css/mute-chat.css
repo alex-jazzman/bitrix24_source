@@ -1,6 +1,5 @@
 .bx-im-sidebar-mute-chat__container {
 	--im-sidebar-main-preview-settings__color_title: #008dba;
-	--im-sidebar-main-preview-settings__color_copilot-title: #8e52ec;
 
 	display: flex;
 	flex-direction: column;

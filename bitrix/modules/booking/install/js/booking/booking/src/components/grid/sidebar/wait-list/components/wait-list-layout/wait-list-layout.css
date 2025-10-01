@@ -13,7 +13,7 @@
 	border: 1px solid var(--ui-color-base-10);
 	pointer-events: all;
 	max-height: 18px;
-	box-shadow: 0 0 30px 10px var(--ui-color-base-02);
+	/*box-shadow: 0 0 30px 10px var(--ui-color-base-02);*/
 	transition: max-height 180ms ease;
 }
 

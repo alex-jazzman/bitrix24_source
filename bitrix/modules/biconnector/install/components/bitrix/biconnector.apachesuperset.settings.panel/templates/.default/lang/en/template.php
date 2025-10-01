@@ -22,5 +22,4 @@ $MESS["BICONNECTOR_SUPERSET_SETTINGS_GROUP_FIELD_HINT"] = "You may lose access t
 $MESS["BICONNECTOR_SUPERSET_SETTINGS_GROUP_HINT"] = "Adding a dashboard to the group will add it to the Dashboards menu item in the top menu. #HINT_LINK#";
 $MESS["BICONNECTOR_SUPERSET_SETTINGS_KEY_UPDATE_FAILED"] = "Error refreshing key.";
 $MESS["BICONNECTOR_SUPERSET_SETTINGS_KEY_UPDATE_SUCCESS"] = "Key has been refreshed.";
-$MESS["BICONNECTOR_SUPERSET_SETTINGS_NEW_DASHBOARD_NOTIFICATION_HINT_LINK"] = "Select employees who will receive notifications when a new dashboard or update is available. #HINT_LINK#";
 $MESS["BICONNECTOR_SUPERSET_SETTINGS_OWNER_HINT_LINK"] = "Dashboard owner has full access to the dashboard. You can lose your access if you change dashboard owner. #HINT_LINK#";

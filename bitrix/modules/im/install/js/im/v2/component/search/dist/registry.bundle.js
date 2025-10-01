@@ -162,9 +162,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	  getOpenItem() {
 	    return {
-	      text: main_core.Loc.getMessage('IM_LIB_MENU_OPEN'),
-	      onclick: () => {
-	        im_public.Messenger.openChat(this.context.dialogId);
+	      title: main_core.Loc.getMessage('IM_LIB_MENU_OPEN'),
+	      onClick: () => {
+	        void im_public.Messenger.openChat(this.context.dialogId);
 	        this.menuInstance.close();
 	      }
 	    };
@@ -175,9 +175,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    }
 	    const profileUri = im_v2_lib_utils.Utils.user.getProfileLink(this.context.dialogId);
 	    return {
-	      text: main_core.Loc.getMessage('IM_LIB_MENU_OPEN_PROFILE_V2'),
-	      href: profileUri,
-	      onclick: () => {
+	      title: main_core.Loc.getMessage('IM_LIB_MENU_OPEN_PROFILE_V2'),
+	      onClick: () => {
+	        BX.SidePanel.Instance.open(profileUri);
 	        this.menuInstance.close();
 	      }
 	    };
@@ -188,8 +188,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    }
 	    const isAnyChatOpened = this.store.getters['application/getLayout'].entityId.length > 0;
 	    return {
-	      text: main_core.Loc.getMessage('IM_LIB_MENU_FIND_SHARED_CHATS'),
-	      onclick: async () => {
+	      title: main_core.Loc.getMessage('IM_LIB_MENU_FIND_SHARED_CHATS'),
+	      onClick: async () => {
 	        if (!isAnyChatOpened) {
 	          await im_public.Messenger.openChat(this.context.dialogId);
 	        }

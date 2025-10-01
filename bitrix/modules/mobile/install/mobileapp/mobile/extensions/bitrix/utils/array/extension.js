@@ -1,5 +1,8 @@
-(() => {
-	const { mergeImmutable } = jn.require('utils/object');
+/**
+ * @module utils/array
+ */
+jn.define('utils/array', (require, exports, module) => {
+	const { mergeImmutable } = require('utils/object');
 
 	/**
 	 * @template T
@@ -75,7 +78,7 @@
 
 	/**
 	 * Creates an array of elements, sorted in ascending order by
-	 * the results of running each element in a collection thru each iteratee.
+	 * the results of running each element in a collection through each iteratee.
 	 * @template T
 	 * @param {Iterable<T>} collection
 	 * @param predicate
@@ -83,9 +86,9 @@
 	 */
 	function sortBy(collection, predicate)
 	{
-		const sortBy = (key) => (a, b) => ((a[key] > b[key]) ? 1 : ((b[key] > a[key]) ? -1 : 0));
+		const createComparer = (key) => (a, b) => ((a[key] > b[key]) ? 1 : ((b[key] > a[key]) ? -1 : 0));
 
-		return [...collection].sort(sortBy(predicate));
+		return [...collection].sort(createComparer(predicate));
 	}
 
 	/**
@@ -148,45 +151,21 @@
 		}
 
 		const [firstArray, ...restArrays] = arrays;
-		const items = firstArray.filter(item => {
-			return restArrays.every(array => array.includes(item));
+		const items = firstArray.filter((item) => {
+			return restArrays.every((array) => array.includes(item));
 		});
 
 		return unique(items);
 	}
 
-	/**
-	 * @class ArrayUtils
-	 * @deprecated Please import specific utilities directly, using jn.require()
-	 */
-	class ArrayUtils
-	{
-		static last(array)
-		{
-			return last(array);
-		}
-
-		static uniqBy(arr, predicate)
-		{
-			return uniqBy(arr, predicate);
-		}
-	}
-
-	jnexport(ArrayUtils);
-
-	/**
-	 * @module utils/array
-	 */
-	jn.define('utils/array', (require, exports, module) => {
-		module.exports = {
-			last,
-			chunk,
-			unique,
-			uniqBy,
-			mergeBy,
-			sortBy,
-			replaceBy,
-			intersection,
-		};
-	});
-})();
+	module.exports = {
+		last,
+		chunk,
+		unique,
+		uniqBy,
+		mergeBy,
+		sortBy,
+		replaceBy,
+		intersection,
+	};
+});

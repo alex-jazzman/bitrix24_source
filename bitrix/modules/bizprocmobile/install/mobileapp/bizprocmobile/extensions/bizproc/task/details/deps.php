@@ -15,6 +15,7 @@ return [
 		'notify-manager',
 		'toast',
 		'tokens',
+		'qrauth',
 
 		'utils/file',
 		'utils/function',

@@ -185,6 +185,7 @@ export const ManagementDialog = {
 					<div class="hr-management-dialog__header_content-container">
 						<div class="hr-management-dialog__header_title">{{title}}</div>
 						<div v-if="description" class="hr-management-dialog__header_subtitle">{{description}}</div>
+						<slot name="extra-subtitle" />
 					</div>
 					<div
 						class="ui-icon-set --cross-40 hr-management-dialog__header_close-button"

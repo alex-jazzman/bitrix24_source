@@ -1,5 +1,6 @@
 import type { reactionType as Reaction } from 'ui.reactions-select';
 
+import type { JsonObject } from 'main.core';
 import type { MessageStatus } from 'im.v2.const';
 
 export type RawTariffRestrictions = {
@@ -238,7 +239,7 @@ export type RawCopilot = {
 	roles: {[string]: RawCopilotRole},
 }
 
-export type RawRecentItem = {
+export type RawLegacyRecentItem = {
 	id: string, // dialogId
 	chat_id: number,
 	chat: RawRecentChat,
@@ -265,4 +266,24 @@ export type RawRecentItem = {
 	unread: boolean,
 	has_reminder: boolean,
 	options: {},
+};
+
+export type RecentItemType = 'chat' | 'user';
+
+export type RawRecentItem = {
+	chatId: number,
+	dialogId: string,
+	type: RecentItemType,
+	counter: number,
+	dateLastActivity: string,
+	dateUpdate: string,
+	invited: Boolean | {
+		originatorId: number,
+		canResend: boolean,
+	},
+	lastReadMessageId: number,
+	messageId: number,
+	options: JsonObject,
+	pinned: boolean,
+	unread: boolean,
 };

@@ -4,6 +4,7 @@ import DepartmentControl from 'intranet.department-control';
 import { AvatarRound, AvatarRoundExtranet, AvatarRoundGuest, AvatarBase } from 'ui.avatar';
 import { TransferToIntranetPopup } from '../transfer-to-intranet-popup';
 import type { TransferToIntranetPopupType } from '../transfer-to-intranet-popup';
+import { BaseEvent } from 'main.core.events';
 
 export class StartStep
 {
@@ -11,6 +12,7 @@ export class StartStep
 	#content: HTMLElement;
 	#department: DepartmentControl;
 	#parent: TransferToIntranetPopup;
+	#sendButton: ?Button;
 
 	constructor(options: TransferToIntranetPopupType, parent: TransferToIntranetPopup)
 	{
@@ -63,8 +65,8 @@ export class StartStep
 					${this.#getDepartmentControl().render()}
 				</div>
 				<div class="transfer-start__action">
-					${this.#getSendButton()}
-					${this.#getCancelButton()}
+					${this.#getSendButton().render()}
+					${this.#getCancelButton().render()}
 				</div>
 			</div>
 		`;
@@ -104,15 +106,16 @@ export class StartStep
 				rootDepartment: Type.isObject(rootDepartment) ? rootDepartment : null,
 				description: Loc.getMessage('INTRANET_EXTRANET_TO_INTRANET_POPUP_DEPARTMENT_DESCRIPTION'),
 			});
+
+			this.#department.subscribe('onChange', this.#onChangeDepartments.bind(this));
 		}
 
 		return this.#department;
 	}
 
-	#getSendButton(): HTMLElement
+	#getSendButton(): Button
 	{
-		return new Button({
-
+		this.#sendButton ??= new Button({
 			className: 'transfer-start__action-send',
 			text: Loc.getMessage('INTRANET_EXTRANET_TO_INTRANET_POPUP_TRANSFER'),
 			size: Button.Size.LARGE,
@@ -120,15 +123,23 @@ export class StartStep
 			useAirDesign: true,
 			noCaps: true,
 			isDependOnTheme: true,
+			state: this.#getDepartmentControl().getValues().length > 0 ? null : Button.State.DISABLED,
 			onclick: () => {
+				if (this.#sendButton.getState() === Button.State.DISABLED)
+				{
+					return;
+				}
+
 				this.#parent.emit('changestate', {
 					departmentValues: this.#department.getValues(),
 				});
 			},
-		}).render();
+		});
+
+		return this.#sendButton;
 	}
 
-	#getCancelButton(): HTMLElement
+	#getCancelButton(): Button
 	{
 		return new Button({
 			useAirDesign: true,
@@ -139,6 +150,13 @@ export class StartStep
 				this.#parent.emit('closepopup');
 			},
 			noCaps: true,
-		}).render();
+		});
+	}
+
+	#onChangeDepartments(event: BaseEvent): void
+	{
+		const { tags } = event.data;
+		const state = tags?.length > 0 ? null : Button.State.DISABLED;
+		this.#getSendButton().setState(state);
 	}
 }

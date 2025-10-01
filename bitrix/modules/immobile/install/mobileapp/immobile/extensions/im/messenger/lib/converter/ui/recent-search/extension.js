@@ -4,7 +4,8 @@
 jn.define('im/messenger/lib/converter/ui/recent-search', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { UserHelper } = require('im/messenger/lib/helper');
-	const { ChatTitle, ChatAvatar } = require('im/messenger/lib/element');
+	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
+	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 
 	/**
 	 * @class RecentSearchUiConverter

@@ -18,7 +18,7 @@ export class ResourceCreationWizard
 
 	#application: VueCreateAppResult | null = null;
 
-	static #makeName(resourceId: string = 'new'): string
+	static makeName(resourceId: string = 'new'): string
 	{
 		return `booking:resource-creation-wizard:${resourceId || 'new'}`;
 	}
@@ -61,7 +61,7 @@ export class ResourceCreationWizard
 
 	open(resourceId: ResourceId = null): void
 	{
-		SidePanelInstance.open(ResourceCreationWizard.#makeName(resourceId), {
+		SidePanelInstance.open(ResourceCreationWizard.makeName(resourceId), {
 			width: ResourceCreationWizard.#width,
 			cacheable: false,
 			events: {

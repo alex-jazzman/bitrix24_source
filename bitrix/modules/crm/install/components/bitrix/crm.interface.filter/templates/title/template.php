@@ -2,7 +2,7 @@
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
-	die;
+	die();
 }
 
 use Bitrix\Crm\Component\EntityList\GridId;
@@ -265,7 +265,7 @@ else
 			'ENABLE_LABEL' => true,
 			'ENABLE_ADDITIONAL_FILTERS' => true,
 			'CONFIG' => $arParams['~CONFIG'] ?? null,
-			'THEME' => Bitrix\Main\UI\Filter\Theme::LIGHT,
+			'THEME' => Bitrix\Main\UI\Filter\Theme::AIR,
 			'USE_CHECKBOX_LIST_FOR_SETTINGS_POPUP' => (bool)($arParams['USE_CHECKBOX_LIST_FOR_SETTINGS_POPUP'] ?? false),
 			'RESTRICTED_FIELDS' => ($arParams['RESTRICTED_FIELDS'] ?? []),
 		],

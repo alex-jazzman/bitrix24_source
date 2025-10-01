@@ -4,7 +4,8 @@ define("NOT_CHECK_FILE_PERMISSIONS", true);
 define("NO_KEEP_STATISTIC", true);
 define("BX_STATISTIC_BUFFER_USED", false);
 
-require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
+require_once $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_before.php";
+require_once $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/interface/init_admin.php";
 
 \Bitrix\Main\Loader::includeModule('bizproc');
 \Bitrix\Main\Localization\Loc::loadMessages(__FILE__);
@@ -76,13 +77,7 @@ catch (Exception $e)
 	$canWrite = false;
 }
 
-if (!$canWrite || !check_bitrix_sessid())
-{
-	ShowError(GetMessage("ACCESS_DENIED"));
-	\Bitrix\Main\Application::getInstance()->terminate();
-}
-
-if (!empty($_POST["save"]))
+if (!empty($_POST["save"]) && $canWrite && check_bitrix_sessid())
 {
 	$perms = array();
 	$errorMessage = '';
@@ -105,9 +100,14 @@ if (!empty($_POST["save"]))
 	\Bitrix\Main\Application::getInstance()->terminate();
 }
 
-$APPLICATION->ShowTitle(GetMessage("BIZPROC_WFS_TITLE_MSGVER_1"));
+$popupWindow = new CJSPopup(GetMessage("BIZPROC_WFS_TITLE_MSGVER_1"));
+$popupWindow->ShowTitlebar(GetMessage("BIZPROC_WFS_TITLE_MSGVER_1"));
 
-require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_after.php");
+if (!$canWrite || !check_bitrix_sessid())
+{
+	$popupWindow->ShowError(GetMessage("ACCESS_DENIED"));
+	\Bitrix\Main\Application::getInstance()->terminate();
+}
 
 $runtime = CBPRuntime::GetRuntime();
 $runtime->StartRuntime();
@@ -152,10 +152,10 @@ if (
 	);
 }
 
+$popupWindow->StartContent();
 ?>
 <script>
 BX.namespace('BX.Bizproc');
-BX.WindowManager.Get().SetTitle('<?= GetMessageJS("BIZPROC_WFS_TITLE_MSGVER_1") ?>');
 
 var WFSAllData = {};
 WFSAllData['P'] = <?=(is_array($arWorkflowParameters) && !empty($arWorkflowParameters) ?CUtil::PhpToJSObject($arWorkflowParameters):'{}')?>;
@@ -164,7 +164,7 @@ WFSAllData['C'] = <?=(is_array($arWorkflowConstants) && !empty($arWorkflowConsta
 
 function WFSStart()
 {
-	var form = document.getElementById('bizprocform');
+	var form = document.querySelector('.bx-core-adm-dialog-content-wrap');
 	var type, id;
 
 	for (type in WFSAllData)
@@ -302,7 +302,7 @@ function WFSSaveOK(response)
 	{
 		for (i = 1; i < t.rows.length; i++)
 		{
-			arWorkflowParameters[t.rows[i].paramId] = WFSAllData['P'][t.rows[i].paramId];
+			arWorkflowParameters[t.rows[i].getAttribute('paramId')] = WFSAllData['P'][t.rows[i].getAttribute('paramId')];
 		}
 	}
 
@@ -312,7 +312,7 @@ function WFSSaveOK(response)
 	{
 		for (i = 1; i < t.rows.length; i++)
 		{
-			arWorkflowConstants[t.rows[i].paramId] = WFSAllData['C'][t.rows[i].paramId];
+			arWorkflowConstants[t.rows[i].getAttribute('paramId')] = WFSAllData['C'][t.rows[i].getAttribute('paramId')];
 		}
 	}
 
@@ -419,7 +419,7 @@ function WFSParamSetType(type, pvMode, value)
 		objFields.GetFieldInputControl4Type(
 			type,
 			value,
-			{'Field':'WFSFormDefault'+pvMode, 'Form':'bizprocform'},
+			{'Field':'WFSFormDefault'+pvMode},
 			"WFSSwitchSubTypeControl" + pvMode,
 			function(v, newPromt)
 			{
@@ -441,7 +441,7 @@ function WFSParamSetType(type, pvMode, value)
 				objFields.GetFieldInputControl4Subtype(
 					type,
 					value,
-					{'Field':'WFSFormDefault'+pvMode, 'Form':'bizprocform'},
+					{'Field':'WFSFormDefault'+pvMode},
 					function(v1)
 					{
 						if (v1 == undefined)
@@ -464,7 +464,7 @@ function WFSParamSetType(type, pvMode, value)
 		objFields.GetFieldInputControl4Subtype(
 			type,
 			value,
-			{'Field':'WFSFormDefault'+pvMode, 'Form':'bizprocform'},
+			{'Field':'WFSFormDefault'+pvMode},
 			function(v)
 			{
 				if (v == undefined)
@@ -491,7 +491,7 @@ function WFSParamSetSubtype(type, pvMode, value)
 	objFields.GetFieldInputControl4Subtype(
 		type,
 		value,
-		{'Field':'WFSFormDefault'+pvMode, 'Form':'bizprocform'},
+		{'Field':'WFSFormDefault'+pvMode},
 		function(v)
 		{
 			if (v == undefined)
@@ -512,7 +512,7 @@ function WFSSwitchSubTypeControl(newSubtype, pvMode)
 
 	objFields.GetFieldInputValue(
 		window.currentType[pvMode],
-		{'Field':'WFSFormDefault'+pvMode, 'Form':'bizprocform'},
+		{'Field':'WFSFormDefault'+pvMode},
 		function(v)
 		{
 			window.currentType[pvMode]['Options'] = newSubtype;
@@ -546,7 +546,7 @@ function WFSSwitchTypeControl(newType, pvMode, replaceParams)
 		window.currentType[pvMode]['Options'] = null;
 	objFields.GetFieldInputValue(
 		window.currentType[pvMode],
-		{'Field':'WFSFormDefault'+pvMode, 'Form':'bizprocform'},
+		{'Field':'WFSFormDefault'+pvMode},
 		function(v)
 		{
 			if (newType)
@@ -579,13 +579,13 @@ function WFSSwitchSubTypeControlC(newSubtype)
 
 function WFSParamDeleteParam(ob, Type)
 {
-	var id = ob.parentNode.parentNode.paramId;
+	var id = ob.parentNode.parentNode.getAttribute('paramId');
 	delete WFSAllData[Type][id];
 
 	var i, t = document.getElementById('WFSList'+Type);
 	for (i = 1; i < t.rows.length; i++)
 	{
-		if (t.rows[i].paramId == id)
+		if (t.rows[i].getAttribute('paramId') == id)
 		{
 			t.deleteRow(i);
 			return;
@@ -599,7 +599,7 @@ function WFSParamEditParam(ob, pvMode)
 {
 	WFSParamEditForm(true, pvMode);
 
-	var editId = ob.parentNode.parentNode.paramId;
+	var editId = ob.parentNode.parentNode.getAttribute('paramId');
 	var s = WFSAllData[pvMode][editId];
 
 	window.currentType[pvMode] = {'Type' : s['Type'], 'Options' : s['Options'], 'Required' : s['Required'], 'Multiple' : s['Multiple']};
@@ -682,7 +682,7 @@ function WFSParamSaveForm(Type)
 
 	objFields.GetFieldInputValue(
 		WFSData[lastEd],
-		{'Field':'WFSFormDefault'+Type, 'Form':'bizprocform'},
+		{'Field':'WFSFormDefault'+Type},
 		function(v){
 			if (typeof v == "object")
 			{
@@ -707,7 +707,7 @@ function WFSParamFillParam(id, p, pvMode)
 	var i, t = document.getElementById('WFSList'+pvMode);
 	for (i = 1; i < t.rows.length; i++)
 	{
-		if (t.rows[i].paramId == id)
+		if (t.rows[i].getAttribute('paramId') == id)
 		{
 			var r = t.rows[i].cells;
 
@@ -759,7 +759,7 @@ function WFSParamAddParam(id, p, pvMode)
 {
 	var t = document.getElementById('WFSList'+pvMode);
 	var r = t.insertRow(-1);
-	r.paramId = id;
+	r.setAttribute('paramId', id);
 	var c = r.insertCell(-1);
 	c = r.insertCell(-1);
 	c = r.insertCell(-1);
@@ -790,15 +790,7 @@ function moveRowDown(a)
 			row.parentNode.appendChild(row);
 	}
 }
-
-BX.ready(function() {
-	WFSStart();
-});
-
 </script>
-
-<form id="bizprocform" name="bizprocform" method="post">
-<?= bitrix_sessid_post() ?>
 <?php
 $aTabs = [["DIV" => "edit1", "TAB" => GetMessage("BIZPROC_WFS_TAB_MAIN"), "ICON" => "group_edit", "TITLE" => GetMessage("BIZPROC_WFS_TAB_MAIN_TITLE_MSGVER_1")]];
 $aTabs[] = ["DIV" => "edit2", "TAB" => GetMessage("BIZPROC_WFS_TAB_PARAM"), "ICON" => "group_edit", "TITLE" => GetMessage("BIZPROC_WFS_TAB_PARAM_TITLE_MSGVER_1")];
@@ -825,8 +817,9 @@ if (!empty($arAllowableOperations))
 	$aTabs[] = ["DIV" => "edit4", "TAB" => GetMessage("BP_WF_TAB_PERM"), "ICON" => "group_edit", "TITLE" => GetMessage("BP_WF_TAB_PERM_TITLE_MSGVER_1")];
 }
 
-$tabControl = new CAdminTabControl("tabControl", $aTabs);
+$tabControl = new CAdminTabControl("tabControl", $aTabs, false, true);
 
+$tabControl->SetPublicMode();
 $tabControl->Begin();
 
 $tabControl->BeginNextTab();
@@ -1189,6 +1182,11 @@ $tabControl->Buttons(array("buttons"=>Array(
 $tabControl->End();
 
 ?>
-</form>
-<?
-require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin.php");
+<?php
+$popupWindow->EndContent();
+?>
+<script>
+BX.ready(function() {
+	WFSStart();
+});
+</script>

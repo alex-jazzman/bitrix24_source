@@ -127,7 +127,7 @@ export const BaseCell = {
 
 			this.creatingBookingId = `tmp-id-${Date.now()}-${Math.random()}`;
 
-			void this.$store.dispatch(`${Model.Interface}/addQuickFilterIgnoredBookingId`, this.creatingBookingId);
+			void this.$store.dispatch(`${Model.Filter}/addQuickFilterIgnoredBookingId`, this.creatingBookingId);
 			void this.$store.dispatch(`${Model.Bookings}/add`, {
 				id: this.creatingBookingId,
 				dateFromTs: this.cell.fromTs,

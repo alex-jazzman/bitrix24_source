@@ -173,12 +173,13 @@ jn.define('tasks/entry', (require, exports, module) => {
 			}
 
 			const {
-				userId = env.userId,
+				userId = Number(env.userId),
 				parentWidget,
 				analyticsLabel,
 				shouldOpenComments = false,
 				view,
 				kanbanOwnerId,
+				projectId = null,
 			} = params;
 			const taskId = data.id || data.taskId;
 			const guid = Entry.getGuid();
@@ -196,6 +197,7 @@ jn.define('tasks/entry', (require, exports, module) => {
 					shouldOpenComments,
 					view,
 					kanbanOwnerId,
+					projectId,
 				});
 			}
 			else

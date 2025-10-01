@@ -2,6 +2,7 @@
  * @module im/messenger/lib/converter/data/message
  */
 jn.define('im/messenger/lib/converter/data/message', (require, exports, module) => {
+	const { Type } = require('type');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
 	/**
@@ -25,14 +26,24 @@ jn.define('im/messenger/lib/converter/data/message', (require, exports, module) 
 				prevId: params.message.prevId,
 			};
 
+			if (Type.isBoolean(params.message.unread))
+			{
+				modelMessage.unread = params.message.unread;
+			}
+
+			if (Type.isBoolean(params.message.viewed))
+			{
+				modelMessage.viewed = params.message.viewed;
+			}
+
 			if (modelMessage.authorId === serviceLocator.get('core').getUserId())
 			{
-				modelMessage.unread = false;
+				modelMessage.unread ??= false;
 			}
 			else
 			{
-				modelMessage.unread = true;
-				modelMessage.viewed = false;
+				modelMessage.unread ??= true;
+				modelMessage.viewed ??= false;
 			}
 
 			return modelMessage;

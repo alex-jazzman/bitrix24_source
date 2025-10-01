@@ -1,33 +1,53 @@
 import { Loc, Runtime } from 'main.core';
+import { Outline as OutlineIcons } from 'ui.icon-set.api.core';
 
 import { CopilotManager } from 'im.v2.lib.copilot';
 
 import { MessageMenu } from './message-base';
 
 import type { ImModelChat } from 'im.v2.model';
-import type { MenuItem } from 'im.v2.lib.menu';
+import type { MenuItemOptions, MenuSectionOptions } from 'ui.system.menu';
 
 const CopilotChatContext = Object.freeze({
 	personal: 'chat_copilot_tab_one_by_one',
 	group: 'chat_copilot_tab_multi',
 });
 
+const MenuSectionCode = Object.freeze({
+	main: 'main',
+	select: 'select',
+	create: 'create',
+	market: 'market',
+});
+
 export class CopilotMessageMenu extends MessageMenu
 {
-	getMenuItems(): MenuItem[]
+	getMenuItems(): MenuItemOptions[]
 	{
-		return [
+		const mainGroupItems = [
 			this.getCopyItem(),
 			this.getMarkItem(),
 			this.getFavoriteItem(),
 			this.getForwardItem(),
 			this.getSendFeedbackItem(),
 			this.getDeleteItem(),
-			this.getSelectItem(),
+		];
+
+		return [
+			...this.groupItems(mainGroupItems, MenuSectionCode.main),
+			...this.groupItems([this.getSelectItem()], MenuSectionCode.select),
 		];
 	}
 
-	getSendFeedbackItem(): MenuItem
+	getMenuGroups(): MenuSectionOptions[]
+	{
+		return [
+			{ code: MenuSectionCode.main },
+			{ code: MenuSectionCode.select },
+		];
+	}
+
+	getSendFeedbackItem(): MenuItemOptions
 	{
 		const copilotManager = new CopilotManager();
 		if (!copilotManager.isCopilotBot(this.context.authorId))
@@ -36,8 +56,9 @@ export class CopilotMessageMenu extends MessageMenu
 		}
 
 		return {
-			text: Loc.getMessage('IM_LIB_MENU_COPILOT_FEEDBACK'),
-			onclick: () => {
+			title: Loc.getMessage('IM_LIB_MENU_COPILOT_FEEDBACK'),
+			icon: OutlineIcons.FEEDBACK,
+			onClick: () => {
 				void this.openForm();
 				this.menuInstance.close();
 			},

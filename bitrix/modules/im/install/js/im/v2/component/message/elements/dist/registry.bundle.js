@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,im_v2_lib_dateFormatter,ui_vue3,im_v2_component_elements_attach,im_v2_component_elements_keyboard,ui_lottie,im_v2_component_elements_userListPopup,im_v2_lib_user,im_v2_lib_logger,ui_reactionsSelect,im_v2_component_elements_chatTitle,im_v2_lib_utils,im_v2_application_core,im_v2_lib_menu,im_v2_provider_service_sending,im_v2_provider_service_message,im_v2_provider_service_uploading,im_v2_lib_copilot,im_v2_lib_channel,main_core_events,im_v2_const,im_v2_component_elements_avatar,im_v2_lib_permission,im_v2_component_animation,im_v2_provider_service_comments,main_core,ui_vue3_components_reactions,im_v2_lib_parser) {
+(function (exports,im_v2_lib_dateFormatter,ui_vue3,im_v2_component_elements_attach,im_v2_component_elements_keyboard,ui_lottie,im_v2_component_elements_userListPopup,im_v2_lib_user,im_v2_lib_logger,ui_reactionsSelect,im_v2_component_elements_chatTitle,im_v2_lib_utils,im_v2_application_core,im_v2_lib_menu,im_v2_provider_service_sending,im_v2_provider_service_message,im_v2_provider_service_uploading,ui_system_menu,im_v2_lib_copilot,im_v2_lib_channel,main_core_events,im_v2_const,im_v2_component_elements_avatar,im_v2_lib_permission,im_v2_component_animation,im_v2_provider_service_comments,main_core,ui_vue3_components_reactions,im_v2_lib_parser) {
 	'use strict';
 
 	// @vue/component
@@ -969,8 +969,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      return null;
 	    }
 	    return {
-	      text: main_core.Loc.getMessage('IM_MESSENGER_MESSAGE_CONTEXT_MENU_RETRY'),
-	      onclick: () => {
+	      title: main_core.Loc.getMessage('IM_MESSENGER_MESSAGE_CONTEXT_MENU_RETRY'),
+	      onClick: () => {
 	        babelHelpers.classPrivateFieldLooseBase(this, _retrySend)[_retrySend]();
 	        this.menuInstance.close();
 	      }
@@ -980,10 +980,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    if (!babelHelpers.classPrivateFieldLooseBase(this, _isOwnMessage)[_isOwnMessage]() || !babelHelpers.classPrivateFieldLooseBase(this, _hasError)[_hasError]()) {
 	      return null;
 	    }
-	    const phrase = main_core.Loc.getMessage('IM_MESSENGER_MESSAGE_CONTEXT_MENU_DELETE');
 	    return {
-	      html: `<span class="bx-im-message-retry-button__context-menu-delete">${phrase}</span>`,
-	      onclick: () => {
+	      title: main_core.Loc.getMessage('IM_MESSENGER_MESSAGE_CONTEXT_MENU_DELETE'),
+	      design: ui_system_menu.MenuItemDesign.Alert,
+	      onClick: () => {
 	        const messageService = new im_v2_provider_service_message.MessageService({
 	          chatId: this.context.chatId
 	        });
@@ -1417,5 +1417,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	exports.MessageFooter = MessageFooter;
 	exports.DefaultMessageContent = DefaultMessageContent$$1;
 
-}((this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}),BX.Messenger.v2.Lib,BX.Vue3,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.UI,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Ui,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Service,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Event,BX.Messenger.v2.Const,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Animation,BX.Messenger.v2.Service,BX,BX.Vue3.Components,BX.Messenger.v2.Lib));
+}((this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}),BX.Messenger.v2.Lib,BX.Vue3,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.UI,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Ui,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Service,BX.Messenger.v2.Service,BX.UI.System,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Event,BX.Messenger.v2.Const,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Animation,BX.Messenger.v2.Service,BX,BX.Vue3.Components,BX.Messenger.v2.Lib));
 //# sourceMappingURL=registry.bundle.js.map

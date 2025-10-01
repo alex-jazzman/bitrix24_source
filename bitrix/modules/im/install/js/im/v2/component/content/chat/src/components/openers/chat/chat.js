@@ -8,6 +8,7 @@ import { Logger } from 'im.v2.lib.logger';
 import { Utils } from 'im.v2.lib.utils';
 import { ChannelManager } from 'im.v2.lib.channel';
 import { PromoManager } from 'im.v2.lib.promo';
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
 import { ChatService } from 'im.v2.provider.service.chat';
 import { BaseChatContent } from 'im.v2.component.content.elements';
 import { Core } from 'im.v2.application.core';
@@ -16,14 +17,16 @@ import { ChannelContent } from '../../content/channel/channel';
 import { CollabContent } from '../../content/collab/collab';
 import { MultidialogContent } from '../../content/multidialog/multidialog';
 import { NotesContent } from '../../content/notes/notes-content';
-import { DefaultChatContent } from '../../content/default/default';
-import { AiAssistantContent } from '../../content/aiassistant/aiassistant';
+import { CopilotContent } from '../../content/copilot/copilot';
+import { AiAssistantContent } from '../../content/ai-assistant/ai-assistant';
 import { BaseEmptyState as EmptyState } from './components/empty-state/base';
 import { ChannelEmptyState } from './components/empty-state/channel';
 import { EmbeddedChatPromoEmptyState } from './components/empty-state/chat/embedded-promo';
 import { EmbeddedChatEmptyState } from './components/empty-state/chat/embedded';
-import { UserService } from './classes/user-service';
 import { CollabEmptyState } from './components/empty-state/collab/collab';
+import { CopilotEmptyState } from './components/empty-state/copilot/copilot';
+import { AiAssistantEmptyState } from './components/empty-state/ai-assistant/ai-assistant';
+import { UserService } from './classes/user-service';
 
 import './css/default-chat-content.css';
 
@@ -38,16 +41,6 @@ type ContentComponentConfigItem = {
 // @vue/component
 export const ChatOpener = {
 	name: 'ChatOpener',
-	components: {
-		BaseChatContent,
-		ChannelContent,
-		CollabContent,
-		MultidialogContent,
-		EmptyState,
-		ChannelEmptyState,
-		NotesContent,
-		DefaultChatContent,
-	},
 	props:
 	{
 		dialogId: {
@@ -78,10 +71,6 @@ export const ChatOpener = {
 		{
 			return this.dialog.type === ChatType.collab;
 		},
-		isRecentChat(): boolean
-		{
-			return [ChatType.copilot, ChatType.chat].includes(this.dialog.type);
-		},
 		isMultidialog(): boolean
 		{
 			return this.$store.getters['sidebar/multidialog/isSupport'](this.dialogId);
@@ -90,9 +79,16 @@ export const ChatOpener = {
 		{
 			return Number.parseInt(this.dialogId, 10) === Core.getUserId();
 		},
+		isCopilot(): boolean
+		{
+			return this.dialog.type === ChatType.copilot;
+		},
 		isAiAssistant(): boolean
 		{
-			return this.$store.getters['users/bots/isAiAssistant'](this.dialogId);
+			const isAiAssistantBot = this.$store.getters['users/bots/isAiAssistant'](this.dialogId);
+			const isAiAssistantChat = [ChatType.aiAssistant, ChatType.aiAssistantEntity].includes(this.dialog.type);
+
+			return isAiAssistantBot || isAiAssistantChat;
 		},
 		isGuest(): boolean
 		{
@@ -118,12 +114,12 @@ export const ChatOpener = {
 					component: NotesContent,
 				},
 				{
-					condition: this.isAiAssistant,
-					component: AiAssistantContent,
+					condition: this.isCopilot,
+					component: CopilotContent,
 				},
 				{
-					condition: this.isRecentChat,
-					component: DefaultChatContent,
+					condition: this.isAiAssistant,
+					component: AiAssistantContent,
 				},
 			];
 		},
@@ -138,13 +134,35 @@ export const ChatOpener = {
 		emptyStateComponent(): BitrixVueComponentProps
 		{
 			const EmptyStateComponentByLayout = {
-				[Layout.channel.name]: ChannelEmptyState,
-				[Layout.collab.name]: CollabEmptyState,
-				[Layout.chat.name]: this.getChatEmptyStateComponent(),
+				[Layout.channel]: ChannelEmptyState,
+				[Layout.collab]: CollabEmptyState,
+				[Layout.aiAssistant]: this.aiEmptyStateComponent,
+				[Layout.chat]: this.chatEmptyStateComponent,
 				default: EmptyState,
 			};
 
 			return EmptyStateComponentByLayout[this.layout.name] ?? EmptyStateComponentByLayout.default;
+		},
+		chatEmptyStateComponent(): BitrixVueComponentProps
+		{
+			const isEmbeddedMode = LayoutManager.getInstance().isEmbeddedMode();
+			const needToShowPromoEmptyState = PromoManager.getInstance().needToShow(PromoId.embeddedChatEmptyState);
+
+			if (!isEmbeddedMode)
+			{
+				return EmptyState;
+			}
+
+			return needToShowPromoEmptyState ? EmbeddedChatPromoEmptyState : EmbeddedChatEmptyState;
+		},
+		aiEmptyStateComponent(): BitrixVueComponentProps
+		{
+			if (!FeatureManager.isFeatureAvailable(Feature.aiAssistantChatAvailable))
+			{
+				return CopilotEmptyState;
+			}
+
+			return AiAssistantEmptyState;
 		},
 	},
 	watch:
@@ -178,7 +196,7 @@ export const ChatOpener = {
 				const realDialogId = await this.getChatService().prepareDialogId(this.dialogId);
 
 				void LayoutManager.getInstance().setLayout({
-					name: Layout.chat.name,
+					name: Layout.chat,
 					entityId: realDialogId,
 					contextId: this.layout.contextId,
 				});
@@ -253,18 +271,6 @@ export const ChatOpener = {
 			}
 
 			Analytics.getInstance().messageDelete.onNotFoundNotification({ dialogId: this.dialogId });
-		},
-		getChatEmptyStateComponent(): BitrixVueComponentProps
-		{
-			const isEmbeddedMode = LayoutManager.getInstance().isEmbeddedMode();
-			const needToShowPromoEmptyState = PromoManager.getInstance().needToShow(PromoId.embeddedChatEmptyState);
-
-			if (!isEmbeddedMode)
-			{
-				return EmptyState;
-			}
-
-			return needToShowPromoEmptyState ? EmbeddedChatPromoEmptyState : EmbeddedChatEmptyState;
 		},
 		getChatService(): ChatService
 		{

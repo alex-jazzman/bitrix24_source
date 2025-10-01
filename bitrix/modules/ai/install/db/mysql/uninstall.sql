@@ -30,4 +30,3 @@ drop table if exists b_ai_chatbot_chatbot;
 drop table if exists b_ai_chatbot_chat;
 drop table if exists b_ai_chatbot_message;
 drop table if exists b_ai_chatbot_message_unread;
-

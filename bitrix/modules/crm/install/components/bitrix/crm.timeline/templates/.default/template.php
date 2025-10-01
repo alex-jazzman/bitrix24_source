@@ -204,7 +204,7 @@ if (!empty($arResult['ERRORS']))
 				$mode = true;
 				if ($arParams['ENTITY_CONFIG_SCOPE'] !== EntityEditorConfigScope::PERSONAL)
 				{
-					$mode = Container::getInstance()->getUserPermissions()->isAdminForEntity($entityTypeId);
+					$mode = Container::getInstance()->getUserPermissions()->isAdminForEntity($entityTypeId, $categoryId);
 				}
 
 				$menuId = MenuIdResolver::getMenuId($entityTypeId, $arResult['USER_ID'], $categoryId);

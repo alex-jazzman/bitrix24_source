@@ -324,7 +324,7 @@ this.BX = this.BX || {};
 	    _this.contentBackground = null;
 	    _this.borderRadius = null;
 	    _this.contentBorderRadius = null;
-	    _this.targetContainer = main_core.Type.isElementNode(params.targetContainer) ? params.targetContainer : document.body;
+	    _this.setTargetContainer(params.targetContainer);
 	    _this.dragOptions = {
 	      cursor: '',
 	      callback: function callback() {},
@@ -380,7 +380,7 @@ this.BX = this.BX || {};
 	     * @private
 	     */
 	    _this.popupContainer = main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div\n\t\t\t\tclass=\"", "\"\n\t\t\t\tid=\"", "\"\n\t\t\t\tstyle=\"display: none; position: absolute; left: 0; top: 0;\"\n\t\t\t>", "</div>\n\t\t"])), popupClassName, popupId, [_this.titleBar, _this.contentContainer, _this.closeIcon]);
-	    _this.targetContainer.appendChild(_this.popupContainer);
+	    _this.getTargetContainer().append(_this.popupContainer);
 	    _this.zIndexComponent = main_core_zIndexManager.ZIndexManager.register(_this.popupContainer, params.zIndexOptions);
 	    _this.buttonsContainer = null;
 	    if (params.contentColor && main_core.Type.isStringFilled(params.contentColor)) {
@@ -986,6 +986,21 @@ this.BX = this.BX || {};
 	      }
 	    }
 	  }, {
+	    key: "setTargetContainer",
+	    value: function setTargetContainer(targetContainer) {
+	      var newTargetContainer = main_core.Type.isElementNode(targetContainer) ? targetContainer : document.body;
+	      if (newTargetContainer === this.targetContainer) {
+	        return;
+	      }
+	      this.targetContainer = newTargetContainer;
+	      if (this.getPopupContainer()) {
+	        this.getTargetContainer().append(this.getPopupContainer());
+	      }
+	      if (this.overlay) {
+	        main_core.Dom.append(this.overlay.element, this.getTargetContainer());
+	      }
+	    }
+	  }, {
 	    key: "getTargetContainer",
 	    value: function getTargetContainer() {
 	      return this.targetContainer;
@@ -1289,7 +1304,7 @@ this.BX = this.BX || {};
 	          element: main_core.Tag.render(_templateObject9 || (_templateObject9 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"popup-window-overlay\" id=\"popup-window-overlay-", "\"></div>\n\t\t\t\t"])), this.getId())
 	        };
 	        this.resizeOverlay();
-	        main_core.Dom.append(this.overlay.element, this.targetContainer);
+	        main_core.Dom.append(this.overlay.element, this.getTargetContainer());
 	        this.getZIndexComponent().setOverlay(this.overlay.element);
 	      }
 	      if (main_core.Type.isNumber(params === null || params === void 0 ? void 0 : params.opacity) && params.opacity >= 0 && params.opacity <= 100) {

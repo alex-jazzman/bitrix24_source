@@ -75,7 +75,7 @@ export class TreeNodeDragController
 		Event.bind(document, 'mousemove', this.#mouseMoveHandler);
 		Event.bind(document, 'mouseup', this.#mouseUpHandler);
 		Event.bind(document, 'wheel', this.#mouseWheelHandler);
-		EventEmitter.emit(events.HR_ENTITY_TOGGLE_CONNECTORS, { shouldShow: false });
+		EventEmitter.emit(events.HR_ENTITY_TOGGLE_ELEMENTS, { shouldShowElements: false });
 		const draggedId = Number(this.#draggedItem.dataset.id);
 		EventEmitter.emit(events.HR_DRAG_ENTITY, { draggedId });
 	}
@@ -152,7 +152,7 @@ export class TreeNodeDragController
 		Dom.remove(this.#ghost);
 		Dom.remove(this.#positionPointer);
 		this.#resetTeamsBlur();
-		EventEmitter.emit(events.HR_ENTITY_TOGGLE_CONNECTORS, { shouldShow: true });
+		EventEmitter.emit(events.HR_ENTITY_TOGGLE_ELEMENTS, { shouldShowElements: true });
 		const { insertion, targetItem, hasPermission } = this.#targetData;
 		if (!insertion || !hasPermission)
 		{

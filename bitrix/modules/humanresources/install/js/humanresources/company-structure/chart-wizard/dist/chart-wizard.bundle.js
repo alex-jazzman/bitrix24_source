@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Humanresources = this.BX.Humanresources || {};
-(function (exports,ui_notification,ui_dialogs_messagebox,main_loader,ui_vue3_pinia,main_core_cache,ui_iconSet_crm,ui_iconSet_api_core,ui_iconSet_api_vue,humanresources_companyStructure_structureComponents,main_core,ui_entitySelector,humanresources_companyStructure_api,humanresources_companyStructure_chartStore,ui_analytics,humanresources_companyStructure_permissionChecker,humanresources_companyStructure_utils) {
+(function (exports,ui_notification,ui_dialogs_messagebox,humanresources_companyStructure_departmentContent,main_loader,main_core_cache,ui_iconSet_crm,ui_vue3_pinia,ui_iconSet_api_core,ui_iconSet_api_vue,humanresources_companyStructure_structureComponents,main_core,ui_entitySelector,humanresources_companyStructure_api,humanresources_companyStructure_chartStore,ui_analytics,humanresources_companyStructure_permissionChecker,humanresources_companyStructure_utils) {
 	'use strict';
 
 	const SaveMode = Object.freeze({
@@ -341,12 +341,12 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 							<p class="chart-wizard-tree-preview__node_employees-title">
 								{{
 									isTeamEntity 
-									? loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TREE_PREVIEW_TEAM_EMPLOYEES_TITLE') 
-									: loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TREE_PREVIEW_EMPLOYEES_TITLE')
+										? loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TREE_PREVIEW_TEAM_EMPLOYEES_TITLE') 
+										: loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TREE_PREVIEW_EMPLOYEES_TITLE')
 								}}
 							</p>
 							<span class="chart-wizard-tree-preview__node_employees_count">
-								{{locPlural('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TREE_PREVIEW_EMPLOYEES_COUNT', employeesCount)}}
+								{{ locPlural('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TREE_PREVIEW_EMPLOYEES_COUNT', employeesCount) }}
 							</span>
 						</div>
 						<div 
@@ -354,7 +354,11 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 							:data-test-id="formatDataTestId('chart-wizard-tree-preview__node_deputies-list')"
 						>
 							<p class="chart-wizard-tree-preview__node_employees-title">
-								{{loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TREE_PREVIEW_DEPUTIES_TITLE')}}
+								{{
+									isTeamEntity
+										? loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TREE_PREVIEW_TEAM_DEPUTIES_TITLE') 
+										: loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TREE_PREVIEW_DEPUTIES_TITLE') 
+								}}
 							</p>
 							<HeadUsers
 								:users="deputyUsers"
@@ -855,7 +859,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 					<div class="chart-wizard__department_control-wrapper">
 						<div
 							class="ui-ctl ui-ctl-textbox"
-							:class="{ 'ui-ctl-warning': shouldErrorHighlight && departmentName === '' }"
+							:class="{ 'ui-ctl-warning': shouldErrorHighlight && departmentName?.trim() === '' }"
 						>
 							<input
 								v-model="departmentName"
@@ -880,7 +884,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 						</div>
 					</div>
 					<div
-						v-if="shouldErrorHighlight && departmentName === ''"
+						v-if="shouldErrorHighlight && departmentName?.trim() === ''"
 						class="chart-wizard__department_item-error"
 					>
 						<div class="ui-icon-set --warning"></div>
@@ -1236,6 +1240,18 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    isTeamEntity() {
 	      return this.entityType === humanresources_companyStructure_utils.EntityTypes.team;
 	    },
+	    headTitle() {
+	      return this.isTeamEntity ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_EMPLOYEE_TEAM_HEAD_TITLE') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_EMPLOYEE_HEAD_TITLE');
+	    },
+	    headDescription() {
+	      return this.isTeamEntity ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_EMPLOYEE_TEAM_HEAD_DESCR') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_EMPLOYEE_HEAD_DESCR');
+	    },
+	    deputyTitle() {
+	      return this.isTeamEntity ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_EMPLOYEE_TEAM_DEPUTY_TITLE') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_EMPLOYEE_DEPUTY_TITLE');
+	    },
+	    deputyDescription() {
+	      return this.isTeamEntity ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_EMPLOYEE_TEAM_DEPUTY_DESCR') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_EMPLOYEE_DEPUTY_DESCR');
+	    },
 	    employeeTitle() {
 	      return this.isTeamEntity ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_EMPLOYEE_TEAM_EMPLOYEES_TITLE') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_EMPLOYEE_EMPLOYEES_TITLE');
 	    }
@@ -1245,7 +1261,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 			<div class="chart-wizard__form">
 				<div class="chart-wizard__employee_item">
 					<span class="chart-wizard__employee_item-label">
-						{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_EMPLOYEE_HEAD_TITLE') }}
+						{{ headTitle }}
 					</span>
 					<div
 						class="chart-wizard__employee_selector"
@@ -1253,12 +1269,12 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 						data-test-id="hr-company-structure_chart-wizard__employees-head-selector"
 					/>
 					<span class="chart-wizard__employee_item-description">
-						{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_EMPLOYEE_HEAD_DESCR') }}
+						{{ headDescription }}
 					</span>
 				</div>
 				<div class="chart-wizard__employee_item">
 					<span class="chart-wizard__employee_item-label">
-						{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_EMPLOYEE_DEPUTY_TITLE') }}
+						{{ deputyTitle }}
 					</span>
 					<div
 						class="chart-wizard__employee_selector"
@@ -1266,7 +1282,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 						data-test-id="hr-company-structure_chart-wizard__employees-deputy-selector"
 					/>
 					<span class="chart-wizard__employee_item-description">
-						{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_EMPLOYEE_DEPUTY_DESCR') }}
+						{{ deputyDescription }}
 					</span>
 				</div>
 				<div class="chart-wizard__employee_item">
@@ -1293,12 +1309,168 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	`
 	};
 
+	class AbstractSelectorDictionary {
+	  constructor() {
+	    this.phrases = {};
+	  }
+	  getPhrase(key, isTeamEntity) {
+	    const phraseSet = this.phrases[key];
+	    if (!phraseSet) {
+	      throw new Error(`Phrase set for key "${key}" is not defined in ${this.constructor.name} selector dictionary.`);
+	    }
+	    return isTeamEntity ? phraseSet.team : phraseSet.default;
+	  }
+	  getEntityName() {
+	    return 'im-chat-only';
+	  }
+	  getTagId(chat) {
+	    return `chat${chat.id}`;
+	  }
+	  getItemId(tag) {
+	    return Number(tag.id.replace('chat', ''));
+	  }
+	  getEntity() {}
+	  getDialogEvents() {
+	    return {};
+	  }
+	  getTestId(blueprint) {}
+	  getRemovePhrase(hasCurrentUser, isTeamEntity) {
+	    throw new Error('getRemovePhrase must be implemented in inheritor');
+	  }
+	}
+
+	class ChannelSelectorDictionary extends AbstractSelectorDictionary {
+	  constructor(...args) {
+	    super(...args);
+	    this.phrases = {
+	      hintText: {
+	        team: 'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_CHANNELS_ADD_CHECKBOX_HINT',
+	        default: 'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_CHANNELS_ADD_CHECKBOX_HINT_MSGVER_1'
+	      },
+	      createText: {
+	        team: 'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_CHANNELS_ADD_CHECKBOX_LABEL_MSGVER_1',
+	        default: 'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_CHANNELS_ADD_CHECKBOX_LABEL_MSGVER_2'
+	      },
+	      warningText: {
+	        team: 'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_CHANNELS_ADD_CHECKBOX_WARNING',
+	        default: 'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_CHANNELS_ADD_CHECKBOX_WARNING'
+	      }
+	    };
+	  }
+	  getEntity() {
+	    return humanresources_companyStructure_structureComponents.getChannelDialogEntity();
+	  }
+	  getTestId(blueprint) {
+	    return blueprint.replace('chat', 'channel');
+	  }
+	  getRemovePhrase(hasCurrentUser, isTeamEntity) {
+	    if (hasCurrentUser) {
+	      return isTeamEntity ? 'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_CHANNELS_REMOVE_CHECKBOX_LABEL_MSGVER_1' : 'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_CHANNELS_REMOVE_CHECKBOX_LABEL_MSGVER_1';
+	    }
+	    return isTeamEntity ? 'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_CHANNELS_REMOVE_CHECKBOX_LABEL_NOT_INSIDE' : 'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_CHANNELS_REMOVE_CHECKBOX_LABEL_NOT_INSIDE';
+	  }
+	}
+
+	class ChatSelectorDictionary extends AbstractSelectorDictionary {
+	  constructor(...args) {
+	    super(...args);
+	    this.phrases = {
+	      hintText: {
+	        team: 'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_CHATS_ADD_CHECKBOX_HINT',
+	        default: 'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_CHATS_ADD_CHECKBOX_HINT_MSGVER_1'
+	      },
+	      createText: {
+	        team: 'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_CHATS_ADD_CHECKBOX_LABEL_MSGVER_1',
+	        default: 'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_CHATS_ADD_CHECKBOX_LABEL_MSGVER_2'
+	      },
+	      warningText: {
+	        team: 'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_CHATS_ADD_CHECKBOX_WARNING',
+	        default: 'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_CHATS_ADD_CHECKBOX_WARNING'
+	      }
+	    };
+	  }
+	  getEntity() {
+	    return humanresources_companyStructure_structureComponents.getChatDialogEntity();
+	  }
+	  getTestId(blueprint) {
+	    return blueprint;
+	  }
+	  getRemovePhrase(hasCurrentUser, isTeamEntity) {
+	    if (hasCurrentUser) {
+	      return isTeamEntity ? 'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_CHATS_REMOVE_CHECKBOX_LABEL_MSGVER_1' : 'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_CHATS_REMOVE_CHECKBOX_LABEL_MSGVER_1';
+	    }
+	    return isTeamEntity ? 'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_CHATS_REMOVE_CHECKBOX_LABEL_NOT_INSIDE' : 'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_CHATS_REMOVE_CHECKBOX_LABEL_NOT_INSIDE';
+	  }
+	}
+
+	class CollabSelectorDictionary extends AbstractSelectorDictionary {
+	  constructor(...args) {
+	    super(...args);
+	    this.phrases = {
+	      hintText: {
+	        team: 'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_COLLAB_ADD_CHECKBOX_HINT',
+	        default: 'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_COLLAB_ADD_CHECKBOX_HINT'
+	      },
+	      createText: {
+	        team: 'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_COLLAB_ADD_CHECKBOX_LABEL',
+	        default: 'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_COLLAB_ADD_CHECKBOX_LABEL'
+	      },
+	      warningText: {
+	        team: 'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_COLLAB_ADD_CHECKBOX_WARNING',
+	        default: 'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_COLLAB_ADD_CHECKBOX_WARNING'
+	      }
+	    };
+	  }
+	  getEntityName() {
+	    return 'project';
+	  }
+	  getEntity() {
+	    return humanresources_companyStructure_structureComponents.getCollabDialogEntity();
+	  }
+	  getDialogEvents() {
+	    return {
+	      onLoad: event => {
+	        const dialog = event.getTarget();
+	        dialog.removeTab('projects');
+	      }
+	    };
+	  }
+	  getTagId(chat) {
+	    return Number(chat.id);
+	  }
+	  getItemId(tag) {
+	    return tag.id;
+	  }
+	  getTestId(blueprint) {
+	    return blueprint.replace('chat', 'collab');
+	  }
+	  getRemovePhrase(hasCurrentUser, isTeamEntity) {
+	    if (hasCurrentUser) {
+	      return isTeamEntity ? 'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_COLLAB_REMOVE_CHECKBOX_LABEL' : 'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_COLLAB_REMOVE_CHECKBOX_LABEL';
+	    }
+	    return isTeamEntity ? 'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_COLLAB_REMOVE_CHECKBOX_LABEL_NOT_INSIDE' : 'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_COLLAB_REMOVE_CHECKBOX_LABEL_NOT_INSIDE';
+	  }
+	}
+
+	function createSelectorDictionary(type) {
+	  switch (type) {
+	    case humanresources_companyStructure_structureComponents.CommunicationsTypeDict.chat:
+	      return new ChatSelectorDictionary();
+	    case humanresources_companyStructure_structureComponents.CommunicationsTypeDict.channel:
+	      return new ChannelSelectorDictionary();
+	    case humanresources_companyStructure_structureComponents.CommunicationsTypeDict.collab:
+	      return new CollabSelectorDictionary();
+	    default:
+	      throw new Error('Unknown selector type');
+	  }
+	}
+
 	const DEFAULT_TAG_ID = 'default';
 
 	// Component for selecting chats or channels in the wizard. Consists of selector, default button, hint and warning
 	// @vue/component
-	const ChatSelector = {
-	  name: 'chatSelector',
+	const CommunicationSelector = {
+	  name: 'communicationSelector',
 	  components: {
 	    DefaultHint: humanresources_companyStructure_structureComponents.DefaultHint,
 	    BIcon: ui_iconSet_api_vue.BIcon
@@ -1312,16 +1484,20 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      type: Boolean,
 	      required: true
 	    },
+	    hasCurrentUser: {
+	      type: Boolean,
+	      required: true
+	    },
 	    isTeamEntity: {
 	      type: Boolean,
 	      required: true
 	    },
 	    /** @type ChatOrChannelDetailed[] */
-	    initChats: {
+	    initCommunications: {
 	      type: Array,
 	      required: true
 	    },
-	    /** @type ChatTypeDict.chat | ChatTypeDict.channel */
+	    /** @type CommunicationsTypeDict.chat | ChatTypeDict.channel | ChatTypeDict.collab */
 	    type: {
 	      type: String,
 	      required: true
@@ -1334,35 +1510,26 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    };
 	  },
 	  computed: {
+	    selectorDictionary() {
+	      return createSelectorDictionary(this.type);
+	    },
 	    isChannel() {
-	      return this.type === humanresources_companyStructure_structureComponents.ChatTypeDict.channel;
+	      return this.type === humanresources_companyStructure_structureComponents.CommunicationsTypeDict.channel;
 	    },
 	    set() {
 	      return ui_iconSet_api_core.Set;
 	    },
 	    hintText() {
-	      if (this.isChannel) {
-	        return this.isTeamEntity ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_CHANNELS_ADD_CHECKBOX_HINT') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_CHANNELS_ADD_CHECKBOX_HINT_MSGVER_1');
-	      }
-	      return this.isTeamEntity ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_CHATS_ADD_CHECKBOX_HINT') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_CHATS_ADD_CHECKBOX_HINT_MSGVER_1');
+	      return this.loc(this.selectorDictionary.getPhrase('hintText', this.isTeamEntity));
 	    },
 	    createText() {
-	      if (this.isChannel) {
-	        return this.isTeamEntity ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_CHANNELS_ADD_CHECKBOX_LABEL_MSGVER_1') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_CHANNELS_ADD_CHECKBOX_LABEL_MSGVER_2');
-	      }
-	      return this.isTeamEntity ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_CHATS_ADD_CHECKBOX_LABEL_MSGVER_1') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_CHATS_ADD_CHECKBOX_LABEL_MSGVER_2');
+	      return this.loc(this.selectorDictionary.getPhrase('createText', this.isTeamEntity));
 	    },
 	    removeText() {
-	      if (this.isChannel) {
-	        return this.isTeamEntity ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_CHANNELS_REMOVE_CHECKBOX_LABEL') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_CHANNELS_REMOVE_CHECKBOX_LABEL');
-	      }
-	      return this.isTeamEntity ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_CHATS_REMOVE_CHECKBOX_LABEL') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_CHATS_REMOVE_CHECKBOX_LABEL');
+	      return this.loc(this.selectorDictionary.getRemovePhrase(this.hasCurrentUser, this.isTeamEntity));
 	    },
 	    warningText() {
-	      if (this.isChannel) {
-	        return this.isTeamEntity ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_CHANNELS_ADD_CHECKBOX_WARNING') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_CHANNELS_ADD_CHECKBOX_WARNING');
-	      }
-	      return this.isTeamEntity ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_CHATS_ADD_CHECKBOX_WARNING') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_CHATS_ADD_CHECKBOX_WARNING');
+	      return this.loc(this.selectorDictionary.getPhrase('warningText', this.isTeamEntity));
 	    }
 	  },
 	  watch: {
@@ -1380,56 +1547,61 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      }
 	    },
 	    name(value) {
-	      const chatItem = this.selector.getDialog().getItem({
+	      const defaultItem = this.selector.getDialog().getItem({
 	        id: DEFAULT_TAG_ID,
 	        entityId: DEFAULT_TAG_ID
 	      });
-	      chatItem.setTitle(value);
+	      defaultItem.setTitle(value);
 	      if (this.createDefault) {
-	        chatItem.deselect();
-	        chatItem.select();
+	        defaultItem.deselect();
+	        defaultItem.select();
 	      }
 	    },
-	    initChats: {
+	    headsCreated(value) {
+	      if (!value) {
+	        this.createDefault = false;
+	      }
+	    },
+	    initCommunications: {
 	      handler(payload) {
-	        payload.forEach(chat => this.initialChatsSet.add(`chat${chat.id}`));
-	        const preselectedChats = payload.map(chat => ['im-chat-only', `chat${chat.id}`]);
+	        payload.forEach(item => this.initialItemsSet.add(this.selectorDictionary.getTagId(item)));
+	        const preselectedItems = payload.map(item => [this.selectorDictionary.getEntityName(), this.selectorDictionary.getTagId(item)]);
 	        const {
 	          dialog
 	        } = this.selector;
-	        dialog.setPreselectedItems(preselectedChats);
+	        dialog.setPreselectedItems(preselectedItems);
 	        dialog.load();
 	      }
 	    }
 	  },
 	  created() {
-	    this.chats = [];
+	    this.communications = [];
 	    // store initial values to control applyData method in tagSelector
-	    this.initialChatsSet = this.initChats.reduce((set, chat) => set.add(`chat${chat.id}`), new Set());
+	    this.initialItemsSet = this.initCommunications.reduce((set, item) => set.add(this.selectorDictionary.getTagId(item)), new Set());
 	    this.selector = this.getSelector();
 	  },
 	  mounted() {
-	    this.selector.renderTo(this.$refs['chat-selector']);
+	    this.selector.renderTo(this.$refs['communications-selector']);
 	  },
 	  methods: {
 	    loc(phraseCode, replacements = {}) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 	    },
-	    addChatTag(tag) {
+	    addTag(tag) {
 	      if (!tag.searchable) {
-	        const existingChat = this.initChats.find(chat => chat.dialogId === tag.id);
-	        if (existingChat != null && existingChat.title) {
-	          tag.setTitle(existingChat.title);
-	          if (existingChat.hasAccess) {
+	        const existingItem = this.initCommunications.find(item => this.selectorDictionary.getTagId(item) === tag.id);
+	        if (existingItem != null && existingItem.title) {
+	          tag.setTitle(existingItem.title);
+	          if (existingItem.hasAccess) {
 	            tag.setDeselectable(true);
 	          }
 	        }
 	      }
-	      this.chats.push(Number(tag.id.replace('chat', '')));
+	      this.communications.push(this.selectorDictionary.getItemId(tag));
 	    },
 	    getSelector() {
 	      var _entity$tagOptions, _entity$itemOptions;
-	      const entity = this.isChannel ? humanresources_companyStructure_structureComponents.getChannelDialogEntity() : humanresources_companyStructure_structureComponents.getChatDialogEntity();
+	      const entity = this.selectorDictionary.getEntity();
 	      const options = {
 	        multiple: true,
 	        events: {
@@ -1440,10 +1612,10 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	            if (tag.id === DEFAULT_TAG_ID) {
 	              this.createDefault = true;
 	            } else {
-	              this.addChatTag(tag);
+	              this.addTag(tag);
 	            }
-	            if (this.initialChatsSet.has(tag.id)) {
-	              this.initialChatsSet.delete(tag.id);
+	            if (this.initialItemsSet.has(tag.id)) {
+	              this.initialItemsSet.delete(tag.id);
 	            } else {
 	              this.applyData();
 	            }
@@ -1452,11 +1624,11 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	            const {
 	              tag
 	            } = event.getData();
-	            const intId = Number(tag.id.replace('chat', ''));
+	            const intId = this.selectorDictionary.getItemId(tag);
 	            if (tag.id === DEFAULT_TAG_ID) {
 	              this.createDefault = false;
 	            } else {
-	              this.chats = this.chats.filter(chat => chat !== intId);
+	              this.communications = this.communications.filter(item => item !== intId);
 	            }
 	            this.applyData();
 	          }
@@ -1466,9 +1638,10 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	          height: 250,
 	          width: 380,
 	          dropdownMode: true,
-	          recentTabOptions: humanresources_companyStructure_structureComponents.getChatRecentTabOptions(this.entityType, this.type),
+	          events: this.selectorDictionary.getDialogEvents(),
+	          recentTabOptions: humanresources_companyStructure_structureComponents.getCommunicationsRecentTabOptions(this.entityType, this.type),
 	          items: [this.getDefaultItem((_entity$tagOptions = entity.tagOptions) == null ? void 0 : _entity$tagOptions.default, (_entity$itemOptions = entity.itemOptions) == null ? void 0 : _entity$itemOptions.default)],
-	          preselectedItems: this.initChats.map(chat => ['im-chat-only', `chat${chat.id}`]),
+	          preselectedItems: this.initCommunications.map(item => [this.selectorDictionary.getEntityName(), this.selectorDictionary.getTagId(item)]),
 	          entities: [entity]
 	        }
 	      };
@@ -1487,22 +1660,16 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    applyData() {
 	      this.$emit('applyData', {
 	        type: this.type,
-	        chats: this.chats,
+	        communications: this.communications,
 	        createDefault: this.createDefault
 	      });
-	    },
-	    getTestId(blueprint) {
-	      if (this.isChannel) {
-	        return blueprint.replace('chat', 'channel');
-	      }
-	      return blueprint;
 	    }
 	  },
 	  template: `
 		<div
 			class="chart-wizard__chat_selector"
-			ref="chat-selector"
-			:data-test-id="getTestId('hr-company-structure_chart-wizard__chat-selector')"
+			ref="communications-selector"
+			:data-test-id="selectorDictionary.getTestId('hr-company-structure_chart-wizard__chat-selector')"
 		/>
 		<div
 			v-if="!createDefault"
@@ -1512,7 +1679,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 				@click="createDefault = headsCreated"
 				class="chart-wizard__bind-chat__item-create"
 				:class="{ '--disabled': !headsCreated }"
-				:data-test-id="getTestId('hr-company-structure_chart-wizard__make-default-chat-create')"
+				:data-test-id="selectorDictionary.getTestId('hr-company-structure_chart-wizard__make-default-chat-create')"
 				v-html="createText"
 			>
 			</div>
@@ -1523,7 +1690,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 			<div
 				class="chart-wizard__bind-chat__item-remove"
 				:class="{ '--disabled': !headsCreated }"
-				:data-test-id="getTestId('hr-company-structure_chart-wizard__make-default-chat-remove')"
+				:data-test-id="selectorDictionary.getTestId('hr-company-structure_chart-wizard__make-default-chat-remove')"
 			>
 				{{ removeText }}
 			</div>
@@ -1545,10 +1712,20 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	const BindChat = {
 	  name: 'bindChat',
 	  components: {
-	    ChatSelector
+	    CommunicationSelector
 	  },
 	  props: {
 	    heads: {
+	      type: Array,
+	      required: false,
+	      default: () => []
+	    },
+	    employees: {
+	      type: Array,
+	      required: false,
+	      default: () => []
+	    },
+	    employeesIds: {
 	      type: Array,
 	      required: false,
 	      default: () => []
@@ -1574,32 +1751,49 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    initChannels: {
 	      type: Array,
 	      required: true
+	    },
+	    initCollabs: {
+	      type: Array,
+	      required: true
 	    }
 	  },
 	  emits: ['applyData'],
 	  computed: {
-	    chatHintText() {
-	      return this.isTeamEntity ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_CHATS_ADD_CHECKBOX_HINT') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_CHATS_ADD_CHECKBOX_HINT_MSGVER_1');
-	    },
-	    channelHintText() {
-	      return this.isTeamEntity ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_CHANNELS_ADD_CHECKBOX_HINT') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_CHANNELS_ADD_CHECKBOX_HINT_MSGVER_1');
+	    isCollabsAvailable() {
+	      return humanresources_companyStructure_permissionChecker.PermissionChecker.getInstance().isCollabsAvailable;
 	    },
 	    headsCreated() {
 	      const memberRoles = humanresources_companyStructure_api.getMemberRoles(this.entityType);
 	      return this.heads.some(item => item.role === memberRoles.head);
 	    },
+	    hasCurrentUser() {
+	      return this.heads.some(item => item.id === this.userId) || this.employeesIds.includes(this.userId) || this.employees.some(item => item.id === this.userId);
+	    },
 	    isTeamEntity() {
 	      return this.entityType === humanresources_companyStructure_utils.EntityTypes.team;
 	    },
 	    hints() {
-	      if (this.isTeamEntity) {
-	        return [this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_HINT_1'), this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_HINT_2'), this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_HINT_3')];
+	      if (this.isCollabsAvailable) {
+	        if (this.isTeamEntity) {
+	          return [this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_HINT_1_W_COLLABS'), this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_HINT_2_MSGVER_1'), this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_HINT_3_W_COLLABS')];
+	        }
+	        return [this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_HINT_1_W_COLLABS'), this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_HINT_2_MSGVER_2'), this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_HINT_3_W_COLLABS')];
 	      }
-	      return [this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_HINT_1_MSGVER_1'), this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_HINT_2_MSGVER_1'), this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_HINT_3')];
+	      if (this.isTeamEntity) {
+	        return [this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_HINT_1'), this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_HINT_2_MSGVER_1'), this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_HINT_3')];
+	      }
+	      return [this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_HINT_1_MSGVER_1'), this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_HINT_2_MSGVER_2'), this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_HINT_3')];
 	    },
 	    ChatTypeDict() {
-	      return humanresources_companyStructure_structureComponents.ChatTypeDict;
-	    }
+	      return humanresources_companyStructure_structureComponents.CommunicationsTypeDict;
+	    },
+	    hintTitle() {
+	      if (this.isCollabsAvailable) {
+	        return this.isTeamEntity ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_HINT_TITLE_W_COLLABS') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_HINT_TITLE_W_COLLABS');
+	      }
+	      return this.isTeamEntity ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_HINT_TITLE') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_HINT_TITLE');
+	    },
+	    ...ui_vue3_pinia.mapState(humanresources_companyStructure_chartStore.useChartStore, ['userId'])
 	  },
 	  watch: {
 	    initChats(value) {
@@ -1607,13 +1801,18 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    },
 	    initChannels(value) {
 	      this.channels = value.map(item => item.id);
+	    },
+	    initCollabs(value) {
+	      this.collabs = value.map(item => item.id);
 	    }
 	  },
 	  created() {
 	    this.chats = this.initChats.map(item => item.id);
 	    this.channels = this.initChannels.map(item => item.id);
+	    this.collabs = this.initCollabs.map(item => Number(item.id));
 	    this.createDefaultChat = false;
 	    this.createDefaultChannel = false;
+	    this.createDefaultCollab = false;
 	  },
 	  activated() {
 	    this.$emit('applyData', {
@@ -1630,18 +1829,23 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        apiEntityChanged: humanresources_companyStructure_utils.WizardApiEntityChangedDict.bindChats,
 	        chats: this.chats,
 	        channels: this.channels,
+	        collabs: this.collabs,
 	        createDefaultChat: this.createDefaultChat,
 	        createDefaultChannel: this.createDefaultChannel,
+	        createDefaultCollab: this.createDefaultCollab,
 	        isDepartmentDataChanged: true
 	      });
 	    },
-	    onChatSelectorChanged(data) {
-	      if (data.type === humanresources_companyStructure_structureComponents.ChatTypeDict.chat) {
-	        this.chats = data.chats;
+	    onCommunicationSelectorChanged(data) {
+	      if (data.type === humanresources_companyStructure_structureComponents.CommunicationsTypeDict.chat) {
+	        this.chats = data.communications;
 	        this.createDefaultChat = data.createDefault;
-	      } else {
-	        this.channels = data.chats;
+	      } else if (data.type === humanresources_companyStructure_structureComponents.CommunicationsTypeDict.channel) {
+	        this.channels = data.communications;
 	        this.createDefaultChannel = data.createDefault;
+	      } else {
+	        this.collabs = data.communications;
+	        this.createDefaultCollab = data.createDefault;
 	      }
 	      this.applyData();
 	    }
@@ -1654,11 +1858,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 					<div class="chart-wizard__bind-chat__item-hint_text">
 						<div
 							class="chart-wizard__bind-chat__item-hint_title"
-							v-html="
-								isTeamEntity 
-									? loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_HINT_TITLE')
-									: loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_HINT_TITLE')
-							"
+							v-html="hintTitle"
 						>
 						</div>
 						<div v-for="hint in hints"
@@ -1671,6 +1871,53 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 							<span>{{ hint }}</span>
 						</div>
 					</div>
+				</div>
+				<div class="chart-wizard__bind-chat__item-options" v-if="isCollabsAvailable">
+					<div class="chart-wizard__bind-chat__item-options__item-content_title">
+						<div class="chart-wizard__bind-chat__item-options__item-content_title-text">
+							{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_COLLAB_TITLE') }}
+						</div>
+					</div>
+					<span class="chart-wizard__bind-chat__item-description">
+						{{
+							isTeamEntity
+								? loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_COLLAB_DESCRIPTION')
+								: loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_COLLAB_DESCRIPTION')
+						}}
+					</span>
+					<CommunicationSelector
+						:name="name"
+						:headsCreated="headsCreated"
+						:hasCurrentUser="hasCurrentUser"
+						:initCommunications="initCollabs"
+						:type="ChatTypeDict.collab"
+						:isTeamEntity="isTeamEntity"
+						@applyData="onCommunicationSelectorChanged"
+					/>
+				</div>
+				<div class="chart-wizard__bind-chat__item-options">
+					<div class="chart-wizard__bind-chat__item-options__item-content_title">
+						<div class="chart-wizard__bind-chat__item-options__item-content_title-text">
+							{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_CHANNELS_TITLE') }}
+						</div>
+					</div>
+					<span class="chart-wizard__bind-chat__item-description">
+						{{
+							isTeamEntity
+								? loc(
+									'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_CHANNELS_DESCRIPTION')
+								: loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_CHANNELS_DESCRIPTION')
+						}}
+					</span>
+					<CommunicationSelector
+						:name="name"
+						:headsCreated="headsCreated"
+						:hasCurrentUser="hasCurrentUser"
+						:initCommunications="initChannels"
+						:type="ChatTypeDict.channel"
+						:isTeamEntity="isTeamEntity"
+						@applyData="onCommunicationSelectorChanged"
+					/>
 				</div>
 				<div class="chart-wizard__bind-chat__item-options">
 					<div class="chart-wizard__bind-chat__item-options__item-content_title">
@@ -1685,35 +1932,14 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 								: loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_CHATS_DESCRIPTION')
 						}}
 					</span>
-					<ChatSelector
+					<CommunicationSelector
 						:name="name"
 						:headsCreated="headsCreated"
-						:initChats="initChats"
+						:initCommunications="initChats"
+						:hasCurrentUser="hasCurrentUser"
 						:type="ChatTypeDict.chat"
 						:isTeamEntity="isTeamEntity"
-						@applyData="onChatSelectorChanged"
-					/>
-				</div>
-				<div class="chart-wizard__bind-chat__item-options">
-					<div class="chart-wizard__bind-chat__item-options__item-content_title">
-						<div class="chart-wizard__bind-chat__item-options__item-content_title-text">
-							{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_CHANNELS_TITLE') }}
-						</div>
-					</div>
-					<span class="chart-wizard__bind-chat__item-description">
-						{{
-							isTeamEntity
-								? loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_CHANNELS_DESCRIPTION')
-								: loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_CHANNELS_DESCRIPTION')
-						}}
-					</span>
-					<ChatSelector
-						:name="name"
-						:headsCreated="headsCreated"
-						:initChats="initChannels"
-						:type="ChatTypeDict.channel"
-						:isTeamEntity="isTeamEntity"
-						@applyData="onChatSelectorChanged"
+						@applyData="onCommunicationSelectorChanged"
 					/>
 				</div>
 			</div>
@@ -1746,23 +1972,17 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    this.entities = [{
 	      type: humanresources_companyStructure_utils.EntityTypes.department,
 	      title: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_ENTITY_DEPARTMENT_TITLE'),
-	      description: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_ENTITY_DEPARTMENT_DESCR'),
+	      description: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_ENTITY_DEPARTMENT_DESCR_MSGVER_1'),
 	      isEnabled: hasDepartmentCreatePermission,
 	      hint: !hasDepartmentCreatePermission && this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_ENTITY_DEPARTMENT_NO_ACCESS_HINT'),
 	      isSoon: false
 	    }, {
 	      type: humanresources_companyStructure_utils.EntityTypes.team,
 	      title: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_ENTITY_FUNCTIONAL_TEAM_TITLE_MSGVER_1'),
-	      description: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_ENTITY_FUNCTIONAL_TEAM_DESCR'),
+	      description: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_ENTITY_FUNCTIONAL_TEAM_DESCR_MSGVER_1'),
 	      isEnabled: humanresources_companyStructure_permissionChecker.PermissionChecker.isTeamsAvailable && hasTeamCreatePermission,
 	      hint: humanresources_companyStructure_permissionChecker.PermissionChecker.isTeamsAvailable && !hasTeamCreatePermission && this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_ENTITY_FUNCTIONAL_TEAM_NO_ACCESS_HINT_MSGVER_1'),
 	      isSoon: !permissionChecker.isTeamsAvailable
-	    }, {
-	      type: humanresources_companyStructure_utils.EntityTypes.company,
-	      title: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_ENTITY_COMPANY_TITLE'),
-	      description: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_ENTITY_COMPANY_DESCR'),
-	      isEnabled: false,
-	      isSoon: true
 	    }];
 	    for (const entity of this.entities) {
 	      if (entity.isEnabled) {
@@ -1862,6 +2082,15 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    settings: {
 	      type: Object,
 	      required: false
+	    },
+	    /** @type {Record<string, boolean>} */
+	    features: {
+	      type: Object,
+	      required: false
+	    },
+	    shouldErrorHighlight: {
+	      type: Boolean,
+	      required: true
 	    }
 	  },
 	  created() {
@@ -1877,7 +2106,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  activated() {
 	    this.$emit('applyData', {
 	      isDepartmentDataChanged: false,
-	      isValid: true
+	      isValid: !this.isBusinessProcHeadNotSelected
 	    });
 	  },
 	  watch: {
@@ -1904,7 +2133,8 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      this.$emit('applyData', {
 	        apiEntityChanged: humanresources_companyStructure_utils.WizardApiEntityChangedDict.settings,
 	        settings: this.settings,
-	        isDepartmentDataChanged: true
+	        isDepartmentDataChanged: true,
+	        isValid: !this.isBusinessProcHeadNotSelected
 	      });
 	    },
 	    getTagSelector(settingType, locked) {
@@ -1949,11 +2179,12 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	          },
 	          width: 400,
 	          height: 200,
+	          tagMaxWidth: 400,
 	          dropdownMode: true,
 	          showAvatars: false,
 	          selectedItems: this.getTagItems(locked).filter(item => this.settings[settingType].has(item.id)),
 	          items: this.getTagItems(locked),
-	          undeselectedItems: [['head-type', AuthorityTypes.departmentHead]]
+	          undeselectedItems: this.features.isDeputyApprovesBPAvailable ? [] : [['head-type', AuthorityTypes.departmentHead]]
 	        }
 	      });
 	    },
@@ -1964,11 +2195,13 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      };
 	      const departmentTagOptions = {
 	        bgColor: '#ADE7E4',
-	        textColor: '#207976'
+	        textColor: '#207976',
+	        maxWidth: 400
 	      };
 	      const teamTagOptions = {
 	        bgColor: '#CCE3FF',
-	        textColor: '#3592FF'
+	        textColor: '#3592FF',
+	        maxWidth: 400
 	      };
 	      const soonItemOptions = {
 	        customData: {
@@ -1984,7 +2217,12 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	          justifyContent: 'right'
 	        }
 	      };
-	      return [{
+	      const deputyOptions = this.features.isDeputyApprovesBPAvailable ? {
+	        customData: {
+	          selectable: true
+	        }
+	      } : soonItemOptions;
+	      const departmentHead = {
 	        id: AuthorityTypes.departmentHead,
 	        entityId: 'head-type',
 	        tabs: 'recents',
@@ -1993,7 +2231,8 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        customData: {
 	          selectable: true
 	        }
-	      }, {
+	      };
+	      const teamHead = {
 	        id: AuthorityTypes.teamHead,
 	        entityId: 'head-type',
 	        tabs: 'recents',
@@ -2002,21 +2241,24 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        customData: {
 	          selectable: true
 	        }
-	      }, {
+	      };
+	      const departmentDeputy = {
 	        id: AuthorityTypes.departmentDeputy,
 	        entityId: 'head-type',
 	        tabs: 'recents',
 	        title: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_RIGHTS_DEPARTMENT_DEPUTY_ITEM'),
 	        tagOptions: locked ? lockedTagOptions : departmentTagOptions,
-	        ...soonItemOptions
-	      }, {
+	        ...deputyOptions
+	      };
+	      const teamDeputy = {
 	        id: AuthorityTypes.teamDeputy,
 	        entityId: 'head-type',
 	        tabs: 'recents',
 	        title: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_RIGHTS_TEAM_DEPUTY_ITEM'),
 	        tagOptions: locked ? lockedTagOptions : teamTagOptions,
-	        ...soonItemOptions
-	      }];
+	        ...deputyOptions
+	      };
+	      return this.features.isDeputyApprovesBPAvailable ? [departmentHead, departmentDeputy, teamHead, teamDeputy] : [departmentHead, teamHead, departmentDeputy, teamDeputy];
 	    },
 	    goToBPHelp(event) {
 	      if (top.BX.Helper) {
@@ -2035,6 +2277,10 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_RIGHTS_REPORTS_DESCRIPTION', {
 	        '#DEPARTMENT_NAME#': main_core.Text.encode(this.name)
 	      });
+	    },
+	    isBusinessProcHeadNotSelected() {
+	      const bpSettings = this.settings[humanresources_companyStructure_utils.NodeSettingsTypes.businessProcAuthority];
+	      return !bpSettings || bpSettings.size === 0;
 	    }
 	  },
 	  template: `
@@ -2073,9 +2319,19 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 					</div>
 					<div
 						class="chart-wizard__team-rights__business-proc-selector"
+						:class="{ 'ui-ctl-warning': (isBusinessProcHeadNotSelected && shouldErrorHighlight) }"
 						ref="business-proc-selector"
 						data-test-id="hr-company-structure__team-rights__business-proc-selector"
 					/>
+					<div
+						v-if="shouldErrorHighlight && isBusinessProcHeadNotSelected"
+						class="chart-wizard__team-rights__item-options-error"
+					>
+						<div class="ui-icon-set --warning"></div>
+						<span class="chart-wizard__team-rights__item-options-error-message">
+							{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_RIGHTS_BUSINESS_PROC_HEAD_ERROR') }}
+						</span>
+					</div>
 				</div>
 				<div class="chart-wizard__team-rights__item-options">
 					<div class="chart-wizard__team-rights__item-options__item-content_title --soon"
@@ -2132,6 +2388,37 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	};
 
 	const WizardAPI = {
+	  createDepartment: (name, parentId, description, userIds, moveUsersToDepartment, createChat, bindingChatIds, createChannel, bindingChannelIds, createCollab, bindingCollabIds) => {
+	    return humanresources_companyStructure_api.postData('humanresources.api.Structure.Department.create', {
+	      name,
+	      parentId,
+	      description,
+	      userIds,
+	      moveUsersToDepartment,
+	      createChat,
+	      bindingChatIds,
+	      createChannel,
+	      bindingChannelIds,
+	      createCollab,
+	      bindingCollabIds
+	    });
+	  },
+	  createTeam: (name, parentId, description, colorName, userIds, createChat, bindingChatIds, createChannel, bindingChannelIds, createCollab, bindingCollabIds, settings) => {
+	    return humanresources_companyStructure_api.postData('humanresources.api.Structure.Team.create', {
+	      name,
+	      parentId,
+	      description,
+	      colorName,
+	      userIds,
+	      createChat,
+	      bindingChatIds,
+	      createChannel,
+	      bindingChannelIds,
+	      createCollab,
+	      bindingCollabIds,
+	      settings
+	    });
+	  },
 	  addDepartment: (name, parentId, description, entityType, colorName) => {
 	    return humanresources_companyStructure_api.postData('humanresources.api.Structure.Node.add', {
 	      name,
@@ -2169,13 +2456,12 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      parentId
 	    });
 	  },
-	  saveChats: (nodeId, ids, createDefault, removeIds = [], parentId = null) => {
+	  saveChats: (nodeId, ids, createDefault = {}, removeIds = {}) => {
 	    return humanresources_companyStructure_api.postData('humanresources.api.Structure.Node.Member.Chat.saveChatList', {
 	      nodeId,
 	      ids,
 	      createDefault,
-	      removeIds,
-	      parentId
+	      removeIds
 	    });
 	  },
 	  createSettings: (nodeId, settings, parentId) => {
@@ -2208,14 +2494,21 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  createDepartment: departmentData => {
 	    var _parent$children;
 	    const {
-	      departments
+	      departments,
+	      structureMap
 	    } = humanresources_companyStructure_chartStore.useChartStore();
 	    const {
 	      id: departmentId,
-	      parentId
+	      parentId,
+	      entityType
 	    } = departmentData;
 	    const parent = departments.get(parentId);
 	    parent.children = [...((_parent$children = parent.children) != null ? _parent$children : []), departmentId];
+	    structureMap.set(departmentId, {
+	      id: departmentId,
+	      parentId,
+	      entityType
+	    });
 	    departments.set(departmentId, {
 	      ...departmentData,
 	      id: departmentId,
@@ -2254,6 +2547,10 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  }
 	};
 
+	const SaveMode$1 = Object.freeze({
+	  moveUsers: 'moveUsers',
+	  addUsers: 'addUsers'
+	});
 	const ChartWizard = {
 	  name: 'chartWizard',
 	  emits: ['modifyTree', 'close'],
@@ -2310,6 +2607,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        employees: [],
 	        chats: [],
 	        channels: [],
+	        collabs: [],
 	        userCount: 0,
 	        createDefaultChat: false,
 	        createDefaultChannel: false,
@@ -2328,12 +2626,15 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      },
 	      initChats: [],
 	      initChannels: [],
+	      initCollabs: [],
 	      shouldErrorHighlight: false,
 	      steps: [],
-	      saveMode: SaveMode.moveUsers
+	      saveMode: SaveMode$1.moveUsers,
+	      permissionChecker: null
 	    };
 	  },
 	  created() {
+	    this.permissionChecker = humanresources_companyStructure_permissionChecker.PermissionChecker.getInstance();
 	    this.init();
 	  },
 	  beforeUnmount() {
@@ -2357,6 +2658,12 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    currentStep() {
 	      return this.steps[this.stepIndex];
 	    },
+	    isDeputyApprovesBPAvailable() {
+	      if (!this.permissionChecker) {
+	        return false;
+	      }
+	      return this.permissionChecker.checkDeputyApprovalBPAvailable();
+	    },
 	    componentInfo() {
 	      if (!this.currentStep.isPermitted) {
 	        return {
@@ -2369,7 +2676,8 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        description,
 	        heads,
 	        entityType,
-	        teamColor
+	        teamColor,
+	        employees
 	      } = this.departmentData;
 	      const components = {
 	        [StepIds.department]: {
@@ -2398,18 +2706,25 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	          name: 'BindChat',
 	          params: {
 	            heads,
+	            employees,
+	            employeesIds: this.employeesIds,
 	            name,
 	            entityType,
 	            isEditMode: this.isEditMode,
 	            initChats: this.initChats,
-	            initChannels: this.initChannels
+	            initChannels: this.initChannels,
+	            initCollabs: this.initCollabs
 	          }
 	        },
 	        [StepIds.teamRights]: {
 	          name: 'TeamRights',
 	          params: {
 	            name,
-	            settings: this.departmentSettings
+	            settings: this.departmentSettings,
+	            features: {
+	              isDeputyApprovesBPAvailable: this.isDeputyApprovesBPAvailable
+	            },
+	            shouldErrorHighlight: this.shouldErrorHighlight
 	          }
 	        },
 	        [StepIds.entities]: {
@@ -2451,6 +2766,18 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    loc(phraseCode, replacements = {}) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 	    },
+	    mapRawSettings(rawSettings) {
+	      return rawSettings.reduce((acc, {
+	        settingsType,
+	        settingsValue
+	      }) => {
+	        if (!Object.hasOwn(acc, settingsType)) {
+	          acc[settingsType] = new Set();
+	        }
+	        acc[settingsType].add(settingsValue);
+	        return acc;
+	      }, {});
+	    },
 	    async init() {
 	      this.apiEntityChanged = new Set();
 
@@ -2490,23 +2817,17 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	          createDefaultChannel: false
 	        };
 	        const rawSettings = await WizardAPI.getSettings(this.nodeId);
-	        this.departmentSettings = rawSettings.reduce((acc, {
-	          settingsType,
-	          settingsValue
-	        }) => {
-	          if (!Object.hasOwn(acc, settingsType)) {
-	            acc[settingsType] = new Set();
-	          }
-	          acc[settingsType].add(settingsValue);
-	          return acc;
-	        }, {
-	          ...this.departmentSettings
-	        });
+	        const newSettings = this.mapRawSettings(rawSettings);
+	        this.departmentSettings = {
+	          ...this.departmentSettings,
+	          ...newSettings
+	        };
 
 	        // store directly bound chats and channels
 	        const rawChatsAndChannels = await WizardAPI.getChatsAndChannels(this.nodeId);
 	        this.initChats = rawChatsAndChannels.chats.filter(item => !item.originalNodeId);
 	        this.initChannels = rawChatsAndChannels.channels.filter(item => !item.originalNodeId);
+	        this.initCollabs = rawChatsAndChannels.collabs.filter(item => !item.originalNodeId);
 	        this.employeesIds = await WizardAPI.getEmployees(this.nodeId);
 	        return;
 	      }
@@ -2532,7 +2853,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      this.memberRoles = humanresources_companyStructure_api.getMemberRoles(entityType);
 	    },
 	    move(buttonId = 'next') {
-	      if (buttonId === 'next' && !this.isValidStep) {
+	      if (!this.isValidStep) {
 	        this.shouldErrorHighlight = true;
 	        return;
 	      }
@@ -2641,7 +2962,6 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    },
 	    getAllSteps(entityType, departmentId = null) {
 	      const isTeamEntity = entityType === humanresources_companyStructure_utils.EntityTypes.team;
-	      const permissionChecker = humanresources_companyStructure_permissionChecker.PermissionChecker.getInstance();
 	      return {
 	        entity: {
 	          id: StepIds.entities,
@@ -2656,7 +2976,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	          breadcrumbsTitleTeam: 'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_TITLE_BREADCRUMBS',
 	          hasBreadcrumbs: true,
 	          hasTreePreview: true,
-	          isEditPermitted: isTeamEntity ? permissionChecker.hasPermission(humanresources_companyStructure_permissionChecker.PermissionActions.teamEdit, departmentId) : permissionChecker.hasPermission(humanresources_companyStructure_permissionChecker.PermissionActions.departmentEdit, departmentId),
+	          isEditPermitted: isTeamEntity ? this.permissionChecker.hasPermission(humanresources_companyStructure_permissionChecker.PermissionActions.teamEdit, departmentId) : this.permissionChecker.hasPermission(humanresources_companyStructure_permissionChecker.PermissionActions.departmentEdit, departmentId),
 	          dataTestIdPart: 'department'
 	        },
 	        employees: {
@@ -2665,16 +2985,16 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	          breadcrumbsTitleTeam: 'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_EMPLOYEES_BREADCRUMBS',
 	          hasBreadcrumbs: true,
 	          hasTreePreview: true,
-	          isEditPermitted: isTeamEntity ? permissionChecker.hasPermission(humanresources_companyStructure_permissionChecker.PermissionActions.teamAddMember, departmentId) : permissionChecker.hasPermission(humanresources_companyStructure_permissionChecker.PermissionActions.employeeAddToDepartment, departmentId),
+	          isEditPermitted: isTeamEntity ? this.permissionChecker.hasPermission(humanresources_companyStructure_permissionChecker.PermissionActions.teamAddMember, departmentId) : this.permissionChecker.hasPermission(humanresources_companyStructure_permissionChecker.PermissionActions.employeeAddToDepartment, departmentId),
 	          dataTestIdPart: 'employees'
 	        },
 	        bindChat: {
 	          id: StepIds.bindChat,
-	          breadcrumbsTitleDepartment: 'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TITLE_BREADCRUMBS',
-	          breadcrumbsTitleTeam: 'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_TITLE_BREADCRUMBS',
+	          breadcrumbsTitleDepartment: this.permissionChecker.isCollabsAvailable ? 'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TITLE_BREADCRUMBS_W_COLLABS' : 'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TITLE_BREADCRUMBS',
+	          breadcrumbsTitleTeam: this.permissionChecker.isCollabsAvailable ? 'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_TITLE_BREADCRUMBS_W_COLLABS' : 'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_TITLE_BREADCRUMBS',
 	          hasBreadcrumbs: true,
 	          hasTreePreview: false,
-	          isEditPermitted: isTeamEntity ? permissionChecker.hasPermission(humanresources_companyStructure_permissionChecker.PermissionActions.teamCommunicationEdit, departmentId) : permissionChecker.hasPermission(humanresources_companyStructure_permissionChecker.PermissionActions.departmentCommunicationEdit, departmentId),
+	          isEditPermitted: isTeamEntity ? this.permissionChecker.hasPermission(humanresources_companyStructure_permissionChecker.PermissionActions.teamCommunicationEdit, departmentId) : this.permissionChecker.hasPermission(humanresources_companyStructure_permissionChecker.PermissionActions.departmentCommunicationEdit, departmentId),
 	          dataTestIdPart: 'bind-chat'
 	        },
 	        teamRights: {
@@ -2682,7 +3002,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	          breadcrumbsTitleTeam: 'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_RIGHTS_BREADCRUMBS',
 	          hasBreadcrumbs: true,
 	          hasTreePreview: false,
-	          isEditPermitted: isTeamEntity ? permissionChecker.hasPermission(humanresources_companyStructure_permissionChecker.PermissionActions.teamSettingsEdit, departmentId) : permissionChecker.hasPermission(humanresources_companyStructure_permissionChecker.PermissionActions.departmentEdit, departmentId),
+	          isEditPermitted: isTeamEntity ? this.permissionChecker.hasPermission(humanresources_companyStructure_permissionChecker.PermissionActions.teamSettingsEdit, departmentId) : this.permissionChecker.hasPermission(humanresources_companyStructure_permissionChecker.PermissionActions.departmentEdit, departmentId),
 	          dataTestIdPart: 'team-rights'
 	        }
 	      };
@@ -2776,7 +3096,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        return Promise.resolve();
 	      }
 	      const parentId = (_this$departmentData$2 = this.departmentData.parentId) != null ? _this$departmentData$2 : null;
-	      if (this.saveMode === SaveMode.moveUsers) {
+	      if (this.saveMode === SaveMode$1.moveUsers) {
 	        return WizardAPI.moveUsers(departmentId, ids, parentId);
 	      }
 	      return WizardAPI.saveUsers(departmentId, ids, parentId);
@@ -2788,8 +3108,10 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        description,
 	        chats,
 	        channels,
+	        collabs,
 	        createDefaultChat,
 	        createDefaultChannel,
+	        createDefaultCollab,
 	        entityType,
 	        teamColor,
 	        settings
@@ -2798,29 +3120,46 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      let accessCode = '';
 	      this.waiting = true;
 	      try {
-	        const [newDepartment] = await WizardAPI.addDepartment(name, parentId, description, entityType, teamColor == null ? void 0 : teamColor.name);
-	        departmentId = newDepartment.id;
-	        accessCode = newDepartment.accessCode;
-	        const data = await this.getUsersPromise(departmentId);
-	        if (data != null && data.updatedDepartmentIds) {
-	          chartWizardActions.refreshDepartments(data.updatedDepartmentIds);
-	        } else {
-	          chartWizardActions.tryToAddCurrentDepartment(this.departmentData, departmentId);
-	        }
-	        await WizardAPI.saveChats(departmentId, {
-	          chat: [...chats],
-	          channel: [...channels]
-	        }, {
-	          chat: Number(createDefaultChat),
-	          channel: Number(createDefaultChannel)
-	        }, null, parentId);
+	        const userIds = this.calculateEmployeeIds();
+	        const {
+	          headsIds,
+	          deputiesIds,
+	          employeesIds
+	        } = userIds;
+	        const departmentUserIds = {
+	          [this.memberRoles.head]: headsIds,
+	          [this.memberRoles.deputyHead]: deputiesIds,
+	          [this.memberRoles.employee]: employeesIds
+	        };
+	        let settingsNode = {};
+	        let newDepartment = {};
+	        let updatedDepartmentIds = false;
+	        let userMovedToRootIds = false;
 	        if (entityType === humanresources_companyStructure_utils.EntityTypes.team) {
-	          await WizardAPI.createSettings(departmentId, {
+	          settingsNode = {
 	            [humanresources_companyStructure_utils.NodeSettingsTypes.businessProcAuthority]: {
 	              values: [...settings[humanresources_companyStructure_utils.NodeSettingsTypes.businessProcAuthority]],
 	              replace: true
 	            }
-	          }, parentId);
+	          };
+	          ({
+	            node: newDepartment,
+	            updatedDepartmentIds = false,
+	            userMovedToRootIds = false
+	          } = await WizardAPI.createTeam(name, parentId, description, teamColor.name, departmentUserIds, Number(createDefaultChat), chats, Number(createDefaultChannel), channels, Number(createDefaultCollab), collabs, settingsNode));
+	        } else if (entityType === humanresources_companyStructure_utils.EntityTypes.department) {
+	          ({
+	            node: newDepartment,
+	            updatedDepartmentIds = false,
+	            userMovedToRootIds = false
+	          } = await WizardAPI.createDepartment(name, parentId, description, departmentUserIds, this.saveMode === SaveMode$1.moveUsers ? 1 : 0, Number(createDefaultChat), chats, Number(createDefaultChannel), channels, Number(createDefaultCollab), collabs, settingsNode));
+	        }
+	        departmentId = newDepartment.id;
+	        accessCode = newDepartment.accessCode;
+	        if (updatedDepartmentIds) {
+	          chartWizardActions.refreshDepartments(updatedDepartmentIds);
+	        } else if (userMovedToRootIds) {
+	          chartWizardActions.tryToAddCurrentDepartment(this.departmentData, departmentId);
 	        }
 	      } catch (error) {
 	        if (!humanresources_companyStructure_api.reportedErrorTypes.has(error.code)) {
@@ -2872,9 +3211,11 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        teamColor,
 	        settings,
 	        chats,
-	        channels,
 	        createDefaultChat,
-	        createDefaultChannel
+	        channels,
+	        createDefaultChannel,
+	        collabs,
+	        createDefaultCollab
 	      } = this.departmentData;
 	      const currentNode = this.departments.get(id);
 	      const targetNodeId = (currentNode == null ? void 0 : currentNode.parentId) === parentId ? null : parentId;
@@ -2893,13 +3234,22 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        if (this.apiEntityChanged.has(humanresources_companyStructure_utils.WizardApiEntityChangedDict.bindChats)) {
 	          await WizardAPI.saveChats(id, {
 	            chat: chats.filter(chatId => !this.initChats.some(chat => chat.id === chatId)),
-	            channel: channels.filter(channelId => !this.initChannels.some(channel => channel.id === channelId))
+	            channel: channels.filter(channelId => !this.initChannels.some(channel => channel.id === channelId)),
+	            collab: collabs.filter(collabId => !this.initCollabs.some(collab => Number(collab.id) === collabId))
 	          }, {
 	            chat: Number(createDefaultChat),
-	            channel: Number(createDefaultChannel)
-	          }, [...this.initChats.filter(chat => !chats.includes(chat.id)).map(chat => chat.id), ...this.initChannels.filter(channel => !channels.includes(channel.id)).map(channel => channel.id)]);
+	            channel: Number(createDefaultChannel),
+	            collab: Number(createDefaultCollab)
+	          }, {
+	            chat: this.initChats.filter(chat => !chats.includes(chat.id)).map(chat => chat.id),
+	            channel: this.initChannels.filter(channel => !channels.includes(channel.id)).map(channel => channel.id),
+	            collab: this.initCollabs.filter(collab => !collabs.includes(Number(collab.id))).map(collab => collab.id)
+	          });
 	          this.departmentData.chatsDetailed = null;
 	          this.departmentData.channelsDetailed = null;
+	          if (this.isEditMode && id && humanresources_companyStructure_departmentContent.DepartmentContentActions != null && humanresources_companyStructure_departmentContent.DepartmentContentActions.updateChatsInChildrenNodes) {
+	            humanresources_companyStructure_departmentContent.DepartmentContentActions.updateChatsInChildrenNodes(this.nodeId);
+	          }
 	        }
 	        let userMovedToRootIds = [];
 	        if (this.removedUsers.length > 0) {
@@ -2935,9 +3285,9 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    },
 	    createDefaultSaveMode(entityType = 'DEPARTMENT') {
 	      if (entityType === humanresources_companyStructure_utils.EntityTypes.team) {
-	        this.saveMode = SaveMode.addUsers;
+	        this.saveMode = SaveMode$1.addUsers;
 	      } else {
-	        this.saveMode = SaveMode.moveUsers;
+	        this.saveMode = SaveMode$1.moveUsers;
 	      }
 	    },
 	    pickEditAnalytics(departmentId, parentId) {
@@ -3005,7 +3355,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  },
 	  template: `
 		<div class="chart-wizard">
-			<div class="chart-wizard__dialog" :style="{ 'max-width': isFirstStep ? '580px' : '843px' }">
+			<div class="chart-wizard__dialog" :class="{ '--first-step': isFirstStep }">
 				<div v-if="currentStep.hasBreadcrumbs" class="chart-wizard__breadcrumbs-head">
 					<div class="chart-wizard__head_close --breadcrumbs" @click="closeWithConfirm(true)"></div>
 					<div class="chart-wizard__breadcrumbs-head_descr">
@@ -3108,5 +3458,5 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 
 	exports.ChartWizard = ChartWizard;
 
-}((this.BX.Humanresources.CompanyStructure = this.BX.Humanresources.CompanyStructure || {}),BX,BX.UI.Dialogs,BX,BX.Vue3.Pinia,BX.Cache,BX,BX.UI.IconSet,BX.UI.IconSet,BX.Humanresources.CompanyStructure,BX,BX.UI.EntitySelector,BX.Humanresources.CompanyStructure,BX.Humanresources.CompanyStructure,BX.UI.Analytics,BX.Humanresources.CompanyStructure,BX.Humanresources.CompanyStructure));
+}((this.BX.Humanresources.CompanyStructure = this.BX.Humanresources.CompanyStructure || {}),BX,BX.UI.Dialogs,BX.Humanresources.CompanyStructure,BX,BX.Cache,BX,BX.Vue3.Pinia,BX.UI.IconSet,BX.UI.IconSet,BX.Humanresources.CompanyStructure,BX,BX.UI.EntitySelector,BX.Humanresources.CompanyStructure,BX.Humanresources.CompanyStructure,BX.UI.Analytics,BX.Humanresources.CompanyStructure,BX.Humanresources.CompanyStructure));
 //# sourceMappingURL=chart-wizard.bundle.js.map

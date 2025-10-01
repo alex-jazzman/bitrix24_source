@@ -250,7 +250,7 @@ export class Form
 		else if(type === 'boolean')
 		{
 			value = 'Y';
-			result =`<input type="checkbox" name="${Text.encode(field.name)}"${this.data[field.name] === value ? ' checked="checked"' : ''}${field.disabled ? ' disabled="disabled"' : ''}${required}
+			result =`<input type="hidden" name="${Text.encode(field.name)}" value = "N"><input type="checkbox" name="${Text.encode(field.name)}"${this.data[field.name] === value ? ' checked="checked"' : ''}${field.disabled ? ' disabled="disabled"' : ''}${required}
 				value="${value}" class="${this.classes.get('controlInput')}">`;
 		}
 		else if(type === 'list')

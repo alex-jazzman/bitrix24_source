@@ -22,6 +22,7 @@ type RecentState = {
 	recentCollection: Set<string>,
 	unreadCollection: Set<string>,
 	copilotCollection: Set<string>,
+	aiAssistantCollection: Set<string>,
 	channelCollection: Set<string>,
 	collabCollection: Set<string>,
 };
@@ -52,6 +53,7 @@ export class RecentModel extends BuilderModel
 			recentCollection: new Set(),
 			unreadCollection: new Set(),
 			copilotCollection: new Set(),
+			aiAssistantCollection: new Set(),
 			channelCollection: new Set(),
 			collabCollection: new Set(),
 		};
@@ -103,6 +105,16 @@ export class RecentModel extends BuilderModel
 			/** @function recent/getCopilotCollection */
 			getCopilotCollection: (state: RecentState): ImModelRecentItem[] => {
 				return [...state.copilotCollection].filter((dialogId) => {
+					const dialog = this.store.getters['chats/get'](dialogId);
+
+					return Boolean(dialog);
+				}).map((id) => {
+					return state.collection[id];
+				});
+			},
+			/** @function recent/getAiAssistantCollection */
+			getAiAssistantCollection: (state: RecentState): ImModelRecentItem[] => {
+				return [...state.aiAssistantCollection].filter((dialogId) => {
 					const dialog = this.store.getters['chats/get'](dialogId);
 
 					return Boolean(dialog);
@@ -292,6 +304,13 @@ export class RecentModel extends BuilderModel
 
 				this.#updateUnloadedCopilotCounters(payload);
 			},
+			/** @function recent/setAiAssistant */
+			setAiAssistant: async (store: RecentStore, payload: Array | Object) => {
+				const itemIds = await this.store.dispatch('recent/store', payload);
+				store.commit('setAiAssistantCollection', itemIds);
+
+				this.#updateUnloadedCopilotCounters(payload);
+			},
 			/** @function recent/setChannel */
 			setChannel: async (store: RecentStore, payload: Array | Object) => {
 				const itemIds = await this.store.dispatch('recent/store', payload);
@@ -444,6 +463,7 @@ export class RecentModel extends BuilderModel
 
 				store.commit('deleteFromRecentCollection', existingItem.dialogId);
 				store.commit('deleteFromCopilotCollection', existingItem.dialogId);
+				store.commit('deleteFromAiAssistantCollection', existingItem.dialogId);
 				store.commit('deleteFromChannelCollection', existingItem.dialogId);
 				store.commit('deleteFromCollabCollection', existingItem.dialogId);
 				const canDelete = this.#canDelete(existingItem.dialogId);
@@ -487,6 +507,14 @@ export class RecentModel extends BuilderModel
 			},
 			deleteFromCopilotCollection: (state: RecentState, payload: string) => {
 				state.copilotCollection.delete(payload);
+			},
+			setAiAssistantCollection: (state: RecentState, payload: string[]) => {
+				payload.forEach((dialogId) => {
+					state.aiAssistantCollection.add(dialogId);
+				});
+			},
+			deleteFromAiAssistantCollection: (state: RecentState, payload: string) => {
+				state.aiAssistantCollection.delete(payload);
 			},
 			deleteFromChannelCollection: (state: RecentState, payload: string) => {
 				state.channelCollection.delete(payload);

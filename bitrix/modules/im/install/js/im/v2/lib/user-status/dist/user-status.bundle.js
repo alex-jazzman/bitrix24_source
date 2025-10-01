@@ -129,9 +129,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    return;
 	  }
 	  babelHelpers.classPrivateFieldLooseBase(this, _birthdayLoadInterval)[_birthdayLoadInterval] = setTimeout(() => {
-	    im_v2_provider_service_recent.RecentService.getInstance().loadFirstPage();
+	    void im_v2_provider_service_recent.LegacyRecentService.getInstance().loadFirstPage();
 	    setInterval(() => {
-	      im_v2_provider_service_recent.RecentService.getInstance().loadFirstPage();
+	      void im_v2_provider_service_recent.LegacyRecentService.getInstance().loadFirstPage();
 	    }, DAY);
 	  }, im_v2_lib_utils.Utils.date.getTimeToNextMidnight());
 	}

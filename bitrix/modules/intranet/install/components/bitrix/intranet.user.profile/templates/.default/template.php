@@ -139,7 +139,7 @@ if (
 				$haveAvailableActions = in_array(true, $arResult['ACTIONS_AVAILABILITY'], true);
 
 				if (
-					isset($arResult["User"]["STATUS"]) && !empty($arResult["User"]["STATUS"])
+					!empty($arResult["User"]["STATUS"])
 					&& (
 						!(
 							$arResult["User"]["STATUS"] === "employee"
@@ -307,6 +307,7 @@ if (
 		if (
 			$arResult["StressLevel"]['AVAILABLE'] === 'Y'
 			&& !$arResult["isExtranetSite"]
+			&& isset($arResult["User"]["STATUS"])
 			&& !in_array($arResult["User"]["STATUS"], ['email', 'extranet', 'collaber'])
 		)
 		{

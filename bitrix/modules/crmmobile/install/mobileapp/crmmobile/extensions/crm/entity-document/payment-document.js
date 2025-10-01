@@ -21,6 +21,7 @@ jn.define('crm/entity-document/payment-document', (require, exports, module) => 
 	const { getFormattedNumber } = require('utils/phone');
 	const { InfoHelper } = require('layout/ui/info-helper');
 	const { MultiFieldDrawer, MultiFieldType } = require('crm/multi-field-drawer');
+	const { Money } = require('money');
 
 	const PRODUCTS_FOR_LOADER_COUNT = 4;
 

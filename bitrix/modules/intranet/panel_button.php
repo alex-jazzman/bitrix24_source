@@ -13,7 +13,7 @@ class CWizardSolPanelIntranet
 		if(defined("ADMIN_SECTION") && ADMIN_SECTION == true)
 			return;
 
-		if($USER->IsAdmin())
+		if($USER->IsAdmin() && \CTopPanel::shouldShowPanel())
 		{
 			if(isset($_REQUEST['add_new_site_sol']) && $_REQUEST['add_new_site_sol']=='sol' && check_bitrix_sessid())
 			{

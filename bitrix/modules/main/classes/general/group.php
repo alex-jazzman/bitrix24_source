@@ -51,7 +51,14 @@ class CAllGroup
 		}
 
 		$fields = $arFields;
-		unset($fields["USER_ID"]);
+
+		unset($fields['~ID']);
+		unset($fields['USER_ID']);
+
+		if (isset($arFields['~ID']))
+		{
+			$fields['ID'] = $arFields['~ID'];
+		}
 
 		$result = GroupTable::add($fields);
 		$ID = $result->getId();

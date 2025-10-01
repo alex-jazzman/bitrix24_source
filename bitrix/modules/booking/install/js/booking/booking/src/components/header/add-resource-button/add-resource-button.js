@@ -4,13 +4,19 @@ import 'ui.icon-set.actions';
 
 import { AhaMoment, HelpDesk, Model } from 'booking.const';
 import { ahaMoments } from 'booking.lib.aha-moments';
-import { ResourceCreationWizard } from 'booking.resource-creation-wizard';
 import { limit } from 'booking.lib.limit';
 import { RcwAnalytics } from 'booking.lib.analytics';
+import { SidePanelInstance } from 'booking.lib.side-panel-instance';
+import { ResourceCreationWizard } from 'booking.resource-creation-wizard';
 
 import './add-resource-button.css';
 
+// @vue/component
 export const AddResourceButton = {
+	name: 'AddResourceButton',
+	components: {
+		Icon,
+	},
 	data(): Object
 	{
 		return {
@@ -22,6 +28,15 @@ export const AddResourceButton = {
 		isLoaded: `${Model.Interface}/isLoaded`,
 		isFeatureEnabled: `${Model.Interface}/isFeatureEnabled`,
 	}),
+	watch: {
+		isLoaded(): void
+		{
+			if (ahaMoments.shouldShow(AhaMoment.AddResource))
+			{
+				void this.showAhaMoment();
+			}
+		},
+	},
 	methods: {
 		async addResource(): void
 		{
@@ -49,19 +64,12 @@ export const AddResourceButton = {
 			});
 
 			ahaMoments.setShown(AhaMoment.AddResource);
-		},
-	},
-	watch: {
-		isLoaded(): void
-		{
-			if (ahaMoments.shouldShow(AhaMoment.AddResource))
+
+			if (SidePanelInstance.openSliders.every(({ url }) => url !== ResourceCreationWizard.makeName()))
 			{
-				void this.showAhaMoment();
+				void this.addResource();
 			}
 		},
-	},
-	components: {
-		Icon,
 	},
 	template: `
 		<div

@@ -151,7 +151,10 @@
 	      onclick: function onclick() {
 	        box.close();
 	      }
-	    })]
+	    })],
+	    popupOptions: {
+	      fixed: true
+	    }
 	  });
 	  box.show();
 	}

@@ -73,8 +73,8 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		BannerMessageHandler,
 		CallMessageHandler,
 		VoteMessageHandler,
-		ChatAvatar,
-	} = require('im/messenger/lib/element');
+	} = require('im/messenger/lib/element/dialog');
+	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 	const { getLogger } = require('im/messenger/lib/logger');
 	const { MessageRest } = require('im/messenger/provider/rest');
 	const { MessageService } = require('im/messenger/provider/services/message');
@@ -513,6 +513,8 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			this.putTapHandler = this.putTapHandler.bind(this);
 			/** @private */
 			this.phoneTapHandler = this.phoneTapHandler.bind(this);
+			/** @private */
+			this.bbcodeImgTapHandler = this.bbcodeImgTapHandler.bind(this);
 
 			this.channelCommentTapHandler = this.channelCommentTapHandler.bind(this);
 			/** @private */
@@ -623,6 +625,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				.on(EventType.dialog.forwardTap, this.forwardTapHandler)
 				.on(EventType.dialog.channelCommentTap, this.channelCommentTapHandler)
 				.on(EventType.dialog.titleClick, this.openSidebar)
+				.on(EventType.dialog.bbcodeImgTap, this.bbcodeImgTapHandler)
 			;
 
 			this.view.textField.on(EventType.dialog.textField.submit, this.submitHandler);
@@ -1367,6 +1370,8 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				titleParams = await this.headerTitle.createTitleParams();
 			}
 
+			this.headerTitle.setTitleParams(titleParams);
+
 			let rightButtons = [];
 			if (this.configurator.checkIsHeaderButtonControllerClassLoaded())
 			{
@@ -1428,10 +1433,14 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				void await this.store.dispatch('messagesModel/clearChatCollection', { chatId: this.getChatId() });
 			}
 
-			const hasSavedMessages = await this.loadSavedMessages();
-			if (!hasSavedMessages)
+			const lastReadId = this.getDialog()?.lastReadId;
+			if (Type.isNumber(lastReadId) && lastReadId > 0)
 			{
-				this.renderRecentMessage();
+				const hasSavedMessages = await this.loadSavedMessages();
+				if (!hasSavedMessages)
+				{
+					this.renderRecentMessage();
+				}
 			}
 
 			this.loadChatWithMessages()
@@ -1730,41 +1739,33 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				'contextMessageId',
 				contextMessageId,
 			);
-			// eslint-disable-next-line init-declarations
-			let result;
 			if (contextMessageId === 0)
 			{
-				result = await this.messageRepository.getTopPage({
-					chatId,
-					limit: 51,
-				});
-
 				logger.error(`
 					Dialog.loadHistoryMessagesFromDb
 					received the latest messages because where is no lastReadId for dialog ${this.getDialogId()}
-				`, this.getDialog(), result);
+				`, this.getDialog());
+
+				return;
+			}
+			let context = null;
+			if (Feature.isInstantPushEnabled)
+			{
+				context = await this.messageService?.loadLocalStorageContextWithPush(contextMessageId);
 			}
 			else
 			{
-				let context = null;
-				if (Feature.isInstantPushEnabled)
-				{
-					context = await this.messageService?.loadLocalStorageContextWithPush(contextMessageId);
-				}
-				else
-				{
-					context = await this.messageService?.loadLocalStorageContext(contextMessageId);
-				}
-
-				if (Type.isNil(context))
-				{
-					return;
-				}
-
-				result = context.result;
-
-				logger.info(`${this.constructor.name}.loadHistoryMessagesFromDb result by lastReadId`, result);
+				context = await this.messageService?.loadLocalStorageContext(contextMessageId);
 			}
+
+			if (Type.isNil(context))
+			{
+				return;
+			}
+
+			const result = context.result;
+
+			logger.info(`${this.constructor.name}.loadHistoryMessagesFromDb result by lastReadId`, result);
 
 			if (!Type.isUndefined(result.dialogFields))
 			{
@@ -2444,6 +2445,19 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				dialogModel: this.getDialog(),
 			});
 		};
+
+		/**
+		 * @param {string} messageId
+		 * @param {string} localUrl
+		 */
+		bbcodeImgTapHandler(messageId, localUrl)
+		{
+			logger.log(`${this.constructor.name}.bbcodeImgTapHandler`, messageId, localUrl);
+			if (Type.isStringFilled(localUrl))
+			{
+				viewer.openImage(localUrl);
+			}
+		}
 
 		/**
 		 * @param {string} imageId

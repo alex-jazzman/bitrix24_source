@@ -8,7 +8,8 @@ jn.define('im/messenger/provider/pull/chat/message', (require, exports, module) 
 	const { EntityReady } = require('entity-ready');
 
 	const { BaseMessagePullHandler } = require('im/messenger/provider/pull/base');
-	const { ChatTitle, ChatAvatar } = require('im/messenger/lib/element');
+	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
+	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { TabCounters } = require('im/messenger/lib/counters/tab-counters');
 	const { Notifier } = require('im/messenger/lib/notifier');

@@ -8,6 +8,7 @@ import { BusyPopup } from './busy-popup/busy-popup';
 import './busy-slot.css';
 
 const { mapGetters: mapInterfaceGetters } = createNamespacedHelpers(Model.Interface);
+const { mapGetters: mapFilterGetters } = createNamespacedHelpers(Model.Filter);
 
 const BookingBusySlotClassName = 'booking-booking-busy-slot';
 
@@ -43,9 +44,11 @@ export const BusySlot = {
 	computed: {
 		...mapInterfaceGetters({
 			disabledBusySlots: 'disabledBusySlots',
-			isFilterMode: 'isFilterMode',
 			isEditingBookingMode: 'isEditingBookingMode',
 			isDragMode: 'isDragMode',
+		}),
+		...mapFilterGetters({
+			isFilterMode: 'isFilterMode',
 		}),
 		isDisabled(): boolean
 		{

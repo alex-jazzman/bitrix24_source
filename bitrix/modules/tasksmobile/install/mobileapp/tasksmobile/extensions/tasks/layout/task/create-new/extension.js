@@ -137,6 +137,7 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 				copyId: data.copyId,
 				analyticsLabel: data.analyticsLabel || {},
 				parentWidget: data.layoutWidget,
+				kanbanOwnerId: data.kanbanOwnerId || env.userId,
 			});
 
 			parentWidget.openWidget('layout', {
@@ -1750,6 +1751,8 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 					parentWidget: this.props.parentWidget,
 					context: this.props.context,
 					analyticsLabel,
+					view: this.props.view,
+					kanbanOwnerId: this.props.kanbanOwnerId,
 				},
 			);
 		}

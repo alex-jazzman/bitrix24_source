@@ -144,8 +144,10 @@ export class Slider
 		this.setAutoOffset(options.autoOffset);
 
 		this.label = new Label(this, {
-			iconClass: 'side-panel-label-icon-close',
+			className: '--close-label --ui-hoverable',
+			iconClass: 'side-panel-label-icon-close ui-icon-set --cross-l',
 			iconTitle: Loc.getMessage('MAIN_SIDEPANEL_CLOSE'),
+			bgColor: '#0075FF',
 			onclick(label, slider)
 			{
 				slider.close();
@@ -160,13 +162,14 @@ export class Slider
 		this.minimizeLabel = null;
 		this.newWindowLabel = null;
 		this.copyLinkLabel = null;
+		this.printLabel = null;
 
 		if (!this.isSelfContained() && this.minimizeOptions !== null)
 		{
 			this.minimizeLabel = new Label(this, {
-				iconClass: 'side-panel-label-icon-minimize ui-icon-set --arrow-line',
+				className: '--ui-hoverable',
+				iconClass: 'side-panel-label-icon-minimize ui-icon-set --o-minimize',
 				iconTitle: Loc.getMessage('MAIN_SIDEPANEL_MINIMIZE'),
-				bgColor: ['#d9dcdf', 100],
 				onclick: (label, slider) => {
 					if (this.isLoaded())
 					{
@@ -176,12 +179,12 @@ export class Slider
 			});
 		}
 
-		if (options.newWindowLabel === true && (!this.isSelfContained() || Type.isStringFilled(options.newWindowUrl)))
+		if (options.newWindowLabel === true && (this.canChangeHistory() || Type.isStringFilled(options.newWindowUrl)))
 		{
 			this.newWindowLabel = new Label(this, {
-				iconClass: 'side-panel-label-icon-new-window',
+				className: '--ui-hoverable',
+				iconClass: 'side-panel-label-icon-new-window ui-icon-set --go-to-l',
 				iconTitle: Loc.getMessage('MAIN_SIDEPANEL_NEW_WINDOW'),
-				bgColor: ['#d9dcdf', 100],
 				onclick(label, slider)
 				{
 					const newWindowUrl = Type.isStringFilled(options.newWindowUrl) ? options.newWindowUrl : slider.getUrl();
@@ -193,12 +196,12 @@ export class Slider
 			});
 		}
 
-		if (options.copyLinkLabel === true && (!this.isSelfContained() || Type.isStringFilled(options.newWindowUrl)))
+		if (options.copyLinkLabel === true && (this.canChangeHistory() || Type.isStringFilled(options.newWindowUrl)))
 		{
 			this.copyLinkLabel = new Label(this, {
-				iconClass: 'side-panel-label-icon-copy-link',
+				className: '--ui-hoverable',
+				iconClass: 'side-panel-label-icon-copy-link ui-icon-set --o-link',
 				iconTitle: Loc.getMessage('MAIN_SIDEPANEL_COPY_LINK'),
-				bgColor: ['#d9dcdf', 100],
 			});
 
 			BX.clipboard.bindCopyClick(
@@ -213,6 +216,14 @@ export class Slider
 				},
 			);
 		}
+
+		this.printLabel = new Label(this, {
+			hidden: !this.isPrintable(),
+			className: '--side-panel-label-print --ui-hoverable',
+			iconClass: 'side-panel-label-icon-print ui-icon-set --o-printer',
+			iconTitle: Loc.getMessage('MAIN_SIDEPANEL_PRINT'),
+			onclick: this.handlePrintBtnClick.bind(this),
+		});
 
 		// Compatibility
 		if (
@@ -754,12 +765,12 @@ export class Slider
 
 	showCloseBtn(): void
 	{
-		this.getLabel().showIcon();
+		this.getLabel().show();
 	}
 
 	hideCloseBtn(): void
 	{
-		this.getLabel().hideIcon();
+		this.getLabel().hide();
 	}
 
 	showOrLightenCloseBtn(): void
@@ -788,22 +799,28 @@ export class Slider
 
 	showPrintBtn(): void
 	{
-		Dom.addClass(this.getPrintBtn(), 'side-panel-print-visible');
+		if (this.printLabel !== null)
+		{
+			this.printLabel.show();
+		}
 	}
 
 	hidePrintBtn(): void
 	{
-		Dom.removeClass(this.getPrintBtn(), 'side-panel-print-visible');
+		if (this.printLabel !== null)
+		{
+			this.printLabel.hide();
+		}
 	}
 
 	showExtraLabels(): void
 	{
-		Dom.style(this.getExtraLabelsContainer(), 'display', null);
+		Dom.removeClass(this.getExtraLabelsContainer(), '--hidden');
 	}
 
 	hideExtraLabels(): void
 	{
-		Dom.style(this.getExtraLabelsContainer(), 'display', 'none');
+		Dom.addClass(this.getExtraLabelsContainer(), '--hidden');
 	}
 
 	setContentClass(className: string): void
@@ -1268,7 +1285,7 @@ export class Slider
 				${
 					this.hideControls
 						? content
-						: [content, this.getLabelsContainer(), this.getPrintBtn()]
+						: [content, this.getLabelsContainer()]
 				}
 			</div>
 		`;
@@ -1324,6 +1341,7 @@ export class Slider
 					this.minimizeLabel ? this.minimizeLabel.getContainer() : null,
 					this.newWindowLabel ? this.newWindowLabel.getContainer() : null,
 					this.copyLinkLabel ? this.copyLinkLabel.getContainer() : null,
+					this.printLabel ? this.printLabel.getContainer() : null,
 				],
 			});
 		});
@@ -1354,19 +1372,9 @@ export class Slider
 		return this.minimizeLabel;
 	}
 
-	getPrintBtn(): HTMLElement
+	getPrintLabel(): Label | null
 	{
-		return this.#refs.remember('print-btn', () => {
-			return Dom.create('span', {
-				props: {
-					className: 'side-panel-print',
-					title: Loc.getMessage('MAIN_SIDEPANEL_PRINT'),
-				},
-				events: {
-					click: this.handlePrintBtnClick.bind(this),
-				},
-			});
-		});
+		return this.printLabel;
 	}
 
 	/**
@@ -1733,11 +1741,6 @@ export class Slider
 	 */
 	animateOpening()
 	{
-		if (this.isPrintable())
-		{
-			this.showPrintBtn();
-		}
-
 		if (this.animation)
 		{
 			this.animation.stop();

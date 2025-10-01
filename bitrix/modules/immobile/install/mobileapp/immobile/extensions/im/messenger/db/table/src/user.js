@@ -75,9 +75,17 @@ jn.define('im/messenger/db/table/user', (require, exports, module) => {
 
 		saveTextFieldHandler(key, value)
 		{
-			if (['birthday', 'absent'].includes(key) && Type.isBoolean(value))
+			if (['birthday', 'absent'].includes(key))
 			{
-				return '';
+				if (Type.isBoolean(value))
+				{
+					return '';
+				}
+
+				if (Type.isDate(value))
+				{
+					return DateHelper.cast(value, '').toISOString();
+				}
 			}
 
 			return value;

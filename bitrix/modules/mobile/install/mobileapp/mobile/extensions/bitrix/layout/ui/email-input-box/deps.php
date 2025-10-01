@@ -17,8 +17,6 @@ return [
 		'utils/email',
 		'utils/function',
 		'haptics',
-		'layout/ui/email-input-box-old',
-		'feature',
 		'ui-system/typography/text',
 	],
 	'bundle' => [

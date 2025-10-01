@@ -217,9 +217,7 @@ CREATE TABLE b_perf_cache_hitrate (
 	WRITE_COUNT int NOT NULL default 0,
 	CLEAN_COUNT int NOT NULL default 0,
 	RATE float NOT NULL default 0,
-	PRIMARY KEY(ID),
-	UNIQUE INDEX UX_HASH(HASH),
-	INDEX IX_B_PERF_CACHE_RATE(RATE)
+	PRIMARY KEY(ID)
 );
 CREATE UNIQUE INDEX ux_hash ON b_perf_cache_hitrate (hash);
 CREATE INDEX ix_b_perf_cache_rate ON b_perf_cache_hitrate (rate);

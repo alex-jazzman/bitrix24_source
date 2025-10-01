@@ -1,6 +1,6 @@
 /* eslint-disable no-param-reassign */
 import { createStore } from 'ui.vue3.vuex';
-import type { Group, GroupForSave, Dashboard, Scope, PermissionAppState } from './type';
+import type { Group, GroupForSave, Dashboard, Scope, PermissionAppState, User } from './type';
 import type { Group as PopupGroup } from 'biconnector.dashboard-group';
 import { EventEmitter } from 'main.core.events';
 import { Runtime } from 'main.core';
@@ -75,6 +75,10 @@ export class Store
 				},
 			},
 			getters: {
+				user(state: PermissionAppState): User
+				{
+					return state.user;
+				},
 				newGroupPermissions(state: PermissionAppState): Object
 				{
 					return state.newGroupPermissions;

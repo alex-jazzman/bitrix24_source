@@ -1,31 +1,44 @@
 import { MessageMenu } from './message-base';
 
-import type { MenuItem } from 'im.v2.lib.menu';
+import type { MenuItemOptions, MenuSectionOptions } from 'ui.system.menu';
+
+const MenuSectionCode = Object.freeze({
+	main: 'main',
+	select: 'select',
+});
 
 export class ChannelMessageMenu extends MessageMenu
 {
-	getMenuItems(): MenuItem[]
+	getMenuItems(): MenuItemOptions[]
 	{
-		return [
+		const mainGroupItems = [
 			this.getCopyItem(),
 			this.getEditItem(),
+			this.getDownloadFileItem(),
 			this.getPinItem(),
 			this.getForwardItem(),
 			...this.getAdditionalItems(),
 			this.getDeleteItem(),
-			this.getDelimiter(),
-			this.getSelectItem(),
+		];
+
+		return [
+			...this.groupItems(mainGroupItems, MenuSectionCode.main),
+			...this.groupItems([this.getSelectItem()], MenuSectionCode.select),
 		];
 	}
 
-	getNestedItems(): MenuItem[]
+	getNestedMenuGroups(): MenuSectionOptions[]
+	{
+		return [];
+	}
+
+	getNestedItems(): MenuItemOptions[]
 	{
 		return [
 			this.getCopyLinkItem(),
 			this.getCopyFileItem(),
 			this.getMarkItem(),
 			this.getFavoriteItem(),
-			this.getDownloadFileItem(),
 			this.getSaveToDiskItem(),
 		];
 	}

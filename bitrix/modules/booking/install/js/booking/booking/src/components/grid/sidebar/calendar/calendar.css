@@ -4,6 +4,7 @@
 	--scale: calc(260 / 300);
 	--real-width: calc(var(--width) * var(--scale));
 	--real-height: calc(var(--height) * var(--scale));
+	--real-height-count: calc(var(--height) * var(--scale) + 44px);
 	width: var(--real-width);
 	height: calc(var(--height) - var(--real-height));
 	transition: height 180ms ease;
@@ -13,12 +14,21 @@
 	height: var(--real-height);
 }
 
+.booking-sidebar-calendar-container.--expanded.--counter {
+	height: var(--real-height-count);
+}
+
+.booking-sidebar-calendar-container.--counter:not(.--expanded) {
+	margin-bottom: 43px;
+}
+
 .booking-booking-sidebar-calendar {
 	box-sizing: border-box;
 	width: var(--width);
 	max-height: var(--height);
 	transform: scale(var(--scale));
 	transform-origin: top left;
+	overflow: hidden;
 
 	display: flex;
 	flex-direction: column;
@@ -27,7 +37,6 @@
 	background: var(--ui-color-palette-white-base);
 	border-radius: 12px;
 	border: 1px solid var(--ui-color-base-10);
-	box-shadow: 0 0 30px 10px var(--ui-color-base-02);
 	pointer-events: all;
 }
 

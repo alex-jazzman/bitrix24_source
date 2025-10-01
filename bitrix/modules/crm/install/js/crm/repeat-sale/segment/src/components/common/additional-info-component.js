@@ -45,7 +45,7 @@ export const AdditionalInfoComponent = {
 		videoSrc(): string
 		{
 			let name = 'how-it-work-en';
-			if (['kz', 'ru', 'by'].includes(this.region))
+			if (['kz', 'ru', 'by', 'uz'].includes(this.region))
 			{
 				name = 'how-it-work-ru';
 			}

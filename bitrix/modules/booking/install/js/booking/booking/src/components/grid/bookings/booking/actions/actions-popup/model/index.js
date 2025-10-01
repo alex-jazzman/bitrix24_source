@@ -5,6 +5,7 @@ export const ActionsPopupActionEnum: ActionsPopupAction = Object.freeze({
 	confirmation: 'confirmation',
 	deal: 'deal',
 	document: 'document',
+	extraResourcesInfo: 'extraResourcesInfo',
 	fullForm: 'fullForm',
 	message: 'message',
 	visit: 'visit',

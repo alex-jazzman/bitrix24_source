@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Humanresources = this.BX.Humanresources || {};
-(function (exports,ui_iconSet_crm,humanresources_companyStructure_api,ui_entitySelector,ui_tooltip,ui_buttons,humanresources_companyStructure_permissionChecker,ui_iconSet_api_core,ui_iconSet_main,main_core_events,ui_avatar,humanresources_companyStructure_orgChart,humanresources_companyStructure_utils,ui_notification,im_public_iframe,humanresources_companyStructure_structureComponents,main_core,humanresources_companyStructure_chartStore,ui_vue3_pinia) {
+(function (exports,humanresources_companyStructure_userManagementDialog,ui_iconSet_crm,humanresources_companyStructure_api,ui_entitySelector,ui_tooltip,ui_buttons,humanresources_companyStructure_permissionChecker,ui_iconSet_api_core,ui_iconSet_main,main_core_events,ui_avatar,humanresources_companyStructure_orgChart,humanresources_companyStructure_utils,ui_notification,im_public_iframe,humanresources_companyStructure_structureComponents,main_core,humanresources_companyStructure_chartStore,ui_vue3_pinia) {
 	'use strict';
 
 	const HeadListDataTestIds = Object.freeze({
@@ -96,11 +96,12 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      userId
 	    });
 	  },
-	  moveUserToDepartment: (nodeId, userId, targetNodeId) => {
+	  moveUserToDepartment: (nodeId, userId, targetNodeId, role) => {
 	    return humanresources_companyStructure_api.postData('humanresources.api.Structure.Node.Member.moveUser', {
 	      nodeId,
 	      userId,
-	      targetNodeId
+	      targetNodeId,
+	      roleXmlId: role
 	    });
 	  },
 	  isUserInMultipleDepartments: userId => {
@@ -130,7 +131,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      nodeId
 	    });
 	  },
-	  saveChats: (nodeId, ids = [], removeIds = [], parentId = null) => {
+	  saveChats: (nodeId, ids = {}, removeIds = {}, parentId = null) => {
 	    return humanresources_companyStructure_api.postData('humanresources.api.Structure.Node.Member.Chat.saveChatList', {
 	      nodeId,
 	      ids,
@@ -140,6 +141,30 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  }
 	};
 
+	const markDescendantsForChatReload = childrenIds => {
+	  const store = humanresources_companyStructure_chartStore.useChartStore();
+	  const queue = [...childrenIds];
+	  const visited = new Set();
+	  const maxIterations = 10000;
+	  let iterations = 0;
+	  while (queue.length > 0 && iterations < maxIterations) {
+	    iterations++;
+	    const childId = queue.shift();
+	    if (visited.has(childId)) {
+	      continue;
+	    }
+	    visited.add(childId);
+	    const childDepartment = store.departments.get(childId);
+	    if (!childDepartment) {
+	      continue;
+	    }
+	    childDepartment.chatsDetailed = null;
+	    childDepartment.channelsDetailed = null;
+	    if (childDepartment.children && childDepartment.children.length > 0) {
+	      queue.push(...childDepartment.children);
+	    }
+	  }
+	};
 	const DepartmentContentActions = {
 	  moveUserToDepartment: (departmentId, userId, targetDepartmentId, role) => {
 	    var _department$employees;
@@ -201,6 +226,19 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      employees
 	    });
 	  },
+	  updateHeads: (departmentId, heads) => {
+	    const {
+	      departments
+	    } = humanresources_companyStructure_chartStore.useChartStore();
+	    const department = departments.get(departmentId);
+	    if (!department) {
+	      return;
+	    }
+	    departments.set(departmentId, {
+	      ...department,
+	      heads
+	    });
+	  },
 	  updateEmployeeListOptions: (departmentId, options) => {
 	    const {
 	      departments
@@ -215,7 +253,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    };
 	    departments.set(departmentId, department);
 	  },
-	  setChatsAndChannels: (nodeId, chats, channels) => {
+	  setChatsAndChannels: (nodeId, chats, channels, chatsNoAccess = 0, channelsNoAccess = 0) => {
 	    const store = humanresources_companyStructure_chartStore.useChartStore();
 	    const department = store.departments.get(nodeId);
 	    if (!department) {
@@ -223,7 +261,9 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    }
 	    department.channelsDetailed = channels;
 	    department.chatsDetailed = chats;
-	    department.chatAndChannelsCount = chats.length + channels.length;
+	    department.channelsNoAccess = channelsNoAccess;
+	    department.chatsNoAccess = chatsNoAccess;
+	    department.chatAndChannelsCount = chats.length + channels.length + chatsNoAccess + channelsNoAccess;
 	  },
 	  removeUserFromAllDepartments: async userId => {
 	    const store = humanresources_companyStructure_chartStore.useChartStore();
@@ -245,6 +285,14 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    department.channelsDetailed = department.channelsDetailed.filter(chat => chat.id !== chatId);
 	    department.chatsDetailed = department.chatsDetailed.filter(chat => chat.id !== chatId);
 	    department.chatAndChannelsCount--;
+	  },
+	  updateChatsInChildrenNodes: parentNodeId => {
+	    const store = humanresources_companyStructure_chartStore.useChartStore();
+	    const parentDepartment = store.departments.get(parentNodeId);
+	    if (!parentDepartment || !parentDepartment.children) {
+	      return;
+	    }
+	    markDescendantsForChatReload(parentDepartment.children);
 	  }
 	};
 
@@ -725,6 +773,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 
 	const UserListItem = {
 	  name: 'userList',
+	  emits: ['itemDragStart'],
 	  props: {
 	    user: {
 	      type: Object,
@@ -738,6 +787,14 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    entityType: {
 	      type: String,
 	      required: true
+	    },
+	    listType: {
+	      type: String,
+	      required: true
+	    },
+	    canDrag: {
+	      type: Boolean,
+	      default: false
 	    }
 	  },
 	  components: {
@@ -760,6 +817,15 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      BX.SidePanel.Instance.open(item.url, {
 	        cacheable: false
 	      });
+	    },
+	    handleMouseDown(event) {
+	      event.preventDefault();
+	      this.$emit('itemDragStart', {
+	        userId: this.user.id,
+	        initialListType: this.listType,
+	        event,
+	        element: this.$el
+	      });
 	    }
 	  },
 	  template: `
@@ -769,10 +835,15 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 			:class="{ '--searched': user.id === selectedUserId }"
 			:data-id="'hr-department-detail-content__user-' + user.id + '-item'"
 		>
+			<span v-if="canDrag"
+				  @mousedown="handleMouseDown"
+				  class="hr-department-detail-content__dnd-icon ui-icon-set --more-points">
+			</span>
 			<div class="hr-department-detail-content__user-avatar-container" @click="handleUserClick(user)">
 				<img 
 					class="hr-department-detail-content__user-avatar-img"
 					:src="user.avatar ? encodeURI(user.avatar) : defaultAvatar"
+				    alt=""
 				/>
 				<div v-if="user.role === memberRoles.head" class="hr-department-detail-content__user-avatar-overlay"></div>
 			</div>
@@ -1000,16 +1071,80 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      type: Object,
 	      required: false,
 	      default: {}
+	    },
+	    isDropTarget: {
+	      type: Boolean,
+	      default: false
+	    },
+	    listType: {
+	      type: String
 	    }
+	  },
+	  data() {
+	    return {
+	      placeholderIndex: null,
+	      boundHandleDragOverList: null
+	    };
 	  },
 	  computed: {
 	    needToShowCount() {
 	      return main_core.Type.isNumber(this.count);
 	    }
 	  },
+	  watch: {
+	    isDropTarget(newValue, oldValue) {
+	      if (newValue === oldValue) {
+	        return;
+	      }
+	      const itemsWrapper = this.$refs.itemsWrapper;
+	      if (!itemsWrapper) {
+	        return;
+	      }
+	      if (newValue) {
+	        this.boundHandleDragOverList = main_core.Runtime.throttle(this.handleDragOverList.bind(this), 10);
+	        main_core.Event.bind(itemsWrapper, 'mousemove', this.boundHandleDragOverList);
+	        if (this.listItems.length === 0) {
+	          this.placeholderIndex = 0;
+	        }
+	      } else {
+	        main_core.Event.unbind(itemsWrapper, 'mousemove', this.boundHandleDragOverList);
+	        this.boundHandleDragOverList = null;
+	        this.placeholderIndex = null;
+	      }
+	    }
+	  },
 	  methods: {
 	    onActionMenuItemClick(actionId) {
 	      this.$emit('tabListAction', actionId);
+	    },
+	    handleDragOverList(event) {
+	      if (!this.isDropTarget || !this.$refs.itemsWrapper) {
+	        if (this.placeholderIndex !== null) {
+	          this.placeholderIndex = null;
+	        }
+	        return;
+	      }
+	      const itemsWrapper = this.$refs.itemsWrapper;
+	      const children = [...itemsWrapper.querySelectorAll('.hr-department-detail-content__user-container:not(.--dragging)')];
+	      const mouseY = event.clientY;
+	      if (children.length === 0) {
+	        if (this.placeholderIndex !== 0) {
+	          this.placeholderIndex = 0;
+	        }
+	        return;
+	      }
+	      let newIndex = children.length;
+	      for (const [i, child] of children.entries()) {
+	        const rect = child.getBoundingClientRect();
+	        const childMidpointY = rect.top + rect.height / 2;
+	        if (mouseY < childMidpointY) {
+	          newIndex = i;
+	          break;
+	        }
+	      }
+	      if (newIndex !== this.placeholderIndex) {
+	        this.placeholderIndex = newIndex;
+	      }
 	    }
 	  },
 	  template: `
@@ -1019,7 +1154,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 		>
 			<div class="hr-department-detail-content__tab-list_header-container">
 				<div class="hr-department-detail-content__tab-list_list-title">
-					{{ title}}
+					{{ title }}
 					<span
 						v-if="needToShowCount"
 						class="hr-department-detail-content__tab-list_header-count"
@@ -1035,10 +1170,20 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 					:dataTestIds="{buttonDataTestId: dataTestIds.listActionButtonDataTestId, containerDataTestId: dataTestIds.listActonMenuDataTestId}"
 				/>
 			</div>
-			<div class="hr-department-detail-content__tab_list-container">
-				<template v-for="(item) in listItems">
-					<slot :item="item"/>
+			<div class="hr-department-detail-content__tab_list-container" ref="itemsWrapper">
+				<div
+					v-if="placeholderIndex === 0 && isDropTarget"
+					class="hr-department-detail-content__drop-placeholder"
+				></div>
+				<template v-for="(item, index) in listItems" :key="item.id">
+					<slot :item="item"
+					/>
+					<div
+						v-if="placeholderIndex === (index + 1) && isDropTarget"
+						class="hr-department-detail-content__drop-placeholder"
+					></div>
 				</template>
+				<slot name="footer" />
 				<EmptyListItem v-if="emptyItemTitle && emptyItemImageClass && !listItems.length && !hideEmptyItem"
 					:title="emptyItemTitle"
 					:imageClass="emptyItemImageClass"
@@ -1110,6 +1255,8 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	`
 	};
 
+	const AUTOSCROLL_AREA_SIZE = 70;
+
 	// @vue/component
 	const UsersTab = {
 	  name: 'usersTab',
@@ -1118,14 +1265,21 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    EmptyState,
 	    TabList,
 	    EmptyTabAddButton,
-	    UserListItem
+	    UserListItem,
+	    MoveEmployeeConfirmationPopup: humanresources_companyStructure_structureComponents.MoveEmployeeConfirmationPopup
 	  },
 	  emits: ['showDetailLoader', 'hideDetailLoader'],
 	  data() {
 	    return {
 	      searchQuery: '',
 	      selectedUserId: null,
-	      needToScroll: false
+	      needToScroll: false,
+	      dragState: this.getInitialDragState(),
+	      showDndConfirmationPopup: false,
+	      dndPreviousState: null,
+	      dndPopupDescription: '',
+	      boundHandleDragMove: null,
+	      boundHandleDragEnd: null
 	    };
 	  },
 	  computed: {
@@ -1265,6 +1419,26 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 
 	      // text is in progress
 	      return this.isTeamEntity ? '' : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_EMPTY_EMPLOYEES_ADD_USER_SUBTITLE');
+	    },
+	    isHeadListPotentialTarget() {
+	      return this.dragState.isDragging && this.dragState.initialList === 'employees';
+	    },
+	    isEmployeeListPotentialTarget() {
+	      return this.dragState.isDragging && (this.dragState.initialList === 'head' || this.dragState.initialList === 'deputyHead');
+	    },
+	    dndConfirmationPopupTitle() {
+	      const toHead = this.dragState.targetList === 'head';
+	      return toHead ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_DND_POPUP_CONFIRM_TITLE_TO_HEAD') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_DND_POPUP_CONFIRM_TITLE');
+	    },
+	    dndConfirmationPopupBtn() {
+	      const toHead = this.dragState.targetList === 'head';
+	      return toHead ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_DND_POPUP_CONFIRM_BTN_TO_HEAD') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_DND_POPUP_CONFIRM_BTN');
+	    },
+	    showDndRoleSelect() {
+	      return this.dragState.targetList === 'head';
+	    },
+	    headListTitle() {
+	      return this.isTeamEntity ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_TEAM_HEAD_LIST_TITLE') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_HEAD_LIST_TITLE');
 	    }
 	  },
 	  watch: {
@@ -1333,6 +1507,9 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  created() {
 	    this.loadEmployeesAction();
 	    this.clearSearchTimeout = null;
+	    this.autoscrollIntervalId = null;
+	    this.boundHandleDragMove = this.handleDragMove.bind(this);
+	    this.boundHandleDragEnd = this.handleDragEnd.bind(this);
 	  },
 	  mounted() {
 	    this.tabContainer = this.$refs['tab-container'];
@@ -1343,10 +1520,10 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    },
 	    getBadgeText(role) {
 	      if (role === this.memberRoles.head) {
-	        return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_EMPLOYEES_HEAD_BADGE');
+	        return this.isTeamEntity ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_EMPLOYEES_TEAM_HEAD_BADGE') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_EMPLOYEES_HEAD_BADGE');
 	      }
 	      if (role === this.memberRoles.deputyHead) {
-	        return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_EMPLOYEES_DEPUTY_HEAD_BADGE');
+	        return this.isTeamEntity ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_EMPLOYEES_TEAM_DEPUTY_HEAD_BADGE') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_EMPLOYEES_DEPUTY_HEAD_BADGE');
 	      }
 	      return null;
 	    },
@@ -1499,6 +1676,273 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    },
 	    getEmployeeListDataTestIds() {
 	      return EmployeeListDataTestIds;
+	    },
+	    handleItemDragStart(payload) {
+	      if (this.dragState.isDragging) {
+	        return;
+	      }
+	      const {
+	        event,
+	        element,
+	        userId,
+	        initialListType
+	      } = payload;
+	      event.preventDefault();
+	      this.dragState.isDragging = true;
+	      this.dragState.userId = userId;
+	      this.dragState.initialList = initialListType;
+	      this.dragState.draggedElement = element;
+	      const rect = this.dragState.draggedElement.getBoundingClientRect();
+	      this.dragState.offsetX = event.clientX - rect.left;
+	      this.dragState.offsetY = event.clientY - rect.top;
+	      const ghost = this.dragState.draggedElement.cloneNode(true);
+	      main_core.Dom.addClass(ghost, '--ghost');
+	      main_core.Dom.style(ghost, 'left', `${event.clientX - this.dragState.offsetX}px`);
+	      main_core.Dom.style(ghost, 'top', `${event.clientY - this.dragState.offsetY}px`);
+	      main_core.Dom.append(ghost, document.body);
+	      this.dragState.ghostElement = ghost;
+	      main_core.Dom.addClass(this.dragState.draggedElement, '--dragging');
+	      main_core.Dom.addClass(document.body, '--user-dragging');
+	      main_core.Event.bind(document, 'mousemove', this.boundHandleDragMove);
+	      main_core.Event.bind(document, 'mouseup', this.boundHandleDragEnd);
+
+	      // user to computed?
+	      const user = this.formattedHeads.find(u => u.id === userId) || this.formattedEmployees.find(u => u.id === userId);
+	      main_core_events.EventEmitter.emit(humanresources_companyStructure_orgChart.events.HR_USER_DRAG_START, {
+	        user
+	      });
+	    },
+	    handleDragMove(event) {
+	      var _this$$refs$headList, _this$$refs$employeeL;
+	      if (!this.dragState.isDragging) {
+	        return;
+	      }
+	      main_core.Dom.addClass(this.dragState.draggedElement, '--hidden');
+	      main_core_events.EventEmitter.emit(humanresources_companyStructure_orgChart.events.HR_USER_DRAG_MOVE, {
+	        pageX: event.pageX,
+	        pageY: event.pageY
+	      });
+	      if (this.dragState.ghostElement) {
+	        main_core.Dom.style(this.dragState.ghostElement, 'left', `${event.clientX - this.dragState.offsetX}px`);
+	        main_core.Dom.style(this.dragState.ghostElement, 'top', `${event.clientY - this.dragState.offsetY}px`);
+	      }
+	      let potentialTarget = null;
+	      if (this.isHeadListPotentialTarget && this.isPointerOverElement(event, (_this$$refs$headList = this.$refs.headList) == null ? void 0 : _this$$refs$headList.$el)) {
+	        potentialTarget = 'head';
+	      } else if (this.isEmployeeListPotentialTarget && this.isPointerOverElement(event, (_this$$refs$employeeL = this.$refs.employeeList) == null ? void 0 : _this$$refs$employeeL.$el)) {
+	        potentialTarget = 'employee';
+	      }
+	      this.dragState.targetList = potentialTarget;
+	      this.handleAutoscrollOnDrag(event);
+	    },
+	    handleAutoscrollOnDrag(event) {
+	      if (!this.isHeadListPotentialTarget) {
+	        return;
+	      }
+	      const scrollableContainer = this.$refs.scrollableContainer;
+	      if (!scrollableContainer) {
+	        return;
+	      }
+	      const rect = scrollableContainer.getBoundingClientRect();
+	      const mouseY = event.clientY;
+	      const topTriggerZone = rect.top + AUTOSCROLL_AREA_SIZE;
+	      if (mouseY < topTriggerZone) {
+	        if (this.autoscrollIntervalId !== null) {
+	          return;
+	        }
+	        const scrollSpeed = 10;
+	        this.autoscrollIntervalId = setInterval(() => {
+	          scrollableContainer.scrollTop -= scrollSpeed;
+	        }, 16);
+	      } else {
+	        this.stopAutoscroll();
+	      }
+	    },
+	    stopAutoscroll() {
+	      if (this.autoscrollIntervalId !== null) {
+	        clearInterval(this.autoscrollIntervalId);
+	        this.autoscrollIntervalId = null;
+	      }
+	    },
+	    isPointerOverElement(event, element) {
+	      if (!element) {
+	        return false;
+	      }
+	      const rect = element.getBoundingClientRect();
+	      return event.clientX >= rect.left && event.clientX <= rect.right && event.clientY >= rect.top && event.clientY <= rect.bottom;
+	    },
+	    async handleDragEnd() {
+	      if (!this.dragState.isDragging) {
+	        return;
+	      }
+	      main_core_events.EventEmitter.emit(humanresources_companyStructure_orgChart.events.HR_USER_DRAG_DROP);
+	      this.stopAutoscroll();
+	      const {
+	        userId,
+	        initialList,
+	        targetList,
+	        ghostElement,
+	        draggedElement
+	      } = this.dragState;
+	      const isValidDrop = userId && targetList && targetList !== initialList;
+	      let targetIndex = null;
+	      if (isValidDrop) {
+	        const listRef = targetList === 'head' ? this.$refs.headList : this.$refs.employeeList;
+	        targetIndex = listRef == null ? void 0 : listRef.placeholderIndex;
+	      }
+	      main_core.Event.unbind(document, 'mousemove', this.boundHandleDragMove);
+	      main_core.Event.unbind(document, 'mouseup', this.boundHandleDragEnd);
+	      if (ghostElement) {
+	        main_core.Dom.remove(ghostElement);
+	      }
+	      if (draggedElement) {
+	        main_core.Dom.removeClass(draggedElement, '--dragging');
+	        main_core.Dom.removeClass(draggedElement, '--hidden');
+	      }
+	      main_core.Dom.removeClass(document.body, '--user-dragging');
+	      main_core_events.EventEmitter.emit(humanresources_companyStructure_orgChart.events.HR_USER_DRAG_END);
+	      if (!isValidDrop || targetIndex === null) {
+	        this.dragState = this.getInitialDragState();
+	        return;
+	      }
+	      this.dragState.isDragging = false;
+	      this.dragState.ghostElement = null;
+	      this.dragState.draggedElement = null;
+	      this.dragState.context = {
+	        targetIndex
+	      };
+	      this.dndPreviousState = this.moveDndUser();
+	      if (!this.dndPreviousState) {
+	        this.dragState = this.getInitialDragState();
+	        return;
+	      }
+	      const {
+	        context
+	      } = this.dragState;
+	      context.selectedRole = null;
+	      context.selectedRoleLabel = '';
+	      if (targetList === 'head') {
+	        context.selectedRole = this.memberRoles.head;
+	        context.selectedRoleLabel = this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_EMPLOYEES_HEAD_BADGE');
+	      }
+	      await this.prepareDndPopupDescription();
+	      this.showDndConfirmationPopup = true;
+	    },
+	    cancelDndUserMove() {
+	      const {
+	        heads,
+	        employees
+	      } = this.dndPreviousState;
+	      DepartmentContentActions.updateHeads(this.focusedNode, heads);
+	      DepartmentContentActions.updateEmployees(this.focusedNode, employees);
+	      this.dndPreviousState = null;
+	      this.dragState = this.getInitialDragState();
+	      this.showDndConfirmationPopup = false;
+	    },
+	    async confirmDndUserMove(payload) {
+	      const {
+	        userId
+	      } = this.dragState;
+	      const targetRole = payload.role || this.memberRoles.employee;
+	      const department = this.departments.get(this.focusedNode);
+	      const user = department.heads.find(u => u.id === userId) || department.employees.find(u => u.id === userId);
+	      if (!user) {
+	        this.dragState = this.getInitialDragState();
+	        return;
+	      }
+	      const previousRole = user.role;
+	      user.role = targetRole;
+	      try {
+	        await humanresources_companyStructure_userManagementDialog.UserManagementDialogAPI.addUsersToDepartment(this.focusedNode, [userId], targetRole);
+	        ui_notification.UI.Notification.Center.notify({
+	          content: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_DND_SUCCESS'),
+	          autoHideDelay: 3000
+	        });
+	      } catch (error) {
+	        console.error(error);
+	        user.role = previousRole;
+	        this.cancelDndUserMove();
+	      }
+	      this.showDndConfirmationPopup = false;
+	      this.dragState = this.getInitialDragState();
+	    },
+	    async prepareDndPopupDescription() {
+	      var _department$name, _user$name, _user, _user$url, _user2;
+	      const {
+	        userId,
+	        targetList
+	      } = this.dragState;
+	      const toHead = targetList === 'head';
+	      const isTeam = this.isTeamEntity;
+	      const department = this.departments.get(this.departmentId);
+	      const departmentName = main_core.Text.encode((_department$name = department == null ? void 0 : department.name) != null ? _department$name : '');
+	      let user = null;
+	      try {
+	        user = await DepartmentAPI.getUserInfo(this.departmentId, userId);
+	      } catch {/* empty */}
+	      const userName = main_core.Text.encode((_user$name = (_user = user) == null ? void 0 : _user.name) != null ? _user$name : '');
+	      const userUrl = (_user$url = (_user2 = user) == null ? void 0 : _user2.url) != null ? _user$url : '#';
+	      let phraseCode = '';
+	      if (toHead) {
+	        phraseCode = isTeam ? 'HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_DND_POPUP_CONFIRM_DESC_TO_TEAM_HEAD' : 'HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_DND_POPUP_CONFIRM_DESC_TO_HEAD';
+	      } else {
+	        var _user3;
+	        const basePhrase = isTeam ? 'HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_DND_POPUP_CONFIRM_DESC_TEAM' : 'HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_DND_POPUP_CONFIRM_DESC';
+	        const genderSuffix = ((_user3 = user) == null ? void 0 : _user3.gender) === 'F' ? '_F' : '_M';
+	        phraseCode = basePhrase + genderSuffix;
+	      }
+	      this.dndPopupDescription = this.loc(phraseCode, {
+	        '#USER_NAME#': userName,
+	        '#DEPARTMENT_NAME#': departmentName
+	      }).replace('[link]', `<a class="hr-department-detail-content__move-user-department-user-link" href="${userUrl}">`).replace('[/link]', '</a>');
+	    },
+	    moveDndUser() {
+	      const {
+	        userId,
+	        targetList,
+	        context
+	      } = this.dragState;
+	      const {
+	        targetIndex
+	      } = context;
+	      const department = this.departments.get(this.focusedNode);
+	      if (!department) {
+	        return null;
+	      }
+	      const previousState = {
+	        heads: [...department.heads],
+	        employees: [...department.employees]
+	      };
+	      const isMovingToHeads = targetList === 'head';
+	      const sourceList = isMovingToHeads ? [...previousState.employees] : [...previousState.heads];
+	      const targetListForMove = isMovingToHeads ? [...previousState.heads] : [...previousState.employees];
+	      const userIndex = sourceList.findIndex(user => user.id === userId);
+	      if (userIndex === -1) {
+	        return null;
+	      }
+	      const [userToMove] = sourceList.splice(userIndex, 1);
+	      targetListForMove.splice(targetIndex, 0, userToMove);
+	      if (isMovingToHeads) {
+	        DepartmentContentActions.updateHeads(this.focusedNode, targetListForMove);
+	        DepartmentContentActions.updateEmployees(this.focusedNode, sourceList);
+	      } else {
+	        DepartmentContentActions.updateHeads(this.focusedNode, sourceList);
+	        DepartmentContentActions.updateEmployees(this.focusedNode, targetListForMove);
+	      }
+	      return previousState;
+	    },
+	    getInitialDragState() {
+	      return {
+	        isDragging: false,
+	        userId: null,
+	        initialList: null,
+	        targetList: null,
+	        ghostElement: null,
+	        draggedElement: null,
+	        offsetX: 0,
+	        offsetY: 0,
+	        context: null
+	      };
 	    }
 	  },
 	  template: `
@@ -1515,32 +1959,41 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 					v-if="!showSearchEmptyState"
 					v-on="shouldUpdateList ? { scroll: updateList } : {}"
 					class="hr-department-detail-content__lists-container"
+					ref="scrollableContainer"
 				>
 					<TabList
+						ref="headList"
 						id='hr-department-detail-content_chats-tab__chat-list'
-						:title="loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_USERS_HEAD_LIST_TITLE')"
+						:title="headListTitle"
 						:count="headCount"
 						:menuItems="headMenu.items"
 						:listItems="filteredHeads"
+						listType="head"
 						:emptyItemTitle="headListEmptyStateTitle"
 						emptyItemImageClass="hr-department-detail-content__empty-user-list-item-image"
 						:hideEmptyItem="searchQuery.length > 0"
 						:withAddPermission="canAddUsers"
 						@tabListAction="onHeadListActionMenuItemClick"
 						:dataTestIds="getHeadListDataTestIds()"
+						:isDropTarget="isHeadListPotentialTarget && dragState.targetList === 'head'"
 					>
 						<template v-slot="{ item }">
 							<UserListItem
 								:user="item"
+								listType="head"
 								:selectedUserId="selectedUserId"
 								:entityType="entityType"
+								:canDrag="canAddUsers"
+								@itemDragStart="handleItemDragStart"
 							/>
 						</template>
 					</TabList>
 					<TabList
+						ref="employeeList"
 						id='hr-department-detail-content_chats-tab__channel-list'
 						:title="employeeTitle"
 						:count="employeeCount"
+						listType="employees"
 						:menuItems="employeeMenu.items"
 						:listItems="filteredEmployees"
 						:emptyItemTitle="employeesListEmptyStateTitle"
@@ -1549,10 +2002,14 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 						:withAddPermission="canAddUsers"
 						@tabListAction="onEmployeeListActionMenuItemClick"
 						:dataTestIds="getEmployeeListDataTestIds()"
+						:isDropTarget="isEmployeeListPotentialTarget && dragState.targetList === 'employee'"
 					>
 						<template v-slot="{ item }">
 							<UserListItem
 								:user="item"
+								listType="employees"
+								:canDrag="canAddUsers"
+								@itemDragStart="handleItemDragStart"
 								:selectedUserId="selectedUserId"
 								:entityType="entityType"
 							/>
@@ -1576,14 +2033,126 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 					<EmptyTabAddButton v-if="canAddUsers" :departmentId="departmentId" :entityType="entityType"/>
 				</template>
 			</EmptyState>
+			<MoveEmployeeConfirmationPopup 
+				v-if="showDndConfirmationPopup" 
+				:title="dndConfirmationPopupTitle"
+				:description="dndPopupDescription"
+				:confirmButtonText="dndConfirmationPopupBtn"
+				:showRoleSelect="showDndRoleSelect"
+				:excludeEmployeeRole="true"
+				:entityType="entityType"
+				@confirm="confirmDndUserMove"
+				@close="cancelDndUserMove"
+			/>
 		</div>
 	`
 	};
 
+	const MenuOption = Object.freeze({
+	  withChildren: 'withChildren',
+	  withoutChildren: 'withoutChildren'
+	});
+
+	// @vue/component
+	const ChildrenModeSelector = {
+	  name: 'childrenModeSelector',
+	  components: {
+	    RouteActionMenu: humanresources_companyStructure_structureComponents.RouteActionMenu
+	  },
+	  props: {
+	    isTeamEntity: {
+	      type: Boolean,
+	      required: true
+	    },
+	    dataTestId: {
+	      type: String,
+	      required: true
+	    },
+	    hasPermission: {
+	      type: Boolean,
+	      required: true
+	    },
+	    text: {
+	      type: String,
+	      required: true
+	    }
+	  },
+	  emits: ['saveChildrenMode'],
+	  data() {
+	    return {
+	      menuVisible: false,
+	      withChildren: false
+	    };
+	  },
+	  computed: {
+	    getControlButtonText() {
+	      return this.getValueText(this.withChildren);
+	    }
+	  },
+	  created() {
+	    this.menuItems = this.getMenuItems();
+	  },
+	  methods: {
+	    loc(phraseCode, replacements = {}) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
+	    },
+	    showMenu() {
+	      if (this.hasPermission) {
+	        this.menuVisible = true;
+	      }
+	    },
+	    onActionMenuItemClick(actionId) {
+	      if (this.hasPermission) {
+	        this.withChildren = actionId === MenuOption.withChildren;
+	        this.$emit('saveChildrenMode', this.withChildren);
+	      }
+	    },
+	    getMenuItems() {
+	      return [{
+	        id: MenuOption.withoutChildren,
+	        title: this.getValueText(false),
+	        itemClass: 'hr-department-detail-content__children-mode-selector_menu-item'
+	      }, {
+	        id: MenuOption.withChildren,
+	        title: this.getValueText(true),
+	        itemClass: 'hr-department-detail-content__children-mode-selector_menu-item'
+	      }];
+	    },
+	    getValueText(value) {
+	      if (this.isTeamEntity) {
+	        return value ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_WITH_SUBTEAMS_LABEL') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_ONLY_TEAM_LABEL');
+	      }
+	      return value ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_WITH_SUBDEPARTMENTS_LABEL') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_ONLY_DEPARTMENT_LABEL');
+	    }
+	  },
+	  template: `
+		<div class="hr-department-detail-content__change-save-mode-control-container">
+			<span>{{ text }}</span>
+			<a
+				class="hr-department-detail-content__change-save-mode-control-button"
+				:class="{ '--focused': menuVisible, '--disabled': !hasPermission }"
+				:data-test-id="dataTestId"
+				ref='saveChildrenModeButton'
+				@click="showMenu"
+			>
+				{{ getControlButtonText }}
+			</a>
+		</div>
+		<RouteActionMenu
+			v-if="menuVisible"
+			:id="'hr-department-detail-children-mode-selector-menu'"
+			:items="menuItems"
+			:delimiter="false"
+			:width="302"
+			:bindElement="$refs.saveChildrenModeButton"
+			@action="onActionMenuItemClick"
+			@close="menuVisible = false"
+		/>
+	`
+	};
+
 	const ChatsMenuOption = Object.freeze({
-	  addChat: 'addChat',
 	  linkChat: 'linkChat',
-	  addChannel: 'addChannel',
 	  linkChannel: 'linkChannel'
 	});
 	const ChatsMenuLinkChat = Object.freeze({
@@ -1597,17 +2166,6 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  },
 	  dataTestId: 'hr-department-content_chats-tab__chat-list-action-link'
 	});
-	const ChatsMenuAddChat = Object.freeze({
-	  id: ChatsMenuOption.addChat,
-	  title: main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_CHAT_LIST_ADD_BUTTON_TITLE'),
-	  description: main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_CHAT_LIST_ADD_BUTTON_DESC'),
-	  bIcon: {
-	    name: ui_iconSet_api_core.Main.ADD_CHAT,
-	    size: 20,
-	    colorTokenName: 'paletteBlue50'
-	  },
-	  dataTestId: 'hr-department-content_chats-tab__chat-list-action-add'
-	});
 	const ChatsMenuLinkChannel = Object.freeze({
 	  id: ChatsMenuOption.linkChannel,
 	  title: main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_CHANNEL_LIST_LINK_BUTTON_TITLE'),
@@ -1618,17 +2176,6 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    colorTokenName: 'paletteBlue50'
 	  },
 	  dataTestId: 'hr-department-content_chats-tab__channel-list-action-link'
-	});
-	const ChatsMenuAddChannel = Object.freeze({
-	  id: ChatsMenuOption.addChannel,
-	  title: main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_CHANNEL_LIST_ADD_BUTTON_TITLE'),
-	  description: main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_CHANNEL_LIST_ADD_BUTTON_DESC'),
-	  bIcon: {
-	    name: ui_iconSet_api_core.Main.SPEAKER_MOUTHPIECE_PLUS,
-	    size: 20,
-	    colorTokenName: 'paletteBlue50'
-	  },
-	  dataTestId: 'hr-department-content_chats-tab__channel-list-action-add'
 	});
 	const ChatListDataTestIds = Object.freeze({
 	  containerDataTestId: 'hr-department-content_chats-tab__chat-list-container',
@@ -1646,13 +2193,15 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  containerDataTestId: 'hr-department-content_chats-tab__link-chat-container',
 	  confirmButtonDataTestId: 'hr-department-content_chats-tab__link-chat-confirm-button',
 	  cancelButtonDataTestId: 'hr-department-content_chats-tab__link-chat-cancel-button',
-	  closeButtonDataTestId: 'hr-department-content_chats-tab__link-chat-close-button'
+	  closeButtonDataTestId: 'hr-department-content_chats-tab__link-chat-close-button',
+	  addWithChildrenDataTestId: 'hr-department-content_chats-tab__link-chat-add-with-children'
 	});
 	const ChannelLinkDialogDataTestIds = Object.freeze({
 	  containerDataTestId: 'hr-department-content_chats-tab__link-channel-container',
 	  confirmButtonDataTestId: 'hr-department-content_chats-tab__link-channel-confirm-button',
 	  cancelButtonDataTestId: 'hr-department-content_chats-tab__link-channel-cancel-button',
-	  closeButtonDataTestId: 'hr-department-content_chats-tab__link-channel-close-button'
+	  closeButtonDataTestId: 'hr-department-content_chats-tab__link-channel-close-button',
+	  addWithChildrenDataTestId: 'hr-department-content_chats-tab__link-channel-add-with-children'
 	});
 
 	const EmptyTabAddButtons = {
@@ -1780,7 +2329,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      const entityType = this.isTeamEntity ? 'TEAM' : 'DEPARTMENT';
 	      const chatType = this.isChat ? 'CHAT' : 'CHANNEL';
 	      try {
-	        await DepartmentAPI.saveChats(this.nodeId, [], [this.chat.id]);
+	        await DepartmentAPI.updateChats(this.nodeId, [], [this.chat.id]);
 	      } catch (error) {
 	        if (error.code !== 'STRUCTURE_ACCESS_DENIED') {
 	          ui_notification.UI.Notification.Center.notify({
@@ -1794,6 +2343,10 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        this.showUnbindChatConfirmationPopup = false;
 	      }
 	      DepartmentContentActions.unbindChatFromNode(this.nodeId, this.chat.id);
+	      const isOwnChat = !this.chat.originalNodeId || this.chat.originalNodeId === this.nodeId;
+	      if (isOwnChat) {
+	        DepartmentContentActions.updateChatsInChildrenNodes(this.nodeId);
+	      }
 	      ui_notification.UI.Notification.Center.notify({
 	        content: this.loc(`HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_UNBIND_POPUP_${chatType}_FROM_${entityType}_SUCCESS`),
 	        autoHideDelay: 2000
@@ -1847,6 +2400,9 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    ChatListItemActionButton,
 	    ResponsiveHint: humanresources_companyStructure_structureComponents.ResponsiveHint
 	  },
+	  directives: {
+	    hint: humanresources_companyStructure_structureComponents.Hint
+	  },
 	  props: {
 	    /** @type ChatOrChannelDetailed */
 	    chat: {
@@ -1871,33 +2427,37 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      var _this$departments$get;
 	      return (_this$departments$get = this.departments.get(this.chat.originalNodeId)) == null ? void 0 : _this$departments$get.name;
 	    },
+	    hiddenNodeName() {
+	      var _this$structureMap$ge;
+	      return ((_this$structureMap$ge = this.structureMap.get(this.chat.originalNodeId)) == null ? void 0 : _this$structureMap$ge.entityType) === humanresources_companyStructure_utils.EntityTypes.team ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_HIDDEN_TEAM') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_HIDDEN_DEPARTMENT');
+	    },
 	    indirectChatSubtitle() {
-	      var _this$departments$get2;
-	      if (((_this$departments$get2 = this.departments.get(this.chat.originalNodeId)) == null ? void 0 : _this$departments$get2.entityType) === humanresources_companyStructure_utils.EntityTypes.team) {
+	      var _this$structureMap$ge2;
+	      if (((_this$structureMap$ge2 = this.structureMap.get(this.chat.originalNodeId)) == null ? void 0 : _this$structureMap$ge2.entityType) === humanresources_companyStructure_utils.EntityTypes.team) {
 	        return this.isChat ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_CHAT_OF_TEAM') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_CHANNEL_OF_TEAM');
 	      }
 	      return this.isChat ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_CHAT_OF_DEPARTMENT') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_CHANNEL_OF_DEPARTMENT');
 	    },
 	    lockHint() {
-	      var _this$departments$get3, _this$departments$get4;
+	      var _this$structureMap$ge3, _this$structureMap$ge4;
 	      if (!this.chat.hasAccess) {
 	        return this.isChat ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_USER_HAS_NO_ACCESS_TO_CHAT_HINT') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_USER_HAS_NO_ACCESS_TO_CHANNEL_HINT');
 	      }
 
 	      // parent node is a team so child node must be a team too
-	      if (((_this$departments$get3 = this.departments.get(this.chat.originalNodeId)) == null ? void 0 : _this$departments$get3.entityType) === humanresources_companyStructure_utils.EntityTypes.team) {
+	      if (((_this$structureMap$ge3 = this.structureMap.get(this.chat.originalNodeId)) == null ? void 0 : _this$structureMap$ge3.entityType) === humanresources_companyStructure_utils.EntityTypes.team) {
 	        return this.isChat ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_PARENT_TEAM_CHAT_HINT') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_PARENT_TEAM_CHANNEL_HINT');
 	      }
 
 	      // parent node is a department so we check if child node is a department too
-	      if (((_this$departments$get4 = this.departments.get(this.nodeId)) == null ? void 0 : _this$departments$get4.entityType) === humanresources_companyStructure_utils.EntityTypes.department) {
+	      if (((_this$structureMap$ge4 = this.structureMap.get(this.nodeId)) == null ? void 0 : _this$structureMap$ge4.entityType) === humanresources_companyStructure_utils.EntityTypes.department) {
 	        return this.isChat ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_PARENT_DEPARTMENT_CHAT_OF_DEPARTMENT_HINT') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_PARENT_DEPARTMENT_CHANNEL_OF_DEPARTMENT_HINT');
 	      }
 
 	      // parent node is a department but child node is a team
 	      return this.isChat ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_PARENT_DEPARTMENT_CHAT_OF_TEAM_HINT') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_PARENT_DEPARTMENT_CHANNEL_OF_TEAM_HINT');
 	    },
-	    ...ui_vue3_pinia.mapState(humanresources_companyStructure_chartStore.useChartStore, ['departments'])
+	    ...ui_vue3_pinia.mapState(humanresources_companyStructure_chartStore.useChartStore, ['structureMap', 'departments'])
 	  },
 	  watch: {
 	    chat() {
@@ -1975,14 +2535,20 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 				</div>
 				<div v-if="chat.originalNodeId && originalNodeName" class="hr-department-detail-content__tab-list_item-subtitle --chat-item">
 					{{ indirectChatSubtitle }}
-					<span class="hr-department-detail-content__tab-list_orig-node-name" @click="locateToOriginalDepartment">
+					<ResponsiveHint 
+						:content="originalNodeName" 
+						defaultClass="hr-department-detail-content__tab-list_orig-node-name"
+						:checkScrollWidth="true"
+						:width="null"
+						@click="locateToOriginalDepartment"
+					>
 						{{ originalNodeName }}
-					</span>
+					</ResponsiveHint>
 				</div>
 				<div v-else-if="chat.originalNodeId" class="hr-department-detail-content__tab-list_item-subtitle --chat-item">
 					{{ indirectChatSubtitle }}
 					<span class="hr-department-detail-content__tab-list_orig-node-hidden-name">
-						{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_HIDDEN_DEPARTMENT') }}
+						{{ hiddenNodeName }}
 					</span>
 				</div>
 				<div v-else class="hr-department-detail-content__tab-list_item-subtitle">
@@ -2005,7 +2571,8 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    EmptyState,
 	    EmptyTabAddButtons,
 	    ChatListItem,
-	    ManagementDialog: humanresources_companyStructure_structureComponents.ManagementDialog
+	    ManagementDialog: humanresources_companyStructure_structureComponents.ManagementDialog,
+	    ChildrenModeSelector
 	  },
 	  data() {
 	    return {
@@ -2014,7 +2581,9 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      isChannelLinkActive: false,
 	      channelLinkDialogVisible: false,
 	      isLoading: false,
-	      searchQuery: ''
+	      searchQuery: '',
+	      addChatsWithChildren: false,
+	      addChannelsWithChildren: false
 	    };
 	  },
 	  created() {
@@ -2024,28 +2593,39 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    loc(phraseCode, replacements = {}) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 	    },
+	    locPlural(phraseCode, count) {
+	      return main_core.Loc.getMessagePlural(phraseCode, count, {
+	        '#COUNT#': count
+	      });
+	    },
 	    searchChatOrChannel(searchQuery) {
 	      this.searchQuery = searchQuery;
 	    },
 	    async loadChatAction(force) {
-	      var _loadedChatsAndChanne, _loadedChatsAndChanne2;
+	      var _loadedChatsAndChanne, _loadedChatsAndChanne2, _loadedChatsAndChanne3, _loadedChatsAndChanne4;
+	      if (this.isLoading) {
+	        return null;
+	      }
 	      const nodeId = this.focusedNode;
 	      const department = this.departments.get(nodeId);
 	      if (!department) {
-	        return;
+	        return null;
 	      }
 	      if (!force && main_core.Type.isArray(department.chatsDetailed) && main_core.Type.isArray(department.channelsDetailed)) {
-	        return;
-	      }
-	      if (this.isLoading) {
-	        return;
+	        return {
+	          chats: department.chatsDetailed,
+	          channels: department.channelsDetailed,
+	          chatsNoAccess: department.chatsNoAccess,
+	          channelsNoAccess: department.channelsNoAccess
+	        };
 	      }
 	      this.isLoading = true;
 	      this.$emit('showDetailLoader');
 	      const loadedChatsAndChannels = await DepartmentAPI.getChatsAndChannels(nodeId);
-	      DepartmentContentActions.setChatsAndChannels(nodeId, (_loadedChatsAndChanne = loadedChatsAndChannels.chats) != null ? _loadedChatsAndChanne : [], (_loadedChatsAndChanne2 = loadedChatsAndChannels.channels) != null ? _loadedChatsAndChanne2 : []);
+	      DepartmentContentActions.setChatsAndChannels(nodeId, (_loadedChatsAndChanne = loadedChatsAndChannels.chats) != null ? _loadedChatsAndChanne : [], (_loadedChatsAndChanne2 = loadedChatsAndChannels.channels) != null ? _loadedChatsAndChanne2 : [], (_loadedChatsAndChanne3 = loadedChatsAndChannels.chatsNoAccess) != null ? _loadedChatsAndChanne3 : 0, (_loadedChatsAndChanne4 = loadedChatsAndChannels.channelsNoAccess) != null ? _loadedChatsAndChanne4 : 0);
 	      this.$emit('hideDetailLoader');
 	      this.isLoading = false;
+	      return loadedChatsAndChannels;
 	    },
 	    getChatListMenuItems() {
 	      return this.canEdit ? [ChatsMenuLinkChat] : [];
@@ -2089,38 +2669,54 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      return [entity];
 	    },
 	    getChatLinkRecentTabOptions() {
-	      return humanresources_companyStructure_structureComponents.getChatRecentTabOptions(this.teamEntity, humanresources_companyStructure_structureComponents.ChatTypeDict.chat);
+	      return humanresources_companyStructure_structureComponents.getCommunicationsRecentTabOptions(this.teamEntity, humanresources_companyStructure_structureComponents.CommunicationsTypeDict.chat);
 	    },
 	    getChannelLinkRecentTabOptions() {
-	      return humanresources_companyStructure_structureComponents.getChatRecentTabOptions(this.teamEntity, humanresources_companyStructure_structureComponents.ChatTypeDict.channel);
+	      return humanresources_companyStructure_structureComponents.getCommunicationsRecentTabOptions(this.teamEntity, humanresources_companyStructure_structureComponents.CommunicationsTypeDict.channel);
 	    },
 	    async linkChats(chatsItems) {
 	      this.isChatLinkActive = true;
 	      const chats = chatsItems.map(chatItem => Number(chatItem.id.replace('chat', '')));
 	      const nodeId = this.focusedNode;
 	      const ids = {
-	        chat: chats
+	        chat: chats,
+	        withChildren: this.addChatsWithChildren
 	      };
 	      try {
 	        await DepartmentAPI.saveChats(nodeId, ids);
+	        const loadedChatsAndChannels = await this.loadChatAction(true);
+	        if (this.addChatsWithChildren && loadedChatsAndChannels) {
+	          const newChats = loadedChatsAndChannels.chats.filter(chat => chats.includes(chat.id));
+	          if (newChats.length > 0) {
+	            DepartmentContentActions.updateChatsInChildrenNodes(nodeId);
+	          }
+	        }
 	      } catch {/* empty */}
 	      this.isChatLinkActive = false;
 	      this.chatLinkDialogVisible = false;
-	      this.loadChatAction(true);
+	      this.addChatsWithChildren = false;
 	    },
 	    async linkChannel(chatsItems) {
 	      this.isChannelLinkActive = true;
 	      const channels = chatsItems.map(chatItem => Number(chatItem.id.replace('chat', '')));
 	      const nodeId = this.focusedNode;
 	      const ids = {
-	        channel: channels
+	        channel: channels,
+	        withChildren: this.addChannelsWithChildren
 	      };
 	      try {
 	        await DepartmentAPI.saveChats(nodeId, ids);
+	        const loadedChatsAndChannels = await this.loadChatAction(true);
+	        if (this.addChannelsWithChildren && loadedChatsAndChannels) {
+	          const newChannels = loadedChatsAndChannels.channels.filter(channel => channels.includes(channel.id));
+	          if (newChannels.length > 0) {
+	            DepartmentContentActions.updateChatsInChildrenNodes(nodeId);
+	          }
+	        }
 	      } catch {/* empty */}
 	      this.isChannelLinkActive = false;
 	      this.channelLinkDialogVisible = false;
-	      this.loadChatAction(true);
+	      this.addChannelsWithChildren = false;
 	    },
 	    getChatLinkDialogDataTestIds() {
 	      return ChatLinkDialogDataTestIds;
@@ -2138,6 +2734,22 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      var _this$departments$get3, _this$departments$get4;
 	      return (_this$departments$get3 = (_this$departments$get4 = this.departments.get(this.focusedNode)) == null ? void 0 : _this$departments$get4.channelsDetailed) != null ? _this$departments$get3 : [];
 	    },
+	    chatsNoAccess() {
+	      var _this$departments$get5, _this$departments$get6;
+	      return (_this$departments$get5 = (_this$departments$get6 = this.departments.get(this.focusedNode)) == null ? void 0 : _this$departments$get6.chatsNoAccess) != null ? _this$departments$get5 : 0;
+	    },
+	    channelsNoAccess() {
+	      var _this$departments$get7, _this$departments$get8;
+	      return (_this$departments$get7 = (_this$departments$get8 = this.departments.get(this.focusedNode)) == null ? void 0 : _this$departments$get8.channelsNoAccess) != null ? _this$departments$get7 : 0;
+	    },
+	    chatsNoAccessText() {
+	      const phrase = this.chats.length > 0 ? 'HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_CHAT_LIST_ITEM_MORE_HIDDEN_TEXT' : 'HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_CHAT_LIST_ITEM_EMPTY_HIDDEN_TEXT';
+	      return this.locPlural(phrase, this.chatsNoAccess);
+	    },
+	    channelsNoAccessText() {
+	      const phrase = this.channels.length > 0 ? 'HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_CHANNEL_LIST_ITEM_MORE_HIDDEN_TEXT' : 'HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_CHANNEL_LIST_ITEM_EMPTY_HIDDEN_TEXT';
+	      return this.locPlural(phrase, this.channelsNoAccess);
+	    },
 	    filteredChats() {
 	      return this.chats.filter(chat => chat.title.toLowerCase().includes(this.searchQuery.toLowerCase()));
 	    },
@@ -2145,10 +2757,10 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      return this.channels.filter(channel => channel.title.toLowerCase().includes(this.searchQuery.toLowerCase()));
 	    },
 	    showAddEmptyState() {
-	      return this.chats.length === 0 && this.channels.length === 0;
+	      return this.chats.length === 0 && this.channels.length === 0 && this.chatsNoAccess === 0 && this.channelsNoAccess === 0;
 	    },
 	    showSearchEmptyState() {
-	      return this.filteredChats.length === 0 && this.filteredChannels.length === 0;
+	      return (this.chats.length > 0 || this.channels.length > 0) && this.filteredChats.length === 0 && this.filteredChannels.length === 0;
 	    },
 	    getLinkedChatIds() {
 	      return this.chats.map(chatItem => `chat${chatItem.id}`);
@@ -2161,8 +2773,8 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      return Boolean(main_core.Type.isArray(department.chatsDetailed) && main_core.Type.isArray(department.channelsDetailed));
 	    },
 	    teamEntity() {
-	      var _this$departments$get5;
-	      return (_this$departments$get5 = this.departments.get(this.focusedNode)) == null ? void 0 : _this$departments$get5.entityType;
+	      var _this$departments$get9;
+	      return (_this$departments$get9 = this.departments.get(this.focusedNode)) == null ? void 0 : _this$departments$get9.entityType;
 	    },
 	    isTeamEntity() {
 	      return this.teamEntity === humanresources_companyStructure_utils.EntityTypes.team;
@@ -2184,19 +2796,43 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    },
 	    emptyChatTitle() {
 	      if (this.canEdit) {
-	        return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_CHAT_LIST_ITEM_TEXT');
+	        return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_CHAT_LIST_ITEM_TEXT_MSGVER_1');
 	      }
-	      return this.isTeamEntity ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_CHAT_LIST_ITEM_NO_TEAM_TEXT') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_CHAT_LIST_ITEM_NO_DEPARTMENT_TEXT');
+	      return this.isTeamEntity ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_CHAT_LIST_ITEM_NO_TEAM_TEXT_MSGVER_1') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_CHAT_LIST_ITEM_NO_DEPARTMENT_TEXT_MSGVER_1');
 	    },
 	    emptyChannelTitle() {
 	      if (this.canEdit) {
-	        return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_CHANNEL_LIST_ITEM_TEXT');
+	        return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_CHANNEL_LIST_ITEM_TEXT_MSGVER_1');
 	      }
-	      return this.isTeamEntity ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_CHANNEL_LIST_ITEM_NO_TEAM_TEXT') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_CHANNEL_LIST_ITEM_NO_DEPARTMENT_TEXT');
+	      return this.isTeamEntity ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_CHANNEL_LIST_ITEM_NO_TEAM_TEXT_MSGVER_1') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_CHANNEL_LIST_ITEM_NO_DEPARTMENT_TEXT_MSGVER_1');
 	    },
 	    canEdit() {
 	      const permissionChecker = humanresources_companyStructure_permissionChecker.PermissionChecker.getInstance();
 	      return this.isTeamEntity ? permissionChecker.hasPermission(humanresources_companyStructure_permissionChecker.PermissionActions.teamCommunicationEdit, this.focusedNode) : permissionChecker.hasPermission(humanresources_companyStructure_permissionChecker.PermissionActions.departmentCommunicationEdit, this.focusedNode);
+	    },
+	    getDialogExtraSubtitleLabel() {
+	      return this.isTeamEntity ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_WITH_SUBTEAMS_LABEL') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_WITH_SUBDEPARTMENTS_LABEL');
+	    },
+	    canAddWithChildren() {
+	      const permissionChecker = humanresources_companyStructure_permissionChecker.PermissionChecker.getInstance();
+	      if (this.isTeamEntity) {
+	        const teamTeamMinValue = {
+	          TEAM: humanresources_companyStructure_permissionChecker.PermissionLevels.selfAndSub
+	        };
+	        const teamDepartmentMinValue = {
+	          DEPARTMENT: humanresources_companyStructure_permissionChecker.PermissionLevels.selfAndSub
+	        };
+	        const teamAction = humanresources_companyStructure_permissionChecker.PermissionActions.teamCommunicationEdit;
+	        return permissionChecker.hasPermission(teamAction, this.focusedNode, teamTeamMinValue) || permissionChecker.hasPermission(teamAction, this.focusedNode, teamDepartmentMinValue);
+	      }
+	      const departmentAction = humanresources_companyStructure_permissionChecker.PermissionActions.departmentCommunicationEdit;
+	      return permissionChecker.hasPermission(departmentAction, this.focusedNode, humanresources_companyStructure_permissionChecker.PermissionLevels.selfAndSub);
+	    },
+	    hideEmptyChatItem() {
+	      return this.searchQuery.length > 0 || this.chatsNoAccess > 0;
+	    },
+	    hideEmptyChannelItem() {
+	      return this.searchQuery.length > 0 || this.channelsNoAccess > 0;
 	    },
 	    ...ui_vue3_pinia.mapState(humanresources_companyStructure_chartStore.useChartStore, ['focusedNode', 'departments'])
 	  },
@@ -2223,12 +2859,12 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 					<TabList
 						id='hr-department-detail-content_chats-tab__chat-list'
 						:title="loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_CHAT_LIST_TITLE')"
-						:count="chats.length"
+						:count="chats.length + chatsNoAccess"
 						:menuItems="chatMenuItems"
 						:listItems="filteredChats"
 						:emptyItemTitle="emptyChatTitle"
 						emptyItemImageClass="hr-department-detail-content__chat-empty-tab-list-item_tab-icon"
-						:hideEmptyItem="searchQuery.length > 0"
+						:hideEmptyItem="hideEmptyChatItem"
 						:withAddPermission="canEdit"
 						@tabListAction="onActionMenuItemClick"
 						:dataTestIds="getChatListDataTestIds()"
@@ -2236,22 +2872,38 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 						<template v-slot="{ item }">
 							<ChatListItem :chat="item" :nodeId="focusedNode"/>
 						</template>
+						<template v-if="chatsNoAccess > 0" v-slot:footer>
+							<div 
+								class="hr-department-detail-content__tab-list_communications-hidden"
+								data-test-id="hr-department-content_chats-tab__list_chat-hidden-text"
+							>
+								{{ chatsNoAccessText }}
+							</div>
+						</template>
 					</TabList>
 					<TabList
 						id='hr-department-detail-content_chats-tab__channel-list'
 						:title="loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_CHANNEL_LIST_TITLE')"
-						:count="channels.length"
+						:count="channels.length + channelsNoAccess"
 						:menuItems="channelMenuItems"
 						:listItems="filteredChannels"
 						:emptyItemTitle="emptyChannelTitle"
 						emptyItemImageClass="hr-department-detail-content__chat-empty-tab-list-item_tab-icon"
-						:hideEmptyItem="searchQuery.length > 0"
+						:hideEmptyItem="hideEmptyChannelItem"
 						:withAddPermission="canEdit"
 						@tabListAction="onActionMenuItemClick"
 						:dataTestIds="getChannelListDataTestIds()"
 					>
 						<template v-slot="{ item }">
 							<ChatListItem :chat="item" :nodeId="focusedNode"/>
+						</template>
+						<template v-if="channelsNoAccess > 0" v-slot:footer>
+							<div
+								class="hr-department-detail-content__tab-list_communications-hidden"
+								data-test-id="hr-department-content_chats-tab__list_channel-hidden-text"
+							>
+								{{ channelsNoAccessText }}
+							</div>
 						</template>
 					</TabList>
 				</div>
@@ -2286,7 +2938,17 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 				@managementDialogAction="linkChats"
 				@close="chatLinkDialogVisible = false"
 				:dataTestIds="getChatLinkDialogDataTestIds()"
-			/>
+			>
+				<template v-slot:extra-subtitle>
+					<ChildrenModeSelector
+						:isTeamEntity="isTeamEntity"
+						:data-test-id="getChatLinkDialogDataTestIds().addWithChildrenDataTestId"
+						:hasPermission="canAddWithChildren"
+						:text="loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_MODE_CHATS_TEXT')"
+						@saveChildrenMode="addChatsWithChildren = $event"
+					/>
+				</template>
+			</ManagementDialog>
 			<ManagementDialog
 				v-if="channelLinkDialogVisible"
 				id="hr-department-detail-content-chats-tab-channel-link-dialog"
@@ -2299,7 +2961,17 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 				@managementDialogAction="linkChannel"
 				@close="channelLinkDialogVisible = false"
 				:dataTestIds="getChannelLinkDialogDataTestIds()"
-			/>
+			>
+				<template v-slot:extra-subtitle>
+					<ChildrenModeSelector
+						:isTeamEntity="isTeamEntity"
+						:data-test-id="getChatLinkDialogDataTestIds().addWithChildrenDataTestId"
+						:hasPermission="canAddWithChildren"
+						:text="loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_MODE_CHANNELS_TEXT')"
+						@saveChildrenMode="addChannelsWithChildren = $event"
+					/>
+				</template>
+			</ManagementDialog>
 		</div>
 	`
 	};
@@ -2484,6 +3156,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	};
 
 	exports.DepartmentContent = DepartmentContent;
+	exports.DepartmentContentActions = DepartmentContentActions;
 
-}((this.BX.Humanresources.CompanyStructure = this.BX.Humanresources.CompanyStructure || {}),BX,BX.Humanresources.CompanyStructure,BX.UI.EntitySelector,BX.UI,BX.UI,BX.Humanresources.CompanyStructure,BX.UI.IconSet,BX,BX.Event,BX.UI,BX.Humanresources.CompanyStructure,BX.Humanresources.CompanyStructure,BX,BX.Messenger.v2.Lib,BX.Humanresources.CompanyStructure,BX,BX.Humanresources.CompanyStructure,BX.Vue3.Pinia));
+}((this.BX.Humanresources.CompanyStructure = this.BX.Humanresources.CompanyStructure || {}),BX.Humanresources.CompanyStructure,BX,BX.Humanresources.CompanyStructure,BX.UI.EntitySelector,BX.UI,BX.UI,BX.Humanresources.CompanyStructure,BX.UI.IconSet,BX,BX.Event,BX.UI,BX.Humanresources.CompanyStructure,BX.Humanresources.CompanyStructure,BX,BX.Messenger.v2.Lib,BX.Humanresources.CompanyStructure,BX,BX.Humanresources.CompanyStructure,BX.Vue3.Pinia));
 //# sourceMappingURL=department-content.bundle.js.map

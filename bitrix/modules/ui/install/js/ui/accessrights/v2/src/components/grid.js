@@ -12,7 +12,7 @@ export const Grid = {
 	loader: null,
 	computed: {
 		...mapState({
-			isSaving: (state) => state.application.isSaving,
+			isProgress: (state) => state.application.isProgress,
 			guid: (state) => state.application.guid,
 			searchContainerSelector: (state) => state.application.options.searchContainerSelector,
 		}),
@@ -109,7 +109,7 @@ export const Grid = {
 			<SearchBox/>
 		</Teleport>
 		<div ref="container" class='ui-access-rights-v2' :class="{
-			'ui-access-rights-v2-block': isSaving,
+			'ui-access-rights-v2-block': isProgress,
 		}">
 			<Header :user-groups="shownUserGroups"/>
 			<Section

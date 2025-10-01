@@ -8,6 +8,7 @@ import type { MessageAddParams } from '../../types/message';
 const ActionNameByRecentType = {
 	[RecentType.default]: 'recent/setRecent',
 	[RecentType.copilot]: 'recent/setCopilot',
+	[RecentType.aiAssistant]: 'recent/setAiAssistant',
 	[RecentType.openChannel]: 'recent/setChannel',
 	[RecentType.collab]: 'recent/setCollab',
 };

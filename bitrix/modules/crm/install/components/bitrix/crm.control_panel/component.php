@@ -527,11 +527,12 @@ if ($isAdmin || $userPermissionsService->entityType()->canReadItems($invoiceEnti
 		// if we pass an empty array create button still will be displayed
 		'ACTIONS' => empty($actions) ? null : $actions,
 	];
+
 	if (!RestrictionManager::getInvoicesRestriction()->hasPermission())
 	{
 		unset($invoiceItem['URL']);
 		$invoiceItem['IS_LOCKED'] = true;
-		$invoiceItem['ON_CLICK'] = RestrictionManager::getInvoicesRestriction()->prepareInfoHelperScript();
+		$invoiceItem['ON_CLICK'] = RestrictionManager::getInvoicesRestriction()->prepareFeaturePromoterScript();
 	}
 
 	if (!InvoiceSettings::getCurrent()->isOldInvoicesEnabled())
@@ -870,11 +871,12 @@ if($isAdmin || $userPermissionsService->entityType()->canReadItems(CCrmOwnerType
 		'ACTIONS' => $actions,
 		'IS_DISABLED' => true
 	);
+
 	if (!RestrictionManager::getQuotesRestriction()->hasPermission())
 	{
 		unset($stdItems['QUOTE']['URL']);
 		$stdItems['QUOTE']['IS_LOCKED'] = true;
-		$stdItems['QUOTE']['ON_CLICK'] = RestrictionManager::getQuotesRestriction()->prepareInfoHelperScript();
+		$stdItems['QUOTE']['ON_CLICK'] = RestrictionManager::getQuotesRestriction()->prepareFeaturePromoterScript();
 	}
 }
 

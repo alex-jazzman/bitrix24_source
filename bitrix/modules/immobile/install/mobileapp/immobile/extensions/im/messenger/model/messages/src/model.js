@@ -828,13 +828,19 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 			},
 
 			/** @function messagesModel/updateList */
-			updateList: (store, { messageList, actionName = 'update' }) => {
+			updateList: (store, { messageList, actionName = 'updateList' }) => {
 				if (!Type.isArrayFilled(messageList))
 				{
 					return false;
 				}
 
-				const updateMessagesData = messageList.map((message) => {
+				const filteredMessageList = messageList.filter((message) => store.state.collection[message.id]);
+				if (filteredMessageList.length === 0)
+				{
+					return false;
+				}
+
+				const updateMessagesData = filteredMessageList.map((message) => {
 					return {
 						id: message.id,
 						fields: validate(message),

@@ -251,6 +251,11 @@ export class BitrixCall extends AbstractCall
 		this._reconnectionEventCount = newValue;
 	}
 
+	get hasConnectionData()
+	{
+		return Boolean(this.connectionData.mediaServerUrl && this.connectionData.roomData);
+	}
+
 	initPeers()
 	{
 		this.users.forEach((userId) =>
@@ -916,6 +921,7 @@ export class BitrixCall extends AbstractCall
 
 		this.screenShared = false;
 		this.localVideoShown = false;
+		this.floorRequestActive = false;
 	};
 
 	attachToConference(options: { joinAsViewer: ?boolean } = {})
@@ -1495,18 +1501,17 @@ export class BitrixCall extends AbstractCall
 		}
 	};
 
-	#onLocalMediaRendererMuteToggled = (e) =>
-	{
-		if (e === MediaStreamsKinds.Microphone)
+	#onLocalMediaRendererMuteToggled = (source, muted) => {
+		if (source === MediaStreamsKinds.Microphone)
 		{
 			this.#setPublishingState(MediaStreamsKinds.Microphone, false);
-			this.signaling.sendMicrophoneState(false);
+			this.signaling.sendMicrophoneState(!muted);
 		}
-		else if (e === MediaStreamsKinds.Camera)
+		else if (source === MediaStreamsKinds.Camera)
 		{
 			this.#setPublishingState(MediaStreamsKinds.Camera, false);
 		}
-	}
+	};
 
 	#onMediaMutedBySystem = (muted) =>
 	{
@@ -1869,13 +1874,13 @@ export class BitrixCall extends AbstractCall
 		if (this._reconnectionEventCount === 0)
 		{
 			params.reconnectionEventCount = this.reconnectionEventCount + 1;
-			
+
 			this.runCallback(CallEvent.onReconnecting, params);
 		}
-		
+
 		if (this.reconnectionEventCount++)
 		{
-			
+
 			return;
 		}
 
@@ -2239,6 +2244,10 @@ export class BitrixCall extends AbstractCall
 				peer.setReady(false);
 			}
 		}
+		else if (eventName === clientEvents.microphoneState)
+		{
+			// do nothing
+		}
 		else
 		{
 			this.log("Unknown scenario event " + eventName);
@@ -2368,6 +2377,8 @@ export class BitrixCall extends AbstractCall
 		this.ready = false;
 		this.joinedAsViewer = false;
 		this.localVideoShown = false;
+		this.floorRequestActive = false;
+
 		if (this.localVAD)
 		{
 			this.localVAD.destroy();

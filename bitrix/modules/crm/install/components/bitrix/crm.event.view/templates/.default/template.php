@@ -233,7 +233,7 @@ if (
 			$showAddEventButton = (\Bitrix\Main\Config\Option::get('crm', 'enable_add_event_btn', 'N') === 'Y');
 		}
 
-		if ($showAddEventButton)
+		if ($showAddEventButton && !$arResult['IS_HIDE_EVENT_ADD_BUTTON'])
 		{
 			$toolbarButtons[] = [
 				'TEXT' => GetMessage('CRM_EVENT_VIEW_ADD_SHORT'),
@@ -258,7 +258,11 @@ if (
 		);
 	}
 
-	$APPLICATION->ShowViewContent('crm-internal-filter');
+	?>
+	<div class="crm-event-history-filter-wrapper">
+		<?php $APPLICATION->ShowViewContent('crm-internal-filter'); ?>
+	</div>
+	<?php
 }
 
 $APPLICATION->IncludeComponent(

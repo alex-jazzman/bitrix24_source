@@ -32,6 +32,7 @@ export const Selector = {
 			addUserGroupsProviderTab: (state) => state.application.options.additionalMembersParams.addUserGroupsProviderTab,
 			addProjectsProviderTab: (state) => state.application.options.additionalMembersParams.addProjectsProviderTab,
 			addStructureTeamsProviderTab: (state) => state.application.options.additionalMembersParams.addStructureTeamsProviderTab,
+			addStructureRolesProviderTab: (state) => state.application.options.additionalMembersParams.addStructureRolesProviderTab,
 		}),
 	},
 	mounted()
@@ -88,6 +89,11 @@ export const Selector = {
 				const groupId = match ? match[1] : null;
 
 				return ['site-groups', groupId];
+			}
+
+			if (/^(?:ATD|ATE|ATT|AD|AE|AT)[1-9]\d*$/.test(accessCode))
+			{
+				return ['structure-role', accessCode];
 			}
 
 			if (accessCode.at(0) === 'A')
@@ -192,6 +198,11 @@ export const Selector = {
 				return item.id;
 			}
 
+			if (entityId === 'structure-role')
+			{
+				return item.id;
+			}
+
 			if (entityId === 'project-access-codes')
 			{
 				return item.id;
@@ -216,6 +227,7 @@ export const Selector = {
 					return 'structureteams';
 				case 'site-groups':
 				case 'user-groups':
+				case 'structure-role':
 					return 'usergroups';
 				default:
 					return '';
@@ -247,15 +259,27 @@ export const Selector = {
 				},
 			];
 
+			if (this.addStructureRolesProviderTab)
+			{
+				entities.push({
+					id: 'structure-role',
+					options: {
+						includedNodeEntityTypes: ['team', 'department'],
+					},
+					dynamicLoad: true,
+					dynamicSearch: true,
+				});
+			}
+
 			if (this.addStructureTeamsProviderTab)
 			{
 				entities.push({
 					id: 'structure-node',
 					options: {
 						selectMode: 'usersAndDepartments',
+						includedNodeEntityTypes: ['team'],
 						allowSelectRootDepartment: true,
 						allowFlatDepartments: true,
-						includedNodeEntityTypes: ['team'],
 						useMultipleTabs: true,
 						visual: {
 							avatarMode: 'node',

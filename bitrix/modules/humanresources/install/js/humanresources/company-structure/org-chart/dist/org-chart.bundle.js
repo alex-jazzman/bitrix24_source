@@ -17,14 +17,20 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  HR_FIRST_POPUP_SHOW: 'HR.company-structure:first-popup-showed',
 	  HR_DRAG_ENTITY: 'hr-drag-entity',
 	  HR_DROP_ENTITY: 'hr-drop-entity',
-	  HR_ENTITY_TOGGLE_CONNECTORS: 'hr-entity-toggle-connectors',
 	  HR_ORG_CHART_TRANSFORM_CANVAS: 'hr-org-chart-transform-canvas',
 	  HR_DEPARTMENT_SLIDER_ON_MESSAGE: 'SidePanel.Slider:onMessage',
 	  HR_ORG_CHART_LOCATE_TO_DEPARTMENT: 'hr-org-chart-locate-to-department',
+	  HR_ENTITY_TOGGLE_ELEMENTS: 'hr-entity-toggle-elements',
 	  HR_ENTITY_SHOW_WIZARD: 'hr-entity-show-wizard',
 	  HR_ENTITY_REMOVE: 'hr-entity-remove',
 	  HR_PUBLIC_FOCUS_NODE: 'HumanResources.CompanyStructure:focusNode',
-	  INTRANET_USER_MINIPROFILE_CLOSE: 'Intranet.User.MiniProfile:close'
+	  INTRANET_USER_MINIPROFILE_CLOSE: 'Intranet.User.MiniProfile:close',
+	  HR_USER_DRAG_START: 'HumanResources.User:dragStart',
+	  HR_USER_DRAG_MOVE: 'HumanResources.User:dragMove',
+	  HR_USER_DRAG_DROP: 'HumanResources.User:drop',
+	  HR_USER_DRAG_END: 'HumanResources.User:dragEnd',
+	  HR_USER_DRAG_ENTER_NODE: 'HumanResources.User:dragEnterNode',
+	  HR_USER_DRAG_LEAVE_NODE: 'HumanResources.User:dragLeaveNode'
 	});
 	const detailPanelWidth = 364;
 
@@ -185,13 +191,14 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	};
 
 	const OrgChartActions = {
-	  applyData: (departments, currentDepartments, userId) => {
+	  applyData: (departments, currentDepartments, userId, map) => {
 	    const store = humanresources_companyStructure_chartStore.useChartStore();
 	    store.$patch({
 	      departments,
 	      currentDepartments,
 	      userId,
-	      searchedUserId: userId
+	      searchedUserId: userId,
+	      structureMap: map
 	    });
 	  },
 	  focusDepartment: departmentId => {
@@ -206,7 +213,8 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    const store = humanresources_companyStructure_chartStore.useChartStore();
 	    const {
 	      departments,
-	      currentDepartments
+	      currentDepartments,
+	      structureMap
 	    } = store;
 	    const removableDepartment = departments.get(removableDepartmentId);
 	    const {
@@ -220,6 +228,8 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    const parentDepartment = departments.get(parentId);
 	    removableDeparmentChildren.forEach(childId => {
 	      const department = departments.get(childId);
+	      const mapEntity = structureMap.get(childId);
+	      mapEntity.parentId = parentId;
 	      department.parentId = parentId;
 	    });
 	    if (removableDepartmentUserCount > 0 && entityType === humanresources_companyStructure_utils.EntityTypes.department) {
@@ -260,9 +270,11 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  },
 	  removeDepartment: departmentId => {
 	    const {
-	      departments
+	      departments,
+	      structureMap
 	    } = humanresources_companyStructure_chartStore.useChartStore();
 	    departments.delete(departmentId);
+	    structureMap.delete(departmentId);
 	  },
 	  inviteUser: userData => {
 	    const {
@@ -558,28 +570,18 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  },
 	  mounted() {
 	    const permissionChecker = humanresources_companyStructure_permissionChecker.PermissionChecker.getInstance();
+	    const id = permissionChecker.hasPermissionOfAction(humanresources_companyStructure_permissionChecker.PermissionActions.accessEdit) ? MenuOption$1.accessRights : MenuOption$1.teamAccessRights;
 	    this.dropdownItems = [{
-	      id: MenuOption$1.accessRights,
-	      title: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_CONFIG_PERMISSION_TITLE_MSGVER_1'),
-	      description: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_CONFIG_PERMISSION_DESCR_MSGVER_1'),
+	      id,
+	      title: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_CONFIG_PERMISSION'),
+	      description: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_CONFIG_PERMISSION_DESCR_MSGVER_2'),
 	      bIcon: {
 	        name: ui_iconSet_api_core.Main.PERSONS_2,
 	        size: 20,
 	        color: humanresources_companyStructure_utils.getColorCode('paletteBlue50')
 	      },
 	      dataTestId: 'hr-org-chart_title-panel__access-rights-button',
-	      permission: permissionChecker.hasPermissionOfAction(humanresources_companyStructure_permissionChecker.PermissionActions.accessEdit)
-	    }, {
-	      id: MenuOption$1.teamAccessRights,
-	      title: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_CONFIG_TEAM_PERMISSION_TITLE'),
-	      description: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_CONFIG_TEAM_PERMISSION_DESCR'),
-	      bIcon: {
-	        name: ui_iconSet_api_core.Main.MY_PLAN,
-	        size: 20,
-	        color: humanresources_companyStructure_utils.getColorCode('paletteBlue50')
-	      },
-	      dataTestId: 'hr-org-chart_title-panel__team-access-rights-button',
-	      permission: permissionChecker.hasPermissionOfAction(humanresources_companyStructure_permissionChecker.PermissionActions.teamAccessEdit)
+	      permission: permissionChecker.hasPermissionOfAction(humanresources_companyStructure_permissionChecker.PermissionActions.accessEdit) || permissionChecker.hasPermissionOfAction(humanresources_companyStructure_permissionChecker.PermissionActions.teamAccessEdit)
 	    }];
 	  },
 	  methods: {
@@ -743,6 +745,270 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 			</div>
 		</div>
 	`
+	};
+
+	const DepartmentAPI = {
+	  getPagedEmployees: (id, page, countPerPage) => {
+	    return humanresources_companyStructure_api.getData('humanresources.api.Structure.Node.Member.Employee.list', {
+	      nodeId: id,
+	      page,
+	      countPerPage
+	    });
+	  },
+	  removeUserFromDepartment: (nodeId, userId) => {
+	    return humanresources_companyStructure_api.postData('humanresources.api.Structure.Node.Member.deleteUser', {
+	      nodeId,
+	      userId
+	    });
+	  },
+	  moveUserToDepartment: (nodeId, userId, targetNodeId, role) => {
+	    return humanresources_companyStructure_api.postData('humanresources.api.Structure.Node.Member.moveUser', {
+	      nodeId,
+	      userId,
+	      targetNodeId,
+	      roleXmlId: role
+	    });
+	  },
+	  isUserInMultipleDepartments: userId => {
+	    return humanresources_companyStructure_api.getData('humanresources.api.User.isUserInMultipleDepartments', {
+	      userId
+	    });
+	  },
+	  getUserInfo: (nodeId, userId) => {
+	    return humanresources_companyStructure_api.getData('humanresources.api.User.getInfoByUserMember', {
+	      nodeId,
+	      userId
+	    });
+	  },
+	  fireUser: userId => {
+	    return humanresources_companyStructure_api.postData('intranet.user.fire', {
+	      userId
+	    });
+	  },
+	  findMemberByQuery: (nodeId, query) => {
+	    return humanresources_companyStructure_api.getData('humanresources.api.Structure.Node.Member.find', {
+	      nodeId,
+	      query
+	    });
+	  },
+	  getChatsAndChannels: nodeId => {
+	    return humanresources_companyStructure_api.getData('humanresources.api.Structure.Node.Member.Chat.getList', {
+	      nodeId
+	    });
+	  },
+	  saveChats: (nodeId, ids = {}, removeIds = {}, parentId = null) => {
+	    return humanresources_companyStructure_api.postData('humanresources.api.Structure.Node.Member.Chat.saveChatList', {
+	      nodeId,
+	      ids,
+	      removeIds,
+	      parentId
+	    });
+	  }
+	};
+
+	const markDescendantsForChatReload = childrenIds => {
+	  const store = humanresources_companyStructure_chartStore.useChartStore();
+	  const queue = [...childrenIds];
+	  const visited = new Set();
+	  const maxIterations = 10000;
+	  let iterations = 0;
+	  while (queue.length > 0 && iterations < maxIterations) {
+	    iterations++;
+	    const childId = queue.shift();
+	    if (visited.has(childId)) {
+	      continue;
+	    }
+	    visited.add(childId);
+	    const childDepartment = store.departments.get(childId);
+	    if (!childDepartment) {
+	      continue;
+	    }
+	    childDepartment.chatsDetailed = null;
+	    childDepartment.channelsDetailed = null;
+	    if (childDepartment.children && childDepartment.children.length > 0) {
+	      queue.push(...childDepartment.children);
+	    }
+	  }
+	};
+	const DepartmentContentActions = {
+	  moveUserToDepartment: (departmentId, userId, targetDepartmentId, role) => {
+	    var _department$employees;
+	    const store = humanresources_companyStructure_chartStore.useChartStore();
+	    const department = store.departments.get(departmentId);
+	    const targetDepartment = store.departments.get(targetDepartmentId);
+	    if (!department || !targetDepartment) {
+	      return;
+	    }
+	    const oldMemberRoles = humanresources_companyStructure_api.getMemberRoles(department.entityType);
+	    const targetMemberRoles = humanresources_companyStructure_api.getMemberRoles(targetDepartment.entityType);
+	    const user = role === oldMemberRoles.employee ? (_department$employees = department.employees) == null ? void 0 : _department$employees.find(employee => employee.id === userId) : department.heads.find(head => head.id === userId);
+	    if (!user) {
+	      return;
+	    }
+	    department.userCount -= 1;
+	    if (role === oldMemberRoles.employee) {
+	      department.employees = department.employees.filter(employee => employee.id !== userId);
+	    } else {
+	      department.heads = department.heads.filter(head => head.id !== userId);
+	    }
+	    targetDepartment.userCount += 1;
+	    if (userId === store.userId) {
+	      store.changeCurrentDepartment(departmentId, targetDepartmentId);
+	    }
+	    user.role = targetMemberRoles.employee;
+	    if (!targetDepartment.employees) {
+	      return;
+	    }
+	    targetDepartment.employees.push(user);
+	  },
+	  removeUserFromDepartment: (departmentId, userId, role) => {
+	    const store = humanresources_companyStructure_chartStore.useChartStore();
+	    const department = store.departments.get(departmentId);
+	    const oldMemberRoles = humanresources_companyStructure_api.getMemberRoles(department.entityType);
+	    if (!department) {
+	      return;
+	    }
+	    if (userId === store.userId) {
+	      store.changeCurrentDepartment(departmentId);
+	    }
+	    department.userCount -= 1;
+	    if (role === oldMemberRoles.employee) {
+	      department.employees = department.employees.filter(employee => employee.id !== userId);
+	      return;
+	    }
+	    department.heads = department.heads.filter(head => head.id !== userId);
+	  },
+	  updateEmployees: (departmentId, employees) => {
+	    const {
+	      departments
+	    } = humanresources_companyStructure_chartStore.useChartStore();
+	    const department = departments.get(departmentId);
+	    if (!department) {
+	      return;
+	    }
+	    departments.set(departmentId, {
+	      ...department,
+	      employees
+	    });
+	  },
+	  updateHeads: (departmentId, heads) => {
+	    const {
+	      departments
+	    } = humanresources_companyStructure_chartStore.useChartStore();
+	    const department = departments.get(departmentId);
+	    if (!department) {
+	      return;
+	    }
+	    departments.set(departmentId, {
+	      ...department,
+	      heads
+	    });
+	  },
+	  updateEmployeeListOptions: (departmentId, options) => {
+	    const {
+	      departments
+	    } = humanresources_companyStructure_chartStore.useChartStore();
+	    const department = departments.get(departmentId);
+	    if (!department) {
+	      return;
+	    }
+	    department.employeeListOptions = {
+	      ...department.employeeListOptions,
+	      ...options
+	    };
+	    departments.set(departmentId, department);
+	  },
+	  setChatsAndChannels: (nodeId, chats, channels, chatsNoAccess = 0, channelsNoAccess = 0) => {
+	    const store = humanresources_companyStructure_chartStore.useChartStore();
+	    const department = store.departments.get(nodeId);
+	    if (!department) {
+	      return;
+	    }
+	    department.channelsDetailed = channels;
+	    department.chatsDetailed = chats;
+	    department.channelsNoAccess = channelsNoAccess;
+	    department.chatsNoAccess = chatsNoAccess;
+	    department.chatAndChannelsCount = chats.length + channels.length + chatsNoAccess + channelsNoAccess;
+	  },
+	  removeUserFromAllDepartments: async userId => {
+	    const store = humanresources_companyStructure_chartStore.useChartStore();
+	    const departments = store.departments;
+	    const departmentsToUpdate = [];
+	    for (const [key, department] of departments) {
+	      if ('heads' in department && main_core.Type.isArray(department.heads) && department.heads.some(employee => employee.id === userId) || 'employees' in department && main_core.Type.isArray(department.employees) && department.employees.some(employee => employee.id === userId)) {
+	        departmentsToUpdate.push(key);
+	      }
+	    }
+	    return store.refreshDepartments(departmentsToUpdate);
+	  },
+	  unbindChatFromNode: (nodeId, chatId) => {
+	    const store = humanresources_companyStructure_chartStore.useChartStore();
+	    const department = store.departments.get(nodeId);
+	    if (!department) {
+	      return;
+	    }
+	    department.channelsDetailed = department.channelsDetailed.filter(chat => chat.id !== chatId);
+	    department.chatsDetailed = department.chatsDetailed.filter(chat => chat.id !== chatId);
+	    department.chatAndChannelsCount--;
+	  },
+	  updateChatsInChildrenNodes: parentNodeId => {
+	    const store = humanresources_companyStructure_chartStore.useChartStore();
+	    const parentDepartment = store.departments.get(parentNodeId);
+	    if (!parentDepartment || !parentDepartment.children) {
+	      return;
+	    }
+	    markDescendantsForChatReload(parentDepartment.children);
+	  }
+	};
+
+	const UserManagementDialogActions = {
+	  getDepartmentName: nodeId => {
+	    const {
+	      departments
+	    } = humanresources_companyStructure_chartStore.useChartStore();
+	    const targetDepartment = departments.get(nodeId);
+	    if (!targetDepartment) {
+	      return '';
+	    }
+	    return targetDepartment.name;
+	  },
+	  moveUsersToDepartment: (nodeId, users, userCount, updatedDepartmentIds) => {
+	    var _targetDepartment$emp;
+	    const store = humanresources_companyStructure_chartStore.useChartStore();
+	    const targetDepartment = store.departments.get(nodeId);
+	    if (!targetDepartment) {
+	      return;
+	    }
+	    const newMemberUserIds = new Set(users.map(user => user.id));
+	    const employees = ((_targetDepartment$emp = targetDepartment.employees) != null ? _targetDepartment$emp : []).filter(user => !newMemberUserIds.has(user.id));
+	    const headsUserIds = new Set(targetDepartment.heads.map(head => head.id));
+	    const newUsers = users.filter(user => !headsUserIds.has(user.id));
+	    employees.push(...newUsers);
+	    targetDepartment.employees = employees;
+	    targetDepartment.userCount = userCount;
+	    if (updatedDepartmentIds.length > 0) {
+	      void store.refreshDepartments(updatedDepartmentIds);
+	    }
+	  },
+	  addUsersToDepartment: (nodeId, users, userCount, role) => {
+	    var _targetDepartment$hea, _targetDepartment$emp2;
+	    const store = humanresources_companyStructure_chartStore.useChartStore();
+	    const targetDepartment = store.departments.get(nodeId);
+	    if (!targetDepartment) {
+	      return;
+	    }
+	    const memberRoles = humanresources_companyStructure_api.getMemberRoles(targetDepartment.entityType);
+	    const newMemberUserIds = new Set(users.map(user => user.id));
+	    if (newMemberUserIds.has(store.userId)) {
+	      store.changeCurrentDepartment(0, targetDepartment.id);
+	    }
+	    const heads = ((_targetDepartment$hea = targetDepartment.heads) != null ? _targetDepartment$hea : []).filter(user => !newMemberUserIds.has(user.id));
+	    const employees = ((_targetDepartment$emp2 = targetDepartment.employees) != null ? _targetDepartment$emp2 : []).filter(user => !newMemberUserIds.has(user.id));
+	    (role === memberRoles.employee ? employees : heads).push(...users);
+	    targetDepartment.heads = heads;
+	    targetDepartment.employees = employees;
+	    targetDepartment.userCount = userCount;
+	  }
 	};
 
 	const UrlParamNames = Object.freeze({
@@ -1167,7 +1433,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    const i18nMap = {
 	      head: {
 	        team: {
-	          title: main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_TAB_USERS_MEMBER_ACTION_MENU_ADD_HEAD_TITLE'),
+	          title: main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_TAB_USERS_MEMBER_ACTION_MENU_ADD_TEAM_HEAD_TITLE'),
 	          description: main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_DETAIL_TAB_USERS_MEMBER_ACTION_MENU_ADD_TEAM_HEAD_SUBTITLE'),
 	          role: humanresources_companyStructure_api.teamMemberRoles.head
 	        },
@@ -1629,6 +1895,18 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      type: Boolean,
 	      required: false,
 	      default: true
+	    },
+	    userDropTargetNodeId: {
+	      type: Number,
+	      default: null
+	    },
+	    isUserDropAllowed: {
+	      type: Boolean,
+	      default: false
+	    },
+	    isDraggingUser: {
+	      type: Boolean,
+	      default: false
 	    }
 	  },
 	  emits: ['calculatePosition'],
@@ -1648,12 +1926,14 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      return this.departments.get(this.nodeId);
 	    },
 	    nodeClass() {
+	      const isDragSource = this.isDraggingUser && this.nodeId === this.focusedNode;
 	      return {
 	        '--expanded': this.expandedNodes.includes(this.nodeId),
 	        '--current-department': this.isCurrentDepartment,
 	        '--focused': this.focusedNode === this.nodeId,
 	        '--with-restricted-access-rights': !this.showInfo,
-	        '--team': this.isTeamEntity
+	        '--team': this.isTeamEntity,
+	        '--drag-source': isDragSource
 	      };
 	    },
 	    subdivisionsClass() {
@@ -1734,6 +2014,19 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        return this.locPlural('HUMANRESOURCES_COMPANY_TEAM_CHILDREN_COUNT', childTeamsCount);
 	      }
 	      return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_TREE_NO_SUBDEPARTMENTS');
+	    },
+	    deputyTitle() {
+	      return this.isTeamEntity ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_TREE_TEAM_DEPUTY_TITLE') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_TREE_DEPUTY_TITLE');
+	    },
+	    dropOverlayText() {
+	      const sourceNode = this.departments.get(this.focusedNode);
+	      if (sourceNode.entityType !== this.nodeData.entityType) {
+	        return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_MOVED_FORBIDDEN');
+	      }
+	      return this.isUserDropAllowed ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_MOVED_ALLOWED') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_MOVED_NO_RIGHTS');
+	    },
+	    showOverlay() {
+	      return this.nodeId === this.userDropTargetNodeId && this.nodeId !== this.focusedNode;
 	    },
 	    ...ui_vue3_pinia.mapState(humanresources_companyStructure_chartStore.useChartStore, ['departments', 'focusedNode'])
 	  },
@@ -1889,6 +2182,16 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        });
 	        this.prevHeight = this.$el.offsetHeight;
 	      }
+	    },
+	    onDragMouseEnter() {
+	      main_core_events.EventEmitter.emit(events.HR_USER_DRAG_ENTER_NODE, {
+	        nodeId: this.nodeId
+	      });
+	    },
+	    onDragMouseLeave() {
+	      main_core_events.EventEmitter.emit(events.HR_USER_DRAG_LEAVE_NODE, {
+	        nodeId: this.nodeId
+	      });
 	    }
 	  },
 	  template: `
@@ -1903,9 +2206,24 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 				'--node-expanded-color': nodeData.teamColor?.expandedBorderColor,
 			}"
 		>
+			<div v-if="showOverlay"
+				class="humanresources-tree__node_drop-overlay"
+			>
+				<div class="ui-icon-set"
+					 :class="{
+					'--circle-plus': isUserDropAllowed,
+					'--cross-circle-50': !isUserDropAllowed
+				}"
+				></div>
+				<div class="humanresources-tree__node_drop-overlay-text">
+					{{ dropOverlayText }}
+				</div>
+			</div>
 			<div
 				class="humanresources-tree__node_summary"
 				@click.stop="onDepartmentClick('department')"
+				@mouseenter="onDragMouseEnter"
+				@mouseleave="onDragMouseLeave"
 			>
 				<template v-if="showInfo">
 					<div
@@ -1966,7 +2284,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 							<div v-if="!deputy.length"></div>
 							<HeadList
 								:items="deputy"
-								:title="loc('HUMANRESOURCES_COMPANY_STRUCTURE_TREE_DEPUTY_TITLE')"
+								:title="deputyTitle"
 								:collapsed="true"
 								:type="'deputy'"
 							>
@@ -2019,6 +2337,9 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 						:currentDepartments="currentDepartments"
 						:isShown="isExpanded"
 						@calculatePosition="calculatePosition"
+						:userDropTargetNodeId="userDropTargetNodeId"
+						:isUserDropAllowed="isUserDropAllowed"
+						:isDraggingUser="isDraggingUser"
 					/>
 				</TransitionGroup>
 			</div>
@@ -2544,8 +2865,8 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  main_core.Event.bind(document, 'mousemove', babelHelpers.classPrivateFieldLooseBase(this, _mouseMoveHandler)[_mouseMoveHandler]);
 	  main_core.Event.bind(document, 'mouseup', babelHelpers.classPrivateFieldLooseBase(this, _mouseUpHandler)[_mouseUpHandler]);
 	  main_core.Event.bind(document, 'wheel', babelHelpers.classPrivateFieldLooseBase(this, _mouseWheelHandler)[_mouseWheelHandler]);
-	  main_core_events.EventEmitter.emit(events.HR_ENTITY_TOGGLE_CONNECTORS, {
-	    shouldShow: false
+	  main_core_events.EventEmitter.emit(events.HR_ENTITY_TOGGLE_ELEMENTS, {
+	    shouldShowElements: false
 	  });
 	  const draggedId = Number(babelHelpers.classPrivateFieldLooseBase(this, _draggedItem)[_draggedItem].dataset.id);
 	  main_core_events.EventEmitter.emit(events.HR_DRAG_ENTITY, {
@@ -2622,8 +2943,8 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  main_core.Dom.remove(babelHelpers.classPrivateFieldLooseBase(this, _ghost)[_ghost]);
 	  main_core.Dom.remove(babelHelpers.classPrivateFieldLooseBase(this, _positionPointer)[_positionPointer]);
 	  babelHelpers.classPrivateFieldLooseBase(this, _resetTeamsBlur)[_resetTeamsBlur]();
-	  main_core_events.EventEmitter.emit(events.HR_ENTITY_TOGGLE_CONNECTORS, {
-	    shouldShow: true
+	  main_core_events.EventEmitter.emit(events.HR_ENTITY_TOGGLE_ELEMENTS, {
+	    shouldShowElements: true
 	  });
 	  const {
 	    insertion,
@@ -2902,7 +3223,9 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  name: 'companyTree',
 	  components: {
 	    TreeNode,
-	    Connectors
+	    Connectors,
+	    MoveEmployeeConfirmationPopup: humanresources_companyStructure_structureComponents.MoveEmployeeConfirmationPopup,
+	    ConfirmationPopup: humanresources_companyStructure_structureComponents.ConfirmationPopup
 	  },
 	  directives: {
 	    dnd: DragAndDrop
@@ -2923,10 +3246,22 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    return {
 	      expandedNodes: [],
 	      isLocatedDepartmentVisible: false,
-	      isLoaded: false
+	      isLoaded: false,
+	      userDropTargetNodeId: null,
+	      isUserDropAllowed: false,
+	      draggedUserData: null,
+	      showDndConfirmationPopup: false,
+	      showDndErrorPopup: false,
+	      dndErrorPopupDescription: '',
+	      dndUserMoveContext: null,
+	      isCombineOnly: false
 	    };
 	  },
 	  computed: {
+	    entityType() {
+	      var _this$departments$get;
+	      return ((_this$departments$get = this.departments.get(this.focusedNode)) == null ? void 0 : _this$departments$get.entityType) || '';
+	    },
 	    rootId() {
 	      const {
 	        id: rootId
@@ -2937,6 +3272,16 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    },
 	    connectors() {
 	      return this.$refs.connectors;
+	    },
+	    dndPopupDescription() {
+	      const targetDepartment = this.departments.get(this.dndUserMoveContext.targetDepartmentId);
+	      const phrase = targetDepartment.entityType === humanresources_companyStructure_utils.EntityTypes.team ? 'HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_DESC_TEAM' : 'HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_DESC_DEPARTMENT';
+	      return main_core.Loc.getMessage(phrase, {
+	        '#USER_NAME#': main_core.Text.encode(this.dndUserMoveContext.user.name),
+	        '#DEPARTMENT_NAME#': main_core.Text.encode(targetDepartment.name),
+	        '[link]': `<a class="hr-department-detail-content__move-user-department-user-link" href="${this.dndUserMoveContext.user.url}">`,
+	        '[/link]': '</a>'
+	      });
 	    },
 	    ...ui_vue3_pinia.mapState(humanresources_companyStructure_chartStore.useChartStore, ['currentDepartments', 'userId', 'focusedNode', 'departments'])
 	  },
@@ -3029,9 +3374,9 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      data
 	    }) {
 	      const {
-	        shouldShow
+	        shouldShowElements
 	      } = data;
-	      this.connectors.toggleAllConnectorsVisibility(shouldShow, this.expandedNodes);
+	      this.connectors.toggleAllConnectorsVisibility(shouldShowElements, this.expandedNodes);
 	    },
 	    async changeOrder(data) {
 	      const {
@@ -3173,13 +3518,13 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      });
 	    },
 	    focus(nodeId, options = {}) {
-	      var _this$departments$get;
+	      var _this$departments$get2;
 	      const {
 	        expandAfterFocus = false,
 	        showEmployees = false,
 	        subdivisionsSelected = false
 	      } = options;
-	      const hasChildren = ((_this$departments$get = this.departments.get(nodeId).children) == null ? void 0 : _this$departments$get.length) > 0;
+	      const hasChildren = ((_this$departments$get2 = this.departments.get(nodeId).children) == null ? void 0 : _this$departments$get2.length) > 0;
 	      let shouldExpand = expandAfterFocus || !this.expandedNodes.includes(nodeId);
 	      if (showEmployees) {
 	        shouldExpand = this.expandedNodes.includes(nodeId);
@@ -3300,7 +3645,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    expandLowerDepartments() {
 	      let expandLevel = 0;
 	      const expandRecursively = departmentId => {
-	        var _this$departments$get2;
+	        var _this$departments$get3;
 	        const {
 	          children = []
 	        } = this.departments.get(departmentId);
@@ -3311,7 +3656,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        expandLevel += 1;
 	        const middleBound = Math.trunc(children.length / 2);
 	        const childId = children[middleBound];
-	        if (((_this$departments$get2 = this.departments.get(childId).children) == null ? void 0 : _this$departments$get2.length) > 0) {
+	        if (((_this$departments$get3 = this.departments.get(childId).children) == null ? void 0 : _this$departments$get3.length) > 0) {
 	          expandRecursively(childId);
 	          return;
 	        }
@@ -3386,8 +3731,13 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        [events.HR_DEPARTMENT_FOCUS]: this.onFocusDepartment,
 	        [events.HR_DRAG_ENTITY]: this.onDragEntity,
 	        [events.HR_DROP_ENTITY]: this.onDropEntity,
-	        [events.HR_ENTITY_TOGGLE_CONNECTORS]: this.onToggleConnectors,
-	        [events.HR_PUBLIC_FOCUS_NODE]: this.onPublicFocusNode
+	        [events.HR_ENTITY_TOGGLE_ELEMENTS]: this.onToggleConnectors,
+	        [events.HR_PUBLIC_FOCUS_NODE]: this.onPublicFocusNode,
+	        [events.HR_USER_DRAG_START]: this.onUserDragStart,
+	        [events.HR_USER_DRAG_DROP]: this.onUserDragDrop,
+	        [events.HR_USER_DRAG_END]: this.onUserDragEnd,
+	        [events.HR_USER_DRAG_ENTER_NODE]: this.onUserDragEnterNode,
+	        [events.HR_USER_DRAG_LEAVE_NODE]: this.onUserDragLeaveNode
 	      };
 	      Object.entries(this.events).forEach(([event, handle]) => {
 	        main_core_events.EventEmitter.subscribe(event, handle);
@@ -3397,6 +3747,184 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      Object.entries(this.events).forEach(([event, handle]) => {
 	        main_core_events.EventEmitter.unsubscribe(event, handle);
 	      });
+	    },
+	    onUserDragStart({
+	      data
+	    }) {
+	      this.draggedUserData = data.user;
+	    },
+	    onUserDragEnterNode({
+	      data
+	    }) {
+	      if (!this.draggedUserData) {
+	        return;
+	      }
+	      const hoveredNodeId = data.nodeId;
+	      const sourceDepartmentId = this.focusedNode;
+	      const hoveredNode = this.departments.get(hoveredNodeId);
+	      const sourceNode = this.departments.get(sourceDepartmentId);
+	      if (sourceNode.entityType !== hoveredNode.entityType || hoveredNodeId === sourceDepartmentId) {
+	        this.userDropTargetNodeId = hoveredNodeId;
+	        this.isUserDropAllowed = false;
+	        return;
+	      }
+	      this.userDropTargetNodeId = hoveredNodeId;
+	      const movePermissions = this.canMoveUser(sourceDepartmentId, hoveredNodeId);
+	      this.isUserDropAllowed = movePermissions.isAllowed;
+	      this.isCombineOnly = movePermissions.combineOnly;
+	    },
+	    onUserDragLeaveNode({
+	      data
+	    }) {
+	      if (!this.draggedUserData) {
+	        return;
+	      }
+	      if (this.userDropTargetNodeId === data.nodeId) {
+	        this.userDropTargetNodeId = null;
+	        this.isUserDropAllowed = false;
+	      }
+	    },
+	    async onUserDragDrop() {
+	      if (!this.userDropTargetNodeId || !this.isUserDropAllowed) {
+	        return;
+	      }
+	      this.dndUserMoveContext = {
+	        user: this.draggedUserData,
+	        sourceDepartmentId: this.focusedNode,
+	        targetDepartmentId: this.userDropTargetNodeId,
+	        sourceRole: this.draggedUserData.role
+	      };
+	      this.showDndConfirmationPopup = true;
+	    },
+	    async confirmUserMove(payload) {
+	      var _targetDepartment$hea, _targetDepartment$emp;
+	      this.showDndConfirmationPopup = false;
+	      const {
+	        user,
+	        targetDepartmentId
+	      } = this.dndUserMoveContext;
+	      const targetDepartment = this.departments.get(targetDepartmentId);
+	      const userInTarget = ((_targetDepartment$hea = targetDepartment.heads) != null ? _targetDepartment$hea : []).find(u => u.id === user.id) || ((_targetDepartment$emp = targetDepartment.employees) != null ? _targetDepartment$emp : []).find(u => u.id === user.id);
+	      const isAlreadyInTarget = Boolean(userInTarget);
+	      const isRoleTheSame = isAlreadyInTarget && userInTarget.role === payload.role;
+	      if (isAlreadyInTarget && isRoleTheSame) {
+	        this.displayDndErrorPopup(user, targetDepartmentId);
+	        this.dndUserMoveContext = null;
+	        return;
+	      }
+	      try {
+	        if (payload.isCombineMode) {
+	          await this.handleCombineUser(this.dndUserMoveContext, payload);
+	        } else {
+	          await this.handleMoveUser(this.dndUserMoveContext, payload, isAlreadyInTarget);
+	        }
+	        const phrase = targetDepartment.entityType === humanresources_companyStructure_utils.EntityTypes.team ? 'HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_MOVED_SUCCESS_TEAM' : 'HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_MOVED_SUCCESS_DEPARTMENT';
+	        ui_notification.UI.Notification.Center.notify({
+	          content: this.loc(phrase, {
+	            '#USER_NAME#': main_core.Text.encode(user.name),
+	            '#DEPARTMENT_NAME#': main_core.Text.encode(targetDepartment.name),
+	            '#USER_ROLE#': main_core.Text.encode(payload.roleLabel)
+	          })
+	        });
+	      } catch (error) {
+	        console.error(error);
+	      }
+	      this.dndUserMoveContext = null;
+	    },
+	    async handleCombineUser(dndContext, payload) {
+	      var _payload$badgeText;
+	      const {
+	        user,
+	        targetDepartmentId
+	      } = dndContext;
+	      const data = await humanresources_companyStructure_userManagementDialog.UserManagementDialogAPI.addUsersToDepartment(targetDepartmentId, [user.id], payload.role);
+	      UserManagementDialogActions.addUsersToDepartment(targetDepartmentId, [{
+	        ...user,
+	        role: payload.role,
+	        badgeText: (_payload$badgeText = payload.badgeText) != null ? _payload$badgeText : null
+	      }], data.userCount, payload.role);
+	    },
+	    async handleMoveUser(dndContext, payload, isAlreadyInTarget) {
+	      var _payload$badgeText2;
+	      const {
+	        user,
+	        sourceDepartmentId,
+	        targetDepartmentId,
+	        sourceRole
+	      } = dndContext;
+	      const targetDepartment = this.departments.get(targetDepartmentId);
+	      if (isAlreadyInTarget) {
+	        await humanresources_companyStructure_userManagementDialog.UserManagementDialogAPI.addUsersToDepartment(targetDepartmentId, [user.id], payload.role);
+	        await DepartmentAPI.removeUserFromDepartment(sourceDepartmentId, user.id);
+	      } else {
+	        await DepartmentAPI.moveUserToDepartment(sourceDepartmentId, user.id, targetDepartmentId, payload.role);
+	      }
+	      const finalUserCount = targetDepartment.userCount + (isAlreadyInTarget ? 0 : 1);
+	      DepartmentContentActions.removeUserFromDepartment(sourceDepartmentId, user.id, sourceRole);
+	      UserManagementDialogActions.addUsersToDepartment(targetDepartmentId, [{
+	        ...user,
+	        role: payload.role,
+	        badgeText: (_payload$badgeText2 = payload.badgeText) != null ? _payload$badgeText2 : null
+	      }], finalUserCount, payload.role);
+	    },
+	    displayDndErrorPopup(user, targetDepartmentId) {
+	      const targetDepartment = this.departments.get(targetDepartmentId);
+	      const phrase = targetDepartment.entityType === humanresources_companyStructure_utils.EntityTypes.team ? 'HUMANRESOURCES_COMPANY_STRUCTURE_DND_ERROR_POPUP_DESC_TEAM' : 'HUMANRESOURCES_COMPANY_STRUCTURE_DND_ERROR_POPUP_DESC_DEPARTMENT';
+	      this.dndErrorPopupDescription = main_core.Loc.getMessage(phrase, {
+	        '#USER_NAME#': main_core.Text.encode(user.name),
+	        '#DEPARTMENT_NAME#': main_core.Text.encode(targetDepartment.name),
+	        '[link]': `<a class="hr-department-detail-content__move-user-department-user-link" href="${user.url}">`,
+	        '[/link]': '</a>'
+	      });
+	      this.showDndErrorPopup = true;
+	    },
+	    cancelUserMove() {
+	      if (!this.dndUserMoveContext) {
+	        return;
+	      }
+	      this.showDndConfirmationPopup = false;
+	      this.dndUserMoveContext = null;
+	    },
+	    closeDndErrorPopup() {
+	      this.showDndErrorPopup = false;
+	      this.dndErrorPopupDescription = '';
+	      this.dndUserMoveContext = null;
+	    },
+	    onUserDragEnd() {
+	      this.userDropTargetNodeId = null;
+	      this.isUserDropAllowed = false;
+	      this.draggedUserData = null;
+	    },
+	    canMoveUser(sourceDepartmentId, targetDepartmentId) {
+	      const permissionChecker = humanresources_companyStructure_permissionChecker.PermissionChecker.getInstance();
+	      const sourceDepartmentData = this.departments.get(sourceDepartmentId);
+	      const hoveredNodeData = this.departments.get(targetDepartmentId);
+	      if (!sourceDepartmentData || !hoveredNodeData) {
+	        return {
+	          isAllowed: false,
+	          forceCombine: false
+	        };
+	      }
+	      const sourcePermissionAction = sourceDepartmentData.entityType === humanresources_companyStructure_utils.EntityTypes.team ? humanresources_companyStructure_permissionChecker.PermissionActions.teamRemoveMember : humanresources_companyStructure_permissionChecker.PermissionActions.employeeRemoveFromDepartment;
+	      const canTakeFromSource = permissionChecker.hasPermission(sourcePermissionAction, sourceDepartmentId);
+	      const targetPermissionAction = hoveredNodeData.entityType === humanresources_companyStructure_utils.EntityTypes.team ? humanresources_companyStructure_permissionChecker.PermissionActions.teamAddMember : humanresources_companyStructure_permissionChecker.PermissionActions.employeeAddToDepartment;
+	      const canPutToTarget = permissionChecker.hasPermission(targetPermissionAction, targetDepartmentId);
+	      if (canTakeFromSource && canPutToTarget) {
+	        return {
+	          isAllowed: true,
+	          combineOnly: false
+	        };
+	      }
+	      if (!canTakeFromSource && canPutToTarget) {
+	        return {
+	          isAllowed: true,
+	          combineOnly: true
+	        };
+	      }
+	      return {
+	        isAllowed: false,
+	        combineOnly: false
+	      };
 	    }
 	  },
 	  template: `
@@ -3412,12 +3940,43 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 				:expandedNodes="[...expandedNodes]"
 				:canvasZoom="canvasTransform.zoom"
 				:currentDepartments="currentDepartments"
+				:userDropTargetNodeId="userDropTargetNodeId"
+				:isUserDropAllowed="isUserDropAllowed"
+				:isDraggingUser="!!draggedUserData"
 			></TreeNode>
 			<Connectors
 				ref="connectors"
 				:isLocatedDepartmentVisible="isLocatedDepartmentVisible"
 				:treeNodes="treeNodes"
 			></Connectors>
+			<MoveEmployeeConfirmationPopup
+				v-if="showDndConfirmationPopup"
+				:description="dndPopupDescription"
+				:showRoleSelect="true"
+				:showCombineCheckbox="true"
+				:isCombineOnly="isCombineOnly"
+				:entityType="entityType"
+				@confirm="confirmUserMove"
+				@close="cancelUserMove"
+			/>
+			<ConfirmationPopup
+				v-if="showDndErrorPopup"
+				:withoutTitleBar = true
+				:onlyConfirmButtonMode = true
+				:confirmBtnText = "loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_USER_ACTION_MENU_MOVE_TO_ANOTHER_DEPARTMENT_ALREADY_BELONGS_TO_DEPARTMENT_CLOSE_BUTTON')"
+				:width="300"
+				@action="closeDndErrorPopup"
+				@close="closeDndErrorPopup"
+			>
+				<template v-slot:content>
+					<div class="hr-department-detail-content__user-action-text-container">
+						<div
+							class="hr-department-detail-content__user-belongs-to-department-text-container"
+							v-html="dndErrorPopupDescription"
+						/>
+					</div>
+				</template>
+			</ConfirmationPopup>
 		</div>
 	`
 	};
@@ -3660,6 +4219,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      isTeamEntity: false,
 	      teamColor: null,
 	      isCollapsed: true,
+	      isHidden: false,
 	      isLoading: true,
 	      needToShowLoader: false
 	    };
@@ -3679,6 +4239,9 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    },
 	    memberRoles() {
 	      return humanresources_companyStructure_api.getMemberRoles(this.entityType);
+	    },
+	    isPanelCollapsed() {
+	      return this.isCollapsed || this.isHidden;
 	    }
 	  },
 	  watch: {
@@ -3698,6 +4261,12 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      },
 	      deep: true
 	    }
+	  },
+	  created() {
+	    this.subscribeOnEvents();
+	  },
+	  beforeUnmount() {
+	    this.unsubscribeFromEvents();
 	  },
 	  methods: {
 	    toggleCollapse() {
@@ -3720,25 +4289,46 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    },
 	    hideLoader() {
 	      this.needToShowLoader = false;
+	    },
+	    subscribeOnEvents() {
+	      this.events = {
+	        [events.HR_ENTITY_TOGGLE_ELEMENTS]: this.onToggleDetailPanel
+	      };
+	      Object.entries(this.events).forEach(([event, handle]) => {
+	        main_core_events.EventEmitter.subscribe(event, handle);
+	      });
+	    },
+	    unsubscribeFromEvents() {
+	      Object.entries(this.events).forEach(([event, handle]) => {
+	        main_core_events.EventEmitter.unsubscribe(event, handle);
+	      });
+	    },
+	    onToggleDetailPanel({
+	      data
+	    }) {
+	      const {
+	        shouldShowElements
+	      } = data;
+	      this.isHidden = !shouldShowElements;
 	    }
 	  },
 	  template: `
 		<div
-			:class="['humanresources-detail-panel', { '--collapsed': isCollapsed }]"
-			v-on="isCollapsed ? { click: toggleCollapse } : {}"
+			:class="['humanresources-detail-panel', { '--collapsed': isPanelCollapsed }]"
+			v-on="isPanelCollapsed ? { click: toggleCollapse } : {}"
 			data-id="hr-department-detail-panel__container"
 		>
 			<div
 				v-if="!isLoading"
 				class="humanresources-detail-panel-container"
-				:class="{ '--hide': needToShowLoader && !isCollapsed }"
+				:class="{ '--hide': needToShowLoader && !isPanelCollapsed }"
 			>
 				<div class="humanresources-detail-panel__head" 
-					 :class="{ '--team': isTeamEntity, '--collapsed': isCollapsed }"
+					 :class="{ '--team': isTeamEntity, '--collapsed': isPanelCollapsed }"
 					 :style="{ '--team-head-background': teamColor?.treeHeadBackground }"
 				>
 					<span
-						v-if="!isCollapsed"
+						v-if="!isPanelCollapsed"
 						v-hint
 						class="humanresources-detail-panel__title"
 					>
@@ -3752,27 +4342,27 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 					</DetailPanelCollapsedTitle>
 					<div class="humanresources-detail-panel__header_buttons_container">
 						<DetailPanelEditButton
-							v-if="!isCollapsed"
+							v-if="!isPanelCollapsed"
 							:entityId="focusedNode"
 							:entityType="entityType"
 						/>
 						<div
 							class="humanresources-detail-panel__collapse_button --icon"
 							@click="toggleCollapse"
-							:class="{ '--collapsed': isCollapsed }"
+							:class="{ '--collapsed': isPanelCollapsed }"
 							data-id="hr-department-detail-panel__collapse-button"
 						/>
 					</div>
 				</div>
-				<div class="humanresources-detail-panel__content" v-show="!isCollapsed">
+				<div class="humanresources-detail-panel__content" v-show="!isPanelCollapsed">
 					<DepartmentContent
 						@showDetailLoader="showLoader"
 						@hideDetailLoader="hideLoader"
-						:isCollapsed="isCollapsed"
+						:isCollapsed="isPanelCollapsed"
 					/>
 				</div>
 			</div>
-			<div v-if="needToShowLoader && !isCollapsed" class="humanresources-detail-panel-loader-container"/>
+			<div v-if="needToShowLoader && !isPanelCollapsed" class="humanresources-detail-panel-loader-container"/>
 		</div>
 	`
 	};
@@ -3903,11 +4493,19 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  async created() {
 	    const slider = BX.SidePanel.Instance.getTopSlider();
 	    slider == null ? void 0 : slider.showLoader();
-	    const [departments, currentDepartments, userId] = await Promise.all([chartAPI.getDepartmentsData(), chartAPI.getCurrentDepartments(), chartAPI.getUserId()]);
+	    const [departmentsData, currentDepartments, userId] = await Promise.all([chartAPI.getDepartmentsData(), chartAPI.getCurrentDepartments(), chartAPI.getUserId()]);
 	    slider == null ? void 0 : slider.closeLoader();
+	    const departments = departmentsData.structure;
+	    const structureMap = Object.entries(departmentsData.map).reduce((map, [id, value]) => {
+	      map.set(Number(id), {
+	        id: Number(id),
+	        ...value
+	      });
+	      return map;
+	    }, new Map());
 	    const parsedDepartments = chartAPI.createTreeDataStore(departments);
 	    const availableDepartments = currentDepartments.filter(item => parsedDepartments.has(item));
-	    OrgChartActions.applyData(parsedDepartments, availableDepartments, userId);
+	    OrgChartActions.applyData(parsedDepartments, availableDepartments, userId, structureMap);
 	    this.rootOffset = 100;
 	    this.transformCanvas();
 	    this.canvas.shown = true;

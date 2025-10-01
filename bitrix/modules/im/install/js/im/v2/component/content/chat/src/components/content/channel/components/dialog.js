@@ -40,7 +40,7 @@ export const ChannelDialog = {
 		},
 		isChatLayout(): boolean
 		{
-			return this.layout.name === Layout.chat.name;
+			return this.layout.name === Layout.chat;
 		},
 		channelComments(): number[]
 		{

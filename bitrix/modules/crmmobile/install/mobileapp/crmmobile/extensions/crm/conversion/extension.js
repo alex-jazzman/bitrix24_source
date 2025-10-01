@@ -8,6 +8,7 @@ jn.define('crm/conversion', (require, exports, module) => {
 	const { unique } = require('utils/array');
 	const { EventEmitter } = require('event-emitter');
 	const { get, isEmpty } = require('utils/object');
+	const { Random } = require('utils/random');
 	const { NotifyManager } = require('notify-manager');
 	const { TypeId, TypeName, Type } = require('crm/type');
 	const { BackdropWizard } = require('layout/ui/wizard/backdrop');

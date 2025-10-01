@@ -4,6 +4,7 @@
 jn.define('user-profile/api', (require, exports, module) => {
 	const { RunActionExecutor } = require('rest/run-action-executor');
 	const { TabType } = require('user-profile/const');
+	const { ajaxPublicErrorHandler } = require('error');
 
 	const cacheTtl = 86400;
 
@@ -13,7 +14,7 @@ jn.define('user-profile/api', (require, exports, module) => {
 	}) => {
 		const cacheId = `user-profile-tabs-${env.userId}-${ownerId}-${selectedTabId}`;
 
-		return new Promise((resolve) => {
+		return new Promise((resolve, reject) => {
 			new RunActionExecutor(
 				'mobile.Profile.getTabs',
 				{
@@ -27,7 +28,8 @@ jn.define('user-profile/api', (require, exports, module) => {
 				.setHandler(resolve)
 				.setCacheHandler(resolve)
 				.setSkipRequestIfCacheExists()
-				.call(true);
+				.call(true)
+				.catch(ajaxPublicErrorHandler(reject));
 		});
 	};
 
@@ -37,7 +39,7 @@ jn.define('user-profile/api', (require, exports, module) => {
 	}) => {
 		const cacheId = `user-profile-tab-content-${env.userId}-${ownerId}-${tabType}`;
 
-		return new Promise((resolve) => {
+		return new Promise((resolve, reject) => {
 			new RunActionExecutor(
 				'mobile.Profile.getTabData',
 				{
@@ -51,12 +53,13 @@ jn.define('user-profile/api', (require, exports, module) => {
 				.setHandler(resolve)
 				.setCacheHandler(resolve)
 				.setSkipRequestIfCacheExists()
-				.call(true);
+				.call(true)
+				.catch(ajaxPublicErrorHandler(reject));
 		});
 	};
 
 	const fetchNewProfileFeatureEnabled = () => {
-		return new Promise((resolve) => {
+		return new Promise((resolve, reject) => {
 			const handler = (response) => {
 				if (response.status === 'success')
 				{
@@ -77,7 +80,8 @@ jn.define('user-profile/api', (require, exports, module) => {
 				.setHandler(handler)
 				.setCacheHandler(handler)
 				.setSkipRequestIfCacheExists()
-				.call(true);
+				.call(true)
+				.catch(ajaxPublicErrorHandler(reject));
 		});
 	};
 

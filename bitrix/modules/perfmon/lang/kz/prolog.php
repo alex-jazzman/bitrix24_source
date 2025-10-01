@@ -1,2 +1,2 @@
 <?php
-$MESS["PERFMON_HIT_FIND"] = "Табу";
+$MESS['PERFMON_HIT_FIND'] = "Табу";

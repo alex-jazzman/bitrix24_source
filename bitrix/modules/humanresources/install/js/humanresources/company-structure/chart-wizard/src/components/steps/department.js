@@ -431,7 +431,7 @@ export const Department = {
 					<div class="chart-wizard__department_control-wrapper">
 						<div
 							class="ui-ctl ui-ctl-textbox"
-							:class="{ 'ui-ctl-warning': shouldErrorHighlight && departmentName === '' }"
+							:class="{ 'ui-ctl-warning': shouldErrorHighlight && departmentName?.trim() === '' }"
 						>
 							<input
 								v-model="departmentName"
@@ -456,7 +456,7 @@ export const Department = {
 						</div>
 					</div>
 					<div
-						v-if="shouldErrorHighlight && departmentName === ''"
+						v-if="shouldErrorHighlight && departmentName?.trim() === ''"
 						class="chart-wizard__department_item-error"
 					>
 						<div class="ui-icon-set --warning"></div>

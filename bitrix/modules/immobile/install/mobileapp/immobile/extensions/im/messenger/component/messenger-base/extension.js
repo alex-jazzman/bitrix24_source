@@ -42,7 +42,6 @@ jn.define('im/messenger/component/messenger-base', async (require, exports, modu
 		 * @property {Recent} recent - recent chat list controller
 		 * @property {Dialog} dialog - chat controller
 		 * @property {DialogSelector} dialogSelector - chat search controller
-		 * @property {ChatCreator} chatCreator - chat creation dialog
 		 * @property {RestManager} restManager - collects requests to initialize the messenger into a batch and executes it
 		 */
 		constructor()
@@ -95,7 +94,6 @@ jn.define('im/messenger/component/messenger-base', async (require, exports, modu
 			this.dialog = null;
 			/** @type {RecentSelector || DialogSelector} */
 			this.searchSelector = null;
-			this.chatCreator = null;
 			/** @type {DialogCreator || null} */
 			this.dialogCreator = null;
 			this.visibilityManager = VisibilityManager.getInstance();

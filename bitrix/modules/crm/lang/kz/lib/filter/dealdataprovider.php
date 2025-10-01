@@ -21,6 +21,7 @@ $MESS["CRM_DEAL_FILTER_RECURRING_ACTIVE"] = "Белсенді";
 $MESS["CRM_DEAL_FILTER_RECURRING_COUNTER_REPEAT"] = "Жасалған мәмілелер";
 $MESS["CRM_DEAL_FILTER_RECURRING_LIMIT_DATE"] = "Аяқталу күні";
 $MESS["CRM_DEAL_FILTER_RECURRING_NEXT_EXECUTION"] = "Келесі жасау күні";
+$MESS["CRM_DEAL_FILTER_REPEAT_SALE_SEGMENT_ID"] = "Қайта сату сценарийі";
 $MESS["CRM_DEAL_FILTER_ROBOT_DEBUGGER_MSGVER_1"] = "Ретке келтіру режиміндегі мәмілелер";
 $MESS["CRM_DEAL_FILTER_STAGE_ID_FROM_HISTORY"] = "Тарих бойынша саты";
 $MESS["CRM_DEAL_FILTER_STAGE_ID_FROM_SUPPOSED_HISTORY"] = "Тарих бойынша саты (болжамды ауысулармен)";

@@ -1,10 +1,10 @@
 import { Core } from 'im.v2.application.core';
-import { RecentService } from 'im.v2.provider.service.recent';
+import { LegacyRecentService } from 'im.v2.provider.service.recent';
 
 import type { JsonObject } from 'main.core';
 import type { ImModelRecentItem } from 'im.v2.model';
 
-export class CopilotRecentService extends RecentService
+export class CopilotRecentService extends LegacyRecentService
 {
 	getQueryParams(firstPage: boolean): JsonObject
 	{

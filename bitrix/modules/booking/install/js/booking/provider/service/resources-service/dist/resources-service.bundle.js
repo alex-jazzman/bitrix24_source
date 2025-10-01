@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Booking = this.BX.Booking || {};
 this.BX.Booking.Provider = this.BX.Booking.Provider || {};
-(function (exports,booking_core,booking_lib_apiClient,booking_const) {
+(function (exports,booking_core,booking_const,booking_lib_apiClient) {
 	'use strict';
 
 	function mapDtoToModel(resourceDto) {
@@ -17,9 +17,11 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	    })),
 	    counter: resourceDto.counter,
 	    isMain: resourceDto.isMain,
+	    isDeleted: resourceDto.isDeleted,
 	    createdBy: resourceDto.createdBy,
 	    createdAt: resourceDto.createdAt,
 	    updatedAt: resourceDto.updatedAt,
+	    deletedAt: resourceDto.deletedAt,
 	    // info
 	    isInfoNotificationOn: resourceDto.isInfoNotificationOn,
 	    templateTypeInfo: resourceDto.templateTypeInfo,
@@ -56,6 +58,7 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	    slotRanges: resource.slotRanges,
 	    counter: null,
 	    isMain: resource.isMain,
+	    isDeleted: resource.isDeleted,
 	    createdBy: null,
 	    createdAt: null,
 	    updatedAt: null,
@@ -139,29 +142,37 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	      return error;
 	    }
 	  }
-	  async delete(resourceId) {
+	  async delete(resourceId, withFutureBookings = false) {
 	    try {
-	      await new booking_lib_apiClient.ApiClient().post('Resource.delete', {
+	      const action = withFutureBookings ? 'Resource.forceDelete' : 'Resource.delete';
+	      const {
+	        removedBookingIds
+	      } = await new booking_lib_apiClient.ApiClient().post(action, {
 	        id: resourceId
 	      });
-	      await Promise.all([booking_core.Core.getStore().dispatch(`${booking_const.Model.Resources}/delete`, resourceId), booking_core.Core.getStore().dispatch(`${booking_const.Model.Favorites}/delete`, resourceId), booking_core.Core.getStore().dispatch(`${booking_const.Model.Interface}/deleteResourceId`, resourceId)]);
+	      const $store = booking_core.Core.getStore();
+	      const updateStoreActions = [$store.dispatch(`${booking_const.Model.Resources}/delete`, resourceId), $store.dispatch(`${booking_const.Model.Favorites}/delete`, resourceId), $store.dispatch(`${booking_const.Model.Interface}/deleteResourceId`, resourceId), $store.dispatch(`${booking_const.Model.Interface}/removeDeletingResource`, resourceId)];
+	      if (removedBookingIds) {
+	        updateStoreActions.push($store.dispatch(`${booking_const.Model.Bookings}/deleteMany`, removedBookingIds));
+	      }
+	      await Promise.all(updateStoreActions);
 	    } catch (error) {
 	      console.error('ResourceService: delete error', error);
 	    }
 	  }
-	  async hasBookings(resourceId) {
+	  async hasFutureBookings(resourceId) {
 	    try {
-	      return new booking_lib_apiClient.ApiClient().post('Resource.hasBookings', {
+	      return new booking_lib_apiClient.ApiClient().post('Resource.hasFutureBookings', {
 	        resourceId
 	      });
 	    } catch (error) {
-	      console.error('ResourceService: hasBookings error', error);
+	      console.error('ResourceService: hasFutureBookings error', error);
 	    }
 	    return Promise.resolve();
 	  }
 	}
 	function _updateResourcesFromFavorites2() {
-	  const isFilterMode = booking_core.Core.getStore().getters[`${booking_const.Model.Interface}/isFilterMode`];
+	  const isFilterMode = booking_core.Core.getStore().getters[`${booking_const.Model.Filter}/isFilterMode`];
 	  if (isFilterMode) {
 	    return;
 	  }
@@ -183,5 +194,5 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	exports.ResourceMappers = ResourceMappers;
 	exports.resourceService = resourceService;
 
-}((this.BX.Booking.Provider.Service = this.BX.Booking.Provider.Service || {}),BX.Booking,BX.Booking.Lib,BX.Booking.Const));
+}((this.BX.Booking.Provider.Service = this.BX.Booking.Provider.Service || {}),BX.Booking,BX.Booking.Const,BX.Booking.Lib));
 //# sourceMappingURL=resources-service.bundle.js.map

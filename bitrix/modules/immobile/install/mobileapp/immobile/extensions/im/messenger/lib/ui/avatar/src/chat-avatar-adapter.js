@@ -3,7 +3,7 @@
  */
 jn.define('im/messenger/lib/ui/avatar/src/chat-avatar-adapter', (require, exports, module) => {
 	const { mergeImmutable, isObjectLike } = require('utils/object');
-	const { ChatAvatar } = require('im/messenger/lib/element');
+	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 
 	/**
 	 * @class ChatAvatarAdapter

@@ -2,7 +2,7 @@
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
-	die;
+	die();
 }
 
 \Bitrix\Main\UI\Extension::load([
@@ -15,11 +15,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	'ui.banner-dispatcher',
 ]);
 
-\Bitrix\Main\Loader::includeModule('mobile');
-
 $options = $arParams['~OPTIONS'];
-$intent = $options['intent'];
-$link = \Bitrix\Mobile\Deeplink::getAuthLink($intent);
 
 ?>
 
@@ -33,7 +29,7 @@ $link = \Bitrix\Mobile\Deeplink::getAuthLink($intent);
 					right: 30,
 					bottom: 30,
 				},
-				qrContent: '<?= $link ?>',
+				qrContent: '<?= $options['link']?>',
 				title: '<?= CUtil::JSEscape($options['title']) ?>',
 				content: content,
 				analytics: {
@@ -52,4 +48,3 @@ $link = \Bitrix\Mobile\Deeplink::getAuthLink($intent);
 			});
 		});
 	</script>
-

@@ -7,7 +7,8 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { NavigationSelector } = require('im/messenger/controller/dialog-creator/navigation-selector');
-	const { ChatTitle, ChatAvatar } = require('im/messenger/lib/element');
+	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
+	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { AnalyticsService } = require('im/messenger/provider/services/analytics');

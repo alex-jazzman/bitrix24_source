@@ -33,7 +33,7 @@ export const CollabListContainer = {
 	{
 		onChatClick(dialogId: string): void
 		{
-			this.$emit('selectEntity', { layoutName: Layout.collab.name, entityId: dialogId });
+			this.$emit('selectEntity', { layoutName: Layout.collab, entityId: dialogId });
 		},
 		onCreateClick(): void
 		{

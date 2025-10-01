@@ -833,12 +833,9 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 
 				result.dialogues.push(dialogItem);
 
-				result.recent.push({
-					...item,
-					avatar: item.avatar.url,
-					color: item.avatar.color,
-					counter: dialogItem.counter,
-				});
+				result.recent.push(
+					this.prepareRecentItem(item),
+				);
 
 				result.counterState.push({
 					chatId: dialogItem.chatId ?? dialogItem.id ?? 0,
@@ -895,6 +892,27 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 
 				return users;
 			}
+		}
+
+		/**
+		 * @param {RecentItemData} recenItem
+		 * @return {RecentItemData}
+		 */
+		prepareRecentItem(recenItem)
+		{
+			const preparedRecentItem = {
+				...recenItem,
+				avatar: recenItem.avatar.url,
+				color: recenItem.avatar.color,
+				counter: recenItem.counter,
+			};
+
+			if (Type.isPlainObject(preparedRecentItem.message.file) && preparedRecentItem.message.file?.id)
+			{
+				preparedRecentItem.message.params = { withFile: [String(preparedRecentItem.message.file.id)] };
+			}
+
+			return preparedRecentItem;
 		}
 	}
 

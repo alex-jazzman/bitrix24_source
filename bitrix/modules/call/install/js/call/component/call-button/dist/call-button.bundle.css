@@ -98,39 +98,6 @@
 	background-repeat: no-repeat;
 }
 
-.menu-popup-item.bx-call-chat-header-call-button-menu__item {
-	height: auto;
-}
-
-.menu-popup-item.bx-call-chat-header-call-button-menu__item .menu-popup-item-text {
-	line-height: initial;
-}
-
-.bx-call-chat-header-call-button-menu__phone_container {
-	display: inline-flex;
-	flex-direction: column;
-	padding: 6px 0;
-}
-
-.bx-call-chat-header-call-button-menu__phone_title {
-	height: auto;
-	line-height: initial;
-	margin-bottom: 2px;
-	font: var(--ui-font-size-3xs, 11px) var(--ui-font-family-primary, var(--ui-font-family-system));
-	color: var(--call-chat-header-call-button__font-color_phone-title);
-}
-
-.bx-call-chat-header-call-button-menu__phone_number {
-	height: auto;
-	line-height: initial;
-	font: var(--ui-font-size-sm, 13px) var(--ui-font-family-primary, var(--ui-font-family-system));
-	color: var(--call-chat-header-call-button__font-color_phone-number);
-}
-
-.bx-call-chat-header-call-button-menu__zoom.--disabled {
-	opacity: 0.4;
-}
-
 .bx-call-chat-header-call-button__promo-container {
 	--call-chat-header-call-button__promo-borer-color: #B095DC;
 

@@ -30,10 +30,9 @@ jn.define('selector/providers/tree-providers/nested-department-provider/src/enti
 
 		prepareItemForDrawing(item, initialEntity)
 		{
-			const isAvatarSupported = AvatarClass.isNativeSupported();
 			const isEmployee = item.params?.entityType === ENTITY_TYPE.employee;
 
-			if (!item.id || !isAvatarSupported)
+			if (!item.id)
 			{
 				return this.getDefaultItemsStyles(item);
 			}

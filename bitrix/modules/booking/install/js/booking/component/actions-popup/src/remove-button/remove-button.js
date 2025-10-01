@@ -39,7 +39,7 @@ export const RemoveButton = {
 			v-bind="dataAttributes"
 			@click="$emit('remove')"
 		>
-			<Icon :name="iconSet.TRASH_BIN" color="var(--ui-color-palette-gray-60)"/>
+			<Icon :name="iconSet.TRASH_BIN"/>
 			<div v-if="showLabel" class="booking-actions-popup__item-overbooking-label">
 				{{ loc('BB_ACTIONS_POPUP_OVERBOOKING_REMOVE') }}
 			</div>

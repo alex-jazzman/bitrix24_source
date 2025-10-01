@@ -71,7 +71,6 @@ class CBPCrmChangeDealCategoryActivity extends CBPActivity
 
 		if ($resultError === Crm\Category\DealCategoryChangeError::NONE)
 		{
-			// Send Operations Analytics
 			$documentType = $this->getDocumentType();
 			\CCrmBizProcHelper::sendOperationsAnalytics(
 				Dictionary::EVENT_ENTITY_EDIT,

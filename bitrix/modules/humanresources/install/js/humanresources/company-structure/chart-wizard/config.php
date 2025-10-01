@@ -10,10 +10,11 @@ return [
 	'rel' => [
 		'ui.notification',
 		'ui.dialogs.messagebox',
+		'humanresources.company-structure.department-content',
 		'main.loader',
-		'ui.vue3.pinia',
 		'main.core.cache',
 		'ui.icon-set.crm',
+		'ui.vue3.pinia',
 		'ui.icon-set.api.core',
 		'ui.icon-set.api.vue',
 		'humanresources.company-structure.structure-components',

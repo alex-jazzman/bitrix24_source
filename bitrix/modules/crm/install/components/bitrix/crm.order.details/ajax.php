@@ -80,7 +80,7 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 
 		if (!empty($this->request['ORDER_PRODUCT_DATA']))
 		{
-			// json can be broken sometimes; see http://jabber.bx/view.php?id=133871
+			// json can be broken sometimes
 			$productData = Context::getCurrent()->getRequest()->getPostList()->getRaw('ORDER_PRODUCT_DATA');
 			try
 			{

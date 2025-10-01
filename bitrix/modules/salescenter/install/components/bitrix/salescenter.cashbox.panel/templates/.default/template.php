@@ -1,9 +1,18 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\SalesCenter\Integration\Bitrix24Manager;
+
+/**
+ * @global CMain $APPLICATION
+ * @var array $arResult
+ */
 
 $messages = Loc::loadLanguageFile(__FILE__);
 
@@ -27,9 +36,8 @@ Bitrix24Manager::getInstance()->addIntegrationRequestButtonToToolbar(
 		Bitrix24Manager::ANALYTICS_SENDER_PAGE => Bitrix24Manager::ANALYTICS_LABEL_SALESHUB_CASHBOX
 	]
 );
-?>
 
-<?php if ($arResult['isCashboxCountryConflict']): ?>
+if ($arResult['isCashboxCountryConflict']): ?>
 	<div class="ui-alert ui-alert-warning">
 		<span class="ui-alert-message">
 			<?= Loc::getMessage('SALESCENTER_CASHBOX_ZONE_CONFLICT'); ?>

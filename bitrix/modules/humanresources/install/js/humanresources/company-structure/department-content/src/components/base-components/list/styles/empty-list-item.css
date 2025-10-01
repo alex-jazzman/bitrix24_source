@@ -35,5 +35,4 @@
 	color: var(--ui-color-palette-black-base);
 	font-weight: var(--ui-font-weight-normal);
 	font-size: var(--ui-font-size-xs);
-	line-height: var(--ui-font-line-height-3xs);
 }

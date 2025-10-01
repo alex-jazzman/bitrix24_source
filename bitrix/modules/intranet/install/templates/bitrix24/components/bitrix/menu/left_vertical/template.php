@@ -1,4 +1,6 @@
 <?php
+
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
 use Bitrix\UI\Counter\Counter;
@@ -27,9 +29,12 @@ $arHiddenItemsCounters = array();
 $arAllItemsCounters = array();
 $mainPage = new \Bitrix\Intranet\Site\FirstPage\MainFirstPage();
 $siteUrl = htmlspecialcharsbx(SITE_DIR);
-
+$showAiAssistantWidget = ModuleManager::isModuleInstalled('aiassistant')
+	&& Option::get('aiassistant', 'marta_registration_enabled') === 'Y'
+;
 ?>
-<div class="menu-items-block menu-items-view-mode" id="menu-items-block">
+
+<div class="menu-items-block menu-items-view-mode <?= $showAiAssistantWidget ? '--with-ai' : '' ?>" id="menu-items-block">
 	<div class="menu-items-header">
 		<div class="menu-items-header__menu-swticher">
 			<div class="menu-switcher">
@@ -381,10 +386,12 @@ $siteUrl = htmlspecialcharsbx(SITE_DIR);
 	</div>
 </div>
 
-<?php if (ModuleManager::isModuleInstalled('aiassistant')): ?>
-	<?php
-	$APPLICATION->includeComponent("bitrix:aiassistant.widget", ".default", [], $this);
-	?>
+<?php if ($showAiAssistantWidget): ?>
+	<div class="menu-items-ai-assistant-stub menu-items-block__scope">
+		<?php
+			$APPLICATION->includeComponent("bitrix:aiassistant.widget", ".default", [], $this);
+		?>
+	</div>
 <?php endif; ?>
 
 <div class="menu-items-stub menu-items-block__scope"></div>

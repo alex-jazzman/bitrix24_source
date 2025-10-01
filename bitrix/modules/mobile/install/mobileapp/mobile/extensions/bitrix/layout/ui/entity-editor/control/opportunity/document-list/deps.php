@@ -3,6 +3,7 @@
 return [
 	'alert',
 	'apptheme',
+	'money',
 	'layout/ui/money',
 	'layout/ui/context-menu',
 	'layout/ui/context-menu/item',
@@ -11,4 +12,5 @@ return [
 	'notify',
 	'crm:multi-field-drawer',
 	'crm:type',
+	'utils/random',
 ];

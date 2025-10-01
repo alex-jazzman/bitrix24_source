@@ -15,7 +15,6 @@ import type {
 	Intersections,
 	MousePosition,
 	MoneyStatistics,
-	QuickFilter,
 	Occupancy,
 	DraggedDataTransfer,
 } from './types';
@@ -59,27 +58,21 @@ export class Interface extends BuilderModel
 			selectedDateTs: new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime(),
 			viewDateTs: new Date(today.getFullYear(), today.getMonth()).getTime(),
 			deletingBookings: {},
+			deletingResources: {},
 			deletingWaitListItemIds: {},
 			selectedCells: {},
 			hoveredCell: null,
 			busySlots: {},
 			disabledBusySlots: {},
 			resourcesIds: [],
-			isFilterMode: false,
+			pinnedResourceIds: [],
 			isIntersectionForAll: true,
-			filteredBookingsIds: [],
-			filteredMarks: [],
 			counterMarks: [],
 			freeMarks: [],
 			totalClients: this.getVariable('totalClients', 0),
 			totalNewClientsToday: this.getVariable('totalNewClientsToday', 0),
 			moneyStatistics: this.getVariable('moneyStatistics', null),
 			intersections: {},
-			quickFilter: {
-				hovered: {},
-				active: {},
-				ignoredBookingIds: {},
-			},
 			timezone: this.getVariable('timezone', Intl.DateTimeFormat().resolvedOptions().timeZone),
 			mousePosition: {
 				top: 0,
@@ -160,6 +153,8 @@ export class Interface extends BuilderModel
 			viewDateTs: (state, getters): number => state.viewDateTs - getters.offset,
 			/** @function interface/deletingBookings */
 			deletingBookings: (state): { [id: number]: number } => state.deletingBookings,
+			/** @function interface/deletingResources */
+			deletingResources: (state): { [id: number]: number } => state.deletingResources,
 			/** @function interface/deletingWaitListItems */
 			deletingWaitListItems: (state): { [id: number]: number } => state.deletingWaitListItemIds,
 			/** @function interface/selectedCells */
@@ -173,14 +168,14 @@ export class Interface extends BuilderModel
 			/** @function interface/resourcesIds */
 			resourcesIds: (state, getters, rootState, rootGetters): number[] => {
 				const extraResourcesIds = rootGetters[`${Model.Bookings}/getByDate`](state.selectedDateTs)
-					.filter((booking) => !getters.isFilterMode && booking.counter > 0)
+					.filter((booking) => !rootGetters[`${Model.Filter}/isFilterMode`] && booking.counter > 0)
 					.map((booking) => booking.resourcesIds[0]);
 
-				const resourcesIds = [...new Set([...state.resourcesIds, ...extraResourcesIds])];
+				const resourcesIds = [...new Set([...state.pinnedResourceIds, ...state.resourcesIds, ...extraResourcesIds])];
 
 				const excludeResources = new Set(
-					getters.getOccupancy(resourcesIds, Object.values(state.quickFilter.ignoredBookingIds))
-						.filter((occupancy: Occupancy) => Object.values(state.quickFilter.active).some((hour) => {
+					getters.getOccupancy(resourcesIds, Object.values(rootGetters[`${Model.Filter}/quickFilter`].ignoredBookingIds))
+						.filter((occupancy: Occupancy) => Object.values(rootGetters[`${Model.Filter}/quickFilter`].active).some((hour) => {
 							const fromTs = new Date(state.selectedDateTs).setHours(hour) - getters.offset;
 							const toTs = new Date(state.selectedDateTs).setHours(hour + 1) - getters.offset;
 
@@ -189,6 +184,8 @@ export class Interface extends BuilderModel
 						.flatMap((occupancy: Occupancy) => occupancy.resourcesIds),
 				);
 
+				Object.values(state.deletingResources).forEach((id) => excludeResources.add(Number(id)));
+
 				return resourcesIds.filter((id) => !excludeResources.has(id));
 			},
 			extraResourcesIds: (state, getters) => {
@@ -196,14 +193,8 @@ export class Interface extends BuilderModel
 
 				return getters.resourcesIds.filter((id) => !resourcesIds.includes(id));
 			},
-			/** @function interface/isFilterMode */
-			isFilterMode: (state): boolean => state.isFilterMode,
 			/** @function interface/isIntersectionForAll */
 			isIntersectionForAll: (state): boolean => state.isIntersectionForAll,
-			/** @function interface/filteredBookingsIds */
-			filteredBookingsIds: (state): number[] => state.filteredBookingsIds,
-			/** @function interface/filteredMarks */
-			filteredMarks: (state): string[] => state.filteredMarks,
 			/** @function interface/freeMarks */
 			freeMarks: (state): string[] => state.freeMarks,
 			/** @function interface/totalClients */
@@ -222,8 +213,6 @@ export class Interface extends BuilderModel
 			},
 			/** @function interface/intersections */
 			intersections: (state): Intersections => state.intersections,
-			/** @function interface/quickFilter */
-			quickFilter: (state): QuickFilter => state.quickFilter,
 			/** @function interface/timezone */
 			timezone: (state): string => state.timezone,
 			/** @function interface/offset */
@@ -318,6 +307,19 @@ export class Interface extends BuilderModel
 	// eslint-disable-next-line max-lines-per-function
 	getActions(): ActionTree<InterfaceModelState>
 	{
+		const createBatchableAction = (mutationName: string) => {
+			return (store, payload: number | number[]) => {
+				if (Type.isArray(payload))
+				{
+					payload.forEach((id) => store.commit(mutationName, id));
+				}
+				else
+				{
+					store.commit(mutationName, payload);
+				}
+			};
+		};
+
 		return {
 			/** @function interface/setEditingBookingId */
 			setEditingBookingId: (store, editingBookingId: number) => {
@@ -392,21 +394,17 @@ export class Interface extends BuilderModel
 				store.commit('setViewDateTs', viewDateTs);
 			},
 			/** @function interface/addDeletingBooking */
-			addDeletingBooking: (store, bookingId: number) => {
-				store.commit('addDeletingBooking', bookingId);
-			},
+			addDeletingBooking: createBatchableAction('addDeletingBooking'),
 			/** @function interface/removeDeletingBooking */
-			removeDeletingBooking: (store, bookingId: number) => {
-				store.commit('removeDeletingBooking', bookingId);
-			},
-			/** @function interfcae/addDeletingWaitListItemId */
-			addDeletingWaitListItemId: (store, waitListItemId: number | number[]) => {
-				store.commit('addDeletingWaitListItemId', waitListItemId);
-			},
+			removeDeletingBooking: createBatchableAction('removeDeletingBooking'),
+			/** @function interface/addDeletingResource */
+			addDeletingResource: createBatchableAction('addDeletingResource'),
+			/** @function interface/removeDeletingResource */
+			removeDeletingResource: createBatchableAction('removeDeletingResource'),
+			/** @function interface/addDeletingWaitListItemId */
+			addDeletingWaitListItemId: createBatchableAction('addDeletingWaitListItemId'),
 			/** @function interface/removeDeletingWaitListItemId */
-			removeDeletingWaitListItemId: (store, waitListItemId: number | number[]) => {
-				store.commit('removeDeletingWaitListItemId', waitListItemId);
-			},
+			removeDeletingWaitListItemId: createBatchableAction('removeDeletingWaitListItemId'),
 			/** @function interface/addSelectedCell */
 			addSelectedCell: (store, cell: CellDto) => {
 				store.commit('addSelectedCell', cell);
@@ -443,25 +441,16 @@ export class Interface extends BuilderModel
 			setResourcesIds: (store, resourcesIds: number[]) => {
 				store.commit('setResourcesIds', resourcesIds);
 			},
+			setPinnedResourceIds: ({ commit }, resourceIds: number[]): void => {
+				commit('setPinnedResourceIds', resourceIds);
+			},
 			/** @function interface/deleteResourceId */
 			deleteResourceId: (store, resourceId: number) => {
 				store.commit('deleteResourceId', resourceId);
 			},
-			/** @function interface/setFilterMode */
-			setFilterMode: (store, isFilterMode: boolean) => {
-				store.commit('setFilterMode', isFilterMode);
-			},
 			/** @function interface/setIntersectionMode */
 			setIntersectionMode: (store, isIntersectionForAll: boolean) => {
 				store.commit('setIntersectionMode', isIntersectionForAll);
-			},
-			/** @function interface/setFilteredBookingsIds */
-			setFilteredBookingsIds: (store, filteredBookingsIds: number[]) => {
-				store.commit('setFilteredBookingsIds', filteredBookingsIds);
-			},
-			/** @function interface/setFilteredMarks */
-			setFilteredMarks: (store, dates: number[]) => {
-				store.commit('setFilteredMarks', dates);
 			},
 			/** @function interface/setFreeMarks */
 			setFreeMarks: (store, dates: number[]) => {
@@ -485,28 +474,6 @@ export class Interface extends BuilderModel
 			/** @function interface/setIntersections */
 			setIntersections: (store, intersections: Intersections) => {
 				store.commit('setIntersections', intersections);
-			},
-			/** @function interface/hoverQuickFilter */
-			hoverQuickFilter: (store, hour: number) => {
-				store.commit('hoverQuickFilter', hour);
-			},
-			/** @function interface/fleeQuickFilter */
-			fleeQuickFilter: (store, hour: number) => {
-				store.commit('fleeQuickFilter', hour);
-			},
-			/** @function interface/activateQuickFilter */
-			activateQuickFilter: (store, hour: number) => {
-				store.commit('activateQuickFilter', hour);
-				store.commit('clearQuickFilterIgnoredBookingIds');
-			},
-			/** @function interface/deactivateQuickFilter */
-			deactivateQuickFilter: (store, hour: number) => {
-				store.commit('deactivateQuickFilter', hour);
-				store.commit('clearQuickFilterIgnoredBookingIds');
-			},
-			/** @function interface/addQuickFilterIgnoredBookingId */
-			addQuickFilterIgnoredBookingId: (store, bookingId: number) => {
-				store.commit('addQuickFilterIgnoredBookingId', bookingId);
 			},
 			/** @function interface/setMousePosition */
 			setMousePosition: (store, mousePosition: MousePosition) => {
@@ -613,29 +580,17 @@ export class Interface extends BuilderModel
 			removeDeletingBooking: (state, bookingId: number) => {
 				delete state.deletingBookings[bookingId];
 			},
-			addDeletingWaitListItemId: (state, waitListItemId: number | number[]) => {
-				if (Type.isArray(waitListItemId))
-				{
-					waitListItemId.forEach((id) => {
-						state.deletingWaitListItemIds[id] = id;
-					});
-				}
-				else
-				{
-					state.deletingWaitListItemIds[waitListItemId] = waitListItemId;
-				}
+			addDeletingResource: (state: InterfaceModelState, resourceId: number): void => {
+				state.deletingResources[resourceId] = resourceId;
 			},
-			removeDeletingWaitListItemId: (state, waitListItemId: number | number[]) => {
-				if (Type.isArray(waitListItemId))
-				{
-					waitListItemId.forEach((id) => {
-						delete state.deletingWaitListItemIds[id];
-					});
-				}
-				else
-				{
-					delete state.deletingWaitListItemIds[waitListItemId];
-				}
+			removeDeletingResource: (state: InterfaceModelState, resourceId: number): void => {
+				delete state.deletingResources[resourceId];
+			},
+			addDeletingWaitListItemId: (state, waitListItemId: number) => {
+				state.deletingWaitListItemIds[waitListItemId] = waitListItemId;
+			},
+			removeDeletingWaitListItemId: (state, waitListItemId: number) => {
+				delete state.deletingWaitListItemIds[waitListItemId];
 			},
 			addSelectedCell: (state, cell: CellDto) => {
 				state.selectedCells[cell.id] = cell;
@@ -665,20 +620,14 @@ export class Interface extends BuilderModel
 			setResourcesIds: (state, resourcesIds: number[]) => {
 				state.resourcesIds = resourcesIds.sort((a, b) => a - b);
 			},
+			setPinnedResourceIds: (state, resourceIds: number[]): void => {
+				state.pinnedResourceIds = resourceIds;
+			},
 			deleteResourceId: (state, resourceId: number) => {
 				state.resourcesIds = state.resourcesIds.filter((id: number) => id !== resourceId);
 			},
-			setFilterMode: (state, isFilterMode: boolean) => {
-				state.isFilterMode = isFilterMode;
-			},
 			setIntersectionMode: (state, isIntersectionForAll: boolean) => {
 				state.isIntersectionForAll = isIntersectionForAll;
-			},
-			setFilteredBookingsIds: (state, filteredBookingsIds: number[]) => {
-				state.filteredBookingsIds = [...filteredBookingsIds];
-			},
-			setFilteredMarks: (state, dates: number[]) => {
-				state.filteredMarks = dates;
 			},
 			setFreeMarks: (state, dates: number[]) => {
 				state.freeMarks = dates;
@@ -697,24 +646,6 @@ export class Interface extends BuilderModel
 			},
 			setIntersections: (state, intersections: Intersections) => {
 				state.intersections = intersections;
-			},
-			hoverQuickFilter: (state, hour: number) => {
-				state.quickFilter.hovered[hour] = hour;
-			},
-			fleeQuickFilter: (state, hour: number) => {
-				delete state.quickFilter.hovered[hour];
-			},
-			activateQuickFilter: (state, hour: number) => {
-				state.quickFilter.active[hour] = hour;
-			},
-			deactivateQuickFilter: (state, hour: number) => {
-				delete state.quickFilter.active[hour];
-			},
-			addQuickFilterIgnoredBookingId: (state, bookingId: number) => {
-				state.quickFilter.ignoredBookingIds[bookingId] = bookingId;
-			},
-			clearQuickFilterIgnoredBookingIds: (state) => {
-				state.quickFilter.ignoredBookingIds = {};
 			},
 			setMousePosition: (state, mousePosition: MousePosition) => {
 				state.mousePosition = mousePosition;

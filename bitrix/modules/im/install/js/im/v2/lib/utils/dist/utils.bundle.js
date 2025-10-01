@@ -267,9 +267,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    }).innerText;
 	  },
 	  convertSnakeToCamelCase(text) {
-	    return text.replace(/(_[a-z])/gi, $1 => {
+	    return text.replaceAll(/(_[a-z])/gi, $1 => {
 	      return $1.toUpperCase().replace('_', '');
 	    });
+	  },
+	  convertCamelToSnakeCase(text) {
+	    return text.replaceAll(/([A-Z])/g, match => `_${match.toLowerCase()}`);
 	  },
 	  escapeRegex(string) {
 	    return string.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');

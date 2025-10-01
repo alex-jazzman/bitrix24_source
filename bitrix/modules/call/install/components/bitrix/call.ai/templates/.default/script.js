@@ -3,7 +3,6 @@
 	BX.namespace("BX.Call.AI");
 
 	const Analytics = BX.Call.Lib?.Analytics;
-	const isNewFollowUpSliderEnabled = BX.Call.Util?.isNewFollowUpSliderEnabled();
 
 	BX.Call.AI.Tabs = {
 		callId: null,
@@ -210,8 +209,8 @@
 						isLoadingUsers: true,
 						callId,
 						usersData: [],
-						withBorder: !isNewFollowUpSliderEnabled,
-						withIcon: isNewFollowUpSliderEnabled,
+						withBorder: false,
+						withIcon: true,
 					};
 				},
 				created()
@@ -487,7 +486,7 @@
 		},
 		deleteFollowUp: function()
 		{
-			if (!BX.Vue3 || !isNewFollowUpSliderEnabled)
+			if (!BX.Vue3)
 			{
 				return;
 			}

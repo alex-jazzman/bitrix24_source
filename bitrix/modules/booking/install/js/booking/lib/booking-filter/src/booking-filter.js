@@ -8,7 +8,7 @@ const CounterDictionary = Object.freeze({
 	BookingUnconfirmed: 'booking_unconfirmed',
 });
 
-class BookingFilter
+export class BookingFilter
 {
 	prepareFilter(fields: BookingUIFilter, withinMonth: boolean = false): BookingListFilter
 	{

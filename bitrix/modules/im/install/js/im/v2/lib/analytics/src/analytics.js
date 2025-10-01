@@ -44,7 +44,7 @@ export class Analytics
 {
 	#excludedChats: Set<DialogId> = new Set();
 	#chatsWithTyping: Set<DialogId> = new Set();
-	#currentTab: string = Layout.chat.name;
+	#currentTab: string = Layout.chat;
 
 	chatCreate: ChatCreate = new ChatCreate();
 	chatEdit: ChatEdit = new ChatEdit();
@@ -82,28 +82,18 @@ export class Analytics
 		this.#excludedChats.add(dialogId);
 	}
 
-	onOpenMessenger()
-	{
-		sendData({
-			event: AnalyticsEvent.openMessenger,
-			tool: AnalyticsTool.im,
-			category: AnalyticsCategory.messenger,
-		});
-	}
-
 	onOpenTab(tabName: string)
 	{
-		const existingTabs = [
-			Layout.chat.name,
-			Layout.copilot.name,
-			Layout.collab.name,
-			Layout.channel.name,
-			Layout.notification.name,
-			Layout.settings.name,
-			Layout.openlines.name,
+		const trackedTabs = [
+			Layout.aiAssistant,
+			Layout.collab,
+			Layout.channel,
+			Layout.notification,
+			Layout.settings,
+			Layout.openlines,
 		];
 
-		if (!existingTabs.includes(tabName))
+		if (!trackedTabs.includes(tabName))
 		{
 			return;
 		}

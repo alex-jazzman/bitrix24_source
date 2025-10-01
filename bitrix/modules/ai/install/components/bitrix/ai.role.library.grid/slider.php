@@ -37,7 +37,7 @@ $APPLICATION->IncludeComponent(
 		'POPUP_COMPONENT_TEMPLATE_NAME' => '.default',
 		'POPUP_COMPONENT_PARAMS' => [],
 		"USE_UI_TOOLBAR" => "Y",
-		"CUSTOM_BACKGROUND_STYLE" => 'top left / cover no-repeat url(/bitrix/components/bitrix/ai.role.library/templates/.default/images/background.jpg)',
+		"CUSTOM_BACKGROUND_STYLE" => '#877cdd top left / cover no-repeat url(/bitrix/components/bitrix/ai.role.library.grid/templates/.default/images/background.jpg)',
 	)
 );
 

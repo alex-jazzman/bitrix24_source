@@ -6,13 +6,15 @@ import { Messenger } from 'im.public.iframe';
 import { EntityTypes, getColorCode, ChatTypes } from 'humanresources.company-structure.utils';
 import { mapState } from 'ui.vue3.pinia';
 import { ChatListItemActionButton } from './action-button';
-import { ResponsiveHint } from 'humanresources.company-structure.structure-components';
+import { Hint, ResponsiveHint } from 'humanresources.company-structure.structure-components';
 
 // @vue/component
 export const ChatListItem = {
 	name: 'chatListItem',
 
 	components: { ChatListItemActionButton, ResponsiveHint },
+
+	directives: { hint: Hint },
 
 	props: {
 		/** @type ChatOrChannelDetailed */
@@ -42,9 +44,16 @@ export const ChatListItem = {
 		{
 			return this.departments.get(this.chat.originalNodeId)?.name;
 		},
+		hiddenNodeName(): string
+		{
+			return this.structureMap.get(this.chat.originalNodeId)?.entityType === EntityTypes.team
+				? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_HIDDEN_TEAM')
+				: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_HIDDEN_DEPARTMENT')
+			;
+		},
 		indirectChatSubtitle(): string
 		{
-			if (this.departments.get(this.chat.originalNodeId)?.entityType === EntityTypes.team)
+			if (this.structureMap.get(this.chat.originalNodeId)?.entityType === EntityTypes.team)
 			{
 				return this.isChat
 					? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_CHAT_OF_TEAM')
@@ -68,7 +77,7 @@ export const ChatListItem = {
 			}
 
 			// parent node is a team so child node must be a team too
-			if (this.departments.get(this.chat.originalNodeId)?.entityType === EntityTypes.team)
+			if (this.structureMap.get(this.chat.originalNodeId)?.entityType === EntityTypes.team)
 			{
 				return this.isChat
 					? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_PARENT_TEAM_CHAT_HINT')
@@ -77,7 +86,7 @@ export const ChatListItem = {
 			}
 
 			// parent node is a department so we check if child node is a department too
-			if (this.departments.get(this.nodeId)?.entityType === EntityTypes.department)
+			if (this.structureMap.get(this.nodeId)?.entityType === EntityTypes.department)
 			{
 				return this.isChat
 					? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_PARENT_DEPARTMENT_CHAT_OF_DEPARTMENT_HINT')
@@ -91,7 +100,7 @@ export const ChatListItem = {
 				: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_PARENT_DEPARTMENT_CHANNEL_OF_TEAM_HINT')
 			;
 		},
-		...mapState(useChartStore, ['departments']),
+		...mapState(useChartStore, ['structureMap', 'departments']),
 	},
 
 	watch: {
@@ -184,14 +193,20 @@ export const ChatListItem = {
 				</div>
 				<div v-if="chat.originalNodeId && originalNodeName" class="hr-department-detail-content__tab-list_item-subtitle --chat-item">
 					{{ indirectChatSubtitle }}
-					<span class="hr-department-detail-content__tab-list_orig-node-name" @click="locateToOriginalDepartment">
+					<ResponsiveHint 
+						:content="originalNodeName" 
+						defaultClass="hr-department-detail-content__tab-list_orig-node-name"
+						:checkScrollWidth="true"
+						:width="null"
+						@click="locateToOriginalDepartment"
+					>
 						{{ originalNodeName }}
-					</span>
+					</ResponsiveHint>
 				</div>
 				<div v-else-if="chat.originalNodeId" class="hr-department-detail-content__tab-list_item-subtitle --chat-item">
 					{{ indirectChatSubtitle }}
 					<span class="hr-department-detail-content__tab-list_orig-node-hidden-name">
-						{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_HIDDEN_DEPARTMENT') }}
+						{{ hiddenNodeName }}
 					</span>
 				</div>
 				<div v-else class="hr-department-detail-content__tab-list_item-subtitle">

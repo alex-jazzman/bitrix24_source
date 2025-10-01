@@ -7,8 +7,8 @@ jn.define('crm/timeline/controllers/todo', (require, exports, module) => {
 	const { FileSelector } = require('layout/ui/file/selector');
 	const { NotifyManager } = require('notify-manager');
 	const { ResponsibleSelector } = require('crm/timeline/services/responsible-selector');
-	const { ProfileView } = require('user/profile');
 	const { AnalyticsEvent } = require('analytics');
+	const { UserProfile } = require('user-profile');
 
 	const SupportedActions = {
 		ADD_FILE: 'Activity:ToDo:AddFile',
@@ -104,25 +104,9 @@ jn.define('crm/timeline/controllers/todo', (require, exports, module) => {
 		{
 			const { userId } = actionParams || {};
 
-			if (!userId)
-			{
-				return;
-			}
-
-			const widgetParams = {
-				groupStyle: true,
-				backdrop: {
-					bounceEnable: false,
-					swipeAllowed: true,
-					showOnTop: true,
-					hideNavigationBar: false,
-					horizontalSwipeAllowed: false,
-				},
-			};
-
-			PageManager.openWidget('list', widgetParams)
-				.then((list) => ProfileView.open({ userId }, list))
-				.catch(console.error);
+			void UserProfile.open({
+				ownerId: userId,
+			});
 		}
 
 		/**

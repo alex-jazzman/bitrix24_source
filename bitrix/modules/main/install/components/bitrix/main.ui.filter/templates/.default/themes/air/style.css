@@ -422,6 +422,10 @@
 	border: var(--ui-border-width-thin) solid var(--ui-color-design-outline-focused-stroke);
 }
 
+.main-ui-filter-theme-air .main-ui-filter-field-container .main-ui-square-search-item:focus {
+	border: none;
+}
+
 .main-ui-filter-theme-air .main-ui-control.main-ui-select {
 	background-image: none;
 }

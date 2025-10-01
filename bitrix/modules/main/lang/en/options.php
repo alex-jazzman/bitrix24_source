@@ -242,6 +242,8 @@ $MESS["main_options_device_history"] = "Save user login and device history:";
 $MESS["main_options_device_history_days"] = "Days to keep login history:";
 $MESS["main_options_device_history_note"] = "You may need to configure PHP <a href=\"https://www.php.net/manual/en/function.get-browser.php\" target = \"_blank\">browscap</a> for better device detection. Use the latest ini file from <a href=\"http://browscap.org\" target=\"_blank\">Browser Capabilities Project</a>.";
 $MESS["main_options_device_history_notify"] = "Notify when new devices log into user account (<a href=\"#EMAIL_TEMPLATES_URL#\">email templates</a>):";
+$MESS["main_options_device_history_notify_im"] = "Send notifications to the chat (requires modules \"im\" and \"imbot\"):";
+$MESS["main_options_device_history_notify_only"] = "Notify selected users only:";
 $MESS["main_options_device_history_title"] = "Login and device history";
 $MESS["main_options_diplicates_max_size"] = "Don't try to detect duplicates if the file size is over (MB):";
 $MESS["main_options_email_register"] = "Register users using email:";

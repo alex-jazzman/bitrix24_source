@@ -140,7 +140,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      const {
 	        to
 	      } = event.getData();
-	      if (to.name === im_v2_const.Layout.createChat.name && to.entityId !== im_v2_const.ChatType.chat) {
+	      if (to.name === im_v2_const.Layout.createChat && to.entityId !== im_v2_const.ChatType.chat) {
 	        this.exitByChatTypeSwitch = true;
 	      }
 	    },
@@ -379,7 +379,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      const {
 	        to
 	      } = event.getData();
-	      if (to.name === im_v2_const.Layout.createChat.name && to.entityId !== im_v2_const.ChatType.videoconf) {
+	      if (to.name === im_v2_const.Layout.createChat && to.entityId !== im_v2_const.ChatType.videoconf) {
 	        this.exitByChatTypeSwitch = true;
 	      }
 	    },
@@ -632,7 +632,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      const {
 	        to
 	      } = event.getData();
-	      if (to.name === im_v2_const.Layout.createChat.name && to.entityId !== im_v2_const.ChatType.channel) {
+	      if (to.name === im_v2_const.Layout.createChat && to.entityId !== im_v2_const.ChatType.channel) {
 	        this.exitByChatTypeSwitch = true;
 	      }
 	    },
@@ -946,7 +946,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      const {
 	        to
 	      } = event.getData();
-	      if (to.name === im_v2_const.Layout.createChat.name && to.entityId !== im_v2_const.ChatType.collab) {
+	      if (to.name === im_v2_const.Layout.createChat && to.entityId !== im_v2_const.ChatType.collab) {
 	        this.exitByChatTypeSwitch = true;
 	      }
 	    },

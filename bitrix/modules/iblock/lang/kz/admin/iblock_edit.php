@@ -271,4 +271,4 @@ $MESS["IB_E_WF_TYPE_NONE"] = "жоқ";
 $MESS["IB_E_WF_TYPE_WORKFLOW"] = "құжат айналымы";
 $MESS["IB_E_WORKFLOW"] = "Құжат айналымына қатысады:";
 $MESS["IB_E_XML_ID"] = "Сыртқы код";
-$MESS["IB_E_YANDEX_EXPORT"] = "Яндекс.Тауарларға экспорттау";
+$MESS['IB_E_YANDEX_EXPORT'] = "Яндекс.Тауарларға экспорттау";

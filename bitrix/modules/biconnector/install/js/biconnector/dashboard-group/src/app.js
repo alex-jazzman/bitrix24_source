@@ -64,6 +64,11 @@ export const App: BitrixVueComponentProps = {
 		},
 	},
 	methods: {
+		handleDeletionConfirmationRequest(event): void
+		{
+			this.deletionWarning.dashboardId = event.dashboardId;
+			this.deletionWarning.popupShown = true;
+		},
 		updateRight(): void
 		{
 			EventEmitter.emit('BIConnector.GroupPopup:onGroupUpdated', {
@@ -91,34 +96,32 @@ export const App: BitrixVueComponentProps = {
 		},
 		onDashboardRemove(event): void
 		{
+			const dashboardId = event.dashboardId;
 			if (
 				this.isSaveEnabled
-				&& this.$store.getters.isNeedShowDeletionWarningPopup
+				&& this.$store.getters.shouldShowDeleteWarning(dashboardId)
 			)
 			{
-				this.deletionWarning.dashboardId = event.dashboardId;
+				this.deletionWarning.dashboardId = dashboardId;
 				this.deletionWarning.popupShown = true;
 			}
 			else
 			{
-				this.$store.commit('removeDashboard', event.dashboardId);
+				this.$store.commit('removeDashboard', dashboardId);
 				this.updateRight();
 			}
 		},
-		confirmDashboardDeletion(event): void
+		confirmDashboardDeletion(): void
 		{
 			this.$store.commit('removeDashboard', this.deletionWarning.dashboardId);
-			if (event.dontShow)
-			{
-				BX.userOptions.save('biconnector', 'deleteDashboardFromGroupPopup', 'needShow', false);
-				this.$store.commit('setShowDeletionWarningPopup', false);
-			}
+			this.$refs.dashboardSelector.deselect(this.deletionWarning.dashboardId);
 			this.deletionWarning.dashboardId = null;
 			this.deletionWarning.popupShown = false;
 			this.updateRight();
 		},
 		cancelDashboardDeletion(): void
 		{
+			this.$refs.dashboardSelector.resetDialog();
 			this.deletionWarning.dashboardId = null;
 			this.deletionWarning.popupShown = false;
 		},
@@ -188,7 +191,12 @@ export const App: BitrixVueComponentProps = {
 		</div>
 		<div class="group-button-panel">
 			<div class="group-button-wrapper">
-				<DashboardSelector :dashboards="dashboards" @on-dashboards-change="updateRight"/>
+				<DashboardSelector
+					:dashboards="dashboards"
+					@on-dashboards-change="updateRight"
+					@on-before-remove-confirmation="handleDeletionConfirmationRequest"
+					ref="dashboardSelector"
+				/>
 			</div>
 			<GroupScopeSelector @on-group-scope-add="onGroupScopeAdd" @on-group-scope-remove="onGroupScopeRemove" :can-edit="!isSystemGroup"/>
 		</div>
@@ -218,7 +226,7 @@ export const App: BitrixVueComponentProps = {
 				class="ui-btn ui-btn-light-border ui-btn-md ui-btn-round ui-btn-no-caps group-footer-button"
 				@click="closePopup"
 			>
-				{{ $Bitrix.Loc.getMessage('BI_GROUP_SAVE_CANCEL') }}
+				{{ $Bitrix.Loc.getMessage('BI_GROUP_SAVE_CANCEL_MSGVER_1') }}
 			</div>
 		</div>
 		<div class="group-loader" v-if="isLoading"></div>

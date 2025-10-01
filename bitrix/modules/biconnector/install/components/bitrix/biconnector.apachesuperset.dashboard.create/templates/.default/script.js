@@ -73,10 +73,12 @@
 	          data: saveData
 	        }
 	      }).then(function (response) {
+	        var _window$open;
 	        biconnector_apacheSupersetAnalytics.ApacheSupersetAnalytics.sendAnalytics('new', 'report_new', {
 	          type: 'custom',
 	          c_element: 'new_button'
 	        });
+	        (_window$open = window.open(response.data.dashboard.detailUrl, '_blank')) === null || _window$open === void 0 ? void 0 : _window$open.focus();
 	        parent.BX.Event.EventEmitter.emit('BIConnector.CreateForm:onDashboardCreated', {
 	          dashboard: response.data.dashboard
 	        });

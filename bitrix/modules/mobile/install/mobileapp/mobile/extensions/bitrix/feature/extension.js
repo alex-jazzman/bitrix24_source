@@ -27,46 +27,6 @@ jn.define('feature', (require, exports, module) => {
 			return isAndroid && minApiVersion(59, 'isSafeAreaSupportedOnAndroid');
 		}
 
-		static isOpenImageNonContextSupported()
-		{
-			if (isAndroid)
-			{
-				return true;
-			}
-
-			return minApiVersion(55, 'isOpenImageNonContextSupported');
-		}
-
-		static isFallbackUrlSupported()
-		{
-			return minApiVersion(55, 'isFallbackUrlSupported');
-		}
-
-		static isDidAdoptHeightByKeyboardEventSupported()
-		{
-			return minApiVersion(55, 'isDidAdoptHeightByKeyboardEventSupported');
-		}
-
-		static isSmartphoneContactsAPISupported()
-		{
-			return minApiVersion(55, 'isSmartphoneContactsAPISupported');
-		}
-
-		static isNativeAvatarSupported()
-		{
-			return typeof Avatar === 'function' && minApiVersion(56, 'isNativeAvatarSupported');
-		}
-
-		static isListViewMoveRowToSectionEndSupported()
-		{
-			return minApiVersion(56, 'isListViewMoveRowToSectionEndSupported');
-		}
-
-		static isMultiEmailInputSupported()
-		{
-			return minApiVersion(58, 'isMultiEmailInputSupported');
-		}
-
 		static isSelectorWidgetOnViewHiddenEventBugFixed()
 		{
 			if (isAndroid)
@@ -92,6 +52,7 @@ jn.define('feature', (require, exports, module) => {
 
 		static isNativeStoreSupported()
 		{
+			// api 59
 			return Boolean(require('native/store'));
 		}
 

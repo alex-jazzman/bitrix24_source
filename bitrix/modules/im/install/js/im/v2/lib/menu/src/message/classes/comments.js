@@ -1,31 +1,43 @@
 import { Loc } from 'main.core';
 import { EventEmitter } from 'main.core.events';
+import { Outline as OutlineIcons } from 'ui.icon-set.api.core';
 
 import { EventType } from 'im.v2.const';
 import { ChannelManager } from 'im.v2.lib.channel';
 
 import { MessageMenu } from './message-base';
 
-import type { MenuItem } from 'im.v2.lib.menu';
+import type { MenuItemOptions, MenuSectionOptions } from 'ui.system.menu';
+
+const MenuSectionCode = Object.freeze({
+	main: 'main',
+	select: 'select',
+	file: 'file',
+	open: 'open',
+	create: 'create',
+});
 
 export class CommentsMessageMenu extends MessageMenu
 {
-	getMenuItems(): MenuItem[]
+	getMenuItems(): MenuItemOptions[]
 	{
 		const message = this.context;
 		const contextDialogId = this.context.dialogId;
 		if (ChannelManager.isCommentsPostMessage(message, contextDialogId))
 		{
-			return [
+			const mainGroupItems = [
 				this.getCopyItem(),
 				this.getCopyFileItem(),
-				this.getDelimiter(),
-
+			];
+			const fileGroupItems = [
 				this.getDownloadFileItem(),
 				this.getSaveToDiskItem(),
-				this.getDelimiter(),
+			];
 
-				this.getOpenInChannelItem(),
+			return [
+				...this.groupItems(mainGroupItems, MenuSectionCode.main),
+				...this.groupItems(fileGroupItems, MenuSectionCode.file),
+				...this.groupItems([this.getOpenInChannelItem()], MenuSectionCode.open),
 			];
 		}
 
@@ -33,29 +45,54 @@ export class CommentsMessageMenu extends MessageMenu
 			this.getReplyItem(),
 			this.getCopyItem(),
 			this.getEditItem(),
+			this.getDownloadFileItem(),
 			...this.getAdditionalItems(),
 			this.getDeleteItem(),
 		];
 	}
 
-	getNestedItems(): MenuItem[]
+	getMenuGroups(): MenuSectionOptions[]
 	{
 		return [
-			this.getCopyFileItem(),
-			this.getFavoriteItem(),
-			this.getDownloadFileItem(),
-			this.getSaveToDiskItem(),
-			this.getDelimiter(),
-			this.getCreateTaskItem(),
-			this.getCreateMeetingItem(),
+			{ code: MenuSectionCode.main },
+			{ code: MenuSectionCode.file },
+			{ code: MenuSectionCode.open },
 		];
 	}
 
-	getOpenInChannelItem(): MenuItem
+	getNestedMenuGroups(): MenuSectionOptions[]
+	{
+		return [
+			{ code: MenuSectionCode.main },
+			{ code: MenuSectionCode.create },
+		];
+	}
+
+	getNestedItems(): MenuItemOptions[]
+	{
+		const mainGroupItems = [
+			this.getCopyFileItem(),
+			this.getFavoriteItem(),
+			this.getSaveToDiskItem(),
+		];
+
+		const createGroupItems = [
+			this.getCreateTaskItem(),
+			this.getCreateMeetingItem(),
+		];
+
+		return [
+			...this.groupItems(mainGroupItems, MenuSectionCode.main),
+			...this.groupItems(createGroupItems, MenuSectionCode.create),
+		];
+	}
+
+	getOpenInChannelItem(): MenuItemOptions
 	{
 		return {
-			text: Loc.getMessage('IM_LIB_MENU_COMMENTS_OPEN_IN_CHANNEL'),
-			onclick: () => {
+			title: Loc.getMessage('IM_LIB_MENU_COMMENTS_OPEN_IN_CHANNEL'),
+			icon: OutlineIcons.GO_TO_MESSAGE,
+			onClick: () => {
 				EventEmitter.emit(EventType.dialog.closeComments);
 
 				this.menuInstance.close();

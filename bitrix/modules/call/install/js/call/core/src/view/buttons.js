@@ -1,9 +1,33 @@
-import {Dom, Text, Type} from 'main.core';
-import Util from '../util';
-import {createSVG} from './svg';
-import {View} from './view';
-import { Utils } from 'im.v2.lib.utils';
+import { Dom, Text, Type } from 'main.core';
 
+import Util from '../util';
+import { createSVG } from './svg';
+import { View } from './view';
+
+
+
+const createCssTooltip = (options = {}) => {
+	const {
+		width: tooltipWidth = 'max-content',
+		position: tooltipPosition = 'top',
+		getText: getTooltipText = () => ''
+	} = options;
+
+	const hasTooltip = Boolean(Object.keys(options).length);
+	const tooltipText = getTooltipText();
+	const tooltipPositionClass = tooltipPosition === 'bottom' ? '-bottom' : '-top';
+	const tooltipClass = `bx-videocall-tooltip ${tooltipPositionClass}`;
+	const tooltipTextVarName = '--data-tooltip-text';
+
+	return {
+		hasTooltip,
+		tooltipClass: hasTooltip ? tooltipClass : '',
+		tooltipText,
+		tooltipStyle: `--data-tooltip-width:${tooltipWidth}; ${tooltipTextVarName}:'${tooltipText}'`,
+		getTooltipText,
+		tooltipTextVarName,
+	}
+}
 export class TitleButton
 {
 	constructor(config)
@@ -57,6 +81,8 @@ export class SimpleButton
 		this.backgroundClass = "bx-messenger-videocall-panel-icon-background" + (this.backgroundClass ? " " : "") + this.backgroundClass;
 		this.blocked = config.blocked === true;
 
+		this.tooltip = createCssTooltip(BX.prop.getObject(config, 'tooltip', {}));
+
 		this.text = BX.prop.getString(config, "text", "");
 		this.isActive = false;
 		this.counter = BX.prop.getInteger(config, "counter", 0);
@@ -70,8 +96,6 @@ export class SimpleButton
 
 		this.callbacks = {
 			onClick: BX.prop.getFunction(config, "onClick", BX.DoNothing),
-			onMouseOver: BX.prop.getFunction(config, "onMouseOver", BX.DoNothing),
-			onMouseOut: BX.prop.getFunction(config, "onMouseOut", BX.DoNothing),
 		}
 	};
 
@@ -92,8 +116,15 @@ export class SimpleButton
 			textNode = null;
 		}
 
+		const {
+			tooltipClass, tooltipStyle,
+		} = this.tooltip;
+
 		this.elements.root = Dom.create("div", {
-			props: {className: "bx-messenger-videocall-panel-item" + (this.blocked ? " blocked" : "")},
+			props: { className: `bx-messenger-videocall-panel-item ${tooltipClass}` + (this.blocked ? ' blocked' : '') },
+			attrs: {
+				style: tooltipStyle,
+			},
 			children: [
 				Dom.create("div", {
 					props: {className: this.backgroundClass},
@@ -127,8 +158,6 @@ export class SimpleButton
 			],
 			events: {
 				click: this.callbacks.onClick,
-				mouseover: this.callbacks.onMouseOver,
-				mouseout: this.callbacks.onMouseOut
 			}
 		});
 
@@ -159,6 +188,13 @@ export class SimpleButton
 		{
 			this.elements.root.classList.remove("active");
 		}
+
+		const {
+			hasTooltip, getTooltipText, tooltipTextVarName,
+		} = this.tooltip;
+
+		hasTooltip && this.elements.root.style.setProperty(tooltipTextVarName, `'${getTooltipText()}'`);
+
 	};
 
 	setBlocked(isBlocked)
@@ -226,6 +262,8 @@ export class DeviceButton
 		this.arrowHidden = (config.arrowHidden === true);
 		this.blocked = (config.blocked === true);
 
+		this.tooltip = createCssTooltip(BX.prop.getObject(config, 'tooltip', {}));
+
 		this.backgroundClass = BX.prop.getString(config, "backgroundClass", "");
 
 		this.showLevel = (config.showLevel === true);
@@ -247,8 +285,6 @@ export class DeviceButton
 			onClick: BX.prop.getFunction(config, "onClick", BX.DoNothing),
 			onArrowClick: BX.prop.getFunction(config, "onArrowClick", BX.DoNothing),
 			onSideIconClick: BX.prop.getFunction(config, "onSideIconClick", BX.DoNothing),
-			onMouseOver: BX.prop.getFunction(config, "onMouseOver", BX.DoNothing),
-			onMouseOut: BX.prop.getFunction(config, "onMouseOut", BX.DoNothing),
 		}
 	};
 
@@ -259,10 +295,18 @@ export class DeviceButton
 			return this.elements.root;
 		}
 
+		const {
+			tooltipClass, tooltipStyle,
+		} = this.tooltip;
+
+
 		this.elements.root = Dom.create("div", {
 			props: {
 				id: "bx-messenger-videocall-panel-item-with-arrow-" + this.class,
-				className: "bx-messenger-videocall-panel-item-with-arrow" + (this.blocked ? " blocked" : "")
+				className: `bx-messenger-videocall-panel-item-with-arrow ${tooltipClass}` + (this.blocked ? " blocked" : "")
+			},
+			attrs: {
+				style: tooltipStyle,
 			},
 			children: [
 				Dom.create("div", {
@@ -286,8 +330,6 @@ export class DeviceButton
 			],
 			events: {
 				click: this.callbacks.onClick,
-				mouseover: this.callbacks.onMouseOver,
-				mouseout: this.callbacks.onMouseOut
 			}
 		});
 
@@ -447,6 +489,12 @@ export class DeviceButton
 		{
 			this.elements.levelMeter.setAttribute('y', Math.round((1 - this.level) * 20));
 		}
+
+		const {
+			hasTooltip, getTooltipText, tooltipTextVarName,
+		} = this.tooltip;
+
+		hasTooltip && this.elements.root.style.setProperty(tooltipTextVarName, `'${getTooltipText()}'`);
 	};
 
 	disable()
@@ -468,6 +516,12 @@ export class DeviceButton
 		{
 			this.elements.levelMeter.setAttribute('y', Math.round((1 - this.level) * 20));
 		}
+
+		const {
+			hasTooltip, getTooltipText, tooltipTextVarName,
+		} = this.tooltip;
+
+		hasTooltip && this.elements.root.style.setProperty(tooltipTextVarName, `'${getTooltipText()}'`);
 	};
 
 	setBlocked(blocked)
@@ -600,11 +654,10 @@ export class TopButton
 			icon: null,
 			text: null,
 		};
+		this.tooltip = createCssTooltip(BX.prop.getObject(config, 'tooltip', {}));
 
 		this.callbacks = {
 			onClick: BX.prop.getFunction(config, 'onClick', BX.DoNothing),
-			onMouseOver: BX.prop.getFunction(config, 'onMouseOver', BX.DoNothing),
-			onMouseOut: BX.prop.getFunction(config, 'onMouseOut', BX.DoNothing),
 		};
 	}
 
@@ -615,8 +668,15 @@ export class TopButton
 			return this.elements.root;
 		}
 
+		const {
+			tooltipClass, tooltipStyle,
+		} = this.tooltip;
+
 		this.elements.root = Dom.create('div', {
-			props: { className: 'bx-messenger-videocall-top-button' },
+			props: { className: `bx-messenger-videocall-top-button ${tooltipClass}` },
+			attrs: {
+				style: tooltipStyle,
+			},
 			children: [
 				this.elements.icon = Dom.create('div', {
 					props: { className: `bx-messenger-videocall-top-button-icon ${this.iconClass}` },
@@ -628,8 +688,6 @@ export class TopButton
 			],
 			events: {
 				click: this.callbacks.onClick,
-				mouseover: this.callbacks.onMouseOver,
-				mouseout: this.callbacks.onMouseOut,
 			},
 		});
 
@@ -663,6 +721,7 @@ export class TopFramelessButton
 		this.iconClass = BX.prop.getString(config, 'iconClass', '');
 		this.textClass = BX.prop.getString(config, 'textClass', '');
 		this.text = BX.prop.getString(config, 'text', '');
+		this.tooltip = createCssTooltip(BX.prop.getObject(config, 'tooltip', {}));
 
 		this.elements = {
 			root: null,
@@ -670,8 +729,6 @@ export class TopFramelessButton
 
 		this.callbacks = {
 			onClick: BX.prop.getFunction(config, 'onClick', BX.DoNothing),
-			onMouseOver: BX.prop.getFunction(config, 'onMouseOver', BX.DoNothing),
-			onMouseOut: BX.prop.getFunction(config, 'onMouseOut', BX.DoNothing),
 		};
 	}
 
@@ -682,8 +739,15 @@ export class TopFramelessButton
 			return this.elements.root;
 		}
 
+		const {
+			tooltipClass, tooltipStyle,
+		} = this.tooltip;
+
 		this.elements.root = Dom.create('div', {
-			props: { className: 'bx-messenger-videocall-top-button-frameless' },
+			props: { className: `bx-messenger-videocall-top-button-frameless ${tooltipClass}` },
+			attrs: {
+				style: tooltipStyle,
+			},
 			children: [
 				Dom.create('div', {
 					props: { className: `bx-messenger-videocall-top-button-icon ${this.iconClass}` },
@@ -698,8 +762,6 @@ export class TopFramelessButton
 			],
 			events: {
 				click: this.callbacks.onClick,
-				mouseover: this.callbacks.onMouseOver,
-				mouseout: this.callbacks.onMouseOut,
 			},
 		});
 
@@ -900,6 +962,8 @@ export class RecordStatusButton
 
 		this.updateViewInterval = null;
 
+		this.tooltip = createCssTooltip(BX.prop.getObject(config, 'tooltip', {}));
+
 		this.elements = {
 			root: null,
 			timeText: null,
@@ -909,8 +973,6 @@ export class RecordStatusButton
 		this.callbacks = {
 			onPauseClick: BX.prop.getFunction(config, "onPauseClick", BX.DoNothing),
 			onStopClick: BX.prop.getFunction(config, "onStopClick", BX.DoNothing),
-			onMouseOver: BX.prop.getFunction(config, "onMouseOver", BX.DoNothing),
-			onMouseOut: BX.prop.getFunction(config, "onMouseOut", BX.DoNothing),
 		}
 	};
 
@@ -921,8 +983,15 @@ export class RecordStatusButton
 			return this.elements.root;
 		}
 
+		const {
+			tooltipStyle,
+		} = this.tooltip;
+
 		this.elements.root = Dom.create("div", {
-			props: {className: "bx-messenger-videocall-top-recordstatus record-status-" + this.recordState.state + " " + (this.recordState.userId == this.userId ? '' : 'record-user-viewer')},
+			props: { className: `bx-messenger-videocall-top-recordstatus record-status-` + this.recordState.state + ' ' + (this.recordState.userId == this.userId ? '' : 'record-user-viewer') },
+			attrs: {
+				style: tooltipStyle,
+			},
 			children: [
 				Dom.create("div", {
 					props: {className: "bx-messenger-videocall-top-recordstatus-status"},
@@ -961,10 +1030,6 @@ export class RecordStatusButton
 					]
 				}),
 			],
-			events: {
-				mouseover: this.callbacks.onMouseOver,
-				mouseout: this.callbacks.onMouseOut
-			}
 		});
 
 		return this.elements.root;
@@ -995,7 +1060,14 @@ export class RecordStatusButton
 
 		if (!this.elements.root.classList.contains("record-status-" + this.recordState.state))
 		{
-			this.elements.root.className = "bx-messenger-videocall-top-recordstatus record-status-" + this.recordState.state + ' ' + (this.recordState.userId == this.userId ? '' : 'record-user-viewer');
+			const {
+				tooltipClass,
+				hasTooltip, tooltipTextVarName, getTooltipText,
+			} = this.tooltip;
+
+			const tooltipText = getTooltipText();
+			hasTooltip && tooltipText && this.elements.root.style.setProperty(tooltipTextVarName, `'${tooltipText}'`);
+			this.elements.root.className = `${tooltipText && tooltipClass} bx-messenger-videocall-top-recordstatus record-status-` + this.recordState.state + ' ' + (this.recordState.userId == this.userId ? '' : 'record-user-viewer');
 		}
 	};
 

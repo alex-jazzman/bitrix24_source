@@ -40,7 +40,7 @@ export class DepartmentPermissionChecker extends BasePermissionChecker
 			return false;
 		}
 
-		const departments = useChartStore().departments;
+		const departments = useChartStore().structureMap;
 		if (action === PermissionActions.departmentDelete)
 		{
 			const rootId = [...departments.values()].find((department) => department.parentId === 0).id;

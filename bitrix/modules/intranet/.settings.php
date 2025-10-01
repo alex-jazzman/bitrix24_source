@@ -47,7 +47,9 @@ return [
 			'intranet.option.mobile_app' => [
 				'constructor' => function () {
 					return new \Bitrix\Intranet\Service\MobileAppSettings(
-						new \Bitrix\Intranet\Service\IntranetOption()
+						new \Bitrix\Intranet\Service\IntranetOption(),
+						\Bitrix\Intranet\CurrentUser::get(),
+						new \Bitrix\Intranet\Internal\Service\EntitySelectorCodeService(),
 					);
 				},
 			],

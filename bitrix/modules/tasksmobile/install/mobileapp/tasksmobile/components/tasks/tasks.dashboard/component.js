@@ -37,7 +37,7 @@
 		tasksUpserted,
 		tasksAdded,
 		selectByTaskIdOrGuid,
-		selectEntities,
+		selectTaskEntities,
 		selectIsCreating,
 		selectMarkedAsRemoved,
 		selectWithCreationError,
@@ -143,6 +143,8 @@
 			this.sorting = new TasksDashboardSorting({
 				type: TasksDashboardSorting.types.ACTIVITY,
 				view,
+				isProject: Boolean(projectId),
+				ownerId,
 			});
 
 			this.moreMenu = new TasksDashboardMoreMenu(
@@ -283,10 +285,14 @@
 
 		subscribe()
 		{
+			const context = {
+				ownerId: this.props.ownerId,
+			};
+
 			this.pull.subscribe();
-			this.unsubscribeCounterChangeObserver = observeCounterChange(store, this.onCounterChange);
-			this.unsubscribeTasksObserver = observeListChange(store, this.onVisibleTasksChange);
-			this.unsubscribeCreationErrorObserver = observeCreationError(store, this.onCreationErrorChange);
+			this.unsubscribeCounterChangeObserver = observeCounterChange(store, this.onCounterChange, context);
+			this.unsubscribeTasksObserver = observeListChange(store, this.onVisibleTasksChange, context);
+			this.unsubscribeCreationErrorObserver = observeCreationError(store, this.onCreationErrorChange, context);
 
 			if (this.isMyDashboard())
 			{
@@ -692,7 +698,12 @@
 
 			if (items.length > 0)
 			{
-				actions.push(isCache ? tasksAdded(items) : tasksUpserted(items));
+				const payload = {
+					tasks: items,
+					ownerId: this.props.ownerId,
+				};
+
+				actions.push(isCache ? tasksAdded(payload) : tasksUpserted(payload));
 			}
 
 			if (users.length > 0)
@@ -827,7 +838,7 @@
 
 		onItemClick(id, data, params)
 		{
-			const task = selectByTaskIdOrGuid(store.getState(), id);
+			const task = selectByTaskIdOrGuid(store.getState(), id, this.props.ownerId);
 			if (!task)
 			{
 				return;
@@ -850,6 +861,7 @@
 							c_element: this.getAnalyticsLabel().c_element ?? 'title_click',
 							c_sub_section: this.getAnalyticsLabel().c_sub_section ?? params.view?.toLowerCase(),
 						},
+						projectId: this.props.projectId,
 						view: this.state.view,
 						kanbanOwnerId: params.ownerId,
 					},
@@ -859,7 +871,7 @@
 
 		onItemLongClick(itemId, itemData, params)
 		{
-			const task = selectByTaskIdOrGuid(store.getState(), itemId);
+			const task = selectByTaskIdOrGuid(store.getState(), itemId, this.props.ownerId);
 			if (task.isCreationErrorExist)
 			{
 				return;
@@ -890,6 +902,8 @@
 				delete actions[ActionMenu.action.unpin];
 			}
 
+			const isCurrentUser = this.props.ownerId === this.props.currentUserId;
+
 			const actionMenu = new ActionMenu({
 				task,
 				actions: Object.keys(actions),
@@ -900,10 +914,13 @@
 					...this.getAnalyticsLabel(),
 					module: 'tasks',
 					currentView: this.state.view,
-					isCurrentUser: this.props.ownerId === this.props.currentUserId ? 'Y' : 'N',
+					isCurrentUser: isCurrentUser ? 'Y' : 'N',
 					isProject: Type.isNumber(this.props.projectId) ? 'Y' : 'N',
 					c_sub_section: this.getAnalyticsLabel()?.c_sub_section ?? this.state.view?.toLowerCase(),
 				},
+				projectId: this.props.projectId,
+				isCurrentUser,
+				ownerId: this.props.ownerId,
 			});
 			const target = this.currentView.getItemMenuViewRef(itemId);
 
@@ -955,6 +972,11 @@
 				}
 
 				taskCreateParameters.initialTaskData.deadline = deadline;
+			}
+
+			if (this.isSelectedView(Views.PLANNER))
+			{
+				taskCreateParameters.kanbanOwnerId = this.props.ownerId;
 			}
 
 			if (this.props.projectId > 0)
@@ -1235,7 +1257,7 @@
 				if (commands[command])
 				{
 					const taskId = (params.TASK_ID ?? params.taskId ?? params.entityXmlId ?? 0).toString();
-					const task = selectByTaskIdOrGuid(store.getState(), taskId);
+					const task = selectByTaskIdOrGuid(store.getState(), taskId, this.props.ownerId);
 
 					if (command === PullCommand.TASK_VIEW && !task?.newCommentsCount)
 					{
@@ -1331,6 +1353,7 @@
 				actions: {
 					loadItems: this.props.projectId === null ? 'tasksmobile.Task.getUserListTasks' : 'tasksmobile.Task.getProjectListTasks',
 				},
+				projectId: this.props.projectId,
 			}));
 		}
 
@@ -1381,7 +1404,7 @@
 				hideTitleLoader: this.hideTitleLoader,
 				ref: this.bindRef,
 				itemLayoutOptions: {
-					canBePinned: true,
+					canBePinned: this.props.currentUserId === Number(this.props.ownerId),
 					displayFields: this.state.displayFields ? this.state.displayFields[this.state.view] : {},
 				},
 				animationTypes: {
@@ -1408,12 +1431,16 @@
 			)
 			{
 				resultItems = [
-					...selectWithCreationError(store.getState()).sort(this.sorting.getSortItemsCallback()),
+					...selectWithCreationError(store.getState(), this.props.ownerId).sort(
+						this.sorting.getSortItemsCallback({
+							projectId: this.props.projectId,
+						}),
+					),
 					...resultItems,
 				];
 			}
 
-			const taskEntities = selectEntities(store.getState());
+			const taskEntities = selectTaskEntities(store.getState(), this.props.ownerId);
 
 			// filter marked as removed tasks
 			return resultItems.filter(({ id }) => {
@@ -1425,8 +1452,12 @@
 
 		onBeforeItemsRender(items, { allItemsLoaded })
 		{
-			const taskEntities = Object.values(selectEntities(store.getState()));
-			const pinnedItems = items.filter((item) => item.isPinned === true);
+			const taskEntities = Object.values(selectTaskEntities(store.getState(), this.props.ownerId));
+			const pinnedItems = items.filter((item) => (
+				this.props.projectId
+					? item.isPinnedInGroup === true
+					: item.isPinned === true
+			));
 			const lastPinnedIndex = pinnedItems.length - 1;
 			const lastIndex = items.length - 1;
 			const sortingField = this.sorting.getConvertedType();
@@ -1503,7 +1534,7 @@
 				return;
 			}
 
-			const task = selectByTaskIdOrGuid(store.getState(), item.id);
+			const task = selectByTaskIdOrGuid(store.getState(), item.id, this.props.ownerId);
 			if (!task.isCreationErrorExist)
 			{
 				this.increaseStageCounter(item);
@@ -1517,7 +1548,7 @@
 				return;
 			}
 
-			const task = selectByTaskIdOrGuid(store.getState(), item.id);
+			const task = selectByTaskIdOrGuid(store.getState(), item.id, this.props.ownerId);
 			if (
 				Type.isNil(task)
 				|| (!task.isCreationErrorExist && task.isRemoved === true)

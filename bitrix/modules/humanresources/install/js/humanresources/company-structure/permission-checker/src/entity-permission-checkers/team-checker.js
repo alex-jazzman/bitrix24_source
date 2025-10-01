@@ -49,8 +49,8 @@ export class TeamPermissionChecker extends BasePermissionChecker
 
 		if (permissionValue.TEAM === PermissionLevels.fullCompany)
 		{
-			const departments = useChartStore().departments;
-			const currentNode = departments.get(entityId);
+			const entities = useChartStore().structureMap;
+			const currentNode = entities.get(entityId);
 
 			if (
 				(action === PermissionActions.teamCreate || action === PermissionActions.teamEdit)
@@ -78,11 +78,11 @@ export class TeamPermissionChecker extends BasePermissionChecker
 			return false;
 		}
 
-		const nodes = useChartStore().departments;
+		const entities = useChartStore().structureMap;
 		const userEntities = useChartStore().currentDepartments;
 		const userTeams = new Set(
 			userEntities.filter((id) => {
-				const department = nodes.get(id);
+				const department = entities.get(id);
 
 				return department && department.entityType === EntityTypes.team;
 			}),
@@ -98,7 +98,7 @@ export class TeamPermissionChecker extends BasePermissionChecker
 			return false;
 		}
 
-		let currentDepartment = nodes.get(nodeId);
+		let currentDepartment = entities.get(nodeId);
 		while (currentDepartment)
 		{
 			if (currentDepartment.entityType === EntityTypes.department)
@@ -111,7 +111,7 @@ export class TeamPermissionChecker extends BasePermissionChecker
 				return true;
 			}
 
-			currentDepartment = nodes.get(currentDepartment.parentId);
+			currentDepartment = entities.get(currentDepartment.parentId);
 		}
 
 		return false;
@@ -124,11 +124,11 @@ export class TeamPermissionChecker extends BasePermissionChecker
 			return false;
 		}
 
-		const nodes = useChartStore().departments;
+		const entities = useChartStore().structureMap;
 		const userEntities = useChartStore().currentDepartments;
 		const userDepartments = new Set(
 			userEntities.filter((id) => {
-				const department = nodes.get(id);
+				const department = entities.get(id);
 
 				return department && department.entityType === EntityTypes.department;
 			}),
@@ -139,7 +139,7 @@ export class TeamPermissionChecker extends BasePermissionChecker
 			return true;
 		}
 
-		let currentDepartment = nodes.get(nodeId);
+		let currentDepartment = entities.get(nodeId);
 		while (currentDepartment)
 		{
 			if (userDepartments.has(currentDepartment.id))
@@ -157,7 +157,7 @@ export class TeamPermissionChecker extends BasePermissionChecker
 				return false;
 			}
 
-			currentDepartment = nodes.get(currentDepartment.parentId);
+			currentDepartment = entities.get(currentDepartment.parentId);
 		}
 
 		return false;

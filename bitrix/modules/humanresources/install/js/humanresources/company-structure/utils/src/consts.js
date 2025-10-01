@@ -4,7 +4,6 @@
 export const EntityTypes = Object.freeze({
 	department: 'DEPARTMENT',
 	team: 'TEAM',
-	company: 'COMPANY',
 });
 
 export const WizardApiEntityChangedDict: Record<string> = Object.freeze({

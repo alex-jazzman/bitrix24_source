@@ -19,8 +19,6 @@ class ControllerClient extends BaseSender
 		'eu' => 'https://videocalls-de.bitrix.info',
 		'us' => 'https://videocalls-us.bitrix.info',
 	];
-	private const REGION_CIS = ['ru', 'by', 'kz', 'am', 'az', 'ge', 'kg', 'uz'];
-	private const REGION_EU = ['de', 'eu', 'fr', 'it', 'pl', 'tr', 'uk'];
 
 	private array $httpClientParameters = [];
 
@@ -36,11 +34,11 @@ class ControllerClient extends BaseSender
 
 		if (empty($endpoint))
 		{
-			if (in_array($region, self::REGION_CIS, true))
+			if (in_array($region, Library::REGION_CIS, true))
 			{
 				$endpoint = self::SERVICE_MAP['ru'];
 			}
-			elseif (in_array($region, self::REGION_EU, true))
+			elseif (in_array($region, Library::REGION_EU, true))
 			{
 				$endpoint = self::SERVICE_MAP['eu'];
 			}
@@ -57,6 +55,19 @@ class ControllerClient extends BaseSender
 		return $endpoint;
 	}
 
+	/**
+	 * @return string
+	 */
+	protected function getClientServerName(): string
+	{
+		$publicUrl = Library::getPortalPublicUrl();
+		if (!empty($publicUrl))
+		{
+			return $publicUrl;
+		}
+
+		return parent::getClientServerName();
+	}
 
 	/**
 	 * Returns API endpoint for the service.
@@ -169,7 +180,6 @@ class ControllerClient extends BaseSender
 			'streamTimeout' => 10,
 		];
 
-		$action = 'callcontroller.InternalApi.startTrack';
 		if ($call instanceof ConferenceCall)
 		{
 			$data['callType'] = 'conference';
@@ -179,7 +189,7 @@ class ControllerClient extends BaseSender
 			$data['callType'] = 'plain';
 		}
 
-		return $this->performRequest($action, $data);
+		return $this->performRequest('callcontroller.InternalApi.startTrack', $data);
 	}
 
 	/**
@@ -199,7 +209,6 @@ class ControllerClient extends BaseSender
 			'streamTimeout' => 10,
 		];
 
-		$action = 'callcontroller.InternalApi.stopTrack';
 		if ($call instanceof ConferenceCall)
 		{
 			$data['callType'] = 'conference';
@@ -209,7 +218,7 @@ class ControllerClient extends BaseSender
 			$data['callType'] = 'plain';
 		}
 
-		return $this->performRequest($action, $data);
+		return $this->performRequest('callcontroller.InternalApi.stopTrack', $data);
 	}
 
 	/**
@@ -229,7 +238,6 @@ class ControllerClient extends BaseSender
 			'streamTimeout' => 10,
 		];
 
-		$action = 'callcontroller.InternalApi.destroyTrack';
 		if ($call instanceof ConferenceCall)
 		{
 			$data['callType'] = 'conference';
@@ -239,7 +247,7 @@ class ControllerClient extends BaseSender
 			$data['callType'] = 'plain';
 		}
 
-		return $this->performRequest($action, $data);
+		return $this->performRequest('callcontroller.InternalApi.destroyTrack', $data);
 	}
 
 	/**
@@ -279,9 +287,52 @@ class ControllerClient extends BaseSender
 			'streamTimeout' => 5,
 		];
 
-		$action = 'callcontroller.Settings.registerKey';
+		return $this->performRequest('callcontroller.Settings.registerKey', $data);
+	}
 
-		return $this->performRequest($action, $data);
+	/**
+	 * @see \Bitrix\CallController\Controller\Settings::getRegistrationDataAction
+	 * @return Result
+	 */
+	public function getRegistrationData(): Result
+	{
+		$this->httpClientParameters = [
+			'waitResponse' => true,
+			'socketTimeout' => 5,
+			'streamTimeout' => 5,
+		];
+
+		return $this->performRequest('callcontroller.Settings.getRegistrationData', []);
+	}
+
+	/**
+	 * @see \Bitrix\CallController\Controller\Settings::unregisterKeyAction
+	 * @return Result
+	 */
+	public function unregisterCallKey(): Result
+	{
+		$this->httpClientParameters = [
+			'waitResponse' => false,
+			'socketTimeout' => 5,
+			'streamTimeout' => 5,
+		];
+
+		return $this->performRequest('callcontroller.Settings.unregisterKey');
+	}
+
+	/**
+	 * @see \Bitrix\CallController\Controller\Settings::checkPublicUrlAction
+	 * @return Result
+	 */
+	public function checkPublicUrl(string $publicUrl): Result
+	{
+		$this->httpClientParameters = [
+			'waitResponse' => true,
+			'socketTimeout' => 10,
+			'streamTimeout' => 10,
+		];
+
+		return $this->performRequest('callcontroller.Settings.checkPublicUrl', ['publicUrl' => $publicUrl]);
 	}
 
 	public function getHttpClientParameters(): array

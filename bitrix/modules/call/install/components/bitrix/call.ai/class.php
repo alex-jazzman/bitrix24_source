@@ -34,14 +34,7 @@ class CallAiComponent extends \CBitrixComponent
 			$APPLICATION->SetTitle(Loc::getMessage('CALL_COMPONENT_COPILOT_DETAIL_V2', [
 				'#DATE#' => $this->arResult['CALL_DATE']
 			]));
-			if (\Bitrix\Call\Settings::isNewFollowUpSliderEnabled())
-			{
-				$this->includeComponentTemplate('template.v2');
-			}
-			else
-			{
-				$this->includeComponentTemplate();
-			}
+			$this->includeComponentTemplate('template.v2');
 		}
 	}
 

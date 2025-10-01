@@ -58,7 +58,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  watch: {
 	    layout: {
 	      handler(newLayout, prevLayout) {
-	        if (newLayout.name !== im_v2_const.Layout.openlines.name) {
+	        if (newLayout.name !== im_v2_const.Layout.openlines) {
 	          return;
 	        }
 	        if (this.dialogIdChangedFromFrame) {
@@ -106,7 +106,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      }
 	      this.dialogIdChangedFromFrame = true;
 	      void im_v2_lib_layout.LayoutManager.getInstance().setLayout({
-	        name: im_v2_const.Layout.openlines.name,
+	        name: im_v2_const.Layout.openlines,
 	        entityId: event.detail
 	      });
 	    },

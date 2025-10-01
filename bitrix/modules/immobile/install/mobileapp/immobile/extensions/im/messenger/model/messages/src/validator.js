@@ -126,7 +126,7 @@ jn.define('im/messenger/model/messages/validator', (require, exports, module) =>
 			result.files = fields.files;
 		}
 
-		if (Type.isPlainObject(fields.params))
+		if (Type.isPlainObject(fields.params) || Type.isArray(fields.params))
 		{
 			const { params, fileIds, attach, richLinkId, keyboard } = validateParams(fields.params);
 			result.params = params;

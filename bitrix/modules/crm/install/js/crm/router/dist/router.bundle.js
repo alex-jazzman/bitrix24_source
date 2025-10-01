@@ -213,6 +213,17 @@ this.BX = this.BX || {};
 	      isSharing
 	    }).show();
 	  }
+	  openRepeatSaleSegmentSlider(segmentId, readOnly = true, analytics = {}) {
+	    return Router.openSlider(`/crm/repeat-sale-segment/details/${segmentId}/`, {
+	      width: 922,
+	      cacheable: false,
+	      requestMethod: 'post',
+	      requestParams: {
+	        readOnly,
+	        analytics
+	      }
+	    });
+	  }
 	  closeSettingsMenu(event, item) {
 	    if (item && main_core.Type.isFunction(item.getMenuWindow)) {
 	      const window = item.getMenuWindow();

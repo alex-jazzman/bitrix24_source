@@ -1136,7 +1136,14 @@ this.BX = this.BX || {};
 	        if (command !== 'onOrderSave' || sliderJustClosed) {
 	          return;
 	        }
-	        reloadWidget();
+	        var orderId = false;
+	        var orderIds = _this15._orderIds();
+	        if (main_core.Type.isPlainObject(params) && main_core.Type.isPlainObject(params.FIELDS)) {
+	          orderId = parseInt(params.FIELDS.ID || 0, 10);
+	          if (orderIds.includes(orderId)) {
+	            reloadWidget();
+	          }
+	        }
 	      }, inCompatMode);
 	      main_core_events.EventEmitter.subscribe('onPullEvent-salescenter', function (command, params) {
 	        if (command !== 'onOrderPaymentViewed') {

@@ -19,10 +19,12 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	var _prepareFields = /*#__PURE__*/new WeakSet();
 	var _prepareBaseFields = /*#__PURE__*/new WeakSet();
 	var _prepareTasksFields = /*#__PURE__*/new WeakSet();
+	var _prepareParams = /*#__PURE__*/new WeakSet();
 	var _getOwnerField = /*#__PURE__*/new WeakSet();
 	var _getModeratorsField = /*#__PURE__*/new WeakSet();
 	var _getShowHistoryField = /*#__PURE__*/new WeakSet();
 	var _getWhoCanInviteField = /*#__PURE__*/new WeakSet();
+	var _getAllowGuestsInvitationField = /*#__PURE__*/new WeakSet();
 	var _getManageMessagesField = /*#__PURE__*/new WeakSet();
 	var _getTasksViewUsersField = /*#__PURE__*/new WeakSet();
 	var _getTasksSortTasksField = /*#__PURE__*/new WeakSet();
@@ -45,10 +47,12 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _getTasksSortTasksField);
 	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _getTasksViewUsersField);
 	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _getManageMessagesField);
+	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _getAllowGuestsInvitationField);
 	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _getWhoCanInviteField);
 	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _getShowHistoryField);
 	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _getModeratorsField);
 	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _getOwnerField);
+	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _prepareParams);
 	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _prepareTasksFields);
 	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _prepareBaseFields);
 	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _prepareFields);
@@ -91,7 +95,8 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	        options: main_core.Type.isPlainObject(data.options) ? data.options : {},
 	        permissionsLabels: main_core.Type.isPlainObject(data.permissionsLabels) ? data.permissionsLabels : {},
 	        rightsPermissionsLabels: main_core.Type.isPlainObject(data.rightsPermissionsLabels) ? data.rightsPermissionsLabels : {},
-	        optionsLabels: main_core.Type.isPlainObject(data.optionsLabels) ? data.optionsLabels : {}
+	        optionsLabels: main_core.Type.isPlainObject(data.optionsLabels) ? data.optionsLabels : {},
+	        isAllowedInviteCollabers: main_core.Type.isBoolean(data.isAllowedInviteCollabers) ? data.isAllowedInviteCollabers : false
 	      };
 	    }
 	  }, {
@@ -100,7 +105,7 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	      var _this2 = this;
 	      var uiStyles = 'ui-sidepanel-layout-content ui-sidepanel-layout-content-margin';
 	      _classPrivateMethodGet(this, _prepareFields, _prepareFields2).call(this, formData);
-	      var _ref = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div ref=\"content\" class=\"sn-collab__access-right-side-panel ui-sidepanel-layout\">\n\t\t\t\t<div class=\"ui-sidepanel-layout-header\">\n\t\t\t\t\t<div class=\"ui-sidepanel-layout-title\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<form ref=\"form\" class=\"", " sn-collab__access-right-form\">\n\t\t\t\t\t<div class=\"sn-collab__access-right-form-box\">\n\t\t\t\t\t\t<div class=\"sn-collab__access-right-form-box-label\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"sn-collab__access-right-form-box --selectors\">\n\t\t\t\t\t\t<div class=\"sn-collab__access-right-form-box-label\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</form>\n\t\t\t\t<div class=\"ui-sidepanel-layout-footer-anchor\"></div>\n\t\t\t\t<div class=\"ui-sidepanel-layout-footer\">\n\t\t\t\t<div class=\"ui-sidepanel-layout-buttons\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('SN_COLLAB_ACCESS_RIGHTS'), uiStyles, main_core.Loc.getMessage('SN_COLLAB_ACCESS_RIGHTS_MANAGEMENT_LABEL_MSGVER_1'), babelHelpers.classPrivateFieldGet(this, _layout).ownerField.render(), babelHelpers.classPrivateFieldGet(this, _layout).moderatorsField.render(), babelHelpers.classPrivateFieldGet(this, _layout).showHistory.render(), babelHelpers.classPrivateFieldGet(this, _layout).whoCanInvite.render(), babelHelpers.classPrivateFieldGet(this, _layout).manageMessages.render(), main_core.Loc.getMessage('SN_COLLAB_ACCESS_RIGHTS_TASKS_LABEL'), babelHelpers.classPrivateFieldGet(this, _layout).tasksViewUsersField.render(), babelHelpers.classPrivateFieldGet(this, _layout).tasksSortTasksField.render(), babelHelpers.classPrivateFieldGet(this, _layout).tasksCreateTasksField.render(), babelHelpers.classPrivateFieldGet(this, _layout).tasksEditTasksField.render(), babelHelpers.classPrivateFieldGet(this, _layout).tasksDeleteTasksField.render(), _classPrivateMethodGet(this, _renderButtons, _renderButtons2).call(this, formData)),
+	      var _ref = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div ref=\"content\" class=\"sn-collab__access-right-side-panel ui-sidepanel-layout\">\n\t\t\t\t<div class=\"ui-sidepanel-layout-header\">\n\t\t\t\t\t<div class=\"ui-sidepanel-layout-title\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<form ref=\"form\" class=\"", " sn-collab__access-right-form\">\n\t\t\t\t\t<div class=\"sn-collab__access-right-form-box\">\n\t\t\t\t\t\t<div class=\"sn-collab__access-right-form-box-label\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"sn-collab__access-right-form-box --selectors\">\n\t\t\t\t\t\t<div class=\"sn-collab__access-right-form-box-label\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</form>\n\t\t\t\t<div class=\"ui-sidepanel-layout-footer-anchor\"></div>\n\t\t\t\t<div class=\"ui-sidepanel-layout-footer\">\n\t\t\t\t<div class=\"ui-sidepanel-layout-buttons\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('SN_COLLAB_ACCESS_RIGHTS'), uiStyles, main_core.Loc.getMessage('SN_COLLAB_ACCESS_RIGHTS_MANAGEMENT_LABEL_MSGVER_1'), babelHelpers.classPrivateFieldGet(this, _layout).ownerField.render(), babelHelpers.classPrivateFieldGet(this, _layout).moderatorsField.render(), babelHelpers.classPrivateFieldGet(this, _layout).showHistory.render(), babelHelpers.classPrivateFieldGet(this, _layout).whoCanInvite.render(), babelHelpers.classPrivateFieldGet(this, _layout).allowGuestsInvitation.render(), babelHelpers.classPrivateFieldGet(this, _layout).manageMessages.render(), main_core.Loc.getMessage('SN_COLLAB_ACCESS_RIGHTS_TASKS_LABEL'), babelHelpers.classPrivateFieldGet(this, _layout).tasksViewUsersField.render(), babelHelpers.classPrivateFieldGet(this, _layout).tasksSortTasksField.render(), babelHelpers.classPrivateFieldGet(this, _layout).tasksCreateTasksField.render(), babelHelpers.classPrivateFieldGet(this, _layout).tasksEditTasksField.render(), babelHelpers.classPrivateFieldGet(this, _layout).tasksDeleteTasksField.render(), _classPrivateMethodGet(this, _renderButtons, _renderButtons2).call(this, formData)),
 	        content = _ref.content,
 	        form = _ref.form;
 	      main_core.Event.bind(form, 'change', function () {
@@ -191,7 +196,8 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	    options: {
 	      showHistory: babelHelpers.classPrivateFieldGet(this, _layout).showHistory.getValue(),
 	      manageMessages: babelHelpers.classPrivateFieldGet(this, _layout).manageMessages.getValue(),
-	      whoCanInvite: babelHelpers.classPrivateFieldGet(this, _layout).whoCanInvite.getValue()
+	      whoCanInvite: babelHelpers.classPrivateFieldGet(this, _layout).whoCanInvite.getValue(),
+	      allowGuestsInvitation: babelHelpers.classPrivateFieldGet(this, _layout).allowGuestsInvitation.getValue()
 	    },
 	    permissions: {
 	      tasks: {
@@ -205,16 +211,18 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	  };
 	}
 	function _prepareFields2(formData) {
+	  _classPrivateMethodGet(this, _prepareParams, _prepareParams2).call(this, formData);
 	  _classPrivateMethodGet(this, _prepareBaseFields, _prepareBaseFields2).call(this, formData);
 	  _classPrivateMethodGet(this, _prepareTasksFields, _prepareTasksFields2).call(this, formData);
 	}
 	function _prepareBaseFields2(formData) {
-	  var _formData$options, _formData$options2, _formData$options3;
+	  var _formData$options, _formData$options2, _formData$options3, _formData$options4;
 	  babelHelpers.classPrivateFieldGet(this, _layout).ownerField = _classPrivateMethodGet(this, _getOwnerField, _getOwnerField2).call(this, formData.ownerId);
 	  babelHelpers.classPrivateFieldGet(this, _layout).moderatorsField = _classPrivateMethodGet(this, _getModeratorsField, _getModeratorsField2).call(this, formData.moderators);
 	  babelHelpers.classPrivateFieldGet(this, _layout).showHistory = _classPrivateMethodGet(this, _getShowHistoryField, _getShowHistoryField2).call(this, formData.optionsLabels, (_formData$options = formData.options) === null || _formData$options === void 0 ? void 0 : _formData$options.showHistory);
 	  babelHelpers.classPrivateFieldGet(this, _layout).whoCanInvite = _classPrivateMethodGet(this, _getWhoCanInviteField, _getWhoCanInviteField2).call(this, formData.permissionsLabels, (_formData$options2 = formData.options) === null || _formData$options2 === void 0 ? void 0 : _formData$options2.whoCanInvite);
-	  babelHelpers.classPrivateFieldGet(this, _layout).manageMessages = _classPrivateMethodGet(this, _getManageMessagesField, _getManageMessagesField2).call(this, formData.permissionsLabels, (_formData$options3 = formData.options) === null || _formData$options3 === void 0 ? void 0 : _formData$options3.manageMessages);
+	  babelHelpers.classPrivateFieldGet(this, _layout).allowGuestsInvitation = _classPrivateMethodGet(this, _getAllowGuestsInvitationField, _getAllowGuestsInvitationField2).call(this, formData.optionsLabels, (_formData$options3 = formData.options) === null || _formData$options3 === void 0 ? void 0 : _formData$options3.allowGuestsInvitation);
+	  babelHelpers.classPrivateFieldGet(this, _layout).manageMessages = _classPrivateMethodGet(this, _getManageMessagesField, _getManageMessagesField2).call(this, formData.permissionsLabels, (_formData$options4 = formData.options) === null || _formData$options4 === void 0 ? void 0 : _formData$options4.manageMessages);
 	}
 	function _prepareTasksFields2(formData) {
 	  var _formData$permissions;
@@ -224,6 +232,9 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	  babelHelpers.classPrivateFieldGet(this, _layout).tasksCreateTasksField = _classPrivateMethodGet(this, _getTasksCreateTasksField, _getTasksCreateTasksField2).call(this, formData.rightsPermissionsLabels, tasks === null || tasks === void 0 ? void 0 : tasks.create_tasks);
 	  babelHelpers.classPrivateFieldGet(this, _layout).tasksEditTasksField = _classPrivateMethodGet(this, _getTasksEditTasksField, _getTasksEditTasksField2).call(this, formData.rightsPermissionsLabels, tasks === null || tasks === void 0 ? void 0 : tasks.edit_tasks);
 	  babelHelpers.classPrivateFieldGet(this, _layout).tasksDeleteTasksField = _classPrivateMethodGet(this, _getTasksDeleteTasksField, _getTasksDeleteTasksField2).call(this, formData.rightsPermissionsLabels, tasks === null || tasks === void 0 ? void 0 : tasks.delete_tasks);
+	}
+	function _prepareParams2(formData) {
+	  babelHelpers.classPrivateFieldGet(this, _params).isAllowedInviteCollabers = formData.isAllowedInviteCollabers;
 	}
 	function _getOwnerField2(ownerId) {
 	  var label = _classPrivateMethodGet(this, _getFieldLabel, _getFieldLabel2).call(this, 'OwnerHint', main_core.Loc.getMessage('SN_COLLAB_ACCESS_RIGHTS_OWNER_LABEL'), main_core.Loc.getMessage('SN_COLLAB_ACCESS_RIGHTS_OWNER_LABEL_HINT'));
@@ -256,6 +267,12 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	function _getWhoCanInviteField2(options, selectedValue) {
 	  var label = _classPrivateMethodGet(this, _getFieldLabel, _getFieldLabel2).call(this, 'InitiateHint', main_core.Loc.getMessage('SN_COLLAB_ACCESS_RIGHTS_INITIATE_LABEL'), main_core.Loc.getMessage('SN_COLLAB_ACCESS_RIGHTS_INITIATE_LABEL_HINT'));
 	  return _classPrivateMethodGet(this, _getSelector, _getSelector2).call(this, 'whoCanInvite', label, options, selectedValue);
+	}
+	function _getAllowGuestsInvitationField2(options, selectedValue) {
+	  // is collabers invitation enabled at the portal level
+	  var isFieldDisabled = !babelHelpers.classPrivateFieldGet(this, _params).isAllowedInviteCollabers;
+	  var label = _classPrivateMethodGet(this, _getFieldLabel, _getFieldLabel2).call(this, 'AllowGuestsInvitationHint', main_core.Loc.getMessage('SN_COLLAB_ACCESS_RIGHTS_ALLOW_GUESTS_INVITATION_LABEL'));
+	  return _classPrivateMethodGet(this, _getSelector, _getSelector2).call(this, 'allowGuestsInvitation', label, options, selectedValue, isFieldDisabled);
 	}
 	function _getManageMessagesField2(options, selectedValue) {
 	  var label = _classPrivateMethodGet(this, _getFieldLabel, _getFieldLabel2).call(this, 'ChatHint', main_core.Loc.getMessage('SN_COLLAB_ACCESS_RIGHTS_CHAT_LABEL'), main_core.Loc.getMessage('SN_COLLAB_ACCESS_RIGHTS_CHAT_LABEL_HINT'));
@@ -290,6 +307,7 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	}
 	function _getSelector2(id, label, options) {
 	  var selectedValue = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 'K';
+	  var isFieldDisabled = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : false;
 	  var items = [];
 	  Object.entries(options).forEach(function (_ref3) {
 	    var _ref4 = babelHelpers.slicedToArray(_ref3, 2),
@@ -305,6 +323,7 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 	    id: "sn-collab-form-field-".concat(id),
 	    label: label,
 	    items: items,
+	    isFieldDisabled: isFieldDisabled,
 	    current: selectedValue
 	  });
 	}

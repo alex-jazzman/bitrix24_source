@@ -68,18 +68,11 @@ class ShopGroupAssistant
 			return false;
 		}
 
-		//$groupId = \CGroup::GetIDByCode($groupCode);
-		$group = GroupTable::getRow([
-			'select' => ['ID'],
-			'filter' => ['=STRING_ID' => $groupCode],
-			'cache' => ['ttl' => 86400],
-		]);
-
-		if (!$group)
+		$groupId = \CGroup::GetIDByCode($groupCode);
+		if (!$groupId)
 		{
 			return false;
 		}
-		$groupId = (int)$group['ID'];
 
 		\CUser::appendUserGroup($userId, [$groupId]);
 

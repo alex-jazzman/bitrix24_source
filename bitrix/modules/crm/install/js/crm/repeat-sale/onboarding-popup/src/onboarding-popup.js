@@ -155,7 +155,7 @@ export class OnboardingPopup
 		const region = Extension.getSettings('crm.repeat-sale.onboarding-popup').get('region');
 
 		let name = 'how-it-work-en';
-		if (['kz', 'ru', 'by'].includes(region))
+		if (['kz', 'ru', 'by', 'uz'].includes(region))
 		{
 			name = 'how-it-work-ru';
 		}

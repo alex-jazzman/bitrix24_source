@@ -22,7 +22,7 @@ Class bizproc extends CModule
 		$this->MODULE_VERSION = $arModuleVersion["VERSION"];
 		$this->MODULE_VERSION_DATE = $arModuleVersion["VERSION_DATE"];
 
-		$this->MODULE_NAME = Loc::getMessage("BIZPROC_INSTALL_NAME");
+		$this->MODULE_NAME = Loc::getMessage("BIZPROC_INSTALL_NAME_MSGVER_1");
 		$this->MODULE_DESCRIPTION = Loc::getMessage("BIZPROC_INSTALL_DESCRIPTION");
 	}
 

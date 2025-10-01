@@ -1,4 +1,7 @@
 import { EntityTypes } from 'humanresources.company-structure.utils';
+import type { BaseEvent } from 'main.core.events';
+import { EventEmitter } from 'main.core.events';
+import { events } from '../../consts';
 import { DetailPanelCollapsedTitle } from './detail-panel-collapsed-title';
 import { useChartStore } from 'humanresources.company-structure.chart-store';
 import { mapState } from 'ui.vue3.pinia';
@@ -31,6 +34,7 @@ export const DetailPanel = {
 			isTeamEntity: false,
 			teamColor: null,
 			isCollapsed: true,
+			isHidden: false,
 			isLoading: true,
 			needToShowLoader: false,
 		};
@@ -60,6 +64,10 @@ export const DetailPanel = {
 		{
 			return getMemberRoles(this.entityType);
 		},
+		isPanelCollapsed(): boolean
+		{
+			return this.isCollapsed || this.isHidden;
+		}
 	},
 
 	watch: {
@@ -82,6 +90,16 @@ export const DetailPanel = {
 			},
 			deep: true,
 		},
+	},
+
+	created(): void
+	{
+		this.subscribeOnEvents();
+	},
+
+	beforeUnmount(): void
+	{
+		this.unsubscribeFromEvents();
 	},
 
 	methods:
@@ -113,25 +131,45 @@ export const DetailPanel = {
 		{
 			this.needToShowLoader = false;
 		},
+		subscribeOnEvents(): void
+		{
+			this.events = {
+				[events.HR_ENTITY_TOGGLE_ELEMENTS]: this.onToggleDetailPanel,
+			};
+			Object.entries(this.events).forEach(([event, handle]) => {
+				EventEmitter.subscribe(event, handle);
+			});
+		},
+		unsubscribeFromEvents(): void
+		{
+			Object.entries(this.events).forEach(([event, handle]) => {
+				EventEmitter.unsubscribe(event, handle);
+			});
+		},
+		onToggleDetailPanel({ data }: BaseEvent): void
+		{
+			const { shouldShowElements } = data;
+			this.isHidden = !shouldShowElements;
+		},
 	},
 
 	template: `
 		<div
-			:class="['humanresources-detail-panel', { '--collapsed': isCollapsed }]"
-			v-on="isCollapsed ? { click: toggleCollapse } : {}"
+			:class="['humanresources-detail-panel', { '--collapsed': isPanelCollapsed }]"
+			v-on="isPanelCollapsed ? { click: toggleCollapse } : {}"
 			data-id="hr-department-detail-panel__container"
 		>
 			<div
 				v-if="!isLoading"
 				class="humanresources-detail-panel-container"
-				:class="{ '--hide': needToShowLoader && !isCollapsed }"
+				:class="{ '--hide': needToShowLoader && !isPanelCollapsed }"
 			>
 				<div class="humanresources-detail-panel__head" 
-					 :class="{ '--team': isTeamEntity, '--collapsed': isCollapsed }"
+					 :class="{ '--team': isTeamEntity, '--collapsed': isPanelCollapsed }"
 					 :style="{ '--team-head-background': teamColor?.treeHeadBackground }"
 				>
 					<span
-						v-if="!isCollapsed"
+						v-if="!isPanelCollapsed"
 						v-hint
 						class="humanresources-detail-panel__title"
 					>
@@ -145,27 +183,27 @@ export const DetailPanel = {
 					</DetailPanelCollapsedTitle>
 					<div class="humanresources-detail-panel__header_buttons_container">
 						<DetailPanelEditButton
-							v-if="!isCollapsed"
+							v-if="!isPanelCollapsed"
 							:entityId="focusedNode"
 							:entityType="entityType"
 						/>
 						<div
 							class="humanresources-detail-panel__collapse_button --icon"
 							@click="toggleCollapse"
-							:class="{ '--collapsed': isCollapsed }"
+							:class="{ '--collapsed': isPanelCollapsed }"
 							data-id="hr-department-detail-panel__collapse-button"
 						/>
 					</div>
 				</div>
-				<div class="humanresources-detail-panel__content" v-show="!isCollapsed">
+				<div class="humanresources-detail-panel__content" v-show="!isPanelCollapsed">
 					<DepartmentContent
 						@showDetailLoader="showLoader"
 						@hideDetailLoader="hideLoader"
-						:isCollapsed="isCollapsed"
+						:isCollapsed="isPanelCollapsed"
 					/>
 				</div>
 			</div>
-			<div v-if="needToShowLoader && !isCollapsed" class="humanresources-detail-panel-loader-container"/>
+			<div v-if="needToShowLoader && !isPanelCollapsed" class="humanresources-detail-panel-loader-container"/>
 		</div>
 	`,
 };

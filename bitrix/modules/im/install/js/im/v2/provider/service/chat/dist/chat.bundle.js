@@ -409,7 +409,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	}
 	function _redirectToLayout2(actionResult) {
 	  const extractor = new ChatDataExtractor(actionResult);
-	  im_v2_lib_layout.LayoutManager.getInstance().setLastOpenedElement(im_v2_const.Layout.chat.name, '');
+	  im_v2_lib_layout.LayoutManager.getInstance().setLastOpenedElement(im_v2_const.Layout.chat, '');
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _needRedirectToOpenLinesLayout)[_needRedirectToOpenLinesLayout](actionResult)) {
 	    return im_public.Messenger.openLines(extractor.getDialogId());
 	  }
@@ -444,8 +444,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	var _addCollabToModel = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("addCollabToModel");
 	var _addChatToModel = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("addChatToModel");
 	var _sendAnalytics = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendAnalytics");
+	var _prepareType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareType");
 	class CreateService {
 	  constructor() {
+	    Object.defineProperty(this, _prepareType, {
+	      value: _prepareType2
+	    });
 	    Object.defineProperty(this, _sendAnalytics, {
 	      value: _sendAnalytics2
 	    });
@@ -531,6 +535,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  const preparedConfig = {
 	    ...chatConfig
 	  };
+	  if (preparedConfig.type) {
+	    preparedConfig.type = babelHelpers.classPrivateFieldLooseBase(this, _prepareType)[_prepareType](preparedConfig.type);
+	  }
+	  if (preparedConfig.entityType) {
+	    preparedConfig.entityType = babelHelpers.classPrivateFieldLooseBase(this, _prepareType)[_prepareType](preparedConfig.entityType);
+	  }
 	  if (preparedConfig.avatar) {
 	    preparedConfig.avatar = await im_v2_lib_utils.Utils.file.getBase64(chatConfig.avatar);
 	  }
@@ -600,6 +610,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	}
 	function _sendAnalytics2(dialogId) {
 	  im_v2_lib_analytics.Analytics.getInstance().ignoreNextChatOpen(dialogId);
+	}
+	function _prepareType2(type) {
+	  return im_v2_lib_utils.Utils.text.convertCamelToSnakeCase(type).toUpperCase();
 	}
 
 	var _store$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");

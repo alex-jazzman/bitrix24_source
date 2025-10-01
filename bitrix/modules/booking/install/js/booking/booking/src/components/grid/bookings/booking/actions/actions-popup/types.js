@@ -3,6 +3,7 @@ export type ActionsPopupAction = $ReadOnly<{
 	confirmation: 'confirmation',
 	deal: 'deal',
 	document: 'document',
+	extraResourcesInfo: 'extraResourcesInfo',
 	fullForm: 'fullForm',
 	info: 'info',
 	message: 'message',

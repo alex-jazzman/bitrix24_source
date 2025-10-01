@@ -15,7 +15,8 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 	const { TabFactory } = require('layout/ui/detail-card/tabs/factory');
 	const { FocusManager } = require('layout/ui/fields/focus-manager');
 	const { debounce } = require('utils/function');
-	const { merge, mergeImmutable, isEqual, clone } = require('utils/object');
+	const { merge, mergeImmutable, isEqual, clone, toMD5 } = require('utils/object');
+	const { Random } = require('utils/random');
 	const { Loc } = require('loc');
 	const { qrauth } = require('qrauth/utils');
 	const { RunActionExecutor } = require('rest/run-action-executor');
@@ -374,7 +375,7 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 
 		getTabCacheId()
 		{
-			return `${this.props.endpoint}-${Object.toMD5(this.getTabParams())}`;
+			return `${this.props.endpoint}-${toMD5(this.getTabParams())}`;
 		}
 
 		getTabParams()

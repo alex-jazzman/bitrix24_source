@@ -6,7 +6,18 @@ import {FloatingScreenShare} from './floating_screenshare';
 import {FloatingScreenShareContent} from './floating_screenshare';
 import {CallHint} from './call_hint_popup'
 import {CallController} from './controller';
-import { CallEngine, CallEvent, EndpointDirection, UserState, Provider, CallType, CallState, DisconnectReason, CallScheme } from './engine/engine';
+import {
+	CallEngine,
+	CallEvent,
+	EndpointDirection,
+	UserState,
+	Provider,
+	CallType,
+	CallState,
+	StartCallErrorCode,
+	DisconnectReason,
+	CallScheme,
+} from './engine/engine';
 import {CallEngineLegacy} from './engine/engine_legacy';
 import {Hardware} from './hardware';
 import Util from './util';
@@ -14,6 +25,7 @@ import { CallAI } from './call_ai';
 import {VideoStrategy} from './video_strategy';
 import {View} from './view/view';
 import { CopilotPopup } from './view/copilot-popup';
+import { ParticipantsPermissionPopup } from './view/participants-permission-popup';
 import {WebScreenSharePopup} from './web_screenshare_popup';
 import { UserListPopup } from 'call.component.user-list-popup';
 import { UserList } from 'call.component.user-list';
@@ -35,6 +47,7 @@ export {
 	CallState as State,
 	CallEngineLegacy as EngineLegacy,
 	EndpointDirection,
+	StartCallErrorCode,
 	DisconnectReason,
 	FloatingScreenShare,
 	FloatingScreenShareContent,
@@ -53,6 +66,7 @@ export {
 	UserList,
 	CallAI,
 	CallScheme,
+	ParticipantsPermissionPopup,
 };
 
 // compatibility

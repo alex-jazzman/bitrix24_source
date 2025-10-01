@@ -203,18 +203,18 @@ jn.define('tasks/statemanager/redux/slices/tasks/thunk', (require, exports, modu
 
 	const pin = createAsyncThunk(
 		'tasks:tasks/pin',
-		({ taskId }) => runActionPromise({
+		({ taskId, projectId = null }) => runActionPromise({
 			action: 'tasksmobile.Task.pin',
-			options: { taskId },
+			options: { taskId, projectId },
 		}),
 		{ condition },
 	);
 
 	const unpin = createAsyncThunk(
 		'tasks:tasks/unpin',
-		({ taskId }) => runActionPromise({
+		({ taskId, projectId = null }) => runActionPromise({
 			action: 'tasksmobile.Task.unpin',
-			options: { taskId },
+			options: { taskId, projectId },
 		}),
 		{ condition },
 	);

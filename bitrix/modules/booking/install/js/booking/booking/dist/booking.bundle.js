@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,booking_component_mixin_locMixin,main_loader,booking_provider_service_mainPageService,booking_provider_service_dictionaryService,booking_provider_service_calendarService,main_core_events,ui_counterpanel,ui_cnt,booking_lib_drag,ui_vue3_components_richLoc,ui_notificationManager,booking_provider_service_bookingActionsService,booking_component_loader,ui_vue3_directives_hint,booking_lib_mousePosition,booking_component_timeSelector,booking_component_notePopup,ui_iconSet_api_core,ui_iconSet_animated,booking_component_counter,booking_lib_checkBookingIntersection,booking_lib_grid,booking_lib_inInterval,booking_lib_range,booking_core,ui_datePicker,booking_lib_isRealId,booking_component_actionsPopup,booking_component_booking,booking_lib_dealHelper,booking_model_bookings,booking_model_clients,booking_provider_service_waitListService,booking_lib_removeBooking,booking_lib_removeWaitListItem,booking_lib_currencyFormat,booking_component_statisticsPopup,ui_dialogs_messagebox,ui_hint,booking_provider_service_resourcesService,ui_iconSet_actions,booking_resourceCreationWizard,booking_provider_service_resourceDialogService,booking_lib_resources,booking_lib_resourcesDateCache,ui_iconSet_api_vue,ui_iconSet_main,booking_provider_service_optionService,booking_lib_helpDesk,booking_lib_busySlots,ui_entitySelector,booking_lib_limit,booking_provider_service_bookingService,booking_provider_service_clientService,ui_ears,main_date,booking_lib_duration,booking_component_clientPopup,booking_lib_analytics,ui_autoLaunch,ui_vue3_vuex,main_core,ui_bannerDispatcher,booking_lib_resolvable,booking_lib_ahaMoments,main_popup,booking_component_popup,booking_component_helpDeskLoc,ui_vue3,booking_const,booking_component_button) {
+(function (exports,booking_component_mixin_locMixin,main_loader,booking_component_emptyFilterResultsPopup,booking_provider_service_mainPageService,booking_provider_service_dictionaryService,booking_provider_service_calendarService,booking_lib_filterResultNavigator,ui_counterpanel,ui_cnt,main_core_events,booking_lib_drag,ui_vue3_components_richLoc,ui_notificationManager,booking_provider_service_bookingActionsService,booking_component_loader,ui_vue3_directives_hint,booking_lib_mousePosition,booking_component_timeSelector,booking_component_notePopup,ui_iconSet_api_core,ui_iconSet_animated,booking_component_counter,booking_lib_checkBookingIntersection,booking_lib_grid,booking_lib_inInterval,booking_lib_range,booking_core,ui_datePicker,booking_component_counterFloating,booking_lib_isRealId,ui_dialogs_messagebox,booking_component_actionsPopup,booking_component_booking,booking_lib_dealHelper,booking_model_bookings,booking_model_clients,booking_provider_service_waitListService,booking_lib_removeBooking,booking_lib_removeWaitListItem,ui_label,booking_lib_currencyFormat,booking_component_statisticsPopup,ui_hint,booking_lib_removeResource,ui_iconSet_actions,booking_lib_sidePanelInstance,booking_resourceCreationWizard,booking_provider_service_resourceDialogService,booking_lib_resources,booking_lib_resourcesDateCache,ui_iconSet_api_vue,ui_iconSet_main,booking_provider_service_optionService,booking_lib_helpDesk,booking_lib_busySlots,ui_entitySelector,booking_lib_limit,booking_provider_service_bookingService,booking_provider_service_clientService,ui_ears,main_date,booking_lib_duration,booking_component_clientPopup,booking_lib_analytics,ui_autoLaunch,ui_vue3_vuex,main_core,ui_bannerDispatcher,booking_lib_resolvable,booking_lib_ahaMoments,main_popup,booking_component_popup,booking_component_helpDeskLoc,ui_vue3,booking_const,booking_component_button) {
 	'use strict';
 
 	const cellHeight = 50;
@@ -117,6 +117,7 @@ this.BX = this.BX || {};
 	  Contact: 'CONTACT',
 	  Company: 'COMPANY',
 	  Resource: 'RESOURCE',
+	  ResourceLabel: 'RESOURCE_label',
 	  Confirmed: 'CONFIRMED',
 	  RequireAttention: 'REQUIRE_ATTENTION'
 	});
@@ -156,6 +157,10 @@ this.BX = this.BX || {};
 	    setFields(fields) {
 	      const preparedFields = this.filter.getFilterFieldsValues();
 	      preparedFields[FilterField.RequireAttention] = fields.REQUIRE_ATTENTION;
+	      preparedFields[FilterField.Resource] = fields.RESOURCE;
+	      if (FilterField.ResourceLabel in fields) {
+	        preparedFields[FilterField.ResourceLabel] = fields.RESOURCE_label;
+	      }
 	      this.filter.getApi().setFields(preparedFields);
 	      this.filter.getApi().apply();
 	    },
@@ -709,28 +714,28 @@ this.BX = this.BX || {};
 	  },
 	  computed: {
 	    active() {
-	      return this.hour in this.$store.getters[`${booking_const.Model.Interface}/quickFilter`].active;
+	      return this.hour in this.$store.getters[`${booking_const.Model.Filter}/quickFilter`].active;
 	    },
 	    hovered() {
-	      return this.hour in this.$store.getters[`${booking_const.Model.Interface}/quickFilter`].hovered;
+	      return this.hour in this.$store.getters[`${booking_const.Model.Filter}/quickFilter`].hovered;
 	    }
 	  },
 	  methods: {
 	    onClick() {
 	      this.closeHelpPopup();
 	      if (this.active) {
-	        void this.$store.dispatch(`${booking_const.Model.Interface}/deactivateQuickFilter`, this.hour);
+	        void this.$store.dispatch(`${booking_const.Model.Filter}/deactivateQuickFilter`, this.hour);
 	      } else {
-	        void this.$store.dispatch(`${booking_const.Model.Interface}/activateQuickFilter`, this.hour);
+	        void this.$store.dispatch(`${booking_const.Model.Filter}/activateQuickFilter`, this.hour);
 	      }
 	    },
 	    hover() {
 	      this.helpPopupTimeout = setTimeout(() => this.showHelpPopup(), 1000);
-	      void this.$store.dispatch(`${booking_const.Model.Interface}/hoverQuickFilter`, this.hour);
+	      void this.$store.dispatch(`${booking_const.Model.Filter}/hoverQuickFilter`, this.hour);
 	    },
 	    flee() {
 	      this.closeHelpPopup();
-	      void this.$store.dispatch(`${booking_const.Model.Interface}/fleeQuickFilter`, this.hour);
+	      void this.$store.dispatch(`${booking_const.Model.Filter}/fleeQuickFilter`, this.hour);
 	    },
 	    showHelpPopup() {
 	      this.isHelpPopupShown = true;
@@ -1018,6 +1023,30 @@ this.BX = this.BX || {};
 			:id="bookingId"
 			:loading="isLoading"
 			disabled
+		/>
+	`
+	};
+
+	// @vue/component
+	const BookingExtraResourcesInfo = {
+	  name: 'BookingExtraResourcesInfo',
+	  components: {
+	    ExtraResourcesInfo: booking_component_actionsPopup.ExtraResourcesInfo
+	  },
+	  props: {
+	    bookingId: {
+	      type: [Number, String],
+	      required: true
+	    }
+	  },
+	  emits: ['freeze', 'unfreeze'],
+	  template: `
+		<ExtraResourcesInfo
+			:id="bookingId"
+			@open="$emit('freeze')"
+			@close="$emit('unfreeze')"
+			@freeze="$emit('freeze')"
+			@unfreeze="$emit('unfreeze')"
 		/>
 	`
 	};
@@ -1400,6 +1429,7 @@ this.BX = this.BX || {};
 	  confirmation: 'confirmation',
 	  deal: 'deal',
 	  document: 'document',
+	  extraResourcesInfo: 'extraResourcesInfo',
 	  fullForm: 'fullForm',
 	  message: 'message',
 	  visit: 'visit',
@@ -1458,6 +1488,13 @@ this.BX = this.BX || {};
 	          bookingId: this.bookingId
 	        },
 	        component: BookingClient
+	      }, {
+	        id: ActionsPopupActionEnum.extraResourcesInfo,
+	        props: {
+	          bookingId: this.bookingId,
+	          resourceId: this.resourceId
+	        },
+	        component: BookingExtraResourcesInfo
 	      }, [{
 	        id: ActionsPopupActionEnum.deal,
 	        props: {
@@ -1534,7 +1571,7 @@ this.BX = this.BX || {};
 					:disabled="Boolean(options?.overbooking?.disabled)"
 					@close="$emit('close')"
 				/>
-				<Waitlist :bookingId/>
+				<Waitlist v-if="!options?.waitList?.hidden" :bookingId/>
 				<BookingRemoveBtn :bookingId @close="$emit('close')"/>
 			</template>
 		</ActionsPopup>
@@ -2440,6 +2477,10 @@ this.BX = this.BX || {};
 	      if (this.dateFromTsRounded === this.booking.dateFromTs && this.dateToTsRounded === this.booking.dateToTs) {
 	        return;
 	      }
+	      const resource = this.$store.getters[`${booking_const.Model.Resources}/getById`](this.resourceId);
+	      if (resource.isDeleted) {
+	        return;
+	      }
 	      const id = this.bookingId;
 	      const booking = {
 	        id,
@@ -2892,7 +2933,9 @@ this.BX = this.BX || {};
 	      draggedDataTransfer: `${booking_const.Model.Interface}/draggedDataTransfer`,
 	      draggedBookingId: `${booking_const.Model.Interface}/draggedBookingId`,
 	      getWaitListItemById: `${booking_const.Model.WaitList}/getById`,
-	      getResourceById: `${booking_const.Model.Resources}/getById`
+	      getResourceById: `${booking_const.Model.Resources}/getById`,
+	      isDeletingResourceFilterMode: `${booking_const.Model.Filter}/isDeletingResourceFilterMode`,
+	      deletingResource: `${booking_const.Model.Filter}/deletingResource`
 	    }),
 	    booking() {
 	      return this.getBookingById(this.bookingId);
@@ -2954,7 +2997,11 @@ this.BX = this.BX || {};
 	    actionsPopupOptions() {
 	      return {
 	        overbooking: {
-	          disabled: this.overbooking !== null
+	          disabled: this.overbooking !== null,
+	          hidden: this.isDeletedResource
+	        },
+	        waitList: {
+	          hidden: this.isDeletedResource
 	        }
 	      };
 	    },
@@ -2963,6 +3010,13 @@ this.BX = this.BX || {};
 	    },
 	    hasAccent() {
 	      return this.editingBookingId === this.bookingId || this.isBookingCreatedFromEmbed(this.bookingId);
+	    },
+	    isDeletedResource() {
+	      var _this$getResourceById, _this$getResourceById2;
+	      return (_this$getResourceById = (_this$getResourceById2 = this.getResourceById(this.resourceId)) == null ? void 0 : _this$getResourceById2.isDeleted) != null ? _this$getResourceById : false;
+	    },
+	    isShaded() {
+	      return this.isDeletingResourceFilterMode && this.resourceId !== this.deletingResource.id;
 	    }
 	  },
 	  watch: {
@@ -2985,6 +3039,10 @@ this.BX = this.BX || {};
 	  },
 	  methods: {
 	    dragMouseEnter() {
+	      if (this.isDeletedResource) {
+	        this.dropArea = false;
+	        return;
+	      }
 	      if (this.dropArea || !this.draggedDataTransfer.id) {
 	        return;
 	      }
@@ -3147,6 +3205,7 @@ this.BX = this.BX || {};
 				'--shifted': isShifted && !realBooking,
 				'--drop-area': dropArea,
 				'--accent': hasAccent,
+				'--shaded': isShaded,
 				'not-transition': animationPause,
 			}"
 			:width="bookingWidth"
@@ -3269,6 +3328,9 @@ this.BX = this.BX || {};
 	const {
 	  mapGetters: mapInterfaceGetters
 	} = ui_vue3_vuex.createNamespacedHelpers(booking_const.Model.Interface);
+	const {
+	  mapGetters: mapFilterGetters
+	} = ui_vue3_vuex.createNamespacedHelpers(booking_const.Model.Filter);
 	const BookingBusySlotClassName = 'booking-booking-busy-slot';
 	// @vue/component
 	const BusySlot = {
@@ -3296,9 +3358,11 @@ this.BX = this.BX || {};
 	  computed: {
 	    ...mapInterfaceGetters({
 	      disabledBusySlots: 'disabledBusySlots',
-	      isFilterMode: 'isFilterMode',
 	      isEditingBookingMode: 'isEditingBookingMode',
 	      isDragMode: 'isDragMode'
+	    }),
+	    ...mapFilterGetters({
+	      isFilterMode: 'isFilterMode'
 	    }),
 	    isDisabled() {
 	      const isDragOffHours = this.isDragMode && this.busySlot.type === booking_const.BusySlot.OffHours;
@@ -3494,7 +3558,7 @@ this.BX = this.BX || {};
 	      }
 	      void this.$store.dispatch(`${booking_const.Model.Interface}/setHoveredCell`, null);
 	      this.creatingBookingId = `tmp-id-${Date.now()}-${Math.random()}`;
-	      void this.$store.dispatch(`${booking_const.Model.Interface}/addQuickFilterIgnoredBookingId`, this.creatingBookingId);
+	      void this.$store.dispatch(`${booking_const.Model.Filter}/addQuickFilterIgnoredBookingId`, this.creatingBookingId);
 	      void this.$store.dispatch(`${booking_const.Model.Bookings}/add`, {
 	        id: this.creatingBookingId,
 	        dateFromTs: this.cell.fromTs,
@@ -3804,6 +3868,9 @@ this.BX = this.BX || {};
 	const {
 	  mapGetters: mapInterfaceGetters$1
 	} = ui_vue3_vuex.createNamespacedHelpers(booking_const.Model.Interface);
+	const {
+	  mapGetters: mapFilterGetters$1
+	} = ui_vue3_vuex.createNamespacedHelpers(booking_const.Model.Filter);
 	const Bookings = {
 	  name: 'Bookings',
 	  data() {
@@ -3818,16 +3885,18 @@ this.BX = this.BX || {};
 	    ...mapInterfaceGetters$1({
 	      resourcesIds: 'resourcesIds',
 	      selectedDateTs: 'selectedDateTs',
-	      isFilterMode: 'isFilterMode',
-	      filteredBookingsIds: 'filteredBookingsIds',
 	      selectedCells: 'selectedCells',
 	      hoveredCell: 'hoveredCell',
 	      busySlots: 'busySlots',
-	      quickFilter: 'quickFilter',
 	      isFeatureEnabled: 'isFeatureEnabled',
 	      editingBookingId: 'editingBookingId',
 	      embedItems: 'embedItems',
 	      draggedBookingId: 'draggedBookingId'
+	    }),
+	    ...mapFilterGetters$1({
+	      filteredBookingsIds: 'filteredBookingsIds',
+	      isFilterMode: 'isFilterMode',
+	      quickFilter: 'quickFilter'
 	    }),
 	    resourcesHash() {
 	      const resources = this.$store.getters[`${booking_const.Model.Resources}/getByIds`](this.resourcesIds).map(({
@@ -3993,12 +4062,12 @@ this.BX = this.BX || {};
 	  computed: {
 	    ...ui_vue3_vuex.mapGetters({
 	      overbookingMap: `${booking_const.Model.Bookings}/overbookingMap`,
-	      isFilterMode: `${booking_const.Model.Interface}/isFilterMode`,
+	      isFilterMode: `${booking_const.Model.Filter}/isFilterMode`,
 	      isEditingBookingMode: `${booking_const.Model.Interface}/isEditingBookingMode`,
 	      draggedBookingId: `${booking_const.Model.Interface}/draggedBookingId`,
 	      draggedDataTransfer: `${booking_const.Model.Interface}/draggedDataTransfer`,
 	      resizedBookingId: `${booking_const.Model.Interface}/resizedBookingId`,
-	      quickFilter: `${booking_const.Model.Interface}/quickFilter`
+	      quickFilter: `${booking_const.Model.Filter}/quickFilter`
 	    }),
 	    draggedElementId() {
 	      return this.draggedDataTransfer.id;
@@ -4701,11 +4770,80 @@ this.BX = this.BX || {};
 	const {
 	  mapGetters: mapInterfaceGetters$3
 	} = ui_vue3_vuex.createNamespacedHelpers(booking_const.Model.Interface);
+	const {
+	  mapGetters: mapFilterGetters$2
+	} = ui_vue3_vuex.createNamespacedHelpers(booking_const.Model.Filter);
+
+	// @vue/component
 	const Calendar = {
+	  components: {
+	    Icon: ui_iconSet_api_vue.BIcon,
+	    CounterFloating: booking_component_counterFloating.CounterFloating
+	  },
+	  props: {
+	    calendarClass: {
+	      type: [String, Object, Array],
+	      default: ''
+	    }
+	  },
 	  data() {
 	    return {
 	      IconSet: ui_iconSet_api_vue.Set
 	    };
+	  },
+	  computed: {
+	    ...ui_vue3_vuex.mapGetters({
+	      calendarExpanded: `${booking_const.Model.Interface}/calendarExpanded`,
+	      datesCount: `${booking_const.Model.Filter}/datesCount`
+	    }),
+	    ...mapInterfaceGetters$3({
+	      freeMarks: 'freeMarks',
+	      getCounterMarks: 'getCounterMarks',
+	      offset: 'offset'
+	    }),
+	    ...mapFilterGetters$2({
+	      filteredMarks: 'filteredMarks',
+	      isFilterMode: 'isFilterMode',
+	      isDeletingResourceFilterMode: 'isDeletingResourceFilterMode'
+	    }),
+	    selectedDateTs() {
+	      return this.$store.getters[`${booking_const.Model.Interface}/selectedDateTs`] + this.offset;
+	    },
+	    viewDateTs() {
+	      return this.$store.getters[`${booking_const.Model.Interface}/viewDateTs`] + this.offset;
+	    },
+	    counterMarks() {
+	      if (this.isFilterMode || this.isDeletingResourceFilterMode) {
+	        return this.getCounterMarks(this.filteredMarks);
+	      }
+	      return this.getCounterMarks();
+	    },
+	    formattedDate() {
+	      const format = this.calendarExpanded ? this.loc('BOOKING_MONTH_YEAR_FORMAT') : main_date.DateTimeFormat.getFormat('LONG_DATE_FORMAT');
+	      const timestamp = this.calendarExpanded ? this.viewDateTs / 1000 : this.selectedDateTs / 1000;
+	      return main_date.DateTimeFormat.format(format, timestamp);
+	    },
+	    isShowCounterFloating() {
+	      return (this.isDeletingResourceFilterMode || this.isFilterMode) && this.datesCount.count > 0;
+	    }
+	  },
+	  watch: {
+	    selectedDateTs(selectedDateTs) {
+	      this.datePicker.selectDate(ui_datePicker.createDate(selectedDateTs));
+	      this.updateMarks();
+	    },
+	    filteredMarks() {
+	      this.updateMarks();
+	    },
+	    freeMarks() {
+	      this.updateMarks();
+	    },
+	    counterMarks() {
+	      this.setCounterMarks();
+	    },
+	    isFilterMode() {
+	      this.updateMarks();
+	    }
 	  },
 	  created() {
 	    this.datePicker = new ui_datePicker.DatePicker({
@@ -4727,35 +4865,6 @@ this.BX = this.BX || {};
 	  },
 	  beforeUnmount() {
 	    this.datePicker.destroy();
-	  },
-	  computed: {
-	    ...ui_vue3_vuex.mapGetters({
-	      calendarExpanded: `${booking_const.Model.Interface}/calendarExpanded`
-	    }),
-	    ...mapInterfaceGetters$3({
-	      filteredMarks: 'filteredMarks',
-	      freeMarks: 'freeMarks',
-	      isFilterMode: 'isFilterMode',
-	      getCounterMarks: 'getCounterMarks',
-	      offset: 'offset'
-	    }),
-	    selectedDateTs() {
-	      return this.$store.getters[`${booking_const.Model.Interface}/selectedDateTs`] + this.offset;
-	    },
-	    viewDateTs() {
-	      return this.$store.getters[`${booking_const.Model.Interface}/viewDateTs`] + this.offset;
-	    },
-	    counterMarks() {
-	      if (this.isFilterMode) {
-	        return this.getCounterMarks(this.filteredMarks);
-	      }
-	      return this.getCounterMarks();
-	    },
-	    formattedDate() {
-	      const format = this.calendarExpanded ? this.loc('BOOKING_MONTH_YEAR_FORMAT') : main_date.DateTimeFormat.getFormat('LONG_DATE_FORMAT');
-	      const timestamp = this.calendarExpanded ? this.viewDateTs / 1000 : this.selectedDateTs / 1000;
-	      return main_date.DateTimeFormat.format(format, timestamp);
-	    }
 	  },
 	  methods: {
 	    onPreviousClick() {
@@ -4801,7 +4910,7 @@ this.BX = this.BX || {};
 	      return new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
 	    },
 	    updateMarks() {
-	      if (this.isFilterMode) {
+	      if (this.isFilterMode || this.isDeletingResourceFilterMode) {
 	        this.setFilterMarks();
 	      } else {
 	        this.setFreeMarks();
@@ -4816,9 +4925,17 @@ this.BX = this.BX || {};
 	        bgColor: bgColorFree
 	      }]);
 	    },
+	    getFilterMarks() {
+	      if (!this.isDeletingResourceFilterMode) {
+	        return this.filteredMarks;
+	      }
+	      const today = new Date();
+	      const todayTs = today.setHours(0, 0, 0, 0);
+	      return this.filteredMarks.filter(freeMarkTs => new Date(freeMarkTs).getTime() >= todayTs);
+	    },
 	    setFilterMarks() {
 	      const bgColorFilter = 'rgba(var(--ui-color-primary-rgb), 0.20)';
-	      const dates = this.prepareDates(this.filteredMarks);
+	      const dates = this.prepareDates(this.getFilterMarks());
 	      this.datePicker.setDayColors([{
 	        matcher: dates,
 	        bgColor: bgColorFilter
@@ -4845,29 +4962,14 @@ this.BX = this.BX || {};
 	      await Promise.all([this.$store.dispatch(`${booking_const.Model.Interface}/setCalendarExpanded`, !this.calendarExpanded), booking_provider_service_optionService.optionService.setBool(booking_const.Option.CalendarExpanded, this.calendarExpanded)]);
 	    }
 	  },
-	  watch: {
-	    selectedDateTs(selectedDateTs) {
-	      this.datePicker.selectDate(ui_datePicker.createDate(selectedDateTs));
-	      this.updateMarks();
-	    },
-	    filteredMarks() {
-	      this.updateMarks();
-	    },
-	    freeMarks() {
-	      this.updateMarks();
-	    },
-	    counterMarks() {
-	      this.setCounterMarks();
-	    },
-	    isFilterMode() {
-	      this.updateMarks();
-	    }
-	  },
-	  components: {
-	    Icon: ui_iconSet_api_vue.BIcon
-	  },
 	  template: `
-		<div class="booking-sidebar-calendar-container" :class="{'--expanded': calendarExpanded}">
+		<div 
+			class="booking-sidebar-calendar-container"
+			:class="[calendarClass, {
+				'--expanded': calendarExpanded,
+				'--counter': isShowCounterFloating,
+			}].flat(1)"
+		>
 			<div class="booking-booking-sidebar-calendar">
 				<div class="booking-booking-sidebar-calendar-header">
 					<div class="booking-sidebar-button" @click="onPreviousClick">
@@ -4885,6 +4987,10 @@ this.BX = this.BX || {};
 				</div>
 				<div class="booking-booking-sidebar-calendar-date-picker" ref="datePicker"></div>
 			</div>
+			<CounterFloating
+				v-if="isShowCounterFloating"
+				:count="datesCount.count"
+			/>
 		</div>
 	`
 	};
@@ -6009,14 +6115,20 @@ this.BX = this.BX || {};
 	      waitListItems: `${booking_const.Model.WaitList}/get`,
 	      waitListExpanded: `${booking_const.Model.Interface}/waitListExpanded`,
 	      draggedBookingId: `${booking_const.Model.Interface}/draggedBookingId`,
+	      draggedBookingResourceId: `${booking_const.Model.Interface}/draggedBookingResourceId`,
 	      editingBookingId: `${booking_const.Model.Interface}/editingBookingId`,
 	      editingWaitListItemId: `${booking_const.Model.Interface}/editingWaitListItemId`,
 	      isFeatureEnabled: `${booking_const.Model.Interface}/isFeatureEnabled`,
 	      isBookingCreatedFromEmbed: `${booking_const.Model.Interface}/isBookingCreatedFromEmbed`,
-	      embedItems: `${booking_const.Model.Interface}/embedItems`
+	      embedItems: `${booking_const.Model.Interface}/embedItems`,
+	      getResourceById: `${booking_const.Model.Resources}/getById`
 	    }),
 	    isEmpty() {
 	      return this.waitListItems.length === 0;
+	    },
+	    isAvailableToDrop() {
+	      var _this$getResourceById;
+	      return Boolean(this.draggedBookingId && !((_this$getResourceById = this.getResourceById(this.draggedBookingResourceId)) != null && _this$getResourceById.isDeleted));
 	    },
 	    showEmptyState() {
 	      return this.isEmpty && !this.draggedBookingId;
@@ -6087,7 +6199,7 @@ this.BX = this.BX || {};
 	  },
 	  template: `
 		<WaitListLayout
-			:dragging="Boolean(draggedBookingId)"
+			:dragging="isAvailableToDrop"
 			:showEmptyState
 			:expanded="waitListExpanded"
 			:waitListItemsCount="waitListItems.length"
@@ -6170,19 +6282,20 @@ this.BX = this.BX || {};
 
 	// @vue/component
 	const Grid = {
+	  name: 'BookingsGrid',
+	  components: {
+	    LeftPanel,
+	    NowLine,
+	    Column,
+	    Bookings,
+	    ScalePanel,
+	    Sidebar,
+	    DragDelete
+	  },
 	  data() {
 	    return {
 	      scrolledToBooking: false
 	    };
-	  },
-	  mounted() {
-	    this.ears = new ui_ears.Ears({
-	      container: this.$refs.columnsContainer,
-	      smallSize: true,
-	      className: 'booking-booking-grid-columns-ears'
-	    }).init();
-	    main_core.Event.EventEmitter.subscribe('BX.Main.Popup:onAfterClose', this.tryShowAhaMoment);
-	    main_core.Event.EventEmitter.subscribe('BX.Main.Popup:onDestroy', this.tryShowAhaMoment);
 	  },
 	  computed: {
 	    ...ui_vue3_vuex.mapGetters({
@@ -6191,51 +6304,14 @@ this.BX = this.BX || {};
 	      editingBookingId: `${booking_const.Model.Interface}/editingBookingId`,
 	      editingWaitListItemId: `${booking_const.Model.Interface}/editingWaitListItemId`,
 	      isFeatureEnabled: `${booking_const.Model.Interface}/isFeatureEnabled`,
-	      isLoaded: `${booking_const.Model.Interface}/isLoaded`
+	      isLoaded: `${booking_const.Model.Interface}/isLoaded`,
+	      selectedDateTs: `${booking_const.Model.Interface}/selectedDateTs`,
+	      filteredBookingsIds: `${booking_const.Model.Filter}/filteredBookingsIds`,
+	      isFilterMode: `${booking_const.Model.Filter}/isFilterMode`
 	    }),
 	    editingBooking() {
 	      var _this$$store$getters$;
 	      return (_this$$store$getters$ = this.$store.getters['bookings/getById'](this.editingBookingId)) != null ? _this$$store$getters$ : null;
-	    }
-	  },
-	  beforeUnmount() {
-	    var _this$dragManager;
-	    (_this$dragManager = this.dragManager) == null ? void 0 : _this$dragManager.destroy();
-	  },
-	  methods: {
-	    updateEars() {
-	      this.ears.toggleEars();
-	      this.tryShowAhaMoment();
-	    },
-	    areEarsShown() {
-	      const shownClass = 'ui-ear-show';
-	      return main_core.Dom.hasClass(this.ears.getRightEar(), shownClass) || main_core.Dom.hasClass(this.ears.getLeftEar(), shownClass);
-	    },
-	    scrollToEditingBooking() {
-	      if (!this.editingBooking || this.scrolledToBooking) {
-	        return;
-	      }
-	      const top = booking_lib_grid.grid.calculateTop(this.editingBooking.dateFromTs);
-	      const height = booking_lib_grid.grid.calculateHeight(this.editingBooking.dateFromTs, this.editingBooking.dateToTs);
-	      this.$refs.inner.scrollTop = top + height / 2 + this.$refs.inner.offsetHeight / 2;
-	      this.scrolledToBooking = true;
-	    },
-	    tryShowAhaMoment() {
-	      if (this.areEarsShown() && booking_lib_ahaMoments.ahaMoments.shouldShow(booking_const.AhaMoment.ExpandGrid)) {
-	        main_core.Event.EventEmitter.unsubscribe('BX.Main.Popup:onAfterClose', this.tryShowAhaMoment);
-	        main_core.Event.EventEmitter.unsubscribe('BX.Main.Popup:onDestroy', this.tryShowAhaMoment);
-	        void this.$refs.scalePanel.showAhaMoment();
-	      }
-	    },
-	    initDragManager(id = '', kind = null) {
-	      if (this.isFeatureEnabled) {
-	        const dataId = id ? `[data-id="${id}"]` : '';
-	        const dataKind = kind ? `[data-kind="${kind}"]` : '';
-	        this.dragManager = new booking_lib_drag.Drag({
-	          container: this.$el.parentElement,
-	          draggable: `.booking--draggable-item${dataId}${dataKind}`
-	        });
-	      }
 	    }
 	  },
 	  watch: {
@@ -6269,18 +6345,74 @@ this.BX = this.BX || {};
 	      if (id) {
 	        this.initDragManager(id, booking_const.DraggedElementKind.WaitListItem);
 	      }
+	    },
+	    filteredBookingsIds(ids) {
+	      var _this$$store$getters$2;
+	      if (!this.isFilterMode || ids.length === 0) {
+	        return;
+	      }
+	      const booking = (_this$$store$getters$2 = this.$store.getters['bookings/getById'](ids[0])) != null ? _this$$store$getters$2 : null;
+	      if (booking !== null) {
+	        this.scrollToBooking(booking);
+	      }
 	    }
 	  },
-	  components: {
-	    LeftPanel,
-	    NowLine,
-	    Column,
-	    Bookings,
-	    ScalePanel,
-	    Sidebar,
-	    DragDelete
+	  mounted() {
+	    this.ears = new ui_ears.Ears({
+	      container: this.$refs.columnsContainer,
+	      smallSize: true,
+	      className: 'booking-booking-grid-columns-ears'
+	    }).init();
+	    main_core_events.EventEmitter.subscribe('BX.Main.Popup:onAfterClose', this.tryShowAhaMoment);
+	    main_core_events.EventEmitter.subscribe('BX.Main.Popup:onDestroy', this.tryShowAhaMoment);
 	  },
-	  // language=Vue
+	  beforeUnmount() {
+	    var _this$dragManager;
+	    (_this$dragManager = this.dragManager) == null ? void 0 : _this$dragManager.destroy();
+	  },
+	  unmounted() {
+	    main_core_events.EventEmitter.unsubscribe('BX.Main.Popup:onAfterClose', this.tryShowAhaMoment);
+	    main_core_events.EventEmitter.unsubscribe('BX.Main.Popup:onDestroy', this.tryShowAhaMoment);
+	  },
+	  methods: {
+	    updateEars() {
+	      this.ears.toggleEars();
+	      this.tryShowAhaMoment();
+	    },
+	    areEarsShown() {
+	      const shownClass = 'ui-ear-show';
+	      return main_core.Dom.hasClass(this.ears.getRightEar(), shownClass) || main_core.Dom.hasClass(this.ears.getLeftEar(), shownClass);
+	    },
+	    scrollToEditingBooking() {
+	      if (!this.editingBooking || this.scrolledToBooking) {
+	        return;
+	      }
+	      this.scrollToBooking(this.editingBooking);
+	    },
+	    scrollToBooking(booking) {
+	      const top = booking_lib_grid.grid.calculateTop(booking.dateFromTs);
+	      const height = booking_lib_grid.grid.calculateHeight(booking.dateFromTs, booking.dateToTs);
+	      this.$refs.inner.scrollTop = top + height / 2 + this.$refs.inner.offsetHeight / 2;
+	      this.scrolledToBooking = true;
+	    },
+	    tryShowAhaMoment() {
+	      if (this.areEarsShown() && booking_lib_ahaMoments.ahaMoments.shouldShow(booking_const.AhaMoment.ExpandGrid)) {
+	        main_core.Event.EventEmitter.unsubscribe('BX.Main.Popup:onAfterClose', this.tryShowAhaMoment);
+	        main_core.Event.EventEmitter.unsubscribe('BX.Main.Popup:onDestroy', this.tryShowAhaMoment);
+	        void this.$refs.scalePanel.showAhaMoment();
+	      }
+	    },
+	    initDragManager(id = '', kind = null) {
+	      if (this.isFeatureEnabled) {
+	        const dataId = id ? `[data-id="${id}"]` : '';
+	        const dataKind = kind ? `[data-kind="${kind}"]` : '';
+	        this.dragManager = new booking_lib_drag.Drag({
+	          container: this.$el.parentElement,
+	          draggable: `.booking--draggable-item${dataId}${dataKind}`
+	        });
+	      }
+	    }
+	  },
 	  template: `
 		<div ref="bookingContainer" class="booking-booking-grid">
 			<div
@@ -6638,6 +6770,7 @@ this.BX = this.BX || {};
 	`
 	};
 
+	// @vue/component
 	const ResourceMenu = {
 	  name: 'ResourceMenu',
 	  props: {
@@ -6655,7 +6788,8 @@ this.BX = this.BX || {};
 	    ...ui_vue3_vuex.mapGetters({
 	      favoritesIds: `${booking_const.Model.Favorites}/get`,
 	      isEditingBookingMode: `${booking_const.Model.Interface}/isEditingBookingMode`,
-	      isFeatureEnabled: `${booking_const.Model.Interface}/isFeatureEnabled`
+	      isFeatureEnabled: `${booking_const.Model.Interface}/isFeatureEnabled`,
+	      isFilterMode: `${booking_const.Model.Filter}/isFilterMode`
 	    }),
 	    popupId() {
 	      return `resource-menu-${this.resourceId || 'new'}`;
@@ -6676,6 +6810,9 @@ this.BX = this.BX || {};
 	      var _this$menuPopup, _this$menuPopup$popup;
 	      if ((_this$menuPopup = this.menuPopup) != null && (_this$menuPopup$popup = _this$menuPopup.popupWindow) != null && _this$menuPopup$popup.isShown()) {
 	        this.destroy();
+	        return;
+	      }
+	      if (this.isFilterMode) {
 	        return;
 	      }
 	      const menuButton = this.$refs['menu-button'];
@@ -6736,7 +6873,7 @@ this.BX = this.BX || {};
 	        html: `<span class="alert-text">${this.loc('BOOKING_RESOURCE_MENU_DELETE')}</span>`,
 	        onclick: async () => {
 	          this.destroy();
-	          await this.deleteResource(this.resourceId);
+	          await this.removeResource(this.resourceId);
 	        }
 	      }];
 	    },
@@ -6761,6 +6898,9 @@ this.BX = this.BX || {};
 	    async editResource(resourceId, wizard) {
 	      wizard.open(resourceId);
 	    },
+	    async removeResource(resourceId) {
+	      await new booking_lib_removeResource.RemoveResource(resourceId).run();
+	    },
 	    async hideResource(resourceId) {
 	      const ids = [...this.favoritesIds];
 	      const index = this.favoritesIds.indexOf(resourceId);
@@ -6769,45 +6909,6 @@ this.BX = this.BX || {};
 	      }
 	      ids.splice(index, 1);
 	      await booking_lib_resources.hideResources(ids);
-	    },
-	    async deleteResource(resourceId) {
-	      const confirmed = await this.confirmDelete(resourceId);
-	      if (confirmed) {
-	        await booking_provider_service_resourcesService.resourceService.delete(resourceId);
-	      }
-	    },
-	    async confirmDelete(resourceId) {
-	      const disabled = await booking_provider_service_resourcesService.resourceService.hasBookings(resourceId);
-	      return new Promise(resolve => {
-	        const messageBox = ui_dialogs_messagebox.MessageBox.create({
-	          message: main_core.Loc.getMessage('BOOKING_RESOURCE_CONFIRM_DELETE'),
-	          yesCaption: main_core.Loc.getMessage('BOOKING_RESOURCE_CONFIRM_DELETE_YES'),
-	          modal: true,
-	          buttons: ui_dialogs_messagebox.MessageBoxButtons.YES_CANCEL,
-	          onYes: () => {
-	            messageBox.close();
-	            resolve(true);
-	          },
-	          onCancel: () => {
-	            messageBox.close();
-	            resolve(false);
-	          }
-	        });
-	        if (disabled) {
-	          const popup = messageBox.getPopupWindow();
-	          popup.subscribe('onAfterShow', () => {
-	            const yesButton = messageBox.getYesButton();
-	            yesButton.setDisabled(true);
-	            main_core.Event.bind(yesButton.getContainer(), 'mouseenter', () => {
-	              this.hint.show(yesButton.getContainer(), main_core.Loc.getMessage('BOOKING_RESOURCE_CONFIRM_DELETE_HINT'), true);
-	            });
-	            main_core.Event.bind(yesButton.getContainer(), 'mouseleave', () => {
-	              this.hint.hide(yesButton.getContainer());
-	            });
-	          });
-	        }
-	        messageBox.show();
-	      });
 	    }
 	  },
 	  template: `
@@ -6864,6 +6965,14 @@ this.BX = this.BX || {};
 	    },
 	    bookings() {
 	      return this.$store.getters[`${booking_const.Model.Bookings}/getByDateAndResources`](this.selectedDateTs, [this.resourceId]);
+	    },
+	    labelHTML() {
+	      const label = new ui_label.Label({
+	        size: ui_label.LabelSize.SM,
+	        text: this.loc('BOOKING_BOOKING_RESOURCE_DELETED'),
+	        fill: true
+	      });
+	      return label.render().outerHTML;
 	    }
 	  },
 	  methods: {
@@ -6910,6 +7019,7 @@ this.BX = this.BX || {};
 		>
 			<template v-if="visible">
 				<ResourceWorkload
+					v-if="!resource.isDeleted"
 					:resourceId="resourceId"
 					:scale="zoom"
 					:isGrid="true"
@@ -6922,8 +7032,16 @@ this.BX = this.BX || {};
 						{{ resourceType.name }}
 					</div>
 				</div>
-				<div class="booking-booking-header-resource-profit" v-html="profit"></div>
-				<div class="booking-booking-header-resource-actions">
+				<div
+					v-if="resource.isDeleted"
+					v-html="labelHTML"
+				></div>
+				<div
+					class="booking-booking-header-resource-profit"
+					v-else
+					v-html="profit"
+				></div>
+				<div class="booking-booking-header-resource-actions" v-if="!resource.isDeleted">
 					<ResourceMenu :resource-id/>
 				</div>
 			</template>
@@ -6931,7 +7049,12 @@ this.BX = this.BX || {};
 	`
 	};
 
+	// @vue/component
 	const AddResourceButton = {
+	  name: 'AddResourceButton',
+	  components: {
+	    Icon: ui_iconSet_api_vue.BIcon
+	  },
 	  data() {
 	    return {
 	      IconSet: ui_iconSet_api_vue.Set,
@@ -6942,6 +7065,13 @@ this.BX = this.BX || {};
 	    isLoaded: `${booking_const.Model.Interface}/isLoaded`,
 	    isFeatureEnabled: `${booking_const.Model.Interface}/isFeatureEnabled`
 	  }),
+	  watch: {
+	    isLoaded() {
+	      if (booking_lib_ahaMoments.ahaMoments.shouldShow(booking_const.AhaMoment.AddResource)) {
+	        void this.showAhaMoment();
+	      }
+	    }
+	  },
 	  methods: {
 	    async addResource() {
 	      if (!this.isFeatureEnabled) {
@@ -6963,17 +7093,12 @@ this.BX = this.BX || {};
 	        target: this.$refs.button
 	      });
 	      booking_lib_ahaMoments.ahaMoments.setShown(booking_const.AhaMoment.AddResource);
-	    }
-	  },
-	  watch: {
-	    isLoaded() {
-	      if (booking_lib_ahaMoments.ahaMoments.shouldShow(booking_const.AhaMoment.AddResource)) {
-	        void this.showAhaMoment();
+	      if (booking_lib_sidePanelInstance.SidePanelInstance.openSliders.every(({
+	        url
+	      }) => url !== booking_resourceCreationWizard.ResourceCreationWizard.makeName())) {
+	        void this.addResource();
 	      }
 	    }
-	  },
-	  components: {
-	    Icon: ui_iconSet_api_vue.BIcon
 	  },
 	  template: `
 		<div
@@ -7349,7 +7474,7 @@ this.BX = this.BX || {};
 	      selectedDateTs: `${booking_const.Model.Interface}/selectedDateTs`,
 	      favoritesIds: `${booking_const.Model.Favorites}/get`,
 	      resources: `${booking_const.Model.Resources}/get`,
-	      isFilterMode: `${booking_const.Model.Interface}/isFilterMode`,
+	      isFilterMode: `${booking_const.Model.Filter}/isFilterMode`,
 	      isEditingBookingMode: `${booking_const.Model.Interface}/isEditingBookingMode`,
 	      isLoaded: `${booking_const.Model.Interface}/isLoaded`,
 	      mainResources: `${booking_const.Model.MainResources}/resources`
@@ -7381,7 +7506,8 @@ this.BX = this.BX || {};
 	      const maxScroll = container.scrollHeight - container.offsetHeight;
 	      if (scrollTop + 10 >= maxScroll) {
 	        const loadedResourcesIds = booking_lib_resourcesDateCache.resourcesDateCache.getIdsByDateTs(this.selectedDateTs / 1000);
-	        const resourcesIds = this.resources.map(resource => resource.id);
+	        const activeResources = this.resources.filter(resource => !resource.isDeleted);
+	        const resourcesIds = activeResources.map(resource => resource.id);
 	        const idsToLoad = resourcesIds.filter(id => !loadedResourcesIds.includes(id)).slice(0, booking_const.Limit.ResourcesDialog);
 	        await booking_provider_service_resourceDialogService.resourceDialogService.loadByIds(idsToLoad, this.selectedDateTs / 1000);
 	        this.updateItems();
@@ -7460,7 +7586,7 @@ this.BX = this.BX || {};
 	    isItemHidden(id) {
 	      const loadedResourcesIds = booking_lib_resourcesDateCache.resourcesDateCache.getIdsByDateTs(this.selectedDateTs / 1000);
 	      const resource = this.getResource(id);
-	      const visible = loadedResourcesIds.includes(id) && resource && this.selectedTypes[resource.typeId];
+	      const visible = loadedResourcesIds.includes(id) && resource && !resource.isDeleted && this.selectedTypes[resource.typeId];
 	      return !visible;
 	    },
 	    getResource(id) {
@@ -7726,14 +7852,17 @@ this.BX = this.BX || {};
 	      if (resourcesIds.join(',') === previousResourcesIds.join(',')) {
 	        return;
 	      }
-	      const deletedIds = previousResourcesIds.filter(id => !resourcesIds.includes(id));
+	      const removedIds = previousResourcesIds.filter(id => !resourcesIds.includes(id));
 	      const newIds = resourcesIds.filter(id => !previousResourcesIds.includes(id));
-	      deletedIds.forEach(id => {
+	      removedIds.forEach(id => {
 	        const item = this.selector.getItem([booking_const.EntitySelectorEntity.Resource, id]);
 	        this.selector.removeItem(item);
 	      });
 	      newIds.forEach(id => {
 	        const resource = this.$store.getters[`${booking_const.Model.Resources}/getById`](id);
+	        if (!resource || resource.isDeleted) {
+	          return;
+	        }
 	        const resourceType = this.$store.getters[`${booking_const.Model.ResourceTypes}/getById`](resource.typeId);
 	        this.selector.addItem({
 	          id,
@@ -7964,9 +8093,9 @@ this.BX = this.BX || {};
 	      if (resourcesIds.join(',') === previousResourcesIds.join(',')) {
 	        return;
 	      }
-	      const deletedIds = previousResourcesIds.filter(id => !resourcesIds.includes(id));
+	      const removedIds = previousResourcesIds.filter(id => !resourcesIds.includes(id));
 	      const newIds = resourcesIds.filter(id => !previousResourcesIds.includes(id));
-	      deletedIds.forEach(id => {
+	      removedIds.forEach(id => {
 	        const item = this.selector.getDialog().getItem([booking_const.EntitySelectorEntity.Resource, id]);
 	        this.selector.getDialog().removeItem(item);
 	        const tag = this.selector.getTags().find(it => it.getId() === id);
@@ -7974,6 +8103,9 @@ this.BX = this.BX || {};
 	      });
 	      newIds.forEach(id => {
 	        const resource = this.$store.getters[`${booking_const.Model.Resources}/getById`](id);
+	        if (!resource || resource.isDeleted) {
+	          return;
+	        }
 	        const resourceType = this.$store.getters[`${booking_const.Model.ResourceTypes}/getById`](resource.typeId);
 	        this.selector.getDialog().addItem({
 	          id,
@@ -8115,7 +8247,7 @@ this.BX = this.BX || {};
 	  computed: {
 	    ...ui_vue3_vuex.mapGetters({
 	      resourcesIds: `${booking_const.Model.Interface}/resourcesIds`,
-	      isFilterMode: `${booking_const.Model.Interface}/isFilterMode`,
+	      isFilterMode: `${booking_const.Model.Filter}/isFilterMode`,
 	      isEditingBookingMode: `${booking_const.Model.Interface}/isEditingBookingMode`,
 	      intersections: `${booking_const.Model.Interface}/intersections`,
 	      isIntersectionForAll: `${booking_const.Model.Interface}/isIntersectionForAll`,
@@ -8473,7 +8605,8 @@ this.BX = this.BX || {};
 	    ...ui_vue3_vuex.mapGetters({
 	      selectedCells: `${booking_const.Model.Interface}/selectedCells`,
 	      timezone: `${booking_const.Model.Interface}/timezone`,
-	      embedItems: `${booking_const.Model.Interface}/embedItems`
+	      embedItems: `${booking_const.Model.Interface}/embedItems`,
+	      intersections: `${booking_const.Model.Interface}/intersections`
 	    })
 	  },
 	  methods: {
@@ -8497,16 +8630,19 @@ this.BX = this.BX || {};
 	      await this.closeMultiBooking();
 	    },
 	    getBookings() {
-	      return Object.values(this.selectedCells).map(cell => ({
-	        id: `tmp-id-${Date.now()}-${Math.random()}`,
-	        dateFromTs: cell.fromTs,
-	        dateToTs: cell.toTs,
-	        resourcesIds: [cell.resourceId],
-	        timezoneFrom: this.timezone,
-	        timezoneTo: this.timezone,
-	        externalData: this.externalData,
-	        clients: this.clients
-	      }));
+	      return Object.values(this.selectedCells).map(cell => {
+	        var _this$intersections$, _this$intersections$c;
+	        return {
+	          id: `tmp-id-${Date.now()}-${Math.random()}`,
+	          dateFromTs: cell.fromTs,
+	          dateToTs: cell.toTs,
+	          resourcesIds: [...new Set([cell.resourceId, ...((_this$intersections$ = this.intersections[0]) != null ? _this$intersections$ : []), ...((_this$intersections$c = this.intersections[cell.resourceId]) != null ? _this$intersections$c : [])])],
+	          timezoneFrom: this.timezone,
+	          timezoneTo: this.timezone,
+	          externalData: this.externalData,
+	          clients: this.clients
+	        };
+	      });
 	    },
 	    showNotification(bookingList) {
 	      const bookingQuantity = bookingList.length;
@@ -9037,7 +9173,7 @@ this.BX = this.BX || {};
 			:buttonClass="['--air', ButtonStyle.NO_CAPS, AirButtonStyle.OUTLINE_NO_ACCENT]"
 			:text="label"
 			:color="ButtonColor.LIGHT_BORDER"
-			:size="ButtonSize.MEDIUM"
+			:size="ButtonSize.SMALL"
 			@click="openMenu"
 		/>
 		<CrmFormsPopup
@@ -9059,7 +9195,8 @@ this.BX = this.BX || {};
 	    MultiBooking,
 	    Banner,
 	    Trial,
-	    CrmFormsButton
+	    CrmFormsButton,
+	    EmptyFilterResultsPopup: booking_component_emptyFilterResultsPopup.EmptyFilterResultsPopup
 	  },
 	  props: {
 	    afterTitleContainer: HTMLElement,
@@ -9072,6 +9209,7 @@ this.BX = this.BX || {};
 	  },
 	  data() {
 	    return {
+	      loadingFilter: false,
 	      loader: new main_loader.Loader()
 	    };
 	  },
@@ -9079,14 +9217,21 @@ this.BX = this.BX || {};
 	    ...ui_vue3_vuex.mapGetters({
 	      selectedDateTs: `${booking_const.Model.Interface}/selectedDateTs`,
 	      viewDateTs: `${booking_const.Model.Interface}/viewDateTs`,
-	      isFilterMode: `${booking_const.Model.Interface}/isFilterMode`,
-	      filteredBookingsIds: `${booking_const.Model.Interface}/filteredBookingsIds`,
+	      isFilterMode: `${booking_const.Model.Filter}/isFilterMode`,
+	      isDeletingResourceFilterMode: `${booking_const.Model.Filter}/isDeletingResourceFilterMode`,
+	      deletingResource: `${booking_const.Model.Filter}/deletingResource`,
+	      filteredBookingsIds: `${booking_const.Model.Filter}/filteredBookingsIds`,
 	      selectedCells: `${booking_const.Model.Interface}/selectedCells`,
 	      resourcesIds: `${booking_const.Model.Favorites}/get`,
 	      extraResourcesIds: `${booking_const.Model.Interface}/extraResourcesIds`,
 	      bookings: `${booking_const.Model.Bookings}/get`,
+	      getBookingsByIds: `${booking_const.Model.Bookings}/getByIds`,
+	      getFutureBookingsByResourceId: `${booking_const.Model.Bookings}/getFutureByResourceId`,
 	      intersections: `${booking_const.Model.Interface}/intersections`,
-	      editingBookingId: `${booking_const.Model.Interface}/editingBookingId`
+	      editingBookingId: `${booking_const.Model.Interface}/editingBookingId`,
+	      fetchingNextDate: `${booking_const.Model.Filter}/fetchingNextDate`,
+	      datesCount: `${booking_const.Model.Filter}/datesCount`,
+	      requestFields: `${booking_const.Model.Filter}/requestFields`
 	    }),
 	    hasSelectedCells() {
 	      return Object.keys(this.selectedCells).length > 0;
@@ -9100,6 +9245,8 @@ this.BX = this.BX || {};
 	    selectedDateTs() {
 	      if (this.isFilterMode) {
 	        void this.applyFilter();
+	      } else if (this.isDeletingResourceFilterMode) {
+	        void this.applyDeletingResourceFilter(this.deletingResource);
 	      } else {
 	        void this.fetchPage(this.selectedDateTs / 1000);
 	      }
@@ -9114,10 +9261,26 @@ this.BX = this.BX || {};
 	        void this.fetchPage(this.selectedDateTs / 1000);
 	      }
 	    },
+	    isDeletingResourceFilterMode(isDeletingResourceFilterMode) {
+	      if (isDeletingResourceFilterMode) {
+	        booking_lib_filterResultNavigator.deletingResourceFilterResultCountActualizer.subscribe();
+	      } else {
+	        booking_lib_filterResultNavigator.deletingResourceFilterResultCountActualizer.unsubscribe();
+	        void this.clearDeletingResourceFilter();
+	        void this.fetchPage(this.selectedDateTs / 1000);
+	      }
+	    },
 	    viewDateTs() {
 	      void this.updateMarks();
 	    },
-	    resourcesIds() {
+	    resourcesIds(resourcesIds) {
+	      if (this.isDeletingResourceFilterMode) {
+	        if (resourcesIds.includes(this.deletingResource.id)) {
+	          this.$store.dispatch(`${booking_const.Model.Interface}/setPinnedResourceIds`, [...resourcesIds]);
+	        } else {
+	          void this.clearDeletingResourceFilter();
+	        }
+	      }
 	      void this.updateMarks();
 	    },
 	    intersections() {
@@ -9130,6 +9293,18 @@ this.BX = this.BX || {};
 	        void this.$store.dispatch(`${booking_const.Model.Interface}/setIntersections`, {
 	          0: additionalResourcesIds
 	        });
+	      }
+	    },
+	    fetchingNextDate(fetching) {
+	      if (fetching) {
+	        this.showLoader();
+	      } else {
+	        this.hideLoader();
+	      }
+	    },
+	    deletingResource(resource) {
+	      if (resource !== null) {
+	        void this.applyDeletingResourceFilter(resource, true);
 	      }
 	    }
 	  },
@@ -9163,14 +9338,59 @@ this.BX = this.BX || {};
 	      const fields = this.getFilterFieldsByCounterItem(counterItem);
 	      this.$refs.filter.setFields(fields);
 	    },
-	    async applyFilter() {
+	    getFilterFields() {
+	      const fields = this.$refs.filter.getFields();
+	      if (this.isDeletingResourceFilterMode && 'RESOURCE' in fields && Object.keys(fields).length === 1) {
+	        return {
+	          RESOURCE: this.$store.getters[`${booking_const.Model.Interface}/resourcesIds`]
+	        };
+	      }
+	      return this.$refs.filter.getFields();
+	    },
+	    async applyFilter({
+	      fromFilter = false
+	    } = {}) {
 	      const fields = this.$refs.filter.getFields();
 	      this.setCounterItem(this.getCounterItemByFilterFields(fields));
 	      this.showLoader();
-	      await Promise.all([this.$store.dispatch(`${booking_const.Model.Interface}/setFilterMode`, true), this.updateMarks(),
+	      await this.$store.dispatch(`${booking_const.Model.Filter}/setFilterFields`, this.$refs.filter.getFields());
+	      await Promise.all([this.$store.dispatch(`${booking_const.Model.Filter}/setFilterMode`, true), this.updateMarks(),
 	      // eslint-disable-next-line unicorn/no-array-callback-reference
-	      booking_provider_service_bookingService.bookingService.filter(fields)]);
+	      booking_provider_service_bookingService.bookingService.filter(this.requestFields)]);
+	      if (fromFilter && (this.filteredBookingsIds.length === 0 || Date.now() > this.selectedDateTs)) {
+	        await this.tryNavigateToOptimalFilterResult();
+	      }
 	      this.hideLoader();
+	    },
+	    async applyDeletingResourceFilter(resource, force = false) {
+	      if (!force && this.isDeletingResourceFilterMode && !this.isDeletionResourceFilterFields(this.$refs.filter.getFields())) {
+	        await this.$store.dispatch(`${booking_const.Model.Filter}/setFilterMode`, true);
+	        await this.clearDeletingResourceFilter(true);
+	        await this.applyFilter({
+	          fromFilter: true
+	        });
+	        return;
+	      }
+	      const fields = {
+	        RESOURCE: [resource.id.toString()],
+	        RESOURCE_label: [resource.name]
+	      };
+	      if (force) {
+	        this.$refs.filter.setFields(fields);
+	      }
+	      const requestFields = this.getFilterFields();
+	      this.showLoader();
+	      await Promise.all([this.$store.dispatch(`${booking_const.Model.Filter}/setFilterFields`, fields), this.$store.dispatch(`${booking_const.Model.Filter}/setDeletionResourceFilterFields`, requestFields), this.$store.dispatch(`${booking_const.Model.Interface}/setPinnedResourceIds`, requestFields.RESOURCE)]);
+	      await Promise.all([this.updateMarks(),
+	      // eslint-disable-next-line unicorn/no-array-callback-reference
+	      booking_provider_service_bookingService.bookingService.filter(this.requestFields)]);
+	      if (force && this.getFutureBookingsByResourceId(resource.id).length === 0) {
+	        await this.tryNavigateToOptimalFilterResult(true);
+	      }
+	      this.hideLoader();
+	    },
+	    isDeletionResourceFilterFields(fields) {
+	      return Object.keys(fields).length === 1 && 'RESOURCE' in fields && fields.RESOURCE.length === 1 && fields.RESOURCE[0] === this.deletingResource.id.toString();
 	    },
 	    setCounterItem(item) {
 	      this.ignoreConterPanel = true;
@@ -9185,6 +9405,12 @@ this.BX = this.BX || {};
 	        [RequireAttention.Delayed]: CounterItem.Delayed
 	      }[filterFields.REQUIRE_ATTENTION];
 	    },
+	    async tryNavigateToOptimalFilterResult(inFuture = false) {
+	      const dateTs = await booking_lib_filterResultNavigator.filterResultNavigator.getOptimalFilterDateTs(inFuture);
+	      if (dateTs && dateTs !== this.selectedDateTs) {
+	        await this.$store.dispatch(`${booking_const.Model.Interface}/setSelectedDateTs`, dateTs);
+	      }
+	    },
 	    getFilterFieldsByCounterItem(counterItem) {
 	      const fields = this.$refs.filter.getFields();
 	      fields.REQUIRE_ATTENTION = {
@@ -9197,8 +9423,27 @@ this.BX = this.BX || {};
 	      this.setCounterItem(null);
 	      booking_provider_service_calendarService.calendarService.clearFilterCache();
 	      booking_provider_service_bookingService.bookingService.clearFilterCache();
-	      void Promise.all([this.$store.dispatch(`${booking_const.Model.Interface}/setResourcesIds`, this.resourcesIds), this.$store.dispatch(`${booking_const.Model.Interface}/setFilterMode`, false), this.$store.dispatch(`${booking_const.Model.Interface}/setFilteredBookingsIds`, []), this.$store.dispatch(`${booking_const.Model.Interface}/setFilteredMarks`, [])]);
+	      await Promise.all([this.$store.dispatch(`${booking_const.Model.Interface}/setResourcesIds`, this.resourcesIds), this.$store.dispatch(`${booking_const.Model.Filter}/setFilterMode`, false), this.$store.dispatch(`${booking_const.Model.Filter}/setFilteredBookingsIds`, []), this.$store.dispatch(`${booking_const.Model.Filter}/setFilteredMarks`, []), this.$store.dispatch(`${booking_const.Model.Filter}/clearFilter`, {}), this.$store.dispatch(`${booking_const.Model.Interface}/setPinnedResourceIds`, [])]);
 	      this.hideLoader();
+	    },
+	    async clearDeletingResourceFilter(modeOnly = false) {
+	      await Promise.all([this.$store.dispatch(`${booking_const.Model.Filter}/setDeletingResourceFilter`, null), this.$store.dispatch(`${booking_const.Model.Interface}/setPinnedResourceIds`, [])]);
+	      if (this.isFilterMode || modeOnly) {
+	        return;
+	      }
+	      this.$refs.filter.setFields({
+	        RESOURCE: [],
+	        RESOURCE_label: []
+	      });
+	      await this.clearFilter();
+	    },
+	    clearDeletingResourceFilterFields() {
+	      if (this.isDeletionResourceFilterFields(this.$refs.filter.getFields())) {
+	        this.$refs.filter.setFields({
+	          RESOURCE: [],
+	          RESOURCE_label: []
+	        });
+	      }
 	    },
 	    addAfterTitle() {
 	      this.afterTitleContainer.append(this.$refs.afterTitle.$el);
@@ -9208,8 +9453,8 @@ this.BX = this.BX || {};
 	      void this.$store.dispatch(`${booking_const.Model.Interface}/setResourcesIds`, resourcesIds);
 	    },
 	    async updateMarks() {
-	      if (this.isFilterMode) {
-	        await this.updateFilterMarks();
+	      if (this.isFilterMode || this.isDeletingResourceFilterMode) {
+	        await Promise.all([this.updateFilterBookingsCount(), this.updateFilterMarks()]);
 	      } else {
 	        await Promise.all([this.updateFreeMarks(), this.updateCounterMarks()]);
 	      }
@@ -9224,16 +9469,22 @@ this.BX = this.BX || {};
 	    },
 	    async updateFilterMarks() {
 	      const fields = this.$refs.filter.getFields();
-	      await this.$store.dispatch(`${booking_const.Model.Interface}/setFilteredMarks`, []);
-	      await booking_provider_service_calendarService.calendarService.loadFilterMarks(fields);
+	      await this.$store.dispatch(`${booking_const.Model.Filter}/setFilteredMarks`, []);
+	      await booking_provider_service_calendarService.calendarService.loadFilterMarks(fields, this.isDeletingResourceFilterMode);
 	    },
 	    async updateCounterMarks() {
 	      await booking_provider_service_calendarService.calendarService.loadCounterMarks(this.viewDateTs);
 	    },
+	    async updateFilterBookingsCount() {
+	      const fields = this.$refs.filter.getFields();
+	      await booking_provider_service_calendarService.calendarService.loadBookingsDateCount(fields, this.isDeletingResourceFilterMode);
+	    },
 	    showLoader() {
+	      this.loadingFilter = true;
 	      void this.loader.show(this.$refs.baseComponent.$el);
 	    },
 	    hideLoader() {
+	      this.loadingFilter = false;
 	      void this.loader.hide();
 	    }
 	  },
@@ -9245,8 +9496,11 @@ this.BX = this.BX || {};
 			<BookingFilter
 				:filterId="filterId"
 				ref="filter"
-				@apply="applyFilter"
+				@apply="isDeletingResourceFilterMode ? applyDeletingResourceFilter(deletingResource) : applyFilter({ fromFilter: true })"
 				@clear="clearFilter"
+			/>
+			<EmptyFilterResultsPopup
+				v-if="isFilterMode && !isDeletingResourceFilterMode && !loadingFilter && !fetchingNextDate && datesCount.count === 0"
 			/>
 			<CountersPanel
 				:target="counterPanelContainer"
@@ -9280,5 +9534,5 @@ this.BX = this.BX || {};
 
 	exports.Booking = Booking$1;
 
-}((this.BX.Booking = this.BX.Booking || {}),BX.Booking.Component.Mixin,BX,BX.Booking.Provider.Service,BX.Booking.Provider.Service,BX.Booking.Provider.Service,BX.Event,BX.UI,BX.UI,BX.Booking.Lib,BX.UI.Vue3.Components,BX.UI.NotificationManager,BX.Booking.Provider.Service,BX.Booking.Component,BX.Vue3.Directives,BX.Booking.Lib,BX.Booking.Component,BX.Booking.Component,BX.UI.IconSet,BX,BX.Booking.Component,BX.Booking.Lib,BX.Booking.Lib,BX.Booking.Lib,BX.Booking.Lib,BX.Booking,BX.UI.DatePicker,BX.Booking.Lib,BX.Booking.Component,BX.Booking.Component,BX.Booking.Lib,BX.Booking.Model,BX.Booking.Model,BX.Booking.Provider.Service,BX.Booking.Lib,BX.Booking.Lib,BX.Booking.Lib,BX.Booking.Component,BX.UI.Dialogs,BX,BX.Booking.Provider.Service,BX,BX.Booking,BX.Booking.Provider.Service,BX.Booking.Lib,BX.Booking.Lib,BX.UI.IconSet,BX,BX.Booking.Provider.Service,BX.Booking.Lib,BX.Booking.Lib,BX.UI.EntitySelector,BX.Booking.Lib,BX.Booking.Provider.Service,BX.Booking.Provider.Service,BX.UI,BX.Main,BX.Booking.Lib,BX.Booking.Component,BX.Booking.Lib,BX.UI.AutoLaunch,BX.Vue3.Vuex,BX,BX.UI,BX.Booking.Lib,BX.Booking.Lib,BX.Main,BX.Booking.Component,BX.Booking.Component,BX.Vue3,BX.Booking.Const,BX.Booking.Component));
+}((this.BX.Booking = this.BX.Booking || {}),BX.Booking.Component.Mixin,BX,BX.Booking.Component,BX.Booking.Provider.Service,BX.Booking.Provider.Service,BX.Booking.Provider.Service,BX.Booking.Lib,BX.UI,BX.UI,BX.Event,BX.Booking.Lib,BX.UI.Vue3.Components,BX.UI.NotificationManager,BX.Booking.Provider.Service,BX.Booking.Component,BX.Vue3.Directives,BX.Booking.Lib,BX.Booking.Component,BX.Booking.Component,BX.UI.IconSet,BX,BX.Booking.Component,BX.Booking.Lib,BX.Booking.Lib,BX.Booking.Lib,BX.Booking.Lib,BX.Booking,BX.UI.DatePicker,BX.Booking.Component,BX.Booking.Lib,BX.UI.Dialogs,BX.Booking.Component,BX.Booking.Component,BX.Booking.Lib,BX.Booking.Model,BX.Booking.Model,BX.Booking.Provider.Service,BX.Booking.Lib,BX.Booking.Lib,BX.UI,BX.Booking.Lib,BX.Booking.Component,BX,BX.Booking.Lib,BX,BX.Booking.Lib,BX.Booking,BX.Booking.Provider.Service,BX.Booking.Lib,BX.Booking.Lib,BX.UI.IconSet,BX,BX.Booking.Provider.Service,BX.Booking.Lib,BX.Booking.Lib,BX.UI.EntitySelector,BX.Booking.Lib,BX.Booking.Provider.Service,BX.Booking.Provider.Service,BX.UI,BX.Main,BX.Booking.Lib,BX.Booking.Component,BX.Booking.Lib,BX.UI.AutoLaunch,BX.Vue3.Vuex,BX,BX.UI,BX.Booking.Lib,BX.Booking.Lib,BX.Main,BX.Booking.Component,BX.Booking.Component,BX.Vue3,BX.Booking.Const,BX.Booking.Component));
 //# sourceMappingURL=booking.bundle.js.map

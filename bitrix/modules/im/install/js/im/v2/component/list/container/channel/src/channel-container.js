@@ -33,7 +33,7 @@ export const ChannelListContainer = {
 	{
 		onChatClick(dialogId): void
 		{
-			this.$emit('selectEntity', { layoutName: Layout.channel.name, entityId: dialogId });
+			this.$emit('selectEntity', { layoutName: Layout.channel, entityId: dialogId });
 		},
 		onCreateClick(): void
 		{

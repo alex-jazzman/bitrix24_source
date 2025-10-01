@@ -63,13 +63,16 @@ class Json
 
 	public static function validate(string $data): bool
 	{
-		if (function_exists('json_validate'))
-		{
-			return json_validate($data);
-		}
+		// On PHP 8.3 replace to
+		// return json_validate($data);
 
 		try
 		{
+			if ($data === 'null') // consistency with json_validate
+			{
+				return true;
+			}
+
 			return json_decode(json: $data, associative: true, flags: JSON_THROW_ON_ERROR) !== null;
 		}
 		catch (JsonException)

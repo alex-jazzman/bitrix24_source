@@ -1,4 +1,4 @@
-import { Loc, Tag, Dom, Reflection, ajax } from 'main.core';
+import { ajax as Ajax, Dom, Loc, Reflection, Tag } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { DashboardParametersSelector } from 'biconnector.dashboard-parameters-selector';
 import { ApacheSupersetAnalytics } from 'biconnector.apache-superset-analytics';
@@ -106,7 +106,7 @@ class SupersetDashboardCreateManager
 
 		this.#saveButton.setWaiting(true);
 
-		ajax.runComponentAction(
+		Ajax.runComponentAction(
 			this.#props.componentName,
 			'save',
 			{
@@ -122,6 +122,7 @@ class SupersetDashboardCreateManager
 					type: 'custom',
 					c_element: 'new_button',
 				});
+				window.open(response.data.dashboard.detailUrl, '_blank')?.focus();
 				parent.BX.Event.EventEmitter.emit('BIConnector.CreateForm:onDashboardCreated', {
 					dashboard: response.data.dashboard,
 				});

@@ -175,7 +175,7 @@ if (
 											<tr>
 												<td align="center" style="padding-bottom: 16px;">
 													<div><!--[if mso]>
-														<v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="http://" style="height:47px;v-text-anchor:middle;width:350px;text-transform: uppercase;" arcsize="18%" stroke="f" fillcolor="#bbed21">
+														<v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="<?=$arParams['LINK']?>" style="height:47px;v-text-anchor:middle;width:350px;text-transform: uppercase;" arcsize="18%" stroke="f" fillcolor="#bbed21">
 															<w:anchorlock/>
 															<center>
 														<![endif]-->

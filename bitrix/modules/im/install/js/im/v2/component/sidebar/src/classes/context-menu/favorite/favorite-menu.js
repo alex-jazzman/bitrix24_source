@@ -4,7 +4,7 @@ import { MessageService } from 'im.v2.provider.service.message';
 
 import { SidebarMenu } from '../sidebar-base-menu';
 
-import type { MenuItem } from 'im.v2.lib.menu';
+import type { MenuItemOptions } from 'ui.system.menu';
 
 export class FavoriteMenu extends SidebarMenu
 {
@@ -15,7 +15,7 @@ export class FavoriteMenu extends SidebarMenu
 		this.id = 'im-sidebar-context-menu';
 	}
 
-	getMenuItems(): MenuItem[]
+	getMenuItems(): MenuItemOptions | null[]
 	{
 		return [
 			this.getOpenContextMessageItem(),
@@ -23,11 +23,11 @@ export class FavoriteMenu extends SidebarMenu
 		];
 	}
 
-	getDeleteFromFavoriteItem(): MenuItem
+	getDeleteFromFavoriteItem(): MenuItemOptions
 	{
 		return {
-			text: Loc.getMessage('IM_SIDEBAR_MENU_REMOVE_FROM_SAVED_V2'),
-			onclick: function() {
+			title: Loc.getMessage('IM_SIDEBAR_MENU_REMOVE_FROM_SAVED_V2'),
+			onClick: function() {
 				const messageService = new MessageService({ chatId: this.context.chatId });
 				messageService.removeMessageFromFavorite(this.context.messageId);
 				this.menuInstance.close();

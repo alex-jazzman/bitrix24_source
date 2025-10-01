@@ -6,6 +6,7 @@
 	const { AvaMenu } = require('ava-menu');
 	const { Type } = require('type');
 	const { UserProfile } = require('user-profile');
+	const { merge } = require('utils/object');
 
 	if (typeof window.SocketConnection === 'undefined')
 	{
@@ -271,7 +272,7 @@
 					}
 			}
 
-			this.userCounters = Utils.objectMerge(this.userCounters, counters);
+			this.userCounters = merge(this.userCounters, counters);
 
 			let needUpdate = false;
 			for (let userCounter in this.userCounterMapTabName)

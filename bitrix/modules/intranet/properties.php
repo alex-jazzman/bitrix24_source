@@ -535,6 +535,10 @@ class CIBlockPropertyEmployee extends CIEmployeeProperty
 	{
 		if (!empty($arProperty['SETTINGS']['USE_ENTITY_SELECTOR']))
 		{
+			if (($strHTMLControlName['VALUE'] ?? '') === 'DEFAULT_VALUE')
+			{
+				$arProperty['MULTIPLE'] = 'N';
+			}
 			return self::renderEntitySelector($arProperty, $value, $strHTMLControlName);
 		}
 

@@ -12,6 +12,8 @@ return [
 		'ui.vue3',
 		'ui.vue3.vuex',
 		'main.popup',
+		'ui.icon-set.api.core',
+		'ui.vue3.components.button',
 		'main.core',
 		'main.core.events',
 		'ui.entity-selector',

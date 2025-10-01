@@ -5,7 +5,6 @@ import {
 	DateFilterField,
 	DashboardDateFilterField,
 	KeyInfoField,
-	UserNotificationField,
 	DashboardOwnerField,
 	DashboardGroupsField,
 	DeleteSupersetField,
@@ -32,8 +31,6 @@ export class FieldFactory
 				return DashboardDateFilterField.create(controlId, settings);
 			case 'keyInfo':
 				return KeyInfoField.create(controlId, settings);
-			case 'userNotificationSelector':
-				return UserNotificationField.create(controlId, settings);
 			case 'ownerSelector':
 				return DashboardOwnerField.create(controlId, settings);
 			case 'dashboardGroupsSelector':

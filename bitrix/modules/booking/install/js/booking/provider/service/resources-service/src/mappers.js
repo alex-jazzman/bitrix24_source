@@ -14,9 +14,11 @@ export function mapDtoToModel(resourceDto: ResourceDto): ResourceModel
 		})),
 		counter: resourceDto.counter,
 		isMain: resourceDto.isMain,
+		isDeleted: resourceDto.isDeleted,
 		createdBy: resourceDto.createdBy,
 		createdAt: resourceDto.createdAt,
 		updatedAt: resourceDto.updatedAt,
+		deletedAt: resourceDto.deletedAt,
 
 		// info
 		isInfoNotificationOn: resourceDto.isInfoNotificationOn,
@@ -60,6 +62,7 @@ export function mapModelToDto(resource: ResourceModel): ResourceDto
 		slotRanges: resource.slotRanges,
 		counter: null,
 		isMain: resource.isMain,
+		isDeleted: resource.isDeleted,
 		createdBy: null,
 		createdAt: null,
 		updatedAt: null,

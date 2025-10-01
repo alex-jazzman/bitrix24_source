@@ -91,19 +91,9 @@ export class RepeatSale extends Base
 			return;
 		}
 
-		void Router.openSlider(
-			`/crm/repeat-sale-segment/details/${segmentId}/`,
-			{
-				width: 922,
-				cacheable: false,
-				requestMethod: 'post',
-				requestParams: {
-					analytics: {
-						section: 'deal_section',
-					},
-				},
-			},
-		);
+		void Router.Instance.openRepeatSaleSegmentSlider(segmentId, true, {
+			section: 'deal_section',
+		});
 	}
 
 	#showRestrictionSlider(): void
@@ -266,22 +256,26 @@ export class RepeatSale extends Base
 
 				BX.UI.Feedback.Form.open({
 					id: 'b24_ai_provider_partner_crm_feedback',
-					defaultForm: {
-						id: 682,
-						lang: 'en',
-						sec: '3sd3le',
-					},
-					forms: [{
-						zones: ['cn'],
-						id: 678,
-						lang: 'cn',
-						sec: 'wyufoe',
-					}, {
-						zones: ['vn'],
-						id: 680,
-						lang: 'vn',
-						sec: '2v97xr',
-					}],
+					forms: [
+						{
+							zones: ['en'],
+							id: 682,
+							lang: 'en',
+							sec: '3sd3le',
+						},
+						{
+							zones: ['cn'],
+							id: 678,
+							lang: 'cn',
+							sec: 'wyufoe',
+						},
+						{
+							zones: ['vn'],
+							id: 680,
+							lang: 'vn',
+							sec: '2v97xr',
+						},
+					],
 				});
 			},
 			onCancel: (messageBox) => {

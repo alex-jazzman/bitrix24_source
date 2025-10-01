@@ -437,8 +437,9 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 		getCallUsersLimit()
 		{
 			// eslint-disable-next-line no-undef
-			const { call_server_max_users: userLimit } = jnExtensionData.get('im:messenger/lib/permission-manager');
-
+			const userLimit = MessengerParams.get('CALL_SERVER_MAX_USERS', null)
+				?? jnExtensionData.get('im:messenger/lib/permission-manager').call_server_max_users
+			;
 			return userLimit;
 		}
 

@@ -209,8 +209,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	function _getConnectItem2() {
 	  const title = this.context.connected ? main_core.Loc.getMessage('IM_USER_SETTINGS_DESKTOP_CONTEXT_MENU_DISCONNECT_V2') : main_core.Loc.getMessage('IM_USER_SETTINGS_DESKTOP_CONTEXT_MENU_CONNECT_V2');
 	  return {
-	    text: title,
-	    onclick: function () {
+	    title,
+	    onClick: function () {
 	      var _PopupManager$getPopu2;
 	      if (this.context.connected) {
 	        babelHelpers.classPrivateFieldLooseBase(this, _disconnect)[_disconnect]();
@@ -224,8 +224,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	}
 	function _getDeleteItem2() {
 	  return {
-	    text: main_core.Loc.getMessage('IM_USER_SETTINGS_DESKTOP_CONTEXT_MENU_DELETE_V2'),
-	    onclick: async function () {
+	    title: main_core.Loc.getMessage('IM_USER_SETTINGS_DESKTOP_CONTEXT_MENU_DELETE_V2'),
+	    onClick: async function () {
 	      const userChoice = await im_v2_lib_confirm.showDesktopDeleteConfirm();
 	      if (userChoice === true) {
 	        var _PopupManager$getPopu3;
@@ -632,12 +632,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  methods: {
 	    onMarketClick() {
 	      this.$emit('clickMarketItem', {
-	        id: im_v2_const.Layout.market.name
+	        id: im_v2_const.Layout.market
 	      });
 	    },
 	    onMarketItemClick(item) {
 	      this.$emit('clickMarketItem', {
-	        id: im_v2_const.Layout.market.name,
+	        id: im_v2_const.Layout.market,
 	        entityId: item.id
 	      });
 	    },
@@ -648,7 +648,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      };
 	    },
 	    isItemSelected(itemId) {
-	      return this.layout.name === im_v2_const.Layout.market.name && this.layout.entityId === itemId;
+	      return this.layout.name === im_v2_const.Layout.market && this.layout.entityId === itemId;
 	    },
 	    getIconClassNames(item) {
 	      return item.iconName.toString();
@@ -691,9 +691,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	};
 
 	const LayoutToAction = Object.freeze({
-	  [im_v2_const.Layout.market.name]: im_v2_const.ActionByUserType.getMarket,
-	  [im_v2_const.Layout.openlines.name]: im_v2_const.ActionByUserType.getOpenlines,
-	  [im_v2_const.Layout.channel.name]: im_v2_const.ActionByUserType.getChannels
+	  [im_v2_const.Layout.market]: im_v2_const.ActionByUserType.getMarket,
+	  [im_v2_const.Layout.openlines]: im_v2_const.ActionByUserType.getOpenlines,
+	  [im_v2_const.Layout.channel]: im_v2_const.ActionByUserType.getChannels
 	});
 
 	// @vue/component

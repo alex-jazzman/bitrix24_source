@@ -64,7 +64,7 @@ export type SyncRawMessage = {
 	}
 	id: number,
 	isSystem: boolean,
-	params: Object,
+	params: Object | [],
 	text: string,
 	unread: boolean,
 	uuid: string | null,

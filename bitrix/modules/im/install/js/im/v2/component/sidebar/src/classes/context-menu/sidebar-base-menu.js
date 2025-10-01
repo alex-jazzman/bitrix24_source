@@ -5,7 +5,7 @@ import { BaseMenu } from 'im.v2.lib.menu';
 import { Notifier } from 'im.v2.lib.notifier';
 import { EventType } from 'im.v2.const';
 
-import type { MenuItem } from 'im.v2.lib.menu';
+import type { MenuItemOptions, MenuOptions } from 'ui.system.menu';
 
 export class SidebarMenu extends BaseMenu
 {
@@ -15,7 +15,7 @@ export class SidebarMenu extends BaseMenu
 		this.id = 'im-sidebar-context-menu';
 	}
 
-	getMenuOptions(): Object
+	getMenuOptions(): MenuOptions
 	{
 		return {
 			...super.getMenuOptions(),
@@ -23,7 +23,7 @@ export class SidebarMenu extends BaseMenu
 		};
 	}
 
-	getOpenContextMessageItem(): ?MenuItem
+	getOpenContextMessageItem(): ?MenuItemOptions
 	{
 		if (!this.context.messageId || this.context.messageId === 0)
 		{
@@ -31,8 +31,8 @@ export class SidebarMenu extends BaseMenu
 		}
 
 		return {
-			text: Loc.getMessage('IM_SIDEBAR_MENU_GO_TO_CONTEXT_MESSAGE'),
-			onclick: () => {
+			title: Loc.getMessage('IM_SIDEBAR_MENU_GO_TO_CONTEXT_MESSAGE'),
+			onClick: () => {
 				EventEmitter.emit(EventType.dialog.goToMessageContext, {
 					messageId: this.context.messageId,
 					dialogId: this.context.dialogId,
@@ -43,7 +43,7 @@ export class SidebarMenu extends BaseMenu
 		};
 	}
 
-	getCopyLinkItem(title: string): ?MenuItem
+	getCopyLinkItem(title: string): ?MenuItemOptions
 	{
 		if (!BX.clipboard.isCopySupported())
 		{
@@ -51,8 +51,8 @@ export class SidebarMenu extends BaseMenu
 		}
 
 		return {
-			text: title,
-			onclick: () => {
+			title,
+			onClick: () => {
 				if (BX.clipboard.copy(this.context.source))
 				{
 					Notifier.onCopyLinkComplete();

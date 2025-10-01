@@ -29,6 +29,7 @@ BX.Kanban.Column = function(options)
 	this.total = null;
 	this.isTotalFrozen = false;
 	this.animate = options.animate || null;
+	this.autoPagination = false;
 
 	this.canEdit = null;
 	this.canSort = null;
@@ -126,13 +127,22 @@ BX.Kanban.Column.prototype =
 		this.setColor(options.color);
 		this.setData(options.data);
 
-		var boolOptions = ["canEdit", "canSort", "canRemove", "canAddItem", "droppable", "canSortItems",];
-		boolOptions.forEach(function(boolOption) {
+		const boolOptions = [
+			'canEdit',
+			'canSort',
+			'canRemove',
+			'canAddItem',
+			'droppable',
+			'canSortItems',
+			'autoPagination',
+		];
+
+		boolOptions.forEach((boolOption) => {
 			if (BX.type.isBoolean(options[boolOption]))
 			{
 				this[boolOption] = options[boolOption];
 			}
-		}, this);
+		});
 	},
 
 	setColor: function(color)
@@ -567,6 +577,11 @@ BX.Kanban.Column.prototype =
 
 	hasLoading: function()
 	{
+		if (this.autoPagination)
+		{
+			return true;
+		}
+
 		return this.total !== null && this.total > this.getItemsCount();
 	},
 
@@ -622,6 +637,11 @@ BX.Kanban.Column.prototype =
 		var columnContainer = this.getContainer();
 		columnContainer.classList[isEmptyColumn ? "add" : "remove"]("main-kanban-column-empty");
 		columnContainer.classList[this.isDroppable() ? "add" : "remove"]("main-kanban-column-droppable");
+
+		if (this.autoPagination)
+		{
+			columnContainer.classList.add("--auto-pagination");
+		}
 
 		if(!this.getGrid().firstRenderComplete)
 		{
@@ -1172,7 +1192,7 @@ BX.Kanban.Column.prototype =
 		var firstItem = this.getFirstItem(false);
 		if (firstItem)
 		{
-			var existsDraftItem = firstItem.getId().indexOf('kanban-new-item-') === 0;
+			const existsDraftItem = firstItem.getId().toString().indexOf('kanban-new-item-') === 0;
 			if (existsDraftItem)
 			{
 				firstItem.applyDraftEditMode();
@@ -2023,6 +2043,7 @@ BX.Kanban.Pagination.prototype = {
 		jsDD.refreshDestArea();
 
 		var loader = this.getLoader();
+
 		if (!this.loadingInProgress && column.hasLoading() && loader.offsetTop < scrollTop + offsetHeight)
 		{
 			this.showLoader();

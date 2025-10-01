@@ -167,6 +167,8 @@ DROP TABLE IF EXISTS b_crm_item_category_user_field;
 DROP TABLE IF EXISTS b_crm_assigned;
 DROP TABLE IF EXISTS b_crm_entity_contact;
 DROP TABLE IF EXISTS b_crm_entity_relation;
+DROP TABLE IF EXISTS b_crm_entity_stage_history;
+DROP TABLE IF EXISTS b_crm_entity_stage_history_with_supposed;
 DROP TABLE IF EXISTS b_crm_company_index;
 DROP TABLE IF EXISTS b_crm_contact_index;
 DROP TABLE IF EXISTS b_crm_lead_index;

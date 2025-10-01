@@ -5,12 +5,11 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-use Bitrix\HumanResources\Access\StructureAccessController;
-use Bitrix\HumanResources\Access\StructureActionDictionary;
 use Bitrix\HumanResources\Enum\Access\RoleCategory;
 use Bitrix\HumanResources\Service\Container;
+use Bitrix\HumanResources\Internals\Service\Container as InternalsContainer;
+use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\Engine\CurrentUser;
 
 if (!Bitrix\Main\Loader::includeModule('humanresources'))
 {
@@ -26,34 +25,26 @@ class HumanResourcesConfigPermissionsAjaxController extends \Bitrix\Main\Engine\
 	 *
 	 * @return array|null
 	 */
-	public function savePermissionsAction(array $userGroups = [], ?array $deletedUserGroups = null, ?array $parameters = []): ?array
+	public function savePermissionsAction(array $userGroups = [], ?array $deletedUserGroups = null, ?array $parameters = []): array
 	{
-		if (!\Bitrix\HumanResources\Config\Storage::canUsePermissionConfig())
+		$category = RoleCategory::tryFrom($parameters['category'] ?? '');
+
+		if (!$category)
 		{
 			return [];
 		}
 
-		if (!isset($parameters['category']) || !$this->isSupportedRoleCategory((string)$parameters['category']))
+		$accessService = InternalsContainer::getAccessService();
+		if (!$accessService->checkAccessToEditPermissions($category))
 		{
-			return null;
-		}
+			$this->addError(new Main\Error('Access denied', 'ACCESS_DENIED'));
 
-		$action = $parameters['category'] === RoleCategory::Department->value
-			? StructureActionDictionary::ACTION_USERS_ACCESS_EDIT
-			: StructureActionDictionary::ACTION_TEAM_ACCESS_EDIT
-		;
-
-		if (!check_bitrix_sessid() || !StructureAccessController::can(CurrentUser::get()->getId(), $action))
-		{
-			return null;
+			return [];
 		}
 
 		try
 		{
 			$permissionService = Container::getAccessRolePermissionService();
-			$category = \Bitrix\HumanResources\Enum\Access\RoleCategory::tryFrom(
-				$parameters['category'] ?? ''
-			) ?? \Bitrix\HumanResources\Enum\Access\RoleCategory::Department;
 			$permissionService->setCategory($category);
 
 			if (!empty($userGroups))
@@ -78,19 +69,27 @@ class HumanResourcesConfigPermissionsAjaxController extends \Bitrix\Main\Engine\
 			);
 		}
 
-		return null;
+		return [];
 	}
 
 	public function loadAction(?array $parameters): array
 	{
-		if (!StructureAccessController::can(CurrentUser::get()->getId(), StructureActionDictionary::ACTION_USERS_ACCESS_EDIT))
+		$category = RoleCategory::tryFrom($parameters['category'] ?? '');
+
+		if (!$category)
 		{
 			return [];
 		}
+
+		$accessService = InternalsContainer::getAccessService();
+		if (!$accessService->checkAccessToEditPermissions($category))
+		{
+			$this->addError(new Main\Error('Access denied', 'ACCESS_DENIED'));
+
+			return [];
+		}
+
 		$permissionService = Container::getAccessRolePermissionService();
-		$category = \Bitrix\HumanResources\Enum\Access\RoleCategory::tryFrom(
-				$parameters['category'] ?? ''
-			) ?? \Bitrix\HumanResources\Enum\Access\RoleCategory::Department;
 		$permissionService->setCategory($category);
 
 		return [
@@ -109,13 +108,5 @@ class HumanResourcesConfigPermissionsAjaxController extends \Bitrix\Main\Engine\
 		}
 
 		Container::getAccessRolePermissionService()->deleteRoles($deletedUserGroups);
-	}
-
-	private function isSupportedRoleCategory(string $category): bool
-	{
-		return in_array($category, [
-			RoleCategory::Department->value,
-			RoleCategory::Team->value,
-		], true);
 	}
 }

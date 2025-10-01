@@ -7,17 +7,104 @@ import 'ui.icon-set.actions';
 
 import { DateFormat, Model, Option } from 'booking.const';
 import { optionService } from 'booking.provider.service.option-service';
+import { CounterFloating } from 'booking.component.counter-floating';
 
 import './calendar.css';
 
 const { mapGetters: mapInterfaceGetters } = createNamespacedHelpers(Model.Interface);
+const { mapGetters: mapFilterGetters } = createNamespacedHelpers(Model.Filter);
 
+// @vue/component
 export const Calendar = {
+	components: {
+		Icon,
+		CounterFloating,
+	},
+	props: {
+		calendarClass: {
+			type: [String, Object, Array],
+			default: '',
+		},
+	},
 	data(): Object
 	{
 		return {
 			IconSet,
 		};
+	},
+	computed: {
+		...mapGetters({
+			calendarExpanded: `${Model.Interface}/calendarExpanded`,
+			datesCount: `${Model.Filter}/datesCount`,
+		}),
+		...mapInterfaceGetters({
+			freeMarks: 'freeMarks',
+			getCounterMarks: 'getCounterMarks',
+			offset: 'offset',
+		}),
+		...mapFilterGetters({
+			filteredMarks: 'filteredMarks',
+			isFilterMode: 'isFilterMode',
+			isDeletingResourceFilterMode: 'isDeletingResourceFilterMode',
+		}),
+		selectedDateTs(): number
+		{
+			return this.$store.getters[`${Model.Interface}/selectedDateTs`] + this.offset;
+		},
+		viewDateTs(): number
+		{
+			return this.$store.getters[`${Model.Interface}/viewDateTs`] + this.offset;
+		},
+		counterMarks(): string[]
+		{
+			if (this.isFilterMode || this.isDeletingResourceFilterMode)
+			{
+				return this.getCounterMarks(this.filteredMarks);
+			}
+
+			return this.getCounterMarks();
+		},
+		formattedDate(): string
+		{
+			const format = this.calendarExpanded
+				? this.loc('BOOKING_MONTH_YEAR_FORMAT')
+				: DateTimeFormat.getFormat('LONG_DATE_FORMAT')
+			;
+
+			const timestamp = this.calendarExpanded
+				? this.viewDateTs / 1000
+				: this.selectedDateTs / 1000
+			;
+
+			return DateTimeFormat.format(format, timestamp);
+		},
+		isShowCounterFloating(): boolean
+		{
+			return (this.isDeletingResourceFilterMode || this.isFilterMode) && (this.datesCount.count > 0);
+		},
+	},
+	watch: {
+		selectedDateTs(selectedDateTs: number): void
+		{
+			this.datePicker.selectDate(createDate(selectedDateTs));
+			this.updateMarks();
+		},
+		filteredMarks(): void
+		{
+			this.updateMarks();
+		},
+		freeMarks(): void
+		{
+			this.updateMarks();
+		},
+		counterMarks(): void
+		{
+			this.setCounterMarks();
+		},
+		isFilterMode(): void
+		{
+			this.updateMarks();
+		},
 	},
 	created(): void
 	{
@@ -44,49 +131,6 @@ export const Calendar = {
 	beforeUnmount(): void
 	{
 		this.datePicker.destroy();
-	},
-	computed: {
-		...mapGetters({
-			calendarExpanded: `${Model.Interface}/calendarExpanded`,
-		}),
-		...mapInterfaceGetters({
-			filteredMarks: 'filteredMarks',
-			freeMarks: 'freeMarks',
-			isFilterMode: 'isFilterMode',
-			getCounterMarks: 'getCounterMarks',
-			offset: 'offset',
-		}),
-		selectedDateTs(): number
-		{
-			return this.$store.getters[`${Model.Interface}/selectedDateTs`] + this.offset;
-		},
-		viewDateTs(): number
-		{
-			return this.$store.getters[`${Model.Interface}/viewDateTs`] + this.offset;
-		},
-		counterMarks(): string[]
-		{
-			if (this.isFilterMode)
-			{
-				return this.getCounterMarks(this.filteredMarks);
-			}
-
-			return this.getCounterMarks();
-		},
-		formattedDate(): string
-		{
-			const format = this.calendarExpanded
-				? this.loc('BOOKING_MONTH_YEAR_FORMAT')
-				: DateTimeFormat.getFormat('LONG_DATE_FORMAT')
-			;
-
-			const timestamp = this.calendarExpanded
-				? this.viewDateTs / 1000
-				: this.selectedDateTs / 1000
-			;
-
-			return DateTimeFormat.format(format, timestamp);
-		},
 	},
 	methods: {
 		onPreviousClick(): void
@@ -148,7 +192,7 @@ export const Calendar = {
 		},
 		updateMarks(): void
 		{
-			if (this.isFilterMode)
+			if (this.isFilterMode || this.isDeletingResourceFilterMode)
 			{
 				this.setFilterMarks();
 			}
@@ -171,10 +215,22 @@ export const Calendar = {
 				},
 			]);
 		},
+		getFilterMarks(): string[]
+		{
+			if (!this.isDeletingResourceFilterMode)
+			{
+				return this.filteredMarks;
+			}
+
+			const today = new Date();
+			const todayTs = today.setHours(0, 0, 0, 0);
+
+			return this.filteredMarks.filter((freeMarkTs) => new Date(freeMarkTs).getTime() >= todayTs);
+		},
 		setFilterMarks(): void
 		{
 			const bgColorFilter = 'rgba(var(--ui-color-primary-rgb), 0.20)';
-			const dates = this.prepareDates(this.filteredMarks);
+			const dates = this.prepareDates(this.getFilterMarks());
 
 			this.datePicker.setDayColors([
 				{
@@ -216,34 +272,14 @@ export const Calendar = {
 			]);
 		},
 	},
-	watch: {
-		selectedDateTs(selectedDateTs: number): void
-		{
-			this.datePicker.selectDate(createDate(selectedDateTs));
-			this.updateMarks();
-		},
-		filteredMarks(): void
-		{
-			this.updateMarks();
-		},
-		freeMarks(): void
-		{
-			this.updateMarks();
-		},
-		counterMarks(): void
-		{
-			this.setCounterMarks();
-		},
-		isFilterMode(): void
-		{
-			this.updateMarks();
-		},
-	},
-	components: {
-		Icon,
-	},
 	template: `
-		<div class="booking-sidebar-calendar-container" :class="{'--expanded': calendarExpanded}">
+		<div 
+			class="booking-sidebar-calendar-container"
+			:class="[calendarClass, {
+				'--expanded': calendarExpanded,
+				'--counter': isShowCounterFloating,
+			}].flat(1)"
+		>
 			<div class="booking-booking-sidebar-calendar">
 				<div class="booking-booking-sidebar-calendar-header">
 					<div class="booking-sidebar-button" @click="onPreviousClick">
@@ -261,6 +297,10 @@ export const Calendar = {
 				</div>
 				<div class="booking-booking-sidebar-calendar-date-picker" ref="datePicker"></div>
 			</div>
+			<CounterFloating
+				v-if="isShowCounterFloating"
+				:count="datesCount.count"
+			/>
 		</div>
 	`,
 };

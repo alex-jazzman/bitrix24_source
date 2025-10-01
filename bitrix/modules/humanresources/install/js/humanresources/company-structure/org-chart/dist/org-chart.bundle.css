@@ -1227,3 +1227,41 @@
 	left: 50%;
 	transform: translate(-50%, -50%);
 }
+
+.humanresources-tree__node.--drag-source > .humanresources-tree__node_summary {
+	pointer-events: none;
+	opacity: .5;
+	transition: opacity 0.2s;
+}
+
+.humanresources-tree__node_drop-overlay {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	right: 0;
+	left: 0;
+	z-index: 10;
+	border-radius: 12px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	background: rgba(var(--ui-color-background-primary-rgb), 0.85);
+	pointer-events: none;
+}
+
+.humanresources-tree__node_drop-overlay .--circle-plus {
+	--ui-icon-set__icon-color: var(--ui-color-palette-blue-50);
+}
+
+.humanresources-tree__node_drop-overlay .--cross-circle-50 {
+	--ui-icon-set__icon-color: var(--ui-color-palette-red-50);
+}
+
+.humanresources-tree__node_drop-overlay-text {
+	color: var(--ui-color-base-80);
+	font-size: var(--ui-font-size-xs);
+	line-height: var(--ui-font-line-height-2xs);
+	text-align: center;
+	max-width: 172px;
+}

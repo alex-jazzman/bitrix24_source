@@ -1,7 +1,7 @@
 import { Core } from 'im.v2.application.core';
 import { UserMenu } from 'im.v2.lib.menu';
 
-import type { MenuItem } from 'im.v2.lib.menu';
+import type { MenuItemOptions, MenuOptions } from 'ui.system.menu';
 
 export class AvatarMenu extends UserMenu
 {
@@ -12,7 +12,7 @@ export class AvatarMenu extends UserMenu
 		this.id = 'bx-im-avatar-context-menu';
 	}
 
-	getMenuOptions(): Object
+	getMenuOptions(): MenuOptions
 	{
 		return {
 			...super.getMenuOptions(),
@@ -22,7 +22,7 @@ export class AvatarMenu extends UserMenu
 		};
 	}
 
-	getMenuItems(): MenuItem[]
+	getMenuItems(): MenuItemOptions | null[]
 	{
 		const isCurrentUser = this.context.user.id === Core.getUserId();
 		if (isCurrentUser)

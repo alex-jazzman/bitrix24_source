@@ -1,6 +1,6 @@
 import { SearchInput } from 'im.v2.component.elements.search-input';
 import { ChatButton, ButtonSize, ButtonColor } from 'im.v2.component.elements.button';
-import { ChatType, Layout } from 'im.v2.const';
+import { ChatType } from 'im.v2.const';
 
 import './detail-header.css';
 
@@ -46,12 +46,6 @@ export const DetailHeader = {
 	{
 		ButtonSize: () => ButtonSize,
 		ButtonColor: () => ButtonColor,
-		isCopilotLayout(): boolean
-		{
-			const { name: currentLayoutName } = this.$store.getters['application/getLayout'];
-
-			return currentLayoutName === Layout.copilot.name;
-		},
 		dialog(): ImModelChat
 		{
 			return this.$store.getters['chats/get'](this.dialogId, true);

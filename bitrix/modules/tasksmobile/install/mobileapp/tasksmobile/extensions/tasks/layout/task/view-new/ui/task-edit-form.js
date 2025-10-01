@@ -779,8 +779,9 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 
 	const mapStateToProps = (state, ownProps) => {
 		const taskId = ownProps.id;
-		const task = selectByTaskIdOrGuid(state, taskId);
-		const actions = selectActions(task);
+		const ownerId = ownProps.kanbanOwnerId;
+		const task = selectByTaskIdOrGuid(state, taskId, ownerId);
+		const actions = selectActions({ task });
 
 		const shouldShowCompactButtons = ActionButtonsView.hasAllowedActions(task);
 		const deadlineColor = getDeadlineColor(task);

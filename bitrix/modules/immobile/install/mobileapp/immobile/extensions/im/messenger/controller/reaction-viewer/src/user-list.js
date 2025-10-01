@@ -7,10 +7,8 @@ jn.define('im/messenger/controller/reaction-viewer/user-list', (require, exports
 	const { LoaderItem } = require('im/messenger/lib/ui/base/loader');
 	const { DateFormatter } = require('im/messenger/lib/date-formatter');
 	const { Loc } = require('im/messenger/loc');
-	const {
-		ChatTitle,
-		ChatAvatar,
-	} = require('im/messenger/lib/element');
+	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
+	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 
 	/**
 	 * @class

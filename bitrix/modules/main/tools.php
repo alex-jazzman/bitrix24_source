@@ -496,6 +496,12 @@ function CheckDateTime($datetime, $format = false)
 		return false;
 	}
 
+	if (!isset($ar["SS"]))
+	{
+		// skip seconds
+		$format = str_replace(':SS', '', $format);
+	}
+
 	$s1 = preg_replace("~([^:\\\\/\\s.,0-9-]+|[^:\\\\/\\s.,a-z-]+)[\n\r\t ]*~iu", "P", $datetime);
 	$s2 = preg_replace("/(DD|MMMM|MM|MI|M|YYYY|HH|H|GG|G|SS|TT|T)[\n\r\t ]*/iu", "P", $format);
 

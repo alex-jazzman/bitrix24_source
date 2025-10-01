@@ -21,8 +21,10 @@ return [
 		'ui-system/typography/bbcodetext',
 		'ui-system/blocks/chips/chip-button',
 		'statemanager/redux/store',
-		'intranet:invite-status-box',
 		'intranet:statemanager/redux/slices/employees/selector',
 
+		'layout/ui/status-box',
+		'rest/run-action-executor',
+		'asset-manager',
 	],
 ];

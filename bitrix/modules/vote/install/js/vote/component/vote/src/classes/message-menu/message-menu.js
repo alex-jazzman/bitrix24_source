@@ -1,10 +1,12 @@
 import { EventEmitter } from 'main.core.events';
 import { Loc } from 'main.core';
-import { type MenuItem, MessageMenu } from 'im.v2.lib.menu';
+import { MessageMenu } from 'im.v2.lib.menu';
+import { Outline as OutlineIcons } from 'ui.icon-set.api.core';
 
 import { VoteApplication } from 'vote.application';
 import { VoteAnalytics } from 'vote.analytics';
 import type { VoteElementState, QuestionElementState } from 'vote.store.vote';
+import type { MenuItemOptions } from 'ui.system.menu';
 
 export class VoteMessageMenu extends MessageMenu
 {
@@ -16,7 +18,7 @@ export class VoteMessageMenu extends MessageMenu
 		this.#app = VoteApplication.getInstance();
 	}
 
-	getMenuItems(): MenuItem[]
+	getMenuItems(): MenuItemOptions | null[]
 	{
 		return [
 			this.getReplyItem(),
@@ -30,19 +32,19 @@ export class VoteMessageMenu extends MessageMenu
 		];
 	}
 
-	getCopyLinkItem(): MenuItem
+	getCopyLinkItem(): MenuItemOptions
 	{
 		const copyLinkItem = super.getCopyLinkItem();
-		const { onclick } = copyLinkItem;
-		copyLinkItem.onclick = () => {
-			onclick();
+		const { onClick } = copyLinkItem;
+		copyLinkItem.onClick = () => {
+			onClick();
 			VoteAnalytics.copyLink(this.context.dialogId, this.context.id, 'message_link');
 		};
 
 		return copyLinkItem;
 	}
 
-	getRevokeItem(): ?MenuItem
+	getRevokeItem(): ?MenuItemOptions
 	{
 		if (!this.#canRevokeVote())
 		{
@@ -50,15 +52,16 @@ export class VoteMessageMenu extends MessageMenu
 		}
 
 		return {
-			text: Loc.getMessage('VOTE_REVOKE'),
-			onclick: () => {
+			title: Loc.getMessage('VOTE_REVOKE'),
+			icon: OutlineIcons.UNDO,
+			onClick: () => {
 				EventEmitter.emit('vote:message-menu:revoke-vote', { entityId: this.context.id });
 				this.close();
 			},
 		};
 	}
 
-	getCompleteItem(): ?MenuItem
+	getCompleteItem(): ?MenuItemOptions
 	{
 		if (!this.#canCompleteVote())
 		{
@@ -66,15 +69,16 @@ export class VoteMessageMenu extends MessageMenu
 		}
 
 		return {
-			text: Loc.getMessage('VOTE_POPUP_BTN_COMPLETE'),
-			onclick: () => {
+			title: Loc.getMessage('VOTE_POPUP_BTN_COMPLETE'),
+			icon: OutlineIcons.CHATS_WITH_CHECK,
+			onClick: () => {
 				EventEmitter.emit('vote:message-menu:complete-vote', { entityId: this.context.id });
 				this.close();
 			},
 		};
 	}
 
-	getShowResultsItem(): ?MenuItem
+	getShowResultsItem(): ?MenuItemOptions
 	{
 		if (!this.#canShowResults())
 		{
@@ -82,8 +86,9 @@ export class VoteMessageMenu extends MessageMenu
 		}
 
 		return {
-			text: Loc.getMessage('VOTE_SHOW_RESULTS'),
-			onclick: () => {
+			title: Loc.getMessage('VOTE_SHOW_RESULTS'),
+			icon: OutlineIcons.POLL,
+			onClick: () => {
 				EventEmitter.emit('vote:message-menu:results-vote', { entityId: this.context.id });
 				this.close();
 			},

@@ -11,8 +11,8 @@ return [
 		'ui-system/blocks/chips/chip-status',
 		'layout/ui/collapsible-text',
 		'utils/date/moment',
+		'layout/ui/friendly-date/time-ago-format',
 		'utils/date/dynamic-date-formatter',
-		'utils/date/formats',
 		'layout/ui/whats-new/items/whats-new/reaction',
 		'ui-system/blocks/chips/chip-button',
 

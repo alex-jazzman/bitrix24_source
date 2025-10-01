@@ -140,9 +140,9 @@ if (!$limitManager->checkLimitWarning())
 	<div class='dashboard-iframe'></div>
 </div>
 
-
 <script>
 	BX.message(<?= Json::encode(Loc::loadLanguageFile(__FILE__)) ?>);
+	BX.message(<?= Json::encode(Loc::loadLanguageFile($_SERVER['DOCUMENT_ROOT'] . $templateFolder . '/startup.php')) ?>);
 	BX.ready(() => {
 
 		<?php if ($arResult['CAN_SEND_STARTUP_METRIC']): ?>
@@ -172,6 +172,7 @@ if (!$limitManager->checkLimitWarning())
 					'supersetDomain' => \CUtil::JSEscape($arResult['SUPERSET_DOMAIN']),
 					'type' => $arResult['DASHBOARD_TYPE'],
 					'appId' => $arResult['DASHBOARD_APP_ID'],
+					'isUseExternalDatasets' => $arResult['IS_USE_EXTERNAL_DATASETS'],
 				],
 				'embeddedDebugMode' => $arResult['EMBEDDED_DEBUG_MODE'],
 			]) ?>

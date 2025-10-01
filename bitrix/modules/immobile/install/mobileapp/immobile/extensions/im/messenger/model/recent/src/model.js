@@ -6,6 +6,7 @@
 jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 	const { Type } = require('type');
 	const { Uuid } = require('utils/uuid');
+	const { merge } = require('utils/object');
 
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { DateFormatter } = require('im/messenger/lib/date-formatter');
@@ -530,8 +531,8 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 				recentItemList.forEach((item) => {
 					const currentElement = state.collection[item.index];
 
-					item.fields.message = { ...currentElement?.message, ...item.fields.message };
-					item.fields.options = { ...currentElement?.options, ...item.fields.options };
+					item.fields.message = merge(currentElement?.message, item.fields.message);
+					item.fields.options = merge(currentElement?.options, item.fields.options);
 
 					state.collection[item.index] = {
 						...state.collection[item.index],

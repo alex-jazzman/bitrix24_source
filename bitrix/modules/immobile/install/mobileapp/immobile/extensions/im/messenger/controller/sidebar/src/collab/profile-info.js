@@ -7,7 +7,7 @@ jn.define('im/messenger/controller/sidebar/collab/profile-info', (require, expor
 	const { Theme } = require('im/lib/theme');
 	const { SidebarProfileInfo } = require('im/messenger/controller/sidebar/chat/sidebar-profile-info');
 	const { EventType } = require('im/messenger/const');
-	const { ChatAvatar } = require('im/messenger/lib/element');
+	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const logger = LoggerManager.getInstance().getLogger('sidebar--sidebar-profile-info');

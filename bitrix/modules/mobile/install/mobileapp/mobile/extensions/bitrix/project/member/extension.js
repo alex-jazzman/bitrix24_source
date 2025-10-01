@@ -1,5 +1,10 @@
-(() => {
-	const { UserProfile } = jn.require('user-profile');
+/**
+ * @module project/member
+ */
+jn.define('project/member', (require, exports, module) => {
+	const { UserProfile } = require('user-profile');
+	const { RequestExecutor } = require('rest');
+
 	class Action
 	{
 		static get types()
@@ -404,5 +409,5 @@
 		}
 	}
 
-	jnexport([ProjectMember, 'ProjectMember']);
-})();
+	module.exports = { ProjectMember };
+});

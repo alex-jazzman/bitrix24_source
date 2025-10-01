@@ -1,5 +1,9 @@
 <?php
 
+use Bitrix\Main\Application;
+use Bitrix\Main\Loader;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
+
 $siteId = '';
 if(isset($_REQUEST['site_id']) && is_string($_REQUEST['site_id']))
 {
@@ -15,7 +19,7 @@ if($siteId)
 
 require($_SERVER['DOCUMENT_ROOT'].'/bitrix/header.php');
 
-$request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
+$request = Application::getInstance()->getContext()->getRequest();
 
 if (($showChecks = $request->get('show_checks')) && $showChecks == 'y')
 {
@@ -67,9 +71,9 @@ elseif (($showChecksCorrection = $request->get('show_checks_correction')) && $sh
 }
 else
 {
-	if (\Bitrix\Main\Loader::includeModule('ui'))
+	if (Loader::includeModule('ui'))
 	{
-		\Bitrix\UI\Toolbar\Facade\Toolbar::deleteFavoriteStar();
+		Toolbar::deleteFavoriteStar();
 	}
 
 	if ($request->get('handler') === 'offline')

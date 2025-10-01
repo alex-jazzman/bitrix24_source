@@ -314,7 +314,7 @@
 
 			if (
 				this.actionsAvailability.fire
-				&& !BX.util.in_array(this.userStatus, ['email', 'shop'])
+				&& !BX.util.in_array(this.userStatus, ['email', 'shop', 'visitor', 'fired'])
 			)
 			{
 				itemText = BX.message('INTRANET_USER_PROFILE_FIRE');
@@ -430,8 +430,7 @@
 				this.isCloud
 				&& this.canEditProfile && !this.isOwnProfile
 				&& !this.isIntegratorUser
-				&& this.userStatus !== 'fired'
-				&& this.userStatus !== 'waiting'
+				&& !BX.util.in_array(this.userStatus, ['email', 'shop', 'waiting', 'fired', 'visitor'])
 			)
 			{
 				menuItems.push({

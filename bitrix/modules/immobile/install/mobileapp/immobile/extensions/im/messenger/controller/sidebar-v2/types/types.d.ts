@@ -41,6 +41,9 @@ type SidebarViewDefaultProps = {
 	widgetTitle: string,
 	chatTitle: ChatTitle,
 	isMessagesAutoDeleteDelayEnabled: boolean,
+	callbacks?: {
+		callUserProfile?: () => any,
+	}
 };
 
 type SidebarPermissionManagerDefaultProps = {

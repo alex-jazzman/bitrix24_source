@@ -826,6 +826,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	var _stageId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("stageId");
 	var _catalog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("catalog");
 	var _cache = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("cache");
+	var _settings = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("settings");
 	var _showNewGroups = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showNewGroups");
 	var _getRecentEntitiesIds = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getRecentEntitiesIds");
 	var _getRecentEntities = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getRecentEntities");
@@ -956,11 +957,16 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    Object.defineProperty(this, _settings, {
+	      writable: true,
+	      value: null
+	    });
 	    Object.defineProperty(this, _showNewGroups, {
 	      writable: true,
 	      value: false
 	    });
 	    this.setEventNamespace('BX.Bizproc.Automation.RobotSelector');
+	    babelHelpers.classPrivateFieldLooseBase(this, _settings)[_settings] = main_core.Extension.getSettings('bizproc.automation.robot-selector');
 	    babelHelpers.classPrivateFieldLooseBase(this, _context)[_context] = props.context;
 	    babelHelpers.classPrivateFieldLooseBase(this, _stageId)[_stageId] = props.stageId;
 	    babelHelpers.classPrivateFieldLooseBase(this, _cache)[_cache] = new bizproc_localSettings.Settings('robot-selector');
@@ -1317,45 +1323,14 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 		`;
 	}
 	function _getItemsHeader2() {
+	  var _babelHelpers$classPr, _babelHelpers$classPr2;
 	  const helpFeedbackParams = {
 	    id: String(Math.random()),
-	    portalUri: 'https://bitrix24.team',
-	    forms: [{
-	      zones: ['ru'],
-	      id: 1922,
-	      lang: 'ru',
-	      sec: 'frsxzd'
-	    }, {
-	      zones: ['kz'],
-	      id: 1923,
-	      lang: 'ru',
-	      sec: 'skbmjc'
-	    }, {
-	      zones: ['by'],
-	      id: 1931,
-	      lang: 'ru',
-	      sec: 'om1f4c'
-	    }, {
-	      zones: ['en'],
-	      id: 1937,
-	      lang: 'en',
-	      sec: 'yu3ljc'
-	    }, {
-	      zones: ['la', 'co', 'mx'],
-	      id: 1947,
-	      lang: 'es',
-	      sec: 'wuezi9'
-	    }, {
-	      zones: ['br'],
-	      id: 1948,
-	      lang: 'br',
-	      sec: 'j5gglp'
-	    }, {
-	      zones: ['de'],
-	      id: 1946,
-	      lang: 'de',
-	      sec: '6tpoy4'
-	    }]
+	    portalUri: (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _settings)[_settings]) == null ? void 0 : _babelHelpers$classPr.portalUri,
+	    forms: (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _settings)[_settings]) == null ? void 0 : _babelHelpers$classPr2.forms,
+	    presets: {
+	      source: 'bizproc'
+	    }
 	  };
 	  return `
 			<div class="bizproc-creating-robot__head_title">
@@ -1437,7 +1412,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 		`;
 	}
 	function _getTitleBar2() {
-	  var _babelHelpers$classPr;
+	  var _babelHelpers$classPr3;
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _context)[_context].document.statusList.length <= 1) {
 	    return main_core.Tag.render(_t || (_t = _`
 				<div>
@@ -1453,7 +1428,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 				${0}
 			</div>
 			${0}
-		`), main_core.Loc.getMessage('BIZPROC_AUTOMATION_ROBOT_SELECTOR_POPUP_TITLE_1'), main_core.Loc.getMessage('BIZPROC_AUTOMATION_ROBOT_SELECTOR_TITLEBAR_SUBTITLE'), (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _getTitleBarStageBlock)[_getTitleBarStageBlock]()) != null ? _babelHelpers$classPr : '');
+		`), main_core.Loc.getMessage('BIZPROC_AUTOMATION_ROBOT_SELECTOR_POPUP_TITLE_1'), main_core.Loc.getMessage('BIZPROC_AUTOMATION_ROBOT_SELECTOR_TITLEBAR_SUBTITLE'), (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _getTitleBarStageBlock)[_getTitleBarStageBlock]()) != null ? _babelHelpers$classPr3 : '');
 	}
 	function _getTitleBarStageBlock2() {
 	  const statusList = babelHelpers.classPrivateFieldLooseBase(this, _context)[_context].document.statusList;

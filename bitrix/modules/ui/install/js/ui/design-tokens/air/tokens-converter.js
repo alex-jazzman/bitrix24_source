@@ -335,7 +335,7 @@ function parseArgs()
 	const args = process.argv.slice(2);
 	let inputFile = defaultInputPath;
 	let outputFile = defaultOutputPath;
-	let excludeList = ['legacy', 'chat', 'stage', 'space', 'opacity', 'size', 'radius', 'component'];
+	let excludeList = ['legacy', 'chat', 'stage', 'space', 'opacity', 'size', 'radius', 'component', 'font size', 'line height'];
 	let collectionsFilter = ['design', 'fixed'];
 
 	args.forEach(arg =>

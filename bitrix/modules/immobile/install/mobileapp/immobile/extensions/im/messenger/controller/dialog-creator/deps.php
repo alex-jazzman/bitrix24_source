@@ -20,7 +20,6 @@ return [
 		'im:messenger/controller/search',
 		'im:messenger/controller/chat-composer',
 		'im:messenger/lib/emitter',
-		'im:messenger/lib/element',
 		'im:messenger/lib/params',
 		'im:messenger/lib/feature',
 		'im:messenger/lib/rest',
@@ -30,6 +29,8 @@ return [
 		'im:messenger/lib/ui/base/list',
 		'im:messenger/lib/logger',
 		'im:messenger/lib/permission-manager',
+		'im:messenger/lib/element/chat-title',
+		'im:messenger/lib/element/chat-avatar',
 		'intranet:invite-opener-new',
 		'analytics',
 		'layout/ui/copilot-role-selector',
@@ -42,11 +43,7 @@ return [
 	'bundle' => [
 		'./src/dialog-creator',
 		'./src/navigation-selector',
-		'./src/recipient-selector',
-		'./src/dialog-info',
 		'./src/view/navigation-selector',
-		'./src/view/recipient-selector',
-		'./src/view/dialog-info',
 		'./src/view/navigation-button',
 	],
 ];

@@ -596,15 +596,6 @@ this.BX.Crm = this.BX.Crm || {};
 	            events: {
 	              'Item:onBeforeSelect': this.onBeforeSelect.bind(this)
 	            }
-	          },
-	          popup: {
-	            events: {
-	              onShow: function onShow(event) {
-	                // @todo maybe there is a better solution?
-	                var zIndex = ui_sidepanel.SidePanel.Instance.getTopSlider().getZindex() + 1;
-	                event.target.getZIndexComponent().setZIndex(zIndex);
-	              }
-	            }
 	          }
 	        }
 	      });

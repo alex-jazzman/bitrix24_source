@@ -23,7 +23,7 @@ export const RoleHeading = {
 	computed: {
 		RichMenuItemIcon: () => RichMenuItemIcon,
 		...mapState({
-			isSaving: (state) => state.application.isSaving,
+			isProgress: (state) => state.application.isProgress,
 			guid: (state) => state.application.guid,
 			maxVisibleUserGroups: (state) => state.application.options.maxVisibleUserGroups,
 		}),
@@ -135,7 +135,7 @@ export const RoleHeading = {
 			popup.show();
 		},
 		showActionsMenu(): void {
-			if (!this.isSaving)
+			if (!this.isProgress)
 			{
 				this.isPopupShown = true;
 			}
@@ -179,7 +179,7 @@ export const RoleHeading = {
 		<div ref="container" class='ui-access-rights-v2-role'>
 			<div class="ui-access-rights-v2-role-value-container">
 				<input
-					v-if="isEdit && !isSaving"
+					v-if="isEdit && !isProgress"
 					ref="input"
 					type='text'
 					class='ui-access-rights-v2-role-input'

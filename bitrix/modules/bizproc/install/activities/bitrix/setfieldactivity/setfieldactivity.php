@@ -1,7 +1,11 @@
 <?php
 
 use Bitrix\Bizproc\FieldType;
+
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+
+use Bitrix\Crm\Integration\Analytics\Dictionary;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
@@ -60,6 +64,18 @@ class CBPSetFieldActivity extends CBPActivity implements IBPActivityExternalEven
 			}
 
 			$documentService->UpdateDocument($documentId, $resultFields, $this->ModifiedBy);
+
+			if (
+				Loader::includeModule('crm')
+				&& method_exists(CCrmBizProcHelper::class, 'sendOperationsAnalytics')
+			)
+			{
+				\CCrmBizProcHelper::sendOperationsAnalytics(
+					Dictionary::EVENT_ENTITY_EDIT,
+					$this,
+					$documentType[2] ?? '',
+				);
+			}
 		}
 		catch (Exception $e)
 		{
@@ -93,9 +109,7 @@ class CBPSetFieldActivity extends CBPActivity implements IBPActivityExternalEven
 		$documentService = $this->workflow->GetService('DocumentService');
 		$documentFields = $documentService->GetDocumentFields($documentType);
 		$documentFieldsAliasesMap = CBPDocument::getDocumentFieldsAliasesMap($documentFields);
-		$rootActivity = $this->getRootActivity();
-		$usedDocumentFields = $rootActivity->{CBPDocument::PARAM_USED_DOCUMENT_FIELDS} ?? [];
-		$document = $documentService->GetDocument($documentId, $documentType, $usedDocumentFields);
+		$document = $documentService->getDocument($documentId, $documentType, array_keys($fields));
 
 		foreach ($fields as $key => $value)
 		{

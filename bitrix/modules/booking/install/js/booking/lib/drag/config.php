@@ -16,6 +16,7 @@ return [
 		'booking.lib.busy-slots',
 		'booking.lib.analytics',
 		'booking.provider.service.booking-service',
+		'booking.component.non-draggable-booking-popup',
 	],
 	'skip_core' => false,
 ];

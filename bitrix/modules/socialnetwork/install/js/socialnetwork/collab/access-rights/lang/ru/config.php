@@ -8,6 +8,9 @@ $MESS['SN_COLLAB_ACCESS_RIGHTS_MODERATORS_LABEL'] = 'Модераторы';
 $MESS['SN_COLLAB_ACCESS_RIGHTS_MODERATORS_LABEL_HINT'] = 'Владелец может дать дополнительные права на управление коллабой модератору';
 $MESS['SN_COLLAB_ACCESS_RIGHTS_INITIATE_LABEL'] = 'Кто может приглашать участников';
 $MESS['SN_COLLAB_ACCESS_RIGHTS_INITIATE_LABEL_HINT'] = 'Выберите участников, которые смогут приглашать коллег и гостей для работы в коллабе';
+$MESS['SN_COLLAB_ACCESS_RIGHTS_ALLOW_GUESTS_INVITATION_LABEL'] = 'Разрешить приглашать гостей в коллабу';
+$MESS['SN_COLLAB_ACCESS_RIGHTS_ALLOW_GUESTS_INVITATION_LABEL_HINT_ENABLED'] = 'Участники коллабы смогут приглашать гостей';
+$MESS['SN_COLLAB_ACCESS_RIGHTS_ALLOW_GUESTS_INVITATION_LABEL_HINT_DISABLED'] = 'Администратор вашего Битрикс24 отключил возможность приглашать гостей в коллабы';
 $MESS['SN_COLLAB_ACCESS_RIGHTS_CHAT_LABEL'] = 'Кто может писать сообщения в чат';
 $MESS['SN_COLLAB_ACCESS_RIGHTS_CHAT_LABEL_HINT'] = 'Выберите участников, которые смогут не только следить за обсуждениями, но и активно в них участвовать';
 

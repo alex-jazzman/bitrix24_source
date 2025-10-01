@@ -6,7 +6,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	'use strict';
 
 	const customClickHandler = {
-	  [im_v2_const.NavigationMenuItem.copilot]: onCopilotClick,
+	  [im_v2_const.NavigationMenuItem.aiAssistant]: onCopilotClick,
 	  [im_v2_const.NavigationMenuItem.call]: onCallClick,
 	  [im_v2_const.NavigationMenuItem.timemanager]: onTimeManagerClick,
 	  [im_v2_const.NavigationMenuItem.homepage]: onHomepageClick,
@@ -46,7 +46,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    return;
 	  }
 	  changeLayout({
-	    layoutName: im_v2_const.Layout.copilot.name,
+	    layoutName: im_v2_const.Layout.aiAssistant,
 	    layoutEntityId: payload.entityId
 	  });
 	}
@@ -72,7 +72,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  } = payload;
 	  if (entityId) {
 	    changeLayout({
-	      layoutName: im_v2_const.Layout.market.name,
+	      layoutName: im_v2_const.Layout.market,
 	      layoutEntityId: entityId
 	    });
 	    return;

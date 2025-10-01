@@ -131,6 +131,7 @@ export const TileWidgetComponent: BitrixVueComponentProps = {
 				:autoCollapse="autoCollapse"
 				:readonly="widgetOptions.readonly"
 				:removeFromServer="widgetOptions.removeFromServer"
+				:forceDisableSelection="widgetOptions.forceDisableSelection"
 				@onUnmount="autoCollapse = false"
 			/>
 			<component :is="slots[TileWidgetSlot.AFTER_TILE_LIST]"></component>

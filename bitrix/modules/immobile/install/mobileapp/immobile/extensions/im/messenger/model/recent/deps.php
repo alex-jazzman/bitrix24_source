@@ -4,6 +4,7 @@ return [
 	'extensions' => [
 		'type',
 		'utils/uuid',
+		'utils/object',
 		'im:messenger/const',
 		'im:messenger/lib/logger',
 		'im:messenger/lib/helper',

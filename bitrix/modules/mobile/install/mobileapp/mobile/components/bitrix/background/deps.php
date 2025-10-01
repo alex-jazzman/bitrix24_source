@@ -41,5 +41,6 @@ return [
 		'calendar:background',
 		'app-rating-background-client',
 		'whats-new/background',
+		'timeman/analytics',
 	],
 ];

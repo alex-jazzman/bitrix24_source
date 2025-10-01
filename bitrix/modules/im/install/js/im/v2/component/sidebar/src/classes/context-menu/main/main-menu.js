@@ -9,8 +9,9 @@ import { PermissionManager } from 'im.v2.lib.permission';
 import { Analytics } from 'im.v2.lib.analytics';
 import { showDeleteChatConfirm } from 'im.v2.lib.confirm';
 import { Notifier } from 'im.v2.lib.notifier';
+import { MenuItemDesign } from 'ui.system.menu';
 
-import type { MenuItem } from 'im.v2.lib.menu';
+import type { MenuItemOptions, MenuOptions } from 'ui.system.menu';
 
 export class MainMenu extends RecentMenu
 {
@@ -27,7 +28,7 @@ export class MainMenu extends RecentMenu
 		this.permissionManager = PermissionManager.getInstance();
 	}
 
-	getMenuOptions(): Object
+	getMenuOptions(): MenuOptions
 	{
 		return {
 			...super.getMenuOptions(),
@@ -36,7 +37,7 @@ export class MainMenu extends RecentMenu
 		};
 	}
 
-	getMenuItems(): MenuItem[]
+	getMenuItems(): MenuItemOptions[]
 	{
 		return [
 			this.getPinMessageItem(),
@@ -51,7 +52,7 @@ export class MainMenu extends RecentMenu
 		];
 	}
 
-	getEditItem(): ?MenuItem
+	getEditItem(): ?MenuItemOptions
 	{
 		if (!this.permissionManager.canPerformActionByRole(ActionByRole.update, this.context.dialogId))
 		{
@@ -59,19 +60,19 @@ export class MainMenu extends RecentMenu
 		}
 
 		return {
-			text: Loc.getMessage('IM_SIDEBAR_MENU_UPDATE_CHAT'),
-			onclick: () => {
+			title: Loc.getMessage('IM_SIDEBAR_MENU_UPDATE_CHAT'),
+			onClick: () => {
 				Analytics.getInstance().chatEdit.onOpenForm(this.context.dialogId);
 
 				void LayoutManager.getInstance().setLayout({
-					name: Layout.updateChat.name,
+					name: Layout.updateChat,
 					entityId: this.context.dialogId,
 				});
 			},
 		};
 	}
 
-	getDeleteItem(): ?MenuItem
+	getDeleteItem(): ?MenuItemOptions
 	{
 		if (!this.permissionManager.canPerformActionByRole(ActionByRole.delete, this.context.dialogId))
 		{
@@ -79,9 +80,9 @@ export class MainMenu extends RecentMenu
 		}
 
 		return {
-			text: Loc.getMessage('IM_SIDEBAR_MENU_DELETE_CHAT'),
-			className: 'menu-popup-no-icon bx-im-sidebar__context-menu_delete',
-			onclick: async () => {
+			title: Loc.getMessage('IM_SIDEBAR_MENU_DELETE_CHAT'),
+			design: MenuItemDesign.Alert,
+			onClick: async () => {
 				Analytics.getInstance().chatDelete.onClick(this.context.dialogId);
 				if (await this.#isDeletionCancelled())
 				{
@@ -101,7 +102,7 @@ export class MainMenu extends RecentMenu
 		};
 	}
 
-	getOpenUserCalendarItem(): ?MenuItem
+	getOpenUserCalendarItem(): ?MenuItemOptions
 	{
 		if (!this.isUser())
 		{
@@ -116,15 +117,15 @@ export class MainMenu extends RecentMenu
 		const profileUri = Utils.user.getCalendarLink(this.context.dialogId);
 
 		return {
-			text: Loc.getMessage('IM_LIB_MENU_OPEN_CALENDAR_V2'),
-			onclick: () => {
+			title: Loc.getMessage('IM_LIB_MENU_OPEN_CALENDAR_V2'),
+			onClick: () => {
 				BX.SidePanel.Instance.open(profileUri);
 				this.menuInstance.close();
 			},
 		};
 	}
 
-	getAddMembersToChatItem(): MenuItem
+	getAddMembersToChatItem(): ?MenuItemOptions
 	{
 		if (this.isBot() || this.isChatWithCurrentUser())
 		{
@@ -143,27 +144,27 @@ export class MainMenu extends RecentMenu
 			return null;
 		}
 
-		const text = this.isChannel()
+		const title = this.isChannel()
 			? Loc.getMessage('IM_SIDEBAR_MENU_INVITE_SUBSCRIBERS')
 			: Loc.getMessage('IM_SIDEBAR_MENU_INVITE_MEMBERS_V2');
 
 		return {
-			text,
-			onclick: () => {
-				Analytics.getInstance().userAdd.onChatSidebarClick(this.dialogId);
+			title,
+			onClick: () => {
+				Analytics.getInstance().userAdd.onChatSidebarClick(this.context.dialogId);
 				this.emit(MainMenu.events.onAddToChatShow);
 				this.menuInstance.close();
 			},
 		};
 	}
 
-	async #deleteChat(): ?MenuItem
+	async #deleteChat(): Promise<void>
 	{
 		await (new ChatService()).deleteChat(this.context.dialogId);
 		void LayoutManager.getInstance().clearCurrentLayoutEntityId();
 	}
 
-	async #deleteCollab(): ?MenuItem
+	async #deleteCollab(): Promise<void>
 	{
 		Notifier.collab.onBeforeDelete();
 		await (new ChatService()).deleteCollab(this.context.dialogId);
@@ -173,12 +174,10 @@ export class MainMenu extends RecentMenu
 
 	async #isDeletionCancelled(): Promise<boolean>
 	{
-		const { dialogId } = this.context;
-
-		const confirmResult = await showDeleteChatConfirm(dialogId);
+		const confirmResult = await showDeleteChatConfirm(this.context.dialogId);
 		if (!confirmResult)
 		{
-			Analytics.getInstance().chatDelete.onCancel(dialogId);
+			Analytics.getInstance().chatDelete.onCancel(this.context.dialogId);
 
 			return true;
 		}

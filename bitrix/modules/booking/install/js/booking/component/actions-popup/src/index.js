@@ -3,6 +3,7 @@ export { Client } from './client/client';
 export { Confirmation } from './confirmation/confirmation';
 export { Deal } from './deal/deal';
 export { Document } from './document/document';
+export { ExtraResourcesInfo } from './extra-resources-info/extra-resources-info';
 export { FullForm } from './full-form/full-form';
 export { Info } from './info/info';
 export { Message } from './message/message';

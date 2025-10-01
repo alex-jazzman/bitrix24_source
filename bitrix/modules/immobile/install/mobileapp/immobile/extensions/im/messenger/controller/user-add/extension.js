@@ -9,10 +9,8 @@ jn.define('im/messenger/controller/user-add', (require, exports, module) => {
 	const { Logger } = require('im/messenger/lib/logger');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { EventType, RestMethod, ComponentCode } = require('im/messenger/const');
-	const {
-		ChatTitle,
-		ChatAvatar,
-	} = require('im/messenger/lib/element');
+	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
+	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { DialogHelper } = require('im/messenger/lib/helper/dialog');

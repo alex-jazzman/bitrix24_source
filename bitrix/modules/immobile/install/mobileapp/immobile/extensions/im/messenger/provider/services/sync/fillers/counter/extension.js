@@ -8,6 +8,7 @@ jn.define('im/messenger/provider/services/sync/fillers/counter', (require, expor
 		EventType,
 		ComponentCode,
 	} = require('im/messenger/const');
+	const { EntityReady } = require('entity-ready');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { CounterHelper } = require('im/messenger/lib/helper');
 
@@ -27,6 +28,17 @@ jn.define('im/messenger/provider/services/sync/fillers/counter', (require, expor
 			super();
 			/** @type {CounterStorageWriter} */
 			this.storageWriter = storageWriter;
+			this.processedResultUuidCollection = new Set();
+
+			// TODO remove after updating freeze debug
+			this.debugInfo = {
+				steps: [],
+				isViewLoaded: null,
+				readyEntitiesCollection: [],
+				fillDataMethodExecuted: false,
+			};
+
+			this.isReady = true;
 		}
 
 		getUuidPrefix()
@@ -46,6 +58,28 @@ jn.define('im/messenger/provider/services/sync/fillers/counter', (require, expor
 
 		async fillData(data)
 		{
+			if (this.processedResultUuidCollection.has(data.uuid))
+			{
+				MessengerEmitter.emit(
+					EventType.sync.requestResultSaved,
+					{ uuid },
+					ComponentCode.imMessenger,
+				);
+
+				return;
+			}
+
+			this.debugInfo = {
+				data,
+				steps: [],
+				isViewLoaded: null,
+				readyEntitiesCollection: [],
+				fillDataMethodExecuted: true,
+			};
+
+			this.debugInfo.isViewLoaded = window.isViewLoaded;
+			this.debugInfo.readyEntitiesCollection = [...EntityReady.readyEntitiesCollection];
+			this.debugInfo.steps.push(1);
 			logger.log(`${this.constructor.name}.fillData`, data);
 			const {
 				uuid,
@@ -54,20 +88,25 @@ jn.define('im/messenger/provider/services/sync/fillers/counter', (require, expor
 
 			try
 			{
+				this.debugInfo.steps.push(2);
 				const counterCollectionToUpdate = this.#prepareCounterCollectionToUpdate(result);
 				logger.log(`${this.constructor.name}.fillData counterCollectionToUpdate`, counterCollectionToUpdate);
-
+				this.debugInfo.steps.push(3);
 				const chatIdListToDelete = this.#prepareChatIdListToDelete(result);
 				logger.log(`${this.constructor.name}.fillData chatIdListToDelete`, chatIdListToDelete);
-
+				this.debugInfo.steps.push(5);
 				void this.storageWriter.setCollection(counterCollectionToUpdate);
+				this.debugInfo.steps.push(6);
 				void this.storageWriter.deleteFromCollection(chatIdListToDelete);
-
+				this.debugInfo.steps.push(7);
 				MessengerEmitter.emit(
 					EventType.sync.requestResultSaved,
 					{ uuid },
 					ComponentCode.imMessenger,
 				);
+				this.debugInfo.steps.push(8);
+
+				this.processedResultUuidCollection.add(uuid);
 			}
 			catch (error)
 			{

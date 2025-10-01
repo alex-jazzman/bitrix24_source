@@ -1,7 +1,5 @@
 <?php
 $MESS["BT_CAT_ADM_TOOLS_ADD_GROUP_MSGVER_1"] = "Жинақ";
-$MESS["BT_CAT_ADM_TOOLS_ADD_INSTAGRAM_IMPORT_2"] = "Instagram - нан импорттау";
-$MESS["BT_CAT_ADM_TOOLS_ADD_INSTAGRAM_IMPORT_TITLE"] = "Instagram арқылы тауарларды қосу үшін басыңыз";
 $MESS["BT_CAT_ADM_TOOLS_ADD_PRODUCT"] = "Тауар";
 $MESS["BT_CAT_ADM_TOOLS_ADD_PROD_EXT"] = "Тауар жасау";
 $MESS["BT_CAT_ADM_TOOLS_ADD_PROD_EXT_2"] = "Жасау";

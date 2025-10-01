@@ -4,7 +4,6 @@ export const CopilotChatType = Object.freeze({
 });
 
 export const AnalyticsEvent = Object.freeze({
-	openMessenger: 'open_messenger',
 	openChat: 'open_chat',
 	createNewChat: 'create_new_chat',
 	audioUse: 'audio_use',

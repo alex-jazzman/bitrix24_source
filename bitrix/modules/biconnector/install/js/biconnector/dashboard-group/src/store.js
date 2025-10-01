@@ -129,12 +129,12 @@ export class Store
 						}
 					}
 				},
-				setShowDeletionWarningPopup(state: GroupAppState, isShow: boolean): void
-				{
-					state.isNeedShowDeletionWarningPopup = isShow;
-				},
 			},
 			getters: {
+				user(state: GroupAppState): User
+				{
+					return state.user;
+				},
 				groupName(state: GroupAppState): string
 				{
 					return state.group.name;
@@ -146,6 +146,10 @@ export class Store
 				dashboards(state: GroupAppState): Map<number, Dashboard>
 				{
 					return state.dashboards;
+				},
+				otherGroups(state: GroupAppState): Group[]
+				{
+					return state.otherGroups;
 				},
 				groupDashboardsData(state: GroupAppState): Dashboard[]
 				{
@@ -201,9 +205,41 @@ export class Store
 						return false;
 					};
 				},
-				isNeedShowDeletionWarningPopup(state: GroupAppState): boolean
+				accessibleDashboardIdsSet(state: GroupAppState): Set
 				{
-					return state.isNeedShowDeletionWarningPopup;
+					return new Set(
+						state.otherGroups
+							.filter((group) => state.user.accessibleGroupIds.includes(group.id))
+							.flatMap((group) => group.dashboardIds),
+					);
+				},
+				shouldShowDeleteWarning(state: GroupAppState, getters): (dashboardId: number) => boolean
+				{
+					return (dashboardId: number) => {
+						const user = state.user;
+
+						if (user.isAdmin || user.hasAccessToPermission)
+						{
+							return false;
+						}
+
+						const dashboard: Dashboard = state.dashboards.get(dashboardId);
+
+						if (!dashboard)
+						{
+							return false;
+						}
+
+						if (
+							dashboard.createdById === user.id
+							|| dashboard.ownerId === user.id
+						)
+						{
+							return false;
+						}
+
+						return !getters.accessibleDashboardIdsSet.has(dashboardId);
+					};
 				},
 				isTitleEdited(state: GroupAppState): boolean
 				{

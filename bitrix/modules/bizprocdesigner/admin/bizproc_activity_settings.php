@@ -4,8 +4,8 @@ define("NOT_CHECK_FILE_PERMISSIONS", true);
 define("NO_KEEP_STATISTIC", true);
 define("BX_STATISTIC_BUFFER_USED", false);
 
-require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
-require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_js.php");
+require_once $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_before.php";
+require_once $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/interface/init_admin.php";
 
 \Bitrix\Main\Loader::includeModule('bizproc');
 IncludeModuleLangFile(__FILE__);
@@ -20,7 +20,7 @@ IncludeModuleLangFile(__FILE__);
 
 if (empty($_POST['document_type']))
 {
-	die();
+	CMain::FinalActions();
 }
 
 if (!defined('MODULE_ID') && !defined('ENTITY') && isset($_REQUEST['dts']))
@@ -57,7 +57,7 @@ $canWrite = CBPDocument::CanUserOperateDocumentType(
 if(!$canWrite)
 {
 	$popupWindow->ShowError(GetMessage("ACCESS_DENIED"));
-	die();
+	CMain::FinalActions();
 }
 
 $runtime = CBPRuntime::GetRuntime();
@@ -66,7 +66,7 @@ $runtime->StartRuntime();
 $arActivityDescription = $runtime->GetActivityDescription($activityType);
 if ($arActivityDescription == null)
 {
-	die ("Bad activity type!" . htmlspecialcharsbx($activityType));
+	CMain::FinalActions("Bad activity type!" . htmlspecialcharsbx($activityType));
 }
 
 if($arActivityDescription["DESCRIPTION"])
@@ -174,7 +174,7 @@ if (!empty($_POST["save"]) && check_bitrix_sessid())
 		<?= $popupWindow->jsPopup?>.CloseDialog();
 		</script>
 		<?php
-		die();
+		CMain::FinalActions();
 	}
 }
 
@@ -555,5 +555,3 @@ $popupWindow->EndContent();
 $popupWindow->StartButtons();
 $popupWindow->ShowStandardButtons();
 $popupWindow->EndButtons();
-
-require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/epilog_admin_js.php");

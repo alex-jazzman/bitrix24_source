@@ -52,6 +52,7 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 			});
 
 			text = parserCommon.decodeNewLine(text);
+			text = parserImage.decodeImageWithSize(text);
 			text = parserUrl.prepareGifUrl(text);
 			text = parserSmile.decodeSmile(text, options);
 			text = parserMention.decode(text);
@@ -151,6 +152,7 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 			text = parserCall.simplify(text);
 			text = parserImage.simplifyLink(text);
 			text = parserImage.simplifyIcon(text);
+			text = parserImage.simplifyImage(text);
 			text = parserUrl.simplify(text);
 			text = parserDisk.simplify(text);
 			text = parserCommon.simplifyNewLine(text);

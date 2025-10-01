@@ -48,7 +48,7 @@ export const Opener = {
 
 		await MessengerSlider.getInstance().openSlider();
 		const layoutParams = {
-			name: Layout.chat.name,
+			name: Layout.chat,
 			entityId: preparedDialogId,
 		};
 		if (messageId > 0)
@@ -75,7 +75,7 @@ export const Opener = {
 		const preparedDialogId = dialogId.toString();
 		await MessengerSlider.getInstance().openSlider();
 		const layoutParams = {
-			name: Layout.chat.name,
+			name: Layout.chat,
 			entityId: preparedDialogId,
 		};
 		await LayoutManager.getInstance().setLayout(layoutParams);
@@ -108,7 +108,7 @@ export const Opener = {
 		const optionOpenLinesV2Activated = FeatureManager.isFeatureAvailable(Feature.openLinesV2);
 
 		return LayoutManager.getInstance().setLayout({
-			name: optionOpenLinesV2Activated ? Layout.openlinesV2.name : Layout.openlines.name,
+			name: optionOpenLinesV2Activated ? Layout.openlinesV2 : Layout.openlines,
 			entityId: preparedDialogId,
 		});
 	},
@@ -120,7 +120,7 @@ export const Opener = {
 		await MessengerSlider.getInstance().openSlider();
 
 		return LayoutManager.getInstance().setLayout({
-			name: Layout.copilot.name,
+			name: Layout.aiAssistant,
 			entityId: preparedDialogId,
 			contextId,
 		});
@@ -140,7 +140,7 @@ export const Opener = {
 		await MessengerSlider.getInstance().openSlider();
 
 		return LayoutManager.getInstance().setLayout({
-			name: Layout.collab.name,
+			name: Layout.collab,
 			entityId: preparedDialogId,
 		});
 	},
@@ -172,7 +172,7 @@ export const Opener = {
 	{
 		await MessengerSlider.getInstance().openSlider();
 		await LayoutManager.getInstance().setLayout({
-			name: Layout.notification.name,
+			name: Layout.notification,
 		});
 
 		EventEmitter.emit(EventType.layout.onOpenNotifications);
@@ -184,7 +184,7 @@ export const Opener = {
 	{
 		await MessengerSlider.getInstance().openSlider();
 		await LayoutManager.getInstance().setLayout({
-			name: Layout.chat.name,
+			name: Layout.chat,
 		});
 
 		EventEmitter.emit(EventType.recent.openSearch);
@@ -198,7 +198,7 @@ export const Opener = {
 		await MessengerSlider.getInstance().openSlider();
 
 		await LayoutManager.getInstance().setLayout({
-			name: Layout.settings.name,
+			name: Layout.settings,
 			entityId: sectionName,
 		});
 
@@ -233,7 +233,7 @@ export const Opener = {
 
 		await MessengerSlider.getInstance().openSlider();
 		const layoutParams = {
-			name: Layout.createChat.name,
+			name: Layout.createChat,
 			entityId: chatType,
 		};
 

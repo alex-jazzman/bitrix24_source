@@ -293,7 +293,9 @@ jn.define('layout/ui/whats-new', (require, exports, module) => {
 				{
 					style: {
 						flex: 1,
-						backgroundColor: Color.bgContentPrimary.toHex(),
+						backgroundColor: (this.props.articles.length === 0)
+							? Color.accentSoftBlue3.toHex()
+							: Color.bgContentPrimary.toHex(),
 					},
 					safeArea: {
 						bottom: this.props.hasUnsupportedFeatures,
@@ -374,7 +376,7 @@ jn.define('layout/ui/whats-new', (require, exports, module) => {
 					text: Loc.getMessage('WHATS_NEW_LIST_UPDATE'),
 					stretched: true,
 					onClick: this.openStore,
-					testId: 'category-detail-save-button',
+					testId: 'whats-new-list-update-button',
 					disabled: this.state.error,
 				}),
 			);

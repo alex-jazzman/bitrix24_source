@@ -5,6 +5,8 @@ jn.define('im/messenger/provider/services/recent/service', (require, exports, mo
 	const { PageNavigation } = require('im/messenger/lib/page-navigation');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { RecentRest } = require('im/messenger/provider/rest');
+	const { PinService } = require('im/messenger/provider/services/recent/pin');
+	const { HideService } = require('im/messenger/provider/services/recent/hide');
 	const { TabCounters } = require('im/messenger/lib/counters/tab-counters');
 	const { Feature } = require('im/messenger/lib/feature');
 	const { Logger } = require('im/messenger/lib/logger');
@@ -15,6 +17,10 @@ jn.define('im/messenger/provider/services/recent/service', (require, exports, mo
 	 */
 	class RecentService
 	{
+		/** @type {PinService} */
+		#pinService;
+		/** @type {HideService} */
+		#hideService;
 		#lastMessageDate;
 
 		constructor()
@@ -313,6 +319,35 @@ jn.define('im/messenger/provider/services/recent/service', (require, exports, mo
 
 				return recentItem.pinned === false;
 			});
+		}
+
+		get pinService()
+		{
+			this.#pinService = this.#pinService ?? new PinService();
+
+			return this.#pinService;
+		}
+
+		get hideService()
+		{
+			this.#hideService = this.#hideService ?? new HideService();
+
+			return this.#hideService;
+		}
+
+		pinChat(dialogId)
+		{
+			this.pinService.pinChat(dialogId);
+		}
+
+		unpinChat(dialogId)
+		{
+			this.pinService.unpinChat(dialogId);
+		}
+
+		hideChat(dialogId)
+		{
+			this.hideService.hideChat(dialogId);
 		}
 	}
 

@@ -8,6 +8,7 @@ import { Grid } from './components/grid';
 import 'ui.notification';
 import { AnalyticsManager } from './integration/analytics-manager';
 import { createStore } from './store/index';
+import type { AccessRightsModel } from './store/model/access-rights-model';
 import type { Options } from './store/model/application-model';
 import { AccessRightsExporter } from './store/model/transformation/backend-exporter/access-rights-exporter';
 import { AllUserGroupsExporter } from './store/model/transformation/backend-exporter/user-groups/all-user-groups-exporter';
@@ -19,7 +20,6 @@ import type { ExternalUserGroup } from './store/model/transformation/internalize
 import { UserGroupsInternalizer } from './store/model/transformation/internalizer/user-groups-internalizer';
 import { ShownUserGroupsCopier } from './store/model/transformation/shown-user-groups-copier';
 import type { UserGroupsCollection, UserGroupsModel } from './store/model/user-groups-model';
-import type { AccessRightsModel } from './store/model/access-rights-model';
 
 export type AppConstructOptions = Options & {
 	renderTo: HTMLElement;
@@ -155,14 +155,14 @@ export class App
 	sendActionRequest(): Promise
 	{
 		return new Promise((resolve, reject) => {
-			if (this.#store.state.application.isSaving || !this.#store.getters['application/isModified'])
+			if (this.#store.state.application.isProgress || !this.#store.getters['application/isModified'])
 			{
 				resolve();
 
 				return;
 			}
 
-			this.#store.commit('application/setSaving', true);
+			this.#store.commit('application/setProgress', true);
 
 			this.#analyticsManager.onSaveAttempt();
 
@@ -203,7 +203,7 @@ export class App
 				.finally(() => {
 					const waitContainer = this.#buttonPanel?.getContainer().querySelector('.ui-btn-wait');
 					Dom.removeClass(waitContainer, 'ui-btn-wait');
-					this.#store.commit('application/setSaving', false);
+					this.#store.commit('application/setProgress', false);
 
 					resolve();
 				});
@@ -314,6 +314,9 @@ export class App
 					},
 				}),
 			],
+			popupOptions: {
+				fixed: true,
+			},
 		});
 
 		box.show();

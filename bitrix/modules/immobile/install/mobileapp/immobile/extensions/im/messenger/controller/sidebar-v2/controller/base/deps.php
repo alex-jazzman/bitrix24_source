@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'type',
 		'tokens',
 		'assets/icons',
 		'layout/ui/menu',
@@ -14,15 +15,16 @@ return [
 
 		'im:messenger/const',
 		'im:messenger/provider/services/chat',
+		'im:messenger/provider/services/recent',
 		'im:messenger/provider/services/analytics',
 		'im:messenger/lib/di/service-locator',
 		'im:messenger/lib/utils',
 		'im:messenger/lib/logger',
 		'im:messenger/lib/permission-manager',
 		'im:messenger/lib/rest-manager',
-		'im:messenger/lib/element',
+		'im:messenger/lib/element/chat-title',
 		'im:messenger/lib/helper',
-		'im/messenger/lib/params',
+		'im:messenger/lib/params',
 		'im:messenger/lib/ui/notification',
 		'im:messenger/controller/sidebar-v2/const',
 		'im:messenger/controller/sidebar-v2/ui/primary-button',

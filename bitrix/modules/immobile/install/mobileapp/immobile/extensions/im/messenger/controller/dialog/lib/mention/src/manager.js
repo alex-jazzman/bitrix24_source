@@ -3,8 +3,8 @@
  */
 jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, exports, module) => {
 	const { MentionProvider } = require('im/messenger/controller/dialog/lib/mention/provider');
-	const { ChatAvatar } = require('im/messenger/lib/element');
-	const { ChatTitle } = require('im/messenger/lib/element');
+	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
+	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
 	const { EventType, BBCode } = require('im/messenger/const');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');

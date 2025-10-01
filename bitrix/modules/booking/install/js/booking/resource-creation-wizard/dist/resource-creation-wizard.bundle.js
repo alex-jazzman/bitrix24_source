@@ -3606,7 +3606,6 @@ this.BX = this.BX || {};
 	  _t;
 	var _width = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("width");
 	var _application = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("application");
-	var _makeName = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("makeName");
 	var _mountContent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("mountContent");
 	var _initCore = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initCore");
 	var _makeContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("makeContainer");
@@ -3626,8 +3625,11 @@ this.BX = this.BX || {};
 	      value: null
 	    });
 	  }
+	  static makeName(resourceId = 'new') {
+	    return `booking:resource-creation-wizard:${resourceId || 'new'}`;
+	  }
 	  open(resourceId = null) {
-	    booking_lib_sidePanelInstance.SidePanelInstance.open(babelHelpers.classPrivateFieldLooseBase(ResourceCreationWizard, _makeName)[_makeName](resourceId), {
+	    booking_lib_sidePanelInstance.SidePanelInstance.open(ResourceCreationWizard.makeName(resourceId), {
 	      width: babelHelpers.classPrivateFieldLooseBase(ResourceCreationWizard, _width)[_width],
 	      cacheable: false,
 	      events: {
@@ -3659,9 +3661,6 @@ this.BX = this.BX || {};
 	    booking_lib_sidePanelInstance.SidePanelInstance.close();
 	  }
 	}
-	function _makeName2(resourceId = 'new') {
-	  return `booking:resource-creation-wizard:${resourceId || 'new'}`;
-	}
 	function _mountContent2(container) {
 	  const application = ui_vue3.BitrixVue.createApp(App, booking_core.Core.getParams());
 	  application.mixin(booking_component_mixin_locMixin.locMixin);
@@ -3685,9 +3684,6 @@ this.BX = this.BX || {};
 			<div id="booking-resource-creation-wizard-app" class="booking-resource-creation-wizard-app"></div>
 		`));
 	}
-	Object.defineProperty(ResourceCreationWizard, _makeName, {
-	  value: _makeName2
-	});
 	Object.defineProperty(ResourceCreationWizard, _width, {
 	  writable: true,
 	  value: 600

@@ -8080,12 +8080,13 @@ this.BX.Crm = this.BX.Crm || {};
 	    throw response;
 	  });
 	}
-	function _openCallScoringResult2(actionData) {
+	async function _openCallScoringResult2(actionData) {
 	  var _actionData$activityC, _actionData$clientDet, _actionData$clientFul, _actionData$userPhoto, _actionData$jobId, _actionData$assessmen;
 	  if (!main_core.Type.isInteger(actionData.activityId) || !main_core.Type.isInteger(actionData.ownerTypeId) || !main_core.Type.isInteger(actionData.ownerId)) {
 	    return;
 	  }
-	  const callScoring = new crm_ai_call.Call.CallQuality({
+	  await top.BX.Runtime.loadExtension('crm.ai.call');
+	  const callScoring = new top.BX.Crm.AI.Call.CallQuality({
 	    activityId: actionData.activityId,
 	    ownerTypeId: actionData.ownerTypeId,
 	    ownerId: actionData.ownerId,
@@ -8216,11 +8217,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      messageBox.close();
 	      BX.UI.Feedback.Form.open({
 	        id: 'b24_ai_provider_partner_crm_feedback',
-	        defaultForm: {
-	          id: 682,
-	          lang: 'en',
-	          sec: '3sd3le'
-	        },
 	        forms: [{
 	          zones: ['cn'],
 	          id: 678,
@@ -8231,6 +8227,11 @@ this.BX.Crm = this.BX.Crm || {};
 	          id: 680,
 	          lang: 'vn',
 	          sec: '2v97xr'
+	        }, {
+	          zones: ['en'],
+	          id: 682,
+	          lang: 'en',
+	          sec: '3sd3le'
 	        }]
 	      });
 	    },
@@ -9928,11 +9929,12 @@ this.BX.Crm = this.BX.Crm || {};
 	  }]);
 	  return TranscriptResult;
 	}(Base);
-	function _open2(actionData) {
+	async function _open2(actionData) {
 	  if (!main_core.Type.isInteger(actionData.activityId) || !main_core.Type.isInteger(actionData.ownerTypeId) || !main_core.Type.isInteger(actionData.ownerId)) {
 	    return;
 	  }
-	  const transcription = new crm_ai_call.Call.Transcription({
+	  await top.BX.Runtime.loadExtension('crm.ai.call');
+	  const transcription = new top.BX.Crm.AI.Call.Transcription({
 	    activityId: actionData.activityId,
 	    ownerTypeId: actionData.ownerTypeId,
 	    ownerId: actionData.ownerId,
@@ -9977,11 +9979,12 @@ this.BX.Crm = this.BX.Crm || {};
 	  }]);
 	  return TranscriptSummaryResult;
 	}(Base);
-	function _open2$1(actionData) {
+	async function _open2$1(actionData) {
 	  if (!main_core.Type.isInteger(actionData.activityId) || !main_core.Type.isInteger(actionData.ownerTypeId) || !main_core.Type.isInteger(actionData.ownerId)) {
 	    return;
 	  }
-	  const summary = new crm_ai_call.Call.Summary({
+	  await top.BX.Runtime.loadExtension('crm.ai.call');
+	  const summary = new top.BX.Crm.AI.Call.Summary({
 	    activityId: actionData.activityId,
 	    ownerTypeId: actionData.ownerTypeId,
 	    ownerId: actionData.ownerId,
@@ -10157,12 +10160,13 @@ this.BX.Crm = this.BX.Crm || {};
 	  }]);
 	  return CallScoringResult;
 	}(Base);
-	function _open2$2(actionData) {
+	async function _open2$2(actionData) {
 	  var _actionData$activityC, _actionData$clientDet, _actionData$clientFul, _actionData$userPhoto, _actionData$jobId;
 	  if (!main_core.Type.isInteger(actionData.activityId) || !main_core.Type.isInteger(actionData.ownerTypeId) || !main_core.Type.isInteger(actionData.ownerId)) {
 	    return;
 	  }
-	  const callQualityDlg = new crm_ai_call.Call.CallQuality({
+	  await top.BX.Runtime.loadExtension('crm.ai.call');
+	  const callQualityDlg = new top.BX.Crm.AI.Call.CallQuality({
 	    activityId: actionData.activityId,
 	    activityCreated: (_actionData$activityC = actionData.activityCreated) !== null && _actionData$activityC !== void 0 ? _actionData$activityC : null,
 	    ownerTypeId: actionData.ownerTypeId,
@@ -10947,15 +10951,8 @@ this.BX.Crm = this.BX.Crm || {};
 	  if (!main_core.Type.isInteger(segmentId)) {
 	    return;
 	  }
-	  void crm_router.Router.openSlider(`/crm/repeat-sale-segment/details/${segmentId}/`, {
-	    width: 922,
-	    cacheable: false,
-	    requestMethod: 'post',
-	    requestParams: {
-	      analytics: {
-	        section: 'deal_section'
-	      }
-	    }
+	  void crm_router.Router.Instance.openRepeatSaleSegmentSlider(segmentId, true, {
+	    section: 'deal_section'
 	  });
 	}
 	function _showRestrictionSlider2() {
@@ -11080,12 +11077,12 @@ this.BX.Crm = this.BX.Crm || {};
 	      messageBox.close();
 	      BX.UI.Feedback.Form.open({
 	        id: 'b24_ai_provider_partner_crm_feedback',
-	        defaultForm: {
+	        forms: [{
+	          zones: ['en'],
 	          id: 682,
 	          lang: 'en',
 	          sec: '3sd3le'
-	        },
-	        forms: [{
+	        }, {
 	          zones: ['cn'],
 	          id: 678,
 	          lang: 'cn',

@@ -1,8 +1,9 @@
 import { FileExport } from 'biconnector.dataset-import.file-export';
-import { MessageBox } from 'ui.dialogs.messagebox';
-import { Reflection, Loc, Text, ajax as Ajax } from 'main.core';
+import { Popup as MainPopup } from 'main.popup';
+import { Reflection, Loc, Text, ajax as Ajax, Tag } from 'main.core';
 import { EventEmitter } from 'main.core.events';
-import { Button, ButtonColor, CancelButton } from 'ui.buttons';
+import { AirButtonStyle, Button, ButtonSize } from 'ui.buttons';
+import { Dialog } from 'ui.system.dialog';
 
 type Props = {
 	gridId: ?string,
@@ -114,37 +115,59 @@ class ExternalDatasetManager
 	}
 
 	deleteDataset(id: number) {
-		const messageBox = new MessageBox({
-			message: Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_DATASET_GRID_DELETE_POPUP_DESCRIPTION'),
-			title: Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_DATASET_GRID_DELETE_POPUP_TITLE'),
-			buttons: [
+		this.#getDeleteDatasetPopup(id).show();
+	}
+
+	#getDeleteDatasetPopup(id: number): MainPopup
+	{
+		const deleteDatasetPopupInstance = new Dialog({
+			title: Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_DATASET_GRID_DELETE_POPUP_TITLE_MSGVER_1'),
+			content: this.#getDeleteDatasetPopupContent(),
+			centerButtons: [
 				new Button({
-					color: ButtonColor.DANGER,
 					text: Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_DATASET_GRID_DELETE_POPUP_CAPTION_YES'),
+					size: ButtonSize.LARGE,
+					style: AirButtonStyle.FILLED,
+					useAirDesign: true,
 					onclick: (button) => {
 						button.setWaiting();
 						this.deleteDatasetAjaxAction(id)
 							.then(() => {
 								this.#grid.reload();
-								messageBox.close();
+								deleteDatasetPopupInstance.hide();
 							})
 							.catch((response) => {
-								messageBox.close();
+								deleteDatasetPopupInstance.hide();
 								if (response.errors)
 								{
 									this.#notifyErrors(response.errors);
 								}
-							});
+							})
+						;
 					},
 				}),
-				new CancelButton({
+				new Button({
 					text: Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_DATASET_GRID_DELETE_POPUP_CAPTION_NO'),
-					onclick: () => messageBox.close(),
+					size: ButtonSize.LARGE,
+					style: AirButtonStyle.PLAIN,
+					useAirDesign: true,
+					onclick: () => deleteDatasetPopupInstance.hide(),
 				}),
 			],
+			hasOverlay: true,
+			width: 400,
 		});
 
-		messageBox.show();
+		return deleteDatasetPopupInstance;
+	}
+
+	#getDeleteDatasetPopupContent(): HTMLElement
+	{
+		return Tag.render`
+			<div class="biconnector-delete-dataset-popup-content">
+				${Loc.getMessage('BICONNECTOR_SUPERSET_EXTERNAL_DATASET_GRID_DELETE_POPUP_DESCRIPTION_MSGVER_1')}
+			</div>
+		`;
 	}
 
 	deleteDatasetAjaxAction(datasetId: number): Promise

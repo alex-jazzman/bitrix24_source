@@ -294,9 +294,9 @@
 			{
 				BX.SidePanel.Instance.open(this.data.connectPath);
 			}
-			else if(this.data.type === 'recommend')
+			else if (this.data.type === 'recommend')
 			{
-				BX.SidePanel.Instance.open(this.data.connectPath, {width: 735});
+				BX.Salescenter.Manager.openFeedbackFormParams(null, this.data.feedbackConfig);
 			}
 		},
 

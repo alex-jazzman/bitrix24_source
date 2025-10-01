@@ -177,7 +177,7 @@ export const GroupChatCreation = {
 		onLayoutChange(event: BaseEvent<OnLayoutChangeEvent>)
 		{
 			const { to } = event.getData();
-			if (to.name === Layout.createChat.name && to.entityId !== ChatType.chat)
+			if (to.name === Layout.createChat && to.entityId !== ChatType.chat)
 			{
 				this.exitByChatTypeSwitch = true;
 			}

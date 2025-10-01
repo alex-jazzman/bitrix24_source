@@ -90,7 +90,7 @@ class BIConnector extends \CModule
 		if ($siteId)
 		{
 			$dashboardDetailTemplate = [
-				'SORT' => 0,
+				'SORT' => 500,
 				'SITE_ID' => $siteId,
 				'CONDITION' => "CSite::InDir('/bi/dashboard/detail/')",
 				'TEMPLATE' => 'dashboard_detail'
@@ -204,6 +204,13 @@ class BIConnector extends \CModule
 
 			\CAgent::AddAgent('\\Bitrix\\BIConnector\\LogTable::cleanUpAgent();', 'biconnector', 'N', 86400);
 			\CAgent::AddAgent('\\Bitrix\\BIConnector\\Integration\\Superset\\Agent::createDefaultRoles();', 'biconnector');
+			\CAgent::AddAgent(
+				'\\Bitrix\\BIConnector\\Integration\\Superset\\Agent::actualizeSystemDashboards();',
+				'biconnector',
+				'N',
+				86400,
+				next_exec: \ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 600, 'FULL'),
+			);
 
 			ModuleManager::registerModule($this->MODULE_ID);
 

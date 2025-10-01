@@ -9,4 +9,5 @@ export const AhaMoment = Object.freeze({
 	ExpandGrid: 'expand_grid',
 	SelectResources: 'select_resources',
 	CyclePopup: 'cycle_popup',
+	SearchNavigation: 'search_navigation',
 });

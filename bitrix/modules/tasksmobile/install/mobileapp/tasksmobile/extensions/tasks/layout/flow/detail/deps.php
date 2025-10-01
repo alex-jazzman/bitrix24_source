@@ -6,7 +6,6 @@ return [
 		'type',
 		'loc',
 		'require-lazy',
-		'user/profile',
 		'utils/date',
 		'project/utils',
 
@@ -28,6 +27,7 @@ return [
 		'layout/ui/scroll-view',
 		'layout/ui/collapsible-text',
 		'layout/pure-component',
+		'user-profile',
 	],
 	'bundle' => [
 		'./src/common',

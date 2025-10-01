@@ -23,6 +23,7 @@ export const RouteActionMenu = {
 				:id="item.id"
 				:title="item.title"
 				:description="item.description"
+				:itemClass="item.itemClass"
 				:imageClass="item.imageClass"
 				:dataTestId="item.dataTestId"
 				:bIcon="item.bIcon"

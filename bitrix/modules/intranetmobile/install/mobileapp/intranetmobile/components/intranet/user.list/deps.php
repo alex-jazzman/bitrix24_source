@@ -7,7 +7,6 @@ return [
 		'layout/ui/search-bar',
 		'ui-system/blocks/status-block',
 		'ui-system/layout/box',
-		'user/profile',
 		'loc',
 
 		'asset-manager',

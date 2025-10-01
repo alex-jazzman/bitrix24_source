@@ -1,4 +1,4 @@
-import { Event, ZIndexManager, Runtime, Extension } from 'main.core';
+import { Event, ZIndexManager, Runtime } from 'main.core';
 import { SidePanel, type SliderManager } from 'main.sidepanel';
 import { EventEmitter } from 'main.core.events';
 
@@ -15,7 +15,6 @@ import 'ui.notification';
 import 'im.v2.lib.opener';
 
 import type { Store } from 'ui.vue3.vuex';
-import type { SettingsCollection } from 'main.core.collections';
 
 const SLIDER_PREFIX = 'im:slider';
 const BASE_STACK_INDEX = 1200;
@@ -191,8 +190,8 @@ export class MessengerSlider
 
 		EventEmitter.emit(EventType.slider.onClose);
 
-		LayoutManager.getInstance().setLayout({
-			name: Layout.chat.name,
+		void LayoutManager.getInstance().setLayout({
+			name: Layout.chat,
 		});
 	}
 

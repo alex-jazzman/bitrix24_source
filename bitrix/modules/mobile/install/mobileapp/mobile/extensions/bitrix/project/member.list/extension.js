@@ -1,11 +1,13 @@
-(() => {
-	const require = (ext) => jn.require(ext);
-
+/**
+ * @module project/member-list
+ */
+jn.define('project/member-list', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const colorUtils = require('utils/color');
 	const { ContextMenu, Icon } = require('layout/ui/context-menu');
 	const { AvatarClass } = require('ui-system/blocks/avatar');
 	const { RequestExecutor } = require('rest');
+	const { ProjectMember } = require('project/member');
 	const platform = Application.getPlatform();
 	const caches = new Map();
 
@@ -1491,5 +1493,13 @@
 		}
 	}
 
-	jnexport([ProjectMemberList, 'ProjectMemberList']);
+	module.exports = { ProjectMemberList };
+});
+
+// todo remove after all global usages in other modules will be cleaned
+(function() {
+	const require = (ext) => jn.require(ext);
+	const { ProjectMemberList } = require('project/member-list');
+
+	jnexport(ProjectMemberList);
 })();

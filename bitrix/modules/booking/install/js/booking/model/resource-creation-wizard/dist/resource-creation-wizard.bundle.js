@@ -18,6 +18,7 @@ this.BX.Booking = this.BX.Booking || {};
 	    slotRanges: [],
 	    counter: null,
 	    isMain: true,
+	    isDeleted: false,
 	    isConfirmationNotificationOn: false,
 	    isFeedbackNotificationOn: false,
 	    isInfoNotificationOn: false,

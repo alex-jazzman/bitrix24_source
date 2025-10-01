@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_MODULE_NOT_INSTALLED"] = "Модуль CRM не установлен.";
 $MESS["CRM_PERMISSION_DENIED"] = "Доступ запрещен";
 $MESS["CRM_FIELDS_EDIT_TITLE_EDIT"] = "Настройка поля: #NAME#";
@@ -15,4 +15,3 @@ $MESS["CRM_FIELDS_EDIT_NAME_DEFAULT"] = "Новое поле";
 $MESS["CC_BLFE_BAD_FIELD_NAME_LANG"] = "Пожалуйста, установите название поля на языке #LANG_NAME#.";
 $MESS["CC_BLFE_BAD_FIELD_NAME"] = "Пожалуйста, установите название поля.";
 $MESS["CC_BLFE_ERR_IBLOCK_ELEMENT_BAD_IBLOCK_ID"] = "Пожалуйста, выберите инфоблок для привязки.";
-?>

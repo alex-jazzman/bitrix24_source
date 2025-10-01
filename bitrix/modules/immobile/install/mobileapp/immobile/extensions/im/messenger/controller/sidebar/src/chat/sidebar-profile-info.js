@@ -9,10 +9,8 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-profile-info', (require,
 	const {
 		AvatarSafe,
 	} = require('im/messenger/lib/ui/base/avatar');
-	const {
-		ChatTitle,
-		ChatAvatar,
-	} = require('im/messenger/lib/element');
+	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
+	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 	const { EventType } = require('im/messenger/const');
 	const { Theme } = require('im/lib/theme');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');

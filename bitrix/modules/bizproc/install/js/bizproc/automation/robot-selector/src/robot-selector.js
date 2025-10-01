@@ -1,4 +1,4 @@
-import { Type, Loc, Runtime, Text, Event, Tag, Dom } from 'main.core';
+import { Type, Loc, Runtime, Text, Event, Tag, Dom, Extension } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { MenuManager, PopupOptions } from 'main.popup';
 import { Context } from 'bizproc.automation';
@@ -14,6 +14,18 @@ import { RecentGroup } from './groups/recent-group';
 
 import { EmptyGroupStub } from './stubs/empty-group-stub';
 
+type FeedbackForm = {
+	id: number;
+	zones: string[];
+	lang?: string;
+	sec: string;
+};
+
+type ExtensionSettings = {
+	portalUri: string;
+	forms: FeedbackForm[];
+};
+
 export class RobotSelector extends EventEmitter
 {
 	static RECENT_GROUP_ID = 'recent';
@@ -25,6 +37,7 @@ export class RobotSelector extends EventEmitter
 	#stageId: string;
 	#catalog: ?EntityCatalog;
 	#cache: Settings;
+	#settings: ExtensionSettings | null = null;
 
 	#showNewGroups: boolean = false;
 
@@ -39,6 +52,8 @@ export class RobotSelector extends EventEmitter
 		super();
 		// TODO - fix namespace
 		this.setEventNamespace('BX.Bizproc.Automation.RobotSelector');
+
+		this.#settings = Extension.getSettings('bizproc.automation.robot-selector');
 
 		this.#context = props.context;
 		this.#stageId = props.stageId;
@@ -560,16 +575,11 @@ export class RobotSelector extends EventEmitter
 	{
 		const helpFeedbackParams = {
 			id: String(Math.random()),
-			portalUri: 'https://bitrix24.team',
-			forms: [
-				{zones: ['ru'], id: 1922, lang: 'ru', sec: 'frsxzd'},
-				{zones: ['kz'], id: 1923, lang: 'ru', sec: 'skbmjc'},
-				{zones: ['by'], id: 1931, lang: 'ru', sec: 'om1f4c'},
-				{zones: ['en'], id: 1937, lang: 'en', sec: 'yu3ljc'},
-				{zones: ['la', 'co', 'mx'], id: 1947, lang: 'es', sec: 'wuezi9'},
-				{zones: ['br'], id: 1948, lang: 'br', sec: 'j5gglp'},
-				{zones: ['de'], id: 1946, lang: 'de', sec: '6tpoy4'},
-			],
+			portalUri: this.#settings?.portalUri,
+			forms: this.#settings?.forms,
+			presets: {
+				source: 'bizproc',
+			},
 		};
 
 		return `

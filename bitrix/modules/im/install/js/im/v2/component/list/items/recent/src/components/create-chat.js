@@ -40,7 +40,7 @@ export const CreateChat = {
 		{
 			const { name: currentLayoutName } = this.$store.getters['application/getLayout'];
 
-			return currentLayoutName === Layout.createChat.name;
+			return currentLayoutName === Layout.createChat;
 		},
 		preparedTitle(): string
 		{

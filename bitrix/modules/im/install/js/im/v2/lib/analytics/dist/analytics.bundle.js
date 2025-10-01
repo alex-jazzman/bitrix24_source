@@ -10,7 +10,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  multiuser: 'chatType_multiuser'
 	});
 	const AnalyticsEvent = Object.freeze({
-	  openMessenger: 'open_messenger',
 	  openChat: 'open_chat',
 	  createNewChat: 'create_new_chat',
 	  audioUse: 'audio_use',
@@ -1146,7 +1145,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    });
 	    Object.defineProperty(this, _currentTab, {
 	      writable: true,
-	      value: im_v2_const.Layout.chat.name
+	      value: im_v2_const.Layout.chat
 	    });
 	    this.chatCreate = new ChatCreate();
 	    this.chatEdit = new ChatEdit();
@@ -1176,16 +1175,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  ignoreNextChatOpen(dialogId) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _excludedChats)[_excludedChats].add(dialogId);
 	  }
-	  onOpenMessenger() {
-	    ui_analytics.sendData({
-	      event: AnalyticsEvent.openMessenger,
-	      tool: AnalyticsTool.im,
-	      category: AnalyticsCategory.messenger
-	    });
-	  }
 	  onOpenTab(tabName) {
-	    const existingTabs = [im_v2_const.Layout.chat.name, im_v2_const.Layout.copilot.name, im_v2_const.Layout.collab.name, im_v2_const.Layout.channel.name, im_v2_const.Layout.notification.name, im_v2_const.Layout.settings.name, im_v2_const.Layout.openlines.name];
-	    if (!existingTabs.includes(tabName)) {
+	    const trackedTabs = [im_v2_const.Layout.aiAssistant, im_v2_const.Layout.collab, im_v2_const.Layout.channel, im_v2_const.Layout.notification, im_v2_const.Layout.settings, im_v2_const.Layout.openlines];
+	    if (!trackedTabs.includes(tabName)) {
 	      return;
 	    }
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _currentTab)[_currentTab] === tabName) {

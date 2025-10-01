@@ -13,8 +13,9 @@ import { Favorites } from 'booking.model.favorites';
 import { Dictionary } from 'booking.model.dictionary';
 import { MainResources } from 'booking.model.main-resources';
 import { WaitList } from 'booking.model.wait-list';
-import { FormsMenu } from 'booking.model.forms-menu';
 import { BookingPullManager } from 'booking.provider.pull.booking-pull-manager';
+import { Filter } from 'booking.model.filter';
+import { FormsMenu } from 'booking.model.forms-menu';
 import type { MoneyStatistics } from 'booking.model.interface';
 
 export type BookingParams = {
@@ -119,6 +120,7 @@ class CoreApplication
 			.addModel(Dictionary.create())
 			.addModel(MainResources.create())
 			.addModel(WaitList.create())
+			.addModel(Filter.create())
 			.addModel(FormsMenu.create())
 		;
 

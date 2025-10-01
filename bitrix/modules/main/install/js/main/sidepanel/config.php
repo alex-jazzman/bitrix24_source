@@ -13,8 +13,10 @@ return [
 		'clipboard',
 		'ui.fonts.opensans',
 		'popup',
+		'ui.design-tokens.air',
 		'ui.icon-set.actions',
 		'ui.icon-set.main',
+		'ui.icon-set.outline',
 	],
 	'skip_core' => false,
 ];

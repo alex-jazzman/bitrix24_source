@@ -161,6 +161,7 @@ class ConferenceApplication
 		this.waitingForCallStatusTimeout = null;
 		this.callEventReceived = false;
 		this.callRecordState = Call.View.RecordState.Stopped;
+		this.callRecordInitiatorId = null;
 		this.callRecordInfo = null;
 
 		this.floatingScreenShareWindow = null;
@@ -1478,6 +1479,22 @@ class ConferenceApplication
 
 	endCall(finishCall = false)
 	{
+		if (this.isRecording())
+		{
+			Analytics.getInstance().onRecordStop({
+				callId: this.currentCall.uuid,
+				callType: Analytics.AnalyticsType.videoconf,
+				subSection: finishCall ? Analytics.AnalyticsSubSection.contextMenu : Analytics.AnalyticsSubSection.window,
+				element: finishCall ? Analytics.AnalyticsElement.finishForAllButton : Analytics.AnalyticsElement.disconnectButton,
+				recordTime: Util.getRecordTimeText(this.callRecordInfo),
+			});
+			this.callRecordInfo = null;
+
+			BXDesktopSystem.CallRecordStop();
+		}
+
+		this.#stopRecordCall();
+
 		this.setConferenceHasErrorInCall(false);
 		this.showFeedback = !!this.currentCall?.wasConnected;
 		if (this.currentCall)
@@ -1495,21 +1512,6 @@ class ConferenceApplication
 			this.removeAdditionalEvents();
 			this.currentCall.hangup(false, '', finishCall);
 		}
-
-		if (this.isRecording())
-		{
-			Analytics.getInstance().onRecordStop({
-				callId: this.currentCall.uuid,
-				callType: Analytics.AnalyticsType.videoconf,
-				subSection: finishCall ? Analytics.AnalyticsSubSection.contextMenu : Analytics.AnalyticsSubSection.window,
-				element: finishCall ? Analytics.AnalyticsElement.finishForAllButton : Analytics.AnalyticsElement.disconnectButton,
-				recordTime: Util.getRecordTimeText(this.callRecordInfo),
-			});
-			this.callRecordInfo = null;
-
-			BXDesktopSystem.CallRecordStop();
-		}
-		this.callRecordState = Call.View.RecordState.Stopped;
 
 		if (Utils.platform.isBitrixDesktop())
 		{
@@ -2457,15 +2459,17 @@ class ConferenceApplication
 		{
 			return;
 		}
+
 		if (e.video && Object.values(Hardware.cameraList).length === 0)
 		{
-			this.showNotification(BX.message("IM_CALL_CAMERA_ERROR_FALLBACK_TO_MIC"));
+			this.showNotification(Loc.getMessage('IM_CALL_CAMERA_ERROR_FALLBACK_TO_MIC'));
+
 			return;
 		}
 
-		Hardware.setIsCameraOn({isCameraOn: e.video, calledProgrammatically: !!e.calledProgrammatically});
+		Hardware.setIsCameraOn({ isCameraOn: e.video, calledProgrammatically: Boolean(e.calledProgrammatically) });
 
-		if (!e.video)
+		if (this.currentCall && !e.video && !this.currentCall.isScreenSharingStarted())
 		{
 			this.callView.releaseLocalMedia();
 		}
@@ -3223,6 +3227,13 @@ class ConferenceApplication
 			e.state = Call.UserState.Idle;
 		}
 
+		if (e.state === Call.UserState.Idle && e.userId === this.callRecordInitiatorId)
+		{
+			this.callRecordState = Call.View.RecordState.Stopped;
+			this.callView.setRecordState(this.callView.getDefaultRecordState());
+			this.callView.setButtonActive('record', false);
+		}
+
 		this.callView.setUserState(e.userId, e.state);
 		this.updateCallUser(e.userId,{state: e.state});
 
@@ -3486,7 +3497,12 @@ class ConferenceApplication
 		}
 
 		this.callView.setUserTalking(e.userId, true);
-		this.callView.setUserFloorRequestState(e.userId, false);
+
+		if (e.userId == this.callView.localUser.id)
+		{
+			this.callView.setUserFloorRequestState(e.userId, false);
+		}
+
 		this.updateCallUser(e.userId, {talking: true, floorRequestState: false});
 	}
 
@@ -4025,13 +4041,18 @@ class ConferenceApplication
 	{
 		this.callRecordState = event.recordState.state;
 		this.callView.setRecordState(event.recordState);
+		this.callRecordInitiatorId = event.userId;
 
 		if (!this.canRecord() || event.userId != this.controller.getUserId())
 		{
 			return true;
 		}
 
-		if (event.recordState.state !== Call.View.RecordState.Stopped)
+		if (event.recordState.state === Call.View.RecordState.Stopped)
+		{
+			this.callRecordInitiatorId = null;
+		}
+		else
 		{
 			this.callRecordInfo = event.recordState;
 		}
@@ -4136,68 +4157,82 @@ class ConferenceApplication
 		this.setConferenceHasErrorInCall(true);
 		const errorCode = e.code || e.name || e.error;
 
-		let errorMessage;
+		let errorMessage = '';
+		let isUnknownError = false;
 
-		if (e.name == "VoxConnectionError" || e.name == "AuthResult")
+		if (e.name === 'VoxConnectionError' || e.name === 'AuthResult')
 		{
 			Util.reportConnectionResult(e.call.id, false);
 		}
 
-		if (e.name == "AuthResult" || errorCode == "AUTHORIZE_ERROR")
+		switch (errorCode)
 		{
-			errorMessage = BX.message("IM_CALL_ERROR_AUTHORIZATION");
-		}
-		else if (e.name == "Failed" && errorCode == 403)
-		{
-			errorMessage = BX.message("IM_CALL_ERROR_HARDWARE_ACCESS_DENIED");
-		}
-		else if (errorCode == "ERROR_UNEXPECTED_ANSWER")
-		{
-			errorMessage = BX.message("IM_CALL_ERROR_UNEXPECTED_ANSWER");
-		}
-		else if (errorCode == "BLANK_ANSWER_WITH_ERROR_CODE")
-		{
-			errorMessage = BX.message("IM_CALL_ERROR_BLANK_ANSWER");
-		}
-		else if (errorCode == "BLANK_ANSWER")
-		{
-			errorMessage = BX.message("IM_CALL_ERROR_BLANK_ANSWER");
-		}
-		else if (errorCode == "ACCESS_DENIED")
-		{
-			errorMessage = BX.message("IM_CALL_ERROR_ACCESS_DENIED");
-		}
-		else if (errorCode == "NO_WEBRTC")
-		{
-			errorMessage = this.isHttps ? BX.message("IM_CALL_NO_WEBRT") : BX.message("IM_CALL_ERROR_HTTPS_REQUIRED");
-		}
-		else if (errorCode == "UNKNOWN_ERROR")
-		{
-			errorMessage = BX.message("IM_CALL_ERROR_UNKNOWN");
-		}
-		else if (errorCode == "NETWORK_ERROR")
-		{
-			errorMessage = BX.message("IM_CALL_ERROR_NETWORK");
-		}
-		else if (errorCode == "NotAllowedError")
-		{
-			errorMessage = BX.message("IM_CALL_ERROR_HARDWARE_ACCESS_DENIED");
-		}
-		else
-		{
-			//errorMessage = BX.message("IM_CALL_ERROR_HARDWARE_ACCESS_DENIED");
-			errorMessage = BX.message("IM_CALL_ERROR_UNKNOWN_WITH_CODE").replace("#ERROR_CODE#", errorCode);
+			case Call.StartCallErrorCode.ErrorUnexpectedAnswer:
+				errorMessage = Loc.getMessage('IM_CALL_ERROR_UNEXPECTED_ANSWER');
+				break;
+
+			case Call.StartCallErrorCode.BlankAnswerWithErrorCode:
+				errorMessage = Loc.getMessage('IM_CALL_ERROR_BLANK_ANSWER');
+				break;
+
+			case Call.StartCallErrorCode.BlankAnswer:
+				errorMessage = Loc.getMessage('IM_CALL_ERROR_BLANK_ANSWER');
+				break;
+
+			case Call.StartCallErrorCode.AccessDenied:
+				errorMessage = Loc.getMessage('IM_CALL_ERROR_ACCESS_DENIED');
+				break;
+
+			case Call.StartCallErrorCode.NoWebrtc:
+				errorMessage = Loc.getMessage(this.isHttps ? 'IM_CALL_NO_WEBRT' : 'IM_CALL_ERROR_HTTPS_REQUIRED');
+				break;
+
+			case Call.StartCallErrorCode.UnknownError:
+				isUnknownError = true;
+				errorMessage = Loc.getMessage('IM_CALL_ERROR_UNKNOWN');
+				break;
+
+			case Call.StartCallErrorCode.NetworkError:
+				errorMessage = Loc.getMessage('IM_CALL_ERROR_NETWORK');
+				break;
+
+			case Call.StartCallErrorCode.NotAllowedError:
+				errorMessage = Loc.getMessage('IM_CALL_ERROR_HARDWARE_ACCESS_DENIED');
+				break;
+
+			case Call.StartCallErrorCode.NotReadableError:
+				errorMessage = Loc.getMessage('IM_CALL_ERROR_HARDWARE');
+				break;
+
+			default:
+				if (errorCode === Call.StartCallErrorCode.AuthorizeError || e.name === 'AuthResult')
+				{
+					errorMessage = Loc.getMessage('IM_CALL_ERROR_AUTHORIZATION');
+				}
+				else if (errorCode == 403 && e.name === 'Failed')
+				{
+					errorMessage = Loc.getMessage('IM_CALL_ERROR_HARDWARE_ACCESS_DENIED');
+				}
+				else
+				{
+					isUnknownError = true;
+					errorMessage = Loc.getMessage('IM_CALL_ERROR_UNKNOWN_WITH_CODE', { '#ERROR_CODE#': errorCode });
+				}
 		}
 
 		if (this.callView)
 		{
-			if (errorCode === Call.DisconnectReason.SecurityKeyChanged)
+			if (isUnknownError)
+			{
+				this.callView.showSelfTest();
+			}
+			else if (errorCode === Call.DisconnectReason.SecurityKeyChanged)
 			{
 				this.callView.showSecurityKeyError();
 			}
 			else
 			{
-				this.callView.showFatalError();
+				this.callView.showFatalError({ text: errorMessage });
 			}
 		}
 		else
@@ -4318,6 +4353,21 @@ class ConferenceApplication
 	setCameraState(state)
 	{
 		Call.Hardware.isCameraOn = state;
+	}
+
+	#stopRecordCall()
+	{
+		if (this.isRecording())
+		{
+			this.callRecordState = Call.View.RecordState.Stopped;
+			this.callView.setRecordState(this.callView.getDefaultRecordState());
+			this.callView.setButtonActive('record', false);
+
+			this.currentCall.sendRecordState({
+				action: Call.View.RecordState.Stopped,
+				userId: this.currentCall.userId,
+			});
+		}
 	}
 	/* endregion 01. Call methods */
 

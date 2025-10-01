@@ -92,7 +92,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	const { CollabRecent } = require('im/messenger/controller/recent/collab');
 	const { RecentView } = require('im/messenger/view/recent');
 	const { Dialog } = require('im/messenger/controller/dialog/chat');
-	const { ChatCreator } = require('im/messenger/controller/chat-creator');
 	const { DialogCreator } = require('im/messenger/controller/dialog-creator');
 	const { RecentSelector } = require('im/messenger/controller/search/experimental');
 	const { SmileManager } = require('im/messenger/lib/smile-manager');
@@ -119,7 +118,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		 * @property {CollabRecent} recent - recent chat list controller
 		 * @property {Dialog} dialog - chat controller
 		 * @property {DialogSelector} dialogSelector - chat search controller
-		 * @property {ChatCreator} chatCreator - chat creation dialog
 		 * @property {RestManager} restManager - collects requests to initialize the messenger into a batch and executes it
 		 */
 		constructor()
@@ -178,7 +176,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			});
 
 			this.searchSelector = new RecentSelector(dialogList);
-			this.chatCreator = new ChatCreator();
 			this.dialogCreator = new DialogCreator();
 		}
 
@@ -365,6 +362,8 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		 */
 		async refresh(params = {})
 		{
+			await EntityReady.wait('im.navigation');
+
 			const { shortMode = false } = params;
 
 			await this.core.setAppStatus(AppStatus.connection, true);

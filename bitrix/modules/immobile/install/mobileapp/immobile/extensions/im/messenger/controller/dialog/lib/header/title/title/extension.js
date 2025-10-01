@@ -7,7 +7,8 @@ jn.define('im/messenger/controller/dialog/lib/header/title/title', (require, exp
 	const { AppStatus, DialogType } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { UserUtils } = require('im/messenger/lib/utils');
-	const { ChatAvatar, ChatTitle } = require('im/messenger/lib/element');
+	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
+	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 	const {
 		DialogHelper,
 		UserHelper,
@@ -42,7 +43,13 @@ jn.define('im/messenger/controller/dialog/lib/header/title/title', (require, exp
 		 */
 		createTitleParams()
 		{
-			const dialogId = this.getDialog().dialogId;
+			const dialogId = this.getDialog()?.dialogId;
+
+			if (!dialogId)
+			{
+				return {};
+			}
+
 			const avatar = ChatAvatar.createFromDialogId(dialogId);
 			const title = ChatTitle.createFromDialogId(dialogId);
 			const result = {

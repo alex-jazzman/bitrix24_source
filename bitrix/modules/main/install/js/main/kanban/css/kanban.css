@@ -334,6 +334,10 @@
 	font-weight: var(--ui-font-weight-regular, 400);
 }
 
+.main-kanban-column.--auto-pagination .main-kanban-column-total-item {
+	display: none;
+}
+
 .main-kanban-column-title-dark .main-kanban-column-total-item,
 .main-kanban-column-title-dark .main-kanban-column-title-text { color: #fff }
 

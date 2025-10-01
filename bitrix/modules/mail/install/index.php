@@ -118,19 +118,8 @@ Class mail extends CModule
 
 				$group = new CGroup;
 
-				$dbResult = CGroup::GetList(
-					'id',
-					'asc',
-					array(
-						"STRING_ID" => $arGroup["STRING_ID"],
-						"STRING_ID_EXACT_MATCH" => "Y"
-					)
-				);
-				if ($arExistsGroup = $dbResult->Fetch())
-				{
-					$groupID = $arExistsGroup["ID"];
-				}
-				else
+				$groupID = CGroup::GetIDByCode($arGroup["STRING_ID"]);
+				if (!$groupID)
 				{
 					if (file_exists($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/bitrix24"))
 					{

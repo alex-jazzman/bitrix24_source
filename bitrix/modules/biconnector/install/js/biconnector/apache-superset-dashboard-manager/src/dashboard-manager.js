@@ -23,6 +23,7 @@ export class DashboardManager
 	static DASHBOARD_STATUS_READY = 'R';
 	static DASHBOARD_STATUS_FAILED = 'F';
 	static DASHBOARD_STATUS_DRAFT = 'D';
+	static DASHBOARD_STATUS_NOT_INSTALLED = 'N';
 
 	static DASHBOARD_STATUS_COMPUTED_NOT_LOAD = 'NL';
 
@@ -250,7 +251,7 @@ export class DashboardManager
 	{
 		return new Promise((resolve, reject) => {
 			Ajax
-				.runAction('biconnector.group.loadSettingsData')
+				.runAction('biconnector.group.loadSettingsData', { data: { groupIdCode: groupId } })
 				.then((response: {}) => {
 					const dashboards = new Map(
 						Object
@@ -263,7 +264,7 @@ export class DashboardManager
 						groups: response.data.groups,
 						dashboards,
 						saveEnabled: true,
-						isNeedShowDeletionWarningPopup: response.data.isNeedShowDeletionWarningPopup,
+						user: response.data.user,
 					});
 					resolve(response);
 				})
@@ -372,6 +373,15 @@ export class DashboardManager
 				allowChangeTitle: true,
 			},
 		);
+	}
+
+	static installDashboard(dashboardId: number): Promise
+	{
+		return BX.ajax.runAction('biconnector.dashboard.installDashboard', {
+			data: {
+				id: dashboardId,
+			},
+		});
 	}
 
 	openCreationSlider(groupIds: []): void

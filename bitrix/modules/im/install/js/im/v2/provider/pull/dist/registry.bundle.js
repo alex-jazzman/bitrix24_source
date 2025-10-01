@@ -1268,6 +1268,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	const ActionNameByRecentType = {
 	  [im_v2_const.RecentType.default]: 'recent/setRecent',
 	  [im_v2_const.RecentType.copilot]: 'recent/setCopilot',
+	  [im_v2_const.RecentType.aiAssistant]: 'recent/setAiAssistant',
 	  [im_v2_const.RecentType.openChannel]: 'recent/setChannel',
 	  [im_v2_const.RecentType.collab]: 'recent/setCollab'
 	};

@@ -15,10 +15,6 @@ li.menu-item-group-more {
 	display: none;
 }
 
-.menu-item-group-more-ul .menu-favorites-draggable {
-	left: 0;
-}
-
 .menu-item-group.menu-item-block .menu-fav-editable-btn {
 	margin-left: auto;
 }

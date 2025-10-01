@@ -27,7 +27,7 @@ return [
 		'layout/ui/user/avatar',
 		'statemanager/redux/slices/users',
 		'statemanager/redux/store',
-		'user/profile',
+		'user-profile',
 		'utils/function',
 		'utils/date/duration',
 		'utils/date',

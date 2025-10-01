@@ -346,8 +346,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      return null;
 	    }
 	    return {
-	      html: im_v2_lib_utils.Utils.file.createDownloadLink(main_core.Loc.getMessage('IM_MESSAGE_FILE_MENU_DOWNLOAD_FILE'), file.urlDownload, file.name),
-	      onclick: function () {
+	      title: main_core.Loc.getMessage('IM_MESSAGE_FILE_MENU_DOWNLOAD_FILE'),
+	      onClick: function () {
+	        im_v2_lib_utils.Utils.file.downloadFiles([file]);
 	        this.menuInstance.close();
 	      }.bind(this)
 	    };
@@ -358,8 +359,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      return null;
 	    }
 	    return {
-	      text: main_core.Loc.getMessage('IM_MESSAGE_FILE_MENU_SAVE_ON_DISK_MSGVER_1'),
-	      onclick: async function () {
+	      title: main_core.Loc.getMessage('IM_MESSAGE_FILE_MENU_SAVE_ON_DISK_MSGVER_1'),
+	      onClick: async function () {
 	        this.menuInstance.close();
 	        await this.diskService.save(this.context.files);
 	        im_v2_lib_notifier.Notifier.file.onDiskSaveComplete();
@@ -429,12 +430,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    hasPreview() {
 	      return main_core.Type.isStringFilled(this.file.urlPreview);
 	    }
-	  },
-	  created() {
-	    this.contextMenu = new BaseFileContextMenu();
-	  },
-	  beforeUnmount() {
-	    this.contextMenu.destroy();
 	  },
 	  methods: {
 	    download() {

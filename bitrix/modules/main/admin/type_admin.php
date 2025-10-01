@@ -131,7 +131,7 @@ $runtimeList = array();
 $arFilter['!EVENT_NAME'] = null;
 if(isset($arFilter['MESSAGE_ID']))
 {
-	$runtimeList[] = new \Bitrix\Main\Entity\ReferenceField(
+	$runtimeList[] = new \Bitrix\Main\ORM\Fields\Relations\Reference(
 		'MESSAGE',
 		'Bitrix\Main\Mail\Internal\EventMessageTable',
 		array('=this.EVENT_NAME' => 'ref.EVENT_NAME')

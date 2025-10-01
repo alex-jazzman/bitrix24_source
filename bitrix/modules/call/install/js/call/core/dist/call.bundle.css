@@ -920,6 +920,61 @@
 	margin-left: 8px;
 }
 
+.bx-videocall-tooltip {
+	position: relative;
+}
+
+.bx-videocall-tooltip::after {
+	content: var(--data-tooltip-text);
+	width: var(--data-tooltip-width);
+	position: absolute;
+	left: 0px;
+	-webkit-transform: translateY(0) translateZ(0);
+	        transform: translateY(0) translateZ(0);
+	background: rgba(0, 0, 0, 0.8);
+	color: #fff;
+	padding: 5px 10px;
+	border-radius: 20px;
+	font-size: 13px;
+	line-height: 1.3;
+	text-align: center;
+	-webkit-box-shadow: 0 19px 24px rgba(88, 112, 118, 0.17);
+	        box-shadow: 0 19px 24px rgba(88, 112, 118, 0.17);
+	opacity: 0;
+	pointer-events: none;
+	z-index: 10;
+	-webkit-transition: opacity 0.15s ease, -webkit-transform 0.15s ease;
+	transition: opacity 0.15s ease, -webkit-transform 0.15s ease;
+	-o-transition: opacity 0.15s ease, transform 0.15s ease;
+	transition: opacity 0.15s ease, transform 0.15s ease;
+	transition: opacity 0.15s ease, transform 0.15s ease, -webkit-transform 0.15s ease;
+	white-space: pre-line;
+}
+
+.bx-videocall-tooltip:hover::after {
+	opacity: 0.7;
+}
+
+.bx-videocall-tooltip.-top::after {
+	bottom: calc(100%);
+}
+
+.bx-videocall-tooltip.-top:hover::after {
+	-webkit-transform: translateY(-10px);
+	    -ms-transform: translateY(-10px);
+	        transform: translateY(-10px);
+}
+
+.bx-videocall-tooltip.-bottom::after {
+	top: calc(100%);
+}
+
+.bx-videocall-tooltip.-bottom:hover::after {
+	-webkit-transform: translateY(10px);
+	    -ms-transform: translateY(10px);
+	        transform: translateY(10px);
+}
+
 .bx-messenger-videocall-top-button-icon {
 	width: 18px;
 	height: 18px;
@@ -1892,6 +1947,43 @@
 	word-break: normal;
 	overflow-wrap: normal;
 	white-space: pre-wrap;
+}
+
+.bx-messenger-videocall-panel-item-hotkey-hint.popup-window-show-animation-opacity-transform {
+	-webkit-animation: popupWindowShowAnimationOpacityTransform 100ms;
+	        animation: popupWindowShowAnimationOpacityTransform 100ms;
+	-webkit-animation-fill-mode: both;
+	        animation-fill-mode: both;
+}
+
+@-webkit-keyframes popupWindowShowAnimationOpacityTransform {
+	0% {
+		opacity: 0;
+		-webkit-transform: translate3d(0, 5px, 0);
+		-ms-transform: translate3d(0, 5px, 0);
+		transform: translate3d(0, 5px, 0);
+	}
+	100% {
+		opacity: 0.7;
+		-webkit-transform: translate3d(0, 0px, 0);
+		-ms-transform: translate3d(0, 0px, 0);
+		transform: translate3d(0, 0px, 0);
+	}
+}
+
+@keyframes popupWindowShowAnimationOpacityTransform {
+	0% {
+		opacity: 0;
+		-webkit-transform: translate3d(0, 5px, 0);
+		-ms-transform: translate3d(0, 5px, 0);
+		transform: translate3d(0, 5px, 0);
+	}
+	100% {
+		opacity: 0.7;
+		-webkit-transform: translate3d(0, 0px, 0);
+		-ms-transform: translate3d(0, 0px, 0);
+		transform: translate3d(0, 0px, 0);
+	}
 }
 
 .calm-counter .bx-messenger-videocall-panel-item-counter {

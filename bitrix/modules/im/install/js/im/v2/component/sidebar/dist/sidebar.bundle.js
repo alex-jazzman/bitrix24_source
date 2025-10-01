@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,im_v2_lib_localStorage,im_v2_lib_sidebar,ui_vue3_directives_lazyload,ui_label,main_date,im_v2_lib_channel,im_v2_component_elements_toggle,im_v2_component_elements_autoDelete,im_v2_lib_autoDelete,ui_vue3_directives_hint,im_v2_component_elements_copilotRolesDialog,ui_promoVideoPopup,im_v2_component_elements_popup,im_v2_lib_helpdesk,im_v2_lib_rest,ui_manual,im_v2_lib_promo,im_v2_lib_feature,ui_viewer,im_v2_provider_service_disk,im_v2_model,im_v2_component_elements_audioplayer,ui_icons,ui_notification,rest_client,ui_vue3_vuex,im_v2_lib_market,im_v2_lib_entityCreator,im_v2_lib_analytics,im_v2_lib_layout,im_v2_component_entitySelector,im_v2_lib_notifier,im_v2_lib_copilot,im_v2_lib_menu,im_v2_lib_call,im_v2_provider_service_chat,im_v2_lib_permission,im_v2_lib_confirm,im_v2_provider_service_message,im_v2_lib_logger,im_v2_lib_parser,im_v2_lib_textHighlighter,im_v2_component_elements_searchInput,main_core,im_v2_lib_utils,im_v2_component_elements_chatTitle,im_v2_component_elements_avatar,im_v2_lib_user,im_v2_application_core,main_core_events,im_public,im_v2_const,im_v2_component_elements_loader,im_v2_component_elements_button,im_v2_lib_dateFormatter) {
+(function (exports,im_v2_lib_localStorage,im_v2_lib_sidebar,ui_system_menu,ui_vue3_directives_lazyload,ui_label,main_date,im_v2_lib_channel,im_v2_component_elements_toggle,im_v2_component_elements_autoDelete,im_v2_lib_autoDelete,ui_vue3_directives_hint,im_v2_component_elements_copilotRolesDialog,ui_promoVideoPopup,im_v2_component_elements_popup,im_v2_lib_helpdesk,im_v2_lib_rest,ui_manual,im_v2_lib_promo,im_v2_lib_feature,ui_viewer,im_v2_provider_service_disk,im_v2_model,im_v2_component_elements_audioplayer,ui_icons,ui_notification,rest_client,ui_vue3_vuex,im_v2_lib_market,im_v2_lib_entityCreator,im_v2_lib_analytics,im_v2_lib_layout,im_v2_component_entitySelector,im_v2_lib_notifier,im_v2_lib_copilot,im_v2_lib_menu,im_v2_lib_call,im_v2_provider_service_chat,im_v2_lib_permission,im_v2_lib_confirm,im_v2_provider_service_message,im_v2_lib_logger,im_v2_lib_parser,im_v2_lib_textHighlighter,im_v2_component_elements_searchInput,main_core,im_v2_lib_utils,im_v2_component_elements_chatTitle,im_v2_component_elements_avatar,im_v2_lib_user,im_v2_application_core,main_core_events,im_public,im_v2_const,im_v2_component_elements_loader,im_v2_component_elements_button,im_v2_lib_dateFormatter) {
 	'use strict';
 
 	function getChatId(dialogId) {
@@ -925,11 +925,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      return null;
 	    }
 	    return {
-	      text: main_core.Loc.getMessage('IM_SIDEBAR_MENU_UPDATE_CHAT'),
-	      onclick: () => {
+	      title: main_core.Loc.getMessage('IM_SIDEBAR_MENU_UPDATE_CHAT'),
+	      onClick: () => {
 	        im_v2_lib_analytics.Analytics.getInstance().chatEdit.onOpenForm(this.context.dialogId);
 	        void im_v2_lib_layout.LayoutManager.getInstance().setLayout({
-	          name: im_v2_const.Layout.updateChat.name,
+	          name: im_v2_const.Layout.updateChat,
 	          entityId: this.context.dialogId
 	        });
 	      }
@@ -940,9 +940,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      return null;
 	    }
 	    return {
-	      text: main_core.Loc.getMessage('IM_SIDEBAR_MENU_DELETE_CHAT'),
-	      className: 'menu-popup-no-icon bx-im-sidebar__context-menu_delete',
-	      onclick: async () => {
+	      title: main_core.Loc.getMessage('IM_SIDEBAR_MENU_DELETE_CHAT'),
+	      design: ui_system_menu.MenuItemDesign.Alert,
+	      onClick: async () => {
 	        im_v2_lib_analytics.Analytics.getInstance().chatDelete.onClick(this.context.dialogId);
 	        if (await babelHelpers.classPrivateFieldLooseBase(this, _isDeletionCancelled)[_isDeletionCancelled]()) {
 	          return;
@@ -965,8 +965,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    }
 	    const profileUri = im_v2_lib_utils.Utils.user.getCalendarLink(this.context.dialogId);
 	    return {
-	      text: main_core.Loc.getMessage('IM_LIB_MENU_OPEN_CALENDAR_V2'),
-	      onclick: () => {
+	      title: main_core.Loc.getMessage('IM_LIB_MENU_OPEN_CALENDAR_V2'),
+	      onClick: () => {
 	        BX.SidePanel.Instance.open(profileUri);
 	        this.menuInstance.close();
 	      }
@@ -984,11 +984,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    if (!hasAccessByRole) {
 	      return null;
 	    }
-	    const text = this.isChannel() ? main_core.Loc.getMessage('IM_SIDEBAR_MENU_INVITE_SUBSCRIBERS') : main_core.Loc.getMessage('IM_SIDEBAR_MENU_INVITE_MEMBERS_V2');
+	    const title = this.isChannel() ? main_core.Loc.getMessage('IM_SIDEBAR_MENU_INVITE_SUBSCRIBERS') : main_core.Loc.getMessage('IM_SIDEBAR_MENU_INVITE_MEMBERS_V2');
 	    return {
-	      text,
-	      onclick: () => {
-	        im_v2_lib_analytics.Analytics.getInstance().userAdd.onChatSidebarClick(this.dialogId);
+	      title,
+	      onClick: () => {
+	        im_v2_lib_analytics.Analytics.getInstance().userAdd.onChatSidebarClick(this.context.dialogId);
 	        this.emit(MainMenu.events.onAddToChatShow);
 	        this.menuInstance.close();
 	      }
@@ -1006,12 +1006,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  void im_v2_lib_layout.LayoutManager.getInstance().deleteLastOpenedElementById(this.context.dialogId);
 	}
 	async function _isDeletionCancelled2() {
-	  const {
-	    dialogId
-	  } = this.context;
-	  const confirmResult = await im_v2_lib_confirm.showDeleteChatConfirm(dialogId);
+	  const confirmResult = await im_v2_lib_confirm.showDeleteChatConfirm(this.context.dialogId);
 	  if (!confirmResult) {
-	    im_v2_lib_analytics.Analytics.getInstance().chatDelete.onCancel(dialogId);
+	    im_v2_lib_analytics.Analytics.getInstance().chatDelete.onCancel(this.context.dialogId);
 	    return true;
 	  }
 	  return false;
@@ -1044,7 +1041,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  },
 	  computed: {
 	    recentItem() {
-	      return this.$store.getters['recent/get'](this.dialogId, true);
+	      return this.$store.getters['recent/get'](this.dialogId);
 	    },
 	    dialog() {
 	      return this.$store.getters['chats/get'](this.dialogId, true);
@@ -1081,11 +1078,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      this.showAddToChatPopup = true;
 	    },
 	    onContextMenuClick(event) {
-	      const item = {
+	      const context = {
 	        dialogId: this.dialogId,
-	        ...this.recentItem
+	        recentItem: this.recentItem
 	      };
-	      this.contextMenu.openMenu(item, event.target);
+	      this.contextMenu.openMenu(context, event.target);
 	    },
 	    onSidebarCloseClick() {
 	      main_core_events.EventEmitter.emit(im_v2_const.EventType.sidebar.close);
@@ -1231,12 +1228,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    },
 	    chatId() {
 	      return this.dialog.chatId;
-	    },
-	    isCopilotLayout() {
-	      const {
-	        name: currentLayoutName
-	      } = this.$store.getters['application/getLayout'];
-	      return currentLayoutName === im_v2_const.Layout.copilot.name;
 	    }
 	  },
 	  methods: {
@@ -1260,7 +1251,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  template: `
 		<div 
 			class="bx-im-sidebar-chat-favourites__container" 
-			:class="{'--copilot': isCopilotLayout}"
 			@click="onFavouriteClick"
 		>
 			<div class="bx-im-sidebar-chat-favourites__title">
@@ -1333,7 +1323,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    },
 	    chatTypeText() {
 	      var _DescriptionByChatTyp;
-	      if (this.isCopilotLayout) {
+	      if (this.isAiAssistantLayout) {
 	        return im_v2_lib_copilot.CopilotManager.getAIModelName(this.dialogId);
 	      }
 	      if (this.isBot) {
@@ -1350,11 +1340,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      }
 	      return this.isLongDescription;
 	    },
-	    isCopilotLayout() {
+	    isAiAssistantLayout() {
 	      const {
 	        name: currentLayoutName
 	      } = this.$store.getters['application/getLayout'];
-	      return currentLayoutName === im_v2_const.Layout.copilot.name;
+	      return currentLayoutName === im_v2_const.Layout.aiAssistant;
 	    }
 	  },
 	  methods: {
@@ -1686,8 +1676,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      return null;
 	    }
 	    return {
-	      text: main_core.Loc.getMessage('IM_SIDEBAR_MENU_GO_TO_CONTEXT_MESSAGE'),
-	      onclick: () => {
+	      title: main_core.Loc.getMessage('IM_SIDEBAR_MENU_GO_TO_CONTEXT_MESSAGE'),
+	      onClick: () => {
 	        main_core_events.EventEmitter.emit(im_v2_const.EventType.dialog.goToMessageContext, {
 	          messageId: this.context.messageId,
 	          dialogId: this.context.dialogId
@@ -1701,8 +1691,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      return null;
 	    }
 	    return {
-	      text: title,
-	      onclick: () => {
+	      title,
+	      onClick: () => {
 	        if (BX.clipboard.copy(this.context.source)) {
 	          im_v2_lib_notifier.Notifier.onCopyLinkComplete();
 	        }
@@ -1745,8 +1735,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	  getDeleteItem() {
 	    return {
-	      text: main_core.Loc.getMessage('IM_SIDEBAR_MENU_DELETE_TASK_CONNECTION'),
-	      onclick: function () {
+	      title: main_core.Loc.getMessage('IM_SIDEBAR_MENU_DELETE_TASK_CONNECTION'),
+	      onClick: function () {
 	        this.taskManager.delete(this.context.task);
 	        this.menuInstance.close();
 	      }.bind(this)
@@ -2089,8 +2079,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	  getDeleteItem() {
 	    return {
-	      text: main_core.Loc.getMessage('IM_SIDEBAR_MENU_DELETE_MEETING_CONNECTION'),
-	      onclick: function () {
+	      title: main_core.Loc.getMessage('IM_SIDEBAR_MENU_DELETE_MEETING_CONNECTION'),
+	      onClick: function () {
 	        this.meetingManager.delete(this.context.meeting);
 	        this.menuInstance.close();
 	      }.bind(this)
@@ -2359,12 +2349,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          }
 	        }
 	      };
-	    },
-	    isCopilotLayout() {
-	      const {
-	        name: currentLayoutName
-	      } = this.$store.getters['application/getLayout'];
-	      return currentLayoutName === im_v2_const.Layout.copilot.name;
 	    }
 	  },
 	  methods: {
@@ -2392,7 +2376,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		<div
 			v-if="isGroupChat"
 			class="bx-im-sidebar-mute-chat__container"
-			:class="{'--not-active': !canBeMuted, '--copilot': isCopilotLayout}"
+			:class="{'--not-active': !canBeMuted}"
 			v-hint="hintMuteNotAvailable"
 		>
 			<div class="bx-im-sidebar-mute-chat__title">
@@ -3958,12 +3942,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  computed: {
 	    ButtonSize: () => im_v2_component_elements_button.ButtonSize,
 	    ButtonColor: () => im_v2_component_elements_button.ButtonColor,
-	    isCopilotLayout() {
-	      const {
-	        name: currentLayoutName
-	      } = this.$store.getters['application/getLayout'];
-	      return currentLayoutName === im_v2_const.Layout.copilot.name;
-	    },
 	    dialog() {
 	      return this.$store.getters['chats/get'](this.dialogId, true);
 	    },
@@ -4740,8 +4718,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      return null;
 	    }
 	    return {
-	      html: this.getDownloadHtml(this.context.file.urlDownload, this.context.file.name),
-	      onclick: function () {
+	      title: main_core.Loc.getMessage('IM_SIDEBAR_MENU_DOWNLOAD_FILE'),
+	      onClick: function () {
+	        im_v2_lib_utils.Utils.file.downloadFiles([this.context.file]);
 	        this.menuInstance.close();
 	      }.bind(this)
 	    };
@@ -4751,8 +4730,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      return null;
 	    }
 	    return {
-	      text: main_core.Loc.getMessage('IM_SIDEBAR_MENU_SAVE_FILE_ON_DISK_MSGVER_1'),
-	      onclick: async function () {
+	      title: main_core.Loc.getMessage('IM_SIDEBAR_MENU_SAVE_FILE_ON_DISK_MSGVER_1'),
+	      onClick: async function () {
 	        this.menuInstance.close();
 	        await this.mediaManager.saveOnDisk([this.context.sidebarFile.fileId]);
 	        im_v2_lib_notifier.Notifier.file.onDiskSaveComplete();
@@ -4764,23 +4743,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      return null;
 	    }
 	    return {
-	      text: main_core.Loc.getMessage('IM_SIDEBAR_MENU_DELETE_FILE'),
-	      onclick: function () {
+	      title: main_core.Loc.getMessage('IM_SIDEBAR_MENU_DELETE_FILE'),
+	      onClick: function () {
 	        this.mediaManager.delete(this.context.sidebarFile);
 	        this.menuInstance.close();
 	      }.bind(this)
 	    };
-	  }
-	  getDownloadHtml(urlDownload, fileName) {
-	    const a = main_core.Dom.create('a', {
-	      text: main_core.Loc.getMessage('IM_SIDEBAR_MENU_DOWNLOAD_FILE')
-	    });
-	    main_core.Dom.style(a, 'display', 'block');
-	    main_core.Dom.style(a, 'color', 'inherit');
-	    main_core.Dom.style(a, 'text-decoration', 'inherit');
-	    a.setAttribute('href', urlDownload);
-	    a.setAttribute('download', fileName);
-	    return a;
 	  }
 	}
 
@@ -6245,8 +6213,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      return null;
 	    }
 	    return {
-	      text: main_core.Loc.getMessage('IM_SIDEBAR_MENU_DELETE_FROM_LINKS'),
-	      onclick: function () {
+	      title: main_core.Loc.getMessage('IM_SIDEBAR_MENU_DELETE_FROM_LINKS'),
+	      onClick: function () {
 	        this.linkManager.delete(this.context);
 	        this.menuInstance.close();
 	      }.bind(this)
@@ -7009,8 +6977,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    }
 	    const isManager = this.context.dialog.managerList.includes(this.context.user.id);
 	    return {
-	      text: isManager ? main_core.Loc.getMessage('IM_SIDEBAR_MENU_MANAGER_REMOVE') : main_core.Loc.getMessage('IM_SIDEBAR_MENU_MANAGER_ADD'),
-	      onclick: () => {
+	      title: isManager ? main_core.Loc.getMessage('IM_SIDEBAR_MENU_MANAGER_REMOVE') : main_core.Loc.getMessage('IM_SIDEBAR_MENU_MANAGER_ADD'),
+	      onClick: () => {
 	        if (isManager) {
 	          this.chatService.removeManager(this.context.dialog.dialogId, this.context.user.id);
 	        } else {
@@ -7028,8 +6996,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      return null;
 	    }
 	    return {
-	      text: main_core.Loc.getMessage('IM_LIB_MENU_CALL_2'),
-	      onclick: () => {
+	      title: main_core.Loc.getMessage('IM_LIB_MENU_CALL_2'),
+	      onClick: () => {
 	        this.callManager.startCall(userDialogId);
 	        this.menuInstance.close();
 	      }
@@ -7043,8 +7011,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    const isCurrentUser = this.context.user.id === im_v2_application_core.Core.getUserId();
 	    const phraseCode = isCurrentUser ? 'IM_LIB_MENU_OPEN_OWN_CALENDAR' : 'IM_LIB_MENU_OPEN_CALENDAR_V2';
 	    return {
-	      text: main_core.Loc.getMessage(phraseCode),
-	      onclick: () => {
+	      title: main_core.Loc.getMessage(phraseCode),
+	      onClick: () => {
 	        BX.SidePanel.Instance.open(profileUri);
 	        this.menuInstance.close();
 	      }
@@ -7059,8 +7027,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      return null;
 	    }
 	    return {
-	      text: main_core.Loc.getMessage('IM_LIB_MENU_LEAVE_MSGVER_1'),
-	      onclick: async () => {
+	      title: main_core.Loc.getMessage('IM_LIB_MENU_LEAVE_MSGVER_1'),
+	      onClick: async () => {
 	        this.menuInstance.close();
 	        const userChoice = await im_v2_lib_confirm.showLeaveChatConfirm(this.context.dialog.dialogId);
 	        if (!userChoice) {
@@ -7129,8 +7097,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    },
 	    chatLink() {
 	      const layoutName = im_v2_lib_layout.LayoutManager.getInstance().getLayout().name;
-	      const isCopilot = layoutName === im_v2_const.Layout.copilot.name;
-	      const chatGetParameter = isCopilot ? im_v2_const.GetParameter.openCopilotChat : im_v2_const.GetParameter.openChat;
+	      const isAiAssistant = layoutName === im_v2_const.Layout.aiAssistant;
+	      const chatGetParameter = isAiAssistant ? im_v2_const.GetParameter.openCopilotChat : im_v2_const.GetParameter.openChat;
 	      const getParams = new URLSearchParams({
 	        [chatGetParameter]: this.dialogId
 	      });
@@ -7296,8 +7264,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	  getDeleteFromFavoriteItem() {
 	    return {
-	      text: main_core.Loc.getMessage('IM_SIDEBAR_MENU_REMOVE_FROM_SAVED_V2'),
-	      onclick: function () {
+	      title: main_core.Loc.getMessage('IM_SIDEBAR_MENU_REMOVE_FROM_SAVED_V2'),
+	      onClick: function () {
 	        const messageService = new im_v2_provider_service_message.MessageService({
 	          chatId: this.context.chatId
 	        });
@@ -8889,5 +8857,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.ChatSidebar = ChatSidebar;
 
-}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Vue3.Directives,BX.UI,BX.Main,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Vue3.Directives,BX.Messenger.v2.Component.Elements,BX.UI,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.UI.Manual,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.UI.Viewer,BX.Messenger.v2.Service,BX.Messenger.v2.Model,BX.Messenger.v2.Component.Elements,BX,BX,BX,BX.Vue3.Vuex,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.EntitySelector,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib));
+}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.UI.System,BX.Vue3.Directives,BX.UI,BX.Main,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Vue3.Directives,BX.Messenger.v2.Component.Elements,BX.UI,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.UI.Manual,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.UI.Viewer,BX.Messenger.v2.Service,BX.Messenger.v2.Model,BX.Messenger.v2.Component.Elements,BX,BX,BX,BX.Vue3.Vuex,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.EntitySelector,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib));
 //# sourceMappingURL=sidebar.bundle.js.map

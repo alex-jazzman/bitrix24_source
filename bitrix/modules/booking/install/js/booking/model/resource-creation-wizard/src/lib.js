@@ -20,6 +20,7 @@ export function getEmptyResource(): ResourceModel
 		slotRanges: [],
 		counter: null,
 		isMain: true,
+		isDeleted: false,
 		isConfirmationNotificationOn: false,
 		isFeedbackNotificationOn: false,
 		isInfoNotificationOn: false,

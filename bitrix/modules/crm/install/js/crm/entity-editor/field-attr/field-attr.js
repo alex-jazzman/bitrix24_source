@@ -284,6 +284,8 @@ if (typeof BX.Crm.EntityFieldVisibilityConfigurator === "undefined")
 
 		this._items = [];
 		this._restriction = {};
+
+		this.useHumanResourcesModule = true;
 	};
 
 	BX.Crm.EntityFieldVisibilityConfigurator.prototype =
@@ -299,6 +301,7 @@ if (typeof BX.Crm.EntityFieldVisibilityConfigurator === "undefined")
 
 			this._restriction = BX.prop.getObject(this.getSettings(), "restriction", {});
 			this._isPermitted = BX.prop.getBoolean(this._restriction, "isPermitted", true);
+			this.useHumanResourcesModule = BX.prop.getBoolean(this.getSettings(), 'useHumanResourcesModule', true);
 
 			this._squares = [];
 			this._isEnabled = !this.isEmpty();
@@ -565,6 +568,7 @@ if (typeof BX.Crm.EntityFieldVisibilityConfigurator === "undefined")
 					this._id,
 					{
 						callback: BX.delegate(this.processItemSelect, this),
+						useHumanResourcesModule: this.useHumanResourcesModule,
 					}
 				)
 			}

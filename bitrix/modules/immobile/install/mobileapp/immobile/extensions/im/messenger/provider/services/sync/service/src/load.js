@@ -21,6 +21,9 @@ jn.define('im/messenger/provider/services/sync/service/load', (require, exports,
 	const { getLogger } = require('im/messenger/lib/logger');
 	const logger = getLogger('sync-service');
 
+	const FILLER_COUNTER_EMIT_RETRIES = 5;
+	const FILLER_COUNTER_EMIT_RETRY_DELAY = 2000;
+
 	/**
 	 * @class LoadService
 	 */
@@ -44,6 +47,7 @@ jn.define('im/messenger/provider/services/sync/service/load', (require, exports,
 			/** @type {AppStatus['sync'] | AppStatus['backgroundSync']} */
 			this.syncMode = AppStatus.sync;
 			this.errorList = [];
+			this.retryLog = [];
 		}
 
 		get emitter()
@@ -232,15 +236,75 @@ jn.define('im/messenger/provider/services/sync/service/load', (require, exports,
 
 			if (fillerOptions.shouldFillCounter)
 			{
-				MessengerEmitter.emit(EventType.sync.requestResultReceived, {
+				this.emitCounterFillerWithRetry({
 					uuid: counterRequestResultSavedUuid,
 					result,
-				}, ComponentCode.imNavigation);
+				}, ComponentCode.imNavigation, requestResultSavedIdList);
 			}
 
 			logger.log('SyncService waits for a response from SyncFillers', expectedRequestResultSavedIdList);
 
 			return syncListPromise;
+		}
+
+		/**
+		 * @param {Object} data
+		 * @param {string} componentCode
+		 * @param {Set} requestResultSavedIdList
+		 */
+		emitCounterFillerWithRetry(data, componentCode, requestResultSavedIdList)
+		{
+			let attempt = 0;
+			const uuid = data.uuid;
+			const tryEmit = () => {
+				attempt += 1;
+				const logEntry = {
+					uuid,
+					attempt,
+					timestamp: Date.now(),
+					message: `Emit counter filler event, attempt ${attempt}`,
+				};
+				this.retryLog.push(logEntry);
+				logger.warn(`[CounterRetry] ${logEntry.message}`, data);
+
+				MessengerEmitter.emit(EventType.sync.requestResultReceived, data, componentCode);
+				setTimeout(() => {
+					if (requestResultSavedIdList.has(uuid))
+					{
+						this.retryLog.push({
+							uuid,
+							attempt,
+							timestamp: Date.now(),
+							message: 'Counter filler responded successfully',
+						});
+
+						return;
+					}
+
+					if (attempt < FILLER_COUNTER_EMIT_RETRIES)
+					{
+						this.retryLog.push({
+							uuid,
+							attempt,
+							timestamp: Date.now(),
+							message: 'No response from counter filler, retrying...',
+						});
+						tryEmit();
+					}
+					else
+					{
+						this.retryLog.push({
+							uuid,
+							attempt,
+							timestamp: Date.now(),
+							message: 'No response from counter filler after max retries',
+						});
+						logger.error(`[CounterRetry] No response from counter filler after ${FILLER_COUNTER_EMIT_RETRIES} attempts`, data);
+					}
+				}, FILLER_COUNTER_EMIT_RETRY_DELAY);
+			};
+
+			tryEmit();
 		}
 
 		isEntityReady(entityId)

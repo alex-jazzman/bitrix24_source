@@ -9,7 +9,7 @@ import { isNotes, notesConfig } from './configs/notes';
 import { isLines, linesConfig } from './configs/lines';
 import { isCollab, collabConfig } from './configs/collab';
 import { isSupport, supportConfig } from './configs/support';
-import { isAiAssistant, aiAssistantConfig } from './configs/aiassistant';
+import { isAiAssistant, aiAssistantConfig } from './configs/ai-assistant';
 import { isComment, commentConfig } from './configs/comment';
 import { isChannel, channelConfig } from './configs/channel';
 import { isCopilot, copilotConfig } from './configs/copilot';

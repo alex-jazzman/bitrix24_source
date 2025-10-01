@@ -6,6 +6,7 @@ import type { BookingModel } from 'booking.model.bookings';
 import { BookingClient } from './client/client';
 import { BookingDeal } from './deal/deal';
 import { BookingDocument } from './document/document';
+import { BookingExtraResourcesInfo } from './extra-resources-info/booking-extra-resources-info';
 import { BookingMessage } from './message/message';
 import { BookingConfirmation } from './confirmation/confirmation';
 import { BookingVisit } from './visit/visit';
@@ -75,6 +76,14 @@ export const BookingActionsPopup = {
 						bookingId: this.bookingId,
 					},
 					component: BookingClient,
+				},
+				{
+					id: ActionsPopupActionEnum.extraResourcesInfo,
+					props: {
+						bookingId: this.bookingId,
+						resourceId: this.resourceId,
+					},
+					component: BookingExtraResourcesInfo,
 				},
 				[
 					{
@@ -165,7 +174,7 @@ export const BookingActionsPopup = {
 					:disabled="Boolean(options?.overbooking?.disabled)"
 					@close="$emit('close')"
 				/>
-				<Waitlist :bookingId/>
+				<Waitlist v-if="!options?.waitList?.hidden" :bookingId/>
 				<BookingRemoveBtn :bookingId @close="$emit('close')"/>
 			</template>
 		</ActionsPopup>

@@ -66,16 +66,20 @@ this.BX = this.BX || {};
 	    babelHelpers.defineProperty(this, "slider", null);
 	    babelHelpers.defineProperty(this, "color", null);
 	    babelHelpers.defineProperty(this, "bgColor", null);
+	    babelHelpers.defineProperty(this, "className", '');
 	    babelHelpers.defineProperty(this, "iconClass", '');
 	    babelHelpers.defineProperty(this, "iconTitle", '');
 	    babelHelpers.defineProperty(this, "onclick", null);
 	    babelHelpers.defineProperty(this, "text", null);
+	    babelHelpers.defineProperty(this, "hidden", false);
 	    babelHelpers.defineProperty(this, "cache", new main_core.Cache.MemoryCache());
 	    this.slider = slider;
 	    const options = main_core.Type.isPlainObject(labelOptions) ? labelOptions : {};
-	    this.setBgColor(options.bgColor);
+	    this.hidden = main_core.Type.isBoolean(options.hidden) ? options.hidden : this.hidden;
 	    this.setColor(options.color);
+	    this.setBgColor(options.bgColor);
 	    this.setText(options.text);
+	    this.setClassName(options.className);
 	    this.setIconClass(options.iconClass);
 	    this.setIconTitle(options.iconTitle);
 	    this.setOnclick(options.onclick);
@@ -84,9 +88,16 @@ this.BX = this.BX || {};
 	    key: "getContainer",
 	    value: function getContainer() {
 	      return this.cache.remember('container', () => {
+	        const classes = ['side-panel-label'];
+	        if (this.getClassName()) {
+	          classes.push(this.getClassName());
+	        }
+	        if (this.isHidden()) {
+	          classes.push('--hidden');
+	        }
 	        return main_core.Dom.create('div', {
 	          props: {
-	            className: 'side-panel-label'
+	            className: classes.join(' ')
 	          },
 	          children: [this.getIconBox(), this.getTextContainer()],
 	          events: {
@@ -183,6 +194,7 @@ this.BX = this.BX || {};
 	      if (main_core.Type.isStringFilled(color)) {
 	        this.color = color;
 	        main_core.Dom.style(this.getTextContainer(), 'color', color);
+	        main_core.Dom.style(this.getIconContainer(), '--ui-icon-set__icon-color', color);
 	      }
 	    }
 	  }, {
@@ -207,10 +219,14 @@ this.BX = this.BX || {};
 	          bgColor = `#${hex}${alfaHex}`;
 	        }
 	        this.bgColor = bgColor;
-	        main_core.Dom.style(this.getContainer(), 'background-color', bgColor);
+	        main_core.Dom.style(this.getContainer(), '--ui-color', bgColor);
+	        if (this.getColor() === null) {
+	          main_core.Dom.style(this.getIconContainer(), '--ui-icon-set__icon-color', '#fff');
+	        }
 	      } else if (bgColor === null) {
 	        this.bgColor = null;
-	        main_core.Dom.style(this.getContainer(), 'background-color', null);
+	        main_core.Dom.style(this.getContainer(), '--ui-color', null);
+	        main_core.Dom.style(this.getIconContainer(), '--ui-icon-set__icon-color', null);
 	      }
 	    }
 	  }, {
@@ -233,6 +249,23 @@ this.BX = this.BX || {};
 	    key: "getText",
 	    value: function getText() {
 	      return this.text;
+	    }
+	  }, {
+	    key: "setClassName",
+	    value: function setClassName(className) {
+	      if (main_core.Type.isStringFilled(className)) {
+	        main_core.Dom.removeClass(this.getContainer(), this.className);
+	        this.className = className;
+	        main_core.Dom.addClass(this.getContainer(), this.className);
+	      } else if (className === null) {
+	        main_core.Dom.removeClass(this.getContainer(), this.className);
+	        this.className = className;
+	      }
+	    }
+	  }, {
+	    key: "getClassName",
+	    value: function getClassName() {
+	      return this.className;
 	    }
 	  }, {
 	    key: "setIconClass",
@@ -263,6 +296,23 @@ this.BX = this.BX || {};
 	    key: "getIconTitle",
 	    value: function getIconTitle() {
 	      return this.iconTitle;
+	    }
+	  }, {
+	    key: "isHidden",
+	    value: function isHidden() {
+	      return this.hidden;
+	    }
+	  }, {
+	    key: "hide",
+	    value: function hide() {
+	      this.hidden = true;
+	      main_core.Dom.addClass(this.getContainer(), '--hidden');
+	    }
+	  }, {
+	    key: "show",
+	    value: function show() {
+	      this.hidden = false;
+	      main_core.Dom.removeClass(this.getContainer(), '--hidden');
 	    }
 	  }, {
 	    key: "setOnclick",
@@ -543,8 +593,10 @@ this.BX = this.BX || {};
 	    this.setDesignSystemContext(options.designSystemContext);
 	    this.setAutoOffset(options.autoOffset);
 	    this.label = new Label(this, {
-	      iconClass: 'side-panel-label-icon-close',
+	      className: '--close-label --ui-hoverable',
+	      iconClass: 'side-panel-label-icon-close ui-icon-set --cross-l',
 	      iconTitle: main_core.Loc.getMessage('MAIN_SIDEPANEL_CLOSE'),
+	      bgColor: '#0075FF',
 	      onclick(label, slider) {
 	        slider.close();
 	      }
@@ -556,11 +608,12 @@ this.BX = this.BX || {};
 	    this.minimizeLabel = null;
 	    this.newWindowLabel = null;
 	    this.copyLinkLabel = null;
+	    this.printLabel = null;
 	    if (!this.isSelfContained() && this.minimizeOptions !== null) {
 	      this.minimizeLabel = new Label(this, {
-	        iconClass: 'side-panel-label-icon-minimize ui-icon-set --arrow-line',
+	        className: '--ui-hoverable',
+	        iconClass: 'side-panel-label-icon-minimize ui-icon-set --o-minimize',
 	        iconTitle: main_core.Loc.getMessage('MAIN_SIDEPANEL_MINIMIZE'),
-	        bgColor: ['#d9dcdf', 100],
 	        onclick: (label, slider) => {
 	          if (this.isLoaded()) {
 	            this.minimize();
@@ -568,11 +621,11 @@ this.BX = this.BX || {};
 	        }
 	      });
 	    }
-	    if (options.newWindowLabel === true && (!this.isSelfContained() || main_core.Type.isStringFilled(options.newWindowUrl))) {
+	    if (options.newWindowLabel === true && (this.canChangeHistory() || main_core.Type.isStringFilled(options.newWindowUrl))) {
 	      this.newWindowLabel = new Label(this, {
-	        iconClass: 'side-panel-label-icon-new-window',
+	        className: '--ui-hoverable',
+	        iconClass: 'side-panel-label-icon-new-window ui-icon-set --go-to-l',
 	        iconTitle: main_core.Loc.getMessage('MAIN_SIDEPANEL_NEW_WINDOW'),
-	        bgColor: ['#d9dcdf', 100],
 	        onclick(label, slider) {
 	          const newWindowUrl = main_core.Type.isStringFilled(options.newWindowUrl) ? options.newWindowUrl : slider.getUrl();
 	          Object.assign(document.createElement('a'), {
@@ -582,11 +635,11 @@ this.BX = this.BX || {};
 	        }
 	      });
 	    }
-	    if (options.copyLinkLabel === true && (!this.isSelfContained() || main_core.Type.isStringFilled(options.newWindowUrl))) {
+	    if (options.copyLinkLabel === true && (this.canChangeHistory() || main_core.Type.isStringFilled(options.newWindowUrl))) {
 	      this.copyLinkLabel = new Label(this, {
-	        iconClass: 'side-panel-label-icon-copy-link',
-	        iconTitle: main_core.Loc.getMessage('MAIN_SIDEPANEL_COPY_LINK'),
-	        bgColor: ['#d9dcdf', 100]
+	        className: '--ui-hoverable',
+	        iconClass: 'side-panel-label-icon-copy-link ui-icon-set --o-link',
+	        iconTitle: main_core.Loc.getMessage('MAIN_SIDEPANEL_COPY_LINK')
 	      });
 	      BX.clipboard.bindCopyClick(this.copyLinkLabel.getIconBox(), {
 	        text: () => {
@@ -596,6 +649,13 @@ this.BX = this.BX || {};
 	        }
 	      });
 	    }
+	    this.printLabel = new Label(this, {
+	      hidden: !this.isPrintable(),
+	      className: '--side-panel-label-print --ui-hoverable',
+	      iconClass: 'side-panel-label-icon-print ui-icon-set --o-printer',
+	      iconTitle: main_core.Loc.getMessage('MAIN_SIDEPANEL_PRINT'),
+	      onclick: this.handlePrintBtnClick.bind(this)
+	    });
 
 	    // Compatibility
 	    if (this.url.includes('crm.activity.planner/slider.php') && options.events && main_core.Type.isFunction(options.events.onOpen) && options.events.compatibleEvents !== false) {
@@ -1001,12 +1061,12 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "showCloseBtn",
 	    value: function showCloseBtn() {
-	      this.getLabel().showIcon();
+	      this.getLabel().show();
 	    }
 	  }, {
 	    key: "hideCloseBtn",
 	    value: function hideCloseBtn() {
-	      this.getLabel().hideIcon();
+	      this.getLabel().hide();
 	    }
 	  }, {
 	    key: "showOrLightenCloseBtn",
@@ -1029,22 +1089,26 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "showPrintBtn",
 	    value: function showPrintBtn() {
-	      main_core.Dom.addClass(this.getPrintBtn(), 'side-panel-print-visible');
+	      if (this.printLabel !== null) {
+	        this.printLabel.show();
+	      }
 	    }
 	  }, {
 	    key: "hidePrintBtn",
 	    value: function hidePrintBtn() {
-	      main_core.Dom.removeClass(this.getPrintBtn(), 'side-panel-print-visible');
+	      if (this.printLabel !== null) {
+	        this.printLabel.hide();
+	      }
 	    }
 	  }, {
 	    key: "showExtraLabels",
 	    value: function showExtraLabels() {
-	      main_core.Dom.style(this.getExtraLabelsContainer(), 'display', null);
+	      main_core.Dom.removeClass(this.getExtraLabelsContainer(), '--hidden');
 	    }
 	  }, {
 	    key: "hideExtraLabels",
 	    value: function hideExtraLabels() {
-	      main_core.Dom.style(this.getExtraLabelsContainer(), 'display', 'none');
+	      main_core.Dom.addClass(this.getExtraLabelsContainer(), '--hidden');
 	    }
 	  }, {
 	    key: "setContentClass",
@@ -1438,7 +1502,7 @@ this.BX = this.BX || {};
 			<div class="side-panel side-panel-container">
 				${0}
 			</div>
-		`), this.hideControls ? content : [content, this.getLabelsContainer(), this.getPrintBtn()]);
+		`), this.hideControls ? content : [content, this.getLabelsContainer()]);
 	      main_core.Dom.addClass(this.layout.container, this.getDesignSystemContext());
 	      main_core.Dom.addClass(this.layout.container, this.containerClassName);
 	      return this.layout.container;
@@ -1477,7 +1541,7 @@ this.BX = this.BX || {};
 	          props: {
 	            className: 'side-panel-extra-labels'
 	          },
-	          children: [this.minimizeLabel ? this.minimizeLabel.getContainer() : null, this.newWindowLabel ? this.newWindowLabel.getContainer() : null, this.copyLinkLabel ? this.copyLinkLabel.getContainer() : null]
+	          children: [this.minimizeLabel ? this.minimizeLabel.getContainer() : null, this.newWindowLabel ? this.newWindowLabel.getContainer() : null, this.copyLinkLabel ? this.copyLinkLabel.getContainer() : null, this.printLabel ? this.printLabel.getContainer() : null]
 	        });
 	      });
 	    }
@@ -1507,19 +1571,9 @@ this.BX = this.BX || {};
 	      return this.minimizeLabel;
 	    }
 	  }, {
-	    key: "getPrintBtn",
-	    value: function getPrintBtn() {
-	      return babelHelpers.classPrivateFieldGet(this, _refs).remember('print-btn', () => {
-	        return main_core.Dom.create('span', {
-	          props: {
-	            className: 'side-panel-print',
-	            title: main_core.Loc.getMessage('MAIN_SIDEPANEL_PRINT')
-	          },
-	          events: {
-	            click: this.handlePrintBtnClick.bind(this)
-	          }
-	        });
-	      });
+	    key: "getPrintLabel",
+	    value: function getPrintLabel() {
+	      return this.printLabel;
 	    }
 	    /**
 	     * @private
@@ -1775,9 +1829,6 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "animateOpening",
 	    value: function animateOpening() {
-	      if (this.isPrintable()) {
-	        this.showPrintBtn();
-	      }
 	      if (this.animation) {
 	        this.animation.stop();
 	      }
@@ -3906,16 +3957,16 @@ this.BX = this.BX || {};
 	        if (!sameWidth) {
 	          this.getTopSlider().showShadow();
 	        }
-	        this.getTopSlider().hideOrDarkenCloseBtn();
-	        this.getTopSlider().hidePrintBtn();
+	        this.getTopSlider().hideCloseBtn();
 	        this.getTopSlider().hideExtraLabels();
 	      } else {
 	        slider.setOverlayAnimation(true);
 	      }
 	      _classPrivateMethodGet$2(this, _addOpenSlider, _addOpenSlider2).call(this, slider);
-	      this.getOpenSliders().forEach((currentSlider, index, openSliders) => {
-	        currentSlider.getLabel().moveAt(openSliders.length - index - 1); // move down
-	      });
+
+	      // this.getOpenSliders().forEach((currentSlider: Slider, index: number, openSliders: Slider[]) => {
+	      // 	currentSlider.getLabel().moveAt(openSliders.length - index - 1); // move down
+	      // });
 
 	      this.losePageFocus();
 	      if (!this.opened) {
@@ -3963,9 +4014,10 @@ this.BX = this.BX || {};
 	      const previousSlider = this.getPreviousSlider();
 	      const topSlider = this.getTopSlider();
 	      this.exitFullScreen();
-	      this.getOpenSliders().forEach((slider, index, openSliders) => {
-	        slider.getLabel().moveAt(openSliders.length - index - 2); // move up
-	      });
+
+	      // this.getOpenSliders().forEach((slider, index, openSliders) => {
+	      // 	slider.getLabel().moveAt(openSliders.length - index - 2); // move up
+	      // });
 
 	      let visibleSlider = null;
 	      const openSliders = this.getOpenSliders();
@@ -3982,7 +4034,8 @@ this.BX = this.BX || {};
 	      if (previousSlider) {
 	        previousSlider.unhideOverlay();
 	        previousSlider.hideShadow();
-	        previousSlider.showOrLightenCloseBtn();
+	        previousSlider.showCloseBtn();
+	        previousSlider.showExtraLabels();
 	        if (topSlider) {
 	          topSlider.hideOverlay();
 	          topSlider.hideShadow();
@@ -4099,18 +4152,16 @@ this.BX = this.BX || {};
 	      _classPrivateMethodGet$2(this, _removeOpenSlider, _removeOpenSlider2).call(this, slider);
 	      slider.unhideOverlay();
 	      slider.hideShadow();
-	      this.getOpenSliders().forEach((slider, index, openSliders) => {
-	        slider.getLabel().moveAt(openSliders.length - index - 1); //update position
-	      });
+
+	      // this.getOpenSliders().forEach((slider, index, openSliders) => {
+	      // 	slider.getLabel().moveAt(openSliders.length - index - 1); //update position
+	      // });
 
 	      if (this.getTopSlider()) {
-	        this.getTopSlider().showOrLightenCloseBtn();
 	        this.getTopSlider().unhideOverlay();
 	        this.getTopSlider().hideShadow();
+	        this.getTopSlider().showCloseBtn();
 	        this.getTopSlider().showExtraLabels();
-	        if (this.getTopSlider().isPrintable()) {
-	          this.getTopSlider().showPrintBtn();
-	        }
 	        this.getTopSlider().focus();
 	      } else {
 	        window.focus();

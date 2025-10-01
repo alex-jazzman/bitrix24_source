@@ -15,6 +15,8 @@ return [
 		'im:messenger/lib/ui/notification',
 		'im:messenger/lib/helper',
 		'im:messenger/lib/permission-manager',
+		'im:messenger/lib/element/chat-title',
+		'im:messenger/lib/element/chat-avatar',
 	],
 	'bundle' => [
 		'./src/list',

@@ -5,8 +5,7 @@ return [
 		'tokens',
 		'utils/object',
 		'ui-system/blocks/avatar',
-
-		'im:messenger/lib/element',
+		'im:messenger/lib/element/chat-avatar',
 		'im:messenger/const',
 	],
 	'bundle' => [

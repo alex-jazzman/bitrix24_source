@@ -8,7 +8,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	const NavigationItemToIcon = Object.freeze({
 	  [im_v2_const.NavigationMenuItem.notification]: ui_iconSet_api_vue.Outline.NOTIFICATION,
-	  [im_v2_const.NavigationMenuItem.copilot]: ui_iconSet_api_vue.Outline.COPILOT,
+	  [im_v2_const.NavigationMenuItem.aiAssistant]: ui_iconSet_api_vue.Outline.COPILOT,
 	  [im_v2_const.NavigationMenuItem.openlines]: ui_iconSet_api_vue.Outline.OPEN_CHANNELS,
 	  [im_v2_const.NavigationMenuItem.openlinesV2]: ui_iconSet_api_vue.Outline.OPEN_CHANNELS
 	});
@@ -34,7 +34,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      var _this$$store$getters$;
 	      const counterToItemId = {
 	        [im_v2_const.NavigationMenuItem.notification]: 'notifications/getCounter',
-	        [im_v2_const.NavigationMenuItem.copilot]: 'counters/getTotalCopilotCounter',
+	        [im_v2_const.NavigationMenuItem.aiAssistant]: 'counters/getTotalCopilotCounter',
 	        [im_v2_const.NavigationMenuItem.openlines]: 'counters/getTotalLinesCounter',
 	        [im_v2_const.NavigationMenuItem.openlinesV2]: 'counters/getTotalLinesCounter'
 	      };
@@ -82,7 +82,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	`
 	};
 
-	const CompactNavigationItems = [im_v2_const.NavigationMenuItem.notification, im_v2_const.NavigationMenuItem.copilot, im_v2_const.NavigationMenuItem.openlines, im_v2_const.NavigationMenuItem.openlinesV2];
+	const CompactNavigationItems = [im_v2_const.NavigationMenuItem.notification, im_v2_const.NavigationMenuItem.aiAssistant, im_v2_const.NavigationMenuItem.openlines, im_v2_const.NavigationMenuItem.openlinesV2];
 	// @vue/component
 	const CompactNavigation = {
 	  name: 'CompactNavigation',
@@ -350,7 +350,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        return;
 	      }
 	      const context = {
-	        ...item,
+	        dialogId: item.dialogId,
+	        recentItem: item,
 	        compactMode: true
 	      };
 	      this.contextMenuManager.openMenu(context, event.currentTarget);
@@ -373,7 +374,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    },
 	    getRecentService() {
 	      if (!this.service) {
-	        this.service = im_v2_provider_service_recent.RecentService.getInstance();
+	        this.service = im_v2_provider_service_recent.LegacyRecentService.getInstance();
 	      }
 	      return this.service;
 	    },

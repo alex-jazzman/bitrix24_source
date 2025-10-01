@@ -162,6 +162,11 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 		}
 		else
 		{
+			if (isset($_GET['breakLimit']))
+			{
+				$service->enableBreakingLimitPrinting();
+			}
+
 			$resultQuery = $service->printQuery(
 				$tableName,
 				$input,

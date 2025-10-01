@@ -1,6 +1,5 @@
 <?php
 
-use Bitrix\Main\Text\HtmlFilter;
 use Bitrix\Main\Grid\Editor\Types;
 use Bitrix\Main\Grid\Panel;
 use Bitrix\Main\Grid\Context;
@@ -11,6 +10,9 @@ use Bitrix\Main\UI\Filter;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Main\Web\Json;
 use Bitrix\UI\Toolbar\ButtonLocation;
+use Bitrix\Main\ORM\Query\Query;
+use Bitrix\Main\ORM\Data\DataManager;
+use Bitrix\Main\ORM\Fields\ExpressionField;
 
 class CAdminUiList extends CAdminList
 {
@@ -1837,7 +1839,7 @@ class CAdminUiResult extends CAdminResult
 
 	/**
 	 * @param string $tableId
-	 * @param string $className Bitrix\Main\Entity\DataManager class name.
+	 * @param string $className DataManager class name.
 	 * @param array $getListParams
 	 */
 	public static function setNavParams($tableId, $className, &$getListParams)
@@ -1863,10 +1865,10 @@ class CAdminUiResult extends CAdminResult
 			if (class_exists($className))
 			{
 				/**
-				 * @var Bitrix\Main\Entity\DataManager $className
+				 * @var DataManager $className
 				 */
-				$countQuery = new Bitrix\Main\Entity\Query($className::getEntity());
-				$countQuery->addSelect(new Bitrix\Main\Entity\ExpressionField("CNT", "COUNT(1)"));
+				$countQuery = new Query($className::getEntity());
+				$countQuery->addSelect(new ExpressionField("CNT", "COUNT(1)"));
 				$countQuery->setFilter($getListParams["filter"]);
 				$totalCount = $countQuery->setLimit(null)->setOffset(null)->exec()->fetch();
 				unset($countQuery);

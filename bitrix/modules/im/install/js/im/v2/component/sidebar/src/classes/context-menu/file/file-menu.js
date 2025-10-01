@@ -1,4 +1,5 @@
 import 'ui.viewer';
+import { Utils } from 'im.v2.lib.utils';
 import { Loc, Dom } from 'main.core';
 
 import { SidebarMenu } from '../sidebar-base-menu';
@@ -6,7 +7,7 @@ import { FileManager } from './file-manager';
 
 import { Notifier } from 'im.v2.lib.notifier';
 
-import type { MenuItem } from 'im.v2.lib.menu';
+import type { MenuItemOptions } from 'ui.system.menu';
 import type { ImModelFile, ImModelSidebarFileItem } from 'im.v2.model';
 
 type MediaMenuContext = {
@@ -28,7 +29,7 @@ export class FileMenu extends SidebarMenu
 		this.mediaManager = new FileManager();
 	}
 
-	getMenuItems(): MenuItem[]
+	getMenuItems(): MenuItemOptions | null[]
 	{
 		return [
 			this.getOpenContextMessageItem(),
@@ -38,7 +39,7 @@ export class FileMenu extends SidebarMenu
 		];
 	}
 
-	getDownloadFileItem(): ?MenuItem
+	getDownloadFileItem(): ?MenuItemOptions
 	{
 		if (!this.context.file.urlDownload)
 		{
@@ -46,14 +47,15 @@ export class FileMenu extends SidebarMenu
 		}
 
 		return {
-			html: this.getDownloadHtml(this.context.file.urlDownload, this.context.file.name),
-			onclick: function() {
+			title: Loc.getMessage('IM_SIDEBAR_MENU_DOWNLOAD_FILE'),
+			onClick: function() {
+				Utils.file.downloadFiles([this.context.file]);
 				this.menuInstance.close();
 			}.bind(this),
 		};
 	}
 
-	getSaveFileOnDiskItem(): ?MenuItem
+	getSaveFileOnDiskItem(): ?MenuItemOptions
 	{
 		if (!this.context.sidebarFile.fileId)
 		{
@@ -61,8 +63,8 @@ export class FileMenu extends SidebarMenu
 		}
 
 		return {
-			text: Loc.getMessage('IM_SIDEBAR_MENU_SAVE_FILE_ON_DISK_MSGVER_1'),
-			onclick: async function() {
+			title: Loc.getMessage('IM_SIDEBAR_MENU_SAVE_FILE_ON_DISK_MSGVER_1'),
+			onClick: async function() {
 				this.menuInstance.close();
 				await this.mediaManager.saveOnDisk([this.context.sidebarFile.fileId]);
 				Notifier.file.onDiskSaveComplete();
@@ -70,7 +72,7 @@ export class FileMenu extends SidebarMenu
 		};
 	}
 
-	getDeleteFileItem(): MenuItem
+	getDeleteFileItem(): ?MenuItemOptions
 	{
 		if (this.getCurrentUserId() !== this.context.sidebarFile.authorId)
 		{
@@ -78,27 +80,11 @@ export class FileMenu extends SidebarMenu
 		}
 
 		return {
-			text: Loc.getMessage('IM_SIDEBAR_MENU_DELETE_FILE'),
-			onclick: function() {
+			title: Loc.getMessage('IM_SIDEBAR_MENU_DELETE_FILE'),
+			onClick: function() {
 				this.mediaManager.delete(this.context.sidebarFile);
 				this.menuInstance.close();
 			}.bind(this),
 		};
-	}
-
-	getDownloadHtml(urlDownload: string, fileName: string): HTMLAnchorElement
-	{
-		const a = Dom.create('a', {
-			text: Loc.getMessage('IM_SIDEBAR_MENU_DOWNLOAD_FILE'),
-		});
-
-		Dom.style(a, 'display', 'block');
-		Dom.style(a, 'color', 'inherit');
-		Dom.style(a, 'text-decoration', 'inherit');
-
-		a.setAttribute('href', urlDownload);
-		a.setAttribute('download', fileName);
-
-		return a;
 	}
 }

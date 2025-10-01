@@ -533,14 +533,11 @@ class HardwareManager extends EventEmitter
 		return resultDeviceList;
 	}
 
-	getCurrentDeviceList()
+	async getCurrentDeviceList()
 	{
-		return new Promise((resolve, reject) => {
-			this.enumerateDevices().then(deviceList => {
-				this._currentDeviceList = this.filterDeviceList(deviceList);
-				resolve(this._currentDeviceList, deviceList);
-			})
-		});
+		const deviceList = await this.enumerateDevices();
+		this._currentDeviceList = this.filterDeviceList(deviceList);
+		return { currentDeviceList: this._currentDeviceList, deviceList };
 	}
 
 	getRemovedUsedDevices(devices, currentDevices)

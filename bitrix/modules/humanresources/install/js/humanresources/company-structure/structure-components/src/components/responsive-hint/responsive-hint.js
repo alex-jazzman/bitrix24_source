@@ -13,17 +13,25 @@ export const ResponsiveHint = {
 			required: true,
 		},
 		width: {
-			type: Number,
+			type: [Number, null],
 			default: 300,
 		},
 		extraClasses: {
 			type: Object,
+		},
+		defaultClass: {
+			type: String,
+			default: 'ui-hint',
 		},
 		top: {
 			type: Boolean,
 			default: false,
 		},
 		alignCenter: {
+			type: Boolean,
+			default: false,
+		},
+		checkScrollWidth: {
 			type: Boolean,
 			default: false,
 		},
@@ -53,6 +61,11 @@ export const ResponsiveHint = {
 		}
 
 		Event.bind(this.$refs['hint-container'], 'mouseenter', () => {
+			if (this.checkScrollWidth && this.$refs['hint-container'].scrollWidth === this.$refs['hint-container'].offsetWidth)
+			{
+				return;
+			}
+
 			this.hint = Reflection.getClass('BX.UI.Hint').createInstance({
 				popupParameters: { ...parameters }, // destruct parameters to recreate hint
 			});
@@ -70,7 +83,7 @@ export const ResponsiveHint = {
 	},
 
 	template: `
-		<span class="ui-hint" ref="hint-container" :class="extraClasses">
+		<span :class="[defaultClass, extraClasses]" ref="hint-container">
 			<slot/>
 		</span>
 	`,

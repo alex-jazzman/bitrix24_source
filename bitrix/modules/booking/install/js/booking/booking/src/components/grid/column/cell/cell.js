@@ -25,12 +25,12 @@ export const Cell = {
 	computed: {
 		...mapGetters({
 			overbookingMap: `${Model.Bookings}/overbookingMap`,
-			isFilterMode: `${Model.Interface}/isFilterMode`,
+			isFilterMode: `${Model.Filter}/isFilterMode`,
 			isEditingBookingMode: `${Model.Interface}/isEditingBookingMode`,
 			draggedBookingId: `${Model.Interface}/draggedBookingId`,
 			draggedDataTransfer: `${Model.Interface}/draggedDataTransfer`,
 			resizedBookingId: `${Model.Interface}/resizedBookingId`,
-			quickFilter: `${Model.Interface}/quickFilter`,
+			quickFilter: `${Model.Filter}/quickFilter`,
 		}),
 		draggedElementId(): number
 		{

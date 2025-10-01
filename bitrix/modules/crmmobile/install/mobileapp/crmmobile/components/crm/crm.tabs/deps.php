@@ -18,6 +18,7 @@ return [
 		'utils/function',
 		'alert',
 		'loc',
+		'money',
 
 		'crm:type',
 		'crm:loc',

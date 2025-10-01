@@ -15,7 +15,6 @@ use Bitrix\MobileApp\Mobile;
 class Projects implements Tabable
 {
 	private const INITIAL_COMPONENT = 'tasks:tasks.project.list';
-	private const MINIMAL_API_VERSION = 41;
 
 	/** @var Context $context */
 	private $context;
@@ -66,7 +65,6 @@ class Projects implements Tabable
 		return [
 			'title' => $this->getTitle(),
 			'useLetterImage' => true,
-			'min_api_version' => self::MINIMAL_API_VERSION,
 			'color' => '#00ace3',
 			'imageUrl' => 'favorite/icon-projects.png',
 			'imageName' => $this->getIconId(),
@@ -152,6 +150,6 @@ class Projects implements Tabable
 
 	public function getIconId(): string
 	{
-		return Mobile::getApiVersion() < 56 ? $this->getId() : 'folder_with_card';
+		return 'folder_with_card';
 	}
 }

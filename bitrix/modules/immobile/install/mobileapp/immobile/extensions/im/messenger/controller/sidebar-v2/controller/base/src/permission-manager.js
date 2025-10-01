@@ -2,6 +2,7 @@
  * @module im/messenger/controller/sidebar-v2/controller/base/src/permission-manager
  */
 jn.define('im/messenger/controller/sidebar-v2/controller/base/src/permission-manager', (require, exports, module) => {
+	const { Type } = require('type');
 	const { ChatPermission, UserPermission } = require('im/messenger/lib/permission-manager');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Loc } = require('im/messenger/controller/sidebar-v2/loc');
@@ -19,7 +20,10 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base/src/permission-man
 
 		canPin()
 		{
-			return false; // todo enable when pin service will be ready
+			const store = serviceLocator.get('core').getStore();
+			const recentItem = store.getters['recentModel/getById'](this.dialogId);
+
+			return Type.isObject(recentItem);
 		}
 
 		canCall()
@@ -70,6 +74,11 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base/src/permission-man
 		canChangeOwner()
 		{
 			return this.chatPermission.сanChangeOwner();
+		}
+
+		canHide()
+		{
+			return this.dialogHelper.isBot && !this.dialogHelper.isAiAssistant;
 		}
 
 		/**

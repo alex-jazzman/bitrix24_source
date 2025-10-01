@@ -47,7 +47,33 @@ this.BX.Booking = this.BX.Booking || {};
 	}
 	const bookingFilter = new BookingFilter();
 
+	class BookingDateCountFilter extends BookingFilter {
+	  prepareUndatedFilter(fields, withinMonth = false) {
+	    const filter = super.prepareFilter(fields, withinMonth);
+	    delete filter.WITHIN;
+	    return filter;
+	  }
+	  prepareFutureOnlyFilter(fields, withinMonth = false) {
+	    const filter = super.prepareFilter(fields, withinMonth);
+	    filter.WITHIN = {
+	      DATE_FROM: Math.trunc(Date.now() / 1000)
+	    };
+	    return filter;
+	  }
+	  prepareFutureFilter(fields, withinMonth = false) {
+	    const filter = super.prepareFilter(fields, withinMonth);
+	    const dateFrom = filter.WITHIN.DATE_FROM;
+	    const today = Math.trunc(Date.now() / 1000);
+	    if (dateFrom < today) {
+	      filter.WITHIN.DATE_FROM = today;
+	    }
+	    return filter;
+	  }
+	}
+	const bookingDateCountFilter = new BookingDateCountFilter();
+
 	exports.bookingFilter = bookingFilter;
+	exports.bookingDateCountFilter = bookingDateCountFilter;
 
 }((this.BX.Booking.Lib = this.BX.Booking.Lib || {}),BX,BX.Booking.Const,BX.Booking));
 //# sourceMappingURL=booking-filter.bundle.js.map

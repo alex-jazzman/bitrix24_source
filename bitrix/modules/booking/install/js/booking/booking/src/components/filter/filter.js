@@ -10,6 +10,7 @@ export const FilterField = Object.freeze({
 	Contact: 'CONTACT',
 	Company: 'COMPANY',
 	Resource: 'RESOURCE',
+	ResourceLabel: 'RESOURCE_label',
 	Confirmed: 'CONFIRMED',
 	RequireAttention: 'REQUIRE_ATTENTION',
 });
@@ -61,6 +62,12 @@ export const Filter = {
 			const preparedFields = this.filter.getFilterFieldsValues();
 
 			preparedFields[FilterField.RequireAttention] = fields.REQUIRE_ATTENTION;
+			preparedFields[FilterField.Resource] = fields.RESOURCE;
+
+			if (FilterField.ResourceLabel in fields)
+			{
+				preparedFields[FilterField.ResourceLabel] = fields.RESOURCE_label;
+			}
 
 			this.filter.getApi().setFields(preparedFields);
 			this.filter.getApi().apply();

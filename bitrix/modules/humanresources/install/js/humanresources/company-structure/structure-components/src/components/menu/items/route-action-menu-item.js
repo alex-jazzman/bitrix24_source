@@ -25,6 +25,11 @@ export const RouteActionMenuItem = {
 			required: false,
 			default: '',
 		},
+		itemClass: {
+			type: String,
+			required: false,
+			default: '',
+		},
 		bIcon: {
 			type: Object,
 			required: false,
@@ -51,6 +56,7 @@ export const RouteActionMenuItem = {
 	template: `
 		<div
 			class="hr-structure-route-action-popup-menu-item"
+			:class="itemClass"
 			:data-test-id="dataTestId"
 		>
 			<div class="hr-structure-route-action-popup-menu-item__content">

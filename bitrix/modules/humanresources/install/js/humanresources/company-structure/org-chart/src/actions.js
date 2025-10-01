@@ -1,18 +1,19 @@
 import { useChartStore } from 'humanresources.company-structure.chart-store';
-import { memberRoles } from 'humanresources.company-structure.api';
+import { getMemberRoles, memberRoles } from 'humanresources.company-structure.api';
 import { EntityTypes } from 'humanresources.company-structure.utils';
 import { chartAPI } from './api';
 import type { TreeItem } from './types';
 import type { UserData } from 'humanresources.company-structure.utils';
 
 export const OrgChartActions = {
-	applyData: (departments: Map<Number, TreeItem>, currentDepartments: number[], userId: number): void => {
+	applyData: (departments: Map<Number, TreeItem>, currentDepartments: number[], userId: number, map: Array): void => {
 		const store = useChartStore();
 		store.$patch({
 			departments,
 			currentDepartments,
 			userId,
 			searchedUserId: userId,
+			structureMap: map,
 		});
 	},
 	focusDepartment: (departmentId: number): void => {
@@ -25,7 +26,7 @@ export const OrgChartActions = {
 	},
 	moveSubordinatesToParent: (removableDepartmentId: number): void => {
 		const store = useChartStore();
-		const { departments, currentDepartments } = store;
+		const { departments, currentDepartments, structureMap } = store;
 		const removableDepartment = departments.get(removableDepartmentId);
 		const {
 			parentId,
@@ -39,6 +40,8 @@ export const OrgChartActions = {
 
 		removableDeparmentChildren.forEach((childId) => {
 			const department = departments.get(childId);
+			const mapEntity = structureMap.get(childId);
+			mapEntity.parentId = parentId;
 			department.parentId = parentId;
 		});
 		if ((removableDepartmentUserCount > 0) && (entityType === EntityTypes.department))
@@ -80,8 +83,9 @@ export const OrgChartActions = {
 		departments.set(removableDepartmentId, { ...removableDepartment, prevParentId: parentId });
 	},
 	removeDepartment: (departmentId: number): void => {
-		const { departments } = useChartStore();
+		const { departments, structureMap } = useChartStore();
 		departments.delete(departmentId);
+		structureMap.delete(departmentId);
 	},
 	inviteUser: (userData: UserData): void => {
 		const { nodeId, ...restData } = userData;

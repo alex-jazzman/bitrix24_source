@@ -36,6 +36,8 @@ class NotifyService
 		MESSAGE_TYPE_AI_DESTROY = 'AI_DESTROY'
 	;
 
+	public const ADMIN_NOTIFICATION_TAG = 'call_registration';
+
 	private static ?NotifyService $service = null;
 
 	private array $shownMessage = [];
@@ -235,5 +237,31 @@ class NotifyService
 		}
 
 		return $result;
+	}
+
+	public function addAdminNotify(string $message): void
+	{
+		\CAdminNotify::add([
+			'MESSAGE' => $message,
+			'TAG' => self::ADMIN_NOTIFICATION_TAG,
+			'MODULE_ID' => 'call',
+			'ENABLE_CLOSE' => 'Y',
+			'NOTIFY_TYPE' => \CAdminNotify::TYPE_NORMAL,
+		]);
+	}
+
+	public function addAdminNotifyError(string $message): void
+	{
+		\CAdminNotify::add([
+			'MESSAGE' => $message,
+			'TAG' => self::ADMIN_NOTIFICATION_TAG,
+			'MODULE_ID' => 'call',
+			'ENABLE_CLOSE' => 'Y',
+			'NOTIFY_TYPE' => \CAdminNotify::TYPE_ERROR,
+		]);
+	}
+	public function clearAdminNotify(): void
+	{
+		\CAdminNotify::DeleteByTag(self::ADMIN_NOTIFICATION_TAG);
 	}
 }

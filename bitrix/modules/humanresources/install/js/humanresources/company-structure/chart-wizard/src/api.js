@@ -3,6 +3,62 @@ import type { ChatListResponse } from 'humanresources.company-structure.utils';
 import { DepartmentUserIds } from './types';
 
 export const WizardAPI = {
+	createDepartment: (
+		name: string,
+		parentId: number,
+		description: ?string,
+		userIds: DepartmentUserIds,
+		moveUsersToDepartment: number,
+		createChat: number,
+		bindingChatIds: number[],
+		createChannel: number,
+		bindingChannelIds: number[],
+		createCollab: number,
+		bindingCollabIds: number[],
+	): Promise<void> => {
+		return postData('humanresources.api.Structure.Department.create', {
+			name,
+			parentId,
+			description,
+			userIds,
+			moveUsersToDepartment,
+			createChat,
+			bindingChatIds,
+			createChannel,
+			bindingChannelIds,
+			createCollab,
+			bindingCollabIds,
+		});
+	},
+	createTeam: (
+		name: string,
+		parentId: number,
+		description: ?string,
+		colorName: ?string,
+		userIds: DepartmentUserIds,
+		createChat: number,
+		bindingChatIds: number[],
+		createChannel: number,
+		bindingChannelIds: number[],
+		createCollab: number,
+		bindingCollabIds: number[],
+		settings: {},
+	): Promise<void> => {
+		return postData('humanresources.api.Structure.Team.create', {
+			name,
+			parentId,
+			description,
+			colorName,
+			userIds,
+			createChat,
+			bindingChatIds,
+			createChannel,
+			bindingChannelIds,
+			createCollab,
+			bindingCollabIds,
+			settings,
+		});
+	},
 	addDepartment: (
 		name: string,
 		parentId: number,
@@ -52,17 +108,15 @@ export const WizardAPI = {
 	},
 	saveChats: (
 		nodeId: number,
-		ids: number[],
-		createDefault: boolean[],
-		removeIds: number[] = [],
-		parentId: ?number = null,
+		ids: { chat?: number[], channel?: number[], collab?: number[] },
+		createDefault: { chat?: boolean[], channel?: boolean[], collab?: boolean[] } = {},
+		removeIds: { chat?: number[], channel?: number[], collab?: number[] } = {},
 	): Promise<void> => {
 		return postData('humanresources.api.Structure.Node.Member.Chat.saveChatList', {
 			nodeId,
 			ids,
 			createDefault,
 			removeIds,
-			parentId,
 		});
 	},
 	createSettings: (

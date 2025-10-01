@@ -41,6 +41,8 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 				[FieldType.map]: this.saveMapFieldHandler.bind(this),
 				[FieldType.set]: this.saveSetFieldHandler.bind(this),
 				[FieldType.text]: this.saveTextFieldHandler.bind(this),
+				[FieldType.object]: this.saveObjectFieldHandler.bind(this),
+				[FieldType.array]: this.saveArrayFieldHandler.bind(this),
 			};
 
 			this.restoreHandlerCollection = {
@@ -50,6 +52,8 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 				[FieldType.map]: this.restoreMapFieldHandler.bind(this),
 				[FieldType.set]: this.restoreSetFieldHandler.bind(this),
 				[FieldType.text]: this.restoreTextFieldHandler.bind(this),
+				[FieldType.object]: this.restoreObjectFieldHandler.bind(this),
+				[FieldType.array]: this.restoreArrayFieldHandler.bind(this),
 			};
 
 			this.getPrimaryKey();
@@ -141,6 +145,9 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 			return value === '1';
 		}
 
+		/**
+		 * @deprecated FieldType.json. Use FieldType.object or FieldType.array instead
+		 */
 		saveJSONFieldHandler(key, value)
 		{
 			try
@@ -155,6 +162,9 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 			}
 		}
 
+		/**
+		 * @deprecated FieldType.json. Use FieldType.object or FieldType.array instead
+		 */
 		restoreJSONFieldHandler(key, value)
 		{
 			try
@@ -229,6 +239,64 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 		restoreTextFieldHandler(key, value)
 		{
 			return value;
+		}
+
+		// eslint-disable-next-line sonarjs/no-identical-functions
+		saveObjectFieldHandler(key, value)
+		{
+			try
+			{
+				return JSON.stringify(value);
+			}
+			catch (error)
+			{
+				logger.error(`Table.restoreDatabaseRow error in ${this.getName()}:`, key, value, error);
+
+				return null;
+			}
+		}
+
+		// eslint-disable-next-line sonarjs/no-identical-functions
+		saveArrayFieldHandler(key, value)
+		{
+			try
+			{
+				return JSON.stringify(value);
+			}
+			catch (error)
+			{
+				logger.error(`Table.restoreDatabaseRow error in ${this.getName()}:`, key, value, error);
+
+				return null;
+			}
+		}
+
+		restoreObjectFieldHandler(key, value)
+		{
+			try
+			{
+				return JSON.parse(value);
+			}
+			catch (error)
+			{
+				logger.error(`Table.restoreDatabaseRow error in ${this.getName()}:`, key, value, error);
+
+				return FieldDefaultValue.emptyObject;
+			}
+		}
+
+		restoreArrayFieldHandler(key, value)
+		{
+			try
+			{
+				return JSON.parse(value);
+			}
+			catch (error)
+			{
+				logger.error(`Table.restoreDatabaseRow error in ${this.getName()}:`, key, value, error);
+
+				return FieldDefaultValue.emptyArray;
+			}
 		}
 
 		get isSupported()

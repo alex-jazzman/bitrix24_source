@@ -16,6 +16,7 @@ foreach (
 		'GeoIp2' => '/vendor/geoip2/geoip2/src',
 		'MaxMind\\Db' => '/vendor/maxmind-db/reader/src/MaxMind/Db',
 		'PhpParser' => '/vendor/nikic/php-parser/lib/PhpParser',
+		'Recurr' => '/vendor/simshaun/recurr/src/Recurr',
 	]
 	as $namespace => $namespacePath
 )
@@ -235,7 +236,6 @@ Loader::registerAutoLoadClasses(
 		'CAjax' => 'ajax_tools.php',
 		'CAllUser' => 'classes/general/user.php',
 		'CUser' => 'classes/general/user.php',
-		'CAllEvent' => 'classes/general/event.php',
 		'CEvent' => 'classes/general/event.php',
 		'CAllEventMessage' => 'classes/general/eventmessage.php',
 		'CEventMessage' => 'classes/general/eventmessage.php',
@@ -308,3 +308,6 @@ Loader::registerHandler([\Bitrix\Main\ORM\Loader::class, 'autoLoad']);
 
 // old class names compatibility
 require_once __DIR__ . '/compatibility.php';
+
+// register composer classes
+Loader::includeComposerAutoload();

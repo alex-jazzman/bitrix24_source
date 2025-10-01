@@ -3,6 +3,7 @@ $MESS["INTRANET_DISK_PROMO_DESC_MSGVER_1"] = "Қазіргі әлемде Инт
 $MESS["INTRANET_DISK_PROMO_DESC_SUB"] = "Қосымшаны компьютерге орнатыңыз және кез келген жерден кез келген уақытта құжаттармен жұмыс жасаңыз!";
 $MESS["INTRANET_DISK_PROMO_HEADER"] = "Өз &laquo;Битрикс24-ге&raquo; жаңа файл мүмкіндіктерін қосыңыз.";
 $MESS["INTRANET_DISK_PROMO_STEP1_TITLE"] = "#LINK_START#Битрикс24#LINK_END# қосымшасын сақтаңыз және орнатыңыз";
+$MESS["INTRANET_DISK_PROMO_STEP1_TITLE_MACOS"] = "MacOS үшін Битрикс24 қосымшасын жүктеп алыңыз және орнатыңыз #INTEL_LINK_START#Intel#INTEL_LINK_END# немесе #ARM64_LINK_START#ARM64#ARM64_LINK_END#";
 $MESS["INTRANET_DISK_PROMO_STEP2_DESC"] = "Қосымшаны іске қосыңыз және файлдарды синхрондау автоматты түрде басталады. Қажет болса, жергілікті қай бумалармен жұмыс істейтіндігіңізді және қайсысы тек браузерде қол жетімді болатынын реттеңіз.";
 $MESS["INTRANET_DISK_PROMO_STEP2_TITLE_MSGVER_1"] = "Битрикс24.Диск қосыңыз";
 $MESS["INTRANET_DISK_PROMO_TITLE_MACOS"] = "MacOS үшін Битрикс24 қосымшасы";

@@ -9,7 +9,8 @@ return [
 		'im:messenger/lib/di/service-locator',
 		'im:messenger/const',
 		'im:messenger/lib/converter/data/recent',
-		'im:messenger/lib/element',
+		'im:messenger/lib/element/chat-title',
+		'im:messenger/lib/element/chat-avatar',
 		'im:messenger/lib/helper',
 		'im:messenger/lib/logger',
 		'im:messenger/lib/params',
@@ -30,7 +31,7 @@ return [
 		'im:messenger/provider/pull/lib/recent/chat/update-manager',
 		'im:messenger/provider/pull/lib/file',
 		'im:messenger/provider/data',
-		'im/messenger/lib/feature',
+		'im:messenger/lib/feature',
 	],
 	'bundle' => [
 		'./src/dialog',

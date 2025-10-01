@@ -1,7 +1,10 @@
+import { Event } from 'main.core';
+
 import { Core } from 'booking.core';
-import { Model } from 'booking.const';
+import { EventName, Model } from 'booking.const';
 import { ApiClient } from 'booking.lib.api-client';
 import { bookingFilter } from 'booking.lib.booking-filter';
+import { deepToRaw } from 'booking.lib.deep-to-raw';
 import { mainPageService } from 'booking.provider.service.main-page-service';
 import type { BookingModel } from 'booking.model.bookings';
 import type { BookingUIFilter, BookingListFilter } from 'booking.lib.booking-filter';
@@ -23,7 +26,7 @@ class BookingService
 		try
 		{
 			await $store.dispatch(`${Model.Interface}/addCreatedFromEmbedBooking`, id);
-			await $store.dispatch(`${Model.Interface}/addQuickFilterIgnoredBookingId`, id);
+			await $store.dispatch(`${Model.Filter}/addQuickFilterIgnoredBookingId`, id);
 			await $store.dispatch(`${Model.Bookings}/add`, booking);
 
 			const bookingDto = mapModelToDto(booking);
@@ -35,10 +38,14 @@ class BookingService
 
 			await $store.dispatch(`${Model.Interface}/setAnimationPause`, true);
 			await $store.dispatch(`${Model.Interface}/addCreatedFromEmbedBooking`, createdBooking.id);
-			await $store.dispatch(`${Model.Interface}/addQuickFilterIgnoredBookingId`, createdBooking.id);
+			await $store.dispatch(`${Model.Filter}/addQuickFilterIgnoredBookingId`, createdBooking.id);
 			await $store.dispatch(`${Model.Bookings}/update`, {
 				id,
 				booking: createdBooking,
+			});
+
+			Event.EventEmitter.emit(EventName.CreateBookings, {
+				bookings: [createdBooking],
 			});
 
 			void mainPageService.fetchCounters();
@@ -80,6 +87,10 @@ class BookingService
 				$store.dispatch(`${Model.Bookings}/upsertMany`, createdBookings),
 			]);
 
+			Event.EventEmitter.emit(EventName.CreateBookings, {
+				bookings: createdBookings,
+			});
+
 			void mainPageService.fetchCounters();
 
 			return createdBookings;
@@ -120,6 +131,11 @@ class BookingService
 
 			void Core.getStore().dispatch(`${Model.Clients}/upsertMany`, clients);
 
+			Event.EventEmitter.emit(EventName.UpdateBooking, {
+				oldBooking: deepToRaw(bookingBeforeUpdate),
+				newBooking: deepToRaw(updatedBooking),
+			});
+
 			void mainPageService.fetchCounters();
 		}
 		catch (error)
@@ -142,6 +158,10 @@ class BookingService
 			void Core.getStore().dispatch(`${Model.Bookings}/delete`, id);
 
 			await (new ApiClient()).post('Booking.delete', { id });
+
+			Event.EventEmitter.emit(EventName.DeleteBooking, {
+				booking: deepToRaw(bookingBeforeDelete),
+			});
 
 			await this.#onAfterDelete(id);
 		}
@@ -169,7 +189,10 @@ class BookingService
 		}
 	}
 
-	async createFromWaitListItem(waitListItemId: number, booking: BookingModel): Promise<{ success: boolean, booking?: BookingModel }>
+	async createFromWaitListItem(waitListItemId: number, booking: BookingModel): Promise<{
+		success: boolean,
+		booking?: BookingModel
+	}>
 	{
 		const $store = Core.getStore();
 		const id = booking.id;
@@ -196,13 +219,17 @@ class BookingService
 			const clients = new BookingDataExtractor([data]).getClients();
 			await Promise.all([
 				$store.dispatch(`${Model.Clients}/upsertMany`, clients),
-				$store.dispatch(`${Model.Interface}/addQuickFilterIgnoredBookingId`, createdBooking.id),
+				$store.dispatch(`${Model.Filter}/addQuickFilterIgnoredBookingId`, createdBooking.id),
 				$store.dispatch(`${Model.Bookings}/update`, {
 					id,
 					booking: createdBooking,
 				}),
 				$store.dispatch(`${Model.Interface}/addCreatedFromEmbedBooking`, createdBooking.id),
 			]);
+
+			Event.EventEmitter.emit(EventName.CreateBookings, {
+				bookings: [createdBooking],
+			});
 
 			void mainPageService.fetchCounters();
 
@@ -305,7 +332,7 @@ class BookingService
 			return;
 		}
 
-		void Core.getStore().dispatch(`${Model.Interface}/setFilteredBookingsIds`, extractor.getBookingsIds());
+		void Core.getStore().dispatch(`${Model.Filter}/setFilteredBookingsIds`, extractor.getBookingsIds());
 	}
 
 	async #requestFilter(filter: BookingListFilter): Promise<BookingDto[]>

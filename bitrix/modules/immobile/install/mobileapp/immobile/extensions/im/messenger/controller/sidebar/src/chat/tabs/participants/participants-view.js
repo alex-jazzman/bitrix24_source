@@ -21,7 +21,8 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 	const { LoaderItem } = require('im/messenger/lib/ui/base/loader');
 	const { ChatPermission } = require('im/messenger/lib/permission-manager');
 	const { DialogHelper, UserHelper } = require('im/messenger/lib/helper');
-	const { ChatTitle, ChatAvatar } = require('im/messenger/lib/element');
+	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
+	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 	const { Notification } = require('im/messenger/lib/ui/notification');
 	const { UserProfile } = require('im/messenger/controller/user-profile');
 	const { ParticipantManager } = require('im/messenger/controller/participant-manager');

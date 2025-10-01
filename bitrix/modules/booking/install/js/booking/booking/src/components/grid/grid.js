@@ -1,4 +1,5 @@
 import { Dom, Event } from 'main.core';
+import { EventEmitter } from 'main.core.events';
 import { mapGetters } from 'ui.vue3.vuex';
 import { Ears } from 'ui.ears';
 
@@ -23,22 +24,21 @@ type GridData = {
 
 // @vue/component
 export const Grid = {
+	name: 'BookingsGrid',
+	components: {
+		LeftPanel,
+		NowLine,
+		Column,
+		Bookings,
+		ScalePanel,
+		Sidebar,
+		DragDelete,
+	},
 	data(): GridData
 	{
 		return {
 			scrolledToBooking: false,
 		};
-	},
-	mounted(): void
-	{
-		this.ears = new Ears({
-			container: this.$refs.columnsContainer,
-			smallSize: true,
-			className: 'booking-booking-grid-columns-ears',
-		}).init();
-
-		Event.EventEmitter.subscribe('BX.Main.Popup:onAfterClose', this.tryShowAhaMoment);
-		Event.EventEmitter.subscribe('BX.Main.Popup:onDestroy', this.tryShowAhaMoment);
 	},
 	computed: {
 		...mapGetters({
@@ -48,65 +48,13 @@ export const Grid = {
 			editingWaitListItemId: `${Model.Interface}/editingWaitListItemId`,
 			isFeatureEnabled: `${Model.Interface}/isFeatureEnabled`,
 			isLoaded: `${Model.Interface}/isLoaded`,
+			selectedDateTs: `${Model.Interface}/selectedDateTs`,
+			filteredBookingsIds: `${Model.Filter}/filteredBookingsIds`,
+			isFilterMode: `${Model.Filter}/isFilterMode`,
 		}),
 		editingBooking(): BookingModel | null
 		{
 			return this.$store.getters['bookings/getById'](this.editingBookingId) ?? null;
-		},
-	},
-	beforeUnmount(): void
-	{
-		this.dragManager?.destroy();
-	},
-	methods: {
-		updateEars(): void
-		{
-			this.ears.toggleEars();
-
-			this.tryShowAhaMoment();
-		},
-		areEarsShown(): boolean
-		{
-			const shownClass = 'ui-ear-show';
-
-			return (
-				Dom.hasClass(this.ears.getRightEar(), shownClass)
-				|| Dom.hasClass(this.ears.getLeftEar(), shownClass)
-			);
-		},
-		scrollToEditingBooking(): void
-		{
-			if (!this.editingBooking || this.scrolledToBooking)
-			{
-				return;
-			}
-
-			const top = grid.calculateTop(this.editingBooking.dateFromTs);
-			const height = grid.calculateHeight(this.editingBooking.dateFromTs, this.editingBooking.dateToTs);
-			this.$refs.inner.scrollTop = top + height / 2 + this.$refs.inner.offsetHeight / 2;
-			this.scrolledToBooking = true;
-		},
-		tryShowAhaMoment(): void
-		{
-			if (this.areEarsShown() && ahaMoments.shouldShow(AhaMoment.ExpandGrid))
-			{
-				Event.EventEmitter.unsubscribe('BX.Main.Popup:onAfterClose', this.tryShowAhaMoment);
-				Event.EventEmitter.unsubscribe('BX.Main.Popup:onDestroy', this.tryShowAhaMoment);
-				void this.$refs.scalePanel.showAhaMoment();
-			}
-		},
-		initDragManager(id: number | string = '', kind: $Values<typeof DraggedElementKind> = null): void
-		{
-			if (this.isFeatureEnabled)
-			{
-				const dataId = id ? `[data-id="${id}"]` : '';
-				const dataKind = kind ? `[data-kind="${kind}"]` : '';
-
-				this.dragManager = new Drag({
-					container: this.$el.parentElement,
-					draggable: `.booking--draggable-item${dataId}${dataKind}`,
-				});
-			}
 		},
 	},
 	watch: {
@@ -153,17 +101,95 @@ export const Grid = {
 				this.initDragManager(id, DraggedElementKind.WaitListItem);
 			}
 		},
+		filteredBookingsIds(ids: number[]): void
+		{
+			if (!this.isFilterMode || ids.length === 0)
+			{
+				return;
+			}
+
+			const booking: BookingModel | null = this.$store.getters['bookings/getById'](ids[0]) ?? null;
+			if (booking !== null)
+			{
+				this.scrollToBooking(booking);
+			}
+		},
 	},
-	components: {
-		LeftPanel,
-		NowLine,
-		Column,
-		Bookings,
-		ScalePanel,
-		Sidebar,
-		DragDelete,
+	mounted(): void
+	{
+		this.ears = new Ears({
+			container: this.$refs.columnsContainer,
+			smallSize: true,
+			className: 'booking-booking-grid-columns-ears',
+		}).init();
+
+		EventEmitter.subscribe('BX.Main.Popup:onAfterClose', this.tryShowAhaMoment);
+		EventEmitter.subscribe('BX.Main.Popup:onDestroy', this.tryShowAhaMoment);
 	},
-	// language=Vue
+	beforeUnmount(): void
+	{
+		this.dragManager?.destroy();
+	},
+	unmounted()
+	{
+		EventEmitter.unsubscribe('BX.Main.Popup:onAfterClose', this.tryShowAhaMoment);
+		EventEmitter.unsubscribe('BX.Main.Popup:onDestroy', this.tryShowAhaMoment);
+	},
+	methods: {
+		updateEars(): void
+		{
+			this.ears.toggleEars();
+
+			this.tryShowAhaMoment();
+		},
+		areEarsShown(): boolean
+		{
+			const shownClass = 'ui-ear-show';
+
+			return (
+				Dom.hasClass(this.ears.getRightEar(), shownClass)
+				|| Dom.hasClass(this.ears.getLeftEar(), shownClass)
+			);
+		},
+		scrollToEditingBooking(): void
+		{
+			if (!this.editingBooking || this.scrolledToBooking)
+			{
+				return;
+			}
+
+			this.scrollToBooking(this.editingBooking);
+		},
+		scrollToBooking(booking: BookingModel): void
+		{
+			const top = grid.calculateTop(booking.dateFromTs);
+			const height = grid.calculateHeight(booking.dateFromTs, booking.dateToTs);
+			this.$refs.inner.scrollTop = top + height / 2 + this.$refs.inner.offsetHeight / 2;
+			this.scrolledToBooking = true;
+		},
+		tryShowAhaMoment(): void
+		{
+			if (this.areEarsShown() && ahaMoments.shouldShow(AhaMoment.ExpandGrid))
+			{
+				Event.EventEmitter.unsubscribe('BX.Main.Popup:onAfterClose', this.tryShowAhaMoment);
+				Event.EventEmitter.unsubscribe('BX.Main.Popup:onDestroy', this.tryShowAhaMoment);
+				void this.$refs.scalePanel.showAhaMoment();
+			}
+		},
+		initDragManager(id: number | string = '', kind: $Values<typeof DraggedElementKind> = null): void
+		{
+			if (this.isFeatureEnabled)
+			{
+				const dataId = id ? `[data-id="${id}"]` : '';
+				const dataKind = kind ? `[data-kind="${kind}"]` : '';
+
+				this.dragManager = new Drag({
+					container: this.$el.parentElement,
+					draggable: `.booking--draggable-item${dataId}${dataKind}`,
+				});
+			}
+		},
+	},
 	template: `
 		<div ref="bookingContainer" class="booking-booking-grid">
 			<div

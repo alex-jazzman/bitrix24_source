@@ -797,12 +797,6 @@ In addition to the Google Terms of Service (http://www.google.com/accounts/TOS),
 				->setCopyright("Copyright 2012 The Apache Software Foundation")
 				->setLicence(static::LICENCE_APACHE2),
 
-			// faceid/install/components/bitrix/faceid.tracker/templates/.default/smoother.js
-			// faceid/install/js/faceid/WebPhotoMaker/smoother.js
-			(new static("Smoother"))
-				->setCopyright("Copyright 2014 Martin Tschirsich")
-				->setLicence(static::LICENCE_MIT),
-
 			// ui/install/js/ui/fonts/comforter-brush
 			(new static("Font Comforter Brush"))
 				->setCopyright("Copyright 2015 The Comforter Brush Project Authors")
@@ -862,6 +856,32 @@ In addition to the Google Terms of Service (http://www.google.com/accounts/TOS),
 				->setProductUrl('https://github.com/simshaun/recurr')
 				->setLicence(static::LICENCE_MIT)
 				->setLicenceUrl('https://github.com/simshaun/recurr/blob/master/LICENSE'),
+
+			// mobile/install/mobileapp/mobile/extensions/bitrix/statemanager/redux
+			(new static('Redux Toolkit'))
+				->setCopyright('Copyright (c) 2018 Mark Erikson')
+				->setProductUrl('https://redux-toolkit.js.org')
+				->setLicence(Copyright::LICENCE_MIT),
+
+			(new static('Redux-State-Sync 3'))
+				->setCopyright('Copyright (c) 2018 MU AOHUA')
+				->setProductUrl('https://github.com/AOHUA/redux-state-sync')
+				->setLicence(Copyright::LICENCE_MIT),
+
+			(new static('Logger for Redux'))
+				->setCopyright('Copyright (c) 2016 Eugene Rodionov')
+				->setProductUrl('https://github.com/LogRocket/redux-logger')
+				->setLicence(Copyright::LICENCE_MIT),
+
+			(new static('redux-batched-subscribe'))
+				->setCopyright('Copyright (c) 2016 Terry Appleby')
+				->setProductUrl('https://github.com/tappleby/redux-batched-subscribe')
+				->setLicence(Copyright::LICENCE_MIT),
+
+			(new static('redux-batched-actions'))
+				->setCopyright('Copyright (c) 2016 Tim Shelburne')
+				->setProductUrl('https://github.com/tshelburne/redux-batched-actions')
+				->setLicence(Copyright::LICENCE_MIT),
 		];
 	}
 }

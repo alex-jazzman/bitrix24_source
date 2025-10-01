@@ -82,7 +82,7 @@ export const ChatDescription = {
 		},
 		chatTypeText(): string
 		{
-			if (this.isCopilotLayout)
+			if (this.isAiAssistantLayout)
 			{
 				return CopilotManager.getAIModelName(this.dialogId);
 			}
@@ -108,11 +108,11 @@ export const ChatDescription = {
 
 			return this.isLongDescription;
 		},
-		isCopilotLayout(): boolean
+		isAiAssistantLayout(): boolean
 		{
 			const { name: currentLayoutName } = this.$store.getters['application/getLayout'];
 
-			return currentLayoutName === Layout.copilot.name;
+			return currentLayoutName === Layout.aiAssistant;
 		},
 	},
 	methods:

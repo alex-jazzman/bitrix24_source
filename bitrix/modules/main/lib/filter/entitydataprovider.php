@@ -74,6 +74,8 @@ abstract class EntityDataProvider extends DataProvider
 					'intranetUsersOnly' => true,
 					'fieldName' => $params['fieldName'],
 					'referenceClass'  => ($params['referenceClass'] ?? null),
+					'referenceFieldName'  => ($params['referenceFieldName'] ?? null),
+					'referenceAdditionalFilter'  => ($params['referenceAdditionalFilter'] ?? null),
 					'entityTypeId' => ($params['entityTypeId'] ?? null),
 					'module' => ($params['module'] ?? null),
 				]

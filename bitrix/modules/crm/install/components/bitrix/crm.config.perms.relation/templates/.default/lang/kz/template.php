@@ -8,7 +8,6 @@ $MESS["CRM_PERMS_PERM_ADD"] = "Қолжетімділік құқығын қос�
 $MESS["CRM_PERMS_PERM_DELETE"] = "Жою";
 $MESS["CRM_PERMS_PERM_ENTITY"] = "Пайдаланушы";
 $MESS["CRM_PERMS_PERM_ROLE"] = "CRM рөлі";
-$MESS["CRM_PERMS_RESTRICTION"] = "Қызметкерлердің CRM-ге қолжетімділік құқықтарын <a target=\"_blank\" href=\"https://www.bitrix24.kz/prices/\">коммерциялық тарифтерде</a> баптауға болады.";
 $MESS["CRM_PERMS_ROLE_ADD"] = "Қосу";
 $MESS["CRM_PERMS_ROLE_DELETE"] = "Жою";
 $MESS["CRM_PERMS_ROLE_EDIT"] = "Редакциялау";

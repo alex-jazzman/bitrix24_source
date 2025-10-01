@@ -20,7 +20,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		Message,
 		DateSeparatorMessage,
 		UnreadSeparatorMessage,
-	} = require('im/messenger/lib/element');
+	} = require('im/messenger/lib/element/dialog');
 
 	const { getLogger } = require('im/messenger/lib/logger');
 	const logger = getLogger('dialog--message-renderer');
@@ -306,7 +306,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		 */
 		async setMessageList(messageList)
 		{
-			logger.info('MessageRenderer.setMessageList:', messageList);
+			logger.info('MessageRenderer.setMessageList:', clone(messageList));
 			this.messageList = [...messageList];
 			this.markUploadingMessages(messageList);
 
@@ -1359,6 +1359,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		{
 			const messageListWithTemplate = [];
 			const dialogModelState = this.getDialog();
+
 			messageList.reverse().forEach((message, index, messageList) => {
 				if (Type.isNil(message))
 				{
@@ -1376,7 +1377,6 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 					const isUnread = !Uuid.isV4(message.id) && dialogModelState.lastReadId < oldestMessage.id;
 					if (
 						isUnread
-						&& oldestMessage.unread
 						&& dialogModelState.lastReadId !== 0
 						&& this.unreadSeparatorAdded === false
 					)
@@ -1405,7 +1405,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 					const previousMessageDate = this.toDateCode(previousMessage.date);
 					const newestMessageDate = this.toDateCode(newestMessage.date);
 
-					const isUnread = !Uuid.isV4(newestMessage.id) && dialogModelState.lastReadId < newestMessage.id && newestMessage.unread;
+					const isUnread = !Uuid.isV4(newestMessage.id) && dialogModelState.lastReadId < newestMessage.id;
 					if (
 						isUnread
 						&& dialogModelState.lastReadId !== 0
@@ -1444,7 +1444,6 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 				;
 				const isUnreadCurrent = !Uuid.isV4(currentMessage.id)
 					&& dialogModelState.lastReadId < currentMessage.id
-					&& currentMessage.unread
 				;
 
 				if (
@@ -2095,27 +2094,48 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 			const result = [...viewMessageList];
 			let firstUnreadMessageId = null;
 			let firstUnreadMessage = null;
-			let lastReadMessage = null;
-			for (const message of messageList)
+			let lastReadMessageId = null;
+
+			const dialogModel = this.getDialog();
+			const lastReadMessageIndex = messageList
+				.findIndex((message) => dialogModel.lastReadId === message.id)
+			;
+
+			if (lastReadMessageIndex === -1)
 			{
-				const messageId = String(message.id);
-				if (
-					messageId === this.idBeforeUnreadSeparatorMessage
-					|| messageId === this.idAfterUnreadSeparatorMessage
-					|| message.unread === false
-				)
+				for (const message of messageList)
 				{
-					lastReadMessage = messageId;
+					const messageId = String(message.id);
+					if (
+						messageId === this.idBeforeUnreadSeparatorMessage
+						|| messageId === this.idAfterUnreadSeparatorMessage
+						|| message.id <= dialogModel.lastReadId
+					)
+					{
+						lastReadMessageId = messageId;
 
-					continue;
+						continue;
+					}
+
+					firstUnreadMessageId = messageId;
+					firstUnreadMessage = message;
+					break;
 				}
+			}
+			else
+			{
+				lastReadMessageId = String(dialogModel.lastReadId);
 
-				firstUnreadMessageId = messageId;
-				firstUnreadMessage = message;
-				break;
+				const firstUnreadIndex = lastReadMessageIndex === messageList.length - 1
+					? null
+					: lastReadMessageIndex + 1
+				;
+
+				firstUnreadMessage = messageList[firstUnreadIndex];
+				firstUnreadMessageId = firstUnreadMessage?.id;
 			}
 
-			if (Type.isNull(firstUnreadMessageId))
+			if (Type.isNil(firstUnreadMessageId))
 			{
 				// Observe the sequence of separators. First unread, after Date separator
 				const insertPosition = result[1] instanceof DateSeparatorMessage
@@ -2128,20 +2148,21 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 					this.viewMessageCollection[UnreadSeparatorMessage.getDefaultId()],
 				);
 				// reassign idBeforeUnreadSeparatorMessage
-				if (!Type.isNull(lastReadMessage))
+				if (!Type.isNil(lastReadMessageId))
 				{
-					this.idBeforeUnreadSeparatorMessage = lastReadMessage;
+					this.idBeforeUnreadSeparatorMessage = lastReadMessageId;
 				}
 
 				return result;
 			}
 
+			firstUnreadMessageId = String(firstUnreadMessageId);
 			const index = result.findIndex((message) => message.id === firstUnreadMessageId);
 			this.idAfterUnreadSeparatorMessage = firstUnreadMessageId;
 			this.afterUnreadSeparatorMessage = firstUnreadMessage;
-			if (!Type.isNull(lastReadMessage))
+			if (!Type.isNull(lastReadMessageId))
 			{
-				this.idBeforeUnreadSeparatorMessage = lastReadMessage;
+				this.idBeforeUnreadSeparatorMessage = lastReadMessageId;
 			}
 
 			// Observe the sequence of separators. First unread, after Date separator

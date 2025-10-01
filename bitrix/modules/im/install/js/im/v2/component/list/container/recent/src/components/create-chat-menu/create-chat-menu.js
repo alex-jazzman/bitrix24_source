@@ -11,6 +11,7 @@ import { PromoManager } from 'im.v2.lib.promo';
 import { CreateChatManager } from 'im.v2.lib.create-chat';
 import { Feature, FeatureManager } from 'im.v2.lib.feature';
 import { CopilotService } from 'im.v2.provider.service.copilot';
+import { AiAssistantService } from 'im.v2.provider.service.ai-assistant';
 
 import { CreateChatHelp } from './components/create-chat-help';
 import { NewBadge } from './components/collab/new-badge';
@@ -100,7 +101,11 @@ export const CreateChatMenu = {
 		},
 		isCopilotAvailableAndCreatable(): boolean
 		{
-			return this.isCopilotAvailable && this.canCreateCopilot;
+			return this.isCopilotAvailable && this.canCreateCopilot && !this.isAiAssistantChatAvailable;
+		},
+		isAiAssistantChatAvailable(): boolean
+		{
+			return FeatureManager.isFeatureAvailable(Feature.aiAssistantChatAvailable);
 		},
 		canCreateChannel(): boolean
 		{
@@ -197,6 +202,17 @@ export const CreateChatMenu = {
 			this.isLoading = false;
 			void Messenger.openChat(newDialogId);
 		},
+		async onAiAssistantCreateClick(): void
+		{
+			this.showMenu = false;
+			this.isLoading = true;
+			const newDialogId = await this.getAiAssistantService().createChat()
+				.catch(() => {
+					this.isLoading = false;
+				});
+			this.isLoading = false;
+			void Messenger.openChat(newDialogId);
+		},
 		onPromoContinueClick()
 		{
 			PromoManager.getInstance().markAsWatched(this.getPromoType());
@@ -213,7 +229,7 @@ export const CreateChatMenu = {
 		startChatCreation()
 		{
 			const { name: currentLayoutName, entityId: currentLayoutChatType } = this.$store.getters['application/getLayout'];
-			if (currentLayoutName === Layout.createChat.name && currentLayoutChatType === this.chatTypeToCreate)
+			if (currentLayoutName === Layout.createChat && currentLayoutChatType === this.chatTypeToCreate)
 			{
 				return;
 			}
@@ -235,6 +251,15 @@ export const CreateChatMenu = {
 			}
 
 			return this.copilotService;
+		},
+		getAiAssistantService(): AiAssistantService
+		{
+			if (!this.aiAssistantService)
+			{
+				this.aiAssistantService = new AiAssistantService();
+			}
+
+			return this.aiAssistantService;
 		},
 		handleShowPopup()
 		{
@@ -272,6 +297,14 @@ export const CreateChatMenu = {
 				<template #after-content>
 					<CopilotRoleSelectionButton @click.stop="onCopilotRoleSelectClick" />
 				</template>
+			</MenuItem>
+			<MenuItem
+				v-if="isAiAssistantChatAvailable"
+				:icon="MenuItemIcon.copilot"
+				title="Marta AI chat"
+				subtitle="For fun"
+				@click.stop="onAiAssistantCreateClick"
+			>
 			</MenuItem>
 			<MenuItem
 				v-if="canCreateChannel"

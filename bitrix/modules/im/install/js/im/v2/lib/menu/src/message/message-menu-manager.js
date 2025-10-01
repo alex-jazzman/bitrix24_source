@@ -22,6 +22,7 @@ export class MessageMenuManager
 	#defaultMenuByCallback: Map<MenuCheckFunction, MessageMenu> = new Map();
 	#customMenuByCallback: Map<MenuCheckFunction, MessageMenu> = new Map();
 	#menuByMessageType: Map<MessageType, MessageMenu> = new Map();
+	#menuInstance = null;
 
 	static getInstance(): MessageMenuManager
 	{
@@ -40,23 +41,11 @@ export class MessageMenuManager
 
 	openMenu(context: MessageMenuContext, bindElement: HTMLElement): void
 	{
-		const DefaultMenuClass = this.#getDefaultMenuClass(context);
-		if (!this.#contextCanBeCustomized(context))
-		{
-			(new DefaultMenuClass()).openMenu(context, bindElement);
+		this.#destroyMenuInstance();
 
-			return;
-		}
-
-		const CustomMenuClass = this.#getCustomMenuClass(context);
-		if (CustomMenuClass)
-		{
-			(new CustomMenuClass()).openMenu(context, bindElement);
-
-			return;
-		}
-
-		(new DefaultMenuClass()).openMenu(context, bindElement);
+		const MenuClass = this.#resolveMenuClass(context);
+		this.#menuInstance = new MenuClass();
+		this.#menuInstance.openMenu(context, bindElement);
 	}
 
 	registerMenuByCallback(callback: MenuCheckFunction, menuClass: MessageMenu): void
@@ -74,6 +63,18 @@ export class MessageMenuManager
 		this.#menuByMessageType.set(messageType, menuClass);
 	}
 
+	#resolveMenuClass(context: MessageMenuContext): MessageMenu
+	{
+		if (!this.#isCustomMenuAllowed(context))
+		{
+			return this.#getDefaultMenuClass(context);
+		}
+
+		const customMenu = this.#getCustomMenuClass(context);
+
+		return customMenu ?? this.#getDefaultMenuClass(context);
+	}
+
 	#registerDefaultMenus()
 	{
 		this.#defaultMenuByCallback.set(this.#isChannel.bind(this), ChannelMessageMenu);
@@ -81,7 +82,7 @@ export class MessageMenuManager
 		this.#defaultMenuByCallback.set(this.#isCopilot.bind(this), CopilotMessageMenu);
 	}
 
-	#contextCanBeCustomized(context: MessageMenuContext): boolean
+	#isCustomMenuAllowed(context: MessageMenuContext): boolean
 	{
 		return !ChannelManager.isCommentsPostMessage(context, context.dialogId);
 	}
@@ -147,5 +148,16 @@ export class MessageMenuManager
 	#getMenuForMessageType(messageType: MessageType): MessageMenu
 	{
 		return this.#menuByMessageType.get(messageType);
+	}
+
+	#destroyMenuInstance(): void
+	{
+		if (!this.#menuInstance)
+		{
+			return;
+		}
+
+		this.#menuInstance.destroy();
+		this.#menuInstance = null;
 	}
 }

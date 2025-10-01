@@ -265,7 +265,7 @@ jn.define('selector/providers/tree-providers/nested-department-provider', (requi
 
 			if (entity.type === 'button')
 			{
-				preparedEntity.type = Application.getApiVersion() < 56 ? 'info' : 'department';
+				preparedEntity.type = 'department';
 				preparedEntity.id += '/button';
 			}
 			else if (entity.type === 'selectable')

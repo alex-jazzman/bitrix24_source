@@ -1,31 +1,38 @@
 import { MessageMenu } from 'im.v2.lib.menu';
 
-import type { MenuItem } from 'im.v2.lib.menu';
+import type { MenuItemOptions, MenuSectionOptions } from 'ui.system.menu';
+
+const MenuSectionCode = Object.freeze({
+	main: 'main',
+	select: 'select',
+});
 
 export class OpenLinesMessageMenu extends MessageMenu
 {
-	getMenuItems(): MenuItem[]
+	getMenuItems(): MenuItemOptions[]
 	{
-		return [
+		const mainGroupItems = [
 			this.getReplyItem(),
 			this.getCopyItem(),
+			this.getMarkItem(),
 			this.getForwardItem(),
 			this.getFavoriteItem(),
-			this.getDelimiter(),
-
 			this.getDownloadFileItem(),
-			this.getDelimiter(),
-
 			this.getEditItem(),
-			this.getDelimiter(),
-
 			this.getDeleteItem(),
-			this.getDelimiter(),
+		];
 
-			this.getMarkItem(),
-			this.getDelimiter(),
+		return [
+			...this.groupItems(mainGroupItems, MenuSectionCode.main),
+			...this.groupItems([this.getSelectItem()], MenuSectionCode.select),
+		];
+	}
 
-			this.getSelectItem(),
+	getMenuGroups(): MenuSectionOptions[]
+	{
+		return [
+			{ code: MenuSectionCode.main },
+			{ code: MenuSectionCode.select },
 		];
 	}
 }

@@ -10,10 +10,8 @@ jn.define('im/messenger/controller/dialog/lib/web', (require, exports, module) =
 
 	const AppTheme = require('apptheme');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const {
-		ChatAvatar,
-		ChatTitle,
-	} = require('im/messenger/lib/element');
+	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
+	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { PushHandler } = require('im/messenger/provider/push');

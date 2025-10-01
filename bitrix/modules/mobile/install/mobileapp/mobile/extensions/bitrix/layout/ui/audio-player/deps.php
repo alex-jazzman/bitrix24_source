@@ -5,6 +5,7 @@ return [
 		'haptics',
 		'apptheme',
 		'utils/function',
+		'utils/random',
 		'layout/ui/context-menu',
 		'event-emitter',
 		'layout/ui/range-slider',

@@ -13,8 +13,6 @@ use Bitrix\MobileApp\Mobile;
 
 class CatalogStore implements Tabable {
 
-	const MINIMAL_API_VERSION = 49;
-
 	/**
 	 * @var Context $context
 	 */
@@ -24,7 +22,6 @@ class CatalogStore implements Tabable {
 	{
 		return (
 			!$this->context->extranet
-			&& Mobile::getApiVersion() >= self::MINIMAL_API_VERSION
 			&& IsModuleInstalled('catalog')
 			&& \CModule::IncludeModule('catalog')
 			&& AccessController::getCurrent()->check(ActionDictionary::ACTION_CATALOG_READ)
@@ -119,6 +116,6 @@ class CatalogStore implements Tabable {
 
 	public function getIconId(): string
 	{
-		return Mobile::getApiVersion() < 56 ? $this->getId() : 'stock';
+		return 'stock';
 	}
 }

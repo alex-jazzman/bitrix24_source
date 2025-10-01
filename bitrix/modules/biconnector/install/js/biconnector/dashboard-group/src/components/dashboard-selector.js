@@ -16,6 +16,7 @@ export const DashboardSelector: BitrixVueComponentProps = {
 	{
 		return {
 			initialDashboardIds: [],
+			bypassDeselectHandler: false,
 		};
 	},
 	mounted()
@@ -55,6 +56,28 @@ export const DashboardSelector: BitrixVueComponentProps = {
 						},
 					},
 				],
+				tagSelectorOptions: {
+					events: {
+						onBeforeTagRemove: (event: BaseEvent) => {
+							if (this.bypassDeselectHandler)
+							{
+								return;
+							}
+
+							const tag = event.data.tag;
+							const dashboardId = tag.getId();
+							if (
+								this.$store.getters.isSaveEnabled
+								&& this.$store.getters.shouldShowDeleteWarning(dashboardId)
+							)
+							{
+								event.preventDefault();
+								this.dialog.setAutoHide(false);
+								this.$emit('onBeforeRemoveConfirmation', { dashboardId });
+							}
+						},
+					},
+				},
 				events: {
 					'Item:onSelect': (event: BaseEvent) => {
 						const item: Item = event.data.item;
@@ -62,13 +85,33 @@ export const DashboardSelector: BitrixVueComponentProps = {
 							id: item.getId(),
 							name: item.getTitle(),
 							type: item.getCustomData().get('type') ?? DashboardType.system,
+							createdById: item.getCustomData().get('createdById'),
+							ownerId: item.getCustomData().get('ownerId'),
 							scopes: item.getCustomData().get('scopes') ?? [],
 						};
 						this.$store.commit('addDashboard', dashboard);
 						this.$emit('onDashboardsChange');
 					},
+					'Item:onBeforeDeselect': (event: BaseEvent) => {
+						if (this.bypassDeselectHandler)
+						{
+							return;
+						}
+
+						const item: Item = event.data.item;
+						const dashboardId = item.getId();
+						if (
+							this.$store.getters.isSaveEnabled
+							&& this.$store.getters.shouldShowDeleteWarning(dashboardId)
+						)
+						{
+							event.preventDefault();
+							this.dialog.setAutoHide(false);
+							this.$emit('onBeforeRemoveConfirmation', { dashboardId });
+						}
+					},
 					'Item:onDeselect': (event: BaseEvent) => {
-						const item = event.data.item;
+						const item: Item = event.data.item;
 						this.$store.commit('removeDashboard', item.getId());
 						this.$emit('onDashboardsChange');
 					},
@@ -88,8 +131,19 @@ export const DashboardSelector: BitrixVueComponentProps = {
 				},
 			});
 		},
+		deselect(dashboardId: number)
+		{
+			this.bypassDeselectHandler = true;
+			this.dialog.getItem({ entityId: 'biconnector-superset-dashboard', id: dashboardId })?.deselect();
+		},
+		resetDialog()
+		{
+			this.dialog.setAutoHide(true);
+			this.bypassDeselectHandler = false;
+		},
 	},
 	emits: [
+		'onBeforeRemoveConfirmation',
 		'onDashboardsChange',
 	],
 	watch: {

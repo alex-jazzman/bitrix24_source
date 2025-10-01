@@ -5,6 +5,7 @@ jn.define('rest/run-action-executor', (require, exports, module) => {
 	const { RunActionCache } = require('rest/run-action-executor/cache');
 	const { RequestManager } = require('rest/run-action-executor/src/request-manager');
 	const { Logger, LogType } = require('utils/logger');
+	const { toMD5 } = require('utils/object');
 
 	const logger = new Logger([
 		LogType.INFO,
@@ -311,7 +312,7 @@ jn.define('rest/run-action-executor', (require, exports, module) => {
 		{
 			if (this.uid === null)
 			{
-				this.uid = `${Object.toMD5(this.options)}/${Object.toMD5(this.navigation)}/${this.action}`;
+				this.uid = `${toMD5(this.options)}/${toMD5(this.navigation)}/${this.action}`;
 			}
 
 			return this.uid;

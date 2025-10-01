@@ -56,7 +56,7 @@ export const OpenlinesContent = {
 		layout: {
 			handler(newLayout: ImModelLayout, prevLayout: ImModelLayout)
 			{
-				if (newLayout.name !== Layout.openlines.name)
+				if (newLayout.name !== Layout.openlines)
 				{
 					return;
 				}
@@ -123,7 +123,7 @@ export const OpenlinesContent = {
 			this.dialogIdChangedFromFrame = true;
 
 			void LayoutManager.getInstance().setLayout({
-				name: Layout.openlines.name,
+				name: Layout.openlines,
 				entityId: event.detail,
 			});
 		},

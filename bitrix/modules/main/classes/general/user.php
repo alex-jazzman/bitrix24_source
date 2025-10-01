@@ -1720,6 +1720,7 @@ class CAllUser extends CDBResult
 
 		$result_message = true;
 		$user_id = 0;
+		$error = [];
 		$context = (new Authentication\Context())
 			->setMethod(Method::Password)
 		;
@@ -1777,7 +1778,7 @@ class CAllUser extends CDBResult
 			if ($user_id <= 0)
 			{
 				//internal authentication OR application password for external user
-				$user_id = static::LoginInternal($arParams, $result_message, $context);
+				$user_id = static::LoginInternal($arParams, $result_message, $context, $error);
 
 				if ($user_id <= 0)
 				{
@@ -1885,7 +1886,10 @@ class CAllUser extends CDBResult
 
 		if ($doAuthorize && $result_message !== true && (Option::get('main', 'event_log_login_fail', 'N') === 'Y'))
 		{
-			CEventLog::Log(CEventLog::SEVERITY_SECURITY, 'USER_LOGIN', 'main', $login, $result_message['MESSAGE']);
+			$auditType = $error['auditType'] ?? 'USER_LOGIN';
+			$info = $error['info'] ?? [];
+			$info['message'] = $result_message['MESSAGE'];
+			CEventLog::Log(CEventLog::SEVERITY_SECURITY, $auditType, 'main', $login, $info);
 		}
 
 		return $arParams["RESULT_MESSAGE"];
@@ -1896,9 +1900,10 @@ class CAllUser extends CDBResult
 	 * @param array $arParams
 	 * @param array|bool $result_message
 	 * @param Authentication\Context|null $context
+	 * @param array $error
 	 * @return int User ID on success or 0 on failure. Additionally, $result_message will hold an error.
 	 */
-	public static function LoginInternal(&$arParams, &$result_message = true, $context = null)
+	public static function LoginInternal(&$arParams, &$result_message = true, $context = null, &$error = [])
 	{
 		global $DB, $APPLICATION;
 
@@ -1932,6 +1937,13 @@ class CAllUser extends CDBResult
 			$original = isset($arParams["PASSWORD_ORIGINAL"]) && $arParams["PASSWORD_ORIGINAL"] === 'Y';
 			$loginAttempts = intval($arUser["LOGIN_ATTEMPTS"]) + 1;
 
+			$error['info'] = [
+				'userId' => $arUser["ID"],
+				'active' => $arUser["ACTIVE"],
+				'blocked' => $arUser["BLOCKED"],
+				'loginAttempts' => $loginAttempts,
+			];
+
 			if ($arUser["BLOCKED"] != 'Y')
 			{
 				$policy = static::getPolicy($arUser["ID"]);
@@ -1944,6 +1956,9 @@ class CAllUser extends CDBResult
 					$APPLICATION->SetNeedCAPTHA(true);
 					if (!$APPLICATION->CaptchaCheckCode($_REQUEST["captcha_word"] ?? '', $_REQUEST["captcha_sid"] ?? ''))
 					{
+						$error['auditType'] = 'USER_LOGIN_INCORRECT_CAPTCHA';
+						$error['info']['policyLoginAttempts'] = $policyLoginAttempts;
+
 						$correctCaptcha = false;
 					}
 				}
@@ -2001,6 +2016,10 @@ class CAllUser extends CDBResult
 					}
 				}
 			}
+			else
+			{
+				$error['auditType'] = 'USER_LOGIN_BLOCKED';
+			}
 
 			if ($passwordCorrect)
 			{
@@ -2029,6 +2048,7 @@ class CAllUser extends CDBResult
 					{
 						//require to change the password right now
 						$passwordExpired = true;
+						$error['info']['passwordExpired'] = 'Y';
 					}
 					if (!$passwordExpired && $original && $policy->getPasswordCheckPolicy())
 					{
@@ -2037,6 +2057,7 @@ class CAllUser extends CDBResult
 						{
 							//require to change the password because it doesn't match the group policy
 							$passwordExpired = true;
+							$error['info']['passwordExpired'] = 'Policy';
 						}
 					}
 					if (!$passwordExpired)
@@ -2048,6 +2069,8 @@ class CAllUser extends CDBResult
 							if (UserPasswordTable::passwordExpired($arUser["ID"], $policyChangeDays))
 							{
 								$passwordExpired = true;
+								$error['info']['passwordExpired'] = 'Days';
+								$error['info']['passwordExpiredDays'] = $policyChangeDays;
 							}
 						}
 					}
@@ -2098,6 +2121,10 @@ class CAllUser extends CDBResult
 				//incorrect password
 				$DB->Query("UPDATE b_user SET LOGIN_ATTEMPTS = " . $loginAttempts . ", TIMESTAMP_X = TIMESTAMP_X WHERE ID = " . intval($arUser["ID"]));
 			}
+		}
+		else
+		{
+			$error['auditType'] = 'USER_LOGIN_NOT_FOUND';
 		}
 
 		if ($user_id == 0)
@@ -4328,10 +4355,17 @@ class CAllUser extends CDBResult
 		return $groups;
 	}
 
-	public static function GetCount()
+	public static function GetCount($maxCount = 0)
 	{
 		global $DB;
-		$r = $DB->Query("SELECT COUNT('x') as C FROM b_user");
+		if ($maxCount > 0)
+		{
+			$r = $DB->Query("SELECT COUNT('x') as C FROM (SELECT ID from b_user limit " . intval($maxCount) . ") t");
+		}
+		else
+		{
+			$r = $DB->Query("SELECT COUNT('x') as C FROM b_user");
+		}
 		$r = $r->Fetch();
 		return intval($r["C"]);
 	}

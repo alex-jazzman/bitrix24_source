@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,ui_analytics,ui_draganddrop_draggable,ui_switcherNested,ui_iconSet_crm,ui_uploader_stackWidget,ui_ears,intranet_themePicker_dialog,ui_iconSet_social,ui_alerts,ui_form,ui_forms,ui_iconSet_actions,ui_iconSet_main,ui_formElements_view,ui_switcher,ui_entitySelector,ui_buttons,ui_icon_set,ui_section,sidepanel,ui_dialogs_messagebox,ui_formElements_field,main_core_events,main_popup,main_loader,main_core) {
+(function (exports,ui_analytics,ui_draganddrop_draggable,ui_switcherNested,ui_iconSet_crm,ui_uploader_stackWidget,ui_ears,intranet_themePicker_dialog,ui_iconSet_social,ui_alerts,ui_form,ui_forms,ui_iconSet_actions,ui_iconSet_main,ui_formElements_view,ui_switcher,ui_cnt,ui_buttons,ui_icon_set,ui_section,sidepanel,ui_dialogs_messagebox,ui_formElements_field,main_core_events,main_popup,main_loader,main_core) {
 	'use strict';
 
 	var _eventList = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("eventList");
@@ -1622,65 +1622,14 @@ this.BX = this.BX || {};
 	    parent: this
 	  });
 	  if (this.hasValue('allow_livefeed_toall')) {
-	    let allowPostFeedField = new ui_formElements_view.Checker(this.getValue('allow_livefeed_toall'));
-	    allowPostFeedField.hideSeparator = true;
-	    let settingsField = new ui_formElements_field.SettingsField({
-	      fieldView: allowPostFeedField
-	    });
-	    const settingsRow = new ui_formElements_field.SettingsRow({
-	      parent: settingsSection,
-	      child: settingsField
-	    });
-	    let userSelectorField = new ui_formElements_view.UserSelector({
+	    const allowPostFeedChecker = new ui_formElements_view.Checker(this.getValue('allow_livefeed_toall'));
+	    const allowPostFeedSelector = ui_formElements_view.FieldFactory.createUserSelector({
 	      inputName: 'livefeed_toall_rights[]',
 	      label: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_SELECT_USER_PUBLIC_MESS'),
 	      values: Object.values(this.getValue('arToAllRights')),
-	      enableDepartments: true,
-	      encodeValue: value => {
-	        if (!main_core.Type.isNil(value.id)) {
-	          return value.id === 'all-users' ? 'AU' : value.type + value.id.toString().split(':')[0];
-	        }
-	        return null;
-	      },
-	      decodeValue: value => {
-	        if (value === 'UA') {
-	          return {
-	            type: 'AU',
-	            id: ''
-	          };
-	        }
-	        const arr = value.match(/^(U|DR|D)(\d+)/);
-	        if (!main_core.Type.isArray(arr)) {
-	          return {
-	            type: null,
-	            id: null
-	          };
-	        }
-	        return {
-	          type: arr[1],
-	          id: arr[2]
-	        };
-	      }
+	      enableDepartments: true
 	    });
-	    settingsField = new ui_formElements_field.SettingsField({
-	      fieldView: userSelectorField
-	    });
-	    const userSelectorRow = new ui_section.Row({
-	      isHidden: !allowPostFeedField.isChecked(),
-	      className: 'ui-section__subrow'
-	    });
-	    new ui_formElements_field.SettingsRow({
-	      row: userSelectorRow,
-	      parent: settingsRow,
-	      child: settingsField
-	    });
-	    main_core_events.EventEmitter.subscribe(allowPostFeedField.switcher, 'toggled', () => {
-	      if (allowPostFeedField.isChecked()) {
-	        userSelectorRow.show();
-	      } else {
-	        userSelectorRow.hide();
-	      }
-	    });
+	    CommunicationPage.addToSectionCheckerHelper(allowPostFeedChecker, [allowPostFeedSelector], settingsSection);
 	  }
 	  if (this.hasValue('default_livefeed_toall')) {
 	    let allowPostToAllField = new ui_formElements_view.Checker(this.getValue('default_livefeed_toall'));
@@ -1728,36 +1677,11 @@ this.BX = this.BX || {};
 	      className: 'ui-section__subrow --no-border'
 	    });
 	    CommunicationPage.addToSectionHelper(canPostGeneralChatListField, settingsRow, canPostGeneralChatListRow);
-	    let managerSelectorField = new ui_formElements_view.UserSelector({
+	    let managerSelectorField = ui_formElements_view.FieldFactory.createUserSelector({
 	      inputName: 'imchat_toall_rights[]',
 	      label: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_SELECT_USER_PUBLIC_MESS'),
 	      enableAll: false,
-	      values: Object.values((_this$getValue3 = this.getValue('generalChatManagersList')) != null ? _this$getValue3 : []),
-	      encodeValue: value => {
-	        if (!main_core.Type.isNil(value.id)) {
-	          return value.id === 'all-users' ? 'AU' : 'U' + value.id;
-	        }
-	        return null;
-	      },
-	      decodeValue: value => {
-	        if (value === 'UA') {
-	          return {
-	            type: 'AU',
-	            id: ''
-	          };
-	        }
-	        const arr = value.match(/^(U)(\d+)/);
-	        if (!main_core.Type.isArray(arr)) {
-	          return {
-	            type: null,
-	            id: null
-	          };
-	        }
-	        return {
-	          type: arr[1],
-	          id: arr[2]
-	        };
-	      }
+	      values: Object.values((_this$getValue3 = this.getValue('generalChatManagersList')) != null ? _this$getValue3 : [])
 	    });
 	    let managerSelectorRow = new ui_section.Row({
 	      content: managerSelectorField.render(),
@@ -1805,10 +1729,6 @@ this.BX = this.BX || {};
 	    let allowUrlPreviewField = new ui_formElements_view.Checker(this.getValue('url_preview_enable'));
 	    CommunicationPage.addToSectionHelper(allowUrlPreviewField, settingsSection);
 	  }
-	  if (this.hasValue('isAutoDeleteMessagesEnabled')) {
-	    const allowAutoDeleteField = new ui_formElements_view.Checker(this.getValue('isAutoDeleteMessagesEnabled'));
-	    CommunicationPage.addToSectionHelper(allowAutoDeleteField, settingsSection);
-	  }
 	  if (this.hasValue('create_overdue_chats')) {
 	    let overdueChatsField = new ui_formElements_view.Checker(this.getValue('create_overdue_chats'));
 	    CommunicationPage.addToSectionHelper(overdueChatsField, settingsSection);
@@ -1843,36 +1763,11 @@ this.BX = this.BX || {};
 	      className: 'ui-section__subrow --no-border'
 	    });
 	    CommunicationPage.addToSectionHelper(canPostGeneralChannelListField, settingsRow, canPostGeneralChannelListRow);
-	    let managerSelectorField = new ui_formElements_view.UserSelector({
+	    let managerSelectorField = ui_formElements_view.FieldFactory.createUserSelector({
 	      inputName: 'imchannel_toall_rights[]',
 	      label: (_Loc$getMessage = main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_SELECT_USER_PUBLIC_MESS_CHANNEL')) != null ? _Loc$getMessage : '',
 	      enableAll: false,
-	      values: Object.values((_this$getValue4 = this.getValue('generalChannelManagersList')) != null ? _this$getValue4 : []),
-	      encodeValue: value => {
-	        if (!main_core.Type.isNil(value.id)) {
-	          return value.id === 'all-users' ? 'AU' : 'U' + value.id;
-	        }
-	        return null;
-	      },
-	      decodeValue: value => {
-	        if (value === 'UA') {
-	          return {
-	            type: 'AU',
-	            id: ''
-	          };
-	        }
-	        const arr = value.match(/^(U)(\d+)/);
-	        if (!main_core.Type.isArray(arr)) {
-	          return {
-	            type: null,
-	            id: null
-	          };
-	        }
-	        return {
-	          type: arr[1],
-	          id: arr[2]
-	        };
-	      }
+	      values: Object.values((_this$getValue4 = this.getValue('generalChannelManagersList')) != null ? _this$getValue4 : [])
 	    });
 	    let managerSelectorRow = new ui_section.Row({
 	      content: managerSelectorField.render(),
@@ -4358,12 +4253,12 @@ this.BX = this.BX || {};
 	var _buildDevicesHistorySection = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("buildDevicesHistorySection");
 	var _buildEventLogSection = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("buildEventLogSection");
 	var _buildBlackListSection = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("buildBlackListSection");
-	var _buildMobileAppSection = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("buildMobileAppSection");
+	var _buildDataLeakProtectionSection = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("buildDataLeakProtectionSection");
 	class SecurityPage extends ui_formElements_field.BaseSettingsPage {
 	  constructor() {
 	    super();
-	    Object.defineProperty(this, _buildMobileAppSection, {
-	      value: _buildMobileAppSection2
+	    Object.defineProperty(this, _buildDataLeakProtectionSection, {
+	      value: _buildDataLeakProtectionSection2
 	    });
 	    Object.defineProperty(this, _buildBlackListSection, {
 	      value: _buildBlackListSection2
@@ -4438,14 +4333,14 @@ this.BX = this.BX || {};
 	      var _babelHelpers$classPr;
 	      (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _buildOTPSection)[_buildOTPSection]()) == null ? void 0 : _babelHelpers$classPr.renderTo(contentNode);
 	    }
+	    (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _buildDataLeakProtectionSection)[_buildDataLeakProtectionSection]()) == null ? void 0 : _babelHelpers$classPr2.renderTo(contentNode);
 
 	    // if (isBitrix24)
 	    // {
 	    // 	this.#buildPasswordRecoverySection().renderTo(contentNode);
 	    // }
-	    (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _buildDevicesHistorySection)[_buildDevicesHistorySection]()) == null ? void 0 : _babelHelpers$classPr2.renderTo(contentNode);
-	    (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _buildEventLogSection)[_buildEventLogSection]()) == null ? void 0 : _babelHelpers$classPr3.renderTo(contentNode);
-	    (_babelHelpers$classPr4 = babelHelpers.classPrivateFieldLooseBase(this, _buildMobileAppSection)[_buildMobileAppSection]()) == null ? void 0 : _babelHelpers$classPr4.renderTo(contentNode);
+	    (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _buildDevicesHistorySection)[_buildDevicesHistorySection]()) == null ? void 0 : _babelHelpers$classPr3.renderTo(contentNode);
+	    (_babelHelpers$classPr4 = babelHelpers.classPrivateFieldLooseBase(this, _buildEventLogSection)[_buildEventLogSection]()) == null ? void 0 : _babelHelpers$classPr4.renderTo(contentNode);
 	    if (isBitrix24) {
 	      var _babelHelpers$classPr5, _babelHelpers$classPr6;
 	      (_babelHelpers$classPr5 = babelHelpers.classPrivateFieldLooseBase(this, _buildAccessIPSection)[_buildAccessIPSection]()) == null ? void 0 : _babelHelpers$classPr5.renderTo(contentNode);
@@ -4730,36 +4625,11 @@ this.BX = this.BX || {};
 	}
 	function _getUserSelectorRow2(ipUsersList) {
 	  var _this$getValue2;
-	  const userSelector = new ui_formElements_view.UserSelector({
+	  const userSelector = ui_formElements_view.FieldFactory.createUserSelector({
 	    inputName: `SECURITY_IP_ACCESS_${ipUsersList.fieldNumber}_USERS[]`,
 	    label: (_this$getValue2 = this.getValue('IP_ACCESS_RIGHTS_ENABLED_LABEL')) != null ? _this$getValue2 : main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_SELECT_USER_ACCESS_IP'),
 	    values: Object.values(ipUsersList.users),
-	    enableDepartments: true,
-	    encodeValue: value => {
-	      if (!main_core.Type.isNil(value.id)) {
-	        return value.id === 'all-users' ? 'AU' : value.type + value.id.toString().split(':')[0];
-	      }
-	      return null;
-	    },
-	    decodeValue: value => {
-	      if (value === 'AU') {
-	        return {
-	          type: value,
-	          id: ''
-	        };
-	      }
-	      const arr = value.match(/^(U|DR|D)(\d+)/);
-	      if (!main_core.Type.isArray(arr)) {
-	        return {
-	          type: null,
-	          id: null
-	        };
-	      }
-	      return {
-	        type: arr[1],
-	        id: arr[2]
-	      };
-	    }
+	    enableDepartments: true
 	  });
 	  return new ui_formElements_field.SettingsField({
 	    fieldView: userSelector
@@ -4927,22 +4797,38 @@ this.BX = this.BX || {};
 	  };
 	  return new ui_section.Section(params);
 	}
-	function _buildMobileAppSection2() {
-	  if (!this.hasValue('sectionMobileApp')) {
+	function _buildDataLeakProtectionSection2() {
+	  if (!this.hasValue('sectionDataLeakProtection')) {
 	    return;
 	  }
-	  const mobileAppSection = new ui_section.Section(this.getValue('sectionMobileApp'));
+	  const mobileAppSection = new ui_section.Section(this.getValue('sectionDataLeakProtection'));
 	  const settingsSection = new ui_formElements_field.SettingsSection({
 	    section: mobileAppSection,
 	    parent: this
 	  });
-	  if (this.hasValue('switcherDisableCopy')) {
-	    let disableCopyField = new ui_formElements_view.Checker(this.getValue('switcherDisableCopy'));
-	    SecurityPage.addToSectionHelper(disableCopyField, settingsSection);
-	  }
 	  if (this.hasValue('switcherDisableScreenshot')) {
-	    let disableCopyScreenshotField = new ui_formElements_view.Checker(this.getValue('switcherDisableScreenshot'));
-	    SecurityPage.addToSectionHelper(disableCopyScreenshotField, settingsSection);
+	    const disableCopyScreenshotChecker = new ui_formElements_view.Checker(this.getValue('switcherDisableScreenshot'));
+	    const disableCopyScreenshotSelector = ui_formElements_view.FieldFactory.createUserSelector({
+	      ...this.getValue('selectorDisableScreenshot'),
+	      enableDepartments: true
+	    });
+	    SecurityPage.addToSectionCheckerHelper(disableCopyScreenshotChecker, [disableCopyScreenshotSelector], settingsSection);
+	  }
+	  if (this.hasValue('switcherDisableCopy')) {
+	    const disableCopyCopyChecker = new ui_formElements_view.Checker(this.getValue('switcherDisableCopy'));
+	    const disableCopyCopySelector = ui_formElements_view.FieldFactory.createUserSelector({
+	      ...this.getValue('selectorDisableCopy'),
+	      enableDepartments: true
+	    });
+	    SecurityPage.addToSectionCheckerHelper(disableCopyCopyChecker, [disableCopyCopySelector], settingsSection);
+	  }
+	  if (this.hasValue('isAutoDeleteMessagesEnabled')) {
+	    const allowAutoDeleteField = new ui_formElements_view.Checker(this.getValue('isAutoDeleteMessagesEnabled'));
+	    SecurityPage.addToSectionHelper(allowAutoDeleteField, settingsSection);
+	  }
+	  if (this.hasValue('isWaterMarksEnabled')) {
+	    const allowAutoDeleteField = new ui_formElements_view.Checker(this.getValue('isWaterMarksEnabled'));
+	    SecurityPage.addToSectionHelper(allowAutoDeleteField, settingsSection);
 	  }
 	  return settingsSection;
 	}
@@ -6799,5 +6685,5 @@ this.BX = this.BX || {};
 	exports.ServerDataSource = ServerDataSource;
 	exports.Permission = Permission;
 
-}((this.BX.Intranet = this.BX.Intranet || {}),BX.UI.Analytics,BX.UI.DragAndDrop,BX.UI,BX,BX.UI.Uploader,BX.UI,BX.Intranet.Bitrix24.ThemePicker,BX,BX.UI,BX,BX,BX,BX,BX.UI.FormElements,BX.UI,BX.UI.EntitySelector,BX.UI,BX,BX.UI,BX,BX.UI.Dialogs,BX.UI.FormElements,BX.Event,BX.Main,BX,BX));
+}((this.BX.Intranet = this.BX.Intranet || {}),BX.UI.Analytics,BX.UI.DragAndDrop,BX.UI,BX,BX.UI.Uploader,BX.UI,BX.Intranet.Bitrix24.ThemePicker,BX,BX.UI,BX,BX,BX,BX,BX.UI.FormElements,BX.UI,BX.UI,BX.UI,BX,BX.UI,BX,BX.UI.Dialogs,BX.UI.FormElements,BX.Event,BX.Main,BX,BX));
 //# sourceMappingURL=script.js.map

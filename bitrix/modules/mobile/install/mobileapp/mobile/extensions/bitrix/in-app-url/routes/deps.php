@@ -2,9 +2,8 @@
 
 return [
 	'extensions' => [
-		'feature',
 		'project/utils',
-		'utils/url',
+		'disk:in-app-url/routes',
 		'user-profile',
 	],
 ];

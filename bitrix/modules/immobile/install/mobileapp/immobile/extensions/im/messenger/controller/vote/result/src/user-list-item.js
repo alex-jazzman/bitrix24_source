@@ -17,7 +17,13 @@ jn.define('im/messenger/controller/vote/result/user-list-item', (require, export
 		 */
 		renderItemContent()
 		{
-			const { id, workPosition, showBorder } = this.props.item;
+			const {
+				id,
+				workPosition,
+				showBorder,
+				fullName,
+				avatarSizeOriginal,
+			} = this.props.item;
 			const testId = `${this.testId}-item-content`;
 
 			return View(
@@ -33,6 +39,8 @@ jn.define('im/messenger/controller/vote/result/user-list-item', (require, export
 					id,
 					size: 40,
 					testId: `${testId}-avatar`,
+					name: fullName,
+					uri: avatarSizeOriginal,
 				}),
 				View(
 					{

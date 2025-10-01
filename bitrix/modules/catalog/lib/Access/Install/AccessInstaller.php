@@ -222,7 +222,7 @@ class AccessInstaller
 			$groups[$groupTask['GROUP_ID']]['PERMISSIONS'][] = $taskPermissionMap[$groupTask['TASK_ID']];
 		}
 
-		$adminGroupId = (int)\CGroup::GetIDByCode(ShopGroupAssistant::SHOP_ADMIN_USER_GROUP_CODE);
+		$adminGroupId = \CGroup::GetIDByCode(ShopGroupAssistant::SHOP_ADMIN_USER_GROUP_CODE);
 
 		foreach ($groups as $groupId => &$group)
 		{

@@ -6,11 +6,15 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Disk;
+
 use Bitrix\Mail;
+
 use Bitrix\Main;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Text\Encoding;
+
+use Bitrix\Crm\Integration\Analytics\Dictionary;
 
 class CBPMailActivity extends CBPActivity
 {
@@ -151,6 +155,19 @@ class CBPMailActivity extends CBPActivity
 			$eventName = ($mailMessageType === 'html') ? 'BIZPROC_HTML_MAIL_TEMPLATE' : 'BIZPROC_MAIL_TEMPLATE';
 			$event = new CEvent;
 			$event->Send($eventName, $siteId, $arFields, 'N', '', $files);
+		}
+
+		if (
+			Loader::includeModule('crm')
+			&& method_exists(CCrmBizProcHelper::class, 'sendOperationsAnalytics')
+		)
+		{
+			$documentType = $this->getDocumentType();
+			\CCrmBizProcHelper::sendOperationsAnalytics(
+				Dictionary::EVENT_ENTITY_SOCIAL,
+				$this,
+				$documentType[2] ?? '',
+			);
 		}
 
 		return CBPActivityExecutionStatus::Closed;

@@ -93,8 +93,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	 */
 	var EntityTypes = Object.freeze({
 	  department: 'DEPARTMENT',
-	  team: 'TEAM',
-	  company: 'COMPANY'
+	  team: 'TEAM'
 	});
 	var WizardApiEntityChangedDict = Object.freeze({
 	  department: 'department',

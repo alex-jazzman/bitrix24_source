@@ -263,6 +263,7 @@ $MESS["main_options_device_history_title"] = "История входов и у�
 $MESS["main_options_device_history"] = "Сохранять историю входов с устройств пользователя:";
 $MESS["main_options_device_history_days"] = "Сколько дней хранить историю входов:";
 $MESS["main_options_device_history_notify"] = "Оповещать пользователей о входе с нового устройства (<a href=\"#EMAIL_TEMPLATES_URL#\">почтовые шаблоны</a>):";
+$MESS["main_options_device_history_notify_im"] = "Оповещать пользователей в чат (требуются модули im, imbot):";
 $MESS["main_options_device_history_note"] = 'Для лучшего определения устройств настройте <a href="https://www.php.net/manual/en/function.get-browser.php" target = "_blank">browscap</a> в PHP. Используйте последнюю версию ini-файла с <a href="http://browscap.org" target="_blank">Browser Capabilities Project</a>.';
 $MESS['main_options_device_geoip'] = 'Собирать IP-геоданные для истории входов:';
 $MESS['main_options_geo'] = 'Геолокация';
@@ -277,3 +278,4 @@ $MESS['main_option_event_log_syslog'] = 'Записывать события в 
 $MESS['main_option_event_log_file'] = 'Записывать события в файл (JSON):';
 $MESS['main_option_event_log_file_path'] = 'Полный путь к файлу:';
 $MESS['MAIN_EVENT_LOG_GROUP_EDIT'] = 'Записывать редактирование группы:';
+$MESS['main_options_device_history_notify_only'] = 'Оповещать только указанных пользователей:';

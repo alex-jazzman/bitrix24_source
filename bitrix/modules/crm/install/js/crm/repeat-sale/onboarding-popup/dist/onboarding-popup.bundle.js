@@ -222,7 +222,7 @@ this.BX.Crm = this.BX.Crm || {};
 	function _getVideoPath2() {
 	  const region = main_core.Extension.getSettings('crm.repeat-sale.onboarding-popup').get('region');
 	  let name = 'how-it-work-en';
-	  if (['kz', 'ru', 'by'].includes(region)) {
+	  if (['kz', 'ru', 'by', 'uz'].includes(region)) {
 	    name = 'how-it-work-ru';
 	  }
 	  return `/bitrix/js/crm/repeat-sale/onboarding-popup/video/${name}.webm`;

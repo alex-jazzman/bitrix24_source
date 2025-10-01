@@ -468,7 +468,7 @@ jn.define('intranet/create-department', (require, exports, module) => {
 								}, this.props.parentWidget);
 							}
 
-							const { id, name: title } = result.data[0];
+							const { id, name: title } = result.data.node;
 							this.props.onSave?.({
 								id,
 								title,

@@ -9,7 +9,7 @@ import { Utils } from 'im.v2.lib.utils';
 import { MarketManager } from 'im.v2.lib.market';
 
 const customClickHandler = {
-	[NavigationMenuItem.copilot]: onCopilotClick,
+	[NavigationMenuItem.aiAssistant]: onCopilotClick,
 	[NavigationMenuItem.call]: onCallClick,
 	[NavigationMenuItem.timemanager]: onTimeManagerClick,
 	[NavigationMenuItem.homepage]: onHomepageClick,
@@ -61,7 +61,7 @@ function onCopilotClick(payload: NavigationMenuItemParams)
 	}
 
 	changeLayout({
-		layoutName: Layout.copilot.name,
+		layoutName: Layout.aiAssistant,
 		layoutEntityId: payload.entityId,
 	});
 }
@@ -94,7 +94,7 @@ function onMarketClick(payload: NavigationMenuItemParams)
 	if (entityId)
 	{
 		changeLayout({
-			layoutName: Layout.market.name,
+			layoutName: Layout.market,
 			layoutEntityId: entityId,
 		});
 
@@ -104,7 +104,7 @@ function onMarketClick(payload: NavigationMenuItemParams)
 	MarketManager.openMarketplace();
 }
 
-function changeLayout({ layoutName, layoutEntityId }: {layoutName: string, layoutEntityId?: string | number})
+function changeLayout({ layoutName, layoutEntityId }: { layoutName: string, layoutEntityId?: string | number })
 {
 	if (!Layout[layoutName])
 	{

@@ -30,7 +30,7 @@ jn.define('im/messenger/lib/converter/ui/message', (require, exports, module) =>
 		CallMessageFactory,
 		VoteMessageFactory,
 		AiAssistantMessage,
-	} = require('im/messenger/lib/element');
+	} = require('im/messenger/lib/element/dialog');
 	const { Feature } = require('im/messenger/lib/feature');
 	const { MessageHelper } = require('im/messenger/lib/helper');
 

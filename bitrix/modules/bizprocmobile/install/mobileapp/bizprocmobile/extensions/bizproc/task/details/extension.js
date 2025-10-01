@@ -11,9 +11,11 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Type } = require('type');
 	const { showToast } = require('toast');
+	const { QRCodeAuthComponent } = require('qrauth');
 
 	const { openNativeViewer } = require('utils/file');
 	const { throttle } = require('utils/function');
+	const { Random } = require('utils/random');
 
 	const { PureComponent } = require('layout/pure-component');
 	const { ContextMenu } = require('layout/ui/context-menu');
@@ -58,6 +60,7 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 							targetUserId: props.targetUserId || null,
 							readOnlyTimeline: props.readOnlyTimeline || false,
 							showNotifications: props.showNotifications,
+							isNeedFastClose: props.isNeedFastClose ?? true,
 						}));
 					},
 				},
@@ -86,7 +89,6 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 			this.isClosing = false;
 			this.isChanged = false;
 
-			// eslint-disable-next-line no-undef
 			this.uid = props.uid || Random.getString();
 			this.customEventEmitter = EventEmitter.createWithUid(this.uid);
 
@@ -197,7 +199,6 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 			// todo: add RPA tasks?
 			if (this.task.activity === 'RpaRequestActivity')
 			{
-				// eslint-disable-next-line no-undef
 				return new QRCodeAuthComponent({
 					redirectUrl: this.task.documentUrl,
 					showHint: true,
@@ -425,6 +426,7 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 				allTaskCount: this.state.allCount,
 				layout: this.layout,
 				showNotifications: BX.prop.getBoolean(this.props, 'showNotifications', true),
+				isNeedFastClose: BX.prop.getBoolean(this.props, 'isNeedFastClose', true),
 				detailsRef: this,
 			});
 		}

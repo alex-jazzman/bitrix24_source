@@ -1,13 +1,19 @@
-import { Runtime } from 'main.core';
+import { PermissionChecker, PermissionActions } from 'humanresources.company-structure.permission-checker';
+import { UserManagementDialogAPI } from 'humanresources.company-structure.user-management-dialog';
+import { Runtime, Loc, Text } from 'main.core';
 import { EntityTypes } from 'humanresources.company-structure.utils';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 import { UI } from 'ui.notification';
 import { ButtonColor } from 'ui.buttons';
+import { DepartmentContentActions } from '../../../../department-content/src/actions';
+import { DepartmentAPI } from '../../../../department-content/src/api';
+import { UserManagementDialogActions } from '../../../../user-management-dialog/src/actions';
 import { UrlProvidedParamsService } from '../../classes/url-provided-params-service';
 import { TreeNode } from './tree-node/tree-node';
 import { Connectors } from './connectors';
 import { DragAndDrop } from './directives/drag-and-drop';
 import { useChartStore } from 'humanresources.company-structure.chart-store';
+import { MoveEmployeeConfirmationPopup, ConfirmationPopup } from 'humanresources.company-structure.structure-components';
 import { mapState } from 'ui.vue3.pinia';
 import { EventEmitter, type BaseEvent } from 'main.core.events';
 import { events } from '../../consts';
@@ -21,7 +27,12 @@ import './style.css';
 export const Tree = {
 	name: 'companyTree',
 
-	components: { TreeNode, Connectors },
+	components: {
+		TreeNode,
+		Connectors,
+		MoveEmployeeConfirmationPopup,
+		ConfirmationPopup,
+	},
 
 	directives: { dnd: DragAndDrop },
 
@@ -47,11 +58,23 @@ export const Tree = {
 			expandedNodes: [],
 			isLocatedDepartmentVisible: false,
 			isLoaded: false,
+			userDropTargetNodeId: null,
+			isUserDropAllowed: false,
+			draggedUserData: null,
+			showDndConfirmationPopup: false,
+			showDndErrorPopup: false,
+			dndErrorPopupDescription: '',
+			dndUserMoveContext: null,
+			isCombineOnly: false,
 		};
 	},
 
 	computed:
 	{
+		entityType(): string
+		{
+			return this.departments.get(this.focusedNode)?.entityType || '';
+		},
 		rootId(): number
 		{
 			const { id: rootId } = [...this.departments.values()].find((department) => {
@@ -63,6 +86,20 @@ export const Tree = {
 		connectors(): Connectors
 		{
 			return this.$refs.connectors;
+		},
+		dndPopupDescription(): string
+		{
+			const targetDepartment = this.departments.get(this.dndUserMoveContext.targetDepartmentId);
+			const phrase = targetDepartment.entityType === EntityTypes.team ? 'HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_DESC_TEAM'
+				: 'HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_DESC_DEPARTMENT'
+			;
+
+			return Loc.getMessage(phrase, {
+				'#USER_NAME#': Text.encode(this.dndUserMoveContext.user.name),
+				'#DEPARTMENT_NAME#': Text.encode(targetDepartment.name),
+				'[link]': `<a class="hr-department-detail-content__move-user-department-user-link" href="${this.dndUserMoveContext.user.url}">`,
+				'[/link]': '</a>',
+			});
 		},
 		...mapState(useChartStore, ['currentDepartments', 'userId', 'focusedNode', 'departments']),
 	},
@@ -164,8 +201,8 @@ export const Tree = {
 		},
 		onToggleConnectors({ data }: BaseEvent): void
 		{
-			const { shouldShow } = data;
-			this.connectors.toggleAllConnectorsVisibility(shouldShow, this.expandedNodes);
+			const { shouldShowElements } = data;
+			this.connectors.toggleAllConnectorsVisibility(shouldShowElements, this.expandedNodes);
 		},
 		async changeOrder(data: DragAndDropData): Promise<void>
 		{
@@ -522,8 +559,13 @@ export const Tree = {
 				[events.HR_DEPARTMENT_FOCUS]: this.onFocusDepartment,
 				[events.HR_DRAG_ENTITY]: this.onDragEntity,
 				[events.HR_DROP_ENTITY]: this.onDropEntity,
-				[events.HR_ENTITY_TOGGLE_CONNECTORS]: this.onToggleConnectors,
+				[events.HR_ENTITY_TOGGLE_ELEMENTS]: this.onToggleConnectors,
 				[events.HR_PUBLIC_FOCUS_NODE]: this.onPublicFocusNode,
+				[events.HR_USER_DRAG_START]: this.onUserDragStart,
+				[events.HR_USER_DRAG_DROP]: this.onUserDragDrop,
+				[events.HR_USER_DRAG_END]: this.onUserDragEnd,
+				[events.HR_USER_DRAG_ENTER_NODE]: this.onUserDragEnterNode,
+				[events.HR_USER_DRAG_LEAVE_NODE]: this.onUserDragLeaveNode,
 			};
 			Object.entries(this.events).forEach(([event, handle]) => {
 				EventEmitter.subscribe(event, handle);
@@ -534,6 +576,230 @@ export const Tree = {
 			Object.entries(this.events).forEach(([event, handle]) => {
 				EventEmitter.unsubscribe(event, handle);
 			});
+		},
+		onUserDragStart({ data }): void
+		{
+			this.draggedUserData = data.user;
+		},
+		onUserDragEnterNode({ data }): void
+		{
+			if (!this.draggedUserData)
+			{
+				return;
+			}
+
+			const hoveredNodeId = data.nodeId;
+			const sourceDepartmentId = this.focusedNode;
+
+			const hoveredNode = this.departments.get(hoveredNodeId);
+			const sourceNode = this.departments.get(sourceDepartmentId);
+
+			if (sourceNode.entityType !== hoveredNode.entityType || hoveredNodeId === sourceDepartmentId)
+			{
+				this.userDropTargetNodeId = hoveredNodeId;
+				this.isUserDropAllowed = false;
+
+				return;
+			}
+
+			this.userDropTargetNodeId = hoveredNodeId;
+			const movePermissions = this.canMoveUser(sourceDepartmentId, hoveredNodeId);
+			this.isUserDropAllowed = movePermissions.isAllowed;
+			this.isCombineOnly = movePermissions.combineOnly;
+		},
+		onUserDragLeaveNode({ data }): void
+		{
+			if (!this.draggedUserData)
+			{
+				return;
+			}
+
+			if (this.userDropTargetNodeId === data.nodeId)
+			{
+				this.userDropTargetNodeId = null;
+				this.isUserDropAllowed = false;
+			}
+		},
+		async onUserDragDrop(): Promise<void>
+		{
+			if (!this.userDropTargetNodeId || !this.isUserDropAllowed)
+			{
+				return;
+			}
+
+			this.dndUserMoveContext = {
+				user: this.draggedUserData,
+				sourceDepartmentId: this.focusedNode,
+				targetDepartmentId: this.userDropTargetNodeId,
+				sourceRole: this.draggedUserData.role,
+			};
+
+			this.showDndConfirmationPopup = true;
+		},
+		async confirmUserMove(payload: {
+			role: string;
+			roleLabel: string;
+			isCombineMode: boolean;
+			badgeText: string;
+		}): Promise<void>
+		{
+			this.showDndConfirmationPopup = false;
+			const { user, targetDepartmentId } = this.dndUserMoveContext;
+
+			const targetDepartment = this.departments.get(targetDepartmentId);
+			const userInTarget = (targetDepartment.heads ?? []).find((u) => u.id === user.id)
+				|| (targetDepartment.employees ?? []).find((u) => u.id === user.id);
+			const isAlreadyInTarget = Boolean(userInTarget);
+			const isRoleTheSame = isAlreadyInTarget && (userInTarget.role === payload.role);
+
+			if (isAlreadyInTarget && isRoleTheSame)
+			{
+				this.displayDndErrorPopup(user, targetDepartmentId);
+				this.dndUserMoveContext = null;
+
+				return;
+			}
+
+			try
+			{
+				if (payload.isCombineMode)
+				{
+					await this.handleCombineUser(this.dndUserMoveContext, payload);
+				}
+				else
+				{
+					await this.handleMoveUser(this.dndUserMoveContext, payload, isAlreadyInTarget);
+				}
+
+				const phrase = targetDepartment.entityType === EntityTypes.team ? 'HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_MOVED_SUCCESS_TEAM'
+					: 'HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_MOVED_SUCCESS_DEPARTMENT'
+				;
+				UI.Notification.Center.notify({
+					content: this.loc(phrase, {
+						'#USER_NAME#': Text.encode(user.name),
+						'#DEPARTMENT_NAME#': Text.encode(targetDepartment.name),
+						'#USER_ROLE#': Text.encode(payload.roleLabel),
+					}),
+				});
+			}
+			catch (error)
+			{
+				console.error(error);
+			}
+
+			this.dndUserMoveContext = null;
+		},
+		async handleCombineUser(dndContext, payload): Promise<void>
+		{
+			const { user, targetDepartmentId } = dndContext;
+			const data = await UserManagementDialogAPI.addUsersToDepartment(targetDepartmentId, [user.id], payload.role);
+
+			UserManagementDialogActions.addUsersToDepartment(
+				targetDepartmentId,
+				[{ ...user, role: payload.role, badgeText: payload.badgeText ?? null }],
+				data.userCount,
+				payload.role,
+			);
+		},
+		async handleMoveUser(dndContext, payload, isAlreadyInTarget): Promise<void>
+		{
+			const { user, sourceDepartmentId, targetDepartmentId, sourceRole } = dndContext;
+			const targetDepartment = this.departments.get(targetDepartmentId);
+
+			if (isAlreadyInTarget)
+			{
+				await UserManagementDialogAPI.addUsersToDepartment(targetDepartmentId, [user.id], payload.role);
+				await DepartmentAPI.removeUserFromDepartment(sourceDepartmentId, user.id);
+			}
+			else
+			{
+				await DepartmentAPI.moveUserToDepartment(
+					sourceDepartmentId,
+					user.id,
+					targetDepartmentId,
+					payload.role,
+				);
+			}
+
+			const finalUserCount = targetDepartment.userCount + (isAlreadyInTarget ? 0 : 1);
+
+			DepartmentContentActions.removeUserFromDepartment(sourceDepartmentId, user.id, sourceRole);
+			UserManagementDialogActions.addUsersToDepartment(
+				targetDepartmentId,
+				[{ ...user, role: payload.role, badgeText: payload.badgeText ?? null }],
+				finalUserCount,
+				payload.role,
+			);
+		},
+		displayDndErrorPopup(user, targetDepartmentId: number): void
+		{
+			const targetDepartment = this.departments.get(targetDepartmentId);
+			const phrase = targetDepartment.entityType === EntityTypes.team ? 'HUMANRESOURCES_COMPANY_STRUCTURE_DND_ERROR_POPUP_DESC_TEAM'
+				: 'HUMANRESOURCES_COMPANY_STRUCTURE_DND_ERROR_POPUP_DESC_DEPARTMENT'
+			;
+			this.dndErrorPopupDescription = Loc.getMessage(phrase, {
+				'#USER_NAME#': Text.encode(user.name),
+				'#DEPARTMENT_NAME#': Text.encode(targetDepartment.name),
+				'[link]': `<a class="hr-department-detail-content__move-user-department-user-link" href="${user.url}">`,
+				'[/link]': '</a>',
+			});
+
+			this.showDndErrorPopup = true;
+		},
+		cancelUserMove(): void
+		{
+			if (!this.dndUserMoveContext)
+			{
+				return;
+			}
+
+			this.showDndConfirmationPopup = false;
+			this.dndUserMoveContext = null;
+		},
+		closeDndErrorPopup(): void
+		{
+			this.showDndErrorPopup = false;
+			this.dndErrorPopupDescription = '';
+			this.dndUserMoveContext = null;
+		},
+		onUserDragEnd(): void
+		{
+			this.userDropTargetNodeId = null;
+			this.isUserDropAllowed = false;
+			this.draggedUserData = null;
+		},
+		canMoveUser(sourceDepartmentId: number, targetDepartmentId: number): { isAllowed: boolean; combineOnly: boolean }
+		{
+			const permissionChecker = PermissionChecker.getInstance();
+			const sourceDepartmentData = this.departments.get(sourceDepartmentId);
+			const hoveredNodeData = this.departments.get(targetDepartmentId);
+
+			if (!sourceDepartmentData || !hoveredNodeData)
+			{
+				return { isAllowed: false, forceCombine: false };
+			}
+
+			const sourcePermissionAction = sourceDepartmentData.entityType === EntityTypes.team
+				? PermissionActions.teamRemoveMember
+				: PermissionActions.employeeRemoveFromDepartment;
+			const canTakeFromSource = permissionChecker.hasPermission(sourcePermissionAction, sourceDepartmentId);
+
+			const targetPermissionAction = hoveredNodeData.entityType === EntityTypes.team
+				? PermissionActions.teamAddMember
+				: PermissionActions.employeeAddToDepartment;
+			const canPutToTarget = permissionChecker.hasPermission(targetPermissionAction, targetDepartmentId);
+
+			if (canTakeFromSource && canPutToTarget)
+			{
+				return { isAllowed: true, combineOnly: false };
+			}
+
+			if (!canTakeFromSource && canPutToTarget)
+			{
+				return { isAllowed: true, combineOnly: true };
+			}
+
+			return { isAllowed: false, combineOnly: false };
 		},
 	},
 
@@ -550,12 +816,43 @@ export const Tree = {
 				:expandedNodes="[...expandedNodes]"
 				:canvasZoom="canvasTransform.zoom"
 				:currentDepartments="currentDepartments"
+				:userDropTargetNodeId="userDropTargetNodeId"
+				:isUserDropAllowed="isUserDropAllowed"
+				:isDraggingUser="!!draggedUserData"
 			></TreeNode>
 			<Connectors
 				ref="connectors"
 				:isLocatedDepartmentVisible="isLocatedDepartmentVisible"
 				:treeNodes="treeNodes"
 			></Connectors>
+			<MoveEmployeeConfirmationPopup
+				v-if="showDndConfirmationPopup"
+				:description="dndPopupDescription"
+				:showRoleSelect="true"
+				:showCombineCheckbox="true"
+				:isCombineOnly="isCombineOnly"
+				:entityType="entityType"
+				@confirm="confirmUserMove"
+				@close="cancelUserMove"
+			/>
+			<ConfirmationPopup
+				v-if="showDndErrorPopup"
+				:withoutTitleBar = true
+				:onlyConfirmButtonMode = true
+				:confirmBtnText = "loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_USER_ACTION_MENU_MOVE_TO_ANOTHER_DEPARTMENT_ALREADY_BELONGS_TO_DEPARTMENT_CLOSE_BUTTON')"
+				:width="300"
+				@action="closeDndErrorPopup"
+				@close="closeDndErrorPopup"
+			>
+				<template v-slot:content>
+					<div class="hr-department-detail-content__user-action-text-container">
+						<div
+							class="hr-department-detail-content__user-belongs-to-department-text-container"
+							v-html="dndErrorPopupDescription"
+						/>
+					</div>
+				</template>
+			</ConfirmationPopup>
 		</div>
 	`,
 };

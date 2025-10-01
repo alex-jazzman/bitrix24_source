@@ -25,6 +25,7 @@ return [
 		'im.v2.provider.service.sending',
 		'im.v2.provider.service.message',
 		'im.v2.provider.service.uploading',
+		'ui.system.menu',
 		'im.v2.lib.copilot',
 		'im.v2.lib.channel',
 		'main.core.events',

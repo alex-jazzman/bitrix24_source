@@ -112,7 +112,7 @@ export const CollabCreation = {
 		onLayoutChange(event: BaseEvent<OnLayoutChangeEvent>): void
 		{
 			const { to } = event.getData();
-			if (to.name === Layout.createChat.name && to.entityId !== ChatType.collab)
+			if (to.name === Layout.createChat && to.entityId !== ChatType.collab)
 			{
 				this.exitByChatTypeSwitch = true;
 			}

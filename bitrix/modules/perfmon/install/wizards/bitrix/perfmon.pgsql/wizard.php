@@ -507,6 +507,20 @@ class CPgUserStep extends CBasePgWizardStep
 				return;
 			}
 
+			$option = $conn->query("select setting from pg_settings where name = 'standard_conforming_strings'")->fetch();
+			if (!isset($option['SETTING']) || $option['SETTING'] != 'on')
+			{
+				$this->SetError(GetMessage("PGWIZ_ERROR_PGSQL_CONFIG_ER"));
+				return;
+			}
+
+			$option = $conn->query("select setting from pg_settings where name = 'ac_ignore_maclabel'")->fetch();
+			if (isset($option['SETTING']) && $option['SETTING'] == 'false')
+			{
+				$this->SetError(GetMessage("PGWIZ_ERROR_PGSQL_CONFIG_MAC_ER"));
+				return;
+			}
+
 			if ($wizard->GetVar('create') === 'by_wizard')
 			{
 				$dbResult = $conn->query("SELECT datname FROM pg_database WHERE datname = '" . $conn->getSqlHelper()->forSql($wizard->GetVar('database')) . "'");

@@ -192,7 +192,7 @@ export default class Popup extends EventEmitter
 		this.borderRadius = null;
 		this.contentBorderRadius = null;
 
-		this.targetContainer = Type.isElementNode(params.targetContainer) ? params.targetContainer : document.body;
+		this.setTargetContainer(params.targetContainer);
 
 		this.dragOptions = {
 			cursor: '',
@@ -284,7 +284,7 @@ export default class Popup extends EventEmitter
 			>${[this.titleBar, this.contentContainer, this.closeIcon]}</div>
 		`;
 
-		this.targetContainer.appendChild(this.popupContainer);
+		this.getTargetContainer().append(this.popupContainer);
 
 		this.zIndexComponent = ZIndexManager.register(this.popupContainer, params.zIndexOptions);
 
@@ -1050,6 +1050,26 @@ export default class Popup extends EventEmitter
 		}
 	}
 
+	setTargetContainer(targetContainer: HTMLElement): void
+	{
+		const newTargetContainer = Type.isElementNode(targetContainer) ? targetContainer : document.body;
+		if (newTargetContainer === this.targetContainer)
+		{
+			return;
+		}
+
+		this.targetContainer = newTargetContainer;
+		if (this.getPopupContainer())
+		{
+			this.getTargetContainer().append(this.getPopupContainer());
+		}
+
+		if (this.overlay)
+		{
+			Dom.append(this.overlay.element, this.getTargetContainer());
+		}
+	}
+
 	getTargetContainer(): HTMLElement
 	{
 		return this.targetContainer;
@@ -1433,7 +1453,7 @@ export default class Popup extends EventEmitter
 
 			this.resizeOverlay();
 
-			Dom.append(this.overlay.element, this.targetContainer);
+			Dom.append(this.overlay.element, this.getTargetContainer());
 			this.getZIndexComponent().setOverlay(this.overlay.element);
 		}
 

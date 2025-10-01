@@ -8,8 +8,9 @@ return [
 	'css' => 'dist/structure-components.bundle.css',
 	'js' => 'dist/structure-components.bundle.js',
 	'rel' => [
-		'main.popup',
 		'ui.icon-set.api.vue',
+		'main.popup',
+		'humanresources.company-structure.api',
 		'ui.entity-selector',
 		'ui.icon-set.actions',
 		'humanresources.company-structure.utils',

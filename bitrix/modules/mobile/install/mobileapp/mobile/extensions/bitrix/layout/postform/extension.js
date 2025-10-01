@@ -4,6 +4,7 @@
 	AppTheme.extend('medalSelector', {
 		Opacity: [1, 0.1],
 	});
+	const { AnalyticsEvent } = require('analytics');
 
 	this.NewPostComponent = class NewPostComponent extends LayoutComponent
 	{
@@ -394,6 +395,28 @@
 				.then((postData) => this.processBackground(postData, backgroundImageCode))
 				.then((postData) => this.processVote(postData, voteData))
 				.then((postData) => {
+					let analyticType = 'post';
+					if (postData.GRATITUDE_MEDAL)
+					{
+						analyticType = 'appreciation';
+					}
+					else if (postData.IMPORTANT === 'Y')
+					{
+						analyticType = 'announcement';
+					}
+					else if (postData.UF_BLOG_POST_VOTE)
+					{
+						analyticType = 'poll';
+					}
+
+					new AnalyticsEvent({
+						tool: 'feed',
+						category: 'posts_operations',
+						event: 'post_create',
+						type: analyticType,
+						c_section: postData.DEST.some((dest => dest.startsWith('SG'))) ? 'project' : 'posts',
+					}).send();
+
 					BX.postComponentEvent(
 						'Livefeed.PublicationQueue::setItem',
 						[

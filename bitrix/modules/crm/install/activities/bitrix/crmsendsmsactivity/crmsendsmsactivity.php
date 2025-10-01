@@ -83,7 +83,6 @@ class CBPCrmSendSmsActivity extends CBPActivity
 
 		if ($sendResult)
 		{
-			// Send Operations Analytics
 			$documentType = $this->getDocumentType();
 			\CCrmBizProcHelper::sendOperationsAnalytics(
 				Dictionary::EVENT_ENTITY_SOCIAL,

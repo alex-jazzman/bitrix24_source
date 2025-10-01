@@ -2287,7 +2287,13 @@ this.BX.Crm = this.BX.Crm || {};
 	      return this.formatUserTime('F');
 	    },
 	    dayWeek() {
-	      return this.formatUserTime('D');
+	      const dayShortName = this.formatUserTime('D');
+	      if (this.time.length > 5)
+	        // "12:34".length === 5, if +" PM" than > 5
+	        {
+	          return dayShortName.slice(0, 2);
+	        }
+	      return dayShortName;
 	    },
 	    time() {
 	      return this.getDateTimeConverter().toTimeString();
@@ -2687,7 +2693,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      uiButton: Object.freeze(null),
 	      timerSecondsRemaining: 0,
 	      currentState: this.state,
-	      hintText: main_core.Type.isStringFilled(this.tooltip) ? main_core.Text.encode(this.tooltip) : ''
+	      hintText: main_core.Type.isStringFilled(this.tooltip) ? this.tooltip : ''
 	    };
 	  },
 	  computed: {

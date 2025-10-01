@@ -688,14 +688,8 @@ export class View
 		document.addEventListener('mousemove', this.onMouseMoveHandler);
 		// TODO: Disable PiP on minimize
 		// this.toggleVisibilityChangeDocumentEvent(true);
-		if (Browser.isMac())
-		{
-			this.keyModifier = '&#8984; + Shift';
-		}
-		else
-		{
-			this.keyModifier = 'Ctrl + Shift';
-		}
+
+		this.keyModifierForCss = Browser.isMac() ? '\\2318 + Shift' : 'Ctrl + Shift';
 
 		this.container.appendChild(this.elements.audioContainer);
 		this.container.appendChild(this.elements.screenAudioContainer);
@@ -2811,114 +2805,97 @@ export class View
 	 */
 	showMessage(params)
 	{
-		if (!this.elements.root)
-		{
-			this.render();
-			this.container.appendChild(this.elements.root);
-		}
-
-		const statusNode = Dom.create("div", {
-			props: {className: "bx-messenger-videocall-user-status bx-messenger-videocall-user-status-wide"},
+		const statusNode = Dom.create('div', {
+			props: { className: 'bx-messenger-videocall-user-status bx-messenger-videocall-user-status-wide' },
 		});
 
 		if (Type.isStringFilled(params.text))
 		{
-			const textNode = Dom.create("div", {
-				props: {className: "bx-messenger-videocall-status-text"},
-				text: params.text
+			const textNode = Dom.create('div', {
+				props: { className: 'bx-messenger-videocall-status-text' },
+				text: params.text,
 			});
-			statusNode.appendChild(textNode);
+			Dom.append(textNode, statusNode);
 		}
 
-		if (this.elements.overlay.childElementCount)
-		{
-			Dom.clean(this.elements.overlay);
-		}
-		this.elements.overlay.appendChild(statusNode);
-	};
+		this.#showErrorLayout(statusNode);
+	}
 
 	hideMessage()
 	{
 		this.elements.overlay.textContent = '';
-	};
+	}
 
-	renderErrorCallLayout()
+	renderSelfTestCallLayout()
 	{
-		if (!this.elements.root)
-		{
-			this.render();
-			this.container.appendChild(this.elements.root);
-		}
-
-		const errorContainer = Dom.create("div", {
-			props: {className: "bx-messenger-videocall-error-container"},
+		const errorContainer = Dom.create('div', {
+			props: { className: 'bx-messenger-videocall-error-container' },
 			children: [
-				Dom.create("div", {
-					props: {className: "bx-messenger-videocall-error-container-icon-alert"},
+				Dom.create('div', {
+					props: { className: 'bx-messenger-videocall-error-container-icon-alert' },
 				}),
-				Dom.create("div", {
-					props: {className: "bx-messenger-videocall-error-message"},
-					text: BX.message("CALL_CONNECTED_ERROR"),
+				Dom.create('div', {
+					props: { className: 'bx-messenger-videocall-error-message' },
+					text: Loc.getMessage('CALL_CONNECTED_ERROR'),
 				}),
-				Dom.create("div", {
-					props: {className: "bx-messenger-videocall-error-button-self-test"},
-					text: BX.message("CALL_RUN_SELF_TEST"),
+				Dom.create('div', {
+					props: { className: 'bx-messenger-videocall-error-button-self-test' },
+					text: Loc.getMessage('CALL_RUN_SELF_TEST'),
 					events: {
-						click: () =>
-						{
+						click: () => {
 							Util.startSelfTest();
-						}
-					}
+						},
+					},
 				}),
-
 			],
-		})
+		});
 
-		if (this.elements.overlay.childElementCount)
-		{
-			Dom.clean(this.elements.overlay);
-		}
-		this.elements.overlay.appendChild(errorContainer);
+		this.#showErrorLayout(errorContainer);
 	}
 
 	renderReloadPageLayout()
 	{
+		const errorContainer = Dom.create('div', {
+			props: { className: 'bx-messenger-videocall-error-container' },
+			children: [
+				Dom.create('div', {
+					props: { className: 'bx-messenger-videocall-error-container-icon-alert' },
+				}),
+				Dom.create('div', {
+					props: { className: 'bx-messenger-videocall-error-message' },
+					html: Loc.getMessage('CALL_SECURITY_KEY_CHANGED', { '[break]': '<br/>' }),
+				}),
+				Dom.create('div', {
+					props: { className: 'bx-messenger-videocall-error-button-self-test' },
+					text: Loc.getMessage('CALL_RELOAD_PAGE'),
+					events: {
+						click: () => {
+							this.destroy();
+							location.reload();
+						},
+					},
+				}),
+			],
+		});
+
+		this.#showErrorLayout(errorContainer);
+	}
+
+	#showErrorLayout(content)
+	{
 		if (!this.elements.root)
 		{
 			this.render();
-			this.container.appendChild(this.elements.root);
+			Dom.append(this.elements.root, this.container);
 		}
-
-		const errorContainer = Dom.create("div", {
-			props: {className: 'bx-messenger-videocall-error-container'},
-			children: [
-				Dom.create('div', {
-					props: {className: "bx-messenger-videocall-error-container-icon-alert"},
-				}),
-				Dom.create('div', {
-					props: {className: "bx-messenger-videocall-error-message"},
-					html: BX.message('CALL_SECURITY_KEY_CHANGED').replace('[break]', '<br/>'),
-				}),
-				Dom.create('div', {
-					props: {className: 'bx-messenger-videocall-error-button-self-test'},
-					text: BX.message('CALL_RELOAD_PAGE'),
-					events: {
-						click: () =>
-						{
-							this.destroy();
-							location.reload();
-						}
-					}
-				}),
-			],
-		})
 
 		if (this.elements.overlay.childElementCount)
 		{
 			Dom.clean(this.elements.overlay);
 		}
-		this.elements.overlay.appendChild(errorContainer);
-	};
+
+		Dom.append(content, this.elements.overlay);
+	}
 
 	/**
 	 * @param {Object} params
@@ -2927,19 +2904,28 @@ export class View
 	 */
 	showFatalError(params)
 	{
-		this.renderErrorCallLayout();
-		this.setUiState(UiState.Error);
-		// in some cases video elements may still be shown on the error screen, let's hide them
-		this.elements.userList.container.style.display = 'none';
-	};
+		this.showMessage(params);
+		this.#prepareErrorState();
+	}
 
 	showSecurityKeyError()
 	{
 		this.renderReloadPageLayout();
+		this.#prepareErrorState();
+	}
+
+	showSelfTest()
+	{
+		this.renderSelfTestCallLayout();
+		this.#prepareErrorState();
+	}
+
+	#prepareErrorState()
+	{
 		this.setUiState(UiState.Error);
 		// in some cases video elements may still be shown on the error screen, let's hide them
-		this.elements.userList.container.style.display = 'none';
-	};
+		Dom.style(this.elements.userList.container, 'display', 'none');
+	}
 
 	close()
 	{
@@ -4455,14 +4441,15 @@ export class View
 							blocked: this.isButtonBlocked('microphone'),
 							showLevel: true,
 							sideIcon: this.getMicrophoneSideIcon(this.roomState),
-							onClick: (e) => {
-								this._onMicrophoneButtonClick(e);
-								this._showMicrophoneHint(e);
-							},
+							onClick: this._onMicrophoneButtonClick.bind(this),
 							onArrowClick: this._onMicrophoneArrowClick.bind(this),
-							onMouseOver: this._showMicrophoneHint.bind(this),
-							onMouseOut: () => this._destroyHotKeyHint(),
 							onSideIconClick: this._onMicrophoneSideIconClick.bind(this),
+							...(Util.isDesktop() ? {
+								tooltip: {
+									position: 'top',
+									getText: () => Hardware.isMicrophoneMuted ? `${BX.message('IM_SPACE_HOTKEY')}\\A${this.keyModifierForCss} + A` : `${this.keyModifierForCss} + A`,
+								},
+							} : {}),
 						});
 					}
 
@@ -4487,12 +4474,12 @@ export class View
 							blocked: this.isButtonBlocked('camera'),
 							onClick: this._onCameraButtonClick.bind(this),
 							onArrowClick: this._onCameraArrowClick.bind(this),
-							onMouseOver: (e) => {
-								this._showHotKeyHint(e.currentTarget.firstChild, 'camera', `${this.keyModifier} + V`);
-							},
-							onMouseOut: () => {
-								this._destroyHotKeyHint();
-							},
+							...(Util.isDesktop() ? {
+								tooltip: {
+									position: 'top',
+									getText: () => `${this.keyModifierForCss} + V`,
+								}
+							} : {}),
 						});
 					}
 
@@ -4514,12 +4501,12 @@ export class View
 							text: BX.message('IM_M_CALL_BTN_SCREEN'),
 							blocked: this.isButtonBlocked('screen'),
 							onClick: this._onScreenButtonClick.bind(this),
-							onMouseOver: (e) => {
-								this._showHotKeyHint(e.currentTarget, 'screen', `${this.keyModifier} + S`);
-							},
-							onMouseOut: () => {
-								this._destroyHotKeyHint();
-							},
+							...(Util.isDesktop() ? {
+								tooltip: {
+									position: 'top',
+									getText: () => `${this.keyModifierForCss} + S`,
+								}
+							} : {}),
 						});
 					}
 
@@ -4546,18 +4533,12 @@ export class View
 								: BX.message('IM_M_CALL_BTN_RECORD'),
 							blocked: this.isButtonBlocked('record'),
 							onClick: this._onRecordToggleClick.bind(this),
-							onMouseOver: (e) => {
-								if (this.isRecordingHotKeySupported())
-								{
-									this._showHotKeyHint(e.currentTarget, 'record', `${this.keyModifier} + R`);
+							...(Util.isDesktop() ? {
+								tooltip: {
+									position: 'top',
+									getText: () => `${this.keyModifierForCss} + R`,
 								}
-							},
-							onMouseOut: () => {
-								if (this.isRecordingHotKeySupported())
-								{
-									this._destroyHotKeyHint();
-								}
-							},
+							} : {}),
 						});
 					}
 
@@ -4602,38 +4583,14 @@ export class View
 							blocked: this.isButtonBlocked('copilot'),
 							onClick: this._onCopilotButtonClick.bind(this),
 							isComingSoon: !this.isCopilotFeaturesEnabled,
-							onMouseOver: (e) => {
-								this.hintManager.popupParameters.events = null;
-								this.hintManager.popupParameters.events = {
-									onShow: function onShow(event) {
-										const popup = event.getTarget();
-										const elementOffsetWidth = e.currentTarget?.offsetWidth;
-										const popupOffsetWidth = popup.getPopupContainer()?.offsetWidth;
-
-										if (!elementOffsetWidth || !popupOffsetWidth)
-										{
-											return;
-										}
-
-										const offsetLeft = (elementOffsetWidth / 2 - popupOffsetWidth / 2);
-
-										popup.setOffset({
-											offsetLeft,
-										});
-									},
-								};
-								const hintText = this.isCopilotActive
-									? Loc.getMessage('CALL_COPILOT_BUTTON_ON_HINT_V2')
-									: Loc.getMessage('CALL_COPILOT_BUTTON_OFF_HINT')
-								;
-								this.hintManager.show(e.currentTarget, hintText);
-							},
-							onMouseOut: (e) => {
-								if (!e.relatedTarget || !e.currentTarget.contains(e.relatedTarget))
-								{
-									this.hintManager.hide();
-								}
-							},
+							...(Util.isDesktop() ? {
+								tooltip: {
+									position: 'top',
+									getText: () => this.isCopilotActive
+										? Loc.getMessage('CALL_COPILOT_BUTTON_ON_HINT_V2')
+										: Loc.getMessage('CALL_COPILOT_BUTTON_OFF_HINT'),
+								},
+							} : {}),
 						});
 					}
 
@@ -4726,12 +4683,12 @@ export class View
 							text: BX.message('IM_M_CALL_BTN_CHAT'),
 							blocked: this.isButtonBlocked('chat'),
 							onClick: this._onChatButtonClick.bind(this),
-							onMouseOver: (e) => {
-								this._showHotKeyHint(e.currentTarget, 'chat', `${this.keyModifier} + C`);
-							},
-							onMouseOut: () => {
-								this._destroyHotKeyHint();
-							},
+							...(Util.isDesktop() ? {
+								tooltip: {
+									position: 'top',
+									getText: () => `${this.keyModifierForCss} + C`,
+								}
+							} : {}),
 						});
 					}
 
@@ -4749,10 +4706,12 @@ export class View
 							text: BX.message('IM_M_CALL_BTN_WANT_TO_SAY'),
 							blocked: this.isButtonBlocked('floorRequest'),
 							onClick: this._onFloorRequestButtonClick.bind(this),
-							onMouseOver: (e) => {
-								this._showHotKeyHint(e.currentTarget, 'floorRequest', `${this.keyModifier} + H`);
-							},
-							onMouseOut: () => this._destroyHotKeyHint(),
+							...(Util.isDesktop() ? {
+								tooltip: {
+									position: 'top',
+									getText: () => `${this.keyModifierForCss} + H`,
+								}
+							} : {}),
 						});
 					}
 					else
@@ -4826,13 +4785,11 @@ export class View
 							iconClass: 'protected',
 							textClass: 'protected',
 							text: BX.message('IM_M_CALL_PROTECTED').toLowerCase(),
-							onMouseOver: (e) => {
-								this.hintManager.popupParameters.events = null;
-								this.hintManager.show(e.currentTarget, BX.message('IM_M_CALL_PROTECTED_HINT'));
-							},
-							onMouseOut: () => {
-								this.hintManager.hide();
-							},
+							tooltip: {
+								width: '384px',
+								position: 'bottom',
+								getText: () => BX.message('IM_M_CALL_PROTECTED_HINT'),
+							}
 						});
 					}
 
@@ -4853,8 +4810,18 @@ export class View
 							recordState: this.recordState,
 							onPauseClick: this._onRecordPauseClick.bind(this),
 							onStopClick: this._onRecordStopClick.bind(this),
-							onMouseOver: this._onRecordMouseOver.bind(this),
-							onMouseOut: this._onRecordMouseOut.bind(this),
+							tooltip: {
+								position: 'bottom',
+								getText: () => {
+									if (this.recordState.userId == this.userId || !this.userData[this.recordState.userId])
+									{
+										return '';
+									}
+
+									const recordingUserName = Text.encode(this.userData[this.recordState.userId].name);
+									return BX.message('IM_M_CALL_RECORD_HINT').replace('#USER_NAME#', recordingUserName);
+								},
+							}
 						});
 					}
 
@@ -4877,12 +4844,12 @@ export class View
 							iconClass: this.layout === Layouts.Grid ? 'speaker' : 'grid',
 							text: this.layout === Layouts.Grid ? BX.message('IM_M_CALL_SPEAKER_MODE') : BX.message('IM_M_CALL_GRID_MODE'),
 							onClick: this._onGridButtonClick.bind(this),
-							onMouseOver: (e) => {
-								this._showHotKeyHint(e.currentTarget, 'grid', `${this.keyModifier} + W`, { position: 'bottom' });
-							},
-							onMouseOut: () => {
-								this._destroyHotKeyHint();
-							},
+							...(Util.isDesktop() ? {
+								tooltip: {
+									position: 'bottom',
+									getText: () => `${this.keyModifierForCss} + W`
+								}
+							} : {}),
 						});
 					}
 
@@ -5282,8 +5249,8 @@ export class View
 
 	toggleStatePictureInPictureCallWindow(isActive)
 	{
-		const isPiPAvailable = Util.isPictureInPictureFeatureEnabled() && PictureInPictureWindow.isAvailable;
-		if (isActive && !this.pictureInPictureCallWindow && isPiPAvailable)
+		const isPiPAvailable = PictureInPictureWindow.isAvailable;
+		if (isActive && !this.pictureInPictureCallWindow && isPiPAvailable && Util.isPictureInPictureFeatureEnabled())
 		{
 			this.pictureInPictureCallWindow = new PictureInPictureWindow({
 				currentUser: this.getPictureInPictureCallWindowUser(),
@@ -5928,49 +5895,7 @@ export class View
 		}
 	};
 
-	_showHotKeyHint(targetNode, name, text, options)
-	{
-		const existingHint = BX.PopupWindowManager.getPopupById('ui-hint-popup');
-		if (existingHint)
-		{
-			existingHint.destroy();
-		}
 
-		if (!this.isHotKeyActive(name))
-		{
-			return;
-		}
-
-		options = options || {};
-		this.hintManager.popupParameters.events = {
-			onShow: function onShow(event) {
-				let popup = event.getTarget();
-				let offsetLeft = (targetNode.offsetWidth / 2 - popup.getPopupContainer().offsetWidth / 2) + 23;
-
-				if (options?.additionalOffsetLeft)
-				{
-					offsetLeft += options.additionalOffsetLeft;
-				}
-				// hack to get hint sizes
-				popup.getPopupContainer().style.display = 'block';
-				if (options.position === 'bottom') {
-					popup.setOffset({
-						offsetTop: 10,
-						offsetLeft,
-					});
-				} else {
-					popup.setOffset({
-						offsetLeft,
-					});
-				}
-			}
-		};
-
-		this.hintManager.show(
-			targetNode,
-			text
-		);
-	}
 
 	_destroyHotKeyHint()
 	{
@@ -5985,29 +5910,9 @@ export class View
 		}
 
 		// we need to destroy, not .hide for onShow event handler (see method _showHotKeyHint).
+		this.hintManager.hide();
 		this.hintManager.popup.destroy();
 		this.hintManager.popup = null;
-	}
-
-	_showMicrophoneHint(e)
-	{
-		this.hintManager.hide();
-
-		if (!this.isHotKeyActive("microphone"))
-		{
-			return;
-		}
-
-		let micHotkeys = '';
-		let additionalOffsetLeft = 0;
-		if (Hardware.isMicrophoneMuted && this.isHotKeyActive("microphoneSpace"))
-		{
-			micHotkeys = BX.message("IM_SPACE_HOTKEY") + '<br>';
-			additionalOffsetLeft = 20;
-		}
-		micHotkeys += this.keyModifier + ' + A';
-
-		this._showHotKeyHint(e.currentTarget.firstChild, "microphone", micHotkeys, {additionalOffsetLeft});
 	}
 
 	_onKeyDown(e)
@@ -6329,22 +6234,6 @@ export class View
 			recordState: this.recordState.state,
 			node: e.currentTarget
 		});
-	};
-
-	_onRecordMouseOver(e)
-	{
-		if (this.recordState.userId == this.userId || !this.userData[this.recordState.userId])
-		{
-			return;
-		}
-
-		const recordingUserName = Text.encode(this.userData[this.recordState.userId].name);
-		this.hintManager.show(e.currentTarget, BX.message("IM_M_CALL_RECORD_HINT").replace("#USER_NAME#", recordingUserName));
-	};
-
-	_onRecordMouseOut()
-	{
-		this.hintManager.hide();
 	};
 
 	_onDocumentButtonClick(e)
@@ -6885,10 +6774,7 @@ export class View
 
 	releaseLocalMedia()
 	{
-		if (!this.hasCurrentUserScreenSharing())
-		{
-			this.localUser.releaseStream();
-		}
+		this.localUser.releaseStream();
 
 		if (this.centralUser.id == this.userId)
 		{

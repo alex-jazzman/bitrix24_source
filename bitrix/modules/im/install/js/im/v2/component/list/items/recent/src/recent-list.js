@@ -2,7 +2,7 @@ import { BaseEvent } from 'main.core.events';
 
 import { ChatType, Settings } from 'im.v2.const';
 import { Utils } from 'im.v2.lib.utils';
-import { RecentService } from 'im.v2.provider.service.recent';
+import { LegacyRecentService } from 'im.v2.provider.service.recent';
 import { RecentMenu } from 'im.v2.lib.menu';
 import { DraftManager } from 'im.v2.lib.draft';
 import { CreateChatManager } from 'im.v2.lib.create-chat';
@@ -149,7 +149,8 @@ export const RecentList = {
 			}
 
 			const context = {
-				...item,
+				dialogId: item.dialogId,
+				recentItem: item,
 				compactMode: false,
 			};
 
@@ -213,11 +214,11 @@ export const RecentList = {
 
 			return this.showInvited || hasBirthday;
 		},
-		getRecentService(): RecentService
+		getRecentService(): LegacyRecentService
 		{
 			if (!this.service)
 			{
-				this.service = RecentService.getInstance();
+				this.service = LegacyRecentService.getInstance();
 			}
 
 			return this.service;

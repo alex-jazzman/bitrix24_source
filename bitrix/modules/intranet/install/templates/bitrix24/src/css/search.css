@@ -5,6 +5,7 @@
 
 	--air-header-search-icon-left-shift: 0px;
 	--air-header-search-icon-image: var(--o-ui-icon-set__path_search);
+	--air-header-search-icon-color: var(--ui-color-base-1);
 	--air-header-search-input-width: 0;
 	--air-header-search-input-opacity: 0;
 }
@@ -31,7 +32,7 @@
 	mask-size: contain;
 	mask-repeat: no-repeat;
 	mask-position: center center;
-	background-color: var(--ui-color-base-4);
+	background-color: var(--air-header-search-icon-color);
 	cursor: pointer;
 	transition: 0.2s ease-in-out background-color;
 }
@@ -39,7 +40,7 @@
 .air-header__search-icon:hover,
 .air-header__search-icon:focus,
 .air-header__search-icon.--accent {
-	background-color: color-mix(in srgb, var(--ui-color-base-4) 100%, var(--ui-color-bg-state-hover-default-overlay-hex) var(--ui-color-bg-state-hover-default-overlay-opacity));
+	background-color: color-mix(in srgb, var(--air-header-search-icon-color) 100%, var(--ui-color-bg-state-hover-default-overlay-hex) var(--ui-color-bg-state-hover-default-overlay-opacity));
 	transition-duration: 0s;
 }
 
@@ -67,6 +68,7 @@
 .air-header__search.--active,
 .air-header__search.header-search-active,
 .air-header__search.header-search-not-empty {
+	--air-header-search-icon-color: var(--ui-color-base-4);
 	--air-header-search-icon-image: var(--o-ui-icon-set__path_cross-l);
 	--air-header-search-icon-left-shift: -4px;
 	--air-header-search-input-width: 290px;

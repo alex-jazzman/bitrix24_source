@@ -58,8 +58,10 @@ jn.define('layout/ui/loading-screen', (require, exports, module) => {
 	};
 });
 
-(() => {
-	const { LoadingScreenComponent } = jn.require('layout/ui/loading-screen');
+// todo remove after all global usages in other modules will be cleaned
+(function() {
+	const require = (ext) => jn.require(ext);
+	const { LoadingScreenComponent } = require('layout/ui/loading-screen');
 
 	jnexport(LoadingScreenComponent);
 })();

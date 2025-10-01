@@ -10,6 +10,8 @@ jn.define('im/messenger/controller/dialog/ai-assistant/dialog', (require, export
 	const { Dialog } = require('im/messenger/controller/dialog/chat');
 	const { DialogTextHelper } = require('im/messenger/controller/dialog/lib/helper/text');
 
+	const { AiAssistantMessageMenu } = require('im/messenger/controller/dialog/ai-assistant/component/message-menu');
+
 	const logger = getLogger('dialog--dialog');
 
 	/**
@@ -57,6 +59,14 @@ jn.define('im/messenger/controller/dialog/ai-assistant/dialog', (require, export
 			this.view
 				.on(EventType.dialog.footnoteTap, this.footnoteTapHandler)
 			;
+		}
+
+		/**
+		 * @return {MessageMenuController}
+		 */
+		createMessageMenu()
+		{
+			return new AiAssistantMessageMenu(this.getMessageMenuParams());
 		}
 
 		/**

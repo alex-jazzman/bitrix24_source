@@ -6,7 +6,7 @@ import { Utils } from 'im.v2.lib.utils';
 import { PopupType } from 'im.v2.const';
 import { Notifier } from 'im.v2.lib.notifier';
 
-import type { MenuItem } from 'im.v2.lib.menu';
+import type { MenuItemOptions } from 'ui.system.menu';
 import type { ImModelFile, ImModelMessage } from 'im.v2.model';
 
 export class BaseFileContextMenu extends BaseMenu
@@ -24,7 +24,7 @@ export class BaseFileContextMenu extends BaseMenu
 		this.diskService = new DiskService();
 	}
 
-	getMenuItems(): Array
+	getMenuItems(): MenuItemOptions | null[]
 	{
 		return [
 			this.getDownloadFileItem(),
@@ -32,7 +32,7 @@ export class BaseFileContextMenu extends BaseMenu
 		];
 	}
 
-	getDownloadFileItem(): ?MenuItem
+	getDownloadFileItem(): ?MenuItemOptions
 	{
 		const file = this.#getMessageFile();
 		if (!file)
@@ -41,18 +41,15 @@ export class BaseFileContextMenu extends BaseMenu
 		}
 
 		return {
-			html: Utils.file.createDownloadLink(
-				Loc.getMessage('IM_MESSAGE_FILE_MENU_DOWNLOAD_FILE'),
-				file.urlDownload,
-				file.name,
-			),
-			onclick: function() {
+			title: Loc.getMessage('IM_MESSAGE_FILE_MENU_DOWNLOAD_FILE'),
+			onClick: function() {
+				Utils.file.downloadFiles([file]);
 				this.menuInstance.close();
 			}.bind(this),
 		};
 	}
 
-	getSaveToDiskItem(): ?MenuItem
+	getSaveToDiskItem(): ?MenuItemOptions
 	{
 		const file = this.#getMessageFile();
 		if (!file)
@@ -61,8 +58,8 @@ export class BaseFileContextMenu extends BaseMenu
 		}
 
 		return {
-			text: Loc.getMessage('IM_MESSAGE_FILE_MENU_SAVE_ON_DISK_MSGVER_1'),
-			onclick: async function() {
+			title: Loc.getMessage('IM_MESSAGE_FILE_MENU_SAVE_ON_DISK_MSGVER_1'),
+			onClick: async function() {
 				this.menuInstance.close();
 				await this.diskService.save(this.context.files);
 				Notifier.file.onDiskSaveComplete();

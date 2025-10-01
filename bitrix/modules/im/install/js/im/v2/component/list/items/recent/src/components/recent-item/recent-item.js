@@ -88,7 +88,7 @@ export const RecentItem = {
 		},
 		isChatSelected(): boolean
 		{
-			const canBeSelected = [Layout.chat.name, Layout.updateChat.name, Layout.collab.name];
+			const canBeSelected = [Layout.chat, Layout.updateChat, Layout.collab, Layout.aiAssistant];
 			if (!canBeSelected.includes(this.layout.name))
 			{
 				return false;

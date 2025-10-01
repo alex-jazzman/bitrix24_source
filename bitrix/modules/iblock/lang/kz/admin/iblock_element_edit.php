@@ -109,4 +109,4 @@ $MESS["IBLOCK_SECTION"] = "Бөлімдер:";
 $MESS["IBLOCK_TCATALOG"] = "Сауда каталогы";
 $MESS["IBLOCK_UPPER_LEVEL"] = "Жоғарғы деңгей";
 $MESS["IBLOCK_WRONG_SESSION"] = "Сіздің сессияңыз аяқталды. Құжатты қайтадан сақтаңыз.";
-$MESS["IBLOCK_WRONG_WF_STATUS"] = "Қате мәртебе";
+$MESS['IBLOCK_WRONG_WF_STATUS'] = "Қате мәртебе";

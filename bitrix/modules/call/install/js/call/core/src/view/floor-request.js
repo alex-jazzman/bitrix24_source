@@ -49,7 +49,12 @@ export class FloorRequest extends EventEmitter
 	
 	_canChangeSpeakPermission()
 	{
-		return Util.isUserControlFeatureEnabled() && !this.userModel.permissionToSpeak && !Util.getRoomPermissions().AudioEnabled && Util.canControlGiveSpeakPermission();
+		return (
+			Util.isUserControlFeatureEnabled()
+			&& !this.userModel.permissionToSpeak
+			&& !Util.getRoomPermissions().AudioEnabled
+			&& Util.canControlGiveSpeakPermission()
+		);
 	}
 
 	mount(container)

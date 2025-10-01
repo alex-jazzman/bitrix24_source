@@ -14,7 +14,8 @@ this.BX.Booking = this.BX.Booking || {};
 	  ResourceIntersection: 'resource_intersection',
 	  ExpandGrid: 'expand_grid',
 	  SelectResources: 'select_resources',
-	  CyclePopup: 'cycle_popup'
+	  CyclePopup: 'cycle_popup',
+	  SearchNavigation: 'search_navigation'
 	});
 
 	const HelpDesk = Object.freeze({
@@ -151,7 +152,10 @@ this.BX.Booking = this.BX.Booking || {};
 	});
 
 	const EventName = Object.freeze({
-	  CloseWizard: 'booking:resource-creation-wizard:close'
+	  CloseWizard: 'booking:resource-creation-wizard:close',
+	  CreateBookings: 'booking:booking:create',
+	  DeleteBooking: 'booking:booking:delete',
+	  UpdateBooking: 'booking:booking:update'
 	});
 
 	const Limit = Object.freeze({
@@ -172,7 +176,8 @@ this.BX.Booking = this.BX.Booking || {};
 	  ResourceCreationWizard: 'resource-creation-wizard',
 	  ResourceTypes: 'resourceTypes',
 	  Resources: 'resources',
-	  WaitList: 'wait-list'
+	  WaitList: 'wait-list',
+	  Filter: 'filter'
 	});
 
 	const Module = Object.freeze({
@@ -231,7 +236,8 @@ this.BX.Booking = this.BX.Booking || {};
 	  AhaResourceIntersection: 'aha_resource_intersection',
 	  AhaExpandGrid: 'aha_expand_grid',
 	  AhaSelectResources: 'aha_select_resources',
-	  AhaCyclePopup: 'aha_cycle_popup'
+	  AhaCyclePopup: 'aha_cycle_popup',
+	  AhaSearchNavigation: 'aha_search_navigation'
 	});
 
 	const NotificationChannel = Object.freeze({

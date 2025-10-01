@@ -1,5 +1,7 @@
 import { Loc, Type } from 'main.core';
 import { EventEmitter } from 'main.core.events';
+import { MenuItemDesign } from 'ui.system.menu';
+import { Outline as OutlineIcons } from 'ui.icon-set.api.core';
 
 import { PromoManager } from 'im.v2.lib.promo';
 import { Analytics } from 'im.v2.lib.analytics';
@@ -19,12 +21,16 @@ import { Notifier } from 'im.v2.lib.notifier';
 // noinspection ES6PreferShortImport
 import { BaseMenu } from '../../base/base';
 
-import '../css/message-menu.css';
-
-import type { MenuItem } from 'im.v2.lib.menu';
 import type { ImModelMessage, ImModelChat, ImModelFile } from 'im.v2.model';
-import type { MenuOptions } from 'main.popup';
+import type { MenuItemOptions, MenuOptions, MenuSectionOptions } from 'ui.system.menu';
 export type MessageMenuContext = ImModelMessage & { dialogId: string };
+
+const MenuSectionCode = Object.freeze({
+	main: 'main',
+	select: 'select',
+	create: 'create',
+	market: 'market',
+});
 
 export class MessageMenu extends BaseMenu
 {
@@ -49,26 +55,47 @@ export class MessageMenu extends BaseMenu
 			className: this.getMenuClassName(),
 			angle: true,
 			offsetLeft: 11,
-			minWidth: 178,
+			minWidth: 238,
 		};
 	}
 
-	getMenuItems(): MenuItem[]
+	getMenuItems(): MenuItemOptions | null[]
 	{
-		return [
+		const mainGroupItems = [
 			this.getReplyItem(),
 			this.getCopyItem(),
 			this.getEditItem(),
+			this.getDownloadFileItem(),
 			this.getPinItem(),
 			this.getForwardItem(),
 			...this.getAdditionalItems(),
 			this.getDeleteItem(),
-			this.getDelimiter(),
-			this.getSelectItem(),
+		];
+
+		return [
+			...this.groupItems(mainGroupItems, MenuSectionCode.main),
+			...this.groupItems([this.getSelectItem()], MenuSectionCode.select),
 		];
 	}
 
-	getSelectItem(): ?MenuItem
+	getMenuGroups(): MenuSectionOptions[]
+	{
+		return [
+			{ code: MenuSectionCode.main },
+			{ code: MenuSectionCode.select },
+		];
+	}
+
+	getNestedMenuGroups(): MenuSectionOptions[]
+	{
+		return [
+			{ code: MenuSectionCode.main },
+			{ code: MenuSectionCode.create },
+			{ code: MenuSectionCode.market },
+		];
+	}
+
+	getSelectItem(): ?MenuItemOptions
 	{
 		if (this.#isDeletedMessage() || !this.#isRealMessage())
 		{
@@ -76,8 +103,9 @@ export class MessageMenu extends BaseMenu
 		}
 
 		return {
-			text: Loc.getMessage('IM_DIALOG_CHAT_MENU_SELECT'),
-			onclick: () => {
+			title: Loc.getMessage('IM_DIALOG_CHAT_MENU_SELECT'),
+			icon: OutlineIcons.CIRCLE_CHECK,
+			onClick: () => {
 				EventEmitter.emit(EventType.dialog.openBulkActionsMode, {
 					messageId: this.context.id,
 					dialogId: this.context.dialogId,
@@ -87,21 +115,22 @@ export class MessageMenu extends BaseMenu
 		};
 	}
 
-	getReplyItem(): MenuItem
+	getReplyItem(): MenuItemOptions
 	{
 		return {
-			text: Loc.getMessage('IM_DIALOG_CHAT_MENU_REPLY'),
-			onclick: () => {
+			title: Loc.getMessage('IM_DIALOG_CHAT_MENU_REPLY'),
+			onClick: () => {
 				EventEmitter.emit(EventType.textarea.replyMessage, {
 					messageId: this.context.id,
 					dialogId: this.context.dialogId,
 				});
 				this.menuInstance.close();
 			},
+			icon: OutlineIcons.QUOTE,
 		};
 	}
 
-	getForwardItem(): ?MenuItem
+	getForwardItem(): ?MenuItemOptions
 	{
 		if (this.#isDeletedMessage() || !this.#isRealMessage())
 		{
@@ -109,8 +138,9 @@ export class MessageMenu extends BaseMenu
 		}
 
 		return {
-			text: Loc.getMessage('IM_DIALOG_CHAT_MENU_FORWARD'),
-			onclick: () => {
+			title: Loc.getMessage('IM_DIALOG_CHAT_MENU_FORWARD'),
+			icon: OutlineIcons.FORWARD,
+			onClick: () => {
 				Analytics.getInstance().messageForward.onClickForward({ dialogId: this.context.dialogId });
 				EventEmitter.emit(EventType.dialog.showForwardPopup, {
 					messagesIds: [this.context.id],
@@ -120,7 +150,7 @@ export class MessageMenu extends BaseMenu
 		};
 	}
 
-	getCopyItem(): ?MenuItem
+	getCopyItem(): ?MenuItemOptions
 	{
 		if (this.#isDeletedMessage() || this.context.text.trim().length === 0)
 		{
@@ -128,8 +158,8 @@ export class MessageMenu extends BaseMenu
 		}
 
 		return {
-			text: Loc.getMessage('IM_DIALOG_CHAT_MENU_COPY'),
-			onclick: async () => {
+			title: Loc.getMessage('IM_DIALOG_CHAT_MENU_COPY'),
+			onClick: async () => {
 				const textToCopy = Parser.prepareCopy(this.context);
 
 				await Utils.text.copyToClipboard(textToCopy);
@@ -137,14 +167,16 @@ export class MessageMenu extends BaseMenu
 
 				this.menuInstance.close();
 			},
+			icon: OutlineIcons.COPY,
 		};
 	}
 
-	getCopyLinkItem(): MenuItem
+	getCopyLinkItem(): MenuItemOptions
 	{
 		return {
-			text: Loc.getMessage('IM_DIALOG_CHAT_MENU_COPY_LINK_MSGVER_1'),
-			onclick: () => {
+			title: Loc.getMessage('IM_DIALOG_CHAT_MENU_COPY_LINK_MSGVER_1'),
+			icon: OutlineIcons.LINK,
+			onClick: () => {
 				const textToCopy = Utils.text.getMessageLink(this.context.dialogId, this.context.id);
 				if (BX.clipboard?.copy(textToCopy))
 				{
@@ -155,7 +187,7 @@ export class MessageMenu extends BaseMenu
 		};
 	}
 
-	getCopyFileItem(): ?MenuItem
+	getCopyFileItem(): ?MenuItemOptions
 	{
 		if (this.context.files.length !== 1)
 		{
@@ -163,8 +195,9 @@ export class MessageMenu extends BaseMenu
 		}
 
 		return {
-			text: Loc.getMessage('IM_DIALOG_CHAT_MENU_COPY_FILE'),
-			onclick: () => {
+			title: Loc.getMessage('IM_DIALOG_CHAT_MENU_COPY_FILE'),
+			icon: OutlineIcons.COPY,
+			onClick: () => {
 				const textToCopy = Parser.prepareCopyFile(this.context);
 				if (BX.clipboard?.copy(textToCopy))
 				{
@@ -175,7 +208,7 @@ export class MessageMenu extends BaseMenu
 		};
 	}
 
-	getPinItem(): ?MenuItem
+	getPinItem(): ?MenuItemOptions
 	{
 		const canPin = PermissionManager.getInstance().canPerformActionByRole(
 			ActionByRole.pinMessage,
@@ -193,8 +226,9 @@ export class MessageMenu extends BaseMenu
 		});
 
 		return {
-			text: isPinned ? Loc.getMessage('IM_DIALOG_CHAT_MENU_UNPIN') : Loc.getMessage('IM_DIALOG_CHAT_MENU_PIN'),
-			onclick: () => {
+			title: isPinned ? Loc.getMessage('IM_DIALOG_CHAT_MENU_UNPIN') : Loc.getMessage('IM_DIALOG_CHAT_MENU_PIN'),
+			icon: OutlineIcons.PIN,
+			onClick: () => {
 				const messageService = new MessageService({ chatId: this.context.chatId });
 				if (isPinned)
 				{
@@ -220,7 +254,7 @@ export class MessageMenu extends BaseMenu
 		};
 	}
 
-	getFavoriteItem(): MenuItem
+	getFavoriteItem(): MenuItemOptions
 	{
 		if (this.#isDeletedMessage())
 		{
@@ -235,8 +269,9 @@ export class MessageMenu extends BaseMenu
 		;
 
 		return {
-			text: menuItemText,
-			onclick: () => {
+			title: menuItemText,
+			icon: OutlineIcons.FAVORITE,
+			onClick: () => {
 				const messageService = new MessageService({ chatId: this.context.chatId });
 				if (isInFavorite)
 				{
@@ -252,7 +287,7 @@ export class MessageMenu extends BaseMenu
 		};
 	}
 
-	getMarkItem(): ?MenuItem
+	getMarkItem(): ?MenuItemOptions
 	{
 		const canUnread = this.context.viewed && !this.#isOwnMessage();
 
@@ -264,8 +299,9 @@ export class MessageMenu extends BaseMenu
 		}
 
 		return {
-			text: Loc.getMessage('IM_DIALOG_CHAT_MENU_MARK'),
-			onclick: () => {
+			title: Loc.getMessage('IM_DIALOG_CHAT_MENU_MARK'),
+			icon: OutlineIcons.NEW_MESSAGE,
+			onClick: () => {
 				const messageService = new MessageService({ chatId: this.context.chatId });
 				messageService.markMessage(this.context.id);
 				this.menuInstance.close();
@@ -273,7 +309,7 @@ export class MessageMenu extends BaseMenu
 		};
 	}
 
-	getCreateTaskItem(): ?MenuItem
+	getCreateTaskItem(): ?MenuItemOptions
 	{
 		if (this.#isDeletedMessage())
 		{
@@ -281,8 +317,9 @@ export class MessageMenu extends BaseMenu
 		}
 
 		return {
-			text: Loc.getMessage('IM_DIALOG_CHAT_MENU_CREATE_TASK_MSGVER_1'),
-			onclick: () => {
+			title: Loc.getMessage('IM_DIALOG_CHAT_MENU_CREATE_TASK_MSGVER_1'),
+			icon: OutlineIcons.TASK,
+			onClick: () => {
 				const entityCreator = new EntityCreator(this.context.chatId);
 				void entityCreator.createTaskForMessage(this.context.id);
 				this.menuInstance.close();
@@ -290,7 +327,7 @@ export class MessageMenu extends BaseMenu
 		};
 	}
 
-	getCreateMeetingItem(): ?MenuItem
+	getCreateMeetingItem(): ?MenuItemOptions
 	{
 		if (this.#isDeletedMessage())
 		{
@@ -298,8 +335,9 @@ export class MessageMenu extends BaseMenu
 		}
 
 		return {
-			text: Loc.getMessage('IM_DIALOG_CHAT_MENU_CREATE_MEETING_MSGVER_1'),
-			onclick: () => {
+			title: Loc.getMessage('IM_DIALOG_CHAT_MENU_CREATE_MEETING_MSGVER_1'),
+			icon: OutlineIcons.CALENDAR_WITH_SLOTS,
+			onClick: () => {
 				const entityCreator = new EntityCreator(this.context.chatId);
 				void entityCreator.createMeetingForMessage(this.context.id);
 				this.menuInstance.close();
@@ -307,7 +345,7 @@ export class MessageMenu extends BaseMenu
 		};
 	}
 
-	getEditItem(): ?MenuItem
+	getEditItem(): ?MenuItemOptions
 	{
 		if (!this.#isOwnMessage() || this.#isDeletedMessage() || this.#isForwardedMessage())
 		{
@@ -315,8 +353,9 @@ export class MessageMenu extends BaseMenu
 		}
 
 		return {
-			text: Loc.getMessage('IM_DIALOG_CHAT_MENU_EDIT'),
-			onclick: () => {
+			title: Loc.getMessage('IM_DIALOG_CHAT_MENU_EDIT'),
+			icon: OutlineIcons.EDIT_L,
+			onClick: () => {
 				EventEmitter.emit(EventType.textarea.editMessage, {
 					messageId: this.context.id,
 					dialogId: this.context.dialogId,
@@ -326,7 +365,7 @@ export class MessageMenu extends BaseMenu
 		};
 	}
 
-	getDeleteItem(): ?MenuItem
+	getDeleteItem(): ?MenuItemOptions
 	{
 		if (this.#isDeletedMessage())
 		{
@@ -344,41 +383,38 @@ export class MessageMenu extends BaseMenu
 		}
 
 		return {
-			text: Loc.getMessage('IM_DIALOG_CHAT_MENU_DELETE'),
-			className: 'menu-popup-no-icon bx-im-dialog-chat__message-menu_delete',
-			onclick: this.#onDelete.bind(this),
+			title: Loc.getMessage('IM_DIALOG_CHAT_MENU_DELETE'),
+			design: MenuItemDesign.Alert,
+			icon: OutlineIcons.TRASHCAN,
+			onClick: this.#onDelete.bind(this),
 		};
 	}
 
-	getMarketItems(): MenuItem[]
+	getMarketItems(): MenuItemOptions[]
 	{
 		const { dialogId, id } = this.context;
 		const placements = this.marketManager.getAvailablePlacementsByType(PlacementType.contextMenu, dialogId);
 		const marketMenuItem = [];
-		if (placements.length > 0)
-		{
-			marketMenuItem.push(this.getDelimiter());
-		}
 
 		const context = { messageId: id, dialogId };
 
 		placements.forEach((placement) => {
 			marketMenuItem.push({
-				text: placement.title,
-				onclick: () => {
-					MarketManager.openSlider(placement, context);
+				title: placement.title,
+				icon: OutlineIcons.MARKET,
+				onClick: () => {
+					void MarketManager.openSlider(placement, context);
 					this.menuInstance.close();
 				},
 			});
 		});
 
-		// (10 items + 1 delimiter), because we don't want to show long context menu.
-		const itemLimit = 11;
+		const MARKET_ITEMS_LIMIT = 10;
 
-		return marketMenuItem.slice(0, itemLimit);
+		return marketMenuItem.slice(0, MARKET_ITEMS_LIMIT);
 	}
 
-	getDownloadFileItem(): ?MenuItem
+	getDownloadFileItem(): ?MenuItemOptions
 	{
 		if (!Type.isArrayFilled(this.context.files))
 		{
@@ -393,7 +429,7 @@ export class MessageMenu extends BaseMenu
 		return this.#getDownloadSeveralFilesItem();
 	}
 
-	getSaveToDiskItem(): ?MenuItem
+	getSaveToDiskItem(): ?MenuItemOptions
 	{
 		if (!Type.isArrayFilled(this.context.files))
 		{
@@ -405,8 +441,9 @@ export class MessageMenu extends BaseMenu
 			: Loc.getMessage('IM_DIALOG_CHAT_MENU_SAVE_ALL_ON_DISK');
 
 		return {
-			text: menuItemText,
-			onclick: async function() {
+			title: menuItemText,
+			icon: OutlineIcons.FOLDER_24,
+			onClick: async function() {
 				Analytics.getInstance().messageFiles.onClickSaveOnDisk({
 					messageId: this.context.id,
 					dialogId: this.context.dialogId,
@@ -419,49 +456,51 @@ export class MessageMenu extends BaseMenu
 		};
 	}
 
-	getDelimiter(): MenuItem
+	getAdditionalItems(): MenuItemOptions[]
 	{
-		return {
-			delimiter: true,
-		};
-	}
-
-	getAdditionalItems(): MenuItem[]
-	{
-		const additionalItems = this.getNestedItems();
-		if (this.#needNestedMenu(additionalItems))
+		const items = this.getNestedItems();
+		if (this.#needNestedMenu(items))
 		{
 			return [{
-				text: Loc.getMessage('IM_DIALOG_CHAT_MENU_MORE'),
-				items: additionalItems,
+				title: Loc.getMessage('IM_DIALOG_CHAT_MENU_MORE'),
+				subMenu: {
+					items,
+					sections: this.getNestedMenuGroups(),
+				},
 			}];
 		}
 
-		return additionalItems;
+		return items;
 	}
 
-	getNestedItems(): MenuItem[]
+	getNestedItems(): MenuItemOptions[]
 	{
-		return [
+		const mainGroupItems = [
 			this.getCopyLinkItem(),
 			this.getCopyFileItem(),
 			this.getMarkItem(),
 			this.getFavoriteItem(),
-			this.getDownloadFileItem(),
 			this.getSaveToDiskItem(),
-			this.getDelimiter(),
+		];
+
+		const createGroupItems = [
 			this.getCreateTaskItem(),
 			this.getCreateMeetingItem(),
-			...this.getMarketItems(),
+		];
+
+		return [
+			...this.groupItems(mainGroupItems, MenuSectionCode.main),
+			...this.groupItems(createGroupItems, MenuSectionCode.create),
+			...this.groupItems(this.getMarketItems(), MenuSectionCode.market),
 		];
 	}
 
-	#needNestedMenu(additionalItems: MenuItem[]): boolean
+	#needNestedMenu(additionalItems: MenuItemOptions[]): boolean
 	{
 		const NESTED_MENU_MIN_ITEMS = 3;
-		const onlyMenuItems = additionalItems.filter((item) => item && !this.isDelimiter(item));
+		const menuItems = additionalItems.filter((item) => item !== null);
 
-		return onlyMenuItems.length >= NESTED_MENU_MIN_ITEMS;
+		return menuItems.length >= NESTED_MENU_MIN_ITEMS;
 	}
 
 	#isOwnMessage(): boolean
@@ -528,17 +567,16 @@ export class MessageMenu extends BaseMenu
 		return false;
 	}
 
-	#getDownloadSingleFileItem(): MenuItem
+	#getDownloadSingleFileItem(): MenuItemOptions
 	{
 		const file = this.#getFirstFile();
 
 		return {
-			html: Utils.file.createDownloadLink(
-				Loc.getMessage('IM_DIALOG_CHAT_MENU_DOWNLOAD_FILE'),
-				file.urlDownload,
-				file.name,
-			),
-			onclick: function() {
+			title: Loc.getMessage('IM_DIALOG_CHAT_MENU_DOWNLOAD_FILE'),
+			icon: OutlineIcons.DOWNLOAD,
+			onClick: function() {
+				Utils.file.downloadFiles([file]);
+
 				Analytics.getInstance().messageFiles.onClickDownload({
 					messageId: this.context.id,
 					dialogId: this.context.dialogId,
@@ -548,15 +586,16 @@ export class MessageMenu extends BaseMenu
 		};
 	}
 
-	#getDownloadSeveralFilesItem(): MenuItem
+	#getDownloadSeveralFilesItem(): MenuItemOptions
 	{
 		const files: ImModelFile[] = this.context.files.map((fileId) => {
 			return this.store.getters['files/get'](fileId);
 		});
 
 		return {
-			text: Loc.getMessage('IM_DIALOG_CHAT_MENU_DOWNLOAD_FILES'),
-			onclick: async () => {
+			title: Loc.getMessage('IM_DIALOG_CHAT_MENU_DOWNLOAD_FILES'),
+			icon: OutlineIcons.DOWNLOAD,
+			onClick: async () => {
 				Analytics.getInstance().messageFiles.onClickDownload({
 					messageId: this.context.id,
 					dialogId: this.context.dialogId,

@@ -67,7 +67,8 @@ if(typeof BX.Crm.EntityEditorSection === "undefined")
 					editor: child ? child._editor : null,
 					config: child ? BX.prop.getObject(data, "visibilityConfigs", null) : null,
 					field: child ? child : null,
-					restriction: this._editor.getRestriction('userFieldAccessRights')
+					restriction: this._editor.getRestriction('userFieldAccessRights'),
+					useHumanResourcesModule: this._editor.getOption('useHumanResourcesModule', 'Y') === 'Y',
 				}
 			);
 			params.visibilityConfigurator = this._visibilityConfigurator;

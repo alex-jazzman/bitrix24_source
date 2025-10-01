@@ -8,7 +8,7 @@ import { CallManager } from 'im.v2.lib.call';
 import { PermissionManager } from 'im.v2.lib.permission';
 import { EventType, SidebarDetailBlock, UserType } from 'im.v2.const';
 
-import type { MenuItem } from 'im.v2.lib.menu';
+import type { MenuItemOptions } from 'ui.system.menu';
 import type { ImModelUser } from 'im.v2.model';
 
 export class SearchContextMenu extends BaseMenu
@@ -24,7 +24,7 @@ export class SearchContextMenu extends BaseMenu
 		this.permissionManager = PermissionManager.getInstance();
 	}
 
-	getMenuItems(): MenuItem[]
+	getMenuItems(): MenuItemOptions | null[]
 	{
 		return [
 			this.getOpenItem(),
@@ -33,18 +33,18 @@ export class SearchContextMenu extends BaseMenu
 		];
 	}
 
-	getOpenItem(): MenuItem
+	getOpenItem(): MenuItemOptions
 	{
 		return {
-			text: Loc.getMessage('IM_LIB_MENU_OPEN'),
-			onclick: () => {
-				Messenger.openChat(this.context.dialogId);
+			title: Loc.getMessage('IM_LIB_MENU_OPEN'),
+			onClick: () => {
+				void Messenger.openChat(this.context.dialogId);
 				this.menuInstance.close();
 			},
 		};
 	}
 
-	getOpenProfileItem(): ?MenuItem
+	getOpenProfileItem(): ?MenuItemOptions
 	{
 		if (!this.isUser() || this.isBot())
 		{
@@ -54,15 +54,15 @@ export class SearchContextMenu extends BaseMenu
 		const profileUri = Utils.user.getProfileLink(this.context.dialogId);
 
 		return {
-			text: Loc.getMessage('IM_LIB_MENU_OPEN_PROFILE_V2'),
-			href: profileUri,
-			onclick: () => {
+			title: Loc.getMessage('IM_LIB_MENU_OPEN_PROFILE_V2'),
+			onClick: () => {
+				BX.SidePanel.Instance.open(profileUri);
 				this.menuInstance.close();
 			},
 		};
 	}
 
-	getChatsWithUserItem(): ?MenuItem
+	getChatsWithUserItem(): ?MenuItemOptions
 	{
 		if (!this.isUser() || this.isBot() || this.isChatWithCurrentUser())
 		{
@@ -72,8 +72,8 @@ export class SearchContextMenu extends BaseMenu
 		const isAnyChatOpened = this.store.getters['application/getLayout'].entityId.length > 0;
 
 		return {
-			text: Loc.getMessage('IM_LIB_MENU_FIND_SHARED_CHATS'),
-			onclick: async () => {
+			title: Loc.getMessage('IM_LIB_MENU_FIND_SHARED_CHATS'),
+			onClick: async () => {
 				if (!isAnyChatOpened)
 				{
 					await Messenger.openChat(this.context.dialogId);

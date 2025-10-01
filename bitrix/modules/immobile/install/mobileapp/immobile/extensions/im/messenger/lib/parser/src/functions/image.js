@@ -22,6 +22,26 @@ jn.define('im/messenger/lib/parser/functions/image', (require, exports, module) 
 			);
 		},
 
+		decodeImageWithSize(text)
+		{
+			const patternImgWithUrl = /(\[img(?:\s\S+)?])\[url(?:=\S+)?]([^[]+)(?:\[\/url])?(\s?\[\/img])(?:\[\/url])?/gi;
+			const patternImageWithSize = /\[img(?:\ssize=(?:small|medium|large))?](\S+)\s\[\/img]/gi;
+
+			return text
+				.replaceAll(patternImgWithUrl, '$1$2$3')
+				.replaceAll(
+					patternImageWithSize,
+					(match, url) => `[IMG radius="10"]${url}[/IMG]`,
+				);
+		},
+
+		simplifyImage(text)
+		{
+			const pattern = /\[img(?:\ssize=small|medium|large)?](\S+)\s\[\/img]/gi;
+
+			return text.replaceAll(pattern, parserEmoji.getImageBlock());
+		},
+
 		simplifyLink(text)
 		{
 			text = text.replace(/(.)?((https|http):\/\/(\S+)\.(jpg|jpeg|png|gif|webp)(\?\S+)?)/ig, function(whole, letter, url)

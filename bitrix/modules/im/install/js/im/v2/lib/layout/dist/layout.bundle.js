@@ -6,7 +6,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	'use strict';
 
 	const TypesWithoutContext = new Set([im_v2_const.ChatType.comment]);
-	const LayoutsWithoutLastOpenedElement = new Set([im_v2_const.Layout.channel.name, im_v2_const.Layout.market.name]);
+	const LayoutsWithoutLastOpenedElement = new Set([im_v2_const.Layout.channel, im_v2_const.Layout.market]);
 	var _instance = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("instance");
 	var _lastOpenedElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("lastOpenedElement");
 	var _onGoToMessageContext = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onGoToMessageContext");
@@ -103,7 +103,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    const layoutConfig = im_v2_lib_localStorage.LocalStorageManager.getInstance().get(im_v2_const.LocalStorageKey.layoutConfig);
 	    if (!layoutConfig) {
 	      return this.setLayout({
-	        name: im_v2_const.Layout.chat.name
+	        name: im_v2_const.Layout.chat
 	      });
 	    }
 	    im_v2_lib_logger.Logger.warn('LayoutManager: last layout was restored', layoutConfig);
@@ -180,7 +180,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    return;
 	  }
 	  void this.setLayout({
-	    name: im_v2_const.Layout.chat.name,
+	    name: im_v2_const.Layout.chat,
 	    entityId: dialogId,
 	    contextId: messageId
 	  });
@@ -193,7 +193,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  if (currentLayout.name === config.name) {
 	    return;
 	  }
-	  if (config.name === im_v2_const.Layout.copilot.name) {
+	  if (config.name === im_v2_const.Layout.aiAssistant) {
 	    im_v2_lib_analytics.Analytics.getInstance().copilot.onOpenTab();
 	  }
 	  im_v2_lib_analytics.Analytics.getInstance().onOpenTab(config.name);
@@ -216,7 +216,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    name,
 	    entityId
 	  } = this.getLayout();
-	  const CHAT_LAYOUTS = new Set([im_v2_const.Layout.chat.name, im_v2_const.Layout.channel.name, im_v2_const.Layout.copilot.name, im_v2_const.Layout.openlines.name, im_v2_const.Layout.openlinesV2.name, im_v2_const.Layout.collab.name]);
+	  const CHAT_LAYOUTS = new Set([im_v2_const.Layout.chat, im_v2_const.Layout.channel, im_v2_const.Layout.aiAssistant, im_v2_const.Layout.openlines, im_v2_const.Layout.openlinesV2, im_v2_const.Layout.collab]);
 	  if (CHAT_LAYOUTS.has(name) && entityId) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _clearBulkActionsCollection)[_clearBulkActionsCollection]();
 	  }

@@ -9,8 +9,8 @@ jn.define('collab/invite/src/utils', (require, exports, module) => {
 	const { Link4, LinkMode, Ellipsize } = require('ui-system/blocks/link');
 	const { Color } = require('tokens');
 	const { ButtonDesign } = require('ui-system/form/buttons/button');
-	const { InviteStatusBox } = require('intranet/invite-status-box');
 	const { qrauth } = require('qrauth/utils');
+	const { StatusBox } = require('layout/ui/status-box');
 
 	/**
 	 * Show success toast after guests invitation or employee adding
@@ -62,7 +62,7 @@ jn.define('collab/invite/src/utils', (require, exports, module) => {
 		const imageUri = makeLibraryImagePath('invite-guests-disabled.svg', 'collab/invite');
 		const isAdmin = env.isAdmin;
 
-		const inviteBoxInstance = await InviteStatusBox.open({
+		const inviteBoxInstance = await StatusBox.open({
 			parentWidget,
 			backdropTitle: Loc.getMessage('COLLAB_GUEST_INVITE_RESTRICTIONS_BOX_TITLE'),
 			testId: 'guests-invite-restrictions-box',

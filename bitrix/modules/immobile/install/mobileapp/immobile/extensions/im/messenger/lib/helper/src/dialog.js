@@ -72,7 +72,7 @@ jn.define('im/messenger/lib/helper/dialog', (require, exports, module) => {
 		{
 			if (!Type.isNumber(dialogId) && !Type.isStringFilled(dialogId))
 			{
-				logger.error('DialogHelper.getByDialogId error: dialogId is not a number or string filled', dialogId);
+				logger.warn('DialogHelper.getByDialogId error: dialogId is not a number or string filled', dialogId);
 
 				return null;
 			}
@@ -105,7 +105,7 @@ jn.define('im/messenger/lib/helper/dialog', (require, exports, module) => {
 		{
 			if (!Type.isNumber(chatId))
 			{
-				logger.error('DialogHelper.getByChatId error: chatId is not a number', chatId);
+				logger.warn('DialogHelper.getByChatId error: chatId is not a number', chatId);
 
 				return null;
 			}
@@ -340,6 +340,17 @@ jn.define('im/messenger/lib/helper/dialog', (require, exports, module) => {
 		get isMuted()
 		{
 			return this.dialogModel.muteList?.includes(MessengerParams.getUserId());
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		get isPinned()
+		{
+			const store = serviceLocator.get('core').getStore();
+			const recentItemState = store.getters['recentModel/getById'](this.dialogModel.dialogId);
+
+			return recentItemState?.pinned;
 		}
 	}
 

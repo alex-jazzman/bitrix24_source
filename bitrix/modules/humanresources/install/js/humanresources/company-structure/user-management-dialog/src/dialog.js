@@ -10,6 +10,8 @@ import './style.css';
 
 const dialogId = 'hr-user-management-dialog';
 
+export { UserManagementDialogAPI } from './api';
+
 export class UserManagementDialog
 {
 	#dialog: Dialog;
@@ -98,6 +100,7 @@ export class UserManagementDialog
 				role: this.#role,
 				description: this.description,
 				memberRoles: this.#memberRoles,
+				entityType: this.#entityType,
 			},
 			footer: BaseUserManagementDialogFooter,
 			footerOptions: {
@@ -136,6 +139,11 @@ export class UserManagementDialog
 		if (type === 'add' && role === this.#memberRoles.employee)
 		{
 			return Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_USER_MANAGEMENT_DIALOG_ADD_EMPLOYEE_TITLE');
+		}
+
+		if (type === 'add' && role === this.#memberRoles.head && entityType === EntityTypes.team)
+		{
+			return Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_USER_MANAGEMENT_DIALOG_ADD_TEAM_HEAD_TITLE');
 		}
 
 		if (type === 'add' && role === this.#memberRoles.head)

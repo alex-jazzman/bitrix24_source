@@ -9,6 +9,8 @@
 	const { Project } = require('tasks/project');
 	const { StorageCache } = require('storage-cache');
 	const { WorkgroupUtil } = require('project/utils');
+	const { ProjectMemberList } = require('project/member-list');
+	const { RequestExecutor } = require('rest');
 	const { RunActionExecutor } = require('rest/run-action-executor');
 
 	const platform = Application.getPlatform();

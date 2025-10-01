@@ -451,6 +451,10 @@ this.BX.UI = this.BX.UI || {};
 	    removeFromServer: {
 	      type: Boolean,
 	      default: true
+	    },
+	    forceDisableSelection: {
+	      type: Boolean,
+	      default: false
 	    }
 	  },
 	  setup() {
@@ -562,6 +566,9 @@ this.BX.UI = this.BX.UI || {};
 	      return this.widgetOptions.slots && this.widgetOptions.slots[ui_uploader_tileWidget.TileWidgetSlot.ITEM_EXTRA_ACTION] ? this.widgetOptions.slots[ui_uploader_tileWidget.TileWidgetSlot.ITEM_EXTRA_ACTION] : this.widgetOptions.insertIntoText === true ? InsertIntoTextButton : null;
 	    },
 	    isSelected() {
+	      if (this.forceDisableSelection) {
+	        return false;
+	      }
 	      return this.item.customData.tileSelected === true;
 	    },
 	    fileIconSize() {
@@ -795,6 +802,10 @@ this.BX.UI = this.BX.UI || {};
 	    removeFromServer: {
 	      type: Boolean,
 	      default: true
+	    },
+	    forceDisableSelection: {
+	      type: Boolean,
+	      default: false
 	    }
 	  },
 	  data: () => ({
@@ -895,6 +906,7 @@ this.BX.UI = this.BX.UI || {};
 					:readonly="readonly"
 					:viewerGroupBy="groupBy"
 					:removeFromServer="removeFromServer"
+					:forceDisableSelection="forceDisableSelection"
 				/>
 			</transition-group>
 			<transition name="ui-tile-uploader-item" type="animation">
@@ -912,6 +924,7 @@ this.BX.UI = this.BX.UI || {};
 					:readonly="readonly"
 					:viewerGroupBy="groupBy"
 					:removeFromServer="removeFromServer"
+					:forceDisableSelection="forceDisableSelection"
 				/>
 			</transition-group>
 		</div>
@@ -1017,6 +1030,7 @@ this.BX.UI = this.BX.UI || {};
 				:autoCollapse="autoCollapse"
 				:readonly="widgetOptions.readonly"
 				:removeFromServer="widgetOptions.removeFromServer"
+				:forceDisableSelection="widgetOptions.forceDisableSelection"
 				@onUnmount="autoCollapse = false"
 			/>
 			<component :is="slots[TileWidgetSlot.AFTER_TILE_LIST]"></component>

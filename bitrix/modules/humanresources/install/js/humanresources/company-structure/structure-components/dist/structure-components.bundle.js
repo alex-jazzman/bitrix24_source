@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Humanresources = this.BX.Humanresources || {};
-(function (exports,main_popup,ui_iconSet_api_vue,ui_entitySelector,ui_iconSet_actions,humanresources_companyStructure_utils,main_core) {
+(function (exports,ui_iconSet_api_vue,main_popup,humanresources_companyStructure_api,ui_entitySelector,ui_iconSet_actions,humanresources_companyStructure_utils,main_core) {
 	'use strict';
 
 	const POPUP_CONTAINER_PREFIX = '#popup-window-content-';
@@ -276,6 +276,11 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      required: false,
 	      default: ''
 	    },
+	    itemClass: {
+	      type: String,
+	      required: false,
+	      default: ''
+	    },
 	    bIcon: {
 	      type: Object,
 	      required: false,
@@ -298,6 +303,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  template: `
 		<div
 			class="hr-structure-route-action-popup-menu-item"
+			:class="itemClass"
 			:data-test-id="dataTestId"
 		>
 			<div class="hr-structure-route-action-popup-menu-item__content">
@@ -351,6 +357,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 				:id="item.id"
 				:title="item.title"
 				:description="item.description"
+				:itemClass="item.itemClass"
 				:imageClass="item.imageClass"
 				:dataTestId="item.dataTestId"
 				:bIcon="item.bIcon"
@@ -727,6 +734,171 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	`
 	};
 
+	// @vue/component
+	const MoveEmployeeConfirmationPopup = {
+	  name: 'MoveEmployeeConfirmationPopup',
+	  components: {
+	    ConfirmationPopup
+	  },
+	  props: {
+	    title: {
+	      type: String,
+	      default: main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_TITLE')
+	    },
+	    description: {
+	      type: String,
+	      required: true
+	    },
+	    confirmButtonText: {
+	      type: String,
+	      default: main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_CONFIRM_BTN')
+	    },
+	    entityType: {
+	      type: String,
+	      default: 'department'
+	    },
+	    showRoleSelect: {
+	      type: Boolean,
+	      default: false
+	    },
+	    showCombineCheckbox: {
+	      type: Boolean,
+	      default: false
+	    },
+	    isCombineOnly: {
+	      type: Boolean,
+	      default: false
+	    },
+	    excludeEmployeeRole: {
+	      type: Boolean,
+	      default: false
+	    }
+	  },
+	  emits: ['confirm', 'close'],
+	  data() {
+	    return {
+	      selectedRole: null,
+	      combinePosition: this.isCombineOnly
+	    };
+	  },
+	  computed: {
+	    memberRoles() {
+	      return humanresources_companyStructure_api.getMemberRoles(this.entityType);
+	    },
+	    selectedRoleLabel() {
+	      switch (this.selectedRole) {
+	        case this.memberRoles.head:
+	          return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_HEAD');
+	        case this.memberRoles.deputyHead:
+	          return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_DEPUTY');
+	        case this.memberRoles.employee:
+	          return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_EMPLOYEE');
+	        default:
+	          return '';
+	      }
+	    }
+	  },
+	  created() {
+	    if (this.showRoleSelect) {
+	      this.selectedRole = this.excludeEmployeeRole ? this.memberRoles.head : this.memberRoles.employee;
+	    }
+	  },
+	  methods: {
+	    loc(phrase) {
+	      return main_core.Loc.getMessage(phrase);
+	    },
+	    handleConfirm() {
+	      const payload = {
+	        role: this.selectedRole,
+	        roleLabel: this.selectedRoleLabel,
+	        isCombineMode: this.combinePosition
+	      };
+	      if (this.selectedRole !== this.memberRoles.employee) {
+	        payload.badgeText = this.selectedRoleLabel;
+	      }
+	      this.$emit('confirm', payload);
+	    },
+	    toggleRoleMenu() {
+	      const menuId = 'dnd-confirmation-role-menu';
+	      const bindElement = this.$refs.roleSelect;
+	      if (main_popup.PopupManager.getPopupById(menuId)) {
+	        main_popup.PopupManager.getPopupById(menuId).destroy();
+	        return;
+	      }
+	      const menu = new main_popup.Menu({
+	        id: menuId,
+	        bindElement,
+	        width: 334,
+	        items: this.roleMenuItems(),
+	        events: {
+	          onPopupClose: () => {
+	            menu.destroy();
+	          }
+	        }
+	      });
+	      menu.show();
+	    },
+	    roleMenuItems() {
+	      const memberRoles = humanresources_companyStructure_api.getMemberRoles(this.entityType);
+	      const items = [{
+	        id: memberRoles.head,
+	        text: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_HEAD')
+	      }, {
+	        id: memberRoles.deputyHead,
+	        text: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_DEPUTY')
+	      }];
+	      if (!this.excludeEmployeeRole) {
+	        items.push({
+	          id: memberRoles.employee,
+	          text: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_EMPLOYEE')
+	        });
+	      }
+	      return items.map(item => ({
+	        ...item,
+	        onclick: (event, menuItem) => {
+	          this.selectedRole = menuItem.id;
+	          menuItem.getMenuWindow().close();
+	        }
+	      }));
+	    }
+	  },
+	  template: `
+		<ConfirmationPopup
+			:title="title"
+			:width="364"
+			:confirmBtnText="confirmButtonText"
+			@action="handleConfirm"
+			@close="$emit('close')"
+		>
+			<template v-slot:content>
+				<div class="hr-dnd-confirmation_block">
+					<div v-html="description" class="hr-dnd-confirmation_description"></div>
+					<div v-if="showRoleSelect"
+						 class="ui-ctl ui-ctl-w100 ui-ctl-sm ui-ctl-after-icon ui-ctl-dropdown hr-dnd-confirmation_select"
+						 @click="toggleRoleMenu"
+						 ref="roleSelect"
+					>
+						<div class="ui-ctl-after ui-ctl-icon-angle"></div>
+						<div class="ui-ctl-element">{{ selectedRoleLabel }}</div>
+					</div>
+					<div v-if="showCombineCheckbox" class="ui-ctl ui-ctl-checkbox hr-dnd-confirmation_checkbox">
+						<input
+							type="checkbox"
+							class="ui-ctl-element"
+							v-model="combinePosition"
+							:disabled="isCombineOnly"
+							id="dnd-confirmation-combine-checkbox"
+						>
+						<label for="dnd-confirmation-combine-checkbox" class="ui-ctl-label-text">
+							{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_CHECKBOX') }}
+						</label>
+					</div>
+				</div>
+			</template>
+		</ConfirmationPopup>
+	`
+	};
+
 	const Hint = {
 	  mounted(el) {
 	    let hint = null;
@@ -927,6 +1099,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 					<div class="hr-management-dialog__header_content-container">
 						<div class="hr-management-dialog__header_title">{{title}}</div>
 						<div v-if="description" class="hr-management-dialog__header_subtitle">{{description}}</div>
+						<slot name="extra-subtitle" />
 					</div>
 					<div
 						class="ui-icon-set --cross-40 hr-management-dialog__header_close-button"
@@ -1020,22 +1193,56 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    }
 	  };
 	};
-	const ChatTypeDict = Object.freeze({
+	const getCollabDialogEntity = function () {
+	  return {
+	    id: 'project',
+	    dynamicLoad: true,
+	    dynamicSearch: true,
+	    options: {
+	      type: ['collab'],
+	      createProjectLink: false,
+	      checkCollabInviteOption: true
+	    },
+	    itemOptions: {
+	      collab: {
+	        supertitle: null,
+	        subtitle: main_core.Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_COLLAB_SUPERTITLE'),
+	        textColor: '#535c69'
+	      }
+	    },
+	    tagOptions: {
+	      default: {
+	        textColor: '#207976',
+	        bgColor: '#ade7e4',
+	        avatar: '/bitrix/js/socialnetwork/entity-selector/src/images/collab-project.svg'
+	      }
+	    }
+	  };
+	};
+	const CommunicationsTypeDict = Object.freeze({
 	  chat: 'chat',
-	  channel: 'channel'
+	  channel: 'channel',
+	  collab: 'collab'
 	});
-	const getChatRecentTabOptions = function (entityType, chatType) {
+	const getCommunicationsRecentTabOptions = function (entityType, chatType) {
 	  let title = '';
-	  if (chatType === ChatTypeDict.chat) {
-	    title = entityType === humanresources_companyStructure_utils.EntityTypes.team ? main_core.Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_CHAT_TEAM_STUB_TITLE') : main_core.Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_CHAT_DEPARTMENT_STUB_TITLE');
+	  let subtitle = '';
+	  if (chatType === CommunicationsTypeDict.chat) {
+	    title = main_core.Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_CHAT_STUB_TITLE');
+	    subtitle = entityType === humanresources_companyStructure_utils.EntityTypes.team ? main_core.Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_CHAT_TEAM_STUB_SUBTITLE') : main_core.Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_CHAT_DEPARTMENT_STUB_SUBTITLE');
+	  } else if (chatType === CommunicationsTypeDict.channel) {
+	    title = main_core.Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_CHANNEL_STUB_TITLE');
+	    subtitle = entityType === humanresources_companyStructure_utils.EntityTypes.team ? main_core.Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_CHANNEL_TEAM_STUB_SUBTITLE') : main_core.Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_CHANNEL_DEPARTMENT_STUB_SUBTITLE');
 	  } else {
-	    title = entityType === humanresources_companyStructure_utils.EntityTypes.team ? main_core.Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_CHANNEL_TEAM_STUB_TITLE') : main_core.Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_CHANNEL_DEPARTMENT_STUB_TITLE');
+	    title = main_core.Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_COLLAB_STUB_TITLE');
+	    subtitle = entityType === humanresources_companyStructure_utils.EntityTypes.team ? main_core.Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_COLLAB_TEAM_STUB_SUBTITLE') : main_core.Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_COLLAB_DEPARTMENT_STUB_SUBTITLE');
 	  }
 	  return {
 	    visible: false,
 	    stub: true,
 	    stubOptions: {
-	      title
+	      title,
+	      subtitle
 	    }
 	  };
 	};
@@ -1051,17 +1258,25 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      required: true
 	    },
 	    width: {
-	      type: Number,
+	      type: [Number, null],
 	      default: 300
 	    },
 	    extraClasses: {
 	      type: Object
+	    },
+	    defaultClass: {
+	      type: String,
+	      default: 'ui-hint'
 	    },
 	    top: {
 	      type: Boolean,
 	      default: false
 	    },
 	    alignCenter: {
+	      type: Boolean,
+	      default: false
+	    },
+	    checkScrollWidth: {
 	      type: Boolean,
 	      default: false
 	    }
@@ -1086,6 +1301,9 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      };
 	    }
 	    main_core.Event.bind(this.$refs['hint-container'], 'mouseenter', () => {
+	      if (this.checkScrollWidth && this.$refs['hint-container'].scrollWidth === this.$refs['hint-container'].offsetWidth) {
+	        return;
+	      }
 	      this.hint = main_core.Reflection.getClass('BX.UI.Hint').createInstance({
 	        popupParameters: {
 	          ...parameters
@@ -1105,7 +1323,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    (_this$hint2 = this.hint) == null ? void 0 : _this$hint2.hide();
 	  },
 	  template: `
-		<span class="ui-hint" ref="hint-container" :class="extraClasses">
+		<span :class="[defaultClass, extraClasses]" ref="hint-container">
 			<slot/>
 		</span>
 	`
@@ -1140,14 +1358,16 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	exports.ActionMenu = ActionMenu;
 	exports.UserListActionMenu = UserListActionMenu;
 	exports.ConfirmationPopup = ConfirmationPopup;
+	exports.MoveEmployeeConfirmationPopup = MoveEmployeeConfirmationPopup;
 	exports.Hint = Hint;
 	exports.ManagementDialog = ManagementDialog;
 	exports.getChatDialogEntity = getChatDialogEntity;
 	exports.getChannelDialogEntity = getChannelDialogEntity;
-	exports.getChatRecentTabOptions = getChatRecentTabOptions;
-	exports.ChatTypeDict = ChatTypeDict;
+	exports.getCommunicationsRecentTabOptions = getCommunicationsRecentTabOptions;
+	exports.getCollabDialogEntity = getCollabDialogEntity;
+	exports.CommunicationsTypeDict = CommunicationsTypeDict;
 	exports.ResponsiveHint = ResponsiveHint;
 	exports.DefaultHint = DefaultHint;
 
-}((this.BX.Humanresources.CompanyStructure = this.BX.Humanresources.CompanyStructure || {}),BX.Main,BX.UI.IconSet,BX.UI.EntitySelector,BX,BX.Humanresources.CompanyStructure,BX));
+}((this.BX.Humanresources.CompanyStructure = this.BX.Humanresources.CompanyStructure || {}),BX.UI.IconSet,BX.Main,BX.Humanresources.CompanyStructure,BX.UI.EntitySelector,BX,BX.Humanresources.CompanyStructure,BX));
 //# sourceMappingURL=structure-components.bundle.js.map

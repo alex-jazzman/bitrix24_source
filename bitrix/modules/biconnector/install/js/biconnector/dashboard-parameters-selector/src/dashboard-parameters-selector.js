@@ -44,7 +44,7 @@ export class DashboardParametersSelector
 	getLayout(): HTMLElement
 	{
 		const paramsHintText = Loc.getMessage(
-			'DASHBOARD_PARAMS_SELECTOR_PARAMS_HINT_MSGVER_1',
+			'DASHBOARD_PARAMS_SELECTOR_PARAMS_HINT_MSGVER_2',
 			{
 				'[link]': '<a class="ui-link" onclick="top.BX.Helper.show(`redirect=detail&code=22658454`)">',
 				'[/link]': '</a>',

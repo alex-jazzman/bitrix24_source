@@ -936,46 +936,30 @@ class SalesCenterPaySystemPanel extends CBitrixComponent implements Controllerab
 
 	private function getRecommendItem(): array
 	{
-		$feedbackPath = \CComponentEngine::makeComponentPath('bitrix:salescenter.feedback');
-		$feedbackPath = getLocalPath('components'.$feedbackPath.'/slider.php');
-		$feedbackPath = new Main\Web\Uri($feedbackPath);
-
-		$queryParams = [
-			'lang' => LANGUAGE_ID,
-			'feedback_type' => 'paysystem_offer',
-		];
-		$feedbackPath->addParams($queryParams);
-
 		return [
 			'id' => 'recommend',
 			'title' => Loc::getMessage('SPP_PAYSYSTEM_APP_RECOMMEND'),
 			'image' => $this->getImagePath().'recommend.svg',
 			'data' => [
 				'type' => 'recommend',
-				'connectPath' => $feedbackPath->getLocator(),
-			]
+				'feedbackConfig' => [
+					'feedback_type' => Bitrix24Manager::FEEDBACK_TYPE_PAYSYSTEM_OFFER,
+				],
+			],
 		];
 	}
 
 	private function getSbpRecommendItem(): array
 	{
-		$feedbackPath = \CComponentEngine::makeComponentPath('bitrix:salescenter.feedback');
-		$feedbackPath = getLocalPath('components'.$feedbackPath.'/slider.php');
-		$feedbackPath = new Main\Web\Uri($feedbackPath);
-
-		$queryParams = [
-			'lang' => LANGUAGE_ID,
-			'feedback_type' => 'paysystem_sbp_offer',
-		];
-		$feedbackPath->addParams($queryParams);
-
 		return [
 			'id' => 'sbp_recommend',
 			'title' => Loc::getMessage('SPP_PAYSYSTEM_SBP_RECOMMEND'),
 			'image' => $this->getImagePath().'sbp_recommend.svg',
 			'data' => [
 				'type' => 'recommend',
-				'connectPath' => $feedbackPath->getLocator(),
+				'feedbackConfig' => [
+					'feedback_type' => Bitrix24Manager::FEEDBACK_TYPE_PAYSYSTEM_SBP_OFFER,
+				],
 			]
 		];
 	}

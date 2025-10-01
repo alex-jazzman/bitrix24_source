@@ -115,6 +115,11 @@ export class ServerPlainCall extends AbstractCall
 		return Provider.Plain;
 	}
 
+	get hasConnectionData()
+	{
+		return Boolean(this.connectionData.mediaServerUrl && this.connectionData.roomData);
+	}
+
 	initPeers(userIds)
 	{
 		let peers = {};

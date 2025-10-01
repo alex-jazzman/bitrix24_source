@@ -1,5 +1,8 @@
 <?php
 
+use Bitrix\Intranet\Integration\Templates\Air\ChatMenu;
+use Bitrix\Intranet\Site\Sections\CollaborationSection;
+use Bitrix\Main\Application;
 use Bitrix\Main\Web\Json;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
@@ -41,14 +44,18 @@ $config = Json::encode($application->getConfig());
 <?php
 $this->setViewTarget("above_pagetitle", 100);
 
-$APPLICATION->includeComponent(
-	'bitrix:main.interface.buttons',
-	'',
-	[
-		'ID' => 'chat-menu',
-		'ITEMS' => \Bitrix\Intranet\Integration\Templates\Air\ChatMenu::getMenuItems(),
-		'THEME' => 'air',
-	]
-);
+if (\Bitrix\Main\Loader::includeModule('intranet'))
+{
+	$showCollaborationMenu = CollaborationSection::shouldShowNewStructure();
+	$APPLICATION->includeComponent(
+		'bitrix:main.interface.buttons',
+		'',
+		[
+			'ID' => $showCollaborationMenu ? 'top_menu_id_collaboration' : 'chat-menu',
+			'ITEMS' => $showCollaborationMenu ? CollaborationSection::getMenuItems() : ChatMenu::getMenuItems(),
+			'THEME' => 'air',
+		]
+	);
+}
 
 $this->endViewTarget();

@@ -242,6 +242,8 @@ $MESS["main_options_device_history"] = "Пайдаланушы құрылғыл�
 $MESS["main_options_device_history_days"] = "Кіру тарихын қанша күн сақтау керек:";
 $MESS["main_options_device_history_note"] = "Құрылғыларды жақсы анықтау үшін PHP-де <a href=\"https://www.php.net/manual/en/function.get-browser.php\" target = \"_blank\">browscap</a> баптаңыз. <a href=\"http://browscap.org\" target=\"_blank\">Browser Capabilities Project</a> соңғы нұсқадағы  ini-файлды пайдаланыңыз.";
 $MESS["main_options_device_history_notify"] = "Пайдаланушыларға жаңа құрылғыдан кіру туралы хабарлау (<a href=\"#EMAIL_TEMPLATES_URL#\">пошта қалыптары</a>):";
+$MESS["main_options_device_history_notify_im"] = "Пайдаланушыларға чатқа хабарлау (im, imbot модульдері қажет):";
+$MESS["main_options_device_history_notify_only"] = "Тек көрсетілген пайдаланушыларға хабарлау:";
 $MESS["main_options_device_history_title"] = "Кірістер мен құрылғылардың тарихы";
 $MESS["main_options_diplicates_max_size"] = "Телнұсқаларды басқаруға арналған максималды файл өлшемі (Мб):";
 $MESS["main_options_email_register"] = "Пайдаланушыларды email арқылы тіркеу:";

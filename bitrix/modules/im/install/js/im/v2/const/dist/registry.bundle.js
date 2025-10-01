@@ -59,6 +59,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  imV2ChatTaskPrepare: 'im.v2.Chat.Task.prepare',
 	  imV2RecentChannelTail: 'im.v2.Recent.Channel.Tail',
 	  imV2RecentCollabTail: 'im.v2.Recent.Collab.Tail',
+	  imV2RecentAiAssistantTail: 'im.v2.Recent.AiAssistant.tail',
 	  imV2ChatCopilotUpdateRole: 'im.v2.Chat.Copilot.updateRole',
 	  imV2ChatCopilotUpdateAiModel: 'im.v2.Chat.Copilot.updateEngine',
 	  imV2AccessCheck: 'im.v2.Access.check',
@@ -266,7 +267,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  openChannel: 'openChannel',
 	  generalChannel: 'generalChannel',
 	  comment: 'comment',
-	  collab: 'collab'
+	  collab: 'collab',
+	  aiAssistant: 'aiAssistant',
+	  aiAssistantEntity: 'aiAssistantEntity'
 	});
 	const DialogScrollThreshold = Object.freeze({
 	  none: 'none',
@@ -402,6 +405,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const RecentType = {
 	  default: 'default',
 	  copilot: 'copilot',
+	  aiAssistant: 'aiAssistant',
 	  openChannel: 'openChannel',
 	  collab: 'collab'
 	};
@@ -415,73 +419,20 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  expert: 'expert'
 	};
 
-	const Layout = Object.freeze({
-	  chat: {
-	    name: 'chat',
-	    list: 'RecentListContainer',
-	    content: 'ChatContent'
-	  },
-	  createChat: {
-	    name: 'createChat',
-	    list: 'RecentListContainer',
-	    content: 'CreateChatContent'
-	  },
-	  updateChat: {
-	    name: 'updateChat',
-	    list: 'RecentListContainer',
-	    content: 'UpdateChatContent'
-	  },
-	  channel: {
-	    name: 'channel',
-	    list: 'ChannelListContainer',
-	    content: 'ChatContent'
-	  },
-	  notification: {
-	    name: 'notification',
-	    list: 'RecentListContainer',
-	    content: 'NotificationContent'
-	  },
-	  openlines: {
-	    name: 'openlines',
-	    list: '',
-	    content: 'OpenlineContent'
-	  },
-	  openlinesV2: {
-	    name: 'openlinesV2',
-	    list: 'OpenlineListContainer',
-	    content: 'OpenlinesV2Content'
-	  },
-	  conference: {
-	    name: 'conference',
-	    list: 'RecentListContainer',
-	    content: 'ChatContent'
-	  },
-	  call: {
-	    name: 'call',
-	    list: 'RecentListContainer',
-	    content: 'ChatContent'
-	  },
-	  settings: {
-	    name: 'settings',
-	    list: '',
-	    content: 'SettingsContent'
-	  },
-	  copilot: {
-	    name: 'copilot',
-	    list: 'CopilotListContainer',
-	    content: 'CopilotContent'
-	  },
-	  collab: {
-	    name: 'collab',
-	    list: 'CollabListContainer',
-	    content: 'ChatContent'
-	  },
-	  market: {
-	    name: 'market',
-	    list: '',
-	    content: 'MarketContent'
-	  }
-	});
+	const Layout = {
+	  chat: 'chat',
+	  createChat: 'createChat',
+	  updateChat: 'updateChat',
+	  channel: 'channel',
+	  notification: 'notification',
+	  openlines: 'openlines',
+	  openlinesV2: 'openlinesV2',
+	  conference: 'conference',
+	  settings: 'settings',
+	  aiAssistant: 'aiAssistant',
+	  collab: 'collab',
+	  market: 'market'
+	};
 
 	const SearchEntityIdTypes = {
 	  user: 'user',
@@ -820,6 +771,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  getOpenlines: 'getOpenlines',
 	  createCollab: 'createCollab',
 	  createCopilot: 'createCopilot',
+	  createAiAssistant: 'createAiAssistant',
 	  createChannel: 'createChannel',
 	  createChat: 'createChat',
 	  createConference: 'createConference',
@@ -939,16 +891,16 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	});
 
 	const NavigationMenuItem = Object.freeze({
-	  [Layout.chat.name]: Layout.chat.name,
-	  [Layout.copilot.name]: Layout.copilot.name,
-	  [Layout.collab.name]: Layout.collab.name,
-	  [Layout.channel.name]: Layout.channel.name,
-	  [Layout.openlines.name]: Layout.openlines.name,
-	  [Layout.openlinesV2.name]: Layout.openlinesV2.name,
-	  [Layout.notification.name]: Layout.notification.name,
-	  [Layout.call.name]: Layout.call.name,
-	  [Layout.market.name]: Layout.market.name,
-	  [Layout.settings.name]: Layout.settings.name,
+	  [Layout.chat]: Layout.chat,
+	  [Layout.aiAssistant]: Layout.aiAssistant,
+	  [Layout.collab]: Layout.collab,
+	  [Layout.channel]: Layout.channel,
+	  [Layout.openlines]: Layout.openlines,
+	  [Layout.openlinesV2]: Layout.openlinesV2,
+	  [Layout.notification]: Layout.notification,
+	  [Layout.market]: Layout.market,
+	  [Layout.settings]: Layout.settings,
+	  call: 'call',
 	  timemanager: 'timemanager',
 	  homepage: 'homepage'
 	});

@@ -1,5 +1,8 @@
 <?php
 $MESS["SN_COLLAB_ACCESS_RIGHTS"] = "Қол жеткізу құқықтары";
+$MESS["SN_COLLAB_ACCESS_RIGHTS_ALLOW_GUESTS_INVITATION_LABEL"] = "Қонақтарды коллабқа шақыруға рұқсат ету";
+$MESS["SN_COLLAB_ACCESS_RIGHTS_ALLOW_GUESTS_INVITATION_LABEL_HINT_DISABLED"] = "Битрикс24 әкімшісі қонақтарды коллабтарға шақыру мүмкіндігін өшірді";
+$MESS["SN_COLLAB_ACCESS_RIGHTS_ALLOW_GUESTS_INVITATION_LABEL_HINT_ENABLED"] = "Коллаб қатысушылары қонақтарды шақыра алады";
 $MESS["SN_COLLAB_ACCESS_RIGHTS_BUTTON_CANCEL"] = "Болдырмау";
 $MESS["SN_COLLAB_ACCESS_RIGHTS_BUTTON_SAVE"] = "Сақтау";
 $MESS["SN_COLLAB_ACCESS_RIGHTS_CHAT_LABEL"] = "Чатқа кім хабарлама жаза алады";
@@ -7,6 +10,7 @@ $MESS["SN_COLLAB_ACCESS_RIGHTS_CHAT_LABEL_HINT"] = "Талқылауларды �
 $MESS["SN_COLLAB_ACCESS_RIGHTS_ERROR_REQUIRED_OWNER"] = "Коллабтың иесін көрсетіңіз";
 $MESS["SN_COLLAB_ACCESS_RIGHTS_INITIATE_LABEL"] = "Қатысушыларды кім шақыра алады";
 $MESS["SN_COLLAB_ACCESS_RIGHTS_INITIATE_LABEL_HINT"] = "Әріптестер мен қонақтарды коллабқа шақыра алатын қатысушыларды таңдаңыз";
+$MESS["SN_COLLAB_ACCESS_RIGHTS_MANAGEMENT_LABEL_MSGVER_1"] = "Коллабаны басқару";
 $MESS["SN_COLLAB_ACCESS_RIGHTS_MODERATORS_LABEL"] = "Модераторлар";
 $MESS["SN_COLLAB_ACCESS_RIGHTS_MODERATORS_LABEL_HINT"] = "Иесі модераторға коллабты басқаруға қосымша құқықтар бере алады";
 $MESS["SN_COLLAB_ACCESS_RIGHTS_OWNER_LABEL"] = "Иесі";

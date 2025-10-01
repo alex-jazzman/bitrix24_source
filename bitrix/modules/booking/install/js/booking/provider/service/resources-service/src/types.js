@@ -6,6 +6,8 @@ export type ResourceDto = {
 	name: string,
 	description: string | null,
 	isMain: boolean,
+	isPrimary: boolean,
+	isDeleted: boolean,
 	slotRanges: [{
 		id: number | null,
 		from: number,
@@ -17,6 +19,7 @@ export type ResourceDto = {
 	createdBy: number | null,
 	createdAt: number | null,
 	updatedAt: number | null,
+	deletedAt: number | null,
 
 	// info
 	isInfoNotificationOn: boolean,

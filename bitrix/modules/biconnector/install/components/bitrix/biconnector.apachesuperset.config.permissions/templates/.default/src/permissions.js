@@ -14,12 +14,19 @@ export class Permissions
 {
 	static init(params: initPermissionParams)
 	{
-		const { newGroupPermissions, dashboardGroups, dashboards, appGuid } = params;
+		const {
+			newGroupPermissions,
+			dashboardGroups,
+			dashboards,
+			user,
+			appGuid,
+		} = params;
 		const state: PermissionAppState = {
 			groups: dashboardGroups,
 			dashboards: new Map(Object.entries(dashboards).map(([key, value]) => [Number(key), value])),
 			newGroupPermissions,
 			appGuid,
+			user,
 		};
 
 		const permissionsApp = BitrixVue.createApp({

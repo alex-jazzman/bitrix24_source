@@ -348,6 +348,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/menu', (require, expo
 		{
 			if (message.isPossibleMultiselect())
 			{
+				menu.addSeparator();
 				menu.addAction(MultiSelectAction);
 			}
 		}

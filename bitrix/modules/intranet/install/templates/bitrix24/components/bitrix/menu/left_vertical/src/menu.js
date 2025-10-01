@@ -493,7 +493,7 @@ export default class Menu
 		const loadBannerDispatcherExtensionPromise = Runtime.loadExtension('ui.banner-dispatcher');
 
 		loadBannerDispatcherExtensionPromise.then(() => {
-			BannerDispatcher.high.toQueue((onDone) => {
+			BannerDispatcher.critical.toQueue((onDone) => {
 				const presetController = this.getDefaultPresetController();
 				presetController.show('global');
 				presetController.getPopup().subscribe('onAfterClose', (event) => {

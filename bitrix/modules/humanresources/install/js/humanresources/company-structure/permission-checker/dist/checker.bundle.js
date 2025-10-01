@@ -131,8 +131,8 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      }
 	    }
 	    if (permissionValue.TEAM === PermissionLevels.fullCompany) {
-	      const departments = humanresources_companyStructure_chartStore.useChartStore().departments;
-	      const currentNode = departments.get(entityId);
+	      const entities = humanresources_companyStructure_chartStore.useChartStore().structureMap;
+	      const currentNode = entities.get(entityId);
 	      if ((action === PermissionActions.teamCreate || action === PermissionActions.teamEdit) && currentNode.entityType === humanresources_companyStructure_utils.EntityTypes.department) {
 	        return humanresources_companyStructure_permissionChecker.PermissionChecker.hasPermission(PermissionActions.structureView, currentNode.id);
 	      }
@@ -147,10 +147,10 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    if (level === PermissionLevels.none) {
 	      return false;
 	    }
-	    const nodes = humanresources_companyStructure_chartStore.useChartStore().departments;
+	    const entities = humanresources_companyStructure_chartStore.useChartStore().structureMap;
 	    const userEntities = humanresources_companyStructure_chartStore.useChartStore().currentDepartments;
 	    const userTeams = new Set(userEntities.filter(id => {
-	      const department = nodes.get(id);
+	      const department = entities.get(id);
 	      return department && department.entityType === humanresources_companyStructure_utils.EntityTypes.team;
 	    }));
 	    if (userTeams.has(nodeId)) {
@@ -159,7 +159,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    if (level === PermissionLevels.self) {
 	      return false;
 	    }
-	    let currentDepartment = nodes.get(nodeId);
+	    let currentDepartment = entities.get(nodeId);
 	    while (currentDepartment) {
 	      if (currentDepartment.entityType === humanresources_companyStructure_utils.EntityTypes.department) {
 	        return false;
@@ -167,7 +167,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      if (userTeams.has(currentDepartment.id)) {
 	        return true;
 	      }
-	      currentDepartment = nodes.get(currentDepartment.parentId);
+	      currentDepartment = entities.get(currentDepartment.parentId);
 	    }
 	    return false;
 	  }
@@ -175,16 +175,16 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    if (level === PermissionLevels.none) {
 	      return false;
 	    }
-	    const nodes = humanresources_companyStructure_chartStore.useChartStore().departments;
+	    const entities = humanresources_companyStructure_chartStore.useChartStore().structureMap;
 	    const userEntities = humanresources_companyStructure_chartStore.useChartStore().currentDepartments;
 	    const userDepartments = new Set(userEntities.filter(id => {
-	      const department = nodes.get(id);
+	      const department = entities.get(id);
 	      return department && department.entityType === humanresources_companyStructure_utils.EntityTypes.department;
 	    }));
 	    if (userDepartments.has(nodeId)) {
 	      return true;
 	    }
-	    let currentDepartment = nodes.get(nodeId);
+	    let currentDepartment = entities.get(nodeId);
 	    while (currentDepartment) {
 	      if (userDepartments.has(currentDepartment.id)) {
 	        return true;
@@ -195,7 +195,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	        }
 	        return false;
 	      }
-	      currentDepartment = nodes.get(currentDepartment.parentId);
+	      currentDepartment = entities.get(currentDepartment.parentId);
 	    }
 	    return false;
 	  }
@@ -213,7 +213,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    if (minLevel !== null && permissionValue < minLevel) {
 	      return false;
 	    }
-	    const departments = humanresources_companyStructure_chartStore.useChartStore().departments;
+	    const departments = humanresources_companyStructure_chartStore.useChartStore().structureMap;
 	    if (action === PermissionActions.departmentDelete) {
 	      const rootId = [...departments.values()].find(department => department.parentId === 0).id;
 	      if (departmentId === rootId) {
@@ -256,6 +256,8 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    if (!PermissionCheckerClass.instance) {
 	      this.currentUserPermissions = {};
 	      this.isTeamsAvailable = false;
+	      this.isCollabsAvailable = false;
+	      this.isDeputyApprovesBPAvailable = false;
 	      this.isInitialized = false;
 	      this.departmentChecker = new DepartmentPermissionChecker();
 	      this.teamChecker = new TeamPermissionChecker(this.departmentChecker, this.currentUserPermissions);
@@ -272,10 +274,14 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    }
 	    const {
 	      currentUserPermissions,
-	      teamsAvailable
+	      teamsAvailable,
+	      collabsAvailable,
+	      deputyApprovesBP
 	    } = await chartAPI.getDictionary();
 	    this.currentUserPermissions = currentUserPermissions;
 	    this.isTeamsAvailable = teamsAvailable;
+	    this.isCollabsAvailable = collabsAvailable;
+	    this.isDeputyApprovesBPAvailable = deputyApprovesBP;
 	    this.isInitialized = true;
 	  }
 	  hasPermission(action, entityId, minLevel = null) {
@@ -290,6 +296,9 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      return this.teamChecker.hasPermission(action, entityId, permissionLevel, minLevel);
 	    }
 	    return false;
+	  }
+	  checkDeputyApprovalBPAvailable() {
+	    return this.isDeputyApprovesBPAvailable;
 	  }
 	  hasPermissionOfAction(action) {
 	    const permissionLevel = this.currentUserPermissions[action];

@@ -10,5 +10,4 @@ $MESS["CRM_PERMS_EDIT_ENTITIES_MORE"] = "Тағы";
 $MESS["CRM_PERMS_EDIT_ENTITIES_ROLE"] = "Рөл";
 $MESS["CRM_PERMS_EDIT_ENTITIES_SAVE"] = "Сақтау";
 $MESS["CRM_PERMS_EDIT_ENTITIES_STAGES"] = "Сатылар";
-$MESS["CRM_PERMS_EDIT_RESTRICTION"] = "CRM-ге қолжетімділік құқықтарын баптау тек <a target=\"_blank\" href=\"https://www.bitrix24.kz/prices/\">ақылы тарифтерде</a> қолжетімді.";
 $MESS["CRM_PERMS_EDIT_ROLE_DELETE"] = "Рөлді жою";

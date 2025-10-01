@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,main_core_events,ui_vue3_vuex,call_core,call_core_engine,im_public,im_v2_lib_slider,im_v2_lib_logger,im_v2_lib_promo,im_v2_lib_soundNotification,rest_client,im_v2_lib_rest,im_v2_const,main_core,ui_buttons,im_v2_application_core) {
+(function (exports,im_v2_lib_desktopApi,main_core_events,ui_vue3_vuex,call_core,call_core_engine,im_public,im_v2_lib_slider,im_v2_lib_logger,im_v2_lib_promo,im_v2_lib_soundNotification,rest_client,im_v2_lib_rest,im_v2_const,main_core,ui_buttons,im_v2_application_core) {
 	'use strict';
 
 	class BetaCallService {
@@ -220,6 +220,19 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      callInstalled
 	    } = main_core.Extension.getSettings('im.v2.lib.call');
 	    return callInstalled === true;
+	  }
+
+	  // TODO: add to a new file after separating call and im
+	  async sendBroadcastRequest(callId) {
+	    if (!this.isAvailable()) {
+	      return Promise.resolve([]);
+	    }
+	    if (!im_v2_lib_desktopApi.DesktopApi.isDesktop()) {
+	      return Promise.resolve([]);
+	    }
+	    return await babelHelpers.classPrivateFieldLooseBase(this, _controller)[_controller].callMultiBroadcastClient.broadcastRequest(callId, {
+	      timeout: 100
+	    });
 	  }
 	  createBetaCallRoom(chatId) {
 	    if (!this.isAvailable()) {
@@ -525,7 +538,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	}
 	function _getCurrentDialogId2() {
 	  const layout = babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].getters['application/getLayout'];
-	  if (layout.name !== im_v2_const.Layout.chat.name) {
+	  if (layout.name !== im_v2_const.Layout.chat) {
 	    return '';
 	  }
 	  return layout.entityId;
@@ -604,5 +617,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.CallManager = CallManager;
 
-}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX.Event,BX.Vue3.Vuex,BX.Call,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX,BX.UI,BX.Messenger.v2.Application));
+}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX.Messenger.v2.Lib,BX.Event,BX.Vue3.Vuex,BX.Call,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX,BX.UI,BX.Messenger.v2.Application));
 //# sourceMappingURL=call.bundle.js.map

@@ -33,3 +33,24 @@
 	width: 121px;
 	background-image: url('../images/empty-department.svg');
 }
+
+body.--user-dragging .hr-department-detail-content__user-container:hover {
+	pointer-events: none;
+}
+
+.hr-department-detail-content__user-role-select {
+	margin-top: 10px;
+}
+
+.hr-department-detail-content__user-role-select .ui-ctl-element {
+	border-radius: 9px;
+}
+
+.hr-department-detail-content__user-action-text-container.--role-select {
+	padding-bottom: 10px;
+	line-height: var(--ui-font-line-height-2xs);
+}
+
+.hr-department-detail-content__user-role-select .ui-ctl-after {
+	right: 0;
+}

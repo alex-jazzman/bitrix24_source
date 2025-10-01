@@ -851,16 +851,16 @@ export default class Whatsapp extends Item
 		const showForm = () => {
 			BX.UI.Feedback.Form.open({
 				id: 'b24_crm_timeline_whatsapp_template_suggest_form',
-				defaultForm: {
-					id: 760,
-					lang: 'en',
-					sec: 'culzcq',
-				},
 				forms: [{
 					zones: ['ru', 'by', 'kz'],
 					id: 758,
 					lang: 'ru',
 					sec: 'jyafqa',
+				}, {
+					zones: ['en'],
+					id: 760,
+					lang: 'en',
+					sec: 'culzcq',
 				}, {
 					zones: ['de'],
 					id: 764,

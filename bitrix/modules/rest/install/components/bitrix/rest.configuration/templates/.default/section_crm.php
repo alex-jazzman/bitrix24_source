@@ -17,7 +17,7 @@ $APPLICATION->SetTitle($arResult['TITLE']);
 $bodyClass = $APPLICATION->getPageProperty('BodyClass', false);
 $bodyClasses = 'no-hidden no-background no-all-paddings';
 $APPLICATION->setPageProperty('BodyClass', trim(sprintf('%s %s', $bodyClass, $bodyClasses)));
-if($arResult['ERROR'])
+if (!empty($arResult['ERROR']))
 {
 	ShowError($arResult['ERROR']);
 	return false;

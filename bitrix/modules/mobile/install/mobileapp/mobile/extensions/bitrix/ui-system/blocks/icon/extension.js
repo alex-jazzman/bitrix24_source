@@ -31,11 +31,6 @@ jn.define('ui-system/blocks/icon', (require, exports, module) => {
 	 */
 	class IconView extends LayoutComponent
 	{
-		static isFallbackUrlSupported()
-		{
-			return Application.getApiVersion() >= 55;
-		}
-
 		render()
 		{
 			const { testId, forwardRef } = this.props;
@@ -100,36 +95,12 @@ jn.define('ui-system/blocks/icon', (require, exports, module) => {
 				};
 			}
 
-			const named = icon.getIconName();
-			const path = icon.getPath();
-			const domainPath = withCurrentDomain(path);
-			const isFallbackUrlSupported = IconView.isFallbackUrlSupported();
-
-			if (isFallbackUrlSupported)
-			{
-				return {
-					named: {
-						named,
-						fallbackUrl: domainPath,
-					},
-				};
-			}
-
-			if (path && !isFallbackUrlSupported)
-			{
-				return {
-					svg: {
-						uri: domainPath,
-					},
-				};
-			}
-
-			if (named)
-			{
-				return { named };
-			}
-
-			return {};
+			return {
+				named: {
+					named: icon.getIconName(),
+					fallbackUrl: withCurrentDomain(icon.getPath()),
+				},
+			};
 		}
 
 		getIconContent()

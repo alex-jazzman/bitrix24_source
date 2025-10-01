@@ -1,9 +1,16 @@
+export type User = {
+	id: number,
+	isAdmin: boolean,
+	hasAccessToPermission: boolean,
+	accessibleGroupIds: string[],
+};
+
 export type GroupAppParams = {
 	groupId: string,
 	groups: Group[],
 	dashboards: Map<number, Dashboard>,
 	saveEnabled: boolean,
-	isNeedShowDeletionWarningPopup: boolean,
+	user: User,
 };
 
 export type GroupAppState = {
@@ -12,7 +19,7 @@ export type GroupAppState = {
 	dashboards: Map<number, Dashboard>,
 	saveEnabled: boolean,
 	isLoading: boolean,
-	isNeedShowDeletionWarningPopup: boolean,
+	user: User,
 };
 
 export const GroupType = {
@@ -39,6 +46,8 @@ export type Dashboard = {
 	name: string,
 	type: DashboardType.system | DashboardType.market | DashboardType.custom,
 	scopes: Scope[],
+	createdById: number,
+	ownerId: number,
 };
 
 export type Scope = {

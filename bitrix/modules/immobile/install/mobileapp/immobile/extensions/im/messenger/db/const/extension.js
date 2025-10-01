@@ -7,9 +7,11 @@ jn.define('im/messenger/db/const', (require, exports, module) => {
 		text: 'text',
 		date: 'date',
 		boolean: 'boolean',
-		json: 'json',
+		json: 'json', /** @deprecated. use object or array instead */
 		map: 'map',
 		set: 'set',
+		object: 'object',
+		array: 'array',
 	});
 
 	const SqlFieldType = {
@@ -19,7 +21,8 @@ jn.define('im/messenger/db/const', (require, exports, module) => {
 		[FieldType.boolean]: 'TEXT',
 		[FieldType.json]: 'TEXT',
 		[FieldType.map]: 'TEXT',
-		[FieldType.set]: 'TEXT',
+		[FieldType.object]: 'TEXT',
+		[FieldType.array]: 'TEXT',
 	};
 
 	const FieldDefaultValue = Object.freeze({

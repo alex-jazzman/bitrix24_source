@@ -83,6 +83,22 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/controller', (require
 
 		/**
 		 * @param {number} messageId
+		 * @return {IMessageContextMenu}
+		 */
+		createBaseMessageContextMenuControllerByMessageId(messageId)
+		{
+			const baseContextMenuController = new MessageMenu({
+				getDialog: this.getDialog,
+				relatedEntity: this.configurator.getRelatedEntity(),
+			});
+
+			baseContextMenuController.setDialogLocator(this.dialogLocator);
+
+			return baseContextMenuController;
+		}
+
+		/**
+		 * @param {number} messageId
 		 * @return {Promise<IMessageContextMenu>}
 		 */
 		async createMessageContextMenuControllerByMessageId(messageId)
@@ -180,6 +196,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/controller', (require
 			orderedActions
 				.forEach((actionId) => this.actions[actionId](menu, contextMenuMessage))
 			;
+			menu.clearUnnecessarySeparators();
 
 			this.dialogLocator.get('view')
 				.showMenuForMessage(message, menu)
@@ -295,11 +312,12 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/controller', (require
 		 */
 		async registerActions(messageId)
 		{
+			const baseController = this.createBaseMessageContextMenuControllerByMessageId(messageId);
 			const controller = await this.createMessageContextMenuControllerByMessageId(messageId);
-
 			this.actions = {
 				[MessageMenuActionType.reaction]: this.addReactionAction.bind(this),
 				...controller.getActions(),
+				...baseController.getActions(),
 			};
 		}
 
@@ -309,10 +327,11 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/controller', (require
 		 */
 		async registerActionHandlers(messageId)
 		{
+			const baseController = this.createBaseMessageContextMenuControllerByMessageId(messageId);
 			const controller = await this.createMessageContextMenuControllerByMessageId(messageId);
-
 			this.handlers = {
 				...controller.getActionHandlers(),
+				...baseController.getActionHandlers(),
 			};
 		}
 

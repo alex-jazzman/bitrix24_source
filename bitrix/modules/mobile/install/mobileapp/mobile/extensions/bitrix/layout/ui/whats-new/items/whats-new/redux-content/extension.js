@@ -13,8 +13,8 @@ jn.define('layout/ui/whats-new/items/whats-new/redux-content', (require, exports
 	const { ChipStatus, ChipStatusDesign, ChipStatusMode } = require('ui-system/blocks/chips/chip-status');
 	const { CollapsibleText } = require('layout/ui/collapsible-text');
 	const { Moment } = require('utils/date/moment');
+	const { TimeAgoFormat } = require('layout/ui/friendly-date/time-ago-format');
 	const { DynamicDateFormatter } = require('utils/date/dynamic-date-formatter');
-	const { longDate, shortTime, dayShortMonth } = require('utils/date/formats');
 	const { WhatsNewReaction } = require('layout/ui/whats-new/items/whats-new/reaction');
 	const { ChipButton, ChipButtonMode, ChipButtonDesign } = require('ui-system/blocks/chips/chip-button');
 
@@ -59,7 +59,7 @@ jn.define('layout/ui/whats-new/items/whats-new/redux-content', (require, exports
 
 		get testId()
 		{
-			return `${this.props.testId}-whats-new-item-${this.props.item.id}`;
+			return `${this.props.testId}-${this.props.item.id}`;
 		}
 
 		get categories()
@@ -148,6 +148,7 @@ jn.define('layout/ui/whats-new/items/whats-new/redux-content', (require, exports
 							this.renderTime(),
 						),
 						name && H5({
+							testId: `${this.testId}-title`,
 							text: name,
 							color: Color.base1,
 							style: {
@@ -157,6 +158,7 @@ jn.define('layout/ui/whats-new/items/whats-new/redux-content', (require, exports
 							ellipsize: 'end',
 						}),
 						description && new CollapsibleText({
+							testId: `${this.testId}-description`,
 							value: description,
 							canExpand: true,
 							style: {
@@ -202,7 +204,7 @@ jn.define('layout/ui/whats-new/items/whats-new/redux-content', (require, exports
 			}
 
 			return ChipStatus({
-				testId: `${this.testId}-item-category`,
+				testId: `${this.testId}-category`,
 				text: itemCategory.name,
 				mode: ChipStatusMode.TINTED,
 				design: ChipStatusDesign.PRIMARY,
@@ -222,6 +224,7 @@ jn.define('layout/ui/whats-new/items/whats-new/redux-content', (require, exports
 			return Text7({
 				text: this.getFormattedDate(time),
 				color: Color.base4,
+				testId: `${this.testId}-time`,
 			});
 		}
 
@@ -231,13 +234,18 @@ jn.define('layout/ui/whats-new/items/whats-new/redux-content', (require, exports
 		 */
 		getFormattedDate(time)
 		{
+			const timeAgoTextBuilder = new TimeAgoFormat();
+
 			const formatter = new DynamicDateFormatter({
 				config: {
-					[DynamicDateFormatter.periods.DAY]: shortTime(),
-					[DynamicDateFormatter.deltas.WEEK]: 'E',
-					[DynamicDateFormatter.periods.YEAR]: dayShortMonth(),
+					past: {
+						[DynamicDateFormatter.deltas.HOUR]: (m) => timeAgoTextBuilder.formatMinutes(m),
+						[DynamicDateFormatter.deltas.DAY]: (m) => timeAgoTextBuilder.formatHours(m),
+						[DynamicDateFormatter.deltas.WEEK]: (m) => timeAgoTextBuilder.formatDays(m),
+						[DynamicDateFormatter.deltas.MONTH]: (m) => timeAgoTextBuilder.formatDays(m),
+						[DynamicDateFormatter.deltas.YEAR]: (m) => timeAgoTextBuilder.formatMonths(m),
+					},
 				},
-				defaultFormat: longDate(),
 			});
 
 			return formatter.format(new Moment(time * 1000));

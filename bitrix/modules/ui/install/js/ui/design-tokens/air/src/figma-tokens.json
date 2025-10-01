@@ -69,13 +69,13 @@
               "value": "#000000"
             },
             {
-              "name": "base/base-white-fixed",
+              "name": "backgrounds/content/bg-content-primary",
               "type": "color",
               "isAlias": false,
               "value": "#FFFFFF"
             },
             {
-              "name": "backgrounds/content/bg-content-primary",
+              "name": "base/base-white-fixed",
               "type": "color",
               "isAlias": false,
               "value": "#FFFFFF"
@@ -186,7 +186,7 @@
               "name": "backgrounds/content/bg-content-secondary",
               "type": "color",
               "isAlias": false,
-              "value": "#FBFBFB"
+              "value": "#FAFCFD"
             },
             {
               "name": "divider/optical/divider-optical-on-overlay-weight",
@@ -198,7 +198,7 @@
               "name": "backgrounds/content/bg-content-tertiary",
               "type": "color",
               "isAlias": false,
-              "value": "#F1F4F6"
+              "value": "#EEF2F4"
             },
             {
               "name": "backgrounds/vibrant/bg-vibrant-accent",
@@ -622,6 +622,63 @@
               "type": "color",
               "isAlias": false,
               "value": "#FFFFFF3D"
+            },
+            {
+              "name": "design/filled white/default/design-filled-white-bg",
+              "type": "color",
+              "isAlias": false,
+              "value": "#FAFAFC"
+            },
+            {
+              "name": "design/filled white/default/design-filled-white-stroke",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-7"
+              }
+            },
+            {
+              "name": "design/filled white/default/design-filled-white-stroke-weight",
+              "type": "number",
+              "isAlias": false,
+              "value": 0
+            },
+            {
+              "name": "design/filled white/default/design-filled-white-content",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-2"
+              }
+            },
+            {
+              "name": "design/filled white/default/design-filled-white-content-icon",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-2"
+              }
+            },
+            {
+              "name": "design/filled white/default/design-filled-white-content-chevron",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-2"
+              }
+            },
+            {
+              "name": "design/filled white/default/design-filled-white-content-divider",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-7"
+              }
             },
             {
               "name": "design/filled no accent/default/design-filled-na-bg",
@@ -1938,12 +1995,12 @@
               }
             },
             {
-              "name": "design/selection/default/design-selection-content",
-              "type": "color",
+              "name": "design/selection/default/design-selection-stroke-weight-alt",
+              "type": "number",
               "isAlias": true,
               "value": {
-                "collection": "design",
-                "name": "accent/main/accent-main-primary"
+                "collection": "fixed",
+                "name": "global/border/width/border-width-thin"
               }
             },
             {
@@ -1953,6 +2010,15 @@
               "value": {
                 "collection": "design",
                 "name": "divider/content/divider-default"
+              }
+            },
+            {
+              "name": "design/selection/default/design-selection-content",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "accent/main/accent-main-primary"
               }
             },
             {
@@ -2028,7 +2094,7 @@
               "name": "accent/main/accent-main-primary-alt-2",
               "type": "color",
               "isAlias": false,
-              "value": "#7AB7FF"
+              "value": "#58B1FF"
             },
             {
               "name": "accent/main/accent-main-success",
@@ -2718,7 +2784,7 @@
               "name": "component/drawer/drawer-bg-default",
               "type": "color",
               "isAlias": false,
-              "value": "#F6F8FA"
+              "value": "#EEF2F4"
             },
             {
               "name": "component/drawer/drawer-bg-unfocused",
@@ -3294,16 +3360,16 @@
               "value": "#F9FCFF"
             },
             {
-              "name": "pallete/blue/blue-04",
-              "type": "color",
-              "isAlias": false,
-              "value": "#F8FBFF"
-            },
-            {
               "name": "pallete/black/black-base",
               "type": "color",
               "isAlias": false,
               "value": "#333333"
+            },
+            {
+              "name": "pallete/blue/blue-04",
+              "type": "color",
+              "isAlias": false,
+              "value": "#F8FBFF"
             },
             {
               "name": "pallete/blue/blue-06",
@@ -4671,6 +4737,15 @@
               }
             },
             {
+              "name": "design/disabled/default/design-disabled-content-alt",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-4"
+              }
+            },
+            {
               "name": "design/disabled/default/design-disabled-content-icon",
               "type": "color",
               "isAlias": true,
@@ -4970,16 +5045,16 @@
               "value": "#000000"
             },
             {
-              "name": "base/base-white-fixed",
-              "type": "color",
-              "isAlias": false,
-              "value": "#FFFFFF"
-            },
-            {
               "name": "backgrounds/content/bg-content-primary",
               "type": "color",
               "isAlias": false,
               "value": "#262626"
+            },
+            {
+              "name": "base/base-white-fixed",
+              "type": "color",
+              "isAlias": false,
+              "value": "#FFFFFF"
             },
             {
               "name": "divider/content/divider-accent",
@@ -5532,6 +5607,66 @@
               "type": "color",
               "isAlias": false,
               "value": "#FFFFFF3D"
+            },
+            {
+              "name": "design/filled white/default/design-filled-white-bg",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "backgrounds/content/bg-content-primary"
+              }
+            },
+            {
+              "name": "design/filled white/default/design-filled-white-stroke",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-7"
+              }
+            },
+            {
+              "name": "design/filled white/default/design-filled-white-stroke-weight",
+              "type": "number",
+              "isAlias": false,
+              "value": 0
+            },
+            {
+              "name": "design/filled white/default/design-filled-white-content",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-2"
+              }
+            },
+            {
+              "name": "design/filled white/default/design-filled-white-content-icon",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-2"
+              }
+            },
+            {
+              "name": "design/filled white/default/design-filled-white-content-chevron",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-2"
+              }
+            },
+            {
+              "name": "design/filled white/default/design-filled-white-content-divider",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-7"
+              }
             },
             {
               "name": "design/filled no accent/default/design-filled-na-bg",
@@ -6842,10 +6977,13 @@
               }
             },
             {
-              "name": "design/selection/default/design-selection-content",
-              "type": "color",
-              "isAlias": false,
-              "value": "#2A94FF"
+              "name": "design/selection/default/design-selection-stroke-weight-alt",
+              "type": "number",
+              "isAlias": true,
+              "value": {
+                "collection": "fixed",
+                "name": "global/border/width/border-width-thin"
+              }
             },
             {
               "name": "design/plain no accent/focused/design-plain-na-focused-stroke",
@@ -6855,6 +6993,12 @@
                 "collection": "design",
                 "name": "divider/content/divider-default"
               }
+            },
+            {
+              "name": "design/selection/default/design-selection-content",
+              "type": "color",
+              "isAlias": false,
+              "value": "#2A94FF"
             },
             {
               "name": "design/plain no accent/focused/design-plain-na-focused-stroke-weight",
@@ -8171,16 +8315,16 @@
               "value": "#FFFFFF"
             },
             {
-              "name": "pallete/blue/blue-04",
-              "type": "color",
-              "isAlias": false,
-              "value": "#FFFFFF"
-            },
-            {
               "name": "pallete/black/black-base",
               "type": "color",
               "isAlias": false,
               "value": "#333333"
+            },
+            {
+              "name": "pallete/blue/blue-04",
+              "type": "color",
+              "isAlias": false,
+              "value": "#FFFFFF"
             },
             {
               "name": "pallete/blue/blue-06",
@@ -9548,6 +9692,15 @@
               }
             },
             {
+              "name": "design/disabled/default/design-disabled-content-alt",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-4"
+              }
+            },
+            {
               "name": "design/disabled/default/design-disabled-content-icon",
               "type": "color",
               "isAlias": true,
@@ -9796,7 +9949,7 @@
               "name": "base/base-1",
               "type": "color",
               "isAlias": false,
-              "value": "#000000"
+              "value": "#1D1E1F"
             },
             {
               "name": "base/base-2",
@@ -9847,16 +10000,16 @@
               "value": "#000000"
             },
             {
-              "name": "base/base-white-fixed",
-              "type": "color",
-              "isAlias": false,
-              "value": "#FFFFFF"
-            },
-            {
               "name": "backgrounds/content/bg-content-primary",
               "type": "color",
               "isAlias": false,
               "value": "#0000000F"
+            },
+            {
+              "name": "base/base-white-fixed",
+              "type": "color",
+              "isAlias": false,
+              "value": "#FFFFFF"
             },
             {
               "name": "divider/content/divider-accent",
@@ -10409,6 +10562,63 @@
               "type": "color",
               "isAlias": false,
               "value": "#FFFFFF1F"
+            },
+            {
+              "name": "design/filled white/default/design-filled-white-bg",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "backgrounds/content/bg-content-primary"
+              }
+            },
+            {
+              "name": "design/filled white/default/design-filled-white-stroke",
+              "type": "color",
+              "isAlias": false,
+              "value": "#00000014"
+            },
+            {
+              "name": "design/filled white/default/design-filled-white-stroke-weight",
+              "type": "number",
+              "isAlias": false,
+              "value": 0
+            },
+            {
+              "name": "design/filled white/default/design-filled-white-content",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-0"
+              }
+            },
+            {
+              "name": "design/filled white/default/design-filled-white-content-icon",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-1"
+              }
+            },
+            {
+              "name": "design/filled white/default/design-filled-white-content-chevron",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-1"
+              }
+            },
+            {
+              "name": "design/filled white/default/design-filled-white-content-divider",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-7"
+              }
             },
             {
               "name": "design/filled no accent/default/design-filled-na-bg",
@@ -11719,7 +11929,7 @@
               "name": "design/selection/default/design-selection-bg",
               "type": "color",
               "isAlias": false,
-              "value": "#0000001F"
+              "value": "#00000014"
             },
             {
               "name": "design/selection/default/design-selection-stroke",
@@ -11734,19 +11944,25 @@
               "value": 0
             },
             {
-              "name": "design/selection/default/design-selection-content",
-              "type": "color",
-              "isAlias": true,
-              "value": {
-                "collection": "design",
-                "name": "base/base-0"
-              }
+              "name": "design/selection/default/design-selection-stroke-weight-alt",
+              "type": "number",
+              "isAlias": false,
+              "value": 0
             },
             {
               "name": "design/plain no accent/focused/design-plain-na-focused-stroke",
               "type": "color",
               "isAlias": false,
               "value": "#00000014"
+            },
+            {
+              "name": "design/selection/default/design-selection-content",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-1"
+              }
             },
             {
               "name": "design/plain no accent/focused/design-plain-na-focused-stroke-weight",
@@ -11763,7 +11979,7 @@
               "isAlias": true,
               "value": {
                 "collection": "design",
-                "name": "base/base-0"
+                "name": "base/base-1"
               }
             },
             {
@@ -12511,7 +12727,7 @@
               "name": "component/drawer/drawer-bg-default",
               "type": "color",
               "isAlias": false,
-              "value": "#F6F8FA00"
+              "value": "#EEF2F400"
             },
             {
               "name": "component/drawer/drawer-bg-unfocused",
@@ -13048,16 +13264,16 @@
               "value": "#FFFFFF"
             },
             {
-              "name": "pallete/blue/blue-04",
-              "type": "color",
-              "isAlias": false,
-              "value": "#FFFFFF"
-            },
-            {
               "name": "pallete/black/black-base",
               "type": "color",
               "isAlias": false,
               "value": "#333333"
+            },
+            {
+              "name": "pallete/blue/blue-04",
+              "type": "color",
+              "isAlias": false,
+              "value": "#FFFFFF"
             },
             {
               "name": "pallete/blue/blue-06",
@@ -14428,6 +14644,15 @@
               }
             },
             {
+              "name": "design/disabled/default/design-disabled-content-alt",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-6"
+              }
+            },
+            {
               "name": "design/disabled/default/design-disabled-content-icon",
               "type": "color",
               "isAlias": true,
@@ -14721,16 +14946,16 @@
               "value": "#000000"
             },
             {
-              "name": "base/base-white-fixed",
-              "type": "color",
-              "isAlias": false,
-              "value": "#FFFFFF"
-            },
-            {
               "name": "backgrounds/content/bg-content-primary",
               "type": "color",
               "isAlias": false,
               "value": "#FFFFFF29"
+            },
+            {
+              "name": "base/base-white-fixed",
+              "type": "color",
+              "isAlias": false,
+              "value": "#FFFFFF"
             },
             {
               "name": "divider/content/divider-accent",
@@ -15283,6 +15508,63 @@
               "type": "color",
               "isAlias": false,
               "value": "#FFFFFF29"
+            },
+            {
+              "name": "design/filled white/default/design-filled-white-bg",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "backgrounds/content/bg-content-primary"
+              }
+            },
+            {
+              "name": "design/filled white/default/design-filled-white-stroke",
+              "type": "color",
+              "isAlias": false,
+              "value": "#FFFFFF24"
+            },
+            {
+              "name": "design/filled white/default/design-filled-white-stroke-weight",
+              "type": "number",
+              "isAlias": false,
+              "value": 0
+            },
+            {
+              "name": "design/filled white/default/design-filled-white-content",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-0"
+              }
+            },
+            {
+              "name": "design/filled white/default/design-filled-white-content-icon",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-1"
+              }
+            },
+            {
+              "name": "design/filled white/default/design-filled-white-content-chevron",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-1"
+              }
+            },
+            {
+              "name": "design/filled white/default/design-filled-white-content-divider",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-7"
+              }
             },
             {
               "name": "design/filled no accent/default/design-filled-na-bg",
@@ -16608,6 +16890,18 @@
               "value": 0
             },
             {
+              "name": "design/selection/default/design-selection-stroke-weight-alt",
+              "type": "number",
+              "isAlias": false,
+              "value": 0
+            },
+            {
+              "name": "design/plain no accent/focused/design-plain-na-focused-stroke",
+              "type": "color",
+              "isAlias": false,
+              "value": "#FFFFFF1F"
+            },
+            {
               "name": "design/selection/default/design-selection-content",
               "type": "color",
               "isAlias": true,
@@ -16615,12 +16909,6 @@
                 "collection": "design",
                 "name": "base/base-0"
               }
-            },
-            {
-              "name": "design/plain no accent/focused/design-plain-na-focused-stroke",
-              "type": "color",
-              "isAlias": false,
-              "value": "#FFFFFF1F"
             },
             {
               "name": "design/plain no accent/focused/design-plain-na-focused-stroke-weight",
@@ -17385,7 +17673,7 @@
               "name": "component/drawer/drawer-bg-default",
               "type": "color",
               "isAlias": false,
-              "value": "#F6F8FA00"
+              "value": "#EEF2F400"
             },
             {
               "name": "component/drawer/drawer-bg-unfocused",
@@ -17922,16 +18210,16 @@
               "value": "#FFFFFF"
             },
             {
-              "name": "pallete/blue/blue-04",
-              "type": "color",
-              "isAlias": false,
-              "value": "#FFFFFF"
-            },
-            {
               "name": "pallete/black/black-base",
               "type": "color",
               "isAlias": false,
               "value": "#333333"
+            },
+            {
+              "name": "pallete/blue/blue-04",
+              "type": "color",
+              "isAlias": false,
+              "value": "#FFFFFF"
             },
             {
               "name": "pallete/blue/blue-06",
@@ -19302,6 +19590,15 @@
               }
             },
             {
+              "name": "design/disabled/default/design-disabled-content-alt",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-6"
+              }
+            },
+            {
               "name": "design/disabled/default/design-disabled-content-icon",
               "type": "color",
               "isAlias": true,
@@ -19672,37 +19969,175 @@
               "value": "#0000000D"
             },
             {
-              "name": "global/font/letter-spacing-2XL",
+              "name": "global/font/font size/font-size-4XL",
+              "type": "number",
+              "isAlias": false,
+              "value": 25
+            },
+            {
+              "name": "global/font/font size/font-size-3XL",
+              "type": "number",
+              "isAlias": false,
+              "value": 21
+            },
+            {
+              "name": "global/font/font size/font-size-2XL",
+              "type": "number",
+              "isAlias": false,
+              "value": 19
+            },
+            {
+              "name": "global/font/font size/font-size-XL",
+              "type": "number",
+              "isAlias": false,
+              "value": 17
+            },
+            {
+              "name": "global/font/font size/font-size-L",
+              "type": "number",
+              "isAlias": false,
+              "value": 16
+            },
+            {
+              "name": "global/font/font size/font-size-M",
+              "type": "number",
+              "isAlias": false,
+              "value": 15
+            },
+            {
+              "name": "global/font/font size/font-size-S",
+              "type": "number",
+              "isAlias": false,
+              "value": 14
+            },
+            {
+              "name": "global/font/font size/font-size-XS",
+              "type": "number",
+              "isAlias": false,
+              "value": 13
+            },
+            {
+              "name": "global/font/font size/font-size-2XS",
+              "type": "number",
+              "isAlias": false,
+              "value": 12
+            },
+            {
+              "name": "global/font/font size/font-size-3XS",
+              "type": "number",
+              "isAlias": false,
+              "value": 10
+            },
+            {
+              "name": "global/font/font size/font-size-4XS",
+              "type": "number",
+              "isAlias": false,
+              "value": 9
+            },
+            {
+              "name": "global/font/line height/line-height-5XL",
+              "type": "number",
+              "isAlias": false,
+              "value": 33
+            },
+            {
+              "name": "global/font/line height/line-height-4XL",
+              "type": "number",
+              "isAlias": false,
+              "value": 29
+            },
+            {
+              "name": "global/font/line height/line-height-3XL",
+              "type": "number",
+              "isAlias": false,
+              "value": 26
+            },
+            {
+              "name": "global/font/line height/line-height-2XL",
+              "type": "number",
+              "isAlias": false,
+              "value": 23
+            },
+            {
+              "name": "global/font/line height/line-height-XL",
+              "type": "number",
+              "isAlias": false,
+              "value": 21
+            },
+            {
+              "name": "global/font/line height/line-height-L",
+              "type": "number",
+              "isAlias": false,
+              "value": 20
+            },
+            {
+              "name": "global/font/line height/line-height-M",
+              "type": "number",
+              "isAlias": false,
+              "value": 19
+            },
+            {
+              "name": "global/font/line height/line-height-S",
+              "type": "number",
+              "isAlias": false,
+              "value": 17
+            },
+            {
+              "name": "global/font/line height/line-height-XS",
+              "type": "number",
+              "isAlias": false,
+              "value": 15
+            },
+            {
+              "name": "global/font/line height/line-height-2XS",
+              "type": "number",
+              "isAlias": false,
+              "value": 14
+            },
+            {
+              "name": "global/font/line height/line-height-3XS",
+              "type": "number",
+              "isAlias": false,
+              "value": 13
+            },
+            {
+              "name": "global/font/line height/line-height-4XS",
+              "type": "number",
+              "isAlias": false,
+              "value": 12
+            },
+            {
+              "name": "global/font/letter spacing/letter-spacing-2XL",
               "type": "number",
               "isAlias": false,
               "value": 0.75
             },
             {
-              "name": "global/font/letter-spacing-XL",
+              "name": "global/font/letter spacing/letter-spacing-XL",
               "type": "number",
               "isAlias": false,
               "value": 0.6499999761581421
             },
             {
-              "name": "global/font/letter-spacing-L",
+              "name": "global/font/letter spacing/letter-spacing-L",
               "type": "number",
               "isAlias": false,
               "value": -0.05000000074505806
             },
             {
-              "name": "global/font/letter-spacing-M",
+              "name": "global/font/letter spacing/letter-spacing-M",
               "type": "number",
               "isAlias": false,
               "value": -0.10000000149011612
             },
             {
-              "name": "global/font/letter-spacing-S",
+              "name": "global/font/letter spacing/letter-spacing-S",
               "type": "number",
               "isAlias": false,
               "value": -0.20000000298023224
             },
             {
-              "name": "global/font/letter-spacing-XS",
+              "name": "global/font/letter spacing/letter-spacing-XS",
               "type": "number",
               "isAlias": false,
               "value": -0.3499999940395355
@@ -20098,12 +20533,12 @@
               }
             },
             {
-              "name": "component/button/space/toggle/button-toggle-XL-space-inset",
+              "name": "component/button/space/submenu/button-submenu-XL-space-inset",
               "type": "number",
               "isAlias": true,
               "value": {
                 "collection": "fixed",
-                "name": "global/space/inset/space-inset-sm2"
+                "name": "global/space/inset/space-inset-sm"
               }
             },
             {
@@ -20161,25 +20596,13 @@
               }
             },
             {
-              "name": "component/button/space/toggle/button-toggle-L-space-inset",
+              "name": "component/button/space/submenu/button-submenu-L-space-inset",
               "type": "number",
-              "isAlias": true,
-              "value": {
-                "collection": "fixed",
-                "name": "global/space/inset/space-inset-sm"
-              }
+              "isAlias": false,
+              "value": 9
             },
             {
-              "name": "component/button/space/toggle/button-toggle-M-space-inset",
-              "type": "number",
-              "isAlias": true,
-              "value": {
-                "collection": "fixed",
-                "name": "global/space/inset/space-inset-xs2"
-              }
-            },
-            {
-              "name": "component/button/space/toggle/button-toggle-S-space-inset",
+              "name": "component/button/space/submenu/button-submenu-M-space-inset",
               "type": "number",
               "isAlias": true,
               "value": {
@@ -20188,7 +20611,7 @@
               }
             },
             {
-              "name": "component/button/space/toggle/button-toggle-XS-space-inset",
+              "name": "component/button/space/submenu/button-submenu-S-space-inset",
               "type": "number",
               "isAlias": true,
               "value": {
@@ -20197,12 +20620,27 @@
               }
             },
             {
-              "name": "component/button/space/toggle/button-toggle-2XS-space-inset",
+              "name": "component/button/space/submenu/button-submenu-XS-space-inset",
+              "type": "number",
+              "isAlias": false,
+              "value": 5
+            },
+            {
+              "name": "component/button/space/submenu/button-submenu-2XS-space-inset",
               "type": "number",
               "isAlias": true,
               "value": {
                 "collection": "fixed",
                 "name": "global/space/inset/space-inset-2xs"
+              }
+            },
+            {
+              "name": "component/button/space/submenu/button-submenu-3XS-space-inset",
+              "type": "number",
+              "isAlias": true,
+              "value": {
+                "collection": "fixed",
+                "name": "global/space/inset/space-inset-3xs"
               }
             },
             {
@@ -20716,12 +21154,21 @@
               }
             },
             {
-              "name": "component/popup-menu/pmenu-cell-space-inset-TB",
+              "name": "component/popup-menu/pmenu-cell-space-inset-TB-M",
               "type": "number",
               "isAlias": true,
               "value": {
                 "collection": "fixed",
                 "name": "global/space/inset/space-inset-xs"
+              }
+            },
+            {
+              "name": "component/popup-menu/pmenu-cell-space-inset-TB-L",
+              "type": "number",
+              "isAlias": true,
+              "value": {
+                "collection": "fixed",
+                "name": "global/space/inset/space-inset-sm2"
               }
             },
             {

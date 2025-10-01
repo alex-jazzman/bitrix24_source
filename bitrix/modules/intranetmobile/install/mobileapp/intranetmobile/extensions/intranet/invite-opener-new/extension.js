@@ -6,8 +6,9 @@ jn.define('intranet/invite-opener-new', (require, exports, module) => {
 	const { Invite, IntranetInviteAnalytics, AnalyticsEvent } = require('intranet/invite-new');
 	const { Alert } = require('alert');
 	const { Loc } = require('loc');
-	const { InviteStatusBox } = require('intranet/invite-status-box');
+	const { StatusBox } = require('layout/ui/status-box');
 	const { Tourist } = require('tourist');
+	const { makeLibraryImagePath } = require('asset-manager');
 
 	const ErrorCode = {
 		POSSIBILITIES_RESTRICTED: 'Invite possibilities restricted',
@@ -95,10 +96,10 @@ jn.define('intranet/invite-opener-new', (require, exports, module) => {
 	};
 
 	const handleUserHasNoPermissionsToInvite = (onInviteError, parentLayout = PageManager) => {
-		InviteStatusBox.open({
+		StatusBox.open({
 			backdropTitle: Loc.getMessage('INTRANET_INVITE_OPENER_TITLE_MSGVER_1'),
 			testId: 'status-box-no-invitation',
-			imageName: 'no-invitation.svg',
+			imageUri: makeLibraryImagePath('no-invitation.svg', 'invite-status-box', 'intranet'),
 			parentWidget: parentLayout,
 			description: Loc.getMessage('INTRANET_INVITE_DISABLED_BOX_TEXT'),
 			buttonText: Loc.getMessage('INTRANET_INVITE_DISABLED_BOX_BUTTON_TEXT'),

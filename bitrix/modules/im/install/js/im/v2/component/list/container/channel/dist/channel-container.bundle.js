@@ -28,7 +28,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  methods: {
 	    onChatClick(dialogId) {
 	      this.$emit('selectEntity', {
-	        layoutName: im_v2_const.Layout.channel.name,
+	        layoutName: im_v2_const.Layout.channel,
 	        entityId: dialogId
 	      });
 	    },

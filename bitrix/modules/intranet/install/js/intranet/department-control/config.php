@@ -14,6 +14,7 @@ return [
 	'rel' => [
 		'main.core',
 		'ui.entity-selector',
+		'main.core.events',
 	],
 	'skip_core' => false,
 ];

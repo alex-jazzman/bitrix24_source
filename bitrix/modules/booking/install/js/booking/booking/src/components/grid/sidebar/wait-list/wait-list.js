@@ -40,15 +40,24 @@ export const WaitList = {
 			waitListItems: `${Model.WaitList}/get`,
 			waitListExpanded: `${Model.Interface}/waitListExpanded`,
 			draggedBookingId: `${Model.Interface}/draggedBookingId`,
+			draggedBookingResourceId: `${Model.Interface}/draggedBookingResourceId`,
 			editingBookingId: `${Model.Interface}/editingBookingId`,
 			editingWaitListItemId: `${Model.Interface}/editingWaitListItemId`,
 			isFeatureEnabled: `${Model.Interface}/isFeatureEnabled`,
 			isBookingCreatedFromEmbed: `${Model.Interface}/isBookingCreatedFromEmbed`,
 			embedItems: `${Model.Interface}/embedItems`,
+			getResourceById: `${Model.Resources}/getById`,
 		}),
 		isEmpty(): boolean
 		{
 			return this.waitListItems.length === 0;
+		},
+		isAvailableToDrop(): boolean
+		{
+			return Boolean((
+				this.draggedBookingId
+				&& !this.getResourceById(this.draggedBookingResourceId)?.isDeleted
+			));
 		},
 		showEmptyState(): boolean
 		{
@@ -154,7 +163,7 @@ export const WaitList = {
 	},
 	template: `
 		<WaitListLayout
-			:dragging="Boolean(draggedBookingId)"
+			:dragging="isAvailableToDrop"
 			:showEmptyState
 			:expanded="waitListExpanded"
 			:waitListItemsCount="waitListItems.length"

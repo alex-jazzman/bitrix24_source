@@ -10,9 +10,11 @@ export type ResourceModel = {
 	slotRanges: SlotRange[],
 	counter: number | null,
 	isMain: false,
+	isDeleted: false,
 	createdBy: number,
 	createdAt: number,
 	updatedAt: number | null,
+	deletedAt: number | null,
 
 	// info
 	isInfoNotificationOn: boolean,

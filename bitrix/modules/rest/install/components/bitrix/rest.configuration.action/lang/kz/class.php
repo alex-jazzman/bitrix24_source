@@ -1,10 +1,10 @@
 <?php
 $MESS["REST_CONFIGURATION_ACTION_EXPORT_CRM_ACTION"] = "Экспорттау";
-$MESS["REST_CONFIGURATION_ACTION_EXPORT_CRM_DESCRIPTION"] = "CRM баптауларын сақтаңыз, </br>оларды әріптестеріңізбен бөлісу үшін";
-$MESS["REST_CONFIGURATION_ACTION_EXPORT_CRM_TITLE"] = "Шешімдермен бөлісіңіз";
+$MESS["REST_CONFIGURATION_ACTION_EXPORT_CRM_DESCRIPTION_MSGVER_1"] = "CRM-ді барлық баптауларымен <br/> басқа Битрикс24-ке экспорттаңыз";
+$MESS["REST_CONFIGURATION_ACTION_EXPORT_CRM_TITLE_MSGVER_1"] = "Дайын шешіммен бөлісіңіз";
 $MESS["REST_CONFIGURATION_ACTION_IMPORT_CRM_ACTION"] = "Импорттау";
-$MESS["REST_CONFIGURATION_ACTION_IMPORT_CRM_DESCRIPTION"] = "Баптаулар мен деректерді </br>басқа CRM-ден тасымалдау";
-$MESS["REST_CONFIGURATION_ACTION_IMPORT_CRM_TITLE"] = "Битрикс24-те жылдам бастау";
+$MESS["REST_CONFIGURATION_ACTION_IMPORT_CRM_DESCRIPTION_MSGVER_1"] = "CRM-ді барлық баптаулармен <br/> басқа Битрикс24-тен тасымалдаңыз";
+$MESS["REST_CONFIGURATION_ACTION_IMPORT_CRM_TITLE_MSGVER_1"] = "Жылдам бастау";
 $MESS["REST_CONFIGURATION_ACTION_TITLE_EXPORT"] = "Экспорттау";
 $MESS["REST_CONFIGURATION_ACTION_TITLE_IMPORT"] = "Импорттау";
 $MESS["REST_CONFIGURATION_ACTION_TITLE_LOAD_MARKETPLACE_2"] = "Маркетте жариялау";

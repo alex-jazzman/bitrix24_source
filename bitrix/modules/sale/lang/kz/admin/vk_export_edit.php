@@ -45,7 +45,7 @@ $MESS["SALE_VK_SETTINGS_EXPORT_TIMELIMIT"] = "Бір қадамды орында
 $MESS["SALE_VK_SETTINGS_EXPORT_TIMELIMIT_HELP"] = "PHP скрипт пен MySQL қосылымының өмір сүру уақытынан біршама аз болуы керек";
 $MESS["SALE_VK_SETTINGS_GROUP_ID"] = "Тауарларды импорттауға арналған топ";
 $MESS["SALE_VK_SETTINGS_NAME"] = "Атауы";
-$MESS["SALE_VK_SETTINGS_NOTE"] = "Кодтарды алу үшін <a target=\"_blank\" href=\"https://id.vk.com/about/business/go\">Вконтактеде қосымшаны тіркеу</a> керек (Web платформасы үшін).<br />\"Сенімді redirect URL\" өрісінде <a href=\"#URL#\">#URL#</a> мәнін көрсетуге болады";
+$MESS["SALE_VK_SETTINGS_NOTE"] = "Кодтарды алу үшін <a target=\"_blank\" href=\"https://id.vk.ru/about/business/go\">Вконтактеде қосымшаны тіркеу</a> керек (Web платформасы үшін).<br />\"Сенімді redirect URL\" өрісінде <a href=\"#URL#\">#URL#</a> мәнін көрсетуге болады";
 $MESS["SALE_VK_SETTINGS_NO_APP_ID"] = "ВКонтакте қосымшасының ID көрсетіңіз";
 $MESS["SALE_VK_SETTINGS_NO_CATEOGRY"] = "Әдепкі бойынша тауарлар санатын көрсетіңіз";
 $MESS["SALE_VK_SETTINGS_NO_GROUP_ID"] = "ВКонтакте тобының ID көрсетіңіз";

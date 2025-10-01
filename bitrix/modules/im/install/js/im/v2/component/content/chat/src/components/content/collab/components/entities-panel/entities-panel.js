@@ -104,6 +104,7 @@ export const EntitiesPanel = {
 				popupOptions: {
 					offsetTop: 11,
 					offsetLeft: 38,
+					autoHide: true,
 					closeIcon: true,
 					closeIconSize: CloseIconSize.LARGE,
 					events: {

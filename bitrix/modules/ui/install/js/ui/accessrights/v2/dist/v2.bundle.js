@@ -173,7 +173,8 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	      options: state => state.application.options,
 	      addUserGroupsProviderTab: state => state.application.options.additionalMembersParams.addUserGroupsProviderTab,
 	      addProjectsProviderTab: state => state.application.options.additionalMembersParams.addProjectsProviderTab,
-	      addStructureTeamsProviderTab: state => state.application.options.additionalMembersParams.addStructureTeamsProviderTab
+	      addStructureTeamsProviderTab: state => state.application.options.additionalMembersParams.addStructureTeamsProviderTab,
+	      addStructureRolesProviderTab: state => state.application.options.additionalMembersParams.addStructureRolesProviderTab
 	    })
 	  },
 	  mounted() {
@@ -217,6 +218,9 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	        const match = accessCode.match(/^G(\d+)$/) || null;
 	        const groupId = match ? match[1] : null;
 	        return ['site-groups', groupId];
+	      }
+	      if (/^(?:ATD|ATE|ATT|AD|AE|AT)[1-9]\d*$/.test(accessCode)) {
+	        return ['structure-role', accessCode];
 	      }
 	      if (accessCode.at(0) === 'A') {
 	        return ['user-groups', accessCode];
@@ -294,6 +298,9 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	      if (entityId === 'user-groups') {
 	        return item.id;
 	      }
+	      if (entityId === 'structure-role') {
+	        return item.id;
+	      }
 	      if (entityId === 'project-access-codes') {
 	        return item.id;
 	      }
@@ -315,6 +322,7 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	          return 'structureteams';
 	        case 'site-groups':
 	        case 'user-groups':
+	        case 'structure-role':
 	          return 'usergroups';
 	        default:
 	          return '';
@@ -341,14 +349,24 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	        dynamicLoad: true,
 	        dynamicSearch: true
 	      }];
+	      if (this.addStructureRolesProviderTab) {
+	        entities.push({
+	          id: 'structure-role',
+	          options: {
+	            includedNodeEntityTypes: ['team', 'department']
+	          },
+	          dynamicLoad: true,
+	          dynamicSearch: true
+	        });
+	      }
 	      if (this.addStructureTeamsProviderTab) {
 	        entities.push({
 	          id: 'structure-node',
 	          options: {
 	            selectMode: 'usersAndDepartments',
+	            includedNodeEntityTypes: ['team'],
 	            allowSelectRootDepartment: true,
 	            allowFlatDepartments: true,
-	            includedNodeEntityTypes: ['team'],
 	            useMultipleTabs: true,
 	            visual: {
 	              avatarMode: 'node',
@@ -506,7 +524,7 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	  computed: {
 	    RichMenuItemIcon: () => ui_vue3_components_richMenu.RichMenuItemIcon,
 	    ...ui_vue3_vuex.mapState({
-	      isSaving: state => state.application.isSaving,
+	      isProgress: state => state.application.isProgress,
 	      guid: state => state.application.guid,
 	      maxVisibleUserGroups: state => state.application.options.maxVisibleUserGroups
 	    }),
@@ -605,7 +623,7 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	      popup.show();
 	    },
 	    showActionsMenu() {
-	      if (!this.isSaving) {
+	      if (!this.isProgress) {
 	        this.isPopupShown = true;
 	      }
 	    },
@@ -643,7 +661,7 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 		<div ref="container" class='ui-access-rights-v2-role'>
 			<div class="ui-access-rights-v2-role-value-container">
 				<input
-					v-if="isEdit && !isSaving"
+					v-if="isEdit && !isProgress"
 					ref="input"
 					type='text'
 					class='ui-access-rights-v2-role-input'
@@ -3959,7 +3977,7 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	  loader: null,
 	  computed: {
 	    ...ui_vue3_vuex.mapState({
-	      isSaving: state => state.application.isSaving,
+	      isProgress: state => state.application.isProgress,
 	      guid: state => state.application.guid,
 	      searchContainerSelector: state => state.application.options.searchContainerSelector
 	    }),
@@ -4071,7 +4089,7 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 			<SearchBox/>
 		</Teleport>
 		<div ref="container" class='ui-access-rights-v2' :class="{
-			'ui-access-rights-v2-block': isSaving,
+			'ui-access-rights-v2-block': isProgress,
 		}">
 			<Header :user-groups="shownUserGroups"/>
 			<Section
@@ -4343,7 +4361,7 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	    return {
 	      options: babelHelpers.classPrivateFieldLooseBase(this, _options)[_options],
 	      guid: babelHelpers.classPrivateFieldLooseBase(this, _guid)[_guid],
-	      isSaving: false
+	      isProgress: false
 	    };
 	  }
 	  getGetters() {
@@ -4361,9 +4379,9 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	  }
 	  getMutations() {
 	    return {
-	      setSaving: (state, isSaving) => {
+	      setProgress: (state, isProgress) => {
 	        // eslint-disable-next-line no-param-reassign
-	        state.isSaving = Boolean(isSaving);
+	        state.isProgress = Boolean(isProgress);
 	      }
 	    };
 	  }
@@ -5236,7 +5254,7 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	  }
 	  // noinspection OverlyComplexFunctionJS
 	  transform(externalSource) {
-	    var _externalSource$addit, _externalSource$addit2, _externalSource$addit3, _externalSource$addit4, _externalSource$addit5, _externalSource$addit6;
+	    var _externalSource$addit, _externalSource$addit2, _externalSource$addit3, _externalSource$addit4, _externalSource$addit5, _externalSource$addit6, _externalSource$addit7, _externalSource$addit8;
 	    // freeze tells vue that we don't need reactivity on this state
 	    // and prevents accidental modification as well
 	    return babelHelpers.classPrivateFieldLooseBase(this, _deepFreeze)[_deepFreeze]({
@@ -5251,11 +5269,13 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	      additionalMembersParams: main_core.Type.isPlainObject(externalSource.additionalMembersParams) ? {
 	        addUserGroupsProviderTab: Boolean((_externalSource$addit = (_externalSource$addit2 = externalSource.additionalMembersParams) == null ? void 0 : _externalSource$addit2.addUserGroupsProviderTab) != null ? _externalSource$addit : false),
 	        addProjectsProviderTab: Boolean((_externalSource$addit3 = (_externalSource$addit4 = externalSource.additionalMembersParams) == null ? void 0 : _externalSource$addit4.addProjectsProviderTab) != null ? _externalSource$addit3 : true),
-	        addStructureTeamsProviderTab: Boolean((_externalSource$addit5 = (_externalSource$addit6 = externalSource.additionalMembersParams) == null ? void 0 : _externalSource$addit6.addStructureTeamsProviderTab) != null ? _externalSource$addit5 : false)
+	        addStructureTeamsProviderTab: Boolean((_externalSource$addit5 = (_externalSource$addit6 = externalSource.additionalMembersParams) == null ? void 0 : _externalSource$addit6.addStructureTeamsProviderTab) != null ? _externalSource$addit5 : false),
+	        addStructureRolesProviderTab: Boolean((_externalSource$addit7 = (_externalSource$addit8 = externalSource.additionalMembersParams) == null ? void 0 : _externalSource$addit8.addStructureRolesProviderTab) != null ? _externalSource$addit7 : false)
 	      } : {
 	        addUserGroupsProviderTab: false,
 	        addProjectsProviderTab: true,
-	        addStructureTeamsProviderTab: false
+	        addStructureTeamsProviderTab: false,
+	        addStructureRolesProviderTab: false
 	      },
 	      isSaveAccessRightsList: main_core.Type.isBoolean(externalSource.isSaveAccessRightsList) ? externalSource.isSaveAccessRightsList : false
 	    });
@@ -5548,11 +5568,11 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	  }
 	  sendActionRequest() {
 	    return new Promise((resolve, reject) => {
-	      if (babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].state.application.isSaving || !babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].getters['application/isModified']) {
+	      if (babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].state.application.isProgress || !babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].getters['application/isModified']) {
 	        resolve();
 	        return;
 	      }
-	      babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].commit('application/setSaving', true);
+	      babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].commit('application/setProgress', true);
 	      babelHelpers.classPrivateFieldLooseBase(this, _analyticsManager)[_analyticsManager].onSaveAttempt();
 	      babelHelpers.classPrivateFieldLooseBase(this, _runSaveAjaxRequest)[_runSaveAjaxRequest]().then(({
 	        userGroups,
@@ -5590,7 +5610,7 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	        var _babelHelpers$classPr;
 	        const waitContainer = (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _buttonPanel)[_buttonPanel]) == null ? void 0 : _babelHelpers$classPr.getContainer().querySelector('.ui-btn-wait');
 	        main_core.Dom.removeClass(waitContainer, 'ui-btn-wait');
-	        babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].commit('application/setSaving', false);
+	        babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].commit('application/setProgress', false);
 	        resolve();
 	      });
 	    });
@@ -5761,7 +5781,10 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	      onclick: () => {
 	        box.close();
 	      }
-	    })]
+	    })],
+	    popupOptions: {
+	      fixed: true
+	    }
 	  });
 	  box.show();
 	}

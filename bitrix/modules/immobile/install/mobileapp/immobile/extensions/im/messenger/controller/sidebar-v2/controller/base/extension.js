@@ -8,9 +8,10 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base', (require, export
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { ChatService } = require('im/messenger/provider/services/chat');
+	const { RecentService } = require('im/messenger/provider/services/recent');
 	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
 	const { RestManager } = require('im/messenger/lib/rest-manager');
-	const { ChatTitle } = require('im/messenger/lib/element');
+	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
 	const { SidebarBaseView } = require('im/messenger/controller/sidebar-v2/controller/base/src/view');
 	const { SidebarPermissionManager } = require(
 		'im/messenger/controller/sidebar-v2/controller/base/src/permission-manager',
@@ -79,6 +80,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base', (require, export
 			this.logger = LoggerManager.getInstance().getLogger(`SidebarV2.${this.constructor.name}`);
 			this.analyticsService = AnalyticsService.getInstance();
 			this.chatService = new ChatService();
+			this.recentService = new RecentService();
 
 			return this;
 		}
@@ -302,6 +304,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base', (require, export
 				this.permissionManager.canCopyLink() ? this.getHeaderContextMenuItemCopyLink() : null,
 				this.permissionManager.canLeave() ? this.getHeaderContextMenuItemLeave() : null,
 				this.permissionManager.canDelete() ? this.getHeaderContextMenuItemDelete() : null,
+				this.permissionManager.canHide() ? this.getHeaderContextMenuItemHide() : null,
 			];
 
 			return items.filter(Boolean);
@@ -313,6 +316,18 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base', (require, export
 		 */
 		getHeaderContextMenuItemPin()
 		{
+			if (this.dialogHelper.isPinned)
+			{
+				return {
+					id: SidebarContextMenuActionId.UNPIN,
+					title: Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_ACTION_UNPIN'),
+					icon: Icon.UNPIN,
+					testId: 'sidebar-context-menu-item-unpin',
+					sort: SidebarContextMenuActionPosition.TOP,
+					onItemSelected: () => this.handleUnpinDialogAction(),
+				};
+			}
+
 			return {
 				id: SidebarContextMenuActionId.PIN,
 				title: Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_ACTION_PIN'),
@@ -339,6 +354,10 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base', (require, export
 			};
 		}
 
+		/**
+		 * @protected
+		 * @return {SidebarContextMenuItem}
+		 */
 		getHeaderContextMenuItemCopyLink()
 		{
 			return {
@@ -385,6 +404,22 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base', (require, export
 		}
 
 		/**
+		 * @protected
+		 * @return {SidebarContextMenuItem}
+		 */
+		getHeaderContextMenuItemHide()
+		{
+			return {
+				id: SidebarContextMenuActionId.HIDE,
+				title: Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_ACTION_HIDE'),
+				icon: Icon.BOX_WITH_LID,
+				testId: 'sidebar-context-menu-item-hide',
+				sort: SidebarContextMenuActionPosition.BOTTOM,
+				onItemSelected: () => this.handleHideDialogAction(),
+			};
+		}
+
+		/**
 		 * @private
 		 * @return {void}
 		 */
@@ -427,7 +462,42 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base', (require, export
 		};
 
 		handlePinDialogAction()
-		{}
+		{
+			if (!isOnline())
+			{
+				Notification.showOfflineToast({ offset: SIDEBAR_DEFAULT_TOAST_OFFSET });
+
+				return;
+			}
+
+			this.recentService.pinChat(this.dialogId);
+			this.#updateHeaderContextMenuItems();
+		}
+
+		handleUnpinDialogAction()
+		{
+			if (!isOnline())
+			{
+				Notification.showOfflineToast({ offset: SIDEBAR_DEFAULT_TOAST_OFFSET });
+
+				return;
+			}
+
+			this.recentService.unpinChat(this.dialogId);
+			this.#updateHeaderContextMenuItems();
+		}
+
+		handleHideDialogAction()
+		{
+			if (!isOnline())
+			{
+				Notification.showOfflineToast({ offset: SIDEBAR_DEFAULT_TOAST_OFFSET });
+
+				return;
+			}
+
+			this.recentService.hideChat(this.dialogId);
+		}
 
 		handleEditDialogAction()
 		{}
@@ -437,6 +507,20 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base', (require, export
 
 		handleDeleteDialogAction()
 		{}
+
+		/**
+		 * @return {void}
+		 */
+		#updateHeaderContextMenuItems()
+		{
+			this.headerContextMenuItems = this.getHeaderContextMenuItems().sort((a, b) => a.sort - b.sort);
+			if (this.headerContextMenuItems.length === 0 || !this.headerContextMenu)
+			{
+				return;
+			}
+
+			this.headerContextMenu.setProvider(() => this.headerContextMenuItems);
+		}
 
 		// endregion
 

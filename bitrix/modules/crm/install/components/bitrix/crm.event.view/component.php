@@ -863,6 +863,8 @@ if ($arResult['EVENT_ENTITY_LINK'] == 'Y')
 	}
 }
 
+$arResult['IS_HIDE_EVENT_ADD_BUTTON'] = $this->isHideEventAddButton();
+
 $this->IncludeComponentTemplate();
 
 return $obRes->SelectedRowsCount();

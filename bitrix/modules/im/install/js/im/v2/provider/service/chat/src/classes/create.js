@@ -94,6 +94,16 @@ export class CreateService
 	async #prepareFields(chatConfig: ChatConfig): RestChatConfig
 	{
 		const preparedConfig = { ...chatConfig };
+		if (preparedConfig.type)
+		{
+			preparedConfig.type = this.#prepareType(preparedConfig.type);
+		}
+
+		if (preparedConfig.entityType)
+		{
+			preparedConfig.entityType = this.#prepareType(preparedConfig.entityType);
+		}
+
 		if (preparedConfig.avatar)
 		{
 			preparedConfig.avatar = await Utils.file.getBase64(chatConfig.avatar);
@@ -180,5 +190,10 @@ export class CreateService
 	#sendAnalytics(dialogId)
 	{
 		Analytics.getInstance().ignoreNextChatOpen(dialogId);
+	}
+
+	#prepareType(type: string): string
+	{
+		return Utils.text.convertCamelToSnakeCase(type).toUpperCase();
 	}
 }

@@ -14,6 +14,7 @@ this.BX.Booking = this.BX.Booking || {};
 	var _shouldShowExpandGrid = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("shouldShowExpandGrid");
 	var _shouldShowSelectResources = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("shouldShowSelectResources");
 	var _shouldShowCyclePopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("shouldShowCyclePopup");
+	var _shouldShowSearchNavigation = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("shouldShowSearchNavigation");
 	var _wasNotShown = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("wasNotShown");
 	var _wasShown = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("wasShown");
 	var _getOptionName = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getOptionName");
@@ -27,6 +28,9 @@ this.BX.Booking = this.BX.Booking || {};
 	    });
 	    Object.defineProperty(this, _wasNotShown, {
 	      value: _wasNotShown2
+	    });
+	    Object.defineProperty(this, _shouldShowSearchNavigation, {
+	      value: _shouldShowSearchNavigation2
 	    });
 	    Object.defineProperty(this, _shouldShowCyclePopup, {
 	      value: _shouldShowCyclePopup2
@@ -154,7 +158,8 @@ this.BX.Booking = this.BX.Booking || {};
 	      [booking_const.AhaMoment.ResourceIntersection]: babelHelpers.classPrivateFieldLooseBase(this, _shouldShowResourceIntersection)[_shouldShowResourceIntersection](),
 	      [booking_const.AhaMoment.ExpandGrid]: babelHelpers.classPrivateFieldLooseBase(this, _shouldShowExpandGrid)[_shouldShowExpandGrid](),
 	      [booking_const.AhaMoment.SelectResources]: babelHelpers.classPrivateFieldLooseBase(this, _shouldShowSelectResources)[_shouldShowSelectResources](),
-	      [booking_const.AhaMoment.CyclePopup]: babelHelpers.classPrivateFieldLooseBase(this, _shouldShowCyclePopup)[_shouldShowCyclePopup]()
+	      [booking_const.AhaMoment.CyclePopup]: babelHelpers.classPrivateFieldLooseBase(this, _shouldShowCyclePopup)[_shouldShowCyclePopup](),
+	      [booking_const.AhaMoment.SearchNavigation]: babelHelpers.classPrivateFieldLooseBase(this, _shouldShowSearchNavigation)[_shouldShowSearchNavigation]()
 	    }[ahaMoment];
 	  }
 	  setShown(ahaMoment) {
@@ -206,6 +211,9 @@ this.BX.Booking = this.BX.Booking || {};
 	  const previousAhaMomentShown = babelHelpers.classPrivateFieldLooseBase(this, _wasShown)[_wasShown](booking_const.AhaMoment.SelectResources);
 	  return wasNotShown && previousAhaMomentShown;
 	}
+	function _shouldShowSearchNavigation2() {
+	  return babelHelpers.classPrivateFieldLooseBase(this, _wasNotShown)[_wasNotShown](booking_const.AhaMoment.SearchNavigation);
+	}
 	function _wasNotShown2(ahaMoment) {
 	  return !babelHelpers.classPrivateFieldLooseBase(this, _wasShown)[_wasShown](ahaMoment);
 	}
@@ -226,7 +234,8 @@ this.BX.Booking = this.BX.Booking || {};
 	    [booking_const.AhaMoment.ResourceIntersection]: booking_const.Option.AhaResourceIntersection,
 	    [booking_const.AhaMoment.ExpandGrid]: booking_const.Option.AhaExpandGrid,
 	    [booking_const.AhaMoment.SelectResources]: booking_const.Option.AhaSelectResources,
-	    [booking_const.AhaMoment.CyclePopup]: booking_const.Option.AhaCyclePopup
+	    [booking_const.AhaMoment.CyclePopup]: booking_const.Option.AhaCyclePopup,
+	    [booking_const.AhaMoment.SearchNavigation]: booking_const.Option.AhaSearchNavigation
 	  }[ahaMoment];
 	}
 	const ahaMoments = new AhaMoments();

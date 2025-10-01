@@ -7,7 +7,6 @@ jn.define('im/messenger/controller/sidebar-v2/controller/chat/src/view', (requir
 	const { IconView, Icon } = require('ui-system/blocks/icon');
 
 	const { SidebarBaseView } = require('im/messenger/controller/sidebar-v2/controller/base');
-	const { UserProfile } = require('im/messenger/controller/user-profile');
 	const { UserUtils } = require('im/messenger/lib/utils');
 	const { SidebarWorkPosition } = require('im/messenger/controller/sidebar-v2/ui/layout/work-position');
 
@@ -26,15 +25,6 @@ jn.define('im/messenger/controller/sidebar-v2/controller/chat/src/view', (requir
 			return View(
 				{
 					testId: 'chat-info-container',
-					onClick: () => {
-						if (!isBot)
-						{
-							UserProfile.show(this.dialogId, {
-								backdrop: true,
-								openingDialogId: this.dialogId,
-							}).catch((err) => this.logger.error('callUserProfile.catch:', err));
-						}
-					},
 				},
 				View(
 					{

@@ -224,7 +224,7 @@ jn.define('selector/providers/tree-providers/directory-provider', (require, expo
 
 			if (preparedEntity.type === 'button')
 			{
-				preparedEntity.type = Application.getApiVersion() < 56 ? 'info' : 'department';
+				preparedEntity.type = 'department';
 				preparedEntity.id += '/button';
 			}
 			else if (preparedEntity.type === 'selectable')

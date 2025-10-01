@@ -8,6 +8,8 @@
 	const { qrauth } = require('qrauth/utils');
 	const { showToast } = require('toast');
 	const { NotifyManager } = require('notify-manager');
+	const { Loc } = require('loc');
+	const { RequestExecutor } = require('rest');
 
 	const pathToExtension = '/bitrix/mobileapp/mobile/extensions/bitrix/project/utils';
 	const projectCache = new Map();
@@ -249,7 +251,7 @@
 		{
 			if (membersCount > 0)
 			{
-				const pluralForm = CommonUtils.getPluralForm(membersCount);
+				const pluralForm = Loc.getPluralForm(membersCount);
 
 				return BX.message(`MOBILE_PROJECT_TAB_MEMBERS_${pluralForm}`).replace('#NUM#', membersCount);
 			}

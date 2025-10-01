@@ -63,12 +63,32 @@ jn.define('im/messenger/provider/services/read/service', (require, exports, modu
 		 * @param {number} chatId
 		 * @param {Array<Number>} messageIdList
 		 * @param {number} lastReadId
+		 * @param {Array<Number>} unreadMessageList
 		 * @returns {Promise<void>}
 		 */
-		#readMessagesHandler = async ({ chatId, messageIdList }) => {
-			logger.log(`${this.className}.readMessagesHandler`, chatId, messageIdList);
+		#readMessagesHandler = async ({
+			chatId,
+			messageIdList,
+			lastReadId,
+			unreadMessageList = null,
+		}) => {
+			logger.log(`${this.className}.readMessagesHandler`, chatId, messageIdList, lastReadId, unreadMessageList);
 
-			const deductibleCounter = messageIdList.length;
+			const deductibleCounter = messageIdList.reduce((counter, messageId) => {
+				if (Type.isNull(unreadMessageList))
+				{
+					return messageId > lastReadId ? counter + 1 : counter;
+				}
+
+				if (Type.isArrayFilled(unreadMessageList) && unreadMessageList.includes(messageId))
+				{
+					return counter + 1;
+				}
+
+				return counter;
+			}, 0);
+
+			logger.log(`${this.className}.readMessagesHandler deductibleCounter`, deductibleCounter);
 
 			this.#counterStorageWriter.decreaseCounter(chatId, deductibleCounter);
 

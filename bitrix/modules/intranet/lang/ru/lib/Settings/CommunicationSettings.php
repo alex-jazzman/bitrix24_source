@@ -19,7 +19,6 @@ $MESS["INTRANET_SETTINGS_FIELD_LABEL_ALLOW_AUTO_CONNECT_DISK"] = 'Автомат
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_ALLOW_PUBLIC_LINK"] = 'Разрешить публичные ссылки на файлы';
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_ALLOW_BLOCK_DOC"] = 'Разрешить блокировать документ во время редактирования';
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_ALLOW_SEARCH_DOC"] = 'Разрешить поиск по содержимому документов';
-$MESS["INTRANET_SETTINGS_FIELD_LABEL_ALLOW_AUTO_DELETE_TO_BE_ENABLED"] = 'Разрешить включать автоудаление сообщений в чатах';
 
 $MESS["INTRANET_SETTINGS_SECTION_TITLE_NEWS_FEED"] = 'Лента новостей';
 $MESS["INTRANET_SETTINGS_SECTION_TITLE_CHATS"] = 'Чаты';
@@ -38,4 +37,3 @@ $MESS["INTRANET_SETTINGS_FIELD_HINT_ALLOW_AUTO_CONNECT_DISK_ON_MSGVER_1"] = 'П�
 $MESS["INTRANET_SETTINGS_FIELD_HINT_ALLOW_PUBLIC_LINK_ON_MSGVER_1"] = 'Сотрудники могут копировать публичные ссылки и отправлять их тем, кто не работает в вашей компании. #MORE_DETAILS#';
 $MESS["INTRANET_SETTINGS_FIELD_HINT_ALLOW_SEARCH_DOC_ON_MSGVER_1"] = 'Доступен поиск по информации внутри документов на диске с учетом прав доступа сотрудников к этим документам. #MORE_DETAILS#';
 $MESS["INTRANET_SETTINGS_FIELD_HINT_ALLOW_BLOCK_DOC_ON_MSGVER_1"] = 'Блокировка не дает нескольким сотрудникам одновременно редактировать документ. #MORE_DETAILS#';
-$MESS["INTRANET_SETTINGS_FIELD_HINT_ALLOW_AUTO_DELETE_TO_BE_ENABLED"] = 'Участники чатов смогут управлять опцией автоудаления сообщений. Сообщения в чатах с включенным автоудалением будут автоматически удаляться через выбранный промежуток времени.';

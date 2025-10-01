@@ -28,9 +28,9 @@ use Bitrix\Main\ORM\Fields\Relations\Reference;
 use Bitrix\Main\ORM\Query\Join;
 use Bitrix\Main\UserTable;
 use Bitrix\Main\UserGroupTable;
-use Bitrix\Main\Entity\Query;
+use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Main\DB\SqlExpression;
-use Bitrix\Main\Entity\ExpressionField;
+use Bitrix\Main\ORM\Fields\ExpressionField;
 use Bitrix\Main\Text\HtmlFilter;
 use Bitrix\Main\Type\DateTime;
 

@@ -13,6 +13,7 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 	const { ListItemType, ListItemsFactory } = require('crm/simple-list/items');
 	const { Kanban } = require('layout/ui/kanban');
 	const { Icon } = require('ui-system/blocks/icon');
+	const { LoadingScreenComponent } = require('layout/ui/loading-screen');
 
 	const store = require('statemanager/redux/store');
 	const {

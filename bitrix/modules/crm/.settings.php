@@ -369,6 +369,12 @@ return array(
 			'crm.service.multifieldStorage' => [
 				'className' => '\\Bitrix\\Crm\\Service\\MultifieldStorage',
 			],
+			'crm.service.pullEventsQueue' => [
+				'className' => '\\Bitrix\\Crm\\Service\\PullEventsQueue',
+			],
+			'crm.service.lastActivity' => [
+				'className' => '\\Bitrix\\Crm\\Service\\LastActivity',
+			],
 			'crm.kanban.entity.lead' => [
 				'className' => '\\Bitrix\\Crm\\Kanban\\Entity\\Lead',
 			],
@@ -691,12 +697,37 @@ return array(
 
 				return new \Bitrix\Crm\Service\Logger\StackLogger(...$loggers);
 			},
+			'ScenarioInvestigation' => static function () {
+				if (\Bitrix\Main\Loader::includeModule('bitrix24'))
+				{
+					$logger = new \Bitrix\Crm\Service\Logger\Message2LogLogger('Scenario.Investigation', 9);
+					$logger->setLevel(\Psr\Log\LogLevel::NOTICE);
+
+					return $logger;
+				}
+				return new \Psr\Log\NullLogger();
+			}
 		],
 	],
 	'console' => [
 		'value' => [
 			'commands' => [
 				\Bitrix\Crm\Cli\GenerateEntitiesCommand::class,
+			],
+		],
+		'readonly' => true,
+	],
+	'aiassistant.marta' => [
+		'value' => [
+			'agents' => [
+				Bitrix\Crm\Integration\AiAssistant\Agents\CrmExecutorAgent::class,
+				Bitrix\Crm\Integration\AiAssistant\Agents\CrmExecutorPlannerAgent::class,
+			],
+			'scenarios' => [
+				Bitrix\Crm\Integration\AiAssistant\Scenario\EmptyCrmSetupScenario::class,
+			],
+			'profileDataProviders' => [
+				Bitrix\Crm\Integration\AiAssistant\DataProviders\CrmProvider::class,
 			],
 		],
 		'readonly' => true,

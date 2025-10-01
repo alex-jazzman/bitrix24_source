@@ -951,6 +951,7 @@ export class BitrixCallLegacy extends AbstractCall
 
 		this.screenShared = false;
 		this.localVideoShown = false;
+		this.floorRequestActive = false;
 	};
 
 	attachToConference(options: { joinAsViewer: ?boolean } = {})
@@ -2396,6 +2397,8 @@ export class BitrixCallLegacy extends AbstractCall
 		this.ready = false;
 		this.joinedAsViewer = false;
 		this.localVideoShown = false;
+		this.floorRequestActive = false;
+
 		if (this.localVAD)
 		{
 			this.localVAD.destroy();

@@ -5,6 +5,7 @@
 jn.define('im/messenger/controller/dialog/lib/message-menu/message', (require, exports, module) => {
 	const {
 		DialogType,
+		MessageParams,
 	} = require('im/messenger/const');
 	const { Feature, MobileFeature } = require('im/messenger/lib/feature');
 	const { ChatPermission } = require('im/messenger/lib/permission-manager');
@@ -156,7 +157,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message', (require, e
 
 		isPossibleCallFeedback()
 		{
-			return !this.#isYour() && !this.#isSystem() && this.isDialogCopilot();
+			return !this.#isYour() && !this.#isSystem() && (this.isDialogCopilot() || this.#isAiAssistantMessage());
 		}
 
 		isPossibleMultiselect()
@@ -343,6 +344,11 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message', (require, e
 		isDialogCopilot()
 		{
 			return this.dialogModel.type === DialogType.copilot;
+		}
+
+		#isAiAssistantMessage()
+		{
+			return this.messageModel.params?.componentId === MessageParams.ComponentId.AiAssistantMessage;
 		}
 
 		#isBot()

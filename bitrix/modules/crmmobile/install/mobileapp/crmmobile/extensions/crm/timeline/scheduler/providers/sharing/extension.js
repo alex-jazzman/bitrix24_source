@@ -11,6 +11,7 @@ jn.define('crm/timeline/scheduler/providers/sharing', (require, exports, module)
 	const { EventEmitter } = require('event-emitter');
 	const { get } = require('utils/object');
 	const { copyToClipboard } = require('utils/copy');
+	const { Random } = require('utils/random');
 	const { showEmailBanner } = require('communication/email-menu');
 	const { getFeatureRestriction, tariffPlanRestrictionsReady } = require('tariff-plan-restriction');
 

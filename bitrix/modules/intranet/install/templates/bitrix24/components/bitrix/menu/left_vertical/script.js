@@ -3580,7 +3580,7 @@ this.BX = this.BX || {};
 	  showGlobalPreset() {
 	    const loadBannerDispatcherExtensionPromise = main_core.Runtime.loadExtension('ui.banner-dispatcher');
 	    loadBannerDispatcherExtensionPromise.then(() => {
-	      ui_bannerDispatcher.BannerDispatcher.high.toQueue(onDone => {
+	      ui_bannerDispatcher.BannerDispatcher.critical.toQueue(onDone => {
 	        const presetController = this.getDefaultPresetController();
 	        presetController.show('global');
 	        presetController.getPopup().subscribe('onAfterClose', event => {

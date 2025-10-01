@@ -9,6 +9,7 @@ use Bitrix\Main\Data\Cache;
 use Bitrix\Main\Data\CacheEngineInterface;
 use Bitrix\Main\Data\CacheEngineStatInterface;
 use Bitrix\Main\Data\Internal\CacheCleanPathTable;
+use Bitrix\Main\Type\DateTime;
 
 abstract class KeyValueEngine implements CacheEngineInterface, CacheEngineStatInterface
 {
@@ -151,7 +152,7 @@ abstract class KeyValueEngine implements CacheEngineInterface, CacheEngineStatIn
 		{
 			$this->sid = $cacheConfig['sid'];
 		}
-		$this->sid .= '|v1';
+		$this->sid .= '|v1.1';
 
 		if (isset($cacheConfig['actual_data']) && !$this->useLock)
 		{
@@ -289,7 +290,7 @@ abstract class KeyValueEngine implements CacheEngineInterface, CacheEngineStatIn
 
 	protected function getPartition($key): string
 	{
-		return substr(sha1($key), 0, 2);
+		return substr(sha1($key), 0, 4);
 	}
 
 	protected function getInitDirKey($baseDirVersion, $baseDir, $initDir): string
@@ -315,7 +316,7 @@ abstract class KeyValueEngine implements CacheEngineInterface, CacheEngineStatIn
 	 * @param bool $create
 	 * @return string
 	 */
-	protected function getInitDirVersion($baseDir, $initDir = false, bool $create = true ): string
+	protected function getInitDirVersion($baseDir, $initDir = false, bool $create = true): string
 	{
 		$baseDirVersion = $this->getBaseDirVersion($baseDir);
 		$initDirHash = sha1($baseDir . '|' . $initDir);
@@ -523,11 +524,11 @@ abstract class KeyValueEngine implements CacheEngineInterface, CacheEngineStatIn
 			if ($this->useLock)
 			{
 				$this->set($key . '~', $this->ttlOld, $initDirVersion);
-				$cleanFrom = (new \Bitrix\Main\Type\DateTime())->add('+' . $this->ttlOld . ' seconds');
+				$cleanFrom = (new DateTime())->add('+' . $this->ttlOld . ' seconds');
 			}
 			else
 			{
-				$cleanFrom = (new \Bitrix\Main\Type\DateTime());
+				$cleanFrom = (new DateTime());
 			}
 
 			$this->addCleanPath([
@@ -557,7 +558,7 @@ abstract class KeyValueEngine implements CacheEngineInterface, CacheEngineStatIn
 					{
 						$this->addCleanPath([
 							'PREFIX' => $path,
-							'CLEAN_FROM' =>  (new \Bitrix\Main\Type\DateTime()),
+							'CLEAN_FROM' =>  (new DateTime()),
 							'CLUSTER_GROUP' => static::$clusterGroup
 						]);
 					}
@@ -601,7 +602,7 @@ abstract class KeyValueEngine implements CacheEngineInterface, CacheEngineStatIn
 
 		$paths = CacheCleanPathTable::query()
 			->setSelect(['ID', 'PREFIX'])
-			->where('CLEAN_FROM', '<=', new \Bitrix\Main\Type\DateTime())
+			->where('CLEAN_FROM', '<=', new DateTime())
 			->where('CLUSTER_GROUP', static::$clusterGroup)
 			->setLimit($count + $delta)
 			->exec();

@@ -2,9 +2,7 @@ import { Main } from 'ui.icon-set.api.core';
 import { Loc } from 'main.core';
 
 export const ChatsMenuOption = Object.freeze({
-	addChat: 'addChat',
 	linkChat: 'linkChat',
-	addChannel: 'addChannel',
 	linkChannel: 'linkChannel',
 });
 
@@ -20,18 +18,6 @@ export const ChatsMenuLinkChat = Object.freeze({
 	dataTestId: 'hr-department-content_chats-tab__chat-list-action-link',
 });
 
-export const ChatsMenuAddChat = Object.freeze({
-	id: ChatsMenuOption.addChat,
-	title: Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_CHAT_LIST_ADD_BUTTON_TITLE'),
-	description: Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_CHAT_LIST_ADD_BUTTON_DESC'),
-	bIcon: {
-		name: Main.ADD_CHAT,
-		size: 20,
-		colorTokenName: 'paletteBlue50',
-	},
-	dataTestId: 'hr-department-content_chats-tab__chat-list-action-add',
-});
-
 export const ChatsMenuLinkChannel = Object.freeze({
 	id: ChatsMenuOption.linkChannel,
 	title: Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_CHANNEL_LIST_LINK_BUTTON_TITLE'),
@@ -42,18 +28,6 @@ export const ChatsMenuLinkChannel = Object.freeze({
 		colorTokenName: 'paletteBlue50',
 	},
 	dataTestId: 'hr-department-content_chats-tab__channel-list-action-link',
-});
-
-export const ChatsMenuAddChannel = Object.freeze({
-	id: ChatsMenuOption.addChannel,
-	title: Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_CHANNEL_LIST_ADD_BUTTON_TITLE'),
-	description: Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_CHANNEL_LIST_ADD_BUTTON_DESC'),
-	bIcon: {
-		name: Main.SPEAKER_MOUTHPIECE_PLUS,
-		size: 20,
-		colorTokenName: 'paletteBlue50',
-	},
-	dataTestId: 'hr-department-content_chats-tab__channel-list-action-add',
 });
 
 export const ChatListDataTestIds = Object.freeze({
@@ -75,6 +49,7 @@ export const ChatLinkDialogDataTestIds = Object.freeze({
 	confirmButtonDataTestId: 'hr-department-content_chats-tab__link-chat-confirm-button',
 	cancelButtonDataTestId: 'hr-department-content_chats-tab__link-chat-cancel-button',
 	closeButtonDataTestId: 'hr-department-content_chats-tab__link-chat-close-button',
+	addWithChildrenDataTestId: 'hr-department-content_chats-tab__link-chat-add-with-children',
 });
 
 export const ChannelLinkDialogDataTestIds = Object.freeze({
@@ -82,4 +57,5 @@ export const ChannelLinkDialogDataTestIds = Object.freeze({
 	confirmButtonDataTestId: 'hr-department-content_chats-tab__link-channel-confirm-button',
 	cancelButtonDataTestId: 'hr-department-content_chats-tab__link-channel-cancel-button',
 	closeButtonDataTestId: 'hr-department-content_chats-tab__link-channel-close-button',
+	addWithChildrenDataTestId: 'hr-department-content_chats-tab__link-channel-add-with-children',
 });

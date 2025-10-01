@@ -13,6 +13,7 @@ return [
 		'vote.component.loader',
 		'main.core.events',
 		'im.v2.lib.menu',
+		'ui.icon-set.api.core',
 		'vote.analytics',
 		'main.core',
 		'ui.vue3.directives.hint',

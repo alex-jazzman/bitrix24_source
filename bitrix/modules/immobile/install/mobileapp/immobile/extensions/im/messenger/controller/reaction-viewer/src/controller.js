@@ -7,7 +7,8 @@ jn.define('im/messenger/controller/reaction-viewer/controller', (require, export
 	const { ReactionService } = require('im/messenger/provider/services/reaction');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { EventType, ComponentCode } = require('im/messenger/const');
-	const { ChatAvatar, ChatTitle } = require('im/messenger/lib/element');
+	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
+	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 	const { Haptics } = require('haptics');
 
 	let isWidgetOpen = false;

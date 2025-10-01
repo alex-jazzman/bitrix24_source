@@ -6,6 +6,12 @@
 	text-align: left;
 	text-decoration: underline dashed;
 	text-underline-offset: 3px;
+	text-decoration-color: var(--ui-color-palette-gray-40);
+	transition: .2s;
+}
+
+.booking-actions-popup__item-waitlist-label:hover {
+	text-decoration-color: var(--ui-color-palette-gray-80);
 }
 
 .booking-actions-popup__item-waitlist-row {

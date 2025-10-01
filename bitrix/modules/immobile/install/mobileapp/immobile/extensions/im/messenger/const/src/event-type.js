@@ -48,6 +48,9 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			openVoteResult: 'ImMobile.Messenger.VoteResult:open',
 			voteResultPullSubscribed: 'ImMobile.Messenger.VoteResult:pullSubscribed',
 			voteResultPullUnsubscribed: 'ImMobile.Messenger.VoteResult:pullUnsubscribed',
+			dev: {
+				openConsole: 'ImMobile.Messenger.Dev:openConsole',
+			},
 		},
 		/** Extension events */
 		recent: {
@@ -132,6 +135,7 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			richCancelTap: 'richCancelTap',
 			channelCommentTap: 'channelCommentTap',
 			updateUploadProgressByMessageId: 'updateUploadProgressByMessageId',
+			bbcodeImgTap: 'bbcodeImgTap',
 			external: {
 				goToMessageContext: 'ImMobile.Messenger.Dialog:goToMessageContext',
 				scrollToBottom: 'ImMobile.Messenger.Dialog:scrollToBottom',

@@ -86,10 +86,15 @@ export const CopilotList = {
 		{
 			this.$emit('chatClick', item.dialogId);
 		},
-		onRightClick(item, event)
+		onRightClick(item: ImModelRecentItem, event: PointerEvent)
 		{
 			event.preventDefault();
-			this.contextMenuManager.openMenu(item, event.currentTarget);
+
+			const context = {
+				dialogId: item.dialogId,
+				recentItem: item,
+			};
+			this.contextMenuManager.openMenu(context, event.currentTarget);
 		},
 		getRecentService(): CopilotRecentService
 		{

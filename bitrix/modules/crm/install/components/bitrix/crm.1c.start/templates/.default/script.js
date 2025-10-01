@@ -47,20 +47,23 @@
 			BX.addCustomEvent(
 				this.helperTileManager,
 				this.helperTileManager.events.tileClick,
-				function (tile) {
-					BX.UI.Feedback.Form.open(
-						{
-							id: 'crm-onec-helper',
-							portalUri: params.formPortalUri,
-							defaultForm: {id: 1367, sec: 'x0yd4e'},
-							forms: [
-								{licenseZones: ['kz'], id: 1371, sec: '5fpkda'},
-								{licenseZones: ['by'], id: 1377, sec: '6ft6t0'},
-								{licenseZones: ['ua'], id: 1375, sec: '1a0omj'},
-							]
-						}
-					);
-				}
+				() => {
+					if (params.formPortalUri)
+					{
+						BX.UI.Feedback.Form.open(
+							{
+								id: 'crm-onec-helper',
+								portalUri: params.formPortalUri,
+								forms: [
+									{ zones: ['ru'], id: 1367, sec: 'x0yd4e' },
+									{ zones: ['kz'], id: 1371, sec: '5fpkda' },
+									{ zones: ['by'], id: 1377, sec: '6ft6t0' },
+									{ zones: ['ua'], id: 1375, sec: '1a0omj' },
+								],
+							},
+						);
+					}
+				},
 			);
 		}
 	};

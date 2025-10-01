@@ -5,7 +5,6 @@ $MESS["IM_NS_DEFAULT_MSGVER_1"] = "Прочие уведомления";
 $MESS["IM_NS_MESSAGE_NEW_MSGVER_2"] = "Сообщения в личных чатах";
 $MESS["IM_NS_CHAT_NEW"] = "Сообщения в групповых чатах";
 $MESS["IM_NS_OPEN_NEW_MSGVER_1"] = "Сообщения в каналах";
-$MESS["IM_NS_LIKE"] = "Лайки в чатах (мне нравится)";
 $MESS["IM_NS_MENTION"] = "Вас упомянули в открытом чате";
 $MESS["IM_NS_MENTION_2"] = "Вас упомянули в чате";
 $MESS["IM_NS_MAIN"] = "Рейтинги, Лайки";

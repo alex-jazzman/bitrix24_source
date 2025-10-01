@@ -575,7 +575,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	const DesktopDataUpdater = {
 	  async reloadChatInfo() {
-	    await im_v2_provider_service_recent.RecentService.getInstance().requestItems({
+	    await im_v2_provider_service_recent.LegacyRecentService.getInstance().requestItems({
 	      firstPage: true
 	    });
 	    const currentLayout = im_v2_lib_layout.LayoutManager.getInstance().getLayout();

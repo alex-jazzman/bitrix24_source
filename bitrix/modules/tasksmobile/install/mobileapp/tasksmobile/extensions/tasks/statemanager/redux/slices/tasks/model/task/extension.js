@@ -16,9 +16,14 @@ jn.define('tasks/statemanager/redux/slices/tasks/model/task', (require, exports,
 		 * @public
 		 * @param {object} sourceServerTask
 		 * @param {object|null} existingReduxTask
+		 * @param {{ownerId: Number}} context
 		 * @return {object}
 		 */
-		static prepareReduxTaskFromServerTask(sourceServerTask, existingReduxTask = null)
+		static prepareReduxTaskFromServerTask(
+			sourceServerTask,
+			existingReduxTask = null,
+			context = {},
+		)
 		{
 			const preparedTask = { ...TaskModel.getEmptyReduxTask(), ...existingReduxTask };
 			const serverTask = FieldChangeRegistry.removeChangedFields(sourceServerTask.id, sourceServerTask);
@@ -172,7 +177,16 @@ jn.define('tasks/statemanager/redux/slices/tasks/model/task', (require, exports,
 
 			if (!Type.isUndefined(serverTask.isPinned))
 			{
-				preparedTask.isPinned = serverTask.isPinned;
+				const { ownerId = env.userId } = context;
+				preparedTask.isPinned = {
+					...preparedTask.isPinned,
+					[ownerId]: serverTask.isPinned,
+				};
+			}
+
+			if (!Type.isUndefined(serverTask.isPinnedInGroup))
+			{
+				preparedTask.isPinnedInGroup = serverTask.isPinnedInGroup;
 			}
 
 			if (!Type.isUndefined(serverTask.isInFavorites))
@@ -396,7 +410,8 @@ jn.define('tasks/statemanager/redux/slices/tasks/model/task', (require, exports,
 				userFieldNames: undefined,
 
 				isMuted: undefined,
-				isPinned: undefined,
+				isPinned: {},
+				isPinnedInGroup: undefined,
 				isInFavorites: undefined,
 				isResultRequired: undefined,
 				isResultExists: undefined,
@@ -504,7 +519,10 @@ jn.define('tasks/statemanager/redux/slices/tasks/model/task', (require, exports,
 				userFieldNames: [],
 
 				isMuted: false,
-				isPinned: false,
+				isPinned: {
+					[env.userId]: false,
+				},
+				isPinnedInGroup: false,
 				isInFavorites: false,
 				isResultRequired: false,
 				isResultExists: false,

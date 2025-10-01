@@ -51,6 +51,18 @@ export const TreeNode = {
 			required: false,
 			default: true,
 		},
+		userDropTargetNodeId: {
+			type: Number,
+			default: null,
+		},
+		isUserDropAllowed: {
+			type: Boolean,
+			default: false,
+		},
+		isDraggingUser: {
+			type: Boolean,
+			default: false,
+		},
 	},
 
 	emits: ['calculatePosition'],
@@ -77,12 +89,15 @@ export const TreeNode = {
 		},
 		nodeClass(): { [key: string]: boolean; }
 		{
+			const isDragSource = this.isDraggingUser && this.nodeId === this.focusedNode;
+
 			return {
 				'--expanded': this.expandedNodes.includes(this.nodeId),
 				'--current-department': this.isCurrentDepartment,
 				'--focused': this.focusedNode === this.nodeId,
 				'--with-restricted-access-rights': !this.showInfo,
 				'--team': this.isTeamEntity,
+				'--drag-source': isDragSource,
 			};
 		},
 		subdivisionsClass(): { [key: string]: boolean; }
@@ -186,6 +201,30 @@ export const TreeNode = {
 			}
 
 			return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_TREE_NO_SUBDEPARTMENTS');
+		},
+		deputyTitle(): string
+		{
+			return this.isTeamEntity
+				? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_TREE_TEAM_DEPUTY_TITLE')
+				: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_TREE_DEPUTY_TITLE')
+			;
+		},
+		dropOverlayText(): string
+		{
+			const sourceNode = this.departments.get(this.focusedNode);
+			if (sourceNode.entityType !== this.nodeData.entityType)
+			{
+				return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_MOVED_FORBIDDEN');
+			}
+
+			return this.isUserDropAllowed
+				? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_MOVED_ALLOWED')
+				: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_MOVED_NO_RIGHTS')
+			;
+		},
+		showOverlay(): boolean
+		{
+			return this.nodeId === this.userDropTargetNodeId && this.nodeId !== this.focusedNode;
 		},
 		...mapState(useChartStore, ['departments', 'focusedNode']),
 	},
@@ -373,6 +412,15 @@ export const TreeNode = {
 				this.prevHeight = this.$el.offsetHeight;
 			}
 		},
+		onDragMouseEnter(): void
+		{
+			EventEmitter.emit(events.HR_USER_DRAG_ENTER_NODE, { nodeId: this.nodeId });
+		},
+
+		onDragMouseLeave(): void
+		{
+			EventEmitter.emit(events.HR_USER_DRAG_LEAVE_NODE, { nodeId: this.nodeId });
+		},
 	},
 
 	template: `
@@ -387,9 +435,24 @@ export const TreeNode = {
 				'--node-expanded-color': nodeData.teamColor?.expandedBorderColor,
 			}"
 		>
+			<div v-if="showOverlay"
+				class="humanresources-tree__node_drop-overlay"
+			>
+				<div class="ui-icon-set"
+					 :class="{
+					'--circle-plus': isUserDropAllowed,
+					'--cross-circle-50': !isUserDropAllowed
+				}"
+				></div>
+				<div class="humanresources-tree__node_drop-overlay-text">
+					{{ dropOverlayText }}
+				</div>
+			</div>
 			<div
 				class="humanresources-tree__node_summary"
 				@click.stop="onDepartmentClick('department')"
+				@mouseenter="onDragMouseEnter"
+				@mouseleave="onDragMouseLeave"
 			>
 				<template v-if="showInfo">
 					<div
@@ -450,7 +513,7 @@ export const TreeNode = {
 							<div v-if="!deputy.length"></div>
 							<HeadList
 								:items="deputy"
-								:title="loc('HUMANRESOURCES_COMPANY_STRUCTURE_TREE_DEPUTY_TITLE')"
+								:title="deputyTitle"
 								:collapsed="true"
 								:type="'deputy'"
 							>
@@ -503,6 +566,9 @@ export const TreeNode = {
 						:currentDepartments="currentDepartments"
 						:isShown="isExpanded"
 						@calculatePosition="calculatePosition"
+						:userDropTargetNodeId="userDropTargetNodeId"
+						:isUserDropAllowed="isUserDropAllowed"
+						:isDraggingUser="isDraggingUser"
 					/>
 				</TransitionGroup>
 			</div>

@@ -190,7 +190,7 @@ export const ConferenceCreation = {
 		onLayoutChange(event: BaseEvent<OnLayoutChangeEvent>)
 		{
 			const { to } = event.getData();
-			if (to.name === Layout.createChat.name && to.entityId !== ChatType.videoconf)
+			if (to.name === Layout.createChat && to.entityId !== ChatType.videoconf)
 			{
 				this.exitByChatTypeSwitch = true;
 			}

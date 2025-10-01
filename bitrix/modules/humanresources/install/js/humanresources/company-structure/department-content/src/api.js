@@ -11,11 +11,12 @@ export const DepartmentAPI = {
 			userId,
 		});
 	},
-	moveUserToDepartment: (nodeId: number, userId: number, targetNodeId: number): Promise<void> => {
+	moveUserToDepartment: (nodeId: number, userId: number, targetNodeId: number, role: string): Promise<void> => {
 		return postData('humanresources.api.Structure.Node.Member.moveUser', {
 			nodeId,
 			userId,
 			targetNodeId,
+			roleXmlId: role,
 		});
 	},
 	isUserInMultipleDepartments: (userId: number): Promise<void> => {
@@ -47,8 +48,8 @@ export const DepartmentAPI = {
 	},
 	saveChats: (
 		nodeId: number,
-		ids: number[] = [],
-		removeIds: number[] = [],
+		ids: { chat: number[], channel: number[], collab: number[], withChildren: boolean } = {},
+		removeIds: { chat?: number[], channel?: number[], collab?: number[] } = {},
 		parentId: ?number = null,
 	): Promise<Array> => {
 		return postData('humanresources.api.Structure.Node.Member.Chat.saveChatList', {

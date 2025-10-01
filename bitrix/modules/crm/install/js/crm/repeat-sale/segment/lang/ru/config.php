@@ -1,5 +1,6 @@
 <?php
 $MESS['CRM_REPEAT_SALE_SEGMENT_TITLE'] = 'Настройка сценария повторных продаж';
+$MESS['CRM_REPEAT_SALE_SEGMENT_TITLE_READ_ONLY'] = 'Сценарий повторных продаж';
 
 $MESS['CRM_REPEAT_SALE_SEGMENT_MANUAL_TEXTAREA_TITLE'] = 'Текст дела CRM для менеджера';
 $MESS['CRM_REPEAT_SALE_SEGMENT_MANUAL_SECTION_TITLE'] = 'Воронка для новых сделок';

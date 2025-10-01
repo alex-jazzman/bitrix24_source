@@ -41,7 +41,7 @@ jn.define('selector/widget/entity/socialnetwork/user', (require, exports, module
 
 		static prepareItemForDrawing(item)
 		{
-			if (!item.id || !AvatarClass?.isNativeSupported())
+			if (!item.id)
 			{
 				return item;
 			}

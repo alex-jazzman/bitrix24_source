@@ -346,6 +346,12 @@ export const Resize = {
 				return;
 			}
 
+			const resource = this.$store.getters[`${Model.Resources}/getById`](this.resourceId);
+			if (resource.isDeleted)
+			{
+				return;
+			}
+
 			const id = this.bookingId;
 			const booking = {
 				id,

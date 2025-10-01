@@ -40,6 +40,10 @@ export const TileItem: BitrixVueComponentProps = {
 			type: Boolean,
 			default: true,
 		},
+		forceDisableSelection: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	setup(): Object
 	{
@@ -186,6 +190,11 @@ export const TileItem: BitrixVueComponentProps = {
 		},
 		isSelected(): boolean
 		{
+			if (this.forceDisableSelection)
+			{
+				return false;
+			}
+
 			return this.item.customData.tileSelected === true;
 		},
 		fileIconSize(): number

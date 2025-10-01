@@ -17,7 +17,7 @@ import type { ImModelLayout, ImModelChat } from 'im.v2.model';
 type EntityId = string;
 
 const TypesWithoutContext: Set<string> = new Set([ChatType.comment]);
-const LayoutsWithoutLastOpenedElement: Set<string> = new Set([Layout.channel.name, Layout.market.name]);
+const LayoutsWithoutLastOpenedElement: Set<string> = new Set([Layout.channel, Layout.market]);
 
 export class LayoutManager
 {
@@ -96,7 +96,7 @@ export class LayoutManager
 		const layoutConfig = LocalStorageManager.getInstance().get(LocalStorageKey.layoutConfig);
 		if (!layoutConfig)
 		{
-			return this.setLayout({ name: Layout.chat.name });
+			return this.setLayout({ name: Layout.chat });
 		}
 
 		Logger.warn('LayoutManager: last layout was restored', layoutConfig);
@@ -200,7 +200,7 @@ export class LayoutManager
 		}
 
 		void this.setLayout({
-			name: Layout.chat.name,
+			name: Layout.chat,
 			entityId: dialogId,
 			contextId: messageId,
 		});
@@ -219,7 +219,7 @@ export class LayoutManager
 			return;
 		}
 
-		if (config.name === Layout.copilot.name)
+		if (config.name === Layout.aiAssistant)
 		{
 			Analytics.getInstance().copilot.onOpenTab();
 		}
@@ -246,12 +246,12 @@ export class LayoutManager
 	{
 		const { name, entityId } = this.getLayout();
 		const CHAT_LAYOUTS = new Set([
-			Layout.chat.name,
-			Layout.channel.name,
-			Layout.copilot.name,
-			Layout.openlines.name,
-			Layout.openlinesV2.name,
-			Layout.collab.name,
+			Layout.chat,
+			Layout.channel,
+			Layout.aiAssistant,
+			Layout.openlines,
+			Layout.openlinesV2,
+			Layout.collab,
 		]);
 
 		if (CHAT_LAYOUTS.has(name) && entityId)

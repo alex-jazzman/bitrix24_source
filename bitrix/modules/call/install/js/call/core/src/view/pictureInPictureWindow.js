@@ -818,7 +818,7 @@ export class PictureInPictureWindow {
 			try
 			{
 				this.pictureWindow = await window.documentPictureInPicture.requestWindow({
-					disallowReturnToOpener: false,
+					disallowReturnToOpener: true,
 					width: 370,
 					height: 215,
 					preferInitialWindowPlacement: false,

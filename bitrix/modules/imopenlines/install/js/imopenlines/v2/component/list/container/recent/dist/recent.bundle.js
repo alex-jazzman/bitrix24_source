@@ -22,7 +22,7 @@ this.BX.OpenLines.v2.Component = this.BX.OpenLines.v2.Component || {};
 	  methods: {
 	    onChatClick(dialogId) {
 	      this.$emit('selectEntity', {
-	        layoutName: im_v2_const.Layout.openlinesV2.name,
+	        layoutName: im_v2_const.Layout.openlinesV2,
 	        entityId: dialogId
 	      });
 	    },

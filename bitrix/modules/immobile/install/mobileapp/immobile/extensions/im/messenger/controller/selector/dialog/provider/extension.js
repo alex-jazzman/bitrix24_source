@@ -11,7 +11,8 @@ jn.define('im/messenger/controller/selector/dialog/provider', (require, exports,
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
 	const { RecentProvider: SearchProvider } = require('im/messenger/controller/search/experimental');
-	const { ChatAvatar, ChatTitle } = require('im/messenger/lib/element');
+	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
+	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 	const { DialogType } = require('im/messenger/const');
 	const { UserHelper } = require('im/messenger/lib/helper');
 

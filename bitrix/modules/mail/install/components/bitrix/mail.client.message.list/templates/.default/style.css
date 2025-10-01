@@ -6,6 +6,10 @@
 	display:none;
 }*/
 
+.pagetitle-toolbar-field-view.pagetitle-mail-view  #uiToolbarContainer{
+	min-width: 800px;
+}
+
 .mail-list-settings-menu-popup-toggle {
 	margin-left: 12px;
 	min-width: 39px;

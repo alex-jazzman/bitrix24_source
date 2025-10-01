@@ -16,6 +16,7 @@
 	const { getFeatureRestriction, tariffPlanRestrictionsReady } = require('tariff-plan-restriction');
 	const { CollabAccessService } = require('collab/service/access');
 	const { ProjectTagsField } = require('layout/socialnetwork/project/fields/tags');
+	const { ProjectMemberList } = require('project/member-list');
 
 	class ProjectView extends LayoutComponent
 	{

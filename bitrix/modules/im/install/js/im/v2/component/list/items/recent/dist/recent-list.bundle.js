@@ -396,7 +396,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      return this.isNotes ? im_v2_component_elements_chatTitle.ChatTitleType.notes : '';
 	    },
 	    isChatSelected() {
-	      const canBeSelected = [im_v2_const.Layout.chat.name, im_v2_const.Layout.updateChat.name, im_v2_const.Layout.collab.name];
+	      const canBeSelected = [im_v2_const.Layout.chat, im_v2_const.Layout.updateChat, im_v2_const.Layout.collab, im_v2_const.Layout.aiAssistant];
 	      if (!canBeSelected.includes(this.layout.name)) {
 	        return false;
 	      }
@@ -532,7 +532,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    }
 	  },
 	  methods: {
-	    onJoinClick() {
+	    async onJoinClick() {
 	      main_core_events.EventEmitter.emit(im_v2_const.EventType.call.onJoinFromRecentItem);
 	      if (this.isConference) {
 	        call_lib_analytics.Analytics.getInstance().onJoinConferenceClick({
@@ -543,7 +543,14 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        });
 	        return;
 	      }
+	      const hasThisActiveCall = await this.getCallManager().sendBroadcastRequest(this.activeCall.call.uuid);
+	      if (hasThisActiveCall.some(call => call)) {
+	        return;
+	      }
 	      this.getCallManager().joinCall(this.activeCall.call.id, this.activeCall.call.uuid, this.activeCall.dialogId);
+	    },
+	    onBackToCallClick() {
+	      this.getCallManager().sendBroadcastRequest(this.activeCall.call.uuid);
 	    },
 	    onLeaveCallClick() {
 	      this.getCallManager().leaveCurrentCall();
@@ -598,7 +605,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					</div>
 					<div v-else-if="hasJoined && !isTabWithActiveCall" class="bx-im-list-recent-active-call__actions_container">
 						<div class="bx-im-list-recent-active-call__actions_item --another-device">
-							<ChatButton :size="ButtonSize.M" :customColorScheme="anotherDeviceColorScheme" :isRounded="true" :text="loc('IM_LIST_RECENT_ACTIVE_CALL_ANOTHER_DEVICE')" />
+							<ChatButton :size="ButtonSize.M" @click.stop="onBackToCallClick" :customColorScheme="anotherDeviceColorScheme" :isRounded="true" :text="loc('IM_LIST_RECENT_ACTIVE_CALL_ANOTHER_DEVICE')" />
 						</div>
 					</div>
 				</div>
@@ -639,7 +646,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      const {
 	        name: currentLayoutName
 	      } = this.$store.getters['application/getLayout'];
-	      return currentLayoutName === im_v2_const.Layout.createChat.name;
+	      return currentLayoutName === im_v2_const.Layout.createChat;
 	    },
 	    preparedTitle() {
 	      if (this.chatTitle === '') {
@@ -947,7 +954,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        return;
 	      }
 	      const context = {
-	        ...item,
+	        dialogId: item.dialogId,
+	        recentItem: item,
 	        compactMode: false
 	      };
 	      this.contextMenuManager.openMenu(context, event.currentTarget);
@@ -997,7 +1005,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    },
 	    getRecentService() {
 	      if (!this.service) {
-	        this.service = im_v2_provider_service_recent.RecentService.getInstance();
+	        this.service = im_v2_provider_service_recent.LegacyRecentService.getInstance();
 	      }
 	      return this.service;
 	    },

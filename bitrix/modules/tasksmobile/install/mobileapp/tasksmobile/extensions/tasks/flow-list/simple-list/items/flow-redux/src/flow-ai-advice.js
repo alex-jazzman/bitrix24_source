@@ -11,9 +11,9 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-ai-advice', (re
 	const { BottomSheet } = require('bottom-sheet');
 	const { Color, Indent } = require('tokens');
 	const { Loc } = require('loc');
-	const { ProfileView } = require('user/profile');
 	const { UIMenu } = require('layout/ui/menu');
 	const { Entry } = require('tasks/entry');
+	const { UserProfile } = require('user-profile');
 
 	class FlowAiAdvice extends LayoutComponent
 	{
@@ -358,7 +358,10 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-ai-advice', (re
 
 		onUserClick({ userId })
 		{
-			ProfileView.openInBottomSheet(userId, this.props.parentWidget);
+			void UserProfile.open({
+				ownerId: userId,
+				parentWidget: this.props.parentWidget,
+			});
 		}
 
 		renderFootnote()

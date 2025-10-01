@@ -69,3 +69,4 @@ export type { RawKeyboardButtonConfig, KeyboardButtonConfig } from './keyboard';
 export type { RawSettings, RawNotificationSettingsBlock, NotificationSettingsBlock, NotificationSettingsItem } from './settings';
 
 export type { SidebarMainPanelBlockType } from './sidebar';
+export type { LayoutType } from './layout';

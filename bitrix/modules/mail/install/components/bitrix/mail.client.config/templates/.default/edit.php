@@ -668,6 +668,29 @@ $APPLICATION->includeComponent('bitrix:main.mail.confirm', '', array());
 			</div>
 		</div>
 
+		<?php if (
+			(\Bitrix\Main\Config\Option::get('mail', 'enable_mailbox_list_grid_page', 'N') === 'Y')
+		&& !empty($mailbox)
+		&& $USER->isAdmin()): ?>
+		<div class="ui-slider-section">
+			<div class="mail-connect-section-block">
+				<div class="mail-connect-title-block">
+					<div class="mail-connect-title"><?=Loc::getMessage('MAIL_CLIENT_CONFIG_OWNER') ?></div>
+				</div>
+				<div class="mail-connect-option-email mail-connect-form-check-hidden">
+					<div id="mail-owner-selector-container"></div>
+				</div>
+				<input
+					type="hidden"
+					id="mail-owner-id-input"
+					name="fields[owner_id]"
+					value="<?= $arParams['OWNER_ACCESS_CODE'] ?>"
+				>
+			</div>
+			</div>
+		</div>
+		<?php endif; ?>
+
 		<div class="mail-connect-footer mail-connect-footer-fixed">
 			<div id="mail_connect_form_error"></div>
 			<div class="mail-connect-footer-container">
@@ -734,6 +757,31 @@ if (empty($mailbox))
 	$crmSyncIntervals[$fullSyncPeriodKey] = htmlspecialcharsbx(Loc::getMessage('MAIL_CLIENT_CONFIG_IMAP_AGE_2_I'));
 }
 
+$ownerData = null;
+if (!empty($mailbox['USER_ID']))
+{
+	$user = \CUser::GetByID($mailbox['USER_ID'])->Fetch();
+	if ($user)
+	{
+		$avatarUrl = null;
+		if (!empty($user['PERSONAL_PHOTO']))
+		{
+			$avatarFile = CFile::GetFileArray($user['PERSONAL_PHOTO']);
+			if ($avatarFile)
+			{
+				$avatarUrl = $avatarFile['SRC'];
+			}
+		}
+
+		$ownerData = [
+			'id' => $user['ID'],
+			'entityId' => 'user',
+			'title' => \CUser::FormatName(\CSite::getNameFormat(false), $user, true, false),
+			'avatar' => $avatarUrl,
+		];
+	}
+}
+
 $arJsParams = [
 	'crmSyncIntervals' => $crmSyncIntervals,
 	'messageSyncIntervals' => $messageSyncIntervals,
@@ -752,6 +800,9 @@ $arJsParams = [
 	'isSuccessSyncStatus' => $arResult['LAST_MAIL_CHECK_STATUS'],
 	'oauthUserIsEmpty' => empty($settings['oauth_user']),
 	'isOauthMode' => !empty($settings['oauth']),
+	'ownerId' => !empty($mailbox['USER_ID']) ? (int)$mailbox['USER_ID'] : null,
+	'owner' => $ownerData,
+	'ownerSelectText' => Loc::getMessage("MAIL_CLIENT_CONFIG_OWNER_CHANGE"),
 ];
 ?>
 <script>
@@ -772,8 +823,71 @@ $arJsParams = [
 	BX.UI.Hint.init(BX('mail_connect_form'));
 
 	BX.ready(function() {
+		const initOwnerSelector = function (params) {
+			const ownerContainerNode = BX('mail-owner-selector-container');
+			const ownerInputNode = BX('mail-owner-id-input');
+
+			if (!ownerContainerNode || !ownerInputNode)
+			{
+				return;
+			}
+
+			ownerContainerNode.innerHTML = '';
+
+			const preselectedItems = [];
+			if (params.owner)
+			{
+				preselectedItems.push(['user', params.owner.id]);
+			}
+
+			const tagSelector = new BX.UI.EntitySelector.TagSelector({
+				addButtonCaptionMore: params.ownerSelectText,
+				multiple: false,
+				items: params.owner ? [params.owner] : [],
+				dialogOptions: {
+					context: 'MAIL_CLIENT_CONFIG_OWNER',
+					preselectedItems: preselectedItems,
+					entities: [{
+						id: 'user',
+						options: {
+							inviteEmployeeLink: false,
+							intranetUsersOnly: true
+						}
+					}],
+					events: {
+						'Item:onSelect': function (event) {
+							const selectedItem = event.getData().item;
+							ownerInputNode.value = 'U' + selectedItem.getId();
+						}
+					}
+				},
+				events: {
+					'onBeforeTagRemove': function () {
+						ownerInputNode.value = '';
+					}
+				}
+			});
+
+			tagSelector.renderTo(ownerContainerNode);
+		};
+
+		if (!BX.MailClientConfig?.Edit?.isOwnerSelectorInited)
+		{
+			BX.MailClientConfig.Edit.isOwnerSelectorInited = true;
+
+			BX.MailClientConfig.Edit.init = (function(originalInit) {
+				return function(params) {
+					originalInit.apply(this, arguments);
+					initOwnerSelector(params);
+				};
+			})(BX.MailClientConfig.Edit.init);
+		}
+	});
+
+	BX.ready(function(){
 		BX.MailClientConfig.Edit.init(<?=Json::encode($arJsParams)?>);
 	});
+
 
 	BX.message({
 		'MAIL_CLIENT_CONFIG_IMAP_DIRS_TITLE': '<?=\CUtil::jsEscape(Loc::getMessage('MAIL_CLIENT_CONFIG_IMAP_DIRS_TITLE')) ?>',

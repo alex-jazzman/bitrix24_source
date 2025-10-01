@@ -18,9 +18,7 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 	const { getLogger } = require('im/messenger/lib/logger');
 	const { Feature } = require('im/messenger/lib/feature');
 	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
-	const {
-		UnreadSeparatorMessage,
-	} = require('im/messenger/lib/element');
+	const { UnreadSeparatorMessage } = require('im/messenger/lib/element/dialog');
 
 	const { StateManager } = require('im/messenger/view/lib/state-manager');
 	const { DialogTextField } = require('im/messenger/view/dialog/text-field');

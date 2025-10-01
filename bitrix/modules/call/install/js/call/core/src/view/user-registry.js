@@ -114,11 +114,7 @@ export class UserModel
 
 	_onUpdateTalking(talking)
 	{
-		if (talking)
-		{
-			this.floorRequestState = false;
-		}
-		else
+		if (!talking)
 		{
 			this.talkingStop = (new Date()).getTime();
 		}

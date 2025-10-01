@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 (function (exports,main_core) {
 	'use strict';
@@ -142,7 +143,7 @@ this.BX = this.BX || {};
 	        result = "<input name=\"".concat(field.name, "\"\n\t\t\t\tclass=\"").concat(this.classes.get('controlInput'), "\"\n\t\t\t\tvalue=\"").concat(value, "\"").concat(required, "\n\t\t\t\ttype=\"text\"\n\t\t\t\t").concat(attribute, ">");
 	      } else if (type === 'boolean') {
 	        value = 'Y';
-	        result = "<input type=\"checkbox\" name=\"".concat(main_core.Text.encode(field.name), "\"").concat(this.data[field.name] === value ? ' checked="checked"' : '').concat(field.disabled ? ' disabled="disabled"' : '').concat(required, "\n\t\t\t\tvalue=\"").concat(value, "\" class=\"").concat(this.classes.get('controlInput'), "\">");
+	        result = "<input type=\"hidden\" name=\"".concat(main_core.Text.encode(field.name), "\" value = \"N\"><input type=\"checkbox\" name=\"").concat(main_core.Text.encode(field.name), "\"").concat(this.data[field.name] === value ? ' checked="checked"' : '').concat(field.disabled ? ' disabled="disabled"' : '').concat(required, "\n\t\t\t\tvalue=\"").concat(value, "\" class=\"").concat(this.classes.get('controlInput'), "\">");
 	      } else if (type === 'list') {
 	        result = "<select class=\"".concat(this.classes.get('controlInput'), "\" name=\"").concat(main_core.Text.encode(field.name), "\"").concat(required, ">");
 	        if (field.data && main_core.Type.isArray(field.data.items)) {

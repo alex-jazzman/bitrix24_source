@@ -559,15 +559,32 @@ this.BX = this.BX || {};
 	    }
 	  }, {
 	    key: "getCurrentDeviceList",
-	    value: function getCurrentDeviceList() {
-	      var _this6 = this;
-	      return new Promise(function (resolve, reject) {
-	        _this6.enumerateDevices().then(function (deviceList) {
-	          _this6._currentDeviceList = _this6.filterDeviceList(deviceList);
-	          resolve(_this6._currentDeviceList, deviceList);
-	        });
-	      });
-	    }
+	    value: function () {
+	      var _getCurrentDeviceList = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee3() {
+	        var deviceList;
+	        return _regeneratorRuntime().wrap(function _callee3$(_context3) {
+	          while (1) switch (_context3.prev = _context3.next) {
+	            case 0:
+	              _context3.next = 2;
+	              return this.enumerateDevices();
+	            case 2:
+	              deviceList = _context3.sent;
+	              this._currentDeviceList = this.filterDeviceList(deviceList);
+	              return _context3.abrupt("return", {
+	                currentDeviceList: this._currentDeviceList,
+	                deviceList: deviceList
+	              });
+	            case 5:
+	            case "end":
+	              return _context3.stop();
+	          }
+	        }, _callee3, this);
+	      }));
+	      function getCurrentDeviceList() {
+	        return _getCurrentDeviceList.apply(this, arguments);
+	      }
+	      return getCurrentDeviceList;
+	    }()
 	  }, {
 	    key: "getRemovedUsedDevices",
 	    value: function getRemovedUsedDevices(devices, currentDevices) {
@@ -1006,9 +1023,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "_onUpdateTalking",
 	    value: function _onUpdateTalking(talking) {
-	      if (talking) {
-	        this.floorRequestState = false;
-	      } else {
+	      if (!talking) {
 	        this.talkingStop = new Date().getTime();
 	      }
 	    }
@@ -1111,6 +1126,30 @@ this.BX = this.BX || {};
 	  return element;
 	}
 
+	var createCssTooltip = function createCssTooltip() {
+	  var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+	  var _options$width = options.width,
+	    tooltipWidth = _options$width === void 0 ? 'max-content' : _options$width,
+	    _options$position = options.position,
+	    tooltipPosition = _options$position === void 0 ? 'top' : _options$position,
+	    _options$getText = options.getText,
+	    getTooltipText = _options$getText === void 0 ? function () {
+	      return '';
+	    } : _options$getText;
+	  var hasTooltip = Boolean(Object.keys(options).length);
+	  var tooltipText = getTooltipText();
+	  var tooltipPositionClass = tooltipPosition === 'bottom' ? '-bottom' : '-top';
+	  var tooltipClass = "bx-videocall-tooltip ".concat(tooltipPositionClass);
+	  var tooltipTextVarName = '--data-tooltip-text';
+	  return {
+	    hasTooltip: hasTooltip,
+	    tooltipClass: hasTooltip ? tooltipClass : '',
+	    tooltipText: tooltipText,
+	    tooltipStyle: "--data-tooltip-width:".concat(tooltipWidth, "; ").concat(tooltipTextVarName, ":'").concat(tooltipText, "'"),
+	    getTooltipText: getTooltipText,
+	    tooltipTextVarName: tooltipTextVarName
+	  };
+	};
 	var TitleButton = /*#__PURE__*/function () {
 	  function TitleButton(config) {
 	    babelHelpers.classCallCheck(this, TitleButton);
@@ -1158,6 +1197,7 @@ this.BX = this.BX || {};
 	    this.backgroundClass = BX.prop.getString(config, "backgroundClass", "");
 	    this.backgroundClass = "bx-messenger-videocall-panel-icon-background" + (this.backgroundClass ? " " : "") + this.backgroundClass;
 	    this.blocked = config.blocked === true;
+	    this.tooltip = createCssTooltip(BX.prop.getObject(config, 'tooltip', {}));
 	    this.text = BX.prop.getString(config, "text", "");
 	    this.isActive = false;
 	    this.counter = BX.prop.getInteger(config, "counter", 0);
@@ -1168,9 +1208,7 @@ this.BX = this.BX || {};
 	      comingSoon: null
 	    };
 	    this.callbacks = {
-	      onClick: BX.prop.getFunction(config, "onClick", BX.DoNothing),
-	      onMouseOver: BX.prop.getFunction(config, "onMouseOver", BX.DoNothing),
-	      onMouseOut: BX.prop.getFunction(config, "onMouseOut", BX.DoNothing)
+	      onClick: BX.prop.getFunction(config, "onClick", BX.DoNothing)
 	    };
 	  }
 	  babelHelpers.createClass(SimpleButton, [{
@@ -1190,9 +1228,15 @@ this.BX = this.BX || {};
 	      } else {
 	        textNode = null;
 	      }
+	      var _this$tooltip = this.tooltip,
+	        tooltipClass = _this$tooltip.tooltipClass,
+	        tooltipStyle = _this$tooltip.tooltipStyle;
 	      this.elements.root = main_core.Dom.create("div", {
 	        props: {
-	          className: "bx-messenger-videocall-panel-item" + (this.blocked ? " blocked" : "")
+	          className: "bx-messenger-videocall-panel-item ".concat(tooltipClass) + (this.blocked ? ' blocked' : '')
+	        },
+	        attrs: {
+	          style: tooltipStyle
 	        },
 	        children: [main_core.Dom.create("div", {
 	          props: {
@@ -1227,9 +1271,7 @@ this.BX = this.BX || {};
 	          }
 	        })],
 	        events: {
-	          click: this.callbacks.onClick,
-	          mouseover: this.callbacks.onMouseOver,
-	          mouseout: this.callbacks.onMouseOut
+	          click: this.callbacks.onClick
 	        }
 	      });
 	      if (this.isActive) {
@@ -1252,6 +1294,11 @@ this.BX = this.BX || {};
 	      } else {
 	        this.elements.root.classList.remove("active");
 	      }
+	      var _this$tooltip2 = this.tooltip,
+	        hasTooltip = _this$tooltip2.hasTooltip,
+	        getTooltipText = _this$tooltip2.getTooltipText,
+	        tooltipTextVarName = _this$tooltip2.tooltipTextVarName;
+	      hasTooltip && this.elements.root.style.setProperty(tooltipTextVarName, "'".concat(getTooltipText(), "'"));
 	    }
 	  }, {
 	    key: "setBlocked",
@@ -1302,6 +1349,7 @@ this.BX = this.BX || {};
 	    this.arrowEnabled = config.arrowEnabled === true;
 	    this.arrowHidden = config.arrowHidden === true;
 	    this.blocked = config.blocked === true;
+	    this.tooltip = createCssTooltip(BX.prop.getObject(config, 'tooltip', {}));
 	    this.backgroundClass = BX.prop.getString(config, "backgroundClass", "");
 	    this.showLevel = config.showLevel === true;
 	    this.level = config.level || 0;
@@ -1318,9 +1366,7 @@ this.BX = this.BX || {};
 	    this.callbacks = {
 	      onClick: BX.prop.getFunction(config, "onClick", BX.DoNothing),
 	      onArrowClick: BX.prop.getFunction(config, "onArrowClick", BX.DoNothing),
-	      onSideIconClick: BX.prop.getFunction(config, "onSideIconClick", BX.DoNothing),
-	      onMouseOver: BX.prop.getFunction(config, "onMouseOver", BX.DoNothing),
-	      onMouseOut: BX.prop.getFunction(config, "onMouseOut", BX.DoNothing)
+	      onSideIconClick: BX.prop.getFunction(config, "onSideIconClick", BX.DoNothing)
 	    };
 	  }
 	  babelHelpers.createClass(DeviceButton, [{
@@ -1329,10 +1375,16 @@ this.BX = this.BX || {};
 	      if (this.elements.root) {
 	        return this.elements.root;
 	      }
+	      var _this$tooltip3 = this.tooltip,
+	        tooltipClass = _this$tooltip3.tooltipClass,
+	        tooltipStyle = _this$tooltip3.tooltipStyle;
 	      this.elements.root = main_core.Dom.create("div", {
 	        props: {
 	          id: "bx-messenger-videocall-panel-item-with-arrow-" + this["class"],
-	          className: "bx-messenger-videocall-panel-item-with-arrow" + (this.blocked ? " blocked" : "")
+	          className: "bx-messenger-videocall-panel-item-with-arrow ".concat(tooltipClass) + (this.blocked ? " blocked" : "")
+	        },
+	        attrs: {
+	          style: tooltipStyle
 	        },
 	        children: [main_core.Dom.create("div", {
 	          props: {
@@ -1355,9 +1407,7 @@ this.BX = this.BX || {};
 	          text: this.text
 	        })],
 	        events: {
-	          click: this.callbacks.onClick,
-	          mouseover: this.callbacks.onMouseOver,
-	          mouseout: this.callbacks.onMouseOut
+	          click: this.callbacks.onClick
 	        }
 	      });
 	      this.elements.arrow = main_core.Dom.create("div", {
@@ -1500,6 +1550,11 @@ this.BX = this.BX || {};
 	      } else if (this.elements.levelMeter) {
 	        this.elements.levelMeter.setAttribute('y', Math.round((1 - this.level) * 20));
 	      }
+	      var _this$tooltip4 = this.tooltip,
+	        hasTooltip = _this$tooltip4.hasTooltip,
+	        getTooltipText = _this$tooltip4.getTooltipText,
+	        tooltipTextVarName = _this$tooltip4.tooltipTextVarName;
+	      hasTooltip && this.elements.root.style.setProperty(tooltipTextVarName, "'".concat(getTooltipText(), "'"));
 	    }
 	  }, {
 	    key: "disable",
@@ -1516,6 +1571,11 @@ this.BX = this.BX || {};
 	      } else if (this.elements.levelMeter) {
 	        this.elements.levelMeter.setAttribute('y', Math.round((1 - this.level) * 20));
 	      }
+	      var _this$tooltip5 = this.tooltip,
+	        hasTooltip = _this$tooltip5.hasTooltip,
+	        getTooltipText = _this$tooltip5.getTooltipText,
+	        tooltipTextVarName = _this$tooltip5.tooltipTextVarName;
+	      hasTooltip && this.elements.root.style.setProperty(tooltipTextVarName, "'".concat(getTooltipText(), "'"));
 	    }
 	  }, {
 	    key: "setBlocked",
@@ -1630,10 +1690,9 @@ this.BX = this.BX || {};
 	      icon: null,
 	      text: null
 	    };
+	    this.tooltip = createCssTooltip(BX.prop.getObject(config, 'tooltip', {}));
 	    this.callbacks = {
-	      onClick: BX.prop.getFunction(config, 'onClick', BX.DoNothing),
-	      onMouseOver: BX.prop.getFunction(config, 'onMouseOver', BX.DoNothing),
-	      onMouseOut: BX.prop.getFunction(config, 'onMouseOut', BX.DoNothing)
+	      onClick: BX.prop.getFunction(config, 'onClick', BX.DoNothing)
 	    };
 	  }
 	  babelHelpers.createClass(TopButton, [{
@@ -1642,9 +1701,15 @@ this.BX = this.BX || {};
 	      if (this.elements.root) {
 	        return this.elements.root;
 	      }
+	      var _this$tooltip6 = this.tooltip,
+	        tooltipClass = _this$tooltip6.tooltipClass,
+	        tooltipStyle = _this$tooltip6.tooltipStyle;
 	      this.elements.root = main_core.Dom.create('div', {
 	        props: {
-	          className: 'bx-messenger-videocall-top-button'
+	          className: "bx-messenger-videocall-top-button ".concat(tooltipClass)
+	        },
+	        attrs: {
+	          style: tooltipStyle
 	        },
 	        children: [this.elements.icon = main_core.Dom.create('div', {
 	          props: {
@@ -1657,9 +1722,7 @@ this.BX = this.BX || {};
 	          text: this.text
 	        })],
 	        events: {
-	          click: this.callbacks.onClick,
-	          mouseover: this.callbacks.onMouseOver,
-	          mouseout: this.callbacks.onMouseOut
+	          click: this.callbacks.onClick
 	        }
 	      });
 	      return this.elements.root;
@@ -1688,13 +1751,12 @@ this.BX = this.BX || {};
 	    this.iconClass = BX.prop.getString(config, 'iconClass', '');
 	    this.textClass = BX.prop.getString(config, 'textClass', '');
 	    this.text = BX.prop.getString(config, 'text', '');
+	    this.tooltip = createCssTooltip(BX.prop.getObject(config, 'tooltip', {}));
 	    this.elements = {
 	      root: null
 	    };
 	    this.callbacks = {
-	      onClick: BX.prop.getFunction(config, 'onClick', BX.DoNothing),
-	      onMouseOver: BX.prop.getFunction(config, 'onMouseOver', BX.DoNothing),
-	      onMouseOut: BX.prop.getFunction(config, 'onMouseOut', BX.DoNothing)
+	      onClick: BX.prop.getFunction(config, 'onClick', BX.DoNothing)
 	    };
 	  }
 	  babelHelpers.createClass(TopFramelessButton, [{
@@ -1703,9 +1765,15 @@ this.BX = this.BX || {};
 	      if (this.elements.root) {
 	        return this.elements.root;
 	      }
+	      var _this$tooltip7 = this.tooltip,
+	        tooltipClass = _this$tooltip7.tooltipClass,
+	        tooltipStyle = _this$tooltip7.tooltipStyle;
 	      this.elements.root = main_core.Dom.create('div', {
 	        props: {
-	          className: 'bx-messenger-videocall-top-button-frameless'
+	          className: "bx-messenger-videocall-top-button-frameless ".concat(tooltipClass)
+	        },
+	        attrs: {
+	          style: tooltipStyle
 	        },
 	        children: [main_core.Dom.create('div', {
 	          props: {
@@ -1718,9 +1786,7 @@ this.BX = this.BX || {};
 	          text: this.text
 	        })],
 	        events: {
-	          click: this.callbacks.onClick,
-	          mouseover: this.callbacks.onMouseOver,
-	          mouseout: this.callbacks.onMouseOut
+	          click: this.callbacks.onClick
 	        }
 	      });
 	      return this.elements.root;
@@ -1902,6 +1968,7 @@ this.BX = this.BX || {};
 	    this.userId = config.userId;
 	    this.recordState = config.recordState;
 	    this.updateViewInterval = null;
+	    this.tooltip = createCssTooltip(BX.prop.getObject(config, 'tooltip', {}));
 	    this.elements = {
 	      root: null,
 	      timeText: null,
@@ -1909,9 +1976,7 @@ this.BX = this.BX || {};
 	    };
 	    this.callbacks = {
 	      onPauseClick: BX.prop.getFunction(config, "onPauseClick", BX.DoNothing),
-	      onStopClick: BX.prop.getFunction(config, "onStopClick", BX.DoNothing),
-	      onMouseOver: BX.prop.getFunction(config, "onMouseOver", BX.DoNothing),
-	      onMouseOut: BX.prop.getFunction(config, "onMouseOut", BX.DoNothing)
+	      onStopClick: BX.prop.getFunction(config, "onStopClick", BX.DoNothing)
 	    };
 	  }
 	  babelHelpers.createClass(RecordStatusButton, [{
@@ -1920,9 +1985,13 @@ this.BX = this.BX || {};
 	      if (this.elements.root) {
 	        return this.elements.root;
 	      }
+	      var tooltipStyle = this.tooltip.tooltipStyle;
 	      this.elements.root = main_core.Dom.create("div", {
 	        props: {
-	          className: "bx-messenger-videocall-top-recordstatus record-status-" + this.recordState.state + " " + (this.recordState.userId == this.userId ? '' : 'record-user-viewer')
+	          className: "bx-messenger-videocall-top-recordstatus record-status-" + this.recordState.state + ' ' + (this.recordState.userId == this.userId ? '' : 'record-user-viewer')
+	        },
+	        attrs: {
+	          style: tooltipStyle
 	        },
 	        children: [main_core.Dom.create("div", {
 	          props: {
@@ -1964,11 +2033,7 @@ this.BX = this.BX || {};
 	              click: this.callbacks.onPauseClick
 	            }
 	          })]
-	        })],
-	        events: {
-	          mouseover: this.callbacks.onMouseOver,
-	          mouseout: this.callbacks.onMouseOut
-	        }
+	        })]
 	      });
 	      return this.elements.root;
 	    }
@@ -1992,7 +2057,14 @@ this.BX = this.BX || {};
 	        this.elements.timeText.innerText = Util.getRecordTimeText(this.recordState);
 	      }
 	      if (!this.elements.root.classList.contains("record-status-" + this.recordState.state)) {
-	        this.elements.root.className = "bx-messenger-videocall-top-recordstatus record-status-" + this.recordState.state + ' ' + (this.recordState.userId == this.userId ? '' : 'record-user-viewer');
+	        var _this$tooltip8 = this.tooltip,
+	          tooltipClass = _this$tooltip8.tooltipClass,
+	          hasTooltip = _this$tooltip8.hasTooltip,
+	          tooltipTextVarName = _this$tooltip8.tooltipTextVarName,
+	          getTooltipText = _this$tooltip8.getTooltipText;
+	        var tooltipText = getTooltipText();
+	        hasTooltip && tooltipText && this.elements.root.style.setProperty(tooltipTextVarName, "'".concat(tooltipText, "'"));
+	        this.elements.root.className = "".concat(tooltipText && tooltipClass, " bx-messenger-videocall-top-recordstatus record-status-") + this.recordState.state + ' ' + (this.recordState.userId == this.userId ? '' : 'record-user-viewer');
 	      }
 	    }
 	  }, {
@@ -2751,6 +2823,7 @@ this.BX = this.BX || {};
 	  JoinResponseError: 'JoinResponseError'
 	};
 	var ErrorPreventingReconnection = {
+	  CanNotCreateRoom: 1,
 	  InputError: 2,
 	  AccessDenied: 3,
 	  RoomNotFound: 5,
@@ -3375,7 +3448,7 @@ this.BX = this.BX || {};
 	      }
 	      return new Promise(function (resolve, reject) {
 	        var isErrorPreventingReconnection = function isErrorPreventingReconnection(code) {
-	          return code === ErrorPreventingReconnection.InputError || code === ErrorPreventingReconnection.AccessDenied || code === ErrorPreventingReconnection.RoomNotFound || code === ErrorPreventingReconnection.MalfunctioningSignaling;
+	          return code === ErrorPreventingReconnection.CanNotCreateRoom || code === ErrorPreventingReconnection.InputError || code === ErrorPreventingReconnection.AccessDenied || code === ErrorPreventingReconnection.RoomNotFound || code === ErrorPreventingReconnection.MalfunctioningSignaling;
 	        };
 	        request.then(function (data) {
 	          var _data$result, _data$result2;
@@ -4048,6 +4121,18 @@ this.BX = this.BX || {};
 	            reconnectionReasonInfo: "State of ".concat(subscriber ? 'recipient' : 'sender', " peer connection changed to ").concat(state)
 	          });
 	        }
+	      } else if (state === 'failed' || state === 'disconnected') {
+	        var logMessage = "State of ".concat(subscriber ? 'recipient' : 'sender', " PEER CONNECTION changed to ").concat(state);
+	        this.setLog(logMessage, LOG_LEVEL.WARNING);
+	      }
+	    }
+	  }, {
+	    key: "onIceConnectionStateChange",
+	    value: function onIceConnectionStateChange(subscriber) {
+	      var state = subscriber ? this.recipient.iceConnectionState : this.sender.iceConnectionState;
+	      if (state === 'failed' || state === 'disconnected') {
+	        var logMessage = "State of ".concat(subscriber ? 'recipient' : 'sender', " ICE connection changed to ").concat(state);
+	        this.setLog(logMessage, LOG_LEVEL.WARNING);
 	      }
 	    }
 	  }, {
@@ -5369,17 +5454,27 @@ this.BX = this.BX || {};
 	              babelHelpers.classPrivateFieldGet(this, _privateProperties).switchActiveAudioDevicePending = deviceId;
 	              return _context20.abrupt("return");
 	            case 4:
+	              error = null;
 	              fulfilled = false;
 	              this.setLog("Start switching an audio device to ".concat(deviceId), LOG_LEVEL.INFO);
 	              promise = new Promise( /*#__PURE__*/function () {
 	                var _ref8 = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$1().mark(function _callee19(resolve, reject) {
-	                  var prevStream, _babelHelpers$classPr18, prevTrack, prevTrackEnabledState, prevTrackId, audioTrack, sender, _deviceId;
+	                  var prevStream, _babelHelpers$classPr18, sender, prevTrack, prevTrackEnabledState, prevTrackId, audioTrack, _deviceId;
 	                  return _regeneratorRuntime$1().wrap(function _callee19$(_context19) {
 	                    while (1) switch (_context19.prev = _context19.next) {
 	                      case 0:
 	                        babelHelpers.classPrivateFieldGet(_this15, _privateProperties).audioDeviceId = deviceId;
 	                        prevStream = babelHelpers.classPrivateFieldGet(_this15, _privateProperties).microphoneStream;
 	                        _context19.prev = 2;
+	                        sender = _classPrivateMethodGet(_this15, _getSender, _getSender2).call(_this15, MediaStreamsKinds.Microphone);
+	                        if (sender) {
+	                          _context19.next = 8;
+	                          break;
+	                        }
+	                        _this15.setLog('Switching an audio device skipped - no sender', LOG_LEVEL.WARNING);
+	                        error = 'No sender for audio';
+	                        return _context19.abrupt("return");
+	                      case 8:
 	                        prevTrack = (_babelHelpers$classPr18 = babelHelpers.classPrivateFieldGet(_this15, _privateProperties).microphoneStream) === null || _babelHelpers$classPr18 === void 0 ? void 0 : _babelHelpers$classPr18.getAudioTracks()[0];
 	                        babelHelpers.classPrivateFieldGet(_this15, _privateProperties).microphoneStream = null;
 	                        prevTrackEnabledState = true;
@@ -5389,54 +5484,53 @@ this.BX = this.BX || {};
 	                          prevTrackId = prevTrack.id;
 	                          prevTrack.stop();
 	                        }
-	                        _context19.next = 10;
+	                        _context19.next = 15;
 	                        return _this15.getLocalAudio();
-	                      case 10:
+	                      case 15:
 	                        audioTrack = _context19.sent;
 	                        audioTrack.source = MediaStreamsKinds.Microphone;
 	                        audioTrack.enabled = prevTrackEnabledState;
-	                        sender = _classPrivateMethodGet(_this15, _getSender, _getSender2).call(_this15, MediaStreamsKinds.Microphone);
-	                        if (!(sender && (_this15.isAudioPublished() || sender.track.id !== audioTrack.id || audioTrack.id !== prevTrackId))) {
-	                          _context19.next = 18;
+	                        if (!(_this15.isAudioPublished() || sender.track.id !== audioTrack.id || audioTrack.id !== prevTrackId)) {
+	                          _context19.next = 22;
 	                          break;
 	                        }
 	                        _this15.setLog('Have sender for audio, start replacing track', LOG_LEVEL.INFO);
-	                        _context19.next = 18;
+	                        _context19.next = 22;
 	                        return sender.replaceTrack(audioTrack);
-	                      case 18:
+	                      case 22:
 	                        _this15.setLog('Switching an audio device succeeded', LOG_LEVEL.INFO);
-	                        _context19.next = 26;
+	                        _context19.next = 30;
 	                        break;
-	                      case 21:
-	                        _context19.prev = 21;
+	                      case 25:
+	                        _context19.prev = 25;
 	                        _context19.t0 = _context19["catch"](2);
 	                        error = _context19.t0;
 	                        _this15.setLog("Switching an audio device failed: ".concat(_context19.t0), LOG_LEVEL.ERROR);
 	                        if (!babelHelpers.classPrivateFieldGet(_this15, _privateProperties).microphoneStream) {
 	                          babelHelpers.classPrivateFieldGet(_this15, _privateProperties).microphoneStream = prevStream;
 	                        }
-	                      case 26:
-	                        _context19.prev = 26;
+	                      case 30:
+	                        _context19.prev = 30;
 	                        if (!babelHelpers.classPrivateFieldGet(_this15, _privateProperties).switchActiveAudioDevicePending) {
-	                          _context19.next = 33;
+	                          _context19.next = 37;
 	                          break;
 	                        }
 	                        _deviceId = babelHelpers.classPrivateFieldGet(_this15, _privateProperties).switchActiveAudioDevicePending;
 	                        babelHelpers.classPrivateFieldGet(_this15, _privateProperties).switchActiveAudioDevicePending = null;
 	                        resolve(_this15.switchActiveAudioDevice(_deviceId, true));
-	                        _context19.next = 36;
+	                        _context19.next = 40;
 	                        break;
-	                      case 33:
+	                      case 37:
 	                        fulfilled = true;
 	                        babelHelpers.classPrivateFieldGet(_this15, _privateProperties).switchActiveAudioDeviceInProgress = null;
 	                        return _context19.abrupt("return", error ? reject(error) : resolve());
-	                      case 36:
-	                        return _context19.finish(26);
-	                      case 37:
+	                      case 40:
+	                        return _context19.finish(30);
+	                      case 41:
 	                      case "end":
 	                        return _context19.stop();
 	                    }
-	                  }, _callee19, null, [[2, 21, 26, 37]]);
+	                  }, _callee19, null, [[2, 25, 30, 41]]);
 	                }));
 	                return function (_x15, _x16) {
 	                  return _ref8.apply(this, arguments);
@@ -5446,7 +5540,7 @@ this.BX = this.BX || {};
 	                babelHelpers.classPrivateFieldGet(this, _privateProperties).switchActiveAudioDeviceInProgress = promise;
 	              }
 	              return _context20.abrupt("return", promise);
-	            case 9:
+	            case 10:
 	            case "end":
 	              return _context20.stop();
 	          }
@@ -5474,6 +5568,7 @@ this.BX = this.BX || {};
 	              babelHelpers.classPrivateFieldGet(this, _privateProperties).switchActiveVideoDevicePending = deviceId;
 	              return _context22.abrupt("return");
 	            case 4:
+	              error = null;
 	              fulfilled = false;
 	              this.setLog("Start switching a video device to ".concat(deviceId), LOG_LEVEL.INFO);
 	              promise = new Promise( /*#__PURE__*/function () {
@@ -5486,56 +5581,64 @@ this.BX = this.BX || {};
 	                        prevStream = babelHelpers.classPrivateFieldGet(_this16, _privateProperties).cameraStream;
 	                        _context21.prev = 2;
 	                        sender = _classPrivateMethodGet(_this16, _getSender, _getSender2).call(_this16, MediaStreamsKinds.Camera);
-	                        if (!(sender && _this16.isVideoPublished())) {
-	                          _context21.next = 15;
+	                        if (sender) {
+	                          _context21.next = 8;
+	                          break;
+	                        }
+	                        _this16.setLog('Switching a video device skipped - no sender', LOG_LEVEL.WARNING);
+	                        error = 'No sender for video';
+	                        return _context21.abrupt("return");
+	                      case 8:
+	                        if (!_this16.isVideoPublished()) {
+	                          _context21.next = 19;
 	                          break;
 	                        }
 	                        _this16.setLog('Have sender for video, start replacing track', LOG_LEVEL.INFO);
 	                        (_babelHelpers$classPr19 = babelHelpers.classPrivateFieldGet(_this16, _privateProperties).cameraStream) === null || _babelHelpers$classPr19 === void 0 ? void 0 : _babelHelpers$classPr19.getVideoTracks()[0].stop();
 	                        babelHelpers.classPrivateFieldGet(_this16, _privateProperties).cameraStream = null;
-	                        _context21.next = 10;
+	                        _context21.next = 14;
 	                        return _this16.getLocalVideo();
-	                      case 10:
+	                      case 14:
 	                        videoTrack = _context21.sent;
 	                        videoTrack.source = MediaStreamsKinds.Camera;
-	                        _context21.next = 14;
+	                        _context21.next = 18;
 	                        return sender.replaceTrack(videoTrack);
-	                      case 14:
-	                        _classPrivateMethodGet(_this16, _updateVideoEncodings, _updateVideoEncodings2).call(_this16, sender, videoTrack);
-	                      case 15:
-	                        _this16.setLog('Switching a video device succeeded', LOG_LEVEL.INFO);
-	                        _context21.next = 23;
-	                        break;
 	                      case 18:
-	                        _context21.prev = 18;
+	                        _classPrivateMethodGet(_this16, _updateVideoEncodings, _updateVideoEncodings2).call(_this16, sender, videoTrack);
+	                      case 19:
+	                        _this16.setLog('Switching a video device succeeded', LOG_LEVEL.INFO);
+	                        _context21.next = 27;
+	                        break;
+	                      case 22:
+	                        _context21.prev = 22;
 	                        _context21.t0 = _context21["catch"](2);
 	                        error = _context21.t0;
 	                        _this16.setLog("Switching a video device failed: ".concat(_context21.t0), LOG_LEVEL.ERROR);
 	                        if (!babelHelpers.classPrivateFieldGet(_this16, _privateProperties).cameraStream) {
 	                          babelHelpers.classPrivateFieldGet(_this16, _privateProperties).cameraStream = prevStream;
 	                        }
-	                      case 23:
-	                        _context21.prev = 23;
+	                      case 27:
+	                        _context21.prev = 27;
 	                        if (!babelHelpers.classPrivateFieldGet(_this16, _privateProperties).switchActiveVideoDevicePending) {
-	                          _context21.next = 30;
+	                          _context21.next = 34;
 	                          break;
 	                        }
 	                        _deviceId2 = babelHelpers.classPrivateFieldGet(_this16, _privateProperties).switchActiveVideoDevicePending;
 	                        babelHelpers.classPrivateFieldGet(_this16, _privateProperties).switchActiveVideoDevicePending = null;
 	                        resolve(_this16.switchActiveVideoDevice(_deviceId2, true));
-	                        _context21.next = 33;
+	                        _context21.next = 37;
 	                        break;
-	                      case 30:
+	                      case 34:
 	                        fulfilled = true;
 	                        babelHelpers.classPrivateFieldGet(_this16, _privateProperties).switchActiveVideoDeviceInProgress = null;
 	                        return _context21.abrupt("return", error ? reject(error) : resolve());
-	                      case 33:
-	                        return _context21.finish(23);
-	                      case 34:
+	                      case 37:
+	                        return _context21.finish(27);
+	                      case 38:
 	                      case "end":
 	                        return _context21.stop();
 	                    }
-	                  }, _callee21, null, [[2, 18, 23, 34]]);
+	                  }, _callee21, null, [[2, 22, 27, 38]]);
 	                }));
 	                return function (_x19, _x20) {
 	                  return _ref9.apply(this, arguments);
@@ -5545,7 +5648,7 @@ this.BX = this.BX || {};
 	                babelHelpers.classPrivateFieldGet(this, _privateProperties).switchActiveVideoDeviceInProgress = promise;
 	              }
 	              return _context22.abrupt("return", promise);
-	            case 9:
+	            case 10:
 	            case "end":
 	              return _context22.stop();
 	          }
@@ -6730,6 +6833,9 @@ this.BX = this.BX || {};
 	  this.sender.addEventListener('connectionstatechange', function (e) {
 	    return _this30.onConnectionStateChange();
 	  });
+	  this.sender.addEventListener('iceconnectionstatechange', function (e) {
+	    return _this30.onIceConnectionStateChange();
+	  });
 	  this.recipient = new RTCPeerConnection(config);
 	  this.recipient.ontrack = function (event) {
 	    var _babelHelpers$classPr29;
@@ -6748,6 +6854,9 @@ this.BX = this.BX || {};
 	  });
 	  this.recipient.addEventListener('connectionstatechange', function (e) {
 	    return _this30.onConnectionStateChange(true);
+	  });
+	  this.recipient.addEventListener('iceconnectionstatechange', function (e) {
+	    return _this30.onIceConnectionStateChange(true);
 	  });
 	  var getStatsHandle = /*#__PURE__*/function () {
 	    var _ref10 = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$1().mark(function _callee23() {
@@ -8364,7 +8473,12 @@ this.BX = this.BX || {};
 	    key: "playAudio",
 	    value: function playAudio() {
 	      if (!this.audioStream) {
+	        var _this$userModel;
 	        this.elements.audio.srcObject = null;
+	        Util.sendLog({
+	          description: 'no audioStream to play',
+	          userModelId: (_this$userModel = this.userModel) === null || _this$userModel === void 0 ? void 0 : _this$userModel.id
+	        });
 	        return;
 	      }
 	      if (this.speakerId && main_core.Type.isFunction(this.elements.audio.setSinkId)) {
@@ -8640,14 +8754,6 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "hasVideo",
 	    value: function hasVideo() {
-	      if (this.userModel.state != UserState.Connected && (!!this._videoTrack || !!this._videoRenderer)) {
-	        console.warn("We have videoRenderer but UserState is not connected; State ".concat(this.userModel.state, "  UserId: ").concat(this.userModel.id));
-	        Util.sendLog({
-	          'description': 'We have videoRenderer but UserState is not connected',
-	          'state': this.userModel.state,
-	          'usrId': this.userModel.id
-	        });
-	      }
 	      return this.userModel.state == UserState.Connected && (!!this._videoTrack || !!this._videoRenderer);
 	    }
 	  }, {
@@ -8831,6 +8937,13 @@ this.BX = this.BX || {};
 	        return;
 	      }
 	      this._audioTrack = audioTrack;
+	      if (!this._audioTrack) {
+	        var _this$userModel2;
+	        Util.sendLog({
+	          description: 'trying to set not defined audioTrack!',
+	          userModelId: (_this$userModel2 = this.userModel) === null || _this$userModel2 === void 0 ? void 0 : _this$userModel2.id
+	        });
+	      }
 	      this._audioStream = this._audioTrack ? new MediaStream([this._audioTrack]) : null;
 	      this.playAudio();
 	    }
@@ -10914,7 +11027,7 @@ this.BX = this.BX || {};
 	              _context.prev = 4;
 	              _context.next = 7;
 	              return window.documentPictureInPicture.requestWindow({
-	                disallowReturnToOpener: false,
+	                disallowReturnToOpener: true,
 	                width: 370,
 	                height: 215,
 	                preferInitialWindowPlacement: false
@@ -11226,6 +11339,8 @@ this.BX = this.BX || {};
 	  return AhaMomentNotify;
 	}();
 
+	function ownKeys$1(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+	function _objectSpread$1(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$1(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$1(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	function _createForOfIteratorHelper$1(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$1(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 	function _unsupportedIterableToArray$1(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$1(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$1(o, minLen); }
 	function _arrayLikeToArray$1(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
@@ -11319,12 +11434,16 @@ this.BX = this.BX || {};
 	  hidden: 'hidden',
 	  visible: 'visible'
 	};
+	var _showErrorLayout = /*#__PURE__*/new WeakSet();
+	var _prepareErrorState = /*#__PURE__*/new WeakSet();
 	var _getViewVisibilityChange = /*#__PURE__*/new WeakSet();
 	var View = /*#__PURE__*/function () {
 	  function View(config) {
 	    var _this = this;
 	    babelHelpers.classCallCheck(this, View);
 	    _classPrivateMethodInitSpec$1(this, _getViewVisibilityChange);
+	    _classPrivateMethodInitSpec$1(this, _prepareErrorState);
+	    _classPrivateMethodInitSpec$1(this, _showErrorLayout);
 	    babelHelpers.defineProperty(this, "setCameraState", function (event) {
 	      if (_this.isCameraOn == event.data.isCameraOn) {
 	        return;
@@ -11809,11 +11928,8 @@ this.BX = this.BX || {};
 	      document.addEventListener('mousemove', this.onMouseMoveHandler);
 	      // TODO: Disable PiP on minimize
 	      // this.toggleVisibilityChangeDocumentEvent(true);
-	      if (main_core.Browser.isMac()) {
-	        this.keyModifier = '&#8984; + Shift';
-	      } else {
-	        this.keyModifier = 'Ctrl + Shift';
-	      }
+
+	      this.keyModifierForCss = main_core.Browser.isMac() ? '\\2318 + Shift' : 'Ctrl + Shift';
 	      this.container.appendChild(this.elements.audioContainer);
 	      this.container.appendChild(this.elements.screenAudioContainer);
 	      this.viewVisibility.startViewVisibilityChange();
@@ -13426,28 +13542,21 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "showMessage",
 	    value: function showMessage(params) {
-	      if (!this.elements.root) {
-	        this.render();
-	        this.container.appendChild(this.elements.root);
-	      }
-	      var statusNode = main_core.Dom.create("div", {
+	      var statusNode = main_core.Dom.create('div', {
 	        props: {
-	          className: "bx-messenger-videocall-user-status bx-messenger-videocall-user-status-wide"
+	          className: 'bx-messenger-videocall-user-status bx-messenger-videocall-user-status-wide'
 	        }
 	      });
 	      if (main_core.Type.isStringFilled(params.text)) {
-	        var textNode = main_core.Dom.create("div", {
+	        var textNode = main_core.Dom.create('div', {
 	          props: {
-	            className: "bx-messenger-videocall-status-text"
+	            className: 'bx-messenger-videocall-status-text'
 	          },
 	          text: params.text
 	        });
-	        statusNode.appendChild(textNode);
+	        main_core.Dom.append(textNode, statusNode);
 	      }
-	      if (this.elements.overlay.childElementCount) {
-	        main_core.Dom.clean(this.elements.overlay);
-	      }
-	      this.elements.overlay.appendChild(statusNode);
+	      _classPrivateMethodGet$1(this, _showErrorLayout, _showErrorLayout2).call(this, statusNode);
 	    }
 	  }, {
 	    key: "hideMessage",
@@ -13455,30 +13564,26 @@ this.BX = this.BX || {};
 	      this.elements.overlay.textContent = '';
 	    }
 	  }, {
-	    key: "renderErrorCallLayout",
-	    value: function renderErrorCallLayout() {
-	      if (!this.elements.root) {
-	        this.render();
-	        this.container.appendChild(this.elements.root);
-	      }
-	      var errorContainer = main_core.Dom.create("div", {
+	    key: "renderSelfTestCallLayout",
+	    value: function renderSelfTestCallLayout() {
+	      var errorContainer = main_core.Dom.create('div', {
 	        props: {
-	          className: "bx-messenger-videocall-error-container"
+	          className: 'bx-messenger-videocall-error-container'
 	        },
-	        children: [main_core.Dom.create("div", {
+	        children: [main_core.Dom.create('div', {
 	          props: {
-	            className: "bx-messenger-videocall-error-container-icon-alert"
+	            className: 'bx-messenger-videocall-error-container-icon-alert'
 	          }
-	        }), main_core.Dom.create("div", {
+	        }), main_core.Dom.create('div', {
 	          props: {
-	            className: "bx-messenger-videocall-error-message"
+	            className: 'bx-messenger-videocall-error-message'
 	          },
-	          text: BX.message("CALL_CONNECTED_ERROR")
-	        }), main_core.Dom.create("div", {
+	          text: main_core.Loc.getMessage('CALL_CONNECTED_ERROR')
+	        }), main_core.Dom.create('div', {
 	          props: {
-	            className: "bx-messenger-videocall-error-button-self-test"
+	            className: 'bx-messenger-videocall-error-button-self-test'
 	          },
-	          text: BX.message("CALL_RUN_SELF_TEST"),
+	          text: main_core.Loc.getMessage('CALL_RUN_SELF_TEST'),
 	          events: {
 	            click: function click() {
 	              Util.startSelfTest();
@@ -13486,37 +13591,32 @@ this.BX = this.BX || {};
 	          }
 	        })]
 	      });
-	      if (this.elements.overlay.childElementCount) {
-	        main_core.Dom.clean(this.elements.overlay);
-	      }
-	      this.elements.overlay.appendChild(errorContainer);
+	      _classPrivateMethodGet$1(this, _showErrorLayout, _showErrorLayout2).call(this, errorContainer);
 	    }
 	  }, {
 	    key: "renderReloadPageLayout",
 	    value: function renderReloadPageLayout() {
 	      var _this17 = this;
-	      if (!this.elements.root) {
-	        this.render();
-	        this.container.appendChild(this.elements.root);
-	      }
-	      var errorContainer = main_core.Dom.create("div", {
+	      var errorContainer = main_core.Dom.create('div', {
 	        props: {
 	          className: 'bx-messenger-videocall-error-container'
 	        },
 	        children: [main_core.Dom.create('div', {
 	          props: {
-	            className: "bx-messenger-videocall-error-container-icon-alert"
+	            className: 'bx-messenger-videocall-error-container-icon-alert'
 	          }
 	        }), main_core.Dom.create('div', {
 	          props: {
-	            className: "bx-messenger-videocall-error-message"
+	            className: 'bx-messenger-videocall-error-message'
 	          },
-	          html: BX.message('CALL_SECURITY_KEY_CHANGED').replace('[break]', '<br/>')
+	          html: main_core.Loc.getMessage('CALL_SECURITY_KEY_CHANGED', {
+	            '[break]': '<br/>'
+	          })
 	        }), main_core.Dom.create('div', {
 	          props: {
 	            className: 'bx-messenger-videocall-error-button-self-test'
 	          },
-	          text: BX.message('CALL_RELOAD_PAGE'),
+	          text: main_core.Loc.getMessage('CALL_RELOAD_PAGE'),
 	          events: {
 	            click: function click() {
 	              _this17.destroy();
@@ -13525,10 +13625,7 @@ this.BX = this.BX || {};
 	          }
 	        })]
 	      });
-	      if (this.elements.overlay.childElementCount) {
-	        main_core.Dom.clean(this.elements.overlay);
-	      }
-	      this.elements.overlay.appendChild(errorContainer);
+	      _classPrivateMethodGet$1(this, _showErrorLayout, _showErrorLayout2).call(this, errorContainer);
 	    }
 	  }, {
 	    key: "showFatalError",
@@ -13538,18 +13635,20 @@ this.BX = this.BX || {};
 	     * @param {string} [params.subText]
 	     */
 	    value: function showFatalError(params) {
-	      this.renderErrorCallLayout();
-	      this.setUiState(UiState.Error);
-	      // in some cases video elements may still be shown on the error screen, let's hide them
-	      this.elements.userList.container.style.display = 'none';
+	      this.showMessage(params);
+	      _classPrivateMethodGet$1(this, _prepareErrorState, _prepareErrorState2).call(this);
 	    }
 	  }, {
 	    key: "showSecurityKeyError",
 	    value: function showSecurityKeyError() {
 	      this.renderReloadPageLayout();
-	      this.setUiState(UiState.Error);
-	      // in some cases video elements may still be shown on the error screen, let's hide them
-	      this.elements.userList.container.style.display = 'none';
+	      _classPrivateMethodGet$1(this, _prepareErrorState, _prepareErrorState2).call(this);
+	    }
+	  }, {
+	    key: "showSelfTest",
+	    value: function showSelfTest() {
+	      this.renderSelfTestCallLayout();
+	      _classPrivateMethodGet$1(this, _prepareErrorState, _prepareErrorState2).call(this);
 	    }
 	  }, {
 	    key: "close",
@@ -14764,7 +14863,7 @@ this.BX = this.BX || {};
 	            if (this.buttons.microphone) {
 	              this.buttons.microphone.setBlocked(this.isButtonBlocked('microphone'));
 	            } else {
-	              this.buttons.microphone = new DeviceButton({
+	              this.buttons.microphone = new DeviceButton(_objectSpread$1({
 	                "class": 'microphone',
 	                text: BX.message('IM_M_CALL_BTN_MIC'),
 	                enabled: !Hardware.isMicrophoneMuted,
@@ -14775,17 +14874,17 @@ this.BX = this.BX || {};
 	                blocked: this.isButtonBlocked('microphone'),
 	                showLevel: true,
 	                sideIcon: this.getMicrophoneSideIcon(this.roomState),
-	                onClick: function onClick(e) {
-	                  _this30._onMicrophoneButtonClick(e);
-	                  _this30._showMicrophoneHint(e);
-	                },
+	                onClick: this._onMicrophoneButtonClick.bind(this),
 	                onArrowClick: this._onMicrophoneArrowClick.bind(this),
-	                onMouseOver: this._showMicrophoneHint.bind(this),
-	                onMouseOut: function onMouseOut() {
-	                  return _this30._destroyHotKeyHint();
-	                },
 	                onSideIconClick: this._onMicrophoneSideIconClick.bind(this)
-	              });
+	              }, Util.isDesktop() ? {
+	                tooltip: {
+	                  position: 'top',
+	                  getText: function getText() {
+	                    return Hardware.isMicrophoneMuted ? "".concat(BX.message('IM_SPACE_HOTKEY'), "\\A").concat(_this30.keyModifierForCss, " + A") : "".concat(_this30.keyModifierForCss, " + A");
+	                  }
+	                }
+	              } : {}));
 	            }
 	            if (rerender) {
 	              main_core.Dom.append(this.buttons.microphone.render(), left);
@@ -14795,7 +14894,7 @@ this.BX = this.BX || {};
 	            if (this.buttons.camera) {
 	              this.buttons.camera.setBlocked(this.isButtonBlocked('camera'));
 	            } else {
-	              this.buttons.camera = new DeviceButton({
+	              this.buttons.camera = new DeviceButton(_objectSpread$1({
 	                "class": 'camera',
 	                text: BX.message('IM_M_CALL_BTN_CAMERA'),
 	                enabled: Hardware.isCameraOn,
@@ -14803,14 +14902,15 @@ this.BX = this.BX || {};
 	                arrowEnabled: this.isMediaSelectionAllowed(),
 	                blocked: this.isButtonBlocked('camera'),
 	                onClick: this._onCameraButtonClick.bind(this),
-	                onArrowClick: this._onCameraArrowClick.bind(this),
-	                onMouseOver: function onMouseOver(e) {
-	                  _this30._showHotKeyHint(e.currentTarget.firstChild, 'camera', "".concat(_this30.keyModifier, " + V"));
-	                },
-	                onMouseOut: function onMouseOut() {
-	                  _this30._destroyHotKeyHint();
+	                onArrowClick: this._onCameraArrowClick.bind(this)
+	              }, Util.isDesktop() ? {
+	                tooltip: {
+	                  position: 'top',
+	                  getText: function getText() {
+	                    return "".concat(_this30.keyModifierForCss, " + V");
+	                  }
 	                }
-	              });
+	              } : {}));
 	            }
 	            if (rerender) {
 	              main_core.Dom.append(this.buttons.camera.render(), left);
@@ -14820,19 +14920,20 @@ this.BX = this.BX || {};
 	            if (this.buttons.screen) {
 	              this.buttons.screen.setBlocked(this.isButtonBlocked('screen'));
 	            } else {
-	              this.buttons.screen = new SimpleButton({
+	              this.buttons.screen = new SimpleButton(_objectSpread$1({
 	                "class": 'screen',
 	                backgroundClass: 'bx-messenger-videocall-panel-background-screen',
 	                text: BX.message('IM_M_CALL_BTN_SCREEN'),
 	                blocked: this.isButtonBlocked('screen'),
-	                onClick: this._onScreenButtonClick.bind(this),
-	                onMouseOver: function onMouseOver(e) {
-	                  _this30._showHotKeyHint(e.currentTarget, 'screen', "".concat(_this30.keyModifier, " + S"));
-	                },
-	                onMouseOut: function onMouseOut() {
-	                  _this30._destroyHotKeyHint();
+	                onClick: this._onScreenButtonClick.bind(this)
+	              }, Util.isDesktop() ? {
+	                tooltip: {
+	                  position: 'top',
+	                  getText: function getText() {
+	                    return "".concat(_this30.keyModifierForCss, " + S");
+	                  }
 	                }
-	              });
+	              } : {}));
 	            }
 	            if (rerender) {
 	              main_core.Dom.append(this.buttons.screen.render(), center);
@@ -14842,23 +14943,20 @@ this.BX = this.BX || {};
 	            if (this.buttons.record) {
 	              this.buttons.record.setBlocked(this.isButtonBlocked('record'));
 	            } else {
-	              this.buttons.record = new SimpleButton({
+	              this.buttons.record = new SimpleButton(_objectSpread$1({
 	                "class": 'record',
 	                backgroundClass: 'bx-messenger-videocall-panel-background-record',
 	                text: ['View.RecordState.Started', 'View.RecordState.Resumed'].includes(this.recordState.state) ? BX.message('CALL_M_BTN_TITLE_STOP_RECORD') : BX.message('IM_M_CALL_BTN_RECORD'),
 	                blocked: this.isButtonBlocked('record'),
-	                onClick: this._onRecordToggleClick.bind(this),
-	                onMouseOver: function onMouseOver(e) {
-	                  if (_this30.isRecordingHotKeySupported()) {
-	                    _this30._showHotKeyHint(e.currentTarget, 'record', "".concat(_this30.keyModifier, " + R"));
-	                  }
-	                },
-	                onMouseOut: function onMouseOut() {
-	                  if (_this30.isRecordingHotKeySupported()) {
-	                    _this30._destroyHotKeyHint();
+	                onClick: this._onRecordToggleClick.bind(this)
+	              }, Util.isDesktop() ? {
+	                tooltip: {
+	                  position: 'top',
+	                  getText: function getText() {
+	                    return "".concat(_this30.keyModifierForCss, " + R");
 	                  }
 	                }
-	              });
+	              } : {}));
 	            }
 	            if (rerender) {
 	              main_core.Dom.append(this.buttons.record.render(), center);
@@ -14885,39 +14983,21 @@ this.BX = this.BX || {};
 	              this.buttons.copilot.setBlocked(this.isButtonBlocked('copilot'));
 	              this.buttons.copilot.setActive(this.isCopilotActive);
 	            } else {
-	              this.buttons.copilot = new SimpleButton({
+	              this.buttons.copilot = new SimpleButton(_objectSpread$1({
 	                "class": 'copilot',
 	                backgroundClass: 'bx-messenger-videocall-panel-background-copilot',
 	                text: BX.message('CALL_BUTTON_COPILOT_TITLE'),
 	                blocked: this.isButtonBlocked('copilot'),
 	                onClick: this._onCopilotButtonClick.bind(this),
-	                isComingSoon: !this.isCopilotFeaturesEnabled,
-	                onMouseOver: function onMouseOver(e) {
-	                  _this30.hintManager.popupParameters.events = null;
-	                  _this30.hintManager.popupParameters.events = {
-	                    onShow: function onShow(event) {
-	                      var _e$currentTarget, _popup$getPopupContai;
-	                      var popup = event.getTarget();
-	                      var elementOffsetWidth = (_e$currentTarget = e.currentTarget) === null || _e$currentTarget === void 0 ? void 0 : _e$currentTarget.offsetWidth;
-	                      var popupOffsetWidth = (_popup$getPopupContai = popup.getPopupContainer()) === null || _popup$getPopupContai === void 0 ? void 0 : _popup$getPopupContai.offsetWidth;
-	                      if (!elementOffsetWidth || !popupOffsetWidth) {
-	                        return;
-	                      }
-	                      var offsetLeft = elementOffsetWidth / 2 - popupOffsetWidth / 2;
-	                      popup.setOffset({
-	                        offsetLeft: offsetLeft
-	                      });
-	                    }
-	                  };
-	                  var hintText = _this30.isCopilotActive ? main_core.Loc.getMessage('CALL_COPILOT_BUTTON_ON_HINT_V2') : main_core.Loc.getMessage('CALL_COPILOT_BUTTON_OFF_HINT');
-	                  _this30.hintManager.show(e.currentTarget, hintText);
-	                },
-	                onMouseOut: function onMouseOut(e) {
-	                  if (!e.relatedTarget || !e.currentTarget.contains(e.relatedTarget)) {
-	                    _this30.hintManager.hide();
+	                isComingSoon: !this.isCopilotFeaturesEnabled
+	              }, Util.isDesktop() ? {
+	                tooltip: {
+	                  position: 'top',
+	                  getText: function getText() {
+	                    return _this30.isCopilotActive ? main_core.Loc.getMessage('CALL_COPILOT_BUTTON_ON_HINT_V2') : main_core.Loc.getMessage('CALL_COPILOT_BUTTON_OFF_HINT');
 	                  }
 	                }
-	              });
+	              } : {}));
 	            }
 	            if (rerender) {
 	              main_core.Dom.append(this.buttons.copilot.render(), center);
@@ -14992,19 +15072,20 @@ this.BX = this.BX || {};
 	            if (this.buttons.chat) {
 	              this.buttons.chat.setBlocked(this.isButtonBlocked('chat'));
 	            } else {
-	              this.buttons.chat = new SimpleButton({
+	              this.buttons.chat = new SimpleButton(_objectSpread$1({
 	                "class": 'chat',
 	                backgroundClass: 'bx-messenger-videocall-panel-background-chat',
 	                text: BX.message('IM_M_CALL_BTN_CHAT'),
 	                blocked: this.isButtonBlocked('chat'),
-	                onClick: this._onChatButtonClick.bind(this),
-	                onMouseOver: function onMouseOver(e) {
-	                  _this30._showHotKeyHint(e.currentTarget, 'chat', "".concat(_this30.keyModifier, " + C"));
-	                },
-	                onMouseOut: function onMouseOut() {
-	                  _this30._destroyHotKeyHint();
+	                onClick: this._onChatButtonClick.bind(this)
+	              }, Util.isDesktop() ? {
+	                tooltip: {
+	                  position: 'top',
+	                  getText: function getText() {
+	                    return "".concat(_this30.keyModifierForCss, " + C");
+	                  }
 	                }
-	              });
+	              } : {}));
 	            }
 	            if (rerender) {
 	              main_core.Dom.append(this.buttons.chat.render(), center);
@@ -15012,19 +15093,20 @@ this.BX = this.BX || {};
 	            break;
 	          case 'floorRequest':
 	            if (!this.buttons.floorRequest) {
-	              this.buttons.floorRequest = new SimpleButton({
+	              this.buttons.floorRequest = new SimpleButton(_objectSpread$1({
 	                "class": 'floor-request',
 	                backgroundClass: 'bx-messenger-videocall-panel-background-floor-request',
 	                text: BX.message('IM_M_CALL_BTN_WANT_TO_SAY'),
 	                blocked: this.isButtonBlocked('floorRequest'),
-	                onClick: this._onFloorRequestButtonClick.bind(this),
-	                onMouseOver: function onMouseOver(e) {
-	                  _this30._showHotKeyHint(e.currentTarget, 'floorRequest', "".concat(_this30.keyModifier, " + H"));
-	                },
-	                onMouseOut: function onMouseOut() {
-	                  return _this30._destroyHotKeyHint();
+	                onClick: this._onFloorRequestButtonClick.bind(this)
+	              }, Util.isDesktop() ? {
+	                tooltip: {
+	                  position: 'top',
+	                  getText: function getText() {
+	                    return "".concat(_this30.keyModifierForCss, " + H");
+	                  }
 	                }
-	              });
+	              } : {}));
 	            } else {
 	              this.buttons.floorRequest.setBlocked(this.isButtonBlocked('floorRequest'));
 	            }
@@ -15087,12 +15169,12 @@ this.BX = this.BX || {};
 	                iconClass: 'protected',
 	                textClass: 'protected',
 	                text: BX.message('IM_M_CALL_PROTECTED').toLowerCase(),
-	                onMouseOver: function onMouseOver(e) {
-	                  _this31.hintManager.popupParameters.events = null;
-	                  _this31.hintManager.show(e.currentTarget, BX.message('IM_M_CALL_PROTECTED_HINT'));
-	                },
-	                onMouseOut: function onMouseOut() {
-	                  _this31.hintManager.hide();
+	                tooltip: {
+	                  width: '384px',
+	                  position: 'bottom',
+	                  getText: function getText() {
+	                    return BX.message('IM_M_CALL_PROTECTED_HINT');
+	                  }
 	                }
 	              });
 	            }
@@ -15109,8 +15191,16 @@ this.BX = this.BX || {};
 	                recordState: this.recordState,
 	                onPauseClick: this._onRecordPauseClick.bind(this),
 	                onStopClick: this._onRecordStopClick.bind(this),
-	                onMouseOver: this._onRecordMouseOver.bind(this),
-	                onMouseOut: this._onRecordMouseOut.bind(this)
+	                tooltip: {
+	                  position: 'bottom',
+	                  getText: function getText() {
+	                    if (_this31.recordState.userId == _this31.userId || !_this31.userData[_this31.recordState.userId]) {
+	                      return '';
+	                    }
+	                    var recordingUserName = main_core.Text.encode(_this31.userData[_this31.recordState.userId].name);
+	                    return BX.message('IM_M_CALL_RECORD_HINT').replace('#USER_NAME#', recordingUserName);
+	                  }
+	                }
 	              });
 	            }
 	            if (rerender) {
@@ -15124,19 +15214,18 @@ this.BX = this.BX || {};
 	                text: this.layout === Layouts.Grid ? BX.message('IM_M_CALL_SPEAKER_MODE') : BX.message('IM_M_CALL_GRID_MODE')
 	              });
 	            } else {
-	              this.buttons.grid = new TopButton({
+	              this.buttons.grid = new TopButton(_objectSpread$1({
 	                iconClass: this.layout === Layouts.Grid ? 'speaker' : 'grid',
 	                text: this.layout === Layouts.Grid ? BX.message('IM_M_CALL_SPEAKER_MODE') : BX.message('IM_M_CALL_GRID_MODE'),
-	                onClick: this._onGridButtonClick.bind(this),
-	                onMouseOver: function onMouseOver(e) {
-	                  _this31._showHotKeyHint(e.currentTarget, 'grid', "".concat(_this31.keyModifier, " + W"), {
-	                    position: 'bottom'
-	                  });
-	                },
-	                onMouseOut: function onMouseOut() {
-	                  _this31._destroyHotKeyHint();
+	                onClick: this._onGridButtonClick.bind(this)
+	              }, Util.isDesktop() ? {
+	                tooltip: {
+	                  position: 'bottom',
+	                  getText: function getText() {
+	                    return "".concat(_this31.keyModifierForCss, " + W");
+	                  }
 	                }
-	              });
+	              } : {}));
 	            }
 	            if (rerender) {
 	              main_core.Dom.append(this.buttons.grid.render(), this.elements.topPanel);
@@ -15452,8 +15541,8 @@ this.BX = this.BX || {};
 	    key: "toggleStatePictureInPictureCallWindow",
 	    value: function toggleStatePictureInPictureCallWindow(isActive) {
 	      var _this34 = this;
-	      var isPiPAvailable = Util.isPictureInPictureFeatureEnabled() && PictureInPictureWindow.isAvailable;
-	      if (isActive && !this.pictureInPictureCallWindow && isPiPAvailable) {
+	      var isPiPAvailable = PictureInPictureWindow.isAvailable;
+	      if (isActive && !this.pictureInPictureCallWindow && isPiPAvailable && Util.isPictureInPictureFeatureEnabled()) {
 	        this.pictureInPictureCallWindow = new PictureInPictureWindow({
 	          currentUser: this.getPictureInPictureCallWindowUser(),
 	          isCopilotFeaturesEnabled: this.isCopilotFeaturesEnabled,
@@ -15954,41 +16043,6 @@ this.BX = this.BX || {};
 	      }
 	    }
 	  }, {
-	    key: "_showHotKeyHint",
-	    value: function _showHotKeyHint(targetNode, name, text, options) {
-	      var existingHint = BX.PopupWindowManager.getPopupById('ui-hint-popup');
-	      if (existingHint) {
-	        existingHint.destroy();
-	      }
-	      if (!this.isHotKeyActive(name)) {
-	        return;
-	      }
-	      options = options || {};
-	      this.hintManager.popupParameters.events = {
-	        onShow: function onShow(event) {
-	          var _options;
-	          var popup = event.getTarget();
-	          var offsetLeft = targetNode.offsetWidth / 2 - popup.getPopupContainer().offsetWidth / 2 + 23;
-	          if ((_options = options) !== null && _options !== void 0 && _options.additionalOffsetLeft) {
-	            offsetLeft += options.additionalOffsetLeft;
-	          }
-	          // hack to get hint sizes
-	          popup.getPopupContainer().style.display = 'block';
-	          if (options.position === 'bottom') {
-	            popup.setOffset({
-	              offsetTop: 10,
-	              offsetLeft: offsetLeft
-	            });
-	          } else {
-	            popup.setOffset({
-	              offsetLeft: offsetLeft
-	            });
-	          }
-	        }
-	      };
-	      this.hintManager.show(targetNode, text);
-	    }
-	  }, {
 	    key: "_destroyHotKeyHint",
 	    value: function _destroyHotKeyHint() {
 	      if (!Util.isDesktop()) {
@@ -15999,26 +16053,9 @@ this.BX = this.BX || {};
 	      }
 
 	      // we need to destroy, not .hide for onShow event handler (see method _showHotKeyHint).
+	      this.hintManager.hide();
 	      this.hintManager.popup.destroy();
 	      this.hintManager.popup = null;
-	    }
-	  }, {
-	    key: "_showMicrophoneHint",
-	    value: function _showMicrophoneHint(e) {
-	      this.hintManager.hide();
-	      if (!this.isHotKeyActive("microphone")) {
-	        return;
-	      }
-	      var micHotkeys = '';
-	      var additionalOffsetLeft = 0;
-	      if (Hardware.isMicrophoneMuted && this.isHotKeyActive("microphoneSpace")) {
-	        micHotkeys = BX.message("IM_SPACE_HOTKEY") + '<br>';
-	        additionalOffsetLeft = 20;
-	      }
-	      micHotkeys += this.keyModifier + ' + A';
-	      this._showHotKeyHint(e.currentTarget.firstChild, "microphone", micHotkeys, {
-	        additionalOffsetLeft: additionalOffsetLeft
-	      });
 	    }
 	  }, {
 	    key: "_onKeyDown",
@@ -16255,20 +16292,6 @@ this.BX = this.BX || {};
 	        recordState: this.recordState.state,
 	        node: e.currentTarget
 	      });
-	    }
-	  }, {
-	    key: "_onRecordMouseOver",
-	    value: function _onRecordMouseOver(e) {
-	      if (this.recordState.userId == this.userId || !this.userData[this.recordState.userId]) {
-	        return;
-	      }
-	      var recordingUserName = main_core.Text.encode(this.userData[this.recordState.userId].name);
-	      this.hintManager.show(e.currentTarget, BX.message("IM_M_CALL_RECORD_HINT").replace("#USER_NAME#", recordingUserName));
-	    }
-	  }, {
-	    key: "_onRecordMouseOut",
-	    value: function _onRecordMouseOut() {
-	      this.hintManager.hide();
 	    }
 	  }, {
 	    key: "_onDocumentButtonClick",
@@ -16765,9 +16788,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "releaseLocalMedia",
 	    value: function releaseLocalMedia() {
-	      if (!this.hasCurrentUserScreenSharing()) {
-	        this.localUser.releaseStream();
-	      }
+	      this.localUser.releaseStream();
 	      if (this.centralUser.id == this.userId) {
 	        this.centralUser.releaseStream();
 	      }
@@ -16875,6 +16896,21 @@ this.BX = this.BX || {};
 	  }]);
 	  return View;
 	}();
+	function _showErrorLayout2(content) {
+	  if (!this.elements.root) {
+	    this.render();
+	    main_core.Dom.append(this.elements.root, this.container);
+	  }
+	  if (this.elements.overlay.childElementCount) {
+	    main_core.Dom.clean(this.elements.overlay);
+	  }
+	  main_core.Dom.append(content, this.elements.overlay);
+	}
+	function _prepareErrorState2() {
+	  this.setUiState(UiState.Error);
+	  // in some cases video elements may still be shown on the error screen, let's hide them
+	  main_core.Dom.style(this.elements.userList.container, 'display', 'none');
+	}
 	function _getViewVisibilityChange2() {
 	  var listners = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
 	  var handler = function handler(event) {
@@ -18355,6 +18391,11 @@ this.BX = this.BX || {};
 	    key: "provider",
 	    get: function get() {
 	      return Provider.Plain;
+	    }
+	  }, {
+	    key: "hasConnectionData",
+	    get: function get() {
+	      return Boolean(this.connectionData.mediaServerUrl && this.connectionData.roomData);
 	    }
 	  }]);
 	  return ServerPlainCall;
@@ -19988,8 +20029,8 @@ this.BX = this.BX || {};
 	}
 
 	var _MediaKinds;
-	function ownKeys$1(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-	function _objectSpread$1(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$1(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$1(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
+	function ownKeys$2(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+	function _objectSpread$2(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$2(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$2(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	function _classPrivateFieldInitSpec$2(obj, privateMap, value) { _checkPrivateRedeclaration$3(obj, privateMap); privateMap.set(obj, value); }
 	function _classPrivateMethodInitSpec$3(obj, privateSet) { _checkPrivateRedeclaration$3(obj, privateSet); privateSet.add(obj); }
 	function _checkPrivateRedeclaration$3(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
@@ -20304,11 +20345,11 @@ this.BX = this.BX || {};
 	    });
 	    _classPrivateFieldInitSpec$2(babelHelpers.assertThisInitialized(_this), _onLocalMediaRendererMuteToggled, {
 	      writable: true,
-	      value: function value(e) {
-	        if (e === MediaStreamsKinds.Microphone) {
+	      value: function value(source, muted) {
+	        if (source === MediaStreamsKinds.Microphone) {
 	          _classPrivateMethodGet$3(babelHelpers.assertThisInitialized(_this), _setPublishingState, _setPublishingState2).call(babelHelpers.assertThisInitialized(_this), MediaStreamsKinds.Microphone, false);
-	          _this.signaling.sendMicrophoneState(false);
-	        } else if (e === MediaStreamsKinds.Camera) {
+	          _this.signaling.sendMicrophoneState(!muted);
+	        } else if (source === MediaStreamsKinds.Camera) {
 	          _classPrivateMethodGet$3(babelHelpers.assertThisInitialized(_this), _setPublishingState, _setPublishingState2).call(babelHelpers.assertThisInitialized(_this), MediaStreamsKinds.Camera, false);
 	        }
 	      }
@@ -20697,12 +20738,12 @@ this.BX = this.BX || {};
 	        var headers = evt.headers,
 	          leaveInformation = evt.leaveInformation;
 	        if (headers) {
-	          logData = _objectSpread$1(_objectSpread$1({}, logData), {}, {
+	          logData = _objectSpread$2(_objectSpread$2({}, logData), {}, {
 	            headers: headers
 	          });
 	        }
 	        if (leaveInformation) {
-	          logData = _objectSpread$1(_objectSpread$1({}, logData), {}, {
+	          logData = _objectSpread$2(_objectSpread$2({}, logData), {}, {
 	            leaveInformation: leaveInformation
 	          });
 	        }
@@ -20917,7 +20958,7 @@ this.BX = this.BX || {};
 	          if (peer) {
 	            peer.setReady(false);
 	          }
-	        } else {
+	        } else if (eventName === clientEvents$1.microphoneState) ; else {
 	          _this.log("Unknown scenario event " + eventName);
 	        }
 	      }
@@ -21564,6 +21605,7 @@ this.BX = this.BX || {};
 	      this.connectionData = {};
 	      this.screenShared = false;
 	      this.localVideoShown = false;
+	      this.floorRequestActive = false;
 	    }
 	  }, {
 	    key: "attachToConference",
@@ -21822,6 +21864,7 @@ this.BX = this.BX || {};
 	      this.ready = false;
 	      this.joinedAsViewer = false;
 	      this.localVideoShown = false;
+	      this.floorRequestActive = false;
 	      if (this.localVAD) {
 	        this.localVAD.destroy();
 	        this.localVAD = null;
@@ -21931,6 +21974,11 @@ this.BX = this.BX || {};
 	        this.runCallback(CallEvent.onReconnected);
 	      }
 	      this._reconnectionEventCount = newValue;
+	    }
+	  }, {
+	    key: "hasConnectionData",
+	    get: function get() {
+	      return Boolean(this.connectionData.mediaServerUrl && this.connectionData.roomData);
 	    }
 	  }]);
 	  return BitrixCall;
@@ -22415,9 +22463,108 @@ this.BX = this.BX || {};
 	  return CallStub;
 	}();
 
-	function ownKeys$2(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-	function _objectSpread$2(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$2(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$2(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	function _regeneratorRuntime$3() { /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ _regeneratorRuntime$3 = function _regeneratorRuntime() { return exports; }; var exports = {}, Op = Object.prototype, hasOwn = Op.hasOwnProperty, defineProperty = Object.defineProperty || function (obj, key, desc) { obj[key] = desc.value; }, $Symbol = "function" == typeof Symbol ? Symbol : {}, iteratorSymbol = $Symbol.iterator || "@@iterator", asyncIteratorSymbol = $Symbol.asyncIterator || "@@asyncIterator", toStringTagSymbol = $Symbol.toStringTag || "@@toStringTag"; function define(obj, key, value) { return Object.defineProperty(obj, key, { value: value, enumerable: !0, configurable: !0, writable: !0 }), obj[key]; } try { define({}, ""); } catch (err) { define = function define(obj, key, value) { return obj[key] = value; }; } function wrap(innerFn, outerFn, self, tryLocsList) { var protoGenerator = outerFn && outerFn.prototype instanceof Generator ? outerFn : Generator, generator = Object.create(protoGenerator.prototype), context = new Context(tryLocsList || []); return defineProperty(generator, "_invoke", { value: makeInvokeMethod(innerFn, self, context) }), generator; } function tryCatch(fn, obj, arg) { try { return { type: "normal", arg: fn.call(obj, arg) }; } catch (err) { return { type: "throw", arg: err }; } } exports.wrap = wrap; var ContinueSentinel = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var IteratorPrototype = {}; define(IteratorPrototype, iteratorSymbol, function () { return this; }); var getProto = Object.getPrototypeOf, NativeIteratorPrototype = getProto && getProto(getProto(values([]))); NativeIteratorPrototype && NativeIteratorPrototype !== Op && hasOwn.call(NativeIteratorPrototype, iteratorSymbol) && (IteratorPrototype = NativeIteratorPrototype); var Gp = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(IteratorPrototype); function defineIteratorMethods(prototype) { ["next", "throw", "return"].forEach(function (method) { define(prototype, method, function (arg) { return this._invoke(method, arg); }); }); } function AsyncIterator(generator, PromiseImpl) { function invoke(method, arg, resolve, reject) { var record = tryCatch(generator[method], generator, arg); if ("throw" !== record.type) { var result = record.arg, value = result.value; return value && "object" == babelHelpers["typeof"](value) && hasOwn.call(value, "__await") ? PromiseImpl.resolve(value.__await).then(function (value) { invoke("next", value, resolve, reject); }, function (err) { invoke("throw", err, resolve, reject); }) : PromiseImpl.resolve(value).then(function (unwrapped) { result.value = unwrapped, resolve(result); }, function (error) { return invoke("throw", error, resolve, reject); }); } reject(record.arg); } var previousPromise; defineProperty(this, "_invoke", { value: function value(method, arg) { function callInvokeWithMethodAndArg() { return new PromiseImpl(function (resolve, reject) { invoke(method, arg, resolve, reject); }); } return previousPromise = previousPromise ? previousPromise.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); } }); } function makeInvokeMethod(innerFn, self, context) { var state = "suspendedStart"; return function (method, arg) { if ("executing" === state) throw new Error("Generator is already running"); if ("completed" === state) { if ("throw" === method) throw arg; return doneResult(); } for (context.method = method, context.arg = arg;;) { var delegate = context.delegate; if (delegate) { var delegateResult = maybeInvokeDelegate(delegate, context); if (delegateResult) { if (delegateResult === ContinueSentinel) continue; return delegateResult; } } if ("next" === context.method) context.sent = context._sent = context.arg;else if ("throw" === context.method) { if ("suspendedStart" === state) throw state = "completed", context.arg; context.dispatchException(context.arg); } else "return" === context.method && context.abrupt("return", context.arg); state = "executing"; var record = tryCatch(innerFn, self, context); if ("normal" === record.type) { if (state = context.done ? "completed" : "suspendedYield", record.arg === ContinueSentinel) continue; return { value: record.arg, done: context.done }; } "throw" === record.type && (state = "completed", context.method = "throw", context.arg = record.arg); } }; } function maybeInvokeDelegate(delegate, context) { var methodName = context.method, method = delegate.iterator[methodName]; if (undefined === method) return context.delegate = null, "throw" === methodName && delegate.iterator["return"] && (context.method = "return", context.arg = undefined, maybeInvokeDelegate(delegate, context), "throw" === context.method) || "return" !== methodName && (context.method = "throw", context.arg = new TypeError("The iterator does not provide a '" + methodName + "' method")), ContinueSentinel; var record = tryCatch(method, delegate.iterator, context.arg); if ("throw" === record.type) return context.method = "throw", context.arg = record.arg, context.delegate = null, ContinueSentinel; var info = record.arg; return info ? info.done ? (context[delegate.resultName] = info.value, context.next = delegate.nextLoc, "return" !== context.method && (context.method = "next", context.arg = undefined), context.delegate = null, ContinueSentinel) : info : (context.method = "throw", context.arg = new TypeError("iterator result is not an object"), context.delegate = null, ContinueSentinel); } function pushTryEntry(locs) { var entry = { tryLoc: locs[0] }; 1 in locs && (entry.catchLoc = locs[1]), 2 in locs && (entry.finallyLoc = locs[2], entry.afterLoc = locs[3]), this.tryEntries.push(entry); } function resetTryEntry(entry) { var record = entry.completion || {}; record.type = "normal", delete record.arg, entry.completion = record; } function Context(tryLocsList) { this.tryEntries = [{ tryLoc: "root" }], tryLocsList.forEach(pushTryEntry, this), this.reset(!0); } function values(iterable) { if (iterable) { var iteratorMethod = iterable[iteratorSymbol]; if (iteratorMethod) return iteratorMethod.call(iterable); if ("function" == typeof iterable.next) return iterable; if (!isNaN(iterable.length)) { var i = -1, next = function next() { for (; ++i < iterable.length;) if (hasOwn.call(iterable, i)) return next.value = iterable[i], next.done = !1, next; return next.value = undefined, next.done = !0, next; }; return next.next = next; } } return { next: doneResult }; } function doneResult() { return { value: undefined, done: !0 }; } return GeneratorFunction.prototype = GeneratorFunctionPrototype, defineProperty(Gp, "constructor", { value: GeneratorFunctionPrototype, configurable: !0 }), defineProperty(GeneratorFunctionPrototype, "constructor", { value: GeneratorFunction, configurable: !0 }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, toStringTagSymbol, "GeneratorFunction"), exports.isGeneratorFunction = function (genFun) { var ctor = "function" == typeof genFun && genFun.constructor; return !!ctor && (ctor === GeneratorFunction || "GeneratorFunction" === (ctor.displayName || ctor.name)); }, exports.mark = function (genFun) { return Object.setPrototypeOf ? Object.setPrototypeOf(genFun, GeneratorFunctionPrototype) : (genFun.__proto__ = GeneratorFunctionPrototype, define(genFun, toStringTagSymbol, "GeneratorFunction")), genFun.prototype = Object.create(Gp), genFun; }, exports.awrap = function (arg) { return { __await: arg }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, asyncIteratorSymbol, function () { return this; }), exports.AsyncIterator = AsyncIterator, exports.async = function (innerFn, outerFn, self, tryLocsList, PromiseImpl) { void 0 === PromiseImpl && (PromiseImpl = Promise); var iter = new AsyncIterator(wrap(innerFn, outerFn, self, tryLocsList), PromiseImpl); return exports.isGeneratorFunction(outerFn) ? iter : iter.next().then(function (result) { return result.done ? result.value : iter.next(); }); }, defineIteratorMethods(Gp), define(Gp, toStringTagSymbol, "Generator"), define(Gp, iteratorSymbol, function () { return this; }), define(Gp, "toString", function () { return "[object Generator]"; }), exports.keys = function (val) { var object = Object(val), keys = []; for (var key in object) keys.push(key); return keys.reverse(), function next() { for (; keys.length;) { var key = keys.pop(); if (key in object) return next.value = key, next.done = !1, next; } return next.done = !0, next; }; }, exports.values = values, Context.prototype = { constructor: Context, reset: function reset(skipTempReset) { if (this.prev = 0, this.next = 0, this.sent = this._sent = undefined, this.done = !1, this.delegate = null, this.method = "next", this.arg = undefined, this.tryEntries.forEach(resetTryEntry), !skipTempReset) for (var name in this) "t" === name.charAt(0) && hasOwn.call(this, name) && !isNaN(+name.slice(1)) && (this[name] = undefined); }, stop: function stop() { this.done = !0; var rootRecord = this.tryEntries[0].completion; if ("throw" === rootRecord.type) throw rootRecord.arg; return this.rval; }, dispatchException: function dispatchException(exception) { if (this.done) throw exception; var context = this; function handle(loc, caught) { return record.type = "throw", record.arg = exception, context.next = loc, caught && (context.method = "next", context.arg = undefined), !!caught; } for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i], record = entry.completion; if ("root" === entry.tryLoc) return handle("end"); if (entry.tryLoc <= this.prev) { var hasCatch = hasOwn.call(entry, "catchLoc"), hasFinally = hasOwn.call(entry, "finallyLoc"); if (hasCatch && hasFinally) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } else if (hasCatch) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); } else { if (!hasFinally) throw new Error("try statement without catch or finally"); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } } } }, abrupt: function abrupt(type, arg) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc <= this.prev && hasOwn.call(entry, "finallyLoc") && this.prev < entry.finallyLoc) { var finallyEntry = entry; break; } } finallyEntry && ("break" === type || "continue" === type) && finallyEntry.tryLoc <= arg && arg <= finallyEntry.finallyLoc && (finallyEntry = null); var record = finallyEntry ? finallyEntry.completion : {}; return record.type = type, record.arg = arg, finallyEntry ? (this.method = "next", this.next = finallyEntry.finallyLoc, ContinueSentinel) : this.complete(record); }, complete: function complete(record, afterLoc) { if ("throw" === record.type) throw record.arg; return "break" === record.type || "continue" === record.type ? this.next = record.arg : "return" === record.type ? (this.rval = this.arg = record.arg, this.method = "return", this.next = "end") : "normal" === record.type && afterLoc && (this.next = afterLoc), ContinueSentinel; }, finish: function finish(finallyLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.finallyLoc === finallyLoc) return this.complete(entry.completion, entry.afterLoc), resetTryEntry(entry), ContinueSentinel; } }, "catch": function _catch(tryLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc === tryLoc) { var record = entry.completion; if ("throw" === record.type) { var thrown = record.arg; resetTryEntry(entry); } return thrown; } } throw new Error("illegal catch attempt"); }, delegateYield: function delegateYield(iterable, resultName, nextLoc) { return this.delegate = { iterator: values(iterable), resultName: resultName, nextLoc: nextLoc }, "next" === this.method && (this.arg = undefined), ContinueSentinel; } }, exports; }
+	var CallMultiChannel = /*#__PURE__*/function () {
+	  function CallMultiChannel(name) {
+	    var _this = this;
+	    babelHelpers.classCallCheck(this, CallMultiChannel);
+	    this.channel = new BroadcastChannel(name);
+	    this.senderId = Math.random().toString(36).slice(2);
+	    this.requests = new Map();
+	    this.channel.onmessage = function (event) {
+	      var _event$data = event.data,
+	        type = _event$data.type,
+	        requestId = _event$data.requestId,
+	        senderId = _event$data.senderId,
+	        payload = _event$data.payload;
+	      if (type === 'response' && _this.requests.has(requestId)) {
+	        var req = _this.requests.get(requestId);
+	        if (!req.responders.has(senderId)) {
+	          req.responders.add(senderId);
+	          req.responses.push(payload);
+	          if (Date.now() > req.deadline) {
+	            req.resolve(req.responses);
+	            _this.requests["delete"](requestId);
+	          }
+	        }
+	      }
+	      if (type === 'request' && senderId !== _this.senderId) {
+	        var result = _this.handle ? _this.handle(payload) : undefined;
+	        if (result !== undefined) {
+	          _this.channel.postMessage({
+	            type: 'response',
+	            requestId: requestId,
+	            senderId: _this.senderId,
+	            payload: result
+	          });
+	        }
+	      }
+	    };
+	  }
+	  babelHelpers.createClass(CallMultiChannel, [{
+	    key: "executer",
+	    value: function executer(handler) {
+	      this.handle = handler;
+	    }
+	  }, {
+	    key: "broadcastRequest",
+	    value: function () {
+	      var _broadcastRequest = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$3().mark(function _callee(payload) {
+	        var _this2 = this;
+	        var _ref,
+	          _ref$timeout,
+	          timeout,
+	          requestId,
+	          _args = arguments;
+	        return _regeneratorRuntime$3().wrap(function _callee$(_context) {
+	          while (1) switch (_context.prev = _context.next) {
+	            case 0:
+	              _ref = _args.length > 1 && _args[1] !== undefined ? _args[1] : {}, _ref$timeout = _ref.timeout, timeout = _ref$timeout === void 0 ? 100 : _ref$timeout;
+	              requestId = Math.random().toString(36).slice(2);
+	              return _context.abrupt("return", new Promise(function (resolve) {
+	                _this2.requests.set(requestId, {
+	                  resolve: resolve,
+	                  responses: [],
+	                  responders: new Set(),
+	                  deadline: Date.now() + timeout
+	                });
+	                _this2.channel.postMessage({
+	                  type: 'request',
+	                  requestId: requestId,
+	                  senderId: _this2.senderId,
+	                  payload: payload
+	                });
+	                setTimeout(function () {
+	                  if (_this2.requests.has(requestId)) {
+	                    resolve(_this2.requests.get(requestId).responses);
+	                    _this2.requests["delete"](requestId);
+	                  }
+	                }, timeout);
+	              }));
+	            case 3:
+	            case "end":
+	              return _context.stop();
+	          }
+	        }, _callee);
+	      }));
+	      function broadcastRequest(_x) {
+	        return _broadcastRequest.apply(this, arguments);
+	      }
+	      return broadcastRequest;
+	    }()
+	  }, {
+	    key: "destroy",
+	    value: function destroy() {
+	      this.channel.close();
+	      this.requests.clear();
+	    }
+	  }]);
+	  return CallMultiChannel;
+	}();
+
+	function ownKeys$3(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+	function _objectSpread$3(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$3(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$3(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
+	function _regeneratorRuntime$4() { /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ _regeneratorRuntime$4 = function _regeneratorRuntime() { return exports; }; var exports = {}, Op = Object.prototype, hasOwn = Op.hasOwnProperty, defineProperty = Object.defineProperty || function (obj, key, desc) { obj[key] = desc.value; }, $Symbol = "function" == typeof Symbol ? Symbol : {}, iteratorSymbol = $Symbol.iterator || "@@iterator", asyncIteratorSymbol = $Symbol.asyncIterator || "@@asyncIterator", toStringTagSymbol = $Symbol.toStringTag || "@@toStringTag"; function define(obj, key, value) { return Object.defineProperty(obj, key, { value: value, enumerable: !0, configurable: !0, writable: !0 }), obj[key]; } try { define({}, ""); } catch (err) { define = function define(obj, key, value) { return obj[key] = value; }; } function wrap(innerFn, outerFn, self, tryLocsList) { var protoGenerator = outerFn && outerFn.prototype instanceof Generator ? outerFn : Generator, generator = Object.create(protoGenerator.prototype), context = new Context(tryLocsList || []); return defineProperty(generator, "_invoke", { value: makeInvokeMethod(innerFn, self, context) }), generator; } function tryCatch(fn, obj, arg) { try { return { type: "normal", arg: fn.call(obj, arg) }; } catch (err) { return { type: "throw", arg: err }; } } exports.wrap = wrap; var ContinueSentinel = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var IteratorPrototype = {}; define(IteratorPrototype, iteratorSymbol, function () { return this; }); var getProto = Object.getPrototypeOf, NativeIteratorPrototype = getProto && getProto(getProto(values([]))); NativeIteratorPrototype && NativeIteratorPrototype !== Op && hasOwn.call(NativeIteratorPrototype, iteratorSymbol) && (IteratorPrototype = NativeIteratorPrototype); var Gp = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(IteratorPrototype); function defineIteratorMethods(prototype) { ["next", "throw", "return"].forEach(function (method) { define(prototype, method, function (arg) { return this._invoke(method, arg); }); }); } function AsyncIterator(generator, PromiseImpl) { function invoke(method, arg, resolve, reject) { var record = tryCatch(generator[method], generator, arg); if ("throw" !== record.type) { var result = record.arg, value = result.value; return value && "object" == babelHelpers["typeof"](value) && hasOwn.call(value, "__await") ? PromiseImpl.resolve(value.__await).then(function (value) { invoke("next", value, resolve, reject); }, function (err) { invoke("throw", err, resolve, reject); }) : PromiseImpl.resolve(value).then(function (unwrapped) { result.value = unwrapped, resolve(result); }, function (error) { return invoke("throw", error, resolve, reject); }); } reject(record.arg); } var previousPromise; defineProperty(this, "_invoke", { value: function value(method, arg) { function callInvokeWithMethodAndArg() { return new PromiseImpl(function (resolve, reject) { invoke(method, arg, resolve, reject); }); } return previousPromise = previousPromise ? previousPromise.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); } }); } function makeInvokeMethod(innerFn, self, context) { var state = "suspendedStart"; return function (method, arg) { if ("executing" === state) throw new Error("Generator is already running"); if ("completed" === state) { if ("throw" === method) throw arg; return doneResult(); } for (context.method = method, context.arg = arg;;) { var delegate = context.delegate; if (delegate) { var delegateResult = maybeInvokeDelegate(delegate, context); if (delegateResult) { if (delegateResult === ContinueSentinel) continue; return delegateResult; } } if ("next" === context.method) context.sent = context._sent = context.arg;else if ("throw" === context.method) { if ("suspendedStart" === state) throw state = "completed", context.arg; context.dispatchException(context.arg); } else "return" === context.method && context.abrupt("return", context.arg); state = "executing"; var record = tryCatch(innerFn, self, context); if ("normal" === record.type) { if (state = context.done ? "completed" : "suspendedYield", record.arg === ContinueSentinel) continue; return { value: record.arg, done: context.done }; } "throw" === record.type && (state = "completed", context.method = "throw", context.arg = record.arg); } }; } function maybeInvokeDelegate(delegate, context) { var methodName = context.method, method = delegate.iterator[methodName]; if (undefined === method) return context.delegate = null, "throw" === methodName && delegate.iterator["return"] && (context.method = "return", context.arg = undefined, maybeInvokeDelegate(delegate, context), "throw" === context.method) || "return" !== methodName && (context.method = "throw", context.arg = new TypeError("The iterator does not provide a '" + methodName + "' method")), ContinueSentinel; var record = tryCatch(method, delegate.iterator, context.arg); if ("throw" === record.type) return context.method = "throw", context.arg = record.arg, context.delegate = null, ContinueSentinel; var info = record.arg; return info ? info.done ? (context[delegate.resultName] = info.value, context.next = delegate.nextLoc, "return" !== context.method && (context.method = "next", context.arg = undefined), context.delegate = null, ContinueSentinel) : info : (context.method = "throw", context.arg = new TypeError("iterator result is not an object"), context.delegate = null, ContinueSentinel); } function pushTryEntry(locs) { var entry = { tryLoc: locs[0] }; 1 in locs && (entry.catchLoc = locs[1]), 2 in locs && (entry.finallyLoc = locs[2], entry.afterLoc = locs[3]), this.tryEntries.push(entry); } function resetTryEntry(entry) { var record = entry.completion || {}; record.type = "normal", delete record.arg, entry.completion = record; } function Context(tryLocsList) { this.tryEntries = [{ tryLoc: "root" }], tryLocsList.forEach(pushTryEntry, this), this.reset(!0); } function values(iterable) { if (iterable) { var iteratorMethod = iterable[iteratorSymbol]; if (iteratorMethod) return iteratorMethod.call(iterable); if ("function" == typeof iterable.next) return iterable; if (!isNaN(iterable.length)) { var i = -1, next = function next() { for (; ++i < iterable.length;) if (hasOwn.call(iterable, i)) return next.value = iterable[i], next.done = !1, next; return next.value = undefined, next.done = !0, next; }; return next.next = next; } } return { next: doneResult }; } function doneResult() { return { value: undefined, done: !0 }; } return GeneratorFunction.prototype = GeneratorFunctionPrototype, defineProperty(Gp, "constructor", { value: GeneratorFunctionPrototype, configurable: !0 }), defineProperty(GeneratorFunctionPrototype, "constructor", { value: GeneratorFunction, configurable: !0 }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, toStringTagSymbol, "GeneratorFunction"), exports.isGeneratorFunction = function (genFun) { var ctor = "function" == typeof genFun && genFun.constructor; return !!ctor && (ctor === GeneratorFunction || "GeneratorFunction" === (ctor.displayName || ctor.name)); }, exports.mark = function (genFun) { return Object.setPrototypeOf ? Object.setPrototypeOf(genFun, GeneratorFunctionPrototype) : (genFun.__proto__ = GeneratorFunctionPrototype, define(genFun, toStringTagSymbol, "GeneratorFunction")), genFun.prototype = Object.create(Gp), genFun; }, exports.awrap = function (arg) { return { __await: arg }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, asyncIteratorSymbol, function () { return this; }), exports.AsyncIterator = AsyncIterator, exports.async = function (innerFn, outerFn, self, tryLocsList, PromiseImpl) { void 0 === PromiseImpl && (PromiseImpl = Promise); var iter = new AsyncIterator(wrap(innerFn, outerFn, self, tryLocsList), PromiseImpl); return exports.isGeneratorFunction(outerFn) ? iter : iter.next().then(function (result) { return result.done ? result.value : iter.next(); }); }, defineIteratorMethods(Gp), define(Gp, toStringTagSymbol, "Generator"), define(Gp, iteratorSymbol, function () { return this; }), define(Gp, "toString", function () { return "[object Generator]"; }), exports.keys = function (val) { var object = Object(val), keys = []; for (var key in object) keys.push(key); return keys.reverse(), function next() { for (; keys.length;) { var key = keys.pop(); if (key in object) return next.value = key, next.done = !1, next; } return next.done = !0, next; }; }, exports.values = values, Context.prototype = { constructor: Context, reset: function reset(skipTempReset) { if (this.prev = 0, this.next = 0, this.sent = this._sent = undefined, this.done = !1, this.delegate = null, this.method = "next", this.arg = undefined, this.tryEntries.forEach(resetTryEntry), !skipTempReset) for (var name in this) "t" === name.charAt(0) && hasOwn.call(this, name) && !isNaN(+name.slice(1)) && (this[name] = undefined); }, stop: function stop() { this.done = !0; var rootRecord = this.tryEntries[0].completion; if ("throw" === rootRecord.type) throw rootRecord.arg; return this.rval; }, dispatchException: function dispatchException(exception) { if (this.done) throw exception; var context = this; function handle(loc, caught) { return record.type = "throw", record.arg = exception, context.next = loc, caught && (context.method = "next", context.arg = undefined), !!caught; } for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i], record = entry.completion; if ("root" === entry.tryLoc) return handle("end"); if (entry.tryLoc <= this.prev) { var hasCatch = hasOwn.call(entry, "catchLoc"), hasFinally = hasOwn.call(entry, "finallyLoc"); if (hasCatch && hasFinally) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } else if (hasCatch) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); } else { if (!hasFinally) throw new Error("try statement without catch or finally"); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } } } }, abrupt: function abrupt(type, arg) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc <= this.prev && hasOwn.call(entry, "finallyLoc") && this.prev < entry.finallyLoc) { var finallyEntry = entry; break; } } finallyEntry && ("break" === type || "continue" === type) && finallyEntry.tryLoc <= arg && arg <= finallyEntry.finallyLoc && (finallyEntry = null); var record = finallyEntry ? finallyEntry.completion : {}; return record.type = type, record.arg = arg, finallyEntry ? (this.method = "next", this.next = finallyEntry.finallyLoc, ContinueSentinel) : this.complete(record); }, complete: function complete(record, afterLoc) { if ("throw" === record.type) throw record.arg; return "break" === record.type || "continue" === record.type ? this.next = record.arg : "return" === record.type ? (this.rval = this.arg = record.arg, this.method = "return", this.next = "end") : "normal" === record.type && afterLoc && (this.next = afterLoc), ContinueSentinel; }, finish: function finish(finallyLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.finallyLoc === finallyLoc) return this.complete(entry.completion, entry.afterLoc), resetTryEntry(entry), ContinueSentinel; } }, "catch": function _catch(tryLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc === tryLoc) { var record = entry.completion; if ("throw" === record.type) { var thrown = record.arg; resetTryEntry(entry); } return thrown; } } throw new Error("illegal catch attempt"); }, delegateYield: function delegateYield(iterable, resultName, nextLoc) { return this.delegate = { iterator: values(iterable), resultName: resultName, nextLoc: nextLoc }, "next" === this.method && (this.arg = undefined), ContinueSentinel; } }, exports; }
 	function _classPrivateMethodInitSpec$4(obj, privateSet) { _checkPrivateRedeclaration$4(obj, privateSet); privateSet.add(obj); }
 	function _checkPrivateRedeclaration$4(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet$4(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
@@ -22467,6 +22614,18 @@ this.BX = this.BX || {};
 	  Medium: "medium",
 	  Low: "low",
 	  VeryLow: "very_low"
+	};
+	var StartCallErrorCode = {
+	  AuthorizeError: 'AUTHORIZE_ERROR',
+	  BlankAnswer: 'BLANK_ANSWER',
+	  BlankAnswerWithErrorCode: 'BLANK_ANSWER_WITH_ERROR_CODE',
+	  ErrorUnexpectedAnswer: 'ERROR_UNEXPECTED_ANSWER',
+	  AccessDenied: 'ACCESS_DENIED',
+	  NetworkError: 'NETWORK_ERROR',
+	  NoWebrtc: 'NO_WEBRTC',
+	  NotAllowedError: 'NotAllowedError',
+	  NotReadableError: 'NotReadableError',
+	  UnknownError: 'UNKNOWN_ERROR'
 	};
 	var DisconnectReason = {
 	  SecurityKeyChanged: 'SECURITY_KEY_CHANGED',
@@ -22580,20 +22739,14 @@ this.BX = this.BX || {};
 	    this.restClient = null;
 	    this.pullClient = null;
 	    this.finishedCalls = new Set();
-	    this.multiBroadcastClient = new MultiChannel('call_engine_channel');
+	    this.multiBroadcastClient = new CallMultiChannel('call_engine_channel');
 	    this.init();
 	  }
 	  babelHelpers.createClass(Engine, [{
 	    key: "init",
 	    value: function init() {
-	      var _this = this;
 	      BX.addCustomEvent("onPullEvent-call", _classPrivateMethodGet$4(this, _onPullEvent, _onPullEvent2).bind(this));
 	      BX.addCustomEvent("onPullEvent-im", _classPrivateMethodGet$4(this, _onPullEvent, _onPullEvent2).bind(this));
-	      this.multiBroadcastClient.executer(function () {
-	        return Object.values(_this.calls).some(function (call) {
-	          return Boolean(call.BitrixCall);
-	        });
-	      });
 	    }
 	  }, {
 	    key: "getSiteId",
@@ -22650,38 +22803,38 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "createCall",
 	    value: function createCall(config) {
-	      var _this2 = this;
+	      var _this = this;
 	      return new Promise( /*#__PURE__*/function () {
-	        var _ref = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$3().mark(function _callee(resolve, reject) {
+	        var _ref = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$4().mark(function _callee(resolve, reject) {
 	          var _data, _data$result, _data2, _data2$result;
 	          var callType, callProvider, callId, _call, data, instanceId, aiSettings, callFactory, call;
-	          return _regeneratorRuntime$3().wrap(function _callee$(_context) {
+	          return _regeneratorRuntime$4().wrap(function _callee$(_context) {
 	            while (1) switch (_context.prev = _context.next) {
 	              case 0:
 	                callType = config.type || CallType.Instant;
-	                callProvider = config.provider || _this2.getDefaultProvider();
+	                callProvider = config.provider || _this.getDefaultProvider();
 	                if (!config.joinExisting) {
 	                  _context.next = 15;
 	                  break;
 	                }
-	                _context.t0 = _regeneratorRuntime$3().keys(_this2.calls);
+	                _context.t0 = _regeneratorRuntime$4().keys(_this.calls);
 	              case 4:
 	                if ((_context.t1 = _context.t0()).done) {
 	                  _context.next = 15;
 	                  break;
 	                }
 	                callId = _context.t1.value;
-	                if (!_this2.calls.hasOwnProperty(callId)) {
+	                if (!_this.calls.hasOwnProperty(callId)) {
 	                  _context.next = 13;
 	                  break;
 	                }
-	                _call = _this2.calls[callId];
-	                if (!(_call.provider === config.provider && _call.associatedEntity.type === config.chatInfo.entityType && _call.associatedEntity.id === config.chatInfo.entityId)) {
+	                _call = _this.calls[callId];
+	                if (!(_call.provider === config.provider && _call.associatedEntity.type === config.entityType && _call.associatedEntity.id === config.entityId)) {
 	                  _context.next = 13;
 	                  break;
 	                }
-	                _this2.log(callId, "Found existing call, attaching to it");
-	                _this2.onCallCreated(_call);
+	                _this.log(callId, "Found existing call, attaching to it");
+	                _this.onCallCreated(_call);
 	                Hardware.isCameraOn = config.videoEnabled === true;
 	                return _context.abrupt("return", resolve({
 	                  call: _call,
@@ -22726,26 +22879,26 @@ this.BX = this.BX || {};
 	                if (aiSettings.serviceEnabled) {
 	                  CallAI.setup(aiSettings);
 	                }
-	                if (!_this2.calls[data.result.roomId]) {
+	                if (!_this.calls[data.result.roomId]) {
 	                  _context.next = 36;
 	                  break;
 	                }
-	                if (!(_this2.calls[data.result.roomId] instanceof CallStub)) {
+	                if (!(_this.calls[data.result.roomId] instanceof CallStub)) {
 	                  _context.next = 34;
 	                  break;
 	                }
-	                _this2.calls[data.result.roomId].destroy();
+	                _this.calls[data.result.roomId].destroy();
 	                _context.next = 36;
 	                break;
 	              case 34:
 	                console.warn("Call ".concat(data.result.roomId, " already exists, returning it instead of creating a new one"));
 	                return _context.abrupt("return", resolve({
-	                  call: _this2.calls[data.result.roomId],
+	                  call: _this.calls[data.result.roomId],
 	                  isNew: false
 	                }));
 	              case 36:
 	                Hardware.isCameraOn = config.videoEnabled === true;
-	                callFactory = _classPrivateMethodGet$4(_this2, _getCallFactory, _getCallFactory2).call(_this2, callProvider);
+	                callFactory = _classPrivateMethodGet$4(_this, _getCallFactory, _getCallFactory2).call(_this, callProvider);
 	                call = callFactory.createCall({
 	                  uuid: data.result.roomId,
 	                  instanceId: instanceId,
@@ -22755,7 +22908,7 @@ this.BX = this.BX || {};
 	                  type: callType,
 	                  startDate: new Date(data.result.startDate * 1000),
 	                  events: {
-	                    onDestroy: _classPrivateMethodGet$4(_this2, _onCallDestroy, _onCallDestroy2).bind(_this2)
+	                    onDestroy: _classPrivateMethodGet$4(_this, _onCallDestroy, _onCallDestroy2).bind(_this)
 	                  },
 	                  debug: config.debug === true,
 	                  connectionData: {
@@ -22764,8 +22917,8 @@ this.BX = this.BX || {};
 	                  },
 	                  scheme: data.result.scheme
 	                });
-	                _this2.calls[call.uuid] = call;
-	                _this2.onCallCreated(call);
+	                _this.calls[call.uuid] = call;
+	                _this.onCallCreated(call);
 	                resolve({
 	                  call: call,
 	                  isNew: data.result.isNew
@@ -22784,19 +22937,19 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "createChildCall",
 	    value: function createChildCall(parentCall, newProvider, newUsers, config) {
-	      var _this3 = this;
+	      var _this2 = this;
 	      return new Promise(function (resolve, reject) {
 	        var callParameters = {
 	          callUuid: parentCall.uuid,
 	          newProvider: newProvider,
 	          users: newUsers
 	        };
-	        _this3.getRestClient().callMethod(ajaxActions$2.createChatForChildCall, callParameters).then(function (response) {
+	        _this2.getRestClient().callMethod(ajaxActions$2.createChatForChildCall, callParameters).then(function (response) {
 	          var createCallResponse = response.data();
 	          var token = createCallResponse.token;
 	          var chatId = createCallResponse.chatId;
 	          var callType = CallType.Instant;
-	          var callFactory = _classPrivateMethodGet$4(_this3, _getCallFactory, _getCallFactory2).call(_this3, newProvider);
+	          var callFactory = _classPrivateMethodGet$4(_this2, _getCallFactory, _getCallFactory2).call(_this2, newProvider);
 	          var instanceId = Util.getUuidv4();
 	          Util.getCallConnectionData({
 	            callToken: token,
@@ -22816,14 +22969,14 @@ this.BX = this.BX || {};
 	            var call = callFactory.createCall({
 	              uuid: data.result.roomId,
 	              instanceId: instanceId,
-	              initiatorId: _this3.userId,
+	              initiatorId: _this2.userId,
 	              parentUuid: parentCall.uuid,
 	              direction: Direction.Outgoing,
 	              enableMicAutoParameters: parentCall.enableMicAutoParameters !== false,
 	              type: callType,
 	              startDate: data.result.startDate,
 	              events: {
-	                onDestroy: _classPrivateMethodGet$4(_this3, _onCallDestroy, _onCallDestroy2).bind(_this3)
+	                onDestroy: _classPrivateMethodGet$4(_this2, _onCallDestroy, _onCallDestroy2).bind(_this2)
 	              },
 	              logToken: createCallResponse.logToken,
 	              connectionData: {
@@ -22833,7 +22986,7 @@ this.BX = this.BX || {};
 	              debug: config.debug,
 	              scheme: data.result.scheme
 	            });
-	            _this3.calls[call.uuid] = call;
+	            _this2.calls[call.uuid] = call;
 	            resolve({
 	              call: call,
 	              isNew: data.result.startDate
@@ -22871,7 +23024,7 @@ this.BX = this.BX || {};
 	        initiatorId: parseInt(callFields['INITIATOR_ID']),
 	        parentUuid: callFields['PARENT_UUID'],
 	        direction: callFields['INITIATOR_ID'] == this.userId ? Direction.Outgoing : Direction.Incoming,
-	        associatedEntity: _objectSpread$2({
+	        associatedEntity: _objectSpread$3({
 	          userCounter: Object.keys(userData).length
 	        }, associatedEntity),
 	        type: callFields['TYPE'],
@@ -22889,13 +23042,28 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "getCallWithId",
 	    value: function getCallWithId(uuid, config) {
-	      if (this.calls[uuid]) {
-	        return Promise.resolve({
-	          call: this.calls[uuid],
-	          isNew: false
-	        });
-	      }
-	      return this.createCall(config);
+	      var _this3 = this;
+	      return new Promise(function (resolve, reject) {
+	        var call = _this3.calls[uuid];
+	        if (call && call.hasConnectionData || call && !config) {
+	          resolve({
+	            call: call,
+	            isNew: false
+	          });
+	        } else if (config) {
+	          _this3.createCall(config).then(function (result) {
+	            resolve(result);
+	          })["catch"](function (error) {
+	            reject(error);
+	          });
+	        } else {
+	          var error = {
+	            name: 'CALL_NOT_FOUND',
+	            message: 'Call not found'
+	          };
+	          reject(error);
+	        }
+	      });
 	    }
 	  }, {
 	    key: "getCallWithDialogId",
@@ -22986,39 +23154,39 @@ this.BX = this.BX || {};
 	    }
 	  }
 	}
-	function _onPullIncomingCall2(_x4, _x5) {
+	function _onPullIncomingCall2(_x3, _x4) {
 	  return _onPullIncomingCall3.apply(this, arguments);
 	}
 	function _onPullIncomingCall3() {
-	  _onPullIncomingCall3 = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$3().mark(function _callee3(params, extra) {
+	  _onPullIncomingCall3 = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$4().mark(function _callee2(params, extra) {
 	    var callFields, callUuid, call, callFactory, instanceId, broadcastResponse, hasActiveCalls;
-	    return _regeneratorRuntime$3().wrap(function _callee3$(_context3) {
-	      while (1) switch (_context3.prev = _context3.next) {
+	    return _regeneratorRuntime$4().wrap(function _callee2$(_context2) {
+	      while (1) switch (_context2.prev = _context2.next) {
 	        case 0:
 	          console.log('#onPullIncomingCall', location.href);
 	          if (!(extra.server_time_ago > 30)) {
-	            _context3.next = 4;
+	            _context2.next = 4;
 	            break;
 	          }
 	          console.error("Call was started too long time ago");
-	          return _context3.abrupt("return");
+	          return _context2.abrupt("return");
 	        case 4:
 	          callFields = params.call;
 	          callUuid = callFields.uuid;
 	          CallAI.setup(params.aiSettings);
 	          if (!this.finishedCalls.has(callUuid)) {
-	            _context3.next = 10;
+	            _context2.next = 10;
 	            break;
 	          }
 	          this.log(callUuid, 'Got "Call::incoming" after "Call::finish"');
-	          return _context3.abrupt("return");
+	          return _context2.abrupt("return");
 	        case 10:
 	          call_lib_callTokenManager.CallTokenManager.setToken(callFields.associatedEntity.chatId, params.callToken);
 	          if (!(this.calls[callUuid] instanceof CallStub)) {
-	            _context3.next = 13;
+	            _context2.next = 13;
 	            break;
 	          }
-	          return _context3.abrupt("return");
+	          return _context2.abrupt("return");
 	        case 13:
 	          if (this.calls[callUuid]) {
 	            call = this.calls[callUuid];
@@ -23032,6 +23200,7 @@ this.BX = this.BX || {};
 	            call = callFactory.createCall({
 	              uuid: callUuid,
 	              instanceId: instanceId,
+	              parentId: callFields.parentId || null,
 	              parentUuid: callFields.parentUuid || null,
 	              callFromMobile: params.isLegacyMobile === true,
 	              direction: Direction.Incoming,
@@ -23048,12 +23217,12 @@ this.BX = this.BX || {};
 	            this.calls[callUuid] = call;
 	            this.onCallCreated(call);
 	          }
-	          _context3.next = 16;
+	          _context2.next = 16;
 	          return this.multiBroadcastClient.broadcastRequest(callUuid, {
-	            timeout: 500
+	            timeout: 100
 	          });
 	        case 16:
-	          broadcastResponse = _context3.sent;
+	          broadcastResponse = _context2.sent;
 	          hasActiveCalls = broadcastResponse.some(function (res) {
 	            return res;
 	          });
@@ -23067,9 +23236,9 @@ this.BX = this.BX || {};
 	          this.log(call.uuid, "Incoming call " + call.uuid);
 	        case 20:
 	        case "end":
-	          return _context3.stop();
+	          return _context2.stop();
 	      }
-	    }, _callee3, this);
+	    }, _callee2, this);
 	  }));
 	  return _onPullIncomingCall3.apply(this, arguments);
 	}
@@ -23087,13 +23256,13 @@ this.BX = this.BX || {};
 	  }
 	}
 	function _onCallDestroy2(e) {
-	  var _this6 = this;
+	  var _this4 = this;
 	  var callId = e.call.uuid;
 	  this.calls[callId] = new CallStub({
 	    callId: callId,
 	    onDelete: function onDelete() {
-	      if (_this6.calls[callId]) {
-	        delete _this6.calls[callId];
+	      if (_this4.calls[callId]) {
+	        delete _this4.calls[callId];
 	      }
 	    }
 	  });
@@ -23132,103 +23301,6 @@ this.BX = this.BX || {};
 	    }
 	  }]);
 	  return BitrixCallFactory;
-	}();
-	var MultiChannel = /*#__PURE__*/function () {
-	  function MultiChannel(name) {
-	    var _this4 = this;
-	    babelHelpers.classCallCheck(this, MultiChannel);
-	    this.channel = new BroadcastChannel(name);
-	    this.senderId = Math.random().toString(36).slice(2);
-	    this.requests = new Map();
-	    this.channel.onmessage = function (event) {
-	      var _event$data = event.data,
-	        type = _event$data.type,
-	        requestId = _event$data.requestId,
-	        senderId = _event$data.senderId,
-	        payload = _event$data.payload;
-	      if (type === 'response' && _this4.requests.has(requestId)) {
-	        var req = _this4.requests.get(requestId);
-	        if (!req.responders.has(senderId)) {
-	          req.responders.add(senderId);
-	          req.responses.push(payload);
-	          if (Date.now() > req.deadline) {
-	            req.resolve(req.responses);
-	            _this4.requests["delete"](requestId);
-	          }
-	        }
-	      }
-	      if (type === 'request' && senderId !== _this4.senderId) {
-	        var result = _this4.handle();
-	        if (result !== undefined) {
-	          _this4.channel.postMessage({
-	            type: 'response',
-	            requestId: requestId,
-	            senderId: _this4.senderId,
-	            payload: result
-	          });
-	        }
-	      }
-	    };
-	  }
-	  babelHelpers.createClass(MultiChannel, [{
-	    key: "executer",
-	    value: function executer(handler) {
-	      this.handle = handler;
-	    }
-	  }, {
-	    key: "broadcastRequest",
-	    value: function () {
-	      var _broadcastRequest = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$3().mark(function _callee2(callUuid) {
-	        var _this5 = this;
-	        var _ref2,
-	          _ref2$timeout,
-	          timeout,
-	          requestId,
-	          _args2 = arguments;
-	        return _regeneratorRuntime$3().wrap(function _callee2$(_context2) {
-	          while (1) switch (_context2.prev = _context2.next) {
-	            case 0:
-	              _ref2 = _args2.length > 1 && _args2[1] !== undefined ? _args2[1] : {}, _ref2$timeout = _ref2.timeout, timeout = _ref2$timeout === void 0 ? 100 : _ref2$timeout;
-	              requestId = Math.random().toString(36).slice(2);
-	              return _context2.abrupt("return", new Promise(function (resolve) {
-	                _this5.requests.set(requestId, {
-	                  resolve: resolve,
-	                  responses: [],
-	                  responders: new Set(),
-	                  deadline: Date.now() + timeout
-	                });
-	                _this5.channel.postMessage({
-	                  type: 'request',
-	                  requestId: requestId,
-	                  senderId: _this5.senderId,
-	                  payload: callUuid
-	                });
-	                setTimeout(function () {
-	                  if (_this5.requests.has(requestId)) {
-	                    resolve(_this5.requests.get(requestId).responses);
-	                    _this5.requests["delete"](requestId);
-	                  }
-	                }, timeout);
-	              }));
-	            case 3:
-	            case "end":
-	              return _context2.stop();
-	          }
-	        }, _callee2);
-	      }));
-	      function broadcastRequest(_x3) {
-	        return _broadcastRequest.apply(this, arguments);
-	      }
-	      return broadcastRequest;
-	    }()
-	  }, {
-	    key: "destroy",
-	    value: function destroy() {
-	      this.channel.close();
-	      this.requests.clear();
-	    }
-	  }]);
-	  return MultiChannel;
 	}();
 	var CallEngine = new Engine();
 
@@ -24646,7 +24718,9 @@ this.BX = this.BX || {};
 	  }
 	  peer.setReady(true);
 	  if (params.restart) {
-	    peer.reconnect();
+	    peer.reconnect({
+	      reconnectionReason: 'GOT_PULL_EVENT_NEGOTIATION_NEEDED'
+	    });
 	  } else {
 	    peer.onNegotiationNeeded();
 	  }
@@ -24819,7 +24893,9 @@ this.BX = this.BX || {};
 	function _onOnline2() {
 	  var peers = Object.values(this.peers);
 	  peers.forEach(function (peer) {
-	    peer.reconnect();
+	    peer.reconnect({
+	      reconnectionReason: 'GOT_ONLINE_EVENT_FROM_BROWSER'
+	    });
 	  });
 	}
 	function _beforeLeaveCall2$1() {
@@ -25379,7 +25455,10 @@ this.BX = this.BX || {};
 	        this.sendMedia();
 	      } else {
 	        this.localStreams[tag] = this.call.getLocalStream(tag);
-	        this.reconnect();
+	        var logMessage = 'Reconnect by replaceMediaStream';
+	        this.reconnect({
+	          reconnectionReasonInfo: logMessage
+	        });
 	      }
 	    }
 	  }, {
@@ -25808,15 +25887,19 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "_onConnectionOfferReplyTimeout",
 	    value: function _onConnectionOfferReplyTimeout(connectionId) {
-	      this.log("did not receive connection answer for connection " + connectionId);
+	      var logMessage = 'Did not receive connection answer for connection ' + connectionId;
 	      this.call.setPublishingState(MediaStreamsKinds.Camera, false);
-	      this.reconnect();
+	      this.reconnect({
+	        reconnectionReasonInfo: logMessage
+	      });
 	    }
 	  }, {
 	    key: "_onNegotiationNeededReplyTimeout",
 	    value: function _onNegotiationNeededReplyTimeout() {
-	      this.log("did not receive connection offer in time");
-	      this.reconnect();
+	      var logMessage = 'Did not receive connection offer in time';
+	      this.reconnect({
+	        reconnectionReasonInfo: logMessage
+	      });
 	    }
 	  }, {
 	    key: "setConnectionOffer",
@@ -26037,7 +26120,7 @@ this.BX = this.BX || {};
 	    }
 	  }, {
 	    key: "reconnect",
-	    value: function reconnect() {
+	    value: function reconnect(reconnectInfoObject) {
 	      clearTimeout(this.reconnectAfterDisconnectTimeout);
 	      this.connectionAttempt++;
 	      if (this.connectionAttempt > 3) {
@@ -26047,15 +26130,16 @@ this.BX = this.BX || {};
 	        return;
 	      }
 	      this.callbacks.onReconnecting({
-	        reconnectionReason: 'TRYING_RESTORE_ICE_CONNECTION',
-	        reconnectionReasonInfo: ''
+	        reconnectionReason: (reconnectInfoObject === null || reconnectInfoObject === void 0 ? void 0 : reconnectInfoObject.reconnectionReason) || 'TRYING_RESTORE_ICE_CONNECTION',
+	        reconnectionReasonInfo: (reconnectInfoObject === null || reconnectInfoObject === void 0 ? void 0 : reconnectInfoObject.reconnectionReasonInfo) || ''
 	      });
+	      if (reconnectInfoObject && reconnectInfoObject.reconnectionReasonInfo) {
+	        this.log(reconnectInfoObject.reconnectionReasonInfo);
+	      }
 	      this.log("Trying to restore ICE connection. Attempt " + this.connectionAttempt);
 	      if (this.isInitiator()) {
 	        this._destroyPeerConnection();
 	        this.sendMedia();
-	      } else {
-	        this.sendNegotiationNeeded(true);
 	      }
 	    }
 	  }, {
@@ -26136,8 +26220,11 @@ this.BX = this.BX || {};
 	    clearTimeout(this.reconnectAfterDisconnectTimeout);
 	    this._updateTracksDebounced();
 	  } else if (this.peerConnection.connectionState === "failed") {
-	    this.log("peer connection failed. Trying to restore connection immediately");
-	    this.reconnect();
+	    var logMessage = 'Peer connection failed. Trying to restore connection immediately';
+	    this.reconnect({
+	      reconnectionReason: 'PEER_CONNECTION_FAILED',
+	      reconnectionReasonInfo: logMessage
+	    });
 	  }
 	  // else if (this.peerConnection.connectionState === "disconnected")
 	  // {
@@ -26261,8 +26348,8 @@ this.BX = this.BX || {};
 	}
 
 	var _MediaKinds$1;
-	function ownKeys$3(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-	function _objectSpread$3(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$3(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$3(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
+	function ownKeys$4(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+	function _objectSpread$4(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$4(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$4(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	function _classPrivateFieldInitSpec$3(obj, privateMap, value) { _checkPrivateRedeclaration$6(obj, privateMap); privateMap.set(obj, value); }
 	function _classPrivateMethodInitSpec$6(obj, privateSet) { _checkPrivateRedeclaration$6(obj, privateSet); privateSet.add(obj); }
 	function _checkPrivateRedeclaration$6(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
@@ -26999,12 +27086,12 @@ this.BX = this.BX || {};
 	        var headers = evt.headers,
 	          leaveInformation = evt.leaveInformation;
 	        if (headers) {
-	          logData = _objectSpread$3(_objectSpread$3({}, logData), {}, {
+	          logData = _objectSpread$4(_objectSpread$4({}, logData), {}, {
 	            headers: headers
 	          });
 	        }
 	        if (leaveInformation) {
-	          logData = _objectSpread$3(_objectSpread$3({}, logData), {}, {
+	          logData = _objectSpread$4(_objectSpread$4({}, logData), {}, {
 	            leaveInformation: leaveInformation
 	          });
 	        }
@@ -27870,6 +27957,7 @@ this.BX = this.BX || {};
 	      }
 	      this.screenShared = false;
 	      this.localVideoShown = false;
+	      this.floorRequestActive = false;
 	    }
 	  }, {
 	    key: "attachToConference",
@@ -28147,6 +28235,7 @@ this.BX = this.BX || {};
 	      this.ready = false;
 	      this.joinedAsViewer = false;
 	      this.localVideoShown = false;
+	      this.floorRequestActive = false;
 	      if (this.localVAD) {
 	        this.localVAD.destroy();
 	        this.localVAD = null;
@@ -28776,8 +28865,8 @@ this.BX = this.BX || {};
 	  return MediaRenderer;
 	}();
 
-	function ownKeys$4(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-	function _objectSpread$4(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$4(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$4(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
+	function ownKeys$5(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+	function _objectSpread$5(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$5(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$5(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	function _classPrivateMethodInitSpec$7(obj, privateSet) { _checkPrivateRedeclaration$7(obj, privateSet); privateSet.add(obj); }
 	function _checkPrivateRedeclaration$7(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet$7(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
@@ -29072,7 +29161,7 @@ this.BX = this.BX || {};
 	        direction: callFields['INITIATOR_ID'] == this.userId ? Direction$1.Outgoing : Direction$1.Incoming,
 	        users: users,
 	        userData: userData,
-	        associatedEntity: _objectSpread$4({
+	        associatedEntity: _objectSpread$5({
 	          userCounter: Object.keys(userData).length
 	        }, callFields.ASSOCIATED_ENTITY),
 	        type: callFields.TYPE,
@@ -29378,9 +29467,9 @@ this.BX = this.BX || {};
 	}();
 	var CallEngineLegacy = new EngineLegacy();
 
-	function _regeneratorRuntime$4() { /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ _regeneratorRuntime$4 = function _regeneratorRuntime() { return exports; }; var exports = {}, Op = Object.prototype, hasOwn = Op.hasOwnProperty, defineProperty = Object.defineProperty || function (obj, key, desc) { obj[key] = desc.value; }, $Symbol = "function" == typeof Symbol ? Symbol : {}, iteratorSymbol = $Symbol.iterator || "@@iterator", asyncIteratorSymbol = $Symbol.asyncIterator || "@@asyncIterator", toStringTagSymbol = $Symbol.toStringTag || "@@toStringTag"; function define(obj, key, value) { return Object.defineProperty(obj, key, { value: value, enumerable: !0, configurable: !0, writable: !0 }), obj[key]; } try { define({}, ""); } catch (err) { define = function define(obj, key, value) { return obj[key] = value; }; } function wrap(innerFn, outerFn, self, tryLocsList) { var protoGenerator = outerFn && outerFn.prototype instanceof Generator ? outerFn : Generator, generator = Object.create(protoGenerator.prototype), context = new Context(tryLocsList || []); return defineProperty(generator, "_invoke", { value: makeInvokeMethod(innerFn, self, context) }), generator; } function tryCatch(fn, obj, arg) { try { return { type: "normal", arg: fn.call(obj, arg) }; } catch (err) { return { type: "throw", arg: err }; } } exports.wrap = wrap; var ContinueSentinel = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var IteratorPrototype = {}; define(IteratorPrototype, iteratorSymbol, function () { return this; }); var getProto = Object.getPrototypeOf, NativeIteratorPrototype = getProto && getProto(getProto(values([]))); NativeIteratorPrototype && NativeIteratorPrototype !== Op && hasOwn.call(NativeIteratorPrototype, iteratorSymbol) && (IteratorPrototype = NativeIteratorPrototype); var Gp = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(IteratorPrototype); function defineIteratorMethods(prototype) { ["next", "throw", "return"].forEach(function (method) { define(prototype, method, function (arg) { return this._invoke(method, arg); }); }); } function AsyncIterator(generator, PromiseImpl) { function invoke(method, arg, resolve, reject) { var record = tryCatch(generator[method], generator, arg); if ("throw" !== record.type) { var result = record.arg, value = result.value; return value && "object" == babelHelpers["typeof"](value) && hasOwn.call(value, "__await") ? PromiseImpl.resolve(value.__await).then(function (value) { invoke("next", value, resolve, reject); }, function (err) { invoke("throw", err, resolve, reject); }) : PromiseImpl.resolve(value).then(function (unwrapped) { result.value = unwrapped, resolve(result); }, function (error) { return invoke("throw", error, resolve, reject); }); } reject(record.arg); } var previousPromise; defineProperty(this, "_invoke", { value: function value(method, arg) { function callInvokeWithMethodAndArg() { return new PromiseImpl(function (resolve, reject) { invoke(method, arg, resolve, reject); }); } return previousPromise = previousPromise ? previousPromise.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); } }); } function makeInvokeMethod(innerFn, self, context) { var state = "suspendedStart"; return function (method, arg) { if ("executing" === state) throw new Error("Generator is already running"); if ("completed" === state) { if ("throw" === method) throw arg; return doneResult(); } for (context.method = method, context.arg = arg;;) { var delegate = context.delegate; if (delegate) { var delegateResult = maybeInvokeDelegate(delegate, context); if (delegateResult) { if (delegateResult === ContinueSentinel) continue; return delegateResult; } } if ("next" === context.method) context.sent = context._sent = context.arg;else if ("throw" === context.method) { if ("suspendedStart" === state) throw state = "completed", context.arg; context.dispatchException(context.arg); } else "return" === context.method && context.abrupt("return", context.arg); state = "executing"; var record = tryCatch(innerFn, self, context); if ("normal" === record.type) { if (state = context.done ? "completed" : "suspendedYield", record.arg === ContinueSentinel) continue; return { value: record.arg, done: context.done }; } "throw" === record.type && (state = "completed", context.method = "throw", context.arg = record.arg); } }; } function maybeInvokeDelegate(delegate, context) { var methodName = context.method, method = delegate.iterator[methodName]; if (undefined === method) return context.delegate = null, "throw" === methodName && delegate.iterator["return"] && (context.method = "return", context.arg = undefined, maybeInvokeDelegate(delegate, context), "throw" === context.method) || "return" !== methodName && (context.method = "throw", context.arg = new TypeError("The iterator does not provide a '" + methodName + "' method")), ContinueSentinel; var record = tryCatch(method, delegate.iterator, context.arg); if ("throw" === record.type) return context.method = "throw", context.arg = record.arg, context.delegate = null, ContinueSentinel; var info = record.arg; return info ? info.done ? (context[delegate.resultName] = info.value, context.next = delegate.nextLoc, "return" !== context.method && (context.method = "next", context.arg = undefined), context.delegate = null, ContinueSentinel) : info : (context.method = "throw", context.arg = new TypeError("iterator result is not an object"), context.delegate = null, ContinueSentinel); } function pushTryEntry(locs) { var entry = { tryLoc: locs[0] }; 1 in locs && (entry.catchLoc = locs[1]), 2 in locs && (entry.finallyLoc = locs[2], entry.afterLoc = locs[3]), this.tryEntries.push(entry); } function resetTryEntry(entry) { var record = entry.completion || {}; record.type = "normal", delete record.arg, entry.completion = record; } function Context(tryLocsList) { this.tryEntries = [{ tryLoc: "root" }], tryLocsList.forEach(pushTryEntry, this), this.reset(!0); } function values(iterable) { if (iterable) { var iteratorMethod = iterable[iteratorSymbol]; if (iteratorMethod) return iteratorMethod.call(iterable); if ("function" == typeof iterable.next) return iterable; if (!isNaN(iterable.length)) { var i = -1, next = function next() { for (; ++i < iterable.length;) if (hasOwn.call(iterable, i)) return next.value = iterable[i], next.done = !1, next; return next.value = undefined, next.done = !0, next; }; return next.next = next; } } return { next: doneResult }; } function doneResult() { return { value: undefined, done: !0 }; } return GeneratorFunction.prototype = GeneratorFunctionPrototype, defineProperty(Gp, "constructor", { value: GeneratorFunctionPrototype, configurable: !0 }), defineProperty(GeneratorFunctionPrototype, "constructor", { value: GeneratorFunction, configurable: !0 }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, toStringTagSymbol, "GeneratorFunction"), exports.isGeneratorFunction = function (genFun) { var ctor = "function" == typeof genFun && genFun.constructor; return !!ctor && (ctor === GeneratorFunction || "GeneratorFunction" === (ctor.displayName || ctor.name)); }, exports.mark = function (genFun) { return Object.setPrototypeOf ? Object.setPrototypeOf(genFun, GeneratorFunctionPrototype) : (genFun.__proto__ = GeneratorFunctionPrototype, define(genFun, toStringTagSymbol, "GeneratorFunction")), genFun.prototype = Object.create(Gp), genFun; }, exports.awrap = function (arg) { return { __await: arg }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, asyncIteratorSymbol, function () { return this; }), exports.AsyncIterator = AsyncIterator, exports.async = function (innerFn, outerFn, self, tryLocsList, PromiseImpl) { void 0 === PromiseImpl && (PromiseImpl = Promise); var iter = new AsyncIterator(wrap(innerFn, outerFn, self, tryLocsList), PromiseImpl); return exports.isGeneratorFunction(outerFn) ? iter : iter.next().then(function (result) { return result.done ? result.value : iter.next(); }); }, defineIteratorMethods(Gp), define(Gp, toStringTagSymbol, "Generator"), define(Gp, iteratorSymbol, function () { return this; }), define(Gp, "toString", function () { return "[object Generator]"; }), exports.keys = function (val) { var object = Object(val), keys = []; for (var key in object) keys.push(key); return keys.reverse(), function next() { for (; keys.length;) { var key = keys.pop(); if (key in object) return next.value = key, next.done = !1, next; } return next.done = !0, next; }; }, exports.values = values, Context.prototype = { constructor: Context, reset: function reset(skipTempReset) { if (this.prev = 0, this.next = 0, this.sent = this._sent = undefined, this.done = !1, this.delegate = null, this.method = "next", this.arg = undefined, this.tryEntries.forEach(resetTryEntry), !skipTempReset) for (var name in this) "t" === name.charAt(0) && hasOwn.call(this, name) && !isNaN(+name.slice(1)) && (this[name] = undefined); }, stop: function stop() { this.done = !0; var rootRecord = this.tryEntries[0].completion; if ("throw" === rootRecord.type) throw rootRecord.arg; return this.rval; }, dispatchException: function dispatchException(exception) { if (this.done) throw exception; var context = this; function handle(loc, caught) { return record.type = "throw", record.arg = exception, context.next = loc, caught && (context.method = "next", context.arg = undefined), !!caught; } for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i], record = entry.completion; if ("root" === entry.tryLoc) return handle("end"); if (entry.tryLoc <= this.prev) { var hasCatch = hasOwn.call(entry, "catchLoc"), hasFinally = hasOwn.call(entry, "finallyLoc"); if (hasCatch && hasFinally) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } else if (hasCatch) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); } else { if (!hasFinally) throw new Error("try statement without catch or finally"); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } } } }, abrupt: function abrupt(type, arg) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc <= this.prev && hasOwn.call(entry, "finallyLoc") && this.prev < entry.finallyLoc) { var finallyEntry = entry; break; } } finallyEntry && ("break" === type || "continue" === type) && finallyEntry.tryLoc <= arg && arg <= finallyEntry.finallyLoc && (finallyEntry = null); var record = finallyEntry ? finallyEntry.completion : {}; return record.type = type, record.arg = arg, finallyEntry ? (this.method = "next", this.next = finallyEntry.finallyLoc, ContinueSentinel) : this.complete(record); }, complete: function complete(record, afterLoc) { if ("throw" === record.type) throw record.arg; return "break" === record.type || "continue" === record.type ? this.next = record.arg : "return" === record.type ? (this.rval = this.arg = record.arg, this.method = "return", this.next = "end") : "normal" === record.type && afterLoc && (this.next = afterLoc), ContinueSentinel; }, finish: function finish(finallyLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.finallyLoc === finallyLoc) return this.complete(entry.completion, entry.afterLoc), resetTryEntry(entry), ContinueSentinel; } }, "catch": function _catch(tryLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc === tryLoc) { var record = entry.completion; if ("throw" === record.type) { var thrown = record.arg; resetTryEntry(entry); } return thrown; } } throw new Error("illegal catch attempt"); }, delegateYield: function delegateYield(iterable, resultName, nextLoc) { return this.delegate = { iterator: values(iterable), resultName: resultName, nextLoc: nextLoc }, "next" === this.method && (this.arg = undefined), ContinueSentinel; } }, exports; }
-	function ownKeys$5(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-	function _objectSpread$5(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$5(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$5(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
+	function _regeneratorRuntime$5() { /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ _regeneratorRuntime$5 = function _regeneratorRuntime() { return exports; }; var exports = {}, Op = Object.prototype, hasOwn = Op.hasOwnProperty, defineProperty = Object.defineProperty || function (obj, key, desc) { obj[key] = desc.value; }, $Symbol = "function" == typeof Symbol ? Symbol : {}, iteratorSymbol = $Symbol.iterator || "@@iterator", asyncIteratorSymbol = $Symbol.asyncIterator || "@@asyncIterator", toStringTagSymbol = $Symbol.toStringTag || "@@toStringTag"; function define(obj, key, value) { return Object.defineProperty(obj, key, { value: value, enumerable: !0, configurable: !0, writable: !0 }), obj[key]; } try { define({}, ""); } catch (err) { define = function define(obj, key, value) { return obj[key] = value; }; } function wrap(innerFn, outerFn, self, tryLocsList) { var protoGenerator = outerFn && outerFn.prototype instanceof Generator ? outerFn : Generator, generator = Object.create(protoGenerator.prototype), context = new Context(tryLocsList || []); return defineProperty(generator, "_invoke", { value: makeInvokeMethod(innerFn, self, context) }), generator; } function tryCatch(fn, obj, arg) { try { return { type: "normal", arg: fn.call(obj, arg) }; } catch (err) { return { type: "throw", arg: err }; } } exports.wrap = wrap; var ContinueSentinel = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var IteratorPrototype = {}; define(IteratorPrototype, iteratorSymbol, function () { return this; }); var getProto = Object.getPrototypeOf, NativeIteratorPrototype = getProto && getProto(getProto(values([]))); NativeIteratorPrototype && NativeIteratorPrototype !== Op && hasOwn.call(NativeIteratorPrototype, iteratorSymbol) && (IteratorPrototype = NativeIteratorPrototype); var Gp = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(IteratorPrototype); function defineIteratorMethods(prototype) { ["next", "throw", "return"].forEach(function (method) { define(prototype, method, function (arg) { return this._invoke(method, arg); }); }); } function AsyncIterator(generator, PromiseImpl) { function invoke(method, arg, resolve, reject) { var record = tryCatch(generator[method], generator, arg); if ("throw" !== record.type) { var result = record.arg, value = result.value; return value && "object" == babelHelpers["typeof"](value) && hasOwn.call(value, "__await") ? PromiseImpl.resolve(value.__await).then(function (value) { invoke("next", value, resolve, reject); }, function (err) { invoke("throw", err, resolve, reject); }) : PromiseImpl.resolve(value).then(function (unwrapped) { result.value = unwrapped, resolve(result); }, function (error) { return invoke("throw", error, resolve, reject); }); } reject(record.arg); } var previousPromise; defineProperty(this, "_invoke", { value: function value(method, arg) { function callInvokeWithMethodAndArg() { return new PromiseImpl(function (resolve, reject) { invoke(method, arg, resolve, reject); }); } return previousPromise = previousPromise ? previousPromise.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); } }); } function makeInvokeMethod(innerFn, self, context) { var state = "suspendedStart"; return function (method, arg) { if ("executing" === state) throw new Error("Generator is already running"); if ("completed" === state) { if ("throw" === method) throw arg; return doneResult(); } for (context.method = method, context.arg = arg;;) { var delegate = context.delegate; if (delegate) { var delegateResult = maybeInvokeDelegate(delegate, context); if (delegateResult) { if (delegateResult === ContinueSentinel) continue; return delegateResult; } } if ("next" === context.method) context.sent = context._sent = context.arg;else if ("throw" === context.method) { if ("suspendedStart" === state) throw state = "completed", context.arg; context.dispatchException(context.arg); } else "return" === context.method && context.abrupt("return", context.arg); state = "executing"; var record = tryCatch(innerFn, self, context); if ("normal" === record.type) { if (state = context.done ? "completed" : "suspendedYield", record.arg === ContinueSentinel) continue; return { value: record.arg, done: context.done }; } "throw" === record.type && (state = "completed", context.method = "throw", context.arg = record.arg); } }; } function maybeInvokeDelegate(delegate, context) { var methodName = context.method, method = delegate.iterator[methodName]; if (undefined === method) return context.delegate = null, "throw" === methodName && delegate.iterator["return"] && (context.method = "return", context.arg = undefined, maybeInvokeDelegate(delegate, context), "throw" === context.method) || "return" !== methodName && (context.method = "throw", context.arg = new TypeError("The iterator does not provide a '" + methodName + "' method")), ContinueSentinel; var record = tryCatch(method, delegate.iterator, context.arg); if ("throw" === record.type) return context.method = "throw", context.arg = record.arg, context.delegate = null, ContinueSentinel; var info = record.arg; return info ? info.done ? (context[delegate.resultName] = info.value, context.next = delegate.nextLoc, "return" !== context.method && (context.method = "next", context.arg = undefined), context.delegate = null, ContinueSentinel) : info : (context.method = "throw", context.arg = new TypeError("iterator result is not an object"), context.delegate = null, ContinueSentinel); } function pushTryEntry(locs) { var entry = { tryLoc: locs[0] }; 1 in locs && (entry.catchLoc = locs[1]), 2 in locs && (entry.finallyLoc = locs[2], entry.afterLoc = locs[3]), this.tryEntries.push(entry); } function resetTryEntry(entry) { var record = entry.completion || {}; record.type = "normal", delete record.arg, entry.completion = record; } function Context(tryLocsList) { this.tryEntries = [{ tryLoc: "root" }], tryLocsList.forEach(pushTryEntry, this), this.reset(!0); } function values(iterable) { if (iterable) { var iteratorMethod = iterable[iteratorSymbol]; if (iteratorMethod) return iteratorMethod.call(iterable); if ("function" == typeof iterable.next) return iterable; if (!isNaN(iterable.length)) { var i = -1, next = function next() { for (; ++i < iterable.length;) if (hasOwn.call(iterable, i)) return next.value = iterable[i], next.done = !1, next; return next.value = undefined, next.done = !0, next; }; return next.next = next; } } return { next: doneResult }; } function doneResult() { return { value: undefined, done: !0 }; } return GeneratorFunction.prototype = GeneratorFunctionPrototype, defineProperty(Gp, "constructor", { value: GeneratorFunctionPrototype, configurable: !0 }), defineProperty(GeneratorFunctionPrototype, "constructor", { value: GeneratorFunction, configurable: !0 }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, toStringTagSymbol, "GeneratorFunction"), exports.isGeneratorFunction = function (genFun) { var ctor = "function" == typeof genFun && genFun.constructor; return !!ctor && (ctor === GeneratorFunction || "GeneratorFunction" === (ctor.displayName || ctor.name)); }, exports.mark = function (genFun) { return Object.setPrototypeOf ? Object.setPrototypeOf(genFun, GeneratorFunctionPrototype) : (genFun.__proto__ = GeneratorFunctionPrototype, define(genFun, toStringTagSymbol, "GeneratorFunction")), genFun.prototype = Object.create(Gp), genFun; }, exports.awrap = function (arg) { return { __await: arg }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, asyncIteratorSymbol, function () { return this; }), exports.AsyncIterator = AsyncIterator, exports.async = function (innerFn, outerFn, self, tryLocsList, PromiseImpl) { void 0 === PromiseImpl && (PromiseImpl = Promise); var iter = new AsyncIterator(wrap(innerFn, outerFn, self, tryLocsList), PromiseImpl); return exports.isGeneratorFunction(outerFn) ? iter : iter.next().then(function (result) { return result.done ? result.value : iter.next(); }); }, defineIteratorMethods(Gp), define(Gp, toStringTagSymbol, "Generator"), define(Gp, iteratorSymbol, function () { return this; }), define(Gp, "toString", function () { return "[object Generator]"; }), exports.keys = function (val) { var object = Object(val), keys = []; for (var key in object) keys.push(key); return keys.reverse(), function next() { for (; keys.length;) { var key = keys.pop(); if (key in object) return next.value = key, next.done = !1, next; } return next.done = !0, next; }; }, exports.values = values, Context.prototype = { constructor: Context, reset: function reset(skipTempReset) { if (this.prev = 0, this.next = 0, this.sent = this._sent = undefined, this.done = !1, this.delegate = null, this.method = "next", this.arg = undefined, this.tryEntries.forEach(resetTryEntry), !skipTempReset) for (var name in this) "t" === name.charAt(0) && hasOwn.call(this, name) && !isNaN(+name.slice(1)) && (this[name] = undefined); }, stop: function stop() { this.done = !0; var rootRecord = this.tryEntries[0].completion; if ("throw" === rootRecord.type) throw rootRecord.arg; return this.rval; }, dispatchException: function dispatchException(exception) { if (this.done) throw exception; var context = this; function handle(loc, caught) { return record.type = "throw", record.arg = exception, context.next = loc, caught && (context.method = "next", context.arg = undefined), !!caught; } for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i], record = entry.completion; if ("root" === entry.tryLoc) return handle("end"); if (entry.tryLoc <= this.prev) { var hasCatch = hasOwn.call(entry, "catchLoc"), hasFinally = hasOwn.call(entry, "finallyLoc"); if (hasCatch && hasFinally) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } else if (hasCatch) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); } else { if (!hasFinally) throw new Error("try statement without catch or finally"); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } } } }, abrupt: function abrupt(type, arg) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc <= this.prev && hasOwn.call(entry, "finallyLoc") && this.prev < entry.finallyLoc) { var finallyEntry = entry; break; } } finallyEntry && ("break" === type || "continue" === type) && finallyEntry.tryLoc <= arg && arg <= finallyEntry.finallyLoc && (finallyEntry = null); var record = finallyEntry ? finallyEntry.completion : {}; return record.type = type, record.arg = arg, finallyEntry ? (this.method = "next", this.next = finallyEntry.finallyLoc, ContinueSentinel) : this.complete(record); }, complete: function complete(record, afterLoc) { if ("throw" === record.type) throw record.arg; return "break" === record.type || "continue" === record.type ? this.next = record.arg : "return" === record.type ? (this.rval = this.arg = record.arg, this.method = "return", this.next = "end") : "normal" === record.type && afterLoc && (this.next = afterLoc), ContinueSentinel; }, finish: function finish(finallyLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.finallyLoc === finallyLoc) return this.complete(entry.completion, entry.afterLoc), resetTryEntry(entry), ContinueSentinel; } }, "catch": function _catch(tryLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc === tryLoc) { var record = entry.completion; if ("throw" === record.type) { var thrown = record.arg; resetTryEntry(entry); } return thrown; } } throw new Error("illegal catch attempt"); }, delegateYield: function delegateYield(iterable, resultName, nextLoc) { return this.delegate = { iterator: values(iterable), resultName: resultName, nextLoc: nextLoc }, "next" === this.method && (this.arg = undefined), ContinueSentinel; } }, exports; }
+	function ownKeys$6(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+	function _objectSpread$6(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$6(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$6(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	var blankAvatar = '/bitrix/js/im/images/blank.gif';
 	var userData = {};
 	var usersInProcess = {};
@@ -30047,28 +30136,31 @@ this.BX = this.BX || {};
 	  return BX.message('conference_chat_enabled');
 	};
 	var getCallConnectionData = /*#__PURE__*/function () {
-	  var _ref = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$4().mark(function _callee2(callOptions, chatId) {
-	    return _regeneratorRuntime$4().wrap(function _callee2$(_context2) {
+	  var _ref = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$5().mark(function _callee2(callOptions, chatId) {
+	    var mustCreate,
+	      _args2 = arguments;
+	    return _regeneratorRuntime$5().wrap(function _callee2$(_context2) {
 	      while (1) switch (_context2.prev = _context2.next) {
 	        case 0:
+	          mustCreate = _args2.length > 2 && _args2[2] !== undefined ? _args2[2] : true;
 	          if (!main_core.Type.isPlainObject(callOptions)) {
 	            callOptions = {};
 	          }
 	          return _context2.abrupt("return", new Promise( /*#__PURE__*/function () {
-	            var _ref2 = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$4().mark(function _callee(resolve, reject) {
+	            var _ref2 = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$5().mark(function _callee(resolve, reject) {
 	              var callBalancerUrl, roomType, url, userToken, data;
-	              return _regeneratorRuntime$4().wrap(function _callee$(_context) {
+	              return _regeneratorRuntime$5().wrap(function _callee$(_context) {
 	                while (1) switch (_context.prev = _context.next) {
 	                  case 0:
 	                    abortController = new AbortController();
 	                    callBalancerUrl = call_lib_settingsManager.CallSettingsManager.callBalancerUrl;
 	                    roomType = callOptions.provider === Provider.Plain && call_lib_settingsManager.CallSettingsManager.isJwtInPlainCallsEnabled() ? RoomType.Personal : RoomType.Small;
-	                    url = "".concat(callBalancerUrl, "/v2/join");
+	                    url = "".concat(callBalancerUrl, "/v2/join?mustCreate=").concat(Boolean(mustCreate));
 	                    _context.next = 6;
 	                    return call_lib_callTokenManager.CallTokenManager.getUserToken(chatId);
 	                  case 6:
 	                    userToken = _context.sent;
-	                    data = JSON.stringify(_objectSpread$5({
+	                    data = JSON.stringify(_objectSpread$6({
 	                      userToken: userToken,
 	                      roomType: roomType,
 	                      clientVersion: ClientVersion,
@@ -30107,7 +30199,7 @@ this.BX = this.BX || {};
 	              return _ref2.apply(this, arguments);
 	            };
 	          }()));
-	        case 2:
+	        case 3:
 	        case "end":
 	          return _context2.stop();
 	      }
@@ -30118,31 +30210,26 @@ this.BX = this.BX || {};
 	  };
 	}();
 	var getCallConnectionDataById = /*#__PURE__*/function () {
-	  var _ref3 = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$4().mark(function _callee3(callUuid) {
+	  var _ref3 = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$5().mark(function _callee3(callUuid) {
 	    var call;
-	    return _regeneratorRuntime$4().wrap(function _callee3$(_context3) {
+	    return _regeneratorRuntime$5().wrap(function _callee3$(_context3) {
 	      while (1) switch (_context3.prev = _context3.next) {
 	        case 0:
-	          _context3.prev = 0;
-	          _context3.next = 3;
+	          _context3.next = 2;
 	          return CallEngine.getCallWithId(callUuid);
-	        case 3:
+	        case 2:
 	          call = _context3.sent;
 	          return _context3.abrupt("return", getCallConnectionData({
 	            callType: call.call.type,
 	            instanceId: call.call.instanceId,
 	            provider: call.call.provider,
 	            callToken: call_lib_callTokenManager.CallTokenManager.getTokenCached(call.call.associatedEntity.chatId)
-	          }, call.call.associatedEntity.chatId));
-	        case 7:
-	          _context3.prev = 7;
-	          _context3.t0 = _context3["catch"](0);
-	          throw _context3.t0;
-	        case 10:
+	          }, call.call.associatedEntity.chatId, false));
+	        case 4:
 	        case "end":
 	          return _context3.stop();
 	      }
-	    }, _callee3, null, [[0, 7]]);
+	    }, _callee3);
 	  }));
 	  return function getCallConnectionDataById(_x5) {
 	    return _ref3.apply(this, arguments);
@@ -30194,17 +30281,13 @@ this.BX = this.BX || {};
 	  var _Extension$getSetting6;
 	  return (_Extension$getSetting6 = main_core.Extension.getSettings('call.core')) === null || _Extension$getSetting6 === void 0 ? void 0 : _Extension$getSetting6.isNewQOSEnabled;
 	};
-	var isNewFollowUpSliderEnabled = function isNewFollowUpSliderEnabled() {
-	  var _Extension$getSetting7;
-	  return (_Extension$getSetting7 = main_core.Extension.getSettings('call.core')) === null || _Extension$getSetting7 === void 0 ? void 0 : _Extension$getSetting7.isNewFollowUpSliderEnabled;
-	};
 	var isKibanaLogsEnabled = function isKibanaLogsEnabled() {
-	  var _Extension$getSetting8;
-	  return (_Extension$getSetting8 = main_core.Extension.getSettings('call.core')) === null || _Extension$getSetting8 === void 0 ? void 0 : _Extension$getSetting8.isKibanaLogsEnabled;
+	  var _Extension$getSetting7;
+	  return (_Extension$getSetting7 = main_core.Extension.getSettings('call.core')) === null || _Extension$getSetting7 === void 0 ? void 0 : _Extension$getSetting7.isKibanaLogsEnabled;
 	};
 	var isChatMountInPage = function isChatMountInPage() {
-	  var _Extension$getSetting9, _Extension$getSetting10;
-	  return ((_Extension$getSetting9 = main_core.Extension.getSettings('call.core')) === null || _Extension$getSetting9 === void 0 ? void 0 : _Extension$getSetting9.isAirDesignEnabled) && ((_Extension$getSetting10 = main_core.Extension.getSettings('call.core')) === null || _Extension$getSetting10 === void 0 ? void 0 : _Extension$getSetting10.shouldHideQuickAccess);
+	  var _Extension$getSetting8, _Extension$getSetting9;
+	  return ((_Extension$getSetting8 = main_core.Extension.getSettings('call.core')) === null || _Extension$getSetting8 === void 0 ? void 0 : _Extension$getSetting8.isAirDesignEnabled) && ((_Extension$getSetting9 = main_core.Extension.getSettings('call.core')) === null || _Extension$getSetting9 === void 0 ? void 0 : _Extension$getSetting9.shouldHideQuickAccess);
 	};
 
 	/* ws logger */
@@ -30281,7 +30364,6 @@ this.BX = this.BX || {};
 	  isPictureInPictureFeatureEnabled: isPictureInPictureFeatureEnabled,
 	  isNewQOSEnabled: isNewQOSEnabled,
 	  sendLog: sendLog,
-	  isNewFollowUpSliderEnabled: isNewFollowUpSliderEnabled,
 	  isChatMountInPage: isChatMountInPage,
 	  roomPermissions: roomPermissions,
 	  getCurrentUserRole: getCurrentUserRole,
@@ -35571,9 +35653,9 @@ this.BX = this.BX || {};
 	  return ParticipantsPermissionSwitcher;
 	}();
 
-	function _regeneratorRuntime$5() { /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ _regeneratorRuntime$5 = function _regeneratorRuntime() { return exports; }; var exports = {}, Op = Object.prototype, hasOwn = Op.hasOwnProperty, defineProperty = Object.defineProperty || function (obj, key, desc) { obj[key] = desc.value; }, $Symbol = "function" == typeof Symbol ? Symbol : {}, iteratorSymbol = $Symbol.iterator || "@@iterator", asyncIteratorSymbol = $Symbol.asyncIterator || "@@asyncIterator", toStringTagSymbol = $Symbol.toStringTag || "@@toStringTag"; function define(obj, key, value) { return Object.defineProperty(obj, key, { value: value, enumerable: !0, configurable: !0, writable: !0 }), obj[key]; } try { define({}, ""); } catch (err) { define = function define(obj, key, value) { return obj[key] = value; }; } function wrap(innerFn, outerFn, self, tryLocsList) { var protoGenerator = outerFn && outerFn.prototype instanceof Generator ? outerFn : Generator, generator = Object.create(protoGenerator.prototype), context = new Context(tryLocsList || []); return defineProperty(generator, "_invoke", { value: makeInvokeMethod(innerFn, self, context) }), generator; } function tryCatch(fn, obj, arg) { try { return { type: "normal", arg: fn.call(obj, arg) }; } catch (err) { return { type: "throw", arg: err }; } } exports.wrap = wrap; var ContinueSentinel = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var IteratorPrototype = {}; define(IteratorPrototype, iteratorSymbol, function () { return this; }); var getProto = Object.getPrototypeOf, NativeIteratorPrototype = getProto && getProto(getProto(values([]))); NativeIteratorPrototype && NativeIteratorPrototype !== Op && hasOwn.call(NativeIteratorPrototype, iteratorSymbol) && (IteratorPrototype = NativeIteratorPrototype); var Gp = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(IteratorPrototype); function defineIteratorMethods(prototype) { ["next", "throw", "return"].forEach(function (method) { define(prototype, method, function (arg) { return this._invoke(method, arg); }); }); } function AsyncIterator(generator, PromiseImpl) { function invoke(method, arg, resolve, reject) { var record = tryCatch(generator[method], generator, arg); if ("throw" !== record.type) { var result = record.arg, value = result.value; return value && "object" == babelHelpers["typeof"](value) && hasOwn.call(value, "__await") ? PromiseImpl.resolve(value.__await).then(function (value) { invoke("next", value, resolve, reject); }, function (err) { invoke("throw", err, resolve, reject); }) : PromiseImpl.resolve(value).then(function (unwrapped) { result.value = unwrapped, resolve(result); }, function (error) { return invoke("throw", error, resolve, reject); }); } reject(record.arg); } var previousPromise; defineProperty(this, "_invoke", { value: function value(method, arg) { function callInvokeWithMethodAndArg() { return new PromiseImpl(function (resolve, reject) { invoke(method, arg, resolve, reject); }); } return previousPromise = previousPromise ? previousPromise.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); } }); } function makeInvokeMethod(innerFn, self, context) { var state = "suspendedStart"; return function (method, arg) { if ("executing" === state) throw new Error("Generator is already running"); if ("completed" === state) { if ("throw" === method) throw arg; return doneResult(); } for (context.method = method, context.arg = arg;;) { var delegate = context.delegate; if (delegate) { var delegateResult = maybeInvokeDelegate(delegate, context); if (delegateResult) { if (delegateResult === ContinueSentinel) continue; return delegateResult; } } if ("next" === context.method) context.sent = context._sent = context.arg;else if ("throw" === context.method) { if ("suspendedStart" === state) throw state = "completed", context.arg; context.dispatchException(context.arg); } else "return" === context.method && context.abrupt("return", context.arg); state = "executing"; var record = tryCatch(innerFn, self, context); if ("normal" === record.type) { if (state = context.done ? "completed" : "suspendedYield", record.arg === ContinueSentinel) continue; return { value: record.arg, done: context.done }; } "throw" === record.type && (state = "completed", context.method = "throw", context.arg = record.arg); } }; } function maybeInvokeDelegate(delegate, context) { var methodName = context.method, method = delegate.iterator[methodName]; if (undefined === method) return context.delegate = null, "throw" === methodName && delegate.iterator["return"] && (context.method = "return", context.arg = undefined, maybeInvokeDelegate(delegate, context), "throw" === context.method) || "return" !== methodName && (context.method = "throw", context.arg = new TypeError("The iterator does not provide a '" + methodName + "' method")), ContinueSentinel; var record = tryCatch(method, delegate.iterator, context.arg); if ("throw" === record.type) return context.method = "throw", context.arg = record.arg, context.delegate = null, ContinueSentinel; var info = record.arg; return info ? info.done ? (context[delegate.resultName] = info.value, context.next = delegate.nextLoc, "return" !== context.method && (context.method = "next", context.arg = undefined), context.delegate = null, ContinueSentinel) : info : (context.method = "throw", context.arg = new TypeError("iterator result is not an object"), context.delegate = null, ContinueSentinel); } function pushTryEntry(locs) { var entry = { tryLoc: locs[0] }; 1 in locs && (entry.catchLoc = locs[1]), 2 in locs && (entry.finallyLoc = locs[2], entry.afterLoc = locs[3]), this.tryEntries.push(entry); } function resetTryEntry(entry) { var record = entry.completion || {}; record.type = "normal", delete record.arg, entry.completion = record; } function Context(tryLocsList) { this.tryEntries = [{ tryLoc: "root" }], tryLocsList.forEach(pushTryEntry, this), this.reset(!0); } function values(iterable) { if (iterable) { var iteratorMethod = iterable[iteratorSymbol]; if (iteratorMethod) return iteratorMethod.call(iterable); if ("function" == typeof iterable.next) return iterable; if (!isNaN(iterable.length)) { var i = -1, next = function next() { for (; ++i < iterable.length;) if (hasOwn.call(iterable, i)) return next.value = iterable[i], next.done = !1, next; return next.value = undefined, next.done = !0, next; }; return next.next = next; } } return { next: doneResult }; } function doneResult() { return { value: undefined, done: !0 }; } return GeneratorFunction.prototype = GeneratorFunctionPrototype, defineProperty(Gp, "constructor", { value: GeneratorFunctionPrototype, configurable: !0 }), defineProperty(GeneratorFunctionPrototype, "constructor", { value: GeneratorFunction, configurable: !0 }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, toStringTagSymbol, "GeneratorFunction"), exports.isGeneratorFunction = function (genFun) { var ctor = "function" == typeof genFun && genFun.constructor; return !!ctor && (ctor === GeneratorFunction || "GeneratorFunction" === (ctor.displayName || ctor.name)); }, exports.mark = function (genFun) { return Object.setPrototypeOf ? Object.setPrototypeOf(genFun, GeneratorFunctionPrototype) : (genFun.__proto__ = GeneratorFunctionPrototype, define(genFun, toStringTagSymbol, "GeneratorFunction")), genFun.prototype = Object.create(Gp), genFun; }, exports.awrap = function (arg) { return { __await: arg }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, asyncIteratorSymbol, function () { return this; }), exports.AsyncIterator = AsyncIterator, exports.async = function (innerFn, outerFn, self, tryLocsList, PromiseImpl) { void 0 === PromiseImpl && (PromiseImpl = Promise); var iter = new AsyncIterator(wrap(innerFn, outerFn, self, tryLocsList), PromiseImpl); return exports.isGeneratorFunction(outerFn) ? iter : iter.next().then(function (result) { return result.done ? result.value : iter.next(); }); }, defineIteratorMethods(Gp), define(Gp, toStringTagSymbol, "Generator"), define(Gp, iteratorSymbol, function () { return this; }), define(Gp, "toString", function () { return "[object Generator]"; }), exports.keys = function (val) { var object = Object(val), keys = []; for (var key in object) keys.push(key); return keys.reverse(), function next() { for (; keys.length;) { var key = keys.pop(); if (key in object) return next.value = key, next.done = !1, next; } return next.done = !0, next; }; }, exports.values = values, Context.prototype = { constructor: Context, reset: function reset(skipTempReset) { if (this.prev = 0, this.next = 0, this.sent = this._sent = undefined, this.done = !1, this.delegate = null, this.method = "next", this.arg = undefined, this.tryEntries.forEach(resetTryEntry), !skipTempReset) for (var name in this) "t" === name.charAt(0) && hasOwn.call(this, name) && !isNaN(+name.slice(1)) && (this[name] = undefined); }, stop: function stop() { this.done = !0; var rootRecord = this.tryEntries[0].completion; if ("throw" === rootRecord.type) throw rootRecord.arg; return this.rval; }, dispatchException: function dispatchException(exception) { if (this.done) throw exception; var context = this; function handle(loc, caught) { return record.type = "throw", record.arg = exception, context.next = loc, caught && (context.method = "next", context.arg = undefined), !!caught; } for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i], record = entry.completion; if ("root" === entry.tryLoc) return handle("end"); if (entry.tryLoc <= this.prev) { var hasCatch = hasOwn.call(entry, "catchLoc"), hasFinally = hasOwn.call(entry, "finallyLoc"); if (hasCatch && hasFinally) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } else if (hasCatch) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); } else { if (!hasFinally) throw new Error("try statement without catch or finally"); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } } } }, abrupt: function abrupt(type, arg) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc <= this.prev && hasOwn.call(entry, "finallyLoc") && this.prev < entry.finallyLoc) { var finallyEntry = entry; break; } } finallyEntry && ("break" === type || "continue" === type) && finallyEntry.tryLoc <= arg && arg <= finallyEntry.finallyLoc && (finallyEntry = null); var record = finallyEntry ? finallyEntry.completion : {}; return record.type = type, record.arg = arg, finallyEntry ? (this.method = "next", this.next = finallyEntry.finallyLoc, ContinueSentinel) : this.complete(record); }, complete: function complete(record, afterLoc) { if ("throw" === record.type) throw record.arg; return "break" === record.type || "continue" === record.type ? this.next = record.arg : "return" === record.type ? (this.rval = this.arg = record.arg, this.method = "return", this.next = "end") : "normal" === record.type && afterLoc && (this.next = afterLoc), ContinueSentinel; }, finish: function finish(finallyLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.finallyLoc === finallyLoc) return this.complete(entry.completion, entry.afterLoc), resetTryEntry(entry), ContinueSentinel; } }, "catch": function _catch(tryLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc === tryLoc) { var record = entry.completion; if ("throw" === record.type) { var thrown = record.arg; resetTryEntry(entry); } return thrown; } } throw new Error("illegal catch attempt"); }, delegateYield: function delegateYield(iterable, resultName, nextLoc) { return this.delegate = { iterator: values(iterable), resultName: resultName, nextLoc: nextLoc }, "next" === this.method && (this.arg = undefined), ContinueSentinel; } }, exports; }
-	function ownKeys$6(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-	function _objectSpread$6(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$6(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$6(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
+	function _regeneratorRuntime$6() { /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ _regeneratorRuntime$6 = function _regeneratorRuntime() { return exports; }; var exports = {}, Op = Object.prototype, hasOwn = Op.hasOwnProperty, defineProperty = Object.defineProperty || function (obj, key, desc) { obj[key] = desc.value; }, $Symbol = "function" == typeof Symbol ? Symbol : {}, iteratorSymbol = $Symbol.iterator || "@@iterator", asyncIteratorSymbol = $Symbol.asyncIterator || "@@asyncIterator", toStringTagSymbol = $Symbol.toStringTag || "@@toStringTag"; function define(obj, key, value) { return Object.defineProperty(obj, key, { value: value, enumerable: !0, configurable: !0, writable: !0 }), obj[key]; } try { define({}, ""); } catch (err) { define = function define(obj, key, value) { return obj[key] = value; }; } function wrap(innerFn, outerFn, self, tryLocsList) { var protoGenerator = outerFn && outerFn.prototype instanceof Generator ? outerFn : Generator, generator = Object.create(protoGenerator.prototype), context = new Context(tryLocsList || []); return defineProperty(generator, "_invoke", { value: makeInvokeMethod(innerFn, self, context) }), generator; } function tryCatch(fn, obj, arg) { try { return { type: "normal", arg: fn.call(obj, arg) }; } catch (err) { return { type: "throw", arg: err }; } } exports.wrap = wrap; var ContinueSentinel = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var IteratorPrototype = {}; define(IteratorPrototype, iteratorSymbol, function () { return this; }); var getProto = Object.getPrototypeOf, NativeIteratorPrototype = getProto && getProto(getProto(values([]))); NativeIteratorPrototype && NativeIteratorPrototype !== Op && hasOwn.call(NativeIteratorPrototype, iteratorSymbol) && (IteratorPrototype = NativeIteratorPrototype); var Gp = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(IteratorPrototype); function defineIteratorMethods(prototype) { ["next", "throw", "return"].forEach(function (method) { define(prototype, method, function (arg) { return this._invoke(method, arg); }); }); } function AsyncIterator(generator, PromiseImpl) { function invoke(method, arg, resolve, reject) { var record = tryCatch(generator[method], generator, arg); if ("throw" !== record.type) { var result = record.arg, value = result.value; return value && "object" == babelHelpers["typeof"](value) && hasOwn.call(value, "__await") ? PromiseImpl.resolve(value.__await).then(function (value) { invoke("next", value, resolve, reject); }, function (err) { invoke("throw", err, resolve, reject); }) : PromiseImpl.resolve(value).then(function (unwrapped) { result.value = unwrapped, resolve(result); }, function (error) { return invoke("throw", error, resolve, reject); }); } reject(record.arg); } var previousPromise; defineProperty(this, "_invoke", { value: function value(method, arg) { function callInvokeWithMethodAndArg() { return new PromiseImpl(function (resolve, reject) { invoke(method, arg, resolve, reject); }); } return previousPromise = previousPromise ? previousPromise.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); } }); } function makeInvokeMethod(innerFn, self, context) { var state = "suspendedStart"; return function (method, arg) { if ("executing" === state) throw new Error("Generator is already running"); if ("completed" === state) { if ("throw" === method) throw arg; return doneResult(); } for (context.method = method, context.arg = arg;;) { var delegate = context.delegate; if (delegate) { var delegateResult = maybeInvokeDelegate(delegate, context); if (delegateResult) { if (delegateResult === ContinueSentinel) continue; return delegateResult; } } if ("next" === context.method) context.sent = context._sent = context.arg;else if ("throw" === context.method) { if ("suspendedStart" === state) throw state = "completed", context.arg; context.dispatchException(context.arg); } else "return" === context.method && context.abrupt("return", context.arg); state = "executing"; var record = tryCatch(innerFn, self, context); if ("normal" === record.type) { if (state = context.done ? "completed" : "suspendedYield", record.arg === ContinueSentinel) continue; return { value: record.arg, done: context.done }; } "throw" === record.type && (state = "completed", context.method = "throw", context.arg = record.arg); } }; } function maybeInvokeDelegate(delegate, context) { var methodName = context.method, method = delegate.iterator[methodName]; if (undefined === method) return context.delegate = null, "throw" === methodName && delegate.iterator["return"] && (context.method = "return", context.arg = undefined, maybeInvokeDelegate(delegate, context), "throw" === context.method) || "return" !== methodName && (context.method = "throw", context.arg = new TypeError("The iterator does not provide a '" + methodName + "' method")), ContinueSentinel; var record = tryCatch(method, delegate.iterator, context.arg); if ("throw" === record.type) return context.method = "throw", context.arg = record.arg, context.delegate = null, ContinueSentinel; var info = record.arg; return info ? info.done ? (context[delegate.resultName] = info.value, context.next = delegate.nextLoc, "return" !== context.method && (context.method = "next", context.arg = undefined), context.delegate = null, ContinueSentinel) : info : (context.method = "throw", context.arg = new TypeError("iterator result is not an object"), context.delegate = null, ContinueSentinel); } function pushTryEntry(locs) { var entry = { tryLoc: locs[0] }; 1 in locs && (entry.catchLoc = locs[1]), 2 in locs && (entry.finallyLoc = locs[2], entry.afterLoc = locs[3]), this.tryEntries.push(entry); } function resetTryEntry(entry) { var record = entry.completion || {}; record.type = "normal", delete record.arg, entry.completion = record; } function Context(tryLocsList) { this.tryEntries = [{ tryLoc: "root" }], tryLocsList.forEach(pushTryEntry, this), this.reset(!0); } function values(iterable) { if (iterable) { var iteratorMethod = iterable[iteratorSymbol]; if (iteratorMethod) return iteratorMethod.call(iterable); if ("function" == typeof iterable.next) return iterable; if (!isNaN(iterable.length)) { var i = -1, next = function next() { for (; ++i < iterable.length;) if (hasOwn.call(iterable, i)) return next.value = iterable[i], next.done = !1, next; return next.value = undefined, next.done = !0, next; }; return next.next = next; } } return { next: doneResult }; } function doneResult() { return { value: undefined, done: !0 }; } return GeneratorFunction.prototype = GeneratorFunctionPrototype, defineProperty(Gp, "constructor", { value: GeneratorFunctionPrototype, configurable: !0 }), defineProperty(GeneratorFunctionPrototype, "constructor", { value: GeneratorFunction, configurable: !0 }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, toStringTagSymbol, "GeneratorFunction"), exports.isGeneratorFunction = function (genFun) { var ctor = "function" == typeof genFun && genFun.constructor; return !!ctor && (ctor === GeneratorFunction || "GeneratorFunction" === (ctor.displayName || ctor.name)); }, exports.mark = function (genFun) { return Object.setPrototypeOf ? Object.setPrototypeOf(genFun, GeneratorFunctionPrototype) : (genFun.__proto__ = GeneratorFunctionPrototype, define(genFun, toStringTagSymbol, "GeneratorFunction")), genFun.prototype = Object.create(Gp), genFun; }, exports.awrap = function (arg) { return { __await: arg }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, asyncIteratorSymbol, function () { return this; }), exports.AsyncIterator = AsyncIterator, exports.async = function (innerFn, outerFn, self, tryLocsList, PromiseImpl) { void 0 === PromiseImpl && (PromiseImpl = Promise); var iter = new AsyncIterator(wrap(innerFn, outerFn, self, tryLocsList), PromiseImpl); return exports.isGeneratorFunction(outerFn) ? iter : iter.next().then(function (result) { return result.done ? result.value : iter.next(); }); }, defineIteratorMethods(Gp), define(Gp, toStringTagSymbol, "Generator"), define(Gp, iteratorSymbol, function () { return this; }), define(Gp, "toString", function () { return "[object Generator]"; }), exports.keys = function (val) { var object = Object(val), keys = []; for (var key in object) keys.push(key); return keys.reverse(), function next() { for (; keys.length;) { var key = keys.pop(); if (key in object) return next.value = key, next.done = !1, next; } return next.done = !0, next; }; }, exports.values = values, Context.prototype = { constructor: Context, reset: function reset(skipTempReset) { if (this.prev = 0, this.next = 0, this.sent = this._sent = undefined, this.done = !1, this.delegate = null, this.method = "next", this.arg = undefined, this.tryEntries.forEach(resetTryEntry), !skipTempReset) for (var name in this) "t" === name.charAt(0) && hasOwn.call(this, name) && !isNaN(+name.slice(1)) && (this[name] = undefined); }, stop: function stop() { this.done = !0; var rootRecord = this.tryEntries[0].completion; if ("throw" === rootRecord.type) throw rootRecord.arg; return this.rval; }, dispatchException: function dispatchException(exception) { if (this.done) throw exception; var context = this; function handle(loc, caught) { return record.type = "throw", record.arg = exception, context.next = loc, caught && (context.method = "next", context.arg = undefined), !!caught; } for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i], record = entry.completion; if ("root" === entry.tryLoc) return handle("end"); if (entry.tryLoc <= this.prev) { var hasCatch = hasOwn.call(entry, "catchLoc"), hasFinally = hasOwn.call(entry, "finallyLoc"); if (hasCatch && hasFinally) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } else if (hasCatch) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); } else { if (!hasFinally) throw new Error("try statement without catch or finally"); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } } } }, abrupt: function abrupt(type, arg) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc <= this.prev && hasOwn.call(entry, "finallyLoc") && this.prev < entry.finallyLoc) { var finallyEntry = entry; break; } } finallyEntry && ("break" === type || "continue" === type) && finallyEntry.tryLoc <= arg && arg <= finallyEntry.finallyLoc && (finallyEntry = null); var record = finallyEntry ? finallyEntry.completion : {}; return record.type = type, record.arg = arg, finallyEntry ? (this.method = "next", this.next = finallyEntry.finallyLoc, ContinueSentinel) : this.complete(record); }, complete: function complete(record, afterLoc) { if ("throw" === record.type) throw record.arg; return "break" === record.type || "continue" === record.type ? this.next = record.arg : "return" === record.type ? (this.rval = this.arg = record.arg, this.method = "return", this.next = "end") : "normal" === record.type && afterLoc && (this.next = afterLoc), ContinueSentinel; }, finish: function finish(finallyLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.finallyLoc === finallyLoc) return this.complete(entry.completion, entry.afterLoc), resetTryEntry(entry), ContinueSentinel; } }, "catch": function _catch(tryLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc === tryLoc) { var record = entry.completion; if ("throw" === record.type) { var thrown = record.arg; resetTryEntry(entry); } return thrown; } } throw new Error("illegal catch attempt"); }, delegateYield: function delegateYield(iterable, resultName, nextLoc) { return this.delegate = { iterator: values(iterable), resultName: resultName, nextLoc: nextLoc }, "next" === this.method && (this.arg = undefined), ContinueSentinel; } }, exports; }
+	function ownKeys$7(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+	function _objectSpread$7(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$7(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$7(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	function _classPrivateMethodInitSpec$a(obj, privateSet) { _checkPrivateRedeclaration$a(obj, privateSet); privateSet.add(obj); }
 	function _checkPrivateRedeclaration$a(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet$a(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
@@ -35614,6 +35696,7 @@ this.BX = this.BX || {};
 	var _onChildCallFirstMedia = /*#__PURE__*/new WeakSet();
 	var _onChildCallFirstUserJoined = /*#__PURE__*/new WeakSet();
 	var _switchToChildCall = /*#__PURE__*/new WeakSet();
+	var _stopRecordCall = /*#__PURE__*/new WeakSet();
 	var _setUserMedia = /*#__PURE__*/new WeakSet();
 	var _getCallDetail = /*#__PURE__*/new WeakSet();
 	var CallController = /*#__PURE__*/function (_EventEmitter) {
@@ -35624,6 +35707,7 @@ this.BX = this.BX || {};
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(CallController).call(this));
 	    _classPrivateMethodInitSpec$a(babelHelpers.assertThisInitialized(_this), _getCallDetail);
 	    _classPrivateMethodInitSpec$a(babelHelpers.assertThisInitialized(_this), _setUserMedia);
+	    _classPrivateMethodInitSpec$a(babelHelpers.assertThisInitialized(_this), _stopRecordCall);
 	    _classPrivateMethodInitSpec$a(babelHelpers.assertThisInitialized(_this), _switchToChildCall);
 	    _classPrivateMethodInitSpec$a(babelHelpers.assertThisInitialized(_this), _onChildCallFirstUserJoined);
 	    _classPrivateMethodInitSpec$a(babelHelpers.assertThisInitialized(_this), _onChildCallFirstMedia);
@@ -35659,6 +35743,7 @@ this.BX = this.BX || {};
 	    _this.screenShareStartTime = null;
 	    _this.callRecordState = View.RecordState.Stopped;
 	    _this.callRecordType = View.RecordType.None;
+	    _this.callRecordInitiatorId = null;
 	    _this.callRecordInfo = null;
 	    _this.autoCloseCallView = true;
 	    _this.talkingUsers = {};
@@ -35761,6 +35846,7 @@ this.BX = this.BX || {};
 	    _this.pictureInPictureDebounceForOpen = null;
 	    _this.isWindowFocus = true;
 	    _this.isCallHangupButtonPressed = false;
+	    _this.callMultiBroadcastClient = null;
 	    if (needInit) {
 	      _this.init();
 	      _classPrivateMethodGet$a(babelHelpers.assertThisInitialized(_this), _subscribeEvents$1, _subscribeEvents2$1).call(babelHelpers.assertThisInitialized(_this), _config);
@@ -35824,6 +35910,22 @@ this.BX = this.BX || {};
 	      BX.addCustomEvent("OnDesktopTabChange", this._onImTabChangeHandler);
 	      BX.addCustomEvent(window, "onImUpdateCounterMessage", this._onUpdateChatCounter.bind(this));
 	      BX.garbage(this.destroy, this);
+	      if (im_v2_lib_desktopApi.DesktopApi.isDesktop()) {
+	        this.callMultiBroadcastClient = new CallMultiChannel('call_controller_multi_channel');
+	        this.callMultiBroadcastClient.executer(function (callUuid) {
+	          var _this2$currentCall;
+	          var currentCallUuid = (_this2$currentCall = _this2.currentCall) === null || _this2$currentCall === void 0 ? void 0 : _this2$currentCall.uuid;
+	          var hasView = Boolean(_this2.callView);
+	          var hasActiveCall = currentCallUuid === callUuid && hasView;
+	          if (hasActiveCall) {
+	            BXDesktopSystem.SetActiveTab();
+	          }
+	          return hasActiveCall;
+	        });
+	      }
+	      CallEngine.multiBroadcastClient.executer(function () {
+	        return Boolean(_this2.callView);
+	      });
 	      this.inited = true;
 	    }
 	    /**
@@ -35922,7 +36024,7 @@ this.BX = this.BX || {};
 	      var newCallId = this._getCallIdentifier(newCall);
 	      var currentCallId = this._getCallIdentifier(this.currentCall);
 	      if (!isCurrentCallActive) {
-	        if (newCall.initiatorId == this.userId) {
+	        if (newCall.initiatorId == this.userId || CallEngineLegacy.calls[newCall.parentId]) {
 	          return;
 	        }
 	        if (this.ignoreDeclinedCallsTimeout[newCallId]) {
@@ -36512,7 +36614,8 @@ this.BX = this.BX || {};
 	      var call = CallEngineLegacy.getCallWithDialogId(dialogId) || CallEngine.getCallWithDialogId(dialogId);
 	      if (call) {
 	        this.joinCall(call.id, call.uuid, video, {
-	          chatInfo: call.associatedEntity
+	          chatInfo: call.associatedEntity,
+	          mustCreate: true
 	        });
 	        return;
 	      }
@@ -36754,18 +36857,21 @@ this.BX = this.BX || {};
 	      this.log("Joining call " + callUuid);
 	      this.initCallPromise = isLegacyCall ? Promise.resolve() : call_lib_callTokenManager.CallTokenManager.getToken(options.chatInfo.chatId);
 	      this.initCallPromise.then(function (callToken) {
-	        var config = {
-	          provider: provider,
-	          entityType: 'chat',
-	          entityId: options.chatInfo.id,
-	          videoEnabled: Boolean(video),
-	          enableMicAutoParameters: Hardware.enableMicAutoParameters,
-	          joinExisting: true,
-	          roomId: callUuid,
-	          debug: _this9.debug,
-	          token: callToken,
-	          chatInfo: options.chatInfo
-	        };
+	        var config = null;
+	        if (options !== null && options !== void 0 && options.mustCreate) {
+	          config = {
+	            provider: provider,
+	            entityType: 'chat',
+	            entityId: options.chatInfo.id,
+	            videoEnabled: Boolean(video),
+	            enableMicAutoParameters: Hardware.enableMicAutoParameters,
+	            joinExisting: true,
+	            roomId: callUuid,
+	            debug: _this9.debug,
+	            token: callToken,
+	            chatInfo: options.chatInfo
+	          };
+	        }
 	        return isLegacyCall ? CallEngineLegacy.getCallWithId(callId) : CallEngine.getCallWithId(callUuid, config);
 	      }).then(function (result) {
 	        if (!_this9.currentCall || _this9.currentCall.uuid !== callUuid) {
@@ -37184,7 +37290,7 @@ this.BX = this.BX || {};
 	        darkMode: true,
 	        contentBorderRadius: '6px'
 	      };
-	      this.documentsMenu = new BX.PopupMenuWindow(_objectSpread$6(_objectSpread$6({}, newStyleOptions), {}, {
+	      this.documentsMenu = new BX.PopupMenuWindow(_objectSpread$7(_objectSpread$7({}, newStyleOptions), {}, {
 	        angle: false,
 	        bindElement: this.callView.buttons.document.elements.root,
 	        targetContainer: this.container,
@@ -37549,10 +37655,11 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "getDocumentType",
 	    value: function getDocumentType() {
-	      if (this.docEditor.options.type === DocumentType.Resume) {
+	      var _this$docEditor, _this$docEditor$optio, _this$docEditor2, _this$docEditor2$opti;
+	      if (((_this$docEditor = this.docEditor) === null || _this$docEditor === void 0 ? void 0 : (_this$docEditor$optio = _this$docEditor.options) === null || _this$docEditor$optio === void 0 ? void 0 : _this$docEditor$optio.type) === DocumentType.Resume) {
 	        return call_lib_analytics.Analytics.AnalyticsType.resume;
 	      }
-	      switch (this.docEditor.options.typeFile) {
+	      switch ((_this$docEditor2 = this.docEditor) === null || _this$docEditor2 === void 0 ? void 0 : (_this$docEditor2$opti = _this$docEditor2.options) === null || _this$docEditor2$opti === void 0 ? void 0 : _this$docEditor2$opti.typeFile) {
 	        case FILE_TYPE_DOCX:
 	          return call_lib_analytics.Analytics.AnalyticsType.doc;
 	        case FILE_TYPE_XLSX:
@@ -37560,10 +37667,14 @@ this.BX = this.BX || {};
 	        case FILE_TYPE_PPTX:
 	          return call_lib_analytics.Analytics.AnalyticsType.presentation;
 	      }
+	      return '';
 	    }
 	  }, {
 	    key: "unfold",
 	    value: function unfold() {
+	      var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+	      var _options$fromPiP = options.fromPiP,
+	        fromPiP = _options$fromPiP === void 0 ? false : _options$fromPiP;
 	      if (this.detached) {
 	        this.container.style.removeProperty('width');
 	        this.callView.show();
@@ -37583,7 +37694,9 @@ this.BX = this.BX || {};
 	            this.resizeObserver.observe(this.container);
 	          }
 	        }
-	        this.togglePictureInPictureCallWindow();
+	        this.togglePictureInPictureCallWindow({
+	          isForceClose: fromPiP
+	        });
 	      }
 	      BX.onCustomEvent(this, "CallController::onUnfold", {});
 	    }
@@ -37721,9 +37834,10 @@ this.BX = this.BX || {};
 	        date: new Date()
 	      });
 	      this.callRecordState = View.RecordState.Started;
-	    } // event handlers
+	    }
 	  }, {
 	    key: "_onCallNotificationClose",
+	    // event handlers
 	    value: function _onCallNotificationClose() {
 	      clearTimeout(this.hideIncomingCallTimeout);
 	      this.messengerFacade.stopRepeatSound(this.audioRingtone);
@@ -37740,10 +37854,10 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "_onCallNotificationButtonClick",
 	    value: function () {
-	      var _onCallNotificationButtonClick2 = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$5().mark(function _callee(e) {
+	      var _onCallNotificationButtonClick2 = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$6().mark(function _callee(e) {
 	        var _this20 = this;
 	        var data, _this$currentCall2, _this$currentCall3, _this$currentCall4, callParams, callId;
-	        return _regeneratorRuntime$5().wrap(function _callee$(_context) {
+	        return _regeneratorRuntime$6().wrap(function _callee$(_context) {
 	          while (1) switch (_context.prev = _context.next) {
 	            case 0:
 	              data = e.data;
@@ -37840,7 +37954,7 @@ this.BX = this.BX || {};
 	    value: function onAnswerButtonClick(mediaParams, callParams) {
 	      var _this21 = this;
 	      var isLegacyCall = callParams.scheme === CallScheme.classic;
-	      var currentCallPromise = isLegacyCall ? CallEngineLegacy.getCallWithId(callParams.id) : CallEngine.getCallWithId(callParams.uuid, {});
+	      var currentCallPromise = isLegacyCall ? CallEngineLegacy.getCallWithId(callParams.id) : CallEngine.getCallWithId(callParams.uuid);
 	      currentCallPromise.then(function (result) {
 	        if (!_this21.currentCall) {
 	          _this21.currentCall = result.call;
@@ -38050,8 +38164,11 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "_onPipClose",
 	    value: function _onPipClose() {
-	      if (this.folded) {
-	        this.unfold();
+	      var isViewHidden = this.callView.viewVisibility.getCurrentVisibility() === View.DocumentVisibilityState.hidden;
+	      if (this.folded && isViewHidden) {
+	        this.unfold({
+	          fromPiP: true
+	        });
 	      }
 	    }
 	  }, {
@@ -38785,7 +38902,7 @@ this.BX = this.BX || {};
 	        isCameraOn: e.video,
 	        calledProgrammatically: !!e.calledProgrammatically
 	      });
-	      if (!e.video) {
+	      if (!e.video && !this.currentCall.isScreenSharingStarted()) {
 	        this.callView.releaseLocalMedia();
 	      }
 	      if (!this.currentCall.cameraId && e.video) {
@@ -39081,11 +39198,7 @@ this.BX = this.BX || {};
 	      if (this.invitePopup) {
 	        this.invitePopup.close();
 	      }
-	      if (this.isRecording()) {
-	        BXDesktopSystem.CallRecordStop();
-	      }
-	      this.callRecordState = View.RecordState.Stopped;
-	      this.callRecordType = View.RecordType.None;
+	      _classPrivateMethodGet$a(this, _stopRecordCall, _stopRecordCall2).call(this);
 	      if (this.callRecordMenu) {
 	        this.callRecordMenu.close();
 	      }
@@ -39197,7 +39310,22 @@ this.BX = this.BX || {};
 	        			name: userData.name
 	        		}));
 	        	}.bind(this));*/
-	      } else if (e.state == UserState.Idle && e.previousState == UserState.Connected) ; else if (e.state == UserState.Failed) {
+	      } else if (e.state == UserState.Idle && e.previousState == UserState.Connected) {
+	        /*Util.getUser(e.userId).then(function(userData)
+	        	{
+	        		this.showNotification(Util.getCustomMessage("IM_M_CALL_USER_DISCONNECTED", {
+	        			gender: userData.gender,
+	        			name: userData.name
+	        		}));
+	        	}.bind(this));*/
+
+	        if (e.userId === this.callRecordInitiatorId) {
+	          this.callRecordState = View.RecordState.Stopped;
+	          this.callRecordType = View.RecordType.None;
+	          this.callView.setRecordState(this.callView.getDefaultRecordState());
+	          this.callView.setButtonActive('record', false);
+	        }
+	      } else if (e.state == UserState.Failed) {
 	        if (e.networkProblem) {
 	          this.showNetworkProblemNotification(BX.message("IM_M_CALL_TURN_UNAVAILABLE"));
 	        } else if (this.currentCall instanceof PlainCall) {
@@ -39607,7 +39735,9 @@ this.BX = this.BX || {};
 	      this.talkingUsers[e.userId] = true;
 	      if (this.callView) {
 	        this.callView.setUserTalking(e.userId, true);
-	        this.callView.setUserFloorRequestState(e.userId, false);
+	        if (e.userId == this.callView.localUser.id) {
+	          this.callView.setUserFloorRequestState(e.userId, false);
+	        }
 	      }
 	      if (this.floatingWindow) {
 	        this.floatingWindow.setTalking(Object.keys(this.talkingUsers).map(function (id) {
@@ -40039,8 +40169,11 @@ this.BX = this.BX || {};
 	    value: function _onCallUserRecordState(event) {
 	      this.callRecordState = event.recordState.state;
 	      this.callView.setRecordState(event.recordState);
+	      this.callRecordInitiatorId = event.userId;
 	      if (event.recordState.state !== View.RecordState.Stopped) {
 	        this.callRecordInfo = event.recordState;
+	      } else {
+	        this.callRecordInitiatorId = null;
 	      }
 	      if (!this.canRecord() || event.userId != BX.message['USER_ID']) {
 	        return true;
@@ -40066,7 +40199,6 @@ this.BX = this.BX || {};
 	          callId: this._getCallIdentifier(this.currentCall),
 	          callType: this.getCallType()
 	        });
-	        console.error('DIALOG ID', _dialogId2);
 	        BXDesktopSystem.CallRecordStart({
 	          windowId: windowId,
 	          fileName: fileName,
@@ -40104,39 +40236,61 @@ this.BX = this.BX || {};
 	    key: "_onCallFailure",
 	    value: function _onCallFailure(e) {
 	      var errorCode = e.code || e.name || e.error;
-	      var errorMessage;
-	      if (e.name == "VoxConnectionError" || e.name == "AuthResult") {
+	      var errorMessage = '';
+	      var isUnknownError = false;
+	      if (e.name === 'VoxConnectionError' || e.name === 'AuthResult') {
 	        Util.reportConnectionResult(e.call.id, false);
 	      }
-	      if (e.name == "AuthResult" || errorCode == "AUTHORIZE_ERROR") {
-	        errorMessage = BX.message("IM_CALL_ERROR_AUTHORIZATION");
-	      } else if (e.name == "Failed" && errorCode == 403) {
-	        errorMessage = BX.message("IM_CALL_ERROR_HARDWARE_ACCESS_DENIED");
-	      } else if (errorCode == "ERROR_UNEXPECTED_ANSWER") {
-	        errorMessage = BX.message("IM_CALL_ERROR_UNEXPECTED_ANSWER");
-	      } else if (errorCode == "BLANK_ANSWER_WITH_ERROR_CODE") {
-	        errorMessage = BX.message("IM_CALL_ERROR_BLANK_ANSWER");
-	      } else if (errorCode == "BLANK_ANSWER") {
-	        errorMessage = BX.message("IM_CALL_ERROR_BLANK_ANSWER");
-	      } else if (errorCode == "ACCESS_DENIED") {
-	        errorMessage = BX.message("IM_CALL_ERROR_ACCESS_DENIED");
-	      } else if (errorCode == "NO_WEBRTC") {
-	        errorMessage = this.isHttps ? BX.message("IM_CALL_NO_WEBRT") : BX.message("IM_CALL_ERROR_HTTPS_REQUIRED");
-	      } else if (errorCode == "UNKNOWN_ERROR") {
-	        errorMessage = BX.message("IM_CALL_ERROR_UNKNOWN");
-	      } else if (errorCode == "NETWORK_ERROR") {
-	        errorMessage = BX.message("IM_CALL_ERROR_NETWORK");
-	      } else if (errorCode == "NotAllowedError") {
-	        errorMessage = BX.message("IM_CALL_ERROR_HARDWARE_ACCESS_DENIED");
-	      } else {
-	        //errorMessage = BX.message("IM_CALL_ERROR_HARDWARE_ACCESS_DENIED");
-	        errorMessage = BX.message("IM_CALL_ERROR_UNKNOWN_WITH_CODE").replace("#ERROR_CODE#", errorCode);
+	      switch (errorCode) {
+	        case StartCallErrorCode.ErrorUnexpectedAnswer:
+	          errorMessage = main_core.Loc.getMessage('IM_CALL_ERROR_UNEXPECTED_ANSWER');
+	          break;
+	        case StartCallErrorCode.BlankAnswerWithErrorCode:
+	          errorMessage = main_core.Loc.getMessage('IM_CALL_ERROR_BLANK_ANSWER');
+	          break;
+	        case StartCallErrorCode.BlankAnswer:
+	          errorMessage = main_core.Loc.getMessage('IM_CALL_ERROR_BLANK_ANSWER');
+	          break;
+	        case StartCallErrorCode.AccessDenied:
+	          errorMessage = main_core.Loc.getMessage('IM_CALL_ERROR_ACCESS_DENIED');
+	          break;
+	        case StartCallErrorCode.NoWebrtc:
+	          errorMessage = main_core.Loc.getMessage(this.isHttps ? 'IM_CALL_NO_WEBRT' : 'IM_CALL_ERROR_HTTPS_REQUIRED');
+	          break;
+	        case StartCallErrorCode.UnknownError:
+	          isUnknownError = true;
+	          errorMessage = main_core.Loc.getMessage('IM_CALL_ERROR_UNKNOWN');
+	          break;
+	        case StartCallErrorCode.NetworkError:
+	          errorMessage = main_core.Loc.getMessage('IM_CALL_ERROR_NETWORK');
+	          break;
+	        case StartCallErrorCode.NotAllowedError:
+	          errorMessage = main_core.Loc.getMessage('IM_CALL_ERROR_HARDWARE_ACCESS_DENIED');
+	          break;
+	        case StartCallErrorCode.NotReadableError:
+	          errorMessage = main_core.Loc.getMessage('IM_CALL_ERROR_HARDWARE');
+	          break;
+	        default:
+	          if (errorCode === StartCallErrorCode.AuthorizeError || e.name === 'AuthResult') {
+	            errorMessage = main_core.Loc.getMessage('IM_CALL_ERROR_AUTHORIZATION');
+	          } else if (errorCode == 403 && e.name === 'Failed') {
+	            errorMessage = main_core.Loc.getMessage('IM_CALL_ERROR_HARDWARE_ACCESS_DENIED');
+	          } else {
+	            isUnknownError = true;
+	            errorMessage = main_core.Loc.getMessage('IM_CALL_ERROR_UNKNOWN_WITH_CODE', {
+	              '#ERROR_CODE#': errorCode
+	            });
+	          }
 	      }
 	      if (this.callView) {
-	        if (errorCode === DisconnectReason.SecurityKeyChanged) {
+	        if (isUnknownError) {
+	          this.callView.showSelfTest();
+	        } else if (errorCode === DisconnectReason.SecurityKeyChanged) {
 	          this.callView.showSecurityKeyError();
 	        } else {
-	          this.callView.showFatalError();
+	          this.callView.showFatalError({
+	            text: errorMessage
+	          });
 	        }
 	      } else {
 	        this.showNotification(errorMessage);
@@ -40327,11 +40481,7 @@ this.BX = this.BX || {};
 	        return;
 	      }
 	      Hardware.isMicrophoneMuted = false;
-	      if (this.isRecording()) {
-	        BXDesktopSystem.CallRecordStop();
-	      }
-	      this.callRecordState = View.RecordState.Stopped;
-	      this.callRecordType = View.RecordType.None;
+	      _classPrivateMethodGet$a(this, _stopRecordCall, _stopRecordCall2).call(this);
 	      this.docCreatedForCurrentCall = false;
 	      var callDetails;
 	      if (!this.getActiveCallUsers().length && Boolean(this.callView) && !this.isCallHangupButtonPressed) {
@@ -40741,6 +40891,7 @@ this.BX = this.BX || {};
 	        this.resizeObserver.disconnect();
 	        this.resizeObserver = null;
 	      }
+	      this.callMultiBroadcastClient && this.callMultiBroadcastClient.destroy();
 	      Hardware.unsubscribe(Hardware.Events.onChangeMirroringVideo, this._onCallLocalCameraFlipHandler);
 	    }
 	  }, {
@@ -41533,13 +41684,9 @@ this.BX = this.BX || {};
 	  var previousRecordType = View.RecordType.None;
 	  if (this.isRecording()) {
 	    previousRecordType = this.callRecordType;
-	    BXDesktopSystem.CallRecordStop();
-	    this.callRecordState = View.RecordState.Stopped;
-	    this.callRecordType = View.RecordType.None;
-	    this.callView.setRecordState(this.callView.getDefaultRecordState());
-	    this.callView.setButtonActive('record', false);
+	    _classPrivateMethodGet$a(this, _stopRecordCall, _stopRecordCall2).call(this);
 	  }
-	  this.callView.showButton('floorRequest');
+	  this.callView.showButtons(['floorRequest', 'hangupOptions']);
 	  newCall.removeEventListener(CallEvent.onUserJoined, this._onChildCallFirstMediaHandler);
 	  newCall.removeEventListener(CallEvent.onRemoteMediaReceived, this._onChildCallFirstUserJoinedHandler);
 	  newCall.removeEventListener(CallEvent.onLocalMediaReceived, this._onCallLocalMediaReceivedHandler);
@@ -41565,8 +41712,26 @@ this.BX = this.BX || {};
 	    this._startRecordCall(previousRecordType);
 	  }
 	}
+	function _stopRecordCall2() {
+	  if (this.isRecording()) {
+	    BXDesktopSystem.CallRecordStop();
+	    this.callRecordState = View.RecordState.Stopped;
+	    this.callRecordType = View.RecordType.None;
+	    this.callView.setRecordState(this.callView.getDefaultRecordState());
+	    this.callView.setButtonActive('record', false);
+	    this.currentCall.sendRecordState({
+	      action: View.RecordState.Stopped,
+	      userId: this.userId
+	    });
+	  }
+	}
 	function _setUserMedia2(e) {
 	  if (!this.callView) {
+	    Util.sendLog({
+	      description: 'trying to do #setUserMedia, but callView is not initialized yet',
+	      userId: e.userId,
+	      kind: e.kind
+	    });
 	    return;
 	  }
 	  if ('track' in e) {
@@ -41617,6 +41782,7 @@ this.BX = this.BX || {};
 	exports.State = CallState;
 	exports.EngineLegacy = CallEngineLegacy;
 	exports.EndpointDirection = EndpointDirection;
+	exports.StartCallErrorCode = StartCallErrorCode;
 	exports.DisconnectReason = DisconnectReason;
 	exports.FloatingScreenShare = FloatingScreenShare;
 	exports.FloatingScreenShareContent = FloatingScreenShareContent;

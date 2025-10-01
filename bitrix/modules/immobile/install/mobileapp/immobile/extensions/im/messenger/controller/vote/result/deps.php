@@ -33,7 +33,7 @@ return [
 		'im:messenger/lib/di/service-locator',
 		'im:messenger/lib/helper',
 		'im:messenger/lib/params',
-		'im/messenger/provider/services/analytics',
+		'im:messenger/provider/services/analytics',
 		'im:messenger/provider/services/vote',
 	],
 	'bundle' => [

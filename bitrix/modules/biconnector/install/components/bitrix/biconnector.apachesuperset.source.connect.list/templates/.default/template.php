@@ -57,7 +57,7 @@ $sourceList = $arResult['SOURCE_LIST'];
 				class="biconnector-superset-source-list-card__second-connect-button ui-btn-icon-add ui-btn ui-btn-light-border ui-btn-no-caps ui-btn-round ui-btn-sm"
 			>
 				<span class="biconnector-superset-source-list-card__second-connect-button-text">
-					<?= Loc::getMessage('BICONNECTOR_SUPERSET_SOURCE_CONNECT_LIST_ADD_CONNECTION_BUTTON') ?>
+					<?= Loc::getMessage('BICONNECTOR_SUPERSET_SOURCE_CONNECT_LIST_ADD_CONNECTION_BUTTON_MSGVER_1') ?>
 				</span>
 			</button>
 		</div>

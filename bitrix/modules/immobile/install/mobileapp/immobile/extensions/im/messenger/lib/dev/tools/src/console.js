@@ -8,9 +8,13 @@ jn.define('im/messenger/lib/dev/tools/console', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { merge } = require('utils/object');
 
-	const { EventType } = require('im/messenger/const');
+	const {
+		EventType,
+		RestMethod,
+	} = require('im/messenger/const');
 	const { AfterScrollMessagePosition } = require('im/messenger/view/dialog');
 	const { Notification } = require('im/messenger/lib/ui/notification');
+	const { runAction } = require('im/messenger/lib/rest');
 	const {
 		LoggerManager,
 	} = require('im/messenger/lib/logger');
@@ -58,12 +62,18 @@ jn.define('im/messenger/lib/dev/tools/console', (require, exports, module) => {
 		async show()
 		{
 			logger.enable('log');
+
+			const titleParams = {
+				text: 'Console',
+			};
+
+			const componentCode = BX.componentParameters.get('COMPONENT_CODE', '');
+			titleParams.text += `: ${componentCode}`;
+
 			this.widget = await PageManager.openWidget(
 				'chat.dialog',
 				{
-					titleParams: {
-						text: 'Console',
-					},
+					titleParams,
 				},
 			);
 
@@ -104,12 +114,28 @@ jn.define('im/messenger/lib/dev/tools/console', (require, exports, module) => {
 					sectionCode: 'general',
 					iconName: 'action_delete',
 				},
+				{
+					id: 'send-error-log',
+					title: 'Send error log',
+					sectionCode: 'general',
+					iconName: 'send',
+				},
 			);
 
 			const topMenuButtonHandler = async (event, item) => {
-				if (event === 'onItemSelected' && item.id === 'clear')
+				if (event !== 'onItemSelected')
+				{
+					return;
+				}
+
+				if (item.id === 'clear')
 				{
 					await this.widget.setMessages([]);
+				}
+
+				if (item.id === 'send-error-log')
+				{
+					await this.openSendErrorLogDialog();
 				}
 			};
 
@@ -277,7 +303,7 @@ jn.define('im/messenger/lib/dev/tools/console', (require, exports, module) => {
 			}
 			catch (error)
 			{
-				logger.error('Console: execution error', error);
+				logger.error(`${error.name}: ${error.message}`);
 			}
 
 			this.widget.textField.clear();
@@ -326,6 +352,31 @@ jn.define('im/messenger/lib/dev/tools/console', (require, exports, module) => {
 					icon: Icon.COPY,
 				});
 			}
+		}
+
+		async openSendErrorLogDialog()
+		{
+			const { openDialogSelector } = require('im/messenger/controller/selector/dialog/opener');
+			openDialogSelector({
+				onItemSelected: ({ item }) => {
+					const debugInfoText = JSON.stringify(LoggerManager.getInstance().getDebugInfo().error.reverse());
+
+					const data = {
+						dialogId: item.id,
+						fields: {
+							message: debugInfoText,
+						},
+					};
+
+					return runAction(RestMethod.imV2ChatMessageSend, { data });
+				},
+				onClose: () => {
+					Notification.showToastWithParams({
+						message: 'Error log sent',
+						icon: Icon.SENDED,
+					});
+				},
+			});
 		}
 	}
 

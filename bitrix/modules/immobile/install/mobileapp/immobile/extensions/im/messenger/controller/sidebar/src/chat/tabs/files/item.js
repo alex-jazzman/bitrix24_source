@@ -10,7 +10,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/files/item', (require, expo
 	const { Icon, IconView } = require('ui-system/blocks/icon');
 
 	const { Theme } = require('im/lib/theme');
-	const { ChatAvatar } = require('im/messenger/lib/element');
+	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const {
 		formatFileSize,

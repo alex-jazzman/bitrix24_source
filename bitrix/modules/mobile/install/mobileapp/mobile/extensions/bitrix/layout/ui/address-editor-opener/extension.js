@@ -5,6 +5,7 @@ jn.define('layout/ui/address-editor-opener', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { Loc } = require('loc');
 	const { withCurrentDomain } = require('utils/url');
+	const { Random } = require('utils/random');
 
 	/**
 	 * @class AddressEditorOpener
@@ -27,12 +28,12 @@ jn.define('layout/ui/address-editor-opener', (require, exports, module) => {
 		 * @returns {Promise}
 		 */
 		async open({
-					   address = null,
-					   geoPoint = null,
-					   mode = AddressEditorModes.edit,
-					   uid = Random.getString(),
-					   onAddressSelected = null,
-				   })
+			address = null,
+			geoPoint = null,
+			mode = AddressEditorModes.edit,
+			uid = Random.getString(),
+			onAddressSelected = null,
+		})
 		{
 			const deviceGeoPosition = mode === AddressEditorModes.edit
 				? await this.requestDeviceGeoPosition()

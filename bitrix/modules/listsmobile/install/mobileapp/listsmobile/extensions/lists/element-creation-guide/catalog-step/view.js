@@ -4,11 +4,12 @@
 jn.define('lists/element-creation-guide/catalog-step/view', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const AppTheme = require('apptheme');
+	const { AnalyticsEvent } = require('analytics');
 	const { EventEmitter } = require('event-emitter');
+	const { Random } = require('utils/random');
+	const { PureComponent } = require('layout/pure-component');
 	const { Stub } = require('lists/element-creation-guide/stub');
 	const { CatalogStepSkeleton } = require('lists/element-creation-guide/catalog-step/skeleton');
-	const { PureComponent } = require('layout/pure-component');
-	const { AnalyticsEvent } = require('analytics');
 
 	class CatalogStepView extends PureComponent
 	{
@@ -28,7 +29,6 @@ jn.define('lists/element-creation-guide/catalog-step/view', (require, exports, m
 			this.items = this.props.items || [];
 			this.selectedItem = this.props.selectedItem || null;
 
-			// eslint-disable-next-line no-undef
 			this.uid = props.uid || Random.getString();
 			this.customEventEmitter = EventEmitter.createWithUid(this.uid);
 

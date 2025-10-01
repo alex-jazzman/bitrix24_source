@@ -623,7 +623,7 @@ jn.define('ui-system/form/inputs/input', (require, exports, module) => {
 
 		getBorderStyle({ filled } = {})
 		{
-			if (!this.isStroke())
+			if (this.isNaked())
 			{
 				return {};
 			}

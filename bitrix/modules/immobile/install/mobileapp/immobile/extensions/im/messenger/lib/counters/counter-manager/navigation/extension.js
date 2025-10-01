@@ -18,10 +18,6 @@ jn.define('im/messenger/lib/counters/counter-manager/navigation', (require, expo
 	class NavigationCounterHandler
 	{
 		static #instance;
-		#pushHandler = new CounterPushMessageHandler(CounterStorageWriter.getInstance());
-		#syncHandler = new SyncFillerCounter(CounterStorageWriter.getInstance());
-		#pullHandler = new CounterPullHandler(CounterStorageWriter.getInstance());
-		#readMessageService = new ReadMessageService();
 
 		/**
 		 * @return {NavigationCounterHandler}
@@ -38,6 +34,10 @@ jn.define('im/messenger/lib/counters/counter-manager/navigation', (require, expo
 
 		constructor()
 		{
+			this.pushHandler = new CounterPushMessageHandler(CounterStorageWriter.getInstance());
+			this.syncHandler = new SyncFillerCounter(CounterStorageWriter.getInstance());
+			this.pullHandler = new CounterPullHandler(CounterStorageWriter.getInstance());
+			this.readMessageService = new ReadMessageService();
 			this.writer = CounterStorageWriter.getInstance();
 
 			this.#subscribeEvents();
@@ -60,7 +60,7 @@ jn.define('im/messenger/lib/counters/counter-manager/navigation', (require, expo
 
 		#subscribePullEvents()
 		{
-			BX.PULL.subscribe(this.#pullHandler);
+			BX.PULL.subscribe(this.pullHandler);
 		}
 
 		/**

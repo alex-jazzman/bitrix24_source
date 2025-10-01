@@ -2,8 +2,6 @@
  * @module in-app-url/routes
  */
 jn.define('in-app-url/routes', (require, exports, module) => {
-	const { Feature } = require('feature');
-	const { getHttpPath } = require('utils/url');
 	const { UserProfile } = require('user-profile');
 	const { WorkgroupUtil } = require('project/utils');
 
@@ -30,11 +28,6 @@ jn.define('in-app-url/routes', (require, exports, module) => {
 						diskParams[param] = value;
 					}
 				});
-
-				if (!Feature.isOpenImageNonContextSupported())
-				{
-					return Application.openUrl(getHttpPath(url));
-				}
 
 				return BX.postComponentEvent('onDiskFolderOpen', [diskParams], 'background');
 			}).name('disk:entity');

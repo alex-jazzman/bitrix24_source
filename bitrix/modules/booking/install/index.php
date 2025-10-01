@@ -110,6 +110,11 @@ class booking extends CModule
 
 		$connection = \Bitrix\Main\Application::getConnection();
 
+		if (!$DB->Query('SELECT 1 FROM b_booking_scorer WHERE 1=0', true))
+		{
+			$this->cleanCounters();
+		}
+
 		// db
 		$errors = $DB->runSQLBatch(
 			$this->getDocumentRoot().'/bitrix/modules/booking/install/db/' . $connection->getType() . '/install.sql'
@@ -183,6 +188,8 @@ class booking extends CModule
 		// db
 		if (isset($arParams['savedata']) && !$arParams['savedata'])
 		{
+			$this->cleanCounters();
+
 			$errors = $DB->runSQLBatch(
 				$this->getDocumentRoot().'/bitrix/modules/booking/install/db/' . $connection->getType() . '/uninstall.sql'
 			);
@@ -282,7 +289,7 @@ class booking extends CModule
 			name: '\\Bitrix\\Booking\\Internals\\Service\\Notifications\\Agent\\DelayedCounterAgent::execute();',
 			module: 'booking',
 			interval: 60,
-			next_exec: ConvertTimeStamp(time() + CTimeZone::GetOffset() + 60, 'FULL'),
+			next_exec: ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 60, 'FULL'),
 			existError: false
 		);
 
@@ -298,7 +305,15 @@ class booking extends CModule
 			name: '\\Bitrix\\Booking\\Internals\\Service\\InstallAgent::execute();',
 			module: 'booking',
 			interval: 60,
-			next_exec: ConvertTimeStamp(time() + CTimeZone::GetOffset() + 60, 'FULL'),
+			next_exec: ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 60, 'FULL'),
+			existError: false
+		);
+
+		\CAgent::AddAgent(
+			name: '\\Bitrix\\Booking\\Internals\\Service\\Agent\\ProcessDelayedTaskAgent::execute();',
+			module: 'booking',
+			interval: 60,
+			next_exec: ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 600, 'FULL'),
 			existError: false
 		);
 	}
@@ -352,5 +367,13 @@ class booking extends CModule
 			'\Bitrix\Booking\Rest\V1\Event\RestEventHandler',
 			'onRestServiceBuildDescription',
 		);
+	}
+
+	private function cleanCounters(): void
+	{
+		global $DB, $CACHE_MANAGER;
+
+		$DB->Query("DELETE FROM b_user_counter WHERE CODE = 'booking_total'");
+		$CACHE_MANAGER->CleanDir('user_counter');
 	}
 }

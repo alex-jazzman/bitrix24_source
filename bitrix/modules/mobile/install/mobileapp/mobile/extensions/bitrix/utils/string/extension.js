@@ -1,6 +1,8 @@
-(() => {
-
-	const { isRegExp } = jn.require('utils/type');
+/**
+ * @module utils/string
+ */
+jn.define('utils/string', (require, exports, module) => {
+	const { isRegExp } = require('utils/type');
 
 	/**
 	 * @param {any} value
@@ -64,6 +66,7 @@
 		return value;
 	}
 
+	// eslint-disable-next-line camelcase
 	function number_format(number, decimals, dec_point, thousands_sep)
 	{
 		let i, j, kw, kd, km, sign = '';
@@ -192,57 +195,18 @@
 	 */
 	const escapeRegExp = (string) => string.replaceAll(/[$()*+./?[\\\]^{|}-]/g, '\\$&');
 
-	/**
-	 * @class StringUtils
-	 * @deprecated Please import specific utilities directly, using jn.require()
-	 */
-	class StringUtils
-	{
-		static stringify(value)
-		{
-			return stringify(value);
-		}
-
-		static capitalize(value)
-		{
-			return capitalize(value);
-		}
-
-		static camelize(value)
-		{
-			return camelize(value);
-		}
-
-		static trim(value)
-		{
-			return trim(value);
-		}
-
-		static number_format(number, decimals, dec_point, thousands_sep)
-		{
-			return number_format(number, decimals, dec_point, thousands_sep);
-		}
-	}
-
-	jnexport(StringUtils);
-
-	/**
-	 * @module utils/string
-	 */
-	jn.define('utils/string', (require, exports, module) => {
-
-		module.exports = {
-			stringify,
-			capitalize,
-			camelize,
-			trim,
-			number_format,
-			splitByWords,
-			compareWords,
-			IntlCollator,
-			truncate,
-			replaceAll,
-			escapeRegExp,
-		};
-	});
-})();
+	module.exports = {
+		stringify,
+		capitalize,
+		camelize,
+		trim,
+		// eslint-disable-next-line camelcase
+		number_format,
+		splitByWords,
+		compareWords,
+		IntlCollator,
+		truncate,
+		replaceAll,
+		escapeRegExp,
+	};
+});

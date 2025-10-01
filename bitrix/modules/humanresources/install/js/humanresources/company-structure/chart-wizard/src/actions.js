@@ -3,10 +3,15 @@ import type { DepartmentData } from './types';
 
 export const chartWizardActions = {
 	createDepartment: (departmentData: DepartmentData): void => {
-		const { departments } = useChartStore();
-		const { id: departmentId, parentId } = departmentData;
+		const { departments, structureMap } = useChartStore();
+		const { id: departmentId, parentId, entityType } = departmentData;
 		const parent = departments.get(parentId);
 		parent.children = [...parent.children ?? [], departmentId];
+		structureMap.set(departmentId, {
+			id: departmentId,
+			parentId,
+			entityType,
+		});
 		departments.set(departmentId, {
 			...departmentData,
 			id: departmentId,

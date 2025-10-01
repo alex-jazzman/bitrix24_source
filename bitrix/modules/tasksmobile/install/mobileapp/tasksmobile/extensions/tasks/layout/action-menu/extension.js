@@ -52,6 +52,8 @@ jn.define('tasks/layout/action-menu', (require, exports, module) => {
 			this.analyticsLabel = options.analyticsLabel;
 			this.shouldBackOnRemove = options.shouldBackOnRemove;
 			this.allowSuccessToasts = Boolean(options.allowSuccessToasts);
+			this.projectId = options.projectId || null;
+			this.isCurrentUser = options.isCurrentUser ?? false;
 
 			/** @type {BaseEngine} */
 			this.menu = (options.engine && options.engine instanceof BaseEngine)
@@ -99,7 +101,10 @@ jn.define('tasks/layout/action-menu', (require, exports, module) => {
 								c_element: 'context_menu',
 							},
 							layout: this.layoutWidget,
-							options: { shouldBackOnRemove: this.shouldBackOnRemove },
+							options: {
+								shouldBackOnRemove: this.shouldBackOnRemove,
+								projectId: this.projectId,
+							},
 						});
 					},
 				};
@@ -116,7 +121,11 @@ jn.define('tasks/layout/action-menu', (require, exports, module) => {
 			}
 
 			const has = Object.prototype.hasOwnProperty;
-			const taskActions = selectActions(this.task);
+			const taskActions = selectActions({
+				task: this.task,
+				isProjectContext: Boolean(this.projectId),
+				isCurrentUser: this.isCurrentUser,
+			});
 			const actions = (
 				this.actions
 					.filter((action) => !has.call(taskActions, action) || taskActions[action])

@@ -25,7 +25,7 @@ jn.define('im/messenger/lib/converter/ui/recent', (require, exports, module) => 
 		InvitedUserItem,
 		NetworkUserItem,
 		ChannelItem,
-	} = require('im/messenger/lib/element');
+	} = require('im/messenger/lib/element/recent');
 	const {
 		BotType,
 		ComponentCode,

@@ -47,7 +47,7 @@ export const RecentItem = {
 		},
 		isChatSelected(): boolean
 		{
-			if (this.layout.name !== Layout.openlinesV2.name)
+			if (this.layout.name !== Layout.openlinesV2)
 			{
 				return false;
 			}

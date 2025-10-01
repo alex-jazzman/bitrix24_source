@@ -1,10 +1,20 @@
 import type { BitrixVueComponentProps } from 'ui.vue3';
 import { Popup as MainPopup, PopupManager, type PopupOptions } from 'main.popup';
-import { BIcon, Set } from 'ui.icon-set.api.vue';
+import { BIcon } from 'ui.icon-set.api.vue';
+import { Outline } from 'ui.icon-set.api.core';
+import { Button as UiButton, AirButtonStyle, ButtonSize } from 'ui.vue3.components.button';
 
 export const DeletionWarningPopup: BitrixVueComponentProps = {
 	emits: ['confirm', 'close'],
 	props: {},
+	setup(): Object
+	{
+		return {
+			ButtonSize,
+			AirButtonStyle,
+			Outline,
+		};
+	},
 	data(): Object
 	{
 		return {
@@ -19,28 +29,27 @@ export const DeletionWarningPopup: BitrixVueComponentProps = {
 			return {
 				id: this.popupId,
 				content: this.$refs.content,
-				width: 400,
-				padding: 18,
+				width: 410,
+				padding: 12,
+				borderRadius: '16px',
 				autoHide: true,
 				overlay: true,
 				events: {
 					onPopupClose: this.closePopup,
-					onPopupDestroy: this.closePopup,
 				},
 				fixed: true,
 			};
-		},
-		set(): Set
-		{
-			return Set;
 		},
 	},
 	methods: {
 		closePopup(): void
 		{
-			PopupManager.getPopupById(this.popupId)?.destroy();
-			this.popupInstance = null;
-			this.$emit('close');
+			if (this.popupInstance)
+			{
+				PopupManager.getPopupById(this.popupId)?.destroy();
+				this.popupInstance = null;
+				this.$emit('close');
+			}
 		},
 		onConfirm(): void
 		{
@@ -49,10 +58,7 @@ export const DeletionWarningPopup: BitrixVueComponentProps = {
 		},
 		getPopupText(): string
 		{
-			return this.$Bitrix.Loc.getMessage('BI_GROUP_SAVE_WARN_TEXT')
-				.replace('[link]', '<a class="ui-link ui-link-primary ui-link-dashed group-warn-popup-box-link" onclick="top.BX.Helper.show(`redirect=detail&code=25556500`)">')
-				.replace('[/link]', '</a>')
-			;
+			return this.$Bitrix.Loc.getMessage('BI_GROUP_SAVE_WARN_TEXT_MSGVER_1');
 		},
 	},
 	mounted(): void
@@ -70,28 +76,34 @@ export const DeletionWarningPopup: BitrixVueComponentProps = {
 	},
 	components: {
 		BIcon,
+		UiButton,
 	},
 	template: `
 		<div ref="content" class="group-warn-popup">
 			<div class="group-warn-popup-title-block">
 				<div class="group-warn-popup-title">{{ $Bitrix.Loc.getMessage('BI_GROUP_SAVE_WARN_TITLE') }}</div>
 				<BIcon
-					:name="set.CROSS_30"
-					:size="18"
-					color="#BDC1C6"
+					:name="Outline.CROSS_L"
+					:size="24"
+					color="#A7A7A7"
 					:class="'group-warn-popup-close'"
 					@click="closePopup"
 				></BIcon>
 			</div>
 			<div class="group-warn-popup-box" v-html="getPopupText()"></div>
-			<label class="group-warn-popup-checkbox">
-				<input type="checkbox" v-model="dontShow"/>
-				<span class="group-warn-popup-checkbox-text">{{ $Bitrix.Loc.getMessage('BI_GROUP_SAVE_WARN_DONT_SHOW') }}</span>
-			</label>
-			<div class="group-warn-popup-separator"></div>
 			<div class="group-warn-popup-buttons">
-				<div class="ui-btn ui-btn-sm ui-btn-primary" @click="onConfirm">{{ $Bitrix.Loc.getMessage('BI_GROUP_SAVE_WARN_YES') }}</div>
-				<div class="ui-btn ui-btn-sm ui-btn-light-border" @click="closePopup">{{ $Bitrix.Loc.getMessage('BI_GROUP_SAVE_WARN_NO') }}</div>
+				<UiButton
+					:text="$Bitrix.Loc.getMessage('BI_GROUP_SAVE_WARN_YES')"
+					:size="ButtonSize.MEDIUM"
+					:style="AirButtonStyle.FILLED"
+					@click="onConfirm"
+				/>
+				<UiButton
+					:text="$Bitrix.Loc.getMessage('BI_GROUP_SAVE_WARN_NO')"
+					:size="ButtonSize.MEDIUM"
+					:style="AirButtonStyle.PLAIN"
+					@click="closePopup"
+				/>
 			</div>
 		</div>
 	`,

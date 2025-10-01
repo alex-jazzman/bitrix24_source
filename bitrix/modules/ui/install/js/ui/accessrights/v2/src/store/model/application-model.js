@@ -3,7 +3,7 @@ import { BuilderModel, type GetterTree, type MutationTree } from 'ui.vue3.vuex';
 export type ApplicationState = {
 	options: Readonly<Options>,
 	guid: string,
-	isSaving: boolean,
+	isProgress: boolean,
 }
 
 export type Options = {
@@ -58,7 +58,7 @@ export class ApplicationModel extends BuilderModel
 		return {
 			options: this.#options,
 			guid: this.#guid,
-			isSaving: false,
+			isProgress: false,
 		};
 	}
 
@@ -80,9 +80,9 @@ export class ApplicationModel extends BuilderModel
 	getMutations(): MutationTree<ApplicationState>
 	{
 		return {
-			setSaving: (state, isSaving: boolean): void => {
+			setProgress: (state, isProgress: boolean): void => {
 				// eslint-disable-next-line no-param-reassign
-				state.isSaving = Boolean(isSaving);
+				state.isProgress = Boolean(isProgress);
 			},
 		};
 	}

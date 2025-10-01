@@ -20,7 +20,6 @@ return [
 		'im:messenger/controller/recent/collab',
 		'im:messenger/controller/dialog/chat',
 		'im:messenger/controller/dialog/lib/assets',
-		'im:messenger/controller/chat-creator',
 		'im:messenger/controller/forward-selector',
 		'im:messenger/controller/dialog-creator',
 		'im:messenger/view/recent',

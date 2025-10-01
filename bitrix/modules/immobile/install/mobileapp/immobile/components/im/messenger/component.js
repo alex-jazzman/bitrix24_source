@@ -108,7 +108,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	const { CopilotDialog } = require('im/messenger/controller/dialog/copilot');
 	const { AiAssistantDialog } = require('im/messenger/controller/dialog/ai-assistant');
 	const { ChatAssets } = require('im/messenger/controller/dialog/lib/assets');
-	const { ChatCreator } = require('im/messenger/controller/chat-creator');
 	const { Communication } = require('im/messenger/lib/integration/mobile/communication');
 	const { Promotion } = require('im/messenger/lib/promotion');
 	const { DialogHelper } = require('im/messenger/lib/helper');
@@ -144,7 +143,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		 * @property {Recent} recent - recent chat list controller
 		 * @property {Dialog} dialog - chat controller
 		 * @property {DialogSelector} dialogSelector - chat search controller
-		 * @property {ChatCreator} chatCreator - chat creation dialog
 		 * @property {RestManager} restManager - collects requests to initialize the messenger into a batch and executes it
 		 */
 		constructor()
@@ -234,7 +232,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 
 			this.searchSelector = new RecentSelector(dialogList);
 
-			this.chatCreator = new ChatCreator();
 			this.dialogCreator = new DialogCreator();
 		}
 
@@ -554,6 +551,8 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		 */
 		async refresh(params = {})
 		{
+			await EntityReady.wait('im.navigation');
+
 			const { shortMode = false } = params;
 
 			this.syncService.clearBackgroundSyncInterval();
@@ -911,15 +910,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		openChatCreate()
 		{
 			Logger.log('EventType.messenger.createChat');
-
-			if (this.dialogCreator !== null)
-			{
-				this.dialogCreator.open();
-
-				return;
-			}
-
-			this.chatCreator.open();
+			this.dialogCreator.open();
 		}
 
 		onNotificationOpen()

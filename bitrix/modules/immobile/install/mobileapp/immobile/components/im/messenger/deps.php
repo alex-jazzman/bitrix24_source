@@ -24,7 +24,6 @@ return [
 		'im:messenger/controller/dialog/copilot',
 		'im:messenger/controller/dialog/ai-assistant',
 		'im:messenger/controller/dialog/lib/assets',
-		'im:messenger/controller/chat-creator',
 		'im:messenger/controller/forward-selector',
 		'im:messenger/controller/dialog-creator',
 		'im:messenger/controller/sidebar',

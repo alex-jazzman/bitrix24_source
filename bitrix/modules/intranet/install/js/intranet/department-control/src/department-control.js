@@ -1,5 +1,6 @@
 import { Loc, Type, Tag, Dom } from 'main.core';
 import { TagSelector } from 'ui.entity-selector';
+import { BaseEvent, EventEmitter } from 'main.core.events';
 import './style.css';
 
 export type DepartmentControlType = {
@@ -9,7 +10,7 @@ export type DepartmentControlType = {
 	description: string,
 }
 
-export default class DepartmentControl
+export default class DepartmentControl extends EventEmitter
 {
 	#tagSelector: TagSelector;
 	#rootDepartment: Object;
@@ -19,8 +20,10 @@ export default class DepartmentControl
 
 	constructor(options: DepartmentControlType)
 	{
+		super();
+		this.setEventNamespace('BX.Intranet.DepartmentControl');
 		this.#rootDepartment = Type.isNil(options?.rootDepartment) ? null : options?.rootDepartment;
-		this.#departmentList = !Type.isArray(options?.departmentList) ? [] : options?.departmentList;
+		this.#departmentList = Type.isArray(options?.departmentList) ? options?.departmentList : [];
 		this.#title = options.title ?? Loc.getMessage('INTRANET_INVITE_DIALOG_DEPARTMENT_CONTROL_LABEL');
 		this.#description = options.description ?? Loc.getMessage('INTRANET_INVITE_DIALOG_DEPARTMENT_CONTROL_DESCRIPTION');
 
@@ -42,6 +45,8 @@ export default class DepartmentControl
 						event.preventDefault();
 					}
 				},
+				onAfterTagAdd: this.onAfterTagChange.bind(this),
+				onAfterTagRemove: this.onAfterTagChange.bind(this),
 			},
 			dialogOptions: {
 				context: 'INVITATION_STRUCTURE',
@@ -75,7 +80,7 @@ export default class DepartmentControl
 							item?.select();
 						}
 					},
-					'onLoad': (event: BaseEvent) => {
+					onLoad: (event: BaseEvent) => {
 						const dialog: Dialog = event.getTarget();
 						dialog.selectTab('structure-departments-tab');
 					},
@@ -87,7 +92,12 @@ export default class DepartmentControl
 	getDefaultItems(): Array
 	{
 		let items = [];
-		if (!Type.isNil(this.#rootDepartment) && Type.isArray(this.#departmentList))
+
+		if (
+			!Type.isNil(this.#rootDepartment)
+			&& Type.isArray(this.#departmentList)
+			&& this.#departmentList.length > 0
+		)
 		{
 			items = this.#departmentList.map((department) => {
 				return {
@@ -127,7 +137,7 @@ export default class DepartmentControl
 		this.#tagSelector.removeTags();
 		this.getDefaultItems().forEach((item) => {
 			this.#tagSelector.addTag(item);
-		})
+		});
 	}
 
 	#isRootItem(item: Object): boolean
@@ -166,5 +176,11 @@ export default class DepartmentControl
 		this.#tagSelector.renderTo(fieldContainer);
 
 		return Tag.render`<div>${title}${description}${fieldContainer}</div>`;
+	}
+
+	onAfterTagChange(event: BaseEvent): void
+	{
+		const selector = event.getTarget();
+		this.emit('onChange', { tags: selector.getTags() });
 	}
 }

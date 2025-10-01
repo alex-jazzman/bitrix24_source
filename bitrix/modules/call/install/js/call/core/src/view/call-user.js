@@ -197,6 +197,15 @@ export class CallUser
 			return;
 		}
 		this._audioTrack = audioTrack;
+		
+		if (!this._audioTrack)
+		{
+			Util.sendLog({
+				description: 'trying to set not defined audioTrack!',
+				userModelId: this.userModel?.id,
+			});
+		}
+		
 		this._audioStream = this._audioTrack ? new MediaStream([this._audioTrack]) : null;
 		this.playAudio()
 	}
@@ -1599,8 +1608,14 @@ export class CallUser
 	playAudio()
 	{
 		if (!this.audioStream)
-		{
+		{			
 			this.elements.audio.srcObject = null;
+			
+			Util.sendLog({
+				description: 'no audioStream to play',
+				userModelId: this.userModel?.id,
+			});
+			
 			return;
 		}
 
@@ -1953,11 +1968,6 @@ export class CallUser
 
 	hasVideo()
 	{
-		if (this.userModel.state != UserState.Connected && (!!this._videoTrack || !!this._videoRenderer))
-		{
-			console.warn(`We have videoRenderer but UserState is not connected; State ${this.userModel.state}  UserId: ${this.userModel.id}`);
-			Util.sendLog({'description': 'We have videoRenderer but UserState is not connected', 'state': this.userModel.state, 'usrId': this.userModel.id});
-		}
 		return this.userModel.state == UserState.Connected && (!!this._videoTrack || !!this._videoRenderer);
 	};
 

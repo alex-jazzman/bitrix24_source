@@ -1,16 +1,29 @@
 import { getMemberRoles } from 'humanresources.company-structure.api';
+import { PermissionChecker } from 'humanresources.company-structure.permission-checker';
+import { useChartStore } from 'humanresources.company-structure.chart-store';
 import { EntityTypes, WizardApiEntityChangedDict, type ChatOrChannelDetailed } from 'humanresources.company-structure.utils';
-import { ChatSelector } from './steps-components/chat-selector';
-import { ChatTypeDict } from 'humanresources.company-structure.structure-components';
+import { mapState } from 'ui.vue3.pinia';
+import { CommunicationSelector } from '../communication-selector/communication-selector';
+import { CommunicationsTypeDict } from 'humanresources.company-structure.structure-components';
 
 // @vue/component
 export const BindChat = {
 	name: 'bindChat',
 
-	components: { ChatSelector },
+	components: { CommunicationSelector },
 
 	props: {
 		heads: {
+			type: Array,
+			required: false,
+			default: () => [],
+		},
+		employees: {
+			type: Array,
+			required: false,
+			default: () => [],
+		},
+		employeesIds: {
 			type: Array,
 			required: false,
 			default: () => [],
@@ -37,25 +50,19 @@ export const BindChat = {
 			type: Array,
 			required: true,
 		},
+		initCollabs: {
+			type: Array,
+			required: true,
+		},
 	},
 
 	emits: ['applyData'],
 
 	computed:
 	{
-		chatHintText(): string
+		isCollabsAvailable(): boolean
 		{
-			return this.isTeamEntity
-				? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_CHATS_ADD_CHECKBOX_HINT')
-				: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_CHATS_ADD_CHECKBOX_HINT_MSGVER_1')
-			;
-		},
-		channelHintText(): string
-		{
-			return this.isTeamEntity
-				? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_CHANNELS_ADD_CHECKBOX_HINT')
-				: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_CHANNELS_ADD_CHECKBOX_HINT_MSGVER_1')
-			;
+			return PermissionChecker.getInstance().isCollabsAvailable;
 		},
 		headsCreated(): boolean
 		{
@@ -63,31 +70,72 @@ export const BindChat = {
 
 			return this.heads.some((item) => item.role === memberRoles.head);
 		},
+		hasCurrentUser(): boolean
+		{
+			return this.heads.some((item) => item.id === this.userId)
+				|| this.employeesIds.includes(this.userId)
+				|| this.employees.some((item) => item.id === this.userId)
+			;
+		},
 		isTeamEntity(): boolean
 		{
 			return this.entityType === EntityTypes.team;
 		},
 		hints(): string[]
 		{
+			if (this.isCollabsAvailable)
+			{
+				if (this.isTeamEntity)
+				{
+					return [
+						this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_HINT_1_W_COLLABS'),
+						this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_HINT_2_MSGVER_1'),
+						this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_HINT_3_W_COLLABS'),
+					];
+				}
+
+				return [
+					this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_HINT_1_W_COLLABS'),
+					this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_HINT_2_MSGVER_2'),
+					this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_HINT_3_W_COLLABS'),
+				];
+			}
+
 			if (this.isTeamEntity)
 			{
 				return [
 					this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_HINT_1'),
-					this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_HINT_2'),
+					this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_HINT_2_MSGVER_1'),
 					this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_HINT_3'),
 				];
 			}
 
 			return [
 				this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_HINT_1_MSGVER_1'),
-				this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_HINT_2_MSGVER_1'),
+				this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_HINT_2_MSGVER_2'),
 				this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_HINT_3'),
 			];
 		},
 		ChatTypeDict(): Record<string, string>
 		{
-			return ChatTypeDict;
+			return CommunicationsTypeDict;
 		},
+		hintTitle(): string
+		{
+			if (this.isCollabsAvailable)
+			{
+				return this.isTeamEntity
+					? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_HINT_TITLE_W_COLLABS')
+					: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_HINT_TITLE_W_COLLABS')
+				;
+			}
+
+			return this.isTeamEntity
+				? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_HINT_TITLE')
+				: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_HINT_TITLE')
+			;
+		},
+		...mapState(useChartStore, ['userId']),
 	},
 
 	watch:
@@ -100,14 +148,20 @@ export const BindChat = {
 		{
 			this.channels = value.map((item) => item.id);
 		},
+		initCollabs(value: ChatOrChannelDetailed[]): void
+		{
+			this.collabs = value.map((item) => item.id);
+		},
 	},
 
 	created(): void
 	{
 		this.chats = this.initChats.map((item) => item.id);
 		this.channels = this.initChannels.map((item) => item.id);
+		this.collabs = this.initCollabs.map((item) => Number(item.id));
 		this.createDefaultChat = false;
 		this.createDefaultChannel = false;
+		this.createDefaultCollab = false;
 	},
 
 	activated(): void
@@ -130,22 +184,29 @@ export const BindChat = {
 				apiEntityChanged: WizardApiEntityChangedDict.bindChats,
 				chats: this.chats,
 				channels: this.channels,
+				collabs: this.collabs,
 				createDefaultChat: this.createDefaultChat,
 				createDefaultChannel: this.createDefaultChannel,
+				createDefaultCollab: this.createDefaultCollab,
 				isDepartmentDataChanged: true,
 			});
 		},
-		onChatSelectorChanged(data: { type: string, chats: Array, createDefault: boolean })
+		onCommunicationSelectorChanged(data: { type: string, communications: Array, createDefault: boolean }): void
 		{
-			if (data.type === ChatTypeDict.chat)
+			if (data.type === CommunicationsTypeDict.chat)
 			{
-				this.chats = data.chats;
+				this.chats = data.communications;
 				this.createDefaultChat = data.createDefault;
+			}
+			else if (data.type === CommunicationsTypeDict.channel)
+			{
+				this.channels = data.communications;
+				this.createDefaultChannel = data.createDefault;
 			}
 			else
 			{
-				this.channels = data.chats;
-				this.createDefaultChannel = data.createDefault;
+				this.collabs = data.communications;
+				this.createDefaultCollab = data.createDefault;
 			}
 
 			this.applyData();
@@ -160,11 +221,7 @@ export const BindChat = {
 					<div class="chart-wizard__bind-chat__item-hint_text">
 						<div
 							class="chart-wizard__bind-chat__item-hint_title"
-							v-html="
-								isTeamEntity 
-									? loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_HINT_TITLE')
-									: loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_HINT_TITLE')
-							"
+							v-html="hintTitle"
 						>
 						</div>
 						<div v-for="hint in hints"
@@ -177,6 +234,53 @@ export const BindChat = {
 							<span>{{ hint }}</span>
 						</div>
 					</div>
+				</div>
+				<div class="chart-wizard__bind-chat__item-options" v-if="isCollabsAvailable">
+					<div class="chart-wizard__bind-chat__item-options__item-content_title">
+						<div class="chart-wizard__bind-chat__item-options__item-content_title-text">
+							{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_COLLAB_TITLE') }}
+						</div>
+					</div>
+					<span class="chart-wizard__bind-chat__item-description">
+						{{
+							isTeamEntity
+								? loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_COLLAB_DESCRIPTION')
+								: loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_COLLAB_DESCRIPTION')
+						}}
+					</span>
+					<CommunicationSelector
+						:name="name"
+						:headsCreated="headsCreated"
+						:hasCurrentUser="hasCurrentUser"
+						:initCommunications="initCollabs"
+						:type="ChatTypeDict.collab"
+						:isTeamEntity="isTeamEntity"
+						@applyData="onCommunicationSelectorChanged"
+					/>
+				</div>
+				<div class="chart-wizard__bind-chat__item-options">
+					<div class="chart-wizard__bind-chat__item-options__item-content_title">
+						<div class="chart-wizard__bind-chat__item-options__item-content_title-text">
+							{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_CHANNELS_TITLE') }}
+						</div>
+					</div>
+					<span class="chart-wizard__bind-chat__item-description">
+						{{
+							isTeamEntity
+								? loc(
+									'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_CHANNELS_DESCRIPTION')
+								: loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_CHANNELS_DESCRIPTION')
+						}}
+					</span>
+					<CommunicationSelector
+						:name="name"
+						:headsCreated="headsCreated"
+						:hasCurrentUser="hasCurrentUser"
+						:initCommunications="initChannels"
+						:type="ChatTypeDict.channel"
+						:isTeamEntity="isTeamEntity"
+						@applyData="onCommunicationSelectorChanged"
+					/>
 				</div>
 				<div class="chart-wizard__bind-chat__item-options">
 					<div class="chart-wizard__bind-chat__item-options__item-content_title">
@@ -191,35 +295,14 @@ export const BindChat = {
 								: loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_CHATS_DESCRIPTION')
 						}}
 					</span>
-					<ChatSelector
+					<CommunicationSelector
 						:name="name"
 						:headsCreated="headsCreated"
-						:initChats="initChats"
+						:initCommunications="initChats"
+						:hasCurrentUser="hasCurrentUser"
 						:type="ChatTypeDict.chat"
 						:isTeamEntity="isTeamEntity"
-						@applyData="onChatSelectorChanged"
-					/>
-				</div>
-				<div class="chart-wizard__bind-chat__item-options">
-					<div class="chart-wizard__bind-chat__item-options__item-content_title">
-						<div class="chart-wizard__bind-chat__item-options__item-content_title-text">
-							{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_CHANNELS_TITLE') }}
-						</div>
-					</div>
-					<span class="chart-wizard__bind-chat__item-description">
-						{{
-							isTeamEntity
-								? loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_CHANNELS_DESCRIPTION')
-								: loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_CHANNELS_DESCRIPTION')
-						}}
-					</span>
-					<ChatSelector
-						:name="name"
-						:headsCreated="headsCreated"
-						:initChats="initChannels"
-						:type="ChatTypeDict.channel"
-						:isTeamEntity="isTeamEntity"
-						@applyData="onChatSelectorChanged"
+						@applyData="onCommunicationSelectorChanged"
 					/>
 				</div>
 			</div>

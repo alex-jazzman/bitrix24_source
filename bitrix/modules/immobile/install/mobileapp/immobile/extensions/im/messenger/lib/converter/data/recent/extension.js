@@ -95,6 +95,19 @@ jn.define('im/messenger/lib/converter/data/recent', (require, exports, module) =
 				;
 				newElement.message.status = element.message.status ?? '';
 				newElement.message.subTitleIcon = element.message.subTitleIcon ?? '';
+
+				if (!Type.isPlainObject(newElement.message.params))
+				{
+					newElement.message.params = {};
+				}
+
+				newElement.message.params.withFile = (
+					element.message.params
+					&& Type.isArrayFilled(element.message.params.FILE_ID)
+				)
+					? element.message.params.FILE_ID
+					: newElement.message.params?.withFile ?? false
+				;
 			}
 
 			if (!Type.isUndefined(element.counter))

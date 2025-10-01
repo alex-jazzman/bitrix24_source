@@ -129,7 +129,7 @@ class CBPCrmChangeStatusActivity extends CBPActivity
 				[$fieldKey => $targetStatus],
 				$this->ModifiedBy
 			);
-			// Send Operations Analytics
+
 			$documentType = $this->getDocumentType();
 			\CCrmBizProcHelper::sendOperationsAnalytics(
 				Dictionary::EVENT_ENTITY_EDIT,

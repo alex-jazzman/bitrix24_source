@@ -1905,7 +1905,7 @@ abstract class EntityObject implements ArrayAccess
 		{
 			$fieldName = StringHelper::strtoupper($fieldName);
 
-			if (!isset($this->_actualValues[$fieldName]))
+			if (!array_key_exists($fieldName, $this->_actualValues))
 			{
 				// regular field
 				$list[] = $fieldName;
@@ -1937,7 +1937,8 @@ abstract class EntityObject implements ArrayAccess
 		{
 			$fieldMask = $field->getTypeMask();
 
-			if (!isset($this->_actualValues[StringHelper::strtoupper($field->getName())])
+			if (
+				!array_key_exists(StringHelper::strtoupper($field->getName()), $this->_actualValues)
 				&& ($mask & $fieldMask)
 			)
 			{

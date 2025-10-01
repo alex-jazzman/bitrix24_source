@@ -87,6 +87,7 @@ $APPLICATION->IncludeComponent('bitrix:ui.button.panel', '', [
 			newGroupPermissions: <?= Json::encode($arResult['NEW_GROUP_PERMISSIONS']) ?>,
 			dashboardGroups: <?= Json::encode($arResult['DASHBOARD_GROUPS']) ?>,
 			dashboards: <?= Json::encode($arResult['DASHBOARDS']) ?>,
+			user: <?= Json::encode($arResult['USER_DATA']) ?>,
 			appGuid: accessRightsApp.getGuid(),
 		});
 	});

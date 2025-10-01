@@ -989,7 +989,7 @@ const isConferenceChatEnabled = () =>
 	return BX.message('conference_chat_enabled');
 }
 
-const getCallConnectionData = async (callOptions, chatId) => {
+const getCallConnectionData = async (callOptions, chatId, mustCreate = true) => {
 	if (!Type.isPlainObject(callOptions))
 	{
 		callOptions = {};
@@ -1003,7 +1003,7 @@ const getCallConnectionData = async (callOptions, chatId) => {
 		const roomType = callOptions.provider === Provider.Plain && CallSettingsManager.isJwtInPlainCallsEnabled()
 			? RoomType.Personal
 			: RoomType.Small;
-		const url = `${callBalancerUrl}/v2/join`;
+		const url = `${callBalancerUrl}/v2/join?mustCreate=${Boolean(mustCreate)}`;
 
 		const userToken = await CallTokenManager.getUserToken(chatId);
 
@@ -1051,24 +1051,20 @@ const getCallConnectionData = async (callOptions, chatId) => {
 	});
 };
 
-const getCallConnectionDataById = async (callUuid) =>
-{
-	try
-	{
-		const call = await CallEngine.getCallWithId(callUuid);
+const getCallConnectionDataById = async (callUuid) => {
+	const call = await CallEngine.getCallWithId(callUuid);
 
-		return getCallConnectionData({
+	return getCallConnectionData(
+		{
 			callType: call.call.type,
 			instanceId: call.call.instanceId,
 			provider: call.call.provider,
 			callToken: CallTokenManager.getTokenCached(call.call.associatedEntity.chatId),
-		}, call.call.associatedEntity.chatId);
-	}
-	catch (error)
-	{
-		throw error;
-	}
-}
+		},
+		call.call.associatedEntity.chatId,
+		false,
+	);
+};
 
 const abortGetCallConnectionData = () => {
 	abortController?.abort();
@@ -1131,11 +1127,6 @@ const isPictureInPictureFeatureEnabled = () =>
 const isNewQOSEnabled = () =>
 {
 	return Extension.getSettings('call.core')?.isNewQOSEnabled;
-}
-
-const isNewFollowUpSliderEnabled = () =>
-{
-	return Extension.getSettings('call.core')?.isNewFollowUpSliderEnabled;
 }
 
 const isKibanaLogsEnabled = () =>
@@ -1223,7 +1214,6 @@ export default {
 	isPictureInPictureFeatureEnabled,
 	isNewQOSEnabled,
 	sendLog,
-	isNewFollowUpSliderEnabled,
 	isChatMountInPage,
 	roomPermissions,
 	getCurrentUserRole,

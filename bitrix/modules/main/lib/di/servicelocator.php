@@ -272,22 +272,6 @@ final class ServiceLocator implements ContainerInterface
 				);
 			}
 
-			if ($this->isInterfaceOrAbstractClass($classNameInParams))
-			{
-				if (!isset($this->services[$classNameInParams]))
-				{
-					throw new ServiceNotFoundException(
-						"For {$className} error in params: {$classNameInParams} (abstract or interface) is not registered in ServiceLocator"
-					);
-				}
-
-				[$classOrClosure] = $this->services[$classNameInParams];
-				if (is_string($classOrClosure))
-				{
-					$classNameInParams = $classOrClosure;
-				}
-			}
-
 			$paramsForClass[] = $this->get($classNameInParams);
 		}
 
@@ -358,12 +342,5 @@ final class ServiceLocator implements ContainerInterface
 	private function isClassKey(string $id): bool
 	{
 		return !isset($this->services[$id]);
-	}
-
-	private function isInterfaceOrAbstractClass(string $className): bool
-	{
-		return
-			interface_exists($className)
-			|| (class_exists($className) && (new ReflectionClass($className))->isAbstract());
 	}
 }

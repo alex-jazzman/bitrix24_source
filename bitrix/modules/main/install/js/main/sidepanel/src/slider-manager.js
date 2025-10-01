@@ -873,8 +873,7 @@ export class SliderManager
 				this.getTopSlider().showShadow();
 			}
 
-			this.getTopSlider().hideOrDarkenCloseBtn();
-			this.getTopSlider().hidePrintBtn();
+			this.getTopSlider().hideCloseBtn();
 			this.getTopSlider().hideExtraLabels();
 		}
 		else
@@ -884,9 +883,9 @@ export class SliderManager
 
 		this.#addOpenSlider(slider);
 
-		this.getOpenSliders().forEach((currentSlider: Slider, index: number, openSliders: Slider[]) => {
-			currentSlider.getLabel().moveAt(openSliders.length - index - 1); // move down
-		});
+		// this.getOpenSliders().forEach((currentSlider: Slider, index: number, openSliders: Slider[]) => {
+		// 	currentSlider.getLabel().moveAt(openSliders.length - index - 1); // move down
+		// });
 
 		this.losePageFocus();
 
@@ -951,9 +950,9 @@ export class SliderManager
 
 		this.exitFullScreen();
 
-		this.getOpenSliders().forEach((slider, index, openSliders) => {
-			slider.getLabel().moveAt(openSliders.length - index - 2); // move up
-		});
+		// this.getOpenSliders().forEach((slider, index, openSliders) => {
+		// 	slider.getLabel().moveAt(openSliders.length - index - 2); // move up
+		// });
 
 		let visibleSlider = null;
 		const openSliders = this.getOpenSliders();
@@ -976,7 +975,8 @@ export class SliderManager
 		{
 			previousSlider.unhideOverlay();
 			previousSlider.hideShadow();
-			previousSlider.showOrLightenCloseBtn();
+			previousSlider.showCloseBtn();
+			previousSlider.showExtraLabels();
 
 			if (topSlider)
 			{
@@ -1127,21 +1127,16 @@ export class SliderManager
 		slider.unhideOverlay();
 		slider.hideShadow();
 
-		this.getOpenSliders().forEach((slider, index, openSliders) => {
-			slider.getLabel().moveAt(openSliders.length - index - 1); //update position
-		});
+		// this.getOpenSliders().forEach((slider, index, openSliders) => {
+		// 	slider.getLabel().moveAt(openSliders.length - index - 1); //update position
+		// });
 
 		if (this.getTopSlider())
 		{
-			this.getTopSlider().showOrLightenCloseBtn();
 			this.getTopSlider().unhideOverlay();
 			this.getTopSlider().hideShadow();
+			this.getTopSlider().showCloseBtn();
 			this.getTopSlider().showExtraLabels();
-
-			if (this.getTopSlider().isPrintable())
-			{
-				this.getTopSlider().showPrintBtn();
-			}
 			this.getTopSlider().focus();
 		}
 		else

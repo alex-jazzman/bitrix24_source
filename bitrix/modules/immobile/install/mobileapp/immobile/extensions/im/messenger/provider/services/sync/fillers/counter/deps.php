@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'entity-ready',
 		'im:messenger/const',
 		'im:messenger/lib/emitter',
 		'im:messenger/lib/logger',

@@ -71,7 +71,7 @@ export class CreateChatManager extends EventEmitter
 			this.setCreationStatus(false);
 		}
 		void LayoutManager.getInstance().setLayout({
-			name: Layout.createChat.name,
+			name: Layout.createChat,
 			entityId: chatTypeToCreate,
 		});
 	}

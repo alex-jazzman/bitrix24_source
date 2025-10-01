@@ -3,7 +3,7 @@
  */
 jn.define('im/messenger/controller/sidebar-v2/tabs/common-chats/src/content', (require, exports, module) => {
 	const { Loc } = require('im/messenger/controller/sidebar-v2/loc');
-	const { ChatTitle } = require('im/messenger/lib/element');
+	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { EventType, ComponentCode } = require('im/messenger/const');
 	const { ListItem } = require('im/messenger/controller/sidebar-v2/ui/layout/list-item');

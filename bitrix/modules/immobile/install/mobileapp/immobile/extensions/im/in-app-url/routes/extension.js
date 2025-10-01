@@ -404,15 +404,12 @@ jn.define('im/in-app-url/routes', (require, exports, module) => {
 			},
 		).name('im:vote:result:open');
 
-		inAppUrl.register(
-			'/vote-result/([\\w.]+)',
-			(_, { url }) => {
-				MessengerEmitter.emit(
-					EventType.messenger.openVoteResult,
-					{ signedAttachId: [...url.matchAll('/vote-result/([\\w.]+)')].shift().slice(1)[0] },
-					ComponentCode.imMessenger,
-				);
-			},
-		).name('im:vote:result:open');
+		inAppUrl.register('/vote-result/:signedAttachId', (params) => {
+			MessengerEmitter.emit(
+				EventType.messenger.openVoteResult,
+				params,
+				ComponentCode.imMessenger,
+			);
+		}).name('im:vote:result:open');
 	};
 });

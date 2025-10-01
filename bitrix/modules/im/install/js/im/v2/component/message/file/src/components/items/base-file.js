@@ -5,8 +5,6 @@ import { FileViewerContext } from 'im.v2.const';
 import { Utils } from 'im.v2.lib.utils';
 import { ProgressBar, ProgressBarSize } from 'im.v2.component.elements.progressbar';
 
-import { BaseFileContextMenu } from '../../classes/base-file-context-menu';
-
 import '../../css/items/base-file.css';
 
 import type { ImModelFile } from 'im.v2.model';
@@ -76,14 +74,6 @@ export const BaseFileItem = {
 		{
 			return Type.isStringFilled(this.file.urlPreview);
 		},
-	},
-	created()
-	{
-		this.contextMenu = new BaseFileContextMenu();
-	},
-	beforeUnmount()
-	{
-		this.contextMenu.destroy();
 	},
 	methods:
 	{

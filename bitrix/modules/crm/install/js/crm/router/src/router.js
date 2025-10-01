@@ -308,6 +308,26 @@ class Router
 		}).show();
 	}
 
+	openRepeatSaleSegmentSlider(
+		segmentId: number,
+		readOnly: boolean = true,
+		analytics: Object = {},
+	): Promise<?BX.SidePanel.Slider>
+	{
+		return Router.openSlider(
+			`/crm/repeat-sale-segment/details/${segmentId}/`,
+			{
+				width: 922,
+				cacheable: false,
+				requestMethod: 'post',
+				requestParams: {
+					readOnly,
+					analytics,
+				},
+			},
+		);
+	}
+
 	closeSettingsMenu(event, item)
 	{
 		if (item && Type.isFunction(item.getMenuWindow))

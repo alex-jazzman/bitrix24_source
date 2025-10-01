@@ -17,6 +17,10 @@ use Bitrix\Main\Errorable;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Main\Context;
+use Bitrix\Main\Engine\Response\Render\Component;
+use Bitrix\Main\Engine\Response\Render\Extension;
+use Bitrix\Main\Engine\Response\Render\View;
+use Bitrix\Main\Engine\View\ViewPathResolver;
 use Bitrix\Main\Event;
 use Bitrix\Main\EventManager;
 use Bitrix\Main\EventResult;
@@ -108,7 +112,7 @@ class Controller implements Errorable, Controllerable
 		}
 
 		/** @see \Bitrix\Main\Engine\ControllerBuilder::build */
-		//propbably should refactor with ControllerBuilder::build
+		//probably should refactor with ControllerBuilder::build
 
 		// override parameters
 		$controller->request = $this->getRequest();
@@ -420,11 +424,12 @@ class Controller implements Errorable, Controllerable
 
 			$this->attachFilters($action);
 
+
 			if ($this->prepareParams() &&
 				$this->processBeforeAction($action) === true &&
 				$this->triggerOnBeforeAction($action) === true)
 			{
-				$result = $action->runWithSourceParametersList();
+				$result = $this->getActionResponse($action);
 
 				if ($action instanceof Errorable)
 				{
@@ -457,13 +462,18 @@ class Controller implements Errorable, Controllerable
 		return $result;
 	}
 
-	protected function writeToLogException(\Throwable $e)
+	protected function getActionResponse(Action $action)
+	{
+		return $action->runWithSourceParametersList();
+	}
+
+	protected function writeToLogException(\Throwable $e): void
 	{
 		$exceptionHandler = Application::getInstance()->getExceptionHandler();
 		$exceptionHandler->writeToLog($e);
 	}
 
-	private function processExceptionInDebug(\Throwable $e)
+	private function processExceptionInDebug(\Throwable $e): void
 	{
 		if ($this->shouldWriteToLogException($e))
 		{
@@ -627,6 +637,7 @@ class Controller implements Errorable, Controllerable
 	protected function create($actionName)
 	{
 		$config = $this->getActionConfig($actionName);
+
 		$methodName = $this->generateActionMethodName($actionName);
 
 		if (method_exists($this, $methodName))
@@ -646,7 +657,7 @@ class Controller implements Errorable, Controllerable
 			if (!$config)
 			{
 				throw new SystemException(
-					"Could not find description of {$actionName} in {$this::className()}",
+					"Could not find description of $actionName in {$this::className()}",
 					self::EXCEPTION_UNKNOWN_ACTION
 				);
 			}
@@ -1085,6 +1096,11 @@ class Controller implements Errorable, Controllerable
 		return $this->errorCollection->toArray();
 	}
 
+	public function hasErrors(): bool
+	{
+		return !$this->errorCollection->isEmpty();
+	}
+
 	/**
 	 * Getting once error with the necessary code.
 	 * @param string $code Code of error.
@@ -1093,5 +1109,116 @@ class Controller implements Errorable, Controllerable
 	final public function getErrorByCode($code)
 	{
 		return $this->errorCollection->getErrorByCode($code);
+	}
+
+	/**
+	 * Returns response with component content inside site template.
+	 *
+	 * Example:
+	 * ```php
+		public function fooAction()
+		{
+			return $this->renderComponent('bitrix:component.name', 'template-name', [
+				'param' => 'value',
+			]);
+		}
+	 * ```
+	 *
+	 * @see \Bitrix\Main\Engine\Response\Render\Component
+	 *
+	 * @param string $name
+	 * @param string $template
+	 * @param array $params
+	 * @param bool $withSiteTemplate
+	 *
+	 * @return Component
+	 */
+	final protected function renderComponent(string $name, string $template = '', array $params = [], bool $withSiteTemplate = true): Component
+	{
+		return new Component(
+			$name,
+			$template,
+			$params,
+			$withSiteTemplate,
+		);
+	}
+
+	/**
+	 * Render file content.
+	 *
+	 * Example:
+	 * ```php
+		public function fooAction()
+		{
+			return $this->renderView('testfile');
+		}
+	 * ```
+	 *
+	 * Equivalent to:
+	 * ```php
+		public function fooAction()
+		{
+			return $this->renderView('/local/modules/my.module/views/testfile.php');
+		}
+	 * ```
+	 *
+	 * Example with params:
+	 * ```php
+		public function fooAction()
+		{
+			return $this->renderView('testfile', [
+				'id' => 123,
+			]);
+		}
+	 * ```
+	 *
+	 * Render only file content, without site template:
+	 * ```php
+		public function fooAction()
+		{
+			return $this->renderView('/local/modules/my.module/views/testfile.php', withSiteTemplate: false);
+		}
+	 * ```
+	 *
+	 * @see \Bitrix\Main\Engine\Response\Render\View
+	 *
+	 * @param string $viewPath
+	 * @param array $params
+	 * @param bool $withSiteTemplate
+	 *
+	 * @return View
+	 */
+	final protected function renderView(string $viewPath, array $params = [], bool $withSiteTemplate = true): View
+	{
+		$resolver = new ViewPathResolver(
+			$viewPath,
+			'renderView',
+		);
+
+		return new View(
+			$resolver->resolve(),
+			$params,
+			$withSiteTemplate
+		);
+	}
+
+	/**
+	 * Render extension. It's not SSR!
+	 *
+	 * @see \Bitrix\Main\Engine\Response\Render\Extension
+	 *
+	 * @param  string    $extension
+	 * @param  array     $params
+	 * @param  bool      $withSiteTemplate
+	 *
+	 * @return Extension
+	 */
+	final protected function renderExtension(string $extension, array $params = [], bool $withSiteTemplate = true): Extension
+	{
+		return new Extension(
+			$extension,
+			$params,
+			$withSiteTemplate,
+		);
 	}
 }

@@ -8,6 +8,7 @@ import Util from '../util'
 import {AbstractCall} from './abstract_call';
 import { CallTokenManager } from 'call.lib.call-token-manager';
 import {CallAI} from '../call_ai';
+import { CallMultiChannel } from '../call_multi_channel';
 import { CallSettingsManager } from 'call.lib.settings-manager';
 
 export const CallState = {
@@ -68,6 +69,19 @@ export const Quality = {
 	Medium: "medium",
 	Low: "low",
 	VeryLow: "very_low"
+};
+
+export const StartCallErrorCode = {
+	AuthorizeError: 'AUTHORIZE_ERROR',
+	BlankAnswer: 'BLANK_ANSWER',
+	BlankAnswerWithErrorCode: 'BLANK_ANSWER_WITH_ERROR_CODE',
+	ErrorUnexpectedAnswer: 'ERROR_UNEXPECTED_ANSWER',
+	AccessDenied: 'ACCESS_DENIED',
+	NetworkError: 'NETWORK_ERROR',
+	NoWebrtc: 'NO_WEBRTC',
+	NotAllowedError: 'NotAllowedError',
+	NotReadableError: 'NotReadableError',
+	UnknownError: 'UNKNOWN_ERROR',
 };
 
 export const DisconnectReason = {
@@ -189,7 +203,7 @@ class Engine
 
 		this.finishedCalls = new Set();
 
-		this.multiBroadcastClient = new MultiChannel('call_engine_channel');
+		this.multiBroadcastClient = new CallMultiChannel('call_engine_channel');
 
 		this.init();
 	};
@@ -198,10 +212,6 @@ class Engine
 	{
 		BX.addCustomEvent("onPullEvent-call", this.#onPullEvent.bind(this));
 		BX.addCustomEvent("onPullEvent-im", this.#onPullEvent.bind(this));
-
-		this.multiBroadcastClient.executer(() =>
-			Object.values(this.calls).some(call => Boolean(call.BitrixCall)),
-		);
 	};
 
 	getSiteId()
@@ -272,8 +282,8 @@ class Engine
 						const call: AbstractCall = this.calls[callId];
 						if (
 							call.provider === config.provider
-							&& call.associatedEntity.type === config.chatInfo.entityType
-							&& call.associatedEntity.id === config.chatInfo.entityId
+							&& call.associatedEntity.type === config.entityType
+							&& call.associatedEntity.id === config.entityId
 						)
 						{
 							this.log(callId, "Found existing call, attaching to it");
@@ -489,16 +499,37 @@ class Engine
 
 	getCallWithId(uuid, config): Promise<{ call: AbstractCall, isNew: boolean }>
 	{
-		if (this.calls[uuid])
-		{
-			return Promise.resolve({
-				call: this.calls[uuid],
-				isNew: false
-			});
-		}
+		return new Promise((resolve, reject) => {
+			const call = this.calls[uuid];
 
-		return this.createCall(config);
-	};
+			if (
+				(call && call.hasConnectionData)
+				|| (call && !config)
+			)
+			{
+				resolve({ call, isNew: false });
+			}
+			else if (config)
+			{
+				this.createCall(config)
+					.then((result) => {
+						resolve(result);
+					})
+					.catch((error) => {
+						reject(error);
+					});
+			}
+			else
+			{
+				const error = {
+					name: 'CALL_NOT_FOUND',
+					message: 'Call not found',
+				};
+
+				reject(error);
+			}
+		});
+	}
 
 	getCallWithDialogId(dialogId: string): ?Object
 	{
@@ -600,6 +631,7 @@ class Engine
 			call = callFactory.createCall({
 				uuid: callUuid,
 				instanceId: instanceId,
+				parentId: callFields.parentId || null,
 				parentUuid: callFields.parentUuid || null,
 				callFromMobile: params.isLegacyMobile === true,
 				direction: Direction.Incoming,
@@ -619,7 +651,7 @@ class Engine
 			this.onCallCreated(call);
 		}
 
-		const broadcastResponse = await this.multiBroadcastClient.broadcastRequest(callUuid, { timeout: 500 });
+		const broadcastResponse = await this.multiBroadcastClient.broadcastRequest(callUuid, { timeout: 100 });
 		const hasActiveCalls = broadcastResponse.some(res => res);
 
 		if (call && !hasActiveCalls)
@@ -777,80 +809,5 @@ class BitrixCallFactory
 		return new BitrixCall(config);
 	}
 }
-
-class MultiChannel {
-	constructor(name) {
-		this.channel = new BroadcastChannel(name);
-		this.senderId = Math.random().toString(36).slice(2);
-		this.requests = new Map();
-
-		this.channel.onmessage = (event) => {
-			const { type, requestId, senderId, payload } = event.data;
-
-			if (type === 'response' && this.requests.has(requestId)) {
-				const req = this.requests.get(requestId);
-
-				if (!req.responders.has(senderId)) {
-					req.responders.add(senderId);
-					req.responses.push(payload);
-
-					if (Date.now() > req.deadline) {
-						req.resolve(req.responses);
-						this.requests.delete(requestId);
-					}
-				}
-			}
-
-			if (type === 'request' && senderId !== this.senderId) {
-				const result = this.handle();
-				if (result !== undefined) {
-					this.channel.postMessage({
-						type: 'response',
-						requestId,
-						senderId: this.senderId,
-						payload: result
-					});
-				}
-			}
-		};
-	}
-
-	executer(handler) {
-		this.handle = handler;
-	}
-
-	async broadcastRequest(callUuid, { timeout = 100 } = {}) {
-		const requestId = Math.random().toString(36).slice(2);
-
-		return new Promise((resolve) => {
-			this.requests.set(requestId, {
-				resolve,
-				responses: [],
-				responders: new Set(),
-				deadline: Date.now() + timeout
-			});
-
-			this.channel.postMessage({
-				type: 'request',
-				requestId,
-				senderId: this.senderId,
-				payload: callUuid
-			});
-
-			setTimeout(() => {
-				if (this.requests.has(requestId)) {
-					resolve(this.requests.get(requestId).responses);
-					this.requests.delete(requestId);
-				}
-			}, timeout);
-		});
-	}
-
-	destroy() {
-		this.channel.close();
-		this.requests.clear();
-	}
-}
-
 
 export const CallEngine = new Engine();

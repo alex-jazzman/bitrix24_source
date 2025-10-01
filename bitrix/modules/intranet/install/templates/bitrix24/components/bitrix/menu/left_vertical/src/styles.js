@@ -29,3 +29,4 @@ import './css/menu-popup.css';
 import './css/menu-btn-arrow-up.css';
 import './css/menu-marta.css';
 import './css/group-panel.css';
+import './css/ai-assistant.css';

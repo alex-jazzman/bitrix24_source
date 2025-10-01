@@ -10,9 +10,10 @@ import { Dialog } from 'ui.entity-selector';
 import { Guide } from 'ui.tour';
 import { ApacheSupersetMarketManager } from 'biconnector.apache-superset-market-manager';
 import { TagFooter } from 'biconnector.entity-selector';
-import { Button, ButtonColor, CancelButton } from 'ui.buttons';
+import { AirButtonStyle, Button, ButtonColor, CancelButton, ButtonSize } from 'ui.buttons';
 import 'ui.alerts';
 import 'ui.forms';
+import { Dialog as SystemDialog } from 'ui.system.dialog';
 
 type Props = {
 	gridId: ?string,
@@ -21,6 +22,7 @@ type Props = {
 	isAvailableGroupCreation: boolean,
 	isMarketExists: boolean,
 	marketUrl: string,
+	supersetStatus: string,
 };
 
 type LoginPopupParams = {
@@ -133,10 +135,6 @@ class SupersetDashboardGridManager
 					this.#onSupersetStatusChange(status);
 				}
 			}
-			else if (eventName === 'onInitialDashboardsInstalled')
-			{
-				this.#grid.reload();
-			}
 		});
 
 		EventEmitter.subscribe('BX.Rest.Configuration.Install:onFinish', () => {
@@ -160,8 +158,8 @@ class SupersetDashboardGridManager
 			this.#grid.reload();
 		});
 
-		EventEmitter.subscribe('BIConnector.CreateForm:onDashboardCreated', (event) => {
-			this.#onNewDashboardCreated(event);
+		EventEmitter.subscribe('BIConnector.CreateForm:onDashboardCreated', () => {
+			this.#grid.reload();
 		});
 
 		EventEmitter.subscribe('BIConnector.AccessRights:onRightsSaved', () => {
@@ -257,7 +255,11 @@ class SupersetDashboardGridManager
 			this.getGrid().reload();
 		}
 
-		if (status !== 'LOAD' && status !== 'ERROR')
+		if (
+			status !== 'LOAD'
+			&& status !== 'ERROR'
+			&& status !== 'LIMIT_EXCEEDED'
+		)
 		{
 			return;
 		}
@@ -265,6 +267,7 @@ class SupersetDashboardGridManager
 		const statusMap = {
 			LOAD: DashboardManager.DASHBOARD_STATUS_LOAD,
 			ERROR: DashboardManager.DASHBOARD_STATUS_COMPUTED_NOT_LOAD,
+			LIMIT_EXCEEDED: DashboardManager.DASHBOARD_STATUS_COMPUTED_NOT_LOAD,
 		};
 
 		const grid = this.getGrid();
@@ -350,6 +353,18 @@ class SupersetDashboardGridManager
 	 */
 	showLoginPopup(params: LoginPopupParams, openedFrom: string = 'unknown')
 	{
+		if (
+			!Type.isNumber(params.dashboardId)
+			|| !['CUSTOM', 'MARKET', 'SYSTEM'].includes(params.type)
+			|| !Type.isStringFilled(params.editUrl)
+		)
+		{
+			// noinspection JSIgnoredPromiseFromCall
+			console.error('SupersetDashboardGridManager: showLoginPopup called with invalid params', params);
+
+			return;
+		}
+
 		const grid = this.getGrid();
 		if (params.type === 'CUSTOM')
 		{
@@ -517,9 +532,9 @@ class SupersetDashboardGridManager
 			switch (status)
 			{
 				case DashboardManager.DASHBOARD_STATUS_READY:
-					labelClass = 'ui-label-lightgreen';
-					labelTitle = Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_STATUS_READY');
-					break;
+					setTimeout(() => this.#grid.updateRow(dashboardId), 500);
+
+					return;
 				case DashboardManager.DASHBOARD_STATUS_DRAFT:
 					labelClass = 'ui-label-default';
 					labelTitle = Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_STATUS_DRAFT');
@@ -536,6 +551,12 @@ class SupersetDashboardGridManager
 					labelClass = 'ui-label-danger';
 					labelTitle = Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_STATUS_NOT_LOAD');
 					break;
+			}
+
+			if (this.#properties.supersetStatus === 'LIMIT_EXCEEDED')
+			{
+				labelClass = 'ui-label-danger';
+				labelTitle = Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_STATUS_NOT_LOAD');
 			}
 
 			if (labelClass === '')
@@ -711,23 +732,35 @@ class SupersetDashboardGridManager
 		;
 	}
 
-	deleteDashboard(dashboardId: number): void
+	deleteDashboard(dashboardId: number, isCustom: boolean): void
 	{
-		const messageBox = new MessageBox({
-			message: Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_POPUP_TITLE'),
-			buttons: [
+		const message = isCustom
+			? Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_POPUP_MESSAGE_CUSTOM')
+			: Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_POPUP_MESSAGE_MARKET')
+		;
+
+		const deletePopup = new SystemDialog({
+			title: Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_POPUP_TITLE_MSGVER_1'),
+			subtitle: message,
+			width: 400,
+			hasCloseButton: true,
+			closeByEsc: true,
+			disableScrolling: true,
+			centerButtons: [
 				new Button({
-					color: ButtonColor.DANGER,
 					text: Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_POPUP_CAPTION_YES'),
+					useAirDesign: true,
+					size: ButtonSize.LARGE,
+					style: AirButtonStyle.FILLED_ALERT,
 					onclick: (button) => {
 						button.setWaiting();
 						this.#dashboardManager.deleteDashboard(dashboardId)
 							.then(() => {
 								this.getGrid().reload();
-								messageBox.close();
+								deletePopup.hide();
 							})
 							.catch((response) => {
-								messageBox.close();
+								deletePopup.hide();
 								if (response.errors)
 								{
 									this.#notifyErrors(response.errors);
@@ -737,32 +770,41 @@ class SupersetDashboardGridManager
 				}),
 				new CancelButton({
 					text: Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_POPUP_CAPTION_NO'),
-					onclick: (button) => messageBox.close(),
+					size: ButtonSize.LARGE,
+					useAirDesign: true,
+					style: AirButtonStyle.PLAIN,
+					onclick: (button) => deletePopup.hide(),
 				}),
 			],
 		});
 
-		messageBox.show();
+		deletePopup.show();
 	}
 
 	deleteGroup(groupId: number): void
 	{
-		const messageBox = new MessageBox({
-			message: Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_GROUP_POPUP_TITLE'),
-			buttons: [
+		const deletePopup = new SystemDialog({
+			title: Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_GROUP_POPUP_TITLE_MSGVER_1'),
+			subtitle: Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_GROUP_POPUP_DESC'),
+			hasCloseButton: true,
+			closeByEsc: true,
+			disableScrolling: true,
+			centerButtons: [
 				new Button({
-					color: ButtonColor.DANGER,
 					text: Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_GROUP_POPUP_CAPTION_YES'),
+					useAirDesign: true,
+					size: ButtonSize.LARGE,
+					style: AirButtonStyle.FILLED_ALERT,
 					onclick: (button) => {
 						PermissionsAnalytics.sendGroupDeleteAnalytics(PermissionsAnalyticsSource.grid);
 						button.setWaiting();
 						this.#dashboardManager.deleteGroup(groupId)
 							.then(() => {
 								this.getGrid().reload();
-								messageBox.close();
+								deletePopup.hide();
 							})
 							.catch((response) => {
-								messageBox.close();
+								deletePopup.hide();
 								if (response.errors)
 								{
 									this.#notifyErrors(response.errors);
@@ -772,12 +814,15 @@ class SupersetDashboardGridManager
 				}),
 				new CancelButton({
 					text: Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_GROUP_POPUP_CAPTION_NO'),
-					onclick: (button) => messageBox.close(),
+					size: ButtonSize.LARGE,
+					useAirDesign: true,
+					style: AirButtonStyle.PLAIN,
+					onclick: (button) => deletePopup.hide(),
 				}),
 			],
 		});
 
-		messageBox.show();
+		deletePopup.show();
 	}
 
 	openCreationSlider(): void
@@ -801,61 +846,6 @@ class SupersetDashboardGridManager
 			PermissionsAnalyticsSource.grid,
 			true,
 		);
-	}
-
-	#onNewDashboardCreated(event: Event): void
-	{
-		const newDashboard = event.data.dashboard;
-		let needAddRowInRealtime = false;
-		const filterGroupIds: string[] = this.getFilter().getFilterFieldsValues()['GROUPS.ID'] ?? [];
-		if (filterGroupIds.length === 0 && newDashboard.groupIds.length === 0)
-		{
-			needAddRowInRealtime = true;
-		}
-		else
-		{
-			for (const dashboardGroupId of newDashboard.groupIds)
-			{
-				if (filterGroupIds.includes(String(dashboardGroupId)))
-				{
-					needAddRowInRealtime = true;
-					break;
-				}
-			}
-		}
-
-		if (!needAddRowInRealtime)
-		{
-			BX.UI.Notification.Center.notify({
-				content: Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DASHBOARD_CREATED'),
-			});
-
-			return;
-		}
-
-		const grid: BX.Main.grid = this.getGrid();
-		const gridRealtime: BX.Grid.Realtime = grid.getRealtime();
-		gridRealtime.addRow({
-			id: newDashboard.id,
-			columns: newDashboard.columns,
-			actions: newDashboard.actions,
-			insertAfter: this.#lastPinnedRowId,
-		});
-		const newRowNode = this.#grid.getRows().getById(newDashboard.id).node;
-		newRowNode.setAttribute('data-group-id', 'D');
-
-		const editableData = grid.getParam('EDITABLE_DATA');
-		if (BX.type.isPlainObject(editableData))
-		{
-			editableData[newDashboard.id] = { TITLE: newDashboard.title };
-		}
-
-		const counterTotalTextContainer = grid.getCounterTotal().querySelector('.main-grid-panel-content-text');
-		counterTotalTextContainer.textContent++;
-		this.#initHints();
-		setTimeout(() => {
-			this.#showDraftGuide(newRowNode);
-		}, 1200);
 	}
 
 	#buildDashboardTitleEditor(
@@ -978,7 +968,9 @@ class SupersetDashboardGridManager
 			.then(() => {
 				this.#grid.tableUnfade();
 			})
-			.catch(() => {})
+			.catch(() => {
+				this.#grid.tableUnfade();
+			})
 		;
 	}
 

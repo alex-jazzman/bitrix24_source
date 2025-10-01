@@ -3,7 +3,7 @@
  */
 jn.define('intranet/invite-new/src/admin-email-not-confirmed-box', (require, exports, module) => {
 	const { Loc } = require('loc');
-	const { InviteStatusBox } = require('intranet/invite-status-box');
+	const { StatusBox } = require('layout/ui/status-box');
 	const { makeLibraryImagePath } = require('asset-manager');
 	const { ButtonDesign } = require('ui-system/form/buttons/button');
 
@@ -17,7 +17,7 @@ jn.define('intranet/invite-new/src/admin-email-not-confirmed-box', (require, exp
 		analytics?.sendProhibitInviteEvent?.(inviteCase);
 		const imageUri = makeLibraryImagePath(`invite-by-${inviteCase}-disabled.svg`, 'invite', 'intranet');
 
-		InviteStatusBox.open({
+		StatusBox.open({
 			backdropTitle: Loc.getMessage(`INVITE_BY_${inviteCase.toUpperCase()}_ADMIN_NOT_CONFIRMED_EMAIL_BOX_TOP_TITLE`),
 			testId: 'admin-email-not-confirmed-status-box',
 			imageUri,

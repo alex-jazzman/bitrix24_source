@@ -16,6 +16,7 @@ $APPLICATION->IncludeComponent(
 		'PAGE_MODE' => false,
 		'PAGE_MODE_OFF_BACK_URL' => '/',
 		'USE_PADDING' => false,
+		'USE_UI_TOOLBAR' => 'Y',
 	],
 );
 

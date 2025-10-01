@@ -3000,10 +3000,12 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  showForm() {
 	    BX.UI.Feedback.Form.open({
 	      id: 'intranet-active-directory',
-	      defaultForm: {
+	      forms: [{
+	        zones: ['ru'],
 	        id: 309,
+	        lang: 'ru',
 	        sec: 'fbc0n3'
-	      }
+	      }]
 	    });
 	  }
 	}

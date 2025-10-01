@@ -58,6 +58,7 @@ export class DetailInstance
 			p1: ApacheSupersetAnalytics.buildAppIdForAnalyticRequest(this.#embeddedParams.appId),
 			p2: this.#embeddedParams.id,
 			...(config.analyticScope && { p3: ApacheSupersetAnalytics.buildScopeForAnalyticRequest(config.analyticScope) }),
+			p4: this.#embeddedParams.isUseExternalDatasets ?? false,
 		});
 	}
 
@@ -67,7 +68,7 @@ export class DetailInstance
 			Dom.clean(this.#frameNode);
 			BX.BIConnector.ApacheSuperset.Dashboard.Detail.createSkeleton({
 				container: this.#frameNode,
-				isSupersetAvailable: true,
+				status: DashboardManager.DASHBOARD_STATUS_LOAD,
 			});
 		});
 
@@ -86,6 +87,7 @@ export class DetailInstance
 				type: this.#embeddedParams.type.toLowerCase(),
 				p1: ApacheSupersetAnalytics.buildAppIdForAnalyticRequest(this.#embeddedParams.appId),
 				p2: this.#embeddedParams.id,
+				p4: this.#embeddedParams.isUseExternalDatasets ?? false,
 			});
 
 			top.window.history.pushState(null, '', historyUrl);

@@ -15,6 +15,14 @@ if (!CModule::IncludeModule('crm'))
  * @var $arParams []
  */
 
+$arParams['~CONFIG'] = $arParams['~CONFIG'] ?? [];
+$arParams['~CONFIG'] = array_merge(
+	$arParams['~CONFIG'],
+	[
+		'AUTOFOCUS' => false,
+	],
+);
+
 $gridID = $arParams['GRID_ID'];
 $gridContext = CCrmGridContext::Get($gridID);
 if(empty($gridContext) && isset($arParams['FILTER_FIELDS']))

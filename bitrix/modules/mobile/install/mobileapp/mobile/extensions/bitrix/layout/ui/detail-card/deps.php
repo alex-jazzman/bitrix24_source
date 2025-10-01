@@ -22,6 +22,9 @@ return [
 		'qrauth/utils',
 		'rest/run-action-executor',
 		'utils',
+		'utils/random',
+		'utils/function',
+		'utils/object',
 		'haptics',
 	],
 ];

@@ -124,8 +124,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    const id = this.getIdFromSliderId(sliderId);
 	    delete this.instances[id];
 	    main_core_events.EventEmitter.emit(im_v2_const.EventType.slider.onClose);
-	    im_v2_lib_layout.LayoutManager.getInstance().setLayout({
-	      name: im_v2_const.Layout.chat.name
+	    void im_v2_lib_layout.LayoutManager.getInstance().setLayout({
+	      name: im_v2_const.Layout.chat
 	    });
 	  }
 	  onCloseByEsc({

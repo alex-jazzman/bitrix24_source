@@ -14,6 +14,8 @@ export class PermissionCheckerClass
 		{
 			this.currentUserPermissions = {};
 			this.isTeamsAvailable = false;
+			this.isCollabsAvailable = false;
+			this.isDeputyApprovesBPAvailable = false;
 			this.isInitialized = false;
 			this.departmentChecker = new DepartmentPermissionChecker();
 			this.teamChecker = new TeamPermissionChecker(this.departmentChecker, this.currentUserPermissions);
@@ -38,10 +40,14 @@ export class PermissionCheckerClass
 		const {
 			currentUserPermissions,
 			teamsAvailable,
+			collabsAvailable,
+			deputyApprovesBP,
 		} = await chartAPI.getDictionary();
 
 		this.currentUserPermissions = currentUserPermissions;
 		this.isTeamsAvailable = teamsAvailable;
+		this.isCollabsAvailable = collabsAvailable;
+		this.isDeputyApprovesBPAvailable = deputyApprovesBP;
 
 		this.isInitialized = true;
 	}
@@ -79,6 +85,11 @@ export class PermissionCheckerClass
 		}
 
 		return false;
+	}
+
+	checkDeputyApprovalBPAvailable(): boolean
+	{
+		return this.isDeputyApprovesBPAvailable;
 	}
 
 	hasPermissionOfAction(action: string): boolean

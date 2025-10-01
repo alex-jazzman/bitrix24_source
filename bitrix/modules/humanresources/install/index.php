@@ -31,6 +31,7 @@ class HumanResources extends CModule
 				'OnAfterUserUpdate' => [UserEventHandler::class, 'onAfterUserUpdate',],
 				'OnAfterUserDelete' => [UserEventHandler::class, 'onAfterUserDelete',],
 				'OnAfterUserAdd' => [UserEventHandler::class, 'onAfterUserAdd',],
+				'OnAuthProvidersBuildList' => ['\Bitrix\HumanResources\Access\AuthProvider\StructureAuthProvider', 'getProviders',],
 			],
 			'humanresources' => [
 				'OnMemberAdded' => [NewToOldEventHandler::class, 'onMemberAdded',],

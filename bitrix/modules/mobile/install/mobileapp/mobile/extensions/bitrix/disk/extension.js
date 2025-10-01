@@ -8,7 +8,10 @@ include('InAppNotifier');
 	const require = (ext) => jn.require(ext);
 
 	const { copyToClipboard } = require('utils/copy');
+	const { toMD5 } = require('utils/object');
 	const AppTheme = require('apptheme');
+	const { RequestExecutor } = require('rest');
+	const { RunActionExecutor } = require('rest/run-action-executor');
 	const pathToExtension = '/bitrix/mobileapp/mobile/extensions/bitrix/disk/';
 	const downloadPath = '/mobile/ajax.php?mobile_action=disk_download_file&action=downloadFile&fileId=';
 
@@ -294,7 +297,7 @@ include('InAppNotifier');
 					order,
 				};
 
-				this.request.cacheId = Object.toMD5({
+				this.request.cacheId = toMD5({
 					entityId: this.ownerId,
 					type: this.entityType,
 					folderId: this.folderId,
@@ -432,17 +435,11 @@ include('InAppNotifier');
 			);
 		}
 
-		makeItemChecked(item, checked = true) {
-			if (Application.getApiVersion() >= 54)
-			{
-				item.checked = checked
-			}
-			else
-			{
-				item.iconUrl = checked ? UserDisk.pathToIcon('check.png') : ''
-			}
+		makeItemChecked(item, checked = true)
+		{
+			item.checked = checked;
 
-			return item
+			return item;
 		}
 
 		resolvedFolderId()
@@ -1197,6 +1194,31 @@ include('InAppNotifier');
 					title: this.lastSearchItems.length > 0 ? BX.message('RECENT_SEARCH') : '',
 				},
 			]);
+		}
+	}
+
+	/**
+	 * @class RunActionDelayedExecutor
+	 */
+	class RunActionDelayedExecutor extends RunActionExecutor
+	{
+		constructor(action, options)
+		{
+			super(action, options);
+			this.timeoutId = null;
+			this.timeout = 300;
+		}
+
+		abortCurrentRequest()
+		{
+			clearTimeout(this.timeoutId);
+			super.abortCurrentRequest();
+		}
+
+		call()
+		{
+			clearTimeout(this.timeoutId);
+			this.timeoutId = setTimeout(() => super.call(), this.timeout);
 		}
 	}
 

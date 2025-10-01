@@ -105,3 +105,13 @@
 {
 	height: calc(100vh - 240px) !important;
 }
+
+.biconnector-delete-source-popup-content {
+	margin: 10px 0;
+}
+
+.biconnector-delete-source-with-dataset-dialog-content, .biconnector-delete-source-popup-content {
+	font-weight: var(--ui-font-weight-normal);
+	font-size: var(--ui-font-size-lg);
+	color: #555555;
+}

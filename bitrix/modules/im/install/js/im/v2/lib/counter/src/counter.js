@@ -177,7 +177,7 @@ export class CounterManager
 	{
 		const payload: NavigationCountersPayload = {
 			[NavigationMenuItem.chat]: this.#store.getters['counters/getTotalChatCounter'],
-			[NavigationMenuItem.copilot]: this.#store.getters['counters/getTotalCopilotCounter'],
+			[NavigationMenuItem.aiAssistant]: this.#store.getters['counters/getTotalCopilotCounter'],
 			[NavigationMenuItem.collab]: this.#store.getters['counters/getTotalCollabCounter'],
 			[NavigationMenuItem.openlines]: this.#store.getters['counters/getTotalLinesCounter'],
 			[NavigationMenuItem.openlinesV2]: this.#store.getters['counters/getTotalLinesCounter'],

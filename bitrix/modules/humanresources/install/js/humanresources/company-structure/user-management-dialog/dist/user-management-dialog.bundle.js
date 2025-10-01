@@ -284,10 +284,18 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	var _addRoleSwitcher = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("addRoleSwitcher");
 	var _toggleRoleSwitcherMenu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("toggleRoleSwitcherMenu");
 	var _changeRole = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("changeRole");
+	var _getHeadRoleText = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getHeadRoleText");
+	var _getDeputyRoleText = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDeputyRoleText");
 	class BaseUserManagementDialogHeader extends ui_entitySelector.BaseHeader {
 	  constructor(context, options) {
-	    var _this$getOption, _this$getOption2, _this$getOption3, _this$getOption4;
+	    var _this$getOption, _this$getOption2, _this$getOption3, _this$getOption4, _this$getOption5;
 	    super(context, options);
+	    Object.defineProperty(this, _getDeputyRoleText, {
+	      value: _getDeputyRoleText2
+	    });
+	    Object.defineProperty(this, _getHeadRoleText, {
+	      value: _getHeadRoleText2
+	    });
 	    Object.defineProperty(this, _changeRole, {
 	      value: _changeRole2
 	    });
@@ -301,6 +309,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    this.description = main_core.Text.encode((_this$getOption2 = this.getOption('description')) != null ? _this$getOption2 : '');
 	    this.memberRoles = (_this$getOption3 = this.getOption('memberRoles')) != null ? _this$getOption3 : humanresources_companyStructure_api.memberRoles;
 	    this.role = (_this$getOption4 = this.getOption('role')) != null ? _this$getOption4 : this.memberRoles.employee;
+	    this.entityType = (_this$getOption5 = this.getOption('entityType')) != null ? _this$getOption5 : humanresources_companyStructure_utils.EntityTypes.department;
 	  }
 	  render() {
 	    const {
@@ -344,7 +353,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 					${0}
 				</div>
 			</div>
-		`), main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_USER_MANAGEMENT_DIALOG_ROLE_PICKER_TEXT'), main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_USER_MANAGEMENT_DIALOG_HEAD_ROLE_TITLE'));
+		`), main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_USER_MANAGEMENT_DIALOG_ROLE_PICKER_TEXT'), babelHelpers.classPrivateFieldLooseBase(this, _getHeadRoleText)[_getHeadRoleText]());
 	  main_core.Dom.append(roleSwitcherContainer, this.header);
 	  this.roleSwitcher = roleSwitcher;
 	  main_core.Event.bind(this.roleSwitcher, 'click', () => {
@@ -377,9 +386,9 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 					>
 						${0}
 					</div>
-				`), main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_USER_MANAGEMENT_DIALOG_HEAD_ROLE_TITLE')),
+				`), babelHelpers.classPrivateFieldLooseBase(this, _getHeadRoleText)[_getHeadRoleText]()),
 	    onclick: () => {
-	      this.roleSwitcher.innerText = main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_USER_MANAGEMENT_DIALOG_HEAD_ROLE_TITLE');
+	      this.roleSwitcher.innerText = babelHelpers.classPrivateFieldLooseBase(this, _getHeadRoleText)[_getHeadRoleText]();
 	      babelHelpers.classPrivateFieldLooseBase(this, _changeRole)[_changeRole](this.memberRoles.head);
 	      roleSwitcherMenu.destroy();
 	    }
@@ -390,9 +399,9 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 					>
 						${0}
 					</div>
-				`), main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_USER_MANAGEMENT_DIALOG_DEPUTY_ROLE_TITLE')),
+				`), babelHelpers.classPrivateFieldLooseBase(this, _getDeputyRoleText)[_getDeputyRoleText]()),
 	    onclick: () => {
-	      this.roleSwitcher.innerText = main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_USER_MANAGEMENT_DIALOG_DEPUTY_ROLE_TITLE');
+	      this.roleSwitcher.innerText = babelHelpers.classPrivateFieldLooseBase(this, _getDeputyRoleText)[_getDeputyRoleText]();
 	      babelHelpers.classPrivateFieldLooseBase(this, _changeRole)[_changeRole](this.memberRoles.deputyHead);
 	      roleSwitcherMenu.destroy();
 	    }
@@ -409,6 +418,12 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  const currentFooterOptions = this.getDialog().getFooter().getOptions();
 	  currentFooterOptions.role = role;
 	  this.getDialog().setFooter(BaseUserManagementDialogFooter, currentFooterOptions);
+	}
+	function _getHeadRoleText2() {
+	  return this.entityType === humanresources_companyStructure_utils.EntityTypes.team ? main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_USER_MANAGEMENT_DIALOG_TEAM_HEAD_ROLE_TITLE') : main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_USER_MANAGEMENT_DIALOG_HEAD_ROLE_TITLE');
+	}
+	function _getDeputyRoleText2() {
+	  return this.entityType === humanresources_companyStructure_utils.EntityTypes.team ? main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_USER_MANAGEMENT_DIALOG_TEAM_DEPUTY_ROLE_TITLE') : main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_USER_MANAGEMENT_DIALOG_DEPUTY_ROLE_TITLE');
 	}
 
 	const dialogId = 'hr-user-management-dialog';
@@ -510,7 +525,8 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      title: this.title,
 	      role: babelHelpers.classPrivateFieldLooseBase(this, _role)[_role],
 	      description: this.description,
-	      memberRoles: babelHelpers.classPrivateFieldLooseBase(this, _memberRoles)[_memberRoles]
+	      memberRoles: babelHelpers.classPrivateFieldLooseBase(this, _memberRoles)[_memberRoles],
+	      entityType: babelHelpers.classPrivateFieldLooseBase(this, _entityType)[_entityType]
 	    },
 	    footer: BaseUserManagementDialogFooter,
 	    footerOptions: {
@@ -543,6 +559,9 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  if (type === 'add' && role === babelHelpers.classPrivateFieldLooseBase(this, _memberRoles)[_memberRoles].employee) {
 	    return main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_USER_MANAGEMENT_DIALOG_ADD_EMPLOYEE_TITLE');
 	  }
+	  if (type === 'add' && role === babelHelpers.classPrivateFieldLooseBase(this, _memberRoles)[_memberRoles].head && entityType === humanresources_companyStructure_utils.EntityTypes.team) {
+	    return main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_USER_MANAGEMENT_DIALOG_ADD_TEAM_HEAD_TITLE');
+	  }
 	  if (type === 'add' && role === babelHelpers.classPrivateFieldLooseBase(this, _memberRoles)[_memberRoles].head) {
 	    return main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_USER_MANAGEMENT_DIALOG_ADD_HEAD_TITLE');
 	  }
@@ -562,6 +581,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	}
 
 	exports.UserManagementDialog = UserManagementDialog;
+	exports.UserManagementDialogAPI = UserManagementDialogAPI;
 
 }((this.BX.Humanresources.CompanyStructure = this.BX.Humanresources.CompanyStructure || {}),BX.Main,BX,BX.UI.EntitySelector,BX.Humanresources.CompanyStructure,BX,BX.Humanresources.CompanyStructure,BX.Humanresources.CompanyStructure));
 //# sourceMappingURL=user-management-dialog.bundle.js.map

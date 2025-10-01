@@ -114,6 +114,7 @@ class Manager
 				'componentCode' => 'im.navigation',
 				'scriptPath' => MobileApp\Janative\Manager::getComponentPath('im:im.navigation'),
 				'params' => array_merge([
+					'COMPONENT_CODE' => 'im.navigation',
 					'firstTabId' => $items[0]->getId(),
 				], $sharedParams),
 				'rootWidget' => [
@@ -338,6 +339,7 @@ class Manager
 						$this->collab->getComponentCode() => $this->collab->isPreload(),
 						$this->openLines->getComponentCode() => $this->openLines->isPreload(),
 					],
+					'CALL_SERVER_MAX_USERS' => $this->getCallServerMaxUsers(),
 				],
 			],
 			$this->getInvitationParams(),
@@ -415,5 +417,14 @@ class Manager
 		}
 
 		return Imopenlines\User::isOperator();
+	}
+
+	private function getCallServerMaxUsers(): int
+	{
+		if (Loader::includeModule('bitrix24'))
+		{
+			return (int)\Bitrix\Bitrix24\Feature::getVariable('im_max_call_participants');
+		}
+		return (int)Option::get('im', 'call_server_max_users');
 	}
 }

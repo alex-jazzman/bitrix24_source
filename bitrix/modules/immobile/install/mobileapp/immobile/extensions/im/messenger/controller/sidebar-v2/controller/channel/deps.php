@@ -11,7 +11,7 @@ return [
 		'im:messenger/controller/sidebar-v2/tabs/audio',
 		'im:messenger/controller/sidebar-v2/tabs/media',
 		'im:messenger/controller/sidebar-v2/tabs/participants',
-		'im/messenger/controller/sidebar-v2/user-actions/participants',
+		'im:messenger/controller/sidebar-v2/user-actions/participants',
 		'im:messenger/controller/sidebar-v2/user-actions/user',
 		'im:messenger/controller/sidebar-v2/user-actions/chat',
 		'im:messenger/controller/sidebar-v2/loc',

@@ -20,8 +20,12 @@ export type DepartmentData = {
 	userCount: number;
 	chats: Array<number>,
 	chatsDetailed: Array<ChatOrChannelDetailed>,
+	chatsNoAccess: number,
 	channels: Array<number>,
 	channelsDetailed: Array<ChatOrChannelDetailed>,
+	channelsNoAccess: number,
+	chatAndChannelsCount?: number,
+	children?: Array<number>,
 	createDefaultChat: boolean,
 	createDefaultChannel: boolean,
 	teamColor: NodeColorSettingsType,
@@ -35,11 +39,13 @@ export type DepartmentData = {
 
 export const useChartStore = defineStore('hr-org-chart', {
 	state: () => ({
-		departments: new Map(),
+		departments: new Map(), // list of all entities of structures visible to the user with detailed information
 		currentDepartments: [],
 		focusedNode: 0,
 		searchedUserId: 0,
 		userId: 0,
+		/** @var Map<number, { id: number, parentId: number, entityType: string }> */
+		structureMap: new Map(), // map of the entire structure (all entities) with minimal information
 	}),
 	actions: {
 		async refreshDepartments(nodeIds: number[]): Promise<void>
@@ -59,9 +65,10 @@ export const useChartStore = defineStore('hr-org-chart', {
 				const existingDepartment = this.departments.get(Number(id)) || {};
 				this.departments.set(Number(id), {
 					...existingDepartment,
+					...department,
 					heads: department.heads,
 					userCount: department.userCount,
-					employees: null,
+					employees: [],
 					employeeListOptions: {
 						page: 0,
 						shouldUpdateList: true,
@@ -108,8 +115,14 @@ export const useChartStore = defineStore('hr-org-chart', {
 		{
 			const { id, parentId } = departmentData;
 			const oldData = this.departments.get(id);
+			const entityType = oldData.entityType;
 			const prevParent = this.departments.get(oldData.parentId);
 			this.departments.set(id, { ...oldData, ...departmentData });
+			this.structureMap.set(id, {
+				id,
+				parentId: parentId ?? oldData.parentId,
+				entityType,
+			});
 			if (parentId !== 0 && prevParent.id !== parentId)
 			{
 				prevParent.children = prevParent.children.filter((childId) => childId !== id);

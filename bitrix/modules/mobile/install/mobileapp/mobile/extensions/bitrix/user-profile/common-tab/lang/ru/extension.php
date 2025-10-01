@@ -15,5 +15,6 @@ $MESS['M_PROFILE_USER_STATUS_OFFLINE_WITH_TIME_F'] = 'Была в сети #DATE
 $MESS['M_PROFILE_USER_STATUS_OFFLINE'] = 'Не в сети';
 
 $MESS['M_PROFILE_GRATITUDE_TITLE'] = 'Благодарности';
+$MESS['M_PROFILE_EFFICIENCY_TITLE'] = 'Эффективность';
 $MESS['M_PROFILE_GRATITUDE_MORE_QUANTITY'] = 'еще #QUANTITY#';
 $MESS['M_PROFILE_GRATITUDE_EMPTY'] = "Здесь будут поздравления \nи благодарности от коллег";

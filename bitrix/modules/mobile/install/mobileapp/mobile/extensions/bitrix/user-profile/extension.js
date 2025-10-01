@@ -35,8 +35,6 @@ jn.define('user-profile', (require, exports, module) => {
 				return null;
 			}
 
-			return UserProfile.openLegacyProfile(ownerId, openInComponent, parentWidget, widgetParams);
-
 			const isEnabled = await fetchNewProfileFeatureEnabled();
 
 			if (!isEnabled)
@@ -65,7 +63,7 @@ jn.define('user-profile', (require, exports, module) => {
 
 			if (openInComponent)
 			{
-				parentWidget.openComponent('JSStackComponent', {
+				PageManager.openComponent('JSStackComponent', {
 					// eslint-disable-next-line no-undef
 					scriptPath: availableComponents['user-profile-tabs'].publicUrl,
 					componentCode: 'user-profile-tabs',
@@ -76,6 +74,13 @@ jn.define('user-profile', (require, exports, module) => {
 							objectName: 'tabs',
 							title: Loc.getMessage('M_PROFILE_TITLE'),
 							grabTitle: false,
+							modal: true,
+							leftButtons: [{
+								svg: {
+									uri: `${currentDomain}${Icon.CHEVRON_DOWN_SIZE_M?.getPath()}`,
+								},
+								isCloseButton: true,
+							}],
 							tabs: {
 								items: preparedTabs,
 							},
@@ -84,7 +89,7 @@ jn.define('user-profile', (require, exports, module) => {
 					params: {
 						params,
 					},
-				});
+				}, parentWidget);
 
 				return null;
 			}

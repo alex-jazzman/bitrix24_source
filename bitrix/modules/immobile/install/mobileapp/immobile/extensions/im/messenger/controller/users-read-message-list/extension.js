@@ -16,10 +16,8 @@ jn.define('im/messenger/controller/users-read-message-list', (require, exports, 
 	const { Logger } = require('im/messenger/lib/logger');
 
 	const { runAction } = require('im/messenger/lib/rest');
-	const {
-		ChatTitle,
-		ChatAvatar,
-	} = require('im/messenger/lib/element');
+	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
+	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 
 	const { UsersReadMessageListView } = require('im/messenger/controller/users-read-message-list/view');
 

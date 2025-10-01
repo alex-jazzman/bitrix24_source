@@ -177,6 +177,9 @@ class ConfigPermsComponent
 					},
 				}),
 			],
+			popupOptions: {
+				fixed: true,
+			},
 		});
 
 		box.show();

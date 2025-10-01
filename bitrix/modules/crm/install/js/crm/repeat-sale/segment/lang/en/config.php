@@ -20,5 +20,6 @@ $MESS["CRM_REPEAT_SALE_SEGMENT_PLACEHOLDER"] = "Enter activity description";
 $MESS["CRM_REPEAT_SALE_SEGMENT_PLACEHOLDER_WITH_COPILOT"] = "Enter activity description, or press Space to call CoPilot";
 $MESS["CRM_REPEAT_SALE_SEGMENT_SAVE_ERROR"] = "Could not save script. Please try again.";
 $MESS["CRM_REPEAT_SALE_SEGMENT_TITLE"] = "Repeat sales script";
+$MESS["CRM_REPEAT_SALE_SEGMENT_TITLE_READ_ONLY"] = "Repeat sales script";
 $MESS["CRM_REPEAT_SALE_SEGMENT_VALIDATE_ASSIGNMENT_USERS_ERROR"] = "Script has to have at least one responsible person.";
 $MESS["CRM_REPEAT_SALE_SEGMENT_VALIDATE_TEXT_ERROR"] = "CRM activity text must not be empty.";

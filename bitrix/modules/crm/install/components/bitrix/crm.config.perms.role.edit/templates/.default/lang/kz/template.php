@@ -16,5 +16,4 @@ $MESS["CRM_PERMS_HEAD_READ"] = "Оқу";
 $MESS["CRM_PERMS_HEAD_WRITE"] = "Өзгерту";
 $MESS["CRM_PERMS_PERM_ADD"] = "Баптауларды өзгертуге рұқсат ету";
 $MESS["CRM_PERMS_PERM_INHERIT"] = "Иелену";
-$MESS["CRM_PERMS_RESTRICTION"] = "Қызметкерлердің CRM-ге қолжетімділік құқықтарын <a target=\"_blank\" href=\"https://www.bitrix24.kz/prices/\">коммерциялық тарифтерде</a> баптауға болады.";
 $MESS["CRM_PERMS_ROLE_DELETE"] = "Рөлді жою";

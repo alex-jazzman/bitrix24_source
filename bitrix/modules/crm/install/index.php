@@ -1013,7 +1013,6 @@ class crm extends CModule
 		RegisterModuleDependences('report', 'OnReportUpdate', 'crm', 'CCrmReportHelper', 'clearMenuCache');
 		RegisterModuleDependences('report', 'OnReportDelete', 'crm', 'CCrmReportHelper', 'clearMenuCache');
 		RegisterModuleDependences('iblock', 'OnIBlockDelete', 'crm', 'CAllCrmCatalog', 'OnIBlockDelete');
-		RegisterModuleDependences('iblock', 'OnAfterIBlockElementDelete', 'crm', '\Bitrix\Crm\Order\Import\Instagram', 'onAfterIblockElementDelete');
 
 		RegisterModuleDependences('socialnetwork', 'OnFillSocNetLogEvents', 'crm', 'CCrmExternalSaleImport', 'OnFillSocNetLogEvents');
 
@@ -1830,8 +1829,6 @@ class crm extends CModule
 		{
 			\Bitrix\Crm\Agent\MovedByField\DealFieldAgent::bind();
 		}
-		// set initial values for LAST_ACTIVITY_TIME and LAST_ACTIVITY_BY fields
-		\Bitrix\Crm\Update\Entity\LastActivityFields::bindOnCrmModuleInstallIfNeeded();
 
 		\Bitrix\Crm\Update\Entity\ContactId::bindOnCrmModuleInstallIfNeeded();
 
@@ -1961,7 +1958,6 @@ class crm extends CModule
 		UnRegisterModuleDependences('report', 'OnReportUpdate', 'crm', 'CCrmReportHelper', 'clearMenuCache');
 		UnRegisterModuleDependences('report', 'OnReportDelete', 'crm', 'CCrmReportHelper', 'clearMenuCache');
 		UnRegisterModuleDependences('iblock', 'OnIBlockDelete', 'crm', 'CCrmCatalog', 'OnIBlockDelete');
-		UnRegisterModuleDependences('iblock', 'OnAfterIBlockElementDelete', 'crm', '\Bitrix\Crm\Order\Import\Instagram', 'onAfterIblockElementDelete');
 
 		UnRegisterModuleDependences("socialnetwork", "OnFillSocNetLogEvents", "crm", "CCrmExternalSaleImport", "OnFillSocNetLogEvents");
 

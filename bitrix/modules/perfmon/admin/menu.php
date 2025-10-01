@@ -105,17 +105,26 @@ if (CMain::GetGroupRight('perfmon') != 'D')
 	{
 		foreach ($configParams as $connectionName => $connectionParams)
 		{
-			$connections[] = [
-				'text' => $connectionName,
-				'url' => 'perfmon_tables.php?lang=' . LANGUAGE_ID . '&connection=' . urlencode($connectionName),
-				'more_url' => [
-					'perfmon_tables.php?connection=' . urlencode($connectionName),
-					'perfmon_table.php?connection=' . urlencode($connectionName),
-					'perfmon_row_edit.php?connection=' . urlencode($connectionName),
-				],
-			];
+			if (isset($connectionParams['module']))
+			{
+				\Bitrix\Main\Loader::includeModule($connectionParams['module']);
+			}
+
+			if (is_a($connectionParams['className'], '\Bitrix\Main\DB\Connection', true))
+			{
+				$connections[] = [
+					'text' => $connectionName,
+					'url' => 'perfmon_tables.php?lang=' . LANGUAGE_ID . '&connection=' . urlencode($connectionName),
+					'more_url' => [
+						'perfmon_tables.php?connection=' . urlencode($connectionName),
+						'perfmon_table.php?connection=' . urlencode($connectionName),
+						'perfmon_row_edit.php?connection=' . urlencode($connectionName),
+					],
+				];
+			}
 		}
 	}
+
 	if (count($connections) > 1)
 	{
 		//unset($aMenu['items'][count($aMenu['items']) - 1]['url']);

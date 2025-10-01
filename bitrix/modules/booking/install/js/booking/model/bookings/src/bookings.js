@@ -75,7 +75,20 @@ export class Bookings extends BuilderModel
 			getByDate: (state: BookingsState, getters) => (dateTs: number): BookingModel[] => {
 				const [dateFrom, dateTo] = dateToTsRange(dateTs);
 
-				return getters.get.filter(({ dateToTs, dateFromTs }) => dateToTs > dateFrom && dateTo > dateFromTs);
+				return getters.getByInterval(dateFrom, dateTo);
+			},
+			/** @function booking/getByInterval */
+			getByInterval: (state: BookingsState, getters) => (fromTs: number, toTs: number): BookingModel[] => {
+				return getters.get.filter(({ dateFromTs, dateToTs }: BookingModel) => {
+					return dateToTs > fromTs && dateFromTs < toTs;
+				});
+			},
+			getFutureByResourceId: (state: BookingsState, getters) => (resourceId: number): BookingModel[] => {
+				const now = Date.now();
+
+				return getters.get
+					.filter((booking) => booking.resourcesIds.includes(resourceId) && booking.dateFromTs > now)
+				;
 			},
 			overbookingMap: (state) => {
 				const resourceBookings: { [number]: BookingModel[] } = Object.values(state.collection)

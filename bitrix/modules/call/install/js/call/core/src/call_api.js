@@ -120,6 +120,7 @@ const ReconnectionReason = {
 };
 
 const ErrorPreventingReconnection = {
+	CanNotCreateRoom: 1,
 	InputError: 2,
 	AccessDenied: 3,
 	RoomNotFound: 5,
@@ -277,7 +278,7 @@ export class Call {
 	initConnectionEvent()
 	{
 		const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-
+		
 		if (!connection)
 		{
 			return;
@@ -660,7 +661,7 @@ export class Call {
 				withCounter: true,
 			});
 		});
-		
+
 		this.triggerEvents('Reconnecting', [data]);
 	};
 
@@ -721,7 +722,8 @@ export class Call {
 
 		return new Promise((resolve, reject) => {
 			const isErrorPreventingReconnection = (code) => {
-				return code === ErrorPreventingReconnection.InputError
+				return code === ErrorPreventingReconnection.CanNotCreateRoom
+					|| code === ErrorPreventingReconnection.InputError
 					|| code === ErrorPreventingReconnection.AccessDenied
 					|| code === ErrorPreventingReconnection.RoomNotFound
 					|| code === ErrorPreventingReconnection.MalfunctioningSignaling;
@@ -894,7 +896,7 @@ export class Call {
 				this.setLog(`Adding an early connected participant with id ${p.userId} (sid: ${p.sid})`, LOG_LEVEL.INFO);
 				this.#setRemoteParticipant(p);
 			});
-			
+
 			if (connectedEvent === 'Reconnected')
 			{
 				for (let userId in participantsToDelete)
@@ -906,7 +908,7 @@ export class Call {
 					delete this.#privateProperties.remoteParticipants[userId];
 				}
 			}
-			
+
 			if ('recorderStatus' in data.joinResponse)
 			{
 				const recorderStatus = { code: data.joinResponse.recorderStatus };
@@ -920,9 +922,9 @@ export class Call {
 
 			this.#privateProperties.pingIntervalDuration = data.joinResponse.pingInterval * 1000
 			this.#privateProperties.pingTimeoutDuration = this.#privateProperties.pingIntervalDuration * 2
-			 
+
 			this.#startPingInterval();
-			
+
 			this.triggerEvents(connectedEvent);
 		} else if (data?.participantJoined) {
 			this.setLog(`Adding a new participant with id ${data.participantJoined.participant.userId} (sid: ${data.participantJoined.participant.sid})`, LOG_LEVEL.INFO);
@@ -1288,6 +1290,24 @@ export class Call {
 					reconnectionReasonInfo: `State of ${subscriber ? 'recipient' : 'sender'} peer connection changed to ${state}`,
 				});
 			}
+		}
+		else if (state === 'failed' || state === 'disconnected')
+		{
+			const logMessage = `State of ${subscriber ? 'recipient' : 'sender'} PEER CONNECTION changed to ${state}`;
+			this.setLog(logMessage, LOG_LEVEL.WARNING);	
+		}
+	}
+	
+	onIceConnectionStateChange(subscriber)
+	{
+		const state = subscriber
+			? this.recipient.iceConnectionState
+			: this.sender.iceConnectionState;
+			
+		if (state === 'failed' || state === 'disconnected')
+		{
+			const logMessage = `State of ${subscriber ? 'recipient' : 'sender'} ICE connection changed to ${state}`;
+			this.setLog(logMessage, LOG_LEVEL.WARNING);			
 		}
 	}
 
@@ -2752,16 +2772,26 @@ export class Call {
 			return;
 		}
 
-		let error;
+		let error = null;
 		let fulfilled = false;
 		this.setLog(`Start switching an audio device to ${deviceId}`, LOG_LEVEL.INFO);
-		const promise = new Promise(async (resolve, reject) =>
-		{
+
+		const promise = new Promise(async (resolve, reject) => {
 			this.#privateProperties.audioDeviceId = deviceId;
 			const prevStream = this.#privateProperties.microphoneStream;
 
 			try
 			{
+				const sender = this.#getSender(MediaStreamsKinds.Microphone);
+
+				if (!sender)
+				{
+					this.setLog('Switching an audio device skipped - no sender', LOG_LEVEL.WARNING);
+					error = 'No sender for audio';
+
+					return;
+				}
+
 				const prevTrack = this.#privateProperties.microphoneStream?.getAudioTracks()[0];
 				this.#privateProperties.microphoneStream = null;
 				let prevTrackEnabledState = true;
@@ -2775,11 +2805,7 @@ export class Call {
 				const audioTrack = await this.getLocalAudio();
 				audioTrack.source = MediaStreamsKinds.Microphone;
 				audioTrack.enabled = prevTrackEnabledState;
-				const sender = this.#getSender(MediaStreamsKinds.Microphone);
-				if (
-					sender
-					&& (this.isAudioPublished() || sender.track.id !== audioTrack.id || audioTrack.id !== prevTrackId)
-				)
+				if ((this.isAudioPublished() || sender.track.id !== audioTrack.id || audioTrack.id !== prevTrackId))
 				{
 					this.setLog('Have sender for audio, start replacing track', LOG_LEVEL.INFO);
 					await sender.replaceTrack(audioTrack);
@@ -2828,18 +2854,27 @@ export class Call {
 			return;
 		}
 
-		let error;
+		let error = null;
 		let fulfilled = false;
 		this.setLog(`Start switching a video device to ${deviceId}`, LOG_LEVEL.INFO);
-		const promise = new Promise(async (resolve, reject) =>
-		{
+
+		const promise = new Promise(async (resolve, reject) => {
 			this.#privateProperties.videoDeviceId = deviceId;
 			const prevStream = this.#privateProperties.cameraStream;
 
 			try
 			{
 				const sender = this.#getSender(MediaStreamsKinds.Camera);
-				if (sender && this.isVideoPublished())
+
+				if (!sender)
+				{
+					this.setLog('Switching a video device skipped - no sender', LOG_LEVEL.WARNING);
+					error = 'No sender for video';
+
+					return;
+				}
+
+				if (this.isVideoPublished())
 				{
 					this.setLog('Have sender for video, start replacing track', LOG_LEVEL.INFO);
 					this.#privateProperties.cameraStream?.getVideoTracks()[0].stop();
@@ -2992,7 +3027,7 @@ export class Call {
 		{
 			return true;
 		}
-		
+
 		const signal = {
 			sendLog: {
 				userName: `${this.#privateProperties.userId}`,
@@ -3105,12 +3140,12 @@ export class Call {
 		{
 			this.setLog(`Handling a remote offer failed: ${e}`, LOG_LEVEL.ERROR);
 			this.#beforeDisconnect();
-			
+
 			this.#reconnect({
 				reconnectionReason: 'HANDLING_OFFER',
 				reconnectionReasonInfo: `Handling a remote offer failed: ${e}`,
 			});
-			
+
 			this.checkQosFeatureAndExecutionCallback(() =>
 			{
 				this.addMonitoringEvents({
@@ -3487,7 +3522,8 @@ export class Call {
 		this.triggerEvents('ParticipantMuted', [data]);
 	}
 
-	#allParticipantsMutedHandler(data) {
+	#allParticipantsMutedHandler(data)
+	{
 		if (!Util.isUserControlFeatureEnabled())
 		{
 			return;
@@ -3646,6 +3682,7 @@ export class Call {
 		this.sender = new RTCPeerConnection(config);
 		this.sender.addEventListener('icecandidate', e => this.onIceCandidate(null, e));
 		this.sender.addEventListener('connectionstatechange', e => this.onConnectionStateChange());
+		this.sender.addEventListener('iceconnectionstatechange', e => this.onIceConnectionStateChange());
 
 		this.recipient = new RTCPeerConnection(config);
 		this.recipient.ontrack = (event) => {
@@ -3665,6 +3702,7 @@ export class Call {
 		};
 		this.recipient.addEventListener('icecandidate', e => this.onIceCandidate('SUBSCRIBER', e));
 		this.recipient.addEventListener('connectionstatechange', e => this.onConnectionStateChange(true));
+		this.recipient.addEventListener('iceconnectionstatechange', e => this.onIceConnectionStateChange(true));
 
 		const getStatsHandle = async () => {
 			try

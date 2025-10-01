@@ -205,6 +205,7 @@ $MESS["CRM_TYPE_ITEM_FIELD_NAME_OPPORTUNITY_WITH_CURRENCY"] = "Сумма и в�
 $MESS["CRM_TYPE_SMART_INVOICE_FIELD_BEGIN_DATE"] = "Дата выставления";
 $MESS["CRM_TYPE_SMART_INVOICE_FIELD_CLOSE_DATE"] = "Срок оплаты";
 $MESS["CRM_TYPE_ITEM_FIELD_NAME_LAST_COMMUNICATION_TIME"] = "Дата последней коммуникации";
+$MESS["CRM_TYPE_ITEM_FIELD_NAME_REPEAT_SALE_SEGMENT_ID"] = "Сценарий повторной продажи";
 
 $MESS["CRM_TYPE_CATEGORY_DEFAULT_NAME"] = "Общая";
 $MESS["CRM_TYPE_CATEGORY_NOT_FOUND_ERROR"] = "Воронка не найдена";

@@ -17,6 +17,8 @@ jn.define('im/messenger/lib/parser/functions/quote', (require, exports, module) 
 	const { Code } = require('im/messenger/lib/parser/elements/dialog/message/code');
 	const { parserUrl } = require('im/messenger/lib/parser/functions/url');
 	const { parserImage } = require('im/messenger/lib/parser/functions/image');
+	const { getLogger } = require('im/messenger/lib/logger');
+	const logger = getLogger('parser');
 
 	const QUOTE_SIGN = '>>';
 
@@ -52,6 +54,7 @@ jn.define('im/messenger/lib/parser/functions/quote', (require, exports, module) 
 				}
 
 				quoteText = parserImage.simplifyIcon(quoteText);
+				quoteText = parserImage.simplifyImage(quoteText);
 				const quoteEndIndex = i - 1;
 
 				textLines.splice(quoteStartIndex, quoteEndIndex - quoteStartIndex);
@@ -76,16 +79,22 @@ jn.define('im/messenger/lib/parser/functions/quote', (require, exports, module) 
 		 */
 		decodeQuote(text, options)
 		{
+			logger.log('Parser.decodeQuote text:', text, options);
 			text = text.replace(this.patterns.DECODE_QUOTE_CONTENT_PATTERN, (whole, content) => {
 				const textWithoutTags = parsedElements.cutTags(content);
+				logger.log('Parser.decodeQuote textWithoutTags:', textWithoutTags);
+
 				const userNameMatch = textWithoutTags.match(/^(.*?)\[/s);
 				const userName = userNameMatch ? userNameMatch[1].trim() : '';
+				logger.log('Parser.decodeQuote userName:', userName);
 
 				const timeTagMatch = textWithoutTags.match(/\[([^\]]*?)]/s);
 				const timeTag = timeTagMatch ? timeTagMatch[1].trim() : '';
+				logger.log('Parser.decodeQuote timeTag:', timeTag);
 
 				const contextTagMatch = textWithoutTags.match(/(\s+#(?:chat\d+|\d+:\d+)\/\d+)/);
 				let contextTag = contextTagMatch ? contextTagMatch[1].trim() : '';
+				logger.log('Parser.decodeQuote contextTag:', contextTag);
 
 				let userNameWithData = '';
 				if (userName && timeTag)
@@ -96,6 +105,7 @@ jn.define('im/messenger/lib/parser/functions/quote', (require, exports, module) 
 				{
 					userNameWithData = textWithoutTags.split(/\s+#(?:chat\d+|\d+:\d+)\/\d+/s)[0]?.trim() || '';
 				}
+				logger.log('Parser.decodeQuote userNameWithData:', userNameWithData);
 
 				let quoteText = textWithoutTags;
 				if (contextTag)
@@ -133,6 +143,17 @@ jn.define('im/messenger/lib/parser/functions/quote', (require, exports, module) 
 					title += `${userNameWithData} ${contextTag}`;
 					contextTag = '';
 				}
+
+				if (!userName && userNameWithData === `[${timeTag}]`)
+				{
+					/*
+					* the case, for compatibility with web behavior (pin own pinned system message in group chat)
+					* removes this case, when backend will be sending quote with username on the start string
+					*/
+					title = '';
+				}
+
+				logger.log('Parser.decodeQuote title and quoteText:', { title, quoteText });
 
 				return this.createQuote(title, contextTag, quoteText, userNameWithData, options);
 			});
@@ -221,6 +242,7 @@ jn.define('im/messenger/lib/parser/functions/quote', (require, exports, module) 
 
 			let restoredTagQuoteText = parsedElements.restoreTags(quoteText);
 			restoredTagQuoteText = parserImage.decodeIcon(restoredTagQuoteText);
+			restoredTagQuoteText = parserImage.simplifyImage(restoredTagQuoteText);
 
 			let quoteMark = '';
 			if (isActiveQuote)

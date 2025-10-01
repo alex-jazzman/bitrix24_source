@@ -8,6 +8,7 @@ jn.define('bizproc/workflow/details/content', (require, exports, module) => {
 	const { PureComponent } = require('layout/pure-component');
 	const { EntityManager } = require('layout/ui/entity-editor/manager');
 	const { CollapsibleText } = require('layout/ui/collapsible-text');
+	const { Random } = require('utils/random');
 
 	class WorkflowDetailsContent extends PureComponent
 	{
@@ -15,7 +16,6 @@ jn.define('bizproc/workflow/details/content', (require, exports, module) => {
 		{
 			super(props);
 
-			// eslint-disable-next-line no-undef
 			this.uid = props.uid || Random.getString();
 		}
 

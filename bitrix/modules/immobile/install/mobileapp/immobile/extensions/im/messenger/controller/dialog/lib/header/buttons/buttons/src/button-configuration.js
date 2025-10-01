@@ -4,15 +4,15 @@
 jn.define('im/messenger/controller/dialog/lib/header/buttons/buttons/button-configuration', (require, exports, module) => {
 	const { Loc } = require('im/messenger/loc');
 	const { Theme } = require('im/lib/theme');
+	const { Feature } = require('im/messenger/lib/feature');
 
 	const { Icon } = require('assets/icons');
-	const { Url } = require('im/messenger/lib/helper');
 
 	/** @type DialogHeaderButton */
 	const CallAudioButton = {
 		id: 'call_audio',
 		testId: 'DIALOG_HEADER_AUDIO_CALL_BUTTON',
-		type: 'call_audio',
+		type: Feature.isDialogHeaderButtonIconSupported ? Icon.PHONE_UP.getIconName() : 'call_audio',
 		color: null,
 		badgeCode: 'call_audio',
 	};
@@ -21,7 +21,7 @@ jn.define('im/messenger/controller/dialog/lib/header/buttons/buttons/button-conf
 	const CallVideoButton = {
 		id: 'call_video',
 		testId: 'DIALOG_HEADER_VIDEO_CALL_BUTTON',
-		type: 'call_video',
+		type: Feature.isDialogHeaderButtonIconSupported ? Icon.RECORD_VIDEO.getIconName() : 'call_video',
 		color: null,
 		badgeCode: 'call_video',
 	};

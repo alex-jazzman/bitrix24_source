@@ -11,8 +11,8 @@ jn.define('im/messenger/cache/share-dialog', (require, exports, module) => {
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { ComponentCode } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { ChatTitle } = require('im/messenger/lib/element/chat-title'); // TODO: refactor, after splitting into separate extensions im/messenger/lib/element and  im/messenger/provider/service
-	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar'); // TODO: refactor, after splitting into separate extensions im/messenger/lib/element and  im/messenger/provider/service
+	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
+	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 	const { getLogger } = require('im/messenger/lib/logger');
 
 	const logger = getLogger('cache--share-dialog');

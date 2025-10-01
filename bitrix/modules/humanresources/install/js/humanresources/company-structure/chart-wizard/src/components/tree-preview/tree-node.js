@@ -199,12 +199,12 @@ export const TreeNode = {
 							<p class="chart-wizard-tree-preview__node_employees-title">
 								{{
 									isTeamEntity 
-									? loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TREE_PREVIEW_TEAM_EMPLOYEES_TITLE') 
-									: loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TREE_PREVIEW_EMPLOYEES_TITLE')
+										? loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TREE_PREVIEW_TEAM_EMPLOYEES_TITLE') 
+										: loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TREE_PREVIEW_EMPLOYEES_TITLE')
 								}}
 							</p>
 							<span class="chart-wizard-tree-preview__node_employees_count">
-								{{locPlural('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TREE_PREVIEW_EMPLOYEES_COUNT', employeesCount)}}
+								{{ locPlural('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TREE_PREVIEW_EMPLOYEES_COUNT', employeesCount) }}
 							</span>
 						</div>
 						<div 
@@ -212,7 +212,11 @@ export const TreeNode = {
 							:data-test-id="formatDataTestId('chart-wizard-tree-preview__node_deputies-list')"
 						>
 							<p class="chart-wizard-tree-preview__node_employees-title">
-								{{loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TREE_PREVIEW_DEPUTIES_TITLE')}}
+								{{
+									isTeamEntity
+										? loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TREE_PREVIEW_TEAM_DEPUTIES_TITLE') 
+										: loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TREE_PREVIEW_DEPUTIES_TITLE') 
+								}}
 							</p>
 							<HeadUsers
 								:users="deputyUsers"

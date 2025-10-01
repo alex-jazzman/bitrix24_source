@@ -1,5 +1,8 @@
 <?php
 $MESS["SN_COLLAB_ACCESS_RIGHTS"] = "Access permissions";
+$MESS["SN_COLLAB_ACCESS_RIGHTS_ALLOW_GUESTS_INVITATION_LABEL"] = "Allow inviting guests to this collab:";
+$MESS["SN_COLLAB_ACCESS_RIGHTS_ALLOW_GUESTS_INVITATION_LABEL_HINT_DISABLED"] = "Your Bitrix24 administrator has disabled invitations to this collab.";
+$MESS["SN_COLLAB_ACCESS_RIGHTS_ALLOW_GUESTS_INVITATION_LABEL_HINT_ENABLED"] = "Collab members can invite guests.";
 $MESS["SN_COLLAB_ACCESS_RIGHTS_BUTTON_CANCEL"] = "Cancel";
 $MESS["SN_COLLAB_ACCESS_RIGHTS_BUTTON_SAVE"] = "Save";
 $MESS["SN_COLLAB_ACCESS_RIGHTS_CHAT_LABEL"] = "Users allowed to post messages:";

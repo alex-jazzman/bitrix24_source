@@ -31,6 +31,10 @@ export const TileList: BitrixVueComponentProps = {
 			type: Boolean,
 			default: true,
 		},
+		forceDisableSelection: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	data: (): Object => ({
 		pageSize: 5,
@@ -171,6 +175,7 @@ export const TileList: BitrixVueComponentProps = {
 					:readonly="readonly"
 					:viewerGroupBy="groupBy"
 					:removeFromServer="removeFromServer"
+					:forceDisableSelection="forceDisableSelection"
 				/>
 			</transition-group>
 			<transition name="ui-tile-uploader-item" type="animation">
@@ -188,6 +193,7 @@ export const TileList: BitrixVueComponentProps = {
 					:readonly="readonly"
 					:viewerGroupBy="groupBy"
 					:removeFromServer="removeFromServer"
+					:forceDisableSelection="forceDisableSelection"
 				/>
 			</transition-group>
 		</div>

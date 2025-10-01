@@ -264,11 +264,40 @@ export const Employees = {
 		{
 			return this.entityType === EntityTypes.team;
 		},
+		headTitle(): string
+		{
+			return this.isTeamEntity
+				? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_EMPLOYEE_TEAM_HEAD_TITLE')
+				: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_EMPLOYEE_HEAD_TITLE')
+			;
+		},
+		headDescription(): string
+		{
+			return this.isTeamEntity
+				? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_EMPLOYEE_TEAM_HEAD_DESCR')
+				: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_EMPLOYEE_HEAD_DESCR')
+			;
+		},
+		deputyTitle(): string
+		{
+			return this.isTeamEntity
+				? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_EMPLOYEE_TEAM_DEPUTY_TITLE')
+				: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_EMPLOYEE_DEPUTY_TITLE')
+			;
+		},
+		deputyDescription(): string
+		{
+			return this.isTeamEntity
+				? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_EMPLOYEE_TEAM_DEPUTY_DESCR')
+				: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_EMPLOYEE_DEPUTY_DESCR')
+			;
+		},
 		employeeTitle(): string
 		{
 			return this.isTeamEntity
 				? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_EMPLOYEE_TEAM_EMPLOYEES_TITLE')
-				: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_EMPLOYEE_EMPLOYEES_TITLE');
+				: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_EMPLOYEE_EMPLOYEES_TITLE')
+			;
 		},
 	},
 
@@ -277,7 +306,7 @@ export const Employees = {
 			<div class="chart-wizard__form">
 				<div class="chart-wizard__employee_item">
 					<span class="chart-wizard__employee_item-label">
-						{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_EMPLOYEE_HEAD_TITLE') }}
+						{{ headTitle }}
 					</span>
 					<div
 						class="chart-wizard__employee_selector"
@@ -285,12 +314,12 @@ export const Employees = {
 						data-test-id="hr-company-structure_chart-wizard__employees-head-selector"
 					/>
 					<span class="chart-wizard__employee_item-description">
-						{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_EMPLOYEE_HEAD_DESCR') }}
+						{{ headDescription }}
 					</span>
 				</div>
 				<div class="chart-wizard__employee_item">
 					<span class="chart-wizard__employee_item-label">
-						{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_EMPLOYEE_DEPUTY_TITLE') }}
+						{{ deputyTitle }}
 					</span>
 					<div
 						class="chart-wizard__employee_selector"
@@ -298,7 +327,7 @@ export const Employees = {
 						data-test-id="hr-company-structure_chart-wizard__employees-deputy-selector"
 					/>
 					<span class="chart-wizard__employee_item-description">
-						{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_EMPLOYEE_DEPUTY_DESCR') }}
+						{{ deputyDescription }}
 					</span>
 				</div>
 				<div class="chart-wizard__employee_item">

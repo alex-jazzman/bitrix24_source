@@ -12,7 +12,7 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 	const {
 		selectAll,
 		selectById,
-		selectEntities,
+		selectTaskEntities,
 		selectIds,
 		selectTotal,
 		selectByTaskIdOrGuid,
@@ -150,18 +150,22 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 		initialState,
 		reducers: {
 			tasksAdded: (state, { payload }) => {
-				const tasks = payload.map((task) => {
-					return TaskModel.prepareReduxTaskFromServerTask(task, state.entities[task.id]);
+				const { tasks, ownerId } = payload;
+
+				const tasksPrepared = tasks.map((task) => {
+					return TaskModel.prepareReduxTaskFromServerTask(task, state.entities[task.id], { ownerId });
 				});
 
-				tasksAdapter.addMany(state, tasks);
+				tasksAdapter.addMany(state, tasksPrepared);
 			},
 			tasksUpserted: (state, { payload }) => {
-				const tasks = payload.map((task) => {
-					return TaskModel.prepareReduxTaskFromServerTask(task, state.entities[task.id]);
+				const { tasks, ownerId } = payload;
+
+				const tasksPrepared = tasks.map((task) => {
+					return TaskModel.prepareReduxTaskFromServerTask(task, state.entities[task.id], { ownerId });
 				});
 
-				tasksAdapter.upsertMany(state, tasks);
+				tasksAdapter.upsertMany(state, tasksPrepared);
 			},
 			setRelatedTasks: (state, { payload }) => {
 				const { taskId, relatedTasks } = payload;
@@ -396,7 +400,7 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 
 		selectAll,
 		selectById,
-		selectEntities,
+		selectTaskEntities,
 		selectIds,
 		selectTotal,
 		selectByTaskIdOrGuid,

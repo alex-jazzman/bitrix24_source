@@ -21,7 +21,6 @@ return [
 		'im.v2.application.core',
 		'im.v2.provider.service.recent',
 		'main.core',
-		'im.public',
 		'im.v2.lib.menu',
 	],
 	'skip_core' => false,

@@ -118,7 +118,6 @@ class CBPCrmConvertDocumentActivity extends CBPActivity
 
 		if ($conversionResult->isSuccess())
 		{
-			// Send Operations Analytics
 			\CCrmBizProcHelper::sendOperationsAnalytics(
 				Dictionary::EVENT_ENTITY_CREATE,
 				$this,

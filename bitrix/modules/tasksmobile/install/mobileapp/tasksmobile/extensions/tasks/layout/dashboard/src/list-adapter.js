@@ -56,7 +56,7 @@ jn.define('tasks/layout/dashboard/list-adapter', (require, exports, module) => {
 							'checklist',
 							'status',
 							'isMuted',
-							'isPinned',
+							this.props.projectId ? 'isPinned' : 'isPinnedInGroup',
 							'priority',
 							'responsible',
 							'deadline',
@@ -89,6 +89,8 @@ jn.define('tasks/layout/dashboard/list-adapter', (require, exports, module) => {
 					itemFactory: ListItemsFactory,
 					itemParams: {
 						view: this.getView(),
+						projectId: this.props.projectId,
+						ownerId: this.props.ownerId,
 					},
 					// getRuntimeParams: this.getRuntimeParams,
 					// showEmptySpaceItem: this.isEnabledKanbanToolbar(),
@@ -114,6 +116,7 @@ jn.define('tasks/layout/dashboard/list-adapter', (require, exports, module) => {
 					animationTypes: this.props.animationTypes,
 					currentView: this.props.currentView,
 					requestTimeoutInMilliseconds: this.props.requestTimeoutInMilliseconds,
+					projectId: this.props.projectId,
 				}),
 			);
 		}

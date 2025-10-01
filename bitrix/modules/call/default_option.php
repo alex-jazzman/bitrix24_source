@@ -8,15 +8,11 @@ $call_default_option = [
 	'turn_server_max_users' => 4,
 ];
 
-$region = \Bitrix\Main\Application::getInstance()->getLicense()->getRegion();
-if (in_array($region, ['ru', 'by', 'kz', 'uz']))
+$call_default_option['turn_server'] = match (\Bitrix\Main\Application::getInstance()->getLicense()->getRegion())
 {
-	$call_default_option['turn_server'] = 'turn.bitrix24.tech';
-}
-else
-{
-	$call_default_option['turn_server'] = 'turn.calls.bitrix24.com';
-}
+	'ru','by','kz','am','az','ge','kg','uz' => 'turn.bitrix24.tech',
+	default => 'turn.calls.bitrix24.com'
+};
 
 
 if (file_exists($_SERVER["DOCUMENT_ROOT"]."/bitrix/php_interface/call_options.php"))

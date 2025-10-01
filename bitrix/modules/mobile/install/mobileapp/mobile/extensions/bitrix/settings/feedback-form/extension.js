@@ -14,6 +14,7 @@
 		phone_model: device.model,
 		os_version: device.version,
 	}));
+	const { isModuleInstalled } = require('module');
 
 	BX.addCustomEvent('onRegisterProvider', (addProviderHandler) => {
 		// eslint-disable-next-line no-undef
@@ -40,7 +41,10 @@
 			}
 		}
 
-		if (Application.getPlatform() === 'android' || Application.getApiVersion() >= 60)
+		if (
+			(Application.getPlatform() === 'android' || Application.getApiVersion() >= 60)
+			&& isModuleInstalled('ui')
+		)
 		{
 			addProviderHandler(new FeedbackSettingsProvider('feedback', Loc.getMessage('SE_FEEDBACK_TITLE'), ''));
 		}

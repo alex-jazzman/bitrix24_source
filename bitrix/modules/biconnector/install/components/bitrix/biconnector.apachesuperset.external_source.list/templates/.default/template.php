@@ -21,9 +21,8 @@ Extension::load([
 	'ui.dialogs.messagebox',
 	'ui.hint',
 	'ui.buttons',
-	'ui.icons',
-	'ui.icon-set.actions',
 	'ui.alerts',
+	'ui.system.dialog',
 ]);
 
 if (!empty($arResult['ERROR_MESSAGE']))
@@ -72,6 +71,7 @@ if ($arResult['ENABLED_TRACKING_SOURCE_DATASET_INFO'])
 		BX.message(<?= Json::encode(Loc::loadLanguageFile(__FILE__)) ?>);
 		BX.BIConnector.ExternalSourceManager.Instance = new BX.BIConnector.ExternalSourceManager(<?= Json::encode([
 			'gridId' => $grid?->getId(),
+			'sourceTitleList' => $arResult['SOURCE_TITLE_LIST'],
 		])?>);
 		BX.BIConnector.TrackingAnalyticsHandler.init();
 	});

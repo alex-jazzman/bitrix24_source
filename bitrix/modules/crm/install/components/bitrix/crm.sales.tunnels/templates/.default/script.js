@@ -1482,6 +1482,200 @@ this.BX.Crm = this.BX.Crm || {};
 	  return Grid;
 	}(main_kanban.Kanban.Grid);
 
+	var Backend = /*#__PURE__*/function () {
+	  function Backend() {
+	    babelHelpers.classCallCheck(this, Backend);
+	  }
+	  babelHelpers.createClass(Backend, null, [{
+	    key: "request",
+	    value: function request(_ref) {
+	      var action = _ref.action,
+	        data = _ref.data,
+	        analyticsLabel = _ref.analyticsLabel;
+	      return new Promise(function (resolve, reject) {
+	        main_core.ajax.runComponentAction(Backend.component, action, {
+	          mode: 'class',
+	          data: {
+	            data: data,
+	            entityTypeId: Backend.entityTypeId
+	          },
+	          analyticsLabel: analyticsLabel
+	        }).then(resolve, reject);
+	      });
+	    }
+	  }, {
+	    key: "createCategory",
+	    value: function createCategory(data) {
+	      return Backend.request({
+	        action: 'createCategory',
+	        analyticsLabel: {
+	          component: Backend.component,
+	          action: 'create.new.category'
+	        },
+	        data: data
+	      });
+	    }
+	  }, {
+	    key: "getCategory",
+	    value: function getCategory(data) {
+	      return Backend.request({
+	        action: 'getCategory',
+	        analyticsLabel: {
+	          component: Backend.component,
+	          action: 'get.category'
+	        },
+	        data: data
+	      });
+	    }
+	  }, {
+	    key: "updateCategory",
+	    value: function updateCategory(data) {
+	      return Backend.request({
+	        action: 'updateCategory',
+	        analyticsLabel: {
+	          component: Backend.component,
+	          action: 'update.category'
+	        },
+	        data: data
+	      });
+	    }
+	  }, {
+	    key: "removeCategory",
+	    value: function removeCategory(data) {
+	      return Backend.request({
+	        action: 'removeCategory',
+	        analyticsLabel: {
+	          component: Backend.component,
+	          action: 'remove.category'
+	        },
+	        data: data
+	      });
+	    }
+	  }, {
+	    key: "accessCategory",
+	    value: function accessCategory(data) {
+	      return Backend.request({
+	        action: 'accessCategory',
+	        analyticsLabel: {
+	          component: Backend.component,
+	          action: 'access.category'
+	        },
+	        data: data
+	      });
+	    }
+	  }, {
+	    key: "copyAccessCategory",
+	    value: function copyAccessCategory(data) {
+	      return Backend.request({
+	        action: 'copyAccessCategory',
+	        analyticsLabel: {
+	          component: Backend.component,
+	          action: 'access.category'
+	        },
+	        data: data
+	      });
+	    }
+	  }, {
+	    key: "createRobot",
+	    value: function createRobot(data) {
+	      return Backend.request({
+	        action: 'createRobot',
+	        analyticsLabel: {
+	          component: Backend.component,
+	          action: 'create.robot'
+	        },
+	        data: data
+	      });
+	    }
+	  }, {
+	    key: "removeRobot",
+	    value: function removeRobot(data) {
+	      return Backend.request({
+	        action: 'removeRobot',
+	        analyticsLabel: {
+	          component: Backend.component,
+	          action: 'remove.robot'
+	        },
+	        data: data
+	      });
+	    }
+	  }, {
+	    key: "getRobotSettingsDialog",
+	    value: function getRobotSettingsDialog(data) {
+	      return Backend.request({
+	        action: 'getRobotSettingsDialog',
+	        analyticsLabel: {
+	          component: Backend.component,
+	          action: 'settings.robot'
+	        },
+	        data: data
+	      });
+	    }
+	  }, {
+	    key: "addStage",
+	    value: function addStage(data) {
+	      return Backend.request({
+	        action: 'addStage',
+	        analyticsLabel: {
+	          component: Backend.component,
+	          action: 'add.stage'
+	        },
+	        data: data
+	      });
+	    }
+	  }, {
+	    key: "removeStage",
+	    value: function removeStage(data) {
+	      return Backend.request({
+	        action: 'removeStage',
+	        analyticsLabel: {
+	          component: Backend.component,
+	          action: 'remove.stage'
+	        },
+	        data: data
+	      });
+	    }
+	  }, {
+	    key: "updateStage",
+	    value: function updateStage(data) {
+	      return Backend.request({
+	        action: 'updateStage',
+	        analyticsLabel: {
+	          component: Backend.component,
+	          action: 'update.stage'
+	        },
+	        data: data
+	      });
+	    }
+	  }, {
+	    key: "updateStages",
+	    value: function updateStages(data) {
+	      return Backend.request({
+	        action: 'updateStages',
+	        analyticsLabel: {
+	          component: Backend.component,
+	          action: 'update.stages'
+	        },
+	        data: data
+	      });
+	    }
+	  }, {
+	    key: "getCategories",
+	    value: function getCategories() {
+	      return Backend.request({
+	        action: 'getCategories',
+	        analyticsLabel: {
+	          component: Backend.component,
+	          action: 'get.categories'
+	        }
+	      });
+	    }
+	  }]);
+	  return Backend;
+	}();
+	babelHelpers.defineProperty(Backend, "component", 'bitrix:crm.sales.tunnels');
+	babelHelpers.defineProperty(Backend, "entityTypeId", 2);
+
 	var _templateObject$3, _templateObject2$2, _templateObject3$2, _templateObject4$1, _templateObject5, _templateObject6, _templateObject7, _templateObject8, _templateObject9, _templateObject10, _templateObject11, _templateObject12, _templateObject13, _templateObject14, _templateObject15, _templateObject16, _templateObject17, _templateObject18, _templateObject19, _templateObject20, _templateObject21, _templateObject22, _templateObject23, _templateObject24, _templateObject25, _templateObject26, _templateObject27, _templateObject28, _templateObject29, _templateObject30, _templateObject31;
 	var Category = /*#__PURE__*/function (_Event$EventEmitter) {
 	  babelHelpers.inherits(Category, _Event$EventEmitter);
@@ -2475,200 +2669,6 @@ this.BX.Crm = this.BX.Crm || {};
 	}(main_core.Event.EventEmitter);
 	babelHelpers.defineProperty(Category, "instances", []);
 
-	var Backend = /*#__PURE__*/function () {
-	  function Backend() {
-	    babelHelpers.classCallCheck(this, Backend);
-	  }
-	  babelHelpers.createClass(Backend, null, [{
-	    key: "request",
-	    value: function request(_ref) {
-	      var action = _ref.action,
-	        data = _ref.data,
-	        analyticsLabel = _ref.analyticsLabel;
-	      return new Promise(function (resolve, reject) {
-	        main_core.ajax.runComponentAction(Backend.component, action, {
-	          mode: 'class',
-	          data: {
-	            data: data,
-	            entityTypeId: Backend.entityTypeId
-	          },
-	          analyticsLabel: analyticsLabel
-	        }).then(resolve, reject);
-	      });
-	    }
-	  }, {
-	    key: "createCategory",
-	    value: function createCategory(data) {
-	      return Backend.request({
-	        action: 'createCategory',
-	        analyticsLabel: {
-	          component: Backend.component,
-	          action: 'create.new.category'
-	        },
-	        data: data
-	      });
-	    }
-	  }, {
-	    key: "getCategory",
-	    value: function getCategory(data) {
-	      return Backend.request({
-	        action: 'getCategory',
-	        analyticsLabel: {
-	          component: Backend.component,
-	          action: 'get.category'
-	        },
-	        data: data
-	      });
-	    }
-	  }, {
-	    key: "updateCategory",
-	    value: function updateCategory(data) {
-	      return Backend.request({
-	        action: 'updateCategory',
-	        analyticsLabel: {
-	          component: Backend.component,
-	          action: 'update.category'
-	        },
-	        data: data
-	      });
-	    }
-	  }, {
-	    key: "removeCategory",
-	    value: function removeCategory(data) {
-	      return Backend.request({
-	        action: 'removeCategory',
-	        analyticsLabel: {
-	          component: Backend.component,
-	          action: 'remove.category'
-	        },
-	        data: data
-	      });
-	    }
-	  }, {
-	    key: "accessCategory",
-	    value: function accessCategory(data) {
-	      return Backend.request({
-	        action: 'accessCategory',
-	        analyticsLabel: {
-	          component: Backend.component,
-	          action: 'access.category'
-	        },
-	        data: data
-	      });
-	    }
-	  }, {
-	    key: "copyAccessCategory",
-	    value: function copyAccessCategory(data) {
-	      return Backend.request({
-	        action: 'copyAccessCategory',
-	        analyticsLabel: {
-	          component: Backend.component,
-	          action: 'access.category'
-	        },
-	        data: data
-	      });
-	    }
-	  }, {
-	    key: "createRobot",
-	    value: function createRobot(data) {
-	      return Backend.request({
-	        action: 'createRobot',
-	        analyticsLabel: {
-	          component: Backend.component,
-	          action: 'create.robot'
-	        },
-	        data: data
-	      });
-	    }
-	  }, {
-	    key: "removeRobot",
-	    value: function removeRobot(data) {
-	      return Backend.request({
-	        action: 'removeRobot',
-	        analyticsLabel: {
-	          component: Backend.component,
-	          action: 'remove.robot'
-	        },
-	        data: data
-	      });
-	    }
-	  }, {
-	    key: "getRobotSettingsDialog",
-	    value: function getRobotSettingsDialog(data) {
-	      return Backend.request({
-	        action: 'getRobotSettingsDialog',
-	        analyticsLabel: {
-	          component: Backend.component,
-	          action: 'settings.robot'
-	        },
-	        data: data
-	      });
-	    }
-	  }, {
-	    key: "addStage",
-	    value: function addStage(data) {
-	      return Backend.request({
-	        action: 'addStage',
-	        analyticsLabel: {
-	          component: Backend.component,
-	          action: 'add.stage'
-	        },
-	        data: data
-	      });
-	    }
-	  }, {
-	    key: "removeStage",
-	    value: function removeStage(data) {
-	      return Backend.request({
-	        action: 'removeStage',
-	        analyticsLabel: {
-	          component: Backend.component,
-	          action: 'remove.stage'
-	        },
-	        data: data
-	      });
-	    }
-	  }, {
-	    key: "updateStage",
-	    value: function updateStage(data) {
-	      return Backend.request({
-	        action: 'updateStage',
-	        analyticsLabel: {
-	          component: Backend.component,
-	          action: 'update.stage'
-	        },
-	        data: data
-	      });
-	    }
-	  }, {
-	    key: "updateStages",
-	    value: function updateStages(data) {
-	      return Backend.request({
-	        action: 'updateStages',
-	        analyticsLabel: {
-	          component: Backend.component,
-	          action: 'update.stages'
-	        },
-	        data: data
-	      });
-	    }
-	  }, {
-	    key: "getCategories",
-	    value: function getCategories() {
-	      return Backend.request({
-	        action: 'getCategories',
-	        analyticsLabel: {
-	          component: Backend.component,
-	          action: 'get.categories'
-	        }
-	      });
-	    }
-	  }]);
-	  return Backend;
-	}();
-	babelHelpers.defineProperty(Backend, "component", 'bitrix:crm.sales.tunnels');
-	babelHelpers.defineProperty(Backend, "entityTypeId", 2);
-
 	var CategoryStub = /*#__PURE__*/function (_Category) {
 	  babelHelpers.inherits(CategoryStub, _Category);
 	  function CategoryStub(options) {
@@ -2856,10 +2856,9 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "onHelpButtonClick",
 	    value: function onHelpButtonClick(event) {
+	      var _top$BX$Helper;
 	      event.preventDefault();
-	      if (top.BX.Helper) {
-	        top.BX.Helper.show('redirect=detail&code=9474707');
-	      }
+	      (_top$BX$Helper = top.BX.Helper) === null || _top$BX$Helper === void 0 ? void 0 : _top$BX$Helper.show('redirect=detail&code=20732764');
 	    }
 	  }, {
 	    key: "getCategoryStub",

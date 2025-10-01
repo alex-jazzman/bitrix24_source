@@ -1,2 +1,2 @@
 <?php
-$MESS["BCL_INSTALL"] = "Модульді орнату";
+$MESS['BCL_INSTALL'] = "Модульді орнату";

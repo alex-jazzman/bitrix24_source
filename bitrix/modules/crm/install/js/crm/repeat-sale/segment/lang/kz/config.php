@@ -20,5 +20,6 @@ $MESS["CRM_REPEAT_SALE_SEGMENT_PLACEHOLDER"] = "Менеджерге не іст
 $MESS["CRM_REPEAT_SALE_SEGMENT_PLACEHOLDER_WITH_COPILOT"] = "Менеджер не істеу керектігін егжей-тегжейлі сипаттаңыз немесе CoPilot іске қосу үшін бос орын батырмасын басыңыз";
 $MESS["CRM_REPEAT_SALE_SEGMENT_SAVE_ERROR"] = "Сценарийді сақтау мүмкін болмады. Қайталап көріңіз";
 $MESS["CRM_REPEAT_SALE_SEGMENT_TITLE"] = "Қайта сату сценарийін баптау";
+$MESS["CRM_REPEAT_SALE_SEGMENT_TITLE_READ_ONLY"] = "Қайта сату сценарийі";
 $MESS["CRM_REPEAT_SALE_SEGMENT_VALIDATE_ASSIGNMENT_USERS_ERROR"] = "Сценарийде кем дегенде бір жауапты адам болуы керек";
 $MESS["CRM_REPEAT_SALE_SEGMENT_VALIDATE_TEXT_ERROR"] = "Сценарийде &nbsp;CRM іс мәтіні толтырылуы керек";

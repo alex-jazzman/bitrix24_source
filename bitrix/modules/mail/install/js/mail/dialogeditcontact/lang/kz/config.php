@@ -8,3 +8,4 @@ $MESS["MAIL_DIALOG_EDIT_CONTACT_NAME_TITLE"] = "Аты";
 $MESS["MAIL_DIALOG_EDIT_CONTACT_REMOVE_DIALOG_MESSAGE"] = "Байланысты мекенжай кітабынан нақты жойғыңыз келеді ме?";
 $MESS["MAIL_DIALOG_EDIT_CONTACT_REMOVE_DIALOG_TITLE"] = "Жоюды растау";
 $MESS["MAIL_DIALOG_EDIT_CONTACT_TITLE_BAR_ADD_MSGVER_1"] = "Жаңа мекенжай";
+$MESS["MAIL_DIALOG_EDIT_CONTACT_TITLE_BAR_EDIT_MSGVER_1"] = "Мекенжайды редакциялау";

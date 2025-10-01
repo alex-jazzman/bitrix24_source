@@ -53,7 +53,7 @@ class EntityCollection implements EntityCollectionInterface
 
 		foreach ($this->items as $key => $item)
 		{
-			if (call_user_func($callback, $item, $key))
+			if ($callback($item, $key))
 			{
 				return $item;
 			}

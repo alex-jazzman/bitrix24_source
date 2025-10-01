@@ -2,6 +2,8 @@
  * @module im/messenger/controller/sidebar-v2/controller/base/src/view
  */
 jn.define('im/messenger/controller/sidebar-v2/controller/base/src/view', (require, exports, module) => {
+	const { Type } = require('type');
+
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const { PrimaryButton } = require('im/messenger/controller/sidebar-v2/ui/primary-button');
@@ -59,6 +61,11 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base/src/view', (requir
 
 			/** @type {SidebarWidgetNavigator} */
 			this.widgetNavigator = props.widgetNavigator;
+
+			this.callUserProfile = Type.isFunction(props.callbacks?.callUserProfile)
+				? props.callbacks.callUserProfile
+				: () => {}
+			;
 		}
 
 		get chatTitle()
@@ -288,6 +295,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base/src/view', (requir
 								flexDirection: 'column',
 								justifyContent: 'center',
 							},
+							onClick: () => this.callUserProfile(),
 						},
 						this.renderTitle(),
 						this.renderChatInfo(),
@@ -298,14 +306,19 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base/src/view', (requir
 
 		renderAvatar()
 		{
-			return SidebarAvatar({
-				dialogId: this.dialogId,
-				size: 72,
-				testId: 'avatar',
-				style: {
-					marginRight: Indent.XL3.toNumber(),
+			return View(
+				{
+					onClick: () => this.callUserProfile(),
 				},
-			});
+				SidebarAvatar({
+					dialogId: this.dialogId,
+					size: 72,
+					testId: 'avatar',
+					style: {
+						marginRight: Indent.XL3.toNumber(),
+					},
+				}),
+			);
 		}
 
 		renderTitle()

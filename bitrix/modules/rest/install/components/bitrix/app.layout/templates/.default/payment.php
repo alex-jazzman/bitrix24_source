@@ -38,7 +38,7 @@ if ($arResult['PAYMENT_TYPE'] === AppTable::STATUS_SUBSCRIPTION || $arResult['AP
 	if (!$arResult['SUBSCRIPTION_FINISH'])
 	{
 		$title = Loc::getMessage(
-			'REST_APP_LAYOUT_PAYMENT_ACCESS_TITLE_SUBSCRIBE_APP',
+			'REST_APP_LAYOUT_PAYMENT_ACCESS_TITLE_SUBSCRIBE_APP_MSGVER_2',
 			[
 				'#APP_NAME#' => htmlspecialcharsbx($arResult['APP_NAME'])
 			]

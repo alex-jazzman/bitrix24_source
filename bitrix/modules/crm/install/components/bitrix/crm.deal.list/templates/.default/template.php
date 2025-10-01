@@ -568,6 +568,12 @@ foreach ($arResult['DEAL'] as $sKey =>  $arDeal)
 			) + (is_array($arResult['DEAL_UF'][$sKey]) ? $arResult['DEAL_UF'][$sKey] : [])
 	);
 
+	$availabilityChecker = Container::getInstance()->getRepeatSaleAvailabilityChecker();
+	if ($availabilityChecker->isAvailable() && $availabilityChecker->hasPermission())
+	{
+		$resultItem['columns']['REPEAT_SALE_SEGMENT_ID'] = CCrmViewHelper::renderRepeatSaleSegmentTitle((int)($arDeal['REPEAT_SALE_SEGMENT_ID'] ?? 0));
+	}
+
 	if (isset($arDeal['COMPANY_REVENUE']))
 	{
 		$resultItem['columns']['COMPANY_REVENUE'] =

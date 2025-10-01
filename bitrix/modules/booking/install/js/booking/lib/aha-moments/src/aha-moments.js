@@ -150,6 +150,7 @@ class AhaMoments
 			[AhaMoment.ExpandGrid]: this.#shouldShowExpandGrid(),
 			[AhaMoment.SelectResources]: this.#shouldShowSelectResources(),
 			[AhaMoment.CyclePopup]: this.#shouldShowCyclePopup(),
+			[AhaMoment.SearchNavigation]: this.#shouldShowSearchNavigation(),
 		}[ahaMoment];
 	}
 
@@ -231,6 +232,11 @@ class AhaMoments
 		return wasNotShown && previousAhaMomentShown;
 	}
 
+	#shouldShowSearchNavigation(): boolean
+	{
+		return this.#wasNotShown(AhaMoment.SearchNavigation);
+	}
+
 	#wasNotShown(ahaMoment: $Values<typeof AhaMoment>): boolean
 	{
 		return !this.#wasShown(ahaMoment);
@@ -256,6 +262,7 @@ class AhaMoments
 			[AhaMoment.ExpandGrid]: Option.AhaExpandGrid,
 			[AhaMoment.SelectResources]: Option.AhaSelectResources,
 			[AhaMoment.CyclePopup]: Option.AhaCyclePopup,
+			[AhaMoment.SearchNavigation]: Option.AhaSearchNavigation,
 		}[ahaMoment];
 	}
 }

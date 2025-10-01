@@ -15,8 +15,6 @@ use Bitrix\MobileApp\Mobile;
 final class CrmCustomSection implements Tabable
 {
 	private const INITIAL_COMPONENT = 'crm:crm.tabs';
-
-	private const MINIMAL_API_VERSION = 45;
 	private const ID_PREFIX = 'crm_custom_section';
 	private const MAX_SHORT_TITLE_LENGTH = 14;
 
@@ -45,11 +43,6 @@ final class CrmCustomSection implements Tabable
 		}
 
 		if (!\Bitrix\Crm\Service\Container::getInstance()->getIntranetToolsManager()->checkExternalDynamicAvailability())
-		{
-			return false;
-		}
-
-		if (Mobile::getApiVersion() < self::MINIMAL_API_VERSION)
 		{
 			return false;
 		}
@@ -93,7 +86,6 @@ final class CrmCustomSection implements Tabable
 		return [
 			'title' => $this->getShortTitle(),
 			'useLetterImage' => true,
-			'min_api_version' => self::MINIMAL_API_VERSION,
 			'color' => '#00ace3',
 			'imageUrl' => 'favorite/icon-crm_custom_section.png',
 			'imageName' => $this->getIconId(),
@@ -166,6 +158,6 @@ final class CrmCustomSection implements Tabable
 
 	public function getIconId(): string
 	{
-		return Mobile::getApiVersion() < 56 ?  self::ID_PREFIX : 'activity';
+		return 'activity';
 	}
 }

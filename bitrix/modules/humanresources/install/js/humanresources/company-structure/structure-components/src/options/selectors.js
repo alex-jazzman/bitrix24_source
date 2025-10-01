@@ -70,28 +70,69 @@ export const getChannelDialogEntity = function(): Object {
 	};
 };
 
-export const ChatTypeDict: Record<string, string> = Object.freeze({
+export const getCollabDialogEntity = function(): Object {
+	return {
+		id: 'project',
+		dynamicLoad: true,
+		dynamicSearch: true,
+		options: {
+			type: ['collab'],
+			createProjectLink: false,
+			checkCollabInviteOption: true,
+		},
+		itemOptions: {
+			collab: {
+				supertitle: null,
+				subtitle: Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_COLLAB_SUPERTITLE'),
+				textColor: '#535c69',
+			},
+		},
+		tagOptions: {
+			default: {
+				textColor: '#207976',
+				bgColor: '#ade7e4',
+				avatar: '/bitrix/js/socialnetwork/entity-selector/src/images/collab-project.svg',
+			},
+		},
+	};
+};
+
+export const CommunicationsTypeDict: Record<string, string> = Object.freeze({
 	chat: 'chat',
 	channel: 'channel',
+	collab: 'collab',
 });
 
-export const getChatRecentTabOptions = function(
+export const getCommunicationsRecentTabOptions = function(
 	entityType: string,
-	chatType: ChatTypeDict.chat | ChatTypeDict.channel,
+	chatType: CommunicationsTypeDict.chat | CommunicationsTypeDict.channel | CommunicationsTypeDict.collab,
 ): TabOptions {
 	let title = '';
+	let subtitle = '';
 
-	if (chatType === ChatTypeDict.chat)
+	if (chatType === CommunicationsTypeDict.chat)
 	{
-		title = entityType === EntityTypes.team
-			? Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_CHAT_TEAM_STUB_TITLE')
-			: Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_CHAT_DEPARTMENT_STUB_TITLE');
+		title = Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_CHAT_STUB_TITLE');
+		subtitle = entityType === EntityTypes.team
+			? Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_CHAT_TEAM_STUB_SUBTITLE')
+			: Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_CHAT_DEPARTMENT_STUB_SUBTITLE')
+		;
+	}
+	else if (chatType === CommunicationsTypeDict.channel)
+	{
+		title = Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_CHANNEL_STUB_TITLE');
+		subtitle = entityType === EntityTypes.team
+			? Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_CHANNEL_TEAM_STUB_SUBTITLE')
+			: Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_CHANNEL_DEPARTMENT_STUB_SUBTITLE')
+		;
 	}
 	else
 	{
-		title = entityType === EntityTypes.team
-			? Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_CHANNEL_TEAM_STUB_TITLE')
-			: Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_CHANNEL_DEPARTMENT_STUB_TITLE');
+		title = Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_COLLAB_STUB_TITLE');
+		subtitle = entityType === EntityTypes.team
+			? Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_COLLAB_TEAM_STUB_SUBTITLE')
+			: Loc.getMessage('HUMANRESOURCES_STRUCTURE_COMPONENTS_COLLAB_DEPARTMENT_STUB_SUBTITLE')
+		;
 	}
 
 	return {
@@ -99,6 +140,7 @@ export const getChatRecentTabOptions = function(
 		stub: true,
 		stubOptions: {
 			title,
+			subtitle,
 		},
 	};
 };

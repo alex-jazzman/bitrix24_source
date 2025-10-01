@@ -8,6 +8,7 @@ return [
 	'css' => 'dist/department-content.bundle.css',
 	'js' => 'dist/department-content.bundle.js',
 	'rel' => [
+		'humanresources.company-structure.user-management-dialog',
 		'ui.icon-set.crm',
 		'humanresources.company-structure.api',
 		'ui.entity-selector',

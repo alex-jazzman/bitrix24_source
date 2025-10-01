@@ -1,6 +1,6 @@
 module.exports = {
-	input: './src/recent.js',
-	output: './dist/recent.bundle.js',
+	input: './src/registry.js',
+	output: './dist/registry.bundle.js',
 	namespace: 'BX.Messenger.v2.Service',
 	browserslist: true,
 };

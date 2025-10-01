@@ -4,6 +4,7 @@
 jn.define('im/messenger/lib/logger/manager', (require, exports, module) => {
 	const { Type } = require('type');
 	const { Logger, LogType } = require('utils/logger');
+	const { Feature } = require('im/messenger/lib/feature');
 
 	/**
 	 * @class LoggerManager
@@ -11,6 +12,8 @@ jn.define('im/messenger/lib/logger/manager', (require, exports, module) => {
 	class LoggerManager
 	{
 		#externalConsole;
+		#saveDebugInfoConfig;
+		#debugInfo;
 
 		/**
 		 * @return LoggerManager
@@ -36,6 +39,39 @@ jn.define('im/messenger/lib/logger/manager', (require, exports, module) => {
 				this.getLogger(loggerName);
 			});
 			this.#externalConsole = null;
+			const isDebugInfoEnabled = Feature.isDevModeEnabled;
+			this.#saveDebugInfoConfig = {
+				logLevel: {
+					error: {
+						enabled: isDebugInfoEnabled,
+						maxRecordCount: 100,
+					},
+					log: {
+						enabled: isDebugInfoEnabled,
+						maxRecordCount: 100,
+					},
+					info: {
+						enabled: isDebugInfoEnabled,
+						maxRecordCount: 100,
+					},
+					warn: {
+						enabled: isDebugInfoEnabled,
+						maxRecordCount: 100,
+					},
+					trace: {
+						enabled: isDebugInfoEnabled,
+						maxRecordCount: 100,
+					},
+				},
+			};
+
+			this.#debugInfo = {
+				log: [],
+				info: [],
+				warn: [],
+				error: [],
+				trace: [],
+			};
 		}
 
 		getExternalConsole()
@@ -46,6 +82,16 @@ jn.define('im/messenger/lib/logger/manager', (require, exports, module) => {
 		setExternalConsole(console)
 		{
 			this.#externalConsole = console;
+		}
+
+		getSaveDebugInfoConfig()
+		{
+			return this.#saveDebugInfoConfig;
+		}
+
+		getDebugInfo()
+		{
+			return this.#debugInfo;
 		}
 
 		/**
@@ -147,6 +193,32 @@ jn.define('im/messenger/lib/logger/manager', (require, exports, module) => {
 			return Type.isFunction(method) && printMethodNameList.includes(methodName);
 		}
 
+		saveDebugInfoIfNeeded(methodName, args)
+		{
+			if (this.#saveDebugInfoConfig.logLevel[methodName]?.enabled !== true)
+			{
+				return;
+			}
+
+			const currentRecordCount = this.#debugInfo[methodName].length;
+			const maxRecordCount = this.#saveDebugInfoConfig.logLevel[methodName].maxRecordCount;
+			if (currentRecordCount >= maxRecordCount)
+			{
+				this.#debugInfo[methodName].shift();
+			}
+
+			const debugArgs = args.map((arg) => {
+				if (arg instanceof Error)
+				{
+					return `${arg.name}: ${arg.message}`;
+				}
+
+				return arg;
+			});
+
+			this.#debugInfo[methodName].push(debugArgs);
+		}
+
 		getCallMethodAndPrintToExternalConsoleHandler(logger, method, methodName)
 		{
 			return (...args) => {
@@ -155,6 +227,7 @@ jn.define('im/messenger/lib/logger/manager', (require, exports, module) => {
 				if (logger.isEnabledLogType(methodName))
 				{
 					this.getExternalConsole()?.[methodName](args);
+					this.saveDebugInfoIfNeeded(methodName, args);
 				}
 
 				return result;

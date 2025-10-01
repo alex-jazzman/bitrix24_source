@@ -76,3 +76,9 @@
 {
 	height: calc(100vh - 240px) !important;
 }
+
+.biconnector-delete-dataset-popup-content {
+	font-weight: var(--ui-font-weight-normal);
+	font-size: var(--ui-font-size-lg);
+	color: #555555;
+}

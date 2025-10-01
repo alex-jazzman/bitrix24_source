@@ -533,6 +533,7 @@ if ($action && $tables && $RIGHT >= 'W')
 			echo '<hr>';
 			echo '<pre>';
 			echo '&lt;', '?', "php\n";
+			echo "\n";
 			echo 'namespace Bitrix\\' . $moduleNamespace . ";\n";
 			echo "\n";
 			foreach ($aliases as $row)
@@ -589,6 +590,7 @@ if ($action && $tables && $RIGHT >= 'W')
 				echo "\t}\n";
 			}
 			echo "}\n";
+			echo "\n";
 			echo '</pre>';
 			echo 'File: /bitrix/modules/' . $moduleName . '/lang/ru/lib/' . mb_strtolower($className) . 'table.php';
 			echo '<hr>';
@@ -598,6 +600,7 @@ if ($action && $tables && $RIGHT >= 'W')
 			{
 				echo "\$MESS['" . $messageId . "'] = \"" . EscapePHPString($messageText) . "\";\n";
 			}
+			echo "\n";
 			echo '</pre>';
 			break;
 		}

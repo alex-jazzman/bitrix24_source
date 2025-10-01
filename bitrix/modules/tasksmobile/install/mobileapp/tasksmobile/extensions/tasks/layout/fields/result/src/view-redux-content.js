@@ -331,7 +331,7 @@ jn.define('tasks/layout/fields/result/view-redux-content', (require, exports, mo
 
 	const mapStateToProps = (state, ownProps) => {
 		const result = selectById(state, ownProps.resultId);
-		const actions = selectActions(selectTaskById(state, ownProps.taskId));
+		const actions = selectActions({ task: selectTaskById(state, ownProps.taskId) });
 		const taskActions = {
 			[ActionId.COMPLETE]: actions.complete,
 			[ActionId.APPROVE]: actions.approve,

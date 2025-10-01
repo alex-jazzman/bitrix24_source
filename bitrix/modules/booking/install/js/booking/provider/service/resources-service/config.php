@@ -10,8 +10,8 @@ return [
 	'rel' => [
 		'main.polyfill.core',
 		'booking.core',
-		'booking.lib.api-client',
 		'booking.const',
+		'booking.lib.api-client',
 	],
 	'skip_core' => true,
 ];

@@ -11,7 +11,6 @@ jn.define('sign/grid/item-factory/document', (require, exports, module) => {
 	const { H5 } = require('ui-system/typography/heading');
 	const { Text6 } = require('ui-system/typography/text');
 	const { Avatar } = require('ui-system/blocks/avatar');
-	const { ProfileView } = require('user/profile');
 	const { InitiatedByType } = require('sign/type/initiated-by-type');
 	const { ActionStatus } = require('sign/type/action-status');
 	const { MemberStatus } = require('sign/type/member-status');
@@ -25,6 +24,7 @@ jn.define('sign/grid/item-factory/document', (require, exports, module) => {
 	const { Indent, Color, Component } = require('tokens');
 	const { useCallback } = require('utils/function');
 	const { Loc } = require('loc');
+	const { UserProfile } = require('user-profile');
 
 	const DOCUMENT_IMAGE_NAMES = { default: 'sign-doc.svg', pdf: 'pdf-doc.svg', zip: 'zip-doc.svg' };
 
@@ -430,8 +430,8 @@ jn.define('sign/grid/item-factory/document', (require, exports, module) => {
 		}
 
 		#onSecondSideButtonClickHandler = (userId) => {
-			ProfileView.open({
-				userId,
+			void UserProfile.open({
+				ownerId: userId,
 			});
 		};
 

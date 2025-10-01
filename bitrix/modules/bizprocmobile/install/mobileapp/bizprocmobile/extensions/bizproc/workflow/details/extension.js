@@ -14,6 +14,7 @@ jn.define('bizproc/workflow/details', (require, exports, module) => {
 	const { WorkflowComments } = require('bizproc/workflow/comments');
 	const { WorkflowDetailsContent } = require('bizproc/workflow/details/content');
 	const { WorkflowDetailsSkeleton } = require('bizproc/skeleton');
+	const { Random } = require('utils/random');
 
 	class WorkflowDetails extends PureComponent
 	{

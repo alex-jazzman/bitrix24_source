@@ -287,6 +287,11 @@ this.BX = this.BX || {};
 	  BX.UI.Feedback.Form.open({
 	    id: 'b5309667',
 	    forms: [{
+	      zones: ['en'],
+	      id: 674,
+	      lang: 'en',
+	      sec: '5iorws'
+	    }, {
 	      zones: ['es'],
 	      id: 676,
 	      lang: 'es',
@@ -302,11 +307,6 @@ this.BX = this.BX || {};
 	      lang: 'br',
 	      sec: 'kuelnm'
 	    }],
-	    defaultForm: {
-	      id: 674,
-	      lang: 'en',
-	      sec: '5iorws'
-	    },
 	    presets: {
 	      ...babelHelpers.classPrivateFieldLooseBase(this, _formConfiguration)[_formConfiguration],
 	      sender_page: document.location.href

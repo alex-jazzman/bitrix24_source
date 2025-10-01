@@ -15,11 +15,22 @@ declare type RecentItemData = {
     chat_id: number,
     counter: number,
     date_last_activity: string,
-    message: object,
+    message: RecentItemMessageData,
     options: [],
     title: string,
     type: string,
     user: object,
+}
+
+export type RecentItemMessageData = {
+	attach: false,
+	author_id: number,
+	date: string,
+	file: boolean | { id: number, type: string, name: string},
+	id: number,
+	status: string,
+	text: string,
+	uuid: string,
 }
 
 declare type CopilotRecentItemData = {

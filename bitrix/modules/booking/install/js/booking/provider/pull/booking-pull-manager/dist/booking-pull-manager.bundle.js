@@ -102,7 +102,7 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	  }
 	}
 	function _isFilterMode2() {
-	  return booking_core.Core.getStore().getters[`${booking_const.Model.Interface}/isFilterMode`];
+	  return booking_core.Core.getStore().getters[`${booking_const.Model.Filter}/isFilterMode`];
 	}
 	function _getViewDateTs2() {
 	  return booking_core.Core.getStore().getters[`${booking_const.Model.Interface}/viewDateTs`];
@@ -174,7 +174,7 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	  if (resource.isMain) {
 	    await booking_core.Core.getStore().dispatch(`${booking_const.Model.Favorites}/addMany`, [resource.id]);
 	  }
-	  const isFilterMode = booking_core.Core.getStore().getters[`${booking_const.Model.Interface}/isFilterMode`];
+	  const isFilterMode = booking_core.Core.getStore().getters[`${booking_const.Model.Filter}/isFilterMode`];
 	  if (isFilterMode) {
 	    return;
 	  }

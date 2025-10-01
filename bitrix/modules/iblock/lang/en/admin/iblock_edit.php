@@ -271,4 +271,4 @@ $MESS["IB_E_WF_TYPE_NONE"] = "not in use";
 $MESS["IB_E_WF_TYPE_WORKFLOW"] = "workflow";
 $MESS["IB_E_WORKFLOW"] = "Include in workflow:";
 $MESS["IB_E_XML_ID"] = "Code in external DB source";
-$MESS["IB_E_YANDEX_EXPORT"] = "Export To Yandex.Products";
+$MESS['IB_E_YANDEX_EXPORT'] = "Export To Yandex.Products";

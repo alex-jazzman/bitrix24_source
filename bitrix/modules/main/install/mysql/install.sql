@@ -817,27 +817,18 @@ insert into b_rating_weight (RATING_FROM, RATING_TO, WEIGHT, COUNT) VALUES (-100
 
 CREATE TABLE b_event_log
 (
-	/*SYSTEM GENERATED*/
-	ID INT not null auto_increment,
-	TIMESTAMP_X timestamp,
-
-	/*CALLER INFO*/
-	SEVERITY VARCHAR(50) not null, /*SECURITY, WARNING, NOTICE*/
-	AUDIT_TYPE_ID VARCHAR(50) not null, /*LOGIN_OK, LOGIN_WRONG_PASSWORD*/
-	MODULE_ID VARCHAR(50) not null, /*main, iblock, main.register */
-	ITEM_ID VARCHAR(255) not null, /*user login, element id*/
-
-	/*FROM $_SERVER*/
+	ID BIGINT not null auto_increment,
+	TIMESTAMP_X datetime,
+	SEVERITY VARCHAR(50) not null,
+	AUDIT_TYPE_ID VARCHAR(50) not null,
+	MODULE_ID VARCHAR(50) not null,
+	ITEM_ID VARCHAR(255) not null,
 	REMOTE_ADDR VARCHAR(40),
-	USER_AGENT TEXT, /*2000 for oracle and mssql*/
-	REQUEST_URI TEXT, /*2000 for oracle and mssql*/
-
-	/*FROM CONSTANTS AND VARIABLES*/
-	SITE_ID CHAR(2), /*if defined*/
-	USER_ID INT, /*if logged in*/
-	GUEST_ID INT, /* if statistics installed*/
-
-	/*ADDITIONAL*/
+	USER_AGENT TEXT,
+	REQUEST_URI TEXT,
+	SITE_ID CHAR(2),
+	USER_ID INT,
+	GUEST_ID INT,
 	DESCRIPTION MEDIUMTEXT,
 	PRIMARY KEY (ID),
 	INDEX ix_b_event_log_time(TIMESTAMP_X),

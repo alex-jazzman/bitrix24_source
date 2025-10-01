@@ -1,15 +1,17 @@
 import { Dom, Loc, Runtime, Type } from 'main.core';
 import { Popup, PopupManager } from 'main.popup';
 import { DateTimeFormat } from 'main.date';
-import { Draggable, DragMoveEvent, DragStartEvent } from 'ui.draganddrop.draggable';
+import { Draggable, DragMoveEvent, DragStartEvent, DragEndEvent } from 'ui.draganddrop.draggable';
 
 import { Model, DraggedElementKind } from 'booking.const';
 import { Core } from 'booking.core';
 import { busySlots } from 'booking.lib.busy-slots';
 import { BookingAnalytics } from 'booking.lib.analytics';
 import { bookingService } from 'booking.provider.service.booking-service';
+import { NonDraggableBookingPopup } from 'booking.component.non-draggable-booking-popup';
 import type { BookingModel } from 'booking.model.bookings';
 import type { DraggedDataTransfer } from 'booking.model.interface';
+import type { ResourceModel } from 'booking.model.resources';
 
 type Params = {
 	draggable: string,
@@ -129,7 +131,7 @@ export class Drag
 		this.#updateScroll(draggable, clientX, clientY);
 	}
 
-	async #onDragEnd(): Promise<void>
+	async #onDragEnd(event: DragEndEvent): Promise<void>
 	{
 		clearInterval(this.scrollTimeout);
 
@@ -138,7 +140,7 @@ export class Drag
 			Dom.style(element, 'visibility', '');
 		});
 
-		if (this.#hoveredCell)
+		if (this.#hoveredCell && !this.#getResourceById(this.#hoveredCell.resourceId)?.isDeleted)
 		{
 			if (this.#draggedKind === DraggedElementKind.Booking)
 			{
@@ -154,6 +156,18 @@ export class Drag
 					cell: this.#hoveredCell,
 				});
 			}
+		}
+
+		if (this.#getResourceById(this.#draggedBookingResourceId)?.isDeleted)
+		{
+			const bookingId = this.#draggedBooking.id;
+
+			if (Core.getStore().getters[`${Model.Interface}/deletingBookings`][bookingId])
+			{
+				return;
+			}
+
+			this.#showPopupOnNonDraggableBookingFromDeletedResource(event.data.source, bookingId);
 		}
 
 		this.#draggedKind = null;
@@ -341,6 +355,25 @@ export class Drag
 			'#FROM#': DateTimeFormat.format(timeFormat, (from + this.#offset) / 1000),
 			'#TO#': DateTimeFormat.format(timeFormat, (to + this.#offset) / 1000),
 		});
+	}
+
+	#showPopupOnNonDraggableBookingFromDeletedResource(bookingEl: HTMLElement, bookingId: number): void
+	{
+		const popupId = `booking-non-draggable-booking-${bookingId}`;
+		const popup = new NonDraggableBookingPopup({
+			id: popupId,
+			bindElement: bookingEl,
+		});
+		popup.show();
+
+		setTimeout(() => {
+			popup.destroy(popupId);
+		}, 5000);
+	}
+
+	#getResourceById(resourceId: number): ResourceModel
+	{
+		return Core.getStore().getters[`${Model.Resources}/getById`](resourceId);
 	}
 
 	get #draggedBooking(): BookingModel | null

@@ -14,7 +14,6 @@ use Bitrix\MobileApp\Mobile;
 class Crm implements Tabable
 {
 	private const INITIAL_COMPONENT = 'crm:crm.tabs';
-	private const MINIMAL_API_VERSION = 45;
 
 	/** @var Context $context */
 	private $context;
@@ -25,11 +24,6 @@ class Crm implements Tabable
 			!Loader::includeModule('crm')
 			|| !Loader::includeModule('crmmobile')
 		)
-		{
-			return false;
-		}
-
-		if (Mobile::getApiVersion() < self::MINIMAL_API_VERSION)
 		{
 			return false;
 		}
@@ -91,7 +85,6 @@ class Crm implements Tabable
 		return [
 			'title' => $this->getTitle(),
 			'useLetterImage' => true,
-			'min_api_version' => self::MINIMAL_API_VERSION,
 			'color' => '#00ace3',
 			'imageUrl' => 'favorite/icon-crm.png',
 			'imageName' => $this->getIconId(),

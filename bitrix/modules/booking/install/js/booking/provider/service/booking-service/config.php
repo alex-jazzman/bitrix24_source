@@ -13,6 +13,7 @@ return [
 		'booking.const',
 		'booking.lib.api-client',
 		'booking.lib.booking-filter',
+		'booking.lib.deep-to-raw',
 		'booking.provider.service.main-page-service',
 		'booking.provider.service.client-service',
 		'booking.provider.service.resources-service',

@@ -26,7 +26,10 @@ jn.define('im/messenger/provider/services/chat/read', (require, exports, module)
 			 */
 			this.store = serviceLocator.get('core').getStore();
 
-			/** @private */
+			/**
+			 * @private
+			 * @type {Record<number, Set<number>>}
+			 */
 			this.messagesToRead = {};
 		}
 
@@ -56,6 +59,7 @@ jn.define('im/messenger/provider/services/chat/read', (require, exports, module)
 					const copiedMessageIds = [...messageIds];
 					delete this.messagesToRead[queueChatId];
 					const lastReadId = this.#getLastReadId(queueChatId);
+					const unreadMessageList = this.#getUnreadMessageIdList(copiedMessageIds);
 
 					this.#readMessagesOnClient(queueChatId, copiedMessageIds);
 					MessengerEmitter.emit(
@@ -64,6 +68,7 @@ jn.define('im/messenger/provider/services/chat/read', (require, exports, module)
 							messageIdList: copiedMessageIds,
 							chatId: queueChatId,
 							lastReadId,
+							unreadMessageList,
 						},
 						ComponentCode.imNavigation,
 					);
@@ -105,6 +110,18 @@ jn.define('im/messenger/provider/services/chat/read', (require, exports, module)
 			const dialog = this.store.getters['dialoguesModel/getByChatId'](chatId);
 
 			return dialog.lastReadId;
+		}
+
+		/**
+		 * @param {Array<number>} messageIdList
+		 * @return {Array<number>}
+		 */
+		#getUnreadMessageIdList(messageIdList)
+		{
+			return this.store.getters['messagesModel/getListByIds'](messageIdList)
+				.filter((message) => message.unread === true)
+				.map((message) => message.id)
+			;
 		}
 	}
 

@@ -8,6 +8,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\FinderDestTable;
 use Bitrix\Main\Loader;
+use Bitrix\Main\ORM\Fields\ExpressionField;
 
 class Entities
 {
@@ -281,6 +282,8 @@ class Entities
 
 	public static function getLastSort($params = array())
 	{
+		global $USER;
+
 		$result = array(
 			'DATA' => array(),
 			'DATA_ADDITIONAL' => array()
@@ -392,7 +395,7 @@ class Entities
 				$helper = $conn->getSqlHelper();
 
 				$runtime = array(
-					new \Bitrix\Main\Entity\ExpressionField('CONTEXT_SORT', "CASE WHEN CONTEXT = '".$helper->forSql(mb_strtoupper($params["DEST_CONTEXT"]))."' THEN 1 ELSE 0 END")
+					new ExpressionField('CONTEXT_SORT', "CASE WHEN CONTEXT = '".$helper->forSql(mb_strtoupper($params["DEST_CONTEXT"]))."' THEN 1 ELSE 0 END")
 				);
 
 				$order = array(
@@ -767,7 +770,7 @@ class Entities
 						{
 							$selectList[] = 'UF_USER_CRM_ENTITY';
 						}
-						$selectList[] = new \Bitrix\Main\Entity\ExpressionField('MAX_LAST_USE_DATE', 'MAX(%s)', array('\Bitrix\Main\FinderDest:CODE_USER_CURRENT.LAST_USE_DATE'));
+						$selectList[] = new ExpressionField('MAX_LAST_USE_DATE', 'MAX(%s)', array('\Bitrix\Main\FinderDest:CODE_USER_CURRENT.LAST_USE_DATE'));
 
 						$res = \Bitrix\Main\UserTable::getList(array(
 							'order' => array(

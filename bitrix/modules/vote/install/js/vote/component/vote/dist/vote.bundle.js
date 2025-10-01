@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Vote = this.BX.Vote || {};
-(function (exports,im_v2_const,vote_provider_service,vote_component_loader,main_core_events,im_v2_lib_menu,vote_analytics,main_core,ui_vue3_directives_hint,vote_application,main_popup,ui_vue3_components_popup) {
+(function (exports,im_v2_const,vote_provider_service,vote_component_loader,main_core_events,im_v2_lib_menu,ui_iconSet_api_core,vote_analytics,main_core,ui_vue3_directives_hint,vote_application,main_popup,ui_vue3_components_popup) {
 	'use strict';
 
 	var _app = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("app");
@@ -40,10 +40,10 @@ this.BX.Vote = this.BX.Vote || {};
 	  getCopyLinkItem() {
 	    const copyLinkItem = super.getCopyLinkItem();
 	    const {
-	      onclick
+	      onClick
 	    } = copyLinkItem;
-	    copyLinkItem.onclick = () => {
-	      onclick();
+	    copyLinkItem.onClick = () => {
+	      onClick();
 	      vote_analytics.VoteAnalytics.copyLink(this.context.dialogId, this.context.id, 'message_link');
 	    };
 	    return copyLinkItem;
@@ -53,8 +53,9 @@ this.BX.Vote = this.BX.Vote || {};
 	      return null;
 	    }
 	    return {
-	      text: main_core.Loc.getMessage('VOTE_REVOKE'),
-	      onclick: () => {
+	      title: main_core.Loc.getMessage('VOTE_REVOKE'),
+	      icon: ui_iconSet_api_core.Outline.UNDO,
+	      onClick: () => {
 	        main_core_events.EventEmitter.emit('vote:message-menu:revoke-vote', {
 	          entityId: this.context.id
 	        });
@@ -67,8 +68,9 @@ this.BX.Vote = this.BX.Vote || {};
 	      return null;
 	    }
 	    return {
-	      text: main_core.Loc.getMessage('VOTE_POPUP_BTN_COMPLETE'),
-	      onclick: () => {
+	      title: main_core.Loc.getMessage('VOTE_POPUP_BTN_COMPLETE'),
+	      icon: ui_iconSet_api_core.Outline.CHATS_WITH_CHECK,
+	      onClick: () => {
 	        main_core_events.EventEmitter.emit('vote:message-menu:complete-vote', {
 	          entityId: this.context.id
 	        });
@@ -81,8 +83,9 @@ this.BX.Vote = this.BX.Vote || {};
 	      return null;
 	    }
 	    return {
-	      text: main_core.Loc.getMessage('VOTE_SHOW_RESULTS'),
-	      onclick: () => {
+	      title: main_core.Loc.getMessage('VOTE_SHOW_RESULTS'),
+	      icon: ui_iconSet_api_core.Outline.POLL,
+	      onClick: () => {
 	        main_core_events.EventEmitter.emit('vote:message-menu:results-vote', {
 	          entityId: this.context.id
 	        });
@@ -765,5 +768,5 @@ this.BX.Vote = this.BX.Vote || {};
 
 	exports.VoteDisplay = VoteDisplay;
 
-}((this.BX.Vote.Component = this.BX.Vote.Component || {}),BX.Messenger.v2.Const,BX.Vote.Service,BX.Vote.Component,BX.Event,BX.Messenger.v2.Lib,BX.Vote,BX,BX.Vue3.Directives,BX.Vote,BX.Main,BX.UI.Vue3.Components));
+}((this.BX.Vote.Component = this.BX.Vote.Component || {}),BX.Messenger.v2.Const,BX.Vote.Service,BX.Vote.Component,BX.Event,BX.Messenger.v2.Lib,BX.UI.IconSet,BX.Vote,BX,BX.Vue3.Directives,BX.Vote,BX.Main,BX.UI.Vue3.Components));
 //# sourceMappingURL=vote.bundle.js.map

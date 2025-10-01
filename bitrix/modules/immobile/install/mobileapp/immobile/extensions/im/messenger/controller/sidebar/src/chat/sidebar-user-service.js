@@ -5,7 +5,9 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-user-service', (require,
 	const { Type } = require('type');
 	const { Loc } = require('im/messenger/loc');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { ChatTitle, ChatAvatar, UserStatus } = require('im/messenger/lib/element');
+	const { UserStatus } = require('im/messenger/lib/element/user-status');
+	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
+	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 	const { bookmarkAvatar } = require('im/messenger/assets/common');
 	const { Moment } = require('utils/date');
 	const { UserUtils } = require('im/messenger/lib/utils');

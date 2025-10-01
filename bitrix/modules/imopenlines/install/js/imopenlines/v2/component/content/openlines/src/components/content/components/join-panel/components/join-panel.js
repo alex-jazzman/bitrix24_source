@@ -48,7 +48,7 @@ export const JoinPanel = {
 		closeDialog()
 		{
 			void Messenger.openLines();
-			LayoutManager.getInstance().setLastOpenedElement(Layout.openlinesV2.name, '');
+			LayoutManager.getInstance().setLastOpenedElement(Layout.openlinesV2, '');
 		},
 		getStartService(): StartService
 		{

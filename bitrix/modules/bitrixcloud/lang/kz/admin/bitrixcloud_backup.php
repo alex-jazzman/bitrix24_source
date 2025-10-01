@@ -1,8 +1,8 @@
 <?php
-$MESS["BCL_BACKUP_DO_BACKUP"] = "Резервтік көшіруді орындау";
-$MESS["BCL_BACKUP_FILE_NAME"] = "Файл атауы";
-$MESS["BCL_BACKUP_FILE_SIZE"] = "Файл өлшемі";
-$MESS["BCL_BACKUP_NOTE"] = "
+$MESS['BCL_BACKUP_DO_BACKUP'] = "Резервтік көшіруді орындау";
+$MESS['BCL_BACKUP_FILE_NAME'] = "Файл атауы";
+$MESS['BCL_BACKUP_FILE_SIZE'] = "Файл өлшемі";
+$MESS['BCL_BACKUP_NOTE'] = "
 <p>
 Резервтік көшірмелерді сақтау \"1С-Битрикс: Сайтты басқару\" лицензияларының барлығына (\"Бірінші сайт\" редакциясынан басқа) ұсынылады. Әртүрлі өнім редакциялары үшін <a target=\"_blank\" href=\"https://www.1c-bitrix.ru/products/cms/features/cdn.php#tab-backup-link\">\"1С-Битрикс\" бұлтында</a> белгілі бір орын беріледі. Резервтік көшірмелерді сақтау белсенді коммерциялық лицензиясы (техникалық қолдауымен) бар сайттар үшін қолжетімді.
 </p>
@@ -16,5 +16,5 @@ $MESS["BCL_BACKUP_NOTE"] = "
 Резервтік көшірмелерді сақтау шарттары \"1С-Битрикс\" компаниясының қалауы бойынша өзгертілуі мүмкін.
 </p>
 ";
-$MESS["BCL_BACKUP_TITLE"] = "Резервтік көшірмелер";
-$MESS["BCL_BACKUP_USAGE"] = "Орынды қолдану: #QUOTA# ішінен #USAGE#.";
+$MESS['BCL_BACKUP_TITLE'] = "Резервтік көшірмелер";
+$MESS['BCL_BACKUP_USAGE'] = "Орынды қолдану: #QUOTA# ішінен #USAGE#.";

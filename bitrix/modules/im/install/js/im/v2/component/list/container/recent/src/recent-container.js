@@ -58,7 +58,7 @@ export const RecentListContainer = {
 	{
 		onChatClick(dialogId)
 		{
-			this.$emit('selectEntity', { layoutName: Layout.chat.name, entityId: dialogId });
+			this.$emit('selectEntity', { layoutName: Layout.chat, entityId: dialogId });
 		},
 		onOpenSearch()
 		{

@@ -68,6 +68,7 @@ export const MultiBooking = {
 			selectedCells: `${Model.Interface}/selectedCells`,
 			timezone: `${Model.Interface}/timezone`,
 			embedItems: `${Model.Interface}/embedItems`,
+			intersections: `${Model.Interface}/intersections`,
 		}),
 	},
 	methods: {
@@ -101,7 +102,11 @@ export const MultiBooking = {
 				id: `tmp-id-${Date.now()}-${Math.random()}`,
 				dateFromTs: cell.fromTs,
 				dateToTs: cell.toTs,
-				resourcesIds: [cell.resourceId],
+				resourcesIds: [...new Set([
+					cell.resourceId,
+					...(this.intersections[0] ?? []),
+					...(this.intersections[cell.resourceId] ?? []),
+				])],
 				timezoneFrom: this.timezone,
 				timezoneTo: this.timezone,
 				externalData: this.externalData,

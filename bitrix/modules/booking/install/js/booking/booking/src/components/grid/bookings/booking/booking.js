@@ -77,6 +77,8 @@ export const Booking = {
 			draggedBookingId: `${Model.Interface}/draggedBookingId`,
 			getWaitListItemById: `${Model.WaitList}/getById`,
 			getResourceById: `${Model.Resources}/getById`,
+			isDeletingResourceFilterMode: `${Model.Filter}/isDeletingResourceFilterMode`,
+			deletingResource: `${Model.Filter}/deletingResource`,
 		}),
 		booking(): BookingModel
 		{
@@ -154,6 +156,10 @@ export const Booking = {
 			return {
 				overbooking: {
 					disabled: this.overbooking !== null,
+					hidden: this.isDeletedResource,
+				},
+				waitList: {
+					hidden: this.isDeletedResource,
 				},
 			};
 		},
@@ -164,6 +170,17 @@ export const Booking = {
 		hasAccent(): boolean
 		{
 			return this.editingBookingId === this.bookingId || this.isBookingCreatedFromEmbed(this.bookingId);
+		},
+		isDeletedResource(): boolean
+		{
+			return this.getResourceById(this.resourceId)?.isDeleted ?? false;
+		},
+		isShaded(): boolean
+		{
+			return (
+				this.isDeletingResourceFilterMode
+				&& this.resourceId !== this.deletingResource.id
+			);
 		},
 	},
 	watch: {
@@ -195,6 +212,13 @@ export const Booking = {
 	methods: {
 		dragMouseEnter(): void
 		{
+			if (this.isDeletedResource)
+			{
+				this.dropArea = false;
+
+				return;
+			}
+
 			if (this.dropArea || !this.draggedDataTransfer.id)
 			{
 				return;
@@ -379,6 +403,7 @@ export const Booking = {
 				'--shifted': isShifted && !realBooking,
 				'--drop-area': dropArea,
 				'--accent': hasAccent,
+				'--shaded': isShaded,
 				'not-transition': animationPause,
 			}"
 			:width="bookingWidth"

@@ -15,7 +15,7 @@
 
 .booking-booking-intersections-inner-blank {
 	box-sizing: border-box;
-	min-width: 260px;
+	min-width: calc(260px + calc((10px * var(--zoom)) - 5px));
 	padding: calc(13px* var(--half-zoom)) calc(10px* var(--half-zoom));
 	display: flex;
 	align-items: center;

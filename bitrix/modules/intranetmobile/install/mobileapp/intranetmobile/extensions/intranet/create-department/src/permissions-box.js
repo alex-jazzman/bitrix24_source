@@ -4,7 +4,7 @@
 
 jn.define('intranet/create-department/src/permissions-box', (require, exports, module) => {
 	const { Loc } = require('loc');
-	const { InviteStatusBox } = require('intranet/invite-status-box');
+	const { StatusBox } = require('layout/ui/status-box');
 	const { makeLibraryImagePath } = require('asset-manager');
 	const { ButtonDesign } = require('ui-system/form/buttons/button');
 
@@ -22,7 +22,7 @@ jn.define('intranet/create-department/src/permissions-box', (require, exports, m
 		} = props;
 		const imageUri = makeLibraryImagePath('no-create-permissions.svg', 'create-department', 'intranet');
 
-		InviteStatusBox.open({
+		StatusBox.open({
 			backdropTitle: Loc.getMessage('M_INTRANET_CREATE_DEPARTMENT_NO_PERMISSIONS_BOX_TITLE'),
 			testId: 'create-department-no-permissions-box',
 			imageUri,

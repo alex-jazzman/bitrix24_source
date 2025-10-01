@@ -352,7 +352,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  getState() {
 	    return {
 	      layout: {
-	        name: im_v2_const.Layout.chat.name,
+	        name: im_v2_const.Layout.chat,
 	        entityId: '',
 	        contextId: 0
 	      }
@@ -366,21 +366,21 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      },
 	      /** @function application/isChatOpen */
 	      isChatOpen: state => dialogId => {
-	        const allowedLayouts = [im_v2_const.Layout.chat.name, im_v2_const.Layout.copilot.name, im_v2_const.Layout.channel.name, im_v2_const.Layout.collab.name];
+	        const allowedLayouts = [im_v2_const.Layout.chat, im_v2_const.Layout.aiAssistant, im_v2_const.Layout.channel, im_v2_const.Layout.collab];
 	        if (!allowedLayouts.includes(state.layout.name)) {
 	          return false;
 	        }
 	        return state.layout.entityId === dialogId.toString();
 	      },
 	      isLinesChatOpen: state => dialogId => {
-	        if (state.layout.name !== im_v2_const.Layout.openlines.name && state.layout.name !== im_v2_const.Layout.openlinesV2.name) {
+	        if (state.layout.name !== im_v2_const.Layout.openlines && state.layout.name !== im_v2_const.Layout.openlinesV2) {
 	          return false;
 	        }
 	        return state.layout.entityId === dialogId.toString();
 	      },
 	      /** @function application/areNotificationsOpen */
 	      areNotificationsOpen: state => {
-	        return state.layout.name === im_v2_const.Layout.notification.name;
+	        return state.layout.name === im_v2_const.Layout.notification;
 	      }
 	    };
 	  }
@@ -431,7 +431,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	  validateLayout(name) {
 	    if (!im_v2_const.Layout[name]) {
-	      return im_v2_const.Layout.chat.name;
+	      return im_v2_const.Layout.chat;
 	    }
 	    return name;
 	  }
@@ -4212,6 +4212,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      recentCollection: new Set(),
 	      unreadCollection: new Set(),
 	      copilotCollection: new Set(),
+	      aiAssistantCollection: new Set(),
 	      channelCollection: new Set(),
 	      collabCollection: new Set()
 	    };
@@ -4259,6 +4260,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      /** @function recent/getCopilotCollection */
 	      getCopilotCollection: state => {
 	        return [...state.copilotCollection].filter(dialogId => {
+	          const dialog = this.store.getters['chats/get'](dialogId);
+	          return Boolean(dialog);
+	        }).map(id => {
+	          return state.collection[id];
+	        });
+	      },
+	      /** @function recent/getAiAssistantCollection */
+	      getAiAssistantCollection: state => {
+	        return [...state.aiAssistantCollection].filter(dialogId => {
 	          const dialog = this.store.getters['chats/get'](dialogId);
 	          return Boolean(dialog);
 	        }).map(id => {
@@ -4409,6 +4419,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        store.commit('setCopilotCollection', itemIds);
 	        babelHelpers.classPrivateFieldLooseBase(this, _updateUnloadedCopilotCounters)[_updateUnloadedCopilotCounters](payload);
 	      },
+	      /** @function recent/setAiAssistant */
+	      setAiAssistant: async (store, payload) => {
+	        const itemIds = await this.store.dispatch('recent/store', payload);
+	        store.commit('setAiAssistantCollection', itemIds);
+	        babelHelpers.classPrivateFieldLooseBase(this, _updateUnloadedCopilotCounters)[_updateUnloadedCopilotCounters](payload);
+	      },
 	      /** @function recent/setChannel */
 	      setChannel: async (store, payload) => {
 	        const itemIds = await this.store.dispatch('recent/store', payload);
@@ -4552,6 +4568,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        }
 	        store.commit('deleteFromRecentCollection', existingItem.dialogId);
 	        store.commit('deleteFromCopilotCollection', existingItem.dialogId);
+	        store.commit('deleteFromAiAssistantCollection', existingItem.dialogId);
 	        store.commit('deleteFromChannelCollection', existingItem.dialogId);
 	        store.commit('deleteFromCollabCollection', existingItem.dialogId);
 	        const canDelete = babelHelpers.classPrivateFieldLooseBase(this, _canDelete)[_canDelete](existingItem.dialogId);
@@ -4590,6 +4607,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      },
 	      deleteFromCopilotCollection: (state, payload) => {
 	        state.copilotCollection.delete(payload);
+	      },
+	      setAiAssistantCollection: (state, payload) => {
+	        payload.forEach(dialogId => {
+	          state.aiAssistantCollection.add(dialogId);
+	        });
+	      },
+	      deleteFromAiAssistantCollection: (state, payload) => {
+	        state.aiAssistantCollection.delete(payload);
 	      },
 	      deleteFromChannelCollection: (state, payload) => {
 	        state.channelCollection.delete(payload);

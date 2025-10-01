@@ -1,4 +1,4 @@
-import {Type, Uri} from "main.core";
+import { ajax as Ajax, Runtime, Type } from 'main.core';
 
 export default class Slider
 {
@@ -7,24 +7,33 @@ export default class Slider
 		BX.UI.Feedback.Form.open(Slider.getFeedbackParams());
 	}
 
-	static openIntegrationRequestForm(event, params={})
+	static async openIntegrationRequestForm(event): void
 	{
 		if (event && Type.isFunction(event.preventDefault))
 		{
 			event.preventDefault();
 		}
 
-		if(!Type.isPlainObject(params))
+		try
 		{
-			params = {};
+			const response = await Ajax.runComponentAction(
+				'bitrix:catalog.feedback',
+				'getFormParams',
+				{
+					mode: 'class',
+				},
+			);
+
+			const { Form } = await Runtime.loadExtension(['ui.feedback.form']);
+			const formIdNumber = Math.round(Math.random() * 1000);
+			const data = response.data;
+			data.id += formIdNumber.toString();
+			Form.open(data);
 		}
-
-		let url = (new Uri('/bitrix/components/bitrix/catalog.feedback/slider.php'));
-
-		url.setQueryParams({feedback_type: 'integration_request'});
-		url.setQueryParams(params);
-
-		return Slider.open(url.toString(), {width: 735});
+		catch (err)
+		{
+			await console.error(err);
+		}
 	}
 
 	static open(url, options)

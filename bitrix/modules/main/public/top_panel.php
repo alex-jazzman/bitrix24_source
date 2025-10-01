@@ -177,6 +177,11 @@ class CTopPanel
 			$currentFilePath = $APPLICATION->GetCurPage(true);
 		}
 
+		if (self::isProtectedPath($currentFilePath))
+		{
+			return;
+		}
+
 		$encCurrentDirPath = urlencode($currentDirPath);
 		$encCurrentFilePath = urlencode($currentFilePath);
 		$encRequestUri = urlencode($_SERVER["REQUEST_URI"]);
@@ -1675,5 +1680,17 @@ class CTopPanel
 		);
 
 		return $result;
+	}
+
+	private static function isProtectedPath(string $pathOnDocumentRoot): bool
+	{
+		return
+			in_array($pathOnDocumentRoot, [
+				'/bitrix',
+				'/local/modules',
+			])
+			|| str_starts_with($pathOnDocumentRoot, '/bitrix/')
+			|| str_starts_with($pathOnDocumentRoot, '/local/modules/')
+		;
 	}
 }

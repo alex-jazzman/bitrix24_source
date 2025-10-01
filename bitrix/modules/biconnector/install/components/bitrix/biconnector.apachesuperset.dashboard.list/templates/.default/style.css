@@ -7,6 +7,10 @@
 	text-transform: uppercase;
 }
 
+.main-ui-grid-show-new-row {
+	z-index: auto !important;
+}
+
 .biconnector-grid-username-cell {
 	display: inline-flex;
 	align-items: center;
@@ -247,4 +251,31 @@
 
 .main-grid-row .ui-hint-icon {
 	margin: 0;
+}
+
+.ui-system-dialog__subtitle {
+	font-size: var(--ui-font-size-lg) !important;
+	line-height: var(--ui-font-line-height-sm) !important;
+}
+
+.biconnector-grid-group-name {
+	display: flex;
+}
+
+.biconnector-grid-group-name-subtitle {
+	font-size: var(--ui-font-size-xs);
+	color: var(--ui-color-palette-gray-90);
+}
+
+.biconnector-grid-group-icon {
+	min-width: 28px;
+	max-width: 28px;
+	margin-right: 8px;
+	margin-top: -2px;
+}
+
+.biconnector-grid-group-name-link{
+	cursor: pointer;
+	display: flex;
+	align-items: flex-start;
 }

@@ -53,7 +53,7 @@ export class DashboardGroup
 			dashboards: appParams.dashboards,
 			saveEnabled: appParams.saveEnabled,
 			isLoading: false,
-			isNeedShowDeletionWarningPopup: appParams.isNeedShowDeletionWarningPopup,
+			user: appParams.user,
 		};
 
 		const app = BitrixVue.createApp({

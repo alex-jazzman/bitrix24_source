@@ -75,27 +75,21 @@ this.BX.Booking = this.BX.Booking || {};
 	      selectedDateTs: new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime(),
 	      viewDateTs: new Date(today.getFullYear(), today.getMonth()).getTime(),
 	      deletingBookings: {},
+	      deletingResources: {},
 	      deletingWaitListItemIds: {},
 	      selectedCells: {},
 	      hoveredCell: null,
 	      busySlots: {},
 	      disabledBusySlots: {},
 	      resourcesIds: [],
-	      isFilterMode: false,
+	      pinnedResourceIds: [],
 	      isIntersectionForAll: true,
-	      filteredBookingsIds: [],
-	      filteredMarks: [],
 	      counterMarks: [],
 	      freeMarks: [],
 	      totalClients: this.getVariable('totalClients', 0),
 	      totalNewClientsToday: this.getVariable('totalNewClientsToday', 0),
 	      moneyStatistics: this.getVariable('moneyStatistics', null),
 	      intersections: {},
-	      quickFilter: {
-	        hovered: {},
-	        active: {},
-	        ignoredBookingIds: {}
-	      },
 	      timezone: this.getVariable('timezone', Intl.DateTimeFormat().resolvedOptions().timeZone),
 	      mousePosition: {
 	        top: 0,
@@ -171,6 +165,8 @@ this.BX.Booking = this.BX.Booking || {};
 	      viewDateTs: (state, getters) => state.viewDateTs - getters.offset,
 	      /** @function interface/deletingBookings */
 	      deletingBookings: state => state.deletingBookings,
+	      /** @function interface/deletingResources */
+	      deletingResources: state => state.deletingResources,
 	      /** @function interface/deletingWaitListItems */
 	      deletingWaitListItems: state => state.deletingWaitListItemIds,
 	      /** @function interface/selectedCells */
@@ -183,27 +179,22 @@ this.BX.Booking = this.BX.Booking || {};
 	      disabledBusySlots: state => state.disabledBusySlots,
 	      /** @function interface/resourcesIds */
 	      resourcesIds: (state, getters, rootState, rootGetters) => {
-	        const extraResourcesIds = rootGetters[`${booking_const.Model.Bookings}/getByDate`](state.selectedDateTs).filter(booking => !getters.isFilterMode && booking.counter > 0).map(booking => booking.resourcesIds[0]);
-	        const resourcesIds = [...new Set([...state.resourcesIds, ...extraResourcesIds])];
-	        const excludeResources = new Set(getters.getOccupancy(resourcesIds, Object.values(state.quickFilter.ignoredBookingIds)).filter(occupancy => Object.values(state.quickFilter.active).some(hour => {
+	        const extraResourcesIds = rootGetters[`${booking_const.Model.Bookings}/getByDate`](state.selectedDateTs).filter(booking => !rootGetters[`${booking_const.Model.Filter}/isFilterMode`] && booking.counter > 0).map(booking => booking.resourcesIds[0]);
+	        const resourcesIds = [...new Set([...state.pinnedResourceIds, ...state.resourcesIds, ...extraResourcesIds])];
+	        const excludeResources = new Set(getters.getOccupancy(resourcesIds, Object.values(rootGetters[`${booking_const.Model.Filter}/quickFilter`].ignoredBookingIds)).filter(occupancy => Object.values(rootGetters[`${booking_const.Model.Filter}/quickFilter`].active).some(hour => {
 	          const fromTs = new Date(state.selectedDateTs).setHours(hour) - getters.offset;
 	          const toTs = new Date(state.selectedDateTs).setHours(hour + 1) - getters.offset;
 	          return toTs > occupancy.fromTs && fromTs < occupancy.toTs;
 	        })).flatMap(occupancy => occupancy.resourcesIds));
+	        Object.values(state.deletingResources).forEach(id => excludeResources.add(Number(id)));
 	        return resourcesIds.filter(id => !excludeResources.has(id));
 	      },
 	      extraResourcesIds: (state, getters) => {
 	        const resourcesIds = state.resourcesIds;
 	        return getters.resourcesIds.filter(id => !resourcesIds.includes(id));
 	      },
-	      /** @function interface/isFilterMode */
-	      isFilterMode: state => state.isFilterMode,
 	      /** @function interface/isIntersectionForAll */
 	      isIntersectionForAll: state => state.isIntersectionForAll,
-	      /** @function interface/filteredBookingsIds */
-	      filteredBookingsIds: state => state.filteredBookingsIds,
-	      /** @function interface/filteredMarks */
-	      filteredMarks: state => state.filteredMarks,
 	      /** @function interface/freeMarks */
 	      freeMarks: state => state.freeMarks,
 	      /** @function interface/totalClients */
@@ -220,8 +211,6 @@ this.BX.Booking = this.BX.Booking || {};
 	      },
 	      /** @function interface/intersections */
 	      intersections: state => state.intersections,
-	      /** @function interface/quickFilter */
-	      quickFilter: state => state.quickFilter,
 	      /** @function interface/timezone */
 	      timezone: state => state.timezone,
 	      /** @function interface/offset */
@@ -293,6 +282,15 @@ this.BX.Booking = this.BX.Booking || {};
 
 	  // eslint-disable-next-line max-lines-per-function
 	  getActions() {
+	    const createBatchableAction = mutationName => {
+	      return (store, payload) => {
+	        if (main_core.Type.isArray(payload)) {
+	          payload.forEach(id => store.commit(mutationName, id));
+	        } else {
+	          store.commit(mutationName, payload);
+	        }
+	      };
+	    };
 	    return {
 	      /** @function interface/setEditingBookingId */
 	      setEditingBookingId: (store, editingBookingId) => {
@@ -367,21 +365,17 @@ this.BX.Booking = this.BX.Booking || {};
 	        store.commit('setViewDateTs', viewDateTs);
 	      },
 	      /** @function interface/addDeletingBooking */
-	      addDeletingBooking: (store, bookingId) => {
-	        store.commit('addDeletingBooking', bookingId);
-	      },
+	      addDeletingBooking: createBatchableAction('addDeletingBooking'),
 	      /** @function interface/removeDeletingBooking */
-	      removeDeletingBooking: (store, bookingId) => {
-	        store.commit('removeDeletingBooking', bookingId);
-	      },
-	      /** @function interfcae/addDeletingWaitListItemId */
-	      addDeletingWaitListItemId: (store, waitListItemId) => {
-	        store.commit('addDeletingWaitListItemId', waitListItemId);
-	      },
+	      removeDeletingBooking: createBatchableAction('removeDeletingBooking'),
+	      /** @function interface/addDeletingResource */
+	      addDeletingResource: createBatchableAction('addDeletingResource'),
+	      /** @function interface/removeDeletingResource */
+	      removeDeletingResource: createBatchableAction('removeDeletingResource'),
+	      /** @function interface/addDeletingWaitListItemId */
+	      addDeletingWaitListItemId: createBatchableAction('addDeletingWaitListItemId'),
 	      /** @function interface/removeDeletingWaitListItemId */
-	      removeDeletingWaitListItemId: (store, waitListItemId) => {
-	        store.commit('removeDeletingWaitListItemId', waitListItemId);
-	      },
+	      removeDeletingWaitListItemId: createBatchableAction('removeDeletingWaitListItemId'),
 	      /** @function interface/addSelectedCell */
 	      addSelectedCell: (store, cell) => {
 	        store.commit('addSelectedCell', cell);
@@ -418,25 +412,18 @@ this.BX.Booking = this.BX.Booking || {};
 	      setResourcesIds: (store, resourcesIds) => {
 	        store.commit('setResourcesIds', resourcesIds);
 	      },
+	      setPinnedResourceIds: ({
+	        commit
+	      }, resourceIds) => {
+	        commit('setPinnedResourceIds', resourceIds);
+	      },
 	      /** @function interface/deleteResourceId */
 	      deleteResourceId: (store, resourceId) => {
 	        store.commit('deleteResourceId', resourceId);
 	      },
-	      /** @function interface/setFilterMode */
-	      setFilterMode: (store, isFilterMode) => {
-	        store.commit('setFilterMode', isFilterMode);
-	      },
 	      /** @function interface/setIntersectionMode */
 	      setIntersectionMode: (store, isIntersectionForAll) => {
 	        store.commit('setIntersectionMode', isIntersectionForAll);
-	      },
-	      /** @function interface/setFilteredBookingsIds */
-	      setFilteredBookingsIds: (store, filteredBookingsIds) => {
-	        store.commit('setFilteredBookingsIds', filteredBookingsIds);
-	      },
-	      /** @function interface/setFilteredMarks */
-	      setFilteredMarks: (store, dates) => {
-	        store.commit('setFilteredMarks', dates);
 	      },
 	      /** @function interface/setFreeMarks */
 	      setFreeMarks: (store, dates) => {
@@ -460,28 +447,6 @@ this.BX.Booking = this.BX.Booking || {};
 	      /** @function interface/setIntersections */
 	      setIntersections: (store, intersections) => {
 	        store.commit('setIntersections', intersections);
-	      },
-	      /** @function interface/hoverQuickFilter */
-	      hoverQuickFilter: (store, hour) => {
-	        store.commit('hoverQuickFilter', hour);
-	      },
-	      /** @function interface/fleeQuickFilter */
-	      fleeQuickFilter: (store, hour) => {
-	        store.commit('fleeQuickFilter', hour);
-	      },
-	      /** @function interface/activateQuickFilter */
-	      activateQuickFilter: (store, hour) => {
-	        store.commit('activateQuickFilter', hour);
-	        store.commit('clearQuickFilterIgnoredBookingIds');
-	      },
-	      /** @function interface/deactivateQuickFilter */
-	      deactivateQuickFilter: (store, hour) => {
-	        store.commit('deactivateQuickFilter', hour);
-	        store.commit('clearQuickFilterIgnoredBookingIds');
-	      },
-	      /** @function interface/addQuickFilterIgnoredBookingId */
-	      addQuickFilterIgnoredBookingId: (store, bookingId) => {
-	        store.commit('addQuickFilterIgnoredBookingId', bookingId);
 	      },
 	      /** @function interface/setMousePosition */
 	      setMousePosition: (store, mousePosition) => {
@@ -593,23 +558,17 @@ this.BX.Booking = this.BX.Booking || {};
 	      removeDeletingBooking: (state, bookingId) => {
 	        delete state.deletingBookings[bookingId];
 	      },
+	      addDeletingResource: (state, resourceId) => {
+	        state.deletingResources[resourceId] = resourceId;
+	      },
+	      removeDeletingResource: (state, resourceId) => {
+	        delete state.deletingResources[resourceId];
+	      },
 	      addDeletingWaitListItemId: (state, waitListItemId) => {
-	        if (main_core.Type.isArray(waitListItemId)) {
-	          waitListItemId.forEach(id => {
-	            state.deletingWaitListItemIds[id] = id;
-	          });
-	        } else {
-	          state.deletingWaitListItemIds[waitListItemId] = waitListItemId;
-	        }
+	        state.deletingWaitListItemIds[waitListItemId] = waitListItemId;
 	      },
 	      removeDeletingWaitListItemId: (state, waitListItemId) => {
-	        if (main_core.Type.isArray(waitListItemId)) {
-	          waitListItemId.forEach(id => {
-	            delete state.deletingWaitListItemIds[id];
-	          });
-	        } else {
-	          delete state.deletingWaitListItemIds[waitListItemId];
-	        }
+	        delete state.deletingWaitListItemIds[waitListItemId];
 	      },
 	      addSelectedCell: (state, cell) => {
 	        state.selectedCells[cell.id] = cell;
@@ -640,20 +599,14 @@ this.BX.Booking = this.BX.Booking || {};
 	      setResourcesIds: (state, resourcesIds) => {
 	        state.resourcesIds = resourcesIds.sort((a, b) => a - b);
 	      },
+	      setPinnedResourceIds: (state, resourceIds) => {
+	        state.pinnedResourceIds = resourceIds;
+	      },
 	      deleteResourceId: (state, resourceId) => {
 	        state.resourcesIds = state.resourcesIds.filter(id => id !== resourceId);
 	      },
-	      setFilterMode: (state, isFilterMode) => {
-	        state.isFilterMode = isFilterMode;
-	      },
 	      setIntersectionMode: (state, isIntersectionForAll) => {
 	        state.isIntersectionForAll = isIntersectionForAll;
-	      },
-	      setFilteredBookingsIds: (state, filteredBookingsIds) => {
-	        state.filteredBookingsIds = [...filteredBookingsIds];
-	      },
-	      setFilteredMarks: (state, dates) => {
-	        state.filteredMarks = dates;
 	      },
 	      setFreeMarks: (state, dates) => {
 	        state.freeMarks = dates;
@@ -672,24 +625,6 @@ this.BX.Booking = this.BX.Booking || {};
 	      },
 	      setIntersections: (state, intersections) => {
 	        state.intersections = intersections;
-	      },
-	      hoverQuickFilter: (state, hour) => {
-	        state.quickFilter.hovered[hour] = hour;
-	      },
-	      fleeQuickFilter: (state, hour) => {
-	        delete state.quickFilter.hovered[hour];
-	      },
-	      activateQuickFilter: (state, hour) => {
-	        state.quickFilter.active[hour] = hour;
-	      },
-	      deactivateQuickFilter: (state, hour) => {
-	        delete state.quickFilter.active[hour];
-	      },
-	      addQuickFilterIgnoredBookingId: (state, bookingId) => {
-	        state.quickFilter.ignoredBookingIds[bookingId] = bookingId;
-	      },
-	      clearQuickFilterIgnoredBookingIds: state => {
-	        state.quickFilter.ignoredBookingIds = {};
 	      },
 	      setMousePosition: (state, mousePosition) => {
 	        state.mousePosition = mousePosition;

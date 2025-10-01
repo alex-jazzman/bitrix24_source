@@ -48,7 +48,7 @@ export const CrmFormsButton = {
 			:buttonClass="['--air', ButtonStyle.NO_CAPS, AirButtonStyle.OUTLINE_NO_ACCENT]"
 			:text="label"
 			:color="ButtonColor.LIGHT_BORDER"
-			:size="ButtonSize.MEDIUM"
+			:size="ButtonSize.SMALL"
 			@click="openMenu"
 		/>
 		<CrmFormsPopup

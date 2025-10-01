@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Booking = this.BX.Booking || {};
-(function (exports,booking_component_popupMaker,booking_component_popup,main_sidepanel,ui_vue3_directives_lazyload,booking_component_notePopup,booking_component_clientPopup,main_date,ui_entitySelector,booking_lib_dealHelper,booking_provider_service_bookingActionsService,ui_vue3_directives_hint,ui_iconSet_api_core,booking_component_cyclePopup,booking_lib_ahaMoments,ui_vue3,ui_iconSet_main,booking_lib_helpDesk,booking_component_loader,main_core,main_popup,ui_vue3_vuex,ui_iconSet_api_vue,booking_const,booking_lib_limit,booking_component_button) {
+(function (exports,booking_component_popupMaker,main_sidepanel,ui_vue3_directives_lazyload,booking_component_notePopup,booking_component_clientPopup,main_date,booking_lib_dealHelper,booking_provider_service_bookingActionsService,booking_provider_service_bookingService,ui_entitySelector,booking_provider_service_resourceDialogService,booking_component_popup,ui_label,ui_vue3_directives_hint,ui_iconSet_api_core,booking_component_cyclePopup,booking_lib_ahaMoments,ui_vue3,ui_iconSet_main,booking_lib_helpDesk,booking_component_loader,main_core,main_popup,ui_vue3_vuex,ui_iconSet_api_vue,booking_const,booking_lib_limit,booking_component_button) {
 	'use strict';
 
 	const ActionsPopup = {
@@ -1329,6 +1329,489 @@ this.BX.Booking = this.BX.Booking || {};
 	`
 	};
 
+	// @vue/component
+	const ExtraResourcesDialog = {
+	  name: 'ExtraResourcesDialog',
+	  props: {
+	    /**
+	     * @type {BookingModel}
+	     */
+	    booking: {
+	      type: Object,
+	      required: true
+	    },
+	    resourceId: {
+	      type: Number,
+	      required: true
+	    }
+	  },
+	  emits: ['save'],
+	  computed: {
+	    ...ui_vue3_vuex.mapGetters({
+	      resources: `${booking_const.Model.Resources}/get`,
+	      selectedDateTs: `${booking_const.Model.Interface}/selectedDateTs`,
+	      getByInterval: `${booking_const.Model.Bookings}/getByInterval`
+	    }),
+	    extraResourcesIds() {
+	      return this.booking.resourcesIds.filter(resourceId => resourceId !== this.resourceId);
+	    },
+	    bookings() {
+	      return this.getByInterval(this.booking.dateFromTs, this.booking.dateToTs);
+	    },
+	    resourceBookingsMap() {
+	      const map = new Map();
+	      const bookingId = this.booking.id;
+	      this.bookings.filter(booking => booking.id !== bookingId).forEach(booking => {
+	        booking.resourcesIds.forEach(resourceId => {
+	          const resourceBookingIds = map.get(resourceId) || [];
+	          resourceBookingIds.push(booking.id);
+	          map.set(resourceId, resourceBookingIds);
+	        });
+	      });
+	      return map;
+	    },
+	    excludedResourceIds() {
+	      return new Set([this.resourceId]);
+	    }
+	  },
+	  watch: {
+	    resources(resources) {
+	      this.addItems(resources);
+	    }
+	  },
+	  created() {
+	    void this.loadResources();
+	  },
+	  mounted() {
+	    this.dialog = new ui_entitySelector.Dialog({
+	      id: `booking-booking-extra-resources-selector-${this.booking.id}`,
+	      targetNode: this.$refs.dialog,
+	      preselectedItems: this.extraResourcesIds.map(id => [booking_const.EntitySelectorEntity.Resource, id]),
+	      width: 340,
+	      height: Math.min(window.innerHeight - 380, 400),
+	      dropdownMode: true,
+	      entities: [{
+	        id: booking_const.EntitySelectorEntity.Resource,
+	        dynamicLoad: true,
+	        dynamicSearch: true
+	      }],
+	      popupOptions: {
+	        id: `booking-actions-popup-extra-resources-dialog-${this.booking.id}-${this.resourceId}`,
+	        className: 'booking--booking--actions-popup--extra-resources-info--extra-resources-dialog'
+	      },
+	      enableSearch: true,
+	      searchOptions: {
+	        allowCreateItem: false
+	      },
+	      events: {
+	        onLoad: () => {
+	          this.addItems(this.resources);
+	        },
+	        onHide: () => {
+	          const selectedItemIds = this.dialog.getSelectedItems().map(item => item.id);
+	          selectedItemIds.push(this.resourceId);
+	          this.$emit('save', selectedItemIds);
+	        },
+	        'Item:onBeforeSelect': event => {
+	          const item = event.data.item;
+	          if ((this.resourceBookingsMap.get(item.id) || []).length > 1) {
+	            // eslint-disable-next-line no-param-reassign
+	            event.defaultPrevented = true;
+	          }
+	        }
+	      }
+	    });
+	    this.dialog.show();
+	  },
+	  unmounted() {
+	    var _this$dialog;
+	    (_this$dialog = this.dialog) == null ? void 0 : _this$dialog.destroy == null ? void 0 : _this$dialog.destroy();
+	  },
+	  methods: {
+	    async loadResources() {
+	      await booking_provider_service_resourceDialogService.resourceDialogService.fillDialog(this.selectedDateTs / 1000);
+	    },
+	    getItemOptions(resource) {
+	      return {
+	        id: resource.id,
+	        entityId: booking_const.EntitySelectorEntity.Resource,
+	        title: resource.name,
+	        subtitle: '',
+	        avatar: '/bitrix/js/booking/component/actions-popup/images/extra-resource-icon.svg',
+	        avatarOptions: {
+	          bgImage: '/bitrix/js/booking/component/actions-popup/images/extra-resource-icon.svg',
+	          bgColor: 'rgba(230, 244, 255, 1)',
+	          borderRadius: '50%'
+	        },
+	        tabs: booking_const.EntitySelectorTab.Recent,
+	        selected: this.isItemSelected(resource.id),
+	        deselectable: !this.excludedResourceIds.has(resource.id),
+	        nodeAttributes: {
+	          'data-id': `${this.booking.id}-${resource.id}`,
+	          'data-element': 'booking-extra-resources-dialog-item'
+	        },
+	        badges: [this.getItemBadge(resource)],
+	        badgesOptions: {
+	          justifyContent: 'right'
+	        }
+	      };
+	    },
+	    isItemSelected(id) {
+	      return this.extraResourcesIds.includes(id);
+	    },
+	    getItemBadge(resource) {
+	      const resourceBookingsCount = (this.resourceBookingsMap.get(resource.id) || []).length;
+	      if (resourceBookingsCount >= 2) {
+	        return {
+	          title: this.loc('BOOKING_ACTIONS_POPUP_EXTRA_RESOURCES_INFO_RESOURCE_SELECTOR_BADGE_BUSY'),
+	          textColor: 'rgba(255, 255, 255, 1)',
+	          bgColor: '#e92f2a'
+	        };
+	      }
+	      if (resourceBookingsCount > 0) {
+	        return {
+	          title: this.loc('BOOKING_ACTIONS_POPUP_EXTRA_RESOURCES_INFO_RESOURCE_SELECTOR_BADGE_OVERBOOKING'),
+	          textColor: 'rgba(255, 255, 255, 1)',
+	          bgColor: 'rgba(250, 167, 44, 1)'
+	        };
+	      }
+	      return {};
+	    },
+	    addItems(resources) {
+	      const itemsOptions = resources.filter(({
+	        id
+	      }) => !this.excludedResourceIds.has(id)).reduce((acc, resource) => ({
+	        ...acc,
+	        [resource.id]: this.getItemOptions(resource)
+	      }), {});
+	      Object.values(itemsOptions).forEach(itemOptions => this.dialog.addItem(itemOptions));
+	      const itemsIds = this.dialog.getItems().map(item => item.getId()).filter(id => itemsOptions[id]);
+	      this.dialog.removeItems();
+	      itemsIds.forEach(id => this.dialog.addItem(itemsOptions[id]));
+	      const tab = this.dialog.getActiveTab();
+	      if (tab) {
+	        tab.getContainer().append(tab.getRootNode().getChildrenContainer());
+	        tab.render();
+	      }
+	    }
+	  },
+	  template: `
+		<div ref="dialog"></div>
+	`
+	};
+
+	// @vue/component
+	const ExtraResourcesInfoPopupItem = {
+	  name: 'ExtraResourcesInfoPopupItem',
+	  components: {
+	    Icon: ui_iconSet_api_vue.BIcon
+	  },
+	  props: {
+	    title: {
+	      type: String,
+	      required: true
+	    },
+	    overbooking: {
+	      type: Boolean,
+	      required: true
+	    }
+	  },
+	  setup() {
+	    const iconColor = 'var(--ui-color-accent-main-primary)';
+	    const iconSize = 16;
+	    return {
+	      Outline: ui_iconSet_api_vue.Outline,
+	      iconColor,
+	      iconSize
+	    };
+	  },
+	  computed: {
+	    labelHTML() {
+	      const label = new ui_label.Label({
+	        color: ui_label.LabelColor.WARNING,
+	        size: ui_label.LabelSize.SM,
+	        text: this.loc('BOOKING_ACTIONS_POPUP_EXTRA_RESOURCES_INFO_OVERBOOKING'),
+	        fill: true
+	      });
+	      return label.render().outerHTML;
+	    }
+	  },
+	  template: `
+		<div class="booking--extra-resources-info_element">
+			<div class="booking--extra-resources-info_element-icon —ui-context-content-light">
+				<Icon :name="Outline.PRODUCT" :size="iconSize" :color="iconColor"/>
+			</div>
+
+			<div class="booking--extra-resources-info_element-text" :title="title">
+				{{ title }}
+			</div>
+
+			<div 
+				v-if="overbooking"
+				class="booking--extra-resources-info_element-overbooking"
+				 v-html="labelHTML"
+			></div>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const ExtraResourcesInfoPopup = {
+	  name: 'ExtraResourcesInfoPopup',
+	  components: {
+	    Popup: booking_component_popup.Popup,
+	    ExtraResourcesInfoPopupItem
+	  },
+	  props: {
+	    visible: {
+	      type: Boolean,
+	      default: false
+	    },
+	    bindElement: {
+	      type: HTMLElement,
+	      required: true
+	    },
+	    resourceId: {
+	      type: Number,
+	      required: true
+	    },
+	    /**
+	     * @type {BookingModel}
+	     */
+	    booking: {
+	      type: Object,
+	      required: true
+	    }
+	  },
+	  emits: ['update:visible'],
+	  computed: {
+	    ...ui_vue3_vuex.mapGetters({
+	      getResourcesByIds: `${booking_const.Model.Resources}/getByIds`,
+	      getByInterval: `${booking_const.Model.Bookings}/getByInterval`
+	    }),
+	    config() {
+	      return {
+	        bindElement: this.bindElement,
+	        offsetTop: 10,
+	        offsetLeft: -65,
+	        padding: 14,
+	        contentPadding: 30,
+	        height: 300,
+	        width: 340,
+	        minWidth: 340,
+	        maxWidth: 400,
+	        bindOptions: {
+	          forceBindPosition: true,
+	          position: 'bottom'
+	        }
+	      };
+	    },
+	    resources() {
+	      const extraResourceIds = this.booking.resourcesIds.filter(resourceId => resourceId !== this.resourceId);
+	      return this.getResourcesByIds(extraResourceIds);
+	    },
+	    bookings() {
+	      return this.getByInterval(this.booking.dateFromTs, this.booking.dateToTs);
+	    },
+	    resourceBookingsMap() {
+	      const map = new Map();
+	      this.bookings.forEach(booking => {
+	        booking.resourcesIds.forEach(resourceId => {
+	          const resourceBookingIds = map.get(resourceId) || [];
+	          resourceBookingIds.push(booking.id);
+	          map.set(resourceId, resourceBookingIds);
+	        });
+	      });
+	      return map;
+	    }
+	  },
+	  methods: {
+	    closePopup() {
+	      this.$emit('update:visible', false);
+	    },
+	    isOverbooking(resource) {
+	      const resourceBookingsCount = (this.resourceBookingsMap.get(resource.id) || []).length;
+	      return resourceBookingsCount > 1;
+	    }
+	  },
+	  template: `
+		<Popup
+			ref="popup"
+			id="booking--booking--extra-resources-info"
+			:config
+			@close="closePopup"
+		>
+			<div class="booking--extra-resources-info_container">
+				<div class="booking--extra-resources-info_content">
+					<template v-for="resource in resources" :key="resource.id">
+						<ExtraResourcesInfoPopupItem
+							:title="resource.name"
+							:overbooking="isOverbooking(resource)"
+						/>
+					</template>
+				</div>
+			</div>
+		</Popup>
+	`
+	};
+
+	// @vue/component
+	const ExtraResourcesInfo = {
+	  name: 'ExtraResourceInfo',
+	  components: {
+	    UiButton: booking_component_button.Button,
+	    UiIcon: ui_iconSet_api_vue.BIcon,
+	    ExtraResourcesDialog,
+	    ExtraResourcesInfoPopup
+	  },
+	  props: {
+	    id: {
+	      type: [Number, String],
+	      required: true
+	    },
+	    resourceId: {
+	      type: Number,
+	      required: true
+	    }
+	  },
+	  emits: ['freeze', 'unfreeze'],
+	  setup() {
+	    const iconProductName = ui_iconSet_api_vue.Outline.PRODUCT;
+	    const iconEditName = ui_iconSet_api_vue.Outline.EDIT_M;
+	    const iconHelpName = ui_iconSet_api_vue.Set.HELP;
+	    return {
+	      iconProductName,
+	      iconEditName,
+	      iconHelpName,
+	      AirButtonStyle: booking_component_button.AirButtonStyle,
+	      ButtonColor: booking_component_button.ButtonColor,
+	      ButtonSize: booking_component_button.ButtonSize,
+	      ButtonStyle: booking_component_button.ButtonStyle
+	    };
+	  },
+	  data() {
+	    return {
+	      shownResourcesSelector: false,
+	      showDialogInfo: false
+	    };
+	  },
+	  computed: {
+	    ...ui_vue3_vuex.mapGetters({
+	      getBookingById: `${booking_const.Model.Bookings}/getById`
+	    }),
+	    booking() {
+	      return this.getBookingById(this.id);
+	    },
+	    subtitle() {
+	      if (this.hasExtraResources) {
+	        const count = this.extraResourcesIds.length;
+	        return main_core.Loc.getMessagePlural('BOOKING_ACTIONS_POPUP_EXTRA_RESOURCES_INFO_SUBTITLE', count, {
+	          '#COUNT#': count
+	        });
+	      }
+	      return this.loc('BOOKING_ACTIONS_POPUP_EXTRA_RESOURCES_INFO_SUBTITLE_EMPTY');
+	    },
+	    extraResourcesIds() {
+	      return this.booking.resourcesIds.slice(1);
+	    },
+	    hasExtraResources() {
+	      return this.extraResourcesIds.length > 0;
+	    },
+	    iconProductColor() {
+	      return this.hasExtraResources ? 'rgba(0, 117, 255, 1)' : 'rgba(201, 204, 208, 1)';
+	    }
+	  },
+	  methods: {
+	    toggleResourcesSelector() {
+	      this.shownResourcesSelector = true;
+	      this.$emit('freeze');
+	    },
+	    toggleResourcesInfo() {
+	      this.showDialogInfo = this.hasExtraResources ? !this.showDialogInfo : this.showDialogInfo;
+	    },
+	    hideResourcesSelector() {
+	      this.shownResourcesSelector = false;
+	      this.$emit('unfreeze');
+	    },
+	    saveBookingExtraResources(extraResources) {
+	      this.hideResourcesSelector();
+	      if (!this.hasExtraResourcesChanged(extraResources)) {
+	        return;
+	      }
+	      const resourcesIds = new Set([this.booking.resourcesIds[0], ...extraResources]);
+	      void booking_provider_service_bookingService.bookingService.update({
+	        id: this.booking.id,
+	        resourcesIds: [...resourcesIds]
+	      });
+	    },
+	    hasExtraResourcesChanged(extraResources) {
+	      const bookingExtraResources = this.booking.resourcesIds.slice(1).sort();
+	      if (bookingExtraResources.length !== extraResources.length) {
+	        return true;
+	      }
+	      return [...bookingExtraResources].sort().join(',') !== [...extraResources].sort().join(',');
+	    }
+	  },
+	  template: `
+		<div class="booking-actions-popup__item booking--actions-popup--extra-resources-info">
+			<div class="booking--actions-popup--extra-resources-info__row">
+				<div
+					:class="[
+						'booking-actions-popup-item-icon',
+						'booking--actions-popup--extra-resources-info__icon-product-bg',
+						{
+							'--active': hasExtraResources
+						}
+					]"
+				>
+					<UiIcon
+						:name="iconProductName"
+						:color="iconProductColor"
+					/>
+				</div>
+				<div class="booking--actions-popup--extra-resources-info__content">
+					<div class="booking--actions-popup--extra-resources-info__title">
+						<span>{{ loc('BOOKING_ACTIONS_POPUP_EXTRA_RESOURCES_INFO_TITLE') }}</span>
+					</div>
+					<div class="booking--actions-popup--extra-resources-info__subtitle">
+						<span
+							ref="button"
+							data-element="amount-additional-resources"
+							:class="{ '--fill': hasExtraResources }"
+							@click="toggleResourcesInfo"
+						>
+							{{ subtitle }}
+						</span>
+						<ExtraResourcesInfoPopup
+							v-if="showDialogInfo"
+							v-model:visible="showDialogInfo"
+							:bindElement="$refs.button"
+							:booking
+							:resourceId
+						/>
+					</div>
+				</div>
+				<div ref="edit" class="booking--actions-popup--extra-resources-info__icon-edit">
+					<UiButton
+						data-element="btn-toggle-resources-selector"
+						:icon="iconEditName"
+						:buttonClass="['--air', ButtonStyle.NO_CAPS, AirButtonStyle.OUTLINE_NO_ACCENT]"
+						:color="ButtonColor.LIGHT_BORDER"
+						:size="ButtonSize.SMALL"
+						@click="toggleResourcesSelector"
+					/>
+					<ExtraResourcesDialog
+						v-if="shownResourcesSelector"
+						:booking
+						:resourceId
+						@save="saveBookingExtraResources"
+					/>
+				</div>
+			</div>
+		</div>
+	`
+	};
+
 	const FullForm = {
 	  name: 'ActionsPopupFullForm',
 	  directives: {
@@ -1730,7 +2213,7 @@ this.BX.Booking = this.BX.Booking || {};
 			v-bind="dataAttributes"
 			@click="$emit('remove')"
 		>
-			<Icon :name="iconSet.TRASH_BIN" color="var(--ui-color-palette-gray-60)"/>
+			<Icon :name="iconSet.TRASH_BIN"/>
 			<div v-if="showLabel" class="booking-actions-popup__item-overbooking-label">
 				{{ loc('BB_ACTIONS_POPUP_OVERBOOKING_REMOVE') }}
 			</div>
@@ -2017,11 +2500,12 @@ this.BX.Booking = this.BX.Booking || {};
 	exports.Confirmation = Confirmation;
 	exports.Deal = Deal;
 	exports.Document = Document;
+	exports.ExtraResourcesInfo = ExtraResourcesInfo;
 	exports.FullForm = FullForm;
 	exports.Info = Info;
 	exports.Message = Message;
 	exports.RemoveButton = RemoveButton;
 	exports.Visit = Visit;
 
-}((this.BX.Booking.Component = this.BX.Booking.Component || {}),BX.Booking.Component,BX.Booking.Component,BX.SidePanel,BX.Vue3.Directives,BX.Booking.Component,BX.Booking.Component,BX.Main,BX.UI.EntitySelector,BX.Booking.Lib,BX.Booking.Provider.Service,BX.Vue3.Directives,BX.UI.IconSet,BX.Booking.Component,BX.Booking.Lib,BX.Vue3,BX,BX.Booking.Lib,BX.Booking.Component,BX,BX.Main,BX.Vue3.Vuex,BX.UI.IconSet,BX.Booking.Const,BX.Booking.Lib,BX.Booking.Component));
+}((this.BX.Booking.Component = this.BX.Booking.Component || {}),BX.Booking.Component,BX.SidePanel,BX.Vue3.Directives,BX.Booking.Component,BX.Booking.Component,BX.Main,BX.Booking.Lib,BX.Booking.Provider.Service,BX.Booking.Provider.Service,BX.UI.EntitySelector,BX.Booking.Provider.Service,BX.Booking.Component,BX.UI,BX.Vue3.Directives,BX.UI.IconSet,BX.Booking.Component,BX.Booking.Lib,BX.Vue3,BX,BX.Booking.Lib,BX.Booking.Component,BX,BX.Main,BX.Vue3.Vuex,BX.UI.IconSet,BX.Booking.Const,BX.Booking.Lib,BX.Booking.Component));
 //# sourceMappingURL=actions-popup.bundle.js.map

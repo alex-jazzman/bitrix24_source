@@ -129,7 +129,7 @@ export const PermissionsApp: BitrixVueComponentProps = {
 					groups: Runtime.clone(this.$store.getters.groups),
 					dashboards: Runtime.clone(this.$store.getters.dashboards),
 					saveEnabled: false,
-					isNeedShowDeletionWarningPopup: false,
+					user: this.$store.getters.user,
 				});
 			}
 		},
@@ -151,7 +151,7 @@ export const PermissionsApp: BitrixVueComponentProps = {
 					groups: Runtime.clone(this.$store.getters.groups),
 					dashboards: Runtime.clone(this.$store.getters.dashboards),
 					saveEnabled: false,
-					isNeedShowDeletionWarningPopup: false,
+					user: this.$store.getters.user,
 				});
 			}
 		},

@@ -245,4 +245,18 @@ class CallController extends BaseReceiver
 
 		return ['result' => true];
 	}
+
+	/**
+	 * @restMethod call.CallController.checkPublicUrl
+	 */
+	public function checkPublicUrlAction(int $ping): ?array
+	{
+		if (CallAISettings::isLoggingEnable())
+		{
+			$logger = Logger::getInstance();
+			$logger->info("Got checkPublicUrl action");
+		}
+
+		return ['pong' => ++$ping];
+	}
 }

@@ -15,4 +15,5 @@ export type TileWidgetOptions = {
 	compact: boolean,
 	readonly: boolean,
 	removeFromServer?: boolean,
+	forceDisableSelection?: boolean,
 };

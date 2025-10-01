@@ -43,7 +43,7 @@ export const Entities = {
 			{
 				type: EntityTypes.department,
 				title: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_ENTITY_DEPARTMENT_TITLE'),
-				description: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_ENTITY_DEPARTMENT_DESCR'),
+				description: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_ENTITY_DEPARTMENT_DESCR_MSGVER_1'),
 				isEnabled: hasDepartmentCreatePermission,
 				hint: !hasDepartmentCreatePermission
 					&& this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_ENTITY_DEPARTMENT_NO_ACCESS_HINT'),
@@ -52,19 +52,12 @@ export const Entities = {
 			{
 				type: EntityTypes.team,
 				title: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_ENTITY_FUNCTIONAL_TEAM_TITLE_MSGVER_1'),
-				description: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_ENTITY_FUNCTIONAL_TEAM_DESCR'),
+				description: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_ENTITY_FUNCTIONAL_TEAM_DESCR_MSGVER_1'),
 				isEnabled: PermissionChecker.isTeamsAvailable && hasTeamCreatePermission,
 				hint: PermissionChecker.isTeamsAvailable
 					&& !hasTeamCreatePermission
 					&& this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_ENTITY_FUNCTIONAL_TEAM_NO_ACCESS_HINT_MSGVER_1'),
 				isSoon: !permissionChecker.isTeamsAvailable,
-			},
-			{
-				type: EntityTypes.company,
-				title: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_ENTITY_COMPANY_TITLE'),
-				description: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_ENTITY_COMPANY_DESCR'),
-				isEnabled: false,
-				isSoon: true,
 			},
 		];
 
