@@ -46,6 +46,8 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base/src/view', (requir
 			this.verticalSliderRef = null;
 			/** @type {SidebarTopContainer|null} */
 			this.topContainerRef = null;
+			this.tabSwitcherRef = null;
+			this.tabSliderRef = null;
 			this.topContainerCollapsed = false;
 			this.topContainerToggleInProgress = false;
 			this.topContainerCalculatedHeight = null;
@@ -167,9 +169,11 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base/src/view', (requir
 		 */
 		scrollSelectedTabToBegin(animated = true)
 		{
-			const selectedTab = this.state.selectedTab?.id
-				? this.state.tabs.find((t) => t.getId() === this.state.selectedTab.id)
-				: this.state.tabs[0];
+			const selectedTab = this.getSelectedTab();
+			if (!selectedTab)
+			{
+				return Promise.reject(new Error('No tabs found'));
+			}
 
 			const selectedTabId = selectedTab.getId();
 			const selectedTabViewRef = this.listViewMap[selectedTabId];
@@ -180,6 +184,28 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base/src/view', (requir
 			}
 
 			return Promise.reject(new Error('Scrollable ref not found'));
+		}
+
+		/**
+		 * @protected
+		 * @return {number}
+		 */
+		getSelectedTabIndex()
+		{
+			return this.state.selectedTab?.id
+				? this.state.tabs.findIndex((t) => t.getId() === this.state.selectedTab.id)
+				: 0;
+		}
+
+		/**
+		 * @protected
+		 * @return SidebarBaseTab|undefined
+		 */
+		getSelectedTab()
+		{
+			return this.state.selectedTab?.id
+				? this.state.tabs.find((t) => t.getId() === this.state.selectedTab.id)
+				: this.state.tabs[0];
 		}
 
 		/**
@@ -245,7 +271,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base/src/view', (requir
 						renderPlanLimitBanner: () => this.renderPlanLimitBanner(),
 					}),
 					this.renderTabSwitcher(),
-					this.renderSelectedTab(),
+					this.renderTabSlider(),
 				),
 			);
 		}
@@ -464,6 +490,10 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base/src/view', (requir
 			}
 
 			return TabView({
+				testId: 'tab-switcher',
+				ref: (ref) => {
+					this.tabSwitcherRef = ref;
+				},
 				style: {
 					height: 51,
 				},
@@ -479,9 +509,9 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base/src/view', (requir
 						if (changed)
 						{
 							// clicked on title of another tab
-							this.setState({ selectedTab: tab }, () => {
-								this.collapseTopContainer();
-							});
+							this.state.selectedTab = tab;
+							void this.tabSliderRef?.scrollToPage(this.getSelectedTabIndex());
+							this.collapseTopContainer();
 						}
 						else
 						{
@@ -490,25 +520,24 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base/src/view', (requir
 								.catch((err) => this.logger.warn('Selected tab is unscrollable', err));
 						}
 					}
+
+					if (options?.action === 'code' && changed)
+					{
+						// swiped to another tab
+						this.state.selectedTab = tab;
+					}
 				},
 			});
 		}
 
-		renderSelectedTab()
+		renderTabSlider()
 		{
-			const {
-				tabs,
-				selectedTab: stateSelectedTab,
-			} = this.state;
+			const { tabs } = this.state;
 
 			if (tabs.length === 0)
 			{
 				return null;
 			}
-
-			const selectedTab = stateSelectedTab?.id
-				? tabs.find((tab) => tab.getId() === stateSelectedTab.id)
-				: tabs[0];
 
 			// in ios vertical scroll offset can be less than zero,
 			// that's why we need separate onScroll handlers for ios and android.
@@ -516,25 +545,48 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base/src/view', (requir
 				? this.getIosScrollHandlers()
 				: this.getAndroidScrollHandlers();
 
-			const TabContent = selectedTab.getView();
-
-			return View(
+			return Slider(
 				{
+					testId: 'tab-slider',
 					style: {
 						flex: 1,
 					},
-				},
-				TabContent({
-					...listViewScrollProps,
-					dialogId: this.dialogId,
-					widget: this.widget,
-					widgetNavigator: this.widgetNavigator,
-					topOffset: this.topContainerCalculatedHeight,
-					workingAreaHeight: this.workingAreaCalculatedHeight,
 					ref: (ref) => {
-						this.listViewMap[selectedTab.getId()] = ref;
+						this.tabSliderRef = ref;
 					},
-				}),
+					onPageChange: (nextPage) => {
+						const tabId = tabs[nextPage]?.getId();
+						if (tabId && this.tabSwitcherRef)
+						{
+							this.tabSwitcherRef.setActiveItem(tabId);
+						}
+					},
+				},
+				...(tabs.map((tab) => {
+					const tabId = tab.getId();
+					const TabContent = tab.getView();
+
+					return View(
+						{
+							testId: 'tab-slider-slide',
+							style: {
+								flex: 1,
+							},
+						},
+						TabContent({
+							...listViewScrollProps,
+							testId: `tab-content-${tabId}`,
+							dialogId: this.dialogId,
+							widget: this.widget,
+							widgetNavigator: this.widgetNavigator,
+							topOffset: this.topContainerCalculatedHeight,
+							workingAreaHeight: this.workingAreaCalculatedHeight,
+							ref: (ref) => {
+								this.listViewMap[tabId] = ref;
+							},
+						}),
+					);
+				})),
 			);
 		}
 

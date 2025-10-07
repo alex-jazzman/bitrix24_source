@@ -136,9 +136,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    if (!sliderId.startsWith(SLIDER_PREFIX)) {
 	      return;
 	    }
-	    if (!this.canCloseByEsc()) {
-	      event.denyAction();
-	    }
+
+	    // we handle close by esc in the im.v2.lib.esc-manager
+	    event.denyAction();
 	  }
 	  onDestroy({
 	    data: event
@@ -178,9 +178,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  canClose() {
 	    return true;
 	  }
-	  canCloseByEsc() {
-	    return false;
-	  }
 	  getCurrent() {
 	    return this.instances[this.getCurrentId()];
 	  }
@@ -194,10 +191,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    return Number.parseInt(sliderId.slice(SLIDER_PREFIX.length + 1), 10);
 	  }
 	  getLoaderPath() {
-	    const LOADER = '/bitrix/js/im/v2/lib/slider/src/images/loader-chats.svg?v3';
-	    const LOADER_WITHOUT_NAVIGATION = '/bitrix/js/im/v2/lib/slider/src/images/loader-chats-without-navigation.svg';
-	    const hasNavigation = !im_v2_lib_layout.LayoutManager.getInstance().isAirDesignEnabled();
-	    return hasNavigation ? LOADER : LOADER_WITHOUT_NAVIGATION;
+	    return '/bitrix/js/im/v2/lib/slider/src/images/loader-chats-without-navigation.svg';
 	  }
 	  isChatEmbeddedOnPage() {
 	    return im_v2_lib_layout.LayoutManager.getInstance().isQuickAccessHidden();

@@ -159,6 +159,11 @@ export class InvitationNotification
 
 	show(): void
 	{
+		if (!this.invitationButton)
+		{
+			return;
+		}
+
 		BannerDispatcher.critical.toQueue((onDone) => {
 			this.#popup = this.createNotificationBalloon(onDone);
 			this.#popup.show();

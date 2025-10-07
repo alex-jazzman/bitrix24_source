@@ -162,7 +162,7 @@ jn.define('im/messenger/controller/recent/channel/recent', (require, exports, mo
 				/** @type {RecentModelState} */
 				const item = {
 					id: recentItem.dialogId,
-					pinned: recentItem.pinned,
+					pinned: false,
 					liked: false,
 					unread: recentItem.unread,
 					message: itemMessage,

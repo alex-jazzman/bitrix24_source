@@ -58,3 +58,4 @@ $MESS["IM_CONTENT_COPILOT_HEADER_OPEN_INVITE_POPUP_TITLE"] = "Добавить �
 $MESS["IM_CONTENT_COPILOT_ADD_TO_CHAT_HINT_TITLE"] = "Добавьте участников в чат с CoPilot";
 $MESS["IM_CONTENT_COPILOT_ADD_TO_CHAT_HINT_DESCRIPTION"] = "Так вы сможете все вместе задавать ему вопросы и обсуждать идеи. Ответы CoPilot увидят все участники чата";
 $MESS["IM_CONTENT_COPILOT_ADD_TO_CHAT_HINT_HIDE"] = "Больше не показывать";
+$MESS["IM_CONTENT_AI_ASSISTANT_CHAT_HEADER_TITLE"] = "Ваш персональный помощник";

@@ -1,6 +1,5 @@
 import { Core } from 'im.v2.application.core';
 import { ChatType, Settings } from 'im.v2.const';
-import { LayoutManager } from 'im.v2.lib.layout';
 import { Utils } from 'im.v2.lib.utils';
 import { LegacyRecentService } from 'im.v2.provider.service.recent';
 import { RecentMenu } from 'im.v2.lib.menu';
@@ -80,12 +79,6 @@ export const RecentList = {
 		{
 			return this.$store.getters['application/settings/get'](Settings.recent.showInvited);
 		},
-		containerClasses(): string[]
-		{
-			return {
-				'--air': LayoutManager.getInstance().isAirDesignEnabled(),
-			};
-		},
 	},
 	async created()
 	{
@@ -155,7 +148,7 @@ export const RecentList = {
 		},
 	},
 	template: `
-		<div class="bx-im-messenger__scope bx-im-list-recent-compact__container" :class="containerClasses">
+		<div class="bx-im-messenger__scope bx-im-list-recent-compact__container">
 			<CompactNavigation />
 			<div v-if="activeCalls.length > 0" class="bx-im-list-recent-compact__calls_container">
 				<ActiveCall

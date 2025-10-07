@@ -17,6 +17,7 @@ import { SoundNotificationManager } from 'im.v2.lib.sound-notification';
 import { isSendMessageCombination, isNewLineCombination } from 'im.v2.lib.hotkey';
 import { Textarea } from 'im.v2.lib.textarea';
 import { InputAction } from 'im.v2.lib.input-action';
+import { EscEventAction } from 'im.v2.lib.esc-manager';
 
 import { MentionManager, MentionManagerEvents } from './classes/mention-manager';
 import { InputSenderService } from './classes/input-sender-service';
@@ -88,6 +89,10 @@ export const ChatTextarea = {
 			default: true,
 		},
 		withAutoFocus: {
+			type: Boolean,
+			default: true,
+		},
+		withMention: {
 			type: Boolean,
 			default: true,
 		},
@@ -193,6 +198,10 @@ export const ChatTextarea = {
 
 			return Color.gray40;
 		},
+		isFocused(): boolean
+		{
+			return this.$refs.textarea === document.activeElement;
+		},
 	},
 	watch:
 	{
@@ -222,6 +231,7 @@ export const ChatTextarea = {
 		EventEmitter.subscribe(EventType.textarea.sendMessage, this.onSendMessage);
 		EventEmitter.subscribe(EventType.textarea.insertForward, this.onInsertForward);
 		EventEmitter.subscribe(EventType.textarea.openUploadPreview, this.onOpenUploadPreview);
+		EventEmitter.subscribe(EventType.key.onBeforeEscape, this.onBeforeEscape);
 
 		EventEmitter.subscribe(EventType.dialog.onMessageDeleted, this.onMessageDeleted);
 	},
@@ -248,6 +258,7 @@ export const ChatTextarea = {
 		EventEmitter.unsubscribe(EventType.textarea.sendMessage, this.onSendMessage);
 		EventEmitter.unsubscribe(EventType.textarea.insertForward, this.onInsertForward);
 		EventEmitter.unsubscribe(EventType.textarea.openUploadPreview, this.onOpenUploadPreview);
+		EventEmitter.unsubscribe(EventType.key.onBeforeEscape, this.onBeforeEscape);
 
 		EventEmitter.unsubscribe(EventType.dialog.onMessageDeleted, this.onMessageDeleted);
 	},
@@ -271,12 +282,12 @@ export const ChatTextarea = {
 			else
 			{
 				this.getSendingService().sendMessage({ text, dialogId: this.dialogId });
+				SoundNotificationManager.getInstance().playOnce(SoundType.send);
 			}
 
 			this.getInputActionService().stopAction(InputAction.writing);
 			this.clear();
 			this.getDraftManager().clearDraft(this.dialogId);
-			SoundNotificationManager.getInstance().playOnce(SoundType.send);
 			this.focus();
 			EventEmitter.emit(EventType.textarea.onAfterSendMessage);
 		},
@@ -293,6 +304,7 @@ export const ChatTextarea = {
 					dialogId: this.dialogId,
 					forwardIds: this.panelContext.messagesIds,
 				});
+				SoundNotificationManager.getInstance().playOnce(SoundType.send);
 			}
 			else if (this.forwardEntityMode)
 			{
@@ -305,6 +317,7 @@ export const ChatTextarea = {
 					dialogId: this.dialogId,
 					replyId: this.panelContext.messageId,
 				});
+				SoundNotificationManager.getInstance().playOnce(SoundType.send);
 			}
 		},
 		handleEditAction(text: string): void
@@ -487,21 +500,29 @@ export const ChatTextarea = {
 			}
 			this.panelContext = panelContext;
 		},
+		onBeforeEscape(): $Values<typeof EscEventAction>
+		{
+			if (this.hasActiveMessageAction())
+			{
+				this.closePanel();
+
+				return EscEventAction.handled;
+			}
+
+			if (this.isFocused && !this.isEmptyText)
+			{
+				return EscEventAction.handled;
+			}
+
+			return EscEventAction.ignored;
+		},
 		async onKeyDown(event: KeyboardEvent)
 		{
 			Analytics.getInstance().onTypeMessage(this.dialog);
 
-			if (this.showMention)
+			if (this.showMention && this.withMention)
 			{
 				this.mentionManager.onActiveMentionKeyDown(event);
-
-				return;
-			}
-
-			const exitActionCombination = Utils.key.isCombination(event, 'Escape');
-			if (this.hasActiveMessageAction() && exitActionCombination)
-			{
-				this.closePanel();
 
 				return;
 			}
@@ -960,7 +981,7 @@ export const ChatTextarea = {
 				@sendFiles="onSendFilesFromPreviewPopup"
 			/>
 			<MentionPopup 
-				v-if="showMention" 
+				v-if="withMention && showMention" 
 				:bindElement="$refs['textarea-content']"
 				:dialogId="dialogId"
 				:query="mentionQuery"

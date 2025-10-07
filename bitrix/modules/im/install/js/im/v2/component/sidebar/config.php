@@ -10,11 +10,11 @@ return [
 	'js' => 'dist/sidebar.bundle.js',
 	'rel' => [
 		'im.v2.lib.local-storage',
-		'im.v2.lib.sidebar',
 		'ui.system.menu',
 		'ui.vue3.directives.lazyload',
 		'ui.label',
 		'main.date',
+		'im.v2.lib.sidebar',
 		'im.v2.lib.channel',
 		'im.v2.component.elements.toggle',
 		'im.v2.component.elements.auto-delete',

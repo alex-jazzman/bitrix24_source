@@ -138,8 +138,6 @@ export class CallUser
 		};
 		this.checkAspectInterval = setInterval(this.checkVideoAspect.bind(this), 500);
 
-		this.resizeObserver = null;
-
 		this.hintManager = BX.UI.Hint.createInstance({
 			popupParameters: {
 				targetContainer: document.body,
@@ -708,7 +706,7 @@ export class CallUser
 
 		if (this.userModel.avatar !== '')
 		{
-			this.elements.root.style.setProperty('--avatar', "url('" + this.userModel.avatar + "')");
+			this.elements.root.style.setProperty('--avatar', `url('${this.userModel.avatar}')`);
 			this.elements.avatar.innerText = '';
 			this.elements.root.style.removeProperty('--avatar-background');
 		}
@@ -1321,7 +1319,7 @@ export class CallUser
 		{
 			if (this.userModel.avatar !== '')
 			{
-				this.elements.root.style.setProperty('--avatar', "url('" + this.userModel.avatar + "')");
+				this.elements.root.style.setProperty('--avatar', `url('${this.userModel.avatar}')`);
 				this.elements.avatar.innerText = '';
 				this.elements.root.style.removeProperty('--avatar-background');
 			}
@@ -1691,56 +1689,6 @@ export class CallUser
 		}
 	};
 
-	setAdditionalVariableForRootElements()
-	{
-		if (this.elements.root)
-		{
-			this.elements.root.style.setProperty('--user-preview-container-padding', this.elements.root.offsetWidth * 0.025  + 'px');
-		}
-	}
-
-	onResize()
-	{
-		this.setAdditionalVariableForRootElements();
-	}
-
-	toggleResizeObserver(isActive)
-	{
-		if (isActive)
-		{
-			this.activateResizeObserver();
-		}
-		else
-		{
-			this.deactivateResizeObserver();
-		}
-	}
-
-	deactivateResizeObserver()
-	{
-		if (this.resizeObserver && this.elements.root)
-		{
-			this.resizeObserver.unobserve(this.elements.root);
-		}
-
-		if (this.resizeObserver)
-		{
-			this.resizeObserver.disconnect();
-			this.resizeObserver = null;
-		}
-	}
-
-	activateResizeObserver() {
-		if (!this.resizeObserver)
-		{
-			this.resizeObserver = new BX.ResizeObserver(this.onResize.bind(this));
-		}
-
-		if (this.resizeObserver && this.elements.root)
-		{
-			this.resizeObserver.observe(this.elements.root);
-		}
-	}
 
 	mount(parent, force)
 	{
@@ -1749,8 +1697,6 @@ export class CallUser
 		{
 			this.render();
 			this.initUserNameState();
-			this.setAdditionalVariableForRootElements();
-			this.toggleResizeObserver(true);
 		}
 
 		if (this.isMounted() && this.elements.root.parentElement == parent && !force)
@@ -1776,7 +1722,6 @@ export class CallUser
 		}
 
 		clearInterval(this.checkAspectInterval);
-		this.toggleResizeObserver(false);
 		this.elements.video.srcObject = null;
 		this.elements.preview.srcObject = null;
 		Dom.remove(this.elements.root);
@@ -2119,7 +2064,6 @@ export class CallUser
 		this.userModel.unsubscribe('changed', this._onUserFieldChangedHandler);
 		this.releaseStream();
 		clearInterval(this.checkAspectInterval);
-		this.toggleResizeObserver(false);
 	};
 
 	addAvatarPulseTimer()

@@ -2,7 +2,6 @@ import 'ui.design-tokens.air';
 import { Extension } from 'main.core';
 
 import { NavigationMenuItem } from 'im.v2.const';
-import { LayoutManager } from 'im.v2.lib.layout';
 
 import { CompactNavigationItem } from './compact-navigation-item';
 
@@ -37,13 +36,9 @@ export const CompactNavigation = {
 		{
 			return CompactNavigationItems.filter((item) => this.availableNavigationItems.includes(item));
 		},
-		isAirDesignAvailable(): boolean
-		{
-			return LayoutManager.getInstance().isAirDesignEnabled();
-		},
 	},
 	template: `
-		<div v-if="isAirDesignAvailable" class="bx-im-compact-navigation__container">
+		<div class="bx-im-compact-navigation__container">
 			<div class="bx-im-compact-navigation__items">
 				<CompactNavigationItem
 					v-for="navigationItemId in preparedNavigationItems"

@@ -377,7 +377,12 @@ export const NotificationContent = {
 						></div>
 					</div>
 				</div>
-				<NotificationSearchPanel v-if="showSearchPanel" :schema="schema" @search="onSearch" />
+				<NotificationSearchPanel 
+					v-if="showSearchPanel" 
+					:schema="schema" 
+					@search="onSearch" 
+					@close="showSearchPanel = false" 
+				/>
 			</div>
 			<div class="bx-im-content-notification__elements-container">
 				<div class="bx-im-content-notification__elements" @scroll.passive="onScroll" ref="listNotifications">

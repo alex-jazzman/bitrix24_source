@@ -79,7 +79,9 @@ export const ItemCounters = {
 		},
 		showCounter(): boolean
 		{
-			return !this.recentItem.unread && this.totalCounter > 0 && !this.isSelfChat;
+			const isSingleMessageWithMention = this.showMention && this.totalCounter === 1;
+
+			return !isSingleMessageWithMention && !this.recentItem.unread && this.totalCounter > 0 && !this.isSelfChat;
 		},
 		containerClasses(): { [className: string]: boolean }
 		{

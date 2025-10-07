@@ -2,9 +2,9 @@
 $MESS["IM_LIB_INVITE_CANCEL"] = "Шақыруды болдырмау";
 $MESS["IM_LIB_INVITE_CANCEL_CONFIRM"] = "Шақыруды жіберуден бас тартқыңыз келетініне сенімдісіз бе?";
 $MESS["IM_LIB_INVITE_RESEND"] = "Қайта шақыру";
+$MESS["IM_LIB_MENU_AI_ASSISTANT_FEEDBACK"] = "Кері байланыс";
 $MESS["IM_LIB_MENU_CALL_2"] = "Бейне қоңырау";
 $MESS["IM_LIB_MENU_COMMENTS_OPEN_IN_CHANNEL"] = "Арнадан қараңыз";
-$MESS["IM_LIB_MENU_COPILOT_FEEDBACK"] = "Кері байланыс";
 $MESS["IM_LIB_MENU_FIND_CHATS_WITH_USER"] = "Қызметкермен сөйлесу бөлмелерін іздеу";
 $MESS["IM_LIB_MENU_FIND_CHATS_WITH_USER_MSGVER_1"] = "Ортақ чаттарды табу";
 $MESS["IM_LIB_MENU_FIND_SHARED_CHATS"] = "Ортақ чаттарды табу";

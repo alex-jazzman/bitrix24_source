@@ -436,6 +436,7 @@
 .bx-messenger-videocall-video-container {
 	height: 100%;
 	position: relative;
+	container-type: inline-size;
 }
 
 .bx-messenger-videocall-video {
@@ -449,8 +450,8 @@
 
 .bx-messenger-videocall-preview {
 	position: absolute;
-	bottom: var(--user-preview-container-padding, 0);
-	right: var(--user-preview-container-padding, 0);
+	bottom: 1.5cqw;
+	right: 1.5cqw;
 	width: 12%;
 }
 

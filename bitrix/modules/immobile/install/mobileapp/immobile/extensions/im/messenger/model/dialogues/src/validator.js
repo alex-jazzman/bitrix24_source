@@ -4,7 +4,7 @@
 
 jn.define('im/messenger/model/dialogues/validator', (require, exports, module) => {
 	const { Type } = require('type');
-	const { DateHelper } = require('im/messenger/lib/helper');
+	const { DateHelper, Url } = require('im/messenger/lib/helper');
 	const { UserRole, DialogBackgroundId } = require('im/messenger/const');
 	const { mergeImmutable } = require('utils/object');
 	const { MessengerParams } = require('im/messenger/lib/params');
@@ -533,7 +533,11 @@ jn.define('im/messenger/model/dialogues/validator', (require, exports, module) =
 
 		if (result)
 		{
-			result = encodeURI(result);
+			const urlHelper = Url.createFromPath(result);
+			if (!urlHelper.isEncoded)
+			{
+				result = encodeURI(result);
+			}
 		}
 
 		return result;

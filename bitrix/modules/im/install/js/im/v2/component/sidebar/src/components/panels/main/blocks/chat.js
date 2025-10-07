@@ -1,5 +1,6 @@
 import { ChatTitle } from 'im.v2.component.elements.chat-title';
 import { ChatAvatar, AvatarSize } from 'im.v2.component.elements.avatar';
+import { SidebarManager, type SidebarConfig } from 'im.v2.lib.sidebar';
 
 import { MuteChat } from '../../../elements/mute-chat/mute-chat';
 import { AutoDelete } from '../../../elements/auto-delete/auto-delete';
@@ -20,6 +21,18 @@ export const ChatPreview = {
 	computed:
 	{
 		AvatarSize: () => AvatarSize,
+		sidebarConfig(): SidebarConfig
+		{
+			return SidebarManager.getInstance().getConfig(this.dialogId);
+		},
+		areChatMembersEnabled(): boolean
+		{
+			return this.sidebarConfig.areChatMembersEnabled();
+		},
+		isAutoDeleteEnabled(): boolean
+		{
+			return this.sidebarConfig.isAutoDeleteEnabled();
+		},
 	},
 	template: `
 		<div class="bx-im-sidebar-main-preview__scope">
@@ -34,11 +47,11 @@ export const ChatPreview = {
 				<ChatTitle :dialogId="dialogId" :twoLine="true" class="bx-im-sidebar-main-preview-group-chat__title" />
 			</div>
 			<div class="bx-im-sidebar-main-preview-group-chat__chat-members">
-				<ChatMembersAvatars :dialogId="dialogId" />
+				<ChatMembersAvatars :showMembers="areChatMembersEnabled" :dialogId="dialogId" />
 			</div>
 			<div class="bx-im-sidebar-main-preview-group-chat__settings">
 				<MuteChat :dialogId="dialogId" />
-				<AutoDelete :dialogId="dialogId" />
+				<AutoDelete v-if="isAutoDeleteEnabled" :dialogId="dialogId" />
 			</div>
 		</div>
 	`,

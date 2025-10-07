@@ -1234,6 +1234,16 @@
 			BX.UI.Viewer.Item.prototype.setPropertiesByNode.apply(this, arguments);
 
 			this.playerId = `playerId_${this.generateUniqueId()}`;
+
+			if (!BX.Type.isUndefined(node.dataset.viewerResized))
+			{
+				this.sources = [
+					{ src: node.dataset.src, type: node.dataset.type },
+					{ src: node.dataset.src, type: 'video/mp4' },
+				];
+				this.width = node.dataset.width;
+				this.height = node.dataset.height;
+			}
 		},
 
 		applyReloadOptions(options)
@@ -1249,6 +1259,12 @@
 			const promise = new BX.Promise();
 
 			BX.Runtime.loadExtension('ui.video-player').then(() => {
+				if (this.sources.length > 0)
+				{
+					promise.fulfill(this);
+					return;
+				}
+
 				const headers = [
 					{
 						name: 'BX-Viewer-src',

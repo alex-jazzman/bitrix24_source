@@ -22,22 +22,46 @@ import 'ui.hint';
 import { tooltip, type HintParams } from './tooltip';
 export type { HintParams };
 
-export const hint = {
-	async mounted(element: HTMLElement, { value }: { value: HintParams | Function }): Promise<void>
-	{
-		if (!value)
-		{
-			return;
-		}
+const handlersMap = new WeakMap();
 
-		Event.bind(element, 'mouseenter', () => onMouseEnter(element, getParams(value)));
-		const isInteractive = getParams(value).interactivity ?? false;
-		Event.bind(element, 'mouseleave', () => hideTooltip(isInteractive));
-		Event.bind(element, 'click', () => hideTooltip());
+export const hint = {
+	mounted(element: HTMLElement, { value }: { value: HintParams | Function }): void
+	{
+		updateEvents(element, value);
+	},
+	updated(element: HTMLElement, { value }: { value: HintParams | Function }): void
+	{
+		updateEvents(element, value);
+	},
+	beforeUnmount(element: HTMLElement): void
+	{
+		unbindEvents(element);
 	},
 };
 
 let showTimeout = null;
+
+function updateEvents(element: HTMLElement, params: HintParams | Function): void
+{
+	unbindEvents(element);
+	if (params)
+	{
+		const handlers = {
+			mouseenter: () => onMouseEnter(element, getParams(params)),
+			mouseleave: () => hideTooltip(getParams(params).interactivity ?? false),
+			click: () => hideTooltip(),
+		};
+		handlersMap.set(element, handlers);
+
+		Object.entries(handlers).forEach(([event, handler]) => Event.bind(element, event, handler));
+	}
+}
+
+function unbindEvents(element: HTMLElement): void
+{
+	Object.entries(handlersMap.get(element) ?? {}).forEach(([event, handler]) => Event.unbind(element, event, handler));
+	handlersMap.delete(element);
+}
 
 function onMouseEnter(element: HTMLElement, params: HintParams): void
 {

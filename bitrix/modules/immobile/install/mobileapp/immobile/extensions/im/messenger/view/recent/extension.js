@@ -466,6 +466,65 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 			}
 		}
 
+		/**
+		 * @param {Array<string>} ids
+		 */
+		async removeItemsByIds(ids)
+		{
+			try
+			{
+				logger.log(`${this.constructor.name}.removeItemsByIds`, ids);
+
+				await this.ui.removeItemsByIds(ids);
+				ids.forEach((id) => delete this.itemCollection[id]);
+				this.updateSharedStorageRecentCache();
+			}
+			catch (error)
+			{
+				logger.error(`${this.constructor.name}.removeItemsByIds error`, error);
+			}
+		}
+
+		/**
+		 * @param {Array<object>} itemFilter
+		 */
+		async removeCallItems(itemFilter)
+		{
+			logger.log(`${this.constructor.name}.removeCallItem`, itemFilter);
+
+			const idsToRemove = [];
+			itemFilter.forEach((item) => {
+				const entityId = item?.associatedEntity?.id;
+				if (!entityId)
+				{
+					return;
+				}
+
+				const id = `call${entityId}`;
+				const collectionItem = this.itemCollection[id];
+
+				if (collectionItem?.params.call.uuid === item.uuid)
+				{
+					idsToRemove.push(id);
+				}
+			});
+
+			if (idsToRemove.length === 0)
+			{
+				return;
+			}
+
+			try
+			{
+				await this.ui.removeItemsByIds(idsToRemove);
+				idsToRemove.forEach((id) => delete this.itemCollection[id]);
+			}
+			catch (error)
+			{
+				logger.error(`${this.constructor.name}.removeCallItems`, error);
+			}
+		}
+
 		removeCallItem(itemFilter)
 		{
 			logger.log(`${this.constructor.name}.removeCallItem`, itemFilter);
@@ -488,6 +547,15 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 		findItem(filter, callback)
 		{
 			this.ui.findItem(filter, callback);
+		}
+
+		/**
+		 * @param {string} id
+		 * @return {Promise<object | null>}
+		 */
+		findItemById(id)
+		{
+			return this.ui.findItemById(id);
 		}
 
 		getItem(id)

@@ -206,9 +206,14 @@ BX.UserContentView.sendViewAreaData = function()
 			data: {
 				params: {
 					viewXMLIdList: this.toSendList,
-					context: this.context
-				}
-			}
+					context: this.context,
+				},
+			},
+			analyticsLabel: !!this.mobile ? {
+				tool: 'feed',
+				category: 'posts_operations',
+				event: 'post_read',
+			} : null,
 		}).then(function(response) {
 			this.ajaxSent = false;
 			this.failedAjaxCounter = 0;

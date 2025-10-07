@@ -58,7 +58,7 @@ export const MainHeader = {
 		},
 		isMenuEnabled(): boolean
 		{
-			return this.sidebarConfig.isMenuEnabled();
+			return this.sidebarConfig.isHeaderMenuEnabled();
 		},
 		addMembersPopupComponent(): BitrixVueComponentProps
 		{

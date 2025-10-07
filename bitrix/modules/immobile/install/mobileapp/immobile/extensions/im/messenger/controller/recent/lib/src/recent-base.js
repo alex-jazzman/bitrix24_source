@@ -580,7 +580,8 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 			}
 			else
 			{
-				this.renderer.do('remove', item);
+				const actionName = Feature.isAsyncRecentOperationsAvailable ? 'removeItemsByIds' : 'remove';
+				this.renderer.do(actionName, item);
 			}
 
 			if (!this.recentService.pageNavigation.hasNextPage && this.view.isLoaderShown)
@@ -633,7 +634,8 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 				this.checkEmpty();
 			};
 
-			this.renderer.do('findItem', { id: item.id }, { callback });
+			const actionName = Feature.isAsyncRecentOperationsAvailable ? 'findItemById' : 'findItem';
+			this.renderer.do(actionName, { id: item.id }, { callback });
 		}
 
 		/**

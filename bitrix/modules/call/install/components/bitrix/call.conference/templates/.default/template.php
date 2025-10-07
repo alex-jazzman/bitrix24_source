@@ -34,6 +34,9 @@ $APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
 	});
 
 	window.addEventListener('load', () => {
-		BXDesktopWindow?.ExecuteCommand('show')
+		BX.Runtime.loadExtension('im.v2.lib.desktop-api').then(exports => {
+			const { DesktopApi } = exports;
+			DesktopApi.showWindow();
+		})
 	});
 </script>

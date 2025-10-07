@@ -1,13 +1,13 @@
 import { Core } from 'im.v2.application.core';
 import { SidebarMainPanelBlock } from 'im.v2.const';
 
-import { SidebarConfig } from '../classes/config';
+import { SidebarPreset } from '../classes/preset';
 
 import type { ImModelChat } from 'im.v2.model';
 
 const isSupport = (chatContext: ImModelChat) => Core.getStore().getters['sidebar/multidialog/isSupport'](chatContext.dialogId);
 
-const supportConfig = new SidebarConfig({
+const supportPreset = new SidebarPreset({
 	blocks: [
 		SidebarMainPanelBlock.support,
 		SidebarMainPanelBlock.tariffLimit,
@@ -17,4 +17,4 @@ const supportConfig = new SidebarConfig({
 	],
 });
 
-export { isSupport, supportConfig };
+export { isSupport, supportPreset };

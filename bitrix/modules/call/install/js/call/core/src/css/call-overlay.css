@@ -11,7 +11,6 @@
 
 .bx-messenger-call-overlay.--fixed {
 	position: fixed !important;
-	z-index: 1000 !important;
 }
 
 .bx-messenger-call-overlay.bx-messenger-call-overlay-folded {height: 60px; top: 67px; opacity: 0.85}

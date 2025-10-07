@@ -54,21 +54,10 @@ if (isset($frequency['onclick']))
 	$button->getMainButton()->bindEvent('click', $jsCode);
 }
 
-if (defined('AIR_SITE_TEMPLATE'))
-{
-	$button->setAirDesign();
-	$button->setNoCaps();
-	$button->setStyle(AirButtonStyle::OUTLINE);
-	$button->setSize(Size::SMALL);
-}
-else
-{
-	$button->addClass('ui-btn-themes');
-	if ($isSwitcher)
-	{
-		$button->addClass('intranet-binding-menu-btn-round');
-	}
-}
+$button->setAirDesign();
+$button->setNoCaps();
+$button->setStyle(AirButtonStyle::OUTLINE);
+$button->setSize(Size::SMALL);
 
 $button->getMainButton()->addAttribute('id', $id . '_top');
 $button->getMenuButton()->addAttribute('id', $id);

@@ -487,6 +487,10 @@ this.BX.Intranet = this.BX.Intranet || {};
 	}
 	function _updateData2(data) {
 	  var _GridManager$getInsta;
+	  if (!main_core.Type.isStringFilled(data.get('newEmail')) && !main_core.Type.isBoolean(data.get('newPhone'))) {
+	    top.console.error('Empty new email or phone');
+	    return;
+	  }
 	  const row = (_GridManager$getInsta = GridManager.getInstance(this.gridId).getGrid()) == null ? void 0 : _GridManager$getInsta.getRows().getById(this.userId);
 	  row == null ? void 0 : row.stateLoad();
 	  GridManager.reinviteCloudAction(data).then(response => {
@@ -529,11 +533,21 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    var _ref, _params$email;
 	    const reinvitePopup = new intranet_reinvite.ReinvitePopup({
 	      userId: params.userId,
-	      transport: babelHelpers.classPrivateFieldLooseBase(this, _updateData)[_updateData].bind(params),
-	      //callback,
 	      formType: params.email ? intranet_reinvite.FormType.EMAIL : intranet_reinvite.FormType.PHONE,
 	      bindElement: button.getContainer(),
-	      inputValue: (_ref = (_params$email = params.email) != null ? _params$email : params.phoneNumber) != null ? _ref : ''
+	      inputValue: (_ref = (_params$email = params.email) != null ? _params$email : params.phoneNumber) != null ? _ref : '',
+	      transport: babelHelpers.classPrivateFieldLooseBase(this, _updateData)[_updateData].bind(params)
+	      // transport: (data) => {
+	      // 	if (!Type.isStringFilled(data.get('newEmail')) && !Type.isBoolean(data.get('newPhone'))) {
+	      // 		top.console.error('Empty new email or phone');
+	      // 		return;
+	      // 	}
+	      // 	if ((data.get('newEmail') === '' || data.get('newEmail') === null) && (data.get('newPhone') === '' || data.get('newPhone') === null)) {
+	      // 		top.console.error('Empty new email or phone');
+	      // 		return;
+	      // 	}
+	      // 	this.#updateData(data);
+	      // },
 	    });
 	    //This is a hack. When the row is updated, a new button is created.
 	    reinvitePopup.getPopup().setBindElement(button.getContainer());

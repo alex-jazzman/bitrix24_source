@@ -13,7 +13,7 @@ import type { ImModelChat } from 'im.v2.model';
 
 export class AttachMenu
 {
-	onOpenUploadMenu(dialogId: string)
+	onOpenUploadMenu(dialogId: string): void
 	{
 		const chat: ImModelChat = Core.getStore().getters['chats/get'](dialogId);
 		const chatType: $Values<ChatType> = getChatType(chat);

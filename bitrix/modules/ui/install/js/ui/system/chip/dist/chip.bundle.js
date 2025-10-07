@@ -15,7 +15,8 @@ this.BX.UI.System = this.BX.UI.System || {};
 	  OutlineNoAccent: 'outline-no-accent',
 	  ShadowNoAccent: 'shadow-no-accent',
 	  Shadow: 'shadow',
-	  ShadowAccent: 'shadow-accent'
+	  ShadowAccent: 'shadow-accent',
+	  ShadowDisabled: 'shadow-disabled'
 	});
 	const ChipSize = Object.freeze({
 	  Lg: 'l',
@@ -60,6 +61,10 @@ this.BX.UI.System = this.BX.UI.System || {};
 	      type: Boolean,
 	      default: false
 	    },
+	    dropdown: {
+	      type: Boolean,
+	      default: false
+	    },
 	    lock: {
 	      type: Boolean,
 	      default: false
@@ -92,7 +97,7 @@ this.BX.UI.System = this.BX.UI.System || {};
 					'--rounded': rounded,
 					'--trimmable': trimmable,
 					'--lock': lock,
-					'--with-clear': withClear,
+					'--with-right-icon': withClear || dropdown,
 					'--no-text': text.length === 0,
 				},
 			]"
@@ -103,7 +108,8 @@ this.BX.UI.System = this.BX.UI.System || {};
 			<img v-if="image" class="ui-chip-icon --image" :src="image.src" :alt="image.alt">
 			<BIcon v-if="icon" class="ui-chip-icon" :name="icon"/>
 			<div class="ui-chip-text">{{ text }}</div>
-			<BIcon v-if="withClear" class="ui-chip-clear" :name="Outline.CROSS_M" @click.stop="$emit('clear')"/>
+			<BIcon v-if="dropdown" class="ui-chip-right-icon" :name="Outline.CHEVRON_DOWN_M"/>
+			<BIcon v-if="withClear" class="ui-chip-right-icon" :name="Outline.CROSS_M" @click.stop="$emit('clear')"/>
 			<BIcon v-if="lock" class="ui-chip-lock" :name="Outline.LOCK_M"/>
 		</div>
 	`

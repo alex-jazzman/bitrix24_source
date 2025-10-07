@@ -154,9 +154,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    return result === '1';
 	  },
 	  isAirDesignEnabledInDesktop() {
-	    // duplicate setting from im.v2.lib.layout to minimize dependencies in external usages
-	    const settings = main_core.Extension.getSettings('im.v2.lib.layout');
-	    return this.isDesktop() && settings.get('isAirDesignEnabled', true);
+	    // there is only AIR design now. Temporary solution, need to remove it in the future
+	    const isAirDesignEnabled = true;
+	    return this.isDesktop() && isAirDesignEnabled;
 	  },
 	  getCameraSmoothingStatus() {
 	    return this.getCustomSetting(DesktopSettingsKey.smoothing, '0') === '1';

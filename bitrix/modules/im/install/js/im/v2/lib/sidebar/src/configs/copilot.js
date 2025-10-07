@@ -1,12 +1,12 @@
 import { ChatType, SidebarMainPanelBlock } from 'im.v2.const';
 
-import { SidebarConfig } from '../classes/config';
+import { SidebarPreset } from '../classes/preset';
 
 import type { ImModelChat } from 'im.v2.model';
 
 const isCopilot = (chatContext: ImModelChat) => chatContext.type === ChatType.copilot;
 
-const copilotConfig = new SidebarConfig({
+const copilotPreset = new SidebarPreset({
 	blocks: [
 		SidebarMainPanelBlock.copilot,
 		SidebarMainPanelBlock.tariffLimit,
@@ -16,4 +16,4 @@ const copilotConfig = new SidebarConfig({
 	],
 });
 
-export { isCopilot, copilotConfig };
+export { isCopilot, copilotPreset };

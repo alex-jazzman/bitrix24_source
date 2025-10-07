@@ -169,7 +169,8 @@ export const RolesControl = {
 					<div>{{ $Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_ROLES') }}</div>
 					<div
 						ref="configure"
-						class="ui-icon-set --more ui-access-rights-v2-icon-more"
+						class="ui-icon-set --more-l ui-access-rights-v2-icon-more"
+						style="position: absolute; right: 11px; top: 5px;"
 						@click="isPopupShown = true"
 					>
 						<RichMenuPopup v-if="isPopupShown" @close="isPopupShown = false" :popup-options="{bindElement: $refs.configure}">
@@ -216,21 +217,25 @@ export const RolesControl = {
 						class="ui-access-rights-v2-header-roles-control-counter"
 						@click="toggleViewDialog($refs.counter)"
 					>
-						<div class="ui-icon-set --opened-eye" style="--ui-icon-set__icon-size: 15px;"></div>
+						<div class="ui-icon-set --o-observer" style="--ui-icon-set__icon-size: 18px;"></div>
 						<span v-html="shownGroupsCounter"></span>
 						<div class="ui-icon-set --chevron-down ui-access-rights-v2-header-roles-control-chevron"></div>
 					</div>
 					<div class="ui-access-rights-v2-header-roles-control-expander">
-						<div
-							class="ui-icon-set --collapse"
-							:title="$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_COLLAPSE_ALL_SECTIONS')"
-							@click="$store.dispatch('accessRights/collapseAllSections')"
-						></div>
-						<div 
-							class="ui-icon-set --expand-1"
-							:title="$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_EXPAND_ALL_SECTIONS')"
-							@click="$store.dispatch('accessRights/expandAllSections')"
-						></div>
+						<div class="ui-access-rights-v2-header-roles-control-expander-button">
+							<div
+								class="ui-icon-set --collapse"
+								:title="$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_COLLAPSE_ALL_SECTIONS')"
+								@click="$store.dispatch('accessRights/collapseAllSections')"
+							></div>
+						</div>
+						<div class="ui-access-rights-v2-header-roles-control-expander-button">
+							<div
+								class="ui-icon-set --expand-1"
+								:title="$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_EXPAND_ALL_SECTIONS')"
+								@click="$store.dispatch('accessRights/expandAllSections')"
+							></div>
+						</div>
 					</div>
 				</div>
 			</CellLayout>

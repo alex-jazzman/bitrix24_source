@@ -339,4 +339,38 @@ export const FileUtil = {
 		downloadFileWithDelay(0);
 		Dom.remove(a);
 	},
+
+	getViewerDataForImageSrc({
+		src,
+		viewerGroupBy,
+		objectId = null,
+		context = FileViewerContext.dialog,
+		actions = '[]',
+		title = '',
+		viewer = null,
+	}: {
+		src: string;
+		viewerGroupBy: string;
+		objectId: string;
+		context: string;
+		actions: string;
+		title: string;
+		viewer: boolean | null;
+	}): JsonObject {
+		const defaultAttributes = {
+			viewerAttributes: {
+				actions,
+				objectId,
+				src,
+				title,
+				viewer,
+				viewerGroupBy,
+				viewerType: 'image',
+			},
+			previewImageSrc: src,
+			context,
+		};
+
+		return this.getViewerDataAttributes(defaultAttributes);
+	},
 };

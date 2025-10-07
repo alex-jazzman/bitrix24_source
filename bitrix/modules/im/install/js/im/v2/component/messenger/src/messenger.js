@@ -1,4 +1,5 @@
 import 'planner';
+import 'ui.fontawesome4';
 import 'im.integration.viewer';
 import 'ui.design-tokens';
 import 'ui.fonts.opensans';
@@ -6,9 +7,9 @@ import 'im.v2.css.tokens';
 import 'im.v2.css.icons';
 import 'im.v2.css.classes';
 
-import { MessengerNavigation } from 'im.v2.component.navigation';
 import { OpenlinesContent } from 'im.v2.component.content.openlines';
 import { CounterManager } from 'im.v2.lib.counter';
+import { EscManager } from 'im.v2.lib.esc-manager';
 import { Logger } from 'im.v2.lib.logger';
 import { InitManager } from 'im.v2.lib.init';
 import { Layout, type LayoutType } from 'im.v2.const';
@@ -16,7 +17,6 @@ import { CallManager } from 'im.v2.lib.call';
 import { ThemeManager } from 'im.v2.lib.theme';
 import { DesktopManager } from 'im.v2.lib.desktop';
 import { LayoutManager } from 'im.v2.lib.layout';
-import { NavigationManager, type NavigationMenuItemParams } from 'im.v2.lib.navigation';
 
 import { LayoutComponentMap } from './config/component-map';
 
@@ -29,7 +29,7 @@ import type { ImModelLayout } from 'im.v2.model';
 // @vue/component
 export const Messenger = {
 	name: 'MessengerRoot',
-	components: { MessengerNavigation, OpenlinesContent },
+	components: { OpenlinesContent },
 	data(): JsonObject
 	{
 		return {
@@ -72,18 +72,11 @@ export const Messenger = {
 				'--dark-theme': ThemeManager.isDarkTheme(),
 				'--light-theme': ThemeManager.isLightTheme(),
 				'--desktop': DesktopManager.isDesktop(),
-				'--air': LayoutManager.getInstance().isAirDesignEnabled(),
 			};
 		},
 		callContainerClass(): string[]
 		{
 			return [CallManager.viewContainerClass];
-		},
-		hasNavigation(): boolean
-		{
-			const hasNavigation = !LayoutManager.getInstance().isAirDesignEnabled();
-
-			return hasNavigation ?? true;
 		},
 	},
 	watch:
@@ -108,20 +101,22 @@ export const Messenger = {
 		// emit again because external code expects to receive it after the messenger is opened (not via quick-access).
 		CounterManager.getInstance().emitCounters();
 		LayoutManager.init();
+
 		Logger.warn('MessengerRoot created');
 
 		void this.getLayoutManager().prepareInitialLayout();
 	},
+	mounted()
+	{
+		EscManager.getInstance().register();
+	},
 	beforeUnmount()
 	{
 		this.getLayoutManager().destroy();
+		EscManager.getInstance().unregister();
 	},
 	methods:
 	{
-		onNavigationClick(payload: NavigationMenuItemParams)
-		{
-			NavigationManager.open(payload);
-		},
 		onEntitySelect({ layoutName, entityId })
 		{
 			void this.getLayoutManager().setLayout({ name: layoutName, entityId });
@@ -131,13 +126,9 @@ export const Messenger = {
 			return LayoutManager.getInstance();
 		},
 	},
+	// Do not remove tabindex, we need it to handle ESC.
 	template: `
 		<div class="bx-im-messenger__scope bx-im-messenger__container" :class="containerClasses">
-			<MessengerNavigation
-				v-if="hasNavigation"
-				:currentLayoutName="layoutName" 
-				@navigationClick="onNavigationClick"
-			/>
 			<div class="bx-im-messenger__layout_container">
 				<div class="bx-im-messenger__layout_content">
 					<div v-if="hasListComponent" class="bx-im-messenger__list_container">

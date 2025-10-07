@@ -230,17 +230,11 @@ this.BX = this.BX || {};
 	var lsKey = {
 	  defaultMicrophone: 'bx-im-settings-default-microphone',
 	  defaultCamera: 'bx-im-settings-default-camera',
-	  defaultSpeaker: 'bx-im-settings-default-speaker',
-	  enableMicAutoParameters: 'bx-im-settings-enable-mic-auto-parameters',
-	  preferHd: 'bx-im-settings-camera-prefer-hd',
-	  enableMirroring: 'bx-im-settings-camera-enable-mirroring'
+	  defaultSpeaker: 'bx-im-settings-default-speaker'
 	};
 	var Events = {
-	  initialized: "initialized",
-	  deviceChanged: "deviceChange",
-	  onChangeMirroringVideo: "onChangeMirroringVideo",
-	  onChangeMicrophoneMuted: "onChangeMicrophoneMuted",
-	  onChangeCameraOn: "onChangeCameraOn"
+	  initialized: 'initialized',
+	  deviceChanged: 'deviceChange'
 	};
 	var HardwareManager = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(HardwareManager, _EventEmitter);
@@ -253,8 +247,6 @@ this.BX = this.BX || {};
 	    _this.initialized = false;
 	    _this._currentDeviceList = [];
 	    _this.updating = false;
-	    _this._isCameraOn = false;
-	    _this._isMicrophoneMuted = false;
 	    return _this;
 	  }
 	  babelHelpers.createClass(HardwareManager, [{
@@ -269,7 +261,9 @@ this.BX = this.BX || {};
 	      }
 	      this._checkPermissions();
 	      this.initPromise = new Promise(function (resolve, reject) {
-	        _this2.getCurrentDeviceList().then(function () {
+	        _this2.enumerateDevices().then(function (deviceList) {
+	          console.warn('deviceList', deviceList); // test_remove
+	          _this2._currentDeviceList = _this2.filterDeviceList(deviceList);
 	          navigator.mediaDevices.addEventListener('devicechange', BX.debounce(_this2.onNavigatorDeviceChanged.bind(_this2), 500));
 	          _this2.initialized = true;
 	          _this2.initPromise = null;
@@ -321,36 +315,66 @@ this.BX = this.BX || {};
 	      return _checkPermissions;
 	    }()
 	  }, {
-	    key: "enumerateDevices",
+	    key: "getUserMedia",
 	    value: function () {
-	      var _enumerateDevices = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee2() {
-	        var error, devices;
+	      var _getUserMedia = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee2(constraints) {
 	        return _regeneratorRuntime().wrap(function _callee2$(_context2) {
 	          while (1) switch (_context2.prev = _context2.next) {
 	            case 0:
+	              return _context2.abrupt("return", new Promise(function (resolve, reject) {
+	                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+	                  var error = new Error("NO_WEBRTC");
+	                  error.code = "NO_WEBRTC";
+	                  throw error;
+	                }
+	                navigator.mediaDevices.getUserMedia(constraints).then(function (stream) {
+	                  resolve(stream);
+	                })["catch"](function (err) {
+	                  reject(err);
+	                });
+	              }));
+	            case 1:
+	            case "end":
+	              return _context2.stop();
+	          }
+	        }, _callee2);
+	      }));
+	      function getUserMedia(_x) {
+	        return _getUserMedia.apply(this, arguments);
+	      }
+	      return getUserMedia;
+	    }()
+	  }, {
+	    key: "enumerateDevices",
+	    value: function () {
+	      var _enumerateDevices = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee3() {
+	        var error, devices;
+	        return _regeneratorRuntime().wrap(function _callee3$(_context3) {
+	          while (1) switch (_context3.prev = _context3.next) {
+	            case 0:
 	              if (!(!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices)) {
-	                _context2.next = 4;
+	                _context3.next = 4;
 	                break;
 	              }
 	              error = new Error("NO_WEBRTC");
 	              error.code = "NO_WEBRTC";
 	              throw error;
 	            case 4:
-	              _context2.prev = 4;
-	              _context2.next = 7;
+	              _context3.prev = 4;
+	              _context3.next = 7;
 	              return navigator.mediaDevices.enumerateDevices();
 	            case 7:
-	              devices = _context2.sent;
-	              return _context2.abrupt("return", devices);
+	              devices = _context3.sent;
+	              return _context3.abrupt("return", devices);
 	            case 11:
-	              _context2.prev = 11;
-	              _context2.t0 = _context2["catch"](4);
-	              throw _context2.t0;
+	              _context3.prev = 11;
+	              _context3.t0 = _context3["catch"](4);
+	              throw _context3.t0;
 	            case 14:
 	            case "end":
-	              return _context2.stop();
+	              return _context3.stop();
 	          }
-	        }, _callee2, null, [[4, 11]]);
+	        }, _callee3, null, [[4, 11]]);
 	      }));
 	      function enumerateDevices() {
 	        return _enumerateDevices.apply(this, arguments);
@@ -358,36 +382,10 @@ this.BX = this.BX || {};
 	      return enumerateDevices;
 	    }()
 	  }, {
-	    key: "setIsCameraOn",
-	    /*
-	    	the setter "isCameraOn" is duplicated by that function
-	    to emit additional params in "onChangeCameraOn" event
-	    	for task-565624 off all participants mic/cam/screenshare
-	    	*/
-	    value: function setIsCameraOn(options) {
-	      if (this._isCameraOn !== options.isCameraOn) {
-	        this._isCameraOn = options.isCameraOn;
-	        this.emit(Events.onChangeCameraOn, options);
-	      }
-	    }
-	  }, {
-	    key: "setIsMicrophoneMuted",
-	    /*
-	    	the setter "isMicrophoneMuted" is duplicated by that function
-	    to emit additional params in "onChangeMicrophoneMuted" event
-	    	for task-565624 off all participants mic/cam/screenshare
-	    	*/
-	    value: function setIsMicrophoneMuted(options) {
-	      if (this._isMicrophoneMuted !== options.isMicrophoneMuted) {
-	        this._isMicrophoneMuted = options.isMicrophoneMuted;
-	        this.emit(Events.onChangeMicrophoneMuted, options);
-	      }
-	    }
-	  }, {
 	    key: "hasCamera",
 	    value: function hasCamera() {
 	      if (!this.initialized) {
-	        throw new Error("HardwareManager is not initialized yet");
+	        throw new Error('HardwareManager is not initialized yet');
 	      }
 	      return Object.keys(this.cameraList).length > 0;
 	    }
@@ -395,7 +393,7 @@ this.BX = this.BX || {};
 	    key: "hasMicrophone",
 	    value: function hasMicrophone() {
 	      if (!this.initialized) {
-	        throw new Error("HardwareManager is not initialized yet");
+	        throw new Error('HardwareManager is not initialized yet');
 	      }
 	      return Object.keys(this.microphoneList).length > 0;
 	    }
@@ -403,30 +401,30 @@ this.BX = this.BX || {};
 	    key: "getMicrophoneList",
 	    value: function getMicrophoneList() {
 	      if (!this.initialized) {
-	        throw new Error("HardwareManager is not initialized yet");
+	        throw new Error('HardwareManager is not initialized yet');
 	      }
 	      return Object.values(this._currentDeviceList).filter(function (deviceInfo) {
-	        return deviceInfo.kind === "audioinput" && deviceInfo.deviceId !== 'default';
+	        return deviceInfo.kind === 'audioinput' && deviceInfo.deviceId !== 'default';
 	      });
 	    }
 	  }, {
 	    key: "getCameraList",
 	    value: function getCameraList() {
 	      if (!this.initialized) {
-	        throw new Error("HardwareManager is not initialized yet");
+	        throw new Error('HardwareManager is not initialized yet');
 	      }
 	      return Object.values(this._currentDeviceList).filter(function (deviceInfo) {
-	        return deviceInfo.kind == "videoinput";
+	        return deviceInfo.kind == 'videoinput';
 	      });
 	    }
 	  }, {
 	    key: "getSpeakerList",
 	    value: function getSpeakerList() {
 	      if (!this.initialized) {
-	        throw new Error("HardwareManager is not initialized yet");
+	        throw new Error('HardwareManager is not initialized yet');
 	      }
 	      return Object.values(this._currentDeviceList).filter(function (deviceInfo) {
-	        return deviceInfo.kind === "audiooutput" && deviceInfo.deviceId !== 'default';
+	        return deviceInfo.kind === 'audiooutput' && deviceInfo.deviceId !== 'default';
 	      });
 	    }
 	  }, {
@@ -445,9 +443,9 @@ this.BX = this.BX || {};
 	      var removedDevices = this._currentDeviceList;
 	      var addedDevices = [];
 	      var shouldSkipDeviceChangedEvent = this._currentDeviceList.every(function (deviceInfo) {
-	        return deviceInfo.deviceId == "" && deviceInfo.label == "";
+	        return deviceInfo.deviceId == '' && deviceInfo.label == '';
 	      });
-	      navigator.mediaDevices.enumerateDevices().then(function (devices) {
+	      this.enumerateDevices().then(function (devices) {
 	        devices = _this4.filterDeviceList(devices);
 	        devices.forEach(function (deviceInfo) {
 	          var index = removedDevices.findIndex(function (dev) {
@@ -476,10 +474,10 @@ this.BX = this.BX || {};
 	      var _this5 = this;
 	      return browserDeviceList.filter(function (device) {
 	        switch (device.kind) {
-	          case "audioinput":
-	            return device.deviceId !== "communications" && !_this5.isDeviceInBlackList(device);
-	          case "audiooutput":
-	            return device.deviceId !== "communications" && !_this5.isDeviceInBlackList(device);
+	          case 'audioinput':
+	            return device.deviceId !== 'communications' && !_this5.isDeviceInBlackList(device);
+	          case 'audiooutput':
+	            return device.deviceId !== 'communications' && !_this5.isDeviceInBlackList(device);
 	          default:
 	            return true;
 	        }
@@ -511,7 +509,7 @@ this.BX = this.BX || {};
 	    value: function _getDeviceMap(deviceKind) {
 	      var result = {};
 	      if (!this.initialized) {
-	        throw new Error("HardwareManager is not initialized yet");
+	        throw new Error('HardwareManager is not initialized yet');
 	      }
 	      for (var i = 0; i < this._currentDeviceList.length; i++) {
 	        if (this._currentDeviceList[i].kind == deviceKind) {
@@ -559,42 +557,25 @@ this.BX = this.BX || {};
 	    }
 	  }, {
 	    key: "getCurrentDeviceList",
-	    value: function () {
-	      var _getCurrentDeviceList = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee3() {
-	        var deviceList;
-	        return _regeneratorRuntime().wrap(function _callee3$(_context3) {
-	          while (1) switch (_context3.prev = _context3.next) {
-	            case 0:
-	              _context3.next = 2;
-	              return this.enumerateDevices();
-	            case 2:
-	              deviceList = _context3.sent;
-	              this._currentDeviceList = this.filterDeviceList(deviceList);
-	              return _context3.abrupt("return", {
-	                currentDeviceList: this._currentDeviceList,
-	                deviceList: deviceList
-	              });
-	            case 5:
-	            case "end":
-	              return _context3.stop();
-	          }
-	        }, _callee3, this);
-	      }));
-	      function getCurrentDeviceList() {
-	        return _getCurrentDeviceList.apply(this, arguments);
-	      }
-	      return getCurrentDeviceList;
-	    }()
+	    value: function getCurrentDeviceList() {
+	      var _this6 = this;
+	      return new Promise(function (resolve, reject) {
+	        _this6.enumerateDevices().then(function (deviceList) {
+	          _this6._currentDeviceList = _this6.filterDeviceList(deviceList);
+	          resolve(_this6._currentDeviceList, deviceList);
+	        });
+	      });
+	    }
 	  }, {
 	    key: "getRemovedUsedDevices",
 	    value: function getRemovedUsedDevices(devices, currentDevices) {
 	      return devices.filter(function (device) {
 	        switch (device.kind) {
-	          case "audioinput":
+	          case 'audioinput':
 	            return device.deviceId === currentDevices.microphoneId;
-	          case "audiooutput":
+	          case 'audiooutput':
 	            return device.deviceId === currentDevices.speakerId;
-	          case "videoinput":
+	          case 'videoinput':
 	            return device.deviceId === currentDevices.cameraId;
 	          default:
 	            return false;
@@ -604,17 +585,17 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "cameraList",
 	    get: function get() {
-	      return this._getDeviceMap("videoinput");
+	      return this._getDeviceMap('videoinput');
 	    }
 	  }, {
 	    key: "microphoneList",
 	    get: function get() {
-	      return this._getDeviceMap("audioinput");
+	      return this._getDeviceMap('audioinput');
 	    }
 	  }, {
 	    key: "audioOutputList",
 	    get: function get() {
-	      return this._getDeviceMap("audiooutput");
+	      return this._getDeviceMap('audiooutput');
 	    }
 	  }, {
 	    key: "defaultMicrophone",
@@ -668,41 +649,98 @@ this.BX = this.BX || {};
 	        localStorage.setItem(lsKey.defaultSpeaker, speakerId);
 	      }
 	    }
+	  }]);
+	  return HardwareManager;
+	}(main_core_events.EventEmitter);
+
+	var lsKey$1 = {
+	  enableMicAutoParameters: 'bx-im-settings-enable-mic-auto-parameters',
+	  preferHd: 'bx-im-settings-camera-prefer-hd',
+	  enableMirroring: 'bx-im-settings-camera-enable-mirroring'
+	};
+	var CallEvents = {
+	  onChangeMirroringVideo: 'onChangeMirroringVideo',
+	  onChangeMicrophoneMuted: 'onChangeMicrophoneMuted',
+	  onChangeCameraOn: 'onChangeCameraOn'
+	};
+	var CallHardwareManager = /*#__PURE__*/function (_HardwareManager) {
+	  babelHelpers.inherits(CallHardwareManager, _HardwareManager);
+	  function CallHardwareManager() {
+	    var _this;
+	    babelHelpers.classCallCheck(this, CallHardwareManager);
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(CallHardwareManager).call(this));
+	    _this._isCameraOn = false;
+	    _this._isMicrophoneMuted = false;
+	    _this.Events = Object.assign(_this.Events, CallEvents);
+	    return _this;
+	  }
+	  babelHelpers.createClass(CallHardwareManager, [{
+	    key: "setIsCameraOn",
+	    /* 
+	    
+	    the setter 'isCameraOn' is duplicated by that function  
+	    to emit additional params in 'onChangeCameraOn' event
+	    
+	    for task-565624 off all participants mic/cam/screenshare
+	    
+	    */
+	    value: function setIsCameraOn(options) {
+	      if (this._isCameraOn !== options.isCameraOn) {
+	        this._isCameraOn = options.isCameraOn;
+	        this.emit(this.Events.onChangeCameraOn, options);
+	      }
+	    }
+	  }, {
+	    key: "setIsMicrophoneMuted",
+	    /* 
+	    
+	    the setter 'isMicrophoneMuted' is duplicated by that function  
+	    to emit additional params in 'onChangeMicrophoneMuted' event
+	    
+	    for task-565624 off all participants mic/cam/screenshare
+	    
+	    */
+	    value: function setIsMicrophoneMuted(options) {
+	      if (this._isMicrophoneMuted !== options.isMicrophoneMuted) {
+	        this._isMicrophoneMuted = options.isMicrophoneMuted;
+	        this.emit(this.Events.onChangeMicrophoneMuted, options);
+	      }
+	    }
 	  }, {
 	    key: "enableMicAutoParameters",
 	    get: function get() {
-	      return localStorage ? localStorage.getItem(lsKey.enableMicAutoParameters) !== 'N' : true;
+	      return localStorage ? localStorage.getItem(lsKey$1.enableMicAutoParameters) !== 'N' : true;
 	    },
 	    set: function set(enableMicAutoParameters) {
 	      if (localStorage) {
-	        localStorage.setItem(lsKey.enableMicAutoParameters, enableMicAutoParameters ? 'Y' : 'N');
+	        localStorage.setItem(lsKey$1.enableMicAutoParameters, enableMicAutoParameters ? 'Y' : 'N');
 	      }
 	    }
 	  }, {
 	    key: "preferHdQuality",
 	    get: function get() {
-	      return localStorage ? localStorage.getItem(lsKey.preferHd) !== 'N' : true;
+	      return localStorage ? localStorage.getItem(lsKey$1.preferHd) !== 'N' : true;
 	    },
 	    set: function set(preferHdQuality) {
 	      if (localStorage) {
-	        localStorage.setItem(lsKey.preferHd, preferHdQuality ? 'Y' : 'N');
+	        localStorage.setItem(lsKey$1.preferHd, preferHdQuality ? 'Y' : 'N');
 	      }
 	    }
 	  }, {
 	    key: "enableMirroring",
 	    get: function get() {
-	      return localStorage ? localStorage.getItem(lsKey.enableMirroring) !== 'N' : true;
+	      return localStorage ? localStorage.getItem(lsKey$1.enableMirroring) !== 'N' : true;
 	    },
 	    set: function set(enableMirroring) {
 	      if (this.enableMirroring !== enableMirroring) {
-	        this.emit(Events.onChangeMirroringVideo, {
+	        this.emit(this.Events.onChangeMirroringVideo, {
 	          enableMirroring: enableMirroring
 	        });
-	        if (im_v2_lib_desktopApi.DesktopApi.isDesktop()) {
-	          im_v2_lib_desktopApi.DesktopApi.emit(Events.onChangeMirroringVideo, [enableMirroring]);
+	        if (DesktopApi.isDesktop()) {
+	          DesktopApi.emit(this.Events.onChangeMirroringVideo, [enableMirroring]);
 	        }
 	        if (localStorage) {
-	          localStorage.setItem(lsKey.enableMirroring, enableMirroring ? 'Y' : 'N');
+	          localStorage.setItem(lsKey$1.enableMirroring, enableMirroring ? 'Y' : 'N');
 	        }
 	      }
 	    }
@@ -714,7 +752,7 @@ this.BX = this.BX || {};
 	    set: function set(isCameraOn) {
 	      if (this._isCameraOn !== isCameraOn) {
 	        this._isCameraOn = isCameraOn;
-	        this.emit(Events.onChangeCameraOn, {
+	        this.emit(this.Events.onChangeCameraOn, {
 	          isCameraOn: this._isCameraOn
 	        });
 	      }
@@ -727,15 +765,15 @@ this.BX = this.BX || {};
 	    set: function set(isMicrophoneMuted) {
 	      if (this._isMicrophoneMuted !== isMicrophoneMuted) {
 	        this._isMicrophoneMuted = isMicrophoneMuted;
-	        this.emit(Events.onChangeMicrophoneMuted, {
+	        this.emit(this.Events.onChangeMicrophoneMuted, {
 	          isMicrophoneMuted: this._isMicrophoneMuted
 	        });
 	      }
 	    }
 	  }]);
-	  return HardwareManager;
-	}(main_core_events.EventEmitter);
-	var Hardware = new HardwareManager();
+	  return CallHardwareManager;
+	}(HardwareManager);
+	var Hardware = new CallHardwareManager();
 
 	/**
 	 * Abstract call class
@@ -950,13 +988,24 @@ this.BX = this.BX || {};
 	  return AbstractCall;
 	}();
 
+	function logPlaybackError(error) {
+	  console.error("Playback start error: ", error);
+	  Util.sendLog({
+	    description: 'Playback start error',
+	    error: error
+	  });
+	}
+	function checkAndEncodeURI(uri) {
+	  return decodeURI(uri) === uri ? encodeURI(uri) : uri;
+	}
+
 	var UserModel = /*#__PURE__*/function () {
 	  function UserModel(config) {
 	    babelHelpers.classCallCheck(this, UserModel);
 	    this.data = {
 	      id: BX.prop.getInteger(config, "id", 0),
 	      name: BX.prop.getString(config, "name", ""),
-	      avatar: BX.prop.getString(config, "avatar", ""),
+	      avatar: checkAndEncodeURI(BX.prop.getString(config, "avatar", "")),
 	      gender: BX.prop.getString(config, "gender", ""),
 	      state: BX.prop.getString(config, "state", UserState.Idle),
 	      talking: BX.prop.getBoolean(config, "talking", false),
@@ -2709,10 +2758,6 @@ this.BX = this.BX || {};
 	  }]);
 	  return MobileMenuItem;
 	}();
-
-	function logPlaybackError(error) {
-	  console.error("Playback start error: ", error);
-	}
 
 	function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 	function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
@@ -6075,7 +6120,7 @@ this.BX = this.BX || {};
 	            }
 	          }
 	          _context25.next = 9;
-	          return navigator.mediaDevices.getUserMedia(constraints);
+	          return Hardware.getUserMedia(constraints);
 	        case 9:
 	          stream = _context25.sent;
 	          if (options.video && stream.getVideoTracks()[0]) {
@@ -6164,7 +6209,7 @@ this.BX = this.BX || {};
 	            break;
 	          }
 	          _context26.next = 6;
-	          return navigator.mediaDevices.getUserMedia({
+	          return Hardware.getUserMedia({
 	            video: {
 	              mandatory: {
 	                chromeMediaSource: 'screen',
@@ -6190,7 +6235,7 @@ this.BX = this.BX || {};
 	                ideal: 1080
 	              }
 	            },
-	            systemAudio: "include",
+	            systemAudio: 'include',
 	            audio: true
 	          });
 	        case 11:
@@ -7461,7 +7506,6 @@ this.BX = this.BX || {};
 	      onTurnOffParticipantScreenshare: main_core.Type.isFunction(config.onTurnOffParticipantScreenshare) ? config.onTurnOffParticipantScreenshare : BX.DoNothing
 	    };
 	    this.checkAspectInterval = setInterval(this.checkVideoAspect.bind(this), 500);
-	    this.resizeObserver = null;
 	    this.hintManager = BX.UI.Hint.createInstance({
 	      popupParameters: {
 	        targetContainer: document.body,
@@ -7741,7 +7785,7 @@ this.BX = this.BX || {};
 	        this.elements.root.classList.add('bx-messenger-videocall-user-self');
 	      }
 	      if (this.userModel.avatar !== '') {
-	        this.elements.root.style.setProperty('--avatar', "url('" + this.userModel.avatar + "')");
+	        this.elements.root.style.setProperty('--avatar', "url('".concat(this.userModel.avatar, "')"));
 	        this.elements.avatar.innerText = '';
 	        this.elements.root.style.removeProperty('--avatar-background');
 	      } else {
@@ -8267,7 +8311,7 @@ this.BX = this.BX || {};
 	    value: function updateAvatar() {
 	      if (this.elements.root) {
 	        if (this.userModel.avatar !== '') {
-	          this.elements.root.style.setProperty('--avatar', "url('" + this.userModel.avatar + "')");
+	          this.elements.root.style.setProperty('--avatar', "url('".concat(this.userModel.avatar, "')"));
 	          this.elements.avatar.innerText = '';
 	          this.elements.root.style.removeProperty('--avatar-background');
 	        } else {
@@ -8543,56 +8587,12 @@ this.BX = this.BX || {};
 	      }
 	    }
 	  }, {
-	    key: "setAdditionalVariableForRootElements",
-	    value: function setAdditionalVariableForRootElements() {
-	      if (this.elements.root) {
-	        this.elements.root.style.setProperty('--user-preview-container-padding', this.elements.root.offsetWidth * 0.025 + 'px');
-	      }
-	    }
-	  }, {
-	    key: "onResize",
-	    value: function onResize() {
-	      this.setAdditionalVariableForRootElements();
-	    }
-	  }, {
-	    key: "toggleResizeObserver",
-	    value: function toggleResizeObserver(isActive) {
-	      if (isActive) {
-	        this.activateResizeObserver();
-	      } else {
-	        this.deactivateResizeObserver();
-	      }
-	    }
-	  }, {
-	    key: "deactivateResizeObserver",
-	    value: function deactivateResizeObserver() {
-	      if (this.resizeObserver && this.elements.root) {
-	        this.resizeObserver.unobserve(this.elements.root);
-	      }
-	      if (this.resizeObserver) {
-	        this.resizeObserver.disconnect();
-	        this.resizeObserver = null;
-	      }
-	    }
-	  }, {
-	    key: "activateResizeObserver",
-	    value: function activateResizeObserver() {
-	      if (!this.resizeObserver) {
-	        this.resizeObserver = new BX.ResizeObserver(this.onResize.bind(this));
-	      }
-	      if (this.resizeObserver && this.elements.root) {
-	        this.resizeObserver.observe(this.elements.root);
-	      }
-	    }
-	  }, {
 	    key: "mount",
 	    value: function mount(parent, force) {
 	      force = force === true;
 	      if (!this.elements.root) {
 	        this.render();
 	        this.initUserNameState();
-	        this.setAdditionalVariableForRootElements();
-	        this.toggleResizeObserver(true);
 	      }
 	      if (this.isMounted() && this.elements.root.parentElement == parent && !force) {
 	        this.updatePanelDeferred();
@@ -8611,7 +8611,6 @@ this.BX = this.BX || {};
 	        return false;
 	      }
 	      clearInterval(this.checkAspectInterval);
-	      this.toggleResizeObserver(false);
 	      this.elements.video.srcObject = null;
 	      this.elements.preview.srcObject = null;
 	      main_core.Dom.remove(this.elements.root);
@@ -8873,7 +8872,6 @@ this.BX = this.BX || {};
 	      this.userModel.unsubscribe('changed', this._onUserFieldChangedHandler);
 	      this.releaseStream();
 	      clearInterval(this.checkAspectInterval);
-	      this.toggleResizeObserver(false);
 	    }
 	  }, {
 	    key: "addAvatarPulseTimer",
@@ -10444,6 +10442,7 @@ this.BX = this.BX || {};
 	    key: "updateBlockButtons",
 	    value: function updateBlockButtons(buttonsList) {
 	      this.blockedButtons = buttonsList;
+	      return this;
 	    }
 	  }, {
 	    key: "setButtons",
@@ -10947,6 +10946,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "setSizePictureWindow",
 	    value: function setSizePictureWindow() {
+	      // TODO: debounce/throttle
 	      if (!this.template) {
 	        return;
 	      }
@@ -11457,8 +11457,7 @@ this.BX = this.BX || {};
 	        }
 	      }
 	      if (_this.pictureInPictureCallWindow) {
-	        _this.pictureInPictureCallWindow.setButtons(_this.getPictureInPictureCallWindowGetButtonsList());
-	        _this.pictureInPictureCallWindow.updateButtons();
+	        _this.pictureInPictureCallWindow.setButtons(_this.getPictureInPictureCallWindowGetButtonsList()).updateButtons();
 	      }
 	    });
 	    babelHelpers.defineProperty(this, "setMuted", function (event) {
@@ -11475,8 +11474,7 @@ this.BX = this.BX || {};
 	      }
 	      _this.userRegistry.get(_this.userId).microphoneState = !_this.isMuted;
 	      if (_this.pictureInPictureCallWindow) {
-	        _this.pictureInPictureCallWindow.setButtons(_this.getPictureInPictureCallWindowGetButtonsList());
-	        _this.pictureInPictureCallWindow.updateButtons();
+	        _this.pictureInPictureCallWindow.setButtons(_this.getPictureInPictureCallWindowGetButtonsList()).updateButtons();
 	      }
 	    });
 	    this.title = config.title;
@@ -11850,43 +11848,6 @@ this.BX = this.BX || {};
 	      }, 5000);
 	    }
 	  }, {
-	    key: "toggleVisibilityChangeDocumentEvent",
-	    value: function toggleVisibilityChangeDocumentEvent(isActive) {
-	      var _this3 = this;
-	      var settings = function () {
-	        if (typeof document.hidden !== "undefined") {
-	          return {
-	            hidden: 'hidden',
-	            eventName: 'visibilitychange'
-	          };
-	        } else if (typeof document.msHidden !== "undefined") {
-	          return {
-	            hidden: 'msHidden',
-	            eventName: 'msvisibilitychange'
-	          };
-	        } else if (typeof document.webkitHidden !== "undefined") {
-	          return {
-	            hidden: 'webkitHidden',
-	            eventName: 'webkitvisibilitychange'
-	          };
-	        } else {
-	          return null;
-	        }
-	      }();
-	      if (settings) {
-	        document["".concat(isActive ? 'add' : 'remove', "EventListener")](settings.eventName, function () {
-	          _this3.isDocumentHidden = document[settings.hidden];
-	          if (_this3.pictureInPictureCallWindow) {
-	            _this3.pictureInPictureCallWindow.setButtons(_this3.getPictureInPictureCallWindowGetButtonsList());
-	            _this3.pictureInPictureCallWindow.updateButtons();
-	          }
-	          if (im_v2_lib_desktopApi.DesktopApi.isDesktop() && !_this3.destroyed) {
-	            _this3.toggleStatePictureInPictureCallWindow(_this3.isDocumentHidden || _this3._isActivePiPFromController);
-	          }
-	        });
-	      }
-	    }
-	  }, {
 	    key: "init",
 	    value: function init() {
 	      this.getLimitation();
@@ -11926,9 +11887,6 @@ this.BX = this.BX || {};
 	      window.addEventListener("keyup", this._onKeyUpHandler);
 	      this.onMouseMoveHandler = this.toggleVisibilityEar.bind(this);
 	      document.addEventListener('mousemove', this.onMouseMoveHandler);
-	      // TODO: Disable PiP on minimize
-	      // this.toggleVisibilityChangeDocumentEvent(true);
-
 	      this.keyModifierForCss = main_core.Browser.isMac() ? '\\2318 + Shift' : 'Ctrl + Shift';
 	      this.container.appendChild(this.elements.audioContainer);
 	      this.container.appendChild(this.elements.screenAudioContainer);
@@ -11985,7 +11943,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "setCentralUser",
 	    value: function setCentralUser(userId) {
-	      var _this4 = this;
+	      var _this3 = this;
 	      if (this.centralUser.id == userId) {
 	        return;
 	      }
@@ -12007,7 +11965,7 @@ this.BX = this.BX || {};
 	          this.centralUserMobile = new CallUserMobile({
 	            userModel: this.userRegistry.get(userId),
 	            onClick: function onClick() {
-	              return _this4.showUserMenu(_this4.centralUser.id);
+	              return _this3.showUserMenu(_this3.centralUser.id);
 	            }
 	          });
 	          this.centralUserMobile.mount(this.elements.pinnedUserContainer);
@@ -12080,14 +12038,14 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "getUsersWithVideo",
 	    value: function getUsersWithVideo() {
-	      var _this5 = this;
+	      var _this4 = this;
 	      if (this.cache.has('usersWithVideo')) {
 	        return this.cache.get('usersWithVideo');
 	      }
 	      var users = Object.keys(this.users);
 	      var result = [];
 	      users.forEach(function (userId) {
-	        if (_this5.users[userId].hasVideo()) {
+	        if (_this4.users[userId].hasVideo()) {
 	          result.push(userId);
 	        }
 	      });
@@ -12097,14 +12055,14 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "getConnectedUsers",
 	    value: function getConnectedUsers() {
-	      var _this6 = this;
+	      var _this5 = this;
 	      if (this.cache.has('currentConnectedUser')) {
 	        return this.cache.get('currentConnectedUser');
 	      }
 	      var result = [];
 	      var userModels = babelHelpers.toConsumableArray(this.userRegistry.users.values());
 	      userModels.forEach(function (userModel) {
-	        if (userModel.id != _this6.userId && userModel.state === UserState.Connected) {
+	        if (userModel.id != _this5.userId && userModel.state === UserState.Connected) {
 	          result.push(userModel.id);
 	        }
 	      });
@@ -12115,11 +12073,11 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "getDisplayedUsers",
 	    value: function getDisplayedUsers() {
-	      var _this7 = this;
+	      var _this6 = this;
 	      var result = [];
 	      var userModels = babelHelpers.toConsumableArray(this.userRegistry.users.values());
 	      userModels.forEach(function (userModel) {
-	        if (userModel.id != _this7.userId && (userModel.id != _this7.centralUser.id && _this7.layout === Layouts.Centered || _this7.layout !== Layouts.Centered) && [UserState.Connected, UserState.Connecting, UserState.Calling].includes(userModel.state)) {
+	        if (userModel.id != _this6.userId && (userModel.id != _this6.centralUser.id && _this6.layout === Layouts.Centered || _this6.layout !== Layouts.Centered) && [UserState.Connected, UserState.Connecting, UserState.Calling].includes(userModel.state)) {
 	          result.push(userModel.id);
 	        }
 	      });
@@ -12128,14 +12086,14 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "getActiveUsers",
 	    value: function getActiveUsers() {
-	      var _this8 = this;
+	      var _this7 = this;
 	      if (this.cache.has('activeUsers')) {
 	        return this.cache.get('activeUsers');
 	      }
 	      var result = [];
 	      var userModels = babelHelpers.toConsumableArray(this.userRegistry.users.values());
 	      userModels.forEach(function (userModel) {
-	        if (_this8.isUserHasActiveState(userModel) && Object.hasOwn(_this8.users, userModel.id)) {
+	        if (_this7.isUserHasActiveState(userModel) && Object.hasOwn(_this7.users, userModel.id)) {
 	          result.push(userModel.id);
 	        }
 	      });
@@ -12145,11 +12103,11 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "getUsersWithCamera",
 	    value: function getUsersWithCamera() {
-	      var _this9 = this;
+	      var _this8 = this;
 	      // since we don't receive streams from inactive pages
 	      // we can't use this.getUsersWithVideo() to get number of users with video
 	      return babelHelpers.toConsumableArray(this.userRegistry.users.values()).filter(function (userModel) {
-	        return userModel.id != _this9.userId && userModel.cameraState && _this9.isUserHasActiveState(userModel) && userModel.state !== UserState.Calling;
+	        return userModel.id != _this8.userId && userModel.cameraState && _this8.isUserHasActiveState(userModel) && userModel.state !== UserState.Calling;
 	      });
 	    }
 	  }, {
@@ -12481,7 +12439,7 @@ this.BX = this.BX || {};
 	      this.userId = parseInt(userId);
 	      this.localUser.userModel.id = this.userId;
 	      this.localUser.userModel.name = this.userData[this.userId] ? this.userData[this.userId].name : '';
-	      this.localUser.userModel.avatar = this.userData[this.userId] ? this.userData[this.userId].avatar_hr : '';
+	      this.localUser.userModel.avatar = this.userData[this.userId] ? checkAndEncodeURI(this.userData[this.userId].avatar_hr) : '';
 	      this.userRegistry.push(this.localUser.userModel);
 	    }
 	  }, {
@@ -12590,7 +12548,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "setUserState",
 	    value: function setUserState(userId, newState) {
-	      var _this10 = this;
+	      var _this9 = this;
 	      var user = this.userRegistry.get(userId);
 	      if (!user || user.state === newState) {
 	        return;
@@ -12630,7 +12588,7 @@ this.BX = this.BX || {};
 	      }
 	      if (newState === UserState.Connected) {
 	        var timer = setTimeout(function () {
-	          _this10.waitingForUserMediaTimeouts["delete"](userId);
+	          _this9.waitingForUserMediaTimeouts["delete"](userId);
 	        }, WAITING_VIDEO_DELAY);
 	        this.waitingForUserMediaTimeouts.set(userId, timer);
 	      } else if (newState === UserState.Idle) {
@@ -12857,7 +12815,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "showFloorRequestNotification",
 	    value: function showFloorRequestNotification(userId) {
-	      var _this11 = this;
+	      var _this10 = this;
 	      var userModel = this.userRegistry.get(userId);
 	      if (!userModel) {
 	        return;
@@ -12865,10 +12823,10 @@ this.BX = this.BX || {};
 	      var notification = FloorRequest.create({
 	        userModel: userModel,
 	        onAllowSpeakPermissionClicked: function onAllowSpeakPermissionClicked(_userModel) {
-	          _this11._onAllowSpeakPermissionClickedHandler(_userModel);
+	          _this10._onAllowSpeakPermissionClickedHandler(_userModel);
 	        },
 	        onDisallowSpeakPermissionClicked: function onDisallowSpeakPermissionClicked(_userModel) {
-	          _this11._onDisallowSpeakPermissionClickedHandler(_userModel);
+	          _this10._onDisallowSpeakPermissionClickedHandler(_userModel);
 	        }
 	      });
 	      notification.mount(this.elements.notificationPanel);
@@ -13033,7 +12991,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "updateRerenderQueue",
 	    value: function updateRerenderQueue(userId, reason) {
-	      var _this12 = this;
+	      var _this11 = this;
 	      if (!this.users[userId]) {
 	        throw Error("User " + userId + " is not a part of this call");
 	      }
@@ -13057,7 +13015,7 @@ this.BX = this.BX || {};
 	          } else {
 	            if (!this.rerenderTimeout) {
 	              this.rerenderTimeout = setTimeout(function () {
-	                _this12.renderUserList();
+	                _this11.renderUserList();
 	              }, this.videoRerenderDelay);
 	            }
 	            this.rerenderQueue.set(userId, {
@@ -13077,7 +13035,7 @@ this.BX = this.BX || {};
 	        } else {
 	          if (!this.rerenderTimeout) {
 	            this.rerenderTimeout = setTimeout(function () {
-	              _this12.renderUserList();
+	              _this11.renderUserList();
 	            }, this.videoRerenderDelay);
 	          }
 	          this.rerenderQueue.set(userId, {
@@ -13307,7 +13265,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "showDeviceSelector",
 	    value: function showDeviceSelector(bindElement) {
-	      var _this13 = this,
+	      var _this12 = this,
 	        _events;
 	      if (this.deviceSelector) {
 	        return;
@@ -13331,11 +13289,11 @@ this.BX = this.BX || {};
 	        switchCameraBlocked: this.blockedButtons['camera'],
 	        switchMicrophoneBlocked: this.blockedButtons['microphone'],
 	        events: (_events = {}, babelHelpers.defineProperty(_events, DeviceSelector.Events.onMicrophoneSelect, this._onMicrophoneSelected.bind(this)), babelHelpers.defineProperty(_events, DeviceSelector.Events.onMicrophoneSwitch, this._onMicrophoneButtonClick.bind(this)), babelHelpers.defineProperty(_events, DeviceSelector.Events.onCameraSelect, this._onCameraSelected.bind(this)), babelHelpers.defineProperty(_events, DeviceSelector.Events.onCameraSwitch, this._onCameraButtonClick.bind(this)), babelHelpers.defineProperty(_events, DeviceSelector.Events.onSpeakerSelect, this._onSpeakerSelected.bind(this)), babelHelpers.defineProperty(_events, DeviceSelector.Events.onSpeakerSwitch, this._onSpeakerButtonClick.bind(this)), babelHelpers.defineProperty(_events, DeviceSelector.Events.onChangeHdVideo, this._onChangeHdVideo.bind(this)), babelHelpers.defineProperty(_events, DeviceSelector.Events.onChangeMicAutoParams, this._onChangeMicAutoParams.bind(this)), babelHelpers.defineProperty(_events, DeviceSelector.Events.onChangeFaceImprove, this._onChangeFaceImprove.bind(this)), babelHelpers.defineProperty(_events, DeviceSelector.Events.onAdvancedSettingsClick, function () {
-	          return _this13.eventEmitter.emit(EventName.onOpenAdvancedSettings);
+	          return _this12.eventEmitter.emit(EventName.onOpenAdvancedSettings);
 	        }), babelHelpers.defineProperty(_events, DeviceSelector.Events.onDestroy, function () {
-	          return _this13.deviceSelector = null;
+	          return _this12.deviceSelector = null;
 	        }), babelHelpers.defineProperty(_events, DeviceSelector.Events.onShow, function () {
-	          return _this13.eventEmitter.emit(EventName.onDeviceSelectorShow, {});
+	          return _this12.eventEmitter.emit(EventName.onDeviceSelectorShow, {});
 	        }), _events)
 	      });
 	      this.deviceSelector.show();
@@ -13343,7 +13301,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "showCallMenu",
 	    value: function showCallMenu() {
-	      var _this14 = this;
+	      var _this13 = this;
 	      var menuItems = [{
 	        text: BX.message("IM_M_CALL_BTN_WANT_TO_SAY"),
 	        iconClass: "hand",
@@ -13384,8 +13342,8 @@ this.BX = this.BX || {};
 	        text: BX.message("IM_M_CALL_MOBILE_MENU_CHANGE_MY_NAME"),
 	        iconClass: "change-name",
 	        onClick: function onClick() {
-	          _this14.callMenu.close();
-	          setTimeout(_this14.showRenameSlider.bind(_this14), 100);
+	          _this13.callMenu.close();
+	          setTimeout(_this13.showRenameSlider.bind(_this13), 100);
 	        }
 	      } : null, {
 	        separator: true
@@ -13398,10 +13356,10 @@ this.BX = this.BX || {};
 	        parent: this.elements.root,
 	        items: menuItems,
 	        onClose: function onClose() {
-	          return _this14.callMenu.destroy();
+	          return _this13.callMenu.destroy();
 	        },
 	        onDestroy: function onDestroy() {
-	          return _this14.callMenu = null;
+	          return _this13.callMenu = null;
 	        }
 	      });
 	      this.callMenu.show();
@@ -13409,7 +13367,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "showUserMenu",
 	    value: function showUserMenu(userId) {
-	      var _this15 = this;
+	      var _this14 = this;
 	      var userModel = this.userRegistry.get(userId);
 	      if (!userModel) {
 	        return false;
@@ -13420,8 +13378,8 @@ this.BX = this.BX || {};
 	          text: BX.message("IM_M_CALL_MOBILE_MENU_UNPIN"),
 	          iconClass: "unpin",
 	          onClick: function onClick() {
-	            _this15.userMenu.close();
-	            _this15.unpinUser();
+	            _this14.userMenu.close();
+	            _this14.unpinUser();
 	          }
 	        };
 	      } else if (this.userId != userId) {
@@ -13429,8 +13387,8 @@ this.BX = this.BX || {};
 	          text: BX.message("IM_M_CALL_MOBILE_MENU_PIN"),
 	          iconClass: "pin",
 	          onClick: function onClick() {
-	            _this15.userMenu.close();
-	            _this15.pinUser(userId);
+	            _this14.userMenu.close();
+	            _this14.pinUser(userId);
 	          }
 	        };
 	      }
@@ -13443,8 +13401,8 @@ this.BX = this.BX || {};
 	        text: BX.message("IM_M_CALL_MOBILE_MENU_CHANGE_MY_NAME"),
 	        iconClass: "change-name",
 	        onClick: function onClick() {
-	          _this15.userMenu.close();
-	          setTimeout(_this15.showRenameSlider.bind(_this15), 100);
+	          _this14.userMenu.close();
+	          setTimeout(_this14.showRenameSlider.bind(_this14), 100);
 	        }
 	      } : null,
 	      /*{
@@ -13468,17 +13426,17 @@ this.BX = this.BX || {};
 	        text: BX.message("IM_M_CALL_MOBILE_MENU_CANCEL"),
 	        enabled: false,
 	        onClick: function onClick() {
-	          return _this15.userMenu.close();
+	          return _this14.userMenu.close();
 	        }
 	      }];
 	      this.userMenu = new MobileMenu({
 	        parent: this.elements.root,
 	        items: menuItems,
 	        onClose: function onClose() {
-	          return _this15.userMenu.destroy();
+	          return _this14.userMenu.destroy();
 	        },
 	        onDestroy: function onDestroy() {
-	          return _this15.userMenu = null;
+	          return _this14.userMenu = null;
 	        }
 	      });
 	      this.userMenu.show();
@@ -13486,7 +13444,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "showParticipantsMenu",
 	    value: function showParticipantsMenu() {
-	      var _this16 = this;
+	      var _this15 = this;
 	      if (this.participantsMenu) {
 	        return;
 	      }
@@ -13494,8 +13452,8 @@ this.BX = this.BX || {};
 	        userModel: this.localUser.userModel,
 	        showSubMenu: true,
 	        onClick: function onClick() {
-	          _this16.participantsMenu.close();
-	          _this16.showUserMenu(_this16.localUser.userModel.id);
+	          _this15.participantsMenu.close();
+	          _this15.showUserMenu(_this15.localUser.userModel.id);
 	        }
 	      }];
 	      babelHelpers.toConsumableArray(this.userRegistry.users.values()).forEach(function (userModel) {
@@ -13511,8 +13469,8 @@ this.BX = this.BX || {};
 	          userModel: userModel,
 	          showSubMenu: true,
 	          onClick: function onClick() {
-	            _this16.participantsMenu.close();
-	            _this16.showUserMenu(userModel.id);
+	            _this15.participantsMenu.close();
+	            _this15.showUserMenu(userModel.id);
 	          }
 	        });
 	      });
@@ -13525,10 +13483,10 @@ this.BX = this.BX || {};
 	        header: BX.message('IM_M_CALL_PARTICIPANTS').replace('#COUNT#', this.getConnectedUserCount(true)),
 	        largeIcons: true,
 	        onClose: function onClose() {
-	          _this16.participantsMenu.destroy();
+	          _this15.participantsMenu.destroy();
 	        },
 	        onDestroy: function onDestroy() {
-	          _this16.participantsMenu = null;
+	          _this15.participantsMenu = null;
 	        }
 	      });
 	      this.participantsMenu.show();
@@ -13596,7 +13554,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "renderReloadPageLayout",
 	    value: function renderReloadPageLayout() {
-	      var _this17 = this;
+	      var _this16 = this;
 	      var errorContainer = main_core.Dom.create('div', {
 	        props: {
 	          className: 'bx-messenger-videocall-error-container'
@@ -13619,7 +13577,7 @@ this.BX = this.BX || {};
 	          text: main_core.Loc.getMessage('CALL_RELOAD_PAGE'),
 	          events: {
 	            click: function click() {
-	              _this17.destroy();
+	              _this16.destroy();
 	              location.reload();
 	            }
 	          }
@@ -13700,8 +13658,7 @@ this.BX = this.BX || {};
 	        this.resumeVideo();
 	      }
 	      if (this.pictureInPictureCallWindow) {
-	        this.pictureInPictureCallWindow.setButtons(this.getPictureInPictureCallWindowGetButtonsList());
-	        this.pictureInPictureCallWindow.updateButtons();
+	        this.pictureInPictureCallWindow.setButtons(this.getPictureInPictureCallWindowGetButtonsList()).updateButtons();
 	      }
 	    }
 	  }, {
@@ -13806,13 +13763,13 @@ this.BX = this.BX || {};
 	     * @param {string[]} buttons Array of buttons names to show
 	     */
 	    value: function showButtons(buttons) {
-	      var _this18 = this;
+	      var _this17 = this;
 	      if (!main_core.Type.isArray(buttons)) {
 	        console.error("buttons should be array");
 	      }
 	      buttons.forEach(function (buttonName) {
-	        if (_this18.hiddenButtons.hasOwnProperty(buttonName)) {
-	          delete _this18.hiddenButtons[buttonName];
+	        if (_this17.hiddenButtons.hasOwnProperty(buttonName)) {
+	          delete _this17.hiddenButtons[buttonName];
 	        }
 	      });
 	      this.updateButtons();
@@ -13823,12 +13780,12 @@ this.BX = this.BX || {};
 	     * @param {string[]} buttons Array of buttons names to hide
 	     */
 	    value: function hideButtons(buttons) {
-	      var _this19 = this;
+	      var _this18 = this;
 	      if (!main_core.Type.isArray(buttons)) {
 	        console.error("buttons should be array");
 	      }
 	      buttons.forEach(function (buttonName) {
-	        return _this19.hiddenButtons[buttonName] = true;
+	        return _this18.hiddenButtons[buttonName] = true;
 	      });
 	      this.updateButtons();
 	    }
@@ -13906,18 +13863,18 @@ this.BX = this.BX || {};
 	     * @param {string[]} buttons Array of buttons names to block
 	     */
 	    value: function blockButtons(buttons) {
-	      var _this20 = this;
+	      var _this19 = this;
 	      if (!main_core.Type.isArray(buttons)) {
 	        console.error("buttons should be array ");
 	      }
 	      buttons.forEach(function (buttonName) {
-	        _this20.blockedButtons[buttonName] = true;
-	        if (_this20.buttons[buttonName]) {
-	          _this20.buttons[buttonName].setBlocked(true);
+	        _this19.blockedButtons[buttonName] = true;
+	        if (_this19.buttons[buttonName]) {
+	          _this19.buttons[buttonName].setBlocked(true);
 	        }
 	      });
 	      if (this.pictureInPictureCallWindow) {
-	        this.pictureInPictureCallWindow.updateBlockButtons(this.getBlockedButtonsListPictureInPictureCallWindow());
+	        this.pictureInPictureCallWindow.updateBlockButtons(this.getBlockedButtonsListPictureInPictureCallWindow()).updateButtons();
 	      }
 	    }
 	  }, {
@@ -13926,18 +13883,18 @@ this.BX = this.BX || {};
 	     * @param {string[]} buttons Array of buttons names to unblock
 	     */
 	    value: function unblockButtons(buttons) {
-	      var _this21 = this;
+	      var _this20 = this;
 	      if (!main_core.Type.isArray(buttons)) {
 	        console.error("buttons should be array");
 	      }
 	      buttons.forEach(function (buttonName) {
-	        delete _this21.blockedButtons[buttonName];
-	        if (_this21.buttons[buttonName]) {
-	          _this21.buttons[buttonName].setBlocked(_this21.isButtonBlocked(buttonName));
+	        delete _this20.blockedButtons[buttonName];
+	        if (_this20.buttons[buttonName]) {
+	          _this20.buttons[buttonName].setBlocked(_this20.isButtonBlocked(buttonName));
 	        }
 	      });
 	      if (this.pictureInPictureCallWindow) {
-	        this.pictureInPictureCallWindow.updateBlockButtons(this.getBlockedButtonsListPictureInPictureCallWindow());
+	        this.pictureInPictureCallWindow.updateBlockButtons(this.getBlockedButtonsListPictureInPictureCallWindow()).updateButtons();
 	      }
 	    }
 	  }, {
@@ -13964,7 +13921,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "getButtonList",
 	    value: function getButtonList() {
-	      var _this22 = this;
+	      var _this21 = this;
 	      var result = [];
 	      if (this.uiState === UiState.Error) {
 	        result.push('close');
@@ -13994,7 +13951,7 @@ this.BX = this.BX || {};
 	        result.push('copilot');
 	      }
 	      result = result.filter(function (buttonCode) {
-	        return !Object.prototype.hasOwnProperty.call(_this22.hiddenButtons, buttonCode) && !Object.prototype.hasOwnProperty.call(_this22.overflownButtons, buttonCode);
+	        return !Object.prototype.hasOwnProperty.call(_this21.hiddenButtons, buttonCode) && !Object.prototype.hasOwnProperty.call(_this21.overflownButtons, buttonCode);
 	      });
 	      if (Object.keys(this.overflownButtons).length > 0) {
 	        result.push('more');
@@ -14014,7 +13971,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "getTopButtonList",
 	    value: function getTopButtonList() {
-	      var _this23 = this;
+	      var _this22 = this;
 	      var result = [];
 	      if (this.layout == Layouts.Mobile) {
 	        return ['participantsMobile'];
@@ -14044,7 +14001,7 @@ this.BX = this.BX || {};
 	          return true;
 	        }
 	        previousButtonCode = buttonCode;
-	        return !_this23.hiddenTopButtons.hasOwnProperty(buttonCode);
+	        return !_this22.hiddenTopButtons.hasOwnProperty(buttonCode);
 	      });
 	      this.needToRerenderTopButtonList = this.previousTopButtonList.toString() !== result.toString();
 	      this.previousTopButtonList = result;
@@ -14053,7 +14010,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "render",
 	    value: function render() {
-	      var _this24 = this;
+	      var _this23 = this;
 	      this.elements.root = main_core.Dom.create("div", {
 	        props: {
 	          className: "bx-messenger-videocall bx-messenger-videocall-scope"
@@ -14222,7 +14179,7 @@ this.BX = this.BX || {};
 	        events: {
 	          scroll: main_core.Runtime.debounce(this.toggleEars.bind(this), 300),
 	          wheel: function wheel(e) {
-	            return _this24.elements.userList.container.scrollTop += e.deltaY;
+	            return _this23.elements.userList.container.scrollTop += e.deltaY;
 	          }
 	        }
 	      });
@@ -14276,21 +14233,21 @@ this.BX = this.BX || {};
 	    key: "getOrderingRules",
 	    value: function getOrderingRules() {
 	      var _rules,
-	        _this25 = this;
+	        _this24 = this;
 	      var rules = (_rules = {}, babelHelpers.defineProperty(_rules, RerenderReason.VideoEnabled, []), babelHelpers.defineProperty(_rules, RerenderReason.VideoDisabled, []), babelHelpers.defineProperty(_rules, RerenderReason.UserDisconnected, null), _rules);
 	      this.rerenderQueue.forEach(function (el) {
 	        switch (el.reason) {
 	          case RerenderReason.UserDisconnected:
 	            rules[el.reason] = {
 	              id: el.userId,
-	              order: _this25.userRegistry.get(el.userId).prevOrder
+	              order: _this24.userRegistry.get(el.userId).prevOrder
 	            };
 	            break;
 	          case RerenderReason.VideoEnabled:
 	          case RerenderReason.VideoDisabled:
 	            rules[el.reason].push({
 	              id: el.userId,
-	              order: _this25.userRegistry.get(el.userId).order
+	              order: _this24.userRegistry.get(el.userId).order
 	            });
 	            break;
 	          default:
@@ -14308,19 +14265,19 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "applyOrderChanges",
 	    value: function applyOrderChanges(changes) {
-	      var _this26 = this;
+	      var _this25 = this;
 	      if (!main_core.Type.isArray(changes)) {
 	        return;
 	      }
 	      changes.forEach(function (change) {
 	        if (change.type === SwapType.Direct) {
 	          change.to.userModel.order = change.to.order;
-	          _this26.cache["delete"]('activeUsers');
+	          _this25.cache["delete"]('activeUsers');
 	        } else if (change.type === SwapType.Replace && change.to && change.from) {
 	          change.to.userModel.order = change.from.order;
 	          change.to.userModel.prevOrder = 0;
 	          change.from.userModel.order = change.to.order;
-	          _this26.cache["delete"]('activeUsers');
+	          _this25.cache["delete"]('activeUsers');
 	        }
 	      });
 	    }
@@ -14332,14 +14289,14 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "processVideoRules",
 	    value: function processVideoRules(rules, params) {
-	      var _this27 = this;
+	      var _this26 = this;
 	      var diffBetweenChanges = rules[RerenderReason.VideoEnabled].length - rules[RerenderReason.VideoDisabled].length;
 	      var lessChangesField = diffBetweenChanges > 0 ? RerenderReason.VideoDisabled : RerenderReason.VideoEnabled;
 	      var moreChangesField = diffBetweenChanges > 0 ? RerenderReason.VideoEnabled : RerenderReason.VideoDisabled;
 	      if (rules[RerenderReason.VideoEnabled].length > 0 && rules[RerenderReason.VideoDisabled].length > 0) {
 	        rules[lessChangesField].forEach(function (el, index) {
-	          var toUser = _this27.userRegistry.get(el.id);
-	          var fromUser = _this27.userRegistry.get(rules[moreChangesField][index].id);
+	          var toUser = _this26.userRegistry.get(el.id);
+	          var fromUser = _this26.userRegistry.get(rules[moreChangesField][index].id);
 	          params.orderChanges.push({
 	            type: SwapType.Replace,
 	            to: {
@@ -14366,8 +14323,8 @@ this.BX = this.BX || {};
 	            params.orderChanges.push({
 	              type: SwapType.Replace,
 	              from: {
-	                userModel: _this27.userRegistry.get(el.id),
-	                order: _this27.userRegistry.get(el.id).order
+	                userModel: _this26.userRegistry.get(el.id),
+	                order: _this26.userRegistry.get(el.id).order
 	              }
 	            });
 	            params.incompleteSwaps.push(params.orderChanges.length);
@@ -14422,13 +14379,13 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "completeVideoDisabledSwap",
 	    value: function completeVideoDisabledSwap(rules, params) {
-	      var _this28 = this;
+	      var _this27 = this;
 	      var usersProcessed = 0;
 	      rules[RerenderReason.VideoDisabled].forEach(function (el) {
-	        var userWithoutVideo = _this28.userRegistry.get(el.id);
+	        var userWithoutVideo = _this27.userRegistry.get(el.id);
 	        var userWithoutVideoIndex = params.activeUsers.indexOf(el.id);
-	        var userWithoutVideoPage = Math.ceil((userWithoutVideoIndex + 1) / _this28.usersPerPage);
-	        var skipUsers = (userWithoutVideoPage - 1) * _this28.usersPerPage;
+	        var userWithoutVideoPage = Math.ceil((userWithoutVideoIndex + 1) / _this27.usersPerPage);
+	        var skipUsers = (userWithoutVideoPage - 1) * _this27.usersPerPage;
 	        var numberOfUsersWithVideoForSwap = params.usersWithVideo.length - skipUsers;
 	        var userToSwap = params.usersWithVideo[params.usersWithVideo.length - 1 - usersProcessed];
 	        var canCompleteVideoSwap = userToSwap && userToSwap.order > el.order;
@@ -14446,12 +14403,12 @@ this.BX = this.BX || {};
 	            }
 	          });
 	          var userToSwapIndex = params.activeUsers.indexOf(userToSwap.id);
-	          var userToSwapPage = Math.ceil((userToSwapIndex + 1) / _this28.usersPerPage);
-	          if (userWithoutVideoPage === _this28.currentPage && userToSwapPage > _this28.currentPage) {
+	          var userToSwapPage = Math.ceil((userToSwapIndex + 1) / _this27.usersPerPage);
+	          if (userWithoutVideoPage === _this27.currentPage && userToSwapPage > _this27.currentPage) {
 	            params.usersToKeepActive.push(userToSwap.id);
 	            params.usersToForceDeactivation.push(el.id);
 	            params.usersToDeactivate++;
-	          } else if (userToSwapPage === _this28.currentPage && userToSwapPage > userWithoutVideoPage) {
+	          } else if (userToSwapPage === _this27.currentPage && userToSwapPage > userWithoutVideoPage) {
 	            params.usersToKeepActive.push(el.id);
 	            params.usersToForceDeactivation.push(userToSwap.id);
 	            params.usersToDeactivate++;
@@ -14522,7 +14479,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "renderUserList",
 	    value: function renderUserList(pageChange) {
-	      var _this29 = this;
+	      var _this28 = this;
 	      clearTimeout(this.rerenderTimeout);
 	      this.rerenderTimeout = null;
 	      this.activeUsers = [];
@@ -14570,13 +14527,13 @@ this.BX = this.BX || {};
 	        // new grid logic is applied only in the Layouts.Grid layout
 	        // so we need to save some rules for later
 	        orderingRules[RerenderReason.VideoEnabled].forEach(function (user) {
-	          return _this29.shelvedRerenderQueue.set(user.id, {
+	          return _this28.shelvedRerenderQueue.set(user.id, {
 	            userId: user.id,
 	            reason: RerenderReason.VideoEnabled
 	          });
 	        });
 	        orderingRules[RerenderReason.VideoDisabled].forEach(function (user) {
-	          return _this29.shelvedRerenderQueue.set(user.id, {
+	          return _this28.shelvedRerenderQueue.set(user.id, {
 	            userId: user.id,
 	            reason: RerenderReason.VideoDisabled
 	          });
@@ -14782,7 +14739,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "renderButtons",
 	    value: function renderButtons(buttons, rerender) {
-	      var _this30 = this;
+	      var _this29 = this;
 	      var panelInner, left, center, right;
 	      if (rerender) {
 	        panelInner = main_core.Dom.create('div', {
@@ -14881,7 +14838,7 @@ this.BX = this.BX || {};
 	                tooltip: {
 	                  position: 'top',
 	                  getText: function getText() {
-	                    return Hardware.isMicrophoneMuted ? "".concat(BX.message('IM_SPACE_HOTKEY'), "\\A").concat(_this30.keyModifierForCss, " + A") : "".concat(_this30.keyModifierForCss, " + A");
+	                    return Hardware.isMicrophoneMuted ? "".concat(BX.message('IM_SPACE_HOTKEY'), "\\A", ' ').concat(_this29.keyModifierForCss, " + A", ' ') : "".concat(_this29.keyModifierForCss, " + A");
 	                  }
 	                }
 	              } : {}));
@@ -14907,7 +14864,7 @@ this.BX = this.BX || {};
 	                tooltip: {
 	                  position: 'top',
 	                  getText: function getText() {
-	                    return "".concat(_this30.keyModifierForCss, " + V");
+	                    return "".concat(_this29.keyModifierForCss, " + V");
 	                  }
 	                }
 	              } : {}));
@@ -14930,7 +14887,7 @@ this.BX = this.BX || {};
 	                tooltip: {
 	                  position: 'top',
 	                  getText: function getText() {
-	                    return "".concat(_this30.keyModifierForCss, " + S");
+	                    return "".concat(_this29.keyModifierForCss, " + S");
 	                  }
 	                }
 	              } : {}));
@@ -14953,7 +14910,7 @@ this.BX = this.BX || {};
 	                tooltip: {
 	                  position: 'top',
 	                  getText: function getText() {
-	                    return "".concat(_this30.keyModifierForCss, " + R");
+	                    return "".concat(_this29.keyModifierForCss, " + R");
 	                  }
 	                }
 	              } : {}));
@@ -14994,7 +14951,7 @@ this.BX = this.BX || {};
 	                tooltip: {
 	                  position: 'top',
 	                  getText: function getText() {
-	                    return _this30.isCopilotActive ? main_core.Loc.getMessage('CALL_COPILOT_BUTTON_ON_HINT_V2') : main_core.Loc.getMessage('CALL_COPILOT_BUTTON_OFF_HINT');
+	                    return _this29.isCopilotActive ? main_core.Loc.getMessage('CALL_COPILOT_BUTTON_ON_HINT_V2') : main_core.Loc.getMessage('CALL_COPILOT_BUTTON_OFF_HINT');
 	                  }
 	                }
 	              } : {}));
@@ -15082,7 +15039,7 @@ this.BX = this.BX || {};
 	                tooltip: {
 	                  position: 'top',
 	                  getText: function getText() {
-	                    return "".concat(_this30.keyModifierForCss, " + C");
+	                    return "".concat(_this29.keyModifierForCss, " + C");
 	                  }
 	                }
 	              } : {}));
@@ -15103,7 +15060,7 @@ this.BX = this.BX || {};
 	                tooltip: {
 	                  position: 'top',
 	                  getText: function getText() {
-	                    return "".concat(_this30.keyModifierForCss, " + H");
+	                    return "".concat(_this29.keyModifierForCss, " + H");
 	                  }
 	                }
 	              } : {}));
@@ -15150,7 +15107,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "renderTopButtons",
 	    value: function renderTopButtons(buttons, rerender) {
-	      var _this31 = this;
+	      var _this30 = this;
 	      for (var i = 0; i < buttons.length; i++) {
 	        switch (buttons[i]) {
 	          case 'watermark':
@@ -15194,10 +15151,10 @@ this.BX = this.BX || {};
 	                tooltip: {
 	                  position: 'bottom',
 	                  getText: function getText() {
-	                    if (_this31.recordState.userId == _this31.userId || !_this31.userData[_this31.recordState.userId]) {
+	                    if (_this30.recordState.userId == _this30.userId || !_this30.userData[_this30.recordState.userId]) {
 	                      return '';
 	                    }
-	                    var recordingUserName = main_core.Text.encode(_this31.userData[_this31.recordState.userId].name);
+	                    var recordingUserName = main_core.Text.encode(_this30.userData[_this30.recordState.userId].name);
 	                    return BX.message('IM_M_CALL_RECORD_HINT').replace('#USER_NAME#', recordingUserName);
 	                  }
 	                }
@@ -15222,7 +15179,7 @@ this.BX = this.BX || {};
 	                tooltip: {
 	                  position: 'bottom',
 	                  getText: function getText() {
-	                    return "".concat(_this31.keyModifierForCss, " + W");
+	                    return "".concat(_this30.keyModifierForCss, " + W");
 	                  }
 	                }
 	              } : {}));
@@ -15388,7 +15345,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "createCopilotNotify",
 	    value: function createCopilotNotify(notifyType, callId) {
-	      var _this32 = this;
+	      var _this31 = this;
 	      if (!this.buttons.copilot) {
 	        return null;
 	      }
@@ -15396,7 +15353,7 @@ this.BX = this.BX || {};
 	        type: notifyType,
 	        bindElement: this.buttons.copilot.elements.root,
 	        onClose: function onClose() {
-	          _this32.copilotNotify = null;
+	          _this31.copilotNotify = null;
 	        },
 	        callId: callId
 	      });
@@ -15404,7 +15361,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "createAhaMomentNotifyCallcontrol",
 	    value: function createAhaMomentNotifyCallcontrol() {
-	      var _this33 = this;
+	      var _this32 = this;
 	      if (!this.buttons.callcontrol) {
 	        return;
 	      }
@@ -15418,8 +15375,8 @@ this.BX = this.BX || {};
 	        bindElement: this.buttons.callcontrol.elements.root,
 	        promoId: CALLCONTROL_PROMO_ID,
 	        onClose: function onClose() {
-	          _this33.needToShowCallcontrolPromo = false;
-	          _this33.ahaMomentNotifyCallcontrol = null;
+	          _this32.needToShowCallcontrolPromo = false;
+	          _this32.ahaMomentNotifyCallcontrol = null;
 	        }
 	      });
 	      this.ahaMomentNotifyCallcontrol.show();
@@ -15450,8 +15407,7 @@ this.BX = this.BX || {};
 	      }
 	      this.isWindowFocus = isActive;
 	      if (this.pictureInPictureCallWindow) {
-	        this.pictureInPictureCallWindow.setButtons(this.getPictureInPictureCallWindowGetButtonsList());
-	        this.pictureInPictureCallWindow.updateButtons();
+	        this.pictureInPictureCallWindow.setButtons(this.getPictureInPictureCallWindowGetButtonsList()).updateButtons();
 	      }
 	    }
 	  }, {
@@ -15540,7 +15496,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "toggleStatePictureInPictureCallWindow",
 	    value: function toggleStatePictureInPictureCallWindow(isActive) {
-	      var _this34 = this;
+	      var _this33 = this;
 	      var isPiPAvailable = PictureInPictureWindow.isAvailable;
 	      if (isActive && !this.pictureInPictureCallWindow && isPiPAvailable && Util.isPictureInPictureFeatureEnabled()) {
 	        this.pictureInPictureCallWindow = new PictureInPictureWindow({
@@ -15554,25 +15510,25 @@ this.BX = this.BX || {};
 	          preferInitialWindowPlacement: this.preferInitialWindowPlacementPictureInPicture,
 	          floorRequestNotifications: this.floorRequestNotifications,
 	          onClose: function onClose() {
-	            _this34.pictureInPictureCallWindow = null;
-	            _this34.currentPiPUserId = null;
-	            _this34._onPiPClose();
+	            _this33.pictureInPictureCallWindow = null;
+	            _this33.currentPiPUserId = null;
+	            _this33._onPiPClose();
 	          },
 	          onButtonClick: function onButtonClick(_ref) {
 	            var buttonName = _ref.buttonName,
 	              event = _ref.event;
 	            switch (buttonName) {
 	              case "microphone":
-	                _this34._onMicrophoneButtonClick(event);
+	                _this33._onMicrophoneButtonClick(event);
 	                break;
 	              case "camera":
-	                _this34._onCameraButtonClick(event);
+	                _this33._onCameraButtonClick(event);
 	                break;
 	              case "returnToCall":
-	                _this34._onBodyClick(event);
+	                _this33._onBodyClick(event);
 	                break;
 	              case "stop-screen":
-	                _this34._onScreenButtonClick(event);
+	                _this33._onScreenButtonClick(event);
 	                break;
 	              default:
 	                break;
@@ -15580,7 +15536,7 @@ this.BX = this.BX || {};
 	          }
 	        });
 	        this.pictureInPictureCallWindow.checkAvailableAndCreate().then(function () {
-	          _this34.preferInitialWindowPlacementPictureInPicture = false;
+	          _this33.preferInitialWindowPlacementPictureInPicture = false;
 	        });
 	      }
 	      if (!isActive && this.pictureInPictureCallWindow) {
@@ -15595,8 +15551,7 @@ this.BX = this.BX || {};
 	      }
 	      this.buttons[buttonName].setActive(isActive);
 	      if (this.pictureInPictureCallWindow) {
-	        this.pictureInPictureCallWindow.setButtons(this.getPictureInPictureCallWindowGetButtonsList());
-	        this.pictureInPictureCallWindow.updateButtons();
+	        this.pictureInPictureCallWindow.setButtons(this.getPictureInPictureCallWindowGetButtonsList()).updateButtons();
 	      }
 	    }
 	  }, {
@@ -15618,7 +15573,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "updateUserList",
 	    value: function updateUserList(useShelvedRerenderQueue) {
-	      var _this35 = this;
+	      var _this34 = this;
 	      if (this.layout == Layouts.Mobile) {
 	        if (this.localUser != this.centralUser) {
 	          if (this.localUser.hasVideo()) {
@@ -15646,9 +15601,9 @@ this.BX = this.BX || {};
 	      if (useShelvedRerenderQueue) {
 	        this.shelvedRerenderQueue.forEach(function (el) {
 	          if (el.reason === RerenderReason.VideoEnabled) {
-	            _this35.updateRerenderQueue(el.userId, el.reason);
+	            _this34.updateRerenderQueue(el.userId, el.reason);
 	          } else if (el.reason === RerenderReason.VideoDisabled) {
-	            _this35.updateRerenderQueue(el.userId, el.reason);
+	            _this34.updateRerenderQueue(el.userId, el.reason);
 	          }
 	        });
 	        this.shelvedRerenderQueue.clear();
@@ -15669,7 +15624,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "showOverflownButtonsPopup",
 	    value: function showOverflownButtonsPopup() {
-	      var _this36 = this;
+	      var _this35 = this;
 	      if (this.overflownButtonsPopup) {
 	        this.overflownButtonsPopup.show();
 	        return;
@@ -15698,8 +15653,8 @@ this.BX = this.BX || {};
 	        contentBackground: 'unset',
 	        events: {
 	          onPopupDestroy: function onPopupDestroy() {
-	            _this36.overflownButtonsPopup = null;
-	            _this36.buttons.more.setActive(false);
+	            _this35.overflownButtonsPopup = null;
+	            _this35.buttons.more.setActive(false);
 	          }
 	        }
 	      });
@@ -15733,7 +15688,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "updateButtons",
 	    value: function updateButtons() {
-	      var _this37 = this;
+	      var _this36 = this;
 	      var skippedElementsList = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
 	      if (!this.elements.panel) {
 	        return;
@@ -15759,16 +15714,13 @@ this.BX = this.BX || {};
 	      if (this.buttons.participantsMobile) {
 	        this.buttons.participantsMobile.setCount(this.getConnectedUserCount(true));
 	      }
-	      if (this.pictureInPictureCallWindow) {
-	        this.pictureInPictureCallWindow.updateButtons();
-	      }
 	      if (this.showCallcontrolPromoPopupTimeout) {
 	        clearTimeout(this.showCallcontrolPromoPopupTimeout);
 	      }
 	      if (this.needToShowCallcontrolPromo) {
 	        this.showCallcontrolPromoPopupTimeout = setTimeout(function () {
-	          if (_this37.size !== View.Size.Folded) {
-	            _this37.createAhaMomentNotifyCallcontrol();
+	          if (_this36.size !== View.Size.Folded) {
+	            _this36.createAhaMomentNotifyCallcontrol();
 	          }
 	        }, 1500);
 	      }
@@ -15799,7 +15751,7 @@ this.BX = this.BX || {};
 	        var userModel = this.userRegistry.get(userId);
 	        if (userModel) {
 	          userModel.name = this.userData[userId].name;
-	          userModel.avatar = this.userData[userId].avatar_hr;
+	          userModel.avatar = checkAndEncodeURI(this.userData[userId].avatar_hr);
 	        }
 	      }
 	    }
@@ -15861,19 +15813,19 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "scrollUserListUp",
 	    value: function scrollUserListUp() {
-	      var _this38 = this;
+	      var _this37 = this;
 	      this.stopScroll();
 	      this.scrollInterval = setInterval(function () {
-	        return _this38.elements.userList.container.scrollTop -= 10;
+	        return _this37.elements.userList.container.scrollTop -= 10;
 	      }, 20);
 	    }
 	  }, {
 	    key: "scrollUserListDown",
 	    value: function scrollUserListDown() {
-	      var _this39 = this;
+	      var _this38 = this;
 	      this.stopScroll();
 	      this.scrollInterval = setInterval(function () {
-	        return _this39.elements.userList.container.scrollTop += 10;
+	        return _this38.elements.userList.container.scrollTop += 10;
 	      }, 20);
 	    }
 	  }, {
@@ -16218,26 +16170,26 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "_onRecordToggleClick",
 	    value: function _onRecordToggleClick(e) {
-	      var _this40 = this;
+	      var _this39 = this;
 	      var limitObj = this.getRecordLimitation();
 	      this.onClickButtonWithLimit(limitObj, function () {
-	        if (_this40.recordState.state === View.RecordState.Stopped) {
-	          _this40._onRecordStartClick(e);
+	        if (_this39.recordState.state === View.RecordState.Stopped) {
+	          _this39._onRecordStartClick(e);
 	        } else {
-	          _this40._onRecordStopClick(e);
+	          _this39._onRecordStopClick(e);
 	        }
 	      });
 	    }
 	  }, {
 	    key: "_onForceRecordToggleClick",
 	    value: function _onForceRecordToggleClick(e) {
-	      var _this41 = this;
+	      var _this40 = this;
 	      var limitObj = this.getRecordLimitation();
 	      this.onClickButtonWithLimit(limitObj, function () {
-	        if (_this41.recordState.state === View.RecordState.Stopped) {
-	          _this41._onForceRecordStartClick(View.RecordType.Video);
+	        if (_this40.recordState.state === View.RecordState.Stopped) {
+	          _this40._onForceRecordStartClick(View.RecordType.Video);
 	        } else {
-	          _this41._onRecordStopClick(e);
+	          _this40._onRecordStopClick(e);
 	        }
 	      });
 	    }
@@ -16444,11 +16396,11 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "_onScreenButtonClick",
 	    value: function _onScreenButtonClick(e) {
-	      var _this42 = this;
+	      var _this41 = this;
 	      e.stopPropagation();
 	      var limitObj = this.getScreenSharingLimitation();
 	      this.onClickButtonWithLimit(limitObj, function () {
-	        _this42.eventEmitter.emit(EventName.onButtonClick, {
+	        _this41.eventEmitter.emit(EventName.onButtonClick, {
 	          buttonName: 'toggleScreenSharing',
 	          node: e.target
 	        });
@@ -16584,7 +16536,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "_onParticipantsListButtonClick",
 	    value: function _onParticipantsListButtonClick(e) {
-	      var _this43 = this;
+	      var _this42 = this;
 	      e.stopPropagation();
 	      var viewEvent = new main_core_events.BaseEvent({
 	        data: {
@@ -16603,7 +16555,7 @@ this.BX = this.BX || {};
 	        userList: Object.values(this.users),
 	        current: this.centralUser.id,
 	        onSelect: function onSelect(userId) {
-	          return _this43.setCentralUser(userId);
+	          return _this42.setCentralUser(userId);
 	        }
 	      }).show();
 	    }
@@ -16638,23 +16590,23 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "showRenameSlider",
 	    value: function showRenameSlider() {
-	      var _this44 = this;
+	      var _this43 = this;
 	      if (!this.renameSlider) {
 	        this.renameSlider = new MobileSlider({
 	          parent: this.elements.root,
 	          content: this.renderRenameSlider(),
 	          onClose: function onClose() {
-	            return _this44.renameSlider.destroy();
+	            return _this43.renameSlider.destroy();
 	          },
 	          onDestroy: function onDestroy() {
-	            return _this44.renameSlider = null;
+	            return _this43.renameSlider = null;
 	          }
 	        });
 	      }
 	      this.renameSlider.show();
 	      setTimeout(function () {
-	        _this44.elements.renameSlider.input.focus();
-	        _this44.elements.renameSlider.input.select();
+	        _this43.elements.renameSlider.input.focus();
+	        _this43.elements.renameSlider.input.select();
 	      }, 400);
 	    }
 	  }, {
@@ -16767,19 +16719,19 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "_applyMaxWidth",
 	    value: function _applyMaxWidth(animateUnsetProperty) {
-	      var _this45 = this;
+	      var _this44 = this;
 	      var containerDimensions = this.container.getBoundingClientRect();
 	      if (this.maxWidth !== null) {
 	        if (!this.elements.root.style.maxWidth && animateUnsetProperty) {
 	          this.elements.root.style.maxWidth = containerDimensions.width + 'px';
 	        }
 	        setTimeout(function () {
-	          return _this45.elements.root.style.maxWidth = Math.max(_this45.maxWidth, MIN_WIDTH) + 'px';
+	          return _this44.elements.root.style.maxWidth = Math.max(_this44.maxWidth, MIN_WIDTH) + 'px';
 	        }, 0);
 	      } else {
 	        this.elements.root.style.maxWidth = containerDimensions.width + 'px';
 	        this.elements.root.addEventListener('transitionend', function () {
-	          return _this45.elements.root.style.removeProperty('max-width');
+	          return _this44.elements.root.style.removeProperty('max-width');
 	        }, {
 	          once: true
 	        });
@@ -16837,9 +16789,6 @@ this.BX = this.BX || {};
 	      window.removeEventListener("keydown", this._onKeyDownHandler);
 	      window.removeEventListener("keyup", this._onKeyUpHandler);
 	      document.removeEventListener('mousemove', this.onMouseMoveHandler);
-
-	      // TODO: Disable PiP on minimize
-	      // this.toggleVisibilityChangeDocumentEvent(false);
 	      this.resizeObserver.disconnect();
 	      this.resizeObserver = null;
 	      if (this.intersectionObserver) {
@@ -17796,7 +17745,7 @@ this.BX = this.BX || {};
 	            }
 	          }
 	          if (_this5.deviceList.length === 0) {
-	            navigator.mediaDevices.enumerateDevices().then(function (deviceList) {
+	            Hardware.getCurrentDeviceList().then(function (deviceList) {
 	              _this5.deviceList = deviceList;
 	              _this5.runCallback(CallEvent.onDeviceListUpdated, {
 	                deviceList: _this5.deviceList
@@ -17851,7 +17800,7 @@ this.BX = this.BX || {};
 	            }
 	          }
 	          if (_this6.deviceList.length === 0) {
-	            navigator.mediaDevices.enumerateDevices().then(function (deviceList) {
+	            Hardware.getCurrentDeviceList().then(function (deviceList) {
 	              _this6.deviceList = deviceList;
 	              _this6.runCallback(CallEvent.onDeviceListUpdated, {
 	                deviceList: _this6.deviceList
@@ -23790,7 +23739,7 @@ this.BX = this.BX || {};
 	    value: function getUserMedia(constraintsArray) {
 	      return new Promise(function (resolve, reject) {
 	        var currentConstraints = constraintsArray[0];
-	        navigator.mediaDevices.getUserMedia(currentConstraints).then(function (stream) {
+	        Hardware.getUserMedia(currentConstraints).then(function (stream) {
 	          resolve(stream);
 	        }, function (error) {
 	          this.log("getUserMedia error: ", error);
@@ -23878,7 +23827,7 @@ this.BX = this.BX || {};
 	            }
 	          }
 	          if (_this5.deviceList.length === 0) {
-	            navigator.mediaDevices.enumerateDevices().then(function (deviceList) {
+	            Hardware.getCurrentDeviceList().then(function (deviceList) {
 	              _this5.deviceList = deviceList;
 	              _this5.runCallback(CallEvent.onDeviceListUpdated, {
 	                deviceList: _this5.deviceList
@@ -23933,7 +23882,7 @@ this.BX = this.BX || {};
 	            }
 	          }
 	          if (_this6.deviceList.length === 0) {
-	            navigator.mediaDevices.enumerateDevices().then(function (deviceList) {
+	            Hardware.getCurrentDeviceList().then(function (deviceList) {
 	              _this6.deviceList = deviceList;
 	              _this6.runCallback(CallEvent.onDeviceListUpdated, {
 	                deviceList: _this6.deviceList
@@ -23997,7 +23946,7 @@ this.BX = this.BX || {};
 	    value: function getDisplayMedia() {
 	      return new Promise(function (resolve, reject) {
 	        if (window["BXDesktopSystem"] && window["BXDesktopSystem"].GetProperty('versionParts')[3] < 78) {
-	          navigator.mediaDevices.getUserMedia({
+	          Hardware.getUserMedia({
 	            video: {
 	              mandatory: {
 	                chromeMediaSource: 'screen',
@@ -30385,6 +30334,8 @@ this.BX = this.BX || {};
 	  isKibanaLogsEnabled: isKibanaLogsEnabled
 	};
 
+	function ownKeys$7(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+	function _objectSpread$7(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$7(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$7(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	function _classPrivateMethodInitSpec$8(obj, privateSet) { _checkPrivateRedeclaration$8(obj, privateSet); privateSet.add(obj); }
 	function _checkPrivateRedeclaration$8(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet$8(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
@@ -30398,7 +30349,10 @@ this.BX = this.BX || {};
 	  contentReady: "CallNotification::contentReady",
 	  onButtonClick: "CallNotification::onButtonClick"
 	};
+	var FirstDesktopVersionWithChrome = 76;
+	var BroadcastChannelName = 'IncomingNotification';
 	var _subscribeEvents = /*#__PURE__*/new WeakSet();
+	var _showInDesktop = /*#__PURE__*/new WeakSet();
 	var _onButtonClick = /*#__PURE__*/new WeakSet();
 	var _onContentReady = /*#__PURE__*/new WeakSet();
 	var IncomingNotification = /*#__PURE__*/function (_EventEmitter) {
@@ -30409,6 +30363,7 @@ this.BX = this.BX || {};
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(IncomingNotification).call(this));
 	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _onContentReady);
 	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _onButtonClick);
+	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _showInDesktop);
 	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _subscribeEvents);
 	    _this.setEventNamespace('BX.Call.IncomingNotification');
 	    _this.popup = null;
@@ -30435,6 +30390,12 @@ this.BX = this.BX || {};
 	      im_v2_lib_desktopApi.DesktopApi.subscribe(InternalEvents.onButtonClick, _this.onButtonClickHandler);
 	      im_v2_lib_desktopApi.DesktopApi.subscribe(InternalEvents.contentReady, _this.onContentReadyHandler);
 	    }
+	    var broadcastChannel = new BroadcastChannel(BroadcastChannelName);
+	    broadcastChannel.onmessage = function (event) {
+	      if (event.data.desktopWindowIsReady) {
+	        _classPrivateMethodGet$8(babelHelpers.assertThisInitialized(_this), _showInDesktop, _showInDesktop2).call(babelHelpers.assertThisInitialized(_this));
+	      }
+	    };
 	    return _this;
 	  }
 	  babelHelpers.createClass(IncomingNotification, [{
@@ -30442,38 +30403,30 @@ this.BX = this.BX || {};
 	    value: function show() {
 	      var _this2 = this;
 	      console.log('incoming notification : SHOW');
+	      var params = {
+	        video: this.video,
+	        hasCamera: this.hasCamera,
+	        callerAvatar: this.callerAvatar,
+	        callerName: this.callerName,
+	        callerType: this.callerType,
+	        callerColor: this.callerColor,
+	        microphoneState: this.microphoneState,
+	        cameraState: this.cameraState,
+	        isMessengerOpen: this.isMessengerOpen
+	      };
 	      if (im_v2_lib_desktopApi.DesktopApi.isChatWindow()) {
 	        console.log('incoming notification : ISDESKTOP');
-	        var params = {
-	          video: this.video,
-	          hasCamera: this.hasCamera,
-	          callerAvatar: this.callerAvatar,
-	          callerName: this.callerName,
-	          callerType: this.callerType,
-	          callerColor: this.callerColor,
-	          microphoneState: this.microphoneState,
-	          cameraState: this.cameraState,
-	          isMessengerOpen: this.isMessengerOpen
-	        };
 	        if (this.window) {
-	          this.window.BXDesktopWindow.ExecuteCommand("show");
+	          this.window.BXDesktopWindow.ExecuteCommand('show');
 	        } else {
-	          var js = "\n\t\t\t\t\twindow.callNotification = new BX.Call.IncomingNotificationContent(".concat(JSON.stringify(params), ");\n\t\t\t\t\twindow.callNotification.showInDesktop();\n\t\t\t\t");
-	          var htmlContent = im_v2_lib_desktopApi.DesktopApi.prepareHtml("", js);
+	          this.content = new IncomingNotificationContent(_objectSpread$7({}, params));
+	          var js = "\n\t\t\t\t\tconst broadcastChannel = new BroadcastChannel('".concat(BroadcastChannelName, "');\n\t\t\t\t\tbroadcastChannel.postMessage({ desktopWindowIsReady: true });\n\t\t\t\t");
+	          var htmlContent = im_v2_lib_desktopApi.DesktopApi.prepareHtml('', js);
 	          this.window = im_v2_lib_desktopApi.DesktopApi.createTopmostWindow(htmlContent);
 	        }
 	      } else {
 	        console.log('incoming notification : ISNOTDESKTOP');
-	        this.content = new IncomingNotificationContent({
-	          video: this.video,
-	          hasCamera: this.hasCamera,
-	          callerAvatar: this.callerAvatar,
-	          callerName: this.callerName,
-	          callerType: this.callerType,
-	          callerColor: this.callerColor,
-	          microphoneState: this.microphoneState,
-	          cameraState: this.cameraState,
-	          isMessengerOpen: this.isMessengerOpen,
+	        this.content = new IncomingNotificationContent(_objectSpread$7(_objectSpread$7({}, params), {}, {
 	          onClose: function onClose() {
 	            return _this2.emit(Events$1.onClose);
 	          },
@@ -30483,7 +30436,7 @@ this.BX = this.BX || {};
 	          onButtonClick: function onButtonClick(e) {
 	            return _this2.emit(Events$1.onButtonClick, Object.assign({}, e.data));
 	          }
-	        });
+	        }));
 	        this.createPopup(this.content.render());
 	        this.popup.show();
 	        window.addEventListener('resize', function () {
@@ -30568,7 +30521,13 @@ this.BX = this.BX || {};
 	        this.popup.close();
 	      }
 	      if (this.window) {
-	        this.window.BXDesktopWindow.ExecuteCommand("hide");
+	        var _window$BXDesktopSyst, _window$BXDesktopSyst2;
+	        var desktopVersion = (_window$BXDesktopSyst = window.BXDesktopSystem) === null || _window$BXDesktopSyst === void 0 ? void 0 : (_window$BXDesktopSyst2 = _window$BXDesktopSyst.ApiVersion) === null || _window$BXDesktopSyst2 === void 0 ? void 0 : _window$BXDesktopSyst2.call(_window$BXDesktopSyst);
+	        this.window.BXDesktopWindow.ExecuteCommand('hide');
+	        if (desktopVersion >= FirstDesktopVersionWithChrome) {
+	          this.window.BXDesktopWindow.ExecuteCommand('close');
+	          this.window = null;
+	        }
 	      }
 	      this.emit(Events$1.onClose);
 	    }
@@ -30607,6 +30566,30 @@ this.BX = this.BX || {};
 	      this.subscribe(Events$1[eventName], config[eventName]);
 	    }
 	  }
+	}
+	function _showInDesktop2() {
+	  var _this$window$opener$B, _this$window$BXDeskto;
+	  if (!this.window) {
+	    return;
+	  }
+
+	  // Workaround to prevent incoming call window from hanging.
+	  // Without it, there is a possible scenario, when BXDesktopWindow.ExecuteCommand("close") is executed too early
+	  // (if invite window is closed before appearing), which leads to hanging of the window
+	  if ((_this$window$opener$B = this.window.opener.BXIM) !== null && _this$window$opener$B !== void 0 && _this$window$opener$B.callController && !this.window.opener.BXIM.callController.callNotification) {
+	    console.log('Workaround to prevent incoming call window from hanging');
+	    this.window.BXDesktopWindow.ExecuteCommand('close');
+	    return;
+	  }
+	  var width = 460;
+	  var height = 580;
+	  main_core.Dom.append(this.content.render(), this.window.document.body);
+	  (_this$window$BXDeskto = this.window.BXDesktopWindow) === null || _this$window$BXDeskto === void 0 ? void 0 : _this$window$BXDeskto.SetProperty('position', {
+	    X: 'STP_CENTER',
+	    Y: 'STP_VCENTER',
+	    Width: width,
+	    Height: height
+	  });
 	}
 	function _onButtonClick2(event) {
 	  this.emit(Events$1.onButtonClick, event);
@@ -30684,7 +30667,7 @@ this.BX = this.BX || {};
 	      var avatarImageText = '';
 	      if (this.callerAvatar) {
 	        avatarImageStyles = {
-	          backgroundImage: "url('" + this.callerAvatar + "')",
+	          backgroundImage: "url('".concat(checkAndEncodeURI(this.callerAvatar), "')"),
 	          backgroundColor: '#fff',
 	          backgroundSize: 'cover'
 	        };
@@ -30867,29 +30850,6 @@ this.BX = this.BX || {};
 	        }
 	      })]);
 	      return this.elements.root;
-	    }
-	  }, {
-	    key: "showInDesktop",
-	    value: function showInDesktop() {
-	      var _window$opener$BXIM;
-	      // Workaround to prevent incoming call window from hanging.
-	      // Without it, there is a possible scenario, when BXDesktopWindow.ExecuteCommand("close") is executed too early
-	      // (if invite window is closed before appearing), which leads to hanging of the window
-	      if ((_window$opener$BXIM = window.opener.BXIM) !== null && _window$opener$BXIM !== void 0 && _window$opener$BXIM.callController && !window.opener.BXIM.callController.callNotification) {
-	        console.log('Workaround to prevent incoming call window from hanging');
-	        BXDesktopWindow.ExecuteCommand("close");
-	        return;
-	      }
-	      var width = 460;
-	      var height = 580;
-	      this.render();
-	      document.body.appendChild(this.elements.root);
-	      im_v2_lib_desktopApi.DesktopApi.setWindowPosition({
-	        x: STP_CENTER,
-	        y: STP_VCENTER,
-	        width: width,
-	        height: height
-	      });
 	    }
 	  }, {
 	    key: "setHasCamera",
@@ -35654,8 +35614,8 @@ this.BX = this.BX || {};
 	}();
 
 	function _regeneratorRuntime$6() { /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ _regeneratorRuntime$6 = function _regeneratorRuntime() { return exports; }; var exports = {}, Op = Object.prototype, hasOwn = Op.hasOwnProperty, defineProperty = Object.defineProperty || function (obj, key, desc) { obj[key] = desc.value; }, $Symbol = "function" == typeof Symbol ? Symbol : {}, iteratorSymbol = $Symbol.iterator || "@@iterator", asyncIteratorSymbol = $Symbol.asyncIterator || "@@asyncIterator", toStringTagSymbol = $Symbol.toStringTag || "@@toStringTag"; function define(obj, key, value) { return Object.defineProperty(obj, key, { value: value, enumerable: !0, configurable: !0, writable: !0 }), obj[key]; } try { define({}, ""); } catch (err) { define = function define(obj, key, value) { return obj[key] = value; }; } function wrap(innerFn, outerFn, self, tryLocsList) { var protoGenerator = outerFn && outerFn.prototype instanceof Generator ? outerFn : Generator, generator = Object.create(protoGenerator.prototype), context = new Context(tryLocsList || []); return defineProperty(generator, "_invoke", { value: makeInvokeMethod(innerFn, self, context) }), generator; } function tryCatch(fn, obj, arg) { try { return { type: "normal", arg: fn.call(obj, arg) }; } catch (err) { return { type: "throw", arg: err }; } } exports.wrap = wrap; var ContinueSentinel = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var IteratorPrototype = {}; define(IteratorPrototype, iteratorSymbol, function () { return this; }); var getProto = Object.getPrototypeOf, NativeIteratorPrototype = getProto && getProto(getProto(values([]))); NativeIteratorPrototype && NativeIteratorPrototype !== Op && hasOwn.call(NativeIteratorPrototype, iteratorSymbol) && (IteratorPrototype = NativeIteratorPrototype); var Gp = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(IteratorPrototype); function defineIteratorMethods(prototype) { ["next", "throw", "return"].forEach(function (method) { define(prototype, method, function (arg) { return this._invoke(method, arg); }); }); } function AsyncIterator(generator, PromiseImpl) { function invoke(method, arg, resolve, reject) { var record = tryCatch(generator[method], generator, arg); if ("throw" !== record.type) { var result = record.arg, value = result.value; return value && "object" == babelHelpers["typeof"](value) && hasOwn.call(value, "__await") ? PromiseImpl.resolve(value.__await).then(function (value) { invoke("next", value, resolve, reject); }, function (err) { invoke("throw", err, resolve, reject); }) : PromiseImpl.resolve(value).then(function (unwrapped) { result.value = unwrapped, resolve(result); }, function (error) { return invoke("throw", error, resolve, reject); }); } reject(record.arg); } var previousPromise; defineProperty(this, "_invoke", { value: function value(method, arg) { function callInvokeWithMethodAndArg() { return new PromiseImpl(function (resolve, reject) { invoke(method, arg, resolve, reject); }); } return previousPromise = previousPromise ? previousPromise.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); } }); } function makeInvokeMethod(innerFn, self, context) { var state = "suspendedStart"; return function (method, arg) { if ("executing" === state) throw new Error("Generator is already running"); if ("completed" === state) { if ("throw" === method) throw arg; return doneResult(); } for (context.method = method, context.arg = arg;;) { var delegate = context.delegate; if (delegate) { var delegateResult = maybeInvokeDelegate(delegate, context); if (delegateResult) { if (delegateResult === ContinueSentinel) continue; return delegateResult; } } if ("next" === context.method) context.sent = context._sent = context.arg;else if ("throw" === context.method) { if ("suspendedStart" === state) throw state = "completed", context.arg; context.dispatchException(context.arg); } else "return" === context.method && context.abrupt("return", context.arg); state = "executing"; var record = tryCatch(innerFn, self, context); if ("normal" === record.type) { if (state = context.done ? "completed" : "suspendedYield", record.arg === ContinueSentinel) continue; return { value: record.arg, done: context.done }; } "throw" === record.type && (state = "completed", context.method = "throw", context.arg = record.arg); } }; } function maybeInvokeDelegate(delegate, context) { var methodName = context.method, method = delegate.iterator[methodName]; if (undefined === method) return context.delegate = null, "throw" === methodName && delegate.iterator["return"] && (context.method = "return", context.arg = undefined, maybeInvokeDelegate(delegate, context), "throw" === context.method) || "return" !== methodName && (context.method = "throw", context.arg = new TypeError("The iterator does not provide a '" + methodName + "' method")), ContinueSentinel; var record = tryCatch(method, delegate.iterator, context.arg); if ("throw" === record.type) return context.method = "throw", context.arg = record.arg, context.delegate = null, ContinueSentinel; var info = record.arg; return info ? info.done ? (context[delegate.resultName] = info.value, context.next = delegate.nextLoc, "return" !== context.method && (context.method = "next", context.arg = undefined), context.delegate = null, ContinueSentinel) : info : (context.method = "throw", context.arg = new TypeError("iterator result is not an object"), context.delegate = null, ContinueSentinel); } function pushTryEntry(locs) { var entry = { tryLoc: locs[0] }; 1 in locs && (entry.catchLoc = locs[1]), 2 in locs && (entry.finallyLoc = locs[2], entry.afterLoc = locs[3]), this.tryEntries.push(entry); } function resetTryEntry(entry) { var record = entry.completion || {}; record.type = "normal", delete record.arg, entry.completion = record; } function Context(tryLocsList) { this.tryEntries = [{ tryLoc: "root" }], tryLocsList.forEach(pushTryEntry, this), this.reset(!0); } function values(iterable) { if (iterable) { var iteratorMethod = iterable[iteratorSymbol]; if (iteratorMethod) return iteratorMethod.call(iterable); if ("function" == typeof iterable.next) return iterable; if (!isNaN(iterable.length)) { var i = -1, next = function next() { for (; ++i < iterable.length;) if (hasOwn.call(iterable, i)) return next.value = iterable[i], next.done = !1, next; return next.value = undefined, next.done = !0, next; }; return next.next = next; } } return { next: doneResult }; } function doneResult() { return { value: undefined, done: !0 }; } return GeneratorFunction.prototype = GeneratorFunctionPrototype, defineProperty(Gp, "constructor", { value: GeneratorFunctionPrototype, configurable: !0 }), defineProperty(GeneratorFunctionPrototype, "constructor", { value: GeneratorFunction, configurable: !0 }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, toStringTagSymbol, "GeneratorFunction"), exports.isGeneratorFunction = function (genFun) { var ctor = "function" == typeof genFun && genFun.constructor; return !!ctor && (ctor === GeneratorFunction || "GeneratorFunction" === (ctor.displayName || ctor.name)); }, exports.mark = function (genFun) { return Object.setPrototypeOf ? Object.setPrototypeOf(genFun, GeneratorFunctionPrototype) : (genFun.__proto__ = GeneratorFunctionPrototype, define(genFun, toStringTagSymbol, "GeneratorFunction")), genFun.prototype = Object.create(Gp), genFun; }, exports.awrap = function (arg) { return { __await: arg }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, asyncIteratorSymbol, function () { return this; }), exports.AsyncIterator = AsyncIterator, exports.async = function (innerFn, outerFn, self, tryLocsList, PromiseImpl) { void 0 === PromiseImpl && (PromiseImpl = Promise); var iter = new AsyncIterator(wrap(innerFn, outerFn, self, tryLocsList), PromiseImpl); return exports.isGeneratorFunction(outerFn) ? iter : iter.next().then(function (result) { return result.done ? result.value : iter.next(); }); }, defineIteratorMethods(Gp), define(Gp, toStringTagSymbol, "Generator"), define(Gp, iteratorSymbol, function () { return this; }), define(Gp, "toString", function () { return "[object Generator]"; }), exports.keys = function (val) { var object = Object(val), keys = []; for (var key in object) keys.push(key); return keys.reverse(), function next() { for (; keys.length;) { var key = keys.pop(); if (key in object) return next.value = key, next.done = !1, next; } return next.done = !0, next; }; }, exports.values = values, Context.prototype = { constructor: Context, reset: function reset(skipTempReset) { if (this.prev = 0, this.next = 0, this.sent = this._sent = undefined, this.done = !1, this.delegate = null, this.method = "next", this.arg = undefined, this.tryEntries.forEach(resetTryEntry), !skipTempReset) for (var name in this) "t" === name.charAt(0) && hasOwn.call(this, name) && !isNaN(+name.slice(1)) && (this[name] = undefined); }, stop: function stop() { this.done = !0; var rootRecord = this.tryEntries[0].completion; if ("throw" === rootRecord.type) throw rootRecord.arg; return this.rval; }, dispatchException: function dispatchException(exception) { if (this.done) throw exception; var context = this; function handle(loc, caught) { return record.type = "throw", record.arg = exception, context.next = loc, caught && (context.method = "next", context.arg = undefined), !!caught; } for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i], record = entry.completion; if ("root" === entry.tryLoc) return handle("end"); if (entry.tryLoc <= this.prev) { var hasCatch = hasOwn.call(entry, "catchLoc"), hasFinally = hasOwn.call(entry, "finallyLoc"); if (hasCatch && hasFinally) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } else if (hasCatch) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); } else { if (!hasFinally) throw new Error("try statement without catch or finally"); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } } } }, abrupt: function abrupt(type, arg) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc <= this.prev && hasOwn.call(entry, "finallyLoc") && this.prev < entry.finallyLoc) { var finallyEntry = entry; break; } } finallyEntry && ("break" === type || "continue" === type) && finallyEntry.tryLoc <= arg && arg <= finallyEntry.finallyLoc && (finallyEntry = null); var record = finallyEntry ? finallyEntry.completion : {}; return record.type = type, record.arg = arg, finallyEntry ? (this.method = "next", this.next = finallyEntry.finallyLoc, ContinueSentinel) : this.complete(record); }, complete: function complete(record, afterLoc) { if ("throw" === record.type) throw record.arg; return "break" === record.type || "continue" === record.type ? this.next = record.arg : "return" === record.type ? (this.rval = this.arg = record.arg, this.method = "return", this.next = "end") : "normal" === record.type && afterLoc && (this.next = afterLoc), ContinueSentinel; }, finish: function finish(finallyLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.finallyLoc === finallyLoc) return this.complete(entry.completion, entry.afterLoc), resetTryEntry(entry), ContinueSentinel; } }, "catch": function _catch(tryLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc === tryLoc) { var record = entry.completion; if ("throw" === record.type) { var thrown = record.arg; resetTryEntry(entry); } return thrown; } } throw new Error("illegal catch attempt"); }, delegateYield: function delegateYield(iterable, resultName, nextLoc) { return this.delegate = { iterator: values(iterable), resultName: resultName, nextLoc: nextLoc }, "next" === this.method && (this.arg = undefined), ContinueSentinel; } }, exports; }
-	function ownKeys$7(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-	function _objectSpread$7(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$7(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$7(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
+	function ownKeys$8(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+	function _objectSpread$8(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$8(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$8(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	function _classPrivateMethodInitSpec$a(obj, privateSet) { _checkPrivateRedeclaration$a(obj, privateSet); privateSet.add(obj); }
 	function _checkPrivateRedeclaration$a(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet$a(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
@@ -36345,12 +36305,16 @@ this.BX = this.BX || {};
 	      });
 	      var externalContainer = this.messengerFacade.getContainer();
 	      externalContainer.insertBefore(this.container, externalContainer.firstChild);
+	      if (Util.isChatMountInPage()) {
+	        main_core.ZIndexManager.getOrAddStack(document.body).register(this.container);
+	      }
 	      externalContainer.classList.add("bx-messenger-call");
 	    }
 	  }, {
 	    key: "removeContainer",
 	    value: function removeContainer() {
 	      if (this.container) {
+	        main_core.ZIndexManager.getStack(document.body).unregister(this.container);
 	        main_core.Dom.remove(this.container);
 	        this.container = null;
 	        this.messengerFacade.getContainer().classList.remove("bx-messenger-call");
@@ -36684,6 +36648,9 @@ this.BX = this.BX || {};
 	        }
 	        return callTokenPromise;
 	      }).then(function (callToken) {
+	        if (!_this8.isLegacyCall(provider) && !callToken) {
+	          throw new Error('Empty callToken');
+	        }
 	        var callEngine = isLegacyCall ? CallEngineLegacy : CallEngine;
 	        return callEngine.createCall({
 	          entityType: 'chat',
@@ -37290,7 +37257,7 @@ this.BX = this.BX || {};
 	        darkMode: true,
 	        contentBorderRadius: '6px'
 	      };
-	      this.documentsMenu = new BX.PopupMenuWindow(_objectSpread$7(_objectSpread$7({}, newStyleOptions), {}, {
+	      this.documentsMenu = new BX.PopupMenuWindow(_objectSpread$8(_objectSpread$8({}, newStyleOptions), {}, {
 	        angle: false,
 	        bindElement: this.callView.buttons.document.elements.root,
 	        targetContainer: this.container,
@@ -38101,6 +38068,9 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "_onCallViewShow",
 	    value: function _onCallViewShow() {
+	      if (Util.isChatMountInPage()) {
+	        main_core.ZIndexManager.getStack(document.body).bringToFront(this.container);
+	      }
 	      this.callView.setButtonCounter("chat", this.messengerFacade.getMessageCount());
 	      this.callViewState = ViewState.Opened;
 	    }
@@ -39397,9 +39367,6 @@ this.BX = this.BX || {};
 	        return;
 	      }
 	      this.callView.blockSwitchCamera();
-	      if (this.pictureInPictureCallWindow) {
-	        this.pictureInPictureCallWindow.blockButton('camera');
-	      }
 	    }
 	  }, {
 	    key: "_onUnblockCameraButton",
@@ -39408,9 +39375,6 @@ this.BX = this.BX || {};
 	        return;
 	      }
 	      this.callView.unblockSwitchCamera();
-	      if (this.pictureInPictureCallWindow) {
-	        this.pictureInPictureCallWindow.unblockButton('camera');
-	      }
 	    }
 	  }, {
 	    key: "_onBlockMicrophoneButton",
@@ -39419,9 +39383,6 @@ this.BX = this.BX || {};
 	        return;
 	      }
 	      this.callView.blockSwitchMicrophone();
-	      if (this.pictureInPictureCallWindow) {
-	        this.pictureInPictureCallWindow.blockButton('microphone');
-	      }
 	    }
 	  }, {
 	    key: "_onUnblockMicrophoneButton",
@@ -39430,9 +39391,6 @@ this.BX = this.BX || {};
 	        return;
 	      }
 	      this.callView.unblockSwitchMicrophone();
-	      if (this.pictureInPictureCallWindow) {
-	        this.pictureInPictureCallWindow.unblockButton('microphone');
-	      }
 	    }
 	  }, {
 	    key: "_onCameraPublishing",
@@ -39444,9 +39402,6 @@ this.BX = this.BX || {};
 	      }
 	      if (this.callView) {
 	        this.callView.updateButtons();
-	      }
-	      if (this.pictureInPictureCallWindow) {
-	        this.pictureInPictureCallWindow.updateButtons();
 	      }
 	    }
 	  }, {
@@ -39462,9 +39417,6 @@ this.BX = this.BX || {};
 	      }
 	      if (this.callView) {
 	        this.callView.updateButtons();
-	      }
-	      if (this.pictureInPictureCallWindow) {
-	        this.pictureInPictureCallWindow.updateButtons();
 	      }
 	    }
 	  }, {
@@ -39628,7 +39580,7 @@ this.BX = this.BX || {};
 	        audio: isNotSupportDevicesListBeforeStream,
 	        video: video
 	      };
-	      navigator.mediaDevices.getUserMedia(constraints).then(function (stream) {
+	      Hardware.getUserMedia(constraints).then(function (stream) {
 	        _this33.localStream = stream;
 	        if (!_this33.initCallPromise || !Hardware.isCameraOn) {
 	          _this33._stopLocalStream();
@@ -40210,7 +40162,8 @@ this.BX = this.BX || {};
 	          muted: Hardware.isMicrophoneMuted,
 	          cropTop: 72,
 	          cropBottom: 90,
-	          shareMethod: 'im.disk.record.share'
+	          shareMethod: 'im.disk.record.share',
+	          callType: this.getCallType()
 	        });
 	      } else if (event.recordState.state === View.RecordState.Stopped) {
 	        call_lib_analytics.Analytics.getInstance().onRecordStop({
@@ -40964,7 +40917,7 @@ this.BX = this.BX || {};
 	        });
 	        _this38.callView.show();
 	        if (audioOptions || videoOptions) {
-	          return navigator.mediaDevices.getUserMedia({
+	          return Hardware.getUserMedia({
 	            audio: audioOptions,
 	            video: videoOptions
 	          });
@@ -40989,7 +40942,7 @@ this.BX = this.BX || {};
 	          }, 100);
 	        }
 	        if (videoOptions) {
-	          return navigator.mediaDevices.getUserMedia({
+	          return Hardware.getUserMedia({
 	            audio: false,
 	            video: {
 	              width: 320,
@@ -41800,6 +41753,7 @@ this.BX = this.BX || {};
 	exports.CallAI = CallAI;
 	exports.CallScheme = CallScheme;
 	exports.ParticipantsPermissionPopup = ParticipantsPermissionPopup;
+	exports.CallMultiChannel = CallMultiChannel;
 
 }((this.BX.Call = this.BX.Call || {}),BX.Messenger.Lib,BX.Call,BX.Messenger.v2.Lib,BX.UI.Dialogs,BX.UI,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Intranet,BX.Messenger.v2.Lib,BX.Call.Lib,BX.Call.Lib,BX,BX.Main,BX.Event,BX.UI,BX.Call.Lib,BX.Call.Component,BX.Call.Component,BX,BX,BX,BX.Messenger.Lib));
 //# sourceMappingURL=call.bundle.js.map

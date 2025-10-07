@@ -9,7 +9,6 @@ $MESS["LISTS_ELEMENT_CREATION_GUIDE_CMP_BUTTON_NEXT"] = "ЖАЛҒАСТЫРУ";
 $MESS["LISTS_ELEMENT_CREATION_GUIDE_CMP_BUTTON_SAVE"] = "САҚТАУ";
 $MESS["LISTS_ELEMENT_CREATION_GUIDE_CMP_COLLAPSE_DESCRIPTION"] = "Орау";
 $MESS["LISTS_ELEMENT_CREATION_GUIDE_CMP_DESCRIPTION"] = "Компаниядағы процестерді автоматтандырыңыз, оларды ашық және басқарылатын етіп жасаңыз, әр кезеңді бақылаңыз және ұялы телефоннан да бизнес-процестермен жұмыс жасаңыз";
-$MESS["LISTS_ELEMENT_CREATION_GUIDE_CMP_EMPTY_DESCRIPTION"] = "Сипаттама жоқ";
 $MESS["LISTS_ELEMENT_CREATION_GUIDE_CMP_EMPTY_DESCRIPTION_1"] = "Егер әкімші сипаттаманы толтырса процесспен жұмыс істеу ыңғайлы болады";
 $MESS["LISTS_ELEMENT_CREATION_GUIDE_CMP_EMPTY_DURATION"] = "деректер жоқ";
 $MESS["LISTS_ELEMENT_CREATION_GUIDE_CMP_EXIT_DIALOG_CANCEL"] = "Бас тартпау";

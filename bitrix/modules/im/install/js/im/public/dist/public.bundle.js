@@ -383,6 +383,20 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      target
 	    });
 	  }
+	  isEmbeddedMode() {
+	    const LayoutManager = main_core.Reflection.getClass('BX.Messenger.v2.Lib.LayoutManager');
+	    if (!LayoutManager) {
+	      return false;
+	    }
+	    return LayoutManager.getInstance().isEmbeddedMode();
+	  }
+	  isMessengerSliderOpened() {
+	    const MessengerSlider = main_core.Reflection.getClass('BX.Messenger.v2.Lib.MessengerSlider');
+	    if (!MessengerSlider) {
+	      return false;
+	    }
+	    return MessengerSlider.getInstance().isOpened();
+	  }
 	  async initApplication(applicationName, config = {}) {
 	    const launch = main_core.Reflection.getClass('BX.Messenger.v2.Application.Launch');
 	    if (!launch) {

@@ -127,8 +127,7 @@ jn.define('im/messenger/model/files/model', (require, exports, module) => {
 			/** @function filesModel/set */
 			set: (store, payload) => {
 				const { itemList, actionName = 'set' } = ModelUtils.normalizeItemListPayload(payload);
-
-				itemList.map((file) => {
+				const preparedItemList = itemList.map((file) => {
 					const result = validate(store, { ...file });
 
 					return {
@@ -139,7 +138,7 @@ jn.define('im/messenger/model/files/model', (require, exports, module) => {
 
 				const existingFileList = [];
 				const newFileList = [];
-				itemList.forEach((file) => {
+				preparedItemList.forEach((file) => {
 					if (store.getters.hasFile(file.id))
 					{
 						existingFileList.push(file);

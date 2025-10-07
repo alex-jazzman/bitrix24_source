@@ -1,5 +1,3 @@
-/* eslint-disable no-param-reassign */
-
 /**
  * @module im/messenger/model/messages/validator
  */
@@ -8,7 +6,7 @@ jn.define('im/messenger/model/messages/validator', (require, exports, module) =>
 	const { clone } = require('utils/object');
 	const { Uuid } = require('utils/uuid');
 	const { DateHelper } = require('im/messenger/lib/helper');
-	const { ObjectUtils } = require('im/messenger/lib/utils');
+	const { ObjectUtils, Normalizer } = require('im/messenger/lib/utils');
 
 	/**
 	 * @param {object} fields
@@ -107,7 +105,7 @@ jn.define('im/messenger/model/messages/validator', (require, exports, module) =>
 
 		if (Type.isArray(fields.attach))
 		{
-			result.attach = fields.attach;
+			result.attach = Normalizer.normalizeMessageAttach(fields.attach);
 		}
 
 		if (Type.isArray(fields.keyboard))
@@ -168,7 +166,6 @@ jn.define('im/messenger/model/messages/validator', (require, exports, module) =>
 				result.params.REACTION[key] = value;
 			});
 		}
-
 
 		if (Type.isBoolean(fields.sending))
 		{
@@ -267,8 +264,8 @@ jn.define('im/messenger/model/messages/validator', (require, exports, module) =>
 			}
 			else if (key === 'ATTACH')
 			{
-				attach = ObjectUtils.convertKeysToCamelCase(clone(value), true);
-				params.ATTACH = value;
+				attach = Normalizer.normalizeMessageAttach(value);
+				params.ATTACH = attach;
 			}
 			else if (key === 'KEYBOARD')
 			{

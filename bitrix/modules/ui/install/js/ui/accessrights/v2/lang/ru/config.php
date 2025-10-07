@@ -56,3 +56,4 @@ $MESS["JS_UI_ACCESSRIGHTS_V2_SET_MIN_ACCESS_RIGHTS_ROW_SUBTITLE"] = "Досту�
 $MESS["JS_UI_ACCESSRIGHTS_V2_ACTIONS"] = "Действия";
 $MESS['JS_UI_ACCESSRIGHTS_V2_EXPAND_ALL_SECTIONS'] = 'Развернуть все разделы';
 $MESS['JS_UI_ACCESSRIGHTS_V2_COLLAPSE_ALL_SECTIONS'] = 'Свернуть все разделы';
+$MESS["JS_UI_ACCESSRIGHTS_V2_CANCEL"] = "Отмена";

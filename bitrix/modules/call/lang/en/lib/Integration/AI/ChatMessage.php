@@ -5,6 +5,7 @@ $MESS["CALL_NOTIFY_COPILOT_AGREEMENTS"] = "Meeting summary";
 $MESS["CALL_NOTIFY_COPILOT_AGREEMENTS_COMMON"] = "Result";
 $MESS["CALL_NOTIFY_COPILOT_AGREEMENTS_MEETINGS"] = "Meetings";
 $MESS["CALL_NOTIFY_COPILOT_AGREEMENTS_TASKS"] = "Things To Do";
+$MESS["CALL_NOTIFY_COPILOT_CONTINUE"] = "Try again";
 $MESS["CALL_NOTIFY_COPILOT_DETAIL"] = "[url=#CALL_DETAIL#]Detailed analysis[/url]";
 $MESS["CALL_NOTIFY_COPILOT_DISCLAIMER"] = "CoPilot serves as an auxiliary tool, with human oversight essential for all decision-making processes. [url=#DISCLAIMER#]Learn more[/url]";
 $MESS["CALL_NOTIFY_COPILOT_EFFICIENCY"] = "CoPilot rated efficiency as \"#EFFICIENCY#\".";

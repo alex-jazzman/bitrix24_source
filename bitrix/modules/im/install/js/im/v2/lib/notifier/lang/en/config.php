@@ -8,6 +8,7 @@ $MESS["IM_NOTIFIER_CHAT_DELETE_ERROR"] = "Cannot perform action. Try again later
 $MESS["IM_NOTIFIER_CHAT_RENAME_ERROR"] = "Error renaming chat. Please try again later.";
 $MESS["IM_NOTIFIER_CHAT_UPDATE_ERROR"] = "Error updating chat preferences.";
 $MESS["IM_NOTIFIER_COLLAB_COLLABER_NOT_ACCEPT_INVITATION"] = "Not all guests joined the collab.";
+$MESS["IM_NOTIFIER_COLLAB_COPY_LINK_FORBIDDEN_ERROR"] = "Collab owner has disabled invitations to this collab.";
 $MESS["IM_NOTIFIER_COLLAB_DELETE_ENTITIES_ERROR"] = "Cannot delete collab because it contains files, tasks or meetings.";
 $MESS["IM_NOTIFIER_COLLAB_DELETE_ERROR"] = "Could not delete collab. Try again later.";
 $MESS["IM_NOTIFIER_COLLAB_DELETE_PROGRESS"] = "Deleting the collab now. It may take a while.";

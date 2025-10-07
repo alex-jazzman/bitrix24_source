@@ -26,7 +26,6 @@ return [
 	],
 	'skip_core' => false,
 	'settings' => [
-		'isAirDesignEnabled' => Locator::getMessenger()->getApplication()->isAirDesignEnabled(),
 		'isQuickAccessHidden' => Locator::getMessenger()->getApplication()->shouldHideQuickAccess(),
 	]
 ];

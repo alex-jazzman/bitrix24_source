@@ -1,3 +1,4 @@
+import { ConferenceChannel } from 'call.application.conference';
 import { Messenger } from 'im.public';
 import { Text } from 'main.core';
 
@@ -80,8 +81,15 @@ export const ActiveCall = {
 				CallAnalytics.getInstance().onJoinConferenceClick({
 					callId: this.activeCall.call.id,
 				});
+
+				const hasThisActiveConference = await ConferenceChannel.getInstance().sendRequest(this.dialog.public.code);
+				if (hasThisActiveConference.some(call => call))
+				{
+					return;
+				}
+
 				Messenger.openConference({ code: this.dialog.public.code });
-				return
+				return;
 			}
 
 			const hasThisActiveCall = await this.getCallManager().sendBroadcastRequest(this.activeCall.call.uuid);
@@ -93,6 +101,11 @@ export const ActiveCall = {
 			this.getCallManager().joinCall(this.activeCall.call.id, this.activeCall.call.uuid, this.activeCall.dialogId);
 		},
 		onBackToCallClick() {
+			if (this.isConference)
+			{
+				ConferenceChannel.getInstance().sendRequest(this.dialog.public.code);
+				return;
+			}
 			this.getCallManager().sendBroadcastRequest(this.activeCall.call.uuid);
 		},
 		onLeaveCallClick()

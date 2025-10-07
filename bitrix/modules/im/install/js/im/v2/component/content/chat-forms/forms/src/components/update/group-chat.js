@@ -267,48 +267,50 @@ export const GroupChatUpdating = {
 		},
 	},
 	template: `
-		<div v-if="isLoading" class="bx-im-content-chat-forms__skeleton"></div>
-		<div v-else class="bx-im-content-chat-forms__content --chat" @scroll="onScroll">
-			<div class="bx-im-content-chat-forms__header">
-				<ChatAvatar
-					:avatarFile="avatarFile" 
-					:existingAvatarUrl="avatarUrl" 
-					:chatTitle="chatTitle" 
-					@avatarChange="onAvatarChange" 
+		<div class="bx-im-content-chat-forms__content --chat" @scroll="onScroll">
+			<div v-if="isLoading" class="bx-im-content-chat-forms__skeleton"></div>
+			<template v-else>
+				<div class="bx-im-content-chat-forms__header">
+					<ChatAvatar
+						:avatarFile="avatarFile"
+						:existingAvatarUrl="avatarUrl"
+						:chatTitle="chatTitle"
+						@avatarChange="onAvatarChange"
+					/>
+					<TitleInput v-model="chatTitle" :placeholder="loc('IM_CREATE_CHAT_TITLE_PLACEHOLDER')" />
+				</div>
+				<CreateChatHeading :text="loc('IM_CREATE_CHAT_MEMBERS_TITLE')" />
+				<div class="bx-im-content-chat-forms__members_container">
+					<ChatMembersSelector
+						:customElements="collapsedUsers"
+						:chatMembers="chatMembers"
+						:allowTeamsSelect="dialog.type !== ChatType.videoconf"
+						@membersChange="onMembersChange"
+					/>
+				</div>
+				<SettingsSection
+					:isAvailableInSearch="settings.isAvailableInSearch"
+					:description="settings.description"
+					:withSearchOption="canChangeSearchAvailability"
+					:withAutoDeleteOption="false"
+					@chatTypeChange="onChatTypeChange"
+					@descriptionChange="onDescriptionChange"
 				/>
-				<TitleInput v-model="chatTitle" :placeholder="loc('IM_CREATE_CHAT_TITLE_PLACEHOLDER')" />
-			</div>
-			<CreateChatHeading :text="loc('IM_CREATE_CHAT_MEMBERS_TITLE')" />
-			<div class="bx-im-content-chat-forms__members_container">
-				<ChatMembersSelector 
-					:customElements="collapsedUsers"
-					:chatMembers="chatMembers"
-					:allowTeamsSelect="dialog.type !== ChatType.videoconf"
-					@membersChange="onMembersChange" 
+				<RightsSection
+					:ownerId="rights.ownerId"
+					:managerIds="rights.managerIds"
+					:manageUsersAdd="rights.manageUsersAdd"
+					:manageUsersDelete="rights.manageUsersDelete"
+					:manageUi="rights.manageUi"
+					:manageMessages="rights.manageMessages"
+					@ownerChange="onOwnerChange"
+					@managersChange="onManagersChange"
+					@manageUsersAddChange="onManageUsersAddChange"
+					@manageUsersDeleteChange="onManageUsersDeleteChange"
+					@manageUiChange="onManageUiChange"
+					@manageMessagesChange="onManageMessagesChange"
 				/>
-			</div>
-			<SettingsSection
-				:isAvailableInSearch="settings.isAvailableInSearch"
-				:description="settings.description"
-				:withSearchOption="canChangeSearchAvailability"
-				:withAutoDeleteOption="false"
-				@chatTypeChange="onChatTypeChange"
-				@descriptionChange="onDescriptionChange"
-			/>
-			<RightsSection
-				:ownerId="rights.ownerId"
-				:managerIds="rights.managerIds"
-				:manageUsersAdd="rights.manageUsersAdd"
-				:manageUsersDelete="rights.manageUsersDelete"
-				:manageUi="rights.manageUi"
-				:manageMessages="rights.manageMessages"
-				@ownerChange="onOwnerChange"
-				@managersChange="onManagersChange"
-				@manageUsersAddChange="onManageUsersAddChange"
-				@manageUsersDeleteChange="onManageUsersDeleteChange"
-				@manageUiChange="onManageUiChange"
-				@manageMessagesChange="onManageMessagesChange"
-			/>
+			</template>
 		</div>
 		<ButtonPanel
 			:isCreating="isUpdating || isLoading"

@@ -1818,6 +1818,10 @@ this.BX = this.BX || {};
 	    let fileViewerField = new ui_formElements_view.Selector(this.getValue('DISK_VIEWER_SERVICE'));
 	    CommunicationPage.addToSectionHelper(fileViewerField, settingsSection);
 	  }
+	  if (this.hasValue('DISK_UNIFIED_LINK_DEFAULT_ACCESS_LEVEL')) {
+	    let unifiedLinkDefaultAccessLevelSelector = new ui_formElements_view.Selector(this.getValue('DISK_UNIFIED_LINK_DEFAULT_ACCESS_LEVEL'));
+	    CommunicationPage.addToSectionHelper(unifiedLinkDefaultAccessLevelSelector, settingsSection);
+	  }
 	  if (this.hasValue('DISK_LIMIT_PER_FILE')) {
 	    var _this$getValue$label2;
 	    const messageNode = main_core.Tag.render(_t$7 || (_t$7 = _$7`<span>${0}</span>`), main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_HELP_MESSAGE'));

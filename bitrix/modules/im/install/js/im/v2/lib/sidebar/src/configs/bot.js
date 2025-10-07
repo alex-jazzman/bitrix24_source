@@ -1,7 +1,7 @@
 import { Core } from 'im.v2.application.core';
 import { UserType, SidebarMainPanelBlock } from 'im.v2.const';
 
-import { SidebarConfig } from '../classes/config';
+import { SidebarPreset } from '../classes/preset';
 
 import type { ImModelChat } from 'im.v2.model';
 
@@ -11,7 +11,7 @@ const isBot = (chatContext: ImModelChat) => {
 	return user?.type === UserType.bot;
 };
 
-const botConfig = new SidebarConfig({
+const botPreset = new SidebarPreset({
 	blocks: [
 		SidebarMainPanelBlock.user,
 		SidebarMainPanelBlock.tariffLimit,
@@ -22,4 +22,4 @@ const botConfig = new SidebarConfig({
 	],
 });
 
-export { isBot, botConfig };
+export { isBot, botPreset };

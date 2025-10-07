@@ -129,8 +129,8 @@ export const TitleCell = {
 				v-if="right.groupHead"
 				class="ui-icon-set"
 				:class="{
-					'--minus-in-circle': right.isGroupExpanded,
-					'--plus-in-circle': !right.isGroupExpanded,
+					'--o-circle-minus': right.isGroupExpanded,
+					'--o-circle-plus': !right.isGroupExpanded,
 				}"
 			></span>
 			<div 
@@ -144,15 +144,13 @@ export const TitleCell = {
 					class="ui-access-rights-v2-column-item-title-link ui-access-rights-v2-text-ellipsis"
 					@click="onRightClick"
 				>
-					{{ right.title }}
-					<Hint v-once v-if="right.hint" :html="right.hint"/>
+					{{ right.title }}<Hint v-once v-if="right.hint" :html="right.hint"/>
 				</span>
 				<span 
 					v-else 
 					class="ui-access-rights-v2-text-wrap"
 				>
-					{{ right.title }}
-					<Hint v-once v-if="right.hint" :html="right.hint"/>
+					{{ right.title }}<Hint v-once v-if="right.hint" :html="right.hint"/>
 				</span>
 				<span 
 					v-if="right.subtitle" 
@@ -162,7 +160,7 @@ export const TitleCell = {
 		</div>
 		<div
 			ref="icon" 
-			class="ui-icon-set --more ui-access-rights-v2-icon-more ui-access-rights-v2-title-column-menu" 
+			class="ui-icon-set --more-l ui-access-rights-v2-icon-more ui-access-rights-v2-title-column-menu" 
 			@click="toggleMenu"
 		>
 			<RichMenuPopup

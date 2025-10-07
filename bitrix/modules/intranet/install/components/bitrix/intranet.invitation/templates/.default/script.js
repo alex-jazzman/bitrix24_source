@@ -3058,7 +3058,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      node: document.querySelector('#intranet-invitation-btn'),
 	      events: {
 	        click: event => {
-	          if (!this.isCreatorEmailConfirmed) {
+	          if (!this.isCreatorEmailConfirmed && !(this.navigation.current() instanceof LinkPage)) {
 	            this.messageBar.showError(main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_CONFIRM_CREATOR_EMAIL_ERROR'));
 	            return;
 	          }
@@ -3170,7 +3170,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    }
 	    request.userOptions = this.userOptions;
 	    request.analyticsData = this.analyticsLabel;
-	    request.data["analyticsData"] = this.analyticsLabel;
+	    request.data.analyticsData = this.analyticsLabel;
 	    // eslint-disable-next-line promise/catch-or-return
 	    this.transport.send(request).then(response => {
 	      this.submitButton.ready();

@@ -11,10 +11,10 @@ return [
 	],
 	'rel' => [
 		'main.core',
-		'im.v2.lib.message-component',
 		'im.v2.const',
-		'im.v2.application.core',
 		'im.v2.lib.analytics',
+		'im.v2.lib.message-component',
+		'im.v2.application.core',
 		'ui.analytics',
 	],
 	'skip_core' => false,

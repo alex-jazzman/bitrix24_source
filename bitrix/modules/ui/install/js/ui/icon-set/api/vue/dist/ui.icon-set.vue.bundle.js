@@ -11,7 +11,7 @@ this.BX.UI = this.BX.UI || {};
 	      type: String,
 	      required: true,
 	      validator(value) {
-	        return Object.values(ui_iconSet_api_core.Set).includes(value) || Object.values(ui_iconSet_api_core.Outline).includes(value);
+	        return Object.values(ui_iconSet_api_core.Set).includes(value) || Object.values(ui_iconSet_api_core.Outline).includes(value) || Object.values(ui_iconSet_api_core.Solid).includes(value);
 	      }
 	    },
 	    color: {

@@ -3,7 +3,6 @@
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
 use Bitrix\Disk;
-use Bitrix\Disk\Controller\Integration\Flipchart;
 use Bitrix\Disk\Driver;
 use Bitrix\Disk\File;
 use Bitrix\Disk\Integration\Bitrix24Manager;
@@ -79,10 +78,17 @@ final class DiskDocumentsController extends Disk\Internals\Engine\Controller
 		$belongsToDiskStorages = $this->belongsToDiskStorages($file);
 		if ($belongsToDiskStorages)
 		{
-			$internalLink = $urlManager->getUrlFocusController('showObjectInGrid', [
+			if (Disk\Internal\Service\UnifiedLink\Configuration::supportsUnifiedLink($file))
+			{
+				$internalLink = $urlManager->getUnifiedLink($file, ['absolute' => true]);
+			}
+			else
+			{
+				$internalLink = $urlManager->getUrlFocusController('showObjectInGrid', [
 					'objectId' => $file->getId(),
 					'cmd' => 'show',
-			], true);
+				], true);
+			}
 
 			$actionToShare[] = [
 				'id' => 'internalLink',
@@ -149,16 +155,17 @@ final class DiskDocumentsController extends Disk\Internals\Engine\Controller
 			];
 		}
 
-		if ($trackedObject->getFile()->getTypeFile() == Disk\TypeFile::FLIPCHART)
+		if ((int)$file->getTypeFile() === Disk\TypeFile::FLIPCHART)
 		{
 			if ($trackedObject->getAttachedObjectId())
 			{
-				$openUrl = Driver::getInstance()->getUrlManager()->getUrlForViewAttachedBoard($trackedObject->getAttachedObjectId(), false, 'boards_page');
+				$openUrl = $urlManager->getUrlForViewAttachedBoard($file, $trackedObject->getAttachedObjectId(), false, 'boards_page');
 			}
 			else
 			{
-				$openUrl = Driver::getInstance()->getUrlManager()->getUrlForViewBoard($trackedObject->getFileId(), false, 'boards_page');
+				$openUrl = $urlManager->getUrlForViewBoard($file, false, 'boards_page');
 			}
+
 			array_unshift(
 				$actions,
 				[

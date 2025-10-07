@@ -1002,9 +1002,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  },
 	  methods: {
 	    onForwardButtonClick() {
-	      im_v2_lib_analytics.Analytics.getInstance().messageForward.onClickForward({
-	        dialogId: this.dialogId
-	      });
+	      im_v2_lib_analytics.Analytics.getInstance().messageForward.onClickForward(this.dialogId);
 	      this.messagesIds = [...this.selectedMessages];
 	      this.showForwardPopup = true;
 	    },

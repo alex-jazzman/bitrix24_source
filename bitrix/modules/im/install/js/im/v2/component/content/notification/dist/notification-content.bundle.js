@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,main_polyfill_intersectionobserver,ui_dialogs_messagebox,im_v2_provider_service_notification,im_v2_component_elements_userListPopup,im_v2_component_elements_loader,im_v2_lib_utils,im_v2_component_elements_avatar,im_v2_component_elements_attach,im_v2_lib_parser,im_v2_component_elements_button,im_public,im_v2_component_elements_chatTitle,im_v2_lib_dateFormatter,ui_forms,ui_vue3_vuex,im_v2_lib_user,main_core,im_v2_application_core,im_v2_const,im_v2_lib_logger) {
+(function (exports,main_polyfill_intersectionobserver,ui_dialogs_messagebox,im_v2_provider_service_notification,im_v2_component_elements_userListPopup,im_v2_component_elements_loader,im_v2_lib_utils,im_v2_component_elements_avatar,im_v2_component_elements_attach,im_v2_lib_parser,im_v2_component_elements_button,im_public,im_v2_component_elements_chatTitle,im_v2_lib_dateFormatter,ui_forms,main_core_events,im_v2_lib_escManager,ui_vue3_vuex,im_v2_lib_user,main_core,im_v2_application_core,im_v2_const,im_v2_lib_logger) {
 	'use strict';
 
 	// @vue/component
@@ -523,8 +523,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      required: true
 	    }
 	  },
-	  emits: ['search'],
-	  data: function () {
+	  emits: ['search', 'close'],
+	  data() {
 	    return {
 	      searchQuery: '',
 	      searchType: '',
@@ -550,19 +550,19 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        originalSchema.calendar.NAME = this.$Bitrix.Loc.getMessage('IM_NOTIFICATIONS_SEARCH_FILTER_TYPE_CALENDAR');
 	      }
 	      if (originalSchema.sender) {
-	        originalSchema['sender'].NAME = this.$Bitrix.Loc.getMessage('IM_NOTIFICATIONS_SEARCH_FILTER_TYPE_SENDER');
+	        originalSchema.sender.NAME = this.$Bitrix.Loc.getMessage('IM_NOTIFICATIONS_SEARCH_FILTER_TYPE_SENDER');
 	      }
 	      if (originalSchema.blog) {
 	        originalSchema.blog.NAME = this.$Bitrix.Loc.getMessage('IM_NOTIFICATIONS_SEARCH_FILTER_TYPE_BLOG');
 	      }
 	      if (originalSchema.socialnetwork) {
-	        originalSchema['socialnetwork'].NAME = this.$Bitrix.Loc.getMessage('IM_NOTIFICATIONS_SEARCH_FILTER_TYPE_SOCIALNETWORK');
+	        originalSchema.socialnetwork.NAME = this.$Bitrix.Loc.getMessage('IM_NOTIFICATIONS_SEARCH_FILTER_TYPE_SOCIALNETWORK');
 	      }
 	      if (originalSchema.intranet) {
-	        originalSchema['intranet'].NAME = this.$Bitrix.Loc.getMessage('IM_NOTIFICATIONS_SEARCH_FILTER_TYPE_INTRANET');
+	        originalSchema.intranet.NAME = this.$Bitrix.Loc.getMessage('IM_NOTIFICATIONS_SEARCH_FILTER_TYPE_INTRANET');
 	      }
 
-	      // we need only this modules in this order!
+	      // we need only these modules in this order!
 	      const modulesToShowInFilter = ['tasks', 'calendar', 'crm', 'timeman', 'mail', 'disk', 'bizproc', 'voximplant', 'sender', 'blog', 'vote', 'socialnetwork', 'imopenlines', 'photogallery', 'intranet', 'forum'];
 	      const notificationFilterTypes = [];
 	      modulesToShowInFilter.forEach(moduleId => {
@@ -571,6 +571,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        }
 	      });
 	      return notificationFilterTypes;
+	    },
+	    isEmptyQuery() {
+	      return this.searchQuery.trim() === '';
+	    },
+	    hasFocus() {
+	      return document.activeElement === this.$refs.searchInput;
 	    }
 	  },
 	  watch: {
@@ -583,6 +589,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    searchDate() {
 	      this.search();
 	    }
+	  },
+	  created() {
+	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.key.onBeforeEscape, this.onBeforeEscape);
+	  },
+	  beforeUnmount() {
+	    main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.key.onBeforeEscape, this.onBeforeEscape);
 	  },
 	  methods: {
 	    search() {
@@ -597,7 +609,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        BX.calendar.get().popup.close();
 	      }
 
-	      // eslint-disable-next-line bitrix-rules/no-bx
+	      // eslint-disable-next-line @bitrix24/bitrix24-rules/no-bx
 	      BX.calendar({
 	        node: event.target,
 	        field: event.target,
@@ -606,7 +618,17 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	          this.searchDate = event.target.value;
 	        }
 	      });
-	      return false;
+	    },
+	    onBeforeEscape() {
+	      if (!this.hasFocus) {
+	        return im_v2_lib_escManager.EscEventAction.ignored;
+	      }
+	      if (this.isEmptyQuery) {
+	        this.$emit('close');
+	      } else {
+	        this.searchQuery = '';
+	      }
+	      return im_v2_lib_escManager.EscEventAction.handled;
 	    }
 	  },
 	  template: `
@@ -637,6 +659,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				<button class="ui-ctl-after ui-ctl-icon-clear" @click.prevent="searchQuery=''"></button>
 				<input
 					autofocus
+					ref="searchInput"
 					type="text"
 					class="ui-ctl-element"
 					v-model="searchQuery"
@@ -1248,7 +1271,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 						></div>
 					</div>
 				</div>
-				<NotificationSearchPanel v-if="showSearchPanel" :schema="schema" @search="onSearch" />
+				<NotificationSearchPanel 
+					v-if="showSearchPanel" 
+					:schema="schema" 
+					@search="onSearch" 
+					@close="showSearchPanel = false" 
+				/>
 			</div>
 			<div class="bx-im-content-notification__elements-container">
 				<div class="bx-im-content-notification__elements" @scroll.passive="onScroll" ref="listNotifications">
@@ -1295,5 +1323,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.NotificationContent = NotificationContent;
 
-}((this.BX.Messenger.v2.Component.Content = this.BX.Messenger.v2.Component.Content || {}),BX,BX.UI.Dialogs,BX.Messenger.v2.Service,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX,BX.Vue3.Vuex,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Application,BX.Messenger.v2.Const,BX.Messenger.v2.Lib));
+}((this.BX.Messenger.v2.Component.Content = this.BX.Messenger.v2.Component.Content || {}),BX,BX.UI.Dialogs,BX.Messenger.v2.Service,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX,BX.Event,BX.Messenger.v2.Lib,BX.Vue3.Vuex,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Application,BX.Messenger.v2.Const,BX.Messenger.v2.Lib));
 //# sourceMappingURL=notification-content.bundle.js.map

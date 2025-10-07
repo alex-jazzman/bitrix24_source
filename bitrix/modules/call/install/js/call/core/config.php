@@ -106,6 +106,7 @@ return [
 				'isNewQOSEnabled' => Settings::isNewQOSEnabled(),
 				'isAirDesignEnabled' => \Bitrix\Im\V2\Service\Locator::getMessenger()->getApplication()->isAirDesignEnabled(),
 				'shouldHideQuickAccess' => \Bitrix\Im\V2\Service\Locator::getMessenger()->getApplication()->shouldHideQuickAccess(),
+				'callInstalled' => \Bitrix\Main\ModuleManager::isModuleInstalled('call'),
 			],
 		];
 	},

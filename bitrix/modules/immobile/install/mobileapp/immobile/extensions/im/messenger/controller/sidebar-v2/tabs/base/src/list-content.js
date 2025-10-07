@@ -334,10 +334,12 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/base/src/list-content', (requ
 				onOverscrollBottom,
 				onScrollBeginDrag,
 				onScrollEndDrag,
+				testId,
 			} = this.props;
 
 			return View(
 				{
+					testId: `${testId}-items-container`,
 					style: {
 						flex: 1,
 					},
@@ -349,6 +351,7 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/base/src/list-content', (requ
 					onOverscrollBottom,
 					onScrollBeginDrag,
 					onScrollEndDrag,
+					testId: `${testId}-items-container-grid`,
 					ref: (ref) => {
 						this.listViewRef = ref;
 					},

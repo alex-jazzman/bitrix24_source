@@ -51,6 +51,7 @@ CREATE TABLE b_disk_object
 	DELETED_TYPE int(11) DEFAULT 0,
 	PREVIEW_ID int(11),
 	VIEW_ID int(11),
+    UNIQUE_CODE varchar(64),
 
 	PRIMARY KEY (ID),
 
@@ -65,7 +66,8 @@ CREATE TABLE b_disk_object
 	KEY IX_DISK_O_10 (STORAGE_ID, GLOBAL_CONTENT_VERSION),
 	KEY IX_DISK_O_11 (FILE_ID),
 	KEY IX_DISK_O_12 (PARENT_ID, STORAGE_ID, UPDATE_TIME),
-	KEY IX_DISK_O_13 (STORAGE_ID, SYNC_UPDATE_TIME)
+    KEY IX_DISK_O_13 (STORAGE_ID, SYNC_UPDATE_TIME),
+    UNIQUE KEY IX_DISK_0_14 (UNIQUE_CODE)
 );
 
 CREATE TABLE b_disk_object_head_index
@@ -623,4 +625,15 @@ CREATE TABLE b_disk_attached_view_type
 	ENTITY_ID int(11) not null,
 	VALUE varchar(20) default null,
 	primary key (ENTITY_TYPE, ENTITY_ID)
+);
+
+CREATE TABLE b_disk_unified_link_access
+(
+    ID int NOT NULL AUTO_INCREMENT,
+    OBJECT_ID int NOT NULL,
+    ACCESS_LEVEL varchar(4) NOT NULL,
+
+    PRIMARY KEY(ID),
+
+    UNIQUE KEY IX_DISK_ULA_1 (OBJECT_ID)
 );

@@ -191,6 +191,7 @@
 	--o-ui-icon-set__path_map: url('/bitrix/js/ui/icon-set/outline/images/map.svg');
 	--o-ui-icon-set__path_market: url('/bitrix/js/ui/icon-set/outline/images/market.svg');
 	--o-ui-icon-set__path_maximize: url('/bitrix/js/ui/icon-set/outline/images/maximize.svg');
+	--o-ui-icon-set__path_maximize-2: url('/bitrix/js/ui/icon-set/outline/images/maximize-2.svg');
 	--o-ui-icon-set__path_meeting-point: url('/bitrix/js/ui/icon-set/outline/images/meeting-point.svg');
 	--o-ui-icon-set__path_mention: url('/bitrix/js/ui/icon-set/outline/images/mention.svg');
 	--o-ui-icon-set__path_message: url('/bitrix/js/ui/icon-set/outline/images/message.svg');
@@ -200,6 +201,7 @@
 	--o-ui-icon-set__path_microphone-off: url('/bitrix/js/ui/icon-set/outline/images/microphone-off.svg');
 	--o-ui-icon-set__path_microphone-on: url('/bitrix/js/ui/icon-set/outline/images/microphone-on.svg');
 	--o-ui-icon-set__path_minimize: url('/bitrix/js/ui/icon-set/outline/images/minimize.svg');
+	--o-ui-icon-set__path_minimize-2: url('/bitrix/js/ui/icon-set/outline/images/minimize-2.svg');
 	--o-ui-icon-set__path_mobile-constructor: url('/bitrix/js/ui/icon-set/outline/images/mobile-constructor.svg');
 	--o-ui-icon-set__path_mobile-service: url('/bitrix/js/ui/icon-set/outline/images/mobile-service.svg');
 	--o-ui-icon-set__path_mobile-stars: url('/bitrix/js/ui/icon-set/outline/images/mobile-stars.svg');
@@ -444,6 +446,7 @@
 	--o-ui-icon-set__path_lock-m: url('/bitrix/js/ui/icon-set/outline/images/lock-m.svg');
 	--o-ui-icon-set__path_lock-s: url('/bitrix/js/ui/icon-set/outline/images/lock-s.svg');
 	--o-ui-icon-set__path_lock-xs: url('/bitrix/js/ui/icon-set/outline/images/lock-xs.svg');
+	--o-ui-icon-set__path_lock-2: url('/bitrix/js/ui/icon-set/outline/images/lock-2.svg');
 	--o-ui-icon-set__path_minus-l: url('/bitrix/js/ui/icon-set/outline/images/minus-l.svg');
 	--o-ui-icon-set__path_minus-m: url('/bitrix/js/ui/icon-set/outline/images/minus-m.svg');
 	--o-ui-icon-set__path_minus-s: url('/bitrix/js/ui/icon-set/outline/images/minus-s.svg');
@@ -536,6 +539,41 @@
 	--o-ui-icon-set__path_watermark: url('/bitrix/js/ui/icon-set/outline/images/watermark.svg');
 	--o-ui-icon-set__path_wiki: url('/bitrix/js/ui/icon-set/outline/images/wiki.svg');
 	--o-ui-icon-set__path_poll: url('/bitrix/js/ui/icon-set/outline/images/poll.svg');
+	--o-ui-icon-set__path_action-required: url('/bitrix/js/ui/icon-set/outline/images/action-required.svg');
+	--o-ui-icon-set__path_ai-internet-search: url('/bitrix/js/ui/icon-set/outline/images/ai-internet-search.svg');
+	--o-ui-icon-set__path_ai-reflection: url('/bitrix/js/ui/icon-set/outline/images/ai-reflection.svg');
+	--o-ui-icon-set__path_contact-center: url('/bitrix/js/ui/icon-set/outline/images/contact-center.svg');
+	--o-ui-icon-set__path_delete-person: url('/bitrix/js/ui/icon-set/outline/images/delete-person.svg');
+	--o-ui-icon-set__path_digits123: url('/bitrix/js/ui/icon-set/outline/images/digits123.svg');
+	--o-ui-icon-set__path_location-plus: url('/bitrix/js/ui/icon-set/outline/images/location-plus.svg');
+	--o-ui-icon-set__path_transcription: url('/bitrix/js/ui/icon-set/outline/images/transcription.svg');
+	--o-ui-icon-set__path_auto-check-in: url('/bitrix/js/ui/icon-set/outline/images/auto-check-in.svg');
+	--o-ui-icon-set__path_broom: url('/bitrix/js/ui/icon-set/outline/images/broom.svg');
+	--o-ui-icon-set__path_check-deferred: url('/bitrix/js/ui/icon-set/outline/images/check-deferred.svg');
+	--o-ui-icon-set__path_check-in-cancel: url('/bitrix/js/ui/icon-set/outline/images/check-in-cancel.svg');
+	--o-ui-icon-set__path_check-in-negative: url('/bitrix/js/ui/icon-set/outline/images/check-in-negative.svg');
+	--o-ui-icon-set__path_compass: url('/bitrix/js/ui/icon-set/outline/images/compass.svg');
+	--o-ui-icon-set__path_face-ident: url('/bitrix/js/ui/icon-set/outline/images/face-ident.svg');
+	--o-ui-icon-set__path_fingerprint: url('/bitrix/js/ui/icon-set/outline/images/fingerprint.svg');
+	--o-ui-icon-set__path_graphs-settings: url('/bitrix/js/ui/icon-set/outline/images/graphs-settings.svg');
+	--o-ui-icon-set__path_keyboard: url('/bitrix/js/ui/icon-set/outline/images/keyboard.svg');
+	--o-ui-icon-set__path_media-message: url('/bitrix/js/ui/icon-set/outline/images/media-message.svg');
+	--o-ui-icon-set__path_mobile-selected: url('/bitrix/js/ui/icon-set/outline/images/mobile-selected.svg');
+	--o-ui-icon-set__path_no-compass: url('/bitrix/js/ui/icon-set/outline/images/no-compass.svg');
+	--o-ui-icon-set__path_person-detect: url('/bitrix/js/ui/icon-set/outline/images/person-detect.svg');
+	--o-ui-icon-set__path_reply-all: url('/bitrix/js/ui/icon-set/outline/images/reply-all.svg');
+	--o-ui-icon-set__path_screen-selected: url('/bitrix/js/ui/icon-set/outline/images/screen-selected.svg');
+	--o-ui-icon-set__path_screen-share-pause: url('/bitrix/js/ui/icon-set/outline/images/screen-share-pause.svg');
+	--o-ui-icon-set__path_sign-default: url('/bitrix/js/ui/icon-set/outline/images/sign-default.svg');
+	--o-ui-icon-set__path_size-w-l: url('/bitrix/js/ui/icon-set/outline/images/size-w-l.svg');
+	--o-ui-icon-set__path_statistics-arrow: url('/bitrix/js/ui/icon-set/outline/images/statistics-arrow.svg');
+	--o-ui-icon-set__path_sticker: url('/bitrix/js/ui/icon-set/outline/images/sticker.svg');
+	--o-ui-icon-set__path_browser: url('/bitrix/js/ui/icon-set/outline/images/browser.svg');
+	--o-ui-icon-set__path_more-vertical-xs: url('/bitrix/js/ui/icon-set/outline/images/more-vertical-xs.svg');
+	--o-ui-icon-set__path_more-vertical-s: url('/bitrix/js/ui/icon-set/outline/images/more-vertical-s.svg');
+	--o-ui-icon-set__path_more-vertical-m: url('/bitrix/js/ui/icon-set/outline/images/more-vertical-m.svg');
+	--o-ui-icon-set__path_more-vertical-l: url('/bitrix/js/ui/icon-set/outline/images/more-vertical-l.svg');
+	--o-ui-icon-set__path_database: url('/bitrix/js/ui/icon-set/outline/images/database.svg');
 }
 
 .ui-icon-set.--o-double-gis {
@@ -1306,6 +1344,10 @@
 	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_maximize);
 }
 
+.ui-icon-set.--o-maximize-2 {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_maximize-2);
+}
+
 .ui-icon-set.--o-meeting-point {
 	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_meeting-point);
 }
@@ -1340,6 +1382,10 @@
 
 .ui-icon-set.--o-minimize {
 	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_minimize);
+}
+
+.ui-icon-set.--o-minimize-2 {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_minimize-2);
 }
 
 .ui-icon-set.--o-mobile-constructor {
@@ -2318,6 +2364,10 @@
 	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_lock-xs);
 }
 
+.ui-icon-set.--lock-2 {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_lock-2);
+}
+
 .ui-icon-set.--minus-l {
 	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_minus-l);
 }
@@ -2680,4 +2730,144 @@
 
 .ui-icon-set.--poll {
 	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_poll);
+}
+
+.ui-icon-set.--action-required {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_action-required);
+}
+
+.ui-icon-set.--ai-internet-search {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_ai-internet-search);
+}
+
+.ui-icon-set.--ai-reflection {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_ai-reflection);
+}
+
+.ui-icon-set.--contact-center {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_contact-center);
+}
+
+.ui-icon-set.--delete-person {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_delete-person);
+}
+
+.ui-icon-set.--digits123 {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_digits123);
+}
+
+.ui-icon-set.--o-location-plus {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_location-plus);
+}
+
+.ui-icon-set.--transcription {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_transcription);
+}
+
+.ui-icon-set.--auto-check-in {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_auto-check-in);
+}
+
+.ui-icon-set.--broom {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_broom);
+}
+
+.ui-icon-set.--check-deferred {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_check-deferred);
+}
+
+.ui-icon-set.--check-in-cancel {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_check-in-cancel);
+}
+
+.ui-icon-set.--check-in-negative {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_check-in-negative);
+}
+
+.ui-icon-set.--compass {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_compass);
+}
+
+.ui-icon-set.--face-ident {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_face-ident);
+}
+
+.ui-icon-set.--fingerprint {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_fingerprint);
+}
+
+.ui-icon-set.--graphs-settings {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_graphs-settings);
+}
+
+.ui-icon-set.--o-keyboard {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_keyboard);
+}
+
+.ui-icon-set.--media-message {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_media-message);
+}
+
+.ui-icon-set.--mobile-selected {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_mobile-selected);
+}
+
+.ui-icon-set.--no-compass {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_no-compass);
+}
+
+.ui-icon-set.--person-detect {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_person-detect);
+}
+
+.ui-icon-set.--reply-all {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_reply-all);
+}
+
+.ui-icon-set.--screen-selected {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_screen-selected);
+}
+
+.ui-icon-set.--screen-share-pause {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_screen-share-pause);
+}
+
+.ui-icon-set.--sign-default {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_sign-default);
+}
+
+.ui-icon-set.--size-w-l {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_size-w-l);
+}
+
+.ui-icon-set.--statistics-arrow {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_statistics-arrow);
+}
+
+.ui-icon-set.--sticker {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_sticker);
+}
+
+.ui-icon-set.--browser {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_browser);
+}
+
+.ui-icon-set.--more-vertical-xs {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_more-vertical-xs);
+}
+
+.ui-icon-set.--more-vertical-s {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_more-vertical-s);
+}
+
+.ui-icon-set.--more-vertical-m {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_more-vertical-m);
+}
+
+.ui-icon-set.--more-vertical-l {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_more-vertical-l);
+}
+
+.ui-icon-set.--o-database {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_database);
 }

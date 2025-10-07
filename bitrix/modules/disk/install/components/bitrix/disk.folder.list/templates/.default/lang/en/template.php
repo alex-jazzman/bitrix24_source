@@ -118,6 +118,7 @@ $MESS["DISK_FOLDER_LIST_TITLE_UPLOAD_FILE"] = "File";
 $MESS["DISK_FOLDER_LIST_TRASHCAN_TTL_NOTICE"] = "Files deleted to the Recycle Bin are kept for #TTL_DAY# days";
 $MESS["DISK_FOLDER_LIST_TRASH_EMPTY_TRASH_BUTTON"] = "Empty";
 $MESS["DISK_FOLDER_LIST_TRASH_EMPTY_TRASH_DESCRIPTION"] = "Are you sure you want to delete all items from the Recycle Bin irreversibly?";
+$MESS["DISK_FOLDER_LIST_UNIFIED_RIGHT_USERS"] = "Anyone with the link";
 $MESS["DISK_FOLDER_LIST_VOLUME_PURIFY"] = "Drive Cleanup";
 $MESS["DISK_FOLDER_MW_CREATE_FILE_TEXT"] = "Create using";
 $MESS["DISK_FOLDER_MW_CREATE_FILE_TITLE"] = "Create document";

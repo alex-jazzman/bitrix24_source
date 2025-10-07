@@ -1,6 +1,7 @@
 <?php
 
 use Bitrix\Bitrix24\Sso\Scim;
+use Bitrix\Disk\Controller\UnifiedLinkController;
 use Bitrix\Main\Routing\Controllers\PublicPageController;
 use Bitrix\Main\Routing\RoutingConfigurator;
 
@@ -45,6 +46,13 @@ return function (RoutingConfigurator $routes) {
 	$routes->any('/mobile/disk/{objectId}/download', new PublicPageController('/mobile/disk/index.php'))
 		->where('objectId', '[0-9]+')
 		->default('download', '1');
+
+	$routes->prefix('disk/file')
+		->where('uniqueCode', '[0-9a-zA-Z]{20}')
+		->group(function (RoutingConfigurator $routes) {
+			 $routes->get('{uniqueCode}', [UnifiedLinkController::class, 'view']);
+			 $routes->get('{uniqueCode}/edit', [UnifiedLinkController::class, 'edit']);
+		});
 
 	// pub
 	$routes->prefix('pub')->group(function (RoutingConfigurator $routes) {

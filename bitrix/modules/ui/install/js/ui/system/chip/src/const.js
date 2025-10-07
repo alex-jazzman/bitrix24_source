@@ -9,6 +9,7 @@ export const ChipDesign = Object.freeze({
 	ShadowNoAccent: 'shadow-no-accent',
 	Shadow: 'shadow',
 	ShadowAccent: 'shadow-accent',
+	ShadowDisabled: 'shadow-disabled',
 });
 
 export const ChipSize = Object.freeze({

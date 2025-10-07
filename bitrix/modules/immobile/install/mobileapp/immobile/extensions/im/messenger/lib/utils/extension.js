@@ -10,6 +10,7 @@ jn.define('im/messenger/lib/utils', (require, exports, module) => {
 	const { createPromiseWithResolvers } = require('im/messenger/lib/utils/promise');
 	const { AsyncQueue } = require('im/messenger/lib/utils/src/async-queue');
 	const { ModelUtils } = require('im/messenger/lib/utils/model');
+	const { Normalizer } = require('im/messenger/lib/utils/normalizer');
 
 	module.exports = {
 		UserUtils,
@@ -20,5 +21,6 @@ jn.define('im/messenger/lib/utils', (require, exports, module) => {
 		emojiRegex,
 		AsyncQueue,
 		createPromiseWithResolvers,
+		Normalizer,
 	};
 });

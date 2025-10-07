@@ -1,5 +1,4 @@
-;(function () {
-
+(function() {
 	'use strict';
 
 	BX.namespace('BX.UI.Viewer');
@@ -56,6 +55,7 @@
 		this.moreMenu = null;
 
 		this.eventsAlreadyBinded = false;
+		this.pinchZoomHandler = null;
 
 		this.init();
 	};
@@ -657,6 +657,16 @@
 						{
 							loadedItem.asFirstToShow();
 						}
+
+						if (this.getCurrentItem() instanceof BX.UI.Viewer.Image)
+						{
+							(window.top || window).addEventListener('wheel', this.getPinchZoomHandler(), { passive: false });
+						}
+						else
+						{
+							(window.top || window).removeEventListener('wheel', this.getPinchZoomHandler(), { passive: false });
+							this.pinchZoomHandler = null;
+						}
 					}
 
 					this.processPreload(index, direction);
@@ -685,6 +695,32 @@
 
 			const cycleMove = this.items.length > 20 && (moveToStart || moveToEnd);
 			this.selectCarouselItem(this.currentIndex, options.asFirstToShow !== true && !cycleMove);
+		},
+
+		getPinchZoomHandler()
+		{
+			if (!this.pinchZoomHandler)
+			{
+				this.pinchZoomHandler = (event) => {
+					if (!(event.ctrlKey || event.metaKey))
+					{
+						return;
+					}
+
+					event.preventDefault();
+
+					if (event.deltaY < 0)
+					{
+						this.getCurrentItem().handleZoomIn();
+					}
+					else if (event.deltaY > 0)
+					{
+						this.getCurrentItem().handleZoomOut();
+					}
+				};
+			}
+
+			return this.pinchZoomHandler;
 		},
 
 		processPreload(fromIndex, direction)
@@ -1835,6 +1871,12 @@
 					this.removeBodyPadding();
 				}
 			}.bind(this));
+
+			if (this.pinchZoomHandler)
+			{
+				(window.top || window).removeEventListener('wheel', this.getPinchZoomHandler(), { passive: false });
+				this.pinchZoomHandler = null;
+			}
 
 			// this.items = null;
 			// this.currentIndex = null;

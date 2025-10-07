@@ -3,14 +3,11 @@
  */
 jn.define('im/messenger/lib/promotion', (require, exports, module) => {
 	const { Type } = require('type');
-	const { Color } = require('tokens');
 
 	const { Promo, PromoType, EventType } = require('im/messenger/const');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { PromotionRest } = require('im/messenger/provider/rest');
-	const { CopilotView } = require('im/messenger/lib/promotion/copilot-view');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { NavigationTab } = require('im/messenger/const');
 	const { Feature } = require('im/messenger/lib/feature');
 
 	const COMPONENT_NAME = 'im.messenger.Promotion';
@@ -36,7 +33,6 @@ jn.define('im/messenger/lib/promotion', (require, exports, module) => {
 			this.onCloseWidget = this.onCloseWidget.bind(this);
 			this.handlePromotionGet = this.handlePromotionGet.bind(this);
 			this.onReadPromo = this.#onReadPromo.bind(this);
-			this.showPromoCopilotInDefaultTab = this.#showPromoCopilotInDefaultTab.bind(this);
 			this.openPromoOnInit = this.openPromoOnInit.bind(this);
 			this.openPromotionFromBackgroundUIManagerEvent = this.openPromotionFromBackgroundUIManagerEvent.bind(this);
 		}
@@ -60,12 +56,7 @@ jn.define('im/messenger/lib/promotion', (require, exports, module) => {
 		 * @param {string} componentName
 		 */
 		openPromotionFromBackgroundUIManagerEvent(componentName)
-		{
-			if (componentName === COMPONENT_NAME)
-			{
-				this.showPromoCopilotInDefaultTab();
-			}
-		}
+		{}
 
 		unsubscribeBackgroundUIManagerEvent()
 		{
@@ -81,14 +72,10 @@ jn.define('im/messenger/lib/promotion', (require, exports, module) => {
 		}
 
 		subscribeNavigationEvents()
-		{
-			BX.addCustomEvent(EventType.navigation.onRootTabsSelected, this.showPromoCopilotInDefaultTab);
-		}
+		{}
 
 		unsubscribeNavigationEvents()
-		{
-			BX.removeCustomEvent(EventType.navigation.onRootTabsSelected, this.showPromoCopilotInDefaultTab);
-		}
+		{}
 
 		destruct()
 		{
@@ -101,32 +88,7 @@ jn.define('im/messenger/lib/promotion', (require, exports, module) => {
 		 */
 		buildPromoCollection()
 		{
-			return {
-				[Promo.copilotInDefaultTab]: {
-					type: PromoType.spotlight,
-					options: {
-						setTarget: {
-							target: NavigationTab.imMessenger,
-							params: {
-								useHighlight: false,
-								type: 'rectangle',
-							},
-						},
-						setComponent: {
-							component: new CopilotView({ onClick: this.onReadPromo }),
-							params: {
-								backgroundColor: Color.bgContentInapp.toHex(),
-							},
-						},
-						setHandler: (event) => {
-							if (event === 'onOutsideClick')
-							{
-								this.onReadPromo();
-							}
-						},
-					},
-				},
-			};
+			return {};
 		}
 
 		handlePromotionGet(data)
@@ -169,18 +131,6 @@ jn.define('im/messenger/lib/promotion', (require, exports, module) => {
 			const navigationContext = await PageManager.getNavigator().getNavigationContext();
 
 			return navigationContext.isTabActive && hasPromoCopilotInDefaultTab;
-		}
-
-		async #showPromoCopilotInDefaultTab()
-		{
-			const isPromoShown = await this.checkPromoCopilotInDefaultTab();
-			if (isPromoShown)
-			{
-				const spotlightParams = this.promoCollection[Promo.copilotInDefaultTab].options;
-
-				this.currentActivePromo = Promo.copilotInDefaultTab;
-				this.showSpotlight(spotlightParams);
-			}
 		}
 
 		/**

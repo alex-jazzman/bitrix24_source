@@ -475,24 +475,31 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 		getUserAvatarProps()
 		{
 			const user = this.getUserById(this.dialogId);
-			if (!user)
+			const userHelper = UserHelper.createByUserId(user?.id);
+
+			if (!userHelper)
 			{
 				return this.#getAvatarUserFields();
 			}
 
-			if (user.type === UserType.collaber)
+			if (userHelper.isCollaber)
 			{
 				return this.#getAvatarCollaberFields();
 			}
 
-			if (user.type === UserType.extranet)
+			if (userHelper.isExtranet)
 			{
 				return this.#getAvatarExtranetFields();
 			}
 
-			if (user.botData?.code === BotCode.copilot)
+			if (userHelper.isCopilotBot)
 			{
 				return this.#getAvatarCopilotFields();
+			}
+
+			if (userHelper.isAiAssistant)
+			{
+				return this.#getAvatarAiAssistantFields();
 			}
 
 			return this.#getAvatarUserFields();
@@ -626,6 +633,16 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 		}
 
 		/**
+		 * @return {AvatarDetail}
+		 */
+		#getAvatarAiAssistantFields()
+		{
+			const defaultFields = this.#getAvatarDefaultFields();
+
+			return { ...defaultFields, ...this.#getAiAssistantFields() };
+		}
+
+		/**
 		 * @returns {Partial<AvatarDetail>}
 		 */
 		#getExtranetFields()
@@ -719,6 +736,25 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 		#getAvatarUserFields()
 		{
 			return this.#getAvatarDefaultFields();
+		}
+
+		/**
+		 * @returns {Partial<AvatarDetail>}
+		 */
+		#getAiAssistantFields()
+		{
+			return {
+				hideOutline: false,
+				backBorderColor: Theme.colors.bgContentPrimary,
+				backBorderWidth: 3,
+				accentType: AvatarDetailFields.accentType.blue,
+				accentColorGradient: {
+					start: '#0176FF',
+					middle: '#25C5C0',
+					end: '#60FAB2',
+					angle: 135,
+				},
+			};
 		}
 
 		/**

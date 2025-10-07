@@ -65,9 +65,12 @@
 }
 
 .ui-selector-tab-icon {
-	width: 23px;
-	min-width: 23px;
-	height: 23px;
+	--icon-size: 23px;
+	--ui-icon-set__icon-size: var(--icon-size);
+	--ui-icon-set__icon-color: #ABB1B8;
+	width: var(--icon-size);
+	min-width: var(--icon-size);
+	height: var(--icon-size);
 	background-image: url(images/tab-icon.svg);
 	background-repeat: no-repeat;
 	background-position: center;
@@ -76,6 +79,7 @@
 }
 
 .ui-selector-tab-label-active .ui-selector-tab-icon {
+	--ui-icon-set__icon-color: var(--ui-color-base-white-fixed);
 	background-image: url(images/tab-icon-selected.svg);
 }
 

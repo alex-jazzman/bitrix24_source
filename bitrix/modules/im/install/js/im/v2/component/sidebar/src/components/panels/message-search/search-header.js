@@ -26,6 +26,7 @@ export const SearchHeader = {
 					:withIcon="false"
 					:delayForFocusOnStart="300"
 					@queryChange="$emit('changeQuery', $event)"
+					@closeByEsc="$emit('back')"
 					class="bx-im-sidebar-search-header__input"
 				/>
 			</div>

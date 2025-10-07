@@ -21,6 +21,7 @@ return [
 		'im.v2.provider.service.message',
 		'im.v2.lib.sound-notification',
 		'im.v2.lib.input-action',
+		'im.v2.lib.esc-manager',
 		'im.v2.lib.desktop-api',
 		'im.v2.component.elements.tabs',
 		'im.v2.lib.smile-manager',

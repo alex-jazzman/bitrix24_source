@@ -2,9 +2,10 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,main_core,im_v2_lib_messageComponent,im_v2_const,im_v2_application_core,im_v2_lib_analytics,ui_analytics) {
+(function (exports,main_core,im_v2_const,im_v2_lib_analytics,im_v2_lib_messageComponent,im_v2_application_core,ui_analytics) {
 	'use strict';
 
+	const PSEUDO_CHAT_TYPE_FOR_NOTES = 'notes';
 	const CopilotChatType = Object.freeze({
 	  private: 'chatType_private',
 	  multiuser: 'chatType_multiuser'
@@ -51,7 +52,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  openCreateMenu: 'open_create_menu',
 	  clickUpdate: 'click_update',
 	  clickMoreInformation: 'click_more_information',
-	  goToWeb: 'go_to_web'
+	  goToWeb: 'go_to_web',
+	  copyMessage: 'copy_message',
+	  clickReply: 'click_reply',
+	  copyFile: 'copy_file',
+	  copyLink: 'copy_link',
+	  addToFav: 'add_to_fav',
+	  seeLater: 'see_later',
+	  select: 'select',
+	  addFeedback: 'add_feedback'
 	});
 	const AnalyticsTool = Object.freeze({
 	  ai: 'ai',
@@ -121,7 +130,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  initialBanner: 'initial_banner',
 	  videocall: 'videocall',
 	  audiocall: 'audiocall',
-	  startButton: 'start_button'
+	  startButton: 'start_button',
+	  more: 'more'
 	});
 	const AnalyticsStatus = Object.freeze({
 	  success: 'success',
@@ -187,81 +197,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  return (_ChatType$chat$type = im_v2_const.ChatType[chat.type]) != null ? _ChatType$chat$type : CUSTOM_CHAT_TYPE;
 	}
 
-	const AnalyticsAmountFilesType = {
-	  single: 'files_single',
-	  many: 'files_all'
-	};
-	const AnalyticsFileType = {
-	  ...im_v2_const.FileType,
-	  media: 'media',
-	  any: 'any'
-	};
-	class MessageFiles {
-	  onClickDownload({
-	    messageId,
-	    dialogId
-	  }) {
-	    const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
-	    const params = {
-	      tool: AnalyticsTool.im,
-	      category: getCategoryByChatType(chat.type),
-	      event: AnalyticsEvent.downloadFile,
-	      type: getAnalyticsFileType(messageId),
-	      c_section: AnalyticsSection.chatWindow,
-	      c_sub_section: AnalyticsSubSection.contextMenu,
-	      p1: `chatType_${chat.type}`,
-	      p2: getUserType(),
-	      p3: getFilesAmountParam(messageId),
-	      p5: `chatId_${chat.chatId}`
-	    };
-	    if (chat.type === im_v2_const.ChatType.collab) {
-	      params.p4 = im_v2_lib_analytics.getCollabId(chat.chatId);
-	    }
-	    ui_analytics.sendData(params);
-	  }
-	  onClickSaveOnDisk({
-	    messageId,
-	    dialogId
-	  }) {
-	    const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
-	    const params = {
-	      tool: AnalyticsTool.im,
-	      category: getCategoryByChatType(chat.type),
-	      event: AnalyticsEvent.saveToDisk,
-	      type: getAnalyticsFileType(messageId),
-	      c_section: AnalyticsSection.chatWindow,
-	      c_sub_section: AnalyticsSubSection.contextMenu,
-	      p1: `chatType_${chat.type}`,
-	      p2: getUserType(),
-	      p3: getFilesAmountParam(messageId),
-	      p5: `chatId_${chat.chatId}`
-	    };
-	    if (chat.type === im_v2_const.ChatType.collab) {
-	      params.p4 = im_v2_lib_analytics.getCollabId(chat.chatId);
-	    }
-	    ui_analytics.sendData(params);
-	  }
-	}
-	function getFilesAmountParam(messageId) {
-	  const message = im_v2_application_core.Core.getStore().getters['messages/getById'](messageId);
-	  if (message.files.length === 1) {
-	    return AnalyticsAmountFilesType.single;
-	  }
-	  return AnalyticsAmountFilesType.many;
-	}
-	function getAnalyticsFileType(messageId) {
-	  const message = im_v2_application_core.Core.getStore().getters['messages/getById'](messageId);
-	  const fileTypes = message.files.map(fileId => {
-	    return im_v2_application_core.Core.getStore().getters['files/get'](fileId).type;
-	  });
-	  const uniqueTypes = [...new Set(fileTypes)];
-	  if (uniqueTypes.length === 1) {
-	    return uniqueTypes[0];
-	  }
-	  if (uniqueTypes.length === 2 && uniqueTypes.includes(im_v2_const.FileType.image) && uniqueTypes.includes(im_v2_const.FileType.video)) {
-	    return AnalyticsFileType.media;
-	  }
-	  return AnalyticsFileType.any;
+	function isNotes(dialogId) {
+	  return im_v2_application_core.Core.getUserId().toString() === dialogId;
 	}
 
 	const EntityToEventMap = {
@@ -409,41 +346,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	}
 
 	class MessageDelete {
-	  onClickDelete({
-	    messageId,
-	    dialogId
-	  }) {
-	    const message = im_v2_application_core.Core.getStore().getters['messages/getById'](messageId);
-	    const type = new im_v2_lib_messageComponent.MessageComponentManager(message).getName();
-	    const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
-	    ui_analytics.sendData({
-	      tool: AnalyticsTool.im,
-	      category: AnalyticsCategory.message,
-	      event: AnalyticsEvent.clickDelete,
-	      type,
-	      c_sub_section: AnalyticsSubSection.contextMenu,
-	      p1: `chatType_${chat.type}`,
-	      p5: `chatId_${chat.chatId}`
-	    });
-	  }
-	  onCancel({
-	    messageId,
-	    dialogId
-	  }) {
-	    const message = im_v2_application_core.Core.getStore().getters['messages/getById'](messageId);
-	    const type = new im_v2_lib_messageComponent.MessageComponentManager(message).getName();
-	    const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
-	    ui_analytics.sendData({
-	      tool: AnalyticsTool.im,
-	      category: AnalyticsCategory.message,
-	      event: AnalyticsEvent.cancelDelete,
-	      type,
-	      c_section: AnalyticsSection.popup,
-	      c_sub_section: AnalyticsSubSection.contextMenu,
-	      p1: `chatType_${chat.type}`,
-	      p5: `chatId_${chat.chatId}`
-	    });
-	  }
 	  onNotFoundNotification({
 	    dialogId
 	  }) {
@@ -930,51 +832,41 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	}
 
-	var _onClick$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onClick");
-	var _getAdditionalParams = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getAdditionalParams");
+	var _getEventSpecificParams = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getEventSpecificParams");
 	class MessagePins {
 	  constructor() {
-	    Object.defineProperty(this, _getAdditionalParams, {
-	      value: _getAdditionalParams2
-	    });
-	    Object.defineProperty(this, _onClick$1, {
-	      value: _onClick2$1
+	    Object.defineProperty(this, _getEventSpecificParams, {
+	      value: _getEventSpecificParams2
 	    });
 	  }
-	  onPin(chatId) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _onClick$1)[_onClick$1]({
-	      chatId,
-	      event: AnalyticsEvent.pinMessage
+	  onUnpin({
+	    dialogId,
+	    eventParams = {}
+	  }) {
+	    this.onSendData({
+	      dialogId,
+	      eventParams: {
+	        event: AnalyticsEvent.unpinMessage,
+	        ...eventParams
+	      }
 	    });
 	  }
-	  onUnpin(chatId) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _onClick$1)[_onClick$1]({
-	      chatId,
-	      event: AnalyticsEvent.unpinMessage
-	    });
-	  }
-	  onReachingLimit(chatId) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _onClick$1)[_onClick$1]({
-	      chatId,
-	      event: AnalyticsEvent.pinnedMessageLimitException
-	    });
+	  onSendData({
+	    dialogId,
+	    eventParams
+	  }) {
+	    const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId, true);
+	    const params = {
+	      tool: AnalyticsTool.im,
+	      category: getCategoryByChatType(chat.type),
+	      p1: `chatType_${getChatType(chat)}`,
+	      ...babelHelpers.classPrivateFieldLooseBase(this, _getEventSpecificParams)[_getEventSpecificParams](eventParams.event, chat.chatId),
+	      ...eventParams
+	    };
+	    ui_analytics.sendData(params);
 	  }
 	}
-	function _onClick2$1({
-	  chatId,
-	  event
-	}) {
-	  const chat = im_v2_application_core.Core.getStore().getters['chats/get'](`chat${chatId}`, true);
-	  const params = {
-	    tool: AnalyticsTool.im,
-	    category: getCategoryByChatType(chat.type),
-	    event,
-	    p1: `chatType_${getChatType(chat)}`,
-	    ...babelHelpers.classPrivateFieldLooseBase(this, _getAdditionalParams)[_getAdditionalParams](event, chatId)
-	  };
-	  ui_analytics.sendData(params);
-	}
-	function _getAdditionalParams2(event, chatId) {
+	function _getEventSpecificParams2(event, chatId) {
 	  const pinnedCount = im_v2_application_core.Core.getStore().getters['messages/pin/getPinned'](chatId).length;
 	  if (event === AnalyticsEvent.pinMessage) {
 	    return {
@@ -997,12 +889,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	});
 	var _hasSearchedBefore$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hasSearchedBefore");
 	var _onSelectRecipient = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onSelectRecipient");
-	var _isNotesChat = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isNotesChat");
 	class MessageForward {
 	  constructor() {
-	    Object.defineProperty(this, _isNotesChat, {
-	      value: _isNotesChat2
-	    });
 	    Object.defineProperty(this, _onSelectRecipient, {
 	      value: _onSelectRecipient2
 	    });
@@ -1011,14 +899,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      value: false
 	    });
 	  }
-	  onClickForward({
-	    dialogId
-	  }) {
+	  onClickForward(dialogId) {
 	    const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
 	    ui_analytics.sendData({
 	      tool: AnalyticsTool.im,
 	      category: getCategoryByChatType(chat.type),
 	      event: AnalyticsEvent.clickShare,
+	      c_section: AnalyticsSection.chatWindow,
+	      c_sub_section: AnalyticsSubSection.contextMenu,
 	      p1: `chatType_${chat.type}`,
 	      p2: im_v2_lib_analytics.getUserType()
 	    });
@@ -1070,7 +958,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  source
 	}) {
 	  const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
-	  const type = babelHelpers.classPrivateFieldLooseBase(this, _isNotesChat)[_isNotesChat](dialogId) ? SelectRecipientSource.notes : source;
+	  const type = isNotes(dialogId) ? SelectRecipientSource.notes : source;
 	  ui_analytics.sendData({
 	    tool: AnalyticsTool.im,
 	    category: getCategoryByChatType(chat.type),
@@ -1081,9 +969,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    p2: im_v2_lib_analytics.getUserType(),
 	    p3: `position_${position}`
 	  });
-	}
-	function _isNotesChat2(dialogId) {
-	  return im_v2_application_core.Core.getUserId().toString() === dialogId;
 	}
 
 	var _buildAnalyticsData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("buildAnalyticsData");
@@ -1115,6 +1000,325 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  };
 	}
 
+	const AnalyticsAmountFilesType = {
+	  single: 'files_single',
+	  many: 'files_all'
+	};
+	const AnalyticsFileType = {
+	  ...im_v2_const.FileType,
+	  media: 'media',
+	  any: 'any'
+	};
+	var _onCopyTextCopilot = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onCopyTextCopilot");
+	var _getFilesAmountParam = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getFilesAmountParam");
+	var _getAnalyticsFileType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getAnalyticsFileType");
+	var _getBaseParams = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getBaseParams");
+	class MessageContextMenu {
+	  constructor() {
+	    Object.defineProperty(this, _getBaseParams, {
+	      value: _getBaseParams2
+	    });
+	    Object.defineProperty(this, _getAnalyticsFileType, {
+	      value: _getAnalyticsFileType2
+	    });
+	    Object.defineProperty(this, _getFilesAmountParam, {
+	      value: _getFilesAmountParam2
+	    });
+	    Object.defineProperty(this, _onCopyTextCopilot, {
+	      value: _onCopyTextCopilot2
+	    });
+	    this.messageForward = new MessageForward();
+	    this.messagePins = new MessagePins();
+	  }
+	  onSendFeedback(dialogId) {
+	    var _aiModel$name;
+	    const currentLayout = im_v2_application_core.Core.getStore().getters['application/getLayout'].name;
+	    const role = im_v2_application_core.Core.getStore().getters['copilot/chats/getRole'](dialogId);
+	    const aiModel = im_v2_application_core.Core.getStore().getters['copilot/chats/getAIModel'](dialogId);
+	    const aiModelName = (_aiModel$name = aiModel.name) != null ? _aiModel$name : aiModel;
+	    ui_analytics.sendData({
+	      category: AnalyticsCategory.copilot,
+	      event: AnalyticsEvent.addFeedback,
+	      c_section: `${currentLayout}_tab`,
+	      p2: `provider_${aiModelName}`,
+	      p4: `role_${main_core.Text.toCamelCase(role.code)}`,
+	      ...babelHelpers.classPrivateFieldLooseBase(this, _getBaseParams)[_getBaseParams](dialogId)
+	    });
+	  }
+	  onDelete({
+	    messageId,
+	    dialogId
+	  }) {
+	    const message = im_v2_application_core.Core.getStore().getters['messages/getById'](messageId);
+	    const type = new im_v2_lib_messageComponent.MessageComponentManager(message).getName();
+	    ui_analytics.sendData({
+	      category: AnalyticsCategory.message,
+	      event: AnalyticsEvent.clickDelete,
+	      type,
+	      c_section: AnalyticsSection.chatWindow,
+	      ...babelHelpers.classPrivateFieldLooseBase(this, _getBaseParams)[_getBaseParams](dialogId)
+	    });
+	  }
+	  onCancelDelete({
+	    messageId,
+	    dialogId
+	  }) {
+	    const message = im_v2_application_core.Core.getStore().getters['messages/getById'](messageId);
+	    const type = new im_v2_lib_messageComponent.MessageComponentManager(message).getName();
+	    const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
+	    ui_analytics.sendData({
+	      category: AnalyticsCategory.message,
+	      event: AnalyticsEvent.cancelDelete,
+	      type,
+	      c_section: AnalyticsSection.popup,
+	      p5: `chatId_${chat.chatId}`,
+	      ...babelHelpers.classPrivateFieldLooseBase(this, _getBaseParams)[_getBaseParams](dialogId)
+	    });
+	  }
+	  onFileDownload({
+	    messageId,
+	    dialogId
+	  }) {
+	    const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
+	    const params = {
+	      category: getCategoryByChatType(chat.type),
+	      event: AnalyticsEvent.downloadFile,
+	      type: babelHelpers.classPrivateFieldLooseBase(this, _getAnalyticsFileType)[_getAnalyticsFileType](messageId),
+	      c_section: AnalyticsSection.chatWindow,
+	      p2: im_v2_lib_analytics.getUserType(),
+	      p3: babelHelpers.classPrivateFieldLooseBase(this, _getFilesAmountParam)[_getFilesAmountParam](messageId),
+	      p5: `chatId_${chat.chatId}`,
+	      ...babelHelpers.classPrivateFieldLooseBase(this, _getBaseParams)[_getBaseParams](dialogId)
+	    };
+	    if (chat.type === im_v2_const.ChatType.collab) {
+	      params.p4 = im_v2_lib_analytics.getCollabId(chat.chatId);
+	    }
+	    ui_analytics.sendData(params);
+	  }
+	  onSaveOnDisk({
+	    messageId,
+	    dialogId
+	  }) {
+	    const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
+	    const params = {
+	      category: getCategoryByChatType(chat.type),
+	      event: AnalyticsEvent.saveToDisk,
+	      type: babelHelpers.classPrivateFieldLooseBase(this, _getAnalyticsFileType)[_getAnalyticsFileType](messageId),
+	      c_section: AnalyticsSection.chatWindow,
+	      c_element: AnalyticsElement.more,
+	      p2: im_v2_lib_analytics.getUserType(),
+	      p3: babelHelpers.classPrivateFieldLooseBase(this, _getFilesAmountParam)[_getFilesAmountParam](messageId),
+	      p5: `chatId_${chat.chatId}`,
+	      ...babelHelpers.classPrivateFieldLooseBase(this, _getBaseParams)[_getBaseParams](dialogId)
+	    };
+	    if (chat.type === im_v2_const.ChatType.collab) {
+	      params.p4 = im_v2_lib_analytics.getCollabId(chat.chatId);
+	    }
+	    ui_analytics.sendData(params);
+	  }
+	  onCopyLink(dialogId) {
+	    const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId, true);
+	    ui_analytics.sendData({
+	      category: getCategoryByChatType(chat.type),
+	      event: AnalyticsEvent.copyLink,
+	      c_section: AnalyticsSection.chatWindow,
+	      c_element: AnalyticsElement.more,
+	      ...babelHelpers.classPrivateFieldLooseBase(this, _getBaseParams)[_getBaseParams](dialogId)
+	    });
+	  }
+	  onCopyFile({
+	    dialogId,
+	    fileId
+	  }) {
+	    const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId, true);
+	    const file = im_v2_application_core.Core.getStore().getters['files/get'](fileId);
+	    ui_analytics.sendData({
+	      category: getCategoryByChatType(chat.type),
+	      event: AnalyticsEvent.copyFile,
+	      type: file.type,
+	      c_section: AnalyticsSection.chatWindow,
+	      c_element: AnalyticsElement.more,
+	      ...babelHelpers.classPrivateFieldLooseBase(this, _getBaseParams)[_getBaseParams](dialogId)
+	    });
+	  }
+	  onEdit(dialogId) {
+	    const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId, true);
+	    ui_analytics.sendData({
+	      category: getCategoryByChatType(chat.type),
+	      event: AnalyticsEvent.clickEdit,
+	      c_section: AnalyticsSection.chatWindow,
+	      ...babelHelpers.classPrivateFieldLooseBase(this, _getBaseParams)[_getBaseParams](dialogId)
+	    });
+	  }
+	  onCreateTask(dialogId) {
+	    const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId, true);
+	    ui_analytics.sendData({
+	      category: getCategoryByChatType(chat.type),
+	      event: AnalyticsEvent.clickCreateTask,
+	      c_section: AnalyticsSection.chatWindow,
+	      c_element: AnalyticsElement.more,
+	      ...babelHelpers.classPrivateFieldLooseBase(this, _getBaseParams)[_getBaseParams](dialogId)
+	    });
+	  }
+	  onSelect(dialogId) {
+	    const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId, true);
+	    ui_analytics.sendData({
+	      category: getCategoryByChatType(chat.type),
+	      event: AnalyticsEvent.select,
+	      c_section: AnalyticsSection.chatWindow,
+	      ...babelHelpers.classPrivateFieldLooseBase(this, _getBaseParams)[_getBaseParams](dialogId)
+	    });
+	  }
+	  onMark(dialogId) {
+	    const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId, true);
+	    ui_analytics.sendData({
+	      category: getCategoryByChatType(chat.type),
+	      event: AnalyticsEvent.seeLater,
+	      c_section: AnalyticsSection.chatWindow,
+	      c_element: AnalyticsElement.more,
+	      ...babelHelpers.classPrivateFieldLooseBase(this, _getBaseParams)[_getBaseParams](dialogId)
+	    });
+	  }
+	  onReply(dialogId) {
+	    const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId, true);
+	    ui_analytics.sendData({
+	      category: getCategoryByChatType(chat.type),
+	      event: AnalyticsEvent.clickReply,
+	      c_section: AnalyticsSection.chatWindow,
+	      ...babelHelpers.classPrivateFieldLooseBase(this, _getBaseParams)[_getBaseParams](dialogId)
+	    });
+	  }
+	  onAddFavorite({
+	    dialogId,
+	    messageId
+	  }) {
+	    const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId, true);
+	    const message = im_v2_application_core.Core.getStore().getters['messages/getById'](messageId);
+	    const type = new im_v2_lib_messageComponent.MessageComponentManager(message).getName();
+	    ui_analytics.sendData({
+	      category: getCategoryByChatType(chat.type),
+	      event: AnalyticsEvent.addToFav,
+	      type,
+	      c_section: AnalyticsSection.chatWindow,
+	      c_element: AnalyticsElement.more,
+	      ...babelHelpers.classPrivateFieldLooseBase(this, _getBaseParams)[_getBaseParams](dialogId)
+	    });
+	  }
+	  onCreateEvent(dialogId) {
+	    const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId, true);
+	    ui_analytics.sendData({
+	      category: getCategoryByChatType(chat.type),
+	      event: AnalyticsEvent.clickCreateEvent,
+	      c_section: AnalyticsSection.chatWindow,
+	      c_element: AnalyticsElement.more,
+	      ...babelHelpers.classPrivateFieldLooseBase(this, _getBaseParams)[_getBaseParams](dialogId)
+	    });
+	  }
+	  onCopyText({
+	    dialogId,
+	    messageId
+	  }) {
+	    const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId, true);
+	    const message = im_v2_application_core.Core.getStore().getters['messages/getById'](messageId);
+	    const type = new im_v2_lib_messageComponent.MessageComponentManager(message).getName();
+	    if (chat.type === im_v2_const.ChatType.copilot) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _onCopyTextCopilot)[_onCopyTextCopilot]({
+	        dialogId,
+	        messageId
+	      });
+	      return;
+	    }
+	    ui_analytics.sendData({
+	      category: getCategoryByChatType(chat.type),
+	      event: AnalyticsEvent.copyMessage,
+	      type,
+	      c_section: AnalyticsSection.chatWindow,
+	      ...babelHelpers.classPrivateFieldLooseBase(this, _getBaseParams)[_getBaseParams](dialogId)
+	    });
+	  }
+	  onPin(dialogId) {
+	    this.messagePins.onSendData({
+	      dialogId,
+	      eventParams: {
+	        event: AnalyticsEvent.pinMessage,
+	        c_section: AnalyticsSection.chatWindow
+	      }
+	    });
+	  }
+	  onReachingPinsLimit(dialogId) {
+	    this.messagePins.onSendData({
+	      dialogId,
+	      eventParams: {
+	        event: AnalyticsEvent.pinnedMessageLimitException,
+	        c_section: AnalyticsSection.chatWindow
+	      }
+	    });
+	  }
+	  onUnpin(dialogId) {
+	    this.messagePins.onUnpin({
+	      dialogId,
+	      eventParams: {
+	        c_section: AnalyticsSection.chatWindow
+	      }
+	    });
+	  }
+	  onForward(dialogId) {
+	    this.messageForward.onClickForward(dialogId);
+	  }
+	}
+	function _onCopyTextCopilot2({
+	  dialogId,
+	  messageId
+	}) {
+	  var _aiModel$name2;
+	  const aiModel = im_v2_application_core.Core.getStore().getters['copilot/chats/getAIModel'](dialogId);
+	  const currentLayout = im_v2_application_core.Core.getStore().getters['application/getLayout'].name;
+	  const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId, true);
+	  const message = im_v2_application_core.Core.getStore().getters['messages/getById'](messageId);
+	  const role = im_v2_application_core.Core.getStore().getters['copilot/chats/getRole'](dialogId);
+	  const type = new im_v2_lib_messageComponent.MessageComponentManager(message).getName();
+	  const aiModelName = (_aiModel$name2 = aiModel.name) != null ? _aiModel$name2 : aiModel;
+	  ui_analytics.sendData({
+	    category: AnalyticsCategory.copilot,
+	    event: AnalyticsEvent.copyMessage,
+	    type,
+	    c_section: `${currentLayout}_tab`,
+	    p2: `provider_${aiModelName}`,
+	    p4: `role_${main_core.Text.toCamelCase(role.code)}`,
+	    p5: `chatId_${chat.chatId}`,
+	    ...babelHelpers.classPrivateFieldLooseBase(this, _getBaseParams)[_getBaseParams](dialogId)
+	  });
+	}
+	function _getFilesAmountParam2(messageId) {
+	  const message = im_v2_application_core.Core.getStore().getters['messages/getById'](messageId);
+	  if (message.files.length === 1) {
+	    return AnalyticsAmountFilesType.single;
+	  }
+	  return AnalyticsAmountFilesType.many;
+	}
+	function _getAnalyticsFileType2(messageId) {
+	  const message = im_v2_application_core.Core.getStore().getters['messages/getById'](messageId);
+	  const fileTypes = message.files.map(fileId => {
+	    return im_v2_application_core.Core.getStore().getters['files/get'](fileId).type;
+	  });
+	  const uniqueTypes = [...new Set(fileTypes)];
+	  if (uniqueTypes.length === 1) {
+	    return uniqueTypes[0];
+	  }
+	  if (uniqueTypes.length === 2 && uniqueTypes.includes(im_v2_const.FileType.image) && uniqueTypes.includes(im_v2_const.FileType.video)) {
+	    return AnalyticsFileType.media;
+	  }
+	  return AnalyticsFileType.any;
+	}
+	function _getBaseParams2(dialogId) {
+	  const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId, true);
+	  return {
+	    tool: AnalyticsTool.im,
+	    c_sub_section: AnalyticsSubSection.contextMenu,
+	    p1: `chatType_${chat.type}`
+	  };
+	}
+
 	class SliderInvite {
 	  getEmptyStateContext() {
 	    return AnalyticsSection.chatEmptyState;
@@ -1124,17 +1328,28 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	}
 
-	const PseudoChatTypeForNotes = 'notes';
+	class ChatPins {
+	  onPin(dialogId) {
+	    if (!isNotes(dialogId)) {
+	      return;
+	    }
+	    const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
+	    const params = {
+	      tool: AnalyticsTool.im,
+	      category: getCategoryByChatType(chat.type),
+	      event: AnalyticsEvent.pinChat,
+	      p1: `chatType_${isNotes(dialogId) ? PSEUDO_CHAT_TYPE_FOR_NOTES : chat.type}`
+	    };
+	    ui_analytics.sendData(params);
+	  }
+	}
+
 	var _excludedChats = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("excludedChats");
 	var _chatsWithTyping = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("chatsWithTyping");
 	var _currentTab = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("currentTab");
 	var _instance = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("instance");
-	var _isNotes = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isNotes");
 	class Analytics {
 	  constructor() {
-	    Object.defineProperty(this, _isNotes, {
-	      value: _isNotes2
-	    });
 	    Object.defineProperty(this, _excludedChats, {
 	      writable: true,
 	      value: new Set()
@@ -1159,12 +1374,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    this.checkIn = new CheckIn();
 	    this.copilot = new Copilot();
 	    this.attachMenu = new AttachMenu();
-	    this.messageFiles = new MessageFiles();
 	    this.vote = new Vote();
 	    this.messagePins = new MessagePins();
 	    this.messageForward = new MessageForward();
 	    this.desktopUpdateBanner = new DesktopUpdateBanner();
+	    this.messageContextMenu = new MessageContextMenu();
 	    this.sliderInvite = new SliderInvite();
+	    this.chatPins = new ChatPins();
 	  }
 	  static getInstance() {
 	    if (!babelHelpers.classPrivateFieldLooseBase(this, _instance)[_instance]) {
@@ -1208,11 +1424,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      tool: AnalyticsTool.im,
 	      category: getCategoryByChatType(chatType),
 	      event: AnalyticsEvent.openExisting,
-	      type: babelHelpers.classPrivateFieldLooseBase(this, _isNotes)[_isNotes](dialog) ? PseudoChatTypeForNotes : chatType,
+	      type: isNotes(dialog.dialogId) ? PSEUDO_CHAT_TYPE_FOR_NOTES : chatType,
 	      c_section: `${currentLayout}_tab`,
 	      p2: getUserType()
 	    };
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _isNotes)[_isNotes](dialog)) {
+	    if (!isNotes(dialog.dialogId)) {
 	      params.p5 = `chatId_${dialog.chatId}`;
 	    }
 	    if (chatType === im_v2_const.ChatType.comment) {
@@ -1232,21 +1448,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    }
 	    ui_analytics.sendData(params);
 	  }
-	  onPinChat(dialog) {
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _isNotes)[_isNotes](dialog)) {
-	      return;
-	    }
-	    const chatType = getChatType(dialog);
-	    const params = {
-	      tool: AnalyticsTool.im,
-	      category: getCategoryByChatType(chatType),
-	      event: AnalyticsEvent.pinChat,
-	      p1: `chatType_${babelHelpers.classPrivateFieldLooseBase(this, _isNotes)[_isNotes](dialog) ? PseudoChatTypeForNotes : chatType}`
-	    };
-	    ui_analytics.sendData(params);
-	  }
 	  onTypeMessage(dialog) {
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _isNotes)[_isNotes](dialog) || babelHelpers.classPrivateFieldLooseBase(this, _chatsWithTyping)[_chatsWithTyping].has(dialog.dialogId)) {
+	    if (!isNotes(dialog.dialogId) || babelHelpers.classPrivateFieldLooseBase(this, _chatsWithTyping)[_chatsWithTyping].has(dialog.dialogId)) {
 	      return;
 	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _chatsWithTyping)[_chatsWithTyping].add(dialog.dialogId);
@@ -1255,13 +1458,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      tool: AnalyticsTool.im,
 	      category: getCategoryByChatType(chatType),
 	      event: AnalyticsEvent.typeMessage,
-	      p1: `chatType_${babelHelpers.classPrivateFieldLooseBase(this, _isNotes)[_isNotes](dialog) ? PseudoChatTypeForNotes : chatType}`
+	      p1: `chatType_${isNotes(dialog.dialogId) ? PSEUDO_CHAT_TYPE_FOR_NOTES : chatType}`
 	    };
 	    ui_analytics.sendData(params);
 	  }
-	}
-	function _isNotes2(dialog) {
-	  return Number.parseInt(dialog.dialogId, 10) === im_v2_application_core.Core.getUserId();
 	}
 	Object.defineProperty(Analytics, _instance, {
 	  writable: true,
@@ -1273,5 +1473,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.getCollabId = getCollabId;
 	exports.getUserType = getUserType;
 
-}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.UI.Analytics));
+}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.UI.Analytics));
 //# sourceMappingURL=analytics.bundle.js.map

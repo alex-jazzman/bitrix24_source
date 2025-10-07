@@ -37,3 +37,4 @@ $MESS["DISK_JS_SERVICE_B24_DOCS_TITLE"] = "Битрикс24";
 $MESS["DISK_JS_SERVICE_B24_DOCS_TEXT"] = "Вы сможете работать с ними совместно. Редактировать, обсуждать, делиться.";
 $MESS["DISK_JS_DOCUMENT_ONLYOFFICE_SAVE_PROCESS"] = "Идёт сохранение документа: #name#";
 $MESS["DISK_JS_DOCUMENT_ONLYOFFICE_SAVED"] = "Документ #name# обновлён";
+$MESS["DISK_JS_SHARING_UNIFIED_RIGHT_USERS"] = "Все, у кого есть ссылка";

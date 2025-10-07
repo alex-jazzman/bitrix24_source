@@ -35,17 +35,6 @@ $getLink = function ($item): string
 		$curLink = "";
 	}
 
-	if (
-		!(
-			defined('AIR_SITE_TEMPLATE')
-			&& AIR_SITE_TEMPLATE
-		)
-		&& preg_match("~".SITE_DIR."online\/~i", $curLink)
-	)
-	{
-		$curLink = 'bx://v2/' . $_SERVER['SERVER_NAME'] . '/chat/';
-	}
-
 	return htmlspecialcharsbx($curLink);
 };
 
@@ -325,8 +314,7 @@ $APPLICATION->ShowViewContent('im-fullscreen');
 		<?
 		$counters = $isCompositeMode ? \CUtil::PhpToJSObject($arAllItemsCounters) : '{}';
 		?>
-		const isAir = <?php if (defined('AIR_SITE_TEMPLATE') && AIR_SITE_TEMPLATE) { ?> true <?php } else { ?> false <?php } ?>;
-		BX.Intranet.DescktopLeftMenu = new BX.Intranet.DesktopMenu(<?=\CUtil::PhpToJSObject($arAllItemsCounters)?>, isAir);
+		BX.Intranet.DescktopLeftMenu = new BX.Intranet.DesktopMenu(<?=\CUtil::PhpToJSObject($arAllItemsCounters)?>);
 		BX.Intranet.DescktopLeftMenu.updateCounters(<?=$counters?>);
 	});
 </script>

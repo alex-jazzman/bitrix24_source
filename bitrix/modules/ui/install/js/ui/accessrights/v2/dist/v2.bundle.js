@@ -96,6 +96,7 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	    return babelHelpers.classPrivateFieldLooseBase(this, _cache)[_cache].remember(`hint-${appGuid}`, () => {
 	      return BX.UI.Hint.createInstance({
 	        id: `ui-access-rights-v2-hint-${appGuid}`,
+	        classNameIcon: 'ui-icon-set --o-question',
 	        popupParameters: {
 	          className: 'ui-access-rights-v2-popup-pointer-events ui-hint-popup',
 	          autoHide: true,
@@ -490,7 +491,7 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 					'--has-siblings': userGroup.members.size > 0,
 				}"
 			>
-				<div class="ui-icon-set --plus-30"></div>
+				<div class="ui-icon-set --plus-m"></div>
 			</div>
 			<Selector
 				v-if="isSelectorShown"
@@ -612,6 +613,7 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	            }
 	          }
 	        }), new ui_buttons.CancelButton({
+	          text: this.$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_CANCEL'),
 	          size: ui_buttons.ButtonSize.SMALL,
 	          events: {
 	            click: () => {
@@ -673,7 +675,8 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 			</div>
 			<div 
 				ref="menu"
-				class="ui-icon-set --more ui-access-rights-v2-icon-more" 
+				class="ui-icon-set --more-l ui-access-rights-v2-icon-more"
+				style="position: absolute; right: 11px; top: 5px;"
 				@click="showActionsMenu"
 			>
 				<RichMenuPopup v-if="isPopupShown" @close="isPopupShown = false" :popup-options="{bindElement: $refs.menu}">
@@ -916,7 +919,8 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 					<div>{{ $Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_ROLES') }}</div>
 					<div
 						ref="configure"
-						class="ui-icon-set --more ui-access-rights-v2-icon-more"
+						class="ui-icon-set --more-l ui-access-rights-v2-icon-more"
+						style="position: absolute; right: 11px; top: 5px;"
 						@click="isPopupShown = true"
 					>
 						<RichMenuPopup v-if="isPopupShown" @close="isPopupShown = false" :popup-options="{bindElement: $refs.configure}">
@@ -963,21 +967,25 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 						class="ui-access-rights-v2-header-roles-control-counter"
 						@click="toggleViewDialog($refs.counter)"
 					>
-						<div class="ui-icon-set --opened-eye" style="--ui-icon-set__icon-size: 15px;"></div>
+						<div class="ui-icon-set --o-observer" style="--ui-icon-set__icon-size: 18px;"></div>
 						<span v-html="shownGroupsCounter"></span>
 						<div class="ui-icon-set --chevron-down ui-access-rights-v2-header-roles-control-chevron"></div>
 					</div>
 					<div class="ui-access-rights-v2-header-roles-control-expander">
-						<div
-							class="ui-icon-set --collapse"
-							:title="$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_COLLAPSE_ALL_SECTIONS')"
-							@click="$store.dispatch('accessRights/collapseAllSections')"
-						></div>
-						<div 
-							class="ui-icon-set --expand-1"
-							:title="$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_EXPAND_ALL_SECTIONS')"
-							@click="$store.dispatch('accessRights/expandAllSections')"
-						></div>
+						<div class="ui-access-rights-v2-header-roles-control-expander-button">
+							<div
+								class="ui-icon-set --collapse"
+								:title="$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_COLLAPSE_ALL_SECTIONS')"
+								@click="$store.dispatch('accessRights/collapseAllSections')"
+							></div>
+						</div>
+						<div class="ui-access-rights-v2-header-roles-control-expander-button">
+							<div
+								class="ui-icon-set --expand-1"
+								:title="$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_EXPAND_ALL_SECTIONS')"
+								@click="$store.dispatch('accessRights/expandAllSections')"
+							></div>
+						</div>
 					</div>
 				</div>
 			</CellLayout>
@@ -1197,14 +1205,19 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	    }
 	  },
 	  template: `
-		<div class="ui-ctl ui-ctl-after-icon ui-ctl-w100 ui-access-rights-v2-search">
+		<div
+			class="ui-ctl ui-ctl-after-icon ui-access-rights-v2-search">
 			<input
 				type="text"
 				class="ui-ctl-element ui-ctl-textbox ui-access-rights-v2-search-input"
 				:placeholder="$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_SEARCH_PLACEHOLDER')"
 				v-model="searchQuery"
+				ref="searchInput"
 			>
-			<a class="ui-ctl-after ui-ctl-icon-search ui-access-rights-v2-search-icon"></a>
+			<a 
+				class="ui-icon-set --o-search ui-access-rights-v2-search-icon"
+				@click="this.$refs.searchInput.focus()"
+			></a>
 		</div>
 	`
 	};
@@ -2051,7 +2064,7 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 		<CellLayout class="ui-access-rights-v2-menu-cell" style="cursor: pointer" @click="toggleMenu">
 			<div
 				ref="icon"
-				class="ui-icon-set --more ui-access-rights-v2-icon-more"
+				class="ui-icon-set --more-l ui-access-rights-v2-icon-more"
 			>
 				<RichMenuPopup
 					v-if="isMenuShown"
@@ -2572,7 +2585,8 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	      const cancelButton = new ui_buttons.CancelButton({
 	        onclick: () => {
 	          this.$emit('close');
-	        }
+	        },
+	        text: this.$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_CANCEL')
 	      });
 	      cancelButton.renderTo(this.$refs['button-container']);
 	    });
@@ -3775,8 +3789,8 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 				v-if="right.groupHead"
 				class="ui-icon-set"
 				:class="{
-					'--minus-in-circle': right.isGroupExpanded,
-					'--plus-in-circle': !right.isGroupExpanded,
+					'--o-circle-minus': right.isGroupExpanded,
+					'--o-circle-plus': !right.isGroupExpanded,
 				}"
 			></span>
 			<div 
@@ -3790,15 +3804,13 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 					class="ui-access-rights-v2-column-item-title-link ui-access-rights-v2-text-ellipsis"
 					@click="onRightClick"
 				>
-					{{ right.title }}
-					<Hint v-once v-if="right.hint" :html="right.hint"/>
+					{{ right.title }}<Hint v-once v-if="right.hint" :html="right.hint"/>
 				</span>
 				<span 
 					v-else 
 					class="ui-access-rights-v2-text-wrap"
 				>
-					{{ right.title }}
-					<Hint v-once v-if="right.hint" :html="right.hint"/>
+					{{ right.title }}<Hint v-once v-if="right.hint" :html="right.hint"/>
 				</span>
 				<span 
 					v-if="right.subtitle" 
@@ -3808,7 +3820,7 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 		</div>
 		<div
 			ref="icon" 
-			class="ui-icon-set --more ui-access-rights-v2-icon-more ui-access-rights-v2-title-column-menu" 
+			class="ui-icon-set --more-l ui-access-rights-v2-icon-more ui-access-rights-v2-title-column-menu" 
 			@click="toggleMenu"
 		>
 			<RichMenuPopup
@@ -4170,25 +4182,6 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	    // check 2 out of 3 required fields
 	    // 'event' field is provided by AnalyticsManager
 	    babelHelpers.classPrivateFieldLooseBase(this, _isEnabled)[_isEnabled] = Object.hasOwn(babelHelpers.classPrivateFieldLooseBase(this, _data)[_data], 'tool') && Object.hasOwn(babelHelpers.classPrivateFieldLooseBase(this, _data)[_data], 'category');
-	  }
-	  onSaveAttempt() {
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _isEnabled)[_isEnabled]) {
-	      return;
-	    }
-	    const {
-	      createdRoles,
-	      editedRoles,
-	      deletedRoles
-	    } = babelHelpers.classPrivateFieldLooseBase(this, _analyzeRoles)[_analyzeRoles]();
-	    for (let i = 0; i < createdRoles; i++) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _registerRoleCreateEvent)[_registerRoleCreateEvent]('attempt');
-	    }
-	    for (let i = 0; i < editedRoles; i++) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _registerRoleEditEvent)[_registerRoleEditEvent]('attempt');
-	    }
-	    for (let i = 0; i < deletedRoles; i++) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _registerRoleDeleteEvent)[_registerRoleDeleteEvent]('attempt');
-	    }
 	  }
 	  onSaveSuccess() {
 	    if (!babelHelpers.classPrivateFieldLooseBase(this, _isEnabled)[_isEnabled]) {
@@ -5451,6 +5444,7 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	var _userGroupsModel = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("userGroupsModel");
 	var _accessRightsModel = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("accessRightsModel");
 	var _analyticsManager = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("analyticsManager");
+	var _confirmationPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("confirmationPopup");
 	var _bindEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bindEvents");
 	var _unbindEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("unbindEvents");
 	var _tryShowFeaturePromoter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("tryShowFeaturePromoter");
@@ -5536,6 +5530,10 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    Object.defineProperty(this, _confirmationPopup, {
+	      writable: true,
+	      value: null
+	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1] = options || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _renderTo)[_renderTo] = babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].renderTo;
 	    babelHelpers.classPrivateFieldLooseBase(this, _buttonPanel)[_buttonPanel] = BX.UI.ButtonPanel || null;
@@ -5573,7 +5571,6 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	        return;
 	      }
 	      babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].commit('application/setProgress', true);
-	      babelHelpers.classPrivateFieldLooseBase(this, _analyticsManager)[_analyticsManager].onSaveAttempt();
 	      babelHelpers.classPrivateFieldLooseBase(this, _runSaveAjaxRequest)[_runSaveAjaxRequest]().then(({
 	        userGroups,
 	        accessRights
@@ -5656,6 +5653,11 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _buttonPanel)[_buttonPanel] = null;
 	    main_core.Dom.clean(babelHelpers.classPrivateFieldLooseBase(this, _renderTo)[_renderTo]);
 	    babelHelpers.classPrivateFieldLooseBase(this, _renderTo)[_renderTo] = null;
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _confirmationPopup)[_confirmationPopup]) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _confirmationPopup)[_confirmationPopup].close();
+	      babelHelpers.classPrivateFieldLooseBase(this, _confirmationPopup)[_confirmationPopup].getPopupWindow().destroy();
+	      babelHelpers.classPrivateFieldLooseBase(this, _confirmationPopup)[_confirmationPopup] = null;
+	    }
 	  }
 	  hasUnsavedChanges() {
 	    return !(!babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].getters['application/isModified'] || babelHelpers.classPrivateFieldLooseBase(this, _isUserConfirmedClose)[_isUserConfirmedClose]);
@@ -5759,7 +5761,10 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	    return;
 	  }
 	  sliderEvent.denyAction();
-	  const box = ui_dialogs_messagebox.MessageBox.create({
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _confirmationPopup)[_confirmationPopup] && babelHelpers.classPrivateFieldLooseBase(this, _confirmationPopup)[_confirmationPopup].getPopupWindow().isShown()) {
+	    return;
+	  }
+	  babelHelpers.classPrivateFieldLooseBase(this, _confirmationPopup)[_confirmationPopup] = ui_dialogs_messagebox.MessageBox.create({
 	    mediumButtonSize: false,
 	    title: main_core.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_MODIFIED_CLOSE_WARNING_TITLE'),
 	    message: main_core.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_MODIFIED_CLOSE_WARNING'),
@@ -5771,22 +5776,25 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	      onclick: () => {
 	        babelHelpers.classPrivateFieldLooseBase(this, _analyticsManager)[_analyticsManager].onCloseWithoutSave();
 	        babelHelpers.classPrivateFieldLooseBase(this, _isUserConfirmedClose)[_isUserConfirmedClose] = true;
-	        box.close();
+	        babelHelpers.classPrivateFieldLooseBase(this, _confirmationPopup)[_confirmationPopup].close();
+	        babelHelpers.classPrivateFieldLooseBase(this, _confirmationPopup)[_confirmationPopup] = null;
 	        setTimeout(() => {
 	          sliderEvent.getSlider().close();
 	        });
 	      }
 	    }), new ui_buttons.CancelButton({
 	      size: ui_buttons.ButtonSize.SMALL,
+	      text: main_core.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_CANCEL'),
 	      onclick: () => {
-	        box.close();
+	        babelHelpers.classPrivateFieldLooseBase(this, _confirmationPopup)[_confirmationPopup].close();
+	        babelHelpers.classPrivateFieldLooseBase(this, _confirmationPopup)[_confirmationPopup] = null;
 	      }
 	    })],
 	    popupOptions: {
 	      fixed: true
 	    }
 	  });
-	  box.show();
+	  babelHelpers.classPrivateFieldLooseBase(this, _confirmationPopup)[_confirmationPopup].show();
 	}
 
 	exports.App = App;

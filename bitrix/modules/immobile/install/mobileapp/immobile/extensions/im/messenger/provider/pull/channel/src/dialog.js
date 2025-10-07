@@ -100,6 +100,11 @@ jn.define('im/messenger/provider/pull/channel/dialog', (require, exports, module
 			;
 		}
 
+		handleChatPin(params, extra, command)
+		{
+			this.logger.warn(`${this.constructor.name}.handleChatPin override. do nothing`);
+		}
+
 		/**
 		 * @param {DialoguesModelState} chatData
 		 * @return {boolean}

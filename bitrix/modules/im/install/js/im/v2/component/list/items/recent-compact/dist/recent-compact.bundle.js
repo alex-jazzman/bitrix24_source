@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,im_v2_lib_utils,im_v2_provider_service_recent,im_v2_lib_menu,im_v2_css_tokens,ui_designTokens_air,main_core,im_v2_lib_layout,ui_iconSet_api_vue,im_public,im_v2_application_core,im_v2_const,im_v2_component_elements_avatar) {
+(function (exports,im_v2_lib_utils,im_v2_provider_service_recent,im_v2_lib_menu,im_v2_css_tokens,ui_designTokens_air,main_core,ui_iconSet_api_vue,im_public,im_v2_application_core,im_v2_const,im_v2_component_elements_avatar) {
 	'use strict';
 
 	const NavigationItemToIcon = Object.freeze({
@@ -97,13 +97,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    },
 	    preparedNavigationItems() {
 	      return CompactNavigationItems.filter(item => this.availableNavigationItems.includes(item));
-	    },
-	    isAirDesignAvailable() {
-	      return im_v2_lib_layout.LayoutManager.getInstance().isAirDesignEnabled();
 	    }
 	  },
 	  template: `
-		<div v-if="isAirDesignAvailable" class="bx-im-compact-navigation__container">
+		<div class="bx-im-compact-navigation__container">
 			<div class="bx-im-compact-navigation__items">
 				<CompactNavigationItem
 					v-for="navigationItemId in preparedNavigationItems"
@@ -326,11 +323,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    },
 	    showInvited() {
 	      return this.$store.getters['application/settings/get'](im_v2_const.Settings.recent.showInvited);
-	    },
-	    containerClasses() {
-	      return {
-	        '--air': im_v2_lib_layout.LayoutManager.getInstance().isAirDesignEnabled()
-	      };
 	    }
 	  },
 	  async created() {
@@ -383,7 +375,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    }
 	  },
 	  template: `
-		<div class="bx-im-messenger__scope bx-im-list-recent-compact__container" :class="containerClasses">
+		<div class="bx-im-messenger__scope bx-im-list-recent-compact__container">
 			<CompactNavigation />
 			<div v-if="activeCalls.length > 0" class="bx-im-list-recent-compact__calls_container">
 				<ActiveCall
@@ -420,5 +412,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.RecentList = RecentList;
 
-}((this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Css,BX,BX,BX.Messenger.v2.Lib,BX.UI.IconSet,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Const,BX.Messenger.v2.Component.Elements));
+}((this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Css,BX,BX,BX.UI.IconSet,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Const,BX.Messenger.v2.Component.Elements));
 //# sourceMappingURL=recent-compact.bundle.js.map

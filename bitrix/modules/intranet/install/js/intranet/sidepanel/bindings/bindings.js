@@ -105,9 +105,29 @@
 			},
 			{
 				condition: [
+					'(?<url>/company/personal/user/(\\d+)/tasks/task/view/(?<taskId>\\d+)/\\?chatAction=(?<chatAction>[A-Za-z]+)(?:&entityId=(?<entityId>\\d+))?)',
+					'(?<url>/workgroups/group/(\\d+)/tasks/task/view/(?<taskId>\\d+)/\\?chatAction=(?<chatAction>[A-Za-z]+)(?:&entityId=(?<entityId>\\d+))?)',
+					'(?<url>/extranet/contacts/personal/user/(\\d+)/tasks/task/view/(?<taskId>\\d+)/\\?chatAction=(?<chatAction>[A-Za-z]+)(?:&entityId=(?<entityId>\\d+))?)',
+				],
+				handler: async function(event, link) {
+					event.preventDefault();
+
+					const { chatActionService } = await BX.Runtime.loadExtension('tasks.v2.lib.chat-action-service');
+
+					if (chatActionService)
+					{
+						const coordinates = { x: event.pageX, y: event.pageY };
+
+						chatActionService.process(link, { coordinates });
+					}
+				}
+			},
+			{
+				condition: [
 					'(?<url>/company/personal/user/(\\d+)/tasks/task/view/(?<taskId>\\d+)/)',
 					'(?<url>/company/personal/user/(\\d+)/tasks/task/edit/(?<taskId>\\d+)/)',
 					'(?<url>/workgroups/group/(?<groupId>\\d+)/tasks/task/view/(?<taskId>\\d+)/)',
+					'(?<url>/workgroups/group/(?<groupId>\\d+)/tasks/task/edit/(?<taskId>\\d+)/)',
 					'(?<url>/extranet/contacts/personal/user/(\\d+)/tasks/task/view/(?<taskId>\\d+)/)',
 				],
 				minimizeOptions: (link) => {
@@ -154,6 +174,7 @@
 						const { TaskCard } = await BX.Runtime.loadExtension('tasks.v2.application.task-card');
 
 						TaskCard.showCompactCard({
+							groupId,
 							analytics: {
 								context: params.ta_sec,
 								element: params.ta_el,
@@ -169,6 +190,8 @@
 
 						TaskCard.showFullCard({
 							taskId,
+							groupId,
+							url: link.url,
 							analytics: {
 								context: params.ta_sec,
 								element: params.ta_el,
@@ -1500,7 +1523,7 @@
 				condition: ['/task/comments/(\\d+)/'],
 				options: {
 					cacheable: true,
-					width: 900,
+					width: 800,
 					allowChangeHistory: false,
 				},
 			},

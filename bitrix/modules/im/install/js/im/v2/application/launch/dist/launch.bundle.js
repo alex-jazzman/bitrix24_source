@@ -6,7 +6,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	'use strict';
 
 	const ChatEmbeddedApplication = {
-	  task: 'task'
+	  task: 'task',
+	  aiAssistantWidget: 'aiAssistantWidget'
 	};
 
 	const RESERVED_NAMES = new Set(['Launch', 'Core']);

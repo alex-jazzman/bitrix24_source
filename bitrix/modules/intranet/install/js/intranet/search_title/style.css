@@ -449,3 +449,7 @@
 .search-title-top-list-limits-content p:last-child {
 	margin: 0;
 }
+
+.search-title-top-arrow-hidden {
+	display: none;
+}

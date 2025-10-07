@@ -1,5 +1,6 @@
 import type { PopupOptions } from 'main.popup';
 import type { CounterOptions } from 'ui.cnt';
+import type { ButtonOptions } from 'ui.buttons';
 
 export type MenuOptions = PopupOptions & {
 	sections: MenuSectionOptions[],
@@ -34,6 +35,7 @@ export type MenuItemOptions = {
 	subMenu: MenuOptions[],
 	isLocked: boolean,
 	closeOnSubItemClick: boolean,
+	uiButtonOptions: ButtonOptions,
 };
 
 type BadgeText = {

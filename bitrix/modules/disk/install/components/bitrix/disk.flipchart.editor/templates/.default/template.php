@@ -3,15 +3,19 @@
 /** @var array<string, mixed> $arParams */
 /** @var array<string, mixed> $arResult */
 
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 use Bitrix\UI\Buttons\Button;
 use Bitrix\UI\Buttons\Color;
 use Bitrix\UI\Buttons\Size;
+use Bitrix\Disk\Document\Flipchart\Configuration;
 
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die;
 
 $containerId = 'flipchart-wrapper';
+
+Loader::includeModule('socialnetwork');
 
 Extension::load([
 	'ui.design-tokens',
@@ -22,12 +26,15 @@ Extension::load([
 	'disk.sharing-legacy-popup',
 	'disk.external-link',
 	'loader',
+	'socnetlogdest',
 ]);
 
 $APPLICATION->SetTitle($arResult['DOCUMENT_NAME']);
 
+$isMobile = $arResult['DISPLAY_VARIANT'] === 'mobile';
+
 $sharingButtonHtml = '';
-if ($arResult['SHOULD_SHOW_SHARING_BUTTON'])
+if (!$isMobile && $arResult['SHOULD_SHOW_SHARING_BUTTON'])
 {
 	$setupSharingButton = Button::create();
 	$wayToSharing = [
@@ -69,14 +76,17 @@ if ($arResult['SHOULD_SHOW_SHARING_BUTTON'])
 				'opacity' => 0,
 			],
 			'disableScroll' => true,
-			'items' => $wayToSharing
-		]);
+			'items' => $wayToSharing,
+		])
+	;
 
 	$sharingButtonHtml = $setupSharingButton->render(false);
 }
 ?>
 
 <div data-id="<?= $containerId ?>-wrapper">
+	<?php if (!$isMobile)
+		{ ?>
 	<div class="disk-fe-office-header">
 		<div class="disk-fe-office-header-left">
 			<div class="disk-fe-flipchart-header-logo-box">
@@ -84,13 +94,13 @@ if ($arResult['SHOULD_SHOW_SHARING_BUTTON'])
 				if ($arResult['LANGUAGE'] === 'ru')
 				{
 				?>
-					<a href="<?=$arResult['HEADER_LOGO_URL'] ?>" class="disk-fe-flipchart-header-logo" target="_blank"></a>
+					<a href="<?= $arResult['HEADER_LOGO_URL'] ?>" class="disk-fe-flipchart-header-logo" target="_blank"></a>
 				<?php
 				}
 				else
 				{
 				?>
-					<a href="<?=$arResult['HEADER_LOGO_URL'] ?>" class="disk-fe-flipchart-header-logo --eng" target="_blank"></a>
+					<a href="<?= $arResult['HEADER_LOGO_URL'] ?>" class="disk-fe-flipchart-header-logo --eng" target="_blank"></a>
 				<?php
 				}
 				?>
@@ -105,10 +115,65 @@ if ($arResult['SHOULD_SHOW_SHARING_BUTTON'])
 			<?= $sharingButtonHtml?>
 		</div>
 	</div>
-	<div data-id="<?= $containerId ?>" style="height: calc(100vh - 70px);">
+	<?php } ?>
+	<div data-id="<?= $containerId ?>" style="height: calc(<?=$isMobile ? '100dvh' : '100vh - 70px' ?>);">
 		<div class="boards-editor-wrapper" id="flipchart-editor" style="height: 100%"></div>
 	</div>
 </div>
+
+<?php
+if (Configuration::isReloadBoardAfterInactivityEnabled())
+{
+?>
+<script>
+
+	let lastActiveTime = Date.now();
+
+	document.addEventListener("visibilitychange", function() {
+		if (document.visibilityState === "visible") {
+			if (Date.now() - lastActiveTime > <?=Configuration::getReloadBoardAfterInactivityDelay() ?>)
+			{
+				window.document.location.reload();
+			}
+		}
+	});
+
+	document.addEventListener("mousemove", function() {
+		console.log('move');
+		if (Date.now() - lastActiveTime > <?=(Configuration::getReloadBoardAfterInactivityDelay() * 2) ?>)
+		{
+			window.document.location.reload();
+		}
+		lastActiveTime = Date.now();
+	});
+
+	window.addEventListener("message", e => {
+		if (e.data?.event === "boardChanged" && document.visibilityState === "visible")
+		{
+			lastActiveTime = Date.now();
+		}
+	})
+
+</script>
+<?php
+}
+?>
+
+<?php
+if ($isMobile)
+{
+?>
+<script>
+	let m = document.querySelector('meta[name="viewport"]');
+	if (!m)
+	{
+		m = document.createElement('meta');
+		m.name = 'viewport';
+		document.querySelector('head').append(m);
+	}
+	m.content = 'width=400px, initial-scale=0.8';
+</script>
+<?php } ?>
 
 <script>
 
@@ -123,37 +188,42 @@ if ($arResult['SHOULD_SHOW_SHARING_BUTTON'])
 		boardData: {
 			id: <?= $arResult['ORIGINAL_DOCUMENT_ID'] ?>,
 			name: '<?= \CUtil::JSEscape($arResult['DOCUMENT_NAME']) ?>',
+			uniqueCode: '<?= \CUtil::JSEscape($arResult['FILE_UNIQUE_CODE']) ?>',
 		},
+		sharingControlType: '<?= $arResult['SHARING_CONTROL_TYPE'] ?>',
+		isUnifiedLinkMode: <?= $arResult['IS_UNIFIED_LINK_MODE'] ? 'true' : 'false' ?>,
 	})
 
 	BX.ready(() => {
 		const sdk = new BX.Disk.Flipchart.SDK({
 			containerId: 'flipchart-editor',
-			appUrl: '<?=$arResult['APP_URL'] ?>',
-			token: '<?=$arResult['TOKEN'] ?>',
-			lang: '<?=$arResult['LANGUAGE'] ?>',
+			appUrl: '<?= $arResult['APP_URL'] ?>',
+			token: '<?= $arResult['TOKEN'] ?>',
+			lang: '<?= $arResult['LANGUAGE'] ?>',
 			ui: {
 				colorTheme: 'flipBitrixLight',
-				openTemplatesModal: <?=$arResult['SHOW_TEMPLATES_MODAL'] ? 'true' : 'false' ?>,
+				openTemplatesModal: <?= $arResult['SHOW_TEMPLATES_MODAL'] ? 'true' : 'false' ?>,
 				exportAsFile: true,
 				spinner: 'circular',
 			},
 			permissions: {
-				accessLevel: '<?=$arResult['ACCESS_LEVEL'] ?>',
-				editBoard: <?=$arResult['EDIT_BOARD'] ? 'true' : 'false' ?>,
+				accessLevel: '<?= $arResult['ACCESS_LEVEL'] ?>',
+				editBoard: <?= $arResult['EDIT_BOARD'] ? 'true' : 'false' ?>,
 			},
 			boardData: {
-				fileUrl: '<?=$arResult['DOCUMENT_URL'] ?>',
-				documentId: '<?=$arResult['DOCUMENT_ID'] ?>',
-				sessionId: '<?=$arResult['SESSION_ID'] ?>',
-				fileName: '<?=CUtil::JSEscape($arResult['DOCUMENT_NAME_WITHOUT_EXTENSION']) ?>',
+				fileUrl: '<?= $arResult['DOCUMENT_URL'] ?>',
+				documentId: '<?= $arResult['DOCUMENT_ID'] ?>',
+				sessionId: '<?= $arResult['SESSION_ID'] ?>',
+				fileName: '<?= CUtil::JSEscape($arResult['DOCUMENT_NAME_WITHOUT_EXTENSION']) ?>',
 			},
 			events: {
 				onBoardRenamed(newName) {
 
+					notifyMobileApp({ boardName: newName });
+
 					return BX.ajax.runAction('disk.api.file.rename', {
 						data: {
-							fileId: <?=$arResult['ORIGINAL_DOCUMENT_ID'] ?>,
+							fileId: <?= $arResult['ORIGINAL_DOCUMENT_ID'] ?>,
 							newName: newName + '.board'
 						}
 					});
@@ -162,7 +232,15 @@ if ($arResult['SHOULD_SHOW_SHARING_BUTTON'])
 			}
 		});
 		sdk.init();
+
+		notifyMobileApp({boardName: '<?= CUtil::JSEscape($arResult['DOCUMENT_NAME_WITHOUT_EXTENSION']) ?>'});
 	})
+
+	function notifyMobileApp({boardName}) {
+		if (window.BXMobileApp?.Events) {
+			BXMobileApp.Events.postToComponent('onBoardUpdate', { boardName });
+		}
+	}
 
 	const loader = new BX.Loader({
 		target: document.querySelector(".boards-editor-wrapper")
@@ -174,8 +252,6 @@ if ($arResult['SHOULD_SHOW_SHARING_BUTTON'])
 		if (e.data?.event === "waitSDKParams")
 		{
 			loader.hide();
-
-
 		}
 	})
 

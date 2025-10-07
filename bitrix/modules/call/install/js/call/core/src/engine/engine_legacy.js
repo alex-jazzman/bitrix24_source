@@ -3,7 +3,7 @@ import {DesktopApi} from 'im.v2.lib.desktop-api';
 import {PlainCall} from './plain_call'
 import {BitrixCallLegacy} from './bitrix_call_legacy'
 import {CallStub} from './stub'
-import {Hardware} from '../hardware';
+import {Hardware} from '../call_hardware';
 import Util from '../util'
 import {AbstractCall} from './abstract_call';
 import {CallAI} from '../call_ai';

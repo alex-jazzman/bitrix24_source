@@ -122,6 +122,7 @@ export const RoleHeading = {
 						},
 					}),
 					new CancelButton({
+						text: this.$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_CANCEL'),
 						size: ButtonSize.SMALL,
 						events: {
 							click: () => {
@@ -191,7 +192,8 @@ export const RoleHeading = {
 			</div>
 			<div 
 				ref="menu"
-				class="ui-icon-set --more ui-access-rights-v2-icon-more" 
+				class="ui-icon-set --more-l ui-access-rights-v2-icon-more"
+				style="position: absolute; right: 11px; top: 5px;"
 				@click="showActionsMenu"
 			>
 				<RichMenuPopup v-if="isPopupShown" @close="isPopupShown = false" :popup-options="{bindElement: $refs.menu}">

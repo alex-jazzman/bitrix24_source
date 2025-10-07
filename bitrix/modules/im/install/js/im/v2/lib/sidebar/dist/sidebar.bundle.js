@@ -5,8 +5,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 (function (exports,im_v2_lib_feature,im_v2_lib_market,im_v2_application_core,main_core,im_v2_lib_channel,im_v2_const) {
 	'use strict';
 
-	const baseBlocks = [im_v2_const.SidebarMainPanelBlock.chat, im_v2_const.SidebarMainPanelBlock.tariffLimit, im_v2_const.SidebarMainPanelBlock.info, im_v2_const.SidebarMainPanelBlock.fileList, im_v2_const.SidebarMainPanelBlock.fileUnsortedList, im_v2_const.SidebarMainPanelBlock.taskList, im_v2_const.SidebarMainPanelBlock.meetingList, im_v2_const.SidebarMainPanelBlock.marketAppList];
-
 	var _dialogId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("dialogId");
 	var _chat = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("chat");
 	var _blocks = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("blocks");
@@ -71,65 +69,131 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  return im_v2_application_core.Core.getStore().getters['sidebar/hasHistoryLimit'](babelHelpers.classPrivateFieldLooseBase(this, _chat)[_chat].chatId);
 	}
 
-	var _blocks$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("blocks");
-	var _headerTitle = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("headerTitle");
-	var _headerMenuEnabled = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("headerMenuEnabled");
+	const baseBlocks = [im_v2_const.SidebarMainPanelBlock.chat, im_v2_const.SidebarMainPanelBlock.tariffLimit, im_v2_const.SidebarMainPanelBlock.info, im_v2_const.SidebarMainPanelBlock.fileList, im_v2_const.SidebarMainPanelBlock.fileUnsortedList, im_v2_const.SidebarMainPanelBlock.taskList, im_v2_const.SidebarMainPanelBlock.meetingList, im_v2_const.SidebarMainPanelBlock.marketAppList];
+
+	var _configTemplate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("configTemplate");
 	var _getDefaultConfig = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDefaultConfig");
-	class SidebarConfig {
+	class SidebarPreset {
 	  constructor(rawConfig = {}) {
 	    Object.defineProperty(this, _getDefaultConfig, {
 	      value: _getDefaultConfig2
 	    });
-	    Object.defineProperty(this, _blocks$1, {
+	    Object.defineProperty(this, _configTemplate, {
 	      writable: true,
 	      value: void 0
 	    });
-	    Object.defineProperty(this, _headerTitle, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _headerMenuEnabled, {
-	      writable: true,
-	      value: void 0
-	    });
-	    const preparedConfig = {
+	    babelHelpers.classPrivateFieldLooseBase(this, _configTemplate)[_configTemplate] = {
 	      ...babelHelpers.classPrivateFieldLooseBase(this, _getDefaultConfig)[_getDefaultConfig](),
 	      ...rawConfig
 	    };
-	    const {
-	      blocks,
-	      headerTitle,
-	      headerMenuEnabled
-	    } = preparedConfig;
-	    babelHelpers.classPrivateFieldLooseBase(this, _blocks$1)[_blocks$1] = blocks;
-	    babelHelpers.classPrivateFieldLooseBase(this, _headerTitle)[_headerTitle] = headerTitle;
-	    babelHelpers.classPrivateFieldLooseBase(this, _headerMenuEnabled)[_headerMenuEnabled] = headerMenuEnabled;
 	  }
-	  getBlocks(dialogId) {
-	    return new BlockFilter(dialogId, babelHelpers.classPrivateFieldLooseBase(this, _blocks$1)[_blocks$1]).run();
-	  }
-	  getHeaderTitle() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _headerTitle)[_headerTitle];
-	  }
-	  isMenuEnabled() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _headerMenuEnabled)[_headerMenuEnabled];
+	  get() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _configTemplate)[_configTemplate];
 	  }
 	}
 	function _getDefaultConfig2() {
 	  return {
 	    blocks: baseBlocks,
-	    headerTitle: main_core.Loc.getMessage('IM_SIDEBAR_HEADER_TITLE'),
-	    headerMenuEnabled: true
+	    getHeaderTitle: () => main_core.Loc.getMessage('IM_SIDEBAR_HEADER_TITLE'),
+	    isHeaderMenuEnabled: () => true,
+	    areSharedChatsEnabled: () => true,
+	    areChatMembersEnabled: () => true,
+	    isAutoDeleteEnabled: () => true,
+	    getCustomDescription: () => ''
 	  };
 	}
 
+	var _dialogId$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("dialogId");
+	var _blocks$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("blocks");
+	var _getHeaderTitle = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getHeaderTitle");
+	var _getCustomDescription = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCustomDescription");
+	var _areChatMembersEnabled = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("areChatMembersEnabled");
+	var _isHeaderMenuEnabled = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isHeaderMenuEnabled");
+	var _areSharedChatsEnabled = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("areSharedChatsEnabled");
+	var _isAutoDeleteEnabled = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isAutoDeleteEnabled");
+	class SidebarConfig {
+	  constructor(dialogId, preset) {
+	    Object.defineProperty(this, _dialogId$1, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _blocks$1, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _getHeaderTitle, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _getCustomDescription, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _areChatMembersEnabled, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _isHeaderMenuEnabled, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _areSharedChatsEnabled, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _isAutoDeleteEnabled, {
+	      writable: true,
+	      value: void 0
+	    });
+	    const presetInstance = preset != null ? preset : new SidebarPreset();
+	    const {
+	      blocks,
+	      getHeaderTitle,
+	      isHeaderMenuEnabled,
+	      getCustomDescription,
+	      areSharedChatsEnabled,
+	      areChatMembersEnabled,
+	      isAutoDeleteEnabled
+	    } = presetInstance.get();
+	    babelHelpers.classPrivateFieldLooseBase(this, _dialogId$1)[_dialogId$1] = dialogId;
+	    babelHelpers.classPrivateFieldLooseBase(this, _blocks$1)[_blocks$1] = blocks;
+	    babelHelpers.classPrivateFieldLooseBase(this, _getHeaderTitle)[_getHeaderTitle] = getHeaderTitle;
+	    babelHelpers.classPrivateFieldLooseBase(this, _areSharedChatsEnabled)[_areSharedChatsEnabled] = areSharedChatsEnabled;
+	    babelHelpers.classPrivateFieldLooseBase(this, _areChatMembersEnabled)[_areChatMembersEnabled] = areChatMembersEnabled;
+	    babelHelpers.classPrivateFieldLooseBase(this, _getCustomDescription)[_getCustomDescription] = getCustomDescription;
+	    babelHelpers.classPrivateFieldLooseBase(this, _isHeaderMenuEnabled)[_isHeaderMenuEnabled] = isHeaderMenuEnabled;
+	    babelHelpers.classPrivateFieldLooseBase(this, _isAutoDeleteEnabled)[_isAutoDeleteEnabled] = isAutoDeleteEnabled;
+	  }
+	  getBlocks() {
+	    return new BlockFilter(babelHelpers.classPrivateFieldLooseBase(this, _dialogId$1)[_dialogId$1], babelHelpers.classPrivateFieldLooseBase(this, _blocks$1)[_blocks$1]).run();
+	  }
+	  getHeaderTitle() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _getHeaderTitle)[_getHeaderTitle]();
+	  }
+	  getCustomDescription() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _getCustomDescription)[_getCustomDescription](babelHelpers.classPrivateFieldLooseBase(this, _dialogId$1)[_dialogId$1]);
+	  }
+	  isHeaderMenuEnabled() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _isHeaderMenuEnabled)[_isHeaderMenuEnabled]();
+	  }
+	  isAutoDeleteEnabled() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _isAutoDeleteEnabled)[_isAutoDeleteEnabled]();
+	  }
+	  areSharedChatsEnabled() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _areSharedChatsEnabled)[_areSharedChatsEnabled]();
+	  }
+	  areChatMembersEnabled() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _areChatMembersEnabled)[_areChatMembersEnabled](babelHelpers.classPrivateFieldLooseBase(this, _dialogId$1)[_dialogId$1]);
+	  }
+	}
+
 	const isChat = chatContext => chatContext.type === im_v2_const.ChatType.chat;
-	const chatConfig = new SidebarConfig({
+	const chatPreset = new SidebarPreset({
 	  blocks: [im_v2_const.SidebarMainPanelBlock.chat, im_v2_const.SidebarMainPanelBlock.tariffLimit, im_v2_const.SidebarMainPanelBlock.info, im_v2_const.SidebarMainPanelBlock.fileList, im_v2_const.SidebarMainPanelBlock.fileUnsortedList, im_v2_const.SidebarMainPanelBlock.taskList, im_v2_const.SidebarMainPanelBlock.meetingList, im_v2_const.SidebarMainPanelBlock.marketAppList]
 	});
 
 	const isUser = chatContext => chatContext.type === im_v2_const.ChatType.user;
-	const userConfig = new SidebarConfig({
+	const userPreset = new SidebarPreset({
 	  blocks: [im_v2_const.SidebarMainPanelBlock.user, im_v2_const.SidebarMainPanelBlock.tariffLimit, im_v2_const.SidebarMainPanelBlock.info, im_v2_const.SidebarMainPanelBlock.fileList, im_v2_const.SidebarMainPanelBlock.fileUnsortedList, im_v2_const.SidebarMainPanelBlock.taskList, im_v2_const.SidebarMainPanelBlock.meetingList, im_v2_const.SidebarMainPanelBlock.marketAppList]
 	});
 
@@ -137,54 +201,80 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  const user = im_v2_application_core.Core.getStore().getters['users/get'](chatContext.dialogId);
 	  return (user == null ? void 0 : user.type) === im_v2_const.UserType.bot;
 	};
-	const botConfig = new SidebarConfig({
+	const botPreset = new SidebarPreset({
 	  blocks: [im_v2_const.SidebarMainPanelBlock.user, im_v2_const.SidebarMainPanelBlock.tariffLimit, im_v2_const.SidebarMainPanelBlock.info, im_v2_const.SidebarMainPanelBlock.fileList, im_v2_const.SidebarMainPanelBlock.fileUnsortedList, im_v2_const.SidebarMainPanelBlock.marketAppList]
 	});
 
 	const isNotes = chatContext => {
 	  return chatContext.type === im_v2_const.ChatType.user && Number(chatContext.dialogId) === im_v2_application_core.Core.getUserId();
 	};
-	const notesConfig = new SidebarConfig({
+	const notesPreset = new SidebarPreset({
 	  blocks: [im_v2_const.SidebarMainPanelBlock.notes, im_v2_const.SidebarMainPanelBlock.tariffLimit, im_v2_const.SidebarMainPanelBlock.info, im_v2_const.SidebarMainPanelBlock.fileList, im_v2_const.SidebarMainPanelBlock.fileUnsortedList]
 	});
 
 	const isLines = chatContext => chatContext.type === im_v2_const.ChatType.lines;
-	const linesConfig = new SidebarConfig({
+	const linesPreset = new SidebarPreset({
 	  blocks: [im_v2_const.SidebarMainPanelBlock.chat, im_v2_const.SidebarMainPanelBlock.info, im_v2_const.SidebarMainPanelBlock.fileList],
-	  headerMenuEnabled: false
+	  isHeaderMenuEnabled: () => false
 	});
 
 	const isCollab = chatContext => chatContext.type === im_v2_const.ChatType.collab;
-	const collabConfig = new SidebarConfig({
+	const collabPreset = new SidebarPreset({
 	  blocks: [im_v2_const.SidebarMainPanelBlock.chat, im_v2_const.SidebarMainPanelBlock.info, im_v2_const.SidebarMainPanelBlock.fileList, im_v2_const.SidebarMainPanelBlock.fileUnsortedList, im_v2_const.SidebarMainPanelBlock.collabHelpdesk],
-	  headerTitle: main_core.Loc.getMessage('IM_SIDEBAR_COLLAB_HEADER_TITLE')
+	  getHeaderTitle: () => main_core.Loc.getMessage('IM_SIDEBAR_COLLAB_HEADER_TITLE')
 	});
 
 	const isSupport = chatContext => im_v2_application_core.Core.getStore().getters['sidebar/multidialog/isSupport'](chatContext.dialogId);
-	const supportConfig = new SidebarConfig({
+	const supportPreset = new SidebarPreset({
 	  blocks: [im_v2_const.SidebarMainPanelBlock.support, im_v2_const.SidebarMainPanelBlock.tariffLimit, im_v2_const.SidebarMainPanelBlock.multidialog, im_v2_const.SidebarMainPanelBlock.info, im_v2_const.SidebarMainPanelBlock.fileList]
 	});
 
-	const isAiAssistant = chatContext => im_v2_application_core.Core.getStore().getters['users/bots/isAiAssistant'](chatContext.dialogId);
-	const aiAssistantConfig = new SidebarConfig({
-	  blocks: [im_v2_const.SidebarMainPanelBlock.user, im_v2_const.SidebarMainPanelBlock.tariffLimit, im_v2_const.SidebarMainPanelBlock.info]
+	const isAiAssistantBot = chatContext => im_v2_application_core.Core.getStore().getters['users/bots/isAiAssistant'](chatContext.dialogId);
+	const aiAssistantBotPreset = new SidebarPreset({
+	  blocks: [im_v2_const.SidebarMainPanelBlock.user, im_v2_const.SidebarMainPanelBlock.info, im_v2_const.SidebarMainPanelBlock.taskList, im_v2_const.SidebarMainPanelBlock.meetingList],
+	  areSharedChatsEnabled: () => false,
+	  getCustomDescription: () => {
+	    return main_core.Loc.getMessage('IM_SIDEBAR_AI_ASSISTANT_DESCRIPTION');
+	  }
 	});
 
+	const isAiAssistantChat = chatContext => {
+	  return [im_v2_const.ChatType.aiAssistant, im_v2_const.ChatType.aiAssistantEntity].includes(chatContext.type);
+	};
+	const aiAssistantChatPreset = new SidebarPreset({
+	  blocks: [im_v2_const.SidebarMainPanelBlock.chat, im_v2_const.SidebarMainPanelBlock.info, im_v2_const.SidebarMainPanelBlock.taskList, im_v2_const.SidebarMainPanelBlock.meetingList],
+	  getCustomDescription: dialogId => {
+	    if (isAiAssistantMultiUserChat(dialogId)) {
+	      return '';
+	    }
+	    return main_core.Loc.getMessage('IM_SIDEBAR_AI_ASSISTANT_DESCRIPTION');
+	  },
+	  areChatMembersEnabled: dialogId => {
+	    return isAiAssistantMultiUserChat(dialogId);
+	  },
+	  areSharedChatsEnabled: () => false,
+	  isAutoDeleteEnabled: () => false
+	});
+	const isAiAssistantMultiUserChat = dialogId => {
+	  const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId, true);
+	  return chat.type === im_v2_const.ChatType.aiAssistant && chat.userCounter > 2;
+	};
+
 	const isComment = chatContext => chatContext.type === im_v2_const.ChatType.comment;
-	const commentConfig = new SidebarConfig({
+	const commentPreset = new SidebarPreset({
 	  blocks: [im_v2_const.SidebarMainPanelBlock.post, im_v2_const.SidebarMainPanelBlock.info, im_v2_const.SidebarMainPanelBlock.fileList, im_v2_const.SidebarMainPanelBlock.taskList, im_v2_const.SidebarMainPanelBlock.meetingList],
-	  headerTitle: main_core.Loc.getMessage('IM_SIDEBAR_COMMENTS_HEADER_TITLE'),
-	  headerMenuEnabled: false
+	  getHeaderTitle: () => main_core.Loc.getMessage('IM_SIDEBAR_COMMENTS_HEADER_TITLE'),
+	  isHeaderMenuEnabled: () => false
 	});
 
 	const isChannel = chatContext => im_v2_lib_channel.ChannelManager.isChannel(chatContext.dialogId);
-	const channelConfig = new SidebarConfig({
+	const channelPreset = new SidebarPreset({
 	  blocks: [im_v2_const.SidebarMainPanelBlock.chat, im_v2_const.SidebarMainPanelBlock.info, im_v2_const.SidebarMainPanelBlock.fileList],
-	  headerTitle: main_core.Loc.getMessage('IM_SIDEBAR_CHANNEL_HEADER_TITLE')
+	  getHeaderTitle: () => main_core.Loc.getMessage('IM_SIDEBAR_CHANNEL_HEADER_TITLE')
 	});
 
 	const isCopilot = chatContext => chatContext.type === im_v2_const.ChatType.copilot;
-	const copilotConfig = new SidebarConfig({
+	const copilotPreset = new SidebarPreset({
 	  blocks: [im_v2_const.SidebarMainPanelBlock.copilot, im_v2_const.SidebarMainPanelBlock.tariffLimit, im_v2_const.SidebarMainPanelBlock.copilotInfo, im_v2_const.SidebarMainPanelBlock.taskList, im_v2_const.SidebarMainPanelBlock.meetingList]
 	});
 
@@ -218,18 +308,18 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _checkMigrationStatus)[_checkMigrationStatus]();
 	    babelHelpers.classPrivateFieldLooseBase(this, _registerDefaultConfigs)[_registerDefaultConfigs]();
 	  }
-	  registerConfig(callback, sidebarConfig) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _customConfigMap)[_customConfigMap].set(callback, sidebarConfig);
+	  registerConfig(callback, sidebarPreset) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _customConfigMap)[_customConfigMap].set(callback, sidebarPreset);
 	  }
 	  getConfig(dialogId) {
 	    const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId, true);
 	    const allConfigEntries = [...babelHelpers.classPrivateFieldLooseBase(this, _customConfigMap)[_customConfigMap].entries(), ...babelHelpers.classPrivateFieldLooseBase(this, _defaultConfigMap)[_defaultConfigMap].entries()];
-	    for (const [callback, config] of allConfigEntries) {
+	    for (const [callback, preset] of allConfigEntries) {
 	      if (callback(chat)) {
-	        return config;
+	        return new SidebarConfig(dialogId, preset);
 	      }
 	    }
-	    return new SidebarConfig();
+	    return new SidebarConfig(dialogId);
 	  }
 	}
 	function _checkMigrationStatus2() {
@@ -240,17 +330,18 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	}
 	function _registerDefaultConfigs2() {
 	  // most specific configs first
-	  babelHelpers.classPrivateFieldLooseBase(this, _defaultConfigMap)[_defaultConfigMap].set(isCopilot, copilotConfig);
-	  babelHelpers.classPrivateFieldLooseBase(this, _defaultConfigMap)[_defaultConfigMap].set(isChannel, channelConfig);
-	  babelHelpers.classPrivateFieldLooseBase(this, _defaultConfigMap)[_defaultConfigMap].set(isComment, commentConfig);
-	  babelHelpers.classPrivateFieldLooseBase(this, _defaultConfigMap)[_defaultConfigMap].set(isSupport, supportConfig);
-	  babelHelpers.classPrivateFieldLooseBase(this, _defaultConfigMap)[_defaultConfigMap].set(isAiAssistant, aiAssistantConfig);
-	  babelHelpers.classPrivateFieldLooseBase(this, _defaultConfigMap)[_defaultConfigMap].set(isBot, botConfig);
-	  babelHelpers.classPrivateFieldLooseBase(this, _defaultConfigMap)[_defaultConfigMap].set(isNotes, notesConfig);
-	  babelHelpers.classPrivateFieldLooseBase(this, _defaultConfigMap)[_defaultConfigMap].set(isLines, linesConfig);
-	  babelHelpers.classPrivateFieldLooseBase(this, _defaultConfigMap)[_defaultConfigMap].set(isCollab, collabConfig);
-	  babelHelpers.classPrivateFieldLooseBase(this, _defaultConfigMap)[_defaultConfigMap].set(isUser, userConfig);
-	  babelHelpers.classPrivateFieldLooseBase(this, _defaultConfigMap)[_defaultConfigMap].set(isChat, chatConfig);
+	  babelHelpers.classPrivateFieldLooseBase(this, _defaultConfigMap)[_defaultConfigMap].set(isCopilot, copilotPreset);
+	  babelHelpers.classPrivateFieldLooseBase(this, _defaultConfigMap)[_defaultConfigMap].set(isChannel, channelPreset);
+	  babelHelpers.classPrivateFieldLooseBase(this, _defaultConfigMap)[_defaultConfigMap].set(isComment, commentPreset);
+	  babelHelpers.classPrivateFieldLooseBase(this, _defaultConfigMap)[_defaultConfigMap].set(isSupport, supportPreset);
+	  babelHelpers.classPrivateFieldLooseBase(this, _defaultConfigMap)[_defaultConfigMap].set(isAiAssistantBot, aiAssistantBotPreset);
+	  babelHelpers.classPrivateFieldLooseBase(this, _defaultConfigMap)[_defaultConfigMap].set(isAiAssistantChat, aiAssistantChatPreset);
+	  babelHelpers.classPrivateFieldLooseBase(this, _defaultConfigMap)[_defaultConfigMap].set(isBot, botPreset);
+	  babelHelpers.classPrivateFieldLooseBase(this, _defaultConfigMap)[_defaultConfigMap].set(isNotes, notesPreset);
+	  babelHelpers.classPrivateFieldLooseBase(this, _defaultConfigMap)[_defaultConfigMap].set(isLines, linesPreset);
+	  babelHelpers.classPrivateFieldLooseBase(this, _defaultConfigMap)[_defaultConfigMap].set(isCollab, collabPreset);
+	  babelHelpers.classPrivateFieldLooseBase(this, _defaultConfigMap)[_defaultConfigMap].set(isUser, userPreset);
+	  babelHelpers.classPrivateFieldLooseBase(this, _defaultConfigMap)[_defaultConfigMap].set(isChat, chatPreset);
 	}
 	Object.defineProperty(SidebarManager, _instance, {
 	  writable: true,
@@ -259,6 +350,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.SidebarManager = SidebarManager;
 	exports.SidebarConfig = SidebarConfig;
+	exports.SidebarPreset = SidebarPreset;
 
 }((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Const));
 //# sourceMappingURL=sidebar.bundle.js.map

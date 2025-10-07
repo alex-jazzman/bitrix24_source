@@ -1217,9 +1217,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      },
 	      /** @function messages/anchors/getCounterInChatByType */
 	      getCounterInChatByType: state => (chatId, anchorType) => {
-	        return state.anchors.filter(anchor => {
+	        const chatAnchors = state.anchors.filter(anchor => {
 	          return isAnchorWithTypeFromCurrentChat(anchor, anchorType, chatId);
-	        }).length;
+	        });
+	        return new Set(chatAnchors.map(chatAnchor => chatAnchor.messageId)).size;
 	      },
 	      /** @function messages/anchors/getNextMessageIdWithAnchorType */
 	      getNextMessageIdWithAnchorType: state => (chatId, anchorType) => {
@@ -7953,6 +7954,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  checkFunction: main_core.Type.isString
 	}];
 
+	const AI_MODEL_DEFAULT_NAME = 'none';
+
 	/* eslint-disable no-param-reassign */
 	class ChatsModel$1 extends ui_vue3_vuex.BuilderModel {
 	  getState() {
@@ -7992,7 +7995,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          return null;
 	        }
 	        const aiModelList = im_v2_application_core.Core.getStore().getters['copilot/getAIModels'];
-	        return aiModelList.find(aiModel => aiModel.code === chat.aiModel);
+	        const currentAiModel = aiModelList.find(aiModel => aiModel.code === chat.aiModel);
+	        return currentAiModel != null ? currentAiModel : AI_MODEL_DEFAULT_NAME;
 	      }
 	    };
 	  }

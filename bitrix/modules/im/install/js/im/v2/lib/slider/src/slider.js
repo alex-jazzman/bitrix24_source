@@ -204,10 +204,8 @@ export class MessengerSlider
 			return;
 		}
 
-		if (!this.canCloseByEsc())
-		{
-			event.denyAction();
-		}
+		// we handle close by esc in the im.v2.lib.esc-manager
+		event.denyAction();
 	}
 
 	onDestroy({ data: event })
@@ -266,11 +264,6 @@ export class MessengerSlider
 		return true;
 	}
 
-	canCloseByEsc(): boolean
-	{
-		return false;
-	}
-
 	getCurrent(): Object
 	{
 		return this.instances[this.getCurrentId()];
@@ -293,12 +286,7 @@ export class MessengerSlider
 
 	getLoaderPath(): string
 	{
-		const LOADER = '/bitrix/js/im/v2/lib/slider/src/images/loader-chats.svg?v3';
-		const LOADER_WITHOUT_NAVIGATION = '/bitrix/js/im/v2/lib/slider/src/images/loader-chats-without-navigation.svg';
-
-		const hasNavigation = !LayoutManager.getInstance().isAirDesignEnabled();
-
-		return hasNavigation ? LOADER : LOADER_WITHOUT_NAVIGATION;
+		return '/bitrix/js/im/v2/lib/slider/src/images/loader-chats-without-navigation.svg';
 	}
 
 	isChatEmbeddedOnPage(): boolean

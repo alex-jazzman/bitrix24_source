@@ -1,6 +1,7 @@
 import { Core } from 'im.v2.application.core';
 import { ChannelManager } from 'im.v2.lib.channel';
 import { CopilotManager } from 'im.v2.lib.copilot';
+import { AiAssistantManager } from 'im.v2.lib.ai-assistant';
 import { ChatType, MessageComponent } from 'im.v2.const';
 
 // noinspection ES6PreferShortImport
@@ -8,6 +9,7 @@ import { MessageMenu } from './classes/message-base';
 import { ChannelMessageMenu } from './classes/channel';
 import { CommentsMessageMenu } from './classes/comments';
 import { CopilotMessageMenu } from './classes/copilot';
+import { AiAssistantMessageMenu } from './classes/ai-assistant';
 
 import type { ImModelChat } from 'im.v2.model';
 import type { MessageMenuContext } from 'im.v2.lib.menu';
@@ -80,6 +82,7 @@ export class MessageMenuManager
 		this.#defaultMenuByCallback.set(this.#isChannel.bind(this), ChannelMessageMenu);
 		this.#defaultMenuByCallback.set(this.#isComment.bind(this), CommentsMessageMenu);
 		this.#defaultMenuByCallback.set(this.#isCopilot.bind(this), CopilotMessageMenu);
+		this.#defaultMenuByCallback.set(this.#isAiAssistant.bind(this), AiAssistantMessageMenu);
 	}
 
 	#isCustomMenuAllowed(context: MessageMenuContext): boolean
@@ -138,6 +141,14 @@ export class MessageMenuManager
 	#isCopilot(context: MessageMenuContext): boolean
 	{
 		return (new CopilotManager()).isCopilotChat(context.dialogId);
+	}
+
+	#isAiAssistant(context: MessageMenuContext): boolean
+	{
+		const aiAssistantManager = new AiAssistantManager();
+
+		return aiAssistantManager.isAiAssistantChat(context.dialogId)
+			|| aiAssistantManager.isAiAssistantBot(context.dialogId);
 	}
 
 	#hasMenuForMessageType(messageType: MessageType): boolean

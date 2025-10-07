@@ -27,6 +27,5 @@ return [
 	'settings' => [
 		'isChatWindow' => defined('BX_DESKTOP') && BX_DESKTOP,
 		'v2' => !\Bitrix\Im\Settings::isLegacyChatActivated(),
-		'isAirDesignEnabled' => Locator::getMessenger()->getApplication()->isAirDesignEnabled(),
 	]
 ];

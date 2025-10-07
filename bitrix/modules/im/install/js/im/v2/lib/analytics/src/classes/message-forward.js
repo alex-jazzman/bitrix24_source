@@ -3,8 +3,9 @@ import { sendData } from 'ui.analytics';
 import { Core } from 'im.v2.application.core';
 import { getUserType } from 'im.v2.lib.analytics';
 
-import { AnalyticsEvent, AnalyticsSection, AnalyticsTool } from '../const';
+import { AnalyticsEvent, AnalyticsSection, AnalyticsSubSection, AnalyticsTool } from '../const';
 import { getCategoryByChatType } from '../helpers/get-category-by-chat-type';
+import { isNotes } from '../helpers/is-notes';
 
 import type { ImModelChat } from 'im.v2.model';
 
@@ -27,7 +28,7 @@ export class MessageForward
 {
 	#hasSearchedBefore: boolean = false;
 
-	onClickForward({ dialogId }: { dialogId: string })
+	onClickForward(dialogId: string): void
 	{
 		const chat: ImModelChat = Core.getStore().getters['chats/get'](dialogId);
 
@@ -35,12 +36,14 @@ export class MessageForward
 			tool: AnalyticsTool.im,
 			category: getCategoryByChatType(chat.type),
 			event: AnalyticsEvent.clickShare,
+			c_section: AnalyticsSection.chatWindow,
+			c_sub_section: AnalyticsSubSection.contextMenu,
 			p1: `chatType_${chat.type}`,
 			p2: getUserType(),
 		});
 	}
 
-	onStartSearch({ dialogId }: { dialogId: string })
+	onStartSearch({ dialogId }: { dialogId: string }): void
 	{
 		if (this.#hasSearchedBefore)
 		{
@@ -60,7 +63,7 @@ export class MessageForward
 		});
 	}
 
-	onSelectRecipientFromRecent({ dialogId, position }: RecipientParams)
+	onSelectRecipientFromRecent({ dialogId, position }: RecipientParams): void
 	{
 		this.#onSelectRecipient({
 			dialogId,
@@ -69,7 +72,7 @@ export class MessageForward
 		});
 	}
 
-	onSelectRecipientFromSearchResult({ dialogId, position }: RecipientParams)
+	onSelectRecipientFromSearchResult({ dialogId, position }: RecipientParams): void
 	{
 		this.#onSelectRecipient({
 			dialogId,
@@ -78,15 +81,15 @@ export class MessageForward
 		});
 	}
 
-	onClosePopup()
+	onClosePopup(): void
 	{
 		this.#hasSearchedBefore = false;
 	}
 
-	#onSelectRecipient({ dialogId, position, source }: RecipientParamsWithSource)
+	#onSelectRecipient({ dialogId, position, source }: RecipientParamsWithSource): void
 	{
 		const chat: ImModelChat = Core.getStore().getters['chats/get'](dialogId);
-		const type = this.#isNotesChat(dialogId) ? SelectRecipientSource.notes : source;
+		const type = isNotes(dialogId) ? SelectRecipientSource.notes : source;
 
 		sendData({
 			tool: AnalyticsTool.im,
@@ -98,10 +101,5 @@ export class MessageForward
 			p2: getUserType(),
 			p3: `position_${position}`,
 		});
-	}
-
-	#isNotesChat(dialogId: string): boolean
-	{
-		return Core.getUserId().toString() === dialogId;
 	}
 }

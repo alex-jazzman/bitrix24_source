@@ -122,7 +122,7 @@ export const BulkActionsPanel = {
 	{
 		onForwardButtonClick()
 		{
-			Analytics.getInstance().messageForward.onClickForward({ dialogId: this.dialogId });
+			Analytics.getInstance().messageForward.onClickForward(this.dialogId);
 			this.messagesIds = [...this.selectedMessages];
 			this.showForwardPopup = true;
 		},

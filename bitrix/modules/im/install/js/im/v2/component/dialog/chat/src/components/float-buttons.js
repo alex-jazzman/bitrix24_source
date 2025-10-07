@@ -108,11 +108,13 @@ export const FloatButtons = {
 			>
 				<slot name="additional-float-button"></slot>
 			</div>
-		</TransitionGroup>
-		<Transition name="scroll-button-transition">
-			<div v-if="showScrollButton" class="bx-im-dialog-chat__scroll-button-wrapper">
+			<div
+				v-if="showScrollButton"
+				key="scroll"
+				class="bx-im-dialog-chat__float-buttons_button"
+			>
 				<ScrollButton :dialogId="dialogId" @click="onScrollButtonClick" />
 			</div>
-		</Transition>
+		</TransitionGroup>
 	`,
 };

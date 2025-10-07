@@ -17,7 +17,7 @@ import {Call, CALL_STATE, MediaStreamsKinds, RecorderStatus} from '../call_api.j
 import {View} from '../view/view';
 import { MediaRenderer } from '../view/media-renderer';
 import {SimpleVAD} from './simple_vad'
-import {Hardware} from '../hardware';
+import {Hardware} from '../call_hardware';
 import Util from '../util'
 
 import {Event} from 'main.core';

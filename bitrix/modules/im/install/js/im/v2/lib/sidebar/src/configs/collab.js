@@ -2,13 +2,13 @@ import { Loc } from 'main.core';
 
 import { ChatType, SidebarMainPanelBlock } from 'im.v2.const';
 
-import { SidebarConfig } from '../classes/config';
+import { SidebarPreset } from '../classes/preset';
 
 import type { ImModelChat } from 'im.v2.model';
 
 const isCollab = (chatContext: ImModelChat) => chatContext.type === ChatType.collab;
 
-const collabConfig = new SidebarConfig({
+const collabPreset = new SidebarPreset({
 	blocks: [
 		SidebarMainPanelBlock.chat,
 		SidebarMainPanelBlock.info,
@@ -16,7 +16,7 @@ const collabConfig = new SidebarConfig({
 		SidebarMainPanelBlock.fileUnsortedList,
 		SidebarMainPanelBlock.collabHelpdesk,
 	],
-	headerTitle: Loc.getMessage('IM_SIDEBAR_COLLAB_HEADER_TITLE'),
+	getHeaderTitle: () => Loc.getMessage('IM_SIDEBAR_COLLAB_HEADER_TITLE'),
 });
 
-export { isCollab, collabConfig };
+export { isCollab, collabPreset };

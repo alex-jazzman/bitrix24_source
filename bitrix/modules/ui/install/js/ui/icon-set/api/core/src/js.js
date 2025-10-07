@@ -1,7 +1,7 @@
 import { Type, Tag, Dom } from 'main.core';
 import 'ui.design-tokens.air';
 
-import { Actions, Main, ContactCenter, Outline, CRM, Social, Animated, Editor, Special } from './icon';
+import { Actions, Main, ContactCenter, Outline, CRM, Social, Animated, Editor, Special, Solid } from './icon';
 import { IconHoverMode } from './icon-hover-mode';
 
 export type IconOptions = {
@@ -122,7 +122,7 @@ export class Icon
 
 	#checkIconExistence(iconName: string): boolean
 	{
-		const sets = [Actions, Main, ContactCenter, Outline, CRM, Social, Animated, Editor, Special];
+		const sets = [Actions, Main, ContactCenter, Outline, CRM, Social, Animated, Editor, Special, Solid];
 
 		return sets.some((set) => {
 			return Object.values(set).includes(iconName);

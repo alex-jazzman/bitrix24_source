@@ -1,4 +1,8 @@
+import { EventEmitter } from 'main.core.events';
+
+import { EventType } from 'im.v2.const';
 import { Utils } from 'im.v2.lib.utils';
+import { EscEventAction } from 'im.v2.lib.esc-manager';
 import { Spinner, SpinnerSize, SpinnerColor } from 'im.v2.component.elements.loader';
 
 import './search-input.css';
@@ -37,7 +41,7 @@ export const SearchInput = {
 			default: null,
 		},
 	},
-	emits: ['queryChange', 'inputFocus', 'inputBlur', 'keyPressed', 'close'],
+	emits: ['queryChange', 'inputFocus', 'inputBlur', 'keyPressed', 'close', 'closeByEsc'],
 	data(): JsonObject
 	{
 		return {
@@ -69,6 +73,14 @@ export const SearchInput = {
 			}
 		},
 	},
+	created()
+	{
+		EventEmitter.subscribe(EventType.key.onBeforeEscape, this.onBeforeEscape);
+	},
+	beforeUnmount()
+	{
+		EventEmitter.unsubscribe(EventType.key.onBeforeEscape, this.onBeforeEscape);
+	},
 	mounted()
 	{
 		if (this.delayForFocusOnStart === 0)
@@ -84,6 +96,24 @@ export const SearchInput = {
 	},
 	methods:
 	{
+		onBeforeEscape(): boolean
+		{
+			if (!this.hasFocus)
+			{
+				return EscEventAction.ignored;
+			}
+
+			if (this.isEmptyQuery)
+			{
+				this.closeByEsc();
+			}
+			else
+			{
+				this.onClearInput();
+			}
+
+			return EscEventAction.handled;
+		},
 		onInputUpdate()
 		{
 			this.$emit('queryChange', this.query);
@@ -110,24 +140,17 @@ export const SearchInput = {
 		{
 			if (Utils.key.isCombination(event, 'Escape'))
 			{
-				this.onEscapePressed();
-
 				return;
 			}
 
 			this.$emit('keyPressed', event);
 		},
-		onEscapePressed()
+		closeByEsc()
 		{
-			if (this.isEmptyQuery)
-			{
-				this.onCloseClick();
-				this.blur();
-			}
-			else
-			{
-				this.onClearInput();
-			}
+			this.query = '';
+			this.hasFocus = false;
+			this.$emit('queryChange', this.query);
+			this.$emit('closeByEsc');
 		},
 		focus()
 		{

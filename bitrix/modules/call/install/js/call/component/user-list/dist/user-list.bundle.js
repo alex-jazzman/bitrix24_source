@@ -80,7 +80,7 @@ this.BX.Call = this.BX.Call || {};
 				<div  v-for="user in displayedUsers" :key="user.id || 'remaining'" class="bx-call-user-list-component__user-item">
 					<img
 						v-if="user.avatar"
-						:src="encodeURI(user.avatar)"
+						:src="user.avatar"
 						:alt="user.name"
 						class="bx-call-user-list-component__user-avatar"
 						:class="{ '--border': this.withBorder }"

@@ -82,6 +82,11 @@ export const PinnedMessages = {
 			{
 				this.toggleList(false);
 			}
+
+			if (this.shouldResetIndex(this.upcomingMessageIndex))
+			{
+				this.resetHeaderIndex();
+			}
 		},
 	},
 	methods:
@@ -123,7 +128,7 @@ export const PinnedMessages = {
 
 		clickOnHeaderMessageFromList(index: number): void
 		{
-			// установка следующего индкеса вручную, т.к. выбор напрямую из списка
+			// manually setting the next index because the item is selected directly from the list
 			const nextIndex = index + 1;
 			this.upcomingMessageIndex = this.shouldResetIndex(nextIndex) ? 0 : nextIndex;
 			this.emitMessageClick(this.sortedPinnedMessages[index].id);

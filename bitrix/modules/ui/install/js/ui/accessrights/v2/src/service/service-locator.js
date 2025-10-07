@@ -20,6 +20,7 @@ export class ServiceLocator
 		return this.#cache.remember(`hint-${appGuid}`, () => {
 			return BX.UI.Hint.createInstance({
 				id: `ui-access-rights-v2-hint-${appGuid}`,
+				classNameIcon: 'ui-icon-set --o-question',
 				popupParameters: {
 					className: 'ui-access-rights-v2-popup-pointer-events ui-hint-popup',
 					autoHide: true,

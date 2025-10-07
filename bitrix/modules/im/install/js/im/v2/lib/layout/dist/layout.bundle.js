@@ -154,15 +154,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    });
 	  }
 	  isEmbeddedMode() {
-	    return this.isAirDesignEnabled() && this.isQuickAccessHidden();
-	  }
-	  isAirDesignEnabled() {
-	    const settings = main_core.Extension.getSettings('im.v2.lib.layout');
-	    return settings.get('isAirDesignEnabled', true);
+	    return this.isQuickAccessHidden();
 	  }
 	  isQuickAccessHidden() {
 	    const settings = main_core.Extension.getSettings('im.v2.lib.layout');
 	    return settings.get('isQuickAccessHidden', false);
+	  }
+	  isChatLayout(layoutName) {
+	    const chatLayouts = [im_v2_const.Layout.chat, im_v2_const.Layout.channel, im_v2_const.Layout.aiAssistant, im_v2_const.Layout.openlines, im_v2_const.Layout.openlinesV2, im_v2_const.Layout.collab];
+	    return chatLayouts.includes(layoutName);
 	  }
 	}
 	async function _onGoToMessageContext2(event) {
@@ -216,8 +216,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    name,
 	    entityId
 	  } = this.getLayout();
-	  const CHAT_LAYOUTS = new Set([im_v2_const.Layout.chat, im_v2_const.Layout.channel, im_v2_const.Layout.aiAssistant, im_v2_const.Layout.openlines, im_v2_const.Layout.openlinesV2, im_v2_const.Layout.collab]);
-	  if (CHAT_LAYOUTS.has(name) && entityId) {
+	  if (this.isChatLayout(name) && entityId) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _clearBulkActionsCollection)[_clearBulkActionsCollection]();
 	  }
 	}

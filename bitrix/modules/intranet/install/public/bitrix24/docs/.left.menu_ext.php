@@ -8,7 +8,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 }
 
 $collaborationMenu = $_SERVER['DOCUMENT_ROOT'] . '/collaboration/.left.menu_ext.php';
-if (defined('AIR_SITE_TEMPLATE') && !defined('SUB_MENU_EXT_CONTEXT') && File::isFileExists($collaborationMenu))
+if (!defined('SUB_MENU_EXT_CONTEXT') && File::isFileExists($collaborationMenu))
 {
 	include($collaborationMenu);
 

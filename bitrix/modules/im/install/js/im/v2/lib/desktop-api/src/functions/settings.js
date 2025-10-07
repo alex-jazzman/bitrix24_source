@@ -1,7 +1,3 @@
-import { Extension } from 'main.core';
-
-import type { SettingsCollection } from 'main.core.collections';
-
 export const DesktopSettingsKey = {
 	hideImTab: 'bxd_hide_im_tab',
 	smoothing: 'bxd_camera_smoothing',
@@ -19,10 +15,10 @@ export const settingsFunctions = {
 	},
 	isAirDesignEnabledInDesktop(): boolean
 	{
-		// duplicate setting from im.v2.lib.layout to minimize dependencies in external usages
-		const settings: SettingsCollection = Extension.getSettings('im.v2.lib.layout');
+		// there is only AIR design now. Temporary solution, need to remove it in the future
+		const isAirDesignEnabled = true;
 
-		return this.isDesktop() && settings.get('isAirDesignEnabled', true);
+		return this.isDesktop() && isAirDesignEnabled;
 	},
 	getCameraSmoothingStatus(): boolean
 	{

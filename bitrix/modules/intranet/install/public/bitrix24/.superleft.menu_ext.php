@@ -101,12 +101,12 @@ if (
 $calendarPath = "/company/personal/user/" . $userId . "/calendar/";
 $arMenu[] = array(
 	GetMessage("MENU_CALENDAR"),
-	defined('AIR_SITE_TEMPLATE') ? $calendarPath : "/calendar/",
+	$calendarPath,
 	array(
-		defined('AIR_SITE_TEMPLATE') ? "/calendar/" : $calendarPath,
+		"/calendar/",
 	),
 	array(
-		"real_link" => defined('AIR_SITE_TEMPLATE') ? null : getLeftMenuItemLink("top_menu_id_calendar", $calendarPath),
+		"real_link" => null,
 		"menu_item_id" => "menu_calendar",
 		"sub_link" => SITE_DIR."company/personal/user/".$userId."/calendar/?EVENT_ID=NEW",
 		"counter_id" => "calendar",
@@ -124,14 +124,14 @@ $diskPath =
 
 $arMenu[] = array(
 	GetMessage("MENU_DISK_SECTION_MSGVER_1"),
-	defined('AIR_SITE_TEMPLATE') ? $diskPath : "/docs/",
+	$diskPath,
 	array(
-		defined('AIR_SITE_TEMPLATE') ? "/docs/" : $diskPath,
+		"/docs/",
 		"/company/personal/user/".$userId."/disk/volume/",
 		"/company/personal/user/".$userId."/disk/"
 	),
 	array(
-		"real_link" => defined('AIR_SITE_TEMPLATE') ? null : getLeftMenuItemLink("top_menu_id_docs", $diskPath),
+		"real_link" => null,
 		"menu_item_id" => "menu_files",
 		"top_menu_id" => "top_menu_id_docs",
 	),
@@ -562,8 +562,7 @@ if (Loader::includeModule("bitrix24"))
 }
 
 if (
-	defined('AIR_SITE_TEMPLATE') === false && (IsModuleInstalled("bitrix24") && $GLOBALS['USER']->CanDoOperation('bitrix24_config')
-	|| !IsModuleInstalled("bitrix24") && $GLOBALS['USER']->IsAdmin())
+	!IsModuleInstalled("bitrix24") && $GLOBALS['USER']->IsAdmin()
 )
 {
 	$arMenu[] = array(

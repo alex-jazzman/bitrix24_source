@@ -55,6 +55,8 @@ import {BaseEvent, EventEmitter} from 'main.core.events';
 // pull and rest
 import { PullClient } from "pull.client";
 import { ImCallPullHandler } from "im.provider.pull";
+
+import { ConferenceChannel } from './conference-channel';
 import { CallRestClient } from "./utils/restclient";
 
 const BALLOON_OFFSET_CLASS_NAME = 'bx-call-control-notification-right-offset';
@@ -174,11 +176,25 @@ class ConferenceApplication
 
 		this.loopTimers = {};
 
-		this.pictureInPictureCallWindow = null;
-
 		this.isFileChooserActive = false;
 		this.pictureInPictureDebounceForOpen = null;
 		this.isWindowFocus = true;
+
+		if (DesktopApi.isDesktop())
+		{
+			ConferenceChannel.getInstance().setExecuter((callUuid) => {
+				const currentCallUuid = this.params.alias;
+				const hasView = Boolean(this.callView);
+
+				const hasActiveCall = currentCallUuid === callUuid && hasView;
+				if (hasActiveCall)
+				{
+					BXDesktopSystem.SetActiveTab();
+				}
+
+				return hasActiveCall;
+			});
+		}
 
 		this.initDesktopEvents()
 			.then(() => this.initAdditionalEvents())
@@ -983,7 +999,6 @@ class ConferenceApplication
 		}
 
 		this.callView.blockSwitchCamera();
-		this.pictureInPictureCallWindow?.blockButton('camera');
 	}
 
 	onUnblockCameraButton()
@@ -993,7 +1008,6 @@ class ConferenceApplication
 		}
 
 		this.callView.unblockSwitchCamera();
-		this.pictureInPictureCallWindow?.unblockButton('camera');
 	}
 
 	onBlockMicrophoneButton()
@@ -1003,7 +1017,6 @@ class ConferenceApplication
 		}
 
 		this.callView.blockSwitchMicrophone();
-		this.pictureInPictureCallWindow?.blockButton('microphone');
 	}
 
 	onUnblockMicrophoneButton()
@@ -1013,7 +1026,6 @@ class ConferenceApplication
 		}
 
 		this.callView.unblockSwitchMicrophone();
-		this.pictureInPictureCallWindow?.unblockButton('microphone');
 	}
 
 	checkAvailableCamera()
@@ -2927,11 +2939,6 @@ class ConferenceApplication
 		}
 
 		this.callView.blockSwitchCamera();
-
-		if (this.pictureInPictureCallWindow)
-		{
-			this.pictureInPictureCallWindow.blockButton('camera');
-		}
 	}
 
 	_onUnblockCameraButton()
@@ -2941,11 +2948,6 @@ class ConferenceApplication
 		}
 
 		this.callView.unblockSwitchCamera();
-
-		if (this.pictureInPictureCallWindow)
-		{
-			this.pictureInPictureCallWindow.unblockButton('camera');
-		}
 	}
 
 	_onBlockMicrophoneButton()
@@ -2955,11 +2957,6 @@ class ConferenceApplication
 		}
 
 		this.callView.blockSwitchMicrophone();
-
-		if (this.pictureInPictureCallWindow)
-		{
-			this.pictureInPictureCallWindow.blockButton('microphone');
-		}
 	}
 
 	_onUnblockMicrophoneButton()
@@ -2969,11 +2966,6 @@ class ConferenceApplication
 		}
 
 		this.callView.unblockSwitchMicrophone();
-
-		if (this.pictureInPictureCallWindow)
-		{
-			this.pictureInPictureCallWindow.unblockButton('microphone');
-		}
 	}
 
 	onCameraPublishing(e)
@@ -2991,8 +2983,6 @@ class ConferenceApplication
 		{
 			this.callView.updateButtons();
 		}
-
-		this.pictureInPictureCallWindow?.updateButtons();
 	}
 
 	onMicrophonePublishingd(e)
@@ -3015,8 +3005,6 @@ class ConferenceApplication
 		{
 			this.callView.updateButtons();
 		}
-
-		this.pictureInPictureCallWindow?.updateButtons();
 	}
 
 	onChangeStateCopilot()
@@ -4099,7 +4087,8 @@ class ConferenceApplication
 				muted: Call.Hardware.isMicrophoneMuted,
 				cropTop: 72,
 				cropBottom: 90,
-				shareMethod: 'im.disk.record.share'
+				shareMethod: 'im.disk.record.share',
+				callType: Analytics.AnalyticsType.videoconf,
 			});
 		}
 		else if (event.recordState.state === Call.View.RecordState.Stopped)
@@ -4890,4 +4879,4 @@ ConferenceApplication.FeatureState = {
 	Limited: 'limited',
 };
 
-export {ConferenceApplication};
+export { ConferenceApplication, ConferenceChannel };

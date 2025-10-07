@@ -555,13 +555,17 @@ BX.Intranet.SearchTitle = function(arParams)
 							children: [
 								BX.create("div", {
 									attrs: {
-										className: "search-title-top-list search-title-top-list-js"
+										className: "search-title-top-list search-title-top-list-js",
+										id: "search-title-top-list"
 									},
 									children: itemBlocks
 								}),
 								BX.create("div", {
-									attrs: {className: "search-title-top-arrow"}
-								})
+									attrs: {
+										className: "search-title-top-arrow search-title-top-arrow-hidden",
+										id: "search-title-top-arrow",
+									}
+								}),
 							]
 						})
 					]
@@ -570,7 +574,6 @@ BX.Intranet.SearchTitle = function(arParams)
 		});
 
 		rows.push(block);
-		//this.toggleGlobalCategories("open");
 
 		return rows;
 	};
@@ -1011,6 +1014,11 @@ BX.Intranet.SearchTitle = function(arParams)
 			if (BX.type.isDomNode(result) && result.innerHTML.length)
 			{
 				_this.RESULT.appendChild(result);
+
+				setTimeout(function() {
+					_this.toggleGlobalCategories("close");
+				}, 0);
+
 				if (BX.type.isDomNode(BX("search-title-block-tools")) && BX.type.isDomNode(BX("search-title-global-categories-wrap")))
 				{
 					BX.bind(BX("search-title-global-categories-wrap"), "mouseover", BX.proxy(function ()
@@ -1060,7 +1068,23 @@ BX.Intranet.SearchTitle = function(arParams)
 		var heightWrap = BX("search-title-global-categories-height-wrap");
 
 		if (!BX.type.isDomNode(wrap) || !BX.type.isDomNode(heightWrap))
+		{
 			return;
+		}
+
+		var arrow = BX("search-title-top-arrow");
+		var categoriesList = BX("search-title-top-list");
+
+		var category = BX.findChild(categoriesList, {className: "search-title-top-item"}, true, false);
+		var categoryMarginBottom = parseInt(window.getComputedStyle(category).marginBottom);
+		var minCategoriesListHeight = category.offsetHeight + categoryMarginBottom;
+
+		if (categoriesList.offsetHeight <= minCategoriesListHeight)
+		{
+			return;
+		}
+
+		BX.removeClass(arrow, "search-title-top-arrow-hidden");
 
 		if (mode == "open")
 		{

@@ -646,6 +646,39 @@ textarea {
 	opacity: 1;
 }
 
+.app__right-bar .air-user-profile::after {
+	content: "";
+	position: absolute;
+	width: 24px;
+	height: 1px;
+	bottom: 0;
+	left: 50%;
+	transform: translateX(-50%);
+	background: var(--ui-color-divider-accent);
+
+	opacity: 0;
+	animation-name: air-user-profile-divider-appear;
+	animation-duration: 1ms;
+	animation-timeline: scroll(y root);
+}
+
+.app__right-bar:is(.--transparent, .--overlay-mode) .air-user-profile::after {
+	animation-name: none;
+	opacity: 1;
+}
+
+@keyframes air-user-profile-divider-appear {
+	0% {
+		opacity: 0;
+	}
+	1% {
+		opacity: 1;
+	}
+	100% {
+		opacity: 1;
+	}
+}
+
 .air-user-profile__avatar {
 	display: flex;
 	align-items: center;

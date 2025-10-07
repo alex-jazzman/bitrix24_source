@@ -9,6 +9,8 @@
 
 	--im-dialog-chat__icon-color_float-button: #00ace3;
 	--im-dialog-chat__icon-color-hover_float-button: var(--im-color-palette-blue-60);
+	--im-dialog-chat__background-color_float-button-counter: var(--im-dialog-chat__icon-color_float-button);
+	--im-dialog-chat__background-color-hover_float-button-counter: var(--im-color-palette-blue-60);
 
 	--im-dialog-chat__font-color_new-message: var(--im-color-palette-gray-90);
 	--im-dialog-chat__font-color_scroll-button-counter: var(--im-color-palette-white-base);

@@ -21,10 +21,10 @@ export const HotkeySection = {
 		sendCombinationItems(): RadioOptionItem[]
 		{
 			const ctrlKey = Utils.platform.isMac() ? '&#8984;' : 'Ctrl';
-			const enterSubtext = this.loc('IM_CONTENT_SETTINGS_OPTION_HOTKEY_NEW_LINE', {
+			const enterSubtext = this.loc('IM_CONTENT_SETTINGS_OPTION_HOTKEY_NEW_LINE_MSGVER_1', {
 				'#HOTKEY#': 'Shift + Enter',
 			});
-			const ctrlEnterSubtext = this.loc('IM_CONTENT_SETTINGS_OPTION_HOTKEY_NEW_LINE', {
+			const ctrlEnterSubtext = this.loc('IM_CONTENT_SETTINGS_OPTION_HOTKEY_NEW_LINE_MSGVER_1', {
 				'#HOTKEY#': 'Enter',
 			});
 

@@ -216,13 +216,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      im_v2_lib_logger.Logger.warn(`TaskChatOpener: chat ${this.chatId} is loaded`);
 	    },
 	    registerSidebarConfig() {
-	      const sidebarConfig = new im_v2_lib_sidebar.SidebarConfig({
+	      const sidebarPreset = new im_v2_lib_sidebar.SidebarPreset({
 	        blocks: [im_v2_const.SidebarMainPanelBlock.task, im_v2_const.SidebarMainPanelBlock.info, im_v2_const.SidebarMainPanelBlock.fileList, im_v2_const.SidebarMainPanelBlock.meetingList],
-	        headerMenuEnabled: false
+	        isHeaderMenuEnabled: () => false
 	      });
 	      im_v2_lib_sidebar.SidebarManager.getInstance().registerConfig(chatContext => {
 	        return chatContext.type === this.chatType;
-	      }, sidebarConfig);
+	      }, sidebarPreset);
 	    },
 	    getChatService() {
 	      if (!this.chatService) {

@@ -1,7 +1,3 @@
-.bx-im-messenger__scope * {
-	box-sizing: border-box;
-}
-
 .bx-im-messenger__slider {
 	height: 100%;
 }
@@ -11,27 +7,6 @@
 	height: 100%;
 	display: flex;
 	box-sizing: border-box;
-	overflow: hidden;
-}
-
-.bx-im-messenger__container * {
-	box-sizing: border-box;
-}
-
-.bx-im-messenger__container *::-webkit-scrollbar {
-	width:6px;
-}
-.bx-im-messenger__container *::-webkit-scrollbar-thumb {
-	background-color: transparent;
-	border-radius: 32px;
-}
-.bx-im-messenger__container *:hover::-webkit-scrollbar-thumb {
-	background-color: rgba(82, 92, 105, .2);
-	border-radius: 32px;
-}
-
-body:not(.template-air) .bx-im-messenger__container.--desktop {
-	height: 100vh;
 	overflow: hidden;
 }
 

@@ -4,6 +4,7 @@
 jn.define('im/messenger/model/users/validator', (require, exports, module) => {
 	const { Type } = require('type');
 	const { UserType } = require('im/messenger/const');
+	const { Url } = require('im/messenger/lib/helper');
 
 	function validate(fields, options = {})
 	{
@@ -231,7 +232,11 @@ jn.define('im/messenger/model/users/validator', (require, exports, module) => {
 
 		if (result)
 		{
-			result = encodeURI(result);
+			const urlHelper = Url.createFromPath(result);
+			if (!urlHelper.isEncoded)
+			{
+				result = encodeURI(result);
+			}
 		}
 
 		return result;

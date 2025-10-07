@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,main_core,ui_iconSet_api_vue,im_v2_application_core,ui_vue3,im_v2_lib_textHighlighter,im_v2_lib_copilot,im_v2_const,im_v2_lib_permission) {
+(function (exports,main_core,ui_iconSet_api_vue,im_v2_application_core,ui_vue3,im_v2_lib_textHighlighter,im_v2_lib_copilot,main_core_events,im_v2_const,im_v2_lib_escManager,im_v2_lib_permission) {
 	'use strict';
 
 	const DialogSpecialType = {
@@ -408,6 +408,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      this.inputWidth = this.chatTitle.length;
 	    }
 	  },
+	  created() {
+	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.key.onBeforeEscape, this.onBeforeEscape);
+	  },
+	  beforeUnmount() {
+	    main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.key.onBeforeEscape, this.onBeforeEscape);
+	  },
 	  mounted() {
 	    this.chatTitle = this.dialog.name;
 	  },
@@ -416,9 +422,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      if (!this.canBeRenamed) {
 	        return;
 	      }
-	      if (!this.chatTitle) {
-	        this.chatTitle = this.dialog.name;
-	      }
+	      this.chatTitle = this.dialog.name;
 	      this.isEditing = true;
 	      await this.$nextTick();
 	      this.$refs.titleInput.focus();
@@ -434,10 +438,14 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      }
 	      this.$emit('newTitleSubmit', this.chatTitle);
 	    },
-	    onEditCancel() {
+	    onBeforeEscape() {
+	      if (!this.isEditing) {
+	        return im_v2_lib_escManager.EscEventAction.ignored;
+	      }
 	      this.isEditing = false;
 	      this.showEditIcon = false;
 	      this.chatTitle = this.dialog.name;
+	      return im_v2_lib_escManager.EscEventAction.handled;
 	    }
 	  },
 	  template: `
@@ -463,7 +471,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				@focus="$event.target.select()"
 				@blur="onNewTitleSubmit"
 				@keyup.enter="onNewTitleSubmit"
-				@keyup.esc="onEditCancel"
 				type="text"
 				class="bx-im-elements-editable-chat-title__input"
 				ref="titleInput"
@@ -478,5 +485,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	exports.MessageAuthorTitle = MessageAuthorTitle$$1;
 	exports.EditableChatTitle = EditableChatTitle$$1;
 
-}((this.BX.Messenger.v2.Component.Elements = this.BX.Messenger.v2.Component.Elements || {}),BX,BX.UI.IconSet,BX.Messenger.v2.Application,BX.Vue3,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Lib));
+}((this.BX.Messenger.v2.Component.Elements = this.BX.Messenger.v2.Component.Elements || {}),BX,BX.UI.IconSet,BX.Messenger.v2.Application,BX.Vue3,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Event,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib));
 //# sourceMappingURL=registry.bundle.js.map

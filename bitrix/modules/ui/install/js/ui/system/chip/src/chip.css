@@ -7,20 +7,20 @@
 /* size */
 .ui-chip {
 	--min-height: 32px;
-	--padding: 5px 12px;
+	--padding: 0 12px;
 	--font-size: var(--ui-font-size-md);
 	--line-height: var(--ui-font-line-height-sm);
 	--icon-size: 20px;
 }
 
 .ui-chip.--m {
-	--padding: 4px 10px;
+	--padding: 0 10px;
 	--min-height: 28px;
 }
 
 .ui-chip.--s {
 	--min-height: 24px;
-	--padding: 3px 10px;
+	--padding: 0 10px;
 	--font-size: var(--ui-font-size-sm);
 	--line-height: var(--ui-font-line-height-2xs);
 	--icon-size: 18px;
@@ -28,7 +28,7 @@
 
 .ui-chip.--xs {
 	--min-height: 20px;
-	--padding: 2px 10px;
+	--padding: 0 10px;
 	--font-size: var(--ui-font-size-xs);
 	--line-height: var(--ui-font-line-height-3xs);
 	--icon-size: 16px;
@@ -51,6 +51,8 @@
 
 	--clear-color: var(--text-color);
 	--box-shadow: none;
+
+	--cursor: pointer;
 }
 
 .ui-chip.--filled {
@@ -116,6 +118,12 @@
 	--box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
 }
 
+.ui-chip.--shadow-disabled {
+	--text-color: var(--ui-color-base-5);
+	--box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+	--cursor: default;
+}
+
 .ui-chip.--lock {
 	--text-color: var(--ui-color-base-5);
 	--background: var(--ui-color-base-7);
@@ -138,7 +146,7 @@
 	background: var(--background);
 	border: var(--ui-border-width-thin) solid var(--border-color);
 	box-shadow: var(--box-shadow);
-	cursor: pointer;
+	cursor: var(--cursor);
 	transition: border-color var(--transition-duration);
 }
 
@@ -171,11 +179,11 @@
 	margin: 0 var(--ui-space-inline-2xs) 0 var(--ui-space-stack-2xs2-neg);
 }
 
-.ui-chip.--no-text:not(.--with-clear) .ui-chip-icon {
+.ui-chip.--no-text:not(.--with-right-icon) .ui-chip-icon {
 	margin-right: var(--ui-space-stack-2xs2-neg);
 }
 
-.ui-chip.--no-text.--with-clear .ui-chip-icon {
+.ui-chip.--no-text.--with-right-icon .ui-chip-icon {
 	margin-right: var(--ui-space-inline-3xs);
 }
 
@@ -207,15 +215,15 @@
 }
 
 
-/* clear */
-.ui-chip-clear {
+/* right-icon */
+.ui-chip-right-icon {
 	--ui-icon-set__icon-color: var(--clear-color);
 	--ui-icon-set__icon-size: var(--icon-size);
 	margin-right: var(--ui-space-inline-2xs2-neg);
 	opacity: var(--ui-opacity-50);
 }
 
-.ui-chip-clear:hover {
+.ui-chip-right-icon:hover {
 	opacity: var(--ui-opacity-70);
 }
 

@@ -42,3 +42,4 @@ $MESS["IM_NOTIFIER_RECENT_PIN_LIMIT_ERROR"] = "Всего можно закре�
 $MESS["IM_NOTIFIER_RECENT_PIN_DEFAULT_ERROR"] = "Не удалось закрепить сообщение";
 $MESS["IM_NOTIFIER_RECENT_UNPIN_DEFAULT_ERROR"] = "Не удалось открепить сообщение";
 $MESS['IM_NOTIFIER_COLLAB_COLLABER_NOT_ACCEPT_INVITATION'] = "Не все гости присоединились к коллабе";
+$MESS["IM_NOTIFIER_COLLAB_COPY_LINK_FORBIDDEN_ERROR"] = "Владелец коллабы отключил возможность приглашать гостей";

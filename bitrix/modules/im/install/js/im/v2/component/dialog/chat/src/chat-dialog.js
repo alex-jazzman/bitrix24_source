@@ -573,7 +573,7 @@ export const ChatDialog = {
 		onPinnedMessageUnpin(messageId: number)
 		{
 			this.getMessageService().unpinMessage(this.dialog.chatId, messageId);
-			Analytics.getInstance().messagePins.onUnpin(this.dialog.chatId);
+			Analytics.getInstance().messagePins.onUnpin({ dialogId: this.dialogId });
 		},
 		onScroll(event: Event)
 		{

@@ -20,6 +20,8 @@ type CopilotChat = {
 	aiModel: string,
 }
 
+const AI_MODEL_DEFAULT_NAME = 'none';
+
 /* eslint-disable no-param-reassign */
 export class ChatsModel extends BuilderModel
 {
@@ -72,7 +74,9 @@ export class ChatsModel extends BuilderModel
 
 				const aiModelList = Core.getStore().getters['copilot/getAIModels'];
 
-				return aiModelList.find((aiModel) => aiModel.code === chat.aiModel);
+				const currentAiModel = aiModelList.find((aiModel) => aiModel.code === chat.aiModel);
+
+				return currentAiModel ?? AI_MODEL_DEFAULT_NAME;
 			},
 		};
 	}

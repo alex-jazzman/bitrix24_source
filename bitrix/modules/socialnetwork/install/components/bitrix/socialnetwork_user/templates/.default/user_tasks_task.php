@@ -17,6 +17,11 @@ use Bitrix\Main\Context;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\UI\Extension;
+use Bitrix\Tasks\Slider\Path\PathMaker;
+use Bitrix\Tasks\Slider\Path\TaskPathMaker;
+use Bitrix\Tasks\V2\FormV2Feature;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
 
 $pageId = "user_tasks";
 $taskId = (int)$arResult['VARIABLES']['task_id'];
@@ -27,6 +32,10 @@ $action =
 		: 'view'
 ;
 $usePadding = $action === 'edit' ?? false;
+$formFeatureEnabled = Loader::includeModule('tasks')
+	&& class_exists(FormV2Feature::class)
+	&& FormV2Feature::isOn()
+;
 
 if (Context::getCurrent()->getRequest()->get('IFRAME'))
 {
@@ -51,7 +60,7 @@ if (Context::getCurrent()->getRequest()->get('IFRAME'))
 			'#A_END#' => '</a>',
 		]);
 	}
-	elseif (Loader::includeModule('tasks'))
+	else if (Loader::includeModule('tasks'))
 	{
 		$APPLICATION->IncludeComponent(
 			'bitrix:ui.sidepanel.wrapper',
@@ -89,6 +98,35 @@ if (Context::getCurrent()->getRequest()->get('IFRAME'))
 			["HIDE_ICONS" => "Y"]
 		);
 	}
+}
+else if ($formFeatureEnabled && Context::getCurrent()->getRequest()->get('OLD_FORM') !== 'Y')
+{
+	$APPLICATION->SetPageProperty('BodyClass', 'no-all-paddings no-background');
+	$APPLICATION->SetTitle('');
+	Toolbar::deleteFavoriteStar();
+
+	$pathToList = (new TaskPathMaker(
+		entityId: $taskId,
+		ownerId: $userId,
+		context: PathMaker::PERSONAL_CONTEXT
+	))->makeEntitiesListPath();
+
+	Extension::load('tasks.v2.application.task-card');
+
+	?>
+	<script>
+		top.BX.ready(async function()
+		{
+			const { TaskCard } = await top.BX.Runtime.loadExtension('tasks.v2.application.task-card');
+
+			TaskCard.showFullCard({
+				taskId: <?= $taskId ?>,
+				closeCompleteUrl: "<?= $pathToList ?>",
+				url: window.location.href,
+			});
+		});
+	</script>
+	<?php
 }
 else
 {

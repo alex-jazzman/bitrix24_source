@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,ui_notification,im_v2_lib_layout,im_v2_lib_utils,im_v2_lib_channel,im_v2_lib_notifier,im_v2_component_elements_loader,im_v2_component_animation,ui_dialogs_tooltip,im_v2_component_elements_chatTitle,im_v2_component_entitySelector,main_popup,im_v2_component_elements_popup,im_v2_provider_service_recent,im_v2_lib_promo,im_v2_lib_invite,im_v2_component_content_chatForms_forms,im_v2_lib_feature,im_v2_component_elements_copilotRolesDialog,im_v2_provider_service_copilot,im_public,im_v2_lib_theme,im_v2_provider_service_aiAssistant,main_core,im_v2_application_core,im_v2_lib_analytics,main_core_events,im_v2_component_elements_avatar,im_v2_lib_permission,im_v2_component_content_elements,im_v2_component_elements_toggle,im_v2_provider_service_comments,im_v2_lib_logger,im_v2_model,im_v2_component_dialog_chat,im_v2_component_messageList,im_v2_lib_messageComponent,im_v2_const,im_v2_component_textarea,im_v2_component_elements_button,im_v2_provider_service_chat) {
+(function (exports,ui_notification,im_v2_lib_layout,im_v2_lib_utils,im_v2_lib_channel,im_v2_lib_notifier,ui_dialogs_tooltip,im_v2_component_entitySelector,main_popup,im_v2_component_elements_popup,im_v2_component_animation,im_v2_component_elements_loader,im_v2_component_elements_chatTitle,im_v2_provider_service_recent,im_v2_lib_promo,im_v2_lib_invite,im_v2_component_content_chatForms_forms,im_v2_lib_feature,im_v2_component_elements_copilotRolesDialog,im_v2_provider_service_copilot,im_public,im_v2_lib_theme,im_v2_provider_service_aiAssistant,main_core,im_v2_application_core,im_v2_lib_analytics,main_core_events,im_v2_component_elements_avatar,im_v2_lib_permission,im_v2_component_content_elements,im_v2_component_elements_toggle,im_v2_provider_service_comments,im_v2_lib_logger,im_v2_model,im_v2_component_dialog_chat,im_v2_component_messageList,im_v2_lib_messageComponent,im_v2_const,im_v2_component_textarea,im_v2_component_elements_button,im_v2_provider_service_chat) {
 	'use strict';
 
 	// @vue/component
@@ -1257,8 +1257,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	`
 	};
 
-	const AiAssistantContent = {
-	  name: 'AiAssistantContent',
+	const AiAssistantBotContent = {
+	  name: 'AiAssistantBotContent',
 	  components: {
 	    BaseChatContent: im_v2_component_content_elements.BaseChatContent,
 	    ChatTextarea: im_v2_component_textarea.ChatTextarea
@@ -1285,6 +1285,116 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					:withEdit="false"
 					:withUploadMenu="false"
 					:withSmileSelector="false"
+					@mounted="onTextareaMount"
+				/>
+			</template>
+		</BaseChatContent>
+	`
+	};
+
+	// @vue/component
+	const AiAssistantChatHeader = {
+	  name: 'AiAssistantChatHeader',
+	  components: {
+	    ChatHeader: im_v2_component_content_elements.ChatHeader,
+	    EditableChatTitle: im_v2_component_elements_chatTitle.EditableChatTitle,
+	    ChatAvatar: im_v2_component_elements_avatar.ChatAvatar,
+	    UserCounter: im_v2_component_content_elements.UserCounter,
+	    FadeAnimation: im_v2_component_animation.FadeAnimation,
+	    LineLoader: im_v2_component_elements_loader.LineLoader
+	  },
+	  inject: ['currentSidebarPanel'],
+	  props: {
+	    dialogId: {
+	      type: String,
+	      default: ''
+	    }
+	  },
+	  computed: {
+	    AvatarSize: () => im_v2_component_elements_avatar.AvatarSize,
+	    dialog() {
+	      return this.$store.getters['chats/get'](this.dialogId, true);
+	    },
+	    isAiAssistantMultiUserChat() {
+	      return this.dialog.userCounter > 2;
+	    }
+	  },
+	  methods: {
+	    loc(phraseCode, replacements = {}) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
+	    }
+	  },
+	  template: `
+		<ChatHeader
+			:dialogId="dialogId"
+			:withSearchButton="false"
+			:withCallButton="false"
+		>
+			<template #left>
+				<div class="bx-im-ai-assistant-chat-header__avatar">
+					<ChatAvatar
+						:avatarDialogId="dialogId"
+						:contextDialogId="dialogId"
+						:withSpecialTypes="false"
+						:size="AvatarSize.L"
+					/>
+				</div>
+				<div class="bx-im-chat-header__info">
+					<EditableChatTitle :dialogId="dialogId" @newTitleSubmit="$emit('newTitle', $event)" />
+					<LineLoader v-if="!dialog.inited" :width="50" :height="16" />
+					<FadeAnimation :duration="100">
+						<div v-if="dialog.inited" class="bx-im-chat-header__subtitle_container">
+							<UserCounter v-if="isAiAssistantMultiUserChat" :dialogId="dialogId" />
+							<div v-else class="bx-im-chat-header__subtitle_content">
+								{{ loc('IM_CONTENT_AI_ASSISTANT_CHAT_HEADER_TITLE') }}
+							</div>
+						</div>
+					</FadeAnimation>
+				</div>
+			</template>
+		</ChatHeader>
+	`
+	};
+
+	const AiAssistantChatContent = {
+	  name: 'AiAssistantChatContent',
+	  components: {
+	    BaseChatContent: im_v2_component_content_elements.BaseChatContent,
+	    ChatTextarea: im_v2_component_textarea.ChatTextarea,
+	    AiAssistantChatHeader
+	  },
+	  props: {
+	    dialogId: {
+	      type: String,
+	      required: true
+	    }
+	  },
+	  computed: {
+	    isAiAssistantMultiUserChat() {
+	      const dialog = this.$store.getters['chats/get'](this.dialogId, true);
+	      return dialog.userCounter > 2;
+	    }
+	  },
+	  methods: {
+	    loc(phraseCode) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode);
+	    }
+	  },
+	  template: `
+		<BaseChatContent :dialogId="dialogId">
+			<template #header>
+				<AiAssistantChatHeader :dialogId="dialogId" :key="dialogId" />
+			</template>
+			<template #textarea="{ onTextareaMount }">
+				<ChatTextarea
+					:dialogId="dialogId"
+					:key="dialogId"
+					:placeholder="loc('IM_CONTENT_AIASSISTANT_TEXTAREA_PLACEHOLDER')"
+					:withMarket="false"
+					:withEdit="false"
+					:withUploadMenu="false"
+					:withSmileSelector="false"
+					:withMention="isAiAssistantMultiUserChat"
 					@mounted="onTextareaMount"
 				/>
 			</template>
@@ -1874,10 +1984,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    isCopilot() {
 	      return this.dialog.type === im_v2_const.ChatType.copilot;
 	    },
-	    isAiAssistant() {
-	      const isAiAssistantBot = this.$store.getters['users/bots/isAiAssistant'](this.dialogId);
-	      const isAiAssistantChat = [im_v2_const.ChatType.aiAssistant, im_v2_const.ChatType.aiAssistantEntity].includes(this.dialog.type);
-	      return isAiAssistantBot || isAiAssistantChat;
+	    isAiAssistantChat() {
+	      return [im_v2_const.ChatType.aiAssistant, im_v2_const.ChatType.aiAssistantEntity].includes(this.dialog.type);
+	    },
+	    isAiAssistantBot() {
+	      return this.$store.getters['users/bots/isAiAssistant'](this.dialogId);
 	    },
 	    isGuest() {
 	      return this.dialog.role === im_v2_const.UserRole.guest;
@@ -1899,8 +2010,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        condition: this.isCopilot,
 	        component: CopilotContent
 	      }, {
-	        condition: this.isAiAssistant,
-	        component: AiAssistantContent
+	        condition: this.isAiAssistantBot,
+	        component: AiAssistantBotContent
+	      }, {
+	        condition: this.isAiAssistantChat,
+	        component: AiAssistantChatContent
 	      }];
 	    },
 	    contentComponent() {
@@ -2537,5 +2651,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.ChatContent = ChatContent;
 
-}((this.BX.Messenger.v2.Component.Content = this.BX.Messenger.v2.Component.Content || {}),BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Animation,BX.UI.Dialogs,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.EntitySelector,BX.Main,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Event,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Model,BX.Messenger.v2.Component.Dialog,BX.Messenger.v2.Component,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Component,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Service));
+}((this.BX.Messenger.v2.Component.Content = this.BX.Messenger.v2.Component.Content || {}),BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.UI.Dialogs,BX.Messenger.v2.Component.EntitySelector,BX.Main,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Animation,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Event,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Model,BX.Messenger.v2.Component.Dialog,BX.Messenger.v2.Component,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Component,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Service));
 //# sourceMappingURL=chat-content.bundle.js.map

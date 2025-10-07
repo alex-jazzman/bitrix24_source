@@ -4,7 +4,7 @@ import 'im.v2.css.tokens';
 
 import { Logger } from 'im.v2.lib.logger';
 import { ChatService } from 'im.v2.provider.service.chat';
-import { SidebarManager, SidebarConfig } from 'im.v2.lib.sidebar';
+import { SidebarManager, SidebarPreset } from 'im.v2.lib.sidebar';
 import { SidebarMainPanelBlock } from 'im.v2.const';
 
 import { TaskChatPlaceholder } from './placeholder/placeholder';
@@ -66,19 +66,19 @@ export const TaskChatOpener = {
 		},
 		registerSidebarConfig(): void
 		{
-			const sidebarConfig = new SidebarConfig({
+			const sidebarPreset = new SidebarPreset({
 				blocks: [
 					SidebarMainPanelBlock.task,
 					SidebarMainPanelBlock.info,
 					SidebarMainPanelBlock.fileList,
 					SidebarMainPanelBlock.meetingList,
 				],
-				headerMenuEnabled: false,
+				isHeaderMenuEnabled: () => false,
 			});
 
 			SidebarManager.getInstance().registerConfig((chatContext: ImModelChat) => {
 				return chatContext.type === this.chatType;
-			}, sidebarConfig);
+			}, sidebarPreset);
 		},
 		getChatService(): ChatService
 		{

@@ -1,4 +1,7 @@
-import { ActionByRole } from 'im.v2.const';
+import { EventEmitter } from 'main.core.events';
+
+import { ActionByRole, EventType } from 'im.v2.const';
+import { EscEventAction } from 'im.v2.lib.esc-manager';
 import { PermissionManager } from 'im.v2.lib.permission';
 
 import { ChatTitle } from '../registry';
@@ -55,6 +58,14 @@ export const EditableChatTitle = {
 			this.inputWidth = this.chatTitle.length;
 		},
 	},
+	created()
+	{
+		EventEmitter.subscribe(EventType.key.onBeforeEscape, this.onBeforeEscape);
+	},
+	beforeUnmount()
+	{
+		EventEmitter.unsubscribe(EventType.key.onBeforeEscape, this.onBeforeEscape);
+	},
 	mounted()
 	{
 		this.chatTitle = this.dialog.name;
@@ -68,10 +79,7 @@ export const EditableChatTitle = {
 				return;
 			}
 
-			if (!this.chatTitle)
-			{
-				this.chatTitle = this.dialog.name;
-			}
+			this.chatTitle = this.dialog.name;
 
 			this.isEditing = true;
 			await this.$nextTick();
@@ -93,11 +101,18 @@ export const EditableChatTitle = {
 
 			this.$emit('newTitleSubmit', this.chatTitle);
 		},
-		onEditCancel()
+		onBeforeEscape(): $Values<typeof EscEventAction>
 		{
+			if (!this.isEditing)
+			{
+				return EscEventAction.ignored;
+			}
+
 			this.isEditing = false;
 			this.showEditIcon = false;
 			this.chatTitle = this.dialog.name;
+
+			return EscEventAction.handled;
 		},
 	},
 	template: `
@@ -123,7 +138,6 @@ export const EditableChatTitle = {
 				@focus="$event.target.select()"
 				@blur="onNewTitleSubmit"
 				@keyup.enter="onNewTitleSubmit"
-				@keyup.esc="onEditCancel"
 				type="text"
 				class="bx-im-elements-editable-chat-title__input"
 				ref="titleInput"

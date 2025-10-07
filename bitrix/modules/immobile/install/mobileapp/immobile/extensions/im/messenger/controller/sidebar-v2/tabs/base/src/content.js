@@ -22,9 +22,11 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/base/src/content', (require, 
 			super(props);
 
 			const { dialogId, widgetNavigator, dialogLocator } = props;
-			this.dialogHelper = DialogHelper.createByDialogId(this.dialogId);
-			this.dialogId = dialogId;
+
 			assertDefined(dialogId, 'dialogId property is required');
+
+			this.dialogId = dialogId;
+			this.dialogHelper = DialogHelper.createByDialogId(this.dialogId);
 
 			/** @type {SidebarWidgetNavigator} */
 			this.widgetNavigator = widgetNavigator;
@@ -81,6 +83,7 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/base/src/content', (require, 
 		{
 			return View(
 				{
+					testId: `${this.props.testId}-container`,
 					style: {
 						flex: 1,
 					},

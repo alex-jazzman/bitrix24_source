@@ -2,13 +2,13 @@ import { Loc } from 'main.core';
 
 import { ChatType, SidebarMainPanelBlock } from 'im.v2.const';
 
-import { SidebarConfig } from '../classes/config';
+import { SidebarPreset } from '../classes/preset';
 
 import type { ImModelChat } from 'im.v2.model';
 
 const isComment = (chatContext: ImModelChat) => chatContext.type === ChatType.comment;
 
-const commentConfig = new SidebarConfig({
+const commentPreset = new SidebarPreset({
 	blocks: [
 		SidebarMainPanelBlock.post,
 		SidebarMainPanelBlock.info,
@@ -16,8 +16,8 @@ const commentConfig = new SidebarConfig({
 		SidebarMainPanelBlock.taskList,
 		SidebarMainPanelBlock.meetingList,
 	],
-	headerTitle: Loc.getMessage('IM_SIDEBAR_COMMENTS_HEADER_TITLE'),
-	headerMenuEnabled: false,
+	getHeaderTitle: () => Loc.getMessage('IM_SIDEBAR_COMMENTS_HEADER_TITLE'),
+	isHeaderMenuEnabled: () => false,
 });
 
-export { isComment, commentConfig };
+export { isComment, commentPreset };

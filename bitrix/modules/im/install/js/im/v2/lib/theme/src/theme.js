@@ -66,9 +66,10 @@ const ThemeManager = {
 			? BackgroundPatternColor.gray
 			: BackgroundPatternColor.white
 		;
+		const patternType = colorScheme.pattern;
 
 		const fileName = ImageFileByBackgroundId[backgroundId] ?? backgroundId;
-		const patternImage = `url('${IMAGE_FOLDER_PATH}/pattern-${patternColor}.svg')`;
+		const patternImage = `url('${IMAGE_FOLDER_PATH}/pattern-${patternColor}-${patternType}.svg')`;
 		const highlightImage = `url('${IMAGE_FOLDER_PATH}/${fileName}.png')`;
 
 		return {
@@ -106,6 +107,12 @@ const resolveBackgroundId = (dialogId?: string): string => {
 		return SpecialBackgroundId.copilot;
 	}
 
+	const isAiAssistant = isAiAssistantChat(dialogId, chatType);
+	if (isAiAssistant)
+	{
+		return SpecialBackgroundId.martaAI;
+	}
+
 	const chatBackground = Core.getStore().getters['chats/getBackgroundId'](dialogId);
 	const botBackground = Core.getStore().getters['users/bots/getBackgroundId'](dialogId);
 	if (SpecialBackgroundId[chatBackground])
@@ -119,4 +126,10 @@ const resolveBackgroundId = (dialogId?: string): string => {
 	}
 
 	return userBackground;
+};
+
+// TODO: move to aiAssistantManager
+const isAiAssistantChat = (dialogId: string, chatType: string): boolean => {
+	return Core.getStore().getters['users/bots/isAiAssistant'](dialogId)
+		|| [ChatType.aiAssistant, ChatType.aiAssistantEntity].includes(chatType);
 };

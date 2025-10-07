@@ -28,17 +28,17 @@ export class UserAdd
 {
 	#hasSearchedBefore: boolean = false;
 
-	onChatSidebarClick(dialogId: string)
+	onChatSidebarClick(dialogId: string): void
 	{
 		this.#onAddUserClick(dialogId, AnalyticsSection.chatSidebar);
 	}
 
-	onChatHeaderClick(dialogId: string)
+	onChatHeaderClick(dialogId: string): void
 	{
 		this.#onAddUserClick(dialogId, AnalyticsSection.chatHeader);
 	}
 
-	onStartSearch({ dialogId }: { dialogId: string })
+	onStartSearch({ dialogId }: { dialogId: string }): void
 	{
 		if (this.#hasSearchedBefore)
 		{
@@ -58,12 +58,12 @@ export class UserAdd
 		});
 	}
 
-	onClosePopup()
+	onClosePopup(): void
 	{
 		this.#hasSearchedBefore = false;
 	}
 
-	onSelectUserFromRecent({ dialogId, position }: SelectUserParams)
+	onSelectUserFromRecent({ dialogId, position }: SelectUserParams): void
 	{
 		this.#onSelectUser({
 			dialogId,
@@ -72,7 +72,7 @@ export class UserAdd
 		});
 	}
 
-	onSelectUserFromSearchResult({ dialogId, position }: SelectUserParams)
+	onSelectUserFromSearchResult({ dialogId, position }: SelectUserParams): void
 	{
 		this.#onSelectUser({
 			dialogId,
@@ -81,7 +81,7 @@ export class UserAdd
 		});
 	}
 
-	#onSelectUser({ dialogId, position, source }: SelectUserWithSourceParams)
+	#onSelectUser({ dialogId, position, source }: SelectUserWithSourceParams): void
 	{
 		const chat: ImModelChat = Core.getStore().getters['chats/get'](dialogId, true);
 
@@ -97,7 +97,7 @@ export class UserAdd
 		});
 	}
 
-	#onAddUserClick(dialogId: string, element: AnalyticsSection.chatSidebar | AnalyticsSection.chatHeader)
+	#onAddUserClick(dialogId: string, element: AnalyticsSection.chatSidebar | AnalyticsSection.chatHeader): void
 	{
 		const chat: ImModelChat = Core.getStore().getters['chats/get'](dialogId, true);
 

@@ -13,6 +13,7 @@ $MESS["INTRANET_SETTINGS_FIELD_LABEL_ALLOW_ADMIN_MESSAGE"] = 'Отправлят
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_ALLOW_URL_PREVIEW"] = 'Включить предпросмотр в ссылках';
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_CREATE_OVERDUE_CHATS"] = 'Создавать чат о просроченной задаче на всех участников';
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_SELECT_FILE_VIEWER"] = 'Просматривать документы с помощью';
+$MESS["INTRANET_SETTINGS_FIELD_LABEL_SELECT_UNIFIED_LINK_DEFAULT_ACCESS"] = 'Права по умолчанию для доступа к файлу по ссылке';
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_MAX_FILE_LIMIT"] = 'Максимальное количество записей в истории документа';
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_ALLOW_EDIT_DOC"] = 'Разрешить редактировать документы в ленте новостей, задачах, чатах или комментариях';
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_ALLOW_AUTO_CONNECT_DISK"] = 'Автоматически подключать диск группы при вступлении сотрудника в группу';

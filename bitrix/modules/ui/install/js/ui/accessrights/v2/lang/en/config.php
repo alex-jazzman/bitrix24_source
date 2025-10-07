@@ -7,6 +7,7 @@ $MESS["JS_UI_ACCESSRIGHTS_V2_ALL_ROLES"] = "All roles";
 $MESS["JS_UI_ACCESSRIGHTS_V2_ALL_SELECT_LABEL"] = "select all";
 $MESS["JS_UI_ACCESSRIGHTS_V2_APPLY_TO_ROLE"] = "Copy to existing role";
 $MESS["JS_UI_ACCESSRIGHTS_V2_APPLY_TO_ROLE_SUBTITLE"] = "Copies access permissions from this role to another one.";
+$MESS["JS_UI_ACCESSRIGHTS_V2_CANCEL"] = "Cancel";
 $MESS["JS_UI_ACCESSRIGHTS_V2_COLLAPSE_ALL_SECTIONS"] = "Collapse all sections";
 $MESS["JS_UI_ACCESSRIGHTS_V2_COPIED_ROLE_NAME"] = "Copy of #ORIGINAL#";
 $MESS["JS_UI_ACCESSRIGHTS_V2_COPY"] = "Clone";

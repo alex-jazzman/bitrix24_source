@@ -95,7 +95,7 @@ export const CopyInviteLink = {
 			}
 			catch
 			{
-				Notifier.onCopyLinkError();
+				Notifier.collab.onCopyLinkError();
 			}
 			finally
 			{

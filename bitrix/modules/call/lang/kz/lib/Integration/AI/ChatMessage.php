@@ -5,6 +5,7 @@ $MESS["CALL_NOTIFY_COPILOT_AGREEMENTS"] = "Қорытынды";
 $MESS["CALL_NOTIFY_COPILOT_AGREEMENTS_COMMON"] = "Не шешілді?";
 $MESS["CALL_NOTIFY_COPILOT_AGREEMENTS_MEETINGS"] = "Кездесулер";
 $MESS["CALL_NOTIFY_COPILOT_AGREEMENTS_TASKS"] = "Міндеттер";
+$MESS["CALL_NOTIFY_COPILOT_CONTINUE"] = "Қайталау";
 $MESS["CALL_NOTIFY_COPILOT_DETAIL"] = "[url=#CALL_DETAIL#]Кездесуді егжей-тегжейлі талдау[/url]";
 $MESS["CALL_NOTIFY_COPILOT_DISCLAIMER"] = "CoPilot жауаптары [url=#DISCLAIMER#]дұрыс болмауы[/url] мүмкін, маңызды ақпаратты тексеріңіз.";
 $MESS["CALL_NOTIFY_COPILOT_EFFICIENCY"] = "CoPilot қоңыраудың тиімділігін бағалады: #EFFICIENCY#";

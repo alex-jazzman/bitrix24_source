@@ -400,6 +400,28 @@ class Messenger
 		return getOpener()?.openNavigationItem({ id, entityId, target });
 	}
 
+	isEmbeddedMode(): boolean
+	{
+		const LayoutManager = Reflection.getClass('BX.Messenger.v2.Lib.LayoutManager');
+		if (!LayoutManager)
+		{
+			return false;
+		}
+
+		return LayoutManager.getInstance().isEmbeddedMode();
+	}
+
+	isMessengerSliderOpened(): boolean
+	{
+		const MessengerSlider = Reflection.getClass('BX.Messenger.v2.Lib.MessengerSlider');
+		if (!MessengerSlider)
+		{
+			return false;
+		}
+
+		return MessengerSlider.getInstance().isOpened();
+	}
+
 	async initApplication(
 		applicationName: ChatEmbeddedApplicationType,
 		config: JsonObject = {},

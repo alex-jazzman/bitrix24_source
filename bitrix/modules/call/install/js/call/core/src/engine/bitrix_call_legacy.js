@@ -15,7 +15,7 @@ import { CallEngineLegacy } from './engine_legacy';
 import {Call, CALL_STATE, MediaStreamsKinds} from '../call_api.js';
 import {View} from '../view/view';
 import {SimpleVAD} from './simple_vad'
-import {Hardware} from '../hardware';
+import {Hardware} from '../call_hardware';
 import Util from '../util'
 
 import {Event} from 'main.core';

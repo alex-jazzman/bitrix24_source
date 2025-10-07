@@ -51,6 +51,7 @@ export class App
 	#userGroupsModel: UserGroupsModel;
 	#accessRightsModel: AccessRightsModel;
 	#analyticsManager: AnalyticsManager;
+	#confirmationPopup: MessageBox | null = null;
 
 	constructor(options: AppConstructOptions)
 	{
@@ -163,8 +164,6 @@ export class App
 			}
 
 			this.#store.commit('application/setProgress', true);
-
-			this.#analyticsManager.onSaveAttempt();
 
 			this.#runSaveAjaxRequest()
 				.then(({ userGroups, accessRights }) => {
@@ -287,7 +286,12 @@ export class App
 
 		sliderEvent.denyAction();
 
-		const box = MessageBox.create({
+		if (this.#confirmationPopup && this.#confirmationPopup.getPopupWindow().isShown())
+		{
+			return;
+		}
+
+		this.#confirmationPopup = MessageBox.create({
 			mediumButtonSize: false,
 			title: Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_MODIFIED_CLOSE_WARNING_TITLE'),
 			message: Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_MODIFIED_CLOSE_WARNING'),
@@ -300,7 +304,8 @@ export class App
 					onclick: () => {
 						this.#analyticsManager.onCloseWithoutSave();
 						this.#isUserConfirmedClose = true;
-						box.close();
+						this.#confirmationPopup.close();
+						this.#confirmationPopup = null;
 
 						setTimeout(() => {
 							sliderEvent.getSlider().close();
@@ -309,8 +314,10 @@ export class App
 				}),
 				new CancelButton({
 					size: ButtonSize.SMALL,
+					text: Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_CANCEL'),
 					onclick: () => {
-						box.close();
+						this.#confirmationPopup.close();
+						this.#confirmationPopup = null;
 					},
 				}),
 			],
@@ -319,7 +326,7 @@ export class App
 			},
 		});
 
-		box.show();
+		this.#confirmationPopup.show();
 	}
 
 	draw(): void
@@ -380,6 +387,13 @@ export class App
 
 		Dom.clean(this.#renderTo);
 		this.#renderTo = null;
+
+		if (this.#confirmationPopup)
+		{
+			this.#confirmationPopup.close();
+			this.#confirmationPopup.getPopupWindow().destroy();
+			this.#confirmationPopup = null;
+		}
 	}
 
 	hasUnsavedChanges(): boolean

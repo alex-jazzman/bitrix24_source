@@ -9,14 +9,12 @@ jn.define('im/messenger/controller/dialog/lib/background/configuration', (requir
 	 */
 	const BackgroundConfiguration = {
 		light: {
-			[DialogBackgroundId.martaAi]: {
-				bottomColor: '#4596F9',
+			[DialogBackgroundId.aiAssistant]: {
+				bottomColor: '#FFFFFF',
 				gradientColors: [
-					'#4A86E6',
-					'#598AE4',
-					'#6598E4',
-					'#79B1E7',
-					'#6EB4E7',
+					'#C0DCEB',
+					'#C1DCEB',
+					'#BBD2EE',
 				],
 				angle: 45,
 			},
@@ -42,13 +40,11 @@ jn.define('im/messenger/controller/dialog/lib/background/configuration', (requir
 			},
 		},
 		dark: {
-			[DialogBackgroundId.martaAi]: {
-				bottomColor: '#1B1B1C',
+			[DialogBackgroundId.aiAssistant]: {
+				bottomColor: '#131313',
 				gradientColors: [
-					'#642E61B5',
-					'#643D6AB3',
-					'#64336298',
-					'#64316D99',
+					'#1A4752',
+					'#003A71',
 				],
 				angle: 45,
 			},

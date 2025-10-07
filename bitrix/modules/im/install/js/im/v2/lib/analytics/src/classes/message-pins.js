@@ -7,49 +7,37 @@ import { getCategoryByChatType } from '../helpers/get-category-by-chat-type';
 import { getChatType } from '../helpers/get-chat-type';
 
 import type { ImModelChat } from 'im.v2.model';
+import type { JsonObject } from 'main.core';
 
 export class MessagePins
 {
-	onPin(chatId: string)
+	onUnpin({ dialogId, eventParams = {} }: { dialogId: string, eventParams: JsonObject })
 	{
-		this.#onClick({
-			chatId,
-			event: AnalyticsEvent.pinMessage,
+		this.onSendData({
+			dialogId,
+			eventParams: {
+				event: AnalyticsEvent.unpinMessage,
+				...eventParams,
+			},
 		});
 	}
 
-	onUnpin(chatId: string)
+	onSendData({ dialogId, eventParams }: { dialogId: number, eventParams: JsonObject }): void
 	{
-		this.#onClick({
-			chatId,
-			event: AnalyticsEvent.unpinMessage,
-		});
-	}
-
-	onReachingLimit(chatId: string)
-	{
-		this.#onClick({
-			chatId,
-			event: AnalyticsEvent.pinnedMessageLimitException,
-		});
-	}
-
-	#onClick({ chatId, event }: { chatId: string, event: string })
-	{
-		const chat: ImModelChat = Core.getStore().getters['chats/get'](`chat${chatId}`, true);
+		const chat: ImModelChat = Core.getStore().getters['chats/get'](dialogId, true);
 
 		const params = {
 			tool: AnalyticsTool.im,
 			category: getCategoryByChatType(chat.type),
-			event,
 			p1: `chatType_${getChatType(chat)}`,
-			...this.#getAdditionalParams(event, chatId),
+			...this.#getEventSpecificParams(eventParams.event, chat.chatId),
+			...eventParams,
 		};
 
 		sendData(params);
 	}
 
-	#getAdditionalParams(event: string, chatId: string): Record<string, string>
+	#getEventSpecificParams(event: string, chatId: number): Record<string, string>
 	{
 		const pinnedCount: number = Core.getStore().getters['messages/pin/getPinned'](chatId).length;
 

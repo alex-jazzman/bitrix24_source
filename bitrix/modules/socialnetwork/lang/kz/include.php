@@ -101,7 +101,6 @@ $MESS["SONET_FEATURES_forum_answer"] = "Хабарламаларды кім жа
 $MESS["SONET_FEATURES_forum_full"] = "Форумды кім басқара алады";
 $MESS["SONET_FEATURES_forum_newtopic"] = "Жаңа тақырыптарды кім жасай алады";
 $MESS["SONET_FEATURES_forum_view"] = "Форумды кім көре алады";
-$MESS["SONET_FEATURES_marketplace"] = "Маркет";
 $MESS["SONET_FEATURES_marketplace_MSGVER_1"] = "Маркетплейс";
 $MESS["SONET_FEATURES_microblog"] = "Микроблог";
 $MESS["SONET_FEATURES_microblog_view_post"] = "Хабарламаларды кім көре алады";

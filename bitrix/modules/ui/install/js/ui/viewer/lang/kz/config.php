@@ -1,6 +1,5 @@
 <?php
 $MESS["JS_UI_VIEWER_DEFAULT_ERROR_TITLE"] = "Қате орын алды";
-$MESS["JS_UI_VIEWER_IMAGE_VIEW_FULL_SIZE"] = "Толықтай көрсету";
 $MESS["JS_UI_VIEWER_IMAGE_VIEW_FULL_SIZE_MSGVER_1"] = "Түпнұсқаны ашу";
 $MESS["JS_UI_VIEWER_ITEM_ACTION_DELETE"] = "Жою";
 $MESS["JS_UI_VIEWER_ITEM_ACTION_DOWNLOAD"] = "Жүктеу";

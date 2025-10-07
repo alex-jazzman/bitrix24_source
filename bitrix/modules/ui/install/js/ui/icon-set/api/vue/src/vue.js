@@ -1,4 +1,4 @@
-import { Set, Outline } from 'ui.icon-set.api.core';
+import { Set, Outline, Solid } from 'ui.icon-set.api.core';
 
 // @vue/component
 const BIcon = {
@@ -7,7 +7,7 @@ const BIcon = {
 			type: String,
 			required: true,
 			validator(value): boolean {
-				return Object.values(Set).includes(value) || Object.values(Outline).includes(value);
+				return Object.values(Set).includes(value) || Object.values(Outline).includes(value) || Object.values(Solid).includes(value);
 			},
 		},
 		color: {

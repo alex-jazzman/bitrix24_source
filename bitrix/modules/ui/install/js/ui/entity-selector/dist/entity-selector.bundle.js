@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.UI = this.BX.UI || {};
-(function (exports,main_popup,main_core_collections,main_core_events,main_core,main_loader) {
+(function (exports,main_popup,main_core_collections,ui_iconSet_outline,ui_iconSet_api_core,main_core_events,main_core,main_loader) {
 	'use strict';
 
 	let ItemNodeComparator = /*#__PURE__*/function () {
@@ -3394,12 +3394,17 @@ this.BX.UI = this.BX.UI || {};
 	  _t2,
 	  _t3,
 	  _t4;
+	function _classPrivateMethodInitSpec$2(obj, privateSet) { _checkPrivateRedeclaration$2(obj, privateSet); privateSet.add(obj); }
+	function _checkPrivateRedeclaration$2(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$2(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	var _isIconSet = /*#__PURE__*/new WeakSet();
 	let DefaultStub = /*#__PURE__*/function (_BaseStub) {
 	  babelHelpers.inherits(DefaultStub, _BaseStub);
 	  function DefaultStub(tab, options) {
 	    var _this;
 	    babelHelpers.classCallCheck(this, DefaultStub);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(DefaultStub).call(this, tab, options));
+	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _isIconSet);
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "content", null);
 	    return _this;
 	  }
@@ -3414,7 +3419,7 @@ this.BX.UI = this.BX.UI || {};
 	        if (main_core.Type.isNumber(this.getOption('iconOpacity'))) {
 	          iconOpacity = Math.min(100, Math.max(0, this.getOption('iconOpacity')));
 	        }
-	        const iconStyle = main_core.Type.isStringFilled(icon) ? `style="background-image: url('${encodeUrl(icon)}'); opacity: ${iconOpacity / 100};"` : '';
+	        const iconStyle = main_core.Type.isStringFilled(icon) && !_classPrivateMethodGet$2(this, _isIconSet, _isIconSet2).call(this, icon) ? `style="background-image: url('${encodeUrl(icon)}'); opacity: ${iconOpacity / 100};"` : '';
 	        const arrow = this.getOption('arrow', false) && this.getTab().getDialog().getActiveFooter() !== null;
 	        return main_core.Tag.render(_t$1 || (_t$1 = _$1`
 				<div class="ui-selector-tab-default-stub">
@@ -3423,7 +3428,6 @@ this.BX.UI = this.BX.UI || {};
 						<div class="ui-selector-tab-default-stub-title">${0}</div>
 						${0}
 					</div>
-					
 					${0}
 				</div>
 			`), iconStyle, title, subtitle ? main_core.Tag.render(_t2 || (_t2 = _$1`<div class="ui-selector-tab-default-stub-subtitle">${0}</div>`), subtitle) : '', arrow ? main_core.Tag.render(_t3 || (_t3 = _$1`<div class="ui-selector-tab-default-stub-arrow"></div>`)) : '');
@@ -3448,6 +3452,16 @@ this.BX.UI = this.BX.UI || {};
 	  }]);
 	  return DefaultStub;
 	}(BaseStub);
+	function _isIconSet2(icon) {
+	  try {
+	    new ui_iconSet_api_core.Icon({
+	      icon
+	    });
+	    return true;
+	  } catch {
+	    return false;
+	  }
+	}
 
 	let _$2 = t => t,
 	  _t$2;
@@ -3982,7 +3996,15 @@ this.BX.UI = this.BX.UI || {};
 	      main_core.Dom.style(this.getTitleContainer(), 'color', this.getPropertyByCurrentState('textColor'));
 	      main_core.Dom.style(this.getLabelContainer(), 'background-color', this.getPropertyByCurrentState('bgColor'));
 	      const icon = this.getPropertyByCurrentState('icon');
-	      main_core.Dom.style(this.getIconContainer(), 'background-image', icon ? `url('${encodeUrl(icon)}')` : null);
+	      main_core.Dom.clean(this.getIconContainer());
+	      try {
+	        main_core.Dom.append(new ui_iconSet_api_core.Icon({
+	          icon
+	        }).render(), this.getIconContainer());
+	        main_core.Dom.style(this.getIconContainer(), 'background-image', 'none');
+	      } catch {
+	        main_core.Dom.style(this.getIconContainer(), 'background-image', icon ? `url('${encodeUrl(icon)}')` : null);
+	      }
 	      const titleNode = this.getTitleNode();
 	      if (titleNode) {
 	        this.getTitleNode().renderTo(this.getTitleContainer());
@@ -4145,8 +4167,8 @@ this.BX.UI = this.BX.UI || {};
 	  return Tab;
 	}();
 
-	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration$2(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration$2(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration$3(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$3(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 
 	/**
 	 * @namespace BX.UI.Uploader
@@ -4181,8 +4203,8 @@ this.BX.UI = this.BX.UI || {};
 	}(main_core.BaseError);
 
 	let _Symbol$iterator;
-	function _classPrivateFieldInitSpec$1(obj, privateMap, value) { _checkPrivateRedeclaration$3(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration$3(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateFieldInitSpec$1(obj, privateMap, value) { _checkPrivateRedeclaration$4(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$4(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	var _errors = /*#__PURE__*/new WeakMap();
 	_Symbol$iterator = Symbol.iterator;
 	/**
@@ -4494,6 +4516,9 @@ this.BX.UI = this.BX.UI || {};
 	    value: function setDeselectable(flag) {
 	      if (main_core.Type.isBoolean(flag)) {
 	        this.deselectable = flag;
+	        if (this.isRendered()) {
+	          main_core.Dom.toggleClass(this.getContainer(), 'ui-tag-selector-tag-readonly', !flag);
+	        }
 	      }
 	    }
 	  }, {
@@ -8847,5 +8872,5 @@ this.BX.UI = this.BX.UI || {};
 	exports.DefaultStub = DefaultStub;
 	exports.EntityError = EntityError;
 
-}((this.BX.UI.EntitySelector = this.BX.UI.EntitySelector || {}),BX.Main,BX.Collections,BX.Event,BX,BX));
+}((this.BX.UI.EntitySelector = this.BX.UI.EntitySelector || {}),BX.Main,BX.Collections,BX,BX.UI.IconSet,BX.Event,BX,BX));
 //# sourceMappingURL=entity-selector.bundle.js.map

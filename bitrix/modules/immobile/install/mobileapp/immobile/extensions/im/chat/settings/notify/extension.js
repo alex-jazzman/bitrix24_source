@@ -117,10 +117,10 @@
 				table.delete().then(() =>
 				{
 					table.add({value : {
-						values: this.values,
-						pushTypes: this.pushTypes,
-						counterTypes: this.counterTypes
-					}}).then(() => {
+							values: this.values,
+							pushTypes: this.pushTypes,
+							counterTypes: this.counterTypes
+						}}).then(() => {
 						console.info(`SettingsNotify.saveCache: cache config updated (${new Date()-executeTime}ms)`);
 					});
 				})

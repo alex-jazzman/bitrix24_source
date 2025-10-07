@@ -170,9 +170,8 @@ export class RecentMenu extends BaseMenu
 				}
 				else
 				{
-					const dialog = this.store.getters['chats/get'](this.context.dialogId, true);
-					this.chatService.pinChat(this.context.dialogId);
-					Analytics.getInstance().onPinChat(dialog);
+					this.chatService.pinChat(dialogId);
+					Analytics.getInstance().chatPins.onPin(dialogId);
 				}
 				this.menuInstance.close();
 			},

@@ -187,7 +187,6 @@
 
 .bx-messenger-call-overlay.--fixed {
 	position: fixed !important;
-	z-index: 1000 !important;
 }
 
 .bx-messenger-call-overlay.bx-messenger-call-overlay-folded {height: 60px; top: 67px; opacity: 0.85}
@@ -767,6 +766,7 @@
 .bx-messenger-videocall-video-container {
 	height: 100%;
 	position: relative;
+	container-type: inline-size;
 }
 
 .bx-messenger-videocall-video {
@@ -785,8 +785,8 @@
 
 .bx-messenger-videocall-preview {
 	position: absolute;
-	bottom: var(--user-preview-container-padding, 0);
-	right: var(--user-preview-container-padding, 0);
+	bottom: 1.5cqw;
+	right: 1.5cqw;
 	width: 12%;
 }
 
@@ -7178,24 +7178,58 @@ body:has(.bx-call-picture-in-picture-window) {
 	padding: 28px var(--padding-container) var(--padding-container);
 	background: -o-linear-gradient(270.72deg, rgba(16, 23, 39, 0) 4.42%, rgba(16, 23, 39, 0.34) 22.09%, rgba(16, 23, 39, 0.72) 51.56%, #101727 89.93%);
 	background: linear-gradient(179.28deg, rgba(16, 23, 39, 0) 4.42%, rgba(16, 23, 39, 0.34) 22.09%, rgba(16, 23, 39, 0.72) 51.56%, #101727 89.93%);
-	-webkit-transform: translate(0, 100%);
-	    -ms-transform: translate(0, 100%);
-	        transform: translate(0, 100%);
-	-webkit-transition: -webkit-transform 0.5s ease;
-	transition: -webkit-transform 0.5s ease;
-	-o-transition: transform 0.5s ease;
-	transition: transform 0.5s ease;
-	transition: transform 0.5s ease, -webkit-transform 0.5s ease;
 	-webkit-box-align: start;
 	    -ms-flex-align: start;
 	        align-items: flex-start;
+
+	-webkit-transform: translate3d(0, 100%, 0);
+
+	        transform: translate3d(0, 100%, 0);
+	-webkit-backface-visibility: hidden;
+	        backface-visibility: hidden;
+	opacity: 0;
+	visibility: hidden;
+	pointer-events: none;
+
+	-webkit-transition:
+		opacity .5s ease,
+		visibility 0s linear .5s,
+		-webkit-transform .5s ease;
+
+	transition:
+		opacity .5s ease,
+		visibility 0s linear .5s,
+		-webkit-transform .5s ease;
+
+	-o-transition:
+		transform .5s ease,
+		opacity .5s ease,
+		visibility 0s linear .5s;
+
+	transition:
+		transform .5s ease,
+		opacity .5s ease,
+		visibility 0s linear .5s;
+
+	transition:
+		transform .5s ease,
+		opacity .5s ease,
+		visibility 0s linear .5s,
+		-webkit-transform .5s ease;
+	will-change: transform, opacity;
+	contain: paint;
 }
 
 .bx-call-picture-in-picture-window:hover .bx-call-picture-in-picture-window__actions,
 .bx-call-picture-in-picture-window_min .bx-call-picture-in-picture-window__actions {
-	-webkit-transform: translate(0, 0);
-	    -ms-transform: translate(0, 0);
-	        transform: translate(0, 0);
+	-webkit-transform: translate3d(0, 0, 0);
+	        transform: translate3d(0, 0, 0);
+	opacity: 1;
+	visibility: visible;
+	pointer-events: auto;
+	-webkit-transition-delay: 0s, 0s, 0s;
+	     -o-transition-delay: 0s, 0s, 0s;
+	        transition-delay: 0s, 0s, 0s;
 }
 
 .bx-call-picture-in-picture-window__actions .bx-messenger-videocall-panel-item-with-arrow-icon-microphone {

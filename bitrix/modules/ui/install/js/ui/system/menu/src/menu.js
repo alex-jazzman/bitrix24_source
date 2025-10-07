@@ -20,6 +20,7 @@ export class Menu
 		const defaultOptions: MenuOptions = {
 			noAllPaddings: true,
 			autoHide: true,
+			closeByEsc: true,
 			autoHideHandler: this.#shouldHide,
 			closeOnItemClick: true,
 		};

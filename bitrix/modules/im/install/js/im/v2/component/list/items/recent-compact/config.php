@@ -17,7 +17,6 @@ return [
 		'im.v2.css.tokens',
 		'ui.design-tokens.air',
 		'main.core',
-		'im.v2.lib.layout',
 		'ui.icon-set.api.vue',
 		'im.public',
 		'im.v2.application.core',

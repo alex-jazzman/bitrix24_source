@@ -9,44 +9,57 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  light: 'light',
 	  dark: 'dark'
 	});
+	const ThemePattern = Object.freeze({
+	  default: 'default',
+	  martaAI: 'marta-ai'
+	});
 	const SelectableBackground = Object.freeze({
 	  // dark ones
 	  1: {
 	    color: '#9fcfff',
-	    type: ThemeType.dark
+	    type: ThemeType.dark,
+	    pattern: ThemePattern.default
 	  },
 	  2: {
 	    color: '#81d8bf',
-	    type: ThemeType.dark
+	    type: ThemeType.dark,
+	    pattern: ThemePattern.default
 	  },
 	  3: {
 	    color: '#7fadd1',
-	    type: ThemeType.dark
+	    type: ThemeType.dark,
+	    pattern: ThemePattern.default
 	  },
 	  4: {
 	    color: '#7a90b6',
-	    type: ThemeType.dark
+	    type: ThemeType.dark,
+	    pattern: ThemePattern.default
 	  },
 	  5: {
 	    color: '#5f9498',
-	    type: ThemeType.dark
+	    type: ThemeType.dark,
+	    pattern: ThemePattern.default
 	  },
 	  6: {
 	    color: '#799fe1',
-	    type: ThemeType.dark
+	    type: ThemeType.dark,
+	    pattern: ThemePattern.default
 	  },
 	  // light ones
 	  7: {
 	    color: '#cfeefa',
-	    type: ThemeType.light
+	    type: ThemeType.light,
+	    pattern: ThemePattern.default
 	  },
 	  9: {
 	    color: '#efded3',
-	    type: ThemeType.light
+	    type: ThemeType.light,
+	    pattern: ThemePattern.default
 	  },
 	  11: {
 	    color: '#eff4f6',
-	    type: ThemeType.light
+	    type: ThemeType.light,
+	    pattern: ThemePattern.default
 	  }
 	});
 	const SpecialBackgroundId = {
@@ -58,11 +71,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const SpecialBackground = {
 	  [SpecialBackgroundId.collab]: {
 	    color: '#76c68b',
-	    type: ThemeType.dark
+	    type: ThemeType.dark,
+	    pattern: ThemePattern.default
 	  },
 	  [SpecialBackgroundId.martaAI]: {
-	    color: '#4596f9',
-	    type: ThemeType.dark
+	    color: '#0277ff',
+	    type: ThemeType.dark,
+	    pattern: ThemePattern.martaAI
 	  },
 	  [SpecialBackgroundId.copilot]: SelectableBackground[COPILOT_BACKGROUND_ID]
 	};
@@ -103,8 +118,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      return {};
 	    }
 	    const patternColor = colorScheme.type === ThemeType.light ? BackgroundPatternColor.gray : BackgroundPatternColor.white;
+	    const patternType = colorScheme.pattern;
 	    const fileName = (_ImageFileByBackgroun = ImageFileByBackgroundId[backgroundId]) != null ? _ImageFileByBackgroun : backgroundId;
-	    const patternImage = `url('${IMAGE_FOLDER_PATH}/pattern-${patternColor}.svg')`;
+	    const patternImage = `url('${IMAGE_FOLDER_PATH}/pattern-${patternColor}-${patternType}.svg')`;
 	    const highlightImage = `url('${IMAGE_FOLDER_PATH}/${fileName}.png')`;
 	    return {
 	      backgroundColor: colorScheme.color,
@@ -135,6 +151,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  if (chatType === im_v2_const.ChatType.copilot) {
 	    return SpecialBackgroundId.copilot;
 	  }
+	  const isAiAssistant = isAiAssistantChat(dialogId, chatType);
+	  if (isAiAssistant) {
+	    return SpecialBackgroundId.martaAI;
+	  }
 	  const chatBackground = im_v2_application_core.Core.getStore().getters['chats/getBackgroundId'](dialogId);
 	  const botBackground = im_v2_application_core.Core.getStore().getters['users/bots/getBackgroundId'](dialogId);
 	  if (SpecialBackgroundId[chatBackground]) {
@@ -144,6 +164,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    return SpecialBackgroundId[botBackground];
 	  }
 	  return userBackground;
+	};
+
+	// TODO: move to aiAssistantManager
+	const isAiAssistantChat = (dialogId, chatType) => {
+	  return im_v2_application_core.Core.getStore().getters['users/bots/isAiAssistant'](dialogId) || [im_v2_const.ChatType.aiAssistant, im_v2_const.ChatType.aiAssistantEntity].includes(chatType);
 	};
 
 	exports.SelectableBackground = SelectableBackground;

@@ -220,7 +220,11 @@ export const AddGuestsTab = {
 							@openLanguageSelector="$emit('openLanguageSelector')"
 							@closeLanguageSelector="$emit('closeLanguageSelector')"
 						/>
-						<CopyInviteLink :collabId="collabId" :dialogId="dialogId" :langCode="invitationLangCode"/>
+						<CopyInviteLink 
+							:collabId="collabId"
+							:dialogId="dialogId"
+							:langCode="invitationLangCode"
+						/>
 						<div class="bx-im-add-to-collab__invite-block">
 							<span class="bx-im-add-to-collab__invite-block-title --ellipsis">
 								{{ preparedInvitationTitle }}

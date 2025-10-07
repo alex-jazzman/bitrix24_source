@@ -141,6 +141,42 @@ this.BX = this.BX || {};
 	  }]);
 	  return BackendForTrackedObject;
 	}(Backend);
+	var BackendForUnifiedLink = /*#__PURE__*/function (_Backend2) {
+	  babelHelpers.inherits(BackendForUnifiedLink, _Backend2);
+	  function BackendForUnifiedLink() {
+	    babelHelpers.classCallCheck(this, BackendForUnifiedLink);
+	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(BackendForUnifiedLink).apply(this, arguments));
+	  }
+	  babelHelpers.createClass(BackendForUnifiedLink, null, [{
+	    key: "disableExternalLink",
+	    value: function disableExternalLink(objectId) {
+	      BX.ajax.runAction('disk.api.UnifiedLinkActions.disableExternalLink', {
+	        data: {
+	          uniqueCode: objectId
+	        }
+	      });
+	    }
+	  }, {
+	    key: "generateExternalLink",
+	    value: function generateExternalLink(objectId) {
+	      return main_core.ajax.runAction('disk.api.UnifiedLinkActions.generateExternalLink', {
+	        data: {
+	          uniqueCode: objectId
+	        }
+	      });
+	    }
+	  }, {
+	    key: "getExternalLink",
+	    value: function getExternalLink(objectId) {
+	      return main_core.ajax.runAction('disk.api.UnifiedLinkActions.getExternalLink', {
+	        data: {
+	          uniqueCode: objectId
+	        }
+	      });
+	    }
+	  }]);
+	  return BackendForUnifiedLink;
+	}(Backend);
 
 	var _templateObject, _templateObject2, _templateObject3, _templateObject4;
 	var Input = /*#__PURE__*/function () {
@@ -798,8 +834,47 @@ this.BX = this.BX || {};
 	  return InputSimpleForTrackedObject;
 	}(InputSimple);
 
+	var InputExtendedForUnifiedLink = /*#__PURE__*/function (_InputExtended) {
+	  babelHelpers.inherits(InputExtendedForUnifiedLink, _InputExtended);
+	  function InputExtendedForUnifiedLink(objectId, data) {
+	    var _this;
+	    babelHelpers.classCallCheck(this, InputExtendedForUnifiedLink);
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(InputExtendedForUnifiedLink).call(this, objectId, data));
+	    _this.objectId = objectId; // override for unified link, since here objectId is unique code represented as a string
+	    return _this;
+	  }
+	  babelHelpers.createClass(InputExtendedForUnifiedLink, [{
+	    key: "getBackend",
+	    value: function getBackend() {
+	      return BackendForUnifiedLink;
+	    }
+	  }]);
+	  return InputExtendedForUnifiedLink;
+	}(InputExtended);
+
+	var InputSimpleForUnifiedLink = /*#__PURE__*/function (_InputSimple) {
+	  babelHelpers.inherits(InputSimpleForUnifiedLink, _InputSimple);
+	  function InputSimpleForUnifiedLink(objectId, data) {
+	    babelHelpers.classCallCheck(this, InputSimpleForUnifiedLink);
+	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(InputSimpleForUnifiedLink).call(this, objectId, data));
+	  }
+	  babelHelpers.createClass(InputSimpleForUnifiedLink, [{
+	    key: "getBackend",
+	    value: function getBackend() {
+	      return BackendForUnifiedLink;
+	    }
+	  }], [{
+	    key: "getExtendedInputClass",
+	    value: function getExtendedInputClass() {
+	      return InputExtendedForUnifiedLink;
+	    }
+	  }]);
+	  return InputSimpleForUnifiedLink;
+	}(InputSimple);
+
 	exports.ExternalLink = InputSimple;
 	exports.ExternalLinkForTrackedObject = InputSimpleForTrackedObject;
+	exports.ExternalLinkForUnifiedLink = InputSimpleForUnifiedLink;
 
 }((this.BX.Disk = this.BX.Disk || {}),BX,BX,BX,BX.UI,BX.UI,BX,BX.Event,BX.Main,BX.UI,BX.Main));
 //# sourceMappingURL=external-link.bundle.js.map

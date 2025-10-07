@@ -8,7 +8,7 @@ import * as Buttons from './buttons';
 import {BackgroundDialog} from '../dialogs/background_dialog';
 import {CallUserMobile, MobileMenu, MobileSlider, UserSelectorMobile} from './mobile';
 import {CallUser} from './call-user';
-import {Hardware} from '../hardware';
+import {Hardware} from '../call_hardware';
 import {FloorRequest} from './floor-request';
 import {NotificationManager} from './notifications';
 import {DeviceSelector} from './device-selector';
@@ -20,6 +20,7 @@ import { MediaRenderer } from './media-renderer';
 import { PictureInPictureWindow } from './pictureInPictureWindow';
 import { Utils } from 'im.v2.lib.utils';
 import {UserSelector} from './user-selector';
+import { checkAndEncodeURI } from './tools';
 
 import { PromoManager } from 'im.v2.lib.promo';
 import { AhaMomentNotify } from './aha-moment-notify';
@@ -586,55 +587,6 @@ export class View
 		}, 5000);
 	}
 
-	toggleVisibilityChangeDocumentEvent(isActive)
-	{
-		const settings = (() =>
-		{
-			if (typeof document.hidden !== "undefined")
-			{
-				return {
-					hidden: 'hidden',
-					eventName: 'visibilitychange',
-				};
-			}
-			else if (typeof document.msHidden !== "undefined")
-			{
-				return {
-					hidden: 'msHidden',
-					eventName: 'msvisibilitychange',
-				};
-			}
-			else if (typeof document.webkitHidden !== "undefined")
-			{
-				return {
-					hidden: 'webkitHidden',
-					eventName: 'webkitvisibilitychange',
-				};
-			}
-			else
-			{
-				return null;
-			}
-		})();
-
-		if (settings) {
-			document[`${isActive ? 'add' : 'remove'}EventListener`](settings.eventName, () =>
-			{
-				this.isDocumentHidden = document[settings.hidden];
-
-				if (this.pictureInPictureCallWindow)
-				{
-					this.pictureInPictureCallWindow.setButtons(this.getPictureInPictureCallWindowGetButtonsList());
-					this.pictureInPictureCallWindow.updateButtons();
-				}
-
-				if (DesktopApi.isDesktop() && !this.destroyed) {
-					this.toggleStatePictureInPictureCallWindow(this.isDocumentHidden || this._isActivePiPFromController)
-				}
-			});
-		}
-	}
-
 	init()
 	{
 		this.getLimitation();
@@ -686,8 +638,6 @@ export class View
 
 		this.onMouseMoveHandler = this.toggleVisibilityEar.bind(this);
 		document.addEventListener('mousemove', this.onMouseMoveHandler);
-		// TODO: Disable PiP on minimize
-		// this.toggleVisibilityChangeDocumentEvent(true);
 
 		this.keyModifierForCss = Browser.isMac() ? '\\2318 + Shift' : 'Ctrl + Shift';
 
@@ -1436,8 +1386,7 @@ export class View
 
 		if (this.pictureInPictureCallWindow)
 		{
-			this.pictureInPictureCallWindow.setButtons(this.getPictureInPictureCallWindowGetButtonsList());
-			this.pictureInPictureCallWindow.updateButtons();
+			this.pictureInPictureCallWindow.setButtons(this.getPictureInPictureCallWindowGetButtonsList()).updateButtons();
 		}
 	};
 
@@ -1465,8 +1414,7 @@ export class View
 
 		if (this.pictureInPictureCallWindow)
 		{
-			this.pictureInPictureCallWindow.setButtons(this.getPictureInPictureCallWindowGetButtonsList());
-			this.pictureInPictureCallWindow.updateButtons();
+			this.pictureInPictureCallWindow.setButtons(this.getPictureInPictureCallWindowGetButtonsList()).updateButtons();
 		}
 	};
 
@@ -1480,7 +1428,7 @@ export class View
 		this.userId = parseInt(userId);
 		this.localUser.userModel.id = this.userId;
 		this.localUser.userModel.name = this.userData[this.userId] ? this.userData[this.userId].name : '';
-		this.localUser.userModel.avatar = this.userData[this.userId] ? this.userData[this.userId].avatar_hr : '';
+		this.localUser.userModel.avatar = this.userData[this.userId] ? checkAndEncodeURI(this.userData[this.userId].avatar_hr) : '';
 
 		this.userRegistry.push(this.localUser.userModel);
 	};
@@ -2996,8 +2944,7 @@ export class View
 
 		if (this.pictureInPictureCallWindow)
 		{
-			this.pictureInPictureCallWindow.setButtons(this.getPictureInPictureCallWindowGetButtonsList());
-			this.pictureInPictureCallWindow.updateButtons();
+			this.pictureInPictureCallWindow.setButtons(this.getPictureInPictureCallWindowGetButtonsList()).updateButtons();
 		}
 	};
 
@@ -3250,7 +3197,7 @@ export class View
 
 		if (this.pictureInPictureCallWindow)
 		{
-			this.pictureInPictureCallWindow.updateBlockButtons(this.getBlockedButtonsListPictureInPictureCallWindow());
+			this.pictureInPictureCallWindow.updateBlockButtons(this.getBlockedButtonsListPictureInPictureCallWindow()).updateButtons();
 		}
 	};
 
@@ -3275,7 +3222,7 @@ export class View
 
 		if (this.pictureInPictureCallWindow)
 		{
-			this.pictureInPictureCallWindow.updateBlockButtons(this.getBlockedButtonsListPictureInPictureCallWindow());
+			this.pictureInPictureCallWindow.updateBlockButtons(this.getBlockedButtonsListPictureInPictureCallWindow()).updateButtons();
 		}
 	};
 
@@ -4447,7 +4394,7 @@ export class View
 							...(Util.isDesktop() ? {
 								tooltip: {
 									position: 'top',
-									getText: () => Hardware.isMicrophoneMuted ? `${BX.message('IM_SPACE_HOTKEY')}\\A${this.keyModifierForCss} + A` : `${this.keyModifierForCss} + A`,
+									getText: () => Hardware.isMicrophoneMuted ? `${BX.message('IM_SPACE_HOTKEY')}\\A${' '}${this.keyModifierForCss} + A${' '}` : `${this.keyModifierForCss} + A`,
 								},
 							} : {}),
 						});
@@ -5131,8 +5078,7 @@ export class View
 
 		if (this.pictureInPictureCallWindow)
 		{
-			this.pictureInPictureCallWindow.setButtons(this.getPictureInPictureCallWindowGetButtonsList());
-			this.pictureInPictureCallWindow.updateButtons();
+			this.pictureInPictureCallWindow.setButtons(this.getPictureInPictureCallWindowGetButtonsList()).updateButtons();
 		}
 	}
 
@@ -5312,8 +5258,7 @@ export class View
 
 		if (this.pictureInPictureCallWindow)
 		{
-			this.pictureInPictureCallWindow.setButtons(this.getPictureInPictureCallWindowGetButtonsList());
-			this.pictureInPictureCallWindow.updateButtons();
+			this.pictureInPictureCallWindow.setButtons(this.getPictureInPictureCallWindowGetButtonsList()).updateButtons();
 		}
 
 	};
@@ -5515,11 +5460,6 @@ export class View
 			this.buttons.participantsMobile.setCount(this.getConnectedUserCount(true));
 		}
 
-		if (this.pictureInPictureCallWindow)
-		{
-			this.pictureInPictureCallWindow.updateButtons();
-		}
-
 		if (this.showCallcontrolPromoPopupTimeout)
 		{
 			clearTimeout(this.showCallcontrolPromoPopupTimeout);
@@ -5575,7 +5515,7 @@ export class View
 			if (userModel)
 			{
 				userModel.name = this.userData[userId].name;
-				userModel.avatar = this.userData[userId].avatar_hr;
+				userModel.avatar = checkAndEncodeURI(this.userData[userId].avatar_hr);
 			}
 		}
 	};
@@ -6859,8 +6799,6 @@ export class View
 
 		document.removeEventListener('mousemove', this.onMouseMoveHandler);
 
-		// TODO: Disable PiP on minimize
-		// this.toggleVisibilityChangeDocumentEvent(false);
 		this.resizeObserver.disconnect();
 		this.resizeObserver = null;
 		if (this.intersectionObserver)

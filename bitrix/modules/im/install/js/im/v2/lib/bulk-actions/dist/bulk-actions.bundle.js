@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,main_core_events,main_core,im_v2_const,im_v2_application_core,im_v2_lib_utils) {
+(function (exports,main_core_events,im_v2_const,im_v2_application_core,im_v2_lib_escManager) {
 	'use strict';
 
 	var _instance = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("instance");
@@ -31,6 +31,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    });
 	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.dialog.openBulkActionsMode, this.enableBulkMode.bind(this));
 	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.dialog.closeBulkActionsMode, this.disableBulkMode.bind(this));
+	    this.keyPressHandler = babelHelpers.classPrivateFieldLooseBase(this, _onKeyPressCloseBulkActions)[_onKeyPressCloseBulkActions].bind(this);
 	  }
 	  enableBulkMode(event) {
 	    const {
@@ -41,7 +42,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      messageId,
 	      dialogId
 	    });
-	    this.keyPressHandler = babelHelpers.classPrivateFieldLooseBase(this, _onKeyPressCloseBulkActions)[_onKeyPressCloseBulkActions].bind(this);
 	    babelHelpers.classPrivateFieldLooseBase(this, _bindEscHandler)[_bindEscHandler]();
 	  }
 	  disableBulkMode(event) {
@@ -59,15 +59,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	}
 	function _bindEscHandler2() {
-	  main_core.Event.bind(document, 'keydown', this.keyPressHandler);
+	  main_core_events.EventEmitter.subscribe(im_v2_const.EventType.key.onBeforeEscape, this.keyPressHandler);
 	}
 	function _unbindEscHandler2() {
-	  main_core.Event.unbind(document, 'keydown', this.keyPressHandler);
+	  main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.key.onBeforeEscape, this.keyPressHandler);
 	}
-	function _onKeyPressCloseBulkActions2(event) {
-	  if (im_v2_lib_utils.Utils.key.isCombination(event, 'Escape')) {
-	    this.clearCollection();
-	  }
+	function _onKeyPressCloseBulkActions2() {
+	  this.clearCollection();
+	  return im_v2_lib_escManager.EscEventAction.handled;
 	}
 	Object.defineProperty(BulkActionsManager, _instance, {
 	  writable: true,
@@ -76,5 +75,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.BulkActionsManager = BulkActionsManager;
 
-}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX.Event,BX,BX.Messenger.v2.Const,BX.Messenger.v2.Application,BX.Messenger.v2.Lib));
+}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX.Event,BX.Messenger.v2.Const,BX.Messenger.v2.Application,BX.Messenger.v2.Lib));
 //# sourceMappingURL=bulk-actions.bundle.js.map

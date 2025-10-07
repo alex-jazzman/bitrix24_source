@@ -272,8 +272,11 @@ this.BX.Disk = this.BX.Disk || {};
         babelHelpers.classCallCheck(this, Board);
         babelHelpers.defineProperty(this, "setupSharingButton", null);
         babelHelpers.defineProperty(this, "data", null);
+        babelHelpers.defineProperty(this, "isUnifiedLinkMode", false);
         this.setupSharingButton = ui_buttons.ButtonManager.createByUniqId(options.panelButtonUniqIds.setupSharing);
         this.data = options.boardData;
+        this.sharingControlType = options.sharingControlType;
+        this.isUnifiedLinkMode = options.isUnifiedLinkMode;
         this.bindEvents();
       }
       babelHelpers.createClass(Board, [{
@@ -299,18 +302,39 @@ this.BX.Disk = this.BX.Disk || {};
             eval(menuItem.dataset.blockerExternalLinkFeature);
             return;
           }
-          disk_externalLink.ExternalLink.showPopup(this.data.id);
+          if (this.isUnifiedLinkMode) {
+            disk_externalLink.ExternalLinkForUnifiedLink.showPopup(this.data.uniqueCode);
+          } else {
+            disk_externalLink.ExternalLink.showPopup(this.data.id);
+          }
         }
       }, {
         key: "handleClickSharing",
         value: function handleClickSharing() {
           this.setupSharingButton.getMenuWindow().close();
-          new disk_sharingLegacyPopup.LegacyPopup().showSharingDetailWithChangeRights({
+          this.showSharingRightsPopup();
+        }
+      }, {
+        key: "showSharingRightsPopup",
+        value: function showSharingRightsPopup() {
+          var popup = new disk_sharingLegacyPopup.LegacyPopup();
+          var popupOptions = {
             object: {
               id: this.data.id,
               name: this.data.name
             }
-          });
+          };
+          switch (this.sharingControlType) {
+            case disk_sharingLegacyPopup.SharingControlType.WITH_CHANGE_RIGHTS:
+            case disk_sharingLegacyPopup.SharingControlType.WITH_SHARING:
+              popup.showSharingDetailWithChangeRights(popupOptions);
+              break;
+            case disk_sharingLegacyPopup.SharingControlType.WITHOUT_EDIT:
+              popup.showSharingDetailWithoutEdit(popupOptions);
+              break;
+            default:
+              break;
+          }
         }
       }]);
       return Board;

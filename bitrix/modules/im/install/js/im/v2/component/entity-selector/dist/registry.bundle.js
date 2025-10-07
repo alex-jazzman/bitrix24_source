@@ -457,7 +457,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        await im_v2_lib_utils.Utils.text.copyToClipboard(link);
 	        im_v2_lib_notifier.Notifier.onCopyLinkComplete();
 	      } catch {
-	        im_v2_lib_notifier.Notifier.onCopyLinkError();
+	        im_v2_lib_notifier.Notifier.collab.onCopyLinkError();
 	      } finally {
 	        this.isCopyingInviteLink = false;
 	      }
@@ -833,7 +833,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 							@openLanguageSelector="$emit('openLanguageSelector')"
 							@closeLanguageSelector="$emit('closeLanguageSelector')"
 						/>
-						<CopyInviteLink :collabId="collabId" :dialogId="dialogId" :langCode="invitationLangCode"/>
+						<CopyInviteLink 
+							:collabId="collabId"
+							:dialogId="dialogId"
+							:langCode="invitationLangCode"
+						/>
 						<div class="bx-im-add-to-collab__invite-block">
 							<span class="bx-im-add-to-collab__invite-block-title --ellipsis">
 								{{ preparedInvitationTitle }}

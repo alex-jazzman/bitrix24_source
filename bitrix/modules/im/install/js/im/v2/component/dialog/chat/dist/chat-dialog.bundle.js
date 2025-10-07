@@ -733,6 +733,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      if (newValue.length === 1) {
 	        this.toggleList(false);
 	      }
+	      if (this.shouldResetIndex(this.upcomingMessageIndex)) {
+	        this.resetHeaderIndex();
+	      }
 	    }
 	  },
 	  methods: {
@@ -758,7 +761,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      this.incrementHeaderIndex();
 	    },
 	    clickOnHeaderMessageFromList(index) {
-	      // установка следующего индкеса вручную, т.к. выбор напрямую из списка
+	      // manually setting the next index because the item is selected directly from the list
 	      const nextIndex = index + 1;
 	      this.upcomingMessageIndex = this.shouldResetIndex(nextIndex) ? 0 : nextIndex;
 	      this.emitMessageClick(this.sortedPinnedMessages[index].id);
@@ -1157,12 +1160,14 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			>
 				<slot name="additional-float-button"></slot>
 			</div>
-		</TransitionGroup>
-		<Transition name="scroll-button-transition">
-			<div v-if="showScrollButton" class="bx-im-dialog-chat__scroll-button-wrapper">
+			<div
+				v-if="showScrollButton"
+				key="scroll"
+				class="bx-im-dialog-chat__float-buttons_button"
+			>
 				<ScrollButton :dialogId="dialogId" @click="onScrollButtonClick" />
 			</div>
-		</Transition>
+		</TransitionGroup>
 	`
 	};
 
@@ -1599,7 +1604,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    },
 	    onPinnedMessageUnpin(messageId) {
 	      this.getMessageService().unpinMessage(this.dialog.chatId, messageId);
-	      im_v2_lib_analytics.Analytics.getInstance().messagePins.onUnpin(this.dialog.chatId);
+	      im_v2_lib_analytics.Analytics.getInstance().messagePins.onUnpin({
+	        dialogId: this.dialogId
+	      });
 	    },
 	    onScroll(event) {
 	      this.closeDialogPopups();

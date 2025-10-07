@@ -17,6 +17,7 @@ return [
 		'im.v2.lib.channel',
 		'main.date',
 		'im.v2.lib.parser',
+		'call.application.conference',
 		'im.public',
 		'im.v2.component.elements.chat-title',
 		'im.v2.lib.call',

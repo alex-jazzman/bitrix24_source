@@ -8,6 +8,7 @@ jn.define('im/messenger/controller/recent/lib/renderer', (require, exports, modu
 	const { isEqual } = require('utils/object');
 	const { uniqBy } = require('utils/array');
 
+	const { Feature } = require('im/messenger/lib/feature');
 	const { RecentUiConverter } = require('im/messenger/lib/converter/ui/recent');
 	const { Worker } = require('im/messenger/lib/helper/worker');
 	const { getLogger } = require('im/messenger/lib/logger');
@@ -32,7 +33,9 @@ jn.define('im/messenger/controller/recent/lib/renderer', (require, exports, modu
 			this.ACTION_UPDATE = 'update';
 			this.ACTION_UPDATE_PREPARED_ITEMS = 'updatePreparedItems';
 			this.ACTION_FIND_ITEM = 'findItem';
+			this.ACTION_FIND_ITEM_BY_ID = 'findItemById';
 			this.ACTION_REMOVE = 'remove';
+			this.ACTION_REMOVE_ITEMS_BY_IDS = 'removeItemsByIds';
 			this.ACTION_REMOVE_CALL = 'removeCall';
 
 			/** @private */
@@ -165,6 +168,28 @@ jn.define('im/messenger/controller/recent/lib/renderer', (require, exports, modu
 		}
 
 		/**
+		 * @param {object} item
+		 * @param {(object)=>any} callback
+		 * @return {Promise<boolean>}
+		 */
+		async findItemById(item, callback = () => {})
+		{
+			try
+			{
+				const recentItem = await this.view.findItemById(item.id);
+				callback(recentItem);
+
+				return true;
+			}
+			catch (error)
+			{
+				logger.error(`${this.constructor.name}.findItemById`, error);
+
+				return false;
+			}
+		}
+
+		/**
 		 * @param {Array<object>} items
 		 * @return {boolean}
 		 */
@@ -179,13 +204,32 @@ jn.define('im/messenger/controller/recent/lib/renderer', (require, exports, modu
 
 		/**
 		 * @param {Array<object>} items
-		 * @return {boolean}
+		 * @return {Promise<boolean>}
 		 */
-		removeCall(items)
+		async removeItemsByIds(items)
 		{
-			items.forEach((item) => {
-				this.view.removeCallItem(item);
-			});
+			const ids = items.map((item) => item.id);
+			await this.view.removeItemsByIds(ids);
+
+			return true;
+		}
+
+		/**
+		 * @param {Array<object>} items
+		 * @return {Promise<boolean>}
+		 */
+		async removeCall(items)
+		{
+			if (Feature.isAsyncRecentOperationsAvailable)
+			{
+				await this.view.removeCallItems(items);
+			}
+			else
+			{
+				items.forEach((item) => {
+					this.view.removeCallItem(item);
+				});
+			}
 
 			return true;
 		}
@@ -207,7 +251,9 @@ jn.define('im/messenger/controller/recent/lib/renderer', (require, exports, modu
 
 				Object.keys(this.updateQueue[action]).forEach((itemId) => {
 					const itemData = this.updateQueue[action][itemId];
-					if (action === this.ACTION_FIND_ITEM && itemData?.callback)
+					const actionsWithCallback = [this.ACTION_FIND_ITEM, this.ACTION_FIND_ITEM_BY_ID];
+
+					if (actionsWithCallback.includes(action) && itemData?.callback)
 					{
 						this[action]({ id: itemId }, itemData.callback);
 					}
@@ -268,7 +314,9 @@ jn.define('im/messenger/controller/recent/lib/renderer', (require, exports, modu
 				this.ACTION_UPDATE,
 				this.ACTION_UPDATE_PREPARED_ITEMS,
 				this.ACTION_FIND_ITEM,
+				this.ACTION_FIND_ITEM_BY_ID,
 				this.ACTION_REMOVE,
+				this.ACTION_REMOVE_ITEMS_BY_IDS,
 				this.ACTION_REMOVE_CALL,
 			]);
 		}

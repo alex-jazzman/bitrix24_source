@@ -10,7 +10,7 @@ var { ChatSelector } = jn.require('im/chat/selector/chat');
 var { SelectorDialogListAdapter } = jn.require('im/chat/selector/adapter/dialog-list');
 var { Theme } = jn.require('im/lib/theme');
 var { Feature } = jn.require('im/messenger/lib/feature');
-const { getTopMenuNotificationsButton: _getTopMenuNotificationsButton } = jn.require('im/messenger/api/notifications-opener');
+var { getTopMenuNotificationsButton: _getTopMenuNotificationsButton } = jn.require('im/messenger/api/notifications-opener');
 
 var REVISION = 20; // api revision - sync with im/lib/revision.php
 

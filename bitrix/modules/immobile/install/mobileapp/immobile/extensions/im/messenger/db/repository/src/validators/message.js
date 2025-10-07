@@ -1,10 +1,11 @@
+/* eslint-disable no-param-reassign */
 /**
  * @module im/messenger/db/repository/validators/message
  */
 jn.define('im/messenger/db/repository/validators/message', (require, exports, module) => {
 	const { Type } = require('type');
 	const { DateHelper } = require('im/messenger/lib/helper');
-	const { ObjectUtils } = require('im/messenger/lib/utils');
+	const { ObjectUtils, Normalizer } = require('im/messenger/lib/utils');
 	const { clone } = require('utils/object');
 
 	function validate(messageData)
@@ -119,7 +120,7 @@ jn.define('im/messenger/db/repository/validators/message', (require, exports, mo
 
 		if (Type.isArray(message.attach))
 		{
-			result.attach = message.attach;
+			result.attach = Normalizer.normalizeMessageAttach(message.attach);
 		}
 
 		if (Type.isArray(message.keyboard))
@@ -258,8 +259,8 @@ jn.define('im/messenger/db/repository/validators/message', (require, exports, mo
 			}
 			else if (key === 'ATTACH')
 			{
-				attach = ObjectUtils.convertKeysToCamelCase(clone(value), true);
-				params.ATTACH = value;
+				attach = Normalizer.normalizeMessageAttach(value);
+				params.ATTACH = attach;
 			}
 			else if (key === 'KEYBOARD')
 			{

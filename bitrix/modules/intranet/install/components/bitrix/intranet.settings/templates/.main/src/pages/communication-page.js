@@ -330,6 +330,12 @@ export class CommunicationPage extends BaseSettingsPage
 			CommunicationPage.addToSectionHelper(fileViewerField, settingsSection);
 		}
 
+		if (this.hasValue('DISK_UNIFIED_LINK_DEFAULT_ACCESS_LEVEL'))
+		{
+			let unifiedLinkDefaultAccessLevelSelector = new Selector(this.getValue('DISK_UNIFIED_LINK_DEFAULT_ACCESS_LEVEL'));
+			CommunicationPage.addToSectionHelper(unifiedLinkDefaultAccessLevelSelector, settingsSection);
+		}
+
 		if (this.hasValue('DISK_LIMIT_PER_FILE'))
 		{
 			const messageNode = Tag.render`<span>${Loc.getMessage(

@@ -10,7 +10,7 @@ import { SidebarSkeleton } from '../../elements/skeleton/skeleton';
 import './css/main-panel.css';
 
 import type { JsonObject } from 'main.core';
-import type { BitrixVueComponentProps} from 'ui.vue3';
+import type { BitrixVueComponentProps } from 'ui.vue3';
 import type { ImModelChat } from 'im.v2.model';
 
 // @vue/component

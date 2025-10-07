@@ -23,6 +23,8 @@ SliderManager.registerSliderClass(
 		},
 		overlayOpacity: 52,
 		autoOffset: false,
+		copyLinkLabel: true,
+		newWindowLabel: true,
 	},
 	{
 		animationDuration: 200,

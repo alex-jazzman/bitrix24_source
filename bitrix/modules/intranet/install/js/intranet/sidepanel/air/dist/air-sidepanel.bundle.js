@@ -166,7 +166,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    if (this.getRightBar() && !this.isMessengerSlider()) {
 	      const stack = main_core.ZIndexManager.getOrAddStack(document.body);
 	      stack.register(this.getRightBar());
-	      main_core.Dom.addClass(this.getRightBar(), '--ui-context-edge-dark');
+	      main_core.Dom.addClass(this.getRightBar(), '--ui-context-edge-dark --overlay-mode');
 	    }
 	    return true;
 	  }
@@ -176,7 +176,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    if (this.getRightBar()) {
 	      const stack = main_core.ZIndexManager.getOrAddStack(document.body);
 	      stack.unregister(this.getRightBar());
-	      main_core.Dom.removeClass(this.getRightBar(), '--ui-context-edge-dark');
+	      main_core.Dom.removeClass(this.getRightBar(), '--ui-context-edge-dark --overlay-mode');
 	      main_core.Dom.style(this.getRightBar(), 'z-index', null); // ZIndexManager may not remove z-index, so we do it manually
 	    }
 	  }
@@ -241,14 +241,14 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    var _this$getRightBar;
 	    if (this.isMessengerSlider() || Slider.isMessengerOpenBeforeSlider(this)) {
 	      return {
-	        top: this.isMessengerSlider() ? 58 : 18,
+	        top: this.isMessengerSlider() ? 58 : 16,
 	        right: 18
 	      };
 	    }
 	    const rightBarWidth = ((_this$getRightBar = this.getRightBar()) == null ? void 0 : _this$getRightBar.offsetWidth) || 0;
 	    const rightMargin = babelHelpers.classPrivateFieldLooseBase(Slider, _verticalScrollWidth)[_verticalScrollWidth] + rightBarWidth;
 	    return {
-	      top: 18,
+	      top: 16,
 	      right: rightMargin
 	    };
 	  }
@@ -321,7 +321,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    return `linear-gradient(to bottom, ${overlayBgColor}${start} 0%, ${overlayBgColor}${end} 100%)`;
 	  },
 	  overlayOpacity: 52,
-	  autoOffset: false
+	  autoOffset: false,
+	  copyLinkLabel: true,
+	  newWindowLabel: true
 	}, {
 	  animationDuration: 200,
 	  label: {

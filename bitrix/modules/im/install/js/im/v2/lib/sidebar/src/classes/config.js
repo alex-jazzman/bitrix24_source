@@ -1,53 +1,76 @@
-import { Loc } from 'main.core';
-
-import { baseBlocks } from '../configs/base';
 import { BlockFilter } from './block-filter';
+
+import { SidebarPreset } from './preset';
 
 import type { SidebarMainPanelBlockType } from 'im.v2.const';
 
-type RawConfig = {
-	blocks: SidebarMainPanelBlockType[],
-	headerTitle: string,
-	headerMenuEnabled: boolean,
-};
-
 export class SidebarConfig
 {
+	#dialogId: string;
 	#blocks: SidebarMainPanelBlockType[];
-	#headerTitle: string;
-	#headerMenuEnabled: boolean;
+	#getHeaderTitle: () => string;
+	#getCustomDescription: () => string;
+	#areChatMembersEnabled: () => boolean;
+	#isHeaderMenuEnabled: () => boolean;
+	#areSharedChatsEnabled: boolean;
+	#isAutoDeleteEnabled: boolean;
 
-	constructor(rawConfig: RawConfig = {})
+	constructor(dialogId: string, preset: ?SidebarPreset)
 	{
-		const preparedConfig = { ...this.#getDefaultConfig(), ...rawConfig };
+		const presetInstance = preset ?? new SidebarPreset();
 
-		const { blocks, headerTitle, headerMenuEnabled } = preparedConfig;
+		const {
+			blocks,
+			getHeaderTitle,
+			isHeaderMenuEnabled,
+			getCustomDescription,
+			areSharedChatsEnabled,
+			areChatMembersEnabled,
+			isAutoDeleteEnabled,
+		} = presetInstance.get();
+
+		this.#dialogId = dialogId;
 		this.#blocks = blocks;
-		this.#headerTitle = headerTitle;
-		this.#headerMenuEnabled = headerMenuEnabled;
+		this.#getHeaderTitle = getHeaderTitle;
+		this.#areSharedChatsEnabled = areSharedChatsEnabled;
+		this.#areChatMembersEnabled = areChatMembersEnabled;
+		this.#getCustomDescription = getCustomDescription;
+		this.#isHeaderMenuEnabled = isHeaderMenuEnabled;
+		this.#isAutoDeleteEnabled = isAutoDeleteEnabled;
 	}
 
-	getBlocks(dialogId: string): SidebarMainPanelBlockType[]
+	getBlocks(): SidebarMainPanelBlockType[]
 	{
-		return (new BlockFilter(dialogId, this.#blocks)).run();
+		return (new BlockFilter(this.#dialogId, this.#blocks)).run();
 	}
 
 	getHeaderTitle(): string
 	{
-		return this.#headerTitle;
+		return this.#getHeaderTitle();
 	}
 
-	isMenuEnabled(): boolean
+	getCustomDescription(): string
 	{
-		return this.#headerMenuEnabled;
+		return this.#getCustomDescription(this.#dialogId);
 	}
 
-	#getDefaultConfig(): RawConfig
+	isHeaderMenuEnabled(): boolean
 	{
-		return {
-			blocks: baseBlocks,
-			headerTitle: Loc.getMessage('IM_SIDEBAR_HEADER_TITLE'),
-			headerMenuEnabled: true,
-		};
+		return this.#isHeaderMenuEnabled();
+	}
+
+	isAutoDeleteEnabled(): boolean
+	{
+		return this.#isAutoDeleteEnabled();
+	}
+
+	areSharedChatsEnabled(): boolean
+	{
+		return this.#areSharedChatsEnabled();
+	}
+
+	areChatMembersEnabled(): boolean
+	{
+		return this.#areChatMembersEnabled(this.#dialogId);
 	}
 }

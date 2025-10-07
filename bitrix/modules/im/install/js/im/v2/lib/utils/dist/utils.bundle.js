@@ -771,6 +771,30 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    };
 	    downloadFileWithDelay(0);
 	    main_core.Dom.remove(a);
+	  },
+	  getViewerDataForImageSrc({
+	    src,
+	    viewerGroupBy,
+	    objectId = null,
+	    context = im_v2_const.FileViewerContext.dialog,
+	    actions = '[]',
+	    title = '',
+	    viewer = null
+	  }) {
+	    const defaultAttributes = {
+	      viewerAttributes: {
+	        actions,
+	        objectId,
+	        src,
+	        title,
+	        viewer,
+	        viewerGroupBy,
+	        viewerType: 'image'
+	      },
+	      previewImageSrc: src,
+	      context
+	    };
+	    return this.getViewerDataAttributes(defaultAttributes);
 	  }
 	};
 

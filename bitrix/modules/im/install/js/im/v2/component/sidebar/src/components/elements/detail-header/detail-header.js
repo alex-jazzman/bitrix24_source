@@ -100,6 +100,7 @@ export const DetailHeader = {
 						:delayForFocusOnStart="delayForFocusOnStart"
 						@queryChange="$emit('changeQuery', $event)"
 						@close="$emit('toggleSearchPanelOpened', $event)"
+						@closeByEsc="$emit('toggleSearchPanelOpened', $event)"
 						class="bx-im-sidebar-search-header__input"
 					/>
 					<div v-else @click="$emit('toggleSearchPanelOpened', $event)" class="bx-im-sidebar-detail-header__search__icon --search"></div>

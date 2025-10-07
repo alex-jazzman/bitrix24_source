@@ -1,3 +1,5 @@
+export const PSEUDO_CHAT_TYPE_FOR_NOTES = 'notes';
+
 export const CopilotChatType = Object.freeze({
 	private: 'chatType_private',
 	multiuser: 'chatType_multiuser',
@@ -46,6 +48,14 @@ export const AnalyticsEvent = Object.freeze({
 	clickUpdate: 'click_update',
 	clickMoreInformation: 'click_more_information',
 	goToWeb: 'go_to_web',
+	copyMessage: 'copy_message',
+	clickReply: 'click_reply',
+	copyFile: 'copy_file',
+	copyLink: 'copy_link',
+	addToFav: 'add_to_fav',
+	seeLater: 'see_later',
+	select: 'select',
+	addFeedback: 'add_feedback',
 });
 
 export const AnalyticsTool = Object.freeze({
@@ -122,6 +132,7 @@ export const AnalyticsElement = Object.freeze({
 	videocall: 'videocall',
 	audiocall: 'audiocall',
 	startButton: 'start_button',
+	more: 'more',
 });
 
 export const AnalyticsStatus = Object.freeze({

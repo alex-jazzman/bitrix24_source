@@ -1,4 +1,4 @@
-import {Loc, Browser, Dom, Type, Text, Reflection} from 'main.core';
+import {Loc, Browser, Dom, Type, Text, Reflection, ZIndexManager} from 'main.core';
 import {EventEmitter} from 'main.core.events';
 import {Popup, Menu} from 'main.popup';
 import {MessageBox, MessageBoxButtons} from 'ui.dialogs.messagebox';
@@ -35,7 +35,7 @@ import {BitrixCall} from './engine/bitrix_call_legacy'
 import {VoximplantCall} from './engine/voximplant_call'
 import {PlainCall} from './engine/plain_call';
 import {SimpleVAD} from './engine/simple_vad';
-import {Hardware} from './hardware';
+import {Hardware} from './call_hardware';
 import {View} from './view/view';
 import {VideoStrategy} from './video_strategy';
 import Util from './util';
@@ -975,6 +975,11 @@ export class CallController extends EventEmitter
 		const externalContainer = this.messengerFacade.getContainer();
 		externalContainer.insertBefore(this.container, externalContainer.firstChild);
 
+		if (Util.isChatMountInPage())
+		{
+			ZIndexManager.getOrAddStack(document.body).register(this.container);
+		}
+
 		externalContainer.classList.add("bx-messenger-call");
 	}
 
@@ -982,6 +987,7 @@ export class CallController extends EventEmitter
 	{
 		if (this.container)
 		{
+			ZIndexManager.getStack(document.body).unregister(this.container);
 			Dom.remove(this.container);
 			this.container = null;
 			this.messengerFacade.getContainer().classList.remove("bx-messenger-call");
@@ -1473,6 +1479,11 @@ export class CallController extends EventEmitter
 			})
 			.then((callToken) =>
 			{
+				if (!this.isLegacyCall(provider) && !callToken)
+				{
+					throw new Error('Empty callToken');
+				}
+
 				const callEngine = isLegacyCall
 					? CallEngineLegacy
 					: CallEngine;
@@ -3260,6 +3271,11 @@ export class CallController extends EventEmitter
 
 	_onCallViewShow()
 	{
+		if (Util.isChatMountInPage())
+		{
+			ZIndexManager.getStack(document.body).bringToFront(this.container);
+		}
+
 		this.callView.setButtonCounter("chat", this.messengerFacade.getMessageCount());
 		this.callViewState = ViewState.Opened;
 	}
@@ -4757,11 +4773,6 @@ export class CallController extends EventEmitter
 		}
 
 		this.callView.blockSwitchCamera();
-
-		if (this.pictureInPictureCallWindow)
-		{
-			this.pictureInPictureCallWindow.blockButton('camera');
-		}
 	}
 
 	_onUnblockCameraButton()
@@ -4771,11 +4782,6 @@ export class CallController extends EventEmitter
 		}
 
 		this.callView.unblockSwitchCamera();
-
-		if (this.pictureInPictureCallWindow)
-		{
-			this.pictureInPictureCallWindow.unblockButton('camera');
-		}
 	}
 
 	_onBlockMicrophoneButton()
@@ -4785,11 +4791,6 @@ export class CallController extends EventEmitter
 		}
 
 		this.callView.blockSwitchMicrophone();
-
-		if (this.pictureInPictureCallWindow)
-		{
-			this.pictureInPictureCallWindow.blockButton('microphone');
-		}
 	}
 
 	_onUnblockMicrophoneButton()
@@ -4799,11 +4800,6 @@ export class CallController extends EventEmitter
 		}
 
 		this.callView.unblockSwitchMicrophone();
-
-		if (this.pictureInPictureCallWindow)
-		{
-			this.pictureInPictureCallWindow.unblockButton('microphone');
-		}
 	}
 
 	_onCameraPublishing(e)
@@ -4820,11 +4816,6 @@ export class CallController extends EventEmitter
 		if (this.callView)
 		{
 			this.callView.updateButtons();
-		}
-
-		if (this.pictureInPictureCallWindow)
-		{
-			this.pictureInPictureCallWindow.updateButtons();
 		}
 	}
 
@@ -4847,11 +4838,6 @@ export class CallController extends EventEmitter
 		if (this.callView)
 		{
 			this.callView.updateButtons();
-		}
-
-		if (this.pictureInPictureCallWindow)
-		{
-			this.pictureInPictureCallWindow.updateButtons();
 		}
 	}
 
@@ -5084,10 +5070,8 @@ export class CallController extends EventEmitter
 		}
 
 		const isNotSupportDevicesListBeforeStream = UnsupportedBrowserFeatures.isNotSupportDevicesListBeforeStream;
-
 		const constraints = { audio: isNotSupportDevicesListBeforeStream, video };
-		navigator.mediaDevices.getUserMedia(constraints)
-			.then((stream) =>
+			Hardware.getUserMedia(constraints).then((stream) =>
 			{
 				this.localStream = stream;
 
@@ -5823,7 +5807,8 @@ export class CallController extends EventEmitter
 				muted: Hardware.isMicrophoneMuted,
 				cropTop: 72,
 				cropBottom: 90,
-				shareMethod: 'im.disk.record.share'
+				shareMethod: 'im.disk.record.share',
+				callType: this.getCallType(),
 			});
 		}
 		else if (event.recordState.state === View.RecordState.Stopped)
@@ -6797,7 +6782,7 @@ export class CallController extends EventEmitter
 
 			if (audioOptions || videoOptions)
 			{
-				return navigator.mediaDevices.getUserMedia({
+				return Hardware.getUserMedia({
 					audio: audioOptions,
 					video: videoOptions,
 				})
@@ -6826,7 +6811,7 @@ export class CallController extends EventEmitter
 
 			if (videoOptions)
 			{
-				return navigator.mediaDevices.getUserMedia({
+				return Hardware.getUserMedia({
 					audio: false,
 					video: {
 						width: 320,

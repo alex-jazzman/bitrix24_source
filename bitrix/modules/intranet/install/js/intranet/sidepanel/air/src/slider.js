@@ -40,7 +40,7 @@ export class Slider extends BaseSlider
 		{
 			const stack = ZIndexManager.getOrAddStack(document.body);
 			stack.register(this.getRightBar());
-			Dom.addClass(this.getRightBar(), '--ui-context-edge-dark');
+			Dom.addClass(this.getRightBar(), '--ui-context-edge-dark --overlay-mode');
 		}
 
 		return true;
@@ -55,7 +55,7 @@ export class Slider extends BaseSlider
 		{
 			const stack = ZIndexManager.getOrAddStack(document.body);
 			stack.unregister(this.getRightBar());
-			Dom.removeClass(this.getRightBar(), '--ui-context-edge-dark');
+			Dom.removeClass(this.getRightBar(), '--ui-context-edge-dark --overlay-mode');
 			Dom.style(this.getRightBar(), 'z-index', null); // ZIndexManager may not remove z-index, so we do it manually
 		}
 	}
@@ -159,7 +159,7 @@ export class Slider extends BaseSlider
 		if (this.isMessengerSlider() || Slider.isMessengerOpenBeforeSlider(this))
 		{
 			return {
-				top: this.isMessengerSlider() ? 58 : 18,
+				top: this.isMessengerSlider() ? 58 : 16,
 				right: 18,
 			};
 		}
@@ -168,7 +168,7 @@ export class Slider extends BaseSlider
 		const rightMargin = Slider.#verticalScrollWidth + rightBarWidth;
 
 		return {
-			top: 18,
+			top: 16,
 			right: rightMargin,
 		};
 	}

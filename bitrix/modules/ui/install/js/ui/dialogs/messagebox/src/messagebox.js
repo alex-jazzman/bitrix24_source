@@ -136,6 +136,7 @@ export default class MessageBox
 	 * BX.UI.Dialogs.MessageBox.confirm('Message', 'Title', () => {});
 	 * BX.UI.Dialogs.MessageBox.confirm('Message', 'Title', () => {}, 'Proceed', () => {});
 	 * BX.UI.Dialogs.MessageBox.confirm('Message', 'Title', () => {}, 'Proceed', () => {}, 'Cancel');
+	 * BX.UI.Dialogs.MessageBox.confirm('Message', 'Title', () => {}, 'Proceed', () => {}, 'Cancel', true);
 	 */
 	static confirm(message: string, ...args): MessageBox
 	{
@@ -144,16 +145,17 @@ export default class MessageBox
 		let okCaption = null;
 		let cancelCallback = null;
 		let cancelCaption = null;
+		let useAirDesign = false;
 
 		if (args.length > 0)
 		{
-			if (Type.isString(args[0]))
+			if (Type.isString(args[0]) || Type.isNull(args[0]))
 			{
-				[title, okCallback, okCaption, cancelCallback, cancelCaption] = args;
+				[title, okCallback, okCaption, cancelCallback, cancelCaption, useAirDesign] = args;
 			}
 			else
 			{
-				[okCallback, okCaption, cancelCallback, cancelCaption] = args;
+				[okCallback, okCaption, cancelCallback, cancelCaption, useAirDesign] = args;
 			}
 		}
 
@@ -162,6 +164,7 @@ export default class MessageBox
 			title,
 			okCaption,
 			cancelCaption,
+			useAirDesign,
 			onOk: okCallback,
 			onCancel: cancelCallback,
 			buttons: BX.UI.Dialogs.MessageBoxButtons.OK_CANCEL,

@@ -3,44 +3,58 @@ export const ThemeType = Object.freeze({
 	dark: 'dark',
 });
 
+export const ThemePattern = Object.freeze({
+	default: 'default',
+	martaAI: 'marta-ai',
+});
+
 export const SelectableBackground = Object.freeze({
 	// dark ones
 	1: {
 		color: '#9fcfff',
 		type: ThemeType.dark,
+		pattern: ThemePattern.default,
 	},
 	2: {
 		color: '#81d8bf',
 		type: ThemeType.dark,
+		pattern: ThemePattern.default,
 	},
 	3: {
 		color: '#7fadd1',
 		type: ThemeType.dark,
+		pattern: ThemePattern.default,
 	},
 	4: {
 		color: '#7a90b6',
 		type: ThemeType.dark,
+		pattern: ThemePattern.default,
 	},
 	5: {
 		color: '#5f9498',
 		type: ThemeType.dark,
+		pattern: ThemePattern.default,
 	},
 	6: {
 		color: '#799fe1',
 		type: ThemeType.dark,
+		pattern: ThemePattern.default,
 	},
 	// light ones
 	7: {
 		color: '#cfeefa',
 		type: ThemeType.light,
+		pattern: ThemePattern.default,
 	},
 	9: {
 		color: '#efded3',
 		type: ThemeType.light,
+		pattern: ThemePattern.default,
 	},
 	11: {
 		color: '#eff4f6',
 		type: ThemeType.light,
+		pattern: ThemePattern.default,
 	},
 });
 
@@ -55,10 +69,12 @@ export const SpecialBackground = {
 	[SpecialBackgroundId.collab]: {
 		color: '#76c68b',
 		type: ThemeType.dark,
+		pattern: ThemePattern.default,
 	},
 	[SpecialBackgroundId.martaAI]: {
-		color: '#4596f9',
+		color: '#0277ff',
 		type: ThemeType.dark,
+		pattern: ThemePattern.martaAI,
 	},
 	[SpecialBackgroundId.copilot]: SelectableBackground[COPILOT_BACKGROUND_ID],
 };
@@ -71,5 +87,6 @@ export const ImageFileByBackgroundId = {
 
 export type BackgroundItem = {
 	color: string,
-	type: $Values<typeof ThemeType>
+	type: $Values<typeof ThemeType>,
+	pattern: $Values<typeof ThemePattern>,
 };

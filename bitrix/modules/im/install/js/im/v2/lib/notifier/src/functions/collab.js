@@ -80,4 +80,9 @@ export const CollabNotifier = {
 	{
 		showNotification(Loc.getMessage('IM_NOTIFIER_COLLAB_COLLABER_NOT_ACCEPT_INVITATION'));
 	},
+
+	onCopyLinkError(): void
+	{
+		showNotification(Loc.getMessage('IM_NOTIFIER_COLLAB_COPY_LINK_FORBIDDEN_ERROR'));
+	},
 };

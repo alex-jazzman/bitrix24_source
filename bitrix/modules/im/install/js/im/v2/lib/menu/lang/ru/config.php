@@ -26,6 +26,6 @@ $MESS['IM_LIB_MENU_USER_KICK_FROM_COLLAB'] = "Исключить из колла
 $MESS["IM_LIB_MENU_USER_MENTION"] = "Упомянуть";
 $MESS['IM_LIB_MENU_USER_WRITE'] = "Написать лично";
 
-$MESS["IM_LIB_MENU_COPILOT_FEEDBACK"] = "Обратная связь";
+$MESS["IM_LIB_MENU_AI_ASSISTANT_FEEDBACK"] = "Обратная связь";
 
 $MESS["IM_LIB_MENU_COMMENTS_OPEN_IN_CHANNEL"] = "Посмотреть в канале";

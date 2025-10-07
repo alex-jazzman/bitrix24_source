@@ -73,21 +73,43 @@ this.BX.Vue3 = this.BX.Vue3 || {};
 	 * @subpackage ui
 	 * @copyright 2001-2025 Bitrix
 	 */
+	const handlersMap = new WeakMap();
 	const hint = {
-	  async mounted(element, {
+	  mounted(element, {
 	    value
 	  }) {
-	    var _getParams$interactiv;
-	    if (!value) {
-	      return;
-	    }
-	    main_core.Event.bind(element, 'mouseenter', () => onMouseEnter(element, getParams(value)));
-	    const isInteractive = (_getParams$interactiv = getParams(value).interactivity) != null ? _getParams$interactiv : false;
-	    main_core.Event.bind(element, 'mouseleave', () => hideTooltip(isInteractive));
-	    main_core.Event.bind(element, 'click', () => hideTooltip());
+	    updateEvents(element, value);
+	  },
+	  updated(element, {
+	    value
+	  }) {
+	    updateEvents(element, value);
+	  },
+	  beforeUnmount(element) {
+	    unbindEvents(element);
 	  }
 	};
 	let showTimeout = null;
+	function updateEvents(element, params) {
+	  unbindEvents(element);
+	  if (params) {
+	    const handlers = {
+	      mouseenter: () => onMouseEnter(element, getParams(params)),
+	      mouseleave: () => {
+	        var _getParams$interactiv;
+	        return hideTooltip((_getParams$interactiv = getParams(params).interactivity) != null ? _getParams$interactiv : false);
+	      },
+	      click: () => hideTooltip()
+	    };
+	    handlersMap.set(element, handlers);
+	    Object.entries(handlers).forEach(([event, handler]) => main_core.Event.bind(element, event, handler));
+	  }
+	}
+	function unbindEvents(element) {
+	  var _handlersMap$get;
+	  Object.entries((_handlersMap$get = handlersMap.get(element)) != null ? _handlersMap$get : {}).forEach(([event, handler]) => main_core.Event.unbind(element, event, handler));
+	  handlersMap.delete(element);
+	}
 	function onMouseEnter(element, params) {
 	  var _params$timeout;
 	  clearTimeouts();

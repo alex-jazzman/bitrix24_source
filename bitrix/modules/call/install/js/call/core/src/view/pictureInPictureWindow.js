@@ -1,4 +1,5 @@
 import { Dom } from 'main.core';
+import { Hardware } from '../call_hardware';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { Popup } from 'main.popup';
 import { Utils } from 'im.v2.lib.utils';
@@ -9,7 +10,6 @@ import { FloorRequest } from './floor-request';
 
 import '../css/picture-in-picture-window.css'
 import { UnsupportedBrowserFeatures } from '../engine/unsupported_features_in_browsers';
-import { Hardware } from '../hardware';
 
 export class PictureInPictureWindow {
 	constructor(config)
@@ -165,6 +165,7 @@ export class PictureInPictureWindow {
 	updateBlockButtons(buttonsList)
 	{
 		this.blockedButtons = buttonsList;
+		return this;
 	}
 
 	setButtons(buttonsList)
@@ -730,6 +731,7 @@ export class PictureInPictureWindow {
 
 	setSizePictureWindow()
 	{
+		// TODO: debounce/throttle
 		if (!this.template)
 		{
 			return;

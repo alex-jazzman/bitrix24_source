@@ -1,0 +1,23 @@
+<?php
+$MESS["BPABL_LOG"] = "Бизнес-процессті орындау тарихы";
+$MESS["BPABL_RES_1"] = "Жоқ";
+$MESS["BPABL_RES_2"] = "Сәтті";
+$MESS["BPABL_RES_3"] = "Болдырылмады";
+$MESS["BPABL_RES_4"] = "Қате";
+$MESS["BPABL_RES_5"] = "Инициализацияланбаған";
+$MESS["BPABL_RES_6"] = "Анықталмаған";
+$MESS["BPABL_STATE_MODIFIED"] = "Ағымдағы мәртебенің күні";
+$MESS["BPABL_STATE_NAME"] = "Бизнес-процесстің ағымдағы мәртебесі";
+$MESS["BPABL_STATUS_1"] = "Инициализацияланған";
+$MESS["BPABL_STATUS_2"] = "Орындалуда";
+$MESS["BPABL_STATUS_3"] = "Болдырмау жүргізілуде";
+$MESS["BPABL_STATUS_4"] = "Аяқталды";
+$MESS["BPABL_STATUS_5"] = "Қате";
+$MESS["BPABL_STATUS_6"] = "Анықталмаған";
+$MESS["BPABL_TYPE_1"] = "'#ACTIVITY#'#NOTE# әрекеті іске қосылды";
+$MESS["BPABL_TYPE_2"] = "'#STATUS#' мәртебесі және '#RESULT#'#NOTE# нәтижесі бар '#ACTIVITY#' әрекеті аяқталды";
+$MESS["BPABL_TYPE_3"] = "'#ACTIVITY#'#NOTE# әрекеті болдырылмады";
+$MESS["BPABL_TYPE_4"] = "'#ACTIVITY#'#NOTE# әрекетінің қатесі";
+$MESS["BPABL_TYPE_5"] = "'#ACTIVITY#'#NOTE# әрекеті";
+$MESS["BPABL_TYPE_6"] = "'#ACTIVITY#'#NOTE# әрекетімен бірдеңе жасалды";
+$MESS["BPWC_WLCT_TOTAL"] = "Барлық ";

@@ -1,12 +1,12 @@
 import { ChatType, SidebarMainPanelBlock } from 'im.v2.const';
 
-import { SidebarConfig } from '../classes/config';
+import { SidebarPreset } from '../classes/preset';
 
 import type { ImModelChat } from 'im.v2.model';
 
 const isChat = (chatContext: ImModelChat) => chatContext.type === ChatType.chat;
 
-const chatConfig = new SidebarConfig({
+const chatPreset = new SidebarPreset({
 	blocks: [
 		SidebarMainPanelBlock.chat,
 		SidebarMainPanelBlock.tariffLimit,
@@ -19,4 +19,4 @@ const chatConfig = new SidebarConfig({
 	],
 });
 
-export { isChat, chatConfig };
+export { isChat, chatPreset };

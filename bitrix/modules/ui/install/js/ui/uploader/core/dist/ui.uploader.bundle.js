@@ -5212,6 +5212,7 @@ this.BX.UI = this.BX.UI || {};
 	exports.AbstractLoadController = AbstractLoadController;
 	exports.AbstractUploadController = AbstractUploadController;
 	exports.AbstractRemoveController = AbstractRemoveController;
+	exports.Filter = Filter;
 	exports.formatFileSize = formatFileSize;
 	exports.getFileExtension = getFileExtension;
 	exports.getFilenameWithoutExtension = getFilenameWithoutExtension;

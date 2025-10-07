@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,ui_vue3_vuex,rest_client,ui_dialogs_messagebox,im_v2_lib_call,im_v2_provider_service_recent,im_v2_lib_invite,im_public,im_v2_provider_service_chat,ui_system_menu,im_v2_lib_promo,im_v2_lib_analytics,im_v2_application_core,im_v2_lib_parser,im_v2_lib_entityCreator,im_v2_provider_service_message,im_v2_provider_service_disk,im_v2_lib_market,im_v2_lib_utils,im_v2_lib_permission,im_v2_lib_confirm,im_v2_lib_notifier,main_core_events,im_v2_const,im_v2_lib_channel,main_core,ui_iconSet_api_core,im_v2_lib_copilot) {
+(function (exports,ui_vue3_vuex,rest_client,ui_dialogs_messagebox,im_v2_lib_call,im_v2_provider_service_recent,im_v2_lib_invite,im_public,im_v2_provider_service_chat,im_v2_lib_aiAssistant,ui_system_menu,im_v2_lib_promo,im_v2_application_core,im_v2_lib_parser,im_v2_lib_entityCreator,im_v2_provider_service_message,im_v2_provider_service_disk,im_v2_lib_market,im_v2_lib_utils,im_v2_lib_permission,im_v2_lib_confirm,im_v2_lib_notifier,main_core_events,im_v2_const,im_v2_lib_channel,im_v2_lib_analytics,main_core,ui_iconSet_api_core,im_v2_lib_copilot) {
 	'use strict';
 
 	const EVENT_NAMESPACE = 'BX.Messenger.v2.Lib.Menu';
@@ -38,6 +38,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      },
 	      targetContainer: document.body,
 	      cacheable: false,
+	      closeByEsc: true,
 	      className: this.getMenuClassName(),
 	      items: babelHelpers.classPrivateFieldLooseBase(this, _prepareItems)[_prepareItems](),
 	      sections: this.getMenuGroups()
@@ -196,9 +197,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        if (isPinned) {
 	          this.chatService.unpinChat(dialogId);
 	        } else {
-	          const dialog = this.store.getters['chats/get'](this.context.dialogId, true);
-	          this.chatService.pinChat(this.context.dialogId);
-	          im_v2_lib_analytics.Analytics.getInstance().onPinChat(dialog);
+	          this.chatService.pinChat(dialogId);
+	          im_v2_lib_analytics.Analytics.getInstance().chatPins.onPin(dialogId);
 	        }
 	        this.menuInstance.close();
 	      }
@@ -629,6 +629,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      title: main_core.Loc.getMessage('IM_DIALOG_CHAT_MENU_SELECT'),
 	      icon: ui_iconSet_api_core.Outline.CIRCLE_CHECK,
 	      onClick: () => {
+	        im_v2_lib_analytics.Analytics.getInstance().messageContextMenu.onSelect(this.context.dialogId);
 	        main_core_events.EventEmitter.emit(im_v2_const.EventType.dialog.openBulkActionsMode, {
 	          messageId: this.context.id,
 	          dialogId: this.context.dialogId
@@ -641,6 +642,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    return {
 	      title: main_core.Loc.getMessage('IM_DIALOG_CHAT_MENU_REPLY'),
 	      onClick: () => {
+	        im_v2_lib_analytics.Analytics.getInstance().messageContextMenu.onReply(this.context.dialogId);
 	        main_core_events.EventEmitter.emit(im_v2_const.EventType.textarea.replyMessage, {
 	          messageId: this.context.id,
 	          dialogId: this.context.dialogId
@@ -658,9 +660,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      title: main_core.Loc.getMessage('IM_DIALOG_CHAT_MENU_FORWARD'),
 	      icon: ui_iconSet_api_core.Outline.FORWARD,
 	      onClick: () => {
-	        im_v2_lib_analytics.Analytics.getInstance().messageForward.onClickForward({
-	          dialogId: this.context.dialogId
-	        });
+	        im_v2_lib_analytics.Analytics.getInstance().messageContextMenu.onForward(this.context.dialogId);
 	        main_core_events.EventEmitter.emit(im_v2_const.EventType.dialog.showForwardPopup, {
 	          messagesIds: [this.context.id]
 	        });
@@ -675,6 +675,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    return {
 	      title: main_core.Loc.getMessage('IM_DIALOG_CHAT_MENU_COPY'),
 	      onClick: async () => {
+	        im_v2_lib_analytics.Analytics.getInstance().messageContextMenu.onCopyText({
+	          dialogId: this.context.dialogId,
+	          messageId: this.context.id
+	        });
 	        const textToCopy = im_v2_lib_parser.Parser.prepareCopy(this.context);
 	        await im_v2_lib_utils.Utils.text.copyToClipboard(textToCopy);
 	        im_v2_lib_notifier.Notifier.message.onCopyComplete();
@@ -689,6 +693,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      icon: ui_iconSet_api_core.Outline.LINK,
 	      onClick: () => {
 	        var _BX$clipboard;
+	        im_v2_lib_analytics.Analytics.getInstance().messageContextMenu.onCopyLink(this.context.dialogId);
 	        const textToCopy = im_v2_lib_utils.Utils.text.getMessageLink(this.context.dialogId, this.context.id);
 	        if ((_BX$clipboard = BX.clipboard) != null && _BX$clipboard.copy(textToCopy)) {
 	          im_v2_lib_notifier.Notifier.message.onCopyLinkComplete();
@@ -706,6 +711,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      icon: ui_iconSet_api_core.Outline.COPY,
 	      onClick: () => {
 	        var _BX$clipboard2;
+	        const fileId = this.context.files[0];
+	        im_v2_lib_analytics.Analytics.getInstance().messageContextMenu.onCopyFile({
+	          dialogId: this.context.dialogId,
+	          fileId
+	        });
 	        const textToCopy = im_v2_lib_parser.Parser.prepareCopyFile(this.context);
 	        if ((_BX$clipboard2 = BX.clipboard) != null && _BX$clipboard2.copy(textToCopy)) {
 	          im_v2_lib_notifier.Notifier.file.onCopyComplete();
@@ -732,16 +742,16 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        });
 	        if (isPinned) {
 	          messageService.unpinMessage(this.context.chatId, this.context.id);
-	          im_v2_lib_analytics.Analytics.getInstance().messagePins.onUnpin(this.context.chatId);
+	          im_v2_lib_analytics.Analytics.getInstance().messageContextMenu.onUnpin(this.context.dialogId);
 	        } else {
 	          if (babelHelpers.classPrivateFieldLooseBase(this, _arePinsExceedLimit)[_arePinsExceedLimit]()) {
 	            im_v2_lib_notifier.Notifier.chat.onMessagesPinLimitError(this.maxPins);
-	            im_v2_lib_analytics.Analytics.getInstance().messagePins.onReachingLimit(this.context.chatId);
+	            im_v2_lib_analytics.Analytics.getInstance().messageContextMenu.onReachingPinsLimit(this.context.dialogId);
 	            this.menuInstance.close();
 	            return;
 	          }
 	          messageService.pinMessage(this.context.chatId, this.context.id);
-	          im_v2_lib_analytics.Analytics.getInstance().messagePins.onPin(this.context.chatId);
+	          im_v2_lib_analytics.Analytics.getInstance().messageContextMenu.onPin(this.context.dialogId);
 	        }
 	        this.menuInstance.close();
 	      }
@@ -763,6 +773,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        if (isInFavorite) {
 	          messageService.removeMessageFromFavorite(this.context.id);
 	        } else {
+	          im_v2_lib_analytics.Analytics.getInstance().messageContextMenu.onAddFavorite({
+	            dialogId: this.context.dialogId,
+	            messageId: this.context.id
+	          });
 	          messageService.addMessageToFavorite(this.context.id);
 	        }
 	        this.menuInstance.close();
@@ -780,6 +794,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      title: main_core.Loc.getMessage('IM_DIALOG_CHAT_MENU_MARK'),
 	      icon: ui_iconSet_api_core.Outline.NEW_MESSAGE,
 	      onClick: () => {
+	        im_v2_lib_analytics.Analytics.getInstance().messageContextMenu.onMark(this.context.dialogId);
 	        const messageService = new im_v2_provider_service_message.MessageService({
 	          chatId: this.context.chatId
 	        });
@@ -796,6 +811,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      title: main_core.Loc.getMessage('IM_DIALOG_CHAT_MENU_CREATE_TASK_MSGVER_1'),
 	      icon: ui_iconSet_api_core.Outline.TASK,
 	      onClick: () => {
+	        im_v2_lib_analytics.Analytics.getInstance().messageContextMenu.onCreateTask(this.context.dialogId);
 	        const entityCreator = new im_v2_lib_entityCreator.EntityCreator(this.context.chatId);
 	        void entityCreator.createTaskForMessage(this.context.id);
 	        this.menuInstance.close();
@@ -810,6 +826,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      title: main_core.Loc.getMessage('IM_DIALOG_CHAT_MENU_CREATE_MEETING_MSGVER_1'),
 	      icon: ui_iconSet_api_core.Outline.CALENDAR_WITH_SLOTS,
 	      onClick: () => {
+	        im_v2_lib_analytics.Analytics.getInstance().messageContextMenu.onCreateEvent(this.context.dialogId);
 	        const entityCreator = new im_v2_lib_entityCreator.EntityCreator(this.context.chatId);
 	        void entityCreator.createMeetingForMessage(this.context.id);
 	        this.menuInstance.close();
@@ -824,6 +841,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      title: main_core.Loc.getMessage('IM_DIALOG_CHAT_MENU_EDIT'),
 	      icon: ui_iconSet_api_core.Outline.EDIT_L,
 	      onClick: () => {
+	        im_v2_lib_analytics.Analytics.getInstance().messageContextMenu.onEdit(this.context.dialogId);
 	        main_core_events.EventEmitter.emit(im_v2_const.EventType.textarea.editMessage, {
 	          messageId: this.context.id,
 	          dialogId: this.context.dialogId
@@ -890,7 +908,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      title: menuItemText,
 	      icon: ui_iconSet_api_core.Outline.FOLDER_24,
 	      onClick: async function () {
-	        im_v2_lib_analytics.Analytics.getInstance().messageFiles.onClickSaveOnDisk({
+	        im_v2_lib_analytics.Analytics.getInstance().messageContextMenu.onSaveOnDisk({
 	          messageId: this.context.id,
 	          dialogId: this.context.dialogId
 	        });
@@ -948,7 +966,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    dialogId,
 	    chatId
 	  } = this.context;
-	  im_v2_lib_analytics.Analytics.getInstance().messageDelete.onClickDelete({
+	  im_v2_lib_analytics.Analytics.getInstance().messageContextMenu.onDelete({
 	    messageId,
 	    dialogId
 	  });
@@ -971,7 +989,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	  const confirmResult = await im_v2_lib_confirm.showDeleteChannelPostConfirm();
 	  if (!confirmResult) {
-	    im_v2_lib_analytics.Analytics.getInstance().messageDelete.onCancel({
+	    im_v2_lib_analytics.Analytics.getInstance().messageContextMenu.onCancelDelete({
 	      messageId,
 	      dialogId
 	    });
@@ -986,7 +1004,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    icon: ui_iconSet_api_core.Outline.DOWNLOAD,
 	    onClick: function () {
 	      im_v2_lib_utils.Utils.file.downloadFiles([file]);
-	      im_v2_lib_analytics.Analytics.getInstance().messageFiles.onClickDownload({
+	      im_v2_lib_analytics.Analytics.getInstance().messageContextMenu.onFileDownload({
 	        messageId: this.context.id,
 	        dialogId: this.context.dialogId
 	      });
@@ -1003,7 +1021,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    icon: ui_iconSet_api_core.Outline.DOWNLOAD,
 	    onClick: async () => {
 	      var _this$menuInstance2;
-	      im_v2_lib_analytics.Analytics.getInstance().messageFiles.onClickDownload({
+	      im_v2_lib_analytics.Analytics.getInstance().messageContextMenu.onFileDownload({
 	        messageId: this.context.id,
 	        dialogId: this.context.dialogId
 	      });
@@ -1120,9 +1138,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      return null;
 	    }
 	    return {
-	      title: main_core.Loc.getMessage('IM_LIB_MENU_COPILOT_FEEDBACK'),
+	      title: main_core.Loc.getMessage('IM_LIB_MENU_AI_ASSISTANT_FEEDBACK'),
 	      icon: ui_iconSet_api_core.Outline.FEEDBACK,
 	      onClick: () => {
+	        im_v2_lib_analytics.Analytics.getInstance().messageContextMenu.onSendFeedback(this.context.dialogId);
 	        void this.openForm();
 	        this.menuInstance.close();
 	      }
@@ -1175,6 +1194,19 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	}
 
+	const MenuSectionCode$5 = Object.freeze({
+	  main: 'main',
+	  select: 'select',
+	  create: 'create',
+	  market: 'market'
+	});
+	class AiAssistantMessageMenu extends MessageMenu {
+	  getMenuItems() {
+	    const mainGroupItems = [this.getReplyItem(), this.getCopyItem(), this.getDownloadFileItem(), this.getPinItem(), this.getForwardItem(), ...this.getAdditionalItems(), this.getDeleteItem()];
+	    return [...this.groupItems(mainGroupItems, MenuSectionCode$5.main), ...this.groupItems([this.getSelectItem()], MenuSectionCode$5.select)];
+	  }
+	}
+
 	var _instance = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("instance");
 	var _defaultMenuByCallback = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("defaultMenuByCallback");
 	var _customMenuByCallback = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("customMenuByCallback");
@@ -1190,6 +1222,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	var _isChannel = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isChannel");
 	var _isComment = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isComment");
 	var _isCopilot = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isCopilot");
+	var _isAiAssistant = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isAiAssistant");
 	var _hasMenuForMessageType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hasMenuForMessageType");
 	var _getMenuForMessageType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getMenuForMessageType");
 	var _destroyMenuInstance = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("destroyMenuInstance");
@@ -1209,6 +1242,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    });
 	    Object.defineProperty(this, _hasMenuForMessageType, {
 	      value: _hasMenuForMessageType2
+	    });
+	    Object.defineProperty(this, _isAiAssistant, {
+	      value: _isAiAssistant2
 	    });
 	    Object.defineProperty(this, _isCopilot, {
 	      value: _isCopilot2
@@ -1285,6 +1321,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  babelHelpers.classPrivateFieldLooseBase(this, _defaultMenuByCallback)[_defaultMenuByCallback].set(babelHelpers.classPrivateFieldLooseBase(this, _isChannel)[_isChannel].bind(this), ChannelMessageMenu);
 	  babelHelpers.classPrivateFieldLooseBase(this, _defaultMenuByCallback)[_defaultMenuByCallback].set(babelHelpers.classPrivateFieldLooseBase(this, _isComment)[_isComment].bind(this), CommentsMessageMenu);
 	  babelHelpers.classPrivateFieldLooseBase(this, _defaultMenuByCallback)[_defaultMenuByCallback].set(babelHelpers.classPrivateFieldLooseBase(this, _isCopilot)[_isCopilot].bind(this), CopilotMessageMenu);
+	  babelHelpers.classPrivateFieldLooseBase(this, _defaultMenuByCallback)[_defaultMenuByCallback].set(babelHelpers.classPrivateFieldLooseBase(this, _isAiAssistant)[_isAiAssistant].bind(this), AiAssistantMessageMenu);
 	}
 	function _isCustomMenuAllowed2(context) {
 	  return !im_v2_lib_channel.ChannelManager.isCommentsPostMessage(context, context.dialogId);
@@ -1321,6 +1358,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	function _isCopilot2(context) {
 	  return new im_v2_lib_copilot.CopilotManager().isCopilotChat(context.dialogId);
 	}
+	function _isAiAssistant2(context) {
+	  const aiAssistantManager = new im_v2_lib_aiAssistant.AiAssistantManager();
+	  return aiAssistantManager.isAiAssistantChat(context.dialogId) || aiAssistantManager.isAiAssistantBot(context.dialogId);
+	}
 	function _hasMenuForMessageType2(messageType) {
 	  return babelHelpers.classPrivateFieldLooseBase(this, _menuByMessageType)[_menuByMessageType].has(messageType);
 	}
@@ -1345,5 +1386,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.MessageMenuManager = MessageMenuManager;
 	exports.MessageMenu = MessageMenu;
 
-}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX.Vue3.Vuex,BX,BX.UI.Dialogs,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.UI.System,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Event,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX,BX.UI.IconSet,BX.Messenger.v2.Lib));
+}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX.Vue3.Vuex,BX,BX.UI.Dialogs,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.UI.System,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Event,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.UI.IconSet,BX.Messenger.v2.Lib));
 //# sourceMappingURL=registry.bundle.js.map

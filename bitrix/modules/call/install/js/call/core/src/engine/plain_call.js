@@ -4,7 +4,7 @@ import {AbstractCall} from './abstract_call';
 import {CallEngine, CallState, CallEvent, UserState, Provider} from './engine';
 import {View} from '../view/view';
 import {SimpleVAD} from './simple_vad'
-import {Hardware} from '../hardware';
+import {Hardware} from '../call_hardware';
 import Util from '../util'
 import {MediaStreamsKinds} from '../call_api';
 
@@ -568,7 +568,7 @@ export class PlainCall extends AbstractCall
 		return new Promise(function (resolve, reject)
 		{
 			const currentConstraints = constraintsArray[0];
-			navigator.mediaDevices.getUserMedia(currentConstraints).then(
+			Hardware.getUserMedia(currentConstraints).then(
 				function (stream)
 				{
 					resolve(stream);
@@ -669,7 +669,7 @@ export class PlainCall extends AbstractCall
 				}
 				if (this.deviceList.length === 0)
 				{
-					navigator.mediaDevices.enumerateDevices().then((deviceList) =>
+					Hardware.getCurrentDeviceList().then((deviceList) =>
 					{
 						this.deviceList = deviceList;
 						this.runCallback(CallEvent.onDeviceListUpdated, {
@@ -737,7 +737,7 @@ export class PlainCall extends AbstractCall
 				}
 				if (this.deviceList.length === 0)
 				{
-					navigator.mediaDevices.enumerateDevices().then((deviceList) =>
+					Hardware.getCurrentDeviceList().then((deviceList) =>
 					{
 						this.deviceList = deviceList;
 						this.runCallback(CallEvent.onDeviceListUpdated, {
@@ -815,7 +815,7 @@ export class PlainCall extends AbstractCall
 		return new Promise(function (resolve, reject)
 		{
 			if (window["BXDesktopSystem"] && window["BXDesktopSystem"].GetProperty('versionParts')[3] < 78) {
-				navigator.mediaDevices.getUserMedia({
+				Hardware.getUserMedia({
 					video: {
 						mandatory: {
 							chromeMediaSource: 'screen',

@@ -19,7 +19,7 @@ import {
 	CallScheme,
 } from './engine/engine';
 import {CallEngineLegacy} from './engine/engine_legacy';
-import {Hardware} from './hardware';
+import {Hardware} from './call_hardware';
 import Util from './util';
 import { CallAI } from './call_ai';
 import {VideoStrategy} from './video_strategy';
@@ -29,6 +29,7 @@ import { ParticipantsPermissionPopup } from './view/participants-permission-popu
 import {WebScreenSharePopup} from './web_screenshare_popup';
 import { UserListPopup } from 'call.component.user-list-popup';
 import { UserList } from 'call.component.user-list';
+import { CallMultiChannel } from './call_multi_channel';
 import 'loader';
 import 'resize_observer';
 import 'webrtc_adapter';
@@ -67,6 +68,7 @@ export {
 	CallAI,
 	CallScheme,
 	ParticipantsPermissionPopup,
+	CallMultiChannel,
 };
 
 // compatibility

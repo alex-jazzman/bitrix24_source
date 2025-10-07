@@ -1,5 +1,6 @@
 import Util from './util';
 import {Event} from 'main.core';
+import {Hardware} from './call_hardware';
 
 export const ClientPlatform = 'web';
 
@@ -2589,7 +2590,7 @@ export class Call {
 				}
 			}
 
-			stream = await navigator.mediaDevices.getUserMedia(constraints);
+			stream = await Hardware.getUserMedia(constraints);
 
 			if (options.video && stream.getVideoTracks()[0])
 			{
@@ -2656,7 +2657,7 @@ export class Call {
 
 		try {
 			if (window["BXDesktopSystem"] && window["BXDesktopSystem"].GetProperty('versionParts')[3] < 78) {
-				stream = await navigator.mediaDevices.getUserMedia({
+				stream = await Hardware.getUserMedia({
 					video: {
 						mandatory: {
 							chromeMediaSource: 'screen',
@@ -2679,7 +2680,7 @@ export class Call {
 							ideal: 1080
 						}
 					},
-					systemAudio: "include",
+					systemAudio: 'include',
 					audio: true,
 				});
 			}

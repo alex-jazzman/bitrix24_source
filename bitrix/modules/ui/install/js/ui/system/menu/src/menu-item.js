@@ -1,4 +1,5 @@
 import { Dom, Event, Tag, Text, Type } from 'main.core';
+import { Button as UiButton } from 'ui.buttons';
 import { Counter, CounterColor } from 'ui.cnt';
 import { Outline } from 'ui.icon-set.api.core';
 import 'ui.icon-set.outline';
@@ -48,16 +49,26 @@ export class MenuItem
 			return this.#element;
 		}
 
+		const uiButtonOptions = this.#options.uiButtonOptions;
+		const isUiButton = Boolean(uiButtonOptions);
+		const classNameIsUiButton = isUiButton ? ' --is-ui-button' : '';
+		const classNameDesign = this.#options.design ? ` --${this.#options.design}` : '';
+
 		this.#element = Tag.render`
-			<div class="ui-popup-menu-item --${this.#options.design ?? MenuItemDesign.Default}">
-				${this.#renderHeader()}
-				${this.#renderButtons()}
+			<div class="ui-popup-menu-item${classNameIsUiButton}${classNameDesign}">
+				${isUiButton
+					? new UiButton(uiButtonOptions).render()
+					: Tag.render`
+						<button
+							class="ui-popup-menu-item-action"
+							onclick="${this.#options.onClick}"
+							onmouseenter="${this.#onMouseEnter}"
+							onmouseleave="${this.#onMouseLeave}"
+						>${this.#renderHeader()}${this.#renderButtons()}</button>
+					`
+				}
 			</div>
 		`;
-
-		Event.bind(this.#element, 'click', this.#options.onClick);
-		Event.bind(this.#element, 'mouseenter', this.#onMouseEnter);
-		Event.bind(this.#element, 'mouseleave', this.#onMouseLeave);
 
 		return this.#element;
 	}

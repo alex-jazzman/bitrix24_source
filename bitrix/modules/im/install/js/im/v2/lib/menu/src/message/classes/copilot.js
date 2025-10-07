@@ -1,3 +1,4 @@
+import { Analytics } from 'im.v2.lib.analytics';
 import { Loc, Runtime } from 'main.core';
 import { Outline as OutlineIcons } from 'ui.icon-set.api.core';
 
@@ -56,9 +57,11 @@ export class CopilotMessageMenu extends MessageMenu
 		}
 
 		return {
-			title: Loc.getMessage('IM_LIB_MENU_COPILOT_FEEDBACK'),
+			title: Loc.getMessage('IM_LIB_MENU_AI_ASSISTANT_FEEDBACK'),
 			icon: OutlineIcons.FEEDBACK,
 			onClick: () => {
+				Analytics.getInstance().messageContextMenu.onSendFeedback(this.context.dialogId);
+
 				void this.openForm();
 				this.menuInstance.close();
 			},

@@ -1,4 +1,7 @@
 import { Type, Tag, Dom, Cache, Reflection } from 'main.core';
+import { Icon } from 'ui.icon-set.api.core';
+import 'ui.icon-set.outline';
+
 import ItemNode from '../../item/item-node';
 import Dialog from '../dialog';
 import BaseStub from './base-stub';
@@ -449,7 +452,16 @@ export default class Tab
 		Dom.style(this.getLabelContainer(), 'background-color', this.getPropertyByCurrentState('bgColor'));
 
 		const icon = this.getPropertyByCurrentState('icon');
-		Dom.style(this.getIconContainer(), 'background-image', icon ? `url('${encodeUrl(icon)}')` : null);
+		Dom.clean(this.getIconContainer());
+		try
+		{
+			Dom.append(new Icon({ icon }).render(), this.getIconContainer());
+			Dom.style(this.getIconContainer(), 'background-image', 'none');
+		}
+		catch
+		{
+			Dom.style(this.getIconContainer(), 'background-image', icon ? `url('${encodeUrl(icon)}')` : null);
+		}
 
 		const titleNode = this.getTitleNode();
 		if (titleNode)

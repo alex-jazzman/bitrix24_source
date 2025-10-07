@@ -1,7 +1,7 @@
 import {Dom} from 'main.core'
 import {EventEmitter} from 'main.core.events'
 import {Popup} from 'main.popup'
-import {Hardware} from '../hardware';
+import {Hardware} from '../call_hardware';
 import {BackgroundDialog} from '../dialogs/background_dialog';
 import 'ui.switcher';
 import Util from '../util';

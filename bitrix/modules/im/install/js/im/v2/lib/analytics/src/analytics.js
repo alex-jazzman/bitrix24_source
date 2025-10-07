@@ -4,14 +4,14 @@ import { sendData } from 'ui.analytics';
 import { ChatType, Layout, UserRole } from 'im.v2.const';
 import { Core } from 'im.v2.application.core';
 
-import { AnalyticsEvent, AnalyticsTool, AnalyticsCategory } from './const';
+import { AnalyticsEvent, AnalyticsTool, AnalyticsCategory, PSEUDO_CHAT_TYPE_FOR_NOTES } from './const';
 
 import { getCollabId } from './helpers/get-collab-id';
 import { getUserType } from './helpers/get-user-type';
 import { getCategoryByChatType } from './helpers/get-category-by-chat-type';
 import { getChatType } from './helpers/get-chat-type';
+import { isNotes } from './helpers/is-notes';
 
-import { MessageFiles } from './classes/message-files';
 import { CollabEntities } from './classes/collab-entities';
 import { ChatEntities } from './classes/chat-entities';
 import { ChatDelete } from './classes/chat-delete';
@@ -28,7 +28,9 @@ import { Vote } from './classes/vote-create';
 import { MessagePins } from './classes/message-pins';
 import { MessageForward } from './classes/message-forward';
 import { DesktopUpdateBanner } from './classes/desktop-update-banner';
+import { MessageContextMenu } from './classes/message-context-menu';
 import { SliderInvite } from './classes/slider-invite';
+import { ChatPins } from './classes/chat-pins';
 
 import type { ImModelChat } from 'im.v2.model';
 
@@ -37,8 +39,6 @@ type DialogId = string;
 export { CreateChatContext } from './const';
 export { getCollabId } from './helpers/get-collab-id';
 export { getUserType } from './helpers/get-user-type';
-
-const PseudoChatTypeForNotes = 'notes';
 
 export class Analytics
 {
@@ -58,12 +58,13 @@ export class Analytics
 	checkIn: CheckIn = new CheckIn();
 	copilot: Copilot = new Copilot();
 	attachMenu: AttachMenu = new AttachMenu();
-	messageFiles: MessageFiles = new MessageFiles();
 	vote: Vote = new Vote();
 	messagePins: MessagePins = new MessagePins();
 	messageForward: MessageForward = new MessageForward();
 	desktopUpdateBanner: DesktopUpdateBanner = new DesktopUpdateBanner();
+	messageContextMenu: MessageContextMenu = new MessageContextMenu();
 	sliderInvite: SliderInvite = new SliderInvite();
+	chatPins: ChatPins = new ChatPins();
 
 	static #instance: Analytics;
 
@@ -82,7 +83,7 @@ export class Analytics
 		this.#excludedChats.add(dialogId);
 	}
 
-	onOpenTab(tabName: string)
+	onOpenTab(tabName: string): void
 	{
 		const trackedTabs = [
 			Layout.aiAssistant,
@@ -114,12 +115,7 @@ export class Analytics
 		});
 	}
 
-	#isNotes(dialog: ImModelChat): boolean
-	{
-		return Number.parseInt(dialog.dialogId, 10) === Core.getUserId();
-	}
-
-	onOpenChat(dialog: ImModelChat)
+	onOpenChat(dialog: ImModelChat): void
 	{
 		if (this.#excludedChats.has(dialog.dialogId))
 		{
@@ -143,12 +139,12 @@ export class Analytics
 			tool: AnalyticsTool.im,
 			category: getCategoryByChatType(chatType),
 			event: AnalyticsEvent.openExisting,
-			type: this.#isNotes(dialog) ? PseudoChatTypeForNotes : chatType,
+			type: isNotes(dialog.dialogId) ? PSEUDO_CHAT_TYPE_FOR_NOTES : chatType,
 			c_section: `${currentLayout}_tab`,
 			p2: getUserType(),
 		};
 
-		if (!this.#isNotes(dialog))
+		if (!isNotes(dialog.dialogId))
 		{
 			params.p5 = `chatId_${dialog.chatId}`;
 		}
@@ -179,28 +175,9 @@ export class Analytics
 		sendData(params);
 	}
 
-	onPinChat(dialog: ImModelChat)
+	onTypeMessage(dialog: ImModelChat): void
 	{
-		if (!this.#isNotes(dialog))
-		{
-			return;
-		}
-
-		const chatType = getChatType(dialog);
-
-		const params = {
-			tool: AnalyticsTool.im,
-			category: getCategoryByChatType(chatType),
-			event: AnalyticsEvent.pinChat,
-			p1: `chatType_${this.#isNotes(dialog) ? PseudoChatTypeForNotes : chatType}`,
-		};
-
-		sendData(params);
-	}
-
-	onTypeMessage(dialog: ImModelChat)
-	{
-		if (!this.#isNotes(dialog) || this.#chatsWithTyping.has(dialog.dialogId))
+		if (!isNotes(dialog.dialogId) || this.#chatsWithTyping.has(dialog.dialogId))
 		{
 			return;
 		}
@@ -213,7 +190,7 @@ export class Analytics
 			tool: AnalyticsTool.im,
 			category: getCategoryByChatType(chatType),
 			event: AnalyticsEvent.typeMessage,
-			p1: `chatType_${this.#isNotes(dialog) ? PseudoChatTypeForNotes : chatType}`,
+			p1: `chatType_${isNotes(dialog.dialogId) ? PSEUDO_CHAT_TYPE_FOR_NOTES : chatType}`,
 		};
 
 		sendData(params);

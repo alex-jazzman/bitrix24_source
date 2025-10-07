@@ -156,6 +156,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  },
 	  onCollaberNotAcceptInvitation() {
 	    showNotification(main_core.Loc.getMessage('IM_NOTIFIER_COLLAB_COLLABER_NOT_ACCEPT_INVITATION'));
+	  },
+	  onCopyLinkError() {
+	    showNotification(main_core.Loc.getMessage('IM_NOTIFIER_COLLAB_COPY_LINK_FORBIDDEN_ERROR'));
 	  }
 	};
 

@@ -126,6 +126,11 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 					Intranet\ActionFilter\InviteLimitControl::class,
 				]
 			],
+			'getInviteLink' => [
+				'-prefilters' => [
+					Intranet\ActionFilter\InviteLimitControl::class,
+				]
+			],
 			'invite' => [
 				'+prefilters' => [
 					Intranet\Infrastructure\Controller\ActionFilter\EmailDailyLimit::createByDefault(

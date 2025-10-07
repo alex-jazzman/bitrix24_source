@@ -4,7 +4,7 @@
 jn.define('im/messenger/const/dialog-background', (require, exports, module) => {
 	const DialogBackgroundId = Object.freeze({
 		default: 'default',
-		martaAi: 'martaAI',
+		aiAssistant: 'aiAssistant',
 		copilot: 'copilot',
 		collab: 'collab',
 	});

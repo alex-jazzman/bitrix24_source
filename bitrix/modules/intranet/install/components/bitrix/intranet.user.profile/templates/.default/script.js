@@ -403,7 +403,7 @@
 			if (this.isExtranetUser && this.canEditProfile && !this.isOwnProfile && this.isCloud)
 			{
 				menuItems.push({
-					text: BX.message('INTRANET_USER_PROFILE_MOVE_TO_INTRANET'),
+					text: BX.message('INTRANET_USER_PROFILE_MOVE_TO_INTRANET_MSGVER_1'),
 					className: 'menu-popup-no-icon',
 					onclick: BX.proxy(function() {
 						BX.proxy_context.popupWindow.close();

@@ -18,6 +18,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/menu', (require, expo
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
 	const { getLogger } = require('im/messenger/lib/logger');
+	const { Color } = require('tokens');
 
 	const {
 		CopyAction,
@@ -793,13 +794,58 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/menu', (require, expo
 			}).save();
 		}
 
-		/**
-		 * @param {MessageMenuMessage} message
-		 */
-		onFeedback(message)
+		onFeedback()
 		{
-			const { openFeedbackForm } = require('layout/ui/feedback-form-opener');
-			openFeedbackForm('copilotRoles');
+			const openFormFallback = () => {
+				const formId = 'copilotRoles';
+
+				const hiddenFields = encodeURIComponent(JSON.stringify({
+					from_domain: currentDomain,
+					back_version: Application.getAppVersion(),
+					os_phone: Application.getPlatform(),
+					app_version: Application.getApiVersion(),
+					region_model: env.languageId,
+					phone_model: device.model,
+					os_version: device.version,
+				}));
+
+				PageManager.openPage({
+					backgroundColor: Color.bgSecondary.toHex(),
+					url: `${env.siteDir}mobile/settings?formId=${formId}&hiddenFields=${hiddenFields}`,
+					backdrop: {
+						mediumPositionPercent: 80,
+						onlyMediumPosition: true,
+						forceDismissOnSwipeDown: true,
+						swipeAllowed: true,
+						swipeContentAllowed: true,
+						horizontalSwipeAllowed: false,
+						navigationBarColor: Color.bgSecondary.toHex(),
+						enableNavigationBarBorder: false,
+					},
+					titleParams: {
+						text: Loc.getMessage('FEEDBACK_FORM_TITLE'),
+					},
+					enableNavigationBarBorder: false,
+					modal: true,
+					cache: true,
+				});
+			};
+
+			requireLazy('layout/ui/feedback-form-opener').then(({ FeedbackForm }) => {
+				if (FeedbackForm)
+				{
+					(new FeedbackForm({
+						formId: 'copilotRoles',
+						senderPage: 'MessageMenu',
+					})).openInBackdrop();
+				}
+				else
+				{
+					openFormFallback();
+				}
+			}).catch(() => {
+				openFormFallback();
+			});
 		}
 
 		/**

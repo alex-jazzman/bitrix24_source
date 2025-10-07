@@ -3108,8 +3108,8 @@ BX.Disk.FolderListClass = (function (){
 	var loadedReadOnlyEntityToNewShared = {};
 	var entityToNewSharedMaxTaskName = '';
 
-	FolderListClass.prototype.showSharingDetailWithChangeRights = function (params) {
-
+	FolderListClass.prototype.showSharingDetailWithChangeRights = function (params)
+	{
 		entityToNewShared = {};
 		loadedReadOnlyEntityToNewShared = {};
 
@@ -3124,15 +3124,14 @@ BX.Disk.FolderListClass = (function (){
 				postData: {
 					objectId: objectId
 				},
-				afterSuccessLoad: BX.delegate(function(response)
-				{
-					if(response.status != 'success')
+				afterSuccessLoad: BX.delegate(function(response) {
+					if (response.status != 'success')
 					{
 						response.errors = response.errors || [{}];
 						BX.Disk.showModalWithStatusAction({
 							status: 'error',
 							message: response.errors.pop().message
-						})
+						});
 					}
 
 					var objectOwner = {
@@ -3141,18 +3140,130 @@ BX.Disk.FolderListClass = (function (){
 						link: response.owner.link
 					};
 
+					if (response.unifiedLink)
+					{
+						var accessLevel = response.unifiedLink.availableAccessLevels.find(function(accessLevel) {// eslint-disable-next-line no-mixed-spaces-and-tabs
+							return accessLevel.value === response.unifiedLink.currentAccessLevel;
+						});
+
+						var accessLevelNode = BX.create('span', {
+							props: {
+								className: 'bx-disk-filepage-used-people-permission'
+							},
+							text: accessLevel.name
+						});
+
+						var menuId = 'disk_open_menu_with_rights';
+
+						accessLevelNode.addEventListener('click', function(event) {
+							var menuId = 'access-level-menu';
+							var menuItems = response.unifiedLink.availableAccessLevels.map(function(accessLevel) {
+								return {
+									id: accessLevel.value,
+									text: accessLevel.name,
+									onclick: function() {
+										accessLevelNode.textContent = accessLevel.name;
+										if (entityToNewShared.unifiedLink.currentAccessLevel !== accessLevel.value)
+										{
+											entityToNewShared.unifiedLink.newAccessLevel = accessLevel.value;
+										}
+										BX.PopupMenu.destroy(menuId);
+									},
+								};
+							});
+
+							BX.PopupMenu.show(menuId, event.target, menuItems, {
+								autoHide: true,
+								offsetTop: 0,
+								offsetLeft: 0,
+								angle: {
+									position: 'top',
+									offset: 45
+								},
+								autoHide: true,
+								overlay: {
+									opacity: 0.01
+								},
+								events: {
+									onPopupClose: function() {
+										BX.PopupMenu.destroy(menuId);
+									}
+								}
+							});
+						});
+
+						var unifiedLinkElement = BX.create('table', {
+							props: {
+								id: 'bx-disk-popup-shared-universal-list',
+								className: 'bx-disk-popup-shared-people-list'
+							},
+							children: [
+								BX.create('thead', {
+									children: [
+										BX.create('tr', {
+											children: [
+												BX.create('td', {
+													props: { className: 'bx-disk-popup-shared-people-list-head-col1' }
+												}),
+												BX.create('td', {
+													props: { className: 'bx-disk-popup-shared-people-list-head-col2' },
+													text: BX.message('DISK_FOLDER_LIST_SHARING_LABEL_NAME_RIGHTS')
+												}),
+												BX.create('td', {
+													props: { className: 'bx-disk-popup-shared-people-list-head-col3' }
+												})
+											]
+										}),
+										BX.create('tr', {
+											children: [
+												BX.create('td', {
+													props: { className: 'bx-disk-popup-shared-people-list-head-col1' },
+													children: [
+														BX.create('a', {
+															props: { className: 'bx-disk-filepage-used-people-link' },
+															children: [
+																BX.create('span', {
+																	props: {
+																		className: 'bx-disk-filepage-used-people-avatar link',
+																		style: '--ui-icon-set__icon-size: 15px;'
+																	},
+																}),
+																BX.create('span', {
+																	text: BX.message('DISK_FOLDER_LIST_UNIFIED_RIGHT_USERS')
+																})
+															]
+														})
+													]
+												}),
+												BX.create('td', {
+													props: { className: 'bx-disk-popup-shared-people-list-head-col2' },
+													children: [accessLevelNode]
+												}),
+												BX.create('td', {
+													props: { className: 'bx-disk-popup-shared-people-list-head-col3' }
+												})
+											]
+										})
+									]
+								})
+							]
+						});
+					}
+
 					BX.Disk.modalWindow({
 						modalId: 'bx-disk-detail-sharing-folder-change-right',
 						title: BX.message('DISK_FOLDER_LIST_SHARING_TITLE_MODAL_3'),
 						contentClassName: '',
 						contentStyle: {},
 						events: {
-							onAfterPopupShow: BX.delegate(function () {
+							onAfterPopupShow: BX.delegate(function() {
 
 								BX.addCustomEvent('onChangeRightOfSharing', BX.proxy(this.onChangeRightOfSharing, this));
 
-								for (var i in response.members) {
-									if (!response.members.hasOwnProperty(i)) {
+								for (var i in response.members)
+								{
+									if (!response.members.hasOwnProperty(i))
+									{
 										continue;
 									}
 
@@ -3167,34 +3278,50 @@ BX.Disk.FolderListClass = (function (){
 									};
 								}
 
+								if (response.unifiedLink)
+								{
+									entityToNewShared.unifiedLink = response.unifiedLink;
+								}
+
 								BX.SocNetLogDestination.init({
-									name : this.destFormName,
-									searchInput : BX('feed-add-post-destination-input'),
-									bindMainPopup : { 'node' : BX('feed-add-post-destination-container'), 'offsetTop' : '5px', 'offsetLeft': '15px'},
-									bindSearchPopup : { 'node' : BX('feed-add-post-destination-container'), 'offsetTop' : '5px', 'offsetLeft': '15px'},
-									callback : {
-										select : BX.proxy(this.onSelectDestination, this),
-										unSelect : BX.proxy(this.onUnSelectDestination, this),
-										openDialog : BX.proxy(this.onOpenDialogDestination, this),
-										closeDialog : BX.proxy(this.onCloseDialogDestination, this),
-										openSearch : BX.proxy(this.onOpenSearchDestination, this),
-										closeSearch : BX.proxy(this.onCloseSearchDestination, this)
+									name: this.destFormName,
+									searchInput: BX('feed-add-post-destination-input'),
+									bindMainPopup: {
+										'node': BX('feed-add-post-destination-container'),
+										'offsetTop': '5px',
+										'offsetLeft': '15px'
+									},
+									bindSearchPopup: {
+										'node': BX('feed-add-post-destination-container'),
+										'offsetTop': '5px',
+										'offsetLeft': '15px'
+									},
+									callback: {
+										select: BX.proxy(this.onSelectDestination, this),
+										unSelect: BX.proxy(this.onUnSelectDestination, this),
+										openDialog: BX.proxy(this.onOpenDialogDestination, this),
+										closeDialog: BX.proxy(this.onCloseDialogDestination, this),
+										openSearch: BX.proxy(this.onOpenSearchDestination, this),
+										closeSearch: BX.proxy(this.onCloseSearchDestination, this)
 									},
 									items: response.destination.items,
 									itemsLast: response.destination.itemsLast,
-									itemsSelected : response.destination.itemsSelected
+									itemsSelected: response.destination.itemsSelected
 								});
 
 								var BXSocNetLogDestinationFormName = this.destFormName;
-								BX.bind(BX('feed-add-post-destination-container'), 'click', function(e){BX.SocNetLogDestination.openDialog(BXSocNetLogDestinationFormName);BX.PreventDefault(e); });
+								BX.bind(BX('feed-add-post-destination-container'), 'click', function(e) {
+									BX.SocNetLogDestination.openDialog(BXSocNetLogDestinationFormName);
+									BX.PreventDefault(e);
+								});
 								BX.bind(BX('feed-add-post-destination-input'), 'keyup', BX.proxy(this.onKeyUpDestination, this));
 								BX.bind(BX('feed-add-post-destination-input'), 'keydown', BX.proxy(this.onKeyDownDestination, this));
 
 							}, this),
-							onPopupClose: BX.delegate(function () {
-								if(BX.SocNetLogDestination && BX.SocNetLogDestination.isOpenDialog())
+							onPopupClose: BX.delegate(function() {
+								if (BX.SocNetLogDestination && BX.SocNetLogDestination.isOpenDialog())
 								{
-									BX.SocNetLogDestination.closeDialog()
+									BX.SocNetLogDestination.closeDialog();
 								}
 								BX.removeCustomEvent('onChangeRightOfSharing', BX.proxy(this.onChangeRightOfSharing, this));
 								BX.proxy_context.destroy();
@@ -3214,15 +3341,16 @@ BX.Disk.FolderListClass = (function (){
 											BX.create('thead', {
 												html: '<tr>' +
 													'<td class="bx-disk-popup-shared-people-list-head-col1">' + BX.message('DISK_FOLDER_LIST_SHARING_LABEL_OWNER') + '</td>' +
-												'</tr>'
+													'</tr>'
 											}),
 											BX.create('tr', {
 												html: '<tr>' +
 													'<td class="bx-disk-popup-shared-people-list-col1" style="border-bottom: none;"><a class="bx-disk-filepage-used-people-link" href="' + objectOwner.link + '"><span class="bx-disk-filepage-used-people-avatar" style="background-image: url(\'' + encodeURI(objectOwner.avatar) + '\');"></span>' + BX.util.htmlspecialchars(objectOwner.name) + '</a></td>' +
-												'</tr>'
+													'</tr>'
 											})
 										]
 									}),
+									unifiedLinkElement,
 									BX.create('table', {
 										props: {
 											id: 'bx-disk-popup-shared-people-list',
@@ -3234,7 +3362,7 @@ BX.Disk.FolderListClass = (function (){
 													'<td class="bx-disk-popup-shared-people-list-head-col1">' + BX.message('DISK_FOLDER_LIST_SHARING_LABEL_NAME_RIGHTS_USER') + '</td>' +
 													'<td class="bx-disk-popup-shared-people-list-head-col2">' + BX.message('DISK_FOLDER_LIST_SHARING_LABEL_NAME_RIGHTS') + '</td>' +
 													'<td class="bx-disk-popup-shared-people-list-head-col3"></td>' +
-												'</tr>'
+													'</tr>'
 											})
 										]
 									}),
@@ -3279,7 +3407,7 @@ BX.Disk.FolderListClass = (function (){
 												},
 												text: BX.message('DISK_FOLDER_LIST_SHARING_LABEL_NAME_ADD_RIGHTS_USER'),
 												events: {
-													click: BX.delegate(function () {
+													click: BX.delegate(function() {
 													}, this)
 												}
 											})
@@ -3291,10 +3419,9 @@ BX.Disk.FolderListClass = (function (){
 						buttons: [
 							new BX.PopupWindowCustomButton({
 								text: BX.message('DISK_FOLDER_LIST_BTN_SAVE'),
-								className: "ui-btn ui-btn-success",
+								className: 'ui-btn ui-btn-success',
 								events: {
-									click: BX.delegate(function () {
-
+									click: BX.delegate(function() {
 										BX.Disk.ajax({
 											method: 'POST',
 											dataType: 'json',
@@ -3303,11 +3430,12 @@ BX.Disk.FolderListClass = (function (){
 												objectId: objectId,
 												entityToNewShared: entityToNewShared
 											},
-											onsuccess: BX.delegate(function (response) {
-												if (!response) {
+											onsuccess: BX.delegate(function(response) {
+												if (!response)
+												{
 													return;
 												}
-												if(params.object.isFolder)
+												if (params.object.isFolder)
 												{
 													response.message = BX.message('DISK_FOLDER_LIST_OK_FOLDER_SHARE_MODIFIED').replace('#FOLDER#', params.object.name);
 												}
@@ -3352,8 +3480,7 @@ BX.Disk.FolderListClass = (function (){
 								text: BX.message('DISK_JS_BTN_CANCEL'),
 								className: 'ui-btn ui-btn-link',
 								events: {
-									click: function (e)
-									{
+									click: function(e) {
 										BX.PopupWindowManager.getCurrentPopup().destroy();
 									}
 								}

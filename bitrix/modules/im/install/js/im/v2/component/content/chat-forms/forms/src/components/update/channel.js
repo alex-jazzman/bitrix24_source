@@ -267,58 +267,60 @@ export const ChannelUpdating = {
 		},
 	},
 	template: `
-		<div v-if="isLoading" class="bx-im-content-chat-forms__skeleton"></div>
-		<div v-else class="bx-im-content-chat-forms__content --channel" @scroll="onScroll">
-			<div class="bx-im-content-chat-forms__header">
-				<ChatAvatar
-					:avatarFile="avatarFile"
-					:chatTitle="chatTitle"
-					:existingAvatarUrl="avatarUrl"
-					:type="EmptyAvatarType.squared"
-					@avatarChange="onAvatarChange"
+		<div class="bx-im-content-chat-forms__content --channel" @scroll="onScroll">
+			<div v-if="isLoading" class="bx-im-content-chat-forms__skeleton"></div>
+			<template v-else>
+				<div class="bx-im-content-chat-forms__header">
+					<ChatAvatar
+						:avatarFile="avatarFile"
+						:chatTitle="chatTitle"
+						:existingAvatarUrl="avatarUrl"
+						:type="EmptyAvatarType.squared"
+						@avatarChange="onAvatarChange"
+					/>
+					<TitleInput v-model="chatTitle" :placeholder="loc('IM_CREATE_CHANNEL_TITLE_PLACEHOLDER_V2')" />
+				</div>
+				<CreateChatHeading :text="loc('IM_CREATE_CHANNEL_DESCRIPTION_TITLE')" />
+				<div class="bx-im-content-chat-forms__description_container">
+					<TextareaInput
+						:value="settings.description"
+						:placeholder="loc('IM_CREATE_CHANNEL_DESCRIPTION_PLACEHOLDER_V3')"
+						:border="false"
+						@input="onDescriptionChange"
+					/>
+				</div>
+				<PrivacySection
+					:isAvailableInSearch="settings.isAvailableInSearch"
+					@chatTypeChange="onChatTypeChange"
 				/>
-				<TitleInput v-model="chatTitle" :placeholder="loc('IM_CREATE_CHANNEL_TITLE_PLACEHOLDER_V2')" />
-			</div>
-			<CreateChatHeading :text="loc('IM_CREATE_CHANNEL_DESCRIPTION_TITLE')" />
-			<div class="bx-im-content-chat-forms__description_container">
-				<TextareaInput
-					:value="settings.description"
-					:placeholder="loc('IM_CREATE_CHANNEL_DESCRIPTION_PLACEHOLDER_V3')"
-					:border="false"
-					@input="onDescriptionChange"
+				<CreateChatHeading
+					:text="loc('IM_CREATE_CHANNEL_MEMBERS_TITLE')"
+					:hintText="loc('IM_CREATE_CHANNEL_MEMBERS_HINT')"
 				/>
-			</div>
-			<PrivacySection
-				:isAvailableInSearch="settings.isAvailableInSearch"
-				@chatTypeChange="onChatTypeChange"
-			/>
-			<CreateChatHeading
-				:text="loc('IM_CREATE_CHANNEL_MEMBERS_TITLE')"
-				:hintText="loc('IM_CREATE_CHANNEL_MEMBERS_HINT')"
-			/>
-			<div class="bx-im-content-chat-forms__members_container">
-				<ChatMembersSelector
-					:customElements="collapsedUsers"
-					:chatMembers="chatMembers"
-					:allowTeamsSelect="true"
-					@membersChange="onMembersChange"
+				<div class="bx-im-content-chat-forms__members_container">
+					<ChatMembersSelector
+						:customElements="collapsedUsers"
+						:chatMembers="chatMembers"
+						:allowTeamsSelect="true"
+						@membersChange="onMembersChange"
+					/>
+				</div>
+				<RightsSection
+					:chatType="ChatType.channel"
+					:ownerId="rights.ownerId"
+					:managerIds="rights.managerIds"
+					:manageUsersAdd="rights.manageUsersAdd"
+					:manageUsersDelete="rights.manageUsersDelete"
+					:manageUi="rights.manageUi"
+					:manageMessages="rights.manageMessages"
+					@ownerChange="onOwnerChange"
+					@managersChange="onManagersChange"
+					@manageUsersAddChange="onManageUsersAddChange"
+					@manageUsersDeleteChange="onManageUsersDeleteChange"
+					@manageUiChange="onManageUiChange"
+					@manageMessagesChange="onManageMessagesChange"
 				/>
-			</div>
-			<RightsSection
-				:chatType="ChatType.channel"
-				:ownerId="rights.ownerId"
-				:managerIds="rights.managerIds"
-				:manageUsersAdd="rights.manageUsersAdd"
-				:manageUsersDelete="rights.manageUsersDelete"
-				:manageUi="rights.manageUi"
-				:manageMessages="rights.manageMessages"
-				@ownerChange="onOwnerChange"
-				@managersChange="onManagersChange"
-				@manageUsersAddChange="onManageUsersAddChange"
-				@manageUsersDeleteChange="onManageUsersDeleteChange"
-				@manageUiChange="onManageUiChange"
-				@manageMessagesChange="onManageMessagesChange"
-			/>
+			</template>
 		</div>
 		<ButtonPanel
 			:isCreating="isLoading || isUpdating"

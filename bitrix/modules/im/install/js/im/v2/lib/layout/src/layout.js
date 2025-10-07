@@ -168,14 +168,7 @@ export class LayoutManager
 
 	isEmbeddedMode(): boolean
 	{
-		return this.isAirDesignEnabled() && this.isQuickAccessHidden();
-	}
-
-	isAirDesignEnabled(): boolean
-	{
-		const settings: SettingsCollection = Extension.getSettings('im.v2.lib.layout');
-
-		return settings.get('isAirDesignEnabled', true);
+		return this.isQuickAccessHidden();
 	}
 
 	isQuickAccessHidden(): boolean
@@ -183,6 +176,20 @@ export class LayoutManager
 		const settings: SettingsCollection = Extension.getSettings('im.v2.lib.layout');
 
 		return settings.get('isQuickAccessHidden', false);
+	}
+
+	isChatLayout(layoutName: string): boolean
+	{
+		const chatLayouts = [
+			Layout.chat,
+			Layout.channel,
+			Layout.aiAssistant,
+			Layout.openlines,
+			Layout.openlinesV2,
+			Layout.collab,
+		];
+
+		return chatLayouts.includes(layoutName);
 	}
 
 	async #onGoToMessageContext(event: BaseEvent<{dialogId: string, messageId: number}>): void
@@ -245,16 +252,7 @@ export class LayoutManager
 	#handleChatChange()
 	{
 		const { name, entityId } = this.getLayout();
-		const CHAT_LAYOUTS = new Set([
-			Layout.chat,
-			Layout.channel,
-			Layout.aiAssistant,
-			Layout.openlines,
-			Layout.openlinesV2,
-			Layout.collab,
-		]);
-
-		if (CHAT_LAYOUTS.has(name) && entityId)
+		if (this.isChatLayout(name) && entityId)
 		{
 			this.#clearBulkActionsCollection();
 		}

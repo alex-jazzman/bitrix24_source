@@ -1,6 +1,7 @@
 import {Type} from 'main.core';
 import {EventEmitter} from 'main.core.events';
 import {EndpointDirection, UserState} from '../engine/engine';
+import { checkAndEncodeURI } from './tools';
 
 type UserModelMap = Record<string, UserModel>;
 
@@ -35,7 +36,7 @@ export class UserModel
 		this.data = {
 			id: BX.prop.getInteger(config, "id", 0),
 			name: BX.prop.getString(config, "name", ""),
-			avatar: BX.prop.getString(config, "avatar", ""),
+			avatar: checkAndEncodeURI(BX.prop.getString(config, "avatar", "")),
 			gender: BX.prop.getString(config, "gender", ""),
 			state: BX.prop.getString(config, "state", UserState.Idle),
 			talking: BX.prop.getBoolean(config, "talking", false),

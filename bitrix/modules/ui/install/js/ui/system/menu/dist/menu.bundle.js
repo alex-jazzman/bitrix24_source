@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.UI = this.BX.UI || {};
-(function (exports,main_popup,ui_iconSet_main,ui_cnt,ui_iconSet_api_core,ui_iconSet_outline,main_core) {
+(function (exports,main_popup,ui_iconSet_main,ui_buttons,ui_cnt,ui_iconSet_api_core,ui_iconSet_outline,main_core) {
 	'use strict';
 
 	var _delta = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("delta");
@@ -80,7 +80,8 @@ this.BX.UI = this.BX.UI || {};
 	  _t12,
 	  _t13,
 	  _t14,
-	  _t15;
+	  _t15,
+	  _t16;
 	var _options = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("options");
 	var _callbacks = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("callbacks");
 	var _subMenu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("subMenu");
@@ -331,19 +332,25 @@ this.BX.UI = this.BX.UI || {};
 	    return babelHelpers.classPrivateFieldLooseBase(this, _subMenu)[_subMenu];
 	  }
 	  render() {
-	    var _babelHelpers$classPr7;
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _element)[_element]) {
 	      return babelHelpers.classPrivateFieldLooseBase(this, _element)[_element];
 	    }
+	    const uiButtonOptions = babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].uiButtonOptions;
+	    const isUiButton = Boolean(uiButtonOptions);
+	    const classNameIsUiButton = isUiButton ? ' --is-ui-button' : '';
+	    const classNameDesign = babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].design ? ` --${babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].design}` : '';
 	    babelHelpers.classPrivateFieldLooseBase(this, _element)[_element] = main_core.Tag.render(_t || (_t = _`
-			<div class="ui-popup-menu-item --${0}">
-				${0}
+			<div class="ui-popup-menu-item${0}${0}">
 				${0}
 			</div>
-		`), (_babelHelpers$classPr7 = babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].design) != null ? _babelHelpers$classPr7 : MenuItemDesign.Default, babelHelpers.classPrivateFieldLooseBase(this, _renderHeader)[_renderHeader](), babelHelpers.classPrivateFieldLooseBase(this, _renderButtons)[_renderButtons]());
-	    main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _element)[_element], 'click', babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].onClick);
-	    main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _element)[_element], 'mouseenter', babelHelpers.classPrivateFieldLooseBase(this, _onMouseEnter)[_onMouseEnter]);
-	    main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _element)[_element], 'mouseleave', babelHelpers.classPrivateFieldLooseBase(this, _onMouseLeave)[_onMouseLeave]);
+		`), classNameIsUiButton, classNameDesign, isUiButton ? new ui_buttons.Button(uiButtonOptions).render() : main_core.Tag.render(_t2 || (_t2 = _`
+						<button
+							class="ui-popup-menu-item-action"
+							onclick="${0}"
+							onmouseenter="${0}"
+							onmouseleave="${0}"
+						>${0}${0}</button>
+					`), babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].onClick, babelHelpers.classPrivateFieldLooseBase(this, _onMouseEnter)[_onMouseEnter], babelHelpers.classPrivateFieldLooseBase(this, _onMouseLeave)[_onMouseLeave], babelHelpers.classPrivateFieldLooseBase(this, _renderHeader)[_renderHeader](), babelHelpers.classPrivateFieldLooseBase(this, _renderButtons)[_renderButtons]()));
 	    return babelHelpers.classPrivateFieldLooseBase(this, _element)[_element];
 	  }
 	  closeSubMenuWithTimeout() {
@@ -351,19 +358,19 @@ this.BX.UI = this.BX.UI || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _closeTimeout)[_closeTimeout] = setTimeout(this.closeSubMenu, 200);
 	  }
 	  destroy() {
-	    var _babelHelpers$classPr8;
-	    (_babelHelpers$classPr8 = babelHelpers.classPrivateFieldLooseBase(this, _subMenu)[_subMenu]) == null ? void 0 : _babelHelpers$classPr8.destroy();
+	    var _babelHelpers$classPr7;
+	    (_babelHelpers$classPr7 = babelHelpers.classPrivateFieldLooseBase(this, _subMenu)[_subMenu]) == null ? void 0 : _babelHelpers$classPr7.destroy();
 	  }
 	}
 	function _onSubMenuItemClick2(item) {
 	  item.onClick == null ? void 0 : item.onClick();
 	  if (!item.subMenu && babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].closeOnSubItemClick) {
-	    var _babelHelpers$classPr9, _babelHelpers$classPr10;
-	    (_babelHelpers$classPr9 = (_babelHelpers$classPr10 = babelHelpers.classPrivateFieldLooseBase(this, _callbacks)[_callbacks]).onSubMenuItemClick) == null ? void 0 : _babelHelpers$classPr9.call(_babelHelpers$classPr10);
+	    var _babelHelpers$classPr8, _babelHelpers$classPr9;
+	    (_babelHelpers$classPr8 = (_babelHelpers$classPr9 = babelHelpers.classPrivateFieldLooseBase(this, _callbacks)[_callbacks]).onSubMenuItemClick) == null ? void 0 : _babelHelpers$classPr8.call(_babelHelpers$classPr9);
 	  }
 	}
 	function _renderHeader2() {
-	  return main_core.Tag.render(_t2 || (_t2 = _`
+	  return main_core.Tag.render(_t3 || (_t3 = _`
 			<div class="ui-popup-menu-item-header">
 				${0}
 				${0}
@@ -371,7 +378,7 @@ this.BX.UI = this.BX.UI || {};
 		`), babelHelpers.classPrivateFieldLooseBase(this, _renderTitle)[_renderTitle](), babelHelpers.classPrivateFieldLooseBase(this, _renderSubtitle)[_renderSubtitle]());
 	}
 	function _renderTitle2() {
-	  return main_core.Tag.render(_t3 || (_t3 = _`
+	  return main_core.Tag.render(_t4 || (_t4 = _`
 			<div class="ui-popup-menu-item-title">
 				${0}
 				<div class="ui-popup-menu-item-title-text">${0}</div>
@@ -383,20 +390,20 @@ this.BX.UI = this.BX.UI || {};
 	  if (!babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].isLocked) {
 	    return '';
 	  }
-	  return main_core.Tag.render(_t4 || (_t4 = _`
+	  return main_core.Tag.render(_t5 || (_t5 = _`
 			<div class="ui-popup-menu-item-lock">
 				<div class="ui-icon-set --${0}"></div>
 			</div>
 		`), ui_iconSet_api_core.Outline.LOCK_L);
 	}
 	function _renderBadgeText2() {
-	  var _babelHelpers$classPr11;
-	  if (!main_core.Type.isStringFilled((_babelHelpers$classPr11 = babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].badgeText) == null ? void 0 : _babelHelpers$classPr11.title)) {
+	  var _babelHelpers$classPr10;
+	  if (!main_core.Type.isStringFilled((_babelHelpers$classPr10 = babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].badgeText) == null ? void 0 : _babelHelpers$classPr10.title)) {
 	    return '';
 	  }
 	  const color = babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].badgeText.color;
 	  const style = color ? `--badge-color: ${color};` : '';
-	  return main_core.Tag.render(_t5 || (_t5 = _`
+	  return main_core.Tag.render(_t6 || (_t6 = _`
 			<div class="ui-popup-menu-item-badge-text" style="${0}">
 				${0}
 			</div>
@@ -406,12 +413,12 @@ this.BX.UI = this.BX.UI || {};
 	  if (!main_core.Type.isStringFilled(babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].subtitle)) {
 	    return '';
 	  }
-	  return main_core.Tag.render(_t6 || (_t6 = _`
+	  return main_core.Tag.render(_t7 || (_t7 = _`
 			<div class="ui-popup-menu-item-subtitle">${0}</div>
 		`), main_core.Text.encode(babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].subtitle));
 	}
 	function _renderButtons2() {
-	  return main_core.Tag.render(_t7 || (_t7 = _`
+	  return main_core.Tag.render(_t8 || (_t8 = _`
 			<div class="ui-popup-menu-item-buttons">
 				${0}
 				${0}
@@ -426,11 +433,11 @@ this.BX.UI = this.BX.UI || {};
 	    return '';
 	  }
 	  if (!babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].isSelected) {
-	    return main_core.Tag.render(_t8 || (_t8 = _`
+	    return main_core.Tag.render(_t9 || (_t9 = _`
 				<div class="ui-popup-menu-item-check"></div>
 			`));
 	  }
-	  return main_core.Tag.render(_t9 || (_t9 = _`
+	  return main_core.Tag.render(_t10 || (_t10 = _`
 			<div class="ui-popup-menu-item-check">
 				<div class="ui-icon-set --${0}"></div>
 			</div>
@@ -440,7 +447,7 @@ this.BX.UI = this.BX.UI || {};
 	  if (!babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].extraIcon) {
 	    return '';
 	  }
-	  const extra = main_core.Tag.render(_t10 || (_t10 = _`
+	  const extra = main_core.Tag.render(_t11 || (_t11 = _`
 			<div class="ui-popup-menu-item-extra ${0}">
 				<div class="ui-icon-set --${0}"></div>
 			</div>
@@ -456,11 +463,11 @@ this.BX.UI = this.BX.UI || {};
 	    return '';
 	  }
 	  if (!babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].counter.value) {
-	    return main_core.Tag.render(_t11 || (_t11 = _`
+	    return main_core.Tag.render(_t12 || (_t12 = _`
 				<div class="ui-popup-menu-item-counter"></div>
 			`));
 	  }
-	  return main_core.Tag.render(_t12 || (_t12 = _`
+	  return main_core.Tag.render(_t13 || (_t13 = _`
 			<div class="ui-popup-menu-item-counter">
 				${0}
 			</div>
@@ -471,14 +478,14 @@ this.BX.UI = this.BX.UI || {};
 	}
 	function _renderIcon2() {
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].icon) {
-	    return main_core.Tag.render(_t13 || (_t13 = _`
+	    return main_core.Tag.render(_t14 || (_t14 = _`
 				<div class="ui-popup-menu-item-icon">
 					<div class="ui-icon-set --${0}"></div>
 				</div>
 			`), babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].icon);
 	  }
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].svg) {
-	    return main_core.Tag.render(_t14 || (_t14 = _`
+	    return main_core.Tag.render(_t15 || (_t15 = _`
 				<div class="ui-popup-menu-item-svg">
 					${0}
 				</div>
@@ -490,7 +497,7 @@ this.BX.UI = this.BX.UI || {};
 	  if (!babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].subMenu) {
 	    return '';
 	  }
-	  return main_core.Tag.render(_t15 || (_t15 = _`
+	  return main_core.Tag.render(_t16 || (_t16 = _`
 			<div class="ui-popup-menu-item-arrow">
 				<div class="ui-icon-set --${0}"></div>
 			</div>
@@ -622,6 +629,7 @@ this.BX.UI = this.BX.UI || {};
 	    const defaultOptions = {
 	      noAllPaddings: true,
 	      autoHide: true,
+	      closeByEsc: true,
 	      autoHideHandler: babelHelpers.classPrivateFieldLooseBase(this, _shouldHide)[_shouldHide],
 	      closeOnItemClick: true
 	    };
@@ -810,5 +818,5 @@ this.BX.UI = this.BX.UI || {};
 	exports.MenuSectionDesign = MenuSectionDesign;
 	exports.MenuRichHeaderDesign = MenuRichHeaderDesign;
 
-}((this.BX.UI.System = this.BX.UI.System || {}),BX.Main,BX,BX.UI,BX.UI.IconSet,BX,BX));
+}((this.BX.UI.System = this.BX.UI.System || {}),BX.Main,BX,BX.UI,BX.UI,BX.UI.IconSet,BX,BX));
 //# sourceMappingURL=menu.bundle.js.map

@@ -1,3 +1,4 @@
+import { Text } from 'main.core';
 import { sendData } from 'ui.analytics';
 
 import { Core } from 'im.v2.application.core';
@@ -10,6 +11,7 @@ import {
 	AnalyticsTool,
 	CopilotChatType,
 	AnalyticsType,
+	AnalyticsSubSection,
 } from '../const';
 
 const CopilotEntryPoint = Object.freeze({

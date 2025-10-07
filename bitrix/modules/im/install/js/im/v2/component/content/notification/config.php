@@ -22,6 +22,8 @@ return [
 		'im.v2.component.elements.chat-title',
 		'im.v2.lib.date-formatter',
 		'ui.forms',
+		'main.core.events',
+		'im.v2.lib.esc-manager',
 		'ui.vue3.vuex',
 		'im.v2.lib.user',
 		'main.core',

@@ -1,5 +1,6 @@
 import { Core } from 'im.v2.application.core';
 import { ChatType, UserType } from 'im.v2.const';
+import { SidebarManager } from 'im.v2.lib.sidebar';
 
 import { ChatLinks } from '../../../elements/chat-links/chat-links';
 import { ChatFavourites } from '../../../elements/chat-favourites/chat-favourites';
@@ -45,7 +46,10 @@ export const InfoPreview = {
 		},
 		showSharedChats(): boolean
 		{
-			return this.isUserOrBot && !this.isSelfChat;
+			const sidebarConfig = SidebarManager.getInstance().getConfig(this.dialogId);
+			const isSharedChatsEnabled = sidebarConfig.areSharedChatsEnabled();
+
+			return isSharedChatsEnabled && this.isUserOrBot && !this.isSelfChat;
 		},
 	},
 	template: `

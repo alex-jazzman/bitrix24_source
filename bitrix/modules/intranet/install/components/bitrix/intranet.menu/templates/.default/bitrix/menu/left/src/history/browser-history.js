@@ -3,12 +3,10 @@ import {Tag, Type, Text } from 'main.core';
 export class BrowserHistory
 {
 	wrapper: HTMLElement;
-	isAir: boolean = false;
 	items = [];
 
-	constructor(isAir: boolean)
+	constructor()
 	{
-		this.isAir = isAir;
 		this.wrapper = document.getElementById("history-items");
 	}
 
@@ -58,10 +56,6 @@ export class BrowserHistory
 			}
 
 			let url = Text.encode(item.url);
-			if (!this.isAir && item.url.includes('/online/'))
-			{
-				url = 'bx://v2/' + location.hostname + '/chat/';
-			}
 
 			let li = Tag.render`
 				<li class="intranet__desktop-menu_item">

@@ -106,6 +106,11 @@ jn.define('im/messenger/lib/helper/user', (require, exports, module) => {
 		{
 			return this.userModel.bot && this.userModel.botData && this.userModel.botData.code === BotCode.copilot;
 		}
+
+		get isAiAssistant()
+		{
+			return this.userModel.bot && this.userModel.botData && this.userModel.botData.code === BotCode.aiAssistant;
+		}
 	}
 
 	module.exports = {

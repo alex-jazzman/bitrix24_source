@@ -8,7 +8,7 @@ jn.define('im/messenger/db/repository/user', (require, exports, module) => {
 	const {
 		UserTable,
 	} = require('im/messenger/db/table/user');
-	const { DateHelper } = require('im/messenger/lib/helper');
+	const { DateHelper, Url } = require('im/messenger/lib/helper');
 
 	/**
 	 * @class UserRepository
@@ -298,7 +298,11 @@ jn.define('im/messenger/db/repository/user', (require, exports, module) => {
 
 			if (result)
 			{
-				result = encodeURI(result);
+				const urlHelper = Url.createFromPath(result);
+				if (!urlHelper.isEncoded)
+				{
+					result = encodeURI(result);
+				}
 			}
 
 			return result;

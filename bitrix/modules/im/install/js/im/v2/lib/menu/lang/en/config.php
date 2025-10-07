@@ -2,9 +2,9 @@
 $MESS["IM_LIB_INVITE_CANCEL"] = "Cancel invitation";
 $MESS["IM_LIB_INVITE_CANCEL_CONFIRM"] = "Are you sure you want to cancel invitation?";
 $MESS["IM_LIB_INVITE_RESEND"] = "Invite again";
+$MESS["IM_LIB_MENU_AI_ASSISTANT_FEEDBACK"] = "Feedback";
 $MESS["IM_LIB_MENU_CALL_2"] = "Video call";
 $MESS["IM_LIB_MENU_COMMENTS_OPEN_IN_CHANNEL"] = "View in channel";
-$MESS["IM_LIB_MENU_COPILOT_FEEDBACK"] = "Feedback";
 $MESS["IM_LIB_MENU_FIND_CHATS_WITH_USER_MSGVER_1"] = "Find chats with this user";
 $MESS["IM_LIB_MENU_FIND_SHARED_CHATS"] = "Find chats with this user";
 $MESS["IM_LIB_MENU_HIDE_MSGVER_1"] = "Hide";

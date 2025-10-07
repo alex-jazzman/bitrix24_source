@@ -125,4 +125,5 @@ $MESS["DISK_FOLDER_LIST_TRASHCAN_TTL_NOTICE"] = "Файлы в корзине х
 $MESS["DISK_FOLDER_LIST_COLLABER_HINT"] = "Добавлять файлы можно только в папки коллаб";
 $MESS["DISK_FOLDER_LIST_COLLABER_TOUR_ON_ADD_BUTTON_TITLE"] = "Добавьте файлы в коллабу";
 $MESS["DISK_FOLDER_LIST_COLLABER_TOUR_ON_ADD_BUTTON_TEXT"] = "Файлы будут видны всем участникам коллабы. После загрузки можно обсудить файлы со всеми в чате коллабы или лично с любым участником";
+$MESS["DISK_FOLDER_LIST_UNIFIED_RIGHT_USERS"] = "Все, у кого есть ссылка";
 ?>

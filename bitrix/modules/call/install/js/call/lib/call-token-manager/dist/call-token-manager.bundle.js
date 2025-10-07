@@ -4,6 +4,9 @@ this.BX.Call = this.BX.Call || {};
 (function (exports,main_core) {
 	'use strict';
 
+	const {
+	  callInstalled
+	} = main_core.Extension.getSettings('call.core');
 	var _tokenList = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("tokenList");
 	var _pendingTokenList = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("pendingTokenList");
 	var _queryParams = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("queryParams");
@@ -33,7 +36,9 @@ this.BX.Call = this.BX.Call || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _tokenList)[_tokenList] = {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _pendingTokenList)[_pendingTokenList] = {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _queryParams)[_queryParams] = {};
-	    babelHelpers.classPrivateFieldLooseBase(this, _userToken)[_userToken] = main_core.Loc.getMessage('user_jwt');
+	    if (callInstalled) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _userToken)[_userToken] = main_core.Loc.getMessage('user_jwt');
+	    }
 	  }
 	  setQueryParams(queryParams) {
 	    if (!main_core.Type.isPlainObject(queryParams)) {
@@ -49,7 +54,8 @@ this.BX.Call = this.BX.Call || {};
 	    const pendingToken = babelHelpers.classPrivateFieldLooseBase(this, _pendingTokenList)[_pendingTokenList][chatId];
 	    if (token) {
 	      return token;
-	    } else if (pendingToken) {
+	    }
+	    if (pendingToken) {
 	      return pendingToken;
 	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _pendingTokenList)[_pendingTokenList][chatId] = new Promise(resolve => {
@@ -67,7 +73,8 @@ this.BX.Call = this.BX.Call || {};
 	    const pendingToken = babelHelpers.classPrivateFieldLooseBase(this, _pendingTokenList)[_pendingTokenList][chatId];
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _userToken)[_userToken]) {
 	      return babelHelpers.classPrivateFieldLooseBase(this, _userToken)[_userToken];
-	    } else if (pendingToken) {
+	    }
+	    if (pendingToken) {
 	      return pendingToken;
 	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _pendingTokenList)[_pendingTokenList][chatId] = new Promise(resolve => {

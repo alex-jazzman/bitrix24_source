@@ -242,6 +242,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  },
 	  task: {
 	    onMembersCountChange: 'tasks:card:onMembersCountChange'
+	  },
+	  key: {
+	    onBeforeEscape: 'IM.Keys:onBeforeEscape'
 	  }
 	});
 
@@ -532,7 +535,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  collab10: '#f2fee2',
 	  orange50: '#ffa900',
 	  accentBlue: '#00ace3',
-	  accentMainPrimaryAlt: '#1f86ff'
+	  accentMainPrimaryAlt: '#1f86ff',
+	  base4: '#a8adb4'
 	});
 	const ColorToken = Object.freeze({
 	  base: 'base',

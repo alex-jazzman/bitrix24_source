@@ -116,4 +116,8 @@ export const EventType = Object.freeze({
 	{
 		onMembersCountChange: 'tasks:card:onMembersCountChange',
 	},
+	key:
+	{
+		onBeforeEscape: 'IM.Keys:onBeforeEscape',
+	},
 });

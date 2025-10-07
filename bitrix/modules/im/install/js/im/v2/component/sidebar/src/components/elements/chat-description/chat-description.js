@@ -1,14 +1,16 @@
 import { Loc } from 'main.core';
 
-import { ChatType, Layout, UserType } from 'im.v2.const';
+import { ChatType, UserType } from 'im.v2.const';
 import { CopilotManager } from 'im.v2.lib.copilot';
+import { SidebarManager } from 'im.v2.lib.sidebar';
 
 import './chat-description.css';
 
 import type { JsonObject } from 'main.core';
 import type { ImModelChat, ImModelUser } from 'im.v2.model';
 
-const MAX_DESCRIPTION_SYMBOLS = 25;
+const MAX_DESCRIPTION_SYMBOLS = 50;
+const VISIBLE_DESCRIPTION_LINES = 2;
 const NEW_LINE_SYMBOL = '\n';
 
 const DescriptionByChatType = {
@@ -56,11 +58,22 @@ export const ChatDescription = {
 		{
 			return this.dialog.type === ChatType.collab;
 		},
+		customDescription(): string
+		{
+			const sidebarConfig = SidebarManager.getInstance().getConfig(this.dialogId);
+
+			return sidebarConfig.getCustomDescription();
+		},
+		isCopilotChat(): boolean
+		{
+			return (new CopilotManager()).isCopilotChat(this.dialogId);
+		},
 		isLongDescription(): boolean
 		{
-			const hasNewLine = this.dialog.description.includes(NEW_LINE_SYMBOL);
+			const lineBreakCount = this.dialog.description.split(NEW_LINE_SYMBOL).length - 1;
+			const hasSeveralLines = lineBreakCount > VISIBLE_DESCRIPTION_LINES;
 
-			return this.dialog.description.length > MAX_DESCRIPTION_SYMBOLS || hasNewLine;
+			return (this.dialog.description.length > MAX_DESCRIPTION_SYMBOLS) || hasSeveralLines;
 		},
 		previewDescription(): string
 		{
@@ -82,7 +95,12 @@ export const ChatDescription = {
 		},
 		chatTypeText(): string
 		{
-			if (this.isAiAssistantLayout)
+			if (this.customDescription.length > 0)
+			{
+				return this.customDescription;
+			}
+
+			if (this.isCopilotChat)
 			{
 				return CopilotManager.getAIModelName(this.dialogId);
 			}
@@ -108,12 +126,6 @@ export const ChatDescription = {
 
 			return this.isLongDescription;
 		},
-		isAiAssistantLayout(): boolean
-		{
-			const { name: currentLayoutName } = this.$store.getters['application/getLayout'];
-
-			return currentLayoutName === Layout.aiAssistant;
-		},
 	},
 	methods:
 	{
@@ -126,7 +138,12 @@ export const ChatDescription = {
 		<div class="bx-im-sidebar-chat-description__container">
 			<div class="bx-im-sidebar-chat-description__text-container" :class="[expanded ? '--expanded' : '']">
 				<div class="bx-im-sidebar-chat-description__icon"></div>
-				<div class="bx-im-sidebar-chat-description__text"> {{ descriptionToShow }}</div>
+				<div
+					class="bx-im-sidebar-chat-description__text"
+					:class="{ '--long-description': isLongDescription }"
+				>
+					{{ descriptionToShow }}
+				</div>
 			</div>
 			<button
 				v-if="showExpandButton"

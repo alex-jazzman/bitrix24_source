@@ -1,18 +1,18 @@
 import { ChatType, SidebarMainPanelBlock } from 'im.v2.const';
 
-import { SidebarConfig } from '../classes/config';
+import { SidebarPreset } from '../classes/preset';
 
 import type { ImModelChat } from 'im.v2.model';
 
 const isLines = (chatContext: ImModelChat) => chatContext.type === ChatType.lines;
 
-const linesConfig = new SidebarConfig({
+const linesPreset = new SidebarPreset({
 	blocks: [
 		SidebarMainPanelBlock.chat,
 		SidebarMainPanelBlock.info,
 		SidebarMainPanelBlock.fileList,
 	],
-	headerMenuEnabled: false,
+	isHeaderMenuEnabled: () => false,
 });
 
-export { isLines, linesConfig };
+export { isLines, linesPreset };

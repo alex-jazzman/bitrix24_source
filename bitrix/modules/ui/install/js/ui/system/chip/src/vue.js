@@ -44,6 +44,10 @@ export const Chip = {
 			type: Boolean,
 			default: false,
 		},
+		dropdown: {
+			type: Boolean,
+			default: false,
+		},
 		lock: {
 			type: Boolean,
 			default: false,
@@ -79,7 +83,7 @@ export const Chip = {
 					'--rounded': rounded,
 					'--trimmable': trimmable,
 					'--lock': lock,
-					'--with-clear': withClear,
+					'--with-right-icon': withClear || dropdown,
 					'--no-text': text.length === 0,
 				},
 			]"
@@ -90,7 +94,8 @@ export const Chip = {
 			<img v-if="image" class="ui-chip-icon --image" :src="image.src" :alt="image.alt">
 			<BIcon v-if="icon" class="ui-chip-icon" :name="icon"/>
 			<div class="ui-chip-text">{{ text }}</div>
-			<BIcon v-if="withClear" class="ui-chip-clear" :name="Outline.CROSS_M" @click.stop="$emit('clear')"/>
+			<BIcon v-if="dropdown" class="ui-chip-right-icon" :name="Outline.CHEVRON_DOWN_M"/>
+			<BIcon v-if="withClear" class="ui-chip-right-icon" :name="Outline.CROSS_M" @click.stop="$emit('clear')"/>
 			<BIcon v-if="lock" class="ui-chip-lock" :name="Outline.LOCK_M"/>
 		</div>
 	`,

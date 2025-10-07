@@ -34,7 +34,6 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/common-chats/src/content', (r
 			this.onStoreDeleteSidebarCommonChats = this.onStoreDeleteSidebarCommonChats.bind(this);
 		}
 
-		// todo отписка
 		subscribeStoreEvents()
 		{
 			this.storeManager.on('sidebarModel/sidebarCommonChatsModel/set', this.onStoreSetSidebarCommonChats);

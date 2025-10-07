@@ -71,9 +71,11 @@ export class AnchorsModel extends BuilderModel
 				chatId: number,
 				anchorType: AnchorType,
 			): number => {
-				return state.anchors.filter((anchor) => {
+				const chatAnchors = state.anchors.filter((anchor) => {
 					return isAnchorWithTypeFromCurrentChat(anchor, anchorType, chatId);
-				}).length;
+				});
+
+				return new Set(chatAnchors.map((chatAnchor) => chatAnchor.messageId)).size;
 			},
 			/** @function messages/anchors/getNextMessageIdWithAnchorType */
 			getNextMessageIdWithAnchorType: (state: AnchorsState) => (

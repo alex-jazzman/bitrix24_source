@@ -118,6 +118,7 @@ $MESS["DISK_FOLDER_LIST_TITLE_UPLOAD_FILE"] = "Файл";
 $MESS["DISK_FOLDER_LIST_TRASHCAN_TTL_NOTICE"] = "Себеттегі файлдар жойылғаннан кейін #TTL_DAY# күн сақталады";
 $MESS["DISK_FOLDER_LIST_TRASH_EMPTY_TRASH_BUTTON"] = "Тазарту";
 $MESS["DISK_FOLDER_LIST_TRASH_EMPTY_TRASH_DESCRIPTION"] = "Барлық файлдарды біржола жою арқылы себетті босатқыңыз келетініне сенімдісіз бе?";
+$MESS["DISK_FOLDER_LIST_UNIFIED_RIGHT_USERS"] = "Сілтемесі бар барлық адамдар";
 $MESS["DISK_FOLDER_LIST_VOLUME_PURIFY"] = "Дискідегі орынды тазалау";
 $MESS["DISK_FOLDER_MW_CREATE_FILE_TEXT"] = "көмегімен құру";
 $MESS["DISK_FOLDER_MW_CREATE_FILE_TITLE"] = "Құжатты құру";

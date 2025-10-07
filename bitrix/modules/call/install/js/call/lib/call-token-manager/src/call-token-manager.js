@@ -1,5 +1,6 @@
-import { Type, Loc } from 'main.core';
+import { Type, Loc, Extension } from 'main.core';
 
+const { callInstalled } = Extension.getSettings('call.core');
 class TokenManager
 {
 	#tokenList;
@@ -12,12 +13,16 @@ class TokenManager
 		this.#tokenList = {};
 		this.#pendingTokenList = {};
 		this.#queryParams = {};
-		this.#userToken = Loc.getMessage('user_jwt');
+
+		if (callInstalled)
+		{
+			this.#userToken = Loc.getMessage('user_jwt');
+		}
 	}
 
 	setQueryParams(queryParams)
 	{
-		if (!Type.isPlainObject(queryParams) )
+		if (!Type.isPlainObject(queryParams))
 		{
 			return;
 		}
@@ -38,15 +43,14 @@ class TokenManager
 		{
 			return token;
 		}
-		else if (pendingToken)
+
+		if (pendingToken)
 		{
 			return pendingToken;
 		}
 
-		this.#pendingTokenList[chatId] = new Promise((resolve) =>
-		{
-			this.#loadToken(chatId).then(() =>
-			{
+		this.#pendingTokenList[chatId] = new Promise((resolve) => {
+			this.#loadToken(chatId).then(() => {
 				delete this.#pendingTokenList[chatId];
 				resolve(this.#tokenList[chatId]);
 			});
@@ -68,15 +72,14 @@ class TokenManager
 		{
 			return this.#userToken;
 		}
-		else if (pendingToken)
+
+		if (pendingToken)
 		{
 			return pendingToken;
 		}
 
-		this.#pendingTokenList[chatId] = new Promise((resolve) =>
-		{
-			this.#loadToken(chatId).then(() =>
-			{
+		this.#pendingTokenList[chatId] = new Promise((resolve) => {
+			this.#loadToken(chatId).then(() => {
 				delete this.#pendingTokenList[chatId];
 				resolve(this.#userToken);
 			});

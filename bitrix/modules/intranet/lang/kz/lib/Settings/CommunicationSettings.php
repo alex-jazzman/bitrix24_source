@@ -29,6 +29,7 @@ $MESS["INTRANET_SETTINGS_FIELD_LABEL_POST_FEED"] = "Барлық қызметк�
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_POST_FEED_MSGVER_1"] = "Барлық қызметкерлерге хабарлама жіберуге рұқсат ету";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_PUBLISH_TO_ALL_DEFAULT"] = "Барлық қызметкерлерге әдепкі бойынша хабарлама жіберу";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_SELECT_FILE_VIEWER"] = "Көмегімен құжаттарды қарау";
+$MESS["INTRANET_SETTINGS_FIELD_LABEL_SELECT_UNIFIED_LINK_DEFAULT_ACCESS"] = "Сілтеме арқылы файлға кірудің әдепкі құқықтары";
 $MESS["INTRANET_SETTINGS_SECTION_TITLE_CHANNELS"] = "Жалпы арналар";
 $MESS["INTRANET_SETTINGS_SECTION_TITLE_CHATS"] = "Чаттар";
 $MESS["INTRANET_SETTINGS_SECTION_TITLE_DISK"] = "Диск";

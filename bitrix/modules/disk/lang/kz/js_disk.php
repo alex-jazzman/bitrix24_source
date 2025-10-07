@@ -32,6 +32,7 @@ $MESS["DISK_JS_SHARING_LABEL_TITLE_MODAL"] = "Ортақ қолжетімділ�
 $MESS["DISK_JS_SHARING_LABEL_TITLE_MODAL_2"] = "Ортақ қолжетімділік";
 $MESS["DISK_JS_SHARING_LABEL_TITLE_MODAL_3"] = "Ортақ қолжетімділік";
 $MESS["DISK_JS_SHARING_LABEL_TOOLTIP_SHARING"] = "Бумаға кіре алатын барлық қызметкерлер <br/>жаңа ортақ қолжетімділік мүшелерін қоса алады";
+$MESS["DISK_JS_SHARING_UNIFIED_RIGHT_USERS"] = "Сілтемесі бар барлық адамдар";
 $MESS["DISK_JS_STATUS_ACTION_ERROR"] = "Қате орын алды";
 $MESS["DISK_JS_STATUS_ACTION_SUCCESS"] = "Сәтті";
 $MESS["DISK_JS_USER_LOCKED_DOCUMENT"] = "Құжатты бұғаттады";

@@ -203,6 +203,8 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 		}
 		else
 		{
+			$isCollaber = Loader::includeModule('extranet')
+				&& \Bitrix\Extranet\Service\ServiceContainer::getInstance()->getCollaberService()->isCollaberById($this->userId);
 			$obUser = new CUser();
 			$arGroups = $obUser->GetUserGroup(intval($this->userId));
 			$ID = 0;
@@ -233,7 +235,9 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 						"FROM_USER_ID" => 0,
 						"NOTIFY_TYPE" => IM_NOTIFY_SYSTEM,
 						"NOTIFY_MODULE" => "bitrix24",
-						"NOTIFY_MESSAGE" => Loc::getMessage("INTRANET_USER_PROFILE_MOVE_TO_INTRANET_NOTIFY"),
+						"NOTIFY_MESSAGE" => $isCollaber
+							? Loc::getMessage("INTRANET_USER_PROFILE_MOVE_COLLAB_TO_INTRANET_NOTIFY_MSGVER_1")
+							: Loc::getMessage("INTRANET_USER_PROFILE_MOVE_TO_INTRANET_NOTIFY"),
 					];
 					\CIMNotify::Add($arMessageFields);
 				}

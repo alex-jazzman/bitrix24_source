@@ -47,6 +47,7 @@ export class BaseMenu extends EventEmitter
 			bindOptions: { forceBindPosition: true, position: 'bottom' },
 			targetContainer: document.body,
 			cacheable: false,
+			closeByEsc: true,
 			className: this.getMenuClassName(),
 			items: this.#prepareItems(),
 			sections: this.getMenuGroups(),

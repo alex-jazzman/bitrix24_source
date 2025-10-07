@@ -15,7 +15,13 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 
 use Bitrix\Main\Context;
 use Bitrix\Main\Engine\CurrentUser;
+use Bitrix\Main\Loader;
+use Bitrix\Main\UI\Extension;
 use Bitrix\Socialnetwork\Internals\Registry\FeaturePermRegistry;
+use Bitrix\Tasks\Slider\Factory\SliderFactory;
+use Bitrix\Tasks\Slider\Path\TaskPathMaker;
+use Bitrix\Tasks\V2\FormV2Feature;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
 
 $userId = CurrentUser::get()->getId();
 $pageId = "group_tasks";
@@ -43,6 +49,32 @@ $formParams = [
 	"RATING_TYPE" => $arParams["RATING_TYPE"],
 	"NAME_TEMPLATE" => $arParams["NAME_TEMPLATE"],
 ];
+$formFeatureEnabled = Loader::includeModule('tasks')
+	&& class_exists(FormV2Feature::class)
+	&& FormV2Feature::isOn()
+;
+$isFormV2AllowedForGroup = Loader::includeModule('tasks')
+	&& class_exists(FormV2Feature::class)
+	&& in_array($groupId, FormV2Feature::getAllowedGroups(), true)
+;
+$showPersonalTasks = false;
+if (
+	!FeaturePermRegistry::getInstance()->get(
+		$groupId,
+		'tasks',
+		'view',
+		$userId
+	)
+	|| !FeaturePermRegistry::getInstance()->get(
+		$groupId,
+		'tasks',
+		'view_all',
+		$userId
+	)
+)
+{
+	$showPersonalTasks = true;
+}
 
 if (Context::getCurrent()->getRequest()->get('IFRAME'))
 {
@@ -74,27 +106,52 @@ if (Context::getCurrent()->getRequest()->get('IFRAME'))
 		);
 	}
 }
-else
+else if (
+	($formFeatureEnabled || $isFormV2AllowedForGroup)
+	&& Context::getCurrent()->getRequest()->get('OLD_FORM') !== 'Y'
+)
 {
-	$showPersonalTasks = false;
-	if (
-		!FeaturePermRegistry::getInstance()->get(
-			$groupId,
-			'tasks',
-			'view',
-			$userId
-		)
-		|| !FeaturePermRegistry::getInstance()->get(
-			$groupId,
-			'tasks',
-			'view_all',
-			$userId
-		)
-	)
+	$APPLICATION->SetPageProperty('BodyClass', 'no-all-paddings no-background');
+	$APPLICATION->SetTitle('');
+	Toolbar::deleteFavoriteStar();
+
+	if (isset($showPersonalTasks) && $showPersonalTasks === true)
 	{
-		$showPersonalTasks = true;
+		$context = SliderFactory::PERSONAL_CONTEXT;
+		$ownerId = $userId;
+	}
+	else
+	{
+		$context = SliderFactory::GROUP_CONTEXT;
+		$ownerId = $groupId;
 	}
 
+	$pathToList = (new TaskPathMaker(
+		entityId: $taskId,
+		ownerId: $ownerId,
+		context: $context,
+	))->makeEntitiesListPath();
+
+	Extension::load('tasks.v2.application.task-card');
+
+	?>
+	<script>
+		top.BX.ready(async function()
+		{
+			const { TaskCard } = await top.BX.Runtime.loadExtension('tasks.v2.application.task-card');
+
+			TaskCard.showFullCard({
+				taskId: <?= $taskId ?>,
+				groupId: <?= $groupId ?>,
+				closeCompleteUrl: "<?= $pathToList ?>",
+				url: window.location.href,
+			});
+		});
+	</script>
+	<?php
+}
+else
+{
 	$backgroundForTask = true;
 	require_once('group_tasks_task_background.php');
 }

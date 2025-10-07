@@ -108,16 +108,16 @@ export const NotificationSection = {
 		<div class="bx-im-settings-section-content__body">
 			<div class="bx-im-settings-section-content__block">
 				<div class="bx-im-settings-section-content__block_title">
-					{{ loc('IM_CONTENT_SETTINGS_OPTION_NOTIFICATION_BLOCK_FOCUS') }}
+					{{ loc('IM_CONTENT_SETTINGS_OPTION_NOTIFICATION_BLOCK_FOCUS_MSGVER_1') }}
 				</div>
 				<CheckboxOption
 					:value="enableSound"
-					:text="loc('IM_CONTENT_SETTINGS_OPTION_NOTIFICATION_ENABLE_SOUND')"
+					:text="loc('IM_CONTENT_SETTINGS_OPTION_NOTIFICATION_ENABLE_SOUND_MSGVER_1')"
 					@change="onEnableSoundChange"
 				/>
 				<CheckboxOption
 					:value="enableAutoRead"
-					:text="loc('IM_CONTENT_SETTINGS_OPTION_NOTIFICATION_AUTO_READ')"
+					:text="loc('IM_CONTENT_SETTINGS_OPTION_NOTIFICATION_AUTO_READ_MSGVER_1')"
 					@change="onEnableAutoReadChange"
 				/>
 				<CheckboxOption
@@ -131,7 +131,7 @@ export const NotificationSection = {
 		<div class="bx-im-settings-section-content__body">
 			<div class="bx-im-settings-section-content__block">
 				<div class="bx-im-settings-section-content__block_title">
-					{{ loc('IM_CONTENT_SETTINGS_OPTION_NOTIFICATION_BLOCK_MODE') }}
+					{{ loc('IM_CONTENT_SETTINGS_OPTION_NOTIFICATION_BLOCK_MODE_MSGVER_1') }}
 				</div>
 				<RadioOption :items="notificationModeOptions" @change="onNotificationModeChange" />
 			</div>

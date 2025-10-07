@@ -883,6 +883,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			@queryChange="onInputUpdate"
 			@keyPressed="onKeyPressed"
 			@close="onClose"
+			@closeByEsc="onClose"
 		/>
 	`
 	};

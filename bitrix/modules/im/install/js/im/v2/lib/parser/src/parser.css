@@ -102,16 +102,14 @@
 	border-left: 3px solid #505050;
 }
 
-.bx-im-message-image
-{
-	display: block;
+.bx-im-message-image {
+	display: inline-flex;
 	cursor: pointer;
 	align-items: center;
-	justify-content: left;
+	justify-content: center;
 	overflow: hidden;
-	height: 160px;
-	min-width: 80px;
-	border-radius: 12px;
+	border-radius: 0;
+	max-width: var(--im-content-chat__max-width_message_container);
 }
 
 .bx-im-message-image-source {
@@ -185,4 +183,17 @@
 
 .bx-im-lines-vote-dislike {
 	background: url("./images/dislike.svg");
+}
+
+
+.bx-im-message-image--small img {
+	max-height: 120px;
+}
+
+.bx-im-message-image--medium img {
+	max-height: 200px;
+}
+
+.bx-im-message-image--large img {
+	max-height: 300px;
 }

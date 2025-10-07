@@ -1,7 +1,7 @@
 .bx-im-dialog-chat__float-buttons {
 	position: absolute;
 	right: 20px;
-	bottom: 80px;
+	bottom: 22px;
 	display: flex;
 	flex-direction: column;
 	justify-content: flex-start;
@@ -33,25 +33,35 @@
 .bx-im-dialog-chat__float-button.--color-accent {
 	--im-dialog-chat__icon-color_float-button: #00ace3;
 	--im-dialog-chat__icon-color-hover_float-button: var(--im-color-palette-blue-60);
+	--im-dialog-chat__background-color_float-button-counter: var(--im-dialog-chat__icon-color_float-button);
+	--im-dialog-chat__background-color-hover_float-button-counter: var(--im-dialog-chat__icon-color_float-button);
 }
 
 .bx-im-dialog-chat__float-button.--color-alert {
 	--im-dialog-chat__icon-color_float-button: var(--im-color-palette-red-50);
 	--im-dialog-chat__icon-color-hover_float-button: var(--ui-color-palette-red-60);
+	--im-dialog-chat__background-color_float-button-counter: #00ace3;
+	--im-dialog-chat__background-color-hover_float-button-counter: var(--im-color-palette-blue-60);
 }
 
 .bx-im-dialog-chat__float-button.--color-success {
 	--im-dialog-chat__icon-color_float-button: var(--im-color-palette-green-55);
 	--im-dialog-chat__icon-color-hover_float-button: var(--im-color-palette-green-70);
+	--im-dialog-chat__background-color_float-button-counter: var(--im-dialog-chat__icon-color_float-button);
+	--im-dialog-chat__background-color-hover_float-button-counter: var(--im-dialog-chat__icon-color-hover_float-button);
 }
 
 .bx-im-dialog-chat__float-button:hover {
 	--im-dialog-chat__icon-color_float-button: var(--im-dialog-chat__icon-color-hover_float-button);
 }
 
+.bx-im-dialog-chat__float-button:hover .bx-im-dialog-chat__float-button_counter {
+	--im-dialog-chat__background-color_float-button-counter: var(--im-dialog-chat__background-color-hover_float-button-counter);
+}
+
 .bx-im-dialog-chat__float-button_icon {
-	width: 34px;
-	height: 34px;
+	width: 32px;
+	height: 32px;
 	background-color: var(--im-dialog-chat__icon-color_float-button);
 	mask-size: contain;
 	mask-position: center;
@@ -85,7 +95,7 @@
 	justify-content: center;
 	padding: 0 2px;
 	border-radius: 30px;
-	background-color: var(--im-dialog-chat__icon-color_float-button);
+	background-color: var(--im-dialog-chat__background-color_float-button-counter);
 	font: var(--im-font-size-xs) var(--im-font-family-system);
 	font-weight: var(--im-font-weight-medium);
 	color: var(--im-dialog-chat__font-color_scroll-button-counter);
@@ -111,7 +121,14 @@
 .float-button-transition-enter-active {
 	transition-property: transform, opacity, height, margin-top;
 	transition-timing-function: cubic-bezier(0,.58,.52,2.06), ease-out, ease-out, ease-out;
-	transition-delay: 0.1s, 0.1s, 0s, 0.2s;
+	transition-delay: 0.3s, 0.3s, 0.2s, 0.4s;
+}
+
+/* used to smooth the case when one button is leaving from top and other is entering from bottom */
+.float-button-transition-leave-from + .float-button-transition-enter-from,
+.float-button-transition-leave-to + .float-button-transition-enter-from,
+.float-button-transition-leave-active + .float-button-transition-enter-from {
+	margin-top: 0;
 }
 
 .float-button-transition-enter-from {
@@ -139,22 +156,4 @@
 	opacity: 0;
 	margin-bottom: 0;
 	transform: translateY(-42px);
-}
-
-.scroll-button-transition-move,
-.scroll-button-transition-enter-active,
-.scroll-button-transition-leave-active {
-	transition-property: transform, opacity;
-	transition-duration: 0.2s, 0.2s;
-	transition-timing-function: ease-out;
-}
-
-.scroll-button-transition-enter-from {
-	transform: translateY(24px);
-	opacity: 0;
-}
-
-.scroll-button-transition-leave-to {
-	transform: translateY(24px);
-	opacity: 0;
 }

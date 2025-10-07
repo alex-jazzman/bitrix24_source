@@ -23,10 +23,15 @@ use Bitrix\Disk\Security\SecurityContext;
 use Bitrix\Disk\Sharing;
 use Bitrix\Disk\Storage;
 use Bitrix\Disk\TypeFile;
+use Bitrix\Disk\Internal\Service\UnifiedLink\Configuration as UnifiedLinkConfiguration;
+use Bitrix\Disk\Internal\Access\UnifiedLink\UnifiedLinkAccessCheckHandler;
+use Bitrix\Disk\Internal\Access\UnifiedLink\UnifiedLinkAccessLevel;
+use Bitrix\Disk\Internal\Command\UnifiedLink\SetAccessCommand;
 use Bitrix\Disk\User;
 use Bitrix\Disk\Ui;
 use Bitrix\Main\Analytics\AnalyticsEvent;
 use Bitrix\Main\Application;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Entity\Query;
 use Bitrix\Main\EventResult;
@@ -62,6 +67,13 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 	const ERROR_DISK_QUOTA                     = 'DISK_FLAC_22005';
 
 	private ?array $prevRightsOnStorage = null;
+	private ServiceLocator $serviceLocator;
+
+	public function __construct()
+	{
+		$this->serviceLocator = ServiceLocator::getInstance();
+		parent::__construct();
+	}
 
 	protected function listActions()
 	{
@@ -973,7 +985,14 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 
 		$rightsManager = Driver::getInstance()->getRightsManager();
 		$securityContext = $object->getStorage()->getCurrentUserSecurityContext();
-		if(!$object->canRead($securityContext))
+
+		$isAccessDeniedByUnifiedLink = false;
+		if ($object instanceof File)
+		{
+			$accessByUnifiedLink = $this->getUnifiedLinkCurrentAccessLevel($object);
+			$isAccessDeniedByUnifiedLink = $accessByUnifiedLink === UnifiedLinkAccessLevel::Denied;
+		}
+		if($isAccessDeniedByUnifiedLink && !$object->canRead($securityContext))
 		{
 			$this->sendJsonAccessDeniedResponse();
 		}
@@ -1002,10 +1021,16 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 			$this->sendJsonErrorResponse();
 		}
 
-		$this->sendJsonSuccessResponse(array(
+		$response = array(
 			'members' => $entityList,
 			'owner' => $this->getOwner($object),
-		));
+		);
+
+		if ($object instanceof File && UnifiedLinkConfiguration::supportsUnifiedLink($object)) {
+			$response['unifiedLink'] = $this->getUnifiedLinkData($object);
+		}
+
+		$this->sendJsonSuccessResponse($response);
 	}
 
 	protected function processActionShowSharingDetailChangeRights($objectId)
@@ -1062,7 +1087,7 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 		$owner['canOnlyShare'] = $canOnlyShare;
 		$owner['maxTaskName'] = $maxTaskName;
 
-		$this->sendJsonSuccessResponse(array(
+		$response = array(
 			'members' => $entityList,
 			'owner' => $owner,
 			'destination' => array(
@@ -1081,7 +1106,33 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 				),
 				'itemsSelected' => $destination['SELECTED'],
 			),
-		));
+		);
+
+		if ($object instanceof File && UnifiedLinkConfiguration::supportsUnifiedLink($object))
+		{
+			$response['unifiedLink'] = $this->getUnifiedLinkData($object);
+		}
+
+		$this->sendJsonSuccessResponse($response);
+	}
+
+	private function getUnifiedLinkData(File $object): array
+	{
+		return [
+			'currentAccessLevel' => $this->getUnifiedLinkCurrentAccessLevel($object),
+			'availableAccessLevels' => array_map(static fn (UnifiedLinkAccessLevel $accessLevel) => [
+				'value' => $accessLevel->value,
+				'name' => $accessLevel->getTitle(),
+			], UnifiedLinkAccessLevel::cases()),
+		];
+	}
+
+	private function getUnifiedLinkCurrentAccessLevel(File $object): UnifiedLinkAccessLevel
+	{
+		return $this->serviceLocator
+			->get(UnifiedLinkAccessCheckHandler::class)
+			->check($object)
+		;
 	}
 
 	protected function getOwner(BaseObject $object): array
@@ -1226,6 +1277,28 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 		$entityToNewShared = $this->request->getPost('entityToNewShared');
 		if(!empty($entityToNewShared) && is_array($entityToNewShared))
 		{
+			$unifiedLinkAccessChanged = false;
+			$unifiedLinkData = $entityToNewShared['unifiedLink'];
+			if (isset($unifiedLinkData['newAccessLevel']))
+			{
+				$unifiedLinkNewAccessLevel = UnifiedLinkAccessLevel::tryFrom($unifiedLinkData['newAccessLevel']);
+				if ($unifiedLinkNewAccessLevel !== null)
+				{
+					$result = (new SetAccessCommand($objectId, $unifiedLinkNewAccessLevel))->run();
+
+					if ($result->isSuccess())
+					{
+						$unifiedLinkAccessChanged = true;
+					}
+					else
+					{
+						$this->sendJsonErrorResponse([
+							'unifiedLinkChangeError' => true,
+						]);
+					}
+				}
+			}
+
 			$extendedRights = $entityToNewShared;
 			$newExtendedRightsReformat = array();
 			foreach($extendedRights as $entityId => $right)
@@ -1382,7 +1455,9 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 				}
 			);
 
-			$this->sendJsonSuccessResponse();
+			$this->sendJsonSuccessResponse([
+				'unifiedLinkAccessChanged' => $unifiedLinkAccessChanged,
+			]);
 		}
 		else
 		{

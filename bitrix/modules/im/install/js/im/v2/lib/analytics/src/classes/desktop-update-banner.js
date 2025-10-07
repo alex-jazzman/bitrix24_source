@@ -4,22 +4,22 @@ import { AnalyticsCategory, AnalyticsTool, AnalyticsEvent, AnalyticsType } from 
 
 export class DesktopUpdateBanner
 {
-	onShow()
+	onShow(): void
 	{
 		sendData(this.#buildAnalyticsData(AnalyticsEvent.view));
 	}
 
-	onClickUpdate()
+	onClickUpdate(): void
 	{
 		sendData(this.#buildAnalyticsData(AnalyticsEvent.clickUpdate));
 	}
 
-	onClickMoreInformation()
+	onClickMoreInformation(): void
 	{
 		sendData(this.#buildAnalyticsData(AnalyticsEvent.clickMoreInformation));
 	}
 
-	onOpenWebVersion()
+	onOpenWebVersion(): void
 	{
 		sendData(this.#buildAnalyticsData(AnalyticsEvent.goToWeb));
 	}

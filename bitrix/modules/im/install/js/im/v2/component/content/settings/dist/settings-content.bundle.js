@@ -3,12 +3,12 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,im_v2_lib_logger,im_v2_lib_helpdesk,ui_feedback_form,im_v2_component_dialog_chat,im_v2_lib_theme,im_v2_lib_demo,ui_forms,im_v2_component_elements_hint,main_core,im_v2_application_core,im_v2_lib_rest,im_v2_lib_utils,im_v2_lib_desktopApi,im_v2_lib_confirm,im_v2_const,im_v2_lib_feature,im_v2_lib_layout,im_v2_provider_service_settings) {
+(function (exports,im_v2_lib_logger,im_v2_lib_helpdesk,ui_feedback_form,im_v2_component_dialog_chat,im_v2_lib_theme,im_v2_lib_demo,im_v2_lib_confirm,ui_forms,im_v2_component_elements_hint,main_core,im_v2_application_core,im_v2_lib_rest,im_v2_lib_utils,im_v2_lib_desktopApi,im_v2_const,im_v2_lib_feature,im_v2_provider_service_settings) {
 	'use strict';
 
 	const SectionMetaData = {
 	  appearance: {
-	    name: main_core.Loc.getMessage('IM_CONTENT_SETTINGS_SECTION_LIST_APPEARANCE'),
+	    name: main_core.Loc.getMessage('IM_CONTENT_SETTINGS_SECTION_LIST_APPEARANCE_MSGVER_1'),
 	    icon: 'fa-solid fa-brush'
 	  },
 	  notification: {
@@ -24,7 +24,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    icon: 'fa-solid fa-message'
 	  },
 	  recent: {
-	    name: main_core.Loc.getMessage('IM_CONTENT_SETTINGS_SECTION_LIST_RECENT'),
+	    name: main_core.Loc.getMessage('IM_CONTENT_SETTINGS_SECTION_LIST_RECENT_MSGVER_1'),
 	    icon: 'fa-solid fa-list-ul'
 	  },
 	  desktop: {
@@ -477,11 +477,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		<div class="bx-im-settings-section-content__body">
 			<div class="bx-im-settings-section-content__block">
 				<div class="bx-im-settings-section-content__block_title">
-					{{ loc('IM_CONTENT_SETTINGS_OPTION_NOTIFICATION_BLOCK_SIMPLE_MODE_TITLE') }}
+					{{ loc('IM_CONTENT_SETTINGS_OPTION_NOTIFICATION_BLOCK_SIMPLE_MODE_TITLE_MSGVER_1') }}
 				</div>
 				<CheckboxOption
 					:value="enableWeb"
-					:text="loc('IM_CONTENT_SETTINGS_OPTION_NOTIFICATION_ENABLE_WEB')"
+					:text="loc('IM_CONTENT_SETTINGS_OPTION_NOTIFICATION_ENABLE_WEB_MSGVER_1')"
 					@change="onEnableWebChange"
 				/>
 				<CheckboxOption
@@ -491,7 +491,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				/>
 				<CheckboxOption
 					:value="enablePush"
-					:text="loc('IM_CONTENT_SETTINGS_OPTION_NOTIFICATION_ENABLE_PUSH_V1')"
+					:text="loc('IM_CONTENT_SETTINGS_OPTION_NOTIFICATION_ENABLE_MSGVER_1')"
 					@change="onEnablePushChange"
 				/>
 			</div>
@@ -639,13 +639,13 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				<div class="bx-im-settings-expert-notifications__header">
 					<div class="bx-im-settings-expert-notifications__header_title"></div>
 					<div class="bx-im-settings-expert-notifications__header_type">
-						{{ loc('IM_CONTENT_SETTINGS_EXPERT_NOTIFICATIONS_TYPE_WEB') }}
+						{{ loc('IM_CONTENT_SETTINGS_EXPERT_NOTIFICATIONS_TYPE_WEB_MSGVER_1') }}
 					</div>
 					<div class="bx-im-settings-expert-notifications__header_type">
 						{{ loc('IM_CONTENT_SETTINGS_EXPERT_NOTIFICATIONS_TYPE_MAIL') }}
 					</div>
 					<div class="bx-im-settings-expert-notifications__header_type">
-						{{ loc('IM_CONTENT_SETTINGS_EXPERT_NOTIFICATIONS_TYPE_PUSH') }}
+						{{ loc('IM_CONTENT_SETTINGS_EXPERT_NOTIFICATIONS_TYPE_PUSH_MSGVER_1') }}
 					</div>
 				</div>
 				<NotificationItem v-for="item in block.items" :item="item" :blockId="block.id" :key="item.id" />
@@ -758,16 +758,16 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		<div class="bx-im-settings-section-content__body">
 			<div class="bx-im-settings-section-content__block">
 				<div class="bx-im-settings-section-content__block_title">
-					{{ loc('IM_CONTENT_SETTINGS_OPTION_NOTIFICATION_BLOCK_FOCUS') }}
+					{{ loc('IM_CONTENT_SETTINGS_OPTION_NOTIFICATION_BLOCK_FOCUS_MSGVER_1') }}
 				</div>
 				<CheckboxOption
 					:value="enableSound"
-					:text="loc('IM_CONTENT_SETTINGS_OPTION_NOTIFICATION_ENABLE_SOUND')"
+					:text="loc('IM_CONTENT_SETTINGS_OPTION_NOTIFICATION_ENABLE_SOUND_MSGVER_1')"
 					@change="onEnableSoundChange"
 				/>
 				<CheckboxOption
 					:value="enableAutoRead"
-					:text="loc('IM_CONTENT_SETTINGS_OPTION_NOTIFICATION_AUTO_READ')"
+					:text="loc('IM_CONTENT_SETTINGS_OPTION_NOTIFICATION_AUTO_READ_MSGVER_1')"
 					@change="onEnableAutoReadChange"
 				/>
 				<CheckboxOption
@@ -781,7 +781,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		<div class="bx-im-settings-section-content__body">
 			<div class="bx-im-settings-section-content__block">
 				<div class="bx-im-settings-section-content__block_title">
-					{{ loc('IM_CONTENT_SETTINGS_OPTION_NOTIFICATION_BLOCK_MODE') }}
+					{{ loc('IM_CONTENT_SETTINGS_OPTION_NOTIFICATION_BLOCK_MODE_MSGVER_1') }}
 				</div>
 				<RadioOption :items="notificationModeOptions" @change="onNotificationModeChange" />
 			</div>
@@ -805,10 +805,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    },
 	    sendCombinationItems() {
 	      const ctrlKey = im_v2_lib_utils.Utils.platform.isMac() ? '&#8984;' : 'Ctrl';
-	      const enterSubtext = this.loc('IM_CONTENT_SETTINGS_OPTION_HOTKEY_NEW_LINE', {
+	      const enterSubtext = this.loc('IM_CONTENT_SETTINGS_OPTION_HOTKEY_NEW_LINE_MSGVER_1', {
 	        '#HOTKEY#': 'Shift + Enter'
 	      });
-	      const ctrlEnterSubtext = this.loc('IM_CONTENT_SETTINGS_OPTION_HOTKEY_NEW_LINE', {
+	      const ctrlEnterSubtext = this.loc('IM_CONTENT_SETTINGS_OPTION_HOTKEY_NEW_LINE_MSGVER_1', {
 	        '#HOTKEY#': 'Enter'
 	      });
 	      return [{
@@ -899,17 +899,17 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			<div class="bx-im-settings-section-content__block">
 				<CheckboxOption
 					:value="showBirthday"
-					:text="loc('IM_CONTENT_SETTINGS_OPTION_RECENT_SHOW_BIRTHDAY')"
+					:text="loc('IM_CONTENT_SETTINGS_OPTION_RECENT_SHOW_BIRTHDAY_MSGVER_1')"
 					@change="onShowBirthdayChange"
 				/>
 				<CheckboxOption
 					:value="showInvited"
-					:text="loc('IM_CONTENT_SETTINGS_OPTION_RECENT_SHOW_INVITED')"
+					:text="loc('IM_CONTENT_SETTINGS_OPTION_RECENT_SHOW_INVITED_MSGVER_1')"
 					@change="onShowInvitedChange"
 				/>
 				<CheckboxOption
 					:value="showLastMessage"
-					:text="loc('IM_CONTENT_SETTINGS_OPTION_RECENT_SHOW_TEXT')"
+					:text="loc('IM_CONTENT_SETTINGS_OPTION_RECENT_SHOW_TEXT_MSGVER_1')"
 					@change="onShowLastMessageChange"
 				/>
 			</div>
@@ -923,13 +923,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  components: {
 	    CheckboxOption
 	  },
-	  data() {
-	    return {};
-	  },
 	  computed: {
-	    twoWindowMode() {
-	      return im_v2_lib_desktopApi.DesktopApi.isTwoWindowMode();
-	    },
 	    autoStartDesktop() {
 	      return im_v2_lib_desktopApi.DesktopApi.getAutostartStatus();
 	    },
@@ -949,25 +943,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    sendTelemetry() {
 	      return im_v2_lib_desktopApi.DesktopApi.getTelemetryStatus();
 	    },
-	    isAirDesignEnabled() {
-	      return im_v2_lib_layout.LayoutManager.getInstance().isAirDesignEnabled();
-	    },
 	    isRedirectAvailable() {
 	      return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isDesktopRedirectAvailable);
 	    }
 	  },
 	  methods: {
-	    async onTwoWindowModeChange(newValue) {
-	      im_v2_lib_desktopApi.DesktopApi.setTwoWindowMode(newValue);
-	      if (!im_v2_lib_desktopApi.DesktopApi.isFeatureSupported(im_v2_lib_desktopApi.DesktopFeature.restart.id)) {
-	        void im_v2_lib_confirm.showDesktopConfirm();
-	        return;
-	      }
-	      const userChoice = await im_v2_lib_confirm.showDesktopRestartConfirm();
-	      if (userChoice === true) {
-	        im_v2_lib_desktopApi.DesktopApi.restart();
-	      }
-	    },
 	    onAutoStartDesktopChange(newValue) {
 	      im_v2_lib_desktopApi.DesktopApi.setAutostartStatus(newValue);
 	    },
@@ -1004,12 +984,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				<div class="bx-im-settings-section-content__block_title">
 					{{ loc('IM_CONTENT_SETTINGS_OPTION_DESKTOP_BLOCK_STARTUP') }}
 				</div>
-				<CheckboxOption
-					v-if="!isAirDesignEnabled"
-					:value="twoWindowMode"
-					:text="loc('IM_CONTENT_SETTINGS_OPTION_DESKTOP_TWO_WINDOW_MODE_V2')"
-					@change="onTwoWindowModeChange"
-				/>
 				<CheckboxOption
 					:value="autoStartDesktop"
 					:text="loc('IM_CONTENT_SETTINGS_OPTION_DESKTOP_AUTO_START')"
@@ -1147,5 +1121,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.SettingsContent = SettingsContent;
 
-}((this.BX.Messenger.v2.Component.Content = this.BX.Messenger.v2.Component.Content || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.UI.Feedback,BX.Messenger.v2.Component.Dialog,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Component.Elements,BX,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service));
+}((this.BX.Messenger.v2.Component.Content = this.BX.Messenger.v2.Component.Content || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.UI.Feedback,BX.Messenger.v2.Component.Dialog,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Component.Elements,BX,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Service));
 //# sourceMappingURL=settings-content.bundle.js.map

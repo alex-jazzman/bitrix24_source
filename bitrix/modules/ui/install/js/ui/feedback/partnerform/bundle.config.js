@@ -1,6 +1,6 @@
 module.exports = {
-	input: 'src/PartnerForm.js',
-	output: 'dist/PartnerForm.bundle.js',
+	input: 'src/partner-form.js',
+	output: 'dist/partner-form.bundle.js',
 	namespace: 'BX.UI.Feedback',
 	browserslist: true,
 };

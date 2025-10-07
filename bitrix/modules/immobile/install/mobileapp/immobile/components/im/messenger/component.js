@@ -531,6 +531,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		{
 			const methodList = [
 				...super.getInitRestMethodsForApplicationStartup(),
+				MessengerInitRestMethod.activeCalls,
 				MessengerInitRestMethod.promotion,
 				MessengerInitRestMethod.tariffRestriction,
 			];

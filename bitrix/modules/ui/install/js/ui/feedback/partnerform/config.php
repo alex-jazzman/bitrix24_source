@@ -7,8 +7,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 return [
-	'css' => 'dist/PartnerForm.bundle.css',
-	'js' => 'dist/PartnerForm.bundle.js',
+	'css' => 'dist/partner-form.bundle.css',
+	'js' => 'dist/partner-form.bundle.js',
 	'rel' => [
 		'main.core',
 		'ui.feedback.form',

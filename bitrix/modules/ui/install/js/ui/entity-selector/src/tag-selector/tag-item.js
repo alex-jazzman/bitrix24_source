@@ -287,6 +287,11 @@ export default class TagItem
 		if (Type.isBoolean(flag))
 		{
 			this.deselectable = flag;
+
+			if (this.isRendered())
+			{
+				Dom.toggleClass(this.getContainer(), 'ui-tag-selector-tag-readonly', !flag);
+			}
 		}
 	}
 

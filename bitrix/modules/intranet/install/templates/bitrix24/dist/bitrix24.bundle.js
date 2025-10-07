@@ -8,8 +8,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  main_core.Loc.setMessage(params.messages);
 	  await showPartnerFormPopup({
 	    ...params,
-	    titleBar: main_core.Loc.getMessage('BX24_PARTNER_TITLE'),
-	    sendButtonText: main_core.Loc.getMessage('BX24_BUTTON_SEND')
+	    titleBar: main_core.Loc.getMessage('PARTNER_POPUP_TITLE'),
+	    sendButtonText: main_core.Loc.getMessage('PARTNER_POPUP_SEND_BUTTON')
 	  });
 	}
 	async function showPartnerFormPopup(options) {
@@ -66,162 +66,27 @@ this.BX.Intranet = this.BX.Intranet || {};
 	}
 	async function showIntegratorApplicationForm() {
 	  const {
-	    Form
-	  } = await main_core.Runtime.loadExtension('ui.feedback.form');
-	  Form.open({
+	    PartnerForm
+	  } = await main_core.Runtime.loadExtension('ui.feedback.partnerform');
+	  const formParams = {
 	    id: `intranet-license-partner-form-${parseInt(Math.random() * 1000, 10)}`,
-	    portalUri: 'https://bitrix24.team',
-	    forms: [{
-	      zones: ['de'],
-	      id: 883,
-	      lang: 'de',
-	      sec: 'a12ty8'
-	    }, {
-	      zones: ['com', 'in', 'eu', 'uk'],
-	      id: 735,
-	      lang: 'en',
-	      sec: 'vlhmlv'
-	    }, {
-	      zones: ['es', 'co', 'mx'],
-	      id: 900,
-	      lang: 'es',
-	      sec: 'w3qmwq'
-	    }, {
-	      zones: ['com.br'],
-	      id: 901,
-	      lang: 'pt',
-	      sec: 'prnm4x'
-	    }, {
-	      zones: ['cn/tc'],
-	      id: 902,
-	      lang: 'cn-tc',
-	      sec: 'z8isyg'
-	    }, {
-	      zones: ['cn'],
-	      id: 903,
-	      lang: 'cn-sc',
-	      sec: 'hsxnam'
-	    }, {
-	      zones: ['pl'],
-	      id: 904,
-	      lang: 'pl',
-	      sec: '2ph9ph'
-	    }, {
-	      zones: ['it'],
-	      id: 905,
-	      lang: 'it',
-	      sec: '2r3owa'
-	    }, {
-	      zones: ['fr'],
-	      id: 906,
-	      lang: 'fr',
-	      sec: 'jt2fii'
-	    }, {
-	      zones: ['com.tr'],
-	      id: 907,
-	      lang: 'tr',
-	      sec: 'ovevp8'
-	    }, {
-	      zones: ['id'],
-	      id: 908,
-	      lang: 'id',
-	      sec: '7kq7v2'
-	    }, {
-	      zones: ['com/my'],
-	      id: 909,
-	      lang: 'ms',
-	      sec: 'kmncmj'
-	    }, {
-	      zones: ['com/th'],
-	      id: 910,
-	      lang: 'th',
-	      sec: 'sknbp9'
-	    }, {
-	      zones: ['vn'],
-	      id: 911,
-	      lang: 'vn',
-	      sec: 'a573fy'
-	    }, {
-	      zones: ['jp'],
-	      id: 912,
-	      lang: 'jp',
-	      sec: '3purdq'
-	    }, {
-	      zones: ['ru'],
-	      id: 2122,
-	      lang: 'ru',
-	      sec: '8vralr'
-	    }, {
-	      zones: ['kz'],
-	      id: 2128,
-	      lang: 'ru',
-	      sec: '054phh'
-	    }, {
-	      zones: ['by'],
-	      id: 2129,
-	      lang: 'ru',
-	      sec: 'srs85j'
-	    }],
-	    defaultForm: {
-	      id: 735,
-	      lang: 'en',
-	      sec: 'vlhmlv'
-	    }
-	  });
+	    source: 'intranet.bitrix24.partner-connect-form'
+	  };
+	  PartnerForm.show(formParams);
 	}
 
 	async function showPartnerOrderForm(params) {
 	  if (main_core.Type.isObject(params) === false) {
 	    return;
 	  }
-	  const {
-	    Popup
-	  } = await main_core.Runtime.loadExtension('main.popup');
-	  const popupOptions = {
-	    id: 'B24PartnerOrderForm',
-	    autoHide: true,
-	    noAllPaddings: true,
-	    zIndex: 0,
-	    offsetLeft: 0,
-	    offsetTop: 0,
-	    overlay: true,
-	    borderRadius: '10px',
-	    contentBorderRadius: '10px',
-	    disableScroll: true,
-	    height: Math.min(window.innerHeight - 60, 758),
-	    width: 560,
-	    draggable: {
-	      restrict: true
-	    },
-	    closeByEsc: true,
-	    contentColor: 'white',
-	    contentNoPaddings: true,
-	    cacheable: false,
-	    content: `
-			<script data-b24-form="inline/${params.id}/${params.sec}" data-skip-moving="true">
-				(function(w, d,u) {
-					var s = d.createElement("script");
-					s.async=true;
-					s.src=u + "?" + (Date.now()/180000|0);
-					var h = d.getElementsByTagName("script")[0];
-					h.parentNode.insertBefore(s,h);
-				})(window,document,"https://bitrix24.team/upload/crm/form/loader_${params.id}_${params.sec}.js")
-			</script>
-		`,
-	    events: {
-	      onPopupFirstShow() {
-	        (function (w, d, u) {
-	          var s = d.createElement('script');
-	          s.async = true;
-	          s.src = u + '?' + (Date.now() / 180000 | 0);
-	          var h = d.getElementsByTagName('script')[0];
-	          h.parentNode.insertBefore(s, h);
-	        })(window, document, `https://bitrix24.team/upload/crm/form/loader_${params.id}_${params.sec}.js`);
-	      }
-	    }
+	  const resultParams = {
+	    ...params,
+	    id: `intranet-license-partner-form-${main_core.Text.getRandom()}`
 	  };
-	  const popup = new Popup(popupOptions);
-	  popup.show();
+	  const {
+	    PartnerForm
+	  } = await main_core.Runtime.loadExtension('ui.feedback.partnerform');
+	  PartnerForm.show(resultParams);
 	}
 
 	const showHelper = async () => {

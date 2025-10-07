@@ -462,6 +462,12 @@ $arUrlRewrite = array(
 		'PATH' => '/shop/buyer/index.php'
 	),
 	array(
+		'CONDITION' => '#^/shop/import/instagram/#',
+		'RULE' => '',
+		'ID' => 'bitrix:crm.order.import.instagram',
+		'PATH' => '/shop/import/instagram/index.php'
+	),
+	array(
 		"CONDITION" => "#^/docs/pub/#",
 		"RULE" => "",
 		"ID" => "bitrix:webdav.extlinks",
@@ -1022,6 +1028,16 @@ $arUrlRewrite = array(
 		'CONDITION' => '#^/extranet/vote-result/([0-9a-z\.]+)#',
 		'RULE' => "signedAttachId=\$1",
 		'PATH' => '/extranet/vote-result/index.php',
+	],
+	[
+		'CONDITION' => '#^/disk/file/(?<unique_code>[0-9a-zA-Z]{20})/edit(\/?)#',
+		'RULE' => 'action=disk.api.unifiedlinkcontroller.edit&uniqueCode=$1&',
+		'PATH' => '/bitrix/services/main/ajax.php',
+	],
+	[
+		'CONDITION' => '#^/disk/file/(?<unique_code>[0-9a-zA-Z]{20})(\/?)#',
+		'RULE' => 'action=disk.api.unifiedlinkcontroller.view&uniqueCode=$1&',
+		'PATH' => '/bitrix/services/main/ajax.php',
 	],
 	[
 		'CONDITION' => '#^/task/comments/([0-9]+)#',

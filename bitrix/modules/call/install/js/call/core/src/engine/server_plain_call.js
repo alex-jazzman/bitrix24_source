@@ -4,7 +4,7 @@ import {AbstractCall} from './abstract_call';
 import { CallEngine, CallState, CallEvent, UserState, Provider, DisconnectReason } from './engine';
 import {View} from '../view/view';
 import {SimpleVAD} from './simple_vad';
-import {Hardware} from '../hardware';
+import {Hardware} from '../call_hardware';
 import Util from '../util';
 import {Call, CALL_STATE, MediaStreamsKinds} from '../call_api.js';
 
@@ -648,7 +648,7 @@ export class ServerPlainCall extends AbstractCall
 				}
 				if (this.deviceList.length === 0)
 				{
-					navigator.mediaDevices.enumerateDevices().then((deviceList) =>
+					Hardware.getCurrentDeviceList().then((deviceList) =>
 					{
 						this.deviceList = deviceList;
 						this.runCallback(CallEvent.onDeviceListUpdated, {
@@ -716,7 +716,7 @@ export class ServerPlainCall extends AbstractCall
 				}
 				if (this.deviceList.length === 0)
 				{
-					navigator.mediaDevices.enumerateDevices().then((deviceList) =>
+					Hardware.getCurrentDeviceList().then((deviceList) =>
 					{
 						this.deviceList = deviceList;
 						this.runCallback(CallEvent.onDeviceListUpdated, {

@@ -307,6 +307,11 @@ jn.define('im/messenger/lib/feature', (require, exports, module) => {
 			return NativeFeature?.isFeatureEnabled('chat-recent-like') ?? false;
 		}
 
+		static get isAsyncRecentOperationsAvailable()
+		{
+			return NativeFeature?.isFeatureEnabled('listwidget-api-v1');
+		}
+
 		static get isDialogHeaderButtonIconSupported()
 		{
 			return Application.getApiVersion() >= 60;

@@ -2240,8 +2240,6 @@ if(typeof BX.UI.EntityEditor === "undefined")
 				this._toolPanel.setLocked(true);
 			}
 
-			this.registerSaveAnalyticsEvent('attempt');
-
 			var result = BX.UI.EntityValidationResult.create();
 			this.validate(result).then(
 				BX.delegate(

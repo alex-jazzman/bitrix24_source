@@ -123,6 +123,7 @@ this.BX.UI = this.BX.UI || {};
 	   * BX.UI.Dialogs.MessageBox.confirm('Message', 'Title', () => {});
 	   * BX.UI.Dialogs.MessageBox.confirm('Message', 'Title', () => {}, 'Proceed', () => {});
 	   * BX.UI.Dialogs.MessageBox.confirm('Message', 'Title', () => {}, 'Proceed', () => {}, 'Cancel');
+	   * BX.UI.Dialogs.MessageBox.confirm('Message', 'Title', () => {}, 'Proceed', () => {}, 'Cancel', true);
 	   */
 	  static confirm(message, ...args) {
 	    let title = null;
@@ -130,11 +131,12 @@ this.BX.UI = this.BX.UI || {};
 	    let okCaption = null;
 	    let cancelCallback = null;
 	    let cancelCaption = null;
+	    let useAirDesign = false;
 	    if (args.length > 0) {
-	      if (main_core.Type.isString(args[0])) {
-	        [title, okCallback, okCaption, cancelCallback, cancelCaption] = args;
+	      if (main_core.Type.isString(args[0]) || main_core.Type.isNull(args[0])) {
+	        [title, okCallback, okCaption, cancelCallback, cancelCaption, useAirDesign] = args;
 	      } else {
-	        [okCallback, okCaption, cancelCallback, cancelCaption] = args;
+	        [okCallback, okCaption, cancelCallback, cancelCaption, useAirDesign] = args;
 	      }
 	    }
 	    const messageBox = this.create({
@@ -142,6 +144,7 @@ this.BX.UI = this.BX.UI || {};
 	      title,
 	      okCaption,
 	      cancelCaption,
+	      useAirDesign,
 	      onOk: okCallback,
 	      onCancel: cancelCallback,
 	      buttons: BX.UI.Dialogs.MessageBoxButtons.OK_CANCEL

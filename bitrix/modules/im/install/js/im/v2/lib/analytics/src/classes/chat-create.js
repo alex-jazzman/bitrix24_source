@@ -9,7 +9,7 @@ import { getUserType } from '../helpers/get-user-type';
 
 export class ChatCreate
 {
-	onStartClick(type: $Values<typeof ChatType>)
+	onStartClick(type: $Values<typeof ChatType>): void
 	{
 		const currentLayout = Core.getStore().getters['application/getLayout'].name;
 
@@ -23,7 +23,7 @@ export class ChatCreate
 		});
 	}
 
-	onCollabEmptyStateCreateClick()
+	onCollabEmptyStateCreateClick(): void
 	{
 		sendData({
 			tool: AnalyticsTool.im,
@@ -35,7 +35,7 @@ export class ChatCreate
 		});
 	}
 
-	onMenuCreateClick()
+	onMenuCreateClick(): void
 	{
 		const currentLayout = Core.getStore().getters['application/getLayout'].name;
 

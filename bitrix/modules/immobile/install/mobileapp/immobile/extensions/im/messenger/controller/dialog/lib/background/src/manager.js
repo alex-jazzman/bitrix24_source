@@ -4,6 +4,7 @@
 jn.define('im/messenger/controller/dialog/lib/background/manager', (require, exports, module) => {
 	const { Theme } = require('im/lib/theme');
 
+	const { DialogBackgroundId } = require('im/messenger/const');
 	const { Feature } = require('im/messenger/lib/feature');
 	const { getLogger } = require('im/messenger/lib/logger');
 	const { DialogHelper } = require('im/messenger/lib/helper');
@@ -41,6 +42,12 @@ jn.define('im/messenger/controller/dialog/lib/background/manager', (require, exp
 			if (!Feature.isDialogBackgroundAvailable || !this.isAvailableByDialogType())
 			{
 				return {};
+			}
+
+			const isAiAssistant = DialogHelper.createByDialogId(this.dialogId)?.isAiAssistant;
+			if (isAiAssistant)
+			{
+				return BackgroundConfiguration[this.getThemeId()][DialogBackgroundId.aiAssistant];
 			}
 
 			const dialogBackgroundId = this.store.getters['dialoguesModel/getBackgroundId'](this.dialogId);

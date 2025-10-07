@@ -1,7 +1,7 @@
 import { Core } from 'im.v2.application.core';
 import { ChatType, SidebarMainPanelBlock } from 'im.v2.const';
 
-import { SidebarConfig } from '../classes/config';
+import { SidebarPreset } from '../classes/preset';
 
 import type { ImModelChat } from 'im.v2.model';
 
@@ -9,7 +9,7 @@ const isNotes = (chatContext: ImModelChat) => {
 	return chatContext.type === ChatType.user && Number(chatContext.dialogId) === Core.getUserId();
 };
 
-const notesConfig = new SidebarConfig({
+const notesPreset = new SidebarPreset({
 	blocks: [
 		SidebarMainPanelBlock.notes,
 		SidebarMainPanelBlock.tariffLimit,
@@ -19,4 +19,4 @@ const notesConfig = new SidebarConfig({
 	],
 });
 
-export { isNotes, notesConfig };
+export { isNotes, notesPreset };

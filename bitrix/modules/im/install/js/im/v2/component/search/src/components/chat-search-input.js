@@ -69,6 +69,7 @@ export const ChatSearchInput = {
 			@queryChange="onInputUpdate"
 			@keyPressed="onKeyPressed"
 			@close="onClose"
+			@closeByEsc="onClose"
 		/>
 	`,
 };

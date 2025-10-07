@@ -70,6 +70,22 @@ jn.define('im/messenger/provider/services/sync/fillers/channel', (require, expor
 
 		/**
 		 * @param {SyncListResult} syncListResult
+		 */
+		async processRecent(syncListResult)
+		{
+			// eslint-disable-next-line no-param-reassign
+			syncListResult.recentItems = syncListResult.recentItems.map((recentItem) => {
+				return {
+					...recentItem,
+					pinned: false,
+				};
+			});
+
+			return super.processRecent(syncListResult);
+		}
+
+		/**
+		 * @param {SyncListResult} syncListResult
 		 * @return {SyncListResult}
 		 */
 		filterWithOnlyOpenChannels(syncListResult)

@@ -106,6 +106,8 @@ export class MessageMenu extends BaseMenu
 			title: Loc.getMessage('IM_DIALOG_CHAT_MENU_SELECT'),
 			icon: OutlineIcons.CIRCLE_CHECK,
 			onClick: () => {
+				Analytics.getInstance().messageContextMenu.onSelect(this.context.dialogId);
+
 				EventEmitter.emit(EventType.dialog.openBulkActionsMode, {
 					messageId: this.context.id,
 					dialogId: this.context.dialogId,
@@ -120,6 +122,7 @@ export class MessageMenu extends BaseMenu
 		return {
 			title: Loc.getMessage('IM_DIALOG_CHAT_MENU_REPLY'),
 			onClick: () => {
+				Analytics.getInstance().messageContextMenu.onReply(this.context.dialogId);
 				EventEmitter.emit(EventType.textarea.replyMessage, {
 					messageId: this.context.id,
 					dialogId: this.context.dialogId,
@@ -141,7 +144,7 @@ export class MessageMenu extends BaseMenu
 			title: Loc.getMessage('IM_DIALOG_CHAT_MENU_FORWARD'),
 			icon: OutlineIcons.FORWARD,
 			onClick: () => {
-				Analytics.getInstance().messageForward.onClickForward({ dialogId: this.context.dialogId });
+				Analytics.getInstance().messageContextMenu.onForward(this.context.dialogId);
 				EventEmitter.emit(EventType.dialog.showForwardPopup, {
 					messagesIds: [this.context.id],
 				});
@@ -160,6 +163,11 @@ export class MessageMenu extends BaseMenu
 		return {
 			title: Loc.getMessage('IM_DIALOG_CHAT_MENU_COPY'),
 			onClick: async () => {
+				Analytics.getInstance().messageContextMenu.onCopyText({
+					dialogId: this.context.dialogId,
+					messageId: this.context.id,
+				});
+
 				const textToCopy = Parser.prepareCopy(this.context);
 
 				await Utils.text.copyToClipboard(textToCopy);
@@ -177,6 +185,8 @@ export class MessageMenu extends BaseMenu
 			title: Loc.getMessage('IM_DIALOG_CHAT_MENU_COPY_LINK_MSGVER_1'),
 			icon: OutlineIcons.LINK,
 			onClick: () => {
+				Analytics.getInstance().messageContextMenu.onCopyLink(this.context.dialogId);
+
 				const textToCopy = Utils.text.getMessageLink(this.context.dialogId, this.context.id);
 				if (BX.clipboard?.copy(textToCopy))
 				{
@@ -198,6 +208,12 @@ export class MessageMenu extends BaseMenu
 			title: Loc.getMessage('IM_DIALOG_CHAT_MENU_COPY_FILE'),
 			icon: OutlineIcons.COPY,
 			onClick: () => {
+				const fileId = this.context.files[0];
+				Analytics.getInstance().messageContextMenu.onCopyFile({
+					dialogId: this.context.dialogId,
+					fileId,
+				});
+
 				const textToCopy = Parser.prepareCopyFile(this.context);
 				if (BX.clipboard?.copy(textToCopy))
 				{
@@ -233,21 +249,21 @@ export class MessageMenu extends BaseMenu
 				if (isPinned)
 				{
 					messageService.unpinMessage(this.context.chatId, this.context.id);
-					Analytics.getInstance().messagePins.onUnpin(this.context.chatId);
+					Analytics.getInstance().messageContextMenu.onUnpin(this.context.dialogId);
 				}
 				else
 				{
 					if (this.#arePinsExceedLimit())
 					{
 						Notifier.chat.onMessagesPinLimitError(this.maxPins);
-						Analytics.getInstance().messagePins.onReachingLimit(this.context.chatId);
+						Analytics.getInstance().messageContextMenu.onReachingPinsLimit(this.context.dialogId);
 						this.menuInstance.close();
 
 						return;
 					}
 
 					messageService.pinMessage(this.context.chatId, this.context.id);
-					Analytics.getInstance().messagePins.onPin(this.context.chatId);
+					Analytics.getInstance().messageContextMenu.onPin(this.context.dialogId);
 				}
 				this.menuInstance.close();
 			},
@@ -279,6 +295,11 @@ export class MessageMenu extends BaseMenu
 				}
 				else
 				{
+					Analytics.getInstance().messageContextMenu.onAddFavorite({
+						dialogId: this.context.dialogId,
+						messageId: this.context.id,
+					});
+
 					messageService.addMessageToFavorite(this.context.id);
 				}
 
@@ -302,6 +323,8 @@ export class MessageMenu extends BaseMenu
 			title: Loc.getMessage('IM_DIALOG_CHAT_MENU_MARK'),
 			icon: OutlineIcons.NEW_MESSAGE,
 			onClick: () => {
+				Analytics.getInstance().messageContextMenu.onMark(this.context.dialogId);
+
 				const messageService = new MessageService({ chatId: this.context.chatId });
 				messageService.markMessage(this.context.id);
 				this.menuInstance.close();
@@ -320,6 +343,8 @@ export class MessageMenu extends BaseMenu
 			title: Loc.getMessage('IM_DIALOG_CHAT_MENU_CREATE_TASK_MSGVER_1'),
 			icon: OutlineIcons.TASK,
 			onClick: () => {
+				Analytics.getInstance().messageContextMenu.onCreateTask(this.context.dialogId);
+
 				const entityCreator = new EntityCreator(this.context.chatId);
 				void entityCreator.createTaskForMessage(this.context.id);
 				this.menuInstance.close();
@@ -338,6 +363,8 @@ export class MessageMenu extends BaseMenu
 			title: Loc.getMessage('IM_DIALOG_CHAT_MENU_CREATE_MEETING_MSGVER_1'),
 			icon: OutlineIcons.CALENDAR_WITH_SLOTS,
 			onClick: () => {
+				Analytics.getInstance().messageContextMenu.onCreateEvent(this.context.dialogId);
+
 				const entityCreator = new EntityCreator(this.context.chatId);
 				void entityCreator.createMeetingForMessage(this.context.id);
 				this.menuInstance.close();
@@ -347,7 +374,11 @@ export class MessageMenu extends BaseMenu
 
 	getEditItem(): ?MenuItemOptions
 	{
-		if (!this.#isOwnMessage() || this.#isDeletedMessage() || this.#isForwardedMessage())
+		if (
+			!this.#isOwnMessage()
+			|| this.#isDeletedMessage()
+			|| this.#isForwardedMessage()
+		)
 		{
 			return null;
 		}
@@ -356,6 +387,8 @@ export class MessageMenu extends BaseMenu
 			title: Loc.getMessage('IM_DIALOG_CHAT_MENU_EDIT'),
 			icon: OutlineIcons.EDIT_L,
 			onClick: () => {
+				Analytics.getInstance().messageContextMenu.onEdit(this.context.dialogId);
+
 				EventEmitter.emit(EventType.textarea.editMessage, {
 					messageId: this.context.id,
 					dialogId: this.context.dialogId,
@@ -444,7 +477,7 @@ export class MessageMenu extends BaseMenu
 			title: menuItemText,
 			icon: OutlineIcons.FOLDER_24,
 			onClick: async function() {
-				Analytics.getInstance().messageFiles.onClickSaveOnDisk({
+				Analytics.getInstance().messageContextMenu.onSaveOnDisk({
 					messageId: this.context.id,
 					dialogId: this.context.dialogId,
 				});
@@ -536,7 +569,7 @@ export class MessageMenu extends BaseMenu
 	async #onDelete()
 	{
 		const { id: messageId, dialogId, chatId } = this.context;
-		Analytics.getInstance().messageDelete.onClickDelete({ messageId, dialogId });
+		Analytics.getInstance().messageContextMenu.onDelete({ messageId, dialogId });
 		this.menuInstance.close();
 
 		if (await this.#isDeletionCancelled())
@@ -559,7 +592,7 @@ export class MessageMenu extends BaseMenu
 		const confirmResult = await showDeleteChannelPostConfirm();
 		if (!confirmResult)
 		{
-			Analytics.getInstance().messageDelete.onCancel({ messageId, dialogId });
+			Analytics.getInstance().messageContextMenu.onCancelDelete({ messageId, dialogId });
 
 			return true;
 		}
@@ -577,7 +610,7 @@ export class MessageMenu extends BaseMenu
 			onClick: function() {
 				Utils.file.downloadFiles([file]);
 
-				Analytics.getInstance().messageFiles.onClickDownload({
+				Analytics.getInstance().messageContextMenu.onFileDownload({
 					messageId: this.context.id,
 					dialogId: this.context.dialogId,
 				});
@@ -596,7 +629,7 @@ export class MessageMenu extends BaseMenu
 			title: Loc.getMessage('IM_DIALOG_CHAT_MENU_DOWNLOAD_FILES'),
 			icon: OutlineIcons.DOWNLOAD,
 			onClick: async () => {
-				Analytics.getInstance().messageFiles.onClickDownload({
+				Analytics.getInstance().messageContextMenu.onFileDownload({
 					messageId: this.context.id,
 					dialogId: this.context.dialogId,
 				});

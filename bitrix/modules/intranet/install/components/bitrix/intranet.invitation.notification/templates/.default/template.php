@@ -1,5 +1,13 @@
 <?php
+
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+
+use Bitrix\Main\Loader;
+
+if (Loader::includeModule('extranet') && \CExtranet::IsExtranetSite())
+{
+	return;
+}
 
 $frame = $this->createFrame()->begin('');
 $notification = (new Bitrix\Bitrix24\Service\InvitationPushNotificationService())->createInvitationNotification();
