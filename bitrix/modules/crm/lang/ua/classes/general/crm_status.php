@@ -91,6 +91,7 @@ $MESS["CRM_STATUS_TYPE_QUOTE_STATUS_MSGVER_2"] = "Стадії пропозиц�
 $MESS["CRM_STATUS_TYPE_SMART_DOCUMENT_STATUS"] = "Стадії документа";
 $MESS["CRM_STATUS_TYPE_SOURCE"] = "Джерела";
 $MESS["CRM_STATUS_TYPE_SOURCE_ADVERTISING"] = "Реклама";
+$MESS["CRM_STATUS_TYPE_SOURCE_BOOKING"] = "Онлайн-запис";
 $MESS["CRM_STATUS_TYPE_SOURCE_CALL"] = "Дзвінок";
 $MESS["CRM_STATUS_TYPE_SOURCE_CALLBACK"] = "Зворотний дзвінок";
 $MESS["CRM_STATUS_TYPE_SOURCE_CALL_TRACKER"] = "Трекер дзвінків";

@@ -24,7 +24,7 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	  AFTER: after,
 	  TASK_ID: id
 	}) {
-	  var _after$STAGE_INFO;
+	  var _after$STAGE_INFO$id, _after$STAGE_INFO;
 	  const task = {
 	    id,
 	    title: prepareValue(after.TITLE),
@@ -34,12 +34,13 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    deadlineTs: prepareValue(after.DEADLINE, after.DEADLINE * 1000),
 	    checklist: undefined,
 	    groupId: prepareValue(after.GROUP_ID),
-	    stageId: prepareValue(after.STAGE, (_after$STAGE_INFO = after.STAGE_INFO) == null ? void 0 : _after$STAGE_INFO.id),
+	    stageId: prepareValue(after.STAGE, (_after$STAGE_INFO$id = (_after$STAGE_INFO = after.STAGE_INFO) == null ? void 0 : _after$STAGE_INFO.id) != null ? _after$STAGE_INFO$id : 0),
 	    flowId: prepareValue(after.FLOW_ID),
 	    status: prepareValue(after.STATUS, mapStatus(after.STATUS)),
 	    statusChangedTs: prepareValue(after.STATUS, Date.now()),
 	    accomplicesIds: prepareValue(after.ACCOMPLICES, mapUserIds(after.ACCOMPLICES)),
-	    auditorsIds: prepareValue(after.AUDITORS, mapUserIds(after.AUDITORS))
+	    auditorsIds: prepareValue(after.AUDITORS, mapUserIds(after.AUDITORS)),
+	    tags: prepareValue(after.TAGS, after.TAGS ? after.TAGS.split(',') : [])
 	  };
 	  return Object.fromEntries(Object.entries(task).filter(([, value]) => !main_core.Type.isUndefined(value)));
 	}

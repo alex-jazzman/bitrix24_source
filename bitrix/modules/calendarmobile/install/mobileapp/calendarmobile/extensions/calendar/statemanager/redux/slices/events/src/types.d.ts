@@ -30,6 +30,7 @@ type EventReduxModel = {
 	accessibility: string,
 	privateEvent: number,
 	collabId: number,
+	entityRelation: EntityRelation | null,
 };
 
 type Attendee = {
@@ -67,4 +68,15 @@ type Attachment = {
 	previewUrl: string,
 	width: number,
 	height: number,
+};
+
+type EntityRelation = {
+	eventId: number,
+	owner: {
+		id: number,
+	},
+	entity: {
+		id: number,
+		type: string,
+	},
 };

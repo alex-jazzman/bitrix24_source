@@ -1,4 +1,5 @@
 import { Router } from 'crm.router';
+import { PULL } from 'pull.client';
 import { ajax as Ajax, Dom, Event, Loc, Reflection, Text, Type } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { Menu } from 'main.popup';
@@ -79,6 +80,24 @@ export default class ToolbarComponent extends EventEmitter
 
 			if (button && entityTypeId > 0)
 			{
+				if (PULL)
+				{
+					PULL.subscribe({
+						moduleId: 'crm',
+						command: 'CRM_CATEGORIES_UPDATED',
+						callback: (data) => {
+							if (data.entityTypeId !== entityTypeId)
+							{
+								return;
+							}
+
+							this.#reloadCategoriesMenu(button, entityTypeId, buttonNode.dataset.categoryId);
+						},
+					});
+
+					PULL.extendWatch('CRM_CATEGORIES_UPDATED');
+				}
+
 				this.subscribeCategoriesUpdatedEvent(() => {
 					this.#reloadCategoriesMenu(button, entityTypeId, buttonNode.dataset.categoryId);
 				});
@@ -236,11 +255,11 @@ export default class ToolbarComponent extends EventEmitter
 					href: link || null,
 					dataset: {
 						isDefault: category.isDefault || false,
-						categoryId: category.id
+						categoryId: category.id,
 					},
 				});
 
-				if (category.id > 0 && categoryId > 0 && Number(categoryId) === Number(category.id))
+				if (category.id >= 0 && categoryId >= 0 && Number(categoryId) === Number(category.id))
 				{
 					button.setText(category.name);
 				}
@@ -259,7 +278,7 @@ export default class ToolbarComponent extends EventEmitter
 				this.#reloadAddButtonMenu(categories);
 			}
 
-			this.#tryRedirectToDefaultCategory(items);
+			this.#tryRedirectToDefaultCategory(items, categoryId);
 		}).catch((response) => {
 			console.log('error trying reload categories', response.errors);
 		});
@@ -323,21 +342,34 @@ export default class ToolbarComponent extends EventEmitter
 		}
 	}
 
-	#tryRedirectToDefaultCategory(items: Array): void
+	#tryRedirectToDefaultCategory(items: Array, currentCategoryId: number): void
 	{
-		const currentPage = window.location.pathname;
-		const matches = currentPage.match(/\/(\d+)\/?$/);
-		const currentPageCategoryId = matches ? parseInt(matches[1], 10) : null;
-		const currentCategoryIsUndefined = Type.isUndefined(
-			items.find((row) => row?.dataset?.categoryId === currentPageCategoryId)
-		);
-		if (currentCategoryIsUndefined)
-		{
-			const defaultPage = items.find((row) => row?.dataset?.isDefault);
-			if (Type.isObject(defaultPage) && Type.isStringFilled(defaultPage.href))
+		const tryToRedirect = () => {
+			const isStaticCategory = currentCategoryId <= 0;
+			const isCurrentCategoryDefined = items.some(
+				(row) => Number(row?.dataset?.categoryId) === Number(currentCategoryId),
+			);
+
+			if (!isCurrentCategoryDefined && !isStaticCategory)
 			{
-				window.location.href = defaultPage.href;
+				const defaultPage = items.find((row) => row?.dataset?.isDefault);
+				if (Type.isObject(defaultPage) && Type.isStringFilled(defaultPage.href))
+				{
+					window.location.href = defaultPage.href;
+				}
 			}
+		};
+
+		// wait until all sliders are closed before redirecting
+		if (BX.SidePanel.Instance.getTopSlider())
+		{
+			EventEmitter.subscribeOnce(BX.SidePanel.Instance.getTopSlider(), 'SidePanel.Slider:onCloseComplete', () => {
+				this.#tryRedirectToDefaultCategory(items, currentCategoryId);
+			});
+
+			return;
 		}
+
+		tryToRedirect();
 	}
 }

@@ -12,11 +12,6 @@ use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(dirname(__FILE__) . '/template.php');
 
-\Bitrix\Main\UI\Extension::load([
-	'ui.banner-dispatcher',
-	'sign.tour',
-]);
-
 // top menu init
 
 $menuItemIndex = $this->getMenuIndex();

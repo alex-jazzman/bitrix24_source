@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,im_v2_application_core,im_v2_css_classes,im_v2_lib_logger,im_v2_provider_service_chat,ui_iconSet_api_vue,main_core_events,im_v2_component_content_elements,im_v2_const) {
+(function (exports,im_v2_application_core,im_v2_css_classes,im_v2_lib_logger,im_v2_provider_service_chat,im_v2_component_content_chat,ui_iconSet_api_vue,main_core_events,im_v2_component_content_elements,im_v2_const) {
 	'use strict';
 
 	const MINIMIZE_EVENT_NAME = 'IM.AiAssistantWidget:minimize';
@@ -27,6 +27,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  methods: {
 	    onMinimize() {
 	      main_core_events.EventEmitter.emit(MINIMIZE_EVENT_NAME);
+	    },
+	    loc(phrase) {
+	      return this.$Bitrix.Loc.getMessage(phrase);
 	    }
 	  },
 	  template: `
@@ -38,9 +41,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		>
 			<template #before-actions>
 				<BIcon
-					:name="OutlineIcons.MINIMIZE"
+					:name="OutlineIcons.CROSS_L"
 					:hoverable="true"
 					:color="Color.base4"
+					:title="loc('IM_AI_ASSISTANT_WIDGET_MINIMIZE')"
 					class="bx-im-ai-assistant-chat-header__icon"
 					@click="onMinimize"
 				/>
@@ -53,8 +57,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const AiAssistantWidgetChatContent = {
 	  name: 'AiAssistantWidgetChatContent',
 	  components: {
-	    BaseChatContent: im_v2_component_content_elements.BaseChatContent,
-	    AiAssistantWidgetChatHeader
+	    AiAssistantWidgetChatHeader,
+	    AiAssistantBotContent: im_v2_component_content_chat.AiAssistantBotContent
 	  },
 	  props: {
 	    dialogId: {
@@ -67,11 +71,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    }
 	  },
 	  template: `
-		<BaseChatContent :dialogId="dialogId" :withSidebar="withSidebar">
+		<AiAssistantBotContent :dialogId="dialogId" :withSidebar="withSidebar">
 			<template #header>
 				<AiAssistantWidgetChatHeader :dialogId="dialogId"/>
 			</template>
-		</BaseChatContent>
+		</AiAssistantBotContent>
 	`
 	};
 
@@ -171,5 +175,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.AiAssistantWidgetApplication = AiAssistantWidgetApplication;
 
-}((this.BX.Messenger.v2.Application = this.BX.Messenger.v2.Application || {}),BX.Messenger.v2.Application,BX.Messenger.v2.Css,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.UI.IconSet,BX.Event,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Const));
+}((this.BX.Messenger.v2.Application = this.BX.Messenger.v2.Application || {}),BX.Messenger.v2.Application,BX.Messenger.v2.Css,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Component.Content,BX.UI.IconSet,BX.Event,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Const));
 //# sourceMappingURL=ai-assistant-widget.bundle.js.map

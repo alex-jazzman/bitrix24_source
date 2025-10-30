@@ -3641,6 +3641,10 @@ small,
   max-width: 960px;
 }
 
+.g-max-width-1462 {
+  max-width: 1462px;
+}
+
 /* Min Width in Pixels (px) */
 .g-min-width-35 {
   min-width: 35px;
@@ -18298,6 +18302,12 @@ h6, .h6 {
   --bs-gutter-y: 0;
 }
 
+.block-wrapper *,
+.block-wrapper *::before,
+.block-wrapper *::after {
+  box-sizing: border-box;
+}
+
 /*
  * end custom fix for vibe
  */
@@ -22566,6 +22576,10 @@ h6.g-color, .h6.g-color {
 
 .g-max-width-960 {
   max-width: 960px;
+}
+
+.g-max-width-1462 {
+  max-width: 1462px;
 }
 
 /* Min Width in Pixels (px) */
@@ -27176,13 +27190,52 @@ main:not(.landing-edit-mode) .block-store-menu-sidebar .landing-block {
   display: grid;
 }
 
+.d-grid-71-2 {
+  --grid-max-col-count: 3;
+  --grid-min-col-size: 340px;
+  --grid-gap: 16px;
+  --grid-col-size-calc: calc((100% - var(--grid-gap) * var(--grid-max-col-count)) / var(--grid-max-col-count));
+  --grid-col-min-size-calc: min(100%, max(var(--grid-min-col-size), var(--grid-col-size-calc)));
+  display: grid;
+  gap: var(--grid-gap);
+  grid-template-columns: repeat(auto-fit, minmax(var(--grid-col-min-size-calc), var(--grid-min-col-size)));
+  justify-content: center;
+}
+
+.d-grid-71-3 {
+  --grid-max-col-count: 4;
+  --grid-min-col-size: 270px;
+  --grid-gap: 12px;
+  --grid-col-size-calc: calc((100% - var(--grid-gap) * var(--grid-max-col-count)) / var(--grid-max-col-count));
+  --grid-col-min-size-calc: min(100%, max(var(--grid-min-col-size), var(--grid-col-size-calc)));
+  display: grid;
+  gap: var(--grid-gap);
+  grid-template-columns: repeat(auto-fit, minmax(var(--grid-col-min-size-calc), var(--grid-min-col-size)));
+  justify-content: center;
+}
+
+.d-grid-71-4 {
+  --grid-max-col-count: 3;
+  --grid-min-col-size: 300px;
+  --grid-gap: 12px;
+  --grid-col-size-calc: calc((100% - var(--grid-gap) * var(--grid-max-col-count)) / var(--grid-max-col-count));
+  --grid-col-min-size-calc: min(100%, max(var(--grid-min-col-size), var(--grid-col-size-calc)));
+  display: grid;
+  gap: var(--grid-gap);
+  grid-template-columns: repeat(auto-fit, minmax(var(--grid-col-min-size-calc), var(--grid-min-col-size)));
+  justify-content: center;
+}
+
 .bg-hover:hover .bg-hover-prev-white {
   background-color: #fff !important;
 }
 
+.card-before {
+  display: flex !important;
+}
+
 .card-before::before {
-  position: relative;
-  top: 16px;
+  margin: auto;
   transition: 0.3s;
 }
 
@@ -27215,4 +27268,22 @@ main:not(.landing-edit-mode) .block-store-menu-sidebar .landing-block {
 
 .color-white {
   color: #fff !important;
+}
+
+/*------------------------------------
+  Default Typo
+------------------------------------*/
+html {
+  font-size: 14px;
+}
+
+body {
+  font-size: 1rem;
+  font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+  font-weight: var(--ui-font-weight-regular, 400);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -moz-font-feature-settings: "liga", "kern";
+  text-rendering: optimizelegibility;
 }

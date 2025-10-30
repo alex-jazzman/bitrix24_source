@@ -1,11 +1,11 @@
-import { BaseChatContent } from 'im.v2.component.content.elements';
+import { AiAssistantBotContent } from 'im.v2.component.content.chat';
 
 import { AiAssistantWidgetChatHeader } from './components/header';
 
 // @vue/component
 export const AiAssistantWidgetChatContent = {
 	name: 'AiAssistantWidgetChatContent',
-	components: { BaseChatContent, AiAssistantWidgetChatHeader },
+	components: { AiAssistantWidgetChatHeader, AiAssistantBotContent },
 	props: {
 		dialogId: {
 			type: String,
@@ -17,10 +17,10 @@ export const AiAssistantWidgetChatContent = {
 		},
 	},
 	template: `
-		<BaseChatContent :dialogId="dialogId" :withSidebar="withSidebar">
+		<AiAssistantBotContent :dialogId="dialogId" :withSidebar="withSidebar">
 			<template #header>
 				<AiAssistantWidgetChatHeader :dialogId="dialogId"/>
 			</template>
-		</BaseChatContent>
+		</AiAssistantBotContent>
 	`,
 };

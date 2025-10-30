@@ -7,7 +7,6 @@ $MESS["TASKS_IMPORT_BUTTONS_NEXT"] = "Далі";
 $MESS["TASKS_IMPORT_BUTTONS_STOP"] = "Зупинити";
 $MESS["TASKS_IMPORT_FIELDS_DEFAULT_ASSIGNEE"] = "Виконавець за замовчуванням";
 $MESS["TASKS_IMPORT_FIELDS_DEFAULT_ORIGINATOR"] = "Постановник за замовчуванням";
-$MESS["TASKS_IMPORT_FIELDS_DEFAULT_RESPONSIBLE"] = "Відповідальний за замовчуванням";
 $MESS["TASKS_IMPORT_FIELDS_FILE_ENCODING"] = "Кодування файлу даних";
 $MESS["TASKS_IMPORT_FIELDS_FILE_SEPARATOR"] = "Роздільник колонок";
 $MESS["TASKS_IMPORT_FIELDS_FILE_TEMPLATE"] = "Шаблон файлу";

@@ -9,6 +9,7 @@ $MESS["PRESET_MANUAL_SETTINGS_BUTTON_SAVE"] = "Done";
 $MESS["PRESET_MANUAL_SETTINGS_BUTTON_SHOW"] = "Add";
 $MESS["PRESET_MANUAL_SETTINGS_SECTION_MENU_TITLE"] = "Bottom navigation tools";
 $MESS["PRESET_MANUAL_SETTINGS_SECTION_MORE_TITLE"] = "Tools in the Menu";
+$MESS["PRESET_MANUAL_SETTINGS_SECTION_MORE_TITLE_MSGVER_1"] = "Tools in the Menu";
 $MESS["PRESET_MANUAL_SETTINGS_TITLE"] = "Custom preset";
 $MESS["TAB_PRESETS_NEW_APPLY_ERROR"] = "Cannot apply changes";
 $MESS["TAB_PRESETS_NEW_BANNER_DESCRIPTION_MSGVER_1"] = "Choose only the essential set of tools for quick access or create \"Custom preset\". Other tools will be available in the Menu.";

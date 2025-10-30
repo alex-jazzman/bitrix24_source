@@ -11,6 +11,7 @@ import { Loader } from 'main.loader';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 import { StageFlow } from 'ui.stageflow';
 import './item-details-component.css';
+import { EntityCloseEvent, EntityStageChangeEvent, Dictionary, Builder } from 'crm.integration.analytics';
 
 export type ItemDetailsComponentParams = {
 	entityTypeId: number,
@@ -65,6 +66,7 @@ export class ItemDetailsComponent
 	targetUpdateStage: ?StageModel = null;
 	stageBeforeUpdate: ?StageModel = null;
 	categorySelectorTarget: ?string;
+	analyticsData: ?Object;
 
 	constructor(params: ItemDetailsComponentParams): void
 	{
@@ -327,6 +329,7 @@ export class ItemDetailsComponent
 			this.isStageUpdating.bind(this),
 			Runtime.throttle(this.showStageUpdatingNotification.bind(this), 300),
 			this.isNew(),
+			this.entityTypeId
 		);
 
 		Dom.append(this.stageflowChart.render(), stageFlowContainer);
@@ -452,6 +455,8 @@ export class ItemDetailsComponent
 			return;
 		}
 
+		this.prepareAnalyticsData(stage);
+
 		this.stageBeforeUpdate = this.getStageById(this.currentStageId);
 		this.setStageToFlowChart(stage);
 
@@ -466,6 +471,8 @@ export class ItemDetailsComponent
 				}
 			}
 		}).then( () => {
+			this.sendAnalyticsData(Dictionary.STATUS_SUCCESS);
+
 			this.stopStageUpdateProgress();
 
 			let currentSlider: ?BX.SidePanel.Slider = null;
@@ -535,6 +542,7 @@ export class ItemDetailsComponent
 			}
 			else
 			{
+				this.sendAnalyticsData(Dictionary.STATUS_ERROR);
 				this.showErrorsFromResponse(response);
 			}
 		})
@@ -692,15 +700,20 @@ export class ItemDetailsComponent
 
 			if(parameters.isCancelled)
 			{
+				this.sendAnalyticsData(Dictionary.STATUS_ERROR);
+
 				return;
 			}
 
 			const stage = this.getStageByStatusId(parameters.stageId);
 			if(!stage)
 			{
+				this.sendAnalyticsData(Dictionary.STATUS_ERROR);
+
 				return;
 			}
 			this.updateStage(stage);
+			this.sendAnalyticsData(Dictionary.STATUS_SUCCESS);
 		}
 	}
 
@@ -779,5 +792,48 @@ export class ItemDetailsComponent
 				})
 			;
 		}
+	}
+
+	prepareAnalyticsData(stage: StageModelData)
+	{
+		const stageSemantic = stage.getSemantics();
+
+		if (stageSemantic === 'F')
+		{
+			this.analyticsData = Builder.Entity.CloseEvent.createDefault(
+				this.entityTypeId,
+			)
+				.setElement(Dictionary.ELEMENT_LOSE_BUTTON)
+				.buildData();
+		}
+		else if (stageSemantic === 'S')
+		{
+			this.analyticsData = Builder.Entity.CloseEvent.createDefault(
+				this.entityTypeId,
+			)
+				.setElement(Dictionary.ELEMENT_WON_BUTTON)
+				.buildData();
+		}
+		else
+		{
+			this.analyticsData = Builder.Entity.ChangeStageEvent.createDefault(
+				this.entityTypeId,
+			)
+				.setElement(Dictionary.ELEMENT_STAGE_BAR_BUTTON)
+				.buildData();
+		}
+	}
+
+	sendAnalyticsData(status)
+	{
+		if (!this.analyticsData)
+		{
+			return;
+		}
+
+		BX.UI.Analytics.sendData({
+			...this.analyticsData,
+			status,
+		});
 	}
 }

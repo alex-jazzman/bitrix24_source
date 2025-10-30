@@ -1,5 +1,4 @@
 <?php
-$MESS["IM_ENTITY_SELECTOR_ADD_TO_CHAT_ADD"] = "Додати користувача або відділ";
 $MESS["IM_ENTITY_SELECTOR_ADD_TO_CHAT_ADD_MEMBERS_TITLE"] = "Додати учасників";
 $MESS["IM_ENTITY_SELECTOR_ADD_TO_CHAT_ADD_MORE"] = "Додати";
 $MESS["IM_ENTITY_SELECTOR_ADD_TO_CHAT_ADD_MSGVER_1"] = "Додати користувача";
@@ -7,7 +6,6 @@ $MESS["IM_ENTITY_SELECTOR_ADD_TO_CHAT_CANCEL_BUTTON"] = "Скасувати";
 $MESS["IM_ENTITY_SELECTOR_ADD_TO_CHAT_FORWARD_TITLE"] = "Переслати повідомлення";
 $MESS["IM_ENTITY_SELECTOR_ADD_TO_CHAT_FORWARD_TITLE_SEVERAL_MESSAGES"] = "Переслати повідомлення";
 $MESS["IM_ENTITY_SELECTOR_ADD_TO_CHAT_INVITE_BUTTON"] = "Запросити";
-$MESS["IM_ENTITY_SELECTOR_ADD_TO_CHAT_INVITE_MEMBERS_TITLE"] = "Запросити учасників";
 $MESS["IM_ENTITY_SELECTOR_ADD_TO_CHAT_SHOW_HISTORY"] = "Показати історію чату";
 $MESS["IM_ENTITY_SELECTOR_ADD_TO_COLLAB_COPY_LINK"] = "Копіювати посилання";
 $MESS["IM_ENTITY_SELECTOR_ADD_TO_COLLAB_DEFAULT_LANGUAGE_TITLE"] = "#LANG_NAME# (за вмовчанням)";
@@ -21,10 +19,6 @@ $MESS["IM_ENTITY_SELECTOR_ADD_TO_COLLAB_INVITE_BY_LINK"] = "За посилан�
 $MESS["IM_ENTITY_SELECTOR_ADD_TO_COLLAB_INVITE_BY_PHONE_OR_EMAIL"] = "За номером телефону та адресою ел. пошти";
 $MESS["IM_ENTITY_SELECTOR_ADD_TO_COLLAB_INVITE_LANGUAGE_TITLE"] = "Мова запрошення:";
 $MESS["IM_ENTITY_SELECTOR_ADD_TO_COLLAB_LANGUAGE_SELECTOR_HINT"] = "Виберіть мову запрошення та інтерфейсу гостя. Для інших учасників мова не зміниться.";
-$MESS["IM_ENTITY_SELECTOR_ADD_TO_COLLAB_LINK_COPIED"] = "Посилання скопійовано.";
-$MESS["IM_ENTITY_SELECTOR_ADD_TO_COLLAB_LINK_NOT_COPIED"] = "Не вдалося скопіювати посилання.";
-$MESS["IM_ENTITY_SELECTOR_ADD_TO_COLLAB_LINK_UPDATED"] = "Посилання оновлено.";
-$MESS["IM_ENTITY_SELECTOR_ADD_TO_COLLAB_LINK_UPDATED_ERROR"] = "Не вдалося вийти з колаби, спробуйте пізніше.";
 $MESS["IM_ENTITY_SELECTOR_ADD_TO_COLLAB_LINK_UPDATE_HINT"] = "Оновіть посилання для запрошення, якщо хочете закрити доступ за старим.";
 $MESS["IM_ENTITY_SELECTOR_ADD_TO_COLLAB_TITLE"] = "Додати до колаби";
 $MESS["IM_ENTITY_SELECTOR_EMPLOYEES_TAB"] = "Співробітники";

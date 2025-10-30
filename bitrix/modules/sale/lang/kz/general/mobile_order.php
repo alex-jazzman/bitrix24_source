@@ -92,4 +92,4 @@ $MESS["SMOB_TRANSACT"] = "Транзакциялар";
 $MESS["SMOB_WAITING_FOR_DELIVERY"] = "Жеткізуді күтуде";
 $MESS["SMOB_WAITING_FOR_PAY"] = "Төлемді күтуде";
 $MESS["SMOB_WEIGHT"] = "Жалпы салмағы";
-$MESS["SMOB_ZIP"] = "Индекс";
+$MESS['SMOB_ZIP'] = "Индекс";

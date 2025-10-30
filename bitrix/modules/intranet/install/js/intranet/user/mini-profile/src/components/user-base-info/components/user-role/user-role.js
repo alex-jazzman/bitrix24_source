@@ -27,6 +27,7 @@ export const UserRole = {
 	template: `
 		<div v-if="title"
 			class="intranet-user-mini-profile__role"
+			data-test-id="usermp_role-title"
 		>
 			<div class="intranet-user-mini-profile__role-inner-text">
 				{{ title }}

@@ -15,10 +15,7 @@ return [
 		'ui-system/blocks/reaction/icon',
 
 		'statemanager/redux/slices/users',
-		'statemanager/redux/batched-actions',
-		'statemanager/redux/store',
 		'statemanager/redux/connect',
-		'statemanager/redux/slices/users/thunk',
 		'user-profile',
 	],
 	'bundle' => [

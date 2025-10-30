@@ -4,18 +4,17 @@
 	justify-content: flex-end;
 	width: 100%;
 	min-height: 100%;
+	padding: 0 0 0 18px;
 }
 
 .bx-im-content-chat__container.--center-align .bx-im-message-list__container {
-	max-width: var(--im-content-chat__max-width_textarea_container);
+	max-width: var(--im-content-chat__max-width_message_container);
 	margin: 0 auto;
-	padding: 0 3px 0 9px;
 }
 
 .bx-im-content-chat__container.--left-align .bx-im-message-list__container {
 	max-width: 100%;
 	margin: 0;
-	padding: 0 27px 0 33px;
 }
 
 .bx-im-message-list-date-group__container {
@@ -101,7 +100,7 @@
 }
 
 .bx-im-content-chat__container.--left-align .bx-im-message-list-author-group__container {
-	max-width: var(--im-content-chat__max-width_textarea_container);
+	max-width: var(--im-content-chat__max-width_message_container);
 	margin: 8px 0 0;
 }
 

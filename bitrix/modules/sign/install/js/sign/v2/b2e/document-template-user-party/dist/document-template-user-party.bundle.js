@@ -107,7 +107,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	    const {
 	      shouldCheckDepartmentsSync,
 	      documents
-	    } = await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].template.setupSigners(ids, babelHelpers.classPrivateFieldLooseBase(this, _userParty)[_userParty].getEntities());
+	    } = await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].template.setupSigners(ids, babelHelpers.classPrivateFieldLooseBase(this, _userParty)[_userParty].getEntities(), babelHelpers.classPrivateFieldLooseBase(this, _userParty)[_userParty].isRejectExcludedEnabled());
 	    babelHelpers.classPrivateFieldLooseBase(this, _updatePartiesCountInStore)[_updatePartiesCountInStore](documents); // can rid of this if make syncDepartmentForSigners method
 	    if (shouldCheckDepartmentsSync) {
 	      await babelHelpers.classPrivateFieldLooseBase(this, _waitForDepartmentSync)[_waitForDepartmentSync]();
@@ -140,6 +140,9 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	  closeCounterGuide() {
 	    babelHelpers.classPrivateFieldLooseBase(this, _userParty)[_userParty].closeCounterGuide();
 	  }
+	  isRejectExcludedEnabled() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _userParty)[_userParty].isRejectExcludedEnabled();
+	  }
 	}
 	function _createApp2(container) {
 	  babelHelpers.classPrivateFieldLooseBase(this, _app)[_app] = ui_vue3.BitrixVue.createApp(UserPartyApp, {
@@ -169,7 +172,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	  let syncFinished = false;
 	  while (!syncFinished) {
 	    // eslint-disable-next-line no-await-in-loop
-	    const response = await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].syncB2eMembersWithDepartments(uid, signerParty);
+	    const response = await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].syncB2eMembersWithDepartments(uid, signerParty, babelHelpers.classPrivateFieldLooseBase(this, _userParty)[_userParty].isRejectExcludedEnabled());
 	    syncFinished = response.syncFinished;
 	    // eslint-disable-next-line no-await-in-loop
 	    await babelHelpers.classPrivateFieldLooseBase(this, _sleep)[_sleep](1000);

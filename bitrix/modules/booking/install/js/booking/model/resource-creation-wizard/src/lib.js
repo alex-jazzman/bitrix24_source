@@ -19,6 +19,7 @@ export function getEmptyResource(): ResourceModel
 		description: null,
 		slotRanges: [],
 		counter: null,
+		entities: [],
 		isMain: true,
 		isDeleted: false,
 		isConfirmationNotificationOn: false,

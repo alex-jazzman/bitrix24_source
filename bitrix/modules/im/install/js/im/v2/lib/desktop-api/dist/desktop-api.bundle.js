@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,im_v2_lib_utils,im_v2_lib_logger,main_core,im_v2_const,main_core_events) {
+(function (exports,im_v2_lib_utils,im_v2_lib_logger,im_v2_const,main_core_events,main_core) {
 	'use strict';
 
 	const lifecycleFunctions = {
@@ -145,7 +145,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  hideImTab: 'bxd_hide_im_tab',
 	  smoothing: 'bxd_camera_smoothing',
 	  smoothing_v2: 'bxd_camera_smoothing_v2',
-	  telemetry: 'bxd_telemetry',
 	  sliderBindingsStatus: 'sliderBindingsStatus'
 	};
 	const settingsFunctions = {
@@ -189,12 +188,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  setAutostartStatus(flag) {
 	    var _BXDesktopSystem5;
 	    (_BXDesktopSystem5 = BXDesktopSystem) == null ? void 0 : _BXDesktopSystem5.SetProperty('autostart', flag);
-	  },
-	  getTelemetryStatus() {
-	    return this.getCustomSetting(DesktopSettingsKey.telemetry, '1') === '1';
-	  },
-	  setTelemetryStatus(flag) {
-	    this.setCustomSetting(DesktopSettingsKey.telemetry, flag ? '1' : '0');
 	  },
 	  setCustomSetting(name, value) {
 	    var _BXDesktopSystem6;
@@ -699,6 +692,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	};
 
+	const mediaCompressorFunctions = {
+	  isMediaCompressorAvailable() {
+	    return this.getApiVersion() >= 88 && main_core.Type.isFunction(window.BXMediaCompressor);
+	  },
+	  createMediaCompressor() {
+	    return new window.BXMediaCompressor();
+	  }
+	};
+
 	const DesktopApi = {
 	  ...lifecycleFunctions,
 	  ...commonFunctions,
@@ -714,12 +716,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  ...loggerFunctions,
 	  ...accountFunctions,
 	  ...diskFunctions,
-	  ...debugFunctions
+	  ...debugFunctions,
+	  ...mediaCompressorFunctions
 	};
 
 	exports.DesktopApi = DesktopApi;
 	exports.DesktopFeature = DesktopFeature;
 	exports.DesktopSettingsKey = DesktopSettingsKey;
 
-}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Const,BX.Event));
+}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Event,BX));
 //# sourceMappingURL=desktop-api.bundle.js.map

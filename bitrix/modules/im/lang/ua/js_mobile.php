@@ -1,6 +1,5 @@
 <?php
 $MESS["IM_AUDIO_CALL"] = "Аудіозвонок";
-$MESS["IM_B24DISK"] = "Бітрікс24.Диск";
 $MESS["IM_B24DISK_MSGVER_1"] = "Диск";
 $MESS["IM_CALL"] = "Зателефонувати";
 $MESS["IM_CAMERA_ROLL"] = "Зняти фото";

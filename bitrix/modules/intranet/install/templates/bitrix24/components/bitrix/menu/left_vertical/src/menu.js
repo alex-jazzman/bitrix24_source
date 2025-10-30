@@ -490,9 +490,9 @@ export default class Menu
 
 	showGlobalPreset()
 	{
-		const loadBannerDispatcherExtensionPromise = Runtime.loadExtension('ui.banner-dispatcher');
+		const BannerDispatcher = Reflection.getClass('BX.UI.BannerDispatcher');
 
-		loadBannerDispatcherExtensionPromise.then(() => {
+		const handleBannerQueue = () => {
 			BannerDispatcher.critical.toQueue((onDone) => {
 				const presetController = this.getDefaultPresetController();
 				presetController.show('global');
@@ -500,7 +500,19 @@ export default class Menu
 					onDone();
 				});
 			});
-		}).catch(() => {});
+		};
+
+		if (BannerDispatcher)
+		{
+			handleBannerQueue();
+		}
+		else
+		{
+			const loadBannerDispatcherExtensionPromise = Runtime.loadExtension('ui.banner-dispatcher');
+			loadBannerDispatcherExtensionPromise.then(() => {
+				handleBannerQueue();
+			}).catch(() => {});
+		}
 	}
 
 	handleShowHiddenClick()

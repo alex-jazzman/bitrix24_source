@@ -44,6 +44,7 @@ export const UserStatusIcon = {
 		<div v-if="iconSetting"
 			class="intranet-user-mini-profile__user-status" 
 			:style="{ '--ui-icon-set__icon-color': 'var(' + iconSetting.colorVar + ')' }"
+			data-test-id="usermp_status-icon"
 		>
 			<BIcon
 				:size="24"

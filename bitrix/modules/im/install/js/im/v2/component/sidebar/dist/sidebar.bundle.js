@@ -2334,9 +2334,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    dialog() {
 	      return this.$store.getters['chats/get'](this.dialogId, true);
 	    },
-	    isGroupChat() {
-	      return this.dialogId.startsWith('chat');
-	    },
 	    canBeMuted() {
 	      return im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByRole(im_v2_const.ActionByRole.mute, this.dialogId);
 	    },
@@ -2387,7 +2384,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  },
 	  template: `
 		<div
-			v-if="isGroupChat"
 			class="bx-im-sidebar-mute-chat__container"
 			:class="{'--not-active': !canBeMuted}"
 			v-hint="hintMuteNotAvailable"
@@ -2762,7 +2758,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    ChatTitle: im_v2_component_elements_chatTitle.ChatTitle,
 	    ChatButton: im_v2_component_elements_button.ChatButton,
 	    AddToChat: im_v2_component_entitySelector.AddToChat,
-	    AutoDelete
+	    AutoDelete,
+	    MuteChat
 	  },
 	  props: {
 	    dialogId: {
@@ -2848,6 +2845,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				/>
 			</div>
 			<div class="bx-im-sidebar-main-preview-personal-chat__auto-delete-container">
+				<MuteChat :dialogId="dialogId" />
 				<AutoDelete :dialogId="dialogId" />
 			</div>
 			<AddToChat
@@ -7119,8 +7117,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    },
 	    chatLink() {
 	      const layoutName = im_v2_lib_layout.LayoutManager.getInstance().getLayout().name;
-	      const isAiAssistant = layoutName === im_v2_const.Layout.aiAssistant;
-	      const chatGetParameter = isAiAssistant ? im_v2_const.GetParameter.openCopilotChat : im_v2_const.GetParameter.openChat;
+	      const isCopilot = layoutName === im_v2_const.Layout.copilot;
+	      const chatGetParameter = isCopilot ? im_v2_const.GetParameter.openCopilotChat : im_v2_const.GetParameter.openChat;
 	      const getParams = new URLSearchParams({
 	        [chatGetParameter]: this.dialogId
 	      });

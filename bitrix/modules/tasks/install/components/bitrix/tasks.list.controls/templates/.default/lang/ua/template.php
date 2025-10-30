@@ -37,7 +37,6 @@ $MESS["TASKS_PANEL_SORTING_DIRECTION_ASC"] = "Сортувати за зрост
 $MESS["TASKS_PANEL_SORTING_DIRECTION_DESC"] = "Сортувати по спадаючій";
 $MESS["TASKS_PANEL_SWITCH_TO_ADVANCED_FILTER"] = "Переключитися на розширений фільтр";
 $MESS["TASKS_PANEL_TAB_ALL"] = "Всі";
-$MESS["TASKS_PANEL_TAB_APPLICATIONS_2"] = "Бітрікс24.Маркет";
 $MESS["TASKS_PANEL_TAB_APPLICATIONS_MSGVER_1"] = "Маркет";
 $MESS["TASKS_PANEL_TAB_BACK_TO_LIST"] = "До списку";
 $MESS["TASKS_PANEL_TAB_EFFECTIVE"] = "Ефективність";

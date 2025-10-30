@@ -509,7 +509,12 @@ BX.Intranet.LeftMenu = new BX.Intranet.Menu(<?=CUtil::PhpToJSObject($arJSParams)
 
 if ($arResult["SHOW_PRESET_POPUP"] === true)
 {
-?>BX.Intranet.LeftMenu.showGlobalPreset();
+?>
+	BX.ready(() => {
+		setTimeout(() => {
+			BX.Intranet.LeftMenu.showGlobalPreset();
+		}, 0);
+	});
 <?
 	if (isset($arResult["SHOW_IMPORT_CONFIGURATION"]))
 	{

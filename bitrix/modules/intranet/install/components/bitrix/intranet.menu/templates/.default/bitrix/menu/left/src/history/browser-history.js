@@ -27,7 +27,7 @@ export class BrowserHistory
 	{
 		let i = 0;
 		this.items.forEach((item) => {
-			if (i > 15) {
+			if (i > 15 || !item.url.startsWith(location.origin)) {
 				return true;
 			}
 			let icoName = '';

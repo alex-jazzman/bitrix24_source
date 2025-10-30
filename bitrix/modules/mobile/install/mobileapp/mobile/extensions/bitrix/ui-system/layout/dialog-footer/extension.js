@@ -3,6 +3,7 @@
  */
 jn.define('ui-system/layout/dialog-footer', (require, exports, module) => {
 	const { Feature } = require('feature');
+	const { PropTypes } = require('utils/validation');
 	const { Color, Component, Indent } = require('tokens');
 	const { isEmpty, isFunction, isObjectLike, merge } = require('utils/object');
 	const { Button, ButtonSize } = require('ui-system/form/buttons/button');
@@ -170,7 +171,16 @@ jn.define('ui-system/layout/dialog-footer', (require, exports, module) => {
 				return null;
 			}
 
-			return children;
+			const childrenValue = children
+				.flatMap((child) => (isFunction(child) ? child() : child))
+				.filter(Boolean);
+
+			if (isEmpty(childrenValue))
+			{
+				return null;
+			}
+
+			return childrenValue;
 		}
 
 		#handleOnLayoutFooter = ({ height, width }) => {
@@ -245,6 +255,7 @@ jn.define('ui-system/layout/dialog-footer', (require, exports, module) => {
 			PropTypes.oneOfType([
 				PropTypes.bool,
 				PropTypes.object,
+				PropTypes.func,
 			]),
 		),
 		style: PropTypes.object,

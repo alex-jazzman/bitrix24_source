@@ -5,6 +5,7 @@ $MESS["CALL_NOTIFY_COPILOT_AGREEMENTS"] = "Підсумки";
 $MESS["CALL_NOTIFY_COPILOT_AGREEMENTS_COMMON"] = "Що вирішили";
 $MESS["CALL_NOTIFY_COPILOT_AGREEMENTS_MEETINGS"] = "Зустрічі";
 $MESS["CALL_NOTIFY_COPILOT_AGREEMENTS_TASKS"] = "Завдання";
+$MESS["CALL_NOTIFY_COPILOT_CONTINUE"] = "Спробувати ще раз";
 $MESS["CALL_NOTIFY_COPILOT_DETAIL"] = "[url=#CALL_DETAIL#]Докладний аналіз зустрічі[/url]";
 $MESS["CALL_NOTIFY_COPILOT_DISCLAIMER"] = "Відповіді CoPilot можуть бути неточними, перевіряйте важливу інформацію. [url=#DISCLAIMER#]Докладніше[/url]";
 $MESS["CALL_NOTIFY_COPILOT_EFFICIENCY"] = "CoPilot оцінив ефективність дзвінка: «#EFFICIENCY#».";

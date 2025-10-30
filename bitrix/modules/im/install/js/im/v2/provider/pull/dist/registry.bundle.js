@@ -237,14 +237,14 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    }
 	    // it's an opponent message or our own message from somewhere else
 	    else if (!messageWithRealId && !messageWithTemplateId) {
+	      const hasLoadingMessage = babelHelpers.classPrivateFieldLooseBase(this, _store$2)[_store$2].getters['messages/hasLoadingMessageByMessageId'](params.message.templateId);
+	      if (hasLoadingMessage) {
+	        void babelHelpers.classPrivateFieldLooseBase(this, _store$2)[_store$2].dispatch('messages/delete', {
+	          id: params.message.templateId
+	        });
+	      }
 	      im_v2_lib_logger.Logger.warn('New message pull handler: we dont have this message', params.message);
 	      babelHelpers.classPrivateFieldLooseBase(this, _handleAddingMessageToModel)[_handleAddingMessageToModel](params);
-	    }
-	    const hasLoadingMessage = babelHelpers.classPrivateFieldLooseBase(this, _store$2)[_store$2].getters['messages/hasLoadingMessageByMessageId'](params.message.templateId);
-	    if (hasLoadingMessage) {
-	      void babelHelpers.classPrivateFieldLooseBase(this, _store$2)[_store$2].dispatch('messages/delete', {
-	        id: params.message.templateId
-	      });
 	    }
 	    im_v2_lib_inputAction.InputActionListener.getInstance().stopUserActionsInChat({
 	      userId: params.message.senderId,
@@ -266,6 +266,10 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	      dialogId: dialog.dialogId,
 	      aiModel: engineCode
 	    });
+	  }
+	  handleFileTranscription(params) {
+	    im_v2_lib_logger.Logger.warn('MessagePullHandler: handleFileTranscription', params);
+	    babelHelpers.classPrivateFieldLooseBase(this, _store$2)[_store$2].dispatch('files/setTranscription', params);
 	  }
 	  handleMessageUpdate(params) {
 	    im_v2_lib_logger.Logger.warn('MessagePullHandler: handleMessageUpdate', params);
@@ -1109,6 +1113,9 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  handleChangeEngine(params) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _messageHandler)[_messageHandler].handleChangeEngine(params);
 	  }
+	  handleFileTranscription(params) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _messageHandler)[_messageHandler].handleFileTranscription(params);
+	  }
 	  handleMessageUpdate(params) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _messageHandler)[_messageHandler].handleMessageUpdate(params);
 	  }
@@ -1268,7 +1275,6 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	const ActionNameByRecentType = {
 	  [im_v2_const.RecentType.default]: 'recent/setRecent',
 	  [im_v2_const.RecentType.copilot]: 'recent/setCopilot',
-	  [im_v2_const.RecentType.aiAssistant]: 'recent/setAiAssistant',
 	  [im_v2_const.RecentType.openChannel]: 'recent/setChannel',
 	  [im_v2_const.RecentType.collab]: 'recent/setCollab'
 	};

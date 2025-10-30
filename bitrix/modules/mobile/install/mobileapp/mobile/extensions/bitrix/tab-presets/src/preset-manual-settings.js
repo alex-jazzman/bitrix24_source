@@ -131,7 +131,7 @@ jn.define('tab-presets/preset-manual-settings', (require, exports, module) => {
 							fixedHeight: 0,
 						},
 						{
-							title: Loc.getMessage('PRESET_MANUAL_SETTINGS_SECTION_MORE_TITLE'),
+							title: Loc.getMessage('PRESET_MANUAL_SETTINGS_SECTION_MORE_TITLE_MSGVER_1'),
 							items: this.inactiveItems,
 							dragInteractionEnabled: false,
 							fixedHeight: SECTION_HEADER_HEIGHT,

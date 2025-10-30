@@ -327,8 +327,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	}, {
 	  animationDuration: 200,
 	  label: {
-	    text: '',
-	    bgColor: '#0075FF'
+	    text: ''
 	  }
 	});
 	const namespace = main_core.Reflection.namespace('BX.Bitrix24');

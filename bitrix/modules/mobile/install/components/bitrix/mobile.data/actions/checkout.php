@@ -34,6 +34,8 @@ use Bitrix\Pull\Config;
 use Bitrix\Mobile;
 use Bitrix\Mobile\Auth;
 use Bitrix\Mobile\AvaMenu;
+use Bitrix\Mobile\Config\Feature;
+use Bitrix\Mobile\Feature\MenuFeature;
 
 if ($_SERVER["REQUEST_METHOD"] == "OPTIONS")
 {
@@ -463,6 +465,9 @@ else
 			"notification" => ["url" => $siteDir . "mobile/im/notify.php"],
 		],
 		"isCollabToolEnabled" => $isCollabToolEnabled,
+		'featureFlags' => [
+			'disableAvaMenu' => Feature::isEnabled(MenuFeature::class),
+		],
 	];
 
 	if (Loader::includeModule('bitrix24'))

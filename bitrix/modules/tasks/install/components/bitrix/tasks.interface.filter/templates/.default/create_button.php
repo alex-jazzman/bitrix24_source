@@ -52,23 +52,22 @@ if ($currentUserId !== $targetUserId)
 	$createButtonUri->addParams(['RESPONSIBLE_ID' => $arParams['USER_ID']]);
 }
 
+$analytics = \Bitrix\Tasks\Helper\Analytics::getInstance($currentUserId);
+
 $createButtonUri->addParams([
 	'ta_sec' => $arResult['CREATE_BUTTON_ANALYTICS']['sectionType'] ?? '',
 	'ta_sub' => $arResult['CREATE_BUTTON_ANALYTICS']['viewState'] ?? '',
 	'ta_el' => \Bitrix\Tasks\Helper\Analytics::ELEMENT['create_button'],
+	'p1' => $analytics->getIsDemoParameter(),
+	'p2' => $analytics->getUserTypeParameter(),
 ]);
 
 if ($isCollab)
 {
-	$analytics = \Bitrix\Tasks\Helper\Analytics::getInstance($currentUserId);
-
 	$createButtonUri->addParams([
-		'p2' => $analytics->getUserTypeParameter(),
 		'p4' => $analytics->getCollabParameter($groupId),
 	]);
 }
-
-$color = $arResult['IS_SCRUM_PROJECT'] ? Buttons\Color::LIGHT_BORDER : Buttons\Color::SUCCESS;
 
 $mainButton = $isV2Form ? [] : [
 	'link' => $createButtonUri->getUri(),
@@ -77,7 +76,6 @@ $mainButton = $isV2Form ? [] : [
 
 $splitButton = new SplitButton([
 	'text' => Loc::getMessage('TASKS_BTN_CREATE_TASK'),
-	'color' => $color,
 	'mainButton' => $mainButton,
 	'menuButton' => [
 		'icon' => Buttons\Icon::SETTING,
@@ -91,6 +89,8 @@ if (!$arResult['IS_SCRUM_PROJECT'])
 {
 	$rolesButton = (new Buttons\Button())
 		->setText($arResult['roles']['selectedRoleName'] ?? Loc::getMessage('TASKS_ALL_ROLES'))
+		->setCollapsedIcon(Buttons\Icon::TWO_PERSONS)
+		->setCounter($arResult['roles']['totalCounter'])
 		->setStyle(Buttons\AirButtonStyle::OUTLINE)
 		->setDropdown()
 		->addAttribute('id', 'tasks-buttonRoles')

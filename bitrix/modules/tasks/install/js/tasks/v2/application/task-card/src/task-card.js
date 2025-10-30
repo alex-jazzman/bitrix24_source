@@ -8,13 +8,22 @@ export type Params = {
 	taskId?: number,
 	groupId?: number,
 	deadlineTs?: number,
+	description?: string,
+	auditorsIds?: Array,
 	analytics: AnalyticsParams,
+	source?: Source,
 };
 
 export type AnalyticsParams = {
 	context: string,
 	additionalContext: string,
 	element: string,
+};
+
+export type Source = {
+	type: string,
+	entityId?: number,
+	subEntityId?: number,
 };
 
 export class TaskCard
@@ -27,6 +36,7 @@ export class TaskCard
 			return;
 		}
 
+		// eslint-disable-next-line init-declarations
 		let card;
 		const popup = new Popup({
 			id,
@@ -56,6 +66,7 @@ export class TaskCard
 
 	static showFullCard(params: Params = {}): void
 	{
+		// eslint-disable-next-line init-declarations
 		let card;
 		BX.SidePanel.Instance.open(`tasks-full-card-${params.taskId}`, {
 			contentClassName: 'tasks-full-card-slider-content',
@@ -63,7 +74,7 @@ export class TaskCard
 			customLeftBoundary: 0,
 			cacheable: false,
 			contentCallback: (slider: Slider): void => {
-				void BX.Runtime.loadExtension('tasks.v2.application.task-full-card').then(({ TaskFullCard }) => {
+				void top.BX.Runtime.loadExtension('tasks.v2.application.task-full-card').then(({ TaskFullCard }) => {
 					card = new TaskFullCard({ analytics: {}, ...params });
 					card.mountCard(slider);
 				});

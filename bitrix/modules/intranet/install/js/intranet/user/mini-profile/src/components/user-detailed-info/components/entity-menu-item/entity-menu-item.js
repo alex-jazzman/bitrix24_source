@@ -32,11 +32,12 @@ export const EntityMenuItem = {
 		},
 	},
 	template: `
-		<div class="intranet-user-mini-profile__entity-menu-item">
+		<div class="intranet-user-mini-profile__entity-menu-item" data-test-id="usermp_entity-menu-item">
 			<div class="intranet-user-mini-profile__entity-menu-item-content">
 				<div v-if="image"
 					class="intranet-user-mini-profile__entity-menu-item__icon"
 					:class="image.iconClass ?? null"
+					data-test-id="usermp_entity-menu-item-icon"
 				>
 					<BIcon v-if="image.bIconName" 
 						:name="image.bIconName"
@@ -53,6 +54,7 @@ export const EntityMenuItem = {
 				<div 
 					class="intranet-user-mini-profile__entity-menu-item__title"
 					:title="title"
+					data-test-id="usermp_entity-menu-item-title"
 				>
 					{{ title }}
 				</div>

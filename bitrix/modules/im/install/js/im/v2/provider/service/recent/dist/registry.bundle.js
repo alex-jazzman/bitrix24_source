@@ -225,7 +225,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    counter: item.counter,
 	    role: im_v2_const.UserRole.member,
 	    backgroundId: item.chat.background_id,
-	    textFieldEnabled: item.chat.text_field_enabled
+	    textFieldEnabled: item.chat.text_field_enabled,
+	    muteList: item.chat.mute_list
 	  };
 	}
 	function _prepareChatForAdditionalUser2(user) {

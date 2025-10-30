@@ -1,4 +1,5 @@
 import { EventEmitter } from 'main.core.events';
+import { Event } from 'main.core';
 import { Menu } from 'ui.system.menu';
 import { Store } from 'ui.vue3.vuex';
 import { RestClient } from 'rest.client';
@@ -6,6 +7,7 @@ import { RestClient } from 'rest.client';
 import { Core } from 'im.v2.application.core';
 
 import type { MenuItemOptions, MenuOptions, MenuSectionOptions } from 'ui.system.menu';
+import type { PopupTarget } from 'main.popup';
 
 const EVENT_NAMESPACE = 'BX.Messenger.v2.Lib.Menu';
 
@@ -28,7 +30,7 @@ export class BaseMenu extends EventEmitter
 	}
 
 	// public
-	openMenu(context: Object, target: HTMLElement)
+	openMenu(context: Object, target: PopupTarget)
 	{
 		if (this.menuInstance)
 		{
@@ -38,6 +40,8 @@ export class BaseMenu extends EventEmitter
 		this.target = target;
 		this.menuInstance = new Menu(this.getMenuOptions());
 		this.menuInstance.show(this.target);
+
+		this.#bindBlurEvent();
 	}
 
 	getMenuOptions(): MenuOptions
@@ -108,5 +112,12 @@ export class BaseMenu extends EventEmitter
 	#prepareItems(): MenuItemOptions[]
 	{
 		return this.getMenuItems().filter((item) => item !== null);
+	}
+
+	#bindBlurEvent(): void
+	{
+		Event.bindOnce(window, 'blur', () => {
+			this.destroy();
+		});
 	}
 }

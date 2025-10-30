@@ -1,4 +1,4 @@
-import { Type } from 'main.core';
+import { ajax } from 'main.core';
 
 import { ApiClient } from 'booking.lib.api-client';
 import type { CrmFormResourceModel } from 'booking.model.crm-form';
@@ -10,12 +10,12 @@ class CrmFormService
 {
 	#getResourcesRequest: ?Promise<ResourceDto[]>;
 
-	async getResources(): Promise<CrmFormResourceModel[]>
+	async getResources(ids: number[]): Promise<CrmFormResourceModel[]>
 	{
 		try
 		{
 			this.#getResourcesRequest ??= this.#fetchGetResources;
-			const data = await this.#getResourcesRequest();
+			const { data } = await this.#getResourcesRequest(ids);
 
 			return data.map((resourceDto) => mapDtoToModel(resourceDto));
 		}
@@ -27,9 +27,15 @@ class CrmFormService
 		}
 	}
 
-	#fetchGetResources(): Promise<ResourceDto[]>
+	#fetchGetResources(ids: number[]): Promise<ResourceDto[]>
 	{
-		return new ApiClient().post('CrmForm.getResources');
+		const action: string = new ApiClient().buildUrl('CrmForm.getResources');
+
+		return ajax.runAction(action, {
+			data: {
+				ids,
+			},
+		});
 	}
 }
 

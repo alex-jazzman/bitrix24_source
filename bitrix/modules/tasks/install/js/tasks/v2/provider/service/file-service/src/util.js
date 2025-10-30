@@ -1,3 +1,5 @@
+import { Type } from 'main.core';
+
 export const processCheckListFileIds = (fileIds) => {
 	if (!Array.isArray(fileIds))
 	{
@@ -5,18 +7,18 @@ export const processCheckListFileIds = (fileIds) => {
 	}
 
 	return fileIds.reduce((result, item) => {
-		if (typeof item === 'object' && item !== null && 'id' in item && 'fileId' in item)
+		if (Type.isObjectLike(item) && 'id' in item && 'fileId' in item)
 		{
 			result.push({
 				id: item.id,
-				fileId: item.fileId
+				fileId: item.fileId,
 			});
 		}
-		else if (typeof item === 'string' && item.startsWith('n'))
+		else if (Type.isString(item) && item.startsWith('n'))
 		{
 			result.push({
 				id: item,
-				fileId: item
+				fileId: item,
 			});
 		}
 

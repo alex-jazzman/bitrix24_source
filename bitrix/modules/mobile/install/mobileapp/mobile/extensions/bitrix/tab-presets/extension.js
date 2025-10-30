@@ -19,8 +19,11 @@ jn.define('tab-presets', (require, exports, module) => {
 	const { makeLibraryImagePath } = require('asset-manager');
 	const { Tourist } = require('tourist');
 	const { AnalyticsEvent } = require('analytics');
+	const { Avatar, AvatarEntityType } = require('ui-system/blocks/avatar');
 
 	const ITEM_KEY_MANUAL = 'manual';
+
+	const ITEM_KEY_MENU = 'menu';
 
 	const ITEM_KEY_BANNER = 'banner';
 	const ITEM_TYPE_BANNER = 'banner';
@@ -384,6 +387,10 @@ jn.define('tab-presets', (require, exports, module) => {
 
 			const baseColor = (isSelected ? Color.base4 : Color.base5);
 			const firstColor = (isSelected ? Color.accentMainPrimary : Color.base1);
+			const shouldRenderAvatar = tabName === ITEM_KEY_MENU && tabItem.isAvatarEnabled;
+			const avatarType = env.isCollaber ? AvatarEntityType.COLLAB : (
+				env.extranet ? AvatarEntityType.EXTRANET : AvatarEntityType.USER
+			);
 
 			return View(
 				{
@@ -394,10 +401,19 @@ jn.define('tab-presets', (require, exports, module) => {
 					},
 					testId: `${this.testId}_tab_${tabName}`,
 				},
-				IconView({
+				!shouldRenderAvatar && IconView({
 					testId: `${this.testId}_tab_${tabName}_icon`,
 					icon: TabPresetsNewUtils.getIcon(tabItem.iconId) || TabPresetsNewUtils.getIcon(tabName),
 					color: (isFirst ? firstColor : baseColor),
+					size: 32,
+				}),
+				shouldRenderAvatar && Avatar({
+					testId: `${this.testId}_tab_${tabName}_avatar`,
+					id: env.userId,
+					entityType: avatarType,
+					uri: tabItem.imageUrl,
+					name: tabItem.name,
+					useLetterImage: true,
 					size: 32,
 				}),
 				Text7({

@@ -86,7 +86,7 @@ $arResult["OUTPUT_LIST"] = $APPLICATION->IncludeComponent(
 		"NOTIFY_TEXT" => (isset($arParams["bFromList"]) && $arParams["bFromList"] ? TruncateText(str_replace(Array("\r\n", "\n"), " ", $arParams["POST_DATA"]["~TITLE"]), 100) : ""),
 		"SHOW_MINIMIZED" => $arParams["SHOW_MINIMIZED"],
 
-		"FORM_ID" => $arParams["FORM_ID"], // instead of SHOW_POST_FORM
+		"FORM_ID" => $arResult["SHOW_POST_FORM"] === 'N' ? '' : $arParams["FORM_ID"], // instead of SHOW_POST_FORM
 		"SHOW_POST_FORM" => $arResult["SHOW_POST_FORM"], // for old main.post.list
 
 		"IMAGE_SIZE" => $arParams["IMAGE_SIZE"] ?? null,

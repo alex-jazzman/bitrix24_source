@@ -95,7 +95,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      return this.task.auditorsIds.map(id => ['user', id]);
 	    },
 	    design() {
-	      return this.isSelected ? tasks_v2_component_elements_chip.ChipDesign.ShadowAccent : tasks_v2_component_elements_chip.ChipDesign.Shadow;
+	      return this.isSelected ? tasks_v2_component_elements_chip.ChipDesign.ShadowAccent : tasks_v2_component_elements_chip.ChipDesign.ShadowNoAccent;
 	    },
 	    isSelected() {
 	      return this.$store.getters[`${tasks_v2_const.Model.Tasks}/wasFieldFilled`](this.taskId, auditorsMeta.id);
@@ -109,7 +109,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    (_this$selector = this.selector) == null ? void 0 : _this$selector.destroy();
 	  },
 	  methods: {
-	    showDialog() {
+	    handleClick() {
 	      var _this$selector2;
 	      if (this.isSelected) {
 	        this.highlightField();
@@ -134,7 +134,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        }
 	      });
 	      this.selector.selectItemsByIds(this.preselected);
-	      this.selector.show(this.$refs.chip.$el);
+	      this.selector.show(this.$el);
 	    },
 	    highlightField() {
 	      void tasks_v2_lib_fieldHighlighter.fieldHighlighter.setContainer(this.$root.$el).highlight(auditorsMeta.id);
@@ -145,12 +145,11 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			v-if="isSelected || !readonly"
 			:design="design"
 			:icon="Outline.OBSERVER"
-			:text="auditorsMeta.title"
+			:text="loc('TASKS_V2_AUDITORS_TITLE_CHIP')"
 			:data-task-id="taskId"
 			:data-task-chip-id="auditorsMeta.id"
 			:data-task-chip-value="task.auditorsIds.join(',')"
-			ref="chip"
-			@click="showDialog"
+			@click="handleClick"
 		/>
 	`
 	};

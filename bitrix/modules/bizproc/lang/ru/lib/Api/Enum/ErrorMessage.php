@@ -33,8 +33,11 @@ $MESS['BIZPROC_API_ENUM_ERRORS_EMPTY_PROP'] = 'Не заполнено обяз�
 $MESS['BIZPROC_API_ENUM_ERRORS_INVALID_PARAM_TYPE'] = "Аргумент '#PARAM#' должен иметь тип '#VALUE#'";
 $MESS['BIZPROC_API_ENUM_ERRORS_INVALID_PARAM_ARG'] = "Аргумент '#PARAM#' имеет недопустимое значение '#VALUE#'";
 $MESS['BIZPROC_API_ENUM_ERRORS_PARAM_REQUIRED'] = "Не заполнено обязательное поле #NAME#";
+$MESS['BIZPROC_API_ENUM_ERRORS_CONSTANTS_NOT_TUNED'] = 'Константы бизнес-процесса не настроены';
 
 //SYSTEM
 $MESS['BIZPROC_API_ENUM_ERRORS_MODULE_NOT_INSTALLED'] = 'Модуль «Бизнес-процессы» не установлен';
 $MESS['BIZPROC_API_ENUM_ERRORS_WRONG_TEMPLATE'] = 'Некорректный шаблон бизнес-процесса';
 $MESS['BIZPROC_API_ENUM_ERRORS_UNKNOWN_ERROR'] = 'Неизвестная ошибка';
+$MESS['BIZPROC_API_ENUM_ERRORS_FEATURE_DISABLED'] = 'Бизнес-процесс недоступен. Обратитесь к администратору вашего Битрикс24';
+$MESS['BIZPROC_API_ENUM_ERRORS_OVER_LIMITED'] = 'Превышены лимиты автоматизации';

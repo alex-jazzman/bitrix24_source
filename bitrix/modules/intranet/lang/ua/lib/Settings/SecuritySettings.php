@@ -1,15 +1,24 @@
 <?php
+$MESS["INTRANET_SETTINGS_FIELD_BADGE_WATER_MARKS_SOON"] = "Незабаром";
 $MESS["INTRANET_SETTINGS_FIELD_HINT_ALLOW_AUTO_DELETE_TO_BE_ENABLED"] = "Учасники чатів зможуть керувати опцією автовидалення повідомлень. Повідомлення в чатах з увімкненим автовидаленням автоматично видалятимуться через вибраний проміжок часу.";
 $MESS["INTRANET_SETTINGS_FIELD_HINT_DISABLE_COPY"] = "За ввімкненого налаштування співробітники не зможуть копіювати текст у мобільному застосунку.";
+$MESS["INTRANET_SETTINGS_FIELD_HINT_DISABLE_COPY_MSGVER_1"] = "Зберігайте конфіденційність внутрішнього листування. Співробітники зможуть пересилати повідомлення один одному всередині застосунку, але копіювати й надсилати текст за межі Бітрікс24 не можна.";
 $MESS["INTRANET_SETTINGS_FIELD_HINT_DISABLE_SCREENSHOT"] = "За ввімкненого налаштування співробітники не зможуть робити знімки екрана в мобільному застосунку.";
+$MESS["INTRANET_SETTINGS_FIELD_HINT_DISABLE_SCREENSHOT_MSGVER_1"] = "Під час спроби зробити знімок екрана співробітники побачать повідомлення про заборону, знімок екрана не збережеться. Це захистить конфіденційні дані від витоку, уся інформація залишиться всередині компанії.";
+$MESS["INTRANET_SETTINGS_FIELD_HINT_WATER_MARKS_ENABLED"] = "Спеціальне символьне шифрування для захисту корпоративної інформації. У разі витоку на знімку екрана або на фото залишаться спеціальні символи, за якими легко встановити відправника.";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_ALLOW_AUTO_DELETE_TO_BE_ENABLED"] = "Дозволити вмикати автовидалення повідомлень у чатах";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_DEVISE_HISTORY_CLEANUP_DAYS"] = "Скільки днів зберігати історію входів";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_DISABLE_COPY"] = "Заборонити копіювати текст";
+$MESS["INTRANET_SETTINGS_FIELD_LABEL_DISABLE_COPY_MSGVER_1"] = "Заборона на копіювання тексту в мобільному застосунку";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_DISABLE_SCREENSHOT"] = "Заборонити робити знімки з екрана";
+$MESS["INTRANET_SETTINGS_FIELD_LABEL_DISABLE_SCREENSHOT_MSGVER_1"] = "Заборона знімків екрана в мобільному застосунку";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_SECURITY_OTP"] = "Обов'язково для всіх співробітників";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_SELECT_ACCEPTED_IP"] = "Перелічіть дозволені IP-адреси, розділяючи їх комами, або діапазони IP-адрес через дефіс";
+$MESS["INTRANET_SETTINGS_FIELD_LABEL_WATER_MARKS_ENABLED"] = "Водяні знаки для захисту даних на комп'ютері";
+$MESS["INTRANET_SETTINGS_SECTION_SECURITY_DESCRIPTION_USER_SELECT"] = "Виберіть, кому заборонити";
 $MESS["INTRANET_SETTINGS_SECTION_TITLE_ACCESS_IP"] = "Обмеження доступу за IP-адресами";
 $MESS["INTRANET_SETTINGS_SECTION_TITLE_BLACK_LIST"] = "Чорний список";
+$MESS["INTRANET_SETTINGS_SECTION_TITLE_DATA_LEAK_PROTECTION"] = "Захист інформації від витоку";
 $MESS["INTRANET_SETTINGS_SECTION_TITLE_DEVICES_HISTORY"] = "Історія входів";
 $MESS["INTRANET_SETTINGS_SECTION_TITLE_EVENT_LOG"] = "Журнал подій";
 $MESS["INTRANET_SETTINGS_SECTION_TITLE_MOBILE_APP"] = "Мобільний застосунок";

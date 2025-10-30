@@ -10,6 +10,7 @@ import { AddToChat } from 'im.v2.component.entity-selector';
 import { PermissionManager } from 'im.v2.lib.permission';
 
 import { AutoDelete } from '../../../elements/auto-delete/auto-delete';
+import { MuteChat } from '../../../elements/mute-chat/mute-chat';
 
 import '../css/user-preview.css';
 
@@ -20,7 +21,7 @@ import type { ImModelChat, ImModelUser } from 'im.v2.model';
 export const UserPreview = {
 	name: 'UserPreview',
 	directives: { hint },
-	components: { ChatAvatar, ChatTitle, ChatButton, AddToChat, AutoDelete },
+	components: { ChatAvatar, ChatTitle, ChatButton, AddToChat, AutoDelete, MuteChat },
 	props: {
 		dialogId: {
 			type: String,
@@ -120,6 +121,7 @@ export const UserPreview = {
 				/>
 			</div>
 			<div class="bx-im-sidebar-main-preview-personal-chat__auto-delete-container">
+				<MuteChat :dialogId="dialogId" />
 				<AutoDelete :dialogId="dialogId" />
 			</div>
 			<AddToChat

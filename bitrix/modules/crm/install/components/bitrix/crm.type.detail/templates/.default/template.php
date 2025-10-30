@@ -397,8 +397,18 @@ $renderFieldSelector = static function (?string $title, bool $isActive, string $
 					Loc::getMessage('CRM_TYPE_DETAIL_FIELD_OBSERVERS'),
 					$type->getIsObserversEnabled(),
 					'isObserversEnabled',
-					'crm-type-field-icon-type1'
+					'crm-type-field-icon-type5'
 				);
+
+				if (\Bitrix\Crm\Feature::enabled(Bitrix\Crm\Feature\RecurringDynamic::class))
+				{
+					echo $renderFieldSelector(
+						Loc::getMessage('CRM_TYPE_DETAIL_FIELD_RECURRING'),
+						$type->getIsRecurringEnabled() ?? false,
+						'isRecurringEnabled',
+						'crm-type-field-icon-type6',
+					);
+				}
 				?>
 			</div>
 			<div class="ui-title-3">

@@ -5,7 +5,7 @@ jn.define('layout/ui/copilot-role-selector/src/role-list', (require, exports, mo
 	const { JnListClass } = require('layout/ui/jn-list');
 	const { StatusBlock } = require('ui-system/blocks/status-block');
 	const { makeLibraryImagePath } = require('asset-manager');
-	const { openFeedbackForm } = require('layout/ui/feedback-form-opener');
+	const { FeedbackForm } = require('layout/ui/feedback-form-opener');
 	const { Color } = require('tokens');
 	const { Loc } = require('loc');
 	const { ScopeType } = require('layout/ui/copilot-role-selector/src/type');
@@ -50,7 +50,10 @@ jn.define('layout/ui/copilot-role-selector/src/role-list', (require, exports, mo
 		}
 
 		#onDescriptionLinkClick = () => {
-			openFeedbackForm('copilotRoles');
+			(new FeedbackForm({
+				formId: 'copilotRoles',
+				senderPage: 'copilot_role_list',
+			})).openInBackdrop();
 		};
 
 		#getEmptyStateDescription = () => {

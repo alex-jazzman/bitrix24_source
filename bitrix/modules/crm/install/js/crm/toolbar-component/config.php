@@ -13,6 +13,7 @@ return [
 		'ui.dialogs.messagebox',
 		'ui.navigationpanel',
 		'crm.router',
+		'pull.client',
 		'main.core',
 		'main.core.events',
 		'main.popup',

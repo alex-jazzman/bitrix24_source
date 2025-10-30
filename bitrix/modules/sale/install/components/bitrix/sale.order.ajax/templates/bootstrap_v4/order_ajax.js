@@ -206,7 +206,8 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 							action: 'saveOrderAjax',
 							sessid: BX.bitrix_sessid(),
 							SITE_ID: this.siteId,
-							signedParamsString: this.signedParamsString
+							signedParamsString: this.signedParamsString,
+							userConsents: this.options.userConsents ?? null,
 						},
 						onsuccess: BX.proxy(this.saveOrderWithJson, this),
 						onfailure: BX.proxy(this.handleNotRedirected, this)
@@ -1765,7 +1766,22 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 				if (this.params.USER_CONSENT === 'Y' && BX.UserConsent)
 				{
-					BX.onCustomEvent('bx-soa-order-save', []);
+					if (this.options.userConsents)
+					{
+						var requiredUncheckedConsentId = this.getFirstRequiredUncheckedConsentId();
+						if (requiredUncheckedConsentId)
+						{
+							BX.onCustomEvent('bx-soa-order-save-' + requiredUncheckedConsentId);
+						}
+						else
+						{
+							this.doSaveAction();
+						}
+					}
+					else
+					{
+						BX.onCustomEvent('bx-soa-order-save', []);
+					}
 				}
 				else
 				{
@@ -1783,6 +1799,55 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				this.reachGoal('order');
 				this.sendRequest('saveOrderAjax');
 			}
+		},
+
+		getFirstRequiredUncheckedConsentId: function()
+		{
+			var uncheckedConsent = this.options.userConsents.find(
+				consent => consent.required === 'Y' && consent.checked !== 'Y',
+			);
+
+			return uncheckedConsent ? uncheckedConsent.id : null;
+		},
+
+		refusedByConsent: function(item)
+		{
+			if (item.config.id)
+			{
+				var consent = this.options.userConsents.find(consent => consent.id === item.config.id);
+				if (consent)
+				{
+					consent.checked = 'N';
+				}
+			}
+			this.disallowOrderSave();
+		},
+
+		saveByConsent: function(item)
+		{
+			if (item.config.id)
+			{
+				var consent = this.options.userConsents.find(consent => consent.id === item.config.id);
+				if (consent)
+				{
+					consent.checked = 'Y';
+				}
+			}
+
+			if (!this.isOrderSaveAllowed())
+			{
+				return;
+			}
+
+			var requiredUncheckedConsentId = this.getFirstRequiredUncheckedConsentId();
+			if (requiredUncheckedConsentId)
+			{
+				BX.onCustomEvent('bx-soa-order-save-' + requiredUncheckedConsentId);
+
+				return;
+			}
+
+			this.doSaveAction();
 		},
 
 		/**
@@ -8587,12 +8652,47 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 		initUserConsent: function()
 		{
+			if (this.params.USER_CONSENTS)
+			{
+				this.options.userConsents = [];
+				this.params.USER_CONSENTS.forEach(consent => {
+					this.options.userConsents.push({
+						id: parseInt(consent.ID, 10),
+						checked: consent.CHECKED,
+						required: consent.REQUIRED,
+					});
+				});
+			}
+			else
+			{
+				this.options.userConsents = null;
+			}
+
 			BX.ready(BX.delegate(function(){
-				var control = BX.UserConsent && BX.UserConsent.load(this.orderBlockNode);
-				if (control)
+				if (this.options.userConsents)
 				{
-					BX.addCustomEvent(control, BX.UserConsent.events.save, BX.proxy(this.doSaveAction, this));
-					BX.addCustomEvent(control, BX.UserConsent.events.refused, BX.proxy(this.disallowOrderSave, this));
+					if (BX.UserConsent)
+					{
+						var controls = BX.UserConsent.getItems();
+						if (controls.length === 0)
+						{
+							BX.UserConsent.loadAll(this.orderBlockNode);
+							controls = BX.UserConsent.getItems();
+						}
+						controls.forEach(control => {
+							BX.addCustomEvent(control, BX.UserConsent.events.afterAccepted, BX.proxy(this.saveByConsent, this));
+							BX.addCustomEvent(control, BX.UserConsent.events.refused, BX.proxy(this.refusedByConsent, this));
+						});
+					}
+				}
+				else
+				{
+					var control = BX.UserConsent && BX.UserConsent.load(this.orderBlockNode);
+					if (control)
+					{
+						BX.addCustomEvent(control, BX.UserConsent.events.save, BX.proxy(this.doSaveAction, this));
+						BX.addCustomEvent(control, BX.UserConsent.events.refused, BX.proxy(this.disallowOrderSave, this));
+					}
 				}
 			}, this));
 		}

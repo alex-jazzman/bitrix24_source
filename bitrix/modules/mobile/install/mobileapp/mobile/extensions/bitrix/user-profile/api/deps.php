@@ -2,8 +2,9 @@
 
 return [
 	'extensions' => [
+		'error',
 		'rest/run-action-executor',
 		'user-profile/const',
-		'error',
+		'utils/guid',
 	],
 ];

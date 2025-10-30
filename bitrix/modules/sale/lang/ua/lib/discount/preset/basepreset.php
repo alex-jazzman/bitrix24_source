@@ -17,7 +17,6 @@ $MESS["SALE_BASE_PRESET_ORDERAMOUNT_FIELD_PRIORITY"] = "Пріоритет за�
 $MESS["SALE_BASE_PRESET_ORDERAMOUNT_FIELD_SORT"] = "Індекс сортування в рівні пріоритету";
 $MESS["SALE_BASE_PRESET_ORDERAMOUNT_LID"] = "Сайт, для якого буде діяти знижка";
 $MESS["SALE_BASE_PRESET_ORDERAMOUNT_USER_GROUPS"] = "Групи користувачів, на які поширюється правило";
-$MESS["SALE_HANDLERS_DISCOUNTPRESET_ERROR_EMPTY_VALUE"] = "Не вказана знижка на замовлення";
 $MESS["SALE_HANDLERS_DISCOUNTPRESET_ERROR_EMPTY_VALUE_MSGVER_1"] = "Не вказано розмір знижки.";
 $MESS["SHD_BT_SALE_ACT_GROUP_BASKET_SELECT_CUR_ALL"] = "#CUR# на загальну суму товарів";
 $MESS["SHD_BT_SALE_ACT_GROUP_BASKET_SELECT_CUR_EACH"] = "#CUR# на кожен товар";

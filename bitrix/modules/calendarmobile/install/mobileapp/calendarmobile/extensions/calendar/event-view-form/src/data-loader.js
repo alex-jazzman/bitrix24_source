@@ -86,12 +86,14 @@ jn.define('calendar/event-view-form/data-loader', (require, exports, module) => 
 				};
 			}
 
-			this.addUsersToRedux(event, data.users);
+			this.addUsersToRedux(data.users);
+			this.addUsersToRedux(data.entityRelation?.users || []);
 
 			const eventData = {
 				...data.event,
 				permissions: data.permissions,
 				files: data.files,
+				entityRelation: data?.entityRelation,
 			};
 
 			if (requestCollabs && Type.isArrayFilled(data.sections))
@@ -186,7 +188,7 @@ jn.define('calendar/event-view-form/data-loader', (require, exports, module) => 
 			return result;
 		}
 
-		addUsersToRedux(event, users)
+		addUsersToRedux(users)
 		{
 			if (users && users.length > 0)
 			{

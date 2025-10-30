@@ -277,11 +277,6 @@ export const ChatTitle = {
 		},
 		isChatMuted(): boolean
 		{
-			if (this.isUser)
-			{
-				return false;
-			}
-
 			const isMuted = this.dialog.muteList.find((element) => {
 				return element === Core.getUserId();
 			});

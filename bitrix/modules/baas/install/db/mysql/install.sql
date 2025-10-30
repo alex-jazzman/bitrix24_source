@@ -91,6 +91,8 @@ create table if not exists b_baas_purchase
 	ID INT NOT NULL AUTO_INCREMENT,
 	CODE VARCHAR(128) NOT NULL,
 	PURCHASE_URL VARCHAR(1000),
+	PURGED CHAR(1) NOT NULL DEFAULT 'N',
+	NOTIFIED CHAR(1) NOT NULL DEFAULT 'N',
 
 	unique index `ux_baas_purchase_code` (`CODE`),
 	primary key (ID)

@@ -37,7 +37,6 @@ $MESS["M_TASKS_ACTIONS_MENU_PIN_SUCCESS"] = "Завдання закріплен
 $MESS["M_TASKS_ACTIONS_MENU_READ"] = "Прочитати";
 $MESS["M_TASKS_ACTIONS_MENU_REMOVE_CANCEL"] = "Скасувати";
 $MESS["M_TASKS_ACTIONS_MENU_REMOVE_CONFIRM"] = "Видалити завдання?";
-$MESS["M_TASKS_ACTIONS_MENU_REMOVE_MESSAGE"] = "Завдання видалене";
 $MESS["M_TASKS_ACTIONS_MENU_REMOVE_MSGVER_1"] = "Видалити завдання";
 $MESS["M_TASKS_ACTIONS_MENU_RENEW"] = "Відновити";
 $MESS["M_TASKS_ACTIONS_MENU_RENEW_SUCCESS"] = "Завдання знову в роботі";

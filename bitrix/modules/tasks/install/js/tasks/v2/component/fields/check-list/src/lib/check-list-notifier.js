@@ -47,6 +47,13 @@ export class CheckListNotifier extends EventEmitter
 		this.#startTimer();
 	}
 
+	stopTimer(): void
+	{
+		this.emit('complete', true);
+
+		this.#balloonWithTimer.close();
+	}
+
 	#startTimer(): void
 	{
 		this.#interval = setInterval(() => {
@@ -56,9 +63,9 @@ export class CheckListNotifier extends EventEmitter
 
 			if (this.#counter <= 0)
 			{
-				this.#balloonWithTimer.close();
-
 				this.emit('complete', true);
+
+				this.#balloonWithTimer.close();
 			}
 		}, 1000);
 	}

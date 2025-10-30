@@ -4,7 +4,6 @@ $MESS["SALESCENTER_SP_BUTTON_CLOSE"] = "Скасувати";
 $MESS["SALESCENTER_SP_CASHBOX_PAYSYSTEM_TITLE"] = "Друкувати чеки через платіжну систему «#PAY_SYSTEM_NAME#»";
 $MESS["SALESCENTER_SP_CONNECT_HINT"] = "Використовуйте для авторизації акаунт Яндекса";
 $MESS["SALESCENTER_SP_CONNECT_PAYMENT_BUTTON"] = "Підключити";
-$MESS["SALESCENTER_SP_ERROR_POPUP_TITLE"] = "Помилка";
 $MESS["SALESCENTER_SP_LINK_CONNECT"] = "Як підключити платіжну систему";
 $MESS["SALESCENTER_SP_LINK_SBP_CONNECT"] = "Детальніше про систему швидких платежів у Бітрікс24";
 $MESS["SALESCENTER_SP_PARAMS_FORM_ACTIVE"] = "Активність";

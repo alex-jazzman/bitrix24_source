@@ -15,7 +15,7 @@ export const CopilotContent = {
 		},
 	},
 	template: `
-		<BaseChatContent :dialogId="dialogId">
+		<BaseChatContent :dialogId="dialogId" :withDropArea="false">
 			<template #header>
 				<CopilotChatHeader :dialogId="dialogId" :key="dialogId" />
 			</template>

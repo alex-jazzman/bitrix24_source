@@ -19,7 +19,9 @@ if (!is_null($notification))
 	?>
 	<script>
 		BX.ready(() => {
-			(new BX.Intranet.InvitationNotification(<?= \Bitrix\Main\Web\Json::encode($notification) ?>)).show();
+			setTimeout(() => {
+				(new BX.Intranet.InvitationNotification(<?= \Bitrix\Main\Web\Json::encode($notification) ?>)).show();
+			}, 0);
 		});
 	</script>
 	<?php

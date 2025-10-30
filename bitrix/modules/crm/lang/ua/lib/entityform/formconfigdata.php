@@ -1,0 +1,4 @@
+<?php
+$MESS["UI_FORM_CONFIG_CATEGORY"] = "Напрямок";
+$MESS["UI_FORM_CONFIG_COPY_CONTEXT_BUTTON"] = "Скопіювати";
+$MESS["UI_FORM_CONFIG_DELETE_CONTEXT_BUTTON"] = "Видалити";

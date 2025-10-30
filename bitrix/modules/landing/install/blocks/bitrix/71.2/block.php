@@ -10,191 +10,162 @@
 			>
 				Block title
 			</div>
-			<div class="landing-block-node-card-box d-grid-71-2">
+			<div style="gap: 20px; flex-wrap: wrap;" class="landing-block-node-card-box d-flex justify-content-between">
 				<!-- card 1-->
 				<div
-					class="landing-block-node-card g-pl-20 g-pr-20 g-pt-35 g-pb-35 g-rounded-10 text-center g-bg"
-					style="--bg: #ffffff; box-shadow: 0 7px 6px 3px rgba(0, 0, 0, .05); min-height: 205px; overflow: hidden;"
+					class="landing-block-node-card g-pl-20 g-pr-20 g-pt-20 g-pb-20 g-rounded-10 g-bg d-flex"
+					style="--bg: #ffffff; box-shadow: 0 7px 6px 3px rgba(0, 0, 0, .05); min-height: 210px; max-width: calc(33% - 10px); overflow: hidden;"
 				>
 					<div
-						class="landing-block-node-card-badge g-bg g-color g-pos-rel"
-						style="--bg: #1E86FF; --color: #ffffff;"
+						class="landing-block-node-card-badge g-bg g-color g-rounded-50 g-mr-20"
+						style="--bg: var(--primary); --color: #ffffff; display: inline-flex; justify-content: center; align-items: center; min-width: 50px; height: 50px;"
 					>
+						<div class="landing-block-node-card-icon fa fa-check" style="font-size: 28px;"></div>
+					</div>
+					<div>
 						<div
-							class="d-flex align-items-center g-rounded-100 g-font-size-46 g-bg-inherit g-color-inherit g-pos-abs"
-							style="top: -250px; left: -230px; width: 300px; height: 300px;"
+							class="landing-block-node-card-title g-mb-10 g-color g-font-size-17 g-font-weight-600"
+							style="--color: #000000;"
 						>
-							<div class="g-pos-abs" style="right: 33px; bottom: 20px; opacity: .8;">
-								<div class="landing-block-node-card-icon fa fa-envelope"></div>
-							</div>
+							Title
 						</div>
-					</div>
-					<div
-						class="landing-block-node-card-title g-mb-15 g-color g-font-size-20 g-font-weight-600"
-						style="--color: #000000; margin: 0 auto; max-width: 230px; min-height: 45px;"
-					>
-						Title
-					</div>
-					<div
-						class="landing-block-node-card-text g-color"
-						style="--color: #000000;"
-					>
-						Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+						<div
+							class="landing-block-node-card-text g-color g-font-size-13"
+							style="--color: #000000;"
+						>
+							Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+						</div>
 					</div>
 				</div>
 				<!-- card 2-->
 				<div
-					class="landing-block-node-card g-pl-20 g-pr-20 g-pt-35 g-pb-35 g-rounded-10 text-center g-bg g-pos-rel"
-					style="--bg: #ffffff; box-shadow: 0 7px 6px 3px rgba(0, 0, 0, .05); min-height: 205px; overflow: hidden;"
+					class="landing-block-node-card g-pl-20 g-pr-20 g-pt-20 g-pb-20 g-rounded-10 g-bg d-flex"
+					style="--bg: #ffffff; box-shadow: 0 7px 6px 3px rgba(0, 0, 0, .05); min-height: 210px; max-width: calc(33% - 10px); overflow: hidden;"
 				>
 					<div
-						class="landing-block-node-card-badge g-bg g-color g-pos-rel"
-						style="--bg: #1E86FF; --color: #ffffff;"
+						class="landing-block-node-card-badge g-bg g-color g-rounded-50 g-mr-20"
+						style="--bg: var(--primary); --color: #ffffff; display: inline-flex; justify-content: center; align-items: center; min-width: 50px; height: 50px;"
 					>
+						<div class="landing-block-node-card-icon fa fa-check" style="font-size: 28px;"></div>
+					</div>
+
+					<div>
 						<div
-							class="d-flex align-items-center g-rounded-100 g-font-size-46 g-bg-inherit g-color-inherit g-pos-abs"
-							style="top: -250px; left: -230px; width: 300px; height: 300px;"
+							class="landing-block-node-card-title g-mb-10 g-color g-font-size-17 g-font-weight-600"
+							style="--color: #000000;"
 						>
-							<div class="g-pos-abs" style="right: 33px; bottom: 20px; opacity: .8;">
-								<div class="landing-block-node-card-icon fa fa-check"></div>
-							</div>
+							Title
 						</div>
-					</div>
-					<div
-						class="landing-block-node-card-title g-mb-15 g-color g-font-size-20 g-font-weight-600"
-						style="--color: #000000; margin: 0 auto; max-width: 230px; min-height: 45px;"
-					>
-						Title
-					</div>
-					<div
-						class="landing-block-node-card-text g-color"
-						style="--color: #000000;"
-					>
-						Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+						<div
+							class="landing-block-node-card-text g-color g-font-size-13"
+							style="--color: #000000;"
+						>
+							Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+						</div>
 					</div>
 				</div>
 				<!-- card 3-->
 				<div
-					class="landing-block-node-card g-pl-20 g-pr-20 g-pt-35 g-pb-35 g-rounded-10 text-center g-bg g-pos-rel"
-					style="--bg: #ffffff; box-shadow: 0 7px 6px 3px rgba(0, 0, 0, .05); min-height: 205px; overflow: hidden;"
+					class="landing-block-node-card g-pl-20 g-pr-20 g-pt-20 g-pb-20 g-rounded-10 g-bg d-flex"
+					style="--bg: #ffffff; box-shadow: 0 7px 6px 3px rgba(0, 0, 0, .05); min-height: 210px; max-width: calc(33% - 10px); overflow: hidden;"
 				>
 					<div
-						class="landing-block-node-card-badge g-bg g-color g-pos-rel"
-						style="--bg: #1E86FF; --color: #ffffff;"
+						class="landing-block-node-card-badge g-bg g-color g-rounded-50 g-mr-20"
+						style="--bg: var(--primary); --color: #ffffff; display: inline-flex; justify-content: center; align-items: center; min-width: 50px; height: 50px;"
 					>
+						<div class="landing-block-node-card-icon fa fa-check" style="font-size: 28px;"></div>
+					</div>
+					<div>
 						<div
-							class="d-flex align-items-center g-rounded-100 g-font-size-46 g-bg-inherit g-color-inherit g-pos-abs"
-							style="top: -250px; left: -230px; width: 300px; height: 300px;"
+							class="landing-block-node-card-title g-mb-10 g-color g-font-size-17 g-font-weight-600"
+							style="--color: #000000;"
 						>
-							<div class="g-pos-abs" style="right: 33px; bottom: 20px; opacity: .8;">
-								<div class="landing-block-node-card-icon fa fa-phone"></div>
-							</div>
+							Title
 						</div>
-					</div>
-					<div
-						class="landing-block-node-card-title g-mb-15 g-color g-font-size-20 g-font-weight-600"
-						style="--color: #000000; margin: 0 auto; max-width: 230px; min-height: 45px;"
-					>
-						Title
-					</div>
-					<div
-						class="landing-block-node-card-text g-color"
-						style="--color: #000000;"
-					>
-						Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+						<div
+							class="landing-block-node-card-text g-color g-font-size-13"
+							style="--color: #000000;"
+						>
+							Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+						</div>
 					</div>
 				</div>
 				<!-- card 4-->
 				<div
-					class="landing-block-node-card g-pl-20 g-pr-20 g-pt-35 g-pb-35 g-rounded-10 text-center g-bg g-pos-rel"
-					style="--bg: #ffffff; box-shadow: 0 7px 6px 3px rgba(0, 0, 0, .05); min-height: 205px; overflow: hidden;"
+					class="landing-block-node-card g-pl-20 g-pr-20 g-pt-20 g-pb-20 g-rounded-10 g-bg d-flex"
+					style="--bg: #ffffff; box-shadow: 0 7px 6px 3px rgba(0, 0, 0, .05); min-height: 205px; max-width: calc(33% - 10px); overflow: hidden;"
 				>
 					<div
-						class="landing-block-node-card-badge g-bg g-color g-pos-rel"
-						style="--bg: #1E86FF; --color: #ffffff;"
+						class="landing-block-node-card-badge g-bg g-color g-rounded-50 g-mr-20"
+						style="--bg: var(--primary); --color: #ffffff; display: inline-flex; justify-content: center; align-items: center; min-width: 50px; height: 50px;"
 					>
+						<div class="landing-block-node-card-icon fa fa-check" style="font-size: 28px;"></div>
+					</div>
+					<div>
 						<div
-							class="d-flex align-items-center g-rounded-100 g-font-size-46 g-bg-inherit g-color-inherit g-pos-abs"
-							style="top: -250px; left: -230px; width: 300px; height: 300px;"
+							class="landing-block-node-card-title g-mb-10 g-color g-font-size-17 g-font-weight-600"
+							style="--color: #000000;"
 						>
-							<div class="g-pos-abs" style="right: 33px; bottom: 20px; opacity: .8;">
-								<div class="landing-block-node-card-icon fa fa-envelope"></div>
-							</div>
+							Title
 						</div>
-					</div>
-					<div
-						class="landing-block-node-card-title g-mb-15 g-color g-font-size-20 g-font-weight-600"
-						style="--color: #000000; margin: 0 auto; max-width: 230px; min-height: 45px;"
-					>
-						Title
-					</div>
-					<div
-						class="landing-block-node-card-text g-color"
-						style="--color: #000000;"
-					>
-						Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+						<div
+							class="landing-block-node-card-text g-color g-font-size-13"
+							style="--color: #000000;"
+						>
+							Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+						</div>
 					</div>
 				</div>
 				<!-- card 5-->
 				<div
-					class="landing-block-node-card g-pl-20 g-pr-20 g-pt-35 g-pb-35 g-rounded-10 text-center g-bg g-pos-rel"
-					style="--bg: #ffffff; box-shadow: 0 7px 6px 3px rgba(0, 0, 0, .05); min-height: 205px; overflow: hidden;"
+					class="landing-block-node-card g-pl-20 g-pr-20 g-pt-20 g-pb-20 g-rounded-10 g-bg d-flex"
+					style="--bg: #ffffff; box-shadow: 0 7px 6px 3px rgba(0, 0, 0, .05); min-height: 205px; max-width: calc(33% - 10px); overflow: hidden;"
 				>
 					<div
-						class="landing-block-node-card-badge g-bg g-color g-pos-rel"
-						style="--bg: #1E86FF; --color: #ffffff;"
+						class="landing-block-node-card-badge g-bg g-color g-rounded-50 g-mr-20"
+						style="--bg: var(--primary); --color: #ffffff; display: inline-flex; justify-content: center; align-items: center; min-width: 50px; height: 50px;"
 					>
+						<div class="landing-block-node-card-icon fa fa-check" style="font-size: 28px;"></div>
+					</div>
+					<div>
 						<div
-							class="d-flex align-items-center g-rounded-100 g-font-size-46 g-bg-inherit g-color-inherit g-pos-abs"
-							style="top: -250px; left: -230px; width: 300px; height: 300px;"
+							class="landing-block-node-card-title g-mb-10 g-color g-font-size-17 g-font-weight-600"
+							style="--color: #000000;"
 						>
-							<div class="g-pos-abs" style="right: 33px; bottom: 20px; opacity: .8;">
-								<div class="landing-block-node-card-icon fa fa-check"></div>
-							</div>
+							Title
 						</div>
-					</div>
-					<div
-						class="landing-block-node-card-title g-mb-15 g-color g-font-size-20 g-font-weight-600"
-						style="--color: #000000; margin: 0 auto; max-width: 230px; min-height: 45px;"
-					>
-						Title
-					</div>
-					<div
-						class="landing-block-node-card-text g-color"
-						style="--color: #000000;"
-					>
-						Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+						<div
+							class="landing-block-node-card-text g-color g-font-size-13"
+							style="--color: #000000;"
+						>
+							Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+						</div>
 					</div>
 				</div>
 				<!-- card 6-->
 				<div
-					class="landing-block-node-card g-pl-20 g-pr-20 g-pt-35 g-pb-35 g-rounded-10 text-center g-bg g-pos-rel"
-					style="--bg: #ffffff; box-shadow: 0 7px 6px 3px rgba(0, 0, 0, .05); min-height: 205px; overflow: hidden;"
+					class="landing-block-node-card g-pl-20 g-pr-20 g-pt-20 g-pb-20 g-rounded-10 g-bg d-flex"
+					style="--bg: #ffffff; box-shadow: 0 7px 6px 3px rgba(0, 0, 0, .05); min-height: 205px; max-width: calc(33% - 10px); overflow: hidden;"
 				>
 					<div
-						class="landing-block-node-card-badge g-bg g-color g-pos-rel"
-						style="--bg: #1E86FF; --color: #ffffff;"
+						class="landing-block-node-card-badge g-bg g-color g-rounded-50 g-mr-20"
+						style="--bg: var(--primary); --color: #ffffff; display: inline-flex; justify-content: center; align-items: center; min-width: 50px; height: 50px;"
 					>
+						<div class="landing-block-node-card-icon fa fa-check" style="font-size: 28px;"></div>
+					</div>
+					<div>
 						<div
-							class="d-flex align-items-center g-rounded-100 g-font-size-46 g-bg-inherit g-color-inherit g-pos-abs"
-							style="top: -250px; left: -230px; width: 300px; height: 300px;"
+							class="landing-block-node-card-title g-mb-10 g-color g-font-size-17 g-font-weight-600"
+							style="--color: #000000;"
 						>
-							<div class="g-pos-abs" style="right: 33px; bottom: 20px; opacity: .8;">
-								<div class="landing-block-node-card-icon fa fa-phone"></div>
-							</div>
+							Title
 						</div>
-					</div>
-					<div
-						class="landing-block-node-card-title g-mb-15 g-color g-font-size-20 g-font-weight-600"
-						style="--color: #000000; margin: 0 auto; max-width: 230px; min-height: 45px;"
-					>
-						Title
-					</div>
-					<div
-						class="landing-block-node-card-text g-color"
-						style="--color: #000000;"
-					>
-						Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+						<div
+							class="landing-block-node-card-text g-color g-font-size-13"
+							style="--color: #000000;"
+						>
+							Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+						</div>
 					</div>
 				</div>
 			</div>

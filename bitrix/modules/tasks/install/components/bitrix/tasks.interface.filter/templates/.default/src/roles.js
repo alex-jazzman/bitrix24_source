@@ -2,22 +2,32 @@ import { Runtime, Loc } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { Button, ButtonManager } from 'ui.buttons';
 import { Menu, type MenuItemOptions } from 'ui.system.menu';
+import { PULL } from 'pull.client';
+
 import type { AnalyticsSender } from 'tasks.v2.lib.analytics';
-import type { AnalyticsParams } from 'tasks.v2.application.task-card';
 
 export type Params = {
 	button: HTMLElement,
 	items: { [roleId: string]: RoleDto },
+	totalCounter: number,
 	selectedRoleId: string,
 	analytics: AnalyticsParams,
 };
 
+type AnalyticsParams = {
+	context: string,
+	additionalContext: string,
+	element: string,
+};
+
 type RoleDto = {
 	TEXT: string,
+	COUNTER: string,
 };
 
 type Role = {
 	title: string,
+	counter: number,
 };
 
 const defaultRole = 'view_all';
@@ -42,9 +52,11 @@ export class Roles
 		this.#roles = {
 			[defaultRole]: {
 				title: Loc.getMessage('TASKS_ALL_ROLES'),
+				counter: params.totalCounter,
 			},
 			...Object.fromEntries(Object.entries(params.items).map(([roleId, item]) => [roleId, {
 				title: item.TEXT,
+				counter: Number(item.COUNTER),
 			}])),
 		};
 		this.#analytics = params.analytics;
@@ -71,6 +83,11 @@ export class Roles
 	#bindEvents(): void
 	{
 		EventEmitter.subscribe('BX.Main.Filter:beforeApply', this.#handleFilterBeforeApply);
+		PULL.subscribe({
+			moduleId: 'tasks',
+			command: 'user_counter',
+			callback: this.#handlePull,
+		});
 	}
 
 	#handleFilterBeforeApply = (event: BaseEvent): void => {
@@ -84,14 +101,25 @@ export class Roles
 		}
 	};
 
+	#handlePull = (data): void => {
+		Object.entries(data[0]).forEach(([roleId, { total }]) => {
+			this.#roles[roleId].counter = total;
+		});
+
+		this.#update();
+	};
+
 	#update(): void
 	{
 		this.#button.setText(this.#roleName);
+		this.#button.setRightCounter(this.#roleCounter ? { value: this.#roleCounter } : null);
 		this.#menu.updateItems(this.#menuItems);
 	}
 
 	get #menuItems(): MenuItemOptions[]
 	{
+		const hasCounters = Object.values(this.#roles).some(({ counter }) => counter > 0);
+
 		return Object.entries(this.#roles).map(([roleId, role: Role]) => ({
 			title: role.title,
 			isSelected: roleId === this.#selectedRoleId,
@@ -99,12 +127,22 @@ export class Roles
 				data: [roleId],
 				compatData: [roleId],
 			})),
+			...(hasCounters ? {
+				counter: {
+					value: role.counter,
+				},
+			} : {}),
 		}));
 	}
 
 	get #roleName(): string
 	{
 		return this.#roles[this.#selectedRoleId].title;
+	}
+
+	get #roleCounter(): string
+	{
+		return this.#roles[defaultRole].counter;
 	}
 
 	async #sendAnalyticsClick(): Promise<void>

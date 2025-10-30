@@ -1,4 +1,5 @@
 <?php
+$MESS["COLLAB_INVITE_TOAST_GUESTS_INVITE_DISABLED"] = "Адміністратор вашого Бітрікс24 вимкнув можливість запрошувати гостей до колаби.";
 $MESS["M_COLLAB_CREATE_AUTO_DELETE_MESSAGES_ITEM_DAY"] = "1 доба";
 $MESS["M_COLLAB_CREATE_AUTO_DELETE_MESSAGES_ITEM_HOUR"] = "1 година";
 $MESS["M_COLLAB_CREATE_AUTO_DELETE_MESSAGES_ITEM_MONTH"] = "1 місяць";
@@ -37,6 +38,7 @@ $MESS["M_COLLAB_CREATE_TITLE"] = "Нова колаба";
 $MESS["M_COLLAB_CREATE_UPLOAD_ERROR_TEXT"] = "Спробуйте вибрати інший файл. Якщо помилка продовжить виникати, зверніться до адміністратора вашого Бітрікс24.";
 $MESS["M_COLLAB_CREATE_UPLOAD_ERROR_TITLE"] = "Не вдалося завантажити фото.";
 $MESS["M_COLLAB_PERMISSIONS_ALL"] = "Усі учасники";
+$MESS["M_COLLAB_PERMISSIONS_ALLOW_GUESTS_INVITATION_ITEM_TITLE"] = "Дозволити запрошувати гостей до колаби";
 $MESS["M_COLLAB_PERMISSIONS_EMPLOYEES"] = "Лише співробітники";
 $MESS["M_COLLAB_PERMISSIONS_FALSE"] = "Ні";
 $MESS["M_COLLAB_PERMISSIONS_INVITERS_ITEM_TITLE"] = "Хто може запрошувати учасників";

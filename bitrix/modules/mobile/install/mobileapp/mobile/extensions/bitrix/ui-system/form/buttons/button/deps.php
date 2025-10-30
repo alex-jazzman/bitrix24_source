@@ -17,5 +17,6 @@ return [
 	'bundle' => [
 		'./src/size-enum',
 		'./src/design-enum',
+		'./src/state-decorator',
 	],
 ];

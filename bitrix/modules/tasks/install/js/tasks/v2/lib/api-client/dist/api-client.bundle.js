@@ -5,14 +5,25 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 (function (exports,main_core) {
 	'use strict';
 
+	var _baseUrl = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("baseUrl");
+	var _contentType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("contentType");
 	class ApiClient {
-	  constructor(baseUrl = 'tasks.v2.') {
-	    this.baseUrl = baseUrl;
+	  constructor(baseUrl = 'tasks.v2.', contentType = 'json') {
+	    Object.defineProperty(this, _baseUrl, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _contentType, {
+	      writable: true,
+	      value: void 0
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _baseUrl)[_baseUrl] = baseUrl;
+	    babelHelpers.classPrivateFieldLooseBase(this, _contentType)[_contentType] = contentType;
 	  }
 	  async get(endpoint, params = {}) {
 	    const url = this.buildUrl(endpoint);
 	    const response = await main_core.ajax.runAction(url, {
-	      json: {
+	      [babelHelpers.classPrivateFieldLooseBase(this, _contentType)[_contentType]]: {
 	        method: 'GET',
 	        ...params
 	      }
@@ -22,7 +33,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  async post(endpoint, data) {
 	    const url = this.buildUrl(endpoint);
 	    const response = await main_core.ajax.runAction(url, {
-	      json: data
+	      [babelHelpers.classPrivateFieldLooseBase(this, _contentType)[_contentType]]: data
 	    });
 	    return this.handleResponse(response);
 	  }
@@ -33,7 +44,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      headers: {
 	        'Content-Type': 'application/json'
 	      },
-	      json: data
+	      [babelHelpers.classPrivateFieldLooseBase(this, _contentType)[_contentType]]: data
 	    });
 	    return this.handleResponse(response);
 	  }
@@ -45,7 +56,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    return this.handleResponse(response);
 	  }
 	  buildUrl(endpoint, params = {}) {
-	    let url = `${this.baseUrl}${endpoint}`;
+	    let url = `${babelHelpers.classPrivateFieldLooseBase(this, _baseUrl)[_baseUrl]}${endpoint}`;
 	    if (Object.keys(params).length > 0) {
 	      url += `?${new URLSearchParams(params).toString()}`;
 	    }

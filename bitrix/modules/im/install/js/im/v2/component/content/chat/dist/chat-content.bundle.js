@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,ui_notification,im_v2_lib_layout,im_v2_lib_utils,im_v2_lib_channel,im_v2_lib_notifier,ui_dialogs_tooltip,im_v2_component_entitySelector,main_popup,im_v2_component_elements_popup,im_v2_component_animation,im_v2_component_elements_loader,im_v2_component_elements_chatTitle,im_v2_provider_service_recent,im_v2_lib_promo,im_v2_lib_invite,im_v2_component_content_chatForms_forms,im_v2_lib_feature,im_v2_component_elements_copilotRolesDialog,im_v2_provider_service_copilot,im_public,im_v2_lib_theme,im_v2_provider_service_aiAssistant,main_core,im_v2_application_core,im_v2_lib_analytics,main_core_events,im_v2_component_elements_avatar,im_v2_lib_permission,im_v2_component_content_elements,im_v2_component_elements_toggle,im_v2_provider_service_comments,im_v2_lib_logger,im_v2_model,im_v2_component_dialog_chat,im_v2_component_messageList,im_v2_lib_messageComponent,im_v2_const,im_v2_component_textarea,im_v2_component_elements_button,im_v2_provider_service_chat) {
+(function (exports,ui_notification,im_v2_lib_layout,im_v2_lib_utils,im_v2_lib_channel,im_v2_lib_notifier,im_v2_component_elements_loader,im_v2_component_animation,ui_dialogs_tooltip,im_v2_component_elements_chatTitle,im_v2_component_entitySelector,main_popup,im_v2_component_elements_popup,ui_iconSet_api_vue,im_v2_lib_healthCheck,im_v2_provider_service_recent,im_v2_lib_promo,im_v2_lib_invite,im_v2_component_content_chatForms_forms,im_v2_lib_feature,im_public,im_v2_component_elements_copilotRolesDialog,im_v2_lib_theme,im_v2_provider_service_copilot,main_core,im_v2_application_core,im_v2_lib_analytics,main_core_events,im_v2_component_elements_avatar,im_v2_lib_permission,im_v2_component_content_elements,im_v2_component_elements_toggle,im_v2_provider_service_comments,im_v2_lib_logger,im_v2_model,im_v2_component_dialog_chat,im_v2_component_messageList,im_v2_lib_messageComponent,im_v2_const,im_v2_component_textarea,im_v2_component_elements_button,im_v2_provider_service_chat) {
 	'use strict';
 
 	// @vue/component
@@ -207,7 +207,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			:dialogId="dialogId"
 			:placeholder="this.loc('IM_CONTENT_CHANNEL_TEXTAREA_PLACEHOLDER')"
 			:withMarket="false"
-			:withAudioInput="false"
 			class="bx-im-channel-send-panel__container"
 		/>
 	`
@@ -1246,7 +1245,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    }
 	  },
 	  template: `
-		<BaseChatContent :dialogId="dialogId">
+		<BaseChatContent :dialogId="dialogId" :withDropArea="false">
 			<template #header>
 				<CopilotChatHeader :dialogId="dialogId" :key="dialogId" />
 			</template>
@@ -1257,122 +1256,141 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	`
 	};
 
+	class HealthCheckService {
+	  getEndpoint() {
+	    const langId = main_core.Loc.getMessage('LANGUAGE_ID');
+	    const {
+	      serviceHealthUrl
+	    } = im_v2_application_core.Core.getApplicationData();
+	    const url = new URL(serviceHealthUrl);
+	    url.searchParams.set('userLang', langId);
+	    return url.toString();
+	  }
+	  async getServiceHealthStatus() {
+	    const endpoint = this.getEndpoint();
+	    return new Promise(resolve => {
+	      main_core.ajax.get(endpoint, rawJson => {
+	        let response = {};
+	        try {
+	          response = JSON.parse(rawJson);
+	        } catch {
+	          resolve(null);
+	          return;
+	        }
+	        if (response.result !== 'error') {
+	          resolve(null);
+	          return;
+	        }
+	        resolve(response);
+	      });
+	    });
+	  }
+	}
+
+	const ICON_SIZE = 18;
+
+	// @vue/component
+	const ServiceHealthPanel = {
+	  components: {
+	    BIcon: ui_iconSet_api_vue.BIcon
+	  },
+	  data() {
+	    return {
+	      isShow: false,
+	      title: '',
+	      text: ''
+	    };
+	  },
+	  computed: {
+	    Color: () => im_v2_const.Color,
+	    OutlineIcons: () => ui_iconSet_api_vue.Outline,
+	    ICON_SIZE: () => ICON_SIZE,
+	    isServiceHealthPanelShown() {
+	      return im_v2_lib_healthCheck.HealthCheckManager.getInstance().getIsShown();
+	    },
+	    processedTitle() {
+	      return BX.util.strip_tags(this.title);
+	    },
+	    processedText() {
+	      return BX.util.strip_tags(this.text);
+	    }
+	  },
+	  async created() {
+	    if (this.isServiceHealthPanelShown) {
+	      return;
+	    }
+	    const data = await new HealthCheckService().getServiceHealthStatus();
+	    if (!data) {
+	      return;
+	    }
+	    this.setData(data);
+	    this.show();
+	  },
+	  methods: {
+	    setData(data) {
+	      const {
+	        statusTitle,
+	        statusInfo
+	      } = data;
+	      this.title = statusTitle;
+	      this.text = statusInfo;
+	    },
+	    show() {
+	      this.isShow = true;
+	    },
+	    hide() {
+	      this.isShow = false;
+	      im_v2_lib_healthCheck.HealthCheckManager.getInstance().setIsShown(true);
+	    }
+	  },
+	  template: `
+		<div v-if="isShow" class="bx-im-content-chat__service-health-panel">
+			<div class="bx-im-content-chat__service-health-panel_content">
+				<div
+					v-if="processedTitle"
+					:title="processedTitle"
+					class="bx-im-content-chat__service-health-panel_title --ellipsis"
+				>
+					{{ processedTitle }}
+				</div>
+				<div
+					v-if="processedText"
+					:title="processedText"
+					class="bx-im-content-chat__service-health-panel_text --line-clamp-4"
+				>
+					{{ processedText }}
+				</div>
+			</div>
+			<button
+				class="bx-im-content-chat__service-health-panel_close-button"
+				@click="hide"
+			>
+				<BIcon
+					:name="OutlineIcons.CROSS_M"
+					:color="Color.white"
+					:size="ICON_SIZE"
+					:hoverable="false"
+				/>
+			</button>
+		</div>
+	`
+	};
+
 	const AiAssistantBotContent = {
 	  name: 'AiAssistantBotContent',
 	  components: {
 	    BaseChatContent: im_v2_component_content_elements.BaseChatContent,
-	    ChatTextarea: im_v2_component_textarea.ChatTextarea
-	  },
-	  props: {
-	    dialogId: {
-	      type: String,
-	      required: true
-	    }
-	  },
-	  methods: {
-	    loc(phraseCode) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode);
-	    }
-	  },
-	  template: `
-		<BaseChatContent :dialogId="dialogId">
-			<template #textarea="{ onTextareaMount }">
-				<ChatTextarea
-					:dialogId="dialogId"
-					:key="dialogId"
-					:placeholder="loc('IM_CONTENT_AIASSISTANT_TEXTAREA_PLACEHOLDER')"
-					:withMarket="false"
-					:withEdit="false"
-					:withUploadMenu="false"
-					:withSmileSelector="false"
-					@mounted="onTextareaMount"
-				/>
-			</template>
-		</BaseChatContent>
-	`
-	};
-
-	// @vue/component
-	const AiAssistantChatHeader = {
-	  name: 'AiAssistantChatHeader',
-	  components: {
-	    ChatHeader: im_v2_component_content_elements.ChatHeader,
-	    EditableChatTitle: im_v2_component_elements_chatTitle.EditableChatTitle,
-	    ChatAvatar: im_v2_component_elements_avatar.ChatAvatar,
-	    UserCounter: im_v2_component_content_elements.UserCounter,
-	    FadeAnimation: im_v2_component_animation.FadeAnimation,
-	    LineLoader: im_v2_component_elements_loader.LineLoader
-	  },
-	  inject: ['currentSidebarPanel'],
-	  props: {
-	    dialogId: {
-	      type: String,
-	      default: ''
-	    }
-	  },
-	  computed: {
-	    AvatarSize: () => im_v2_component_elements_avatar.AvatarSize,
-	    dialog() {
-	      return this.$store.getters['chats/get'](this.dialogId, true);
-	    },
-	    isAiAssistantMultiUserChat() {
-	      return this.dialog.userCounter > 2;
-	    }
-	  },
-	  methods: {
-	    loc(phraseCode, replacements = {}) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
-	    }
-	  },
-	  template: `
-		<ChatHeader
-			:dialogId="dialogId"
-			:withSearchButton="false"
-			:withCallButton="false"
-		>
-			<template #left>
-				<div class="bx-im-ai-assistant-chat-header__avatar">
-					<ChatAvatar
-						:avatarDialogId="dialogId"
-						:contextDialogId="dialogId"
-						:withSpecialTypes="false"
-						:size="AvatarSize.L"
-					/>
-				</div>
-				<div class="bx-im-chat-header__info">
-					<EditableChatTitle :dialogId="dialogId" @newTitleSubmit="$emit('newTitle', $event)" />
-					<LineLoader v-if="!dialog.inited" :width="50" :height="16" />
-					<FadeAnimation :duration="100">
-						<div v-if="dialog.inited" class="bx-im-chat-header__subtitle_container">
-							<UserCounter v-if="isAiAssistantMultiUserChat" :dialogId="dialogId" />
-							<div v-else class="bx-im-chat-header__subtitle_content">
-								{{ loc('IM_CONTENT_AI_ASSISTANT_CHAT_HEADER_TITLE') }}
-							</div>
-						</div>
-					</FadeAnimation>
-				</div>
-			</template>
-		</ChatHeader>
-	`
-	};
-
-	const AiAssistantChatContent = {
-	  name: 'AiAssistantChatContent',
-	  components: {
-	    BaseChatContent: im_v2_component_content_elements.BaseChatContent,
 	    ChatTextarea: im_v2_component_textarea.ChatTextarea,
-	    AiAssistantChatHeader
+	    ServiceHealthPanel
 	  },
 	  props: {
 	    dialogId: {
 	      type: String,
 	      required: true
-	    }
-	  },
-	  computed: {
-	    isAiAssistantMultiUserChat() {
-	      const dialog = this.$store.getters['chats/get'](this.dialogId, true);
-	      return dialog.userCounter > 2;
+	    },
+	    withSidebar: {
+	      type: Boolean,
+	      default: true
 	    }
 	  },
 	  methods: {
@@ -1381,9 +1399,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    }
 	  },
 	  template: `
-		<BaseChatContent :dialogId="dialogId">
-			<template #header>
-				<AiAssistantChatHeader :dialogId="dialogId" :key="dialogId" />
+		<BaseChatContent :dialogId="dialogId" :withSidebar="withSidebar" :withDropArea="false">
+			<template #header v-if="$slots['header']">
+				<slot name="header"></slot>
+			</template>
+			<template #sub-header>
+				<ServiceHealthPanel />
 			</template>
 			<template #textarea="{ onTextareaMount }">
 				<ChatTextarea
@@ -1394,7 +1415,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					:withEdit="false"
 					:withUploadMenu="false"
 					:withSmileSelector="false"
-					:withMention="isAiAssistantMultiUserChat"
 					@mounted="onTextareaMount"
 				/>
 			</template>
@@ -1806,84 +1826,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	`
 	};
 
-	const BUTTON_BACKGROUND_COLOR$1 = '#fff';
-	const BUTTON_HOVER_COLOR$1 = '#eee';
-	const BUTTON_TEXT_COLOR$1 = 'rgba(82, 92, 105, 0.9)';
-
-	// @vue/component
-	const AiAssistantEmptyState = {
-	  name: 'AiAssistantEmptyState',
-	  components: {
-	    ChatButton: im_v2_component_elements_button.ChatButton
-	  },
-	  data() {
-	    return {
-	      isCreatingChat: false
-	    };
-	  },
-	  computed: {
-	    ButtonSize: () => im_v2_component_elements_button.ButtonSize,
-	    backgroundStyle() {
-	      return im_v2_lib_theme.ThemeManager.getBackgroundStyleById(im_v2_lib_theme.SpecialBackground.copilot);
-	    },
-	    preparedText() {
-	      return 'Marta AI empty state';
-
-	      // return this.loc('IM_CONTENT_COPILOT_EMPTY_STATE_MESSAGE_MSGVER_1', {
-	      // 	'#BR#': '\n',
-	      // });
-	    },
-
-	    buttonColorScheme() {
-	      return {
-	        borderColor: im_v2_const.Color.transparent,
-	        backgroundColor: BUTTON_BACKGROUND_COLOR$1,
-	        iconColor: BUTTON_TEXT_COLOR$1,
-	        textColor: BUTTON_TEXT_COLOR$1,
-	        hoverColor: BUTTON_HOVER_COLOR$1
-	      };
-	    }
-	  },
-	  methods: {
-	    async onCreateChatClick() {
-	      this.isCreatingChat = true;
-	      const newDialogId = await this.getAiAssistantService().createChat().catch(() => {
-	        this.isCreatingChat = false;
-	      });
-	      this.isCreatingChat = false;
-	      void im_public.Messenger.openCopilot(newDialogId);
-	    },
-	    getAiAssistantService() {
-	      if (!this.aiAssistantService) {
-	        this.aiAssistantService = new im_v2_provider_service_aiAssistant.AiAssistantService();
-	      }
-	      return this.aiAssistantService;
-	    },
-	    loc(phraseCode, replacements = {}) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
-	    }
-	  },
-	  template: `
-		<div class="bx-im-content-ai-assistant-empty-state__container" :style="backgroundStyle">
-			<div class="bx-im-content-ai-assistant-empty-state__content">
-				<div class="bx-im-content-ai-assistant-empty-state__icon"></div>
-				<div class="bx-im-content-ai-assistant-empty-state__text">
-					{{ preparedText }}
-				</div>
-				<ChatButton
-					class="--black-loader"
-					:size="ButtonSize.XL"
-					:customColorScheme="buttonColorScheme"
-					:text="loc('IM_CONTENT_COPILOT_EMPTY_STATE_ASK_QUESTION')"
-					:isRounded="true"
-					:isLoading="isCreatingChat"
-					@click="onCreateChatClick"
-				/>
-			</div>
-		</div>
-	`
-	};
-
 	var _getUserActivityFromPull = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getUserActivityFromPull");
 	var _requestUserData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("requestUserData");
 	var _updateUserModel = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateUserModel");
@@ -1984,9 +1926,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    isCopilot() {
 	      return this.dialog.type === im_v2_const.ChatType.copilot;
 	    },
-	    isAiAssistantChat() {
-	      return [im_v2_const.ChatType.aiAssistant, im_v2_const.ChatType.aiAssistantEntity].includes(this.dialog.type);
-	    },
 	    isAiAssistantBot() {
 	      return this.$store.getters['users/bots/isAiAssistant'](this.dialogId);
 	    },
@@ -2012,9 +1951,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      }, {
 	        condition: this.isAiAssistantBot,
 	        component: AiAssistantBotContent
-	      }, {
-	        condition: this.isAiAssistantChat,
-	        component: AiAssistantChatContent
 	      }];
 	    },
 	    contentComponent() {
@@ -2028,7 +1964,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      const EmptyStateComponentByLayout = {
 	        [im_v2_const.Layout.channel]: ChannelEmptyState,
 	        [im_v2_const.Layout.collab]: CollabEmptyState,
-	        [im_v2_const.Layout.aiAssistant]: this.aiEmptyStateComponent,
+	        [im_v2_const.Layout.copilot]: CopilotEmptyState,
 	        [im_v2_const.Layout.chat]: this.chatEmptyStateComponent,
 	        default: BaseEmptyState
 	      };
@@ -2041,12 +1977,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        return BaseEmptyState;
 	      }
 	      return needToShowPromoEmptyState ? EmbeddedChatPromoEmptyState : EmbeddedChatEmptyState;
-	    },
-	    aiEmptyStateComponent() {
-	      if (!im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.aiAssistantChatAvailable)) {
-	        return CopilotEmptyState;
-	      }
-	      return AiAssistantEmptyState;
 	    }
 	  },
 	  watch: {
@@ -2423,7 +2353,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		<ChatTextarea
 			:dialogId="dialogId"
 			:withMarket="false"
-			:withAudioInput="false"
 			class="bx-im-comments-send-panel__container"
 		/>
 	`
@@ -2650,6 +2579,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	};
 
 	exports.ChatContent = ChatContent;
+	exports.AiAssistantBotContent = AiAssistantBotContent;
 
-}((this.BX.Messenger.v2.Component.Content = this.BX.Messenger.v2.Component.Content || {}),BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.UI.Dialogs,BX.Messenger.v2.Component.EntitySelector,BX.Main,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Animation,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Event,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Model,BX.Messenger.v2.Component.Dialog,BX.Messenger.v2.Component,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Component,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Service));
+}((this.BX.Messenger.v2.Component.Content = this.BX.Messenger.v2.Component.Content || {}),BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Animation,BX.UI.Dialogs,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.EntitySelector,BX.Main,BX.Messenger.v2.Component.Elements,BX.UI.IconSet,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Event,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Model,BX.Messenger.v2.Component.Dialog,BX.Messenger.v2.Component,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Component,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Service));
 //# sourceMappingURL=chat-content.bundle.js.map

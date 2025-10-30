@@ -39,6 +39,7 @@ $MESS["M_CALENDAR_EVENT_LIST_SECTION_LIST_TITLE_MY"] = "Менің күнтіз�
 $MESS["M_CALENDAR_EVENT_LIST_SECTION_LIST_TITLE_OFFICE365"] = "Office365 күнтізбелері";
 $MESS["M_CALENDAR_EVENT_LIST_SECTION_LIST_TITLE_THIS_COLLAB"] = "Осы коллабаның күнтізбелері";
 $MESS["M_CALENDAR_EVENT_LIST_SECTION_LIST_TITLE_THIS_GROUP"] = "Осы топтың күнтізбелері";
+$MESS["M_CALENDAR_EVENT_LIST_SECTION_LIST_TITLE_THIS_USER"] = "Осы пайдаланушының күнтізбелері";
 $MESS["M_CALENDAR_EVENT_LIST_SELECT"] = "Таңдау";
 $MESS["M_CALENDAR_EVENT_LIST_TILL_TIME"] = "#TIME# дейін";
 $MESS["M_CALENDAR_EVENT_LIST_TITLE_SEARCH"] = "Күнтізбе";

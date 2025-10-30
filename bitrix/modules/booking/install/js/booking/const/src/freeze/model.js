@@ -1,4 +1,5 @@
 export const Model = Object.freeze({
+	BookingInfo: 'booking-info',
 	Bookings: 'bookings',
 	Clients: 'clients',
 	Counters: 'counters',

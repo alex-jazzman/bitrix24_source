@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,planner,ui_fontawesome4,im_integration_viewer,ui_designTokens,ui_fonts_opensans,im_v2_css_tokens,im_v2_css_icons,im_v2_css_classes,im_v2_lib_counter,im_v2_lib_escManager,im_v2_lib_logger,im_v2_lib_init,im_v2_const,im_v2_lib_call,im_v2_lib_theme,im_v2_lib_desktop,im_v2_lib_layout,im_v2_component_content_chat,im_v2_component_content_chatForms_forms,im_v2_component_content_market,im_v2_component_content_notification,im_v2_component_content_openlines,im_v2_component_content_openlinesV2,im_v2_component_content_settings,im_v2_component_list_container_aiAssistant,im_v2_component_list_container_channel,im_v2_component_list_container_collab,im_v2_component_list_container_copilot,im_v2_component_list_container_openline,im_v2_component_list_container_recent) {
+(function (exports,planner,ui_fontawesome4,im_integration_viewer,ui_designTokens,ui_fonts_opensans,im_v2_css_tokens,im_v2_css_icons,im_v2_css_classes,im_v2_lib_counter,im_v2_lib_escManager,im_v2_lib_logger,im_v2_lib_init,im_v2_const,im_v2_lib_call,im_v2_lib_theme,im_v2_lib_desktop,im_v2_lib_layout,im_v2_component_content_chat,im_v2_component_content_chatForms_forms,im_v2_component_content_market,im_v2_component_content_notification,im_v2_component_content_openlines,im_v2_component_content_openlinesV2,im_v2_component_content_settings,im_v2_component_list_container_channel,im_v2_component_list_container_collab,im_v2_component_list_container_copilot,im_v2_component_list_container_openline,im_v2_component_list_container_recent) {
 	'use strict';
 
 	const LayoutComponentMap = {
@@ -42,10 +42,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  },
 	  copilot: {
 	    list: im_v2_component_list_container_copilot.CopilotListContainer,
-	    content: im_v2_component_content_chat.ChatContent
-	  },
-	  aiAssistant: {
-	    list: im_v2_component_list_container_aiAssistant.AiAssistantListRouter,
 	    content: im_v2_component_content_chat.ChatContent
 	  },
 	  collab: {
@@ -166,5 +162,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.Messenger = Messenger;
 
-}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX,BX,BX.Messenger.Integration.Viewer,BX,BX,BX.Messenger.v2.Css,BX.Messenger.v2.Css,BX.Messenger.v2.Css,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.List,BX.Messenger.v2.Component.List,BX.Messenger.v2.Component.List,BX.Messenger.v2.Component.List,BX.Messenger.v2.Component.List,BX.Messenger.v2.Component.List));
+}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX,BX,BX.Messenger.Integration.Viewer,BX,BX,BX.Messenger.v2.Css,BX.Messenger.v2.Css,BX.Messenger.v2.Css,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.List,BX.Messenger.v2.Component.List,BX.Messenger.v2.Component.List,BX.Messenger.v2.Component.List,BX.Messenger.v2.Component.List));
 //# sourceMappingURL=messenger.bundle.js.map

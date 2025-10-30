@@ -1,6 +1,7 @@
 export type InlinePlaceholderSelectorOptions = {
-	entityTypeId: number,
+	entityTypeIds: Array<number>,
 	target: HTMLElement,
 	value: string,
-	mode: string
+	mode: string,
+	multiple: boolean,
 };

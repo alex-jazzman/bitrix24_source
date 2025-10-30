@@ -55,9 +55,9 @@ jn.define('layout/ui/reaction-list/user-list/src/reaction', (require, exports, m
 			return this.#getUser()?.avatarSize100 ?? '';
 		}
 
-		get #workPosition()
+		get #description()
 		{
-			return this.#getUser()?.workPosition ?? '';
+			return this.props.description || this.#getUser()?.workPosition;
 		}
 
 		render()
@@ -121,12 +121,12 @@ jn.define('layout/ui/reaction-list/user-list/src/reaction', (require, exports, m
 							ellipsize: 'end',
 							textElement: Text2,
 						}),
-						this.#workPosition && Text5({
+						this.#description && Text5({
 							testId: `${this.#testId}-user-description`,
 							ellipsize: 'end',
 							numberOfLines: 1,
 							style: { color: Color.base3.toHex(), paddingBottom: 2 },
-							text: this.#workPosition,
+							text: this.#description,
 						}),
 					),
 					this.#showIcon && ReactionIconView(

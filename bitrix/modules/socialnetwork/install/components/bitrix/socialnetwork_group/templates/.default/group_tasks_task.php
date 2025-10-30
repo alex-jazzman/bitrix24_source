@@ -57,6 +57,11 @@ $isFormV2AllowedForGroup = Loader::includeModule('tasks')
 	&& class_exists(FormV2Feature::class)
 	&& in_array($groupId, FormV2Feature::getAllowedGroups(), true)
 ;
+$request = Context::getCurrent()->getRequest();
+$isOldForm = $request->get('OLD_FORM') === 'Y';
+$hasTemplate = (int)$request->get('TEMPLATE') > 0 || (int)$request->get('FLOW_ID') > 0;
+$isCommentLink = (bool)$request->get('MID');
+
 $showPersonalTasks = false;
 if (
 	!FeaturePermRegistry::getInstance()->get(
@@ -108,7 +113,9 @@ if (Context::getCurrent()->getRequest()->get('IFRAME'))
 }
 else if (
 	($formFeatureEnabled || $isFormV2AllowedForGroup)
-	&& Context::getCurrent()->getRequest()->get('OLD_FORM') !== 'Y'
+	&& !$isOldForm
+	&& !$hasTemplate
+	&& !$isCommentLink
 )
 {
 	$APPLICATION->SetPageProperty('BodyClass', 'no-all-paddings no-background');
@@ -126,11 +133,14 @@ else if (
 		$ownerId = $groupId;
 	}
 
-	$pathToList = (new TaskPathMaker(
+	$pathMaker = new TaskPathMaker(
 		entityId: $taskId,
 		ownerId: $ownerId,
-		context: $context,
-	))->makeEntitiesListPath();
+		context: $context
+	);
+
+	$pathToList = $pathMaker->makeEntitiesListPath();
+	$pathToTask = $pathMaker->makeEntityPath();
 
 	Extension::load('tasks.v2.application.task-card');
 
@@ -144,7 +154,7 @@ else if (
 				taskId: <?= $taskId ?>,
 				groupId: <?= $groupId ?>,
 				closeCompleteUrl: "<?= $pathToList ?>",
-				url: window.location.href,
+				url: "<?= $pathToTask ?>",
 			});
 		});
 	</script>

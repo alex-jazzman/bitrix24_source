@@ -10,10 +10,10 @@ jn.define('calendar/aha-moments-manager/new-menu', (require, exports, module) =>
 	 */
 	class NewMenu
 	{
-		static show(targetRef)
+		static show()
 		{
 			AhaMoment.show({
-				targetRef,
+				targetRef: 'calendar-more',
 				title: Loc.getMessage('M_CALENDAR_AHA_NEW_MENU_TITLE'),
 				description: Loc.getMessage('M_CALENDAR_AHA_NEW_MENU_DESC'),
 				testId: 'calendar-aha-moment-new-menu',

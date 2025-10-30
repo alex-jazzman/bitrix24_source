@@ -1,3 +1,5 @@
+import type { SlotRange, IntegrationCalendarType } from 'booking.model.resources';
+
 export type ResourceDto = {
 	id: number | null,
 	type: {
@@ -8,13 +10,7 @@ export type ResourceDto = {
 	isMain: boolean,
 	isPrimary: boolean,
 	isDeleted: boolean,
-	slotRanges: [{
-		id: number | null,
-		from: number,
-		to: number,
-		weekDays: string[],
-		slotSize: number,
-	}],
+	slotRanges: SlotRange[],
 	counter: number | null,
 	createdBy: number | null,
 	createdAt: number | null,
@@ -48,4 +44,7 @@ export type ResourceDto = {
 	// feedback
 	isFeedbackNotificationOn: boolean,
 	templateTypeFeedback: string,
+
+	// integrationCalendar
+	entities: IntegrationCalendarType[],
 };

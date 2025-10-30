@@ -13,6 +13,22 @@ jn.define('utils/file', (require, exports, module) => {
 		FILE: 'file',
 	};
 
+	const mimeTypes = {
+		png: 'image/png',
+		gif: 'image/gif',
+		jpg: 'image/jpeg',
+		jpeg: 'image/jpeg',
+		heic: 'image/heic',
+		mp3: 'audio/mpeg',
+		mp4: 'video/mp4',
+		mpeg: 'video/mpeg',
+		ogg: 'video/ogg',
+		mov: 'video/quicktime',
+		zip: 'application/zip',
+		board: 'application/board',
+		php: 'text/php',
+	};
+
 	/**
 	 * @param {string} url
 	 * @return {string}
@@ -84,24 +100,9 @@ jn.define('utils/file', (require, exports, module) => {
 			mimeType = fileName.split('.').pop().toLowerCase();
 		}
 
-		const mimeTypeMap = {
-			png: 'image/png',
-			gif: 'image/gif',
-			jpg: 'image/jpeg',
-			jpeg: 'image/jpeg',
-			heic: 'image/heic',
-			mp3: 'audio/mpeg',
-			mp4: 'video/mp4',
-			mpeg: 'video/mpeg',
-			ogg: 'video/ogg',
-			mov: 'video/quicktime',
-			zip: 'application/zip',
-			php: 'text/php',
-		};
-
-		if (mimeTypeMap[mimeType])
+		if (mimeTypes[mimeType])
 		{
-			return mimeTypeMap[mimeType];
+			return mimeTypes[mimeType];
 		}
 
 		if (fileExtOrMimeType.includes('/')) // iOS old form
@@ -287,5 +288,6 @@ jn.define('utils/file', (require, exports, module) => {
 		openNativeViewerByFileId,
 		formatFileSize,
 		fileSaver,
+		mimeTypes,
 	};
 });

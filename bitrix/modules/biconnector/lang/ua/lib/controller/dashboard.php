@@ -19,7 +19,6 @@ $MESS["BICONNECTOR_CONTROLLER_DASHBOARD_EXPORT_ERROR"] = "Не вдалося е
 $MESS["BICONNECTOR_CONTROLLER_DASHBOARD_RENAME_ERROR_CANNOT_EDIT_TITLE_NOT_EMPTY"] = "Додайте назву звіту";
 $MESS["BICONNECTOR_CONTROLLER_DASHBOARD_RENAME_ERROR_CANNOT_EDIT_TITLE_NOT_FOUND"] = "Такого звіту більше немає. Оновіть сторінку";
 $MESS["BICONNECTOR_CONTROLLER_DASHBOARD_RENAME_ERROR_CANNOT_EDIT_TITLE_NOT_READY"] = "Звіт ще встановлюється. Дочекайтеся закінчення процесу та спробуйте ще раз";
-$MESS["BICONNECTOR_CONTROLLER_DASHBOARD_RENAME_ERROR_CANNOT_EDIT_TITLE_ONLY_CUSTOM"] = "Не можна змінювати назви системних звітів і звітів із Маркету. Ви можете скопіювати звіт і змінити назву копії";
 $MESS["BICONNECTOR_CONTROLLER_DASHBOARD_RENAME_ERROR_CANNOT_EDIT_TITLE_ONLY_CUSTOM_MSGVER_1"] = "Не можна змінювати назви системних звітів і звітів із Маркету. Ви можете скопіювати звіт і змінити назву копії";
 $MESS["BICONNECTOR_CONTROLLER_DASHBOARD_RENAME_ERROR_CANNOT_EDIT_TITLE_UNHANDLED"] = "Не вдалося змінити назву звіту, спробуйте ще раз.";
 $MESS["BICONNECTOR_CONTROLLER_DASHBOARD_RENAME_ERROR_UNAVAILABLE"] = "Не вдалося змінити назву звіту, спробуйте пізніше";

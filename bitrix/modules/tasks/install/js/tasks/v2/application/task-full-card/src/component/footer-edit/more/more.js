@@ -9,6 +9,7 @@ import { EventName, Model, TaskStatus } from 'tasks.v2.const';
 import { responsibleMeta } from 'tasks.v2.component.fields.responsible';
 import { EntitySelectorDialog } from 'tasks.v2.lib.entity-selector-dialog';
 import { taskService } from 'tasks.v2.provider.service.task-service';
+import { statusService } from 'tasks.v2.provider.service.status-service';
 import type { TaskModel } from 'tasks.v2.model.tasks';
 
 import './more.css';
@@ -158,7 +159,7 @@ export const More = {
 			return {
 				title: this.loc('TASKS_V2_TASK_FULL_CARD_DEFER'),
 				icon: Outline.PAUSE_L,
-				onClick: (): void => taskService.defer(this.taskId),
+				onClick: (): void => statusService.defer(this.taskId),
 			};
 		},
 		getPauseItem(): MenuItemOptions
@@ -171,7 +172,7 @@ export const More = {
 			return {
 				title: this.loc('TASKS_V2_TASK_FULL_CARD_PAUSE'),
 				icon: Outline.STOP_L,
-				onClick: (): void => taskService.pause(this.taskId),
+				onClick: (): void => statusService.pause(this.taskId),
 			};
 		},
 		getRenewItem(): MenuItemOptions
@@ -184,7 +185,7 @@ export const More = {
 			return {
 				title: this.loc('TASKS_V2_TASK_FULL_CARD_RENEW'),
 				icon: Outline.UNDO,
-				onClick: (): void => taskService.renew(this.taskId),
+				onClick: (): void => statusService.renew(this.taskId),
 			};
 		},
 		getFixItem(): MenuItemOptions
@@ -197,7 +198,7 @@ export const More = {
 			return {
 				title: this.loc('TASKS_V2_TASK_FULL_CARD_FIX'),
 				icon: Outline.UNDO,
-				onClick: (): void => taskService.renew(this.taskId),
+				onClick: (): void => statusService.renew(this.taskId),
 			};
 		},
 		getDisapproveItem(): MenuItemOptions
@@ -210,7 +211,7 @@ export const More = {
 			return {
 				title: this.loc('TASKS_V2_TASK_FULL_CARD_DISAPPROVE'),
 				icon: Outline.UNDO,
-				onClick: (): void => taskService.disapprove(this.taskId),
+				onClick: (): void => statusService.disapprove(this.taskId),
 			};
 		},
 		getCompleteItem(): MenuItemOptions
@@ -223,7 +224,7 @@ export const More = {
 			return {
 				title: this.loc('TASKS_V2_TASK_FULL_CARD_COMPLETE'),
 				icon: Outline.SENDED,
-				onClick: (): void => taskService.complete(this.taskId),
+				onClick: (): void => statusService.complete(this.taskId),
 			};
 		},
 		getDelegateItem(): MenuItemOptions

@@ -6,6 +6,7 @@ Example:
 
 <Switcher
 	:is-checked="myBoolData"
+	:is-disabled="isDisabled"
 	@check="myBoolData = true"
 	@uncheck="myBoolData = false"
 	:options="{
@@ -24,6 +25,10 @@ export const Switcher = {
 			type: Boolean,
 			required: true,
 		},
+		isDisabled: {
+			type: Boolean,
+			default: false,
+		},
 		options: {
 			/** @type SwitcherOptions */
 			type: Object,
@@ -38,6 +43,9 @@ export const Switcher = {
 	watch: {
 		isChecked(): void {
 			this.switcher.check(this.isChecked, false);
+		},
+		isDisabled(): void {
+			this.switcher.setDisabled(this.isDisabled);
 		},
 		options(newOptions, oldOptions): void {
 			if (this.isOptionsEqual(newOptions, oldOptions))
@@ -57,6 +65,7 @@ export const Switcher = {
 				{
 					...this.options,
 					checked: this.isChecked,
+					disabled: this.isDisabled,
 					handlers: {
 						// checked for when the switcher is made off and unchecked for when the switcher is made on
 						// it looks like a bug, but I'm not sure

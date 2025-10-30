@@ -45,9 +45,9 @@ export const FlowChip = {
 		design(): string
 		{
 			return {
-				[!this.isAutonomous && !this.isSelected]: ChipDesign.Shadow,
+				[!this.isAutonomous && !this.isSelected]: ChipDesign.ShadowNoAccent,
 				[!this.isAutonomous && this.isSelected]: ChipDesign.ShadowAccent,
-				[this.isAutonomous && !this.isSelected]: ChipDesign.Outline,
+				[this.isAutonomous && !this.isSelected]: ChipDesign.OutlineNoAccent,
 				[this.isAutonomous && this.isSelected]: ChipDesign.OutlineAccent,
 			}.true;
 		},
@@ -71,7 +71,7 @@ export const FlowChip = {
 				return this.flow.name;
 			}
 
-			return flowMeta.title;
+			return this.loc('TASKS_V2_FLOW_TITLE_CHIP');
 		},
 		readonly(): boolean
 		{
@@ -88,7 +88,7 @@ export const FlowChip = {
 				return;
 			}
 
-			flowDialog.setTaskId(this.taskId).showTo(this.$refs.chip.$el);
+			flowDialog.setTaskId(this.taskId).showTo(this.$el);
 
 			if (!this.isAutonomous)
 			{
@@ -122,7 +122,6 @@ export const FlowChip = {
 			:data-task-id="taskId"
 			:data-task-chip-id="flowMeta.id"
 			:data-task-chip-value="task.flowId"
-			ref="chip"
 			@click="handleClick"
 			@clear="handleClear"
 			:title="flow?.name ?? ''"

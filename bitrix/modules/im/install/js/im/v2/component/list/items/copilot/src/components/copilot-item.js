@@ -58,7 +58,7 @@ export const CopilotItem = {
 		},
 		isChatSelected(): boolean
 		{
-			if (this.layout.name !== Layout.aiAssistant)
+			if (this.layout.name !== Layout.copilot)
 			{
 				return false;
 			}

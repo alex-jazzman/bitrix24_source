@@ -5,6 +5,8 @@ return [
 		'module',
 		'tokens',
 		'background/ui-manager',
-		'layout/ui/whats-new/analytics',
+	],
+	'components' => [
+		'whats.new',
 	],
 ];

@@ -148,6 +148,8 @@ class Baas extends CModule
 	{
 		global $USER;
 
+		CAdminNotify::DeleteByTag('baas_registration_failed');
+
 		if ($USER->IsAdmin())
 		{
 			$this->UnInstallEvents();

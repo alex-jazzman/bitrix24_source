@@ -10,31 +10,28 @@ jn.define('user-profile/common-tab/src/block/header/block', (require, exports, m
 
 	class HeaderBlock extends BaseBlock
 	{
-		getSort()
-		{
-			return 100;
-		}
-
 		prepareProps(commonTabData)
 		{
-			const { user, ownerId, statusData = {} } = commonTabData ?? {};
+			const { owner, ownerId, statusData = {}, isEditMode, onChange } = commonTabData ?? {};
 
-			if (user)
+			if (owner)
 			{
-				dispatch(usersUpserted([user]));
+				dispatch(usersUpserted([owner]));
 			}
 
 			return {
 				ownerId,
+				isEditMode,
+				onChange,
 				GMTString: statusData.GMTString,
 				lastSeenDate: statusData.lastSeenDate,
-				personalGender: user?.personalGender,
+				personalGender: owner?.personalGender,
 				onVacationDateTo: statusData.onVacationDateTo,
 				status: UserStatus.getEnum(statusData?.status),
 			};
 		}
 
-		shouldUseBaseWrapper()
+		shouldUseBaseViewWrapper()
 		{
 			return false;
 		}

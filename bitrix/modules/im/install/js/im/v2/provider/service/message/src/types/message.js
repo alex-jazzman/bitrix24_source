@@ -23,3 +23,9 @@ export type PaginationRestResult = {
 	copilot: RawCopilot,
 	tariffRestrictions: RawTariffRestrictions,
 };
+
+export type TranscriptionResponse = {
+	fileId: number,
+	status: 'Success' | 'Pending' | 'Error',
+	transcriptText: string | null,
+};

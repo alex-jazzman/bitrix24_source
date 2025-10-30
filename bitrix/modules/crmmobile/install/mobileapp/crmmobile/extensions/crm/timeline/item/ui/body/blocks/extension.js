@@ -78,13 +78,21 @@ jn.define('crm/timeline/item/ui/body/blocks', (require, exports, module) => {
 		 * @param {EventEmitter} itemScopeEventBus
 		 * @param {EventEmitter} timelineScopeEventBus
 		 * @param {function} onAction
+		 * @param {AnalyticsEvent|null} analyticsEvent
 		 */
-		constructor({ model, itemScopeEventBus, timelineScopeEventBus, onAction })
+		constructor({
+			model,
+			itemScopeEventBus,
+			timelineScopeEventBus,
+			onAction,
+			analyticsEvent = null,
+		})
 		{
 			this.model = model;
 			this.itemScopeEventBus = itemScopeEventBus;
 			this.timelineScopeEventBus = timelineScopeEventBus;
 			this.onAction = onAction;
+			this.analyticsEvent = analyticsEvent;
 		}
 
 		/**

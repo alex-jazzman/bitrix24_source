@@ -13,6 +13,7 @@ jn.define('ui-system/form/buttons/button', (require, exports, module) => {
 	const { IconView, iconTypes, Icon } = require('ui-system/blocks/icon');
 	const { ButtonSize } = require('ui-system/form/buttons/button/src/size-enum');
 	const { ButtonDesign } = require('ui-system/form/buttons/button/src/design-enum');
+	const { ButtonStateDecorator } = require('ui-system/form/buttons/button/src/state-decorator');
 
 	const Direction = {
 		LEFT: 'left',
@@ -47,6 +48,7 @@ jn.define('ui-system/form/buttons/button', (require, exports, module) => {
 	 * @property {Function} [onLayout]
 	 * @property {Function} [onDisabledClick]
 	 * @property {Function} [onLongClick]
+	 * @property {boolean} [withStateDecorator=false]
 	 *
 	 * @class Button
 	 * @param {ButtonProps} props
@@ -467,6 +469,8 @@ jn.define('ui-system/form/buttons/button', (require, exports, module) => {
 		rounded: false,
 		border: false,
 		loading: false,
+		disabled: false,
+		withStateDecorator: false,
 	};
 
 	Button.propTypes = {
@@ -496,6 +500,7 @@ jn.define('ui-system/form/buttons/button', (require, exports, module) => {
 		onLayout: PropTypes.func,
 		onDisabledClick: PropTypes.func,
 		onLongClick: PropTypes.func,
+		withStateDecorator: PropTypes.bool,
 	};
 
 	module.exports = {
@@ -503,7 +508,11 @@ jn.define('ui-system/form/buttons/button', (require, exports, module) => {
 		 * @param {ButtonProps} props
 		 * @returns {Button}
 		 */
-		Button: (props) => new Button(props),
+		Button: (props) => (
+			props.withStateDecorator
+				? new ButtonStateDecorator({ component: Button, ...props })
+				: new Button(props)
+		),
 		ButtonClass: Button,
 		ButtonDesign,
 		ButtonSize,

@@ -59,6 +59,7 @@
 				menu_invite: 'menu_invite',
 				menu_tab_presets: 'menu_tab_presets',
 				menu_disk_tabs: 'menu_disk_tabs',
+				total_invitation: 'total_invitation',
 			};
 
 			this.tabNameMapOldUserCounter = {

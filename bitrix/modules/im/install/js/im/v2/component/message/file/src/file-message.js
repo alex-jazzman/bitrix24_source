@@ -1,7 +1,6 @@
 import { Type } from 'main.core';
 import { FileType } from 'im.v2.const';
 import { UnsupportedMessage } from 'im.v2.component.message.unsupported';
-import { Utils } from 'im.v2.lib.utils';
 import { UploadingService } from 'im.v2.provider.service.uploading';
 import { UploaderFile } from 'ui.uploader.core';
 
@@ -42,6 +41,10 @@ export const FileMessage = {
 		withTitle: {
 			type: Boolean,
 			default: true,
+		},
+		containerHeight: {
+			type: [Number, null],
+			default: null,
 		},
 	},
 	computed:
@@ -99,9 +102,7 @@ export const FileMessage = {
 				return FileMessageType.audio;
 			}
 
-			// file.type value is empty for mkv files
-			const isVideo = file.type === FileType.video || Utils.file.getFileExtension(file.name) === 'mkv';
-			if (isVideo && hasPreview)
+			if (file.type === FileType.video && hasPreview)
 			{
 				return FileMessageType.media;
 			}
@@ -170,6 +171,7 @@ export const FileMessage = {
 			:item="message" 
 			:dialogId="dialogId"
 			:withTitle="withTitle" 
+			:containerHeight="containerHeight"
 			:withContextMenu="isRealMessage"
 			@cancelClick="onCancel"
 		/>

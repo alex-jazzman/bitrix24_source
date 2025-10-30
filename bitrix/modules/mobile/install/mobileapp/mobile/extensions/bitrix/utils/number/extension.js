@@ -41,8 +41,20 @@ jn.define('utils/number', (require, exports, module) => {
 		return 0;
 	}
 
+	/**
+	 * Returns "99+" if the quantity exceeds the maximum.
+	 * @param {number} [quantity=0]
+	 * @param {number} [max=99]
+	 * @returns {string}
+	 */
+	function formatQuantityWithLimit(quantity = 0, max = 99)
+	{
+		return quantity > max ? `${max}+` : quantity.toString();
+	}
+
 	module.exports = {
 		inRange,
 		toNumber,
+		formatQuantityWithLimit,
 	};
 });

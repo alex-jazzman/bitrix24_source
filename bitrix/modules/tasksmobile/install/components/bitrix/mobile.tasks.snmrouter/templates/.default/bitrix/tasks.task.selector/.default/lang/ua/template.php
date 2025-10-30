@@ -16,7 +16,6 @@ $MESS["TASKS_STATUS_STATE_UNKNOWN"] = "Не відомо";
 $MESS["TASK_COLUMN_CREATED_BY"] = "постановник";
 $MESS["TASK_COLUMN_DEADLINE"] = "термін";
 $MESS["TASK_COLUMN_PRIORITY"] = "пріоритет";
-$MESS["TASK_COLUMN_RESPONSIBLE_ID"] = "відповідальний";
 $MESS["TASK_COLUMN_RESPONSIBLE_ID_MSGVER_1"] = "виконавець";
 $MESS["TASK_COLUMN_STATUS"] = "статус";
 $MESS["TASK_EXPIRED"] = "Протерміновано";

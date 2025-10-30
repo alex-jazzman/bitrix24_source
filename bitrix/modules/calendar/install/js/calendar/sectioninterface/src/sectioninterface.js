@@ -1005,8 +1005,8 @@ export class SectionInterface extends EventEmitter
 
 		if (
 			!section.isPseudo()
-			&& section.data.EXPORT
-			&& section.data.EXPORT.LINK
+			&& section.data.EXPORT?.LINK
+			&& section.data.EXPORT?.PATH
 			&& section.data.EXTERNAL_TYPE === 'local'
 			&& !this.calendarContext?.util?.isExtranetUser()
 		)
@@ -1018,7 +1018,7 @@ export class SectionInterface extends EventEmitter
 
 					const options = {
 						sectionLink: section.data.EXPORT.LINK,
-						calendarPath: this.calendarContext.util.config.path,
+						calendarPath: section.data.EXPORT.PATH,
 					};
 					if (IcalSyncPopup.checkPathes(options))
 					{
@@ -1217,6 +1217,7 @@ export class SectionInterface extends EventEmitter
 			wrap: this.DOM.sectionFormWrap,
 			sectionAccessTasks: this.sectionManager.getSectionAccessTasks(),
 			sectionManager: this.sectionManager,
+			calendarContext: this.calendarContext,
 			closeCallback: () => {
 				this.allowSliderClose();
 			},

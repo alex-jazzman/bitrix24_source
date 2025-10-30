@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["UF_1C"] = "Користувач з 1С";
 $MESS["UF_DEPARTMENT"] = "Підрозділи";
 $MESS["UF_DISTRICT"] = "Район";
@@ -11,10 +11,10 @@ $MESS["UF_PHONE_INNER"] = "Внутрішній телефон";
 $MESS["UF_SKILLS"] = "Навички";
 $MESS["UF_SKYPE"] = "Логін Skype";
 $MESS["UF_SKYPE_LINK"] = "Посилання на чат у Skype";
+$MESS["UF_SKYPE_MSGVER_1"] = "Microsoft Teams";
 $MESS["UF_STATE_HISTORY"] = "Історія станів";
 $MESS["UF_STATE_LAST"] = "Останній стан";
 $MESS["UF_TWITTER"] = "Twitter";
 $MESS["UF_WEB_SITES"] = "Інші сайти";
 $MESS["UF_XING"] = "Xing";
 $MESS["UF_ZOOM"] = "Zoom";
-?>

@@ -1,0 +1,41 @@
+<?php
+
+return [
+	'extensions' => [
+		'assets/icons',
+		'layout/ui/feedback-form-opener',
+		'loc',
+		'rest/run-action-executor',
+		'settings-v2/const',
+		'settings-v2/emitter',
+		'settings-v2/controller/application-storage',
+		'settings-v2/controller/native',
+		'settings-v2/controller/push-config',
+		'settings-v2/controller/notification-counter',
+		'settings-v2/controller/push-status',
+		'settings-v2/controller/smartfilter-status',
+		'settings-v2/controller/cache',
+		'settings-v2/services/native',
+		'settings-v2/services/notification-load',
+		'type',
+		'utils/copy',
+		'toast',
+		'tokens',
+		'feature-flag',
+	],
+	'bundle' => [
+		'./pages/debug',
+		'./pages/messenger',
+		'./pages/root',
+		'./pages/theme',
+		'./pages/sync',
+		'./pages/video-quality',
+		'./pages/notifications/root',
+		'./pages/notifications/module',
+		'./pages/notifications/counter',
+		'./pages/developer',
+
+		'./src/item-create-helper',
+		'./src/push-config-controller-create-helper',
+	],
+];

@@ -17,7 +17,6 @@ $MESS["SALE_BASE_PRESET_ORDERAMOUNT_FIELD_PRIORITY"] = "Қолдану басы�
 $MESS["SALE_BASE_PRESET_ORDERAMOUNT_FIELD_SORT"] = "Басымдық деңгейінде сұрыптау индексі";
 $MESS["SALE_BASE_PRESET_ORDERAMOUNT_LID"] = "Жеңілдік қолданылатын сайт";
 $MESS["SALE_BASE_PRESET_ORDERAMOUNT_USER_GROUPS"] = "Ереже қолданылатын пайдаланушылар топтары";
-$MESS["SALE_HANDLERS_DISCOUNTPRESET_ERROR_EMPTY_VALUE"] = "Тапсырысқа жеңілдік көрсетілмеген";
 $MESS["SALE_HANDLERS_DISCOUNTPRESET_ERROR_EMPTY_VALUE_MSGVER_1"] = "Жеңілдік көлемі көрсетілмеген";
 $MESS["SHD_BT_SALE_ACT_GROUP_BASKET_SELECT_CUR_ALL"] = "Тауарлардың жалпы сомасына #CUR#";
 $MESS["SHD_BT_SALE_ACT_GROUP_BASKET_SELECT_CUR_EACH"] = "Әр тауарға #CUR#";

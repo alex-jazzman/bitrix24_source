@@ -109,7 +109,11 @@ export const AddTaskButton = {
 		{
 			this.errorReason = this.loc('TASKS_V2_TITLE_IS_EMPTY');
 
-			this.fieldContainer = fieldHighlighter.setContainer(this.$root.$el).addHighlight(titleMeta.id);
+			this.fieldContainer = fieldHighlighter
+				.setContainer(this.$root.$el)
+				.addHighlight(titleMeta.id)
+				.getFieldContainer(titleMeta.id)
+			;
 
 			this.fieldContainer.querySelector('textarea').focus();
 
@@ -119,7 +123,11 @@ export const AddTaskButton = {
 		{
 			this.errorReason = this.loc('TASKS_V2_FILE_IS_UPLOADING');
 
-			this.fieldContainer = fieldHighlighter.setContainer(this.$root.$el).addChipHighlight(filesMeta.id);
+			this.fieldContainer = fieldHighlighter
+				.setContainer(this.$root.$el)
+				.addChipHighlight(filesMeta.id)
+				.getChipContainer(filesMeta.id)
+			;
 
 			this.showPopup();
 		},
@@ -127,7 +135,11 @@ export const AddTaskButton = {
 		{
 			this.errorReason = this.loc('TASKS_V2_FILE_IS_UPLOADING');
 
-			this.fieldContainer = fieldHighlighter.setContainer(this.$root.$el).addChipHighlight(checkListMeta.id);
+			this.fieldContainer = fieldHighlighter
+				.setContainer(this.$root.$el)
+				.addChipHighlight(checkListMeta.id)
+				.getChipContainer(checkListMeta.id)
+			;
 
 			this.showPopup();
 		},

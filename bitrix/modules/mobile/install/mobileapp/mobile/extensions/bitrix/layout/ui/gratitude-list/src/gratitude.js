@@ -2,7 +2,7 @@
  * @module layout/ui/gratitude-list/src/gratitude
  */
 jn.define('layout/ui/gratitude-list/src/gratitude', (require, exports, module) => {
-	const { Component, Indent, Color } = require('tokens');
+	const { Indent, Color } = require('tokens');
 	const { GratitudeIcon } = require('assets/icons');
 	const { Text2, Text5, Text6 } = require('ui-system/typography/text');
 	const { Avatar } = require('ui-system/blocks/avatar');
@@ -10,49 +10,108 @@ jn.define('layout/ui/gratitude-list/src/gratitude', (require, exports, module) =
 	const { usersSelector } = require('statemanager/redux/slices/users');
 	const { PureComponent } = require('layout/pure-component');
 	const {
-		selectNameById,
-		selectRelatedPostIdById,
-		selectCreatedAtById,
-		selectTitleById,
+		selectById,
 	} = require('statemanager/redux/slices/gratitude');
+	const { FormatterTypes } = require('layout/ui/friendly-date/formatter-factory');
+	const { Moment } = require('utils/date');
+	const { HumanDateFormatter } = require('layout/ui/friendly-date/human-date-formatter');
+	const { createTestIdGenerator } = require('utils/test');
+	const { Card } = require('ui-system/layout/card');
 
 	const BADGE_SIZE = {
 		width: 40,
 		height: 40,
 	};
 
+	/**
+	 * @class GratitudeView
+	 * @typedef {Object} GratitudeViewProps
+	 * @property {string} [testId]
+	 * @property {number|null} [postId]
+	 * @property {boolean} [showBorder=false]
+	 * @property {Object} [author]
+	 * @property {number} [author.id]
+	 * @property {string} [author.fullName]
+	 * @property {string} [author.avatarSize100]
+	 * @property {string} [title]
+	 * @property {string} [name]
+	 * @property {number} [createdAt]
+	 * @property {function(number|null): void} itemDetailOpenHandler
+	 * @extends PureComponent
+	 */
 	class GratitudeView extends PureComponent
 	{
+		/**
+		 * @param {GratitudeViewProps} props
+		 */
+		constructor(props)
+		{
+			super(props);
+			this.getTestId = createTestIdGenerator({
+				prefix: this.props.testId,
+				context: this,
+			});
+		}
+
+		/**
+		 * @returns {number|null}
+		 */
 		get #postId()
 		{
 			return this.props.postId ?? null;
 		}
 
+		/**
+		 * @returns {boolean}
+		 */
 		get #showBorder()
 		{
 			return this.props.showBorder ?? false;
 		}
 
+		/**
+		 * @returns {Object|null}
+		 */
+		get #author()
+		{
+			return this.props.author ?? null;
+		}
+
+		/**
+		 * @returns {number|null}
+		 */
 		get #authorId()
 		{
-			return this.props.author?.id ?? null;
+			return this.#author?.id ?? null;
 		}
 
+		/**
+		 * @returns {string}
+		 */
 		get #authorName()
 		{
-			return this.props.author.fullName ?? '';
+			return this.#author?.fullName ?? '';
 		}
 
+		/**
+		 * @returns {string}
+		 */
 		get #authorImage()
 		{
-			return this.props.author.avatarSize100 ?? '';
+			return this.#author?.avatarSize100 ?? '';
 		}
 
+		/**
+		 * @returns {string}
+		 */
 		get #title()
 		{
 			return this.props.title ?? '';
 		}
 
+		/**
+		 * @returns {string}
+		 */
 		get #gratitudeImageUri()
 		{
 			const { name } = this.props;
@@ -60,36 +119,51 @@ jn.define('layout/ui/gratitude-list/src/gratitude', (require, exports, module) =
 			return name ? GratitudeIcon.getSvgUriByName(name) : '';
 		}
 
+		/**
+		 * @returns {string|null}
+		 */
 		get #gratitudeCreatedAt()
 		{
 			const { createdAt } = this.props;
 
-			return createdAt
-				? new Date(createdAt * 1000).toLocaleDateString('en-GB').replaceAll('/', '.')
-				: ''
-			;
-		}
+			if (!createdAt)
+			{
+				return null;
+			}
 
-		getTestId(suffix)
-		{
-			const prefix = this.props.testId ?? '';
+			const moment = Moment.createFromTimestamp(createdAt);
 
-			return suffix ? `${prefix}-${suffix}` : prefix;
+			const formatter = new HumanDateFormatter({
+				moment,
+				showTime: false,
+				futureAllowed: false,
+				formatType: FormatterTypes.HUMAN_DATE,
+			});
+
+			return formatter.format(moment) ?? null;
 		}
 
 		render()
 		{
-			return View(
+			return Card(
 				{
 					testId: this.getTestId(),
+					excludePaddingSide: {
+						bottom: true,
+						top: true,
+					},
 					style: {
 						flexDirection: 'row',
 						alignItems: 'flex-start',
 						justifyContent: 'flex-start',
-						paddingHorizontal: Component.paddingLr.toNumber(),
 						paddingBottom: Indent.L.toNumber(),
 					},
-					onClick: () => this.props.itemDetailOpenHandler(this.#postId),
+					onClick: () => {
+						if (this.#postId)
+						{
+							this.props.itemDetailOpenHandler(this.#postId);
+						}
+					},
 				},
 				this.renderBadge(),
 				this.renderContent(),
@@ -115,32 +189,20 @@ jn.define('layout/ui/gratitude-list/src/gratitude', (require, exports, module) =
 			return View(
 				{
 					style: {
+						alignItems: 'center',
+						justifyContent: 'space-between',
 						flexDirection: 'row',
-						alignItems: 'flex-start',
-						justifyContent: 'flex-start',
-						position: 'relative',
-						width: '95%',
+						flexGrow: 1,
+						flexShrink: 1,
 						paddingTop: Indent.XL.toNumber(),
+						borderTopWidth: this.#showBorder ? 1 : 0,
+						borderTopColor: Color.bgSeparatorSecondary.toHex(),
+						marginLeft: Indent.XL2.toNumber(),
 					},
 				},
 				this.renderTextBlock(),
 				this.renderDate(),
-				this.#showBorder && this.renderBorder(),
 			);
-		}
-
-		renderBorder()
-		{
-			return View({
-				style: {
-					position: 'absolute',
-					height: 1,
-					width: '97%',
-					backgroundColor: Color.bgSeparatorSecondary.toHex(),
-					top: 0,
-					right: 0,
-				},
-			});
 		}
 
 		renderTextBlock()
@@ -148,11 +210,12 @@ jn.define('layout/ui/gratitude-list/src/gratitude', (require, exports, module) =
 			return View(
 				{
 					style: {
+						flexGrow: 1,
+						flexShrink: 1,
 						flexDirection: 'column',
 						alignItems: 'flex-start',
 						justifyContent: 'flex-start',
-						maxWidth: 210,
-						marginHorizontal: Indent.XL2.toNumber(),
+						marginRight: Indent.XL2.toNumber(),
 					},
 				},
 				this.renderTitle(),
@@ -176,6 +239,11 @@ jn.define('layout/ui/gratitude-list/src/gratitude', (require, exports, module) =
 
 		renderAuthor()
 		{
+			if (!this.#authorId)
+			{
+				return null;
+			}
+
 			return View(
 				{
 					testId: this.getTestId(`author-${this.#authorId}`),
@@ -209,14 +277,20 @@ jn.define('layout/ui/gratitude-list/src/gratitude', (require, exports, module) =
 
 		renderDate()
 		{
+			const text = this.#gratitudeCreatedAt;
+
+			if (!text)
+			{
+				return null;
+			}
+
 			return Text5({
 				testId: this.getTestId('date'),
 				text: this.#gratitudeCreatedAt,
 				color: Color.base3,
 				style: {
-					position: 'absolute',
-					top: 16,
-					right: 20,
+					alignSelf: 'flex-start',
+					marginTop: Indent.XS.toNumber(),
 				},
 			});
 		}
@@ -224,10 +298,14 @@ jn.define('layout/ui/gratitude-list/src/gratitude', (require, exports, module) =
 
 	const mapStateToProps = (state, ownProps) => {
 		const author = usersSelector.selectById(state, ownProps.authorId);
-		const name = selectNameById(state, ownProps.id);
-		const title = selectTitleById(state, ownProps.id);
-		const createdAt = selectCreatedAtById(state, ownProps.id);
-		const postId = selectRelatedPostIdById(state, ownProps.id);
+		const gratitude = selectById(state, ownProps.id) || {};
+
+		const {
+			name,
+			createdAt,
+			relatedPostId: postId,
+			title,
+		} = gratitude;
 
 		return {
 			author,

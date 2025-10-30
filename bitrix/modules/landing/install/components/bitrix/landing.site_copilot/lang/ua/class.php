@@ -3,7 +3,6 @@ $MESS["LANDING_CMP_TOP_PANEL_FEATURES_BTN_TEXT"] = "Можливості сай�
 $MESS["LANDING_CMP_TOP_PANEL_LABEL_TEXT"] = "Нове";
 $MESS["LANDING_CMP_TOP_PANEL_LOGO"] = "Бітрікс";
 $MESS["LANDING_CMP_TOP_PANEL_LOGO_24"] = "24";
-$MESS["LANDING_CMP_TOP_PANEL_LOGO_SITES"] = " Сайти";
 $MESS["LANDING_CMP_TOP_PANEL_LOGO_SITES_MSGVER_1"] = "Сайти";
 $MESS["LANDING_CMP_TOP_PANEL_PREVIEW_BTN_TEXT"] = "Відкрити сайт";
 $MESS["LANDING_CMP_TOP_PANEL_SITE_NAME"] = "Сайт із CoPilot";

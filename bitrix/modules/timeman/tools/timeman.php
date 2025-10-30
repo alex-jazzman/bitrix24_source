@@ -2484,7 +2484,18 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 				{
 					if ($ex = $APPLICATION->GetException())
 					{
-						$error = "{error: '" . CUtil::JSEscape($ex->GetString()) . "', error_id:'" . CUtil::JSEscape($ex->GetId()) . "'}";
+						if ($ex->GetId() === 'SYSTEM_ERROR')
+						{
+							$error = GetMessage('TM_ERROR_UNKNOWN');
+						}
+						else
+						{
+							$error = "{error: '"
+								. CUtil::JSEscape($ex->GetString())
+								. "', error_id:'"
+								. CUtil::JSEscape($ex->GetId())
+								. "'}";
+						}
 					}
 				}
 

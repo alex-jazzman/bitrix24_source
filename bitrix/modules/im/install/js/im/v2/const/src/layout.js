@@ -8,7 +8,7 @@ export const Layout = {
 	openlinesV2: 'openlinesV2',
 	conference: 'conference',
 	settings: 'settings',
-	aiAssistant: 'aiAssistant',
+	copilot: 'copilot',
 	collab: 'collab',
 	market: 'market',
 };

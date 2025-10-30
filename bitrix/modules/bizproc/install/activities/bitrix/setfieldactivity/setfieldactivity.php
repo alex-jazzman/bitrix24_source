@@ -430,7 +430,7 @@ class CBPSetFieldActivity extends CBPActivity implements IBPActivityExternalEven
 				return false;
 			}
 
-			if (CBPHelper::getBool($property['Required']) && CBPHelper::isEmptyValue($r))
+			if (CBPHelper::getBool($property['Required'] ?? null) && CBPHelper::isEmptyValue($r))
 			{
 				$errors[] = [
 					'code' => 'NotExist',

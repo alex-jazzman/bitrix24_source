@@ -136,7 +136,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    const preparedDialogId = dialogId.toString();
 	    await im_v2_lib_slider.MessengerSlider.getInstance().openSlider();
 	    return im_v2_lib_layout.LayoutManager.getInstance().setLayout({
-	      name: im_v2_const.Layout.aiAssistant,
+	      name: im_v2_const.Layout.copilot,
 	      entityId: preparedDialogId,
 	      contextId
 	    });
@@ -249,6 +249,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      entityId: normalizeEntityId(payload.entityId),
 	      target: payload.target
 	    });
+	  },
+	  isChatOpened(dialogId) {
+	    const currentLayout = im_v2_lib_layout.LayoutManager.getInstance().getLayout();
+	    if (!im_v2_lib_layout.LayoutManager.getInstance().isChatLayout(currentLayout.name)) {
+	      return false;
+	    }
+	    return currentLayout.entityId === dialogId;
 	  }
 	};
 

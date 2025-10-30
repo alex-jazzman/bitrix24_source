@@ -2,7 +2,6 @@ import { Type, Cache, Text, Tag, Dom, type JsonObject } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { PopupManager, Popup } from 'main.popup';
 
-import { getInstance } from './get-instance';
 import { type ToolbarItemOptions } from './types/toolbar-item-options';
 
 export class ToolbarItem extends EventEmitter
@@ -18,7 +17,7 @@ export class ToolbarItem extends EventEmitter
 		this.title = '';
 		this.url = '';
 		this.entityType = '';
-		this.entityId = 0;
+		this.entityId = '0';
 		this.entityName = '';
 
 		this.refs = new Cache.MemoryCache();
@@ -91,7 +90,7 @@ export class ToolbarItem extends EventEmitter
 	{
 		if (Type.isNumber(entityId) || Type.isStringFilled(entityId))
 		{
-			this.entityId = entityId;
+			this.entityId = String(entityId);
 		}
 	}
 
@@ -112,8 +111,8 @@ export class ToolbarItem extends EventEmitter
 	{
 		return this.refs.remember('container', () => {
 			return Tag.render`
-				<div class="side-panel-toolbar-item" 
-					onclick="${this.handleClick.bind(this)}"
+				<div 
+					class="side-panel-toolbar-item"
 					onmouseenter="${this.handleMouseEnter.bind(this)}"
 					onmouseleave="${this.handleMouseLeave.bind(this)}"
 				>
@@ -138,7 +137,7 @@ export class ToolbarItem extends EventEmitter
 				<a 
 					class="side-panel-toolbar-item-title"
 					href="${encodeURI(this.getUrl())}"
-					data-slider-ignore-autobinding="true"
+					data-slider-maximize="true"
 				>${Text.encode(this.getTitle())}</a>
 			`;
 		});
@@ -235,17 +234,6 @@ export class ToolbarItem extends EventEmitter
 		{
 			hint.close();
 		}
-	}
-
-	handleClick(event): void
-	{
-		if (event.ctrlKey || event.metaKey)
-		{
-			return;
-		}
-
-		event.preventDefault();
-		getInstance().maximize(this.getUrl());
 	}
 
 	handleMouseEnter(): void

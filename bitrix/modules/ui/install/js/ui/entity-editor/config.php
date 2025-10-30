@@ -31,6 +31,7 @@ return [
 		"/bitrix/js/ui/entity-editor/js/user-field.js",
 		"/bitrix/js/ui/entity-editor/js/validator.js",
 		"/bitrix/js/ui/entity-editor/js/pull.js",
+		"/bitrix/js/ui/entity-editor/user-field-configurators/tooltip-configurator.js",
 	],
 	"rel" => [
 		"ajax",
@@ -52,6 +53,7 @@ return [
 		"ui.entity-selector",
 		"ui.design-tokens",
 		"ui.fonts.opensans",
+		"ui.entity-editor.user-field-configurators.tooltip-configurator",
 	],
 	'settings' => [
 		'isFileUserFieldViewingModesAvailable' => method_exists(FileType::class, 'isAvailableDefaultView'),

@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
-(function (exports,main_core,ui_vue3_vuex,tasks_v2_model_epics,tasks_v2_model_flows,tasks_v2_model_groups,tasks_v2_model_interface,tasks_v2_model_stages,tasks_v2_model_tasks,tasks_v2_model_checkList,tasks_v2_model_users,tasks_v2_provider_pull_pullManager) {
+(function (exports,main_core,ui_vue3_vuex,tasks_v2_model_checkList,tasks_v2_model_epics,tasks_v2_model_flows,tasks_v2_model_groups,tasks_v2_model_interface,tasks_v2_model_stages,tasks_v2_model_tasks,tasks_v2_model_users,tasks_v2_provider_pull_pullManager) {
 	'use strict';
 
 	var _params = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("params");
@@ -73,7 +73,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	}
 	async function _initStore2() {
 	  babelHelpers.classPrivateFieldLooseBase(this, _builder)[_builder] = ui_vue3_vuex.Builder.init();
-	  babelHelpers.classPrivateFieldLooseBase(this, _builder)[_builder].addModel(tasks_v2_model_epics.Epics.create()).addModel(tasks_v2_model_flows.Flows.create()).addModel(tasks_v2_model_groups.Groups.create()).addModel(tasks_v2_model_interface.Interface.createWithVariables(babelHelpers.classPrivateFieldLooseBase(this, _params)[_params])).addModel(tasks_v2_model_stages.Stages.create()).addModel(tasks_v2_model_tasks.Tasks.create()).addModel(tasks_v2_model_checkList.CheckList.create()).addModel(tasks_v2_model_users.Users.create());
+	  babelHelpers.classPrivateFieldLooseBase(this, _builder)[_builder].addModel(tasks_v2_model_checkList.CheckList.create()).addModel(tasks_v2_model_epics.Epics.create()).addModel(tasks_v2_model_flows.Flows.create()).addModel(tasks_v2_model_groups.Groups.create()).addModel(tasks_v2_model_interface.Interface.createWithVariables(babelHelpers.classPrivateFieldLooseBase(this, _params)[_params])).addModel(tasks_v2_model_stages.Stages.create()).addModel(tasks_v2_model_tasks.Tasks.create()).addModel(tasks_v2_model_users.Users.create());
 	  const builderResult = await babelHelpers.classPrivateFieldLooseBase(this, _builder)[_builder].build();
 	  return builderResult.store;
 	}

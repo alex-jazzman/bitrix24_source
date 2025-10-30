@@ -43,7 +43,6 @@ $MESS["TASKS_KANBAN_PANEL_MEMBERS"] = "Учасники";
 $MESS["TASKS_KANBAN_PANEL_MEMBERS_AUDITOR"] = "Додати спостерігача";
 $MESS["TASKS_KANBAN_PANEL_MEMBERS_CORESPONSE"] = "Додати співвиконавця";
 $MESS["TASKS_KANBAN_PANEL_MEMBERS_CREATED"] = "Змінити постановника";
-$MESS["TASKS_KANBAN_PANEL_MEMBERS_RESPONSE"] = "Змінити відповідального";
 $MESS["TASKS_KANBAN_PANEL_MEMBERS_RESPONSE_MSGVER_1"] = "Змінити виконавця";
 $MESS["TASKS_KANBAN_PANEL_MOVETASK"] = "Завдання перенесені в колонку: #columnName#";
 $MESS["TASKS_KANBAN_PANEL_STAGE"] = "Стадія";

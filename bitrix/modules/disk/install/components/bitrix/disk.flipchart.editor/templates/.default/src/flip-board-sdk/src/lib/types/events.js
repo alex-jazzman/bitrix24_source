@@ -11,5 +11,6 @@ export var SDKEvents;
     SDKEvents["errorBoardRenamed"] = "errorBoardRenamed";
     SDKEvents["userIsKicked"] = "userIsKicked";
     SDKEvents["userConfirmKickFromBoard"] = "userConfirmKickFromBoard";
+    SDKEvents["shareElementWithSocials"] = "shareElementWithSocials";
 })(SDKEvents || (SDKEvents = {}));
 //# sourceMappingURL=events.js.map

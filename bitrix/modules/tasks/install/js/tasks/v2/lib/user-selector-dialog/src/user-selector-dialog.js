@@ -55,6 +55,7 @@ export class UserSelectorDialog extends EventEmitter
 				'Item:onSelect': this.#select.bind(this),
 				'Item:onDeselect': this.#select.bind(this),
 				onHide: this.#hide.bind(this),
+				onLoad: this.#loadUsers.bind(this),
 				...this.#params.events,
 			},
 		});
@@ -68,5 +69,25 @@ export class UserSelectorDialog extends EventEmitter
 	#hide(): void
 	{
 		this.emit('hide', this.#dialog.getSelectedItems());
+	}
+
+	#loadUsers(): void
+	{
+		const selectedItems = this.#dialog.getSelectedItems();
+		if (!selectedItems || selectedItems.length === 0)
+		{
+			return;
+		}
+
+		const users = selectedItems.map((item) => {
+			return {
+				id: item.getId(),
+				name: item.getTitle(),
+				image: item.getAvatar(),
+				type: item.getEntityType(),
+			};
+		});
+
+		this.emit('selectedUsersLoaded', users);
 	}
 }

@@ -57,6 +57,11 @@ export class BasePullHandler
 		this.#messageHandler.handleChangeEngine(params);
 	}
 
+	handleFileTranscription(params)
+	{
+		this.#messageHandler.handleFileTranscription(params);
+	}
+
 	handleMessageUpdate(params)
 	{
 		this.#messageHandler.handleMessageUpdate(params);

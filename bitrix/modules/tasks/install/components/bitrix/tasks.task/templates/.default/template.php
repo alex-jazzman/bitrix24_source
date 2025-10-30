@@ -1,6 +1,7 @@
 <?php
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
+use Bitrix\Main\Application;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Deadline\Configuration;
 use Bitrix\Tasks\Helper\Analytics;
@@ -23,6 +24,7 @@ use Bitrix\Tasks\Util;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit;
 use Bitrix\Tasks\Util\Type;
 use Bitrix\Tasks\Component\Task\TasksTaskFormState;
+use Bitrix\Tasks\Integration\SocialNetwork\Collab\Provider\CollabProvider;
 
 Loc::loadMessages(__FILE__);
 
@@ -166,6 +168,46 @@ if (Type::isIterable($arResult['ERROR'] ?? null))
 		<?php endif?>
 	</div>
 <?php endif?>
+
+<?php
+$context = Application::getInstance()->getContext();
+$request = $context->getRequest();
+
+if (!empty($request->get('ta_el')))
+{
+
+	$analytics = Analytics::getInstance($userId);
+
+	$params = [
+		'p1' => $analytics->getIsDemoParameter(),
+		'p2' => $analytics->getUserTypeParameter(),
+	];
+
+	$provider = CollabProvider::getInstance();
+
+	if (
+		$arParams['GROUP_ID'] > 0
+		&& $provider->isCollab($arParams['GROUP_ID']))
+	{
+		$params['p4'] = $analytics->getCollabParameter($arParams['GROUP_ID']);
+	}
+
+	$section = $request->get('ta_sec');
+	$element = $request->get('ta_el');
+
+	if (
+		array_key_exists($section, Analytics::SECTION)
+		&& array_key_exists($element, Analytics::ELEMENT)
+	)
+	{
+		$analytics->onTaskCreateClick(
+			section: Analytics::SECTION[$section],
+			element: Analytics::ELEMENT[$element],
+			params: $params,
+		);
+	}
+}
+?>
 
 <?php
 $taskData = !empty($arResult['DATA']['TASK']) ? $arResult['DATA']['TASK'] : array();
@@ -1392,6 +1434,7 @@ if ($taskLimitExceeded || $taskRecurrentRestrict)
 		'relatedSubTaskDeadlinesEnabled' => $relatedSubTaskDeadlinesEnabled,
 		'isExtranetUser' => Bitrix\Tasks\Integration\Extranet\User::isExtranet(),
 		'canEditTask' => (bool)$arResult['canEditTask'],
+		'canCreateFlow' => (bool)$arResult['canCreateFlow'],
 		'isDeadlineNotificationAvailable' => Configuration::isDeadlineNotificationAvailable($userId),
 	))?>;
 

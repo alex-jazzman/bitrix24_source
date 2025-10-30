@@ -127,6 +127,7 @@ jn.define('calendar/event-edit-form', (require, exports, module) => {
 			recursionMode = null,
 			createChatId = null,
 			editAttendeesMode = false,
+			participantsEntityList = [],
 		})
 		{
 			const event = await this.getEvent(eventId, dateFromTs);
@@ -142,6 +143,7 @@ jn.define('calendar/event-edit-form', (require, exports, module) => {
 				recursionMode,
 				selectedDayTs,
 				editAttendeesMode,
+				participantsEntityList,
 			});
 
 			this.openPage(parentLayout, editAttendeesMode, event?.name);

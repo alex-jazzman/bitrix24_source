@@ -663,19 +663,57 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	            }
 	            return mergedOptions;
 	          }
-	          if (Reflect.has(value, 'recaptcha')) {
-	            var _value$recaptcha = value.recaptcha,
-	              _key = _value$recaptcha.key,
-	              secret = _value$recaptcha.secret;
-	            delete value.recaptcha.key;
-	            delete value.recaptcha.secret;
+	          if (Reflect.has(value, 'captcha')) {
+	            var _value$captcha, _value$captcha2;
+	            var recaptcha = {};
 	            var captcha = {};
-	            if (!main_core.Type.isNil(_key)) {
-	              captcha.key = _key;
+	            var yandexCaptcha = {};
+	            if ((_value$captcha = value.captcha) !== null && _value$captcha !== void 0 && _value$captcha.recaptcha) {
+	              var _value$captcha$recapt = value.captcha.recaptcha,
+	                _key = _value$captcha$recapt.key,
+	                secret = _value$captcha$recapt.secret,
+	                use = _value$captcha$recapt.use;
+	              // eslint-disable-next-line no-param-reassign
+	              delete value.captcha.recaptcha.key;
+	              // eslint-disable-next-line no-param-reassign
+	              delete value.captcha.recaptcha.secret;
+	              if (!main_core.Type.isNil(_key)) {
+	                recaptcha.key = _key;
+	              }
+	              if (!main_core.Type.isNil(secret)) {
+	                recaptcha.secret = secret;
+	              }
+	              if (!main_core.Type.isNil(use)) {
+	                recaptcha.use = use;
+	              }
 	            }
-	            if (!main_core.Type.isNil(secret)) {
-	              captcha.secret = secret;
+	            if ((_value$captcha2 = value.captcha) !== null && _value$captcha2 !== void 0 && _value$captcha2.yandexCaptcha) {
+	              var _value$captcha$yandex = value.captcha.yandexCaptcha,
+	                _key2 = _value$captcha$yandex.key,
+	                _secret = _value$captcha$yandex.secret,
+	                _use = _value$captcha$yandex.use;
+	              // eslint-disable-next-line no-param-reassign
+	              delete value.captcha.yandexCaptcha.key;
+	              // eslint-disable-next-line no-param-reassign
+	              delete value.captcha.yandexCaptcha.secret;
+	              if (!main_core.Type.isNil(_key2)) {
+	                yandexCaptcha.key = _key2;
+	              }
+	              if (!main_core.Type.isNil(_secret)) {
+	                yandexCaptcha.secret = _secret;
+	              }
+	              if (!main_core.Type.isNil(_use)) {
+	                yandexCaptcha.use = _use;
+	              }
 	            }
+	            if (value.captcha) {
+	              var service = value.captcha.service;
+	              if (!main_core.Type.isNil(service)) {
+	                captcha.service = service;
+	              }
+	            }
+	            captcha.recaptcha = _objectSpread(_objectSpread({}, formOptions.captcha.recaptcha), recaptcha);
+	            captcha.yandexCaptcha = _objectSpread(_objectSpread({}, formOptions.captcha.yandexCaptcha), yandexCaptcha);
 	            return _objectSpread(_objectSpread({}, formOptions), {}, {
 	              captcha: _objectSpread(_objectSpread({}, formOptions.captcha), captcha),
 	              data: _objectSpread(_objectSpread({}, formOptions.data), value)
@@ -994,8 +1032,8 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	      return this.cache.remember('errorAlert', function () {
 	        var rootWindow = landing_pageobject.PageObject.getRootWindow();
 	        return new rootWindow.BX.UI.Dialogs.MessageBox({
-	          title: landing_loc.Loc.getMessage('LANDING_FORM_SAVE_ERROR_ALERT_TITLE'),
 	          buttons: ui_dialogs_messagebox.MessageBoxButtons.OK,
+	          okCaption: landing_loc.Loc.getMessage('LANDING_FORM_SAVE_CAPTCHA_ALERT_OK_TEXT'),
 	          popupOptions: {
 	            maxHeight: 310
 	          }
@@ -1048,20 +1086,6 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	            }
 	            return currentOptions;
 	          }();
-	          if (options.data.recaptcha.use && !_this20.getFormDictionary().captcha.hasKeys && !options.captcha.hasDefaults) {
-	            options.data.recaptcha.use = false;
-	            var _rootWindow2 = landing_pageobject.PageObject.getRootWindow();
-	            var alert = new _rootWindow2.BX.UI.Dialogs.MessageBox({
-	              title: landing_loc.Loc.getMessage('LANDING_FORM_SAVE_CAPTCHA_ALERT_TITLE'),
-	              message: landing_loc.Loc.getMessage('LANDING_FORM_SAVE_CAPTCHA_ALERT_TEXT_2'),
-	              buttons: ui_dialogs_messagebox.MessageBoxButtons.OK,
-	              onOk: function onOk() {
-	                alert.close();
-	                main_core.Dom.removeClass(_this20.getSaveButton().layout, 'ui-btn-wait');
-	              }
-	            });
-	            alert.show();
-	          }
 	          void crm_form_client.FormClient.getInstance().saveOptions(options).then(function (result) {
 	            BX.onCustomEvent(_this20, 'BX.Landing.Block:onAfterFormSave', [_this20.getCurrentBlock().id]);
 	            _this20.setFormOptions(result);
@@ -1103,8 +1127,8 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	                errorAlert.show();
 	              }
 	            } else {
-	              var _rootWindow3 = landing_pageobject.PageObject.getRootWindow();
-	              _rootWindow3.BX.UI.Dialogs.MessageBox.alert(landing_loc.Loc.getMessage('LANDING_FORM_SAVE_UNKNOWN_ERROR_ALERT_TEXT'), landing_loc.Loc.getMessage('LANDING_FORM_SAVE_ERROR_ALERT_TITLE'));
+	              var _rootWindow2 = landing_pageobject.PageObject.getRootWindow();
+	              _rootWindow2.BX.UI.Dialogs.MessageBox.alert(landing_loc.Loc.getMessage('LANDING_FORM_SAVE_UNKNOWN_ERROR_ALERT_TEXT'), landing_loc.Loc.getMessage('LANDING_FORM_SAVE_ERROR_ALERT_TITLE'));
 	            }
 	            main_core.Dom.removeClass(_this20.getSaveButton().layout, 'ui-btn-wait');
 	          });

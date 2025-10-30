@@ -1,6 +1,6 @@
 import { Dom, Event, Text, Type } from 'main.core';
 
-import { mapActions, mapGetters } from 'ui.vue3.vuex';
+import { mapGetters } from 'ui.vue3.vuex';
 import { Outline } from 'ui.icon-set.api.core';
 import 'ui.icon-set.outline';
 
@@ -9,9 +9,10 @@ import { Core } from 'tasks.v2.core';
 import { CardType, EventName, Model } from 'tasks.v2.const';
 import { Chip } from 'tasks.v2.component.elements.chip';
 import { FieldList } from 'tasks.v2.component.elements.field-list';
+import { DropZone } from 'tasks.v2.component.drop-zone';
 import { Title as FieldTitle } from 'tasks.v2.component.fields.title';
 import { Importance } from 'tasks.v2.component.fields.importance';
-import { DescriptionField, DescriptionSheet } from 'tasks.v2.component.fields.description';
+import { DescriptionField, DescriptionSheet, descriptionTextEditor } from 'tasks.v2.component.fields.description';
 import { Creator, creatorMeta } from 'tasks.v2.component.fields.creator';
 import { Responsible, responsibleMeta } from 'tasks.v2.component.fields.responsible';
 import { Deadline, deadlineMeta } from 'tasks.v2.component.fields.deadline';
@@ -22,6 +23,8 @@ import { Group, GroupChip, groupMeta } from 'tasks.v2.component.fields.group';
 import { Flow, FlowChip, flowMeta } from 'tasks.v2.component.fields.flow';
 import { Accomplices, AccomplicesChip, accomplicesMeta } from 'tasks.v2.component.fields.accomplices';
 import { Auditors, AuditorsChip, auditorsMeta } from 'tasks.v2.component.fields.auditors';
+import { Tags, TagsChip, tagsMeta } from 'tasks.v2.component.fields.tags';
+import { DatePlan, DatePlanChip, DatePlanSheet, datePlanMeta } from 'tasks.v2.component.fields.date-plan';
 import { fileService } from 'tasks.v2.provider.service.file-service';
 import { taskService } from 'tasks.v2.provider.service.task-service';
 import { checkListService } from 'tasks.v2.provider.service.check-list-service';
@@ -44,11 +47,14 @@ export const App = {
 		Files,
 		FilesSheet,
 		CheckList,
+		DatePlan,
+		DatePlanSheet,
 		FieldList,
 		Chip,
 		Chat,
 		FooterCreate,
 		FooterEdit,
+		DropZone,
 	},
 	provide(): Object
 	{
@@ -71,6 +77,9 @@ export const App = {
 	{
 		return {
 			Outline,
+			filesMeta,
+			datePlanMeta,
+			checkListMeta,
 			resizeObserver: null,
 		};
 	},
@@ -78,12 +87,9 @@ export const App = {
 	{
 		return {
 			taskId: this.id,
-			isBottomSheetShown: false,
 			isFilesSheetShown: false,
 			isCheckListSheetShown: false,
-			chipsEventHandlers: {
-				showCheckList: this.openCheckList,
-			},
+			isDatePlanSheetShown: false,
 			checkListId: 0,
 			files: fileService.get(this.id).getFiles(),
 		};
@@ -92,26 +98,6 @@ export const App = {
 		...mapGetters({
 			currentUserId: `${Model.Interface}/currentUserId`,
 		}),
-		wasAccomplicesFilled(): boolean
-		{
-			return this.$store.getters[`${Model.Tasks}/wasFieldFilled`](this.taskId, accomplicesMeta.id);
-		},
-		wasAuditorsFilled(): boolean
-		{
-			return this.$store.getters[`${Model.Tasks}/wasFieldFilled`](this.taskId, auditorsMeta.id);
-		},
-		wasFlowFilled(): boolean
-		{
-			return this.$store.getters[`${Model.Tasks}/wasFieldFilled`](this.taskId, flowMeta.id);
-		},
-		wasGroupFilled(): boolean
-		{
-			return this.$store.getters[`${Model.Tasks}/wasFieldFilled`](this.taskId, groupMeta.id);
-		},
-		wasFilesFilled(): boolean
-		{
-			return this.$store.getters[`${Model.Tasks}/wasFieldFilled`](this.taskId, filesMeta.id);
-		},
 		task(): TaskModel
 		{
 			return this.$store.getters[`${Model.Tasks}/getById`](this.taskId);
@@ -133,7 +119,6 @@ export const App = {
 					title: creatorMeta.title,
 					component: Creator,
 					props: {
-						taskId: this.taskId,
 						context: this.$options.name,
 						selectorWithActionMenu: this.isEdit,
 					},
@@ -142,7 +127,6 @@ export const App = {
 					title: responsibleMeta.title,
 					component: Responsible,
 					props: {
-						taskId: this.taskId,
 						context: this.$options.name,
 						selectorWithActionMenu: this.isEdit,
 					},
@@ -157,14 +141,15 @@ export const App = {
 					withSeparator: true,
 				},
 				{
-					title: filesMeta.title,
-					component: Files,
 					chip: FilesChip,
 				},
 				{
-					title: checkListMeta.title,
-					component: CheckList,
-					chip: CheckListChip,
+					chip: {
+						component: CheckListChip,
+						events: {
+							showCheckList: this.openCheckList,
+						},
+					},
 				},
 				{
 					title: groupMeta.getTitle(this.task.groupId),
@@ -181,7 +166,7 @@ export const App = {
 					title: auditorsMeta.title,
 					component: Auditors,
 					chip: AuditorsChip,
-					withSeparator: this.wasAccomplicesFilled,
+					withSeparator: this.wasFilled(accomplicesMeta.id),
 				},
 				{
 					title: flowMeta.title,
@@ -189,6 +174,19 @@ export const App = {
 					chip: FlowChip,
 					withSeparator: true,
 					isEnabled: Core.getParams().features.isFlowEnabled,
+				},
+				{
+					title: tagsMeta.title,
+					component: Tags,
+					chip: TagsChip,
+				},
+				{
+					chip: {
+						component: DatePlanChip,
+						events: {
+							open: this.openDatePlan,
+						},
+					},
 				},
 			];
 
@@ -209,12 +207,12 @@ export const App = {
 		projectFields(): Object[]
 		{
 			const projectFields = new Set();
-			if (this.wasGroupFilled)
+			if (this.wasFilled(groupMeta.id))
 			{
 				projectFields.add(Group);
 			}
 
-			if (this.wasFlowFilled)
+			if (this.wasFilled(flowMeta.id))
 			{
 				projectFields.add(Flow);
 			}
@@ -225,21 +223,34 @@ export const App = {
 		{
 			const participantsFields = new Set();
 
-			if (this.wasAccomplicesFilled)
+			if (this.wasFilled(accomplicesMeta.id))
 			{
 				participantsFields.add(Accomplices);
 			}
 
-			if (this.wasAuditorsFilled)
+			if (this.wasFilled(auditorsMeta.id))
 			{
 				participantsFields.add(Auditors);
 			}
 
 			return this.fields.filter(({ component }) => participantsFields.has(component));
 		},
+		tagsFields(): Object[]
+		{
+			if (!this.wasFilled(tagsMeta.id))
+			{
+				return [];
+			}
+
+			return this.fields.filter(({ component }) => component === Tags);
+		},
 		chips(): any[]
 		{
-			return this.fields.filter(({ chip, isEnabled }) => chip && isEnabled !== false ).map(({ chip }) => chip);
+			return this.fields.filter(({ chip, isEnabled }) => chip && isEnabled !== false).map(({ chip }) => chip);
+		},
+		isBottomSheetShown(): boolean
+		{
+			return this.isFilesSheetShown || this.isCheckListSheetShown || this.isDatePlanSheetShown;
 		},
 	},
 	watch: {
@@ -268,6 +279,12 @@ export const App = {
 		{
 			await taskService.getById(this.taskId);
 		}
+
+		await fileService.get(this.taskId).list(this.task.fileIds);
+
+		descriptionTextEditor.get(this.taskId, {
+			content: this.task?.description,
+		});
 	},
 	mounted(): void
 	{
@@ -276,10 +293,7 @@ export const App = {
 	},
 	beforeUnmount(): void
 	{
-		if (this.resizeObserver)
-		{
-			this.resizeObserver.disconnect();
-		}
+		this.resizeObserver?.disconnect();
 	},
 	unmounted(): void
 	{
@@ -287,12 +301,14 @@ export const App = {
 		{
 			void this.$store.dispatch(`${Model.Tasks}/delete`, this.taskId);
 			fileService.delete(this.taskId);
+			descriptionTextEditor.delete(this.taskId);
 		}
 	},
 	methods: {
-		...mapActions(Model.Interface, [
-			'updateTitleFieldOffsetHeight',
-		]),
+		wasFilled(fieldId: string): boolean
+		{
+			return this.$store.getters[`${Model.Tasks}/wasFieldFilled`](this.taskId, fieldId);
+		},
 		tryStartObserver(): void
 		{
 			if (this.$refs.title && !this.resizeObserver)
@@ -308,13 +324,15 @@ export const App = {
 				{
 					if (entry.target === this.$refs.title)
 					{
-						this.updateTitleFieldOffsetHeight(entry.contentRect.height);
+						void this.$store.dispatch(`${Model.Interface}/updateTitleFieldOffsetHeight`, entry.contentRect.height);
 					}
 				}
 			});
 		},
 		async addTask(): Promise<void>
 		{
+			await this.$refs?.description?.save();
+
 			const checkLists = this.checkLists;
 
 			const [id] = await taskService.add(this.task);
@@ -327,6 +345,7 @@ export const App = {
 			}
 
 			fileService.replace(this.id, this.taskId);
+			descriptionTextEditor.replace(this.id, this.taskId);
 		},
 		openEditor(): void
 		{
@@ -346,7 +365,6 @@ export const App = {
 		{
 			this.isFilesSheetShown = false;
 			this.handleCloseBottomSheet();
-			this.handleCloseBottomSheet();
 		},
 		openCheckList(checkListId?: number): void
 		{
@@ -354,44 +372,33 @@ export const App = {
 			this.isCheckListSheetShown = true;
 			this.handleShowBottomSheet();
 		},
-		closeCheckList(): void
+		closeCheckList(checkListId?: number): void
 		{
+			this.checkListId = checkListId;
 			this.isCheckListSheetShown = false;
+			this.handleCloseBottomSheet();
+		},
+		openDatePlan(): void
+		{
+			this.isDatePlanSheetShown = true;
+			this.handleShowBottomSheet();
+		},
+		closeDatePlan(): void
+		{
+			this.isDatePlanSheetShown = false;
 			this.handleCloseBottomSheet();
 		},
 		handleShowBottomSheet(): void
 		{
-			this.isBottomSheetShown = true;
 			Dom.addClass(this.$refs.scrollContent, '--disable-scroll');
-			this.$refs.scrollContent.scrollTo({
-				top: 0,
-				behavior: 'smooth',
-			});
 		},
 		handleCloseBottomSheet(): void
 		{
-			this.isBottomSheetShown = false;
 			Dom.removeClass(this.$refs.scrollContent, '--disable-scroll');
 		},
 		close(): void
 		{
 			Event.EventEmitter.emit(EventName.CloseFullCard);
-		},
-		getEventListeners(chip, handlers): Object
-		{
-			const listeners = {};
-
-			if (chip.emits)
-			{
-				Object.keys(handlers).forEach((event: string) => {
-					if (chip.emits.includes(event))
-					{
-						listeners[event] = handlers[event];
-					}
-				});
-			}
-
-			return listeners;
 		},
 	},
 	template: `
@@ -418,9 +425,15 @@ export const App = {
 							:isShown="isCheckListSheetShown"
 							@close="closeCheckList"
 						/>
+						<DatePlanSheet
+							:taskId="taskId"
+							:isShown="isDatePlanSheetShown"
+							@close="closeDatePlan"
+						/>
 						<DescriptionField
 							:taskId="taskId"
 							v-slot="slot"
+							ref="description"
 						>
 							<DescriptionSheet
 								:taskId="taskId"
@@ -436,14 +449,14 @@ export const App = {
 							</div>
 							<div class="tasks-full-card-chips-fields">
 								<div
-									v-if="files.length > 0 || wasFilesFilled"
-									class="tasks-full-card-field-container"
+									v-if="files.length > 0 || wasFilled(filesMeta.id)"
+									class="tasks-full-card-field-container --small-vertical-padding"
 									data-field-container
 								>
 									<Files :taskId="taskId" @open="openFiles"/>
 								</div>
 								<div
-									v-if="task.checklist.length > 0"
+									v-if="wasFilled(checkListMeta.id)"
 									class="tasks-full-card-field-container --custom"
 									data-field-container
 								>
@@ -451,6 +464,7 @@ export const App = {
 										:taskId="taskId"
 										:isPreview="true"
 										:isComponentShown="!isCheckListSheetShown"
+										:checkListId="checkListId"
 										@open="openCheckList"
 									/>
 								</div>
@@ -471,18 +485,36 @@ export const App = {
 										:useSeparator="participantsFields.length > 1"
 									/>
 								</div>
+								<div
+									v-if="tagsFields.length > 0"
+									class="tasks-full-card-field-container"
+									data-field-container
+								>
+									<FieldList :fields="tagsFields"/>
+								</div>
+								<div
+									v-if="wasFilled(datePlanMeta.id)"
+									class="tasks-full-card-field-container"
+									data-field-container
+								>
+									<DatePlan :taskId="taskId" @open="openDatePlan"/>
+								</div>
 								<div class="tasks-full-card-chips">
 									<template v-for="(chip, index) of chips" :key="index">
 										<component
-											:is="chip"
+											:is="chip.component ?? chip"
 											v-bind="{ taskId }"
-											v-on="getEventListeners(chip, chipsEventHandlers)"
+											v-on="chip.events ?? {}"
 										/>
 									</template>
 									<Chip :icon="Outline.APPS" :text="'Ещё'" :soon="true"/>
 								</div>
 							</div>
 						</div>
+						<DropZone
+							v-if="!isBottomSheetShown"
+							:taskId="taskId"
+						/>
 					</div>
 					<div class="tasks-full-card-footer">
 						<FooterEdit v-if="isEdit" :taskId="taskId"/>

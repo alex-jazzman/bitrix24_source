@@ -28,6 +28,21 @@ export const ProgressBar = {
 			type: String,
 			default: ProgressBarSize.L,
 		},
+		handleStatus: {
+			type: Array,
+			default: () => {
+				return [FileStatus.progress, FileStatus.upload];
+			},
+		},
+		/**
+		 * @value {[status: string]: { iconClass: string, labelText: string }}
+		 */
+		statusMap: {
+			type: Object,
+			default: () => {
+				return {};
+			},
+		},
 	},
 	emits: ['cancelClick'],
 	computed: {
@@ -39,7 +54,7 @@ export const ProgressBar = {
 		},
 		needProgressBar(): boolean
 		{
-			return [FileStatus.progress, FileStatus.upload].includes(this.file.status);
+			return this.handleStatus.includes(this.file.status);
 		},
 		progressStyles(): { strokeDashoffset: number, strokeDasharray: number }
 		{
@@ -56,7 +71,21 @@ export const ProgressBar = {
 		},
 		labelText(): string
 		{
+			if (this.statusMap?.[this.file.status]?.labelText)
+			{
+				return this.statusMap?.[this.file.status]?.labelText;
+			}
+
 			return formatProgressLabel(this.file.progress, this.file.size);
+		},
+		iconClass(): string
+		{
+			if (this.statusMap?.[this.file.status]?.iconClass)
+			{
+				return this.statusMap[this.file.status].iconClass;
+			}
+
+			return OutlineIcons.CROSS_L;
 		},
 		containerClass(): string
 		{
@@ -74,7 +103,7 @@ export const ProgressBar = {
 	methods: {
 		onLoaderClick()
 		{
-			if (![FileStatus.upload, FileStatus.progress].includes(this.file.status))
+			if (!this.handleStatus.includes(this.file.status))
 			{
 				return;
 			}
@@ -103,7 +132,7 @@ export const ProgressBar = {
 					></circle>
 				</svg>
 				<BIcon
-					:name="OutlineIcons.CROSS_L"
+					:name="iconClass"
 					:color="Color.white"
 					:size="iconSize"
 					class="bx-im-progress-bar__loader-icon"

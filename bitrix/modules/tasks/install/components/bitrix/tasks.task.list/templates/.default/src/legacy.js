@@ -100,18 +100,16 @@ BX.Tasks.GridActions = {
 
 	onTagUpdateClick: function(taskId, groupId, event)
 	{
-		var onRowUpdate = function(event) {
-			var id = event.getData().id;
+		const onRowUpdate = (baseEvent) => {
+			const id = baseEvent.getData().id;
 			if (Number(id) === Number(taskId))
 			{
-				var row = BX.Main.gridManager.getById(this.gridId).instance.getRows().getById(id);
-				var button = row.getCellById('TAG').querySelector('.main-grid-tag-add');
-
-				dialog.setTargetNode(button);
+				const row = BX.Main.gridManager.getById(this.gridId).instance.getRows().getById(id);
+				dialog.setTargetNode(row.getCellById('TAG'));
 			}
 		};
-		var onRowRemove = function(event) {
-			var id = event.getData().id;
+		const onRowRemove = (baseEvent) => {
+			const id = baseEvent.getData().id;
 			if (Number(id) === Number(taskId))
 			{
 				dialog.hide();
@@ -320,11 +318,15 @@ BX.Tasks.GridActions = {
 			events: {
 				'onLoad': function() {
 					dialog.getFooterContainer().style.zIndex = 1;
-					BX.addCustomEvent('Tasks.Tasks.Grid:RowRemove', BX.proxy(onRowRemove, this));
+					BX.addCustomEvent('Tasks.Tasks.Grid:RowRemove', onRowRemove);
 					onTagsLoad();
 				}.bind(this),
+				'onShow': function() {
+					BX.addCustomEvent('Tasks.Tasks.Grid:RowUpdate', onRowUpdate);
+				}.bind(this),
 				'onHide': function() {
-					BX.removeCustomEvent('Tasks.Tasks.Grid:RowRemove', BX.proxy(onRowRemove, this));
+					BX.removeCustomEvent('Tasks.Tasks.Grid:RowUpdate', onRowUpdate);
+					BX.removeCustomEvent('Tasks.Tasks.Grid:RowRemove', onRowRemove);
 				}.bind(this),
 				'onSearch': function(event){
 					onSearch(event)
@@ -826,7 +828,9 @@ BX.Tasks.GridActions = {
 		var grid = BX.Main.gridManager.getById(this.gridId);
 		if (grid && grid.hasOwnProperty('instance'))
 		{
-			grid.instance.updateRow(taskId.toString());
+			grid.instance.updateRow(taskId.toString(), null, null, ({ id }) => {
+				BX.onCustomEvent('Tasks.Tasks.Grid:RowUpdate', { id });
+			});
 		}
 	},
 
@@ -1958,7 +1962,9 @@ BX(function() {
 					{
 						if (parameters.isCompleteComment === true)
 						{
-							this.getGrid().updateRow(taskId);
+							this.getGrid().updateRow(taskId, null, null, ({ id }) => {
+								BX.onCustomEvent('Tasks.Tasks.Grid:RowUpdate', { id });
+							});
 						}
 						else
 						{
@@ -1975,7 +1981,9 @@ BX(function() {
 					}
 					else if (parameters.action === this.actions.taskUpdate)
 					{
-						this.getGrid().updateRow(taskId);
+						this.getGrid().updateRow(taskId, null, null, ({ id }) => {
+							BX.onCustomEvent('Tasks.Tasks.Grid:RowUpdate', { id });
+						});
 					}
 				}
 			}

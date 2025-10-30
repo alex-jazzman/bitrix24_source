@@ -1,6 +1,6 @@
 /* root container */
 .crm-copilot-wrapper{
-	--crm-copilot-slider-bg: url('images/images/copilot-slider-bg.png?v=2') fixed 100% 0 no-repeat;
+	--crm-copilot-slider-bg: url('/bitrix/js/crm/ai/slider/images/copilot-slider-bg.png') fixed 100% 0 no-repeat;
 	--ui-btn-custom-background: var(--crm-copilot-slider-bg);
 
 	background: var(--crm-copilot-slider-bg);

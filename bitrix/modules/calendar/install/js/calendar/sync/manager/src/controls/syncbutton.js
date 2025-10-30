@@ -1,6 +1,6 @@
 import { Dom, Loc, Tag } from 'main.core';
 import { Popup } from 'main.popup';
-import { Button, ButtonSize, ButtonIcon, ButtonColor } from 'ui.buttons';
+import { Button, ButtonSize, ButtonIcon, ButtonColor, AirButtonStyle } from 'ui.buttons';
 import SyncStatusPopupV2 from './syncstatuspopup-v2';
 
 export default class SyncButton
@@ -14,6 +14,7 @@ export default class SyncButton
 		this.isGoogleApplicationRefused = options.isGoogleApplicationRefused;
 		this.counters = options.counters;
 		this.payAttentionToNewSharingFeature = options.payAttentionToNewSharingFeature;
+		this.useAirDesign = options.useAirDesign;
 
 		this.buttonEnterTimeout = null;
 	}
@@ -28,14 +29,11 @@ export default class SyncButton
 		const buttonData = this.getButtonData();
 
 		this.button = new Button({
-			round: true,
 			text: buttonData.text,
 			size: ButtonSize.EXTRA_SMALL,
-			color: buttonData.color,
 			counter: buttonData.counter ?? 0,
 			leftCounter: buttonData.counter ? { value: buttonData.counter ?? 0 } : '',
-			icon: buttonData.icon || '',
-			className: `ui-btn-themes ${buttonData.iconClass || ''}`,
+			className: 'ui-btn-themes',
 			onclick: this.handleClick,
 			dataset: {
 				id: 'calendar_sync_button',
@@ -43,6 +41,19 @@ export default class SyncButton
 		});
 
 		this.button.renderTo(this.wrapper);
+
+		if (this.useAirDesign)
+		{
+			this.button.setAirDesign(true);
+			this.button.setStyle(buttonData.style);
+			this.button.setIcon(buttonData.icon || '');
+		}
+		else
+		{
+			this.button.setRound();
+			this.button.addClass(buttonData.iconClass || '');
+			this.button.setColor(buttonData.color);
+		}
 
 		if (!this.payAttentionToNewSharingFeature)
 		{
@@ -101,10 +112,20 @@ export default class SyncButton
 		this.counters = counters ?? this.counters;
 
 		const buttonData = this.getButtonData();
-		this.button.setColor(buttonData.color);
+
+		if (this.useAirDesign)
+		{
+			this.button.setStyle(buttonData.style);
+			this.button.setIcon(buttonData.icon || '');
+		}
+		else
+		{
+			this.button.setColor(buttonData.color);
+			this.button.removeClass('ui-btn-icon-fail ui-btn-icon-success ui-btn-clock calendar-sync-btn-icon-refused calendar-sync-btn-counter');
+			this.button.addClass(buttonData.iconClass);
+		}
+
 		this.button.setText(buttonData.text);
-		this.button.removeClass('ui-btn-icon-fail ui-btn-icon-success ui-btn-clock calendar-sync-btn-icon-refused calendar-sync-btn-counter');
-		this.button.addClass(buttonData.iconClass);
 		this.button.setCounter(buttonData.counter ?? 0);
 	}
 
@@ -131,6 +152,7 @@ export default class SyncButton
 			return {
 				text: Loc.getMessage('CAL_BUTTON_STATUS_FAILED_RECONNECT'),
 				color: ButtonColor.LIGHT_BORDER,
+				style: AirButtonStyle.OUTLINE,
 				icon: ButtonIcon.REFRESH,
 				iconClass: 'calendar-sync-btn-icon-refused',
 			};
@@ -142,6 +164,7 @@ export default class SyncButton
 				return {
 					text: Loc.getMessage('STATUS_BUTTON_SYNCHRONIZATION'),
 					color: ButtonColor.LIGHT_BORDER,
+					style: AirButtonStyle.OUTLINE,
 					icon: ButtonIcon.CHECK,
 					iconClass: 'ui-btn-icon-success',
 				};
@@ -151,6 +174,7 @@ export default class SyncButton
 				return {
 					text: Loc.getMessage('STATUS_BUTTON_FAILED'),
 					color: ButtonColor.LIGHT_BORDER,
+					style: AirButtonStyle.OUTLINE,
 					counter: this.counters.sync_errors || 1,
 					iconClass: 'calendar-sync-btn-counter',
 				};
@@ -160,6 +184,7 @@ export default class SyncButton
 				return {
 					text: Loc.getMessage('STATUS_BUTTON_SYNCHRONIZATION'),
 					color: ButtonColor.LIGHT_BORDER,
+					style: AirButtonStyle.OUTLINE,
 					iconClass: 'ui-btn-clock',
 				};
 			}
@@ -167,6 +192,7 @@ export default class SyncButton
 			default: {
 				return {
 					text: Loc.getMessage('STATUS_BUTTON_SYNC_CALENDAR_NEW'),
+					style: AirButtonStyle.FILLED,
 					color: ButtonColor.PRIMARY,
 				};
 			}

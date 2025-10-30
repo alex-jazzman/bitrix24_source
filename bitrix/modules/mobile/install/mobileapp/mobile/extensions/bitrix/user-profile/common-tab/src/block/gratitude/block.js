@@ -9,18 +9,12 @@ jn.define('user-profile/common-tab/src/block/gratitude/block', (require, exports
 	const { Loc } = require('loc');
 	const { ViewMode } = require('user-profile/common-tab/src/block/base-view');
 	const { GratitudeListManager } = require('layout/ui/gratitude-list');
-	const { Type } = require('type');
 
 	class GratitudeBlock extends BaseBlock
 	{
-		getSort()
-		{
-			return 400;
-		}
-
 		prepareProps(commonTabData)
 		{
-			const { gratitude, ownerId, parentWidget, efficiency } = commonTabData ?? {};
+			const { gratitude, ownerId, efficiency, isEditMode, parentWidget } = commonTabData ?? {};
 
 			if (gratitude?.items?.length > 0)
 			{
@@ -29,17 +23,22 @@ jn.define('user-profile/common-tab/src/block/gratitude/block', (require, exports
 
 			return {
 				ownerId,
-				efficiency,
 				parentWidget,
+				efficiency,
+				isEditMode,
 				gratitudeTotalCount: gratitude?.totalCount,
 				gratitudes: gratitude?.items,
 				testId: 'gratitude-card',
 				onClick: this.onClick.bind(this),
 				style: {
-					height: 96,
-					minWidth: '44%',
+					minHeight: 96,
 				},
 			};
+		}
+
+		isAvailable()
+		{
+			return !this.props.isEditMode;
 		}
 
 		getContentClass()
@@ -62,7 +61,7 @@ jn.define('user-profile/common-tab/src/block/gratitude/block', (require, exports
 		{
 			const { ownerId, parentWidget } = this.props;
 
-			void GratitudeListManager.openInComponentWithRedux({
+			void GratitudeListManager.openList({
 				ownerId,
 				parentWidget,
 			});
@@ -70,12 +69,7 @@ jn.define('user-profile/common-tab/src/block/gratitude/block', (require, exports
 
 		getTitle()
 		{
-			if (Type.isArrayFilled(this.props?.gratitudes))
-			{
-				return Loc.getMessage('M_PROFILE_GRATITUDE_TITLE');
-			}
-
-			return null;
+			return Loc.getMessage('M_PROFILE_GRATITUDE_TITLE');
 		}
 	}
 

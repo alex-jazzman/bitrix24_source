@@ -490,6 +490,16 @@ create table if not exists b_landing_block_last_used
 	INDEX IX_B_BLOCK_LU_USER_CODE (USER_ID, CODE)
 );
 
+create table if not exists b_landing_block_favourite
+(
+	ID int(18) not null auto_increment,
+	USER_ID int(18) not null,
+	CODE varchar(255) not null,
+	DATE_CREATE timestamp not null default CURRENT_TIMESTAMP,
+	PRIMARY KEY(ID),
+	INDEX IX_B_BLOCK_LU_USER (USER_ID)
+);
+
 create table if not exists b_landing_history
 (
     ID int(18) not null auto_increment,

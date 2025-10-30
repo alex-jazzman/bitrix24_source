@@ -10,5 +10,6 @@ return [
 		'alert',
 		'loc',
 		'layout/ui/safe-image',
+		'require-lazy',
 	],
 ];

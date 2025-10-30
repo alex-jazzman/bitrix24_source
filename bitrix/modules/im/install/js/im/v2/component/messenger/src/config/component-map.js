@@ -5,7 +5,6 @@ import { NotificationContent } from 'im.v2.component.content.notification';
 import { OpenlinesContent } from 'im.v2.component.content.openlines';
 import { OpenlinesV2Content } from 'im.v2.component.content.openlinesV2';
 import { SettingsContent } from 'im.v2.component.content.settings';
-import { AiAssistantListRouter } from 'im.v2.component.list.container.ai-assistant';
 import { ChannelListContainer } from 'im.v2.component.list.container.channel';
 import { CollabListContainer } from 'im.v2.component.list.container.collab';
 import { CopilotListContainer } from 'im.v2.component.list.container.copilot';
@@ -54,10 +53,6 @@ export const LayoutComponentMap: ComponentMap = {
 	},
 	copilot: {
 		list: CopilotListContainer,
-		content: ChatContent,
-	},
-	aiAssistant: {
-		list: AiAssistantListRouter,
 		content: ChatContent,
 	},
 	collab: {

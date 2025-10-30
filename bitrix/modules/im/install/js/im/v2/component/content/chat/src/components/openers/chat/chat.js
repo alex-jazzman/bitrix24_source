@@ -8,7 +8,6 @@ import { Logger } from 'im.v2.lib.logger';
 import { Utils } from 'im.v2.lib.utils';
 import { ChannelManager } from 'im.v2.lib.channel';
 import { PromoManager } from 'im.v2.lib.promo';
-import { Feature, FeatureManager } from 'im.v2.lib.feature';
 import { ChatService } from 'im.v2.provider.service.chat';
 import { BaseChatContent } from 'im.v2.component.content.elements';
 import { Core } from 'im.v2.application.core';
@@ -19,14 +18,12 @@ import { MultidialogContent } from '../../content/multidialog/multidialog';
 import { NotesContent } from '../../content/notes/notes-content';
 import { CopilotContent } from '../../content/copilot/copilot';
 import { AiAssistantBotContent } from '../../content/ai-assistant-bot/ai-assistant-bot';
-import { AiAssistantChatContent } from '../../content/ai-assistant-chat/ai-assistant-chat';
 import { BaseEmptyState as EmptyState } from './components/empty-state/base';
 import { ChannelEmptyState } from './components/empty-state/channel';
 import { EmbeddedChatPromoEmptyState } from './components/empty-state/chat/embedded-promo';
 import { EmbeddedChatEmptyState } from './components/empty-state/chat/embedded';
 import { CollabEmptyState } from './components/empty-state/collab/collab';
 import { CopilotEmptyState } from './components/empty-state/copilot/copilot';
-import { AiAssistantEmptyState } from './components/empty-state/ai-assistant/ai-assistant';
 import { UserService } from './classes/user-service';
 
 import './css/default-chat-content.css';
@@ -84,10 +81,6 @@ export const ChatOpener = {
 		{
 			return this.dialog.type === ChatType.copilot;
 		},
-		isAiAssistantChat(): boolean
-		{
-			return [ChatType.aiAssistant, ChatType.aiAssistantEntity].includes(this.dialog.type);
-		},
 		isAiAssistantBot(): boolean
 		{
 			return this.$store.getters['users/bots/isAiAssistant'](this.dialogId);
@@ -123,10 +116,6 @@ export const ChatOpener = {
 					condition: this.isAiAssistantBot,
 					component: AiAssistantBotContent,
 				},
-				{
-					condition: this.isAiAssistantChat,
-					component: AiAssistantChatContent,
-				},
 			];
 		},
 		contentComponent(): BitrixVueComponentProps
@@ -142,7 +131,7 @@ export const ChatOpener = {
 			const EmptyStateComponentByLayout = {
 				[Layout.channel]: ChannelEmptyState,
 				[Layout.collab]: CollabEmptyState,
-				[Layout.aiAssistant]: this.aiEmptyStateComponent,
+				[Layout.copilot]: CopilotEmptyState,
 				[Layout.chat]: this.chatEmptyStateComponent,
 				default: EmptyState,
 			};
@@ -160,15 +149,6 @@ export const ChatOpener = {
 			}
 
 			return needToShowPromoEmptyState ? EmbeddedChatPromoEmptyState : EmbeddedChatEmptyState;
-		},
-		aiEmptyStateComponent(): BitrixVueComponentProps
-		{
-			if (!FeatureManager.isFeatureAvailable(Feature.aiAssistantChatAvailable))
-			{
-				return CopilotEmptyState;
-			}
-
-			return AiAssistantEmptyState;
 		},
 	},
 	watch:

@@ -10,7 +10,6 @@ jn.define('calendar/event-list-view/section-list/page', (require, exports, modul
 	const { Box } = require('ui-system/layout/box');
 	const { AreaList } = require('ui-system/layout/area-list');
 	const { Area } = require('ui-system/layout/area');
-	const { Button, ButtonSize } = require('ui-system/form/buttons/button');
 
 	const { SectionManager } = require('calendar/data-managers/section-manager');
 	const { SectionListManager } = require('calendar/event-list-view/section-list/manager');
@@ -66,7 +65,6 @@ jn.define('calendar/event-list-view/section-list/page', (require, exports, modul
 					},
 				},
 				this.renderContent(),
-				this.renderConfirmButtonContainer(),
 			);
 		}
 
@@ -151,6 +149,11 @@ jn.define('calendar/event-list-view/section-list/page', (require, exports, modul
 		{
 			const { header, sections } = this.sections.local;
 
+			if (!Type.isArrayFilled(sections))
+			{
+				return null;
+			}
+
 			return this.renderSectionArea(header, sections);
 		}
 
@@ -186,40 +189,6 @@ jn.define('calendar/event-list-view/section-list/page', (require, exports, modul
 			return this.renderMultipleSectionAreas(this.sections.sync);
 		}
 
-		renderConfirmButtonContainer()
-		{
-			return Box(
-				{
-					safeArea: {
-						bottom: true,
-					},
-				},
-				Area(
-					{
-						isFirst: true,
-						style: {
-							borderTopColor: Color.bgSeparatorSecondary.toHex(),
-							borderTopWidth: 1,
-							backgroundColor: Color.bgSecondary.toHex(),
-						},
-					},
-					this.renderConfirmButton(),
-				),
-			);
-		}
-
-		renderConfirmButton()
-		{
-			return Button({
-				testId: 'calendar-section-list-confirm-button',
-				text: Loc.getMessage('M_CALENDAR_EVENT_LIST_SELECT'),
-				backgroundColor: Color.accentMainPrimary,
-				size: ButtonSize.L,
-				stretched: true,
-				onClick: this.onConfirmButtonClick,
-			});
-		}
-
 		isSectionShown(sectionId)
 		{
 			return !this.state.hiddenSections.includes(sectionId);
@@ -244,15 +213,6 @@ jn.define('calendar/event-list-view/section-list/page', (require, exports, modul
 			this.setState({ hiddenSections });
 		}
 
-		onConfirmButtonClick = () => {
-			if (this.hasChanges)
-			{
-				this.saveState();
-			}
-
-			this.layoutWidget.close();
-		};
-
 		saveState()
 		{
 			SectionManager.saveHiddenSections(State.ownerId, State.calType, this.state.hiddenSections);
@@ -269,8 +229,7 @@ jn.define('calendar/event-list-view/section-list/page', (require, exports, modul
 					text: Loc.getMessage('M_CALENDAR_EVENT_LIST_SECTION_LIST_TITLE'),
 					type: 'wizard',
 				})
-				.showOnTop()
-				.disableSwipe()
+				.setMediumPositionPercent(85)
 				.open()
 				.then((widget) => {
 					this.layoutWidget = widget;

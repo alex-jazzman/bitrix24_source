@@ -479,3 +479,14 @@ CREATE TABLE b_bp_workflow_template_draft
     INDEX ix_bp_wf_draft_template (TEMPLATE_ID),
     INDEX ix_bp_wf_draft_user (USER_ID)
 );
+
+CREATE TABLE b_bp_robot_version_index
+(
+	ID int NOT NULL AUTO_INCREMENT,
+	ROBOT_CODE varchar(255) NOT NULL,
+	VERSION int NOT NULL,
+	DATE_CHANGED date NOT NULL,
+	PRIMARY KEY (ID),
+	UNIQUE KEY ux_bp_robot_version_index_robot_code (ROBOT_CODE),
+	INDEX ix_bp_robot_version_index_date_changed (DATE_CHANGED)
+);

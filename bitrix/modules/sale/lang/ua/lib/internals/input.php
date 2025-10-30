@@ -36,7 +36,6 @@ $MESS["INPUT_NUMBER_SIZE"] = "Кількість видимих цифр";
 $MESS["INPUT_NUMBER_STEP"] = "Крок";
 $MESS["INPUT_NUMBER_STEP_ERROR"] = "не відповідає кроку #NUM#";
 $MESS["INPUT_REQUIRED"] = "Обов'язкове";
-$MESS["INPUT_REQUIRED_ERROR"] = "обов'язково для заповнення";
 $MESS["INPUT_REQUIRED_ERROR_MSGVER_1"] = "\"#NAME#\": обов'язково для заповнення.";
 $MESS["INPUT_REQUIRED_ERROR_WITHOUT_FIELD_TITLE"] = "обов'язково для заповнення";
 $MESS["INPUT_STRING"] = "Рядок";

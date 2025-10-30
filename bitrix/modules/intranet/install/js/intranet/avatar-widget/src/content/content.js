@@ -34,7 +34,8 @@ export class Content extends EventEmitter
 	{
 		return {
 			html: this.getLayout(),
-			minHeight: '58px',
+			minHeight: '50px',
+			margin: '0 13px',
 		};
 	}
 }

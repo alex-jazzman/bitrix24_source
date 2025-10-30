@@ -7,7 +7,6 @@ $MESS["TASK_COLUMN_CREATED_DATE"] = "Дата створення";
 $MESS["TASK_COLUMN_DEADLINE"] = "Термін";
 $MESS["TASK_COLUMN_MARK"] = "Оцінка";
 $MESS["TASK_COLUMN_PRIORITY"] = "Пріоритет";
-$MESS["TASK_COLUMN_RESPONSIBLE_ID"] = "Відповідальний";
 $MESS["TASK_COLUMN_RESPONSIBLE_ID_MSGVER_1"] = "виконавець";
 $MESS["TASK_COLUMN_SORTING"] = "Моє сортування";
 $MESS["TASK_COLUMN_TIME_ESTIMATE"] = "Планові трудовитрати";

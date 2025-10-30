@@ -2923,3 +2923,8 @@ table.bx-disk-popup-shared-people-list .bx-disk-filepage-used-people-link:hover{
 }
 
 /* endregion */
+.disk-external-link-popup.popup-window {
+	left: 50% !important;
+	top: 50% !important;
+	transform: translate(-50%, -50%) !important;
+}

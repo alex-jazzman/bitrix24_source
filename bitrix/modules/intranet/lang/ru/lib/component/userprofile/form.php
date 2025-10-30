@@ -47,3 +47,4 @@ $MESS["INTRANET_USER_PROFILE_FIELD_WORK_PROFILE"] = "Направления де
 $MESS["INTRANET_USER_PROFILE_FIELD_LANGUAGE_ID"] = "Язык для уведомлений";
 $MESS["INTRANET_USER_PROFILE_FIELD_HELP_PASSWORD_TAB"] = 'Изменить почту, которую вы используете для авторизации в Битрикс24, можно в разделе <span class="--underline"><a target="_blank" href="#HELP_LINK#">Пароли</a></span>';
 $MESS["INTRANET_USER_PROFILE_FIELD_DEPARTMENT_HEAD"] = 'Руководитель';
+$MESS["INTRANET_USER_PROFILE_FIELD_TEAM"] = 'Команда';

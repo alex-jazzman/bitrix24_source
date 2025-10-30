@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
-(function (exports,ui_vue3,ui_vue3_mixins_locMixin,tasks_v2_application_taskCard,tasks_v2_component_elements_chip,tasks_v2_component_elements_fieldList,tasks_v2_component_fields_title,tasks_v2_component_fields_importance,tasks_v2_component_fields_description,tasks_v2_component_fields_creator,tasks_v2_component_fields_deadline,tasks_v2_component_fields_status,tasks_v2_component_fields_files,tasks_v2_component_fields_checkList,tasks_v2_component_fields_group,tasks_v2_component_fields_flow,tasks_v2_component_fields_accomplices,tasks_v2_component_fields_auditors,tasks_v2_provider_service_fileService,tasks_v2_provider_service_checkListService,main_core_events,im_public,im_v2_application_integration_task,tasks_v2_core,tasks_v2_component_addTaskButton,ui_vue3_components_button,main_core,ui_vue3_vuex,ui_vue3_components_menu,ui_iconSet_api_vue,ui_iconSet_api_core,ui_iconSet_outline,tasks_v2_const,tasks_v2_component_fields_responsible,tasks_v2_lib_entitySelectorDialog,tasks_v2_provider_service_taskService) {
+(function (exports,ui_vue3,ui_vue3_mixins_locMixin,tasks_v2_application_taskCard,tasks_v2_component_elements_chip,tasks_v2_component_elements_fieldList,tasks_v2_component_dropZone,tasks_v2_component_fields_title,tasks_v2_component_fields_importance,tasks_v2_component_fields_description,tasks_v2_component_fields_creator,tasks_v2_component_fields_deadline,tasks_v2_component_fields_status,tasks_v2_component_fields_files,tasks_v2_component_fields_checkList,tasks_v2_component_fields_group,tasks_v2_component_fields_flow,tasks_v2_component_fields_accomplices,tasks_v2_component_fields_auditors,tasks_v2_component_fields_tags,tasks_v2_component_fields_datePlan,tasks_v2_provider_service_fileService,tasks_v2_provider_service_checkListService,main_core_events,im_public,im_v2_application_integration_task,tasks_v2_core,tasks_v2_component_addTaskButton,ui_vue3_components_button,main_core,ui_vue3_vuex,ui_vue3_components_menu,ui_iconSet_api_vue,ui_iconSet_api_core,ui_iconSet_outline,tasks_v2_const,tasks_v2_component_fields_responsible,tasks_v2_lib_entitySelectorDialog,tasks_v2_provider_service_taskService,tasks_v2_provider_service_statusService) {
 	'use strict';
 
 	// @vue/component
@@ -192,7 +192,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      return {
 	        title: this.loc('TASKS_V2_TASK_FULL_CARD_DEFER'),
 	        icon: ui_iconSet_api_core.Outline.PAUSE_L,
-	        onClick: () => tasks_v2_provider_service_taskService.taskService.defer(this.taskId)
+	        onClick: () => tasks_v2_provider_service_statusService.statusService.defer(this.taskId)
 	      };
 	    },
 	    getPauseItem() {
@@ -202,7 +202,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      return {
 	        title: this.loc('TASKS_V2_TASK_FULL_CARD_PAUSE'),
 	        icon: ui_iconSet_api_core.Outline.STOP_L,
-	        onClick: () => tasks_v2_provider_service_taskService.taskService.pause(this.taskId)
+	        onClick: () => tasks_v2_provider_service_statusService.statusService.pause(this.taskId)
 	      };
 	    },
 	    getRenewItem() {
@@ -212,7 +212,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      return {
 	        title: this.loc('TASKS_V2_TASK_FULL_CARD_RENEW'),
 	        icon: ui_iconSet_api_core.Outline.UNDO,
-	        onClick: () => tasks_v2_provider_service_taskService.taskService.renew(this.taskId)
+	        onClick: () => tasks_v2_provider_service_statusService.statusService.renew(this.taskId)
 	      };
 	    },
 	    getFixItem() {
@@ -222,7 +222,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      return {
 	        title: this.loc('TASKS_V2_TASK_FULL_CARD_FIX'),
 	        icon: ui_iconSet_api_core.Outline.UNDO,
-	        onClick: () => tasks_v2_provider_service_taskService.taskService.renew(this.taskId)
+	        onClick: () => tasks_v2_provider_service_statusService.statusService.renew(this.taskId)
 	      };
 	    },
 	    getDisapproveItem() {
@@ -232,7 +232,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      return {
 	        title: this.loc('TASKS_V2_TASK_FULL_CARD_DISAPPROVE'),
 	        icon: ui_iconSet_api_core.Outline.UNDO,
-	        onClick: () => tasks_v2_provider_service_taskService.taskService.disapprove(this.taskId)
+	        onClick: () => tasks_v2_provider_service_statusService.statusService.disapprove(this.taskId)
 	      };
 	    },
 	    getCompleteItem() {
@@ -242,7 +242,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      return {
 	        title: this.loc('TASKS_V2_TASK_FULL_CARD_COMPLETE'),
 	        icon: ui_iconSet_api_core.Outline.SENDED,
-	        onClick: () => tasks_v2_provider_service_taskService.taskService.complete(this.taskId)
+	        onClick: () => tasks_v2_provider_service_statusService.statusService.complete(this.taskId)
 	      };
 	    },
 	    getDelegateItem() {
@@ -370,7 +370,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      }
 	      return {
 	        text: this.loc('TASKS_V2_TASK_FULL_CARD_START'),
-	        onClick: () => tasks_v2_provider_service_taskService.taskService.start(this.taskId)
+	        onClick: () => tasks_v2_provider_service_statusService.statusService.start(this.taskId)
 	      };
 	    },
 	    getCompleteButton() {
@@ -379,7 +379,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      }
 	      return {
 	        text: this.loc('TASKS_V2_TASK_FULL_CARD_COMPLETE'),
-	        onClick: () => tasks_v2_provider_service_taskService.taskService.complete(this.taskId)
+	        onClick: () => tasks_v2_provider_service_statusService.statusService.complete(this.taskId)
 	      };
 	    },
 	    getRenewButton(style) {
@@ -389,7 +389,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      return {
 	        text: this.loc('TASKS_V2_TASK_FULL_CARD_RENEW'),
 	        style,
-	        onClick: () => tasks_v2_provider_service_taskService.taskService.renew(this.taskId)
+	        onClick: () => tasks_v2_provider_service_statusService.statusService.renew(this.taskId)
 	      };
 	    },
 	    getReviewButton() {
@@ -404,7 +404,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      }
 	      return {
 	        text: this.loc('TASKS_V2_TASK_FULL_CARD_APPROVE'),
-	        onClick: () => tasks_v2_provider_service_taskService.taskService.complete(this.taskId)
+	        onClick: () => tasks_v2_provider_service_statusService.statusService.complete(this.taskId)
 	      };
 	    }
 	  },
@@ -445,11 +445,14 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    Files: tasks_v2_component_fields_files.Files,
 	    FilesSheet: tasks_v2_component_fields_files.FilesSheet,
 	    CheckList: tasks_v2_component_fields_checkList.CheckList,
+	    DatePlan: tasks_v2_component_fields_datePlan.DatePlan,
+	    DatePlanSheet: tasks_v2_component_fields_datePlan.DatePlanSheet,
 	    FieldList: tasks_v2_component_elements_fieldList.FieldList,
 	    Chip: tasks_v2_component_elements_chip.Chip,
 	    Chat,
 	    FooterCreate,
-	    FooterEdit
+	    FooterEdit,
+	    DropZone: tasks_v2_component_dropZone.DropZone
 	  },
 	  provide() {
 	    return {
@@ -470,18 +473,18 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  setup() {
 	    return {
 	      Outline: ui_iconSet_api_core.Outline,
+	      filesMeta: tasks_v2_component_fields_files.filesMeta,
+	      datePlanMeta: tasks_v2_component_fields_datePlan.datePlanMeta,
+	      checkListMeta: tasks_v2_component_fields_checkList.checkListMeta,
 	      resizeObserver: null
 	    };
 	  },
 	  data() {
 	    return {
 	      taskId: this.id,
-	      isBottomSheetShown: false,
 	      isFilesSheetShown: false,
 	      isCheckListSheetShown: false,
-	      chipsEventHandlers: {
-	        showCheckList: this.openCheckList
-	      },
+	      isDatePlanSheetShown: false,
 	      checkListId: 0,
 	      files: tasks_v2_provider_service_fileService.fileService.get(this.id).getFiles()
 	    };
@@ -490,21 +493,6 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    ...ui_vue3_vuex.mapGetters({
 	      currentUserId: `${tasks_v2_const.Model.Interface}/currentUserId`
 	    }),
-	    wasAccomplicesFilled() {
-	      return this.$store.getters[`${tasks_v2_const.Model.Tasks}/wasFieldFilled`](this.taskId, tasks_v2_component_fields_accomplices.accomplicesMeta.id);
-	    },
-	    wasAuditorsFilled() {
-	      return this.$store.getters[`${tasks_v2_const.Model.Tasks}/wasFieldFilled`](this.taskId, tasks_v2_component_fields_auditors.auditorsMeta.id);
-	    },
-	    wasFlowFilled() {
-	      return this.$store.getters[`${tasks_v2_const.Model.Tasks}/wasFieldFilled`](this.taskId, tasks_v2_component_fields_flow.flowMeta.id);
-	    },
-	    wasGroupFilled() {
-	      return this.$store.getters[`${tasks_v2_const.Model.Tasks}/wasFieldFilled`](this.taskId, tasks_v2_component_fields_group.groupMeta.id);
-	    },
-	    wasFilesFilled() {
-	      return this.$store.getters[`${tasks_v2_const.Model.Tasks}/wasFieldFilled`](this.taskId, tasks_v2_component_fields_files.filesMeta.id);
-	    },
 	    task() {
 	      return this.$store.getters[`${tasks_v2_const.Model.Tasks}/getById`](this.taskId);
 	    },
@@ -520,7 +508,6 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	        title: tasks_v2_component_fields_creator.creatorMeta.title,
 	        component: tasks_v2_component_fields_creator.Creator,
 	        props: {
-	          taskId: this.taskId,
 	          context: this.$options.name,
 	          selectorWithActionMenu: this.isEdit
 	        }
@@ -528,7 +515,6 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	        title: tasks_v2_component_fields_responsible.responsibleMeta.title,
 	        component: tasks_v2_component_fields_responsible.Responsible,
 	        props: {
-	          taskId: this.taskId,
 	          context: this.$options.name,
 	          selectorWithActionMenu: this.isEdit
 	        }
@@ -540,13 +526,14 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	        component: tasks_v2_component_fields_status.Status,
 	        withSeparator: true
 	      }, {
-	        title: tasks_v2_component_fields_files.filesMeta.title,
-	        component: tasks_v2_component_fields_files.Files,
 	        chip: tasks_v2_component_fields_files.FilesChip
 	      }, {
-	        title: tasks_v2_component_fields_checkList.checkListMeta.title,
-	        component: tasks_v2_component_fields_checkList.CheckList,
-	        chip: tasks_v2_component_fields_checkList.CheckListChip
+	        chip: {
+	          component: tasks_v2_component_fields_checkList.CheckListChip,
+	          events: {
+	            showCheckList: this.openCheckList
+	          }
+	        }
 	      }, {
 	        title: tasks_v2_component_fields_group.groupMeta.getTitle(this.task.groupId),
 	        component: tasks_v2_component_fields_group.Group,
@@ -560,13 +547,24 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	        title: tasks_v2_component_fields_auditors.auditorsMeta.title,
 	        component: tasks_v2_component_fields_auditors.Auditors,
 	        chip: tasks_v2_component_fields_auditors.AuditorsChip,
-	        withSeparator: this.wasAccomplicesFilled
+	        withSeparator: this.wasFilled(tasks_v2_component_fields_accomplices.accomplicesMeta.id)
 	      }, {
 	        title: tasks_v2_component_fields_flow.flowMeta.title,
 	        component: tasks_v2_component_fields_flow.Flow,
 	        chip: tasks_v2_component_fields_flow.FlowChip,
 	        withSeparator: true,
 	        isEnabled: tasks_v2_core.Core.getParams().features.isFlowEnabled
+	      }, {
+	        title: tasks_v2_component_fields_tags.tagsMeta.title,
+	        component: tasks_v2_component_fields_tags.Tags,
+	        chip: tasks_v2_component_fields_tags.TagsChip
+	      }, {
+	        chip: {
+	          component: tasks_v2_component_fields_datePlan.DatePlanChip,
+	          events: {
+	            open: this.openDatePlan
+	          }
+	        }
 	      }];
 
 	      /* eslint-disable no-param-reassign */
@@ -585,10 +583,10 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    },
 	    projectFields() {
 	      const projectFields = new Set();
-	      if (this.wasGroupFilled) {
+	      if (this.wasFilled(tasks_v2_component_fields_group.groupMeta.id)) {
 	        projectFields.add(tasks_v2_component_fields_group.Group);
 	      }
-	      if (this.wasFlowFilled) {
+	      if (this.wasFilled(tasks_v2_component_fields_flow.flowMeta.id)) {
 	        projectFields.add(tasks_v2_component_fields_flow.Flow);
 	      }
 	      return this.fields.filter(({
@@ -597,15 +595,23 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    },
 	    participantsFields() {
 	      const participantsFields = new Set();
-	      if (this.wasAccomplicesFilled) {
+	      if (this.wasFilled(tasks_v2_component_fields_accomplices.accomplicesMeta.id)) {
 	        participantsFields.add(tasks_v2_component_fields_accomplices.Accomplices);
 	      }
-	      if (this.wasAuditorsFilled) {
+	      if (this.wasFilled(tasks_v2_component_fields_auditors.auditorsMeta.id)) {
 	        participantsFields.add(tasks_v2_component_fields_auditors.Auditors);
 	      }
 	      return this.fields.filter(({
 	        component
 	      }) => participantsFields.has(component));
+	    },
+	    tagsFields() {
+	      if (!this.wasFilled(tasks_v2_component_fields_tags.tagsMeta.id)) {
+	        return [];
+	      }
+	      return this.fields.filter(({
+	        component
+	      }) => component === tasks_v2_component_fields_tags.Tags);
 	    },
 	    chips() {
 	      return this.fields.filter(({
@@ -614,6 +620,9 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      }) => chip && isEnabled !== false).map(({
 	        chip
 	      }) => chip);
+	    },
+	    isBottomSheetShown() {
+	      return this.isFilesSheetShown || this.isCheckListSheetShown || this.isDatePlanSheetShown;
 	    }
 	  },
 	  watch: {
@@ -625,6 +634,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    }
 	  },
 	  async created() {
+	    var _this$task2;
 	    if (!this.isEdit && !this.task) {
 	      void this.$store.dispatch(`${tasks_v2_const.Model.Tasks}/insert`, {
 	        id: this.taskId,
@@ -635,6 +645,10 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    if (this.isEdit && !this.task) {
 	      await tasks_v2_provider_service_taskService.taskService.getById(this.taskId);
 	    }
+	    await tasks_v2_provider_service_fileService.fileService.get(this.taskId).list(this.task.fileIds);
+	    tasks_v2_component_fields_description.descriptionTextEditor.get(this.taskId, {
+	      content: (_this$task2 = this.task) == null ? void 0 : _this$task2.description
+	    });
 	  },
 	  mounted() {
 	    var _this$$refs$skeleton;
@@ -642,18 +656,20 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    (_this$$refs$skeleton = this.$refs.skeleton) == null ? void 0 : _this$$refs$skeleton.append(tasks_v2_application_taskCard.FullSkeleton());
 	  },
 	  beforeUnmount() {
-	    if (this.resizeObserver) {
-	      this.resizeObserver.disconnect();
-	    }
+	    var _this$resizeObserver;
+	    (_this$resizeObserver = this.resizeObserver) == null ? void 0 : _this$resizeObserver.disconnect();
 	  },
 	  unmounted() {
 	    if (!this.isEdit) {
 	      void this.$store.dispatch(`${tasks_v2_const.Model.Tasks}/delete`, this.taskId);
 	      tasks_v2_provider_service_fileService.fileService.delete(this.taskId);
+	      tasks_v2_component_fields_description.descriptionTextEditor.delete(this.taskId);
 	    }
 	  },
 	  methods: {
-	    ...ui_vue3_vuex.mapActions(tasks_v2_const.Model.Interface, ['updateTitleFieldOffsetHeight']),
+	    wasFilled(fieldId) {
+	      return this.$store.getters[`${tasks_v2_const.Model.Tasks}/wasFieldFilled`](this.taskId, fieldId);
+	    },
 	    tryStartObserver() {
 	      if (this.$refs.title && !this.resizeObserver) {
 	        this.resizeObserver = this.getObserver();
@@ -664,12 +680,14 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      return new ResizeObserver(entries => {
 	        for (const entry of entries) {
 	          if (entry.target === this.$refs.title) {
-	            this.updateTitleFieldOffsetHeight(entry.contentRect.height);
+	            void this.$store.dispatch(`${tasks_v2_const.Model.Interface}/updateTitleFieldOffsetHeight`, entry.contentRect.height);
 	          }
 	        }
 	      });
 	    },
 	    async addTask() {
+	      var _this$$refs, _this$$refs$descripti;
+	      await ((_this$$refs = this.$refs) == null ? void 0 : (_this$$refs$descripti = _this$$refs.description) == null ? void 0 : _this$$refs$descripti.save());
 	      const checkLists = this.checkLists;
 	      const [id] = await tasks_v2_provider_service_taskService.taskService.add(this.task);
 	      this.taskId = id;
@@ -677,6 +695,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	        await tasks_v2_provider_service_checkListService.checkListService.save(this.taskId, checkLists);
 	      }
 	      tasks_v2_provider_service_fileService.fileService.replace(this.id, this.taskId);
+	      tasks_v2_component_fields_description.descriptionTextEditor.replace(this.id, this.taskId);
 	    },
 	    openEditor() {
 	      this.handleShowBottomSheet();
@@ -692,42 +711,33 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    closeFiles() {
 	      this.isFilesSheetShown = false;
 	      this.handleCloseBottomSheet();
-	      this.handleCloseBottomSheet();
 	    },
 	    openCheckList(checkListId) {
 	      this.checkListId = checkListId;
 	      this.isCheckListSheetShown = true;
 	      this.handleShowBottomSheet();
 	    },
-	    closeCheckList() {
+	    closeCheckList(checkListId) {
+	      this.checkListId = checkListId;
 	      this.isCheckListSheetShown = false;
 	      this.handleCloseBottomSheet();
 	    },
+	    openDatePlan() {
+	      this.isDatePlanSheetShown = true;
+	      this.handleShowBottomSheet();
+	    },
+	    closeDatePlan() {
+	      this.isDatePlanSheetShown = false;
+	      this.handleCloseBottomSheet();
+	    },
 	    handleShowBottomSheet() {
-	      this.isBottomSheetShown = true;
 	      main_core.Dom.addClass(this.$refs.scrollContent, '--disable-scroll');
-	      this.$refs.scrollContent.scrollTo({
-	        top: 0,
-	        behavior: 'smooth'
-	      });
 	    },
 	    handleCloseBottomSheet() {
-	      this.isBottomSheetShown = false;
 	      main_core.Dom.removeClass(this.$refs.scrollContent, '--disable-scroll');
 	    },
 	    close() {
 	      main_core.Event.EventEmitter.emit(tasks_v2_const.EventName.CloseFullCard);
-	    },
-	    getEventListeners(chip, handlers) {
-	      const listeners = {};
-	      if (chip.emits) {
-	        Object.keys(handlers).forEach(event => {
-	          if (chip.emits.includes(event)) {
-	            listeners[event] = handlers[event];
-	          }
-	        });
-	      }
-	      return listeners;
 	    }
 	  },
 	  template: `
@@ -754,9 +764,15 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 							:isShown="isCheckListSheetShown"
 							@close="closeCheckList"
 						/>
+						<DatePlanSheet
+							:taskId="taskId"
+							:isShown="isDatePlanSheetShown"
+							@close="closeDatePlan"
+						/>
 						<DescriptionField
 							:taskId="taskId"
 							v-slot="slot"
+							ref="description"
 						>
 							<DescriptionSheet
 								:taskId="taskId"
@@ -772,14 +788,14 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 							</div>
 							<div class="tasks-full-card-chips-fields">
 								<div
-									v-if="files.length > 0 || wasFilesFilled"
-									class="tasks-full-card-field-container"
+									v-if="files.length > 0 || wasFilled(filesMeta.id)"
+									class="tasks-full-card-field-container --small-vertical-padding"
 									data-field-container
 								>
 									<Files :taskId="taskId" @open="openFiles"/>
 								</div>
 								<div
-									v-if="task.checklist.length > 0"
+									v-if="wasFilled(checkListMeta.id)"
 									class="tasks-full-card-field-container --custom"
 									data-field-container
 								>
@@ -787,6 +803,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 										:taskId="taskId"
 										:isPreview="true"
 										:isComponentShown="!isCheckListSheetShown"
+										:checkListId="checkListId"
 										@open="openCheckList"
 									/>
 								</div>
@@ -807,18 +824,36 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 										:useSeparator="participantsFields.length > 1"
 									/>
 								</div>
+								<div
+									v-if="tagsFields.length > 0"
+									class="tasks-full-card-field-container"
+									data-field-container
+								>
+									<FieldList :fields="tagsFields"/>
+								</div>
+								<div
+									v-if="wasFilled(datePlanMeta.id)"
+									class="tasks-full-card-field-container"
+									data-field-container
+								>
+									<DatePlan :taskId="taskId" @open="openDatePlan"/>
+								</div>
 								<div class="tasks-full-card-chips">
 									<template v-for="(chip, index) of chips" :key="index">
 										<component
-											:is="chip"
+											:is="chip.component ?? chip"
 											v-bind="{ taskId }"
-											v-on="getEventListeners(chip, chipsEventHandlers)"
+											v-on="chip.events ?? {}"
 										/>
 									</template>
 									<Chip :icon="Outline.APPS" :text="'Ещё'" :soon="true"/>
 								</div>
 							</div>
 						</div>
+						<DropZone
+							v-if="!isBottomSheetShown"
+							:taskId="taskId"
+						/>
 					</div>
 					<div class="tasks-full-card-footer">
 						<FooterEdit v-if="isEdit" :taskId="taskId"/>
@@ -931,5 +966,5 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 
 	exports.TaskFullCard = TaskFullCard;
 
-}((this.BX.Tasks.V2.Application = this.BX.Tasks.V2.Application || {}),BX.Vue3,BX.Vue3.Mixins,BX.Tasks.V2.Application,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Tasks.V2,BX.Tasks.V2.Component,BX.Vue3.Components,BX,BX.Vue3.Vuex,BX.UI.Vue3.Components,BX.UI.IconSet,BX.UI.IconSet,BX,BX.Tasks.V2.Const,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service));
+}((this.BX.Tasks.V2.Application = this.BX.Tasks.V2.Application || {}),BX.Vue3,BX.Vue3.Mixins,BX.Tasks.V2.Application,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Tasks.V2,BX.Tasks.V2.Component,BX.Vue3.Components,BX,BX.Vue3.Vuex,BX.UI.Vue3.Components,BX.UI.IconSet,BX.UI.IconSet,BX,BX.Tasks.V2.Const,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service));
 //# sourceMappingURL=task-full-card.bundle.js.map

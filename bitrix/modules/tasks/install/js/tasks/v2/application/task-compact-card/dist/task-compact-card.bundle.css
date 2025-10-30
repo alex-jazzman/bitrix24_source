@@ -107,36 +107,30 @@
 	pointer-events: none;
 }
 
-.tasks-compact-card-popup.--overlay .tasks-compact-card-drop-zone-container,
-.tasks-compact-card-container:not(.--drag-over) .tasks-compact-card-drop-zone-container {
-	display: none;
+.tasks-compact-card-full-button-auditors-hint-title {
+	font-weight: var(--ui-font-weight-medium);
+	font-size: var(--ui-font-size-2xl);
+	line-height: var(--ui-font-line-height-md);
+	margin-bottom: 5px;
 }
 
-.tasks-compact-card-drop-zone-container {
-	position: absolute;
-	inset: 0;
-	display: flex;
-	padding: 24px;
-	background: rgba(var(--ui-color-palette-white-base-rgb), 0.7);
-}
-
-.tasks-compact-card-drop-zone {
-	flex: 1;
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-	gap: 5px;
-	border-radius: 6px;
-	border: 1px dashed rgba(122, 183, 255, 0.2);
-}
-
-.tasks-compact-card-drop-zone .ui-icon-set {
-	--ui-icon-set__icon-color: var(--ui-color-gray-30);
-	--ui-icon-set__icon-size: 69px;
-}
-
-.tasks-compact-card-drop-zone-text {
-	color: var(--ui-color-base-2);
+.tasks-compact-card-full-button-auditors-hint-content {
+	font-weight: var(--ui-font-weight-normal);
 	font-size: var(--ui-font-size-xs);
+	line-height: var(--ui-font-line-height-md);
+	margin-bottom: 5px;
+}
+
+.tasks-compact-card-full-button-auditors-hint-link {
+	/*color: var(--ui-color-accent-main-link);*/
+	color: #BAD7FF;
+	font-size: var(--ui-font-size-xs);
+	font-weight: var(--ui-font-weight-normal);
+	line-height: var(--ui-font-line-height-md);
+	-webkit-text-decoration: underline dotted;
+	        text-decoration: underline dotted;
+	cursor: pointer;
+	border: none;
+	background: none;
+	padding: 0;
 }

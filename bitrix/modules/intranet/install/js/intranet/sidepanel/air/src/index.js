@@ -30,7 +30,6 @@ SliderManager.registerSliderClass(
 		animationDuration: 200,
 		label: {
 			text: '',
-			bgColor: '#0075FF',
 		},
 	},
 );

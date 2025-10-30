@@ -1,6 +1,6 @@
 import { Type } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
-import { getFilesFromDataTransfer, isFilePasted } from 'ui.uploader.core';
+import { FileStatus as UploaderFileStatus, isResizableImage } from 'ui.uploader.core';
 import { runAction } from 'im.v2.lib.rest';
 
 import { Core } from 'im.v2.application.core';
@@ -11,8 +11,9 @@ import { Notifier } from 'im.v2.lib.notifier';
 import { SendingService } from 'im.v2.provider.service.sending';
 
 import { UploaderWrapper } from './classes/uploader-wrapper';
+import { createDeferredPromise } from './utils/deferred-promise';
 
-import type { ImModelChat, ImModelUser, ImModelMessage, ImModelFile } from 'im.v2.model';
+import type { ImModelChat, ImModelUser, ImModelMessage } from 'im.v2.model';
 import type { UploaderFile, UploaderError } from 'ui.uploader.core';
 import type { Store } from 'ui.vue3.vuex';
 import type { RestClient } from 'rest.client';
@@ -21,14 +22,13 @@ import type {
 	FileFromDisk,
 	FileCommitParams,
 	UploadFilesParams,
-	UploadFromClipboardParams,
-	UploadFromInputParams,
-	UploadFromDragAndDrop,
 } from './types/uploading';
+import type { UploaderWrapperFileOptions } from './classes/types/uploader-wrapper';
 
 type CreateUploaderParams = {
 	dialogId: number,
 	autoUpload: boolean,
+	sendAsFile: boolean,
 	maxParallelUploads: number,
 	maxParallelLoads: number,
 };
@@ -41,19 +41,8 @@ export class UploadingService extends EventEmitter
 	#restClient: RestClient;
 	#isRequestingDiskFolderId: boolean = false;
 	#diskFolderIdRequestPromise: { [string]: Promise } = {};
-	#uploaderWrapper: UploaderWrapper;
+	#uploaderWrappers: Map<string, UploaderWrapper> = new Map();
 	#sendingService: SendingService;
-	#uploaderFilesRegistry: {
-		[uploaderId: string]: {
-			autoUpload: boolean,
-			wasSent: boolean,
-			text: string,
-			dialogId: string,
-			tempMessageId: string,
-			previewCreatedStatus: { [string]: boolean },
-			previewSentStatus: { [string]: boolean },
-		}
-	} = {};
 
 	static event = {
 		uploadStart: 'uploadStart',
@@ -85,113 +74,202 @@ export class UploadingService extends EventEmitter
 		this.#store = Core.getStore();
 		this.#restClient = Core.getRestClient();
 		this.#sendingService = SendingService.getInstance();
-		this.#initUploader();
 	}
 
-	async uploadFromClipboard(params: UploadFromClipboardParams): Promise<{files: UploaderFile[], uploaderId: string}>
-	{
-		const { clipboardEvent, dialogId, autoUpload, imagesOnly } = params;
-
-		const { clipboardData } = clipboardEvent;
-		if (!clipboardData || !isFilePasted(clipboardData))
-		{
-			return '';
-		}
-
-		clipboardEvent.preventDefault();
-
-		let files: File[] = await getFilesFromDataTransfer(clipboardData);
-		if (imagesOnly)
-		{
-			files = files.filter((file) => Utils.file.isImage(file.name));
-			if (imagesOnly.length === 0)
-			{
-				return '';
-			}
-		}
-
-		const { uploaderFiles, uploaderId } = await this.addFiles({
-			files,
-			dialogId,
-			autoUpload,
-		});
-
-		if (uploaderFiles.length === 0)
-		{
-			return '';
-		}
-
-		return uploaderId;
-	}
-
-	async uploadFromInput(params: UploadFromInputParams): Promise<string>
-	{
-		const { event, sendAsFile, autoUpload, dialogId } = params;
-		const rawFiles = Object.values(event.target.files);
-		if (rawFiles.length === 0)
-		{
-			return '';
-		}
-
-		const { uploaderId } = await this.addFiles({
-			files: rawFiles,
-			dialogId,
-			autoUpload,
-			sendAsFile,
-		});
-
-		return uploaderId;
-	}
-
-	async uploadFromDragAndDrop(params: UploadFromDragAndDrop): Promise<string>
-	{
-		const { event, dialogId, autoUpload, sendAsFile } = params;
-		event.preventDefault();
-
-		const rawFiles = await getFilesFromDataTransfer(event.dataTransfer);
-		if (rawFiles.length === 0)
-		{
-			return '';
-		}
-
-		const { uploaderId } = await this.addFiles({
-			files: rawFiles,
-			dialogId,
-			autoUpload,
-			sendAsFile,
-		});
-
-		return uploaderId;
-	}
-
-	#createUploader(params: CreateUploaderParams): Promise<string>
+	// eslint-disable-next-line max-lines-per-function
+	async #createUploader(params: CreateUploaderParams): Promise<{
+		uploaderWrapper: UploaderWrapper,
+		loadAllComplete: Promise<any>,
+		uploadAllComplete: Promise<any>,
+	}>
 	{
 		const {
 			dialogId,
-			autoUpload,
+			autoUpload = false,
+			sendAsFile = false,
 			maxParallelUploads,
 			maxParallelLoads,
 		} = params;
 
 		const uploaderId = Utils.text.getUuidV4();
 		const chatId = this.#getChatId(dialogId);
+		const folderId = await this.checkDiskFolderId(dialogId);
+		const tempMessageId = Utils.text.getUuidV4();
 
-		return this.checkDiskFolderId(dialogId).then((diskFolderId: number) => {
-			this.#uploaderWrapper.createUploader({
-				diskFolderId,
-				uploaderId,
+		const loadAllComplete = createDeferredPromise();
+		const uploadAllComplete = createDeferredPromise();
+		const uploadPreviewPromises = [];
+
+		const uploaderWrapper = new UploaderWrapper({
+			uploaderId,
+			uploaderOptions: {
 				autoUpload,
+				maxParallelLoads,
+				maxParallelUploads,
+				controllerOptions: {
+					folderId,
+					chat: {
+						chatId,
+						dialogId,
+					},
+				},
+			},
+			customData: {
 				chatId,
 				dialogId,
-				maxParallelUploads,
-				maxParallelLoads,
-			});
+				tempMessageId,
+				sendAsFile,
+			},
+			events: {
+				[UploaderWrapper.Event.onFileAddStart]: (event: BaseEvent) => {
+					const { file } = event.getData();
+					this.#addFileToStore(file, sendAsFile);
+				},
+				[UploaderWrapper.Event.onFileStatusChange]: (event: BaseEvent) => {
+					const { file }: { file: UploaderFile } = event.getData();
 
-			return uploaderId;
+					if (file.getStatus() === UploaderFileStatus.PENDING)
+					{
+						if (this.#isMediaFile(file))
+						{
+							this.#updateFilePreviewInStore(file, sendAsFile);
+						}
+						else
+						{
+							this.#updateFilePreviewInStore(file, sendAsFile);
+							this.#updateFileTypeInStore(file, FileType.file);
+							file.setTreatImageAsFile(true);
+							file.setCustomData('sendAsFile', true);
+						}
+
+						const target: UploaderWrapper = event.getTarget();
+
+						if (target.isAllPending())
+						{
+							loadAllComplete.resolve();
+						}
+					}
+				},
+				[UploaderWrapper.Event.onFileUploadStart]: (event: BaseEvent) => {
+					const { file } = event.getData();
+					this.#updateFileSizeInStore(file);
+					this.emit(UploadingService.event.uploadStart);
+				},
+				[UploaderWrapper.Event.onFileUploadProgress]: (event: BaseEvent) => {
+					const { file } = event.getData();
+					this.#updateFileProgress(file.getId(), file.getProgress(), FileStatus.upload);
+				},
+				[UploaderWrapper.Event.onFileUploadComplete]: async (event: BaseEvent) => {
+					const { file } = event.getData();
+					const serverFileId: number = file.getServerFileId().toString().slice(1);
+					const temporaryFileId: string = file.getId();
+					if (this.#isMediaFile(file))
+					{
+						this.#setFileMapping({ serverFileId, temporaryFileId });
+					}
+
+					this.#updateFileProgress(temporaryFileId, file.getProgress(), FileStatus.wait);
+
+					uploadPreviewPromises.push(
+						this.#uploadPreview(file),
+					);
+
+					this.emit(UploadingService.event.uploadComplete);
+				},
+				[UploaderWrapper.Event.onFileUploadError]: (event: BaseEvent) => {
+					const { error } = event.getData();
+					const target = event.getTarget();
+
+					this.#setMessageError(target.getCustomData('tempMessageId'));
+
+					target.getFiles().forEach((uploaderFile: UploaderFile) => {
+						this.#updateFileProgress(uploaderFile.getId(), 0, FileStatus.error);
+					});
+
+					if (this.#isMaxFileSizeExceeded(error))
+					{
+						Notifier.file.handleUploadError(error);
+					}
+
+					Logger.error('UploadingService: upload error', error);
+					this.emit(UploadingService.event.uploadError);
+
+					this.#isUploading = false;
+					this.#processQueue();
+					this.stop(uploaderId);
+				},
+				[UploaderWrapper.Event.onFileUploadCancel]: (event: BaseEvent) => {
+					const { tempFileId } = event.getData();
+					this.#cancelUpload(tempMessageId, tempFileId);
+					this.emit(UploadingService.event.uploadCancel);
+				},
+				[UploaderWrapper.Event.onUploadComplete]: async (event: BaseEvent) => {
+					this.#isUploading = false;
+					this.#processQueue();
+
+					const target: UploaderWrapper = event.getTarget();
+					if (target.isAllCompleted())
+					{
+						await Promise.all(uploadPreviewPromises);
+						uploadAllComplete.resolve();
+						await this.commitMessage(uploaderId);
+						this.#destroyUploader(uploaderId);
+					}
+				},
+			},
+		});
+
+		return {
+			uploaderWrapper,
+			loadAllComplete: loadAllComplete.promise,
+			uploadAllComplete: uploadAllComplete.promise,
+		};
+	}
+
+	prepareFilesOptions(
+		files: Array<File | Blob | UploaderFile>,
+		options: { chatId: number, dialogId: number },
+		sendAsFile: boolean,
+	): Array<UploaderWrapperFileOptions>
+	{
+		return files.map((file: UploaderWrapperFileOptions | UploaderFile) => {
+			const id = Utils.text.getUuidV4();
+
+			if (Type.isFunction(file.getBinary))
+			{
+				return {
+					file: file.getBinary(),
+					options: {
+						...file.toJSON(),
+						clientPreview: file.getClientPreview(),
+						id,
+						customData: {
+							...options,
+						},
+						treatImageAsFile: sendAsFile,
+					},
+				};
+			}
+
+			return {
+				file,
+				options: {
+					id,
+					customData: {
+						...options,
+					},
+					downloadUrl: URL.createObjectURL(file),
+				},
+			};
 		});
 	}
 
-	addFiles(params: UploadFilesParams): Promise<{uploaderFiles: UploaderFile[], uploaderId: string}>
+	async addFiles(params: UploadFilesParams): Promise<{
+		uploaderFiles: UploaderFile[],
+		uploaderId: string,
+		loadAllComplete: Promise<any>,
+		uploadAllComplete: Promise<any>,
+	}>
 	{
 		const {
 			files,
@@ -202,33 +280,44 @@ export class UploadingService extends EventEmitter
 			maxParallelLoads,
 		} = params;
 
-		const uploaderParams: CreateUploaderParams = {
+		const {
+			uploaderWrapper,
+			loadAllComplete,
+			uploadAllComplete,
+		} = await this.#createUploader({
 			dialogId,
 			autoUpload,
+			sendAsFile,
 			maxParallelUploads,
 			maxParallelLoads,
-		};
-
-		return this.#createUploader(uploaderParams).then((uploaderId: string) => {
-			const filesForUploader = [];
-			files.forEach((file) => {
-				const preparedFile = this.#prepareFileForUploader(file, dialogId, uploaderId, sendAsFile);
-				filesForUploader.push(preparedFile);
-			});
-
-			const addedFiles = this.#uploaderWrapper.addFiles(filesForUploader);
-			this.#registerFiles(uploaderId, addedFiles, dialogId, autoUpload);
-
-			return {
-				uploaderFiles: addedFiles,
-				uploaderId,
-			};
 		});
+		const uploaderId: string = uploaderWrapper.getId();
+		const chatId = this.#getChatId(dialogId);
+
+		this.#uploaderWrappers.set(uploaderId, uploaderWrapper);
+
+		const filesOptions = this.prepareFilesOptions(
+			files,
+			{
+				chatId,
+				dialogId,
+			},
+			sendAsFile,
+		);
+
+		const uploaderFiles = uploaderWrapper.addFiles(filesOptions);
+
+		return {
+			uploaderFiles,
+			uploaderId,
+			loadAllComplete,
+			uploadAllComplete,
+		};
 	}
 
 	getFiles(uploaderId): UploaderFile[]
 	{
-		return this.#uploaderWrapper.getFiles(uploaderId);
+		return this.#uploaderWrappers.get(uploaderId).getFiles();
 	}
 
 	#addToQueue(uploaderId: string)
@@ -247,18 +336,21 @@ export class UploadingService extends EventEmitter
 		this.#isUploading = true;
 
 		const uploaderId: string = this.#queue.shift();
-		this.#uploaderFilesRegistry[uploaderId].autoUpload = true;
-		this.#uploaderWrapper.start(uploaderId);
+		this.#uploaderWrappers.get(uploaderId).start();
 	}
 
 	start(uploaderId: string)
 	{
+		this.getFiles(uploaderId).forEach((file: UploaderFile) => {
+			this.#updateFileProgress(file.getId(), 0, FileStatus.progress);
+		});
+
 		this.#addToQueue(uploaderId);
 	}
 
 	stop(uploaderId: string)
 	{
-		this.#uploaderWrapper.stop(uploaderId);
+		this.#uploaderWrappers.get(uploaderId).stop();
 	}
 
 	uploadFileFromDisk(files, dialogId)
@@ -304,90 +396,15 @@ export class UploadingService extends EventEmitter
 		});
 	}
 
-	#initUploader()
+	#isMediaFile(file: UploaderFile): boolean
 	{
-		this.#uploaderWrapper = new UploaderWrapper();
-		this.#uploaderWrapper.subscribe(UploaderWrapper.events.onFileAddStart, (event: BaseEvent) => {
-			const { file } = event.getData();
-			this.#addFileToStore(file);
-		});
-
-		this.#uploaderWrapper.subscribe(UploaderWrapper.events.onFileAdd, (event: BaseEvent) => {
-			const { file, uploaderId } = event.getData();
-			this.#updateFilePreviewInStore(file);
-			this.#setPreviewCreatedStatus(uploaderId, file.getId());
-			this.#tryToSendMessage(uploaderId);
-		});
-
-		this.#uploaderWrapper.subscribe(UploaderWrapper.events.onFileUploadStart, (event: BaseEvent) => {
-			const { file } = event.getData();
-			this.#updateFileSizeInStore(file);
-			this.emit(UploadingService.event.uploadStart);
-		});
-
-		this.#uploaderWrapper.subscribe(UploaderWrapper.events.onFileUploadProgress, (event: BaseEvent) => {
-			const { file } = event.getData();
-			this.#updateFileProgress(file.getId(), file.getProgress(), FileStatus.upload);
-		});
-
-		this.#uploaderWrapper.subscribe(UploaderWrapper.events.onFileUploadComplete, async (event: BaseEvent) => {
-			const { file, uploaderId }: {file: UploaderFile, uploaderId: string} = event.getData();
-			const serverFileId: number = file.getServerFileId().toString().slice(1);
-			const temporaryFileId: string = file.getId();
-			if (this.#isMediaFile(temporaryFileId))
-			{
-				this.#setFileMapping({ serverFileId, temporaryFileId });
-			}
-
-			this.#updateFileProgress(temporaryFileId, file.getProgress(), FileStatus.wait);
-
-			await this.#uploadPreview(file);
-			this.#setPreviewSentStatus(uploaderId, temporaryFileId);
-
-			void this.#tryCommit(uploaderId);
-			this.emit(UploadingService.event.uploadComplete);
-		});
-
-		this.#uploaderWrapper.subscribe(UploaderWrapper.events.onFileUploadError, (event: BaseEvent) => {
-			const { file, error, uploaderId } = event.getData();
-
-			this.#setMessageError(file.getCustomData('tempMessageId'));
-
-			this.getFiles(uploaderId).forEach((uploaderFile: UploaderFile) => {
-				this.#updateFileProgress(uploaderFile.getId(), 0, FileStatus.error);
-			});
-
-			if (this.#isMaxFileSizeExceeded(error))
-			{
-				Notifier.file.handleUploadError(error);
-			}
-
-			Logger.error('UploadingService: upload error', error);
-			this.emit(UploadingService.event.uploadError);
-
-			this.#isUploading = false;
-			this.#processQueue();
-			this.stop(uploaderId);
-		});
-
-		this.#uploaderWrapper.subscribe(UploaderWrapper.events.onFileUploadCancel, (event: BaseEvent) => {
-			const { tempMessageId, tempFileId } = event.getData();
-			this.#cancelUpload(tempMessageId, tempFileId);
-			this.emit(UploadingService.event.uploadCancel);
-		});
-
-		this.#uploaderWrapper.subscribe(UploaderWrapper.events.onUploadComplete, () => {
-			this.#isUploading = false;
-			this.#processQueue();
-		});
-	}
-
-	#isMediaFile(fileId: string | number): boolean
-	{
-		const mediaFileTypes: Array<string> = [FileType.image, FileType.video];
-		const file: ?ImModelFile = this.#store.getters['files/get'](fileId);
-
-		return Boolean(file) && mediaFileTypes.includes(file.type);
+		return (
+			isResizableImage(file.getBinary())
+			|| (
+				file.isVideo()
+				&& Type.isStringFilled(file.getPreviewUrl())
+			)
+		);
 	}
 
 	#setFileMapping(options: {serverFileId: number, temporaryFileId: string})
@@ -465,41 +482,26 @@ export class UploadingService extends EventEmitter
 
 	commitMessage(uploaderId: string): Promise
 	{
-		const dialogId = this.#uploaderFilesRegistry[uploaderId].dialogId;
-		const chatId = this.#getChatId(dialogId);
+		const uploader: UploaderWrapper = this.#uploaderWrappers.get(uploaderId);
+		const chatId = uploader.getCustomData('chatId');
+		const sendAsFile = uploader.getCustomData('sendAsFile');
+		const text = uploader.getCustomData('text');
+		const tempMessageId = uploader.getCustomData('tempMessageId');
 
-		const fileIds = this.#uploaderWrapper.getFiles(uploaderId).map((file) => {
-			return file.getServerFileId().toString().slice(1);
-		});
-
-		const sendAsFile = this.#uploaderWrapper.getFiles(uploaderId).every((file) => {
-			return file.getCustomData('sendAsFile');
-		});
+		const fileIds = uploader.getServerFilesIds();
 
 		return this.#restClient.callMethod(RestMethod.imDiskFileCommit, {
 			chat_id: chatId,
-			message: this.#uploaderFilesRegistry[uploaderId].text,
-			template_id: this.#uploaderFilesRegistry[uploaderId].tempMessageId,
-			// file_template_id: temporaryFileId,
+			message: text,
+			template_id: tempMessageId,
 			as_file: sendAsFile ? 'Y' : 'N',
 			upload_id: fileIds,
 		});
 	}
 
-	async #tryCommit(uploaderId: string)
-	{
-		if (!this.#readyToCommit(uploaderId))
-		{
-			return;
-		}
-
-		await this.commitMessage(uploaderId);
-		this.#destroyUploader(uploaderId);
-	}
-
 	async #uploadPreview(file: UploaderFile): Promise
 	{
-		const needPreview = this.#getFileType(file.getBinary()) === FileType.video || file.isAnimated();
+		const needPreview = this.#getFileType(file) === FileType.video || file.isAnimated();
 		if (!needPreview)
 		{
 			return Promise.resolve();
@@ -522,23 +524,6 @@ export class UploadingService extends EventEmitter
 			.catch(([error]) => {
 				console.error('imDiskFilePreviewUpload request error', error);
 			});
-	}
-
-	#prepareFileForUploader(file: File, dialogId: string, uploaderId, sendAsFile: boolean): MessageWithFile
-	{
-		const tempMessageId = Utils.text.getUuidV4();
-		const tempFileId = Utils.text.getUuidV4();
-		const chatId = this.#getChatId(dialogId);
-
-		return {
-			tempMessageId,
-			tempFileId,
-			file,
-			dialogId,
-			chatId,
-			uploaderId,
-			sendAsFile,
-		};
 	}
 
 	#updateFileProgress(id: string, progress: number, status: string)
@@ -579,37 +564,91 @@ export class UploadingService extends EventEmitter
 		}
 	}
 
-	#addFileToStore(file: UploaderFile)
+	#getFileType(file: UploaderFile): string
 	{
-		const taskId = file.getId();
-		const fileBinary = file.getBinary();
-		const previewData = this.#preparePreview(file);
-		const asFile = file.getCustomData('sendAsFile');
+		if (isResizableImage(file.getBinary()))
+		{
+			return FileType.image;
+		}
+
+		if (file.isVideo())
+		{
+			return FileType.video;
+		}
+
+		if (file.getType().startsWith('audio'))
+		{
+			return FileType.audio;
+		}
+
+		return FileType.file;
+	}
+
+	#addFileToStore(file: UploaderFile, sendAsFile: boolean)
+	{
+		const fileType = this.#getFileType(file);
+		const currentUser = this.#getCurrentUser();
+		const isFile = ![FileType.image, FileType.video].includes(fileType);
 
 		void this.#store.dispatch('files/add', {
-			id: taskId,
-			chatId: file.getCustomData('chatId'),
-			authorId: Core.getUserId(),
-			name: fileBinary.name,
+			id: file.getId(),
+			name: file.getName(),
 			size: file.getSize(),
-			type: asFile ? FileType.file : this.#getFileType(fileBinary),
-			extension: this.#getFileExtension(fileBinary),
-			status: file.isFailed() ? FileStatus.error : FileStatus.progress,
+			type: fileType,
+			extension: file.getExtension(),
+			chatId: file.getCustomData('chatId'),
+			authorId: currentUser.id,
+			authorName: currentUser.name,
+			status: file.isFailed() ? FileStatus.error : FileStatus.wait,
 			progress: 0,
-			authorName: this.#getCurrentUser().name,
-			urlDownload: URL.createObjectURL(file.getBinary()),
-			...previewData,
+			urlDownload: file.getDownloadUrl(),
+			...(() => {
+				if (isFile || sendAsFile)
+				{
+					return { image: false };
+				}
+
+				return {};
+			})(),
 		});
 	}
 
-	#updateFilePreviewInStore(file: UploaderFile)
+	#updateFilePreviewInStore(file: UploaderFile, sendAsFile: boolean)
 	{
-		const previewData = this.#preparePreview(file);
-
 		void this.#store.dispatch('files/update', {
 			id: file.getId(),
 			fields: {
-				...previewData,
+				urlPreview: (() => {
+					if (file.isImage())
+					{
+						return file.getPreviewUrl() || file.getDownloadUrl();
+					}
+
+					return file.getPreviewUrl();
+				})(),
+				...(() => {
+					if (sendAsFile)
+					{
+						return { image: false };
+					}
+
+					return {
+						image: {
+							width: file.getPreviewWidth(),
+							height: file.getPreviewHeight(),
+						},
+					};
+				})(),
+			},
+		});
+	}
+
+	#updateFileTypeInStore(file: UploaderFile, type: string)
+	{
+		void this.#store.dispatch('files/update', {
+			id: file.getId(),
+			fields: {
+				type,
 			},
 		});
 	}
@@ -624,61 +663,9 @@ export class UploadingService extends EventEmitter
 		});
 	}
 
-	#preparePreview(file: UploaderFile): { image: { width: number, height: number }, urlPreview: Blob }
-	{
-		if (file.getCustomData('sendAsFile'))
-		{
-			return {};
-		}
-
-		const preview = {
-			blob: file.getPreviewUrl(),
-			width: file.getPreviewWidth(),
-			height: file.getPreviewHeight(),
-		};
-
-		const previewData = {};
-		if (preview.blob)
-		{
-			previewData.image = {
-				width: preview.width,
-				height: preview.height,
-			};
-
-			previewData.urlPreview = preview.blob;
-		}
-
-		if (file.getClientPreview())
-		{
-			previewData.urlPreview = URL.createObjectURL(file.getClientPreview());
-		}
-
-		return previewData;
-	}
-
 	#getDiskFolderId(dialogId: string): number
 	{
 		return this.#getDialog(dialogId).diskFolderId;
-	}
-
-	#getFileType(file: File): string
-	{
-		let fileType = FileType.file;
-		if (file.type.startsWith('image'))
-		{
-			fileType = FileType.image;
-		}
-		else if (file.type.startsWith('video'))
-		{
-			fileType = FileType.video;
-		}
-
-		return fileType;
-	}
-
-	#getFileExtension(file: File): string
-	{
-		return file.name.split('.').splice(-1)[0];
 	}
 
 	#getDialog(dialogId: string): ImModelChat
@@ -698,128 +685,17 @@ export class UploadingService extends EventEmitter
 		return this.#getDialog(dialogId)?.chatId;
 	}
 
-	#registerFiles(uploaderId: string, files: UploaderFile[], dialogId: string, autoUpload: boolean)
-	{
-		if (!this.#uploaderFilesRegistry[uploaderId])
-		{
-			this.#uploaderFilesRegistry[uploaderId] = {
-				previewCreatedStatus: {},
-				previewSentStatus: {},
-				dialogId,
-				text: '',
-				autoUpload,
-			};
-		}
-
-		files.forEach((file) => {
-			const fileId = file.getId();
-			if (!this.#uploaderFilesRegistry[uploaderId].previewCreatedStatus)
-			{
-				this.#uploaderFilesRegistry[uploaderId].previewCreatedStatus = {};
-			}
-
-			this.#uploaderFilesRegistry[uploaderId].previewCreatedStatus[fileId] = false;
-			this.#uploaderFilesRegistry[uploaderId].previewSentStatus[fileId] = false;
-		});
-	}
-
-	#unregisterFiles(uploaderId: string, files: UploaderFile[])
-	{
-		const entry = this.#uploaderFilesRegistry[uploaderId];
-		if (entry)
-		{
-			files.forEach((file: UploaderFile) => {
-				const fileId = file.getId();
-				if (this.#uploaderFilesRegistry[uploaderId].previewCreatedStatus)
-				{
-					delete this.#uploaderFilesRegistry[uploaderId].previewCreatedStatus[fileId];
-					delete this.#uploaderFilesRegistry[uploaderId].previewSentStatus[fileId];
-				}
-			});
-		}
-	}
-
-	#setPreviewCreatedStatus(uploaderId: string, fileId: string)
-	{
-		this.#uploaderFilesRegistry[uploaderId].previewCreatedStatus[fileId] = true;
-	}
-
-	#setPreviewSentStatus(uploaderId: string, fileId: string)
-	{
-		this.#uploaderFilesRegistry[uploaderId].previewSentStatus[fileId] = true;
-	}
-
 	#setMessagesText(uploaderId: string, text: string)
 	{
-		this.#uploaderFilesRegistry[uploaderId].text = text;
+		this.#uploaderWrappers.get(uploaderId).setCustomData('text', text);
 	}
 
-	#setAutoUpload(uploaderId: string, autoUploadFlag: boolean)
-	{
-		this.#uploaderFilesRegistry[uploaderId].autoUpload = autoUploadFlag;
-	}
-
-	// we don't use it now, because we always send several files in ONE message
-	// noinspection JSUnusedGlobalSymbols
-	sendSeparateMessagesWithFiles(params: { uploaderId: string, text: string})
+	sendMessageWithFiles(params: { uploaderId: string, text: string })
 	{
 		const { uploaderId, text } = params;
 
 		this.#setMessagesText(uploaderId, text);
-		this.#setAutoUpload(uploaderId, true);
-		this.#tryToSendMessages(uploaderId);
-	}
-
-	sendMessageWithFiles(params: { uploaderId: string, text: string})
-	{
-		const { uploaderId, text } = params;
-
-		this.#setMessagesText(uploaderId, text);
-		this.#setAutoUpload(uploaderId, true);
 		this.#tryToSendMessage(uploaderId);
-	}
-
-	#createMessagesFromFiles(uploaderId): {comment: {text: string, dialogId: string}, files: []}
-	{
-		const messagesToSend = {
-			comment: {},
-			files: [],
-		};
-
-		const files = this.getFiles(uploaderId);
-		const text = this.#uploaderFilesRegistry[uploaderId].text;
-		const dialogId = this.#uploaderFilesRegistry[uploaderId].dialogId;
-		const hasText = text.length > 0;
-
-		// if we have more than one file and text, we need to send text message first
-		if (files.length > 1 && hasText)
-		{
-			messagesToSend.comment = { dialogId, text };
-		}
-
-		files.forEach((file) => {
-			if (file.getError())
-			{
-				return;
-			}
-
-			const messageId = Utils.text.getUuidV4();
-
-			file.setCustomData('messageId', messageId);
-			if (files.length === 1 && hasText)
-			{
-				file.setCustomData('messageText', text);
-			}
-
-			messagesToSend.files.push({
-				fileIds: [file.getId()],
-				tempMessageId: file.getCustomData('tempMessageId'),
-				dialogId,
-				text: file.getCustomData('messageText') ?? '',
-			});
-		});
-
-		return messagesToSend;
 	}
 
 	#createMessageFromFiles(uploaderId): {text: string, dialogId: string, tempMessageId: string, fileIds: []}
@@ -833,11 +709,9 @@ export class UploadingService extends EventEmitter
 			}
 		});
 
-		const text = this.#uploaderFilesRegistry[uploaderId].text;
-		const dialogId = this.#uploaderFilesRegistry[uploaderId].dialogId;
-
-		const tempMessageId = files[0].getCustomData('tempMessageId');
-		this.#uploaderFilesRegistry[uploaderId].tempMessageId = tempMessageId;
+		const text = this.#uploaderWrappers.get(uploaderId).getCustomData('text');
+		const dialogId = this.#uploaderWrappers.get(uploaderId).getCustomData('dialogId');
+		const tempMessageId = this.#uploaderWrappers.get(uploaderId).getCustomData('tempMessageId');
 
 		return {
 			fileIds,
@@ -847,67 +721,10 @@ export class UploadingService extends EventEmitter
 		};
 	}
 
-	#readyToAddMessages(uploaderId): boolean
-	{
-		if (
-			!this.#uploaderFilesRegistry[uploaderId]
-			|| !this.#uploaderFilesRegistry[uploaderId].autoUpload
-			|| this.#uploaderFilesRegistry[uploaderId].wasSent
-		)
-		{
-			return false;
-		}
-
-		const { previewCreatedStatus } = this.#uploaderFilesRegistry[uploaderId];
-
-		return Object.values(previewCreatedStatus).every((flag) => flag === true);
-	}
-
-	#readyToCommit(uploaderId: string): boolean
-	{
-		if (!this.#uploaderFilesRegistry[uploaderId])
-		{
-			return false;
-		}
-
-		const { previewSentStatus } = this.#uploaderFilesRegistry[uploaderId];
-
-		return Object.values(previewSentStatus).every((flag) => flag === true);
-	}
-
 	#tryToSendMessage(uploaderId: string)
 	{
-		if (!this.#readyToAddMessages(uploaderId))
-		{
-			return;
-		}
-
-		this.#uploaderFilesRegistry[uploaderId].wasSent = true;
-
 		const message = this.#createMessageFromFiles(uploaderId);
 		void this.#sendingService.sendMessageWithFiles(message);
-		this.start(uploaderId);
-	}
-
-	// we don't use it now, because we always send several files in ONE message
-	// noinspection JSUnusedGlobalSymbols
-	#tryToSendMessages(uploaderId: string)
-	{
-		if (!this.#readyToAddMessages(uploaderId))
-		{
-			return;
-		}
-
-		this.#uploaderFilesRegistry[uploaderId].wasSent = true;
-		const { comment, files } = this.#createMessagesFromFiles(uploaderId);
-		if (comment.text)
-		{
-			this.#sendingService.sendMessage(comment);
-		}
-
-		files.forEach((message) => {
-			void this.#sendingService.sendMessageWithFiles(message);
-		});
 		this.start(uploaderId);
 	}
 
@@ -943,7 +760,7 @@ export class UploadingService extends EventEmitter
 
 	getUploaderIdByFileId(fileId: string | number): ?string
 	{
-		const uploaderIds: Array<string> = Object.keys(this.#uploaderFilesRegistry);
+		const uploaderIds: Array<string> = [...this.#uploaderWrappers.keys()];
 
 		return uploaderIds.find((uploaderId: string) => {
 			return this.getFiles(uploaderId).some((file: UploaderFile) => {
@@ -956,7 +773,7 @@ export class UploadingService extends EventEmitter
 	{
 		const { uploaderId, filesIds, restartUploading = false } = options;
 
-		const files: Array<UploaderFile> = this.#uploaderWrapper.getFiles(uploaderId).filter((file: UploaderFile) => {
+		const files = this.#uploaderWrappers.get(uploaderId).getFiles().filter((file: UploaderFile) => {
 			return filesIds.includes(file.getId());
 		});
 
@@ -965,8 +782,6 @@ export class UploadingService extends EventEmitter
 			file.abort();
 		});
 
-		this.#unregisterFiles(uploaderId, files);
-
 		if (restartUploading)
 		{
 			const [firstFile] = this.getFiles(uploaderId);
@@ -974,45 +789,39 @@ export class UploadingService extends EventEmitter
 			{
 				firstFile.upload();
 			}
+			else
+			{
+				this.#isUploading = false;
+				this.#processQueue();
+			}
 		}
-	}
-
-	destroy()
-	{
-		this.#uploaderWrapper.destroy();
 	}
 
 	#destroyUploader(uploaderId: string)
 	{
-		this.#uploaderWrapper.destroyUploader(uploaderId);
-		delete this.#uploaderFilesRegistry[uploaderId];
-	}
-
-	#getBinaryFiles(uploaderId: string): Array<File>
-	{
-		return this.getFiles(uploaderId).map((file: UploaderFile) => {
-			return file.getBinary();
-		});
+		this.#uploaderWrappers.get(uploaderId).destroy();
+		this.#uploaderWrappers.delete(uploaderId);
 	}
 
 	async retry(uploaderId: string)
 	{
-		const { dialogId, text, tempMessageId } = this.#uploaderFilesRegistry[uploaderId];
-		const sendAsFile: boolean = this.getFiles(uploaderId).some((file) => {
-			return file.getCustomData('sendAsFile');
-		});
+		const uploaderWrapper = this.#uploaderWrappers.get(uploaderId);
+		const dialogId = uploaderWrapper.getCustomData('dialogId');
+		const text = uploaderWrapper.getCustomData('text');
+		const tempMessageId = uploaderWrapper.getCustomData('tempMessageId');
 
-		const binaryFiles: Array<File> = this.#getBinaryFiles(uploaderId);
+		const binaryFiles: Array<File> = uploaderWrapper.getBinaryFiles();
 
-		const { uploaderId: newUploaderId } = await this.addFiles({
+		const { uploaderId: newUploaderId, loadAllComplete } = await this.addFiles({
 			dialogId,
 			files: binaryFiles,
-			sendAsFile,
 		});
 
-		void this.#store.dispatch('messages/delete', {
-			id: tempMessageId,
+		void this.#store.dispatch('messages/deleteLoadingMessageByMessageId', {
+			messageId: tempMessageId,
 		});
+
+		await loadAllComplete;
 
 		this.sendMessageWithFiles({
 			uploaderId: newUploaderId,

@@ -93,6 +93,7 @@ export const UserStatusDescription = {
 	template: `
 		<span v-if="text"
 			class="intranet-user-mini-profile__user-status-description"
+			data-test-id="usermp_status-description-text"
 		>
 			{{ text }}
 		</span>

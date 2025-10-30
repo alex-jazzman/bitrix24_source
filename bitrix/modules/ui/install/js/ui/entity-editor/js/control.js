@@ -4705,13 +4705,14 @@ if(typeof BX.UI.EntityEditorSection === "undefined")
 			fieldData["SETTINGS"] = settings;
 		}
 
+		fieldData['HELP_MESSAGE'] = params?.HELP_MESSAGE ?? '';
+
 		var showAlways = BX.prop.getBoolean(params, "showAlways", null);
 		var label = BX.prop.getString(params, "label", "");
 		var field = BX.prop.get(params, "field", null);
 
 		if(field)
 		{
-			var previousLabel = field.getTitle();
 			if(label !== "" || showAlways !== null)
 			{
 				field.setTitle(label);
@@ -4738,9 +4739,17 @@ if(typeof BX.UI.EntityEditorSection === "undefined")
 			fieldData["FIELD"] = field.getName();
 			fieldData["ENTITY_VALUE_ID"] = field.getEntityValueId();
 
-			if(this._editor.getConfigScope() === BX.UI.EntityConfigScope.common && label !== '' && previousLabel !== label)
+			if(this._editor.getConfigScope() === BX.UI.EntityConfigScope.common && label !== '')
 			{
-				fieldData["EDIT_FORM_LABEL"] = fieldData["LIST_COLUMN_LABEL"] = fieldData["LIST_FILTER_LABEL"] = label;
+				fieldData['EDIT_FORM_LABEL'] = label;
+				fieldData['LIST_COLUMN_LABEL'] = label;
+				fieldData['LIST_FILTER_LABEL'] = label;
+			}
+			else
+			{
+				fieldData['EDIT_FORM_LABEL'] = field._schemeElement._originalTitle;
+				fieldData['LIST_COLUMN_LABEL'] = field._schemeElement._originalTitle;
+				fieldData['LIST_FILTER_LABEL'] = field._schemeElement._originalTitle;
 			}
 
 			fieldData["VALUE"] = field.getFieldValue();

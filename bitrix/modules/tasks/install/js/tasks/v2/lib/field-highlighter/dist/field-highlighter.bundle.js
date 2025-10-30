@@ -13,19 +13,11 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	var _startAnimation = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("startAnimation");
 	var _stopAnimation = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("stopAnimation");
 	var _scrollToField = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("scrollToField");
-	var _getFieldContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getFieldContainer");
-	var _getChipContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getChipContainer");
 	var _nextTick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("nextTick");
 	class FieldHighlighter {
 	  constructor() {
 	    Object.defineProperty(this, _nextTick, {
 	      value: _nextTick2
-	    });
-	    Object.defineProperty(this, _getChipContainer, {
-	      value: _getChipContainer2
-	    });
-	    Object.defineProperty(this, _getFieldContainer, {
-	      value: _getFieldContainer2
 	    });
 	    Object.defineProperty(this, _scrollToField, {
 	      value: _scrollToField2
@@ -50,12 +42,17 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    return this;
 	  }
 	  addHighlight(fieldId) {
-	    return this.highlightContainer(babelHelpers.classPrivateFieldLooseBase(this, _getFieldContainer)[_getFieldContainer](fieldId));
+	    this.highlightContainer(this.getFieldContainer(fieldId));
+	    return this;
 	  }
 	  addChipHighlight(fieldId) {
-	    return this.highlightContainer(babelHelpers.classPrivateFieldLooseBase(this, _getChipContainer)[_getChipContainer](fieldId));
+	    this.highlightContainer(this.getChipContainer(fieldId));
+	    return this;
 	  }
 	  highlightContainer(container) {
+	    if (!container) {
+	      return;
+	    }
 	    main_core.Dom.addClass(container, 'tasks-field-highlight');
 	    const removeHighlight = () => {
 	      main_core.Dom.removeClass(container, 'tasks-field-highlight');
@@ -64,17 +61,25 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    };
 	    main_core.Event.bind(window, 'click', removeHighlight);
 	    main_core.Event.bind(window, 'keydown', removeHighlight);
-	    return container;
 	  }
 	  async highlight(fieldId) {
 	    await babelHelpers.classPrivateFieldLooseBase(this, _nextTick)[_nextTick]();
-	    const fieldContainer = babelHelpers.classPrivateFieldLooseBase(this, _getFieldContainer)[_getFieldContainer](fieldId);
+	    const fieldContainer = this.getFieldContainer(fieldId);
+	    if (!fieldContainer) {
+	      return;
+	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _stopAnimation)[_stopAnimation](fieldContainer);
 	    setTimeout(() => babelHelpers.classPrivateFieldLooseBase(this, _startAnimation)[_startAnimation](fieldContainer));
 	    clearTimeout(babelHelpers.classPrivateFieldLooseBase(this, _highlightTimeouts)[_highlightTimeouts][fieldId]);
 	    babelHelpers.classPrivateFieldLooseBase(this, _highlightTimeouts)[_highlightTimeouts][fieldId] = setTimeout(() => babelHelpers.classPrivateFieldLooseBase(this, _stopAnimation)[_stopAnimation](fieldContainer), 1500);
 	    babelHelpers.classPrivateFieldLooseBase(this, _scrollToField)[_scrollToField](fieldId);
-	    return fieldContainer;
+	  }
+	  getFieldContainer(fieldId) {
+	    var _babelHelpers$classPr;
+	    return (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _container)[_container].querySelector(`[${fieldAttribute}="${fieldId}"]`)) == null ? void 0 : _babelHelpers$classPr.closest(fieldSelector);
+	  }
+	  getChipContainer(fieldId) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _container)[_container].querySelector(`[${chipAttribute}="${fieldId}"]`);
 	  }
 	}
 	function _startAnimation2(fieldContainer) {
@@ -84,17 +89,18 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  main_core.Dom.removeClass(fieldContainer, ['tasks-field-highlight', '--animate']);
 	}
 	function _scrollToField2(fieldId) {
-	  const fieldContainer = babelHelpers.classPrivateFieldLooseBase(this, _getFieldContainer)[_getFieldContainer](fieldId);
+	  const fieldContainer = this.getFieldContainer(fieldId);
+	  if (!fieldContainer) {
+	    return;
+	  }
+	  main_core.Dom.style(fieldContainer, 'scrollMarginTop', '100px');
 	  fieldContainer.scrollIntoView({
-	    block: 'center',
+	    block: 'start',
 	    behavior: 'smooth'
 	  });
-	}
-	function _getFieldContainer2(fieldId) {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _container)[_container].querySelector(`[${fieldAttribute}="${fieldId}"]`).closest(fieldSelector);
-	}
-	function _getChipContainer2(fieldId) {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _container)[_container].querySelector(`[${chipAttribute}="${fieldId}"]`);
+	  setTimeout(() => {
+	    main_core.Dom.style(fieldContainer, 'scrollMarginTop', null);
+	  }, 1000);
 	}
 	function _nextTick2() {
 	  return new Promise(resolve => {

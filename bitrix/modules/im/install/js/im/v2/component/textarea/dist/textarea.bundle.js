@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,ui_iconSet_outline,im_v2_lib_localStorage,im_v2_provider_service_message,im_v2_lib_soundNotification,im_v2_lib_inputAction,im_v2_lib_escManager,im_v2_lib_desktopApi,im_v2_component_elements_tabs,im_v2_lib_smileManager,im_v2_provider_service_sending,im_v2_lib_helpdesk,im_v2_lib_rest,calendar_sharing_interface,vote_application,im_v2_component_elements_menu,im_v2_lib_entityCreator,im_v2_lib_analytics,im_v2_lib_feature,im_v2_lib_permission,im_v2_lib_notifier,file_dialog,main_popup,im_v2_lib_draft,im_v2_lib_hotkey,im_v2_lib_textarea,im_v2_provider_service_uploading,im_v2_component_message_file,im_v2_component_elements_mediaGallery,ui_icons,main_core_events,im_v2_component_elements_scrollWithGradient,im_v2_lib_textHighlighter,im_v2_component_elements_chatTitle,im_v2_component_elements_avatar,im_v2_lib_user,im_v2_lib_logger,im_v2_lib_search,im_v2_lib_utils,im_v2_application_core,im_v2_lib_parser,main_core,im_v2_component_elements_loader,im_v2_lib_market,im_v2_component_elements_popup,ui_iconSet_api_vue,im_v2_component_elements_autoDelete,im_v2_provider_service_chat,im_v2_lib_autoDelete,im_v2_const) {
+(function (exports,ui_iconSet_outline,im_v2_lib_localStorage,im_v2_provider_service_message,im_v2_lib_soundNotification,im_v2_lib_inputAction,ui_uploader_core,im_v2_lib_escManager,im_v2_lib_desktopApi,im_v2_component_elements_tabs,im_v2_lib_smileManager,im_v2_provider_service_sending,im_v2_lib_helpdesk,im_v2_lib_rest,calendar_sharing_interface,vote_application,im_v2_component_elements_menu,im_v2_lib_entityCreator,im_v2_lib_analytics,im_v2_lib_feature,im_v2_lib_permission,im_v2_lib_notifier,file_dialog,im_v2_model,main_popup,im_v2_lib_draft,im_v2_lib_hotkey,im_v2_lib_textarea,im_v2_provider_service_uploading,im_v2_component_elements_mediaGallery,im_v2_component_elements_sendButton,ui_icons,main_core_events,im_v2_component_elements_scrollWithGradient,im_v2_lib_textHighlighter,im_v2_component_elements_chatTitle,im_v2_component_elements_avatar,im_v2_lib_user,im_v2_lib_logger,im_v2_lib_search,im_v2_lib_utils,im_v2_application_core,im_v2_lib_parser,main_core,im_v2_component_elements_loader,im_v2_lib_market,im_v2_component_elements_popup,ui_iconSet_api_vue,im_v2_component_elements_autoDelete,im_v2_provider_service_chat,im_v2_lib_autoDelete,im_v2_const) {
 	'use strict';
 
 	const MentionSymbols = new Set(['@', '+']);
@@ -4559,52 +4559,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	};
 
 	// @vue/component
-	const SendButton = {
-	  props: {
-	    dialogId: {
-	      type: String,
-	      default: ''
-	    },
-	    editMode: {
-	      type: Boolean,
-	      default: false
-	    },
-	    isDisabled: {
-	      type: Boolean,
-	      default: false
-	    }
-	  },
-	  computed: {
-	    dialog() {
-	      return this.$store.getters['chats/get'](this.dialogId, true);
-	    },
-	    dialogTypeClass() {
-	      return `--${this.dialog.type}`;
-	    },
-	    buttonHint() {
-	      const sendByEnter = this.$store.getters['application/settings/get'](im_v2_const.Settings.hotkey.sendByEnter);
-	      const ctrlKey = im_v2_lib_utils.Utils.platform.isMac() ? 'Cmd' : 'Ctrl';
-	      const sendCombination = sendByEnter ? 'Enter' : `${ctrlKey} + Enter`;
-	      return this.loc('IM_TEXTAREA_ICON_SEND_TEXT', {
-	        '#SEND_MESSAGE_COMBINATION#': sendCombination
-	      });
-	    }
-	  },
-	  methods: {
-	    loc(phraseCode, replacements = {}) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
-	    }
-	  },
-	  template: `
-		<div
-			:title="buttonHint"
-			class="bx-im-send-panel__button_container"
-			:class="[{'--edit': editMode, '--disabled': isDisabled, }, dialogTypeClass]"
-		></div>
-	`
-	};
-
-	// @vue/component
 	const FilePreviewItem = {
 	  name: 'FilePreviewItem',
 	  props: {
@@ -4678,9 +4632,22 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    removable: {
 	      type: Boolean,
 	      default: false
+	    },
+	    highlightDropzone: {
+	      type: Object,
+	      default: null
+	    },
+	    viewerGroupBy: {
+	      type: String || null,
+	      default: null
 	    }
 	  },
-	  emits: ['removeItem'],
+	  emits: ['removeItem', 'itemDragStart', 'itemDragEnd', 'itemDragOver', 'itemDragLeave', 'itemDrop'],
+	  data() {
+	    return {
+	      isDraggable: false
+	    };
+	  },
 	  computed: {
 	    hasError() {
 	      return this.file.status === im_v2_const.FileStatus.error;
@@ -4690,6 +4657,35 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        return ErrorPreviewItem.name;
 	      }
 	      return FilePreviewItem.name;
+	    },
+	    draggableClasses() {
+	      const classes = {};
+	      if (this.highlightDropzone.fileId === this.file.id) {
+	        classes[`--dropzone-${this.highlightDropzone.position}`] = true;
+	      }
+	      classes['--draggable'] = this.isDraggable;
+	      return classes;
+	    },
+	    viewerAttributes() {
+	      if (this.file.viewerAttrs) {
+	        return im_v2_lib_utils.Utils.file.getViewerDataAttributes({
+	          viewerAttributes: this.file.viewerAttrs,
+	          previewImageSrc: this.file.urlPreview,
+	          context: im_v2_const.FileViewerContext.dialog
+	        });
+	      }
+	      return im_v2_lib_utils.Utils.file.getViewerDataAttributes({
+	        viewerAttributes: {
+	          viewer: true,
+	          viewerResized: true,
+	          viewerType: this.file.type,
+	          title: this.file.name,
+	          src: this.file.urlDownload,
+	          viewerGroupBy: this.viewerGroupBy
+	        },
+	        previewImageSrc: this.file.urlPreview,
+	        context: im_v2_const.FileViewerContext.dialog
+	      });
 	    }
 	  },
 	  methods: {
@@ -4697,13 +4693,71 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      this.$emit('removeItem', {
 	        file: this.file
 	      });
+	    },
+	    onDragStart(event) {
+	      this.$emit('itemDragStart', {
+	        file: this.file,
+	        axis: 'y',
+	        event
+	      });
+	      this.isDraggable = true;
+	    },
+	    onDragEnd(event) {
+	      this.$emit('itemDragEnd', {
+	        file: this.file,
+	        axis: 'y',
+	        event
+	      });
+	      this.isDraggable = false;
+	      event.target.removeAttribute('draggable');
+	    },
+	    onDragOver(event) {
+	      this.$emit('itemDragOver', {
+	        file: this.file,
+	        axis: 'y',
+	        event
+	      });
+	    },
+	    onDragLeave(event) {
+	      this.$emit('itemDragLeave', {
+	        file: this.file,
+	        axis: 'y',
+	        event
+	      });
+	    },
+	    onDrop(event) {
+	      this.$emit('itemDrop', {
+	        file: this.file,
+	        axis: 'y',
+	        event
+	      });
+	      this.isDraggable = false;
+	    },
+	    onMouseDown() {
+	      this.$refs.dragElement.setAttribute('draggable', 'true');
 	    }
 	  },
 	  template: `
-		<div class="bx-im-upload-preview-file-item__scope">
+		<div 
+			class="bx-im-upload-preview-file-item__scope"
+			:class="this.draggableClasses"
+			@dragstart="onDragStart"
+			@dragend="onDragEnd"
+			@dragover="onDragOver"
+			@dragleave="onDragLeave"
+			@drop="onDrop"
+			ref="dragElement"
+		>
+			<div 
+				class="bx-im-upload-preview-file-item__drag"
+				@mousedown="onMouseDown"
+			>
+				<div class="bx-im-upload-preview-file-item__drag-icon"></div>
+			</div>
 			<component
 				:is="previewComponentName"
 				:file="file"
+				v-bind="viewerAttributes"
 			/>
 			<div v-if="removable" class="bx-im-upload-preview-file-item__remove" @click="onRemoveClick">
 				<div class="bx-im-upload-preview-file-item__remove-icon"></div>
@@ -4714,6 +4768,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	const MAX_FILES_COUNT = 100;
 	const BUTTONS_CONTAINER_HEIGHT = 74;
+	const TEXT_LIMIT_COUNTER_SHOW_RANGE = 200;
 	const TextareaHeight = {
 	  max: 208,
 	  min: 46
@@ -4723,9 +4778,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const UploadPreviewContent = {
 	  name: 'UploadPreviewContent',
 	  components: {
-	    MediaContent: im_v2_component_message_file.MediaContent,
 	    FileItem,
-	    SendButton,
+	    SendButton: im_v2_component_elements_sendButton.SendButton,
 	    MediaGallery: im_v2_component_elements_mediaGallery.MediaGallery
 	  },
 	  props: {
@@ -4737,6 +4791,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      type: Array,
 	      required: true
 	    },
+	    uploadingId: {
+	      type: String || null,
+	      default: null
+	    },
 	    sourceFilesCount: {
 	      type: Number,
 	      required: true
@@ -4745,6 +4803,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      type: String,
 	      required: false,
 	      default: ''
+	    },
+	    popupId: {
+	      type: String,
+	      required: true
+	    },
+	    allowAdjustPosition: {
+	      type: Boolean,
+	      default: true
 	    }
 	  },
 	  emits: ['sendFiles', 'close', 'updateTitle'],
@@ -4752,18 +4818,41 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    return {
 	      text: '',
 	      sendAsFile: false,
-	      uploaderFiles: [],
 	      chunks: [],
+	      uploaderChunks: [],
 	      textareaHeight: TextareaHeight.min,
-	      textareaResizedHeight: 0
+	      textareaResizedHeight: 0,
+	      draggedItemEvent: null,
+	      lastTargetItem: null,
+	      lastTargetPosition: null,
+	      highlightDropzone: {},
+	      draggedFile: null,
+	      axis: 'x',
+	      insertPosition: null
 	    };
 	  },
 	  computed: {
+	    files() {
+	      return this.chunks.flat();
+	    },
+	    uploaderFiles() {
+	      const allUploaderFiles = this.uploaderIds.flatMap(uploaderId => {
+	        return this.getUploadingService().getFiles(uploaderId);
+	      });
+	      const fileIds = this.files.map(file => {
+	        return file.id;
+	      });
+	      return fileIds.map(fileId => {
+	        return allUploaderFiles.find(file => {
+	          return file.getId() === fileId;
+	        });
+	      });
+	    },
 	    isOverMaxFilesLimit() {
 	      return this.sourceFilesCount > MAX_FILES_COUNT;
 	    },
 	    isMediaOnly() {
-	      return this.chunks.flat().every(file => {
+	      return this.files.every(file => {
 	        return file.type === im_v2_const.FileType.image || file.type === im_v2_const.FileType.video;
 	      });
 	    },
@@ -4771,19 +4860,28 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      const settings = main_core.Extension.getSettings('im.v2.component.textarea');
 	      return settings.get('maxLength');
 	    },
+	    allowedTextLimit() {
+	      return this.inputMaxLength - this.text.length;
+	    },
+	    showInputLengthCounter() {
+	      return this.allowedTextLimit <= TEXT_LIMIT_COUNTER_SHOW_RANGE;
+	    },
 	    textareaHeightStyle() {
 	      return this.textareaHeight === 'auto' ? 'auto' : `${this.textareaHeight}px`;
 	    },
 	    title() {
-	      const filesCount = Math.min(this.uploaderFiles.length, MAX_FILES_COUNT);
+	      const filesCount = Math.min(this.files.length, MAX_FILES_COUNT);
 	      return this.$Bitrix.Loc.getMessage('IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_COMPUTED_TITLE', {
 	        '#COUNT#': filesCount
 	      });
 	    }
 	  },
 	  watch: {
-	    text() {
-	      void this.adjustTextareaHeight();
+	    async text() {
+	      await this.adjustTextareaHeight();
+	      if (this.allowAdjustPosition) {
+	        this.adjustPopupPosition();
+	      }
 	    },
 	    title() {
 	      this.$emit('updateTitle', this.title);
@@ -4799,7 +4897,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    this.uploaderIds.forEach(uploaderId => {
 	      const files = [];
 	      this.getUploadingService().getFiles(uploaderId).forEach(file => {
-	        this.uploaderFiles.push(file);
 	        files.push(this.$store.getters['files/get'](file.getId()));
 	      });
 	      this.chunks.push(files);
@@ -4848,18 +4945,19 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      });
 	    },
 	    onSend() {
-	      if (this.sendAsFile || !this.isMediaOnly) {
+	      const sendAsFile = this.sendAsFile || !this.isMediaOnly;
+	      if (sendAsFile) {
 	        this.uploaderFiles.forEach(file => {
 	          this.removePreviewParams(file);
+	          file.setTreatImageAsFile(true);
+	          file.setCustomData('sendAsFile', true);
 	        });
 	      }
-	      const filteredUploaderIds = this.uploaderIds.filter(uploaderId => {
-	        return this.getUploadingService().getFiles(uploaderId).length > 0;
-	      });
 	      this.$emit('sendFiles', {
 	        text: this.text,
-	        uploaderIds: filteredUploaderIds,
-	        sendAsFile: this.sendAsFile
+	        uploaderIds: this.uploaderIds,
+	        files: this.uploaderFiles,
+	        sendAsFile
 	      });
 	      this.text = '';
 	    },
@@ -4918,48 +5016,96 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      const textareaTop = this.$refs.messageText.getBoundingClientRect().top;
 	      return textareaTop + newMaxPoint + BUTTONS_CONTAINER_HEIGHT > window.innerHeight;
 	    },
-	    getUploaderIdByFileId(fileId) {
-	      const uploadingService = this.getUploadingService();
-	      return this.uploaderIds.find(uploaderId => {
-	        return uploadingService.getFiles(uploaderId).some(file => {
-	          return file.getId() === fileId;
-	        });
-	      });
-	    },
-	    removeFileFromUploader(fileId) {
-	      const uploaderId = this.getUploaderIdByFileId(fileId);
-	      this.getUploadingService().removeFileFromUploader({
-	        uploaderId,
-	        filesIds: [fileId]
-	      });
-	    },
 	    onRemoveItem(event) {
-	      this.removeFileFromUploader(event.file.id);
-	      this.chunks = [];
-	      this.uploaderFiles = [];
-	      this.uploaderIds.forEach(uploaderId => {
-	        const files = [];
-	        this.getUploadingService().getFiles(uploaderId).forEach(file => {
-	          this.uploaderFiles.push(file);
-	          files.push(this.$store.getters['files/get'](file.getId()));
-	        });
-	        if (main_core.Type.isArrayFilled(files)) {
-	          this.chunks.push(files);
-	        }
+	      const files = this.chunks.flat().filter(file => {
+	        return file.id !== event.file.id;
 	      });
-	      if (!main_core.Type.isArrayFilled(this.uploaderFiles)) {
+	      this.chunks = im_v2_provider_service_uploading.MultiUploadingService.makeChunks({
+	        files
+	      });
+	      if (this.chunks.length === 0) {
 	        this.onCancel();
 	      }
+	    },
+	    adjustPopupPosition() {
+	      var _PopupManager$getPopu;
+	      (_PopupManager$getPopu = main_popup.PopupManager.getPopupById(this.popupId)) == null ? void 0 : _PopupManager$getPopu.adjustPosition({
+	        forceBindPosition: true,
+	        position: 'bottom'
+	      });
+	    },
+	    onItemDragStart(event) {
+	      this.draggedItemEvent = event;
+	      this.draggedFile = event.file;
+	      this.axis = event.axis || this.axis;
+	      // eslint-disable-next-line no-param-reassign
+	      event.event.dataTransfer.effectAllowed = 'move';
+	    },
+	    onItemDragEnd(event) {
+	      event.event.preventDefault();
+	      delete this.highlightDropzone.fileId;
+	      delete this.highlightDropzone.position;
+	      const files = this.chunks.flat();
+	      const currentFileIndex = files.indexOf(this.draggedFile);
+	      const targetIndex = (() => {
+	        const index = files.indexOf(this.lastTargetItem);
+	        if (this.lastTargetPosition === 'before') {
+	          return index - 1;
+	        }
+	        return index;
+	      })();
+	      files.splice(currentFileIndex, 1);
+	      files.splice(targetIndex + 1, 0, this.draggedFile);
+	      this.chunks = im_v2_provider_service_uploading.MultiUploadingService.makeChunks({
+	        files
+	      });
+	      this.draggedFile = null;
+	    },
+	    onItemDragOver(event) {
+	      if (this.draggedFile) {
+	        event.event.preventDefault();
+	        const currentTarget = event.file;
+	        const currentTargetPosition = (() => {
+	          const targetRect = event.event.currentTarget.getBoundingClientRect();
+	          const targetCenter = (() => {
+	            if (this.axis === 'x') {
+	              return targetRect.left + targetRect.width / 2;
+	            }
+	            return targetRect.top + targetRect.height / 2;
+	          })();
+	          if (this.axis === 'x' && event.event.x > targetCenter || this.axis === 'y' && event.event.y > targetCenter) {
+	            return 'after';
+	          }
+	          return 'before';
+	        })();
+	        if (currentTarget !== this.lastTargetItem || currentTarget === this.lastTargetItem && currentTargetPosition !== this.lastTargetPosition) {
+	          this.lastTargetPosition = currentTargetPosition;
+	          this.lastTargetItem = currentTarget;
+	          this.highlightDropzone = {
+	            fileId: currentTarget.id,
+	            position: currentTargetPosition
+	          };
+	        }
+	      }
+	    },
+	    onDrop(event) {
+	      event.preventDefault();
 	    }
 	  },
 	  template: `
-		<div class="bx-im-upload-preview__container">
+		<div class="bx-im-upload-preview__container" @drop="onDrop">
 			<div class="bx-im-upload-preview__items-container">
 				<div v-if="isMediaOnly && !sendAsFile" v-for="chunk in chunks" class="bx-im-upload-preview__items-chunk">
 					<MediaGallery
 						:files="chunk"
 						:allowRemoveItem="true"
+						:allowSorting="true"
+						:viewerGroupBy="uploadingId"
 						@removeItem="onRemoveItem"
+						@itemDragStart="onItemDragStart"
+						@itemDragEnd="onItemDragEnd"
+						@itemDragOver="onItemDragOver"
+						:highlightDropzone="highlightDropzone"
 					/>
 				</div>
 				<div v-else v-for="chunk in chunks" class="bx-im-upload-preview__items-chunk">
@@ -4967,7 +5113,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 						v-for="fileItem in chunk"
 						:file="fileItem"
 						:removable="true"
+						:allowSorting="true"
+						:viewerGroupBy="uploadingId"
 						@removeItem="onRemoveItem"
+						@itemDragStart="onItemDragStart"
+						@itemDragEnd="onItemDragEnd"
+						@itemDragOver="onItemDragOver"
+						:highlightDropzone="highlightDropzone"
 					/>
 				</div>
 			</div>
@@ -4980,19 +5132,24 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					{{ loc('IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_SEND_WITHOUT_COMPRESSION') }}
 				</label>
 				<div class="bx-im-upload-preview__control-form">
-					<textarea
-						ref="messageText"
-						v-model="text"
-						:placeholder="loc('IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_INPUT_PLACEHOLDER_2')"
-						:maxlength="inputMaxLength"
-						:style="{'height': textareaHeightStyle}"
-						class="bx-im-upload-preview__message-text"
-						rows="1"
-						@keydown="onKeyDownHandler"
-					></textarea>
+					<div class="bx-im-upload-preview__message-text__wrapper">
+						<textarea
+							ref="messageText"
+							v-model="text"
+							:placeholder="loc('IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_INPUT_PLACEHOLDER_2')"
+							:maxlength="inputMaxLength"
+							:style="{'height': textareaHeightStyle}"
+							class="bx-im-upload-preview__message-text"
+							rows="1"
+							@keydown="onKeyDownHandler"
+						></textarea>
+						<div v-if="showInputLengthCounter" class="bx-im-upload-preview__message-text__counter">
+							<span>{{ this.allowedTextLimit }}</span>
+						</div>
+						<div @mousedown="onResizeStart" class="bx-im-upload-preview__message-text__drag-handle"></div>
+					</div>
 					<SendButton :dialogId="dialogId" @click="onSend" />
 				</div>
-				<div @mousedown="onResizeStart" class="bx-im-upload-preview__drag-handle"></div>
 			</div>
 		</div>
 	`
@@ -5005,7 +5162,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  name: 'UploadPreviewPopup',
 	  components: {
 	    MessengerPopup: im_v2_component_elements_popup.MessengerPopup,
-	    UploadPreviewContent
+	    UploadPreviewContent,
+	    Loader: im_v2_component_elements_loader.Loader,
+	    Spinner: im_v2_component_elements_loader.Spinner
 	  },
 	  props: {
 	    dialogId: {
@@ -5015,6 +5174,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    uploaderIds: {
 	      type: Array,
 	      required: true
+	    },
+	    uploadingId: {
+	      type: String || null,
+	      default: null
 	    },
 	    sourceFilesCount: {
 	      type: Number,
@@ -5027,6 +5190,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    }
 	  },
 	  emits: ['close', 'sendFiles'],
+	  data() {
+	    return {
+	      allowAdjustPosition: true
+	    };
+	  },
 	  computed: {
 	    POPUP_ID: () => POPUP_ID,
 	    config() {
@@ -5045,8 +5213,35 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        contentPadding: 0,
 	        className: 'bx-im-upload-preview__scope',
 	        autoHide: true,
+	        closeByEsc: false,
 	        overlay: true
 	      };
+	    },
+	    files() {
+	      const uploadingService = this.getUploadingService();
+	      return this.uploaderIds.flatMap(uploaderId => {
+	        return uploadingService.getFiles(uploaderId).map(file => {
+	          return this.$store.getters['files/get'](file.getId());
+	        });
+	      });
+	    },
+	    isReady() {
+	      return this.files.every(file => {
+	        return file.image !== null;
+	      });
+	    }
+	  },
+	  watch: {
+	    isReady() {
+	      if (this.isReady) {
+	        queueMicrotask(() => {
+	          var _PopupManager$getPopu;
+	          (_PopupManager$getPopu = main_popup.PopupManager.getPopupById(POPUP_ID)) == null ? void 0 : _PopupManager$getPopu.adjustPosition({
+	            forceBindPosition: true,
+	            position: 'bottom'
+	          });
+	        });
+	      }
 	    }
 	  },
 	  methods: {
@@ -5055,25 +5250,39 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      this.$emit('close');
 	    },
 	    onUpdateTitle(title) {
-	      var _PopupManager$getPopu;
-	      (_PopupManager$getPopu = main_popup.PopupManager.getPopupById(POPUP_ID)) == null ? void 0 : _PopupManager$getPopu.setTitleBar(title);
+	      var _PopupManager$getPopu2;
+	      (_PopupManager$getPopu2 = main_popup.PopupManager.getPopupById(POPUP_ID)) == null ? void 0 : _PopupManager$getPopu2.setTitleBar(title);
+	    },
+	    getUploadingService() {
+	      return im_v2_provider_service_uploading.UploadingService.getInstance();
+	    },
+	    onDragStart() {
+	      this.allowAdjustPosition = false;
 	    }
 	  },
 	  template: `
 		<MessengerPopup
 			:config="config"
 			@close="$emit('close')"
+			@popupDragStart="onDragStart"
 			:id="POPUP_ID"
 		>
-			<UploadPreviewContent 
+			<UploadPreviewContent
+				v-if="isReady"
 				:dialogId="dialogId"
 				:uploaderIds="uploaderIds"
+				:uploadingId="uploadingId"
 				:sourceFilesCount="sourceFilesCount"
 				:textareaValue="textareaValue"
+				:popupId="POPUP_ID"
+				:allowAdjustPosition="allowAdjustPosition"
 				@close="$emit('close')"
 				@sendFiles="onSendFiles"
 				@updateTitle="onUpdateTitle"
 			/>
+			<div v-else class="bx-im-upload-preview-popup-preparing">
+				<Spinner></Spinner>
+			</div>
 		</MessengerPopup>
 	`
 	};
@@ -6596,7 +6805,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  components: {
 	    UploadMenu,
 	    SmileSelector,
-	    SendButton,
+	    SendButton: im_v2_component_elements_sendButton.SendButton,
 	    UploadPreviewPopup,
 	    MentionPopup,
 	    TextareaPanel,
@@ -6629,10 +6838,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      type: Boolean,
 	      default: true
 	    },
-	    withAudioInput: {
-	      type: Boolean,
-	      default: true
-	    },
 	    withAutoFocus: {
 	      type: Boolean,
 	      default: true
@@ -6651,6 +6856,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      mentionQuery: '',
 	      showUploadPreviewPopup: false,
 	      previewPopupUploaderIds: [],
+	      previewPopupUploadingId: null,
 	      previewPopupSourceFilesCount: 0,
 	      panelType: im_v2_const.TextareaPanelType.none,
 	      panelContext: {
@@ -6744,6 +6950,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.textarea.insertForward, this.onInsertForward);
 	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.textarea.openUploadPreview, this.onOpenUploadPreview);
 	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.key.onBeforeEscape, this.onBeforeEscape);
+	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.dialog.closeComments, this.onCloseComments);
 	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.dialog.onMessageDeleted, this.onMessageDeleted);
 	  },
 	  mounted() {
@@ -6765,6 +6972,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.textarea.insertForward, this.onInsertForward);
 	    main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.textarea.openUploadPreview, this.onOpenUploadPreview);
 	    main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.key.onBeforeEscape, this.onBeforeEscape);
+	    main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.dialog.closeComments, this.onCloseComments);
 	    main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.dialog.onMessageDeleted, this.onMessageDeleted);
 	  },
 	  methods: {
@@ -7029,14 +7237,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      sendAsFile
 	    }) {
 	      const multiUploadingService = this.getMultiUploadingService();
-	      const multiUploadingResult = await multiUploadingService.uploadFromInput({
-	        event,
+	      const multiUploadingResult = await multiUploadingService.upload({
+	        files: Object.values(event.target.files),
 	        sendAsFile,
 	        dialogId: this.dialogId,
 	        autoUpload: false
 	      });
 	      this.showUploadPreviewPopup = true;
 	      this.previewPopupUploaderIds = multiUploadingResult.uploaderIds;
+	      this.previewPopupUploadingId = multiUploadingResult.uploadingId;
 	      this.previewPopupSourceFilesCount = multiUploadingResult.sourceFilesCount;
 	    },
 	    onDiskFileSelect({
@@ -7116,15 +7325,18 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      }
 	      this.openForwardPanel(messagesIds);
 	    },
-	    async onPaste(clipboardEvent) {
+	    async onPaste(event) {
 	      if (!this.withUploadMenu) {
 	        return;
 	      }
+	      if (!event.clipboardData || !ui_uploader_core.isFilePasted(event.clipboardData)) {
+	        return;
+	      }
+	      event.preventDefault();
 	      const multiUploadingService = this.getMultiUploadingService();
-	      const multiUploadingResult = await multiUploadingService.uploadFromClipboard({
-	        clipboardEvent,
+	      const multiUploadingResult = await multiUploadingService.upload({
+	        files: await ui_uploader_core.getFilesFromDataTransfer(event.clipboardData),
 	        dialogId: this.dialogId,
-	        imagesOnly: false,
 	        autoUpload: false
 	      });
 	      if (!main_core.Type.isArrayFilled(multiUploadingResult.uploaderIds)) {
@@ -7132,6 +7344,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      }
 	      this.showUploadPreviewPopup = true;
 	      this.previewPopupUploaderIds = multiUploadingResult.uploaderIds;
+	      this.previewPopupUploadingId = multiUploadingResult.uploadingId;
 	      this.previewPopupSourceFilesCount = multiUploadingResult.sourceFilesCount;
 	    },
 	    onOpenUploadPreview(event) {
@@ -7140,6 +7353,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      } = event.getData();
 	      this.showUploadPreviewPopup = true;
 	      this.previewPopupUploaderIds = multiUploadingResult.uploaderIds;
+	      this.previewPopupUploadingId = multiUploadingResult.uploadingId;
 	      this.previewPopupSourceFilesCount = multiUploadingResult.sourceFilesCount;
 	    },
 	    onMarketIconClick() {
@@ -7255,14 +7469,22 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      }
 	      return this.multiUploadingService;
 	    },
-	    onSendFilesFromPreviewPopup(event) {
+	    async onSendFilesFromPreviewPopup(event) {
 	      this.text = '';
 	      const {
 	        text,
-	        uploaderIds
+	        files,
+	        sendAsFile
 	      } = event;
 	      const textWithMentions = this.mentionManager.replaceMentions(text);
-	      uploaderIds.forEach((uploaderId, index) => {
+	      const multiUploadingResult = await this.getMultiUploadingService().upload({
+	        files,
+	        dialogId: this.dialogId,
+	        autoUpload: false,
+	        sendAsFile
+	      });
+	      await multiUploadingResult.loadAllComplete;
+	      multiUploadingResult.uploaderIds.forEach((uploaderId, index) => {
 	        this.getUploadingService().sendMessageWithFiles({
 	          uploaderId,
 	          text: index === 0 ? textWithMentions : ''
@@ -7296,6 +7518,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    },
 	    onAudioInputResult(inputText) {
 	      this.text += inputText;
+	    },
+	    onCloseComments() {
+	      this.restoreTextareaHeight();
 	    }
 	  },
 	  template: `
@@ -7308,8 +7533,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					:dialogId="dialogId"
 					@close="closePanel"
 				/>
-				<div class="bx-im-textarea__content" ref="textarea-content">
-					<div class="bx-im-textarea__left">
+				<div class="bx-im-textarea__content" ref="textarea-content" @click="focus">
+					<div class="bx-im-textarea__top">
 						<UploadMenu
 							v-if="withUploadMenu"
 							:dialogId="dialogId" 
@@ -7327,40 +7552,39 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 							ref="textarea"
 							rows="1"
 						></textarea>
+					</div>
+					<div class="bx-im-textarea__bottom">
+						<slot name="bottom-panel-buttons"></slot>
+						<AutoDeleteSelector
+							v-if="isAutoDeleteEnabled"
+							:dialogId="dialogId"
+						/>
+						<BIcon
+							v-if="withMarket"
+							:name="OutlineIcons.APPS"
+							:title="loc('IM_TEXTAREA_ICON_APPLICATION')"
+							:size="ICON_SIZE"
+							:color="marketIconColor"
+							class="bx-im-textarea__icon"
+							@click="onMarketIconClick"
+						/>
+						<SmileSelector
+							v-if="withSmileSelector"
+							:dialogId="dialogId"
+						/>
 						<AudioInput
-							v-if="withAudioInput"
 							@inputStart="onAudioInputStart"
 							@inputResult="onAudioInputResult"
 						/>
-					</div>
-					<div class="bx-im-textarea__right">
-						<div class="bx-im-textarea__action-panel">
-							<AutoDeleteSelector
-								v-if="isAutoDeleteEnabled"
-								:dialogId="dialogId"
-							/>
-							<BIcon
-								v-if="withMarket"
-								:name="OutlineIcons.APPS"
-								:title="loc('IM_TEXTAREA_ICON_APPLICATION')"
-								:size="ICON_SIZE"
-								:color="marketIconColor"
-								class="bx-im-textarea__icon"
-								@click="onMarketIconClick"
-							/>
-							<SmileSelector 
-								v-if="withSmileSelector" 
-								:dialogId="dialogId" 
-							/>
-						</div>
+						<SendButton :dialogId="dialogId" :editMode="editMode" :isDisabled="isDisabled" @click="sendMessage" />
 					</div>
 				</div>
 			</div>
-			<SendButton :dialogId="dialogId" :editMode="editMode" :isDisabled="isDisabled" @click="sendMessage" />
 			<UploadPreviewPopup
 				v-if="showUploadPreviewPopup"
 				:dialogId="dialogId"
 				:uploaderIds="previewPopupUploaderIds"
+				:uploadingId="previewPopupUploadingId"
 				:sourceFilesCount="previewPopupSourceFilesCount"
 				:textareaValue="text"
 				@close="showUploadPreviewPopup = false"
@@ -7379,5 +7603,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.ChatTextarea = ChatTextarea;
 
-}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Service??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Service??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Calendar?.Sharing??{},BX?.Vote??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX??{},BX?.Main??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Service??{},BX?.Messenger?.v2?.Component?.Message??{},BX?.Messenger?.v2?.Component?.Elements??{},BX??{},BX?.Event??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Application??{},BX?.Messenger?.v2?.Lib??{},BX??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.UI?.IconSet??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Service??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Const??{}));
+}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Service??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.UI?.Uploader??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Service??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Calendar?.Sharing??{},BX?.Vote??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX??{},BX?.Messenger?.v2?.Model??{},BX?.Main??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Service??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Component?.Elements??{},BX??{},BX?.Event??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Application??{},BX?.Messenger?.v2?.Lib??{},BX??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.UI?.IconSet??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Service??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Const??{}));
 //# sourceMappingURL=textarea.bundle.js.map

@@ -263,6 +263,8 @@
 	--chat-overall-fixed-white-rgb: 255, 255, 255;
 	--chat-overall-invert-alert: #ffffff;
 	--chat-overall-invert-alert-rgb: 255, 255, 255;
+	--chat-overall-viewer-bg: #ffffff;
+	--chat-overall-viewer-bg-rgb: 255, 255, 255;
 	--collab-accent-less1: #ffffff;
 	--collab-accent-less1-rgb: 255, 255, 255;
 	--collab-accent-less2: #ffffff;
@@ -568,6 +570,8 @@
 	--chat-overall-fixed-white-rgb: 255, 255, 255;
 	--chat-overall-invert-alert: #ffffff;
 	--chat-overall-invert-alert-rgb: 255, 255, 255;
+	--chat-overall-viewer-bg: #ffffff;
+	--chat-overall-viewer-bg-rgb: 255, 255, 255;
 	--collab-accent-less1: #ffffff;
 	--collab-accent-less1-rgb: 255, 255, 255;
 	--collab-accent-less2: #ffffff;
@@ -873,6 +877,8 @@
 	--chat-overall-fixed-white-rgb: 235, 235, 235;
 	--chat-overall-invert-alert: #FFFFFF;
 	--chat-overall-invert-alert-rgb: 255, 255, 255;
+	--chat-overall-viewer-bg: #EEF7FFF5;
+	--chat-overall-viewer-bg-rgb: 238, 247, 255;
 	--collab-accent-less1: #8CEF73;
 	--collab-accent-less1-rgb: 140, 239, 115;
 	--collab-accent-less2: #6BE860;
@@ -1178,6 +1184,8 @@
 	--chat-overall-fixed-white-rgb: 231, 231, 231;
 	--chat-overall-invert-alert: #FF5752;
 	--chat-overall-invert-alert-rgb: 255, 87, 82;
+	--chat-overall-viewer-bg: #051D3AF5;
+	--chat-overall-viewer-bg-rgb: 5, 29, 58;
 	--collab-accent-less1: #8CEF73;
 	--collab-accent-less1-rgb: 140, 239, 115;
 	--collab-accent-less2: #6BE860;

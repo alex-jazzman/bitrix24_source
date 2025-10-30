@@ -6,6 +6,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 (function (exports,call_component_callButton,im_v2_component_elements_loader,im_v2_component_animation,im_v2_component_elements_chatTitle,im_v2_component_elements_avatar,im_v2_lib_utils,ui_vue3,im_v2_component_dialog_chat,im_v2_component_textarea,im_v2_lib_theme,im_v2_lib_textarea,im_v2_component_sidebar,im_v2_lib_bulkActions,ui_uploader_core,main_core,im_v2_provider_service_uploading,im_v2_provider_service_chat,main_core_events,ui_vue3_directives_hint,im_v2_application_core,im_v2_lib_analytics,im_v2_const,im_v2_lib_permission,im_v2_component_elements_button,im_v2_component_entitySelector,im_v2_lib_confirm,im_v2_provider_service_message) {
 	'use strict';
 
+	const {
+	  callInstalled
+	} = main_core.Extension.getSettings('im.v2.lib.call');
+
 	// @vue/component
 	const CallHeaderButton = {
 	  name: 'CallHeaderButton',
@@ -24,6 +28,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      return this.$store.getters['chats/get'](this.dialogId, true);
 	    },
 	    componentToRender() {
+	      if (!callInstalled) {
+	        return null;
+	      }
 	      return call_component_callButton.CallButton;
 	    }
 	  },
@@ -273,7 +280,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		<div class="bx-im-chat-header__info">
 			<div class="bx-im-chat-header__title --user">
 				<a :href="userLink" target="_blank" class="bx-im-chat-header__title_container">
-					<ChatTitle :dialogId="dialogId" :withAutoDelete="true" />
+					<ChatTitle :dialogId="dialogId" :withAutoDelete="true" :withMute="true" />
 				</a>
 				<span class="bx-im-chat-header__user-status">{{ userLastOnlineText }}</span>
 			</div>
@@ -763,8 +770,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    async onDrop(event) {
 	      event.preventDefault();
 	      const multiUploadingService = this.getMultiUploadingService();
-	      const multiUploadingResult = await multiUploadingService.uploadFromDragAndDrop({
-	        event,
+	      const multiUploadingResult = await multiUploadingService.upload({
+	        files: await ui_uploader_core.getFilesFromDataTransfer(event.dataTransfer),
 	        dialogId: this.dialogId,
 	        sendAsFile: false,
 	        autoUpload: false
@@ -1142,6 +1149,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    withHeader: {
 	      type: Boolean,
 	      default: true
+	    },
+	    withDropArea: {
+	      type: Boolean,
+	      default: true
 	    }
 	  },
 	  data() {
@@ -1263,6 +1274,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				<slot v-if="withHeader" name="header">
 					<ChatHeader :dialogId="dialogId" :key="dialogId" />
 				</slot>
+				<slot name="sub-header"></slot>
 				<div :style="dialogContainerStyle" class="bx-im-content-chat__dialog_container">
 					<Transition name="loading-bar-transition">
 						<LoadingBar v-if="showLoadingBar" />
@@ -1281,7 +1293,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 							<ChatTextarea
 								:dialogId="dialogId"
 								:key="dialogId"
-								:withAudioInput="false"
 								@mounted="onTextareaMount"
 							/>
 						</slot>
@@ -1291,7 +1302,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					</slot>
 					<MutePanel v-else :dialogId="dialogId" />
 				</Transition>
-				<DropArea :dialogId="dialogId" :container="$refs.content || {}" :key="dialogId" />
+				<DropArea
+					v-if="withDropArea"
+					:key="dialogId" 
+					:dialogId="dialogId" 
+					:container="$refs.content || {}" 
+				/>
 				<!-- End textarea -->
 			</div>
 			<ChatSidebar

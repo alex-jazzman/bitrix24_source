@@ -67,6 +67,7 @@ export const UserDetailedInfoContactItemValue = {
 			class="intranet-user-mini-profile__detailed-info__contact-item-value"
 			:href="href"
 			target
+			:data-test-id="'usermp_contact-' + type"
 			@click="onClick"
 		> 
 			{{ value }}

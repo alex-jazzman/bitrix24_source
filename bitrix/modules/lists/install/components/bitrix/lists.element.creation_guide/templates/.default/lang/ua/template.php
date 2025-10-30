@@ -9,7 +9,6 @@ $MESS["LISTS_ELEMENT_CREATION_GUIDE_CMP_BUTTON_NEXT"] = "ПРОДОВЖИТИ";
 $MESS["LISTS_ELEMENT_CREATION_GUIDE_CMP_BUTTON_SAVE"] = "ЗБЕРЕГТИ";
 $MESS["LISTS_ELEMENT_CREATION_GUIDE_CMP_COLLAPSE_DESCRIPTION"] = "Згорнути";
 $MESS["LISTS_ELEMENT_CREATION_GUIDE_CMP_DESCRIPTION"] = "Автоматизуйте процеси в компанії, робіть їх прозорішими та керованішими, контролюйте кожен етап і працюйте з бізнес-процесами навіть із мобільного телефону.";
-$MESS["LISTS_ELEMENT_CREATION_GUIDE_CMP_EMPTY_DESCRIPTION"] = "Немає опису.";
 $MESS["LISTS_ELEMENT_CREATION_GUIDE_CMP_EMPTY_DESCRIPTION_1"] = "Вам буде зручніше працювати з процесом, якщо адміністратор заповнить опис.";
 $MESS["LISTS_ELEMENT_CREATION_GUIDE_CMP_EMPTY_DURATION"] = "немає даних";
 $MESS["LISTS_ELEMENT_CREATION_GUIDE_CMP_EXIT_DIALOG_CANCEL"] = "Не скасовувати";

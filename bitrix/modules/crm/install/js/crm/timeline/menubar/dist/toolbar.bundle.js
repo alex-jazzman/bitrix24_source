@@ -5810,13 +5810,21 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	}
 	function _getSpotlight2$1() {
-	  return new BX.SpotLight({
+	  const spotlight = new BX.SpotLight({
 	    id: `${SPOTLIGHT_ID_PREFIX$1}-${babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].itemCode}-guide`,
 	    targetElement: babelHelpers.classPrivateFieldLooseBase(this, _getGuideBindElement)[_getGuideBindElement](),
 	    targetVertex: SPOTLIGHT_TARGET_VERTEX,
 	    zIndex: SPOTLIGHT_Z_INDEX,
 	    autoSave: 'no'
 	  });
+	  spotlight.bindEvents({
+	    onTargetEnter: () => {
+	      if (babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].stayShowedSpotlight !== true) {
+	        spotlight.close();
+	      }
+	    }
+	  });
+	  return spotlight;
 	}
 	function _getGuideBindElement2(force = false) {
 	  if (main_core.Type.isDomNode(babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].guideBindElement)) {

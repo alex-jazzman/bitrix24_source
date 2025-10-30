@@ -1,13 +1,13 @@
 import { Extension } from 'main.core';
 import { Builder, BuilderModel, Store } from 'ui.vue3.vuex';
 
+import { CheckList } from 'tasks.v2.model.check-list';
 import { Epics } from 'tasks.v2.model.epics';
 import { Flows } from 'tasks.v2.model.flows';
 import { Groups } from 'tasks.v2.model.groups';
 import { Interface } from 'tasks.v2.model.interface';
 import { Stages } from 'tasks.v2.model.stages';
 import { Tasks } from 'tasks.v2.model.tasks';
-import { CheckList } from 'tasks.v2.model.check-list';
 import { Users } from 'tasks.v2.model.users';
 
 import { PullManager } from 'tasks.v2.provider.pull.pull-manager';
@@ -74,13 +74,13 @@ class CoreApplication
 		this.#builder = Builder.init();
 
 		this.#builder
+			.addModel(CheckList.create())
 			.addModel(Epics.create())
 			.addModel(Flows.create())
 			.addModel(Groups.create())
 			.addModel(Interface.createWithVariables(this.#params))
 			.addModel(Stages.create())
 			.addModel(Tasks.create())
-			.addModel(CheckList.create())
 			.addModel(Users.create())
 		;
 

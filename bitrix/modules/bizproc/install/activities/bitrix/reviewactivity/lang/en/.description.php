@@ -1,9 +1,7 @@
 <?php
-$MESS["BPAA_DESCR_CM"] = "Comments";
 $MESS["BPAA_DESCR_CM_1"] = "Notes";
 $MESS["BPAR_DESCR_DESCR"] = "Read the element and post comments";
 $MESS["BPAR_DESCR_LR"] = "Last read by";
-$MESS["BPAR_DESCR_LR_COMMENT"] = "Last reader's comment";
 $MESS["BPAR_DESCR_LR_COMMENT_1"] = "Last viewer's notes";
 $MESS["BPAR_DESCR_NAME"] = "Read element";
 $MESS["BPAR_DESCR_RC"] = "Persons Read";

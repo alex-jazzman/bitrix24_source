@@ -11,13 +11,15 @@
 				Description of the block
 			</div>
 		</div>
-		<a
-			class="landing-block-node-link g-mb-9 g-pt-8 g-pb-8 g-px-20 g-rounded-10 text-center btn g-font-size-16 g-font-weight-500 g-color g-bg g-color--hover g-bg--hover"
-			style="--color: #0253C8; --bg: #E6F4FF; --color-hover: #ffffff; --bg-hover: var(--primary);"
-			href="#"
-			target="_blank"
-		>
-			Button
-		</a>
+		<div style="display: inline-flex">
+			<a
+				class="landing-block-node-link g-mb-9 g-pt-8 g-pb-8 g-px-20 g-rounded-10 text-center btn g-font-size-16 g-font-weight-500 g-color g-bg g-color--hover g-bg--hover"
+				style="--color: #0253C8; --bg: #E6F4FF; --color-hover: #ffffff; --bg-hover: var(--primary);"
+				href="#"
+				target="_blank"
+			>
+				Button
+			</a>
+		</div>
 	</div>
 </section>

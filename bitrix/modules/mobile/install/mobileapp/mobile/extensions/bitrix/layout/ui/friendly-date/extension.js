@@ -72,6 +72,7 @@ jn.define('layout/ui/friendly-date', (require, exports, module) => {
 							defaultFormat: this.props.defaultTimeFormat,
 							futureAllowed: this.props.futureAllowed,
 							context: this.props.context,
+							showTime: this.props.showTime,
 						},
 					).format(moment);
 				}
@@ -104,6 +105,7 @@ jn.define('layout/ui/friendly-date', (require, exports, module) => {
 						defaultFormat: this.props.defaultTimeFormat,
 						futureAllowed: this.props.futureAllowed,
 						context: this.props.context,
+						showTime: this.props.showTime,
 					}).format(moment);
 				}
 

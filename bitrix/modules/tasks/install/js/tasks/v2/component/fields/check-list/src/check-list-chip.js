@@ -46,20 +46,35 @@ export const CheckListChip = {
 		},
 		isUploading(): boolean
 		{
-			return this.task.checklist?.some((itemId) => fileService.get(itemId, EntityTypes.CheckListItem).isUploading());
+			return this.task.checklist?.some((itemId) => {
+				return fileService.get(
+					itemId,
+					EntityTypes.CheckListItem,
+					{ parentEntityId: this.taskId },
+				).isUploading();
+			});
 		},
 		design(): string
 		{
 			return {
-				[!this.isAutonomous && !this.isSelected]: ChipDesign.Shadow,
+				[!this.isAutonomous && !this.isSelected]: ChipDesign.ShadowNoAccent,
 				[!this.isAutonomous && this.isSelected]: ChipDesign.ShadowAccent,
-				[this.isAutonomous && !this.isSelected]: ChipDesign.Outline,
+				[this.isAutonomous && !this.isSelected]: ChipDesign.OutlineNoAccent,
 				[this.isAutonomous && this.isSelected]: ChipDesign.OutlineAccent,
 			}.true;
 		},
 		isSelected(): boolean
 		{
-			return this.checkLists.length > 0;
+			if (this.isAutonomous)
+			{
+				return this.checkLists.length > 0;
+			}
+
+			return this.wasFilled || this.checkLists.length > 0;
+		},
+		wasFilled(): boolean
+		{
+			return this.$store.getters[`${Model.Tasks}/wasFieldFilled`](this.taskId, checkListMeta.id);
 		},
 		checkListItemCount(): number
 		{
@@ -84,7 +99,7 @@ export const CheckListChip = {
 		},
 		icon(): string
 		{
-			if (this.isUploading)
+			if (this.isUploading && !this.wasFilled)
 			{
 				return Animated.LOADER_WAIT;
 			}
@@ -168,7 +183,7 @@ export const CheckListChip = {
 		{
 			if (this.isAutonomous)
 			{
-				this.$refs.chip.focus();
+				this.$el.focus();
 			}
 		},
 	},
@@ -179,7 +194,6 @@ export const CheckListChip = {
 			:text="text"
 			:data-task-id="taskId"
 			:data-task-chip-id="checkListMeta.id"
-			ref="chip"
 			@click="handleClick"
 		/>
 	`,

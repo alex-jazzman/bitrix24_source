@@ -1,5 +1,8 @@
 <?php
 $MESS["SN_COLLAB_ACCESS_RIGHTS"] = "Права доступу";
+$MESS["SN_COLLAB_ACCESS_RIGHTS_ALLOW_GUESTS_INVITATION_LABEL"] = "Дозволити запрошувати гостей до колаби:";
+$MESS["SN_COLLAB_ACCESS_RIGHTS_ALLOW_GUESTS_INVITATION_LABEL_HINT_DISABLED"] = "Адміністратор вашого Бітрікс24 вимкнув можливість запрошувати гостей до колаб.";
+$MESS["SN_COLLAB_ACCESS_RIGHTS_ALLOW_GUESTS_INVITATION_LABEL_HINT_ENABLED"] = "Учасники колаби зможуть запрошувати гостей.";
 $MESS["SN_COLLAB_ACCESS_RIGHTS_BUTTON_CANCEL"] = "Скасувати";
 $MESS["SN_COLLAB_ACCESS_RIGHTS_BUTTON_SAVE"] = "Зберегти";
 $MESS["SN_COLLAB_ACCESS_RIGHTS_CHAT_LABEL"] = "Хто може писати повідомлення в чат";

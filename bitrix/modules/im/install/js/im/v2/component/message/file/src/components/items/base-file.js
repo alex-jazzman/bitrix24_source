@@ -107,6 +107,7 @@ export const BaseFileItem = {
 			<div class="bx-im-base-file-item__viewer-container" v-bind="viewerAttributes" @click="download">
 				<div class="bx-im-base-file-item__icon-container" ref="loader-icon">
 					<ProgressBar 
+						v-if="!isLoaded" 
 						:item="file"
 						:size="ProgressBarSize.S"
 						@cancelClick="onCancelClick"

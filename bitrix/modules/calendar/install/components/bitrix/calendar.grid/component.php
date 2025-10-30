@@ -24,8 +24,6 @@ CModule::IncludeModule("socialnetwork");
 $APPLICATION->ResetException();
 $APPLICATION->SetPageProperty("BodyClass", trim($APPLICATION->GetPageProperty("BodyClass")." no-all-paddings"));
 
-$arParams['FILTER_ID'] = "CALENDAR_GRID_FILTER_".$arParams["CALENDAR_TYPE"]."_". ($arParams["OWNER_ID"] ?? '') ."_".CCalendar::GetCurUserId();
-
 $viewTaskPath = '';
 $editTaskPath = '';
 if ($arParams['CALENDAR_TYPE'] === 'user')

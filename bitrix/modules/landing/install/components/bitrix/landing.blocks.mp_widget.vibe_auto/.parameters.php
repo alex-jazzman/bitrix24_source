@@ -8,7 +8,18 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 $arComponentParameters = [
-	'PARAMETERS' => [],
+	'PARAMETERS' => [
+		'TYPE' => [
+			'NAME' => Loc::getMessage('LANDING_WIDGET_VIBE_AUTO_TITLE'),
+			'TYPE' => 'LIST',
+			'VALUES' => [
+				'1' => '1',
+				'2' => '2',
+				'3' => '3',
+				'4' => '4',
+			],
+		],
+	],
 ];
 
 $parentComponentParameters = CComponentUtil::GetComponentProps(

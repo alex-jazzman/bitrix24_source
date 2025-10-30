@@ -8,6 +8,7 @@ return [
 		'pull/client/events',
 		'layout/ui/fields/boolean',
 		'tokens',
+		'utils/random',
 
 		'calendar:ajax',
 		'calendar:enums',

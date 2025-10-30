@@ -19,6 +19,14 @@ $arComponentParameters = [
 			'TYPE' => 'STRING',
 			'DEFAULT' => Loc::getMessage('LANDING_WIDGET_APPS_DESKTOP_TITLE_DEFAULT_VALUE_MSGVER_1'),
 		],
+		'TYPE' => [
+			'NAME' => Loc::getMessage('LANDING_WIDGET_APPS_PARAM_TYPE'),
+			'TYPE' => 'LIST',
+			'VALUES' => [
+				'1' => '1',
+				'2' => '2',
+			],
+		],
 		'COLOR_TITLE_MOBILE' => [
 			'NAME' => Loc::getMessage('LANDING_WIDGET_APPS_PARAM_COLOR_TITLE_NAME'),
 			'TYPE' => 'CUSTOM',

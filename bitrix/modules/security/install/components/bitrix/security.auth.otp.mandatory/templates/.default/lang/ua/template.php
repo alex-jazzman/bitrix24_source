@@ -24,7 +24,6 @@ $MESS["SECURITY_OTP_MANDATORY_AUTH_ERROR_TITLE"] = "Помилка збереж�
 $MESS["SECURITY_OTP_MANDATORY_AUTH_HAND_DESCR"] = "Якщо вам не вдалося сканувати код, виберіть ручне введення даних.                                                                                                                                                                                                                                       <br/> При ручному введенні необхідно вказати адресу сайту або Бітрікс24, ваш E-mail, секретний код, який вказаний на картинці, і вибрати тип ключа";
 $MESS["SECURITY_OTP_MANDATORY_AUTH_HAND_TYPE"] = "Ввести дані вручну";
 $MESS["SECURITY_OTP_MANDATORY_AUTH_INPUT_METHODS_SEPARATOR"] = "або";
-$MESS["SECURITY_OTP_MANDATORY_AUTH_MOBILE"] = "Завантажте мобільний застосунок Bitrix24 OTP";
 $MESS["SECURITY_OTP_MANDATORY_AUTH_MOBILE2"] = "для свого телефону з AppStore або GooglePlay";
 $MESS["SECURITY_OTP_MANDATORY_AUTH_MOBILE2_TMP"] = "для свого телефону з AppStore, GooglePlay";
 $MESS["SECURITY_OTP_MANDATORY_AUTH_MOBILE_MSGVER_1"] = "Завантажте мобільний застосунок Bitrix OTP";

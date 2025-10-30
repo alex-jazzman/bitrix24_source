@@ -529,16 +529,19 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 				if (step.semantics === 'apology' || step.semantics === 'failure')
 				{
 					this._analyticsData.c_element = BX.Crm.Integration.Analytics.Dictionary.ELEMENT_LOSE_BUTTON;
-					this._registerAnalyticsCloseEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_ATTEMPT);
 				}
 				else if (step.semantics === 'success')
 				{
 					this._analyticsData.c_element = BX.Crm.Integration.Analytics.Dictionary.ELEMENT_WON_BUTTON;
-					this._registerAnalyticsCloseEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_ATTEMPT);
 				}
 				else
 				{
-					this._analyticsData = null;
+					this._analyticsData = BX.Crm.Integration.Analytics.Builder.Entity.ChangeStageEvent.createDefault(
+							this._entityTypeId
+						)
+						.setSubSection(BX.Crm.Integration.Analytics.Dictionary.SUB_SECTION_DETAILS)
+						.setElement(BX.Crm.Integration.Analytics.Dictionary.ELEMENT_STAGE_BAR_BUTTON)
+						.buildData();
 				}
 
 				const data = {
@@ -582,8 +585,6 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 						}
 					);
 
-					this._registerAnalyticsCloseEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR);
-
 					return;
 				}
 
@@ -597,12 +598,12 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 
 					this.setCurrentStepByIdAndAdjustSteps(this._previousStepId);
 
-					this._registerAnalyticsCloseEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR);
+					this._registerAnalyticsEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR);
 
 					return;
 				}
 
-				this._registerAnalyticsCloseEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_SUCCESS);
+				this._registerAnalyticsEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_SUCCESS);
 
 				BX.onCustomEvent(
 					window,
@@ -663,6 +664,15 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 				{
 					//Rollback current step
 					this.setCurrentStepByIdAndAdjustSteps(this._previousStepId);
+
+					if (this._analyticsData)
+					{
+						this._registerAnalyticsEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_CANCEL);
+					}
+				}
+				else if (this._analyticsData)
+				{
+					this._registerAnalyticsEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_SUCCESS);
 				}
 			},
 			openTerminationDialog: function()
@@ -734,7 +744,6 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 					.setSubSection(BX.Crm.Integration.Analytics.Dictionary.SUB_SECTION_DETAILS)
 					.setElement(BX.Crm.Integration.Analytics.Dictionary.ELEMENT_DETAILS_PROGRESS_BAR)
 					.buildData();
-				this._registerAnalyticsCloseEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_ATTEMPT);
 
 				this.closeTerminationDialog();
 
@@ -768,7 +777,7 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 							this.showMissPermissionError();
 							this.adjustStepsByCurrentStep();
 
-							this._registerAnalyticsCloseEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR_PERMISSIONS);
+							this._registerAnalyticsEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR_PERMISSIONS);
 							return;
 						}
 
@@ -784,7 +793,7 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 						this.showMissPermissionError();
 						this.adjustStepsByCurrentStep();
 
-						this._registerAnalyticsCloseEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR_PERMISSIONS);
+						this._registerAnalyticsEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR_PERMISSIONS);
 						return;
 					}
 
@@ -797,7 +806,7 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 						const finalScript = BX.prop.getString(this._settings, "finalScript", "");
 						if(finalScript !== "")
 						{
-							this._registerAnalyticsCloseEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_SUCCESS);
+							this._registerAnalyticsEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_SUCCESS);
 							eval(finalScript);
 							return;
 						}
@@ -805,7 +814,7 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 						const finalUrl = BX.prop.getString(this._settings, "finalUrl", "");
 						if(finalUrl !== "")
 						{
-							this._registerAnalyticsCloseEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_SUCCESS);
+							this._registerAnalyticsEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_SUCCESS);
 							window.location = finalUrl;
 							return;
 						}
@@ -1099,7 +1108,7 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 					BX.Crm.EntityDetailProgressControl.getStepColor(this._stepInfos[currentStepIndex])
 				);
 			},
-			_registerAnalyticsCloseEvent(status)
+			_registerAnalyticsEvent(status)
 			{
 				if (!this._analyticsData)
 				{

@@ -6,7 +6,6 @@ $MESS["IM_CONTENT_BULK_ACTIONS_CONFIRM_TITLE"] = "Таңдалған хабар�
 $MESS["IM_CONTENT_BULK_ACTIONS_COUNT_MESSAGES"] = "Хабарламалар";
 $MESS["IM_CONTENT_BULK_ACTIONS_DELETE_NOT_CAN_DELETE"] = "Басқа адамдардың хабарламаларын жою мүмкін емес";
 $MESS["IM_CONTENT_BULK_ACTIONS_PANEL_DELETE"] = "Жою";
-$MESS["IM_CONTENT_BULK_ACTIONS_PANEL_DELETE_COMING_SOON"] = "Жақында пайда болады";
 $MESS["IM_CONTENT_BULK_ACTIONS_PANEL_FORWARD"] = "Жіберу";
 $MESS["IM_CONTENT_BULK_ACTIONS_SELECT_MESSAGES"] = "Хабарламаларды таңдаңыз";
 $MESS["IM_CONTENT_CHAT_HEADER_CHANNEL_USER_COUNT_PLURAL_0"] = "#COUNT# жазылушы";

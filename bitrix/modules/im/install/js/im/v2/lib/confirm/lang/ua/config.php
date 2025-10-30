@@ -1,4 +1,5 @@
 <?php
+$MESS["IM_LIB_CONFIRM_ACTIVE_CALL_CONFIRM"] = "Ви впевнені, що хочете закрити сторінку? У разі закриття, ви відключитеся від дзвінка.";
 $MESS["IM_LIB_CONFIRM_DELETE_COLLAB_TEXT"] = "Колаба видалиться зі всією історією спілкування. Відновити колабу неможливо.";
 $MESS["IM_LIB_CONFIRM_DELETE_COLLAB_TITLE"] = "Видалити колабу?";
 $MESS["IM_LIB_CONFIRM_DELETE_DESKTOP"] = "Справді видалити Бітрікс24 зі списку? #BR# Список допомагає швидко перемикатися між вашими Бітрікс24 та не пропускати сповіщення.";
@@ -6,12 +7,12 @@ $MESS["IM_LIB_CONFIRM_DELETE_DESKTOP_CONFIRM"] = "Так, видалити";
 $MESS["IM_LIB_CONFIRM_DELETE_MESSAGES_TITLE"] = "Видалити";
 $MESS["IM_LIB_CONFIRM_LEAVE_CHANNEL_TEXT"] = "Відписатися від каналу?";
 $MESS["IM_LIB_CONFIRM_LEAVE_CHANNEL_YES"] = "Так, відписатися";
-$MESS["IM_LIB_CONFIRM_LEAVE_CHAT"] = "Ви впевнені, що хочете залишити цей чат?";
 $MESS["IM_LIB_CONFIRM_LEAVE_CHAT_MSGVER_1"] = "Вийти з чату?";
-$MESS["IM_LIB_CONFIRM_LEAVE_CHAT_YES"] = "Вийти";
 $MESS["IM_LIB_CONFIRM_LEAVE_CHAT_YES_MSGVER_1"] = "Так, вийти";
 $MESS["IM_LIB_CONFIRM_LEAVE_COLLAB_TEXT"] = "У вас не буде доступу до чату, завдань, файлів і зустрічей колаби.";
 $MESS["IM_LIB_CONFIRM_LEAVE_COLLAB_TITLE"] = "Вийти з колаби?";
+$MESS["IM_LIB_CONFIRM_READ_MESSAGES_TEXT_CONFIRM"] = "Прочитати";
+$MESS["IM_LIB_CONFIRM_READ_MESSAGES_TITLE"] = "Усі непрочитані повідомлення буде позначено як прочитані.";
 $MESS["IM_LIB_CONFIRM_RESTART_DESKTOP"] = "Зміни набудуть чинності після перезавантаження застосунку.";
 $MESS["IM_LIB_CONFIRM_RESTART_DESKTOP_LATER"] = "Пізніше";
 $MESS["IM_LIB_CONFIRM_RESTART_DESKTOP_OK"] = "OK";

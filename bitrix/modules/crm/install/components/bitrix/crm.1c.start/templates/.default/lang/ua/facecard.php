@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_1C_START_FACE_CARD_ADV_1"] = "Просте підключення";
 $MESS["CRM_1C_START_FACE_CARD_ADV_2"] = "Легке налаштування";
 $MESS["CRM_1C_START_FACE_CARD_ADV_3"] = "Повний портрет клієнта";
@@ -10,5 +10,3 @@ $MESS["CRM_1C_START_FACE_CARD_DO_START"] = "Підключити";
 $MESS["CRM_1C_START_FACE_CARD_INFO_TITLE"] = "Клієнту більше не потрібна карта знижок — достатньо особистої присутності або навіть просто фотографії в телефоні.";
 $MESS["CRM_1C_START_FACE_CARD_INSTALL_INFO"] = "Встановіть модуль Face-карт. Створіть карти знижок для ваших клієнтів. Підвищуйте продажі.";
 $MESS["CRM_1C_START_FACE_CARD_NAME"] = "Face-карт";
-$MESS["CRM_1C_START_FACE_CARD_WARN_TEXT"] = "Зверніть увагу, що розпізнавання облич оплачуються окремо, але в тарифі <a class=\"b24-integration-desc-link\" href=\"\\crm\\crmplus\\\">\"CRM+\"</a> вони безкоштовні та без обмежень.";
-?>

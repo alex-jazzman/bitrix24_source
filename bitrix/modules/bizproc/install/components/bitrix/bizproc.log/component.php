@@ -297,7 +297,7 @@ if (array_key_exists("COMPONENT_VERSION", $arParams) && $arParams["COMPONENT_VER
 	{
 		if ($arParams["SET_TITLE"] == "Y")
 			$APPLICATION->SetTitle(GetMessage("BPWC_WLC_ERROR"));
-		if ($arParams["SET_NAV_CHAIN"] == "Y")
+		if (($arParams["SET_NAV_CHAIN"] ?? null) == "Y")
 			$APPLICATION->AddChainItem(GetMessage("BPWC_WLC_ERROR"));
 	}
 

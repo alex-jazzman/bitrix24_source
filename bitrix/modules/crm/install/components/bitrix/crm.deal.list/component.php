@@ -1692,7 +1692,7 @@ if ($actionData['ACTIVE'] && $actionData['METHOD'] == 'GET')
 		}
 		else
 		{
-			LocalRedirect($arParams['PATH_TO_CURRENT_LIST']);
+			LocalRedirect($arResult['PATH_TO_CURRENT_LIST']);
 		}
 	}
 }
@@ -2528,7 +2528,7 @@ foreach($arResult['DEAL'] as &$arDeal)
 	else
 	{
 		$arDeal['PATH_TO_DEAL_DELETE'] =  CHTTP::urlAddParams(
-			$bInternal ? $APPLICATION->GetCurPage() : ($arParams['PATH_TO_CURRENT_LIST'] ?? ''),
+			$bInternal ? $APPLICATION->GetCurPage() : ($arResult['PATH_TO_CURRENT_LIST'] ?? ''),
 			array('action_'.$arResult['GRID_ID'] => 'delete', 'ID' => $entityID, 'sessid' => $arResult['SESSION_ID'])
 		);
 	}

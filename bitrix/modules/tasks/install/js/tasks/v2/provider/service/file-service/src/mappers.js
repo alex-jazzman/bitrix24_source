@@ -19,5 +19,6 @@ export function mapDtoToModel(fileDto: FileDto): UploaderFileInfo
 		serverPreviewWidth: fileDto.serverPreviewWidth,
 		serverPreviewHeight: fileDto.serverPreviewHeight,
 		customData: fileDto.customData,
+		viewerAttrs: fileDto.viewerAttrs,
 	};
 }

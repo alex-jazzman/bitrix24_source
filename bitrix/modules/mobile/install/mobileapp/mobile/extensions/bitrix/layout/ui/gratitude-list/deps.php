@@ -21,12 +21,22 @@ return [
 		'layout/pure-component',
 		'statemanager/redux/slices/gratitude',
 		'assets/icons',
+		'layout/ui/friendly-date/formatter-factory',
+		'utils/date',
+		'layout/ui/friendly-date/human-date-formatter',
+		'utils/test',
+		'type',
+		'module',
+		'ui-system/layout/card',
+		'utils/validation',
 	],
 	'bundle' => [
 		'./src/list',
 		'./src/item',
-		'./src/redux-item',
 		'./src/factory',
 		'./src/gratitude',
+	],
+	'components' => [
+		'livefeed.postform',
 	],
 ];

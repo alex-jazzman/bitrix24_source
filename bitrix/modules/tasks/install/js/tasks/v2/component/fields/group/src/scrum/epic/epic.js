@@ -5,6 +5,7 @@ import { BIcon } from 'ui.icon-set.api.vue';
 import { Outline } from 'ui.icon-set.api.core';
 import 'ui.icon-set.outline';
 
+import { tooltip } from 'tasks.v2.component.elements.hint';
 import { EntitySelectorEntity, Model } from 'tasks.v2.const';
 import { EntitySelectorDialog } from 'tasks.v2.lib.entity-selector-dialog';
 import { Color } from 'tasks.v2.lib.color';
@@ -74,24 +75,13 @@ export const Epic = {
 		},
 		tooltip(): Function
 		{
-			return (): HintParams => ({
+			return (): HintParams => tooltip({
 				text: this.loc('TASKS_V2_GROUP_EPIC_HINT'),
-				timeout: 500,
 				popupOptions: {
-					className: 'tasks-field-group-hint',
-					offsetTop: 2,
 					offsetLeft: this.$el.offsetWidth / 2,
-					background: 'var(--ui-color-bg-content-inapp)',
-					padding: 6,
-					angle: true,
-					targetContainer: document.body,
 				},
 			});
 		},
-	},
-	created(): void
-	{
-		this.handleEpicSelectedDebounced = Runtime.debounce(this.handleEpicSelected, 10, this);
 	},
 	methods: {
 		handleClick(): void
@@ -100,6 +90,8 @@ export const Epic = {
 		},
 		showDialog(): void
 		{
+			this.handleEpicSelectedDebounced ??= Runtime.debounce(this.handleEpicSelected, 10, this);
+
 			this.dialog ??= new EntitySelectorDialog({
 				multiple: false,
 				dropdownMode: true,

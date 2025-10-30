@@ -5,13 +5,16 @@ import { Utils } from 'im.v2.lib.utils';
 import { openHelpdeskArticle } from 'im.v2.lib.helpdesk';
 import { Notifier } from 'im.v2.lib.notifier';
 import { Color } from 'im.v2.const';
+import { MessageStatus } from 'im.v2.component.message.elements';
 
 import type { ImModelMessage } from 'im.v2.model';
+
+const ICON_SIZE = 18;
 
 // @vue/component
 export const BottomPanelContent = {
 	name: 'BottomPanelContent',
-	components: { BIcon, RichLoc },
+	components: { BIcon, RichLoc, MessageStatus },
 	props: {
 		item: {
 			type: Object,
@@ -20,14 +23,11 @@ export const BottomPanelContent = {
 	},
 	computed: {
 		Color: () => Color,
+		ICON_SIZE: () => ICON_SIZE,
 		OutlineIcons: () => OutlineIcons,
 		message(): ImModelMessage
 		{
 			return this.item;
-		},
-		infoIconColor(): string
-		{
-			return 'var(--im-message-ai-assistant-answer__color_warning)';
 		},
 	},
 	methods: {
@@ -47,30 +47,31 @@ export const BottomPanelContent = {
 		},
 	},
 	template: `
-		<BIcon
-			:name="OutlineIcons.COPY"
-			:color="Color.accentMainPrimaryAlt"
-			:hoverable="true"
-			:title="loc('IM_MESSAGE_AI_ASSISTANT_ANSWER_ACTION_COPY')"
-			@click="onCopyClick"
-			class="bx-im-message-ai-assistant-answer__copy_icon"
-		/>
-		<BIcon
-			:name="OutlineIcons.INFO_CIRCLE"
-			:color="infoIconColor"
-			class="bx-im-message-ai-assistant-answer__warning_icon"
-		/>
-		<span class="bx-im-message-ai-assistant-answer__warning">
-			<RichLoc
-				:text="loc('IM_MESSAGE_AI_ASSISTANT_ANSWER_WARNING')"
-				placeholder="[url]"
-			>
-				<template #url="{ text }">
-					<span class="bx-im-message-ai-assistant-answer__warning_link" @click="onWarningDetailsClick">
-						{{ text }}
-					</span>
-				</template>
-			</RichLoc>
-		</span>
+		<div class="bx-im-message-ai-assistant-answer__bottom-panel">
+			<BIcon
+				:name="OutlineIcons.COPY"
+				:color="Color.accentSoftBorderBlue"
+				:hoverable="true"
+				:title="loc('IM_MESSAGE_AI_ASSISTANT_ANSWER_ACTION_COPY')"
+				:size="ICON_SIZE"
+				@click="onCopyClick"
+				class="bx-im-message-ai-assistant-answer__copy_icon"
+			/>
+			<span class="bx-im-message-ai-assistant-answer__warning">
+				<RichLoc
+					:text="loc('IM_MESSAGE_AI_ASSISTANT_ANSWER_WARNING')"
+					placeholder="[url]"
+				>
+					<template #url="{ text }">
+						<span class="bx-im-message-ai-assistant-answer__warning_link" @click="onWarningDetailsClick">
+							{{ text }}
+						</span>
+					</template>
+				</RichLoc>
+			</span>
+			<div class="bx-im-message-ai-assistant-answer__status-container">
+				<MessageStatus :item="message"/>
+			</div>
+		</div>
 	`,
 };

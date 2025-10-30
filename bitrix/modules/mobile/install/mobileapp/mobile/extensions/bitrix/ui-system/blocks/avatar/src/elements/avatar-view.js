@@ -360,9 +360,9 @@ jn.define('ui-system/blocks/avatar/src/elements/avatar-view', (require, exports,
 			const { emptyAvatar } = this.getPlaceholderParams();
 
 			const svgParams = {
-				url: emptyAvatar === 'string'
+				uri: emptyAvatar === 'string'
 					? emptyAvatar
-					: makeLibraryImagePath(emptyAvatar, 'empty-avatar'),
+					: makeLibraryImagePath(emptyAvatar?.uri, 'empty-avatar'),
 			};
 
 			if (emptyAvatar?.named)

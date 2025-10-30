@@ -46,7 +46,11 @@ export class DocumentTemplateUserParty
 		const {
 			shouldCheckDepartmentsSync,
 			documents,
-		} = await this.#api.template.setupSigners(ids, this.#userParty.getEntities());
+		} = await this.#api.template.setupSigners(
+			ids,
+			this.#userParty.getEntities(),
+			this.#userParty.isRejectExcludedEnabled(),
+		);
 
 		this.#updatePartiesCountInStore(documents); // can rid of this if make syncDepartmentForSigners method
 		if (shouldCheckDepartmentsSync)
@@ -91,7 +95,11 @@ export class DocumentTemplateUserParty
 		while (!syncFinished)
 		{
 			// eslint-disable-next-line no-await-in-loop
-			const response = await this.#api.syncB2eMembersWithDepartments(uid, signerParty);
+			const response = await this.#api.syncB2eMembersWithDepartments(
+				uid,
+				signerParty,
+				this.#userParty.isRejectExcludedEnabled(),
+			);
 			syncFinished = response.syncFinished;
 			// eslint-disable-next-line no-await-in-loop
 			await this.#sleep(1000);
@@ -155,5 +163,10 @@ export class DocumentTemplateUserParty
 	closeCounterGuide(): void
 	{
 		this.#userParty.closeCounterGuide();
+	}
+
+	isRejectExcludedEnabled(): boolean
+	{
+		return this.#userParty.isRejectExcludedEnabled();
 	}
 }

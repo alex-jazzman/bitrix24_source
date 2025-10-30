@@ -32,7 +32,6 @@ $MESS["INTRANET_USER_LIST_GROUP_ACTION_ACCEPT_FIRED_MESSAGE"] = "#USER_LIST# е�
 $MESS["INTRANET_USER_LIST_GROUP_ACTION_ACCEPT_FIRED_MESSAGE_REMAINING"] = "#USER_LIST# және тағы #USER_REMAINING# енді Битрикс24 жұмыс істемейді. Қолжетімділікті қызметкердің профилінде қалпына келтіре аласыз";
 $MESS["INTRANET_USER_LIST_GROUP_ACTION_ACCEPT_FIRED_MESSAGE_SINGLE"] = "#USER# енді Битрикс24-те жұмыс істемейді. Қолжетімділікті қызметкердің профилінде қалпына келтіре аласыз";
 $MESS["INTRANET_USER_LIST_GROUP_ACTION_ACCEPT_FIRED_TITLE"] = "Кейбір қызметкерлер жұмыстан шығарылды";
-$MESS["INTRANET_USER_LIST_GROUP_ACTION_ADDITIONAL_SKIPPED_USERS"] = "және тағы #USER_COUNT#";
 $MESS["INTRANET_USER_LIST_GROUP_ACTION_ALREADY_ACCEPT_INVITE_MESSAGE"] = "#USER_LIST# Битрикс24 шақыруын қабылдады және сіздің растауыңызды күтуде";
 $MESS["INTRANET_USER_LIST_GROUP_ACTION_ALREADY_ACCEPT_INVITE_MESSAGE_REMAINING"] = "#USER_LIST# және тағы #USER_REMAINING# Битрикс24 шақыруын қабылдады және сіздің растауыңызды күтуде";
 $MESS["INTRANET_USER_LIST_GROUP_ACTION_ALREADY_ACCEPT_INVITE_MESSAGE_SINGLE"] = "#USER# Битрикс24 шақыруын қабылдады және сіздің растауыңызды күтуде";

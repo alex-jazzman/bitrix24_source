@@ -9,4 +9,5 @@ $MESS["SIGN_BLANK_SELECTOR_NEW_DOC"] = "Microsoft Word";
 $MESS["SIGN_BLANK_SELECTOR_NEW_PDF"] = "Документ PDF";
 $MESS["SIGN_BLANK_SELECTOR_RECENT_TEMPLATES_TITLE"] = "Останні використані шаблони";
 $MESS["SIGN_BLANK_SELECTOR_SLIDER_SELECT_BLANK_BUTTON_LABEL"] = "Вибрати";
+$MESS["SIGN_BLANK_SELECTOR_UPLOADER_ERROR_INCOMPLETE"] = "Не вдалося завантажити файл, спробуйте ще раз.";
 $MESS["SIGN_BLANK_SELECTOR_UPLOAD_HINT"] = "На підпис можна надіслати зображення (максимум %imageCountLimit%) або 1 файл у форматах PDF, DOC, DOCX, RTF чи ODT.";

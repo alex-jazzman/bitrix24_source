@@ -1,7 +1,6 @@
-<?
-$MESS["VIRUS_DETECTED_NAME"] = "Виявлено вірус";
+<?php
+$MESS["SECURITY_INSTALL_SMS_TEMPLATE_OTP_CONFIRM_MESS"] = "#CODE# — код підтвердження для входу в Бітрікс24.";
 $MESS["VIRUS_DETECTED_DESC"] = "#EMAIL# — E-mail адміністратора сайту (з налаштувань головного модулю)";
-$MESS["VIRUS_DETECTED_SUBJECT"] = "#SITE_NAME#: Виявлено вірус";
 $MESS["VIRUS_DETECTED_MESSAGE"] = "Інформаційне повідомлення сайту #SITE_NAME#
 ------------------------------------------
 
@@ -25,4 +24,5 @@ $MESS["VIRUS_DETECTED_MESSAGE"] = "Інформаційне повідомлен
 ---------------------------------------------------------------------
 Повідомлення сгенеровано автоматично.
 ";
-?>
+$MESS["VIRUS_DETECTED_NAME"] = "Виявлено вірус";
+$MESS["VIRUS_DETECTED_SUBJECT"] = "#SITE_NAME#: Виявлено вірус";

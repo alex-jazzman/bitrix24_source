@@ -270,10 +270,18 @@ export const ViewEventSlider = {
 
 				return;
 			}
+
 			const pullData = event.data[1].fields;
 
-			this.name = pullData.NAME;
-			this.accessibility = pullData.ACCESSIBILITY;
+			if (pullData.NAME)
+			{
+				this.name = pullData.NAME;
+			}
+
+			if (pullData.ACCESSIBILITY)
+			{
+				this.accessibility = pullData.ACCESSIBILITY;
+			}
 
 			BX.ajax.runAction('calendar.api.calendareventviewform.getCalendarViewSliderParams', {
 				data: {
@@ -318,7 +326,10 @@ export const ViewEventSlider = {
 					setTimeout(() => { this.executeScripts(this.$refs.filesView); }, 1000);
 				}
 				this.crmView = this.getComponentHTML(newData.crmView);
-				this.entry = new Entry({data: newData.entry, userIndex: newData.userIndex});
+				this.entry = new Entry({
+					data: newData.entry,
+					userIndex: newData.userIndex,
+				});
 
 				this.updateUserList();
 				this.reloadPlanner();

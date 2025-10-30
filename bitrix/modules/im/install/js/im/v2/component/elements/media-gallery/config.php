@@ -9,6 +9,7 @@ return [
 	'js' => 'dist/media-gallery.bundle.js',
 	'rel' => [
 		'main.core',
+		'ui.icon-set.api.core',
 		'ui.vue3.directives.lazyload',
 		'im.v2.const',
 		'im.v2.lib.utils',

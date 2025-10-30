@@ -1,9 +1,6 @@
 <?php
-$MESS["BPAR_COMMENT_LABEL_MESSAGE"] = "Мітка для поля коментаря";
 $MESS["BPAR_COMMENT_LABEL_MESSAGE_1"] = "Назва поля для пояснення";
-$MESS["BPAR_COMMENT_REQUIRED"] = "Обов'язковість коментаря";
 $MESS["BPAR_COMMENT_REQUIRED_1"] = "Запитувати пояснення";
-$MESS["BPAR_SHOW_COMMENT"] = "Показувати поле введення коментаря";
 $MESS["BPAR_SHOW_COMMENT_1"] = "Показувати поле з поясненням";
 $MESS["BPAR_TASK_BUTTON_MESSAGE"] = "Текст кнопки в завданні";
 $MESS["BPRIA_ACCESS_CONTROL"] = "Обмежити доступ";
@@ -11,7 +8,6 @@ $MESS["BPRIA_ACT_APPROVE"] = "Документ прийнятий";
 $MESS["BPRIA_ACT_APPROVE_TRACK"] = "Користувач #PERSON# ввів додаткову інформацію #COMMENT#";
 $MESS["BPRIA_ACT_BUTTON1"] = "Зберегти";
 $MESS["BPRIA_ACT_BUTTON2"] = "Відхилити";
-$MESS["BPRIA_ACT_COMMENT"] = "Коментар";
 $MESS["BPRIA_ACT_COMMENT_1"] = "Пояснення";
 $MESS["BPRIA_ACT_COMMENT_ERROR"] = "Не заповнено поле: #COMMENT_LABEL#";
 $MESS["BPRIA_ACT_INFO"] = "Очікування додаткової інформації";
@@ -29,7 +25,6 @@ $MESS["BPRIA_ARGUMENT_NULL"] = "Не заповнено обов'язкове з
 $MESS["BPRIA_COMMENT_REQUIRED_TO_APPROVE"] = "Обов'язково в разі погодження";
 $MESS["BPRIA_COMMENT_REQUIRED_TO_REJECT"] = "Обов'язково в разі відхилення";
 $MESS["BPRIA_DESCR"] = "Опис завдання";
-$MESS["BPRIA_LOG_COMMENTS"] = "Коментар";
 $MESS["BPRIA_LOG_N"] = "Відхилений";
 $MESS["BPRIA_LOG_Y"] = "Інформація введена";
 $MESS["BPRIA_NAME"] = "Назва завдання";

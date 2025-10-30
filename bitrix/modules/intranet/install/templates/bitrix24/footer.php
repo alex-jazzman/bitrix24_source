@@ -11,6 +11,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Page\AssetMode;
 use Bitrix\Main\Web\Json;
+use Bitrix\Intranet\Public\Provider\Portal\LanguageProvider;
 
 \Bitrix\Main\UI\Extension::load(['pull.client']);
 
@@ -64,8 +65,7 @@ AirTemplate::tryApplyDefaultTopMenu();
 							</a>
 						</div>
 						<?php
-							$b24Languages = [];
-							include($_SERVER['DOCUMENT_ROOT'] . SITE_TEMPLATE_PATH . '/languages.php');
+							$b24Languages = (new LanguageProvider())->getPublicArray();
 						?>
 						<div class="air-footer__button">
 							<button
@@ -146,20 +146,19 @@ if (!$imEnabled || !$imEmbedded)
 	);
 }
 
-$APPLICATION->includeComponent('bitrix:intranet.connection.status', '', ['rootContainer' => '#connection-status']);
-
 $dynamicArea = new StaticArea('footer-components');
 $dynamicArea->setAssetMode(AssetMode::STANDARD);
 $dynamicArea->startDynamicArea();
 
-$APPLICATION->includeComponent('bitrix:intranet.invitation.notification', '', []);
 $APPLICATION->includeComponent('bitrix:intranet.mobile.popup', '', []);
+$APPLICATION->includeComponent('bitrix:intranet.invitation.notification', '', []);
 $APPLICATION->includeComponent('bitrix:intranet.placement', '', []);
 $APPLICATION->includeComponent('bitrix:bizproc.debugger', '', []);
 $APPLICATION->includeComponent('bitrix:timeman.report.status', '', []);
 $APPLICATION->includeComponent($isBitrix24Cloud ? 'bitrix:bitrix24.notify.panel' : 'bitrix:intranet.notify.panel', '');
 $APPLICATION->includeComponent('bitrix:intranet.mail.check', '', []);
 $APPLICATION->includeComponent('bitrix:intranet.otp.info', '', []);
+$APPLICATION->includeComponent('bitrix:intranet.connection.status', '', ['rootContainer' => '#connection-status']);
 
 $dynamicArea->finishDynamicArea();
 ?>

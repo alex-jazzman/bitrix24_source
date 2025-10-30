@@ -2,13 +2,14 @@ import { Type, Loc, Dom, Event, Runtime, Text, Browser, Uri, Tag, type JsonObjec
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { MemoryCache, type BaseCache } from 'main.core.cache';
 import { ZIndexManager, type ZIndexComponent } from 'main.core.z-index-manager';
+import type { Popup } from 'main.popup';
 
 import { Dictionary } from './dictionary';
 import { Label } from './label';
 import { MessageEvent } from './message-event';
 import { SliderEvent } from './slider-event';
 
-import { type SliderOptions } from './types/slider-options';
+import type { SliderOptions, SliderEvents } from './types/slider-options';
 import { type MinimizeOptions } from './types/minimize-options';
 import { type OuterBoundary } from './types/outer-boundary';
 
@@ -44,7 +45,7 @@ export class Slider
 		this.cacheable = options.cacheable !== false;
 		this.autoFocus = options.autoFocus !== false;
 		this.printable = options.printable === true;
-		this.allowChangeHistory = options.allowChangeHistory !== false;
+		this.allowChangeHistory = Type.isBoolean(options.allowChangeHistory) ? options.allowChangeHistory : null;
 		this.allowChangeTitle = Type.isBoolean(options.allowChangeTitle) ? options.allowChangeTitle : null;
 		this.allowCrossOrigin = options.allowCrossOrigin === true;
 		this.data = new Dictionary(Type.isPlainObject(options.data) ? options.data : {});
@@ -128,17 +129,7 @@ export class Slider
 		this.animationOptions = {};
 
 		this.minimizeOptions = null;
-		const minimizeOptions = options.minimizeOptions;
-		if (
-			Type.isPlainObject(minimizeOptions)
-			&& Type.isStringFilled(minimizeOptions.entityType)
-			&& (Type.isStringFilled(minimizeOptions.entityId) || Type.isNumber(minimizeOptions.entityId))
-			&& (Type.isStringFilled(minimizeOptions.url))
-		)
-		{
-			this.minimizeOptions = minimizeOptions;
-		}
-
+		this.setMinimizeOptions(options.minimizeOptions);
 		this.setToolbarOnOpen(options.hideToolbarOnOpen);
 		this.setDesignSystemContext(options.designSystemContext);
 		this.setAutoOffset(options.autoOffset);
@@ -147,7 +138,6 @@ export class Slider
 			className: '--close-label --ui-hoverable',
 			iconClass: 'side-panel-label-icon-close ui-icon-set --cross-l',
 			iconTitle: Loc.getMessage('MAIN_SIDEPANEL_CLOSE'),
-			bgColor: '#0075FF',
 			onclick(label, slider)
 			{
 				slider.close();
@@ -159,25 +149,21 @@ export class Slider
 		this.label.setColor(labelOptions.color);
 		this.label.setBgColor(labelOptions.bgColor, labelOptions.opacity);
 
-		this.minimizeLabel = null;
+		this.minimizeLabel = new Label(this, {
+			className: '--ui-hoverable',
+			iconClass: 'side-panel-label-icon-minimize ui-icon-set --o-minimize',
+			iconTitle: Loc.getMessage('MAIN_SIDEPANEL_MINIMIZE'),
+			onclick: (label, slider) => {
+				if (this.isLoaded())
+				{
+					this.minimize();
+				}
+			},
+			visible: this.areMinimizeOptionsValid(this.minimizeOptions),
+		});
 		this.newWindowLabel = null;
 		this.copyLinkLabel = null;
 		this.printLabel = null;
-
-		if (!this.isSelfContained() && this.minimizeOptions !== null)
-		{
-			this.minimizeLabel = new Label(this, {
-				className: '--ui-hoverable',
-				iconClass: 'side-panel-label-icon-minimize ui-icon-set --o-minimize',
-				iconTitle: Loc.getMessage('MAIN_SIDEPANEL_MINIMIZE'),
-				onclick: (label, slider) => {
-					if (this.isLoaded())
-					{
-						this.minimize();
-					}
-				},
-			});
-		}
 
 		if (options.newWindowLabel === true && (this.canChangeHistory() || Type.isStringFilled(options.newWindowUrl)))
 		{
@@ -240,9 +226,14 @@ export class Slider
 			};
 		}
 
-		if (Type.isPlainObject(options.events))
+		[options.events].flat().forEach((events: SliderEvents) => this.#subscribeEvents(events));
+	}
+
+	#subscribeEvents(events: SliderEvents): void
+	{
+		if (Type.isPlainObject(events))
 		{
-			for (const [eventName, fn] of Object.entries(options.events))
+			for (const [eventName, fn] of Object.entries(events))
 			{
 				if (Type.isFunction(fn))
 				{
@@ -408,7 +399,24 @@ export class Slider
 		this.animationOptions = Type.isPlainObject(options) ? options : {};
 	}
 
-	getMinimizeOptions(): MinimizeOptions
+	setMinimizeOptions(minimizeOptions: MinimizeOptions | null): void
+	{
+		const showMinimizeLabel = this.areMinimizeOptionsValid(minimizeOptions);
+
+		this.minimizeOptions = minimizeOptions;
+		this.minimizeLabel?.setVisible(showMinimizeLabel);
+	}
+
+	areMinimizeOptionsValid(minimizeOptions: ?MinimizeOptions): boolean
+	{
+		return Type.isPlainObject(minimizeOptions)
+			&& Type.isStringFilled(minimizeOptions.entityType)
+			&& (Type.isStringFilled(minimizeOptions.entityId) || Type.isNumber(minimizeOptions.entityId))
+			&& Type.isStringFilled(minimizeOptions.url)
+		;
+	}
+
+	getMinimizeOptions(): MinimizeOptions | null
 	{
 		return this.minimizeOptions;
 	}
@@ -689,12 +697,17 @@ export class Slider
 
 	canChangeHistory(): boolean
 	{
-		return (
-			this.allowChangeHistory
-			&& !this.allowCrossOrigin
-			&& !this.isSelfContained()
-			&& !/^\/bitrix\/(components|tools)\//i.test(this.getUrl())
-		);
+		if (this.allowCrossOrigin || /^\/bitrix\/(components|tools)\//i.test(this.getUrl()))
+		{
+			return false;
+		}
+
+		if (this.allowChangeHistory === null)
+		{
+			return !this.isSelfContained();
+		}
+
+		return this.allowChangeHistory;
 	}
 
 	canChangeTitle(): boolean
@@ -1338,7 +1351,7 @@ export class Slider
 					className: 'side-panel-extra-labels',
 				},
 				children: [
-					this.minimizeLabel ? this.minimizeLabel.getContainer() : null,
+					this.minimizeLabel.getContainer(),
 					this.newWindowLabel ? this.newWindowLabel.getContainer() : null,
 					this.copyLinkLabel ? this.copyLinkLabel.getContainer() : null,
 					this.printLabel ? this.printLabel.getContainer() : null,
@@ -2259,6 +2272,19 @@ export class Slider
 
 		this.firePageEvent('onEscapePress');
 		this.fireFrameEvent('onEscapePress');
+	}
+
+	isOnTopOfPopup(popup: Popup): boolean
+	{
+		const sameStack = this.getZIndexComponent().getStack() === popup.getZIndexComponent().getStack();
+		const popupOnTop = sameStack && popup.getZindex() > this.getZindex();
+		let popupInside = this.getContainer().contains(popup.getPopupContainer());
+		if (this.getFrameWindow())
+		{
+			popupInside = this.getFrameWindow().document.contains(popup.getPopupContainer());
+		}
+
+		return !(popup.isShown() && (popupOnTop || popupInside));
 	}
 
 	/**

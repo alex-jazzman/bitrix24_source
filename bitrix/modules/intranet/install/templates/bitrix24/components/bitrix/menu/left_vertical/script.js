@@ -3578,16 +3578,24 @@ this.BX = this.BX || {};
 	    this.showMessage(bindElement, main_core.Loc.getMessage('edit_error'));
 	  }
 	  showGlobalPreset() {
-	    const loadBannerDispatcherExtensionPromise = main_core.Runtime.loadExtension('ui.banner-dispatcher');
-	    loadBannerDispatcherExtensionPromise.then(() => {
-	      ui_bannerDispatcher.BannerDispatcher.critical.toQueue(onDone => {
+	    const BannerDispatcher = main_core.Reflection.getClass('BX.UI.BannerDispatcher');
+	    const handleBannerQueue = () => {
+	      BannerDispatcher.critical.toQueue(onDone => {
 	        const presetController = this.getDefaultPresetController();
 	        presetController.show('global');
 	        presetController.getPopup().subscribe('onAfterClose', event => {
 	          onDone();
 	        });
 	      });
-	    }).catch(() => {});
+	    };
+	    if (BannerDispatcher) {
+	      handleBannerQueue();
+	    } else {
+	      const loadBannerDispatcherExtensionPromise = main_core.Runtime.loadExtension('ui.banner-dispatcher');
+	      loadBannerDispatcherExtensionPromise.then(() => {
+	        handleBannerQueue();
+	      }).catch(() => {});
+	    }
 	  }
 	  handleShowHiddenClick() {
 	    this.getItemsController().toggleHiddenContainer(true);

@@ -52,8 +52,23 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		</Popup>
 	`
 	};
+	const tooltip = params => ({
+	  timeout: 500,
+	  ...params,
+	  popupOptions: {
+	    className: 'tasks-hint',
+	    darkMode: false,
+	    offsetTop: 2,
+	    background: 'var(--ui-color-bg-content-inapp)',
+	    padding: 6,
+	    angle: true,
+	    targetContainer: document.body,
+	    ...params.popupOptions
+	  }
+	});
 
 	exports.Hint = Hint;
+	exports.tooltip = tooltip;
 
 }((this.BX.Tasks.V2.Component.Elements = this.BX.Tasks.V2.Component.Elements || {}),BX,BX.UI.Vue3.Components));
 //# sourceMappingURL=hint.bundle.js.map

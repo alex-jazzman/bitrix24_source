@@ -15,4 +15,5 @@ $MESS["LANDING_BLOCK_SEPARATOR_PARTNER_2_MSGVER_1"] = "Market";
 $MESS["LANDING_BLOCK_TEXT_FULL"] = "Block dimensions is out of bound";
 $MESS["LANDING_BLOCK_TITLE"] = "Page title";
 $MESS["LANDING_BLOCK_WRONG_VERSION"] = "The block version does not match the module version";
+$MESS["LD_BLOCK_SECTION_FAVOURITE"] = "Favorites";
 $MESS["LD_BLOCK_SECTION_LAST"] = "Recent items";

@@ -55,7 +55,6 @@ $MESS["BOOKING_AHA_RESOURCE_WORKLOAD_TITLE"] = "Ресурстардың жүк�
 $MESS["BOOKING_AHA_SELECT_RESOURCES_TEXT_MSGVER_1"] = "Үнемі жұмыс істейтін ресурстарды осында шығарыңыз. Осылайша олар әрқашан көз алдыңызда болады";
 $MESS["BOOKING_AHA_SELECT_RESOURCES_TITLE_MSGVER_1"] = "Кестені өзіңізге ыңғайлы етіп реттеңіз";
 $MESS["BOOKING_BOOKING_ADD_COLUMN"] = "Баған қосу";
-$MESS["BOOKING_BOOKING_ADD_INTERSECTION_DIALOG_HEADER"] = "Ресурсты таңдаңыз";
 $MESS["BOOKING_BOOKING_ADD_INTERSECTION_DIALOG_SEARCH_FOOTER"] = "Жаңа ресурс жасаңыз";
 $MESS["BOOKING_BOOKING_ADD_INTERSECTION_MSGVER_1"] = "Бірнеше ресурстарға арналған слоттарды көрсету";
 $MESS["BOOKING_BOOKING_ADD_INTERSECTION_MULTI"] = "Қиылысу";

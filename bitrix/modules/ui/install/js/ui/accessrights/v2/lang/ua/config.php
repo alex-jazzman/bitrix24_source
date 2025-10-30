@@ -1,5 +1,4 @@
 <?php
-$MESS["JS_UI_ACCESSRIGHTS_V2_ACCESS"] = "Доступ";
 $MESS["JS_UI_ACCESSRIGHTS_V2_ACTIONS"] = "Дії";
 $MESS["JS_UI_ACCESSRIGHTS_V2_ADD"] = "Додати";
 $MESS["JS_UI_ACCESSRIGHTS_V2_ALL_ACCEPTED"] = "Усі";
@@ -8,6 +7,7 @@ $MESS["JS_UI_ACCESSRIGHTS_V2_ALL_ROLES"] = "Усі ролі";
 $MESS["JS_UI_ACCESSRIGHTS_V2_ALL_SELECT_LABEL"] = "вибрати всі";
 $MESS["JS_UI_ACCESSRIGHTS_V2_APPLY_TO_ROLE"] = "Скопіювати в іншу роль";
 $MESS["JS_UI_ACCESSRIGHTS_V2_APPLY_TO_ROLE_SUBTITLE"] = "Налаштовані права доступу скопіюються в іншу роль.";
+$MESS["JS_UI_ACCESSRIGHTS_V2_CANCEL"] = "Скасувати";
 $MESS["JS_UI_ACCESSRIGHTS_V2_COLLAPSE_ALL_SECTIONS"] = "Згорнути всі розділи";
 $MESS["JS_UI_ACCESSRIGHTS_V2_COPIED_ROLE_NAME"] = "Копія #ORIGINAL#";
 $MESS["JS_UI_ACCESSRIGHTS_V2_COPY"] = "Скопіювати";
@@ -41,7 +41,6 @@ $MESS["JS_UI_ACCESSRIGHTS_V2_ROLE_COUNTER"] = "#VISIBLE_ROLES# #GREY_START# з #
 $MESS["JS_UI_ACCESSRIGHTS_V2_ROLE_NAME"] = "Назва ролі";
 $MESS["JS_UI_ACCESSRIGHTS_V2_ROLE_SELECTOR_MAX_VISIBLE_WARNING"] = "Одночасно в правах доступу може відображатися стільки ролей: #COUNT#.";
 $MESS["JS_UI_ACCESSRIGHTS_V2_ROLE_VIEW"] = "Відображення ролей";
-$MESS["JS_UI_ACCESSRIGHTS_V2_ROLE_VIEW_SUBTITLE"] = "Приховаються неактуальні ролі.";
 $MESS["JS_UI_ACCESSRIGHTS_V2_ROLE_VIEW_SUBTITLE_MSGVER_1"] = "Виберіть, які ролі потрібно показати або приховати.";
 $MESS["JS_UI_ACCESSRIGHTS_V2_SEARCH_PLACEHOLDER"] = "Пошук";
 $MESS["JS_UI_ACCESSRIGHTS_V2_SELECTED_ITEMS_TITLE"] = "Вибрано:";

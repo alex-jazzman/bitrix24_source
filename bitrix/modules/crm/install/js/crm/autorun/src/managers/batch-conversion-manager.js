@@ -240,8 +240,6 @@ export class BatchConversionManager
 			sessid: BX.bitrix_sessid(),
 		};
 
-		this.#sendAnalyticsData('attempt');
-
 		Ajax(
 			{
 				url: this._serviceUrl,

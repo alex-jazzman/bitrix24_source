@@ -124,8 +124,51 @@ jn.define('statemanager/redux/slices/users/thunk', (require, exports, module) =>
 		}
 	};
 
+	const updateProfilePhoto = createAsyncThunk(
+		`${sliceName}/updateUserAvatar`,
+		async ({ userId, image, base64 }, { rejectWithValue }) => {
+			try
+			{
+				if (!image || !base64)
+				{
+					return rejectWithValue({
+						error: 'Invalid image data',
+						error_description: 'Image or base64 data is not provided',
+					});
+				}
+
+				const data = {
+					id: userId,
+					PERSONAL_PHOTO: ['avatar.png', base64],
+				};
+
+				// todo replace with BX.runActionExecutor()
+				const response = await BX.rest.callMethod('user.update', data);
+				if (!response?.answer?.result)
+				{
+					return rejectWithValue({
+						error: response?.answer?.error,
+						errorDescription: response?.answer?.error_description,
+					});
+				}
+
+				return {
+					image,
+				};
+			}
+			catch (response)
+			{
+				return rejectWithValue({
+					error: response?.answer?.error,
+					error_description: response?.answer?.error_description,
+				});
+			}
+		},
+	);
+
 	module.exports = {
 		updateUserThunk,
 		fetchUsersIfNotLoaded,
+		updateProfilePhoto,
 	};
 });

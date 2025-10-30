@@ -55,7 +55,6 @@ $MESS["BOOKING_AHA_RESOURCE_WORKLOAD_TITLE"] = "Monitor resource load";
 $MESS["BOOKING_AHA_SELECT_RESOURCES_TEXT_MSGVER_1"] = "You can choose to show only the resources you use on a daily basis, and/or hide those that are temporarily not available.";
 $MESS["BOOKING_AHA_SELECT_RESOURCES_TITLE_MSGVER_1"] = "Customize the schedule board";
 $MESS["BOOKING_BOOKING_ADD_COLUMN"] = "Add column";
-$MESS["BOOKING_BOOKING_ADD_INTERSECTION_DIALOG_HEADER"] = "Select resource";
 $MESS["BOOKING_BOOKING_ADD_INTERSECTION_DIALOG_SEARCH_FOOTER"] = "Create new resource";
 $MESS["BOOKING_BOOKING_ADD_INTERSECTION_MSGVER_1"] = "Make resource bundle";
 $MESS["BOOKING_BOOKING_ADD_INTERSECTION_MULTI"] = "Make resource bundle";

@@ -127,21 +127,25 @@ export const UserDetailedInfo = {
 		<div class="intranet-user-mini-profile__detailed-info">
 			<UserDetailedInfoItem v-if="info.personalMobile"
 				:title="loc('INTRANET_USER_MINI_DETAILED_INFO_PERSONAL_MOBILE')"
+				type="personal-mobile"
 			>
 				<UserDetailedInfoContactItemValue :value="info.personalMobile" type="phone"/>
 			</UserDetailedInfoItem>
 			<UserDetailedInfoItem v-if="info.innerPhone"
 				:title="loc('INTRANET_USER_MINI_DETAILED_INFO_PHONE_INNER')"
+				type="inner-phone"
 			>
 				{{ info.innerPhone }}
 			</UserDetailedInfoItem>
 			<UserDetailedInfoItem v-if="info.email"
 				:title="loc('INTRANET_USER_MINI_DETAILED_INFO_EMAIL')"
+				type="email"
 			>
 				<UserDetailedInfoContactItemValue :value="info.email" type="mail"/>
 			</UserDetailedInfoItem>
 			<UserDetailedInfoItem v-if="headItems.length"
 				:title="headTitle"
+				type="head"
 			>
 				<UserDetailedInfoEntityListValue
 					entityType="user"
@@ -151,6 +155,7 @@ export const UserDetailedInfo = {
 			</UserDetailedInfoItem>
 			<UserDetailedInfoItem v-if="departmentItems.length"
 				:title="departmentTitle"
+				type="department"
 			>
 				<UserDetailedInfoEntityListValue 
 					:items="departmentItems"
@@ -162,6 +167,7 @@ export const UserDetailedInfo = {
 						<div class="intranet-user-mini-profile__detailed-info-item__parent-department">
 							<div class="intranet-user-mini-profile__detailed-info-item__parent-department-text"
 								 :title="getParentDepartmentById(item.parentId)?.title"
+								 data-test-id="usermp_parent-department"
 							>
 								{{ getParentDepartmentById(item.parentId)?.title }}
 							</div>
@@ -176,6 +182,7 @@ export const UserDetailedInfo = {
 			</UserDetailedInfoItem>
 			<UserDetailedInfoItem v-if="teamItems.length"
 				:title="teamTitle"
+				type="team"
 			>
 				<UserDetailedInfoEntityListValue 
 					:items="teamItems"

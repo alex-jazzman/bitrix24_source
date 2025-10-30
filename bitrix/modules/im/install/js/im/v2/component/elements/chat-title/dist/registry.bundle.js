@@ -213,9 +213,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      return false;
 	    },
 	    isChatMuted() {
-	      if (this.isUser) {
-	        return false;
-	      }
 	      const isMuted = this.dialog.muteList.find(element => {
 	        return element === im_v2_application_core.Core.getUserId();
 	      });

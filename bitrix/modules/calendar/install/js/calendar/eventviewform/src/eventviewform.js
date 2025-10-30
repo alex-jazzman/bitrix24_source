@@ -274,22 +274,9 @@ export class EventViewForm
 			Dom.addClass(this.DOM.content.querySelector(`#${uid}_time_wrap`), 'calendar-slider-sidebar-head-long-time');
 		}
 
-		if (this.canDo(this.entry, 'edit') && this.DOM.editButton)
+		if ((this.canDo('edit') || this.canDo('editLocation') || this.canDo('editAttendees')) && this.DOM.editButton)
 		{
-			Event.bind(this.DOM.editButton, 'click', () => {
-				this.BX.SidePanel.Instance.close(false, () => {
-					EntryManager.openEditSlider({
-						entry: this.entry,
-						type: this.type,
-						ownerId: this.ownerId,
-						userId: this.userId,
-					});
-				});
-			});
-		}
-		else
-		{
-			this.BX.remove(this.DOM.editButton);
+			Event.bind(this.DOM.editButton, 'click', this.handleEditButtonClick.bind(this));
 		}
 
 		if (this.DOM.sidebarInner)
@@ -299,7 +286,7 @@ export class EventViewForm
 			if (Type.isDomNode(this.DOM.reminderWrap))
 			{
 				Dom.clean(this.DOM.reminderWrap);
-				const viewMode = !this.canDo(this.entry, 'edit')
+				const viewMode = !this.canDo('edit')
 					&& this.entry.getCurrentStatus() === false;
 
 				this.reminderControl = new this.BX.Calendar.Controls.Reminder({
@@ -340,7 +327,7 @@ export class EventViewForm
 			Event.bind(this.DOM.downloadButton, 'click', () => EntryManager.downloadIcs(this.entryId));
 		}
 
-		if (this.canDo(this.entry, 'delete'))
+		if (this.canDo('delete'))
 		{
 			Event.bind(this.DOM.delButton, 'click', () => {
 				EventEmitter.subscribeOnce('BX.Calendar.Entry:beforeDelete', () => {
@@ -371,7 +358,11 @@ export class EventViewForm
 
 		this.DOM.relationWrap = this.DOM.content.querySelector(`#${uid}_view_relation_wrap`);
 
-		if (this.DOM.relationWrap && this.entry?.data?.EVENT_TYPE === '#shared_crm#')
+		if (
+			this.DOM.relationWrap
+			&& this.canDo('view')
+			&& ['#shared_crm#', '#booking#'].includes(this.entry?.data?.EVENT_TYPE)
+		)
 		{
 			this.relationControl = new RelationInterface({
 				parentNode: this.DOM.relationWrap,
@@ -653,6 +644,16 @@ export class EventViewForm
 						.then(() => {
 							this.statusControl.setStatus(this.entry.getCurrentStatus(), false);
 							this.statusControl.updateStatus();
+
+							if (this.entry.getCurrentStatus() === 'Y')
+							{
+								Event.bind(this.DOM.editButton, 'click', this.handleEditButtonClick.bind(this));
+							}
+							else
+							{
+								Event.unbind(this.DOM.editButton, 'click', this.handleEditButtonClick.bind(this));
+							}
+
 							EventEmitter.emit(`MeetingStatusControl_${uid}:onSetStatus`, event);
 						});
 				}
@@ -693,11 +694,11 @@ export class EventViewForm
 		}, 1500));
 	}
 
-	canDo(entry, action)
+	canDo(action)
 	{
 		if ((action === 'edit' || action === 'delete'))
 		{
-			if (entry.isResourcebooking())
+			if (this.entry.isResourcebooking())
 			{
 				return false;
 			}
@@ -718,6 +719,23 @@ export class EventViewForm
 			}
 
 			return this.permissions.view_full;
+		}
+
+		const isInvitedOrRejected = ['Q', 'N'].includes(this.entry.getCurrentStatus());
+		if (action === 'editLocation')
+		{
+			const canEdit = this.entry.permissions?.edit === true;
+			const canEditLocation = this.entry.permissions?.editLocation === true;
+
+			return !isInvitedOrRejected && (canEdit || canEditLocation);
+		}
+
+		if (action === 'editAttendees')
+		{
+			const canEdit = this.entry.permissions?.edit === true;
+			const canEditAttendees = this.entry.permissions?.editAttendees === true;
+
+			return !isInvitedOrRejected && (canEdit || canEditAttendees);
 		}
 
 		return false;
@@ -771,7 +789,7 @@ export class EventViewForm
 				e.keyCode === Util.getKeyCode('delete')
 				// || e.keyCode === Util.getKeyCode('backspace')
 			)
-			&& this.canDo(this.entry, 'delete'))
+			&& this.canDo('delete'))
 		{
 			const target = event.target || event.srcElement;
 			const tagName = Type.isElementNode(target) ? target.tagName.toLowerCase() : null;
@@ -839,5 +857,17 @@ export class EventViewForm
 				return null;
 			},
 		);
+	}
+
+	handleEditButtonClick(): void
+	{
+		this.BX.SidePanel.Instance.close(false, () => {
+			EntryManager.openEditSlider({
+				entry: this.entry,
+				type: this.type,
+				ownerId: this.ownerId,
+				userId: this.userId,
+			});
+		});
 	}
 }

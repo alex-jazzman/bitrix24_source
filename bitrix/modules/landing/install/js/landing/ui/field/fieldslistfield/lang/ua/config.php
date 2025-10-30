@@ -33,3 +33,4 @@ $MESS["LANDING_FIELDS_LIST_FIELD_PRODUCTS_TITLE2"] = "Список товарі�
 $MESS["LANDING_FIELDS_LIST_FIELD_SEPARATOR_TITLE"] = "Роздільник";
 $MESS["LANDING_FIELDS_SELECT_PRODUCTS_BUTTON_TITLE"] = "Додати товари";
 $MESS["LANDING_FIELDS_SELECT_SEPARATOR_BUTTON_TITLE"] = "Додати роздільник";
+$MESS["LANDING_PHONE_FIELD_AHA_MOMENT_REGION_CODE"] = "Додайте код країни — його буде автоматично підставлено у форму. Так клієнтам буде зручніше вводити номер, а ви отримаєте правильний телефон для зв'язку.";

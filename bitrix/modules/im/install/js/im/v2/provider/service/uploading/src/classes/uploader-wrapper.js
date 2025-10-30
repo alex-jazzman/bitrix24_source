@@ -1,33 +1,28 @@
-import { BaseEvent, EventEmitter } from 'main.core.events';
-import { Uploader, UploaderEvent } from 'ui.uploader.core';
+import { Type } from 'main.core';
+import { EventEmitter, BaseEvent } from 'main.core.events';
+import {
+	Uploader,
+	UploaderEvent,
+	FilterType,
+	type UploaderFile,
+	type UploaderFileOptions,
+	FileStatus as UploaderFileStatus,
+} from 'ui.uploader.core';
 
-import { EventType } from 'im.v2.const';
+import { UploaderVideoCompressionFilter } from './video-compression-filter';
 
-import type { UploaderFile } from 'ui.uploader.core';
-import type { MessageWithFile } from '../types/uploading';
-
-export type UploaderWrapperOptions = {
-	diskFolderId: number,
-	uploaderId: string,
-	chatId: number,
-	dialogId: string,
-	autoUpload: boolean,
-	maxParallelLoads: number,
-	maxParallelUploads: number,
-}
-
-const MAX_FILES_IN_ONE_MESSAGE = 10;
+import type { UploaderWrapperFileOptions, UploaderWrapperOptions } from './types/uploader-wrapper';
 
 export class UploaderWrapper extends EventEmitter
 {
-	#uploaderRegistry: {[uploaderId: string]: Uploader} = {};
-	#onUploadCancelHandler: Function;
-
-	static eventNamespace = 'BX.Messenger.v2.Service.Uploading.UploaderWrapper';
-
-	static events = {
+	static EVENT_NAMESPACE = 'BX.Messenger.v2.Service.Uploading.UploaderWrapper';
+	static CONTROLLER = 'disk.uf.integration.diskUploaderController';
+	static Event = {
 		onFileAddStart: 'onFileAddStart',
 		onFileAdd: 'onFileAdd',
+		onFileLoadComplete: 'onFileLoadComplete',
+		onFileStateChange: 'onFileStateChange',
+		onFileStatusChange: 'onFileStatusChange',
 		onFileUploadStart: 'onFileUploadStart',
 		onFileUploadProgress: 'onFileUploadProgress',
 		onFileUploadComplete: 'onFileUploadComplete',
@@ -37,46 +32,23 @@ export class UploaderWrapper extends EventEmitter
 		onUploadComplete: 'onUploadComplete',
 	};
 
-	constructor()
+	#id: string;
+	#uploader: Uploader;
+	#customData: { [key: string]: any } = {};
+
+	constructor({ uploaderId, uploaderOptions, events, customData }: UploaderWrapperOptions)
 	{
 		super();
-		this.setEventNamespace(UploaderWrapper.eventNamespace);
+		this.setEventNamespace(UploaderWrapper.EVENT_NAMESPACE);
+		this.subscribeFromOptions(events);
 
-		this.#onUploadCancelHandler = this.#onUploadCancel.bind(this);
-		EventEmitter.subscribe(EventType.uploader.cancel, this.#onUploadCancelHandler);
-	}
-
-	createUploader(options: UploaderWrapperOptions)
-	{
-		const {
-			diskFolderId,
-			uploaderId,
-			chatId,
-			dialogId,
-			autoUpload = false,
-			maxParallelLoads,
-			maxParallelUploads,
-		} = options;
-
-		this.#uploaderRegistry[uploaderId] = new Uploader({
-			autoUpload,
-			maxParallelLoads,
-			maxParallelUploads,
-			controller: 'disk.uf.integration.diskUploaderController',
+		this.#id = uploaderId;
+		this.#uploader = new Uploader({
+			controller: UploaderWrapper.CONTROLLER,
 			multiple: true,
-			controllerOptions: {
-				folderId: diskFolderId,
-				chat: {
-					chatId,
-					dialogId,
-				},
-			},
 			imageResizeWidth: 1280,
 			imageResizeHeight: 1280,
 			imageResizeMode: 'contain',
-			imageResizeFilter: (file: UploaderFile) => {
-				return !file.getCustomData('sendAsFile') && !file.isAnimated();
-			},
 			imageResizeMimeType: 'image/jpeg',
 			imageResizeMimeTypeMode: 'force',
 			imagePreviewHeight: 720,
@@ -84,126 +56,144 @@ export class UploaderWrapper extends EventEmitter
 			treatOversizeImageAsFile: true,
 			ignoreUnknownImageTypes: true,
 			maxFileSize: null,
+			imageResizeFilter: (file: UploaderFile) => {
+				return !file.getCustomData('sendAsFile') && !file.isAnimated();
+			},
+			...uploaderOptions,
 			events: {
-				[UploaderEvent.FILE_ADD_START]: (event) => {
-					this.emit(UploaderWrapper.events.onFileAddStart, { ...event.getData(), uploaderId });
+				[UploaderEvent.FILE_ADD_START]: (event: BaseEvent) => {
+					this.emit(UploaderWrapper.Event.onFileAddStart, { ...event.getData(), uploaderId });
 				},
-				[UploaderEvent.FILE_UPLOAD_START]: (event) => {
-					this.emit(UploaderWrapper.events.onFileUploadStart, { ...event.getData(), uploaderId });
+				[UploaderEvent.FILE_ADD]: (event: BaseEvent) => {
+					this.emit(UploaderWrapper.Event.onFileAdd, { ...event.getData(), uploaderId });
 				},
-				[UploaderEvent.FILE_ADD]: (event) => {
-					this.emit(UploaderWrapper.events.onFileAdd, { ...event.getData(), uploaderId });
+				[UploaderEvent.FILE_LOAD_COMPLETE]: (event: BaseEvent) => {
+					this.emit(UploaderWrapper.Event.onFileLoadComplete, { ...event.getData(), uploaderId });
 				},
-				[UploaderEvent.FILE_UPLOAD_PROGRESS]: (event) => {
-					this.emit(UploaderWrapper.events.onFileUploadProgress, { ...event.getData(), uploaderId });
+				[UploaderEvent.FILE_STATE_CHANGE]: (event: BaseEvent) => {
+					this.emit(UploaderWrapper.Event.onFileStateChange, { ...event.getData(), uploaderId });
 				},
-				[UploaderEvent.FILE_UPLOAD_COMPLETE]: (event) => {
-					this.emit(UploaderWrapper.events.onFileUploadComplete, { ...event.getData(), uploaderId });
+				[UploaderEvent.FILE_STATUS_CHANGE]: (event: BaseEvent) => {
+					this.emit(UploaderWrapper.Event.onFileStatusChange, { ...event.getData(), uploaderId });
 				},
-				[UploaderEvent.ERROR]: (event) => {
-					this.emit(UploaderWrapper.events.onFileUploadError, { ...event.getData(), uploaderId });
+				[UploaderEvent.FILE_UPLOAD_START]: (event: BaseEvent) => {
+					this.emit(UploaderWrapper.Event.onFileUploadStart, { ...event.getData(), uploaderId });
 				},
-				[UploaderEvent.FILE_ERROR]: (event) => {
-					this.emit(UploaderWrapper.events.onFileUploadError, { ...event.getData(), uploaderId });
+				[UploaderEvent.FILE_UPLOAD_PROGRESS]: (event: BaseEvent) => {
+					this.emit(UploaderWrapper.Event.onFileUploadProgress, { ...event.getData(), uploaderId });
 				},
-				[UploaderEvent.MAX_FILE_COUNT_EXCEEDED]: (event) => {
-					this.emit(UploaderWrapper.events.onMaxFileCountExceeded, { ...event.getData(), uploaderId });
+				[UploaderEvent.FILE_UPLOAD_COMPLETE]: (event: BaseEvent) => {
+					this.emit(UploaderWrapper.Event.onFileUploadComplete, { ...event.getData(), uploaderId });
 				},
-				[UploaderEvent.UPLOAD_COMPLETE]: (event) => {
-					this.emit(UploaderWrapper.events.onUploadComplete, { ...event.getData(), uploaderId });
+				[UploaderEvent.ERROR]: (event: BaseEvent) => {
+					this.emit(UploaderWrapper.Event.onFileUploadError, { ...event.getData(), uploaderId });
+				},
+				[UploaderEvent.FILE_ERROR]: (event: BaseEvent) => {
+					this.emit(UploaderWrapper.Event.onFileUploadError, { ...event.getData(), uploaderId });
+				},
+				[UploaderEvent.MAX_FILE_COUNT_EXCEEDED]: (event: BaseEvent) => {
+					this.emit(UploaderWrapper.Event.onMaxFileCountExceeded, { ...event.getData(), uploaderId });
+				},
+				[UploaderEvent.UPLOAD_COMPLETE]: (event: BaseEvent) => {
+					this.emit(UploaderWrapper.Event.onUploadComplete, { ...event.getData(), uploaderId });
 				},
 			},
+			filters: [
+				{
+					type: FilterType.PREPARATION,
+					filter: UploaderVideoCompressionFilter,
+				},
+			],
+		});
+
+		if (Type.isPlainObject(customData))
+		{
+			this.#customData = customData;
+		}
+	}
+
+	getId(): string
+	{
+		return this.#id;
+	}
+
+	setCustomData(key, value)
+	{
+		this.#customData[key] = value;
+	}
+
+	getCustomData(key: string): any
+	{
+		return this.#customData[key];
+	}
+
+	addFiles(filesOptions: Array<UploaderWrapperFileOptions>): Array<UploaderFile>
+	{
+		const filesEntries: Array<Array<File | Blob, UploaderFileOptions>> = filesOptions.map((fileOption) => {
+			return Object.values(fileOption);
+		});
+
+		return this.#uploader.addFiles(filesEntries);
+	}
+
+	removeFile(fileId: string)
+	{
+		this.#uploader.getFile(fileId)?.remove?.();
+	}
+
+	getFiles(): Array<UploaderFile>
+	{
+		return this.#uploader.getFiles();
+	}
+
+	getFilesIds(): Array<string>
+	{
+		return this.getFiles().map((file: UploaderFile) => {
+			return file.getId();
 		});
 	}
 
-	start(uploaderId: string)
+	isAllPending(): boolean
 	{
-		this.#uploaderRegistry[uploaderId].setAutoUpload(true);
-		this.#uploaderRegistry[uploaderId].start();
-	}
-
-	stop(uploaderId: string)
-	{
-		this.#uploaderRegistry[uploaderId].stop();
-	}
-
-	destroyUploader(uploaderId: string)
-	{
-		this.#uploaderRegistry[uploaderId].destroy({ removeFilesFromServer: false });
-		delete this.#uploaderRegistry[uploaderId];
-	}
-
-	addFiles(tasks: MessageWithFile[]): UploaderFile[]
-	{
-		const firstTenTasks = tasks.slice(0, MAX_FILES_IN_ONE_MESSAGE);
-
-		const addedFiles = [];
-		firstTenTasks.forEach((task) => {
-			const file = this.#addFile(task);
-			if (file)
-			{
-				addedFiles.push(file);
-			}
+		return this.getFiles().every((currentFile: UploaderFile) => {
+			return currentFile.getStatus() === UploaderFileStatus.PENDING;
 		});
-
-		return addedFiles;
 	}
 
-	getFiles(uploaderId): UploaderFile[]
+	isAllCompleted(): boolean
 	{
-		return this.#uploaderRegistry[uploaderId].getFiles();
+		return this.getFiles().every((currentFile: UploaderFile) => {
+			return currentFile.getStatus() === UploaderFileStatus.COMPLETE;
+		});
 	}
 
-	#addFile(task: MessageWithFile): ?UploaderFile
+	getServerFilesIds(): Array<string>
 	{
-		return this.#uploaderRegistry[task.uploaderId].addFile(
-			task.file,
-			{
-				id: task.tempFileId,
-				customData: {
-					dialogId: task.dialogId,
-					chatId: task.chatId,
-					tempMessageId: task.tempMessageId,
-					sendAsFile: task.sendAsFile,
-				},
-			},
-		);
+		return this.getFiles().map((file: UploaderFile) => {
+			return file.getServerFileId().toString().slice(1);
+		});
 	}
 
-	#onUploadCancel(event: BaseEvent)
+	getBinaryFiles(): Array<File>
 	{
-		const { tempFileId, tempMessageId } = event.getData();
-		if (!tempFileId || !tempMessageId)
-		{
-			return;
-		}
-
-		this.#removeFileFromUploader(tempFileId);
-		this.emit(UploaderWrapper.events.onFileUploadCancel, { tempMessageId, tempFileId });
+		return this.getFiles().map((file: UploaderFile) => {
+			return file.getBinary();
+		});
 	}
 
-	#removeFileFromUploader(tempFileId: string)
+	start()
 	{
-		const uploaderList = Object.values(this.#uploaderRegistry);
-		for (const uploader of uploaderList)
-		{
-			if (!uploader.getFile)
-			{
-				continue;
-			}
+		this.#uploader.setAutoUpload(true);
+		this.#uploader.start();
+	}
 
-			const file = uploader.getFile(tempFileId);
-			if (file)
-			{
-				file.remove();
-
-				break;
-			}
-		}
+	stop()
+	{
+		this.#uploader.stop();
 	}
 
 	destroy()
 	{
-		EventEmitter.unsubscribe(EventType.uploader.cancel, this.#onUploadCancelHandler);
+		this.#uploader.destroy({ removeFilesFromServer: false });
 	}
 }

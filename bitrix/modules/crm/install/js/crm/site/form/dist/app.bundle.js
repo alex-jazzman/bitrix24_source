@@ -6371,10 +6371,10 @@ var Vue = exports.Vue;
       babelHelpers.createClass(ReCaptcha$$1, [{
         key: "adjust",
         value: function adjust(options) {
-          if (typeof options.key !== "undefined") {
+          if (typeof options.key !== 'undefined') {
             babelHelpers.classPrivateFieldSet(this, _key, options.key);
           }
-          if (typeof options.use !== "undefined") {
+          if (typeof options.use !== 'undefined') {
             babelHelpers.classPrivateFieldSet(this, _use, options.use);
           }
         }
@@ -6386,7 +6386,7 @@ var Vue = exports.Vue;
       }, {
         key: "isVerified",
         value: function isVerified() {
-          return !this.canUse() || !!babelHelpers.classPrivateFieldGet(this, _response);
+          return !this.canUse() || Boolean(babelHelpers.classPrivateFieldGet(this, _response));
         }
       }, {
         key: "getKey",
@@ -6394,8 +6394,11 @@ var Vue = exports.Vue;
           if (babelHelpers.classPrivateFieldGet(this, _key)) {
             return babelHelpers.classPrivateFieldGet(this, _key);
           }
+
+          // eslint-disable-next-line no-undef
           if (b24form && b24form.common) {
-            return (b24form.common.properties.recaptcha || {}).key;
+            // eslint-disable-next-line no-undef
+            return (b24form.common.properties.captcha.recaptcha || {}).key;
           }
           return null;
         }
@@ -6426,7 +6429,7 @@ var Vue = exports.Vue;
           babelHelpers.classPrivateFieldSet(this, _target, target);
           babelHelpers.classPrivateFieldSet(this, _widgetId, window.grecaptcha.render(target, {
             sitekey: this.getKey(),
-            //this.#key,
+            // this.#key,
             badge: 'inline',
             size: 'invisible',
             callback: function callback(response) {
@@ -6450,16 +6453,127 @@ var Vue = exports.Vue;
 
     function _classPrivateFieldInitSpec$6(obj, privateMap, value) { _checkPrivateRedeclaration$8(obj, privateMap); privateMap.set(obj, value); }
     function _checkPrivateRedeclaration$8(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+    var _key$1 = /*#__PURE__*/new WeakMap();
+    var _use$1 = /*#__PURE__*/new WeakMap();
+    var _widgetId$1 = /*#__PURE__*/new WeakMap();
+    var _response$1 = /*#__PURE__*/new WeakMap();
+    var _target$1 = /*#__PURE__*/new WeakMap();
+    var _callback$1 = /*#__PURE__*/new WeakMap();
+    var YandexCaptcha = /*#__PURE__*/function () {
+      function YandexCaptcha() {
+        babelHelpers.classCallCheck(this, YandexCaptcha);
+        _classPrivateFieldInitSpec$6(this, _key$1, {
+          writable: true,
+          value: void 0
+        });
+        _classPrivateFieldInitSpec$6(this, _use$1, {
+          writable: true,
+          value: false
+        });
+        _classPrivateFieldInitSpec$6(this, _widgetId$1, {
+          writable: true,
+          value: void 0
+        });
+        _classPrivateFieldInitSpec$6(this, _response$1, {
+          writable: true,
+          value: void 0
+        });
+        _classPrivateFieldInitSpec$6(this, _target$1, {
+          writable: true,
+          value: void 0
+        });
+        _classPrivateFieldInitSpec$6(this, _callback$1, {
+          writable: true,
+          value: void 0
+        });
+      }
+      babelHelpers.createClass(YandexCaptcha, [{
+        key: "adjust",
+        value: function adjust(options) {
+          if (typeof options.key !== 'undefined') {
+            babelHelpers.classPrivateFieldSet(this, _key$1, options.key);
+          }
+          if (typeof options.use !== 'undefined') {
+            babelHelpers.classPrivateFieldSet(this, _use$1, options.use);
+          }
+        }
+      }, {
+        key: "canUse",
+        value: function canUse() {
+          return babelHelpers.classPrivateFieldGet(this, _use$1) && this.getKey();
+        }
+      }, {
+        key: "isVerified",
+        value: function isVerified() {
+          return !this.canUse() || Boolean(babelHelpers.classPrivateFieldGet(this, _response$1));
+        }
+      }, {
+        key: "getKey",
+        value: function getKey() {
+          if (babelHelpers.classPrivateFieldGet(this, _key$1)) {
+            return babelHelpers.classPrivateFieldGet(this, _key$1);
+          }
+
+          // eslint-disable-next-line no-undef
+          if (b24form && b24form.common) {
+            // eslint-disable-next-line no-undef
+            return (b24form.common.properties.captcha.yandexCaptcha || {}).key;
+          }
+          return null;
+        }
+      }, {
+        key: "getResponse",
+        value: function getResponse() {
+          return babelHelpers.classPrivateFieldGet(this, _response$1);
+        }
+      }, {
+        key: "verify",
+        value: function verify(callback) {
+          if (!window.smartCaptcha) {
+            return;
+          }
+          if (callback) {
+            babelHelpers.classPrivateFieldSet(this, _callback$1, callback);
+          }
+          babelHelpers.classPrivateFieldSet(this, _response$1, '');
+          window.smartCaptcha.execute(babelHelpers.classPrivateFieldGet(this, _widgetId$1));
+        }
+      }, {
+        key: "render",
+        value: function render(target) {
+          var _this = this;
+          if (!window.smartCaptcha) {
+            return;
+          }
+          babelHelpers.classPrivateFieldSet(this, _target$1, target);
+          window.smartCaptcha.render(target, {
+            sitekey: this.getKey(),
+            invisible: true,
+            callback: function callback(response) {
+              babelHelpers.classPrivateFieldSet(_this, _response$1, response);
+              if (babelHelpers.classPrivateFieldGet(_this, _callback$1)) {
+                babelHelpers.classPrivateFieldGet(_this, _callback$1).call(_this);
+                babelHelpers.classPrivateFieldSet(_this, _callback$1, null);
+              }
+            }
+          });
+        }
+      }]);
+      return YandexCaptcha;
+    }();
+
+    function _classPrivateFieldInitSpec$7(obj, privateMap, value) { _checkPrivateRedeclaration$9(obj, privateMap); privateMap.set(obj, value); }
+    function _checkPrivateRedeclaration$9(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
     var _currency = /*#__PURE__*/new WeakMap();
     var _fields = /*#__PURE__*/new WeakMap();
     var Basket = /*#__PURE__*/function () {
       function Basket(fields, currency) {
         babelHelpers.classCallCheck(this, Basket);
-        _classPrivateFieldInitSpec$6(this, _currency, {
+        _classPrivateFieldInitSpec$7(this, _currency, {
           writable: true,
           value: void 0
         });
-        _classPrivateFieldInitSpec$6(this, _fields, {
+        _classPrivateFieldInitSpec$7(this, _fields, {
           writable: true,
           value: []
         });
@@ -7502,9 +7616,9 @@ var Vue = exports.Vue;
       }
       loaded = false;
       var node = document.createElement('SCRIPT');
-      node.setAttribute("type", "text/javascript");
-      node.setAttribute("async", "");
-      node.setAttribute("src", 'https://www.google.com/recaptcha/api.js');
+      node.setAttribute('type', 'text/javascript');
+      node.setAttribute('async', '');
+      node.setAttribute('src', 'https://www.google.com/recaptcha/api.js');
       node.onload = function () {
         return window.grecaptcha.ready(function () {
           loaded = true;
@@ -7534,7 +7648,53 @@ var Vue = exports.Vue;
           return _this.renderCaptcha();
         });
       },
-      template: "<div v-if=\"canUse()\" class=\"b24-form-recaptcha\"><div></div></div>"
+      template: "\n\t\t<div v-if=\"canUse()\" class=\"b24-form-recaptcha\"><div></div></div>\n\t"
+    };
+
+    var loaded$1 = null;
+    var callbacks$1 = [];
+    function load$1(callback) {
+      if (loaded$1) {
+        callback();
+        return;
+      }
+      callbacks$1.push(callback);
+      if (loaded$1 === false) {
+        return;
+      }
+      loaded$1 = false;
+      var node = document.createElement('SCRIPT');
+      node.setAttribute('type', 'text/javascript');
+      node.setAttribute('defer', '');
+      node.setAttribute('src', 'https://smartcaptcha.yandexcloud.net/captcha.js?render=onload&onload=onloadFunction');
+      node.onload = function () {
+        loaded$1 = true;
+        callbacks$1.forEach(function (innerCallback) {
+          return innerCallback();
+        });
+      };
+      (document.getElementsByTagName('head')[0] || document.documentElement).appendChild(node);
+    }
+    var YandexCaptcha$1 = {
+      props: ['form'],
+      methods: {
+        canUse: function canUse() {
+          return this.form.yandexCaptcha.canUse();
+        },
+        renderCaptcha: function renderCaptcha() {
+          this.form.yandexCaptcha.render(this.$el.children[0]);
+        }
+      },
+      mounted: function mounted() {
+        var _this = this;
+        if (!this.canUse()) {
+          return;
+        }
+        load$1(function () {
+          return _this.renderCaptcha();
+        });
+      },
+      template: "\n\t\t<div v-if=\"canUse()\" class=\"b24-form-yandex-captcha\"><div></div></div>\n\t"
     };
 
     var Form = {
@@ -7544,29 +7704,29 @@ var Vue = exports.Vue;
         }
       },
       components: {
-        'field': Factory.getComponent(),
+        field: Factory.getComponent(),
         'abuse-block': AbuseBlock,
         'agreement-block': AgreementBlock,
         'state-block': StateBlock,
         'pager-block': PagerBlock,
         'basket-block': BasketBlock,
-        'recaptcha-block': ReCaptcha$2
+        'recaptcha-block': ReCaptcha$2,
+        'yandex-captcha-block': YandexCaptcha$1
       },
-      template: "\n\t\t<div class=\"b24-form-wrapper\"\n\t\t\t:class=\"classes()\"\n\t\t>\n\t\t\t<div v-if=\"form.title || form.desc\" class=\"b24-form-header b24-form-padding-side\">\n\t\t\t\t<div v-if=\"form.title\" class=\"b24-form-header-title\">{{ form.title }}</div>\n\t\t\t\t<div class=\"b24-form-header-description\"\n\t\t\t\t\tv-if=\"form.desc\"\n\t\t\t\t\tv-html=\"form.desc\"\n\t\t\t\t></div>\n\t\t\t</div>\n\t\t\t<div v-else class=\"b24-form-header-padding\"></div>\n\n\t\t\t<div class=\"b24-form-content b24-form-padding-side\">\n\t\t\t\t<form\n\t\t\t\t\tmethod=\"post\"\n\t\t\t\t\tnovalidate\n\t\t\t\t\t@submit=\"submit\"\n\t\t\t\t\tv-if=\"form.pager\"\n\t\t\t\t>\n\t\t\t\t\t<component\n\t\t\t\t\t\t:is=\"'pager-block'\"\n\t\t\t\t\t\t:pager=\"form.pager\"\n\t\t\t\t\t\tv-if=\"form.pager.iterable()\"\n\t\t\t\t\t></component>\n\n\t\t\t\t\t<div v-if=\"!form.disabled\">\n\t\t\t\t\t\t<component\n\t\t\t\t\t\t\t:is=\"'field'\"\n\t\t\t\t\t\t\tv-for=\"field in form.pager.current().fields\"\n\t\t\t\t\t\t\t:key=\"field.id\"\n\t\t\t\t\t\t\t:field=\"field\"\n\t\t\t\t\t\t></component>\n\t\t\t\t\t</div>\n\n\t\t\t\t\t<component\n\t\t\t\t\t\t:is=\"'agreement-block'\"\n\t\t\t\t\t\t:formId=\"form.getId()\"\n\t\t\t\t\t\t:fields=\"form.agreements\"\n\t\t\t\t\t\t:view=\"form.view\"\n\t\t\t\t\t\t:messages=\"form.messages\"\n\t\t\t\t\t\tv-if=\"form.pager.ended()\"\n\t\t\t\t\t></component>\n\n\t\t\t\t\t<component\n\t\t\t\t\t\t:is=\"'basket-block'\"\n\t\t\t\t\t\t:basket=\"form.basket\"\n\t\t\t\t\t\t:messages=\"form.messages\"\n\t\t\t\t\t></component>\n\n\t\t\t\t\t<div class=\"b24-form-btn-container\">\n\t\t\t\t\t\t<div class=\"b24-form-btn-block\"\n\t\t\t\t\t\t\tv-if=\"!form.pager.beginning()\"\n\t\t\t\t\t\t\t@click.prevent=\"prevPage()\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<button type=\"button\" class=\"b24-form-btn b24-form-btn-white b24-form-btn-border\">\n\t\t\t\t\t\t\t\t{{ form.messages.get('navBack') }}\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\n\t\t\t\t\t\t<div class=\"b24-form-btn-block\"\n\t\t\t\t\t\t\tv-if=\"!form.pager.ended()\"\n\t\t\t\t\t\t\t@click.prevent=\"nextPage()\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<button type=\"button\" class=\"b24-form-btn\">\n\t\t\t\t\t\t\t\t{{ form.messages.get('navNext') }}\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"b24-form-btn-block\"\n\t\t\t\t\t\t\tv-if=\"form.pager.ended()\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<button type=\"submit\" class=\"b24-form-btn\">\n\t\t\t\t\t\t\t\t{{ form.buttonCaption || form.messages.get('defButton') }}\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\n\t\t\t\t\t<span style=\"color: red;\" v-show=\"false && hasErrors\">\n\t\t\t\t\t\tDebug: fill fields\n\t\t\t\t\t</span>\n\t\t\t\t</form>\n\t\t\t</div>\n\n\t\t\t<state-block :form=\"form\" />\n\n\t\t\t<recaptcha-block :form=\"form\" />\n\n\t\t\t<div class=\"b24-form-sign\">\n\t\t\t\t<select v-show=\"false\" v-model=\"form.messages.language\">\n\t\t\t\t\t<option\n\t\t\t\t\t\tv-for=\"language in form.languages\"\n\t\t\t\t\t\t:value=\"language\"\n\t\t\t\t\t>\n\t\t\t\t\t\t{{ language }}\n\t\t\t\t\t</option>\n\t\t\t\t</select>\n\n\t\t\t\t<component\n\t\t\t\t\tv-if=\"abuseEnabled\"\n\t\t\t\t\t:is=\"'abuse-block'\"\n\t\t\t\t\t:messages=\"form.messages\"\n\t\t\t\t\t:abuseLink=\"abuseLink\"\n\t\t\t\t></component>\n\n\t\t\t\t<div class=\"b24-form-sign-info\" v-if=\"form.useSign\">\n\t\t\t\t\t<span class=\"b24-form-sign-text\">{{ form.messages.get('sign') }}</span>\n\t\t\t\t\t<span class=\"b24-form-sign-bx\">{{ getSignBy() }}</span>\n\t\t\t\t\t<span class=\"b24-form-sign-24\">24</span>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t",
       computed: {
         hasErrors: function hasErrors() {
           return this.form.validated && !this.form.valid();
         },
         abuseEnabled: function abuseEnabled() {
           var _this$form, _this$form$abuse;
-          return !!((_this$form = this.form) !== null && _this$form !== void 0 && (_this$form$abuse = _this$form.abuse) !== null && _this$form$abuse !== void 0 && _this$form$abuse.link);
+          return Boolean((_this$form = this.form) === null || _this$form === void 0 ? void 0 : (_this$form$abuse = _this$form.abuse) === null || _this$form$abuse === void 0 ? void 0 : _this$form$abuse.link);
         },
         abuseLink: function abuseLink() {
           return this.abuseEnabled ? this.getQueryParametersForAbuseLink() : '';
         },
         isDark: function isDark() {
           var _this$form2, _this$form2$design;
-          return !!((_this$form2 = this.form) !== null && _this$form2 !== void 0 && (_this$form2$design = _this$form2.design) !== null && _this$form2$design !== void 0 && _this$form2$design.isDark());
+          return Boolean((_this$form2 = this.form) === null || _this$form2 === void 0 ? void 0 : (_this$form2$design = _this$form2.design) === null || _this$form2$design === void 0 ? void 0 : _this$form2$design.isDark());
         }
       },
       methods: {
@@ -7616,14 +7776,15 @@ var Vue = exports.Vue;
             if (!border.hasOwnProperty(pos) || !border[pos]) {
               continue;
             }
-            list.push('b24-form-border-' + pos);
+            list.push("b24-form-border-".concat(pos));
           }
           if (this.form.loading || this.form.sent || this.form.error || this.form.disabled) {
             list.push('b24-from-state-on');
           }
           return list;
         }
-      }
+      },
+      template: "\n\t\t<div class=\"b24-form-wrapper\"\n\t\t\t:class=\"classes()\"\n\t\t>\n\t\t\t<div v-if=\"form.title || form.desc\" class=\"b24-form-header b24-form-padding-side\">\n\t\t\t\t<div v-if=\"form.title\" class=\"b24-form-header-title\">{{ form.title }}</div>\n\t\t\t\t<div class=\"b24-form-header-description\"\n\t\t\t\t\tv-if=\"form.desc\"\n\t\t\t\t\tv-html=\"form.desc\"\n\t\t\t\t></div>\n\t\t\t</div>\n\t\t\t<div v-else class=\"b24-form-header-padding\"></div>\n\n\t\t\t<div class=\"b24-form-content b24-form-padding-side\">\n\t\t\t\t<form\n\t\t\t\t\tmethod=\"post\"\n\t\t\t\t\tnovalidate\n\t\t\t\t\t@submit=\"submit\"\n\t\t\t\t\tv-if=\"form.pager\"\n\t\t\t\t>\n\t\t\t\t\t<component\n\t\t\t\t\t\t:is=\"'pager-block'\"\n\t\t\t\t\t\t:pager=\"form.pager\"\n\t\t\t\t\t\tv-if=\"form.pager.iterable()\"\n\t\t\t\t\t></component>\n\n\t\t\t\t\t<div v-if=\"!form.disabled\">\n\t\t\t\t\t\t<component\n\t\t\t\t\t\t\t:is=\"'field'\"\n\t\t\t\t\t\t\tv-for=\"field in form.pager.current().fields\"\n\t\t\t\t\t\t\t:key=\"field.id\"\n\t\t\t\t\t\t\t:field=\"field\"\n\t\t\t\t\t\t></component>\n\t\t\t\t\t</div>\n\n\t\t\t\t\t<component\n\t\t\t\t\t\t:is=\"'agreement-block'\"\n\t\t\t\t\t\t:formId=\"form.getId()\"\n\t\t\t\t\t\t:fields=\"form.agreements\"\n\t\t\t\t\t\t:view=\"form.view\"\n\t\t\t\t\t\t:messages=\"form.messages\"\n\t\t\t\t\t\tv-if=\"form.pager.ended()\"\n\t\t\t\t\t></component>\n\n\t\t\t\t\t<component\n\t\t\t\t\t\t:is=\"'basket-block'\"\n\t\t\t\t\t\t:basket=\"form.basket\"\n\t\t\t\t\t\t:messages=\"form.messages\"\n\t\t\t\t\t></component>\n\n\t\t\t\t\t<div class=\"b24-form-btn-container\">\n\t\t\t\t\t\t<div class=\"b24-form-btn-block\"\n\t\t\t\t\t\t\tv-if=\"!form.pager.beginning()\"\n\t\t\t\t\t\t\t@click.prevent=\"prevPage()\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<button type=\"button\" class=\"b24-form-btn b24-form-btn-white b24-form-btn-border\">\n\t\t\t\t\t\t\t\t{{ form.messages.get('navBack') }}\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\n\t\t\t\t\t\t<div class=\"b24-form-btn-block\"\n\t\t\t\t\t\t\tv-if=\"!form.pager.ended()\"\n\t\t\t\t\t\t\t@click.prevent=\"nextPage()\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<button type=\"button\" class=\"b24-form-btn\">\n\t\t\t\t\t\t\t\t{{ form.messages.get('navNext') }}\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"b24-form-btn-block\"\n\t\t\t\t\t\t\tv-if=\"form.pager.ended()\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<button type=\"submit\" class=\"b24-form-btn\">\n\t\t\t\t\t\t\t\t{{ form.buttonCaption || form.messages.get('defButton') }}\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\n\t\t\t\t\t<span style=\"color: red;\" v-show=\"false && hasErrors\">\n\t\t\t\t\t\tDebug: fill fields\n\t\t\t\t\t</span>\n\t\t\t\t</form>\n\t\t\t</div>\n\n\t\t\t<state-block :form=\"form\" />\n\n\t\t\t<recaptcha-block :form=\"form\" />\n\n\t\t\t<yandex-captcha-block :form=\"form\" />\n\n\t\t\t<div class=\"b24-form-sign\">\n\t\t\t\t<select v-show=\"false\" v-model=\"form.messages.language\">\n\t\t\t\t\t<option\n\t\t\t\t\t\tv-for=\"language in form.languages\"\n\t\t\t\t\t\t:value=\"language\"\n\t\t\t\t\t>\n\t\t\t\t\t\t{{ language }}\n\t\t\t\t\t</option>\n\t\t\t\t</select>\n\n\t\t\t\t<component\n\t\t\t\t\tv-if=\"abuseEnabled\"\n\t\t\t\t\t:is=\"'abuse-block'\"\n\t\t\t\t\t:messages=\"form.messages\"\n\t\t\t\t\t:abuseLink=\"abuseLink\"\n\t\t\t\t></component>\n\n\t\t\t\t<div class=\"b24-form-sign-info\" v-if=\"form.useSign\">\n\t\t\t\t\t<span class=\"b24-form-sign-text\">{{ form.messages.get('sign') }}</span>\n\t\t\t\t\t<span class=\"b24-form-sign-bx\">{{ getSignBy() }}</span>\n\t\t\t\t\t<span class=\"b24-form-sign-24\">24</span>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t"
     };
 
     var Wrapper = {
@@ -7763,18 +7924,18 @@ var Vue = exports.Vue;
       'b24-form-widget': Widget$1
     };
 
-    function _classPrivateFieldInitSpec$7(obj, privateMap, value) { _checkPrivateRedeclaration$9(obj, privateMap); privateMap.set(obj, value); }
-    function _checkPrivateRedeclaration$9(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+    function _classPrivateFieldInitSpec$8(obj, privateMap, value) { _checkPrivateRedeclaration$a(obj, privateMap); privateMap.set(obj, value); }
+    function _checkPrivateRedeclaration$a(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
     var _data = /*#__PURE__*/new WeakMap();
     var _offset = /*#__PURE__*/new WeakMap();
     var Chunk = /*#__PURE__*/function () {
       function Chunk(data, offset) {
         babelHelpers.classCallCheck(this, Chunk);
-        _classPrivateFieldInitSpec$7(this, _data, {
+        _classPrivateFieldInitSpec$8(this, _data, {
           writable: true,
           value: null
         });
-        _classPrivateFieldInitSpec$7(this, _offset, {
+        _classPrivateFieldInitSpec$8(this, _offset, {
           writable: true,
           value: 0
         });
@@ -7800,9 +7961,9 @@ var Vue = exports.Vue;
       return Chunk;
     }();
 
-    function _classPrivateMethodInitSpec$3(obj, privateSet) { _checkPrivateRedeclaration$a(obj, privateSet); privateSet.add(obj); }
-    function _classPrivateFieldInitSpec$8(obj, privateMap, value) { _checkPrivateRedeclaration$a(obj, privateMap); privateMap.set(obj, value); }
-    function _checkPrivateRedeclaration$a(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+    function _classPrivateMethodInitSpec$3(obj, privateSet) { _checkPrivateRedeclaration$b(obj, privateSet); privateSet.add(obj); }
+    function _classPrivateFieldInitSpec$9(obj, privateMap, value) { _checkPrivateRedeclaration$b(obj, privateMap); privateMap.set(obj, value); }
+    function _checkPrivateRedeclaration$b(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
     function _classPrivateMethodGet$3(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
     var _file = /*#__PURE__*/new WeakMap();
     var _fileData = /*#__PURE__*/new WeakMap();
@@ -7830,55 +7991,55 @@ var Vue = exports.Vue;
         _classPrivateMethodInitSpec$3(babelHelpers.assertThisInitialized(_this), _postChunk);
         _classPrivateMethodInitSpec$3(babelHelpers.assertThisInitialized(_this), _uploadChunk);
         _classPrivateMethodInitSpec$3(babelHelpers.assertThisInitialized(_this), _getNextChunk);
-        _classPrivateFieldInitSpec$8(babelHelpers.assertThisInitialized(_this), _file, {
+        _classPrivateFieldInitSpec$9(babelHelpers.assertThisInitialized(_this), _file, {
           writable: true,
           value: void 0
         });
-        _classPrivateFieldInitSpec$8(babelHelpers.assertThisInitialized(_this), _fileData, {
+        _classPrivateFieldInitSpec$9(babelHelpers.assertThisInitialized(_this), _fileData, {
           writable: true,
           value: void 0
         });
-        _classPrivateFieldInitSpec$8(babelHelpers.assertThisInitialized(_this), _fieldId, {
+        _classPrivateFieldInitSpec$9(babelHelpers.assertThisInitialized(_this), _fieldId, {
           writable: true,
           value: void 0
         });
-        _classPrivateFieldInitSpec$8(babelHelpers.assertThisInitialized(_this), _chunkOffset, {
+        _classPrivateFieldInitSpec$9(babelHelpers.assertThisInitialized(_this), _chunkOffset, {
           writable: true,
           value: null
         });
-        _classPrivateFieldInitSpec$8(babelHelpers.assertThisInitialized(_this), _fileToken, {
+        _classPrivateFieldInitSpec$9(babelHelpers.assertThisInitialized(_this), _fileToken, {
           writable: true,
           value: null
         });
-        _classPrivateFieldInitSpec$8(babelHelpers.assertThisInitialized(_this), _identification, {
+        _classPrivateFieldInitSpec$9(babelHelpers.assertThisInitialized(_this), _identification, {
           writable: true,
           value: void 0
         });
-        _classPrivateFieldInitSpec$8(babelHelpers.assertThisInitialized(_this), _controller, {
+        _classPrivateFieldInitSpec$9(babelHelpers.assertThisInitialized(_this), _controller, {
           writable: true,
           value: 'crm.fileUploader.siteFormFileUploaderController'
         });
-        _classPrivateFieldInitSpec$8(babelHelpers.assertThisInitialized(_this), _action, {
+        _classPrivateFieldInitSpec$9(babelHelpers.assertThisInitialized(_this), _action, {
           writable: true,
           value: 'crm.site.fileUploader.upload'
         });
-        _classPrivateFieldInitSpec$8(babelHelpers.assertThisInitialized(_this), _currentChunk, {
+        _classPrivateFieldInitSpec$9(babelHelpers.assertThisInitialized(_this), _currentChunk, {
           writable: true,
           value: void 0
         });
-        _classPrivateFieldInitSpec$8(babelHelpers.assertThisInitialized(_this), _started, {
+        _classPrivateFieldInitSpec$9(babelHelpers.assertThisInitialized(_this), _started, {
           writable: true,
           value: false
         });
-        _classPrivateFieldInitSpec$8(babelHelpers.assertThisInitialized(_this), _uploaded, {
+        _classPrivateFieldInitSpec$9(babelHelpers.assertThisInitialized(_this), _uploaded, {
           writable: true,
           value: false
         });
-        _classPrivateFieldInitSpec$8(babelHelpers.assertThisInitialized(_this), _chunkOptions, {
+        _classPrivateFieldInitSpec$9(babelHelpers.assertThisInitialized(_this), _chunkOptions, {
           writable: true,
           value: void 0
         });
-        _classPrivateFieldInitSpec$8(babelHelpers.assertThisInitialized(_this), _additionalControllerOptions, {
+        _classPrivateFieldInitSpec$9(babelHelpers.assertThisInitialized(_this), _additionalControllerOptions, {
           writable: true,
           value: []
         });
@@ -8120,9 +8281,9 @@ var Vue = exports.Vue;
       });
     }
 
-    function _classPrivateMethodInitSpec$4(obj, privateSet) { _checkPrivateRedeclaration$b(obj, privateSet); privateSet.add(obj); }
-    function _classPrivateFieldInitSpec$9(obj, privateMap, value) { _checkPrivateRedeclaration$b(obj, privateMap); privateMap.set(obj, value); }
-    function _checkPrivateRedeclaration$b(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+    function _classPrivateMethodInitSpec$4(obj, privateSet) { _checkPrivateRedeclaration$c(obj, privateSet); privateSet.add(obj); }
+    function _classPrivateFieldInitSpec$a(obj, privateMap, value) { _checkPrivateRedeclaration$c(obj, privateMap); privateMap.set(obj, value); }
+    function _checkPrivateRedeclaration$c(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
     function _classPrivateMethodGet$4(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
     var _form$2 = /*#__PURE__*/new WeakMap();
     var _files = /*#__PURE__*/new WeakMap();
@@ -8139,35 +8300,35 @@ var Vue = exports.Vue;
         babelHelpers.classCallCheck(this, Uploader);
         _classPrivateMethodInitSpec$4(this, _getCurrentUploadingFile);
         _classPrivateMethodInitSpec$4(this, _uploadNext);
-        _classPrivateFieldInitSpec$9(this, _form$2, {
+        _classPrivateFieldInitSpec$a(this, _form$2, {
           writable: true,
           value: void 0
         });
-        _classPrivateFieldInitSpec$9(this, _files, {
+        _classPrivateFieldInitSpec$a(this, _files, {
           writable: true,
           value: void 0
         });
-        _classPrivateFieldInitSpec$9(this, _fileUploader, {
+        _classPrivateFieldInitSpec$a(this, _fileUploader, {
           writable: true,
           value: void 0
         });
-        _classPrivateFieldInitSpec$9(this, _filesControllers, {
+        _classPrivateFieldInitSpec$a(this, _filesControllers, {
           writable: true,
           value: void 0
         });
-        _classPrivateFieldInitSpec$9(this, _currentFileIndex, {
+        _classPrivateFieldInitSpec$a(this, _currentFileIndex, {
           writable: true,
           value: 0
         });
-        _classPrivateFieldInitSpec$9(this, _summarySize, {
+        _classPrivateFieldInitSpec$a(this, _summarySize, {
           writable: true,
           value: 0
         });
-        _classPrivateFieldInitSpec$9(this, _allProgress, {
+        _classPrivateFieldInitSpec$a(this, _allProgress, {
           writable: true,
           value: 0
         });
-        _classPrivateFieldInitSpec$9(this, _lastUpdateTime, {
+        _classPrivateFieldInitSpec$a(this, _lastUpdateTime, {
           writable: true,
           value: null
         });
@@ -8301,8 +8462,8 @@ var Vue = exports.Vue;
 
     function ownKeys$4(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
     function _objectSpread$4(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$4(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$4(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
-    function _classPrivateFieldInitSpec$a(obj, privateMap, value) { _checkPrivateRedeclaration$c(obj, privateMap); privateMap.set(obj, value); }
-    function _checkPrivateRedeclaration$c(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+    function _classPrivateFieldInitSpec$b(obj, privateMap, value) { _checkPrivateRedeclaration$d(obj, privateMap); privateMap.set(obj, value); }
+    function _checkPrivateRedeclaration$d(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
     var DefaultOptions$4 = {
       view: 'inline'
     };
@@ -8320,7 +8481,7 @@ var Vue = exports.Vue;
         var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : DefaultOptions$4;
         babelHelpers.classCallCheck(this, Controller$$1);
         _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Controller$$1).call(this, options));
-        _classPrivateFieldInitSpec$a(babelHelpers.assertThisInitialized(_this), _id$2, {
+        _classPrivateFieldInitSpec$b(babelHelpers.assertThisInitialized(_this), _id$2, {
           writable: true,
           value: void 0
         });
@@ -8332,15 +8493,15 @@ var Vue = exports.Vue;
         babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "analyticsHandler", {});
         babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "languages", []);
         babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "language", 'en');
-        _classPrivateFieldInitSpec$a(babelHelpers.assertThisInitialized(_this), _fields$1, {
+        _classPrivateFieldInitSpec$b(babelHelpers.assertThisInitialized(_this), _fields$1, {
           writable: true,
           value: []
         });
-        _classPrivateFieldInitSpec$a(babelHelpers.assertThisInitialized(_this), _dependence, {
+        _classPrivateFieldInitSpec$b(babelHelpers.assertThisInitialized(_this), _dependence, {
           writable: true,
           value: void 0
         });
-        _classPrivateFieldInitSpec$a(babelHelpers.assertThisInitialized(_this), _properties, {
+        _classPrivateFieldInitSpec$b(babelHelpers.assertThisInitialized(_this), _properties, {
           writable: true,
           value: {}
         });
@@ -8356,7 +8517,7 @@ var Vue = exports.Vue;
           title: '$',
           format: '$#'
         });
-        _classPrivateFieldInitSpec$a(babelHelpers.assertThisInitialized(_this), _personalisation, {
+        _classPrivateFieldInitSpec$b(babelHelpers.assertThisInitialized(_this), _personalisation, {
           writable: true,
           value: {
             title: '',
@@ -8374,7 +8535,7 @@ var Vue = exports.Vue;
           text: '',
           handler: null
         });
-        _classPrivateFieldInitSpec$a(babelHelpers.assertThisInitialized(_this), _vue, {
+        _classPrivateFieldInitSpec$b(babelHelpers.assertThisInitialized(_this), _vue, {
           writable: true,
           value: void 0
         });
@@ -8384,8 +8545,11 @@ var Vue = exports.Vue;
         babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _dependence, new Manager(babelHelpers.assertThisInitialized(_this)));
         _this.analytics = new Analytics$1(babelHelpers.assertThisInitialized(_this));
         _this.recaptcha = new ReCaptcha$1();
+        _this.yandexCaptcha = new YandexCaptcha();
         _this.abuse = options.abuse;
         _this.emit(EventTypes.initBefore, options);
+
+        // eslint-disable-next-line no-param-reassign
         options = _this.adjust(options);
         _this.uploader = new Uploader(babelHelpers.assertThisInitialized(_this));
         babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _id$2, options.id || Math.random().toString().split('.')[1] + Math.random().toString().split('.')[1]);
@@ -8474,8 +8638,14 @@ var Vue = exports.Vue;
             return false;
           }
           storeFieldValues(this.getFields());
-          if (!this.recaptcha.isVerified()) {
+          if (this.recaptcha.canUse() && !this.recaptcha.isVerified()) {
             this.recaptcha.verify(function () {
+              return _this3.submit();
+            });
+            return false;
+          }
+          if (this.yandexCaptcha.canUse() && !this.yandexCaptcha.isVerified()) {
+            this.yandexCaptcha.verify(function () {
               return _this3.submit();
             });
             return false;
@@ -8504,7 +8674,10 @@ var Vue = exports.Vue;
           formData.set('properties', JSON.stringify(babelHelpers.classPrivateFieldGet(this, _properties)));
           formData.set('consents', JSON.stringify(consents));
           formData.set('recaptcha', this.recaptcha.getResponse());
+          formData.set('yandexSmartCaptcha', this.yandexCaptcha.getResponse());
           formData.set('timeZoneOffset', new Date().getTimezoneOffset());
+
+          // eslint-disable-next-line promise/catch-or-return
           promise.then(function () {
             formData.set('values', JSON.stringify(_this3.values()));
           });
@@ -8654,8 +8827,11 @@ var Vue = exports.Vue;
               proxy: options.proxy
             }, options.design));
           }
-          if (typeof options.recaptcha !== 'undefined') {
-            this.recaptcha.adjust(options.recaptcha);
+          if (typeof options.captcha !== 'undefined' && options.captcha.service === 'google' && typeof options.captcha.recaptcha !== 'undefined') {
+            this.recaptcha.adjust(options.captcha.recaptcha);
+          }
+          if (typeof options.captcha !== 'undefined' && options.captcha.service === 'yandex' && typeof options.captcha.yandexCaptcha !== 'undefined') {
+            this.yandexCaptcha.adjust(options.captcha.yandexCaptcha);
           }
           if (Array.isArray(options.dependencies)) {
             babelHelpers.classPrivateFieldGet(this, _dependence).setDependencies(options.dependencies);
@@ -9059,18 +9235,18 @@ var Vue = exports.Vue;
         applyOldenLoaderData: applyOldenLoaderData
     });
 
-    function _classPrivateFieldInitSpec$b(obj, privateMap, value) { _checkPrivateRedeclaration$d(obj, privateMap); privateMap.set(obj, value); }
-    function _checkPrivateRedeclaration$d(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+    function _classPrivateFieldInitSpec$c(obj, privateMap, value) { _checkPrivateRedeclaration$e(obj, privateMap); privateMap.set(obj, value); }
+    function _checkPrivateRedeclaration$e(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
     var _forms = /*#__PURE__*/new WeakMap();
     var _userProviderPromise = /*#__PURE__*/new WeakMap();
     var Application = /*#__PURE__*/function () {
       function Application() {
         babelHelpers.classCallCheck(this, Application);
-        _classPrivateFieldInitSpec$b(this, _forms, {
+        _classPrivateFieldInitSpec$c(this, _forms, {
           writable: true,
           value: []
         });
-        _classPrivateFieldInitSpec$b(this, _userProviderPromise, {
+        _classPrivateFieldInitSpec$c(this, _userProviderPromise, {
           writable: true,
           value: void 0
         });

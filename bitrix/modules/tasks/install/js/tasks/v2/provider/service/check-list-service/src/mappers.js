@@ -1,6 +1,8 @@
-import type { CheckListModel } from 'tasks.v2.model.check-list';
 import { UserTypes } from 'tasks.v2.model.users';
-import { CheckListSliderData } from './types';
+import { UserMappers } from 'tasks.v2.provider.service.user-service';
+import type { CheckListModel } from 'tasks.v2.model.check-list';
+
+import type { CheckListSliderData, CheckListDto } from './types';
 
 export function prepareCheckLists(checklist: CheckListModel[]): CheckListModel[]
 {
@@ -10,11 +12,40 @@ export function prepareCheckLists(checklist: CheckListModel[]): CheckListModel[]
 	});
 
 	return checklist.map((item: CheckListModel) => {
-		const title = prepareTitle(item);
 		const parentNodeId = item.parentId ? parentNodeIdMap.get(item.parentId) : 0;
 
-		return { ...item, title, parentNodeId };
+		return { ...item, parentNodeId };
 	});
+}
+
+export function mapDtoToModel(checkList: CheckListModel): CheckListDto
+{
+	return {
+		id: checkList.id,
+		nodeId: checkList.nodeId,
+		title: checkList.title,
+		creator: checkList.creator ? UserMappers.mapDtoToModel(checkList.creator) : null,
+		toggledBy: checkList.toggledBy ? UserMappers.mapDtoToModel(checkList.toggledBy) : null,
+		toggledDate: checkList.toggledDate,
+		accomplices: checkList.accomplices?.map((it) => UserMappers.mapDtoToModel(it)),
+		auditors: checkList.auditors?.map((it) => UserMappers.mapDtoToModel(it)),
+		attachments: checkList.attachments,
+		isComplete: checkList.isComplete,
+		isImportant: checkList.isImportant,
+		parentId: checkList.parentId,
+		parentNodeId: checkList.parentNodeId,
+		sortIndex: checkList.sortIndex,
+		actions: checkList.actions,
+		panelIsShown: checkList.panelIsShown,
+		myFilterActive: checkList.myFilterActive,
+		collapsed: checkList.collapsed,
+		expanded: checkList.expanded,
+		localCompleteState: checkList.localCompleteState,
+		localCollapsedState: checkList.localCollapsedState,
+		areCompletedCollapsed: checkList.areCompletedCollapsed,
+		hidden: checkList.hidden,
+		groupMode: checkList.groupMode,
+	};
 }
 
 export function mapModelToSliderData(checkLists: CheckListModel[]): CheckListSliderData[]

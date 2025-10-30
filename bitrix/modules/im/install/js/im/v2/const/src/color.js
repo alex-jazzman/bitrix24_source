@@ -10,7 +10,7 @@ export const Color = Object.freeze({
 	collab10: '#f2fee2',
 	orange50: '#ffa900',
 	accentBlue: '#00ace3',
-	accentMainPrimaryAlt: '#1f86ff',
+	accentSoftBorderBlue: '#88c8f8',
 	base4: '#a8adb4',
 });
 

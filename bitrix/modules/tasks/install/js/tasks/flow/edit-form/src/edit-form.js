@@ -30,7 +30,7 @@ type Params = {
 	isFeatureTrialable?: boolean,
 };
 
-export type DistributionType = 'manually' | 'queue' | 'himself' | 'by_workload';
+export type DistributionType = 'manually' | 'queue' | 'himself' | 'immutable';
 
 export type Flow = {
 	id: ?number,

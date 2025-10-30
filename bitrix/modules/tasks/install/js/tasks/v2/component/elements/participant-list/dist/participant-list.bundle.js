@@ -68,7 +68,6 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  data() {
 	    return {
 	      menuUserId: null,
-	      addBackgroundHovered: false,
 	      isDialogShown: false,
 	      isPopupShown: false
 	    };
@@ -122,8 +121,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    },
 	    readonly() {
 	      return !this.task.rights.edit;
+	      // return true;
 	    }
 	  },
+
 	  watch: {
 	    usersLength() {
 	      if (this.popupUsers.length === 0) {
@@ -133,6 +134,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  },
 	  mounted() {
 	    tasks_v2_lib_heightTransition.heightTransition.animate(this.$el);
+
+	    // Load preselected items
+	    this.createDialog();
 	  },
 	  updated() {
 	    tasks_v2_lib_heightTransition.heightTransition.animate(this.$el);
@@ -142,7 +146,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    (_this$selector = this.selector) == null ? void 0 : _this$selector.destroy();
 	  },
 	  methods: {
-	    handleClick(userId) {
+	    handleClickUser(userId) {
 	      if (this.readonly) {
 	        tasks_v2_lib_hrefClick.hrefClick(tasks_v2_provider_service_userService.userService.getUrl(userId));
 	        return;
@@ -188,6 +192,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	            this.updateUsers(this.getSelectedUsers());
 	          }
 	        }
+	      });
+	      dialog.subscribe('selectedUsersLoaded', event => {
+	        const users = event.getData();
+	        this.updateUsers(users);
 	      });
 	      return dialog;
 	    },
@@ -238,31 +246,21 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    }
 	  },
 	  template: `
-		<div class="tasks-field-participant-list" v-bind="dataset" ref="users">
-			<div v-if="usersLength > 0" class="tasks-field-users">
-				<div
-					v-if="!readonly"
-					class="tasks-field-users-add-background"
-					@click="showDialog"
-					@mouseenter="addBackgroundHovered = true"
-					@mouseleave="addBackgroundHovered = false"
-				></div>
+		<div v-bind="dataset" ref="users">
+			<div
+				v-if="usersLength > 0"
+				class="tasks-field-users"
+			>
 				<UserAvatarListUsers
 					:users="displayedUsers"
 					:withCross="!withActionMenu"
+					:isDialogShown
+					:readonly
 					ref="userList"
-					@onClick="(userId) => handleClick(userId)"
-					@onCrossClick="(userId) => removeUser(userId)"
-				>
-					<template #addButton>
-						<BIcon
-							class="tasks-field-user-add"
-							:class="{ '--active': addBackgroundHovered || isDialogShown }"
-							:name="Outline.PLUS_L"
-							@click="showDialog"
-						/>
-					</template>
-				</UserAvatarListUsers>
+					@onClick="showDialog"
+					@onUserClick="(userId) => handleClickUser(userId)"
+					@onUserCrossClick="(userId) => removeUser(userId)"
+				/>
 				<div
 					v-if="popupUsers.length > 0"
 					class="tasks-field-participant-list-more"
@@ -278,7 +276,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					{{ loc('TASKS_V2_PARTICIPANT_LIST_ADD') }}
 				</div>
 			</div>
-			<div class="tasks-field-participant-list-anchor" ref="anchor"></div>
+			<div ref="anchor"></div>
 		</div>
 		<BMenu v-if="menuUserId" :options="menuOptions" @close="menuUserId = null"/>
 		<Popup
@@ -290,9 +288,11 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				<UserAvatarListUsers
 					:users="popupUsers"
 					:withCross="!withActionMenu"
+					:isDialogShown
 					ref="popupUserList"
-					@onClick="(userId) => handleClick(userId)"
-					@onCrossClick="(userId) => removeUser(userId)"
+					@onClick="showDialog"
+					@onUserClick="(userId) => handleClickUser(userId)"
+					@onUserCrossClick="(userId) => removeUser(userId)"
 				/>
 			</div>
 		</Popup>

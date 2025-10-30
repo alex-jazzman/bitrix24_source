@@ -9,4 +9,3 @@ $MESS["M_UI_QR_INVITE_ENTITY_GROUP_COMPANY"] = "Компания";
 $MESS["M_UI_QR_INVITE_ENTITY_GROUP_DEPARTMENT"] = "Бөлім";
 $MESS["M_UI_QR_INVITE_ERROR_DESCRIPTION"] = "Біраз уақыттан кейін қайталап көріңіз. \nЕгер қате орын алса, Битрикс24 әкімшісіне хабарласыңыз";
 $MESS["M_UI_QR_INVITE_ERROR_TITLE"] = "Ішкі қате орын алды";
-$MESS["M_UI_QR_INVITE_TITLE"] = "QR-код бойынша шақыру";

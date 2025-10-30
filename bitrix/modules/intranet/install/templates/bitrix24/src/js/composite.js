@@ -4,6 +4,21 @@ import { MemoryCache, type BaseCache } from 'main.core.cache';
 import { PULL } from 'pull.client';
 import { getBackUrl } from './helpers';
 
+import { createToolbarSkeleton, type ToolbarSkeletonOptions } from './skeletons/create-toolbar-skeleton';
+import { createActionsBarSkeleton, type ActionsBarSkeletonOptions } from './skeletons/create-actions-bar-skeleton';
+import { createGridSkeleton } from './skeletons/create-grid-skeleton';
+import { createKanbanSkeleton } from './skeletons/create-kanban-skeleton';
+
+type GridSkeletonOptions = {
+	toolbarOptions?: ToolbarSkeletonOptions,
+	actionsBarOptions?: ActionsBarSkeletonOptions | boolean;
+};
+
+type KanbanSkeletonOptions = {
+	toolbarOptions?: ToolbarSkeletonOptions,
+	actionsBarOptions?: ActionsBarSkeletonOptions | boolean;
+};
+
 export class Composite
 {
 	#refs: BaseCache<HTMLElement> = new MemoryCache();
@@ -28,27 +43,40 @@ export class Composite
 
 	showLoader(): void
 	{
-		const page = window.location.pathname;
-		if (page === '/stream/' || page === '/stream/index.php' || page === '/index.php')
-		{
-			this.#showLoader('stream');
-		}
-		else
-		{
-			setTimeout(() => {
-				this.#showLoader();
-			}, 500);
-		}
-	}
-
-	#showLoader(page: string = null): void
-	{
 		if (this.isReady())
 		{
 			return;
 		}
 
-		const skeleton = this.#getPageSkeleton(page);
+		const page = window.location.pathname;
+		if (page === '/stream/' || page === '/stream/index.php' || page === '/index.php')
+		{
+			this.#showLoader(this.getLiveFeedSkeleton());
+
+			return;
+		}
+
+		const kanbanOptions = this.#getKanbanSkeletonOptions(page);
+		if (kanbanOptions !== null)
+		{
+			this.#showLoader(this.#createKanbanSkeleton(kanbanOptions));
+
+			return;
+		}
+
+		const gridOptions = this.#getGridSkeletonOptions(page);
+		if (gridOptions !== null)
+		{
+			this.#showLoader(this.#createGridSkeleton(gridOptions));
+
+			return;
+		}
+
+		this.#showLoader();
+	}
+
+	#showLoader(skeleton: HTMLElement = null): void
+	{
 		const container = this.getStubContainer();
 		const stub = skeleton ?? this.getLoaderContainer();
 		if (!container || stub.parentNode)
@@ -59,18 +87,104 @@ export class Composite
 		Dom.append(stub, container);
 	}
 
-	#getPageSkeleton(page: string): HTMLElement | null
+	#getGridSkeletonOptions(page: string): GridSkeletonOptions | null
 	{
-		const map = {
-			stream: () => this.getLiveFeedSkeleton(),
-		};
+		const patterns: Array<[RegExp, GridSkeletonOptions]> = [
+			[/^\/workgroups\/$/, { actionsBarOptions: true }],
 
-		if (map[page])
+			[/^\/crm\/(lead|deal|quote)\/(list|category)\/.*?$/, { toolbarOptions: { showIconButton: true }, actionsBarOptions: { showCounterPanel: true, rightButtonsCount: 2 } }],
+			[/^\/crm\/(contact|company)\/list\/.*?$/, { toolbarOptions: { showIconButton: true }, actionsBarOptions: { rightButtonsCount: 1 } }],
+			[/^\/crm\/type\/\d+\/list\/.*?$/, { toolbarOptions: { showIconButton: true }, actionsBarOptions: { rightButtonsCount: 1 } }],
+			[/^\/crm\/configs\/mycompany\/.*?$/, { toolbarOptions: { showIconButton: true } }],
+			[/^\/crm\/(events|activity|webform|copilot-call-assessment|catalog)\/.*?$/, {}],
+			[/^\/crm\/type\/$/, {}],
+
+			[/^\/company\/$/, { toolbarOptions: { showIconButton: true }, actionsBarOptions: { rightButtonsCount: 1 } }],
+			[/^\/company\/personal\/user\/\d+\/tasks\/(projects|flow|scrum)\/.*?$/, { actionsBarOptions: { rightButtonsCount: 2 } }],
+			[/^\/company\/personal\/user\/\d+\/tasks\/(departments|templates)\/.*?$/, {}],
+
+			[/^\/sign\/(list|contact)\/.*?$/, { toolbarOptions: { showIconButton: true }, actionsBarOptions: { rightButtonsCount: 1 } }],
+			[/^\/sign\/mysafe\/.*?$/, {}],
+			[/^\/sign\/b2e\/list\/.*?$/, { toolbarOptions: { showIconButton: true }, actionsBarOptions: { rightButtonsCount: 1 } }],
+			[/^\/sign\/b2e\/my-documents\/.*?$/, { actionsBarOptions: true }],
+			[/^\/sign\/b2e\/(settings|member_dynamic_settings|signers)\/.*?$/, {}],
+
+			[/^\/shop\/documents\/(contractors|contractors_contacts)\/.*?$/, { toolbarOptions: { showIconButton: true }, actionsBarOptions: { rightButtonsCount: 1 } }],
+			[/^\/shop\/documents\/.*?$/, { toolbarOptions: { showIconButton: true } }],
+			[/^\/shop\/catalog\/\d+\/.*?$/, {}],
+			[/^\/shop\/documents-catalog\/.*?$/, {}],
+			[/^\/shop\/orders\/.*?$/, { toolbarOptions: { showIconButton: true }, actionsBarOptions: { rightButtonsCount: 1 } }],
+			[/^\/shop\/settings\/(sale_location_type_list|sale_location_node_list|sale_person_type|sale_transact_admin|sale_basket)\/.*?$/, {}],
+
+			[/^\/company\/lists\/\d+\/view\/\d+\/.*?$/, { toolbarOptions: { showIconButton: true } }],
+			[/^\/company\/lists\/\d+\/fields\/.*?$/, { toolbarOptions: { showIconButton: true } }],
+
+			[/^\/automation\/type\/.*?$/, {}],
+			[/^\/bizproc\/userprocesses\/.*?$/, { actionsBarOptions: true }],
+			[/^\/bizproc\/(start|bizproc)\/.*?$/, {}],
+			[/^\/marketing\/(letter|ads|segment|template|blacklist|contact|rc|toloka)\/.*?$/, {}],
+			[/^\/conference\/.*?$/, {}],
+			[/^\/bi\/dashboard\/.*?$/, {}],
+			[/^\/rpa\/tasks\/.*?$/, {}],
+		];
+
+		for (const pattern of patterns)
 		{
-			return map[page]();
+			if (pattern[0].test(page))
+			{
+				return pattern[1];
+			}
 		}
 
 		return null;
+	}
+
+	#createKanbanSkeleton(options: KanbanSkeletonOptions): HTMLElement
+	{
+		const actionsBarOptions = options?.actionsBarOptions ?? {};
+		const showActionsBar = Type.isObject(options?.actionsBarOptions) || options?.actionsBarOptions === true;
+
+		return Tag.render`
+			<div class="grid-skeleton-wrapper">
+				${createToolbarSkeleton(options.toolbarOptions)}
+				${showActionsBar ? createActionsBarSkeleton(actionsBarOptions) : null}
+				${createKanbanSkeleton()}
+			</div>
+		`;
+	}
+
+	#getKanbanSkeletonOptions(page: string): KanbanSkeletonOptions | null
+	{
+		const patterns: Array<[RegExp, KanbanSkeletonOptions]> = [
+			[/^\/crm\/(lead|deal)\/(kanban|activity)\/.*?$/, { toolbarOptions: { showIconButton: true }, actionsBarOptions: { rightButtonsCount: 2 } }],
+			[/^\/crm\/type\/\d+\/kanban\/.*?$/, {}],
+			[/^\/sign\/$/, { toolbarOptions: { showIconButton: true }, actionsBarOptions: { rightButtonsCount: 1 } }],
+			[/^\/sign\/b2e\/$/, { toolbarOptions: { showIconButton: true }, actionsBarOptions: { rightButtonsCount: 1 } }],
+		];
+
+		for (const pattern of patterns)
+		{
+			if (pattern[0].test(page))
+			{
+				return pattern[1];
+			}
+		}
+
+		return null;
+	}
+
+	#createGridSkeleton(options: GridSkeletonOptions): HTMLElement
+	{
+		const actionsBarOptions = options?.actionsBarOptions ?? {};
+		const showActionsBar = Type.isObject(options?.actionsBarOptions) || options?.actionsBarOptions === true;
+
+		return Tag.render`
+			<div class="grid-skeleton-wrapper">
+				${createToolbarSkeleton(options.toolbarOptions)}
+				${showActionsBar ? createActionsBarSkeleton(actionsBarOptions) : null}
+				${createGridSkeleton()}
+			</div>
+		`;
 	}
 
 	getStubContainer(): HTMLElement | null
@@ -171,7 +285,7 @@ export class Composite
 						</div>
 					</div>
 				</div>
-				
+
 				<div class="skeleton__white-bg-element skeleton__sidebar">
 					<div class="skeleton__sidebar-header">
 						<div class="skeleton__sidebar-header_line"></div>

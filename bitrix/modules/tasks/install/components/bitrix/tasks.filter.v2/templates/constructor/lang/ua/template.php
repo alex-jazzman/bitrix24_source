@@ -11,7 +11,6 @@ $MESS["TASKS_FIELD_META:DEADLINE_TS"] = "Крайній термін";
 $MESS["TASKS_FIELD_META:END_DATE_PLAN_TS"] = "План. дата завершення";
 $MESS["TASKS_FIELD_META:START_DATE_PLAN_TS"] = "План. дата початку";
 $MESS["TASKS_FIELD_PRIORITY_V2"] = "Важливість";
-$MESS["TASKS_FIELD_RESPOSNSIBLE"] = "Відповідальний";
 $MESS["TASKS_FIELD_STATUS"] = "Статус";
 $MESS["TASKS_FIELD_TITLE"] = "Назва";
 $MESS["TASKS_FILTERV2_CONSTRUCTOR_BTN_ADD_CONDITION"] = "Додати умову";

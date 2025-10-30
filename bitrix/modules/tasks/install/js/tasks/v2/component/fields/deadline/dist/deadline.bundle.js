@@ -3,12 +3,8 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
-(function (exports,tasks_v2_lib_heightTransition,ui_vue3_components_popup,tasks_v2_provider_service_taskService,main_date,ui_datePicker,ui_iconSet_api_vue,ui_iconSet_api_core,ui_iconSet_outline,tasks_v2_const,tasks_v2_lib_timezone,tasks_v2_lib_analytics,main_core) {
+(function (exports,ui_system_typography_vue,tasks_v2_component_elements_hoverPill,tasks_v2_lib_heightTransition,ui_vue3_components_popup,tasks_v2_provider_service_taskService,main_date,ui_datePicker,ui_iconSet_api_vue,ui_iconSet_api_core,ui_iconSet_outline,tasks_v2_const,tasks_v2_lib_calendar,tasks_v2_lib_timezone,tasks_v2_lib_analytics,main_core) {
 	'use strict';
-
-	const calendarSettings = main_core.Extension.getSettings('tasks.v2.component.fields.deadline').calendarSettings;
-	const addZero = unit => `0${unit}`.slice(-2);
-	const defaultTime = `${addZero(calendarSettings.HOURS.END.H)}:${addZero(calendarSettings.HOURS.END.M)}`;
 
 	// @vue/component
 	const DeadlinePopupContent = {
@@ -86,7 +82,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      const offset = tasks_v2_lib_timezone.timezone.getOffset(this.task.deadlineTs);
 	      const picker = new ui_datePicker.DatePicker({
 	        selectedDates: this.task.deadlineTs ? [this.task.deadlineTs + offset] : null,
-	        defaultTime,
+	        defaultTime: tasks_v2_lib_calendar.calendar.defaultTime,
 	        inline: true,
 	        enableTime: true,
 	        events: {
@@ -94,8 +90,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	            const {
 	              date
 	            } = event.getData();
-	            const selectedDate = this.createDateFromUtc(date);
-	            const dateTs = selectedDate.getTime();
+	            const dateTs = tasks_v2_lib_calendar.calendar.createDateFromUtc(date).getTime();
 	            this.$emit('update', dateTs - tasks_v2_lib_timezone.timezone.getOffset(dateTs));
 	          }
 	        }
@@ -116,7 +111,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	          hour,
 	          minute
 	        } = event.getData();
-	        if (main_core.Type.isNumber(minute) || hour === this.hour) {
+	        if (Number.isInteger(minute) || hour === this.hour) {
 	          this.close();
 	        }
 	        this.sendAnalytics(tasks_v2_const.Analytics.Element.Calendar);
@@ -124,16 +119,13 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      });
 	      return picker;
 	    },
-	    createDateFromUtc(date) {
-	      return new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), date.getUTCHours(), date.getUTCMinutes());
-	    },
 	    focusDate(timestamp) {
 	      this.datePicker.setFocusDate(timestamp);
 	    },
 	    selectPresetDate(timestamp) {
 	      const date = new Date(timestamp);
 	      const [y, m, d] = [date.getFullYear(), date.getMonth(), date.getDate()];
-	      this.datePicker.selectDate(new Date(`${m + 1}/${d}/${y} ${defaultTime}`));
+	      this.datePicker.selectDate(new Date(`${m + 1}/${d}/${y} ${tasks_v2_lib_calendar.calendar.defaultTime}`));
 	      this.sendAnalytics(tasks_v2_const.Analytics.Element.DeadlinePreset);
 	      this.close();
 	    },
@@ -238,6 +230,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	// @vue/component
 	const Deadline = {
 	  components: {
+	    TextMd: ui_system_typography_vue.TextMd,
+	    Text2Xs: ui_system_typography_vue.Text2Xs,
+	    HoverPill: tasks_v2_component_elements_hoverPill.HoverPill,
 	    BIcon: ui_iconSet_api_vue.BIcon,
 	    DeadlinePopup
 	  },
@@ -249,8 +244,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  },
 	  setup() {
 	    return {
-	      deadlineMeta,
-	      Outline: ui_iconSet_api_core.Outline
+	      deadlineMeta
 	    };
 	  },
 	  data() {
@@ -289,19 +283,13 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      if (!this.deadlineTs) {
 	        return this.loc('TASKS_V2_DEADLINE_EMPTY');
 	      }
-	      const isThisYear = new Date(this.deadlineTs).getFullYear() === new Date().getFullYear();
-	      const format = this.loc('TASKS_V2_DEADLINE_FORMAT', {
-	        '#DATE#': main_date.DateTimeFormat.getFormat(isThisYear ? 'DAY_MONTH_FORMAT' : 'LONG_DATE_FORMAT'),
-	        '#TIME#': main_date.DateTimeFormat.getFormat('SHORT_TIME_FORMAT')
-	      });
-	      const offset = tasks_v2_lib_timezone.timezone.getOffset(this.deadlineTs);
-	      return main_date.DateTimeFormat.format(format, (this.deadlineTs + offset) / 1000);
+	      return tasks_v2_lib_calendar.calendar.formatDateTime(this.deadlineTs);
 	    },
 	    iconName() {
 	      if (this.isFlowFilledOnAdd) {
-	        return ui_iconSet_api_core.Outline.BOTTLENECK;
+	        return ui_iconSet_api_vue.Outline.BOTTLENECK;
 	      }
-	      return ui_iconSet_api_core.Outline.CALENDAR_WITH_SLOTS;
+	      return ui_iconSet_api_vue.Outline.CALENDAR_WITH_SLOTS;
 	    },
 	    isEdit() {
 	      return Number.isInteger(this.taskId) && this.taskId > 0;
@@ -332,9 +320,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      }
 	      this.isPopupShown = true;
 	    },
-	    handleCrossClick(event) {
+	    handleCrossClick() {
 	      var _this$$refs$popup;
-	      event.stopPropagation();
 	      (_this$$refs$popup = this.$refs.popup) == null ? void 0 : _this$$refs$popup.clear();
 	      void tasks_v2_provider_service_taskService.taskService.update(this.taskId, {
 	        deadlineTs: 0
@@ -344,10 +331,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      this.selectingDeadlineTs = selectingDeadlineTs;
 	    },
 	    handleClose() {
-	      var _this$$refs$deadline;
+	      var _this$$refs$deadline, _this$$refs$deadline$;
 	      this.isPopupShown = false;
 	      this.selectingDeadlineTs = null;
-	      (_this$$refs$deadline = this.$refs.deadline) == null ? void 0 : _this$$refs$deadline.focus();
+	      (_this$$refs$deadline = this.$refs.deadline) == null ? void 0 : (_this$$refs$deadline$ = _this$$refs$deadline.$el) == null ? void 0 : _this$$refs$deadline$.focus();
 	    },
 	    handleKeydown(event) {
 	      if (event.key === 'Enter' && !(event.ctrlKey || event.metaKey)) {
@@ -358,32 +345,29 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  template: `
 		<div
 			class="tasks-field-deadline"
-			:class="{ '--expired': isExpired }"
+			:class="{ '--expired': isExpired, '--readonly': readonly, '--filled': deadlineTs }"
 			:data-task-id="taskId"
 			:data-task-field-id="deadlineMeta.id"
 			:data-task-field-value="task.deadlineTs"
 			ref="container"
 		>
-			<div
-				class="tasks-field-deadline-main"
-				:class="{ '--readonly': readonly, '--filled': deadlineTs }"
+			<HoverPill
+				:withClear="Boolean(deadlineTs) && !readonly"
+				:readonly="readonly"
 				ref="deadline"
-				tabindex="0"
 				@click="handleClick"
+				@clear="handleCrossClick"
 				@keydown="handleKeydown"
 			>
 				<BIcon class="tasks-field-deadline-icon" :name="iconName"/>
-				<div class="tasks-field-deadline-text">{{ deadlineFormatted }}</div>
-				<div v-if="deadlineTs && !readonly" class="tasks-field-deadline-cross" @click.capture="handleCrossClick">
-					<BIcon :name="Outline.CROSS_L"/>
-				</div>
-			</div>
-			<div v-if="isExpired" class="tasks-field-deadline-expired">{{ expiredFormatted }}</div>
+				<TextMd class="tasks-field-deadline-text" :accent="isExpired">{{ deadlineFormatted }}</TextMd>
+			</HoverPill>
+			<Text2Xs v-if="isExpired" class="tasks-field-deadline-expired">{{ expiredFormatted }}</Text2Xs>
 		</div>
 		<DeadlinePopup
 			v-if="isPopupShown"
 			:taskId="taskId"
-			:bindElement="$refs.deadline"
+			:bindElement="$refs.deadline.$el"
 			ref="popup"
 			@update="handleUpdate"
 			@close="handleClose"
@@ -394,5 +378,5 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	exports.Deadline = Deadline;
 	exports.deadlineMeta = deadlineMeta;
 
-}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.Tasks.V2.Lib,BX.UI.Vue3.Components,BX.Tasks.V2.Provider.Service,BX.Main,BX.UI.DatePicker,BX.UI.IconSet,BX.UI.IconSet,BX,BX.Tasks.V2.Const,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX));
+}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.UI.System.Typography.Vue,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Lib,BX.UI.Vue3.Components,BX.Tasks.V2.Provider.Service,BX.Main,BX.UI.DatePicker,BX.UI.IconSet,BX.UI.IconSet,BX,BX.Tasks.V2.Const,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX));
 //# sourceMappingURL=deadline.bundle.js.map

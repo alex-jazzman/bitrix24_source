@@ -59,11 +59,13 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    tooltip() {
 	      return () => ({
 	        text: this.modelValue,
+	        interactivity: true,
 	        popupOptions: {
 	          className: 'b24-growing-text-area-popup',
 	          bindElement: this.$el,
 	          offsetLeft: 40,
 	          maxWidth: 440,
+	          maxHeight: 360,
 	          angle: {
 	            offset: 40
 	          },
@@ -109,6 +111,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    focusTextarea() {
 	      if (this.readonly) {
 	        return;
+	      }
+	      if (this.focus) {
+	        void this.handleFocus();
 	      }
 	      this.focus = true;
 	      void this.$nextTick(() => {

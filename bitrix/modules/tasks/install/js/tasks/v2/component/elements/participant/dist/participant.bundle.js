@@ -3,13 +3,14 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
-(function (exports,ui_vue3_components_popup,ui_vue3_components_richLoc,tasks_v2_const,tasks_v2_component_elements_hint,tasks_v2_component_elements_userCustomTagSelector) {
+(function (exports,ui_vue3_components_popup,ui_vue3_components_richLoc,tasks_v2_const,tasks_v2_component_elements_hint,tasks_v2_component_elements_hoverPill,tasks_v2_component_elements_userCustomTagSelector) {
 	'use strict';
 
 	// @vue/component
 	const Participant = {
 	  name: 'TaskParticipant',
 	  components: {
+	    HoverPill: tasks_v2_component_elements_hoverPill.HoverPill,
 	    UserCustomTagSelector: tasks_v2_component_elements_userCustomTagSelector.UserCustomTagSelector,
 	    Popup: ui_vue3_components_popup.Popup,
 	    RichLoc: ui_vue3_components_richLoc.RichLoc,
@@ -97,11 +98,11 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      }
 	    },
 	    focus() {
-	      this.$refs.container.focus();
+	      this.$refs.container.$el.focus();
 	    }
 	  },
 	  template: `
-		<div class="tasks-field-participant" v-bind="dataset" ref="container" tabindex="0" @keydown="handleKeydown">
+		<HoverPill v-bind="dataset" ref="container" @keydown="handleKeydown">
 			<UserCustomTagSelector
 				:dialogOptions="dialogOptions"
 				:items="preselected"
@@ -113,10 +114,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				@select="handleUserSelected"
 				@unfreeze="focus"
 			/>
-		</div>
+		</HoverPill>
 		<Hint
 			v-if="isPopupShown"
-			:bindElement="$refs.container"
+			:bindElement="$refs.container.$el"
 			@close="closeHint"
 		>
 			<RichLoc class="tasks-field-participant-cant-change" :text="cantChangeHint" placeholder="[action]">
@@ -130,5 +131,5 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 
 	exports.Participant = Participant;
 
-}((this.BX.Tasks.V2.Component.Elements = this.BX.Tasks.V2.Component.Elements || {}),BX.UI.Vue3.Components,BX.UI.Vue3.Components,BX.Tasks.V2.Const,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements));
+}((this.BX.Tasks.V2.Component.Elements = this.BX.Tasks.V2.Component.Elements || {}),BX.UI.Vue3.Components,BX.UI.Vue3.Components,BX.Tasks.V2.Const,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements));
 //# sourceMappingURL=participant.bundle.js.map

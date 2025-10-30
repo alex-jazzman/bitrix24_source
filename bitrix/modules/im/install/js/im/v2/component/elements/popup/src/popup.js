@@ -23,7 +23,7 @@ export const MessengerPopup = {
 			},
 		},
 	},
-	emits: ['close'],
+	emits: ['close', 'popupDragStart'],
 	computed:
 	{
 		popupContainer(): string
@@ -84,6 +84,7 @@ export const MessengerPopup = {
 				events: {
 					onPopupClose: this.closePopup.bind(this),
 					onPopupDestroy: this.closePopup.bind(this),
+					onDragStart: this.dragStart.bind(this),
 				},
 				contentBorderRadius: POPUP_BORDER_RADIUS,
 			};
@@ -114,6 +115,10 @@ export const MessengerPopup = {
 			this.$emit('close');
 			this.instance.destroy();
 			this.instance = null;
+		},
+		dragStart()
+		{
+			this.$emit('popupDragStart');
 		},
 		enableAutoHide()
 		{

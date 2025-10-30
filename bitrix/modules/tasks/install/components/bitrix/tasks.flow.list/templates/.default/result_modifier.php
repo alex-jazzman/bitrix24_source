@@ -15,6 +15,11 @@ use Bitrix\Tasks\Flow\Grid\Columns;
 
 $converter = new Converter(Converter::UC_FIRST | Converter::TO_CAMEL);
 
+if (($arResult['isToolAvailable'] ?? null) === false)
+{
+	return;
+}
+
 $canDoAction = ($arResult['isFeatureEnabled'] || $arResult['canTurnOnTrial']);
 
 foreach ($arResult['rows'] as $key => $row)

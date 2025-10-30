@@ -12,10 +12,12 @@ this.BX = this.BX || {};
 	var _ttl = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("ttl");
 	var _ttlInterval = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("ttlInterval");
 	var _small = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("small");
+	var _stub = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("stub");
 	var _getContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getContainer");
 	var _getQrNode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getQrNode");
 	var _getQrStub = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getQrStub");
 	var _getShowQrButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getShowQrButton");
+	var _addQrCodeImage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("addQrCodeImage");
 	var _clean = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("clean");
 	var _loading = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("loading");
 	var _createQrCodeImage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createQrCodeImage");
@@ -37,6 +39,9 @@ this.BX = this.BX || {};
 	    });
 	    Object.defineProperty(this, _clean, {
 	      value: _clean2
+	    });
+	    Object.defineProperty(this, _addQrCodeImage, {
+	      value: _addQrCodeImage2
 	    });
 	    Object.defineProperty(this, _getShowQrButton, {
 	      value: _getShowQrButton2
@@ -70,9 +75,14 @@ this.BX = this.BX || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    Object.defineProperty(this, _stub, {
+	      writable: true,
+	      value: void 0
+	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _intent)[_intent] = main_core.Type.isString(options.intent) ? options.intent : 'default';
 	    babelHelpers.classPrivateFieldLooseBase(this, _small)[_small] = main_core.Type.isBoolean(options.small) ? options.small : false;
 	    babelHelpers.classPrivateFieldLooseBase(this, _ttl)[_ttl] = main_core.Type.isNumber(options.ttl) ? options.ttl : 60;
+	    babelHelpers.classPrivateFieldLooseBase(this, _stub)[_stub] = main_core.Type.isBoolean(options.stub) ? options.stub : true;
 	  }
 	  render() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _getContainer)[_getContainer]();
@@ -80,6 +90,10 @@ this.BX = this.BX || {};
 	}
 	function _getContainer2() {
 	  return babelHelpers.classPrivateFieldLooseBase(this, _cache)[_cache].remember('container', () => {
+	    const qrNode = babelHelpers.classPrivateFieldLooseBase(this, _getQrNode)[_getQrNode]();
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _stub)[_stub]) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _addQrCodeImage)[_addQrCodeImage]();
+	    }
 	    return main_core.Tag.render(_t || (_t = _`
 				<div class="ui-short-qr-auth__container ${0}">
 					<div class="ui-short-qr-auth__corner --top-left"></div>
@@ -88,7 +102,7 @@ this.BX = this.BX || {};
 					<div class="ui-short-qr-auth__corner --bottom-right"></div>
 					${0}
 				</div>
-			`), babelHelpers.classPrivateFieldLooseBase(this, _small)[_small] ? '--small' : '', babelHelpers.classPrivateFieldLooseBase(this, _getQrNode)[_getQrNode]());
+			`), babelHelpers.classPrivateFieldLooseBase(this, _small)[_small] ? '--small' : '', qrNode);
 	  });
 	}
 	function _getQrNode2() {
@@ -97,7 +111,7 @@ this.BX = this.BX || {};
 				<div class="ui-short-qr-auth__qr">
 					${0}
 				</div>
-			`), babelHelpers.classPrivateFieldLooseBase(this, _getQrStub)[_getQrStub]());
+			`), babelHelpers.classPrivateFieldLooseBase(this, _stub)[_stub] ? babelHelpers.classPrivateFieldLooseBase(this, _getQrStub)[_getQrStub]() : null);
 	  });
 	}
 	function _getQrStub2() {
@@ -121,15 +135,18 @@ this.BX = this.BX || {};
 	      noCaps: true,
 	      wide: true,
 	      onclick: () => {
-	        babelHelpers.classPrivateFieldLooseBase(this, _createQrCodeImage)[_createQrCodeImage]();
-	        if (!babelHelpers.classPrivateFieldLooseBase(this, _ttlInterval)[_ttlInterval]) {
-	          babelHelpers.classPrivateFieldLooseBase(this, _ttlInterval)[_ttlInterval] = setInterval(() => {
-	            babelHelpers.classPrivateFieldLooseBase(this, _createQrCodeImage)[_createQrCodeImage]();
-	          }, babelHelpers.classPrivateFieldLooseBase(this, _ttl)[_ttl] * 1000);
-	        }
+	        babelHelpers.classPrivateFieldLooseBase(this, _addQrCodeImage)[_addQrCodeImage]();
 	      }
 	    });
 	  });
+	}
+	function _addQrCodeImage2() {
+	  babelHelpers.classPrivateFieldLooseBase(this, _createQrCodeImage)[_createQrCodeImage]();
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _ttlInterval)[_ttlInterval]) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _ttlInterval)[_ttlInterval] = setInterval(() => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _createQrCodeImage)[_createQrCodeImage]();
+	    }, babelHelpers.classPrivateFieldLooseBase(this, _ttl)[_ttl] * 1000);
+	  }
 	}
 	function _clean2() {
 	  main_core.Dom.clean(babelHelpers.classPrivateFieldLooseBase(this, _getQrNode)[_getQrNode]());

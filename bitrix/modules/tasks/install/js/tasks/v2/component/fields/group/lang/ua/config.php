@@ -2,7 +2,6 @@
 $MESS["TASKS_V2_GROUP_ABOUT"] = "Відкрити проєкт";
 $MESS["TASKS_V2_GROUP_ABOUT_COLLAB"] = "Відкрити колабу";
 $MESS["TASKS_V2_GROUP_ABOUT_SCRUM"] = "Відкрити скрам";
-$MESS["TASKS_V2_GROUP_ADD"] = "Додати";
 $MESS["TASKS_V2_GROUP_CANT_CHANGE_FLOW"] = "У завданнях у потоці не можна змінити проєкт. Якщо хочете поміняти, приберіть потік.";
 $MESS["TASKS_V2_GROUP_CHANGE"] = "Змінити";
 $MESS["TASKS_V2_GROUP_CLEAR"] = "Відв'язати";
@@ -17,7 +16,7 @@ $MESS["TASKS_V2_GROUP_OWNER"] = "Керівник";
 $MESS["TASKS_V2_GROUP_STAGE_HINT"] = "Вибір стадії";
 $MESS["TASKS_V2_GROUP_STORY_POINTS_HINT"] = "Story Points";
 $MESS["TASKS_V2_GROUP_SUBJECT"] = "Тематика";
-$MESS["TASKS_V2_GROUP_TITLE"] = "Проєкт";
+$MESS["TASKS_V2_GROUP_TITLE"] = "Проєкт:";
 $MESS["TASKS_V2_GROUP_TITLE_CHIP"] = "Проєкт";
 $MESS["TASKS_V2_GROUP_TITLE_COLLAB"] = "Колаба";
 $MESS["TASKS_V2_GROUP_TITLE_SCRUM"] = "Скрам";

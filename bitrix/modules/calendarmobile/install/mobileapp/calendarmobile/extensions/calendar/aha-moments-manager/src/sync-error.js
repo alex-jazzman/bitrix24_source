@@ -10,11 +10,11 @@ jn.define('calendar/aha-moments-manager/sync-error', (require, exports, module) 
 	 */
 	class SyncError
 	{
-		static show(targetRef, onHide)
+		static show(onHide)
 		{
 			AhaMoment.show({
-				targetRef,
 				onHide,
+				targetRef: 'calendar-more',
 				title: Loc.getMessage('M_CALENDAR_AHA_SYNC_ERROR_TITLE'),
 				description: Loc.getMessage('M_CALENDAR_AHA_SYNC_ERROR_DESC'),
 				testId: 'calendar-aha-moment-sync-error',

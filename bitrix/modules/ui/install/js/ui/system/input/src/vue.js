@@ -18,6 +18,10 @@ export const BInput = {
 			type: String,
 			default: '',
 		},
+		rowsQuantity: {
+			type: Number,
+			default: 1,
+		},
 		label: {
 			type: String,
 			default: '',
@@ -110,7 +114,21 @@ export const BInput = {
 			]">
 			<div v-if="label" class="ui-system-input-label" :class="{ '--inline': labelInline }">{{ label }}</div>
 			<div class="ui-system-input-container">
+				<textarea
+					v-if="rowsQuantity > 1"
+					v-model="value"
+					class="ui-system-input-value ui-system-input-value_multi"
+					:placeholder="placeholder"
+					:disabled="disabled"
+					:rows="rowsQuantity"
+					ref="input"
+					@click="$emit('click', $event)"
+					@focus="$emit('focus', $event)"
+					@blur="$emit('blur', $event)"
+					@input="$emit('input', $event)"
+				/>
 				<input
+					v-else
 					v-model="value"
 					class="ui-system-input-value"
 					:placeholder="placeholder"
@@ -120,12 +138,12 @@ export const BInput = {
 					@focus="$emit('focus', $event)"
 					@blur="$emit('blur', $event)"
 					@input="$emit('input', $event)"
-				>
+				/>
 				<BIcon v-if="icon" class="ui-system-input-icon" :name="icon"/>
 				<BIcon v-if="withClear" class="ui-system-input-cross" :name="Outline.CROSS_L" @click="$emit('clear')"/>
 				<BIcon v-if="dropdown" class="ui-system-input-dropdown" :name="Outline.CHEVRON_DOWN_L"/>
 			</div>
-			<div v-if="error?.trim() && !disabled" class="ui-system-input-label --inline --error">{{ error }}</div>
+			<div v-if="error?.trim() && !disabled" class="ui-system-input-label --error">{{ error }}</div>
 		</div>
 	`,
 };

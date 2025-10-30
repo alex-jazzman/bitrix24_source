@@ -93,7 +93,7 @@ return [
 				'constructorParams' => static fn() => [
 					'chatFacade' => new \Bitrix\Intranet\Integration\Im\ChatFacade(),
 					'departmentService' => new \Bitrix\Intranet\Integration\HumanResources\Department(),
-					'teamService' => new \Bitrix\Intranet\Integration\HumanResources\Team(),
+					'teamService' => new \Bitrix\Intranet\Internal\Integration\Humanresources\TeamRepository(),
 				],
 			],
 			'intranet.service.invite.status' => [

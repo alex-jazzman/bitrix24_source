@@ -1,6 +1,4 @@
 <?php
-$MESS["BXD_CALL_BG_MASK_TITLE"] = "Вибір фону й аватара";
-$MESS["BXD_CALL_BG_TITLE"] = "Вибір фону";
 $MESS["BXD_CONFIRM_CLOSE"] = "Закрити";
 $MESS["BXD_DEFAULT_TITLE"] = "Бітрікс: Десктопний застосунок (Версія: #VERSION#)";
 $MESS["BXD_LOGOUT"] = "Змінити користувача";

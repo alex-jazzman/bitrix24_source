@@ -82,7 +82,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					:dialogId="dialogId"
 					:key="dialogId"
 					:withMarket="false"
-					:withAudioInput="false"
 					:withAutoFocus="false"
 					@mounted="onTextareaMount"
 				/>

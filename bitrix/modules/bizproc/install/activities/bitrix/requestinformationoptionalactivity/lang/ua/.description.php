@@ -1,5 +1,4 @@
 <?php
-$MESS["BPRIOA_DESCR_CM"] = "Коментар";
 $MESS["BPRIOA_DESCR_CM_1"] = "Пояснення";
 $MESS["BPRIOA_DESCR_DESCR"] = "Запит додаткової інформації (з відхиленням)";
 $MESS["BPRIOA_DESCR_LU"] = "Користувач, який надав інформацію";

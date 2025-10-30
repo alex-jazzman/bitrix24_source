@@ -7,6 +7,7 @@ use Bitrix\Crm\Integration\UI\EntitySelector\CountryProvider;
 use Bitrix\Crm\Integration\UI\EntitySelector\DynamicMultipleProvider;
 use Bitrix\Crm\Integration\UI\EntitySelector\MailRecipientProvider;
 use Bitrix\Crm\Integration\UI\EntitySelector\MessageTemplateProvider;
+use Bitrix\Crm\Integration\UI\EntitySelector\MultiplePlaceholderProvider;
 use Bitrix\Crm\Integration\UI\EntitySelector\PlaceholderProvider;
 use Bitrix\Crm\Integration\UI\EntitySelector\TimelinePingProvider;
 
@@ -133,6 +134,13 @@ $uiEntitySelectorConfig = [
 				],
 			],
 			[
+				'entityId' => 'multiple_placeholder',
+				'provider' => [
+					'moduleId' => 'crm',
+					'className' => MultiplePlaceholderProvider::class,
+				],
+			],
+			[
 				'entityId' => 'message_template',
 				'provider' => [
 					'moduleId' => 'crm',
@@ -248,6 +256,9 @@ return array(
 						\Bitrix\Main\Context::getCurrent()->getCulture(),
 					];
 				},
+			],
+			'crm.service.webform.defaultvalueprovider' => [
+				'className' => '\\Bitrix\\Crm\\Service\\WebForm\\DefaultValueProvider',
 			],
 			'crm.service.converter.ormObject' => [
 				'className' => '\\Bitrix\\Crm\\Service\\Converter\\OrmObject',
@@ -589,6 +600,9 @@ return array(
 			'crm.repeatSale.availabilityChecker' => [
 				'className' => \Bitrix\Crm\RepeatSale\AvailabilityChecker::class,
 			],
+			'crm.integration.catalog.access.productRowChecker' => [
+				'className' => \Bitrix\Crm\Integration\Catalog\Access\ProductRowChecker::class,
+			],
 		],
 		'readonly' => true,
 	],
@@ -611,6 +625,11 @@ return array(
 
 				return \Bitrix\Crm\Integration\Intranet\BindingMenu\CodeBuilder::getMenuCode($entityTypeId);
 			},
+		],
+	],
+	'documentgenerator.customFields' => [
+		'value' => [
+			'manager' => '\\Bitrix\\Crm\\Integration\\DocumentGenerator\\CustomField\\FieldManager',
 		],
 	],
 	'loggers' => [

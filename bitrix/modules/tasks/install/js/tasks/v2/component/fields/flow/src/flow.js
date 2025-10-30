@@ -113,10 +113,8 @@ export const Flow = {
 		{
 			this.isMenuShown = true;
 		},
-		handleCrossClick(event: MouseEvent): void
+		handleCrossClick(): void
 		{
-			event.stopPropagation();
-
 			this.clearField();
 		},
 		openFlow(): void
@@ -158,7 +156,7 @@ export const Flow = {
 						v-if="!isEdit"
 						class="tasks-field-flow-cross"
 						:name="Outline.CROSS_L"
-						@click.capture="handleCrossClick"
+						@click.capture.stop="handleCrossClick"
 					/>
 				</template>
 				<template v-else>

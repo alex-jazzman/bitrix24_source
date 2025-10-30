@@ -11,6 +11,7 @@
 	--font-size: var(--ui-font-size-md);
 	--line-height: var(--ui-font-line-height-sm);
 	--icon-size: 20px;
+	--background-icon-size: 14px;
 }
 
 .ui-chip.--m {
@@ -24,6 +25,7 @@
 	--font-size: var(--ui-font-size-sm);
 	--line-height: var(--ui-font-line-height-2xs);
 	--icon-size: 18px;
+	--background-icon-size: 12px;
 }
 
 .ui-chip.--xs {
@@ -32,6 +34,7 @@
 	--font-size: var(--ui-font-size-xs);
 	--line-height: var(--ui-font-line-height-3xs);
 	--icon-size: 16px;
+	--background-icon-size: 10px;
 }
 
 
@@ -95,6 +98,11 @@
 	--border-color: var(--ui-color-base-7);
 	--icon-color-hover: var(--ui-color-accent-main-primary);
 	--clear-color: var(--ui-color-base-4);
+}
+
+.ui-chip.--outline-copilot {
+	--text-color: var(--ui-color-copilot-accent-primary);
+	--border-color: var(--ui-color-copilot-bg-content-2);
 }
 
 .ui-chip.--shadow-no-accent {
@@ -177,7 +185,18 @@
 .ui-chip-icon {
 	--ui-icon-set__icon-color: var(--icon-color);
 	--ui-icon-set__icon-size: var(--icon-size);
+	display: grid;
+	place-items: center;
 	margin: 0 var(--ui-space-inline-2xs) 0 var(--ui-space-stack-2xs2-neg);
+}
+
+.ui-chip-icon.--with-background {
+	--icon-background: initial;
+	--ui-icon-set__icon-size: var(--background-icon-size);
+	width: var(--icon-size);
+	height: var(--icon-size);
+	border-radius: var(--ui-border-radius-pill);
+	background: var(--icon-background);
 }
 
 .ui-chip.--no-text:not(.--with-right-icon) .ui-chip-icon {

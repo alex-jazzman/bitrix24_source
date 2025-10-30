@@ -8,15 +8,19 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 /** @var array $arParams */
 /** @var array $arResult */
 /** @var CMain $APPLICATION */
-/** @var \CBitrixComponentTemplate $this */
+/** @var CBitrixComponentTemplate $this */
 
 use Bitrix\DocumentGenerator\Integration\Bitrix24Manager;
+use Bitrix\Main\Engine\Response\Converter;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Web\Json;
 use Bitrix\UI\Toolbar\Facade\Toolbar;
 
 $this->IncludeLangFile();
 
-\Bitrix\Main\UI\Extension::load([
+Extension::load([
 	'core',
 	'ui.design-tokens',
 	'sidepanel',
@@ -28,7 +32,7 @@ $this->IncludeLangFile();
 	'ui.buttons.icons',
 ]);
 
-if (\Bitrix\Main\Loader::includeModule('ui'))
+if (Loader::includeModule('ui'))
 {
 	Toolbar::deleteFavoriteStar();
 
@@ -316,6 +320,19 @@ if (\Bitrix\Main\Loader::includeModule('ui'))
 					</div>
 				</div>
 			</div>
+			<div class="docs-template-load-crm" id="add-template-custom-fields-block">
+			<?php
+				if (
+					isset($arResult['TEMPLATE']['CUSTOM_FIELDS'], $arResult['customFieldsManager'])
+					&& is_array($arResult['TEMPLATE']['CUSTOM_FIELDS'])
+				)
+				{
+					foreach ($arResult['TEMPLATE']['CUSTOM_FIELDS'] as $fieldData) : ?>
+						<?= $arResult['customFieldsManager']->renderField($fieldData) ?>
+					<?php endforeach;
+				}
+			?>
+			</div>
 			<div class="docs-template-load-buttons docs-template-load-buttons-slider" id="add-template-buttons-block">
 				<div class="docs-template-load-buttons-inner">
 					<button class="ui-btn ui-btn-md ui-btn-success" id="add-template-save-button"><?= Loc::getMessage(
@@ -330,19 +347,25 @@ if (\Bitrix\Main\Loader::includeModule('ui'))
 		<script>
 			BX.ready(function()
 			{
-				BX.DocumentGenerator.UploadTemplate.init(<?=CUtil::PhpToJSObject($arResult['params']);?>);
-				BX.DocumentGenerator.UploadTemplate.moduleId = '<?=CUtil::JSEscape($arParams['MODULE']);?>';
-				BX.DocumentGenerator.UploadTemplate.providers = <?=\CUtil::PhpToJSObject($arResult['PROVIDERS']);?>;
+				BX.DocumentGenerator.UploadTemplate.init(<?= CUtil::PhpToJSObject($arResult['params']); ?>);
+				BX.DocumentGenerator.UploadTemplate.moduleId = '<?= CUtil::JSEscape($arParams['MODULE']); ?>';
+				BX.DocumentGenerator.UploadTemplate.providers = <?= CUtil::PhpToJSObject($arResult['PROVIDERS']); ?>;
 				<?php if(!empty($arResult['TEMPLATE']))
 				{
-					?>BX.DocumentGenerator.UploadTemplate.setTemplateData(<?=CUtil::PhpToJSObject($arResult['TEMPLATE']);?>);<?php
+					?>BX.DocumentGenerator.UploadTemplate.setTemplateData(<?= CUtil::PhpToJSObject($arResult['TEMPLATE']); ?>);<?php
 				}
 				?>BX.DocumentGenerator.UploadTemplate.initProviderPopup();
-				BX.DocumentGenerator.UploadTemplate.regions = <?=\CUtil::PhpToJSObject(
-					\Bitrix\Main\Engine\Response\Converter::toJson()->process($arResult['REGIONS'])
-				);?>;
-				BX.message(<?= \Bitrix\Main\Web\Json::encode(Loc::loadLanguageFile(__FILE__)) ?>);
+				BX.DocumentGenerator.UploadTemplate.regions = <?= CUtil::PhpToJSObject(
+					Converter::toJson()->process($arResult['REGIONS'])
+				); ?>;
+				BX.message(<?= Json::encode(Loc::loadLanguageFile(__FILE__)) ?>);
 			});
+
+			<?php
+				if (!empty($arResult['TEMPLATE']['CUSTOM_FIELDS_JS'])): ?>
+					<?= $arResult['TEMPLATE']['CUSTOM_FIELDS_JS']; ?>
+				<?php endif;
+			?>
 		</script>
 		<?php
 	} ?>

@@ -1,16 +1,14 @@
 <?php
-$MESS["IM_LIB_NOTIFIER_NOTIFY_REPLY_PLACEHOLDER"] = "Уведіть текст відповіді...";
-$MESS["IM_LIB_NOTIFIER_NOTIFY_SYSTEM_TITLE"] = "Системне сповіщення";
 $MESS["IM_NOTIFIER_AUDIO_INPUT_ERROR"] = "Не вдалося розпізнати мову, спробуйте пізніше.";
 $MESS["IM_NOTIFIER_CALL_BACKGROUND_FILE_SIZE_ERROR"] = "Розмір вибраного файлу \"#FILE_NAME#\" перевищує максимальний (#LIMIT# Мб).";
 $MESS["IM_NOTIFIER_CALL_BACKGROUND_FILE_UNSUPPORTED_ERROR"] = "Вибраний файл \"#FILE_NAME#\" неможливо використати як фон.";
 $MESS["IM_NOTIFIER_CHAT_ACCESS_ERROR"] = "Ви не додані в цей чат або чат уже видалений.";
 $MESS["IM_NOTIFIER_CHAT_CREATE_ERROR"] = "Не вдалося створити чат, спробуйте пізніше.";
 $MESS["IM_NOTIFIER_CHAT_DELETE_ERROR"] = "Не вдалося виконати дію, спробуйте пізніше.";
-$MESS["IM_NOTIFIER_CHAT_PIN_LIMIT_ERROR"] = "Можна закріпити максимум стільки повідомлень: #MAX_PINS#.";
 $MESS["IM_NOTIFIER_CHAT_RENAME_ERROR"] = "Під час перейменування чату сталася помилка, спробуйте пізніше.";
 $MESS["IM_NOTIFIER_CHAT_UPDATE_ERROR"] = "Помилка оновлення налаштувань чату.";
 $MESS["IM_NOTIFIER_COLLAB_COLLABER_NOT_ACCEPT_INVITATION"] = "Не всі гості приєдналися до колаби.";
+$MESS["IM_NOTIFIER_COLLAB_COPY_LINK_FORBIDDEN_ERROR"] = "Власник колаби вимкнув можливість запрошувати гостей.";
 $MESS["IM_NOTIFIER_COLLAB_DELETE_ENTITIES_ERROR"] = "Не можна видалити колабу, поки в ній є файли, завдання і зустрічі.";
 $MESS["IM_NOTIFIER_COLLAB_DELETE_ERROR"] = "Не вдалося видалити колабу, спробуйте пізніше.";
 $MESS["IM_NOTIFIER_COLLAB_DELETE_PROGRESS"] = "Видаляємо колабу. Це займе якийсь час.";
@@ -38,6 +36,9 @@ $MESS["IM_NOTIFIER_LINK_COPY_ERROR"] = "Не вдалося скопіювати
 $MESS["IM_NOTIFIER_MESSAGES_PIN_LIMIT_ERROR"] = "Можна закріпити максимум стільки повідомлень: #MAX_PINS#.";
 $MESS["IM_NOTIFIER_MESSAGE_COPY_COMPLETE"] = "Повідомлення скопійовано";
 $MESS["IM_NOTIFIER_MESSAGE_FAVORITE_ADD_COMPLETE"] = "Повідомлення додано до Обраного. Обрані повідомлення можна переглянути в бічній панелі чату.";
+$MESS["IM_NOTIFIER_MESSAGE_FORWARD_NOTES_COMPLETE"] = "Повідомлення переслано.";
+$MESS["IM_NOTIFIER_MESSAGE_FORWARD_NOTES_OPEN_COMPLETE"] = "Перейти";
+$MESS["IM_NOTIFIER_MESSAGE_FORWARD_NOTES_SEVERAL_MESSAGES_COMPLETE"] = "Повідомлення переслані.";
 $MESS["IM_NOTIFIER_MESSAGE_LINK_COPY_COMPLETE"] = "Посилання на повідомлення скопійовано.";
 $MESS["IM_NOTIFIER_MESSAGE_SELECT_LIMIT_ERROR"] = "Вибрано максимальну кількість повідомлень.";
 $MESS["IM_NOTIFIER_RECENT_PIN_DEFAULT_ERROR"] = "Не вдалося закріпити повідомлення.";

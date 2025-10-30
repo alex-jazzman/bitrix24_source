@@ -278,7 +278,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				</div>
 				<div
 					v-else
-					class="b24-user-selector-user-add"
+					class="b24-user-selector-user-placeholder"
 					:data-id="'Add-' + testId"
 					@click="showDialog"
 				>

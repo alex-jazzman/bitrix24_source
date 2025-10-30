@@ -4,10 +4,11 @@ import { Outline } from 'ui.icon-set.api.core';
 import 'ui.icon-set.outline';
 
 import { GroupType, Model } from 'tasks.v2.const';
+import { Hint } from 'tasks.v2.component.elements.hint';
+import { HoverPill } from 'tasks.v2.component.elements.hover-pill';
 import { heightTransition } from 'tasks.v2.lib.height-transition';
 import { openGroup } from 'tasks.v2.lib.open-group';
 import { taskService } from 'tasks.v2.provider.service.task-service';
-import { Hint } from 'tasks.v2.component.elements.hint';
 import type { GroupModel } from 'tasks.v2.model.groups';
 import type { TaskModel } from 'tasks.v2.model.tasks';
 
@@ -26,6 +27,7 @@ export const Group = {
 		Stage,
 		Scrum,
 		Hint,
+		HoverPill,
 		GroupPopup,
 	},
 	props: {
@@ -173,12 +175,6 @@ export const Group = {
 		{
 			groupDialog.setTaskId(this.taskId).showTo(this.$refs.group);
 		},
-		handleCrossClick(event: MouseEvent): void
-		{
-			event.stopPropagation();
-
-			this.clearField();
-		},
 		clearField(): void
 		{
 			void taskService.update(
@@ -192,28 +188,25 @@ export const Group = {
 	},
 	template: `
 		<div
-			class="tasks-field-group"
 			:data-task-id="taskId"
 			:data-task-field-id="groupMeta.id"
 			:data-task-field-value="task.groupId"
 			ref="container"
 		>
 			<div class="tasks-field-group-group" :class="{ '--secret': isSecret }" ref="group" @click="handleClick">
-				<template v-if="task.groupId">
+				<HoverPill
+					v-if="task.groupId"
+					:withClear="!readonly && !isEdit && (task.flowId ?? 0) <= 0"
+					@clear="clearField"
+				>
 					<img v-if="groupImage" class="tasks-field-group-image" :src="groupImage" :alt="groupName"/>
 					<BIcon v-else class="tasks-field-group-add-icon" :name="Outline.FOLDER"/>
 					<div class="tasks-field-group-title">{{ groupName }}</div>
-					<BIcon
-						v-if="!isEdit && (task.flowId ?? 0) <= 0"
-						class="tasks-field-group-cross"
-						:name="Outline.CROSS_L"
-						@click.capture="handleCrossClick"
-					/>
-				</template>
-				<template v-else>
+				</HoverPill>
+				<HoverPill v-else>
 					<BIcon class="tasks-field-group-add-icon" :name="Outline.FOLDER_PLUS"/>
 					<div class="tasks-field-group-add-text">{{ loc('TASKS_V2_GROUP_ADD') }}</div>
-				</template>
+				</HoverPill>
 			</div>
 			<Stage v-if="isEdit && group && !task.flowId" :taskId="taskId"/>
 			<Scrum v-if="isScrum && !task.flowId" :taskId="taskId"/>

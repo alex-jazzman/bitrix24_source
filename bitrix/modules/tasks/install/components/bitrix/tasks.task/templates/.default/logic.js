@@ -47,6 +47,7 @@ BX.namespace('Tasks.Component');
 
 				this.isExtranetUser = (this.option('isExtranetUser') === true);
 				this.canEditTask = (this.option('canEditTask') === true);
+				this.canCreateFlow = (this.option('canCreateFlow') === true);
 
 				this.isDeadlineNotificationAvailable = (this.option('isDeadlineNotificationAvailable') === true);
 				this.deadlineNotificationSkipped = (this.option('deadlineNotificationSkipped') === true);
@@ -78,6 +79,17 @@ BX.namespace('Tasks.Component');
 				this.aiCommandExecutor = null;
 
 				this.changingFlow = false;
+
+				this.filesCount = 0;
+
+				if (this.getTaskId() > 0)
+				{
+					const taskData = this.getTaskData();
+					if (BX.type.isArray(taskData.UF_TASK_WEBDAV_FILES))
+					{
+						this.filesCount = taskData.UF_TASK_WEBDAV_FILES.length;
+					}
+				}
 			},
 
 			setHtmlEditorCtrlEnterHandler: function()
@@ -99,6 +111,7 @@ BX.namespace('Tasks.Component');
 					isExtranet: this.isExtranetUser,
 					flowParams: this.flowParams,
 					toggleFlowParams: this.toggleFlowParams,
+					canCreateFlow: this.canCreateFlow,
 				};
 
 				this.flowSelector = new BX.Tasks.Flow.EntitySelector(selectorParams);
@@ -477,6 +490,59 @@ BX.namespace('Tasks.Component');
 
 					BX.Event.EventEmitter.emit('BX.Tasks.Component.Task:projectPreselected', { groupId: groupId });
 				}
+
+				// analytics label "add_project"
+				const projectInputButton = document.querySelector('[data-bx-id="task-edit-se-project-block"]')
+					.querySelector(".task-form-field-controls");
+
+				if (BX.type.isElementNode(projectInputButton))
+				{
+					BX.Event.bind(projectInputButton, 'click', () => {
+						BX.Runtime.loadExtension('ui.analytics').then(() => {
+							BX.UI.Analytics.sendData({
+								tool: 'tasks',
+								category: 'task_operations',
+								event: 'add_project',
+								type: 'task',
+								c_section: 'tasks',
+								c_element: 'project_button',
+								status: 'success',
+							});
+						});
+					});
+				}
+
+				BX.Event.EventEmitter.subscribe('BX.UI.Uploader:File:onUploadComplete', (event) => {
+					let userType = 'intranet';
+					if (this.getUser().IS_COLLABER_USER)
+					{
+						userType = 'collaber';
+					}
+					else if (this.getUser().IS_EXTRANET_USER)
+					{
+						userType = 'extranet';
+					}
+
+					BX.Runtime.loadExtension('ui.analytics').then(() => {
+						BX.UI.Analytics.sendData({
+							tool: 'tasks',
+							category: 'task_operations',
+							event: 'attach_file',
+							type: 'task',
+							c_section: 'tasks',
+							c_element: 'project_button',
+							status: 'success',
+							p1: `size_${event.data.file.size}`,
+							p2: `user_${userType}`,
+							p3: `filesCount_${++this.filesCount}`,
+							p5: `ext_${event.data.file.extension}`,
+						});
+					});
+				});
+
+				BX.Event.EventEmitter.subscribe('BX.UI.Uploader:File:onRemove', (event) => {
+					this.filesCount--;
+				});
 			},
 
 			bindAIEvents: function() {
@@ -508,8 +574,16 @@ BX.namespace('Tasks.Component');
 
 			bindSliderEvents: function()
 			{
-				BX.addCustomEvent("SidePanel.Slider:onLoad", this.setEditorBeforeUnloadEvent.bind(this, true));
-				BX.addCustomEvent("SidePanel.Slider:onClose", this.setEditorBeforeUnloadEvent.bind(this, false));
+				if (Number(this.getTaskId()) === 0)
+				{
+					BX.addCustomEvent("SidePanel.Slider:onClose", this.closeWithConfirm.bind(this));
+					BX.addCustomEvent("SidePanel.Slider:onLoad", this.setEditorBeforeUnloadEvent.bind(this, false));
+				}
+				else
+				{
+					BX.addCustomEvent("SidePanel.Slider:onLoad", this.setEditorBeforeUnloadEvent.bind(this, true));
+					BX.addCustomEvent("SidePanel.Slider:onClose", this.setEditorBeforeUnloadEvent.bind(this, false));
+				}
 				BX.addCustomEvent('SidePanel.Slider:onMessage', BX.delegate(function(event) {
 					if (event.getEventId() === 'sonetGroupEvent')
 					{
@@ -534,6 +608,184 @@ BX.namespace('Tasks.Component');
 				}, this));
 				BX.addCustomEvent('SidePanel.Slider:onCloseByEsc', function(event) {
 					event.denyAction();
+				});
+			},
+
+			closeWithConfirm: function(event)
+			{
+				if (this.exitConfirmed)
+				{
+					return;
+				}
+
+				event.denyAction();
+
+				if (this.popupIsActive)
+				{
+					return;
+				}
+
+				if (this.isDataChanged())
+				{
+					this.showConfirmPopup(event);
+				}
+				else
+				{
+					this.closeSlider(event.getSlider());
+				}
+			},
+
+			isDataChanged: function()
+			{
+				const taskData = this.getTaskData();
+				const allowedFields = this.getAllowedFields();
+				const participantFields = new Set(['SE_AUDITOR', 'SE_ACCOMPLICE']);
+
+				for (const field in allowedFields)
+				{
+					let initialFieldValue = taskData[field];
+
+					const isParticipantField = participantFields.has(field);
+
+					if (isParticipantField)
+					{
+						if (this.isParticipantSelectorChanged(field, initialFieldValue))
+						{
+							return true;
+						}
+
+						continue;
+					}
+
+					if (field === 'CHECKLIST')
+					{
+						if (this.isChecklistPresent(allowedFields[field]))
+						{
+							return true;
+						}
+
+						continue;
+					}
+
+					if (field === 'FILE')
+					{
+						if (this.isFilePresent(allowedFields[field]))
+						{
+							return true;
+						}
+
+						continue;
+					}
+
+					initialFieldValue = this.normalizeValue(initialFieldValue);
+
+					const actualFieldValue = document.querySelector(`input[name*="${allowedFields[field]}"]`).value;
+
+					if (initialFieldValue !== actualFieldValue)
+					{
+						return true;
+					}
+				}
+
+				return false;
+			},
+
+			normalizeValue: function(value)
+			{
+				if (BX.Type.isNil(value))
+				{
+					return '';
+				}
+
+				if (BX.Type.isNumber(value))
+				{
+					return value.toString();
+				}
+
+				return value;
+			},
+
+			isFilePresent: function(fileSelector)
+			{
+				const files = document.querySelectorAll(`input[type="hidden"][name*="${fileSelector}"]:not([value=""])`);
+
+				return files.length > 0;
+			},
+
+			isChecklistPresent: function(checklistSelector)
+			{
+				const checklist = document.querySelector(`div[data-block-name="${checklistSelector}"] .tasks-checklist-wrapper`);
+
+				return checklist !== null;
+			},
+
+			showConfirmPopup: function(event)
+			{
+				this.disableScroll();
+
+				this.popupIsActive = true;
+
+				const onCancelFunction = (dialog) => {
+					this.popupIsActive = false;
+					this.enableScroll();
+					dialog.close();
+				};
+
+				BX.UI.Dialogs.MessageBox.show({
+					message: BX.Loc.getMessage('TASKS_TASK_COMPONENT_TEMPLATE_ONCLOSE_POPUP_MESSAGE'),
+					buttons: BX.UI.Dialogs.MessageBoxButtons.OK_CANCEL,
+					onOk: () => this.closeSlider(event.getSlider()),
+					onCancel: onCancelFunction,
+				});
+			},
+
+			disableScroll: function()
+			{
+				BX.Dom.style(document.body, 'overflow', 'hidden');
+			},
+
+			enableScroll: function()
+			{
+				BX.Dom.style(document.body, 'overflow', '');
+			},
+
+			closeSlider: function(slider)
+			{
+				this.exitConfirmed = true;
+				slider.close();
+			},
+
+			getAllowedFields: function()
+			{
+				return {
+					TITLE: '[TITLE]',
+					DESCRIPTION: '[DESCRIPTION]',
+					CHECKLIST: 'SE_CHECKLIST',
+					FILE: '[UF_TASK_WEBDAV_FILES]',
+					PRIORITY: '[PRIORITY]',
+					DEADLINE: '[DEADLINE]',
+					START_DATE_PLAN: '[START_DATE_PLAN]',
+					END_DATE_PLAN: '[END_DATE_PLAN]',
+					REQUIRE_RESULT: '[SE_PARAMETER][3][VALUE]',
+					SE_ACCOMPLICE: '[SE_ACCOMPLICE]',
+					SE_AUDITOR: '[SE_AUDITOR]',
+				};
+			},
+
+			isParticipantSelectorChanged: function(field, fieldData)
+			{
+				const divElement = document.querySelector(`div[data-block-name="${field}"]`);
+				const userInputGroups = divElement.querySelectorAll('span[data-item-value*="U"]');
+
+				if (fieldData.length !== userInputGroups.length)
+				{
+					return true;
+				}
+
+				return [...userInputGroups].some((elem) => {
+					const userId = parseInt(elem.querySelector('input[name*="ID"]').value, 10);
+
+					return !fieldData.some(({ ID }) => ID === userId);
 				});
 			},
 
@@ -594,6 +846,19 @@ BX.namespace('Tasks.Component');
 					}
 					// fire event on reminder block, if any
 					BX.Tasks.Util.Dispatcher.fireEvent('reminder-' + this.id(), 'setTaskDeadLine', [stamp]);
+
+					BX.Runtime.loadExtension('ui.analytics').then(() => {
+						BX.UI.Analytics.sendData({
+							tool: 'tasks',
+							category: 'task_operations',
+							event: 'deadline_set',
+							type: 'task',
+							c_section: 'tasks',
+							c_sub_section: 'task_card',
+							c_element: 'calendar',
+							status: 'success',
+						});
+					});
 				}, this));
 
 				if (!this.isEditMode() && this.getTaskData().DEADLINE_ISO)

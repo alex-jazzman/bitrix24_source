@@ -11,7 +11,6 @@ $MESS["TASKS_FILES"] = "Файли";
 $MESS["TASKS_PRIORITY_V2"] = "Важливе завдання";
 $MESS["TASKS_QUICK_INFO_DETAILS"] = "Подробиці";
 $MESS["TASKS_QUICK_INFO_EMPTY_DATE"] = "немає";
-$MESS["TASKS_RESPONSIBLE"] = "Відповідальний";
 $MESS["TASKS_STATUS"] = "Статус";
 $MESS["TASKS_STATUS_ACCEPTED"] = "Прийняте";
 $MESS["TASKS_STATUS_COMPLETED"] = "Завершене";

@@ -2,10 +2,9 @@
  * @module user-profile/common-tab/src/block/header/view
  */
 jn.define('user-profile/common-tab/src/block/header/view', (require, exports, module) => {
-	const { Avatar } = require('ui-system/blocks/avatar');
+	const { Avatar, AvatarEntityType } = require('ui-system/blocks/avatar');
 	const { connect } = require('statemanager/redux/connect');
 	const { usersSelector } = require('statemanager/redux/slices/users');
-	const { Area } = require('ui-system/layout/area');
 	const { H3 } = require('ui-system/typography/heading');
 	const { Text5, Text6 } = require('ui-system/typography/text');
 	const { BBCodeText } = require('ui-system/typography/bbcodetext');
@@ -21,6 +20,9 @@ jn.define('user-profile/common-tab/src/block/header/view', (require, exports, mo
 	const { Moment } = require('utils/date');
 	const store = require('statemanager/redux/store');
 	const { UserStatus } = require('user-profile/common-tab/enum/user-status');
+	const { BadgeButton, BadgeButtonDesign, BadgeButtonSize } = require('ui-system/blocks/badges/button');
+	const { AvatarPicker } = require('avatar-picker');
+	const { Alert } = require('alert');
 
 	/**
 	 * @typedef {Object} HeaderProps
@@ -46,7 +48,20 @@ jn.define('user-profile/common-tab/src/block/header/view', (require, exports, mo
 				prefix: 'header-block',
 				context: this,
 			});
+			this.avatarPicker = new AvatarPicker();
+			this.#initState(props);
 		}
+
+		componentWillReceiveProps(props)
+		{
+			this.#initState(props);
+		}
+
+		#initState = (props) => {
+			this.state = {
+				image: props.image ?? null,
+			};
+		};
 
 		get personalGender()
 		{
@@ -61,46 +76,138 @@ jn.define('user-profile/common-tab/src/block/header/view', (require, exports, mo
 
 		render()
 		{
-			return Area(
+			const { isEditMode } = this.props;
+
+			const editStyles = isEditMode ? {
+				paddingTop: Indent.XL.toNumber(),
+				paddingBottom: Indent.XL2.toNumber(),
+			} : {};
+
+			return View(
 				{
 					style: {
-						width: '100%',
 						backgroundColor: Color.bgContentPrimary.toHex(),
+						...editStyles,
 					},
-					testId: this.getTestId('area'),
-					isFirst: true,
 				},
 				View(
-					{},
-					View(
-						{
-							style: {
-								flexDirection: 'row',
-							},
+					{
+						style: {
+							flexDirection: 'row',
 						},
-						this.#renderAvatar(),
-						this.#renderTextContent(),
-					),
-					this.#renderButtons(),
+					},
+					this.#renderAvatar(),
+					this.#renderTextContent(),
 				),
+				!isEditMode && this.#renderButtons(),
 			);
 		}
 
+		#getAvatarEntityType()
+		{
+			const { isCollaber, isExtranet } = this.props;
+
+			if (isCollaber)
+			{
+				return AvatarEntityType.COLLAB;
+			}
+
+			if (isExtranet)
+			{
+				return AvatarEntityType.EXTRANET;
+			}
+
+			return AvatarEntityType.USER;
+		}
+
 		#renderAvatar = () => {
-			const { id } = this.props;
+			const { isEditMode } = this.props;
+			const { image } = this.state;
+			const avatarProps = {
+				testId: this.getTestId(`avatar-edit-${isEditMode}`),
+				size: 84,
+				accent: !isEditMode,
+				onClick: this.#onAvatarClick,
+				uri: image?.previewUrl ?? null,
+				entityType: this.#getAvatarEntityType(),
+			};
 
 			return View(
 				{
 					testId: this.getTestId('avatar-container'),
 				},
-				Avatar({
-					testId: this.getTestId('avatar'),
-					id,
-					size: 84,
-					withRedux: true,
-					accent: true,
+				Avatar(avatarProps),
+				isEditMode && this.#renderEditButton(),
+				!isEditMode && this.#renderStatusIcon(),
+			);
+		};
+
+		#onAvatarClick = () => {
+			const { isEditMode } = this.props;
+			if (isEditMode)
+			{
+				this.#pickAvatar();
+			}
+			else
+			{
+				this.#showAvatarInViewer();
+			}
+		};
+
+		#showAvatarInViewer = () => {
+			const { image } = this.state;
+			const { fullName } = this.props;
+			const url = image?.originalImage ?? image?.previewUrl;
+			if (url)
+			{
+				viewer.openImage(url, fullName);
+			}
+		};
+
+		#pickAvatar = () => {
+			const { isEditMode, onChange } = this.props;
+			if (!isEditMode)
+			{
+				return;
+			}
+
+			this.avatarPicker.open()
+				.then((image) => {
+					if (image)
+					{
+						this.setState({ image }, () => {
+							onChange?.('header', {
+								image,
+							});
+						});
+					}
+				})
+				.catch((err) => {
+					console.error(err);
+					Alert.alert(
+						Loc.getMessage('M_PROFILE_AVATAR_CHOOSE_ERROR_TITLE'),
+						Loc.getMessage('M_PROFILE_AVATAR_CHOOSE_ERROR_TEXT'),
+						() => {},
+					);
+				});
+		};
+
+		#renderEditButton = () => {
+			return View(
+				{
+					style: {
+						position: 'absolute',
+						top: 0,
+						right: 0,
+					},
+				},
+				BadgeButton({
+					testId: this.getTestId('edit-badge-button'),
+					size: BadgeButtonSize.XL,
+					icon: Icon.EDIT,
+					design: BadgeButtonDesign.WHITE,
+					onClick: this.#pickAvatar,
 				}),
-				this.#renderStatusIcon(),
 			);
 		};
 
@@ -119,7 +226,7 @@ jn.define('user-profile/common-tab/src/block/header/view', (require, exports, mo
 						height: size,
 						width: size,
 						zIndex: 1,
-						backgroundColor: Color.baseWhiteFixed.toHex(),
+						backgroundColor: Color.bgContentPrimary.toHex(),
 						borderRadius: size / 2,
 					},
 				},
@@ -134,6 +241,8 @@ jn.define('user-profile/common-tab/src/block/header/view', (require, exports, mo
 
 		#renderTextContent()
 		{
+			const { isEditMode } = this.props;
+
 			return View(
 				{
 					testId: this.getTestId('avatar'),
@@ -145,7 +254,7 @@ jn.define('user-profile/common-tab/src/block/header/view', (require, exports, mo
 				},
 				this.#renderFullName(),
 				this.#renderWorkPosition(),
-				this.#renderStatusText(),
+				!isEditMode && this.#renderStatusText(),
 			);
 		}
 
@@ -156,9 +265,26 @@ jn.define('user-profile/common-tab/src/block/header/view', (require, exports, mo
 			return H3({
 				testId: this.getTestId('full-name'),
 				accent: true,
-				color: Color.base1,
+				color: this.#getFullNameColor(),
 				text: fullName,
 			});
+		}
+
+		#getFullNameColor()
+		{
+			const { isCollaber, isExtranet } = this.props;
+
+			if (isCollaber)
+			{
+				return Color.collabAccentPrimaryAlt;
+			}
+
+			if (isExtranet)
+			{
+				return Color.accentExtraOrange;
+			}
+
+			return Color.base1;
 		}
 
 		#renderWorkPosition()
@@ -182,7 +308,7 @@ jn.define('user-profile/common-tab/src/block/header/view', (require, exports, mo
 		#renderStatusText()
 		{
 			const { status, lastSeenDate } = this.props;
-			if ((status === UserStatus.OFFLINE || status === UserStatus.ONLINE) && !Type.isNil(lastSeenDate))
+			if ((status === UserStatus.OFFLINE) && !Type.isNil(lastSeenDate) && lastSeenDate !== 0)
 			{
 				return View(
 					{
@@ -367,16 +493,26 @@ jn.define('user-profile/common-tab/src/block/header/view', (require, exports, mo
 			id,
 			fullName,
 			workPosition,
+			avatarSize100,
+			avatarSizeOriginal,
+			isCollaber,
+			isExtranet,
 		} = usersSelector.selectById(state, ownerId);
 
 		return {
 			id,
 			fullName,
 			workPosition,
+			isCollaber,
+			isExtranet,
 			GMTString,
 			lastSeenDate,
 			onVacationDateTo,
 			status,
+			image: {
+				previewUrl: avatarSize100,
+				originalImage: avatarSizeOriginal,
+			},
 		};
 	};
 

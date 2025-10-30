@@ -9,12 +9,12 @@ use Bitrix\Tasks\Flow\FlowFeature;
 use Bitrix\Tasks\Helper\Analytics;
 use Bitrix\Tasks\Helper\RestrictionUrl;
 use Bitrix\Tasks\Integration\Bitrix24;
-use Bitrix\Tasks\Integration\Intranet\Settings;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
 use Bitrix\Tasks\Internals\Task\MetaStatus;
 use Bitrix\Tasks\Internals\Task\Priority;
 use Bitrix\Tasks\Slider\Path\TaskPathMaker;
 use Bitrix\Tasks\Util;
+use Bitrix\Tasks\V2\Internal\DI\Container;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
@@ -984,7 +984,7 @@ $APPLICATION->IncludeComponent(
 );
 
 $this->EndViewTarget();
-$isTemplatesAvailable = (new Settings())->isToolAvailable(Settings::TOOLS['templates']);
+$isTemplatesAvailable = Container::getInstance()->getToolService()->isTemplatesAvailable();
 
 $request = \Bitrix\Main\Context::getCurrent()->getRequest();
 if (!empty($request->get('ta_sec')))
@@ -1101,6 +1101,7 @@ if (!empty($request->get('ta_sec')))
 			category: 'readonly_livefeed',
 		},
 		canEditTask: <?= Json::encode($arResult['canEditTask']) ?>,
+		canCreateFlow: <?= Json::encode($arResult['canCreateFlow']) ?>,
 		isExtranetUser: <?= $arResult['isExtranetUser'] ? 'true' : 'false' ?>,
 		flowParams: {
 			id: <?= (int)($arResult['DATA']['FLOW']['ID'] ?? 0) ?>,

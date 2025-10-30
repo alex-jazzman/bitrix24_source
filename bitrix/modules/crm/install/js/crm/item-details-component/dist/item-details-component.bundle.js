@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,crm_itemDetailsComponent_pagetitle,crm_itemDetailsComponent_stageFlow,crm_messagesender,crm_stageModel,crm_stage_permissionChecker,main_core,main_core_events,main_loader,ui_dialogs_messagebox,ui_stageflow) {
+(function (exports,crm_itemDetailsComponent_pagetitle,crm_itemDetailsComponent_stageFlow,crm_messagesender,crm_stageModel,crm_stage_permissionChecker,main_core,main_core_events,main_loader,ui_dialogs_messagebox,ui_stageflow,crm_integration_analytics) {
 	'use strict';
 
 	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
@@ -221,7 +221,7 @@ this.BX = this.BX || {};
 	          finalStageSelectorTitle: main_core.Loc.getMessage('CRM_ITEM_DETAIL_STAGEFLOW_FINAL_STAGE_SELECTOR')
 	        }
 	      };
-	      this.stageflowChart = new crm_itemDetailsComponent_stageFlow.Chart(chartParams, flowStagesData, this.permissionChecker, this.getStageById.bind(this), this.isStageUpdating.bind(this), main_core.Runtime.throttle(this.showStageUpdatingNotification.bind(this), 300), this.isNew());
+	      this.stageflowChart = new crm_itemDetailsComponent_stageFlow.Chart(chartParams, flowStagesData, this.permissionChecker, this.getStageById.bind(this), this.isStageUpdating.bind(this), main_core.Runtime.throttle(this.showStageUpdatingNotification.bind(this), 300), this.isNew(), this.entityTypeId);
 	      main_core.Dom.append(this.stageflowChart.render(), stageFlowContainer);
 	    }
 	  }, {
@@ -322,6 +322,7 @@ this.BX = this.BX || {};
 	        console.error('Wrong stage');
 	        return;
 	      }
+	      this.prepareAnalyticsData(stage);
 	      this.stageBeforeUpdate = this.getStageById(this.currentStageId);
 	      this.setStageToFlowChart(stage);
 	      this.startStageUpdateProgress(stage);
@@ -335,6 +336,7 @@ this.BX = this.BX || {};
 	          }
 	        }
 	      }).then(function () {
+	        _this4.sendAnalyticsData(crm_integration_analytics.Dictionary.STATUS_SUCCESS);
 	        _this4.stopStageUpdateProgress();
 	        var currentSlider = null;
 	        if (main_core.Reflection.getClass('BX.SidePanel.Instance.getTopSlider')) {
@@ -387,6 +389,7 @@ this.BX = this.BX || {};
 	          _this4.bindPartialEntityEditorEvents();
 	          _this4.partialEntityEditor.open();
 	        } else {
+	          _this4.sendAnalyticsData(crm_integration_analytics.Dictionary.STATUS_ERROR);
 	          _this4.showErrorsFromResponse(response);
 	        }
 	      });
@@ -523,13 +526,16 @@ this.BX = this.BX || {};
 	      if (main_core.Type.isArray(data) && data.length === 2) {
 	        var parameters = data[1];
 	        if (parameters.isCancelled) {
+	          this.sendAnalyticsData(crm_integration_analytics.Dictionary.STATUS_ERROR);
 	          return;
 	        }
 	        var stage = this.getStageByStatusId(parameters.stageId);
 	        if (!stage) {
+	          this.sendAnalyticsData(crm_integration_analytics.Dictionary.STATUS_ERROR);
 	          return;
 	        }
 	        this.updateStage(stage);
+	        this.sendAnalyticsData(crm_integration_analytics.Dictionary.STATUS_SUCCESS);
 	      }
 	    }
 	  }, {
@@ -597,11 +603,33 @@ this.BX = this.BX || {};
 	        });
 	      }
 	    }
+	  }, {
+	    key: "prepareAnalyticsData",
+	    value: function prepareAnalyticsData(stage) {
+	      var stageSemantic = stage.getSemantics();
+	      if (stageSemantic === 'F') {
+	        this.analyticsData = crm_integration_analytics.Builder.Entity.CloseEvent.createDefault(this.entityTypeId).setElement(crm_integration_analytics.Dictionary.ELEMENT_LOSE_BUTTON).buildData();
+	      } else if (stageSemantic === 'S') {
+	        this.analyticsData = crm_integration_analytics.Builder.Entity.CloseEvent.createDefault(this.entityTypeId).setElement(crm_integration_analytics.Dictionary.ELEMENT_WON_BUTTON).buildData();
+	      } else {
+	        this.analyticsData = crm_integration_analytics.Builder.Entity.ChangeStageEvent.createDefault(this.entityTypeId).setElement(crm_integration_analytics.Dictionary.ELEMENT_STAGE_BAR_BUTTON).buildData();
+	      }
+	    }
+	  }, {
+	    key: "sendAnalyticsData",
+	    value: function sendAnalyticsData(status) {
+	      if (!this.analyticsData) {
+	        return;
+	      }
+	      BX.UI.Analytics.sendData(_objectSpread(_objectSpread({}, this.analyticsData), {}, {
+	        status: status
+	      }));
+	    }
 	  }]);
 	  return ItemDetailsComponent;
 	}();
 
 	exports.ItemDetailsComponent = ItemDetailsComponent;
 
-}((this.BX.Crm = this.BX.Crm || {}),BX.Crm.ItemDetailsComponent.PageTitle,BX.Crm.ItemDetailsComponent,BX.Crm.MessageSender,BX.Crm.Models,BX.Crm.Stage,BX,BX.Event,BX,BX.UI.Dialogs,BX.UI));
+}((this.BX.Crm = this.BX.Crm || {}),BX.Crm.ItemDetailsComponent.PageTitle,BX.Crm.ItemDetailsComponent,BX.Crm.MessageSender,BX.Crm.Models,BX.Crm.Stage,BX,BX.Event,BX,BX.UI.Dialogs,BX.UI,BX.Crm.Integration.Analytics));
 //# sourceMappingURL=item-details-component.bundle.js.map

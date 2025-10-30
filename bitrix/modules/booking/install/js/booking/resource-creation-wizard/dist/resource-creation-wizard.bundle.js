@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,ui_vue3,booking_component_mixin_locMixin,booking_model_notifications,booking_model_resourceCreationWizard,booking_lib_sidePanelInstance,main_loader,booking_core,ui_notificationManager,crm_messagesender,booking_provider_service_resourcesService,booking_lib_analytics,ui_entitySelector,booking_model_resourceTypes,booking_provider_service_resourcesTypeService,main_core_events,booking_lib_timezone,ui_buttons,booking_lib_duration,ui_forms,ui_layoutForm,booking_lib_ahaMoments,ui_vue3_components_menu,ui_vue3_directives_hint,ui_iconSet_actions,ui_iconSet_crm,ui_hint,booking_component_switcher,booking_provider_service_resourceCreationWizardService,main_popup,main_core,main_date,booking_component_popup,booking_component_button,booking_component_helpDeskLoc,ui_iconSet_api_vue,ui_iconSet_api_core,ui_vue3_components_richLoc,ui_vue3_vuex,ui_iconSet_main,booking_const,booking_component_cyclePopup) {
+(function (exports,ui_vue3,booking_component_mixin_locMixin,booking_model_notifications,booking_model_resourceCreationWizard,booking_lib_sidePanelInstance,main_loader,booking_core,ui_notificationManager,crm_messagesender,booking_provider_service_resourcesService,booking_lib_analytics,booking_model_resourceTypes,booking_provider_service_resourcesTypeService,booking_component_reminder,ui_entitySelector,main_core_events,booking_lib_timezone,ui_buttons,booking_lib_duration,ui_forms,ui_layoutForm,booking_lib_ahaMoments,ui_vue3_components_menu,ui_vue3_directives_hint,ui_iconSet_actions,ui_iconSet_crm,ui_hint,booking_component_switcher,booking_provider_service_resourceCreationWizardService,main_popup,main_core,main_date,booking_component_popup,booking_component_button,booking_component_helpDeskLoc,ui_iconSet_api_vue,ui_iconSet_api_core,ui_vue3_components_richLoc,ui_vue3_vuex,ui_iconSet_main,booking_const,booking_component_cyclePopup) {
 	'use strict';
 
 	const UiLoader = {
@@ -197,15 +197,24 @@ this.BX = this.BX || {};
 	}
 
 	var _resource = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("resource");
+	var _entityCalendar = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityCalendar");
 	var _isBitrix24Approved = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isBitrix24Approved");
 	var _isBitrix24SenderAvailable = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isBitrix24SenderAvailable");
 	var _prepareCompanySlotRanges = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareCompanySlotRanges");
 	var _prepareResourceTypeNotifications = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareResourceTypeNotifications");
 	var _upsertResource = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("upsertResource");
 	var _prepareNotificationOptions = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareNotificationOptions");
+	var _checkEntityCalendar = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("checkEntityCalendar");
+	var _disabledCalendarIntegration = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("disabledCalendarIntegration");
 	class ResourceNotificationStep extends Step {
 	  constructor() {
 	    super();
+	    Object.defineProperty(this, _disabledCalendarIntegration, {
+	      value: _disabledCalendarIntegration2
+	    });
+	    Object.defineProperty(this, _checkEntityCalendar, {
+	      value: _checkEntityCalendar2
+	    });
 	    Object.defineProperty(this, _prepareNotificationOptions, {
 	      value: _prepareNotificationOptions2
 	    });
@@ -223,6 +232,10 @@ this.BX = this.BX || {};
 	    });
 	    Object.defineProperty(this, _isBitrix24Approved, {
 	      value: _isBitrix24Approved2
+	    });
+	    Object.defineProperty(this, _entityCalendar, {
+	      get: _get_entityCalendar,
+	      set: void 0
 	    });
 	    Object.defineProperty(this, _resource, {
 	      get: _get_resource,
@@ -247,6 +260,7 @@ this.BX = this.BX || {};
 	        slotRanges: babelHelpers.classPrivateFieldLooseBase(this, _prepareCompanySlotRanges)[_prepareCompanySlotRanges](babelHelpers.classPrivateFieldLooseBase(this, _resource)[_resource])
 	      });
 	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _checkEntityCalendar)[_checkEntityCalendar]();
 	    const isSuccess = await babelHelpers.classPrivateFieldLooseBase(this, _upsertResource)[_upsertResource](babelHelpers.classPrivateFieldLooseBase(this, _resource)[_resource]);
 	    if (!isSuccess) {
 	      this.store.commit(`${booking_const.Model.ResourceCreationWizard}/setSaving`, false);
@@ -261,6 +275,9 @@ this.BX = this.BX || {};
 	}
 	function _get_resource() {
 	  return this.store.getters[`${booking_const.Model.ResourceCreationWizard}/getResource`];
+	}
+	function _get_entityCalendar() {
+	  return this.store.getters[`${booking_const.Model.ResourceCreationWizard}/entityCalendar`];
 	}
 	function _isBitrix24Approved2() {
 	  if (!babelHelpers.classPrivateFieldLooseBase(this, _isBitrix24SenderAvailable)[_isBitrix24SenderAvailable]()) {
@@ -324,11 +341,32 @@ this.BX = this.BX || {};
 	    text
 	  };
 	}
+	async function _checkEntityCalendar2() {
+	  var _babelHelpers$classPr2, _babelHelpers$classPr3;
+	  if (!this.store.getters[`${booking_const.Model.ResourceCreationWizard}/isIntegrationCalendarEnabled`] || ((_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _entityCalendar)[_entityCalendar].data) == null ? void 0 : (_babelHelpers$classPr3 = _babelHelpers$classPr2.userIds) == null ? void 0 : _babelHelpers$classPr3.length) === 0) {
+	    await babelHelpers.classPrivateFieldLooseBase(this, _disabledCalendarIntegration)[_disabledCalendarIntegration]();
+	  }
+	}
+	async function _disabledCalendarIntegration2() {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _entityCalendar)[_entityCalendar] === null) {
+	    return;
+	  }
+	  await this.store.dispatch(`${booking_const.Model.ResourceCreationWizard}/updateResourceEntityCalendar`, {
+	    userIds: [],
+	    locationId: null,
+	    checkAvailability: false,
+	    reminders: []
+	  });
+	}
 
 	var _isFirstStep = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isFirstStep");
+	var _validateIntegrationCalendarUser = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("validateIntegrationCalendarUser");
 	class ResourceSettingsStep extends Step {
 	  constructor() {
 	    super();
+	    Object.defineProperty(this, _validateIntegrationCalendarUser, {
+	      value: _validateIntegrationCalendarUser2
+	    });
 	    Object.defineProperty(this, _isFirstStep, {
 	      get: _get_isFirstStep,
 	      set: void 0
@@ -353,6 +391,9 @@ this.BX = this.BX || {};
 	      await store.dispatch(`${booking_const.Model.ResourceCreationWizard}/setInvalidResourceType`, true);
 	      return;
 	    }
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _validateIntegrationCalendarUser)[_validateIntegrationCalendarUser]()) {
+	      return;
+	    }
 	    await super.next();
 	    booking_lib_analytics.RcwAnalytics.sendAddResourceStep2();
 	  }
@@ -366,6 +407,18 @@ this.BX = this.BX || {};
 	}
 	function _get_isFirstStep() {
 	  return this.store.getters[`${booking_const.Model.ResourceCreationWizard}/startStep`] === this.step;
+	}
+	function _validateIntegrationCalendarUser2() {
+	  const isIntegrationCalendarEnabled = this.store.getters[`${booking_const.Model.ResourceCreationWizard}/isIntegrationCalendarEnabled`];
+	  const calendarEntity = this.store.getters[`${booking_const.Model.ResourceCreationWizard}/entityCalendar`];
+	  if (!isIntegrationCalendarEnabled || !calendarEntity || calendarEntity.data.userIds.length > 0) {
+	    return true;
+	  }
+	  if (!calendarEntity.data.locationId && calendarEntity.data.reminders.length === 0) {
+	    return true;
+	  }
+	  void this.store.dispatch(`${booking_const.Model.ResourceCreationWizard}/setInvalidIntegrationCalendarUser`, true);
+	  return false;
 	}
 
 	const ResourceCreationWizardFooter = {
@@ -843,7 +896,7 @@ this.BX = this.BX || {};
 	  },
 	  setup() {
 	    const title = main_core.Loc.getMessage('BRCW_SETTINGS_CARD_SCHEDULE_TITLE_MSGVER_1');
-	    const titleIconType = ui_iconSet_api_vue.Set.COLLABORATION;
+	    const titleIconType = ui_iconSet_api_vue.Set.OPENED_EYE;
 	    const items = [{
 	      id: 'common',
 	      itemClass: 'resource-creation-wizard__form-settings-schedule-view-common',
@@ -923,8 +976,379 @@ this.BX = this.BX || {};
 	`
 	};
 
+	// @vue/component
+	const SettingsItem = {
+	  name: 'IntegrationSettingsItem',
+	  components: {
+	    ErrorMessage
+	  },
+	  props: {
+	    title: {
+	      type: String,
+	      required: true
+	    },
+	    description: {
+	      type: String,
+	      required: true
+	    },
+	    errorMessage: {
+	      type: String,
+	      default: null
+	    }
+	  },
+	  template: `
+		<div class="resource-creation-wizard__integration-block-settings-item">
+			<div class="resource-creation-wizard__integration-block-settings-item-info">
+				<div class="resource-creation-wizard__integration-block-settings-item-info-title">
+					{{ title }}
+				</div>
+				<div class="resource-creation-wizard__integration-block-settings-item-info-description">
+					{{ description }}
+				</div>
+			</div>
+			<slot/>
+			<ErrorMessage v-if="errorMessage" :message="errorMessage"/>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const SettingsSelector = {
+	  name: 'SettingsSelector',
+	  props: {
+	    values: {
+	      type: Array,
+	      required: true
+	    },
+	    entitiesId: {
+	      type: String,
+	      required: true
+	    },
+	    multiple: {
+	      type: Boolean,
+	      default: true
+	    },
+	    disabled: {
+	      type: Boolean,
+	      default: false
+	    },
+	    tab: {
+	      type: Boolean,
+	      default: false
+	    }
+	  },
+	  emits: ['change'],
+	  watch: {
+	    disabled: {
+	      handler(disabled) {
+	        var _this$selector;
+	        (_this$selector = this.selector) == null ? void 0 : _this$selector.setLocked(disabled);
+	      },
+	      immediate: true
+	    }
+	  },
+	  created() {
+	    this.selector = this.createSelector();
+	  },
+	  mounted() {
+	    this.mountSelector();
+	  },
+	  beforeUnmount() {
+	    this.destroySelector();
+	  },
+	  methods: {
+	    createSelector() {
+	      const tagSelectionOptions = {
+	        multiple: this.multiple,
+	        addButtonCaption: this.loc('BRCW_SETTINGS_CARD_INTEGRATION_SELECTOR_BTN'),
+	        showCreateButton: false,
+	        maxHeight: 40,
+	        dialogOptions: {
+	          context: 'bookingResourceIntersection',
+	          width: 290,
+	          height: 340,
+	          dropdownMode: true,
+	          compactView: true,
+	          enableSearch: true,
+	          cacheable: true,
+	          showAvatars: false,
+	          popupOptions: {
+	            targetContainer: this.$root.$el.querySelector('.resource-creation-wizard__wrapper')
+	          },
+	          entities: [{
+	            id: this.entitiesId,
+	            dynamicLoad: true,
+	            dynamicSearch: true
+	          }],
+	          preselectedItems: this.values.map(id => [this.entitiesId, id]),
+	          events: {
+	            'Item:onSelect': event => {
+	              this.select(event.getData().item.id);
+	            },
+	            'Item:onDeselect': event => {
+	              this.deselect(event.getData().item.id);
+	            }
+	          }
+	        }
+	      };
+	      if (this.tab) {
+	        tagSelectionOptions.dialogOptions.tabs = [{
+	          id: this.entitiesId
+	        }];
+	      }
+	      return new ui_entitySelector.TagSelector(tagSelectionOptions);
+	    },
+	    select(itemId) {
+	      const itemsSet = new Set(this.values);
+	      itemsSet.add(itemId);
+	      this.$emit('change', [...itemsSet]);
+	    },
+	    deselect(itemId) {
+	      this.$emit('change', this.values.filter(id => id !== itemId));
+	    },
+	    mountSelector() {
+	      this.selector.renderTo(this.$refs.settingsSelector);
+	      if (this.disabled) {
+	        this.selector.setLocked(this.disabled);
+	      }
+	    },
+	    destroySelector() {
+	      this.selector.getDialog().destroy();
+	      this.selector = null;
+	      this.$refs.settingsSelector.innerHTML = '';
+	    }
+	  },
+	  template: `
+		<div
+			ref="settingsSelector"
+			class="resource-creation-wizard__integration-block-settings-selector"
+		></div>
+	`
+	};
+
 	const {
-	  mapGetters: mapResourceGetters
+	  mapGetters: mapResourceGetters,
+	  mapActions
+	} = ui_vue3_vuex.createNamespacedHelpers(booking_const.Model.ResourceCreationWizard);
+
+	// @vue/component
+	const IntegrationCalendar = {
+	  name: 'IntegrationCalendar',
+	  components: {
+	    Icon: ui_iconSet_api_vue.BIcon,
+	    Switcher: booking_component_switcher.Switcher,
+	    SettingsItem,
+	    SettingsSelector,
+	    UiReminder: booking_component_reminder.Reminder
+	  },
+	  setup() {
+	    const iconName = ui_iconSet_api_vue.Main.CALENDAR_1;
+	    const iconColor = 'var(--ui-color-primary)';
+	    const iconSize = 22;
+	    const entityRoomId = booking_const.EntitySelectorEntity.Room;
+	    const entityUserId = booking_const.EntitySelectorEntity.User;
+	    return {
+	      iconName,
+	      iconColor,
+	      iconSize,
+	      entityRoomId,
+	      entityUserId
+	    };
+	  },
+	  data() {
+	    return {
+	      isVisible: null
+	    };
+	  },
+	  computed: {
+	    ...mapResourceGetters({
+	      entityCalendar: 'entityCalendar',
+	      isIntegrationCalendarEnabled: 'isIntegrationCalendarEnabled',
+	      invalidIntegrationCalendarUser: 'invalidIntegrationCalendarUser'
+	    }),
+	    isEnabled: {
+	      get() {
+	        return this.$store.getters[`${booking_const.Model.ResourceCreationWizard}/isIntegrationCalendarEnabled`];
+	      },
+	      set(isIntegrationCalendarEnabled) {
+	        this.$store.dispatch(`${booking_const.Model.ResourceCreationWizard}/setIsIntegrationCalendarEnabled`, isIntegrationCalendarEnabled);
+	      }
+	    },
+	    reminders: {
+	      get() {
+	        var _this$entityCalendar, _this$entityCalendar$;
+	        return (((_this$entityCalendar = this.entityCalendar) == null ? void 0 : (_this$entityCalendar$ = _this$entityCalendar.data) == null ? void 0 : _this$entityCalendar$.reminders) || []).map(r => r.count);
+	      },
+	      set(reminders) {
+	        this.updateResourceEntityCalendar({
+	          reminders: reminders.map(r => {
+	            return {
+	              type: 'min',
+	              count: r
+	            };
+	          })
+	        });
+	      }
+	    },
+	    isDisabled() {
+	      var _this$entityCalendar2;
+	      if (!this.isEnabled) {
+	        return true;
+	      }
+	      return !this.isEnabled || !this.entityCalendar || ((_this$entityCalendar2 = this.entityCalendar) == null ? void 0 : _this$entityCalendar2.data.userIds.length) === 0;
+	    },
+	    userErrorMessage() {
+	      if (!this.isEnabled || !this.invalidIntegrationCalendarUser) {
+	        return null;
+	      }
+	      return this.loc('BRCW_SETTINGS_CARD_INTEGRATION_CALENDAR_SETTING_USER_ERROR_MESSAGE');
+	    }
+	  },
+	  watch: {
+	    invalidIntegrationCalendarUser(invalid) {
+	      if (invalid) {
+	        this.scrollToUserField();
+	      }
+	    }
+	  },
+	  beforeMount() {
+	    this.isVisible = this.$store.getters[`${booking_const.Model.ResourceCreationWizard}/isIntegrationCalendarEnabled`];
+	  },
+	  methods: {
+	    ...mapActions(['updateResource', 'updateResourceEntityCalendar', 'createResourceEntityCalendar', 'setInvalidIntegrationCalendarUser']),
+	    async toggleEnabled() {
+	      if (!this.entityCalendar) {
+	        await this.createResourceEntityCalendar();
+	      }
+	      this.isEnabled = !this.isEnabled;
+	      if (this.isEnabled && !this.isVisible) {
+	        this.isVisible = true;
+	      }
+	      if (!this.isEnabled) {
+	        await this.setInvalidIntegrationCalendarUser(false);
+	      }
+	    },
+	    async updateUsers(userIds) {
+	      await this.updateResourceEntityCalendar({
+	        userIds: userIds.map(id => parseInt(id, 10))
+	      });
+	      if (userIds.length > 0) {
+	        await this.setInvalidIntegrationCalendarUser(false);
+	      }
+	    },
+	    async updateLocationId(locationIds) {
+	      var _parseInt;
+	      await this.updateResourceEntityCalendar({
+	        locationId: locationIds.length > 0 ? (_parseInt = parseInt(locationIds[0], 10)) != null ? _parseInt : null : null
+	      });
+	    },
+	    scrollToUserField() {
+	      var _this$$refs$user$$el;
+	      (_this$$refs$user$$el = this.$refs.user.$el) == null ? void 0 : _this$$refs$user$$el.scrollIntoView(true, {
+	        behavior: 'smooth',
+	        block: 'center'
+	      });
+	    }
+	  },
+	  template: `
+		<div class="resource-creation-wizard__integration-block">
+			<div class="resource-creation-wizard__integration-block-header">
+				<Icon :name="iconName" :size="iconSize" :color="iconColor"/>
+				<div class="resource-creation-wizard__integration-block-title">
+					{{ loc('BRCW_SETTINGS_CARD_INTEGRATION_CALENDAR_TITLE') }}
+				</div>
+				<Switcher
+					class="resource-creation-wizard__integration-block-switcher"
+					data-id="resource-creation-wizard__integration-block-switcher-calendar"
+					:hiddenText="true"
+					:model-value="isEnabled"
+					@toggle="toggleEnabled"
+				/>
+			</div>
+			<div class="resource-creation-wizard__integration-block-description">
+				{{ loc('BRCW_SETTINGS_CARD_INTEGRATION_CALENDAR_TEXT') }}
+			</div>
+			<div
+				v-if="isVisible"
+				class="resource-creation-wizard__integration-block-settings"
+			>
+				<SettingsItem
+					ref="user"
+					:title="loc('BRCW_SETTINGS_CARD_INTEGRATION_CALENDAR_SETTING_USER_TITLE')"
+					:description="loc('BRCW_SETTINGS_CARD_INTEGRATION_CALENDAR_SETTING_USER_TEXT')"
+					:errorMessage="userErrorMessage"
+				>
+					<SettingsSelector
+						:class="{ '--warning': entityCalendar?.data?.userIds.length === 0 && entityCalendar?.data?.locationId}"
+						id="resource-creation-wizard__integration-block-users"
+						data-element="resource-creation-wizard__integration-block-users"
+						:entitiesId="entityUserId"
+						:values="entityCalendar?.data.userIds ?? []"
+						:disabled="!isEnabled"
+						@change="updateUsers"
+					/>
+				</SettingsItem>
+				<SettingsItem
+					:title="loc('BRCW_SETTINGS_CARD_INTEGRATION_CALENDAR_SETTING_ROOM_TITLE')"
+					:description="loc('BRCW_SETTINGS_CARD_INTEGRATION_CALENDAR_SETTING_ROOM_TEXT')"
+				>
+					<SettingsSelector
+						id="resource-creation-wizard__integration-block-resource"
+						data-element="resource-creation-wizard__integration-block-resource"
+						:entitiesId="entityRoomId"
+						:multiple="false"
+						:values="entityCalendar?.data.locationId ? [String(entityCalendar.data.locationId)] : []"
+						:disabled="isDisabled"
+						tab
+						@change="updateLocationId"
+					/>
+				</SettingsItem>
+				<SettingsItem
+					:title="loc('BRCW_SETTINGS_CARD_INTEGRATION_CALENDAR_SETTING_REMINDER_TITLE')"
+					:description="loc('BRCW_SETTINGS_CARD_INTEGRATION_CALENDAR_SETTING_REMINDER_TEXT')"
+				>
+					<UiReminder
+						v-model="reminders"
+						:disabled="isDisabled"
+					/>
+				</SettingsItem>
+			</div>
+		</div>
+	`
+	};
+
+	const Integration = {
+	  name: 'Integration',
+	  components: {
+	    TitleLayout,
+	    TextLayout,
+	    IntegrationCalendar
+	  },
+	  setup() {
+	    const title = main_core.Loc.getMessage('BRCW_SETTINGS_CARD_INTEGRATION_TITLE');
+	    const titleIconType = ui_iconSet_api_vue.Set.COLLABORATION;
+	    return {
+	      title,
+	      titleIconType
+	    };
+	  },
+	  template: `
+		<div class="ui-form resource-creation-wizard__form-settings">
+			<TitleLayout
+				:title="title"
+				:iconType="titleIconType"
+			/>
+			<TextLayout
+				type="IntegrationSettings"
+				:text="loc('BRCW_SETTINGS_CARD_INTEGRATION_DESCRIPTION')"
+			/>
+			<IntegrationCalendar/>
+		</div>
+	`
+	};
+
+	const {
+	  mapGetters: mapResourceGetters$1
 	} = ui_vue3_vuex.createNamespacedHelpers('resource-creation-wizard');
 	const WorkTimeMixin = {
 	  data() {
@@ -980,7 +1404,7 @@ this.BX = this.BX || {};
 	    }
 	  },
 	  computed: {
-	    ...mapResourceGetters({
+	    ...mapResourceGetters$1({
 	      companyScheduleSlots: 'getCompanyScheduleSlots',
 	      weekStart: 'weekStart'
 	    }),
@@ -1981,8 +2405,8 @@ this.BX = this.BX || {};
 	};
 
 	const {
-	  mapGetters: mapResourceGetters$1,
-	  mapActions,
+	  mapGetters: mapResourceGetters$2,
+	  mapActions: mapActions$1,
 	  mapMutations
 	} = ui_vue3_vuex.createNamespacedHelpers('resource-creation-wizard');
 	const ResourceSettingsCard = {
@@ -1991,7 +2415,8 @@ this.BX = this.BX || {};
 	    BaseFields,
 	    ScheduleTypes,
 	    WorkTime,
-	    SlotLength
+	    SlotLength,
+	    Integration
 	  },
 	  created() {
 	    var _this$resource$slotRa, _this$resource$slotRa2, _this$resource$slotRa3;
@@ -2007,7 +2432,7 @@ this.BX = this.BX || {};
 	    };
 	  },
 	  methods: {
-	    ...mapActions(['updateResource', 'setInvalidResourceName', 'setInvalidResourceType']),
+	    ...mapActions$1(['updateResource', 'setInvalidResourceName', 'setInvalidResourceType']),
 	    ...mapMutations(['setGlobalSchedule']),
 	    updateResourceName(name) {
 	      this.updateResource({
@@ -2066,7 +2491,7 @@ this.BX = this.BX || {};
 	    ...ui_vue3_vuex.mapGetters({
 	      timezone: `${booking_const.Model.Interface}/timezone`
 	    }),
-	    ...mapResourceGetters$1({
+	    ...mapResourceGetters$2({
 	      resource: 'getResource',
 	      companyScheduleSlots: 'getCompanyScheduleSlots',
 	      isCompanyScheduleAccess: 'isCompanyScheduleAccess',
@@ -2121,6 +2546,7 @@ this.BX = this.BX || {};
 				data-id="brcw-resource-settings-schedule-types"
 				v-model="isMain"
 			/>
+			<Integration/>
 			<WorkTime
 				data-id="brcw-resource-settings-work-time"
 				:initialSlotRanges="slotRanges"
@@ -3691,5 +4117,5 @@ this.BX = this.BX || {};
 
 	exports.ResourceCreationWizard = ResourceCreationWizard;
 
-}((this.BX.Booking = this.BX.Booking || {}),BX.Vue3,BX.Booking.Component.Mixin,BX.Booking.Model,BX.Booking.Model,BX.Booking.Lib,BX,BX.Booking,BX.UI.NotificationManager,BX.Crm.MessageSender,BX.Booking.Provider.Service,BX.Booking.Lib,BX.UI.EntitySelector,BX.Booking.Model,BX.Booking.Provider.Service,BX.Event,BX.Booking.Lib,BX.UI,BX.Booking.Lib,BX,BX.UI,BX.Booking.Lib,BX.UI.Vue3.Components,BX.Vue3.Directives,BX,BX,BX,BX.Booking.Component,BX.Booking.Provider.Service,BX.Main,BX,BX.Main,BX.Booking.Component,BX.Booking.Component,BX.Booking.Component,BX.UI.IconSet,BX.UI.IconSet,BX.UI.Vue3.Components,BX.Vue3.Vuex,BX,BX.Booking.Const,BX.Booking.Component));
+}((this.BX.Booking = this.BX.Booking || {}),BX.Vue3,BX.Booking.Component.Mixin,BX.Booking.Model,BX.Booking.Model,BX.Booking.Lib,BX,BX.Booking,BX.UI.NotificationManager,BX.Crm.MessageSender,BX.Booking.Provider.Service,BX.Booking.Lib,BX.Booking.Model,BX.Booking.Provider.Service,BX.Booking.Component,BX.UI.EntitySelector,BX.Event,BX.Booking.Lib,BX.UI,BX.Booking.Lib,BX,BX.UI,BX.Booking.Lib,BX.UI.Vue3.Components,BX.Vue3.Directives,BX,BX,BX,BX.Booking.Component,BX.Booking.Provider.Service,BX.Main,BX,BX.Main,BX.Booking.Component,BX.Booking.Component,BX.Booking.Component,BX.UI.IconSet,BX.UI.IconSet,BX.UI.Vue3.Components,BX.Vue3.Vuex,BX,BX.Booking.Const,BX.Booking.Component));
 //# sourceMappingURL=resource-creation-wizard.bundle.js.map

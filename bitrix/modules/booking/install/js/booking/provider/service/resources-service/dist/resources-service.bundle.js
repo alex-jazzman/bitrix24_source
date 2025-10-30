@@ -44,7 +44,9 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	    delayedCounterDelay: resourceDto.delayedCounterDelay,
 	    // feedback
 	    isFeedbackNotificationOn: resourceDto.isFeedbackNotificationOn,
-	    templateTypeFeedback: resourceDto.templateTypeFeedback
+	    templateTypeFeedback: resourceDto.templateTypeFeedback,
+	    // integrationCalendar
+	    entities: resourceDto.entities || []
 	  };
 	}
 	function mapModelToDto(resource) {
@@ -84,8 +86,20 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 	    delayedCounterDelay: resource.delayedCounterDelay,
 	    // feedback
 	    isFeedbackNotificationOn: resource.isFeedbackNotificationOn,
-	    templateTypeFeedback: resource.templateTypeFeedback
+	    templateTypeFeedback: resource.templateTypeFeedback,
+	    // integrationCalendar
+	    entities: entitiesToDto(resource.entities)
 	  };
+	}
+	function entitiesToDto(entities) {
+	  return checkEntityCalendar(entities);
+	}
+	function checkEntityCalendar(entities) {
+	  // eslint-disable-next-line max-len
+	  return entities.filter(entity => {
+	    var _entity$data;
+	    return !(entity.entityType === booking_const.ResourceEntityType.Calendar && ((_entity$data = entity.data) == null ? void 0 : _entity$data.userIds.length) === 0);
+	  });
 	}
 
 	var _updateResourcesFromFavorites = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateResourcesFromFavorites");

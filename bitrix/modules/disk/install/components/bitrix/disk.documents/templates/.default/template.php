@@ -17,6 +17,7 @@ CJSCore::Init(array(
 	'ui.viewer',
 	'ui.ears',
 	'ui.tilegrid',
+	'ui.icons.disk',
 	'ui.info-helper',
 	'ui.dialogs.messagebox',
 	'disk.users',

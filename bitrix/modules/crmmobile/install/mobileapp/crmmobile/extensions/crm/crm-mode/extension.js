@@ -427,7 +427,7 @@ jn.define('crm/crm-mode', (require, exports, module) => {
 
 			if (isSuccess)
 			{
-				this.setCrmModeInCache(crmType);
+				CrmMode.setCrmModeInCache(crmType);
 				if (this.isProgress)
 				{
 					this.closeProgressBar(true);
@@ -496,6 +496,25 @@ jn.define('crm/crm-mode', (require, exports, module) => {
 				.setCacheId(CRM_MODE_CACHE_NAME);
 		}
 
+		static async getCurrentCrmMode()
+		{
+			const crmMode = CrmMode.getCrmModeFromCache();
+			if (crmMode)
+			{
+				return crmMode;
+			}
+
+			const config = await CrmMode.getCrmModeConfig();
+			if (config && config.currentCrmMode)
+			{
+				CrmMode.setCrmModeInCache(config.currentCrmMode);
+
+				return config.currentCrmMode;
+			}
+
+			return '';
+		}
+
 		static getCrmModeFromCache()
 		{
 			const cache = CrmMode.getCrmModeRunActionExecutor().getCache();
@@ -503,7 +522,7 @@ jn.define('crm/crm-mode', (require, exports, module) => {
 			return cache.getData()?.data?.currentCrmMode ?? '';
 		}
 
-		setCrmModeInCache(crmMode)
+		static setCrmModeInCache(crmMode)
 		{
 			const executor = CrmMode.getCrmModeRunActionExecutor();
 			const cache = executor.getCache();
@@ -545,7 +564,7 @@ jn.define('crm/crm-mode', (require, exports, module) => {
 				console.error(e);
 			}
 
-			return null;
+			return Promise.resolve();
 		}
 
 		static async loadCrmProps()

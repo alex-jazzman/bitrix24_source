@@ -9,5 +9,4 @@ $MESS["LANDING_CMP_PAR_PAGE_URL_LANDING_VIEW"] = "Посилання на сто
 $MESS["LANDING_CMP_PAR_PAGE_URL_SITES"] = "Посилання на сторінку зі списком сайтів";
 $MESS["LANDING_CMP_PAR_SITE_ID"] = "Ідентифікатор сайту";
 $MESS["LANDING_CMP_PAR_SITE_WORK_MODE"] = "Працювати в режимі сайта примусово";
-$MESS["LANDING_CMP_PAR_SKIP_REMOTE"] = "Не завантажувати шаблони з Бітрікс24.Маркет";
 $MESS["LANDING_CMP_PAR_SKIP_REMOTE_MSGVER_1"] = "Не завантажувати шаблони з Бітрікс24 Маркет";

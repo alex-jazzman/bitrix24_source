@@ -1,0 +1,21 @@
+<?php
+$MESS["MB_TASKS_AT_SOCNET_LOG_CPT_MENU_ITEM_LIST"] = "Топтағы міндеттер тізімі";
+$MESS["MOBILE_LOG_ADD_POST"] = "Хабарлама жазу";
+$MESS["MOBILE_LOG_COMMENT_ADD_BUTTON_SEND"] = "Жіберу";
+$MESS["MOBILE_LOG_COMMENT_ADD_TITLE"] = "Пікір жазу...";
+$MESS["MOBILE_LOG_COMMENT_BUTTON_MORE"] = "Барлық пікірлерді қараңыз (#COMMENTS#)";
+$MESS["MOBILE_LOG_COUNTER_1"] = "жаңа хабарлама";
+$MESS["MOBILE_LOG_COUNTER_2"] = "жаңа хабарламалар";
+$MESS["MOBILE_LOG_COUNTER_3"] = "жаңа хабарлама";
+$MESS["MOBILE_LOG_DESTINATION_MORE"] = ", тағы #COUNT#";
+$MESS["MOBILE_LOG_FOLLOW_N"] = "Қадағалау";
+$MESS["MOBILE_LOG_FOLLOW_Y"] = "Енді бақыламау";
+$MESS["MOBILE_LOG_GROUP_FILES"] = "Топ файлдары";
+$MESS["MOBILE_LOG_MESSAGE_EMPTY"] = "Жазба жоқ";
+$MESS["MOBILE_LOG_MORE"] = "Тағы";
+$MESS["MOBILE_LOG_NEW_ERROR"] = "Хабарлама жарияланған жоқ";
+$MESS["MOBILE_LOG_NEW_PULL"] = "Жаңарту үшін тартыңыз";
+$MESS["MOBILE_LOG_NEW_PULL_LOADING"] = "Жаңа хабарламаларды жүктеу";
+$MESS["MOBILE_LOG_NEW_PULL_RELEASE"] = "Жаңарту үшін жіберіңіз";
+$MESS["MOBILE_LOG_NEXT_POST_MORE"] = "Жүктеу...";
+$MESS["MOBILE_LOG_TITLE"] = "Жанды лента";

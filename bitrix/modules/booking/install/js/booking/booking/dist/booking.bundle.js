@@ -7428,7 +7428,14 @@ this.BX = this.BX || {};
 	`
 	};
 
+	// @vue/component
 	const SelectResources = {
+	  name: 'SelectResources',
+	  components: {
+	    DialogHeader,
+	    DialogFooter,
+	    ResourceWorkload
+	  },
 	  data() {
 	    return {
 	      dialogFilled: false,
@@ -7437,6 +7444,50 @@ this.BX = this.BX || {};
 	      workloadRefs: {},
 	      selectedTypes: {}
 	    };
+	  },
+	  computed: {
+	    ...ui_vue3_vuex.mapGetters({
+	      selectedDateTs: `${booking_const.Model.Interface}/selectedDateTs`,
+	      favoritesIds: `${booking_const.Model.Favorites}/get`,
+	      resources: `${booking_const.Model.Resources}/get`,
+	      isFilterMode: `${booking_const.Model.Filter}/isFilterMode`,
+	      isEditingBookingMode: `${booking_const.Model.Interface}/isEditingBookingMode`,
+	      isLoaded: `${booking_const.Model.Interface}/isLoaded`,
+	      mainResources: `${booking_const.Model.MainResources}/resources`,
+	      resourceTypes: `${booking_const.Model.ResourceTypes}/get`
+	    }),
+	    mainResourceIds() {
+	      return new Set(this.mainResources);
+	    },
+	    isDefaultState() {
+	      return this.mainResourceIds.size === this.favoritesIds.length && this.favoritesIds.every(id => this.mainResourceIds.has(id));
+	    },
+	    visibleResourceTypes() {
+	      return this.resourceTypes.filter(item => item.resourcesCnt > 0).map(({
+	        id
+	      }) => id);
+	    }
+	  },
+	  watch: {
+	    favoritesIds() {
+	      this.updateItems();
+	    },
+	    resources: {
+	      handler(resources) {
+	        setTimeout(() => this.addItems(resources));
+	        booking_provider_service_resourceDialogService.resourceDialogService.clearMainResourcesCache();
+	      },
+	      deep: true
+	    },
+	    selectedTypes: {
+	      handler() {
+	        void this.updateItemsByType();
+	      },
+	      deep: true
+	    },
+	    isLoaded() {
+	      this.tryShowAhaMoment();
+	    }
 	  },
 	  mounted() {
 	    this.dialog = new ui_entitySelector.Dialog({
@@ -7468,23 +7519,6 @@ this.BX = this.BX || {};
 	    main_core.Event.bind(this.dialog.getRecentTab().getContainer(), 'scroll', this.loadOnScroll);
 	    main_core.Event.EventEmitter.subscribe('BX.Main.Popup:onAfterClose', this.tryShowAhaMoment);
 	    main_core.Event.EventEmitter.subscribe('BX.Main.Popup:onDestroy', this.tryShowAhaMoment);
-	  },
-	  computed: {
-	    ...ui_vue3_vuex.mapGetters({
-	      selectedDateTs: `${booking_const.Model.Interface}/selectedDateTs`,
-	      favoritesIds: `${booking_const.Model.Favorites}/get`,
-	      resources: `${booking_const.Model.Resources}/get`,
-	      isFilterMode: `${booking_const.Model.Filter}/isFilterMode`,
-	      isEditingBookingMode: `${booking_const.Model.Interface}/isEditingBookingMode`,
-	      isLoaded: `${booking_const.Model.Interface}/isLoaded`,
-	      mainResources: `${booking_const.Model.MainResources}/resources`
-	    }),
-	    mainResourceIds() {
-	      return new Set(this.mainResources);
-	    },
-	    isDefaultState() {
-	      return this.mainResourceIds.size === this.favoritesIds.length && this.favoritesIds.every(id => this.mainResourceIds.has(id));
-	    }
 	  },
 	  methods: {
 	    showDialog() {
@@ -7601,7 +7635,7 @@ this.BX = this.BX || {};
 	      this.updateItems();
 	      this.dialog.getSearchTab().getStub().hide();
 	      this.dialog.getSearchTab().getSearchLoader().show();
-	      await booking_provider_service_resourceDialogService.resourceDialogService.doSearch(this.query, this.selectedDateTs / 1000);
+	      await booking_provider_service_resourceDialogService.resourceDialogService.doSearch(this.query, this.selectedDateTs / 1000, this.visibleResourceTypes);
 	      this.dialog.search(this.query);
 	      this.updateItems();
 	      this.dialog.getSearchTab().getSearchLoader().hide();
@@ -7661,33 +7695,22 @@ this.BX = this.BX || {};
 	          item.deselect();
 	        }
 	      });
-	    }
-	  },
-	  watch: {
-	    favoritesIds() {
-	      this.updateItems();
 	    },
-	    resources: {
-	      handler(resources) {
-	        setTimeout(() => this.addItems(resources));
-	        booking_provider_service_resourceDialogService.resourceDialogService.clearMainResourcesCache();
-	      },
-	      deep: true
+	    getSelectedTypes() {
+	      return this.visibleResourceTypes.filter(id => this.selectedTypes[id]);
 	    },
-	    selectedTypes: {
-	      handler() {
+	    async updateItemsByType() {
+	      if (this.query || this.visibleResourceTypes.every(id => this.selectedTypes[id]) || this.visibleResourceTypes.every(id => !this.selectedTypes[id])) {
 	        this.updateItems();
-	      },
-	      deep: true
-	    },
-	    isLoaded() {
-	      this.tryShowAhaMoment();
+	        return;
+	      }
+	      await booking_provider_service_resourceDialogService.resourceDialogService.doSearch(this.query, this.selectedDateTs / 1000, this.getSelectedTypes());
+	      this.updateItems();
+	      this.dialog.getSearchTab().getSearchLoader().hide();
+	      if (this.dialog.getSearchTab().isEmptyResult()) {
+	        this.dialog.getSearchTab().getStub().show();
+	      }
 	    }
-	  },
-	  components: {
-	    DialogHeader,
-	    DialogFooter,
-	    ResourceWorkload
 	  },
 	  template: `
 		<div
@@ -7999,7 +8022,6 @@ this.BX = this.BX || {};
 	        showCreateButton: false,
 	        maxHeight: 50,
 	        dialogOptions: {
-	          header: this.loc('BOOKING_BOOKING_ADD_INTERSECTION_DIALOG_HEADER'),
 	          context: 'bookingResourceIntersection',
 	          width: 290,
 	          height: 340,
@@ -8297,21 +8319,29 @@ this.BX = this.BX || {};
 	`
 	};
 
+	const timeFormat = main_date.DateTimeFormat.getFormat('SHORT_TIME_FORMAT');
+
+	// @vue/component
 	const BaseComponent = {
-	  data() {
-	    return {
-	      DateTimeFormat: main_date.DateTimeFormat
-	    };
-	  },
-	  computed: ui_vue3_vuex.mapGetters({
-	    fromHour: 'interface/fromHour',
-	    toHour: 'interface/toHour',
-	    zoom: 'interface/zoom'
-	  }),
+	  name: 'BaseComponent',
 	  components: {
 	    Header,
 	    Intersections,
 	    Grid
+	  },
+	  computed: {
+	    ...ui_vue3_vuex.mapGetters({
+	      fromHour: 'interface/fromHour',
+	      toHour: 'interface/toHour',
+	      zoom: 'interface/zoom'
+	    }),
+	    isAmPmMode() {
+	      if (main_date.DateTimeFormat.isAmPmMode()) {
+	        return true;
+	      }
+	      const now = main_date.DateTimeFormat.format(timeFormat, Date.now());
+	      return now.endsWith('am') || now.endsWith('pm');
+	    }
 	  },
 	  template: `
 		<div
@@ -8325,7 +8355,7 @@ this.BX = this.BX || {};
 			:class="{
 				'--zoom-is-less-than-07': zoom < 0.7,
 				'--zoom-is-less-than-08': zoom < 0.8,
-				'--am-pm-mode': DateTimeFormat.isAmPmMode(),
+				'--am-pm-mode': isAmPmMode,
 			}"
 		>
 			<Header/>

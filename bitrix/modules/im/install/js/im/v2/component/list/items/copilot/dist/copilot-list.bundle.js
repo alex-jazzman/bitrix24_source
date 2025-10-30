@@ -149,7 +149,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      return this.$store.getters['application/getLayout'];
 	    },
 	    isChatSelected() {
-	      if (this.layout.name !== im_v2_const.Layout.aiAssistant) {
+	      if (this.layout.name !== im_v2_const.Layout.copilot) {
 	        return false;
 	      }
 	      return this.layout.entityId === this.recentItem.dialogId;

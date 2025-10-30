@@ -2,6 +2,7 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Crm\Integration\StorageType;
+use Bitrix\Crm\ItemMiniCard\Builder\MiniCardHtmlBuilder;
 use Bitrix\Crm\Restriction\RestrictionManager;
 
 if (!CModule::IncludeModule('crm'))
@@ -513,9 +514,9 @@ $arResult['FIELDS']['tab_1'][] = array(
 	'id' => 'LEAD_ID',
 	'name' => GetMessage('CRM_QUOTE_FIELD_LEAD_ID'),
 	'value' => isset($arResult['ELEMENT']['LEAD_TITLE'])
-		? (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canReadItems(CCrmOwnerType::Lead))
-			? $arResult['ELEMENT']['LEAD_TITLE'] :
-			'<a href="'.$arResult['PATH_TO_LEAD_SHOW'].'" bx-tooltip-user-id="LEAD_'.$arResult['ELEMENT']['~LEAD_ID'].'" bx-tooltip-loader="'.htmlspecialcharsbx('/bitrix/components/bitrix/crm.lead.show/card.ajax.php').'" bx-tooltip-classname="crm_balloon_lead">'.$arResult['ELEMENT']['LEAD_TITLE'].'</a>'
+		? (new MiniCardHtmlBuilder(CCrmOwnerType::Lead, (int)$arResult['ELEMENT']['~LEAD_ID']))
+			->setTitle($arResult['ELEMENT']['LEAD_TITLE'])
+			->build()
 		: '',
 	'type' => 'custom',
 	'isTactile' => true
@@ -527,10 +528,10 @@ $arResult['FIELDS']['tab_1'][] = array(
 	'id' => 'DEAL_ID',
 	'name' => GetMessage('CRM_QUOTE_FIELD_DEAL_ID'),
 	'value' => isset($arResult['ELEMENT']['DEAL_TITLE'])
-		? (!CCrmDeal::CheckReadPermission($arResult['ELEMENT']['~DEAL_ID'], $userPermissions)
-			? $arResult['ELEMENT']['DEAL_TITLE'] :
-			'<a href="'.$arResult['PATH_TO_DEAL_SHOW'].'" bx-tooltip-user-id="DEAL_'.$arResult['ELEMENT']['~DEAL_ID'].'" bx-tooltip-loader="'.htmlspecialcharsbx('/bitrix/components/bitrix/crm.deal.show/card.ajax.php').'" bx-tooltip-classname="crm_balloon_deal">'.$arResult['ELEMENT']['DEAL_TITLE'].'</a>'
-		) : '',
+		? (new MiniCardHtmlBuilder(CCrmOwnerType::Deal, (int)$arResult['ELEMENT']['~DEAL_ID']))
+			->setTitle($arResult['ELEMENT']['DEAL_TITLE'])
+			->build()
+		: '',
 	'type' => 'custom',
 	'isTactile' => true
 );

@@ -137,7 +137,10 @@ jn.define('calendar/event-list-view/section-list/manager', (require, exports, mo
 		{
 			if (this.calType === CalendarType.USER)
 			{
-				return Loc.getMessage('M_CALENDAR_EVENT_LIST_SECTION_LIST_TITLE_MY');
+				return this.ownerId === Number(env.userId)
+					? Loc.getMessage('M_CALENDAR_EVENT_LIST_SECTION_LIST_TITLE_MY')
+					: Loc.getMessage('M_CALENDAR_EVENT_LIST_SECTION_LIST_TITLE_THIS_USER')
+				;
 			}
 
 			if (this.calType === CalendarType.GROUP)

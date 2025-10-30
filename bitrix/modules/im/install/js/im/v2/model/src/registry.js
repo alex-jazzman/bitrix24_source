@@ -52,3 +52,4 @@ export type {
 export type { SidebarMultidialogItem as ImModelSidebarMultidialogItem } from './type/sidebar/multidialog';
 export type { SidebarFileTab as ImModelSidebarFileTab } from './type/sidebar/file-tab';
 export type { Anchor as ImModelAnchor } from './type/anchor';
+export type { Transcription as ImModelTranscription } from './type/file';

@@ -9,6 +9,7 @@ import { CloseEvent as BlockCloseEvent } from './builders/block/close-event';
 import { EnableEvent as BlockEnableEvent } from './builders/block/enable-event';
 import { LinkEvent as BlockLinkEvent } from './builders/block/link-event';
 import { AddEvent as EntityAddEventBuilder } from './builders/entity/add-event';
+import { ChangeStageEvent as EntityChangeStageEventBuilder } from './builders/entity/change-stage-event';
 import { CloseEvent as EntityCloseEventBuilder } from './builders/entity/close-event';
 import { ConvertBatchEvent as EntityConvertBatchEventBuilder } from './builders/entity/convert-batch-event';
 import { ConvertEvent as EntityConvertEventBuilder } from './builders/entity/convert-event';
@@ -33,6 +34,7 @@ import type {
 	EntityCloseEvent,
 	EntityConvertBatchEvent,
 	EntityConvertEvent,
+	EntityChangeStageEvent,
 	EventStatus,
 	RepeatSaleBannerClickEvent,
 	RepeatSaleBannerCloseEvent,
@@ -48,6 +50,7 @@ const Builder = Object.freeze({
 		ConvertEvent: EntityConvertEventBuilder,
 		ConvertBatchEvent: EntityConvertBatchEventBuilder,
 		CloseEvent: EntityCloseEventBuilder,
+		ChangeStageEvent: EntityChangeStageEventBuilder
 	},
 	AI: {
 		CallParsingEvent: AICallParsingEventBuilder,
@@ -100,6 +103,7 @@ export type {
 	EntityCloseEvent,
 	EntityConvertEvent,
 	EntityConvertBatchEvent,
+	EntityChangeStageEvent,
 	EventStatus,
 	RepeatSaleBannerViewEvent,
 	RepeatSaleBannerClickEvent,

@@ -5,7 +5,7 @@ import { Outline } from 'ui.icon-set.api.core';
 import 'ui.icon-set.outline';
 
 import { Model, TaskStatus } from 'tasks.v2.const';
-import { taskService } from 'tasks.v2.provider.service.task-service';
+import { statusService } from 'tasks.v2.provider.service.status-service';
 import type { TaskModel } from 'tasks.v2.model.tasks';
 
 import { More } from './more/more';
@@ -94,7 +94,7 @@ export const FooterEdit = {
 
 			return {
 				text: this.loc('TASKS_V2_TASK_FULL_CARD_START'),
-				onClick: (): void => taskService.start(this.taskId),
+				onClick: (): void => statusService.start(this.taskId),
 			};
 		},
 		getCompleteButton(): ButtonOptions
@@ -106,7 +106,7 @@ export const FooterEdit = {
 
 			return {
 				text: this.loc('TASKS_V2_TASK_FULL_CARD_COMPLETE'),
-				onClick: (): void => taskService.complete(this.taskId),
+				onClick: (): void => statusService.complete(this.taskId),
 			};
 		},
 		getRenewButton(style: string): ButtonOptions
@@ -119,7 +119,7 @@ export const FooterEdit = {
 			return {
 				text: this.loc('TASKS_V2_TASK_FULL_CARD_RENEW'),
 				style,
-				onClick: (): void => taskService.renew(this.taskId),
+				onClick: (): void => statusService.renew(this.taskId),
 			};
 		},
 		getReviewButton(): ButtonOptions
@@ -138,7 +138,7 @@ export const FooterEdit = {
 
 			return {
 				text: this.loc('TASKS_V2_TASK_FULL_CARD_APPROVE'),
-				onClick: (): void => taskService.complete(this.taskId),
+				onClick: (): void => statusService.complete(this.taskId),
 			};
 		},
 	},

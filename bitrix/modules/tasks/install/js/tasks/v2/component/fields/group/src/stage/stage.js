@@ -8,6 +8,7 @@ import 'ui.icon-set.outline';
 
 import { Model } from 'tasks.v2.const';
 import { Loader } from 'tasks.v2.component.elements.user-custom-tag-selector';
+import { tooltip } from 'tasks.v2.component.elements.hint';
 import { Color } from 'tasks.v2.lib.color';
 import { groupService } from 'tasks.v2.provider.service.group-service';
 import { taskService } from 'tasks.v2.provider.service.task-service';
@@ -100,17 +101,10 @@ export const Stage = {
 		},
 		tooltip(): Function
 		{
-			return (): HintParams => ({
+			return (): HintParams => tooltip({
 				text: this.loc('TASKS_V2_GROUP_STAGE_HINT'),
-				timeout: 500,
 				popupOptions: {
-					className: 'tasks-field-group-hint',
-					offsetTop: 2,
 					offsetLeft: this.$refs.stage.offsetWidth / 2,
-					background: 'var(--ui-color-bg-content-inapp)',
-					padding: 6,
-					angle: true,
-					targetContainer: document.body,
 				},
 			});
 		},

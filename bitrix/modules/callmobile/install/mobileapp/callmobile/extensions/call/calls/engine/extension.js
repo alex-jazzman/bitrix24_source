@@ -70,6 +70,14 @@
 		Destroyed: 5, // recording will be aborted and no results will be provided
 	};
 
+	BX.Call.ErrorPreventingReconnection = {
+		CanNotCreateRoom: 1,
+		InputError: 2,
+		AccessDenied: 3,
+		RoomNotFound: 5,
+		MalfunctioningSignaling: 7,
+	};
+
 	BX.Call.CallError = {
 		SecurityKeyChanged: 'SECURITY_KEY_CHANGED',
 		RoomClosed: 'ROOM_CLOSED',
@@ -249,7 +257,7 @@
 
 		onActiveCallsReceived(activeCalls)
 		{
-			const callsToInstantiate = new Map(Object.entries(activeCalls));
+			const callsToInstantiate = { ...activeCalls };
 
 			const removeEventSubscription = (call) => {
 				if (!BX.type.isFunction(call.off))
@@ -270,9 +278,9 @@
 					return;
 				}
 
-				if (callsToInstantiate.has(call.id))
+				if (call.id in callsToInstantiate)
 				{
-					callsToInstantiate.delete(call.id);
+					delete callsToInstantiate[call.id];
 
 					return;
 				}
@@ -305,7 +313,7 @@
 					tryToRemoveCall(call);
 				});
 
-			callsToInstantiate.forEach(call => {
+			Object.values(callsToInstantiate).forEach((call) => {
 				const instantiatedCall = this._instantiateCall(
 					call,
 					call.CONNECTION_DATA,
@@ -553,10 +561,10 @@
 				try
 				{
 					data = await CallUtil.getCallConnectionData({
-						callToken: callToken,
-						callType: callType,
+						callToken,
+						callType,
+						instanceId,
 						provider: callProvider,
-						instanceId: instanceId,
 						isVideo: config.videoEnabled,
 					}, chatId);
 				}
@@ -565,26 +573,21 @@
 					return reject(error);
 				}
 
-				if (this.jwtCalls[data.result.roomId])
+				const existingCall = this.jwtCalls[data.result.roomId];
+
+				if (existingCall)
 				{
 					const call = this.jwtCalls[data.result.roomId];
 					if (call instanceof CallStub)
 					{
-						call.destroy();
+						existingCall.destroy();
 					}
-					else
+					else if (existingCall instanceof PlainCallJwt)
 					{
 						console.warn(`Call ${data.result.roomId} already exists`);
-						call.setConnectionData({
-							mediaServerUrl: data.result.mediaServerUrl,
-							roomData: data.result.roomData,
-							roomType: data.result.roomType,
-						});
-						return resolve({
-							call,
-							isNew: false
-						});
+						existingCall.destroy();
 					}
+					delete this.jwtCalls[data.result.roomId];
 				}
 
 				const callFactory = this._getCallFactory(callProvider, BX.Call.Scheme.jwt);
@@ -762,47 +765,44 @@
 			});
 		}
 
-		getJwtCallWithId(uuid, config)
-		{
-			return new Promise(async (resolve, reject) =>
-			{
+		getJwtCallWithId(uuid, config) {
+			return new Promise((resolve, reject) => {
 				const call = this.jwtCalls[uuid];
-				if (call)
-				{
-					if (!call.hasConnectionData)
-					{
-						try
-						{
-							await this.updateConnectionData(call);
-						}
-						catch (e)
-						{
-							return reject(e);
-						}
-					}
-
-					return resolve({
-						call,
-						isNew: false,
-					});
-				}
 
 				if (config)
 				{
-					try
+					this.createJwtCall(config)
+						.then((result) => {
+							resolve(result);
+						})
+						.catch((error) => {
+							reject(error);
+						});
+				}
+				else if (call)
+				{
+					if (call.hasConnectionData)
 					{
-						const result = await this.createJwtCall(config);
-						return resolve(result);
+						resolve({ call, isNew: false });
 					}
-					catch (e)
+					else
 					{
-						return reject(e);
+						this.updateConnectionData(call)
+							.then(() => {
+								resolve({ call, isNew: false });
+							})
+							.catch((error) => {
+								reject(error);
+							});
 					}
 				}
-
-				reject({ code: BX.Call.CallError.CallNotFound });
+				else
+				{
+					const error = { code: BX.Call.CallError.CallNotFound };
+					reject(error);
+				}
 			});
-		};
+		}
 
 		getLegacyCallWithId(id)
 		{
@@ -879,7 +879,7 @@
 						instanceId: call.instanceId,
 					};
 
-					return CallUtil.getCallConnectionData(callOptions, chatId);
+					return CallUtil.getCallConnectionData(callOptions, chatId, false);
 				}).then((data) =>
 				{
 					call.setConnectionData({
@@ -1150,6 +1150,7 @@
 				else
 				{
 					call = callFactory.createCall({
+						id: parseInt(params.callId, 10),
 						uuid: callFields.uuid,
 						instanceId: this.getUuidv4(),
 						parentUuid: callFields.parentUuid || null,
@@ -2275,22 +2276,20 @@
 			});
 		}
 
-		getCallConnectionData(callOptions, chatId)
+		getCallConnectionData(callOptions, chatId, mustCreate = true)
 		{
 			if (!BX.type.isPlainObject(callOptions))
 			{
 				callOptions = {};
 			}
 
-			return new Promise(async (resolve, reject) =>
-			{
-				const callBalancerUrl = CallSettingsManager.callBalancerUrl;
+			return new Promise(async (resolve, reject) => {
 				const roomType = callOptions.provider === BX.Call.Provider.Plain && CallSettingsManager.isJwtInPlainCallsEnabled()
 					? BX.Call.RoomType.Personal
 					: BX.Call.RoomType.Small;
 				const clientVersion = CallUtil.getApiVersion();
 				const clientPlatform = Application.getPlatform();
-				const url = `${callBalancerUrl}/v2/join`;
+				const url = `${CallSettingsManager.callBalancerUrl}/v2/join?mustCreate=${Boolean(mustCreate)}`;
 
 				const userToken = await tokenManager.getUserToken(chatId);
 
@@ -2300,65 +2299,74 @@
 					clientVersion,
 					clientPlatform,
 					...callOptions,
-				}, chatId);
+				});
 
 				BX.ajax({
-						url: url,
-						method: 'POST',
-						data: data,
-						prepareData: false,
-						dataType: 'json',
-						skipAuthCheck: true,
-						timeout: 60,
-					})
-					.then((response) => {
-						if (response.result?.mediaServerUrl && response.result?.roomData)
-						{
-							resolve(response);
-						}
+					url,
+					data,
+					method: 'POST',
+					prepareData: false,
+					dataType: 'json',
+					skipAuthCheck: true,
+					timeout: 60,
+				}).then((response) => {
+					if (response.result?.mediaServerUrl && response.result?.roomData)
+					{
+						resolve(response);
+					}
 
-						reject({ code: BX.Call.CallError.MediaServerMissingParams });
-					})
-					.catch((error) =>
+					const error = { code: BX.Call.CallError.MediaServerMissingParams };
+					reject(error);
+				}).catch((e) => {
+					let error = e;
+
+					if (e.xhr?.responseText)
 					{
 						try
 						{
-							const response = JSON.parse(error.xhr.responseText);
+							const response = JSON.parse(e.xhr.responseText);
 							if (response.error.message)
 							{
-								reject({ code: response.error.message });
+								error = { code: response.error.message, errorCode: response.error.code };
 							}
 						}
-						catch (e)
+						catch
 						{
-							console.log(e);
+							error = { code: BX.Call.CallError.MediaServerUnreachable };
 						}
-						reject({ code: BX.Call.CallError.MediaServerUnreachable });
-					});
+					}
+
+					reject(error);
+				});
 			});
 		}
 
 		async getCallConnectionDataById(callUuid)
 		{
-			try
-			{
-				const call = callEngine.jwtCalls[callUuid];
-				if (!call)
-				{
-					throw { code: BX.Call.CallError.CallNotFound };
-				}
+			const call = callEngine.jwtCalls[callUuid];
 
-				return this.getCallConnectionData({
+			if (!call)
+			{
+				const error = { code: BX.Call.CallError.CallNotFound };
+
+				return Promise.reject(error);
+			}
+
+			return this.getCallConnectionData(
+				{
 					callType: call.type,
 					instanceId: call.instanceId,
 					provider: call.provider,
 					callToken: tokenManager.getTokenCached(call.associatedEntity.chatId),
-				}, call.associatedEntity.chatId);
-			}
-			catch (error)
-			{
-				throw error;
-			}
+				},
+				call.associatedEntity.chatId,
+				false,
+			);
+		}
+
+		abortGetCallConnectionData()
+		{
+			this.abortableRequest?.abort();
 		}
 
 		isNewMobileGridEnabled()

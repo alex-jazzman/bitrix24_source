@@ -16,7 +16,6 @@ return [
 		'im.v2.lib.invite',
 		'im.public',
 		'im.v2.provider.service.chat',
-		'im.v2.lib.ai-assistant',
 		'ui.system.menu',
 		'im.v2.lib.promo',
 		'im.v2.application.core',

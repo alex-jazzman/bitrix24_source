@@ -2765,7 +2765,9 @@ this.BX.Calendar = this.BX.Calendar || {};
 	      zIndex: this.zIndex,
 	      offsetLeft: 0,
 	      offsetTop: 0,
-	      draggable: true,
+	      draggable: {
+	        restrict: true
+	      },
 	      bindOnResize: false,
 	      titleBar: this.getTitle(),
 	      closeIcon: {
@@ -3258,7 +3260,9 @@ this.BX.Calendar = this.BX.Calendar || {};
 	      minHeight: 120,
 	      autoHide: true,
 	      closeByEsc: true,
-	      draggable: true,
+	      draggable: {
+	        restrict: true
+	      },
 	      closeIcon: true,
 	      animation: 'fading-slide',
 	      contentBackground: "#fff",
@@ -3357,7 +3361,9 @@ this.BX.Calendar = this.BX.Calendar || {};
 	      minHeight: 120,
 	      autoHide: true,
 	      closeByEsc: true,
-	      draggable: true,
+	      draggable: {
+	        restrict: true
+	      },
 	      closeIcon: true,
 	      animation: 'fading-slide',
 	      contentBackground: "#fff",
@@ -3488,7 +3494,9 @@ this.BX.Calendar = this.BX.Calendar || {};
 	      minHeight: 120,
 	      autoHide: true,
 	      closeByEsc: true,
-	      draggable: true,
+	      draggable: {
+	        restrict: true
+	      },
 	      closeIcon: true,
 	      animation: 'fading-slide',
 	      contentBackground: "#fff",
@@ -4978,7 +4986,9 @@ this.BX.Calendar = this.BX.Calendar || {};
 	      zIndex: this.zIndex,
 	      offsetLeft: 0,
 	      offsetTop: 0,
-	      draggable: true,
+	      draggable: {
+	        restrict: true
+	      },
 	      bindOnResize: false,
 	      titleBar: main_core.Loc.getMessage('EC_REINVITE_TITLE'),
 	      closeIcon: {
@@ -5169,7 +5179,9 @@ this.BX.Calendar = this.BX.Calendar || {};
 	      zIndex: this.Z_INDEX,
 	      offsetLeft: 0,
 	      offsetTop: 0,
-	      draggable: true,
+	      draggable: {
+	        restrict: true
+	      },
 	      bindOnResize: false,
 	      titleBar: main_core.Loc.getMessage('EC_CONFIRMED_EMAIL_TITLE'),
 	      closeIcon: {
@@ -5279,7 +5291,9 @@ this.BX.Calendar = this.BX.Calendar || {};
 	      zIndex: this.Z_INDEX,
 	      offsetLeft: 0,
 	      offsetTop: 0,
-	      draggable: true,
+	      draggable: {
+	        restrict: true
+	      },
 	      bindOnResize: false,
 	      titleBar: main_core.Loc.getMessage('EC_EMAIL_LIMIT_TITLE'),
 	      closeIcon: {

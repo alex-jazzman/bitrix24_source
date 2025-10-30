@@ -2,7 +2,7 @@ import { Type } from 'main.core';
 
 import { DefaultMessageContent, MessageHeader, MessageFooter } from 'im.v2.component.message.elements';
 import { BaseMessage } from 'im.v2.component.message.base';
-import { FileType, MessageType } from 'im.v2.const';
+import { FileType } from 'im.v2.const';
 
 import { AudioItem } from './items/audio';
 
@@ -52,12 +52,9 @@ export const AudioMessage = {
 		{
 			return Type.isNumber(this.message.id);
 		},
-		messageType(): $Values<typeof MessageType>
-		{
-			return this.$store.getters['messages/getMessageType'](this.message.id);
-		},
 	},
-	methods: {
+	methods:
+	{
 		onCancel(event)
 		{
 			this.$emit('cancelClick', event);
@@ -71,7 +68,6 @@ export const AudioMessage = {
 					:key="messageFile.id"
 					:item="messageFile"
 					:messageId="message.id"
-					:messageType="messageType"
 					@cancelClick="onCancel"
 				/>
 			</div>

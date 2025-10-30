@@ -12,11 +12,9 @@ use Bitrix\Main\Web\Uri;
 use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\Flow\FlowFeature;
-use Bitrix\Tasks\Flow\Integration\BIConnector\FlowBIAnalytics;
 use Bitrix\Tasks\Integration\BIConnector\TaskBIAnalytics;
 use Bitrix\Tasks\Integration\Bitrix24;
 use Bitrix\Tasks\Integration\Extranet\User;
-use Bitrix\Tasks\Integration\Intranet\Settings;
 use Bitrix\Tasks\Integration\Socialnetwork\Space\SpaceService;
 use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Internals\Routes\RouteDictionary;
@@ -24,7 +22,7 @@ use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\ProjectLimit;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\ScrumLimit;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
 use Bitrix\Main\UI\Extension;
-
+use Bitrix\Tasks\V2\Internal\DI\Container;
 
 $isV2Form = \Bitrix\Tasks\V2\FormV2Feature::isOn('miniform');
 if ($isV2Form)
@@ -294,7 +292,7 @@ if (
 	$arResult['ITEMS'][] = $reportItem;
 }
 
-$portalSettings = Settings::getInstance();
+$toolService = Container::getInstance()->getToolService();
 
 if (!$isCollaber)
 {
@@ -303,7 +301,7 @@ if (!$isCollaber)
 
 	$efficiencyItemId = 'view_effective';
 
-	$isEfficiencyAvailable = $portalSettings->isToolAvailableByMenuId($efficiencyItemId);
+	$isEfficiencyAvailable = $toolService->isisAvailableByMenuId($efficiencyItemId);
 
 	$efficiencyCounter = $isEfficiencyAvailable ? (int)$arResult['EFFECTIVE_COUNTER'] . '%' : '';
 
@@ -406,7 +404,7 @@ if (TaskAccessController::can($arParams['LOGGED_USER_ID'], ActionDictionary::ACT
 
 foreach ($arResult['ITEMS'] as $key => $item)
 {
-	if (!$portalSettings->isToolAvailableByMenuId($item['ID']))
+	if (!$toolService->isisAvailableByMenuId($item['ID']))
 	{
 		unset($arResult['ITEMS'][$key]);
 	}

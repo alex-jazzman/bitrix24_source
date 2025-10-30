@@ -12,4 +12,5 @@ $MESS["SIGN_B2E_DOCUMENT_FILLING_DATE_CREATE_LABEL"] = "Дата створен�
 $MESS["SIGN_B2E_DOCUMENT_FILLING_DATE_EXPIRE_LABEL"] = "Підписати до";
 $MESS["SIGN_B2E_DOCUMENT_FILLING_INPUT_REG_NUMBER_LABEL"] = "Реєстраційний номер";
 $MESS["SIGN_B2E_DOCUMENT_FILLING_INPUT_REG_NUMBER_PLACEHOLDER"] = "б/н";
+$MESS["SIGN_B2E_DOCUMENT_FILLING_REMOVE_TEMPLATE"] = "Прибрати шаблон із комплекту на надсилання";
 $MESS["SIGN_B2E_DOCUMENT_FILLING_TITLE_HEAD_LABEL"] = "Заповніть дані";

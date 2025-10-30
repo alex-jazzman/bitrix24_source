@@ -12,6 +12,7 @@ return [
 		'main.core',
 		'main.core.events',
 		'tasks.viewed',
+		'ui.analytics',
 	],
 	'skip_core' => false,
 ];

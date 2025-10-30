@@ -22,7 +22,13 @@ export type Options = {
 	documentInitiatedType: DocumentInitiatedType;
 };
 
-export const allowedSignatureProviders: Array<ProviderCodeType> = ['goskey', 'external', 'ses-ru', 'ses-com'];
+export const allowedSignatureProviders: Array<ProviderCodeType> = [
+	'goskey',
+	'external',
+	'ses-ru',
+	'ses-com',
+	'ses-ru-express',
+];
 
 const sesComLearnMoreLink = new Uri('https://www.bitrix24.com/terms/esignature-for-hr-rules.php');
 
@@ -489,6 +495,8 @@ export class ProviderSelector extends EventEmitter
 				return Loc.getMessage('SIGN_B2E_PROVIDER_SES_NAME');
 			case 'ses-com':
 				return Loc.getMessage('SIGN_B2E_PROVIDER_SES_COM_NAME');
+			case 'ses-ru-express':
+				return Loc.getMessage('SIGN_B2E_PROVIDER_SES_RU_EXPRESS_NAME');
 			default:
 				return '';
 		}
@@ -589,10 +597,12 @@ export class ProviderSelector extends EventEmitter
 		const providerCodeToProviderInfoTextMap: { [key: ProviderCodeType]: ?string } = {
 			goskey: Loc.getMessage('SIGN_B2E_COMPANY_GOSKEY_INFO'),
 			'ses-ru': Loc.getMessage('SIGN_B2E_COMPANY_SES_RU_INFO'),
+			'ses-ru-express': Loc.getMessage('SIGN_B2E_COMPANY_SES_RU_EXPRESS_INFO'),
 		};
 		const providerCodeToHelpdeskCodeMap: { [key: ProviderCodeType]: string } = {
 			goskey: HelpdeskCodes.GoskeyDetails,
 			'ses-ru': HelpdeskCodes.SesRuDetails,
+			'ses-ru-express': HelpdeskCodes.SesRuExpressDetails,
 		};
 
 		const text = Tag.render`<span>${Helpdesk.replaceLink(

@@ -342,7 +342,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 				$arField['SETTINGS']['IBLOCK_ID'] = (isset($_POST['IB_IBLOCK_ID']) ? (int)$_POST['IB_IBLOCK_ID'] : 0);
 				if ($arField['SETTINGS']['IBLOCK_ID'] <= 0)
 				{
-					$strError .= GetMessage('CC_BLFE_ERR_IBLOCK_ELEMENT_BAD_IBLOCK_ID').'<br>';
+					$strError .= GetMessage('CC_BLFE_ERR_IBLOCK_ELEMENT_BAD_IBLOCK_ID_MSGVER_1').'<br>';
 				}
 				$arField['SETTINGS']['DEFAULT_VALUE'] = $_POST['IB_DEFAULT_VALUE'];
 				$arField['SETTINGS']['DISPLAY'] = $_POST['IB_DISPLAY'];

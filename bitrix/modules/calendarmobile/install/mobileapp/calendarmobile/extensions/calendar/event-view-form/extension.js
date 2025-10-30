@@ -8,11 +8,14 @@ jn.define('calendar/event-view-form', (require, exports, module) => {
 
 	const { H2 } = require('ui-system/typography/heading');
 
+	const { CalendarType } = require('calendar/enums');
+	const { AppRatingClient } = require('calendar/app-rating-client');
+
 	const { MoreButton } = require('calendar/event-view-form/layout/more-button');
 	const { EventViewForm } = require('calendar/event-view-form/form');
-	const { CalendarType } = require('calendar/enums');
 	const { DataLoader } = require('calendar/event-view-form/data-loader');
-	const { AppRatingClient } = require('calendar/app-rating-client');
+
+	const { IconWithText } = require('calendar/event-view-form/layout/icon-with-text');
 
 	const initialLayoutTitle = {
 		text: Loc.getMessage('M_CALENDAR_EVENT_VIEW_FORM_TITLE'),
@@ -190,5 +193,8 @@ jn.define('calendar/event-view-form', (require, exports, module) => {
 		}
 	}
 
-	module.exports = { EventView };
+	module.exports = {
+		EventView,
+		IconWithText,
+	};
 });

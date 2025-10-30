@@ -11,7 +11,6 @@ import { isLines, linesPreset } from './configs/lines';
 import { isCollab, collabPreset } from './configs/collab';
 import { isSupport, supportPreset } from './configs/support';
 import { isAiAssistantBot, aiAssistantBotPreset } from './configs/ai-assistant-bot';
-import { isAiAssistantChat, aiAssistantChatPreset } from './configs/ai-assistant-chat';
 import { isComment, commentPreset } from './configs/comment';
 import { isChannel, channelPreset } from './configs/channel';
 import { isCopilot, copilotPreset } from './configs/copilot';
@@ -83,7 +82,6 @@ export class SidebarManager
 		this.#defaultConfigMap.set(isComment, commentPreset);
 		this.#defaultConfigMap.set(isSupport, supportPreset);
 		this.#defaultConfigMap.set(isAiAssistantBot, aiAssistantBotPreset);
-		this.#defaultConfigMap.set(isAiAssistantChat, aiAssistantChatPreset);
 		this.#defaultConfigMap.set(isBot, botPreset);
 		this.#defaultConfigMap.set(isNotes, notesPreset);
 		this.#defaultConfigMap.set(isLines, linesPreset);

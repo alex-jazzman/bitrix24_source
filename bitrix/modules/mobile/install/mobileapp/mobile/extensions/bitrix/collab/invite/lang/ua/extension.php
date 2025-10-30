@@ -1,4 +1,8 @@
 <?php
+$MESS["COLLAB_GUESTS_INVITE_DISABLED_BY_COLLAB_ADMIN_BOX_TITLE"] = "Запросити гостя до колаби";
+$MESS["COLLAB_GUESTS_INVITE_DISABLED_BY_COLLAB_ADMIN_BUTTON_TEXT"] = "Закрити";
+$MESS["COLLAB_GUESTS_INVITE_DISABLED_BY_COLLAB_ADMIN_DESCRIPTION"] = "Зверніться до адміністратора колаби, щоб увімкнути цю можливість.";
+$MESS["COLLAB_GUESTS_INVITE_DISABLED_BY_COLLAB_ADMIN_TITLE"] = "Запрошення гостей до колаби вимкнено";
 $MESS["COLLAB_GUEST_INVITE_LANGUAGE_CHOOSER_TEXT"] = "Мова запрошення: [COLOR=#COLOR#][URL]#LANGUAGE#[/URL][/COLOR]";
 $MESS["COLLAB_GUEST_INVITE_RESTRICTIONS_BOX_BUTTON_TEXT"] = "Закрити";
 $MESS["COLLAB_GUEST_INVITE_RESTRICTIONS_BOX_DETAILS_BUTTON_TEXT"] = "Докладніше";
@@ -34,10 +38,8 @@ $MESS["COLLAB_INVITE_NAME_CHECKER_TITLE_EMAIL"] = "Напишіть імена �
 $MESS["COLLAB_INVITE_NAME_CHECKER_TITLE_PHONE"] = "Перевірте імена гостей";
 $MESS["COLLAB_INVITE_PERMISSIONS_ALERT_DESCRIPTION"] = "Запрошувати учасників у цю колабу може лише її власник або модератор.";
 $MESS["COLLAB_INVITE_PERMISSIONS_ALERT_TITLE"] = "Недостатньо прав";
-$MESS["COLLAB_INVITE_QR_SHARING_MESSAGE_TEXT"] = "Скануйте QR-код і приєднуйтесь до колаби";
 $MESS["COLLAB_INVITE_SELECTOR_SEND_BUTTON_TEXT"] = "Запросити";
 $MESS["COLLAB_INVITE_SHARE_LINK_DIALOG_TITLE"] = "Поділитися посиланням";
-$MESS["COLLAB_INVITE_SHARING_MESSAGE_TEXT"] = "Приєднуйтесь до колаби. Тут ми спілкуємося в чаті, зідзвонюємося і разом ідемо до результату #link#";
 $MESS["COLLAB_INVITE_SINGLE_ADD_SUCCESS_TOAST_TEXT"] = "Співробітник доданий";
 $MESS["COLLAB_INVITE_SINGLE_SEND_SUCCESS_TOAST_TEXT"] = "Запрошення надіслано";
 $MESS["COLLAB_INVITE_TAB_EMPLOYEES_TITLE"] = "Співробітники";

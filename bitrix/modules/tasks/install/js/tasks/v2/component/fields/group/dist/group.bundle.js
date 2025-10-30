@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
-(function (exports,tasks_v2_lib_heightTransition,ui_vue3_components_menu,ui_iconSet_crm,tasks_v2_component_elements_userCustomTagSelector,ui_iconSet_api_vue,tasks_v2_lib_color,ui_vue3_directives_hint,ui_vue3_components_popup,ui_vue3_components_button,tasks_v2_lib_openGroup,tasks_v2_provider_service_groupService,tasks_v2_provider_service_userService,tasks_v2_lib_entitySelectorDialog,main_core,ui_iconSet_api_core,ui_iconSet_outline,tasks_v2_core,tasks_v2_const,tasks_v2_component_elements_chip,tasks_v2_component_elements_hint,tasks_v2_lib_fieldHighlighter,tasks_v2_lib_analytics,tasks_v2_provider_service_taskService) {
+(function (exports,tasks_v2_component_elements_hoverPill,tasks_v2_lib_heightTransition,ui_vue3_components_menu,ui_iconSet_crm,tasks_v2_component_elements_userCustomTagSelector,ui_iconSet_api_vue,tasks_v2_lib_color,ui_vue3_directives_hint,ui_vue3_components_popup,ui_vue3_components_button,tasks_v2_lib_openGroup,tasks_v2_provider_service_groupService,tasks_v2_provider_service_userService,tasks_v2_lib_entitySelectorDialog,main_core,ui_iconSet_api_core,ui_iconSet_outline,tasks_v2_core,tasks_v2_const,tasks_v2_component_elements_chip,tasks_v2_component_elements_hint,tasks_v2_lib_fieldHighlighter,tasks_v2_lib_analytics,tasks_v2_provider_service_taskService) {
 	'use strict';
 
 	const groupMeta = Object.freeze({
@@ -95,17 +95,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      return new tasks_v2_lib_color.Color(this.stage.color).isDark();
 	    },
 	    tooltip() {
-	      return () => ({
+	      return () => tasks_v2_component_elements_hint.tooltip({
 	        text: this.loc('TASKS_V2_GROUP_STAGE_HINT'),
-	        timeout: 500,
 	        popupOptions: {
-	          className: 'tasks-field-group-hint',
-	          offsetTop: 2,
-	          offsetLeft: this.$refs.stage.offsetWidth / 2,
-	          background: 'var(--ui-color-bg-content-inapp)',
-	          padding: 6,
-	          angle: true,
-	          targetContainer: document.body
+	          offsetLeft: this.$refs.stage.offsetWidth / 2
 	        }
 	      });
 	    },
@@ -229,30 +222,21 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      return new tasks_v2_lib_color.Color(this.epic.color).isDark();
 	    },
 	    tooltip() {
-	      return () => ({
+	      return () => tasks_v2_component_elements_hint.tooltip({
 	        text: this.loc('TASKS_V2_GROUP_EPIC_HINT'),
-	        timeout: 500,
 	        popupOptions: {
-	          className: 'tasks-field-group-hint',
-	          offsetTop: 2,
-	          offsetLeft: this.$el.offsetWidth / 2,
-	          background: 'var(--ui-color-bg-content-inapp)',
-	          padding: 6,
-	          angle: true,
-	          targetContainer: document.body
+	          offsetLeft: this.$el.offsetWidth / 2
 	        }
 	      });
 	    }
-	  },
-	  created() {
-	    this.handleEpicSelectedDebounced = main_core.Runtime.debounce(this.handleEpicSelected, 10, this);
 	  },
 	  methods: {
 	    handleClick() {
 	      this.showDialog();
 	    },
 	    showDialog() {
-	      var _this$dialog;
+	      var _this$handleEpicSelec, _this$dialog;
+	      (_this$handleEpicSelec = this.handleEpicSelectedDebounced) != null ? _this$handleEpicSelec : this.handleEpicSelectedDebounced = main_core.Runtime.debounce(this.handleEpicSelected, 10, this);
 	      (_this$dialog = this.dialog) != null ? _this$dialog : this.dialog = new tasks_v2_lib_entitySelectorDialog.EntitySelectorDialog({
 	        multiple: false,
 	        dropdownMode: true,
@@ -335,17 +319,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      return (_this$task$storyPoint = this.task.storyPoints) == null ? void 0 : _this$task$storyPoint.trim();
 	    },
 	    tooltip() {
-	      return () => ({
+	      return () => tasks_v2_component_elements_hint.tooltip({
 	        text: this.loc('TASKS_V2_GROUP_STORY_POINTS_HINT'),
-	        timeout: 500,
 	        popupOptions: {
-	          className: 'tasks-field-group-hint',
-	          offsetTop: 2,
-	          offsetLeft: this.$refs.storyPoints.offsetWidth / 2,
-	          background: 'var(--ui-color-bg-content-inapp)',
-	          padding: 6,
-	          angle: true,
-	          targetContainer: document.body
+	          offsetLeft: this.$refs.storyPoints.offsetWidth / 2
 	        }
 	      });
 	    }
@@ -679,7 +656,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _taskId)[_taskId] = taskId;
 	    return this;
 	  }
-	  async init() {
+	  init() {
 	    var _babelHelpers$classPr3, _babelHelpers$classPr4;
 	    (_babelHelpers$classPr4 = (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _dialog))[_dialog]) != null ? _babelHelpers$classPr4 : _babelHelpers$classPr3[_dialog] = babelHelpers.classPrivateFieldLooseBase(this, _createDialog)[_createDialog]();
 	  }
@@ -751,6 +728,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    Stage,
 	    Scrum,
 	    Hint: tasks_v2_component_elements_hint.Hint,
+	    HoverPill: tasks_v2_component_elements_hoverPill.HoverPill,
 	    GroupPopup
 	  },
 	  props: {
@@ -868,10 +846,6 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    showDialog() {
 	      groupDialog.setTaskId(this.taskId).showTo(this.$refs.group);
 	    },
-	    handleCrossClick(event) {
-	      event.stopPropagation();
-	      this.clearField();
-	    },
 	    clearField() {
 	      void tasks_v2_provider_service_taskService.taskService.update(this.taskId, {
 	        groupId: 0,
@@ -881,28 +855,25 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  },
 	  template: `
 		<div
-			class="tasks-field-group"
 			:data-task-id="taskId"
 			:data-task-field-id="groupMeta.id"
 			:data-task-field-value="task.groupId"
 			ref="container"
 		>
 			<div class="tasks-field-group-group" :class="{ '--secret': isSecret }" ref="group" @click="handleClick">
-				<template v-if="task.groupId">
+				<HoverPill
+					v-if="task.groupId"
+					:withClear="!readonly && !isEdit && (task.flowId ?? 0) <= 0"
+					@clear="clearField"
+				>
 					<img v-if="groupImage" class="tasks-field-group-image" :src="groupImage" :alt="groupName"/>
 					<BIcon v-else class="tasks-field-group-add-icon" :name="Outline.FOLDER"/>
 					<div class="tasks-field-group-title">{{ groupName }}</div>
-					<BIcon
-						v-if="!isEdit && (task.flowId ?? 0) <= 0"
-						class="tasks-field-group-cross"
-						:name="Outline.CROSS_L"
-						@click.capture="handleCrossClick"
-					/>
-				</template>
-				<template v-else>
+				</HoverPill>
+				<HoverPill v-else>
 					<BIcon class="tasks-field-group-add-icon" :name="Outline.FOLDER_PLUS"/>
 					<div class="tasks-field-group-add-text">{{ loc('TASKS_V2_GROUP_ADD') }}</div>
-				</template>
+				</HoverPill>
 			</div>
 			<Stage v-if="isEdit && group && !task.flowId" :taskId="taskId"/>
 			<Scrum v-if="isScrum && !task.flowId" :taskId="taskId"/>
@@ -956,9 +927,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    },
 	    design() {
 	      return {
-	        [!this.isAutonomous && !this.isSelected]: tasks_v2_component_elements_chip.ChipDesign.Shadow,
+	        [!this.isAutonomous && !this.isSelected]: tasks_v2_component_elements_chip.ChipDesign.ShadowNoAccent,
 	        [!this.isAutonomous && this.isSelected]: tasks_v2_component_elements_chip.ChipDesign.ShadowAccent,
-	        [this.isAutonomous && !this.isSelected]: tasks_v2_component_elements_chip.ChipDesign.Outline,
+	        [this.isAutonomous && !this.isSelected]: tasks_v2_component_elements_chip.ChipDesign.OutlineNoAccent,
 	        [this.isAutonomous && this.isSelected]: tasks_v2_component_elements_chip.ChipDesign.OutlineAccent
 	      }.true;
 	    },
@@ -979,7 +950,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        var _this$group$name, _this$group;
 	        return (_this$group$name = (_this$group = this.group) == null ? void 0 : _this$group.name) != null ? _this$group$name : this.loc('TASKS_V2_GROUP_HIDDEN');
 	      }
-	      return groupMeta.title;
+	      return this.loc('TASKS_V2_GROUP_TITLE_CHIP');
 	    },
 	    icon() {
 	      if (this.isFilled) {
@@ -993,7 +964,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        return null;
 	      }
 	      return {
-	        src: (_this$group2 = this.group) == null ? void 0 : _this$group2.image,
+	        src: encodeURI((_this$group2 = this.group) == null ? void 0 : _this$group2.image),
 	        alt: (_this$group3 = this.group) == null ? void 0 : _this$group3.name
 	      };
 	    },
@@ -1053,7 +1024,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    },
 	    handleFieldClose() {
 	      if (this.isAutonomous) {
-	        this.$refs.chip.focus();
+	        var _this$$refs$chip;
+	        (_this$$refs$chip = this.$refs.chip) == null ? void 0 : _this$$refs$chip.$el.focus();
 	      }
 	    },
 	    handleUpdate() {
@@ -1097,5 +1069,5 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	exports.GroupChip = GroupChip;
 	exports.groupMeta = groupMeta;
 
-}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.Tasks.V2.Lib,BX.UI.Vue3.Components,BX,BX.Tasks.V2.Component.Elements,BX.UI.IconSet,BX.Tasks.V2.Lib,BX.Vue3.Directives,BX.UI.Vue3.Components,BX.Vue3.Components,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Lib,BX,BX.UI.IconSet,BX,BX.Tasks.V2,BX.Tasks.V2.Const,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service));
+}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Lib,BX.UI.Vue3.Components,BX,BX.Tasks.V2.Component.Elements,BX.UI.IconSet,BX.Tasks.V2.Lib,BX.Vue3.Directives,BX.UI.Vue3.Components,BX.Vue3.Components,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Lib,BX,BX.UI.IconSet,BX,BX.Tasks.V2,BX.Tasks.V2.Const,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service));
 //# sourceMappingURL=group.bundle.js.map

@@ -2,12 +2,13 @@ import { Event } from 'main.core';
 import { Button as UiButton, AirButtonStyle, ButtonSize } from 'ui.vue3.components.button';
 
 import { Core } from 'tasks.v2.core';
-import { EventName, Model } from 'tasks.v2.const';
+import { EventName, Model, Option } from 'tasks.v2.const';
 import { Hint } from 'tasks.v2.component.elements.hint';
 import { checkListMeta } from 'tasks.v2.component.fields.check-list';
 import { filesMeta } from 'tasks.v2.component.fields.files';
 import { fieldHighlighter } from 'tasks.v2.lib.field-highlighter';
 import { analytics } from 'tasks.v2.lib.analytics';
+import { ahaMoments } from 'tasks.v2.lib.aha-moments';
 import { EntityTypes, fileService } from 'tasks.v2.provider.service.file-service';
 import type { TaskModel } from 'tasks.v2.model.tasks';
 import type { CheckListModel } from 'tasks.v2.model.check-list';
@@ -45,6 +46,8 @@ export const FullCardButton = {
 		return {
 			isHintShown: false,
 			hintBindElement: null,
+			showAuditorsHint: false,
+			auditorsHintBindElement: null,
 		};
 	},
 	computed: {
@@ -70,6 +73,22 @@ export const FullCardButton = {
 		{
 			return this.task.checklist?.some((itemId) => fileService.get(itemId, EntityTypes.CheckListItem).isUploading());
 		},
+		hasAuditors(): boolean
+		{
+			return Array.isArray(this.task?.auditorsIds) && this.task.auditorsIds.length > 0;
+		},
+	},
+	mounted()
+	{
+		// Show auditors hint if auditorsIds is not empty
+		if (this.hasAuditors && ahaMoments.shouldShow(Option.AhaAuditorsInCompactFormPopup))
+		{
+			this.$nextTick(() => {
+				// Bind to the button element
+				this.auditorsHintBindElement = this.$refs.fullCardButtonContainer;
+				this.showAuditorsHint = true;
+			});
+		}
 	},
 	methods: {
 		handleClick(): void
@@ -89,13 +108,21 @@ export const FullCardButton = {
 		},
 		highlightFiles(): void
 		{
-			this.hintBindElement = fieldHighlighter.setContainer(this.$root.$el).addChipHighlight(filesMeta.id);
+			this.hintBindElement = fieldHighlighter
+				.setContainer(this.$root.$el)
+				.addChipHighlight(filesMeta.id)
+				.getChipContainer(filesMeta.id)
+			;
 
 			this.showHint();
 		},
 		highlightChecklist(): void
 		{
-			this.hintBindElement = fieldHighlighter.setContainer(this.$root.$el).addChipHighlight(checkListMeta.id);
+			this.hintBindElement = fieldHighlighter
+				.setContainer(this.$root.$el)
+				.addChipHighlight(checkListMeta.id)
+				.getChipContainer(checkListMeta.id)
+			;
 
 			this.showHint();
 		},
@@ -132,9 +159,19 @@ export const FullCardButton = {
 				Event.EventEmitter.emit(`${EventName.OpenFullCard}:${this.taskId}`, this.taskId);
 			}
 		},
+		closeAuditorsHint()
+		{
+			this.showAuditorsHint = false;
+		},
+		handleAuditorsHintLinkClick()
+		{
+			ahaMoments.setShown(Option.AhaAuditorsInCompactFormPopup);
+			this.closeAuditorsHint();
+		},
 	},
 	template: `
 		<div
+			ref="fullCardButtonContainer"
 			class="tasks-compact-card-full-button-container"
 			:class="{ '--disabled': isDisabled }"
 			@click="handleClick"
@@ -148,6 +185,25 @@ export const FullCardButton = {
 				:dataset="{taskButtonId: 'full'}"
 				:disabled="isDisabled"
 			/>
+			<Hint
+				v-if="showAuditorsHint"
+				:bindElement="auditorsHintBindElement"
+				@close="closeAuditorsHint"
+			>
+				<div class="tasks-compact-card-full-button-auditors-hint-title">
+					{{ loc('TASKS_V2_TCC_AUDITORS_HINT_TITLE') }}
+				</div>
+				<div class="tasks-compact-card-full-button-auditors-hint-content">
+					{{ loc('TASKS_V2_TCC_AUDITORS_HINT_CONTENT') }}	
+				</div>
+				<div 
+					class="tasks-compact-card-full-button-auditors-hint-link"
+					@click.stop="handleAuditorsHintLinkClick"
+				>
+					{{ loc('TASKS_V2_TCC_AUDITORS_HINT_DO_NOT_SHOW_AGAIN') }}
+				</div>
+				
+			</Hint>
 		</div>
 		<Hint
 			v-if="isHintShown"

@@ -443,7 +443,9 @@ jn.define('call/calls/controller', (require, exports, module) => {
 						callId: this.currentCall.id,
 						callUuid: this.currentCall.uuid,
 						associatedEntity: associatedDialogData,
+						mustCreate: true,
 					});
+
 					return;
 				}
 				else
@@ -453,6 +455,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 						icon: Icon.ALERT,
 						backgroundColor: Theme.colors.accentMainAlert,
 					});
+
 					return;
 				}
 			}
@@ -466,6 +469,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 					callId: call.id,
 					callUuid: call.uuid,
 					associatedEntity: call.associatedEntity,
+					mustCreate: true,
 				});
 
 				return;
@@ -818,16 +822,20 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			this.requestDeviceAccess(isVideoEnabled).then(() => {
 				this.onConnectToCallClick = Date.now();
 
-				const callConfig = {
-					provider,
-					type: callInfo.associatedEntity.type === 'videoconf' ? BX.Call.Type.Permanent : BX.Call.Type.Instant,
-					entityType: 'chat',
-					entityId: callInfo.associatedEntity.id,
-					videoEnabled: isVideoEnabled,
-					joinExisting: isGroupChat,
-					roomId: callInfo.callUuid,
-					chatInfo: callInfo.associatedEntity,
-				};
+				let callConfig = null;
+				if (callInfo.mustCreate)
+				{
+					callConfig = {
+						provider,
+						type: callInfo.associatedEntity.type === 'videoconf' ? BX.Call.Type.Permanent : BX.Call.Type.Instant,
+						entityType: 'chat',
+						entityId: callInfo.associatedEntity.id,
+						videoEnabled: isVideoEnabled,
+						joinExisting: false,
+						roomId: callInfo.callUuid,
+						chatInfo: callInfo.associatedEntity,
+					};
+				}
 
 				return isLegacyCall
 					? callEngine.getLegacyCallWithId(callInfo.callId)
@@ -837,10 +845,11 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				device.setIdleTimerDisabled(true);
 				this.changeProximitySensorStatus(true);
 
-				const isVideoconf = this.currentCall.associatedEntity.advanced['chatType'] === 'videoconf';
+				const isVideoconf = this.currentCall.associatedEntity.advanced.chatType === 'videoconf';
+				const status = callInfo.mustCreate ? 'outgoing' : 'call';
 
 				return this.openCallView({
-					status: 'call',
+					status,
 					chatCounter: this.chatCounter,
 					isGroupCall: true, // it's impossible to join any other call but the group one
 					associatedEntityName: this.currentCall.associatedEntity.name,
@@ -1290,6 +1299,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 
 		onJoinCall(callInfo)
 		{
+
 			if (!CallUtil.isDeviceSupported())
 			{
 				navigator.notification.alert(BX.message('MOBILE_CALL_UNSUPPORTED_VERSION'));
@@ -2342,7 +2352,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 		{
 			const errorMessage = errorCode === BX.Call.CallError.SecurityKeyChanged
 				? BX.message('CALLMOBILE_SECURITY_KEY_CHANGED').replace('[break]', '\n')
-				: BX.message('MOBILE_CALL_INTERNAL_ERROR').replace('#ERROR_CODE#', 'E003');
+				: BX.message('MOBILE_CALL_INTERNAL_ERROR').replace('#ERROR_CODE#', errorCode || 'E003');
 
 			CallUtil.error('onCallFailure');
 			this.clearEverything();
@@ -2385,6 +2395,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 		onChildCallFirstStream(userId, stream)
 		{
 			this.currentCall.log('Finishing one-to-one call, switching to group call');
+			console.log('Finishing one-to-one call, switching to group call')
 
 			this.callView.setVideoStream(userId, stream);
 			this.childCall.off(BX.Call.Event.onStreamReceived, this.onChildCallFirstStreamHandler);
@@ -2458,8 +2469,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				CallUtil.warn('joined local call');
 				// camera state may be changed since call was created,
 				// so we need to set correct value for it manually
-				const isVideoEnabled = this.localVideoRequired;
-				this.localVideoRequired = false;
+				const isVideoEnabled = this.currentCall.isVideoEnabled() ?? this.localVideoRequired;
 
 				if (this.currentCall.provider !== BX.Call.Provider.Plain)
 				{
@@ -2520,6 +2530,10 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				return;
 			}
 			const muted = this.currentCall.isMuted();
+			if (this.callView)
+			{
+				this.callView.checkScreenshareAfterReconnect();
+			}
 			/*this.currentCall.setMuted(muted);
 			this.callView.setMuted(muted);
 			if (this.nativeCall)
@@ -2946,7 +2960,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 		{
 			if (this.currentCall)
 			{
-				this.currentCall.hangup();
+				this.currentCall.hangup(true);
 				this.removeCallEvents();
 				this.currentCall = null;
 			}

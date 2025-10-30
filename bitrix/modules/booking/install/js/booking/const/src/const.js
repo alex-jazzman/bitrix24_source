@@ -17,4 +17,5 @@ export { NotificationChannel } from './freeze/resource-creation-wizard';
 export { BookingCounterType } from './freeze/booking-counter-type';
 export { DraggedElementKind } from './freeze/dragged-element-kind';
 export { VisitStatus } from './freeze/visit-status';
+export { ResourceEntityType } from './freeze/resource-entity';
 export * from './freeze/analytics';

@@ -374,9 +374,11 @@ this.BX.Intranet = this.BX.Intranet || {};
 		<div 
 			class="intranet-user-mini-profile__structure-view-department-block"
 			:class="{'--highlighted': highlighted }"
+			data-test-id="usermp_department-block"
 		>
 			<div class="intranet-user-mini-profile__structure-view-department-block__title"
 				 :title="title"
+				 data-test-id="usermp_department-title"
 				 @click="onTitleClick"
 			>
 				<span>{{ title }}</span>
@@ -389,11 +391,12 @@ this.BX.Intranet = this.BX.Intranet || {};
 					</div>
 				</div>
 			</div>
-			<div class="intranet-user-mini-profile__structure-view-department-block__employee-count">
+			<div class="intranet-user-mini-profile__structure-view-department-block__employee-count" data-test-id="usermp_employee-count">
 				{{ employeeCountTitle }}
 			</div>
 			<div v-if="user"
 				class="intranet-user-mini-profile__structure-view-department-block__user"
+				data-test-id="usermp_department-user"
 				@click="onUserClick(user)"
 			>
 				<div class="intranet-user-mini-profile__structure-view-department-block__user-avatar">
@@ -407,12 +410,14 @@ this.BX.Intranet = this.BX.Intranet || {};
 					<div 
 						class="intranet-user-mini-profile__structure-view-department-block__user-info__name"
 						:title="user.name"
+						data-test-id="usermp_department-user-name"
 					>
 						{{ user.name }}
 					</div>
 					<div v-if="user.workPosition"
 						class="intranet-user-mini-profile__structure-view-department-block__user-info__position"
 						:title="user.workPosition"
+						data-test-id="usermp_department-user-position"
 					>
 						{{ user.workPosition }}
 					</div>
@@ -420,22 +425,26 @@ this.BX.Intranet = this.BX.Intranet || {};
 			</div>
 			<div v-if="isShowHead" 
 				class="intranet-user-mini-profile__structure-view-department-block__head"
+				data-test-id="usermp_department-head-section"
 			>
-				<div class="intranet-user-mini-profile__structure-view-department-block__head-title">
+				<div class="intranet-user-mini-profile__structure-view-department-block__head-title" data-test-id="usermp_department-head-title">
 					{{ loc('INTRANET_USER_MINI_DETAILED_INFO_HEAD') }}
 				</div>
 				<div
 					class="intranet-user-mini-profile__structure-view-department-block__head-info"
+					data-test-id="usermp_department-head"
 					@click="onUserClick(head)"
 				>
 					<div
 						class="intranet-user-mini-profile__structure-view-department-block__head-info__avatar"
+						data-test-id="usermp_department-head-avatar"
 					>
 						<Avatar :options="{ picPath: head.avatar, size: 20, title: head.name }"/>
 					</div>
 					<div
 						class="intranet-user-mini-profile__structure-view-department-block__head-info__name"
 						:title="head.name"
+						data-test-id="usermp_department-head-name"
 					>
 						{{ head.name }}
 					</div>
@@ -600,21 +609,23 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    }
 	  },
 	  template: `
-		<div class="intranet-user-mini-profile__structure-view">
-			<div class="intranet-user-mini-profile__structure-view__title">
-				<div class="intranet-user-mini-profile__structure-view__title-icon">
+		<div class="intranet-user-mini-profile__structure-view" data-test-id="usermp_structure-view">
+			<div class="intranet-user-mini-profile__structure-view__title" data-test-id="usermp_structure-title">
+				<div class="intranet-user-mini-profile__structure-view__title-icon" data-test-id="usermp_structure-title-icon">
 					<BIcon :name="outlineSet.COMPANY" :size="18"/>
 				</div>
-				<span>{{ title }}</span>
+				<span data-test-id="usermp_structure-title-text">{{ title }}</span>
 			</div>
-			<div class="intranet-user-mini-profile__structure-view__preview" v-if="branch.length">
+			<div class="intranet-user-mini-profile__structure-view__preview" v-if="branch.length" data-test-id="usermp_structure-preview">
 				<div v-for="(department, index) in branch"
 					 class="intranet-user-mini-profile__structure-view__preview-row"
+					 data-test-id="usermp_structure-department-row"
 				>
 					<DepartmentSpacer :value="index * 20"/>
 					<template v-if="department === LockedDepartment">
 						<LockedDepartmentBlock
 							:ref="el => { blocks[index] = el}"
+							data-test-id="usermp_locked-department-block"
 						/>
 					</template>
 					<template v-else>
@@ -627,6 +638,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 							:user="getUserForDepartment(department)"
 							:head="getHeadForDepartment(department)"
 							:highlighted="department.id === userDepartmentId"
+							data-test-id="usermp_department-block"
 						/>
 					</template>
 				</div>
@@ -637,6 +649,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 						:topBindElement="elementPair[0]"
 						:bottomBindElement="elementPair[1]"
 						:offsetLeft="11"
+						data-test-id="usermp_department-connector"
 					/>
 				</template>
 			</div>
@@ -741,11 +754,12 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    }
 	  },
 	  template: `
-		<div class="intranet-user-mini-profile__structure-view-list">
+		<div class="intranet-user-mini-profile__structure-view-list" data-test-id="usermp_structure-view-list">
 			<div
 				class="intranet-user-mini-profile__structure-view-list__preview-zone"
 				:class="{ '--one-branch': !hasManyUserDepartments }"
 				:style="{ '--missing-max-department-count': missingMaxDepartmentCount }"
+				data-test-id="usermp_structure-preview-zone"
 			>
 				<TransitionGroup 
 					type="transition" 
@@ -763,12 +777,14 @@ this.BX.Intranet = this.BX.Intranet || {};
 							:userDepartmentId="departmentId"
 							:headDictionary="structure.headDictionary"
 							:user="user"
+							data-test-id="usermp_structure-view"
 						/>
 					</template>
 				</TransitionGroup>
 			</div>
 			<div v-if="hasManyUserDepartments"
 				class="intranet-user-mini-profile__structure-view-control"
+				data-test-id="usermp_structure-view-control"
 			>
 				<Button 
 					:leftIcon="buttonIcon.CHEVRON_LEFT_S"
@@ -894,6 +910,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  template: `
 		<div v-if="title"
 			class="intranet-user-mini-profile__role"
+			data-test-id="usermp_role-title"
 		>
 			<div class="intranet-user-mini-profile__role-inner-text">
 				{{ title }}
@@ -973,6 +990,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 		<div v-if="iconSetting"
 			class="intranet-user-mini-profile__user-status" 
 			:style="{ '--ui-icon-set__icon-color': 'var(' + iconSetting.colorVar + ')' }"
+			data-test-id="usermp_status-icon"
 		>
 			<BIcon
 				:size="24"
@@ -1055,6 +1073,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  template: `
 		<span v-if="text"
 			class="intranet-user-mini-profile__user-status-description"
+			data-test-id="usermp_status-description-text"
 		>
 			{{ text }}
 		</span>
@@ -1112,7 +1131,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    }
 	  },
 	  template: `
-		<span class="intranet-user-mini-profile__user-time">
+		<span class="intranet-user-mini-profile__user-time" data-test-id="usermp_user-time-display">
 			{{ formattedTime }}
 		</span>
 	`
@@ -1221,6 +1240,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 				<div class="intranet-user-mini-profile__base-info__user-avatar-wrapper">
 					<div 
 						class="intranet-user-mini-profile__base-info__user-avatar"
+						data-test-id="usermp_avatar"
 						@click="openProfile"
 					>
 						<Avatar 
@@ -1235,26 +1255,31 @@ this.BX.Intranet = this.BX.Intranet || {};
 					</div>
 					<UserStatusIcon v-if="info.status" 
 						:status="info.status.code"
+						data-test-id="usermp_status"
 					/>
 				</div>
 				<div class="intranet-user-mini-profile__base-info__user-data">
 					<div class="intranet-user-mini-profile__base-info__user-data__name"
 						 :title="info.name"
+						 data-test-id="usermp_name"
 						 @click="openProfile"
 					>
 						{{ info.name }}
 					</div>
 					<div class="intranet-user-mini-profile__base-info__user-data__position"
 						 :title="info.workPosition"
+						 data-test-id="usermp_position"
 					>
 						{{ info.workPosition }}
 					</div>
 					<div class="intranet-user-mini-profile__base-info__user-data__status">
 						<UserStatusDescription v-if="info.status"
 							:status="info.status"
+							data-test-id="usermp_status-description"
 						/>
 						<UserTime v-if="shouldShowUserTime" 
 							:utcOffset="info.utcOffset"
+							data-test-id="usermp_user-time"
 						/>
 					</div>
 				</div>
@@ -1265,6 +1290,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 				<div class="intranet-user-mini-profile__base-info__action">
 					<button
 						class="ui-btn ui-btn-sm ui-btn-no-caps --air --wide --style-outline-accent-2"
+						data-test-id="usermp_chat-button"
 						@click="openChat"
 					>
 					<span class="ui-btn-text">
@@ -1276,6 +1302,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 					<div class="ui-btn-split --air ui-btn-sm --style-filled ui-btn-no-caps">
 						<button
 							class="ui-btn-main --air"
+							data-test-id="usermp_call-video-button"
 							@click="call()"
 						>
 							<span class="ui-btn-text">
@@ -1285,6 +1312,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 						<button
 							ref="callActionMenu"
 							class="ui-btn-menu"
+							data-test-id="usermp_call-menu-button"
 							@click="isShowCallMenu = !isShowCallMenu"
 						>
 							<BMenu v-if="isShowCallMenu"
@@ -1297,6 +1325,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 			</div>
 			<div v-if="isShowExpand"
 				class="intranet-user-mini-profile__expand"
+				data-test-id="usermp_expand-button"
 				@click="() => $emit('expand')"
 			>
 				<BIcon :name="!isExpanded ? outlineSet.OPEN_CHAT : outlineSet.CLOSE_CHAT"/>
@@ -1304,6 +1333,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 			<div class="intranet-user-mini-profile__base-info__role">
 				<UserRole 
 					:role="info.role"
+					data-test-id="usermp_role"
 				/>
 			</div>
 		</div>
@@ -1364,6 +1394,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 			class="intranet-user-mini-profile__detailed-info__contact-item-value"
 			:href="href"
 			target
+			:data-test-id="'usermp_contact-' + type"
 			@click="onClick"
 		> 
 			{{ value }}
@@ -1378,14 +1409,19 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    title: {
 	      type: String,
 	      required: true
+	    },
+	    type: {
+	      type: String,
+	      required: false,
+	      default: 'general'
 	    }
 	  },
 	  template: `
-		<div class="intranet-user-mini-profile__detailed-info-item">
-			<div class="intranet-user-mini-profile__detailed-info-item__title">
+		<div class="intranet-user-mini-profile__detailed-info-item" :data-test-id="'usermp_detailed-info-' + type">
+			<div class="intranet-user-mini-profile__detailed-info-item__title" :data-test-id="'usermp_detailed-info-' + type + '-title'">
 				{{ title }}
 			</div>
-			<div class="intranet-user-mini-profile__detailed-info-item__value">
+			<div class="intranet-user-mini-profile__detailed-info-item__value" :data-test-id="'usermp_detailed-info-' + type + '-value'">
 				<slot></slot>
 			</div>
 		</div>
@@ -1413,11 +1449,12 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    }
 	  },
 	  template: `
-		<div class="intranet-user-mini-profile__entity-menu-item">
+		<div class="intranet-user-mini-profile__entity-menu-item" data-test-id="usermp_entity-menu-item">
 			<div class="intranet-user-mini-profile__entity-menu-item-content">
 				<div v-if="image"
 					class="intranet-user-mini-profile__entity-menu-item__icon"
 					:class="image.iconClass ?? null"
+					data-test-id="usermp_entity-menu-item-icon"
 				>
 					<BIcon v-if="image.bIconName" 
 						:name="image.bIconName"
@@ -1434,6 +1471,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 				<div 
 					class="intranet-user-mini-profile__entity-menu-item__title"
 					:title="title"
+					data-test-id="usermp_entity-menu-item-title"
 				>
 					{{ title }}
 				</div>
@@ -1499,7 +1537,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    }
 	  },
 	  template: `
-		<div class="intranet-user-mini-profile__user-detailed-info__list-value" v-if="items.length">
+		<div class="intranet-user-mini-profile__user-detailed-info__list-value" v-if="items.length" :data-test-id="'usermp_entity-list-' + entityType">
 			<div class="intranet-user-mini-profile__user-detailed-info__list-value__element-container">
 					<div v-if="this.$slots.default"
 						class="intranet-user-mini-profile__user-detailed-info__list-value__before-element"
@@ -1513,6 +1551,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 					<a
 						class="intranet-user-mini-profile__user-detailed-info__list-value__element-text"
 						:title="firstItem.title"
+						:data-test-id="'usermp_entity-' + entityType + '-item'"
 						@click="onElementClick(firstItem.id)"
 					>
 						{{ firstItem.title }}
@@ -1520,6 +1559,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 					<div v-if="isCounterShow"
 						 class="intranet-user-mini-profile__user-detailed-info__list-value__counter ui-counter"
 						 ref="counter"
+						 data-test-id="usermp_entity-counter"
 						 @click="openMenu"
 					>
 						<div class="ui-counter-inner">
@@ -1536,6 +1576,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 				<EntityMenuItem v-for="item in items"
 					:title="item.title"
 					:image="item.image"
+					:data-test-id="'usermp_entity-' + entityType + '-menu-item'"
 					@click="onElementClick(item.id)"
 				/>
 			</RichMenuPopup>
@@ -1640,21 +1681,25 @@ this.BX.Intranet = this.BX.Intranet || {};
 		<div class="intranet-user-mini-profile__detailed-info">
 			<UserDetailedInfoItem v-if="info.personalMobile"
 				:title="loc('INTRANET_USER_MINI_DETAILED_INFO_PERSONAL_MOBILE')"
+				type="personal-mobile"
 			>
 				<UserDetailedInfoContactItemValue :value="info.personalMobile" type="phone"/>
 			</UserDetailedInfoItem>
 			<UserDetailedInfoItem v-if="info.innerPhone"
 				:title="loc('INTRANET_USER_MINI_DETAILED_INFO_PHONE_INNER')"
+				type="inner-phone"
 			>
 				{{ info.innerPhone }}
 			</UserDetailedInfoItem>
 			<UserDetailedInfoItem v-if="info.email"
 				:title="loc('INTRANET_USER_MINI_DETAILED_INFO_EMAIL')"
+				type="email"
 			>
 				<UserDetailedInfoContactItemValue :value="info.email" type="mail"/>
 			</UserDetailedInfoItem>
 			<UserDetailedInfoItem v-if="headItems.length"
 				:title="headTitle"
+				type="head"
 			>
 				<UserDetailedInfoEntityListValue
 					entityType="user"
@@ -1664,6 +1709,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 			</UserDetailedInfoItem>
 			<UserDetailedInfoItem v-if="departmentItems.length"
 				:title="departmentTitle"
+				type="department"
 			>
 				<UserDetailedInfoEntityListValue 
 					:items="departmentItems"
@@ -1675,6 +1721,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 						<div class="intranet-user-mini-profile__detailed-info-item__parent-department">
 							<div class="intranet-user-mini-profile__detailed-info-item__parent-department-text"
 								 :title="getParentDepartmentById(item.parentId)?.title"
+								 data-test-id="usermp_parent-department"
 							>
 								{{ getParentDepartmentById(item.parentId)?.title }}
 							</div>
@@ -1689,6 +1736,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 			</UserDetailedInfoItem>
 			<UserDetailedInfoItem v-if="teamItems.length"
 				:title="teamTitle"
+				type="team"
 			>
 				<UserDetailedInfoEntityListValue 
 					:items="teamItems"
@@ -1892,12 +1940,14 @@ this.BX.Intranet = this.BX.Intranet || {};
 						>
 							<div v-if="isShowStructure" 
 								class="intranet-user-mini-profile-wrapper__content__right-wrapper"
+								data-test-id="usermp_structure-wrapper"
 							>
 								<Divider isVertical style="margin: 0 18px"/>
-								<div class="intranet-user-mini-profile-wrapper__column --right">
+								<div class="intranet-user-mini-profile-wrapper__column --right" data-test-id="usermp_structure-column">
 									<StructureViewList
 										:structure="backendData.structure"
 										:user="getUserData()"
+										data-test-id="usermp_structure-view-list"
 									/>
 								</div>
 							</div>

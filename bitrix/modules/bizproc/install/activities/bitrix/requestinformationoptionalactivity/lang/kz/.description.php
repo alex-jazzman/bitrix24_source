@@ -1,5 +1,4 @@
 <?php
-$MESS["BPRIOA_DESCR_CM"] = "Пікір";
 $MESS["BPRIOA_DESCR_CM_1"] = "Түсініктеме";
 $MESS["BPRIOA_DESCR_DESCR"] = "Қосымша ақпаратты сұрату (ауытқумен)";
 $MESS["BPRIOA_DESCR_LU"] = "Ақпарат берген пайдаланушы";

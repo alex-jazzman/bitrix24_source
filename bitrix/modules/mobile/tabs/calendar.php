@@ -10,6 +10,7 @@ use Bitrix\Mobile\Context;
 use Bitrix\Mobile\Tab\Tabable;
 use Bitrix\Mobile\Tab\Utils;
 use Bitrix\MobileApp\Janative\Manager;
+use Bitrix\Mobile\Menu\Analytics;
 
 class Calendar implements Tabable
 {
@@ -53,14 +54,18 @@ class Calendar implements Tabable
 	public function getMenuData(): array
 	{
 		return [
+			'id' => $this->getId(),
+			'section_code' => 'teamwork',
 			'title' => $this->getTitle(),
 			'useLetterImage' => true,
 			'color' => '#F5A200',
 			'imageUrl' => 'favorite/icon-calendar.png',
 			'imageName' => $this->getIconId(),
+			'sort' => 100,
 			'params' => [
 				'onclick' => Utils::getComponentJSCode($this->getComponentParams()),
 				'counter' => $this->getId(),
+				'analytics' => Analytics::calendar(),
 			],
 		];
 	}

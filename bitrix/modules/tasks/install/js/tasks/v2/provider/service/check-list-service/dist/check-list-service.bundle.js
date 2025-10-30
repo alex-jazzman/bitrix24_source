@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
-(function (exports,tasks_v2_model_users,ui_vue3_vuex,tasks_v2_const,tasks_v2_core,tasks_v2_lib_apiClient,tasks_v2_model_checkList) {
+(function (exports,tasks_v2_model_users,tasks_v2_provider_service_userService,ui_vue3_vuex,tasks_v2_const,tasks_v2_core,tasks_v2_lib_apiClient) {
 	'use strict';
 
 	function prepareCheckLists(checklist) {
@@ -12,14 +12,41 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    parentNodeIdMap.set(item.id, item.nodeId);
 	  });
 	  return checklist.map(item => {
-	    const title = prepareTitle(item);
 	    const parentNodeId = item.parentId ? parentNodeIdMap.get(item.parentId) : 0;
 	    return {
 	      ...item,
-	      title,
 	      parentNodeId
 	    };
 	  });
+	}
+	function mapDtoToModel(checkList) {
+	  var _checkList$accomplice, _checkList$auditors;
+	  return {
+	    id: checkList.id,
+	    nodeId: checkList.nodeId,
+	    title: checkList.title,
+	    creator: checkList.creator ? tasks_v2_provider_service_userService.UserMappers.mapDtoToModel(checkList.creator) : null,
+	    toggledBy: checkList.toggledBy ? tasks_v2_provider_service_userService.UserMappers.mapDtoToModel(checkList.toggledBy) : null,
+	    toggledDate: checkList.toggledDate,
+	    accomplices: (_checkList$accomplice = checkList.accomplices) == null ? void 0 : _checkList$accomplice.map(it => tasks_v2_provider_service_userService.UserMappers.mapDtoToModel(it)),
+	    auditors: (_checkList$auditors = checkList.auditors) == null ? void 0 : _checkList$auditors.map(it => tasks_v2_provider_service_userService.UserMappers.mapDtoToModel(it)),
+	    attachments: checkList.attachments,
+	    isComplete: checkList.isComplete,
+	    isImportant: checkList.isImportant,
+	    parentId: checkList.parentId,
+	    parentNodeId: checkList.parentNodeId,
+	    sortIndex: checkList.sortIndex,
+	    actions: checkList.actions,
+	    panelIsShown: checkList.panelIsShown,
+	    myFilterActive: checkList.myFilterActive,
+	    collapsed: checkList.collapsed,
+	    expanded: checkList.expanded,
+	    localCompleteState: checkList.localCompleteState,
+	    localCollapsedState: checkList.localCollapsedState,
+	    areCompletedCollapsed: checkList.areCompletedCollapsed,
+	    hidden: checkList.hidden,
+	    groupMode: checkList.groupMode
+	  };
 	}
 	function mapModelToSliderData(checkLists) {
 	  return Object.fromEntries(checkLists.map(item => {
@@ -93,17 +120,14 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	            id: taskId
 	          }
 	        });
-	        const checkListModel = new tasks_v2_model_checkList.CheckList();
-	        const defaultValues = checkListModel.getElementState();
-	        const enrichedData = data.map(item => ({
-	          ...defaultValues,
-	          ...Object.fromEntries(Object.entries(item).filter(([_, value]) => value !== null))
-	        }));
-	        await Promise.all([this.$store.dispatch(`${tasks_v2_const.Model.CheckList}/upsertMany`, enrichedData), this.$store.dispatch(`${tasks_v2_const.Model.Tasks}/update`, {
+	        const checkLists = data.map(it => mapDtoToModel(it));
+	        await Promise.all([this.$store.dispatch(`${tasks_v2_const.Model.CheckList}/upsertMany`, checkLists), this.$store.dispatch(`${tasks_v2_const.Model.Tasks}/update`, {
 	          id: taskId,
 	          fields: {
-	            containsChecklist: data.length > 0,
-	            checklist: data.map(item => item.id)
+	            containsChecklist: checkLists.length > 0,
+	            checklist: checkLists.map(({
+	              id
+	            }) => id)
 	          }
 	        })]);
 	        resolve();
@@ -123,24 +147,62 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	            checklist: prepareCheckLists(checklists)
 	          }
 	        });
-	        const checkListModel = new tasks_v2_model_checkList.CheckList();
-	        const defaultValues = checkListModel.getElementState();
-	        const enrichedData = savedList.map(item => ({
-	          ...defaultValues,
-	          ...Object.fromEntries(Object.entries(item).filter(([_, value]) => value !== null))
-	        }));
-	        const oldIds = checklists.map(item => item.id);
-	        await Promise.all([this.$store.dispatch(`${tasks_v2_const.Model.CheckList}/deleteMany`, oldIds), this.$store.dispatch(`${tasks_v2_const.Model.CheckList}/upsertMany`, enrichedData), this.$store.dispatch(`${tasks_v2_const.Model.Tasks}/update`, {
+	        await Promise.all([this.$store.dispatch(`${tasks_v2_const.Model.Interface}/setDisableCheckListAnimations`, true), this.$store.dispatch(`${tasks_v2_const.Model.CheckList}/upsertMany`, savedList), this.$store.dispatch(`${tasks_v2_const.Model.Tasks}/update`, {
 	          id: taskId,
 	          fields: {
-	            containsChecklist: true,
-	            checklist: enrichedData.map(item => item.id)
+	            containsChecklist: savedList.length > 0,
+	            checklist: savedList.map(item => item.id)
 	          }
 	        })]);
+	        void this.$store.dispatch(`${tasks_v2_const.Model.Interface}/setDisableCheckListAnimations`, false);
 	        resolve();
 	      } catch (error) {
 	        reject(error);
 	      }
+	    });
+	  }
+	  async collapse(taskId, checkListId) {
+	    await new tasks_v2_lib_apiClient.ApiClient().post('CheckList.collapse', {
+	      taskId,
+	      checkListId
+	    });
+	    void this.$store.dispatch(`${tasks_v2_const.Model.CheckList}/update`, {
+	      id: checkListId,
+	      fields: {
+	        collapsed: true,
+	        expanded: false
+	      }
+	    });
+	  }
+	  async expand(taskId, checkListId) {
+	    await new tasks_v2_lib_apiClient.ApiClient().post('CheckList.expand', {
+	      taskId,
+	      checkListId
+	    });
+	    void this.$store.dispatch(`${tasks_v2_const.Model.CheckList}/update`, {
+	      id: checkListId,
+	      fields: {
+	        collapsed: false,
+	        expanded: true
+	      }
+	    });
+	  }
+	  async complete(taskId, checkListId) {
+	    await new tasks_v2_lib_apiClient.ApiClient('tasks.task.', 'data').post('checklist.complete', {
+	      taskId,
+	      checkListItemId: checkListId
+	    });
+	  }
+	  async renew(taskId, checkListId) {
+	    await new tasks_v2_lib_apiClient.ApiClient('tasks.task.', 'data').post('checklist.renew', {
+	      taskId,
+	      checkListItemId: checkListId
+	    });
+	  }
+	  async delete(taskId, checkListId) {
+	    await new tasks_v2_lib_apiClient.ApiClient('tasks.task.', 'data').post('checklist.delete', {
+	      taskId,
+	      checkListItemId: checkListId
 	    });
 	  }
 	  get $store() {
@@ -156,5 +218,5 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	exports.CheckListMappers = CheckListMappers;
 	exports.checkListService = checkListService;
 
-}((this.BX.Tasks.V2.Provider.Service = this.BX.Tasks.V2.Provider.Service || {}),BX.Tasks.V2.Model,BX.Vue3.Vuex,BX.Tasks.V2.Const,BX.Tasks.V2,BX.Tasks.V2.Lib,BX.Tasks.V2.Model));
+}((this.BX.Tasks.V2.Provider.Service = this.BX.Tasks.V2.Provider.Service || {}),BX.Tasks.V2.Model,BX.Tasks.V2.Provider.Service,BX.Vue3.Vuex,BX.Tasks.V2.Const,BX.Tasks.V2,BX.Tasks.V2.Lib));
 //# sourceMappingURL=check-list-service.bundle.js.map

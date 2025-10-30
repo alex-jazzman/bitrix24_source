@@ -132,7 +132,7 @@ export const Field = {
 				timezone: this.timezone,
 			};
 		},
-		resourcesIds(): number[] | null
+		resourcesIds(): number[]
 		{
 			return this.settingsData?.resourceIds || [];
 		},
@@ -268,7 +268,11 @@ export const Field = {
 			try
 			{
 				this.fetchingResources = true;
-				const response = await this.runAction('booking.api_v1.CrmForm.getResources');
+				const response = await this.runAction('booking.api_v1.CrmForm.getResources', {
+					data: {
+						ids: this.resourcesIds,
+					},
+				});
 				this.setResources(mapDtoToResource(response.data || []));
 
 				if (this.occupancyManager instanceof Occupancy)

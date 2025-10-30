@@ -2,6 +2,7 @@ export interface IBoard {
     tryToCloseBoard: () => Promise<void>;
     renameBoard: (name: string) => Promise<void>;
 }
+type ShareElementSocial = 'telegram' | 'vk' | 'whatsapp' | 'bitrix';
 export interface JWTParams {
     user_id: string;
     username: string;
@@ -29,6 +30,12 @@ export interface UIParams {
     spinner?: 'circular' | 'default';
     userKickable?: boolean;
     confirmUserKick?: boolean;
+    scrollToElement?: string;
+    shareElementSocials?: ShareElementSocial[];
+    disable?: {
+        shareElementInSocials?: boolean;
+        elementLink?: boolean;
+    };
 }
 export interface BoardData {
     boardId?: string;
@@ -49,6 +56,7 @@ export interface BoardParams {
     token?: string;
     appUrl: string;
     lang?: string;
+    boardUrl?: string;
     partnerId: string;
     appContainerDomain: string;
     ui: UIParams;
@@ -60,10 +68,13 @@ export interface SDKParams {
     lang?: string;
     ui?: UIParams;
     partnerId: string;
+    boardUrl?: string;
     events?: {
         onBoardChanged?: () => void;
         onBoardRenamed?: (name: string) => void;
         onUserKickConfirmed?: () => void;
         onUserKicked?: () => void;
+        onShareElementWithSocials?: (link: string, social: ShareElementSocial) => void;
     };
 }
+export {};

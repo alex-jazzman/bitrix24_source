@@ -46,6 +46,11 @@ export class ResourceSettingsStep extends Step
 			return;
 		}
 
+		if (!this.#validateIntegrationCalendarUser())
+		{
+			return;
+		}
+
 		await super.next();
 		RcwAnalytics.sendAddResourceStep2();
 	}
@@ -60,5 +65,25 @@ export class ResourceSettingsStep extends Step
 		{
 			await super.back();
 		}
+	}
+
+	#validateIntegrationCalendarUser(): boolean
+	{
+		const isIntegrationCalendarEnabled = this.store.getters[`${Model.ResourceCreationWizard}/isIntegrationCalendarEnabled`];
+		const calendarEntity = this.store.getters[`${Model.ResourceCreationWizard}/entityCalendar`];
+
+		if (!isIntegrationCalendarEnabled || !calendarEntity || calendarEntity.data.userIds.length > 0)
+		{
+			return true;
+		}
+
+		if (!calendarEntity.data.locationId && calendarEntity.data.reminders.length === 0)
+		{
+			return true;
+		}
+
+		void this.store.dispatch(`${Model.ResourceCreationWizard}/setInvalidIntegrationCalendarUser`, true);
+
+		return false;
 	}
 }

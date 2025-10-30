@@ -3,11 +3,11 @@ import { BaseEvent } from 'main.core.events';
 import { Dialog, Item } from 'ui.entity-selector';
 
 import { EntitySelectorEntity, EntitySelectorTab } from 'booking.const';
-import { crmFormService } from 'booking.provider.service.crm-form-service';
 import type { ResourceModel } from 'booking.model.resources';
 
 import { ContentHeader } from './content-header/content-header';
 import { ResourcesSelector } from './resources-selector/resources-selector';
+import { resourceStore } from '../../services/resource-store';
 
 import './resources-manager.css';
 
@@ -25,8 +25,7 @@ export class ResourcesManager
 	dialog: ?Dialog = null;
 	#targetNode: HTMLElement;
 	#selectedIds: number[];
-	#resourcedIds: number[];
-	#resources: ResourceModel[];
+	#resourcesIds: number[];
 	#loadingResources: boolean = false;
 	#options: ResourcesManagerOptions;
 	#btnDeleteResources: HTMLElement;
@@ -34,21 +33,28 @@ export class ResourcesManager
 
 	constructor(options: ResourcesManagerOptions)
 	{
-		this.#resourcedIds = options.selectedIds || [];
+		this.#resourcesIds = options.selectedIds || [];
 		this.#selectedIds = [];
 		this.#targetNode = options.target;
-		this.#resources = [];
 		this.#options = options;
 	}
 
-	show(): void
+	async show(): void
 	{
 		if (!this.dialog)
 		{
 			this.#initDialog();
+
+			await this.#loadResources(this.#resourcesIds);
+
+			const renderInitialContent = this.#resourcesIds.length > 0
+				? this.#addSelectedItems.bind(this)
+				: this.#appendEmptyState.bind(this)
+			;
+
+			renderInitialContent();
 		}
 
-		void this.#fetchResources();
 		this.dialog.show();
 
 		Event.bind(document, 'scroll', this.adjustPosition, true);
@@ -58,10 +64,10 @@ export class ResourcesManager
 	{
 		if (this.dialog)
 		{
-			this.#options.onUpdateResourceIds(this.#resourcedIds);
+			this.#options.onUpdateResourceIds(this.#resourcesIds);
 			if (Type.isFunction(this.#options.onClose))
 			{
-				this.#options.onClose(this.#resourcedIds);
+				this.#options.onClose(this.#resourcesIds);
 			}
 			this.dialog.destroy();
 			Event.unbind(document, 'scroll', this.adjustPosition, true);
@@ -78,12 +84,12 @@ export class ResourcesManager
 
 	get selectedResources(): ResourceModel[]
 	{
-		if (this.#resourcedIds.length === 0 || this.#resources.length === 0)
+		if (this.#resourcesIds.length === 0)
 		{
 			return [];
 		}
 
-		return this.#resources.filter((resource) => this.#resourcedIds.includes(resource.id));
+		return resourceStore.getByIds(this.#resourcesIds);
 	}
 
 	#initDialog(): void
@@ -118,7 +124,7 @@ export class ResourcesManager
 				placeholder: Loc.getMessage('BOOKING_CRM_FORMS_SETTINGS_RESOURCE_MANAGER_SEARCH_PLACEHOLDER'),
 			},
 			events: {
-				onHide: () => this.#options.onClose?.(this.#resourcedIds),
+				onHide: () => this.#options.onClose?.(this.#resourcesIds),
 				'Item:onSelect': (event: BaseEvent) => {
 					this.#selectItem(event.getData().item);
 				},
@@ -128,7 +134,7 @@ export class ResourcesManager
 			},
 		});
 
-		if (this.#resourcedIds.length > 0)
+		if (this.#resourcesIds.length > 0)
 		{
 			this.#appendSubHeaderContent();
 		}
@@ -164,7 +170,7 @@ export class ResourcesManager
 		}
 
 		this.#setResourceIds(
-			this.#resourcedIds.filter((id) => !this.#selectedIds.includes(id)),
+			this.#resourcesIds.filter((id) => !this.#selectedIds.includes(id)),
 		);
 		this.#selectedIds = [];
 		this.#hideDeleteButton();
@@ -224,35 +230,25 @@ export class ResourcesManager
 		}
 	}
 
-	async #fetchResources(): Promise<void>
+	async #loadResources(ids: number[]): Promise<void>
 	{
-		if (this.#resources.length > 0)
+		if (ids.length === 0)
 		{
 			return;
 		}
 
 		this.#setLoadingResources(true);
-		this.#resources = await crmFormService.getResources();
-		this.#addSelectedItems();
+		await resourceStore.ensure(ids);
 		this.#setLoadingResources(false);
-
-		if (this.#resourcedIds.length === 0)
-		{
-			this.#appendEmptyState();
-		}
 	}
 
 	#addSelectedItems(): void
 	{
 		this.dialog.removeItems();
 
-		for (const resource of this.#resources)
+		const resources: ResourceModel[] = resourceStore.getByIds(this.#resourcesIds);
+		for (const resource: ResourceModel of resources)
 		{
-			if (!this.#resourcedIds.includes(resource.id))
-			{
-				continue;
-			}
-
 			this.dialog.addItem({
 				id: resource.id,
 				entityId: EntitySelectorEntity.Resource,
@@ -278,7 +274,7 @@ export class ResourcesManager
 
 	#setResourceIds(selectedIds: number[]): void
 	{
-		this.#resourcedIds = selectedIds;
+		this.#resourcesIds = selectedIds;
 		this.#addSelectedItems();
 		this.#updateResourcesCount(selectedIds.length);
 		this.#options.onUpdateResourceIds(selectedIds);
@@ -299,8 +295,7 @@ export class ResourcesManager
 	{
 		const resourceSelector = new ResourcesSelector({
 			targetNode: event?.target || null,
-			selectedIds: this.#resourcedIds,
-			resources: this.#resources,
+			selectedIds: this.#resourcesIds,
 			onSave: this.#saveResourceSelector.bind(this),
 			onClose: this.#closeResourceSelector.bind(this),
 		}).createSelector();
@@ -308,8 +303,9 @@ export class ResourcesManager
 		resourceSelector.show();
 	}
 
-	#saveResourceSelector({ resourceIds }: { resourceIds: number[] }): void
+	async #saveResourceSelector({ resourceIds }: { resourceIds: number[] }): void
 	{
+		await this.#loadResources(resourceIds);
 		this.#setResourceIds(resourceIds);
 	}
 
@@ -357,7 +353,7 @@ export class ResourcesManager
 			},
 		);
 		const resourcesCount = Loc.getMessage('BOOKING_CRM_FORMS_SETTINGS_RESOURCE_MANAGER_RESOURCES_COUNT', {
-			'#COUNT#': `<span class="crm-form--booking--resources-manager--header-resources-count">${this.#resourcedIds.length}</span>`,
+			'#COUNT#': `<span class="crm-form--booking--resources-manager--header-resources-count">${this.#resourcesIds.length}</span>`,
 		});
 
 		const { root, btnDeleteResources, btnChangeResources } = Tag.render`

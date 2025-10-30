@@ -28,6 +28,7 @@ export const Dictionary = Object.freeze({
 	EVENT_ENTITY_CONVERT_OPEN: 'entity_convert_open',
 	EVENT_ENTITY_UPDATE: 'entity_update',
 	EVENT_ENTITY_EDIT: 'entity_edit',
+	EVENT_ENTITY_CHANGE_STAGE: 'entity_change_stage',
 
 	EVENT_CALL_PARSING: 'call_parsing',
 	EVENT_AUDIO_TO_TEXT: 'audio_to_text',
@@ -159,6 +160,7 @@ export const Dictionary = Object.freeze({
 	ELEMENT_CONTACT_CENTER_IMPORTEXCEL: 'contact_center_importexcel',
 	ELEMENT_ITEM_CONTACT_CENTER: 'item_contact_center',
 	ELEMENT_ITEM_INDUSTRY_BUTTON: 'item_industry_button',
+	ELEMENT_STAGE_BAR_BUTTON: 'stage_bar_btn',
 
 	ELEMENT_STREAM_CONTENT_WHATSAPP: 'stream_content_wa',
 	ELEMENT_WA_PREVIEW: 'wa_preview',

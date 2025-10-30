@@ -1,3 +1,4 @@
+import { Type } from 'main.core';
 import { PopupManager } from 'main.popup';
 import { mapGetters } from 'ui.vue3.vuex';
 
@@ -43,15 +44,6 @@ export const AddClient = {
 			providerModuleId: `${Model.Clients}/providerModuleId`,
 			isFeatureEnabled: `${Model.Interface}/isFeatureEnabled`,
 		}),
-		offsetLeft(): number
-		{
-			if (this.popupOffsetLeft === null)
-			{
-				return this.$refs.button.offsetWidth + 10;
-			}
-
-			return this.popupOffsetLeft;
-		},
 	},
 	methods: {
 		clickHandler(): void
@@ -63,9 +55,24 @@ export const AddClient = {
 				return;
 			}
 
+			if (this.showPopup)
+			{
+				return;
+			}
+
 			PopupManager.getPopupById(CLIENT_POPUP_ID)?.destroy();
 
 			this.showPopup = true;
+		},
+		getOffsetLeft(): number
+		{
+			const { left } = this.$refs.button.getBoundingClientRect();
+			if (window.innerWidth - left < 370)
+			{
+				return -317;
+			}
+
+			return Type.isNil(this.popupOffsetLeft) ? this.$refs.button.offsetWidth + 10 : this.popupOffsetLeft;
 		},
 	},
 	template: `
@@ -83,7 +90,7 @@ export const AddClient = {
 			v-if="showPopup"
 			:bindElement="this.$refs.button"
 			:offset-top="-100"
-			:offset-left="offsetLeft"
+			:offset-left="getOffsetLeft()"
 			@create="$emit('add', $event)"
 			@close="showPopup = false"
 		/>

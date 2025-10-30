@@ -291,7 +291,7 @@ export const UserCustomTagSelector = {
 				</div>
 				<div
 					v-else
-					class="b24-user-selector-user-add"
+					class="b24-user-selector-user-placeholder"
 					:data-id="'Add-' + testId"
 					@click="showDialog"
 				>

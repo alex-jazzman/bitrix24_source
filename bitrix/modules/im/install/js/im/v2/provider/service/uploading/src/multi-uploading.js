@@ -1,18 +1,16 @@
 import { Utils } from 'im.v2.lib.utils';
 import { Type } from 'main.core';
-import { getFilesFromDataTransfer, isFilePasted, UploaderFile } from 'ui.uploader.core';
+
 import { UploadingService } from './uploading';
 
-import type {
-	UploadFilesParams,
-	UploadFromClipboardParams,
-	UploadFromDragAndDrop,
-	UploadFromInputParams,
-} from './types/uploading';
+import type { UploaderFile } from 'ui.uploader.core';
+import type { UploadFilesParams, UploadParams } from './types/uploading';
 
 type AddFilesResult = {
 	uploaderFiles: Array<UploaderFile>,
 	uploaderId: string,
+	loadAllComplete: Promise<any>,
+	uploadAllComplete: Promise<any>,
 };
 
 type MakeChunksOptions<T> = {
@@ -22,8 +20,11 @@ type MakeChunksOptions<T> = {
 };
 
 export type MultiUploadingResult = {
+	uploadingId: string,
 	uploaderIds: Array<string>,
 	sourceFilesCount: number,
+	loadAllComplete: Promise<any>,
+	uploadAllComplete: Promise<any>,
 };
 
 const MAX_FILES_COUNT_IN_ONE_MESSAGE = 10;
@@ -65,114 +66,25 @@ export class MultiUploadingService
 		return UploadingService.getInstance();
 	}
 
-	async addFiles(params: UploadFilesParams): Promise<AddFilesResult>
+	#createUploadingId(): string
+	{
+		return Utils.text.getUuidV4();
+	}
+
+	async #addFiles(params: UploadFilesParams): Promise<AddFilesResult>
 	{
 		return this.#getUploadingService().addFiles(params);
 	}
 
-	async uploadFromInput(params: UploadFromInputParams): Promise<MultiUploadingResult>
+	async upload({ files, dialogId, autoUpload, sendAsFile }: UploadParams): Promise<MultiUploadingResult>
 	{
-		const { event, sendAsFile, autoUpload, dialogId } = params;
-		const rawFiles = Object.values(event.target.files);
-		const chunks: Array<Array<File>> = MultiUploadingService.makeChunks({
-			files: rawFiles,
-		});
-
-		const addFilesResults: Array<AddFilesResult> = await Promise.all(
-			chunks.map((chunk: Array<File>) => {
-				return this.addFiles({
-					files: chunk,
-					maxParallelLoads: MultiUploadingService.getMaxParallelLoads(chunks),
-					maxParallelUploads: MAX_PARALLEL_UPLOADS,
-					dialogId,
-					autoUpload,
-					sendAsFile,
-				});
-			}),
-		);
-
-		const uploaderIds: Array<string> = addFilesResults.map(({ uploaderId }) => {
-			return uploaderId;
-		});
-		const sourceFilesCount: number = rawFiles.length;
-
-		return {
-			uploaderIds,
-			sourceFilesCount,
-		};
-	}
-
-	async uploadFromClipboard(params: UploadFromClipboardParams): Promise<MultiUploadingResult>
-	{
-		const { clipboardEvent, dialogId, autoUpload, imagesOnly } = params;
-
-		const { clipboardData } = clipboardEvent;
-		if (!clipboardData || !isFilePasted(clipboardData))
-		{
-			return {
-				uploaderIds: [],
-				sourceFilesCount: 0,
-			};
-		}
-
-		clipboardEvent.preventDefault();
-
-		let files: Array<File> = await getFilesFromDataTransfer(clipboardData);
-		if (imagesOnly)
-		{
-			files = files.filter((file) => Utils.file.isImage(file.name));
-			if (imagesOnly.length === 0)
-			{
-				return {
-					uploaderIds: [],
-					sourceFilesCount: 0,
-				};
-			}
-		}
-
-		const chunks: Array<Array<File>> = MultiUploadingService.makeChunks({
+		const chunks = MultiUploadingService.makeChunks({
 			files,
 		});
 
 		const addFilesResults: Array<AddFilesResult> = await Promise.all(
 			chunks.map((chunk: Array<File>) => {
-				return this.addFiles({
-					files: chunk,
-					maxParallelLoads: MultiUploadingService.getMaxParallelLoads(chunks),
-					maxParallelUploads: MAX_PARALLEL_UPLOADS,
-					dialogId,
-					autoUpload,
-				});
-			}),
-		);
-
-		const uploaderIds: Array<string> = addFilesResults
-			.filter((addFilesResult: AddFilesResult) => {
-				return addFilesResult.uploaderFiles.length > 0;
-			})
-			.map(({ uploaderId }) => {
-				return uploaderId;
-			});
-		const sourceFilesCount: number = files.length;
-
-		return {
-			uploaderIds,
-			sourceFilesCount,
-		};
-	}
-
-	async uploadFromDragAndDrop(params: UploadFromDragAndDrop): Promise<MultiUploadingResult>
-	{
-		const { event, dialogId, autoUpload, sendAsFile } = params;
-
-		const rawFiles: Array<File> = await getFilesFromDataTransfer(event.dataTransfer);
-		const chunks: Array<Array<File>> = MultiUploadingService.makeChunks({
-			files: rawFiles,
-		});
-
-		const addFilesResults: Array<AddFilesResult> = await Promise.all(
-			chunks.map((chunk: Array<File>) => {
-				return this.addFiles({
+				return this.#addFiles({
 					files: chunk,
 					maxParallelLoads: MultiUploadingService.getMaxParallelLoads(chunks),
 					maxParallelUploads: MAX_PARALLEL_UPLOADS,
@@ -183,14 +95,30 @@ export class MultiUploadingService
 			}),
 		);
 
-		const uploaderIds: Array<string> = addFilesResults.map(({ uploaderId }) => {
-			return uploaderId;
+		const uploadingId: string = this.#createUploadingId();
+		const uploaderIds: Array<string> = [];
+		const loadCompletePromises: Array<Promise<any>> = [];
+		const uploadCompletePromises: Array<Promise<any>> = [];
+
+		addFilesResults.forEach(({ uploaderId, uploaderFiles, loadAllComplete, uploadAllComplete }) => {
+			if (Type.isArrayFilled(uploaderFiles))
+			{
+				uploaderIds.push(uploaderId);
+				loadCompletePromises.push(loadAllComplete);
+				uploadCompletePromises.push(uploadAllComplete);
+			}
 		});
-		const sourceFilesCount: number = rawFiles.length;
+
+		const loadAllComplete: Promise<any> = Promise.all(loadCompletePromises);
+		const uploadAllComplete: Promise<any> = Promise.all(uploadCompletePromises);
+		const sourceFilesCount: number = files.length;
 
 		return {
+			uploadingId,
 			uploaderIds,
 			sourceFilesCount,
+			loadAllComplete,
+			uploadAllComplete,
 		};
 	}
 }

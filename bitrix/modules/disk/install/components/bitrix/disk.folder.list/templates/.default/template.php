@@ -72,6 +72,7 @@ CJSCore::Init(array(
 	'clipboard',
 	'ui.hint',
 	'ui.tour',
+	'main.core',
 ));
 
 Asset::getInstance()->addCss('/bitrix/components/bitrix/disk.interface.grid/templates/.default/bitrix/main.interface.grid/.default/style.css');
@@ -198,20 +199,22 @@ if (!empty($arResult["PATH_TO_DISK_VOLUME"]))
 		'target' => $isInIframe? '_blank' : '',
 	);
 }
-$currentPage = $APPLICATION->GetCurPageParam('', array($arResult['GRID']["SORT_VARS"]["order"], $arResult['GRID']["SORT_VARS"]["by"]));
-foreach($arResult['GRID']['COLUMN_FOR_SORTING'] as $name => $column)
-{
-	$jsSortFields[] = [
-		'field' => $name,
-		'label' => $column['LABEL'],
-	];
-}
 
 $byColumn = key($arResult['GRID']['SORT']);
 $direction = $arResult['GRID']['SORT'][$byColumn];
 $inverseDirection = mb_strtolower($direction) == 'desc'? 'asc' : 'desc';
 $sortLabel = $arResult['GRID']['COLUMN_FOR_SORTING'][$byColumn]['LABEL'];
 $isMixSorting = $arResult['GRID']['SORT_MODE'] === FolderListOptions::SORT_MODE_MIX;
+$currentPage = $APPLICATION->GetCurPageParam('', array($arResult['GRID']["SORT_VARS"]["order"], $arResult['GRID']["SORT_VARS"]["by"]));
+
+foreach($arResult['GRID']['COLUMN_FOR_SORTING'] as $name => $column)
+{
+	$jsSortFields[] = [
+		'field' => $name,
+		'label' => $column['LABEL'],
+		'active' => $name === $byColumn,
+	];
+}
 
 if (!empty($arResult['STORAGE']['FOR_SOCNET_GROUP']))
 {
@@ -504,7 +507,8 @@ BX.message({
 	DISK_FOLDER_LIST_COLLABER_TOUR_ON_ADD_BUTTON_TITLE: '<?= GetMessageJS('DISK_FOLDER_LIST_COLLABER_TOUR_ON_ADD_BUTTON_TITLE')?>',
 	DISK_FOLDER_LIST_ACT_DOWNLOAD_ERROR: '<?=GetMessageJS("DISK_FOLDER_LIST_ACT_DOWNLOAD_ERROR")?>',
 	DISK_FOLDER_LIST_COLLABER_TOUR_ON_ADD_BUTTON_TEXT: '<?= GetMessageJS('DISK_FOLDER_LIST_COLLABER_TOUR_ON_ADD_BUTTON_TEXT')?>',
-	DISK_FOLDER_LIST_UNIFIED_RIGHT_USERS: '<?= GetMessageJS('DISK_FOLDER_LIST_UNIFIED_RIGHT_USERS')?>'
+	DISK_FOLDER_LIST_UNIFIED_RIGHT_USERS: '<?= GetMessageJS('DISK_FOLDER_LIST_UNIFIED_RIGHT_USERS')?>',
+	DISK_FOLDER_LIST_COLLABER_HINT_FOR_READONLY_FOLDER_IN_COLLAB: '<?= GetMessageJS('DISK_FOLDER_LIST_COLLABER_HINT_FOR_READONLY_FOLDER_IN_COLLAB')?>',
 });
 </script>
 
@@ -599,6 +603,7 @@ BX(function () {
 		isUserCollaber: <?= $arResult['IS_USER_COLLABER']? 'true' : 'false' ?>,
 		collaberTourOnAddButtonId: '<?= CUtil::JSEscape($arResult['COLLABER_TOUR_ON_ADD_BUTTON_ID']) ?>',
 		isCollaberTourOnAddButtonViewed: <?= $arResult['IS_COLLABER_TOUR_ON_ADD_BUTTON_VIEWED']? 'true' : 'false' ?>,
+		readonlyCollabFolderStateCookieName: '<?= CUtil::JSEscape($arResult['READONLY_COLLAB_FOLDER_STATE_COOKIE_NAME']) ?>',
 	});
 
 	var btnSettings = document.querySelector('.js-disk-settings-button');
@@ -654,32 +659,6 @@ BX(function () {
 		}
 	});
 
-	<?php
-	if(\Bitrix\Disk\Document\Flipchart\Configuration::isBoardsEnabled())
-	{
-	?>
-	menuItemsLists.push({
-		text: "<?= CUtil::JSEscape(Loc::getMessage('DISK_FOLDER_LIST_TITLE_ADD_BOARD')) ?>",
-		onclick: function(event, popupItem){
-			popupItem.getMenuWindow().close();
-			var newTab = window.open('', '_blank');
-			BX.Disk['FolderListClass_<?= $component->getComponentId() ?>'].runCreatingFile('board', 'l', response => {
-				BX.UI.Analytics.sendData({
-					event: 'create',
-					tool: 'boards',
-					category: 'boards',
-					c_element: 'disk_page',
-				});
-				if (response.openUrl) {
-					newTab.location.href = response.openUrl;
-				}
-			});
-		}
-	});
-	<?php
-	}
-	?>
-
 	<?
 	if (!empty($arResult['DOCUMENT_HANDLERS']))
 	{
@@ -715,6 +694,32 @@ BX(function () {
 		<? }
 	?>
 	<?
+	}
+	?>
+
+	<?php
+	if(\Bitrix\Disk\Document\Flipchart\Configuration::isBoardsEnabled())
+	{
+	?>
+	menuItemsLists.splice(3, 0,{
+		text: "<?= CUtil::JSEscape(Loc::getMessage('DISK_FOLDER_LIST_TITLE_ADD_BOARD')) ?>",
+		onclick: function(event, popupItem){
+			popupItem.getMenuWindow().close();
+			var newTab = window.open('', '_blank');
+			BX.Disk['FolderListClass_<?= $component->getComponentId() ?>'].runCreatingFile('board', 'l', response => {
+				BX.UI.Analytics.sendData({
+					event: 'create',
+					tool: 'boards',
+					category: 'boards',
+					c_element: 'disk_page',
+				});
+				if (response.openUrl) {
+					newTab.location.href = response.openUrl;
+				}
+			});
+		}
+	});
+	<?php
 	}
 	?>
 

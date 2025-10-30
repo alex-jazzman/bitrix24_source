@@ -51,10 +51,20 @@ return [
 				"analytics" => Main\Loader::includeModule('crm')
 					? Crm\WebForm\Helper::getExternalAnalyticsData(null, true)
 					: [],
-				"recaptcha" => [
-					'key' => Main\Loader::includeModule('crm')
-						? (Crm\WebForm\ReCaptcha::getKey(2) ?: Crm\WebForm\ReCaptcha::getDefaultKey(2))
-						: null
+				"captcha" => [
+					'service' => Bitrix\Main\Config\Option::get('crm', 'crm_form_captcha_service'),
+					'recaptcha' => [
+						'key' => Main\Loader::includeModule('crm')
+							? (Crm\WebForm\ReCaptcha::getKey(2) ?: Crm\WebForm\ReCaptcha::getDefaultKey(2))
+							: null
+						,
+					],
+					'yandexCaptcha' => [
+						'key' => Main\Loader::includeModule('crm')
+							? Crm\WebForm\YandexCaptcha::getKey() ?: Crm\WebForm\YandexCaptcha::getDefaultKey()
+							: null
+						,
+					],
 				],
 				"resourcebooking" => [
 					'link' => Main\Loader::includeModule('crm')

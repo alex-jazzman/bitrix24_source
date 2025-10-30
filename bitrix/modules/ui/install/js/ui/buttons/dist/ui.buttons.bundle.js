@@ -1754,7 +1754,8 @@ this.BX = this.BX || {};
 	        if (_classStaticPrivateMethodGet(this, ButtonManager$$1, _getCounter).call(this, counterNode)) {
 	          var _counterNode;
 	          options.rightCounter = {
-	            value: _classStaticPrivateMethodGet(this, ButtonManager$$1, _getCounter).call(this, counterNode)
+	            value: _classStaticPrivateMethodGet(this, ButtonManager$$1, _getCounter).call(this, counterNode),
+	            style: _classStaticPrivateMethodGet(this, ButtonManager$$1, _getCounterStyle).call(this, counterNode)
 	          };
 	          options.counterNode = undefined;
 	          options.counter = undefined;
@@ -1873,6 +1874,12 @@ this.BX = this.BX || {};
 	    return main_core.Type.isNumber(counter) ? counter : textContent;
 	  }
 	  return null;
+	}
+	function _getCounterStyle(counterNode) {
+	  if (!main_core.Type.isDomNode(counterNode)) {
+	    return null;
+	  }
+	  return _classStaticPrivateMethodGet(this, ButtonManager$$1, _getEnumProp).call(this, counterNode, ui_cnt.CounterStyle);
 	}
 	function _getEnumProp(node, enumeration) {
 	  for (let key in enumeration) {

@@ -57,6 +57,8 @@ BX.namespace('Tasks.Component');
 		this.isExtranetUser = parameters.isExtranetUser;
 		this.canEditTask = parameters.canEditTask;
 
+		this.canCreateFlow = parameters.canCreateFlow;
+
 		BX.addCustomEvent(window, 'tasksTaskEvent', this.onTaskEvent.bind(this));
 		BX.addCustomEvent('SidePanel.Slider:onClose', this.onSliderClose.bind(this, false));
 		BX.addCustomEvent('SidePanel.Slider:onCloseByEsc', this.onSliderClose.bind(this, true));
@@ -93,6 +95,24 @@ BX.namespace('Tasks.Component');
 
 			this.toggleFooterWrap(true);
 		}.bind(this));
+
+		const projectButtonAdd = document.querySelector('#bx-component-scope-bitrix_tasks_widget_member_selectorprojectlink_5');
+		if (BX.type.isElementNode(projectButtonAdd))
+		{
+			BX.Event.bind(projectButtonAdd, 'click', () => {
+				BX.Runtime.loadExtension('ui.analytics').then(() => {
+					BX.UI.Analytics.sendData({
+						tool: 'tasks',
+						category: 'task_operations',
+						event: 'add_project',
+						type: 'task',
+						section: 'tasks',
+						element: 'project_button',
+						status: 'success',
+					});
+				});
+			});
+		}
 
 		this.initFlowSelector();
 		this.initFavorite();
@@ -136,9 +156,9 @@ BX.namespace('Tasks.Component');
 		const selectorParams = {
 			taskId: this.taskId,
 			canEditTask: this.canEditTask,
-			isExtranet: this.isExtranetUser,
 			toggleFlowParams: this.toggleFlowParams,
 			flowParams: this.flowParams,
+			canCreateFlow: this.canCreateFlow,
 		};
 
 		this.flowSelector = new BX.Tasks.Flow.EntitySelector(selectorParams);

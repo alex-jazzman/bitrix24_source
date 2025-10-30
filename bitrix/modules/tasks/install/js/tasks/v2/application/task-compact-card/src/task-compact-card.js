@@ -35,9 +35,7 @@ export class TaskCompactCard
 		this.#adjustPosition();
 		this.#subscribe();
 
-		const dragHandle = Tag.render`
-			<div class="tasks-compact-card-popup-drag-handle"></div>
-		`;
+		const dragHandle = Tag.render`<div class="tasks-compact-card-popup-drag-handle"></div>`;
 		Dom.append(dragHandle, popup.getContentContainer());
 		this.#popup.setDraggable({
 			element: dragHandle,

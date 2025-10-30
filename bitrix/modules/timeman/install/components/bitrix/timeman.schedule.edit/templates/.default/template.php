@@ -209,18 +209,6 @@ else
 								htmlspecialcharsbx(Loc::getMessage('TIMEMAN_SCHEDULE_EDIT_REPORT_ALLOW_BROWSER'));
 								?></label>
 						</div>
-						<? if (\Bitrix\Main\Loader::includeModule('faceid') && \Bitrix\FaceId\FaceId::isAvailable()): ?>
-							<div class="timeman-schedule-form-limit-item">
-								<input class="timeman-schedule-form-violation-hidden-input" type="checkbox" id="Bitrix24.Time"
-										data-role="startTimeAllowedDevice"
-									<?= $scheduleForm->isB24TimeDeviceAllowed() || $arResult['isNewSchedule'] ? 'checked' : ''; ?>
-										name="<?= $scheduleFormName . '[allowedDevices][b24time]'; ?>"
-								>
-								<label class="timeman-schedule-form-violation-hidden-label" for="Bitrix24.Time"><?=
-									htmlspecialcharsbx(Loc::getMessage('TIMEMAN_SCHEDULE_EDIT_REPORT_ALLOW_B24_TIME'));
-									?></label>
-							</div>
-						<? endif; ?>
 						<div class="timeman-schedule-form-limit-item">
 							<input class="timeman-schedule-form-violation-hidden-input" type="checkbox" id="mobile"
 									data-role="startTimeAllowedDevice"

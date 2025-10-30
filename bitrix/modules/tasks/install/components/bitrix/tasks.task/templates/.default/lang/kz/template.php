@@ -80,6 +80,7 @@ $MESS["TASKS_TASK_COMPONENT_TEMPLATE_NO_WORK_DAYS_ERROR"] = "Порталыңы�
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_OF_DAYS"] = "күн";
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_OF_HOURS"] = "сағат";
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_OF_MINUTES"] = "минут";
+$MESS["TASKS_TASK_COMPONENT_TEMPLATE_ONCLOSE_POPUP_MESSAGE"] = "Міндетті сақтамай жабу керек пе? Барлық деректер мен баптаулар жоғалады";
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_ORIGINATOR"] = "Қоюшы";
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_PARAMETER_1"] = "Мерзімдер қосымша міндеттердің мерзімдерімен анықталады";
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_PARAMETER_2"] = "Қосымша міндеттерді аяқтаған кезде міндетті автоматты түрде аяқтау (және керісінше)";

@@ -1,7 +1,6 @@
 import { Core } from 'im.v2.application.core';
 import { ChannelManager } from 'im.v2.lib.channel';
 import { CopilotManager } from 'im.v2.lib.copilot';
-import { AiAssistantManager } from 'im.v2.lib.ai-assistant';
 import { ChatType, MessageComponent } from 'im.v2.const';
 
 // noinspection ES6PreferShortImport
@@ -145,10 +144,7 @@ export class MessageMenuManager
 
 	#isAiAssistant(context: MessageMenuContext): boolean
 	{
-		const aiAssistantManager = new AiAssistantManager();
-
-		return aiAssistantManager.isAiAssistantChat(context.dialogId)
-			|| aiAssistantManager.isAiAssistantBot(context.dialogId);
+		return Core.getStore().getters['users/bots/isAiAssistant'](context.dialogId);
 	}
 
 	#hasMenuForMessageType(messageType: MessageType): boolean

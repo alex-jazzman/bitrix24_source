@@ -23,7 +23,7 @@ class GroupDialog
 		return this;
 	}
 
-	async init(): void
+	init(): void
 	{
 		this.#dialog ??= this.#createDialog();
 	}

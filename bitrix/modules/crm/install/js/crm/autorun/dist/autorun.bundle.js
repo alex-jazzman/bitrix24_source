@@ -1256,7 +1256,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      PARAMS: params,
 	      sessid: BX.bitrix_sessid()
 	    };
-	    babelHelpers.classPrivateFieldLooseBase(this, _sendAnalyticsData)[_sendAnalyticsData]('attempt');
 	    main_core.ajax({
 	      url: this._serviceUrl,
 	      method: 'POST',

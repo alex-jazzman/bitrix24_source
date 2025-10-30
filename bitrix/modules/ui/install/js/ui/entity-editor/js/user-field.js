@@ -330,6 +330,11 @@ if(typeof BX.UI.EntityUserFieldManager === "undefined")
 			fieldData["ENTITY_ID"] = this._fieldEntityId;
 			fieldData["SIGNATURE"] = this._creationSignature;
 
+			if (BX.type.isNotEmptyString(fieldData['HELP_MESSAGE']))
+			{
+				this.addFieldLabel('HELP_MESSAGE', fieldData['HELP_MESSAGE'], fieldData);
+			}
+
 			if(BX.type.isNotEmptyString(fieldData["EDIT_FORM_LABEL"]))
 			{
 				this.addFieldLabel("EDIT_FORM_LABEL", fieldData["EDIT_FORM_LABEL"], fieldData);
@@ -1961,6 +1966,18 @@ if(typeof BX.UI.EntityEditorUserFieldConfigurator === "undefined")
 		this._showAlwaysCheckBox.checked = isNew
 			? BX.prop.getBoolean(this._settings, "showAlways", true)
 			: this._field.checkOptionFlag(BX.UI.EntityEditorControlOptions.showAlways);
+		//endregion
+
+		//region Tooltip configurator
+		if (this.tooltipConfigurator)
+		{
+			this.tooltipConfiguratorCheckBox = this.createOption({
+				caption: this.tooltipConfigurator.getCaption(),
+				elements: [this.tooltipConfigurator.getInput().prepareLayout()],
+			});
+			this.tooltipConfigurator.getInput().adjustVisibility();
+			this.tooltipConfigurator.setCheckBox(this.tooltipConfiguratorCheckBox);
+		}
 		//endregion
 
 		if (

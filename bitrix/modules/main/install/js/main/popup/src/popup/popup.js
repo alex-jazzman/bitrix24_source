@@ -166,7 +166,6 @@ export default class Popup extends EventEmitter
 		this.autoHide = params.autoHide === true;
 		this.disableScroll = params.disableScroll === true || params.isScrollBlock === true;
 		this.autoHideHandler = Type.isFunction(params.autoHideHandler) ? params.autoHideHandler : null;
-		this.handleAutoHide = this.handleAutoHide.bind(this);
 		this.handleOverlayClick = this.handleOverlayClick.bind(this);
 		this.isAutoHideBinded = false;
 		this.closeByEsc = params.closeByEsc === true;
@@ -211,7 +210,6 @@ export default class Popup extends EventEmitter
 
 		this.handleDocumentMouseMove = this.handleDocumentMouseMove.bind(this);
 		this.handleDocumentMouseUp = this.handleDocumentMouseUp.bind(this);
-		this.handleDocumentKeyUp = this.handleDocumentKeyUp.bind(this);
 		this.handleResizeWindow = this.handleResizeWindow.bind(this);
 		this.handleResize = this.handleResize.bind(this);
 		this.handleMove = this.handleMove.bind(this);
@@ -1061,7 +1059,9 @@ export default class Popup extends EventEmitter
 		this.targetContainer = newTargetContainer;
 		if (this.getPopupContainer())
 		{
+			ZIndexManager.unregister(this.getPopupContainer());
 			this.getTargetContainer().append(this.getPopupContainer());
+			ZIndexManager.register(this.getPopupContainer());
 		}
 
 		if (this.overlay)
@@ -1285,7 +1285,7 @@ export default class Popup extends EventEmitter
 	{
 		if (this.closeByEsc && !this.isCloseByEscBinded)
 		{
-			Event.bind(document, 'keyup', this.handleDocumentKeyUp);
+			Event.bind(this.targetContainer.ownerDocument, 'keyup', this.handleDocumentKeyUp, true);
 			this.isCloseByEscBinded = true;
 		}
 	}
@@ -1297,7 +1297,7 @@ export default class Popup extends EventEmitter
 	{
 		if (this.isCloseByEscBinded)
 		{
-			Event.unbind(document, 'keyup', this.handleDocumentKeyUp);
+			Event.unbind(this.targetContainer.ownerDocument, 'keyup', this.handleDocumentKeyUp, true);
 			this.isCloseByEscBinded = false;
 		}
 	}
@@ -1339,11 +1339,11 @@ export default class Popup extends EventEmitter
 			{
 				if (this.isCompatibleMode())
 				{
-					Event.bind(document, 'click', this.handleAutoHide);
+					Event.bind(this.targetContainer.ownerDocument, 'click', this.handleAutoHide);
 				}
 				else
 				{
-					document.addEventListener('click', this.handleAutoHide, true);
+					this.targetContainer.ownerDocument.addEventListener('click', this.handleAutoHide, true);
 				}
 			}
 		}
@@ -1371,11 +1371,11 @@ export default class Popup extends EventEmitter
 			{
 				if (this.isCompatibleMode())
 				{
-					Event.unbind(document, 'click', this.handleAutoHide);
+					Event.unbind(this.targetContainer.ownerDocument, 'click', this.handleAutoHide);
 				}
 				else
 				{
-					document.removeEventListener('click', this.handleAutoHide, true);
+					this.targetContainer.ownerDocument.removeEventListener('click', this.handleAutoHide, true);
 				}
 			}
 		}
@@ -1384,8 +1384,7 @@ export default class Popup extends EventEmitter
 	/**
 	 * @private
 	 */
-	handleAutoHide(event): void
-	{
+	handleAutoHide = (event): void => {
 		if (this.isDestroyed())
 		{
 			return;
@@ -1402,7 +1401,7 @@ export default class Popup extends EventEmitter
 		{
 			this._tryCloseByEvent(event);
 		}
-	}
+	};
 
 	/**
 	 * @private
@@ -1834,7 +1833,7 @@ export default class Popup extends EventEmitter
 
 	isShown(): boolean
 	{
-		return !this.isDestroyed() && this.getPopupContainer().style.display === 'block';
+		return !this.isDestroyed() && this.getPopupContainer()?.style.display === 'block';
 	}
 
 	destroy(): void
@@ -2115,15 +2114,14 @@ export default class Popup extends EventEmitter
 	/**
 	 * @private
 	 */
-	handleDocumentKeyUp(event): void
-	{
+	handleDocumentKeyUp = (event): void => {
 		if (event.keyCode === 27)
 		{
 			checkEscPressed(this.getZindex(), () => {
 				this.close();
 			});
 		}
-	}
+	};
 
 	/**
 	 * @private

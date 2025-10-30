@@ -10,6 +10,6 @@ export type RuleOptions = {
 	allowCrossDomain?: boolean,
 	mobileFriendly?: boolean,
 	loader?: string,
-	options?: SliderOptions,
+	options?: SliderOptions | (link: LinkOptions) => SliderOptions,
 	minimizeOptions: (link: LinkOptions) => MinimizeOptions,
 };

@@ -45,7 +45,8 @@ this.BX.Booking = this.BX.Booking || {};
 	      createdBy: 0,
 	      createdAt: 0,
 	      updatedAt: 0,
-	      deletedAt: 0
+	      deletedAt: 0,
+	      entities: []
 	    };
 	  }
 	  getGetters() {

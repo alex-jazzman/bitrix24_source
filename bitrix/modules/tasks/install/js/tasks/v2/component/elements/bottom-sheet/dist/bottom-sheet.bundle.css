@@ -3,17 +3,15 @@
 	z-index: 110;
 	position: absolute;
 	inset: 0;
-	padding: 15px 24px 22px 24px;
+	padding: 18px 24px 24px 24px;
 	border-radius: 18px 18px 0 0;
 	background: var(--ui-color-base-8);
-	box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.04), 0 8px 24px 0 rgba(0, 0, 0, 0.30);
-	transform-style: preserve-3d;
 	transition: top 200ms, right 200ms;
 	top: var(--bottom-sheet-top);
 }
 
 .b24-bottom-sheet.--check-list {
-	padding: 15px 0 22px 0;
+	padding: 0 0 22px 0;
 }
 
 .b24-bottom-sheet.--expanded {
@@ -25,12 +23,25 @@
 	content: '';
 	position: absolute;
 	z-index: -1;
-	transform: translateZ(-1px);
 	-webkit-backdrop-filter: blur(2px);
 	        backdrop-filter: blur(2px);
 	inset: -10000px;
 	opacity: 0;
 	transition: opacity 300ms;
+	pointer-events: none;
+}
+
+.b24-bottom-sheet::after {
+	content: '';
+	position: absolute;
+	z-index: -1;
+	inset: 0;
+	opacity: 0;
+	border-radius: 18px 18px 0 0;
+	background: var(--ui-color-bg-content-primary);
+	box-shadow: 0 8px 17px 0 rgba(0, 0, 0, 0.21);
+	transition: opacity 300ms;
+	pointer-events: none;
 }
 
 .b24-bottom-sheet:not(.--expanded):before {
@@ -38,7 +49,14 @@
 }
 
 .b24-bottom-sheet.--expanded:before {
+	background-color: rgba(0, 51, 102, 0.2);
+	transition: none;
+}
+
+.b24-bottom-sheet.--expanded::after,
+.b24-bottom-sheet.--expanded:before {
 	opacity: 1;
+	pointer-events: auto;
 }
 
 .b24-bottom-sheet-enter-active,

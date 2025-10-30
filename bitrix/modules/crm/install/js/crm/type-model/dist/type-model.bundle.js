@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,main_core,crm_model) {
+(function (exports,crm_model,main_core) {
 	'use strict';
 
 	/**
@@ -97,6 +97,12 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	  setIsObserversEnabled(isObserversEnabled) {
 	    this.data.isObserversEnabled = isObserversEnabled === true;
+	  }
+	  getIsRecurringEnabled() {
+	    return this.data.isRecurringEnabled;
+	  }
+	  setIsRecurringEnabled(isRecurringEnabled) {
+	    this.data.isRecurringEnabled = isRecurringEnabled === true;
 	  }
 	  getIsRecyclebinEnabled() {
 	    return this.data.isRecyclebinEnabled;
@@ -215,11 +221,11 @@ this.BX.Crm = this.BX.Crm || {};
 	    });
 	  }
 	  static getBooleanFieldNames() {
-	    return ['isCategoriesEnabled', 'isStagesEnabled', 'isBeginCloseDatesEnabled', 'isClientEnabled', 'isLinkWithProductsEnabled', 'isCrmTrackingEnabled', 'isMycompanyEnabled', 'isDocumentsEnabled', 'isSourceEnabled', 'isUseInUserfieldEnabled', 'isObserversEnabled', 'isRecyclebinEnabled', 'isAutomationEnabled', 'isBizProcEnabled', 'isSetOpenPermissions', 'isCountersEnabled'];
+	    return ['isCategoriesEnabled', 'isStagesEnabled', 'isBeginCloseDatesEnabled', 'isClientEnabled', 'isLinkWithProductsEnabled', 'isCrmTrackingEnabled', 'isMycompanyEnabled', 'isDocumentsEnabled', 'isSourceEnabled', 'isUseInUserfieldEnabled', 'isObserversEnabled', 'isRecurringEnabled', 'isRecyclebinEnabled', 'isAutomationEnabled', 'isBizProcEnabled', 'isSetOpenPermissions', 'isCountersEnabled'];
 	  }
 	}
 
 	exports.TypeModel = TypeModel;
 
-}((this.BX.Crm.Models = this.BX.Crm.Models || {}),BX,BX.Crm));
+}((this.BX.Crm.Models = this.BX.Crm.Models || {}),BX.Crm,BX));
 //# sourceMappingURL=type-model.bundle.js.map

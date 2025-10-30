@@ -32,6 +32,10 @@ $return = [
 			'name' => Loc::getMessage('LANDING_BLOCK_WIDGET_70_7_NODE_TEXT'),
 			'type' => 'text',
 		],
+		'.landing-block-node-list-item-icon' => [
+			'name' => Loc::getMessage('LANDING_BLOCK_WIDGET_70_7_NODE_ARROW'),
+			'type' => 'icon',
+		],
 		'.landing-block-node-list-item-text' => [
 			'name' => Loc::getMessage('LANDING_BLOCK_WIDGET_70_7_NODE_TEXT'),
 			'type' => 'text',
@@ -86,9 +90,9 @@ $return = [
 				'name' => Loc::getMessage('LANDING_BLOCK_WIDGET_70_7_NODE_TEXT'),
 				'type' => ['typo'],
 			],
-			'.landing-block-node-list-item-arrow' => [
+			'.landing-block-node-list-item-icon' => [
 				'name' => Loc::getMessage('LANDING_BLOCK_WIDGET_70_7_NODE_ARROW'),
-				'type' => ['background-color-after', 'background-color-before'],
+				'type' => ['color', 'font-size'],
 			],
 			'.landing-block-node-list-item-text' => [
 				'name' => Loc::getMessage('LANDING_BLOCK_WIDGET_70_7_NODE_ITEM'),

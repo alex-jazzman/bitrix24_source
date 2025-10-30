@@ -113,7 +113,7 @@ this.BX.Booking = this.BX.Booking || {};
 	    text: String
 	  },
 	  template: `
-		<span class="booking--help-desk-nowrap">{{ text }}</span>
+		{{ text }}
 	`
 	};
 

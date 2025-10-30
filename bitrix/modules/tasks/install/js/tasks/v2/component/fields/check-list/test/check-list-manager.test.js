@@ -965,6 +965,427 @@ describe('CheckListManager', () => {
 				assert.strictEqual(result?.id, 'parent3');
 			});
 		});
+
+		describe('getChildWithEmptyTitle', () => {
+			it('should return null when no children exist', () => {
+				const result = manager.getChildWithEmptyTitle('non-existent-id');
+
+				assert.strictEqual(result, null);
+			});
+
+			it('should return null when no children have empty title', () => {
+				const parent = demoCheckLists.find(item => item.parentId === 0);
+				const result = manager.getChildWithEmptyTitle(parent.id);
+
+				assert.strictEqual(result, null);
+			});
+
+			it('should work with mixed sort indexes', () => {
+				const parentId = Text.getRandom();
+				const items = [
+					createCheckListItem(parentId, { id: 'child1', title: '', sortIndex: 100 }),
+					createCheckListItem(parentId, { id: 'child2', title: 'Normal', sortIndex: 50 }),
+					createCheckListItem(parentId, { id: 'child3', title: '', sortIndex: 200 }),
+				];
+
+				const testManager = new CheckListManager({
+					computed: { checkLists: () => items }
+				});
+
+				const result = testManager.getChildWithEmptyTitle(parentId);
+
+				assert.strictEqual(result?.id, 'child3');
+			});
+
+			it('should handle empty string vs whitespace correctly', () => {
+				const parentId = Text.getRandom();
+				const items = [
+					createCheckListItem(parentId, { id: 'child1', title: '   ', sortIndex: 0 }),
+					createCheckListItem(parentId, { id: 'child2', title: '', sortIndex: 1 }),
+				];
+
+				const testManager = new CheckListManager({
+					computed: { checkLists: () => items }
+				});
+
+				const result = testManager.getChildWithEmptyTitle(parentId);
+
+				assert.strictEqual(result?.id, 'child2');
+			});
+		});
+
+		describe('isItemCollapsed', () => {
+			it('should respect localCollapsedState when set', () => {
+				const item = createCheckListItem(0, {
+					localCollapsedState: true,
+					collapsed: false,
+					expanded: true,
+				});
+
+				assert.strictEqual(manager.isItemCollapsed(item, true, 0), true);
+				assert.strictEqual(manager.isItemCollapsed(item, false, 0), true);
+			});
+
+			it('should return false in non-preview mode regardless of other conditions', () => {
+				const item = createCheckListItem(0, {
+					localCollapsedState: null,
+					collapsed: true,
+					expanded: false,
+				});
+
+				assert.strictEqual(manager.isItemCollapsed(item, false, 0), false);
+				assert.strictEqual(manager.isItemCollapsed(item, false, 1), false);
+			});
+
+			it('should return true when collapsed=true and expanded=false in preview mode', () => {
+				const item = createCheckListItem(0, {
+					localCollapsedState: null,
+					collapsed: true,
+					expanded: false,
+				});
+
+				assert.strictEqual(manager.isItemCollapsed(item, true, 0), true);
+			});
+
+			it('should return false when expanded=true in preview mode', () => {
+				const item = createCheckListItem(0, {
+					localCollapsedState: null,
+					collapsed: true,
+					expanded: true,
+				});
+
+				assert.strictEqual(manager.isItemCollapsed(item, true, 0), false);
+			});
+
+			it('should return false for first item when no state is set', () => {
+				const item = createCheckListItem(0, {
+					localCollapsedState: null,
+					collapsed: undefined,
+					expanded: undefined,
+				});
+
+				assert.strictEqual(manager.isItemCollapsed(item, true, 0), false);
+			});
+
+			it('should return true for non-first items when no state is set', () => {
+				const item = createCheckListItem(0, {
+					localCollapsedState: null,
+					collapsed: undefined,
+					expanded: undefined,
+				});
+
+				assert.strictEqual(manager.isItemCollapsed(item, true, 1), true);
+				assert.strictEqual(manager.isItemCollapsed(item, true, 2), true);
+			});
+
+			it('should prioritize expanded over collapsed when both are set', () => {
+				const item = createCheckListItem(0, {
+					localCollapsedState: null,
+					collapsed: true,
+					expanded: true,
+				});
+
+				assert.strictEqual(manager.isItemCollapsed(item, true, 0), false);
+			});
+
+			it('should handle undefined collapsed/expanded fields', () => {
+				const item = createCheckListItem(0, {
+					localCollapsedState: null,
+					collapsed: undefined,
+					expanded: undefined,
+				});
+
+				assert.strictEqual(manager.isItemCollapsed(item, true, 0), false);
+				assert.strictEqual(manager.isItemCollapsed(item, true, 1), true);
+			});
+
+			it('should handle null collapsed/expanded fields', () => {
+				const item = createCheckListItem(0, {
+					localCollapsedState: null,
+					collapsed: null,
+					expanded: null,
+				});
+
+				assert.strictEqual(manager.isItemCollapsed(item, true, 0), false);
+				assert.strictEqual(manager.isItemCollapsed(item, true, 1), true);
+			});
+		});
+
+		describe('getRootParentByChildId', () => {
+			it('should return the item itself for root items (parentId === 0)', () => {
+				const rootItem = demoCheckLists.find(item => item.parentId === 0);
+				const result = manager.getRootParentByChildId(rootItem.id);
+
+				assert.strictEqual(result?.id, rootItem.id);
+			});
+
+			it('should return correct root parent for direct children', () => {
+				const rootItem = demoCheckLists.find(item => item.parentId === 0);
+				const childItem = demoCheckLists.find(item => item.parentId === rootItem.id);
+
+				const result = manager.getRootParentByChildId(childItem.id);
+
+				assert.strictEqual(result?.id, rootItem.id);
+			});
+
+			it('should return correct root parent for nested items (2+ levels deep)', () => {
+				const rootItem = demoCheckLists.find(item => item.parentId === 0);
+				const childItem = demoCheckLists.find(item => item.parentId === rootItem.id);
+				const nestedItem = demoCheckLists.find(item => item.parentId === childItem.id);
+
+				if (nestedItem)
+				{
+					const result = manager.getRootParentByChildId(nestedItem.id);
+
+					assert.strictEqual(result?.id, rootItem.id);
+				}
+				else
+				{
+					assert.fail('Nested item not found in demo data');
+				}
+			});
+
+			it('should return null for non-existent item', () => {
+				const result = manager.getRootParentByChildId('non-existent-id');
+
+				assert.strictEqual(result, null);
+			});
+
+			it('should handle circular references safely', () => {
+				const item1 = createCheckListItem(0, { id: 'item1' });
+				const item2 = createCheckListItem('item1', { id: 'item2' });
+
+				item1.parentId = 'item2';
+
+				const testManager = new CheckListManager({
+					computed: {
+						checkLists: () => [item1, item2],
+					},
+				});
+
+				let result;
+				assert.doesNotThrow(() => {
+					result = testManager.getRootParentByChildId('item2');
+				});
+
+				assert(result === null || result?.id === 'item1');
+			});
+
+			it('should return null when parent chain is broken', () => {
+				const orphanItem = createCheckListItem('missing-parent', { id: 'orphan' });
+				const testManager = new CheckListManager({
+					computed: {
+						checkLists: () => [orphanItem],
+					},
+				});
+
+				const result = testManager.getRootParentByChildId('orphan');
+
+				assert.strictEqual(result, null);
+			});
+
+			it('should work with complex nested structures', () => {
+				const root = createCheckListItem(0, { id: 'root' });
+				const parent1 = createCheckListItem('root', { id: 'parent1' });
+				const child1 = createCheckListItem('parent1', { id: 'child1' });
+				const grandchild1 = createCheckListItem('child1', { id: 'grandchild1' });
+
+				const parent2 = createCheckListItem('root', { id: 'parent2' });
+				const child2 = createCheckListItem('parent2', { id: 'child2' });
+
+				const testManager = new CheckListManager({
+					computed: {
+						checkLists: () => [root, parent1, child1, grandchild1, parent2, child2],
+					},
+				});
+
+				assert.strictEqual(testManager.getRootParentByChildId('grandchild1')?.id, 'root');
+				assert.strictEqual(testManager.getRootParentByChildId('child2')?.id, 'root');
+				assert.strictEqual(testManager.getRootParentByChildId('parent1')?.id, 'root');
+				assert.strictEqual(testManager.getRootParentByChildId('root')?.id, 'root');
+			});
+
+			it('should handle multiple root items correctly', () => {
+				const root1 = createCheckListItem(0, { id: 'root1' });
+				const root2 = createCheckListItem(0, { id: 'root2' });
+				const childOfRoot1 = createCheckListItem('root1', { id: 'child1' });
+				const childOfRoot2 = createCheckListItem('root2', { id: 'child2' });
+
+				const testManager = new CheckListManager({
+					computed: {
+						checkLists: () => [root1, root2, childOfRoot1, childOfRoot2],
+					},
+				});
+
+				assert.strictEqual(testManager.getRootParentByChildId('child1')?.id, 'root1');
+				assert.strictEqual(testManager.getRootParentByChildId('child2')?.id, 'root2');
+			});
+		});
+
+		describe('expandIdsWithChildren', () => {
+			let manager;
+			let demoCheckLists;
+
+			beforeEach(() => {
+				demoCheckLists = [
+					createCheckListItem(0, { id: 'root1' }),
+					createCheckListItem('root1', { id: 'child1' }),
+					createCheckListItem('child1', { id: 'grandchild1' }),
+					createCheckListItem(0, { id: 'root2' }),
+					createCheckListItem('root2', { id: 'child2' }),
+				];
+
+				manager = new CheckListManager({
+					computed: { checkLists: () => demoCheckLists },
+				});
+			});
+
+			it('should include all nested children', () => {
+				const input = new Set(['root1']);
+				const result = manager.expandIdsWithChildren(input);
+
+				assert.deepEqual([...result].sort(), ['root1', 'child1', 'grandchild1'].sort());
+			});
+
+			it('should work with multiple root ids', () => {
+				const input = new Set(['root1', 'root2']);
+				const result = manager.expandIdsWithChildren(input);
+
+				assert.deepEqual(
+					[...result].sort(),
+					['root1', 'child1', 'grandchild1', 'root2', 'child2'].sort(),
+				);
+			});
+
+			it('should handle empty input', () => {
+				const result = manager.expandIdsWithChildren(new Set());
+				assert.strictEqual(result.size, 0);
+			});
+
+			it('should handle circular references safely', () => {
+				const item1 = createCheckListItem(0, { id: 'item1' });
+				const item2 = createCheckListItem('item1', { id: 'item2' });
+				item1.parentId = 'item2';
+
+				const testManager = new CheckListManager({
+					computed: { checkLists: () => [item1, item2] },
+				});
+
+				const result = testManager.expandIdsWithChildren(new Set(['item1']));
+				assert.deepEqual([...result].sort(), ['item1', 'item2'].sort());
+			});
+
+			it('should not include unrelated items', () => {
+				const input = new Set(['root1']);
+				const result = manager.expandIdsWithChildren(input);
+
+				assert(!result.has('root2'));
+				assert(!result.has('child2'));
+			});
+		});
+
+		describe('findItemIdsWithUser', () => {
+			let manager;
+			let testCheckLists;
+			const testUserId = 123;
+
+			beforeEach(() => {
+				testCheckLists = [
+					createCheckListItem(0, { id: 'root1' }),
+					createCheckListItem(0, { id: 'root2' }),
+
+					createCheckListItem('root1', {
+						id: 'child1',
+						accomplices: [{ id: testUserId, name: 'Test User', image: '', type: 'employee' }],
+					}),
+					createCheckListItem('root1', {
+						id: 'child2',
+						auditors: [{ id: testUserId, name: 'Test User', image: '', type: 'employee' }],
+					}),
+
+					createCheckListItem('root2', { id: 'child3' }),
+					createCheckListItem('root2', {
+						id: 'child4',
+						accomplices: [{ id: 456, name: 'Other User', image: '', type: 'employee' }],
+					}),
+
+					createCheckListItem('child1', {
+						id: 'grandchild1',
+						auditors: [{ id: testUserId, name: 'Test User', image: '', type: 'employee' }],
+					}),
+					createCheckListItem('child1', {
+						id: 'grandchild2',
+						accomplices: [{ id: testUserId, name: 'Test User', image: '', type: 'employee' }],
+					}),
+					createCheckListItem('child3', { id: 'grandchild3' }),
+				];
+
+				manager = new CheckListManager({
+					computed: { checkLists: () => testCheckLists },
+				});
+			});
+
+			it('should find item ids where user is in accomplices or auditors', () => {
+				const result = manager.findItemIdsWithUser('root1', testUserId);
+
+				assert.strictEqual(result.size, 4);
+				assert(result.has('child1'));
+				assert(result.has('child2'));
+				assert(result.has('grandchild1'));
+				assert(result.has('grandchild2'));
+			});
+
+			it('should return empty set if no items contain the user', () => {
+				const result = manager.findItemIdsWithUser('root2', testUserId);
+				assert.strictEqual(result.size, 0);
+			});
+
+			it('should handle empty accomplices and auditors arrays', () => {
+				const result = manager.findItemIdsWithUser('child3', testUserId);
+				assert.strictEqual(result.size, 0);
+			});
+
+			it('should return empty set for non-existent parent item', () => {
+				const result = manager.findItemIdsWithUser('non-existent', testUserId);
+				assert.strictEqual(result.size, 0);
+			});
+
+			it('should handle items with user in both accomplices and auditors', () => {
+				testCheckLists.push(
+					createCheckListItem('root1', {
+						id: 'child3',
+						accomplices: [{ id: testUserId, name: 'Test User', image: '', type: 'employee' }],
+						auditors: [{ id: testUserId, name: 'Test User', image: '', type: 'employee' }],
+					}),
+				);
+
+				const result = manager.findItemIdsWithUser('root1', testUserId);
+				assert(result.has('child3'));
+			});
+
+			it('should handle multiple users in accomplices/auditors', () => {
+				const child1 = testCheckLists.find(item => item.id === 'child1');
+				child1.accomplices.push(
+					{ id: 456, name: 'Other User 1', image: '', type: 'employee' },
+					{ id: 789, name: 'Other User 2', image: '', type: 'employee' },
+				);
+
+				const result = manager.findItemIdsWithUser('root1', testUserId);
+				assert(result.has('child1'));
+			});
+
+			it('should work with deep nesting', () => {
+				const greatGrandchild = createCheckListItem('grandchild1', {
+					id: 'greatGrandchild',
+					auditors: [{ id: testUserId, name: 'Test User', image: '', type: 'employee' }],
+				});
+				testCheckLists.push(greatGrandchild);
+
+				const result = manager.findItemIdsWithUser('root1', testUserId);
+				assert(result.has('greatGrandchild'));
+				assert.strictEqual(result.size, 5);
+			});
+		});
 	});
 
 	describe('Group mode', () => {

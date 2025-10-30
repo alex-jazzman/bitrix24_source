@@ -70,14 +70,18 @@ $items = array_map(function ($item) use ($defaultHandler) {
 
 if (\Bitrix\Main\Config\Option::get('disk', 'boards_enabled', 'N') === 'Y')
 {
-	array_unshift(
+	array_splice(
 		$items,
+		1,
+		0,
 		[
-			'text' => Loc::getMessage('DISK_DOCUMENTS_TOOLBAR_CREATE_BOARD'),
-			'onclick' => new UI\Buttons\JsCode(
-				'BX.Disk.Documents.Toolbar.createBoard("docs_page");'
-			)
-		],
+			[
+				'text' => Loc::getMessage('DISK_DOCUMENTS_TOOLBAR_CREATE_BOARD'),
+				'onclick' => new UI\Buttons\JsCode(
+					'BX.Disk.Documents.Toolbar.createBoard("docs_page");'
+				)
+			]
+		]
 	);
 }
 

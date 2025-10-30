@@ -1,5 +1,5 @@
-import { Model } from 'tasks.v2.const';
 import type { CheckListModel } from 'tasks.v2.model.check-list';
+import type { UserModel } from 'tasks.v2.model.users';
 
 type Params = {
 	computed?: {
@@ -37,7 +37,8 @@ export class CheckListManager
 
 		const findParent = (parentId) => this.#getCheckLists().find((item: CheckListModel) => item.id === parentId);
 
-		while (current.parentId !== 0) {
+		while (current.parentId !== 0)
+		{
 			if (visitedIds.has(current.id))
 			{
 				break;
@@ -77,6 +78,36 @@ export class CheckListManager
 		return this.isItemDescendant(potentialAncestor, parent);
 	}
 
+	showItems(
+		itemIds: (number | string)[],
+		updateFn: (updates: CheckListModel[]) => void,
+	): void
+	{
+		const updates: CheckListModel[] = [];
+
+		itemIds.forEach((itemId: number | string) => this.#setItemsVisibility(itemId, false, updates));
+
+		if (updates.length > 0)
+		{
+			updateFn(updates);
+		}
+	}
+
+	hideItems(
+		itemIds: (number | string)[],
+		updateFn: (updates: CheckListModel[]) => void,
+	): void
+	{
+		const updates: CheckListModel[] = [];
+
+		itemIds.forEach((itemId: number | string) => this.#setItemsVisibility(itemId, true, updates));
+
+		if (updates.length > 0)
+		{
+			updateFn(updates);
+		}
+	}
+
 	syncParentCompletionState(
 		itemId: number | string,
 		updateFn: (id: string | number, fields: Partial<CheckListModel>) => void,
@@ -101,13 +132,16 @@ export class CheckListManager
 		const childrenItems = this.#getCheckLists().filter((item: CheckListModel) => item.parentId === parentItem.id);
 		const isEmptyParent = (childrenItems.length === 0);
 
-		const allChildrenCompleted = childrenItems.every((child: CheckListModel) => child.isComplete);
-		const someChildrenIncomplete = childrenItems.some((child: CheckListModel) => !child.isComplete);
+		const allChildrenCompleted = childrenItems.every((child: CheckListModel) => {
+			return child.localCompleteState ?? child.isComplete;
+		});
+		const someChildrenIncomplete = !allChildrenCompleted;
 
+		const parentCompleted = parentItem.localCompleteState ?? parentItem.isComplete;
 		const shouldUpdateParent = (
 			isEmptyParent
-			|| (allChildrenCompleted && !parentItem.isComplete)
-			|| (someChildrenIncomplete && parentItem.isComplete)
+			|| (allChildrenCompleted && !parentCompleted)
+			|| (someChildrenIncomplete && parentCompleted)
 		);
 		if (!shouldUpdateParent)
 		{
@@ -146,9 +180,9 @@ export class CheckListManager
 		selectedItems.forEach((item: CheckListModel) => result.set(item.id, item));
 
 		const getChildren = (parentIds: (string | number)[]): void => {
-			const children = allItems.filter((item: CheckListModel) =>
-				parentIds.includes(item.parentId) && !result.has(item.id)
-			);
+			const children = allItems.filter((item: CheckListModel) => {
+				return parentIds.includes(item.parentId) && !result.has(item.id);
+			});
 
 			children.forEach((child: CheckListModel) => result.set(child.id, child));
 
@@ -160,7 +194,7 @@ export class CheckListManager
 
 		getChildren(selectedItems.map((item: CheckListModel) => item.id));
 
-		return Array.from(result.values());
+		return [...result.values()];
 	}
 
 	getAllChildren(itemId: number | string): CheckListModel[]
@@ -195,9 +229,11 @@ export class CheckListManager
 		return result;
 	}
 
-	getAllCompletedChildrenChildren(itemId: number | string): CheckListModel[]
+	getAllCompletedChildren(itemId: number | string): CheckListModel[]
 	{
-		return this.getAllChildren(itemId).filter((item: CheckListModel) => item.isComplete === true);
+		return this.getAllChildren(itemId).filter((item: CheckListModel) => {
+			return (item.localCompleteState ?? item.isComplete) === true;
+		});
 	}
 
 	getChildren(itemId: number | string): CheckListModel[]
@@ -252,7 +288,7 @@ export class CheckListManager
 		const updates = itemsToResort
 			.map((item: CheckListModel) => ({
 				...item,
-				sortIndex: item.sortIndex + 1
+				sortIndex: item.sortIndex + 1,
 			}));
 
 		if (updates.length > 0)
@@ -378,7 +414,7 @@ export class CheckListManager
 	findNearestItem(
 		initialItem: CheckListModel,
 		selected: boolean,
-		excludeChildrenOf: CheckListModel[] = []
+		excludeChildrenOf: CheckListModel[] = [],
 	): ?CheckListModel
 	{
 		if (!initialItem)
@@ -426,13 +462,210 @@ export class CheckListManager
 		});
 	}
 
-	getFirstChild(itemId: number | string,): ?CheckListModel
+	getFirstChild(itemId: number | string): ?CheckListModel
 	{
 		const children = this.#getCheckLists()
 			.filter((item: CheckListModel) => item.parentId === itemId)
 			.sort((a: CheckListModel, b: CheckListModel) => a.sortIndex - b.sortIndex);
 
 		return children[0] || null;
+	}
+
+	hasEmptyItemWithFiles(hasItemFiles: (item: CheckListModel) => boolean): boolean
+	{
+		return this.#getCheckLists().some((item: CheckListModel) => {
+			return item.title === '' && hasItemFiles(item);
+		});
+	}
+
+	hasItemWithFiles(hasItemFiles: (item: CheckListModel) => boolean): boolean
+	{
+		return this.#getCheckLists().some((item: CheckListModel) => {
+			return hasItemFiles(item);
+		});
+	}
+
+	hasEmptyParentItem(): boolean
+	{
+		return this.#getCheckLists().some((item: CheckListModel) => {
+			return item.parentId === 0 && item.title === '';
+		});
+	}
+
+	getFirstEmptyItem(): ?CheckListModel
+	{
+		const items = this.#getCheckLists()
+			.filter((item: CheckListModel) => item.title === '')
+			.sort((a: CheckListModel, b: CheckListModel) => a.sortIndex - b.sortIndex);
+
+		return items[0] || null;
+	}
+
+	getChildWithEmptyTitle(itemId: number | string): ?CheckListModel
+	{
+		const children = this.#getCheckLists()
+			.filter((item: CheckListModel) => item.parentId === itemId)
+			.sort((a: CheckListModel, b: CheckListModel) => b.sortIndex - a.sortIndex)
+			.find((item: CheckListModel) => item.title === '');
+
+		return children || null;
+	}
+
+	isItemCollapsed(item: CheckListModel, isPreview: boolean, positionIndex: number): boolean
+	{
+		if (item.localCollapsedState !== null)
+		{
+			return item.localCollapsedState;
+		}
+
+		if (!isPreview)
+		{
+			return false;
+		}
+
+		if (item.collapsed && !item.expanded)
+		{
+			return true;
+		}
+
+		if (item.expanded)
+		{
+			return false;
+		}
+
+		return positionIndex !== 0;
+	}
+
+	getRootParentByChildId(itemId: number | string): ?CheckListModel
+	{
+		const childItem = this.getItem(itemId);
+		if (!childItem)
+		{
+			return null;
+		}
+
+		if (childItem.parentId === 0)
+		{
+			return childItem;
+		}
+
+		let currentItem = childItem;
+
+		const visitedIds = new Set();
+
+		while (currentItem && currentItem.parentId !== 0)
+		{
+			if (visitedIds.has(currentItem.id))
+			{
+				break;
+			}
+
+			visitedIds.add(currentItem.id);
+
+			const parent = this.getItem(currentItem.parentId);
+			if (!parent)
+			{
+				break;
+			}
+
+			currentItem = parent;
+		}
+
+		return currentItem?.parentId === 0 ? currentItem : null;
+	}
+
+	expandIdsWithChildren(itemIds: Set<string | number>): Set<string | number>
+	{
+		const fullSet = new Set(itemIds);
+
+		if (itemIds.size === 0 || this.#getCheckLists().length === 0)
+		{
+			return fullSet;
+		}
+
+		const checkListMap = new Map(this.#getCheckLists().map((item: CheckListModel) => [item.id, item]));
+
+		const processedIds = new Set();
+
+		itemIds.forEach((id: string | number) => {
+			if (!processedIds.has(id))
+			{
+				this.#findNestedChildren(id, checkListMap, fullSet, processedIds);
+			}
+		});
+
+		return fullSet;
+	}
+
+	findItemIdsWithUser(rootId: number | string, userId: number): Set<string | number>
+	{
+		const allItems = this.getAllChildren(rootId);
+		const rootItem = this.getItem(rootId);
+
+		if (rootItem)
+		{
+			allItems.unshift(rootItem);
+		}
+
+		const result = new Set();
+		allItems.forEach((item: CheckListModel) => {
+			const hasUser = (
+				item.accomplices?.some((user: UserModel) => user.id === userId)
+				|| item.auditors?.some((user: UserModel) => user.id === userId)
+			);
+
+			if (hasUser && item.parentId !== 0)
+			{
+				result.add(item.id);
+			}
+		});
+
+		return result;
+	}
+
+	#setItemsVisibility(
+		itemId: number | string,
+		hidden: boolean,
+		updates: CheckListModel[],
+	): void
+	{
+		const item = this.getItem(itemId);
+		if (!item || item.hidden === hidden)
+		{
+			return;
+		}
+
+		const updatedItem = { ...item, hidden };
+		updates.push(updatedItem);
+
+		const children = this.getChildren(itemId);
+		children.forEach((child: CheckListModel) => {
+			this.#setItemsVisibility(child.id, hidden, updates);
+		});
+	}
+
+	#findNestedChildren(
+		parentId: string | number,
+		checkListMap: Map<string | number, CheckListModel>,
+		resultSet: Set<string | number>,
+		processedIds: Set<string | number>,
+	): void
+	{
+		if (processedIds.has(parentId))
+		{
+			return;
+		}
+
+		processedIds.add(parentId);
+
+		checkListMap.forEach((item: CheckListModel) => {
+			if (item.parentId === parentId && !resultSet.has(item.id))
+			{
+				resultSet.add(item.id);
+
+				this.#findNestedChildren(item.id, checkListMap, resultSet, processedIds);
+			}
+		});
 	}
 
 	#getRootParent(item: CheckListModel): ?CheckListModel

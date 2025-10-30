@@ -24,6 +24,13 @@ this.BX.Booking = this.BX.Booking || {};
 	    color: String,
 	    round: Boolean,
 	    icon: String,
+	    iconPosition: {
+	      type: String,
+	      validator(position) {
+	        return !position || ['left', 'right'].includes(position);
+	      }
+	    },
+	    useAirDesign: Boolean,
 	    noCaps: Boolean,
 	    disabled: Boolean,
 	    clocking: Boolean,
@@ -39,6 +46,8 @@ this.BX.Booking = this.BX.Booking || {};
 	      color: this.color,
 	      round: this.round,
 	      icon: this.icon,
+	      iconPosition: this.iconPosition,
+	      useAirDesign: Boolean(this.useAirDesign),
 	      noCaps: this.noCaps,
 	      onclick: () => {
 	        this.$emit('click');
@@ -46,6 +55,9 @@ this.BX.Booking = this.BX.Booking || {};
 	      dataset: this.dataset,
 	      className: main_core.Type.isArray(this.buttonClass) ? this.buttonClass.join(' ') : this.buttonClass
 	    });
+	    if (this.useAirDesign) {
+	      this.button.setAirDesign(true);
+	    }
 	  },
 	  mounted() {
 	    var _this$button;
@@ -87,7 +99,7 @@ this.BX.Booking = this.BX.Booking || {};
 	    icon: {
 	      handler(icon) {
 	        var _this$button6;
-	        (_this$button6 = this.button) == null ? void 0 : _this$button6.setIcon(icon);
+	        (_this$button6 = this.button) == null ? void 0 : _this$button6.setIcon(icon, this.iconPosition);
 	      }
 	    },
 	    disabled: {

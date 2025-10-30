@@ -195,16 +195,12 @@ export class AboutPage extends FormPage
 		const value = this.#flow.plannedCompletionTime;
 		this.#layout.plannedCompletionTimeIntervalSelector = new IntervalSelector({ value });
 
-		const needUseSchedule = this.#needUseSchedule;
-		if (needUseSchedule)
-		{
-			this.#layout.plannedCompletionTimeIntervalSelector.subscribe('intervalChanged', (event) => {
-				const interval = event.getData().interval;
-				const isSkipWeekendsDisabled = this.#isShortInterval(interval);
+		this.#layout.plannedCompletionTimeIntervalSelector.subscribe('intervalChanged', (event) => {
+			const interval = event.getData().interval;
+			const isSkipWeekendsDisabled = this.#isShortInterval(interval);
 
-				this.#layout.skipWeekends.disable(isSkipWeekendsDisabled);
-			});
-		}
+			this.#layout.skipWeekends.disable(isSkipWeekendsDisabled);
+		});
 
 		const duration = this.#layout.plannedCompletionTimeIntervalSelector.getDuration();
 
@@ -238,7 +234,7 @@ export class AboutPage extends FormPage
 		});
 
 		const interval = this.#layout.plannedCompletionTimeIntervalSelector.getInterval();
-		const isSkipWeekendsDisabled = needUseSchedule && this.#isShortInterval(interval);
+		const isSkipWeekendsDisabled = this.#isShortInterval(interval);
 
 		this.#layout.skipWeekends = new ValueChecker({
 			id: 'planned-completion-time-skip-weekends',
@@ -275,13 +271,6 @@ export class AboutPage extends FormPage
 		`;
 
 		return root;
-	}
-
-	get #needUseSchedule(): boolean
-	{
-		const settings = Extension.getSettings('tasks.flow.edit-form');
-
-		return settings.get('needUseSchedule');
 	}
 
 	async onContinueClick(flowData: Flow = {}): Promise<boolean>

@@ -9,7 +9,7 @@
 		var(--im-message-base__padding-bottom_body)
 		var(--im-message-base__padding-left_body)
 	;
-	--im-message-base__offset_context-menu: 54px;
+	--im-message-base__offset_context-menu: 42px;
 	--im-message-base__background-color: var(--im-color-palette-white-base);
 	--im-message-base__background-color_self: #e9fecb;
 	--im-message-base__background-color_error: var(--im-color-palette-red-20);

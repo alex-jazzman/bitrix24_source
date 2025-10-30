@@ -51,3 +51,5 @@ $MESS['TAB_NAME_DISK'] = 'Файлы';
 $MESS['TAB_DISK_NAVIGATION_TAB_RECENT'] = 'Недавние';
 $MESS['TAB_DISK_NAVIGATION_TAB_MY_FILES'] = 'Мои файлы';
 $MESS['TAB_DISK_NAVIGATION_TAB_COMPANY_FILES'] = 'Файлы компании';
+
+$MESS["TAB_NAME_TERMINAL_MENU_TITLE"] = "Платёжный терминал";

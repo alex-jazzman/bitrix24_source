@@ -11,7 +11,6 @@ $return = [
 		'name' => Loc::getMessage('LANDING_BLOCK_WIDGET_71_2_NAME'),
 		'type' => ['page', 'store', 'smn', 'knowledge', 'group', 'mainpage'],
 		'section' => ['columns', 'widgets_columns'],
-		'system' => true,
 	],
 	'cards' => [
 		'.landing-block-node-card' => [

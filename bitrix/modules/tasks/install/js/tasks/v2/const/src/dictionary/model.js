@@ -1,4 +1,5 @@
 export const Model = Object.freeze({
+	CheckList: 'checklist',
 	Epics: 'epics',
 	Flows: 'flows',
 	Groups: 'groups',
@@ -6,6 +7,4 @@ export const Model = Object.freeze({
 	Stages: 'stages',
 	Tasks: 'tasks',
 	Users: 'users',
-	CheckList: 'checklist',
-	Analytics: 'analytics',
 });

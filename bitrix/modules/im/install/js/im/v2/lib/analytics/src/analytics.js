@@ -86,7 +86,7 @@ export class Analytics
 	onOpenTab(tabName: string): void
 	{
 		const trackedTabs = [
-			Layout.aiAssistant,
+			Layout.copilot,
 			Layout.collab,
 			Layout.channel,
 			Layout.notification,

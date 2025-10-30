@@ -1,12 +1,22 @@
 import { hint } from 'ui.vue3.directives.hint';
-import { BIcon as Icon, Set as IconSet } from 'ui.icon-set.api.vue';
+import { BIcon as UiIcon, Set as IconSet } from 'ui.icon-set.api.vue';
 
 import './full-form.css';
 
+// @vue/component
 export const FullForm = {
 	name: 'ActionsPopupFullForm',
+	components: {
+		UiIcon,
+	},
 	directives: {
 		hint,
+	},
+	props: {
+		bookingId: {
+			type: Number,
+			required: true,
+		},
 	},
 	computed: {
 		arrowIcon(): string
@@ -31,9 +41,6 @@ export const FullForm = {
 			};
 		},
 	},
-	components: {
-		Icon,
-	},
 	template: `
 		<div
 			v-hint="soonHint"
@@ -45,7 +52,7 @@ export const FullForm = {
 				{{ loc('BB_ACTIONS_POPUP_FULL_FORM_LABEL') }}
 			</div>
 			<div class="booking-actions-popup__item-full-form-icon">
-				<Icon :name="arrowIcon" :size="arrowIconSize" :color="arrowIconColor"/>
+				<UiIcon :name="arrowIcon" :size="arrowIconSize" :color="arrowIconColor"/>
 			</div>
 		</div>
 	`,

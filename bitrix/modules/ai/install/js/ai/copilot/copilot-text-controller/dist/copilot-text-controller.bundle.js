@@ -665,7 +665,7 @@ this.BX = this.BX || {};
 	  return {
 	    code: 'market',
 	    href: '/market/collection/ai_provider_partner_crm/',
-	    text: main_core.Loc.getMessage('AI_COPILOT_SEARCH_IN_MARKET'),
+	    text: main_core.Loc.getMessage('AI_COPILOT_SEARCH_IN_MARKET_MSGVER_1'),
 	    icon: ui_iconSet_api_core.Main.MARKET_1,
 	    arrow: false
 	  };
@@ -1133,7 +1133,7 @@ this.BX = this.BX || {};
 	  constructor(options) {
 	    super({
 	      icon: ui_iconSet_api_core.Main.MARKET_1,
-	      text: main_core.Loc.getMessage('AI_COPILOT_SEARCH_IN_MARKET'),
+	      text: main_core.Loc.getMessage('AI_COPILOT_SEARCH_IN_MARKET_MSGVER_1'),
 	      href: '/market/collection/ai_provider_partner_crm/',
 	      ...options
 	    });

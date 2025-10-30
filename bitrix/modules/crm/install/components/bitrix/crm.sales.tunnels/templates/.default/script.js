@@ -1006,7 +1006,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  });
 	}
 
-	var _templateObject$2, _templateObject2$1, _templateObject3$1;
+	var _templateObject$2, _templateObject2$1;
 	if (BX.Kanban.Pagination) {
 	  BX.Kanban.Pagination.prototype.adjust = function () {};
 	}
@@ -1263,7 +1263,6 @@ this.BX.Crm = this.BX.Crm || {};
 	        });
 	        main_core.Dom.append(dot, header);
 	      }
-	      main_core.Tag.attrs(header)(_templateObject2$1 || (_templateObject2$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\ttitle: ", ";\n\t\t"])), this.getName());
 	      return header;
 	    }
 	  }, {
@@ -1295,7 +1294,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        if (_this2.currentName !== _this2.getName()) {
 	          _this2.onNameChangeHandler(_this2);
 	          _this2.currentName = _this2.getName();
-	          main_core.Tag.attrs(_this2.getHeader())(_templateObject3$1 || (_templateObject3$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\ttitle: ", ";\n\t\t\t\t"])), _this2.getName());
+	          main_core.Tag.attrs(_this2.getHeader())(_templateObject2$1 || (_templateObject2$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\ttitle: ", ";\n\t\t\t\t"])), _this2.getName());
 	        }
 	      }, 500);
 	    }
@@ -1676,7 +1675,7 @@ this.BX.Crm = this.BX.Crm || {};
 	babelHelpers.defineProperty(Backend, "component", 'bitrix:crm.sales.tunnels');
 	babelHelpers.defineProperty(Backend, "entityTypeId", 2);
 
-	var _templateObject$3, _templateObject2$2, _templateObject3$2, _templateObject4$1, _templateObject5, _templateObject6, _templateObject7, _templateObject8, _templateObject9, _templateObject10, _templateObject11, _templateObject12, _templateObject13, _templateObject14, _templateObject15, _templateObject16, _templateObject17, _templateObject18, _templateObject19, _templateObject20, _templateObject21, _templateObject22, _templateObject23, _templateObject24, _templateObject25, _templateObject26, _templateObject27, _templateObject28, _templateObject29, _templateObject30, _templateObject31;
+	var _templateObject$3, _templateObject2$2, _templateObject3$1, _templateObject4$1, _templateObject5, _templateObject6, _templateObject7, _templateObject8, _templateObject9, _templateObject10, _templateObject11, _templateObject12, _templateObject13, _templateObject14, _templateObject15, _templateObject16, _templateObject17, _templateObject18, _templateObject19, _templateObject20, _templateObject21, _templateObject22, _templateObject23, _templateObject24, _templateObject25, _templateObject26, _templateObject27, _templateObject28, _templateObject29, _templateObject30, _templateObject31;
 	var Category = /*#__PURE__*/function (_Event$EventEmitter) {
 	  babelHelpers.inherits(Category, _Event$EventEmitter);
 	  babelHelpers.createClass(Category, null, [{
@@ -1843,7 +1842,7 @@ this.BX.Crm = this.BX.Crm || {};
 	          category.cache["delete"]('rectArea');
 	        }
 	        if (y < categoryMiddle && curIndex < _this5.dragIndex && categoryContainer.style.transform !== "translate3d(0px, ".concat(categoryHeight, "px, 0px)")) {
-	          main_core.Tag.style(categoryContainer)(_templateObject3$2 || (_templateObject3$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\ttransition: 200ms;\n\t\t\t\t\ttransform: translate3d(0px, ", "px, 0px);\n\t\t\t\t"])), categoryHeight);
+	          main_core.Tag.style(categoryContainer)(_templateObject3$1 || (_templateObject3$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\ttransition: 200ms;\n\t\t\t\t\ttransform: translate3d(0px, ", "px, 0px);\n\t\t\t\t"])), categoryHeight);
 	          _this5.dragTargetCategory = category;
 	          category.cache["delete"]('rectArea');
 	        }
@@ -2747,15 +2746,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    main_core.Event.bind(this.getAddCategoryButton(), 'click', this.onAddCategoryClick.bind(this));
 	    main_core.Event.bind(this.addCategoryButtonTop, 'click', this.onAddCategoryTopClick.bind(this));
 	    main_core.Event.bind(this.helpButton, 'click', this.onHelpButtonClick.bind(this));
-	    var toolbarComponent = main_core.Reflection.getClass('top.BX.Crm.ToolbarComponent') ? main_core.Reflection.getClass('top.BX.Crm.ToolbarComponent').Instance : null;
-	    var slider = this.getSlider();
-	    if (slider && toolbarComponent) {
-	      main_core.Event.EventEmitter.subscribe('SidePanel.Slider:onClose', function () {
-	        if (_this.isChanged) {
-	          toolbarComponent.emitCategoriesUpdatedEvent();
-	        }
-	      });
-	    }
 	    this.constructor.lastInstance = this;
 	  }
 	  babelHelpers.createClass(Manager, [{

@@ -43,6 +43,9 @@ export type ResourceModel = {
 	// feedback
 	isFeedbackNotificationOn: boolean,
 	templateTypeFeedback: string,
+
+	// integrationCalendar
+	entities: IntegrationCalendarType[],
 };
 
 export type SlotRange = {
@@ -53,3 +56,21 @@ export type SlotRange = {
 	slotSize: number,
 	timezone: string,
 };
+
+export type IntegrationCalendarType = {
+	entityType: string;
+	entityId: number;
+	data: IntegrationCalendarDataType;
+}
+
+export type IntegrationCalendarDataType = {
+	userIds: number[];
+	locationId: number;
+	checkAvailability: boolean;
+	reminders: IntegrationCalendarReminder[];
+}
+
+export type IntegrationCalendarReminder = {
+	type: 'min';
+	count: number;
+}

@@ -478,6 +478,7 @@ if (!BX.Disk.pathToUser)
 					}
 					modalWindow = new BX.PopupWindow(params.modalId, params.bindElement, {
 						titleBar: params.title,
+						className: params.className,
 						content: contentDialog,
 						bindOptions: params.bindOptions,
 						closeByEsc: true,
@@ -493,8 +494,10 @@ if (!BX.Disk.pathToUser)
 				}
 				else
 				{
+					console.log('params', params);
 					modalWindow = BX.PopupWindowManager.create(params.modalId, params.bindElement, {
 						titleBar: params.title,
+						className: params.className,
 						content: contentDialog,
 						bindOptions: params.bindOptions,
 						closeByEsc: true,
@@ -1566,7 +1569,7 @@ if (!BX.Disk.pathToUser)
 														BX.create('td', {
 															props: { className: 'bx-disk-popup-shared-people-list-head-col1' },
 															children: [
-																BX.create('a', {
+																BX.create('span', {
 																	props: { className: 'bx-disk-filepage-used-people-link' },
 																	children: [
 																		BX.create('span', {

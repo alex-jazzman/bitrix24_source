@@ -15,4 +15,5 @@ $MESS["LANDING_BLOCK_SEPARATOR_PARTNER_2_MSGVER_1"] = "Битрикс24 Марк
 $MESS["LANDING_BLOCK_TEXT_FULL"] = "Блок өлшемі максималды деңгейден асады";
 $MESS["LANDING_BLOCK_TITLE"] = "Парақша тақырыпаты";
 $MESS["LANDING_BLOCK_WRONG_VERSION"] = "Блок нұсқасы модуль нұсқасына сәйкес келмейді";
+$MESS["LD_BLOCK_SECTION_FAVOURITE"] = "Таңдаулылар";
 $MESS["LD_BLOCK_SECTION_LAST"] = "Соңғы";

@@ -25,7 +25,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      }
 	    }
 	  },
-	  emits: ['close'],
+	  emits: ['close', 'popupDragStart'],
 	  computed: {
 	    popupContainer() {
 	      return `${POPUP_CONTAINER_PREFIX}${this.id}`;
@@ -73,7 +73,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        animation: 'fading',
 	        events: {
 	          onPopupClose: this.closePopup.bind(this),
-	          onPopupDestroy: this.closePopup.bind(this)
+	          onPopupDestroy: this.closePopup.bind(this),
+	          onDragStart: this.dragStart.bind(this)
 	        },
 	        contentBorderRadius: POPUP_BORDER_RADIUS
 	      };
@@ -102,6 +103,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      this.$emit('close');
 	      this.instance.destroy();
 	      this.instance = null;
+	    },
+	    dragStart() {
+	      this.$emit('popupDragStart');
 	    },
 	    enableAutoHide() {
 	      this.getPopupInstance().setAutoHide(true);

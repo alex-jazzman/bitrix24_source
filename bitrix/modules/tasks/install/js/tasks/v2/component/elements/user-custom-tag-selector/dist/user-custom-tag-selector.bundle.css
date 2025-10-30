@@ -1,6 +1,6 @@
 .b24-user-selector {
-	display: flex;
-	min-height: 25px;
+	max-width: 100%;
+	min-height: 22px;
 	font-weight: var(--ui-font-weight-medium);
 	white-space: nowrap;
 }
@@ -9,8 +9,6 @@
 	position: relative;
 	margin-left: 20px;
 }
-
-
 
 .b24-user-selector-user {
 	--text-color: inherit;
@@ -28,13 +26,7 @@
 	--text-color: #ca8600;
 }
 
-.b24-user-selector-user {
-	display: flex;
-	align-items: center;
-	overflow: hidden;
-}
-
-.b24-user-selector-user-add {
+.b24-user-selector-user-placeholder {
 	display: flex;
 	align-items: center;
 	gap: 6px;
@@ -44,14 +36,13 @@
 
 .b24-user-selector-user-label {
 	display: flex;
-	gap: var(--ui-space-inline-xs);
 	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	cursor: pointer;
 	overflow: hidden;
 }
 
-.b24-user-selector-user-image {
-	padding: 1px;
-}
+.b24-user-selector-user-image {}
 
 .b24-user-selector-user-label .b24-user-selector-user-image,
 .b24-user-selector-user-label .b24-user-selector-user-name {

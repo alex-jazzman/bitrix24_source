@@ -17,6 +17,3 @@ $MESS["VOTE_RESULT_COUNT_PLURAL_2"] = "#COUNT# голосів";
 $MESS["VOTE_REVOKE"] = "Переголосувати";
 $MESS["VOTE_SHOW_RESULTS"] = "Переглянути результати";
 $MESS["VOTE_SUMMARY_COUNT_NO_VOTES"] = "Немає голосів";
-$MESS["VOTE_SUMMARY_COUNT_PLURAL_0"] = "Проголосувала #COUNT# особа";
-$MESS["VOTE_SUMMARY_COUNT_PLURAL_1"] = "Проголосувало #COUNT# особи";
-$MESS["VOTE_SUMMARY_COUNT_PLURAL_2"] = "Проголосувало #COUNT# осіб";

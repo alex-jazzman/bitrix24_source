@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["SOPL_TPL_RESTRICTED_PAID_MESSAGE"] = "<b>Зверніть увагу:</b> оплата замовлення буде доступна після підтвердження менеджером";
 $MESS["SPOL_CANCEL_PAYMENT"] = "назад";
 $MESS["SPOL_CHECK_NUM"] = "Чек №#CHECK_NUMBER#";
@@ -30,8 +30,6 @@ $MESS["SPOL_TPL_ORDER"] = "Замовлення";
 $MESS["SPOL_TPL_ORDERS_CANCELED_HEADER"] = "Скасовані замовлення";
 $MESS["SPOL_TPL_ORDER_CANCELED"] = "Замовлення скасовано";
 $MESS["SPOL_TPL_ORDER_FINISHED"] = "Замовлення виконано";
-$MESS["SPOL_TPL_ORDER_IN_STATUS"] = "Замовлення в статусі";
-$MESS["SPOL_TPL_ORDER_IN_STATUSES"] = "Замовлення в статусі";
 $MESS["SPOL_TPL_PAID"] = "Оплачено";
 $MESS["SPOL_TPL_PAY"] = "Сплатити";
 $MESS["SPOL_TPL_PAYMENT"] = "Оплата";
@@ -40,9 +38,7 @@ $MESS["SPOL_TPL_REPEAT_ORDER"] = "Повторити замовлення";
 $MESS["SPOL_TPL_RESTRICTED_PAID"] = "На перевірці менеджером";
 $MESS["SPOL_TPL_RIGHT_QUOTE"] = "&raquo;";
 $MESS["SPOL_TPL_SUMOF"] = "на суму";
-$MESS["SPOL_TPL_SUM_TO_PAID"] = "Сума до оплати за рахунком";
 $MESS["SPOL_TPL_TWO_GOODS"] = "товару";
 $MESS["SPOL_TPL_VIEW_ALL_ORDERS"] = "Подивитися всі замовлення";
 $MESS["SPOL_TPL_VIEW_ORDERS_CANCELED"] = "Подивитися історію скасованих замовлень";
 $MESS["SPOL_TPL_VIEW_ORDERS_HISTORY"] = "Подивитися історію замовлень";
-?>

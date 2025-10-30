@@ -44,6 +44,7 @@ $MESS["CRM_STATUS_TYPE_SOURCE_STORE"] = "Интернет-магазин";
 $MESS["CRM_STATUS_TYPE_SOURCE_RC_GENERATOR"] = "Генератор продаж";
 $MESS["CRM_STATUS_TYPE_SOURCE_CALL_TRACKER"] = "Трекер звонков";
 $MESS["CRM_STATUS_TYPE_SOURCE_REPEAT_SALE"] = "Повторные продажи";
+$MESS["CRM_STATUS_TYPE_SOURCE_BOOKING"] = "Онлайн-запись";
 $MESS["CRM_CONTACT_TYPE_CLIENT"] = "Клиенты";
 $MESS["CRM_CONTACT_TYPE_SUPPLIER"] = "Поставщики";
 $MESS["CRM_CONTACT_TYPE_PARTNER"] = "Партнеры";

@@ -32,6 +32,7 @@ $MESS["DISK_JS_SHARING_LABEL_TITLE_MODAL"] = "Параметри загальн�
 $MESS["DISK_JS_SHARING_LABEL_TITLE_MODAL_2"] = "Загальний доступ";
 $MESS["DISK_JS_SHARING_LABEL_TITLE_MODAL_3"] = "Загальний доступ";
 $MESS["DISK_JS_SHARING_LABEL_TOOLTIP_SHARING"] = "Всі співробітники, що мають доступ до папки,<br/>зможуть додавати нових учасників загального доступу";
+$MESS["DISK_JS_SHARING_UNIFIED_RIGHT_USERS"] = "Усі, у кого є посилання";
 $MESS["DISK_JS_STATUS_ACTION_ERROR"] = "Виникла помилка";
 $MESS["DISK_JS_STATUS_ACTION_SUCCESS"] = "Успішно";
 $MESS["DISK_JS_USER_LOCKED_DOCUMENT"] = "Заблокував документ";

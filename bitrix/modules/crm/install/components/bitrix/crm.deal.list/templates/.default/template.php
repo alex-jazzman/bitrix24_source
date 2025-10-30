@@ -20,6 +20,8 @@ use Bitrix\Crm\Activity\ToDo\CalendarSettings\CalendarSettingsProvider;
 use Bitrix\Crm\Activity\ToDo\ColorSettings\ColorSettingsProvider;
 use Bitrix\Crm\Activity\TodoPingSettingsProvider;
 use Bitrix\Crm\Grid\MenuActionsPreparer;
+use Bitrix\Crm\Integration\Analytics\Builder\Entity\AddOpenEvent;
+use Bitrix\Crm\Integration\Analytics\Dictionary;
 use Bitrix\Crm\Restriction\AvailabilityManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Tour\RepeatSale\OnboardingPopup;
@@ -28,7 +30,11 @@ use Bitrix\Crm\UI\NavigationBarPanel;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Web\Json;
 use Bitrix\Main\Web\Uri;
+use Bitrix\UI\Buttons\AirButtonStyle;
+use Bitrix\UI\Toolbar\ButtonLocation;
+use Bitrix\UI\Toolbar\Manager;
 
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/crm-entity-show.css");
 $APPLICATION->SetAdditionalCSS('/bitrix/themes/.default/bitrix24/crm-entity-show.css');
@@ -685,30 +691,37 @@ $APPLICATION->IncludeComponent('bitrix:main.user.link',
 	array('HIDE_ICONS' => 'Y')
 );
 
-if ($arResult['ENABLE_TOOLBAR'])
-{
-	$addButton = [
-		'TEXT' => Loc::getMessage('CRM_DEAL_LIST_NEW_DEAL'),
-		'TITLE' => Loc::getMessage('CRM_DEAL_LIST_NEW_DEAL'),
-		'LINK' => $arResult['PATH_TO_DEAL_ADD'],
-		'SQUARE' => true,
-		'HIGHLIGHT' => true,
-	];
+$filterLazyLoadUrl = '/bitrix/components/bitrix/crm.deal.list/filter.ajax.php?' . bitrix_sessid_get();
+$filterLazyLoadParams = [
+	'filter_id' => urlencode($arResult['GRID_ID']),
+	'category_id' => $arResult['CATEGORY_ID'] ?? null,
+	'is_recurring' => $arParams['IS_RECURRING'],
+	'siteID' => SITE_ID,
+];
+$uri = new Uri($filterLazyLoadUrl);
 
+if ($arResult['ENABLE_TOOLBAR'] && !\Bitrix\Main\Grid\Context::isInternalRequest())
+{
 	$urlParams = [];
 	if (isset($arResult['DEAL_ADD_URL_PARAMS']) && is_array($arResult['DEAL_ADD_URL_PARAMS']))
 	{
 		$urlParams = $arResult['DEAL_ADD_URL_PARAMS'];
 	}
 
-	$addButton['ONCLICK'] = 'BX.CrmEntityManager.createEntity(BX.CrmEntityType.names.deal, { urlParams: '.CUtil::PhpToJSObject($urlParams).' })';
+	$jsCode = 'BX.CrmEntityManager.createEntity(BX.CrmEntityType.names.deal, { urlParams: ' . CUtil::PhpToJSObject($urlParams).' })';
+	$addButtonParams = [
+		'text' =>  Loc::getMessage('CRM_DEAL_LIST_NEW_DEAL'),
+		'style' => AirButtonStyle::FILLED,
+		'icon' => \Bitrix\UI\Buttons\Icon::ADD,
+		'onclick' => new \Bitrix\UI\Buttons\JsCode($jsCode),
+	];
 
 	if (
 		$arResult['ADD_EVENT_NAME'] !== ''
 		&& $arResult['ADD_EVENT_NAME'] !== 'CrmCreateDynamicFromDynamic' //add exclude for "CrmCreateDynamicFromDynamic" event we don't have bind/subscribe for it
 	)
 	{
-		$analyticsBuilder = \Bitrix\Crm\Integration\Analytics\Builder\Entity\AddOpenEvent::createDefault(CCrmOwnerType::Deal)
+		$analyticsBuilder = AddOpenEvent::createDefault(CCrmOwnerType::Deal)
 			->setSection(
 				!empty($arParams['~ANALYTICS']['c_section']) && is_string($arParams['~ANALYTICS']['c_section'])
 					? $arParams['~ANALYTICS']['c_section']
@@ -719,7 +732,8 @@ if ($arResult['ENABLE_TOOLBAR'])
 					? $arParams['~ANALYTICS']['c_sub_section']
 					: null
 			)
-			->setElement(\Bitrix\Crm\Integration\Analytics\Dictionary::ELEMENT_CREATE_LINKED_ENTITY_BUTTON);
+			->setElement(Dictionary::ELEMENT_CREATE_LINKED_ENTITY_BUTTON);
+
 		$data = [
 			'urlParams' => $analyticsBuilder->buildData(),
 		];
@@ -728,59 +742,85 @@ if ($arResult['ENABLE_TOOLBAR'])
 			$data['urlParams']['st[' . $key . ']'] = $value;
 			unset($data['urlParams'][$key]);
 		}
-		$addButton['ONCLICK'] = "BX.onCustomEvent(window, '{$arResult['ADD_EVENT_NAME']}', " . json_encode($data) . ")";
-	}
-	else
-	{
-		unset($addButton['LINK']);
+
+		$jsCode = "BX.onCustomEvent(window, '{$arResult['ADD_EVENT_NAME']}', " . Json::encode($data) . ")";
+		$addButtonParams['onclick'] = new \Bitrix\UI\Buttons\JsCode($jsCode);
 	}
 
-	$linkButton = null;
+	$buttons = [$addButtonParams];
+
 	if ($arParams['PARENT_ENTITY_TYPE_ID'] && $arParams['PARENT_ENTITY_ID'])
 	{
-		$relationCode = $arParams['PARENT_ENTITY_TYPE_ID'] . '-' . $arParams['PARENT_ENTITY_ID'] . '-' . \CCrmOwnerType::Deal;
+		$relationCode = (int)$arParams['PARENT_ENTITY_TYPE_ID'] . '-' . (int)$arParams['PARENT_ENTITY_ID'] . '-' . \CCrmOwnerType::Deal;
 		$targetId = 'relation-button-' . $relationCode;
-		$linkButton = [
-			'ATTRIBUTES' => [
-				'ID' => $targetId
-			],
-			'TEXT' => Loc::getMessage('CRM_DEAL_LIST_LINK_DEAL'),
-			'TITLE' => Loc::getMessage('CRM_DEAL_LIST_LINK_DEAL'),
-			'SQUARE' => true,
-			'ONCLICK' => sprintf(
-				<<<js
-(function() {
-	const selector = BX.Crm.Binder.Manager.Instance.createRelatedSelector(
-		'%s',
-		'%s'
-	);
-	if (selector)
-	{
-		selector.show();
-	}
-})()
-js,
-				\CUtil::JSEscape('relation-' . $relationCode),
-				\CUtil::JSEscape($targetId),
-			),
-		];
-	}
+		$jsCode = sprintf(
+			<<<js
+				(function() {
+					void BX.Crm.Binder.Manager.Instance.createRelatedSelector('%s', '%s')?.show();
+				})()
+			js,
+			\CUtil::JSEscape('relation-' . $relationCode),
+			\CUtil::JSEscape($targetId),
+		);
 
-	$buttons = [$addButton];
-	if ($linkButton)
-	{
+		$linkButton = new Bitrix\UI\Buttons\Button([
+			'id' => $targetId,
+			'text' =>  Loc::getMessage('CRM_DEAL_LIST_LINK_DEAL'),
+			'style' => AirButtonStyle::OUTLINE,
+			'icon' => \Bitrix\UI\Buttons\Icon::ADD,
+			'onclick' => new \Bitrix\UI\Buttons\JsCode($jsCode),
+		]);
+
+		$linkButton->addAttribute('id', $targetId);
 		$buttons[] = $linkButton;
 	}
-	$APPLICATION->IncludeComponent(
-		'bitrix:crm.interface.toolbar',
-		'',
-		array(
-			'TOOLBAR_ID' => mb_strtolower($arResult['GRID_ID']).'_toolbar',
-			'BUTTONS' => $buttons,
-		),
-		$component,
-		array('HIDE_ICONS' => 'Y')
-	);
+
+	$toolbarId = mb_strtolower($arResult['GRID_ID']) . '_toolbar';
+	$toolbar = Manager::getInstance()->createToolbar($toolbarId, []);
+
+	foreach ($buttons as $button)
+	{
+		$toolbar->addButton($button, ButtonLocation::AFTER_TITLE);
+	}
+
+	$toolbar->addFilter([
+		'GRID_ID' => $arResult['GRID_ID'],
+		'FILTER_ID' => $arResult['GRID_ID'],
+		'FILTER' => $arResult['FILTER'],
+		'FILTER_PRESETS' => $arResult['FILTER_PRESETS'],
+		'ENABLE_FIELDS_SEARCH' => 'Y',
+		'ENABLE_LABEL' => true,
+		'HEADERS_SECTIONS' => $arResult['HEADERS_SECTIONS'],
+		'HEADERS' => $arResult['HEADERS'],
+		'LAZY_LOAD' => [
+			'GET_LIST' => $uri->addParams(array_merge($filterLazyLoadParams, ['action' => 'list']))->getUri(),
+			'GET_FIELD' => $uri->addParams(array_merge($filterLazyLoadParams, ['action' => 'field']))->getUri(),
+			'GET_FIELDS' => $uri->addParams(array_merge($filterLazyLoadParams, ['action' => 'fields']))->getUri(),
+		],
+		'CONFIG' => [
+			'popupColumnsCount' => 4,
+			'popupWidth' => 800,
+			'showPopupInCenter' => true,
+		],
+		'THEME' => Bitrix\Main\UI\Filter\Theme::MUTED,
+		'RESTRICTED_FIELDS' => ($arResult['RESTRICTED_FIELDS'] ?? []),
+		'USE_CHECKBOX_LIST_FOR_SETTINGS_POPUP' => true,
+	]);
+
+	$toolbar->hideTitle();
+	?>
+	<div class="crm-list-top-toolbar">
+			<?php
+			$GLOBALS["APPLICATION"]->IncludeComponent(
+				'bitrix:ui.toolbar',
+				'',
+				[
+					'TOOLBAR_ID' => $toolbarId,
+				],
+			);
+			?>
+			</div>
+	<?php
 }
 
 $messages = [];
@@ -818,15 +858,6 @@ $APPLICATION->IncludeComponent(
 	),
 	$component
 );
-
-$filterLazyLoadUrl = '/bitrix/components/bitrix/crm.deal.list/filter.ajax.php?' . bitrix_sessid_get();
-$filterLazyLoadParams = [
-	'filter_id' => urlencode($arResult['GRID_ID']),
-	'category_id' => $arResult['CATEGORY_ID'] ?? null,
-	'is_recurring' => $arParams['IS_RECURRING'],
-	'siteID' => SITE_ID,
-];
-$uri = new Uri($filterLazyLoadUrl);
 
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.interface.grid',
@@ -1065,9 +1096,9 @@ if ($arResult['CONVERSION_PERMITTED'] && $arResult['CAN_CONVERT'] && $conversion
 								cancelButton: "<?=GetMessageJS("CRM_DEAL_CONV_DIALOG_CANCEL_BTN")?>"
 							},
 							analytics: {
-								c_section: '<?= \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_DEAL ?>',
-								c_sub_section: '<?= \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_LIST ?>',
-								c_element: '<?= \Bitrix\Crm\Integration\Analytics\Dictionary::ELEMENT_GRID_ROW_CONTEXT_MENU ?>',
+								c_section: '<?= Dictionary::SECTION_DEAL ?>',
+								c_sub_section: '<?= Dictionary::SUB_SECTION_LIST ?>',
+								c_element: '<?= Dictionary::ELEMENT_GRID_ROW_CONTEXT_MENU ?>',
 							},
 						}
 					},
@@ -1281,8 +1312,8 @@ if (!empty($arResult['RESTRICTED_FIELDS_ENGINE']))
 \Bitrix\Crm\Integration\NotificationsManager::showSignUpFormOnCrmShopCreated();
 
 $analytics = [
-	'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_DEAL,
-	'c_sub_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_LIST,
+	'c_section' => Dictionary::SECTION_DEAL,
+	'c_sub_section' => Dictionary::SUB_SECTION_LIST,
 ];
 
 print OnboardingPopup::getInstance()->setAnalytics($analytics)->build();

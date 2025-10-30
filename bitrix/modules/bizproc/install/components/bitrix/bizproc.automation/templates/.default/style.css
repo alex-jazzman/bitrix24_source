@@ -2157,3 +2157,19 @@
 	width: 20px;
 	height: 20px;
 }
+
+.automatic-toolbar-search-new-entities-container {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+	width: 100%;
+}
+
+.ui-toolbar-right-custom-html {
+	flex-grow: 1;
+}
+
+.popup-window.bizproc-new-entities-aha-moment .popup-window-content .ui-tour-popup-text {
+	color: var(--ui-color-base-white-fixed);
+}

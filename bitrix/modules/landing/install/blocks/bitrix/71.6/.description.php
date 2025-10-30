@@ -11,7 +11,6 @@ $return = [
 		'name' => Loc::getMessage('LANDING_BLOCK_WIDGET_71_6_NAME'),
 		'type' => ['page', 'store', 'smn', 'knowledge', 'group', 'mainpage'],
 		'section' => ['text_image', 'widgets_columns'],
-		'system' => true,
 	],
 	'cards' => [],
 	'nodes' => [
@@ -39,7 +38,7 @@ $return = [
 		'nodes' => [
 			'.landing-block-container' => [
 				'name' => Loc::getMessage('LANDING_BLOCK_WIDGET_71_6_NODE_CONTAINER'),
-				'type' => ['background-color'],
+				'type' => ['background-color', 'padding-top', 'padding-bottom'],
 			],
 			'.landing-block-node-title' => [
 				'name' => Loc::getMessage('LANDING_BLOCK_WIDGET_71_6_NODE_TITLE'),
@@ -51,7 +50,7 @@ $return = [
 			],
 			'.landing-block-node-tab' => [
 				'name' => Loc::getMessage('LANDING_BLOCK_WIDGET_71_6_NODE_BADGE'),
-				'type' => ['display-element', 'background-color', 'typo'],
+				'type' => ['display-element', 'background-color', 'border-color', 'typo'],
 			],
 		],
 	],

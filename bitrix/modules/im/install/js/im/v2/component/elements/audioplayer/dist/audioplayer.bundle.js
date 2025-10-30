@@ -427,9 +427,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					<div class="bx-im-audio-player__track-event" @mousemove="seeking"></div>
 				</div>
 				<div class="bx-im-audio-player__timer-container --ellipsis">
-					{{metaInfo}}
+					{{ metaInfo }}
 				</div>
 			</div>
+			<slot name="transcription-control"></slot>
 			<div
 				v-if="!withPlaybackRateControl"
 				class="bx-im-audio-player__rate-button-container"
@@ -439,7 +440,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					@click="changeRate"
 				>
 					<span :class="{'bx-im-audio-player__rate-icon': !isPlaying}">
-						{{currentRateLabel}}
+						{{ currentRateLabel }}
 					</span>
 				</button>
 			</div>

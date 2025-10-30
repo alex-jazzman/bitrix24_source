@@ -91,6 +91,7 @@ $getCounterId = function($item): string
 	'main.popup',
 	'ui.counter',
 	'im.v2.lib.desktop-api',
+	'main.loader',
 ]);
 
 Bitrix\Intranet\Integration\Templates\Bitrix24\ThemePicker::getInstance()->showHeadAssets();
@@ -286,9 +287,9 @@ $APPLICATION->ShowViewContent('im-fullscreen');
 
 <script>
 	BX.message({
-		"MENU_ACCOUNT_POPUP_CONNECT": '<?=GetMessageJS("MENU_ACCOUNT_POPUP_CONNECT")?>',
-		"MENU_ACCOUNT_POPUP_DISCONNECT": '<?=GetMessageJS("MENU_ACCOUNT_POPUP_DISCONNECT")?>',
-		"MENU_ACCOUNT_POPUP_REMOVE": '<?=GetMessageJS("MENU_ACCOUNT_POPUP_REMOVE")?>',
+		"MENU_ACCOUNT_POPUP_CONNECT": '<?=GetMessageJS("MENU_ACCOUNT_POPUP_CONNECT_MSGVER_1")?>',
+		"MENU_ACCOUNT_POPUP_DISCONNECT": '<?=GetMessageJS("MENU_ACCOUNT_POPUP_DISCONNECT_MSGVER_1")?>',
+		"MENU_ACCOUNT_POPUP_REMOVE": '<?=GetMessageJS("MENU_ACCOUNT_POPUP_REMOVE_MSGVER_1")?>',
 	});
 
 	BX.ready(function() {

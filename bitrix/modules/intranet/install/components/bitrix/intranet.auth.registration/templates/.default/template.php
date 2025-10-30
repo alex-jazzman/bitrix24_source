@@ -11,6 +11,7 @@ $APPLICATION->IncludeComponent(
 	\COption::GetOptionString("main", "auth_components_template", ""),
 	[
 		"AUTH_RESULT" => $arResult['AUTH_RESULT'],
+		'HOST_NAME' => $arResult['HOST_NAME'],
 		"NOT_SHOW_LINKS" => 'N',
 	]
 );

@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,main_core,main_date,main_popup,ui_dialogs_messagebox) {
+(function (exports,main_core,main_date,main_popup,ui_alerts,ui_dialogs_messagebox) {
 	'use strict';
 
 	let _ = t => t,
@@ -313,13 +313,13 @@ this.BX = this.BX || {};
 	  static showFieldError(message, wrap, options) {
 	    if (main_core.Type.isDomNode(wrap) && main_core.Type.isString(message) && message !== '') {
 	      main_core.Dom.remove(wrap.querySelector('.ui-alert'));
-	      const alert = new BX.UI.Alert({
-	        color: BX.UI.Alert.Color.DANGER,
-	        icon: BX.UI.Alert.Icon.DANGER,
+	      const alert = new ui_alerts.Alert({
+	        color: ui_alerts.Alert.Color.DANGER,
+	        icon: ui_alerts.Alert.Icon.DANGER,
 	        text: message
 	      });
 	      const alertWrap = alert.getContainer();
-	      wrap.appendChild(alertWrap);
+	      main_core.Dom.append(alertWrap, wrap);
 	      return alertWrap;
 	    }
 	  }
@@ -793,5 +793,5 @@ this.BX = this.BX || {};
 
 	exports.Util = Util;
 
-}((this.BX.Calendar = this.BX.Calendar || {}),BX,BX.Main,BX.Main,BX.UI.Dialogs));
+}((this.BX.Calendar = this.BX.Calendar || {}),BX,BX.Main,BX.Main,BX.UI,BX.UI.Dialogs));
 //# sourceMappingURL=util.bundle.js.map

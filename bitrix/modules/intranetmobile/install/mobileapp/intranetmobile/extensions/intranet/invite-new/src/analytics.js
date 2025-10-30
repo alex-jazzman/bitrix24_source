@@ -3,6 +3,7 @@
  */
 jn.define('intranet/invite-new/src/analytics', (require, exports, module) => {
 	const { AnalyticsEvent } = require('analytics');
+
 	/**
 	 * @class IntranetInviteAnalytics
 	 */
@@ -228,8 +229,5 @@ jn.define('intranet/invite-new/src/analytics', (require, exports, module) => {
 		}
 	}
 
-	module.exports = {
-		IntranetInviteAnalytics,
-		AnalyticsEvent,
-	};
+	module.exports = { IntranetInviteAnalytics };
 });

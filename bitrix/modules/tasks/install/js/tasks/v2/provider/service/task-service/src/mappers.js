@@ -1,8 +1,9 @@
 import { Type } from 'main.core';
+
 import { CheckListMappers } from 'tasks.v2.provider.service.check-list-service';
 import type { TaskModel } from 'tasks.v2.model.tasks';
 import type { CheckListModel } from 'tasks.v2.model.check-list';
-import type { TaskDto, TaskSliderData } from './types';
+import type { TagDto, TaskDto, TaskSliderData } from './types';
 
 export function mapModelToDto(task: TaskModel): TaskDto
 {
@@ -15,6 +16,8 @@ export function mapModelToDto(task: TaskModel): TaskDto
 		responsible: prepareValue(task.responsibleId, { id: task.responsibleId }),
 		deadlineTs: prepareValue(task.deadlineTs, Math.floor(task.deadlineTs / 1000)),
 		needsControl: prepareValue(task.needsControl),
+		startPlanTs: prepareValue(task.startPlanTs, Math.floor(task.startPlanTs / 1000)),
+		endPlanTs: prepareValue(task.endPlanTs, Math.floor(task.endPlanTs / 1000)),
 		fileIds: prepareValue(task.fileIds),
 		checklist: prepareValue(task.checklist),
 		group: prepareValue(task.groupId, { id: task.groupId }),
@@ -25,14 +28,20 @@ export function mapModelToDto(task: TaskModel): TaskDto
 		statusChangedTs: prepareValue(task.statusChangedTs, Math.floor(task.statusChangedTs / 1000)),
 		accomplices: prepareValue(task.accomplicesIds, task.accomplicesIds?.map((id) => ({ id }))),
 		auditors: prepareValue(task.auditorsIds, task.auditorsIds?.map((id) => ({ id }))),
+		tags: prepareValue(task.tags, mapTags(task.tags ?? [])),
 		chatId: prepareValue(task.chatId),
+		allowsChangeDeadline: prepareValue(task.allowsChangeDeadline),
+		allowsChangeDatePlan: prepareValue(task.allowsChangeDatePlan),
+		matchesWorkTime: prepareValue(task.matchesWorkTime),
+		matchesSubTasksTime: prepareValue(task.matchesSubTasksTime),
+		source: prepareValue(task.source),
 		parent: undefined,
 	};
 }
 
 export function mapDtoToModel(taskDto: TaskDto): TaskModel
 {
-	const task = {
+	const task: TaskModel = {
 		id: taskDto.id,
 		title: taskDto.title,
 		isImportant: taskDto.priority === 'high',
@@ -42,25 +51,29 @@ export function mapDtoToModel(taskDto: TaskDto): TaskModel
 		responsibleId: taskDto.responsible.id,
 		deadlineTs: taskDto.deadlineTs * 1000,
 		needsControl: taskDto.needsControl,
+		startPlanTs: taskDto.startPlanTs * 1000,
+		endPlanTs: taskDto.endPlanTs * 1000,
 		fileIds: taskDto.fileIds,
 		checklist: taskDto.checklist ?? [],
 		containsChecklist: taskDto.containsChecklist,
 		groupId: taskDto.group?.id,
-		stageId: taskDto.stage?.id,
+		stageId: taskDto.stage?.id ?? 0,
 		flowId: taskDto.flow?.id,
 		status: taskDto.status,
 		statusChangedTs: taskDto.statusChangedTs * 1000,
 		accomplicesIds: taskDto.accomplices.map(({ id }) => id),
 		auditorsIds: taskDto.auditors.map(({ id }) => id),
 		chatId: taskDto.chatId,
+		allowsChangeDeadline: prepareValue(taskDto.allowsChangeDeadline),
+		allowsChangeDatePlan: prepareValue(taskDto.allowsChangeDatePlan),
+		matchesWorkTime: prepareValue(taskDto.matchesWorkTime),
+		matchesSubTasksTime: prepareValue(taskDto.matchesSubTasksTime),
+		rights: prepareValue(taskDto.rights),
+		tags: prepareValue(taskDto.tags, taskDto.tags?.map(({ name }) => name)),
+		archiveLink: prepareValue(taskDto.archiveLink),
 	};
 
-	if (taskDto.rights)
-	{
-		task.rights = taskDto.rights;
-	}
-
-	return task;
+	return Object.fromEntries(Object.entries(task).filter(([, value]) => value));
 }
 
 export function mapModelToSliderData(task: TaskModel, checkLists: CheckListModel[]): TaskSliderData
@@ -87,5 +100,10 @@ function prepareValue(value: any, mappedValue: any = value): any | undefined
 // TODO: Temporary. Remove when removing old full card
 function mapDescription(description: ?string): ?string
 {
-	return description?.replaceAll('[p]\n', '').replaceAll('[/p]', '');
+	return description?.replaceAll(/\[p]\n|\[p]\[\/p]|\[\/p]/gi, '').trim();
+}
+
+function mapTags(tags: number[]): TagDto[]
+{
+	return tags.map((name) => ({ name }));
 }

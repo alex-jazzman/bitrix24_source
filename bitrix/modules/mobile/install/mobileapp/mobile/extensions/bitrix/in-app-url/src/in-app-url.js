@@ -94,26 +94,33 @@ jn.define('in-app-url/in-app-url', (require, exports, module) => {
 				return false;
 			}
 
-			const route = this.findRoute(url);
-
-			if (!route)
+			try
 			{
-				console.warn(`in-app-url: no route found for path ${url}`);
-				if (fallbackFn)
+				const route = this.findRoute(url);
+
+				if (!route)
 				{
-					return fallbackFn(url);
+					console.warn(`in-app-url: no route found for path ${url}`);
+					if (fallbackFn)
+					{
+						return fallbackFn(url);
+					}
+
+					PageManager.openPage({
+						bx24ModernStyle: true,
+						...context,
+						url: url.toString(),
+					});
+
+					return false;
 				}
 
-				PageManager.openPage({
-					bx24ModernStyle: true,
-					...context,
-					url: url.toString(),
-				});
-
-				return false;
+				return route.dispatch(url, context);
 			}
-
-			return route.dispatch(url, context);
+			catch (e)
+			{
+				console.error(`in-app-url: error while opening path ${path}`, e);
+			}
 		}
 
 		/**
@@ -143,6 +150,10 @@ jn.define('in-app-url/in-app-url', (require, exports, module) => {
 			return this.routes.filter((route) => route.hasName(name));
 		}
 
+		/**
+		 * @param options
+		 * @returns {Route}
+		 */
 		#createRoute(options)
 		{
 			return new Route(options);

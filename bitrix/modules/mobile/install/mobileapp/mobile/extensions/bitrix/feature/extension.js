@@ -60,6 +60,16 @@ jn.define('feature', (require, exports, module) => {
 		{
 			return !isAndroid || minApiVersion(60, 'canUseAnimatedCounter');
 		}
+
+		static canUseWidgetEventOpened()
+		{
+			return feature?.isFeatureEnabled('widget_event_opened');
+		}
+
+		static isNativeSettingApiSupported()
+		{
+			return Boolean(feature?.isFeatureEnabled('module-config-app-settings'));
+		}
 	}
 
 	/**

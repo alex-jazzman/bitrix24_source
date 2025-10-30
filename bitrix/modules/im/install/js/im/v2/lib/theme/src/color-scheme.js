@@ -5,7 +5,7 @@ export const ThemeType = Object.freeze({
 
 export const ThemePattern = Object.freeze({
 	default: 'default',
-	martaAI: 'marta-ai',
+	aiAssistant: 'ai-assistant',
 });
 
 export const SelectableBackground = Object.freeze({
@@ -58,6 +58,7 @@ export const SelectableBackground = Object.freeze({
 	},
 });
 
+// should be synced with \Bitrix\Im\V2\Chat\Background\BackgroundId, can potentially be used externally
 export const SpecialBackgroundId = {
 	collab: 'collab',
 	martaAI: 'martaAI',
@@ -74,14 +75,14 @@ export const SpecialBackground = {
 	[SpecialBackgroundId.martaAI]: {
 		color: '#0277ff',
 		type: ThemeType.dark,
-		pattern: ThemePattern.martaAI,
+		pattern: ThemePattern.aiAssistant,
 	},
 	[SpecialBackgroundId.copilot]: SelectableBackground[COPILOT_BACKGROUND_ID],
 };
 
 export const ImageFileByBackgroundId = {
 	[SpecialBackgroundId.collab]: 'collab-v2',
-	[SpecialBackgroundId.martaAI]: 'marta-ai',
+	[SpecialBackgroundId.martaAI]: 'ai-assistant',
 	[SpecialBackgroundId.copilot]: COPILOT_BACKGROUND_ID.toString(),
 };
 

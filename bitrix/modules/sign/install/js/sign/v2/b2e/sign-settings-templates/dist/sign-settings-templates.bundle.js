@@ -332,7 +332,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	            return document.templateId;
 	          });
 	          _context3.next = 7;
-	          return babelHelpers.classPrivateFieldGet(this, _api).template.registerDocuments(templateIds);
+	          return babelHelpers.classPrivateFieldGet(this, _api).template.registerDocuments(templateIds, babelHelpers.classPrivateFieldGet(this, _documentUserParty).isRejectExcludedEnabled());
 	        case 7:
 	          _yield$babelHelpers$c = _context3.sent;
 	          items = _yield$babelHelpers$c.items;

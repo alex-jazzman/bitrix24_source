@@ -366,7 +366,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      },
 	      /** @function application/isChatOpen */
 	      isChatOpen: state => dialogId => {
-	        const allowedLayouts = [im_v2_const.Layout.chat, im_v2_const.Layout.aiAssistant, im_v2_const.Layout.channel, im_v2_const.Layout.collab];
+	        const allowedLayouts = [im_v2_const.Layout.chat, im_v2_const.Layout.copilot, im_v2_const.Layout.channel, im_v2_const.Layout.collab];
 	        if (!allowedLayouts.includes(state.layout.name)) {
 	          return false;
 	        }
@@ -3672,7 +3672,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  getState() {
 	    return {
 	      collection: {},
-	      temporaryFilesMap: new Map()
+	      temporaryFilesMap: new Map(),
+	      transcriptions: {}
 	    };
 	  }
 	  getElementState() {
@@ -3685,7 +3686,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      extension: '',
 	      icon: 'empty',
 	      size: 0,
-	      image: false,
+	      image: null,
 	      status: im_v2_const.FileStatus.done,
 	      progress: 100,
 	      authorId: 0,
@@ -3747,6 +3748,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          return state.collection[temporaryFileId];
 	        }
 	        return null;
+	      },
+	      /** @function files/getTranscription */
+	      getTranscription: state => fileId => {
+	        return state.transcriptions[fileId] || null;
 	      }
 	    };
 	  }
@@ -3819,6 +3824,19 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      /** @function files/setTemporaryFileMapping */
 	      setTemporaryFileMapping: (store, payload) => {
 	        store.commit('setTemporaryFileMapping', payload);
+	      },
+	      /** @function files/setTranscription */
+	      setTranscription: (store, payload) => {
+	        const {
+	          fileId,
+	          status,
+	          transcriptText
+	        } = payload;
+	        store.commit('setTranscription', {
+	          fileId,
+	          status,
+	          transcriptText
+	        });
 	      }
 	    };
 	  }
@@ -3859,6 +3877,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      },
 	      setTemporaryFileMapping: (state, payload) => {
 	        state.temporaryFilesMap.set(payload.serverFileId, payload.temporaryFileId);
+	      },
+	      setTranscription: (state, payload) => {
+	        state.transcriptions[payload.fileId] = {
+	          status: payload.status,
+	          transcriptText: payload.transcriptText
+	        };
 	      }
 	    };
 	  }
@@ -4213,7 +4237,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      recentCollection: new Set(),
 	      unreadCollection: new Set(),
 	      copilotCollection: new Set(),
-	      aiAssistantCollection: new Set(),
 	      channelCollection: new Set(),
 	      collabCollection: new Set()
 	    };
@@ -4261,15 +4284,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      /** @function recent/getCopilotCollection */
 	      getCopilotCollection: state => {
 	        return [...state.copilotCollection].filter(dialogId => {
-	          const dialog = this.store.getters['chats/get'](dialogId);
-	          return Boolean(dialog);
-	        }).map(id => {
-	          return state.collection[id];
-	        });
-	      },
-	      /** @function recent/getAiAssistantCollection */
-	      getAiAssistantCollection: state => {
-	        return [...state.aiAssistantCollection].filter(dialogId => {
 	          const dialog = this.store.getters['chats/get'](dialogId);
 	          return Boolean(dialog);
 	        }).map(id => {
@@ -4420,12 +4434,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        store.commit('setCopilotCollection', itemIds);
 	        babelHelpers.classPrivateFieldLooseBase(this, _updateUnloadedCopilotCounters)[_updateUnloadedCopilotCounters](payload);
 	      },
-	      /** @function recent/setAiAssistant */
-	      setAiAssistant: async (store, payload) => {
-	        const itemIds = await this.store.dispatch('recent/store', payload);
-	        store.commit('setAiAssistantCollection', itemIds);
-	        babelHelpers.classPrivateFieldLooseBase(this, _updateUnloadedCopilotCounters)[_updateUnloadedCopilotCounters](payload);
-	      },
 	      /** @function recent/setChannel */
 	      setChannel: async (store, payload) => {
 	        const itemIds = await this.store.dispatch('recent/store', payload);
@@ -4569,7 +4577,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        }
 	        store.commit('deleteFromRecentCollection', existingItem.dialogId);
 	        store.commit('deleteFromCopilotCollection', existingItem.dialogId);
-	        store.commit('deleteFromAiAssistantCollection', existingItem.dialogId);
 	        store.commit('deleteFromChannelCollection', existingItem.dialogId);
 	        store.commit('deleteFromCollabCollection', existingItem.dialogId);
 	        const canDelete = babelHelpers.classPrivateFieldLooseBase(this, _canDelete)[_canDelete](existingItem.dialogId);
@@ -4608,14 +4615,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      },
 	      deleteFromCopilotCollection: (state, payload) => {
 	        state.copilotCollection.delete(payload);
-	      },
-	      setAiAssistantCollection: (state, payload) => {
-	        payload.forEach(dialogId => {
-	          state.aiAssistantCollection.add(dialogId);
-	        });
-	      },
-	      deleteFromAiAssistantCollection: (state, payload) => {
-	        state.aiAssistantCollection.delete(payload);
 	      },
 	      deleteFromChannelCollection: (state, payload) => {
 	        state.channelCollection.delete(payload);

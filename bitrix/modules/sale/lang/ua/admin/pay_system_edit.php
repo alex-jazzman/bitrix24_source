@@ -49,13 +49,11 @@ $MESS["SALE_EDIT_RECORD"] = "Зміна платіжної системи # #ID#
 $MESS["SALE_NEW_RECORD"] = "Нова платіжна система";
 $MESS["SALE_PSE_BIS_VAL_SETTINGS"] = "Налаштування обробника ПС";
 $MESS["SALE_PSE_ERROR_ACTION_SAVE"] = "Не вказано обробника платіжної системи";
-$MESS["SALE_PSE_ERROR_DEFAULT_RSRT_APPLY"] = "Помилка застосування загальних обмежень до платіжної системи.";
 $MESS["SALE_PSE_ERROR_DEFAULT_RSRT_APPLY_MSGVER_1"] = "Помилка застосування загальних обмежень до платіжної системи.";
 $MESS["SALE_PSE_ERROR_DOCUMENT_TEMPLATE_EMPTY"] = "Не вказано шаблон документа";
 $MESS["SALE_PSE_ERROR_HANDLER_TYPE"] = "Не знайдено обробник";
 $MESS["SALE_PSE_ERROR_IMAGE_ERROR"] = "Помилка при завантаженні #SETTING_NAME#. Спробуйте, наприклад, завантажити в іншому форматі.<br>";
 $MESS["SALE_PSE_ERROR_NO_ACTION_FILE"] = "Не вибраний обробник ПС";
-$MESS["SALE_PSE_ERROR_RSRT_CURRENCY_SAVE"] = "Помилка при збереженні обмеження по валютам";
 $MESS["SALE_PSE_ERROR_SET_BIZVAL_MAP"] = "Помилка при збереженні БС";
 $MESS["SALE_PSE_RETURN"] = "Налаштування повернень";
 $MESS["SALE_PSE_YANDEX_INVOICE_SETTINGS"] = "Для виставлення рахунків через Яндекс, необхідно додатково <a href='/bitrix/admin/sale_yandexinvoice_settings.php?lang=ua&pay_system_id=#ID#' target='_blank'>налаштувати</a> обробник";

@@ -9,4 +9,5 @@ $MESS["SIGN_BLANK_SELECTOR_NEW_DOC"] = "Microsoft Word";
 $MESS["SIGN_BLANK_SELECTOR_NEW_PDF"] = "PDF document";
 $MESS["SIGN_BLANK_SELECTOR_RECENT_TEMPLATES_TITLE"] = "Recent documents";
 $MESS["SIGN_BLANK_SELECTOR_SLIDER_SELECT_BLANK_BUTTON_LABEL"] = "Select";
+$MESS["SIGN_BLANK_SELECTOR_UPLOADER_ERROR_INCOMPLETE"] = "Could not upload file. Please try again.";
 $MESS["SIGN_BLANK_SELECTOR_UPLOAD_HINT"] = "You can submit for signing one PDF, DOC, DOCX, RTF or ODT document at a time, or up to %imageCountLimit% JPG / PNG images.";

@@ -53,7 +53,6 @@ $MESS["IM_TEXTAREA_REPLY_AUDIO_TITLE"] = "Audio";
 $MESS["IM_TEXTAREA_REPLY_DELETED_TITLE"] = "Message has been deleted.";
 $MESS["IM_TEXTAREA_SELECT_CALENDAR_SLOT"] = "Time slots";
 $MESS["IM_TEXTAREA_SELECT_DOCUMENT_SIGN"] = "Document for signing";
-$MESS["IM_TEXTAREA_SELECT_FILE"] = "File";
 $MESS["IM_TEXTAREA_SELECT_FILE_FROM_B24"] = "File on Bitrix24";
 $MESS["IM_TEXTAREA_SELECT_LOCAL_FILE"] = "File on this computer";
 $MESS["IM_TEXTAREA_SELECT_MEETING"] = "Event or meeting";

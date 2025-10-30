@@ -161,7 +161,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    return settings.get('isQuickAccessHidden', false);
 	  }
 	  isChatLayout(layoutName) {
-	    const chatLayouts = [im_v2_const.Layout.chat, im_v2_const.Layout.channel, im_v2_const.Layout.aiAssistant, im_v2_const.Layout.openlines, im_v2_const.Layout.openlinesV2, im_v2_const.Layout.collab];
+	    const chatLayouts = [im_v2_const.Layout.chat, im_v2_const.Layout.channel, im_v2_const.Layout.copilot, im_v2_const.Layout.openlines, im_v2_const.Layout.openlinesV2, im_v2_const.Layout.collab];
 	    return chatLayouts.includes(layoutName);
 	  }
 	}
@@ -193,7 +193,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  if (currentLayout.name === config.name) {
 	    return;
 	  }
-	  if (config.name === im_v2_const.Layout.aiAssistant) {
+	  if (config.name === im_v2_const.Layout.copilot) {
 	    im_v2_lib_analytics.Analytics.getInstance().copilot.onOpenTab();
 	  }
 	  im_v2_lib_analytics.Analytics.getInstance().onOpenTab(config.name);

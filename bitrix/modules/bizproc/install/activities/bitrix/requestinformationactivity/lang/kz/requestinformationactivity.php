@@ -1,9 +1,6 @@
 <?php
-$MESS["BPAR_COMMENT_LABEL_MESSAGE"] = "Пікір өрісіне арналған белгі";
 $MESS["BPAR_COMMENT_LABEL_MESSAGE_1"] = "Түсіндіруге арналған өріс атауы";
-$MESS["BPAR_COMMENT_REQUIRED"] = "Пікір міндетті";
 $MESS["BPAR_COMMENT_REQUIRED_1"] = "Түсініктеме сұрау";
-$MESS["BPAR_SHOW_COMMENT"] = "Пікірді енгізу өрісін көрсету";
 $MESS["BPAR_SHOW_COMMENT_1"] = "Түсініктемесі бар өрісті көрсету";
 $MESS["BPAR_TASK_BUTTON_MESSAGE"] = "Тапсырмадағы батырма мәтіні";
 $MESS["BPRIA_ACCESS_CONTROL"] = "Қолжетімділікті шектеу";
@@ -11,7 +8,6 @@ $MESS["BPRIA_ACT_APPROVE"] = "Құжат қабылданды";
 $MESS["BPRIA_ACT_APPROVE_TRACK"] = "#PERSON# пайдаланушы #COMMENT# қосымша ақпаратты енгізді ";
 $MESS["BPRIA_ACT_BUTTON1"] = "Сақтау";
 $MESS["BPRIA_ACT_BUTTON2"] = "Қабылдамау";
-$MESS["BPRIA_ACT_COMMENT"] = "Пікір";
 $MESS["BPRIA_ACT_COMMENT_1"] = "Түсініктеме";
 $MESS["BPRIA_ACT_COMMENT_ERROR"] = "Өріс толтырылмаған: #COMMENT_LABEL#";
 $MESS["BPRIA_ACT_INFO"] = "Қосымша ақпаратты күту";
@@ -29,7 +25,6 @@ $MESS["BPRIA_ARGUMENT_NULL"] = "#PARAM#' міндетті мәні толтыр�
 $MESS["BPRIA_COMMENT_REQUIRED_TO_APPROVE"] = "Бекіту кезінде міндетті";
 $MESS["BPRIA_COMMENT_REQUIRED_TO_REJECT"] = "Қабылдамау кезінде міндетті";
 $MESS["BPRIA_DESCR"] = "Тапсырманың сипаттамасы";
-$MESS["BPRIA_LOG_COMMENTS"] = "Пікір";
 $MESS["BPRIA_LOG_N"] = "Қабылданбады";
 $MESS["BPRIA_LOG_Y"] = "Ақпарат енгізілді";
 $MESS["BPRIA_NAME"] = "Тапсырманың атауы";

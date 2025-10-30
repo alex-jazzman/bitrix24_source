@@ -33,8 +33,12 @@ export class CheckList extends BuilderEntityModel<CheckListModelState, CheckList
 				toggle: true,
 			},
 			panelIsShown: false,
+			myFilterActive: false,
 			collapsed: false,
-			previewCollapsed: true,
+			expanded: false,
+			localCompleteState: null,
+			localCollapsedState: null,
+			areCompletedCollapsed: false,
 			hidden: false,
 			groupMode: {
 				active: false,

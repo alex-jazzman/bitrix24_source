@@ -6,6 +6,10 @@
 	--im-audio-player__border-color-rate-button: rgba(82, 92, 105, .2);
 	--im-audio-player__border-color_hover-rate-button: rgba(82, 92, 105, .4);
 	--im-audio-player__text-color_hover-rate-button: rgba(82, 92, 105);
+	--im-audio-player__background-color_transcription-button: var(--im-color-palette-blue-15);
+	--im-audio-player__background-color_transcription-button_hover: #d3f4ff;
+	--im-audio-player__background-color_transcription-button-self: rgba(var(--im-color-palette-gray-90-rgb), 0.05);
+	--im-audio-player__background-color_transcription-button-self_hover: rgba(var(--im-color-palette-gray-90-rgb), 0.1);
 	--im-audio-player__background-image_play-icon: url("data:image/svg+xml;charset=utf-8,%3Csvg width='9' height='14' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M8.694 6.49L.941 1.006A.58.58 0 00.323.97a.62.62 0 00-.317.549v10.963c-.002.23.12.443.317.55a.578.578 0 00.618-.039L8.694 7.51A.622.622 0 008.956 7a.622.622 0 00-.262-.51z' fill='%23fff'/%3E%3C/svg%3E");
 	--im-audio-player__background-image_pause-icon: url("data:image/svg+xml;charset=utf-8,%3Csvg width='10' height='12' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3.75.167H.835v11.666h2.917V.167zM10 .167H7.085v11.666h2.917V.167z' fill='%23fff'/%3E%3C/svg%3E");
 	--im-audio-player__background-image_loader-icon: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2218%22%20height%3D%2218%22%20viewBox%3D%220%200%2018%2018%22%3E%0A%20%20%3Cpath%20fill%3D%22%23FFFFFF%22%20fill-rule%3D%22evenodd%22%20d%3D%22M9.25347735%2C0.131844352%20L9.25347735%2C1.65344535%20C9.1693359%2C1.65059411%209.08483578%2C1.64915697%209%2C1.64915697%20C4.9402415%2C1.64915697%201.64915697%2C4.9402415%201.64915697%2C9%20C1.64915697%2C13.0597585%204.9402415%2C16.350843%209%2C16.350843%20C13.0597585%2C16.350843%2016.350843%2C13.0597585%2016.350843%2C9%20C16.350843%2C8.91516422%2016.3494059%2C8.8306641%2016.3465546%2C8.74652265%20L17.8681556%2C8.74652265%20C17.870518%2C8.83072687%2017.8717071%2C8.91522457%2017.8717071%2C9%20C17.8717071%2C13.8997085%2013.8997085%2C17.8717071%209%2C17.8717071%20C4.10029146%2C17.8717071%200.128292901%2C13.8997085%200.128292901%2C9%20C0.128292901%2C4.10029146%204.10029146%2C0.128292901%209%2C0.128292901%20C9.08477543%2C0.128292901%209.16927313%2C0.129481974%209.25347735%2C0.131844352%20Z%22%20opacity%3D%22.6%22/%3E%0A%3C/svg%3E%0A');
@@ -73,10 +77,12 @@
 	cursor: wait;
 }
 
-.bx-im-audio-player__rate-button-container {
-	min-width: 47px;
+.bx-im-audio-player__rate-button-container,
+.bx-im-audio-player__transcription-button-container {
 	display: flex;
 	justify-content: right;
+	padding-top: 5px;
+	margin-left: 10px;
 }
 
 .bx-im-audio-player__rate-button-container button {
@@ -89,10 +95,33 @@
 	border-radius: 100px;
 	background-color: transparent;
 	color: var(--im-audio-player__text-color-rate-button);
-	font-size: 12px;
-	font-weight: 600;
-	margin-top: 5px;
+	font-size: var(--im-font-size-xs);
+	font-weight: var(--ui-font-weight-semi-bold);
 	transition: border-color 0.3s ease, color 0.3s ease;
+}
+
+.bx-im-audio-player__transcription-button-container button {
+	cursor: pointer;
+	min-width: 37px;
+	height: 24px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 100px;
+	border: none;
+	background-color: var(--im-audio-player__background-color_transcription-button);
+}
+
+.bx-im-audio-player__transcription-button-container button:hover {
+	background-color: var(--im-audio-player__background-color_transcription-button_hover);
+}
+
+.bx-im-message-base__wrap.--self .bx-im-audio-player__transcription-button-container button {
+	background-color: var(--im-audio-player__background-color_transcription-button-self);
+}
+
+.bx-im-message-base__wrap.--self .bx-im-audio-player__transcription-button-container button:hover {
+	background-color: var(--im-audio-player__background-color_transcription-button-self_hover);
 }
 
 .bx-im-audio-player__rate-button-container button.--active:hover {
@@ -139,6 +168,7 @@
 	top: 0;
 	left: 0;
 	background: var(--im-audio-player__background_track-mask);
+	will-change: transform;
 }
 
 .bx-im-audio-player__track-mask.--active {

@@ -1,6 +1,5 @@
 <?php
 $MESS["TASKS_GRID_TASK_GRID_HEADER_ACTIVITY_DATE"] = "Активність";
-$MESS["TASKS_GRID_TASK_GRID_HEADER_ALLOW_CHANGE_DEADLINE"] = "Дозволити відповідальному міняти крайній термін";
 $MESS["TASKS_GRID_TASK_GRID_HEADER_ALLOW_CHANGE_DEADLINE_MSGVER_1"] = "Дозволяти виконавцю змінювати крайній термін";
 $MESS["TASKS_GRID_TASK_GRID_HEADER_ALLOW_TIME_TRACKING"] = "Враховувати час";
 $MESS["TASKS_GRID_TASK_GRID_HEADER_ASSIGNEE_NAME"] = "Виконавець";
@@ -13,10 +12,8 @@ $MESS["TASKS_GRID_TASK_GRID_HEADER_FLAG_COMPLETE"] = "Завершення за�
 $MESS["TASKS_GRID_TASK_GRID_HEADER_FLOW"] = "Потік";
 $MESS["TASKS_GRID_TASK_GRID_HEADER_GROUP_NAME"] = "Проєкт";
 $MESS["TASKS_GRID_TASK_GRID_HEADER_ID"] = "ID";
-$MESS["TASKS_GRID_TASK_GRID_HEADER_MARK"] = "Оцінка";
 $MESS["TASKS_GRID_TASK_GRID_HEADER_MARK_MSGVER_1"] = "Оцінка";
 $MESS["TASKS_GRID_TASK_GRID_HEADER_ORIGINATOR_NAME"] = "Постановник";
-$MESS["TASKS_GRID_TASK_GRID_HEADER_RESPONSIBLE_NAME"] = "Відповідальний";
 $MESS["TASKS_GRID_TASK_GRID_HEADER_STAGE_ID"] = "Стадія канбану";
 $MESS["TASKS_GRID_TASK_GRID_HEADER_STATUS"] = "Статус";
 $MESS["TASKS_GRID_TASK_GRID_HEADER_TAG"] = "Теги";

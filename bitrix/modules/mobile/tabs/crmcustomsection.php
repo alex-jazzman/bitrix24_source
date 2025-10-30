@@ -11,6 +11,9 @@ use Bitrix\Mobile\Tab\Tabable;
 use Bitrix\Mobile\Tab\Utils;
 use Bitrix\MobileApp\Janative\Manager;
 use Bitrix\MobileApp\Mobile;
+use Bitrix\Mobile\Menu\Analytics;
+use Bitrix\Mobile\Config\Feature;
+use Bitrix\Mobile\Feature\MenuFeature;
 
 final class CrmCustomSection implements Tabable
 {
@@ -84,21 +87,24 @@ final class CrmCustomSection implements Tabable
 	public function getMenuData(): array
 	{
 		return [
-			'title' => $this->getShortTitle(),
+			'id' => $this->getId(),
+			'title' => $this->getTitle(),
 			'useLetterImage' => true,
+			'section_code' => 'crm_dynamic',
 			'color' => '#00ace3',
 			'imageUrl' => 'favorite/icon-crm_custom_section.png',
 			'imageName' => $this->getIconId(),
 			'params' => [
 				'onclick' => Utils::getComponentJSCode($this->getComponentParams()),
 				'counter' => 'crm_custom_section_' . $this->customSection->getId(),
+				'analytics' => Analytics::crmCustomSection(),
 			]
 		];
 	}
 
 	public function shouldShowInMenu(): bool
 	{
-		return false;
+		return Feature::isEnabled(MenuFeature::class);
 	}
 
 	public function canBeRemoved(): bool

@@ -840,7 +840,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	  const documentUids = [...this.documentsGroup.keys()];
 	  for (const documentUid of documentUids) {
 	    // eslint-disable-next-line no-await-in-loop
-	    await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].setupB2eParties(documentUid, representative.entityId, members);
+	    await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].setupB2eParties(documentUid, representative.entityId, members, babelHelpers.classPrivateFieldLooseBase(this, _userParty)[_userParty].isRejectExcludedEnabled());
 	  }
 	  const uid = babelHelpers.classPrivateFieldLooseBase(this, _documentUid)[_documentUid];
 	  const membersData = await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].loadMembers(uid);
@@ -869,7 +869,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	  let syncFinished = false;
 	  while (!syncFinished) {
 	    // eslint-disable-next-line no-await-in-loop
-	    const response = await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].syncB2eMembersWithDepartments(uid, signerParty);
+	    const response = await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].syncB2eMembersWithDepartments(uid, signerParty, babelHelpers.classPrivateFieldLooseBase(this, _userParty)[_userParty].isRejectExcludedEnabled());
 	    syncFinished = response.syncFinished;
 	    // eslint-disable-next-line no-await-in-loop
 	    await babelHelpers.classPrivateFieldLooseBase(this, _sleep)[_sleep](1000);

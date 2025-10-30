@@ -25,6 +25,11 @@ export class ResourceNotificationStep extends Step
 		return this.store.getters[`${Model.ResourceCreationWizard}/getResource`];
 	}
 
+	get #entityCalendar(): ResourceModel
+	{
+		return this.store.getters[`${Model.ResourceCreationWizard}/entityCalendar`];
+	}
+
 	get labelNext(): string
 	{
 		return Type.isNull(this.#resource.id ?? null)
@@ -51,6 +56,8 @@ export class ResourceNotificationStep extends Step
 				slotRanges: this.#prepareCompanySlotRanges(this.#resource),
 			});
 		}
+
+		this.#checkEntityCalendar();
 
 		const isSuccess = await this.#upsertResource(this.#resource);
 		if (!isSuccess)
@@ -155,5 +162,31 @@ export class ResourceNotificationStep extends Step
 			id: Text.getRandom(),
 			text,
 		};
+	}
+
+	async #checkEntityCalendar(): void
+	{
+		if (
+			!this.store.getters[`${Model.ResourceCreationWizard}/isIntegrationCalendarEnabled`]
+			|| this.#entityCalendar.data?.userIds?.length === 0
+		)
+		{
+			await this.#disabledCalendarIntegration();
+		}
+	}
+
+	async #disabledCalendarIntegration(): Promise<void>
+	{
+		if (this.#entityCalendar === null)
+		{
+			return;
+		}
+
+		await this.store.dispatch(`${Model.ResourceCreationWizard}/updateResourceEntityCalendar`, {
+			userIds: [],
+			locationId: null,
+			checkAvailability: false,
+			reminders: [],
+		});
 	}
 }

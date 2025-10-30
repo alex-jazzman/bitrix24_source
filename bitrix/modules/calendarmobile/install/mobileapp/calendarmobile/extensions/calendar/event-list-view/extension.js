@@ -5,7 +5,6 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 	const { Type } = require('type');
 	const { FloatingActionButton } = require('ui-system/form/buttons/floating-action-button');
 	const { tariffPlanRestrictionsReady } = require('tariff-plan-restriction');
-	const { Icon } = require('ui-system/blocks/icon');
 	const { Tourist } = require('tourist');
 
 	const { Sharing, SharingContext } = require('calendar/sharing');
@@ -17,6 +16,7 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 	const { CollabManager } = require('calendar/data-managers/collab-manager');
 	const { UserManager } = require('calendar/data-managers/user-manager');
 	const { MoreMenu } = require('calendar/event-list-view/more-menu');
+	const { SearchLayout } = require('calendar/event-list-view/search/layout');
 	const { SharingButton } = require('calendar/event-list-view/sharing-button');
 	const { EventEditForm } = require('calendar/event-edit-form');
 	const { Layout } = require('calendar/event-list-view/layout');
@@ -39,9 +39,12 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 			super(props);
 
 			this.floatingActionButtonRef = null;
-			this.menuButtonPointerRef = null;
 
 			this.syncErrorAhaShowed = false;
+
+			this.search = null;
+			this.sharingButton = null;
+			this.moreMenu = null;
 
 			this.initManagers();
 			this.initState();
@@ -71,7 +74,11 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 			CollabManager.setCollabs(this.props.collabInfo);
 			UserManager.addUsersToRedux(this.props.user);
 
-			if (this.props.calType === CalendarType.USER && !env.extranet)
+			if (
+				this.props.calType === CalendarType.USER
+				&& Number(this.props.ownerId) === Number(env.userId)
+				&& !env.extranet
+			)
 			{
 				SyncManager.setSyncInfo(this.props.syncInfo);
 			}
@@ -82,6 +89,7 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 			State.init({
 				calType: this.props.calType,
 				ownerId: this.props.ownerId,
+				viewMode: this.props.viewMode,
 				counters: this.props.counters,
 				hiddenSections: SectionManager.getHiddenSections(),
 				showDeclined: SettingsManager.isShowDeclinedEnabled(),
@@ -92,8 +100,7 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 
 		initRightMenuButtons()
 		{
-			this.sharingButton = null;
-			if (State.calType === CalendarType.USER && !env.extranet)
+			if (this.shouldShowSharingButton())
 			{
 				const sharing = new Sharing({
 					sharingInfo: this.props.sharingInfo,
@@ -104,6 +111,14 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 					sharing,
 					layout: this.layout,
 					onSharing: () => this.initRightMenu(),
+				});
+			}
+
+			if (this.shouldShowSearchButton())
+			{
+				this.search = new SearchLayout({
+					layout: this.props.layout,
+					filterPresets: this.props.filterPresets,
 				});
 			}
 
@@ -188,7 +203,7 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 							SyncManager.handlePull(data);
 							break;
 						case PullCommand.HANDLE_SUCCESSFUL_CONNECTION:
-							SectionManager.refresh(State.ownerId, State.calType, true);
+							void this.onHandleSuccessfulConnection();
 							break;
 						case PullCommand.UPDATE_USER_COUNTERS:
 							this.updateUserCounter(data);
@@ -208,26 +223,17 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 			if (!env.isCollaber && Tourist.firstTime(AhaMomentEvent.NEW_MENU))
 			{
 				setTimeout(() => {
-					if (this.menuButtonPointerRef)
-					{
-						NewMenu.show(this.menuButtonPointerRef);
+					NewMenu.show();
 
-						void Tourist.remember(AhaMomentEvent.NEW_MENU);
-					}
+					void Tourist.remember(AhaMomentEvent.NEW_MENU);
 				}, 500);
 			}
 			else if (!env.isCollaber && this.moreMenu.hasCountersValue() && Tourist.firstTime(AhaMomentEvent.SYNC_ERROR))
 			{
 				setTimeout(() => {
-					if (this.menuButtonPointerRef)
-					{
-						SyncError.show(
-							this.menuButtonPointerRef,
-							this.onHideSyncErrorAha,
-						);
+					SyncError.show(this.onHideSyncErrorAha);
 
-						void Tourist.remember(AhaMomentEvent.SYNC_ERROR);
-					}
+					void Tourist.remember(AhaMomentEvent.SYNC_ERROR);
 				}, 500);
 			}
 		}
@@ -252,23 +258,12 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 			const buttons = [];
 
 			buttons.push(
-				this.getSearchButton(),
+				this.search?.getButton(),
 				this.sharingButton?.getButton(),
 				this.moreMenu.getMenuButton(),
 			);
 
 			return buttons.filter(Boolean);
-		}
-
-		getSearchButton()
-		{
-			return {
-				type: Icon.SEARCH.getIconName(),
-				id: 'calendar-search',
-				testId: 'calendar-search',
-				accent: State.isSearchMode,
-				callback: this.showSearch,
-			};
 		}
 
 		initFloatingButton()
@@ -282,10 +277,6 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 				});
 			}
 		}
-
-		showSearch = () => {
-			State.setIsSearchVisible(true);
-		};
 
 		onSearch = (params) => {
 			this.initRightMenu();
@@ -341,6 +332,12 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 			}
 		}
 
+		async onHandleSuccessfulConnection()
+		{
+			await SectionManager.refresh(State.ownerId, State.calType, true);
+			void EventManager.refresh(true);
+		}
+
 		hiddenSectionsUpdated(hiddenSections)
 		{
 			SectionManager.setHiddenSections(hiddenSections);
@@ -367,7 +364,10 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 
 		updateUserCounter(data)
 		{
-			if (State.calType !== CalendarType.USER)
+			if (
+				State.calType !== CalendarType.USER
+				&& State.ownerId !== Number(env.userId)
+			)
 			{
 				return;
 			}
@@ -412,7 +412,6 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 					},
 				},
 				this.renderLayout(),
-				this.renderMenuButtonPointer(),
 			);
 		}
 
@@ -424,27 +423,16 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 			});
 		}
 
-		renderMenuButtonPointer()
-		{
-			return View(
-				{
-					style: {
-						height: 1,
-						width: 1,
-						opacity: 0,
-						position: 'absolute',
-						right: Application.getPlatform() === 'android' ? 33 : 36,
-						top: 0,
-					},
-					ref: (ref) => {
-						this.menuButtonPointerRef = ref;
-					},
-				},
-			);
-		}
-
 		handleFloatingButtonClick = () => {
+			const participantsEntityList = [Number(env.userId)];
+
+			if (State.calType === CalendarType.USER && State.ownerId !== Number(env.userId))
+			{
+				participantsEntityList.push(State.ownerId);
+			}
+
 			void EventEditForm.open({
+				participantsEntityList,
 				ownerId: State.ownerId,
 				calType: State.calType,
 				selectedDayTs: State.selectedDate.getTime(),
@@ -466,6 +454,23 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 				isExtranet,
 				name: fullName,
 			};
+		}
+
+		shouldShowSharingButton()
+		{
+			return (
+				State.calType === CalendarType.USER
+				&& State.ownerId === Number(env.userId)
+				&& !env.extranet
+			);
+		}
+
+		shouldShowSearchButton()
+		{
+			return (State.calType === CalendarType.USER && State.ownerId === Number(env.userId))
+				|| State.calType === CalendarType.GROUP
+				|| State.calType === CalendarType.COMPANY_CALENDAR
+			;
 		}
 	}
 

@@ -4,7 +4,7 @@
 jn.define('calendar/event-list-view/state', (require, exports, module) => {
 	const { Type } = require('type');
 	const { BaseState, observeState } = require('calendar/state');
-	const { Counters } = require('calendar/enums');
+	const { Counters, ViewMode } = require('calendar/enums');
 
 	const store = require('statemanager/redux/store');
 
@@ -22,7 +22,6 @@ jn.define('calendar/event-list-view/state', (require, exports, module) => {
 	 * @property {function(value)} setShowDeclined
 	 * @property {function(value)} setShowWeekNumbers
 	 * @property {function(value)} setDenyBusyInvitation
-	 * @property {function(value)} setIsSearchVisible
 	 * @property {function(value)} setSearchString
 	 * @property {function(value)} setPreset
 	 * @property {function(value)} setPresetId
@@ -44,6 +43,7 @@ jn.define('calendar/event-list-view/state', (require, exports, module) => {
 		 * @param [props.hiddenSections] {Array}
 		 * @param [props.calType] {String}
 		 * @param [props.ownerId] {Number}
+		 * @param [props.viewMode] {String}
 		 * @param [props.showDeclined] {Boolean}
 		 * @param [props.showWeekNumbers] {Boolean}
 		 * @param [props.denyBusyInvitation] {Boolean}
@@ -52,6 +52,8 @@ jn.define('calendar/event-list-view/state', (require, exports, module) => {
 		{
 			this.calType = props.calType;
 			this.ownerId = Number(props.ownerId);
+			this.viewMode = props.viewMode;
+
 			this.counters = props.counters;
 			this.hiddenSections = props.hiddenSections;
 
@@ -59,7 +61,6 @@ jn.define('calendar/event-list-view/state', (require, exports, module) => {
 			this.showWeekNumbers = props.showWeekNumbers;
 			this.denyBusyInvitation = props.denyBusyInvitation;
 
-			this.isSearchVisible = false;
 			this.searchString = '';
 			this.presetId = '';
 			this.preset = null;
@@ -95,7 +96,6 @@ jn.define('calendar/event-list-view/state', (require, exports, module) => {
 
 		closeFilter()
 		{
-			this.isSearchVisible = false;
 			this.searchString = '';
 			this.presetId = '';
 		}
@@ -125,6 +125,16 @@ jn.define('calendar/event-list-view/state', (require, exports, module) => {
 		get isInvitationMode()
 		{
 			return this.invitesSelected || this.isInvitationPresetEnabled;
+		}
+
+		get isBaseViewMode()
+		{
+			return this.viewMode === ViewMode.BASE;
+		}
+
+		get isTabsViewMode()
+		{
+			return this.viewMode === ViewMode.TABS;
 		}
 
 		get searchData()

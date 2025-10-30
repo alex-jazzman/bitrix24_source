@@ -88,7 +88,7 @@ export const RecentItem = {
 		},
 		isChatSelected(): boolean
 		{
-			const canBeSelected = [Layout.chat, Layout.updateChat, Layout.collab, Layout.aiAssistant];
+			const canBeSelected = [Layout.chat, Layout.updateChat, Layout.collab, Layout.copilot];
 			if (!canBeSelected.includes(this.layout.name))
 			{
 				return false;
@@ -98,11 +98,6 @@ export const RecentItem = {
 		},
 		isChatMuted(): boolean
 		{
-			if (this.isUser)
-			{
-				return false;
-			}
-
 			const isMuted = this.dialog.muteList.find((element) => {
 				return element === Core.getUserId();
 			});

@@ -276,7 +276,7 @@ export class Toolbar extends EventEmitter
 		return this.collapsed;
 	}
 
-	getItems()
+	getItems(): ToolbarItem[]
 	{
 		return this.items;
 	}
@@ -571,7 +571,9 @@ export class Toolbar extends EventEmitter
 
 	getItem(entityType: string, entityId: string | number): ToolbarItem | null
 	{
-		return this.items.find((item) => item.getEntityType() === entityType && item.getEntityId() === entityId) || null;
+		return this.items.find((item) => {
+			return item.getEntityType() === entityType && item.getEntityId() === String(entityId);
+		}) || null;
 	}
 
 	getItemByUrl(url: string): ToolbarItem | null

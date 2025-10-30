@@ -7,6 +7,7 @@ $MESS["TASKS_V2_TASK_FULL_CARD_DELEGATE"] = "Делегувати";
 $MESS["TASKS_V2_TASK_FULL_CARD_DELETE"] = "Видалити";
 $MESS["TASKS_V2_TASK_FULL_CARD_DISAPPROVE"] = "На доопрацювання";
 $MESS["TASKS_V2_TASK_FULL_CARD_FIX"] = "Повернути в роботу";
+$MESS["TASKS_V2_TASK_FULL_CARD_MORE"] = "Ще";
 $MESS["TASKS_V2_TASK_FULL_CARD_ON_REVIEW"] = "На перевірці";
 $MESS["TASKS_V2_TASK_FULL_CARD_PAUSE"] = "Призупинити";
 $MESS["TASKS_V2_TASK_FULL_CARD_RENEW"] = "Відновити";

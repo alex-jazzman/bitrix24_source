@@ -101,7 +101,10 @@ export class B2ETemplatesSignSettings
 
 		const documents: LoadedDocumentData[] = store.documents;
 		const templateIds = documents.map((document: LoadedDocumentData) => document.templateId);
-		const { items } = await this.#api.template.registerDocuments(templateIds);
+		const { items } = await this.#api.template.registerDocuments(
+			templateIds,
+			this.#documentUserParty.isRejectExcludedEnabled(),
+		);
 		store.setCreatedDocuments(items);
 	}
 

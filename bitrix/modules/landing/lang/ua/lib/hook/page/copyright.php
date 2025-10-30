@@ -4,7 +4,6 @@ $MESS["LANDING_HOOK_COPYRIGHT_SHOW"] = "Підпис &laquo;На основі Б
 $MESS["LANDING_HOOK_COPYRIGHT_SHOW_SMN"] = "Підпис &laquo;Швидко з Бітрікс&raquo;";
 $MESS["LANDING_HOOK_COPYRIGHT_TEXT_COMMON"] = "На основі <linklogo>#LOGO#</linklogo> &mdash; <linksite>безплатні сайти</linksite> та <linkcrm>CRM</linkcrm>";
 $MESS["LANDING_HOOK_COPYRIGHT_TEXT_COMMON_EN"] = "На основі #LOGO#. <linksite>Створити вебсайти онлайн</linksite>";
-$MESS["LANDING_HOOK_COPYRIGHT_TEXT_CONTENT_LINK_REPORT"] = "Повідомити про порушення";
 $MESS["LANDING_HOOK_COPYRIGHT_TEXT_CONTENT_LINK_REPORT_2"] = "Поскаржитися на контент сайту в #a1#Бітрікс24#a2#";
 $MESS["LANDING_HOOK_COPYRIGHT_TEXT_CONTENT_LINK_REPORT_HINT"] = "Бітрікс24 не несе відповідальності за вміст сайту, але ви можете повідомити нам про порушення.";
 $MESS["LANDING_HOOK_COPYRIGHT_TEXT_SMN_1"] = "На основі";

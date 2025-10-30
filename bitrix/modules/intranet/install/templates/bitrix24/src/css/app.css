@@ -42,7 +42,6 @@
 	align-items: stretch;
 	justify-content: flex-start;
 	order: 1;
-	overflow: hidden;
 	padding-bottom: calc(80px * var(--side-panel-toolbar-shifted, 0));
 }
 

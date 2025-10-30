@@ -2,7 +2,7 @@
  * @module user-profile/common-tab/src/block/base-view
  */
 jn.define('user-profile/common-tab/src/block/base-view', (require, exports, module) => {
-	const { Indent, Color, Corner, Component } = require('tokens');
+	const { Indent, Color, Component } = require('tokens');
 	const { Text4 } = require('ui-system/typography/text');
 	const { Card } = require('ui-system/layout/card');
 
@@ -15,22 +15,16 @@ jn.define('user-profile/common-tab/src/block/base-view', (require, exports, modu
 		backgroundColor: Color.bgContentPrimary.toHex(),
 		flexDirection: 'column',
 		justifyContent: 'center',
-		marginTop: Component.cardListGap.toNumber(),
 	};
 
 	const ViewModeStyles = {
 		[ViewMode.FULL_WIDTH]: {
 			...BaseViewStyles,
-			width: '90%',
-			borderRadius: Component.cardPaddingT.toNumber(),
-			padding: Component.cardPaddingLr.toNumber(),
-			marginHorizontal: Component.areaPaddingLr.toNumber(),
+			marginBottom: Component.cardListGap.toNumber(),
 		},
 		[ViewMode.HALF_WIDTH]: {
 			...BaseViewStyles,
-			minWidth: 156,
-			borderRadius: Corner.L.toNumber(),
-			padding: Indent.XL.toNumber(),
+			flexGrow: 1,
 		},
 	};
 
@@ -52,7 +46,9 @@ jn.define('user-profile/common-tab/src/block/base-view', (require, exports, modu
 			testId,
 			viewMode = ViewMode.FULL_WIDTH,
 			onClick,
+			cardProps = {},
 			style: customStyles = {},
+			titleStyle: customTitleStyles = {},
 		} = props;
 
 		const viewModeStyles = ViewModeStyles[viewMode] ?? ViewModeStyles[ViewMode.FULL_WIDTH];
@@ -69,6 +65,7 @@ jn.define('user-profile/common-tab/src/block/base-view', (require, exports, modu
 				color: Color.base1,
 				style: {
 					marginBottom: Indent.XL2.toNumber(),
+					...customTitleStyles,
 				},
 			});
 		};
@@ -85,6 +82,7 @@ jn.define('user-profile/common-tab/src/block/base-view', (require, exports, modu
 				},
 				onClick,
 				testId,
+				...cardProps,
 			},
 			renderTitle(),
 			renderContent(),

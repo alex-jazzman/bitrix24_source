@@ -129,6 +129,7 @@
 					'(?<url>/workgroups/group/(?<groupId>\\d+)/tasks/task/view/(?<taskId>\\d+)/)',
 					'(?<url>/workgroups/group/(?<groupId>\\d+)/tasks/task/edit/(?<taskId>\\d+)/)',
 					'(?<url>/extranet/contacts/personal/user/(\\d+)/tasks/task/view/(?<taskId>\\d+)/)',
+					'(?<url>/extranet/contacts/personal/user/(\\d+)/tasks/task/edit/(?<taskId>\\d+)/)',
 				],
 				minimizeOptions: (link) => {
 					return {
@@ -138,65 +139,93 @@
 						url: link.matches.groups.url,
 					};
 				},
-				loader: 'intranet:task-detail',
 				stopParameters: [
 					'PAGEN_(\\d+)',
 				],
-				options: {
-					label: {
-						text: BX.message('INTRANET_BINDINGS_TASK'),
-						bgColor: '#2FC6F6',
-					},
-					events: {
-						onCloseComplete: function() {
-							BX.Runtime.loadExtension('bitrix24.feedbackcollector').then(function(exports) {
-								var feedbackCollectorClass = exports.FeedbackCollector;
-								if (feedbackCollectorClass)
-								{
-									(new feedbackCollectorClass({feedbackId: 'tasksFeedbackSliderClose'})).run();
-								}
+				options: (link) => {
+					const queryParams = getQueryParams(link.url);
+					const taskId = parseInt(link.matches.groups.taskId, 10);
+					const groupId = parseInt(link.matches.groups.groupId, 10) || undefined;
+					const hasTemplate = Number(queryParams.TEMPLATE) > 0 || Number(queryParams.FLOW_ID) > 0;
+					const isCommentLink = Boolean(queryParams.MID);
+
+					const tasksSettings = BX.Extension.getSettings('intranet.sidepanel.bindings').get('tasks');
+					const isV2Form = tasksSettings.isV2Form || tasksSettings.allowedGroups.includes(groupId);
+					if (queryParams.OLD_FORM === 'Y' || hasTemplate || isCommentLink || !isV2Form)
+					{
+						return {
+							label: {
+								text: BX.message('INTRANET_BINDINGS_TASK'),
+								bgColor: '#2FC6F6',
+							},
+							events: {
+								onCloseComplete: function() {
+									BX.Runtime.loadExtension('bitrix24.feedbackcollector').then(function(exports) {
+										var feedbackCollectorClass = exports.FeedbackCollector;
+										if (feedbackCollectorClass)
+										{
+											(new feedbackCollectorClass({feedbackId: 'tasksFeedbackSliderClose'})).run();
+										}
+									});
+								},
+							},
+							printable: true,
+							loader: 'intranet:task-detail',
+						};
+					}
+
+					const url = link.matches.groups.url;
+					const analytics = {
+						context: queryParams.ta_sec,
+						element: queryParams.ta_el,
+					};
+
+					let card = null;
+
+					return {
+						width: 1510,
+						customLeftBoundary: 0,
+						cacheable: false,
+						contentCallback: (slider) => {
+							void BX.Runtime.loadExtension('tasks.v2.application.task-full-card').then((exports) => {
+								card = new exports.TaskFullCard({ taskId, groupId, url, link, analytics });
+								card.mount(slider);
 							});
+
+							return taskSkeleton();
 						},
-					},
-					printable: true,
+						events: {
+							onCloseComplete: () => card?.unmount(),
+						},
+						allowChangeHistory: true,
+						printable: true,
+						copyLinkLabel: true,
+						newWindowUrl: url,
+					};
 				},
 				handler: async function(event, link) {
 					event.preventDefault();
 
-					const tasksSettings = BX.Extension.getSettings('intranet.sidepanel.bindings').get('tasks');
-					const groupId = parseInt(link.matches.groups.groupId, 10);
-					const isV2FromAllowedForGroup = tasksSettings.allowedGroups.includes(groupId);
-					const taskId = parseInt(link.matches.groups.taskId, 10);
-					const params = getQueryParams(link.url);
+					const queryParams = getQueryParams(link.url);
+					const hasTemplate = Number(queryParams.TEMPLATE) > 0 || Number(queryParams.FLOW_ID) > 0;
 
-					if (taskId === 0 && tasksSettings.isV2MiniForm && params.miniform)
+					if (!hasTemplate && queryParams.miniform)
 					{
 						const { TaskCard } = await BX.Runtime.loadExtension('tasks.v2.application.task-card');
 
 						TaskCard.showCompactCard({
-							groupId,
 							analytics: {
-								context: params.ta_sec,
-								element: params.ta_el,
+								context: queryParams.ta_sec,
+								element: queryParams.ta_el,
 							},
 						});
 
 						return;
 					}
 
-					if (tasksSettings.isV2Form || isV2FromAllowedForGroup)
+					if (link.anchor?.dataset.sliderMaximize)
 					{
-						const { TaskCard } = await BX.Runtime.loadExtension('tasks.v2.application.task-card');
-
-						TaskCard.showFullCard({
-							taskId,
-							groupId,
-							url: link.url,
-							analytics: {
-								context: params.ta_sec,
-								element: params.ta_el,
-							},
-						});
+						BX.SidePanel.Instance.maximize(link.url, this.options);
 					}
 					else
 					{
@@ -250,31 +279,6 @@
 			},
 			{
 				condition: [
-					'/company/personal/user/(\\d+)/tasks/task/edit/0/',
-					'/workgroups/group/(\\d+)/tasks/task/edit/0/',
-					'/extranet/contacts/personal/user/(\\d+)/tasks/task/edit/0/'
-				],
-				loader: 'intranet:task-add',
-				options: {
-					label: {
-						text: BX.message('INTRANET_BINDINGS_TASK'),
-						bgColor: '#2FC6F6',
-					},
-					events: {
-						onCloseComplete: function() {
-							BX.Runtime.loadExtension('bitrix24.feedbackcollector').then(function(exports) {
-								var feedbackCollectorClass = exports.FeedbackCollector;
-								if (feedbackCollectorClass)
-								{
-									(new feedbackCollectorClass({feedbackId: 'tasksFeedbackSliderClose'})).run();
-								}
-							});
-						},
-					},
-				},
-			},
-			{
-				condition: [
 					'/company/personal/user/(\\d+)/tasks/templates/template/edit/0/',
 				],
 				loader: 'intranet:task-add',
@@ -299,6 +303,25 @@
 						bgColor: "#2FC6F6"
 					}
 				}
+			},
+			{
+				condition: [
+					'/company/personal/user/\\d+/tasks/\\?F_STATE=sVag',
+					'/workgroups/group/\\d+/tasks/\\?F_STATE=sVag',
+					'/extranet/contacts/personal/user/\\d+/tasks/\\?F_STATE=sVag'
+				],
+				handler: function(event) {
+					debugger;
+					const Messenger = BX.Reflection.getClass('BX.Messenger.Public')
+					if (!Messenger)
+					{
+						return;
+					}
+
+					Messenger.openNavigationItem({ id: 'tasksTask' });
+
+					event.preventDefault();
+				},
 			},
 			{
 				condition: ['/crm/button/edit/(\\d+)/'],
@@ -1529,5 +1552,52 @@
 			},
 		]
 	});
+
+	const line = BX.UI.System.Line;
+	const circle = BX.UI.System.Circle;
+
+	const taskSkeleton = () => BX.Tag.render`
+		<div class="task-skeleton --full">
+			<div class="--main">
+				<div style="padding: 28px 24px">
+					<div class="--full-title --row">
+						${line(350, 18)}
+						${circle()}
+					</div>
+					<div class="--full-description">${line(260, 18)}</div>
+					${line(null, 84)}
+					<div style="margin: 12px 0">${line(null, 84)}</div>
+					${line(null, 84)}
+					<div class="--full-chips --row">
+						${line(88, 32)}
+						${line(88, 32)}
+						${line(88, 32)}
+					</div>
+				</div>
+				<div class="--row --footer">
+					${line(85, 38)}
+					<div class="--more">${line(38, 38)}</div>
+					${line(131, 22)}
+				</div>
+			</div>
+			<div class="--chat">
+				<div class="--chat-title --row">
+					${circle(40)}
+					<div class="--chat-info">
+						${line(110, 12)}
+						${line(75, 10)}
+					</div>
+					${circle()}
+					<div style="margin-left: 8px">${circle()}</div>
+				</div>
+				<div class="--chat-bg">
+					<div class="--textarea --row">
+						${line(null, 47)}
+						${circle(44)}
+					</div>
+				</div>
+			</div>
+		</div>
+	`;
 
 })();

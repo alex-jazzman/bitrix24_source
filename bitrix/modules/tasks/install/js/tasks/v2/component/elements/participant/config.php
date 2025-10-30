@@ -13,6 +13,7 @@ return [
 		'ui.vue3.components.rich-loc',
 		'tasks.v2.const',
 		'tasks.v2.component.elements.hint',
+		'tasks.v2.component.elements.hover-pill',
 		'tasks.v2.component.elements.user-custom-tag-selector',
 	],
 	'skip_core' => true,

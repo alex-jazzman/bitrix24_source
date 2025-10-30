@@ -1,0 +1,23 @@
+<?php
+$MESS["SIGN_SIGNERS_DELETE_CONFIRMATION_MESSAGE"] = "Відновити групу не вийде.";
+$MESS["SIGN_SIGNERS_DELETE_CONFIRMATION_TITLE"] = "Видалити групу?";
+$MESS["SIGN_SIGNERS_GRID_COPY_HINT_FAIL"] = "Не вдалося скопіювати групу, спробуйте ще раз.";
+$MESS["SIGN_SIGNERS_GRID_COPY_HINT_SUCCESS"] = "Групу скопійовано.";
+$MESS["SIGN_SIGNERS_GRID_CREATE_LIST_CANCEL_BUTTON_TEXT"] = "Скасувати";
+$MESS["SIGN_SIGNERS_GRID_CREATE_LIST_CREATE_BUTTON_TEXT"] = "Створити";
+$MESS["SIGN_SIGNERS_GRID_CREATE_LIST_DESCRIPTION"] = "Створіть групу і додайте до неї співробітників для швидкого надсилання кадрових електронних документів.";
+$MESS["SIGN_SIGNERS_GRID_CREATE_LIST_HINT_TITLE_NOT_EMPTY"] = "Заповніть назву групи.";
+$MESS["SIGN_SIGNERS_GRID_CREATE_LIST_POPUP_INPUT_PLACEHOLDER"] = "Назва групи";
+$MESS["SIGN_SIGNERS_GRID_CREATE_LIST_POPUP_TITLE"] = "Нова група";
+$MESS["SIGN_SIGNERS_GRID_CREATE_LIST_SAVE_BUTTON_TEXT"] = "Перейменувати";
+$MESS["SIGN_SIGNERS_GRID_DELETE_HINT_FAIL"] = "Не вдалося видалити групу, спробуйте ще раз.";
+$MESS["SIGN_SIGNERS_GRID_DELETE_HINT_SUCCESS"] = "Групу видалено.";
+$MESS["SIGN_SIGNERS_GRID_DELETE_POPUP_NO"] = "Скасувати";
+$MESS["SIGN_SIGNERS_GRID_DELETE_POPUP_YES"] = "Так, видалити";
+$MESS["SIGN_SIGNERS_GRID_LIST_CREATE_FAIL"] = "Помилка створення групи.";
+$MESS["SIGN_SIGNERS_GRID_LIST_CREATE_SUCCESS"] = "Групу створено успішно.";
+$MESS["SIGN_SIGNERS_SIGNERS_GRID_DELETE_HINT_FAIL"] = "Не вдалося видалити співробітників із групи.";
+$MESS["SIGN_SIGNERS_SIGNERS_GRID_DELETE_HINT_SUCCESS"] = "Співробітників видалено з групи.";
+$MESS["SIGN_SIGNERS_SIGNER_DELETE_CONFIRMATION_TITLE"] = "Видалити співробітників із групи?";
+$MESS["SIGN_SIGNERS_SIGNER_GRID_DELETE_HINT_FAIL"] = "Не вдалося видалити співробітника з групи.";
+$MESS["SIGN_SIGNERS_SIGNER_GRID_DELETE_HINT_SUCCESS"] = "Співробітника видалено з групи.";

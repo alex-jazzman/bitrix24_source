@@ -231,12 +231,14 @@ export const UserMiniProfileComponent = {
 						>
 							<div v-if="isShowStructure" 
 								class="intranet-user-mini-profile-wrapper__content__right-wrapper"
+								data-test-id="usermp_structure-wrapper"
 							>
 								<Divider isVertical style="margin: 0 18px"/>
-								<div class="intranet-user-mini-profile-wrapper__column --right">
+								<div class="intranet-user-mini-profile-wrapper__column --right" data-test-id="usermp_structure-column">
 									<StructureViewList
 										:structure="backendData.structure"
 										:user="getUserData()"
+										data-test-id="usermp_structure-view-list"
 									/>
 								</div>
 							</div>

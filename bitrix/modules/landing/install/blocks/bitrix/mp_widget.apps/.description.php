@@ -21,6 +21,7 @@ $return = [
 				'editable' => [
 					'TITLE_MOBILE' => [],
 					'TITLE_DESKTOP' => [],
+					'TYPE' => [],
 					// visual
 					'COLOR_TITLE_MOBILE' => [
 						'style' => true,

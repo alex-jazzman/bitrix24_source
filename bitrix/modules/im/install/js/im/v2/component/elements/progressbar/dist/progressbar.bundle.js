@@ -40,6 +40,21 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    size: {
 	      type: String,
 	      default: ProgressBarSize.L
+	    },
+	    handleStatus: {
+	      type: Array,
+	      default: () => {
+	        return [im_v2_const.FileStatus.progress, im_v2_const.FileStatus.upload];
+	      }
+	    },
+	    /**
+	     * @value {[status: string]: { iconClass: string, labelText: string }}
+	     */
+	    statusMap: {
+	      type: Object,
+	      default: () => {
+	        return {};
+	      }
 	    }
 	  },
 	  emits: ['cancelClick'],
@@ -50,7 +65,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      return this.item;
 	    },
 	    needProgressBar() {
-	      return [im_v2_const.FileStatus.progress, im_v2_const.FileStatus.upload].includes(this.file.status);
+	      return this.handleStatus.includes(this.file.status);
 	    },
 	    progressStyles() {
 	      const radius = 23;
@@ -63,7 +78,19 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      };
 	    },
 	    labelText() {
+	      var _this$statusMap, _this$statusMap$this$;
+	      if ((_this$statusMap = this.statusMap) != null && (_this$statusMap$this$ = _this$statusMap[this.file.status]) != null && _this$statusMap$this$.labelText) {
+	        var _this$statusMap2, _this$statusMap2$this;
+	        return (_this$statusMap2 = this.statusMap) == null ? void 0 : (_this$statusMap2$this = _this$statusMap2[this.file.status]) == null ? void 0 : _this$statusMap2$this.labelText;
+	      }
 	      return formatProgressLabel(this.file.progress, this.file.size);
+	    },
+	    iconClass() {
+	      var _this$statusMap3, _this$statusMap3$this;
+	      if ((_this$statusMap3 = this.statusMap) != null && (_this$statusMap3$this = _this$statusMap3[this.file.status]) != null && _this$statusMap3$this.iconClass) {
+	        return this.statusMap[this.file.status].iconClass;
+	      }
+	      return ui_iconSet_api_vue.Outline.CROSS_L;
 	    },
 	    containerClass() {
 	      return `--size-${this.size.toLowerCase()}`;
@@ -77,7 +104,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  },
 	  methods: {
 	    onLoaderClick() {
-	      if (![im_v2_const.FileStatus.upload, im_v2_const.FileStatus.progress].includes(this.file.status)) {
+	      if (!this.handleStatus.includes(this.file.status)) {
 	        return;
 	      }
 	      this.$emit('cancelClick', {
@@ -105,7 +132,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					></circle>
 				</svg>
 				<BIcon
-					:name="OutlineIcons.CROSS_L"
+					:name="iconClass"
 					:color="Color.white"
 					:size="iconSize"
 					class="bx-im-progress-bar__loader-icon"

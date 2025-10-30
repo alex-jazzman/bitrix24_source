@@ -29,7 +29,6 @@ $MESS["SALESCENTER_SP_CONNECT_TBANK_BUSINESS_DESCRIPTION"] = "Т-Бизнест�
 $MESS["SALESCENTER_SP_CONNECT_TBANK_BUSINESS_DISCONNECT_BUTTON"] = "Т-Бизнесті өшіру";
 $MESS["SALESCENTER_SP_CONNECT_YOOKASSA_PAYMENT_BUTTON"] = "ЮKassa-да аккаунт бұрыннан бар";
 $MESS["SALESCENTER_SP_CREATE_YOOKASSA_PAYMENT_BUTTON"] = "ЮKassa-да аккаунт құру";
-$MESS["SALESCENTER_SP_ERROR_POPUP_TITLE"] = "Қате";
 $MESS["SALESCENTER_SP_LINK_CONNECT"] = "Төлем жүйесін қалай қосу керек";
 $MESS["SALESCENTER_SP_LINK_SBP_CONNECT"] = "Битрикс24-тегі жылдам төлем жүйесі туралы толығырақ";
 $MESS["SALESCENTER_SP_LOGOUT_CONFIRMATION_CANCEL"] = "Болдырмау";

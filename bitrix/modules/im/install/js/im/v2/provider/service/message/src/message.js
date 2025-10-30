@@ -4,6 +4,7 @@ import { EditService } from './classes/edit';
 import { DeleteService } from './classes/delete';
 import { MarkService } from './classes/mark';
 import { FavoriteService } from './classes/favorite';
+import { TranscribeService } from './classes/transcribe';
 
 export class MessageService
 {
@@ -13,6 +14,7 @@ export class MessageService
 	#deleteService: DeleteService;
 	#markService: MarkService;
 	#favoriteService: FavoriteService;
+	#transcribeService: TranscribeService;
 
 	static getMessageRequestLimit(): number
 	{
@@ -33,6 +35,7 @@ export class MessageService
 		this.#pinService = new PinService();
 		this.#markService = new MarkService(chatId);
 		this.#favoriteService = new FavoriteService(chatId);
+		this.#transcribeService = new TranscribeService(chatId);
 	}
 
 	// region 'pagination'
@@ -143,6 +146,13 @@ export class MessageService
 	deleteMessages(messageIds: number[]): void
 	{
 		this.#deleteService.deleteMessages(messageIds);
+	}
+	// endregion 'delete'
+
+	// region 'transcribe'
+	transcribe(fileId: number): Promise
+	{
+		return this.#transcribeService.transcribe(fileId);
 	}
 	// endregion 'delete'
 }

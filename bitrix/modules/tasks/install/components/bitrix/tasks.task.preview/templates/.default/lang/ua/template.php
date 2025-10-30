@@ -11,7 +11,6 @@ $MESS["TASKS_PRIORITY"] = "Пріоритет";
 $MESS["TASKS_PRIORITY_0"] = "Низький";
 $MESS["TASKS_PRIORITY_1"] = "Середній";
 $MESS["TASKS_PRIORITY_2"] = "Високий";
-$MESS["TASKS_RESPONSIBLE"] = "Відповідальний";
 $MESS["TASKS_SIDEBAR_START_DATE"] = "з";
 $MESS["TASKS_START_DATE_PLAN"] = "Дата старту";
 $MESS["TASKS_STATUS"] = "Статус";

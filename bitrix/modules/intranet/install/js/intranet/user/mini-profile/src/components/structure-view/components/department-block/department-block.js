@@ -73,9 +73,11 @@ export const DepartmentBlock = {
 		<div 
 			class="intranet-user-mini-profile__structure-view-department-block"
 			:class="{'--highlighted': highlighted }"
+			data-test-id="usermp_department-block"
 		>
 			<div class="intranet-user-mini-profile__structure-view-department-block__title"
 				 :title="title"
+				 data-test-id="usermp_department-title"
 				 @click="onTitleClick"
 			>
 				<span>{{ title }}</span>
@@ -88,11 +90,12 @@ export const DepartmentBlock = {
 					</div>
 				</div>
 			</div>
-			<div class="intranet-user-mini-profile__structure-view-department-block__employee-count">
+			<div class="intranet-user-mini-profile__structure-view-department-block__employee-count" data-test-id="usermp_employee-count">
 				{{ employeeCountTitle }}
 			</div>
 			<div v-if="user"
 				class="intranet-user-mini-profile__structure-view-department-block__user"
+				data-test-id="usermp_department-user"
 				@click="onUserClick(user)"
 			>
 				<div class="intranet-user-mini-profile__structure-view-department-block__user-avatar">
@@ -106,12 +109,14 @@ export const DepartmentBlock = {
 					<div 
 						class="intranet-user-mini-profile__structure-view-department-block__user-info__name"
 						:title="user.name"
+						data-test-id="usermp_department-user-name"
 					>
 						{{ user.name }}
 					</div>
 					<div v-if="user.workPosition"
 						class="intranet-user-mini-profile__structure-view-department-block__user-info__position"
 						:title="user.workPosition"
+						data-test-id="usermp_department-user-position"
 					>
 						{{ user.workPosition }}
 					</div>
@@ -119,22 +124,26 @@ export const DepartmentBlock = {
 			</div>
 			<div v-if="isShowHead" 
 				class="intranet-user-mini-profile__structure-view-department-block__head"
+				data-test-id="usermp_department-head-section"
 			>
-				<div class="intranet-user-mini-profile__structure-view-department-block__head-title">
+				<div class="intranet-user-mini-profile__structure-view-department-block__head-title" data-test-id="usermp_department-head-title">
 					{{ loc('INTRANET_USER_MINI_DETAILED_INFO_HEAD') }}
 				</div>
 				<div
 					class="intranet-user-mini-profile__structure-view-department-block__head-info"
+					data-test-id="usermp_department-head"
 					@click="onUserClick(head)"
 				>
 					<div
 						class="intranet-user-mini-profile__structure-view-department-block__head-info__avatar"
+						data-test-id="usermp_department-head-avatar"
 					>
 						<Avatar :options="{ picPath: head.avatar, size: 20, title: head.name }"/>
 					</div>
 					<div
 						class="intranet-user-mini-profile__structure-view-department-block__head-info__name"
 						:title="head.name"
+						data-test-id="usermp_department-head-name"
 					>
 						{{ head.name }}
 					</div>

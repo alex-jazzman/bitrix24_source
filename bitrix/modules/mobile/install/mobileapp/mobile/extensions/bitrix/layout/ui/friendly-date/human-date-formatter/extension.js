@@ -21,6 +21,11 @@ jn.define('layout/ui/friendly-date/human-date-formatter', (require, exports, mod
 		{
 			const time = this.formatDefault(moment);
 
+			if (!this.showTime)
+			{
+				return moment.inThisYear ? moment.format(dayMonth) : moment.format(longDate);
+			}
+
 			if (moment.isJustNow(this.justNowDelay))
 			{
 				return Loc.getMessage('MOBILE_UI_VIEW_JUST_NOW');

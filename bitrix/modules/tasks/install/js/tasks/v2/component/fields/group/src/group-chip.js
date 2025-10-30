@@ -58,9 +58,9 @@ export const GroupChip = {
 		design(): string
 		{
 			return {
-				[!this.isAutonomous && !this.isSelected]: ChipDesign.Shadow,
+				[!this.isAutonomous && !this.isSelected]: ChipDesign.ShadowNoAccent,
 				[!this.isAutonomous && this.isSelected]: ChipDesign.ShadowAccent,
-				[this.isAutonomous && !this.isSelected]: ChipDesign.Outline,
+				[this.isAutonomous && !this.isSelected]: ChipDesign.OutlineNoAccent,
 				[this.isAutonomous && this.isSelected]: ChipDesign.OutlineAccent,
 			}.true;
 		},
@@ -88,7 +88,7 @@ export const GroupChip = {
 				return this.group?.name ?? this.loc('TASKS_V2_GROUP_HIDDEN');
 			}
 
-			return groupMeta.title;
+			return this.loc('TASKS_V2_GROUP_TITLE_CHIP');
 		},
 		icon(): ?string
 		{
@@ -107,7 +107,7 @@ export const GroupChip = {
 			}
 
 			return {
-				src: this.group?.image,
+				src: encodeURI(this.group?.image),
 				alt: this.group?.name,
 			};
 		},
@@ -189,7 +189,7 @@ export const GroupChip = {
 		{
 			if (this.isAutonomous)
 			{
-				this.$refs.chip.focus();
+				this.$refs.chip?.$el.focus();
 			}
 		},
 		handleUpdate(): void

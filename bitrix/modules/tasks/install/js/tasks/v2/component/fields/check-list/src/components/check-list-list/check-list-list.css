@@ -1,12 +1,12 @@
 .tasks-check-list-list {
 	display: flex;
 	align-items: center;
-	background: #FFFFFFAD;
+	background: rgba(var(--ui-color-palette-white-base-rgb), var(--ui-opacity-40));
 	border-radius: 10px;
 }
 
 .tasks-check-list-list.--default {
-	padding: 18px;
+	padding: 12px 14px 12px 18px;
 }
 
 .tasks-check-list-list-content {
@@ -14,7 +14,7 @@
 	flex-direction: column;
 	align-items: center;
 	width: 100%;
-	background: #FFFFFFAD;
+	background: rgba(var(--ui-color-palette-white-base-rgb), var(--ui-opacity-40));
 	border-radius: 10px;
 }
 
@@ -26,6 +26,15 @@
 .tasks-check-list-list-content-row .ui-icon-set {
 	margin-right: 6px;
 	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+}
+
+.tasks-check-list-list-content-row-plus {
+	margin: auto;
+}
+
+.tasks-check-list-list-content-row .tasks-check-list-list-content-row-plus {
+	margin-right: 0;
+	--ui-icon-set__icon-color: var(--ui-color-base-3);
 }
 
 .tasks-check-list-list-content-text {
@@ -103,13 +112,21 @@
 	width: 100%;
 }
 
+.tasks-check-list-list-content-row.--stub {
+	cursor: pointer;
+}
+
 .tasks-check-list-list-content-btn {
 	display: flex;
 	align-items: center;
 	box-sizing: border-box;
-	max-height: 34px;
-	padding: 0 0 8px 10px;
+	max-height: 36px;
+	padding: 8px 0 8px 10px;
 	cursor: pointer;
+}
+
+.tasks-check-list-list-content-btn.--empty {
+	padding-top: 8px;
 }
 
 .tasks-check-list-list-content-row.--footer .ui-icon-set {

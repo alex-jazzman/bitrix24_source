@@ -4,7 +4,7 @@ import 'ui.icon-set.animated';
 import 'ui.icon-set.outline';
 
 import { Chip, ChipDesign } from 'tasks.v2.component.elements.chip';
-import { GroupType, Model } from 'tasks.v2.const';
+import { GroupType, Model, CardType } from 'tasks.v2.const';
 import { fieldHighlighter } from 'tasks.v2.lib.field-highlighter';
 import { analytics } from 'tasks.v2.lib.analytics';
 import { fileService, type FileService } from 'tasks.v2.provider.service.file-service';
@@ -57,14 +57,14 @@ export const FilesChip = {
 		},
 		filesCount(): number
 		{
-			return this.task.fileIds.length;
+			return this.files.length;
 		},
 		design(): string
 		{
 			return {
-				[!this.isAutonomous && !this.isSelected]: ChipDesign.Shadow,
+				[!this.isAutonomous && !this.isSelected]: ChipDesign.ShadowNoAccent,
 				[!this.isAutonomous && this.isSelected]: ChipDesign.ShadowAccent,
-				[this.isAutonomous && !this.isSelected]: ChipDesign.Outline,
+				[this.isAutonomous && !this.isSelected]: ChipDesign.OutlineNoAccent,
 				[this.isAutonomous && this.isSelected]: ChipDesign.OutlineAccent,
 				[this.hasError]: ChipDesign.OutlineAlert,
 			}.true;
@@ -108,9 +108,9 @@ export const FilesChip = {
 		{
 			return this.files.some(({ status }) => [FileStatus.UPLOAD_FAILED, FileStatus.LOAD_FAILED].includes(status));
 		},
-		readonly(): boolean
+		canAttachFiles(): boolean
 		{
-			return !this.task.rights.edit;
+			return this.task.rights.attachFile || this.task.rights.edit;
 		},
 		popupHasAlreadyBeenShown(): boolean
 		{
@@ -185,7 +185,11 @@ export const FilesChip = {
 		},
 		browseFiles(): void
 		{
-			this.fileService.browse({ bindElement: this.$refs.chip.$el, onHideCallback: this.onFileBrowserClose });
+			this.fileService.browse({
+				bindElement: this.$refs.chip.$el,
+				onHideCallback: this.onFileBrowserClose,
+				compact: this.cardType === CardType.Compact,
+			});
 		},
 		highlightField(): void
 		{
@@ -193,12 +197,13 @@ export const FilesChip = {
 		},
 		onFileBrowserClose(): void
 		{
-			this.$refs.chip?.focus();
+			this.$refs.chip?.$el.focus();
+			this.fileService.setFileBrowserClosed(true);
 		},
 	},
 	template: `
 		<Chip
-			v-if="isSelected || !readonly"
+			v-if="isSelected || canAttachFiles"
 			:design="design"
 			:icon="icon"
 			:text="text"

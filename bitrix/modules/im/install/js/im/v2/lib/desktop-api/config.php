@@ -19,9 +19,9 @@ return [
 	'rel' => [
 		'im.v2.lib.utils',
 		'im.v2.lib.logger',
-		'main.core',
 		'im.v2.const',
 		'main.core.events',
+		'main.core',
 	],
 	'skip_core' => false,
 	'settings' => [

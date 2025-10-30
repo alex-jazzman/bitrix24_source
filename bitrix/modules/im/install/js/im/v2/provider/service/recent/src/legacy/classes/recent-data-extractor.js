@@ -213,6 +213,7 @@ export class RecentDataExtractor
 			role: UserRole.member,
 			backgroundId: item.chat.background_id,
 			textFieldEnabled: item.chat.text_field_enabled,
+			muteList: item.chat.mute_list,
 		};
 	}
 

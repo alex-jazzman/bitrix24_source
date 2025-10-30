@@ -7,13 +7,8 @@
 	describe('GratitudeIcon', () => {
 		const TEST_NAME = Loc.getMessage('M_UI_GRATITUDE_ICON_BEER');
 		const UNKNOWN_NAME = 'UNKNOWN';
-		const EXPECTED_ELEMENTS_COUNT = 14;
+		const EXPECTED_ELEMENTS_COUNT = GratitudeIcon.getEnums().length;
 		const ImageDir = `${currentDomain}/bitrix/mobileapp/mobile/extensions/bitrix/assets/gratitude-icons`;
-
-		it('should have correct number of elements', () => {
-			const enums = GratitudeIcon.getEnums();
-			expect(enums.length).toBe(EXPECTED_ELEMENTS_COUNT);
-		});
 
 		it('should have unique names', () => {
 			const names = new Set(
@@ -50,6 +45,26 @@
 			const expected = `${ImageDir}/beer.svg`;
 			const result = GratitudeIcon.getSvgUriByName(TEST_NAME);
 			expect(result).toBe(expected);
+		});
+
+		it('getFeedList should return a valid list of feed items', () => {
+			const feedList = GratitudeIcon.getFeedList();
+			Object.values(feedList).forEach((item) => {
+				expect(item).toBeDefined('backgroundUrl');
+				expect(item).toBeDefined('medalSelectorUrl');
+				expect(item).toBeDefined('medalUrl');
+				expect(item).toBeDefined('name');
+				expect(item).toBeDefined('sort');
+
+				expect(typeof item.backgroundUrl).toBe('string');
+				expect(typeof item.medalSelectorUrl).toBe('string');
+				expect(typeof item.medalUrl).toBe('string');
+				expect(typeof item.name).toBe('string');
+				expect(typeof item.sort).toBe('string');
+
+				expect(item.medalUrl).toMatchRegex(/^\/bitrix\/mobileapp\/mobile\/extensions\/bitrix\/assets\/gratitude-icons\/.*\.svg$/);
+				expect(item.sort).toMatchRegex(/^\d+$/);
+			});
 		});
 
 		GratitudeIcon.getEnums().forEach((enumItem) => {

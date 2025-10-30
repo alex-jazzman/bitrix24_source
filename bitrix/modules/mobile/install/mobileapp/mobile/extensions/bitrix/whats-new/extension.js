@@ -6,6 +6,7 @@ jn.define('whats-new', (require, exports, module) => {
 	const { WhatsNewUIManager } = require('whats-new/ui-manager');
 	const { WhatsNewService } = require('whats-new/service');
 	const { WhatsNewCounter } = require('whats-new/counter-manager');
+	const { WhatsNewAnalytics } = require('layout/ui/whats-new/analytics');
 
 	/**
 	 * @class WhatsNewManager
@@ -34,6 +35,10 @@ jn.define('whats-new', (require, exports, module) => {
 
 			if (WhatsNewManager.canOpenOnAppActive() && counter > 0)
 			{
+				new WhatsNewAnalytics()
+					.setEvent(WhatsNewAnalytics.Event.drawerOpen)
+					.send();
+
 				WhatsNewUIManager.openComponentInBackground();
 			}
 

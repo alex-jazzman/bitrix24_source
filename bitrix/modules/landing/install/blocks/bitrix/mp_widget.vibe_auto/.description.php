@@ -17,7 +17,9 @@ $return = [
 		"bitrix:landing.blocks.mp_widget.vibe_auto" => [
 			'type' => 'component',
 			'extra' => [
-				'editable' => [],
+				'editable' => [
+					'TYPE' => [],
+				],
 			],
 		],
 	],

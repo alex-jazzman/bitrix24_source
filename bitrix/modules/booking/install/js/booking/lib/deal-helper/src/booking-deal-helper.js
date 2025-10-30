@@ -71,7 +71,12 @@ export class BookingDealHelper extends DealHelper
 
 	saveDeal(dealData: DealData | null): void
 	{
-		const externalData = dealData ? [dealData] : [];
+		const externalData = this.#booking.externalData.filter((data) => data.entityTypeId !== CrmEntity.Deal);
+
+		if (dealData)
+		{
+			externalData.push(dealData);
+		}
 
 		void bookingService.update({
 			id: this.#bookingId,

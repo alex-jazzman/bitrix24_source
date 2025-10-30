@@ -39,7 +39,16 @@ jn.define('crm/timeline/services/file-selector-configs', (require, exports, modu
 					fileTokens: selector.getFiles().map((file) => file.sourceFileId || file.token || file.id),
 				};
 
-				BX.ajax.runAction('crm.activity.todo.updateFiles', { data })
+				const analyticsEvent = options.analyticsEvent || null;
+
+				BX.ajax.runAction('crm.activity.todo.updateFiles', {
+					data,
+					analyticsLabel: analyticsEvent
+						?.setEvent('activity_edit')
+						.setElement('edit_button')
+						.setP4('addBlock_1')
+						.exportToObject(),
+				})
 					.then(() => successHandler(resolve))
 					.catch((err) => errorHandler(err, resolve));
 			}),

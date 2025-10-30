@@ -6,6 +6,7 @@ import {
 	type CopilotChatEvents,
 	type CopilotChatMessageType,
 } from 'landing.copilot.chat';
+import { Metrika } from 'landing.metrika';
 
 import 'ui.design-tokens';
 import { BlockGenerator } from './block-generator';
@@ -24,6 +25,7 @@ type CopilotChatOptions = {
 
 export type SlidePanelOptions = {
 	copilotChatOptions: CopilotChatOptions;
+	siteGenerationId: ?number;
 };
 
 export class SlidePanel
@@ -31,6 +33,9 @@ export class SlidePanel
 	#copilotChat: CopilotChatInstance;
 	#copilotChatOptions: CopilotChatOptions;
 	#blockGenerator: BlockGenerator;
+	#siteGenerationId: ?number;
+
+	#metrika: Metrika;
 
 	copilotChatEvents: CopilotChatEvents;
 	copilotChatMessageType: CopilotChatMessageType;
@@ -49,6 +54,8 @@ export class SlidePanel
 		this.switchers = [];
 
 		this.#copilotChatOptions = options.copilotChatOptions;
+		this.#siteGenerationId = options.siteGenerationId;
+		this.#metrika = new Metrika(true, 'ai');
 
 		this.init();
 	}
@@ -148,6 +155,14 @@ export class SlidePanel
 			if (this.#copilotChat.isShown() === false)
 			{
 				this.#copilotChat.show();
+
+				const siteType = this.#siteGenerationId ? 'ai' : 'manual';
+				this.#metrika.sendData({
+					category: 'block_edition',
+					event: 'open',
+					c_section: 'site_editor',
+					p3: ['siteType', siteType],
+				});
 			}
 
 			this.#blockGenerator?.setSelectMode();

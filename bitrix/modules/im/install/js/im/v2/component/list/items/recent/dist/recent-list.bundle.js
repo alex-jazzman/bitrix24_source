@@ -397,16 +397,13 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      return this.isNotes ? im_v2_component_elements_chatTitle.ChatTitleType.notes : '';
 	    },
 	    isChatSelected() {
-	      const canBeSelected = [im_v2_const.Layout.chat, im_v2_const.Layout.updateChat, im_v2_const.Layout.collab, im_v2_const.Layout.aiAssistant];
+	      const canBeSelected = [im_v2_const.Layout.chat, im_v2_const.Layout.updateChat, im_v2_const.Layout.collab, im_v2_const.Layout.copilot];
 	      if (!canBeSelected.includes(this.layout.name)) {
 	        return false;
 	      }
 	      return this.layout.entityId === this.recentItem.dialogId;
 	    },
 	    isChatMuted() {
-	      if (this.isUser) {
-	        return false;
-	      }
 	      const isMuted = this.dialog.muteList.find(element => {
 	        return element === im_v2_application_core.Core.getUserId();
 	      });
@@ -967,7 +964,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        recentItem: item,
 	        compactMode: false
 	      };
-	      this.contextMenuManager.openMenu(context, event.currentTarget);
+	      const positionTarget = {
+	        left: event.clientX,
+	        top: event.clientY
+	      };
+	      this.contextMenuManager.openMenu(context, positionTarget);
 	      event.preventDefault();
 	    },
 	    onCallClick({

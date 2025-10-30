@@ -16,6 +16,7 @@ return [
 		'sign.v2.api',
 		'sign.feature-storage',
 		'sign.type',
+		'sign.v2.b2e.user-party-refused',
 		'ui.icon-set.main',
 	],
 	'skip_core' => false,

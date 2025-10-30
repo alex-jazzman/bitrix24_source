@@ -188,7 +188,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    },
 	    onChatClick(dialogId) {
 	      this.$emit('selectEntity', {
-	        layoutName: im_v2_const.Layout.aiAssistant,
+	        layoutName: im_v2_const.Layout.copilot,
 	        entityId: dialogId
 	      });
 	    },

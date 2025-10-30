@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'analytics',
 		'tokens',
 		'apptheme',
 		'layout/ui/menu',

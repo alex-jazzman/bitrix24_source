@@ -40,7 +40,7 @@
 	user-select: none;
 }
 
-.ui-avatar svg {
+.ui-avatar > svg {
 	width: var(--ui-avatar-size);
 	height: var(--ui-avatar-size)
 }

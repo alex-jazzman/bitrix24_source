@@ -1,4 +1,5 @@
 <?php
+$MESS["INTRANET_SETTINGS_ALL_WEEKDAY_SELECTED_ERROR"] = "У розкладі має бути хоча б один робочий день.";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_HOLIDAYS"] = "Ви можете додавати будь-які свята й вихідні";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_WEEKEND"] = "Вихідні";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_WEEK_START"] = "Який перший день тижня показувати в календарі";

@@ -397,6 +397,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    }
 	    return MessengerSlider.getInstance().isOpened();
 	  }
+	  isChatOpened(dialogId) {
+	    var _getOpener17;
+	    return (_getOpener17 = getOpener()) == null ? void 0 : _getOpener17.isChatOpened(dialogId);
+	  }
 	  async initApplication(applicationName, config = {}) {
 	    const launch = main_core.Reflection.getClass('BX.Messenger.v2.Application.Launch');
 	    if (!launch) {

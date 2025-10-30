@@ -45,6 +45,7 @@ export class Resources extends BuilderModel
 			createdAt: 0,
 			updatedAt: 0,
 			deletedAt: 0,
+			entities: [],
 		};
 	}
 

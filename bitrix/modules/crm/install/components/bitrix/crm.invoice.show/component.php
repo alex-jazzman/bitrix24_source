@@ -1,6 +1,8 @@
 <?php
 
+use Bitrix\Crm\ItemMiniCard\Builder\MiniCardHtmlBuilder;
 use Bitrix\Crm\Restriction\RestrictionManager;
+use Bitrix\Main\Localization\Loc;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
@@ -119,7 +121,7 @@ elseif ($arFields['IS_RECURRING'] === "Y")
 {
 	LocalRedirect(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_INVOICE_LIST'], array()));
 }
-	
+
 unset($arFields);
 
 if (empty($arResult['ELEMENT']['ID']))
@@ -459,12 +461,12 @@ $arResult['FIELDS']['tab_1'][] = array(
 
 $arResult['FIELDS']['tab_1'][] = array(
 	'id' => 'UF_DEAL_ID',
-	'name' => GetMessage('CRM_FIELD_UF_DEAL_ID'),
+	'name' => Loc::getMessage('CRM_FIELD_UF_DEAL_ID'),
 	'value' => isset($arResult['ELEMENT']['UF_DEAL_TITLE'])
-		? (!$userPermissionsService->item()->canRead(CCrmOwnerType::Deal, $dealID)
-			? htmlspecialcharsbx($arResult['ELEMENT']['UF_DEAL_TITLE']) :
-			'<a href="'.$arResult['PATH_TO_DEAL_SHOW'].'" bx-tooltip-user-id="DEAL_'.$dealID.'" bx-tooltip-loader="'.htmlspecialcharsbx('/bitrix/components/bitrix/crm.deal.show/card.ajax.php').'" bx-tooltip-classname="crm_balloon_deal">'.htmlspecialcharsbx($arResult['ELEMENT']['UF_DEAL_TITLE']).'</a>'
-		) : GetMessage('CRM_INVOICE_DEAL_NOT_ASSIGNED'),
+		? (new MiniCardHtmlBuilder(CCrmOwnerType::Deal, $dealID))
+			->setTitle($arResult['ELEMENT']['UF_DEAL_TITLE'])
+			->build()
+		: Loc::getMessage('CRM_INVOICE_DEAL_NOT_ASSIGNED'),
 	'type' => 'custom',
 	'isTactile' => true
 );
@@ -473,10 +475,10 @@ $arResult['FIELDS']['tab_1'][] = array(
 	'id' => 'UF_QUOTE_ID',
 	'name' => GetMessage('CRM_FIELD_UF_QUOTE_ID'),
 	'value' => isset($arResult['ELEMENT']['UF_QUOTE_TITLE'])
-		? (!$userPermissionsService->item()->canRead(CCrmOwnerType::Quote, $quoteID)
-			? htmlspecialcharsbx($arResult['ELEMENT']['UF_QUOTE_TITLE']) :
-			'<a href="'.$arResult['PATH_TO_QUOTE_SHOW'].'" bx-tooltip-user-id="QUOTE_'.$quoteID.'" bx-tooltip-loader="'.htmlspecialcharsbx('/bitrix/components/bitrix/crm.quote.show/card.ajax.php').'" bx-tooltip-classname="crm_balloon_quote">'.htmlspecialcharsbx($arResult['ELEMENT']['UF_QUOTE_TITLE']).'</a>'
-		) : GetMessage('CRM_INVOICE_QUOTE_NOT_ASSIGNED'),
+		? (new MiniCardHtmlBuilder(CCrmOwnerType::Quote, $quoteID))
+			->setTitle($arResult['ELEMENT']['UF_QUOTE_TITLE'])
+			->build()
+		: Loc::getMessage('CRM_INVOICE_QUOTE_NOT_ASSIGNED'),
 	'type' => 'custom',
 	'isTactile' => true
 );

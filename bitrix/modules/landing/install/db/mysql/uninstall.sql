@@ -4,6 +4,7 @@ drop table if exists b_landing_domain;
 drop table if exists b_landing_template;
 drop table if exists b_landing_template_ref;
 drop table if exists b_landing_block;
+drop table if exists b_landing_block_favourite;
 drop table if exists b_landing_repo;
 drop table if exists b_landing_hook_data;
 drop table if exists b_landing_file;

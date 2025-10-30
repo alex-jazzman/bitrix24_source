@@ -11,6 +11,7 @@ use Bitrix\Calendar\Util;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Text\HtmlFilter;
+use Bitrix\Main\Web\Uri;
 use Bitrix\UI\Buttons;
 use Bitrix\UI\Toolbar\ButtonLocation;
 
@@ -77,7 +78,10 @@ if ($type === 'location' || !\CCalendar::isReadOnly($sectionList, $collabSection
 			],
 			[
 				'text' => Loc::getMessage('EC_TASK_BUTTON'),
-				'onclick' => new \Bitrix\UI\Buttons\JsHandler('openCalendarTaskCreate'),
+				'href' => (new Uri($arParams['EDIT_TASK_PATH']))->addParams([
+					'ta_sec' => 'calendar',
+					'ta_el' => 'create_button',
+				]),
 				'dataset' => [
 					'id' => 'calendar_menu_task_add',
 				],

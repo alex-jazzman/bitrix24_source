@@ -388,9 +388,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	function _classPrivateFieldInitSpec$2(obj, privateMap, value) { _checkPrivateRedeclaration$3(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration$3(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet$3(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
-	var _isExtranet = /*#__PURE__*/new WeakMap();
 	var _toggleFlow = /*#__PURE__*/new WeakMap();
 	var _flowParams = /*#__PURE__*/new WeakMap();
+	var _canCreateFlow = /*#__PURE__*/new WeakMap();
 	var _dialog = /*#__PURE__*/new WeakMap();
 	var _selectedItemBeforeUpdate = /*#__PURE__*/new WeakMap();
 	var _createDialog = /*#__PURE__*/new WeakSet();
@@ -402,15 +402,15 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    _classPrivateMethodInitSpec$3(this, _addFooter);
 	    _classPrivateMethodInitSpec$3(this, _createFlow);
 	    _classPrivateMethodInitSpec$3(this, _createDialog);
-	    _classPrivateFieldInitSpec$2(this, _isExtranet, {
-	      writable: true,
-	      value: void 0
-	    });
 	    _classPrivateFieldInitSpec$2(this, _toggleFlow, {
 	      writable: true,
 	      value: void 0
 	    });
 	    _classPrivateFieldInitSpec$2(this, _flowParams, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec$2(this, _canCreateFlow, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -423,7 +423,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      value: void 0
 	    });
 	    babelHelpers.classPrivateFieldSet(this, _flowParams, params.flowParams);
-	    babelHelpers.classPrivateFieldSet(this, _isExtranet, params.isExtranet);
+	    babelHelpers.classPrivateFieldSet(this, _canCreateFlow, params.canCreateFlow);
 	    babelHelpers.classPrivateFieldSet(this, _toggleFlow, ToggleFlowFactory.get(params.toggleFlowParams));
 	    babelHelpers.classPrivateFieldSet(this, _selectedItemBeforeUpdate, null);
 	  }
@@ -510,7 +510,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      }
 	    },
 	    searchOptions: {
-	      allowCreateItem: !babelHelpers.classPrivateFieldGet(this, _isExtranet),
+	      allowCreateItem: babelHelpers.classPrivateFieldGet(this, _canCreateFlow),
 	      footerOptions: {
 	        label: BX.Loc.getMessage('TASKS_FLOW_ENTITY_SELECTOR_CREATE_BUTTON')
 	      }
@@ -518,11 +518,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    recentTabOptions: {
 	      stub: 'BX.Tasks.Flow.EmptyStub',
 	      stubOptions: {
-	        showArrow: !babelHelpers.classPrivateFieldGet(this, _isExtranet)
+	        showArrow: babelHelpers.classPrivateFieldGet(this, _canCreateFlow)
 	      }
 	    }
 	  }));
-	  if (!babelHelpers.classPrivateFieldGet(this, _isExtranet)) {
+	  if (babelHelpers.classPrivateFieldGet(this, _canCreateFlow)) {
 	    babelHelpers.classPrivateFieldSet(this, _dialog, _classPrivateMethodGet$3(this, _addFooter, _addFooter2).call(this, babelHelpers.classPrivateFieldGet(this, _dialog)));
 	  }
 	  return babelHelpers.classPrivateFieldGet(this, _dialog);
@@ -600,8 +600,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	function _classPrivateMethodGet$5(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _flowSelectorBtn = /*#__PURE__*/new WeakMap();
 	var _taskId$1 = /*#__PURE__*/new WeakMap();
-	var _isExtranet$1 = /*#__PURE__*/new WeakMap();
 	var _canEditTask = /*#__PURE__*/new WeakMap();
+	var _canCreateFlow$1 = /*#__PURE__*/new WeakMap();
 	var _toggleFlowParams = /*#__PURE__*/new WeakMap();
 	var _flowParams$1 = /*#__PURE__*/new WeakMap();
 	var _dialog$1 = /*#__PURE__*/new WeakMap();
@@ -630,11 +630,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec$4(this, _isExtranet$1, {
+	    _classPrivateFieldInitSpec$4(this, _canEditTask, {
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec$4(this, _canEditTask, {
+	    _classPrivateFieldInitSpec$4(this, _canCreateFlow$1, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -651,8 +651,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      value: void 0
 	    });
 	    babelHelpers.classPrivateFieldSet(this, _taskId$1, _params.taskId);
-	    babelHelpers.classPrivateFieldSet(this, _isExtranet$1, _params.isExtranet);
 	    babelHelpers.classPrivateFieldSet(this, _canEditTask, _params.canEditTask);
+	    babelHelpers.classPrivateFieldSet(this, _canCreateFlow$1, _params.canCreateFlow);
 	    babelHelpers.classPrivateFieldSet(this, _toggleFlowParams, _params.toggleFlowParams);
 	    babelHelpers.classPrivateFieldSet(this, _flowParams$1, _params.flowParams);
 	    babelHelpers.classPrivateFieldSet(this, _flowSelectorBtn, ui_buttons.ButtonManager.createFromNode(document.getElementById('tasks-flow-selector-container')));
@@ -807,9 +807,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	}
 	function _createDialog2$1() {
 	  babelHelpers.classPrivateFieldSet(this, _dialog$1, new EntitySelectorDialog({
-	    isExtranet: babelHelpers.classPrivateFieldGet(this, _isExtranet$1),
 	    toggleFlowParams: babelHelpers.classPrivateFieldGet(this, _toggleFlowParams),
-	    flowParams: babelHelpers.classPrivateFieldGet(this, _flowParams$1)
+	    flowParams: babelHelpers.classPrivateFieldGet(this, _flowParams$1),
+	    canCreateFlow: babelHelpers.classPrivateFieldGet(this, _canCreateFlow$1)
 	  }));
 	  return babelHelpers.classPrivateFieldGet(this, _dialog$1);
 	}

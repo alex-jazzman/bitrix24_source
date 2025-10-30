@@ -7,7 +7,7 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	'use strict';
 
 	function mapModelToDto(task) {
-	  var _task$accomplicesIds, _task$auditorsIds;
+	  var _task$accomplicesIds, _task$auditorsIds, _task$tags;
 	  return {
 	    id: task.id,
 	    title: prepareValue(task.title),
@@ -21,6 +21,8 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    }),
 	    deadlineTs: prepareValue(task.deadlineTs, Math.floor(task.deadlineTs / 1000)),
 	    needsControl: prepareValue(task.needsControl),
+	    startPlanTs: prepareValue(task.startPlanTs, Math.floor(task.startPlanTs / 1000)),
+	    endPlanTs: prepareValue(task.endPlanTs, Math.floor(task.endPlanTs / 1000)),
 	    fileIds: prepareValue(task.fileIds),
 	    checklist: prepareValue(task.checklist),
 	    group: prepareValue(task.groupId, {
@@ -41,12 +43,18 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    auditors: prepareValue(task.auditorsIds, (_task$auditorsIds = task.auditorsIds) == null ? void 0 : _task$auditorsIds.map(id => ({
 	      id
 	    }))),
+	    tags: prepareValue(task.tags, mapTags((_task$tags = task.tags) != null ? _task$tags : [])),
 	    chatId: prepareValue(task.chatId),
+	    allowsChangeDeadline: prepareValue(task.allowsChangeDeadline),
+	    allowsChangeDatePlan: prepareValue(task.allowsChangeDatePlan),
+	    matchesWorkTime: prepareValue(task.matchesWorkTime),
+	    matchesSubTasksTime: prepareValue(task.matchesSubTasksTime),
+	    source: prepareValue(task.source),
 	    parent: undefined
 	  };
 	}
 	function mapDtoToModel(taskDto) {
-	  var _taskDto$checklist, _taskDto$group, _taskDto$stage, _taskDto$flow;
+	  var _taskDto$checklist, _taskDto$group, _taskDto$stage$id, _taskDto$stage, _taskDto$flow, _taskDto$tags;
 	  const task = {
 	    id: taskDto.id,
 	    title: taskDto.title,
@@ -57,11 +65,13 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    responsibleId: taskDto.responsible.id,
 	    deadlineTs: taskDto.deadlineTs * 1000,
 	    needsControl: taskDto.needsControl,
+	    startPlanTs: taskDto.startPlanTs * 1000,
+	    endPlanTs: taskDto.endPlanTs * 1000,
 	    fileIds: taskDto.fileIds,
 	    checklist: (_taskDto$checklist = taskDto.checklist) != null ? _taskDto$checklist : [],
 	    containsChecklist: taskDto.containsChecklist,
 	    groupId: (_taskDto$group = taskDto.group) == null ? void 0 : _taskDto$group.id,
-	    stageId: (_taskDto$stage = taskDto.stage) == null ? void 0 : _taskDto$stage.id,
+	    stageId: (_taskDto$stage$id = (_taskDto$stage = taskDto.stage) == null ? void 0 : _taskDto$stage.id) != null ? _taskDto$stage$id : 0,
 	    flowId: (_taskDto$flow = taskDto.flow) == null ? void 0 : _taskDto$flow.id,
 	    status: taskDto.status,
 	    statusChangedTs: taskDto.statusChangedTs * 1000,
@@ -71,12 +81,18 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    auditorsIds: taskDto.auditors.map(({
 	      id
 	    }) => id),
-	    chatId: taskDto.chatId
+	    chatId: taskDto.chatId,
+	    allowsChangeDeadline: prepareValue(taskDto.allowsChangeDeadline),
+	    allowsChangeDatePlan: prepareValue(taskDto.allowsChangeDatePlan),
+	    matchesWorkTime: prepareValue(taskDto.matchesWorkTime),
+	    matchesSubTasksTime: prepareValue(taskDto.matchesSubTasksTime),
+	    rights: prepareValue(taskDto.rights),
+	    tags: prepareValue(taskDto.tags, (_taskDto$tags = taskDto.tags) == null ? void 0 : _taskDto$tags.map(({
+	      name
+	    }) => name)),
+	    archiveLink: prepareValue(taskDto.archiveLink)
 	  };
-	  if (taskDto.rights) {
-	    task.rights = taskDto.rights;
-	  }
-	  return task;
+	  return Object.fromEntries(Object.entries(task).filter(([, value]) => value));
 	}
 	function mapModelToSliderData(task, checkLists) {
 	  var _task$fileIds;
@@ -98,7 +114,12 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 
 	// TODO: Temporary. Remove when removing old full card
 	function mapDescription(description) {
-	  return description == null ? void 0 : description.replaceAll('[p]\n', '').replaceAll('[/p]', '');
+	  return description == null ? void 0 : description.replaceAll(/\[p]\n|\[p]\[\/p]|\[\/p]/gi, '').trim();
+	}
+	function mapTags(tags) {
+	  return tags.map(name => ({
+	    name
+	  }));
 	}
 
 	var _data = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("data");
@@ -127,33 +148,16 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	  }
 	}
 
-	var _isRealId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isRealId");
-	var _updateFields = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateFields");
-	var _updatePromises = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updatePromises");
-	var _updateServerTaskDebounced = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateServerTaskDebounced");
-	var _updateTaskFields = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateTaskFields");
-	var _updateServerTask = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateServerTask");
-	var _updateScrumFields = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateScrumFields");
-	var _updateStatus = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateStatus");
-	var _updateDeadlineFields = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateDeadlineFields");
-	var _getTaskFields = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getTaskFields");
-	var _getFilteredFields = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getFilteredFields");
-	var _scrumFields = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("scrumFields");
-	var _statusFields = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("statusFields");
-	var _deadlineFields = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("deadlineFields");
-	var _hasChanges = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hasChanges");
-	var _getStoreTask = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getStoreTask");
-	var _insertStoreTask = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("insertStoreTask");
-	var _updateStoreTask = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateStoreTask");
-	var _extractTask = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("extractTask");
-	var _deleteStoreTask = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("deleteStoreTask");
-	class TaskService {
+	var _updateFields, _updateTaskBefore, _updatePromises, _updateServerTaskDebounced, _updateTaskDebounced, _updateTask, _updateTaskFields, _updateScrumFields, _updateDeadlineFields, _updateDatePlanFields, _getTaskFields, _getFilteredFields, _hasChanges, _getStoreTask, _insertStoreTask, _updateStoreTask, _deleteStoreTask;
+	const separateFields = {
+	  scrumFields: new Set(['storyPoints', 'epicId']),
+	  deadlineFields: new Set(['deadlineTs']),
+	  datePlanFields: new Set(['startPlanTs', 'endPlanTs', 'matchesWorkTime', 'matchesSubTasksTime'])
+	};
+	const taskService = new (_updateFields = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateFields"), _updateTaskBefore = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateTaskBefore"), _updatePromises = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updatePromises"), _updateServerTaskDebounced = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateServerTaskDebounced"), _updateTaskDebounced = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateTaskDebounced"), _updateTask = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateTask"), _updateTaskFields = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateTaskFields"), _updateScrumFields = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateScrumFields"), _updateDeadlineFields = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateDeadlineFields"), _updateDatePlanFields = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateDatePlanFields"), _getTaskFields = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getTaskFields"), _getFilteredFields = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getFilteredFields"), _hasChanges = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hasChanges"), _getStoreTask = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getStoreTask"), _insertStoreTask = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("insertStoreTask"), _updateStoreTask = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateStoreTask"), _deleteStoreTask = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("deleteStoreTask"), class {
 	  constructor() {
 	    Object.defineProperty(this, _deleteStoreTask, {
 	      value: _deleteStoreTask2
-	    });
-	    Object.defineProperty(this, _extractTask, {
-	      value: _extractTask2
 	    });
 	    Object.defineProperty(this, _updateStoreTask, {
 	      value: _updateStoreTask2
@@ -167,43 +171,35 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    Object.defineProperty(this, _hasChanges, {
 	      value: _hasChanges2
 	    });
-	    Object.defineProperty(this, _deadlineFields, {
-	      get: _get_deadlineFields,
-	      set: void 0
-	    });
-	    Object.defineProperty(this, _statusFields, {
-	      get: _get_statusFields,
-	      set: void 0
-	    });
-	    Object.defineProperty(this, _scrumFields, {
-	      get: _get_scrumFields,
-	      set: void 0
-	    });
 	    Object.defineProperty(this, _getFilteredFields, {
 	      value: _getFilteredFields2
 	    });
 	    Object.defineProperty(this, _getTaskFields, {
 	      value: _getTaskFields2
 	    });
+	    Object.defineProperty(this, _updateDatePlanFields, {
+	      value: _updateDatePlanFields2
+	    });
 	    Object.defineProperty(this, _updateDeadlineFields, {
 	      value: _updateDeadlineFields2
-	    });
-	    Object.defineProperty(this, _updateStatus, {
-	      value: _updateStatus2
 	    });
 	    Object.defineProperty(this, _updateScrumFields, {
 	      value: _updateScrumFields2
 	    });
-	    Object.defineProperty(this, _updateServerTask, {
-	      value: _updateServerTask2
-	    });
 	    Object.defineProperty(this, _updateTaskFields, {
 	      value: _updateTaskFields2
 	    });
-	    Object.defineProperty(this, _isRealId, {
-	      value: _isRealId2
+	    Object.defineProperty(this, _updateTask, {
+	      value: _updateTask2
+	    });
+	    Object.defineProperty(this, _updateTaskDebounced, {
+	      value: _updateTaskDebounced2
 	    });
 	    Object.defineProperty(this, _updateFields, {
+	      writable: true,
+	      value: {}
+	    });
+	    Object.defineProperty(this, _updateTaskBefore, {
 	      writable: true,
 	      value: {}
 	    });
@@ -223,7 +219,7 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	          id
 	        }
 	      });
-	      await babelHelpers.classPrivateFieldLooseBase(this, _extractTask)[_extractTask](data);
+	      await this.extractTask(data);
 	    } catch (error) {
 	      console.error('TaskService: getById error', error);
 	    }
@@ -250,7 +246,7 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	        task: mapModelToDto(task)
 	      });
 	      const id = data.id;
-	      await babelHelpers.classPrivateFieldLooseBase(this, _extractTask)[_extractTask](data);
+	      await this.extractTask(data);
 	      return [id, null];
 	    } catch (error) {
 	      var _error$errors, _error$errors$;
@@ -261,13 +257,11 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	  async update(id, fields) {
 	    const taskBeforeUpdate = babelHelpers.classPrivateFieldLooseBase(this, _getStoreTask)[_getStoreTask](id);
 	    await babelHelpers.classPrivateFieldLooseBase(this, _updateStoreTask)[_updateStoreTask](id, fields);
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _isRealId)[_isRealId](id)) {
+	    if (!this.isRealId(id)) {
 	      return;
 	    }
 	    try {
-	      await babelHelpers.classPrivateFieldLooseBase(this, _updateScrumFields)[_updateScrumFields](id, fields, taskBeforeUpdate);
-	      await babelHelpers.classPrivateFieldLooseBase(this, _updateDeadlineFields)[_updateDeadlineFields](id, fields, taskBeforeUpdate);
-	      await babelHelpers.classPrivateFieldLooseBase(this, _updateTaskFields)[_updateTaskFields](id, fields, taskBeforeUpdate);
+	      await babelHelpers.classPrivateFieldLooseBase(this, _updateTaskDebounced)[_updateTaskDebounced](id, fields, taskBeforeUpdate);
 	    } catch (error) {
 	      await babelHelpers.classPrivateFieldLooseBase(this, _updateStoreTask)[_updateStoreTask](id, taskBeforeUpdate);
 	      console.error('TaskService: update error', error);
@@ -276,7 +270,7 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	  async delete(id) {
 	    const taskBeforeDelete = babelHelpers.classPrivateFieldLooseBase(this, _getStoreTask)[_getStoreTask](id);
 	    await babelHelpers.classPrivateFieldLooseBase(this, _deleteStoreTask)[_deleteStoreTask](id);
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _isRealId)[_isRealId](id)) {
+	    if (!this.isRealId(id)) {
 	      return;
 	    }
 	    try {
@@ -290,139 +284,93 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	      console.error('TaskService: delete error', error);
 	    }
 	  }
-	  async start(id) {
-	    await babelHelpers.classPrivateFieldLooseBase(this, _updateStatus)[_updateStatus](id, 'Task.Status.start', tasks_v2_const.TaskStatus.InProgress);
+	  async extractTask(data) {
+	    const extractor = new TaskGetExtractor(data);
+	    await Promise.all([this.$store.dispatch(`${tasks_v2_const.Model.Tasks}/upsert`, extractor.getTask()), this.$store.dispatch(`${tasks_v2_const.Model.Flows}/upsert`, extractor.getFlow()), this.$store.dispatch(`${tasks_v2_const.Model.Groups}/insert`, extractor.getGroup()), this.$store.dispatch(`${tasks_v2_const.Model.Stages}/upsertMany`, extractor.getStages()), this.$store.dispatch(`${tasks_v2_const.Model.Users}/upsertMany`, extractor.getUsers())]);
+	    await tasks_v2_provider_service_fileService.fileService.get(data.id).sync(data.fileIds);
 	  }
-	  async disapprove(id) {
-	    await babelHelpers.classPrivateFieldLooseBase(this, _updateStatus)[_updateStatus](id, 'Task.Status.disapprove', tasks_v2_const.TaskStatus.Pending);
-	  }
-	  async defer(id) {
-	    await babelHelpers.classPrivateFieldLooseBase(this, _updateStatus)[_updateStatus](id, 'Task.Status.defer', tasks_v2_const.TaskStatus.Deferred);
-	  }
-	  async approve(id) {
-	    await babelHelpers.classPrivateFieldLooseBase(this, _updateStatus)[_updateStatus](id, 'Task.Status.approve', tasks_v2_const.TaskStatus.Completed);
-	  }
-	  async pause(id) {
-	    await babelHelpers.classPrivateFieldLooseBase(this, _updateStatus)[_updateStatus](id, 'Task.Status.pause', tasks_v2_const.TaskStatus.Pending);
-	  }
-	  async complete(id) {
-	    const status = babelHelpers.classPrivateFieldLooseBase(this, _getStoreTask)[_getStoreTask](id).needsControl ? tasks_v2_const.TaskStatus.SupposedlyCompleted : tasks_v2_const.TaskStatus.Completed;
-	    await babelHelpers.classPrivateFieldLooseBase(this, _updateStatus)[_updateStatus](id, 'Task.Status.complete', status);
-	  }
-	  async renew(id) {
-	    await babelHelpers.classPrivateFieldLooseBase(this, _updateStatus)[_updateStatus](id, 'Task.Status.renew', tasks_v2_const.TaskStatus.Pending);
-	  }
-	  async getLegacyCommentsByTaskId(id) {
-	    try {
-	      var _data$html;
-	      const data = await tasks_v2_lib_apiClient.apiClient.post('LegacyComment.get', {
-	        task: {
-	          id
-	        }
-	      });
-	      return (_data$html = data.html) != null ? _data$html : '';
-	    } catch (error) {
-	      console.error('TaskService: getLegacyCommentsByTaskId error', error);
-	      return '';
-	    }
+	  isRealId(id) {
+	    return Number.isInteger(id) && id > 0;
 	  }
 	  get $store() {
 	    return tasks_v2_core.Core.getStore();
 	  }
-	}
-	function _isRealId2(id) {
-	  return Number.isInteger(id) && id > 0;
-	}
-	async function _updateTaskFields2(id, fields, taskBeforeUpdate) {
-	  var _babelHelpers$classPr, _babelHelpers$classPr2, _babelHelpers$classPr3, _babelHelpers$classPr4;
-	  const taskFields = babelHelpers.classPrivateFieldLooseBase(this, _getTaskFields)[_getTaskFields](fields);
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _hasChanges)[_hasChanges](taskBeforeUpdate, taskFields)) {
-	    return;
-	  }
+	})();
+	async function _updateTaskDebounced2(id, fields, taskBeforeUpdate) {
+	  var _babelHelpers$classPr, _babelHelpers$classPr2, _babelHelpers$classPr3, _babelHelpers$classPr4, _babelHelpers$classPr5, _babelHelpers$classPr6;
 	  babelHelpers.classPrivateFieldLooseBase(this, _updateFields)[_updateFields][id] = {
 	    ...babelHelpers.classPrivateFieldLooseBase(this, _updateFields)[_updateFields][id],
-	    ...taskFields
+	    ...fields
 	  };
-	  (_babelHelpers$classPr2 = (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _updatePromises)[_updatePromises])[id]) != null ? _babelHelpers$classPr2 : _babelHelpers$classPr[id] = new Resolvable();
-	  (_babelHelpers$classPr4 = (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _updateServerTaskDebounced)[_updateServerTaskDebounced])[id]) != null ? _babelHelpers$classPr4 : _babelHelpers$classPr3[id] = main_core.Runtime.debounce(babelHelpers.classPrivateFieldLooseBase(this, _updateServerTask)[_updateServerTask], 500, this);
+	  (_babelHelpers$classPr2 = (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _updateTaskBefore)[_updateTaskBefore])[id]) != null ? _babelHelpers$classPr2 : _babelHelpers$classPr[id] = taskBeforeUpdate;
+	  (_babelHelpers$classPr4 = (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _updatePromises)[_updatePromises])[id]) != null ? _babelHelpers$classPr4 : _babelHelpers$classPr3[id] = new Resolvable();
+	  (_babelHelpers$classPr6 = (_babelHelpers$classPr5 = babelHelpers.classPrivateFieldLooseBase(this, _updateServerTaskDebounced)[_updateServerTaskDebounced])[id]) != null ? _babelHelpers$classPr6 : _babelHelpers$classPr5[id] = main_core.Runtime.debounce(babelHelpers.classPrivateFieldLooseBase(this, _updateTask)[_updateTask], 500, this);
 	  babelHelpers.classPrivateFieldLooseBase(this, _updateServerTaskDebounced)[_updateServerTaskDebounced][id](id);
 	  await babelHelpers.classPrivateFieldLooseBase(this, _updatePromises)[_updatePromises][id];
 	}
-	async function _updateServerTask2(id) {
+	async function _updateTask2(id) {
 	  const fields = babelHelpers.classPrivateFieldLooseBase(this, _updateFields)[_updateFields][id];
 	  delete babelHelpers.classPrivateFieldLooseBase(this, _updateFields)[_updateFields][id];
+	  const taskBeforeUpdate = babelHelpers.classPrivateFieldLooseBase(this, _updateTaskBefore)[_updateTaskBefore][id];
+	  delete babelHelpers.classPrivateFieldLooseBase(this, _updateTaskBefore)[_updateTaskBefore][id];
 	  const promise = babelHelpers.classPrivateFieldLooseBase(this, _updatePromises)[_updatePromises][id];
 	  delete babelHelpers.classPrivateFieldLooseBase(this, _updatePromises)[_updatePromises][id];
-	  const data = await tasks_v2_lib_apiClient.apiClient.post('Task.update', {
-	    task: mapModelToDto({
-	      id,
-	      ...fields
-	    })
-	  });
-	  await babelHelpers.classPrivateFieldLooseBase(this, _extractTask)[_extractTask](data);
+	  await babelHelpers.classPrivateFieldLooseBase(this, _updateTaskFields)[_updateTaskFields](id, fields, taskBeforeUpdate);
+	  await babelHelpers.classPrivateFieldLooseBase(this, _updateScrumFields)[_updateScrumFields](id, fields, taskBeforeUpdate);
+	  await babelHelpers.classPrivateFieldLooseBase(this, _updateDeadlineFields)[_updateDeadlineFields](id, fields, taskBeforeUpdate);
+	  await babelHelpers.classPrivateFieldLooseBase(this, _updateDatePlanFields)[_updateDatePlanFields](id, fields, taskBeforeUpdate);
 	  promise.resolve();
 	}
-	async function _updateScrumFields2(id, fields, taskBeforeUpdate) {
-	  const scrumFields = babelHelpers.classPrivateFieldLooseBase(this, _getFilteredFields)[_getFilteredFields](fields, babelHelpers.classPrivateFieldLooseBase(this, _scrumFields)[_scrumFields]);
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _hasChanges)[_hasChanges](taskBeforeUpdate, scrumFields)) {
-	    return;
-	  }
-	  await tasks_v2_lib_apiClient.apiClient.post('Scrum.updateTask', {
-	    taskId: id,
-	    fields: scrumFields
-	  });
-	}
-	async function _updateStatus2(id, action, status) {
-	  const taskBeforeUpdate = babelHelpers.classPrivateFieldLooseBase(this, _getStoreTask)[_getStoreTask](id);
-	  await babelHelpers.classPrivateFieldLooseBase(this, _updateStoreTask)[_updateStoreTask](id, {
-	    status
-	  });
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _isRealId)[_isRealId](id)) {
-	    return;
-	  }
-	  try {
-	    const data = await tasks_v2_lib_apiClient.apiClient.post(action, {
-	      task: {
-	        id
-	      }
+	async function _updateTaskFields2(id, fields, taskBeforeUpdate) {
+	  const taskFields = babelHelpers.classPrivateFieldLooseBase(this, _getTaskFields)[_getTaskFields](fields);
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _hasChanges)[_hasChanges](taskBeforeUpdate, taskFields)) {
+	    const data = await tasks_v2_lib_apiClient.apiClient.post('Task.update', {
+	      task: mapModelToDto({
+	        id,
+	        ...taskFields
+	      })
 	    });
-	    await babelHelpers.classPrivateFieldLooseBase(this, _extractTask)[_extractTask](data);
-	  } catch (error) {
-	    await babelHelpers.classPrivateFieldLooseBase(this, _updateStoreTask)[_updateStoreTask](id, taskBeforeUpdate);
-	    console.error(`TaskService: ${action} error`, error);
+	    await this.extractTask(data);
+	  }
+	}
+	async function _updateScrumFields2(id, fields, taskBeforeUpdate) {
+	  const scrumFields = babelHelpers.classPrivateFieldLooseBase(this, _getFilteredFields)[_getFilteredFields](fields, separateFields.scrumFields);
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _hasChanges)[_hasChanges](taskBeforeUpdate, scrumFields)) {
+	    await tasks_v2_lib_apiClient.apiClient.post('Scrum.updateTask', {
+	      taskId: id,
+	      fields: scrumFields
+	    });
 	  }
 	}
 	async function _updateDeadlineFields2(id, fields, taskBeforeUpdate) {
-	  const deadlineFields = babelHelpers.classPrivateFieldLooseBase(this, _getFilteredFields)[_getFilteredFields](fields, babelHelpers.classPrivateFieldLooseBase(this, _deadlineFields)[_deadlineFields]);
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _hasChanges)[_hasChanges](taskBeforeUpdate, deadlineFields)) {
-	    return;
+	  const deadlineFields = babelHelpers.classPrivateFieldLooseBase(this, _getFilteredFields)[_getFilteredFields](fields, separateFields.deadlineFields);
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _hasChanges)[_hasChanges](taskBeforeUpdate, deadlineFields)) {
+	    await tasks_v2_lib_apiClient.apiClient.post('Task.Deadline.update', {
+	      task: mapModelToDto({
+	        id,
+	        ...deadlineFields
+	      })
+	    });
 	  }
-	  await tasks_v2_lib_apiClient.apiClient.post('Task.Deadline.update', {
-	    task: mapModelToDto({
-	      id,
-	      ...deadlineFields
-	    })
-	  });
 	}
-	function _getTaskFields2(fields) {
-	  return Object.fromEntries(Object.entries(fields).filter(([field]) => {
-	    const scrumField = babelHelpers.classPrivateFieldLooseBase(this, _scrumFields)[_scrumFields].has(field);
-	    const statusField = babelHelpers.classPrivateFieldLooseBase(this, _statusFields)[_statusFields].has(field);
-	    const deadlineField = babelHelpers.classPrivateFieldLooseBase(this, _deadlineFields)[_deadlineFields].has(field);
-	    return !scrumField && !statusField && !deadlineField;
+	async function _updateDatePlanFields2(id, fields, taskBeforeUpdate) {
+	  const datePlanFields = babelHelpers.classPrivateFieldLooseBase(this, _getFilteredFields)[_getFilteredFields](fields, separateFields.datePlanFields);
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _hasChanges)[_hasChanges](taskBeforeUpdate, datePlanFields)) {
+	    await tasks_v2_lib_apiClient.apiClient.post('Task.Plan.update', {
+	      task: mapModelToDto({
+	        id,
+	        ...datePlanFields
+	      })
+	    });
+	  }
+	}
+	function _getTaskFields2(task) {
+	  return Object.fromEntries(Object.entries(task).filter(([field]) => {
+	    return Object.values(separateFields).every(set => !set.has(field));
 	  }));
 	}
 	function _getFilteredFields2(fields, filterSet) {
 	  return Object.fromEntries(Object.entries(fields).filter(([field]) => filterSet.has(field)));
-	}
-	function _get_scrumFields() {
-	  return new Set(['storyPoints', 'epicId']);
-	}
-	function _get_statusFields() {
-	  return new Set(['status']);
-	}
-	function _get_deadlineFields() {
-	  return new Set(['deadlineTs']);
 	}
 	function _hasChanges2(task, fields) {
 	  return Object.entries(fields).some(([field, value]) => JSON.stringify(task[field]) !== JSON.stringify(value));
@@ -441,15 +389,9 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    fields
 	  });
 	}
-	async function _extractTask2(data) {
-	  const extractor = new TaskGetExtractor(data);
-	  await Promise.all([this.$store.dispatch(`${tasks_v2_const.Model.Tasks}/upsert`, extractor.getTask()), this.$store.dispatch(`${tasks_v2_const.Model.Flows}/upsert`, extractor.getFlow()), this.$store.dispatch(`${tasks_v2_const.Model.Groups}/insert`, extractor.getGroup()), this.$store.dispatch(`${tasks_v2_const.Model.Stages}/upsertMany`, extractor.getStages()), this.$store.dispatch(`${tasks_v2_const.Model.Users}/upsertMany`, extractor.getUsers())]);
-	  await tasks_v2_provider_service_fileService.fileService.get(data.id).sync(data.fileIds);
-	}
 	async function _deleteStoreTask2(id) {
 	  await this.$store.dispatch(`${tasks_v2_const.Model.Tasks}/delete`, id);
 	}
-	const taskService = new TaskService();
 	function Resolvable() {
 	  const promise = new Promise(resolve => {
 	    this.resolve = resolve;

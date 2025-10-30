@@ -3456,7 +3456,6 @@ if(typeof BX.Crm.EntityEditorRecurring === "undefined")
 		if (
 			BX.type.isPlainObject(data.loaders)
 			&& BX.type.isNotEmptyString(data.loaders["url"])
-			&& BX.type.isNotEmptyString(data.loaders["action"])
 		)
 		{
 			BX.ajax(
@@ -3465,25 +3464,30 @@ if(typeof BX.Crm.EntityEditorRecurring === "undefined")
 					method: "POST",
 					dataType: "json",
 					data: {
-						ACTION: data.loaders["action"],
-						PARAMS: {ID:this._model.getField('ID')}
+						sessid : BX.bitrix_sessid(),
+						entityId: this._model.getField('ID'),
+						entityTypeId: this._model.getEntityTypeId(),
 					},
 					onsuccess: BX.delegate(this.onEntityHintLoad, this)
 				}
 			);
 		}
 	};
+
 	BX.Crm.EntityEditorRecurring.prototype.onEntityHintLoad = function(result)
 	{
-		var entityData = BX.prop.getObject(result, "DATA", null);
+		const entityData = result.data ?? null;
 
-		if(!entityData)
+		if (!entityData)
 		{
 			return;
 		}
-		if (BX.type.isNotEmptyString(entityData.HINT))
+
+		const { hint } = entityData;
+
+		if (BX.type.isNotEmptyString(hint))
 		{
-			this._schemeElement._data.view.text = entityData.HINT;
+			this._schemeElement._data.view.text = hint;
 		}
 
 		if (this._schemeElement._promise instanceof BX.Promise)
@@ -3492,6 +3496,7 @@ if(typeof BX.Crm.EntityEditorRecurring === "undefined")
 			this._schemeElement._promise = null;
 		}
 	};
+
 	BX.Crm.EntityEditorRecurring.prototype.showLicencePopup = function(e)
 	{
 		e.preventDefault();

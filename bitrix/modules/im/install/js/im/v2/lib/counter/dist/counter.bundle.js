@@ -168,7 +168,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	function _emitCountersUpdate2() {
 	  const payload = {
 	    [im_v2_const.NavigationMenuItem.chat]: babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].getters['counters/getTotalChatCounter'],
-	    [im_v2_const.NavigationMenuItem.aiAssistant]: babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].getters['counters/getTotalCopilotCounter'],
+	    [im_v2_const.NavigationMenuItem.copilot]: babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].getters['counters/getTotalCopilotCounter'],
 	    [im_v2_const.NavigationMenuItem.collab]: babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].getters['counters/getTotalCollabCounter'],
 	    [im_v2_const.NavigationMenuItem.openlines]: babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].getters['counters/getTotalLinesCounter'],
 	    [im_v2_const.NavigationMenuItem.openlinesV2]: babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].getters['counters/getTotalLinesCounter'],

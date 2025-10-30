@@ -19,6 +19,7 @@ return [
 		'main.loader',
 		'ui.dialogs.messagebox',
 		'ui.stageflow',
+		'crm.integration.analytics',
 	],
 	'skip_core' => false,
 ];

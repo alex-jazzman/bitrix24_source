@@ -29,7 +29,6 @@ $MESS["IMCONNECTORMOBILE_TELEGRAM_REGISTRY_CONTINUE"] = "Продовжити";
 $MESS["IMCONNECTORMOBILE_TELEGRAM_REGISTRY_GO_TO_TELEGRAM"] = "Перейти до Telegram";
 $MESS["IMCONNECTORMOBILE_TELEGRAM_REGISTRY_LOADER_DESCRIPTION"] = "Підключаємо бота Telegram до вашого Бітрікс24, залишилося зовсім трохи";
 $MESS["IMCONNECTORMOBILE_TELEGRAM_REGISTRY_LOADER_TITLE"] = "Під'єднання Telegram";
-$MESS["IMCONNECTORMOBILE_TELEGRAM_REGISTRY_STEP_1_DESCRIPTION"] = "Після завершення налаштування ви отримаєте токен доступу. [URL=https://www.bitrix24.com/]Як це працює?[/URL]";
 $MESS["IMCONNECTORMOBILE_TELEGRAM_REGISTRY_STEP_1_DESCRIPTION_MSGVER_1"] = "Після завершення налаштування ви отримаєте токен доступу. [URL]Як це працює?[/URL]";
 $MESS["IMCONNECTORMOBILE_TELEGRAM_REGISTRY_STEP_1_TITLE"] = "Налаштуйте бота в Telegram";
 $MESS["IMCONNECTORMOBILE_TELEGRAM_REGISTRY_STEP_2_DESCRIPTION"] = "Скопіюйте токен у чаті налаштування бота й уставте у вікно нижче";

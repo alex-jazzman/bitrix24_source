@@ -46,3 +46,12 @@
 	-webkit-line-clamp: 3;
 	-webkit-box-orient: vertical;
 }
+
+.bx-im-messenger__scope .--line-clamp-4 {
+	display: -webkit-box;
+	text-overflow: ellipsis;
+	word-break: break-word;
+	overflow: hidden;
+	-webkit-line-clamp: 4;
+	-webkit-box-orient: vertical;
+}

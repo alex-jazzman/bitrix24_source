@@ -65,6 +65,7 @@ return [
 		'./src/layout/day-label',
 		'./src/layout/event',
 		'./src/layout/calendar-grid',
+		'./src/layout/calendar-header',
 		'./src/layout/invites-banner',
 		'./src/layout/search-header',
 		'./src/layout/event-list',
@@ -74,6 +75,7 @@ return [
 		'./src/settings-page',
 		'./src/list-skeleton',
 		'./src/search/layout',
+		'./src/search/layout-view',
 		'./src/search/preset',
 
 		'./src/section-list/page',

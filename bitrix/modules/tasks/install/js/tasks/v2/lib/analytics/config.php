@@ -1,13 +1,22 @@
 <?php
+
+use Bitrix\Main\Engine\CurrentUser;
+use Bitrix\Main\Loader;
+use Bitrix\Tasks\V2\Internal\DI\Container;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
 
-if (!\Bitrix\Main\Loader::includeModule('tasks'))
+if (!Loader::includeModule('tasks'))
 {
 	return [];
 }
+
+$configService = Container::getInstance()->getConfigService();
+$userId = (int)CurrentUser::get()->getId();
+
 
 return [
 	'js' => 'dist/analytics.bundle.js',
@@ -18,5 +27,5 @@ return [
 		'tasks.v2.const',
 	],
 	'skip_core' => false,
-	'settings' => (new \Bitrix\Tasks\V2\Internal\Service\Extension\Config())->getAnalyticsSettings(),
+	'settings' => $configService->getAnalyticsSettings($userId),
 ];

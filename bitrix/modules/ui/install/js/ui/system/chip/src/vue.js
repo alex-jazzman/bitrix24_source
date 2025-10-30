@@ -25,7 +25,15 @@ export const Chip = {
 		},
 		icon: {
 			type: String,
-			default: '',
+			default: null,
+		},
+		iconColor: {
+			type: String,
+			default: null,
+		},
+		iconBackground: {
+			type: String,
+			default: null,
 		},
 		image: {
 			/** @type ChipImage */
@@ -92,7 +100,14 @@ export const Chip = {
 			@click="$emit('click')"
 		>
 			<img v-if="image" class="ui-chip-icon --image" :src="image.src" :alt="image.alt">
-			<BIcon v-if="icon" class="ui-chip-icon" :name="icon"/>
+			<div
+				v-if="icon"
+				class="ui-chip-icon"
+				:class="{ '--with-background': Boolean(iconBackground) }"
+				:style="{ '--icon-background': iconBackground }"
+			>
+				<BIcon :name="icon" :color="iconColor"/>
+			</div>
 			<div class="ui-chip-text">{{ text }}</div>
 			<BIcon v-if="dropdown" class="ui-chip-right-icon" :name="Outline.CHEVRON_DOWN_M"/>
 			<BIcon v-if="withClear" class="ui-chip-right-icon" :name="Outline.CROSS_M" @click.stop="$emit('clear')"/>

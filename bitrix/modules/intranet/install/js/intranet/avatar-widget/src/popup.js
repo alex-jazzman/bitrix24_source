@@ -2,17 +2,13 @@ import { Cache, Dom } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { PopupComponentsMaker } from 'ui.popupcomponentsmaker';
 import { MainContent } from './content/main-content';
-import { QrAuthContent } from './content/qr-auth-content';
-import { DesktopContent } from './content/desktop-content';
-import { OtpContent } from './content/otp-content';
-import { SignDocumentsContent } from './content/sign-documents-content';
-import { SalaryVacationContent } from './content/salary-vacation-content';
-import { ExtensionContent } from './content/extension-content';
-import { LogoutContent } from './content/logout-content';
-import { ThemeContent } from './content/theme-content';
-import { PerfReviewContent } from './content/perf-review-content';
+import { FooterContent } from './content/footer-content';
+import { SecondaryContent } from './content/secondary-content';
+import { ApplicationContent } from './content/application-content';
+import { MobileAuthContent } from './content/mobile-auth-content';
 import { Analytics } from './analytics';
 import type { ConfigOptions, PopupOptions } from './types';
+import { ExtranetSecondaryContent } from './content/extranet-secondary-content';
 
 export class Popup extends EventEmitter
 {
@@ -56,11 +52,12 @@ export class Popup extends EventEmitter
 
 			const popup = new PopupComponentsMaker({
 				target: this.getOptions().target,
-				width: 450,
+				width: 390,
 				content: this.#getContent(),
 				popupLoader: this.getOptions().loader,
-				offsetLeft: -392,
+				padding: 0,
 				offsetTop: -50,
+				offsetLeft: 0,
 			});
 			popup.getPopup().setFixed(true);
 			const setOverlay = () => {
@@ -79,6 +76,7 @@ export class Popup extends EventEmitter
 			});
 			popup.getPopup().subscribe('onBeforeShow', setOverlay);
 			this.#cache.set('popup', popup);
+			this.#cache.set('contentWrapper', popup.getContentWrapper());
 
 			this.emit('afterInit');
 
@@ -93,56 +91,19 @@ export class Popup extends EventEmitter
 				this.#getMainContent().getConfig(),
 			];
 
-			if (this.getOptions().content?.signDocuments?.isAvailable)
+			content.push(this.#getApplicationContent().getConfig());
+
+			if (this.getOptions().content.extranetSecondary)
 			{
-				content.push(
-					this.#getSignDocumentsContent().getConfig(),
-					this.#getSalaryVacationContent().getConfig(),
-				);
+				content.push(this.#getExtranetSecondaryContent().getConfig());
 			}
 
-			if (this.getOptions().content?.perfReview?.isAvailable)
+			if (this.getOptions().content.secondary)
 			{
-				content.push(this.#getPerfReviewContent().getConfig());
+				content.push(this.#getSecondaryContent().getConfig());
 			}
 
-			if (this.getOptions().content?.otp?.isAvailable)
-			{
-				content.push({
-					html: [
-						this.#getQrAuthContent().getConfig(),
-						{
-							html: [
-								this.#getDesktopContent().getConfig(),
-								this.#getOtpContent().getConfig(),
-							],
-						},
-					],
-				});
-			}
-			else
-			{
-				content.push({
-					html: [
-						this.#getQrAuthContent().getConfig(),
-						this.#getDesktopContent().getConfig(),
-					],
-				});
-			}
-
-			if (this.getOptions().content?.extension?.isAvailable)
-			{
-				content.push(this.#getExtensionContent().getConfig());
-			}
-
-			content.push(
-				{
-					html: [
-						this.#getThemeContent().getConfig(),
-						this.#getLogoutContent().getConfig(),
-					],
-				},
-			);
+			content.push(this.#getFooterContent().getConfig());
 
 			return content;
 		});
@@ -157,85 +118,56 @@ export class Popup extends EventEmitter
 		});
 	}
 
-	#getSignDocumentsContent(): SignDocumentsContent
+	#getSecondaryContent(): SecondaryContent
 	{
-		return this.#cache.remember('myDocumentsContent', () => {
-			return new SignDocumentsContent({
-				...this.getOptions().content.signDocuments,
+		return this.#cache.remember('secondaryContent', () => {
+			return new SecondaryContent({
+				...this.getOptions().content.secondary,
 			});
 		});
 	}
 
-	#getSalaryVacationContent(): SalaryVacationContent
+	#getApplicationContent(): ApplicationContent
 	{
-		return this.#cache.remember('salaryVacationContent', () => {
-			return new SalaryVacationContent({
-				...this.getOptions().content.salaryVacation,
+		return this.#cache.remember('applicationContent', () => {
+			return new ApplicationContent({
+				...this.getOptions().content.application,
 			});
 		});
 	}
 
-	#getPerfReviewContent(): PerfReviewContent
+	#getFooterContent(): FooterContent
 	{
-		return this.#cache.remember('perfReviewContent', () => {
-			return new PerfReviewContent({
-				...this.getOptions().content.perfReview,
+		return this.#cache.remember('footerContent', () => {
+			return new FooterContent({
+				...this.getOptions().content.footer,
 			});
 		});
 	}
 
-	#getQrAuthContent(): QrAuthContent
+	#getMobileAuthContent(): MobileAuthContent
 	{
-		return this.#cache.remember('qrAuthContent', () => {
-			return new QrAuthContent({
-				isSmall: !this.getOptions().content.otp?.isAvailable,
-				...this.getOptions().content.qrAuth,
+		return this.#cache.remember('mobileAuthContent', () => {
+			return new MobileAuthContent({
+				...this.getOptions().content.mobileAuth.tools.fastMobileAuth,
 			});
 		});
 	}
 
-	#getDesktopContent(): DesktopContent
+	#getFastMobileAuthSubsection(): HTMLElement
 	{
-		return this.#cache.remember('desktopContent', () => {
-			return new DesktopContent({
-				isSmall: !this.getOptions().content.otp?.isAvailable,
-				...this.getOptions().content.desktop,
-			});
+		return this.#cache.remember('fastMobileAuthSubsection', () => {
+			return (new PopupComponentsMaker(
+				{ content: [this.#getMobileAuthContent().getConfig()] },
+			)).getContentWrapper();
 		});
 	}
 
-	#getOtpContent(): OtpContent
+	#getExtranetSecondaryContent(): ExtranetSecondaryContent
 	{
-		return this.#cache.remember('otpContent', () => {
-			return new OtpContent({
-				...this.getOptions().content.otp,
-			});
-		});
-	}
-
-	#getExtensionContent(): ExtensionContent
-	{
-		return this.#cache.remember('extensionContent', () => {
-			return new ExtensionContent({
-				...this.getOptions().content.extension,
-			});
-		});
-	}
-
-	#getThemeContent(): ThemeContent
-	{
-		return this.#cache.remember('settingsContent', () => {
-			return new ThemeContent({
-				...this.getOptions().content.theme,
-			});
-		});
-	}
-
-	#getLogoutContent(): LogoutContent
-	{
-		return this.#cache.remember('logoutContent', () => {
-			return new LogoutContent({
-				...this.getOptions().content.logout,
+		return this.#cache.remember('extranetSecondaryContent', () => {
+			return new ExtranetSecondaryContent({
+				...this.getOptions().content.extranetSecondary,
 			});
 		});
 	}
@@ -250,6 +182,7 @@ export class Popup extends EventEmitter
 			});
 			this.subscribe('afterInit', () => {
 				this.#setAutoHideEventHandlers();
+				this.#setSubsectionEventHandlers();
 
 				const close = () => {
 					this.close();
@@ -302,6 +235,19 @@ export class Popup extends EventEmitter
 				popup.subscribeOnce('onClose', handler);
 				popup.subscribeOnce('onDestroy', handler);
 			}
+		});
+	}
+
+	#setSubsectionEventHandlers(): void
+	{
+		const openFastMobileAuthSubsection = () => {
+			const subsection = this.#getFastMobileAuthSubsection();
+			this.getBasePopup().getPopup().setContent(subsection);
+		};
+		EventEmitter.subscribe('BX.Intranet.AvatarWidget.FastMobileAuthTool:onClick', openFastMobileAuthSubsection);
+		EventEmitter.subscribe('BX.Intranet.AvatarWidget.ApplicationInstallerTool:onClick', openFastMobileAuthSubsection);
+		EventEmitter.subscribe('BX.Intranet.AvatarWidget.Subsection:back', () => {
+			this.getBasePopup().getPopup().setContent(this.getBasePopup().getContentWrapper());
 		});
 	}
 }

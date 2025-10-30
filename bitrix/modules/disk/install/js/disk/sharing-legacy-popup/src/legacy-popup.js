@@ -97,10 +97,10 @@ export default class LegacyPopup
 								</tr>
 								<tr>
 									<td class="bx-disk-popup-shared-people-list-head-col1">
-										<a href="" class="bx-disk-filepage-used-people-link">
+										<span href="" class="bx-disk-filepage-used-people-link">
 											<span class="bx-disk-filepage-used-people-avatar link" style="--ui-icon-set__icon-size: 15px;"></span>
 											${Loc.getMessage('JS_DISK_SHARING_LEGACY_POPUP_UNIFIED_RIGHT_USERS')}
-										</a>
+										</span>
 									</td>
 									<td class="bx-disk-popup-shared-people-list-head-col2">
 										${accessLevelNode}

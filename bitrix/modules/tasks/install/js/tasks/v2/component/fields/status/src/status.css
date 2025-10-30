@@ -9,3 +9,9 @@
 	margin-right: 6px;
 	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
 }
+
+.tasks-field-status-hint {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-xs);
+}

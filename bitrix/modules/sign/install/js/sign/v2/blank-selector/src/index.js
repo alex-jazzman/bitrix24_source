@@ -6,12 +6,13 @@ import { EventEmitter, BaseEvent } from 'main.core.events';
 import { isTemplateMode } from 'sign.v2.sign-settings';
 import { Layout } from 'ui.sidepanel.layout';
 import { TileWidget } from 'ui.uploader.tile-widget';
-import { UploaderEvent, type UploaderFile } from 'ui.uploader.core';
+import { UploaderEvent, FileStatus, type UploaderFile } from 'ui.uploader.core';
 import { Api } from 'sign.v2.api';
 import { ListItem } from './list-item';
 import { Blank } from './blank';
 import { BlankField } from './blank-field';
 import type { BlankSelectorConfig, BlankData, ListItemProps, BlankProps, ToggleEvent } from './types/type';
+import { UI } from 'ui.notification';
 import './style.css';
 
 type RemoveOptions = {
@@ -346,6 +347,14 @@ export class BlankSelector extends EventEmitter
 		{
 			return;
 		}
+
+		if (!this.#isAllFileUploadsComplete(files))
+		{
+			const errorMessage = Loc.getMessage('SIGN_BLANK_SELECTOR_UPLOADER_ERROR_INCOMPLETE');
+			UI.Notification.Center.notify({ content: errorMessage });
+			throw new Error(errorMessage);
+		}
+
 		const firstFile = files.at(0);
 		const blank = new Blank({ title: firstFile.getName() });
 		blank.setReady(false);
@@ -377,13 +386,23 @@ export class BlankSelector extends EventEmitter
 	{
 		const uploader = this.#tileWidget.getUploader();
 		const files = uploader.getFiles();
+
 		if (files.length === 0)
 		{
 			return;
 		}
+
 		const [firstFile] = files;
 		await this.#resumeUploading();
 		const blank = firstFile.getCustomData(firstFile.getId());
+
+		if (!this.#isAllFileUploadsComplete(files))
+		{
+			const errorMessage = Loc.getMessage('SIGN_BLANK_SELECTOR_UPLOADER_ERROR_INCOMPLETE');
+			UI.Notification.Center.notify({ content: errorMessage });
+			throw new Error(errorMessage);
+		}
+
 		try
 		{
 			const filesIds = files.map((file): string => file.getServerFileId());
@@ -699,5 +718,14 @@ export class BlankSelector extends EventEmitter
 		{
 			Dom.removeClass(blank.getLayout(), '--disabled');
 		}
+	}
+
+	#isAllFileUploadsComplete(files: Array<UploaderFile>): boolean
+	{
+		const notUploadedFiles = files.filter((file) => {
+			return file.getStatus() !== FileStatus.COMPLETE || Type.isNull(file.getServerFileId());
+		});
+
+		return notUploadedFiles.length === 0;
 	}
 }

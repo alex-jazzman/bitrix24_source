@@ -383,6 +383,15 @@ class calendar extends CModule
 		CAgent::AddAgent("Bitrix\\Calendar\\Core\\Queue\\Agent\\EventAttendeesUpdateAgent::runAgent();", "calendar", "N", 3600);
 		CAgent::AddAgent("\\Bitrix\\Calendar\\Sharing\\Util\\ExpiredLinkCleanAgent::runAgent();", "calendar");
 		CAgent::AddAgent("Bitrix\\Calendar\\Core\\Queue\\Agent\\SendingEmailNotificationAgent::runAgent();", "calendar", "N", 60);
+		CAgent::AddAgent(
+			'\\Bitrix\\Calendar\\Synchronization\\Infrastructure\\Agent\\Logger\\CleanLogAgent::runAgent();',
+			'calendar',
+			'N',
+			86400,
+			'',
+			'Y',
+			ConvertTimeStamp(time() + 7200, 'FULL')
+		);
 	}
 
 	function SetOptions()

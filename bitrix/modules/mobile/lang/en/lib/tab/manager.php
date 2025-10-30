@@ -22,7 +22,6 @@ $MESS["TAB_PRESET_NAME_MANUAL_V2"] = "Custom preset";
 $MESS["TAB_PRESET_NAME_OL"] = "Open Channel agent";
 $MESS["TAB_PRESET_NAME_SIGN"] = "e-Signature for HR";
 $MESS["TAB_PRESET_NAME_STREAM_V2"] = "Feed";
-$MESS["TAB_PRESET_NAME_TASK"] = "Tasks";
 $MESS["TAB_PRESET_NAME_TASK_MSGVER_1"] = "Tasks and projects";
 $MESS["TAB_PRESET_NAME_TERMINAL"] = "Payment terminal";
 $MESS["TASK_CHAT_DESCRIPTION"] = "You discuss tasks and projects in the chats";

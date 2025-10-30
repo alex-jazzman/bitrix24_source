@@ -1,15 +1,17 @@
 .b24-field-list {
+	--gap: 14px;
 	--min-row-height: 25px;
 	position: relative;
 	display: grid;
 	grid-template-columns: max-content auto;
-	gap: 14px;
+	gap: var(--gap);
 	align-items: center;
 	grid-auto-rows: minmax(var(--min-row-height), auto);
 	font-size: var(--ui-font-size-lg);
 }
 
 .b24-field-list-title {
+	position: relative;
 	align-self: start;
 	line-height: var(--min-row-height);
 	color: var(--ui-color-base-3);
@@ -18,22 +20,32 @@
 	cursor: default;
 }
 
-.b24-field-list-title.--with-separator .b24-field-list-title-text {
-	margin-top: 10px;
+.b24-field-list-title.--with-separator {
+	padding: var(--gap) 0 0 0;
 }
 
-.b24-field-list-title.--with-separator:before {
-	content: '';
-	position: absolute;
-	height: var(--ui-border-width-thin);
-	background: var(--ui-color-divider-less);
-	width: 100%;
-}
+.b24-field-list-title-text {}
 
 .b24-field-list-value {
+	position: relative;
 	min-width: 0;
 }
 
 .b24-field-list-value.--with-separator {
-	margin-top: 10px;
+	padding: var(--gap) 0 0 0;
+}
+
+.b24-field-list-title.--with-separator:before,
+.b24-field-list-value.--with-separator:before {
+	content: '';
+	position: absolute;
+	left: 0;
+	top: 0;
+	height: var(--ui-border-width-thin);
+	background: var(--ui-color-divider-less);
+	width: calc(100% + var(--gap));
+}
+
+.b24-field-list-value.--with-separator:before {
+	left: calc(var(--gap) * -1);
 }

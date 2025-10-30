@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,crm_clientSelector,ui_dialogs_messagebox,ui_navigationpanel,crm_router,main_core,main_core_events,main_popup,ui_buttons,ui_tour) {
+(function (exports,crm_clientSelector,ui_dialogs_messagebox,ui_navigationpanel,crm_router,pull_client,main_core,main_core_events,main_popup,ui_buttons,ui_tour) {
 	'use strict';
 
 	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
@@ -666,6 +666,19 @@ this.BX = this.BX || {};
 	          button.counterNode.innerText = '99+';
 	        }
 	        if (button && entityTypeId > 0) {
+	          if (pull_client.PULL) {
+	            pull_client.PULL.subscribe({
+	              moduleId: 'crm',
+	              command: 'CRM_CATEGORIES_UPDATED',
+	              callback: data => {
+	                if (data.entityTypeId !== entityTypeId) {
+	                  return;
+	                }
+	                _classPrivateMethodGet$3(this, _reloadCategoriesMenu, _reloadCategoriesMenu2).call(this, button, entityTypeId, buttonNode.dataset.categoryId);
+	              }
+	            });
+	            pull_client.PULL.extendWatch('CRM_CATEGORIES_UPDATED');
+	          }
 	          this.subscribeCategoriesUpdatedEvent(() => {
 	            _classPrivateMethodGet$3(this, _reloadCategoriesMenu, _reloadCategoriesMenu2).call(this, button, entityTypeId, buttonNode.dataset.categoryId);
 	          });
@@ -806,7 +819,7 @@ this.BX = this.BX || {};
 	          categoryId: category.id
 	        }
 	      });
-	      if (category.id > 0 && categoryId > 0 && Number(categoryId) === Number(category.id)) {
+	      if (category.id >= 0 && categoryId >= 0 && Number(categoryId) === Number(category.id)) {
 	        button.setText(category.name);
 	      }
 	      startKey++;
@@ -818,7 +831,7 @@ this.BX = this.BX || {};
 	    if (entityTypeId === BX.CrmEntityType.enumeration.deal) {
 	      _classPrivateMethodGet$3(this, _reloadAddButtonMenu, _reloadAddButtonMenu2).call(this, categories);
 	    }
-	    _classPrivateMethodGet$3(this, _tryRedirectToDefaultCategory, _tryRedirectToDefaultCategory2).call(this, items);
+	    _classPrivateMethodGet$3(this, _tryRedirectToDefaultCategory, _tryRedirectToDefaultCategory2).call(this, items, categoryId);
 	  }).catch(response => {
 	    console.log('error trying reload categories', response.errors);
 	  });
@@ -862,23 +875,32 @@ this.BX = this.BX || {};
 	    });
 	  }
 	}
-	function _tryRedirectToDefaultCategory2(items) {
-	  const currentPage = window.location.pathname;
-	  const matches = currentPage.match(/\/(\d+)\/?$/);
-	  const currentPageCategoryId = matches ? parseInt(matches[1], 10) : null;
-	  const currentCategoryIsUndefined = main_core.Type.isUndefined(items.find(row => {
-	    var _row$dataset;
-	    return (row === null || row === void 0 ? void 0 : (_row$dataset = row.dataset) === null || _row$dataset === void 0 ? void 0 : _row$dataset.categoryId) === currentPageCategoryId;
-	  }));
-	  if (currentCategoryIsUndefined) {
-	    const defaultPage = items.find(row => {
-	      var _row$dataset2;
-	      return row === null || row === void 0 ? void 0 : (_row$dataset2 = row.dataset) === null || _row$dataset2 === void 0 ? void 0 : _row$dataset2.isDefault;
+	function _tryRedirectToDefaultCategory2(items, currentCategoryId) {
+	  const tryToRedirect = () => {
+	    const isStaticCategory = currentCategoryId <= 0;
+	    const isCurrentCategoryDefined = items.some(row => {
+	      var _row$dataset;
+	      return Number(row === null || row === void 0 ? void 0 : (_row$dataset = row.dataset) === null || _row$dataset === void 0 ? void 0 : _row$dataset.categoryId) === Number(currentCategoryId);
 	    });
-	    if (main_core.Type.isObject(defaultPage) && main_core.Type.isStringFilled(defaultPage.href)) {
-	      window.location.href = defaultPage.href;
+	    if (!isCurrentCategoryDefined && !isStaticCategory) {
+	      const defaultPage = items.find(row => {
+	        var _row$dataset2;
+	        return row === null || row === void 0 ? void 0 : (_row$dataset2 = row.dataset) === null || _row$dataset2 === void 0 ? void 0 : _row$dataset2.isDefault;
+	      });
+	      if (main_core.Type.isObject(defaultPage) && main_core.Type.isStringFilled(defaultPage.href)) {
+	        window.location.href = defaultPage.href;
+	      }
 	    }
+	  };
+
+	  // wait until all sliders are closed before redirecting
+	  if (BX.SidePanel.Instance.getTopSlider()) {
+	    main_core_events.EventEmitter.subscribeOnce(BX.SidePanel.Instance.getTopSlider(), 'SidePanel.Slider:onCloseComplete', () => {
+	      _classPrivateMethodGet$3(this, _tryRedirectToDefaultCategory, _tryRedirectToDefaultCategory2).call(this, items, currentCategoryId);
+	    });
+	    return;
 	  }
+	  tryToRedirect();
 	}
 
 	/**
@@ -893,5 +915,5 @@ this.BX = this.BX || {};
 	exports.ToolbarComponent = ToolbarComponent;
 	exports.NavigationBar = NavigationBar;
 
-}((this.BX.Crm = this.BX.Crm || {}),BX.Crm,BX.UI.Dialogs,BX.UI,BX.Crm,BX,BX.Event,BX.Main,BX.UI,BX.UI.Tour));
+}((this.BX.Crm = this.BX.Crm || {}),BX.Crm,BX.UI.Dialogs,BX.UI,BX.Crm,BX,BX,BX.Event,BX.Main,BX.UI,BX.UI.Tour));
 //# sourceMappingURL=toolbar-component.bundle.js.map

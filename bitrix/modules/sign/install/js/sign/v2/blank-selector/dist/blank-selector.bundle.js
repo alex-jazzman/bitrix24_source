@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Sign = this.BX.Sign || {};
-(function (exports,main_date,main_popup,sign_v2_signSettings,ui_sidepanel_layout,ui_uploader_tileWidget,ui_uploader_core,main_loader,ui_icons,main_core,main_core_events,sign_v2_api,ui_entitySelector) {
+(function (exports,main_date,main_popup,sign_v2_signSettings,ui_sidepanel_layout,ui_uploader_tileWidget,ui_uploader_core,main_loader,ui_icons,main_core,main_core_events,sign_v2_api,ui_entitySelector,ui_notification) {
 	'use strict';
 
 	let _ = t => t,
@@ -380,10 +380,14 @@ this.BX.Sign = this.BX.Sign || {};
 	var _disableSaveButtonIntoSlider = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("disableSaveButtonIntoSlider");
 	var _enableSaveButtonIntoSlider = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("enableSaveButtonIntoSlider");
 	var _getSaveButtonIntoSlider = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getSaveButtonIntoSlider");
+	var _isAllFileUploadsComplete = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isAllFileUploadsComplete");
 	class BlankSelector extends main_core_events.EventEmitter {
 	  constructor(config) {
 	    var _config$events;
 	    super();
+	    Object.defineProperty(this, _isAllFileUploadsComplete, {
+	      value: _isAllFileUploadsComplete2
+	    });
 	    Object.defineProperty(this, _getSaveButtonIntoSlider, {
 	      value: _getSaveButtonIntoSlider2
 	    });
@@ -589,6 +593,13 @@ this.BX.Sign = this.BX.Sign || {};
 	    if (files.length === 0) {
 	      return;
 	    }
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _isAllFileUploadsComplete)[_isAllFileUploadsComplete](files)) {
+	      const errorMessage = main_core.Loc.getMessage('SIGN_BLANK_SELECTOR_UPLOADER_ERROR_INCOMPLETE');
+	      ui_notification.UI.Notification.Center.notify({
+	        content: errorMessage
+	      });
+	      throw new Error(errorMessage);
+	    }
 	    const firstFile = files.at(0);
 	    const blank = new Blank({
 	      title: firstFile.getName()
@@ -619,6 +630,13 @@ this.BX.Sign = this.BX.Sign || {};
 	    const [firstFile] = files;
 	    await babelHelpers.classPrivateFieldLooseBase(this, _resumeUploading)[_resumeUploading]();
 	    const blank = firstFile.getCustomData(firstFile.getId());
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _isAllFileUploadsComplete)[_isAllFileUploadsComplete](files)) {
+	      const errorMessage = main_core.Loc.getMessage('SIGN_BLANK_SELECTOR_UPLOADER_ERROR_INCOMPLETE');
+	      ui_notification.UI.Notification.Center.notify({
+	        content: errorMessage
+	      });
+	      throw new Error(errorMessage);
+	    }
 	    try {
 	      var _babelHelpers$classPr2;
 	      const filesIds = files.map(file => file.getServerFileId());
@@ -998,10 +1016,16 @@ this.BX.Sign = this.BX.Sign || {};
 	function _getSaveButtonIntoSlider2() {
 	  return babelHelpers.classPrivateFieldLooseBase(this, _cache$1)[_cache$1].get('saveButton');
 	}
+	function _isAllFileUploadsComplete2(files) {
+	  const notUploadedFiles = files.filter(file => {
+	    return file.getStatus() !== ui_uploader_core.FileStatus.COMPLETE || main_core.Type.isNull(file.getServerFileId());
+	  });
+	  return notUploadedFiles.length === 0;
+	}
 
 	exports.BlankField = BlankField$$1;
 	exports.ListItem = ListItem;
 	exports.BlankSelector = BlankSelector;
 
-}((this.BX.Sign.V2 = this.BX.Sign.V2 || {}),BX.Main,BX.Main,BX.Sign.V2,BX.UI.SidePanel,BX.UI.Uploader,BX.UI.Uploader,BX,BX,BX,BX.Event,BX.Sign.V2,BX.UI.EntitySelector));
+}((this.BX.Sign.V2 = this.BX.Sign.V2 || {}),BX.Main,BX.Main,BX.Sign.V2,BX.UI.SidePanel,BX.UI.Uploader,BX.UI.Uploader,BX,BX,BX,BX.Event,BX.Sign.V2,BX.UI.EntitySelector,BX));
 //# sourceMappingURL=blank-selector.bundle.js.map

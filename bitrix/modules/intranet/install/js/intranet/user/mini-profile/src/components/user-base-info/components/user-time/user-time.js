@@ -74,7 +74,7 @@ export const UserTime = {
 		},
 	},
 	template: `
-		<span class="intranet-user-mini-profile__user-time">
+		<span class="intranet-user-mini-profile__user-time" data-test-id="usermp_user-time-display">
 			{{ formattedTime }}
 		</span>
 	`,

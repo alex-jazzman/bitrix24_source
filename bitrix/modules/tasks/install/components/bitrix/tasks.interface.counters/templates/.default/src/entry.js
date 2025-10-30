@@ -3,6 +3,7 @@ import { BaseEvent, EventEmitter } from 'main.core.events';
 import { CounterItem, CounterPanel } from 'ui.counterpanel';
 import { Filter } from './counters-helper';
 import { Controller as Viewed } from 'tasks.viewed';
+import { sendData } from 'ui.analytics';
 
 export class Counters extends CounterPanel
 {
@@ -270,6 +271,7 @@ export class Counters extends CounterPanel
 
 		this.#activateLinkedMenuItem(item);
 		this.filter.toggleByField(count);
+		this.#sendAnalyticsEvent(item);
 
 		EventEmitter.emit('Tasks.Toolbar:onItem', {
 			counter: count,
@@ -362,6 +364,7 @@ export class Counters extends CounterPanel
 	{
 		if (this.isRoleChanged())
 		{
+			this.getItems().forEach((item) => item.deactivate(false));
 			this.updateRole();
 			this.updateCountersData();
 		}
@@ -750,5 +753,52 @@ export class Counters extends CounterPanel
 		{
 			readAllItem.lock();
 		}
+	}
+
+	#sendAnalyticsEvent(item: CounterItem): void
+	{
+		sendData({
+			tool: 'tasks',
+			category: 'task_operations',
+			type: 'task',
+			event: this.#getAnalyticsEvent(item),
+			c_section: this.#getAnalyticsSection(item),
+			c_element: this.#getAnalyticsElement(item),
+		});
+	}
+
+	#getAnalyticsEvent(item: CounterItem)
+	{
+		if (Counters.counterTypes.expired.includes(item.id))
+		{
+			return 'overdue_counters_on';
+		}
+
+		return 'comments_counters_on';
+	}
+
+	#getAnalyticsSection(item: CounterItem)
+	{
+		if (Counters.counterTypes.scrum.includes(item.id))
+		{
+			return 'scrum';
+		}
+
+		if (Counters.counterTypes.project.includes(item.id))
+		{
+			return 'project';
+		}
+
+		return 'tasks';
+	}
+
+	#getAnalyticsElement(item: CounterItem)
+	{
+		if (Counters.counterTypes.expired.includes(item.id))
+		{
+			return 'overdue_counters_filter';
+		}
+
+		return 'comments_counters_filter';
 	}
 }

@@ -2,7 +2,7 @@ import { Type, Reflection, Dom, Runtime, Tag } from 'main.core';
 import { EventEmitter, BaseEvent } from 'main.core.events';
 import { MenuItem } from 'main.popup';
 import { Switcher } from 'ui.switcher';
-import { Counter } from 'ui.cnt';
+import { Counter, CounterStyle } from 'ui.cnt';
 
 import BaseButton from './base-button';
 import Button from './button/button';
@@ -159,6 +159,7 @@ export default class ButtonManager
 			{
 				options.rightCounter = {
 					value: this.#getCounter(counterNode),
+					style: this.#getCounterStyle(counterNode),
 				};
 
 				options.counterNode = undefined;
@@ -329,6 +330,21 @@ export default class ButtonManager
 		}
 
 		return null;
+	}
+
+	/**
+	 * @private
+	 * @param {HTMLElement} counterNode
+	 * @return {string | null}
+	 */
+	static #getCounterStyle(counterNode: HTMLElement): string | null
+	{
+		if (!Type.isDomNode(counterNode))
+		{
+			return null;
+		}
+
+		return this.#getEnumProp(counterNode, CounterStyle);
 	}
 
 	/**

@@ -66,11 +66,13 @@ export const GrowingTextArea = {
 		{
 			return (): HintParams => ({
 				text: this.modelValue,
+				interactivity: true,
 				popupOptions: {
 					className: 'b24-growing-text-area-popup',
 					bindElement: this.$el,
 					offsetLeft: 40,
 					maxWidth: 440,
+					maxHeight: 360,
 					angle: {
 						offset: 40,
 					},
@@ -130,6 +132,11 @@ export const GrowingTextArea = {
 				return;
 			}
 
+			if (this.focus)
+			{
+				void this.handleFocus();
+			}
+
 			this.focus = true;
 
 			void this.$nextTick(() => {
@@ -182,7 +189,7 @@ export const GrowingTextArea = {
 				event.stopPropagation();
 			}
 		},
-		async handleFocus(event: FocusEvent): Promise<void>
+		async handleFocus(event?: FocusEvent): Promise<void>
 		{
 			this.focus = true;
 

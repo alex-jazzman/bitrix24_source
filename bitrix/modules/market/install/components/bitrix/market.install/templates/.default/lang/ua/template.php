@@ -13,4 +13,6 @@ $MESS["MARKET_INSTALL_PRIVACY_LINK"] = "https://www.bitrix24.ua/about/privacy.ph
 $MESS["MARKET_INSTALL_PRIVACY_TEXT"] = "Я ознайомлений та згоден з <a href=\"#LINK#\" target=\"_blank\">політикою конфіденційності</a>";
 $MESS["MARKET_INSTALL_REQUIRED_RIGHTS"] = "Застосунок запитує дозвіл на такі дії:";
 $MESS["MARKET_INSTALL_TERMS_OF_SERVICE_TEXT"] = "Встановлюючи або завантажуючи застосунки або інтеграції, ви погоджуєтеся з  <a href=\"#LINK#\" target=\"_blank\">Умовами використання Бітрікс24.Маркет</a>";
+$MESS["MARKET_INSTALL_TERMS_OF_SERVICE_TEXT_MSGVER_1"] = "Встановлюючи або завантажуючи застосунки чи інтеграції, ви погоджуєтеся з <a href=\"#LINK#\" target=\"_blank\">Bitrix24 Market Terms of Use</a>";
 $MESS["MARKET_INSTALL_TOS_ERROR"] = "Для установки застосунку необхідно підтвердити свою згоду з умовами використання Бітрікс24.Маркет";
+$MESS["MARKET_INSTALL_TOS_ERROR_MSGVER_1"] = "Щоб встановити застосунок, погодьтеся з Bitrix24 Market Terms of Use";

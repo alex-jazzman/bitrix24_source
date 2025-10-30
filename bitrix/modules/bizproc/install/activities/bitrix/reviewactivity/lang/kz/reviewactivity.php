@@ -3,7 +3,6 @@ $MESS["BPAA_ACT_APPROVERS_NONE"] = "жоқ";
 $MESS["BPAA_ACT_COMMENT_ERROR"] = "Өріс толтырылмаған: #COMMENT_LABEL#";
 $MESS["BPAA_ACT_NO_ACTION"] = "Әрекет дұрыс емес көрсетілген";
 $MESS["BPAR_ACT_BUTTON2"] = "Танысып шықты";
-$MESS["BPAR_ACT_COMMENT"] = "Пікір";
 $MESS["BPAR_ACT_COMMENT_1"] = "Түсініктеме";
 $MESS["BPAR_ACT_COMMENT_REQUIRED_TO_APPROVE"] = "Бекіту кезінде міндетті";
 $MESS["BPAR_ACT_COMMENT_REQUIRED_TO_REJECT"] = "Қабылдамау кезінде міндетті";

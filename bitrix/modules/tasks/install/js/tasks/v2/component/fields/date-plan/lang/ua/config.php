@@ -1,0 +1,21 @@
+<?php
+$MESS["TASKS_V2_DATE_PLAN_ALLOW_CHANGE"] = "Дозволити виконавцю змінювати заплановані строки";
+$MESS["TASKS_V2_DATE_PLAN_BUTTON_SAVE"] = "Зберегти";
+$MESS["TASKS_V2_DATE_PLAN_DAYS"] = "дн.";
+$MESS["TASKS_V2_DATE_PLAN_DESCRIPTION"] = "Заплануйте дати початку та завершення завдання. Це допоможе розставити пріоритети та виконати завдання вчасно.";
+$MESS["TASKS_V2_DATE_PLAN_DURATION"] = "Тривалість";
+$MESS["TASKS_V2_DATE_PLAN_END"] = "Завершити";
+$MESS["TASKS_V2_DATE_PLAN_FIELD_END"] = "Дата завершення";
+$MESS["TASKS_V2_DATE_PLAN_FIELD_START"] = "Дата початку";
+$MESS["TASKS_V2_DATE_PLAN_HOURS"] = "год";
+$MESS["TASKS_V2_DATE_PLAN_MATCH_SUBTASKS_TIME"] = "Строки завдання залежать від підзавдань";
+$MESS["TASKS_V2_DATE_PLAN_MATCH_SUBTASKS_TIME_HINT"] = "Заплановані строки завдання змінюються залежно від строків, визначених у підзавданнях.";
+$MESS["TASKS_V2_DATE_PLAN_MATCH_SUBTASKS_TIME_STATE"] = "Залежать від підзавдань";
+$MESS["TASKS_V2_DATE_PLAN_MATCH_WORK_TIME"] = "Пропускати вихідні дні";
+$MESS["TASKS_V2_DATE_PLAN_MATCH_WORK_TIME_HINT"] = "Автоматично перенести крайній термін, якщо він випадає на вихідний день або свято.";
+$MESS["TASKS_V2_DATE_PLAN_MINUTES"] = "хв";
+$MESS["TASKS_V2_DATE_PLAN_NO_SUBTASKS_HINT"] = "У завдання немає підзавдань. Щойно вони з'являться, строки виконання встановляться автоматично.";
+$MESS["TASKS_V2_DATE_PLAN_START"] = "Почати";
+$MESS["TASKS_V2_DATE_PLAN_TITLE"] = "Строки";
+$MESS["TASKS_V2_DATE_PLAN_TITLE_CHIP"] = "Планування строків";
+$MESS["TASKS_V2_DATE_PLAN_TITLE_SHEET"] = "Планування строків";

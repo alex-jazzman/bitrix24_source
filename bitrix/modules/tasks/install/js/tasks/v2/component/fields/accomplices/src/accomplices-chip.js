@@ -42,7 +42,7 @@ export const AccomplicesChip = {
 		},
 		design(): string
 		{
-			return this.isSelected ? ChipDesign.ShadowAccent : ChipDesign.Shadow;
+			return this.isSelected ? ChipDesign.ShadowAccent : ChipDesign.ShadowNoAccent;
 		},
 		isSelected(): boolean
 		{
@@ -90,7 +90,7 @@ export const AccomplicesChip = {
 			});
 
 			this.selector.selectItemsByIds(this.preselected);
-			this.selector.show(this.$refs.chip.$el);
+			this.selector.show(this.$el);
 		},
 		highlightField(): void
 		{
@@ -102,11 +102,10 @@ export const AccomplicesChip = {
 			v-if="isSelected || !readonly"
 			:design="design"
 			:icon="Outline.PERSON"
-			:text="accomplicesMeta.title"
+			:text="loc('TASKS_V2_ACCOMPLICES_TITLE_CHIP')"
 			:data-task-id="taskId"
 			:data-task-chip-id="accomplicesMeta.id"
 			:data-task-chip-value="task.accomplicesIds.join(',')"
-			ref="chip"
 			@click="showDialog"
 		/>
 	`,

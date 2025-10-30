@@ -9,7 +9,7 @@ import { Utils } from 'im.v2.lib.utils';
 import { MarketManager } from 'im.v2.lib.market';
 
 const customClickHandler = {
-	[NavigationMenuItem.aiAssistant]: onCopilotClick,
+	[NavigationMenuItem.copilot]: onCopilotClick,
 	[NavigationMenuItem.call]: onCallClick,
 	[NavigationMenuItem.timemanager]: onTimeManagerClick,
 	[NavigationMenuItem.homepage]: onHomepageClick,
@@ -61,7 +61,7 @@ function onCopilotClick(payload: NavigationMenuItemParams)
 	}
 
 	changeLayout({
-		layoutName: Layout.aiAssistant,
+		layoutName: Layout.copilot,
 		layoutEntityId: payload.entityId,
 	});
 }

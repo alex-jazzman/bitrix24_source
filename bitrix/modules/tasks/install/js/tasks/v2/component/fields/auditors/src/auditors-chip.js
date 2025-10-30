@@ -42,7 +42,7 @@ export const AuditorsChip = {
 		},
 		design(): string
 		{
-			return this.isSelected ? ChipDesign.ShadowAccent : ChipDesign.Shadow;
+			return this.isSelected ? ChipDesign.ShadowAccent : ChipDesign.ShadowNoAccent;
 		},
 		isSelected(): boolean
 		{
@@ -58,7 +58,7 @@ export const AuditorsChip = {
 		this.selector?.destroy();
 	},
 	methods: {
-		showDialog(): void
+		handleClick(): void
 		{
 			if (this.isSelected)
 			{
@@ -90,7 +90,7 @@ export const AuditorsChip = {
 			});
 
 			this.selector.selectItemsByIds(this.preselected);
-			this.selector.show(this.$refs.chip.$el);
+			this.selector.show(this.$el);
 		},
 		highlightField(): void
 		{
@@ -102,12 +102,11 @@ export const AuditorsChip = {
 			v-if="isSelected || !readonly"
 			:design="design"
 			:icon="Outline.OBSERVER"
-			:text="auditorsMeta.title"
+			:text="loc('TASKS_V2_AUDITORS_TITLE_CHIP')"
 			:data-task-id="taskId"
 			:data-task-chip-id="auditorsMeta.id"
 			:data-task-chip-value="task.auditorsIds.join(',')"
-			ref="chip"
-			@click="showDialog"
+			@click="handleClick"
 		/>
 	`,
 };

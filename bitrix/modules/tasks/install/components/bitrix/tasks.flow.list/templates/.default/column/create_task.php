@@ -10,6 +10,7 @@ use Bitrix\Main\Web\Uri;
 use Bitrix\Tasks\Flow\Flow;
 use Bitrix\Tasks\UI\ScopeDictionary;
 use Bitrix\UI\Buttons\JsCode;
+use Bitrix\Tasks\Flow\Distribution\FlowDistributionType;
 
 if (!function_exists('renderCreateTaskColumn'))
 {
@@ -32,7 +33,28 @@ if (!function_exists('renderCreateTaskColumn'))
 		$buttonBuilder->addAttribute('id', 'tasks-flow-list-create-task-' . $flow->getId());
 		$buttonBuilder->addAttribute('type', 'button');
 
+		if ($flow->isImmutable())
+		{
+			$buttonBuilder->setDisabled();
+			$tooltipText = Loc::getMessage(
+				'TASKS_FLOW_LIST_CREATE_TASK_IMMUTABLE_DISTRIBUTION_TOOLTIP',
+				['[br/]' => '<br>']
+			);
+			$tooltip = <<<HTML
+				<span
+					class="ui-hint"
+					data-hint="$tooltipText"
+					data-hint-html
+				>
+				</span>
+			HTML;
+		}
+
 		$button = $buttonBuilder->render();
+		if (isset($tooltip))
+		{
+			$button .= $tooltip;
+		}
 
 		$disableClass = $isActive ? '' : '--disable';
 

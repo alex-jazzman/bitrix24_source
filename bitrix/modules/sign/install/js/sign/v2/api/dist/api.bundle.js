@@ -106,10 +106,11 @@ this.BX.Sign = this.BX.Sign || {};
 	      folderId
 	    });
 	  }
-	  send(templateUid, fields) {
+	  send(templateUid, fields, isOnboarding = false) {
 	    return post('sign.api_v1.b2e.document.template.send', {
 	      uid: templateUid,
-	      fields
+	      fields,
+	      isOnboarding
 	    });
 	  }
 	  getFields(templateUid) {
@@ -155,16 +156,21 @@ this.BX.Sign = this.BX.Sign || {};
 	      entities
 	    });
 	  }
-	  registerDocuments(templateIds) {
+	  registerDocuments(templateIds, excludeRejected = true) {
 	    return post('sign.api_v1.b2e.document.template.registerDocuments', {
-	      templateIds
+	      templateIds,
+	      excludeRejected
 	    });
 	  }
-	  setupSigners(documentIds, signers) {
+	  setupSigners(documentIds, signers, excludeRejected) {
 	    return post('sign.api_v1.b2e.document.template.setupSigners', {
 	      documentIds,
-	      signers
+	      signers,
+	      excludeRejected
 	    });
+	  }
+	  installOnboardingTemplate() {
+	    return post('sign.api_v1.b2e.document.template.installOnboardingTemplate', {});
 	  }
 	}
 
@@ -198,6 +204,43 @@ this.BX.Sign = this.BX.Sign || {};
 	  }
 	}
 
+	class SignersListApi {
+	  deleteSignersList(listId) {
+	    return post('sign.api_v1.b2e.signers.deleteList', {
+	      listId
+	    });
+	  }
+	  copySignersList(listId) {
+	    return post('sign.api_v1.b2e.signers.copyList', {
+	      listId
+	    });
+	  }
+	  deleteSignersFromList(listId, userIds) {
+	    return post('sign.api_v1.b2e.signers.deleteSignersFromList', {
+	      listId,
+	      userIds
+	    });
+	  }
+	  createList(title) {
+	    return post('sign.api_v1.b2e.signers.createList', {
+	      title
+	    });
+	  }
+	  renameList(listId, title) {
+	    return post('sign.api_v1.b2e.signers.renameList', {
+	      listId,
+	      title
+	    });
+	  }
+	  addSignersToList(listId, members, excludeRejected = true) {
+	    return post('sign.api_v1.b2e.signers.addSignersToList', {
+	      listId,
+	      members,
+	      excludeRejected
+	    });
+	  }
+	}
+
 	var _post = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("post");
 	class Api {
 	  constructor() {
@@ -206,6 +249,7 @@ this.BX.Sign = this.BX.Sign || {};
 	    });
 	    this.template = new TemplateApi();
 	    this.templateFolder = new TemplateFolderApi();
+	    this.signersList = new SignersListApi();
 	  }
 	  register(blankId, scenarioType = null, asTemplate = false, chatId = 0, templateFolderId = 0, initiatedByType = null) {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _post)[_post]('sign.api_v1.document.register', {
@@ -422,27 +466,31 @@ this.BX.Sign = this.BX.Sign || {};
 	      fileId
 	    });
 	  }
-	  setupB2eParties(documentUid, representativeId, members) {
+	  setupB2eParties(documentUid, representativeId, members, excludeRejected = true) {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _post)[_post]('sign.api_v1.document.member.setupB2eParties', {
 	      documentUid,
 	      representativeId,
-	      members
+	      members,
+	      excludeRejected
 	    });
 	  }
-	  syncB2eMembersWithDepartments(documentUid, currentParty) {
+	  syncB2eMembersWithDepartments(documentUid, currentParty, excludeRejected = true) {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _post)[_post]('sign.api_v1.document.member.syncB2eMembersWithDepartments', {
 	      documentUid,
-	      currentParty
+	      currentParty,
+	      excludeRejected
 	    });
 	  }
-	  getUniqUserCountForMembers(members) {
+	  getUniqUserCountForMembers(members, excludeRejected = true) {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _post)[_post]('sign.api_v1.document.member.getUniqSignersCount', {
-	      members
+	      members,
+	      excludeRejected
 	    });
 	  }
-	  getUniqUserCountForDocument(documentUid) {
+	  getUniqUserCountForDocument(documentUid, excludeRejected = true) {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _post)[_post]('sign.api_v1.document.member.getUniqSignersCountForDocument', {
-	      documentUid
+	      documentUid,
+	      excludeRejected
 	    });
 	  }
 	  getDepartmentsForDocument(documentUid, page, pageSize) {
@@ -625,6 +673,12 @@ this.BX.Sign = this.BX.Sign || {};
 	    return babelHelpers.classPrivateFieldLooseBase(this, _post)[_post]('sign.api_v1.integration.humanresources.hcmLink.loadBulkMultipleVacancyEmployee', {
 	      documentUids
 	    });
+	  }
+	  hasSignedDocuments() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _post)[_post]('sign.api_v1.b2e.onboarding.hasSignedDocuments', {});
+	  }
+	  hideOnboardingSigningBanner() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _post)[_post]('sign.api_v1.b2e.onboarding.hideOnboardingSigningBanner', {});
 	  }
 	}
 	function _post2(endpoint, data = null, notifyError = true) {

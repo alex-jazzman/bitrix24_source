@@ -23,6 +23,10 @@ this.BX.Booking = this.BX.Booking || {};
 	    code: '23712054',
 	    anchorCode: 'inte'
 	  },
+	  ResourceIntegrationSettings: {
+	    code: '23661822',
+	    anchorCode: 'calen'
+	  },
 	  ResourceType: {
 	    code: '23661822',
 	    anchorCode: 'reso'
@@ -137,6 +141,8 @@ this.BX.Booking = this.BX.Booking || {};
 	const EntitySelectorEntity = Object.freeze({
 	  Deal: 'deal',
 	  Resource: 'resource',
+	  Room: 'room',
+	  User: 'user',
 	  ResourceType: 'resource-type'
 	});
 
@@ -163,6 +169,7 @@ this.BX.Booking = this.BX.Booking || {};
 	});
 
 	const Model = Object.freeze({
+	  BookingInfo: 'booking-info',
 	  Bookings: 'bookings',
 	  Clients: 'clients',
 	  Counters: 'counters',
@@ -261,6 +268,10 @@ this.BX.Booking = this.BX.Booking || {};
 	  NotVisited: 'notVisited'
 	});
 
+	const ResourceEntityType = Object.freeze({
+	  Calendar: 'calendar'
+	});
+
 	const AnalyticsTool = Object.freeze({
 	  booking: 'booking'
 	});
@@ -313,6 +324,7 @@ this.BX.Booking = this.BX.Booking || {};
 	exports.BookingCounterType = BookingCounterType;
 	exports.DraggedElementKind = DraggedElementKind;
 	exports.VisitStatus = VisitStatus;
+	exports.ResourceEntityType = ResourceEntityType;
 	exports.AnalyticsTool = AnalyticsTool;
 	exports.AnalyticsCategory = AnalyticsCategory;
 	exports.AnalyticsEvent = AnalyticsEvent;

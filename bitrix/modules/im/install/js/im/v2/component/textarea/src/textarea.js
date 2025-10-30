@@ -10,13 +10,15 @@ import { DraftManager } from 'im.v2.lib.draft';
 import { Utils } from 'im.v2.lib.utils';
 import { Parser } from 'im.v2.lib.parser';
 import { LocalStorageManager } from 'im.v2.lib.local-storage';
-import { UploadingService, MultiUploadingService } from 'im.v2.provider.service.uploading';
 import { SendingService } from 'im.v2.provider.service.sending';
 import { MessageService } from 'im.v2.provider.service.message';
+import { UploadingService, MultiUploadingService, type MultiUploadingResult } from 'im.v2.provider.service.uploading';
 import { SoundNotificationManager } from 'im.v2.lib.sound-notification';
 import { isSendMessageCombination, isNewLineCombination } from 'im.v2.lib.hotkey';
 import { Textarea } from 'im.v2.lib.textarea';
 import { InputAction } from 'im.v2.lib.input-action';
+import { SendButton } from 'im.v2.component.elements.send-button';
+import { getFilesFromDataTransfer, isFilePasted } from 'ui.uploader.core';
 import { EscEventAction } from 'im.v2.lib.esc-manager';
 
 import { MentionManager, MentionManagerEvents } from './classes/mention-manager';
@@ -25,7 +27,6 @@ import { ResizeDirection, ResizeManager } from './classes/resize-manager';
 import { AudioInput } from './components/audio-input/audio-input';
 import { SmileSelector } from './components/smile-selector/smile-selector';
 import { UploadMenu } from './components/upload-menu/upload-menu';
-import { SendButton } from './components/send-button';
 import { UploadPreviewPopup } from './components/upload-preview/upload-preview-popup';
 import { MentionPopup } from './components/mention/mention-popup';
 import { TextareaPanel } from './components/panel/panel';
@@ -37,7 +38,6 @@ import type { JsonObject } from 'main.core';
 import type { ImModelChat, ImModelMessage } from 'im.v2.model';
 import type { InsertTextEvent, InsertMentionEvent } from 'im.v2.const';
 import type { ForwardedEntityConfig, PanelContextWithMultipleIds } from 'im.v2.provider.service.sending';
-import type { MultiUploadingResult } from 'im.v2.provider.service.uploading';
 
 const MESSAGE_ACTION_PANELS = new Set([PanelType.edit, PanelType.reply, PanelType.forward, PanelType.forwardEntity]);
 const TextareaHeight = {
@@ -84,10 +84,6 @@ export const ChatTextarea = {
 			type: Boolean,
 			default: true,
 		},
-		withAudioInput: {
-			type: Boolean,
-			default: true,
-		},
 		withAutoFocus: {
 			type: Boolean,
 			default: true,
@@ -109,6 +105,7 @@ export const ChatTextarea = {
 
 			showUploadPreviewPopup: false,
 			previewPopupUploaderIds: [],
+			previewPopupUploadingId: null,
 			previewPopupSourceFilesCount: 0,
 
 			panelType: PanelType.none,
@@ -232,6 +229,7 @@ export const ChatTextarea = {
 		EventEmitter.subscribe(EventType.textarea.insertForward, this.onInsertForward);
 		EventEmitter.subscribe(EventType.textarea.openUploadPreview, this.onOpenUploadPreview);
 		EventEmitter.subscribe(EventType.key.onBeforeEscape, this.onBeforeEscape);
+		EventEmitter.subscribe(EventType.dialog.closeComments, this.onCloseComments);
 
 		EventEmitter.subscribe(EventType.dialog.onMessageDeleted, this.onMessageDeleted);
 	},
@@ -259,6 +257,7 @@ export const ChatTextarea = {
 		EventEmitter.unsubscribe(EventType.textarea.insertForward, this.onInsertForward);
 		EventEmitter.unsubscribe(EventType.textarea.openUploadPreview, this.onOpenUploadPreview);
 		EventEmitter.unsubscribe(EventType.key.onBeforeEscape, this.onBeforeEscape);
+		EventEmitter.unsubscribe(EventType.dialog.closeComments, this.onCloseComments);
 
 		EventEmitter.unsubscribe(EventType.dialog.onMessageDeleted, this.onMessageDeleted);
 	},
@@ -611,8 +610,8 @@ export const ChatTextarea = {
 		async onFileSelect({ event, sendAsFile }: Event)
 		{
 			const multiUploadingService: MultiUploadingService = this.getMultiUploadingService();
-			const multiUploadingResult: MultiUploadingResult = await multiUploadingService.uploadFromInput({
-				event,
+			const multiUploadingResult: MultiUploadingResult = await multiUploadingService.upload({
+				files: Object.values(event.target.files),
 				sendAsFile,
 				dialogId: this.dialogId,
 				autoUpload: false,
@@ -620,6 +619,7 @@ export const ChatTextarea = {
 
 			this.showUploadPreviewPopup = true;
 			this.previewPopupUploaderIds = multiUploadingResult.uploaderIds;
+			this.previewPopupUploadingId = multiUploadingResult.uploadingId;
 			this.previewPopupSourceFilesCount = multiUploadingResult.sourceFilesCount;
 		},
 		onDiskFileSelect({ files })
@@ -692,18 +692,24 @@ export const ChatTextarea = {
 
 			this.openForwardPanel(messagesIds);
 		},
-		async onPaste(clipboardEvent: ClipboardEvent)
+		async onPaste(event: ClipboardEvent)
 		{
 			if (!this.withUploadMenu)
 			{
 				return;
 			}
 
+			if (!event.clipboardData || !isFilePasted(event.clipboardData))
+			{
+				return;
+			}
+
+			event.preventDefault();
+
 			const multiUploadingService: MultiUploadingService = this.getMultiUploadingService();
-			const multiUploadingResult: MultiUploadingResult = await multiUploadingService.uploadFromClipboard({
-				clipboardEvent,
+			const multiUploadingResult: MultiUploadingResult = await multiUploadingService.upload({
+				files: await getFilesFromDataTransfer(event.clipboardData),
 				dialogId: this.dialogId,
-				imagesOnly: false,
 				autoUpload: false,
 			});
 
@@ -714,6 +720,7 @@ export const ChatTextarea = {
 
 			this.showUploadPreviewPopup = true;
 			this.previewPopupUploaderIds = multiUploadingResult.uploaderIds;
+			this.previewPopupUploadingId = multiUploadingResult.uploadingId;
 			this.previewPopupSourceFilesCount = multiUploadingResult.sourceFilesCount;
 		},
 		onOpenUploadPreview(event: BaseEvent)
@@ -722,6 +729,7 @@ export const ChatTextarea = {
 
 			this.showUploadPreviewPopup = true;
 			this.previewPopupUploaderIds = multiUploadingResult.uploaderIds;
+			this.previewPopupUploadingId = multiUploadingResult.uploadingId;
 			this.previewPopupSourceFilesCount = multiUploadingResult.sourceFilesCount;
 		},
 		onMarketIconClick()
@@ -864,13 +872,22 @@ export const ChatTextarea = {
 
 			return this.multiUploadingService;
 		},
-		onSendFilesFromPreviewPopup(event)
+		async onSendFilesFromPreviewPopup(event)
 		{
 			this.text = '';
-			const { text, uploaderIds } = event;
+			const { text, files, sendAsFile } = event;
 			const textWithMentions = this.mentionManager.replaceMentions(text);
 
-			uploaderIds.forEach((uploaderId, index) => {
+			const multiUploadingResult = await this.getMultiUploadingService().upload({
+				files,
+				dialogId: this.dialogId,
+				autoUpload: false,
+				sendAsFile,
+			});
+
+			await multiUploadingResult.loadAllComplete;
+
+			multiUploadingResult.uploaderIds.forEach((uploaderId: string, index) => {
 				this.getUploadingService().sendMessageWithFiles({
 					uploaderId,
 					text: index === 0 ? textWithMentions : '',
@@ -911,6 +928,10 @@ export const ChatTextarea = {
 		{
 			this.text += inputText;
 		},
+		onCloseComments()
+		{
+			this.restoreTextareaHeight();
+		},
 	},
 	template: `
 		<div class="bx-im-send-panel__scope bx-im-send-panel__container --ui-context-content-light">
@@ -922,8 +943,8 @@ export const ChatTextarea = {
 					:dialogId="dialogId"
 					@close="closePanel"
 				/>
-				<div class="bx-im-textarea__content" ref="textarea-content">
-					<div class="bx-im-textarea__left">
+				<div class="bx-im-textarea__content" ref="textarea-content" @click="focus">
+					<div class="bx-im-textarea__top">
 						<UploadMenu
 							v-if="withUploadMenu"
 							:dialogId="dialogId" 
@@ -941,40 +962,39 @@ export const ChatTextarea = {
 							ref="textarea"
 							rows="1"
 						></textarea>
+					</div>
+					<div class="bx-im-textarea__bottom">
+						<slot name="bottom-panel-buttons"></slot>
+						<AutoDeleteSelector
+							v-if="isAutoDeleteEnabled"
+							:dialogId="dialogId"
+						/>
+						<BIcon
+							v-if="withMarket"
+							:name="OutlineIcons.APPS"
+							:title="loc('IM_TEXTAREA_ICON_APPLICATION')"
+							:size="ICON_SIZE"
+							:color="marketIconColor"
+							class="bx-im-textarea__icon"
+							@click="onMarketIconClick"
+						/>
+						<SmileSelector
+							v-if="withSmileSelector"
+							:dialogId="dialogId"
+						/>
 						<AudioInput
-							v-if="withAudioInput"
 							@inputStart="onAudioInputStart"
 							@inputResult="onAudioInputResult"
 						/>
-					</div>
-					<div class="bx-im-textarea__right">
-						<div class="bx-im-textarea__action-panel">
-							<AutoDeleteSelector
-								v-if="isAutoDeleteEnabled"
-								:dialogId="dialogId"
-							/>
-							<BIcon
-								v-if="withMarket"
-								:name="OutlineIcons.APPS"
-								:title="loc('IM_TEXTAREA_ICON_APPLICATION')"
-								:size="ICON_SIZE"
-								:color="marketIconColor"
-								class="bx-im-textarea__icon"
-								@click="onMarketIconClick"
-							/>
-							<SmileSelector 
-								v-if="withSmileSelector" 
-								:dialogId="dialogId" 
-							/>
-						</div>
+						<SendButton :dialogId="dialogId" :editMode="editMode" :isDisabled="isDisabled" @click="sendMessage" />
 					</div>
 				</div>
 			</div>
-			<SendButton :dialogId="dialogId" :editMode="editMode" :isDisabled="isDisabled" @click="sendMessage" />
 			<UploadPreviewPopup
 				v-if="showUploadPreviewPopup"
 				:dialogId="dialogId"
 				:uploaderIds="previewPopupUploaderIds"
+				:uploadingId="previewPopupUploadingId"
 				:sourceFilesCount="previewPopupSourceFilesCount"
 				:textareaValue="text"
 				@close="showUploadPreviewPopup = false"

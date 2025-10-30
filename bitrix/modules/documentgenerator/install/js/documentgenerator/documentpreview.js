@@ -302,21 +302,20 @@
 			}
 			try
 			{
-				provider = provider.replace(/\\/g, '\\\\');
 				BX.DocumentGenerator.Document.isProcessing = true;
 				BX.ajax.runAction('documentgenerator.api.document.list', {
 					data: {
 						select: ['id', 'number'],
 						filter: {
-							provider: provider,
-							templateId: templateId,
-							value: value
+							'=provider': provider.toLowerCase(),
+							'=templateId': templateId,
+							'=value': value,
 						},
-						order: {id: 'desc'}
+						order: { id: 'desc' },
 					},
 					navigation: {
-						size: 1
-					}
+						size: 1,
+					},
 				}).then(function(response)
 				{
 					BX.DocumentGenerator.Document.isProcessing = false;

@@ -220,6 +220,11 @@ jn.define('calendar/model/event', (require, exports, module) => {
 			;
 		}
 
+		isBookingEvent()
+		{
+			return this.getEventType() === EventTypes.BOOKING;
+		}
+
 		isRecurrence()
 		{
 			return Boolean(this.getRecurrenceRule());

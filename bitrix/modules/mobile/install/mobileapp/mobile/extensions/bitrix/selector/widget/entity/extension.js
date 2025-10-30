@@ -195,7 +195,7 @@ jn.define('selector/widget/entity', (require, exports, module) => {
 			if (createOptions.enableCreation && !createOptions.handler)
 			{
 				createOptions.handler = this.getCreateEntityHandler(
-					providerOptions.entities[0].options,
+					providerOptions?.entities[0]?.options,
 					createOptions,
 				);
 			}

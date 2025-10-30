@@ -95,9 +95,9 @@ jn.define('calendar/data-managers/event-manager', (require, exports, module) => 
 		 * @public
 		 * @returns {Promise<void>}
 		 */
-		async refresh()
+		async refresh(force = false)
 		{
-			if (this.isRefreshing)
+			if (this.isRefreshing && !force)
 			{
 				return;
 			}

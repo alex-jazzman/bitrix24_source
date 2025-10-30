@@ -6,6 +6,8 @@ import { Model } from 'tasks.v2.const';
 import type {
 	InterfaceModelParams,
 	InterfaceModelState,
+	CheckListCompletionCallback,
+	CheckListCompletionCallbacks,
 	DefaultDeadline,
 } from './types';
 
@@ -33,6 +35,9 @@ export class Interface extends BuilderModel
 				defaultDeadlineInSeconds: 0,
 				defaultDeadlineDate: '',
 			}),
+			deletingCheckListIds: {},
+			disableCheckListAnimations: false,
+			checkListCompletionCallbacks: {},
 		};
 	}
 
@@ -45,6 +50,10 @@ export class Interface extends BuilderModel
 			titleFieldOffsetHeight: (state: InterfaceModelState): number => state.titleFieldOffsetHeight,
 			/** @function interface/defaultDeadline */
 			defaultDeadline: (state: InterfaceModelState): DefaultDeadline => state.defaultDeadline,
+			/** @function interface/deletingCheckListIds */
+			deletingCheckListIds: (state: InterfaceModelState): { [id: number]: number } => state.deletingCheckListIds,
+			/** @function interface/disableCheckListAnimations */
+			disableCheckListAnimations: (state: InterfaceModelState): number => state.disableCheckListAnimations,
 		};
 	}
 
@@ -59,6 +68,26 @@ export class Interface extends BuilderModel
 			updateDefaultDeadline: (store, defaultDeadline: DefaultDeadline) => {
 				store.commit('setDefaultDeadline', defaultDeadline);
 			},
+			/** @function interface/addCheckListItemToDeleting */
+			addCheckListItemToDeleting: (store, itemId: number | string) => {
+				store.commit('addCheckListItemToDeleting', itemId);
+			},
+			/** @function interface/removeCheckListItemFromDeleting */
+			removeCheckListItemFromDeleting: (store, itemId: number | string) => {
+				store.commit('removeCheckListItemFromDeleting', itemId);
+			},
+			/** @function interface/addCheckListCompletionCallback */
+			addCheckListCompletionCallback: (store, { id, callback }) => {
+				store.commit('addCheckListCompletionCallback', { id, callback });
+			},
+			/** @function interface/executeCheckListCompletionCallbacks */
+			executeCheckListCompletionCallbacks: (store) => {
+				store.commit('executeCheckListCompletionCallbacks');
+			},
+			/** @function interface/setDisableCheckListAnimations */
+			setDisableCheckListAnimations: (store, disableCheckListAnimations: boolean) => {
+				store.commit('setDisableCheckListAnimations', disableCheckListAnimations);
+			},
 		};
 	}
 
@@ -70,6 +99,22 @@ export class Interface extends BuilderModel
 			},
 			setDefaultDeadline: (state: InterfaceModelState, defaultDeadline: DefaultDeadline) => {
 				state.defaultDeadline = defaultDeadline;
+			},
+			addCheckListItemToDeleting: (state: InterfaceModelState, itemId: number | string) => {
+				state.deletingCheckListIds[itemId] = itemId;
+			},
+			removeCheckListItemFromDeleting: (state: InterfaceModelState, itemId: number) => {
+				delete state.deletingCheckListIds[itemId];
+			},
+			addCheckListCompletionCallback: (state: InterfaceModelState, { id, callback }) => {
+				state.checkListCompletionCallbacks[id] = callback;
+			},
+			executeCheckListCompletionCallbacks: (state: InterfaceModelState) => {
+				Object.values(state.checkListCompletionCallbacks).forEach((cb: CheckListCompletionCallback) => cb());
+				state.checkListCompletionCallbacks = {};
+			},
+			setDisableCheckListAnimations: (state: InterfaceModelState, disableCheckListAnimations: boolean) => {
+				state.disableCheckListAnimations = disableCheckListAnimations === true;
 			},
 		};
 	}

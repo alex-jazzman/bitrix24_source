@@ -69,6 +69,11 @@ jn.define('calendar/sync-page/provider/sync-provider', (require, exports, module
 			return this.props.type;
 		}
 
+		get reconnecting()
+		{
+			return this.props.reconnecting;
+		}
+
 		render()
 		{
 			return View(
@@ -182,6 +187,21 @@ jn.define('calendar/sync-page/provider/sync-provider', (require, exports, module
 
 		renderButtons()
 		{
+			if (this.reconnecting)
+			{
+				return View(
+					{
+						style: {
+							marginTop: 10,
+							flexDirection: 'row',
+							alignItems: 'center',
+						},
+					},
+					this.renderReconnectButton(),
+					this.renderSettingsButton(),
+				);
+			}
+
 			if (this.props.connected === false)
 			{
 				return View(
@@ -286,6 +306,7 @@ jn.define('calendar/sync-page/provider/sync-provider', (require, exports, module
 						flexDirection: 'row',
 						flexGrow: 1,
 						backgroundColor: AppTheme.colors.accentMainPrimaryalt,
+						opacity: this.reconnecting ? 0.5 : 1,
 					},
 					onClick: this.reconnectProvider,
 					testId: 'sync_page_provider_reconnect_button',
@@ -359,7 +380,7 @@ jn.define('calendar/sync-page/provider/sync-provider', (require, exports, module
 
 		renderSyncDate()
 		{
-			if (this.isErrorConnection())
+			if (this.isErrorConnection() || this.reconnecting)
 			{
 				return null;
 			}
@@ -420,7 +441,11 @@ jn.define('calendar/sync-page/provider/sync-provider', (require, exports, module
 
 		onAuthComplete = () => {
 			this.handleStartWizardWaiting();
-			this.openSyncWizard();
+
+			if (!this.reconnecting)
+			{
+				this.openSyncWizard();
+			}
 		};
 
 		onConnectionCreated = () => {
@@ -447,9 +472,11 @@ jn.define('calendar/sync-page/provider/sync-provider', (require, exports, module
 
 			setTimeout(() => {
 				this.handleStartWizardWaiting();
-				this.openSyncWizard({
-					accountName: appleId,
-				});
+
+				if (!this.reconnecting)
+				{
+					this.openSyncWizard({ accountName: appleId });
+				}
 			}, 500);
 		};
 
@@ -500,18 +527,13 @@ jn.define('calendar/sync-page/provider/sync-provider', (require, exports, module
 		};
 
 		reconnectProvider = () => {
-			// eslint-disable-next-line promise/catch-or-return
-			this.connectionModel.deactivateConnection(this.props.id).then((response) => {
-				if (response.errors && response.errors.length > 0)
-				{
-					console.error('error deactivate');
-				}
-				else
-				{
-					this.customEventEmitter.emit('Calendar.Sync::onConnectionDisabled', [{ type: this.type }]);
-					this.connectionModel.connect();
-				}
-			});
+			if (this.reconnecting)
+			{
+				return;
+			}
+
+			this.customEventEmitter.emit('Calendar.Sync::onReconnection', [{ type: this.type }]);
+			this.connectionModel.connect();
 		};
 
 		openSyncWizard(additionalProps = {})
@@ -546,6 +568,11 @@ jn.define('calendar/sync-page/provider/sync-provider', (require, exports, module
 
 		isErrorConnection()
 		{
+			if (this.reconnecting)
+			{
+				return false;
+			}
+
 			return this.connected === true && this.status === false;
 		}
 	}

@@ -9,6 +9,5 @@ $MESS["CRM_INTEGRATION_MAIL_MANAGER_ERROR_NO_FROM"] = "Хат жіберуге �
 $MESS["CRM_INTEGRATION_MAIL_MANAGER_ERROR_TOO_BIG_ATTACHMENT"] = "Тіркемелердің ең жоғарғы шегі асып кетті (#SIZE#)";
 $MESS["CRM_INTEGRATION_MAIL_MANAGER_ERROR_TO_BLACKLISTED"] = "Біз сіздің хатыңызды жібермедік, өйткені алушы #EMAIL# қара тізімде орналасқан";
 $MESS["CRM_INTEGRATION_MAIL_MANAGER_ERROR_UNKNOWN"] = "Хат жіберу мүмкін болмады";
-$MESS["CRM_INTEGRATION_MAIL_MANAGER_HISTORY_EVENT_TEXT"] = "Тақырып: #SUBJECT#<br/>Кімнен: #FROM#<br/>Кімге: #TO#<br/><br/>#MESSAGE_BODY#";
 $MESS["CRM_INTEGRATION_MAIL_MANAGER_HISTORY_EVENT_TEXT_MSGVER_1"] = "Тақырыбы:#SUBJECT#<br/>Кімнен: #FROM#<br/>Кімге:#TO#";
 $MESS["CRM_INTEGRATION_MAIL_MANAGER_NAME"] = "Пошта";

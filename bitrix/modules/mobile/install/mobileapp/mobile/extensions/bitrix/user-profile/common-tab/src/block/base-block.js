@@ -3,6 +3,7 @@
  */
 jn.define('user-profile/common-tab/src/block/base-block', (require, exports, module) => {
 	const { BaseViewWrapper, ViewMode } = require('user-profile/common-tab/src/block/base-view');
+	const { BaseEditWrapper } = require('user-profile/common-tab/src/block/base-edit');
 
 	class BaseBlock
 	{
@@ -22,7 +23,12 @@ jn.define('user-profile/common-tab/src/block/base-block', (require, exports, mod
 		/**
 		 * @returns {boolean}
 		 */
-		shouldUseBaseWrapper()
+		shouldUseBaseViewWrapper()
+		{
+			return true;
+		}
+
+		shouldUseBaseEditWrapper()
 		{
 			return true;
 		}
@@ -52,14 +58,6 @@ jn.define('user-profile/common-tab/src/block/base-block', (require, exports, mod
 		}
 
 		/**
-		 * @returns {number}
-		 */
-		getSort()
-		{
-			return 0;
-		}
-
-		/**
 		 * @param {Object} commonTabData
 		 */
 		prepareProps(commonTabData)
@@ -74,7 +72,17 @@ jn.define('user-profile/common-tab/src/block/base-block', (require, exports, mod
 		{
 			const content = this.#getContent();
 
-			if (this.shouldUseBaseWrapper())
+			if (this.props.isEditMode)
+			{
+				if (this.shouldUseBaseEditWrapper())
+				{
+					return this.#wrapWithBaseEdit({ content, ...this.props });
+				}
+
+				return content;
+			}
+
+			if (this.shouldUseBaseViewWrapper())
 			{
 				return this.#wrapWithBaseView({ content, ...this.props });
 			}
@@ -101,6 +109,8 @@ jn.define('user-profile/common-tab/src/block/base-block', (require, exports, mod
 				style = {},
 				title = this.getTitle(),
 				viewMode = this.getViewMode(),
+				cardProps = {},
+				titleStyle = {},
 			} = props;
 
 			return BaseViewWrapper({
@@ -110,7 +120,21 @@ jn.define('user-profile/common-tab/src/block/base-block', (require, exports, mod
 				viewMode,
 				onClick,
 				style,
+				cardProps,
+				titleStyle,
 			});
+		}
+
+		#wrapWithBaseEdit(props)
+		{
+			const {
+				testId = '',
+				title = this.getTitle(),
+				content,
+				style = {},
+			} = props;
+
+			return BaseEditWrapper({ testId, title, content, style });
 		}
 	}
 

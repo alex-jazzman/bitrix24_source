@@ -53,8 +53,6 @@ export class RecentMenu extends BaseMenu
 		return {
 			...super.getMenuOptions(),
 			className: this.getMenuClassName(),
-			angle: true,
-			offsetLeft: 32,
 		};
 	}
 

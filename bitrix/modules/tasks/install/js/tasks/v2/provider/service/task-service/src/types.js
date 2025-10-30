@@ -11,6 +11,8 @@ export type TaskDto = {
 	responsible: UserDto,
 	deadlineTs: number,
 	needsControl: boolean,
+	startPlanTs: number,
+	endPlanTs: number,
 	fileIds: number[],
 	checklist: number[] | string[],
 	containsChecklist: boolean,
@@ -22,9 +24,15 @@ export type TaskDto = {
 	statusChangedTs: number,
 	accomplices: UserDto[],
 	auditors: UserDto[],
+	tags: TagDto[],
 	parent: TaskDto,
 	chatId: number,
+	allowsChangeDeadline: boolean,
+	allowsChangeDatePlan: boolean,
+	matchesWorkTime: boolean,
+	matchesSubTasksTime: boolean,
 	rights: { [right: string]: boolean },
+	archiveLink: ?string,
 };
 
 export type TaskSliderData = {
@@ -44,4 +52,11 @@ type Status = 'pending' | 'in_progress' | 'supposedly_completed' | 'completed' |
 
 type CheckList = {
 	any: any,
+};
+
+export type TagDto = {
+	id: number,
+	name: string,
+	owner: UserDto,
+	group: GroupDto,
 };

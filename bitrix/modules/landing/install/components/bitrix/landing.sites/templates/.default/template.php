@@ -110,7 +110,7 @@ if (
 	(!isset($arResult['LICENSE']) || $arResult['LICENSE'] !== 'nfr')
 )
 {
-	$formCode = 'general';
+	$formCode = 'partner';
 	$params = $component->getFeedbackParameters($formCode);
 	if (is_array($params))
 	{

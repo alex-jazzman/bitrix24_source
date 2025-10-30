@@ -5,7 +5,6 @@ $MESS["CATALOG_STORE_DOCUMENT_CONDUCT_BUTTON"] = "Провести докуме�
 $MESS["CATALOG_STORE_DOCUMENT_DETAIL_CANCEL_ERROR"] = "Сталася помилка під час скасування проведення документа";
 $MESS["CATALOG_STORE_DOCUMENT_DETAIL_CARD_NO_WRITE_RIGHTS_ERROR"] = "Недостатньо прав для збереження картки документа.";
 $MESS["CATALOG_STORE_DOCUMENT_DETAIL_CONDUCT_ERROR"] = "Сталася помилка під час проведення документа";
-$MESS["CATALOG_STORE_DOCUMENT_DETAIL_DOCUMENT_BUTTON"] = "Документ";
 $MESS["CATALOG_STORE_DOCUMENT_DETAIL_DOCUMENT_NOT_FOUND_ERROR"] = "Документ не знайдено";
 $MESS["CATALOG_STORE_DOCUMENT_DETAIL_DOCUMENT_TYPE_NOT_SPECIFIED_ERROR"] = "Не вказано тип документа";
 $MESS["CATALOG_STORE_DOCUMENT_DETAIL_DOC_TYPE_A"] = "Прибуття товару на склад";

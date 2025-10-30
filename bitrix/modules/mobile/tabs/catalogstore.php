@@ -44,14 +44,23 @@ class CatalogStore implements Tabable {
 
 	public function getMenuData() {
 		return [
+			'id' => 'catalog_store',
+			'sort' => 400,
 			'title' => $this->getTitle(),
 			'useLetterImage' => true,
 			'sectionCode' => 'catalog_store',
+			'section_code' => 'crm',
 			'color' => '#05b5ab',
 			'imageUrl' => 'catalog/icon-catalog-store.png',
 			'imageName' => $this->getIconId(),
 			'params' => [
 				'onclick' => Utils::getComponentJSCode($this->getComponentParams()),
+				'analytics' => [
+					'tool' => 'inventory',
+					'category' => 'inventory',
+					'event' => 'open_section',
+					'c_section' => 'ava_menu',
+				],
 			],
 		];
 	}

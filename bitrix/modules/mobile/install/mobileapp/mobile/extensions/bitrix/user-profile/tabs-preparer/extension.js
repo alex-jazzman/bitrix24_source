@@ -4,6 +4,10 @@
 jn.define('user-profile/tabs-preparer', (require, exports, module) => {
 	const { TabType } = require('user-profile/const');
 	const { CommonTab } = require('user-profile/common-tab');
+	const { ProfileFilesGrid } = require('disk/file-grid/profile-files');
+	const { getState } = require('statemanager/redux/store');
+	const { selectById } = require('statemanager/redux/slices/users/selector');
+	const { Loc } = require('loc');
 
 	/**
 	 * @param {Array} tabs
@@ -32,15 +36,39 @@ jn.define('user-profile/tabs-preparer', (require, exports, module) => {
 	}
 
 	/**
-	 * @param {Object} nestedWidgets
-	 * @param {Object} params
+	 * @param {Object} tabsWidget
+	 * @param {number} ownerId
 	 */
-	function initTabWidgets(nestedWidgets, params)
+	function bindEvents(tabsWidget, ownerId)
 	{
-		initCommonTabWidget(nestedWidgets, params);
+		tabsWidget.on('onTabSelected', (item, changed) => {
+			if (!changed)
+			{
+				return;
+			}
+
+			let widgetTitle = Loc.getMessage('M_PROFILE_TITLE');
+			if (item.id !== TabType.COMMON)
+			{
+				widgetTitle = selectById(getState(), ownerId)?.fullName ?? widgetTitle;
+			}
+
+			tabsWidget.setTitle({ text: widgetTitle }, true);
+		});
 	}
 
-	function initCommonTabWidget(nestedWidgets, params)
+	/**
+	 * @param {Object} tabsWidget
+	 * @param {Object} params
+	 */
+	function initTabNestedWidgets(tabsWidget, params)
+	{
+		const nestedWidgets = tabsWidget.nestedWidgets();
+		initCommonTabWidget(nestedWidgets, params, tabsWidget);
+		initFilesTabWidget(nestedWidgets, params);
+	}
+
+	function initCommonTabWidget(nestedWidgets, params, tabsWidget)
 	{
 		if (nestedWidgets[TabType.COMMON])
 		{
@@ -48,13 +76,32 @@ jn.define('user-profile/tabs-preparer', (require, exports, module) => {
 			const widgetParams = params[TabType.COMMON];
 
 			widget.showComponent(
-				CommonTab({ ...widgetParams, layout: widget }),
+				CommonTab({
+					...widgetParams,
+					parentWidget: widget,
+					tabsWidget,
+					closeIcon: params.closeIcon,
+				}),
+			);
+		}
+	}
+
+	function initFilesTabWidget(nestedWidgets, params)
+	{
+		if (nestedWidgets[TabType.FILES])
+		{
+			const widget = nestedWidgets[TabType.FILES];
+			const widgetParams = params[TabType.FILES];
+
+			widget.showComponent(
+				new ProfileFilesGrid({ ...widgetParams, parentWidget: widget }),
 			);
 		}
 	}
 
 	module.exports = {
 		prepareTabs,
-		initTabWidgets,
+		bindEvents,
+		initTabNestedWidgets,
 	};
 });

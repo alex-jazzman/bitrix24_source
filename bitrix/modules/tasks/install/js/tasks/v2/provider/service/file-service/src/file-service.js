@@ -1,16 +1,18 @@
+import { Runtime, Type, Loc, Text } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import type { BaseEvent } from 'main.core.events';
 
-import { FileStatus, getFilesFromDataTransfer, isFilePasted } from 'ui.uploader.core';
+import { FileStatus } from 'ui.uploader.core';
 import { VueUploaderAdapter } from 'ui.uploader.vue';
-import type { UploaderFileInfo, UploaderFile } from 'ui.uploader.core';
+import type { UploaderFileInfo } from 'ui.uploader.core';
 import type { Store } from 'ui.vue3.vuex';
+import { VueRefValue } from 'ui.vue3';
+import { UI } from 'ui.notification';
 
 import { UserFieldMenu, openDiskFileDialog } from 'disk.uploader.user-field-widget';
 import { Model } from 'tasks.v2.const';
 import { Core } from 'tasks.v2.core';
 import { apiClient } from 'tasks.v2.lib.api-client';
-import { taskService } from 'tasks.v2.provider.service.task-service';
 
 import { mapDtoToModel } from './mappers';
 import { processCheckListFileIds } from './util';
@@ -18,7 +20,9 @@ import type { FileId, FileDto } from './types';
 
 export type BrowseParams = {
 	bindElement: HTMLElement,
+	onShowCallback?: Function,
 	onHideCallback?: Function,
+	compact: boolean,
 };
 
 export const EntityTypes = Object.freeze({
@@ -28,29 +32,54 @@ export const EntityTypes = Object.freeze({
 
 export type EntityType = $Values<typeof EntityTypes>;
 
+type Options = {
+	parentEntityId?: number | string,
+}
+
 export class FileService extends EventEmitter
 {
 	#entityId: number | string;
 	#entityType: EntityType;
+	#options: Options;
 	#menu: UserFieldMenu;
 	#loadedIds: Set<FileId> = new Set();
 	#objectsIds: { [id: FileId]: number } = {};
 	#promises: Promise[] = [];
 	#adapter: VueUploaderAdapter;
+	#fileBrowserClosed: boolean = false;
+	#filesToAttach: UploaderFileInfo[] = [];
+	#filesToDetach: UploaderFileInfo[] = [];
+	#isDetachedErrorMode: boolean = false;
+	#saveAttachedFilesDebounced: Function;
+	#saveDetachedFilesDebounced: Function;
 
-	constructor(entityId: number | string, entityType: EntityType = EntityTypes.Task)
+	constructor(
+		entityId: number | string,
+		entityType: EntityType = EntityTypes.Task,
+		options: Options = {},
+	)
 	{
 		super();
 
 		this.setEventNamespace('Tasks.V2.Provider.Service.FileService');
 		this.setEntityId(entityId, entityType);
+		this.initAdapter(entityId, entityType);
 
+		this.#options = options;
+
+		this.#saveAttachedFilesDebounced = Runtime.debounce(this.#saveAttachedFiles, 3000, this);
+		this.#saveDetachedFilesDebounced = Runtime.debounce(this.#saveDetachedFiles, 3000, this);
+	}
+
+	initAdapter(entityId: number | string, entityType: EntityType): void
+	{
 		this.#adapter = new VueUploaderAdapter({
 			id: getServiceKey(entityId, entityType),
 			controller: 'disk.uf.integration.diskUploaderController',
 			imagePreviewHeight: 1200,
 			imagePreviewWidth: 1200,
 			imagePreviewQuality: 0.85,
+			ignoreUnknownImageTypes: true,
 			treatOversizeImageAsFile: true,
 			multiple: true,
 			maxFileSize: null,
@@ -72,9 +101,7 @@ export class FileService extends EventEmitter
 				const fileIds = new Set(this.#entityFileIds);
 				if (!this.#getIdsByObjectId(file.customData.objectId).some((id: FileId) => fileIds.has(id)))
 				{
-					this.#updateEntity({
-						fileIds: [...fileIds, file.serverFileId],
-					});
+					this.#attachFiles([...fileIds, file.serverFileId], file);
 				}
 
 				this.emit('onFileComplete', file);
@@ -85,9 +112,9 @@ export class FileService extends EventEmitter
 				const idsToRemove = new Set(this.#getIdsByObjectId(file.customData.objectId));
 				this.#removeLoadedObjectsIds(idsToRemove);
 
-				this.#updateEntity({
-					fileIds: this.#entityFileIds.filter((id: FileId) => !idsToRemove.has(id)),
-				});
+				this.#detachFiles(this.#getEntityFileIds(idsToRemove), file);
+
+				this.emit('onFileRemove', { file });
 			},
 		});
 	}
@@ -100,7 +127,7 @@ export class FileService extends EventEmitter
 
 	getEntityId(): string
 	{
-		return getServiceKey(this.#entityId, this.#entityType);
+		return this.#entityId;
 	}
 
 	getAdapter(): VueUploaderAdapter
@@ -108,7 +135,7 @@ export class FileService extends EventEmitter
 		return this.#adapter;
 	}
 
-	getFiles(): UploaderFileInfo[]
+	getFiles(): VueRefValue<UploaderFileInfo>
 	{
 		return this.#adapter.getReactiveItems();
 	}
@@ -121,11 +148,20 @@ export class FileService extends EventEmitter
 		].includes(status));
 	}
 
+	hasUploadingError(): boolean
+	{
+		return this.#adapter.getItems().some(({ status }) => [
+			FileStatus.UPLOAD_FAILED,
+			FileStatus.LOAD_FAILED,
+		].includes(status));
+	}
+
 	browse(params: BrowseParams): void
 	{
-		this.#menu ??= new UserFieldMenu({
+		this.#menu = new UserFieldMenu({
 			dialogId: 'task-card',
 			uploader: this.#adapter.getUploader(),
+			compact: params.compact || false,
 			menuOptions: {
 				minWidth: 220,
 				animation: 'fading',
@@ -139,9 +175,11 @@ export class FileService extends EventEmitter
 					onPopupClose: () => {
 						params.onHideCallback?.();
 					},
+					onPopupShow: () => {
+						params.onShowCallback?.();
+					},
 				},
 			},
-			compact: true,
 		});
 
 		this.#menu.show(params.bindElement);
@@ -168,6 +206,22 @@ export class FileService extends EventEmitter
 		});
 	}
 
+	setFileBrowserClosed(value: boolean): void
+	{
+		this.#fileBrowserClosed = value;
+		this.emit('onFileBrowserClosed');
+	}
+
+	isFileBrowserClosed(): boolean
+	{
+		return this.#fileBrowserClosed;
+	}
+
+	resetFileBrowserClosedState(): void
+	{
+		this.#fileBrowserClosed = false;
+	}
+
 	destroy(): void
 	{
 		this.#adapter.unsubscribeAll('Item:onAdd');
@@ -176,38 +230,13 @@ export class FileService extends EventEmitter
 		this.#adapter.getUploader().destroy();
 	}
 
-	async uploadFromClipboard(params: { clipboardEvent: ClipboardEvent }): Promise<UploaderFile[]>
-	{
-		const { clipboardEvent } = params;
-
-		const { clipboardData } = clipboardEvent;
-
-		if (!clipboardData || !isFilePasted(clipboardData))
-		{
-			return [];
-		}
-
-		clipboardEvent.preventDefault();
-
-		const files: File[] = await getFilesFromDataTransfer(clipboardData);
-
-		return this.#addFiles(files);
-	}
-
-	#addFiles(files: ArrayLike): UploaderFile[]
-	{
-		const uploader = this.#adapter.getUploader();
-
-		return uploader.addFiles(files);
-	}
-
 	async sync(ids: FileId[]): Promise<void>
 	{
 		if (ids.every((id: FileId) => this.#loadedIds.has(id)))
 		{
 			this.#adapter.getItems().forEach((file) => {
 				const uploaderIds = [file.serverFileId];
-				if (file.serverFileId[0] === 'n')
+				if (this.#isNewFile(file.serverFileId))
 				{
 					const objectId = Number(file.serverFileId.slice(1));
 
@@ -228,7 +257,7 @@ export class FileService extends EventEmitter
 
 	async list(ids: FileId[]): Promise<UploaderFileInfo[]>
 	{
-		const unloadedIds = ids.filter((id) => id[0] !== 'n' && !this.#loadedIds.has(id));
+		const unloadedIds = ids.filter((id) => !this.#isNewFile(id) && !this.#loadedIds.has(id));
 		if (unloadedIds.length === 0)
 		{
 			await Promise.all(this.#promises);
@@ -242,7 +271,22 @@ export class FileService extends EventEmitter
 
 		try
 		{
-			const data = await apiClient.post('File.list', { ids: unloadedIds });
+			let data = [];
+
+			if (this.#entityType === EntityTypes.Task)
+			{
+				data = await apiClient.post('File.list', {
+					taskId: this.#entityId,
+					ids: unloadedIds,
+				});
+			}
+			else if (this.#entityType === EntityTypes.CheckListItem)
+			{
+				data = await apiClient.post('Task.CheckList.File.list', {
+					taskId: this.#options.parentEntityId,
+					ids: unloadedIds,
+				});
+			}
 
 			const files = data.map((fileDto: FileDto) => mapDtoToModel(fileDto));
 
@@ -288,25 +332,159 @@ export class FileService extends EventEmitter
 	{
 		return Object.entries(this.#objectsIds)
 			.filter(([, objectId]): boolean => objectId === objectIdToFind)
-			.map(([id]): FileId => (id[0] === 'n' ? id : Number(id)))
+			.map(([id]): FileId => (this.#isNewFile(id) ? id : Number(id)))
 		;
 	}
 
-	#updateEntity(data: { fileIds: FileId[] }): void
+	#attachFiles(fileIds: FileId[], attachedFile: UploaderFileInfo): void
 	{
 		if (this.#entityType === EntityTypes.Task)
 		{
-			void taskService.update(this.#entityId, data);
+			const id = this.#entityId;
+
+			void this.$store.dispatch(`${Model.Tasks}/update`, {
+				id,
+				fields: { fileIds },
+			});
+
+			if (this.#isDetachedErrorMode)
+			{
+				return;
+			}
+
+			if (this.#isRealId(id) && this.#isNewFile(attachedFile.serverFileId))
+			{
+				this.#filesToAttach.push(attachedFile);
+				this.#saveAttachedFilesDebounced();
+			}
 		}
 		else if (this.#entityType === EntityTypes.CheckListItem)
 		{
-			const attachments = processCheckListFileIds(data.fileIds);
-
-			void this.$store.dispatch(`${Model.CheckList}/update`, {
-				id: this.#entityId,
-				fields: { attachments },
-			});
+			this.#processCheckListFileIds(fileIds);
 		}
+	}
+
+	#detachFiles(fileIds: FileId[], detachedFile: UploaderFileInfo): void
+	{
+		if (this.#entityType === EntityTypes.Task)
+		{
+			const id = this.#entityId;
+
+			void this.$store.dispatch(`${Model.Tasks}/update`, {
+				id,
+				fields: { fileIds },
+			});
+
+			if (this.#isRealId(id))
+			{
+				const detachedId = detachedFile.serverFileId;
+				const attachedIndex = this.#filesToAttach.findIndex((file) => file.serverFileId === detachedId);
+				if (attachedIndex === -1)
+				{
+					this.#filesToDetach.push(detachedFile);
+					this.#saveDetachedFilesDebounced();
+				}
+				else
+				{
+					this.#filesToAttach.splice(attachedIndex, 1);
+				}
+			}
+		}
+		else if (this.#entityType === EntityTypes.CheckListItem)
+		{
+			this.#processCheckListFileIds(fileIds);
+		}
+	}
+
+	#getEntityFileIds(excludedIds: Set<FileId> = new Set()): []
+	{
+		if (this.#entityType === EntityTypes.Task)
+		{
+			return this.#entityFileIds.filter((id: FileId) => !excludedIds.has(id));
+		}
+
+		if (this.#entityType === EntityTypes.CheckListItem)
+		{
+			return this.#entityFileIds.filter((attach) => !excludedIds.has(attach.id));
+		}
+
+		return [];
+	}
+
+	#processCheckListFileIds(fileIds: FileId[]): void
+	{
+		const attachments = processCheckListFileIds(fileIds);
+
+		void this.$store.dispatch(`${Model.CheckList}/update`, {
+			id: this.#entityId,
+			fields: { attachments },
+		});
+	}
+
+	#isRealId(id: number): boolean
+	{
+		return Number.isInteger(id) && id > 0;
+	}
+
+	#isNewFile(id: number | string): boolean
+	{
+		return String(id).startsWith('n');
+	}
+
+	async #saveAttachedFiles(): void
+	{
+		if (Type.isArrayFilled(this.#filesToAttach))
+		{
+			try
+			{
+				const ids = this.#filesToAttach.map((file) => file.serverFileId);
+				this.#filesToAttach = [];
+
+				void apiClient.post('File.attach', { task: { id: this.#entityId }, ids });
+			}
+			catch (error)
+			{
+				console.error('FileService: saveAttachedFiles error', error);
+
+				this.notifyError(Loc.getMessage('TASKS_V2_NOTIFY_FILE_ATTACH_ERROR'));
+			}
+		}
+	}
+
+	async #saveDetachedFiles(): void
+	{
+		if (Type.isArrayFilled(this.#filesToDetach))
+		{
+			const filesBeforeDetach = this.#filesToDetach;
+
+			try
+			{
+				const ids = this.#filesToDetach.map((file) => file.serverFileId);
+				this.#filesToDetach = [];
+
+				await apiClient.post('File.detach', { task: { id: this.#entityId }, ids });
+			}
+			catch (error)
+			{
+				console.error('FileService: saveDetachedFiles error', error);
+
+				this.#isDetachedErrorMode = true;
+
+				this.#adapter.getUploader().addFiles(filesBeforeDetach);
+
+				this.#isDetachedErrorMode = false;
+
+				this.notifyError(Loc.getMessage('TASKS_V2_NOTIFY_FILE_DETACH_ERROR'));
+			}
+		}
+	}
+
+	notifyError(content: string): void
+	{
+		UI.Notification.Center.notify({
+			content,
+			id: `file-service-error-${Text.getRandom()}`,
+		});
 	}
 
 	get #entityFileIds(): []
@@ -333,10 +511,14 @@ function getServiceKey(entityId: number, entityType: EntityType): string
 }
 
 export const fileService = {
-	get(entityId: number, entityType: EntityType = EntityTypes.Task): FileService
+	get(
+		entityId: number,
+		entityType: EntityType = EntityTypes.Task,
+		options: Options = {},
+	): FileService
 	{
 		const key = getServiceKey(entityId, entityType);
-		services[key] ??= new FileService(entityId, entityType);
+		services[key] ??= new FileService(entityId, entityType, options);
 
 		return services[key];
 	},

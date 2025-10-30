@@ -60,4 +60,7 @@ $MESS["MBCAL_VIEWEV_TH"] = "Бс";
 $MESS["MBCAL_VIEWEV_TU"] = "Сс";
 $MESS["MBCAL_VIEWEV_WE"] = "Ср";
 $MESS["MB_CALENDAR_SAVE_BUT"] = "Сақтау";
+$MESS["MB_CAL_EVENT_DATE_FORMAT"] = "D., d M. Y";
+$MESS["MB_CAL_EVENT_TIME_FORMAT"] = "G:i";
+$MESS["MB_CAL_EVENT_TIME_FORMAT_AMPM"] = "h:i a";
 $MESS["PULL_TEXT"] = "Жаңарту үшін тартыңыз...";

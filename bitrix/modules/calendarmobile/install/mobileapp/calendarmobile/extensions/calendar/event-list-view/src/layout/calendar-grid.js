@@ -3,8 +3,9 @@
  */
 jn.define('calendar/event-list-view/layout/calendar-grid', (require, exports, module) => {
 	const { Type } = require('type');
-	const { Color } = require('tokens');
+	const { Color, Component } = require('tokens');
 
+	const { CalendarType } = require('calendar/enums');
 	const { DateHelper } = require('calendar/date-helper');
 	const { EventModel } = require('calendar/model/event');
 	const { EventManager } = require('calendar/data-managers/event-manager');
@@ -52,33 +53,43 @@ jn.define('calendar/event-list-view/layout/calendar-grid', (require, exports, mo
 		{
 			return View(
 				{},
-				!this.props.isHidden && CalendarView(
-					{
-						style: {
-							backgroundColor: Color.bgNavigation.toHex(),
-							borderBottomWidth: 1,
-							borderBottomColor: Color.bgSeparatorSecondary.toHex(),
-						},
-						textStyle: {
-							today: {
-								textColor: Color.accentMainPrimary.toHex(),
-							},
-							todaySelected: {
-								backgroundColor: Color.accentMainPrimary.toHex(),
-								textColor: Color.baseWhiteFixed.toHex(),
-							},
-							currentWeekNumber: {
-								textColor: Color.accentMainPrimary.toHex(),
-							},
-						},
-						initialDate: Math.round((State.selectedDate.getTime() - this.timezoneOffset) / 1000),
-						showWeekNumbers: this.props.showWeekNumbers,
-						firstWeekday: SettingsManager.getFirstWeekday(),
-						onMonthSwitched: this.onMonthSwitched,
-						onDateSelected: this.onDateSelected,
-						ref: this.#bindCalendarRef,
+				!this.props.isHidden && this.renderContent(),
+			);
+		}
+
+		renderContent()
+		{
+			return View(
+				{
+					style: {
+						paddingTop: State.isTabsViewMode ? Component.areaPaddingTAt.toNumber() : 0,
 					},
-				),
+				},
+				CalendarView({
+					style: {
+						backgroundColor: Color.bgNavigation.toHex(),
+						borderBottomWidth: 1,
+						borderBottomColor: Color.bgSeparatorSecondary.toHex(),
+					},
+					textStyle: {
+						today: {
+							textColor: Color.accentMainPrimary.toHex(),
+						},
+						todaySelected: {
+							backgroundColor: Color.accentMainPrimary.toHex(),
+							textColor: Color.baseWhiteFixed.toHex(),
+						},
+						currentWeekNumber: {
+							textColor: Color.accentMainPrimary.toHex(),
+						},
+					},
+					initialDate: Math.round((State.selectedDate.getTime() - this.timezoneOffset) / 1000),
+					showWeekNumbers: this.props.showWeekNumbers,
+					firstWeekday: SettingsManager.getFirstWeekday(),
+					onMonthSwitched: this.onMonthSwitched,
+					onDateSelected: this.onDateSelected,
+					ref: this.#bindCalendarRef,
+				}),
 			);
 		}
 
@@ -123,11 +134,26 @@ jn.define('calendar/event-list-view/layout/calendar-grid', (require, exports, mo
 
 		setMonthTitle(date)
 		{
-			const monthName = DateHelper.getShortMonthName(date);
-			const text = monthName.charAt(0).toUpperCase() + monthName.slice(1);
-			const detailText = date.getFullYear().toString();
+			if (State.isBaseViewMode)
+			{
+				this.props.layout.setTitle({
+					text: this.getMonth(date),
+					detailText: this.getYear(date),
+					useLargeTitleMode: true,
+				});
+			}
+		}
 
-			this.props.layout.setTitle({ text, detailText, useLargeTitleMode: true });
+		getMonth(date)
+		{
+			const monthName = DateHelper.getShortMonthName(date);
+
+			return monthName.charAt(0).toUpperCase() + monthName.slice(1);
+		}
+
+		getYear(date)
+		{
+			return date.getFullYear().toString();
 		}
 
 		setDateAfterMonthSwitch(date)
@@ -164,11 +190,14 @@ jn.define('calendar/event-list-view/layout/calendar-grid', (require, exports, mo
 				return !this.props.hiddenSections.includes(sectionId);
 			});
 
-			const events = selectByMonth(store.getState(), {
-				date,
-				sectionIds,
-				showDeclined: false,
-			});
+			const events = selectByMonth(
+				store.getState(),
+				{
+					date,
+					sectionIds,
+					showDeclined: false,
+				},
+			);
 
 			const checkedDates = [];
 			const inviteDates = [];
@@ -228,6 +257,11 @@ jn.define('calendar/event-list-view/layout/calendar-grid', (require, exports, mo
 		prepareInvites(events)
 		{
 			const invites = {};
+
+			if (State.calType === CalendarType.USER && State.ownerId !== Number(env.userId))
+			{
+				return invites;
+			}
 
 			events.forEach((reduxEvent) => {
 				const event = EventModel.fromReduxModel(reduxEvent);

@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
-(function (exports,ui_vue3,ui_vue3_mixins_locMixin,main_core_events,main_popup,ui_vue3_vuex,ui_notificationManager,ui_uploader_tileWidget,ui_iconSet_outline,tasks_v2_component_addTaskButton,tasks_v2_component_fields_title,tasks_v2_component_fields_importance,tasks_v2_component_fields_description,tasks_v2_component_elements_fieldList,tasks_v2_component_fields_responsible,tasks_v2_component_fields_deadline,tasks_v2_component_fields_group,tasks_v2_provider_service_taskService,tasks_v2_provider_service_checkListService,main_core,ui_vue3_components_button,tasks_v2_core,tasks_v2_const,tasks_v2_component_elements_hint,tasks_v2_component_fields_checkList,tasks_v2_component_fields_files,tasks_v2_lib_fieldHighlighter,tasks_v2_lib_analytics,tasks_v2_provider_service_fileService,ui_iconSet_api_vue,ui_iconSet_api_core) {
+(function (exports,ui_vue3,ui_vue3_mixins_locMixin,main_core_events,main_popup,ui_vue3_vuex,ui_notificationManager,ui_uploader_tileWidget,ui_iconSet_api_vue,ui_iconSet_api_core,ui_iconSet_outline,tasks_v2_component_addTaskButton,tasks_v2_component_fields_title,tasks_v2_component_fields_importance,tasks_v2_component_fields_description,tasks_v2_component_elements_fieldList,tasks_v2_component_dropZone,tasks_v2_component_fields_responsible,tasks_v2_component_fields_deadline,tasks_v2_component_fields_group,tasks_v2_provider_service_taskService,tasks_v2_provider_service_checkListService,main_core,ui_vue3_components_button,tasks_v2_core,tasks_v2_const,tasks_v2_component_elements_hint,tasks_v2_component_fields_checkList,tasks_v2_component_fields_files,tasks_v2_lib_fieldHighlighter,tasks_v2_lib_analytics,tasks_v2_lib_ahaMoments,tasks_v2_provider_service_fileService) {
 	'use strict';
 
 	// @vue/component
@@ -33,7 +33,9 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  data() {
 	    return {
 	      isHintShown: false,
-	      hintBindElement: null
+	      hintBindElement: null,
+	      showAuditorsHint: false,
+	      auditorsHintBindElement: null
 	    };
 	  },
 	  computed: {
@@ -53,6 +55,20 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    isCheckListUploading() {
 	      var _this$task$checklist;
 	      return (_this$task$checklist = this.task.checklist) == null ? void 0 : _this$task$checklist.some(itemId => tasks_v2_provider_service_fileService.fileService.get(itemId, tasks_v2_provider_service_fileService.EntityTypes.CheckListItem).isUploading());
+	    },
+	    hasAuditors() {
+	      var _this$task2;
+	      return Array.isArray((_this$task2 = this.task) == null ? void 0 : _this$task2.auditorsIds) && this.task.auditorsIds.length > 0;
+	    }
+	  },
+	  mounted() {
+	    // Show auditors hint if auditorsIds is not empty
+	    if (this.hasAuditors && tasks_v2_lib_ahaMoments.ahaMoments.shouldShow(tasks_v2_const.Option.AhaAuditorsInCompactFormPopup)) {
+	      this.$nextTick(() => {
+	        // Bind to the button element
+	        this.auditorsHintBindElement = this.$refs.fullCardButtonContainer;
+	        this.showAuditorsHint = true;
+	      });
 	    }
 	  },
 	  methods: {
@@ -66,11 +82,11 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      }
 	    },
 	    highlightFiles() {
-	      this.hintBindElement = tasks_v2_lib_fieldHighlighter.fieldHighlighter.setContainer(this.$root.$el).addChipHighlight(tasks_v2_component_fields_files.filesMeta.id);
+	      this.hintBindElement = tasks_v2_lib_fieldHighlighter.fieldHighlighter.setContainer(this.$root.$el).addChipHighlight(tasks_v2_component_fields_files.filesMeta.id).getChipContainer(tasks_v2_component_fields_files.filesMeta.id);
 	      this.showHint();
 	    },
 	    highlightChecklist() {
-	      this.hintBindElement = tasks_v2_lib_fieldHighlighter.fieldHighlighter.setContainer(this.$root.$el).addChipHighlight(tasks_v2_component_fields_checkList.checkListMeta.id);
+	      this.hintBindElement = tasks_v2_lib_fieldHighlighter.fieldHighlighter.setContainer(this.$root.$el).addChipHighlight(tasks_v2_component_fields_checkList.checkListMeta.id).getChipContainer(tasks_v2_component_fields_checkList.checkListMeta.id);
 	      this.showHint();
 	    },
 	    showHint() {
@@ -96,10 +112,18 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      } else {
 	        main_core.Event.EventEmitter.emit(`${tasks_v2_const.EventName.OpenFullCard}:${this.taskId}`, this.taskId);
 	      }
+	    },
+	    closeAuditorsHint() {
+	      this.showAuditorsHint = false;
+	    },
+	    handleAuditorsHintLinkClick() {
+	      tasks_v2_lib_ahaMoments.ahaMoments.setShown(tasks_v2_const.Option.AhaAuditorsInCompactFormPopup);
+	      this.closeAuditorsHint();
 	    }
 	  },
 	  template: `
 		<div
+			ref="fullCardButtonContainer"
 			class="tasks-compact-card-full-button-container"
 			:class="{ '--disabled': isDisabled }"
 			@click="handleClick"
@@ -113,6 +137,25 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 				:dataset="{taskButtonId: 'full'}"
 				:disabled="isDisabled"
 			/>
+			<Hint
+				v-if="showAuditorsHint"
+				:bindElement="auditorsHintBindElement"
+				@close="closeAuditorsHint"
+			>
+				<div class="tasks-compact-card-full-button-auditors-hint-title">
+					{{ loc('TASKS_V2_TCC_AUDITORS_HINT_TITLE') }}
+				</div>
+				<div class="tasks-compact-card-full-button-auditors-hint-content">
+					{{ loc('TASKS_V2_TCC_AUDITORS_HINT_CONTENT') }}	
+				</div>
+				<div 
+					class="tasks-compact-card-full-button-auditors-hint-link"
+					@click.stop="handleAuditorsHintLinkClick"
+				>
+					{{ loc('TASKS_V2_TCC_AUDITORS_HINT_DO_NOT_SHOW_AGAIN') }}
+				</div>
+				
+			</Hint>
 		</div>
 		<Hint
 			v-if="isHintShown"
@@ -121,26 +164,6 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 		>
 			{{ loc('TASKS_V2_TCC_FILE_IS_UPLOADING') }}
 		</Hint>
-	`
-	};
-
-	// @vue/component
-	const DropZone = {
-	  components: {
-	    BIcon: ui_iconSet_api_vue.BIcon
-	  },
-	  setup() {
-	    return {
-	      Main: ui_iconSet_api_core.Main
-	    };
-	  },
-	  template: `
-		<div class="tasks-compact-card-drop-zone-container">
-			<div class="tasks-compact-card-drop-zone">
-				<BIcon :name="Main.ATTACH"/>
-				<div class="tasks-compact-card-drop-zone-text">{{ loc('TASKS_V2_TCC_DROP_ZONE') }}</div>
-			</div>
-		</div>
 	`
 	};
 
@@ -157,7 +180,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    AddTaskButton: tasks_v2_component_addTaskButton.AddTaskButton,
 	    CheckList: tasks_v2_component_fields_checkList.CheckList,
 	    FullCardButton,
-	    DropZone
+	    DropZone: tasks_v2_component_dropZone.DropZone
 	  },
 	  mixins: [ui_uploader_tileWidget.DragOverMixin],
 	  provide() {
@@ -181,7 +204,21 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      required: false,
 	      default: null
 	    },
+	    description: {
+	      type: [String, null],
+	      required: false,
+	      default: ''
+	    },
+	    auditorsIds: {
+	      type: Array,
+	      required: false,
+	      default: () => []
+	    },
 	    analytics: {
+	      type: Object,
+	      default: () => ({})
+	    },
+	    source: {
 	      type: Object,
 	      default: () => ({})
 	    }
@@ -259,12 +296,28 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	        responsibleId: this.currentUserId,
 	        ...(this.groupId ? {
 	          groupId: this.groupId
+	        } : {}),
+	        ...(this.description ? {
+	          description: this.description
+	        } : ''),
+	        ...(this.auditorsIds ? {
+	          auditorsIds: this.auditorsIds
+	        } : []),
+	        ...(this.source ? {
+	          source: this.source
 	        } : {})
 	      };
 	      if (this.deadlineTs !== null) {
 	        payload.deadlineTs = this.deadlineTs;
 	      } else if (this.hasDefaultDeadline) {
 	        payload.deadlineTs = this.defaultDeadlineTs;
+	      }
+	      if (this.auditorsIds !== null && this.auditorsIds.length > 0) {
+	        this.auditorsIds.forEach(auditorId => {
+	          this.insertUser({
+	            id: auditorId
+	          });
+	        });
 	      }
 	      this.insert(payload);
 	    }
@@ -284,7 +337,6 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    });
 	    this.resizeObserver.observe(this.$refs.title);
 	    this.subscribeEvents();
-	    this.fileService.getAdapter().getUploader().assignDropzone(this.$el);
 	  },
 	  beforeUnmount() {
 	    if (this.resizeObserver) {
@@ -300,6 +352,9 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  methods: {
 	    ...ui_vue3_vuex.mapActions(tasks_v2_const.Model.Tasks, ['insert', 'delete']),
 	    ...ui_vue3_vuex.mapActions(tasks_v2_const.Model.Interface, ['updateTitleFieldOffsetHeight']),
+	    ...ui_vue3_vuex.mapActions(tasks_v2_const.Model.Users, {
+	      insertUser: 'insert'
+	    }),
 	    close() {
 	      main_core.Event.EventEmitter.emit(`${tasks_v2_const.EventName.CloseCard}:${this.taskId}`);
 	    },
@@ -370,13 +425,11 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      main_core.Event.EventEmitter.emit(`${tasks_v2_const.EventName.AdjustPosition}:${this.taskId}`);
 	      this.externalPopup = event.popupInstance;
 	      this.adjustCardPopup(true);
-	      this.fileService.getAdapter().getUploader().unassignDropzone(this.$el);
 	    },
 	    handleHidingPopup() {
 	      main_core.Event.EventEmitter.emit(`${tasks_v2_const.EventName.HideOverlay}:${this.taskId}`);
 	      main_core.Event.EventEmitter.emit(`${tasks_v2_const.EventName.AdjustPosition}:${this.taskId}`);
 	      this.externalPopup = null;
-	      this.fileService.getAdapter().getUploader().assignDropzone(this.$el);
 	    },
 	    handleResizingPopup() {
 	      this.adjustCardPopup();
@@ -511,7 +564,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 					</div>
 				</div>
 			</div>
-			<DropZone/>
+			<DropZone v-if="!isCheckListPopupShown" :taskId="taskId" :bottom="18"/>
 		</div>
 	`
 	};
@@ -669,9 +722,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    await babelHelpers.classPrivateFieldLooseBase(this, _mountApplication)[_mountApplication](popup.getContentContainer());
 	    babelHelpers.classPrivateFieldLooseBase(this, _adjustPosition)[_adjustPosition]();
 	    babelHelpers.classPrivateFieldLooseBase(this, _subscribe)[_subscribe]();
-	    const dragHandle = main_core.Tag.render(_t || (_t = _`
-			<div class="tasks-compact-card-popup-drag-handle"></div>
-		`));
+	    const dragHandle = main_core.Tag.render(_t || (_t = _`<div class="tasks-compact-card-popup-drag-handle"></div>`));
 	    main_core.Dom.append(dragHandle, popup.getContentContainer());
 	    babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup].setDraggable({
 	      element: dragHandle,
@@ -717,5 +768,5 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 
 	exports.TaskCompactCard = TaskCompactCard;
 
-}((this.BX.Tasks.V2.Application = this.BX.Tasks.V2.Application || {}),BX.Vue3,BX.Vue3.Mixins,BX.Event,BX.Main,BX.Vue3.Vuex,BX.UI.NotificationManager,BX.UI.Uploader,BX,BX.Tasks.V2.Component,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX,BX.Vue3.Components,BX.Tasks.V2,BX.Tasks.V2.Const,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.UI.IconSet,BX.UI.IconSet));
+}((this.BX.Tasks.V2.Application = this.BX.Tasks.V2.Application || {}),BX.Vue3,BX.Vue3.Mixins,BX.Event,BX.Main,BX.Vue3.Vuex,BX.UI.NotificationManager,BX.UI.Uploader,BX.UI.IconSet,BX.UI.IconSet,BX,BX.Tasks.V2.Component,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX,BX.Vue3.Components,BX.Tasks.V2,BX.Tasks.V2.Const,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service));
 //# sourceMappingURL=task-compact-card.bundle.js.map

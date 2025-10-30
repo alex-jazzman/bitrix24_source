@@ -23,11 +23,20 @@ jn.define('calendar/event-edit-form/layout/section-info', (require, exports, mod
 			super(props);
 
 			this.componentLoaded = false;
+			this.pendingSectionId = null;
 		}
 
 		componentDidMount()
 		{
 			this.componentLoaded = true;
+
+			if (this.pendingSectionId !== null)
+			{
+				setTimeout(() => {
+					State.setSectionId(Number(this.pendingSectionId));
+					this.pendingSectionId = null;
+				}, 0);
+			}
 		}
 
 		get sectionId()
@@ -379,7 +388,7 @@ jn.define('calendar/event-edit-form/layout/section-info', (require, exports, mod
 			{
 				if (Number(result.id) !== Number(this.sectionId))
 				{
-					State.setSectionId(Number(result.id));
+					this.handleDifferentSectionSelected(result.id);
 				}
 
 				return result;
@@ -387,9 +396,9 @@ jn.define('calendar/event-edit-form/layout/section-info', (require, exports, mod
 
 			result = this.getSections().find((section) => this.belongsToView(section));
 
-			if (result.id)
+			if (result?.id)
 			{
-				State.setSectionId(Number(result.id));
+				this.handleDifferentSectionSelected(result.id);
 
 				return result;
 			}
@@ -442,6 +451,18 @@ jn.define('calendar/event-edit-form/layout/section-info', (require, exports, mod
 			return sections.find((section) => {
 				return section.getId() === Number(this.sectionId) && this.belongsToView(section);
 			});
+		}
+
+		handleDifferentSectionSelected(sectionId)
+		{
+			if (this.componentLoaded)
+			{
+				State.setSectionId(Number(sectionId));
+			}
+			else
+			{
+				this.pendingSectionId = sectionId;
+			}
 		}
 
 		isCollabContext()

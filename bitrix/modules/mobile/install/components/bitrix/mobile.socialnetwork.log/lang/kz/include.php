@@ -1,0 +1,4 @@
+<?php
+$MESS["SONET_SLM_FORMAT_DATE"] = "j F, G:i";
+$MESS["SONET_SLM_FORMAT_DATE_YEAR"] = "j F Y, G:i";
+$MESS["SONET_SLM_FORMAT_TIME"] = "G:i";

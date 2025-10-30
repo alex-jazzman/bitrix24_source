@@ -42,5 +42,6 @@ return [
 		'app-rating-background-client',
 		'whats-new/background',
 		'timeman/analytics',
+		'layout/ui/gratitude-list/subscriptions',
 	],
 ];

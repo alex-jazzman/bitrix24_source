@@ -17,6 +17,7 @@ this.BX.Booking = this.BX.Booking || {};
 	    description: null,
 	    slotRanges: [],
 	    counter: null,
+	    entities: [],
 	    isMain: true,
 	    isDeleted: false,
 	    isConfirmationNotificationOn: false,
@@ -35,7 +36,7 @@ this.BX.Booking = this.BX.Booking || {};
 	  };
 	}
 
-	/* eslint-disable no-param-reassign */
+	/* eslint-disable no-param-reassign,max-lines-per-function */
 	class ResourceCreationWizardModel extends ui_vue3_vuex.BuilderModel {
 	  getName() {
 	    return booking_const.Model.ResourceCreationWizard;
@@ -52,12 +53,14 @@ this.BX.Booking = this.BX.Booking || {};
 	      isSaving: false,
 	      invalidResourceName: false,
 	      invalidResourceType: false,
+	      invalidIntegrationCalendarUser: false,
 	      isCompanyScheduleAccess: false,
 	      companyScheduleUrl: '',
 	      weekStart: 'Mon',
 	      globalSchedule: false,
 	      checkedForAll: {},
-	      isChannelChoiceAvailable: true
+	      isChannelChoiceAvailable: true,
+	      isIntegrationCalendarEnabled: false
 	    };
 	  }
 	  getGetters() {
@@ -76,9 +79,12 @@ this.BX.Booking = this.BX.Booking || {};
 	        return main_core.Type.isNull(state.resourceId) ? 1 : 2;
 	      },
 	      finishStep: () => 3,
+	      invalidIntegrationCalendarUser: state => {
+	        return state.isIntegrationCalendarEnabled && state.invalidIntegrationCalendarUser;
+	      },
 	      invalidChooseTypeCard: state => main_core.Type.isNull(state.resource.typeId),
-	      invalidSettingsCard: state => {
-	        return state.invalidResourceName || !state.resource.typeId;
+	      invalidSettingsCard: (state, getters) => {
+	        return state.invalidResourceName || !state.resource.typeId || getters.invalidIntegrationCalendarUser;
 	      },
 	      invalidCurrentCard: (state, getters) => {
 	        if (state.step === 1) {
@@ -109,6 +115,13 @@ this.BX.Booking = this.BX.Booking || {};
 	        }) => {
 	          return relatedResourceTypeId === typeId;
 	        }) || null;
+	      },
+	      entityCalendar: state => {
+	        var _state$resource, _state$resource$entit;
+	        return ((_state$resource = state.resource) == null ? void 0 : (_state$resource$entit = _state$resource.entities) == null ? void 0 : _state$resource$entit.find(ent => ent.entityType === booking_const.ResourceEntityType.Calendar)) || null;
+	      },
+	      isIntegrationCalendarEnabled: state => {
+	        return state.isIntegrationCalendarEnabled;
 	      }
 	    };
 	  }
@@ -138,6 +151,7 @@ this.BX.Booking = this.BX.Booking || {};
 	        state,
 	        commit
 	      }) {
+	        var _resource$entities, _resource$entities$fi, _resource$entities$fi2, _resource$entities$fi3;
 	        const resourceId = state.resourceId;
 	        const resource = getResource(resourceId);
 	        commit('init', {
@@ -146,6 +160,7 @@ this.BX.Booking = this.BX.Booking || {};
 	          step: 2
 	        });
 	        commit('setCurrentResourceName', resource.name);
+	        commit('setIsIntegrationCalendarEnabled', ((_resource$entities = resource.entities) == null ? void 0 : (_resource$entities$fi = _resource$entities.find(ent => ent.entityType === booking_const.ResourceEntityType.Calendar)) == null ? void 0 : (_resource$entities$fi2 = _resource$entities$fi.data) == null ? void 0 : (_resource$entities$fi3 = _resource$entities$fi2.userIds) == null ? void 0 : _resource$entities$fi3.length) > 0);
 	      },
 	      nextStep({
 	        state,
@@ -192,6 +207,18 @@ this.BX.Booking = this.BX.Booking || {};
 	          Object.assign(patch, notifications);
 	        }
 	        commit('updateResource', patch);
+	      },
+	      /** @function resource-creation-wizard/createResourceEntityCalendar */
+	      createResourceEntityCalendar({
+	        commit
+	      }) {
+	        commit('createResourceEntityCalendar');
+	      },
+	      /** @function resource-creation-wizard/updateResourceEntityCalendar */
+	      updateResourceEntityCalendar({
+	        commit
+	      }, calendarPath) {
+	        commit('updateResourceEntityCalendar', calendarPath);
 	      },
 	      /** @function resource-creation-wizard/setCompanyScheduleSlots */
 	      setCompanyScheduleSlots({
@@ -272,6 +299,18 @@ this.BX.Booking = this.BX.Booking || {};
 	        commit
 	      }, isChannelChoiceAvailable) {
 	        commit('setIsChannelChoiceAvailable', isChannelChoiceAvailable);
+	      },
+	      /** @function resource-creation-wizard/setIsIntegrationCalendarEnabled */
+	      setIsIntegrationCalendarEnabled({
+	        commit
+	      }, isIntegrationCalendarEnabled) {
+	        commit('setIsIntegrationCalendarEnabled', isIntegrationCalendarEnabled);
+	      },
+	      /** @function resource-creation-wizard/setInvalidIntegrationCalendarUser */
+	      setInvalidIntegrationCalendarUser({
+	        commit
+	      }, invalidIntegrationCalendarUser) {
+	        commit('setInvalidIntegrationCalendarUser', invalidIntegrationCalendarUser);
 	      }
 	    };
 	  }
@@ -303,6 +342,34 @@ this.BX.Booking = this.BX.Booking || {};
 	          ...state.resource,
 	          ...patch
 	        };
+	      },
+	      createResourceEntityCalendar(state) {
+	        var _state$resource2, _state$resource2$enti;
+	        const hasCalendarEntity = (_state$resource2 = state.resource) == null ? void 0 : (_state$resource2$enti = _state$resource2.entities) == null ? void 0 : _state$resource2$enti.some(entity => entity.entityType === booking_const.ResourceEntityType.Calendar);
+	        if (!hasCalendarEntity) {
+	          var _state$resource3, _state$resource3$enti;
+	          (_state$resource3 = state.resource) == null ? void 0 : (_state$resource3$enti = _state$resource3.entities) == null ? void 0 : _state$resource3$enti.push({
+	            entityType: booking_const.ResourceEntityType.Calendar,
+	            entityId: 0,
+	            data: {
+	              userIds: [],
+	              locationId: null,
+	              checkAvailability: false,
+	              reminders: []
+	            }
+	          });
+	        }
+	      },
+	      updateResourceEntityCalendar(state, calendarPath) {
+	        var _state$resource4;
+	        const index = (_state$resource4 = state.resource) == null ? void 0 : _state$resource4.entities.findIndex(ent => ent.entityType === booking_const.ResourceEntityType.Calendar);
+	        if (index >= 0) {
+	          const entityCalendar = state.resource.entities[index];
+	          entityCalendar.data = {
+	            ...entityCalendar.data,
+	            ...calendarPath
+	          };
+	        }
 	      },
 	      setGlobalSchedule(state, checked) {
 	        state.globalSchedule = Boolean(checked);
@@ -341,6 +408,12 @@ this.BX.Booking = this.BX.Booking || {};
 	      },
 	      setIsChannelChoiceAvailable(state, isChannelChoiceAvailable) {
 	        state.isChannelChoiceAvailable = isChannelChoiceAvailable;
+	      },
+	      setIsIntegrationCalendarEnabled(state, isIntegrationCalendarEnabled) {
+	        state.isIntegrationCalendarEnabled = isIntegrationCalendarEnabled;
+	      },
+	      setInvalidIntegrationCalendarUser(state, invalidIntegrationCalendarUser = false) {
+	        state.invalidIntegrationCalendarUser = invalidIntegrationCalendarUser;
 	      }
 	    };
 	  }

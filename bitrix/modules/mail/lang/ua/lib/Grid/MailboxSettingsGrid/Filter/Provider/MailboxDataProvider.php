@@ -1,0 +1,9 @@
+<?php
+$MESS["MAIL_MAILBOX_GRID_FILTER_ACCESS_USERS"] = "Користувачі з доступом";
+$MESS["MAIL_MAILBOX_GRID_FILTER_CRM_INTEGRATION"] = "Зв'язок із CRM";
+$MESS["MAIL_MAILBOX_GRID_FILTER_CRM_QUEUE"] = "Відповідальні в CRM";
+$MESS["MAIL_MAILBOX_GRID_FILTER_DISK_SIZE"] = "Місце на диску (МБ)";
+$MESS["MAIL_MAILBOX_GRID_FILTER_EMAIL"] = "Адреса ел. пошти";
+$MESS["MAIL_MAILBOX_GRID_FILTER_LAST_SYNC"] = "Час останньої синхронізації";
+$MESS["MAIL_MAILBOX_GRID_FILTER_OWNER"] = "Власник";
+$MESS["MAIL_MAILBOX_GRID_FILTER_SENDER_NAME"] = "Ім'я відправника";

@@ -8,6 +8,7 @@ $MESS["DISK_FOLDER_LIST_ACT_COPY"] = "Копіювати";
 $MESS["DISK_FOLDER_LIST_ACT_COPY_INTERNAL_LINK"] = "Скопіювати внутрішнє посилання";
 $MESS["DISK_FOLDER_LIST_ACT_DETAILS"] = "Детальніше";
 $MESS["DISK_FOLDER_LIST_ACT_DOWNLOAD"] = "Завантажити";
+$MESS["DISK_FOLDER_LIST_ACT_DOWNLOAD_ERROR"] = "Не вдалося створити архів для завантаження. Можливо, папка надто велика або ви вибрали забагато файлів. Спробуйте зменшити обсяг даних і повторіть спробу.";
 $MESS["DISK_FOLDER_LIST_ACT_EDIT"] = "Редагувати";
 $MESS["DISK_FOLDER_LIST_ACT_GET_EXT_LINK"] = "Отримати публічне посилання";
 $MESS["DISK_FOLDER_LIST_ACT_LOCK"] = "Заблокувати";

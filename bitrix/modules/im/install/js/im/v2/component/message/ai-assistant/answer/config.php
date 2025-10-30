@@ -10,13 +10,13 @@ return [
 	'rel' => [
 		'main.polyfill.core',
 		'im.v2.component.message.base',
-		'im.v2.component.message.elements',
 		'ui.icon-set.api.vue',
 		'ui.vue3.components.rich-loc',
 		'im.v2.lib.utils',
 		'im.v2.lib.helpdesk',
 		'im.v2.lib.notifier',
 		'im.v2.const',
+		'im.v2.component.message.elements',
 	],
 	'skip_core' => true,
 ];

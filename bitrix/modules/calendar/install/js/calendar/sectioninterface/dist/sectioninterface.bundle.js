@@ -19,6 +19,7 @@ this.BX = this.BX || {};
 	    this.sectionManager = options.sectionManager;
 	    this.closeCallback = options.closeCallback;
 	    this.BX = calendar_util.Util.getBX();
+	    this.calendarContext = options.calendarContext;
 	    this.keyHandlerBinded = this.keyHandler.bind(this);
 	  }
 	  show(params = {}) {
@@ -380,7 +381,8 @@ this.BX = this.BX || {};
 	          'all-users': true
 	        }
 	      }];
-	      if (calendar_util.Util.isProjectFeatureEnabled()) {
+	      const calendarContext = this.calendarContext || calendar_util.Util.getCalendarContext();
+	      if (calendarContext.util.config.projectFeatureEnabled) {
 	        entities.push({
 	          id: 'project'
 	        });
@@ -1768,7 +1770,7 @@ this.BX = this.BX || {};
 	    }
 	  }
 	  showSectionMenu(section, menuItemNode) {
-	    var _this$calendarContext6, _this$calendarContext7;
+	    var _section$data$EXPORT, _section$data$EXPORT2, _this$calendarContext6, _this$calendarContext7;
 	    const menuItems = [];
 	    const itemNode = menuItemNode.closest('[data-bx-calendar-section]');
 	    if (main_core.Type.isElementNode(itemNode)) {
@@ -1819,14 +1821,14 @@ this.BX = this.BX || {};
 	        }
 	      });
 	    }
-	    if (!section.isPseudo() && section.data.EXPORT && section.data.EXPORT.LINK && section.data.EXTERNAL_TYPE === 'local' && !((_this$calendarContext6 = this.calendarContext) != null && (_this$calendarContext7 = _this$calendarContext6.util) != null && _this$calendarContext7.isExtranetUser())) {
+	    if (!section.isPseudo() && (_section$data$EXPORT = section.data.EXPORT) != null && _section$data$EXPORT.LINK && (_section$data$EXPORT2 = section.data.EXPORT) != null && _section$data$EXPORT2.PATH && section.data.EXTERNAL_TYPE === 'local' && !((_this$calendarContext6 = this.calendarContext) != null && (_this$calendarContext7 = _this$calendarContext6.util) != null && _this$calendarContext7.isExtranetUser())) {
 	      menuItems.push({
 	        text: main_core.Loc.getMessage('EC_ACTION_EXPORT'),
 	        onclick: () => {
 	          this.sectionActionMenu.close();
 	          const options = {
 	            sectionLink: section.data.EXPORT.LINK,
-	            calendarPath: this.calendarContext.util.config.path
+	            calendarPath: section.data.EXPORT.PATH
 	          };
 	          if (calendar_sync_interface.IcalSyncPopup.checkPathes(options)) {
 	            calendar_sync_interface.IcalSyncPopup.createInstance(options).show();
@@ -1958,6 +1960,7 @@ this.BX = this.BX || {};
 	      wrap: this.DOM.sectionFormWrap,
 	      sectionAccessTasks: this.sectionManager.getSectionAccessTasks(),
 	      sectionManager: this.sectionManager,
+	      calendarContext: this.calendarContext,
 	      closeCallback: () => {
 	        this.allowSliderClose();
 	      }

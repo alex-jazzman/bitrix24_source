@@ -16,6 +16,7 @@ jn.define('layout/ui/reaction-list/user-list/src/list-item', (require, exports, 
 				showBorder: this.props.item?.showBorder,
 				showIcon: this.props.item?.showIcon,
 				user: this.props.item?.user,
+				description: this.props.item?.description,
 			});
 		}
 	}

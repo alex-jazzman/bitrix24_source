@@ -46,7 +46,7 @@ jn.define('disk/file-grid/folder-files', (require, exports, module) => {
 
 			if (this.isSearching())
 			{
-				title = Loc.getMessage('M_DISK_EMPTY_SEARCH_RESULT_TITLE');
+				title = Loc.getMessage('M_DISK_EMPTY_SEARCH_RESULT_TITLE_MSGVER_2');
 				description = Loc.getMessage('M_DISK_EMPTY_SEARCH_RESULT_DESCRIPTION');
 				imageUri = makeLibraryImagePath('search.svg', 'empty-states');
 			}

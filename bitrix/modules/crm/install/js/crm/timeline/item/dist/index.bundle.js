@@ -10814,6 +10814,10 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (action === `${item.getType()}:ShowCyclePopup`) {
 	        showCyclePopup(actionData.status);
 	      }
+	      if (action === `${item.getType()}:ShowInfoHelper`) {
+	        var _BX$UI, _BX$UI$InfoHelper;
+	        (_BX$UI = BX.UI) === null || _BX$UI === void 0 ? void 0 : (_BX$UI$InfoHelper = _BX$UI.InfoHelper) === null || _BX$UI$InfoHelper === void 0 ? void 0 : _BX$UI$InfoHelper.show(actionData.code);
+	      }
 	    }
 	  }], [{
 	    key: "isItemSupported",

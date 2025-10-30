@@ -91,10 +91,22 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  TaskState
 	});
 
+	const CardType = Object.freeze({
+	  Compact: 'task_mini',
+	  Full: 'task'
+	});
+
+	const DurationUnit = Object.freeze({
+	  Minutes: 'minutes',
+	  Hours: 'hours',
+	  Days: 'days'
+	});
+
 	const EntitySelectorEntity = Object.freeze({
 	  Epic: 'epic-selector',
 	  Flow: 'flow',
 	  Project: 'project',
+	  Tag: 'task-tag',
 	  User: 'user',
 	  StructureNode: 'structure-node'
 	});
@@ -119,15 +131,14 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	});
 
 	const Model = Object.freeze({
+	  CheckList: 'checklist',
 	  Epics: 'epics',
 	  Flows: 'flows',
 	  Groups: 'groups',
 	  Interface: 'interface',
 	  Stages: 'stages',
 	  Tasks: 'tasks',
-	  Users: 'users',
-	  CheckList: 'checklist',
-	  Analytics: 'analytics'
+	  Users: 'users'
 	});
 
 	const Module = Object.freeze({
@@ -142,19 +153,26 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  Deferred: 'deferred'
 	});
 
-	const CardType = Object.freeze({
-	  Compact: 'task_mini',
-	  Full: 'task'
+	const AhaMoment = Object.freeze({
+	  AuditorsInCard: 'auditors_in_card'
+	});
+
+	const Option = Object.freeze({
+	  // AhaMoments
+	  AhaAuditorsInCompactFormPopup: 'aha_auditors_compact_form'
 	});
 
 	exports.Analytics = Analytics;
+	exports.CardType = CardType;
+	exports.DurationUnit = DurationUnit;
 	exports.EntitySelectorEntity = EntitySelectorEntity;
 	exports.EventName = EventName;
 	exports.GroupType = GroupType;
 	exports.Model = Model;
 	exports.Module = Module;
 	exports.TaskStatus = TaskStatus;
-	exports.CardType = CardType;
+	exports.AhaMoment = AhaMoment;
+	exports.Option = Option;
 
 }((this.BX.Tasks.V2.Const = this.BX.Tasks.V2.Const || {})));
 //# sourceMappingURL=const.bundle.js.map

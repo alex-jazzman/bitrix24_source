@@ -784,6 +784,18 @@
 						url,
 					},
 				},
+				{
+					regExp: /\/disk\/boards\/(\d+)\/open\/?/i,
+					result: {
+						url,
+					},
+				},
+				{
+					regExp: /\/disk\/file\/([\da-z]+)(?:\/[^?]*)?(?:\?.*)?$/i,
+					result: {
+						url,
+					},
+				},
 			];
 
 			for (let i = 0; i < regExpMap.length; i++) {

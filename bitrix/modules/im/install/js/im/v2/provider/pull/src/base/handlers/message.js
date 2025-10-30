@@ -29,6 +29,7 @@ import type {
 	MessageDeleteCompletePreparedParams,
 	PrepareDeleteMessageParams,
 	EngineUpdateParams,
+	FileTranscriptionParams,
 } from '../../types/message';
 import type { PullExtraParams, RawFile, RawUser, RawMessage, RawChat } from '../../types/common';
 
@@ -86,18 +87,18 @@ export class MessagePullHandler
 		// it's an opponent message or our own message from somewhere else
 		else if (!messageWithRealId && !messageWithTemplateId)
 		{
+			const hasLoadingMessage: boolean = this.#store.getters['messages/hasLoadingMessageByMessageId'](
+				params.message.templateId,
+			);
+			if (hasLoadingMessage)
+			{
+				void this.#store.dispatch('messages/delete', {
+					id: params.message.templateId,
+				});
+			}
+
 			Logger.warn('New message pull handler: we dont have this message', params.message);
 			this.#handleAddingMessageToModel(params);
-		}
-
-		const hasLoadingMessage: boolean = this.#store.getters['messages/hasLoadingMessageByMessageId'](
-			params.message.templateId,
-		);
-		if (hasLoadingMessage)
-		{
-			void this.#store.dispatch('messages/delete', {
-				id: params.message.templateId,
-			});
 		}
 
 		InputActionListener.getInstance().stopUserActionsInChat({
@@ -120,6 +121,13 @@ export class MessagePullHandler
 		}
 
 		this.#store.dispatch('copilot/chats/updateModel', { dialogId: dialog.dialogId, aiModel: engineCode });
+	}
+
+	handleFileTranscription(params: FileTranscriptionParams)
+	{
+		Logger.warn('MessagePullHandler: handleFileTranscription', params);
+
+		this.#store.dispatch('files/setTranscription', params);
 	}
 
 	handleMessageUpdate(params: MessageUpdateParams)

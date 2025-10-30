@@ -10,11 +10,11 @@ return [
 	'rel' => [
 		'main.polyfill.core',
 		'tasks.v2.model.users',
+		'tasks.v2.provider.service.user-service',
 		'ui.vue3.vuex',
 		'tasks.v2.const',
 		'tasks.v2.core',
 		'tasks.v2.lib.api-client',
-		'tasks.v2.model.check-list',
 	],
 	'skip_core' => true,
 ];

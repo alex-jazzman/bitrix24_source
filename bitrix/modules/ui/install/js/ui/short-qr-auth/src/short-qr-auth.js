@@ -9,6 +9,7 @@ export type ShortQrAuthOptions = {
 	intent?: string;
 	ttl?: number;
 	small?: boolean;
+	stub?: boolean;
 };
 
 export class ShortQrAuth
@@ -18,12 +19,14 @@ export class ShortQrAuth
 	#ttl: number;
 	#ttlInterval: number;
 	#small: boolean;
+	#stub: boolean;
 
 	constructor(options: ShortQrAuthOptions = {})
 	{
 		this.#intent = Type.isString(options.intent) ? options.intent : 'default';
 		this.#small = Type.isBoolean(options.small) ? options.small : false;
 		this.#ttl = Type.isNumber(options.ttl) ? options.ttl : 60;
+		this.#stub = Type.isBoolean(options.stub) ? options.stub : true;
 	}
 
 	render(): HTMLElement
@@ -34,13 +37,20 @@ export class ShortQrAuth
 	#getContainer(): HTMLElement
 	{
 		return this.#cache.remember('container', () => {
+			const qrNode = this.#getQrNode();
+
+			if (!this.#stub)
+			{
+				this.#addQrCodeImage();
+			}
+
 			return Tag.render`
 				<div class="ui-short-qr-auth__container ${this.#small ? '--small' : ''}">
 					<div class="ui-short-qr-auth__corner --top-left"></div>
 					<div class="ui-short-qr-auth__corner --top-right"></div>
 					<div class="ui-short-qr-auth__corner --bottom-left"></div>
 					<div class="ui-short-qr-auth__corner --bottom-right"></div>
-					${this.#getQrNode()}
+					${qrNode}
 				</div>
 			`;
 		});
@@ -51,7 +61,7 @@ export class ShortQrAuth
 		return this.#cache.remember('qrNode', () => {
 			return Tag.render`
 				<div class="ui-short-qr-auth__qr">
-					${this.#getQrStub()}
+					${this.#stub ? this.#getQrStub() : null}
 				</div>
 			`;
 		});
@@ -81,17 +91,22 @@ export class ShortQrAuth
 				noCaps: true,
 				wide: true,
 				onclick: () => {
-					this.#createQrCodeImage();
-
-					if (!this.#ttlInterval)
-					{
-						this.#ttlInterval = setInterval(() => {
-							this.#createQrCodeImage();
-						}, this.#ttl * 1000);
-					}
+					this.#addQrCodeImage();
 				},
 			});
 		});
+	}
+
+	#addQrCodeImage(): void
+	{
+		this.#createQrCodeImage();
+
+		if (!this.#ttlInterval)
+		{
+			this.#ttlInterval = setInterval(() => {
+				this.#createQrCodeImage();
+			}, this.#ttl * 1000);
+		}
 	}
 
 	#clean(): void

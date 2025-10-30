@@ -288,8 +288,12 @@ this.BX = this.BX || {};
 	        return;
 	      }
 	      const pullData = event.data[1].fields;
-	      this.name = pullData.NAME;
-	      this.accessibility = pullData.ACCESSIBILITY;
+	      if (pullData.NAME) {
+	        this.name = pullData.NAME;
+	      }
+	      if (pullData.ACCESSIBILITY) {
+	        this.accessibility = pullData.ACCESSIBILITY;
+	      }
 	      BX.ajax.runAction('calendar.api.calendareventviewform.getCalendarViewSliderParams', {
 	        data: {
 	          entryId: this.eventId,
@@ -857,26 +861,15 @@ this.BX = this.BX || {};
 	    if (main_core.Type.isElementNode(innerTimeWrap) && innerTimeWrap.offsetHeight > 50) {
 	      main_core.Dom.addClass(this.DOM.content.querySelector(`#${uid}_time_wrap`), 'calendar-slider-sidebar-head-long-time');
 	    }
-	    if (this.canDo(this.entry, 'edit') && this.DOM.editButton) {
-	      main_core.Event.bind(this.DOM.editButton, 'click', () => {
-	        this.BX.SidePanel.Instance.close(false, () => {
-	          calendar_entry.EntryManager.openEditSlider({
-	            entry: this.entry,
-	            type: this.type,
-	            ownerId: this.ownerId,
-	            userId: this.userId
-	          });
-	        });
-	      });
-	    } else {
-	      this.BX.remove(this.DOM.editButton);
+	    if ((this.canDo('edit') || this.canDo('editLocation') || this.canDo('editAttendees')) && this.DOM.editButton) {
+	      main_core.Event.bind(this.DOM.editButton, 'click', this.handleEditButtonClick.bind(this));
 	    }
 	    if (this.DOM.sidebarInner) {
 	      // Reminder
 	      this.DOM.reminderWrap = this.DOM.sidebarInner.querySelector('.calendar-slider-sidebar-remind-wrap');
 	      if (main_core.Type.isDomNode(this.DOM.reminderWrap)) {
 	        main_core.Dom.clean(this.DOM.reminderWrap);
-	        const viewMode = !this.canDo(this.entry, 'edit') && this.entry.getCurrentStatus() === false;
+	        const viewMode = !this.canDo('edit') && this.entry.getCurrentStatus() === false;
 	        this.reminderControl = new this.BX.Calendar.Controls.Reminder({
 	          wrap: this.DOM.reminderWrap,
 	          zIndex: this.zIndex,
@@ -907,7 +900,7 @@ this.BX = this.BX || {};
 	    if (this.downloadIcsEnabled) {
 	      main_core.Event.bind(this.DOM.downloadButton, 'click', () => calendar_entry.EntryManager.downloadIcs(this.entryId));
 	    }
-	    if (this.canDo(this.entry, 'delete')) {
+	    if (this.canDo('delete')) {
 	      main_core.Event.bind(this.DOM.delButton, 'click', () => {
 	        main_core_events.EventEmitter.subscribeOnce('BX.Calendar.Entry:beforeDelete', () => {
 	          this.BX.SidePanel.Instance.close();
@@ -927,7 +920,7 @@ this.BX = this.BX || {};
 	      });
 	    }
 	    this.DOM.relationWrap = this.DOM.content.querySelector(`#${uid}_view_relation_wrap`);
-	    if (this.DOM.relationWrap && ((_this$entry = this.entry) == null ? void 0 : (_this$entry$data = _this$entry.data) == null ? void 0 : _this$entry$data.EVENT_TYPE) === '#shared_crm#') {
+	    if (this.DOM.relationWrap && this.canDo('view') && ['#shared_crm#', '#booking#'].includes((_this$entry = this.entry) == null ? void 0 : (_this$entry$data = _this$entry.data) == null ? void 0 : _this$entry$data.EVENT_TYPE)) {
 	      this.relationControl = new calendar_entityrelation.RelationInterface({
 	        parentNode: this.DOM.relationWrap,
 	        eventId: this.entry.parentId
@@ -1144,6 +1137,11 @@ this.BX = this.BX || {};
 	          calendar_entry.EntryManager.setMeetingStatus(this.entry, event.getData().status).then(() => {
 	            this.statusControl.setStatus(this.entry.getCurrentStatus(), false);
 	            this.statusControl.updateStatus();
+	            if (this.entry.getCurrentStatus() === 'Y') {
+	              main_core.Event.bind(this.DOM.editButton, 'click', this.handleEditButtonClick.bind(this));
+	            } else {
+	              main_core.Event.unbind(this.DOM.editButton, 'click', this.handleEditButtonClick.bind(this));
+	            }
 	            main_core_events.EventEmitter.emit(`MeetingStatusControl_${uid}:onSetStatus`, event);
 	          });
 	        }
@@ -1173,9 +1171,9 @@ this.BX = this.BX || {};
 	      popup.close();
 	    }, 1500));
 	  }
-	  canDo(entry, action) {
+	  canDo(action) {
 	    if (action === 'edit' || action === 'delete') {
-	      if (entry.isResourcebooking()) {
+	      if (this.entry.isResourcebooking()) {
 	        return false;
 	      }
 	      if (this.entry.permissions) {
@@ -1190,6 +1188,19 @@ this.BX = this.BX || {};
 	        return (_this$entry$permissio2 = this.entry.permissions) == null ? void 0 : _this$entry$permissio2.view_full;
 	      }
 	      return this.permissions.view_full;
+	    }
+	    const isInvitedOrRejected = ['Q', 'N'].includes(this.entry.getCurrentStatus());
+	    if (action === 'editLocation') {
+	      var _this$entry$permissio3, _this$entry$permissio4;
+	      const canEdit = ((_this$entry$permissio3 = this.entry.permissions) == null ? void 0 : _this$entry$permissio3.edit) === true;
+	      const canEditLocation = ((_this$entry$permissio4 = this.entry.permissions) == null ? void 0 : _this$entry$permissio4.editLocation) === true;
+	      return !isInvitedOrRejected && (canEdit || canEditLocation);
+	    }
+	    if (action === 'editAttendees') {
+	      var _this$entry$permissio5, _this$entry$permissio6;
+	      const canEdit = ((_this$entry$permissio5 = this.entry.permissions) == null ? void 0 : _this$entry$permissio5.edit) === true;
+	      const canEditAttendees = ((_this$entry$permissio6 = this.entry.permissions) == null ? void 0 : _this$entry$permissio6.editAttendees) === true;
+	      return !isInvitedOrRejected && (canEdit || canEditAttendees);
 	    }
 	    return false;
 	  }
@@ -1213,7 +1224,7 @@ this.BX = this.BX || {};
 	  keyHandler(e) {
 	    if (e.keyCode === calendar_util.Util.getKeyCode('delete')
 	    // || e.keyCode === Util.getKeyCode('backspace')
-	    && this.canDo(this.entry, 'delete')) {
+	    && this.canDo('delete')) {
 	      const target = event.target || event.srcElement;
 	      const tagName = main_core.Type.isElementNode(target) ? target.tagName.toLowerCase() : null;
 	      if (tagName && !['input', 'textarea'].includes(tagName)) {
@@ -1260,6 +1271,16 @@ this.BX = this.BX || {};
 	    }, response => {
 	      alert(main_core.Loc.getMessage('EC_CONFERENCE_ERROR'));
 	      return null;
+	    });
+	  }
+	  handleEditButtonClick() {
+	    this.BX.SidePanel.Instance.close(false, () => {
+	      calendar_entry.EntryManager.openEditSlider({
+	        entry: this.entry,
+	        type: this.type,
+	        ownerId: this.ownerId,
+	        userId: this.userId
+	      });
 	    });
 	  }
 	}

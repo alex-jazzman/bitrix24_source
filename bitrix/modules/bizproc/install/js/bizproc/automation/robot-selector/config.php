@@ -7,11 +7,21 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 $portalUri = null;
 $forms = null;
+$newRobotIds = null;
+$viewedNewRobotIds = null;
 
 if (\Bitrix\Main\Loader::includeModule('ui'))
 {
 	$portalUri = (new Bitrix\UI\Form\UrlProvider())->getPartnerPortalUrl();
 	$forms = Bitrix\UI\Form\formsprovider::getForms();
+}
+
+if (
+	\Bitrix\Main\Loader::includeModule('bizproc')
+)
+{
+	$newRobotIds = (new \Bitrix\Bizproc\Internal\Service\LatestRobots\LatestRobotService())->getNewRobots();
+	$viewedNewRobotIds = (new \Bitrix\Bizproc\Internal\Service\LatestRobots\LatestRobotService())->getViewedNewRobotIds();
 }
 
 return [
@@ -22,6 +32,7 @@ return [
 		'main.popup',
 		'bizproc.automation',
 		'bizproc.local-settings',
+		'main.polyfill.intersectionobserver',
 		'main.core',
 		'ui.entity-catalog',
 		'ui.vue3.pinia',
@@ -30,5 +41,7 @@ return [
 	'settings' => [
 		'portalUri' => $portalUri,
 		'forms' => $forms,
+		'newRobotIds' => $newRobotIds,
+		'viewedNewRobotIds' => $viewedNewRobotIds,
 	],
 ];

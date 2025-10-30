@@ -3,7 +3,6 @@ $MESS["UI_SELECTOR_CREATE_ITEM_LABEL"] = "Створити:";
 $MESS["UI_SELECTOR_ITEM_LINK_TITLE"] = "Детальніше";
 $MESS["UI_SELECTOR_RECENT_TAB_TITLE"] = "Останні";
 $MESS["UI_SELECTOR_SEARCH_LOADER_TEXT"] = "Іде пошук додаткових результатів...";
-$MESS["UI_SELECTOR_SEARCH_STUB_SUBTITLE"] = "Спробуйте змінити умови пошуку";
 $MESS["UI_SELECTOR_SEARCH_STUB_SUBTITLE_MSGVER_1"] = "Спробуйте змінити умови пошуку";
 $MESS["UI_SELECTOR_SEARCH_STUB_TITLE"] = "Немає збігів";
 $MESS["UI_SELECTOR_SEARCH_TAB_TITLE"] = "Пошук";

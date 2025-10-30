@@ -26,12 +26,12 @@ return [
 		'layout/ui/fields/textarea/theme/air-title',
 		'layout/ui/fields/file-with-background-attach/theme/air',
 		'layout/ui/fields/user/theme/air',
-		'layout/ui/fields/base',
 		'layout/ui/loading-screen',
 		'layout/ui/fields/theme',
 		'layout/ui/fields/user',
 
 		'statemanager/redux/connect',
+		'statemanager/redux/slices/users',
 
 		'calendar:ajax',
 		'calendar:enums',
@@ -46,6 +46,7 @@ return [
 		'calendar:app-rating-client',
 
 		'calendar:layout/menu/recursion-mode',
+		'calendar:layout/user-field-air-theme',
 		'collab/service/access',
 	],
 	'bundle' => [
@@ -66,6 +67,7 @@ return [
 		'./src/fields/user-with-chat-buttons',
 		'./src/fields/accessibility',
 		'./src/fields/special',
+		'./src/fields/entity-relation',
 
 		'./src/layout/calendar-icon',
 		'./src/layout/icon-with-text',

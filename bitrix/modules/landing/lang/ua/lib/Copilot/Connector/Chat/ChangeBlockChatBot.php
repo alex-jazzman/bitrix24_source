@@ -1,6 +1,4 @@
 <?php
-$MESS["LANDING_CHATBOT_BLOCKS_BOOSTS_ERROR_BAAS"] = "[p]Запити до CoPilot у вашому бусті закінчилися.[/p][p] Якщо ви активно використовуєте CoPilot, купіть стільки бустів, скільки потрібно для комфортної роботи команди.[/p]#LINK#Купити бусти CoPilot#/LINK#";
-$MESS["LANDING_CHATBOT_BLOCKS_BOOSTS_ERROR_PROMO"] = "[p]Запити до CoPilot закінчилися й будуть знову доступні з наступного місяця.[/p][p]Ви можете купити бусти CoPilot, щоб збільшити кількість запитів і працювати з ШІ на професійному рівні.[/p]#LINK#Купити бусти CoPilot#/LINK#";
 $MESS["LANDING_CHATBOT_BLOCKS_ERROR_B24"] = "Щось пішло не так, спробуйте ще раз трохи пізніше.";
 $MESS["LANDING_CHATBOT_BLOCKS_ERROR_RESTRICTED_REQUEST"] = "CoPilot не може обробити цей запит. Спробуйте вказати іншу тему.";
 $MESS["LANDING_CHATBOT_BLOCKS_ERROR_VENDOR"] = "Щось пішло не так, спробуйте ще раз трохи пізніше.";

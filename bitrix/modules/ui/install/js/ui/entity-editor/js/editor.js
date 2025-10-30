@@ -3244,22 +3244,31 @@ if(typeof BX.UI.EntityEditor === "undefined")
 			{
 				for (var userScopeId in this._config._userScopes)
 				{
-					items.push(
-						{
-							text: BX.message('UI_ENTITY_EDITOR_CHECK_SCOPE').replace('#SCOPE_NAME#', this._config._userScopes[userScopeId]['NAME']),
-							onclick: callback,
-							attributes: {
-								'data-id': userScopeId
-							},
-							className:
-								(
-									this._config.getScope() === BX.UI.EntityConfigScope.custom
-									&& this._config._userScopeId === userScopeId
-								)
-									? "menu-popup-item-accept" : "menu-popup-item-none"
+					const item = {
+						text: BX.Loc.getMessage('UI_ENTITY_EDITOR_CHECK_SCOPE', {
+							'#SCOPE_NAME#': this._config._userScopes[userScopeId]['NAME']
+						}),
+						onclick: callback,
+						attributes: {
+							'data-id': userScopeId,
+						},
+						className:
+							(
+								this._config.getScope() === BX.UI.EntityConfigScope.custom
+								&& this._config._userScopeId === userScopeId
+							)
+								? 'menu-popup-item-accept' : 'menu-popup-item-none',
 
-						}
-					);
+					};
+
+					if (this._entityId <= 0 && this._config._userScopes[userScopeId]['ON_ADD'] === 'Y')
+					{
+						items.push(item);
+					}
+					else if (this._entityId > 0 && this._config._userScopes[userScopeId]['ON_UPDATE'] === 'Y')
+					{
+						items.push(item);
+					}
 				}
 			}
 
@@ -3270,14 +3279,17 @@ if(typeof BX.UI.EntityEditor === "undefined")
 					items.push({ delimiter: true });
 				}
 
-				items.push(
-					{
-						id: "resetConfig",
-						text: BX.message("UI_ENTITY_EDITOR_RESET_CONFIG_MSGVER_2"),
-						onclick: callback,
-						className: "menu-popup-item-none"
-					}
-				);
+				if (!this._config._userScopeId)
+				{
+					items.push(
+						{
+							id: "resetConfig",
+							text: BX.message("UI_ENTITY_EDITOR_RESET_CONFIG_MSGVER_2"),
+							onclick: callback,
+							className: "menu-popup-item-none"
+						}
+					);
+				}
 
 				if(BX.prop.getBoolean(this._settings, "enableSettingsForAll", false))
 				{
@@ -3307,7 +3319,7 @@ if(typeof BX.UI.EntityEditor === "undefined")
 					items.push(
 						{
 							id: "editCommonConfig",
-							text: BX.message('UI_ENTITY_EDITOR_UPDATE_SCOPE_MSGVER_1'),
+							text: BX.message('UI_ENTITY_EDITOR_UPDATE_SCOPE_MSGVER_2'),
 							onclick: callback,
 							className: "menu-popup-item-none"
 						}
@@ -3543,9 +3555,22 @@ if(typeof BX.UI.EntityEditor === "undefined")
 		//region Configuration
 		getCommonConfigEditUrl: function(entityTypeId, moduleId)
 		{
-			return this._commonConfigEditUrl
+			let editUrl = this._commonConfigEditUrl
 				.replace(/#ENTITY_TYPE_ID_VALUE#/gi, entityTypeId)
 				.replace(/#MODULE_ID#/gi, moduleId);
+
+			let categoryId = BX.prop.getInteger(this._context.PARAMS, 'CATEGORY_ID');
+			if (BX.Type.isUndefined(categoryId))
+			{
+				categoryId = BX.prop.getInteger(this._context, 'CATEGORY_ID');
+			}
+
+			if (moduleId === 'crm' && BX.Type.isInteger(categoryId))
+			{
+				editUrl = editUrl + `&apply_filter=Y&CATEGORY=${categoryId}`;
+			}
+
+			return editUrl;
 		},
 		onMenuItemClick: function(event, menuItem)
 		{
@@ -3569,7 +3594,9 @@ if(typeof BX.UI.EntityEditor === "undefined")
 				case 'editCommonConfig':
 					BX.SidePanel.Instance.open(
 						this.getCommonConfigEditUrl(this._config._id, this.moduleId),
-						{width: 980}
+						{
+							cacheable: false,
+						}
 					);
 					break;
 				default:
@@ -3603,7 +3630,7 @@ if(typeof BX.UI.EntityEditor === "undefined")
 				return;
 			}
 
-			this._config.setScope(scope, userScopeId, this.moduleId).then(
+			this._config.setScope(scope, userScopeId, this.moduleId, this._entityId).then(
 				function()
 				{
 					var eventArgs = {
@@ -3623,19 +3650,24 @@ if(typeof BX.UI.EntityEditor === "undefined")
 		},
 		createConfigScopeForCheckedUsers: function()
 		{
-			var config = BX.UI.EntityEditorScopeConfig.create(
+			const options = BX.prop.getObject(this._settings, 'options', {});
+			const useHumanResourcesModule = BX.prop.getString(options, 'useHumanResourcesModule', 'N');
+			const useOnAddOnUpdateSegregation = BX.prop.getString(options, 'useOnAddOnUpdateSegregation', 'N');
+			const config = BX.UI.EntityEditorScopeConfig.create(
 				this._id+'_config', {
 					editor: this,
 					config: this._config.toJSON(),
 					entityTypeId: this._config._id,
 					isCommonConfig: true,
-					moduleId: this.moduleId
+					moduleId: this.moduleId,
+					useHumanResourcesModule: useHumanResourcesModule === 'Y',
+					useOnAddOnUpdateSegregation: useOnAddOnUpdateSegregation === 'Y'
 				});
 			config.open();
 		},
 		forceCommonConfigScopeForAll: function()
 		{
-			this._config.forceCommonScopeForAll().then(
+			this._config.forceCommonScopeForAll(this._entityId).then(
 				function()
 				{
 					var scope = this._config.getScope();
@@ -3651,7 +3683,7 @@ if(typeof BX.UI.EntityEditor === "undefined")
 		},
 		resetConfig: function()
 		{
-			this._config.reset(false).then(
+			this._config.reset(false, this._entityId).then(
 				function()
 				{
 					var scope = this._config.getScope();
@@ -4042,6 +4074,7 @@ if(typeof(BX.UI.EntityEditorScopeConfig) === "undefined")
 
 		this._popup = null;
 		this._selector = null;
+		this._popupSaveButton = {};
 
 		this._name = "";
 		this._items = [];
@@ -4062,6 +4095,8 @@ if(typeof(BX.UI.EntityEditorScopeConfig) === "undefined")
 		this.moduleId = null;
 
 		this._onSquareClick = BX.delegate(this.onSquareClick, this);
+		this._onAddInput = {};
+		this._onUpdateInput = {};
 	};
 
 	BX.UI.EntityEditorScopeConfig.prototype =
@@ -4082,6 +4117,8 @@ if(typeof(BX.UI.EntityEditorScopeConfig) === "undefined")
 
 				this._entityTypeId = this.getSetting('entityTypeId', null);
 				this.moduleId = this.getSetting('moduleId', null);
+				this.useHumanResourcesModule = this.getSetting('useHumanResourcesModule', false);
+				this.useOnAddOnUpdateSegregation = this.getSetting('useOnAddOnUpdateSegregation', false);
 			},
 			getId: function()
 			{
@@ -4140,6 +4177,11 @@ if(typeof(BX.UI.EntityEditorScopeConfig) === "undefined")
 				container.appendChild(this.prepareNameControl());
 				container.appendChild(this.prepareUserSelectControl());
 				container.appendChild(this.prepareForceSetToUsersControl());
+				if (this.useOnAddOnUpdateSegregation)
+				{
+					container.appendChild(this.prepareAvailableOnAddControl());
+					container.appendChild(this.prepareAvailableonUpdateControl());
+				}
 
 				return container;
 			},
@@ -4222,10 +4264,10 @@ if(typeof(BX.UI.EntityEditorScopeConfig) === "undefined")
 								id: 'project',
 							},
 							{
-								id: 'department',
+								id: this.useHumanResourcesModule === true ? 'structure-node' : 'department',
 								options: {
-									selectMode: 'usersAndDepartments'
-								}
+									selectMode: 'usersAndDepartments',
+								},
 							},
 						],
 					}
@@ -4235,48 +4277,78 @@ if(typeof(BX.UI.EntityEditorScopeConfig) === "undefined")
 
 				return container;
 			},
-			prepareForceSetToUsersControl: function()
+			prepareInputCheckboxTag()
 			{
-				var container = BX.create('div', {
-					style: {
-						paddingBottom: '10px',
-						borderBottom: '1px solid #f2f2f4'
-					}
-				});
+				return BX.Tag.render`
+					<input class="ui-ctl-element" type="checkbox" checked="checked">
+				`;
+			},
+			prepareCheckBoxField(controlObject, text, hint)
+			{
+				if (
+					!BX.Type.isElementNode(controlObject)
+					|| !BX.Type.isString(text)
+				)
+				{
+					return;
+				}
 
-				var control = BX.create('div', {
-					props:{
-						className: 'ui-ctl ui-ctl-checkbox ui-ctl-w100'
-					}
-				});
+				const container = BX.Tag.render`
+					<div style="padding-bottom: 10px; border-bottom: 1px solid #f2f2f4"></div>
+				`;
 
-				this._forceSetInput = BX.create("input", {
-					props:{
-						className: 'ui-ctl-element',
-						type: 'checkbox',
-						checked: true
-					},
-				});
+				const control = BX.Tag.render`
+					<div class="ui-ctl ui-ctl-checkbox ui-ctl-w100"></div
+				`;
 
-				control.appendChild(this._forceSetInput);
-				control.appendChild(BX.create('div', {
-					props:{
-						className: 'ui-ctl-label-text',
-					},
-					text: BX.message('UI_ENTITY_EDITOR_CONFIG_SCOPE_FORCE_INSTALL_TO_USERS_MSGVER_1')
-				}));
-				control.appendChild(
-					BX.UI.Hint.createNode(BX.message('UI_ENTITY_EDITOR_CONFIG_HINT_SCOPE_FORCE_INSTALL_TO_USERS'))
-				);
+				BX.Dom.append(controlObject, control)
+				BX.Dom.append(BX.Tag.render`
+					<div class="ui-ctl-label-text">${text}</div
+				`, control);
 
-				container.appendChild(control);
+				if (BX.Type.isElementNode(hint))
+				{
+					BX.Dom.append(hint, control);
+				}
+
+				BX.Dom.append(control, container)
 
 				return container;
+			},
+			prepareForceSetToUsersControl: function()
+			{
+				this._forceSetInput = this.prepareInputCheckboxTag();
+
+				return this.prepareCheckBoxField(
+					this._forceSetInput,
+					BX.Loc.getMessage('UI_ENTITY_EDITOR_CONFIG_SCOPE_FORCE_INSTALL_TO_USERS_MSGVER_1'),
+					BX.UI.Hint.createNode(BX.message('UI_ENTITY_EDITOR_CONFIG_HINT_SCOPE_FORCE_INSTALL_TO_USERS')),
+				);
+			},
+			prepareAvailableOnAddControl: function()
+			{
+				this._onAddInput = this.prepareInputCheckboxTag();
+
+				return this.prepareCheckBoxField(
+					this._onAddInput,
+					BX.Loc.getMessage('UI_ENTITY_EDITOR_CONFIG_SCOPE_SET_AVAILABLE_ON_ADD'),
+					BX.UI.Hint.createNode(BX.message('UI_ENTITY_EDITOR_CONFIG_HINT_SCOPE_SET_AVAILABLE_ON_ADD')),
+				);
+			},
+			prepareAvailableonUpdateControl: function()
+			{
+				this._onUpdateInput = this.prepareInputCheckboxTag();
+
+				return this.prepareCheckBoxField(
+					this._onUpdateInput,
+					BX.Loc.getMessage('UI_ENTITY_EDITOR_CONFIG_SCOPE_SET_AVAILABLE_ON_UPDATE'),
+					BX.UI.Hint.createNode(BX.message('UI_ENTITY_EDITOR_CONFIG_HINT_SCOPE_SET_AVAILABLE_ON_UPDATE')),
+				);
 			},
 			prepareButtons: function()
 			{
 				return [
-					new BX.UI.Button({
+					this._popupSaveButton = new BX.UI.Button({
 						text: BX.message('UI_ENTITY_EDITOR_CONFIG_SCOPE_SAVE'),
 						tag: BX.UI.Button.Tag.LINK,
 						color: BX.UI.Button.Color.PRIMARY,
@@ -4284,8 +4356,10 @@ if(typeof(BX.UI.EntityEditorScopeConfig) === "undefined")
 							click: function(params, event) {
 								event.preventDefault();
 								this.processSave();
-							}.bind(this)
-						}
+							}.bind(this),
+						},
+						useAirDesign: true,
+						style: BX.UI.Button.AirStyle.FILLED,
 					}),
 					new BX.UI.Button({
 						text: BX.message('UI_ENTITY_EDITOR_CONFIG_SCOPE_CANCEL'),
@@ -4295,9 +4369,11 @@ if(typeof(BX.UI.EntityEditorScopeConfig) === "undefined")
 							click: function(params, event) {
 								event.preventDefault();
 								this.processCancel();
-							}.bind(this)
-						}
-					})
+							}.bind(this),
+						},
+						useAirDesign: true,
+						style: BX.UI.Button.AirStyle.PLAIN,
+					}),
 				];
 			},
 			close: function()
@@ -4337,6 +4413,12 @@ if(typeof(BX.UI.EntityEditorScopeConfig) === "undefined")
 			},
 			processSave: function()
 			{
+				if (this._popupSaveButton.isWaiting())
+				{
+					return;
+				}
+
+				this._popupSaveButton.setWaiting();
 				this.clearErrors();
 				this.setName(this._nameInput.value);
 
@@ -4354,18 +4436,22 @@ if(typeof(BX.UI.EntityEditorScopeConfig) === "undefined")
 								forceSetToUsers: this._forceSetInput.checked,
 								categoryName: this._editor._config.categoryName,
 								common: 'Y',
+								availableOnAdd: this._onAddInput.checked,
+								availableOnUpdate: this._onUpdateInput.checked,
 							}
 						}
 					}
 				)
 				.then(
 					function(response) {
+						this._popupSaveButton.setWaiting(false);
 						this.close();
 						BX.UI.EntityEditorScopeConfig.prototype.notifyShow(response);
 						var scopeId = parseInt(response.data, 10);
 						this._editor.setConfigScope(BX.UI.EntityConfigScope.custom, scopeId);
 					}.bind(this)
 				).catch(function(response){
+					this._popupSaveButton.setWaiting(false);
 					//todo show errors some other way
 					this.fillErrors(response.data);
 				}.bind(this));

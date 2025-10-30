@@ -612,7 +612,12 @@ export class B2ESignSettings extends SignSettings
 		for (const documentUid of documentUids)
 		{
 			// eslint-disable-next-line no-await-in-loop
-			await this.#api.setupB2eParties(documentUid, representative.entityId, members);
+			await this.#api.setupB2eParties(
+				documentUid,
+				representative.entityId,
+				members,
+				this.#userParty.isRejectExcludedEnabled(),
+			);
 		}
 		const uid = this.#documentUid;
 		const membersData = await this.#api.loadMembers(uid);
@@ -649,7 +654,11 @@ export class B2ESignSettings extends SignSettings
 		while (!syncFinished)
 		{
 			// eslint-disable-next-line no-await-in-loop
-			const response = await this.#api.syncB2eMembersWithDepartments(uid, signerParty);
+			const response = await this.#api.syncB2eMembersWithDepartments(
+				uid,
+				signerParty,
+				this.#userParty.isRejectExcludedEnabled(),
+			);
 			syncFinished = response.syncFinished;
 			// eslint-disable-next-line no-await-in-loop
 			await this.#sleep(1000);

@@ -7,7 +7,6 @@ $MESS["IM_MESSAGE_LIST_EMPTY_STATE_DEFAULT_MESSAGE_5"] = "Телефон арқ�
 $MESS["IM_MESSAGE_LIST_EMPTY_STATE_TITLE"] = "Бірдеңе жазыңыз, файлды жіберіңіз, қоңырау шалыңыз немесе дайын хабарламалардың бірін таңдаңыз";
 $MESS["IM_MESSAGE_LIST_STATUS_READ_CHAT"] = "Қаралды: #USER#";
 $MESS["IM_MESSAGE_LIST_STATUS_READ_CHAT_PLURAL_MSGVER_2"] = "Қаралды:#USERS# және [link]тағы #COUNT#[/link]";
-$MESS["IM_MESSAGE_LIST_STATUS_READ_USER"] = "Қаралды: #DATE#";
 $MESS["IM_MESSAGE_LIST_STATUS_READ_USER_MSGVER_1"] = "Қаралды: #DATE#";
 $MESS["IM_MESSAGE_LIST_STATUS_RECORDING_VOICE_MSGVER_1"] = "#USER# аудио жазып жатыр";
 $MESS["IM_MESSAGE_LIST_STATUS_SENDING_FILE_MSGVER_1"] = "#USER# файлды жіберіп жатыр";

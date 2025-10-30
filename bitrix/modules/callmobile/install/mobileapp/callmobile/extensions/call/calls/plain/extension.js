@@ -1783,6 +1783,11 @@
 
 			this.peerConnection.close();
 			this.peerConnection = null;
+
+			this.videoSender = null;
+			this.audioSender = null;
+			this.incomingVideoTrack = null;
+			this.incomingScreenTrack = null;
 		}
 
 		_hasIncomingVideo()

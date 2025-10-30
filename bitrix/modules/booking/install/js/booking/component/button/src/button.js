@@ -30,6 +30,14 @@ export const Button = {
 		color: String,
 		round: Boolean,
 		icon: String,
+		iconPosition: {
+			type: String,
+			validator(position: ?string): boolean
+			{
+				return !position || ['left', 'right'].includes(position);
+			},
+		},
+		useAirDesign: Boolean,
 		noCaps: Boolean,
 		disabled: Boolean,
 		clocking: Boolean,
@@ -46,6 +54,8 @@ export const Button = {
 			color: this.color,
 			round: this.round,
 			icon: this.icon,
+			iconPosition: this.iconPosition,
+			useAirDesign: Boolean(this.useAirDesign),
 			noCaps: this.noCaps,
 			onclick: () => {
 				this.$emit('click');
@@ -53,6 +63,11 @@ export const Button = {
 			dataset: this.dataset,
 			className: Type.isArray(this.buttonClass) ? this.buttonClass.join(' ') : this.buttonClass,
 		});
+
+		if (this.useAirDesign)
+		{
+			this.button.setAirDesign(true);
+		}
 	},
 	mounted(): void
 	{
@@ -99,7 +114,7 @@ export const Button = {
 		icon: {
 			handler(icon): void
 			{
-				this.button?.setIcon(icon);
+				this.button?.setIcon(icon, this.iconPosition);
 			},
 		},
 		disabled: {

@@ -84,7 +84,7 @@ const ThemeManager = {
 
 /** Background selection priority:
  * 1. If there is no dialog context: user selected background (from user settings)
- * 2. Background by chat type (collab/copilot)
+ * 2. Background by chat type (collab/copilot/aiAssistant)
  * 3. Chat background (from chat fields)
  * 4. Bot background (from bot fields)
  * 5. User selected background (from user settings)
@@ -107,7 +107,7 @@ const resolveBackgroundId = (dialogId?: string): string => {
 		return SpecialBackgroundId.copilot;
 	}
 
-	const isAiAssistant = isAiAssistantChat(dialogId, chatType);
+	const isAiAssistant = Core.getStore().getters['users/bots/isAiAssistant'](dialogId);
 	if (isAiAssistant)
 	{
 		return SpecialBackgroundId.martaAI;
@@ -126,10 +126,4 @@ const resolveBackgroundId = (dialogId?: string): string => {
 	}
 
 	return userBackground;
-};
-
-// TODO: move to aiAssistantManager
-const isAiAssistantChat = (dialogId: string, chatType: string): boolean => {
-	return Core.getStore().getters['users/bots/isAiAssistant'](dialogId)
-		|| [ChatType.aiAssistant, ChatType.aiAssistantEntity].includes(chatType);
 };

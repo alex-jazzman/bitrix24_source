@@ -3,7 +3,6 @@ $MESS["BPAA_ACT_APPROVERS_NONE"] = "немає";
 $MESS["BPAA_ACT_COMMENT_ERROR"] = "Не заповнено поле: #COMMENT_LABEL#";
 $MESS["BPAA_ACT_NO_ACTION"] = "Невірно вказано дію";
 $MESS["BPAR_ACT_BUTTON2"] = "Ознайомлений";
-$MESS["BPAR_ACT_COMMENT"] = "Коментар";
 $MESS["BPAR_ACT_COMMENT_1"] = "Пояснення";
 $MESS["BPAR_ACT_COMMENT_REQUIRED_TO_APPROVE"] = "Обов'язково в разі погодження";
 $MESS["BPAR_ACT_COMMENT_REQUIRED_TO_REJECT"] = "Обов'язково в разі відхилення";

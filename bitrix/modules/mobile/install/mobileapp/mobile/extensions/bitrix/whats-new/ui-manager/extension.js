@@ -2,10 +2,8 @@
  * @module whats-new/ui-manager
  */
 jn.define('whats-new/ui-manager', (require, exports, module) => {
-	const { isModuleInstalled } = require('module');
 	const { Color } = require('tokens');
 	const { BackgroundUIManager } = require('background/ui-manager');
-	const { WhatsNewAnalytics } = require('layout/ui/whats-new/analytics');
 
 	const WHATS_NEW_COMPONENT_NAME = 'whats.new';
 
@@ -40,10 +38,6 @@ jn.define('whats-new/ui-manager', (require, exports, module) => {
 					},
 				},
 			});
-
-			new WhatsNewAnalytics()
-				.setEvent(WhatsNewAnalytics.Event.drawerOpen)
-				.send();
 		}
 
 		static openComponentInBackground()

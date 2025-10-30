@@ -10,7 +10,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 ?>
 
 <section
-	class="landing-block g-bg g-pa-20"
+	class="landing-block g-bg g-pl-20 g-pr-20 g-pt-10 g-pb-10"
 	style="--bg: #ffffff;"
 >
 <?php

@@ -52,6 +52,7 @@ $MESS["IMOL_CHAT_NOTIFY_RATING_VALUE_LIKE"] = "добре";
 $MESS["IMOL_CHAT_NOTIFY_SCHEMA_RATING_CLIENT_new"] = "Сповіщення про оцінку якості від клієнта";
 $MESS["IMOL_CHAT_NOTIFY_SCHEMA_RATING_HEAD"] = "Сповіщення про оцінку якості від керівника";
 $MESS["IMOL_CHAT_NO_OPERATOR_AVAILABLE_IN_QUEUE_NEW"] = "Звернення повернене в чергу. Немає доступних операторів";
+$MESS["IMOL_CHAT_OPERATOR_STARTED_DAY"] = "У користувача #USER# розпочався робочий день. Тепер цей оператор теж може бачити звернення.";
 $MESS["IMOL_CHAT_PAUSE_OFF_NEW"] = "Дату автоматичного закриття встановлено за правилами черги";
 $MESS["IMOL_CHAT_PAUSE_ON"] = "Дату автоматичного закриття перенесено на #DATE#";
 $MESS["IMOL_CHAT_RETURNED_TO_QUEUE_NEW"] = "Звернення повернене у чергу.";

@@ -1,18 +1,16 @@
 (() => {
 	BX.onViewLoaded(async () => {
-		const { initTabWidgets } = await requireLazy('user-profile/tabs-preparer', false);
-		if (initTabWidgets)
-		{
-			const params = BX.componentParameters.get('params', {});
+		const {
+			initTabNestedWidgets,
+			bindEvents,
+		} = await requireLazy('user-profile/tabs-preparer', false);
 
-			initTabWidgets(
-				// eslint-disable-next-line no-undef
-				tabs.nestedWidgets(),
-				Object.fromEntries(
-					// eslint-disable-next-line no-undef
-					Object.entries(params).map(([tab, tabParams]) => [tab, { ...tabParams, parentWidget: tabs }]),
-				),
-			);
+		if (initTabNestedWidgets && bindEvents)
+		{
+			// eslint-disable-next-line no-undef
+			bindEvents(tabs, Number(BX.componentParameters.get('ownerId', env.userId)));
+			// eslint-disable-next-line no-undef
+			initTabNestedWidgets(tabs, BX.componentParameters.get('params', {}));
 		}
 	});
 })();

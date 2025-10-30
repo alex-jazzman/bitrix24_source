@@ -9,7 +9,7 @@ import '../css/compact-navigation.css';
 
 const CompactNavigationItems = [
 	NavigationMenuItem.notification,
-	NavigationMenuItem.aiAssistant,
+	NavigationMenuItem.copilot,
 	NavigationMenuItem.openlines,
 	NavigationMenuItem.openlinesV2,
 ];

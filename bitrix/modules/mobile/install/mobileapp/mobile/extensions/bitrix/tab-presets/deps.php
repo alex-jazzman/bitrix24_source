@@ -13,6 +13,7 @@ return [
 		'tourist',
 		'analytics',
 		'layout/ui/loading-screen',
+		'ui-system/blocks/avatar',
 		'ui-system/blocks/banners/card-banner',
 		'ui-system/blocks/chips/chip-button',
 		'ui-system/blocks/icon',

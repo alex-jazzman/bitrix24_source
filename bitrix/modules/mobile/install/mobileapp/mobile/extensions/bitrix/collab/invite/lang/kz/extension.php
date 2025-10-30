@@ -34,7 +34,6 @@ $MESS["COLLAB_INVITE_NAME_CHECKER_TITLE_EMAIL"] = "Қонақтардың атт
 $MESS["COLLAB_INVITE_NAME_CHECKER_TITLE_PHONE"] = "Қонақтардың аттарын тексеріңіз";
 $MESS["COLLAB_INVITE_PERMISSIONS_ALERT_DESCRIPTION"] = "Коллабқа қатысушыларды тек иесі немесе модераторы шақыра алады";
 $MESS["COLLAB_INVITE_PERMISSIONS_ALERT_TITLE"] = "Құқықтар жеткіліксіз";
-$MESS["COLLAB_INVITE_QR_SHARING_MESSAGE_TEXT"] = "QR кодын сканерлеп, коллабқа қосылыңыз";
 $MESS["COLLAB_INVITE_SELECTOR_SEND_BUTTON_TEXT"] = "Шақыру";
 $MESS["COLLAB_INVITE_SHARE_LINK_DIALOG_TITLE"] = "Сілтемені бөлісу";
 $MESS["COLLAB_INVITE_SINGLE_ADD_SUCCESS_TOAST_TEXT"] = "Қызметкер қосылды";

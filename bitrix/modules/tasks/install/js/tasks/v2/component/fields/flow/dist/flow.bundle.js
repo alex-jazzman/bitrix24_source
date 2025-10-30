@@ -81,6 +81,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  }
 	}
 	function _createDialog2() {
+	  var _Core$getParams$right, _Core$getParams$right2;
 	  const onItemChangeDebounced = main_core.Runtime.debounce(babelHelpers.classPrivateFieldLooseBase(this, _onItemChange)[_onItemChange], 10, this);
 	  const dialog = new tasks_v2_lib_entitySelectorDialog.EntitySelectorDialog({
 	    context: 'tasks-card',
@@ -109,11 +110,13 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      }
 	    }
 	  });
-	  const isFeatureTriable = main_core.Extension.getSettings('tasks.v2.component.fields.flow').get('isFeatureTriable');
-	  const footer = new tasks_flow_entitySelector.Footer(dialog, {
-	    isFeatureTriable
-	  });
-	  dialog.setFooter(footer.render());
+	  if ((_Core$getParams$right = tasks_v2_core.Core.getParams().rights) != null && (_Core$getParams$right2 = _Core$getParams$right.flow) != null && _Core$getParams$right2.create) {
+	    const isFeatureTriable = main_core.Extension.getSettings('tasks.v2.component.fields.flow').get('isFeatureTriable');
+	    const footer = new tasks_flow_entitySelector.Footer(dialog, {
+	      isFeatureTriable
+	    });
+	    dialog.setFooter(footer.render());
+	  }
 	  return dialog;
 	}
 	async function _onItemChange2() {
@@ -234,8 +237,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    showMenu() {
 	      this.isMenuShown = true;
 	    },
-	    handleCrossClick(event) {
-	      event.stopPropagation();
+	    handleCrossClick() {
 	      this.clearField();
 	    },
 	    openFlow() {
@@ -270,7 +272,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 						v-if="!isEdit"
 						class="tasks-field-flow-cross"
 						:name="Outline.CROSS_L"
-						@click.capture="handleCrossClick"
+						@click.capture.stop="handleCrossClick"
 					/>
 				</template>
 				<template v-else>
@@ -313,9 +315,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    },
 	    design() {
 	      return {
-	        [!this.isAutonomous && !this.isSelected]: tasks_v2_component_elements_chip.ChipDesign.Shadow,
+	        [!this.isAutonomous && !this.isSelected]: tasks_v2_component_elements_chip.ChipDesign.ShadowNoAccent,
 	        [!this.isAutonomous && this.isSelected]: tasks_v2_component_elements_chip.ChipDesign.ShadowAccent,
-	        [this.isAutonomous && !this.isSelected]: tasks_v2_component_elements_chip.ChipDesign.Outline,
+	        [this.isAutonomous && !this.isSelected]: tasks_v2_component_elements_chip.ChipDesign.OutlineNoAccent,
 	        [this.isAutonomous && this.isSelected]: tasks_v2_component_elements_chip.ChipDesign.OutlineAccent
 	      }.true;
 	    },
@@ -332,7 +334,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      if (this.isFilled) {
 	        return this.flow.name;
 	      }
-	      return flowMeta.title;
+	      return this.loc('TASKS_V2_FLOW_TITLE_CHIP');
 	    },
 	    readonly() {
 	      return !this.task.rights.edit;
@@ -344,7 +346,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        this.highlightField();
 	        return;
 	      }
-	      flowDialog.setTaskId(this.taskId).showTo(this.$refs.chip.$el);
+	      flowDialog.setTaskId(this.taskId).showTo(this.$el);
 	      if (!this.isAutonomous) {
 	        flowDialog.onUpdateOnce(this.highlightField);
 	      }
@@ -371,7 +373,6 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			:data-task-id="taskId"
 			:data-task-chip-id="flowMeta.id"
 			:data-task-chip-value="task.flowId"
-			ref="chip"
 			@click="handleClick"
 			@clear="handleClear"
 			:title="flow?.name ?? ''"

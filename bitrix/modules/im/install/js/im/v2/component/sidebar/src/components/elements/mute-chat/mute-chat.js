@@ -29,10 +29,6 @@ export const MuteChat = {
 		{
 			return this.$store.getters['chats/get'](this.dialogId, true);
 		},
-		isGroupChat(): boolean
-		{
-			return this.dialogId.startsWith('chat');
-		},
 		canBeMuted(): boolean
 		{
 			return PermissionManager.getInstance().canPerformActionByRole(ActionByRole.mute, this.dialogId);
@@ -100,7 +96,6 @@ export const MuteChat = {
 	},
 	template: `
 		<div
-			v-if="isGroupChat"
 			class="bx-im-sidebar-mute-chat__container"
 			:class="{'--not-active': !canBeMuted}"
 			v-hint="hintMuteNotAvailable"

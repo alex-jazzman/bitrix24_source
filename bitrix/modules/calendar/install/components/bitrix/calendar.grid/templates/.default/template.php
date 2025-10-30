@@ -249,16 +249,6 @@ if ($arResult['IS_COLLAB'])
 		}
 	}
 
-	function openCalendarTaskCreate()
-	{
-		const editTaskPath = BX.Uri.addParam("<?=HtmlFilter::encode($arParams['EDIT_TASK_PATH'])?>", {
-			ta_sec: 'calendar',
-			ta_el: 'create_button',
-		});
-
-		BX.SidePanel.Instance.open(editTaskPath, { loader: 'task-new-loader' });
-	}
-
 	function openCalendarSectionList()
 	{
 		BX.Calendar.EntryManager.openSectionsSlider();

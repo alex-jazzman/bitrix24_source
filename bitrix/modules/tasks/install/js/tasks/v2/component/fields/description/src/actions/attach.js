@@ -15,17 +15,10 @@ export const Attach = {
 			Outline,
 		};
 	},
-	methods: {
-		handleClick()
-		{
-			alert('Not implemented yet');
-		},
-	},
 	template: `
 		<ActionButton
 			:iconName="Outline.ATTACH"
 			:title="loc('TASKS_V2_DESCRIPTION_ACTION_ATTACH_TITLE')"
-			@click="handleClick"
 		/>
 	`,
 };

@@ -1447,6 +1447,12 @@
 
 		onDesignerBlockClick: function()
 		{
+			BX.UI.Analytics.sendData({
+				tool: 'landing',
+				category: 'superblock',
+				event: 'open',
+				type: BX.Landing.Main.getAnalyticsCategoryByType(),
+			});
 			// get actual block content before designer edit
 			var oldContent = null;
 			BX.Landing.Backend.getInstance()
@@ -1491,20 +1497,27 @@
 									var newContent = response.content;
 									if (oldContent !== newContent)
 									{
+										BX.UI.Analytics.sendData({
+											tool: 'landing',
+											category: 'superblock',
+											event: 'save',
+											type: BX.Landing.Main.getAnalyticsCategoryByType(),
+										});
+
 										BX.Landing.History.getInstance().push();
 										this.reload().then(function()
 										{
 											fireCustomEvent("BX.Landing.Block:onDesignerBlockSave", [this.id]);
 										}.bind(this));
-										// analytic label on close
-										var metrika = new BX.Landing.Metrika(true);
-										metrika.sendLabel(
-											null,
-											"designerBlock",
-											"close" +
-											"&designed=" + (this.designed ? "Y" : "N") +
-											"&code=" + this.manifest.code
-										);
+									}
+									else
+									{
+										BX.UI.Analytics.sendData({
+											tool: 'landing',
+											category: 'superblock',
+											event: 'close',
+											type: BX.Landing.Main.getAnalyticsCategoryByType(),
+										});
 									}
 								}.bind(this));
 						}.bind(this)

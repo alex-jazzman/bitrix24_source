@@ -4,8 +4,7 @@
 	const { Route } = require('in-app-url/route');
 	const { describe, it, expect } = require('testing');
 
-	const inAppHandler = () => {
-	};
+	const inAppHandler = () => {};
 
 	describe('Route match method', () => {
 		it('should return true for a matching URL', () => {
@@ -35,7 +34,7 @@
 			const regexp = route.regexp;
 
 			expect(regexp).toBeInstanceOf(RegExp);
-			expect(regexp.source).toBe('\\/work\\/group\\/([^&=$/]+)\\/tasks\\/view\\/([^&=$/]+)\\/');
+			expect(regexp.source).toBe('\\/work\\/group\\/([^&=$/?]+)\\/tasks\\/view\\/([^&=$/?]+)\\/');
 		});
 
 		it('should match a URL using the generated RegExp', () => {
@@ -78,6 +77,12 @@
 			const route = new Route({ pattern: '/company/personal/user/:userId/tasks/task/:taskId/' });
 			const variables = route.getPatternVariables(route.pattern);
 			expect(variables).toEqual(['userId', 'taskId']);
+		});
+
+		it('should return an array of variable names from the pattern', () => {
+			const route = new Route({ pattern: '/company/personal/user/:user-Id/tasks/task/:task-Id/' });
+			const variables = route.getPatternVariables(route.pattern);
+			expect(variables).toEqual(['user-Id', 'task-Id']);
 		});
 
 		it('should return an empty array if there are no variables', () => {

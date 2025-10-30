@@ -75,18 +75,18 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    },
 	    highlightTitle() {
 	      this.errorReason = this.loc('TASKS_V2_TITLE_IS_EMPTY');
-	      this.fieldContainer = tasks_v2_lib_fieldHighlighter.fieldHighlighter.setContainer(this.$root.$el).addHighlight(tasks_v2_component_fields_title.titleMeta.id);
+	      this.fieldContainer = tasks_v2_lib_fieldHighlighter.fieldHighlighter.setContainer(this.$root.$el).addHighlight(tasks_v2_component_fields_title.titleMeta.id).getFieldContainer(tasks_v2_component_fields_title.titleMeta.id);
 	      this.fieldContainer.querySelector('textarea').focus();
 	      this.showPopup();
 	    },
 	    highlightFiles() {
 	      this.errorReason = this.loc('TASKS_V2_FILE_IS_UPLOADING');
-	      this.fieldContainer = tasks_v2_lib_fieldHighlighter.fieldHighlighter.setContainer(this.$root.$el).addChipHighlight(tasks_v2_component_fields_files.filesMeta.id);
+	      this.fieldContainer = tasks_v2_lib_fieldHighlighter.fieldHighlighter.setContainer(this.$root.$el).addChipHighlight(tasks_v2_component_fields_files.filesMeta.id).getChipContainer(tasks_v2_component_fields_files.filesMeta.id);
 	      this.showPopup();
 	    },
 	    highlightChecklist() {
 	      this.errorReason = this.loc('TASKS_V2_FILE_IS_UPLOADING');
-	      this.fieldContainer = tasks_v2_lib_fieldHighlighter.fieldHighlighter.setContainer(this.$root.$el).addChipHighlight(tasks_v2_component_fields_checkList.checkListMeta.id);
+	      this.fieldContainer = tasks_v2_lib_fieldHighlighter.fieldHighlighter.setContainer(this.$root.$el).addChipHighlight(tasks_v2_component_fields_checkList.checkListMeta.id).getChipContainer(tasks_v2_component_fields_checkList.checkListMeta.id);
 	      this.showPopup();
 	    },
 	    showPopup() {

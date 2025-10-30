@@ -83,6 +83,9 @@ class Crm implements Tabable
 	public function getMenuData(): ?array
 	{
 		return [
+			'id' => 'crm',
+			'sort' => 100,
+			'section_code' => 'crm',
 			'title' => $this->getTitle(),
 			'useLetterImage' => true,
 			'color' => '#00ace3',
@@ -92,6 +95,12 @@ class Crm implements Tabable
 				'id' => 'crm_tabs',
 				'onclick' => Utils::getComponentJSCode($this->getComponentParams()),
 				'counter' => 'crm_all_no_orders',
+				'analytics' => [
+					'tool' => 'crm',
+					'category' => 'entity_operations',
+					'event' => 'open_section',
+					'c_section' => 'ava_menu',
+				],
 			],
 		];
 	}

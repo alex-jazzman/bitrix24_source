@@ -26,7 +26,6 @@ $MESS["IM_LIST_RECENT_EMPTY"] = "Чаттар жоқ";
 $MESS["IM_LIST_RECENT_EMPTY_STATE_INVITE_USERS"] = "Әріптестерді шақыру";
 $MESS["IM_LIST_RECENT_EMPTY_STATE_SUBTITLE"] = "Сіз Битрикс24-ке қосатын қызметкерлер чаттар тізімінде пайда болады";
 $MESS["IM_LIST_RECENT_EMPTY_STATE_TITLE"] = "Әзірге чаттар жоқ";
-$MESS["IM_LIST_RECENT_INVITATION_NOT_ACCEPTED"] = "Шақыру қабылданбады";
 $MESS["IM_LIST_RECENT_INVITATION_NOT_ACCEPTED_MSGVER_1"] = "Шақыру әлі қабылданған жоқ";
 $MESS["IM_LIST_RECENT_MESSAGE_DRAFT_2"] = "Шимай жазба: #TEXT#";
 $MESS["IM_LIST_RECENT_NEW_USER_POPUP_TEXT"] = "Мен сізбен бірге командадамын!";

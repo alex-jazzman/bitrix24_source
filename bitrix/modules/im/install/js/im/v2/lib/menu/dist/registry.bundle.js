@@ -2,14 +2,18 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,ui_vue3_vuex,rest_client,ui_dialogs_messagebox,im_v2_lib_call,im_v2_provider_service_recent,im_v2_lib_invite,im_public,im_v2_provider_service_chat,im_v2_lib_aiAssistant,ui_system_menu,im_v2_lib_promo,im_v2_application_core,im_v2_lib_parser,im_v2_lib_entityCreator,im_v2_provider_service_message,im_v2_provider_service_disk,im_v2_lib_market,im_v2_lib_utils,im_v2_lib_permission,im_v2_lib_confirm,im_v2_lib_notifier,main_core_events,im_v2_const,im_v2_lib_channel,im_v2_lib_analytics,main_core,ui_iconSet_api_core,im_v2_lib_copilot) {
+(function (exports,ui_vue3_vuex,rest_client,ui_dialogs_messagebox,im_v2_lib_call,im_v2_provider_service_recent,im_v2_lib_invite,im_public,im_v2_provider_service_chat,ui_system_menu,im_v2_lib_promo,im_v2_application_core,im_v2_lib_parser,im_v2_lib_entityCreator,im_v2_provider_service_message,im_v2_provider_service_disk,im_v2_lib_market,im_v2_lib_utils,im_v2_lib_permission,im_v2_lib_confirm,im_v2_lib_notifier,main_core_events,im_v2_const,im_v2_lib_channel,im_v2_lib_analytics,main_core,ui_iconSet_api_core,im_v2_lib_copilot) {
 	'use strict';
 
 	const EVENT_NAMESPACE = 'BX.Messenger.v2.Lib.Menu';
 	var _prepareItems = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareItems");
+	var _bindBlurEvent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bindBlurEvent");
 	class BaseMenu extends main_core_events.EventEmitter {
 	  constructor() {
 	    super();
+	    Object.defineProperty(this, _bindBlurEvent, {
+	      value: _bindBlurEvent2
+	    });
 	    Object.defineProperty(this, _prepareItems, {
 	      value: _prepareItems2
 	    });
@@ -28,6 +32,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    this.target = target;
 	    this.menuInstance = new ui_system_menu.Menu(this.getMenuOptions());
 	    this.menuInstance.show(this.target);
+	    babelHelpers.classPrivateFieldLooseBase(this, _bindBlurEvent)[_bindBlurEvent]();
 	  }
 	  getMenuOptions() {
 	    return {
@@ -81,6 +86,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	function _prepareItems2() {
 	  return this.getMenuItems().filter(item => item !== null);
 	}
+	function _bindBlurEvent2() {
+	  main_core.Event.bindOnce(window, 'blur', () => {
+	    this.destroy();
+	  });
+	}
 
 	const MenuSectionCode = Object.freeze({
 	  main: 'main',
@@ -117,9 +127,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  getMenuOptions() {
 	    return {
 	      ...super.getMenuOptions(),
-	      className: this.getMenuClassName(),
-	      angle: true,
-	      offsetLeft: 32
+	      className: this.getMenuClassName()
 	    };
 	  }
 	  getMenuClassName() {
@@ -1044,7 +1052,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	const MenuSectionCode$2 = Object.freeze({
 	  main: 'main',
-	  select: 'select'
+	  select: 'select',
+	  create: 'create'
 	});
 	class ChannelMessageMenu extends MessageMenu {
 	  getMenuItems() {
@@ -1052,10 +1061,16 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    return [...this.groupItems(mainGroupItems, MenuSectionCode$2.main), ...this.groupItems([this.getSelectItem()], MenuSectionCode$2.select)];
 	  }
 	  getNestedMenuGroups() {
-	    return [];
+	    return [{
+	      code: MenuSectionCode$2.main
+	    }, {
+	      code: MenuSectionCode$2.create
+	    }];
 	  }
 	  getNestedItems() {
-	    return [this.getCopyLinkItem(), this.getCopyFileItem(), this.getMarkItem(), this.getFavoriteItem(), this.getSaveToDiskItem()];
+	    const mainGroupItems = [this.getCopyLinkItem(), this.getCopyFileItem(), this.getMarkItem(), this.getFavoriteItem(), this.getSaveToDiskItem()];
+	    const createGroupItems = [this.getCreateTaskItem(), this.getCreateMeetingItem()];
+	    return [...this.groupItems(mainGroupItems, MenuSectionCode$2.main), ...this.groupItems(createGroupItems, MenuSectionCode$2.create)];
 	  }
 	}
 
@@ -1202,8 +1217,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	});
 	class AiAssistantMessageMenu extends MessageMenu {
 	  getMenuItems() {
-	    const mainGroupItems = [this.getReplyItem(), this.getCopyItem(), this.getDownloadFileItem(), this.getPinItem(), this.getForwardItem(), ...this.getAdditionalItems(), this.getDeleteItem()];
-	    return [...this.groupItems(mainGroupItems, MenuSectionCode$5.main), ...this.groupItems([this.getSelectItem()], MenuSectionCode$5.select)];
+	    const mainGroupItems = [this.getCopyItem(), this.getDownloadFileItem(), this.getForwardItem(), ...this.getAdditionalItems()];
+	    return this.groupItems(mainGroupItems, MenuSectionCode$5.main);
+	  }
+	  getNestedItems() {
+	    const mainGroupItems = [this.getCopyFileItem(), this.getMarkItem(), this.getFavoriteItem(), this.getSaveToDiskItem()];
+	    const createGroupItems = [this.getCreateTaskItem(), this.getCreateMeetingItem()];
+	    return [...this.groupItems(mainGroupItems, MenuSectionCode$5.main), ...this.groupItems(createGroupItems, MenuSectionCode$5.create), ...this.groupItems(this.getMarketItems(), MenuSectionCode$5.market)];
 	  }
 	}
 
@@ -1359,8 +1379,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  return new im_v2_lib_copilot.CopilotManager().isCopilotChat(context.dialogId);
 	}
 	function _isAiAssistant2(context) {
-	  const aiAssistantManager = new im_v2_lib_aiAssistant.AiAssistantManager();
-	  return aiAssistantManager.isAiAssistantChat(context.dialogId) || aiAssistantManager.isAiAssistantBot(context.dialogId);
+	  return im_v2_application_core.Core.getStore().getters['users/bots/isAiAssistant'](context.dialogId);
 	}
 	function _hasMenuForMessageType2(messageType) {
 	  return babelHelpers.classPrivateFieldLooseBase(this, _menuByMessageType)[_menuByMessageType].has(messageType);
@@ -1385,6 +1404,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.UserMenu = UserMenu;
 	exports.MessageMenuManager = MessageMenuManager;
 	exports.MessageMenu = MessageMenu;
+	exports.AiAssistantMessageMenu = AiAssistantMessageMenu;
 
-}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX.Vue3.Vuex,BX,BX.UI.Dialogs,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.UI.System,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Event,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.UI.IconSet,BX.Messenger.v2.Lib));
+}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX.Vue3.Vuex,BX,BX.UI.Dialogs,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.UI.System,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Event,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.UI.IconSet,BX.Messenger.v2.Lib));
 //# sourceMappingURL=registry.bundle.js.map

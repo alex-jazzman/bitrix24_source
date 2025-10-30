@@ -99,7 +99,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  teamsInStructureAvailable: 'teamsInStructureAvailable',
 	  isDesktopRedirectAvailable: 'isDesktopRedirectAvailable',
 	  aiAssistantBotAvailable: 'aiAssistantAvailable',
-	  aiAssistantChatAvailable: 'aiAssistantChatCreationAvailable'
+	  aiAssistantChatAvailable: 'aiAssistantChatCreationAvailable',
+	  aiFileTranscriptionAvailable: 'aiFileTranscriptionAvailable'
 	};
 	const FeatureManager = {
 	  chatHistory: ChatHistoryManager,

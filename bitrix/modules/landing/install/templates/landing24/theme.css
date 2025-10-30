@@ -9225,6 +9225,10 @@ h6.g-color, .h6.g-color {
   max-width: 960px;
 }
 
+.g-max-width-1462 {
+  max-width: 1462px;
+}
+
 /* Min Width in Pixels (px) */
 .g-min-width-35 {
   min-width: 35px;
@@ -30181,6 +30185,14 @@ img[data-bx-image] {
   box-shadow: 0 0 13px 11px var(--primary);
 }
 
+.u-shadow-custom-v3 {
+  box-shadow: 0 7px 6px 3px rgba(0, 0, 0, 0.05);
+}
+
+.u-shadow-custom-v3:hover {
+  box-shadow: 0 6px 12px 0 rgba(0, 0, 0, 0.15);
+}
+
 /* Styles for separator blocks */
 main:not(.landing-edit-mode) .block-26-2-separator,
 main:not(.landing-edit-mode) .block-26-3-separator,
@@ -30253,9 +30265,12 @@ main:not(.landing-edit-mode) .block-store-menu-sidebar .landing-block {
   background-color: #fff !important;
 }
 
+.card-before {
+  display: flex !important;
+}
+
 .card-before::before {
-  position: relative;
-  top: 16px;
+  margin: auto;
   transition: 0.3s;
 }
 

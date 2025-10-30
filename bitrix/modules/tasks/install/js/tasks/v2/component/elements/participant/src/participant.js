@@ -3,6 +3,7 @@ import { RichLoc } from 'ui.vue3.components.rich-loc';
 
 import { Model } from 'tasks.v2.const';
 import { Hint } from 'tasks.v2.component.elements.hint';
+import { HoverPill } from 'tasks.v2.component.elements.hover-pill';
 import { UserCustomTagSelector, type ItemId } from 'tasks.v2.component.elements.user-custom-tag-selector';
 import type { TaskModel } from 'tasks.v2.model.tasks';
 import type { UserModel } from 'tasks.v2.model.users';
@@ -13,6 +14,7 @@ import './participant.css';
 export const Participant = {
 	name: 'TaskParticipant',
 	components: {
+		HoverPill,
 		UserCustomTagSelector,
 		Popup,
 		RichLoc,
@@ -116,11 +118,11 @@ export const Participant = {
 		},
 		focus(): void
 		{
-			this.$refs.container.focus();
+			this.$refs.container.$el.focus();
 		},
 	},
 	template: `
-		<div class="tasks-field-participant" v-bind="dataset" ref="container" tabindex="0" @keydown="handleKeydown">
+		<HoverPill v-bind="dataset" ref="container" @keydown="handleKeydown">
 			<UserCustomTagSelector
 				:dialogOptions="dialogOptions"
 				:items="preselected"
@@ -132,10 +134,10 @@ export const Participant = {
 				@select="handleUserSelected"
 				@unfreeze="focus"
 			/>
-		</div>
+		</HoverPill>
 		<Hint
 			v-if="isPopupShown"
-			:bindElement="$refs.container"
+			:bindElement="$refs.container.$el"
 			@close="closeHint"
 		>
 			<RichLoc class="tasks-field-participant-cant-change" :text="cantChangeHint" placeholder="[action]">

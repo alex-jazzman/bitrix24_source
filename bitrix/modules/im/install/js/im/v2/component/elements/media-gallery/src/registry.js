@@ -1,2 +1,3 @@
 export { MediaGallery } from './media-gallery';
-export { MediaItem } from './media-item';
+export { MediaGalleryItem } from './media-gallery-item';
+export { MediaGalleryRow } from './media-gallery-row';

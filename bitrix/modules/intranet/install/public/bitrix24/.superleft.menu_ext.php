@@ -199,7 +199,7 @@ else
 	];
 }
 
-if (Loader::includeModule('booking') && \Bitrix\Booking\Service\BookingFeature::isOn())
+if (Loader::includeModule('booking'))
 {
 	$counterId = (\Bitrix\Booking\Service\BookingFeature::isFeatureEnabled() ? 'booking_total' : '');
 

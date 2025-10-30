@@ -343,7 +343,7 @@ if (!$request->offsetExists('landing_mode')):
 	$formCode = '';
 	if (!isset($arResult['LICENSE']) || $arResult['LICENSE'] != 'nfr')
 	{
-		$formCode = 'general';
+		$formCode = 'partner';
 		?>
 		<div style="display: none">
 			<?$APPLICATION->includeComponent(
@@ -959,7 +959,16 @@ else
 				true
 			);
 			<?php if (!$isKnowledge && !$isMainpageEditor):?>
+				<?php
+					$siteGenerationId = null;
+					$generation = new Copilot\Generation();
+					if ($generation->initBySiteId($siteId, (new Copilot\Generation\Scenario\CreateSite())))
+					{
+						$siteGenerationId = $generation->getId();
+					}
+				?>
 				const slidePanel = new BX.Landing.View.SlidePanel({
+					siteGenerationId: <?= $siteGenerationId ?? 'null'?>,
 					copilotChatOptions: {
 						entityId: '<?= Copilot\Connector\Chat\Chat::createChatEntityId() ?>',
 						chatId: <?= $arResult['AI_CHAT_ID'] ?? 'null' ?>,

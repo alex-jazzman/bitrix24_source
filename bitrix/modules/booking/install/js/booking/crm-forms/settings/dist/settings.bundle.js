@@ -1,8 +1,45 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Booking = this.BX.Booking || {};
-(function (exports,main_core_events,booking_provider_service_crmFormService,booking_const,ui_entitySelector,main_core) {
+(function (exports,main_loader,booking_provider_service_crmFormService,main_core_events,booking_const,ui_entitySelector,main_core) {
 	'use strict';
+
+	var _resourcesById = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("resourcesById");
+	var _isLoaded = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isLoaded");
+	class ResourceStore {
+	  constructor() {
+	    Object.defineProperty(this, _isLoaded, {
+	      value: _isLoaded2
+	    });
+	    Object.defineProperty(this, _resourcesById, {
+	      writable: true,
+	      value: new Map()
+	    });
+	  }
+	  async ensure(ids) {
+	    if (ids.length === 0) {
+	      return;
+	    }
+	    const needToLoadIds = ids.filter(id => !babelHelpers.classPrivateFieldLooseBase(this, _isLoaded)[_isLoaded](id));
+	    if (needToLoadIds.length === 0) {
+	      return;
+	    }
+	    const loaded = await booking_provider_service_crmFormService.crmFormService.getResources(needToLoadIds);
+	    for (const resource of loaded) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _resourcesById)[_resourcesById].set(resource.id, resource);
+	    }
+	  }
+	  getByIds(ids) {
+	    return ids.map(id => babelHelpers.classPrivateFieldLooseBase(this, _resourcesById)[_resourcesById].get(id)).filter(Boolean);
+	  }
+	  getAll() {
+	    return [...babelHelpers.classPrivateFieldLooseBase(this, _resourcesById)[_resourcesById].values()];
+	  }
+	}
+	function _isLoaded2(id) {
+	  return babelHelpers.classPrivateFieldLooseBase(this, _resourcesById)[_resourcesById].has(id);
+	}
+	const resourceStore = new ResourceStore();
 
 	const defaultBookingForm = {
 	  resourceIds: [],
@@ -309,8 +346,7 @@ this.BX.Booking = this.BX.Booking || {};
 	const subHeaderClassName = 'crm-form--booking--resources-manager--header-resources-section';
 	var _targetNode$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("targetNode");
 	var _selectedIds$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("selectedIds");
-	var _resourcedIds = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("resourcedIds");
-	var _resources$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("resources");
+	var _resourcesIds = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("resourcesIds");
 	var _loadingResources = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("loadingResources");
 	var _options = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("options");
 	var _btnDeleteResources = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("btnDeleteResources");
@@ -322,7 +358,7 @@ this.BX.Booking = this.BX.Booking || {};
 	var _appendEmptyState = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("appendEmptyState");
 	var _removeEmptyState = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("removeEmptyState");
 	var _updateResourcesCount = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateResourcesCount");
-	var _fetchResources = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("fetchResources");
+	var _loadResources = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("loadResources");
 	var _addSelectedItems = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("addSelectedItems");
 	var _setLoadingResources = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setLoadingResources");
 	var _setResourceIds = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setResourceIds");
@@ -369,8 +405,8 @@ this.BX.Booking = this.BX.Booking || {};
 	    Object.defineProperty(this, _addSelectedItems, {
 	      value: _addSelectedItems2
 	    });
-	    Object.defineProperty(this, _fetchResources, {
-	      value: _fetchResources2
+	    Object.defineProperty(this, _loadResources, {
+	      value: _loadResources2
 	    });
 	    Object.defineProperty(this, _updateResourcesCount, {
 	      value: _updateResourcesCount2
@@ -402,11 +438,7 @@ this.BX.Booking = this.BX.Booking || {};
 	      writable: true,
 	      value: void 0
 	    });
-	    Object.defineProperty(this, _resourcedIds, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _resources$1, {
+	    Object.defineProperty(this, _resourcesIds, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -426,25 +458,26 @@ this.BX.Booking = this.BX.Booking || {};
 	      writable: true,
 	      value: void 0
 	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _resourcedIds)[_resourcedIds] = options.selectedIds || [];
+	    babelHelpers.classPrivateFieldLooseBase(this, _resourcesIds)[_resourcesIds] = options.selectedIds || [];
 	    babelHelpers.classPrivateFieldLooseBase(this, _selectedIds$1)[_selectedIds$1] = [];
 	    babelHelpers.classPrivateFieldLooseBase(this, _targetNode$1)[_targetNode$1] = options.target;
-	    babelHelpers.classPrivateFieldLooseBase(this, _resources$1)[_resources$1] = [];
 	    babelHelpers.classPrivateFieldLooseBase(this, _options)[_options] = options;
 	  }
-	  show() {
+	  async show() {
 	    if (!this.dialog) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _initDialog)[_initDialog]();
+	      await babelHelpers.classPrivateFieldLooseBase(this, _loadResources)[_loadResources](babelHelpers.classPrivateFieldLooseBase(this, _resourcesIds)[_resourcesIds]);
+	      const renderInitialContent = babelHelpers.classPrivateFieldLooseBase(this, _resourcesIds)[_resourcesIds].length > 0 ? babelHelpers.classPrivateFieldLooseBase(this, _addSelectedItems)[_addSelectedItems].bind(this) : babelHelpers.classPrivateFieldLooseBase(this, _appendEmptyState)[_appendEmptyState].bind(this);
+	      renderInitialContent();
 	    }
-	    void babelHelpers.classPrivateFieldLooseBase(this, _fetchResources)[_fetchResources]();
 	    this.dialog.show();
 	    main_core.Event.bind(document, 'scroll', this.adjustPosition, true);
 	  }
 	  close() {
 	    if (this.dialog) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].onUpdateResourceIds(babelHelpers.classPrivateFieldLooseBase(this, _resourcedIds)[_resourcedIds]);
+	      babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].onUpdateResourceIds(babelHelpers.classPrivateFieldLooseBase(this, _resourcesIds)[_resourcesIds]);
 	      if (main_core.Type.isFunction(babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].onClose)) {
-	        babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].onClose(babelHelpers.classPrivateFieldLooseBase(this, _resourcedIds)[_resourcedIds]);
+	        babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].onClose(babelHelpers.classPrivateFieldLooseBase(this, _resourcesIds)[_resourcesIds]);
 	      }
 	      this.dialog.destroy();
 	      main_core.Event.unbind(document, 'scroll', this.adjustPosition, true);
@@ -456,10 +489,10 @@ this.BX.Booking = this.BX.Booking || {};
 	    }
 	  }
 	  get selectedResources() {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _resourcedIds)[_resourcedIds].length === 0 || babelHelpers.classPrivateFieldLooseBase(this, _resources$1)[_resources$1].length === 0) {
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _resourcesIds)[_resourcesIds].length === 0) {
 	      return [];
 	    }
-	    return babelHelpers.classPrivateFieldLooseBase(this, _resources$1)[_resources$1].filter(resource => babelHelpers.classPrivateFieldLooseBase(this, _resourcedIds)[_resourcedIds].includes(resource.id));
+	    return resourceStore.getByIds(babelHelpers.classPrivateFieldLooseBase(this, _resourcesIds)[_resourcesIds]);
 	  }
 	}
 	function _initDialog2() {
@@ -495,7 +528,7 @@ this.BX.Booking = this.BX.Booking || {};
 	    events: {
 	      onHide: () => {
 	        var _babelHelpers$classPr, _babelHelpers$classPr2;
-	        return (_babelHelpers$classPr = (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _options)[_options]).onClose) == null ? void 0 : _babelHelpers$classPr.call(_babelHelpers$classPr2, babelHelpers.classPrivateFieldLooseBase(this, _resourcedIds)[_resourcedIds]);
+	        return (_babelHelpers$classPr = (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _options)[_options]).onClose) == null ? void 0 : _babelHelpers$classPr.call(_babelHelpers$classPr2, babelHelpers.classPrivateFieldLooseBase(this, _resourcesIds)[_resourcesIds]);
 	      },
 	      'Item:onSelect': event => {
 	        babelHelpers.classPrivateFieldLooseBase(this, _selectItem)[_selectItem](event.getData().item);
@@ -505,7 +538,7 @@ this.BX.Booking = this.BX.Booking || {};
 	      }
 	    }
 	  });
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _resourcedIds)[_resourcedIds].length > 0) {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _resourcesIds)[_resourcesIds].length > 0) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _appendSubHeaderContent)[_appendSubHeaderContent]();
 	  }
 	  this.dialog.removeItems();
@@ -526,7 +559,7 @@ this.BX.Booking = this.BX.Booking || {};
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _selectedIds$1)[_selectedIds$1].length === 0) {
 	    return;
 	  }
-	  babelHelpers.classPrivateFieldLooseBase(this, _setResourceIds)[_setResourceIds](babelHelpers.classPrivateFieldLooseBase(this, _resourcedIds)[_resourcedIds].filter(id => !babelHelpers.classPrivateFieldLooseBase(this, _selectedIds$1)[_selectedIds$1].includes(id)));
+	  babelHelpers.classPrivateFieldLooseBase(this, _setResourceIds)[_setResourceIds](babelHelpers.classPrivateFieldLooseBase(this, _resourcesIds)[_resourcesIds].filter(id => !babelHelpers.classPrivateFieldLooseBase(this, _selectedIds$1)[_selectedIds$1].includes(id)));
 	  babelHelpers.classPrivateFieldLooseBase(this, _selectedIds$1)[_selectedIds$1] = [];
 	  babelHelpers.classPrivateFieldLooseBase(this, _hideDeleteButton)[_hideDeleteButton]();
 	}
@@ -569,24 +602,18 @@ this.BX.Booking = this.BX.Booking || {};
 	    resourcesCountEl.innerText = resourcesCount;
 	  }
 	}
-	async function _fetchResources2() {
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _resources$1)[_resources$1].length > 0) {
+	async function _loadResources2(ids) {
+	  if (ids.length === 0) {
 	    return;
 	  }
 	  babelHelpers.classPrivateFieldLooseBase(this, _setLoadingResources)[_setLoadingResources](true);
-	  babelHelpers.classPrivateFieldLooseBase(this, _resources$1)[_resources$1] = await booking_provider_service_crmFormService.crmFormService.getResources();
-	  babelHelpers.classPrivateFieldLooseBase(this, _addSelectedItems)[_addSelectedItems]();
+	  await resourceStore.ensure(ids);
 	  babelHelpers.classPrivateFieldLooseBase(this, _setLoadingResources)[_setLoadingResources](false);
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _resourcedIds)[_resourcedIds].length === 0) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _appendEmptyState)[_appendEmptyState]();
-	  }
 	}
 	function _addSelectedItems2() {
 	  this.dialog.removeItems();
-	  for (const resource of babelHelpers.classPrivateFieldLooseBase(this, _resources$1)[_resources$1]) {
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _resourcedIds)[_resourcedIds].includes(resource.id)) {
-	      continue;
-	    }
+	  const resources = resourceStore.getByIds(babelHelpers.classPrivateFieldLooseBase(this, _resourcesIds)[_resourcesIds]);
+	  for (const resource of resources) {
 	    this.dialog.addItem({
 	      id: resource.id,
 	      entityId: booking_const.EntitySelectorEntity.Resource,
@@ -605,7 +632,7 @@ this.BX.Booking = this.BX.Booking || {};
 	  }
 	}
 	function _setResourceIds2(selectedIds) {
-	  babelHelpers.classPrivateFieldLooseBase(this, _resourcedIds)[_resourcedIds] = selectedIds;
+	  babelHelpers.classPrivateFieldLooseBase(this, _resourcesIds)[_resourcesIds] = selectedIds;
 	  babelHelpers.classPrivateFieldLooseBase(this, _addSelectedItems)[_addSelectedItems]();
 	  babelHelpers.classPrivateFieldLooseBase(this, _updateResourcesCount)[_updateResourcesCount](selectedIds.length);
 	  babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].onUpdateResourceIds(selectedIds);
@@ -620,17 +647,17 @@ this.BX.Booking = this.BX.Booking || {};
 	function _openResourceSelector2(event) {
 	  const resourceSelector = new ResourcesSelector({
 	    targetNode: (event == null ? void 0 : event.target) || null,
-	    selectedIds: babelHelpers.classPrivateFieldLooseBase(this, _resourcedIds)[_resourcedIds],
-	    resources: babelHelpers.classPrivateFieldLooseBase(this, _resources$1)[_resources$1],
+	    selectedIds: babelHelpers.classPrivateFieldLooseBase(this, _resourcesIds)[_resourcesIds],
 	    onSave: babelHelpers.classPrivateFieldLooseBase(this, _saveResourceSelector)[_saveResourceSelector].bind(this),
 	    onClose: babelHelpers.classPrivateFieldLooseBase(this, _closeResourceSelector)[_closeResourceSelector].bind(this)
 	  }).createSelector();
 	  this.dialog.freeze();
 	  resourceSelector.show();
 	}
-	function _saveResourceSelector2({
+	async function _saveResourceSelector2({
 	  resourceIds
 	}) {
+	  await babelHelpers.classPrivateFieldLooseBase(this, _loadResources)[_loadResources](resourceIds);
 	  babelHelpers.classPrivateFieldLooseBase(this, _setResourceIds)[_setResourceIds](resourceIds);
 	}
 	function _closeResourceSelector2() {
@@ -664,7 +691,7 @@ this.BX.Booking = this.BX.Booking || {};
 	    '#ICON#': '×'
 	  });
 	  const resourcesCount = main_core.Loc.getMessage('BOOKING_CRM_FORMS_SETTINGS_RESOURCE_MANAGER_RESOURCES_COUNT', {
-	    '#COUNT#': `<span class="crm-form--booking--resources-manager--header-resources-count">${babelHelpers.classPrivateFieldLooseBase(this, _resourcedIds)[_resourcedIds].length}</span>`
+	    '#COUNT#': `<span class="crm-form--booking--resources-manager--header-resources-count">${babelHelpers.classPrivateFieldLooseBase(this, _resourcesIds)[_resourcesIds].length}</span>`
 	  });
 	  const {
 	    root,
@@ -898,15 +925,22 @@ this.BX.Booking = this.BX.Booking || {};
 	var _layout = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("layout");
 	var _bookingSettingsDataModel = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bookingSettingsDataModel");
 	var _isAutoSelectionOn$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isAutoSelectionOn");
+	var _resourceLoader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("resourceLoader");
+	var _loadingResources$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("loadingResources");
 	var _resourcesManagerButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("resourcesManagerButton");
 	var _initFields = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initFields");
-	var _getContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getContainer");
+	var _loadResources$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("loadResources");
+	var _setLoadingResources$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setLoadingResources");
+	var _filterAvailableResourceIds = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("filterAvailableResourceIds");
+	var _getHeaderContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getHeaderContainer");
+	var _getBodyContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getBodyContainer");
 	var _renderContent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderContent");
 	var _renderResource = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderResource");
 	var _showResourcesManager = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showResourcesManager");
+	var _getResourceIds = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getResourceIds");
 	var _setResourceIds$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setResourceIds");
 	var _updateResourcesCounter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateResourcesCounter");
-	var _updateResouceManagerButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateResouceManagerButton");
+	var _updateResourceManagerButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateResourceManagerButton");
 	var _renderLabelField = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderLabelField");
 	var _renderPlaceholderField = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderPlaceholderField");
 	var _renderHintField = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderHintField");
@@ -938,14 +972,17 @@ this.BX.Booking = this.BX.Booking || {};
 	    Object.defineProperty(this, _renderLabelField, {
 	      value: _renderLabelField2
 	    });
-	    Object.defineProperty(this, _updateResouceManagerButton, {
-	      value: _updateResouceManagerButton2
+	    Object.defineProperty(this, _updateResourceManagerButton, {
+	      value: _updateResourceManagerButton2
 	    });
 	    Object.defineProperty(this, _updateResourcesCounter, {
 	      value: _updateResourcesCounter2
 	    });
 	    Object.defineProperty(this, _setResourceIds$1, {
 	      value: _setResourceIds2$1
+	    });
+	    Object.defineProperty(this, _getResourceIds, {
+	      value: _getResourceIds2
 	    });
 	    Object.defineProperty(this, _showResourcesManager, {
 	      value: _showResourcesManager2
@@ -956,8 +993,20 @@ this.BX.Booking = this.BX.Booking || {};
 	    Object.defineProperty(this, _renderContent, {
 	      value: _renderContent2
 	    });
-	    Object.defineProperty(this, _getContainer, {
-	      value: _getContainer2
+	    Object.defineProperty(this, _getBodyContainer, {
+	      value: _getBodyContainer2
+	    });
+	    Object.defineProperty(this, _getHeaderContainer, {
+	      value: _getHeaderContainer2
+	    });
+	    Object.defineProperty(this, _filterAvailableResourceIds, {
+	      value: _filterAvailableResourceIds2
+	    });
+	    Object.defineProperty(this, _setLoadingResources$1, {
+	      value: _setLoadingResources2$1
+	    });
+	    Object.defineProperty(this, _loadResources$1, {
+	      value: _loadResources2$1
 	    });
 	    Object.defineProperty(this, _initFields, {
 	      value: _initFields2
@@ -978,6 +1027,14 @@ this.BX.Booking = this.BX.Booking || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    Object.defineProperty(this, _resourceLoader, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _loadingResources$1, {
+	      writable: true,
+	      value: false
+	    });
 	    Object.defineProperty(this, _resourcesManagerButton, {
 	      writable: true,
 	      value: null
@@ -988,15 +1045,16 @@ this.BX.Booking = this.BX.Booking || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _bookingSettingsDataModel)[_bookingSettingsDataModel] = new BookingSettingsDataModel(listItemOptions.sourceOptions.settingsData || {}, isAutoSelectionOn, templateId);
 	    babelHelpers.classPrivateFieldLooseBase(this, _initFields)[_initFields](babelHelpers.classPrivateFieldLooseBase(this, _bookingSettingsDataModel)[_bookingSettingsDataModel].form);
 	  }
-	  show() {
-	    const container = babelHelpers.classPrivateFieldLooseBase(this, _getContainer)[_getContainer]();
+	  async show() {
+	    await babelHelpers.classPrivateFieldLooseBase(this, _loadResources$1)[_loadResources$1](babelHelpers.classPrivateFieldLooseBase(this, _getResourceIds)[_getResourceIds]());
+	    const container = babelHelpers.classPrivateFieldLooseBase(this, _getBodyContainer)[_getBodyContainer]();
 	    main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _renderContent)[_renderContent](), container);
 	    BX.UI.Hint.init(container);
 	    babelHelpers.classPrivateFieldLooseBase(this, _updateResourcesCounter)[_updateResourcesCounter]();
 	    main_core.Dom.style(container, 'display', 'block');
 	  }
 	  close() {
-	    const container = babelHelpers.classPrivateFieldLooseBase(this, _getContainer)[_getContainer]();
+	    const container = babelHelpers.classPrivateFieldLooseBase(this, _getBodyContainer)[_getBodyContainer]();
 	    this.emit('onClose');
 	    main_core.Dom.style(container, 'display', 'none');
 	    main_core.Dom.clean(container);
@@ -1027,7 +1085,39 @@ this.BX.Booking = this.BX.Booking || {};
 	    hasSlotsAllAvailableResources
 	  }), babelHelpers.classPrivateFieldLooseBase(this, _isAutoSelectionOn$1)[_isAutoSelectionOn$1]);
 	}
-	function _getContainer2() {
+	async function _loadResources2$1(ids) {
+	  if (ids.length === 0) {
+	    return;
+	  }
+	  babelHelpers.classPrivateFieldLooseBase(this, _setLoadingResources$1)[_setLoadingResources$1](true);
+	  await resourceStore.ensure(babelHelpers.classPrivateFieldLooseBase(this, _getResourceIds)[_getResourceIds]());
+	  babelHelpers.classPrivateFieldLooseBase(this, _setResourceIds$1)[_setResourceIds$1](babelHelpers.classPrivateFieldLooseBase(this, _filterAvailableResourceIds)[_filterAvailableResourceIds](ids));
+	  babelHelpers.classPrivateFieldLooseBase(this, _setLoadingResources$1)[_setLoadingResources$1](false);
+	}
+	function _setLoadingResources2$1(loading) {
+	  const container = babelHelpers.classPrivateFieldLooseBase(this, _getHeaderContainer)[_getHeaderContainer]();
+	  babelHelpers.classPrivateFieldLooseBase(this, _loadingResources$1)[_loadingResources$1] = loading;
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _loadingResources$1)[_loadingResources$1]) {
+	    var _babelHelpers$classPr, _babelHelpers$classPr2;
+	    (_babelHelpers$classPr2 = (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _resourceLoader))[_resourceLoader]) != null ? _babelHelpers$classPr2 : _babelHelpers$classPr[_resourceLoader] = new main_loader.Loader({
+	      size: 40
+	    });
+	    main_core.Dom.style(container, 'opacity', 0.8);
+	    void babelHelpers.classPrivateFieldLooseBase(this, _resourceLoader)[_resourceLoader].show(container);
+	  } else {
+	    main_core.Dom.style(container, 'opacity', 1);
+	    void babelHelpers.classPrivateFieldLooseBase(this, _resourceLoader)[_resourceLoader].hide();
+	  }
+	}
+	function _filterAvailableResourceIds2(ids) {
+	  const availableResources = resourceStore.getAll();
+	  const availableResourceIds = new Set(availableResources.map(resource => resource.id));
+	  return ids.filter(id => availableResourceIds.has(id));
+	}
+	function _getHeaderContainer2() {
+	  return document.querySelector(`.landing-ui-component-list-item[data-id="${babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].id}"] .landing-ui-component-list-item-header`);
+	}
+	function _getBodyContainer2() {
 	  return document.querySelector(`.landing-ui-component-list-item[data-id="${babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].id}"] .landing-ui-component-list-item-body`);
 	}
 	function _renderContent2() {
@@ -1053,7 +1143,7 @@ this.BX.Booking = this.BX.Booking || {};
 			>
 				${0}
 			</button>
-		`), babelHelpers.classPrivateFieldLooseBase(this, _showResourcesManager)[_showResourcesManager].bind(this), babelHelpers.classPrivateFieldLooseBase(this, _bookingSettingsDataModel)[_bookingSettingsDataModel].form.resourceIds.length > 0 ? main_core.Loc.getMessage('BOOKING_CRM_FORMS_SETTINGS_RESOURCES_FIELD_CHANGE_BUTTON') : main_core.Loc.getMessage('BOOKING_CRM_FORMS_SETTINGS_RESOURCES_FIELD_ADD_BUTTON'));
+		`), babelHelpers.classPrivateFieldLooseBase(this, _showResourcesManager)[_showResourcesManager].bind(this), babelHelpers.classPrivateFieldLooseBase(this, _getResourceIds)[_getResourceIds]().length > 0 ? main_core.Loc.getMessage('BOOKING_CRM_FORMS_SETTINGS_RESOURCES_FIELD_CHANGE_BUTTON') : main_core.Loc.getMessage('BOOKING_CRM_FORMS_SETTINGS_RESOURCES_FIELD_ADD_BUTTON'));
 	  return main_core.Tag.render(_t3$1 || (_t3$1 = _$2`
 			<div class="landing-ui-field d-flex">
 				<div class="flex-grow-1">
@@ -1071,15 +1161,18 @@ this.BX.Booking = this.BX.Booking || {};
 	function _showResourcesManager2() {
 	  const resourcesManager = new ResourcesManager({
 	    target: babelHelpers.classPrivateFieldLooseBase(this, _resourcesManagerButton)[_resourcesManagerButton],
-	    selectedIds: babelHelpers.classPrivateFieldLooseBase(this, _bookingSettingsDataModel)[_bookingSettingsDataModel].form.resourceIds,
+	    selectedIds: babelHelpers.classPrivateFieldLooseBase(this, _getResourceIds)[_getResourceIds](),
 	    onUpdateResourceIds: resourceIds => {
 	      babelHelpers.classPrivateFieldLooseBase(this, _setResourceIds$1)[_setResourceIds$1](resourceIds);
 	      babelHelpers.classPrivateFieldLooseBase(this, _updateSettings)[_updateSettings]();
 	      babelHelpers.classPrivateFieldLooseBase(this, _updateResourcesCounter)[_updateResourcesCounter]();
-	      babelHelpers.classPrivateFieldLooseBase(this, _updateResouceManagerButton)[_updateResouceManagerButton]();
+	      babelHelpers.classPrivateFieldLooseBase(this, _updateResourceManagerButton)[_updateResourceManagerButton]();
 	    }
 	  });
 	  resourcesManager.show();
+	}
+	function _getResourceIds2() {
+	  return babelHelpers.classPrivateFieldLooseBase(this, _bookingSettingsDataModel)[_bookingSettingsDataModel].form.resourceIds;
 	}
 	function _setResourceIds2$1(resourceIds) {
 	  babelHelpers.classPrivateFieldLooseBase(this, _bookingSettingsDataModel)[_bookingSettingsDataModel].setSettingsData({
@@ -1088,16 +1181,16 @@ this.BX.Booking = this.BX.Booking || {};
 	  babelHelpers.classPrivateFieldLooseBase(this, _updateSettings)[_updateSettings]();
 	}
 	function _updateResourcesCounter2() {
-	  const counterEl = babelHelpers.classPrivateFieldLooseBase(this, _getContainer)[_getContainer]().querySelector('.crm-form--booking-resources-count');
+	  const counterEl = babelHelpers.classPrivateFieldLooseBase(this, _getBodyContainer)[_getBodyContainer]().querySelector('.crm-form--booking-resources-count');
 	  if (main_core.Type.isDomNode(counterEl)) {
-	    counterEl.innerText = babelHelpers.classPrivateFieldLooseBase(this, _bookingSettingsDataModel)[_bookingSettingsDataModel].form.resourceIds.length > 0 ? main_core.Loc.getMessage('BOOKING_CRM_FORMS_SETTINGS_RESOURCES_FIELD_TEXT', {
-	      '#COUNT#': babelHelpers.classPrivateFieldLooseBase(this, _bookingSettingsDataModel)[_bookingSettingsDataModel].form.resourceIds.length
+	    counterEl.innerText = babelHelpers.classPrivateFieldLooseBase(this, _getResourceIds)[_getResourceIds]().length > 0 ? main_core.Loc.getMessage('BOOKING_CRM_FORMS_SETTINGS_RESOURCES_FIELD_TEXT', {
+	      '#COUNT#': babelHelpers.classPrivateFieldLooseBase(this, _getResourceIds)[_getResourceIds]().length
 	    }) : main_core.Loc.getMessage('BOOKING_CRM_FORMS_SETTINGS_RESOURCES_FIELD_EMPTY');
 	  }
 	}
-	function _updateResouceManagerButton2() {
+	function _updateResourceManagerButton2() {
 	  if (main_core.Type.isDomNode(babelHelpers.classPrivateFieldLooseBase(this, _resourcesManagerButton)[_resourcesManagerButton])) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _resourcesManagerButton)[_resourcesManagerButton].innerText = babelHelpers.classPrivateFieldLooseBase(this, _bookingSettingsDataModel)[_bookingSettingsDataModel].form.resourceIds.length > 0 ? main_core.Loc.getMessage('BOOKING_CRM_FORMS_SETTINGS_RESOURCES_FIELD_CHANGE_BUTTON') : main_core.Loc.getMessage('BOOKING_CRM_FORMS_SETTINGS_RESOURCES_FIELD_ADD_BUTTON');
+	    babelHelpers.classPrivateFieldLooseBase(this, _resourcesManagerButton)[_resourcesManagerButton].innerText = babelHelpers.classPrivateFieldLooseBase(this, _getResourceIds)[_getResourceIds]().length > 0 ? main_core.Loc.getMessage('BOOKING_CRM_FORMS_SETTINGS_RESOURCES_FIELD_CHANGE_BUTTON') : main_core.Loc.getMessage('BOOKING_CRM_FORMS_SETTINGS_RESOURCES_FIELD_ADD_BUTTON');
 	  }
 	}
 	function _renderLabelField2() {
@@ -1154,6 +1247,17 @@ this.BX.Booking = this.BX.Booking || {};
 	    return this.settingsPopup.getSettings();
 	  }
 	  showSettingsPopup() {
+	    const isToolDisabled = main_core.Extension.getSettings('booking.crm-forms.settings').isToolDisabled;
+	    if (isToolDisabled) {
+	      main_core.Runtime.loadExtension('ui.info-helper').then(({
+	        InfoHelper
+	      }) => {
+	        InfoHelper.show('limit_v2_booking_off');
+	      }).catch(err => {
+	        console.error(err);
+	      });
+	      return;
+	    }
 	    const container = document.querySelector(`.landing-ui-component-list-item[data-id="${babelHelpers.classPrivateFieldLooseBase(this, _options$2)[_options$2].id}"] .landing-ui-component-list-item-body`);
 	    if (main_core.Dom.style(container, 'display') === 'block') {
 	      this.settingsPopup.close();
@@ -1165,5 +1269,5 @@ this.BX.Booking = this.BX.Booking || {};
 
 	exports.Settings = Settings;
 
-}((this.BX.Booking.CrmForms = this.BX.Booking.CrmForms || {}),BX.Event,BX.Booking.Provider.Service,BX.Booking.Const,BX.UI.EntitySelector,BX));
+}((this.BX.Booking.CrmForms = this.BX.Booking.CrmForms || {}),BX,BX.Booking.Provider.Service,BX.Event,BX.Booking.Const,BX.UI.EntitySelector,BX));
 //# sourceMappingURL=settings.bundle.js.map

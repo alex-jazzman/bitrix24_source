@@ -1,22 +1,3 @@
-.tasks-field-participant {
-	overflow: hidden;
-	max-width: -webkit-max-content;
-	max-width: max-content;
-	padding: 0 8px 0 1px;
-	margin: 0 -8px 0 -1px;
-	border-radius: var(--ui-border-radius-pill);
-}
-
-.tasks-field-participant:hover {
-	--hover-color: rgba(var(--ui-color-palette-black-solid-rgb), 0.03);
-	box-shadow: 0 0 0 2px var(--hover-color);
-	background: var(--hover-color);
-}
-
-.tasks-field-participant:focus-visible {
-	outline: var(--ui-border-width-thick) solid var(--ui-color-design-outline-a1-content-divider);
-}
-
 .tasks-field-participant-cant-change span {
 	border-bottom: var(--ui-border-width-thin) dashed rgba(var(--ui-color-palette-white-base-rgb), 0.5);
 	cursor: pointer;

@@ -19,8 +19,10 @@ export type ResourceCreationWizardState = {
 	companyScheduleUrl: string;
 	invalidResourceName: boolean;
 	invalidResourceType: boolean;
+	invalidIntegrationCalendarUser: boolean;
 	weekStart: string;
 	isChannelChoiceAvailable: boolean;
+	isIntegrationCalendarEnabled: boolean;
 	checkedForAll: { [type: string]: boolean };
 }
 

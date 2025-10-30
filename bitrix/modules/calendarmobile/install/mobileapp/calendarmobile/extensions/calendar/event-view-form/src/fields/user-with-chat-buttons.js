@@ -11,11 +11,8 @@ jn.define('calendar/event-view-form/fields/user-with-chat-buttons', (require, ex
 	const { UserFieldClass } = require('layout/ui/fields/user');
 	const { Icon, IconView } = require('ui-system/blocks/icon');
 	const { withTheme } = require('layout/ui/fields/theme');
-	const { FieldWrapper } = require('layout/ui/fields/theme/air/elements/field-wrapper');
 
-	const { EmptyContent } = require('layout/ui/fields/user/theme/air/src/empty-content');
-	const { EntityList } = require('layout/ui/fields/user/theme/air/src/entity-list');
-
+	const { UserFieldAirTheme } = require('calendar/layout/user-field-air-theme');
 	const { EventAjax } = require('calendar/ajax');
 	const { CollabManager } = require('calendar/data-managers/collab-manager');
 	const { CollabChatMenu, collabChatItemTypes } = require('calendar/event-view-form/collab-chat-menu');
@@ -64,6 +61,11 @@ jn.define('calendar/event-view-form/fields/user-with-chat-buttons', (require, ex
 		get meetingHost()
 		{
 			return this.props.meetingHost;
+		}
+
+		hasCustomTitle()
+		{
+			return false;
 		}
 
 		hasPermissions()
@@ -229,34 +231,7 @@ jn.define('calendar/event-view-form/fields/user-with-chat-buttons', (require, ex
 		}
 	}
 
-	const AirTheme = ({ field }) => FieldWrapper(
-		{ field },
-		View(
-			{
-				style: {
-					paddingVertical: field.isMultiple() ? 0 : Indent.L.toNumber(),
-					flexDirection: 'row',
-					alignItems: 'center',
-					...field.getStyles().airContainer,
-				},
-			},
-			field.isEmpty()
-				? View(
-					{
-						testId: `${field.testId}_CONTENT`,
-					},
-					EmptyContent({
-						testId: `${field.testId}_EMPTY_VIEW`,
-						icon: field.getDefaultLeftIcon(),
-						text: field.getEmptyText(),
-					}),
-				)
-				: EntityList({ field }),
-			!field.isEmpty() && field.hasPermissions() && field.renderRightIcons(),
-		),
-	);
-
 	module.exports = {
-		UserWithChatButtonsField: withTheme(UserWithChatButtonsField, AirTheme),
+		UserWithChatButtonsField: withTheme(UserWithChatButtonsField, UserFieldAirTheme),
 	};
 });

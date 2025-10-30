@@ -10,7 +10,6 @@ $MESS['SMOB_P_SELLING'] = 'Продажи товаров';
 $MESS['SMOB_C_SELLING'] = 'Продажи по клиентам';
 $MESS['SMOB_PRICE_LIST'] = 'Прайс лист';
 $MESS['SMOB_PRIVATE_OFFICE'] = 'Личный кабинет';
-$MESS['SMOB_PUSH_SETTINGS'] = 'Настройка пуш уведомлений';
 $MESS['SMOB_ORDER'] = 'Заказ';
 $MESS['SMOB_HISTORY'] = 'История';
 $MESS['SMOB_TRANSACT'] = 'Транзакции';

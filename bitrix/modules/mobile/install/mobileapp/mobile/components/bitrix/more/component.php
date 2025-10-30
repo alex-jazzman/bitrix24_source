@@ -368,7 +368,7 @@ if (!isset($events['visited_tab_presets']))
 	}
 }
 
-$usersCount = 0;
+$hasMoreThanOneUser = false;
 $isUserFirstTimeInInvitations = !isset($events['visit_invitations']);
 $isUserAdmin = (($isCloud ? \CBitrix24::isPortalAdmin($USER->GetID()) : $USER->isAdmin()));
 
@@ -379,7 +379,7 @@ if (
 	&& Loader::includeModule('intranetmobile')
 )
 {
-	$usersCount = (new \Bitrix\IntranetMobile\Provider\UserProvider())->getAllUsersCount();
+	$hasMoreThanOneUser = (new \Bitrix\IntranetMobile\Provider\UserProvider())->hasMoreThanOneUser();
 }
 
 $showDiskCounter = !isset($events['visited_disk_tabs']);
@@ -418,7 +418,7 @@ $arResult = array_merge($arResult, [
 		"rootStructureSectionId" => $rootStructureSectionId,
 	],
 	'customCounters' => [
-		'menu_invite' => ($isUserAdmin && $usersCount === 1 && $isUserFirstTimeInInvitations) ? 1 : 0,
+		'menu_invite' => ($isUserAdmin && $hasMoreThanOneUser && $isUserFirstTimeInInvitations) ? 1 : 0,
 		'menu_tab_presets' => $showPresetsCounter ? 1 : 0,
 		'menu_disk_tabs' => $showDiskCounter ? 1 : 0,
 	],

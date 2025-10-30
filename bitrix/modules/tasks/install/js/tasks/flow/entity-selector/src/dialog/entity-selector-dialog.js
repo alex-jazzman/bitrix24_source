@@ -14,13 +14,15 @@ type FlowSelectorDialogParams = {
 	isExtranet: boolean,
 	toggleFlowParams: TaskEditToggleFlowParams | TaskViewToggleFlowParams,
 	flowParams: FlowParams,
+	canCreateFlow: boolean,
 }
 
 export class EntitySelectorDialog
 {
-	#isExtranet: boolean;
 	#toggleFlow: AbstractToggleFlow;
 	#flowParams: FlowParams;
+
+	#canCreateFlow: boolean;
 
 	#dialog: Dialog;
 	#selectedItemBeforeUpdate: Item;
@@ -28,7 +30,8 @@ export class EntitySelectorDialog
 	constructor(params: FlowSelectorDialogParams)
 	{
 		this.#flowParams = params.flowParams;
-		this.#isExtranet = params.isExtranet;
+
+		this.#canCreateFlow = params.canCreateFlow;
 
 		this.#toggleFlow = ToggleFlowFactory.get(params.toggleFlowParams);
 		this.#selectedItemBeforeUpdate = null;
@@ -127,7 +130,7 @@ export class EntitySelectorDialog
 				},
 			},
 			searchOptions: {
-				allowCreateItem: !this.#isExtranet,
+				allowCreateItem: this.#canCreateFlow,
 				footerOptions: {
 					label: BX.Loc.getMessage('TASKS_FLOW_ENTITY_SELECTOR_CREATE_BUTTON'),
 				},
@@ -135,12 +138,12 @@ export class EntitySelectorDialog
 			recentTabOptions: {
 				stub: 'BX.Tasks.Flow.EmptyStub',
 				stubOptions: {
-					showArrow: !this.#isExtranet,
+					showArrow: this.#canCreateFlow,
 				},
 			},
 		});
 
-		if (!this.#isExtranet)
+		if (this.#canCreateFlow)
 		{
 			this.#dialog = this.#addFooter(this.#dialog);
 		}

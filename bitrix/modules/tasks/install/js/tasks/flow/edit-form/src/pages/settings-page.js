@@ -30,10 +30,13 @@ export class SettingsPage extends FormPage
 		queueRadio: HTMLInputElement,
 		responsiblesQueueSelector: UserSelector,
 		responsiblesHimselfSelector: UserSelector,
+		responsiblesImmutableSelector: UserSelector,
 		manuallyDistribution: HTMLElement,
 		manuallyRadio: HTMLInputElement,
 		himselfDistribution: HTMLElement,
 		himselfRadio: HTMLInputElement,
+		immutableDistribution: HTMLElement,
+		immutableRadio: HTMLInputElement,
 		moderatorSelector: UserSelector,
 		responsibleCanChangeDeadline: ValueChecker,
 		notifyAtHalfTime: ValueChecker,
@@ -150,6 +153,7 @@ export class SettingsPage extends FormPage
 		Dom.removeClass(this.#layout.queueDistribution, '--active');
 		Dom.removeClass(this.#layout.manuallyDistribution, '--active');
 		Dom.removeClass(this.#layout.himselfDistribution, '--active');
+		Dom.removeClass(this.#layout.immutableDistribution, '--active');
 
 		if (this.#layout.queueRadio.checked)
 		{
@@ -164,6 +168,11 @@ export class SettingsPage extends FormPage
 		if (this.#layout.himselfRadio.checked)
 		{
 			Dom.addClass(this.#layout.himselfDistribution, '--active');
+		}
+
+		if (this.#layout.immutableRadio.checked)
+		{
+			Dom.addClass(this.#layout.immutableDistribution, '--active');
 		}
 	}
 
@@ -201,6 +210,9 @@ export class SettingsPage extends FormPage
 			case 'himself':
 				this.#layout.responsiblesHimselfSelector.setErrors([Loc.getMessage('TASKS_FLOW_EDIT_FORM_TASKS_RESPONSIBLES_ERROR')]);
 				break;
+			case 'immutable':
+				this.#layout.responsiblesImmutableSelector.setErrors([Loc.getMessage('TASKS_FLOW_EDIT_FORM_TASKS_RESPONSIBLES_ERROR')]);
+				break;
 		}
 	}
 
@@ -209,6 +221,7 @@ export class SettingsPage extends FormPage
 		this.#layout.projectSelector.cleanError();
 		this.#layout.responsiblesQueueSelector.cleanError();
 		this.#layout.responsiblesHimselfSelector.cleanError();
+		this.#layout.responsiblesImmutableSelector.cleanError();
 		this.#layout.moderatorSelector.cleanError();
 		this.#layout.taskTemplate.cleanError();
 	}
@@ -275,6 +288,9 @@ export class SettingsPage extends FormPage
 			case 'himself':
 				return this.#getResponsiblesFromSelector(this.#layout.responsiblesHimselfSelector);
 
+			case 'immutable':
+				return this.#getResponsiblesFromSelector(this.#layout.responsiblesImmutableSelector);
+
 			default:
 				return null;
 		}
@@ -292,6 +308,16 @@ export class SettingsPage extends FormPage
 		}
 
 		return null;
+	}
+
+	#addFlowTeamTooltip(): void
+	{
+		const immutableFieldLabel = this.#layout.immutableDistribution.querySelector('.ui-section__field-label');
+		if (Type.isDomNode(immutableFieldLabel))
+		{
+			const immutableDistributionTooltip = this.#renderImmutableFlowTeamTooltip();
+			Dom.append(immutableDistributionTooltip, immutableFieldLabel);
+		}
 	}
 
 	render(): HTMLElement
@@ -356,6 +382,7 @@ export class SettingsPage extends FormPage
 			id: 'task-template',
 			title: Loc.getMessage('TASKS_FLOW_EDIT_FORM_ACCEPT_TASKS_BY_TEMPLATE_TITLE'),
 			entitySelector: this.#getTaskTemplateDialog(),
+			isFieldDisabled: this.#flow.distributionType === 'immutable',
 		});
 
 		this.#layout.settingsPageForm = Tag.render`
@@ -386,6 +413,15 @@ export class SettingsPage extends FormPage
 
 		this.#layout.responsiblesHimselfSelector = this.#getResponsiblesSelector(
 			this.#flow.distributionType === 'himself' ? this.#flow.responsibleList : [],
+		);
+
+		this.#layout.responsiblesImmutableSelector = this.#getResponsiblesSelector(
+			(
+				this.#flow.distributionType === 'immutable'
+				&& Type.isArrayFilled(this.#flow.responsibleList)
+			)
+				? this.#flow.responsibleList
+				: [['user', this.#currentUser]],
 		);
 
 		this.#layout.moderatorSelector = new UserSelector({
@@ -424,13 +460,28 @@ export class SettingsPage extends FormPage
 		this.#layout.himselfDistribution = himselfDistribution;
 		this.#layout.himselfRadio = himselfRadio;
 
+		const { root: immutableDistribution, radio: immutableRadio } = this.#renderDistributionType({
+			type: 'immutable',
+			selector: this.#layout.responsiblesImmutableSelector,
+		});
+		this.#layout.immutableDistribution = immutableDistribution;
+		this.#layout.immutableRadio = immutableRadio;
+
 		this.#layout.queueRadio.checked = this.#flow.distributionType === 'queue';
 		this.#layout.manuallyRadio.checked = this.#flow.distributionType === 'manually';
 		this.#layout.himselfRadio.checked = this.#flow.distributionType === 'himself';
+		this.#layout.immutableRadio.checked = this.#flow.distributionType === 'immutable';
 		this.update();
+
+		Event.bind(this.#layout.queueRadio, 'change', this.#onDistributionChange.bind(this));
+		Event.bind(this.#layout.manuallyRadio, 'change', this.#onDistributionChange.bind(this));
+		Event.bind(this.#layout.himselfRadio, 'change', this.#onDistributionChange.bind(this));
+		Event.bind(this.#layout.immutableRadio, 'change', this.#onDistributionChange.bind(this));
 
 		const selector = this.#layout.responsiblesHimselfSelector.getSelector();
 		selector.getDialog().subscribe('onHide', this.checkDepartmentUsersCount.bind(this, selector));
+
+		this.#addFlowTeamTooltip();
 
 		return Tag.render`
 			<div class="ui-section__field-container">
@@ -442,8 +493,24 @@ export class SettingsPage extends FormPage
 				${this.#layout.queueDistribution}
 				${this.#layout.manuallyDistribution}
 				${this.#layout.himselfDistribution}
+				${this.#layout.immutableDistribution}
 			</div>
 		`;
+	}
+
+	#onDistributionChange(): void
+	{
+		if (this.#layout.immutableRadio.checked)
+		{
+			this.#layout.taskTemplate?.disable(true);
+			this.#layout.taskTemplate?.setValue(false);
+		}
+		else
+		{
+			this.#layout.taskTemplate?.disable(false);
+		}
+
+		this.#layout.taskTemplate?.update();
 	}
 
 	#getResponsiblesSelector(
@@ -458,6 +525,7 @@ export class SettingsPage extends FormPage
 			enableDepartments,
 			values: responsibleValues,
 			label: Loc.getMessage('TASKS_FLOW_EDIT_FORM_DISTRIBUTION_QUEUE_SELECTOR_LABEL'),
+			className: 'tasks-flow__responsible-selector',
 			dialogEvents: {
 				onLoad: this.onDialogLoad,
 			},
@@ -493,6 +561,20 @@ export class SettingsPage extends FormPage
 					${selector?.render()}
 				</div>
 			</div>
+		`;
+	}
+
+	#renderImmutableFlowTeamTooltip(): HTMLElement
+	{
+		return Tag.render`
+			<span
+				data-id="immutableDistributionTooltip"
+				class="ui-hint ui-hint-flow-value-checker"
+				data-hint="${Loc.getMessage('TASKS_FLOW_EDIT_FORM_DISTRIBUTION_IMMUTABLE_TOOLTIP')}" 
+				data-hint-no-icon
+			>
+				<span class="ui-hint-icon ui-hint-icon-flow-value-checker"></span>
+			</span>
 		`;
 	}
 

@@ -30,7 +30,6 @@ $MESS["TASKS_SCRUM_TAG_ALREADY_EXISTS"] = "Такий тег уже існує."
 $MESS["TASKS_SCRUM_TASK_ADD_ERROR"] = "Сталася помилка створення завдання.";
 $MESS["TASKS_SCRUM_TASK_ADD_NAME_ERROR"] = "Не вказана назва завдання.";
 $MESS["TASKS_SCRUM_TASK_ATTACH_FILES_ERROR"] = "Сталася помилка прикріплення файлів до завдання.";
-$MESS["TASKS_SCRUM_TASK_RESPONSIBLE_UPDATE_ERROR"] = "Сталася помилка зміни відповідального.";
 $MESS["TASKS_SCRUM_TASK_RESPONSIBLE_UPDATE_ERROR_MSGVER_1"] = "Сталася помилка зміни виконавця.";
 $MESS["TASKS_SCRUM_TASK_TAG_ADD_ERROR"] = "Сталася помилка прикріплення тега до завдання.";
 $MESS["TASKS_SCRUM_TITLE"] = "Завдання";

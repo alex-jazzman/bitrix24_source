@@ -9,5 +9,6 @@ export declare enum SDKEvents {
     successBoardRenamed = "successBoardRenamed",
     errorBoardRenamed = "errorBoardRenamed",
     userIsKicked = "userIsKicked",
-    userConfirmKickFromBoard = "userConfirmKickFromBoard"
+    userConfirmKickFromBoard = "userConfirmKickFromBoard",
+    shareElementWithSocials = "shareElementWithSocials"
 }

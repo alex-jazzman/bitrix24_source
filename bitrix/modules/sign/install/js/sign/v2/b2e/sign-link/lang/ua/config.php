@@ -7,6 +7,7 @@ $MESS["SIGN_V2_B2E_LINK_EMPLOYEE_DISCLAIMER_MSGVER1"] = "Рекомендуєм�
 $MESS["SIGN_V2_B2E_LINK_EMPLOYEE_DOCUMENT_DATE"] = "Підписано #DATE#";
 $MESS["SIGN_V2_B2E_LINK_EMPLOYEE_SIGNED_DOC_BTN"] = "Завантажити";
 $MESS["SIGN_V2_B2E_LINK_EMPLOYEE_SIGNED_DOC_MSG"] = "Підписаний документ";
+$MESS["SIGN_V2_B2E_LINK_EMPLOYEE_SIGNED_DOC_NOT_READY"] = "Документ ще в обробці. Ви зможете завантажити його за кілька хвилин.";
 $MESS["SIGN_V2_B2E_LINK_ERROR_CODE_ACCESS_DENIED"] = "Немає доступу до документа";
 $MESS["SIGN_V2_B2E_LINK_ERROR_MESSAGE_PLACEHOLDER"] = "Спробуйте пізніше.";
 $MESS["SIGN_V2_B2E_LINK_ERROR_TITLE_PLACEHOLDER"] = "Щось пішло не так.";

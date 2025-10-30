@@ -19,6 +19,9 @@ type LimitsParams = {
 type FeaturesParams = {
 	isV2Enabled: boolean,
 	isMiniformEnabled: boolean,
+	isFlowEnabled: boolean,
+	isProjectsEnabled: boolean,
+	isTemplateEnabled: boolean,
 };
 
 type PathsParams = {

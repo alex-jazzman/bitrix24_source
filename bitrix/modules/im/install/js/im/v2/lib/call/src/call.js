@@ -280,6 +280,12 @@ export class CallManager
 
 	getCallUserLimit(): number
 	{
+		// TODO: add to 597100
+		if (!this.isAvailable())
+		{
+			return 0;
+		}
+
 		return BX.Call.Util.getUserLimit();
 	}
 

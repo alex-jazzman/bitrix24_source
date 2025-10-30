@@ -1,6 +1,5 @@
 <?php
 $MESS["BPAA_DESCR_CHANGES"] = "Changed fields";
-$MESS["BPAA_DESCR_CM"] = "Comment";
 $MESS["BPAA_DESCR_CM_1"] = "Notes";
 $MESS["BPAA_DESCR_LU"] = "Information supplied by";
 $MESS["BPAA_DESCR_TA1"] = "Auto complete";

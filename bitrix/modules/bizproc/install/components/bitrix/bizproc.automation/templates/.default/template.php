@@ -6,6 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\UI\Buttons\AirButtonStyle;
 
 \Bitrix\Main\Loader::includeModule('socialnetwork');
 
@@ -32,14 +33,15 @@ $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'b
 	'bizproc.debugger',
 	'sidepanel',
 	'ui.actionpanel',
+	'ui.banner-dispatcher',
 	'ui.buttons',
 	'ui.forms',
 	'ui.hint',
 	'ui.notification',
 	'ui.alerts',
+	'ui.dialogs.tooltip',
 	'ui.dialogs.messagebox',
 	'ui.entity-selector',
-	'ui.hint',
 	'ui.icon-set.main',
 ]);
 /**
@@ -191,14 +193,32 @@ if (!isset($arParams['HIDE_TOOLBAR']) || $arParams['HIDE_TOOLBAR'] !== 'Y')
 		$toolbar->addButton($categoryButton, \Bitrix\UI\Toolbar\ButtonLocation::AFTER_TITLE);
 	}
 
-	$search = sprintf('
-		<div class="ui-ctl ui-ctl-inline ui-ctl-before-icon ui-ctl-after-icon automation-toolbar-search">
-			<div class="ui-ctl-before ui-ctl-icon-search"></div>
-			<a class="ui-ctl-after ui-ctl-icon-clear" data-role="automation-search-clear"></a>
-			<input type="text" data-role="automation-search" class="ui-ctl-element automation-toolbar-search-input" placeholder="%s">
-		</div>',
-		Loc::getMessage('BIZPROC_AUTOMATION_CMP_SEARCH_PLACEHOLDER'));
-	$toolbar->addRightCustomHtml($search);
+	$buttonStyle = $arResult['NEW_ENTITIES_BUTTON_SHOW_HINT'] ? AirButtonStyle::FILLED : AirButtonStyle::OUTLINE;
+	$newEntitiesButton = new \Bitrix\UI\Buttons\Button([
+		'air' => true,
+		'style' => $buttonStyle,
+		'dataset' => [
+			'role' => 'automation-btn-new-entities',
+		],
+		'text' => Loc::getMessage('BIZPROC_AUTOMATION_NEW_ENTITIES_BUTTON_TEXT'),
+	]);
+	$newEntitiesButtonUniqId = $newEntitiesButton->getUniqId();
+
+	$toolbarRightCustomHtml = sprintf('
+		<div class="automatic-toolbar-search-new-entities-container">
+			<div class="ui-ctl ui-ctl-inline ui-ctl-before-icon ui-ctl-after-icon automation-toolbar-search">
+				<div class="ui-ctl-before ui-ctl-icon-search"></div>
+				<a class="ui-ctl-after ui-ctl-icon-clear" data-role="automation-search-clear"></a>
+				<input type="text" data-role="automation-search" class="ui-ctl-element automation-toolbar-search-input" placeholder="%s">
+			</div>
+			%s
+		</div>
+		',
+		htmlspecialcharsbx(Loc::getMessage('BIZPROC_AUTOMATION_CMP_SEARCH_PLACEHOLDER')),
+		$newEntitiesButton ? $newEntitiesButton->render() : '',
+	);
+
+	$toolbar->addRightCustomHtml($toolbarRightCustomHtml);
 }
 ?>
 
@@ -361,6 +381,8 @@ if (!isset($arParams['HIDE_TOOLBAR']) || $arParams['HIDE_TOOLBAR'] !== 'Y')
 
 					'DELAY_MIN_LIMIT_M' => $arResult['DELAY_MIN_LIMIT_M'],
 					'IS_WORKTIME_AVAILABLE' => $arResult['IS_WORKTIME_AVAILABLE'],
+					'NEW_ENTITIES_BUTTON_ID' => $newEntitiesButtonUniqId ?? '',
+					'NEW_ENTITIES_BUTTON_SHOW_HINT' => $arResult['NEW_ENTITIES_BUTTON_SHOW_HINT'] ?? '',
 				])?>, viewMode);
 		}
 	});

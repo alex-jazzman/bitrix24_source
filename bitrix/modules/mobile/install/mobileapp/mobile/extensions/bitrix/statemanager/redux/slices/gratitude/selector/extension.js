@@ -6,53 +6,27 @@ jn.define('statemanager/redux/slices/gratitude/selector', (require, exports, mod
 	const { createDraftSafeSelector } = require('statemanager/redux/toolkit');
 	const {
 		selectAll,
+		selectById,
 	} = gratitudeAdapter.getSelectors((state) => state[sliceName]);
 
 	const selectGratitudesByOwnerId = createDraftSafeSelector(
 		[selectAll, (_, userId) => userId],
-		(gratitudes, userId) => gratitudes.filter((gratitude) => gratitude?.ownerId === userId),
+		(gratitudes, userId) => gratitudes
+			.filter((gratitude) => gratitude?.ownerId === userId)
+			.sort((newer, older) => older.createdAt - newer.createdAt),
 	);
 
-	const selectGratitudesQuantityByOwnerId = createDraftSafeSelector(
-		[selectAll, (_, userId) => userId],
-		(gratitudes, userId) => gratitudes.reduce((
-			count,
-			gratitude,
-		) => (gratitude?.ownerId === userId ? count + 1 : count), 0),
-	);
-
-	const selectGratitudeById = createDraftSafeSelector(
-		[selectAll, (_, id) => id],
-		(gratitudes, id) => gratitudes.find((gratitude) => gratitude?.id === id),
-	);
-
-	const selectNameById = createDraftSafeSelector(
-		[selectAll, (_, id) => id],
-		(gratitudes, id) => gratitudes.find((gratitude) => gratitude?.id === id)?.name,
-	);
-
-	const selectRelatedPostIdById = createDraftSafeSelector(
-		[selectAll, (_, id) => id],
-		(gratitudes, id) => gratitudes.find((gratitude) => gratitude?.id === id)?.relatedPostId,
-	);
-
-	const selectCreatedAtById = createDraftSafeSelector(
-		[selectAll, (_, id) => id],
-		(gratitudes, id) => gratitudes.find((gratitude) => gratitude?.id === id)?.createdAt,
-	);
-
-	const selectTitleById = createDraftSafeSelector(
-		[selectAll, (_, id) => id],
-		(gratitudes, id) => gratitudes.find((gratitude) => gratitude?.id === id)?.title,
+	const selectGratitudeByPostId = createDraftSafeSelector(
+		[selectAll, (_, relatedId) => relatedId],
+		(gratitudes, relatedId) => gratitudes
+			.filter((gratitude) => gratitude?.relatedPostId === relatedId)
+			.sort((newer, older) => older.createdAt - newer.createdAt)[0],
 	);
 
 	module.exports = {
+		selectById,
+		selectAll,
 		selectGratitudesByOwnerId,
-		selectGratitudesQuantityByOwnerId,
-		selectGratitudeById,
-		selectNameById,
-		selectRelatedPostIdById,
-		selectCreatedAtById,
-		selectTitleById,
+		selectGratitudeByPostId,
 	};
 });

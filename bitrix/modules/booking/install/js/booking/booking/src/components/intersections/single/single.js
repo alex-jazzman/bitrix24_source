@@ -53,7 +53,6 @@ export const Single = {
 				showCreateButton: false,
 				maxHeight: 50,
 				dialogOptions: {
-					header: this.loc('BOOKING_BOOKING_ADD_INTERSECTION_DIALOG_HEADER'),
 					context: 'bookingResourceIntersection',
 					width: 290,
 					height: 340,

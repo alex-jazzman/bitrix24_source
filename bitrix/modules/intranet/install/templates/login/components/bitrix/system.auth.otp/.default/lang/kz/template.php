@@ -1,10 +1,9 @@
 <?php
-$MESS["AUTH_OTP_AUTHORIZE"] = "Кіру";
-$MESS["AUTH_OTP_AUTH_BACK"] = "Авторлану нысанына оралу";
-$MESS["AUTH_OTP_BACK"] = "Артқа";
-$MESS["AUTH_OTP_CAPTCHA_PROMT"] = "Картинадағы сөзді енгізіңіз";
-$MESS["AUTH_OTP_HELP_LINK"] = "Көмек керек пе?";
-$MESS["AUTH_OTP_HELP_TEXT_MSGVER_1"] = "
+$MESS["INTRANET_AUTH_OTP_BACK"] = "Артқа";
+$MESS["INTRANET_AUTH_OTP_CAPTCHA_PROMT"] = "Суреттегі әріптерді енгізіңіз";
+$MESS["INTRANET_AUTH_OTP_CONTINUE_BUTTON"] = "Жалғастыру";
+$MESS["INTRANET_AUTH_OTP_HELP"] = "Көмек";
+$MESS["INTRANET_AUTH_OTP_HELP_TEXT_MSGVER_1"] = "
 Сіздің Битрикс24-тегі деректеріңіздің қауіпсіздігі үшін, әкімші қосымша қорғанысты - екі сатылы авторландыруды қосты.
 Екі сатылы авторландыру - екі қорғаныс факторы болып табылады. Біріншісі-сіздің негізгі құпиясөзіңіз. Екінші қорғаныс факторы - бұл ұялы телефоныңызға (немесе арнайы салпыншақ арқылы) келетін бір реттік код<br/><br/>
 <div class=\"login-text-img\"><img src=\"#PATH#/images/ru/img1.png\"></div>
@@ -23,7 +22,8 @@ $MESS["AUTH_OTP_HELP_TEXT_MSGVER_1"] = "
 <br/>
 Егер сіз екі сатылы авторландыруды орнатып үлгермесеңіз немесе қосымшасы бар телефонды жоғалтсаңыз, Битрикс24-ке кіруді қалпына келтіру үшін компания әкімшісіне хабарласуыңыз керек.<br/><br/>
 Егер сіз әкімші болсаңыз, кіруді қалпына келтіру үшін <a href=\"https://www.bitrix24.ru/support/helpdesk/\"> техникалық қолдауға жүгініңіз</a>.";
-$MESS["AUTH_OTP_HELP_TITLE"] = "Екі сатылы авторландыру";
-$MESS["AUTH_OTP_OTP_MSGVER_1"] = "Бір реттік кодты енгізіңіз:";
-$MESS["AUTH_OTP_PLEASE_AUTH"] = "Авторландыру";
-$MESS["AUTH_OTP_REMEMBER_ME"] = "Осы компьютердегі бір реттік құпиясөзді есте сақтау";
+$MESS["INTRANET_AUTH_OTP_HELP_TITLE"] = "Екі сатылы авторландыру";
+$MESS["INTRANET_AUTH_OTP_LINK"] = "Кіру";
+$MESS["INTRANET_AUTH_OTP_PLACEHOLDER"] = "Бір реттік кодты енгізіңіз";
+$MESS["INTRANET_AUTH_OTP_REMEMBER_ME"] = "Осы құрылғыда есте сақтаңыз";
+$MESS["INTRANET_AUTH_OTP_TITLE"] = "Битрикс24 кіру";

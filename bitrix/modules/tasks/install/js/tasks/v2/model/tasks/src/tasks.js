@@ -6,6 +6,10 @@ import { Model } from 'tasks.v2.const';
 
 import type { TaskModel, TasksModelState } from './types';
 
+const aliasFields = {
+	datePlan: new Set(['startPlanTs', 'endPlanTs', 'matchesSubTasksTime']),
+};
+
 export class Tasks extends BuilderEntityModel<TasksModelState, TaskModel>
 {
 	getName(): string
@@ -31,6 +35,7 @@ export class Tasks extends BuilderEntityModel<TasksModelState, TaskModel>
 			epicId: 0,
 			accomplicesIds: [],
 			auditorsIds: [],
+			tags: [],
 			status: 'pending',
 			statusChangedTs: Date.now(),
 			needsControl: false,
@@ -38,6 +43,7 @@ export class Tasks extends BuilderEntityModel<TasksModelState, TaskModel>
 			rights: {
 				edit: true,
 				deadline: true,
+				datePlan: true,
 				delegate: true,
 			},
 		};
@@ -73,12 +79,12 @@ export class Tasks extends BuilderEntityModel<TasksModelState, TaskModel>
 			upsert: (state: TasksModelState, task: ?TaskModel): void => {
 				BuilderEntityModel.defaultModel.getMutations(this).upsert(state, task);
 
-				this.setFieldsFilled(state, task);
+				this.#setFieldsFilled(state, task);
 			},
 			update: (state: TasksModelState, { id, fields }: { id: number | string, fields: TaskModel }): void => {
 				BuilderEntityModel.defaultModel.getMutations(this).update(state, { id, fields });
 
-				this.setFieldsFilled(state, { id, ...fields });
+				this.#setFieldsFilled(state, { id, ...fields });
 			},
 			setFieldFilled: (state: TasksModelState, { id, fieldName }: { id: number, fieldName: string }): void => {
 				(state.collection[id].filledFields ??= {})[fieldName] = true;
@@ -91,12 +97,12 @@ export class Tasks extends BuilderEntityModel<TasksModelState, TaskModel>
 
 				state.collection[id].filledFields = {};
 
-				this.setFieldsFilled(state, state.collection[id]);
+				this.#setFieldsFilled(state, { id, ...state.collection[id] });
 			},
 		};
 	}
 
-	setFieldsFilled(state: TasksModelState, fields: TaskModel): void
+	#setFieldsFilled(state: TasksModelState, fields: TaskModel): void
 	{
 		const task = state.collection[fields.id];
 		const canEdit = task?.rights?.edit;
@@ -106,7 +112,7 @@ export class Tasks extends BuilderEntityModel<TasksModelState, TaskModel>
 			const isFilled = Boolean(value) && (!Array.isArray(value) || value.length > 0);
 			if (isFilled)
 			{
-				task.filledFields[fieldName] = true;
+				task.filledFields[this.#getAliasField(fieldName) ?? fieldName] = true;
 			}
 
 			if (!isFilled && !canEdit)
@@ -114,5 +120,10 @@ export class Tasks extends BuilderEntityModel<TasksModelState, TaskModel>
 				task.filledFields[fieldName] = false;
 			}
 		});
+	}
+
+	#getAliasField(fieldName: string): string
+	{
+		return Object.entries(aliasFields).find(([, alias]) => alias.has(fieldName))?.[0];
 	}
 }

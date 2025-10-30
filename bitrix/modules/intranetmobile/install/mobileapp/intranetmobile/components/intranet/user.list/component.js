@@ -118,6 +118,15 @@
 				this.onVisibleEmployeesChange,
 			);
 			this.prefetchAssets();
+
+			if (this.openInviteOnMount && this.canInvite)
+			{
+				openIntranetInviteWidget({
+					analytics: new AnalyticsEvent().setSection('userList'),
+					parentLayout: layout,
+					onInviteSentHandler: this.onInviteSuccess,
+				});
+			}
 		}
 
 		componentWillUnmount()
@@ -143,6 +152,11 @@
 		get canInvite()
 		{
 			return BX.componentParameters.get('canInvite', false);
+		}
+
+		get openInviteOnMount()
+		{
+			return BX.componentParameters.get('openInviteOnMount', false);
 		}
 
 		setSorting(sorting)

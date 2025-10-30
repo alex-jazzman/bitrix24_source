@@ -1,5 +1,6 @@
-import { BIcon } from 'ui.icon-set.api.vue';
-import { Animated, Outline } from 'ui.icon-set.api.core';
+import { Type } from 'main.core';
+import { mapGetters } from 'ui.vue3.vuex';
+import { BIcon, Animated, Outline } from 'ui.icon-set.api.vue';
 
 import { Model } from 'tasks.v2.const';
 import type { TaskModel } from 'tasks.v2.model.tasks';
@@ -22,6 +23,10 @@ export const CheckListList = {
 			type: [Number, String],
 			required: true,
 		},
+		isEmpty: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	emits: ['open', 'addFastCheckList'],
 	setup(): Object
@@ -35,25 +40,63 @@ export const CheckListList = {
 	data(): Object
 	{
 		return {
-			checkListManager: null,
+			isLoading: null,
 		};
 	},
 	computed: {
+		...mapGetters({
+			deletingCheckListIds: `${Model.Interface}/deletingCheckListIds`,
+			disableCheckListAnimations: `${Model.Interface}/disableCheckListAnimations`,
+		}),
 		task(): TaskModel
 		{
 			return this.$store.getters[`${Model.Tasks}/getById`](this.taskId);
+		},
+		isEdit(): boolean
+		{
+			return Type.isNumber(this.taskId) && this.taskId > 0;
 		},
 		checkLists(): CheckListModel[]
 		{
 			return this.$store.getters[`${Model.CheckList}/getByIds`](this.task.checklist);
 		},
-		isLoading(): boolean
+		isFilledEmpty(): boolean
 		{
-			return this.checkLists.length === 0;
+			return this.checkListLength === 0 && this.wasFilled;
+		},
+		checkListLength(): number
+		{
+			const deletingRootIds = Object.values(this.deletingCheckListIds);
+
+			const deletingIds = new Set();
+
+			deletingRootIds.forEach((rootId: string | number) => {
+				deletingIds.add(rootId);
+
+				this.checkListManager
+					.getAllChildren(rootId)
+					.forEach((child: CheckListModel) => {
+						deletingIds.add(child.id);
+					});
+			});
+
+			return this.checkLists.filter(({ id }) => !deletingIds.has(id)).length;
 		},
 		containsChecklist(): boolean
 		{
 			return this.task.containsChecklist;
+		},
+		wasFilled(): boolean
+		{
+			return this.$store.getters[`${Model.Tasks}/wasFieldFilled`](this.taskId, checkListMeta.id);
+		},
+		loading(): boolean
+		{
+			return this.isLoading === true && this.isEdit;
+		},
+		canCheckListAdd(): boolean
+		{
+			return this.task.rights.checklistAdd === true;
 		},
 	},
 	async created(): void
@@ -64,9 +107,13 @@ export const CheckListList = {
 			},
 		});
 
-		if (this.containsChecklist)
+		if (this.containsChecklist && this.checkLists.length === 0)
 		{
-			void this.loadData();
+			this.isLoading = true;
+
+			await this.loadData();
+
+			this.isLoading = false;
 		}
 	},
 	methods: {
@@ -79,25 +126,54 @@ export const CheckListList = {
 		<div
 			:data-task-field-id="checkListMeta.id"
 			class="tasks-check-list-list"
-			:class="{ '--default': isLoading }"
+			:class="{ '--default': loading || isFilledEmpty }"
 		>
 			<div
 				class="tasks-check-list-list-content"
-				:class="{ '--default': isLoading }"
+				:class="{ '--default': loading || isFilledEmpty }"
 			>
-				<template v-if="isLoading">
-					<div class="tasks-check-list-list-content-row">
-						<BIcon :name="Animated.LOADER_WAIT"/>
-						<div class="tasks-check-list-list-content-text">
-							{{ loc('TASKS_V2_CHECK_LIST_LOADING') }}
+				<Transition name="check-list-fade" mode="in-out" :css="!disableCheckListAnimations">
+					<div
+						v-if="loading"
+						key="loading"
+						class="tasks-check-list-list-transition-content"
+					>
+						<div class="tasks-check-list-list-content-row">
+							<BIcon :name="Animated.LOADER_WAIT"/>
+							<div class="tasks-check-list-list-content-text">
+								{{ loc('TASKS_V2_CHECK_LIST_LOADING') }}
+							</div>
 						</div>
 					</div>
-				</template>
-				<template v-else>
+				</Transition>
+				<Transition name="check-list-fade" mode="in-out" :css="!disableCheckListAnimations">
+					<div
+						v-if="!loading && isFilledEmpty"
+						key="empty"
+						class="tasks-check-list-list-transition-content"
+					>
+						<div class="tasks-check-list-list-content-row --stub" @click="$emit('addFastCheckList')">
+							<BIcon :name="Outline.CHECK_LIST"/>
+							<div class="tasks-check-list-list-content-text">
+								{{ loc('TASKS_V2_CHECK_LIST_CHIP_TITLE') }}
+							</div>
+							<BIcon class="tasks-check-list-list-content-row-plus" :name="Outline.PLUS_L"/>
+						</div>
+					</div>
+				</Transition>
+				<div
+					v-if="!loading && !isFilledEmpty"
+					key="content"
+					class="tasks-check-list-list-transition-content"
+				>
 					<slot></slot>
-					<div class="tasks-check-list-list-content-row --footer">
+					<div
+						v-if="canCheckListAdd"
+						class="tasks-check-list-list-content-row --footer"
+					>
 						<div
 							class="tasks-check-list-list-content-btn"
+							:class="{ '--empty': isEmpty }"
 							@click="$emit('addFastCheckList')"
 						>
 							<BIcon :name="Outline.PLUS_L"/>
@@ -106,7 +182,7 @@ export const CheckListList = {
 							</div>
 						</div>
 					</div>
-				</template>
+				</div>
 			</div>
 		</div>
 	`,

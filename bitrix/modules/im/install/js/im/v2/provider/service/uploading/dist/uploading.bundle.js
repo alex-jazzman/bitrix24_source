@@ -2,68 +2,83 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,im_v2_lib_rest,im_v2_application_core,im_v2_lib_logger,im_v2_lib_notifier,im_v2_provider_service_sending,main_core_events,im_v2_const,im_v2_lib_utils,main_core,ui_uploader_core) {
+(function (exports,im_v2_lib_rest,im_v2_lib_logger,im_v2_lib_notifier,im_v2_provider_service_sending,main_core_events,im_v2_application_core,im_v2_const,im_v2_lib_desktopApi,ui_uploader_core,im_v2_lib_utils,main_core) {
 	'use strict';
 
-	const MAX_FILES_IN_ONE_MESSAGE = 10;
-	var _uploaderRegistry = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("uploaderRegistry");
-	var _onUploadCancelHandler = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onUploadCancelHandler");
-	var _addFile = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("addFile");
-	var _onUploadCancel = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onUploadCancel");
-	var _removeFileFromUploader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("removeFileFromUploader");
-	class UploaderWrapper extends main_core_events.EventEmitter {
-	  constructor() {
-	    super();
-	    Object.defineProperty(this, _removeFileFromUploader, {
-	      value: _removeFileFromUploader2
-	    });
-	    Object.defineProperty(this, _onUploadCancel, {
-	      value: _onUploadCancel2
-	    });
-	    Object.defineProperty(this, _addFile, {
-	      value: _addFile2
-	    });
-	    Object.defineProperty(this, _uploaderRegistry, {
+	var _store = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
+	class UploaderVideoCompressionFilter extends ui_uploader_core.Filter {
+	  constructor(...args) {
+	    super(...args);
+	    Object.defineProperty(this, _store, {
 	      writable: true,
-	      value: {}
+	      value: null
 	    });
-	    Object.defineProperty(this, _onUploadCancelHandler, {
+	    babelHelpers.classPrivateFieldLooseBase(this, _store)[_store] = im_v2_application_core.Core.getStore();
+	  }
+	  async apply(file) {
+	    if (file.isVideo() && !file.shouldTreatImageAsFile() && im_v2_lib_desktopApi.DesktopApi.isMediaCompressorAvailable()) {
+	      await this.setModelFileStatus(file.getId(), im_v2_const.FileStatus.preparing);
+	      const compressor = im_v2_lib_desktopApi.DesktopApi.createMediaCompressor();
+	      const cancelPromise = new Promise(resolve => {
+	        file.subscribeOnce(ui_uploader_core.FileEvent.REMOVE_COMPLETE, () => {
+	          compressor.cancel();
+	          compressor.removeCompressedFile();
+	          file.remove();
+	          resolve(null);
+	        });
+	      });
+	      const compressedFile = await Promise.race([compressor.compress(file.getBinary()), cancelPromise]);
+	      if (compressedFile) {
+	        file.setFile(compressedFile);
+	        file.setName(compressedFile.name);
+	        file.subscribeOnce(ui_uploader_core.FileEvent.UPLOAD_COMPLETE, () => {
+	          compressor.removeCompressedFile();
+	        });
+	      }
+	    }
+	  }
+	  setModelFileStatus(id, status) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('files/update', {
+	      id,
+	      fields: {
+	        status
+	      }
+	    });
+	  }
+	}
+
+	var _id = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("id");
+	var _uploader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("uploader");
+	var _customData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("customData");
+	class UploaderWrapper extends main_core_events.EventEmitter {
+	  constructor({
+	    uploaderId,
+	    uploaderOptions,
+	    events,
+	    customData
+	  }) {
+	    super();
+	    Object.defineProperty(this, _id, {
 	      writable: true,
 	      value: void 0
 	    });
-	    this.setEventNamespace(UploaderWrapper.eventNamespace);
-	    babelHelpers.classPrivateFieldLooseBase(this, _onUploadCancelHandler)[_onUploadCancelHandler] = babelHelpers.classPrivateFieldLooseBase(this, _onUploadCancel)[_onUploadCancel].bind(this);
-	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.uploader.cancel, babelHelpers.classPrivateFieldLooseBase(this, _onUploadCancelHandler)[_onUploadCancelHandler]);
-	  }
-	  createUploader(options) {
-	    const {
-	      diskFolderId,
-	      uploaderId,
-	      chatId,
-	      dialogId,
-	      autoUpload = false,
-	      maxParallelLoads,
-	      maxParallelUploads
-	    } = options;
-	    babelHelpers.classPrivateFieldLooseBase(this, _uploaderRegistry)[_uploaderRegistry][uploaderId] = new ui_uploader_core.Uploader({
-	      autoUpload,
-	      maxParallelLoads,
-	      maxParallelUploads,
-	      controller: 'disk.uf.integration.diskUploaderController',
+	    Object.defineProperty(this, _uploader, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _customData, {
+	      writable: true,
+	      value: {}
+	    });
+	    this.setEventNamespace(UploaderWrapper.EVENT_NAMESPACE);
+	    this.subscribeFromOptions(events);
+	    babelHelpers.classPrivateFieldLooseBase(this, _id)[_id] = uploaderId;
+	    babelHelpers.classPrivateFieldLooseBase(this, _uploader)[_uploader] = new ui_uploader_core.Uploader({
+	      controller: UploaderWrapper.CONTROLLER,
 	      multiple: true,
-	      controllerOptions: {
-	        folderId: diskFolderId,
-	        chat: {
-	          chatId,
-	          dialogId
-	        }
-	      },
 	      imageResizeWidth: 1280,
 	      imageResizeHeight: 1280,
 	      imageResizeMode: 'contain',
-	      imageResizeFilter: file => {
-	        return !file.getCustomData('sendAsFile') && !file.isAnimated();
-	      },
 	      imageResizeMimeType: 'image/jpeg',
 	      imageResizeMimeTypeMode: 'force',
 	      imagePreviewHeight: 720,
@@ -71,137 +86,161 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      treatOversizeImageAsFile: true,
 	      ignoreUnknownImageTypes: true,
 	      maxFileSize: null,
+	      imageResizeFilter: file => {
+	        return !file.getCustomData('sendAsFile') && !file.isAnimated();
+	      },
+	      ...uploaderOptions,
 	      events: {
 	        [ui_uploader_core.UploaderEvent.FILE_ADD_START]: event => {
-	          this.emit(UploaderWrapper.events.onFileAddStart, {
-	            ...event.getData(),
-	            uploaderId
-	          });
-	        },
-	        [ui_uploader_core.UploaderEvent.FILE_UPLOAD_START]: event => {
-	          this.emit(UploaderWrapper.events.onFileUploadStart, {
+	          this.emit(UploaderWrapper.Event.onFileAddStart, {
 	            ...event.getData(),
 	            uploaderId
 	          });
 	        },
 	        [ui_uploader_core.UploaderEvent.FILE_ADD]: event => {
-	          this.emit(UploaderWrapper.events.onFileAdd, {
+	          this.emit(UploaderWrapper.Event.onFileAdd, {
+	            ...event.getData(),
+	            uploaderId
+	          });
+	        },
+	        [ui_uploader_core.UploaderEvent.FILE_LOAD_COMPLETE]: event => {
+	          this.emit(UploaderWrapper.Event.onFileLoadComplete, {
+	            ...event.getData(),
+	            uploaderId
+	          });
+	        },
+	        [ui_uploader_core.UploaderEvent.FILE_STATE_CHANGE]: event => {
+	          this.emit(UploaderWrapper.Event.onFileStateChange, {
+	            ...event.getData(),
+	            uploaderId
+	          });
+	        },
+	        [ui_uploader_core.UploaderEvent.FILE_STATUS_CHANGE]: event => {
+	          this.emit(UploaderWrapper.Event.onFileStatusChange, {
+	            ...event.getData(),
+	            uploaderId
+	          });
+	        },
+	        [ui_uploader_core.UploaderEvent.FILE_UPLOAD_START]: event => {
+	          this.emit(UploaderWrapper.Event.onFileUploadStart, {
 	            ...event.getData(),
 	            uploaderId
 	          });
 	        },
 	        [ui_uploader_core.UploaderEvent.FILE_UPLOAD_PROGRESS]: event => {
-	          this.emit(UploaderWrapper.events.onFileUploadProgress, {
+	          this.emit(UploaderWrapper.Event.onFileUploadProgress, {
 	            ...event.getData(),
 	            uploaderId
 	          });
 	        },
 	        [ui_uploader_core.UploaderEvent.FILE_UPLOAD_COMPLETE]: event => {
-	          this.emit(UploaderWrapper.events.onFileUploadComplete, {
+	          this.emit(UploaderWrapper.Event.onFileUploadComplete, {
 	            ...event.getData(),
 	            uploaderId
 	          });
 	        },
 	        [ui_uploader_core.UploaderEvent.ERROR]: event => {
-	          this.emit(UploaderWrapper.events.onFileUploadError, {
+	          this.emit(UploaderWrapper.Event.onFileUploadError, {
 	            ...event.getData(),
 	            uploaderId
 	          });
 	        },
 	        [ui_uploader_core.UploaderEvent.FILE_ERROR]: event => {
-	          this.emit(UploaderWrapper.events.onFileUploadError, {
+	          this.emit(UploaderWrapper.Event.onFileUploadError, {
 	            ...event.getData(),
 	            uploaderId
 	          });
 	        },
 	        [ui_uploader_core.UploaderEvent.MAX_FILE_COUNT_EXCEEDED]: event => {
-	          this.emit(UploaderWrapper.events.onMaxFileCountExceeded, {
+	          this.emit(UploaderWrapper.Event.onMaxFileCountExceeded, {
 	            ...event.getData(),
 	            uploaderId
 	          });
 	        },
 	        [ui_uploader_core.UploaderEvent.UPLOAD_COMPLETE]: event => {
-	          this.emit(UploaderWrapper.events.onUploadComplete, {
+	          this.emit(UploaderWrapper.Event.onUploadComplete, {
 	            ...event.getData(),
 	            uploaderId
 	          });
 	        }
-	      }
+	      },
+	      filters: [{
+	        type: ui_uploader_core.FilterType.PREPARATION,
+	        filter: UploaderVideoCompressionFilter
+	      }]
+	    });
+	    if (main_core.Type.isPlainObject(customData)) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _customData)[_customData] = customData;
+	    }
+	  }
+	  getId() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _id)[_id];
+	  }
+	  setCustomData(key, value) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _customData)[_customData][key] = value;
+	  }
+	  getCustomData(key) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _customData)[_customData][key];
+	  }
+	  addFiles(filesOptions) {
+	    const filesEntries = filesOptions.map(fileOption => {
+	      return Object.values(fileOption);
+	    });
+	    return babelHelpers.classPrivateFieldLooseBase(this, _uploader)[_uploader].addFiles(filesEntries);
+	  }
+	  removeFile(fileId) {
+	    var _babelHelpers$classPr;
+	    (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _uploader)[_uploader].getFile(fileId)) == null ? void 0 : _babelHelpers$classPr.remove == null ? void 0 : _babelHelpers$classPr.remove();
+	  }
+	  getFiles() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _uploader)[_uploader].getFiles();
+	  }
+	  getFilesIds() {
+	    return this.getFiles().map(file => {
+	      return file.getId();
 	    });
 	  }
-	  start(uploaderId) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _uploaderRegistry)[_uploaderRegistry][uploaderId].setAutoUpload(true);
-	    babelHelpers.classPrivateFieldLooseBase(this, _uploaderRegistry)[_uploaderRegistry][uploaderId].start();
-	  }
-	  stop(uploaderId) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _uploaderRegistry)[_uploaderRegistry][uploaderId].stop();
-	  }
-	  destroyUploader(uploaderId) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _uploaderRegistry)[_uploaderRegistry][uploaderId].destroy({
-	      removeFilesFromServer: false
+	  isAllPending() {
+	    return this.getFiles().every(currentFile => {
+	      return currentFile.getStatus() === ui_uploader_core.FileStatus.PENDING;
 	    });
-	    delete babelHelpers.classPrivateFieldLooseBase(this, _uploaderRegistry)[_uploaderRegistry][uploaderId];
 	  }
-	  addFiles(tasks) {
-	    const firstTenTasks = tasks.slice(0, MAX_FILES_IN_ONE_MESSAGE);
-	    const addedFiles = [];
-	    firstTenTasks.forEach(task => {
-	      const file = babelHelpers.classPrivateFieldLooseBase(this, _addFile)[_addFile](task);
-	      if (file) {
-	        addedFiles.push(file);
-	      }
+	  isAllCompleted() {
+	    return this.getFiles().every(currentFile => {
+	      return currentFile.getStatus() === ui_uploader_core.FileStatus.COMPLETE;
 	    });
-	    return addedFiles;
 	  }
-	  getFiles(uploaderId) {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _uploaderRegistry)[_uploaderRegistry][uploaderId].getFiles();
+	  getServerFilesIds() {
+	    return this.getFiles().map(file => {
+	      return file.getServerFileId().toString().slice(1);
+	    });
+	  }
+	  getBinaryFiles() {
+	    return this.getFiles().map(file => {
+	      return file.getBinary();
+	    });
+	  }
+	  start() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _uploader)[_uploader].setAutoUpload(true);
+	    babelHelpers.classPrivateFieldLooseBase(this, _uploader)[_uploader].start();
+	  }
+	  stop() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _uploader)[_uploader].stop();
 	  }
 	  destroy() {
-	    main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.uploader.cancel, babelHelpers.classPrivateFieldLooseBase(this, _onUploadCancelHandler)[_onUploadCancelHandler]);
+	    babelHelpers.classPrivateFieldLooseBase(this, _uploader)[_uploader].destroy({
+	      removeFilesFromServer: false
+	    });
 	  }
 	}
-	function _addFile2(task) {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _uploaderRegistry)[_uploaderRegistry][task.uploaderId].addFile(task.file, {
-	    id: task.tempFileId,
-	    customData: {
-	      dialogId: task.dialogId,
-	      chatId: task.chatId,
-	      tempMessageId: task.tempMessageId,
-	      sendAsFile: task.sendAsFile
-	    }
-	  });
-	}
-	function _onUploadCancel2(event) {
-	  const {
-	    tempFileId,
-	    tempMessageId
-	  } = event.getData();
-	  if (!tempFileId || !tempMessageId) {
-	    return;
-	  }
-	  babelHelpers.classPrivateFieldLooseBase(this, _removeFileFromUploader)[_removeFileFromUploader](tempFileId);
-	  this.emit(UploaderWrapper.events.onFileUploadCancel, {
-	    tempMessageId,
-	    tempFileId
-	  });
-	}
-	function _removeFileFromUploader2(tempFileId) {
-	  const uploaderList = Object.values(babelHelpers.classPrivateFieldLooseBase(this, _uploaderRegistry)[_uploaderRegistry]);
-	  for (const uploader of uploaderList) {
-	    if (!uploader.getFile) {
-	      continue;
-	    }
-	    const file = uploader.getFile(tempFileId);
-	    if (file) {
-	      file.remove();
-	      break;
-	    }
-	  }
-	}
-	UploaderWrapper.eventNamespace = 'BX.Messenger.v2.Service.Uploading.UploaderWrapper';
-	UploaderWrapper.events = {
+	UploaderWrapper.EVENT_NAMESPACE = 'BX.Messenger.v2.Service.Uploading.UploaderWrapper';
+	UploaderWrapper.CONTROLLER = 'disk.uf.integration.diskUploaderController';
+	UploaderWrapper.Event = {
 	  onFileAddStart: 'onFileAddStart',
 	  onFileAdd: 'onFileAdd',
+	  onFileLoadComplete: 'onFileLoadComplete',
+	  onFileStateChange: 'onFileStateChange',
+	  onFileStatusChange: 'onFileStatusChange',
 	  onFileUploadStart: 'onFileUploadStart',
 	  onFileUploadProgress: 'onFileUploadProgress',
 	  onFileUploadComplete: 'onFileUploadComplete',
@@ -211,56 +250,55 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  onUploadComplete: 'onUploadComplete'
 	};
 
+	function createDeferredPromise() {
+	  let resolve;
+	  let reject;
+	  const promise = new Promise((resolveRef, rejectRef) => {
+	    resolve = resolveRef;
+	    reject = rejectRef;
+	  });
+	  return {
+	    promise,
+	    resolve,
+	    reject
+	  };
+	}
+
 	const EVENT_NAMESPACE = 'BX.Messenger.v2.Service.UploadingService';
-	var _store = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
+	var _store$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
 	var _restClient = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("restClient");
 	var _isRequestingDiskFolderId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isRequestingDiskFolderId");
 	var _diskFolderIdRequestPromise = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("diskFolderIdRequestPromise");
-	var _uploaderWrapper = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("uploaderWrapper");
+	var _uploaderWrappers = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("uploaderWrappers");
 	var _sendingService = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendingService");
-	var _uploaderFilesRegistry = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("uploaderFilesRegistry");
 	var _queue = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("queue");
 	var _isUploading = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isUploading");
 	var _createUploader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createUploader");
 	var _addToQueue = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("addToQueue");
 	var _processQueue = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("processQueue");
 	var _addFileFromDiskToModel = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("addFileFromDiskToModel");
-	var _initUploader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initUploader");
 	var _isMediaFile = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isMediaFile");
 	var _setFileMapping = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setFileMapping");
 	var _requestDiskFolderId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("requestDiskFolderId");
-	var _tryCommit = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("tryCommit");
 	var _uploadPreview = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("uploadPreview");
-	var _prepareFileForUploader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareFileForUploader");
 	var _updateFileProgress = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateFileProgress");
 	var _cancelUpload = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("cancelUpload");
+	var _getFileType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getFileType");
 	var _addFileToStore = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("addFileToStore");
 	var _updateFilePreviewInStore = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateFilePreviewInStore");
+	var _updateFileTypeInStore = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateFileTypeInStore");
 	var _updateFileSizeInStore = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateFileSizeInStore");
-	var _preparePreview = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("preparePreview");
 	var _getDiskFolderId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDiskFolderId");
-	var _getFileType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getFileType");
-	var _getFileExtension = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getFileExtension");
 	var _getDialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDialog");
 	var _getCurrentUser = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCurrentUser");
 	var _getChatId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getChatId");
-	var _registerFiles = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerFiles");
-	var _unregisterFiles = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("unregisterFiles");
-	var _setPreviewCreatedStatus = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setPreviewCreatedStatus");
-	var _setPreviewSentStatus = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setPreviewSentStatus");
 	var _setMessagesText = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setMessagesText");
-	var _setAutoUpload = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setAutoUpload");
-	var _createMessagesFromFiles = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createMessagesFromFiles");
 	var _createMessageFromFiles = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createMessageFromFiles");
-	var _readyToAddMessages = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("readyToAddMessages");
-	var _readyToCommit = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("readyToCommit");
 	var _tryToSendMessage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("tryToSendMessage");
-	var _tryToSendMessages = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("tryToSendMessages");
 	var _prepareFileFromDisk = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareFileFromDisk");
 	var _isMaxFileSizeExceeded = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isMaxFileSizeExceeded");
 	var _setMessageError = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setMessageError");
 	var _destroyUploader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("destroyUploader");
-	var _getBinaryFiles = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getBinaryFiles");
 	class UploadingService extends main_core_events.EventEmitter {
 	  static getInstance() {
 	    if (!this.instance) {
@@ -270,9 +308,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	  constructor() {
 	    super();
-	    Object.defineProperty(this, _getBinaryFiles, {
-	      value: _getBinaryFiles2
-	    });
 	    Object.defineProperty(this, _destroyUploader, {
 	      value: _destroyUploader2
 	    });
@@ -285,41 +320,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    Object.defineProperty(this, _prepareFileFromDisk, {
 	      value: _prepareFileFromDisk2
 	    });
-	    Object.defineProperty(this, _tryToSendMessages, {
-	      value: _tryToSendMessages2
-	    });
 	    Object.defineProperty(this, _tryToSendMessage, {
 	      value: _tryToSendMessage2
-	    });
-	    Object.defineProperty(this, _readyToCommit, {
-	      value: _readyToCommit2
-	    });
-	    Object.defineProperty(this, _readyToAddMessages, {
-	      value: _readyToAddMessages2
 	    });
 	    Object.defineProperty(this, _createMessageFromFiles, {
 	      value: _createMessageFromFiles2
 	    });
-	    Object.defineProperty(this, _createMessagesFromFiles, {
-	      value: _createMessagesFromFiles2
-	    });
-	    Object.defineProperty(this, _setAutoUpload, {
-	      value: _setAutoUpload2
-	    });
 	    Object.defineProperty(this, _setMessagesText, {
 	      value: _setMessagesText2
-	    });
-	    Object.defineProperty(this, _setPreviewSentStatus, {
-	      value: _setPreviewSentStatus2
-	    });
-	    Object.defineProperty(this, _setPreviewCreatedStatus, {
-	      value: _setPreviewCreatedStatus2
-	    });
-	    Object.defineProperty(this, _unregisterFiles, {
-	      value: _unregisterFiles2
-	    });
-	    Object.defineProperty(this, _registerFiles, {
-	      value: _registerFiles2
 	    });
 	    Object.defineProperty(this, _getChatId, {
 	      value: _getChatId2
@@ -330,20 +338,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    Object.defineProperty(this, _getDialog, {
 	      value: _getDialog2
 	    });
-	    Object.defineProperty(this, _getFileExtension, {
-	      value: _getFileExtension2
-	    });
-	    Object.defineProperty(this, _getFileType, {
-	      value: _getFileType2
-	    });
 	    Object.defineProperty(this, _getDiskFolderId, {
 	      value: _getDiskFolderId2
 	    });
-	    Object.defineProperty(this, _preparePreview, {
-	      value: _preparePreview2
-	    });
 	    Object.defineProperty(this, _updateFileSizeInStore, {
 	      value: _updateFileSizeInStore2
+	    });
+	    Object.defineProperty(this, _updateFileTypeInStore, {
+	      value: _updateFileTypeInStore2
 	    });
 	    Object.defineProperty(this, _updateFilePreviewInStore, {
 	      value: _updateFilePreviewInStore2
@@ -351,20 +353,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    Object.defineProperty(this, _addFileToStore, {
 	      value: _addFileToStore2
 	    });
+	    Object.defineProperty(this, _getFileType, {
+	      value: _getFileType2
+	    });
 	    Object.defineProperty(this, _cancelUpload, {
 	      value: _cancelUpload2
 	    });
 	    Object.defineProperty(this, _updateFileProgress, {
 	      value: _updateFileProgress2
 	    });
-	    Object.defineProperty(this, _prepareFileForUploader, {
-	      value: _prepareFileForUploader2
-	    });
 	    Object.defineProperty(this, _uploadPreview, {
 	      value: _uploadPreview2
-	    });
-	    Object.defineProperty(this, _tryCommit, {
-	      value: _tryCommit2
 	    });
 	    Object.defineProperty(this, _requestDiskFolderId, {
 	      value: _requestDiskFolderId2
@@ -374,9 +373,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    });
 	    Object.defineProperty(this, _isMediaFile, {
 	      value: _isMediaFile2
-	    });
-	    Object.defineProperty(this, _initUploader, {
-	      value: _initUploader2
 	    });
 	    Object.defineProperty(this, _addFileFromDiskToModel, {
 	      value: _addFileFromDiskToModel2
@@ -390,7 +386,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    Object.defineProperty(this, _createUploader, {
 	      value: _createUploader2
 	    });
-	    Object.defineProperty(this, _store, {
+	    Object.defineProperty(this, _store$1, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -406,17 +402,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      writable: true,
 	      value: {}
 	    });
-	    Object.defineProperty(this, _uploaderWrapper, {
+	    Object.defineProperty(this, _uploaderWrappers, {
 	      writable: true,
-	      value: void 0
+	      value: new Map()
 	    });
 	    Object.defineProperty(this, _sendingService, {
 	      writable: true,
 	      value: void 0
-	    });
-	    Object.defineProperty(this, _uploaderFilesRegistry, {
-	      writable: true,
-	      value: {}
 	    });
 	    Object.defineProperty(this, _queue, {
 	      writable: true,
@@ -427,89 +419,43 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      value: false
 	    });
 	    this.setEventNamespace(EVENT_NAMESPACE);
-	    babelHelpers.classPrivateFieldLooseBase(this, _store)[_store] = im_v2_application_core.Core.getStore();
+	    babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1] = im_v2_application_core.Core.getStore();
 	    babelHelpers.classPrivateFieldLooseBase(this, _restClient)[_restClient] = im_v2_application_core.Core.getRestClient();
 	    babelHelpers.classPrivateFieldLooseBase(this, _sendingService)[_sendingService] = im_v2_provider_service_sending.SendingService.getInstance();
-	    babelHelpers.classPrivateFieldLooseBase(this, _initUploader)[_initUploader]();
 	  }
-	  async uploadFromClipboard(params) {
-	    const {
-	      clipboardEvent,
-	      dialogId,
-	      autoUpload,
-	      imagesOnly
-	    } = params;
-	    const {
-	      clipboardData
-	    } = clipboardEvent;
-	    if (!clipboardData || !ui_uploader_core.isFilePasted(clipboardData)) {
-	      return '';
-	    }
-	    clipboardEvent.preventDefault();
-	    let files = await ui_uploader_core.getFilesFromDataTransfer(clipboardData);
-	    if (imagesOnly) {
-	      files = files.filter(file => im_v2_lib_utils.Utils.file.isImage(file.name));
-	      if (imagesOnly.length === 0) {
-	        return '';
+
+	  // eslint-disable-next-line max-lines-per-function
+
+	  prepareFilesOptions(files, options, sendAsFile) {
+	    return files.map(file => {
+	      const id = im_v2_lib_utils.Utils.text.getUuidV4();
+	      if (main_core.Type.isFunction(file.getBinary)) {
+	        return {
+	          file: file.getBinary(),
+	          options: {
+	            ...file.toJSON(),
+	            clientPreview: file.getClientPreview(),
+	            id,
+	            customData: {
+	              ...options
+	            },
+	            treatImageAsFile: sendAsFile
+	          }
+	        };
 	      }
-	    }
-	    const {
-	      uploaderFiles,
-	      uploaderId
-	    } = await this.addFiles({
-	      files,
-	      dialogId,
-	      autoUpload
+	      return {
+	        file,
+	        options: {
+	          id,
+	          customData: {
+	            ...options
+	          },
+	          downloadUrl: URL.createObjectURL(file)
+	        }
+	      };
 	    });
-	    if (uploaderFiles.length === 0) {
-	      return '';
-	    }
-	    return uploaderId;
 	  }
-	  async uploadFromInput(params) {
-	    const {
-	      event,
-	      sendAsFile,
-	      autoUpload,
-	      dialogId
-	    } = params;
-	    const rawFiles = Object.values(event.target.files);
-	    if (rawFiles.length === 0) {
-	      return '';
-	    }
-	    const {
-	      uploaderId
-	    } = await this.addFiles({
-	      files: rawFiles,
-	      dialogId,
-	      autoUpload,
-	      sendAsFile
-	    });
-	    return uploaderId;
-	  }
-	  async uploadFromDragAndDrop(params) {
-	    const {
-	      event,
-	      dialogId,
-	      autoUpload,
-	      sendAsFile
-	    } = params;
-	    event.preventDefault();
-	    const rawFiles = await ui_uploader_core.getFilesFromDataTransfer(event.dataTransfer);
-	    if (rawFiles.length === 0) {
-	      return '';
-	    }
-	    const {
-	      uploaderId
-	    } = await this.addFiles({
-	      files: rawFiles,
-	      dialogId,
-	      autoUpload,
-	      sendAsFile
-	    });
-	    return uploaderId;
-	  }
-	  addFiles(params) {
+	  async addFiles(params) {
 	    const {
 	      files,
 	      dialogId,
@@ -518,34 +464,43 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      maxParallelUploads,
 	      maxParallelLoads
 	    } = params;
-	    const uploaderParams = {
+	    const {
+	      uploaderWrapper,
+	      loadAllComplete,
+	      uploadAllComplete
+	    } = await babelHelpers.classPrivateFieldLooseBase(this, _createUploader)[_createUploader]({
 	      dialogId,
 	      autoUpload,
+	      sendAsFile,
 	      maxParallelUploads,
 	      maxParallelLoads
-	    };
-	    return babelHelpers.classPrivateFieldLooseBase(this, _createUploader)[_createUploader](uploaderParams).then(uploaderId => {
-	      const filesForUploader = [];
-	      files.forEach(file => {
-	        const preparedFile = babelHelpers.classPrivateFieldLooseBase(this, _prepareFileForUploader)[_prepareFileForUploader](file, dialogId, uploaderId, sendAsFile);
-	        filesForUploader.push(preparedFile);
-	      });
-	      const addedFiles = babelHelpers.classPrivateFieldLooseBase(this, _uploaderWrapper)[_uploaderWrapper].addFiles(filesForUploader);
-	      babelHelpers.classPrivateFieldLooseBase(this, _registerFiles)[_registerFiles](uploaderId, addedFiles, dialogId, autoUpload);
-	      return {
-	        uploaderFiles: addedFiles,
-	        uploaderId
-	      };
 	    });
+	    const uploaderId = uploaderWrapper.getId();
+	    const chatId = babelHelpers.classPrivateFieldLooseBase(this, _getChatId)[_getChatId](dialogId);
+	    babelHelpers.classPrivateFieldLooseBase(this, _uploaderWrappers)[_uploaderWrappers].set(uploaderId, uploaderWrapper);
+	    const filesOptions = this.prepareFilesOptions(files, {
+	      chatId,
+	      dialogId
+	    }, sendAsFile);
+	    const uploaderFiles = uploaderWrapper.addFiles(filesOptions);
+	    return {
+	      uploaderFiles,
+	      uploaderId,
+	      loadAllComplete,
+	      uploadAllComplete
+	    };
 	  }
 	  getFiles(uploaderId) {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _uploaderWrapper)[_uploaderWrapper].getFiles(uploaderId);
+	    return babelHelpers.classPrivateFieldLooseBase(this, _uploaderWrappers)[_uploaderWrappers].get(uploaderId).getFiles();
 	  }
 	  start(uploaderId) {
+	    this.getFiles(uploaderId).forEach(file => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _updateFileProgress)[_updateFileProgress](file.getId(), 0, im_v2_const.FileStatus.progress);
+	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _addToQueue)[_addToQueue](uploaderId);
 	  }
 	  stop(uploaderId) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _uploaderWrapper)[_uploaderWrapper].stop(uploaderId);
+	    babelHelpers.classPrivateFieldLooseBase(this, _uploaderWrappers)[_uploaderWrappers].get(uploaderId).stop();
 	  }
 	  uploadFileFromDisk(files, dialogId) {
 	    Object.values(files).forEach(file => {
@@ -610,33 +565,19 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    });
 	  }
 	  commitMessage(uploaderId) {
-	    const dialogId = babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId].dialogId;
-	    const chatId = babelHelpers.classPrivateFieldLooseBase(this, _getChatId)[_getChatId](dialogId);
-	    const fileIds = babelHelpers.classPrivateFieldLooseBase(this, _uploaderWrapper)[_uploaderWrapper].getFiles(uploaderId).map(file => {
-	      return file.getServerFileId().toString().slice(1);
-	    });
-	    const sendAsFile = babelHelpers.classPrivateFieldLooseBase(this, _uploaderWrapper)[_uploaderWrapper].getFiles(uploaderId).every(file => {
-	      return file.getCustomData('sendAsFile');
-	    });
+	    const uploader = babelHelpers.classPrivateFieldLooseBase(this, _uploaderWrappers)[_uploaderWrappers].get(uploaderId);
+	    const chatId = uploader.getCustomData('chatId');
+	    const sendAsFile = uploader.getCustomData('sendAsFile');
+	    const text = uploader.getCustomData('text');
+	    const tempMessageId = uploader.getCustomData('tempMessageId');
+	    const fileIds = uploader.getServerFilesIds();
 	    return babelHelpers.classPrivateFieldLooseBase(this, _restClient)[_restClient].callMethod(im_v2_const.RestMethod.imDiskFileCommit, {
 	      chat_id: chatId,
-	      message: babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId].text,
-	      template_id: babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId].tempMessageId,
-	      // file_template_id: temporaryFileId,
+	      message: text,
+	      template_id: tempMessageId,
 	      as_file: sendAsFile ? 'Y' : 'N',
 	      upload_id: fileIds
 	    });
-	  }
-	  // we don't use it now, because we always send several files in ONE message
-	  // noinspection JSUnusedGlobalSymbols
-	  sendSeparateMessagesWithFiles(params) {
-	    const {
-	      uploaderId,
-	      text
-	    } = params;
-	    babelHelpers.classPrivateFieldLooseBase(this, _setMessagesText)[_setMessagesText](uploaderId, text);
-	    babelHelpers.classPrivateFieldLooseBase(this, _setAutoUpload)[_setAutoUpload](uploaderId, true);
-	    babelHelpers.classPrivateFieldLooseBase(this, _tryToSendMessages)[_tryToSendMessages](uploaderId);
 	  }
 	  sendMessageWithFiles(params) {
 	    const {
@@ -644,11 +585,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      text
 	    } = params;
 	    babelHelpers.classPrivateFieldLooseBase(this, _setMessagesText)[_setMessagesText](uploaderId, text);
-	    babelHelpers.classPrivateFieldLooseBase(this, _setAutoUpload)[_setAutoUpload](uploaderId, true);
 	    babelHelpers.classPrivateFieldLooseBase(this, _tryToSendMessage)[_tryToSendMessage](uploaderId);
 	  }
 	  getUploaderIdByFileId(fileId) {
-	    const uploaderIds = Object.keys(babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry]);
+	    const uploaderIds = [...babelHelpers.classPrivateFieldLooseBase(this, _uploaderWrappers)[_uploaderWrappers].keys()];
 	    return uploaderIds.find(uploaderId => {
 	      return this.getFiles(uploaderId).some(file => {
 	        return file.getId() === fileId;
@@ -661,44 +601,40 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      filesIds,
 	      restartUploading = false
 	    } = options;
-	    const files = babelHelpers.classPrivateFieldLooseBase(this, _uploaderWrapper)[_uploaderWrapper].getFiles(uploaderId).filter(file => {
+	    const files = babelHelpers.classPrivateFieldLooseBase(this, _uploaderWrappers)[_uploaderWrappers].get(uploaderId).getFiles().filter(file => {
 	      return filesIds.includes(file.getId());
 	    });
 	    files.forEach(file => {
 	      file.remove();
 	      file.abort();
 	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _unregisterFiles)[_unregisterFiles](uploaderId, files);
 	    if (restartUploading) {
 	      const [firstFile] = this.getFiles(uploaderId);
 	      if (firstFile) {
 	        firstFile.upload();
+	      } else {
+	        babelHelpers.classPrivateFieldLooseBase(this, _isUploading)[_isUploading] = false;
+	        babelHelpers.classPrivateFieldLooseBase(this, _processQueue)[_processQueue]();
 	      }
 	    }
 	  }
-	  destroy() {
-	    babelHelpers.classPrivateFieldLooseBase(this, _uploaderWrapper)[_uploaderWrapper].destroy();
-	  }
 	  async retry(uploaderId) {
+	    const uploaderWrapper = babelHelpers.classPrivateFieldLooseBase(this, _uploaderWrappers)[_uploaderWrappers].get(uploaderId);
+	    const dialogId = uploaderWrapper.getCustomData('dialogId');
+	    const text = uploaderWrapper.getCustomData('text');
+	    const tempMessageId = uploaderWrapper.getCustomData('tempMessageId');
+	    const binaryFiles = uploaderWrapper.getBinaryFiles();
 	    const {
-	      dialogId,
-	      text,
-	      tempMessageId
-	    } = babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId];
-	    const sendAsFile = this.getFiles(uploaderId).some(file => {
-	      return file.getCustomData('sendAsFile');
-	    });
-	    const binaryFiles = babelHelpers.classPrivateFieldLooseBase(this, _getBinaryFiles)[_getBinaryFiles](uploaderId);
-	    const {
-	      uploaderId: newUploaderId
+	      uploaderId: newUploaderId,
+	      loadAllComplete
 	    } = await this.addFiles({
 	      dialogId,
-	      files: binaryFiles,
-	      sendAsFile
+	      files: binaryFiles
 	    });
-	    void babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('messages/delete', {
-	      id: tempMessageId
+	    void babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].dispatch('messages/deleteLoadingMessageByMessageId', {
+	      messageId: tempMessageId
 	    });
+	    await loadAllComplete;
 	    this.sendMessageWithFiles({
 	      uploaderId: newUploaderId,
 	      text
@@ -706,27 +642,139 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _destroyUploader)[_destroyUploader](uploaderId);
 	  }
 	}
-	function _createUploader2(params) {
+	async function _createUploader2(params) {
 	  const {
 	    dialogId,
-	    autoUpload,
+	    autoUpload = false,
+	    sendAsFile = false,
 	    maxParallelUploads,
 	    maxParallelLoads
 	  } = params;
 	  const uploaderId = im_v2_lib_utils.Utils.text.getUuidV4();
 	  const chatId = babelHelpers.classPrivateFieldLooseBase(this, _getChatId)[_getChatId](dialogId);
-	  return this.checkDiskFolderId(dialogId).then(diskFolderId => {
-	    babelHelpers.classPrivateFieldLooseBase(this, _uploaderWrapper)[_uploaderWrapper].createUploader({
-	      diskFolderId,
-	      uploaderId,
+	  const folderId = await this.checkDiskFolderId(dialogId);
+	  const tempMessageId = im_v2_lib_utils.Utils.text.getUuidV4();
+	  const loadAllComplete = createDeferredPromise();
+	  const uploadAllComplete = createDeferredPromise();
+	  const uploadPreviewPromises = [];
+	  const uploaderWrapper = new UploaderWrapper({
+	    uploaderId,
+	    uploaderOptions: {
 	      autoUpload,
+	      maxParallelLoads,
+	      maxParallelUploads,
+	      controllerOptions: {
+	        folderId,
+	        chat: {
+	          chatId,
+	          dialogId
+	        }
+	      }
+	    },
+	    customData: {
 	      chatId,
 	      dialogId,
-	      maxParallelUploads,
-	      maxParallelLoads
-	    });
-	    return uploaderId;
+	      tempMessageId,
+	      sendAsFile
+	    },
+	    events: {
+	      [UploaderWrapper.Event.onFileAddStart]: event => {
+	        const {
+	          file
+	        } = event.getData();
+	        babelHelpers.classPrivateFieldLooseBase(this, _addFileToStore)[_addFileToStore](file, sendAsFile);
+	      },
+	      [UploaderWrapper.Event.onFileStatusChange]: event => {
+	        const {
+	          file
+	        } = event.getData();
+	        if (file.getStatus() === ui_uploader_core.FileStatus.PENDING) {
+	          if (babelHelpers.classPrivateFieldLooseBase(this, _isMediaFile)[_isMediaFile](file)) {
+	            babelHelpers.classPrivateFieldLooseBase(this, _updateFilePreviewInStore)[_updateFilePreviewInStore](file, sendAsFile);
+	          } else {
+	            babelHelpers.classPrivateFieldLooseBase(this, _updateFilePreviewInStore)[_updateFilePreviewInStore](file, sendAsFile);
+	            babelHelpers.classPrivateFieldLooseBase(this, _updateFileTypeInStore)[_updateFileTypeInStore](file, im_v2_const.FileType.file);
+	            file.setTreatImageAsFile(true);
+	            file.setCustomData('sendAsFile', true);
+	          }
+	          const target = event.getTarget();
+	          if (target.isAllPending()) {
+	            loadAllComplete.resolve();
+	          }
+	        }
+	      },
+	      [UploaderWrapper.Event.onFileUploadStart]: event => {
+	        const {
+	          file
+	        } = event.getData();
+	        babelHelpers.classPrivateFieldLooseBase(this, _updateFileSizeInStore)[_updateFileSizeInStore](file);
+	        this.emit(UploadingService.event.uploadStart);
+	      },
+	      [UploaderWrapper.Event.onFileUploadProgress]: event => {
+	        const {
+	          file
+	        } = event.getData();
+	        babelHelpers.classPrivateFieldLooseBase(this, _updateFileProgress)[_updateFileProgress](file.getId(), file.getProgress(), im_v2_const.FileStatus.upload);
+	      },
+	      [UploaderWrapper.Event.onFileUploadComplete]: async event => {
+	        const {
+	          file
+	        } = event.getData();
+	        const serverFileId = file.getServerFileId().toString().slice(1);
+	        const temporaryFileId = file.getId();
+	        if (babelHelpers.classPrivateFieldLooseBase(this, _isMediaFile)[_isMediaFile](file)) {
+	          babelHelpers.classPrivateFieldLooseBase(this, _setFileMapping)[_setFileMapping]({
+	            serverFileId,
+	            temporaryFileId
+	          });
+	        }
+	        babelHelpers.classPrivateFieldLooseBase(this, _updateFileProgress)[_updateFileProgress](temporaryFileId, file.getProgress(), im_v2_const.FileStatus.wait);
+	        uploadPreviewPromises.push(babelHelpers.classPrivateFieldLooseBase(this, _uploadPreview)[_uploadPreview](file));
+	        this.emit(UploadingService.event.uploadComplete);
+	      },
+	      [UploaderWrapper.Event.onFileUploadError]: event => {
+	        const {
+	          error
+	        } = event.getData();
+	        const target = event.getTarget();
+	        babelHelpers.classPrivateFieldLooseBase(this, _setMessageError)[_setMessageError](target.getCustomData('tempMessageId'));
+	        target.getFiles().forEach(uploaderFile => {
+	          babelHelpers.classPrivateFieldLooseBase(this, _updateFileProgress)[_updateFileProgress](uploaderFile.getId(), 0, im_v2_const.FileStatus.error);
+	        });
+	        if (babelHelpers.classPrivateFieldLooseBase(this, _isMaxFileSizeExceeded)[_isMaxFileSizeExceeded](error)) {
+	          im_v2_lib_notifier.Notifier.file.handleUploadError(error);
+	        }
+	        im_v2_lib_logger.Logger.error('UploadingService: upload error', error);
+	        this.emit(UploadingService.event.uploadError);
+	        babelHelpers.classPrivateFieldLooseBase(this, _isUploading)[_isUploading] = false;
+	        babelHelpers.classPrivateFieldLooseBase(this, _processQueue)[_processQueue]();
+	        this.stop(uploaderId);
+	      },
+	      [UploaderWrapper.Event.onFileUploadCancel]: event => {
+	        const {
+	          tempFileId
+	        } = event.getData();
+	        babelHelpers.classPrivateFieldLooseBase(this, _cancelUpload)[_cancelUpload](tempMessageId, tempFileId);
+	        this.emit(UploadingService.event.uploadCancel);
+	      },
+	      [UploaderWrapper.Event.onUploadComplete]: async event => {
+	        babelHelpers.classPrivateFieldLooseBase(this, _isUploading)[_isUploading] = false;
+	        babelHelpers.classPrivateFieldLooseBase(this, _processQueue)[_processQueue]();
+	        const target = event.getTarget();
+	        if (target.isAllCompleted()) {
+	          await Promise.all(uploadPreviewPromises);
+	          uploadAllComplete.resolve();
+	          await this.commitMessage(uploaderId);
+	          babelHelpers.classPrivateFieldLooseBase(this, _destroyUploader)[_destroyUploader](uploaderId);
+	        }
+	      }
+	    }
 	  });
+	  return {
+	    uploaderWrapper,
+	    loadAllComplete: loadAllComplete.promise,
+	    uploadAllComplete: uploadAllComplete.promise
+	  };
 	}
 	function _addToQueue2(uploaderId) {
 	  babelHelpers.classPrivateFieldLooseBase(this, _queue)[_queue].push(uploaderId);
@@ -738,11 +786,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	  babelHelpers.classPrivateFieldLooseBase(this, _isUploading)[_isUploading] = true;
 	  const uploaderId = babelHelpers.classPrivateFieldLooseBase(this, _queue)[_queue].shift();
-	  babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId].autoUpload = true;
-	  babelHelpers.classPrivateFieldLooseBase(this, _uploaderWrapper)[_uploaderWrapper].start(uploaderId);
+	  babelHelpers.classPrivateFieldLooseBase(this, _uploaderWrappers)[_uploaderWrappers].get(uploaderId).start();
 	}
 	function _addFileFromDiskToModel2(messageWithFile) {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('files/add', {
+	  return babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].dispatch('files/add', {
 	    id: messageWithFile.tempFileId,
 	    chatId: messageWithFile.chatId,
 	    authorId: im_v2_application_core.Core.getUserId(),
@@ -755,94 +802,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    authorName: babelHelpers.classPrivateFieldLooseBase(this, _getCurrentUser)[_getCurrentUser]().name
 	  });
 	}
-	function _initUploader2() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _uploaderWrapper)[_uploaderWrapper] = new UploaderWrapper();
-	  babelHelpers.classPrivateFieldLooseBase(this, _uploaderWrapper)[_uploaderWrapper].subscribe(UploaderWrapper.events.onFileAddStart, event => {
-	    const {
-	      file
-	    } = event.getData();
-	    babelHelpers.classPrivateFieldLooseBase(this, _addFileToStore)[_addFileToStore](file);
-	  });
-	  babelHelpers.classPrivateFieldLooseBase(this, _uploaderWrapper)[_uploaderWrapper].subscribe(UploaderWrapper.events.onFileAdd, event => {
-	    const {
-	      file,
-	      uploaderId
-	    } = event.getData();
-	    babelHelpers.classPrivateFieldLooseBase(this, _updateFilePreviewInStore)[_updateFilePreviewInStore](file);
-	    babelHelpers.classPrivateFieldLooseBase(this, _setPreviewCreatedStatus)[_setPreviewCreatedStatus](uploaderId, file.getId());
-	    babelHelpers.classPrivateFieldLooseBase(this, _tryToSendMessage)[_tryToSendMessage](uploaderId);
-	  });
-	  babelHelpers.classPrivateFieldLooseBase(this, _uploaderWrapper)[_uploaderWrapper].subscribe(UploaderWrapper.events.onFileUploadStart, event => {
-	    const {
-	      file
-	    } = event.getData();
-	    babelHelpers.classPrivateFieldLooseBase(this, _updateFileSizeInStore)[_updateFileSizeInStore](file);
-	    this.emit(UploadingService.event.uploadStart);
-	  });
-	  babelHelpers.classPrivateFieldLooseBase(this, _uploaderWrapper)[_uploaderWrapper].subscribe(UploaderWrapper.events.onFileUploadProgress, event => {
-	    const {
-	      file
-	    } = event.getData();
-	    babelHelpers.classPrivateFieldLooseBase(this, _updateFileProgress)[_updateFileProgress](file.getId(), file.getProgress(), im_v2_const.FileStatus.upload);
-	  });
-	  babelHelpers.classPrivateFieldLooseBase(this, _uploaderWrapper)[_uploaderWrapper].subscribe(UploaderWrapper.events.onFileUploadComplete, async event => {
-	    const {
-	      file,
-	      uploaderId
-	    } = event.getData();
-	    const serverFileId = file.getServerFileId().toString().slice(1);
-	    const temporaryFileId = file.getId();
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _isMediaFile)[_isMediaFile](temporaryFileId)) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _setFileMapping)[_setFileMapping]({
-	        serverFileId,
-	        temporaryFileId
-	      });
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _updateFileProgress)[_updateFileProgress](temporaryFileId, file.getProgress(), im_v2_const.FileStatus.wait);
-	    await babelHelpers.classPrivateFieldLooseBase(this, _uploadPreview)[_uploadPreview](file);
-	    babelHelpers.classPrivateFieldLooseBase(this, _setPreviewSentStatus)[_setPreviewSentStatus](uploaderId, temporaryFileId);
-	    void babelHelpers.classPrivateFieldLooseBase(this, _tryCommit)[_tryCommit](uploaderId);
-	    this.emit(UploadingService.event.uploadComplete);
-	  });
-	  babelHelpers.classPrivateFieldLooseBase(this, _uploaderWrapper)[_uploaderWrapper].subscribe(UploaderWrapper.events.onFileUploadError, event => {
-	    const {
-	      file,
-	      error,
-	      uploaderId
-	    } = event.getData();
-	    babelHelpers.classPrivateFieldLooseBase(this, _setMessageError)[_setMessageError](file.getCustomData('tempMessageId'));
-	    this.getFiles(uploaderId).forEach(uploaderFile => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _updateFileProgress)[_updateFileProgress](uploaderFile.getId(), 0, im_v2_const.FileStatus.error);
-	    });
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _isMaxFileSizeExceeded)[_isMaxFileSizeExceeded](error)) {
-	      im_v2_lib_notifier.Notifier.file.handleUploadError(error);
-	    }
-	    im_v2_lib_logger.Logger.error('UploadingService: upload error', error);
-	    this.emit(UploadingService.event.uploadError);
-	    babelHelpers.classPrivateFieldLooseBase(this, _isUploading)[_isUploading] = false;
-	    babelHelpers.classPrivateFieldLooseBase(this, _processQueue)[_processQueue]();
-	    this.stop(uploaderId);
-	  });
-	  babelHelpers.classPrivateFieldLooseBase(this, _uploaderWrapper)[_uploaderWrapper].subscribe(UploaderWrapper.events.onFileUploadCancel, event => {
-	    const {
-	      tempMessageId,
-	      tempFileId
-	    } = event.getData();
-	    babelHelpers.classPrivateFieldLooseBase(this, _cancelUpload)[_cancelUpload](tempMessageId, tempFileId);
-	    this.emit(UploadingService.event.uploadCancel);
-	  });
-	  babelHelpers.classPrivateFieldLooseBase(this, _uploaderWrapper)[_uploaderWrapper].subscribe(UploaderWrapper.events.onUploadComplete, () => {
-	    babelHelpers.classPrivateFieldLooseBase(this, _isUploading)[_isUploading] = false;
-	    babelHelpers.classPrivateFieldLooseBase(this, _processQueue)[_processQueue]();
-	  });
-	}
-	function _isMediaFile2(fileId) {
-	  const mediaFileTypes = [im_v2_const.FileType.image, im_v2_const.FileType.video];
-	  const file = babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].getters['files/get'](fileId);
-	  return Boolean(file) && mediaFileTypes.includes(file.type);
+	function _isMediaFile2(file) {
+	  return ui_uploader_core.isResizableImage(file.getBinary()) || file.isVideo() && main_core.Type.isStringFilled(file.getPreviewUrl());
 	}
 	function _setFileMapping2(options) {
-	  void babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('files/setTemporaryFileMapping', options);
+	  void babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].dispatch('files/setTemporaryFileMapping', options);
 	}
 	function _requestDiskFolderId2(dialogId) {
 	  return new Promise((resolve, reject) => {
@@ -855,7 +819,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        ID: diskFolderId
 	      } = response.data();
 	      babelHelpers.classPrivateFieldLooseBase(this, _isRequestingDiskFolderId)[_isRequestingDiskFolderId] = false;
-	      void babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('chats/update', {
+	      void babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].dispatch('chats/update', {
 	        dialogId,
 	        fields: {
 	          diskFolderId
@@ -868,15 +832,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    });
 	  });
 	}
-	async function _tryCommit2(uploaderId) {
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _readyToCommit)[_readyToCommit](uploaderId)) {
-	    return;
-	  }
-	  await this.commitMessage(uploaderId);
-	  babelHelpers.classPrivateFieldLooseBase(this, _destroyUploader)[_destroyUploader](uploaderId);
-	}
 	async function _uploadPreview2(file) {
-	  const needPreview = babelHelpers.classPrivateFieldLooseBase(this, _getFileType)[_getFileType](file.getBinary()) === im_v2_const.FileType.video || file.isAnimated();
+	  const needPreview = babelHelpers.classPrivateFieldLooseBase(this, _getFileType)[_getFileType](file) === im_v2_const.FileType.video || file.isAnimated();
 	  if (!needPreview) {
 	    return Promise.resolve();
 	  }
@@ -895,22 +852,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    console.error('imDiskFilePreviewUpload request error', error);
 	  });
 	}
-	function _prepareFileForUploader2(file, dialogId, uploaderId, sendAsFile) {
-	  const tempMessageId = im_v2_lib_utils.Utils.text.getUuidV4();
-	  const tempFileId = im_v2_lib_utils.Utils.text.getUuidV4();
-	  const chatId = babelHelpers.classPrivateFieldLooseBase(this, _getChatId)[_getChatId](dialogId);
-	  return {
-	    tempMessageId,
-	    tempFileId,
-	    file,
-	    dialogId,
-	    chatId,
-	    uploaderId,
-	    sendAsFile
-	  };
-	}
 	function _updateFileProgress2(id, progress, status) {
-	  void babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('files/update', {
+	  void babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].dispatch('files/update', {
 	    id,
 	    fields: {
 	      progress: progress === 100 ? 99 : progress,
@@ -919,193 +862,126 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  });
 	}
 	function _cancelUpload2(tempMessageId, tempFileId) {
-	  const message = babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].getters['messages/getById'](tempMessageId);
+	  const message = babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].getters['messages/getById'](tempMessageId);
 	  if (message) {
-	    void babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('messages/delete', {
+	    void babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].dispatch('messages/delete', {
 	      id: tempMessageId
 	    });
-	    void babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('files/delete', {
+	    void babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].dispatch('files/delete', {
 	      id: tempFileId
 	    });
-	    const chat = babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].getters['chats/getByChatId'](message.chatId);
-	    const lastMessageId = babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].getters['messages/findLastChatMessageId'](message.chatId);
+	    const chat = babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].getters['chats/getByChatId'](message.chatId);
+	    const lastMessageId = babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].getters['messages/findLastChatMessageId'](message.chatId);
 	    if (main_core.Type.isString(lastMessageId) || main_core.Type.isNumber(lastMessageId)) {
-	      void babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('recent/update', {
+	      void babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].dispatch('recent/update', {
 	        id: chat.dialogId,
 	        fields: {
 	          messageId: lastMessageId
 	        }
 	      });
 	    } else {
-	      void babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('recent/delete', {
+	      void babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].dispatch('recent/delete', {
 	        id: chat.dialogId
 	      });
 	    }
 	  }
 	}
-	function _addFileToStore2(file) {
-	  const taskId = file.getId();
-	  const fileBinary = file.getBinary();
-	  const previewData = babelHelpers.classPrivateFieldLooseBase(this, _preparePreview)[_preparePreview](file);
-	  const asFile = file.getCustomData('sendAsFile');
-	  void babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('files/add', {
-	    id: taskId,
-	    chatId: file.getCustomData('chatId'),
-	    authorId: im_v2_application_core.Core.getUserId(),
-	    name: fileBinary.name,
+	function _getFileType2(file) {
+	  if (ui_uploader_core.isResizableImage(file.getBinary())) {
+	    return im_v2_const.FileType.image;
+	  }
+	  if (file.isVideo()) {
+	    return im_v2_const.FileType.video;
+	  }
+	  if (file.getType().startsWith('audio')) {
+	    return im_v2_const.FileType.audio;
+	  }
+	  return im_v2_const.FileType.file;
+	}
+	function _addFileToStore2(file, sendAsFile) {
+	  const fileType = babelHelpers.classPrivateFieldLooseBase(this, _getFileType)[_getFileType](file);
+	  const currentUser = babelHelpers.classPrivateFieldLooseBase(this, _getCurrentUser)[_getCurrentUser]();
+	  const isFile = ![im_v2_const.FileType.image, im_v2_const.FileType.video].includes(fileType);
+	  void babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].dispatch('files/add', {
+	    id: file.getId(),
+	    name: file.getName(),
 	    size: file.getSize(),
-	    type: asFile ? im_v2_const.FileType.file : babelHelpers.classPrivateFieldLooseBase(this, _getFileType)[_getFileType](fileBinary),
-	    extension: babelHelpers.classPrivateFieldLooseBase(this, _getFileExtension)[_getFileExtension](fileBinary),
-	    status: file.isFailed() ? im_v2_const.FileStatus.error : im_v2_const.FileStatus.progress,
+	    type: fileType,
+	    extension: file.getExtension(),
+	    chatId: file.getCustomData('chatId'),
+	    authorId: currentUser.id,
+	    authorName: currentUser.name,
+	    status: file.isFailed() ? im_v2_const.FileStatus.error : im_v2_const.FileStatus.wait,
 	    progress: 0,
-	    authorName: babelHelpers.classPrivateFieldLooseBase(this, _getCurrentUser)[_getCurrentUser]().name,
-	    urlDownload: URL.createObjectURL(file.getBinary()),
-	    ...previewData
+	    urlDownload: file.getDownloadUrl(),
+	    ...(() => {
+	      if (isFile || sendAsFile) {
+	        return {
+	          image: false
+	        };
+	      }
+	      return {};
+	    })()
 	  });
 	}
-	function _updateFilePreviewInStore2(file) {
-	  const previewData = babelHelpers.classPrivateFieldLooseBase(this, _preparePreview)[_preparePreview](file);
-	  void babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('files/update', {
+	function _updateFilePreviewInStore2(file, sendAsFile) {
+	  void babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].dispatch('files/update', {
 	    id: file.getId(),
 	    fields: {
-	      ...previewData
+	      urlPreview: (() => {
+	        if (file.isImage()) {
+	          return file.getPreviewUrl() || file.getDownloadUrl();
+	        }
+	        return file.getPreviewUrl();
+	      })(),
+	      ...(() => {
+	        if (sendAsFile) {
+	          return {
+	            image: false
+	          };
+	        }
+	        return {
+	          image: {
+	            width: file.getPreviewWidth(),
+	            height: file.getPreviewHeight()
+	          }
+	        };
+	      })()
+	    }
+	  });
+	}
+	function _updateFileTypeInStore2(file, type) {
+	  void babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].dispatch('files/update', {
+	    id: file.getId(),
+	    fields: {
+	      type
 	    }
 	  });
 	}
 	function _updateFileSizeInStore2(file) {
-	  void babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('files/update', {
+	  void babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].dispatch('files/update', {
 	    id: file.getId(),
 	    fields: {
 	      size: file.getSize()
 	    }
 	  });
 	}
-	function _preparePreview2(file) {
-	  if (file.getCustomData('sendAsFile')) {
-	    return {};
-	  }
-	  const preview = {
-	    blob: file.getPreviewUrl(),
-	    width: file.getPreviewWidth(),
-	    height: file.getPreviewHeight()
-	  };
-	  const previewData = {};
-	  if (preview.blob) {
-	    previewData.image = {
-	      width: preview.width,
-	      height: preview.height
-	    };
-	    previewData.urlPreview = preview.blob;
-	  }
-	  if (file.getClientPreview()) {
-	    previewData.urlPreview = URL.createObjectURL(file.getClientPreview());
-	  }
-	  return previewData;
-	}
 	function _getDiskFolderId2(dialogId) {
 	  return babelHelpers.classPrivateFieldLooseBase(this, _getDialog)[_getDialog](dialogId).diskFolderId;
 	}
-	function _getFileType2(file) {
-	  let fileType = im_v2_const.FileType.file;
-	  if (file.type.startsWith('image')) {
-	    fileType = im_v2_const.FileType.image;
-	  } else if (file.type.startsWith('video')) {
-	    fileType = im_v2_const.FileType.video;
-	  }
-	  return fileType;
-	}
-	function _getFileExtension2(file) {
-	  return file.name.split('.').splice(-1)[0];
-	}
 	function _getDialog2(dialogId) {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].getters['chats/get'](dialogId);
+	  return babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].getters['chats/get'](dialogId);
 	}
 	function _getCurrentUser2() {
 	  const userId = im_v2_application_core.Core.getUserId();
-	  return babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].getters['users/get'](userId);
+	  return babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].getters['users/get'](userId);
 	}
 	function _getChatId2(dialogId) {
 	  var _babelHelpers$classPr;
 	  return (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _getDialog)[_getDialog](dialogId)) == null ? void 0 : _babelHelpers$classPr.chatId;
 	}
-	function _registerFiles2(uploaderId, files, dialogId, autoUpload) {
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId]) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId] = {
-	      previewCreatedStatus: {},
-	      previewSentStatus: {},
-	      dialogId,
-	      text: '',
-	      autoUpload
-	    };
-	  }
-	  files.forEach(file => {
-	    const fileId = file.getId();
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId].previewCreatedStatus) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId].previewCreatedStatus = {};
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId].previewCreatedStatus[fileId] = false;
-	    babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId].previewSentStatus[fileId] = false;
-	  });
-	}
-	function _unregisterFiles2(uploaderId, files) {
-	  const entry = babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId];
-	  if (entry) {
-	    files.forEach(file => {
-	      const fileId = file.getId();
-	      if (babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId].previewCreatedStatus) {
-	        delete babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId].previewCreatedStatus[fileId];
-	        delete babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId].previewSentStatus[fileId];
-	      }
-	    });
-	  }
-	}
-	function _setPreviewCreatedStatus2(uploaderId, fileId) {
-	  babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId].previewCreatedStatus[fileId] = true;
-	}
-	function _setPreviewSentStatus2(uploaderId, fileId) {
-	  babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId].previewSentStatus[fileId] = true;
-	}
 	function _setMessagesText2(uploaderId, text) {
-	  babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId].text = text;
-	}
-	function _setAutoUpload2(uploaderId, autoUploadFlag) {
-	  babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId].autoUpload = autoUploadFlag;
-	}
-	function _createMessagesFromFiles2(uploaderId) {
-	  const messagesToSend = {
-	    comment: {},
-	    files: []
-	  };
-	  const files = this.getFiles(uploaderId);
-	  const text = babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId].text;
-	  const dialogId = babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId].dialogId;
-	  const hasText = text.length > 0;
-
-	  // if we have more than one file and text, we need to send text message first
-	  if (files.length > 1 && hasText) {
-	    messagesToSend.comment = {
-	      dialogId,
-	      text
-	    };
-	  }
-	  files.forEach(file => {
-	    var _file$getCustomData;
-	    if (file.getError()) {
-	      return;
-	    }
-	    const messageId = im_v2_lib_utils.Utils.text.getUuidV4();
-	    file.setCustomData('messageId', messageId);
-	    if (files.length === 1 && hasText) {
-	      file.setCustomData('messageText', text);
-	    }
-	    messagesToSend.files.push({
-	      fileIds: [file.getId()],
-	      tempMessageId: file.getCustomData('tempMessageId'),
-	      dialogId,
-	      text: (_file$getCustomData = file.getCustomData('messageText')) != null ? _file$getCustomData : ''
-	    });
-	  });
-	  return messagesToSend;
+	  babelHelpers.classPrivateFieldLooseBase(this, _uploaderWrappers)[_uploaderWrappers].get(uploaderId).setCustomData('text', text);
 	}
 	function _createMessageFromFiles2(uploaderId) {
 	  const fileIds = [];
@@ -1115,10 +991,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      fileIds.push(file.getId());
 	    }
 	  });
-	  const text = babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId].text;
-	  const dialogId = babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId].dialogId;
-	  const tempMessageId = files[0].getCustomData('tempMessageId');
-	  babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId].tempMessageId = tempMessageId;
+	  const text = babelHelpers.classPrivateFieldLooseBase(this, _uploaderWrappers)[_uploaderWrappers].get(uploaderId).getCustomData('text');
+	  const dialogId = babelHelpers.classPrivateFieldLooseBase(this, _uploaderWrappers)[_uploaderWrappers].get(uploaderId).getCustomData('dialogId');
+	  const tempMessageId = babelHelpers.classPrivateFieldLooseBase(this, _uploaderWrappers)[_uploaderWrappers].get(uploaderId).getCustomData('tempMessageId');
 	  return {
 	    fileIds,
 	    tempMessageId,
@@ -1126,48 +1001,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    text
 	  };
 	}
-	function _readyToAddMessages2(uploaderId) {
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId] || !babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId].autoUpload || babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId].wasSent) {
-	    return false;
-	  }
-	  const {
-	    previewCreatedStatus
-	  } = babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId];
-	  return Object.values(previewCreatedStatus).every(flag => flag === true);
-	}
-	function _readyToCommit2(uploaderId) {
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId]) {
-	    return false;
-	  }
-	  const {
-	    previewSentStatus
-	  } = babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId];
-	  return Object.values(previewSentStatus).every(flag => flag === true);
-	}
 	function _tryToSendMessage2(uploaderId) {
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _readyToAddMessages)[_readyToAddMessages](uploaderId)) {
-	    return;
-	  }
-	  babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId].wasSent = true;
 	  const message = babelHelpers.classPrivateFieldLooseBase(this, _createMessageFromFiles)[_createMessageFromFiles](uploaderId);
 	  void babelHelpers.classPrivateFieldLooseBase(this, _sendingService)[_sendingService].sendMessageWithFiles(message);
-	  this.start(uploaderId);
-	}
-	function _tryToSendMessages2(uploaderId) {
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _readyToAddMessages)[_readyToAddMessages](uploaderId)) {
-	    return;
-	  }
-	  babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId].wasSent = true;
-	  const {
-	    comment,
-	    files
-	  } = babelHelpers.classPrivateFieldLooseBase(this, _createMessagesFromFiles)[_createMessagesFromFiles](uploaderId);
-	  if (comment.text) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _sendingService)[_sendingService].sendMessage(comment);
-	  }
-	  files.forEach(message => {
-	    void babelHelpers.classPrivateFieldLooseBase(this, _sendingService)[_sendingService].sendMessageWithFiles(message);
-	  });
 	  this.start(uploaderId);
 	}
 	function _prepareFileFromDisk2(file, dialogId) {
@@ -1186,7 +1022,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  return error.getCode() === 'MAX_FILE_SIZE_EXCEEDED';
 	}
 	function _setMessageError2(tempMessageId) {
-	  void babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('messages/update', {
+	  void babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].dispatch('messages/update', {
 	    id: tempMessageId,
 	    fields: {
 	      error: true
@@ -1194,13 +1030,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  });
 	}
 	function _destroyUploader2(uploaderId) {
-	  babelHelpers.classPrivateFieldLooseBase(this, _uploaderWrapper)[_uploaderWrapper].destroyUploader(uploaderId);
-	  delete babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId];
-	}
-	function _getBinaryFiles2(uploaderId) {
-	  return this.getFiles(uploaderId).map(file => {
-	    return file.getBinary();
-	  });
+	  babelHelpers.classPrivateFieldLooseBase(this, _uploaderWrappers)[_uploaderWrappers].get(uploaderId).destroy();
+	  babelHelpers.classPrivateFieldLooseBase(this, _uploaderWrappers)[_uploaderWrappers].delete(uploaderId);
 	}
 	UploadingService.event = {
 	  uploadStart: 'uploadStart',
@@ -1215,8 +1046,16 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const MAX_PARALLEL_LOADS = 10;
 	const MAX_PARALLEL_UPLOADS = 3;
 	var _getUploadingService = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getUploadingService");
+	var _createUploadingId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createUploadingId");
+	var _addFiles = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("addFiles");
 	class MultiUploadingService {
 	  constructor() {
+	    Object.defineProperty(this, _addFiles, {
+	      value: _addFiles2
+	    });
+	    Object.defineProperty(this, _createUploadingId, {
+	      value: _createUploadingId2
+	    });
 	    Object.defineProperty(this, _getUploadingService, {
 	      value: _getUploadingService2
 	    });
@@ -1240,106 +1079,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  static getMaxParallelLoads(chunks) {
 	    return Math.floor(MAX_PARALLEL_LOADS / chunks.length);
 	  }
-	  async addFiles(params) {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _getUploadingService)[_getUploadingService]().addFiles(params);
-	  }
-	  async uploadFromInput(params) {
-	    const {
-	      event,
-	      sendAsFile,
-	      autoUpload,
-	      dialogId
-	    } = params;
-	    const rawFiles = Object.values(event.target.files);
-	    const chunks = MultiUploadingService.makeChunks({
-	      files: rawFiles
-	    });
-	    const addFilesResults = await Promise.all(chunks.map(chunk => {
-	      return this.addFiles({
-	        files: chunk,
-	        maxParallelLoads: MultiUploadingService.getMaxParallelLoads(chunks),
-	        maxParallelUploads: MAX_PARALLEL_UPLOADS,
-	        dialogId,
-	        autoUpload,
-	        sendAsFile
-	      });
-	    }));
-	    const uploaderIds = addFilesResults.map(({
-	      uploaderId
-	    }) => {
-	      return uploaderId;
-	    });
-	    const sourceFilesCount = rawFiles.length;
-	    return {
-	      uploaderIds,
-	      sourceFilesCount
-	    };
-	  }
-	  async uploadFromClipboard(params) {
-	    const {
-	      clipboardEvent,
-	      dialogId,
-	      autoUpload,
-	      imagesOnly
-	    } = params;
-	    const {
-	      clipboardData
-	    } = clipboardEvent;
-	    if (!clipboardData || !ui_uploader_core.isFilePasted(clipboardData)) {
-	      return {
-	        uploaderIds: [],
-	        sourceFilesCount: 0
-	      };
-	    }
-	    clipboardEvent.preventDefault();
-	    let files = await ui_uploader_core.getFilesFromDataTransfer(clipboardData);
-	    if (imagesOnly) {
-	      files = files.filter(file => im_v2_lib_utils.Utils.file.isImage(file.name));
-	      if (imagesOnly.length === 0) {
-	        return {
-	          uploaderIds: [],
-	          sourceFilesCount: 0
-	        };
-	      }
-	    }
+	  async upload({
+	    files,
+	    dialogId,
+	    autoUpload,
+	    sendAsFile
+	  }) {
 	    const chunks = MultiUploadingService.makeChunks({
 	      files
 	    });
 	    const addFilesResults = await Promise.all(chunks.map(chunk => {
-	      return this.addFiles({
-	        files: chunk,
-	        maxParallelLoads: MultiUploadingService.getMaxParallelLoads(chunks),
-	        maxParallelUploads: MAX_PARALLEL_UPLOADS,
-	        dialogId,
-	        autoUpload
-	      });
-	    }));
-	    const uploaderIds = addFilesResults.filter(addFilesResult => {
-	      return addFilesResult.uploaderFiles.length > 0;
-	    }).map(({
-	      uploaderId
-	    }) => {
-	      return uploaderId;
-	    });
-	    const sourceFilesCount = files.length;
-	    return {
-	      uploaderIds,
-	      sourceFilesCount
-	    };
-	  }
-	  async uploadFromDragAndDrop(params) {
-	    const {
-	      event,
-	      dialogId,
-	      autoUpload,
-	      sendAsFile
-	    } = params;
-	    const rawFiles = await ui_uploader_core.getFilesFromDataTransfer(event.dataTransfer);
-	    const chunks = MultiUploadingService.makeChunks({
-	      files: rawFiles
-	    });
-	    const addFilesResults = await Promise.all(chunks.map(chunk => {
-	      return this.addFiles({
+	      return babelHelpers.classPrivateFieldLooseBase(this, _addFiles)[_addFiles]({
 	        files: chunk,
 	        maxParallelLoads: MultiUploadingService.getMaxParallelLoads(chunks),
 	        maxParallelUploads: MAX_PARALLEL_UPLOADS,
@@ -1348,24 +1098,46 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        sendAsFile
 	      });
 	    }));
-	    const uploaderIds = addFilesResults.map(({
-	      uploaderId
+	    const uploadingId = babelHelpers.classPrivateFieldLooseBase(this, _createUploadingId)[_createUploadingId]();
+	    const uploaderIds = [];
+	    const loadCompletePromises = [];
+	    const uploadCompletePromises = [];
+	    addFilesResults.forEach(({
+	      uploaderId,
+	      uploaderFiles,
+	      loadAllComplete,
+	      uploadAllComplete
 	    }) => {
-	      return uploaderId;
+	      if (main_core.Type.isArrayFilled(uploaderFiles)) {
+	        uploaderIds.push(uploaderId);
+	        loadCompletePromises.push(loadAllComplete);
+	        uploadCompletePromises.push(uploadAllComplete);
+	      }
 	    });
-	    const sourceFilesCount = rawFiles.length;
+	    const loadAllComplete = Promise.all(loadCompletePromises);
+	    const uploadAllComplete = Promise.all(uploadCompletePromises);
+	    const sourceFilesCount = files.length;
 	    return {
+	      uploadingId,
 	      uploaderIds,
-	      sourceFilesCount
+	      sourceFilesCount,
+	      loadAllComplete,
+	      uploadAllComplete
 	    };
 	  }
 	}
 	function _getUploadingService2() {
 	  return UploadingService.getInstance();
 	}
+	function _createUploadingId2() {
+	  return im_v2_lib_utils.Utils.text.getUuidV4();
+	}
+	async function _addFiles2(params) {
+	  return babelHelpers.classPrivateFieldLooseBase(this, _getUploadingService)[_getUploadingService]().addFiles(params);
+	}
 
 	exports.UploadingService = UploadingService;
 	exports.MultiUploadingService = MultiUploadingService;
 
-}((this.BX.Messenger.v2.Service = this.BX.Messenger.v2.Service || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Event,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX,BX.UI.Uploader));
+}((this.BX.Messenger.v2.Service = this.BX.Messenger.v2.Service || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Event,BX.Messenger.v2.Application,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.UI.Uploader,BX.Messenger.v2.Lib,BX));
 //# sourceMappingURL=uploading.bundle.js.map

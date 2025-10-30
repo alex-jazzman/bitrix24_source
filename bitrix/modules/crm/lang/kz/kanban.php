@@ -1,5 +1,4 @@
 <?php
-$MESS["CRM_EDITOR_CANCEL"] = "Болдырмау";
 $MESS["CRM_EDITOR_FIELD_ALL_SECTIONS_DISABLED"] = "Өрістерді көрсету үшін элементті таңдаңыз";
 $MESS["CRM_EDITOR_FIELD_CLIENT"] = "Клиент";
 $MESS["CRM_EDITOR_FIELD_COMPANY"] = "Компания";
@@ -7,7 +6,6 @@ $MESS["CRM_EDITOR_FIELD_EMPTY_STATE_DESCRIPTION"] = "Қате бар-жоғын 
 $MESS["CRM_EDITOR_FIELD_EMPTY_STATE_TITLE"] = "Мұндай өріс жоқ";
 $MESS["CRM_EDITOR_FIELD_OPPORTUNITY_WITH_CURRENCY"] = "Сома және валюта";
 $MESS["CRM_EDITOR_FIELD_SEARCH_PLACEHOLDER"] = "Өрістер бойынша іздеу";
-$MESS["CRM_EDITOR_SAVE"] = "Сақтау";
 $MESS["CRM_KANBAN_ACTIVITY_CHANGE_DEAL_MSGVER_1"] = "Сізде жоспарланған істер жоқ.<span class=\"crm-kanban-item-activity-link\">Клиент туралы ұмытпау үшін </span> мәміле бойынша келесі қадамды жоспарлаңыз";
 $MESS["CRM_KANBAN_ACTIVITY_CHANGE_DYNAMIC_MSGVER_1"] = "Сізде жоспарланған істер жоқ. <span class=\"crm-kanban-item-activity-link\">Маңызды нәрселерді ұмытпау үшін </span> келесі қадамды жоспарлаңыз";
 $MESS["CRM_KANBAN_ACTIVITY_CHANGE_LEAD_MSGVER_1"] = "Сізде жоспарланған істер жоқ.<span class=\"crm-kanban-item-activity-link\">Клиент туралы ұмытпау үшін </span> лид бойынша келесі қадамды жоспарлаңыз";

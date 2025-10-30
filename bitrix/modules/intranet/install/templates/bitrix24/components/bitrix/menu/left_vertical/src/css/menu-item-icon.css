@@ -238,6 +238,11 @@
 	--menu-item-icon-active: url("../images/icons/menu-items/solid/contact-center.svg");
 }
 
+.menu-about-sect .menu-item-icon {
+	--menu-item-icon-default: url("../images/icons/menu-items/outline/about.svg");
+	--menu-item-icon-active: url("../images/icons/menu-items/solid/about.svg");
+}
+
 .menu-expand .menu-item-icon {
 	--menu-item-icon-default: url("../images/icons/chevron-down.svg");
 	--menu-item-icon-active: url("../images/icons/chevron-down.svg");

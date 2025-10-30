@@ -1,6 +1,9 @@
 import { AudioPlayer } from 'im.v2.component.elements.audioplayer';
 import { ProgressBar, ProgressBarSize } from 'im.v2.component.elements.progressbar';
 
+import { TranscriptionItem } from './transcription';
+import { TranscriptionButtonItem } from './transcription-button';
+
 import '../../css/items/audio.css';
 
 import type { ImModelFile } from 'im.v2.model';
@@ -8,14 +11,10 @@ import type { ImModelFile } from 'im.v2.model';
 // @vue/component
 export const AudioItem = {
 	name: 'AudioItem',
-	components: { AudioPlayer, ProgressBar },
+	components: { AudioPlayer, ProgressBar, TranscriptionItem, TranscriptionButtonItem },
 	props: {
 		item: {
 			type: Object,
-			required: true,
-		},
-		messageType: {
-			type: String,
 			required: true,
 		},
 		messageId: {
@@ -24,17 +23,33 @@ export const AudioItem = {
 		},
 	},
 	emits: ['cancelClick'],
-	computed: {
+	data(): { transcriptionStatus: boolean }
+	{
+		return {
+			isTranscriptionOpened: false,
+		};
+	},
+	computed:
+	{
 		ProgressBarSize: () => ProgressBarSize,
 		file(): ImModelFile
 		{
 			return this.item;
 		},
-	},
-	methods: {
-		onCancelClick(event)
+		timelineType(): number
 		{
-			this.$emit('onCancel', event);
+			return Math.floor(Math.random() * 5);
+		},
+	},
+	methods:
+	{
+		onCancelClick(event: PointerEvent): void
+		{
+			this.$emit('cancelClick', event);
+		},
+		transcriptionToggle(status: boolean): void
+		{
+			this.isTranscriptionOpened = status;
 		},
 	},
 	template: `
@@ -49,10 +64,23 @@ export const AudioItem = {
 				:messageId="messageId"
 				:src="file.urlDownload"
 				:file="file"
-				:timelineType="Math.floor(Math.random() * 5)"
+				:timelineType="timelineType"
 				:authorId="file.authorId"
 				:withContextMenu="false"
 				:withAvatar="false"
+			>
+				<template #transcription-control>
+					<TranscriptionButtonItem
+						:file="file"
+						:isOpened="isTranscriptionOpened"
+						@transcriptionToggle="transcriptionToggle"
+					/>
+				</template>
+			</AudioPlayer>
+			<TranscriptionItem
+				:file="file"
+				:isOpened="isTranscriptionOpened"
+				:messageId="messageId"
 			/>
 		</div>
 	`,

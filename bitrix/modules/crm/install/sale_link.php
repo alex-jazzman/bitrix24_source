@@ -78,6 +78,7 @@ switch ($languageId)
 	case 'fr':
 	case 'by':
 	case 'ru':
+	case 'uz':
 		$countryLangId = $languageId;
 		break;
 	default:
@@ -115,6 +116,10 @@ switch ($countryLangId)
 	case 'in':
 		$shopLocalization = 'en';
 		$billPsLocalization = $quotePsLocalization = 'en';
+		break;
+	case 'uz':
+		$shopLocalization = $quotePsLocalization = 'ru';
+		$billPsLocalization = 'uz';
 		break;
 	default:
 		$shopLocalization = $countryLangId;
@@ -2029,7 +2034,7 @@ if (!Main\Loader::includeModule('catalog'))
 	return;
 }
 
-if($billPsLocalization == "ru")
+if($billPsLocalization === 'ru')
 {
 	$vat = Catalog\Model\Vat::getRow([
 		'select' => [
@@ -2087,7 +2092,7 @@ if($billPsLocalization == "ru")
 		]);
 	}
 }
-elseif($billPsLocalization == "kz")
+elseif($billPsLocalization === 'kz')
 {
 	$vat = Catalog\Model\Vat::getRow([
 		'select' => [
@@ -2126,14 +2131,79 @@ elseif($billPsLocalization == "kz")
 		]);
 	}
 }
+elseif($billPsLocalization === 'uz')
+{
+	$vat = Catalog\Model\Vat::getRow([
+		'select' => [
+			'ID',
+		],
+		'filter' => [
+			'=EXCLUDE_VAT' => 'Y',
+		],
+	]);
+	if ($vat === null)
+	{
+		Catalog\Model\Vat::add([
+			'NAME' => Loc::getMessage('CRM_VAT_1'),
+			'ACTIVE' => 'Y',
+			'SORT' => 100,
+			'EXCLUDE_VAT' => 'Y',
+			'RATE' => null,
+		]);
+	}
+	$vat = Catalog\Model\Vat::getRow([
+		'select' => [
+			'ID',
+		],
+		'filter' => [
+			'=EXCLUDE_VAT' => 'N',
+			'=RATE' => 0,
+		],
+	]);
+	if ($vat === null)
+	{
+		Catalog\Model\Vat::add([
+			'NAME' => Loc::getMessage('CRM_VAT_0'),
+			'ACTIVE' => 'Y',
+			'SORT' => 200,
+			'EXCLUDE_VAT' => 'N',
+			'RATE' => 0,
+		]);
+	}
+	$vat = Catalog\Model\Vat::getRow([
+		'select' => [
+			'ID',
+		],
+		'filter' => [
+			'=RATE' => 12,
+		],
+	]);
+	if ($vat === null)
+	{
+		Catalog\Model\Vat::add([
+			'NAME' => Loc::getMessage('CRM_VAT_3'),
+			'ACTIVE' => 'Y',
+			'SORT' => 300,
+			'EXCLUDE_VAT' => 'N',
+			'RATE' => 12,
+		]);
+	}
+}
 
 // get default vat
 $defCatVatId = 0;
+$defCatVatIdFilter = [];
+$createCatalogParams = [];
+if ($billPsLocalization === 'uz')
+{
+	$defCatVatIdFilter['=RATE'] = 12;
+}
 $vat = Catalog\Model\Vat::getRow([
 	'select' => [
 		'ID',
 		'SORT',
 	],
+	'filter' => $defCatVatIdFilter,
 	'order' => [
 		'SORT' => 'ASC',
 	],
@@ -2141,6 +2211,7 @@ $vat = Catalog\Model\Vat::getRow([
 if ($vat !== null)
 {
 	$defCatVatId = (int)$vat['ID'];
+	$createCatalogParams = ['VAT_ID' => $defCatVatId];
 }
 
 $arActiveLangs = array();
@@ -2193,7 +2264,7 @@ $arCatalogId = array();
 $dbCatalogList = CCrmCatalog::GetList();
 while ($arCatalog = $dbCatalogList->Fetch())
 	$arCatalogId[] = $arCatalog['ID'];
-$defCatalogId = CCrmCatalog::EnsureDefaultExists();
+$defCatalogId = CCrmCatalog::EnsureDefaultExists($createCatalogParams);
 if ($defCatalogId > 0)
 {
 	if (!in_array($defCatalogId, $arCatalogId))

@@ -77,8 +77,8 @@ export const FilesPopup = {
 				withControlPanel: false,
 				canCreateDocuments: false,
 				tileWidgetOptions: {
-					enableDropzone: false,
 					hideDropArea: true,
+					enableDropzone: false,
 					compact: true,
 					autoCollapse: false,
 				},

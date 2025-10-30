@@ -6,6 +6,7 @@ export const ChipDesign = Object.freeze({
 	OutlineWarning: 'outline-warning',
 	Outline: 'outline',
 	OutlineNoAccent: 'outline-no-accent',
+	OutlineCopilot: 'outline-copilot',
 	ShadowNoAccent: 'shadow-no-accent',
 	Shadow: 'shadow',
 	ShadowAccent: 'shadow-accent',

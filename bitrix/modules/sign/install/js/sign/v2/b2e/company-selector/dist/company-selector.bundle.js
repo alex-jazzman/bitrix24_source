@@ -36,7 +36,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	  _t17,
 	  _t18,
 	  _t19;
-	const allowedSignatureProviders = ['goskey', 'external', 'ses-ru', 'ses-com'];
+	const allowedSignatureProviders = ['goskey', 'external', 'ses-ru', 'ses-com', 'ses-ru-express'];
 	const sesComLearnMoreLink = new main_core.Uri('https://www.bitrix24.com/terms/esignature-for-hr-rules.php');
 	var _layoutCache = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("layoutCache");
 	var _providerMenu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("providerMenu");
@@ -668,6 +668,8 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	      return main_core.Loc.getMessage('SIGN_B2E_PROVIDER_SES_NAME');
 	    case 'ses-com':
 	      return main_core.Loc.getMessage('SIGN_B2E_PROVIDER_SES_COM_NAME');
+	    case 'ses-ru-express':
+	      return main_core.Loc.getMessage('SIGN_B2E_PROVIDER_SES_RU_EXPRESS_NAME');
 	    default:
 	      return '';
 	  }
@@ -735,11 +737,13 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	  }
 	  const providerCodeToProviderInfoTextMap = {
 	    goskey: main_core.Loc.getMessage('SIGN_B2E_COMPANY_GOSKEY_INFO'),
-	    'ses-ru': main_core.Loc.getMessage('SIGN_B2E_COMPANY_SES_RU_INFO')
+	    'ses-ru': main_core.Loc.getMessage('SIGN_B2E_COMPANY_SES_RU_INFO'),
+	    'ses-ru-express': main_core.Loc.getMessage('SIGN_B2E_COMPANY_SES_RU_EXPRESS_INFO')
 	  };
 	  const providerCodeToHelpdeskCodeMap = {
 	    goskey: HelpdeskCodes.GoskeyDetails,
-	    'ses-ru': HelpdeskCodes.SesRuDetails
+	    'ses-ru': HelpdeskCodes.SesRuDetails,
+	    'ses-ru-express': HelpdeskCodes.SesRuExpressDetails
 	  };
 	  const text = main_core.Tag.render(_t18 || (_t18 = _`<span>${0}</span>`), sign_v2_helper.Helpdesk.replaceLink((_providerCodeToProvid = providerCodeToProviderInfoTextMap[code]) != null ? _providerCodeToProvid : '', (_providerCodeToHelpde = providerCodeToHelpdeskCodeMap[code]) != null ? _providerCodeToHelpde : ''));
 	  main_core.Dom.append(text, babelHelpers.classPrivateFieldLooseBase(this, _providerInfoLayout)[_providerInfoLayout]);
@@ -900,6 +904,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	const ProviderCode = Object.freeze({
 	  goskey: 'goskey',
 	  sesCom: 'ses-com',
+	  sesRuExpress: 'ses-ru-express',
 	  sesRu: 'ses-ru',
 	  external: 'external'
 	});
@@ -908,6 +913,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	  GoskeyDetails: '19740688',
 	  SesRuDetails: '19740668',
 	  SesComDetails: '19740668',
+	  SesRuExpressDetails: '26311976',
 	  TaxcomDetails: '19740696',
 	  GoskeyApiKey: '19740816'
 	});

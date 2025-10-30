@@ -1,11 +1,12 @@
+import { DateTimeFormat } from 'main.date';
 import { BIcon } from 'ui.icon-set.api.vue';
 import { Outline } from 'ui.icon-set.api.core';
 import 'ui.icon-set.outline';
 
+import { Hint } from 'tasks.v2.component.elements.hint';
 import { Model, TaskStatus } from 'tasks.v2.const';
 import type { TaskModel } from 'tasks.v2.model.tasks';
 
-import { StatusPopup } from './status-popup/status-popup';
 import { statusMeta } from './status-meta';
 import './status.css';
 
@@ -13,7 +14,7 @@ import './status.css';
 export const Status = {
 	components: {
 		BIcon,
-		StatusPopup,
+		Hint,
 	},
 	props: {
 		taskId: {
@@ -30,18 +31,13 @@ export const Status = {
 	data(): Object
 	{
 		return {
-			nowTs: Date.now(),
-			isPopupShown: false,
+			isHintShown: false,
 		};
 	},
 	computed: {
 		task(): TaskModel
 		{
 			return this.$store.getters[`${Model.Tasks}/getById`](this.taskId);
-		},
-		isExpired(): number
-		{
-			return this.task.deadlineTs && this.nowTs > this.task.deadlineTs;
 		},
 		icon(): string
 		{
@@ -67,22 +63,42 @@ export const Status = {
 
 			return statuses[this.task.status] ?? this.loc('TASKS_V2_STATUS_PENDING');
 		},
-	},
-	mounted(): void
-	{
-		this.nowTsInterval = setInterval(() => {
-			this.nowTs = Date.now();
-		}, 1000);
-	},
-	beforeUnmount(): void
-	{
-		clearInterval(this.nowTsInterval);
+		statusAtFormatted(): string
+		{
+			const statuses = {
+				[TaskStatus.Pending]: 'TASKS_V2_STATUS_PENDING_FROM',
+				[TaskStatus.InProgress]: 'TASKS_V2_STATUS_IN_PROGRESS_FROM',
+				[TaskStatus.SupposedlyCompleted]: 'TASKS_V2_STATUS_SUPPOSEDLY_COMPLETED_FROM',
+				[TaskStatus.Completed]: 'TASKS_V2_STATUS_COMPLETED_AT',
+				[TaskStatus.Deferred]: 'TASKS_V2_STATUS_DEFERRED_AT',
+			};
+
+			return this.loc(statuses[this.task.status], {
+				'#DATE#': this.formatDate(this.task.statusChangedTs),
+				'#TIME#': this.formatTime(this.task.statusChangedTs),
+			});
+		},
+		createdAtFormatted(): string
+		{
+			return this.loc('TASKS_V2_STATUS_CREATED_AT', {
+				'#DATE#': this.formatDate(this.task.createdTs),
+				'#TIME#': this.formatTime(this.task.createdTs),
+			});
+		},
 	},
 	methods: {
+		formatDate(timestamp: number): string
+		{
+			return DateTimeFormat.format(DateTimeFormat.getFormat('SHORT_DATE_FORMAT'), timestamp / 1000);
+		},
+		formatTime(timestamp: number): string
+		{
+			return DateTimeFormat.format(DateTimeFormat.getFormat('SHORT_TIME_FORMAT'), timestamp / 1000);
+		},
 		handleClick(): void
 		{
 			this.clearTimeouts();
-			if (this.isPopupShown)
+			if (this.isHintShown)
 			{
 				this.closePopup();
 			}
@@ -104,12 +120,12 @@ export const Status = {
 		showPopup(): void
 		{
 			this.clearTimeouts();
-			this.isPopupShown = true;
+			this.isHintShown = true;
 		},
 		closePopup(): void
 		{
 			this.clearTimeouts();
-			this.isPopupShown = false;
+			this.isHintShown = false;
 		},
 		clearTimeouts(): void
 		{
@@ -132,11 +148,11 @@ export const Status = {
 			<BIcon class="tasks-field-status-icon" :name="icon"/>
 			<div class="tasks-field-status-text">{{ statusFormatted }}</div>
 		</div>
-		<StatusPopup
-			v-if="isPopupShown"
-			:taskId="taskId"
-			:bindElement="$refs.container"
-			@close="closePopup"
-		/>
+		<Hint v-if="isHintShown" :bindElement="$refs.container" @close="closePopup">
+			<div class="tasks-field-status-hint">
+				<div>{{ statusAtFormatted }}</div>
+				<div>{{ createdAtFormatted }}</div>
+			</div>
+		</Hint>
 	`,
 };

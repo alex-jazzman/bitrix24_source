@@ -9,6 +9,5 @@ $MESS["CRM_INTEGRATION_MAIL_MANAGER_ERROR_NO_FROM"] = "Немає поштови
 $MESS["CRM_INTEGRATION_MAIL_MANAGER_ERROR_TOO_BIG_ATTACHMENT"] = "Перевищено максимальний розмір вкладень (#SIZE#).";
 $MESS["CRM_INTEGRATION_MAIL_MANAGER_ERROR_TO_BLACKLISTED"] = "Ми не надіслали ваш лист, бо одержувач #EMAIL# знаходиться в чорному списку.";
 $MESS["CRM_INTEGRATION_MAIL_MANAGER_ERROR_UNKNOWN"] = "Не вдалося надіслати лист.";
-$MESS["CRM_INTEGRATION_MAIL_MANAGER_HISTORY_EVENT_TEXT"] = "Тема: #SUBJECT#<br/>Від кого: #FROM#<br/>Кому: #TO#<br/><br/>#MESSAGE_BODY#";
 $MESS["CRM_INTEGRATION_MAIL_MANAGER_HISTORY_EVENT_TEXT_MSGVER_1"] = "Тема: #SUBJECT#<br/>Від кого: #FROM#<br/>Кому: #TO#";
 $MESS["CRM_INTEGRATION_MAIL_MANAGER_NAME"] = "Адреса ел. пошти";

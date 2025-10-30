@@ -11,7 +11,6 @@ $return = [
 		'name' => Loc::getMessage('LANDING_BLOCK_WIDGET_71_4_NAME'),
 		'type' => ['page', 'store', 'smn', 'knowledge', 'group', 'mainpage'],
 		'section' => ['columns', 'widgets_columns'],
-		'system' => true,
 	],
 	'cards' => [
 		'.landing-block-node-card' => [
@@ -60,7 +59,7 @@ $return = [
 		'nodes' => [
 			'.landing-block-container' => [
 				'name' => Loc::getMessage('LANDING_BLOCK_WIDGET_71_4_NODE_CONTAINER'),
-				'type' => ['background-color'],
+				'type' => ['background-color', 'padding-top', 'padding-bottom'],
 			],
 			'.landing-block-node-title' => [
 				'name' => Loc::getMessage('LANDING_BLOCK_WIDGET_71_4_NODE_TITLE'),
@@ -72,10 +71,10 @@ $return = [
 			],
 			'.landing-block-node-card-tab' => [
 				'name' => Loc::getMessage('LANDING_BLOCK_WIDGET_71_4_NODE_BADGE'),
-				'type' => ['display-element', 'background-color', 'typo'],
+				'type' => ['display-element', 'background-color', 'border-color', 'typo'],
 			],
-			'.landing-block-node-card-head' => [
-				'name' => Loc::getMessage('LANDING_BLOCK_WIDGET_71_4_NODE_CARD_TOP'),
+			'.landing-block-node-card' => [
+				'name' => Loc::getMessage('LANDING_BLOCK_WIDGET_71_4_NODE_CARD'),
 				'type' => ['background-color'],
 			],
 			'.landing-block-node-card-title' => [
@@ -86,21 +85,21 @@ $return = [
 				'name' => Loc::getMessage('LANDING_BLOCK_WIDGET_71_4_NODE_CARD_TEXT'),
 				'type' => ['typo'],
 			],
-			'.landing-block-node-card-main' => [
-				'name' => Loc::getMessage('LANDING_BLOCK_WIDGET_71_4_NODE_CARD_BOTTOM'),
-				'type' => ['background-color'],
-			],
 			'.landing-block-node-card-subtitle' => [
 				'name' => Loc::getMessage('LANDING_BLOCK_WIDGET_71_4_NODE_CARD_TITLE'),
 				'type' => ['typo'],
 			],
-			'.landing-block-node-card-list-item' => [
-				'name' => Loc::getMessage('LANDING_BLOCK_WIDGET_71_4_NODE_CARD_LIST_ITEM'),
+			'.landing-block-node-card-list' => [
+				'name' => Loc::getMessage('LANDING_BLOCK_WIDGET_71_4_NODE_CARD_TEXT'),
 				'type' => ['typo'],
 			],
 			'.landing-block-node-card-btn' => [
 				'name' => Loc::getMessage('LANDING_BLOCK_WIDGET_71_4_NODE_CARD_BUTTON'),
-				'type' => ['button-type', 'color', 'color-hover', 'background-color', 'background-color-hover'],
+				'type' => ['color', 'color-hover', 'background-color', 'background-color-hover'],
+			],
+			'.landing-block-node-card-main' => [
+				'name' => Loc::getMessage('LANDING_BLOCK_WIDGET_71_4_NODE_CONTAINER'),
+				'type' => ['padding-top', 'padding-bottom'],
 			],
 		],
 	],

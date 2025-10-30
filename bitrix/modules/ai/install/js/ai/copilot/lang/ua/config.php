@@ -38,6 +38,7 @@ $MESS["AI_COPILOT_RESULT_WARNING"] = "Відповіді CoPilot можуть н
 $MESS["AI_COPILOT_RESULT_WARNING_MORE"] = "Докладніше";
 $MESS["AI_COPILOT_ROLES_DIALOG_TITLE"] = "Вибрати роль";
 $MESS["AI_COPILOT_SEARCH_IN_MARKET"] = "Знайти рішення в Маркеті";
+$MESS["AI_COPILOT_SEARCH_IN_MARKET_MSGVER_1"] = "Знайти рішення в Маркеті";
 $MESS["AI_COPILOT_SELECT_COMMAND_BELOW"] = "Виберіть дію нижче";
 $MESS["AI_COPILOT_TEXT_IS_COPIED"] = "Текст скопійовано";
 $MESS["AI_COPILOT_UPDATE_MENU_ERROR"] = "Не вдалося оновити меню CoPilot.";

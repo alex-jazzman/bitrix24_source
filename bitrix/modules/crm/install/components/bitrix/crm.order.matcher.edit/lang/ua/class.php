@@ -10,7 +10,6 @@ $MESS["CRM_ORDERFORM_RELATION_DELIVERY"] = "Служба доставки";
 $MESS["CRM_ORDERFORM_RELATION_PAY_SYSTEM"] = "Платіжна система";
 $MESS["CRM_ORDERFORM_REQUIERD_FIELDS_ERROR"] = "Потрібно додати обов'язкові поля";
 $MESS["CRM_ORDERFORM_RESULT_ENTITY_DC_MERGE"] = "Об'єднувати";
-$MESS["CRM_ORDERFORM_RESULT_ENTITY_DC_NONE"] = "Дозволити дублі";
 $MESS["CRM_ORDERFORM_RESULT_ENTITY_DC_NONE_MSGVER_1"] = "Зберігати дублікати";
 $MESS["CRM_ORDERFORM_RESULT_ENTITY_DC_REPLACE"] = "Замінювати";
 $MESS["CRM_ORDERFORM_TITLE"] = "Налаштування форми оформлення замовлення";

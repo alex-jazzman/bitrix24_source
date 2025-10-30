@@ -9,7 +9,6 @@ $MESS["IM_MESSENGER_MESSAGE_CONTEXT_MENU_DELETE"] = "Видалити";
 $MESS["IM_MESSENGER_MESSAGE_CONTEXT_MENU_RETRY"] = "Повторити спробу";
 $MESS["IM_MESSENGER_MESSAGE_EDITED"] = "Змінено";
 $MESS["IM_MESSENGER_MESSAGE_HEADER_FORWARDED_CLOSED_CHANNEL"] = "Закритий канал";
-$MESS["IM_MESSENGER_MESSAGE_HEADER_FORWARDED_FROM"] = "Переслано від #NAME#";
 $MESS["IM_MESSENGER_MESSAGE_HEADER_FORWARDED_FROM_CHANNEL"] = "Переслано від користувача [user_name]#USER_NAME#[/user_name], канал: [channel_name]#CHANNEL_NAME#[/channel_name]";
 $MESS["IM_MESSENGER_MESSAGE_HEADER_FORWARDED_FROM_CHAT"] = "Переслано від користувача [user_name]#USER_NAME#[/user_name]";
 $MESS["IM_MESSENGER_MESSAGE_HEADER_FORWARDED_FROM_SYSTEM"] = "Переслано системне повідомлення";

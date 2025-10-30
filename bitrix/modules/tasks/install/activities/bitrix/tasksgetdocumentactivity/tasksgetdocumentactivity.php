@@ -295,7 +295,7 @@ class CBPTasksGetDocumentActivity extends CBPActivity
 		}
 		if (isset($map['IS_EXPIRED']))
 		{
-			$select += ['DEADLINE', 'REAL_STATUS', 'CLOSED_DATE'];
+			$select = array_merge($select, ['DEADLINE', 'REAL_STATUS', 'CLOSED_DATE']);
 		}
 
 		return $select;

@@ -147,9 +147,9 @@ $getInitiatedByTypeTemplate = static function (?InitiatedByType $initiatedByType
 
 $getUserInfoTemplate = static function (array $responsible): string
 {
-	$userId = (int)$responsible['ID'];
-	$fullName = $responsible['FULL_NAME'];
-	$imagePath = $responsible['AVATAR_PATH'];
+	$userId = (int)$responsible['ID'] ?? 0;
+	$fullName = $responsible['FULL_NAME'] ?? '';
+	$imagePath = $responsible['AVATAR_PATH'] ?? '';
 
 	ob_start();
 	?>
@@ -164,7 +164,7 @@ $getUserInfoTemplate = static function (array $responsible): string
 			</i>
 		</span>
 		<span class="sign-personal-grid-user-name">
-				<?= htmlspecialcharsbx($fullName) ?>
+				<?= $fullName ?>
 		</span>
 		</a>
 	</div>

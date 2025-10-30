@@ -1,5 +1,7 @@
 import { Extension } from 'main.core';
 
+const settings = Extension.getSettings('tasks.v2.lib.timezone');
+
 class Timezone
 {
 	getOffset(dateTs: number, timeZone: string = this.getTimezone()): number
@@ -18,8 +20,6 @@ class Timezone
 
 	getTimezone(): number
 	{
-		const settings = Extension.getSettings('tasks.v2.lib.timezone');
-
 		return settings.timeZone || Intl.DateTimeFormat().resolvedOptions().timeZone;
 	}
 }

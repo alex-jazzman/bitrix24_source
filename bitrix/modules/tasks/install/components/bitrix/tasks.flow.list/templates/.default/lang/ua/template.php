@@ -1,10 +1,13 @@
 <?php
 $MESS["TASKS_FLOW_ADD_BUTTON"] = "Створити потік";
 $MESS["TASKS_FLOW_LIST_ABOUT_EFFICIENCY"] = "Ефективність показує відсоток<br> завдань, виконаних у строк.";
-$MESS["TASKS_FLOW_LIST_ANALYTICS_BTN"] = "Аналітика";
 $MESS["TASKS_FLOW_LIST_BI_ANALYTICS_BADLY"] = "Погано";
+$MESS["TASKS_FLOW_LIST_BI_ANALYTICS_BY_REPORT"] = "За даними звіту «#DASHBOARD_TITLE#»";
 $MESS["TASKS_FLOW_LIST_BI_ANALYTICS_EMPTY_DASHBOARDS"] = "Звіт недоступний";
 $MESS["TASKS_FLOW_LIST_BI_ANALYTICS_GREAT"] = "Відмінно";
+$MESS["TASKS_FLOW_LIST_BI_ANALYTICS_NO_AVAILABLE_REPORTS"] = "Доступних звітів наразі немає";
+$MESS["TASKS_FLOW_LIST_BI_CONSTRUCTOR_NO_ACCESS"] = "Немає доступу до BI-конструктора.";
+$MESS["TASKS_FLOW_LIST_BI_CONSTRUCTOR_TARIFF_ERROR"] = "На вашому тарифі BI-конструктор недоступний.";
 $MESS["TASKS_FLOW_LIST_COLUMN_DEMO_LABEL"] = "Не призначено";
 $MESS["TASKS_FLOW_LIST_COLUMN_MY_TASKS_PLURAL_0"] = "{number} завдання";
 $MESS["TASKS_FLOW_LIST_COLUMN_MY_TASKS_PLURAL_1"] = "{number} завдання";
@@ -20,6 +23,7 @@ $MESS["TASKS_FLOW_LIST_COPILOT_NOT_ENOUGH_TASKS_POPUP_TITLE"] = "CoPilot ще з
 $MESS["TASKS_FLOW_LIST_COPILOT_UNEXPECTED_ERROR_POPUP_DESCRIPTION"] = "CoPilot спробує ще раз підготувати рекомендації, трохи почекайте.";
 $MESS["TASKS_FLOW_LIST_COPILOT_UNEXPECTED_ERROR_POPUP_TITLE"] = "Щось пішло не так";
 $MESS["TASKS_FLOW_LIST_CREATE_TASK"] = "Створити завдання";
+$MESS["TASKS_FLOW_LIST_CREATE_TASK_IMMUTABLE_DISTRIBUTION_TOOLTIP"] = "Завдання в цей потік створюються за допомогою роботів[br/] і бізнес-процесів.";
 $MESS["TASKS_FLOW_LIST_FLOW_OFF"] = "Потік вимкнено.";
 $MESS["TASKS_FLOW_LIST_FLOW_PINNED"] = "Потік закріплений.";
 $MESS["TASKS_FLOW_LIST_FLOW_PIN_CANCEL"] = "Скасувати";

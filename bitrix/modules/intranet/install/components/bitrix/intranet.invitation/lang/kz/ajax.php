@@ -15,4 +15,3 @@ $MESS["BX24_INVITE_DIALOG_SELF_SUCCESS"] = "Жылдам тіркелу үшін
 $MESS["BX24_INVITE_DIALOG_WARNING_CREATE_MAILBOX_ERROR"] = "Пошта жәшігін жасау кезінде қате пайда болды:";
 $MESS["BX24_INVITE_DIALOG_WARNING_MAILBOX_PASSWORD_CONFIRM"] = "Құпиясөзді растау құпиясөзбен сәйкес келмейді";
 $MESS["INTRANET_INVITE_DIALOG_ERROR_LENGTH"] = "50 символ болатын максималды рұқсат етілген ұзындықтан асып кетті";
-$MESS["INTRANET_INVITE_DIALOG_USER_COUNT_ERROR"] = "Тәулігіне шақырылған пайдаланушылардың максималды санынан асып кетті";

@@ -113,6 +113,7 @@ $MESS["JS_CORE_TM_REOPEN"] = "Жұмыс күнін жалғастыру";
 $MESS["JS_CORE_TM_REPORT"] = "Бір күнде жасалған";
 $MESS["JS_CORE_TM_REPORT_PH"] = "Орындалған жұмыс туралы қысқаша есеп жазыңыз";
 $MESS["JS_CORE_TM_RESTRICTION_TITLE"] = "Сіздің тарифіңіздегі опцияға қол жеткізу шектеулі";
+$MESS["JS_CORE_TM_SYSTEM_ERROR"] = "Белгісіз қате пайда болды, бетті жаңартып көріңіз";
 $MESS["JS_CORE_TM_TASKS"] = "Міндеттер";
 $MESS["JS_CORE_TM_TASKS_ADD"] = "Міндетті қосу";
 $MESS["JS_CORE_TM_TASKS_CHOOSE"] = "тізімнен таңдау";

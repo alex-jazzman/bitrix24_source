@@ -1,7 +1,5 @@
 <?php
 $MESS["BT_CAT_ADM_TOOLS_ADD_GROUP_MSGVER_1"] = "Набір";
-$MESS["BT_CAT_ADM_TOOLS_ADD_INSTAGRAM_IMPORT_2"] = "Імпортувати з Instagram";
-$MESS["BT_CAT_ADM_TOOLS_ADD_INSTAGRAM_IMPORT_TITLE"] = "Натисніть, щоб додати товари за допомогою Instagram";
 $MESS["BT_CAT_ADM_TOOLS_ADD_PRODUCT"] = "Товар";
 $MESS["BT_CAT_ADM_TOOLS_ADD_PROD_EXT"] = "Створити товар";
 $MESS["BT_CAT_ADM_TOOLS_ADD_PROD_EXT_2"] = "Створити";

@@ -25,8 +25,12 @@ export type CheckListModel = {
 		toggle: boolean
 	},
 	panelIsShown: boolean,
+	myFilterActive: boolean,
 	collapsed: boolean,
-	previewCollapsed: boolean,
+	expanded: boolean,
+	localCompleteState: ?boolean,
+	localCollapsedState: ?boolean,
+	areCompletedCollapsed: boolean,
 	hidden: boolean,
 	groupMode: {
 		active: boolean,
@@ -34,7 +38,7 @@ export type CheckListModel = {
 	},
 };
 
-type Attachment = {
+export type Attachment = {
 	id: number | string,
 	fileId: number | string,
-}
+};

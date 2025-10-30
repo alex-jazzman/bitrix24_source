@@ -39,10 +39,10 @@ export type FlowParams = {
 type Params = {
 	taskId: Number,
 	canEditTask: boolean,
-	isExtranet: boolean,
 
 	toggleFlowParams: TaskViewToggleFlowParams | TaskEditToggleFlowParams,
 	flowParams: FlowParams,
+	canCreateFlow: boolean,
 };
 
 export {
@@ -55,8 +55,8 @@ export class EntitySelector
 	#flowSelectorBtn: ?Button;
 
 	#taskId: Number;
-	#isExtranet: boolean;
 	#canEditTask: boolean;
+	#canCreateFlow: boolean;
 
 	#toggleFlowParams: TaskViewToggleFlowParams | TaskEditToggleFlowParams;
 	#flowParams: FlowParams;
@@ -65,8 +65,9 @@ export class EntitySelector
 	constructor(params: Params)
 	{
 		this.#taskId = params.taskId;
-		this.#isExtranet = params.isExtranet;
 		this.#canEditTask = params.canEditTask;
+
+		this.#canCreateFlow = params.canCreateFlow;
 
 		this.#toggleFlowParams = params.toggleFlowParams;
 		this.#flowParams = params.flowParams;
@@ -211,9 +212,9 @@ export class EntitySelector
 	#createDialog(): Dialog
 	{
 		this.#dialog = new EntitySelectorDialog({
-			isExtranet: this.#isExtranet,
 			toggleFlowParams: this.#toggleFlowParams,
 			flowParams: this.#flowParams,
+			canCreateFlow: this.#canCreateFlow,
 		});
 
 		return this.#dialog;

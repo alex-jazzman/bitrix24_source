@@ -46,28 +46,27 @@ jn.define('calendar/statemanager/redux/slices/events/model', (require, exports, 
 				accessibility: BX.prop.getString(eventData, 'ACCESSIBILITY', EventAccessibility.BUSY),
 				importance: BX.prop.getString(eventData, 'IMPORTANCE', EventImportance.NORMAL),
 				privateEvent: BX.prop.getNumber(eventData, 'PRIVATE_EVENT', 0),
+				permissions: BX.prop.getObject(eventData, 'permissions', null),
+				files: BX.prop.getArray(eventData, 'files', null),
+				entityRelation: BX.prop.getObject(eventData, 'entityRelation', null),
 			};
 
 			if (
-				existingReduxEvent?.permissions
-				&& Type.isObject(existingReduxEvent.permissions)
-				&& !Type.isUndefined(existingReduxEvent.permissions?.edit)
+				Type.isObject(existingReduxEvent?.permissions)
+				&& !Type.isUndefined(existingReduxEvent?.permissions?.edit)
 			)
 			{
-				preparedEvent.permissions = existingReduxEvent.permissions;
-			}
-			else
-			{
-				preparedEvent.permissions = eventData.permissions;
+				preparedEvent.permissions = existingReduxEvent?.permissions;
 			}
 
-			if (existingReduxEvent?.files && Type.isArrayFilled(existingReduxEvent.files))
+			if (Type.isArrayFilled(existingReduxEvent?.files))
 			{
-				preparedEvent.files = existingReduxEvent.files;
+				preparedEvent.files = existingReduxEvent?.files;
 			}
-			else
+
+			if (Type.isObject(existingReduxEvent?.entityRelation))
 			{
-				preparedEvent.files = eventData.files;
+				preparedEvent.entityRelation = existingReduxEvent?.entityRelation;
 			}
 
 			const meeting = BX.prop.getObject(eventData, 'MEETING', {});
@@ -135,6 +134,7 @@ jn.define('calendar/statemanager/redux/slices/events/model', (require, exports, 
 				chatId: 0,
 				permissions: {},
 				files: [],
+				entityRelation: null,
 				hasUploadedFiles: false,
 			};
 		}

@@ -58,6 +58,11 @@ export class ValueChecker extends EventEmitter
 		return this.#layout.checkerValue?.value || entitySelectorValue || this.#params.placeholder;
 	}
 
+	setValue(value: boolean): void
+	{
+		this.#layout.checker.switcher.check(value);
+	}
+
 	setErrors(errors: string[])
 	{
 		this.#layout.checker?.setErrors(errors);

@@ -22,7 +22,7 @@ jn.define('layout/ui/reaction-list/tab-panel/src/tab-panel', (require, exports, 
 				selectedReactionTab: ReactionTabPanel.constants.ALL,
 			};
 
-			this.parentWidget = layout;
+			this.parentWidget = props.parentWidget ?? layout;
 		}
 
 		get #reactions()

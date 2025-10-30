@@ -159,6 +159,27 @@ export type BlockLinkEvent = {
 	p1: CrmMode,
 }
 
+export type EntityChangeStageEvent = {
+	tool: Dictionary.TOOL_CRM,
+	category: Dictionary.CATEGORY_ENTITY_OPERATIONS,
+	event: Dictionary.EVENT_ENTITY_CHANGE_STAGE,
+	type: 'lead' | 'deal' | 'dynamic',
+	c_section: Dictionary.SECTION_LEAD
+		| Dictionary.SECTION_DEAL
+		| Dictionary.SECTION_DYNAMIC
+	,
+	c_sub_section: Dictionary.SUB_SECTION_LIST
+		| Dictionary.SUB_SECTION_KANBAN
+		| Dictionary.SUB_SECTION_DETAILS
+	,
+	c_element?: Dictionary.ELEMENT_STAGE_BAR_BUTTON
+		| Dictionary.ELEMENT_GRID_ROW_CONTEXT_MENU
+	,
+	status?: EventStatus,
+	p1: CrmMode,
+	p2: number
+};
+
 export type WhatsAppFormEvent = {
 	tool: Dictionary.TOOL_CRM,
 	category: Dictionary.CATEGORY_COMMUNICATION_OPERATIONS,

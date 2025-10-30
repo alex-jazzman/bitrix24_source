@@ -21,6 +21,11 @@ class Projects implements Tabable
 
 	public function isAvailable(): bool
 	{
+		if ($this->context->isCollaber)
+		{
+			return false;
+		}
+
 		if (!Loader::includeModule('tasks') || !Loader::includeModule('tasksmobile'))
 		{
 			return false;

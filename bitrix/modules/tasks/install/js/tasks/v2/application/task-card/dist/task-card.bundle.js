@@ -86,6 +86,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    if (main_popup.PopupManager.getPopupById(id)) {
 	      return;
 	    }
+
+	    // eslint-disable-next-line init-declarations
 	    let card;
 	    const popup = new main_popup.Popup({
 	      id,
@@ -116,6 +118,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    popup.show();
 	  }
 	  static showFullCard(params = {}) {
+	    // eslint-disable-next-line init-declarations
 	    let card;
 	    BX.SidePanel.Instance.open(`tasks-full-card-${params.taskId}`, {
 	      contentClassName: 'tasks-full-card-slider-content',
@@ -123,7 +126,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      customLeftBoundary: 0,
 	      cacheable: false,
 	      contentCallback: slider => {
-	        void BX.Runtime.loadExtension('tasks.v2.application.task-full-card').then(({
+	        void top.BX.Runtime.loadExtension('tasks.v2.application.task-full-card').then(({
 	          TaskFullCard
 	        }) => {
 	          card = new TaskFullCard({

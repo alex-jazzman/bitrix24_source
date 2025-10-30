@@ -5,6 +5,8 @@ jn.define('navigator/more-tab', (require, exports, module) => {
 	const { BaseNavigator } = require('navigator/base');
 	const { NOTIFICATION_EVENTS, SUBSCRIPTION_EVENTS } = require('navigator/more-tab/meta');
 	const { EntityReady } = require('entity-ready');
+	const { AnalyticsEvent } = require('analytics');
+
 	let TASKS_ROOT_COMPONENT_NAME = null;
 	let TASKS_TABS_NAVIGATOR = null;
 	try
@@ -130,8 +132,8 @@ jn.define('navigator/more-tab', (require, exports, module) => {
 
 		async onInviteNotification()
 		{
-			const { openIntranetInviteWidget, AnalyticsEvent } = await requireLazy('intranet:invite-opener-new') || {};
-			if (openIntranetInviteWidget && AnalyticsEvent)
+			const { openIntranetInviteWidget } = await requireLazy('intranet:invite-opener-new') || {};
+			if (openIntranetInviteWidget)
 			{
 				this.makeTabActive();
 

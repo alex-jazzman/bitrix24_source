@@ -34,10 +34,6 @@ export const DesktopSection = {
 
 			return sliderBindingStatus === '1';
 		},
-		sendTelemetry(): boolean
-		{
-			return DesktopApi.getTelemetryStatus();
-		},
 		isRedirectAvailable(): boolean
 		{
 			return FeatureManager.isFeatureAvailable(Feature.isDesktopRedirectAvailable);
@@ -57,10 +53,6 @@ export const DesktopSection = {
 		{
 			this.setSliderBindingStatus(newValue);
 			DesktopApi.setCustomSetting(DesktopSettingsKey.sliderBindingsStatus, newValue ? '1' : '0');
-		},
-		onSendTelemetryChange(newValue: boolean)
-		{
-			DesktopApi.setTelemetryStatus(newValue);
 		},
 		setSliderBindingStatus(flag: boolean)
 		{
@@ -113,16 +105,6 @@ export const DesktopSection = {
 					:value="openLinksInSlider"
 					:text="loc('IM_CONTENT_SETTINGS_OPTION_DESKTOP_OPEN_LINKS_IN_SLIDER_V2')"
 					@change="onOpenLinksInSliderChange"
-				/>
-			</div>
-			<div class="bx-im-settings-section-content__block">
-				<div class="bx-im-settings-section-content__block_title">
-					{{ loc('IM_CONTENT_SETTINGS_OPTION_DESKTOP_BLOCK_ADDITIONAL') }}
-				</div>
-				<CheckboxOption
-					:value="sendTelemetry"
-					:text="loc('IM_CONTENT_SETTINGS_OPTION_DESKTOP_SEND_TELEMETRY')"
-					@change="onSendTelemetryChange"
 				/>
 			</div>
 		</div>

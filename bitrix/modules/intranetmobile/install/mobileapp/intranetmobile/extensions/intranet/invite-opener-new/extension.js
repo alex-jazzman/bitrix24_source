@@ -3,12 +3,11 @@
  */
 jn.define('intranet/invite-opener-new', (require, exports, module) => {
 	const { Notify } = require('notify');
-	const { Invite, IntranetInviteAnalytics, AnalyticsEvent } = require('intranet/invite-new');
-	const { Alert } = require('alert');
+	const { Invite, IntranetInviteAnalytics } = require('intranet/invite-new');
 	const { Loc } = require('loc');
 	const { StatusBox } = require('layout/ui/status-box');
-	const { Tourist } = require('tourist');
 	const { makeLibraryImagePath } = require('asset-manager');
+	const { getInviteSettings, setUserVisitedInvitations } = require('intranet/invite-opener-new/api');
 
 	const ErrorCode = {
 		POSSIBILITIES_RESTRICTED: 'Invite possibilities restricted',
@@ -16,7 +15,7 @@ jn.define('intranet/invite-opener-new', (require, exports, module) => {
 	};
 
 	/**
-	 * @param params
+	 * @param {Object} params
 	 * @param {AnalyticsEvent} params.analytics
 	 * @param {Boolean} params.multipleInvite
 	 * @param {LayoutComponent} params.parentLayout
@@ -32,67 +31,30 @@ jn.define('intranet/invite-opener-new', (require, exports, module) => {
 		}
 
 		Notify.showIndicatorLoading();
-		getInviteSettings().then(
-			(response) => processGetInviteSettingsFulfilled(response, params),
-			(response) => processGetInviteSettingsRejected(response, params),
-		)
-			.catch((errors) => console.error(errors))
-			.finally(() => Notify.hideCurrentIndicator());
-	};
-
-	const processGetInviteSettingsRejected = (response, params) => {
-		const responseHasErrors = response.errors && response.errors.length > 0;
-		if (responseHasErrors)
-		{
-			handleErrors(response.errors, params.onInviteError);
-		}
-	};
-
-	const processGetInviteSettingsFulfilled = (response, params) => {
-		setUserVisitedInvitations();
-
-		const { errors, data } = response;
-		if (errors && errors.length > 0)
-		{
-			handleErrors(errors, params.onInviteError);
-
-			return;
-		}
-
-		const { canCurrentUserInvite } = data;
-		if (!canCurrentUserInvite)
-		{
-			handleUserHasNoPermissionsToInvite(params.onInviteError, params.parentLayout);
-
-			return;
-		}
-
-		openInviteWidget({
-			...extractResponseData(data),
-			...params,
-		});
-	};
-
-	const setUserVisitedInvitations = () => {
-		Tourist.ready()
-			.then(() => {
-				if (Tourist.firstTime('visit_invitations'))
+		getInviteSettings(params)
+			.then((inviteSettings) => {
+				if (!inviteSettings)
 				{
-					return Tourist.remember('visit_invitations')
-						.then(() => {
-							BX.postComponentEvent('onSetUserCounters', [
-								{
-									[String(env.siteId)]: { menu_invite: 0 },
-								},
-							]);
-						})
-						.catch(console.error);
+					return;
 				}
 
-				// eslint-disable-next-line promise/no-return-wrap
-				return Promise.resolve();
+				void setUserVisitedInvitations();
+
+				if (!inviteSettings.canCurrentUserInvite)
+				{
+					handleUserHasNoPermissionsToInvite(params.onInviteError, params.parentLayout);
+
+					return;
+				}
+
+				openInviteWidget({
+					...inviteSettings,
+					...params,
+				});
 			})
-			.catch(console.error);
+			.catch(console.error)
+			.finally(() => Notify.hideCurrentIndicator())
+		;
 	};
 
 	const handleUserHasNoPermissionsToInvite = (onInviteError, parentLayout = PageManager) => {
@@ -109,41 +71,6 @@ jn.define('intranet/invite-opener-new', (require, exports, module) => {
 		{
 			onInviteError([new Error(ErrorCode.PERMISSIONS_RESTRICTED)]);
 		}
-	};
-
-	const handleErrors = (errors, onInviteError) => {
-		Alert.alert('', Invite.getAjaxErrorText(errors));
-
-		if (onInviteError)
-		{
-			onInviteError(errors);
-		}
-	};
-
-	const getInviteSettings = () => {
-		return BX.ajax.runAction('intranetmobile.invite.getInviteSettings');
-	};
-
-	const extractResponseData = (data) => {
-		const {
-			adminConfirm = false,
-			creatorEmailConfirmed = false,
-			canInviteBySMS = false,
-			canInviteByLink = false,
-			canInviteByEmail = false,
-			isBitrix24Included = false,
-			isInviteWithLocalEmailAppEnabled = true,
-		} = data;
-
-		return {
-			adminConfirm,
-			creatorEmailConfirmed,
-			canInviteBySMS,
-			canInviteByLink,
-			canInviteByEmail,
-			isBitrix24Included,
-			isInviteWithLocalEmailAppEnabled,
-		};
 	};
 
 	/**
@@ -255,5 +182,8 @@ jn.define('intranet/invite-opener-new', (require, exports, module) => {
 		PageManager.openWidget('layout', config);
 	};
 
-	module.exports = { openIntranetInviteWidget, AnalyticsEvent, ErrorCode };
+	module.exports = {
+		openIntranetInviteWidget,
+		ErrorCode,
+	};
 });

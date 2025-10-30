@@ -87,6 +87,11 @@ jn.define('intranet/invite-new/src/inviter/qr', (require, exports, module) => {
 		{
 			return true;
 		}
+
+		isAvailableInviteMethod()
+		{
+			return true;
+		}
 	}
 
 	module.exports = { QRInviter };

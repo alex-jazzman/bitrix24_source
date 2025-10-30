@@ -1,7 +1,10 @@
 import { mapGetters } from 'ui.vue3.vuex';
 import { BottomSheet } from 'tasks.v2.component.elements.bottom-sheet';
 import { Model } from 'tasks.v2.const';
+import { DropZone } from 'tasks.v2.component.drop-zone';
+
 import { DescriptionEditor } from './description-editor';
+
 import './description.css';
 
 // @vue/component
@@ -10,6 +13,7 @@ export const DescriptionSheet = {
 	components: {
 		BottomSheet,
 		DescriptionEditor,
+		DropZone,
 	},
 	props: {
 		taskId: {
@@ -26,12 +30,6 @@ export const DescriptionSheet = {
 		},
 	},
 	emits: ['show', 'close'],
-	data(): Object
-	{
-		return {
-			isExpanded: false,
-		};
-	},
 	computed: {
 		...mapGetters({
 			titleFieldOffsetHeight: `${Model.Interface}/titleFieldOffsetHeight`,
@@ -41,32 +39,25 @@ export const DescriptionSheet = {
 		titleFieldOffsetHeight(): void
 		{
 			this.$refs.bottomSheet?.adjustPosition();
-			void this.$refs.editorComponent?.adjustEditor();
 		},
 	},
 	methods: {
-		onAfterEnter(): void
-		{
-			this.$refs.editorComponent.focusToEnd();
-		},
 		handleShow(): void
 		{
-			void this.$refs.editorComponent.adjustEditor();
-
 			this.$emit('show');
 		},
 	},
 	template: `
-		<BottomSheet :isShown="isShown" :isExpanded="isExpanded" @after-enter="onAfterEnter" ref="bottomSheet">
+		<BottomSheet :isShown="isShown" :isExpanded="true" ref="bottomSheet">
 			<DescriptionEditor
 				ref="editorComponent"
 				:taskId="taskId"
 				:doOpenInEditMode="doOpenInEditMode"
-				:isExpanded="isExpanded"
-				@expand="isExpanded = !isExpanded"
+				:isExpanded="true"
 				@show="handleShow"
 				@close="$emit('close')"
-			></DescriptionEditor>
+			/>
+			<DropZone :taskId="taskId"/>
 		</BottomSheet>
 	`,
 };

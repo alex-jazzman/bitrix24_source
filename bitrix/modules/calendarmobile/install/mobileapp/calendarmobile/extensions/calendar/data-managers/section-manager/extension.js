@@ -162,7 +162,7 @@ jn.define('calendar/data-managers/section-manager', (require, exports, module) =
 			this.sections[section.getId()] = section;
 		}
 
-		refresh(ownerId, calType, force = false)
+		async refresh(ownerId, calType, force = false)
 		{
 			if (ownerId !== Number(env.userId) && calType !== CalendarType.USER)
 			{
@@ -176,27 +176,26 @@ jn.define('calendar/data-managers/section-manager', (require, exports, module) =
 
 			this.isRefreshing = true;
 
-			// eslint-disable-next-line promise/catch-or-return
-			EventAjax.getSectionList({ ownerId, calType }).then((response) => {
-				if (response.data && response.data.sections)
+			try
+			{
+				const { data } = await EventAjax.getSectionList({ ownerId, calType });
+
+				if (data && data.sections)
 				{
-					this.setSections(response.data.sections);
-					this.isRefreshing = false;
+					this.setSections(data.sections);
 				}
-			});
+			}
+			catch (e)
+			{
+				console.error('ERROR on SectionManager.refresh', e);
+			}
+
+			this.isRefreshing = false;
 		}
 
 		compareByName(first, second)
 		{
-			const firstName = first.getName().toLowerCase();
-			const secondName = second.getName().toLowerCase();
-
-			if (firstName > secondName)
-			{
-				return 1;
-			}
-
-			return firstName < secondName ? -1 : 0;
+			return first.getName().localeCompare(second.getName());
 		}
 
 		belongsToView(section, ownerId, calType)

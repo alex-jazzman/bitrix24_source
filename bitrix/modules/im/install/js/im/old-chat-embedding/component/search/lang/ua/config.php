@@ -7,7 +7,6 @@ $MESS["IM_SEARCH_SECTION_CHAT_PARTICIPANTS"] = "Учасники чатів";
 $MESS["IM_SEARCH_SECTION_CHAT_USERS"] = "Чати з користувачем";
 $MESS["IM_SEARCH_SECTION_DEPARTMENTS"] = "Відділи";
 $MESS["IM_SEARCH_SECTION_NETWORK"] = "Зовнішні відкриті лінії";
-$MESS["IM_SEARCH_SECTION_NETWORK_BUTTON"] = "Пошук в Бітрікс24.Network";
 $MESS["IM_SEARCH_SECTION_NETWORK_BUTTON_MSGVER_1"] = "Пошук у Бітрікс24 Мережі";
 $MESS["IM_SEARCH_SECTION_OPENLINES"] = "Відкриті лінії";
 $MESS["IM_SEARCH_SECTION_RECENT"] = "Недавній пошук";

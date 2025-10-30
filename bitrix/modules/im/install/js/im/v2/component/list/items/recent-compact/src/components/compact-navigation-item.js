@@ -5,7 +5,7 @@ import { NavigationMenuItem, Color } from 'im.v2.const';
 
 const NavigationItemToIcon = Object.freeze({
 	[NavigationMenuItem.notification]: OutlineIcons.NOTIFICATION,
-	[NavigationMenuItem.aiAssistant]: OutlineIcons.COPILOT,
+	[NavigationMenuItem.copilot]: OutlineIcons.COPILOT,
 	[NavigationMenuItem.openlines]: OutlineIcons.OPEN_CHANNELS,
 	[NavigationMenuItem.openlinesV2]: OutlineIcons.OPEN_CHANNELS,
 });
@@ -30,7 +30,7 @@ export const CompactNavigationItem = {
 		{
 			const counterToItemId = {
 				[NavigationMenuItem.notification]: 'notifications/getCounter',
-				[NavigationMenuItem.aiAssistant]: 'counters/getTotalCopilotCounter',
+				[NavigationMenuItem.copilot]: 'counters/getTotalCopilotCounter',
 				[NavigationMenuItem.openlines]: 'counters/getTotalLinesCounter',
 				[NavigationMenuItem.openlinesV2]: 'counters/getTotalLinesCounter',
 			};

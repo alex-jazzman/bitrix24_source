@@ -20,11 +20,11 @@ return [
 		'ui-system/blocks/department-card',
 		'layout/pure-component',
 		'utils/skeleton',
-	],
-	'bundle' => [
-		'./src/api',
-		'./src/company-structure',
-		'./src/skeleton',
+		'intranet:department-structure',
+		'intranet:statemanager/redux/slices/department',
+		'type',
+		'statemanager/redux/slices/users',
+		'statemanager/redux/store',
 	],
 ];
 

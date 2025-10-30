@@ -1,6 +1,6 @@
 import { GroupMappers } from 'tasks.v2.provider.service.group-service';
 import { FlowMappers } from 'tasks.v2.provider.service.flow-service';
-import { UserMappers } from 'tasks.v2.provider.service.user-service';
+import { UserMappers, type UserDto } from 'tasks.v2.provider.service.user-service';
 import type { FlowModel } from 'tasks.v2.model.flows';
 import type { GroupModel } from 'tasks.v2.model.groups';
 import type { StageModel } from 'tasks.v2.model.stages';
@@ -8,7 +8,7 @@ import type { TaskModel } from 'tasks.v2.model.tasks';
 import type { UserModel } from 'tasks.v2.model.users';
 
 import { mapDtoToModel } from './mappers';
-import type { TaskDto, UserDto } from './types';
+import type { TaskDto } from './types';
 
 export class TaskGetExtractor
 {

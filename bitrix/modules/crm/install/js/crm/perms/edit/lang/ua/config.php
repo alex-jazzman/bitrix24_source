@@ -10,5 +10,4 @@ $MESS["CRM_PERMS_EDIT_ENTITIES_MORE"] = "Ще";
 $MESS["CRM_PERMS_EDIT_ENTITIES_ROLE"] = "Роль";
 $MESS["CRM_PERMS_EDIT_ENTITIES_SAVE"] = "Зберегти";
 $MESS["CRM_PERMS_EDIT_ENTITIES_STAGES"] = "Стадії";
-$MESS["CRM_PERMS_EDIT_RESTRICTION"] = "Налаштування прав доступу до CRM доступне тільки <a target=\"_blank\" href=\"https://www.bitrix24.сom/prices/\">на платних тарифах</a>.";
 $MESS["CRM_PERMS_EDIT_ROLE_DELETE"] = "Видалити роль";

@@ -2,16 +2,20 @@ import { ajax } from 'main.core';
 
 export class ApiClient
 {
-	constructor(baseUrl = 'tasks.v2.')
+	#baseUrl: string;
+	#contentType: string;
+
+	constructor(baseUrl = 'tasks.v2.', contentType = 'json')
 	{
-		this.baseUrl = baseUrl;
+		this.#baseUrl = baseUrl;
+		this.#contentType = contentType;
 	}
 
 	async get(endpoint, params = {}): Promise<any>
 	{
 		const url = this.buildUrl(endpoint);
 		const response = await ajax.runAction(url, {
-			json: { method: 'GET', ...params },
+			[this.#contentType]: { method: 'GET', ...params },
 		});
 
 		return this.handleResponse(response);
@@ -21,7 +25,7 @@ export class ApiClient
 	{
 		const url = this.buildUrl(endpoint);
 		const response = await ajax.runAction(url, {
-			json: data,
+			[this.#contentType]: data,
 		});
 
 		return this.handleResponse(response);
@@ -35,7 +39,7 @@ export class ApiClient
 			headers: {
 				'Content-Type': 'application/json',
 			},
-			json: data,
+			[this.#contentType]: data,
 		});
 
 		return this.handleResponse(response);
@@ -53,7 +57,7 @@ export class ApiClient
 
 	buildUrl(endpoint, params = {}): string
 	{
-		let url = `${this.baseUrl}${endpoint}`;
+		let url = `${this.#baseUrl}${endpoint}`;
 		if (Object.keys(params).length > 0)
 		{
 			url += `?${new URLSearchParams(params).toString()}`;

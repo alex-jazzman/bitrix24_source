@@ -556,7 +556,7 @@ class tasks extends CModule
 	{
 		$agents = [
 			[
-				'name' => \Bitrix\Tasks\V2\Infrastructure\Agent\Reminder::class,
+				'name' => '\Bitrix\Tasks\V2\Infrastructure\Agent\Reminder::execute();',
 				'interval' => 60,
 			],
 			[

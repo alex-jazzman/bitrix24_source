@@ -1,9 +1,4 @@
-.tasks-field-participant-list {
-	overflow: hidden;
-}
-
 .tasks-field-users {
-	position: relative;
 	display: flex;
 	flex-direction: column;
 	gap: 8px;
@@ -13,27 +8,6 @@
 	overflow: auto;
 	gap: 10px;
 	font-size: var(--ui-font-size-lg);
-}
-
-.tasks-field-users-add-background {
-	z-index: 0;
-	position: absolute;
-	inset: 0;
-	cursor: pointer;
-}
-
-.tasks-field-user-add {
-	margin-left: auto;
-	--ui-icon-set__icon-size: 20px;
-	--ui-icon-set__icon-color: var(--ui-color-base-4);
-}
-
-.tasks-field-user-add.ui-icon-set:not(:hover) {
-	opacity: 0;
-}
-
-.tasks-field-user-add.ui-icon-set.--active {
-	opacity: 1;
 }
 
 .tasks-field-participant-list-empty {
@@ -53,8 +27,8 @@
 }
 
 .tasks-field-participant-list-more {
-	z-index: 1;
 	max-width: max-content;
+	margin-top: 8px;
 	font-size: var(--ui-font-size-md);
 	color: var(--ui-color-base-4);
 	cursor: pointer;

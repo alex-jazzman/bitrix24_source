@@ -3994,6 +3994,7 @@ a.crm-timeline__card-title:hover {
 	flex-direction: row;
 	justify-content: flex-start;
 	align-items: center;
+	padding-bottom: 8px;
 }
 
 .crm-timeline-block-internal-copilot-header_text {

@@ -11,10 +11,8 @@
 	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
 }
 
-.tasks-field-status-popup {
+.tasks-field-status-hint {
 	display: flex;
 	flex-direction: column;
-	gap: 8px;
-	color: var(--ui-color-base-8);
-	font-size: var(--ui-font-size-lg);
+	gap: var(--ui-space-stack-xs);
 }

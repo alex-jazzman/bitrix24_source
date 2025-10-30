@@ -73,6 +73,8 @@ export const Switcher = {
 		{
 			this.switcher.check(this.modelValue);
 		}
+
+		this.toggleTextVisibility(this.hiddenText);
 	},
 	methods: {
 		checked(): void

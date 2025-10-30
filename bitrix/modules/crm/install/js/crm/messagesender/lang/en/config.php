@@ -1,6 +1,6 @@
 <?php
-$MESS["CRM_MESSAGESENDER_B24_AGREEMENT_ACCEPT"] = "SMS and WhatsApp messages can now be sent from Bitrix24";
-$MESS["CRM_MESSAGESENDER_B24_AGREEMENT_NOTIFY"] = "You have to agree to the Terms to send messages from Bitrix24";
+$MESS["CRM_MESSAGESENDER_B24_AGREEMENT_ACCEPT"] = "SMS and WhatsApp messages can now be sent from Bitrix24.";
+$MESS["CRM_MESSAGESENDER_B24_AGREEMENT_NOTIFY"] = "You have to agree to the Terms to send messages from Bitrix24.";
 $MESS["CRM_MESSAGESENDER_B24_CONDITION_CHECKER_MARKET_MESSAGE"] = "Connect an SMS provider<br>to send invitation.";
 $MESS["CRM_MESSAGESENDER_B24_CONDITION_CHECKER_OK_BTN_TEXT"] = "Connect";
 $MESS["CRM_MESSAGESENDER_B24_CONNECT_ACCESS_DENIED"] = "Insufficient permission to connect #SERVICE_NAME# to Open Channel. Please contact your Bitrix24 administrator.";

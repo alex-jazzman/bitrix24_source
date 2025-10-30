@@ -1,6 +1,7 @@
 <?php
 
 $MESS['TASKS_V2_GROUP_TITLE'] = 'Проект';
+$MESS['TASKS_V2_GROUP_TITLE_CHIP'] = 'Проект';
 $MESS['TASKS_V2_GROUP_TITLE_COLLAB'] = 'Коллаба';
 $MESS['TASKS_V2_GROUP_TITLE_SCRUM'] = 'Скрам';
 $MESS['TASKS_V2_GROUP_ABOUT'] = 'Открыть проект';

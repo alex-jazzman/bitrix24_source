@@ -8270,6 +8270,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    dialogId: {
 	      type: String,
 	      required: true
+	    },
+	    containerHeight: {
+	      type: [Number, null],
+	      default: null
 	    }
 	  },
 	  data() {
@@ -8450,6 +8454,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 									:dialogId="dialogId"
 									:key="message.id"
 									:data-viewed="message.viewed"
+									:containerHeight="containerHeight"
 									@mouseup="onMessageMouseUp(message, $event)"
 								>
 								</component>

@@ -3,7 +3,7 @@ import { AccessLevel } from './types/SDK';
 import { SDKEvents } from './types/events';
 export default class WebSDK {
     constructor(params) {
-        var _a, _b, _c, _d, _e, _f, _g, _h, _j;
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l;
         this.params = params;
         let accessLevel;
         let canEditBoard;
@@ -42,6 +42,7 @@ export default class WebSDK {
             lang: params.lang || 'ru',
             // bitrix partnerId by default
             partnerId: params.partnerId || '0',
+            boardUrl: params.boardUrl && encodeURIComponent(params.boardUrl),
             ui: {
                 colorTheme: ((_a = params.ui) === null || _a === void 0 ? void 0 : _a.colorTheme) || 'flipOriginLight',
                 openTemplatesModal: !!((_b = params.ui) === null || _b === void 0 ? void 0 : _b.openTemplatesModal),
@@ -52,12 +53,14 @@ export default class WebSDK {
                 spinner: (_g = params.ui) === null || _g === void 0 ? void 0 : _g.spinner,
                 userKickable: (_h = params.ui) === null || _h === void 0 ? void 0 : _h.userKickable,
                 confirmUserKick: (_j = params.ui) === null || _j === void 0 ? void 0 : _j.confirmUserKick,
+                scrollToElement: (_k = params.ui) === null || _k === void 0 ? void 0 : _k.scrollToElement,
+                disable: (_l = params.ui) === null || _l === void 0 ? void 0 : _l.disable,
             },
             appContainerDomain: window.location.origin,
             boardData,
         };
         this.iframeEl = document.createElement('iframe');
-        this.iframeEl.allow = 'clipboard-read; clipboard-write';
+        this.iframeEl.allow = 'clipboard-read; clipboard-write; fullscreen';
         window.addEventListener('beforeunload', this.destroy.bind(this));
     }
     init() {
@@ -116,13 +119,15 @@ export default class WebSDK {
         if (this.boardParams.ui.spinner && this.boardParams.ui.spinner !== 'default')
             url.searchParams.set('spinner', this.boardParams.ui.spinner);
         url.searchParams.set('dt', Date.now().toString());
+        if (this.boardParams.ui.scrollToElement)
+            url.searchParams.set('elementId', this.boardParams.ui.scrollToElement);
         return url.toString();
     }
     addEventListener() {
         window.addEventListener('message', this.listenBoardEvents.bind(this));
     }
     listenBoardEvents(event) {
-        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v;
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _0, _1, _2, _3, _4;
         if (((_a = event.data) === null || _a === void 0 ? void 0 : _a.event) === SDKEvents.waitParams) {
             // @ts-ignore
             (_b = this.iframeEl.contentWindow) === null || _b === void 0 ? void 0 : _b.postMessage({ event: SDKEvents.setParams, data: this.boardParams }, '*');
@@ -145,6 +150,11 @@ export default class WebSDK {
         if (((_r = event.data) === null || _r === void 0 ? void 0 : _r.event) === SDKEvents.userConfirmKickFromBoard) {
             if ((_t = (_s = this.params) === null || _s === void 0 ? void 0 : _s.events) === null || _t === void 0 ? void 0 : _t.onUserKickConfirmed) {
                 (_v = (_u = this.params) === null || _u === void 0 ? void 0 : _u.events) === null || _v === void 0 ? void 0 : _v.onUserKickConfirmed();
+            }
+        }
+        if (((_w = event.data) === null || _w === void 0 ? void 0 : _w.event) === SDKEvents.shareElementWithSocials) {
+            if ((_y = (_x = this.params) === null || _x === void 0 ? void 0 : _x.events) === null || _y === void 0 ? void 0 : _y.onShareElementWithSocials) {
+                (_0 = (_z = this.params) === null || _z === void 0 ? void 0 : _z.events) === null || _0 === void 0 ? void 0 : _0.onShareElementWithSocials(((_2 = (_1 = event.data) === null || _1 === void 0 ? void 0 : _1.data) === null || _2 === void 0 ? void 0 : _2.link) || '', ((_4 = (_3 = event.data) === null || _3 === void 0 ? void 0 : _3.data) === null || _4 === void 0 ? void 0 : _4.social) || 'telegram');
             }
         }
     }

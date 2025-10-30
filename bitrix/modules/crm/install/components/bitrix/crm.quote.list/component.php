@@ -6,7 +6,6 @@ use Bitrix\Crm\Component\EntityList\FieldRestrictionManagerTypes;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\WebForm\Manager as WebFormManager;
 use Bitrix\Main;
-use Bitrix\Main\Config\Option;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
@@ -196,8 +195,10 @@ if($arResult['CAN_CONVERT'])
 	$arResult['CONVERTER_ID'] = $arResult['GRID_ID'];
 }
 
+$isExtendedInternal = $arParams['EXTENDED_INTERNAL_MODE'] ?? null;
+
 //region Filter Presets Initialization
-if (!$bInternal)
+if (!$bInternal || $isExtendedInternal === true)
 {
 	$entityFilter = Crm\Filter\Factory::createEntityFilter(
 		new Crm\Filter\QuoteSettings(['ID' => $arResult['GRID_ID']])
@@ -228,7 +229,7 @@ $fieldRestrictionManager->removeRestrictedFields($filterOptions, $gridOptions);
 //endregion
 
 //region Filter initialization
-if (!$bInternal)
+if (!$bInternal || $isExtendedInternal === true)
 {
 	$arResult['FILTER2LOGIC'] = ['TITLE', 'COMMENTS'];
 

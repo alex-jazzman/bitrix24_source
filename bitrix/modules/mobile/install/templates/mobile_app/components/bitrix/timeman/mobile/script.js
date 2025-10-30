@@ -588,7 +588,7 @@
 						{
 							menu.push({
 								name: BX.message("TM_MENU_STOP"),
-								icon: 'finish',
+								icon: 'flag',
 								action: BX.proxy(function() {
 									this.showStopForm("normal");
 									_initPage(this.getMenu(status, false));
@@ -599,7 +599,7 @@
 						{
 							menu.push({
 								name: BX.message("TM_MENU_STOP1"),
-								icon: 'finish',
+								icon: 'flag',
 								action: BX.proxy(function(){
 									this.showStopForm("extended");
 									_initPage(this.getMenu(status, false));

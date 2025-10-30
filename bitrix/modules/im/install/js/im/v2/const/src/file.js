@@ -4,6 +4,7 @@ export const FileStatus = Object.freeze({
 	progress: 'progress',
 	done: 'done',
 	error: 'error',
+	preparing: 'preparing',
 });
 
 export const FileType = Object.freeze({

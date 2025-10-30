@@ -87,6 +87,7 @@ export const ChatDialog = {
 			showQuoteButton: false,
 			isJumpingToAnchor: false,
 			messagesToRead: new Set(),
+			containerHeight: 0,
 		};
 	},
 	computed:
@@ -193,8 +194,11 @@ export const ChatDialog = {
 		Logger.warn('Dialog: Chat created', this.dialogId);
 		this.initContextMode();
 	},
-	mounted()
+	async mounted()
 	{
+		await this.$nextTick();
+		this.containerHeight = this.$refs.container.clientHeight;
+
 		this.getScrollManager().setContainer(this.getContainer());
 		if (this.dialogInited)
 		{
@@ -902,7 +906,7 @@ export const ChatDialog = {
 			<!-- Message list -->
 			<div @scroll="onScroll" class="bx-im-dialog-chat__scroll-container" ref="container">
 				<slot name="message-list">
-					<MessageList :dialogId="dialogId" />
+					<MessageList :dialogId="dialogId" :containerHeight="containerHeight" />
 				</slot>
 			</div>
 			<FloatButtons

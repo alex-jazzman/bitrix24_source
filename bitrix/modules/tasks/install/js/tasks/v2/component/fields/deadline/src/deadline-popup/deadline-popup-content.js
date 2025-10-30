@@ -1,4 +1,3 @@
-import { Extension, Type } from 'main.core';
 import { DateTimeFormat } from 'main.date';
 import type { BaseEvent } from 'main.core.events';
 
@@ -8,6 +7,7 @@ import { Outline } from 'ui.icon-set.api.core';
 import 'ui.icon-set.outline';
 
 import { Model, Analytics } from 'tasks.v2.const';
+import { calendar } from 'tasks.v2.lib.calendar';
 import { timezone } from 'tasks.v2.lib.timezone';
 import { analytics } from 'tasks.v2.lib.analytics';
 import type { TaskModel } from 'tasks.v2.model.tasks';
@@ -20,10 +20,6 @@ type Preset = {
 	timestamp: number,
 	formatted: string,
 };
-
-const calendarSettings = Extension.getSettings('tasks.v2.component.fields.deadline').calendarSettings;
-const addZero = (unit: number) => `0${unit}`.slice(-2);
-const defaultTime = `${addZero(calendarSettings.HOURS.END.H)}:${addZero(calendarSettings.HOURS.END.M)}`;
 
 // @vue/component
 export const DeadlinePopupContent = {
@@ -116,14 +112,13 @@ export const DeadlinePopupContent = {
 			const offset = timezone.getOffset(this.task.deadlineTs);
 			const picker = new DatePicker({
 				selectedDates: this.task.deadlineTs ? [this.task.deadlineTs + offset] : null,
-				defaultTime,
+				defaultTime: calendar.defaultTime,
 				inline: true,
 				enableTime: true,
 				events: {
 					[DatePickerEvent.SELECT]: (event: BaseEvent) => {
 						const { date } = event.getData();
-						const selectedDate = this.createDateFromUtc(date);
-						const dateTs = selectedDate.getTime();
+						const dateTs = calendar.createDateFromUtc(date).getTime();
 						this.$emit('update', dateTs - timezone.getOffset(dateTs));
 					},
 				},
@@ -141,7 +136,7 @@ export const DeadlinePopupContent = {
 
 			picker.getPicker('time').subscribe('onSelect', (event: BaseEvent) => {
 				const { hour, minute } = event.getData();
-				if (Type.isNumber(minute) || hour === this.hour)
+				if (Number.isInteger(minute) || hour === this.hour)
 				{
 					this.close();
 				}
@@ -152,16 +147,6 @@ export const DeadlinePopupContent = {
 
 			return picker;
 		},
-		createDateFromUtc(date: Date): Date
-		{
-			return new Date(
-				date.getUTCFullYear(),
-				date.getUTCMonth(),
-				date.getUTCDate(),
-				date.getUTCHours(),
-				date.getUTCMinutes(),
-			);
-		},
 		focusDate(timestamp: ?number): void
 		{
 			this.datePicker.setFocusDate(timestamp);
@@ -171,7 +156,7 @@ export const DeadlinePopupContent = {
 			const date = new Date(timestamp);
 			const [y, m, d] = [date.getFullYear(), date.getMonth(), date.getDate()];
 
-			this.datePicker.selectDate(new Date(`${m + 1}/${d}/${y} ${defaultTime}`));
+			this.datePicker.selectDate(new Date(`${m + 1}/${d}/${y} ${calendar.defaultTime}`));
 			this.sendAnalytics(Analytics.Element.DeadlinePreset);
 
 			this.close();

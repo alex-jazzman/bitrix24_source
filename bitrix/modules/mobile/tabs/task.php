@@ -17,6 +17,7 @@ use Bitrix\Socialnetwork\Component\WorkgroupList;
 use Bitrix\Socialnetwork\Helper\Feature;
 use Bitrix\TasksMobile\Provider\TariffPlanRestrictionProvider;
 use Bitrix\TasksMobile\Settings;
+use Bitrix\Mobile\Menu\Analytics;
 
 class Task implements Tabable
 {
@@ -42,12 +43,15 @@ class Task implements Tabable
 	public function getMenuData(): ?array
 	{
 		$result = [
+			'id' => $this->getId(),
+			'section_code' => 'tasks',
 			'title' => $this->getTitle(),
 			'useLetterImage' => true,
 			'color' => '#fabb3f',
 			'imageUrl' => 'favorite/icon-tasks.png',
 			'params' => [
 				'id' => 'tasks_tabs',
+				'analytics' => Analytics::tasks(),
 			],
 			'imageName' => $this->getIconId(),
 		];
@@ -56,7 +60,7 @@ class Task implements Tabable
 		if (!empty($data['component']))
 		{
 			$result['params']['onclick'] = Utils::getComponentJSCode($data['component']);
-			$result['params']['counter'] =' tasks_total';
+			$result['params']['counter'] ='tasks_total';
 		}
 		elseif (!empty($data['page']))
 		{

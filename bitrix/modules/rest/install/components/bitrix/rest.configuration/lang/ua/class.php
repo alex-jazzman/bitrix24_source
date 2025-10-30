@@ -1,6 +1,6 @@
 <?php
-$MESS["REST_CONFIGURATION_APP_SECTION_TITLE_2"] = "Бітрікс24.Маркет";
 $MESS["REST_CONFIGURATION_APP_SECTION_TITLE_2_MSGVER_1"] = "Бітрікс24 Маркет";
+$MESS["REST_CONFIGURATION_APP_SECTION_TITLE_2_MSGVER_2"] = "Бітрікс24 Маркет";
 $MESS["REST_CONFIGURATION_BTN_SHOW_ALL"] = "переглянути все";
 $MESS["REST_CONFIGURATION_ERROR_PLACEMENT"] = "Помилка, немає даних для відображення";
 $MESS["REST_CONFIGURATION_TITLE_NEW_APP"] = "Нові застосунки";

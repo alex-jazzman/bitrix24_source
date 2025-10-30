@@ -21,7 +21,6 @@ $MESS["INTRANET_SETTINGS_FIELD_LABEL_SHOW_MESSAGE_COMPANY_PULSE"] = "Компа�
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_SHOW_MESSAGE_NEW_EMPLOYEE"] = "Жаңа қызметкер туралы хабарламаны көрсету";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_SHOW_MESSAGE_NEW_EMPLOYEE_LF"] = "Жаңалықтар лентасына жаңа қызметкер туралы жазба қосу";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_SHOW_QUIT_EMPLOYEE"] = "Қызметкерлер тізімінде жұмыстан шығарылғандарды көрсету";
-$MESS["INTRANET_SETTINGS_FIELD_LABEL_SHOW_WIDGET"] = "Виджет сіздің компанияңызда Битрикс24 пайдалану белсенділігін көрсетеді - қызметкерлер қаншалықты жиі міндеттер қояды, хабарламалар жазады, мобильді қосымшаға кіреді. [helpdesklink]Толығырақ [/helpdesklink]";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_USERS_TO_INVITE"] = "Барлығына пайдаланушыларды шақыруға рұқсат ету";
 $MESS["INTRANET_SETTINGS_SECTION_TITLE_ADDITIONAL"] = "Қосымша баптаулар";
 $MESS["INTRANET_SETTINGS_SECTION_TITLE_INVITE"] = "Шақырулар";

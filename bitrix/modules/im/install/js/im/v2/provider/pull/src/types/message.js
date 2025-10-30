@@ -254,3 +254,9 @@ type ReactionUser = {
 	name: string,
 	avatar: string
 };
+
+export type FileTranscriptionParams = {
+	fileId: number,
+	status: 'Success' | 'Pending' | 'Error',
+	transcriptText: string | null,
+};

@@ -16,3 +16,4 @@ $MESS['LANDING_BLOCK_MESSAGE_ERROR_EVAL'] = 'При исполнении дан�
 $MESS['LANDING_BLOCK_MESSAGE_ERROR_DYNAMIC_LIMIT_TITLE'] = 'Тарифное ограничение';
 $MESS['LANDING_BLOCK_MESSAGE_ERROR_LIMIT_BUTTON'] = 'Перейти на расширенный тариф';
 $MESS['LD_BLOCK_SECTION_LAST'] = 'Последние';
+$MESS['LD_BLOCK_SECTION_FAVOURITE'] = 'Избранное';

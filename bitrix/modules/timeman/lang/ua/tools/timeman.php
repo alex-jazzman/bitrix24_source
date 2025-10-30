@@ -3,6 +3,7 @@ $MESS["TM_CALENDAR_CHOOSE"] = "Оберіть календар";
 $MESS["TM_CLOCK_SELECT_DATE_LINK"] = "Змінити день";
 $MESS["TM_CONFIRM_LATE_OPEN"] = "Ви впевнені, що хочете почати робочий день у #TIME#?";
 $MESS["TM_DAY_CLOSED_ADMIN"] = "Робочий день закритий керівником";
+$MESS["TM_ERROR_UNKNOWN"] = "Сталася невідома помилка, спробуйте оновити сторінку.";
 $MESS["TM_IN"] = "через";
 $MESS["TM_TASK_ACCOMPLICES"] = "Співвиконавець";
 $MESS["TM_TASK_ACCOMPLICES_PL"] = "Співвиконавці";

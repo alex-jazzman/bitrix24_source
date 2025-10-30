@@ -1,5 +1,6 @@
 import { hint, type HintParams } from 'ui.vue3.directives.hint';
 
+import { tooltip } from 'tasks.v2.component.elements.hint';
 import { Model } from 'tasks.v2.const';
 import { taskService } from 'tasks.v2.provider.service.task-service';
 import type { TaskModel } from 'tasks.v2.model.tasks';
@@ -32,17 +33,10 @@ export const StoryPoints = {
 		},
 		tooltip(): Function
 		{
-			return (): HintParams => ({
+			return (): HintParams => tooltip({
 				text: this.loc('TASKS_V2_GROUP_STORY_POINTS_HINT'),
-				timeout: 500,
 				popupOptions: {
-					className: 'tasks-field-group-hint',
-					offsetTop: 2,
 					offsetLeft: this.$refs.storyPoints.offsetWidth / 2,
-					background: 'var(--ui-color-bg-content-inapp)',
-					padding: 6,
-					angle: true,
-					targetContainer: document.body,
 				},
 			});
 		},

@@ -125,16 +125,11 @@ BX.Helper =
 
 	show: function(additionalParam, sliderOptions)
 	{
-		if (this.isOpen())
-		{
-			return;
-		}
-
 		if (!BX.Type.isPlainObject(sliderOptions))
 		{
 			sliderOptions = {};
 		}
-		
+
 		//compote code
 		const frameOpenUrl = this.frameOpenUrl + ((this.frameOpenUrl.indexOf("?") < 0) ? "?" : "&") +
 			(BX.type.isNotEmptyString(additionalParam) ? additionalParam : "");

@@ -179,6 +179,11 @@ if(typeof BX.UI.EntitySchemeElement === "undefined")
 			}
 
 			this._hint = hint;
+			if (!this._hint)
+			{
+				this._hint = BX.util.htmlspecialchars(settings?.data?.fieldInfo?.HELP_MESSAGE ?? '');
+			}
+
 			this._title = title;
 			this._originalTitle = originalTitle;
 			this._lockText = lockText;

@@ -1,6 +1,7 @@
 import { Dom, Loc, Tag, Type } from 'main.core';
 import { DateTimeFormat } from 'main.date';
 import { PopupManager } from 'main.popup';
+import { Alert } from 'ui.alerts';
 import { MessageBox } from 'ui.dialogs.messagebox';
 import 'ui.notification';
 
@@ -480,15 +481,15 @@ export class Util
 		{
 			Dom.remove(wrap.querySelector('.ui-alert'));
 
-			const alert = new BX.UI.Alert({
-				color: BX.UI.Alert.Color.DANGER,
-				icon: BX.UI.Alert.Icon.DANGER,
+			const alert = new Alert({
+				color: Alert.Color.DANGER,
+				icon: Alert.Icon.DANGER,
 				text: message,
 			});
 
 			const alertWrap = alert.getContainer();
 
-			wrap.appendChild(alertWrap);
+			Dom.append(alertWrap, wrap);
 
 			return alertWrap;
 		}

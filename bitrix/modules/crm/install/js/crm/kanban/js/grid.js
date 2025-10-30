@@ -1197,7 +1197,7 @@ BX.CRM.Kanban.Grid.prototype = {
 		}
 
 		const gridData = this.getData();
-		if (BX.Type.isArrayFilled(data.config?.users))
+		if (BX.Type.isArrayFilled(data.config.users))
 		{
 			data.config.users.forEach((item) => {
 				const userExist = gridData.itemsConfig?.users.some((user) => {
@@ -1211,7 +1211,7 @@ BX.CRM.Kanban.Grid.prototype = {
 			});
 		}
 
-		if (BX.Type.isArrayFilled(data.config?.fields))
+		if (BX.Type.isArrayFilled(data.config.fields))
 		{
 			data.config.fields.forEach((item) => {
 				const fieldConfigExist = gridData.itemsConfig?.fields.some((field) => {
@@ -1702,18 +1702,22 @@ BX.CRM.Kanban.Grid.prototype = {
 			status: targetColumnId,
 			eventId: BX.Pull.QueueManager.registerRandomEventId(),
 		};
-		const ids = this.itemMoving?.groupIds ? this.itemMoving?.groupIds.toString() : itemId;
+
+		const ids = this.itemMoving?.groupIds ?? [itemId];
+		const columnType = targetColumn.getData().type;
+		const isColumnChanged = this.itemMoving?.oldColumn && (this.itemMoving.oldColumn.id !== targetColumn.id);
 
 		const analyticsData = this.getDefaultAnalyticsCloseEvent(item, targetColumn.getData().type, ids);
-
-		this.registerAnalyticsCloseEvent(analyticsData, this._analyticsDictionary.STATUS_ATTEMPT);
 
 		this.ajax(
 			params,
 			(data) => {
 				if (!data)
 				{
-					this.registerAnalyticsCloseEvent(analyticsData, this._analyticsDictionary.STATUS_ERROR);
+					if (isColumnChanged)
+					{
+						this.registerAnalyticsChangeStageEvent(item, columnType, ids, this._analyticsDictionary.STATUS_ERROR)
+					}
 
 					return;
 				}
@@ -1724,12 +1728,18 @@ BX.CRM.Kanban.Grid.prototype = {
 
 					this.showResponseError(data);
 
-					this.registerAnalyticsCloseEvent(analyticsData, this._analyticsDictionary.STATUS_ERROR);
+					if (isColumnChanged)
+					{
+						this.registerAnalyticsChangeStageEvent(item, columnType, ids, this._analyticsDictionary.STATUS_ERROR)
+					}
 
 					return;
 				}
 
-				this.registerAnalyticsCloseEvent(analyticsData, this._analyticsDictionary.STATUS_SUCCESS);
+				if (isColumnChanged)
+				{
+					this.registerAnalyticsChangeStageEvent(item, columnType, ids, this._analyticsDictionary.STATUS_SUCCESS)
+				}
 
 				if (
 					this.getData().useItemPlanner
@@ -1773,7 +1783,7 @@ BX.CRM.Kanban.Grid.prototype = {
 				}
 			},
 			(error) => {
-				this.registerAnalyticsCloseEvent(analyticsData, this._analyticsDictionary.STATUS_ERROR);
+				this.registerAnalyticsChangeStageEvent(item, columnType, ids, this._analyticsDictionary.STATUS_ERROR)
 
 				BX.Kanban.Utils.showErrorDialog(`Error: ${error}`, true);
 			},
@@ -1823,6 +1833,23 @@ BX.CRM.Kanban.Grid.prototype = {
 		analyticsData.status = status;
 
 		BX.UI.Analytics.sendData(analyticsData);
+	},
+
+	registerAnalyticsChangeStageEvent(item, columnType, ids, status)
+	{
+		if (columnType === 'PROGRESS')
+		{
+			const analyticsData = this._analyticsBuilder.Entity.ChangeStageEvent.createDefault(item.getGridData().entityType, ids.length)
+				.setSubSection(this._analyticsDictionary.SUB_SECTION_KANBAN)
+				.setStatus(status)
+				.buildData();
+
+			BX.UI.Analytics.sendData(analyticsData);
+		}
+		else
+		{
+			this.registerAnalyticsCloseEvent(this.getDefaultAnalyticsCloseEvent(item, columnType, ids.toString()), status)
+		}
 	},
 
 	registerAnalyticsSpecialItemLinkClick(item, linkPath)
@@ -2102,6 +2129,7 @@ BX.CRM.Kanban.Grid.prototype = {
 						if (
 							BX.Type.isArrayFilled(configRow)
 							|| (BX.Type.isObject(configRow) && Object.keys(configRow).length > 0)
+							|| BX.Type.isBoolean(configRow)
 						)
 						{
 							gridData.itemsConfig[key] = configRow;

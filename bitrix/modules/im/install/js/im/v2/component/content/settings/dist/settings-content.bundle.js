@@ -940,9 +940,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      const sliderBindingStatus = im_v2_lib_desktopApi.DesktopApi.getCustomSetting(im_v2_lib_desktopApi.DesktopSettingsKey.sliderBindingsStatus, '1');
 	      return sliderBindingStatus === '1';
 	    },
-	    sendTelemetry() {
-	      return im_v2_lib_desktopApi.DesktopApi.getTelemetryStatus();
-	    },
 	    isRedirectAvailable() {
 	      return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isDesktopRedirectAvailable);
 	    }
@@ -957,9 +954,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    onOpenLinksInSliderChange(newValue) {
 	      this.setSliderBindingStatus(newValue);
 	      im_v2_lib_desktopApi.DesktopApi.setCustomSetting(im_v2_lib_desktopApi.DesktopSettingsKey.sliderBindingsStatus, newValue ? '1' : '0');
-	    },
-	    onSendTelemetryChange(newValue) {
-	      im_v2_lib_desktopApi.DesktopApi.setTelemetryStatus(newValue);
 	    },
 	    setSliderBindingStatus(flag) {
 	      if (flag === true) {
@@ -1004,16 +998,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					:value="openLinksInSlider"
 					:text="loc('IM_CONTENT_SETTINGS_OPTION_DESKTOP_OPEN_LINKS_IN_SLIDER_V2')"
 					@change="onOpenLinksInSliderChange"
-				/>
-			</div>
-			<div class="bx-im-settings-section-content__block">
-				<div class="bx-im-settings-section-content__block_title">
-					{{ loc('IM_CONTENT_SETTINGS_OPTION_DESKTOP_BLOCK_ADDITIONAL') }}
-				</div>
-				<CheckboxOption
-					:value="sendTelemetry"
-					:text="loc('IM_CONTENT_SETTINGS_OPTION_DESKTOP_SEND_TELEMETRY')"
-					@change="onSendTelemetryChange"
 				/>
 			</div>
 		</div>

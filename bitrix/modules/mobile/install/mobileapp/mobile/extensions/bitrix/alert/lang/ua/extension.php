@@ -1,6 +1,6 @@
 <?php
 $MESS["ALERT_CONFIRMATION_CANCEL"] = "Відмовитися";
-$MESS["ALERT_CONFIRMATION_CONFIRM"] = "Відкрити доступ";
+$MESS["ALERT_CONFIRMATION_CONFIRM"] = "Зрозуміло";
 $MESS["ALERT_CONFIRM_CLOSING_CONTINUE"] = "Продовжити редагування";
 $MESS["ALERT_CONFIRM_CLOSING_DESCRIPTION"] = "Щоб не втратити зміни, збережіть їх";
 $MESS["ALERT_CONFIRM_CLOSING_DISCARD"] = "Вийти без збереження";

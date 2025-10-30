@@ -1034,10 +1034,9 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 
 		getAnalytics()
 		{
-			return new AnalyticsEvent()
+			return new AnalyticsEvent(this.props.analyticsEvent)
 				.setTool('crm')
 				.setCategory('entity_operations')
-				.setSection(`${this.entityTypeName.toLowerCase()}_section`)
 				.setSubSection(this.getView());
 		}
 
@@ -1492,16 +1491,20 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 		 */
 		getEntityTypeModel(params = {})
 		{
-			params.categoryId = this.getCategoryId(this.props.entityTypeId);
-			params.categoriesCount = this.getCurrentEntityType().data.categoriesCount || 0;
-			params.userInfo = this.props.userInfo;
-			params.isChatSupported = this.getCurrentEntityType().isChatSupported;
-			params.reminders = this.prepareReminders(
-				this.getCurrentEntityType().data.reminders,
-				this.props.remindersList,
-			);
+			const preparedParams = {
+				...params,
+				categoryId: this.getCategoryId(this.props.entityTypeId),
+				categoriesCount: this.getCurrentEntityType().data.categoriesCount || 0,
+				userInfo: this.props.userInfo,
+				isChatSupported: this.getCurrentEntityType().isChatSupported,
+				reminders: this.prepareReminders(
+					this.getCurrentEntityType().data.reminders,
+					this.props.remindersList,
+				),
+				analyticsEvent: this.props.analyticsEvent,
+			};
 
-			return TypeFactory.getEntityByType(this.entityTypeName, params);
+			return TypeFactory.getEntityByType(this.entityTypeName, preparedParams);
 		}
 
 		/**

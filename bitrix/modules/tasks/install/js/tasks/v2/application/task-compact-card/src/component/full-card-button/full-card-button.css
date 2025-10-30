@@ -5,3 +5,30 @@
 .tasks-compact-card-full-button-container.--disabled .tasks-compact-card-full-button {
 	pointer-events: none;
 }
+
+.tasks-compact-card-full-button-auditors-hint-title {
+	font-weight: var(--ui-font-weight-medium);
+	font-size: var(--ui-font-size-2xl);
+	line-height: var(--ui-font-line-height-md);
+	margin-bottom: 5px;
+}
+
+.tasks-compact-card-full-button-auditors-hint-content {
+	font-weight: var(--ui-font-weight-normal);
+	font-size: var(--ui-font-size-xs);
+	line-height: var(--ui-font-line-height-md);
+	margin-bottom: 5px;
+}
+
+.tasks-compact-card-full-button-auditors-hint-link {
+	/*color: var(--ui-color-accent-main-link);*/
+	color: #BAD7FF;
+	font-size: var(--ui-font-size-xs);
+	font-weight: var(--ui-font-weight-normal);
+	line-height: var(--ui-font-line-height-md);
+	text-decoration: underline dotted;
+	cursor: pointer;
+	border: none;
+	background: none;
+	padding: 0;
+}

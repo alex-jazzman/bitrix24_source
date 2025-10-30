@@ -106,11 +106,15 @@ class im extends \CModule
 		$eventManager->registerEventHandler('ai', 'onTuningLoad', 'im', '\Bitrix\Im\V2\Integration\AI\Restriction', 'onTuningLoad');
 		$eventManager->registerEventHandler('humanresources', 'OnRelationAdded', 'im', '\Bitrix\Im\V2\Integration\HumanResources\Sync\SyncService', 'onRelationAdded');
 		$eventManager->registerEventHandler('humanresources', 'OnRelationDeleted', 'im', '\Bitrix\Im\V2\Integration\HumanResources\Sync\SyncService', 'onRelationDeleted');
+		$eventManager->registerEventHandler('humanresources', 'OnRelationPartDeleted', 'im', '\Bitrix\Im\V2\Integration\HumanResources\Sync\SyncService', 'onRelationPartDeleted');
 		$eventManager->registerEventHandler('humanresources', 'OnMemberAdded', 'im', '\Bitrix\Im\V2\Integration\HumanResources\Sync\SyncService', 'onMemberAdded');
 		$eventManager->registerEventHandler('humanresources', 'OnMemberDeleted', 'im', '\Bitrix\Im\V2\Integration\HumanResources\Sync\SyncService', 'onMemberDeleted');
 		$eventManager->registerEventHandler('intranet', 'onLicenseHasChanged', 'im', '\Bitrix\Im\V2\TariffLimit\Limit', 'onLicenseHasChanged');
 		$eventManager->registerEventHandler('humanresources', 'OnMemberUpdated', 'im', '\Bitrix\Im\V2\Integration\HumanResources\Sync\SyncService', 'onMemberUpdated');
 		$eventManager->registerEventHandler('main', 'OnAfterSetOption_isAutoDeleteMessagesEnabled', 'im', '\Bitrix\Im\V2\Message\Delete\DisappearService', 'onAutoDeleteOptionChanged');
+		$eventManager->registerEventHandler('ai', 'onQueueJobExecute', 'im', '\Bitrix\Im\V2\Integration\AI\QueueManager', 'onQueueJobExecute');
+		$eventManager->registerEventHandler('ai', 'onQueueJobFail', 'im', '\Bitrix\Im\V2\Integration\AI\QueueManager', 'onQueueJobFail');
+
 
 		//marketplace
 		$eventManager->registerEventHandler('rest', 'OnRestServiceBuildDescription', 'im','\Bitrix\Im\V2\Marketplace\Placement', 'onRestServiceBuildDescription');
@@ -509,11 +513,14 @@ class im extends \CModule
 		$eventManager->unRegisterEventHandler('ai', 'onTuningLoad', 'im', '\Bitrix\Im\V2\Integration\AI\Restriction', 'onTuningLoad');
 		$eventManager->unRegisterEventHandler('humanresources', 'OnRelationAdded', 'im', '\Bitrix\Im\V2\Integration\HumanResources\Sync\SyncService', 'onRelationAdded');
 		$eventManager->unRegisterEventHandler('humanresources', 'OnRelationDeleted', 'im', '\Bitrix\Im\V2\Integration\HumanResources\Sync\SyncService', 'onRelationDeleted');
+		$eventManager->unRegisterEventHandler('humanresources', 'OnRelationPartDeleted', 'im', '\Bitrix\Im\V2\Integration\HumanResources\Sync\SyncService', 'onRelationPartDeleted');
 		$eventManager->unRegisterEventHandler('humanresources', 'OnMemberAdded', 'im', '\Bitrix\Im\V2\Integration\HumanResources\Sync\SyncService', 'onMemberAdded');
 		$eventManager->unRegisterEventHandler('humanresources', 'OnMemberDeleted', 'im', '\Bitrix\Im\V2\Integration\HumanResources\Sync\SyncService', 'onMemberDeleted');
 		$eventManager->unRegisterEventHandler('intranet', 'onLicenseHasChanged', 'im', '\Bitrix\Im\V2\TariffLimit\Limit', 'onLicenseHasChanged');
 		$eventManager->unRegisterEventHandler('humanresources', 'OnMemberUpdated', 'im', '\Bitrix\Im\V2\Integration\HumanResources\Sync\SyncService', 'onMemberUpdated');
 		$eventManager->unRegisterEventHandler('main', 'OnAfterSetOption_isAutoDeleteMessagesEnabled', 'im', '\Bitrix\Im\V2\Message\Delete\DisappearService', 'onAutoDeleteOptionChanged');
+		$eventManager->unRegisterEventHandler('ai', 'onQueueJobExecute', 'im', '\Bitrix\Im\V2\Integration\AI\QueueManager', 'onQueueJobExecute');
+		$eventManager->unRegisterEventHandler('ai', 'onQueueJobFail', 'im', '\Bitrix\Im\V2\Integration\AI\QueueManager', 'onQueueJobFail');
 
 		$this->UnInstallUserFields($arParams);
 

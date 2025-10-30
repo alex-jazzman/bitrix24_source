@@ -2,6 +2,7 @@ import type { DocumentInitiatedType } from 'sign.type';
 import { post } from './request';
 import { TemplateApi } from './template/template-api';
 import { TemplateFolderApi } from './template/template-folder-api';
+import { SignersListApi } from './signers-list-api';
 import type {
 	B2eCompanyList,
 	BlockData,
@@ -21,6 +22,7 @@ export class Api
 {
 	template: TemplateApi = new TemplateApi();
 	templateFolder: TemplateFolderApi = new TemplateFolderApi();
+	signersList: SignersListApi = new SignersListApi();
 
 	#post(endpoint: string, data: Object | null = null, notifyError: boolean = true): $Call<typeof post>
 	{
@@ -289,38 +291,42 @@ export class Api
 		documentUid: string,
 		representativeId: number,
 		members: Array<SetupMember>,
+		excludeRejected: boolean = true,
 	): Promise
 	{
 		return this.#post('sign.api_v1.document.member.setupB2eParties', {
-			documentUid, representativeId, members,
+			documentUid, representativeId, members, excludeRejected,
 		});
 	}
 
 	syncB2eMembersWithDepartments(
 		documentUid: string,
 		currentParty: number,
+		excludeRejected: boolean = true,
 	): Promise<{ syncFinished: boolean }>
 	{
 		return this.#post('sign.api_v1.document.member.syncB2eMembersWithDepartments', {
-			documentUid, currentParty,
+			documentUid, currentParty, excludeRejected,
 		});
 	}
 
 	getUniqUserCountForMembers(
 		members: Array<CountMember>,
+		excludeRejected: boolean = true,
 	): Promise<{ count: number }>
 	{
 		return this.#post('sign.api_v1.document.member.getUniqSignersCount', {
-			members,
+			members, excludeRejected,
 		});
 	}
 
 	getUniqUserCountForDocument(
 		documentUid: string,
+		excludeRejected: boolean = true,
 	): Promise<{ count: number }>
 	{
 		return this.#post('sign.api_v1.document.member.getUniqSignersCountForDocument', {
-			documentUid,
+			documentUid, excludeRejected,
 		});
 	}
 
@@ -545,5 +551,15 @@ export class Api
 	): Promise<HcmLinkMultipleVacancyEmployeesLoadData[]>
 	{
 		return this.#post('sign.api_v1.integration.humanresources.hcmLink.loadBulkMultipleVacancyEmployee', { documentUids });
+	}
+
+	hasSignedDocuments(): Promise<{ hasSignedDocuments: boolean }>
+	{
+		return this.#post('sign.api_v1.b2e.onboarding.hasSignedDocuments', {});
+	}
+
+	hideOnboardingSigningBanner(): Promise<void>
+	{
+		return this.#post('sign.api_v1.b2e.onboarding.hideOnboardingSigningBanner', {});
 	}
 }

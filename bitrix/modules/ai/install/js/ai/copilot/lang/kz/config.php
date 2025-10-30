@@ -38,6 +38,7 @@ $MESS["AI_COPILOT_RESULT_WARNING"] = "CoPilot жауаптары әрқашан 
 $MESS["AI_COPILOT_RESULT_WARNING_MORE"] = "Толығырақ";
 $MESS["AI_COPILOT_ROLES_DIALOG_TITLE"] = "Рөлді таңдау";
 $MESS["AI_COPILOT_SEARCH_IN_MARKET"] = "Маркетте шешімдерді табу";
+$MESS["AI_COPILOT_SEARCH_IN_MARKET_MSGVER_1"] = "Маркетплейсте шешімдерді табу";
 $MESS["AI_COPILOT_SELECT_COMMAND_BELOW"] = "Төмендегі әрекетті таңдаңыз";
 $MESS["AI_COPILOT_TEXT_IS_COPIED"] = "Мәтін көшірілді";
 $MESS["AI_COPILOT_UPDATE_MENU_ERROR"] = "Копилот мәзірін жаңарту мүмкін болмады";

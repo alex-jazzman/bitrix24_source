@@ -10,5 +10,4 @@ $MESS["IM_NS_MAIN_RATING_VOTE_MENTIONED"] = "Сізді атап өткен ха
 $MESS["IM_NS_MENTION"] = "Сізді ашық чатта атап өтті";
 $MESS["IM_NS_MENTION_2"] = "Сізді чатта атап өтті";
 $MESS["IM_NS_MESSAGE_NEW_MSGVER_2"] = "Жеке чаттардағы хабарламалар";
-$MESS["IM_NS_OPEN_NEW"] = "Арналардағы хабарламалар";
 $MESS["IM_NS_OPEN_NEW_MSGVER_2"] = "Арналардағы жарияланымдар";

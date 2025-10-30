@@ -67,7 +67,6 @@ export default class OnlyOffice
 			userBoxNode: this.userBoxNode,
 		});
 
-		this.sendTelemetryEvent('load');
 		this.initializeEditor(options.editorJson);
 
 		const currentSlider = BX.SidePanel.Instance.getSliderByWindow(window);
@@ -116,26 +115,6 @@ export default class OnlyOffice
 			});
 			BX.PULL.start(this.pullConfig);
 		}
-	}
-
-	sendTelemetryEvent(action, data): void
-	{
-		data = data || {};
-
-		const currentSlider = BX.SidePanel.Instance.getSliderByWindow(window);
-		if (!currentSlider)
-		{
-			return;
-		}
-
-		const currentSliderData = currentSlider.getData();
-		data.action = action;
-		data.uid = currentSliderData.get('uid');
-		data.documentSessionId = this.context.documentSession.id;
-		data.documentSessionHash = this.context.documentSession.hash;
-		data.fileSize = this.context.object.size;
-
-		BX.Disk.sendTelemetryEvent(data);
 	}
 
 	bindEvents(): void
@@ -437,8 +416,6 @@ export default class OnlyOffice
 			fromUserId: this.context.currentUser.id,
 		});
 
-		this.sendTelemetryEvent('exit');
-
 		this.emitEventOnClosed();
 
 		if (this.dontEndCurrentDocumentSession)
@@ -574,8 +551,6 @@ export default class OnlyOffice
 
 	handleDocumentReady(): void
 	{
-		this.sendTelemetryEvent('ready');
-
 		this.caughtDocumentReady = Date.now();
 	}
 

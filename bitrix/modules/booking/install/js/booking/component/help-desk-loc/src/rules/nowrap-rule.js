@@ -1,5 +1,3 @@
-import './nowrap-rule.css';
-
 // @vue/component
 export const NoWrapRule = {
 	name: 'NoWrapRule',
@@ -8,6 +6,6 @@ export const NoWrapRule = {
 		text: String,
 	},
 	template: `
-		<span class="booking--help-desk-nowrap">{{ text }}</span>
+		{{ text }}
 	`,
 };

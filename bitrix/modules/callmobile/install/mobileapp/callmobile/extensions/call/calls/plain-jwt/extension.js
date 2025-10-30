@@ -1139,11 +1139,10 @@
 			}]);
 
 			CallUtil.getCallConnectionDataById(this.uuid)
-				.then((response) =>
-				{
+				.then((response) => {
 					if (this.ready && this.plainCallJwt)
 					{
-						const signalingUrl = this.getSignalingUrl(response.mediaServerUrl, response.roomData);
+						const signalingUrl = this.getSignalingUrl(response.result.mediaServerUrl, response.result.roomData);
 						this.plainCallJwt.updateSignalingUrl(signalingUrl);
 					}
 					else
@@ -1151,20 +1150,17 @@
 						this.#beforeLeaveCall();
 					}
 				})
-				.catch(() =>
-				{
-					if (this._reconnectionEventCount <= this._maxReconnectionAttempts)
+				.catch((error) => {
+					const errorPreventingReconnection = Object.values(BX.Call.ErrorPreventingReconnection);
+
+					if (errorPreventingReconnection.includes(error.errorCode))
 					{
-						setTimeout(() =>
-						{
-							if (this.ready && this.plainCallJwt)
-							{
-								this.__onCallReconnecting();
-							}
-							else
-							{
-								this.#beforeLeaveCall();
-							}
+						this.onFatalError(error.code);
+					}
+					else if (this._reconnectionEventCount < this._maxReconnectionAttempts)
+					{
+						setTimeout(() => {
+							this.__onCallReconnecting();
 						}, 5000);
 					}
 					else

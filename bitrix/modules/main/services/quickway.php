@@ -297,6 +297,11 @@ catch (\JsonException $e)
 	return;
 }
 
+if ($_GET['action'] === 'disk.api.file.showPreview' && isset($storedData['preview']))
+{
+	$storedData = $storedData['preview'];
+}
+
 $accelRedirectPath = $storedData['path'];
 $contentType = $storedData['contentType'];
 $expirationTime = $storedData['expirationTime'];

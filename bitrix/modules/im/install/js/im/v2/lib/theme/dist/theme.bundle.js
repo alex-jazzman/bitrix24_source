@@ -11,7 +11,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	});
 	const ThemePattern = Object.freeze({
 	  default: 'default',
-	  martaAI: 'marta-ai'
+	  aiAssistant: 'ai-assistant'
 	});
 	const SelectableBackground = Object.freeze({
 	  // dark ones
@@ -62,6 +62,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    pattern: ThemePattern.default
 	  }
 	});
+
+	// should be synced with \Bitrix\Im\V2\Chat\Background\BackgroundId, can potentially be used externally
 	const SpecialBackgroundId = {
 	  collab: 'collab',
 	  martaAI: 'martaAI',
@@ -77,13 +79,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  [SpecialBackgroundId.martaAI]: {
 	    color: '#0277ff',
 	    type: ThemeType.dark,
-	    pattern: ThemePattern.martaAI
+	    pattern: ThemePattern.aiAssistant
 	  },
 	  [SpecialBackgroundId.copilot]: SelectableBackground[COPILOT_BACKGROUND_ID]
 	};
 	const ImageFileByBackgroundId = {
 	  [SpecialBackgroundId.collab]: 'collab-v2',
-	  [SpecialBackgroundId.martaAI]: 'marta-ai',
+	  [SpecialBackgroundId.martaAI]: 'ai-assistant',
 	  [SpecialBackgroundId.copilot]: COPILOT_BACKGROUND_ID.toString()
 	};
 
@@ -134,7 +136,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	/** Background selection priority:
 	 * 1. If there is no dialog context: user selected background (from user settings)
-	 * 2. Background by chat type (collab/copilot)
+	 * 2. Background by chat type (collab/copilot/aiAssistant)
 	 * 3. Chat background (from chat fields)
 	 * 4. Bot background (from bot fields)
 	 * 5. User selected background (from user settings)
@@ -151,7 +153,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  if (chatType === im_v2_const.ChatType.copilot) {
 	    return SpecialBackgroundId.copilot;
 	  }
-	  const isAiAssistant = isAiAssistantChat(dialogId, chatType);
+	  const isAiAssistant = im_v2_application_core.Core.getStore().getters['users/bots/isAiAssistant'](dialogId);
 	  if (isAiAssistant) {
 	    return SpecialBackgroundId.martaAI;
 	  }
@@ -164,11 +166,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    return SpecialBackgroundId[botBackground];
 	  }
 	  return userBackground;
-	};
-
-	// TODO: move to aiAssistantManager
-	const isAiAssistantChat = (dialogId, chatType) => {
-	  return im_v2_application_core.Core.getStore().getters['users/bots/isAiAssistant'](dialogId) || [im_v2_const.ChatType.aiAssistant, im_v2_const.ChatType.aiAssistantEntity].includes(chatType);
 	};
 
 	exports.SelectableBackground = SelectableBackground;

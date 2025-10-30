@@ -14,12 +14,13 @@ export function mapPushToModel({ AFTER: after, TASK_ID: id }: PushData): TaskMod
 		deadlineTs: prepareValue(after.DEADLINE, after.DEADLINE * 1000),
 		checklist: undefined,
 		groupId: prepareValue(after.GROUP_ID),
-		stageId: prepareValue(after.STAGE, after.STAGE_INFO?.id),
+		stageId: prepareValue(after.STAGE, after.STAGE_INFO?.id ?? 0),
 		flowId: prepareValue(after.FLOW_ID),
 		status: prepareValue(after.STATUS, mapStatus(after.STATUS)),
 		statusChangedTs: prepareValue(after.STATUS, Date.now()),
 		accomplicesIds: prepareValue(after.ACCOMPLICES, mapUserIds(after.ACCOMPLICES)),
 		auditorsIds: prepareValue(after.AUDITORS, mapUserIds(after.AUDITORS)),
+		tags: prepareValue(after.TAGS, after.TAGS ? after.TAGS.split(',') : []),
 	};
 
 	return Object.fromEntries(Object.entries(task).filter(([, value]) => !Type.isUndefined(value)));

@@ -357,6 +357,33 @@ jn.define('selector/providers/common', (require, exports, module) => {
 			);
 		}
 
+		getSearchAction()
+		{
+			return 'ui.entityselector.doSearch';
+		}
+
+		getSearchActionConfig(query)
+		{
+			const queryWords = this.splitQueryByWords(query);
+
+			return {
+				json: {
+					dialog: this.getAjaxDialog(),
+					searchQuery: {
+						query,
+						queryWords,
+						dynamicSearchEntities: [],
+					},
+				},
+				getParameters: { context: this.context },
+			};
+		}
+
+		getItemsFromSearchResponse(response)
+		{
+			return response.data.dialog.items;
+		}
+
 		runSearchAction(query)
 		{
 			if (this.queryString !== query)
@@ -364,23 +391,11 @@ jn.define('selector/providers/common', (require, exports, module) => {
 				return;
 			}
 
-			const queryWords = this.splitQueryByWords(query);
-
 			BX.ajax.runAction(
-				'ui.entityselector.doSearch',
-				{
-					json: {
-						dialog: this.getAjaxDialog(),
-						searchQuery: {
-							query,
-							queryWords,
-							dynamicSearchEntities: [],
-						},
-					},
-					getParameters: { context: this.context },
-				},
+				this.getSearchAction(),
+				this.getSearchActionConfig(query),
 			).then((response) => {
-				const items = this.prepareItems(response.data.dialog.items);
+				const items = this.prepareItems(this.getItemsFromSearchResponse(response));
 				if (items.length > 0)
 				{
 					this.addItems(items);
@@ -462,7 +477,11 @@ jn.define('selector/providers/common', (require, exports, module) => {
 					return;
 				}
 			}
+			this.fetchRecent(justLoad);
+		}
 
+		fetchRecent(justLoad)
+		{
 			BX.ajax.runAction('ui.entityselector.load', {
 				json: {
 					dialog: this.getAjaxDialog(),

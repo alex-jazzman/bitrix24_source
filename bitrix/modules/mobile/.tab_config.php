@@ -10,22 +10,25 @@ use Bitrix\Mobile\AppTabs\Crm;
 use Bitrix\Mobile\AppTabs\CrmCustomSectionFactory;
 use Bitrix\Mobile\AppTabs\Disk;
 use Bitrix\Mobile\AppTabs\Menu;
+use Bitrix\Mobile\AppTabs\MenuNew;
 use Bitrix\Mobile\AppTabs\Projects;
 use Bitrix\Mobile\AppTabs\Stream;
 use Bitrix\Mobile\AppTabs\Task;
 use Bitrix\Mobile\AppTabs\Terminal;
 use Bitrix\Mobile\Config\Feature;
 use Bitrix\MobileApp\Mobile;
+use Bitrix\Mobile\Feature\MenuFeature;
 
 Mobile::Init();
 
 $isDiskAvailable = (Loader::includeModule('diskmobile') && Feature::isEnabled(AirDiskFeature::class));
+
 $config = [
 	'tabs' => [
 		['code' => 'chat', 'class' => Chat::class],
 		['code' => 'stream', 'class' => Stream::class],
 		['code' => 'task', 'class' => Task::class],
-		['code' => 'menu', 'class' => Menu::class],
+		['code' => 'menu', 'class' => Feature::isEnabled(MenuFeature::class) ? MenuNew::class : Menu::class],
 		['code' => 'crm', 'class' => Crm::class],
 		['code' => 'terminal', 'class' => Terminal::class],
 		['code' => 'catalog_store', 'class' => CatalogStore::class],
@@ -40,6 +43,7 @@ $config = [
 	],
 	'optional' => [
 		'crm',
+		'menu' => 2000,
 	],
 	'unchangeable' => [
 		'menu' => 1000,
@@ -82,8 +86,7 @@ $config = [
 			'crm' => 100,
 			'chat' => 200,
 			'task' => 300,
-			'stream' => (!$isDiskAvailable ? 350 : false),
-			'disk' => ($isDiskAvailable ? 350 : false),
+			'calendar' => 350,
 			'menu' => 1000,
 		], 'intval'),
 		'collaboration' => [

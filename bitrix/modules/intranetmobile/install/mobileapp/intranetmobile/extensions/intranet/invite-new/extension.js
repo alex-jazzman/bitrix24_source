@@ -6,7 +6,7 @@ jn.define('intranet/invite-new', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Box } = require('ui-system/layout/box');
 	const { BoxFooter } = require('ui-system/layout/dialog-footer');
-	const { AnalyticsEvent, IntranetInviteAnalytics } = require('intranet/invite-new/src/analytics');
+	const { IntranetInviteAnalytics } = require('intranet/invite-new/src/analytics');
 	const { Indent } = require('tokens');
 	const { Button, ButtonDesign, ButtonSize } = require('ui-system/form/buttons/button');
 	const { UIMenu } = require('layout/ui/menu');
@@ -18,20 +18,6 @@ jn.define('intranet/invite-new', (require, exports, module) => {
 
 	class Invite extends PureComponent
 	{
-		static getAjaxErrorText(errors)
-		{
-			return errors.map((errorMessage) => {
-				if (errorMessage.message)
-				{
-					return errorMessage.message.replace('<br/>:', '\n').replace('<br/>', '\n');
-				}
-
-				return errorMessage.replace('<br/>:', '\n').replace('<br/>', '\n');
-			}).filter((errorMessage) => {
-				return errorMessage.length > 0;
-			}).join('\n');
-		}
-
 		constructor(props)
 		{
 			super(props);
@@ -240,5 +226,10 @@ jn.define('intranet/invite-new', (require, exports, module) => {
 		};
 	}
 
-	module.exports = { Invite, AnalyticsEvent, IntranetInviteAnalytics };
+	module.exports = {
+		Invite,
+		IntranetInviteAnalytics,
+		InviterFactory,
+		InviteCases,
+	};
 });

@@ -33,7 +33,6 @@ return [
 		'im.v2.component.content.openlines',
 		'im.v2.component.content.openlinesV2',
 		'im.v2.component.content.settings',
-		'im.v2.component.list.container.ai-assistant',
 		'im.v2.component.list.container.channel',
 		'im.v2.component.list.container.collab',
 		'im.v2.component.list.container.copilot',

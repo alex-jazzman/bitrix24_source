@@ -3,6 +3,7 @@ $MESS["TM_CALENDAR_CHOOSE"] = "Күнтізбені таңдаңыз";
 $MESS["TM_CLOCK_SELECT_DATE_LINK"] = "Күнді өзгерту";
 $MESS["TM_CONFIRM_LATE_OPEN"] = "#TIME# жұмыс күнін бастағыңыз келетініне сенімдісіз бе?";
 $MESS["TM_DAY_CLOSED_ADMIN"] = "Жұмыс күнін басшы жапты";
+$MESS["TM_ERROR_UNKNOWN"] = "Белгісіз қате пайда болды, бетті жаңартып көріңіз";
 $MESS["TM_IN"] = "кейін";
 $MESS["TM_TASK_ACCOMPLICES"] = "Бірлесіп орындаушы";
 $MESS["TM_TASK_ACCOMPLICES_PL"] = "Бірлесіп орындаушылар";

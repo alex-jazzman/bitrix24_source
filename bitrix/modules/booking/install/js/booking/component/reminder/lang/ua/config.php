@@ -1,0 +1,22 @@
+<?php
+$MESS["BOOKING_REMINDER_0"] = "У момент події";
+$MESS["BOOKING_REMINDER_5"] = "За 5 хвилин до події";
+$MESS["BOOKING_REMINDER_10"] = "За 10 хвилин до події";
+$MESS["BOOKING_REMINDER_15"] = "За 15 хвилин до події";
+$MESS["BOOKING_REMINDER_20"] = "За 20 хвилин до події";
+$MESS["BOOKING_REMINDER_30"] = "За 30 хвилин до події";
+$MESS["BOOKING_REMINDER_60"] = "За 1 годину до події";
+$MESS["BOOKING_REMINDER_120"] = "За 2 години до події";
+$MESS["BOOKING_REMINDER_1440"] = "За день до події";
+$MESS["BOOKING_REMINDER_2880"] = "За 2 дні до події";
+$MESS["BOOKING_REMINDER_CREATE"] = "Додати";
+$MESS["BOOKING_REMINDER_SHORT_0"] = "У момент події";
+$MESS["BOOKING_REMINDER_SHORT_5"] = "За 5 хвилин";
+$MESS["BOOKING_REMINDER_SHORT_10"] = "За 10 хвилин";
+$MESS["BOOKING_REMINDER_SHORT_15"] = "За 15 хвилин";
+$MESS["BOOKING_REMINDER_SHORT_20"] = "За 20 хвилин";
+$MESS["BOOKING_REMINDER_SHORT_30"] = "За 30 хвилин";
+$MESS["BOOKING_REMINDER_SHORT_60"] = "За 1 годину";
+$MESS["BOOKING_REMINDER_SHORT_120"] = "За 2 години";
+$MESS["BOOKING_REMINDER_SHORT_1440"] = "За день";
+$MESS["BOOKING_REMINDER_SHORT_2880"] = "За 2 дні";

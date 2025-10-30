@@ -261,13 +261,7 @@ this.BX.Booking = this.BX.Booking || {};
 	    ...ui_vue3_vuex.mapGetters({
 	      providerModuleId: `${booking_const.Model.Clients}/providerModuleId`,
 	      isFeatureEnabled: `${booking_const.Model.Interface}/isFeatureEnabled`
-	    }),
-	    offsetLeft() {
-	      if (this.popupOffsetLeft === null) {
-	        return this.$refs.button.offsetWidth + 10;
-	      }
-	      return this.popupOffsetLeft;
-	    }
+	    })
 	  },
 	  methods: {
 	    clickHandler() {
@@ -276,8 +270,20 @@ this.BX.Booking = this.BX.Booking || {};
 	        booking_lib_limit.limit.show();
 	        return;
 	      }
+	      if (this.showPopup) {
+	        return;
+	      }
 	      (_PopupManager$getPopu = main_popup.PopupManager.getPopupById(booking_component_clientPopup.CLIENT_POPUP_ID)) == null ? void 0 : _PopupManager$getPopu.destroy();
 	      this.showPopup = true;
+	    },
+	    getOffsetLeft() {
+	      const {
+	        left
+	      } = this.$refs.button.getBoundingClientRect();
+	      if (window.innerWidth - left < 370) {
+	        return -317;
+	      }
+	      return main_core.Type.isNil(this.popupOffsetLeft) ? this.$refs.button.offsetWidth + 10 : this.popupOffsetLeft;
 	    }
 	  },
 	  template: `
@@ -295,7 +301,7 @@ this.BX.Booking = this.BX.Booking || {};
 			v-if="showPopup"
 			:bindElement="this.$refs.button"
 			:offset-top="-100"
-			:offset-left="offsetLeft"
+			:offset-left="getOffsetLeft()"
 			@create="$emit('add', $event)"
 			@close="showPopup = false"
 		/>

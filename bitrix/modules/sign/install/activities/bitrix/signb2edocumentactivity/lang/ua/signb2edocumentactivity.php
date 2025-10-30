@@ -11,6 +11,8 @@ $MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_ERROR_INVALID_SMART_DOCUMENT_ENTITY_TYP
 $MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_ERROR_INVALID_TEMPLATE_TYPE"] = "Неправильний тип шаблону документа.";
 $MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_ERROR_MAX_REVIEWER_LIMIT_EXCEEDED"] = "Можна додати максимум стільки погоджувачів: #LIMIT#.";
 $MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_ERROR_MEMBERS_NOT_SET"] = "Не вдалося сформувати список співробітників, які підписуватимуть документ.";
+$MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_ERROR_RESPONSIBLE_FOR_SMART_DOCUMENT_NOT_SET"] = "Не вдалося призначити відповідального за документ співробітника.";
+$MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_ERROR_RESPONSIBLE_NOT_SET"] = "Виберіть співробітника, який буде відповідальним за документ.";
 $MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_ERROR_TEMPLATE_NOT_FOUND"] = "Шаблон документа не знайдено.";
 $MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_ERROR_UNABLE_TO_CREATE_DOC"] = "Не вдалося створити документ.";
 $MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_ERROR_UNABLE_TO_CREATE_DOC_ACTIVITY"] = "Не вдалося створити Справу в картці документа.";
@@ -19,6 +21,7 @@ $MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_ERROR_UNAVAILABLE"] = "Робот не�
 $MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_ERROR_UPDATE_FAILED"] = "Не вдалося оновити документ.";
 $MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_INVALID_EVENT_TYPE"] = "Неправильний тип події.";
 $MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_REPRESENTATIVE"] = "Хто підписуватиме від імені компанії";
+$MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_RESPONSIBLE"] = "Хто буде відповідальним";
 $MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_REVIEWER"] = "Хто погоджуватиме";
 $MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_ROBOT_ROLE_DEPUTY_HEAD_TITLE"] = "Заступник керівника відділу";
 $MESS["SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_ROBOT_ROLE_HEAD_TITLE"] = "Керівник відділу";

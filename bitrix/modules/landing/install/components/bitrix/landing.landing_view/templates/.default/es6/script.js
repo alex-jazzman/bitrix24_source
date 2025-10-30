@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Landing = this.BX.Landing || {};
-(function (exports,main_popup,ui_designTokens,main_core,main_core_events,pull_client,landing_pageobject,landing_ui_highlight,landing_animation_copilot,landing_env,landing_history,landing_ui_panel_stylepanel) {
+(function (exports,main_popup,landing_metrika,ui_designTokens,main_core,main_core_events,pull_client,landing_pageobject,landing_ui_highlight,landing_animation_copilot,landing_env,landing_history,landing_ui_panel_stylepanel) {
 	'use strict';
 
 	var Loc = /*#__PURE__*/function () {
@@ -1574,6 +1574,8 @@ this.BX.Landing = this.BX.Landing || {};
 	    value: function onBlockAnimateFinish() {
 	      var _this6 = this;
 	      babelHelpers.classPrivateFieldSet(this, _isGenerationProcessed, false);
+	      babelHelpers.classPrivateFieldSet(this, _selectedBlock, null);
+	      babelHelpers.classPrivateFieldGet(this, _highlightSelectable).hide();
 	      setTimeout(function () {
 	        _this6.emit('onGenerationFinish');
 	      }, 3000);
@@ -1699,6 +1701,8 @@ this.BX.Landing = this.BX.Landing || {};
 	var _copilotChat$1 = /*#__PURE__*/new WeakMap();
 	var _copilotChatOptions = /*#__PURE__*/new WeakMap();
 	var _blockGenerator = /*#__PURE__*/new WeakMap();
+	var _siteGenerationId = /*#__PURE__*/new WeakMap();
+	var _metrika = /*#__PURE__*/new WeakMap();
 	var _initCopilotChat = /*#__PURE__*/new WeakSet();
 	var SlidePanel = /*#__PURE__*/function () {
 	  function SlidePanel(options) {
@@ -1716,6 +1720,14 @@ this.BX.Landing = this.BX.Landing || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    _classPrivateFieldInitSpec$4(this, _siteGenerationId, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec$4(this, _metrika, {
+	      writable: true,
+	      value: void 0
+	    });
 	    this.layout = {
 	      container: null,
 	      pulse: null,
@@ -1727,6 +1739,8 @@ this.BX.Landing = this.BX.Landing || {};
 	    };
 	    this.switchers = [];
 	    babelHelpers.classPrivateFieldSet(this, _copilotChatOptions, options.copilotChatOptions);
+	    babelHelpers.classPrivateFieldSet(this, _siteGenerationId, options.siteGenerationId);
+	    babelHelpers.classPrivateFieldSet(this, _metrika, new landing_metrika.Metrika(true, 'ai'));
 	    this.init();
 	  }
 	  babelHelpers.createClass(SlidePanel, [{
@@ -1764,7 +1778,7 @@ this.BX.Landing = this.BX.Landing || {};
 	    value: function () {
 	      var _showChat = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime$1().mark(function _callee() {
 	        var _this3 = this;
-	        var slider, _babelHelpers$classPr;
+	        var slider, _babelHelpers$classPr, siteType;
 	        return _regeneratorRuntime$1().wrap(function _callee$(_context) {
 	          while (1) switch (_context.prev = _context.next) {
 	            case 0:
@@ -1823,6 +1837,13 @@ this.BX.Landing = this.BX.Landing || {};
 	            case 23:
 	              if (babelHelpers.classPrivateFieldGet(this, _copilotChat$1).isShown() === false) {
 	                babelHelpers.classPrivateFieldGet(this, _copilotChat$1).show();
+	                siteType = babelHelpers.classPrivateFieldGet(this, _siteGenerationId) ? 'ai' : 'manual';
+	                babelHelpers.classPrivateFieldGet(this, _metrika).sendData({
+	                  category: 'block_edition',
+	                  event: 'open',
+	                  c_section: 'site_editor',
+	                  p3: ['siteType', siteType]
+	                });
 	              }
 	              (_babelHelpers$classPr = babelHelpers.classPrivateFieldGet(this, _blockGenerator)) === null || _babelHelpers$classPr === void 0 ? void 0 : _babelHelpers$classPr.setSelectMode();
 	              main_core.Dom.addClass(this.getChatContainer(), '--show');
@@ -1997,5 +2018,5 @@ this.BX.Landing = this.BX.Landing || {};
 	exports.ExternalControls = ExternalControls;
 	exports.SlidePanel = SlidePanel;
 
-}((this.BX.Landing.View = this.BX.Landing.View || {}),BX.Main,BX,BX,BX.Event,BX,BX.Landing,BX.Landing.UI,BX.Landing.Animation,BX.Landing,BX.Landing,BX.Landing.UI.Panel));
+}((this.BX.Landing.View = this.BX.Landing.View || {}),BX.Main,BX.Landing,BX,BX,BX.Event,BX,BX.Landing,BX.Landing.UI,BX.Landing.Animation,BX.Landing,BX.Landing,BX.Landing.UI.Panel));
 //# sourceMappingURL=script.js.map

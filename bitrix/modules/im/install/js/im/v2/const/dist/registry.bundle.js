@@ -59,7 +59,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  imV2ChatTaskPrepare: 'im.v2.Chat.Task.prepare',
 	  imV2RecentChannelTail: 'im.v2.Recent.Channel.Tail',
 	  imV2RecentCollabTail: 'im.v2.Recent.Collab.Tail',
-	  imV2RecentAiAssistantTail: 'im.v2.Recent.AiAssistant.tail',
 	  imV2ChatCopilotUpdateRole: 'im.v2.Chat.Copilot.updateRole',
 	  imV2ChatCopilotUpdateAiModel: 'im.v2.Chat.Copilot.updateEngine',
 	  imV2AccessCheck: 'im.v2.Access.check',
@@ -68,6 +67,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  imV2DiskFileSave: 'im.v2.Disk.File.save',
 	  imV2ChatBotSendContext: 'im.v2.Chat.Bot.sendContext',
 	  imV2ChatMemberTail: 'im.v2.Chat.Member.tail',
+	  imV2DiskFileTranscribe: 'im.v2.Disk.File.transcribe',
 	  imV2RecentPin: 'im.v2.Chat.pin',
 	  imV2RecentUnpin: 'im.v2.Chat.unpin',
 	  imV2AnchorRead: 'im.v2.Anchor.read',
@@ -270,9 +270,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  openChannel: 'openChannel',
 	  generalChannel: 'generalChannel',
 	  comment: 'comment',
-	  collab: 'collab',
-	  aiAssistant: 'aiAssistant',
-	  aiAssistantEntity: 'aiAssistantEntity'
+	  collab: 'collab'
 	});
 	const DialogScrollThreshold = Object.freeze({
 	  none: 'none',
@@ -295,7 +293,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  wait: 'wait',
 	  progress: 'progress',
 	  done: 'done',
-	  error: 'error'
+	  error: 'error',
+	  preparing: 'preparing'
 	});
 	const FileType = Object.freeze({
 	  image: 'image',
@@ -408,7 +407,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const RecentType = {
 	  default: 'default',
 	  copilot: 'copilot',
-	  aiAssistant: 'aiAssistant',
 	  openChannel: 'openChannel',
 	  collab: 'collab'
 	};
@@ -432,7 +430,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  openlinesV2: 'openlinesV2',
 	  conference: 'conference',
 	  settings: 'settings',
-	  aiAssistant: 'aiAssistant',
+	  copilot: 'copilot',
 	  collab: 'collab',
 	  market: 'market'
 	};
@@ -535,7 +533,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  collab10: '#f2fee2',
 	  orange50: '#ffa900',
 	  accentBlue: '#00ace3',
-	  accentMainPrimaryAlt: '#1f86ff',
+	  accentSoftBorderBlue: '#88c8f8',
 	  base4: '#a8adb4'
 	});
 	const ColorToken = Object.freeze({
@@ -775,7 +773,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  getOpenlines: 'getOpenlines',
 	  createCollab: 'createCollab',
 	  createCopilot: 'createCopilot',
-	  createAiAssistant: 'createAiAssistant',
 	  createChannel: 'createChannel',
 	  createChat: 'createChat',
 	  createConference: 'createConference',
@@ -896,7 +893,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	const NavigationMenuItem = Object.freeze({
 	  [Layout.chat]: Layout.chat,
-	  [Layout.aiAssistant]: Layout.aiAssistant,
+	  [Layout.copilot]: Layout.copilot,
 	  [Layout.collab]: Layout.collab,
 	  [Layout.channel]: Layout.channel,
 	  [Layout.openlines]: Layout.openlines,
@@ -913,6 +910,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  mention: 'MENTION',
 	  reaction: 'REACTION'
 	});
+
+	const TranscriptionStatus = {
+	  SUCCESS: 'Success',
+	  ERROR: 'Error',
+	  PENDING: 'Pending'
+	};
 
 	exports.RestMethod = RestMethod;
 	exports.EventType = EventType;
@@ -986,6 +989,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.ErrorCode = ErrorCode;
 	exports.NavigationMenuItem = NavigationMenuItem;
 	exports.AnchorType = AnchorType;
+	exports.TranscriptionStatus = TranscriptionStatus;
 
 }((this.BX.Messenger.v2.Const = this.BX.Messenger.v2.Const || {}),BX?.OpenLines?.v2?.Const??{},BX?.Messenger?.v2?.Const??{}));
 //# sourceMappingURL=registry.bundle.js.map

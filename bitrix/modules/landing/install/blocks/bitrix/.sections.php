@@ -14,6 +14,7 @@ Loc::loadMessages(
 
 return [
 	'last' => Loc::getMessage('LD_BLOCK_SECTION_LAST'),
+	'favourite' => Loc::getMessage('LD_BLOCK_SECTION_FAVOURITE'),
 	'recommended' =>[
 		'name' => Loc::getMessage('LD_BLOCK_SECTION_RECOMMENDED'),
 		'type' => ['knowledge']

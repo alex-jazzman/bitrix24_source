@@ -420,6 +420,12 @@
 	{
 		return new Promise((resolve) => {
 			const viewRange = this.calendar.getDisplayedViewRange();
+
+			if (!viewRange)
+			{
+				resolve([]);
+			}
+
 			this.entryController.getList({
 				showLoader: (this.entries && !this.entries.length),
 				startDate: new Date(viewRange.start.getFullYear(), viewRange.start.getMonth(), 1),
@@ -743,6 +749,10 @@
 			else if (this.shouldEntryLookLikeCollab(entry))
 			{
 				appendClassName = 'calendar-event-block-icon-collab --month';
+			}
+			else if (this.shouldEntryLookLineBooking(entry))
+			{
+				appendClassName = 'calendar-event-block-icon-booking --month';
 			}
 
 			if (entry.isInvited())

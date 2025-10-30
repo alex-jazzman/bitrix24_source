@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,main_core,pull_client) {
+(function (exports,main_core,pull_client,main_core_events) {
 	'use strict';
 
 	var _templateObject;
@@ -29,26 +29,31 @@ this.BX = this.BX || {};
 	var _updateIcon = /*#__PURE__*/new WeakSet();
 	var _getIconClass = /*#__PURE__*/new WeakSet();
 	var _getIconStyle = /*#__PURE__*/new WeakSet();
-	var WorkTimeStateIcon = /*#__PURE__*/function () {
+	var WorkTimeStateIcon = /*#__PURE__*/function (_EventEmitter) {
+	  babelHelpers.inherits(WorkTimeStateIcon, _EventEmitter);
 	  function WorkTimeStateIcon(params) {
+	    var _this;
 	    babelHelpers.classCallCheck(this, WorkTimeStateIcon);
-	    _classPrivateMethodInitSpec(this, _getIconStyle);
-	    _classPrivateMethodInitSpec(this, _getIconClass);
-	    _classPrivateMethodInitSpec(this, _updateIcon);
-	    _classPrivateMethodInitSpec(this, _isValidCommand);
-	    _classPrivateMethodInitSpec(this, _handlePullEvent);
-	    _classPrivateMethodInitSpec(this, _subscribeToPull);
-	    _classPrivateFieldInitSpec(this, _params, {
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(WorkTimeStateIcon).call(this));
+	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _getIconStyle);
+	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _getIconClass);
+	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _updateIcon);
+	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _isValidCommand);
+	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _handlePullEvent);
+	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _subscribeToPull);
+	    _classPrivateFieldInitSpec(babelHelpers.assertThisInitialized(_this), _params, {
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec(this, _layout, {
+	    _classPrivateFieldInitSpec(babelHelpers.assertThisInitialized(_this), _layout, {
 	      writable: true,
 	      value: void 0
 	    });
-	    babelHelpers.classPrivateFieldSet(this, _params, params);
-	    babelHelpers.classPrivateFieldSet(this, _layout, {});
-	    _classPrivateMethodGet(this, _subscribeToPull, _subscribeToPull2).call(this);
+	    _this.setEventNamespace('BX.Timeman.WorkTimeStateIcon');
+	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _params, params);
+	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _layout, {});
+	    _classPrivateMethodGet(babelHelpers.assertThisInitialized(_this), _subscribeToPull, _subscribeToPull2).call(babelHelpers.assertThisInitialized(_this));
+	    return _this;
 	  }
 	  babelHelpers.createClass(WorkTimeStateIcon, [{
 	    key: "renderTo",
@@ -71,13 +76,13 @@ this.BX = this.BX || {};
 	    }
 	  }]);
 	  return WorkTimeStateIcon;
-	}();
+	}(main_core_events.EventEmitter);
 	function _subscribeToPull2() {
-	  var _this = this;
+	  var _this2 = this;
 	  pull_client.PULL.subscribe({
 	    moduleId: 'timeman',
 	    callback: function callback(data) {
-	      return _classPrivateMethodGet(_this, _handlePullEvent, _handlePullEvent2).call(_this, data);
+	      return _classPrivateMethodGet(_this2, _handlePullEvent, _handlePullEvent2).call(_this2, data);
 	    }
 	  });
 	}
@@ -87,6 +92,7 @@ this.BX = this.BX || {};
 	  }
 	  babelHelpers.classPrivateFieldGet(this, _params).state = data.params.info.state;
 	  babelHelpers.classPrivateFieldGet(this, _params).action = data.params.info.action;
+	  this.emit('onUpdateState', babelHelpers.classPrivateFieldGet(this, _params));
 	  _classPrivateMethodGet(this, _updateIcon, _updateIcon2).call(this);
 	}
 	function _isValidCommand2(command) {
@@ -136,5 +142,5 @@ this.BX = this.BX || {};
 
 	exports.WorkTimeStateIcon = WorkTimeStateIcon;
 
-}((this.BX.Timeman = this.BX.Timeman || {}),BX,BX));
+}((this.BX.Timeman = this.BX.Timeman || {}),BX,BX,BX.Event));
 //# sourceMappingURL=work-time-state-icon.bundle.js.map

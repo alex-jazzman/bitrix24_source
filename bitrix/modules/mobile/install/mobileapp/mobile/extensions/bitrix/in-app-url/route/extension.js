@@ -2,8 +2,8 @@
  * @module in-app-url/route
  */
 jn.define('in-app-url/route', (require, exports, module) => {
-	const ROUTE_PATTERN = '([^&=$/]+)';
-	const ROUTE_PATTERN_REGEXP = new RegExp(`:${ROUTE_PATTERN}`, 'g');
+	const ROUTE_PATTERN = '([^&=$/?]+)';
+	const ROUTE_PATTERN_REGEXP = /:([A-Z_a-z][\w-]*)/g;
 
 	/**
 	 * @class Route

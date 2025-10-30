@@ -68,8 +68,8 @@ export const MembersPanel = {
 		chatLink(): string
 		{
 			const layoutName = LayoutManager.getInstance().getLayout().name;
-			const isAiAssistant = layoutName === Layout.aiAssistant;
-			const chatGetParameter = isAiAssistant ? GetParameter.openCopilotChat : GetParameter.openChat;
+			const isCopilot = layoutName === Layout.copilot;
+			const chatGetParameter = isCopilot ? GetParameter.openCopilotChat : GetParameter.openChat;
 			const getParams = new URLSearchParams({
 				[chatGetParameter]: this.dialogId,
 			});

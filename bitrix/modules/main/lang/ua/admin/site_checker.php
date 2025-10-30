@@ -301,8 +301,6 @@ $MESS["SC_HELP_CHECK_MEMORY_LIMIT"] = "Тест створює окремий ph
 <code> ini_set (\"memory_limit\", \"512M\") </code>
 
 Якщо поточне значення менше, встановіть зазначену рядок в <i>/bitrix/php_interface/dbconn.php</i>.";
-$MESS["SC_HELP_CHECK_METHOD_EXISTS"] = "На деяких версіях php скрипт падає на виклику функції <i>method_exists</i>. Обговорення проблеми є на сайті php: <a href = 'http://bugs.php.net/bug.php?id=51425' target = _blank> http://bugs.php.net/bug.php?id=51425</a>
-В якості вирішення слід встановити іншу версію php. ";
 $MESS["SC_HELP_CHECK_MYSQL_BUG_VERSION"] = "Відомі версії MySQL з помилками, що перешкоджають нормальній роботі сайту.
 <b>4.1.21</b> - некоректно працює сортування за певних умов;
 <b>5.0.41</b> - некоректно працює метод EXISTS, пошук працює неправильно;

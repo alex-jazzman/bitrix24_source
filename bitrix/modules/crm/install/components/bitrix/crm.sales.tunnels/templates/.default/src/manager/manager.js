@@ -1,4 +1,4 @@
-import { Cache, Event, Loc, Reflection, Type } from 'main.core';
+import { Cache, Event, Loc, Type } from 'main.core';
 import { PopupWindow, PopupWindowButtonLink } from 'main.popup';
 import { UI } from 'ui.notification';
 import Backend from '../backend';
@@ -77,19 +77,6 @@ export default class Manager
 		Event.bind(this.addCategoryButtonTop, 'click', this.onAddCategoryTopClick.bind(this));
 		Event.bind(this.helpButton, 'click', this.onHelpButtonClick.bind(this));
 
-		const toolbarComponent = Reflection.getClass('top.BX.Crm.ToolbarComponent')
-			? Reflection.getClass('top.BX.Crm.ToolbarComponent').Instance
-			: null;
-		const slider = this.getSlider();
-		if (slider && toolbarComponent)
-		{
-			Event.EventEmitter.subscribe('SidePanel.Slider:onClose', () => {
-				if (this.isChanged)
-				{
-					toolbarComponent.emitCategoriesUpdatedEvent();
-				}
-			});
-		}
 		this.constructor.lastInstance = this;
 	}
 

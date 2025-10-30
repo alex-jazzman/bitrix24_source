@@ -39,6 +39,7 @@ $MESS["M_CALENDAR_EVENT_LIST_SECTION_LIST_TITLE_MY"] = "Мої календар�
 $MESS["M_CALENDAR_EVENT_LIST_SECTION_LIST_TITLE_OFFICE365"] = "Календарі Office365";
 $MESS["M_CALENDAR_EVENT_LIST_SECTION_LIST_TITLE_THIS_COLLAB"] = "Календарі цієї колаби";
 $MESS["M_CALENDAR_EVENT_LIST_SECTION_LIST_TITLE_THIS_GROUP"] = "Календарі цієї групи";
+$MESS["M_CALENDAR_EVENT_LIST_SECTION_LIST_TITLE_THIS_USER"] = "Календарі цього користувача";
 $MESS["M_CALENDAR_EVENT_LIST_SELECT"] = "Вибрати";
 $MESS["M_CALENDAR_EVENT_LIST_TILL_TIME"] = "до #TIME#";
 $MESS["M_CALENDAR_EVENT_LIST_TITLE_SEARCH"] = "Календар";

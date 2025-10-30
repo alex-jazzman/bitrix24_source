@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
-(function (exports,ui_counterpanel,main_core,main_core_events,tasks_viewed) {
+(function (exports,ui_counterpanel,main_core,main_core_events,tasks_viewed,ui_analytics) {
 	'use strict';
 
 	var Filter = /*#__PURE__*/function () {
@@ -87,6 +87,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	var _getColorByValue = /*#__PURE__*/new WeakSet();
 	var _markCounters = /*#__PURE__*/new WeakSet();
 	var _updateReadAllItem = /*#__PURE__*/new WeakSet();
+	var _sendAnalyticsEvent = /*#__PURE__*/new WeakSet();
+	var _getAnalyticsEvent = /*#__PURE__*/new WeakSet();
+	var _getAnalyticsSection = /*#__PURE__*/new WeakSet();
+	var _getAnalyticsElement = /*#__PURE__*/new WeakSet();
 	var Counters = /*#__PURE__*/function (_CounterPanel) {
 	  babelHelpers.inherits(Counters, _CounterPanel);
 	  babelHelpers.createClass(Counters, null, [{
@@ -112,6 +116,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      multiselect: true,
 	      title: main_core.Loc.getMessage('TASKS_COUNTER_MY')
 	    }));
+	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _getAnalyticsElement);
+	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _getAnalyticsSection);
+	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _getAnalyticsEvent);
+	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _sendAnalyticsEvent);
 	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _updateReadAllItem);
 	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _markCounters);
 	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _getColorByValue);
@@ -227,6 +235,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    value: function onFilterApply() {
 	      var _this5 = this;
 	      if (this.isRoleChanged()) {
+	        this.getItems().forEach(function (item) {
+	          return item.deactivate(false);
+	        });
 	        this.updateRole();
 	        this.updateCountersData();
 	      } else {
@@ -536,6 +547,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  });
 	  _classPrivateMethodGet(this, _activateLinkedMenuItem, _activateLinkedMenuItem2).call(this, item);
 	  this.filter.toggleByField(count);
+	  _classPrivateMethodGet(this, _sendAnalyticsEvent, _sendAnalyticsEvent2).call(this, item);
 	  main_core_events.EventEmitter.emit('Tasks.Toolbar:onItem', {
 	    counter: count
 	  });
@@ -629,6 +641,37 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    readAllItem.lock();
 	  }
 	}
+	function _sendAnalyticsEvent2(item) {
+	  ui_analytics.sendData({
+	    tool: 'tasks',
+	    category: 'task_operations',
+	    type: 'task',
+	    event: _classPrivateMethodGet(this, _getAnalyticsEvent, _getAnalyticsEvent2).call(this, item),
+	    c_section: _classPrivateMethodGet(this, _getAnalyticsSection, _getAnalyticsSection2).call(this, item),
+	    c_element: _classPrivateMethodGet(this, _getAnalyticsElement, _getAnalyticsElement2).call(this, item)
+	  });
+	}
+	function _getAnalyticsEvent2(item) {
+	  if (Counters.counterTypes.expired.includes(item.id)) {
+	    return 'overdue_counters_on';
+	  }
+	  return 'comments_counters_on';
+	}
+	function _getAnalyticsSection2(item) {
+	  if (Counters.counterTypes.scrum.includes(item.id)) {
+	    return 'scrum';
+	  }
+	  if (Counters.counterTypes.project.includes(item.id)) {
+	    return 'project';
+	  }
+	  return 'tasks';
+	}
+	function _getAnalyticsElement2(item) {
+	  if (Counters.counterTypes.expired.includes(item.id)) {
+	    return 'overdue_counters_filter';
+	  }
+	  return 'comments_counters_filter';
+	}
 	babelHelpers.defineProperty(Counters, "READ_ALL_ID", 'read_all');
 	babelHelpers.defineProperty(Counters, "COLOR_GRAY", 'GRAY');
 	babelHelpers.defineProperty(Counters, "COLOR_THEME", 'THEME');
@@ -639,5 +682,5 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	exports.Counters = Counters;
 
-}((this.BX.Tasks.Counters = this.BX.Tasks.Counters || {}),BX.UI,BX,BX.Event,BX.Tasks.Viewed));
+}((this.BX.Tasks.Counters = this.BX.Tasks.Counters || {}),BX.UI,BX,BX.Event,BX.Tasks.Viewed,BX.UI.Analytics));
 //# sourceMappingURL=script.js.map

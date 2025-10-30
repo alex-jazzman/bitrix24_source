@@ -28,7 +28,6 @@ $MESS["TELEPHONY_RUR"] = "руб";
 $MESS["TELEPHONY_SEC"] = "сек";
 $MESS["TELEPHONY_STAT"] = "Толық тарих";
 $MESS["TELEPHONY_TARIFFS_2"] = "Тарифтер";
-$MESS["TELEPHONY_TARIFFS_LINK"] = "https://www.bitrix24.kz/prices/tariffs.php";
 $MESS["TELEPHONY_TITLE"] = "Телефония баптаулары";
 $MESS["TELEPHONY_TITLE_2"] = "Телефония";
 $MESS["TELEPHONY_UAH"] = "грн";

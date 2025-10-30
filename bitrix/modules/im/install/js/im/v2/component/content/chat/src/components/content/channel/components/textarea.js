@@ -23,7 +23,6 @@ export const ChannelTextarea = {
 			:dialogId="dialogId"
 			:placeholder="this.loc('IM_CONTENT_CHANNEL_TEXTAREA_PLACEHOLDER')"
 			:withMarket="false"
-			:withAudioInput="false"
 			class="bx-im-channel-send-panel__container"
 		/>
 	`,

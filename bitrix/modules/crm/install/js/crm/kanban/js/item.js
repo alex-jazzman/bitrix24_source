@@ -423,7 +423,32 @@ BX.CRM.Kanban.Item.prototype = {
 
 		if (BX.Type.isArrayFilled(this.clientNameItems))
 		{
-			this.clientName.innerHTML = this.clientNameItems.join('<br>');
+			this.clientName.innerHTML = '';
+			this.clientNameItems.forEach((clientNameItem) => {
+				if (!clientNameItem.includes('data-mini-card="true"'))
+				{
+					return;
+				}
+
+				const element = BX.Tag.render`${clientNameItem}`;
+
+				const entityTypeId = Number(element.dataset.entityTypeId);
+				const entityId = Number(element.dataset.entityId);
+
+				BX.Runtime
+					.loadExtension('crm.mini-card')
+					.then(({ EntityMiniCard }) => {
+						new BX.Crm.EntityMiniCard({
+							bindElement: element,
+							entityTypeId,
+							entityId,
+						});
+					})
+				;
+
+				BX.Dom.append(element, this.clientName);
+			});
+
 			this.switchVisible(this.clientName, true);
 		}
 		else
@@ -474,8 +499,28 @@ BX.CRM.Kanban.Item.prototype = {
 
 	appendLastActivity(data)
 	{
-		BX.Dom.clean(this.lastActivityTime);
-		BX.Dom.clean(this.lastActivityBy);
+		if (!this.isShowLastActivityTime() && !this.isShowLastActivityUser())
+		{
+			return;
+		}
+
+		if (this.isShowLastActivityTime())
+		{
+			BX.Dom.clean(this.lastActivityTime);
+		}
+		else
+		{
+			BX.Dom.remove(this.lastActivityTime);
+		}
+
+		if (this.isShowLastActivityUser())
+		{
+			BX.Dom.clean(this.lastActivityBy);
+		}
+		else
+		{
+			BX.Dom.remove(this.lastActivityBy);
+		}
 
 		const lastActivity = data.lastActivity;
 		if (
@@ -486,8 +531,15 @@ BX.CRM.Kanban.Item.prototype = {
 			return;
 		}
 
-		this.appendLastActivityTime(lastActivity);
-		this.appendLastActivityUser(lastActivity);
+		if (this.isShowLastActivityTime())
+		{
+			this.appendLastActivityTime(lastActivity);
+		}
+
+		if (this.isShowLastActivityUser())
+		{
+			this.appendLastActivityUser(lastActivity);
+		}
 	},
 
 	appendLastActivityTime(lastActivity)
@@ -553,6 +605,16 @@ BX.CRM.Kanban.Item.prototype = {
 		`;
 
 		BX.Dom.append(userPic, this.lastActivityBy);
+	},
+
+	isShowLastActivityTime()
+	{
+		return Boolean(this.grid.data.itemsConfig?.showLastActivityTime ?? true);
+	},
+
+	isShowLastActivityUser()
+	{
+		return Boolean(this.grid.data.itemsConfig?.showLastActivityUserAvatar ?? true);
 	},
 
 	getUserConfigById(id)
@@ -786,6 +848,28 @@ BX.CRM.Kanban.Item.prototype = {
 				...this.getUserTypeFieldParams(field),
 			};
 		}
+		else if (field.value.includes('data-mini-card="true"'))
+		{
+			const element = BX.Tag.render`${field.value}`;
+
+			const entityTypeId = Number(element.dataset.entityTypeId);
+			const entityId = Number(element.dataset.entityId);
+
+			BX.Runtime
+				.loadExtension('crm.mini-card')
+				.then(({ EntityMiniCard }) => {
+					new BX.Crm.EntityMiniCard({
+						bindElement: element,
+						entityTypeId,
+						entityId,
+					});
+				})
+			;
+
+			params.children = [
+				element,
+			];
+		}
 		else if (field.type === 'money' || field.html === true)
 		{
 			const delimiter = field.valueDelimiter ?? '<br>';
@@ -956,16 +1040,18 @@ BX.CRM.Kanban.Item.prototype = {
 	{
 		BX.Dom.clean(this.footerWrapper);
 
-		const elements = [
-			{
-				id: 'planner',
-				node: this.createPlanner(),
-			},
-			{
+		const elements = [{
+			id: 'planner',
+			node: this.createPlanner(),
+		}];
+
+		if (this.isShowLastActivityTime() || this.isShowLastActivityUser())
+		{
+			elements.push({
 				id: 'activityBlock',
 				node: this.createLastActivityBlock(),
-			},
-		];
+			});
+		}
 
 		const data = {
 			elements,

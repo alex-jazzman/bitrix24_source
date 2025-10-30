@@ -29,6 +29,7 @@
 	const { qrauth } = require('qrauth/utils');
 	const { Money } = require('money');
 	const { RunActionExecutor } = require('rest');
+	const { AnalyticsEvent } = require('analytics');
 
 	SkeletonFactory.alias('Kanban', ListItemType.CRM_ENTITY);
 
@@ -109,6 +110,8 @@
 			this.close = this.close.bind(this);
 
 			this.scrollOnTop = throttle(this.scrollOnTop, 500, this);
+
+			this.analyticsEvent = this.#createAnalytics();
 		}
 
 		componentDidMount()
@@ -166,7 +169,7 @@
 				{
 					BX.ajax.runAction('crm.counter.list', {
 						data: {
-							entityTypeId: this.kanbanTabRef.props.entityTypeId,
+							entityTypeId: (this.kanbanTabRef || this.listTabRef).props.entityTypeId,
 							extras: data.ex,
 							withExcludeUsers: Boolean(this.props.withExcludeUsers),
 						},
@@ -659,7 +662,14 @@
 		{
 			this.listTabRef = null;
 
-			return new KanbanTab(this.getEntityTabConfig(this.bindKanbanRef));
+			return new KanbanTab({
+				...this.getEntityTabConfig(this.bindKanbanRef),
+				analyticsEvent: new AnalyticsEvent(this.analyticsEvent)
+					.setSubSection('kanban')
+					.setSection(
+						this.#prepareAnalyticsSection(),
+					),
+			});
 		}
 
 		bindKanbanRef(ref)
@@ -671,7 +681,27 @@
 		{
 			this.kanbanTabRef = null;
 
-			return new ListTab(this.getEntityTabConfig(this.bindListRef));
+			return new ListTab({
+				...this.getEntityTabConfig(this.bindListRef),
+				analyticsEvent: new AnalyticsEvent(this.analyticsEvent)
+					.setSubSection('list')
+					.setSection(
+						this.#prepareAnalyticsSection(),
+					),
+			});
+		}
+
+		#prepareAnalyticsSection()
+		{
+			const activeTab = this.getActiveTab();
+			const typeName = activeTab.typeName || '';
+			const cSection = `${typeName.toLowerCase().replace(/_\d+/, '')}_section`;
+			if (cSection === 'dynamic_section' && activeTab.isInCustomSection)
+			{
+				return 'custom_section';
+			}
+
+			return cSection;
 		}
 
 		bindListRef(ref)
@@ -955,6 +985,13 @@
 			});
 
 			void menu.show(PageManager);
+		}
+
+		#createAnalytics()
+		{
+			return new AnalyticsEvent({
+				tool: 'crm',
+			});
 		}
 	}
 

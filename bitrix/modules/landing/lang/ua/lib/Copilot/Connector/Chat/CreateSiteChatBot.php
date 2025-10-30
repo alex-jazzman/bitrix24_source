@@ -2,8 +2,6 @@
 $MESS["LANDING_CHATBOT_SITE_ADD_WISHES"] = "Додати побажання";
 $MESS["LANDING_CHATBOT_SITE_ADD_WISHES_OR_START"] = "Напишіть, що б ви хотіли додати. Або натисніть «Створити сайт», і я почну.";
 $MESS["LANDING_CHATBOT_SITE_ANYTHING_ELSE"] = "Почнемо, чи ви хочете додати щось іще?";
-$MESS["LANDING_CHATBOT_SITE_BOOSTS_ERROR_BAAS"] = "[p]Запити до CoPilot у вашому бусті закінчилися.[/p][p] Якщо ви активно використовуєте CoPilot, купіть стільки бустів, скільки потрібно для комфортної роботи команди.[/p]#LINK#Купити бусти CoPilot#/LINK#";
-$MESS["LANDING_CHATBOT_SITE_BOOSTS_ERROR_PROMO"] = "[p]Запити до CoPilot закінчилися й будуть знову доступні з наступного місяця.[/p][p]Ви можете купити бусти CoPilot, щоб збільшити кількість запитів і працювати з ШІ на професійному рівні.[/p]#LINK#Купити бусти CoPilot#/LINK#";
 $MESS["LANDING_CHATBOT_SITE_CHOOSE_COMPANY_NAME"] = "Зрозумів вас, дякую. Зробити сайт для компанії «#COMPANY_NAME»?";
 $MESS["LANDING_CHATBOT_SITE_CREATE_SITE"] = "Створити сайт";
 $MESS["LANDING_CHATBOT_SITE_DONT_CHOOSE_COMPANY"] = "Не вказуй компанію";

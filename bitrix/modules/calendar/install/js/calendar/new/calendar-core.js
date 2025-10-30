@@ -12,7 +12,11 @@
 
 		if (this.util.isFilterEnabled() && config.filterId)
 		{
-			this.search = new BX.Calendar.Search(config.filterId);
+			const filter = BX.Main.filterManager.getById(config.filterId);
+			if (filter)
+			{
+				this.search = new BX.Calendar.Search(config.filterId, filter);
+			}
 		}
 
 		if (config.settings && config.weekStart)
@@ -118,7 +122,7 @@
 
 				this.dragDrop = new window.BXEventCalendar.DragDrop(this);
 
-				if (this.util.isFilterEnabled() && !this.search.isFilterEmpty())
+				if (this.util.isFilterEnabled() && this.search && !this.search.isFilterEmpty())
 				{
 					this.currentViewName = 'list';
 				}
@@ -136,14 +140,14 @@
 				}
 
 				// Search & counters
-				if (this.util.isFilterEnabled())
+				if (this.util.isFilterEnabled() && this.search)
 				{
 					if (!this.search.isFilterEmpty())
 					{
 						this.search.applyFilter();
 					}
 
-					if (this.search && this.getCountersByCalendarContext())
+					if (this.getCountersByCalendarContext())
 					{
 						this.buildCountersControl();
 					}
@@ -185,26 +189,24 @@
 					}
 				}
 
-				if (this.util.userIsOwner())
+				if (this.util.userIsOwner() && !this.util.isExtranetUser())
 				{
-					if (!this.util.isExtranetUser())
-					{
-						this.syncInterface = new BX.Calendar.Sync.Manager.Manager({
-							wrapper: document.getElementById(this.id + '-sync-container'),
-							syncInfo: this.util.config.syncInfo,
-							payAttentionToNewSharingFeature: this.payAttentionToNewSharingFeature,
-							userId: this.currentUser.id,
-							syncLinks: this.util.config.syncLinks,
-							isSetSyncGoogleSettings: this.util.config.isSetSyncGoogleSettings,
-							isSetSyncOffice365Settings: this.util.config.isSetSyncOffice365Settings,
-							sections: this.sectionManager.getSections(),
-							portalAddress: this.util.config.caldav_link_all,
-							isRuZone: this.util.config.isRuZone,
-							calendar: this,
-						});
+					this.syncInterface = new BX.Calendar.Sync.Manager.Manager({
+						wrapper: document.getElementById(this.id + '-sync-container'),
+						syncInfo: this.util.config.syncInfo,
+						payAttentionToNewSharingFeature: this.payAttentionToNewSharingFeature,
+						useAirDesign: this.util.config.useAirDesign,
+						userId: this.currentUser.id,
+						syncLinks: this.util.config.syncLinks,
+						isSetSyncGoogleSettings: this.util.config.isSetSyncGoogleSettings,
+						isSetSyncOffice365Settings: this.util.config.isSetSyncOffice365Settings,
+						sections: this.sectionManager.getSections(),
+						portalAddress: this.util.config.caldav_link_all,
+						isRuZone: this.util.config.isRuZone,
+						calendar: this,
+					});
 
-						this.syncInterface.showSyncButton();
-					}
+					this.syncInterface.showSyncButton();
 				}
 
 				if (this.util.userIsOwner() && !this.isCollabUser || this.isCollabCalendar)

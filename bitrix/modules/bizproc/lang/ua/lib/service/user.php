@@ -1,8 +1,6 @@
 <?php
 $MESS["BP_SERVICE_USER_ACTIVE"] = "Активний";
-$MESS["BP_SERVICE_USER_DEPARTMENT"] = "Підрозділ (список ID)";
 $MESS["BP_SERVICE_USER_DEPARTMENT_1"] = "Список ID підрозділів співробітника (застаріло)";
-$MESS["BP_SERVICE_USER_DEPARTMENT_PRINTABLE"] = "Підрозділ (назви)";
 $MESS["BP_SERVICE_USER_DEPARTMENT_PRINTABLE_1"] = "Список назв підрозділів співробітника (застаріло)";
 $MESS["BP_SERVICE_USER_EMAIL"] = "E-mail";
 $MESS["BP_SERVICE_USER_HEAD"] = "Керівник";

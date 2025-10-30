@@ -28,12 +28,17 @@ jn.define('calendar/event-list-view/more-menu', (require, exports, module) => {
 		{
 			const items = [];
 
-			if (!env.extranet && State.calType === CalendarType.USER)
+			if (this.shouldShowSyncItem())
 			{
 				items.push(this.getSyncItem());
 			}
 
-			items.push(this.getSectionListItem(), this.getSettingsItem());
+			items.push(this.getSectionListItem());
+
+			if (this.shouldShowSettingsItem())
+			{
+				items.push(this.getSettingsItem());
+			}
 
 			return items;
 		}
@@ -115,6 +120,7 @@ jn.define('calendar/event-list-view/more-menu', (require, exports, module) => {
 			return {
 				type: Icon.MORE.getIconName(),
 				id: 'calendar-more',
+				badgeCode: 'calendar-more',
 				testId: 'calendar-more',
 				callback: () => this.showMenu(),
 				dot: this.hasCountersValue(),
@@ -148,6 +154,21 @@ jn.define('calendar/event-list-view/more-menu', (require, exports, module) => {
 		setCounters(counters)
 		{
 			this.counters = counters;
+		}
+
+		shouldShowSyncItem()
+		{
+			return !env.extranet
+				&& State.calType === CalendarType.USER
+				&& State.ownerId === Number(env.userId)
+			;
+		}
+
+		shouldShowSettingsItem()
+		{
+			return State.calType === CalendarType.USER
+				&& State.ownerId === Number(env.userId)
+			;
 		}
 	}
 

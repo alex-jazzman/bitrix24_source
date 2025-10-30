@@ -33,3 +33,4 @@ $MESS["LANDING_FIELDS_LIST_FIELD_PRODUCTS_TITLE2"] = "Тауарлар тізі�
 $MESS["LANDING_FIELDS_LIST_FIELD_SEPARATOR_TITLE"] = "Бөлгіш";
 $MESS["LANDING_FIELDS_SELECT_PRODUCTS_BUTTON_TITLE"] = "Тауарларды қосу";
 $MESS["LANDING_FIELDS_SELECT_SEPARATOR_BUTTON_TITLE"] = "Бөлгішті қосу";
+$MESS["LANDING_PHONE_FIELD_AHA_MOMENT_REGION_CODE"] = "Ел кодын қосыңыз — ол нысанға автоматты түрде жазылады. Осылайша, клиенттерге нөмірді енгізу оңайырақ болады және сіз байланыс үшін дұрыс телефон аласыз.";

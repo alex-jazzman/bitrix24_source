@@ -13,6 +13,7 @@ this.BX.UI.System = this.BX.UI.System || {};
 	  OutlineWarning: 'outline-warning',
 	  Outline: 'outline',
 	  OutlineNoAccent: 'outline-no-accent',
+	  OutlineCopilot: 'outline-copilot',
 	  ShadowNoAccent: 'shadow-no-accent',
 	  Shadow: 'shadow',
 	  ShadowAccent: 'shadow-accent',
@@ -42,7 +43,15 @@ this.BX.UI.System = this.BX.UI.System || {};
 	    },
 	    icon: {
 	      type: String,
-	      default: ''
+	      default: null
+	    },
+	    iconColor: {
+	      type: String,
+	      default: null
+	    },
+	    iconBackground: {
+	      type: String,
+	      default: null
 	    },
 	    image: {
 	      /** @type ChipImage */
@@ -106,7 +115,14 @@ this.BX.UI.System = this.BX.UI.System || {};
 			@click="$emit('click')"
 		>
 			<img v-if="image" class="ui-chip-icon --image" :src="image.src" :alt="image.alt">
-			<BIcon v-if="icon" class="ui-chip-icon" :name="icon"/>
+			<div
+				v-if="icon"
+				class="ui-chip-icon"
+				:class="{ '--with-background': Boolean(iconBackground) }"
+				:style="{ '--icon-background': iconBackground }"
+			>
+				<BIcon :name="icon" :color="iconColor"/>
+			</div>
 			<div class="ui-chip-text">{{ text }}</div>
 			<BIcon v-if="dropdown" class="ui-chip-right-icon" :name="Outline.CHEVRON_DOWN_M"/>
 			<BIcon v-if="withClear" class="ui-chip-right-icon" :name="Outline.CROSS_M" @click.stop="$emit('clear')"/>

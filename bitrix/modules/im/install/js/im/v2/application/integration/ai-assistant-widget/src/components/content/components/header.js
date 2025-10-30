@@ -27,6 +27,10 @@ export const AiAssistantWidgetChatHeader = {
 		{
 			EventEmitter.emit(MINIMIZE_EVENT_NAME);
 		},
+		loc(phrase: string): string
+		{
+			return this.$Bitrix.Loc.getMessage(phrase);
+		},
 	},
 	template: `
 		<ChatHeader
@@ -37,9 +41,10 @@ export const AiAssistantWidgetChatHeader = {
 		>
 			<template #before-actions>
 				<BIcon
-					:name="OutlineIcons.MINIMIZE"
+					:name="OutlineIcons.CROSS_L"
 					:hoverable="true"
 					:color="Color.base4"
+					:title="loc('IM_AI_ASSISTANT_WIDGET_MINIMIZE')"
 					class="bx-im-ai-assistant-chat-header__icon"
 					@click="onMinimize"
 				/>

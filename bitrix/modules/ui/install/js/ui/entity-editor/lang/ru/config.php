@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["UI_ENTITY_EDITOR_YES"] = "Да";
 $MESS["UI_ENTITY_EDITOR_NO"] = "Нет";
 $MESS["UI_ENTITY_EDITOR_SELECT"] = "Выбрать";
@@ -97,6 +97,7 @@ $MESS["UI_ENTITY_EDITOR_SECTION_OPEN_DETAILS"] = "открыть";
 $MESS["UI_ENTITY_EDITOR_CHECK_SCOPE"] = "Выбрать \"#SCOPE_NAME#\"";
 $MESS["UI_ENTITY_EDITOR_CREATE_SCOPE_MSGVER_1"] = "Новый вид карточки";
 $MESS["UI_ENTITY_EDITOR_UPDATE_SCOPE_MSGVER_1"] = "Настройки";
+$MESS["UI_ENTITY_EDITOR_UPDATE_SCOPE_MSGVER_2"] = "Настройки вида карточки";
 $MESS["UI_ENTITY_EDITOR_CONFIG_SCOPE_NAME_MSGVER_1"] = "Название";
 $MESS["UI_ENTITY_EDITOR_CONFIG_SCOPE_MEMBERS_MSGVER_1"] = "Кому доступен";
 $MESS["UI_ENTITY_EDITOR_CONFIG_SCOPE_FORCE_INSTALL_TO_USERS_MSGVER_1"] = "Установить автоматически";
@@ -104,6 +105,10 @@ $MESS["UI_ENTITY_EDITOR_CONFIG_HINT_SCOPE_FORCE_INSTALL_TO_USERS"] = "Вид к�
 $MESS["UI_ENTITY_EDITOR_CONFIG_SCOPE_SAVE"] = "Сохранить";
 $MESS["UI_ENTITY_EDITOR_CONFIG_SCOPE_CANCEL"] = "Отменить";
 $MESS["UI_ENTITY_EDITOR_CONFIG_SCOPE_SAVED_MSGVER_1"] = "Вид карточки сохранён";
+$MESS["UI_ENTITY_EDITOR_CONFIG_HINT_SCOPE_SET_AVAILABLE_ON_ADD"] = "Вид карточки можно будет выбрать при создании элемента этого типа";
+$MESS["UI_ENTITY_EDITOR_CONFIG_SCOPE_SET_AVAILABLE_ON_ADD"] = "Доступен при создании элемента";
+$MESS["UI_ENTITY_EDITOR_CONFIG_HINT_SCOPE_SET_AVAILABLE_ON_UPDATE"] = "Вид карточки можно будет выбрать при редактировании элемента этого типа";
+$MESS["UI_ENTITY_EDITOR_CONFIG_SCOPE_SET_AVAILABLE_ON_UPDATE"] = "Доступен при редактировании элемента";
 $MESS["UI_ENTITY_EDITOR_PRODUCT_SUMMARY_TOTAL"] = "#COUNT# позиций на сумму #TOTAL#";
 $MESS["UI_ENTITY_EDITOR_PRODUCT_SUMMARY_TOTAL_PLURAL_0"] = "#COUNT# позиция на сумму #TOTAL#";
 $MESS["UI_ENTITY_EDITOR_PRODUCT_SUMMARY_TOTAL_PLURAL_1"] = "#COUNT# позиции на сумму #TOTAL#";

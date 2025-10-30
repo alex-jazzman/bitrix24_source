@@ -9,5 +9,6 @@ export type LabelOptions = {
 	iconClass?: string,
 	iconTitle?: string,
 	hidden?: boolean,
+	visible?: boolean,
 	onclick?: (label: Label, slider: Slider) => void,
 };

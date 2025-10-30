@@ -28,7 +28,6 @@ $MESS["TASKS_SONET_GL_TASKS2_TASK_STATUS_MESSAGE_2"] = "Завдання при�
 $MESS["TASKS_SONET_GL_TASKS2_TASK_STATUS_MESSAGE_2_24"] = "Завдання прийняте виконавцем";
 $MESS["TASKS_SONET_GL_TASKS2_TASK_STATUS_MESSAGE_3"] = "Статус завдання змінився на «Виконується»";
 $MESS["TASKS_SONET_GL_TASKS2_TASK_STATUS_MESSAGE_3_24"] = "Завдання виконується";
-$MESS["TASKS_SONET_GL_TASKS2_TASK_STATUS_MESSAGE_4"] = "Завдання закрите (вимагається контроль постановника)";
 $MESS["TASKS_SONET_GL_TASKS2_TASK_STATUS_MESSAGE_4_24"] = "Завдання закрите і чекає контролю";
 $MESS["TASKS_SONET_GL_TASKS2_TASK_STATUS_MESSAGE_4_24_2"] = "Причина";
 $MESS["TASKS_SONET_GL_TASKS2_TASK_STATUS_MESSAGE_4_24_CHANGES"] = "вимагається контроль постановника";

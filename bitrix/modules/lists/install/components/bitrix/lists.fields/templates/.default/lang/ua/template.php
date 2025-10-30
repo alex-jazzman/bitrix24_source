@@ -17,5 +17,4 @@ $MESS["CT_BLF_TOOLBAR_LIST_EDIT"] = "Налаштування списку";
 $MESS["CT_BLF_TOOLBAR_LIST_EDIT_PROCESS"] = "Налаштування процесу";
 $MESS["CT_BLF_TOOLBAR_LIST_TITLE"] = "Повернутися до налаштування списку";
 $MESS["CT_BLF_TOOLBAR_LIST_TITLE_PROCESS"] = "Повернутися до налаштування процесу";
-$MESS["CT_BLF_TOOLBAR_RETURN_LIST_ELEMENT"] = "ДО СПИСКУ";
 $MESS["CT_BLF_TOOLBAR_RETURN_LIST_ELEMENT_MSGVER_1"] = "До списку";

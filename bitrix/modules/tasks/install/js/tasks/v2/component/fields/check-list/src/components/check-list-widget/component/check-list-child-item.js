@@ -1,6 +1,7 @@
+import { Dom } from 'main.core';
 import { BIcon } from 'ui.icon-set.api.vue';
 import { Outline } from 'ui.icon-set.api.core';
-import { FileStatus } from 'ui.uploader.core';
+import { BLine } from 'ui.system.skeleton.vue';
 import type { VueUploaderAdapter } from 'ui.uploader.vue';
 
 import { UserFieldWidgetComponent, type UserFieldWidgetOptions } from 'disk.uploader.user-field-widget';
@@ -10,6 +11,7 @@ import { GrowingTextArea } from 'tasks.v2.component.elements.growing-text-area';
 import { UserAvatarList } from 'tasks.v2.component.elements.user-avatar-list';
 import { fileService, EntityTypes } from 'tasks.v2.provider.service.file-service';
 
+import { CheckListManager } from '../../../lib/check-list-manager';
 import { CheckListItemMixin } from './check-list-item-mixin';
 
 // @vue/component
@@ -17,6 +19,7 @@ export const CheckListChildItem = {
 	name: 'CheckListChildItem',
 	components: {
 		BIcon,
+		BLine,
 		GrowingTextArea,
 		UserAvatarList,
 		UserFieldWidgetComponent,
@@ -32,21 +35,27 @@ export const CheckListChildItem = {
 		},
 	},
 	emits: [
-		'toggleIsComplete',
 		'toggleGroupModeSelected',
 	],
 	setup(props: Object): { uploaderAdapter: VueUploaderAdapter }
 	{
+		const fileServiceInstance = fileService.get(
+			props.id,
+			EntityTypes.CheckListItem,
+			{ parentEntityId: props.taskId },
+		);
+
 		return {
 			Outline,
-			fileService: fileService.get(props.id, EntityTypes.CheckListItem),
-			uploaderAdapter: fileService.get(props.id, EntityTypes.CheckListItem).getAdapter(),
+			fileService: fileServiceInstance,
+			uploaderAdapter: fileServiceInstance.getAdapter(),
 		};
 	},
 	data(): Object
 	{
 		return {
 			uploadingFiles: this.fileService.getFiles(),
+			filesLoading: false,
 		};
 	},
 	computed: {
@@ -59,7 +68,10 @@ export const CheckListChildItem = {
 				tileWidgetOptions: {
 					compact: true,
 					hideDropArea: true,
+					enableDropzone: false,
 					readonly: this.isPreview,
+					autoCollapse: false,
+					removeFromServer: !this.isEdit,
 				},
 			};
 		},
@@ -69,25 +81,24 @@ export const CheckListChildItem = {
 		},
 		hasFilesAttach(): boolean
 		{
-			return this.hasFiles || this.isUploading || this.hasUploadingError;
+			return (
+				this.hasFiles
+				|| this.fileService.isUploading()
+				|| this.fileService.hasUploadingError()
+			);
 		},
 		hasFiles(): boolean
 		{
-			return this.files?.length > 0;
+			return this.filesNumber > 0;
 		},
-		isUploading(): boolean
+		filesNumber(): boolean
 		{
-			return this.uploadingFiles.some(({ status }) => [
-				FileStatus.UPLOADING,
-				FileStatus.LOADING,
-			].includes(status));
-		},
-		hasUploadingError(): boolean
-		{
-			return this.uploadingFiles.some(({ status }) => [
-				FileStatus.UPLOAD_FAILED,
-				FileStatus.LOAD_FAILED,
-			].includes(status));
+			if (!this.files)
+			{
+				return 0;
+			}
+
+			return this.files.length;
 		},
 		hasTrashcanIcon(): boolean
 		{
@@ -98,6 +109,10 @@ export const CheckListChildItem = {
 				&& !this.isPreview
 			);
 		},
+		readOnly(): boolean
+		{
+			return this.isPreview;
+		},
 	},
 	created(): void
 	{
@@ -105,6 +120,12 @@ export const CheckListChildItem = {
 		{
 			void this.loadFiles();
 		}
+
+		this.checkListManager = new CheckListManager({
+			computed: {
+				checkLists: () => this.checkLists,
+			},
+		});
 	},
 	mounted(): void
 	{
@@ -121,20 +142,6 @@ export const CheckListChildItem = {
 		}
 	},
 	methods: {
-		toggleIsComplete(): void
-		{
-			if (this.canToggle === false)
-			{
-				return;
-			}
-
-			this.$store.dispatch(`${Model.CheckList}/update`, {
-				id: this.id,
-				fields: { isComplete: !this.item.isComplete },
-			});
-
-			this.$emit('toggleIsComplete', this.id);
-		},
 		toggleGroupModeSelected(): void
 		{
 			this.$store.dispatch(`${Model.CheckList}/update`, {
@@ -149,31 +156,15 @@ export const CheckListChildItem = {
 
 			this.$emit('toggleGroupModeSelected', this.id);
 		},
-		focusToItem(): void
-		{
-			this.scrollContainer ??= this.$parent.$el?.closest('[data-list]');
-
-			const offset = 200;
-
-			this.scrollContainer.scrollTo({
-				top: this.$refs.item.offsetTop - offset,
-				behavior: 'smooth',
-			});
-		},
-		focusToTextarea(event: PointerEvent): void
-		{
-			const ignoreList = new Set([this.$refs.checkbox]);
-
-			if (!ignoreList.has(event.target))
-			{
-				this.$refs.growingTextArea?.focusTextarea();
-			}
-		},
 		async loadFiles(): Promise<void>
 		{
+			this.filesLoading = true;
+
 			const ids = this.files?.map((file) => file?.id ?? file);
 
 			await this.fileService.list(ids ?? []);
+
+			this.filesLoading = false;
 		},
 		handleEnter(): void
 		{
@@ -200,10 +191,10 @@ export const CheckListChildItem = {
 
 			if (this.isPreview)
 			{
-				this.toggleIsComplete();
+				this.complete(!this.completed);
 			}
 		},
-		isClickInsideFilesWidget(filesNode: HTMLElement, target: HTMLElement)
+		isClickInsideFilesWidget(filesNode: HTMLElement, target: HTMLElement): boolean
 		{
 			if (!filesNode || !target)
 			{
@@ -218,9 +209,7 @@ export const CheckListChildItem = {
 				return false;
 			}
 
-			const hasExcludedClass = excludedClasses.some((className: string) =>
-				target.closest(`.${className}`) !== null
-			);
+			const hasExcludedClass = excludedClasses.some((className: string) => Dom.hasClass(target, className));
 
 			return !hasExcludedClass;
 		},
@@ -230,11 +219,11 @@ export const CheckListChildItem = {
 			ref="item"
 			class="check-list-widget-child-item"
 			:class="{
-				'--extra-indent': hasUsers && !hasFilesAttach,
-				'--complete': item.isComplete,
+				'--complete': completed,
 				'--group-mode': groupMode,
 				'--group-mode-selected': groupModeSelected,
 				'--preview': isPreview,
+				'--toggleable': canToggle,
 			}"
 			:data-id="id"
 			:style="{ marginLeft: itemOffset }"
@@ -250,9 +239,9 @@ export const CheckListChildItem = {
 					<input
 						ref="checkbox"
 						type="checkbox"
-						:checked="item.isComplete"
+						:checked="completed"
 						:disabled="!canToggle || groupMode"
-						@click.stop="toggleIsComplete"
+						@click.stop="complete(!completed)"
 					>
 				</label>
 				<div
@@ -272,6 +261,7 @@ export const CheckListChildItem = {
 					:fontSize="15"
 					:lineHeight="20"
 					@update:modelValue="updateTitle"
+					@input="updateTitle"
 					@focus="handleFocus"
 					@blur="handleBlur"
 					@emptyBlur="handleEmptyBlur"
@@ -308,11 +298,23 @@ export const CheckListChildItem = {
 					</div>
 					<div v-if="hasFilesAttach" class="check-list-widget-item-attach-files">
 						<div class="check-list-widget-item-attach-files-list">
-							<UserFieldWidgetComponent
-								ref="files-widget"
-								:uploaderAdapter="uploaderAdapter"
-								:widgetOptions="widgetOptions"
-							/>
+							<template v-if="filesLoading">
+								<div class="check-list-widget-item-attach-files-list-skeleton">
+									<BLine
+										v-for="index in filesNumber"
+										:key="index"
+										:width="114"
+										:height="90"
+									/>
+								</div>
+							</template>
+							<template v-else>
+								<UserFieldWidgetComponent
+									ref="files-widget"
+									:uploaderAdapter="uploaderAdapter"
+									:widgetOptions="widgetOptions"
+								/>
+							</template>
 						</div>
 					</div>
 				</div>

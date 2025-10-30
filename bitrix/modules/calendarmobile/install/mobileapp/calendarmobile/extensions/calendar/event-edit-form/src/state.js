@@ -494,6 +494,7 @@ jn.define('calendar/event-edit-form/state', (require, exports, module) => {
 				privateEvent: this.privateEvent,
 				color: this.color,
 				calType: this.calType,
+				ownerId: this.ownerId,
 				attendees: this.attendees.map((user) => ({
 					id: user.id,
 					status: this.#getAttendeeStatus(initialAttendees, user.id, EventMeetingStatus.QUESTIONED),
@@ -698,6 +699,16 @@ jn.define('calendar/event-edit-form/state', (require, exports, module) => {
 
 		#compareUser(first, second)
 		{
+			if (first.id === this.ownerId)
+			{
+				return -1;
+			}
+
+			if (second.id === this.ownerId)
+			{
+				return 1;
+			}
+
 			if (first.status === EventMeetingStatus.HOST)
 			{
 				return -1;

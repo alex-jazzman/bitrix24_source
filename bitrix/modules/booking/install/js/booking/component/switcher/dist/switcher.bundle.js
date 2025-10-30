@@ -61,6 +61,7 @@ this.BX.Booking = this.BX.Booking || {};
 	    if (this.modelValue !== this.switcher.checked) {
 	      this.switcher.check(this.modelValue);
 	    }
+	    this.toggleTextVisibility(this.hiddenText);
 	  },
 	  methods: {
 	    checked() {

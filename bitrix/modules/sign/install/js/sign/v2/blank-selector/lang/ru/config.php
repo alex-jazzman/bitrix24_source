@@ -10,3 +10,4 @@ $MESS['SIGN_BLANK_SELECTOR_CLEAR_ALL'] = 'Очистить всё';
 $MESS['SIGN_BLANK_SELECTOR_FIELD_ADD_BUTTON_LABEL'] = "Выбрать шаблон документа";
 $MESS['SIGN_BLANK_SELECTOR_SLIDER_SELECT_BLANK_BUTTON_LABEL'] = "Выбрать";
 $MESS['SIGN_BLANK_SELECTOR_CREATED_MYSELF'] = "Создано вами";
+$MESS['SIGN_BLANK_SELECTOR_UPLOADER_ERROR_INCOMPLETE'] = "Не удалось загрузить файл, попробуйте ещё раз";

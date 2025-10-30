@@ -18,7 +18,7 @@ export const ScheduleTypes = {
 	setup(): { title: string, titleIconType: string, items: IScheduleItem[] }
 	{
 		const title = Loc.getMessage('BRCW_SETTINGS_CARD_SCHEDULE_TITLE_MSGVER_1');
-		const titleIconType = IconSet.COLLABORATION;
+		const titleIconType = IconSet.OPENED_EYE;
 		const items = [
 			{
 				id: 'common',

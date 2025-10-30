@@ -1,4 +1,5 @@
-import type { ResourceModel } from 'booking.model.resources';
+import { ResourceEntityType } from 'booking.const';
+import type { IntegrationCalendarType, ResourceModel } from 'booking.model.resources';
 import type { ResourceDto } from './types';
 
 export function mapDtoToModel(resourceDto: ResourceDto): ResourceModel
@@ -47,6 +48,9 @@ export function mapDtoToModel(resourceDto: ResourceDto): ResourceModel
 		// feedback
 		isFeedbackNotificationOn: resourceDto.isFeedbackNotificationOn,
 		templateTypeFeedback: resourceDto.templateTypeFeedback,
+
+		// integrationCalendar
+		entities: resourceDto.entities || [],
 	};
 }
 
@@ -94,5 +98,19 @@ export function mapModelToDto(resource: ResourceModel): ResourceDto
 		// feedback
 		isFeedbackNotificationOn: resource.isFeedbackNotificationOn,
 		templateTypeFeedback: resource.templateTypeFeedback,
+
+		// integrationCalendar
+		entities: entitiesToDto(resource.entities),
 	};
+}
+
+function entitiesToDto(entities: IntegrationCalendarType): Array
+{
+	return checkEntityCalendar(entities);
+}
+
+function checkEntityCalendar(entities: IntegrationCalendarType): Array
+{
+	// eslint-disable-next-line max-len
+	return entities.filter((entity) => !(entity.entityType === ResourceEntityType.Calendar && entity.data?.userIds.length === 0));
 }

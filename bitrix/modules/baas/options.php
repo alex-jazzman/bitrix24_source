@@ -59,35 +59,44 @@ if (
 	{
 		$action = 'saveAndRegister';
 	}
-	switch ($action)
+	try
 	{
-		case 'reset_domain_url':
-			$server->getConfigs()->resetUrl();
-			break;
-		case 'reset_migration':
-			Baas\Internal\Diag\Logger::getInstance()->info('Migration is set');
-			Baas\Repository\ConsumptionRepository::getInstance()->resetLogForMigration();
-			$client->setConsumptionsLogMigrated(false);
+		switch ($action)
+		{
+			case 'reset_domain_url':
+				$server->getConfigs()->resetUrl();
+				break;
+			case 'reset_migration':
+				Baas\Internal\Diag\Logger::getInstance()->info('Migration is set');
+				Baas\Repository\ConsumptionRepository::getInstance()->resetLogForMigration();
+				$client->setConsumptionsLogMigrated(false);
 
-			\Bitrix\Main\Update\Stepper::bindClass(
-				Baas\Integration\Main\LogsMigrationStepper::class,
-				'baas',
-				10,
-			);
-			break;
-		case 'save':
-		case 'saveAndRegister':
-			$server->getConfigs()->setUrl($request->getPost('baas_server_url'));
-			$historyBaasServers[] = $request->getPost('baas_server_url');
-			Main\Config\Option::set('baas', 'servers', json_encode(array_unique($historyBaasServers)));
-			if ($action === 'saveAndRegister' && Baas\Service\BillingService::getInstance()->register(true)->isSuccess())
-			{
-				Baas\Service\BillingService::getInstance()->synchronizeWithBilling();
-			}
-			break;
+				\Bitrix\Main\Update\Stepper::bindClass(
+					Baas\Integration\Main\LogsMigrationStepper::class,
+					'baas',
+					10,
+				);
+				break;
+			case 'save':
+			case 'saveAndRegister':
+					$baasServerUrl = $request->getPost('baas_server_url');
+					$server->getConfigs()->setUrl($baasServerUrl);
+					$historyBaasServers[] = $baasServerUrl;
+					$historyBaasServersJson = json_encode(array_unique($historyBaasServers));
+					Main\Config\Option::set('baas', 'servers', $historyBaasServersJson);
+					if ($action === 'saveAndRegister' && Baas\Service\BillingService::getInstance()->register(true)->isSuccess())
+					{
+						Baas\Service\BillingService::getInstance()->synchronizeWithBilling();
+					}
+				break;
+		}
+
+		LocalRedirect($APPLICATION->GetCurPageParam());
 	}
-
-	LocalRedirect($APPLICATION->GetCurPageParam());
+	catch (Main\SystemException $exception)
+	{
+		ShowError($exception->getMessage());
+	}
 }
 
 $tabControl = new CAdminTabControl('tabControl', array_values($tabs));
@@ -177,7 +186,7 @@ $tabControl = new CAdminTabControl('tabControl', array_values($tabs));
 		const registerNode = document.querySelector('input[type=button][name="register-portal"]');
 		const registerCb = function() {
 			registerNode.disabled = true;
-			BX.loadExt('baas.utility.register').then(function() {
+			BX.loadExt('baas.utility.registration').then(function() {
 				BX.Baas.Utility.Registration.getInstance().bind(registerNode).send().finally(() => {
 					registerNode.disabled = false;
 				});

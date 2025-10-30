@@ -6,6 +6,7 @@ $MESS["DISK_FOLDER_LIST_BIZPROC_TITLE_MODAL"] = "Бизнес-процессте
 $MESS["DISK_FOLDER_LIST_BTN_CLOSE"] = "Жабу";
 $MESS["DISK_FOLDER_LIST_BTN_SAVE"] = "Сақтау";
 $MESS["DISK_FOLDER_LIST_COLLABER_HINT"] = "Файлдарды тек коллаб бумаларына қосуға болады.";
+$MESS["DISK_FOLDER_LIST_COLLABER_HINT_FOR_READONLY_FOLDER_IN_COLLAB"] = "Бұл бумаға файлдарды қосу үшін құқықтар жеткіліксіз";
 $MESS["DISK_FOLDER_LIST_COLLABER_TOUR_ON_ADD_BUTTON_TEXT"] = "Файлдар коллабтың барлық қатысушыларына көрінетін болады. Жүктегеннен кейін файлдарды коллаб чатының барлық қатысушыларымен немесе кез келген қатысушымен жеке талқылауға болады.";
 $MESS["DISK_FOLDER_LIST_COLLABER_TOUR_ON_ADD_BUTTON_TITLE"] = "Коллабаға файлдарды қосыңыз.";
 $MESS["DISK_FOLDER_LIST_CREATE_FOLDER_MODAL"] = "Буманы құру";

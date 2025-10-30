@@ -5,9 +5,10 @@ import { TextEditor, TextEditorComponent } from 'ui.text-editor';
 import { TaskModel } from 'tasks.v2.model.tasks';
 import { Model } from 'tasks.v2.const';
 import { taskService } from 'tasks.v2.provider.service.task-service';
-import { fileService } from 'tasks.v2.provider.service.file-service';
+import { type FileService, fileService } from 'tasks.v2.provider.service.file-service';
 
 import { DefaultEditorOptions } from './default-editor-options';
+
 import './description.css';
 
 // @vue/component
@@ -29,12 +30,13 @@ export const DescriptionInline = {
 			DefaultEditorOptions,
 		};
 	},
-	data(): Object
+	data(props): { filesService: FileService }
 	{
 		return {
 			isFocused: false,
 			isScrolledToTop: true,
 			isScrolledToBottom: true,
+			fileService: fileService.get(props.taskId),
 		};
 	},
 	computed: {
@@ -54,18 +56,26 @@ export const DescriptionInline = {
 			maxHeight: 112,
 			placeholder: this.loc('TASKS_V2_DESCRIPTION_INLINE_EDITOR_PLACEHOLDER'),
 			content: this.taskDescription,
+			newLineMode: 'paragraph',
 			events: {
-				onFocus: () => this.handleEditorFocus(),
-				onBlur: () => this.handleEditorBlur(),
-				onChange: () => this.handleEditorChange(),
+				onFocus: this.handleEditorFocus,
+				onBlur: this.handleEditorBlur,
+				onChange: this.handleEditorChange,
 			},
 		};
 		this.editor = new TextEditor({ ...DefaultEditorOptions, ...additionalEditorOptions });
+	},
+	mounted(): void
+	{
 		Event.bind(this.editor.getScrollerContainer(), 'scroll', this.handleScroll);
+
+		this.fileService.getAdapter().getUploader().assignPaste(this.$refs.description);
 	},
 	beforeUnmount(): void
 	{
 		Event.unbind(this.editor.getScrollerContainer(), 'scroll', this.handleScroll);
+
+		this.fileService.getAdapter().getUploader().unassignPaste(this.$refs.description);
 	},
 	methods: {
 		hasScroll(): boolean
@@ -96,19 +106,6 @@ export const DescriptionInline = {
 			this.isScrolledToTop = container.scrollTop === 0;
 			this.isScrolledToBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - 5;
 		},
-		async handlePaste(clipboardEvent: ClipboardEvent): void
-		{
-			if (!this.isFocused)
-			{
-				return;
-			}
-
-			const service = fileService.get(this.taskId);
-
-			void service.uploadFromClipboard({
-				clipboardEvent,
-			});
-		},
 	},
 	template: `
 		<div
@@ -116,13 +113,13 @@ export const DescriptionInline = {
 			:class="{ '--bottom-shadow': !isScrolledToBottom, '--top-shadow': !isScrolledToTop }"
 			:data-task-id="taskId"
 			:data-task-field-id="'description'"
-			@paste="handlePaste"
+			ref="description"
 		>
 			<div class="tasks-card-description-inline-shadow --revert" :class="{'--shown': !isScrolledToTop}">
 				<div class="tasks-card-description-inline-shadow-white"/>
 				<div class="tasks-card-description-inline-shadow-black"/>
 			</div>
-			<TextEditorComponent :editor-instance="editor"/>
+			<TextEditorComponent :editorInstance="editor"/>
 			<div class="tasks-card-description-inline-shadow" :class="{'--shown': !isScrolledToBottom}">
 				<div class="tasks-card-description-inline-shadow-white"/>
 				<div class="tasks-card-description-inline-shadow-black"/>

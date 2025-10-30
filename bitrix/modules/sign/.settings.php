@@ -10,6 +10,7 @@ use Bitrix\Sign\Callback;
 use Bitrix\Sign\Service\Sign\Document\GroupService;
 use Bitrix\Sign\Service\CounterService;
 use Bitrix\Sign\Util;
+use Bitrix\Sign\Type;
 
 return [
 	'controllers' => [
@@ -529,6 +530,18 @@ return [
 			'sign.repository.document.template' => [
 				'className' => Repository\Document\TemplateRepository::class,
 			],
+			'sign.repository.signerslist' => [
+				'className' => Repository\SignersList\SignersListRepository::class,
+			],
+			'sign.repository.signerslistuser' => [
+				'className' => Repository\SignersList\SignersListUserRepository::class,
+			],
+			'sign.service.signerslist' => [
+				'className' => Service\SignersListService::class,
+			],
+			'sign.service.onboarding' => [
+				'className' => Service\OnboardingService::class,
+			],
 			'sign.repository.document.group' => [
 				'className' => Repository\Document\GroupRepository::class,
 			],
@@ -625,6 +638,9 @@ return [
 			'sign.service.localizedError' => [
 				'className' => Service\LocalizedErrorService::class,
 			],
+			'sign.service.provider.visibility' => [
+				'className' => Service\Providers\ProviderVisibilityService::class,
+			],
 		]
 	],
 	'service.new.ui' => [ 'value' => true,],
@@ -647,6 +663,17 @@ return [
 					'provider' => [
 						'moduleId' => 'sign',
 						'className' => \Bitrix\Sign\Integration\Ui\EntitySelector\SignRecentDocumentProvider::class,
+					],
+				],
+				[
+					'entityId' => 'signers-list',
+					'options' => [
+						'dynamicLoad' => true,
+						'dynamicSearch' => true,
+					],
+					'provider' => [
+						'moduleId' => 'sign',
+						'className' => \Bitrix\Sign\Integration\Ui\EntitySelector\SignersListsProvider::class,
 					],
 				],
 				[

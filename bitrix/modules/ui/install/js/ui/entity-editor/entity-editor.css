@@ -329,6 +329,14 @@ input.ui-entity-editor-header-title-text {
 	cursor: pointer;
 }
 
+.ui-entity-editor-new-field-visibility-wrapper {
+	padding: 10px 0;
+}
+
+.ui-entity-editor-user-field-setting-error-text {
+	color: #d0011b;
+}
+
 /* addiction step*/
 .ui-entity-new-field-addiction-label { white-space: nowrap; }
 
@@ -2055,6 +2063,19 @@ input.ui-entity-editor-header-title-text {
 	display: flex;
 	align-items: center;
 	justify-content: center;
+}
+
+.ui-entity-editor-block-title-text .ui-hint {
+	display: inline-flex;
+	margin-left: 4px;
+	width: fit-content;
+	height: fit-content;
+}
+
+.ui-entity-editor-block-title-text .ui-hint-icon {
+	margin: 0;
+	width: 1.2em;
+	height: 1.2em;
 }
 
 .ui-entity-editor-block-title-text-right-icon {

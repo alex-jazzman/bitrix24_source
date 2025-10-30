@@ -24,7 +24,7 @@ export const CheckListAddItem = {
 		<div
 			class="check-list-widget-add-item"
 			:class="{'--preview': isPreview}"
-			@click="$emit('addItem')"
+			@mousedown="$emit('addItem')"
 		>
 			<div class="check-list-widget-add-item-icon">
 				<BIcon :name="Outline.PLUS_L"/>

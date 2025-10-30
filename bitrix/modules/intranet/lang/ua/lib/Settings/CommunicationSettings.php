@@ -31,6 +31,7 @@ $MESS["INTRANET_SETTINGS_FIELD_LABEL_POST_FEED"] = "Дозволити публ�
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_POST_FEED_MSGVER_1"] = "Дозволити публікувати повідомлення для всіх співробітників";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_PUBLISH_TO_ALL_DEFAULT"] = "Публікувати повідомлення для всіх співробітників за замовчуванням";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_SELECT_FILE_VIEWER"] = "Переглядати документи з допомогою";
+$MESS["INTRANET_SETTINGS_FIELD_LABEL_SELECT_UNIFIED_LINK_DEFAULT_ACCESS"] = "Права за вмовчанням для доступу до файлу за посиланням:";
 $MESS["INTRANET_SETTINGS_SECTION_TITLE_CHANNELS"] = "Загальні канали";
 $MESS["INTRANET_SETTINGS_SECTION_TITLE_CHATS"] = "Чати";
 $MESS["INTRANET_SETTINGS_SECTION_TITLE_DISK"] = "Диск";

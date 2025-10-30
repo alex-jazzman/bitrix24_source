@@ -2,7 +2,7 @@ import { Layout } from './layout';
 
 export const NavigationMenuItem = Object.freeze({
 	[Layout.chat]: Layout.chat,
-	[Layout.aiAssistant]: Layout.aiAssistant,
+	[Layout.copilot]: Layout.copilot,
 	[Layout.collab]: Layout.collab,
 	[Layout.channel]: Layout.channel,
 	[Layout.openlines]: Layout.openlines,

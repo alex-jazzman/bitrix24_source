@@ -534,15 +534,18 @@ if (
 				'highlightWithCounter' => true,
 				'counter' => 'menu_invite',
 				'onclick' => <<<JS
-						requireLazy('intranet:invite-opener-new')
-							.then(({ openIntranetInviteWidget, AnalyticsEvent }) => {
-								if (openIntranetInviteWidget && AnalyticsEvent)
+					void requireLazy('intranet:invite-opener-new')
+						.then(async ({ openIntranetInviteWidget }) => {
+							if (openIntranetInviteWidget)
+							{
+								const { AnalyticsEvent } = await requireLazy('analytics', false);
+								if (AnalyticsEvent)
 								{
-									openIntranetInviteWidget?.({
-										analytics: new AnalyticsEvent().setSection('more_menu')
-									});
+									openIntranetInviteWidget({ analytics: new AnalyticsEvent().setSection('more_menu') });
 								}
-							});
+							}
+						})
+					;
 				JS,
 			],
 		];

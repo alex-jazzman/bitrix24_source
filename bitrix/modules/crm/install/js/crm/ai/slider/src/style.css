@@ -1,6 +1,6 @@
 /* root container */
 .crm-copilot-wrapper{
-	--crm-copilot-slider-bg: url('./images/copilot-slider-bg.png?v=2') fixed 100% 0 no-repeat;
+	--crm-copilot-slider-bg: url('/bitrix/js/crm/ai/slider/images/copilot-slider-bg.png') fixed 100% 0 no-repeat;
 	--ui-btn-custom-background: var(--crm-copilot-slider-bg);
 
 	background: var(--crm-copilot-slider-bg);
@@ -39,7 +39,7 @@
 	left: var(--copilot-icon-to-left);
 	width: var(--copilot-icon-width);
 	height: var(--copilot-icon-height);
-	content: url('./images/copilot-icon.svg');
+	content: url('../images/copilot-icon.svg');
 }
 
 .side-panel:has(.crm-copilot-wrapper) .side-panel-loader{

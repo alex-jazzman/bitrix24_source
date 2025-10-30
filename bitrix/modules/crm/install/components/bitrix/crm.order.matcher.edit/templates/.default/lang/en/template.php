@@ -63,7 +63,6 @@ $MESS["CRM_ORDERFORM_EDIT_DOC_INVOICE_PRODUCT_CHOICE_NAME1"] = "Name";
 $MESS["CRM_ORDERFORM_EDIT_DOC_INVOICE_PRODUCT_CHOICE_PRICE1"] = "Price";
 $MESS["CRM_ORDERFORM_EDIT_DOC_INVOICE_TITLE"] = "Invoice parameters";
 $MESS["CRM_ORDERFORM_EDIT_DOC_SECTION_MSGVER_1"] = "Create from form data:";
-$MESS["CRM_ORDERFORM_EDIT_DOC_SECTION_NAV"] = "Documents";
 $MESS["CRM_ORDERFORM_EDIT_DOC_SECTION_NAV_MSGVER_1"] = "Data";
 $MESS["CRM_ORDERFORM_EDIT_EDIT"] = "configure";
 $MESS["CRM_ORDERFORM_EDIT_EXTERNAL_ANALYTICS_AUTO_EVENTS"] = "Events and goals will be auto registered if the form is published on your site. You don't have to enter parameters here in this case.";

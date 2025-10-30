@@ -20,6 +20,7 @@ return [
 		'ui-system/layout/box',
 		'ui-system/blocks/avatar',
 		'rest/run-action-executor',
+		'utils/test',
 	],
 	'bundle' => [
 		'./src/entity',

@@ -7,29 +7,50 @@
 }
 
 .tasks-card-change-description {
-	margin-bottom: 4px;
 	display: flex;
+	gap: 4px;
 	cursor: pointer;
 	opacity: 0.7;
 	max-width: -webkit-max-content;
 	max-width: max-content;
+	column-gap: 4px;
+	transition: .4s;
 	align-items: center;
+}
+
+.tasks-card-change-description.--no-hover {
+	opacity: 1;
 }
 
 .tasks-card-description-field {
 	margin-bottom: 4px;
 }
 
+.tasks-card-change-description-mini-container {
+	flex-grow: 0;
+}
+
+.tasks-card-change-description-mini-btn {
+	cursor: text;
+}
+
+.tasks-card-change-description-mini-btn:hover .tasks-card-change-description,
 .tasks-card-change-description:hover {
 	opacity: 1;
 }
 
-.tasks-card-change-description .ui-icon-set {
-	margin-right: 3px;
-}
-
 .tasks-card-change-description-text {
 	font-size: var(--ui-font-size-sm);
+}
+
+.tasks-card-change-description-mini-text {
+	font-size: var(--ui-font-size-lg);
+	color: var(--ui-color-base-4);
+}
+
+.tasks-card-change-description-mini-text-files {
+	font-size: var(--ui-font-size-lg);
+	color: var(--ui-color-accent-main-link);
 }
 
 .tasks-card-description-popup-wrapper {
@@ -56,7 +77,8 @@
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	padding-bottom: 10px;
+	padding-bottom: var(--ui-space-inline-md);
+	border-bottom: var(--ui-border-width-thin) solid var(--ui-color-divider-default);
 }
 
 .tasks-card-description-title {
@@ -78,10 +100,68 @@
 	margin-right: 5px;
 }
 
-.tasks-card-description-editor-wrapper {
+.tasks-card-description-text-area {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+}
+
+.tasks-card-description-text-area-wrapper {
 	flex-grow: 1;
 	overflow: hidden;
+}
+
+.tasks-card-description-editor-wrapper {
+	flex-grow: 1;
+	overflow-y: scroll;
+	--scroll-width: 5px;
+}
+
+@supports (scrollbar-gutter: stable) {
+	.tasks-card-description-editor-wrapper {
+		scrollbar-gutter: stable;
+	}
+}
+
+@supports not selector(::-webkit-scrollbar) {
+	.tasks-card-description-editor-wrapper {
+		scrollbar-color: rgba(0, 0, 0, 0.21) transparent;
+		scrollbar-width: thin;
+	}
+}
+
+.tasks-card-description-editor-wrapper::-webkit-scrollbar {
+	background-color: rgba(0, 0, 0, 0);
+	width: 5px;
+}
+
+.tasks-card-description-editor-wrapper::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.tasks-card-description-editor-wrapper::-webkit-scrollbar-thumb {
+	background: rgba(0, 0, 0, 0.21);
+	border-radius: 5px;
+	cursor: pointer;
+	transition: .2s;
+}
+
+.tasks-card-description-editor-files {
+	flex-grow: 1;
+	padding: var(--ui-space-inset-xl) 0;
 	border-top: var(--ui-border-width-thin) solid var(--ui-color-divider-default);
+}
+
+.tasks-card-description-editor-files.--read-only {
+	border-top: 0;
+}
+
+.tasks-card-description-editor-files.--with-description {
+	padding-top: 0;
+}
+
+.b24-bottom-sheet .tasks-card-description-editor-files {
+	padding: var(--ui-space-inset-md) 0;
 }
 
 .tasks-card-description-inline {
@@ -108,10 +188,6 @@
 	display: none;
 }
 
-.tasks-card-description-view {
-	overflow: auto;
-}
-
 .tasks-card-description-inline-preview {
 	max-height: 130px;
 	overflow: hidden;
@@ -121,42 +197,13 @@
 	display: -webkit-box;
 }
 
-@supports (scrollbar-gutter: stable) {
-	.tasks-card-description-view {
-		scrollbar-gutter: stable;
-	}
-}
-
-@supports not selector(::-webkit-scrollbar) {
-	.tasks-card-description-view {
-		scrollbar-color: rgba(0, 0, 0, 0.21) transparent;
-		scrollbar-width: thin;
-	}
-}
-
-.tasks-card-description-view::-webkit-scrollbar {
-	background-color: rgba(0, 0, 0, 0);
-	width: 5px;
-}
-
-.tasks-card-description-view::-webkit-scrollbar-track {
-	background: transparent;
-}
-
-.tasks-card-description-view::-webkit-scrollbar-thumb {
-	background: rgba(0, 0, 0, 0.21);
-	border-radius: 5px;
-	cursor: pointer;
-	transition: .2s;
-}
-
 .tasks-card-description-footer {
 	display: flex;
 	flex-direction: row;
 	align-items: center;
 	justify-content: space-between;
 	padding-right: 4px;
-	padding-top: 20px;
+	padding-top: var(--ui-space-inline-xl);
 	border-top: var(--ui-border-width-thin) solid var(--ui-color-divider-default);
 }
 
@@ -175,12 +222,7 @@
 	background: none;
 	border: none;
 	cursor: pointer;
-	opacity: 0.7;
 	border-radius: var(--ui-border-radius-3xs);
-}
-
-.tasks-card-description-action-button:hover {
-	opacity: 1;
 }
 
 .tasks-description-popup-show {
@@ -217,9 +259,11 @@
 
 .tasks-card-description-preview {
 	position: relative;
-	line-break: auto;
-	max-height: 84px;
 	overflow: hidden;
+	max-height: 120px;
+	line-break: auto;
+	background: var(--ui-color-bg-content-primary);
+	transition: .4s;
 }
 
 .tasks-card-description-preview .ui-text-editor-scroller {
@@ -227,41 +271,29 @@
 }
 
 .tasks-card-description-preview-button {
-	--tasks-description-preview-button-gradient-end-color: white;
+	display: flex;
 	position: absolute;
-	bottom: 0;
 	right: 0;
-	cursor: pointer;
+	padding: 0 5px;
+	box-sizing: border-box;
+	text-align: right;
 	font-size: var(--ui-font-size-md);
 	line-height: var(--ui-typography-line-height);
-	padding: 0 20px 1px 10px;
-	background-size: 200% 100%;
-	background: linear-gradient(to right, rgba(255, 255, 255, 0.3), var(--tasks-description-preview-button-gradient-end-color) 20px) left;
-	transition: background-position 0.5s ease;
-}
-
-.tasks-card-description-preview-button-edit {
-	display: flex;
-	flex-direction: row;
-	gap: var(--ui-size-3xs);
-	align-items: center;
-	opacity: 0.7;
-}
-
-.tasks-card-description-preview:not(:hover) .tasks-card-description-preview-button-edit {
-	display: none;
-}
-
-.tasks-card-description-preview-button:hover .tasks-card-description-preview-button-edit {
-	opacity: 1;
-}
-
-.tasks-card-description-preview-button-more .tasks-card-description-preview-button-text {
+	cursor: pointer;
 	color: var(--ui-color-accent-main-link);
 }
 
-.tasks-full-card .tasks-card-description-preview-button {
-	--tasks-description-preview-button-gradient-end-color: var(--tasks-color-bg-drawer);
+.tasks-card-description-preview-button.--hide {
+	display: block;
+	position: relative;
+	width: 100%;
+	bottom: 16px;
+}
+
+.tasks-card-description-preview-button-files {
+	align-items: center;
+	margin-right: 12px;
+	display: flex;
 }
 
 .tasks-card-description-footer-buttons {
@@ -275,32 +307,6 @@
 	display: flex;
 	flex-direction: column;
 	gap: 24px;
-}
-
-.tasks-card-description-warning-popup-content {
-	display: flex;
-	flex-direction: column;
-	gap: var(--ui-size-xs2);
-	text-align: center;
-	line-height: var(--ui-font-line-height-sm);
-	color: var(--ui-color-base-1);
-}
-
-.tasks-card-description-warning-popup-title {
-	font-weight: var(--ui-font-weight-medium);
-	font-size: 19px;
-}
-
-.tasks-card-description-warning-popup-description {
-	font-size: var(--ui-font-size-md);
-	font-weight: var(--ui-font-weight-regular);
-}
-
-.tasks-card-description-warning-popup-buttons {
-	display: flex;
-	flex-direction: row;
-	gap: 12px;
-	justify-content: center;
 }
 
 .tasks-card-description-inline-shadow {
@@ -354,4 +360,51 @@
 
 .tasks-card-description-inline .ui-text-editor-editable :last-child {
 	margin-bottom: 0;
+}
+
+.tasks-full-card-field-container.--description-preview .tasks-card-description-footer {
+	padding-top: 6px;
+	padding-bottom: 8px;
+}
+
+.tasks-card-description-field .tasks-full-card-field-container {
+	padding-top: 0;
+	padding-bottom: 0;
+}
+
+.tasks-card-description-field .tasks-full-card-field-container.--no-padding-bottom {
+	padding-bottom: 0;
+}
+
+.tasks-card-description-field-icon {
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+	cursor: pointer;
+}
+
+.tasks-card-description-field-icon-link {
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-link);
+	cursor: pointer;
+}
+
+.tasks-card-description-shadow {
+	pointer-events: none;
+}
+
+.tasks-card-description-shadow-white-right,
+.tasks-card-description-shadow-white-bottom {
+	position: absolute;
+	bottom: 0;
+	right: 0;
+}
+
+.tasks-card-description-shadow-white-right {
+	height: 110px;
+	width: 25%;
+	background: linear-gradient(90deg, rgba(255, 255, 255, 0.00) 25.84%, rgba(255, 255, 255, 1) 51.41%);
+}
+
+.tasks-card-description-shadow-white-bottom {
+	height: 65px;
+	width: 100%;
+	background: linear-gradient(180deg, rgba(255, 255, 255, 0.00) 0%, rgba(255, 255, 255, 1) 50%);
 }

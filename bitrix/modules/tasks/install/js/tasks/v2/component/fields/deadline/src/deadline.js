@@ -1,10 +1,11 @@
-import { DateTimeFormat, DurationFormat } from 'main.date';
-import { BIcon } from 'ui.icon-set.api.vue';
-import { Outline } from 'ui.icon-set.api.core';
+import { DurationFormat } from 'main.date';
+import { TextMd, Text2Xs } from 'ui.system.typography.vue';
+import { BIcon, Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
 
 import { Model } from 'tasks.v2.const';
-import { timezone } from 'tasks.v2.lib.timezone';
+import { HoverPill } from 'tasks.v2.component.elements.hover-pill';
+import { calendar } from 'tasks.v2.lib.calendar';
 import { heightTransition } from 'tasks.v2.lib.height-transition';
 import { taskService } from 'tasks.v2.provider.service.task-service';
 import type { TaskModel } from 'tasks.v2.model.tasks';
@@ -16,6 +17,9 @@ import './deadline.css';
 // @vue/component
 export const Deadline = {
 	components: {
+		TextMd,
+		Text2Xs,
+		HoverPill,
 		BIcon,
 		DeadlinePopup,
 	},
@@ -29,7 +33,6 @@ export const Deadline = {
 	{
 		return {
 			deadlineMeta,
-			Outline,
 		};
 	},
 	data(): Object
@@ -80,14 +83,7 @@ export const Deadline = {
 				return this.loc('TASKS_V2_DEADLINE_EMPTY');
 			}
 
-			const isThisYear = new Date(this.deadlineTs).getFullYear() === new Date().getFullYear();
-			const format = this.loc('TASKS_V2_DEADLINE_FORMAT', {
-				'#DATE#': DateTimeFormat.getFormat(isThisYear ? 'DAY_MONTH_FORMAT' : 'LONG_DATE_FORMAT'),
-				'#TIME#': DateTimeFormat.getFormat('SHORT_TIME_FORMAT'),
-			});
-			const offset = timezone.getOffset(this.deadlineTs);
-
-			return DateTimeFormat.format(format, (this.deadlineTs + offset) / 1000);
+			return calendar.formatDateTime(this.deadlineTs);
 		},
 		iconName(): string
 		{
@@ -136,10 +132,8 @@ export const Deadline = {
 
 			this.isPopupShown = true;
 		},
-		handleCrossClick(event: MouseEvent): void
+		handleCrossClick(): void
 		{
-			event.stopPropagation();
-
 			this.$refs.popup?.clear();
 
 			void taskService.update(
@@ -157,7 +151,7 @@ export const Deadline = {
 		{
 			this.isPopupShown = false;
 			this.selectingDeadlineTs = null;
-			this.$refs.deadline?.focus();
+			this.$refs.deadline?.$el?.focus();
 		},
 		handleKeydown(event: KeyboardEvent): void
 		{
@@ -170,32 +164,29 @@ export const Deadline = {
 	template: `
 		<div
 			class="tasks-field-deadline"
-			:class="{ '--expired': isExpired }"
+			:class="{ '--expired': isExpired, '--readonly': readonly, '--filled': deadlineTs }"
 			:data-task-id="taskId"
 			:data-task-field-id="deadlineMeta.id"
 			:data-task-field-value="task.deadlineTs"
 			ref="container"
 		>
-			<div
-				class="tasks-field-deadline-main"
-				:class="{ '--readonly': readonly, '--filled': deadlineTs }"
+			<HoverPill
+				:withClear="Boolean(deadlineTs) && !readonly"
+				:readonly="readonly"
 				ref="deadline"
-				tabindex="0"
 				@click="handleClick"
+				@clear="handleCrossClick"
 				@keydown="handleKeydown"
 			>
 				<BIcon class="tasks-field-deadline-icon" :name="iconName"/>
-				<div class="tasks-field-deadline-text">{{ deadlineFormatted }}</div>
-				<div v-if="deadlineTs && !readonly" class="tasks-field-deadline-cross" @click.capture="handleCrossClick">
-					<BIcon :name="Outline.CROSS_L"/>
-				</div>
-			</div>
-			<div v-if="isExpired" class="tasks-field-deadline-expired">{{ expiredFormatted }}</div>
+				<TextMd class="tasks-field-deadline-text" :accent="isExpired">{{ deadlineFormatted }}</TextMd>
+			</HoverPill>
+			<Text2Xs v-if="isExpired" class="tasks-field-deadline-expired">{{ expiredFormatted }}</Text2Xs>
 		</div>
 		<DeadlinePopup
 			v-if="isPopupShown"
 			:taskId="taskId"
-			:bindElement="$refs.deadline"
+			:bindElement="$refs.deadline.$el"
 			ref="popup"
 			@update="handleUpdate"
 			@close="handleClose"

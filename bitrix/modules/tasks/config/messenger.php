@@ -8,6 +8,7 @@ use Bitrix\Tasks\V2\Internal\Service\Task\Action\Delete\Async\Receiver\RecountSo
 use Bitrix\Tasks\V2\Internal\Service\Task\Action\Update\Async\Receiver\UpdateDavSync;
 use Bitrix\Tasks\V2\Internal\Service\Task\Action\Update\Async\Receiver\UpdateSearchIndex;
 use Bitrix\Tasks\V2\Internal\Service\Task\Action\Update\Async\Receiver\UpdateTopic;
+use Bitrix\Tasks\Flow\Kanban\Async\Receiver\AddStages;
 
 return  [
 	'value' => [
@@ -36,6 +37,9 @@ return  [
 			],
 			'recount_task_sort' => [
 				'handler' => RecountSort::class
+			],
+			'add_flow_stages' => [
+				'handler' => AddStages::class,
 			],
 		],
 	],

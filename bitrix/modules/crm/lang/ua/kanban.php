@@ -1,5 +1,4 @@
 <?php
-$MESS["CRM_EDITOR_CANCEL"] = "Скасувати";
 $MESS["CRM_EDITOR_FIELD_ALL_SECTIONS_DISABLED"] = "Виберіть елемент для показу полів.";
 $MESS["CRM_EDITOR_FIELD_CLIENT"] = "Клієнт";
 $MESS["CRM_EDITOR_FIELD_COMPANY"] = "Компанія";
@@ -7,7 +6,6 @@ $MESS["CRM_EDITOR_FIELD_EMPTY_STATE_DESCRIPTION"] = "Перевірте, чи п
 $MESS["CRM_EDITOR_FIELD_EMPTY_STATE_TITLE"] = "Поле не знайдено";
 $MESS["CRM_EDITOR_FIELD_OPPORTUNITY_WITH_CURRENCY"] = "Сума та валюта";
 $MESS["CRM_EDITOR_FIELD_SEARCH_PLACEHOLDER"] = "Пошук за полями";
-$MESS["CRM_EDITOR_SAVE"] = "Зберегти";
 $MESS["CRM_KANBAN_ACTIVITY_CHANGE_DEAL_MSGVER_1"] = "У вас нема запланованих справ. <span class=\"crm-kanban-item-activity-link\">Заплануйте</span> наступний крок по угоді, щоб не забути про клієнта.";
 $MESS["CRM_KANBAN_ACTIVITY_CHANGE_DYNAMIC_MSGVER_1"] = "У вас нема запланованих справ. <span class=\"crm-kanban-item-activity-link\">Заплануйте</span> наступний крок, щоб не забути про важливе.";
 $MESS["CRM_KANBAN_ACTIVITY_CHANGE_LEAD_MSGVER_1"] = "У вас нема запланованих справ. <span class=\"crm-kanban-item-activity-link\">Заплануйте</span> наступний крок щодо ліда, щоб не забути про клієнта.";
@@ -47,13 +45,11 @@ $MESS["CRM_KANBAN_MASS_CONVERT_DISABLE_MSGVER_1"] = "Масове перенес
 $MESS["CRM_KANBAN_MASS_CONVERT_SOON"] = "Масова конвертація лідів поки не доступна для канбана. Але ми працюємо над цим завданням і вже скоро це буде реалізовано.";
 $MESS["CRM_KANBAN_MOVE_ITEM_TO_COLUMN_BLOCKED_2"] = "Переміщення на цю стадію неможливе.";
 $MESS["CRM_KANBAN_NOTIFY_BUTTON"] = "Надіслати сповіщення";
-$MESS["CRM_KANBAN_NOTIFY_DEAL_CHANGECATEGORY"] = "Угоди перенесені у воронку: #categoryName#";
 $MESS["CRM_KANBAN_NOTIFY_DEAL_CHANGECATEGORY_LINK2"] = "Угоди перенесено до вирви: <a href=\"#categoryLink#\">#categoryName#</a>";
 $MESS["CRM_KANBAN_NOTIFY_DEAL_DELETE"] = "Угоди видалені";
 $MESS["CRM_KANBAN_NOTIFY_DEAL_IGNORE"] = "Угоди додані до списку виключень";
 $MESS["CRM_KANBAN_NOTIFY_DEAL_SETASSIGNED"] = "Угоди призначені відповідальному: #assignedName#";
 $MESS["CRM_KANBAN_NOTIFY_DEAL_STATUS"] = "Угоди перенесені на стадію : #statusName#";
-$MESS["CRM_KANBAN_NOTIFY_DYNAMIC_CHANGECATEGORY"] = "Елементи перенесені у воронку: #categoryName#";
 $MESS["CRM_KANBAN_NOTIFY_DYNAMIC_CHANGECATEGORY_LINK2"] = "Елементи перенесено до вирви: <a href=\"#categoryLink#\">#categoryName#</a>";
 $MESS["CRM_KANBAN_NOTIFY_DYNAMIC_DELETE"] = "Елементи видалені";
 $MESS["CRM_KANBAN_NOTIFY_DYNAMIC_SETASSIGNED"] = "Елементи призначені відповідальному: #assignedName#";
@@ -115,8 +111,10 @@ $MESS["CRM_KANBAN_REST_DEMO_CRM_MIGRATION"] = "Міграція з іншої CR
 $MESS["CRM_KANBAN_REST_DEMO_FILE_EXPORT"] = "Експорт своєї CRM у файл";
 $MESS["CRM_KANBAN_REST_DEMO_FILE_IMPORT"] = "Імпорт галузевої CRM із файлу";
 $MESS["CRM_KANBAN_REST_DEMO_MARKET_2"] = "Готова CRM із Бітрікс24.Маркет";
+$MESS["CRM_KANBAN_REST_DEMO_MARKET_2_MSGVER_1"] = "Готова CRM із Бітрікс24 Маркет";
 $MESS["CRM_KANBAN_REST_DEMO_MARKET_SECTOR"] = "Галузеві CRM для вашого бізнесу";
 $MESS["CRM_KANBAN_REST_DEMO_PUBLICATION_2"] = "Опублікувати свою CRM у Бітрікс24.Маркет";
+$MESS["CRM_KANBAN_REST_DEMO_PUBLICATION_2_MSGVER_1"] = "Опублікувати свою CRM у Бітрікс24 Маркет";
 $MESS["CRM_KANBAN_REST_DEMO_SETUP"] = "Налаштувати";
 $MESS["CRM_KANBAN_SETTINGS_FIELDS_EDIT"] = "Налаштувати картку створення";
 $MESS["CRM_KANBAN_SETTINGS_FIELDS_VIEW"] = "Налаштувати картку перегляду";

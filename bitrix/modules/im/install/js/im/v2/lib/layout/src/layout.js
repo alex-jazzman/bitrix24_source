@@ -183,7 +183,7 @@ export class LayoutManager
 		const chatLayouts = [
 			Layout.chat,
 			Layout.channel,
-			Layout.aiAssistant,
+			Layout.copilot,
 			Layout.openlines,
 			Layout.openlinesV2,
 			Layout.collab,
@@ -226,7 +226,7 @@ export class LayoutManager
 			return;
 		}
 
-		if (config.name === Layout.aiAssistant)
+		if (config.name === Layout.copilot)
 		{
 			Analytics.getInstance().copilot.onOpenTab();
 		}

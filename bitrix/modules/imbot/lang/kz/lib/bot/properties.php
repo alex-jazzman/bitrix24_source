@@ -1,5 +1,6 @@
 <?php
 $MESS["IMBOT_PROPERTIES_ADDRESS"] = "Мекенжай";
+$MESS["IMBOT_PROPERTIES_BOT_COLOR"] = "AZURE";
 $MESS["IMBOT_PROPERTIES_BOT_EMAIL"] = "support@bitrix24.kz";
 $MESS["IMBOT_PROPERTIES_BOT_NAME"] = "Контрагенттің деректемелері";
 $MESS["IMBOT_PROPERTIES_BOT_WORK_POSITION"] = "Бұл бот сізге СТН/НМТН бойынша ұйымның немесе ЖК деректемелерін табуға көмектеседі";

@@ -69,6 +69,10 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 			this.state.itemActions = this.getValue(props, 'itemActions', []);
 			this.state.forcedShowSkeleton = this.getValue(props, 'forcedShowSkeleton', true);
 
+			this.actionResponseAdapter = Type.isFunction(props.actionResponseAdapter)
+				? props.actionResponseAdapter
+				: (response) => response
+			;
 			this.loadItemsHandler = this.loadItems.bind(this);
 			this.reloadList = this.reloadList.bind(this);
 			this.updateItemHandler = this.updateItemHandler.bind(this);
@@ -296,12 +300,14 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 							return;
 						}
 
+						const adaptedResponse = this.actionResponseAdapter(response);
+
 						if (Type.isFunction(this.props.actionCallbacks?.loadItems))
 						{
-							this.props.actionCallbacks.loadItems(response?.data, renderType.cache, config);
+							this.props.actionCallbacks.loadItems(adaptedResponse?.data, renderType.cache, config);
 						}
 
-						this.drawListFromCache(response, blockPage, appendItems);
+						this.drawListFromCache(adaptedResponse, blockPage, appendItems);
 						this.hideTitleLoader(true);
 					})
 					.setHandler((response, uid) => {
@@ -309,6 +315,8 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 						{
 							return;
 						}
+
+						const adaptedResponse = this.actionResponseAdapter(response);
 
 						clearTimeout(this.requestRenderTimeout);
 
@@ -318,10 +326,10 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 						this.requestRenderTimeout = setTimeout(() => {
 							if (Type.isFunction(this.props.actionCallbacks?.loadItems))
 							{
-								this.props.actionCallbacks.loadItems(response?.data, renderType.ajax, config);
+								this.props.actionCallbacks.loadItems(adaptedResponse?.data, renderType.ajax, config);
 							}
 
-							this.drawListFromAjax(response, blockPage, appendItems);
+							this.drawListFromAjax(adaptedResponse, blockPage, appendItems);
 							this.hideTitleLoader(false);
 							this.currentRequestUid = null;
 						}, remainingTime);

@@ -56,15 +56,19 @@ $return = [
 			],
 			'.landing-block-node-card-container' => [
 				'name' => Loc::getMessage('LANDING_BLOCK_WIDGET_70_2_NODE_CONTAINER'),
-				'type' => ['background-color'],
+				'type' => ['background-color', 'border-radius'],
 			],
 			'.landing-block-node-card-link' => [
-				'name' => Loc::getMessage('LANDING_BLOCK_WIDGET_70_2_NODE_CARD_TITLE'),
-				'type' => ['background-color', 'background-color-hover', 'color', 'color-hover', 'font-family'],
+				'name' => Loc::getMessage('LANDING_BLOCK_WIDGET_70_2_NODE_CARD'),
+				'type' => ['background-color', 'background-color-hover', 'border-radius'],
 			],
 			'.landing-block-node-card-icon' => [
 				'name' => Loc::getMessage('LANDING_BLOCK_WIDGET_70_2_NODE_ICON'),
 				'type' => ['background-color', 'color'],
+			],
+			'.landing-block-node-card-title' => [
+				'name' => Loc::getMessage('LANDING_BLOCK_WIDGET_70_2_NODE_CARD_TITLE'),
+				'type' => ['typo', 'color-hover'],
 			],
 		],
 	],

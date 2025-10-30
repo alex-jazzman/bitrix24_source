@@ -28,7 +28,6 @@ export const TaskChatContent = {
 					:dialogId="dialogId"
 					:key="dialogId"
 					:withMarket="false"
-					:withAudioInput="false"
 					:withAutoFocus="false"
 					@mounted="onTextareaMount"
 				/>

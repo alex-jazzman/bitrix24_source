@@ -11,8 +11,15 @@ return [
 		'tokens',
 		'ui-system/blocks/avatar',
 		'ui-system/blocks/badges/counter',
+		'statemanager/redux/connect',
+		'loc',
+		'intranet:statemanager/redux/slices/department',
+		'statemanager/redux/slices/users/selector',
+		'type',
 	],
 	'bundle' => [
 		'./src/mode-enum',
+		'./src/card',
+		'./src/redux-provider',
 	],
 ];

@@ -1,4 +1,6 @@
 <?php
+$MESS["IMBOT_GIPHY_BOT_COLOR"] = "AQUA";
+$MESS["IMBOT_GIPHY_BOT_GENDER"] = "M";
 $MESS["IMBOT_GIPHY_BOT_NAME"] = "Giphy";
 $MESS["IMBOT_GIPHY_BOT_WORK_POSITION"] = "Бұл бот сізге сәйкес кескінді табуға көмектеседі.";
 $MESS["IMBOT_GIPHY_COMMAND_GIPHY_PARAMS"] = "мәтін";

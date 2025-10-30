@@ -1,6 +1,4 @@
 <?php
-$MESS["BXD_CALL_BG_MASK_TITLE"] = "Фон мен аватарды таңдау";
-$MESS["BXD_CALL_BG_TITLE"] = "Фонды таңдау";
 $MESS["BXD_CONFIRM_CLOSE"] = "Жабу";
 $MESS["BXD_DEFAULT_TITLE"] = "1С-Битрикс: Десктоп қосымшасы (нұсқа: #VERSION#)";
 $MESS["BXD_LOGOUT"] = "Пайдаланушыны өзгерту";

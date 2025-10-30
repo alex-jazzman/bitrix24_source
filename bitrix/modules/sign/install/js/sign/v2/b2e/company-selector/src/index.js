@@ -23,6 +23,7 @@ export type { ProviderCodeType, ProviderSelectedEvent };
 export const ProviderCode: Readonly<Record<string, ProviderCodeType>> = Object.freeze({
 	goskey: 'goskey',
 	sesCom: 'ses-com',
+	sesRuExpress: 'ses-ru-express',
 	sesRu: 'ses-ru',
 	external: 'external',
 });
@@ -49,6 +50,7 @@ export const HelpdeskCodes: $ReadOnly<{ [key: string]: string }> = Object.freeze
 	GoskeyDetails: '19740688',
 	SesRuDetails: '19740668',
 	SesComDetails: '19740668',
+	SesRuExpressDetails: '26311976',
 	TaxcomDetails: '19740696',
 	GoskeyApiKey: '19740816',
 });

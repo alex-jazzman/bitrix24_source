@@ -4,8 +4,6 @@ export type ItemId = [string, number];
 
 export class EntitySelectorDialog extends Dialog
 {
-	#isSelectProgrammatically: boolean = false;
-
 	constructor(dialogOptions: DialogOptions)
 	{
 		const minHeight = 280;
@@ -16,25 +14,6 @@ export class EntitySelectorDialog extends Dialog
 			},
 			...dialogOptions,
 			height: Math.max(minHeight, dialogOptions.height ?? (window.innerHeight / 2 - minTagSelectorHeight)),
-			events: {
-				...dialogOptions.events,
-				'Item:onSelect': () => {
-					if (this.#isSelectProgrammatically)
-					{
-						return;
-					}
-
-					dialogOptions.events?.['Item:onSelect']?.();
-				},
-				'Item:onDeselect': () => {
-					if (this.#isSelectProgrammatically)
-					{
-						return;
-					}
-
-					dialogOptions.events?.['Item:onDeselect']?.();
-				},
-			},
 		};
 
 		super(options);
@@ -49,8 +28,6 @@ export class EntitySelectorDialog extends Dialog
 
 	selectItemsByIds(items: ItemId[]): void
 	{
-		this.#isSelectProgrammatically = true;
-
 		this.getItems().forEach((item: Item) => {
 			const isSelected = this.#inIds(item, items);
 
@@ -64,8 +41,6 @@ export class EntitySelectorDialog extends Dialog
 				item.deselect(true);
 			}
 		});
-
-		this.#isSelectProgrammatically = false;
 	}
 
 	getItemsByIds(items: ItemId[]): Item[]

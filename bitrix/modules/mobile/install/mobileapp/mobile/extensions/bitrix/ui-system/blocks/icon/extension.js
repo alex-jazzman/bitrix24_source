@@ -26,6 +26,7 @@ jn.define('ui-system/blocks/icon', (require, exports, module) => {
 	 * @property {number} [size.width]
 	 * @property {boolean} [disabled]
 	 * @property {Object} [style]
+	 * @property {Function} [onClick]
 	 *
 	 * @class IconView
 	 */

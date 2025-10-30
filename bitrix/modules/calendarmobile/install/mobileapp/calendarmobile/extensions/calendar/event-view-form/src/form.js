@@ -28,6 +28,7 @@ jn.define('calendar/event-view-form/form', (require, exports, module) => {
 	const { UserWithChatButtonsField } = require('calendar/event-view-form/fields/user-with-chat-buttons');
 	const { AccessibilityField } = require('calendar/event-view-form/fields/accessibility');
 	const { SpecialField } = require('calendar/event-view-form/fields/special');
+	const { EntityRelationField } = require('calendar/event-view-form/fields/entity-relation');
 
 	const { TextAreaField: Description } = require('layout/ui/fields/textarea/theme/air-description');
 	const { UserField } = require('layout/ui/fields/user/theme/air');
@@ -49,6 +50,7 @@ jn.define('calendar/event-view-form/form', (require, exports, module) => {
 			acceptedAttendees,
 			declinedAttendees,
 			questionedAttendees,
+			entityRelationUser,
 		} = props;
 
 		return new Form({
@@ -161,6 +163,31 @@ jn.define('calendar/event-view-form/form', (require, exports, module) => {
 				},
 			].filter(Boolean),
 			secondaryFields: [
+				{
+					factory: EntityRelationField,
+					props: {
+						id: EventFormFields.ENTITY_RELATION,
+						layout,
+						testId: 'calendar-event-view-form-entity-relation',
+						value: event?.entityRelation?.owner?.id ? [event.entityRelation.owner.id] : [],
+						entityRelation: event.entityRelation,
+						readOnly: true,
+						required: false,
+						multiple: false,
+						showTitle: false,
+						title: Loc.getMessage('M_CALENDAR_EVENT_VIEW_FORM_ENTITY_RELATION_MANAGER_TITLE'),
+						useState: false,
+						config: {
+							canOpenUserList: false,
+							items: entityRelationUser,
+							provider: {
+								context: 'CALENDAR_EVENT_VIEW_SELECTOR_entity_relation',
+							},
+							useLettersForEmptyAvatar: true,
+							selectorTitle: Loc.getMessage('M_CALENDAR_EVENT_VIEW_FORM_ENTITY_RELATION_MANAGER_TITLE'),
+						},
+					},
+				},
 				{
 					factory: RecurrenceRuleField,
 					props: {
@@ -430,10 +457,15 @@ jn.define('calendar/event-view-form/form', (require, exports, module) => {
 				accessibility: event.accessibility,
 				importance: event.importance,
 				privateEvent: event.privateEvent,
+				entityRelation: event.entityRelation,
 			},
 			acceptedAttendees: getAttendeesInfo(state, event.attendees, EventMeetingStatus.ATTENDED, event.meetingHost),
 			declinedAttendees: getAttendeesInfo(state, event.attendees, EventMeetingStatus.DECLINED),
 			questionedAttendees: getAttendeesInfo(state, event.attendees, EventMeetingStatus.QUESTIONED),
+			entityRelationUser: event?.entityRelation?.owner?.id
+				? [selectMappedUserById(state, event.entityRelation.owner.id)]
+				: []
+			,
 		};
 	};
 

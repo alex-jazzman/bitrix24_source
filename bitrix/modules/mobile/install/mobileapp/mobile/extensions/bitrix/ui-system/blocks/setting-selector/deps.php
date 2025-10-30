@@ -9,5 +9,10 @@ return [
 		'ui-system/typography/text',
 		'ui-system/blocks/switcher',
 		'utils/validation',
+		'utils/enums/base',
+		'utils/object',
+	],
+	'bundle' => [
+		'./src/mode-enum',
 	],
 ];

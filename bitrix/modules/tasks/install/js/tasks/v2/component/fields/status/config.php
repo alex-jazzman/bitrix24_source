@@ -8,11 +8,11 @@ return [
 	'css' => 'dist/status.bundle.css',
 	'js' => 'dist/status.bundle.js',
 	'rel' => [
+		'main.date',
 		'ui.icon-set.api.vue',
 		'ui.icon-set.api.core',
 		'ui.icon-set.outline',
-		'ui.vue3.components.popup',
-		'main.date',
+		'tasks.v2.component.elements.hint',
 		'tasks.v2.const',
 		'main.core',
 	],

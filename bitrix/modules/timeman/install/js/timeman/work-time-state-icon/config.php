@@ -10,6 +10,7 @@ return [
 	'rel' => [
 		'main.core',
 		'pull.client',
+		'main.core.events',
 	],
 	'skip_core' => false,
 ];

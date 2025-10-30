@@ -16,7 +16,6 @@ $MESS["CRM_QUOTE_DETAILS_COPY_PAGE_URL_MSGVER_1"] = "Копіювати поси
 $MESS["CRM_QUOTE_DETAILS_DELETE_CONFIRMATION_MESSAGE_MSGVER_1"] = "Ви впевнені, що хочете видалити цю пропозицію?";
 $MESS["CRM_QUOTE_DETAILS_DELETE_CONFIRMATION_TITLE_MSGVER_1"] = "Видалення пропозиції";
 $MESS["CRM_QUOTE_DETAILS_DELETE_MSGVER_1"] = "Видалити пропозицію";
-$MESS["CRM_QUOTE_DETAILS_EDITOR_MAIN_SECTION_TITLE_MSGVER_1"] = "Про пропозицію";
 $MESS["CRM_QUOTE_DETAILS_JS_ERROR_NO_EMAIL_SETTINGS"] = "Не знайдені налаштування відправки Email";
 $MESS["CRM_QUOTE_DETAILS_JS_ERROR_NO_TEMPLATES"] = "Шаблони для друку не знайдені";
 $MESS["CRM_QUOTE_DETAILS_JS_PRINT"] = "Печатка";

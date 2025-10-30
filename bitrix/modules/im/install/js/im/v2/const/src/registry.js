@@ -41,6 +41,7 @@ export { CollabEntityType } from './collab';
 export { ErrorCode } from './error';
 export { NavigationMenuItem } from './navigation';
 export { AnchorType } from './anchor';
+export { TranscriptionStatus } from './transcription';
 
 export type {
 	OnLayoutChangeEvent,

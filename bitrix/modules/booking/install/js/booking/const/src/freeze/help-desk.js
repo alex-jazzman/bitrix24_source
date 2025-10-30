@@ -1,5 +1,6 @@
 export const HelpDesk: { [key: string]: HelpDeskCode } = Object.freeze({
 	Intersection: { code: '23712054', anchorCode: 'inte' },
+	ResourceIntegrationSettings: { code: '23661822', anchorCode: 'calen' },
 	ResourceType: { code: '23661822', anchorCode: 'reso' },
 	ResourceSchedule: { code: '23661822', anchorCode: 'show' },
 	ResourceWorkTime: { code: '23661822', anchorCode: 'sche' },

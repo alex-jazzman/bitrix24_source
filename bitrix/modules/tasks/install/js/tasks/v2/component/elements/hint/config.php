@@ -10,7 +10,6 @@ return [
 	'rel' => [
 		'main.core',
 		'ui.vue3.components.popup',
-		'ui.icon-set.outline',
 	],
 	'skip_core' => false,
 ];

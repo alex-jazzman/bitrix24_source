@@ -14,6 +14,8 @@ const channelPreset = new SidebarPreset({
 		SidebarMainPanelBlock.chat,
 		SidebarMainPanelBlock.info,
 		SidebarMainPanelBlock.fileList,
+		SidebarMainPanelBlock.taskList,
+		SidebarMainPanelBlock.meetingList,
 	],
 	getHeaderTitle: () => Loc.getMessage('IM_SIDEBAR_CHANNEL_HEADER_TITLE'),
 });

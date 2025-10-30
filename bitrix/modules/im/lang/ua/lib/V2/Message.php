@@ -7,4 +7,5 @@ $MESS["IM_MESSAGE_FILE"] = "Файл";
 $MESS["IM_MESSAGE_FILE_DOWN"] = "Завантажити файл:";
 $MESS["IM_MESSAGE_IMAGE"] = "Зображення";
 $MESS["IM_MESSAGE_QUOTE"] = "Цитата";
+$MESS["IM_MESSAGE_SYSTEM"] = "Системне повідомлення";
 $MESS["IM_MESSAGE_VIDEO"] = "Відео";

@@ -2,6 +2,7 @@
 $MESS["LANDING_FIELD_TITLE_METAOG_NAME"] = "Әлеуметтік желілердегі парақша түрі";
 $MESS["LANDING_FIELD_TITLE_METAOG_NAME_GROUP"] = "Бай сілтеме түрі";
 $MESS["LANDING_FIELD_TITLE_METAOG_NAME_KNOWLEDGE"] = "Бай сілтеме түрі";
+$MESS["LANDING_FIELD_TITLE_METAOG_NAME_MAINPAGE"] = "Бай сілтеме түрі";
 $MESS["LANDING_TPL_ACTION_ADD_IN_SITEMAP"] = "Сайт картасына парақшаны қосу";
 $MESS["LANDING_TPL_ACTION_INSTALL_B24"] = "Битрикс24-пен интеграция модулін орнату";
 $MESS["LANDING_TPL_ACTION_SETTINGS"] = "Баптау";

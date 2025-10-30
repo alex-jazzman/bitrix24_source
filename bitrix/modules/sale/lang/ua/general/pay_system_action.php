@@ -1,5 +1,4 @@
 <?php
-$MESS["SKGPSA_ALARM_EVENT_LOG"] = "Проблеми в роботі платіжних систем";
 $MESS["SKGPSA_ALARM_EVENT_LOG_MSGVER_1"] = "Проблеми в роботі платіжних систем";
 $MESS["SKGPSA_ALARM_MESSAGE"] = "Виявлені проблеми в роботі платіжних систем. Подробиці в <a href=\"/bitrix/admin/event_log.php?lang=#LANGUAGE_ID#\">журналі подій</a>.";
 $MESS["SKGPSA_ERROR_NO_KEY"] = "Ключ \"#KEY#\" не знайдений в масиві GLOBALS[SALE_CORRESPONDENCE] і значення за замовчуванням не визначено. Ідентифікатор замовлення: \"#ORDER_ID#\", ідентифікатор платіжної системи: \"#PS_ID#\"";

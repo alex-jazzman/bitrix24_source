@@ -73,11 +73,15 @@ class FlowDialog
 			},
 		});
 
-		const isFeatureTriable = Extension.getSettings('tasks.v2.component.fields.flow').get('isFeatureTriable');
-		const footer = new Footer(dialog, {
-			isFeatureTriable,
-		});
-		dialog.setFooter(footer.render());
+		if (Core.getParams().rights?.flow?.create)
+		{
+			const isFeatureTriable = Extension.getSettings('tasks.v2.component.fields.flow').get('isFeatureTriable');
+
+			const footer = new Footer(dialog, {
+				isFeatureTriable,
+			});
+			dialog.setFooter(footer.render());
+		}
 
 		return dialog;
 	}

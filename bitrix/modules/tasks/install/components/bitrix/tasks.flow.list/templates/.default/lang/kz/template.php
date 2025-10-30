@@ -19,6 +19,7 @@ $MESS["TASKS_FLOW_LIST_COPILOT_NOT_ENOUGH_TASKS_POPUP_TITLE"] = "Деректе�
 $MESS["TASKS_FLOW_LIST_COPILOT_UNEXPECTED_ERROR_POPUP_DESCRIPTION"] = "CoPilot ұсыныстарды тағы бір рет дайындауға тырысады, біраз күтіңіз";
 $MESS["TASKS_FLOW_LIST_COPILOT_UNEXPECTED_ERROR_POPUP_TITLE"] = "Бірдеңе дұрыс болмады";
 $MESS["TASKS_FLOW_LIST_CREATE_TASK"] = "Міндетті құру";
+$MESS["TASKS_FLOW_LIST_CREATE_TASK_IMMUTABLE_DISTRIBUTION_TOOLTIP"] = "Бұл ағынға арналған міндеттер роботтар[br/] және бизнес-процестер арқылы жасалады";
 $MESS["TASKS_FLOW_LIST_FLOW_OFF"] = "Ағын өшірілді";
 $MESS["TASKS_FLOW_LIST_FLOW_PINNED"] = "Ағын бекітілген";
 $MESS["TASKS_FLOW_LIST_FLOW_PIN_CANCEL"] = "Болдырмау";

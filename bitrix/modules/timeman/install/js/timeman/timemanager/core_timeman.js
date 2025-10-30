@@ -369,7 +369,7 @@ BX.CTimeMan = function(div, DATA)
 		OPEN: BX.delegate(this.OpenDay, this),
 		CLOSE: BX.proxy(this.CloseDayShowForm, this),
 		REOPEN: BX.delegate(this.ReOpenDay, this),
-		PAUSE: BX.delegate(this.PauseDay, this)
+		PAUSE: BX.delegate(this.PauseDay, this),
 	};
 	this.blockedBtn = null;
 
@@ -448,7 +448,9 @@ BX.CTimeMan.prototype.Update = function(force)
 
 BX.CTimeMan.prototype._Update = function(data, action)
 {
-	if (this._checkQueryError(data))
+	var operationSuccessful = this._checkQueryError(data);
+	
+	if (operationSuccessful)
 	{
 		if (this.WND.CLOCKWND && !this.WND.CLOCKWND.SHOW)
 		{
@@ -469,6 +471,10 @@ BX.CTimeMan.prototype._Update = function(data, action)
 			this.close_day_form_ts_report = data.CLOSE_TIMESTAMP_REPORT;
 			this.CloseDayShowForm();
 		}
+	}
+	else
+	{
+		window.top.BX.UI.Notification.Center.notify({ content: BX.message('JS_CORE_TM_SYSTEM_ERROR') });
 	}
 
 	this.unBlockActionBtn();
@@ -648,6 +654,39 @@ BX.CTimeMan.prototype.Open = function()
 				return;
 			}
 			if (this.WND.Show())
+			{
+				this.Update(true);
+			}
+		}.bind(this), true);
+	}
+}
+
+BX.CTimeMan.prototype.OpenVue = function()
+{
+	if (BX.type.isFunction(BX.UI?.Analytics?.sendData))
+	{
+		BX.UI.Analytics.sendData({
+			tool: 'timeman',
+			category: 'workday',
+			event: 'popup_open',
+		});
+	}
+
+	if (this.WND.isShown())
+	{
+		this.WND.Hide();
+
+		return;
+	}
+	else
+	{
+		// todo http://jabber.bx/view.php?id=165797
+		this.Query('check_module', {}, function (data) {
+			if (data && data.error && data.type === 'fatal')
+			{
+				return;
+			}
+			if (this.WND.ShowVue())
 			{
 				this.Update(true);
 			}
@@ -1170,6 +1209,171 @@ BX.CTimeManWindow.prototype.Create = function(DATA)
 		BX.addCustomEvent(this.PARENT, 'onTimeManDataRecieved', BX.delegate(function(DATA){
 			if(!!DATA.PLANNER)
 				this.update(DATA.PLANNER);
+		}, this.PLANNER));
+	}
+
+	BX.onCustomEvent(this, 'onTimeManWindowBuild', [this, this.LAYOUT, DATA])
+
+	if (!this.stafftrackDisplayed)
+	{
+		BX.Runtime.loadExtension('timeman.stafftrack-check-in').then(({ StafftrackCheckIn }) => {
+			new StafftrackCheckIn({
+				container: this.LAYOUT,
+			});
+		})
+		this.stafftrackDisplayed = true;
+	}
+
+	if (!this.isPwtAlertDisplayed)
+	{
+		this.addPwt();
+		this.isPwtAlertDisplayed = true;
+	}
+
+	this.Align();
+}
+
+
+BX.CTimeManWindow.prototype.CreateVue = function(DATA)
+{
+	if (!this.CREATE)
+		return;
+
+	if (this.NOTICE_TIMER)
+	{
+		BX.timer.stop(this.NOTICE_TIMER);
+		this.NOTICE_TIMER = null;
+	}
+
+	if (this.bindOptions.mode == 'popup')
+	{
+		if (!this.POPUP)
+		{
+			var p = this.bindOptions.popupOptions || {
+				autoHide: true,
+				lightShadow: true,
+				bindOptions : {
+					forceBindPosition : true,
+					forceTop : true
+				},
+				angle : {
+					position: "top",
+					offset : 50
+				}
+			};
+
+			p.lightShadow = true;
+
+			const settings = BX.Extension.getSettings('timeman');
+			const isAirTemplate = settings.get('isAirTemplate');
+			if (isAirTemplate)
+			{
+				p.className = 'template-air-popup';
+			}
+
+			this.POPUP = new BX.PopupWindow('timeman_main', this.bindOptions.node, p);
+		}
+
+		this.POPUP.setContent(this.CreateLayoutTable(DATA));
+	}
+	else
+	{
+		if (this.DIV)
+		{
+			BX.cleanNode(this.DIV);
+			this.DIV = null;
+		}
+
+		if (null == this.DIV)
+		{
+			this.DIV = document.body.appendChild(BX.create('DIV', {
+				props: {id: 'tm-popup'},
+				events: {
+					click: BX.eventCancelBubble
+				},
+				style: {
+					position: 'absolute',
+					display: this.SHOW ? 'block' : 'none'
+				}
+			}));
+
+			this.DIV.appendChild(this.CreateLayoutTable());
+		}
+
+		BX.cleanNode(this.LAYOUT);
+
+		this.LAYOUT.appendChild(this.CreateDashboard(DATA));
+		this.LAYOUT.appendChild(_createHR());
+	}
+
+	this.LAYOUT.appendChild(this.CreateNoticeRow(DATA));
+	this.LAYOUT.appendChild(this.CreateMainRow(DATA));
+
+	if (DATA.INFO)
+	{
+		if(DATA.PLANNER)
+		{
+			this.PLANNER = new BX.CPlanner(DATA.PLANNER);
+			this.PLANNER.WND = this;
+
+			this.LAYOUT.appendChild(this.PLANNER.drawAdditional());
+		}
+
+		this.TABCONTROL = new BX.CTimeManTabControl(
+			this.LAYOUT.appendChild(BX.create('DIV'))
+		);
+
+		if (DATA.PLANNER)
+		{
+			this.TABCONTROL.addTab({
+				id: 'plans',
+				title: BX.message('JS_CORE_TM_PLAN'),
+				content: [
+					this.PLANNER.draw()
+				]
+			});
+		}
+
+		this.TABCONTROL.addTab({
+			id: 'report',
+			title: BX.message('JS_CORE_TM_REPORT'),
+			content: this.CreateReport()
+		});
+
+		if(this.PARENT.REPORT_FULL_MODE)
+		{
+			this.call_report = BX.create("SPAN", {
+				attrs: {id: "work_report_call_link"},
+				props: {className: "wr-call-lable"},
+				html: BX.message("JS_CORE_TMR_REPORT_FULL_" + this.PARENT.REPORT_FULL_MODE),
+				events: {"click": BX.proxy(BXTIMEMAN.CheckNeedToReportImm, BXTIMEMAN)}
+			});
+
+			if (BXTIMEMAN.ShowCallReport == true)
+			{
+				this.call_report.style.display = "inline-block";
+			}
+			else
+			{
+				this.call_report.style.display = "none";
+			}
+
+			this.TABCONTROL.HEAD.appendChild(this.call_report);
+		}
+
+		BX.addCustomEvent(this.PARENT, 'onTimeManDataRecieved', BX.delegate(this.CreateDashboard, this));
+		BX.addCustomEvent('onPlannerQueryResult', BX.delegate(function(data){
+			this.DATA.PLANNER = data;
+			this.CreateDashboard(this.DATA);
+		}, this));
+		BX.addCustomEvent(this.PARENT, 'onTimeManDataRecieved', BX.delegate(this.CreateNoticeRow, this));
+		BX.addCustomEvent(this.PARENT, 'onTimeManDataRecieved', BX.delegate(this.CreateMainRow, this));
+
+		BX.addCustomEvent(this.PARENT, 'onTimeManDataRecieved', BX.delegate(function(DATA){
+			if(!!DATA.PLANNER)
+			{
+				this.update(DATA.PLANNER);
+			}
 		}, this.PLANNER));
 	}
 
@@ -1875,6 +2079,45 @@ BX.CTimeManWindow.prototype.CreateMainRow = function(DATA)
 		this.MAIN_ROW_CELL_BTN.innerHTML = BX.message('JS_CORE_TM_CLOSED');
 	}
 
+
+	if (DATA.STATE != 'PAUSED')
+	{
+		if (this.pauseControlBtn)
+		{
+			this.pauseControlBtn.setText(BX.message('JS_CORE_TM_PAUSE'));
+			this.pauseControlBtn.setIcon(BX.UI.Button.Icon.PAUSE);
+			this.pauseControlBtn.setStyle(BX.UI.Button.AirStyle.OUTLINE);
+		}
+		else
+		{
+			this.MAIN_ROW_CELL_TIMER.firstChild.className = 'ui-btn ui-btn-icon-pause tm-btn-pause';
+		}
+
+		BX.hide(row_pause);
+	}
+	else
+	{
+		if (this.pauseControlBtn)
+		{
+			this.pauseControlBtn.setText(BX.message('JS_CORE_TM_UNPAUSE'));
+			this.pauseControlBtn.setIcon(BX.UI.Button.Icon.START);
+			this.pauseControlBtn.setStyle(BX.UI.Button.AirStyle.FILLED);
+		}
+		else
+		{
+			this.MAIN_ROW_CELL_TIMER.firstChild.className = 'ui-btn ui-btn-icon-start tm-btn-start';
+		}
+
+		BX.show(row_pause);
+
+		this.PAUSE_TIMER = BX.timer(row_pause.lastChild, {
+			from: DATA.INFO.DATE_FINISH * 1000,
+			accuracy: 1,
+			dt: 1000 * DATA.INFO.TIME_LEAKS,
+			display: 'worktime_notice_timeman'
+		});
+	}
+
 	var className = 'tm-popup-timeman';
 
 	if (DATA.STATE == 'PAUSED')
@@ -2467,6 +2710,26 @@ BX.CTimeManWindow.prototype.ShowEdit = function()
 	this.EDITWND.Show();
 }
 
+BX.CTimeManWindow.prototype.ShowEditVue = function(element)
+{
+	if (null == this.EDITWND)
+	{
+		this.EDITWND = new BX.CTimeManEditPopup(this, {
+			node: element,
+			bind: element,
+			entry: this.PARENT.DATA,
+			free_mode: this.PARENT.FREE_MODE,
+		});
+	}
+	else
+	{
+		this.EDITWND.setNode(element);
+		this.EDITWND.setData(this.PARENT.DATA);
+	}
+
+	this.EDITWND.Show();
+}
+
 BX.CTimeManWindow.prototype.PauseButtonClick = function(e)
 {
 	var action = this.PARENT.DATA.INFO.PAUSED ? this.ACTIONS.REOPEN : this.ACTIONS.PAUSE;
@@ -2491,6 +2754,13 @@ BX.CTimeManWindow.prototype.MainButtonClick = function(e)
 {
 	this.PARENT.setTimestamp(this.TIMESTAMP);
 	this.PARENT.setReport(this.ERROR_REPORT);
+
+	// TODO: look at this (submitting editing expired working day in old popup
+	//  throws error in the last line of this method without this line)
+	if (!this.MAIN_BTN_HANDLER)
+	{
+		this.MAIN_BTN_HANDLER = this.ACTIONS.CLOSE;
+	}
 
 	if ((this.MAIN_BTN_HANDLER == this.ACTIONS.OPEN) && this.REPORT)
 	{
@@ -2626,6 +2896,52 @@ BX.CTimeManWindow.prototype.Show = function()
 
 	if (null == this.DIV && null == this.POPUP)
 		this.Create(this.PARENT.DATA);
+
+	this.DATA = this.PARENT.DATA;
+
+	if (this.bindOptions.mode == 'popup')
+	{
+		if (this.POPUP.isShown())
+		{
+			this.Hide();
+			return false;
+		}
+		else
+		{
+			this.POPUP.show();
+		}
+	}
+	else
+	{
+		if (this.DIV.style.display == 'block')
+		{
+			this.Hide()
+			return false;
+		}
+		else
+		{
+			this.SHOW = true;
+			this.Align();
+			this.DIV.style.display = 'block';
+
+			setTimeout(BX.proxy(this.onAfterShow, this), 10);
+
+		}
+	}
+
+	BX.onCustomEvent('onTimeManWindowOpen', [this]);
+	return true;
+}
+
+BX.CTimeManWindow.prototype.ShowVue = function()
+{
+	if (!this.PARENT.DATA || !this.PARENT.DATA.STATE)
+		return false;
+
+	this.CREATE = true;
+
+	if (null == this.DIV && null == this.POPUP)
+		this.CreateVue(this.PARENT.DATA);
 
 	this.DATA = this.PARENT.DATA;
 
@@ -2859,7 +3175,10 @@ BX.CTimeManTimeSelector = function(parent, params)
 		buttons.push(
 			new BX.UI.Button({
 				size: BX.UI.Button.Size.MEDIUM,
-				text: parent.MAIN_BUTTON.textContent || parent.MAIN_BUTTON.innerText,
+				// TODO: fix the case when expired day is edited and then day is stopped with new button - not in editing popup
+				text: parent.MAIN_BUTTON?.textContent
+					|| parent.MAIN_BUTTON?.innerText
+					|| BX.message('TIMEMAN_WORK_STATUS_CONTROL_PANEL_ACTION_FINISH_EXPIRED'),
 				useAirDesign: true,
 				style: (
 					parent.DATA.STATE === 'CLOSED'

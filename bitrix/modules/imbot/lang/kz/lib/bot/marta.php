@@ -1,5 +1,6 @@
 <?php
 $MESS["IMBOT_BOT_CHANGE_LANG"] = "Енді мен орысша сөйлеймін :{}";
+$MESS["IMBOT_BOT_COLOR"] = "PINK";
 $MESS["IMBOT_BOT_DISABLE_WELCOME"] = "Өте өкінішті #USER_NAME#... Мен жай ғана саған көмектескім келді :cry: https://marta.bitrix.info/upload/disable.gif";
 $MESS["IMBOT_BOT_DISABLE_WELCOME_MSGVER_1"] = "Өте өкінішті #USER_NAME#... Мен сізге көмектескім келді:cry: https://marta.#URL#/upload/disable.gif";
 $MESS["IMBOT_BOT_ENABLE_WELCOME"] = "Алақай! Рахмет #USER_NAME#! Мен көңіліңізді қалдырмаймын :{} https://marta.bitrix.info/upload/enable.gif";

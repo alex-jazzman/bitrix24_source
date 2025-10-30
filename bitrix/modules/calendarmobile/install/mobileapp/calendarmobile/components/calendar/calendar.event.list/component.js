@@ -6,8 +6,8 @@
 	const { H2 } = require('ui-system/typography/heading');
 
 	const { CalendarEventListView } = require('calendar/event-list-view');
-	const { SearchLayout } = require('calendar/event-list-view/search/layout');
 	const { EventAjax } = require('calendar/ajax');
+	const { CalendarType, ViewMode } = require('calendar/enums');
 
 	/**
 	 * @class CalendarEventList
@@ -21,6 +21,7 @@
 			this.layout = props.layout;
 			this.ownerId = props.ownerId;
 			this.calType = props.calType;
+			this.viewMode = props.viewMode;
 
 			this.state = {
 				loading: true,
@@ -41,8 +42,6 @@
 				collabInfo: [],
 				collabSectionInfo: [],
 			};
-
-			this.searchRef = null;
 		}
 
 		componentDidMount()
@@ -169,7 +168,6 @@
 				},
 				this.state.loading && this.renderLoader(),
 				!this.state.loading && this.renderContent(),
-				!this.state.loading && this.renderSearch(),
 			);
 		}
 
@@ -183,22 +181,10 @@
 				layout: this.layout,
 				ownerId: this.ownerId,
 				calType: this.calType,
+				viewMode: this.viewMode,
 				...this.state,
 			});
 		}
-
-		renderSearch()
-		{
-			return new SearchLayout({
-				layout: this.layout,
-				presets: this.state.filterPresets,
-				ref: this.#bindSearch,
-			});
-		}
-
-		#bindSearch = (ref) => {
-			this.searchRef = ref;
-		};
 
 		renderLoader()
 		{
@@ -220,12 +206,14 @@
 
 	BX.onViewLoaded(() => {
 		const ownerId = BX.componentParameters.get('OWNER_ID', env.userId);
-		const calType = BX.componentParameters.get('CAL_TYPE', 'user');
+		const calType = BX.componentParameters.get('CAL_TYPE', CalendarType.USER);
+		const viewMode = BX.componentParameters.get('VIEW_MODE', ViewMode.BASE);
 
 		layout.enableNavigationBarBorder(false);
 		layout.showComponent(new CalendarEventList({
 			ownerId,
 			calType,
+			viewMode,
 			layout,
 		}));
 	});

@@ -1,8 +1,6 @@
 <?php
 $MESS["BP_SERVICE_USER_ACTIVE"] = "Белсенді";
-$MESS["BP_SERVICE_USER_DEPARTMENT"] = "Бөлімше (ID тізімі)";
 $MESS["BP_SERVICE_USER_DEPARTMENT_1"] = "Қызметкер бөлімшелерінің ID тізімі (ескірген)";
-$MESS["BP_SERVICE_USER_DEPARTMENT_PRINTABLE"] = "Бөлімше (атаулары)";
 $MESS["BP_SERVICE_USER_DEPARTMENT_PRINTABLE_1"] = "Қызметкердің бөлімше атауларының тізімі (ескірген)";
 $MESS["BP_SERVICE_USER_EMAIL"] = "E-mail";
 $MESS["BP_SERVICE_USER_HEAD"] = "Басшы";

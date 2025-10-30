@@ -4,5 +4,4 @@ $MESS["SIGN_USER_PARTY_DESCRIPTION"] = "Чинне законодавство м
 $MESS["SIGN_USER_PARTY_DESCRIPTION_WITHOUT_LINK"] = "Чинне законодавство може вимагати підписання угоди про електронну взаємодію з вашим співробітником перед тим, як ініціювати процес накладання електронного підпису.";
 $MESS["SIGN_USER_PARTY_HEADER"] = "Виберіть співробітників";
 $MESS["SIGN_USER_PARTY_ITEM_TITLE"] = "Співробітники, які будуть підписувати документ";
-$MESS["SIGN_USER_PARTY_TAB_DOCUMENTS"] = "Документи";
 $MESS["SIGN_USER_PARTY_VIEW_SHOW_MORE"] = "і ще #EMPLOYEE_COUNT#";

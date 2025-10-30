@@ -1,4 +1,5 @@
 <?php
+$MESS["IM_LIB_CONFIRM_ACTIVE_CALL_CONFIRM"] = "Сіз бетті жапқыңыз келетініне сенімдісіз бе? Бұл жағдайда сіз қоңыраудан ажыратыласыз";
 $MESS["IM_LIB_CONFIRM_DELETE_COLLAB_TEXT"] = "Коллаб бүкіл байланыс тарихымен жойылады. Коллабты қалпына келтіру мүмкін болмайды";
 $MESS["IM_LIB_CONFIRM_DELETE_COLLAB_TITLE"] = "Коллабты жою керек пе?";
 $MESS["IM_LIB_CONFIRM_DELETE_DESKTOP"] = "Сіз Битрикс24-ті тізімнен алып тастағыңыз келетініне сенімдісіз бе? #BR#Тізім Битрикс24 арасында жылдам ауысуға және мәлімдемелерді жіберіп алмауға көмектеседі";
@@ -6,9 +7,7 @@ $MESS["IM_LIB_CONFIRM_DELETE_DESKTOP_CONFIRM"] = "Иә, жою";
 $MESS["IM_LIB_CONFIRM_DELETE_MESSAGES_TITLE"] = "Жою";
 $MESS["IM_LIB_CONFIRM_LEAVE_CHANNEL_TEXT"] = "Арнадан бас тартасыз ба?";
 $MESS["IM_LIB_CONFIRM_LEAVE_CHANNEL_YES"] = "Иә, жазылудан бас тарту";
-$MESS["IM_LIB_CONFIRM_LEAVE_CHAT"] = "Чаттан шыққыңыз келетініне сенімдісіз бе?";
 $MESS["IM_LIB_CONFIRM_LEAVE_CHAT_MSGVER_1"] = "Чаттан шығу керек пе?";
-$MESS["IM_LIB_CONFIRM_LEAVE_CHAT_YES"] = "Иә, шығып кету";
 $MESS["IM_LIB_CONFIRM_LEAVE_CHAT_YES_MSGVER_1"] = "Иә, шығу";
 $MESS["IM_LIB_CONFIRM_LEAVE_COLLAB_TEXT"] = "Сіз чатқа, міндеттерге, файлдарға және коллаб кездесулеріне қол жеткізе алмайсыз";
 $MESS["IM_LIB_CONFIRM_LEAVE_COLLAB_TITLE"] = "Коллабтан шығу керек пе?";
@@ -36,10 +35,6 @@ $MESS["IM_LIB_EXIT_DELETE_CHANNEL_TITLE"] = "Арнаны жою керек пе
 $MESS["IM_LIB_EXIT_DELETE_CHAT_TEXT"] = "Чатты қалпына келтіру мүмкін емес. Барлық хабарламалар мен файлдар жойылады";
 $MESS["IM_LIB_EXIT_DELETE_CHAT_TEXT_CONFIRM"] = "Иә, жою";
 $MESS["IM_LIB_EXIT_DELETE_CHAT_TITLE"] = "Чатты жою керек пе?";
-$MESS["IM_LIB_EXIT_UPDATE_CHANNEL_TEXT"] = "Сіз арнаға өзгертулер енгіздіңіз, өзгерістерді сақтау керек пе?";
 $MESS["IM_LIB_EXIT_UPDATE_CHANNEL_TITLE"] = "Өзгерістерді сақтаңыз және жазылушыларды өңдеуге өтіңіз?";
-$MESS["IM_LIB_EXIT_UPDATE_CHAT_TEXT"] = "Сіз чатқа өзгертулер енгіздіңіз, өзгерістерді сақтау керек пе?";
 $MESS["IM_LIB_EXIT_UPDATE_CHAT_TEXT_CONFIRM"] = "Сақтау және өту";
 $MESS["IM_LIB_EXIT_UPDATE_CHAT_TITLE"] = "Өзгерістерді сақтаңыз және қатысушыларды өңдеуге өтіңіз?";
-$MESS['IM_LIB_CONFIRM_ACTIVE_CALL_CONFIRM'] = "Сіз бетті жапқыңыз келетініне сенімдісіз бе? Бұл жағдайда сіз қоңыраудан ажыратыласыз";
-

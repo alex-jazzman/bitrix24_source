@@ -10,6 +10,7 @@ use Bitrix\Catalog;
 use Bitrix\Crm\Order\Order;
 use Bitrix\Crm\Order\Permissions;
 use Bitrix\Crm\Restriction\OrderRestriction;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Context;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
@@ -155,6 +156,14 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 
 		if (!$order || !$this->result->isSuccess())
 		{
+			return;
+		}
+
+		$checkCatalogRightsResult = Container::getInstance()->getProductRowChecker()->checkOrderCatalogRights($order);
+		if (!$checkCatalogRightsResult->isSuccess())
+		{
+			$this->addError($checkCatalogRightsResult->getError()->getMessage());
+
 			return;
 		}
 
@@ -1662,17 +1671,23 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 		}
 
 		$basketPropertyIds = Catalog\Product\PropertyCatalogFeature::getBasketPropertyCodes($iblockId);
-		$basketPropertyCodes = Catalog\Product\PropertyCatalogFeature::getBasketPropertyCodes($iblockId, ['CODE' => 'Y']);
-		$result = array_combine($basketPropertyIds, $basketPropertyCodes);
+		if (!empty($basketPropertyIds) && is_array($basketPropertyIds))
+		{
+			$basketPropertyCodes = Catalog\Product\PropertyCatalogFeature::getBasketPropertyCodes($iblockId, ['CODE' => 'Y']);
+			$result = array_combine($basketPropertyIds, $basketPropertyCodes);
+		}
 		if ($variation->getType() !== Catalog\ProductTable::TYPE_OFFER)
 		{
 			return $result;
 		}
 
 		$offerTreeIds = Catalog\Product\PropertyCatalogFeature::getOfferTreePropertyCodes($iblockId);
-		$offerTreeCodes = Catalog\Product\PropertyCatalogFeature::getOfferTreePropertyCodes($iblockId, ['CODE' => 'Y']);
-		$offerTreeProperties = array_combine($offerTreeIds, $offerTreeCodes);
-		$result += $offerTreeProperties;
+		if (!empty($offerTreeIds) && is_array($offerTreeIds))
+		{
+			$offerTreeCodes = Catalog\Product\PropertyCatalogFeature::getOfferTreePropertyCodes($iblockId, ['CODE' => 'Y']);
+			$offerTreeProperties = array_combine($offerTreeIds, $offerTreeCodes);
+			$result += $offerTreeProperties;
+		}
 
 		return $result;
 	}

@@ -156,7 +156,9 @@ export class CompactEventForm extends EventEmitter
 				offsetLeft: 0,
 				closeIcon: true,
 				titleBar: true,
-				draggable: true,
+				draggable: {
+					restrict: true,
+				},
 				resizable: false,
 				lightShadow: true,
 				className: 'calendar-simple-view-popup calendar-simple-view-popup-show',
@@ -261,7 +263,6 @@ export class CompactEventForm extends EventEmitter
 
 			${this.getDateTimeControl()}
 			${this.getUserPlannerSelector()}
-			${this.getRelationControl()}
 
 			<div class="calendar-field-container calendar-field-container-info">
 				${this.getTypeInfoControl()}
@@ -273,6 +274,8 @@ export class CompactEventForm extends EventEmitter
 				</div>`}
 				${this.getRRuleInfoControl()}
 			</div>
+
+			${this.getRelationControl()}
 		</div>`;
 
 		return this.DOM.wrap;
@@ -1417,9 +1420,12 @@ export class CompactEventForm extends EventEmitter
 	getRelationControl(): HTMLElement
 	{
 		this.DOM.relationWrap = null;
-		if (this.entry?.data?.EVENT_TYPE === '#shared_crm#')
+		if (
+			this.canDo('viewFull')
+			&& ['#shared_crm#', '#booking#'].includes(this.entry?.data?.EVENT_TYPE)
+		)
 		{
-			this.DOM.relationWrap = Tag.render`<div></div>`;
+			this.DOM.relationWrap = Tag.render`<div class="calendar-field-container-relations"></div>`;
 			this.relationControl = new RelationInterface({
 				parentNode: this.DOM.relationWrap,
 				eventId: this.entry.parentId,
@@ -2189,6 +2195,7 @@ export class CompactEventForm extends EventEmitter
 			&& e.keyCode === Util.getKeyCode('enter')
 			&& (e.ctrlKey || e.metaKey) && !e.altKey
 			&& !this.isAdditionalPopupShown()
+			&& !this.isCoveredByTopSlider()
 		)
 		{
 			if (this.busyUsersDialog && this.busyUsersDialog.isShown())
@@ -2212,6 +2219,7 @@ export class CompactEventForm extends EventEmitter
 		else if (
 			e.keyCode === Util.getKeyCode('delete')
 			&& !this.isNewEntry()
+			&& !this.isCoveredByTopSlider()
 			&& this.canDo('delete')
 		)
 		{
@@ -2351,7 +2359,14 @@ export class CompactEventForm extends EventEmitter
 		this.outsideMouseDown = !target.closest('div.popup-window');
 	}
 
-	checkTopSlider()
+	isCoveredByTopSlider(): boolean
+	{
+		const topSlider = BX.SidePanel.Instance.getTopSlider();
+
+		return topSlider && !topSlider.url.includes('/calendar/');
+	}
+
+	checkTopSlider(): boolean
 	{
 		return !Util.getBX().SidePanel.Instance.getTopSlider();
 	}
@@ -2360,7 +2375,19 @@ export class CompactEventForm extends EventEmitter
 	{
 		const target = event.target || event.srcElement;
 		this.outsideMouseUp = !target.closest('div.popup-window');
-		if (this.couldBeClosedByEsc()
+
+		if (
+			Dom.hasClass(target, 'popup-window-close-icon')
+			&& Dom.hasClass(target.parentElement, 'calendar-simple-view-popup')
+		)
+		{
+			this.close(true, true);
+
+			return;
+		}
+
+		if (
+			this.couldBeClosedByEsc()
 			&& this.outsideMouseDown
 			&& this.outsideMouseUp
 			&& (this.getMode() === CompactEventForm.VIEW_MODE
@@ -2374,7 +2401,7 @@ export class CompactEventForm extends EventEmitter
 		}
 	}
 
-	couldBeClosedByEsc()
+	couldBeClosedByEsc(): boolean
 	{
 		return !PopupManager._popups.find((popup) => {
 			return popup && popup.getId() !== this.popupId && popup.isShown();

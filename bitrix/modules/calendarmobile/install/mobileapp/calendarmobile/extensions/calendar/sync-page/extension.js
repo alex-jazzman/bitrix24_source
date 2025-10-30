@@ -5,6 +5,7 @@ jn.define('calendar/sync-page', (require, exports, module) => {
 	const { SyncPageTitle } = require('calendar/sync-page/title');
 	const { EventEmitter } = require('event-emitter');
 	const { Color } = require('tokens');
+	const { Random } = require('utils/random');
 
 	const { SyncAjax } = require('calendar/ajax');
 	const { SyncProviderFactory } = require('calendar/sync-page/provider');
@@ -20,13 +21,10 @@ jn.define('calendar/sync-page', (require, exports, module) => {
 			super(props);
 			this.pullUnsubscribe = null;
 
-			// eslint-disable-next-line no-undef
 			this.uid = Random.getString();
 			this.customEventEmitter = EventEmitter.createWithUid(this.uid);
 
 			this.initState();
-			this.handleConnectionCreated = this.handleConnectionCreated.bind(this);
-			this.handleConnectionDisabled = this.handleConnectionDisabled.bind(this);
 		}
 
 		initState()
@@ -62,12 +60,14 @@ jn.define('calendar/sync-page', (require, exports, module) => {
 		{
 			this.customEventEmitter.on('Calendar.Sync::onConnectionCreated', this.handleConnectionCreated);
 			this.customEventEmitter.on('Calendar.Sync::onConnectionDisabled', this.handleConnectionDisabled);
+			this.customEventEmitter.on('Calendar.Sync::onReconnection', this.handleConnectionReconnected);
 		}
 
 		unbindEvents()
 		{
 			this.customEventEmitter.off('Calendar.Sync::onConnectionCreated', this.handleConnectionCreated);
 			this.customEventEmitter.off('Calendar.Sync::onConnectionDisabled', this.handleConnectionDisabled);
+			this.customEventEmitter.off('Calendar.Sync::onReconnection', this.handleConnectionReconnected);
 		}
 
 		pullSubscribe()
@@ -147,6 +147,7 @@ jn.define('calendar/sync-page', (require, exports, module) => {
 						this.state.syncInfo[connectionName] = {
 							...this.state.syncInfo[connectionName],
 							...params.syncInfo[connectionName],
+							reconnecting: false,
 						};
 					}
 				});
@@ -166,6 +167,7 @@ jn.define('calendar/sync-page', (require, exports, module) => {
 							type: connectionName,
 							active: false,
 							connected: false,
+							reconnecting: this.state.syncInfo[connectionName].reconnecting || false,
 						};
 					}
 				});
@@ -174,9 +176,8 @@ jn.define('calendar/sync-page', (require, exports, module) => {
 			this.setState({ syncInfo: this.state.syncInfo });
 		}
 
-		handleConnectionCreated(data)
-		{
-			const type = data.type;
+		handleConnectionCreated = (data) => {
+			const { type } = data;
 
 			void SyncAjax.clearSuccessfulConnectionNotifier(type);
 
@@ -188,15 +189,15 @@ jn.define('calendar/sync-page', (require, exports, module) => {
 					connected: true,
 					syncOffset: 1,
 					status: true,
+					reconnecting: false,
 				};
 
 				this.setState({ syncInfo: this.state.syncInfo });
 			}
-		}
+		};
 
-		handleConnectionDisabled(data)
-		{
-			const type = data.type;
+		handleConnectionDisabled = (data) => {
+			const { type } = data;
 
 			if (this.state.syncInfo[type])
 			{
@@ -204,11 +205,26 @@ jn.define('calendar/sync-page', (require, exports, module) => {
 					type,
 					active: false,
 					connected: false,
+					reconnecting: false,
 				};
 
 				this.setState({ syncInfo: this.state.syncInfo });
 			}
-		}
+		};
+
+		handleConnectionReconnected = (data) => {
+			const { type } = data;
+
+			if (this.state.syncInfo[type])
+			{
+				this.state.syncInfo[type] = {
+					...this.state.syncInfo[type],
+					reconnecting: true,
+				};
+
+				this.setState({ syncInfo: this.state.syncInfo });
+			}
+		};
 	}
 
 	module.exports = { SyncPage };

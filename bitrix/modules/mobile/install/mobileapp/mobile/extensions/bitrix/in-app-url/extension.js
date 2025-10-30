@@ -21,6 +21,12 @@ jn.define('in-app-url', (require, exports, module) => {
 		'bizproc/in-app-url/routes',
 		'disk/in-app-url/routes',
 		'in-app-url/routes',
+		'in-app-url/routes/development-routes',
+		'in-app-url/routes/timeman',
+		'in-app-url/routes/stafftrack',
+		'in-app-url/routes/settings',
+		'in-app-url/routes/bitrix24',
+		'intranet/in-app-url/routes',
 		'call/in-app-url/routes',
 	];
 

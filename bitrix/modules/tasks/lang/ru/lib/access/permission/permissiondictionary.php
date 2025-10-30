@@ -34,6 +34,8 @@ $MESS["TEMPLATE_DEPARTMENT_EDIT"] 				= "Редактирование шабло
 $MESS["TEMPLATE_NON_DEPARTMENT_EDIT"] 			= "Редактирование шаблонов других отделов";
 $MESS["TEMPLATE_REMOVE"] 						= "Удаление шаблонов, к которым есть доступ";
 
+$MESS["FLOW_CREATE"] 							= "Создание потоков";
+
 $MESS["TASK_ROBOT_EDIT"] 						= "Возможность создавать роботов своим задачам";
 
 $MESS["TASK_ACCESS_MANAGE"] 					= "Управление правами доступа";

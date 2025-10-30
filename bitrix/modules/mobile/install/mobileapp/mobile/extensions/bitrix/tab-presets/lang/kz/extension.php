@@ -9,6 +9,7 @@ $MESS["PRESET_MANUAL_SETTINGS_BUTTON_SAVE"] = "Дайын";
 $MESS["PRESET_MANUAL_SETTINGS_BUTTON_SHOW"] = "Мәзірде көрсету";
 $MESS["PRESET_MANUAL_SETTINGS_SECTION_MENU_TITLE"] = "Төменгі мәзірдегі тармақтар";
 $MESS["PRESET_MANUAL_SETTINGS_SECTION_MORE_TITLE"] = "Тағы бөліміндегі тармақтар";
+$MESS["PRESET_MANUAL_SETTINGS_SECTION_MORE_TITLE_MSGVER_1"] = "Мәзір тармақтары";
 $MESS["PRESET_MANUAL_SETTINGS_TITLE"] = "Өз мәзіріңіз";
 $MESS["TAB_PRESETS_NEW_APPLY_ERROR"] = "Өзгерістерді сақтау мүмкін болмады, қайталап көріңіз";
 $MESS["TAB_PRESETS_NEW_BANNER_DESCRIPTION_MSGVER_1"] = "Сізге қажет құралдар ғана, қалғандары қосымша мәзірде болады";

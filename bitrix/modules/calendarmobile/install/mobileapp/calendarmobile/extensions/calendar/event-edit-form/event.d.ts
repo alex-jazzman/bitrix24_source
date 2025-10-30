@@ -32,4 +32,17 @@ type Event = {
 	files: object[],
 	collabId: number,
 	chatId: number,
+	entityRelation: EntityRelation | null,
+};
+
+type EntityRelation = {
+	eventId: number,
+	entity: {
+		id: number,
+		type: string,
+	},
+	owner: {
+		id: number,
+		name: string,
+	},
 };

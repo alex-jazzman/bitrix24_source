@@ -19,6 +19,7 @@ jn.define('layout/ui/qr-invite', (require, exports, module) => {
 	const { Alert, ButtonType } = require('alert');
 	const { QrEntity } = require('layout/ui/qr-invite/src/entity');
 	const { makeLibraryImagePath } = require('asset-manager');
+	const { createTestIdGenerator } = require('utils/test');
 
 	const CONTAINER_SIZE = 245;
 	const QR_SIZE = 229;
@@ -43,6 +44,9 @@ jn.define('layout/ui/qr-invite', (require, exports, module) => {
 				DEPARTMENT: departmentImage,
 				COMPANY: departmentImage,
 			};
+			this.getTestId = createTestIdGenerator({
+				prefix: 'qr-invite',
+			});
 		}
 
 		async componentDidMount()
@@ -63,11 +67,6 @@ jn.define('layout/ui/qr-invite', (require, exports, module) => {
 			const { entityType } = this.props;
 
 			return entityType?.getValue();
-		}
-
-		get testId()
-		{
-			return 'qr-invite';
 		}
 
 		get avatarUri()
@@ -217,10 +216,16 @@ jn.define('layout/ui/qr-invite', (require, exports, module) => {
 				ShimmerView(
 					{
 						animating: true,
-						ref: (ref) => this.shimmerRef = ref,
+						ref: (ref) => {
+							if (ref)
+							{
+								this.shimmerRef = ref;
+							}
+						},
 					},
 					View(
 						{
+							testId: this.getTestId('code-shimmer'),
 							style: {
 								backgroundColor: Color.base6.toHex(),
 								width: CONTAINER_SIZE,
@@ -247,6 +252,7 @@ jn.define('layout/ui/qr-invite', (require, exports, module) => {
 					this.renderEntityInfo(),
 					View(
 						{
+							testId: this.getTestId('container'),
 							style: {
 								marginVertical: 30,
 							},
@@ -277,7 +283,7 @@ jn.define('layout/ui/qr-invite', (require, exports, module) => {
 		renderAvatar(entityParams)
 		{
 			return Avatar({
-				testId: `${this.testId}-avatar`,
+				testId: this.getTestId('avatar'),
 				size: 72,
 				accent: entityParams?.accent,
 				entityType: entityParams?.entityType,
@@ -290,6 +296,7 @@ jn.define('layout/ui/qr-invite', (require, exports, module) => {
 		renderEntityType(entityParams)
 		{
 			return Text6({
+				testId: this.getTestId(`type-${entityParams?.entityName}`),
 				text: entityParams?.entityName,
 				textAlign: 'center',
 				color: entityParams?.textColor,
@@ -304,6 +311,7 @@ jn.define('layout/ui/qr-invite', (require, exports, module) => {
 			const { entityName } = this.props;
 
 			return entityName && H3({
+				testId: this.getTestId(`title-${entityName}`),
 				text: entityName,
 				numberOfLines: 2,
 				ellipsize: 'end',
@@ -351,6 +359,7 @@ jn.define('layout/ui/qr-invite', (require, exports, module) => {
 					},
 				},
 				View({
+					testId: this.getTestId('code'),
 					style: {
 						alignSelf: 'center',
 						width: QR_SIZE,
@@ -374,6 +383,7 @@ jn.define('layout/ui/qr-invite', (require, exports, module) => {
 			}
 
 			return Text5({
+				testId: this.getTestId(`bottom-text-${bottomText}`),
 				text: bottomText,
 				color: Color.base3,
 				style: {
@@ -392,7 +402,7 @@ jn.define('layout/ui/qr-invite', (require, exports, module) => {
 		renderButton()
 		{
 			return Button({
-				testId: `${this.testId}-button`,
+				testId: this.getTestId('button'),
 				text: Loc.getMessage('M_UI_QR_INVITE_BUTTON_TEXT'),
 				design: ButtonDesign.OUTLINE,
 				size: ButtonSize.L,

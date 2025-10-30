@@ -1909,6 +1909,7 @@ return [
 				['name' => '25', 'value' => 'g-rounded-25'],
 				['name' => '30', 'value' => 'g-rounded-30'],
 				['name' => '50', 'value' => 'g-rounded-50'],
+				['name' => '100', 'value' => 'g-rounded-100'],
 			],
 		],
 		'border-width' => [
@@ -3073,6 +3074,7 @@ return [
 				],
 				['name' => Loc::getMessage('LANDING_BLOCK_STYLE-TEXT_CONTAINER_FULL'), 'value' => 'g-max-width-100x'],
 				['name' => Loc::getMessage('LANDING_BLOCK_STYLE-TEXT_CONTAINER_MINI'), 'value' => 'g-max-width-800'],
+				['name' => Loc::getMessage('LANDING_BLOCK_STYLE-TEXT_CONTAINER_MAXI'), 'value' => 'g-max-width-1462'],
 			],
 		],
 		'button-type' => [
@@ -3214,7 +3216,6 @@ return [
 				['name' => '200%', 'value' => 'scale-200'],
 			],
 		],
-		//todo: change phrases
 		'widget-type' => [
 			'name' => Loc::getMessage('LANDING_BLOCK_STYLE_WIDGET_TYPE'),
 			'type' => 'list',
@@ -3404,6 +3405,6 @@ return [
 		'background-gradient' => ['background-color'],
 		'background-hover' => ['background-color-hover'],
 		// dont forget add new usage 'background' style in \Bitrix\Landing\Node\StyleImg::STYLES_WITH_IMAGE
-		'widget' => ['background', 'widget-type', 'margin-top', 'margin-bottom', 'padding-top', 'padding-bottom'],
+		'widget' => ['background', 'widget-type', 'margin-top', 'margin-bottom', 'padding-top', 'padding-bottom', 'padding-left', 'padding-right'],
 	],
 ];

@@ -81,7 +81,7 @@ function getMarketMenuItem(): CopilotMenuItem
 	return {
 		code: 'market',
 		href: '/market/collection/ai_provider_partner_crm/',
-		text: Loc.getMessage('AI_COPILOT_SEARCH_IN_MARKET'),
+		text: Loc.getMessage('AI_COPILOT_SEARCH_IN_MARKET_MSGVER_1'),
 		icon: MainIconSet.MARKET_1,
 		arrow: false,
 	};

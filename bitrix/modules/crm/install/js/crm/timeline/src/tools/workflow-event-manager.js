@@ -34,7 +34,7 @@ export default class WorkflowEventManager
 
 	runFirstAutomationTour(): void
 	{
-		if (!document.querySelector('.bp_starter'))
+		if (!document.querySelector('#crm_entity_bp_starter'))
 		{
 			return;
 		}

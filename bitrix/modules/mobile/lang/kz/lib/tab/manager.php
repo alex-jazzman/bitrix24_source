@@ -22,7 +22,6 @@ $MESS["TAB_PRESET_NAME_MANUAL_V2"] = "Сіздің мәзіріңіз";
 $MESS["TAB_PRESET_NAME_OL"] = "Ашық желі операторы";
 $MESS["TAB_PRESET_NAME_SIGN"] = "КЭДО";
 $MESS["TAB_PRESET_NAME_STREAM_V2"] = "Корпоративтік лента";
-$MESS["TAB_PRESET_NAME_TASK"] = "Міндеттер";
 $MESS["TAB_PRESET_NAME_TASK_MSGVER_1"] = "Міндеттер мен жобалар";
 $MESS["TAB_PRESET_NAME_TERMINAL"] = "Төлем терминалы";
 $MESS["TASK_CHAT_DESCRIPTION"] = "Әріптестеріңізбен чаттарда міндеттер мен жобаларды талқылайсыз";

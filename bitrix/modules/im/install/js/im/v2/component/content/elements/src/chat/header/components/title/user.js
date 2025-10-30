@@ -64,7 +64,7 @@ export const UserTitle = {
 		<div class="bx-im-chat-header__info">
 			<div class="bx-im-chat-header__title --user">
 				<a :href="userLink" target="_blank" class="bx-im-chat-header__title_container">
-					<ChatTitle :dialogId="dialogId" :withAutoDelete="true" />
+					<ChatTitle :dialogId="dialogId" :withAutoDelete="true" :withMute="true" />
 				</a>
 				<span class="bx-im-chat-header__user-status">{{ userLastOnlineText }}</span>
 			</div>

@@ -1812,10 +1812,20 @@ this.BX.Booking = this.BX.Booking || {};
 	`
 	};
 
+	// @vue/component
 	const FullForm = {
 	  name: 'ActionsPopupFullForm',
+	  components: {
+	    UiIcon: ui_iconSet_api_vue.BIcon
+	  },
 	  directives: {
 	    hint: ui_vue3_directives_hint.hint
+	  },
+	  props: {
+	    bookingId: {
+	      type: Number,
+	      required: true
+	    }
 	  },
 	  computed: {
 	    arrowIcon() {
@@ -1836,9 +1846,6 @@ this.BX.Booking = this.BX.Booking || {};
 	      };
 	    }
 	  },
-	  components: {
-	    Icon: ui_iconSet_api_vue.BIcon
-	  },
 	  template: `
 		<div
 			v-hint="soonHint"
@@ -1850,7 +1857,7 @@ this.BX.Booking = this.BX.Booking || {};
 				{{ loc('BB_ACTIONS_POPUP_FULL_FORM_LABEL') }}
 			</div>
 			<div class="booking-actions-popup__item-full-form-icon">
-				<Icon :name="arrowIcon" :size="arrowIconSize" :color="arrowIconColor"/>
+				<UiIcon :name="arrowIcon" :size="arrowIconSize" :color="arrowIconColor"/>
 			</div>
 		</div>
 	`
@@ -2136,14 +2143,14 @@ this.BX.Booking = this.BX.Booking || {};
 				</div>
 				<div class="booking-actions-popup-item-info">
 					<div class="booking-actions-popup-item-title">
-						<span :title="status?.title">{{ status?.title || 'СМС клиенту' }}</span>
+						<span :title="status?.title">{{ status?.title || '' }}</span>
 						<Icon :name="iconSet.HELP" @click="showHelpDesk"/>
 					</div>
 					<div
 						class="booking-actions-popup-item-subtitle"
 						:class="'--' + semantic || 'none'"
 					>
-						{{ status?.description || 'Не отправлено' }}
+						{{ status?.description || '' }}
 					</div>
 				</div>
 				<div class="booking-actions-popup-item-buttons">

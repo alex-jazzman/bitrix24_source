@@ -908,14 +908,14 @@ class CBPMailActivity extends CBPActivity
 			'text',
 			function($objectName, $fieldName, $property, $result) use ($mailMessageType)
 			{
-				if (is_array($result))
-				{
-					$result = implode(', ', CBPHelper::makeArrayFlat($result));
-				}
+				$result = CBPHelper::stringify($result);
 
-				if ($mailMessageType === 'html' && isset($property['ValueContentType']))
+				if ($mailMessageType === 'html')
 				{
-					if ($property['ValueContentType'] === 'bb')
+					$contentType =
+						$property['ValueContentType'] ?? (($property['Type'] ?? '') === 'S:HTML' ? 'html' : 'text')
+					;
+					if ($contentType === 'bb')
 					{
 						$sanitizer = new \CBXSanitizer();
 						$sanitizer->SetLevel(\CBXSanitizer::SECURE_LEVEL_LOW);
@@ -925,7 +925,7 @@ class CBPMailActivity extends CBPActivity
 							\CBPHelper::convertBBtoText($result)
 						);
 					}
-					elseif ($property['ValueContentType'] !== 'html' && isset($property['Type']) && $property['Type'] !== 'S:HTML')
+					elseif ($contentType !== 'html')
 					{
 						$result = htmlspecialcharsbx($result);
 					}

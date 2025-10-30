@@ -24,6 +24,7 @@ $MESS["TAB_NAME_STREAM"] = "Жанды лента";
 $MESS["TAB_NAME_TASKS_LIST"] = "Міндеттер мен Жобалар";
 $MESS["TAB_NAME_TASKS_LIST_SHORT"] = "Міндеттер";
 $MESS["TAB_NAME_TERMINAL"] = "Терминал";
+$MESS["TAB_NAME_TERMINAL_MENU_TITLE"] = "Төлем терминалы";
 $MESS["TAB_STREAM_NAVIGATION_HEADER"] = "Жаңалықтар";
 $MESS["TAB_STREAM_NAVIGATION_HEADER2"] = "Бірлескен жұмыс";
 $MESS["TAB_STREAM_NAVIGATION_TAB_BP"] = "Процестер";

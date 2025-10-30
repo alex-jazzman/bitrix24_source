@@ -1,5 +1,4 @@
 <?php
-$MESS["CRM_CONTACT_DETAIL_ATTR_GR_TYPE_GENERAL"] = "Для всіх стадій та воронок";
 $MESS["CRM_CONTACT_DETAIL_ATTR_GR_TYPE_JUNK"] = "Програні";
 $MESS["CRM_CONTACT_DETAIL_ATTR_GR_TYPE_PIPELINE"] = "В роботі + успішні";
 $MESS["CRM_CONTACT_DETAIL_ATTR_REQUIRED_FULL"] = "Обов'язкове зі стадії";

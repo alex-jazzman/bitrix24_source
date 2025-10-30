@@ -23,9 +23,7 @@ export const FieldList = {
 		<div class="b24-field-list">
 			<template v-for="(field, index) in fields" :key="index">
 				<div class="b24-field-list-title" :class="{ '--with-separator': field.withSeparator }">
-					<div class="b24-field-list-title-text">
-						{{ field.title }}
-					</div>
+					<div class="b24-field-list-title-text">{{ field.title }}</div>
 				</div>
 				<div class="b24-field-list-value" :class="{ '--with-separator': field.withSeparator }">
 					<component :is="field.component" v-bind="field.props"></component>

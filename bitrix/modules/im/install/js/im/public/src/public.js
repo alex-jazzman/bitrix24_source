@@ -29,6 +29,7 @@ type Opener = {
 	startCallList: (callListId: number, params: JsonObject) => Promise,
 	enableDesktopRedirect: () => void,
 	disableDesktopRedirect: () => void,
+	isChatOpened: (dialogId: string) => boolean,
 };
 
 class Messenger
@@ -420,6 +421,11 @@ class Messenger
 		}
 
 		return MessengerSlider.getInstance().isOpened();
+	}
+
+	isChatOpened(dialogId: string): boolean
+	{
+		return getOpener()?.isChatOpened(dialogId);
 	}
 
 	async initApplication(

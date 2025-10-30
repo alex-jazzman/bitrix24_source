@@ -31,8 +31,12 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	        toggle: true
 	      },
 	      panelIsShown: false,
+	      myFilterActive: false,
 	      collapsed: false,
-	      previewCollapsed: true,
+	      expanded: false,
+	      localCompleteState: null,
+	      localCollapsedState: null,
+	      areCompletedCollapsed: false,
 	      hidden: false,
 	      groupMode: {
 	        active: false,

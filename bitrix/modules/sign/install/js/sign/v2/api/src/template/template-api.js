@@ -3,7 +3,6 @@ import { LoadedDocumentData } from 'sign.v2.api';
 import type { CardItem } from 'sign.v2.b2e.user-party';
 import { post } from '../request';
 import type { Template, TemplateField, FieldValue, TemplateSelectedEntity, TemplateCreatedDocument } from './type';
-import type { ControllerError } from '../type';
 
 export type { Template };
 
@@ -19,12 +18,13 @@ export class TemplateApi
 		return post('sign.api_v1.b2e.document.template.complete', { uid: templateUid, folderId });
 	}
 
-	send(templateUid: string, fields: FieldValue[]): Promise<{
+	send(templateUid: string, fields: FieldValue[], isOnboarding: boolean = false): Promise<{
+		assigneeMember: { id: number, uid: string },
 		employeeMember: { id: number, uid: string },
 		document: { id: number, providerCode: ProviderCodeType },
 	}>
 	{
-		return post('sign.api_v1.b2e.document.template.send', { uid: templateUid, fields });
+		return post('sign.api_v1.b2e.document.template.send', { uid: templateUid, fields, isOnboarding });
 	}
 
 	getFields(templateUid: string): Promise<{ fields: TemplateField[] }>
@@ -67,16 +67,21 @@ export class TemplateApi
 		return post('sign.api_v1.b2e.document.template.deleteEntities', { entities });
 	}
 
-	registerDocuments(templateIds: number[]): Promise<{items: TemplateCreatedDocument[]}>
+	registerDocuments(templateIds: number[], excludeRejected: boolean = true): Promise<{items: TemplateCreatedDocument[]}>
 	{
-		return post('sign.api_v1.b2e.document.template.registerDocuments', { templateIds });
+		return post('sign.api_v1.b2e.document.template.registerDocuments', { templateIds, excludeRejected });
 	}
 
-	setupSigners(documentIds: number[], signers: CardItem[]): Promise<{
+	setupSigners(documentIds: number[], signers: CardItem[], excludeRejected: boolean): Promise<{
 		shouldCheckDepartmentsSync: boolean,
 		documents: LoadedDocumentData[],
 	}>
 	{
-		return post('sign.api_v1.b2e.document.template.setupSigners', { documentIds, signers });
+		return post('sign.api_v1.b2e.document.template.setupSigners', { documentIds, signers, excludeRejected });
+	}
+
+	installOnboardingTemplate(): Promise<Object>
+	{
+		return post('sign.api_v1.b2e.document.template.installOnboardingTemplate', {});
 	}
 }

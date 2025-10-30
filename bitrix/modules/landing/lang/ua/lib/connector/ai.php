@@ -1,10 +1,7 @@
 <?php
-$MESS["LANDING_CONNECTOR_AI_ALLOW_COPILOT_TITLE"] = "Сайти";
 $MESS["LANDING_CONNECTOR_AI_ALLOW_DESC"] = "CoPilot створить або відредагує тексти на вашому сайті, запропонує ідеї заголовків, допоможе створити унікальні зображення всередині готових блоків.";
-$MESS["LANDING_CONNECTOR_AI_ALLOW_IMAGE_COPILOT_DESC"] = "CoPilot допоможе створити унікальні зображення для вашого сайту.";
 $MESS["LANDING_CONNECTOR_AI_ALLOW_SITE"] = "Сайти та блоки";
 $MESS["LANDING_CONNECTOR_AI_ALLOW_SITE_DESC"] = "CoPilot швидко створить сайт за коротким описом, внесе правки в будь-який блок за вашими коментарями. Просто напишіть, що вам потрібно, і CoPilot сам придумає дизайн, тексти, зображення.";
-$MESS["LANDING_CONNECTOR_AI_ALLOW_TEXT_COPILOT_DESC"] = "CoPilot створить або відредагує тексти, запропонує ідеї заголовків для вашого сайту.";
 $MESS["LANDING_CONNECTOR_AI_ALLOW_TITLE"] = "Тексти й зображення в готових блоках";
 $MESS["LANDING_CONNECTOR_AI_GROUP_DESC"] = "Створюйте й редагуйте сайти з CoPilot за лічені хвилини.";
 $MESS["LANDING_CONNECTOR_AI_GROUP_TITLE"] = "Створення сайтів із CoPilot";

@@ -34,6 +34,11 @@
 	padding-bottom: 60px;
 }
 
+.crm-entity-wrap .crm-list-top-toolbar {
+	padding-bottom: 9px;
+	margin-bottom: var(--ui-space-stack-2xs);
+}
+
 .crm-entity-section-product-loader {
 	background: url(images/skeleton.svg) no-repeat;
 	height: 446px;

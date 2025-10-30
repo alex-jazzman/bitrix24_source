@@ -14,18 +14,33 @@ export class AiAssistantMessageMenu extends MessageMenu
 	getMenuItems(): MenuItemOptions[]
 	{
 		const mainGroupItems = [
-			this.getReplyItem(),
 			this.getCopyItem(),
 			this.getDownloadFileItem(),
-			this.getPinItem(),
 			this.getForwardItem(),
 			...this.getAdditionalItems(),
-			this.getDeleteItem(),
+		];
+
+		return this.groupItems(mainGroupItems, MenuSectionCode.main);
+	}
+
+	getNestedItems(): MenuItemOptions[]
+	{
+		const mainGroupItems = [
+			this.getCopyFileItem(),
+			this.getMarkItem(),
+			this.getFavoriteItem(),
+			this.getSaveToDiskItem(),
+		];
+
+		const createGroupItems = [
+			this.getCreateTaskItem(),
+			this.getCreateMeetingItem(),
 		];
 
 		return [
 			...this.groupItems(mainGroupItems, MenuSectionCode.main),
-			...this.groupItems([this.getSelectItem()], MenuSectionCode.select),
+			...this.groupItems(createGroupItems, MenuSectionCode.create),
+			...this.groupItems(this.getMarketItems(), MenuSectionCode.market),
 		];
 	}
 }

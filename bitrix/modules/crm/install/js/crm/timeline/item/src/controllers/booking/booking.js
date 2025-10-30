@@ -25,6 +25,11 @@ export class Booking extends Base
 		{
 			showCyclePopup(actionData.status);
 		}
+
+		if (action === `${item.getType()}:ShowInfoHelper`)
+		{
+			BX.UI?.InfoHelper?.show(actionData.code);
+		}
 	}
 
 	static isItemSupported(item: ConfigurableItem): boolean

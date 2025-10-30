@@ -4,6 +4,8 @@ namespace Bitrix\Mobile\AppTabs;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Mobile\Provider\UserRepository;
 use Bitrix\Mobile\Tab\Tabable;
+use Bitrix\Mobile\Config\Feature;
+use Bitrix\Mobile\Feature\MenuFeature;
 
 class Menu implements Tabable
 {
@@ -11,7 +13,7 @@ class Menu implements Tabable
 
 	public function isAvailable()
 	{
-		return !$this->context->isCollaber;
+		return !$this->context->isCollaber && !Feature::isEnabled(MenuFeature::class);
 	}
 
 	public function getData()

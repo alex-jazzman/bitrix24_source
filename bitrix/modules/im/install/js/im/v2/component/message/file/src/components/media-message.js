@@ -17,9 +17,8 @@ import '../css/media-message.css';
 import type { JsonObject } from 'main.core';
 import type { ImModelMessage, ImModelChat } from 'im.v2.model';
 
-const MAX_GALLERY_WIDTH = 305;
-const MAX_SINGLE_MEDIA_WIDTH = 488;
-const MAX_SINGLE_MEDIA_WITH_TEXT_WIDTH = 305;
+const MAX_GALLERY_WIDTH = 460;
+const MAX_SINGLE_MEDIA_WIDTH = 460;
 
 // @vue/component
 export const MediaMessage = {
@@ -45,6 +44,10 @@ export const MediaMessage = {
 		withTitle: {
 			type: Boolean,
 			default: true,
+		},
+		containerHeight: {
+			type: [Number, null],
+			default: 0,
 		},
 	},
 	emits: ['cancelClick'],
@@ -101,19 +104,9 @@ export const MediaMessage = {
 		imageContainerStyles(): JsonObject
 		{
 			let maxWidth = MAX_SINGLE_MEDIA_WIDTH;
-			if (this.fileIds.length > 1)
+			if (this.fileIds.length > 1 || this.hasText)
 			{
 				maxWidth = MAX_GALLERY_WIDTH;
-			}
-
-			if (this.hasText)
-			{
-				maxWidth = MAX_SINGLE_MEDIA_WITH_TEXT_WIDTH;
-
-				return {
-					'max-width': `${maxWidth}px`,
-					'min-width': `${maxWidth}px`,
-				};
 			}
 
 			return { 'max-width': `${maxWidth}px` };
@@ -141,6 +134,7 @@ export const MediaMessage = {
 				<MessageHeader :withTitle="false" :item="item" class="bx-im-message-image__header" />
 				<MediaContent 
 					:item="message"
+					:containerHeight="containerHeight"
 					@cancelClick="onCancel"
 				/>
 				<div v-if="showBottomContainer" class="bx-im-message-image__bottom-container">

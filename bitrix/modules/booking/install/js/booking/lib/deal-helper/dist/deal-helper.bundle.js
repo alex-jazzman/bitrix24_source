@@ -120,7 +120,10 @@ this.BX.Booking = this.BX.Booking || {};
 	    });
 	  }
 	  saveDeal(dealData) {
-	    const externalData = dealData ? [dealData] : [];
+	    const externalData = babelHelpers.classPrivateFieldLooseBase(this, _booking)[_booking].externalData.filter(data => data.entityTypeId !== booking_const.CrmEntity.Deal);
+	    if (dealData) {
+	      externalData.push(dealData);
+	    }
 	    void booking_provider_service_bookingService.bookingService.update({
 	      id: babelHelpers.classPrivateFieldLooseBase(this, _bookingId)[_bookingId],
 	      externalData

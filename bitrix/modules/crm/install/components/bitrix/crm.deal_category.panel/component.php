@@ -34,6 +34,7 @@ use Bitrix\Crm\Category\DealCategory;
 use Bitrix\Crm\Counter\EntityCounterFactory;
 use Bitrix\Crm\Counter\EntityCounterType;
 use Bitrix\Crm\Restriction\RestrictionManager;
+use Bitrix\Main\Localization\Loc;
 
 $curPage = $APPLICATION->GetCurPage();
 
@@ -157,16 +158,17 @@ if (!$arResult['IS_CUSTOMIZED'])
 }
 elseif($arParams['ENABLE_CATEGORY_ALL'] === 'Y')
 {
-	$arResult['ITEMS'] = array_merge(
-		array(
-			array(
-				'NAME' => GetMessage('CRM_DEAL_CATEGORY_PANEL_ALL'),
-				'IS_ACTIVE' => $arResult['CATEGORY_ID'] < 0,
-				'URL' => $arParams['PATH_TO_DEAL_LIST']
-			)
-		),
-		$arResult['ITEMS']
-	);
+	$categoryAllItem = [
+		'ID' => 'all',
+		'NAME' => Loc::getMessage('CRM_DEAL_CATEGORY_PANEL_ALL'),
+		'IS_ACTIVE' => $arResult['CATEGORY_ID'] < 0,
+		'URL' => $arParams['PATH_TO_DEAL_LIST'],
+	];
+
+	$arResult['ITEMS'] = [
+		$categoryAllItem,
+		...$arResult['ITEMS'],
+	];
 }
 
 if ($arResult['ACTIVE_INDEX'] < 0)

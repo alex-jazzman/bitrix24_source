@@ -1,4 +1,5 @@
 <?php
+$MESS["FLOW_CREATE"] = "Create flows";
 $MESS["HINT_TASK_ASSIGNEE_ASSIGN"] = "Adding a participant requires task assign permission for a specific person.";
 $MESS["HINT_TASK_ASSIGNEE_CHANGE_RESPONSIBLE"] = "By default, an assignee can reassign a tasks to subordinate employees. User can reassigne tasks to supervisors or employees of other departments if this user has a task assign permission.";
 $MESS["HINT_TASK_ASSIGNEE_CHECKLIST_ADD"] = "User can add or edit items in a checklist. This permission does not affect items added by other users.";

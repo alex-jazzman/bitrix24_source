@@ -236,20 +236,251 @@ this.BX.Intranet = this.BX.Intranet || {};
 
 	let _ = t => t,
 	  _t,
-	  _t2,
+	  _t2;
+	const createToolbarSkeleton = (options = {}) => {
+	  const {
+	    showIconButton = false
+	  } = options;
+	  return main_core.Tag.render(_t || (_t = _`
+		<div class="toolbar-skeleton">
+			<span class="toolbar-skeleton__page-title"></span>
+			${0}
+		</div>
+	`), showIconButton ? createIconButton() : null);
+	};
+	function createIconButton() {
+	  return main_core.Tag.render(_t2 || (_t2 = _`
+		<span class="toolbar-skeleton__icon-buttons">
+			<span class="toolbar-skeleton__icon-button">
+				<span class="toolbar-skeleton__icon-button-text"></span>
+			</span>
+		</span>
+	`));
+	}
+
+	let _$1 = t => t,
+	  _t$1,
+	  _t2$1,
 	  _t3,
-	  _t4;
+	  _t4,
+	  _t5;
+	const createActionsBarSkeleton = (options = {}) => {
+	  const {
+	    showNavigationPanel = true,
+	    showCounterPanel = false,
+	    rightButtonsCount = 0
+	  } = options;
+	  return main_core.Tag.render(_t$1 || (_t$1 = _$1`
+		<div class="actions-bar-skeleton">
+			${0}
+			${0}
+			${0}
+		</div>
+	`), showNavigationPanel ? createNavigationPanelSkeleton() : null, showCounterPanel ? createCounterPanelSkeleton() : null, rightButtonsCount > 0 ? createRightButtons(rightButtonsCount) : null);
+	};
+	function createNavigationPanelSkeleton() {
+	  return main_core.Tag.render(_t2$1 || (_t2$1 = _$1`
+		<div class="navigation-skeleton">
+				<div class="navigation-skeleton__item">
+					<div class="navigation-skeleton__item-text"></div>
+				</div>
+			</div>
+	`));
+	}
+	function createCounterPanelSkeleton() {
+	  return main_core.Tag.render(_t3 || (_t3 = _$1`
+		<div class="counters-skeleton">
+			<div class="counters-skeleton__item">
+				<div class="counters-skeleton__item-text"></div>
+			</div>
+		</div>
+	`));
+	}
+	function createRightButtons(count) {
+	  const wrapper = main_core.Tag.render(_t4 || (_t4 = _$1`<div class="actions-bar-skeleton__right-buttons"></div>`));
+	  for (let i = 0; i < count; i++) {
+	    const button = main_core.Tag.render(_t5 || (_t5 = _$1`
+			<div class="actions-bar-skeleton__right-button">
+				<div class="actions-bar-skeleton__right-button-text"></div>
+			</div>
+		`));
+	    main_core.Dom.append(button, wrapper);
+	  }
+	  return wrapper;
+	}
+
+	let _$2 = t => t,
+	  _t$2,
+	  _t2$2,
+	  _t3$1;
+	const createGridSkeleton = () => {
+	  return main_core.Tag.render(_t$2 || (_t$2 = _$2`
+		<div class="grid-skeleton-container --ui-context-content-light">
+			<table class="grid-skeleton">
+				<thead>
+					<tr class="grid-skeleton__header-row">
+						<th class="grid-skeleton__header-cell">
+							<div class="grid-skeleton__checkbox"></div>
+						</th>
+						<th class="grid-skeleton__header-cell">
+							<div class="grid-skeleton__avatar"></div>
+						</th>
+						<th class="grid-skeleton__header-cell">
+							<div class="grid-skeleton__cell-title --short"></div>
+						</th>
+						<th class="grid-skeleton__header-cell">
+							<div class="grid-skeleton__cell-title"></div>
+						</th>
+						<th class="grid-skeleton__header-cell">
+							<div class="grid-skeleton__cell-title"></div>
+						</th>
+						<th class="grid-skeleton__header-cell">
+							<div class="grid-skeleton__cell-title"></div>
+						</th>
+						<th class="grid-skeleton__header-cell">
+							<div class="grid-skeleton__cell-title"></div>
+						</th>
+					</tr>
+				</thead>
+				${0}
+			</table>
+		</div>
+	`), getGridSkeletonRows());
+	};
+	function getGridSkeletonRows() {
+	  return main_core.Tag.render(_t2$2 || (_t2$2 = _$2`
+		<tbody>
+			${0}
+			${0}
+			${0}
+			${0}
+			${0}
+			${0}
+			${0}
+		</tbody>
+	`), createGridSkeletonRow(), createGridSkeletonRow(), createGridSkeletonRow(), createGridSkeletonRow(), createGridSkeletonRow(), createGridSkeletonRow(), createGridSkeletonRow());
+	}
+	function createGridSkeletonRow() {
+	  return main_core.Tag.render(_t3$1 || (_t3$1 = _$2`
+		<tr class="grid-skeleton__row">
+			<td class="grid-skeleton__cell">
+				<div class="grid-skeleton__checkbox"></div>
+			</td>
+			<td class="grid-skeleton__cell">
+				<div class="grid-skeleton__avatar"></div>
+			</td>
+			<td class="grid-skeleton__cell">
+				<div class="grid-skeleton__cell-two-text">
+					<div class="grid-skeleton__cell-title --long"></div>
+					<div class="grid-skeleton__cell-title --short"></div>
+				</div>
+			</td>
+			<td class="grid-skeleton__cell">
+				<div class="grid-skeleton__cell-button"></div>
+			</td>
+			<td class="grid-skeleton__cell">
+				<div class="grid-skeleton__avatar-title">
+					<div class="grid-skeleton__avatar"></div>
+					<div class="grid-skeleton__cell-title"></div>
+				</div>
+			</td>
+			<td class="grid-skeleton__cell">
+				<div class="grid-skeleton__avatar-title">
+					<div class="grid-skeleton__avatar"></div>
+					<div class="grid-skeleton__cell-title"></div>
+				</div>
+			</td>
+			<td class="grid-skeleton__cell">
+				<div class="grid-skeleton__avatar-title">
+					<div class="grid-skeleton__avatar"></div>
+					<div class="grid-skeleton__cell-title"></div>
+				</div>
+			</td>
+		</tr>
+	`));
+	}
+
+	let _$3 = t => t,
+	  _t$3;
+	const createKanbanSkeleton = () => {
+	  return main_core.Tag.render(_t$3 || (_t$3 = _$3`
+		<div class="kanban-skeleton --stage-right">
+			<div class="kanban-skeleton__col">
+				<div class="kanban-skeleton__col-stage"></div>
+				<div class="kanban-skeleton__col-tiles">
+					<div class="kanban-skeleton__col-tile --lg"></div>
+					<div class="kanban-skeleton__col-tile"></div>
+				</div>
+			</div>
+			<div class="kanban-skeleton__col">
+				<div class="kanban-skeleton__col-stage"></div>
+				<div class="kanban-skeleton__col-tiles">
+					<div class="kanban-skeleton__col-tile"></div>
+					<div class="kanban-skeleton__col-tile --lg"></div>
+				</div>
+			</div>
+			<div class="kanban-skeleton__col">
+				<div class="kanban-skeleton__col-stage"></div>
+				<div class="kanban-skeleton__col-tiles">
+					<div class="kanban-skeleton__col-tile --lg"></div>
+					<div class="kanban-skeleton__col-tile --lg"></div>
+				</div>
+			</div>
+			<div class="kanban-skeleton__col">
+				<div class="kanban-skeleton__col-stage"></div>
+				<div class="kanban-skeleton__col-tiles">
+					<div class="kanban-skeleton__col-tile --lg"></div>
+					<div class="kanban-skeleton__col-tile"></div>
+				</div>
+			</div>
+			<div class="kanban-skeleton__col">
+				<div class="kanban-skeleton__col-stage"></div>
+				<div class="kanban-skeleton__col-tiles">
+					<div class="kanban-skeleton__col-tile --lg"></div>
+					<div class="kanban-skeleton__col-tile --lg"></div>
+				</div>
+			</div>
+			<div class="kanban-skeleton__col">
+				<div class="kanban-skeleton__col-stage"></div>
+				<div class="kanban-skeleton__col-tiles">
+					<div class="kanban-skeleton__col-tile"></div>
+					<div class="kanban-skeleton__col-tile --lg"></div>
+				</div>
+			</div>
+		</div>
+	`));
+	};
+
+	let _$4 = t => t,
+	  _t$4,
+	  _t2$3,
+	  _t3$2,
+	  _t4$1,
+	  _t5$1,
+	  _t6;
 	var _refs = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("refs");
 	var _showLoader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showLoader");
-	var _getPageSkeleton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getPageSkeleton");
+	var _getGridSkeletonOptions = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getGridSkeletonOptions");
+	var _createKanbanSkeleton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createKanbanSkeleton");
+	var _getKanbanSkeletonOptions = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getKanbanSkeletonOptions");
+	var _createGridSkeleton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createGridSkeleton");
 	var _bindEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bindEvents");
 	class Composite {
 	  constructor() {
 	    Object.defineProperty(this, _bindEvents, {
 	      value: _bindEvents2
 	    });
-	    Object.defineProperty(this, _getPageSkeleton, {
-	      value: _getPageSkeleton2
+	    Object.defineProperty(this, _createGridSkeleton, {
+	      value: _createGridSkeleton2
+	    });
+	    Object.defineProperty(this, _getKanbanSkeletonOptions, {
+	      value: _getKanbanSkeletonOptions2
+	    });
+	    Object.defineProperty(this, _createKanbanSkeleton, {
+	      value: _createKanbanSkeleton2
+	    });
+	    Object.defineProperty(this, _getGridSkeletonOptions, {
+	      value: _getGridSkeletonOptions2
 	    });
 	    Object.defineProperty(this, _showLoader, {
 	      value: _showLoader2
@@ -270,21 +501,32 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    return ((_window$BX = window.BX) == null ? void 0 : (_window$BX$frameCache = _window$BX.frameCache) == null ? void 0 : _window$BX$frameCache.frameDataInserted) === true || !main_core.Type.isUndefined(window.frameRequestFail);
 	  }
 	  showLoader() {
+	    if (this.isReady()) {
+	      return;
+	    }
 	    const page = window.location.pathname;
 	    if (page === '/stream/' || page === '/stream/index.php' || page === '/index.php') {
-	      babelHelpers.classPrivateFieldLooseBase(this, _showLoader)[_showLoader]('stream');
-	    } else {
-	      setTimeout(() => {
-	        babelHelpers.classPrivateFieldLooseBase(this, _showLoader)[_showLoader]();
-	      }, 500);
+	      babelHelpers.classPrivateFieldLooseBase(this, _showLoader)[_showLoader](this.getLiveFeedSkeleton());
+	      return;
 	    }
+	    const kanbanOptions = babelHelpers.classPrivateFieldLooseBase(this, _getKanbanSkeletonOptions)[_getKanbanSkeletonOptions](page);
+	    if (kanbanOptions !== null) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _showLoader)[_showLoader](babelHelpers.classPrivateFieldLooseBase(this, _createKanbanSkeleton)[_createKanbanSkeleton](kanbanOptions));
+	      return;
+	    }
+	    const gridOptions = babelHelpers.classPrivateFieldLooseBase(this, _getGridSkeletonOptions)[_getGridSkeletonOptions](page);
+	    if (gridOptions !== null) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _showLoader)[_showLoader](babelHelpers.classPrivateFieldLooseBase(this, _createGridSkeleton)[_createGridSkeleton](gridOptions));
+	      return;
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _showLoader)[_showLoader]();
 	  }
 	  getStubContainer() {
 	    return document.querySelector('#page-area');
 	  }
 	  getLoaderContainer() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _refs)[_refs].remember('loader', () => {
-	      return main_core.Tag.render(_t || (_t = _`
+	      return main_core.Tag.render(_t$4 || (_t$4 = _$4`
 				<div class="composite-skeleton-container">
 					<div class="composite-loader-container">
 						<svg class="composite-loader-circular" viewBox="25 25 50 50">
@@ -297,7 +539,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  }
 	  getLiveFeedSkeleton() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _refs)[_refs].remember('feed-skeleton', () => {
-	      return main_core.Tag.render(_t2 || (_t2 = _`
+	      return main_core.Tag.render(_t2$3 || (_t2$3 = _$4`
 				<div class="page top-menu-mode start-page no-background no-all-paddings no-page-header">
 					<div class="page__workarea">
 						<div class="page__sidebar">${0}</div>
@@ -309,7 +551,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  }
 	  getLiveFeedSidebar() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _refs)[_refs].remember('feed-sidebar', () => {
-	      return main_core.Tag.render(_t3 || (_t3 = _`
+	      return main_core.Tag.render(_t3$2 || (_t3$2 = _$4`
 				<div class="skeleton__white-bg-element skeleton__sidebar skeleton__intranet-ustat">
 					<div class="skeleton__graph-circle"></div>
 					<div class="skeleton__graph-right">
@@ -328,7 +570,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 						</div>
 					</div>
 				</div>
-				
+
 				<div class="skeleton__white-bg-element skeleton__sidebar">
 					<div class="skeleton__sidebar-header">
 						<div class="skeleton__sidebar-header_line"></div>
@@ -426,7 +668,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  }
 	  getLiveFeedWorkArea() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _refs)[_refs].remember('feed-work-area', () => {
-	      return main_core.Tag.render(_t4 || (_t4 = _`
+	      return main_core.Tag.render(_t4$1 || (_t4$1 = _$4`
 				<div class="skeleton__white-bg-element skeleton__feed-wrap">
 					<div class="skeleton__feed-wrap_header">
 						<div class="skeleton__feed-wrap_header-link --long"></div>
@@ -536,11 +778,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    });
 	  }
 	}
-	function _showLoader2(page = null) {
-	  if (this.isReady()) {
-	    return;
-	  }
-	  const skeleton = babelHelpers.classPrivateFieldLooseBase(this, _getPageSkeleton)[_getPageSkeleton](page);
+	function _showLoader2(skeleton = null) {
 	  const container = this.getStubContainer();
 	  const stub = skeleton != null ? skeleton : this.getLoaderContainer();
 	  if (!container || stub.parentNode) {
@@ -548,14 +786,151 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  }
 	  main_core.Dom.append(stub, container);
 	}
-	function _getPageSkeleton2(page) {
-	  const map = {
-	    stream: () => this.getLiveFeedSkeleton()
-	  };
-	  if (map[page]) {
-	    return map[page]();
+	function _getGridSkeletonOptions2(page) {
+	  const patterns = [[/^\/workgroups\/$/, {
+	    actionsBarOptions: true
+	  }], [/^\/crm\/(lead|deal|quote)\/(list|category)\/.*?$/, {
+	    toolbarOptions: {
+	      showIconButton: true
+	    },
+	    actionsBarOptions: {
+	      showCounterPanel: true,
+	      rightButtonsCount: 2
+	    }
+	  }], [/^\/crm\/(contact|company)\/list\/.*?$/, {
+	    toolbarOptions: {
+	      showIconButton: true
+	    },
+	    actionsBarOptions: {
+	      rightButtonsCount: 1
+	    }
+	  }], [/^\/crm\/type\/\d+\/list\/.*?$/, {
+	    toolbarOptions: {
+	      showIconButton: true
+	    },
+	    actionsBarOptions: {
+	      rightButtonsCount: 1
+	    }
+	  }], [/^\/crm\/configs\/mycompany\/.*?$/, {
+	    toolbarOptions: {
+	      showIconButton: true
+	    }
+	  }], [/^\/crm\/(events|activity|webform|copilot-call-assessment|catalog)\/.*?$/, {}], [/^\/crm\/type\/$/, {}], [/^\/company\/$/, {
+	    toolbarOptions: {
+	      showIconButton: true
+	    },
+	    actionsBarOptions: {
+	      rightButtonsCount: 1
+	    }
+	  }], [/^\/company\/personal\/user\/\d+\/tasks\/(projects|flow|scrum)\/.*?$/, {
+	    actionsBarOptions: {
+	      rightButtonsCount: 2
+	    }
+	  }], [/^\/company\/personal\/user\/\d+\/tasks\/(departments|templates)\/.*?$/, {}], [/^\/sign\/(list|contact)\/.*?$/, {
+	    toolbarOptions: {
+	      showIconButton: true
+	    },
+	    actionsBarOptions: {
+	      rightButtonsCount: 1
+	    }
+	  }], [/^\/sign\/mysafe\/.*?$/, {}], [/^\/sign\/b2e\/list\/.*?$/, {
+	    toolbarOptions: {
+	      showIconButton: true
+	    },
+	    actionsBarOptions: {
+	      rightButtonsCount: 1
+	    }
+	  }], [/^\/sign\/b2e\/my-documents\/.*?$/, {
+	    actionsBarOptions: true
+	  }], [/^\/sign\/b2e\/(settings|member_dynamic_settings|signers)\/.*?$/, {}], [/^\/shop\/documents\/(contractors|contractors_contacts)\/.*?$/, {
+	    toolbarOptions: {
+	      showIconButton: true
+	    },
+	    actionsBarOptions: {
+	      rightButtonsCount: 1
+	    }
+	  }], [/^\/shop\/documents\/.*?$/, {
+	    toolbarOptions: {
+	      showIconButton: true
+	    }
+	  }], [/^\/shop\/catalog\/\d+\/.*?$/, {}], [/^\/shop\/documents-catalog\/.*?$/, {}], [/^\/shop\/orders\/.*?$/, {
+	    toolbarOptions: {
+	      showIconButton: true
+	    },
+	    actionsBarOptions: {
+	      rightButtonsCount: 1
+	    }
+	  }], [/^\/shop\/settings\/(sale_location_type_list|sale_location_node_list|sale_person_type|sale_transact_admin|sale_basket)\/.*?$/, {}], [/^\/company\/lists\/\d+\/view\/\d+\/.*?$/, {
+	    toolbarOptions: {
+	      showIconButton: true
+	    }
+	  }], [/^\/company\/lists\/\d+\/fields\/.*?$/, {
+	    toolbarOptions: {
+	      showIconButton: true
+	    }
+	  }], [/^\/automation\/type\/.*?$/, {}], [/^\/bizproc\/userprocesses\/.*?$/, {
+	    actionsBarOptions: true
+	  }], [/^\/bizproc\/(start|bizproc)\/.*?$/, {}], [/^\/marketing\/(letter|ads|segment|template|blacklist|contact|rc|toloka)\/.*?$/, {}], [/^\/conference\/.*?$/, {}], [/^\/bi\/dashboard\/.*?$/, {}], [/^\/rpa\/tasks\/.*?$/, {}]];
+	  for (const pattern of patterns) {
+	    if (pattern[0].test(page)) {
+	      return pattern[1];
+	    }
 	  }
 	  return null;
+	}
+	function _createKanbanSkeleton2(options) {
+	  var _options$actionsBarOp;
+	  const actionsBarOptions = (_options$actionsBarOp = options == null ? void 0 : options.actionsBarOptions) != null ? _options$actionsBarOp : {};
+	  const showActionsBar = main_core.Type.isObject(options == null ? void 0 : options.actionsBarOptions) || (options == null ? void 0 : options.actionsBarOptions) === true;
+	  return main_core.Tag.render(_t5$1 || (_t5$1 = _$4`
+			<div class="grid-skeleton-wrapper">
+				${0}
+				${0}
+				${0}
+			</div>
+		`), createToolbarSkeleton(options.toolbarOptions), showActionsBar ? createActionsBarSkeleton(actionsBarOptions) : null, createKanbanSkeleton());
+	}
+	function _getKanbanSkeletonOptions2(page) {
+	  const patterns = [[/^\/crm\/(lead|deal)\/(kanban|activity)\/.*?$/, {
+	    toolbarOptions: {
+	      showIconButton: true
+	    },
+	    actionsBarOptions: {
+	      rightButtonsCount: 2
+	    }
+	  }], [/^\/crm\/type\/\d+\/kanban\/.*?$/, {}], [/^\/sign\/$/, {
+	    toolbarOptions: {
+	      showIconButton: true
+	    },
+	    actionsBarOptions: {
+	      rightButtonsCount: 1
+	    }
+	  }], [/^\/sign\/b2e\/$/, {
+	    toolbarOptions: {
+	      showIconButton: true
+	    },
+	    actionsBarOptions: {
+	      rightButtonsCount: 1
+	    }
+	  }]];
+	  for (const pattern of patterns) {
+	    if (pattern[0].test(page)) {
+	      return pattern[1];
+	    }
+	  }
+	  return null;
+	}
+	function _createGridSkeleton2(options) {
+	  var _options$actionsBarOp2;
+	  const actionsBarOptions = (_options$actionsBarOp2 = options == null ? void 0 : options.actionsBarOptions) != null ? _options$actionsBarOp2 : {};
+	  const showActionsBar = main_core.Type.isObject(options == null ? void 0 : options.actionsBarOptions) || (options == null ? void 0 : options.actionsBarOptions) === true;
+	  return main_core.Tag.render(_t6 || (_t6 = _$4`
+			<div class="grid-skeleton-wrapper">
+				${0}
+				${0}
+				${0}
+			</div>
+		`), createToolbarSkeleton(options.toolbarOptions), showActionsBar ? createActionsBarSkeleton(actionsBarOptions) : null, createGridSkeleton());
 	}
 	function _bindEvents2() {
 	  main_core_events.EventEmitter.subscribe('onFrameDataRequestFail', () => {
@@ -1096,15 +1471,16 @@ this.BX.Intranet = this.BX.Intranet || {};
 	var _avatarWrapper = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("avatarWrapper");
 	var _cache = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("cache");
 	var _options = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("options");
-	var _setHiddenAvatar = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setHiddenAvatar");
-	var _setVisibleAvatar = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setVisibleAvatar");
 	var _showWidget = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showWidget");
 	var _getWidgetLoader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getWidgetLoader");
 	var _getContent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getContent");
 	var _showCounter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showCounter");
+	var _setHiddenAvatar = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setHiddenAvatar");
+	var _setVisibleAvatar = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setVisibleAvatar");
 	var _showWorkTimeState = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showWorkTimeState");
+	var _updateStateButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateStateButton");
 	var _getCounterWrapper = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCounterWrapper");
-	var _getWorkTimeStateWrapper = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getWorkTimeStateWrapper");
+	var _getShortWorkTimeStateWrapper = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getShortWorkTimeStateWrapper");
 	var _getCounter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCounter");
 	var _getWorkTimeState = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getWorkTimeState");
 	var _setEventHandlerForUpdateCounter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setEventHandlerForUpdateCounter");
@@ -1138,12 +1514,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    });
 	  }
 	}
-	function _setHiddenAvatar2() {
-	  main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _avatarWrapper)[_avatarWrapper], 'opacity', '0');
-	}
-	function _setVisibleAvatar2() {
-	  main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _avatarWrapper)[_avatarWrapper], 'opacity', '1');
-	}
 	function _showWidget2() {
 	  babelHelpers.classPrivateFieldLooseBase(this, _getContent)[_getContent]().then(response => {
 	    babelHelpers.classPrivateFieldLooseBase(this, _getWidgetLoader)[_getWidgetLoader]().clearBeforeInsertContent();
@@ -1155,7 +1525,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _avatarWrapper)[_avatarWrapper], 'click', () => {
 	      intranet_avatarWidget.AvatarWidget.getInstance().show();
 	    });
-	  }).catch(() => {});
+	  }).catch(error => {
+	    console.error(error);
+	  });
 	}
 	function _getWidgetLoader2() {
 	  return babelHelpers.classPrivateFieldLooseBase(this, _cache)[_cache].remember('widgetLoader', () => {
@@ -1163,11 +1535,11 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      id: 'bx-avatar-header-popup',
 	      bindElement: babelHelpers.classPrivateFieldLooseBase(this, _avatarWrapper)[_avatarWrapper],
 	      className: 'intranet-avatar-widget-base-popup',
-	      width: 450,
+	      width: 390,
 	      useAngle: false,
 	      fixed: true,
 	      offsetTop: -50,
-	      offsetLeft: -392
+	      offsetLeft: 0
 	    });
 	  });
 	}
@@ -1181,17 +1553,50 @@ this.BX.Intranet = this.BX.Intranet || {};
 	function _showCounter2() {
 	  babelHelpers.classPrivateFieldLooseBase(this, _getCounter)[_getCounter]().renderTo(babelHelpers.classPrivateFieldLooseBase(this, _getCounterWrapper)[_getCounterWrapper]());
 	}
+	function _setHiddenAvatar2() {
+	  main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _avatarWrapper)[_avatarWrapper], 'opacity', '0');
+	}
+	function _setVisibleAvatar2() {
+	  main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _avatarWrapper)[_avatarWrapper], 'opacity', '1');
+	}
 	function _showWorkTimeState2() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _getWorkTimeState)[_getWorkTimeState]().renderTo(babelHelpers.classPrivateFieldLooseBase(this, _getWorkTimeStateWrapper)[_getWorkTimeStateWrapper]());
+	  babelHelpers.classPrivateFieldLooseBase(this, _getWorkTimeState)[_getWorkTimeState]().renderTo(babelHelpers.classPrivateFieldLooseBase(this, _getShortWorkTimeStateWrapper)[_getShortWorkTimeStateWrapper]());
+	  babelHelpers.classPrivateFieldLooseBase(this, _getWorkTimeState)[_getWorkTimeState]().subscribe('onUpdateState', event => {
+	    babelHelpers.classPrivateFieldLooseBase(this, _updateStateButton)[_updateStateButton](event.data);
+	  });
+	}
+	function _updateStateButton2(config) {
+	  let className = '';
+	  const stateClasses = ['--worktime-not-started', '--worktime-finished', '--worktime-not-finished', '--worktime-paused'];
+	  stateClasses.forEach(stateClass => {
+	    main_core.Dom.removeClass(babelHelpers.classPrivateFieldLooseBase(this, _avatarWrapper)[_avatarWrapper], stateClass);
+	  });
+	  switch (config.state) {
+	    case 'CLOSED':
+	      className = config.action === 'OPEN' ? '--worktime-not-started' : '--worktime-finished';
+	      break;
+	    case 'EXPIRED':
+	      className = '--worktime-not-finished';
+	      break;
+	    case 'PAUSED':
+	      className = '--worktime-paused';
+	      break;
+	    default:
+	      className = '';
+	      break;
+	  }
+	  if (className) {
+	    main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _avatarWrapper)[_avatarWrapper], className);
+	  }
 	}
 	function _getCounterWrapper2() {
 	  return babelHelpers.classPrivateFieldLooseBase(this, _cache)[_cache].remember('counterWrapper', () => {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _avatarWrapper)[_avatarWrapper].querySelector('.air-user-profile-avatar__counter');
 	  });
 	}
-	function _getWorkTimeStateWrapper2() {
+	function _getShortWorkTimeStateWrapper2() {
 	  return babelHelpers.classPrivateFieldLooseBase(this, _cache)[_cache].remember('workTimeStateWrapper', () => {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _avatarWrapper)[_avatarWrapper].querySelector('.air-user-profile-avatar__work-time-state');
+	    return babelHelpers.classPrivateFieldLooseBase(this, _avatarWrapper)[_avatarWrapper].querySelector('.air-user-profile-avatar__work-time-state-short');
 	  });
 	}
 	function _getCounter2() {
@@ -1230,7 +1635,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  });
 	}
 	function _setEventHandlerForChangeAvatar2() {
-	  const avatar = babelHelpers.classPrivateFieldLooseBase(this, _avatarWrapper)[_avatarWrapper].querySelector('i');
+	  const avatar = babelHelpers.classPrivateFieldLooseBase(this, _avatarWrapper)[_avatarWrapper].querySelector('.air-user-profile__avatar i');
 	  main_core_events.EventEmitter.subscribe('BX.Intranet.UserProfile:Avatar:changed', event => {
 	    const data = event.getData()[0];
 	    const url = data && data.url ? data.url : '';
@@ -1252,14 +1657,23 @@ this.BX.Intranet = this.BX.Intranet || {};
 	Object.defineProperty(AvatarButton, _getCounter, {
 	  value: _getCounter2
 	});
-	Object.defineProperty(AvatarButton, _getWorkTimeStateWrapper, {
-	  value: _getWorkTimeStateWrapper2
+	Object.defineProperty(AvatarButton, _getShortWorkTimeStateWrapper, {
+	  value: _getShortWorkTimeStateWrapper2
 	});
 	Object.defineProperty(AvatarButton, _getCounterWrapper, {
 	  value: _getCounterWrapper2
 	});
+	Object.defineProperty(AvatarButton, _updateStateButton, {
+	  value: _updateStateButton2
+	});
 	Object.defineProperty(AvatarButton, _showWorkTimeState, {
 	  value: _showWorkTimeState2
+	});
+	Object.defineProperty(AvatarButton, _setVisibleAvatar, {
+	  value: _setVisibleAvatar2
+	});
+	Object.defineProperty(AvatarButton, _setHiddenAvatar, {
+	  value: _setHiddenAvatar2
 	});
 	Object.defineProperty(AvatarButton, _showCounter, {
 	  value: _showCounter2
@@ -1272,12 +1686,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 	});
 	Object.defineProperty(AvatarButton, _showWidget, {
 	  value: _showWidget2
-	});
-	Object.defineProperty(AvatarButton, _setVisibleAvatar, {
-	  value: _setVisibleAvatar2
-	});
-	Object.defineProperty(AvatarButton, _setHiddenAvatar, {
-	  value: _setHiddenAvatar2
 	});
 	Object.defineProperty(AvatarButton, _avatarWrapper, {
 	  writable: true,
@@ -1685,9 +2093,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  value: void 0
 	});
 
-	let _$1 = t => t,
-	  _t$1,
-	  _t2$1;
+	let _$5 = t => t,
+	  _t$5,
+	  _t2$4;
 	var _popup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("popup");
 	var _initPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initPopup");
 	var _renderPopupContent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderPopupContent");
@@ -1746,9 +2154,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  main_core.Event.bind(window, 'scroll', windowScrollHandler);
 	}
 	function _renderPopupContent2(languages) {
-	  const container = main_core.Tag.render(_t$1 || (_t$1 = _$1`<div class="intranet__language-popup_list"></div>`));
+	  const container = main_core.Tag.render(_t$5 || (_t$5 = _$5`<div class="intranet__language-popup_list"></div>`));
 	  Object.entries(languages).forEach(([languageCode, languageItem]) => {
-	    const languageItemElement = main_core.Tag.render(_t2$1 || (_t2$1 = _$1`
+	    const languageItemElement = main_core.Tag.render(_t2$4 || (_t2$4 = _$5`
 				<div class="intranet__language-popup_language-item">
 					<span class="intranet__language-popup_language-item-name">${0}</span>
 					<span class="intranet__language-popup_language-beta">${0}</span>

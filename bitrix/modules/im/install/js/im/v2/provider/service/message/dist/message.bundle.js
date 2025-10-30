@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,im_v2_lib_user,im_v2_lib_copilot,im_v2_lib_analytics,main_core_events,im_v2_lib_utils,im_v2_lib_rest,ui_vue3_vuex,rest_client,im_v2_application_core,im_v2_const,im_v2_lib_logger,im_v2_lib_notifier) {
+(function (exports,im_v2_lib_user,im_v2_lib_copilot,im_v2_lib_analytics,main_core_events,im_v2_lib_utils,rest_client,im_v2_lib_notifier,ui_vue3_vuex,im_v2_application_core,im_v2_const,im_v2_lib_logger,im_v2_lib_rest) {
 	'use strict';
 
 	var _store = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
@@ -764,12 +764,54 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	}
 
+	var _chatId$4 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("chatId");
+	var _store$5 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
+	class TranscribeService {
+	  constructor(chatId) {
+	    Object.defineProperty(this, _chatId$4, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _store$5, {
+	      writable: true,
+	      value: void 0
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _chatId$4)[_chatId$4] = chatId;
+	    babelHelpers.classPrivateFieldLooseBase(this, _store$5)[_store$5] = im_v2_application_core.Core.getStore();
+	  }
+	  transcribe(fileId) {
+	    im_v2_lib_logger.Logger.warn('TranscribeService: transcribe:', fileId);
+	    const payload = {
+	      data: {
+	        chatId: babelHelpers.classPrivateFieldLooseBase(this, _chatId$4)[_chatId$4],
+	        fileId
+	      }
+	    };
+	    void babelHelpers.classPrivateFieldLooseBase(this, _store$5)[_store$5].dispatch('files/setTranscription', {
+	      fileId,
+	      status: im_v2_const.TranscriptionStatus.PENDING,
+	      transcriptText: null
+	    });
+	    return im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2DiskFileTranscribe, payload).then(result => {
+	      void babelHelpers.classPrivateFieldLooseBase(this, _store$5)[_store$5].dispatch('files/setTranscription', result);
+	    }).catch(error => {
+	      void babelHelpers.classPrivateFieldLooseBase(this, _store$5)[_store$5].dispatch('files/setTranscription', {
+	        fileId,
+	        status: im_v2_const.TranscriptionStatus.ERROR,
+	        transcriptText: null
+	      });
+	      console.error('TranscribeService: transcribe error:', error);
+	    });
+	  }
+	}
+
 	var _loadService = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("loadService");
 	var _pinService = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("pinService");
 	var _editService = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("editService");
 	var _deleteService = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("deleteService");
 	var _markService = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("markService");
 	var _favoriteService = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("favoriteService");
+	var _transcribeService = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("transcribeService");
 	var _initServices = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initServices");
 	class MessageService {
 	  static getMessageRequestLimit() {
@@ -800,6 +842,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      value: void 0
 	    });
 	    Object.defineProperty(this, _favoriteService, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _transcribeService, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -888,6 +934,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _deleteService)[_deleteService].deleteMessages(messageIds);
 	  }
 	  // endregion 'delete'
+
+	  // region 'transcribe'
+	  transcribe(fileId) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _transcribeService)[_transcribeService].transcribe(fileId);
+	  }
+	  // endregion 'delete'
 	}
 	function _initServices2(chatId) {
 	  babelHelpers.classPrivateFieldLooseBase(this, _loadService)[_loadService] = new LoadService(chatId);
@@ -896,9 +948,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  babelHelpers.classPrivateFieldLooseBase(this, _pinService)[_pinService] = new PinService();
 	  babelHelpers.classPrivateFieldLooseBase(this, _markService)[_markService] = new MarkService(chatId);
 	  babelHelpers.classPrivateFieldLooseBase(this, _favoriteService)[_favoriteService] = new FavoriteService(chatId);
+	  babelHelpers.classPrivateFieldLooseBase(this, _transcribeService)[_transcribeService] = new TranscribeService(chatId);
 	}
 
 	exports.MessageService = MessageService;
 
-}((this.BX.Messenger.v2.Service = this.BX.Messenger.v2.Service || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Vue3.Vuex,BX,BX.Messenger.v2.Application,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib));
+}((this.BX.Messenger.v2.Service = this.BX.Messenger.v2.Service || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Event,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Lib,BX.Vue3.Vuex,BX.Messenger.v2.Application,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib));
 //# sourceMappingURL=message.bundle.js.map

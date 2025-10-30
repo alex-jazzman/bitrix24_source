@@ -1,6 +1,7 @@
 <?php
 
 use Bitrix\Booking\Internals\Integration\Ui\EntitySelector;
+use Bitrix\Booking\Provider\TimeProvider;
 
 return [
 	'controllers' => [
@@ -266,8 +267,164 @@ return [
 					];
 				},
 			],
+			'booking.internals.delayed_task.service' => [
+				'className' => \Bitrix\Booking\Internals\Service\DelayedTask\DelayedTaskService::class,
+				'constructorParams' => static function() {
+					return [
+						'delayedTaskRepository' => \Bitrix\Booking\Internals\Container::getDelayedTaskRepository(),
+					];
+				},
+			],
 			'booking.internals.resource_linked_entity.repository' => [
 				'className' => \Bitrix\Booking\Internals\Repository\ORM\ResourceLinkedEntityRepository::class,
+			],
+			'booking.internals.service.yandex.resource.provider' => [
+				'className' => Bitrix\Booking\Internals\Service\Yandex\ResourceProvider::class,
+				'constructorParams' => static function() {
+					return [
+						'companyRepository' => \Bitrix\Booking\Internals\Container::getYandexCompanyRepository(),
+						'resourceRepository' => \Bitrix\Booking\Internals\Container::getResourceRepository(),
+						'serviceSkuProvider' => \Bitrix\Booking\Internals\Container::getCatalogServiceSkuProvider(),
+					];
+				},
+			],
+			'booking.internals.service.yandex.service.provider' => [
+				'className' => Bitrix\Booking\Internals\Service\Yandex\ServiceProvider::class,
+				'constructorParams' => static function() {
+					return [
+						'companyRepository' => \Bitrix\Booking\Internals\Container::getYandexCompanyRepository(),
+						'resourceRepository' => \Bitrix\Booking\Internals\Container::getResourceRepository(),
+						'serviceSkuProvider' => \Bitrix\Booking\Internals\Container::getCatalogServiceSkuProvider(),
+					];
+				},
+			],
+			'booking.internals.service.yandex.available.time.slots.provider' => [
+				'className' => Bitrix\Booking\Internals\Service\Yandex\AvailableTimeSlotsProvider::class,
+				'constructorParams' => static function() {
+					return [
+						'companyRepository' => \Bitrix\Booking\Internals\Container::getYandexCompanyRepository(),
+						'resourceRepository' => \Bitrix\Booking\Internals\Container::getResourceRepository(),
+						'bookingRepository' => \Bitrix\Booking\Internals\Container::getBookingRepository(),
+						'serviceSkuProvider' => \Bitrix\Booking\Internals\Container::getCatalogServiceSkuProvider(),
+						'timeProvider' => new TimeProvider(),
+					];
+				},
+			],
+			'booking.internals.service.yandex.available.dates.provider' => [
+				'className' => \Bitrix\Booking\Internals\Service\Yandex\AvailableDatesProvider::class,
+				'constructorParams' => static function() {
+					return [
+						'companyRepository' => \Bitrix\Booking\Internals\Container::getYandexCompanyRepository(),
+						'resourceRepository' => \Bitrix\Booking\Internals\Container::getResourceRepository(),
+						'bookingRepository' => \Bitrix\Booking\Internals\Container::getBookingRepository(),
+						'serviceSkuProvider' => \Bitrix\Booking\Internals\Container::getCatalogServiceSkuProvider(),
+						'timeProvider' => new TimeProvider(),
+					];
+				},
+			],
+			'booking.internals.service.yandex.delete.booking.service' => [
+				'className' => Bitrix\Booking\Internals\Service\Yandex\DeleteBookingService::class,
+				'constructorParams' => static function() {
+					return [
+						'bookingRepository' => \Bitrix\Booking\Internals\Container::getBookingRepository(),
+					];
+				},
+			],
+			'booking.internals.service.yandex.create.booking.service' => [
+				'className' => Bitrix\Booking\Internals\Service\Yandex\CreateBookingService::class,
+				'constructorParams' => static function() {
+					return [
+						'bookingRepository' => \Bitrix\Booking\Internals\Container::getBookingRepository(),
+						'resourceRepository' => \Bitrix\Booking\Internals\Container::getResourceRepository(),
+						'serviceSkuProvider' => \Bitrix\Booking\Internals\Container::getCatalogServiceSkuProvider(),
+						'contactService' => \Bitrix\Booking\Internals\Container::getCrmContactService(),
+						'dealService' => \Bitrix\Booking\Internals\Container::getCrmDealService(),
+					];
+				},
+			],
+			'booking.internals.integration.crm.contact.service' => [
+				'className' => Bitrix\Booking\Internals\Integration\Crm\Contact\ContactService::class,
+			],
+			'booking.internals.integration.crm.deal.service' => [
+				'className' => Bitrix\Booking\Internals\Integration\Crm\DealService::class,
+				'constructorParams' => static function() {
+					return [
+						'serviceSkuProvider' => \Bitrix\Booking\Internals\Container::getCatalogServiceSkuProvider(),
+					];
+				},
+			],
+			'booking.internals.integration.catalog.service.sku.provider' => [
+				'className' => \Bitrix\Booking\Internals\Integration\Catalog\ServiceSkuProvider::class,
+			],
+			'booking.internals.service.yandex.booking.provider' => [
+				'className' => Bitrix\Booking\Internals\Service\Yandex\BookingProvider::class,
+				'constructorParams' => static function() {
+					return [
+						'bookingRepository' => \Bitrix\Booking\Internals\Container::getBookingRepository(),
+					];
+				},
+			],
+			'booking.internals.service.yandex.company.feed.provider' => [
+				'className' => Bitrix\Booking\Internals\Service\Yandex\CompanyFeedProvider::class,
+				'constructorParams' => static function() {
+					return [
+						'companyRepository' => \Bitrix\Booking\Internals\Container::getYandexCompanyRepository(),
+					];
+				},
+			],
+			'booking.internals.service.yandex.company.repository' => [
+				'className' => Bitrix\Booking\Internals\Service\Yandex\CompanyRepository::class,
+			],
+			'booking.internals.service.yandex.api.client' => [
+				'className' => Bitrix\Booking\Internals\Service\Yandex\ApiClient::class,
+			],
+			'booking.internals.service.yandex.account' => [
+				'className' => Bitrix\Booking\Internals\Service\Yandex\Account::class,
+				'constructorParams' => static function() {
+					return [
+						'apiClient' => \Bitrix\Booking\Internals\Container::getYandexApiClient(),
+					];
+				},
+			],
+			'booking.internals.service.yandex.company.feed.sender' => [
+				'className' => Bitrix\Booking\Internals\Service\Yandex\CompanyFeedSender::class,
+				'constructorParams' => static function() {
+					return [
+						'apiClient' => \Bitrix\Booking\Internals\Container::getYandexApiClient(),
+					];
+				},
+			],
+			'booking.internals.integration.catalog.sku.data.loader' => [
+				'className' => Bitrix\Booking\Internals\Integration\Catalog\CatalogSkuDataLoader::class,
+				'constructorParams' => static function() {
+					return [
+						'serviceSkuProvider' => \Bitrix\Booking\Internals\Container::getCatalogServiceSkuProvider(),
+					];
+				},
+			],
+			'booking.booking.provider' => [
+				'className' => \Bitrix\Booking\Provider\BookingProvider::class,
+			],
+			'booking.internals.integration.crm.deal.data.loader' => [
+				'className' => Bitrix\Booking\Internals\Integration\Crm\CrmDealDataLoader::class,
+			],
+			'booking.internals.integration.intranet.booking.tool' => [
+				'className' => \Bitrix\Booking\Internals\Integration\Intranet\BookingTool::class,
+			],
+			\Bitrix\Booking\Internals\Repository\BookingRepositoryInterface::class => [
+				'className' => \Bitrix\Booking\Internals\Repository\ORM\BookingRepository::class,
+			],
+			\Bitrix\Booking\Internals\Repository\ResourceRepositoryInterface::class => [
+				'className' => \Bitrix\Booking\Internals\Repository\ORM\ResourceRepository::class,
+			],
+			\Bitrix\Booking\Internals\Repository\ResourceTypeRepositoryInterface::class => [
+				'className' => \Bitrix\Booking\Internals\Repository\ORM\ResourceTypeRepository::class,
+			],
+			\Bitrix\Booking\Internals\Repository\BookingClientRepositoryInterface::class => [
+				'className' => \Bitrix\Booking\Internals\Repository\ORM\BookingClientRepository::class,
+			],
+			\Bitrix\Booking\Internals\Repository\BookingMessageRepositoryInterface::class => [
+				'className' => \Bitrix\Booking\Internals\Repository\ORM\BookingMessageRepository::class,
 			],
 		],
 	],

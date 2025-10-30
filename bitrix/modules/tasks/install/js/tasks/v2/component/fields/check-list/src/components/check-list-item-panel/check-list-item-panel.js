@@ -1,10 +1,18 @@
 import { hint, type HintParams } from 'ui.vue3.directives.hint';
 import { BIcon } from 'ui.icon-set.api.vue';
+
+import { Core } from 'tasks.v2.core';
+import { Model } from 'tasks.v2.const';
+
 import 'tasks.v2.component.elements.hint';
 
-import { PanelMeta } from './check-list-item-panel-meta';
-// eslint-disable-next-line no-unused-vars
-import type { VisibleSections, VisibleActions, Section, Item } from './check-list-item-panel-meta';
+import type { CheckListModel } from 'tasks.v2.model.check-list';
+import type { TaskModel } from 'tasks.v2.model.tasks';
+
+import { PanelAction, PanelMeta } from './check-list-item-panel-meta';
+import { CheckListManager } from '../../lib/check-list-manager';
+
+import type { VisibleSections, VisibleActions, Section, Item, ActiveActions } from './check-list-item-panel-meta';
 
 import './check-list-item-panel.css';
 
@@ -16,22 +24,13 @@ export const CheckListItemPanel = {
 	},
 	directives: { hint },
 	props: {
-		/** @type VisibleActions */
-		visibleSections: {
-			type: Array,
-			default: () => PanelMeta.defaultSections.map((section: Section) => section.name),
+		taskId: {
+			type: [Number, String],
+			required: true,
 		},
-		visibleActions: {
-			type: Array,
-			default: () => [],
-		},
-		disabledActions: {
-			type: Array,
-			default: () => [],
-		},
-		activeActions: {
-			type: Array,
-			default: () => [],
+		currentItem: {
+			type: Object,
+			default: () => null,
 		},
 	},
 	emits: ['action'],
@@ -43,6 +42,14 @@ export const CheckListItemPanel = {
 		};
 	},
 	computed: {
+		task(): TaskModel
+		{
+			return this.$store.getters[`${Model.Tasks}/getById`](this.taskId);
+		},
+		checkLists(): CheckListModel[]
+		{
+			return this.$store.getters[`${Model.CheckList}/getByIds`](this.task.checklist);
+		},
 		sections(): VisibleSections
 		{
 			return PanelMeta.defaultSections
@@ -81,6 +88,147 @@ export const CheckListItemPanel = {
 				},
 			});
 		},
+		visibleSections(): VisibleSections
+		{
+			return PanelMeta.defaultSections.map((section: Section) => section.name);
+		},
+		visibleActions(): VisibleActions
+		{
+			if (!this.currentItem)
+			{
+				return [];
+			}
+
+			let actions = [
+				PanelAction.SetImportant,
+				PanelAction.MoveRight,
+				PanelAction.MoveLeft,
+				PanelAction.AssignAccomplice,
+				PanelAction.AssignAuditor,
+				PanelAction.Forward,
+				PanelAction.Delete,
+			];
+
+			if (this.itemGroupModeSelected)
+			{
+				actions.push(PanelAction.Cancel);
+			}
+			else
+			{
+				actions.push(PanelAction.AttachFile);
+			}
+
+			if (this.currentItem.parentId === 0)
+			{
+				actions = [
+					PanelAction.AssignAccomplice,
+					PanelAction.AssignAuditor,
+				];
+			}
+
+			const limits = Core.getParams().limits;
+			const stakeholdersActions = new Set([
+				PanelAction.AssignAccomplice,
+				PanelAction.AssignAuditor,
+			]);
+
+			return actions.filter((action: string) => {
+				const isDisabledStakeholders = stakeholdersActions.has(action) && !limits.stakeholders;
+
+				return !isDisabledStakeholders;
+			});
+		},
+		disabledActions(): []
+		{
+			if (!this.currentItem)
+			{
+				return [];
+			}
+
+			const disabledActions = [];
+
+			const itemLevel = this.checkListManager.getItemLevel(this.currentItem);
+			const canModify = this.currentItem.actions.modify === true;
+			const canRemove = this.currentItem.actions.remove === true;
+
+			const conditionHandlers = {
+				[PanelAction.SetImportant]: () => {
+					return canModify === false;
+				},
+				[PanelAction.AttachFile]: () => {
+					return canModify === false;
+				},
+				[PanelAction.MoveLeft]: () => {
+					return itemLevel === 1 || canModify === false;
+				},
+				[PanelAction.MoveRight]: () => {
+					return (
+						itemLevel === 5
+						|| this.currentItem.sortIndex === 0
+						|| canModify === false
+					);
+				},
+				[PanelAction.AssignAccomplice]: () => {
+					return canModify === false;
+				},
+				[PanelAction.AssignAuditor]: () => {
+					return canModify === false;
+				},
+				[PanelAction.Forward]: () => {
+					return (
+						canModify === false
+						|| this.currentItem.title === ''
+					);
+				},
+				[PanelAction.Delete]: () => {
+					return canRemove === false;
+				},
+			};
+
+			Object.entries(conditionHandlers)
+				.forEach(([action: string, condition: function]) => {
+					if (condition())
+					{
+						disabledActions.push(action);
+					}
+				})
+			;
+
+			return disabledActions;
+		},
+		activeActions(): ActiveActions
+		{
+			if (!this.currentItem)
+			{
+				return [];
+			}
+
+			const actions = [];
+
+			if (this.currentItem.isImportant)
+			{
+				actions.push(PanelAction.SetImportant);
+			}
+
+			return actions;
+		},
+		itemGroupModeSelected(): boolean
+		{
+			if (!this.currentItem)
+			{
+				return false;
+			}
+
+			return this.currentItem.groupMode?.selected === true;
+		},
+	},
+	created(): void
+	{
+		this.checkListManager = new CheckListManager({
+			computed: {
+				checkLists: () => this.checkLists,
+			},
+		});
 	},
 	methods: {
 		isItemDisabled(item: Item): boolean

@@ -1,5 +1,6 @@
 import { Dom, Tag, Type } from 'main.core';
 import { PULL } from 'pull.client';
+import { EventEmitter } from 'main.core.events';
 
 import './work-time-state-icon.css';
 
@@ -33,7 +34,7 @@ type Params = {
 	action: string,
 };
 
-export class WorkTimeStateIcon
+export class WorkTimeStateIcon extends EventEmitter
 {
 	#params: Params;
 
@@ -44,6 +45,8 @@ export class WorkTimeStateIcon
 
 	constructor(params: Params)
 	{
+		super();
+		this.setEventNamespace('BX.Timeman.WorkTimeStateIcon');
 		this.#params = params;
 
 		this.#layout = {};
@@ -93,6 +96,7 @@ export class WorkTimeStateIcon
 
 		this.#params.state = data.params.info.state;
 		this.#params.action = data.params.info.action;
+		this.emit('onUpdateState', this.#params);
 
 		this.#updateIcon();
 	}

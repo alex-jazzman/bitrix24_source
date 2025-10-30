@@ -23,7 +23,10 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      defaultDeadline: this.getVariable('defaultDeadline', {
 	        defaultDeadlineInSeconds: 0,
 	        defaultDeadlineDate: ''
-	      })
+	      }),
+	      deletingCheckListIds: {},
+	      disableCheckListAnimations: false,
+	      checkListCompletionCallbacks: {}
 	    };
 	  }
 	  getGetters() {
@@ -33,7 +36,11 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      /** @function interface/titleFieldOffsetHeight */
 	      titleFieldOffsetHeight: state => state.titleFieldOffsetHeight,
 	      /** @function interface/defaultDeadline */
-	      defaultDeadline: state => state.defaultDeadline
+	      defaultDeadline: state => state.defaultDeadline,
+	      /** @function interface/deletingCheckListIds */
+	      deletingCheckListIds: state => state.deletingCheckListIds,
+	      /** @function interface/disableCheckListAnimations */
+	      disableCheckListAnimations: state => state.disableCheckListAnimations
 	    };
 	  }
 	  getActions() {
@@ -45,6 +52,32 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      /** @function interface/updateDefaultDeadline */
 	      updateDefaultDeadline: (store, defaultDeadline) => {
 	        store.commit('setDefaultDeadline', defaultDeadline);
+	      },
+	      /** @function interface/addCheckListItemToDeleting */
+	      addCheckListItemToDeleting: (store, itemId) => {
+	        store.commit('addCheckListItemToDeleting', itemId);
+	      },
+	      /** @function interface/removeCheckListItemFromDeleting */
+	      removeCheckListItemFromDeleting: (store, itemId) => {
+	        store.commit('removeCheckListItemFromDeleting', itemId);
+	      },
+	      /** @function interface/addCheckListCompletionCallback */
+	      addCheckListCompletionCallback: (store, {
+	        id,
+	        callback
+	      }) => {
+	        store.commit('addCheckListCompletionCallback', {
+	          id,
+	          callback
+	        });
+	      },
+	      /** @function interface/executeCheckListCompletionCallbacks */
+	      executeCheckListCompletionCallbacks: store => {
+	        store.commit('executeCheckListCompletionCallbacks');
+	      },
+	      /** @function interface/setDisableCheckListAnimations */
+	      setDisableCheckListAnimations: (store, disableCheckListAnimations) => {
+	        store.commit('setDisableCheckListAnimations', disableCheckListAnimations);
 	      }
 	    };
 	  }
@@ -55,6 +88,25 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	      },
 	      setDefaultDeadline: (state, defaultDeadline) => {
 	        state.defaultDeadline = defaultDeadline;
+	      },
+	      addCheckListItemToDeleting: (state, itemId) => {
+	        state.deletingCheckListIds[itemId] = itemId;
+	      },
+	      removeCheckListItemFromDeleting: (state, itemId) => {
+	        delete state.deletingCheckListIds[itemId];
+	      },
+	      addCheckListCompletionCallback: (state, {
+	        id,
+	        callback
+	      }) => {
+	        state.checkListCompletionCallbacks[id] = callback;
+	      },
+	      executeCheckListCompletionCallbacks: state => {
+	        Object.values(state.checkListCompletionCallbacks).forEach(cb => cb());
+	        state.checkListCompletionCallbacks = {};
+	      },
+	      setDisableCheckListAnimations: (state, disableCheckListAnimations) => {
+	        state.disableCheckListAnimations = disableCheckListAnimations === true;
 	      }
 	    };
 	  }

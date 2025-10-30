@@ -203,7 +203,7 @@ jn.define('collab/invite/src/guests-tab-content', (require, exports, module) => 
 						},
 					},
 				),
-				this.isBitrix24Included && Button(
+				Button(
 					{
 						testId: this.getTestId('by-other-button'),
 						forwardRef: (ref) => {
@@ -215,18 +215,6 @@ jn.define('collab/invite/src/guests-tab-content', (require, exports, module) => 
 						stretched: true,
 						onClick: async () => {
 							await this.#openOtherInviteCasesMenu();
-						},
-					},
-				),
-				!this.isBitrix24Included && Button(
-					{
-						testId: this.getTestId('by-email-button'),
-						text: Loc.getMessage('COLLAB_INVITE_TAB_GUESTS_BY_EMAIL_BUTTON'),
-						size: ButtonSize.S,
-						design: ButtonDesign.PLAN_ACCENT,
-						stretched: true,
-						onClick: async () => {
-							await this.#openEmailInputBox();
 						},
 					},
 				),
@@ -600,7 +588,7 @@ jn.define('collab/invite/src/guests-tab-content', (require, exports, module) => 
 
 			if (!this.isBitrix24Included)
 			{
-				return [emailItem];
+				return [emailItem, qrItem];
 			}
 
 			return [contactListItem, emailItem, qrItem];

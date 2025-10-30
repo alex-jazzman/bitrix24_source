@@ -1,6 +1,5 @@
 <?php
 $MESS["JS_UI_VIEWER_DEFAULT_ERROR_TITLE"] = "Сталася помилка";
-$MESS["JS_UI_VIEWER_IMAGE_VIEW_FULL_SIZE"] = "Показати повністю";
 $MESS["JS_UI_VIEWER_IMAGE_VIEW_FULL_SIZE_MSGVER_1"] = "Відкрити оригінал";
 $MESS["JS_UI_VIEWER_ITEM_ACTION_DELETE"] = "Видалити";
 $MESS["JS_UI_VIEWER_ITEM_ACTION_DOWNLOAD"] = "Скачати";

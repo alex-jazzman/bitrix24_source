@@ -6,6 +6,7 @@ $MESS["DISK_FOLDER_LIST_BIZPROC_TITLE_MODAL"] = "Configure business processes";
 $MESS["DISK_FOLDER_LIST_BTN_CLOSE"] = "Close";
 $MESS["DISK_FOLDER_LIST_BTN_SAVE"] = "Save";
 $MESS["DISK_FOLDER_LIST_COLLABER_HINT"] = "You can add files to collab folders only.";
+$MESS["DISK_FOLDER_LIST_COLLABER_HINT_FOR_READONLY_FOLDER_IN_COLLAB"] = "Insufficient permission to add files to this folder.";
 $MESS["DISK_FOLDER_LIST_COLLABER_TOUR_ON_ADD_BUTTON_TEXT"] = "Files will be visible to all collab members and available for discussion in the collab or one-on-one chats.";
 $MESS["DISK_FOLDER_LIST_COLLABER_TOUR_ON_ADD_BUTTON_TITLE"] = "Add files to the collab";
 $MESS["DISK_FOLDER_LIST_CREATE_FOLDER_MODAL"] = "Create folder";

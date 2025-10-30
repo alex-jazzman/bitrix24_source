@@ -2,6 +2,7 @@
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\EventManager;
+use Bitrix\Main\Config\Option;
 
 Loc::loadMessages(__FILE__);
 
@@ -193,6 +194,8 @@ class booking extends CModule
 			$errors = $DB->runSQLBatch(
 				$this->getDocumentRoot().'/bitrix/modules/booking/install/db/' . $connection->getType() . '/uninstall.sql'
 			);
+
+			Option::delete($this->MODULE_ID);
 		}
 		if ($errors !== false)
 		{

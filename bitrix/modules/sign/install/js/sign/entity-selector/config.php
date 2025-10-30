@@ -18,6 +18,11 @@ return [
 				'options' => [
 					'dynamicLoad' => true,
 					'dynamicSearch' => true,
+					'itemOptions' => [
+						'default' => [
+							'avatar' => '/bitrix/js/sign/entity-selector/images/sign-document.svg',
+						],
+					],
 				],
 			],
 			[
@@ -25,6 +30,18 @@ return [
 				'options' => [
 					'dynamicLoad' => true,
 					'dynamicSearch' => true,
+				],
+			],
+			[
+				'id' => 'signers-list',
+				'options' => [
+					'dynamicLoad' => true,
+					'dynamicSearch' => true,
+					'itemOptions' => [
+						'default' => [
+							'avatar' => '/bitrix/js/sign/entity-selector/images/signers-list.svg',
+						],
+					],
 				],
 			],
 		]

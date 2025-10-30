@@ -4,7 +4,6 @@ $MESS["SALE_DELIVERY_REQ_VIEW_CONTENT"] = "Мазмұны";
 $MESS["SALE_DELIVERY_REQ_VIEW_CONTENT_T"] = "Өтінім мазмұны";
 $MESS["SALE_DELIVERY_REQ_VIEW_DELETE"] = "Өтінімді жою";
 $MESS["SALE_DELIVERY_REQ_VIEW_DEL_CONFIRM"] = "Көлік өтінімін жойғыңыз келетініне сенімдісіз бе?";
-$MESS["SALE_DELIVERY_REQ_VIEW_ERROR"] = "Қате";
 $MESS["SALE_DELIVERY_REQ_VIEW_F_DATE_INSERT"] = "Жасау күні мен уақыты";
 $MESS["SALE_DELIVERY_REQ_VIEW_F_DELIVERY_IDT"] = "Жеткізу қызметі";
 $MESS["SALE_DELIVERY_REQ_VIEW_F_EXTERNAL_ID"] = "Сыртқы идентификатор";

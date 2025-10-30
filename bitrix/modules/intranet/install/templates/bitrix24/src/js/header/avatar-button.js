@@ -59,16 +59,6 @@ export class AvatarButton
 		});
 	}
 
-	static #setHiddenAvatar(): void
-	{
-		Dom.style(this.#avatarWrapper, 'opacity', '0');
-	}
-
-	static #setVisibleAvatar(): void
-	{
-		Dom.style(this.#avatarWrapper, 'opacity', '1');
-	}
-
 	static #showWidget(): void
 	{
 		this.#getContent().then((response) => {
@@ -81,7 +71,9 @@ export class AvatarButton
 			Event.bind(this.#avatarWrapper, 'click', () => {
 				AvatarWidget.getInstance().show();
 			});
-		}).catch(() => {});
+		}).catch((error) => {
+			console.error(error);
+		});
 	}
 
 	static #getWidgetLoader(): WidgetLoader
@@ -91,11 +83,11 @@ export class AvatarButton
 				id: 'bx-avatar-header-popup',
 				bindElement: this.#avatarWrapper,
 				className: 'intranet-avatar-widget-base-popup',
-				width: 450,
+				width: 390,
 				useAngle: false,
 				fixed: true,
 				offsetTop: -50,
-				offsetLeft: -392,
+				offsetLeft: 0,
 			});
 		});
 	}
@@ -117,9 +109,60 @@ export class AvatarButton
 		this.#getCounter().renderTo(this.#getCounterWrapper());
 	}
 
+	static #setHiddenAvatar(): void
+	{
+		Dom.style(this.#avatarWrapper, 'opacity', '0');
+	}
+
+	static #setVisibleAvatar(): void
+	{
+		Dom.style(this.#avatarWrapper, 'opacity', '1');
+	}
+
 	static #showWorkTimeState(): void
 	{
-		this.#getWorkTimeState().renderTo(this.#getWorkTimeStateWrapper());
+		this.#getWorkTimeState().renderTo(this.#getShortWorkTimeStateWrapper());
+		this.#getWorkTimeState().subscribe('onUpdateState', (event) => {
+			this.#updateStateButton(event.data);
+		});
+	}
+
+	static #updateStateButton(config: { action: string, state: string }): void
+	{
+		let className = '';
+		const stateClasses = [
+			'--worktime-not-started',
+			'--worktime-finished',
+			'--worktime-not-finished',
+			'--worktime-paused',
+		];
+
+		stateClasses.forEach((stateClass) => {
+			Dom.removeClass(this.#avatarWrapper, stateClass);
+		});
+
+		switch (config.state)
+		{
+			case 'CLOSED':
+				className = config.action === 'OPEN'
+					? '--worktime-not-started'
+					: '--worktime-finished';
+				break;
+			case 'EXPIRED':
+				className = '--worktime-not-finished';
+				break;
+			case 'PAUSED':
+				className = '--worktime-paused';
+				break;
+			default:
+				className = '';
+				break;
+		}
+
+		if (className)
+		{
+			Dom.addClass(this.#avatarWrapper, className);
+		}
 	}
 
 	static #getCounterWrapper(): HTMLElement
@@ -129,10 +172,10 @@ export class AvatarButton
 		});
 	}
 
-	static #getWorkTimeStateWrapper(): HTMLElement
+	static #getShortWorkTimeStateWrapper(): HTMLElement
 	{
 		return this.#cache.remember('workTimeStateWrapper', () => {
-			return this.#avatarWrapper.querySelector('.air-user-profile-avatar__work-time-state');
+			return this.#avatarWrapper.querySelector('.air-user-profile-avatar__work-time-state-short');
 		});
 	}
 
@@ -184,7 +227,7 @@ export class AvatarButton
 
 	static #setEventHandlerForChangeAvatar(): void
 	{
-		const avatar = this.#avatarWrapper.querySelector('i');
+		const avatar = this.#avatarWrapper.querySelector('.air-user-profile__avatar i');
 
 		EventEmitter.subscribe(
 			'BX.Intranet.UserProfile:Avatar:changed',

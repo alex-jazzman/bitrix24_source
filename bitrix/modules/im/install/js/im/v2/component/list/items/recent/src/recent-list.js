@@ -154,7 +154,12 @@ export const RecentList = {
 				compactMode: false,
 			};
 
-			this.contextMenuManager.openMenu(context, event.currentTarget);
+			const positionTarget = {
+				left: event.clientX,
+				top: event.clientY,
+			};
+
+			this.contextMenuManager.openMenu(context, positionTarget);
 
 			event.preventDefault();
 		},

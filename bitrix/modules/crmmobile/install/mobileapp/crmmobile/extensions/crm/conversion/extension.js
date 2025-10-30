@@ -352,7 +352,7 @@ jn.define('crm/conversion', (require, exports, module) => {
 			}
 
 			const conversionConfig = this.getConversionConfig(params);
-			this.processAnalyticsEvents(conversionConfig, this.analytics, 'attempt');
+			void this.processAnalyticsEvents(conversionConfig, this.analytics, 'attempt');
 
 			return new Promise((resolve, reject) => {
 				BX.ajax.runComponentAction(
@@ -363,21 +363,27 @@ jn.define('crm/conversion', (require, exports, module) => {
 						...conversionConfig,
 					},
 				).then((response) => {
-					const status = !response || response.ERROR ? 'error' : 'success';
+					const isSuccess = !response || response.REQUIRED_ACTION || response.ERROR;
+					const status = isSuccess ? 'success' : 'error';
+
 					resolve(response);
-					this.processAnalyticsEvents(conversionConfig, this.analytics, status);
+
+					void this.processAnalyticsEvents(conversionConfig, this.analytics, status);
 				}).catch((error) => {
 					reject(error);
-					this.processAnalyticsEvents(conversionConfig, this.analytics, 'error');
+
+					void this.processAnalyticsEvents(conversionConfig, this.analytics, 'error');
 				});
 			});
 		}
 
-		processAnalyticsEvents(config, analytics, status)
+		async processAnalyticsEvents(config, analytics, status)
 		{
+			const crmMode = await CrmMode.getCurrentCrmMode();
+
 			const preparedEvent = new AnalyticsEvent(analytics)
 				.setStatus(status)
-				.setP1(`crmMode_${CrmMode.getCrmModeFromCache().toLowerCase()}`)
+				.setP1(`crmMode_${crmMode.toLowerCase()}`)
 				.setP2(`from_${Type.getCommonEntityTypeName(config.entityTypeId).toLowerCase()}`);
 
 			const conversionTargetEntitiesTypes = ['COMPANY', 'CONTACT', 'DEAL', 'SMART_INVOICE', 'QUOTE'];

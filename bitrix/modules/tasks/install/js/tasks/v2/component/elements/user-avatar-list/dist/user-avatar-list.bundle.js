@@ -3,13 +3,15 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
-(function (exports,ui_vue3_components_popup,tasks_v2_lib_hrefClick,tasks_v2_provider_service_userService,ui_iconSet_api_vue,ui_iconSet_api_core,ui_iconSet_outline,ui_tooltip,tasks_v2_component_elements_userAvatar) {
+(function (exports,ui_vue3_components_popup,tasks_v2_lib_hrefClick,tasks_v2_provider_service_userService,ui_iconSet_api_vue,ui_iconSet_api_core,ui_iconSet_outline,ui_tooltip,tasks_v2_component_elements_addBackground,tasks_v2_component_elements_hoverPill,tasks_v2_component_elements_userAvatar) {
 	'use strict';
 
 	// @vue/component
 	const UserAvatarListUsers = {
 	  components: {
 	    BIcon: ui_iconSet_api_vue.BIcon,
+	    AddBackground: tasks_v2_component_elements_addBackground.AddBackground,
+	    HoverPill: tasks_v2_component_elements_hoverPill.HoverPill,
 	    UserAvatar: tasks_v2_component_elements_userAvatar.UserAvatar
 	  },
 	  props: {
@@ -20,9 +22,17 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    withCross: {
 	      type: Boolean,
 	      required: true
+	    },
+	    isDialogShown: {
+	      type: Boolean,
+	      default: false
+	    },
+	    readonly: {
+	      type: Boolean,
+	      default: false
 	    }
 	  },
-	  emits: ['onClick', 'onCrossClick'],
+	  emits: ['onClick', 'onUserClick', 'onUserCrossClick'],
 	  setup() {
 	    return {
 	      Outline: ui_iconSet_api_core.Outline
@@ -36,27 +46,31 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  },
 	  template: `
 		<template v-for="(user, index) of users" :key="user.id">
-			<div class="b24-user-avatar-list-user-container" :data-user-id="user.id">
-				<div class="b24-user-avatar-list-user" :ref="'user_' + user.id" :class="'--' + user.type">
+			<div class="b24-user-avatar-list-user-container">
+				<HoverPill
+					class="b24-user-avatar-list-user"
+					:class="'--' + user.type"
+					:withClear="!readonly"
+					@click.stop="$emit('onUserClick', user.id)"
+					@clear="$emit('onUserCrossClick', user.id)"
+				>
 					<div
-						class="b24-user-avatar-list-user-label"
+						class="b24-user-avatar-list-user-inner"
+						:ref="'user_' + user.id"
 						:bx-tooltip-user-id="user.id"
 						bx-tooltip-context="b24"
-						@click="$emit('onClick', user.id)"
 					>
-						<span class="b24-user-avatar-list-user-image">
-							<UserAvatar :src="user.image" :type="user.type"/>
-						</span>
+							<span class="b24-user-avatar-list-user-image">
+								<UserAvatar :src="user.image" :type="user.type"/>
+							</span>
 						<span class="b24-user-avatar-list-user-title">{{ user.name }}</span>
 					</div>
-					<BIcon
-						v-if="withCross"
-						class="b24-user-avatar-list-user-cross"
-						:name="Outline.CROSS_L"
-						@click="$emit('onCrossClick', user.id)"
-					/>
-				</div>
-				<slot v-if="index === 0" name="addButton"></slot>
+				</HoverPill>
+				<AddBackground
+					v-if="!readonly && index === 0"
+					:isActive="isDialogShown"
+					@click="$emit('onClick')"
+				/>
 			</div>
 		</template>
 	`
@@ -163,5 +177,5 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	exports.UserAvatarList = UserAvatarList;
 	exports.UserAvatarListUsers = UserAvatarListUsers;
 
-}((this.BX.Tasks.V2.Component.Elements = this.BX.Tasks.V2.Component.Elements || {}),BX.UI.Vue3.Components,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.UI.IconSet,BX.UI.IconSet,BX,BX.UI,BX.Tasks.V2.Component.Elements));
+}((this.BX.Tasks.V2.Component.Elements = this.BX.Tasks.V2.Component.Elements || {}),BX.UI.Vue3.Components,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.UI.IconSet,BX.UI.IconSet,BX,BX.UI,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements));
 //# sourceMappingURL=user-avatar-list.bundle.js.map

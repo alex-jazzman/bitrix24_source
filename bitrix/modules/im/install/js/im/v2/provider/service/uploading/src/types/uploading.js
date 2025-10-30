@@ -40,22 +40,8 @@ export type UploadFilesParams = {
 	maxParallelUploads: number,
 }
 
-export type UploadFromClipboardParams = {
-	clipboardEvent: ClipboardEvent,
-	dialogId: string,
-	autoUpload: boolean,
-	imagesOnly: boolean,
-}
-
-export type UploadFromInputParams = {
-	event: Event & { target: HTMLInputElement },
-	dialogId: string,
-	autoUpload: boolean,
-	sendAsFile: boolean,
-}
-
-export type UploadFromDragAndDrop = {
-	event: DragEvent,
+export type UploadParams = {
+	files: Array<File | Blob>,
 	dialogId: string,
 	autoUpload: boolean,
 	sendAsFile: boolean,

@@ -4,18 +4,30 @@
 jn.define('intranet/department-info', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { BottomSheet } = require('bottom-sheet');
-	const { Color, Indent } = require('tokens');
+	const { Color } = require('tokens');
 	const { Box } = require('ui-system/layout/box');
 	const { BoxFooter } = require('ui-system/layout/dialog-footer');
 	const { createTestIdGenerator } = require('utils/test');
 	const { Button, ButtonDesign, ButtonSize } = require('ui-system/form/buttons/button');
-	const { getParentDepartments } = require('intranet/department-info/src/api');
-	const { CompanyStructure } = require('intranet/department-info/src/company-structure');
+	const { ReduxDepartmentStructure } = require('intranet/department-structure');
 	const { Area } = require('ui-system/layout/area');
 	const { AreaList } = require('ui-system/layout/area-list');
+	const { dispatch } = require('statemanager/redux/store');
+	const { fetchParentDepartmentsThunk } = require('intranet/statemanager/redux/slices/department');
 
 	const boxDefaultHeight = 600;
 
+	/**
+	 * @typedef {Object} DepartmentInfoProps
+	 * @property {number} departmentId
+	 * @property {boolean} [pending]
+	 * @property {boolean} [showSelectButton = true]
+	 * @property {string} [selectButtonText]
+	 * @property {function} [onClose]
+	 * @property {function} [onSelectButtonClick]
+
+	 * @class DepartmentInfo
+	 */
 	class DepartmentInfo extends LayoutComponent
 	{
 		constructor(props)
@@ -31,28 +43,25 @@ jn.define('intranet/department-info', (require, exports, module) => {
 		{
 			this.state = {
 				pending: props.pending ?? true,
-				departments: [],
-				heads: [],
-				employeeCounts: [],
+				departmentIds: [],
 			};
 		}
 
 		async componentDidMount()
 		{
-			const response = await getParentDepartments(this.props.departmentId);
-			if (response.status === 'success')
-			{
-				const {
-					departments = [],
-					heads = [],
-					employeeCounts = [],
-				} = response.data;
+			const { departmentId } = this.props;
 
+			const {
+				payload: {
+					isSuccess,
+					hierarchy,
+				},
+			} = await dispatch(fetchParentDepartmentsThunk({ departmentId }));
+			if (isSuccess)
+			{
 				this.setState({
 					pending: false,
-					departments,
-					heads,
-					employeeCounts,
+					departmentIds: this.#prepareDepartmentIds(hierarchy),
 				});
 			}
 		}
@@ -142,29 +151,24 @@ jn.define('intranet/department-info', (require, exports, module) => {
 
 		#renderStructure()
 		{
-			const { departments, heads, employeeCounts, pending } = this.state;
+			const { departmentIds, pending } = this.state;
 
-			return CompanyStructure({
-				testId: this.getTestId('structure'),
-				departments: this.#prepareDepartments(departments),
-				heads,
-				employeeCounts,
+			return ReduxDepartmentStructure({
+				testId: this.getTestId(`structure-${departmentIds?.[0]}`),
+				departmentIds,
+				onLayout: this.onStructureLayout,
 				pending,
-				displayEmployeesCount: false,
-				containerStyle: {
-					marginBottom: Indent.XL.toNumber(),
-				},
 			});
 		}
 
-		#prepareDepartments(departments)
+		#prepareDepartmentIds(departmentIds)
 		{
-			if (departments.length < 4)
+			if (departmentIds.length < 4)
 			{
-				return [departments[0], ...departments];
+				return [departmentIds[0], ...departmentIds];
 			}
 
-			return departments;
+			return departmentIds;
 		}
 
 		#renderButtons()

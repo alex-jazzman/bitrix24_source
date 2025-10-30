@@ -121,3 +121,5 @@ $MESS["TASKS_TASK_AI_PROMO_TITLE"] = "CoPilot";
 $MESS["TASKS_TASK_AI_PROMO_SUBTITLE"] = "Расскажите #COPILOT_START#CoPilot#COPILOT_END# о задаче, а он сделает всё остальное";
 
 $MESS['TASKS_PRESELECTED_COLLAB_HINT'] = 'Если вы хотите добавить задачу в другую коллабу, выберите её';
+
+$MESS['TASKS_TASK_COMPONENT_TEMPLATE_ONCLOSE_POPUP_MESSAGE'] = 'Закрыть задачу без сохранения? Все данные и настройки будут потеряны';

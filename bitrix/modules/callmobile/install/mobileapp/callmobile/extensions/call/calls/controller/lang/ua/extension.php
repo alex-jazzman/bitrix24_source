@@ -1,4 +1,9 @@
 <?php
+$MESS["CALLMOBILE_ACTIVE_CALL_NOTIFICATION_CHANNEL_NAME"] = "Активний дзвінок Бітрікс24";
+$MESS["CALLMOBILE_ACTIVE_CALL_NOTIFICATION_CONTENT_TEXT"] = "Дзвінок №#CALL_NUMBER#";
+$MESS["CALLMOBILE_ACTIVE_CALL_NOTIFICATION_HANGUP_BUTTON_TEXT"] = "Завершити";
+$MESS["CALLMOBILE_ACTIVE_CALL_NOTIFICATION_MUTE_BUTTON_TEXT"] = "Вимкнути мікрофон";
+$MESS["CALLMOBILE_ACTIVE_CALL_NOTIFICATION_UNMUTE_BUTTON_TEXT"] = "Увімкнути мікрофон";
 $MESS["CALLMOBILE_ADMIN_ALLOWED_TURN_ON_ALL_FOR_YOU_BY_HANDRAISE_F"] = "#NAME# дозволила вам увімкнути мікрофон, камеру й демонстрацію.";
 $MESS["CALLMOBILE_ADMIN_ALLOWED_TURN_ON_ALL_FOR_YOU_BY_HANDRAISE_M"] = "#NAME# дозволив вам увімкнути мікрофон, камеру й демонстрацію.";
 $MESS["CALLMOBILE_ADMIN_NOT_ALLOWED_TURN_ON_ALL_FOR_YOU_BY_HANDRAISE_F"] = "#NAME# не дозволила вам увімкнути мікрофон, камеру й демонстрацію.";
@@ -14,16 +19,12 @@ $MESS["CALLMOBILE_USER_ALLOW_TURN_ON_MIC_F"] = "#NAME# дозволила вми
 $MESS["CALLMOBILE_USER_ALLOW_TURN_ON_MIC_M"] = "#NAME# дозволив вмикати мікрофони.";
 $MESS["CALLMOBILE_USER_ALLOW_TURN_ON_SCREENSHARE_F"] = "#NAME# дозволила вмикати демонстрацію екрана.";
 $MESS["CALLMOBILE_USER_ALLOW_TURN_ON_SCREENSHARE_M"] = "#NAME# дозволив вмикати демонстрацію екрана.";
-$MESS["CALLMOBILE_USER_ALLOW_YOU_TURN_ON_MIC_F"] = "#NAME# дозволила вам вмикати мікрофон.";
-$MESS["CALLMOBILE_USER_ALLOW_YOU_TURN_ON_MIC_M"] = "#NAME# дозволив вам вмикати мікрофон.";
 $MESS["CALLMOBILE_USER_NOT_ALLOW_TURN_ON_CAM_F"] = "#NAME# заборонила вмикати камери.";
 $MESS["CALLMOBILE_USER_NOT_ALLOW_TURN_ON_CAM_M"] = "#NAME# заборонив вмикати камери.";
 $MESS["CALLMOBILE_USER_NOT_ALLOW_TURN_ON_MIC_F"] = "#NAME# заборонила вмикати мікрофони.";
 $MESS["CALLMOBILE_USER_NOT_ALLOW_TURN_ON_MIC_M"] = "#NAME# заборонив вмикати мікрофони.";
 $MESS["CALLMOBILE_USER_NOT_ALLOW_TURN_ON_SCREENSHARE_F"] = "#NAME# заборонила вмикати демонстрацію екрана.";
 $MESS["CALLMOBILE_USER_NOT_ALLOW_TURN_ON_SCREENSHARE_M"] = "#NAME# заборонив вмикати демонстрацію екрана.";
-$MESS["CALLMOBILE_USER_NOT_ALLOW_YOU_TURN_ON_MIC_F"] = "#NAME# не дозволила вам увімкнути мікрофон.";
-$MESS["CALLMOBILE_USER_NOT_ALLOW_YOU_TURN_ON_MIC_M"] = "#NAME# не дозволив вам увімкнути мікрофон.";
 $MESS["CALLMOBILE_USER_TURNED_OFF_CAM_FOR_ALL_F"] = "#NAME# вимкнула камери в усіх учасників.";
 $MESS["CALLMOBILE_USER_TURNED_OFF_CAM_FOR_ALL_M"] = "#NAME# вимкнув камери в усіх учасників.";
 $MESS["CALLMOBILE_USER_TURNED_OFF_MIC_FOR_ALL_F"] = "#NAME# вимкнула мікрофони в усіх учасників.";

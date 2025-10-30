@@ -18,4 +18,12 @@ export type FileDto = {
 	customData: {
 		objectId: number,
 	},
+	viewerAttrs: {
+		'data-viewer': boolean,
+		'data-title': string,
+		'data-viewer-type-class': string,
+		'data-viewer-type': string,
+		'data-viewer-group-by': string,
+		'data-object-id': string,
+	},
 };

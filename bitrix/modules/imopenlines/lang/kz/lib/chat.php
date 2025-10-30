@@ -52,6 +52,7 @@ $MESS["IMOL_CHAT_NOTIFY_RATING_VALUE_LIKE"] = "жақсы";
 $MESS["IMOL_CHAT_NOTIFY_SCHEMA_RATING_CLIENT_new"] = "Клиенттен сапаны бағалау туралы мәлімдеме ";
 $MESS["IMOL_CHAT_NOTIFY_SCHEMA_RATING_HEAD"] = "Жетекшіден сапаны бағалау туралы мәлімдеме ";
 $MESS["IMOL_CHAT_NO_OPERATOR_AVAILABLE_IN_QUEUE_NEW"] = "Жүгіну кезекке қайтарылды. Бос операторлар жоқ  ";
+$MESS["IMOL_CHAT_OPERATOR_STARTED_DAY"] = "#USER# жұмыс күнін бастады. Енді осы оператор өтініштерді көре алады";
 $MESS["IMOL_CHAT_PAUSE_OFF_NEW"] = "Автоматты жабу күні кезек ережелеріне сәйкес қойылады";
 $MESS["IMOL_CHAT_PAUSE_ON"] = "Автоматты жабылу күні #DATE# күніне ауыстырылды";
 $MESS["IMOL_CHAT_RETURNED_TO_QUEUE_NEW"] = "Жүгіну кезекке қайтарылды.";

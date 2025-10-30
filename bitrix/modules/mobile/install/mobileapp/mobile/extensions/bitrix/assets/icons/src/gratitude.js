@@ -5,7 +5,9 @@ jn.define('assets/icons/src/gratitude', (require, exports, module) => {
 	const { BaseIcon } = require('assets/icons/src/base');
 	const { Loc } = require('loc');
 
-	const ImageDir = `${currentDomain}/bitrix/mobileapp/mobile/extensions/bitrix/assets/gratitude-icons`;
+	const BaseDir = '/bitrix/mobileapp/mobile/extensions/bitrix/assets/gratitude-icons';
+	const ImageDir = `${currentDomain}${BaseDir}`;
+	const FeedMedalDir = '/bitrix/templates/mobile_app/images/lenta/medal';
 
 	class GratitudeIcon extends BaseIcon
 	{
@@ -15,6 +17,10 @@ jn.define('assets/icons/src/gratitude', (require, exports, module) => {
 			path: `${ImageDir}/beer.svg`,
 			content: '',
 			imageUrl: '',
+			feedId: 'beer',
+			feedUrl: `${BaseDir}/beer.svg`,
+			feedBackground: `${FeedMedalDir}/14_beer/background_mobile_mono.svg`,
+			feedSort: '14',
 		});
 
 		static CAKE = new GratitudeIcon('CAKE', {
@@ -23,6 +29,10 @@ jn.define('assets/icons/src/gratitude', (require, exports, module) => {
 			path: `${ImageDir}/cake.svg`,
 			content: '',
 			imageUrl: '',
+			feedId: 'cake',
+			feedUrl: `${BaseDir}/cake.svg`,
+			feedBackground: `${FeedMedalDir}/10_cake/background_mobile_mono.svg`,
+			feedSort: '10',
 		});
 
 		static COCKTAIL = new GratitudeIcon('COCKTAIL', {
@@ -31,6 +41,10 @@ jn.define('assets/icons/src/gratitude', (require, exports, module) => {
 			path: `${ImageDir}/cocktail.svg`,
 			content: '',
 			imageUrl: '',
+			feedId: 'drink',
+			feedUrl: `${BaseDir}/cocktail.svg`,
+			feedBackground: `${FeedMedalDir}/11_drink/background_mobile_mono.svg`,
+			feedSort: '11',
 		});
 
 		static CROWN = new GratitudeIcon('CROWN', {
@@ -39,6 +53,10 @@ jn.define('assets/icons/src/gratitude', (require, exports, module) => {
 			path: `${ImageDir}/crown.svg`,
 			content: '',
 			imageUrl: '',
+			feedId: 'crown',
+			feedUrl: `${BaseDir}/crown.svg`,
+			feedBackground: `${FeedMedalDir}/08_crown/background_mobile_mono.svg`,
+			feedSort: '08',
 		});
 
 		static CUP = new GratitudeIcon('CUP', {
@@ -47,6 +65,10 @@ jn.define('assets/icons/src/gratitude', (require, exports, module) => {
 			path: `${ImageDir}/cup.svg`,
 			content: '',
 			imageUrl: '',
+			feedId: 'cup',
+			feedUrl: `${BaseDir}/cup.svg`,
+			feedBackground: `${FeedMedalDir}/13_cup/background_mobile_mono.svg`,
+			feedSort: '13',
 		});
 
 		static FLAG = new GratitudeIcon('FLAG', {
@@ -55,6 +77,10 @@ jn.define('assets/icons/src/gratitude', (require, exports, module) => {
 			path: `${ImageDir}/flag.svg`,
 			content: '',
 			imageUrl: '',
+			feedId: 'flag',
+			feedUrl: `${BaseDir}/flag.svg`,
+			feedBackground: `${FeedMedalDir}/05_flag/background_mobile_mono.svg`,
+			feedSort: '05',
 		});
 
 		static FLOWER = new GratitudeIcon('FLOWER', {
@@ -63,6 +89,10 @@ jn.define('assets/icons/src/gratitude', (require, exports, module) => {
 			path: `${ImageDir}/flower.svg`,
 			content: '',
 			imageUrl: '',
+			feedId: 'flowers',
+			feedUrl: `${BaseDir}/flower.svg`,
+			feedBackground: `${FeedMedalDir}/02_flowers/background_mobile_mono.svg`,
+			feedSort: '02',
 		});
 
 		static GIFT = new GratitudeIcon('GIFT', {
@@ -71,6 +101,10 @@ jn.define('assets/icons/src/gratitude', (require, exports, module) => {
 			path: `${ImageDir}/gift.svg`,
 			content: '',
 			imageUrl: '',
+			feedId: 'gift',
+			feedUrl: `${BaseDir}/gift.svg`,
+			feedBackground: `${FeedMedalDir}/07_gift/background_mobile_mono.svg`,
+			feedSort: '07',
 		});
 
 		static HEART = new GratitudeIcon('HEART', {
@@ -79,6 +113,10 @@ jn.define('assets/icons/src/gratitude', (require, exports, module) => {
 			path: `${ImageDir}/heart.svg`,
 			content: '',
 			imageUrl: '',
+			feedId: 'heart',
+			feedUrl: `${BaseDir}/heart.svg`,
+			feedBackground: `${FeedMedalDir}/09_heart/background_mobile_mono.svg`,
+			feedSort: '09',
 		});
 
 		static FIRST_PLACE = new GratitudeIcon('FIRST_PLACE', {
@@ -87,6 +125,10 @@ jn.define('assets/icons/src/gratitude', (require, exports, module) => {
 			path: `${ImageDir}/medal.svg`,
 			content: '',
 			imageUrl: '',
+			feedId: 'thefirst',
+			feedUrl: `${BaseDir}/medal.svg`,
+			feedBackground: `${FeedMedalDir}/06_thefirst/background_mobile_mono.svg`,
+			feedSort: '06',
 		});
 
 		static MONEY = new GratitudeIcon('MONEY', {
@@ -95,6 +137,10 @@ jn.define('assets/icons/src/gratitude', (require, exports, module) => {
 			path: `${ImageDir}/money.svg`,
 			content: '',
 			imageUrl: '',
+			feedId: 'money',
+			feedUrl: `${BaseDir}/money.svg`,
+			feedBackground: `${FeedMedalDir}/12_money/background_mobile_mono.svg`,
+			feedSort: '12',
 		});
 
 		static SMILE = new GratitudeIcon('SMILE', {
@@ -103,6 +149,10 @@ jn.define('assets/icons/src/gratitude', (require, exports, module) => {
 			path: `${ImageDir}/smile.svg`,
 			content: '',
 			imageUrl: '',
+			feedId: 'smile',
+			feedUrl: `${BaseDir}/smile.svg`,
+			feedBackground: `${FeedMedalDir}/03_smile/background_mobile_mono.svg`,
+			feedSort: '03',
 		});
 
 		static STAR = new GratitudeIcon('STAR', {
@@ -111,6 +161,10 @@ jn.define('assets/icons/src/gratitude', (require, exports, module) => {
 			path: `${ImageDir}/star.svg`,
 			content: '',
 			imageUrl: '',
+			feedId: 'star',
+			feedUrl: `${BaseDir}/star.svg`,
+			feedBackground: `${FeedMedalDir}/04_star/background_mobile_mono.svg`,
+			feedSort: '04',
 		});
 
 		static SUCCESS = new GratitudeIcon('SUCCESS', {
@@ -119,6 +173,10 @@ jn.define('assets/icons/src/gratitude', (require, exports, module) => {
 			path: `${ImageDir}/success.svg`,
 			content: '',
 			imageUrl: '',
+			feedId: 'thumbsup',
+			feedUrl: `${BaseDir}/success.svg`,
+			feedBackground: `${FeedMedalDir}/01_thumbsup/background_mobile_mono.svg`,
+			feedSort: '01',
 		});
 
 		/**
@@ -130,6 +188,17 @@ jn.define('assets/icons/src/gratitude', (require, exports, module) => {
 			const badge = this.getEnums().find((item) => item.getIconName() === name);
 
 			return badge ? badge.getValue().testId : null;
+		}
+
+		/**
+		 * @param {string} feedId
+		 * @returns {string|null}
+		 */
+		static getNameByFeedId(feedId)
+		{
+			const badge = this.getEnums().find((item) => item.getValue().feedId === feedId);
+
+			return badge ? badge.getIconName() : null;
 		}
 
 		/**
@@ -150,6 +219,24 @@ jn.define('assets/icons/src/gratitude', (require, exports, module) => {
 		static getEnumByName(name)
 		{
 			return this.getEnums().find((item) => item.getIconName() === name) || null;
+		}
+
+		/**
+		 * @returns {Object}
+		 */
+		static getFeedList()
+		{
+			return this.getEnums().reduce((acc, icon) => {
+				acc[icon.getValue().feedId] = {
+					medalUrl: icon.getValue().feedUrl,
+					backgroundUrl: icon.getValue().feedBackground,
+					medalSelectorUrl: icon.getValue().feedBackground,
+					name: icon.getValue().name,
+					sort: icon.getValue().feedSort,
+				};
+
+				return acc;
+			}, {});
 		}
 	}
 

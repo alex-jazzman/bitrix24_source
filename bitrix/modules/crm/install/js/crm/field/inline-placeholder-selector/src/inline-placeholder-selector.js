@@ -1,4 +1,4 @@
-import { Tag, Type, Dom } from 'main.core';
+import { Dom, Tag, Type } from 'main.core';
 import { Dialog } from 'ui.entity-selector';
 import './inline-placeholder-selector.css';
 import 'ui.forms';
@@ -14,10 +14,12 @@ export class InlinePlaceholderSelector
 	#mode: string;
 	#value: string;
 	#target: HTMLElement;
+	#multiple: boolean;
 	#menuButton: HTMLElement;
 	#dialog: Dialog;
 	#inputElement: HTMLElement;
-	#entityTypeId: number;
+	#entityTypeIds: Array<number>;
+	#onBeforeMenuOpen: ?Function;
 
 	constructor(params: InlinePlaceholderSelectorOptions)
 	{
@@ -26,10 +28,23 @@ export class InlinePlaceholderSelector
 			throw new Error('Target DOM node not found');
 		}
 
+		let entityTypeIds = Type.isArrayFilled(params.entityTypeIds)
+			? params.entityTypeIds
+			: []
+		;
+		entityTypeIds = entityTypeIds.filter(entityTypeId => BX.CrmEntityType.isDefined(entityTypeId));
+
 		this.#target = params.target;
-		this.#entityTypeId = Type.isInteger(params.entityTypeId) ? params.entityTypeId : 0;
+		this.#entityTypeIds = entityTypeIds;
 		this.#mode = params.mode ?? InlinePlaceholderSelectorMode.INPUT;
 		this.#value = params.value ?? '';
+		this.#multiple = params.multiple ?? false;
+		this.#onBeforeMenuOpen = Type.isFunction(params.onBeforeMenuOpen) ? params.onBeforeMenuOpen : null;
+	}
+
+	setEntityTypeIds(entityTypeIds: Array<number>): void
+	{
+		this.#entityTypeIds = entityTypeIds;
 	}
 
 	show()
@@ -44,10 +59,31 @@ export class InlinePlaceholderSelector
 
 	#getDialog(): Dialog
 	{
-		if (this.#dialog)
+		if (Type.isNull(this.#onBeforeMenuOpen) && this.#dialog)
 		{
 			return this.#dialog;
 		}
+
+		const entity = this.#multiple
+			? {
+				id: 'multiple_placeholder',
+				dynamicLoad: true,
+				dynamicSearch: false,
+				searchable: true,
+				options: {
+					entityTypeIds: this.#entityTypeIds,
+				},
+			}
+			: {
+				id: 'placeholder',
+				dynamicLoad: true,
+				dynamicSearch: false,
+				searchable: true,
+				options: {
+					entityTypeId: this.#entityTypeIds[0],
+				},
+			}
+		;
 
 		this.#dialog = new Dialog({
 			targetNode: this.#menuButton,
@@ -57,15 +93,7 @@ export class InlinePlaceholderSelector
 			compactView: true,
 			enableSearch: true,
 			entities: [
-				{
-					id: 'placeholder',
-					dynamicLoad: true,
-					dynamicSearch: false,
-					searchable: true,
-					options: {
-						entityTypeId: this.#entityTypeId,
-					},
-				},
+				entity,
 			],
 			events: {
 				'Item:onSelect': (event: BaseEvent) => {
@@ -119,8 +147,13 @@ export class InlinePlaceholderSelector
 		`;
 	}
 
-	#openMenu()
+	async #openMenu(): void
 	{
+		if (this.#onBeforeMenuOpen)
+		{
+			await this.#onBeforeMenuOpen();
+		}
+
 		this.#getDialog().show();
 	}
 

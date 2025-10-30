@@ -7,7 +7,8 @@ jn.define('statemanager/redux/slices/users', (require, exports, module) => {
 	const { createSlice } = require('statemanager/redux/toolkit');
 	const { sliceName, usersAdapter } = require('statemanager/redux/slices/users/meta');
 	const { usersSelector, selectNonExistentUsersByIds } = require('statemanager/redux/slices/users/selector');
-	const { updateUserThunk, fetchUsersIfNotLoaded } = require('statemanager/redux/slices/users/thunk');
+	const { updateUserThunk, fetchUsersIfNotLoaded, updateProfilePhoto } = require('statemanager/redux/slices/users/thunk');
+	const { Type } = require('type');
 
 	const initialState = StateCache.getReducerState(sliceName, usersAdapter.getInitialState());
 
@@ -111,6 +112,13 @@ jn.define('statemanager/redux/slices/users', (require, exports, module) => {
 		},
 		extraReducers: (builder) => {
 			builder
+				.addCase('intranet:department/fetchParentDepartments/fulfilled', (state, action) => {
+					const { users } = action.payload;
+					if (Type.isArrayFilled(users))
+					{
+						usersAdapter.upsertMany(state, users.map((user) => prepareUser(user)));
+					}
+				})
 				.addCase('tasks:tasks/updateRelatedTasks/fulfilled', (state, action) => {
 					const { data } = action.payload;
 					if (data)
@@ -118,7 +126,7 @@ jn.define('statemanager/redux/slices/users', (require, exports, module) => {
 						const { updatedNewRelatedTasks = [] } = data;
 						const { users = [] } = updatedNewRelatedTasks;
 
-						if (Array.isArray(users) && users.length > 0)
+						if (Type.isArrayFilled(users))
 						{
 							usersAdapter.upsertMany(state, users.map((user) => prepareUser(user)));
 						}
@@ -131,7 +139,7 @@ jn.define('statemanager/redux/slices/users', (require, exports, module) => {
 						const { updatedNewRelatedTasks = [] } = data;
 						const { users } = updatedNewRelatedTasks;
 
-						if (Array.isArray(users) && users.length > 0)
+						if (Type.isArrayFilled(users))
 						{
 							usersAdapter.upsertMany(state, users.map((user) => prepareUser(user)));
 						}
@@ -157,6 +165,30 @@ jn.define('statemanager/redux/slices/users', (require, exports, module) => {
 					{
 						usersAdapter.upsertMany(state, data.map((user) => prepareUserFromRest(user)));
 					}
+				})
+				.addCase(updateProfilePhoto.fulfilled, (state, { payload, meta }) => {
+					const { image } = payload;
+					const userId = meta.arg.userId;
+
+					if (image)
+					{
+						const { previewUrl } = image;
+						usersAdapter.updateOne(state, {
+							id: Number(userId),
+							changes: {
+								avatarSizeOriginal: previewUrl,
+								avatarSize100: previewUrl,
+							},
+						});
+					}
+				})
+				.addCase(updateProfilePhoto.rejected, (state, { payload }) => {
+					const { error, errorDescription } = payload || {};
+
+					if (error)
+					{
+						console.error(error, errorDescription);
+					}
 				});
 		},
 	});
@@ -180,5 +212,6 @@ jn.define('statemanager/redux/slices/users', (require, exports, module) => {
 		usersAdded,
 		usersAddedFromEntitySelector,
 		usersUpsertedFromEntitySelector,
+		updateProfilePhoto,
 	};
 });

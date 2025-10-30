@@ -3,7 +3,6 @@ $MESS["BPAA_ACT_APPROVERS_NONE"] = "none";
 $MESS["BPAA_ACT_COMMENT_ERROR"] = "The '#COMMENT_LABEL#' field is required.";
 $MESS["BPAA_ACT_NO_ACTION"] = "Invalid action selected.";
 $MESS["BPAR_ACT_BUTTON2"] = "Done";
-$MESS["BPAR_ACT_COMMENT"] = "Comments";
 $MESS["BPAR_ACT_COMMENT_1"] = "Notes";
 $MESS["BPAR_ACT_COMMENT_REQUIRED_TO_APPROVE"] = "Required when approving workflow element";
 $MESS["BPAR_ACT_COMMENT_REQUIRED_TO_REJECT"] = "Required when declining workflow element";

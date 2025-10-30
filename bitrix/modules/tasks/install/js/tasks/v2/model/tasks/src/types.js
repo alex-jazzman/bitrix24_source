@@ -12,6 +12,8 @@ export type TaskModel = {
 	responsibleId: number,
 	deadlineTs: number,
 	needsControl: boolean,
+	startPlanTs: number,
+	endPlanTs: number,
 	fileIds: number[],
 	checklist: [],
 	containsChecklist: boolean,
@@ -25,8 +27,16 @@ export type TaskModel = {
 	accomplicesIds: number[],
 	auditorsIds: number[],
 	chatId: number,
+	crmItemIds: string[],
+	allowsChangeDeadline: boolean,
+	allowsChangeDatePlan: boolean,
+	matchesWorkTime: boolean,
+	matchesSubTasksTime: boolean,
+	tags: string[],
 	filledFields: { [field: string]: boolean },
 	rights: TaskRights,
+	archiveLink: ?string,
+	source?: Source,
 };
 
 export type TaskRights = {
@@ -43,6 +53,7 @@ export type TaskRights = {
 	renew: boolean,
 	create: boolean,
 	deadline: boolean,
+	datePlan: boolean,
 	changeDirector: boolean,
 	changeResponsible: boolean,
 	changeAccomplices: boolean,
@@ -69,4 +80,12 @@ export type TaskRights = {
 	copy: boolean,
 	createFromTemplate: boolean,
 	saveAsTemplate: boolean,
+	attachFile: boolean,
+	detachFile: boolean,
+};
+
+export type Source = {
+	type: string,
+	entityId?: number,
+	subEntityId?: number,
 };

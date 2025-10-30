@@ -33,6 +33,7 @@ export const Feature = {
 	isDesktopRedirectAvailable: 'isDesktopRedirectAvailable',
 	aiAssistantBotAvailable: 'aiAssistantAvailable',
 	aiAssistantChatAvailable: 'aiAssistantChatCreationAvailable',
+	aiFileTranscriptionAvailable: 'aiFileTranscriptionAvailable',
 };
 
 export const FeatureManager = {

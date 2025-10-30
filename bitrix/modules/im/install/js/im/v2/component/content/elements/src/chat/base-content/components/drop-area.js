@@ -1,4 +1,4 @@
-import { hasDataTransferOnlyFiles } from 'ui.uploader.core';
+import { getFilesFromDataTransfer, hasDataTransferOnlyFiles } from 'ui.uploader.core';
 import { Event, Type, type JsonObject } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 
@@ -121,8 +121,8 @@ export const DropArea = {
 			event.preventDefault();
 
 			const multiUploadingService: MultiUploadingService = this.getMultiUploadingService();
-			const multiUploadingResult: MultiUploadingResult = await multiUploadingService.uploadFromDragAndDrop({
-				event,
+			const multiUploadingResult: MultiUploadingResult = await multiUploadingService.upload({
+				files: await getFilesFromDataTransfer(event.dataTransfer),
 				dialogId: this.dialogId,
 				sendAsFile: false,
 				autoUpload: false,

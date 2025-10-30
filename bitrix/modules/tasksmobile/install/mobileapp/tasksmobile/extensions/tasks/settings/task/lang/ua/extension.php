@@ -3,5 +3,4 @@ $MESS["TASKSMOBILE_SETTINGS_TASK_BETA_ACTIVE_TITLE"] = "Увімкнути бе�
 $MESS["TASKSMOBILE_SETTINGS_TASK_BETA_NEW_CHECKLIST"] = "Нові контрольні списки";
 $MESS["TASKSMOBILE_SETTINGS_TASK_BETA_NOTIFICATION"] = "Перезавантажте застосунок";
 $MESS["TASKSMOBILE_SETTINGS_TASK_BETA_TITLE"] = "Нові завдання (бета)";
-$MESS["TASKSMOBILE_SETTINGS_TASK_BETA_TWO_LINE_HEADER_ACTIVE_TITLE"] = "Заголовки завдань у два рядки";
 $MESS["TASKSMOBILE_SETTINGS_TASK_TITLE"] = "Завдання";

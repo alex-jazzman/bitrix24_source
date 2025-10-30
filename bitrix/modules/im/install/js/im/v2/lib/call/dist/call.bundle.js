@@ -357,6 +357,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    return babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].getters['recent/calls/hasActiveCall']() && !this.hasActiveCurrentCall(dialogId);
 	  }
 	  getCallUserLimit() {
+	    // TODO: add to 597100
+	    if (!this.isAvailable()) {
+	      return 0;
+	    }
 	    return BX.Call.Util.getUserLimit();
 	  }
 	  isChatUserLimitExceeded(dialogId) {

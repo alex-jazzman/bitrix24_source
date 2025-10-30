@@ -48,7 +48,6 @@ $MESS["INTRANET_SETTINGS_DOMAIN_RENAMING_FORMAT_ERROR"] = "Мекенжай те
 $MESS["INTRANET_SETTINGS_DOMAIN_RENAMING_LENGTH_ERROR"] = "Мекенжайда 3 тен 60 символға дейін болуы керек";
 $MESS["INTRANET_SETTINGS_ELEMENT_PERMISSION_MSG"] = "Баптауларды тек сіздің Битрикс24-тің әкімшісі ғана өзгерте алады";
 $MESS["INTRANET_SETTINGS_ERROR_FETCH_DATA"] = "Деректерді алу кезінде қате пайда болды";
-$MESS["INTRANET_SETTINGS_FIELD_DELETE_PORTAL_CHECKWORD_PLACEHOLDER"] = "Битрикс24-ті жоюға дайын болсаңыз #CHECKWORD# енгізіңіз";
 $MESS["INTRANET_SETTINGS_FIELD_HELP_MESSAGE"] = "Бұл тек ақылы тарифтерде қол жетімді. <a onclick=\"BX.Bitrix24.License.openPurchasePage(); return false;\" href=\"#\">Тарифті таңдаңыз</a>";
 $MESS["INTRANET_SETTINGS_FIELD_HELP_MESSAGE_DISABLED"] = "#TOOL# элементін мәзірден алып тастауға болмайды";
 $MESS["INTRANET_SETTINGS_FIELD_HELP_MESSAGE_ENT"] = "Бұл тек Энтерпрайз тарифінде қолжетімді. <a onclick=\"BX.Bitrix24.License.openPurchasePage(\'#TARIFF#\'); return false;\" href=\"#\">Сатып алу</a>";
@@ -198,9 +197,7 @@ $MESS["INTRANET_SETTINGS_MAINPAGE_LIST_ITEM_3"] = "Басты бетті орн�
 $MESS["INTRANET_SETTINGS_MAINPAGE_POPUP_BTN_CANCEL"] = "Болдырмау";
 $MESS["INTRANET_SETTINGS_MAINPAGE_SHARE_POPUP_BTN_CONFIRM"] = "иә, жариялау";
 $MESS["INTRANET_SETTINGS_MAINPAGE_SHARE_POPUP_CONTENT"] = "Барлық қызметкерлер бетті көреді. Біздің вайб сол жақтағы бірінші мәзірде пайда болады";
-$MESS["INTRANET_SETTINGS_MAINPAGE_SHARE_POPUP_TITLE"] = "Негізгі порталды жариялау керек пе?";
 $MESS["INTRANET_SETTINGS_MAINPAGE_SHARE_POPUP_TITLE_MSGVER_1"] = "Басты бетті жариялау керек пе?";
-$MESS["INTRANET_SETTINGS_MAINPAGE_TITLE"] = "Корпоративтік вайб";
 $MESS["INTRANET_SETTINGS_MAINPAGE_WITHDRAW_POPUP_BTN_CONFIRM"] = "Иә, шешіңіз";
 $MESS["INTRANET_SETTINGS_MAINPAGE_WITHDRAW_POPUP_BTN_CONFIRM_FREE"] = "Иә, өшіру";
 $MESS["INTRANET_SETTINGS_MAINPAGE_WITHDRAW_POPUP_CONTENT"] = "Бет жойылмайды, бірақ сол жақ мәзірде «Біздің вайб» элементі қолжетімді болмайды";
@@ -210,7 +207,6 @@ $MESS["INTRANET_SETTINGS_MAINPAGE_WITHDRAW_POPUP_TITLE_FREE"] = "Негізгі 
 $MESS["INTRANET_SETTINGS_OWN_DOMAIN_HELP1"] = "Доменіңіздің аймағындағы DNS редакторына \"IN NS\" түрінің 4 жазбасын енгізу. Егер қосылатын доменге арналған басқа жазбалар болса, оларды жою керек.";
 $MESS["INTRANET_SETTINGS_OWN_DOMAIN_HELP2"] = "Битрикс24 қолдау қызметіне жүгіну. Мұны тек сіздің Битрикс24 әкімшісі жасай алады.";
 $MESS["INTRANET_SETTINGS_OWN_DOMAIN_HELP3"] = "Ауысу жүзеге асырылатын меншікті доменнің нақты атауын көрсету. Қосылатын доменге енгізілген NS жазбаларына өзгертулер туралы дәлелдер келтіру - бұл жай ғана домен аймағының DNS редакторының скриншоты болуы мүмкін.";
-$MESS["INTRANET_SETTINGS_OWN_DOMAIN_HELP_DNS"] = "ns-1277.awsdns-31.org<br>ns-310.awsdns-38.com<br>ns-581.awsdns-08.net<br>ns-1613.awsdns-09.co.uk";
 $MESS["INTRANET_SETTINGS_PERMISSION_MSG"] = "Бұл баптаулар тек біздің Битрикс24 әкімшісіне қолжетімді";
 $MESS["INTRANET_SETTINGS_POPUP_OTP_ENABLE"] = "Барлық пайдаланушылар үшін екі факторлы аутентификацияны қосу үшін алдымен оны өзіңіз үшін баптау қажет";
 $MESS["INTRANET_SETTINGS_POPUP_OTP_ENABLE_BUTTON"] = "Жалғастыру";
@@ -219,9 +215,7 @@ $MESS["INTRANET_SETTINGS_PORTAL_DELETE_MAIL_SUBJECT"] = "#PORTAL_URL#-ды жо�
 $MESS["INTRANET_SETTINGS_SEARCH"] = "іздеу";
 $MESS["INTRANET_SETTINGS_SEARCH_NOT_FOUND"] = "Ештеңе табылған жоқ";
 $MESS["INTRANET_SETTINGS_SEARCH_PLACEHOLDER"] = "Іздеу";
-$MESS["INTRANET_SETTINGS_SECTION_CONFIGURATION_DESCRIPTION_DELETE_PORTAL"] = "Біз барлық деректерді, соның ішінде дискідегі файлдарды және қызметкерлердің профильдерін жоямыз.<br><br>Деректерді қалпына келтіру мүмкін болмайды. Жоюға дайын екеніңізге көз жеткізіңіз. #MORE_DETAILS#";
 $MESS["INTRANET_SETTINGS_SECTION_CONFIGURATION_DESCRIPTION_DELETE_PORTAL_BOUND"] = "Жою алдында Битрикс24-ті филиал желісінен ажырату керек. #MORE_DETAILS#";
-$MESS["INTRANET_SETTINGS_SECTION_CONFIGURATION_DESCRIPTION_DELETE_PORTAL_CHECKWORD"] = "Қазір біз сіздің Битрикс24-ті барлық деректерімен біржола жоямыз. Дайындығыңызды растау үшін #CHECKWORD# сөзін енгізіңіз";
 $MESS["INTRANET_SETTINGS_SECTION_CONFIGURATION_DESCRIPTION_DELETE_PORTAL_EMPLOYEE"] = "Жоюдың алдында сіздің Битрикс24-те тек әкімші қалуы керек. Қалған қызметкерлерді жұмыстан шығару керек. #MORE_DETAILS#";
 $MESS["INTRANET_SETTINGS_SECTION_CONFIGURATION_DESCRIPTION_DELETE_PORTAL_MAIL"] = "Битрикс24-ті жою үшін бізге жазыңыз <a class=\"ui-section__link --mail\" href=\"#MAIL_LINK#\">#MAIL#</a>.<br><br> Барлық деректер қалпына келтіру мүмкіндігінсіз жойылады. #MORE_DETAILS#";
 $MESS["INTRANET_SETTINGS_SECTION_CONFIGURATION_DESCRIPTION_DELETE_PORTAL_MSGVER_1"] = "Битрикс24-ті тек әкімші ғана жоя алады. Жою алдында барлық қызметкерлер жұмыстан босатылуы керек. Барлық деректер, соның ішінде дискідегі файлдар мен қызметкерлердің профилдері жойылады.<br><br>Жоюдан кейін сіз сол мекенжаймен Битрикс24 жасай аласыз. #MORE_DETAILS#";

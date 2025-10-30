@@ -217,14 +217,14 @@ export const Message = {
 				</div>
 				<div class="booking-actions-popup-item-info">
 					<div class="booking-actions-popup-item-title">
-						<span :title="status?.title">{{ status?.title || 'СМС клиенту' }}</span>
+						<span :title="status?.title">{{ status?.title || '' }}</span>
 						<Icon :name="iconSet.HELP" @click="showHelpDesk"/>
 					</div>
 					<div
 						class="booking-actions-popup-item-subtitle"
 						:class="'--' + semantic || 'none'"
 					>
-						{{ status?.description || 'Не отправлено' }}
+						{{ status?.description || '' }}
 					</div>
 				</div>
 				<div class="booking-actions-popup-item-buttons">

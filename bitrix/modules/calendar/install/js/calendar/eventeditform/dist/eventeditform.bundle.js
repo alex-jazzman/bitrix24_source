@@ -304,6 +304,11 @@ this.BX = this.BX || {};
 	    if (!this.isAvailable) {
 	      return;
 	    }
+	    if (this.notLoaded) {
+	      BX.SidePanel.Instance.close();
+	      location.reload();
+	      return;
+	    }
 
 	    // Used to execute javasctipt and attach CSS from ajax responce
 	    this.BX.html(this.slider.layout.content, this.slider.getData().get('sliderContent'));
@@ -700,6 +705,7 @@ this.BX = this.BX || {};
 	        promise.fulfill(html);
 	      }
 	    }, response => {
+	      this.notLoaded = true;
 	      if (response.data && !main_core.Type.isNil(response.data.isAvailable) && !response.data.isAvailable) {
 	        this.isAvailable = false;
 	        const showHelperCallback = () => {
@@ -722,9 +728,7 @@ this.BX = this.BX || {};
 	      const html = this.BX.util.trim('<div></div>');
 	      slider.getData().set('sliderContent', html);
 	      promise.fulfill(html);
-	      // this.calendar.displayError(response.errors);
 	    });
-
 	    return promise;
 	  }
 	  initControls(uid) {

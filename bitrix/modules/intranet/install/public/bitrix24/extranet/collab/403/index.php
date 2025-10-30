@@ -83,6 +83,7 @@ IncludeModuleLangFile($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/intranet/publ
 			justify-content: space-between;
 			align-items: center;
 			margin: 0 auto;
+			cursor: pointer;
 		}
 		.bx-collab-403-action__logout-container span {
 			margin-left: 5px;

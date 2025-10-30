@@ -52,7 +52,6 @@ export const RestMethod = Object.freeze({
 	imV2ChatTaskPrepare: 'im.v2.Chat.Task.prepare',
 	imV2RecentChannelTail: 'im.v2.Recent.Channel.Tail',
 	imV2RecentCollabTail: 'im.v2.Recent.Collab.Tail',
-	imV2RecentAiAssistantTail: 'im.v2.Recent.AiAssistant.tail',
 	imV2ChatCopilotUpdateRole: 'im.v2.Chat.Copilot.updateRole',
 	imV2ChatCopilotUpdateAiModel: 'im.v2.Chat.Copilot.updateEngine',
 	imV2AccessCheck: 'im.v2.Access.check',
@@ -61,6 +60,7 @@ export const RestMethod = Object.freeze({
 	imV2DiskFileSave: 'im.v2.Disk.File.save',
 	imV2ChatBotSendContext: 'im.v2.Chat.Bot.sendContext',
 	imV2ChatMemberTail: 'im.v2.Chat.Member.tail',
+	imV2DiskFileTranscribe: 'im.v2.Disk.File.transcribe',
 
 	imV2RecentPin: 'im.v2.Chat.pin',
 	imV2RecentUnpin: 'im.v2.Chat.unpin',

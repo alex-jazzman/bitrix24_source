@@ -408,7 +408,7 @@ if (typeof BX.Tasks.ProjectSelector === "undefined")
 
 
 this.BX = this.BX || {};
-(function (exports,ui_tour,main_core,main_core_events,ui_buttons,ui_system_menu) {
+(function (exports,ui_tour,main_core,main_core_events,ui_buttons,ui_system_menu,pull_client) {
 	'use strict';
 
 	var _filterId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("filterId");
@@ -501,9 +501,11 @@ this.BX = this.BX || {};
 	var _initButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initButton");
 	var _bindEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bindEvents");
 	var _handleFilterBeforeApply = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleFilterBeforeApply");
+	var _handlePull = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handlePull");
 	var _update = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("update");
 	var _menuItems = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("menuItems");
 	var _roleName = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("roleName");
+	var _roleCounter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("roleCounter");
 	var _sendAnalyticsClick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendAnalyticsClick");
 	var _sendAnalyticsApply = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendAnalyticsApply");
 	var _getAnalyticsSender = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getAnalyticsSender");
@@ -517,6 +519,10 @@ this.BX = this.BX || {};
 	    });
 	    Object.defineProperty(this, _sendAnalyticsClick, {
 	      value: _sendAnalyticsClick2
+	    });
+	    Object.defineProperty(this, _roleCounter, {
+	      get: _get_roleCounter,
+	      set: void 0
 	    });
 	    Object.defineProperty(this, _roleName, {
 	      get: _get_roleName,
@@ -566,16 +572,29 @@ this.BX = this.BX || {};
 	        }
 	      }
 	    });
+	    Object.defineProperty(this, _handlePull, {
+	      writable: true,
+	      value: data => {
+	        Object.entries(data[0]).forEach(([roleId, {
+	          total
+	        }]) => {
+	          babelHelpers.classPrivateFieldLooseBase(this, _roles)[_roles][roleId].counter = total;
+	        });
+	        babelHelpers.classPrivateFieldLooseBase(this, _update)[_update]();
+	      }
+	    });
 	    if (!params.button) {
 	      return;
 	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _selectedRoleId)[_selectedRoleId] = params.selectedRoleId || defaultRole;
 	    babelHelpers.classPrivateFieldLooseBase(this, _roles)[_roles] = {
 	      [defaultRole]: {
-	        title: main_core.Loc.getMessage('TASKS_ALL_ROLES')
+	        title: main_core.Loc.getMessage('TASKS_ALL_ROLES'),
+	        counter: params.totalCounter
 	      },
 	      ...Object.fromEntries(Object.entries(params.items).map(([roleId, item]) => [roleId, {
-	        title: item.TEXT
+	        title: item.TEXT,
+	        counter: Number(item.COUNTER)
 	      }]))
 	    };
 	    babelHelpers.classPrivateFieldLooseBase(this, _analytics)[_analytics] = params.analytics;
@@ -596,23 +615,42 @@ this.BX = this.BX || {};
 	}
 	function _bindEvents2() {
 	  main_core_events.EventEmitter.subscribe('BX.Main.Filter:beforeApply', babelHelpers.classPrivateFieldLooseBase(this, _handleFilterBeforeApply)[_handleFilterBeforeApply]);
+	  pull_client.PULL.subscribe({
+	    moduleId: 'tasks',
+	    command: 'user_counter',
+	    callback: babelHelpers.classPrivateFieldLooseBase(this, _handlePull)[_handlePull]
+	  });
 	}
 	function _update2() {
 	  babelHelpers.classPrivateFieldLooseBase(this, _button)[_button].setText(babelHelpers.classPrivateFieldLooseBase(this, _roleName)[_roleName]);
+	  babelHelpers.classPrivateFieldLooseBase(this, _button)[_button].setRightCounter(babelHelpers.classPrivateFieldLooseBase(this, _roleCounter)[_roleCounter] ? {
+	    value: babelHelpers.classPrivateFieldLooseBase(this, _roleCounter)[_roleCounter]
+	  } : null);
 	  babelHelpers.classPrivateFieldLooseBase(this, _menu)[_menu].updateItems(babelHelpers.classPrivateFieldLooseBase(this, _menuItems)[_menuItems]);
 	}
 	function _get_menuItems() {
+	  const hasCounters = Object.values(babelHelpers.classPrivateFieldLooseBase(this, _roles)[_roles]).some(({
+	    counter
+	  }) => counter > 0);
 	  return Object.entries(babelHelpers.classPrivateFieldLooseBase(this, _roles)[_roles]).map(([roleId, role]) => ({
 	    title: role.title,
 	    isSelected: roleId === babelHelpers.classPrivateFieldLooseBase(this, _selectedRoleId)[_selectedRoleId],
 	    onClick: () => main_core_events.EventEmitter.emit('Tasks.TopMenu:onItem', new main_core_events.BaseEvent({
 	      data: [roleId],
 	      compatData: [roleId]
-	    }))
+	    })),
+	    ...(hasCounters ? {
+	      counter: {
+	        value: role.counter
+	      }
+	    } : {})
 	  }));
 	}
 	function _get_roleName() {
 	  return babelHelpers.classPrivateFieldLooseBase(this, _roles)[_roles][babelHelpers.classPrivateFieldLooseBase(this, _selectedRoleId)[_selectedRoleId]].title;
+	}
+	function _get_roleCounter() {
+	  return babelHelpers.classPrivateFieldLooseBase(this, _roles)[_roles][defaultRole].counter;
 	}
 	async function _sendAnalyticsClick2() {
 	  const analytics = await babelHelpers.classPrivateFieldLooseBase(this, _getAnalyticsSender)[_getAnalyticsSender]();
@@ -680,7 +718,7 @@ this.BX = this.BX || {};
 	exports.Preset = Preset;
 	exports.TasksInterfaceFilter = TasksInterfaceFilter;
 
-}((this.BX.Tasks = this.BX.Tasks || {}),BX.UI.Tour,BX,BX.Event,BX.UI,BX.UI.System));
+}((this.BX.Tasks = this.BX.Tasks || {}),BX.UI.Tour,BX,BX.Event,BX.UI,BX.UI.System,BX));
 
 
 //# sourceMappingURL=script.js.map

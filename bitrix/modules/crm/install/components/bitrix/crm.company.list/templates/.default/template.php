@@ -27,6 +27,9 @@ use Bitrix\Crm\UI\NavigationBarPanel;
 use Bitrix\Crm\UI\SettingsButtonExtender\SettingsButtonExtenderParams;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Uri;
+use Bitrix\UI\Buttons\AirButtonStyle;
+use Bitrix\UI\Buttons\Icon;
+use Bitrix\UI\Buttons\JsCode;
 
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/crm-entity-show.css");
 
@@ -660,45 +663,49 @@ foreach($arResult['COMPANY'] as $sKey =>  $arCompany)
 	unset($resultItem);
 }
 
-if ($arResult['ENABLE_TOOLBAR'])
+if ($arResult['ENABLE_TOOLBAR'] && !\Bitrix\Main\Grid\Context::isInternalRequest())
 {
-	$relationCode = $arParams['PARENT_ENTITY_TYPE_ID'] . '-' . $arParams['PARENT_ENTITY_ID'] . '-' . \CCrmOwnerType::Company;
+	$relationCode = (int)$arParams['PARENT_ENTITY_TYPE_ID'] . '-' . (int)$arParams['PARENT_ENTITY_ID'] . '-' . \CCrmOwnerType::Company;
 	$targetId = 'relation-button-' . $relationCode;
-	$linkButton = [
-		'ATTRIBUTES' => [
-			'ID' => $targetId
-		],
-		'TEXT' => Loc::getMessage('CRM_COMPANY_LIST_LINK_COMPANY'),
-		'TITLE' => Loc::getMessage('CRM_COMPANY_LIST_LINK_COMPANY'),
-		'SQUARE' => true,
-		'ONCLICK' => sprintf(
-			<<<js
-(function() {
-	const selector = BX.Crm.Binder.Manager.Instance.createRelatedSelector(
-		'%s',
-		'%s'
-	);
-	if (selector)
-	{
-		selector.show();
-	}
-})()
-js,
-			\CUtil::JSEscape('relation-' . $relationCode),
-			\CUtil::JSEscape($targetId),
-		),
-	];
 
-	$APPLICATION->IncludeComponent(
-		'bitrix:crm.interface.toolbar',
-		'',
-		[
-			'TOOLBAR_ID' => mb_strtolower($arResult['GRID_ID']).'_toolbar',
-			'BUTTONS' => [$linkButton]
-		],
-		$component,
-		['HIDE_ICONS' => 'Y'],
+	$jsCode = sprintf(
+		<<<js
+			(function() {
+				void BX.Crm.Binder.Manager.Instance.createRelatedSelector('%s', '%s')?.show();
+			})()
+		js,
+		\CUtil::JSEscape('relation-' . $relationCode),
+		\CUtil::JSEscape($targetId),
 	);
+
+	$linkButton = new \Bitrix\UI\Buttons\Button([
+		'id' => $targetId,
+		'text' =>  Loc::getMessage('CRM_COMPANY_LIST_LINK_COMPANY'),
+		'style' => AirButtonStyle::OUTLINE,
+		'icon' => Icon::ADD,
+		'onclick' => new JsCode($jsCode),
+	]);
+
+	$linkButton->addAttribute('id', $targetId);
+
+	$toolbarId = mb_strtolower($arResult['GRID_ID']) . '_toolbar';
+	$toolbar = \Bitrix\UI\Toolbar\Manager::getInstance()->createToolbar($toolbarId, []);
+	$toolbar->addButton($linkButton, \Bitrix\UI\Toolbar\ButtonLocation::AFTER_TITLE);
+
+	$toolbar->hideTitle();
+	?>
+	<div class="crm-list-top-toolbar">
+		<?php
+		$GLOBALS["APPLICATION"]->IncludeComponent(
+			'bitrix:ui.toolbar',
+			'',
+			[
+				'TOOLBAR_ID' => $toolbarId,
+			],
+		);
+		?>
+		</div>
+	<?php
 }
 
 $APPLICATION->IncludeComponent(

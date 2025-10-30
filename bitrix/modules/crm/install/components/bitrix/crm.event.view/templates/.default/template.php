@@ -2,6 +2,7 @@
 
 global $component;
 
+use Bitrix\Crm\ItemMiniCard\Builder\MiniCardHtmlBuilder;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Settings\LayoutSettings;
 use Bitrix\Main\Page\Asset;
@@ -148,11 +149,18 @@ foreach ($arResult['EVENT'] as $arEvent)
 
 	if ($arResult['EVENT_ENTITY_LINK'] === 'Y')
 	{
+		$entityTypeId = CCrmOwnerType::ResolveID($arEvent['ENTITY_TYPE']);
+		$description = CCrmOwnerType::GetDescription($entityTypeId);
+
 		$arColumns['ENTITY_TYPE'] = !empty($arEvent['ENTITY_TYPE'])
-			? htmlspecialcharsbx(CCrmOwnerType::GetDescription(CCrmOwnerType::ResolveID($arEvent['ENTITY_TYPE']))) : '';
+			? htmlspecialcharsbx($description)
+			: ''
+		;
 
 		$arColumns['ENTITY_TITLE'] = !empty($arEvent['ENTITY_TITLE'])
-			? '<a href="'.$arEvent['ENTITY_LINK'] .'" bx-tooltip-user-id="' . $arEvent['ENTITY_TYPE'] . '_'.$arEvent['ENTITY_ID'] . '" bx-tooltip-loader="' . htmlspecialcharsbx('/bitrix/components/bitrix/crm.' . mb_strtolower($arEvent['ENTITY_TYPE']) . '.show/card.ajax.php') . '" bx-tooltip-classname="crm_balloon' . ($arEvent['ENTITY_TYPE'] == 'LEAD' || $arEvent['ENTITY_TYPE'] == 'DEAL' || $arEvent['ENTITY_TYPE'] == 'QUOTE' ? '_no_photo': '_'.mb_strtolower($arEvent['ENTITY_TYPE'])).'">'.$arEvent['ENTITY_TITLE'].'</a>'
+			? (new MiniCardHtmlBuilder($entityTypeId, (int)$arEvent['ENTITY_ID']))
+				->setTitle($arEvent['ENTITY_TITLE'])
+				->build()
 			: ''
 		;
 	}

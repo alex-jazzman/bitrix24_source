@@ -1,4 +1,4 @@
-import { Type } from 'main.core';
+import { Extension, Type } from 'main.core';
 import { Store } from 'ui.vue3.vuex';
 import { OpenLinesManager } from 'imopenlines.v2.lib.openlines';
 import { CallTokenManager } from 'call.lib.call-token-manager';
@@ -20,6 +20,8 @@ import { ChatDataExtractor } from './chat-data-extractor';
 import type { ImModelChat, ImModelMessage } from 'im.v2.model';
 
 import type { ChatLoadRestResult, CommentInfoRestResult } from '../types/chat';
+
+const { callInstalled } = Extension.getSettings('im.v2.lib.call');
 
 type UpdateModelsResult = {
 	dialogId: string,
@@ -169,7 +171,11 @@ export class LoadService
 		} = await this.#updateModels(actionResult);
 
 		const { callInfo } = actionResult;
-		CallTokenManager.setToken(callInfo.chatId, callInfo.token);
+
+		if (callInstalled)
+		{
+			CallTokenManager.setToken(callInfo.chatId, callInfo.token);
+		}
 
 		if (this.#isDialogLoadedMarkNeeded(actionName))
 		{

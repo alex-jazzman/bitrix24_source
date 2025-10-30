@@ -124,21 +124,23 @@ export const StructureView = {
 		},
 	},
 	template: `
-		<div class="intranet-user-mini-profile__structure-view">
-			<div class="intranet-user-mini-profile__structure-view__title">
-				<div class="intranet-user-mini-profile__structure-view__title-icon">
+		<div class="intranet-user-mini-profile__structure-view" data-test-id="usermp_structure-view">
+			<div class="intranet-user-mini-profile__structure-view__title" data-test-id="usermp_structure-title">
+				<div class="intranet-user-mini-profile__structure-view__title-icon" data-test-id="usermp_structure-title-icon">
 					<BIcon :name="outlineSet.COMPANY" :size="18"/>
 				</div>
-				<span>{{ title }}</span>
+				<span data-test-id="usermp_structure-title-text">{{ title }}</span>
 			</div>
-			<div class="intranet-user-mini-profile__structure-view__preview" v-if="branch.length">
+			<div class="intranet-user-mini-profile__structure-view__preview" v-if="branch.length" data-test-id="usermp_structure-preview">
 				<div v-for="(department, index) in branch"
 					 class="intranet-user-mini-profile__structure-view__preview-row"
+					 data-test-id="usermp_structure-department-row"
 				>
 					<DepartmentSpacer :value="index * 20"/>
 					<template v-if="department === LockedDepartment">
 						<LockedDepartmentBlock
 							:ref="el => { blocks[index] = el}"
+							data-test-id="usermp_locked-department-block"
 						/>
 					</template>
 					<template v-else>
@@ -151,6 +153,7 @@ export const StructureView = {
 							:user="getUserForDepartment(department)"
 							:head="getHeadForDepartment(department)"
 							:highlighted="department.id === userDepartmentId"
+							data-test-id="usermp_department-block"
 						/>
 					</template>
 				</div>
@@ -161,6 +164,7 @@ export const StructureView = {
 						:topBindElement="elementPair[0]"
 						:bottomBindElement="elementPair[1]"
 						:offsetLeft="11"
+						data-test-id="usermp_department-connector"
 					/>
 				</template>
 			</div>

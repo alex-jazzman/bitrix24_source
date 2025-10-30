@@ -34,7 +34,6 @@ $MESS["MB_SHARED_FILES_MAIN_MENU_ITEM"] = "Загальні файли";
 $MESS["MB_SHARED_FILES_MAIN_MENU_ITEM_NEW"] = "Загальний диск";
 $MESS["MB_TASKS_MAIN_MENU_ITEM"] = "Завдання та Проєкти";
 $MESS["MEASURE_STRESS"] = "Заміряти";
-$MESS["MENU_AI"] = "Лабораторія AI";
 $MESS["MENU_AI_MSGVER_1"] = "Ваш AI-помічник";
 $MESS["MENU_BITRIX24_INVITE"] = "Запросити";
 $MESS["MENU_BITRIX24_MENU_BOTTOM"] = "Нижнє меню";

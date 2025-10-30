@@ -74,7 +74,7 @@ export const UserDetailedInfoEntityListValue = {
 		},
 	},
 	template: `
-		<div class="intranet-user-mini-profile__user-detailed-info__list-value" v-if="items.length">
+		<div class="intranet-user-mini-profile__user-detailed-info__list-value" v-if="items.length" :data-test-id="'usermp_entity-list-' + entityType">
 			<div class="intranet-user-mini-profile__user-detailed-info__list-value__element-container">
 					<div v-if="this.$slots.default"
 						class="intranet-user-mini-profile__user-detailed-info__list-value__before-element"
@@ -88,6 +88,7 @@ export const UserDetailedInfoEntityListValue = {
 					<a
 						class="intranet-user-mini-profile__user-detailed-info__list-value__element-text"
 						:title="firstItem.title"
+						:data-test-id="'usermp_entity-' + entityType + '-item'"
 						@click="onElementClick(firstItem.id)"
 					>
 						{{ firstItem.title }}
@@ -95,6 +96,7 @@ export const UserDetailedInfoEntityListValue = {
 					<div v-if="isCounterShow"
 						 class="intranet-user-mini-profile__user-detailed-info__list-value__counter ui-counter"
 						 ref="counter"
+						 data-test-id="usermp_entity-counter"
 						 @click="openMenu"
 					>
 						<div class="ui-counter-inner">
@@ -111,6 +113,7 @@ export const UserDetailedInfoEntityListValue = {
 				<EntityMenuItem v-for="item in items"
 					:title="item.title"
 					:image="item.image"
+					:data-test-id="'usermp_entity-' + entityType + '-menu-item'"
 					@click="onElementClick(item.id)"
 				/>
 			</RichMenuPopup>

@@ -1392,7 +1392,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _excludedChats)[_excludedChats].add(dialogId);
 	  }
 	  onOpenTab(tabName) {
-	    const trackedTabs = [im_v2_const.Layout.aiAssistant, im_v2_const.Layout.collab, im_v2_const.Layout.channel, im_v2_const.Layout.notification, im_v2_const.Layout.settings, im_v2_const.Layout.openlines];
+	    const trackedTabs = [im_v2_const.Layout.copilot, im_v2_const.Layout.collab, im_v2_const.Layout.channel, im_v2_const.Layout.notification, im_v2_const.Layout.settings, im_v2_const.Layout.openlines];
 	    if (!trackedTabs.includes(tabName)) {
 	      return;
 	    }

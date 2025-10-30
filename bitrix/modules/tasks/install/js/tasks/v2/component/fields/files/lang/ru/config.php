@@ -8,3 +8,5 @@ $MESS['TASKS_V2_FILES_UPLOAD'] = 'Загрузить файлы';
 $MESS['TASKS_V2_FILES_UPLOAD_BUTTON'] = 'Загрузить';
 $MESS['TASKS_V2_FILES_MY_DRIVE'] = 'Мой диск';
 $MESS['TASKS_V2_FILES_CLEAR'] = 'Удалить все';
+$MESS['TASKS_V2_FILES_MORE'] = 'ещё';
+$MESS['TASKS_V2_FILES_DOWNLOAD_ARCHIVE'] = 'Скачать все (#FILES_SIZE#)';

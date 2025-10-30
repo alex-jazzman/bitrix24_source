@@ -125,6 +125,7 @@ export const UserBaseInfo = {
 				<div class="intranet-user-mini-profile__base-info__user-avatar-wrapper">
 					<div 
 						class="intranet-user-mini-profile__base-info__user-avatar"
+						data-test-id="usermp_avatar"
 						@click="openProfile"
 					>
 						<Avatar 
@@ -139,26 +140,31 @@ export const UserBaseInfo = {
 					</div>
 					<UserStatusIcon v-if="info.status" 
 						:status="info.status.code"
+						data-test-id="usermp_status"
 					/>
 				</div>
 				<div class="intranet-user-mini-profile__base-info__user-data">
 					<div class="intranet-user-mini-profile__base-info__user-data__name"
 						 :title="info.name"
+						 data-test-id="usermp_name"
 						 @click="openProfile"
 					>
 						{{ info.name }}
 					</div>
 					<div class="intranet-user-mini-profile__base-info__user-data__position"
 						 :title="info.workPosition"
+						 data-test-id="usermp_position"
 					>
 						{{ info.workPosition }}
 					</div>
 					<div class="intranet-user-mini-profile__base-info__user-data__status">
 						<UserStatusDescription v-if="info.status"
 							:status="info.status"
+							data-test-id="usermp_status-description"
 						/>
 						<UserTime v-if="shouldShowUserTime" 
 							:utcOffset="info.utcOffset"
+							data-test-id="usermp_user-time"
 						/>
 					</div>
 				</div>
@@ -169,6 +175,7 @@ export const UserBaseInfo = {
 				<div class="intranet-user-mini-profile__base-info__action">
 					<button
 						class="ui-btn ui-btn-sm ui-btn-no-caps --air --wide --style-outline-accent-2"
+						data-test-id="usermp_chat-button"
 						@click="openChat"
 					>
 					<span class="ui-btn-text">
@@ -180,6 +187,7 @@ export const UserBaseInfo = {
 					<div class="ui-btn-split --air ui-btn-sm --style-filled ui-btn-no-caps">
 						<button
 							class="ui-btn-main --air"
+							data-test-id="usermp_call-video-button"
 							@click="call()"
 						>
 							<span class="ui-btn-text">
@@ -189,6 +197,7 @@ export const UserBaseInfo = {
 						<button
 							ref="callActionMenu"
 							class="ui-btn-menu"
+							data-test-id="usermp_call-menu-button"
 							@click="isShowCallMenu = !isShowCallMenu"
 						>
 							<BMenu v-if="isShowCallMenu"
@@ -201,6 +210,7 @@ export const UserBaseInfo = {
 			</div>
 			<div v-if="isShowExpand"
 				class="intranet-user-mini-profile__expand"
+				data-test-id="usermp_expand-button"
 				@click="() => $emit('expand')"
 			>
 				<BIcon :name="!isExpanded ? outlineSet.OPEN_CHAT : outlineSet.CLOSE_CHAT"/>
@@ -208,6 +218,7 @@ export const UserBaseInfo = {
 			<div class="intranet-user-mini-profile__base-info__role">
 				<UserRole 
 					:role="info.role"
+					data-test-id="usermp_role"
 				/>
 			</div>
 		</div>

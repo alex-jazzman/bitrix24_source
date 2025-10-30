@@ -3,17 +3,18 @@
  */
 jn.define('user-profile/common-tab/src/block/gratitude/view', (require, exports, module) => {
 	const { Indent, Color } = require('tokens');
-	const { Text4, Text5, Text7 } = require('ui-system/typography/text');
+	const { Text4 } = require('ui-system/typography/text');
 	const { ElementsStack, ElementsStackDirection } = require('elements-stack');
 	const { CircleStack } = require('utils/skeleton');
 	const { makeLibraryImagePath } = require('asset-manager');
 	const { GratitudeIcon } = require('assets/icons');
-	const { Loc } = require('loc');
 	const { Type } = require('type');
 	const { selectGratitudesByOwnerId } = require('statemanager/redux/slices/gratitude');
 	const { connect } = require('statemanager/redux/connect');
 	const { createTestIdGenerator } = require('utils/test');
 	const { ViewMode } = require('user-profile/common-tab/src/block/base-view');
+	const { IconView, Icon } = require('ui-system/blocks/icon');
+	const { formatQuantityWithLimit } = require('utils/number');
 
 	const IMAGE_SIZE = 34;
 
@@ -28,20 +29,31 @@ jn.define('user-profile/common-tab/src/block/gratitude/view', (require, exports,
 			});
 		}
 
+		/**
+		 * @returns {Array|null}
+		 */
 		get items()
 		{
 			return this.props.gratitudes ?? null;
 		}
 
+		/**
+		 * @returns {number}
+		 */
 		get totalQuantity()
 		{
-			return this.props.gratitudeTotalCount ?? 0;
+			const { gratitudeTotalCount = 0, gratitudes = [] } = this.props;
+
+			return Math.max(gratitudes.length, gratitudeTotalCount);
 		}
 
+		/**
+		 * @returns {number}
+		 */
 		get quantityForPreview()
 		{
-			const HALF_WIDTH_QUANTITY = 4;
-			const FULL_WIDTH_QUANTITY = 10;
+			const HALF_WIDTH_QUANTITY = 3;
+			const FULL_WIDTH_QUANTITY = 8;
 
 			if (this.viewMode === ViewMode.HALF_WIDTH)
 			{
@@ -51,6 +63,9 @@ jn.define('user-profile/common-tab/src/block/gratitude/view', (require, exports,
 			return FULL_WIDTH_QUANTITY;
 		}
 
+		/**
+		 * @returns {Array}
+		 */
 		get badgePreview()
 		{
 			return this.items
@@ -67,6 +82,9 @@ jn.define('user-profile/common-tab/src/block/gratitude/view', (require, exports,
 				});
 		}
 
+		/**
+		 * @returns {string}
+		 */
 		get viewMode()
 		{
 			const { efficiency } = this.props;
@@ -105,75 +123,35 @@ jn.define('user-profile/common-tab/src/block/gratitude/view', (require, exports,
 
 		renderEmptyState()
 		{
-			const emptyStateUri = makeLibraryImagePath('gratitude.svg', 'empty-states');
+			const isHalfWidth = this.viewMode === ViewMode.HALF_WIDTH;
+			const imageName = isHalfWidth ? 'small-empty-state.svg' : 'big-empty-state.svg';
 
-			if (this.viewMode === ViewMode.HALF_WIDTH)
-			{
-				return this.renderSmallEmptyState(emptyStateUri);
-			}
-
-			return this.renderDefaultEmptyState(emptyStateUri);
-		}
-
-		renderSmallEmptyState(emptyStateUri)
-		{
-			return View(
-				{
-					style: {
-						alignItems: 'center',
-						justifyContent: 'flex-start',
-					},
-				},
-				Image(
-					{
-						style: {
-							width: 52,
-							height: 52,
-						},
-						svg: {
-							uri: emptyStateUri,
-						},
-					},
-				),
-				Text7({
-					text: Loc.getMessage('M_PROFILE_GRATITUDE_EMPTY'),
-					color: Color.base3,
-					numberOfLines: 2,
-					style: {
-						textAlign: 'center',
-						marginTop: -1,
-					},
-				}),
-			);
-		}
-
-		renderDefaultEmptyState(emptyStateUri)
-		{
 			return View(
 				{
 					style: {
 						flexDirection: 'row',
-						justifyContent: 'flex-start',
 						alignItems: 'center',
+						justifyContent: 'space-between',
 					},
 				},
 				Image(
 					{
 						style: {
-							width: 64,
-							height: 64,
+							width: isHalfWidth ? 85 : 168,
+							height: 40,
+							marginRight: isHalfWidth ? Indent.L.toNumber() : 0,
 						},
 						svg: {
-							uri: emptyStateUri,
+							uri: makeLibraryImagePath(imageName, 'gratitude'),
 						},
 					},
 				),
-				Text4({
-					text: Loc.getMessage('M_PROFILE_GRATITUDE_EMPTY'),
-					color: Color.base3,
+				IconView({
+					icon: Icon.CHEVRON_TO_THE_RIGHT_SIZE_S,
+					color: Color.base4,
+					size: 20,
 					style: {
-						textAlign: 'left',
-						marginLeft: Indent.XL2.toNumber(),
+						alignSelf: 'flex-end',
 					},
 				}),
 			);
@@ -185,14 +163,13 @@ jn.define('user-profile/common-tab/src/block/gratitude/view', (require, exports,
 				{
 					style: {
 						testId: this.getTestId('content'),
-						width: '100%',
 						flexDirection: 'row',
 						alignItems: 'center',
 						justifyContent: 'space-between',
 					},
 				},
 				this.renderElementsStack(),
-				this.renderRemainingQuantity(),
+				this.renderTotalQuantity(),
 			);
 		}
 
@@ -212,53 +189,35 @@ jn.define('user-profile/common-tab/src/block/gratitude/view', (require, exports,
 			);
 		}
 
-		renderRemainingQuantity()
+		renderTotalQuantity()
 		{
-			const remainingGratitude = this.calculateRemainingGratitude();
-			if (remainingGratitude <= 0)
-			{
-				return View({});
-			}
+			const quantity = this.totalQuantity;
+			const shouldRenderIcon = quantity <= 99;
 
-			if (this.viewMode === ViewMode.HALF_WIDTH)
-			{
-				return View(
-					{
-						testId: this.getTestId('remaining-quantity'),
-						style: {
-							borderWidth: 1,
-							borderRadius: 50,
-							borderColor: Color.bgSeparatorPrimary.toHex(),
-							marginLeft: 7,
-							alignItems: 'center',
-							justifyContent: 'center',
-							width: IMAGE_SIZE,
-							height: IMAGE_SIZE,
-						},
+			return View(
+				{
+					style: {
+						flexDirection: 'row',
+						alignSelf: 'flex-end',
+						alignItems: 'center',
+						justifyContent: 'center',
 					},
-					Text5({
-						testId: this.getTestId(`remaining-quantity-${remainingGratitude}`),
-						color: Color.base4,
-						text: `+${remainingGratitude}`,
-					}),
-				);
-			}
-
-			return Text4({
-				testId: this.getTestId(`remaining-quantity-${remainingGratitude}`),
-				color: Color.base4,
-				text: Loc.getMessage('M_PROFILE_GRATITUDE_MORE_QUANTITY', {
-					'#QUANTITY#': remainingGratitude,
-				}),
-				style: {
-					alignSelf: 'flex-end',
 				},
-			});
-		}
-
-		calculateRemainingGratitude()
-		{
-			return Math.min(this.totalQuantity - this.quantityForPreview, 99);
+				Text4({
+					testId: this.getTestId(`remaining-quantity-${quantity}`),
+					color: Color.base4,
+					text: formatQuantityWithLimit(quantity),
+					style: {
+						marginRight: shouldRenderIcon ? -4 : 0,
+						alignSelf: 'flex-end',
+					},
+				}),
+				shouldRenderIcon && IconView({
+					icon: Icon.CHEVRON_TO_THE_RIGHT_SIZE_S,
+					color: Color.base4,
+					size: 20,
+				}),
+			);
 		}
 
 		getElements()

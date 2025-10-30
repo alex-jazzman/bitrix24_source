@@ -109,3 +109,17 @@ $MESS['BRCW_NOTIFICATION_CARD_TEMPLATE_POPUP_BTN_SELECT_TYPE'] = 'Выбрать
 
 $MESS['BRCW_BOOKING_SOON_HINT'] = 'Скоро будет доступно';
 $MESS['BRCW_MESSAGE_TEMPLATE_SOON_TEXT'] = 'Здесь будет текст сообщения';
+
+$MESS['BRCW_SETTINGS_CARD_INTEGRATION_TITLE'] = 'Куда добавлять записи ресурса';
+$MESS['BRCW_SETTINGS_CARD_INTEGRATION_DESCRIPTION'] = 'Настройте связь с календарём — так специалист всегда сможет посмотреть своё расписание. [helpdesk]Подробнее[/helpdesk]';
+
+$MESS['BRCW_SETTINGS_CARD_INTEGRATION_CALENDAR_TITLE'] = 'Календарь';
+$MESS['BRCW_SETTINGS_CARD_INTEGRATION_CALENDAR_TEXT'] = 'Сотрудник увидит записи в своём календаре в Битрикс24 и сможет отслеживать занятость';
+$MESS['BRCW_SETTINGS_CARD_INTEGRATION_CALENDAR_SETTING_USER_TITLE'] = 'Кто увидит записи в календаре';
+$MESS['BRCW_SETTINGS_CARD_INTEGRATION_CALENDAR_SETTING_USER_TEXT'] = 'Выберите сотрудников, в календари которых нужно добавить записи этого специалиста';
+$MESS['BRCW_SETTINGS_CARD_INTEGRATION_CALENDAR_SETTING_USER_ERROR_MESSAGE'] = 'Выберите одного или нескольких сотрудников';
+$MESS['BRCW_SETTINGS_CARD_INTEGRATION_CALENDAR_SETTING_ROOM_TITLE'] = 'Где специалист оказывает услугу';
+$MESS['BRCW_SETTINGS_CARD_INTEGRATION_CALENDAR_SETTING_ROOM_TEXT'] = 'Выберите помещение из списка переговорных, если сотрудник работает в нём постоянно';
+$MESS['BRCW_SETTINGS_CARD_INTEGRATION_CALENDAR_SETTING_REMINDER_TITLE'] = 'Когда напомнить специалисту о записи';
+$MESS['BRCW_SETTINGS_CARD_INTEGRATION_CALENDAR_SETTING_REMINDER_TEXT'] = 'Настройте напоминания для календаря, чтобы сотрудник точно не забыл о записи';
+$MESS['BRCW_SETTINGS_CARD_INTEGRATION_SELECTOR_BTN'] = 'Выбрать';

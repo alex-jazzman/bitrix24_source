@@ -2,9 +2,9 @@ import { Store } from 'ui.vue3.vuex';
 import { Model } from 'tasks.v2.const';
 import { Core } from 'tasks.v2.core';
 import { ApiClient } from 'tasks.v2.lib.api-client';
-import { CheckList, type CheckListModel } from 'tasks.v2.model.check-list';
+import type { CheckListModel } from 'tasks.v2.model.check-list';
 
-import { prepareCheckLists } from './mappers';
+import { mapDtoToModel, prepareCheckLists } from './mappers';
 
 class CheckListService
 {
@@ -20,22 +20,15 @@ class CheckListService
 					task: { id: taskId },
 				});
 
-				const checkListModel = new CheckList();
-				const defaultValues = checkListModel.getElementState();
-				const enrichedData = data.map((item: CheckListModel) => ({
-					...defaultValues,
-					...Object.fromEntries(
-						Object.entries(item).filter(([_, value]) => value !== null)
-					)
-				}));
+				const checkLists = data.map((it) => mapDtoToModel(it));
 
 				await Promise.all([
-					this.$store.dispatch(`${Model.CheckList}/upsertMany`, enrichedData),
+					this.$store.dispatch(`${Model.CheckList}/upsertMany`, checkLists),
 					this.$store.dispatch(`${Model.Tasks}/update`, {
 						id: taskId,
 						fields: {
-							containsChecklist: data.length > 0,
-							checklist: data.map((item) => item.id),
+							containsChecklist: checkLists.length > 0,
+							checklist: checkLists.map(({ id }) => id),
 						},
 					}),
 				]);
@@ -64,28 +57,19 @@ class CheckListService
 					},
 				});
 
-				const checkListModel = new CheckList();
-				const defaultValues = checkListModel.getElementState();
-				const enrichedData = savedList.map((item: CheckListModel) => ({
-					...defaultValues,
-					...Object.fromEntries(
-						Object.entries(item).filter(([_, value]) => value !== null)
-					)
-				}));
-
-				const oldIds = checklists.map((item: CheckListModel) => item.id);
-
 				await Promise.all([
-					this.$store.dispatch(`${Model.CheckList}/deleteMany`, oldIds),
-					this.$store.dispatch(`${Model.CheckList}/upsertMany`, enrichedData),
+					this.$store.dispatch(`${Model.Interface}/setDisableCheckListAnimations`, true),
+					this.$store.dispatch(`${Model.CheckList}/upsertMany`, savedList),
 					this.$store.dispatch(`${Model.Tasks}/update`, {
 						id: taskId,
 						fields: {
-							containsChecklist: true,
-							checklist: enrichedData.map((item) => item.id),
+							containsChecklist: savedList.length > 0,
+							checklist: savedList.map((item) => item.id),
 						},
 					}),
 				]);
+
+				void this.$store.dispatch(`${Model.Interface}/setDisableCheckListAnimations`, false);
 
 				resolve();
 			}
@@ -93,6 +77,62 @@ class CheckListService
 			{
 				reject(error);
 			}
+		});
+	}
+
+	async collapse(taskId: number, checkListId: number): Promise<void>
+	{
+		await (new ApiClient()).post('CheckList.collapse', {
+			taskId,
+			checkListId,
+		});
+
+		void this.$store.dispatch(`${Model.CheckList}/update`, {
+			id: checkListId,
+			fields: {
+				collapsed: true,
+				expanded: false,
+			},
+		});
+	}
+
+	async expand(taskId: number, checkListId: number): Promise<void>
+	{
+		await (new ApiClient()).post('CheckList.expand', {
+			taskId,
+			checkListId,
+		});
+
+		void this.$store.dispatch(`${Model.CheckList}/update`, {
+			id: checkListId,
+			fields: {
+				collapsed: false,
+				expanded: true,
+			},
+		});
+	}
+
+	async complete(taskId: number, checkListId: number): Promise<void>
+	{
+		await (new ApiClient('tasks.task.', 'data')).post('checklist.complete', {
+			taskId,
+			checkListItemId: checkListId,
+		});
+	}
+
+	async renew(taskId: number, checkListId: number): Promise<void>
+	{
+		await (new ApiClient('tasks.task.', 'data')).post('checklist.renew', {
+			taskId,
+			checkListItemId: checkListId,
+		});
+	}
+
+	async delete(taskId: number, checkListId: number): Promise<void>
+	{
+		await (new ApiClient('tasks.task.', 'data')).post('checklist.delete', {
+			taskId,
+			checkListItemId: checkListId,
 		});
 	}
 

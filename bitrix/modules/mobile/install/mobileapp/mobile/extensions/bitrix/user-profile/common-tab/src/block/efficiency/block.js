@@ -9,32 +9,27 @@ jn.define('user-profile/common-tab/src/block/efficiency/block', (require, export
 
 	class EfficiencyBlock extends BaseBlock
 	{
-		isAvailable()
-		{
-			const { efficiency } = this.props;
-
-			return Boolean(efficiency);
-		}
-
-		getSort()
-		{
-			return 400;
-		}
-
 		prepareProps(commonTabData)
 		{
-			const { efficiency, ownerId } = commonTabData ?? {};
+			const { efficiency, ownerId, isEditMode } = commonTabData ?? {};
 
 			return {
 				ownerId,
 				efficiency,
+				isEditMode,
 				testId: 'efficiency-card',
 				onClick: this.openEfficiency.bind(this),
 				style: {
 					minHeight: 96,
-					minWidth: '40%',
 				},
 			};
+		}
+
+		isAvailable()
+		{
+			const { efficiency, isEditMode } = this.props;
+
+			return !isEditMode && Boolean(efficiency);
 		}
 
 		getContentClass()

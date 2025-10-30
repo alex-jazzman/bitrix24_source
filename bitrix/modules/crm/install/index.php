@@ -758,6 +758,7 @@ class crm extends CModule
 				$tableNamesToDelete[] = $typeFactory->getItemFieldsContextDataClass($type)::getTableName();
 				$tableNamesToDelete[] = \Bitrix\Crm\Security\AccessAttribute\Manager::getEntity(CCrmOwnerType::ResolveName($type->getEntityTypeId()))->getDBTableName();
 			}
+
 			foreach ($tableNamesToDelete as $tableName)
 			{
 				if ($connection->isTableExists($tableName))
@@ -1141,6 +1142,8 @@ class crm extends CModule
 		$eventManager->registerEventHandler('main', 'OnAfterUserTypeDelete', 'crm', '\Bitrix\Crm\UserField\UserFieldHistory', 'onDelete');
 
 		$eventManager->registerEventHandler('documentgenerator', 'onGetDataProviderList', 'crm', '\Bitrix\Crm\Integration\DocumentGeneratorManager', 'getDataProviders');
+		$eventManager->registerEventHandler('documentgenerator', 'onModifyCustomFields', 'crm', '\Bitrix\Crm\Integration\DocumentGeneratorManager', 'onModifyCustomFields');
+		$eventManager->registerEventHandler('documentgenerator', 'onDeleteTemplate', 'crm', '\Bitrix\Crm\Integration\DocumentGeneratorManager', 'onDeleteTemplate');
 		$eventManager->registerEventHandler('documentgenerator', 'onCreateDocument', 'crm', '\Bitrix\Crm\Integration\DocumentGeneratorManager', 'onCreateDocument');
 		$eventManager->registerEventHandler('documentgenerator', 'onDocumentTransformationComplete', 'crm', '\Bitrix\Crm\Integration\DocumentGeneratorManager', 'onDocumentTransformationComplete');
 		$eventManager->registerEventHandler('documentgenerator', 'onUpdateDocument', 'crm', '\Bitrix\Crm\Integration\DocumentGeneratorManager', 'onUpdateDocument');
@@ -2079,7 +2082,10 @@ class crm extends CModule
 		$eventManager->unRegisterEventHandler('main', 'OnAfterUserTypeAdd', 'crm', '\Bitrix\Crm\UserField\UserFieldHistory', 'onAdd');
 		$eventManager->unRegisterEventHandler('main', 'OnAfterUserTypeUpdate', 'crm', '\Bitrix\Crm\UserField\UserFieldHistory', 'onUpdate');
 		$eventManager->unRegisterEventHandler('main', 'OnAfterUserTypeDelete', 'crm', '\Bitrix\Crm\UserField\UserFieldHistory', 'onDelete');
+
 		$eventManager->unRegisterEventHandler('documentgenerator', 'onGetDataProviderList', 'crm', '\Bitrix\Crm\Integration\DocumentGeneratorManager', 'getDataProviders');
+		$eventManager->unRegisterEventHandler('documentgenerator', 'onModifyCustomFields', 'crm', '\Bitrix\Crm\Integration\DocumentGeneratorManager', 'onModifyCustomFields');
+		$eventManager->unRegisterEventHandler('documentgenerator', 'onDeleteTemplate', 'crm', '\Bitrix\Crm\Integration\DocumentGeneratorManager', 'onDeleteTemplate');
 		$eventManager->unRegisterEventHandler('documentgenerator', 'onCreateDocument', 'crm', '\Bitrix\Crm\Integration\DocumentGeneratorManager', 'onCreateDocument');
 		$eventManager->unRegisterEventHandler('documentgenerator', 'onDocumentTransformationComplete', 'crm', '\Bitrix\Crm\Integration\DocumentGeneratorManager', 'onDocumentTransformationComplete');
 		$eventManager->unRegisterEventHandler('documentgenerator', 'onUpdateDocument', 'crm', '\Bitrix\Crm\Integration\DocumentGeneratorManager', 'onUpdateDocument');

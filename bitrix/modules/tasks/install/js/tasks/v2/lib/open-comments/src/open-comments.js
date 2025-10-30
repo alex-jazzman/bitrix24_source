@@ -1,10 +1,10 @@
-import { taskService } from 'tasks.v2.provider.service.task-service';
+import { apiClient } from 'tasks.v2.lib.api-client';
 import { SidePanelInstance } from 'tasks.v2.lib.side-panel-instance';
 
 import './open-comments.css';
 
 export const openComments = async (taskId: number): Promise<void> => {
-	const content = await taskService.getLegacyCommentsByTaskId(taskId);
+	const content = await getLegacyCommentsByTaskId(taskId);
 	const sidePanelId = `tasks-task-legacy-comments-${taskId}`;
 	const maxWidth = 650;
 
@@ -19,3 +19,19 @@ export const openComments = async (taskId: number): Promise<void> => {
 		contentCallback: () => commentsElement,
 	});
 };
+
+async function getLegacyCommentsByTaskId(id: number): Promise<string>
+{
+	try
+	{
+		const data = await apiClient.post('LegacyComment.get', { task: { id } });
+
+		return (data.html) ?? '';
+	}
+	catch (error)
+	{
+		console.error('getLegacyCommentsByTaskId error', error);
+
+		return '';
+	}
+}

@@ -15,6 +15,7 @@ jn.define('calendar/enums', (require, exports, module) => {
 		SHARED_CRM: '#shared_crm#',
 		COLLAB: '#collab#',
 		SHARED_COLLAB: '#shared_collab#',
+		BOOKING: '#booking#',
 	};
 
 	const EventFormFields = {
@@ -32,6 +33,7 @@ jn.define('calendar/enums', (require, exports, module) => {
 		FILES: 'files',
 		ACCESSIBILITY: 'accessibility',
 		SPECIAL: 'special',
+		ENTITY_RELATION: 'entity-relation',
 	};
 
 	const EventMeetingStatus = {
@@ -144,6 +146,16 @@ jn.define('calendar/enums', (require, exports, module) => {
 		NEW_MENU: 'calendar_new_menu',
 	};
 
+	const ViewMode = {
+		BASE: 'base',
+		TABS: 'tabs',
+	};
+
+	const EntityRelationType = {
+		DEAL: 'deal',
+		BOOKING: 'booking',
+	};
+
 	module.exports = {
 		CalendarType,
 		EventTypes,
@@ -162,5 +174,7 @@ jn.define('calendar/enums', (require, exports, module) => {
 		SectionExternalTypes,
 		EventPermissionActions,
 		AhaMomentEvent,
+		ViewMode,
+		EntityRelationType,
 	};
 });

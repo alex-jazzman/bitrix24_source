@@ -56,6 +56,7 @@ $favoriteStar = Toolbar::hasFavoriteStar()? '<span class="ui-toolbar-star" id="u
 		<?=$APPLICATION->getViewContent("inside_pagetitle")?>
 	</div>
 </div>
+<script>console.error('UI Toolbar: do not use an old toolbar.')</script>
 <script>
 	BX.message({
 		UI_TOOLBAR_ADD_PAGE_TO_LEFT_MENU: '<?= GetMessageJS('UI_TOOLBAR_ADD_PAGE_TO_LEFT_MENU') ?>',

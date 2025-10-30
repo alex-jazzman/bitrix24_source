@@ -19,24 +19,24 @@
 			</div>
 			<ul class="landing-block-node-list g-mb-20 g-px-0">
 				<li class="landing-block-node-list-item g-pb-8 d-flex align-items-center" style="list-style: none;">
-					<div
-						class="landing-block-node-list-item-arrow g-mr-9 arrow arrow-1 g-pos-rel d-inline-block g-bg--after g-bg--before"
-						style="--bg--before: var(--primary); --bg--after: var(--primary); width: 16px; height: 9px;"
-					></div>
+					<i
+						class="landing-block-node-list-item-icon far fa-angle-down g-mr-9 g-font-size-25 g-color"
+						style="--color: var(--primary);"
+					></i>
 					<div class="landing-block-node-list-item-text g-font-size-16">Text 1</div>
 				</li>
 				<li class="landing-block-node-list-item g-pb-8 d-flex align-items-center" style="list-style: none;">
-					<div
-						class="landing-block-node-list-item-arrow g-mr-9 arrow arrow-1 g-pos-rel d-inline-block g-bg--after g-bg--before"
-						style="--bg--before: var(--primary); --bg--after: var(--primary); width: 16px; height: 9px;"
-					></div>
+					<i
+						class="landing-block-node-list-item-icon far fa-angle-down g-mr-9 g-font-size-25 g-color"
+						style="--color: var(--primary);"
+					></i>
 					<div class="landing-block-node-list-item-text g-font-size-16">Text 2</div>
 				</li>
 				<li class="landing-block-node-list-item g-pb-8 d-flex align-items-center" style="list-style: none;">
-					<div
-						class="landing-block-node-list-item-arrow g-mr-9 arrow arrow-1 g-pos-rel d-inline-block g-bg--after g-bg--before"
-						style="--bg--before: var(--primary); --bg--after: var(--primary); width: 16px; height: 9px;"
-					></div>
+					<i
+						class="landing-block-node-list-item-icon far fa-angle-down g-mr-9 g-font-size-25 g-color"
+						style="--color: var(--primary);"
+					></i>
 					<div class="landing-block-node-list-item-text g-font-size-16">Text 3</div>
 				</li>
 			</ul>

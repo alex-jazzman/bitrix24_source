@@ -54,3 +54,6 @@ DROP TABLE IF EXISTS `b_im_recent_init_queue`;
 DROP TABLE IF EXISTS `b_im_anchor`;
 DROP TABLE IF EXISTS `b_im_notify_group`;
 DROP TABLE IF EXISTS `b_im_notify_group_condition`;
+DROP TABLE IF EXISTS `b_im_file_param`;
+DROP TABLE IF EXISTS `b_im_file_transcription`;
+DROP TABLE IF EXISTS `b_im_ai_transcribe_queue`;

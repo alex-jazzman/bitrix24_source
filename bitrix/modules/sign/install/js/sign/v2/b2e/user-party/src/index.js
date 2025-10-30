@@ -9,6 +9,7 @@ import { UserPartyPopup } from 'sign.v2.b2e.user-party-popup';
 import { Api, CountMember } from 'sign.v2.api';
 import { FeatureStorage } from 'sign.feature-storage';
 import { MemberRole, type MemberRoleType, EntityType } from 'sign.type';
+import { UserPartyRefused } from 'sign.v2.b2e.user-party-refused';
 import 'ui.icon-set.main';
 
 import './style.css';
@@ -25,8 +26,12 @@ const Mode = Object.freeze({
 	edit: 'edit',
 });
 
-const defaultAvatarLink = '/bitrix/js/sign/v2/b2e/user-party/images/user.svg';
-const departmentAvatarLink = '/bitrix/js/sign/v2/b2e/user-party/images/department.svg';
+const avatarLinks = {
+	user: '/bitrix/js/sign/v2/b2e/user-party/images/user.svg',
+	department: '/bitrix/js/sign/v2/b2e/user-party/images/department.svg',
+	document: '/bitrix/js/sign/v2/b2e/user-party/images/sign-document.svg',
+	signersList: '/bitrix/js/sign/v2/b2e/user-party/images/signers-list.svg',
+};
 
 const HelpdeskCodes = Object.freeze({
 	SignEdmWithEmployees: '19740792',
@@ -62,6 +67,8 @@ export class UserParty
 	#counterDelayTimeout: ?number = null;
 	#role: MemberRoleType = MemberRole.signer;
 
+	#userPartyRefused: UserPartyRefused;
+
 	constructor(options: UserPartyOptions)
 	{
 		this.#api = new Api();
@@ -83,6 +90,12 @@ export class UserParty
 		this.#userPartyCounters = new UserPartyCounters({
 			userCountersLimit: b2eSignersLimitCount,
 		});
+
+		this.#userPartyRefused = new UserPartyRefused();
+		this.#userPartyRefused.subscribe('onChange', (event) => {
+			this.#updateEditModeCounter();
+		});
+
 		this.#ui.container = this.getLayout(region);
 
 		const tabs = [];
@@ -99,11 +112,13 @@ export class UserParty
 					allowFlatDepartments: true,
 				},
 			},
+			{
+				id: 'signers-list',
+			},
 		];
 
 		if (FeatureStorage.isDocumentsInSignersSelectorEnabled())
 		{
-			tabs.push({ id: 'sign-document', title: Loc.getMessage('SIGN_USER_PARTY_TAB_DOCUMENTS') });
 			entities.push({ id: 'sign-document' });
 		}
 
@@ -171,30 +186,44 @@ export class UserParty
 			return this.#ui.itemContainer;
 		}
 
-		const descriptionMessage = region === 'ru'
-			? Helpdesk.replaceLink(Loc.getMessage('SIGN_USER_PARTY_DESCRIPTION'), HelpdeskCodes.SignEdmWithEmployees)
-			: Loc.getMessage('SIGN_USER_PARTY_DESCRIPTION_WITHOUT_LINK')
-		;
-		this.#ui.description = Tag.render`
-			<p class="sign-document-b2e-user-party__description">
-				${descriptionMessage}
-			</p>
-		`;
+		this.#ui.description = this.#renderDescription(region);
 
 		return Tag.render`
 			<div>
 				<div class="sign-b2e-settings__header-wrapper">
 					<h1 class="sign-b2e-settings__header">${Loc.getMessage('SIGN_USER_PARTY_HEADER')}</h1>
-					${this.#userPartyCounters.getLayout()}
+					${this.userPartyCounters.getLayout()}
 				</div>
 				<div class="sign-b2e-settings__item">
-					<p class="sign-b2e-settings__item_title">
-						${Loc.getMessage('SIGN_USER_PARTY_ITEM_TITLE')}
-					</p>
+					${this.#renderTitle()}
 					${this.#ui.itemContainer}
 					${this.#ui.description}
+					${this.userPartyRefused.render() ?? ''}
 				</div>
 			</div>
+		`;
+	}
+
+	#renderTitle(): HTMLElement
+	{
+		return Tag.render`
+			<p class="sign-b2e-settings__item_title">
+				${Loc.getMessage('SIGN_USER_PARTY_ITEM_TITLE')}
+			</p>
+		`;
+	}
+
+	#renderDescription(region: string): HTMLElement
+	{
+		const descriptionMessage = region === 'ru'
+			? Helpdesk.replaceLink(Loc.getMessage('SIGN_USER_PARTY_DESCRIPTION'), HelpdeskCodes.SignEdmWithEmployees)
+			: Loc.getMessage('SIGN_USER_PARTY_DESCRIPTION_WITHOUT_LINK')
+		;
+
+		return Tag.render`
+			<p class="sign-document-b2e-user-party__description">
+				${descriptionMessage}
+			</p>
 		`;
 	}
 
@@ -232,14 +261,28 @@ export class UserParty
 			.slice(0, maxShownItems)
 		;
 
+		const membersResponse = await this.#api.getMembersForDocument(
+			this.#documentUid,
+			1,
+			maxShownItems,
+			this.#role,
+		);
+
+		// filter out refused signers
+		if (this.#role === MemberRole.signer)
+		{
+			const knownUsers = new Set(membersResponse.members.map((member) => member.userId));
+			this.#preselectedUserData = this.#preselectedUserData.filter((item) => {
+				return item.entityType === EntityType.USER
+					? knownUsers.has(item.entityId)
+					: true
+				;
+			});
+		}
+
+		// add signers from lists, departments, etc.
 		if (this.#preselectedUserData.length < maxShownItems)
 		{
-			const membersResponse = await this.#api.getMembersForDocument(
-				this.#documentUid,
-				1,
-				maxShownItems,
-				this.#role,
-			);
 			const preselectedIds = new Set(
 				usersData
 					.filter((item) => item.entityType === EntityType.USER)
@@ -271,7 +314,10 @@ export class UserParty
 
 		if (this.#role === MemberRole.signer)
 		{
-			const signersCountResponse = await this.#api.getUniqUserCountForDocument(this.#documentUid);
+			const signersCountResponse = await this.#api.getUniqUserCountForDocument(
+				this.#documentUid,
+				false,
+			);
 			showMoreCount = signersCountResponse.count - shownUsers;
 			isShowMoreBtn = showMoreCount > 0;
 		}
@@ -407,7 +453,10 @@ export class UserParty
 		clearTimeout(this.#counterDelayTimeout);
 
 		this.#counterDelayTimeout = setTimeout(async () => {
-			const response = await this.#api.getUniqUserCountForMembers(selectedMembers);
+			const response = await this.#api.getUniqUserCountForMembers(
+				selectedMembers,
+				this.isRejectExcludedEnabled(),
+			);
 			this.#userPartyCounters?.update(response.count);
 		}, 100);
 	}
@@ -427,6 +476,11 @@ export class UserParty
 		}
 
 		return isValid;
+	}
+
+	isRejectExcludedEnabled(): boolean
+	{
+		return this.#userPartyRefused.shouldRemoveRefused();
 	}
 
 	getEntities(): Array<CardItem>
@@ -457,6 +511,8 @@ export class UserParty
 				return this.#createDepartmentItemLayout(item);
 			case 'sign-document':
 				return this.#createDocumentItemLayout(item);
+			case 'signers-list':
+				return this.#createSignersListItemLayout(item);
 			default:
 				return this.#createUserItemLayout(item);
 		}
@@ -471,7 +527,7 @@ export class UserParty
 				<div>
 					<img
 						class="sign-document-b2e-user-party__item-list_item-avatar"
-						title="${title}" src='${departmentAvatarLink}' alt="avatar"
+						title="${title}" src='${avatarLinks.department}' alt="avatar"
 					/>
 				</div>
 				<div title="${title}" class="sign-document-b2e-user-party__item-list_item-text">
@@ -488,10 +544,29 @@ export class UserParty
 		return Tag.render`
 			<div class="sign-document-b2e-user-party__item-list_item --document">
 				<div>
-					<div
-						class="sign-document-b2e-user-party__item-list_item-avatar ui-icon-set --document-sign"
-						title="${title}" alt="avatar"
-					></div>
+					<img
+						class="sign-document-b2e-user-party__item-list_item-avatar"
+						title="${title}" src='${avatarLinks.document}' alt="avatar"
+					/>
+				</div>
+				<div title="${title}" class="sign-document-b2e-user-party__item-list_item-text">
+					${title}
+				</div>
+			</div>
+		`;
+	}
+
+	#createSignersListItemLayout(item: CardItem): HTMLElement
+	{
+		const title = TextFormat.encode(item.title);
+
+		return Tag.render`
+			<div class="sign-document-b2e-user-party__item-list_item --signers-list">
+				<div>
+					<img
+						class="sign-document-b2e-user-party__item-list_item-avatar"
+						title="${title}" src='${avatarLinks.signersList}' alt="avatar"
+					/>
 				</div>
 				<div title="${title}" class="sign-document-b2e-user-party__item-list_item-text">
 					${title}
@@ -503,12 +578,12 @@ export class UserParty
 	#createUserItemLayout(item: CardItem): HTMLElement
 	{
 		const title = TextFormat.encode(item.title);
-		const itemAvatar = item.avatar || defaultAvatarLink;
-		const profileLink = `/company/personal/user/${TextFormat.encode(item.entityId)}/`;
+		const itemAvatar = item.avatar || avatarLinks.user;
+		const profileLink = `/company/personal/user/${item.entityId}/`;
 
 		return Tag.render`
 			<div class="sign-document-b2e-user-party__item-list_item --user">
-				<a href="${profileLink}">
+				<a href="${TextFormat.encode(profileLink)}">
 					<img
 						class="sign-document-b2e-user-party__item-list_item-avatar"
 						title="${title}" src='${TextFormat.encode(itemAvatar)}' alt="avatar"
@@ -549,5 +624,29 @@ export class UserParty
 		const { id, entityId } = tag;
 
 		return `${entityId}_${id}`;
+	}
+
+	/**
+	 * @protected
+	 */
+	get userPartyCounters(): UserPartyCounters
+	{
+		return this.#userPartyCounters;
+	}
+
+	/**
+	 * @protected
+	 */
+	get userPartyRefused(): UserPartyRefused
+	{
+		return this.#userPartyRefused;
+	}
+
+	/**
+	 * @protected
+	 */
+	get ui(): HTMLDivElement
+	{
+		return this.#ui;
 	}
 }

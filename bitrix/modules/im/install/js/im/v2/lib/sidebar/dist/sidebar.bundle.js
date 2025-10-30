@@ -238,28 +238,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	});
 
-	const isAiAssistantChat = chatContext => {
-	  return [im_v2_const.ChatType.aiAssistant, im_v2_const.ChatType.aiAssistantEntity].includes(chatContext.type);
-	};
-	const aiAssistantChatPreset = new SidebarPreset({
-	  blocks: [im_v2_const.SidebarMainPanelBlock.chat, im_v2_const.SidebarMainPanelBlock.info, im_v2_const.SidebarMainPanelBlock.taskList, im_v2_const.SidebarMainPanelBlock.meetingList],
-	  getCustomDescription: dialogId => {
-	    if (isAiAssistantMultiUserChat(dialogId)) {
-	      return '';
-	    }
-	    return main_core.Loc.getMessage('IM_SIDEBAR_AI_ASSISTANT_DESCRIPTION');
-	  },
-	  areChatMembersEnabled: dialogId => {
-	    return isAiAssistantMultiUserChat(dialogId);
-	  },
-	  areSharedChatsEnabled: () => false,
-	  isAutoDeleteEnabled: () => false
-	});
-	const isAiAssistantMultiUserChat = dialogId => {
-	  const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId, true);
-	  return chat.type === im_v2_const.ChatType.aiAssistant && chat.userCounter > 2;
-	};
-
 	const isComment = chatContext => chatContext.type === im_v2_const.ChatType.comment;
 	const commentPreset = new SidebarPreset({
 	  blocks: [im_v2_const.SidebarMainPanelBlock.post, im_v2_const.SidebarMainPanelBlock.info, im_v2_const.SidebarMainPanelBlock.fileList, im_v2_const.SidebarMainPanelBlock.taskList, im_v2_const.SidebarMainPanelBlock.meetingList],
@@ -269,7 +247,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	const isChannel = chatContext => im_v2_lib_channel.ChannelManager.isChannel(chatContext.dialogId);
 	const channelPreset = new SidebarPreset({
-	  blocks: [im_v2_const.SidebarMainPanelBlock.chat, im_v2_const.SidebarMainPanelBlock.info, im_v2_const.SidebarMainPanelBlock.fileList],
+	  blocks: [im_v2_const.SidebarMainPanelBlock.chat, im_v2_const.SidebarMainPanelBlock.info, im_v2_const.SidebarMainPanelBlock.fileList, im_v2_const.SidebarMainPanelBlock.taskList, im_v2_const.SidebarMainPanelBlock.meetingList],
 	  getHeaderTitle: () => main_core.Loc.getMessage('IM_SIDEBAR_CHANNEL_HEADER_TITLE')
 	});
 
@@ -335,7 +313,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  babelHelpers.classPrivateFieldLooseBase(this, _defaultConfigMap)[_defaultConfigMap].set(isComment, commentPreset);
 	  babelHelpers.classPrivateFieldLooseBase(this, _defaultConfigMap)[_defaultConfigMap].set(isSupport, supportPreset);
 	  babelHelpers.classPrivateFieldLooseBase(this, _defaultConfigMap)[_defaultConfigMap].set(isAiAssistantBot, aiAssistantBotPreset);
-	  babelHelpers.classPrivateFieldLooseBase(this, _defaultConfigMap)[_defaultConfigMap].set(isAiAssistantChat, aiAssistantChatPreset);
 	  babelHelpers.classPrivateFieldLooseBase(this, _defaultConfigMap)[_defaultConfigMap].set(isBot, botPreset);
 	  babelHelpers.classPrivateFieldLooseBase(this, _defaultConfigMap)[_defaultConfigMap].set(isNotes, notesPreset);
 	  babelHelpers.classPrivateFieldLooseBase(this, _defaultConfigMap)[_defaultConfigMap].set(isLines, linesPreset);

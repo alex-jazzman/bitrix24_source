@@ -163,6 +163,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	}
 
+	const {
+	  callInstalled
+	} = main_core.Extension.getSettings('im.v2.lib.call');
 	var _store$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
 	var _requestChat = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("requestChat");
 	var _markDialogAsLoading = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("markDialogAsLoading");
@@ -337,7 +340,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  const {
 	    callInfo
 	  } = actionResult;
-	  call_lib_callTokenManager.CallTokenManager.setToken(callInfo.chatId, callInfo.token);
+	  if (callInstalled) {
+	    call_lib_callTokenManager.CallTokenManager.setToken(callInfo.chatId, callInfo.token);
+	  }
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _isDialogLoadedMarkNeeded)[_isDialogLoadedMarkNeeded](actionName)) {
 	    await babelHelpers.classPrivateFieldLooseBase(this, _markDialogAsLoaded)[_markDialogAsLoaded](loadedDialogId);
 	  }

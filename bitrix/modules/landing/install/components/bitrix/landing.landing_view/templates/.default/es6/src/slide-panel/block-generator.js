@@ -353,6 +353,8 @@ export class BlockGenerator extends EventEmitter
 	onBlockAnimateFinish(): void
 	{
 		this.#isGenerationProcessed = false;
+		this.#selectedBlock = null;
+		this.#highlightSelectable.hide()
 
 		setTimeout(() => {
 			this.emit('onGenerationFinish');

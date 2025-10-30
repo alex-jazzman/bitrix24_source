@@ -9078,7 +9078,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getVkProfileUrl",
 	    value: function getVkProfileUrl(profile) {
-	      return 'https://vk.com/' + BX.util.htmlspecialchars(profile);
+	      return 'https://vk.ru/' + BX.util.htmlspecialchars(profile);
 	    }
 	  }, {
 	    key: "view",
@@ -16442,7 +16442,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "runFirstAutomationTour",
 	    value: function runFirstAutomationTour() {
-	      if (!document.querySelector('.bp_starter')) {
+	      if (!document.querySelector('#crm_entity_bp_starter')) {
 	        return;
 	      }
 	      main_core_events.EventEmitter.emit('BX.Crm.Timeline.Bizproc::onAfterWorkflowStarted', {

@@ -1,5 +1,4 @@
 <?php
-$MESS["BIZPROC_WORKFLOW_START_EMPTY_DESCRIPTION"] = "No description";
 $MESS["BIZPROC_WORKFLOW_START_EMPTY_DESCRIPTION_1"] = "Suggest the workflow administrator to add a description to the workflow.";
 $MESS["BIZPROC_WORKFLOW_START_LIST_ADD_TEMPLATE_BUTTON"] = "Create";
 $MESS["BIZPROC_WORKFLOW_START_LIST_AVERAGE_WAITING_TIME_MSGVER_1"] = "Average execution time: #TIME#";

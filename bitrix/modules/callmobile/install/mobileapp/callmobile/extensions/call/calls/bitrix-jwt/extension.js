@@ -134,8 +134,6 @@
 
 			this._reconnectionEventCount = 0;
 			this._maxReconnectionAttempts = 5;
-
-
 		}
 
 		get provider()
@@ -1089,30 +1087,28 @@
 			}]);
 
 			CallUtil.getCallConnectionDataById(this.uuid)
-				.then((response) =>
-				{
-					if (!this.ready || !this.bitrixCallDev)
-					{
-						return;
-					}
-
-					if (response.result.mediaServerUrl && response.result.roomData)
+				.then((response) => {
+					if (this.ready && this.bitrixCallDev)
 					{
 						const signalingUrl = this.getSignalingUrl(response.result.mediaServerUrl, response.result.roomData);
 						this.bitrixCallDev.updateSignalingUrl(signalingUrl);
 					}
 					else
 					{
-						throw new Error('No mediaServerUrl or roomData');
+						this.hangup();
 					}
 				})
-				.catch((error) =>
-				{
+				.catch((error) => {
 					console.error(error);
-					if (this._reconnectionEventCount < this._maxReconnectionAttempts)
+					const errorPreventingReconnection = Object.values(BX.Call.ErrorPreventingReconnection);
+
+					if (errorPreventingReconnection.includes(error.errorCode))
 					{
-						setTimeout(() =>
-						{
+						this.onFatalError(error.code);
+					}
+					else if (this._reconnectionEventCount < this._maxReconnectionAttempts)
+					{
+						setTimeout(() => {
 							this.__onCallReconnecting();
 						}, 5000);
 					}
@@ -2004,6 +2000,7 @@
 				onStateChanged: BX.type.isFunction(params.onStateChanged) ? params.onStateChanged : BX.DoNothing,
 				onInviteTimeout: BX.type.isFunction(params.onInviteTimeout) ? params.onInviteTimeout : BX.DoNothing,
 				onStreamReceived: BX.type.isFunction(params.onStreamReceived) ? params.onStreamReceived : BX.DoNothing,
+				onStreamRemoved: BX.type.isFunction(params.onStreamRemoved) ? params.onStreamRemoved : BX.DoNothing,
 				onUserVoiceStarted: BX.type.isFunction(params.onUserVoiceStarted) ? params.onUserVoiceStarted : BX.DoNothing,
 				onUserVoiceStopped: BX.type.isFunction(params.onUserVoiceStopped) ? params.onUserVoiceStopped : BX.DoNothing,
 				onInitialState: BX.type.isFunction(params.onInitialState) ? params.onInitialState : BX.DoNothing,

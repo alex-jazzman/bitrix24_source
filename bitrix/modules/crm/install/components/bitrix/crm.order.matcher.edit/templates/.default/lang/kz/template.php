@@ -63,7 +63,6 @@ $MESS["CRM_ORDERFORM_EDIT_DOC_INVOICE_PRODUCT_CHOICE_NAME1"] = "Атауы";
 $MESS["CRM_ORDERFORM_EDIT_DOC_INVOICE_PRODUCT_CHOICE_PRICE1"] = "Бағасы";
 $MESS["CRM_ORDERFORM_EDIT_DOC_INVOICE_TITLE"] = "Шотты баптау";
 $MESS["CRM_ORDERFORM_EDIT_DOC_SECTION_MSGVER_1"] = "Осы нысандардан құрылады:";
-$MESS["CRM_ORDERFORM_EDIT_DOC_SECTION_NAV"] = "Құжаттар";
 $MESS["CRM_ORDERFORM_EDIT_DOC_SECTION_NAV_MSGVER_1"] = "Деректер";
 $MESS["CRM_ORDERFORM_EDIT_EDIT"] = "баптау";
 $MESS["CRM_ORDERFORM_EDIT_EXTERNAL_ANALYTICS_AUTO_EVENTS"] = "Егер нысан сайтта орнатылған болса және сіз Яндекс.Метрика немесе Google Analytics қолдансаңыз, біз осы блоктағы баптауларды көрсетпестен нысанның оқиғалары мен мақсаттарын автоматты түрде тіркейміз.";

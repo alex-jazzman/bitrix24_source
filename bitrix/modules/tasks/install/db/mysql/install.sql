@@ -963,6 +963,10 @@ create table if not exists b_tasks_deadline_user_option
 	IS_EXACT_DEADLINE_TIME tinyint default 0,
 	SKIP_NOTIFICATION_PERIOD varchar(16) not null default '',
 	SKIP_NOTIFICATION_START_DATE datetime default null,
+	CAN_CHANGE_DEADLINE tinyint(1) not null default 0,
+	MAX_DEADLINE_CHANGE_DATE datetime null,
+	MAX_DEADLINE_CHANGES int null,
+	REQUIRE_DEADLINE_CHANGE_REASON tinyint(1) not null default 0,
 
 	primary key (ID),
 	unique index ix_b_tasks_deadline_user_option_user_id (USER_ID)
@@ -973,4 +977,34 @@ create table if not exists b_tasks_task_chat (
 	CHAT_ID  INT UNSIGNED NOT NULL,
 	PRIMARY KEY (TASK_ID, CHAT_ID),
 	INDEX task_chat_index (TASK_ID, CHAT_ID)
+);
+
+create table if not exists b_tasks_checklist_user_option (
+	ID int not null auto_increment,
+	USER_ID int not null,
+	ITEM_ID int not null,
+	OPTION_CODE int not null,
+	primary key (ID),
+	unique index b_tasks_checklist_user_option_value (USER_ID, ITEM_ID, OPTION_CODE),
+	index b_tasks_checklist_user_option_code (USER_ID, OPTION_CODE)
+);
+
+CREATE TABLE IF NOT EXISTS b_tasks_deadline_change_log (
+	ID int not null auto_increment,
+	TASK_ID int not null,
+	USER_ID int not null,
+	NEW_DEADLINE datetime default null,
+	REASON text null default null,
+	CHANGED_AT datetime default now(),
+
+	primary key (ID),
+	index task_deadline_change_log (TASK_ID, USER_ID)
+);
+
+create table if not exists b_tasks_task_result_file (
+	ID int not null auto_increment,
+	RESULT_ID  int(11) unsigned not null,
+	FILE_ID int(11) not null ,
+	PRIMARY KEY (ID),
+	index task_result_file_index (RESULT_ID)
 );

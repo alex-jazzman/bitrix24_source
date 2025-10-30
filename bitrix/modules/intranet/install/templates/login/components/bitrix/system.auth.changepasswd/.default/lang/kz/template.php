@@ -1,14 +1,9 @@
 <?php
-$MESS["AUTH_AUTH"] = "Авторландыру";
-$MESS["AUTH_CAPTCHA_PROMT"] = "Картинадағы сөзді енгізіңіз";
-$MESS["AUTH_CHANGE"] = "Құпиясөзді өзгерту";
-$MESS["AUTH_CHANGE_PASSWORD"] = "Құпиясөзді ауыстыру";
-$MESS["AUTH_CHECKWORD_MSGVER_1"] = "Бақылау жолы";
-$MESS["AUTH_LOGIN"] = "Логин";
-$MESS["AUTH_NEW_PASSWORD"] = "Жаңа құпиясөз";
-$MESS["AUTH_NEW_PASSWORD_CONFIRM"] = "Құпиясөзді растау";
-$MESS["AUTH_NEW_PASSWORD_REQ"] = "Жаңа құпиясөз";
-$MESS["AUTH_NONSECURE_NOTE"] = "Құпиясөз ашық түрінде жіберіледі. Жібермес бұрын құпиясөзді шифрлау үшін браузерде JavaScript қосыңыз.";
-$MESS["AUTH_REQ"] = "Міндетті өрістер";
-$MESS["AUTH_SECURE_NOTE"] = "Нысанды жібермес бұрын құпиясөз браузерде шифрланады. Бұл құпиясөзді ашық түрінде жібермеуге мүмкіндік береді.";
-$MESS["auth_change_pass_current_pass"] = "Ағымдағы құпиясөз";
+$MESS["INTRANET_CHANGE_PASS_AUTH_LINK"] = "Кіру";
+$MESS["INTRANET_CHANGE_PASS_BUTTON"] = "Жалғастыру";
+$MESS["INTRANET_CHANGE_PASS_CAPTCHA_PROMT"] = "Суреттегі әріптерді енгізіңіз";
+$MESS["INTRANET_CHANGE_PASS_CONFIRM"] = "Құпиясөзді растау";
+$MESS["INTRANET_CHANGE_PASS_CREATE_TITLE"] = "Құпиясөзді ойлап табыңыз";
+$MESS["INTRANET_CHANGE_PASS_CURRENT_PASS"] = "Ағымдағы құпиясөз";
+$MESS["INTRANET_CHANGE_PASS_NEW_PASS"] = "Жаңа құпиясөз";
+$MESS["INTRANET_CHANGE_PASS_TITLE"] = "Құпиясөзді қалпына келтіру";

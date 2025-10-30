@@ -7,37 +7,39 @@ jn.define('layout/ui/gratitude-list', (require, exports, module) => {
 
 	/**
 	 * @class GratitudeListManager
-	 * @extends LayoutComponent
 	 */
-	class GratitudeListManager extends LayoutComponent
+	class GratitudeListManager
 	{
 		/**
 		 * @param {Object} props
 		 * @param {Object} props.parentWidget
-		 * @param {string} props.title
 		 * @param {number} props.ownerId
-		 * @returns {Promise<void>}
+		 * @returns {void}
 		 */
-		static openInComponentWithRedux(props)
+		static openList(props)
 		{
+			if (!props.ownerId)
+			{
+				return;
+			}
+
 			const parentWidget = props.parentWidget ?? PageManager;
 
 			const config = {
 				enableNavigationBarBorder: false,
 				titleParams: {
-					text: props?.title ?? Loc.getMessage('M_UI_GRATITUDE_LIST_TITLE'),
+					text: Loc.getMessage('M_UI_GRATITUDE_LIST_TITLE'),
 					type: 'dialog',
 				},
 				onReady: (readyLayout) => {
 					readyLayout.showComponent(new GratitudeList({
-						withRedux: true,
 						layout: readyLayout,
-						ownerId: props.ownerId ?? null,
+						ownerId: props.ownerId,
 					}));
 				},
 			};
 
-			parentWidget.openWidget('layout', config);
+			void parentWidget.openWidget('layout', config);
 		}
 	}
 

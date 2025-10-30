@@ -1,4 +1,4 @@
-import { Dom } from 'main.core';
+import { Dom, Extension, Runtime } from 'main.core';
 import type { ListItemOptions } from 'landing.ui.component.listitem';
 
 import { BookingSettingsPopup } from './booking-settings-popup';
@@ -30,6 +30,20 @@ export class Settings
 
 	showSettingsPopup(): void
 	{
+		const isToolDisabled = Extension.getSettings('booking.crm-forms.settings').isToolDisabled;
+		if (isToolDisabled)
+		{
+			Runtime.loadExtension('ui.info-helper')
+				.then(({ InfoHelper }) => {
+					InfoHelper.show('limit_v2_booking_off');
+				})
+				.catch((err) => {
+					console.error(err);
+				});
+
+			return;
+		}
+
 		const container = document.querySelector(`.landing-ui-component-list-item[data-id="${this.#options.id}"] .landing-ui-component-list-item-body`);
 
 		if (Dom.style(container, 'display') === 'block')

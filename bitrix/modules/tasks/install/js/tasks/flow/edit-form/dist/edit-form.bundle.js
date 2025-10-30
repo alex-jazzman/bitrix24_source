@@ -104,6 +104,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    const entitySelectorValue = (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _getSelectedItem)[_getSelectedItem]()) == null ? void 0 : _babelHelpers$classPr2.id;
 	    return ((_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].checkerValue) == null ? void 0 : _babelHelpers$classPr3.value) || entitySelectorValue || babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].placeholder;
 	  }
+	  setValue(value) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].checker.switcher.check(value);
+	  }
 	  setErrors(errors) {
 	    var _babelHelpers$classPr4;
 	    (_babelHelpers$classPr4 = babelHelpers.classPrivateFieldLooseBase(this, _layout)[_layout].checker) == null ? void 0 : _babelHelpers$classPr4.setErrors(errors);
@@ -356,14 +359,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	var _getTasksCreatorsFromSelector = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getTasksCreatorsFromSelector");
 	var _isShortInterval = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isShortInterval");
 	var _renderPlannedCompletionTime = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderPlannedCompletionTime");
-	var _needUseSchedule = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("needUseSchedule");
 	class AboutPage extends FormPage {
 	  constructor(params) {
 	    super();
-	    Object.defineProperty(this, _needUseSchedule, {
-	      get: _get_needUseSchedule,
-	      set: void 0
-	    });
 	    Object.defineProperty(this, _renderPlannedCompletionTime, {
 	      value: _renderPlannedCompletionTime2
 	    });
@@ -512,14 +510,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].plannedCompletionTimeIntervalSelector = new tasks_intervalSelector.IntervalSelector({
 	    value
 	  });
-	  const needUseSchedule = babelHelpers.classPrivateFieldLooseBase(this, _needUseSchedule)[_needUseSchedule];
-	  if (needUseSchedule) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].plannedCompletionTimeIntervalSelector.subscribe('intervalChanged', event => {
-	      const interval = event.getData().interval;
-	      const isSkipWeekendsDisabled = babelHelpers.classPrivateFieldLooseBase(this, _isShortInterval)[_isShortInterval](interval);
-	      babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].skipWeekends.disable(isSkipWeekendsDisabled);
-	    });
-	  }
+	  babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].plannedCompletionTimeIntervalSelector.subscribe('intervalChanged', event => {
+	    const interval = event.getData().interval;
+	    const isSkipWeekendsDisabled = babelHelpers.classPrivateFieldLooseBase(this, _isShortInterval)[_isShortInterval](interval);
+	    babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].skipWeekends.disable(isSkipWeekendsDisabled);
+	  });
 	  const duration = babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].plannedCompletionTimeIntervalSelector.getDuration();
 	  const plannedCompletionTimeLabel = `
 			<div class="tasks-flow__create-title-with-hint">
@@ -547,7 +542,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    max: Math.floor(maxInt / monthDuration)
 	  });
 	  const interval = babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].plannedCompletionTimeIntervalSelector.getInterval();
-	  const isSkipWeekendsDisabled = needUseSchedule && babelHelpers.classPrivateFieldLooseBase(this, _isShortInterval)[_isShortInterval](interval);
+	  const isSkipWeekendsDisabled = babelHelpers.classPrivateFieldLooseBase(this, _isShortInterval)[_isShortInterval](interval);
 	  babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].skipWeekends = new ValueChecker({
 	    id: 'planned-completion-time-skip-weekends',
 	    title: main_core.Loc.getMessage('TASKS_FLOW_EDIT_FORM_SKIP_WEEKENDS'),
@@ -581,10 +576,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 			</div>
 		`), babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].plannedCompletionTime.render(), babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].plannedCompletionTimeIntervalSelector.render(), babelHelpers.classPrivateFieldLooseBase(this, _layout$1)[_layout$1].skipWeekends.render());
 	  return root;
-	}
-	function _get_needUseSchedule() {
-	  const settings = main_core.Extension.getSettings('tasks.flow.edit-form');
-	  return settings.get('needUseSchedule');
 	}
 
 	var _userId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("userId");
@@ -636,7 +627,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	let _$2 = t => t,
 	  _t$2,
 	  _t2$2,
-	  _t3$1;
+	  _t3$1,
+	  _t4$1;
 	const BIG_DEPARTMENT_USER_COUNT = 30;
 	const HINT_MESSAGES_BY_COUNT = [{
 	  condition: count => count === 0,
@@ -657,9 +649,12 @@ this.BX.Tasks = this.BX.Tasks || {};
 	var _getResponsiblesByDistributionType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getResponsiblesByDistributionType");
 	var _getResponsiblesFromSelectorByDistributionType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getResponsiblesFromSelectorByDistributionType");
 	var _getResponsiblesFromSelector = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getResponsiblesFromSelector");
+	var _addFlowTeamTooltip = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("addFlowTeamTooltip");
 	var _renderDistribution = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderDistribution");
+	var _onDistributionChange = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onDistributionChange");
 	var _getResponsiblesSelector = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getResponsiblesSelector");
 	var _renderDistributionType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderDistributionType");
+	var _renderImmutableFlowTeamTooltip = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderImmutableFlowTeamTooltip");
 	var _getTaskTemplateDialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getTaskTemplateDialog");
 	var _getProjectLabel = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getProjectLabel");
 	var _getHintMessageCodeByCount = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getHintMessageCodeByCount");
@@ -683,14 +678,23 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    Object.defineProperty(this, _getTaskTemplateDialog, {
 	      value: _getTaskTemplateDialog2
 	    });
+	    Object.defineProperty(this, _renderImmutableFlowTeamTooltip, {
+	      value: _renderImmutableFlowTeamTooltip2
+	    });
 	    Object.defineProperty(this, _renderDistributionType, {
 	      value: _renderDistributionType2
 	    });
 	    Object.defineProperty(this, _getResponsiblesSelector, {
 	      value: _getResponsiblesSelector2
 	    });
+	    Object.defineProperty(this, _onDistributionChange, {
+	      value: _onDistributionChange2
+	    });
 	    Object.defineProperty(this, _renderDistribution, {
 	      value: _renderDistribution2
+	    });
+	    Object.defineProperty(this, _addFlowTeamTooltip, {
+	      value: _addFlowTeamTooltip2
 	    });
 	    Object.defineProperty(this, _getResponsiblesFromSelector, {
 	      value: _getResponsiblesFromSelector2
@@ -762,6 +766,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    main_core.Dom.removeClass(babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].queueDistribution, '--active');
 	    main_core.Dom.removeClass(babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].manuallyDistribution, '--active');
 	    main_core.Dom.removeClass(babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].himselfDistribution, '--active');
+	    main_core.Dom.removeClass(babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].immutableDistribution, '--active');
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].queueRadio.checked) {
 	      main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].queueDistribution, '--active');
 	    }
@@ -770,6 +775,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    }
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].himselfRadio.checked) {
 	      main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].himselfDistribution, '--active');
+	    }
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].immutableRadio.checked) {
+	      main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].immutableDistribution, '--active');
 	    }
 	  }
 	  showErrors(incorrectData) {
@@ -787,6 +795,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].projectSelector.cleanError();
 	    babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].responsiblesQueueSelector.cleanError();
 	    babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].responsiblesHimselfSelector.cleanError();
+	    babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].responsiblesImmutableSelector.cleanError();
 	    babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].moderatorSelector.cleanError();
 	    babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].taskTemplate.cleanError();
 	  }
@@ -863,7 +872,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].taskTemplate = new ValueChecker({
 	      id: 'task-template',
 	      title: main_core.Loc.getMessage('TASKS_FLOW_EDIT_FORM_ACCEPT_TASKS_BY_TEMPLATE_TITLE'),
-	      entitySelector: babelHelpers.classPrivateFieldLooseBase(this, _getTaskTemplateDialog)[_getTaskTemplateDialog]()
+	      entitySelector: babelHelpers.classPrivateFieldLooseBase(this, _getTaskTemplateDialog)[_getTaskTemplateDialog](),
+	      isFieldDisabled: babelHelpers.classPrivateFieldLooseBase(this, _flow$1)[_flow$1].distributionType === 'immutable'
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].settingsPageForm = main_core.Tag.render(_t$2 || (_t$2 = _$2`
 			<form class="tasks-flow__create-settings">
@@ -964,6 +974,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    case 'himself':
 	      babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].responsiblesHimselfSelector.setErrors([main_core.Loc.getMessage('TASKS_FLOW_EDIT_FORM_TASKS_RESPONSIBLES_ERROR')]);
 	      break;
+	    case 'immutable':
+	      babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].responsiblesImmutableSelector.setErrors([main_core.Loc.getMessage('TASKS_FLOW_EDIT_FORM_TASKS_RESPONSIBLES_ERROR')]);
+	      break;
 	  }
 	}
 	function _getResponsiblesByDistributionType2(distributionType, flowData = {}) {
@@ -991,6 +1004,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      return babelHelpers.classPrivateFieldLooseBase(this, _getResponsiblesFromSelector)[_getResponsiblesFromSelector](babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].responsiblesQueueSelector);
 	    case 'himself':
 	      return babelHelpers.classPrivateFieldLooseBase(this, _getResponsiblesFromSelector)[_getResponsiblesFromSelector](babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].responsiblesHimselfSelector);
+	    case 'immutable':
+	      return babelHelpers.classPrivateFieldLooseBase(this, _getResponsiblesFromSelector)[_getResponsiblesFromSelector](babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].responsiblesImmutableSelector);
 	    default:
 	      return null;
 	  }
@@ -1001,9 +1016,17 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }
 	  return null;
 	}
+	function _addFlowTeamTooltip2() {
+	  const immutableFieldLabel = babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].immutableDistribution.querySelector('.ui-section__field-label');
+	  if (main_core.Type.isDomNode(immutableFieldLabel)) {
+	    const immutableDistributionTooltip = babelHelpers.classPrivateFieldLooseBase(this, _renderImmutableFlowTeamTooltip)[_renderImmutableFlowTeamTooltip]();
+	    main_core.Dom.append(immutableDistributionTooltip, immutableFieldLabel);
+	  }
+	}
 	function _renderDistribution2() {
 	  babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].responsiblesQueueSelector = babelHelpers.classPrivateFieldLooseBase(this, _getResponsiblesSelector)[_getResponsiblesSelector](babelHelpers.classPrivateFieldLooseBase(this, _flow$1)[_flow$1].distributionType === 'queue' ? babelHelpers.classPrivateFieldLooseBase(this, _flow$1)[_flow$1].responsibleList : [], false);
 	  babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].responsiblesHimselfSelector = babelHelpers.classPrivateFieldLooseBase(this, _getResponsiblesSelector)[_getResponsiblesSelector](babelHelpers.classPrivateFieldLooseBase(this, _flow$1)[_flow$1].distributionType === 'himself' ? babelHelpers.classPrivateFieldLooseBase(this, _flow$1)[_flow$1].responsibleList : []);
+	  babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].responsiblesImmutableSelector = babelHelpers.classPrivateFieldLooseBase(this, _getResponsiblesSelector)[_getResponsiblesSelector](babelHelpers.classPrivateFieldLooseBase(this, _flow$1)[_flow$1].distributionType === 'immutable' && main_core.Type.isArrayFilled(babelHelpers.classPrivateFieldLooseBase(this, _flow$1)[_flow$1].responsibleList) ? babelHelpers.classPrivateFieldLooseBase(this, _flow$1)[_flow$1].responsibleList : [['user', babelHelpers.classPrivateFieldLooseBase(this, _currentUser)[_currentUser]]]);
 	  babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].moderatorSelector = new ui_formElements_view.UserSelector({
 	    enableAll: false,
 	    enableDepartments: false,
@@ -1040,12 +1063,27 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  });
 	  babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].himselfDistribution = himselfDistribution;
 	  babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].himselfRadio = himselfRadio;
+	  const {
+	    root: immutableDistribution,
+	    radio: immutableRadio
+	  } = babelHelpers.classPrivateFieldLooseBase(this, _renderDistributionType)[_renderDistributionType]({
+	    type: 'immutable',
+	    selector: babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].responsiblesImmutableSelector
+	  });
+	  babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].immutableDistribution = immutableDistribution;
+	  babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].immutableRadio = immutableRadio;
 	  babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].queueRadio.checked = babelHelpers.classPrivateFieldLooseBase(this, _flow$1)[_flow$1].distributionType === 'queue';
 	  babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].manuallyRadio.checked = babelHelpers.classPrivateFieldLooseBase(this, _flow$1)[_flow$1].distributionType === 'manually';
 	  babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].himselfRadio.checked = babelHelpers.classPrivateFieldLooseBase(this, _flow$1)[_flow$1].distributionType === 'himself';
+	  babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].immutableRadio.checked = babelHelpers.classPrivateFieldLooseBase(this, _flow$1)[_flow$1].distributionType === 'immutable';
 	  this.update();
+	  main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].queueRadio, 'change', babelHelpers.classPrivateFieldLooseBase(this, _onDistributionChange)[_onDistributionChange].bind(this));
+	  main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].manuallyRadio, 'change', babelHelpers.classPrivateFieldLooseBase(this, _onDistributionChange)[_onDistributionChange].bind(this));
+	  main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].himselfRadio, 'change', babelHelpers.classPrivateFieldLooseBase(this, _onDistributionChange)[_onDistributionChange].bind(this));
+	  main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].immutableRadio, 'change', babelHelpers.classPrivateFieldLooseBase(this, _onDistributionChange)[_onDistributionChange].bind(this));
 	  const selector = babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].responsiblesHimselfSelector.getSelector();
 	  selector.getDialog().subscribe('onHide', this.checkDepartmentUsersCount.bind(this, selector));
+	  babelHelpers.classPrivateFieldLooseBase(this, _addFlowTeamTooltip)[_addFlowTeamTooltip]();
 	  return main_core.Tag.render(_t2$2 || (_t2$2 = _$2`
 			<div class="ui-section__field-container">
 				<div class="ui-section__field-label_box">
@@ -1056,8 +1094,21 @@ this.BX.Tasks = this.BX.Tasks || {};
 				${0}
 				${0}
 				${0}
+				${0}
 			</div>
-		`), main_core.Loc.getMessage('TASKS_FLOW_EDIT_FORM_DISTRIBUTION_TYPE'), babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].queueDistribution, babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].manuallyDistribution, babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].himselfDistribution);
+		`), main_core.Loc.getMessage('TASKS_FLOW_EDIT_FORM_DISTRIBUTION_TYPE'), babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].queueDistribution, babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].manuallyDistribution, babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].himselfDistribution, babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].immutableDistribution);
+	}
+	function _onDistributionChange2() {
+	  var _babelHelpers$classPr15;
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].immutableRadio.checked) {
+	    var _babelHelpers$classPr12, _babelHelpers$classPr13;
+	    (_babelHelpers$classPr12 = babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].taskTemplate) == null ? void 0 : _babelHelpers$classPr12.disable(true);
+	    (_babelHelpers$classPr13 = babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].taskTemplate) == null ? void 0 : _babelHelpers$classPr13.setValue(false);
+	  } else {
+	    var _babelHelpers$classPr14;
+	    (_babelHelpers$classPr14 = babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].taskTemplate) == null ? void 0 : _babelHelpers$classPr14.disable(false);
+	  }
+	  (_babelHelpers$classPr15 = babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].taskTemplate) == null ? void 0 : _babelHelpers$classPr15.update();
 	}
 	function _getResponsiblesSelector2(responsibleValues, enableDepartments = true, multiple = true) {
 	  return new ui_formElements_view.UserSelector({
@@ -1066,6 +1117,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    enableDepartments,
 	    values: responsibleValues,
 	    label: main_core.Loc.getMessage('TASKS_FLOW_EDIT_FORM_DISTRIBUTION_QUEUE_SELECTOR_LABEL'),
+	    className: 'tasks-flow__responsible-selector',
 	    dialogEvents: {
 	      onLoad: this.onDialogLoad
 	    }
@@ -1103,6 +1155,18 @@ this.BX.Tasks = this.BX.Tasks || {};
 				</div>
 			</div>
 		`), type, type, type, main_core.Loc.getMessage(`TASKS_FLOW_EDIT_FORM_DISTRIBUTION_${type.toUpperCase()}`), main_core.Loc.getMessage('TASKS_FLOW_EDIT_FORM_ANALYTICS_STUB_BUTTON'), main_core.Loc.getMessage(`TASKS_FLOW_EDIT_FORM_DISTRIBUTION_${type.toUpperCase()}_HINT`), type, selector == null ? void 0 : selector.render());
+	}
+	function _renderImmutableFlowTeamTooltip2() {
+	  return main_core.Tag.render(_t4$1 || (_t4$1 = _$2`
+			<span
+				data-id="immutableDistributionTooltip"
+				class="ui-hint ui-hint-flow-value-checker"
+				data-hint="${0}" 
+				data-hint-no-icon
+			>
+				<span class="ui-hint-icon ui-hint-icon-flow-value-checker"></span>
+			</span>
+		`), main_core.Loc.getMessage('TASKS_FLOW_EDIT_FORM_DISTRIBUTION_IMMUTABLE_TOOLTIP'));
 	}
 	function _getTaskTemplateDialog2() {
 	  babelHelpers.classPrivateFieldLooseBase(this, _layout$2)[_layout$2].taskTemplateDialog = new ui_entitySelector.Dialog({
@@ -3160,7 +3224,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  _t$4,
 	  _t2$4,
 	  _t3$2,
-	  _t4$1,
+	  _t4$2,
 	  _t5$1;
 	const SLIDER_WIDTH = 692;
 	const HELPDESK_ARTICLE = 21272066;
@@ -3523,7 +3587,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  popup.show();
 	}
 	function _renderDemoInfoContent2() {
-	  return main_core.Tag.render(_t4$1 || (_t4$1 = _$4`
+	  return main_core.Tag.render(_t4$2 || (_t4$2 = _$4`
 			<div class="tasks-flow__task-demo-info_wrapper">
 				<div class="tasks-flow__task-demo-info_content">
 					<div class="tasks-flow__task-demo-info_title">

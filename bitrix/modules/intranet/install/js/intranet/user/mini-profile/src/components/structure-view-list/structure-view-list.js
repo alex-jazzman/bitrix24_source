@@ -137,11 +137,12 @@ export const StructureViewList = {
 		},
 	},
 	template: `
-		<div class="intranet-user-mini-profile__structure-view-list">
+		<div class="intranet-user-mini-profile__structure-view-list" data-test-id="usermp_structure-view-list">
 			<div
 				class="intranet-user-mini-profile__structure-view-list__preview-zone"
 				:class="{ '--one-branch': !hasManyUserDepartments }"
 				:style="{ '--missing-max-department-count': missingMaxDepartmentCount }"
+				data-test-id="usermp_structure-preview-zone"
 			>
 				<TransitionGroup 
 					type="transition" 
@@ -159,12 +160,14 @@ export const StructureViewList = {
 							:userDepartmentId="departmentId"
 							:headDictionary="structure.headDictionary"
 							:user="user"
+							data-test-id="usermp_structure-view"
 						/>
 					</template>
 				</TransitionGroup>
 			</div>
 			<div v-if="hasManyUserDepartments"
 				class="intranet-user-mini-profile__structure-view-control"
+				data-test-id="usermp_structure-view-control"
 			>
 				<Button 
 					:leftIcon="buttonIcon.CHEVRON_LEFT_S"

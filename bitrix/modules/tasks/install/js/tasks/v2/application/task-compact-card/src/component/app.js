@@ -17,6 +17,7 @@ import { Title as FieldTitle } from 'tasks.v2.component.fields.title';
 import { Importance } from 'tasks.v2.component.fields.importance';
 import { DescriptionInline } from 'tasks.v2.component.fields.description';
 import { FieldList } from 'tasks.v2.component.elements.field-list';
+import { DropZone } from 'tasks.v2.component.drop-zone';
 import { Responsible, responsibleMeta } from 'tasks.v2.component.fields.responsible';
 import { Deadline, deadlineMeta } from 'tasks.v2.component.fields.deadline';
 import { CheckListChip, CheckList } from 'tasks.v2.component.fields.check-list';
@@ -31,7 +32,6 @@ import type { GroupModel } from 'tasks.v2.model.groups';
 import type { CheckListModel } from 'tasks.v2.model.check-list';
 
 import { FullCardButton } from './full-card-button/full-card-button';
-import { DropZone } from './drop-zone/drop-zone';
 import './app.css';
 
 // @vue/component
@@ -72,7 +72,21 @@ export const App = {
 			required: false,
 			default: null,
 		},
+		description: {
+			type: [String, null],
+			required: false,
+			default: '',
+		},
+		auditorsIds: {
+			type: Array,
+			required: false,
+			default: () => [],
+		},
 		analytics: {
+			type: Object,
+			default: () => ({}),
+		},
+		source: {
 			type: Object,
 			default: () => ({}),
 		},
@@ -169,6 +183,9 @@ export const App = {
 				creatorId: this.currentUserId,
 				responsibleId: this.currentUserId,
 				...(this.groupId ? { groupId: this.groupId } : {}),
+				...(this.description ? { description: this.description } : ''),
+				...(this.auditorsIds ? { auditorsIds: this.auditorsIds } : []),
+				...(this.source ? { source: this.source } : {}),
 			};
 
 			if (this.deadlineTs !== null)
@@ -178,6 +195,15 @@ export const App = {
 			else if (this.hasDefaultDeadline)
 			{
 				payload.deadlineTs = this.defaultDeadlineTs;
+			}
+
+			if (this.auditorsIds !== null && this.auditorsIds.length > 0)
+			{
+				this.auditorsIds.forEach((auditorId) => {
+					this.insertUser({
+						id: auditorId,
+					});
+				});
 			}
 
 			this.insert(payload);
@@ -201,8 +227,6 @@ export const App = {
 
 		this.resizeObserver.observe(this.$refs.title);
 		this.subscribeEvents();
-
-		this.fileService.getAdapter().getUploader().assignDropzone(this.$el);
 	},
 	beforeUnmount(): void
 	{
@@ -227,6 +251,9 @@ export const App = {
 		...mapActions(Model.Interface, [
 			'updateTitleFieldOffsetHeight',
 		]),
+		...mapActions(Model.Users, {
+			insertUser: 'insert',
+		}),
 		close(): void
 		{
 			Event.EventEmitter.emit(`${EventName.CloseCard}:${this.taskId}`);
@@ -317,14 +344,12 @@ export const App = {
 			Event.EventEmitter.emit(`${EventName.AdjustPosition}:${this.taskId}`);
 			this.externalPopup = event.popupInstance;
 			this.adjustCardPopup(true);
-			this.fileService.getAdapter().getUploader().unassignDropzone(this.$el);
 		},
 		handleHidingPopup(): void
 		{
 			Event.EventEmitter.emit(`${EventName.HideOverlay}:${this.taskId}`);
 			Event.EventEmitter.emit(`${EventName.AdjustPosition}:${this.taskId}`);
 			this.externalPopup = null;
-			this.fileService.getAdapter().getUploader().assignDropzone(this.$el);
 		},
 		handleResizingPopup(): void
 		{
@@ -481,7 +506,7 @@ export const App = {
 					</div>
 				</div>
 			</div>
-			<DropZone/>
+			<DropZone v-if="!isCheckListPopupShown" :taskId="taskId" :bottom="18"/>
 		</div>
 	`,
 };

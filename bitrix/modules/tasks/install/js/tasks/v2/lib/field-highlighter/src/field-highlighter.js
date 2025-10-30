@@ -17,18 +17,27 @@ class FieldHighlighter
 		return this;
 	}
 
-	addHighlight(fieldId: string): HTMLElement
+	addHighlight(fieldId: string): FieldHighlighter
 	{
-		return this.highlightContainer(this.#getFieldContainer(fieldId));
+		this.highlightContainer(this.getFieldContainer(fieldId));
+
+		return this;
 	}
 
-	addChipHighlight(fieldId: string): HTMLElement
+	addChipHighlight(fieldId: string): FieldHighlighter
 	{
-		return this.highlightContainer(this.#getChipContainer(fieldId));
+		this.highlightContainer(this.getChipContainer(fieldId));
+
+		return this;
 	}
 
-	highlightContainer(container: HTMLElement): HTMLElement
+	highlightContainer(container: ?HTMLElement): void
 	{
+		if (!container)
+		{
+			return;
+		}
+
 		Dom.addClass(container, 'tasks-field-highlight');
 
 		const removeHighlight = () => {
@@ -38,15 +47,18 @@ class FieldHighlighter
 		};
 		Event.bind(window, 'click', removeHighlight);
 		Event.bind(window, 'keydown', removeHighlight);
-
-		return container;
 	}
 
-	async highlight(fieldId: string): Promise<HTMLElement>
+	async highlight(fieldId: string): Promise<void>
 	{
 		await this.#nextTick();
 
-		const fieldContainer = this.#getFieldContainer(fieldId);
+		const fieldContainer = this.getFieldContainer(fieldId);
+
+		if (!fieldContainer)
+		{
+			return;
+		}
 
 		this.#stopAnimation(fieldContainer);
 		setTimeout(() => this.#startAnimation(fieldContainer));
@@ -55,8 +67,6 @@ class FieldHighlighter
 		this.#highlightTimeouts[fieldId] = setTimeout(() => this.#stopAnimation(fieldContainer), 1500);
 
 		this.#scrollToField(fieldId);
-
-		return fieldContainer;
 	}
 
 	#startAnimation(fieldContainer: HTMLElement): void
@@ -71,20 +81,31 @@ class FieldHighlighter
 
 	#scrollToField(fieldId: string): void
 	{
-		const fieldContainer = this.#getFieldContainer(fieldId);
+		const fieldContainer = this.getFieldContainer(fieldId);
+
+		if (!fieldContainer)
+		{
+			return;
+		}
+
+		Dom.style(fieldContainer, 'scrollMarginTop', '100px');
 
 		fieldContainer.scrollIntoView({
-			block: 'center',
+			block: 'start',
 			behavior: 'smooth',
 		});
+
+		setTimeout(() => {
+			Dom.style(fieldContainer, 'scrollMarginTop', null);
+		}, 1000);
 	}
 
-	#getFieldContainer(fieldId: string): HTMLElement
+	getFieldContainer(fieldId: string): ?HTMLElement
 	{
-		return this.#container.querySelector(`[${fieldAttribute}="${fieldId}"]`).closest(fieldSelector);
+		return this.#container.querySelector(`[${fieldAttribute}="${fieldId}"]`)?.closest(fieldSelector);
 	}
 
-	#getChipContainer(fieldId: string): HTMLElement
+	getChipContainer(fieldId: string): ?HTMLElement
 	{
 		return this.#container.querySelector(`[${chipAttribute}="${fieldId}"]`);
 	}

@@ -9,4 +9,4 @@ export type CardItem = {
 	container: HTMLElement,
 }
 
-export type EntityType = 'user' | 'structure-node' | 'sign-document';
+export type EntityType = 'user' | 'structure-node' | 'sign-document' | 'signers-list';

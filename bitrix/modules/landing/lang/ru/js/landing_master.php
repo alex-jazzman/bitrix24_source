@@ -525,3 +525,9 @@ $MESS["LANDING_TITLE_WIDGET_EDIT_BUTTON_DISABLE_HINT_DEMO_DATA"] = "Отключ
 $MESS["LANDING_TITLE_BLOCK_EDIT_BUTTON_DISABLE_HINT_DEMO_DATA"] = "Отключите режим показа демо-данных, чтобы отредактировать блок";
 
 $MESS["LANDING_SOURCEFIELD_LINK_TEXT"] = "Открыть группу";
+
+//section favourite empty state
+$MESS["LANDING_SECTION_FAVOURITE_EMPTY_STATE_TITLE"] = "Избранных блоков пока нет";
+$MESS["LANDING_SECTION_FAVOURITE_EMPTY_STATE_TEXT"] = "Добавьте блоки в избранное, чтобы они появились в этом разделе";
+$MESS["LANDING_SECTION_FAVOURITE_BALLOON_ADD"] = "Блок добавлен в избранное";
+$MESS["LANDING_SECTION_FAVOURITE_BALLOON_REMOVE"] = "Блок удалён из избранного";

@@ -1,10 +1,6 @@
 <?php
-$MESS["MAIN_MAIL_FORM_ADDRESS_BOOK_EMPTY_SEARCH_SUBTITLE"] = "Збережіть контакт, щоб надіслати лист.";
 $MESS["MAIN_MAIL_FORM_ADDRESS_BOOK_EMPTY_SEARCH_SUBTITLE_MSGVER_1"] = "Перевірте, чи немає в запиті помилки, або збережіть адресу.";
-$MESS["MAIN_MAIL_FORM_ADDRESS_BOOK_EMPTY_SEARCH_TITLE"] = "Такого контакту немає в адресній книзі";
 $MESS["MAIN_MAIL_FORM_ADDRESS_BOOK_EMPTY_SEARCH_TITLE_MSGVER_1"] = "Такої адреси немає в адресній книзі";
-$MESS["MAIN_MAIL_FORM_ADDRESS_BOOK_FOOTER_ADD_BUTTON"] = "Новий контакт адресної книги";
-$MESS["MAIN_MAIL_FORM_ADDRESS_BOOK_FOOTER_ADD_BUTTON_ALLOW_CREATE_ITEM"] = "Новий контакт адресної книги:";
 $MESS["MAIN_MAIL_FORM_ADDRESS_BOOK_FOOTER_ADD_BUTTON_ALLOW_CREATE_ITEM_MSGVER_1"] = "Додати нову адресу:";
 $MESS["MAIN_MAIL_FORM_ADDRESS_BOOK_FOOTER_ADD_BUTTON_MSGVER_1"] = "Додати нову адресу";
 $MESS["MAIN_MAIL_FORM_CRM_EMPTY_SEARCH_SUBTITLE"] = "Перевірте помилки або додайте адресу ел. пошти в картку компанії або контакту з цього елемента.";

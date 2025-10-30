@@ -419,6 +419,12 @@ body {
 	opacity: 1;
 }
 
+.landing-pub-top-panel-total-view, .landing-pub-top-panel-unique-view {
+	display: flex;
+	font-weight: var(--ui-font-weight-semi-bold, 600);
+	margin-right: 15px;
+}
+
 .landing-pub-top-panel-unique-view-popup {
 	position: absolute;
 	left: -150px;

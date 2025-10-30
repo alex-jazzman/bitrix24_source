@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,main_core_events,im_v2_component_list_items_recent,im_v2_component_search,im_v2_lib_logger,im_v2_provider_service_chat,ui_infoHelper,im_public,im_v2_component_elements_menu,im_v2_component_elements_copilotRolesDialog,im_v2_component_list_container_elements_createChatPromo,im_v2_lib_permission,im_v2_lib_createChat,im_v2_lib_feature,im_v2_provider_service_copilot,im_v2_provider_service_aiAssistant,im_v2_lib_helpdesk,main_core,im_v2_lib_analytics,im_v2_lib_invite,im_v2_lib_promo,im_v2_const) {
+(function (exports,main_core_events,im_v2_component_list_items_recent,im_v2_component_search,im_v2_lib_logger,im_v2_provider_service_chat,ui_infoHelper,im_public,im_v2_component_elements_menu,im_v2_component_elements_copilotRolesDialog,im_v2_component_list_container_elements_createChatPromo,im_v2_lib_permission,im_v2_lib_createChat,im_v2_lib_feature,im_v2_provider_service_copilot,im_v2_lib_helpdesk,main_core,im_v2_lib_analytics,im_v2_lib_invite,im_v2_lib_promo,im_v2_const) {
 	'use strict';
 
 	// @vue/component
@@ -245,10 +245,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.copilotActive);
 	    },
 	    isCopilotAvailableAndCreatable() {
-	      return this.isCopilotAvailable && this.canCreateCopilot && !this.isAiAssistantChatAvailable;
-	    },
-	    isAiAssistantChatAvailable() {
-	      return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.aiAssistantChatAvailable);
+	      return this.isCopilotAvailable && this.canCreateCopilot;
 	    },
 	    canCreateChannel() {
 	      return im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByUserType(im_v2_const.ActionByUserType.createChannel);
@@ -321,15 +318,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      this.isLoading = false;
 	      void im_public.Messenger.openChat(newDialogId);
 	    },
-	    async onAiAssistantCreateClick() {
-	      this.showMenu = false;
-	      this.isLoading = true;
-	      const newDialogId = await this.getAiAssistantService().createChat().catch(() => {
-	        this.isLoading = false;
-	      });
-	      this.isLoading = false;
-	      void im_public.Messenger.openChat(newDialogId);
-	    },
 	    onPromoContinueClick() {
 	      im_v2_lib_promo.PromoManager.getInstance().markAsWatched(this.getPromoType());
 	      this.startChatCreation();
@@ -363,12 +351,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        this.copilotService = new im_v2_provider_service_copilot.CopilotService();
 	      }
 	      return this.copilotService;
-	    },
-	    getAiAssistantService() {
-	      if (!this.aiAssistantService) {
-	        this.aiAssistantService = new im_v2_provider_service_aiAssistant.AiAssistantService();
-	      }
-	      return this.aiAssistantService;
 	    },
 	    handleShowPopup() {
 	      im_v2_lib_analytics.Analytics.getInstance().chatCreate.onMenuCreateClick();
@@ -405,14 +387,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				<template #after-content>
 					<CopilotRoleSelectionButton @click.stop="onCopilotRoleSelectClick" />
 				</template>
-			</MenuItem>
-			<MenuItem
-				v-if="isAiAssistantChatAvailable"
-				:icon="MenuItemIcon.copilot"
-				title="Marta AI chat"
-				subtitle="For fun"
-				@click.stop="onAiAssistantCreateClick"
-			>
 			</MenuItem>
 			<MenuItem
 				v-if="canCreateChannel"
@@ -556,5 +530,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.RecentListContainer = RecentListContainer;
 
-}((this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}),BX.Event,BX.Messenger.v2.Component.List,BX.Messenger.v2.Component,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.UI,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.List,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Const));
+}((this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}),BX.Event,BX.Messenger.v2.Component.List,BX.Messenger.v2.Component,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.UI,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.List,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Const));
 //# sourceMappingURL=recent-container.bundle.js.map

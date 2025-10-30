@@ -35,7 +35,7 @@
 	flex-grow: 1;
 	width: 100%;
 	min-width: 100%;
-	max-width: var(--im-content-chat__max-width_textarea_container);
+	max-width: var(--im-content-chat__max-width_message_container);
 	overflow: hidden;
 	overflow-y: auto;
 	overflow-anchor: none;

@@ -11,12 +11,11 @@ $return = [
 		'name' => Loc::getMessage('LANDING_BLOCK_WIDGET_71_3_NAME'),
 		'type' => ['page', 'store', 'smn', 'knowledge', 'group', 'mainpage'],
 		'section' => ['columns', 'widgets_columns'],
-		'system' => true,
 	],
 	'cards' => [
 		'.landing-block-node-card' => [
 			'name' => Loc::getMessage('LANDING_BLOCK_WIDGET_71_3_NODE_CARD'),
-			'label' => ['.landing-block-node-item-title'],
+			'label' => ['.landing-block-node-card-title'],
 		],
 	],
 	'nodes' => [
@@ -60,7 +59,7 @@ $return = [
 		'nodes' => [
 			'.landing-block-node-container' => [
 				'name' => Loc::getMessage('LANDING_BLOCK_WIDGET_71_3_NODE_ELEMENT'),
-				'type' => ['background-color'],
+				'type' => ['background-color', 'padding-top', 'padding-bottom'],
 			],
 			'.landing-block-node-title' => [
 				'name' => Loc::getMessage('LANDING_BLOCK_WIDGET_71_3_NODE_TITLE'),
@@ -72,7 +71,11 @@ $return = [
 			],
 			'.landing-block-node-tab' => [
 				'name' => Loc::getMessage('LANDING_BLOCK_WIDGET_71_3_NODE_BADGE'),
-				'type' => ['display-element', 'background-color', 'typo'],
+				'type' => ['display-element', 'background-color', 'border-color', 'typo'],
+			],
+			'.landing-block-node-card-box' => [
+				'name' => Loc::getMessage('LANDING_BLOCK_WIDGET_71_3_NODE_ELEMENT'),
+				'type' => ['background-color'],
 			],
 			'.landing-block-node-card' => [
 				'name' => Loc::getMessage('LANDING_BLOCK_WIDGET_71_3_NODE_CARD'),
@@ -80,7 +83,7 @@ $return = [
 			],
 			'.landing-block-node-card-badge' => [
 				'name' => Loc::getMessage('LANDING_BLOCK_WIDGET_71_3_NODE_CARD_BADGE'),
-				'type' => ['background-color'],
+				'type' => ['display-element', 'background-color', 'color'],
 			],
 			'.landing-block-node-card-title' => [
 				'name' => Loc::getMessage('LANDING_BLOCK_WIDGET_71_3_NODE_CARD_TITLE'),
@@ -91,6 +94,9 @@ $return = [
 				'type' => ['typo'],
 			],
 		],
+	],
+	'assets' => [
+		'ext' => ['landing_carousel'],
 	],
 ];
 

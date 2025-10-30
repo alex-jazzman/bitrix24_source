@@ -12,12 +12,43 @@
 		getExtension,
 		openNativeViewer,
 		NativeViewerMediaTypes,
+		mimeTypes,
 	} = require('utils/file');
 	const { Line } = require('utils/skeleton');
 	const { Loc } = require('loc');
 	const { ShimmedSafeImage } = require('layout/ui/safe-image');
 
-	const throttledNativeViewer = throttle(openNativeViewer, 500);
+	const throttledNativeViewer = throttle(async (params) => {
+		const { file } = params;
+
+		if (file?.type === mimeTypes.board)
+		{
+			try
+			{
+				const opener = await requireLazy('disk:opener/board');
+				if (opener)
+				{
+					const { boardOpener } = opener;
+
+					return boardOpener?.({
+						id: file.id,
+						title: file.name,
+						isAttached: true,
+						analytics: {
+							moduleId: 'mobile',
+						},
+					});
+				}
+			}
+			catch (e)
+			{
+				openNativeViewer(params);
+				console.error(e);
+			}
+		}
+
+		openNativeViewer(params);
+	}, 500);
 
 	function getFileIconType(extension)
 	{
@@ -267,11 +298,13 @@
 	function renderFile(options)
 	{
 		const {
+			id,
 			name,
 			fileType,
 			isLoading,
 			hasError,
 			styles,
+			files,
 			attachmentCloseIcon,
 			onDeleteAttachmentItem,
 			textLines,
@@ -285,12 +318,13 @@
 
 		const extension = getExtension(name || url);
 		const icon = getFileIconType(extension) || 'empty';
+		const file = files.find((fileObj) => Number(fileObj.id) === Number(id));
 
 		return View(
 			{
 				testId: 'pinnedFileContainer',
 				style: styles.wrapper,
-				onClick: () => throttledNativeViewer({ fileType, url, name }),
+				onClick: () => throttledNativeViewer({ fileType, url, name, file }),
 			},
 			View(
 				{

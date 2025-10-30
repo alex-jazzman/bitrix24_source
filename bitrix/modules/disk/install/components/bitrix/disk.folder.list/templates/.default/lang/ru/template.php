@@ -123,6 +123,7 @@ $MESS["DISK_FOLDER_LIST_SEARCH_INDEX_NOTICE"] = "Индексация файло
 $MESS["DISK_FOLDER_LIST_SEARCH_INDEX_NOTICE_1"] = "Индексация файлов в процессе. Как только мы завершим ее, вы сможете полноценно использовать новый поиск на диске. Извините за временные неудобства.";
 $MESS["DISK_FOLDER_LIST_TRASHCAN_TTL_NOTICE"] = "Файлы в корзине хранятся #TTL_DAY# дней после удаления";
 $MESS["DISK_FOLDER_LIST_COLLABER_HINT"] = "Добавлять файлы можно только в папки коллаб";
+$MESS["DISK_FOLDER_LIST_COLLABER_HINT_FOR_READONLY_FOLDER_IN_COLLAB"] = "Недостаточно прав для добавления файлов в эту папку";
 $MESS["DISK_FOLDER_LIST_COLLABER_TOUR_ON_ADD_BUTTON_TITLE"] = "Добавьте файлы в коллабу";
 $MESS["DISK_FOLDER_LIST_COLLABER_TOUR_ON_ADD_BUTTON_TEXT"] = "Файлы будут видны всем участникам коллабы. После загрузки можно обсудить файлы со всеми в чате коллабы или лично с любым участником";
 $MESS["DISK_FOLDER_LIST_UNIFIED_RIGHT_USERS"] = "Все, у кого есть ссылка";

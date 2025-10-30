@@ -9,7 +9,7 @@ return [
 	'js' => 'dist/open-comments.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
-		'tasks.v2.provider.service.task-service',
+		'tasks.v2.lib.api-client',
 		'tasks.v2.lib.side-panel-instance',
 	],
 	'skip_core' => true,

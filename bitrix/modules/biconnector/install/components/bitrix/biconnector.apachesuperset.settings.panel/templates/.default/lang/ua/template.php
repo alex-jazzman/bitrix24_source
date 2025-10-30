@@ -23,4 +23,3 @@ $MESS["BICONNECTOR_SUPERSET_SETTINGS_KEY_UPDATE_FAILED"] = "Під час оно
 $MESS["BICONNECTOR_SUPERSET_SETTINGS_KEY_UPDATE_SUCCESS"] = "Ключ успішно оновлено.";
 $MESS["BICONNECTOR_SUPERSET_SETTINGS_NEW_DASHBOARD_NOTIFICATION_HINT_LINK"] = "Виберіть співробітників, яким надходитимуть сповіщення про нові системні звіти та їхні оновлення. #HINT_LINK#";
 $MESS["BICONNECTOR_SUPERSET_SETTINGS_OWNER_HINT_LINK"] = "Власник має повний доступ до звіту. Якщо ви зміните власника, то можете втратити доступ до цього звіту. #HINT_LINK#";
-$MESS["BICONNECTOR_SUPERSET_SETTINGS_PARAMS_HINT_LINK"] = "Доступні параметри залежать від вибраних зон видимості. Без вибору зон видимості доступний лише параметр «Ідентифікатор користувача». #HINT_LINK#";

@@ -1,6 +1,7 @@
 import type { JsonObject } from 'main.core';
 import { Type, Dom, Event, Runtime, Reflection, Browser, ajax as Ajax, Uri } from 'main.core';
 import { EventEmitter, BaseEvent } from 'main.core.events';
+import { PopupManager } from 'main.popup';
 
 import { Slider } from './slider';
 import type { SliderEvent } from './slider-event';
@@ -156,21 +157,14 @@ export class SliderManager
 
 		const rule = this.getUrlRule(url);
 		const ruleOptions = rule !== null && Type.isPlainObject(rule.options) ? rule.options : {};
-		const options = Type.isPlainObject(sliderOptions) ? sliderOptions : ruleOptions;
 
-		if (
-			Type.isPlainObject(ruleOptions.minimizeOptions)
-			&& Type.isPlainObject(sliderOptions)
-			&& !Type.isPlainObject(sliderOptions.minimizeOptions)
-		)
-		{
-			options.minimizeOptions = ruleOptions.minimizeOptions;
-		}
-
-		if (this.getToolbar() === null && options.minimizeOptions)
-		{
-			options.minimizeOptions = null;
-		}
+		const useGlobalOptions = sliderOptions?.useGlobalOptions ?? ruleOptions.useGlobalOptions ?? true;
+		const useRuleOptions = sliderOptions !== ruleOptions && useGlobalOptions;
+		const options: SliderOptions = {
+			...(useRuleOptions ? ruleOptions : {}),
+			...sliderOptions,
+			events: [useRuleOptions && ruleOptions.events, sliderOptions?.events],
+		};
 
 		const defaultOptions = SliderManager.getSliderDefaultOptions();
 		const priorityOptions = SliderManager.getSliderPriorityOptions();
@@ -803,12 +797,7 @@ export class SliderManager
 				}
 			}
 
-			rule.options = Type.isPlainObject(rule.options) ? rule.options : {};
-			if (Type.isStringFilled(rule.loader) && !Type.isStringFilled(rule.options.loader))
-			{
-				rule.options.loader = rule.loader;
-				delete rule.loader;
-			}
+			rule.options ??= {};
 
 			this.anchorRules.push(rule);
 		});
@@ -1035,7 +1024,7 @@ export class SliderManager
 		this.getToolbar().expand(true);
 
 		const minimizeOptions = this.getMinimizeOptions(slider.getUrl());
-		const { entityType, entityId, url } = minimizeOptions || slider.getMinimizeOptions() || {};
+		const { entityType, entityId, url } = slider.getMinimizeOptions() || minimizeOptions || {};
 
 		const item = this.getToolbar().minimizeItem({
 			title,
@@ -1111,9 +1100,10 @@ export class SliderManager
 
 	handleEscapePress(event)
 	{
-		if (this.isOnTop() && this.getTopSlider() && this.getTopSlider().canCloseByEsc())
+		const topSlider = this.getTopSlider();
+		if (topSlider?.canCloseByEsc() && this.isOnTop(topSlider))
 		{
-			this.getTopSlider().close();
+			topSlider.close();
 		}
 	}
 
@@ -1332,10 +1322,7 @@ export class SliderManager
 
 		event.preventDefault(); // otherwise an iframe loading can be cancelled by a browser
 
-		if (this.isOnTop() && this.getTopSlider() && this.getTopSlider().canCloseByEsc())
-		{
-			this.getTopSlider().close();
-		}
+		this.handleEscapePress();
 	}
 
 	/**
@@ -1367,8 +1354,18 @@ export class SliderManager
 	/**
 	 * @private
 	 */
-	isOnTop(): boolean
+	isOnTop(slider: Slider): boolean
 	{
+		if (slider)
+		{
+			const popups = PopupManager.getPopups();
+			const isOnTopOfAllPopups = popups.every((popup) => slider.isOnTopOfPopup(popup));
+			if (!isOnTopOfAllPopups)
+			{
+				return false;
+			}
+		}
+
 		// Photo Slider or something else can cover Side Panel.
 		const centerX = document.documentElement.clientWidth / 2;
 		const centerY = document.documentElement.clientHeight / 2;
@@ -1451,7 +1448,14 @@ export class SliderManager
 		else
 		{
 			event.preventDefault();
-			this.open(link.url, rule.options);
+			if (Dom.attr(event.target, 'data-slider-maximize') === null)
+			{
+				this.open(link.url, rule.options);
+			}
+			else
+			{
+				this.maximize(link.url, rule.options);
+			}
 		}
 	}
 
@@ -1476,7 +1480,7 @@ export class SliderManager
 		else if (Type.isFunction(rule.handler))
 		{
 			rule.handler(
-				new Event(
+				new MouseEvent(
 					'slider',
 					{
 						bubbles: false,
@@ -1525,20 +1529,28 @@ export class SliderManager
 				if (matches && !this.hasStopParams(href, rule.stopParameters))
 				{
 					link.matches = matches;
+
+					let options = Type.isFunction(rule.options) ? rule.options(link) : rule.options;
 					const minimizeOptions = Type.isFunction(rule.minimizeOptions) ? rule.minimizeOptions(link) : null;
 					if (Type.isPlainObject(minimizeOptions))
 					{
-						if (Type.isPlainObject(rule.options))
+						if (Type.isPlainObject(options))
 						{
-							rule.options.minimizeOptions = minimizeOptions;
+							options.minimizeOptions = minimizeOptions;
 						}
 						else
 						{
-							rule.options = { minimizeOptions };
+							options = { minimizeOptions };
 						}
 					}
 
-					return rule;
+					if (Type.isStringFilled(rule.loader) && !Type.isStringFilled(options.loader))
+					{
+						options.loader = rule.loader;
+						delete rule.loader;
+					}
+
+					return { ...rule, options };
 				}
 			}
 		}

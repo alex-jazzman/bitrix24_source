@@ -4,6 +4,7 @@ $MESS['TASKS_FLOW_ADD_BUTTON'] = 'Создать поток';
 $MESS['TASKS_FLOW_LIST_NO_TASKS'] = 'Нет задач';
 $MESS['TASKS_FLOW_LIST_NO_YOUR_TASKS'] = 'Нет моих задач';
 $MESS['TASKS_FLOW_LIST_CREATE_TASK'] = 'Создать задачу';
+$MESS['TASKS_FLOW_LIST_CREATE_TASK_IMMUTABLE_DISTRIBUTION_TOOLTIP'] = 'Задачи в этот поток создаются с помощью роботов[br/] и бизнес-процессов';
 
 $MESS['TASKS_FLOW_LIST_COLUMN_MY_TASKS_PLURAL_0'] = '{number} задача';
 $MESS['TASKS_FLOW_LIST_COLUMN_MY_TASKS_PLURAL_1'] = '{number} задачи';

@@ -36,6 +36,10 @@ $formFeatureEnabled = Loader::includeModule('tasks')
 	&& class_exists(FormV2Feature::class)
 	&& FormV2Feature::isOn()
 ;
+$request = Context::getCurrent()->getRequest();
+$isOldForm = $request->get('OLD_FORM') === 'Y';
+$hasTemplate = (int)$request->get('TEMPLATE') > 0 || (int)$request->get('FLOW_ID') > 0;
+$isCommentLink = (bool)$request->get('MID');
 
 if (Context::getCurrent()->getRequest()->get('IFRAME'))
 {
@@ -99,17 +103,25 @@ if (Context::getCurrent()->getRequest()->get('IFRAME'))
 		);
 	}
 }
-else if ($formFeatureEnabled && Context::getCurrent()->getRequest()->get('OLD_FORM') !== 'Y')
+else if (
+	$formFeatureEnabled
+	&& !$isOldForm
+	&& !$hasTemplate
+	&& !$isCommentLink
+)
 {
 	$APPLICATION->SetPageProperty('BodyClass', 'no-all-paddings no-background');
 	$APPLICATION->SetTitle('');
 	Toolbar::deleteFavoriteStar();
 
-	$pathToList = (new TaskPathMaker(
+	$pathMaker = new TaskPathMaker(
 		entityId: $taskId,
 		ownerId: $userId,
 		context: PathMaker::PERSONAL_CONTEXT
-	))->makeEntitiesListPath();
+	);
+
+	$pathToList = $pathMaker->makeEntitiesListPath();
+	$pathToTask = $pathMaker->makeEntityPath();
 
 	Extension::load('tasks.v2.application.task-card');
 
@@ -122,7 +134,7 @@ else if ($formFeatureEnabled && Context::getCurrent()->getRequest()->get('OLD_FO
 			TaskCard.showFullCard({
 				taskId: <?= $taskId ?>,
 				closeCompleteUrl: "<?= $pathToList ?>",
-				url: window.location.href,
+				url: "<?= $pathToTask ?>",
 			});
 		});
 	</script>

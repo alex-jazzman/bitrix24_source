@@ -72,10 +72,12 @@ this.BX = this.BX || {};
 	    babelHelpers.defineProperty(this, "onclick", null);
 	    babelHelpers.defineProperty(this, "text", null);
 	    babelHelpers.defineProperty(this, "hidden", false);
+	    babelHelpers.defineProperty(this, "visible", true);
 	    babelHelpers.defineProperty(this, "cache", new main_core.Cache.MemoryCache());
 	    this.slider = slider;
 	    const options = main_core.Type.isPlainObject(labelOptions) ? labelOptions : {};
 	    this.hidden = main_core.Type.isBoolean(options.hidden) ? options.hidden : this.hidden;
+	    this.visible = main_core.Type.isBoolean(options.visible) ? options.visible : this.visible;
 	    this.setColor(options.color);
 	    this.setBgColor(options.bgColor);
 	    this.setText(options.text);
@@ -94,6 +96,9 @@ this.BX = this.BX || {};
 	        }
 	        if (this.isHidden()) {
 	          classes.push('--hidden');
+	        }
+	        if (this.isVisible()) {
+	          classes.push('--visible');
 	        }
 	        return main_core.Dom.create('div', {
 	          props: {
@@ -191,10 +196,10 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "setColor",
 	    value: function setColor(color) {
-	      if (main_core.Type.isStringFilled(color)) {
+	      if (main_core.Type.isStringFilled(color) || color === null) {
 	        this.color = color;
-	        main_core.Dom.style(this.getTextContainer(), 'color', color);
-	        main_core.Dom.style(this.getIconContainer(), '--ui-icon-set__icon-color', color);
+	        main_core.Dom.style(this.getTextContainer(), 'color', this.color);
+	        main_core.Dom.style(this.getIconContainer(), '--ui-icon-set__icon-color', this.color);
 	      }
 	    }
 	  }, {
@@ -313,6 +318,16 @@ this.BX = this.BX || {};
 	    value: function show() {
 	      this.hidden = false;
 	      main_core.Dom.removeClass(this.getContainer(), '--hidden');
+	    }
+	  }, {
+	    key: "isVisible",
+	    value: function isVisible() {
+	      return this.visible;
+	    }
+	  }, {
+	    key: "setVisible",
+	    value: function setVisible(isVisible = true) {
+	      main_core.Dom.toggleClass(this.getContainer(), '--visible', isVisible);
 	    }
 	  }, {
 	    key: "setOnclick",
@@ -473,6 +488,7 @@ this.BX = this.BX || {};
 	var _designSystemContext = /*#__PURE__*/new WeakMap();
 	var _zIndexComponent = /*#__PURE__*/new WeakMap();
 	var _autoOffset = /*#__PURE__*/new WeakMap();
+	var _subscribeEvents = /*#__PURE__*/new WeakSet();
 	var _getAnimationState = /*#__PURE__*/new WeakSet();
 	var _calculateOuterBoundary = /*#__PURE__*/new WeakSet();
 	let Slider = /*#__PURE__*/function () {
@@ -480,6 +496,7 @@ this.BX = this.BX || {};
 	    babelHelpers.classCallCheck(this, Slider);
 	    _classPrivateMethodInitSpec$1(this, _calculateOuterBoundary);
 	    _classPrivateMethodInitSpec$1(this, _getAnimationState);
+	    _classPrivateMethodInitSpec$1(this, _subscribeEvents);
 	    _classPrivateFieldInitSpec$1(this, _refs, {
 	      writable: true,
 	      value: new main_core_cache.MemoryCache()
@@ -533,7 +550,7 @@ this.BX = this.BX || {};
 	    this.cacheable = options.cacheable !== false;
 	    this.autoFocus = options.autoFocus !== false;
 	    this.printable = options.printable === true;
-	    this.allowChangeHistory = options.allowChangeHistory !== false;
+	    this.allowChangeHistory = main_core.Type.isBoolean(options.allowChangeHistory) ? options.allowChangeHistory : null;
 	    this.allowChangeTitle = main_core.Type.isBoolean(options.allowChangeTitle) ? options.allowChangeTitle : null;
 	    this.allowCrossOrigin = options.allowCrossOrigin === true;
 	    this.data = new Dictionary(main_core.Type.isPlainObject(options.data) ? options.data : {});
@@ -585,10 +602,7 @@ this.BX = this.BX || {};
 	    this.animationName = 'sliding';
 	    this.animationOptions = {};
 	    this.minimizeOptions = null;
-	    const minimizeOptions = options.minimizeOptions;
-	    if (main_core.Type.isPlainObject(minimizeOptions) && main_core.Type.isStringFilled(minimizeOptions.entityType) && (main_core.Type.isStringFilled(minimizeOptions.entityId) || main_core.Type.isNumber(minimizeOptions.entityId)) && main_core.Type.isStringFilled(minimizeOptions.url)) {
-	      this.minimizeOptions = minimizeOptions;
-	    }
+	    this.setMinimizeOptions(options.minimizeOptions);
 	    this.setToolbarOnOpen(options.hideToolbarOnOpen);
 	    this.setDesignSystemContext(options.designSystemContext);
 	    this.setAutoOffset(options.autoOffset);
@@ -596,7 +610,6 @@ this.BX = this.BX || {};
 	      className: '--close-label --ui-hoverable',
 	      iconClass: 'side-panel-label-icon-close ui-icon-set --cross-l',
 	      iconTitle: main_core.Loc.getMessage('MAIN_SIDEPANEL_CLOSE'),
-	      bgColor: '#0075FF',
 	      onclick(label, slider) {
 	        slider.close();
 	      }
@@ -605,22 +618,20 @@ this.BX = this.BX || {};
 	    this.label.setText(labelOptions.text);
 	    this.label.setColor(labelOptions.color);
 	    this.label.setBgColor(labelOptions.bgColor, labelOptions.opacity);
-	    this.minimizeLabel = null;
+	    this.minimizeLabel = new Label(this, {
+	      className: '--ui-hoverable',
+	      iconClass: 'side-panel-label-icon-minimize ui-icon-set --o-minimize',
+	      iconTitle: main_core.Loc.getMessage('MAIN_SIDEPANEL_MINIMIZE'),
+	      onclick: (label, slider) => {
+	        if (this.isLoaded()) {
+	          this.minimize();
+	        }
+	      },
+	      visible: this.areMinimizeOptionsValid(this.minimizeOptions)
+	    });
 	    this.newWindowLabel = null;
 	    this.copyLinkLabel = null;
 	    this.printLabel = null;
-	    if (!this.isSelfContained() && this.minimizeOptions !== null) {
-	      this.minimizeLabel = new Label(this, {
-	        className: '--ui-hoverable',
-	        iconClass: 'side-panel-label-icon-minimize ui-icon-set --o-minimize',
-	        iconTitle: main_core.Loc.getMessage('MAIN_SIDEPANEL_MINIMIZE'),
-	        onclick: (label, slider) => {
-	          if (this.isLoaded()) {
-	            this.minimize();
-	          }
-	        }
-	      });
-	    }
 	    if (options.newWindowLabel === true && (this.canChangeHistory() || main_core.Type.isStringFilled(options.newWindowUrl))) {
 	      this.newWindowLabel = new Label(this, {
 	        className: '--ui-hoverable',
@@ -665,15 +676,7 @@ this.BX = this.BX || {};
 	        onOpen(event.getSlider());
 	      };
 	    }
-	    if (main_core.Type.isPlainObject(options.events)) {
-	      for (const [eventName, fn] of Object.entries(options.events)) {
-	        if (main_core.Type.isFunction(fn)) {
-	          main_core_events.EventEmitter.subscribe(this, Slider.getEventFullName(eventName), fn, {
-	            compatMode: true
-	          });
-	        }
-	      }
-	    }
+	    [options.events].flat().forEach(events => _classPrivateMethodGet$1(this, _subscribeEvents, _subscribeEvents2).call(this, events));
 	  }
 	  babelHelpers.createClass(Slider, [{
 	    key: "open",
@@ -784,6 +787,19 @@ this.BX = this.BX || {};
 	    value: function setAnimation(type, options) {
 	      this.animationName = type === 'scale' ? type : 'sliding';
 	      this.animationOptions = main_core.Type.isPlainObject(options) ? options : {};
+	    }
+	  }, {
+	    key: "setMinimizeOptions",
+	    value: function setMinimizeOptions(minimizeOptions) {
+	      var _this$minimizeLabel;
+	      const showMinimizeLabel = this.areMinimizeOptionsValid(minimizeOptions);
+	      this.minimizeOptions = minimizeOptions;
+	      (_this$minimizeLabel = this.minimizeLabel) === null || _this$minimizeLabel === void 0 ? void 0 : _this$minimizeLabel.setVisible(showMinimizeLabel);
+	    }
+	  }, {
+	    key: "areMinimizeOptionsValid",
+	    value: function areMinimizeOptionsValid(minimizeOptions) {
+	      return main_core.Type.isPlainObject(minimizeOptions) && main_core.Type.isStringFilled(minimizeOptions.entityType) && (main_core.Type.isStringFilled(minimizeOptions.entityId) || main_core.Type.isNumber(minimizeOptions.entityId)) && main_core.Type.isStringFilled(minimizeOptions.url);
 	    }
 	  }, {
 	    key: "getMinimizeOptions",
@@ -994,7 +1010,13 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "canChangeHistory",
 	    value: function canChangeHistory() {
-	      return this.allowChangeHistory && !this.allowCrossOrigin && !this.isSelfContained() && !/^\/bitrix\/(components|tools)\//i.test(this.getUrl());
+	      if (this.allowCrossOrigin || /^\/bitrix\/(components|tools)\//i.test(this.getUrl())) {
+	        return false;
+	      }
+	      if (this.allowChangeHistory === null) {
+	        return !this.isSelfContained();
+	      }
+	      return this.allowChangeHistory;
 	    }
 	  }, {
 	    key: "canChangeTitle",
@@ -1541,7 +1563,7 @@ this.BX = this.BX || {};
 	          props: {
 	            className: 'side-panel-extra-labels'
 	          },
-	          children: [this.minimizeLabel ? this.minimizeLabel.getContainer() : null, this.newWindowLabel ? this.newWindowLabel.getContainer() : null, this.copyLinkLabel ? this.copyLinkLabel.getContainer() : null, this.printLabel ? this.printLabel.getContainer() : null]
+	          children: [this.minimizeLabel.getContainer(), this.newWindowLabel ? this.newWindowLabel.getContainer() : null, this.copyLinkLabel ? this.copyLinkLabel.getContainer() : null, this.printLabel ? this.printLabel.getContainer() : null]
 	        });
 	      });
 	    }
@@ -2227,6 +2249,17 @@ this.BX = this.BX || {};
 	      this.firePageEvent('onEscapePress');
 	      this.fireFrameEvent('onEscapePress');
 	    }
+	  }, {
+	    key: "isOnTopOfPopup",
+	    value: function isOnTopOfPopup(popup) {
+	      const sameStack = this.getZIndexComponent().getStack() === popup.getZIndexComponent().getStack();
+	      const popupOnTop = sameStack && popup.getZindex() > this.getZindex();
+	      let popupInside = this.getContainer().contains(popup.getPopupContainer());
+	      if (this.getFrameWindow()) {
+	        popupInside = this.getFrameWindow().document.contains(popup.getPopupContainer());
+	      }
+	      return !(popup.isShown() && (popupOnTop || popupInside));
+	    }
 	    /**
 	     * @private
 	     * @param {BaseEvent} event
@@ -2343,6 +2376,17 @@ this.BX = this.BX || {};
 	  }]);
 	  return Slider;
 	}();
+	function _subscribeEvents2(events) {
+	  if (main_core.Type.isPlainObject(events)) {
+	    for (const [eventName, fn] of Object.entries(events)) {
+	      if (main_core.Type.isFunction(fn)) {
+	        main_core_events.EventEmitter.subscribe(this, Slider.getEventFullName(eventName), fn, {
+	          compatMode: true
+	        });
+	      }
+	    }
+	  }
+	}
 	function _getAnimationState2(mode) {
 	  const states = {
 	    right: {
@@ -2407,18 +2451,6 @@ this.BX = this.BX || {};
 	  return main_core.Runtime.merge(main_core.Type.isPlainObject(outerBoundary) ? outerBoundary : {}, this.getOuterBoundary());
 	}
 
-	let instance = null;
-	function getInstance() {
-	  const topWindow = main_pageobject.PageObject.getRootWindow();
-	  if (topWindow !== window) {
-	    return topWindow.BX.SidePanel.Instance;
-	  }
-	  if (instance === null) {
-	    instance = new SliderManager();
-	  }
-	  return instance;
-	}
-
 	let _$1 = t => t,
 	  _t$1,
 	  _t2$1,
@@ -2435,7 +2467,7 @@ this.BX = this.BX || {};
 	    _this.title = '';
 	    _this.url = '';
 	    _this.entityType = '';
-	    _this.entityId = 0;
+	    _this.entityId = '0';
 	    _this.entityName = '';
 	    _this.refs = new main_core.Cache.MemoryCache();
 	    _this.rendered = false;
@@ -2501,7 +2533,7 @@ this.BX = this.BX || {};
 	    key: "setEntityId",
 	    value: function setEntityId(entityId) {
 	      if (main_core.Type.isNumber(entityId) || main_core.Type.isStringFilled(entityId)) {
-	        this.entityId = entityId;
+	        this.entityId = String(entityId);
 	      }
 	    }
 	  }, {
@@ -2521,8 +2553,8 @@ this.BX = this.BX || {};
 	    value: function getContainer() {
 	      return this.refs.remember('container', () => {
 	        return main_core.Tag.render(_t$1 || (_t$1 = _$1`
-				<div class="side-panel-toolbar-item" 
-					onclick="${0}"
+				<div 
+					class="side-panel-toolbar-item"
 					onmouseenter="${0}"
 					onmouseleave="${0}"
 				>
@@ -2531,7 +2563,7 @@ this.BX = this.BX || {};
 						<div class="ui-icon-set --cross-20" style="--ui-icon-set__icon-size: 100%;"></div>
 					</div>
 				</div>
-			`), this.handleClick.bind(this), this.handleMouseEnter.bind(this), this.handleMouseLeave.bind(this), this.getTitleContainer(), this.handleRemoveBtnClick.bind(this));
+			`), this.handleMouseEnter.bind(this), this.handleMouseLeave.bind(this), this.getTitleContainer(), this.handleRemoveBtnClick.bind(this));
 	      });
 	    }
 	  }, {
@@ -2547,7 +2579,7 @@ this.BX = this.BX || {};
 				<a 
 					class="side-panel-toolbar-item-title"
 					href="${0}"
-					data-slider-ignore-autobinding="true"
+					data-slider-maximize="true"
 				>${0}</a>
 			`), encodeURI(this.getUrl()), main_core.Text.encode(this.getTitle()));
 	      });
@@ -2642,15 +2674,6 @@ this.BX = this.BX || {};
 	      }
 	    }
 	  }, {
-	    key: "handleClick",
-	    value: function handleClick(event) {
-	      if (event.ctrlKey || event.metaKey) {
-	        return;
-	      }
-	      event.preventDefault();
-	      getInstance().maximize(this.getUrl());
-	    }
-	  }, {
 	    key: "handleMouseEnter",
 	    value: function handleMouseEnter() {
 	      this.showTooltip();
@@ -2679,6 +2702,18 @@ this.BX = this.BX || {};
 	  }]);
 	  return ToolbarItem;
 	}(main_core_events.EventEmitter);
+
+	let instance = null;
+	function getInstance() {
+	  const topWindow = main_pageobject.PageObject.getRootWindow();
+	  if (topWindow !== window) {
+	    return topWindow.BX.SidePanel.Instance;
+	  }
+	  if (instance === null) {
+	    instance = new SliderManager();
+	  }
+	  return instance;
+	}
 
 	let _$2 = t => t,
 	  _t$2,
@@ -3141,7 +3176,9 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "getItem",
 	    value: function getItem(entityType, entityId) {
-	      return this.items.find(item => item.getEntityType() === entityType && item.getEntityId() === entityId) || null;
+	      return this.items.find(item => {
+	        return item.getEntityType() === entityType && item.getEntityId() === String(entityId);
+	      }) || null;
 	    }
 	  }, {
 	    key: "getItemByUrl",
@@ -3896,6 +3933,7 @@ this.BX = this.BX || {};
 	        console.trace();
 	      }
 	      parameters.rules.forEach(rule => {
+	        var _rule$options;
 	        if (main_core.Type.isArray(rule.condition)) {
 	          for (let m = 0; m < rule.condition.length; m++) {
 	            if (main_core.Type.isString(rule.condition[m])) {
@@ -3903,11 +3941,7 @@ this.BX = this.BX || {};
 	            }
 	          }
 	        }
-	        rule.options = main_core.Type.isPlainObject(rule.options) ? rule.options : {};
-	        if (main_core.Type.isStringFilled(rule.loader) && !main_core.Type.isStringFilled(rule.options.loader)) {
-	          rule.options.loader = rule.loader;
-	          delete rule.loader;
-	        }
+	        (_rule$options = rule.options) !== null && _rule$options !== void 0 ? _rule$options : rule.options = {};
 	        this.anchorRules.push(rule);
 	      });
 	    }
@@ -4086,7 +4120,7 @@ this.BX = this.BX || {};
 	        entityType,
 	        entityId,
 	        url
-	      } = minimizeOptions || slider.getMinimizeOptions() || {};
+	      } = slider.getMinimizeOptions() || minimizeOptions || {};
 	      const item = this.getToolbar().minimizeItem({
 	        title,
 	        url: main_core.Type.isStringFilled(url) ? url : slider.getUrl(),
@@ -4139,8 +4173,9 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "handleEscapePress",
 	    value: function handleEscapePress(event) {
-	      if (this.isOnTop() && this.getTopSlider() && this.getTopSlider().canCloseByEsc()) {
-	        this.getTopSlider().close();
+	      const topSlider = this.getTopSlider();
+	      if (topSlider !== null && topSlider !== void 0 && topSlider.canCloseByEsc() && this.isOnTop(topSlider)) {
+	        topSlider.close();
 	      }
 	    }
 	    /**
@@ -4322,9 +4357,7 @@ this.BX = this.BX || {};
 	      }
 	      event.preventDefault(); // otherwise an iframe loading can be cancelled by a browser
 
-	      if (this.isOnTop() && this.getTopSlider() && this.getTopSlider().canCloseByEsc()) {
-	        this.getTopSlider().close();
-	      }
+	      this.handleEscapePress();
 	    }
 	    /**
 	     * @private
@@ -4357,7 +4390,15 @@ this.BX = this.BX || {};
 	     */
 	  }, {
 	    key: "isOnTop",
-	    value: function isOnTop() {
+	    value: function isOnTop(slider) {
+	      if (slider) {
+	        const popups = main_popup.PopupManager.getPopups();
+	        const isOnTopOfAllPopups = popups.every(popup => slider.isOnTopOfPopup(popup));
+	        if (!isOnTopOfAllPopups) {
+	          return false;
+	        }
+	      }
+
 	      // Photo Slider or something else can cover Side Panel.
 	      const centerX = document.documentElement.clientWidth / 2;
 	      const centerY = document.documentElement.clientHeight / 2;
@@ -4418,7 +4459,11 @@ this.BX = this.BX || {};
 	        rule.handler(event, link);
 	      } else {
 	        event.preventDefault();
-	        this.open(link.url, rule.options);
+	        if (main_core.Dom.attr(event.target, 'data-slider-maximize') === null) {
+	          this.open(link.url, rule.options);
+	        } else {
+	          this.maximize(link.url, rule.options);
+	        }
 	      }
 	    }
 	    /**
@@ -4437,7 +4482,7 @@ this.BX = this.BX || {};
 	      if (!this.isValidLink(rule, link)) {
 	        BX.reload(url);
 	      } else if (main_core.Type.isFunction(rule.handler)) {
-	        rule.handler(new main_core.Event('slider', {
+	        rule.handler(new MouseEvent('slider', {
 	          bubbles: false,
 	          cancelable: true
 	        }), link);
@@ -4472,17 +4517,25 @@ this.BX = this.BX || {};
 	          const matches = href.match(rule.condition[m]);
 	          if (matches && !this.hasStopParams(href, rule.stopParameters)) {
 	            link.matches = matches;
+	            let options = main_core.Type.isFunction(rule.options) ? rule.options(link) : rule.options;
 	            const minimizeOptions = main_core.Type.isFunction(rule.minimizeOptions) ? rule.minimizeOptions(link) : null;
 	            if (main_core.Type.isPlainObject(minimizeOptions)) {
-	              if (main_core.Type.isPlainObject(rule.options)) {
-	                rule.options.minimizeOptions = minimizeOptions;
+	              if (main_core.Type.isPlainObject(options)) {
+	                options.minimizeOptions = minimizeOptions;
 	              } else {
-	                rule.options = {
+	                options = {
 	                  minimizeOptions
 	                };
 	              }
 	            }
-	            return rule;
+	            if (main_core.Type.isStringFilled(rule.loader) && !main_core.Type.isStringFilled(options.loader)) {
+	              options.loader = rule.loader;
+	              delete rule.loader;
+	            }
+	            return {
+	              ...rule,
+	              options
+	            };
 	          }
 	        }
 	      }
@@ -4646,6 +4699,7 @@ this.BX = this.BX || {};
 	  return SliderManager;
 	}();
 	function _createSlider2(sliderUrl, sliderOptions) {
+	  var _ref, _sliderOptions$useGlo;
 	  if (!main_core.Type.isStringFilled(sliderUrl)) {
 	    return null;
 	  }
@@ -4662,13 +4716,13 @@ this.BX = this.BX || {};
 	  }
 	  const rule = this.getUrlRule(url);
 	  const ruleOptions = rule !== null && main_core.Type.isPlainObject(rule.options) ? rule.options : {};
-	  const options = main_core.Type.isPlainObject(sliderOptions) ? sliderOptions : ruleOptions;
-	  if (main_core.Type.isPlainObject(ruleOptions.minimizeOptions) && main_core.Type.isPlainObject(sliderOptions) && !main_core.Type.isPlainObject(sliderOptions.minimizeOptions)) {
-	    options.minimizeOptions = ruleOptions.minimizeOptions;
-	  }
-	  if (this.getToolbar() === null && options.minimizeOptions) {
-	    options.minimizeOptions = null;
-	  }
+	  const useGlobalOptions = (_ref = (_sliderOptions$useGlo = sliderOptions === null || sliderOptions === void 0 ? void 0 : sliderOptions.useGlobalOptions) !== null && _sliderOptions$useGlo !== void 0 ? _sliderOptions$useGlo : ruleOptions.useGlobalOptions) !== null && _ref !== void 0 ? _ref : true;
+	  const useRuleOptions = sliderOptions !== ruleOptions && useGlobalOptions;
+	  const options = {
+	    ...(useRuleOptions ? ruleOptions : {}),
+	    ...sliderOptions,
+	    events: [useRuleOptions && ruleOptions.events, sliderOptions === null || sliderOptions === void 0 ? void 0 : sliderOptions.events]
+	  };
 	  const defaultOptions = SliderManager.getSliderDefaultOptions();
 	  const priorityOptions = SliderManager.getSliderPriorityOptions();
 	  const SliderClass = SliderManager.getSliderClass();

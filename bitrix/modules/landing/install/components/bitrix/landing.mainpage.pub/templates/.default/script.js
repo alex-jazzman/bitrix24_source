@@ -61,115 +61,259 @@ this.BX.Landing = this.BX.Landing || {};
 	  return DiskFile;
 	}();
 
+	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
+	function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+	function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+	function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
+
+	// Block and analytics constants
+	var CATEGORY = 'vibe';
+	var SECTION_ACTIVE_PAGE = 'active_page';
+	var SECTION_PREVIEW_PAGE = 'preview_page';
+	var P1_TEMPLATE_CODE = 'templateCode';
+	var P2_WIDGET_ID = 'widgetId';
+	var TRIAL_BUTTON_ID = 'trialButton';
+	var EVENT_DEMO_ACTIVATED = 'demo_activated';
+	var EVENT_CLICK_ON_BUTTON = 'click_on_button';
+
+	// HTML tag and attribute constants
+	var TAG_A = 'a';
+	var TAG_BUTTON = 'button';
+	var DATA_PSEUDO_URL = 'data-pseudo-url';
+	var ATTR_HREF = 'href';
+
+	// Other string constants
+	var IS_LIGHT_METRIKA = true;
+	var BLOCK_WRAPPER_CLASS = 'block-wrapper';
+	var BLOCK_PREFIX = 'block-';
+	var DASH = '-';
+	var DOT = '.';
+	var B24URL_TYPE = 'b24url';
+	var SLIDER_TYPE = 'slider';
+	var OTHER_URL_TYPE = 'otherurl';
+	var REGEX_SLIDER = /BX\.Helper\.show\(["'].*?code=(\d+)["']\)/;
+	var REGEX_PSEUDO_URL = /^\/|^https?:\/\/|^#/;
+	var QUOT_ENTITY = '&quot;';
+	var QUOTE = '"';
+	/**
+	 * @typedef {Object} AnalyticsOptions
+	 * @property {boolean} isPublished - Whether the page is published.
+	 * @property {string} templateCode - The template code for analytics.
+	 * @property {Metrika} metrika - Instance of the analytics sending class.
+	 * @property {HTMLElement[]} clickableElements - Array of HTML elements that are tracked for analytics.
+	 */
+
+	/**
+	 * Analytics class for tracking user interactions on landing page blocks.
+	 */
 	var Analytics = /*#__PURE__*/function () {
 	  /**
 	   * Constructor.
+	   * @param {AnalyticsOptions} options - Configuration options.
 	   */
 	  function Analytics(options) {
 	    babelHelpers.classCallCheck(this, Analytics);
 	    this.isPublished = options.isPublished;
 	    this.templateCode = options.templateCode;
-	    this.metrika = new landing_metrika.Metrika(true);
+	    this.metrika = new landing_metrika.Metrika(IS_LIGHT_METRIKA);
+	    this.clickableElements = [];
 	    this.initEventListeners();
 	  }
+
+	  /**
+	   * Initializes click event listeners on all block elements.
+	   * @returns {void}
+	   */
 	  babelHelpers.createClass(Analytics, [{
 	    key: "initEventListeners",
 	    value: function initEventListeners() {
 	      var _this = this;
-	      var blocks = babelHelpers.toConsumableArray(document.getElementsByClassName('block-wrapper'));
-	      blocks.forEach(function (block) {
-	        main_core.Event.bind(block, 'click', _this.onClick.bind(_this));
+	      var blocks = babelHelpers.toConsumableArray(document.getElementsByClassName(BLOCK_WRAPPER_CLASS));
+	      var _iterator = _createForOfIteratorHelper(blocks),
+	        _step;
+	      try {
+	        var _loop = function _loop() {
+	          var _this$clickableElemen;
+	          var block = _step.value;
+	          var elements = _this.findClickableElements(block);
+	          (_this$clickableElemen = _this.clickableElements).push.apply(_this$clickableElemen, babelHelpers.toConsumableArray(elements));
+	          var code = _this.getBlockCode(block);
+	          elements.forEach(function (element) {
+	            main_core.Event.bind(element, 'click', function (event) {
+	              return _this.onClick(event, code);
+	            });
+	          });
+	        };
+	        for (_iterator.s(); !(_step = _iterator.n()).done;) {
+	          _loop();
+	        }
+	      } catch (err) {
+	        _iterator.e(err);
+	      } finally {
+	        _iterator.f();
+	      }
+	    }
+	    /**
+	     * Finds all clickable elements within a block.
+	     * @param {HTMLElement} block - The block element to search within.
+	     * @returns {HTMLElement[]} Array of clickable elements.
+	     */
+	  }, {
+	    key: "findClickableElements",
+	    value: function findClickableElements(block) {
+	      var _this2 = this;
+	      var elements = babelHelpers.toConsumableArray(block.querySelectorAll("".concat(TAG_A, ", ").concat(TAG_BUTTON, ", [").concat(DATA_PSEUDO_URL, "]")));
+	      return elements.filter(function (el) {
+	        return _this2.isClickableElement(el);
 	      });
 	    }
 	    /**
-	     * Click callback.
-	     *
-	     * @param {MouseEvent} event
-	     * @return {void}
+	     * Determines if an element is considered clickable for analytics.
+	     * @param {HTMLElement} element - The element to check.
+	     * @returns {boolean} True if the element is clickable, false otherwise.
 	     */
-	  }, {
-	    key: "onClick",
-	    value: function onClick(event) {
-	      var target = event.target;
-	      if (!this.isClickableElement(target)) {
-	        return;
-	      }
-	      var analyticsData = this.getAnalyticsData(event);
-	      this.metrika.sendData(analyticsData);
-	    }
 	  }, {
 	    key: "isClickableElement",
 	    value: function isClickableElement(element) {
 	      var tag = element.tagName.toLowerCase();
-	      return tag === 'a' || tag === 'button' || element.hasAttribute('data-pseudo-url') || element.parentElement && element.parentElement.tagName.toLowerCase() === 'a' || element.firstElementChild && element.firstElementChild.tagName.toLowerCase() === 'a';
+	      if (tag === TAG_A) {
+	        return true;
+	      }
+	      if (element.closest(TAG_A)) {
+	        return false;
+	      }
+	      return tag === TAG_BUTTON || element.hasAttribute(DATA_PSEUDO_URL);
 	    }
+	    /**
+	     * Extracts a unique code for the block based on its class names.
+	     * @param {HTMLElement} block - The block element.
+	     * @returns {string} The unique block code.
+	     */
+	  }, {
+	    key: "getBlockCode",
+	    value: function getBlockCode(block) {
+	      var className = babelHelpers.toConsumableArray(block.classList).find(function (name) {
+	        return name.startsWith(BLOCK_PREFIX) && name !== BLOCK_WRAPPER_CLASS;
+	      });
+	      if (!className) {
+	        return '';
+	      }
+	      return className.replace(BLOCK_PREFIX, '').replaceAll(DASH, DOT);
+	    }
+	    /**
+	     * Handles click events on tracked elements and sends analytics data.
+	     * @param {MouseEvent} event - The click event object.
+	     * @param {string} code - Unique block code.
+	     * @returns {void}
+	     */
+	  }, {
+	    key: "onClick",
+	    value: function onClick(event, code) {
+	      var target = event.currentTarget;
+	      var data = {
+	        event: this.getEventName(target),
+	        p2: [P2_WIDGET_ID, code],
+	        p4: this.getTrackingParameter(target)
+	      };
+	      this.sendAnalytics(data);
+	    }
+	    /**
+	     * Determines the name of the analytics event based on the clicked element.
+	     * @param {HTMLElement} target - The clicked element.
+	     * @returns {string} The event name for analytics.
+	     */
+	  }, {
+	    key: "getEventName",
+	    value: function getEventName(target) {
+	      return target.id === TRIAL_BUTTON_ID ? EVENT_DEMO_ACTIVATED : EVENT_CLICK_ON_BUTTON;
+	    }
+	    /**
+	     * Extracts and classifies tracking parameters from the clicked element.
+	     * Detects sliders, internal portal links, or external URLs.
+	     * @param {HTMLElement} target - The clicked element.
+	     * @returns {Array} Tracking parameters array.
+	     */
 	  }, {
 	    key: "getTrackingParameter",
 	    value: function getTrackingParameter(target) {
 	      var href = this.extractHrefFromPseudoUrl(target) || this.extractHrefFromElement(target);
 	      if (!href) {
-	        return '';
+	        return undefined;
 	      }
-	      var sliderMatch = href.match(/BX\.Helper\.show\(["'].*?code=(\d+)["']\)/);
+	      var sliderMatch = href.match(REGEX_SLIDER);
 	      if (sliderMatch) {
-	        return ['slider', sliderMatch[1]];
+	        return [SLIDER_TYPE, sliderMatch[1]];
 	      }
 	      if (href.startsWith('/') || href.includes(window.location.origin)) {
-	        return ['b24url', href];
+	        return [B24URL_TYPE, href];
 	      }
-	      return ['otherurl', href];
+	      return [OTHER_URL_TYPE, href];
 	    }
+	    /**
+	     * Attempts to parse a pseudo-URL from a `data-pseudo-url` attribute.
+	     * Validates format and URL prefix before returning.
+	     * @param {HTMLElement} target - The element to extract from.
+	     * @returns {string|null} The extracted href or null.
+	     */
 	  }, {
 	    key: "extractHrefFromPseudoUrl",
 	    value: function extractHrefFromPseudoUrl(target) {
-	      if (!target.hasAttribute('data-pseudo-url')) {
+	      if (!target.hasAttribute(DATA_PSEUDO_URL)) {
 	        return null;
 	      }
-	      var raw = target.getAttribute('data-pseudo-url');
+	      var raw = target.getAttribute(DATA_PSEUDO_URL);
 	      if (!raw) {
 	        return null;
 	      }
 	      try {
-	        var data = JSON.parse(raw.replaceAll('&quot;', '"'));
+	        var data = JSON.parse(raw.replaceAll(QUOT_ENTITY, QUOTE));
 	        if (data && data.href && data.enabled) {
-	          if (!/^\/|^https?:\/\/|^#/.test(data.href)) {
+	          if (!REGEX_PSEUDO_URL.test(data.href)) {
 	            return '';
 	          }
 	          return data.href;
 	        }
 	      } catch (_unused) {
-	        console.warn('Invalid pseudo-url JSON:', raw);
+	        return null;
 	      }
 	      return null;
 	    }
+	    /**
+	     * Retrieves the href attribute from the closest ancestor anchor element.
+	     * @param {HTMLElement} target - The element to start searching from.
+	     * @returns {string|null} The href value or null.
+	     */
 	  }, {
 	    key: "extractHrefFromElement",
 	    value: function extractHrefFromElement(target) {
-	      var linkElement = target.closest('a');
-	      return linkElement ? linkElement.getAttribute('href') || null : null;
+	      var linkElement = target.closest(TAG_A);
+	      return linkElement ? linkElement.getAttribute(ATTR_HREF) || null : null;
 	    }
+	    /**
+	     * Merges common analytics fields with the event-specific data.
+	     * Constructs the final object to be sent to Metrika.
+	     * @param {Record<string, any>} data - Dynamic analytics fields.
+	     * @returns {Record<string, any>} Full analytics data object.
+	     */
 	  }, {
 	    key: "getAnalyticsData",
-	    value: function getAnalyticsData(event) {
-	      var code = '';
-	      var blockWrapper = event.currentTarget;
-	      blockWrapper.classList.forEach(function (className) {
-	        if (className !== 'block-wrapper') {
-	          code += className;
-	        }
-	      });
-	      code = code.replace('block-', '');
-	      code = code.replaceAll('-', '.');
-	      var isTrialButton = event.target.id === 'trialButton';
-	      var eventName = isTrialButton ? 'demo_activated' : 'click_on_button';
-	      return {
-	        category: 'vibe',
-	        event: eventName,
-	        c_section: this.isPublished ? 'active_page' : 'preview_page',
-	        p1: ['templateCode', this.templateCode],
-	        p2: ['widgetId', code],
-	        p4: this.getTrackingParameter(event.target)
-	      };
+	    value: function getAnalyticsData(data) {
+	      return _objectSpread({
+	        category: CATEGORY,
+	        c_section: this.isPublished ? SECTION_ACTIVE_PAGE : SECTION_PREVIEW_PAGE,
+	        p1: [P1_TEMPLATE_CODE, this.templateCode]
+	      }, data);
+	    }
+	    /**
+	     * Sends the finalized analytics data object to the Metrika service.
+	     * @param {Record<string, any>} data - Analytics payload to be transmitted.
+	     * @returns {void}
+	     */
+	  }, {
+	    key: "sendAnalytics",
+	    value: function sendAnalytics(data) {
+	      this.metrika.sendData(this.getAnalyticsData(data));
 	    }
 	  }]);
 	  return Analytics;

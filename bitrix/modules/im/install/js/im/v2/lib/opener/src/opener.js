@@ -120,7 +120,7 @@ export const Opener = {
 		await MessengerSlider.getInstance().openSlider();
 
 		return LayoutManager.getInstance().setLayout({
-			name: Layout.aiAssistant,
+			name: Layout.copilot,
 			entityId: preparedDialogId,
 			contextId,
 		});
@@ -292,5 +292,16 @@ export const Opener = {
 			entityId: normalizeEntityId(payload.entityId),
 			target: payload.target,
 		});
+	},
+
+	isChatOpened(dialogId: string): boolean
+	{
+		const currentLayout = LayoutManager.getInstance().getLayout();
+		if (!LayoutManager.getInstance().isChatLayout(currentLayout.name))
+		{
+			return false;
+		}
+
+		return currentLayout.entityId === dialogId;
 	},
 };

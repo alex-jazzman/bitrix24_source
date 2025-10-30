@@ -95,7 +95,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      return this.task.accomplicesIds.map(id => ['user', id]);
 	    },
 	    design() {
-	      return this.isSelected ? tasks_v2_component_elements_chip.ChipDesign.ShadowAccent : tasks_v2_component_elements_chip.ChipDesign.Shadow;
+	      return this.isSelected ? tasks_v2_component_elements_chip.ChipDesign.ShadowAccent : tasks_v2_component_elements_chip.ChipDesign.ShadowNoAccent;
 	    },
 	    isSelected() {
 	      return this.$store.getters[`${tasks_v2_const.Model.Tasks}/wasFieldFilled`](this.taskId, accomplicesMeta.id);
@@ -134,7 +134,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        }
 	      });
 	      this.selector.selectItemsByIds(this.preselected);
-	      this.selector.show(this.$refs.chip.$el);
+	      this.selector.show(this.$el);
 	    },
 	    highlightField() {
 	      void tasks_v2_lib_fieldHighlighter.fieldHighlighter.setContainer(this.$root.$el).highlight(accomplicesMeta.id);
@@ -145,11 +145,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			v-if="isSelected || !readonly"
 			:design="design"
 			:icon="Outline.PERSON"
-			:text="accomplicesMeta.title"
+			:text="loc('TASKS_V2_ACCOMPLICES_TITLE_CHIP')"
 			:data-task-id="taskId"
 			:data-task-chip-id="accomplicesMeta.id"
 			:data-task-chip-value="task.accomplicesIds.join(',')"
-			ref="chip"
 			@click="showDialog"
 		/>
 	`

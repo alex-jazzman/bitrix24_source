@@ -3,7 +3,7 @@
  */
 jn.define('intranet/invite-new/src/inviter/base', (require, exports, module) => {
 	const { Loc } = require('loc');
-	const { showToast } = require('toast');
+	const { showToast, Position } = require('toast');
 	const { Icon } = require('assets/icons');
 	const { showErrorMessage } = require('intranet/invite-new/src/error');
 	const store = require('statemanager/redux/store');
@@ -35,6 +35,8 @@ jn.define('intranet/invite-new/src/inviter/base', (require, exports, module) => 
 		 * @param {Object} props.layout
 		 * @param {Function} props.onUIMenuItemSelected
 		 * @param {Function} props.getDepartment
+		 * @param {boolean} [props.shouldShowDepartmentChooser=true]
+		 * @param {Position} [props.successInvitationToastPosition=Position.BOTTOM]
 		 */
 		constructor(props)
 		{
@@ -134,18 +136,25 @@ jn.define('intranet/invite-new/src/inviter/base', (require, exports, module) => 
 			return selectedDepartment ? [selectedDepartment.id] : null;
 		};
 
-		closeInviteBox = () => {
-			this.getLayout()?.close();
-		};
+		closeInviteBox = () => this.getLayout()?.close?.();
+
+		closeNameChecker = () => this.nameChecker?.close();
+
+		getSuccessInvitationToastPosition()
+		{
+			return this.props.successInvitationToastPosition ?? Position.BOTTOM;
+		}
 
 		showSuccessInvitationToast = (multipleInvitation) => {
-			const message = multipleInvitation
-				? Loc.getMessage('INTRANET_INVITE_MULTIPLE_SEND_SUCCESS_TOAST_TEXT')
-				: Loc.getMessage('INTRANET_INVITE_SINGLE_SEND_SUCCESS_TOAST_TEXT');
 			showToast(
 				{
-					message,
+					message: (
+						multipleInvitation
+							? Loc.getMessage('INTRANET_INVITE_MULTIPLE_SEND_SUCCESS_TOAST_TEXT')
+							: Loc.getMessage('INTRANET_INVITE_SINGLE_SEND_SUCCESS_TOAST_TEXT')
+					),
 					icon: Icon.CHECK,
+					position: this.getSuccessInvitationToastPosition(),
 				},
 			);
 		};
@@ -195,6 +204,7 @@ jn.define('intranet/invite-new/src/inviter/base', (require, exports, module) => 
 				this.showSuccessInvitationToast(multipleInvitation);
 				store.dispatch(usersUpserted(preparedUsers));
 				this.onInviteSentHandler?.(preparedUsers);
+				this.closeNameChecker();
 				this.closeInviteBox();
 
 				return;
@@ -215,12 +225,22 @@ jn.define('intranet/invite-new/src/inviter/base', (require, exports, module) => 
 		};
 
 		renderNameCheckerDepartmentChooser = (layout) => {
+			if (!this.shouldShowDepartmentChooser())
+			{
+				return null;
+			}
+
 			return NameCheckerDepartmentChooser({
 				layout,
 				department: this.props.getDepartment(),
 				onChange: this.selectedDepartmentChanged,
 			});
 		};
+
+		shouldShowDepartmentChooser()
+		{
+			return Boolean(this.props.shouldShowDepartmentChooser ?? true);
+		}
 
 		selectedDepartmentChanged = (department) => {
 			this.props.selectedDepartmentChanged?.(department);

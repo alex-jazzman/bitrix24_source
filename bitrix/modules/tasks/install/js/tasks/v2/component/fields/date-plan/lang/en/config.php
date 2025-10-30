@@ -1,0 +1,22 @@
+<?php
+$MESS["TASKS_V2_DATE_PLAN_ADD"] = "Add";
+$MESS["TASKS_V2_DATE_PLAN_ALLOW_CHANGE"] = "Assignee can change deadline";
+$MESS["TASKS_V2_DATE_PLAN_BUTTON_SAVE"] = "Save";
+$MESS["TASKS_V2_DATE_PLAN_DAYS"] = "Days";
+$MESS["TASKS_V2_DATE_PLAN_DESCRIPTION"] = "Select the planned start and end dates for this task. As an alternative to selecting the end date, you can specify the planned duration of the task.";
+$MESS["TASKS_V2_DATE_PLAN_DURATION"] = "Duration:";
+$MESS["TASKS_V2_DATE_PLAN_END"] = "End date:";
+$MESS["TASKS_V2_DATE_PLAN_FIELD_END"] = "End date:";
+$MESS["TASKS_V2_DATE_PLAN_FIELD_START"] = "Start date:";
+$MESS["TASKS_V2_DATE_PLAN_HOURS"] = "Hours";
+$MESS["TASKS_V2_DATE_PLAN_MATCH_SUBTASKS_TIME"] = "Sync with subtask deadlines";
+$MESS["TASKS_V2_DATE_PLAN_MATCH_SUBTASKS_TIME_HINT"] = "This task's deadline will vary depending on the deadlines of its subtasks.";
+$MESS["TASKS_V2_DATE_PLAN_MATCH_SUBTASKS_TIME_STATE"] = "Defined by subtasks";
+$MESS["TASKS_V2_DATE_PLAN_MATCH_WORK_TIME"] = "Skip weekends";
+$MESS["TASKS_V2_DATE_PLAN_MATCH_WORK_TIME_HINT"] = "Deadline will be adjusted if it falls on a weekend or a holiday.";
+$MESS["TASKS_V2_DATE_PLAN_MINUTES"] = "Minutes";
+$MESS["TASKS_V2_DATE_PLAN_NO_SUBTASKS_HINT"] = "This task does not have any subtasks yet. Once it does, the deadline will be adjusted accordingly.";
+$MESS["TASKS_V2_DATE_PLAN_START"] = "Start date:";
+$MESS["TASKS_V2_DATE_PLAN_TITLE"] = "Deadline:";
+$MESS["TASKS_V2_DATE_PLAN_TITLE_CHIP"] = "Time planner";
+$MESS["TASKS_V2_DATE_PLAN_TITLE_SHEET"] = "Time planner";

@@ -856,8 +856,7 @@ if ($arResult['EVENT_ENTITY_LINK'] == 'Y')
 	foreach($arResult['EVENT'] as $key => $ar)
 	{
 		$entityInfo = $arEntityList[$ar['ENTITY_TYPE']][$ar['ENTITY_ID']];
-		$arResult['EVENT'][$key]['ENTITY_TITLE'] = isset($entityInfo['ENTITY_TITLE'])
-			? htmlspecialcharsbx($entityInfo['ENTITY_TITLE']) : '';
+		$arResult['EVENT'][$key]['ENTITY_TITLE'] = $entityInfo['ENTITY_TITLE'] ?? '';
 		$arResult['EVENT'][$key]['ENTITY_LINK'] = isset($entityInfo['ENTITY_LINK'])
 			? $entityInfo['ENTITY_LINK'] : '';
 	}

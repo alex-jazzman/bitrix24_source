@@ -472,6 +472,11 @@
 		{
 			event.preventDefault();
 
+			if (this.messageBox && this.messageBox.popupWindow.isShown())
+			{
+				return;
+			}
+
 			if (BX.Dom.hasClass(this.createButton.parentNode, 'needed-market-subscription'))
 			{
 				const metrikaParams = this.getMetrikaParams(this.getMetrikaCreateEvent(), 'error_market');
@@ -535,7 +540,7 @@
 				{
 					let isClickOnButtonOk = false;
 					BX.Runtime.loadExtension('ui.dialogs.messagebox').then(() => {
-						const messageBox = new BX.UI.Dialogs.MessageBox({
+						this.messageBox = new BX.UI.Dialogs.MessageBox({
 							message: this.messages.LANDING_PREVIEW_MAINPAGE_MESSAGE,
 							title: this.messages.LANDING_PREVIEW_MAINPAGE_TITLE,
 							buttons: BX.UI.Dialogs.MessageBoxButtons.OK_CANCEL,
@@ -570,10 +575,10 @@
 								},
 							},
 						});
-						messageBox.show();
-						if (messageBox.popupWindow && messageBox.popupWindow.popupContainer)
+						this.messageBox.show();
+						if (this.messageBox.popupWindow && this.messageBox.popupWindow.popupContainer)
 						{
-							messageBox.popupWindow.popupContainer.classList.add('landing-template-preview-create-popup');
+							this.messageBox.popupWindow.popupContainer.classList.add('landing-template-preview-create-popup');
 						}
 					});
 				}

@@ -45,5 +45,8 @@ export type SliderOptions = {
 	copyLinkLabel?: boolean,
 	minimizeLabel?: boolean,
 	designSystemContext?: string,
-	events?: { [eventName: string]: (event: SliderEvent) => void },
+	events?: SliderEvents | SliderEvents[],
+	useGlobalOptions?: boolean,
 };
+
+export type SliderEvents = { [eventName: string]: (event: SliderEvent) => void };

@@ -18,6 +18,7 @@ export class Label
 	onclick = null;
 	text = null;
 	hidden: boolean = false;
+	visible: boolean = true;
 	cache = new Cache.MemoryCache();
 
 	constructor(slider: Slider, labelOptions: LabelOptions)
@@ -26,6 +27,7 @@ export class Label
 		const options = Type.isPlainObject(labelOptions) ? labelOptions : {};
 
 		this.hidden = Type.isBoolean(options.hidden) ? options.hidden : this.hidden;
+		this.visible = Type.isBoolean(options.visible) ? options.visible : this.visible;
 
 		this.setColor(options.color);
 		this.setBgColor(options.bgColor);
@@ -48,6 +50,11 @@ export class Label
 			if (this.isHidden())
 			{
 				classes.push('--hidden');
+			}
+
+			if (this.isVisible())
+			{
+				classes.push('--visible');
 			}
 
 			return Dom.create('div', {
@@ -167,12 +174,12 @@ export class Label
 
 	setColor(color: string): void
 	{
-		if (Type.isStringFilled(color))
+		if (Type.isStringFilled(color) || color === null)
 		{
 			this.color = color;
 
-			Dom.style(this.getTextContainer(), 'color', color);
-			Dom.style(this.getIconContainer(), '--ui-icon-set__icon-color', color);
+			Dom.style(this.getTextContainer(), 'color', this.color);
+			Dom.style(this.getIconContainer(), '--ui-icon-set__icon-color', this.color);
 		}
 	}
 
@@ -312,6 +319,16 @@ export class Label
 	{
 		this.hidden = false;
 		Dom.removeClass(this.getContainer(), '--hidden');
+	}
+
+	isVisible(): boolean
+	{
+		return this.visible;
+	}
+
+	setVisible(isVisible: boolean = true): void
+	{
+		Dom.toggleClass(this.getContainer(), '--visible', isVisible);
 	}
 
 	setOnclick(fn: Function): void

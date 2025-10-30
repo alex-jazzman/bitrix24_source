@@ -259,6 +259,25 @@ this.BX = this.BX || {};
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Popup).call(this));
 	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _enableTargetScroll);
 	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _disableTargetScroll);
+	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "handleAutoHide", function (event) {
+	      if (_this.isDestroyed()) {
+	        return;
+	      }
+	      if (_this.autoHideHandler !== null) {
+	        if (_this.autoHideHandler(event)) {
+	          _this._tryCloseByEvent(event);
+	        }
+	      } else if (event.target !== _this.getPopupContainer() && !_this.getPopupContainer().contains(event.target)) {
+	        _this._tryCloseByEvent(event);
+	      }
+	    });
+	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "handleDocumentKeyUp", function (event) {
+	      if (event.keyCode === 27) {
+	        checkEscPressed(_this.getZindex(), function () {
+	          _this.close();
+	        });
+	      }
+	    });
 	    _this.setEventNamespace('BX.Main.Popup');
 	    var _arguments = Array.prototype.slice.call(arguments),
 	      popupId = _arguments[0],
@@ -303,7 +322,6 @@ this.BX = this.BX || {};
 	    _this.autoHide = params.autoHide === true;
 	    _this.disableScroll = params.disableScroll === true || params.isScrollBlock === true;
 	    _this.autoHideHandler = main_core.Type.isFunction(params.autoHideHandler) ? params.autoHideHandler : null;
-	    _this.handleAutoHide = _this.handleAutoHide.bind(babelHelpers.assertThisInitialized(_this));
 	    _this.handleOverlayClick = _this.handleOverlayClick.bind(babelHelpers.assertThisInitialized(_this));
 	    _this.isAutoHideBinded = false;
 	    _this.closeByEsc = params.closeByEsc === true;
@@ -338,7 +356,6 @@ this.BX = this.BX || {};
 	    _this.animationCloseEventType = null;
 	    _this.handleDocumentMouseMove = _this.handleDocumentMouseMove.bind(babelHelpers.assertThisInitialized(_this));
 	    _this.handleDocumentMouseUp = _this.handleDocumentMouseUp.bind(babelHelpers.assertThisInitialized(_this));
-	    _this.handleDocumentKeyUp = _this.handleDocumentKeyUp.bind(babelHelpers.assertThisInitialized(_this));
 	    _this.handleResizeWindow = _this.handleResizeWindow.bind(babelHelpers.assertThisInitialized(_this));
 	    _this.handleResize = _this.handleResize.bind(babelHelpers.assertThisInitialized(_this));
 	    _this.handleMove = _this.handleMove.bind(babelHelpers.assertThisInitialized(_this));
@@ -994,7 +1011,9 @@ this.BX = this.BX || {};
 	      }
 	      this.targetContainer = newTargetContainer;
 	      if (this.getPopupContainer()) {
+	        main_core_zIndexManager.ZIndexManager.unregister(this.getPopupContainer());
 	        this.getTargetContainer().append(this.getPopupContainer());
+	        main_core_zIndexManager.ZIndexManager.register(this.getPopupContainer());
 	      }
 	      if (this.overlay) {
 	        main_core.Dom.append(this.overlay.element, this.getTargetContainer());
@@ -1174,7 +1193,7 @@ this.BX = this.BX || {};
 	    key: "bindClosingByEsc",
 	    value: function bindClosingByEsc() {
 	      if (this.closeByEsc && !this.isCloseByEscBinded) {
-	        main_core.Event.bind(document, 'keyup', this.handleDocumentKeyUp);
+	        main_core.Event.bind(this.targetContainer.ownerDocument, 'keyup', this.handleDocumentKeyUp, true);
 	        this.isCloseByEscBinded = true;
 	      }
 	    }
@@ -1185,7 +1204,7 @@ this.BX = this.BX || {};
 	    key: "unbindClosingByEsc",
 	    value: function unbindClosingByEsc() {
 	      if (this.isCloseByEscBinded) {
-	        main_core.Event.unbind(document, 'keyup', this.handleDocumentKeyUp);
+	        main_core.Event.unbind(this.targetContainer.ownerDocument, 'keyup', this.handleDocumentKeyUp, true);
 	        this.isCloseByEscBinded = false;
 	      }
 	    }
@@ -1216,9 +1235,9 @@ this.BX = this.BX || {};
 	          main_core.Event.bind(this.overlay.element, 'click', this.handleOverlayClick);
 	        } else {
 	          if (this.isCompatibleMode()) {
-	            main_core.Event.bind(document, 'click', this.handleAutoHide);
+	            main_core.Event.bind(this.targetContainer.ownerDocument, 'click', this.handleAutoHide);
 	          } else {
-	            document.addEventListener('click', this.handleAutoHide, true);
+	            this.targetContainer.ownerDocument.addEventListener('click', this.handleAutoHide, true);
 	          }
 	        }
 	      }
@@ -1238,9 +1257,9 @@ this.BX = this.BX || {};
 	          main_core.Event.unbind(this.overlay.element, 'click', this.handleOverlayClick);
 	        } else {
 	          if (this.isCompatibleMode()) {
-	            main_core.Event.unbind(document, 'click', this.handleAutoHide);
+	            main_core.Event.unbind(this.targetContainer.ownerDocument, 'click', this.handleAutoHide);
 	          } else {
-	            document.removeEventListener('click', this.handleAutoHide, true);
+	            this.targetContainer.ownerDocument.removeEventListener('click', this.handleAutoHide, true);
 	          }
 	        }
 	      }
@@ -1249,24 +1268,10 @@ this.BX = this.BX || {};
 	     * @private
 	     */
 	  }, {
-	    key: "handleAutoHide",
-	    value: function handleAutoHide(event) {
-	      if (this.isDestroyed()) {
-	        return;
-	      }
-	      if (this.autoHideHandler !== null) {
-	        if (this.autoHideHandler(event)) {
-	          this._tryCloseByEvent(event);
-	        }
-	      } else if (event.target !== this.getPopupContainer() && !this.getPopupContainer().contains(event.target)) {
-	        this._tryCloseByEvent(event);
-	      }
-	    }
+	    key: "_tryCloseByEvent",
 	    /**
 	     * @private
 	     */
-	  }, {
-	    key: "_tryCloseByEvent",
 	    value: function _tryCloseByEvent(event) {
 	      var _this2 = this;
 	      if (this.isCompatibleMode()) {
@@ -1568,7 +1573,8 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "isShown",
 	    value: function isShown() {
-	      return !this.isDestroyed() && this.getPopupContainer().style.display === 'block';
+	      var _this$getPopupContain;
+	      return !this.isDestroyed() && ((_this$getPopupContain = this.getPopupContainer()) === null || _this$getPopupContain === void 0 ? void 0 : _this$getPopupContain.style.display) === 'block';
 	    }
 	  }, {
 	    key: "destroy",
@@ -1768,20 +1774,10 @@ this.BX = this.BX || {};
 	     * @private
 	     */
 	  }, {
-	    key: "handleDocumentKeyUp",
-	    value: function handleDocumentKeyUp(event) {
-	      var _this7 = this;
-	      if (event.keyCode === 27) {
-	        checkEscPressed(this.getZindex(), function () {
-	          _this7.close();
-	        });
-	      }
-	    }
+	    key: "handleResizeWindow",
 	    /**
 	     * @private
 	     */
-	  }, {
-	    key: "handleResizeWindow",
 	    value: function handleResizeWindow() {
 	      if (this.isShown()) {
 	        this.adjustPosition();

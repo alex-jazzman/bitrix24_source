@@ -68,6 +68,10 @@ export const MessageList = {
 			type: String,
 			required: true,
 		},
+		containerHeight: {
+			type: [Number, null],
+			default: null,
+		},
 	},
 	data(): JsonObject
 	{
@@ -280,6 +284,7 @@ export const MessageList = {
 									:dialogId="dialogId"
 									:key="message.id"
 									:data-viewed="message.viewed"
+									:containerHeight="containerHeight"
 									@mouseup="onMessageMouseUp(message, $event)"
 								>
 								</component>

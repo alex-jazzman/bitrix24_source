@@ -91,6 +91,29 @@ export class Main extends EventEmitter
 	}
 
 	/**
+	 * Maps site type to analytics category.
+	 *
+	 * @return {string}
+	 */
+	static getAnalyticsCategoryByType()
+	{
+		const siteType = BX.Landing.Env.getInstance().getType();
+
+		switch (siteType)
+		{
+			case 'STORE':
+				return 'shop';
+			case 'KNOWLEDGE':
+			case 'GROUP':
+				return 'kb';
+			case 'MAINPAGE':
+				return 'vibe';
+			default:
+				return 'site';
+		}
+	}
+
+	/**
 	 * Landing ID
 	 * @type {number}
 	 */
@@ -184,6 +207,11 @@ export class Main extends EventEmitter
 
 			return blocksPanel;
 		});
+	}
+
+	getBlocksPanelContent(): Content
+	{
+		return this.getBlocksPanel().content;
 	}
 
 	hideBlocksPanel()
@@ -526,6 +554,12 @@ export class Main extends EventEmitter
 	 */
 	showBlocksPanel(block, area, button, insertBefore)
 	{
+		BX.UI.Analytics.sendData({
+			tool: 'landing',
+			category: BX.Landing.Main.getAnalyticsCategoryByType(),
+			event: 'open_list',
+		});
+
 		this.currentBlock = block;
 		this.currentArea = area;
 		this.insertBefore = insertBefore;
@@ -607,8 +641,9 @@ export class Main extends EventEmitter
 			const hasItems = !isEmpty(blocks[categoryId].items);
 			const isPopular = categoryId === 'popular';
 			const isSeparator = blocks[categoryId].separator;
+			const isFavourite = categoryId === 'favourite';
 
-			if ((hasItems && !isPopular) || isSeparator)
+			if ((hasItems && !isPopular) || isSeparator || isFavourite)
 			{
 				panel.appendSidebarButton(
 					this.createBlockPanelSidebarButton(categoryId, blocks[categoryId]),
@@ -794,8 +829,19 @@ export class Main extends EventEmitter
 	 * Handles event on blocks list category change
 	 * @param {string} category - Category id
 	 */
-	onBlocksListCategoryChange(category)
+	async onBlocksListCategoryChange(category)
 	{
+		this.currentCategory = category;
+
+		if (this.currentCategory === 'favourite')
+		{
+			BX.UI.Analytics.sendData({
+				tool: 'landing',
+				category: BX.Landing.Main.getAnalyticsCategoryByType(),
+				event: 'click_on_favourite',
+			});
+		}
+
 		const templateCode = this.getTemplateCode();
 		this.getBlocksPanel().content.hidden = false;
 
@@ -805,6 +851,25 @@ export class Main extends EventEmitter
 		});
 
 		this.getBlocksPanel().content.innerHTML = '';
+
+		const loader = new BX.Loader({
+			target: this.getBlocksPanel().content,
+			size: 90,
+		});
+		loader.show();
+
+		try
+		{
+			this.favouriteBlocks = await BX.Landing.Backend.getInstance()
+				.action('Landing::getFavouriteBlocks');
+		}
+		catch (e)
+		{
+			console.warn('Failed to fetch favourite blocks', e);
+			this.favouriteBlocks = [];
+		}
+
+		loader.hide();
 
 		if (category === 'last')
 		{
@@ -817,7 +882,43 @@ export class Main extends EventEmitter
 
 			this.lastBlocks.forEach((blockKey) => {
 				const block = this.getBlockFromRepository(blockKey);
-				this.getBlocksPanel().appendCard(this.createBlockCard(blockKey, block));
+				if (block)
+				{
+					block.currentCategory = category;
+					this.getBlocksPanel().appendCard(this.createBlockCard(blockKey, block));
+				}
+			});
+
+			return;
+		}
+
+		if (category === 'favourite')
+		{
+			if (!this.favouriteBlocks)
+			{
+				this.favouriteBlocks = Object.keys(this.blocks.favourite.items);
+			}
+
+			const blockCards = [];
+			this.favouriteBlocks = [...new Set(this.favouriteBlocks)];
+			this.favouriteBlocks.forEach((blockKey) => {
+				const block = this.getBlockFromRepository(blockKey);
+				if (block)
+				{
+					block.currentCategory = category;
+					blockCards.push(this.createBlockCard(blockKey, block));
+				}
+			});
+
+			if (blockCards.length === 0)
+			{
+				Dom.append(this.createFavouriteCategoryEmptyState(), this.getBlocksPanelContent());
+
+				return;
+			}
+
+			blockCards.forEach((blockCard) => {
+				this.getBlocksPanel().appendCard(blockCard);
 			});
 
 			return;
@@ -831,6 +932,7 @@ export class Main extends EventEmitter
 				(blockTplCode && blockTplCode === templateCode)
 			)
 			{
+				block.currentCategory = category;
 				this.getBlocksPanel().appendCard(this.createBlockCard(blockKey, block));
 			}
 		});
@@ -1271,6 +1373,7 @@ export class Main extends EventEmitter
 				CODE: blockCode,
 				AFTER_ID: this.currentBlock ? this.currentBlock.id : 0,
 				RETURN_CONTENT: 'Y',
+				CATEGORY: this.currentCategory,
 			};
 
 			if (!Type.isBoolean(preventHistory) || preventHistory === false)
@@ -1339,7 +1442,35 @@ export class Main extends EventEmitter
 			mode,
 			isNew: block.new === true,
 			onClick: this.onAddBlock.bind(this, blockKey),
+			currentCategory: block.currentCategory,
+			useFavouriteBadge: true,
+			isFavorite: Array.isArray(this.favouriteBlocks) && this.favouriteBlocks.includes(blockKey),
 		});
+	}
+
+	createFavouriteCategoryEmptyState()
+	{
+		return Tag.render`
+			<div class="landing-favourite-category-empty-state text-center">
+				<img 
+					class="landing-favourite-category-empty-state--image" 
+					src="/bitrix/images/landing/empty-favourite.png" 
+					style="margin-bottom: 14px;"
+				/>
+				<p 
+					class="landing-favourite-category-empty-state--title"
+					style="color: #333333; font-weight: 500; font-size: 19px; line-height: 26px; margin-bottom: 10px;"
+				>
+					${Loc.getMessage('LANDING_SECTION_FAVOURITE_EMPTY_STATE_TITLE')}
+				</p>
+				<p 
+					class="landing-favourite-category-empty-state--text"
+					style="color: #414A56; font-weight: 400; font-size: 16px; line-height: 21px; max-width: 340px; margin: auto;"
+				>
+					${Loc.getMessage('LANDING_SECTION_FAVOURITE_EMPTY_STATE_TEXT')}
+				</p>
+			</div>
+		`;
 	}
 
 

@@ -14,6 +14,7 @@ $MESS["LANDING_TPL_LABEL_NEW"] = "жаңа";
 $MESS["LANDING_TPL_LABEL_SUBSCRIPTION"] = "Жазылым бойынша";
 $MESS["LANDING_TPL_LIMIT_REACHED_TITLE"] = "Шектеу асып кетті";
 $MESS["LANDING_TPL_LOAD_APP_TEMPLATE_2_MSGVER_1"] = "Битрикс24.Маркетплейс-тен қалыптарды <span>жүктеу</span> ";
+$MESS["LANDING_TPL_MARKET_DISABLE_MSGVER_1"] = "Нысандар уақытша қолжетімсіз";
 $MESS["LANDING_TPL_NOT_FOUND_BUTTON"] = "Жазу";
 $MESS["LANDING_TPL_NOT_FOUND_TITLE"] = "Қалыпты таба алмадыңыз ба?";
 $MESS["LANDING_TPL_PAGE_LIMIT_REACHED_TEXT"] = "<p>Сіздің тарифтік жоспарыңызда жасалған парақшалар санына шектеу бар. Жаңа парақшаларды қосу үшін басқа тарифтер жоспарына өтіңіз.</p><p>&laquo;Компания&raquo; жоғарғы тарифінде парақшалар саны шектелмейді.</p>";
