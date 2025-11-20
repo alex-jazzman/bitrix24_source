@@ -26,6 +26,9 @@ jn.define('im/messenger/provider/services/sending/files', (require, exports, mod
 		UploaderManagerEvent,
 	} = require('im/messenger/provider/services/sending/upload-manager');
 
+	// TODO: remove it after solving the problem with listening to voice messages
+	window.debugUploadAudio = [];
+
 	/**
 	 * @class FilesUploadService
 	 */
@@ -303,6 +306,7 @@ jn.define('im/messenger/provider/services/sending/files', (require, exports, mod
 				urlPreview: file.previewUrl,
 				urlShow,
 				localUrl: file.path,
+				isTranscribable: params.isTranscribable ?? false,
 				...previewData,
 			};
 
@@ -387,6 +391,22 @@ jn.define('im/messenger/provider/services/sending/files', (require, exports, mod
 		getDiskFolderId(dialogId)
 		{
 			const diskIdFromModel = this.#getDiskFolderIdFromModel(dialogId);
+
+			// TODO: remove it after solving the problem with listening to voice messages
+			try
+			{
+				const debugData = { getDiskFolderId: `diskIdFromModel: ${diskIdFromModel}` };
+				window.debugUploadAudio.push(debugData);
+				if (window.debugUploadAudio.length > 10)
+				{
+					window.debugUploadAudio.shift();
+				}
+			}
+			catch (e)
+			{
+				console.error(e);
+			}
+
 			if (diskIdFromModel > 0)
 			{
 				return Promise.resolve(diskIdFromModel);
@@ -434,6 +454,16 @@ jn.define('im/messenger/provider/services/sending/files', (require, exports, mod
 
 						this.isRequestingDiskFolderId = false;
 
+						// TODO: remove it after solving the problem with listening to voice messages
+						try
+						{
+							window.debugUploadAudio[window.debugUploadAudio.length - 1].requestDiskFolderId = `diskFolderId: ${diskFolderId}`;
+						}
+						catch (e)
+						{
+							console.error(e);
+						}
+
 						resolve(diskFolderId);
 					})
 					.catch((error) => {
@@ -480,6 +510,12 @@ jn.define('im/messenger/provider/services/sending/files', (require, exports, mod
 		 */
 		#commitFiles(chatId, temporaryMessageId, filesIdsCollection, fromDisk = false)
 		{
+			const params = {
+				chat_id: chatId,
+				message: '', // we don't have to send files with text right now
+				template_id: temporaryMessageId,
+				as_file: false ? 'Y' : 'N', // TODO
+			};
 			const realFileIdsInt = filesIdsCollection.map((fileId) => fileId.realFileIdInt);
 			const fileIdParams = {};
 			if (fromDisk)
@@ -491,11 +527,12 @@ jn.define('im/messenger/provider/services/sending/files', (require, exports, mod
 				fileIdParams.upload_id = realFileIdsInt;
 			}
 
+			params.transcribable_file_ids = filesIdsCollection
+				.filter((ids) => this.#isFileTranscribable(ids.temporaryFileId))
+				.map((ids) => ids.realFileIdInt);
+
 			BX.rest.callMethod(RestMethod.imDiskFileCommit, {
-				chat_id: chatId,
-				message: '', // we don't have to send files with text right now
-				template_id: temporaryMessageId,
-				as_file: false ? 'Y' : 'N', // TODO
+				...params,
 				...fileIdParams,
 			})
 				.then(async (res) => {
@@ -814,6 +851,22 @@ jn.define('im/messenger/provider/services/sending/files', (require, exports, mod
 
 				reader.readAsBinaryString(file);
 			});
+		}
+
+		/**
+		 * @param {string} temporaryFileId
+		 * @returns {boolean}
+		 */
+		#isFileTranscribable(temporaryFileId)
+		{
+			if (!Type.isStringFilled(temporaryFileId))
+			{
+				return false;
+			}
+
+			const filesModel = this.store.getters['filesModel/getById'](temporaryFileId);
+
+			return filesModel.isTranscribable ?? false;
 		}
 	}
 

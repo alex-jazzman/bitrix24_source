@@ -32,7 +32,7 @@ jn.define('im/messenger/lib/rest', (require, exports, module) => {
 
 	/**
 	 * @param method
-	 * @param params
+	 * @param [params]
 	 * @returns {Promise<RestResult>}
 	 */
 	const callMethod = async (method, params) => {

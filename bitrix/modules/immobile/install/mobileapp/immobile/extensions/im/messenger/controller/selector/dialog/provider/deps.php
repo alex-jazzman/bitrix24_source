@@ -14,6 +14,4 @@ return [
 		'im:messenger/lib/element/chat-avatar',
 		'im:messenger/controller/search/experimental',
 	],
-	'bundle' => [
-	],
 ];

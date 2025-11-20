@@ -49,18 +49,20 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		AttachPickerId,
 		MessageParams,
 		DialogActionType,
+		TranscriptStatus,
 	} = require('im/messenger/const');
 
 	const { RecentDataConverter } = require('im/messenger/lib/converter/data/recent');
 	const { MessageUiConverter } = require('im/messenger/lib/converter/ui/message');
 	const { defaultUserIcon, ReactionAssets } = require('im/messenger/assets/common');
-	const { TabCounters } = require('im/messenger/lib/counters/tab-counters');
 	const { MessengerCounterSender } = require('im/messenger/lib/counters/counter-manager/messenger/sender');
 	const { DateFormatter } = require('im/messenger/lib/date-formatter');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const {
 		DialogHelper,
 		Url,
+		RecentHelper,
+		getAudioRecordFormat,
 	} = require('im/messenger/lib/helper');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { ObjectUtils } = require('im/messenger/lib/utils');
@@ -111,6 +113,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 	const { ContextManager } = require('im/messenger/controller/dialog/lib/context-manager');
 	const { MessageRenderer } = require('im/messenger/controller/dialog/lib/message-renderer');
 	const { AudioMessagePlayer } = require('im/messenger/controller/dialog/lib/audio-player');
+	const { AudioPanel } = require('im/messenger/controller/dialog/lib/audio-panel');
 	const { MessageAvatarMenu } = require('im/messenger/controller/dialog/lib/message-avatar-menu');
 	const { WebDialog } = require('im/messenger/controller/dialog/lib/web');
 	const { MessageMenuController } = require('im/messenger/controller/dialog/lib/message-menu');
@@ -133,6 +136,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 	const { AppRatingClient } = require('im/messenger/controller/dialog/lib/app-rating-client');
 	const { FloatingButtonsBarManager } = require('im/messenger/controller/dialog/lib/floating-buttons-bar-manager');
 	const { DialogMediaGallery } = require('im/messenger/controller/dialog/lib/media-gallery');
+	const { TranscriptManager } = require('im/messenger/controller/dialog/lib/transcript-manager');
 
 	/* endregion lib import */
 
@@ -146,9 +150,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 	 */
 	class Dialog
 	{
-		/**
-		 * @type {SendingService}
-		 */
+		/**  @type {SendingService} */
 		#sendingService = null;
 
 		constructor()
@@ -211,7 +213,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			this.titleParams = null;
 
 			/**
-			 * @private
+			 * @protected
 			 * @type {ChatService}
 			 */
 			this.chatService = new ChatService();
@@ -347,9 +349,9 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			this.HOLD_WRITING_REST = 3000;
 			/**
 			 * @private
-			 * @type {AudioMessagePlayer}
+			 * @type {AudioPanel}
 			 */
-			this.audioMessagePlayer = new AudioMessagePlayer(this.store);
+			this.audioPlayer = null;
 
 			this.pullWatchManager = null;
 
@@ -398,11 +400,18 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			this.voteManager = null;
 
 			/**
-			 * @type {JNChatFloatingButtonsBar|null}
+			 * @type {FloatingButtonsBarManager|null}
 			 */
 			this.floatingButtonsBarManager = null;
 
+			/**
+			 * @private
+			 * @type {TranscriptManager}
+			 */
+			this.transcriptManager = null;
+
 			this.resendQueuePromise = Promise.resolve();
+			this.sendQueuePromise = Promise.resolve();
 
 			this.bindMethods();
 
@@ -531,6 +540,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			this.messageUpdateHandler = this.messageUpdateHandlerRouter.bind(this);
 			this.updateReactionHandler = this.redrawReactionMessages.bind(this);
 			this.deleteHandler = this.deleteMessage.bind(this);
+			this.deleteMessagesByChatIdHandler = this.deleteMessagesByChatId.bind(this);
 			/** @private */
 			this.dialogUpdateHandlerRouter = this.dialogUpdateHandlerRouter.bind(this);
 			/** @private */
@@ -557,6 +567,8 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			this.voteMessageUpdateHandler = this.voteMessageUpdateHandler.bind(this);
 			/** @private */
 			this.dialogClearAllCountersHandler = this.dialogClearAllCountersHandler.bind(this);
+			/** @private */
+			this.closeDialogHandler = this.closeDialogHandler.bind(this);
 		}
 
 		/**
@@ -655,6 +667,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			this.callMessageHandler?.unsubscribeEvents();
 			this.voteMessageHandler?.unsubscribeEvents();
 			this.messageMenu?.unsubscribeEvents();
+			this.transcriptManager?.unsubscribeEvents();
 			this.view.removeAll();
 		}
 
@@ -669,6 +682,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				.on('messagesModel/reactionsModel/updateWithId', this.redrawReactionMessageHandler)
 				.on('messagesModel/reactionsModel/add', this.redrawReactionMessageHandler)
 				.on('messagesModel/delete', this.deleteHandler)
+				.on('messagesModel/deleteByChatId', this.deleteMessagesByChatIdHandler)
 				.on('messagesModel/voteModel/set', this.voteMessageUpdateHandler)
 				.on('dialoguesModel/add', this.dialogUpdateHandlerRouter)
 				.on('dialoguesModel/update', this.dialogUpdateHandlerRouter)
@@ -682,10 +696,13 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				.on('commentModel/setCounters', this.updateCommentRouter)
 				.on('commentModel/setCommentsWithCounters', this.updateCommentRouter)
 				.on('commentModel/deleteChannelCounters', this.deleteChannelCountersHandler)
+				.on('counterModel/set', this.setCounterHandler)
+				.on('counterModel/delete', this.deleteCounterHandler)
 			;
 
 			this.pinManager?.subscribeStoreEvents();
 			this.actionButtonManager?.subscribeStoreEvents();
+			this.transcriptManager?.subscribeStoreEvents();
 		}
 
 		/** @protected */
@@ -699,6 +716,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				.off('messagesModel/reactionsModel/updateWithId', this.redrawReactionMessageHandler)
 				.off('messagesModel/reactionsModel/add', this.redrawReactionMessageHandler)
 				.off('messagesModel/delete', this.deleteHandler)
+				.off('messagesModel/deleteByChatId', this.deleteMessagesByChatIdHandler)
 				.off('messagesModel/voteModel/set', this.voteMessageUpdateHandler)
 				.off('dialoguesModel/add', this.dialogUpdateHandlerRouter)
 				.off('dialoguesModel/update', this.dialogUpdateHandlerRouter)
@@ -711,11 +729,14 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				.off('commentModel/setCounters', this.updateCommentRouter)
 				.off('commentModel/setCommentsWithCounters', this.updateCommentRouter)
 				.off('commentModel/deleteChannelCounters', this.deleteChannelCountersHandler)
+				.off('counterModel/set', this.setCounterHandler)
+				.off('counterModel/delete', this.deleteCounterHandler)
 			;
 
 			this.pinManager?.unsubscribeStoreEvents();
 			this.actionButtonManager?.unsubscribeStoreEvents();
 			this.floatingButtonsBarManager?.unsubscribeStoreEvents();
+			this.transcriptManager?.unsubscribeStoreEvents();
 		}
 
 		/** @private */
@@ -727,6 +748,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			BX.addCustomEvent(EventType.dialog.external.sendMessage, this.sendMessageExternalHandler);
 			BX.addCustomEvent(EventType.dialog.external.textarea.insertText, this.insertTextHandler);
 			BX.addCustomEvent(EventType.dialog.external.resend, this.resendHandler);
+			BX.addCustomEvent(EventType.dialog.external.close, this.closeDialogHandler);
 		}
 
 		/** @private */
@@ -738,6 +760,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			BX.removeCustomEvent(EventType.dialog.external.sendMessage, this.sendMessageExternalHandler);
 			BX.removeCustomEvent(EventType.dialog.external.textarea.insertText, this.insertTextHandler);
 			BX.removeCustomEvent(EventType.dialog.external.resend, this.resendHandler);
+			BX.removeCustomEvent(EventType.dialog.external.close, this.closeDialogHandler);
 		}
 
 		/** @protected */
@@ -837,6 +860,19 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 
 			this.voteManager = new VoteManager(this.locator, this.getChatId());
 
+			/**
+			 * @private
+			 * @type {TranscriptManager}
+			 */
+			this.transcriptManager = new TranscriptManager({
+				chatId: this.getChatId(),
+				dialogId: this.getDialogId(),
+				dialogLocator: this.locator,
+				audioMessagePlayer: this.audioPlayer,
+				isLocalStorageSupported: this.isLocalStorageSupported(),
+				validateQuote: this.validateQuote.bind(this),
+			});
+
 			this.locator
 				.add('text-field-manager', this.textField)
 				.add('reply-manager', this.replyManager)
@@ -851,12 +887,28 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 
 			if (Feature.isFloatingButtonsBarAvailable)
 			{
+				this.isFloatingButtonsBarShown = false;
 				this.floatingButtonsBarManager = new FloatingButtonsBarManager(
 					this.view.ui.floatingButtonsBar,
 					this.scrollToNewMessagesHandler,
 					this.locator,
 				);
-				this.floatingButtonsBarManager?.showFloatingButtonsBar();
+
+				this.showFloatingButtonsBarIfNeeded();
+			}
+		}
+
+		showFloatingButtonsBarIfNeeded()
+		{
+			if (
+				Feature.isFloatingButtonsBarAvailable
+				&& this.floatingButtonsBarManager
+				&& this.getChatId() > 0
+				&& !this.isFloatingButtonsBarShown
+			)
+			{
+				this.floatingButtonsBarManager.showFloatingButtonsBar();
+				this.isFloatingButtonsBarShown = true;
 			}
 		}
 
@@ -887,6 +939,25 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			this.callMessageHandler = new CallMessageHandler(serviceLocator, this.locator);
 			this.voteMessageHandler = new VoteMessageHandler(serviceLocator, this.locator);
 			this.commentButton = new CommentButton(this.view, this.getDialogId(), this.locator);
+			this.audioPlayer = this.createAudioPlayer();
+		}
+
+		/**
+		 * @returns {AudioPanel|AudioMessagePlayer}
+		 */
+		createAudioPlayer()
+		{
+			if (Feature.isAudioPanelSupported())
+			{
+				return new AudioPanel({
+					store: this.store,
+					chatId: this.getChatId(),
+					dialogId: this.getDialogId(),
+					getViewableMessages: this.view.getViewableMessages,
+				});
+			}
+
+			return new AudioMessagePlayer(this.store);
 		}
 
 		/**
@@ -926,9 +997,11 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				context = OpenDialogContextType.default,
 				integrationSettings,
 				actionsAfterOpen,
+				onClose = () => {},
 			} = options;
 
 			this.dialogId = dialogId;
+			this.onClose = onClose;
 
 			if (this.getDialogType() === DialogWidgetType.collab)
 			{
@@ -968,10 +1041,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			});
 
 			const isOpenlinesChat = dialogTitleParams && dialogTitleParams.chatType === 'lines';
-			if (
-				!Feature.isChatV2Enabled
-				|| isOpenlinesChat
-			)
+			if (isOpenlinesChat)
 			{
 				this.openWebDialog(options);
 
@@ -1001,6 +1071,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				this.messageService = new MessageService({
 					store: this.store,
 					chatId: this.getChatId(),
+					dialogId: this.getDialogId(),
 				});
 
 				this.locator.add('message-service', this.messageService);
@@ -1029,7 +1100,10 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 					logger.error(`${this.constructor.name}.createWidget error:`, error);
 				});
 
-			await this.executeAfterOpen(actionsAfterOpen);
+			await this.executeAfterOpen(actionsAfterOpen)
+				.catch((error) => {
+					logger.error(`${this.constructor.name}.executeAfterOpen error:`, error);
+				});
 		}
 
 		/**
@@ -1039,14 +1113,15 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		{
 			if (!Array.isArray(actions))
 			{
-				return Promise.reject(new Error('actionsAfterOpen should be an array'));
+				logger.warn(`${this.constructor.name}.executeAfterOpen actions should be an array`);
+
+				return Promise.resolve(false);
 			}
 
 			return mapPromise(actions, (action) => {
 				if (action.type === DialogActionType.goToMessage)
 				{
-					return this.contextManager.goToMessageContext({
-						dialogId: this.dialogId,
+					return this.goToMessage({
 						messageId: action.messageId,
 						targetMessagePosition: action.targetMessagePosition,
 					});
@@ -1062,9 +1137,20 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 					});
 				}
 
-				return Promise.resolve();
+				return Promise.resolve(true);
 			});
 		}
+
+		/**
+		 * @param {GoToMessageContextEvent} options
+		 * @returns {Promise<void>}
+		 */
+		goToMessage = (options) => {
+			return this.contextManager.goToMessageContext({
+				dialogId: this.dialogId,
+				...options,
+			});
+		};
 
 		closeDialogHandler({ dialogId })
 		{
@@ -1195,6 +1281,15 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		isComment(dialogData = this.getDialog())
 		{
 			return Boolean(DialogHelper.createByModel(dialogData)?.isComment);
+		}
+
+		/**
+		 * @param {DialoguesModelState} [dialogData=this.getDialog()]
+		 * @return {boolean}
+		 */
+		isTaskComment(dialogData = this.getDialog())
+		{
+			return Boolean(DialogHelper.createByModel(dialogData)?.isTaskComment);
 		}
 
 		/**
@@ -1350,7 +1445,8 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		/**
 		 * @returns {boolean}
 		 */
-		checkCanRecordAudio() {
+		checkCanRecordAudio()
+		{
 			return true;
 		}
 
@@ -1370,7 +1466,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				titleParams = await this.headerTitle.createTitleParams();
 			}
 
-			this.headerTitle.setTitleParams(titleParams);
+			this.headerTitle?.setTitleParams(titleParams);
 
 			let rightButtons = [];
 			if (this.configurator.checkIsHeaderButtonControllerClassLoaded())
@@ -1401,6 +1497,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 					dialogType: this.getDialogType(),
 					canHaveAttachments: this.checkCanHaveAttachments(),
 					canRecordAudio: this.checkCanRecordAudio(),
+					audioRecordFormat: getAudioRecordFormat(),
 					pinPanel: this.pinManager?.getPinPanelParams(),
 					background: this.backgroundManager?.getConfiguration(),
 				},
@@ -1420,8 +1517,8 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			await this.saveVisibleDialogInfo(); // onViewShown can be called after setMessages() so we duplicate save here
 
 			await this.createView(widget);
-			await this.initManagers();
 			await this.initComponents();
+			await this.initManagers();
 			this.subscribeWidgetEvents(widget);
 			this.subscribeViewEvents();
 			this.subscribeStoreEvents();
@@ -1540,9 +1637,12 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			this.messageService = new MessageService({
 				store: this.store,
 				chatId: this.getChatId(),
+				dialogId: this.getDialogId(),
 			});
 
 			this.locator.add('message-service', this.messageService);
+
+			this.showFloatingButtonsBarIfNeeded();
 
 			const counter = this.getDialog().counter;
 			if (counter > 0)
@@ -1576,6 +1676,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			this.drawStatusField();
 			this.resendMessages();
 			this.checkOpeningBotContext();
+			this.audioPlayer.initialPlayerState?.();
 			this.sendAnalyticsOpenDialog();
 			BX.postComponentEvent(EventType.messenger.openDialogComplete, [
 				{
@@ -1838,6 +1939,14 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 					}
 				}
 
+				const sendingMessageList = this.store.getters['messagesModel/getSendingMessages'](chatId);
+				const updatedSendingMessageList = sendingMessageList.map((message, index, array) => ({
+					...message,
+					date: new Date(Date.now() - array.length),
+				}));
+
+				result.messageList.push(...updatedSendingMessageList);
+
 				await this.store.dispatch('messagesModel/setFromLocalDatabase', {
 					messages: result.messageList,
 					clearCollection: true,
@@ -2056,10 +2165,10 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		 */
 		isNeedHideTextFieldByPermission()
 		{
-			const сanPost = ChatPermission.сanPost(this.getDialog());
+			const canPost = ChatPermission.canPost(this.getDialog());
 			const isGroupDialog = DialogHelper.isDialogId(this.getDialogId());
 
-			return !сanPost && isGroupDialog;
+			return !canPost && isGroupDialog;
 		}
 
 		isNeedDeleteMessages()
@@ -2088,6 +2197,15 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		 */
 		async closeHandler()
 		{
+			try
+			{
+				this.onClose();
+			}
+			catch (error)
+			{
+				logger.error(`${this.constructor.name}.closeHandler onClose error:`, error);
+			}
+
 			await this.visibilityManager.removeVisibleDialogInfoByDialogCode(this.dialogCode);
 			const dialogId = this.getDialogId();
 			await SidebarSearchMemoryStorage.forget(dialogId);
@@ -2095,10 +2213,11 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			this.unsubscribeExternalEvents();
 			this.unsubscribeStoreEvents();
 			this.unsubscribeViewEvents();
-			this.audioMessagePlayer.stop();
+			this.audioPlayer.stopPlayingMessage?.();
 			this.headerTitle.stopRender();
 			this.contextManager.destructor();
 			this.voteManager.destructor();
+			this.audioPlayer.destructor?.();
 			this.pullWatchManager.unsubscribe();
 
 			const chatId = this.getChatId();
@@ -2184,6 +2303,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			}
 
 			this.anchorService.debouncedReadMessageListAnchors(messageList);
+			this.audioPlayer.readMessageList?.(messageList);
 		}
 
 		/**
@@ -2263,7 +2383,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		 */
 		playbackCompletedHandler()
 		{
-			this.audioMessagePlayer.playNext();
+			this.audioPlayer.playNext?.();
 		}
 
 		async urlTapHandler(url)
@@ -2329,7 +2449,8 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		 * @private
 		 */
 		audioRecordingFinishHandler()
-		{}
+		{
+		}
 
 		/**
 		 * @private
@@ -2339,6 +2460,11 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			const file = {
 				url: audioFile.localAudioUrl,
 			};
+
+			if (Feature.isAudioRecordM4AEnabled || Application.getPlatform() === 'ios')
+			{
+				file.isTranscribable = true;
+			}
 
 			this.sendingService.sendFiles(this.getDialogId(), [file])
 				.catch((error) => logger.error(`${this.constructor.name}.sendAudio.sendFiles`, error))
@@ -2526,14 +2652,18 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				return;
 			}
 
-			const shouldPlayAudio = !isPlaying;
-			if (shouldPlayAudio)
+			const analyticsService = AnalyticsService.getInstance();
+			const playingOptions = { messageId, playingTime };
+			const analyticsOptions = { dialogId: this.getDialogId() };
+			if (isPlaying)
 			{
-				this.audioMessagePlayer.play(Number(messageId), playingTime);
+				analyticsService.sendClickToPauseAudioInChat(analyticsOptions);
+				this.audioPlayer.pause?.(playingOptions);
 			}
 			else
 			{
-				this.audioMessagePlayer.stop(playingTime);
+				analyticsService.sendClickToPlayAudioInChat(analyticsOptions);
+				this.audioPlayer.play?.(playingOptions);
 			}
 		}
 
@@ -2554,7 +2684,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 
 			try
 			{
-				await this.audioMessagePlayer.changeRate();
+				await this.audioPlayer.changeRate();
 				await this.messageRenderer.render([playingMessageModel]);
 			}
 			catch (error)
@@ -2567,6 +2697,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		 *
 		 * @param videoId
 		 * @param messageId
+		 * @param {string|null} localUrl
 		 */
 		videoTapHandler(videoId, messageId, localUrl = null)
 		{
@@ -2593,7 +2724,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		 * @param fileId
 		 * @param messageId
 		 */
-		fileTapHandler(fileId, messageId)
+		async fileTapHandler(fileId, messageId)
 		{
 			logger.log(`${this.constructor.name}.fileTapHandler`, fileId, messageId);
 			if (!isOnline())
@@ -2609,10 +2740,34 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				return;
 			}
 
-			const isDocument = (
-				fileModel.type === FileType.file
-				|| fileModel.type === FileType.audio
-			);
+			const isFile = fileModel.type === FileType.file;
+			const isBoard = isFile && fileModel.extension === 'board';
+
+			if (isBoard)
+			{
+				try
+				{
+					const { boardOpener } = await requireLazy('disk:opener/board') ?? {};
+					if (boardOpener)
+					{
+						void boardOpener?.({
+							id: fileId,
+							title: fileModel.name,
+							analytics: {
+								moduleId: 'immobile',
+							},
+						});
+
+						return;
+					}
+				}
+				catch (e)
+				{
+					console.error(e);
+				}
+			}
+
+			const isDocument = isFile || fileModel.type === FileType.audio;
 			if (isDocument)
 			{
 				viewer.openDocument(fileModel.urlDownload, fileModel.name);
@@ -2861,14 +3016,14 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				return;
 			}
 
-			if (!ChatPermission.сanOpenAvatarMenu(this.getDialog()))
+			if (!ChatPermission.canOpenAvatarMenu(this.getDialog()))
 			{
 				return;
 			}
 
 			MessageAvatarMenu.createByAuthorId(authorId, {
 				isBot: user.bot,
-				сanMention: ChatPermission.сanMention(this.getDialog()),
+				canMention: ChatPermission.canMention(this.getDialog()),
 				dialogId: this.getDialogId(),
 			}).open();
 			Haptics.impactMedium();
@@ -2912,8 +3067,8 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 
 		updateReactionRestriction()
 		{
-			const сanSetReaction = ChatPermission.сanSetReaction(this.getDialogId());
-			this.view.updateRestrictions({ reaction: сanSetReaction });
+			const canSetReaction = ChatPermission.canSetReaction(this.getDialogId());
+			this.view.updateRestrictions({ reaction: canSetReaction });
 		}
 
 		/**
@@ -3167,7 +3322,13 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 
 			try
 			{
-				const response = await MessageRest.send(sendMessageParams.requestParams);
+				const sendPromise = this.sendQueuePromise
+					.then(() => {
+						return MessageRest.send(sendMessageParams.requestParams);
+					});
+
+				this.sendQueuePromise = sendPromise.catch(() => {});
+				const response = await sendPromise;
 				logger.log(`${this.constructor.name}.sendMessageToServer response`, response);
 
 				if (response.id) // check when forward without comment message
@@ -3268,7 +3429,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				.then(() => {
 					const resendInternalPromise = this.#resendInternal();
 
-					resendInternalPromise
+					return resendInternalPromise
 						.then(() => {
 							logger.log(`${this.constructor.name}.resendInternal: complete`);
 
@@ -3312,7 +3473,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		}
 
 		/**
-		 * @param {number} index
+		 * @param {number|Object} index
 		 * @param {MessagesModelState|Message} message
 		 * @returns {Promise<void>}
 		 */
@@ -3378,7 +3539,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				templateId: message.id,
 			};
 
-			if (index > 0)
+			if (messageIndex > 0)
 			{
 				await this.messageRenderer.delete([message.id]);
 				await this.messageRenderer.render([modelMessage]);
@@ -3550,7 +3711,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				return;
 			}
 
-			if (!ChatPermission.сanReply(this.getDialog()))
+			if (!ChatPermission.canReply(this.getDialog()))
 			{
 				return;
 			}
@@ -3573,7 +3734,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		 */
 		readyToReplyHandler(index, message)
 		{
-			if (!ChatPermission.сanReply(this.getDialog()))
+			if (!ChatPermission.canReply(this.getDialog()))
 			{
 				Haptics.notifyFailure();
 
@@ -4252,7 +4413,87 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				return;
 			}
 			const { commentChatIdList } = mutation.payload.data;
+			this.updateMessagesByCommentChatIdList(commentChatIdList);
+		}
 
+		/**
+		 * @param {MutationPayload<CounterSetData, CounterSetActions>} payload
+		 */
+		setCounterHandler = ({ payload }) => {
+			const { data } = payload;
+
+			const chatId = this.getChatId();
+
+			if (chatId === 0)
+			{
+				return;
+			}
+
+			if (this.isChannel())
+			{
+				const hasUpdatingChannelComments = data.counterList
+					.some((counterState) => counterState.parentChatId === chatId);
+
+				if (hasUpdatingChannelComments)
+				{
+					this.floatingButtonsBarManager?.updateCommentsButton();
+
+					const commentChatIdList = data.counterList.map((counterState) => counterState.chatId);
+
+					this.updateMessagesByCommentChatIdList(commentChatIdList);
+				}
+			}
+
+			const currentChatCounterState = data.counterList
+				.find((counterState) => counterState.chatId === chatId)
+			;
+			if (!Type.isPlainObject(currentChatCounterState))
+			{
+				return;
+			}
+
+			const counter = currentChatCounterState.counter;
+			if (this.floatingButtonsBarManager)
+			{
+				this.floatingButtonsBarManager.setNewMessageCounter(counter);
+			}
+			else
+			{
+				this.view.setNewMessageCounter(counter);
+			}
+		};
+
+		/**
+		 * @param {MutationPayload<CounterDeleteData, CounterDeleteActions>} payload
+		 */
+		deleteCounterHandler = ({ payload }) => {
+			const { chatIdList } = payload.data;
+
+			const currentChatId = this.getChatId();
+
+			if (this.isChannel())
+			{
+				this.updateMessagesByCommentChatIdList(chatIdList);
+				this.floatingButtonsBarManager?.updateCommentsButton();
+			}
+
+			if (!chatIdList.includes(currentChatId))
+			{
+				return;
+			}
+
+			if (this.floatingButtonsBarManager)
+			{
+				this.floatingButtonsBarManager.setNewMessageCounter(0);
+			}
+			else
+			{
+				this.view.setNewMessageCounter(0);
+			}
+		};
+
+		updateMessagesByCommentChatIdList(commentChatIdList)
+		{
 			const updateMessageList = [];
 			for (const commentChatId of commentChatIdList)
 			{
@@ -4290,9 +4531,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		{
 			ReactionViewerController.open({
 				messageId: message.id,
-				reactionId,
 				dialogId: this.getDialogId(),
-				parentLayout: this.view.ui,
 			});
 		}
 
@@ -4455,6 +4694,31 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		}
 
 		/**
+		 * @param {MutationPayload<MessagesDeleteByChatIdData, MessagesDeleteByChatIdActions>} payload
+		 */
+		async deleteMessagesByChatId({ payload })
+		{
+			const { chatId } = payload.data;
+			if (chatId !== this.getChatId())
+			{
+				return;
+			}
+
+			await this.messageRenderer.clearHistory();
+			this.pinManager?.redrawPinPanel();
+			if (this.selectManager.isSelectMessagesModeEnabled())
+			{
+				await this.selectManager.disableSelectMessagesMode()
+					.catch((error) => logger.error(
+						`${this.constructor.name}.deleteMessagesByChatId.disableSelectMessagesMode catch:`,
+						error,
+					));
+			}
+
+			this.view.hideScrollToNewMessagesButton();
+		}
+
+		/**
 		 * @private
 		 * @param {Object} mutation
 		 * @param {MessengerStoreMutation} mutation.type
@@ -4497,7 +4761,8 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		 * @void
 		 */
 		checkAvailableMention(mutation)
-		{}
+		{
+		}
 
 		/**
 		 * @private
@@ -4538,7 +4803,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		deleteCurrentDialog()
 		{
 			this.store.dispatch('recentModel/delete', { id: this.getDialogId() })
-				.then(() => TabCounters.update())
+				.then(() => serviceLocator.get('tab-counters').update())
 				.catch((err) => logger.log(
 					`${this.constructor.name}.deleteCurrentDialog.recentModel/delete.catch:`,
 					err,
@@ -4711,7 +4976,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		 */
 		async setRecentNewMessage(messageId)
 		{
-			if (Type.isNumber(messageId) || this.isComment())
+			if (Type.isNumber(messageId) || this.isComment() || this.isTaskComment())
 			{
 				return Promise.resolve(true);
 			}

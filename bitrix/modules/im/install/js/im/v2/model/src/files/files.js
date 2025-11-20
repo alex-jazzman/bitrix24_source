@@ -43,6 +43,7 @@ export class FilesModel extends BuilderModel
 			type: 'file',
 			extension: '',
 			icon: 'empty',
+			isTranscribable: false,
 			size: 0,
 			image: null,
 			status: FileStatus.done,
@@ -329,6 +330,11 @@ export class FilesModel extends BuilderModel
 		if (Type.isString(file.authorName) || Type.isNumber(file.authorName))
 		{
 			result.authorName = file.authorName.toString();
+		}
+
+		if (Type.isBoolean(file.isTranscribable))
+		{
+			result.isTranscribable = file.isTranscribable;
 		}
 
 		if (Type.isString(file.urlPreview))

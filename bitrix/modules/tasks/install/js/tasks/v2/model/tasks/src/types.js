@@ -1,5 +1,6 @@
 export type TasksModelState = {
 	collection: { [taskId: string]: TaskModel },
+	partiallyLoadedIds: Set<number>,
 };
 
 export type TaskModel = {
@@ -17,6 +18,12 @@ export type TaskModel = {
 	fileIds: number[],
 	checklist: [],
 	containsChecklist: boolean,
+	parentId: number,
+	subTaskIds: number[],
+	relatedToTaskId: number,
+	relatedTaskIds: number[],
+	containsSubTasks: boolean,
+	containsRelatedTasks: boolean,
 	groupId: number,
 	stageId: number,
 	storyPoints: string,
@@ -35,6 +42,8 @@ export type TaskModel = {
 	tags: string[],
 	filledFields: { [field: string]: boolean },
 	rights: TaskRights,
+	inFavorite: number[],
+	inMute: number[],
 	archiveLink: ?string,
 	source?: Source,
 };
@@ -82,6 +91,8 @@ export type TaskRights = {
 	saveAsTemplate: boolean,
 	attachFile: boolean,
 	detachFile: boolean,
+	detachParent: boolean,
+	detachRelated: boolean,
 };
 
 export type Source = {

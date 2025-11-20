@@ -22,4 +22,5 @@ declare type MessengerCoreRepository = {
 	comment: CommentRepository,
 	vote: VoteRepository,
 	readMessageQueue: ReadMessageQueueRepository,
+	transcript: TranscriptRepository,
 }

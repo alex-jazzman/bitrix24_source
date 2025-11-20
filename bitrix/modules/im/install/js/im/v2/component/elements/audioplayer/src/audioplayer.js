@@ -6,6 +6,7 @@ import { LocalStorageKey, AudioPlaybackRate, AudioPlaybackState as State, EventT
 import { LocalStorageManager } from 'im.v2.lib.local-storage';
 import { Utils } from 'im.v2.lib.utils';
 import { MessageAvatar, AvatarSize } from 'im.v2.component.elements.avatar';
+import { Analytics } from 'im.v2.lib.analytics';
 
 import './audioplayer.css';
 
@@ -305,6 +306,7 @@ export const AudioPlayer = {
 			const commonCurrentRate = this.getRateFromLS();
 			const newRate = this.getNextPlaybackRate(commonCurrentRate);
 
+			Analytics.getInstance().audioMessage.onChangeRate(this.file.chatId, newRate);
 			this.setRateInLS(newRate);
 			this.updateRate(newRate);
 		},
@@ -479,6 +481,7 @@ export const AudioPlayer = {
 
 					break;
 				case 'pause':
+					Analytics.getInstance().audioMessage.onPause(this.file.chatId);
 					if (this.state !== State.stop)
 					{
 						this.state = State.pause;
@@ -486,6 +489,7 @@ export const AudioPlayer = {
 
 					break;
 				case 'play':
+					Analytics.getInstance().audioMessage.onPlay(this.file.chatId);
 					this.state = State.play;
 
 					if (this.state === State.stop)

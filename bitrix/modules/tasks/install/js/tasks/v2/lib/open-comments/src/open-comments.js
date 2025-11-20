@@ -1,5 +1,4 @@
 import { apiClient } from 'tasks.v2.lib.api-client';
-import { SidePanelInstance } from 'tasks.v2.lib.side-panel-instance';
 
 import './open-comments.css';
 
@@ -11,7 +10,7 @@ export const openComments = async (taskId: number): Promise<void> => {
 	const commentsElement = document.createElement('div');
 	BX.Runtime.html(commentsElement, `<div class="tasks-task-full-card-legacy-comments">${content}</div>`);
 
-	SidePanelInstance.open(sidePanelId, {
+	BX.SidePanel.Instance.open(sidePanelId, {
 		customLeftBoundary: 0,
 		width: maxWidth,
 		cacheable: false,

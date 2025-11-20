@@ -44,7 +44,7 @@ export const EmptyState = {
 				<div class="hr-department-detail-content_tab__empty-state-list-item"  v-for="item in list">
 					<div 
 						class="ui-icon-set --circle-check hr-department-detail-content_tab__empty-state-list-item-check"
-						style="--ui-icon-set__icon-size: 20px;"
+						style="--ui-icon-set__icon-size: 24px;"
 					/>
 					<div class="hr-department-detail-content_tab__empty-state-list--item-text">
 						{{ item.text }}

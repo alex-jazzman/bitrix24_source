@@ -47,6 +47,7 @@ return [
 		'im.v2.component.elements.media-gallery',
 		'im.v2.component.elements.send-button',
 		'ui.icons',
+		'im.v2.lib.copilot',
 		'main.core.events',
 		'im.v2.component.elements.scroll-with-gradient',
 		'im.v2.lib.text-highlighter',

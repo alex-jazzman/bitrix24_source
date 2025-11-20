@@ -28,6 +28,14 @@ export const DescriptionSheet = {
 			type: Boolean,
 			default: false,
 		},
+		getBindElement: {
+			type: Function,
+			default: null,
+		},
+		getTargetContainer: {
+			type: Function,
+			default: null,
+		},
 	},
 	emits: ['show', 'close'],
 	computed: {
@@ -48,7 +56,13 @@ export const DescriptionSheet = {
 		},
 	},
 	template: `
-		<BottomSheet :isShown="isShown" :isExpanded="true" ref="bottomSheet">
+		<BottomSheet
+			v-if="isShown"
+			:isExpanded="true"
+			:getBindElement="getBindElement"
+			:getTargetContainer="getTargetContainer"
+			ref="bottomSheet"
+		>
 			<DescriptionEditor
 				ref="editorComponent"
 				:taskId="taskId"

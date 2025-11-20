@@ -31,7 +31,7 @@ final class DiskDocumentsController extends Disk\Internals\Engine\Controller
 			[
 				'STORAGE' => $trackedObject->getFile()->getStorage(),
 				'FILE' => $trackedObject->getFile(),
-			]
+			],
 		);
 	}
 
@@ -52,13 +52,27 @@ final class DiskDocumentsController extends Disk\Internals\Engine\Controller
 		/** @see \Bitrix\Disk\Controller\TrackedObject::downloadAction */
 		$downloadUri = (new Disk\Controller\TrackedObject())->getActionUri('download', ['id' => $trackedObject->getId()]);
 
-		$actions = [
-			[
-				'id' => 'download',
-				'icon' => '/bitrix/js/ui/actionpanel/images/ui_icon_actionpanel_download.svg',
-				'text' => Loc::getMessage('DISK_DOCUMENTS_ACT_DOWNLOAD'),
-				'href' => $downloadUri,
-			]
+		$actions = [];
+
+		$supportsUnifiedLink = $file->supportsUnifiedLink();
+		$isBoard = (int)$file->getTypeFile() === Disk\TypeFile::FLIPCHART;
+
+		if (!$isBoard && $supportsUnifiedLink)
+		{
+			$viewUnifiedLink = $urlManager->getUnifiedLink($file, ['noRedirect' => true]);
+			$actions[] = [
+				'id' => 'view',
+				'text' => Loc::getMessage('DISK_DOCUMENTS_ACT_OPEN'),
+				'href' => $viewUnifiedLink,
+				'target' => '_blank',
+			];
+		}
+
+		$actions[] = [
+			'id' => 'download',
+			'icon' => '/bitrix/js/ui/actionpanel/images/ui_icon_actionpanel_download.svg',
+			'text' => Loc::getMessage('DISK_DOCUMENTS_ACT_DOWNLOAD'),
+			'href' => $downloadUri,
 		];
 
 		$actionToShare = [];
@@ -71,16 +85,21 @@ final class DiskDocumentsController extends Disk\Internals\Engine\Controller
 				'dataset' => [
 					'shouldBlockFeature' => (bool)$featureBlocker,
 					'blocker' => $featureBlocker ?: null,
-				]
+				],
 			];
 		}
 
 		$belongsToDiskStorages = $this->belongsToDiskStorages($file);
 		if ($belongsToDiskStorages)
 		{
-			if (Disk\Internal\Service\UnifiedLink\Configuration::supportsUnifiedLink($file))
+			if ($supportsUnifiedLink)
 			{
-				$internalLink = $urlManager->getUnifiedLink($file, ['absolute' => true]);
+				$unifiedLinkOptions = ['absolute' => true];
+				if ($trackedObject->getAttachedObjectId())
+				{
+					$unifiedLinkOptions['attachedId'] = $trackedObject->getAttachedObjectId();
+				}
+				$internalLink = $urlManager->getUnifiedLink($file, $unifiedLinkOptions);
 			}
 			else
 			{
@@ -95,8 +114,8 @@ final class DiskDocumentsController extends Disk\Internals\Engine\Controller
 				'text' => Loc::getMessage('DISK_DOCUMENTS_ACT_COPY_INTERNAL_LINK'),
 				'dataset' => [
 					'internalLink' => $internalLink,
-					'textCopied' => Loc::getMessage('DISK_DOCUMENTS_ACT_COPIED_INTERNAL_LINK')
-				]
+					'textCopied' => Loc::getMessage('DISK_DOCUMENTS_ACT_COPIED_INTERNAL_LINK'),
+				],
 			];
 		}
 
@@ -107,7 +126,7 @@ final class DiskDocumentsController extends Disk\Internals\Engine\Controller
 				'objectId' => $trackedObject->getFileId(),
 				'objectName' => $trackedObject->getFile()->getName(),
 				'type' => $this->getSharingControlType($trackedObject),
-			]
+			],
 		];
 
 		if ($actionToShare)
@@ -125,7 +144,7 @@ final class DiskDocumentsController extends Disk\Internals\Engine\Controller
 			$actions[] = [
 				'id' => 'rename',
 				'text' => Loc::getMessage('DISK_DOCUMENTS_ACT_RENAME'),
-				'icon' => '/bitrix/js/ui/actionpanel/images/ui_icon_actionpanel_rename.svg'
+				'icon' => '/bitrix/js/ui/actionpanel/images/ui_icon_actionpanel_rename.svg',
 			];
 		}
 
@@ -138,7 +157,7 @@ final class DiskDocumentsController extends Disk\Internals\Engine\Controller
 					'objectId' => $trackedObject->getFileId(),
 					'objectName' => $trackedObject->getFile()->getName(),
 					'fileHistoryUrl' => $urlManager->getPathFileHistory($file),
-					'blockedByFeature' => !Bitrix24Manager::isFeatureEnabled('disk_file_history')
+					'blockedByFeature' => !Bitrix24Manager::isFeatureEnabled('disk_file_history'),
 				],
 			];
 		}
@@ -155,7 +174,7 @@ final class DiskDocumentsController extends Disk\Internals\Engine\Controller
 			];
 		}
 
-		if ((int)$file->getTypeFile() === Disk\TypeFile::FLIPCHART)
+		if ($isBoard)
 		{
 			if ($trackedObject->getAttachedObjectId())
 			{
@@ -173,7 +192,7 @@ final class DiskDocumentsController extends Disk\Internals\Engine\Controller
 					'text' => Loc::getMessage('DISK_DOCUMENTS_ACT_OPEN'),
 					'href' => $openUrl,
 					'target' => '_blank',
-				]
+				],
 			);
 		}
 
@@ -209,8 +228,7 @@ final class DiskDocumentsController extends Disk\Internals\Engine\Controller
 
 		return $storage->getProxyType() instanceof Disk\ProxyType\Common
 			|| $storage->getProxyType() instanceof Disk\ProxyType\Group
-			|| $storage->getProxyType() instanceof Disk\ProxyType\User
-		;
+			|| $storage->getProxyType() instanceof Disk\ProxyType\User;
 	}
 
 	public function getInfoAction(array $trackedObjectIds): array
@@ -282,13 +300,13 @@ final class DiskDocumentsController extends Disk\Internals\Engine\Controller
 		$grid = new \Bitrix\Main\Engine\Response\Component(
 			'bitrix:disk.documents',
 			'',
-			array(
+			[
 				'SEF_MODE' => 'N',
 				'USER_ID' => (int)$this->getCurrentUser()->getId(),
 				'VARIANT' => \Bitrix\Disk\Type\DocumentGridVariant::DocumentsList,
-			),
+			],
 			[],
-			array("HIDE_ICONS" => "Y")
+			["HIDE_ICONS" => "Y"],
 		);
 
 		[$items, $nextPage] = $grid->getItems(
@@ -297,7 +315,7 @@ final class DiskDocumentsController extends Disk\Internals\Engine\Controller
 			],
 			null,
 			['ACTIVITY_TIME' => 'desc'],
-			$grid->getGridHeaders()
+			$grid->getGridHeaders(),
 		);
 
 		$preparedRows = $grid->formatRows($items);

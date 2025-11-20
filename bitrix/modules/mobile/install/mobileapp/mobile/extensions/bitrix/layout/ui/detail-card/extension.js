@@ -4,7 +4,6 @@
 jn.define('layout/ui/detail-card', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { Alert, confirmClosing, confirmDestructiveAction } = require('alert');
-	const { AnalyticsLabel } = require('analytics-label');
 	const { AnalyticsEvent } = require('analytics');
 	const { EventEmitter } = require('event-emitter');
 	const { Haptics } = require('haptics');
@@ -28,6 +27,11 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 	const MAX_TAB_COUNTER_VALUE = 99;
 	const DURATION = 200;
 
+	const AnalyticsEvents = {
+		ENTITY_CREATE: 'entity_create',
+		ENTITY_COPY: 'entity_copy',
+	};
+
 	/**
 	 * @class DetailCardComponent
 	 */
@@ -39,7 +43,7 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 
 			this.mounted = false;
 			this.isClosing = false;
-			this.analytics = null;
+			this.analytics = new AnalyticsEvent(BX.componentParameters.get('analytics', {})).setSubSection('details');
 
 			this.menuActionsProvider = null;
 			this.setAdditionalProvider = null;
@@ -874,10 +878,10 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 
 			if (action.id)
 			{
-				AnalyticsLabel.send({
+				new AnalyticsEvent({
 					...this.getEntityAnalyticsData(),
 					event: action.id,
-				});
+				}).send();
 			}
 		}
 
@@ -891,10 +895,10 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 
 					if (action.id)
 					{
-						AnalyticsLabel.send({
+						new AnalyticsEvent({
 							...this.getEntityAnalyticsData(),
 							event: `${action.id}-success`,
-						});
+						}).send();
 					}
 				})
 				.catch((error) => {
@@ -1220,10 +1224,10 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 
 			if (this.isNewEntity())
 			{
-				AnalyticsLabel.send({
+				new AnalyticsEvent({
 					...this.getEntityAnalyticsData(),
 					event: 'tryingToCreate',
-				});
+				}).send();
 			}
 
 			if (this.onEntityModelReadyHandler)
@@ -1288,7 +1292,7 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 					.then(() => this.hideToolbars())
 					.then(() => NotifyManager.showLoadingIndicator())
 					.then(() => this.getData())
-					.then((payload) => this.runSave(payload, additionalData))
+					.then((payload) => this.runSave(payload, additionalData, true))
 					.then((response) => {
 						if (isNewEntity)
 						{
@@ -1639,23 +1643,21 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 			);
 		}
 
-		runSave(payload, additionalData = {}, sendAnalytics = true)
+		runSave(payload, additionalData = {}, shouldSendAnalytics = true)
 		{
 			const componentParamsForSave = this.getComponentParamsForSave();
+			const preparedPayload = mergeImmutable(payload, additionalData);
 
-			payload = mergeImmutable(payload, additionalData);
-			let analytics = this.getAnalyticsParams();
-			const analyticsEvent = analytics.getEvent();
-			if (sendAnalytics
-				&& this.isNewEntity()
-				&& (analyticsEvent === 'entity_add'
-					|| analyticsEvent === 'entity_copy'))
+			if (shouldSendAnalytics)
 			{
-				analytics.markAsAttempt().send();
-			}
-			else
-			{
-				analytics = null;
+				const analyticsEvent = this.getAnalyticsParams().getEvent();
+				const isCreateOrCopyEvent = analyticsEvent === AnalyticsEvents.ENTITY_CREATE
+					|| analyticsEvent === AnalyticsEvents.ENTITY_COPY;
+
+				if (this.isNewEntity() && isCreateOrCopyEvent)
+				{
+					this.getAnalyticsParams().markAsAttempt().send();
+				}
 			}
 
 			return (
@@ -1663,16 +1665,16 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 					.runAction(this.getSaveEndpoint(), {
 						json: {
 							...componentParamsForSave,
-							data: payload,
+							data: preparedPayload,
 							loadedTabs: this.getLoadedTabs(),
 						},
-						analyticsLabel: sendAnalytics && {
+						analyticsLabel: shouldSendAnalytics && {
 							...this.getEntityAnalyticsData(),
 							event: 'save',
 						},
 					})
-					.then((response) => this.processSaveErrors(response, payload, analytics))
-					.catch((response) => this.processSaveErrors(response, payload, analytics))
+					.then((response) => this.processSaveErrors(response, preparedPayload, shouldSendAnalytics))
+					.catch((response) => this.processSaveErrors(response, preparedPayload, shouldSendAnalytics))
 			);
 		}
 
@@ -1726,12 +1728,12 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 			);
 		}
 
-		processSaveErrors(response, payload, analytics = null)
+		processSaveErrors(response, payload, shouldSendAnalytics = false)
 		{
-			if (analytics)
+			if (shouldSendAnalytics)
 			{
 				const status = response.status === 'success' && response.errors.length === 0 ? 'success' : 'error';
-				analytics.setStatus(status).send();
+				this.getAnalyticsParams().setStatus(status).send();
 			}
 
 			if (this.ajaxErrorHandler)
@@ -1963,11 +1965,6 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 
 		getAnalyticsParams()
 		{
-			if (this.analytics === null)
-			{
-				this.analytics = new AnalyticsEvent(BX.componentParameters.get('analytics', {}));
-			}
-
 			return this.analytics;
 		}
 

@@ -94,7 +94,8 @@ jn.define('im/messenger/controller/dialog/lib/sidebar', (require, exports, modul
 
 		async open()
 		{
-			if (!this.dialogConfigurator.isSidebarEnabled)
+			const { isSidebarEnabled, sidebarConfig } = this.dialogConfigurator;
+			if (!isSidebarEnabled)
 			{
 				return;
 			}
@@ -111,7 +112,7 @@ jn.define('im/messenger/controller/dialog/lib/sidebar', (require, exports, modul
 					}
 
 					logger.info('Dialog.openSidebar.v2: try open', this.dialogId);
-					this.sidebar = await SidebarLazyFactory.make(this.dialogId, this.dialogLocator);
+					this.sidebar = await SidebarLazyFactory.make(this.dialogId, this.dialogLocator, sidebarConfig);
 					void this.sidebar.open(this.view.ui);
 
 					return;

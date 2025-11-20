@@ -19,13 +19,29 @@ jn.define('im/messenger/provider/pull/chat/file', (require, exports, module) => 
 		 */
 		async handleFileAdd(params, extra, command)
 		{
+			if (this.interceptEvent(extra))
+			{
+				return;
+			}
+
+			logger.info(`${this.constructor.name}.handleFileAdd:`, params);
+			await FileUtils.setFiles(params);
+		}
+
+		/**
+		 * @param {object} params
+		 * @param {object} extra
+		 * @param {object} command
+		 */
+		async handleFileTranscription(params, extra, command)
+		{
 			if (this.interceptEvent(params, extra, command))
 			{
 				return;
 			}
 
-			logger.info('ChatFilePullHandler.handleFileAdd:', params);
-			await FileUtils.setFiles(params);
+			logger.info(`${this.constructor.name}.handleFileTranscription:`, params);
+			await FileUtils.setTranscript(params);
 		}
 	}
 

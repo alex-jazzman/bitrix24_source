@@ -73,7 +73,7 @@ export const SearchItem = {
 				return false;
 			}
 
-			return Number.parseInt(this.dialogId, 10) === Core.getUserId();
+			return this.$store.getters['chats/isNotes'](this.dialogId);
 		},
 		avatarType(): string
 		{

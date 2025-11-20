@@ -15,7 +15,10 @@ export class DepartmentPermissionChecker extends BasePermissionChecker
 			PermissionActions.employeeAddToDepartment,
 			PermissionActions.employeeRemoveFromDepartment,
 			PermissionActions.employeeFire,
-			PermissionActions.departmentCommunicationEdit,
+			PermissionActions.departmentSettingsEdit,
+			PermissionActions.departmentChatEdit,
+			PermissionActions.departmentChannelEdit,
+			PermissionActions.departmentCollabEdit,
 			PermissionActions.inviteToDepartment,
 		];
 

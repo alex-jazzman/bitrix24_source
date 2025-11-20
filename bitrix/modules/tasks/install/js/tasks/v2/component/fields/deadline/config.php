@@ -18,11 +18,11 @@ return [
 		'ui.icon-set.api.vue',
 		'ui.icon-set.api.core',
 		'ui.icon-set.outline',
-		'tasks.v2.const',
 		'tasks.v2.lib.calendar',
 		'tasks.v2.lib.timezone',
 		'tasks.v2.lib.analytics',
 		'main.core',
+		'tasks.v2.const',
 	],
 	'skip_core' => false,
 ];

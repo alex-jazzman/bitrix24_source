@@ -1,5 +1,6 @@
 import { getChannelDialogEntity } from 'humanresources.company-structure.structure-components';
 import { AbstractSelectorDictionary } from '../selector-dictionary';
+import { PermissionActions } from 'humanresources.company-structure.permission-checker';
 
 export class ChannelSelectorDictionary extends AbstractSelectorDictionary
 {
@@ -16,6 +17,11 @@ export class ChannelSelectorDictionary extends AbstractSelectorDictionary
 			team: 'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_CHANNELS_ADD_CHECKBOX_WARNING',
 			default: 'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_CHANNELS_ADD_CHECKBOX_WARNING',
 		},
+	};
+
+	permissionAction = {
+		department: PermissionActions.departmentChannelEdit,
+		team: PermissionActions.teamChannelEdit,
 	};
 
 	getEntity(): Object

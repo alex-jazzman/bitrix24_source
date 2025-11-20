@@ -41,6 +41,8 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 			this.chatId = chatId;
 
 			this.store = serviceLocator.get('core').getStore();
+			this.currentUserId = serviceLocator.get('core').getUserId();
+
 			this.resetState();
 		}
 
@@ -299,6 +301,15 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 					await this.view.removeMessagesByIds([bottomMessage.id]);
 				}
 			}
+		}
+
+		async clearHistory()
+		{
+			logger.info('MessageRenderer.clearHistory:');
+			this.resetState();
+
+			await this.view.setMessages([]);
+			this.view.showWelcomeScreen();
 		}
 
 		/**
@@ -1374,7 +1385,9 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 						return;
 					}
 
-					const isUnread = !Uuid.isV4(message.id) && dialogModelState.lastReadId < oldestMessage.id;
+					const isUnread = !Uuid.isV4(message.id)
+						&& dialogModelState.lastReadId < oldestMessage.id
+						&& oldestMessage.authorId !== this.currentUserId;
 					if (
 						isUnread
 						&& dialogModelState.lastReadId !== 0
@@ -1398,14 +1411,16 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 				{
 					const previousMessage = this.getMessage(messageList[index - 1].id);
 					const newestMessage = this.getMessage(messageList[index].id);
-					if (!previousMessage || !newestMessage)
+					if (!previousMessage?.date || !newestMessage?.date)
 					{
 						return;
 					}
 					const previousMessageDate = this.toDateCode(previousMessage.date);
 					const newestMessageDate = this.toDateCode(newestMessage.date);
 
-					const isUnread = !Uuid.isV4(newestMessage.id) && dialogModelState.lastReadId < newestMessage.id;
+					const isUnread = !Uuid.isV4(newestMessage.id)
+						&& dialogModelState.lastReadId < newestMessage.id
+						&& newestMessage.authorId !== this.currentUserId;
 					if (
 						isUnread
 						&& dialogModelState.lastReadId !== 0
@@ -1444,6 +1459,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 				;
 				const isUnreadCurrent = !Uuid.isV4(currentMessage.id)
 					&& dialogModelState.lastReadId < currentMessage.id
+					&& currentMessage.authorId !== serviceLocator.get('core').getUserId()
 				;
 
 				if (
@@ -1695,7 +1711,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 				message.setAuthorBottomMessage(true);
 			}
 
-			const isYourMessage = modelMessage.authorId === serviceLocator.get('core').getUserId();
+			const isYourMessage = modelMessage.authorId === this.currentUserId;
 			if (isYourMessage)
 			{
 				message.setShowAvatar(modelMessage, false);

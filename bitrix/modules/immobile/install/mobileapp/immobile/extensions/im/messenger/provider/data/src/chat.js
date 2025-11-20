@@ -53,7 +53,7 @@ jn.define('im/messenger/provider/data/chat', (require, exports, module) => {
 
 		/**
 		 * @desc performs a complete cleaning of chat data from the database and a partial one from the model
-		 * @param {?DialogId} dialogId
+		 * @param {?number|string} dialogId
 		 * @param {?number} chatId
 		 */
 		async delete({ dialogId = null, chatId = null })

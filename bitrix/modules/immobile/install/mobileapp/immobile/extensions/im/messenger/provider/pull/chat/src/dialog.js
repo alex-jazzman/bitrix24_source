@@ -23,12 +23,12 @@ jn.define('im/messenger/provider/pull/chat/dialog', (require, exports, module) =
 
 		handleReadAllChats(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
 
-			this.logger.info(`${this.getClassName()}.handleReadAllChats`);
+			logger.info(`${this.getClassName()}.handleReadAllChats`);
 
 			readAllCountersOnClient()
 				.catch((error) => {
@@ -77,7 +77,7 @@ jn.define('im/messenger/provider/pull/chat/dialog', (require, exports, module) =
 
 		handleChatCopilotRoleUpdate(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}

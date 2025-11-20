@@ -32,7 +32,7 @@ export interface UIParams {
     confirmUserKick?: boolean;
     scrollToElement?: string;
     shareElementSocials?: ShareElementSocial[];
-    disable?: {
+    features?: {
         shareElementInSocials?: boolean;
         elementLink?: boolean;
     };

@@ -1,5 +1,6 @@
 import { Dialog, Item, type DialogOptions } from 'ui.entity-selector';
 
+export { Item };
 export type ItemId = [string, number];
 
 export class EntitySelectorDialog extends Dialog
@@ -14,6 +15,7 @@ export class EntitySelectorDialog extends Dialog
 			},
 			...dialogOptions,
 			height: Math.max(minHeight, dialogOptions.height ?? (window.innerHeight / 2 - minTagSelectorHeight)),
+			offsetAnimation: false,
 		};
 
 		super(options);
@@ -31,14 +33,29 @@ export class EntitySelectorDialog extends Dialog
 		this.getItems().forEach((item: Item) => {
 			const isSelected = this.#inIds(item, items);
 
-			if (!item.isSelected() && isSelected)
+			if (isSelected)
 			{
 				item.select(true);
 			}
 
-			if (item.isSelected() && !isSelected)
+			if (!isSelected)
 			{
 				item.deselect(true);
+			}
+		});
+	}
+
+	setSelectableByIds({ selectable, unselectable }: { selectable: ItemId[], unselectable: ItemId[] }): void
+	{
+		this.getItems().forEach((item: Item) => {
+			if (this.#inIds(item, selectable))
+			{
+				item.setDeselectable(true);
+			}
+
+			if (this.#inIds(item, unselectable))
+			{
+				item.setDeselectable(false);
 			}
 		});
 	}

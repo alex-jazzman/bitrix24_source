@@ -66,6 +66,11 @@ export class DescriptionTextEditor extends EventEmitter
 				mode: 'disk',
 				files: this.getFiles(),
 			},
+			visualOptions: {
+				borderWidth: 0,
+				blockSpaceInline: 'var(--ui-space-stack-md2)',
+				colorBackground: 'transparent',
+			},
 		};
 
 		this.#editor = new TextEditor({ ...DefaultEditorOptions, ...additionalEditorOptions });

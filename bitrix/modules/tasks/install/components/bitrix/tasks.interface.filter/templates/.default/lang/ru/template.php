@@ -2,6 +2,7 @@
 
 $MESS['TASKS_BTN_ADD_TASK']='Добавить задачу';
 $MESS['TASKS_BTN_CREATE_TASK']='Создать';
+$MESS['TASKS_BTN_ADD_RELATION']='Добавить';
 $MESS['TASKS_BTN_ADD_TASK_BY_TEMPLATE']='Добавить задачу по шаблону';
 $MESS['TASKS_BTN_CREATE_TASK_BY_TEMPLATE']='Задачу по шаблону';
 $MESS['TASKS_BTN_ADD_TASK_BY_TASK']='Задачу';

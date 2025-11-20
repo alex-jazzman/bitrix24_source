@@ -36,7 +36,7 @@ jn.define('settings-v2/controller/notification-counter', (require, exports, modu
 				}
 
 				BX.rest.callMethod('mobile.counter.config.get', {}, (response) => {
-					if (response.answer?.error || !response.answer?.result)
+					if (response.error())
 					{
 						resolve(this.fallbackValue);
 
@@ -57,9 +57,9 @@ jn.define('settings-v2/controller/notification-counter', (require, exports, modu
 				this.setToCache(value);
 
 				BX.rest.callMethod('mobile.counter.config.set', this.getSetConfig(), (response) => {
-					if (response.error || response.answer?.error)
+					if (response.error())
 					{
-						reject(response.error || response.answer.error);
+						reject(response.error());
 					}
 					else
 					{

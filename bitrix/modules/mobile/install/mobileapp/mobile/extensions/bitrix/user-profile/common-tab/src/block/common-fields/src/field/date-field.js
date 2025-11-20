@@ -4,7 +4,6 @@
 jn.define('user-profile/common-tab/src/block/common-fields/src/field/date-field', (require, exports, module) => {
 	const { BaseField } = require('user-profile/common-tab/src/block/common-fields/src/field/base-field');
 	const { FriendlyDate } = require('layout/ui/friendly-date');
-	const { FormatterTypes } = require('layout/ui/friendly-date/formatter-factory');
 	const { Moment } = require('utils/date');
 	const { Text4 } = require('ui-system/typography/text');
 	const { Color, Indent } = require('tokens');
@@ -32,13 +31,20 @@ jn.define('user-profile/common-tab/src/block/common-fields/src/field/date-field'
 		{
 			return new FriendlyDate({
 				moment: Type.isNil(value) ? null : Moment.createFromTimestamp(this.prepareValue(value)),
+				defaultFormat: this.getViewModeDefaultFormat,
 				showTime: false,
 				useTimeAgo: false,
 				futureAllowed: false,
-				formatType: FormatterTypes.HUMAN_DATE,
 				renderContent: this.#renderFriendlyDateContent,
 			});
 		}
+
+		getViewModeDefaultFormat = (moment) => {
+			const { format } = this.props;
+
+			// eslint-disable-next-line no-undef
+			return dateFormatter.get(moment.timestamp, format);
+		};
 
 		renderEditModeFieldValue(value, idx)
 		{

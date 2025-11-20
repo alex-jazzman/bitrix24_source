@@ -10,7 +10,6 @@ jn.define('im/messenger/provider/pull/sidebar', (require, exports, module) => {
 	/**
 	 * @class SidebarPullHandler
 	 */
-	// class SidebarPullHandler
 	class SidebarPullHandler extends BasePullHandler
 	{
 		// region links
@@ -22,7 +21,7 @@ jn.define('im/messenger/provider/pull/sidebar', (require, exports, module) => {
 			if (
 				!this.isSidebarInited(params.link.chatId)
 				|| !this.isLinksMigrated()
-				|| this.interceptEvent(params, extra, command)
+				|| this.interceptEvent(extra)
 			)
 			{
 				return;
@@ -44,7 +43,7 @@ jn.define('im/messenger/provider/pull/sidebar', (require, exports, module) => {
 			if (
 				!this.isSidebarInited(params.chatId)
 				|| !this.isLinksMigrated()
-				|| this.interceptEvent(params, extra, command)
+				|| this.interceptEvent(extra)
 			)
 			{
 				return;
@@ -68,7 +67,7 @@ jn.define('im/messenger/provider/pull/sidebar', (require, exports, module) => {
 			if (
 				!this.isSidebarInited(chatId)
 				|| !this.isFilesMigrated()
-				|| this.interceptEvent(params, extra, command)
+				|| this.interceptEvent(extra)
 			)
 			{
 				return;
@@ -93,7 +92,7 @@ jn.define('im/messenger/provider/pull/sidebar', (require, exports, module) => {
 			if (
 				!this.isFilesMigrated()
 				|| !this.isSidebarInited(chatId)
-				|| this.interceptEvent(params, extra, command)
+				|| this.interceptEvent(extra)
 			)
 			{
 				return;

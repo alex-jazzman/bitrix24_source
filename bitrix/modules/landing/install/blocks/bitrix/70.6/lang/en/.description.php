@@ -1,5 +1,5 @@
 <?php
-$MESS["LANDING_BLOCK_WIDGET_70_6_NAME"] = "Tiles with image and title at the bottom";
+$MESS["LANDING_BLOCK_WIDGET_70_6_NAME"] = "Blocks with image and title at the bottom";
 $MESS["LANDING_BLOCK_WIDGET_70_6_NODE_CARD"] = "Tile";
 $MESS["LANDING_BLOCK_WIDGET_70_6_NODE_CARD_CONTAINER"] = "Container";
 $MESS["LANDING_BLOCK_WIDGET_70_6_NODE_CARD_IMG"] = "Image";

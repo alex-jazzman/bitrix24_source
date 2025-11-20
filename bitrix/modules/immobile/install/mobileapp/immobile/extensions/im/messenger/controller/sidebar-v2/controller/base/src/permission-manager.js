@@ -33,17 +33,22 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base/src/permission-man
 
 		canEdit()
 		{
-			return this.chatPermission.сanEditDialog(this.dialogId);
+			return this.chatPermission.canEditDialog(this.dialogId);
 		}
 
 		canLeave()
 		{
-			return this.chatPermission.сanLeaveFromChat(this.dialogId);
+			return this.chatPermission.canLeaveFromChat(this.dialogId);
 		}
 
 		canDelete()
 		{
 			return this.dialogHelper.canBeDeleted;
+		}
+
+		canClearHistory()
+		{
+			return this.dialogHelper.canClearHistory;
 		}
 
 		canCopyLink()
@@ -53,7 +58,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base/src/permission-man
 
 		canRemoveUserById(userId, dialogData)
 		{
-			return ChatPermission.сanRemoveUserById(userId, dialogData);
+			return ChatPermission.canRemoveUserById(userId, dialogData);
 		}
 
 		canRemoveParticipants()
@@ -63,7 +68,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base/src/permission-man
 
 		canMention()
 		{
-			return ChatPermission.сanMention(this.dialogId);
+			return ChatPermission.canMention(this.dialogId);
 		}
 
 		canAddParticipants()
@@ -73,12 +78,17 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base/src/permission-man
 
 		canChangeOwner()
 		{
-			return this.chatPermission.сanChangeOwner();
+			return this.chatPermission.canChangeOwner();
 		}
 
 		canHide()
 		{
 			return this.dialogHelper.isBot && !this.dialogHelper.isAiAssistant;
+		}
+
+		canMute()
+		{
+			return this.chatPermission.сanMute(this.dialogId);
 		}
 
 		/**

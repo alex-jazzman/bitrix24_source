@@ -2,6 +2,7 @@
  * @module im/messenger/view/recent
  */
 jn.define('im/messenger/view/recent', (require, exports, module) => {
+	/* global dialogList */
 	const { AnalyticsEvent } = require('analytics');
 	const AppTheme = require('apptheme');
 	const { Runtime } = require('runtime');
@@ -233,7 +234,7 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 
 		initQuickRecentLoader()
 		{
-			this.quickRecentLoader = new QuickRecentLoader();
+			this.quickRecentLoader = new QuickRecentLoader(dialogList);
 		}
 
 		renderChatCreateButtonForWelcomeScreen()

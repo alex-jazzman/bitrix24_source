@@ -1,3 +1,5 @@
+import { TaskField } from 'tasks.v2.const';
+
 export const titleMeta = Object.freeze({
-	id: 'title',
+	id: TaskField.Title,
 });

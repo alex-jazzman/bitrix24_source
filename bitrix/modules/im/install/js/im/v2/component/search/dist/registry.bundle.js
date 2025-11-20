@@ -325,7 +325,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      if (!this.replaceWithNotes) {
 	        return false;
 	      }
-	      return Number.parseInt(this.dialogId, 10) === im_v2_application_core.Core.getUserId();
+	      return this.$store.getters['chats/isNotes'](this.dialogId);
 	    },
 	    avatarType() {
 	      if (!this.replaceWithNotes) {

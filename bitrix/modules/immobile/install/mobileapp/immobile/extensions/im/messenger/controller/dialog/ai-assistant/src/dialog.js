@@ -9,6 +9,7 @@ jn.define('im/messenger/controller/dialog/ai-assistant/dialog', (require, export
 
 	const { Dialog } = require('im/messenger/controller/dialog/chat');
 	const { DialogTextHelper } = require('im/messenger/controller/dialog/lib/helper/text');
+	const { NotifyPanelManager } = require('im/messenger/controller/dialog/lib/notify-panel-manager');
 
 	const { AiAssistantMessageMenu } = require('im/messenger/controller/dialog/ai-assistant/component/message-menu');
 
@@ -23,8 +24,42 @@ jn.define('im/messenger/controller/dialog/ai-assistant/dialog', (require, export
 		{
 			super();
 
+			/**
+			 * @protected
+			 * @type {NotifyPanelManager}
+			 */
+			this.notifyPanelManager = null;
+
 			this.messageButtonTapHandler = this.messageButtonTapHandler.bind(this);
 			this.footnoteTapHandler = this.footnoteTapHandler.bind(this);
+		}
+
+		unsubscribeViewEvents()
+		{
+			super.unsubscribeViewEvents();
+
+			this.notifyPanelManager?.unsubscribeViewEvents();
+		}
+
+		async initManagers()
+		{
+			await super.initManagers();
+
+			this.notifyPanelManager = new NotifyPanelManager({
+				dialogLocator: this.locator,
+			});
+		}
+
+		/**
+		 * @param {DialogOpenOptions} options
+		 * @param {PageManager} parentWidget
+		 * @return {Promise<void>}
+		 */
+		async open(options, parentWidget = PageManager)
+		{
+			await super.open(options, parentWidget);
+
+			await this.notifyPanelManager.checkServiceHealthStatus();
 		}
 
 		getDialogType()

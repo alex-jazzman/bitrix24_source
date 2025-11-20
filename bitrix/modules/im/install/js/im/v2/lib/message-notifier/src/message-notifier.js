@@ -1,26 +1,29 @@
-import { Notifier, NotificationOptions } from 'ui.notification-manager';
-import { Store } from 'ui.vue3.vuex';
 import { Loc } from 'main.core';
-import { BaseEvent } from 'main.core.events';
+import { BaseEvent, EventEmitter } from 'main.core.events';
+import { Store } from 'ui.vue3.vuex';
+import { Notifier, NotificationOptions } from 'ui.notification-manager';
 
+import { SoundNotificationManager } from 'im.v2.lib.sound-notification';
 import { Core } from 'im.v2.application.core';
 import { Parser } from 'im.v2.lib.parser';
 import { DesktopManager, DesktopBroadcastManager } from 'im.v2.lib.desktop';
 import { DesktopApi, DesktopFeature } from 'im.v2.lib.desktop-api';
 import { Messenger } from 'im.public';
-import { NotificationTypesCodes, ChatType, DesktopBroadcastAction, WINDOW_ACTIVATION_DELAY } from 'im.v2.const';
+import { NotificationTypesCodes, ChatType, DesktopBroadcastAction, SoundType, EventType } from 'im.v2.const';
 import { NotificationService } from 'im.v2.provider.service.notification';
+
+import { NotificationId, NotificationIdPrefix } from './classes/notification-id';
+
+import { MessageOptionsBuilder } from './classes/message-options-builder';
 
 import type {
 	ImModelUser,
-	ImModelChat,
-	ImModelMessage,
 	ImModelNotification,
 	ImModelNotificationButton,
 } from 'im.v2.model';
 
 export type NotifierClickParams = {
-	id: string // 'im-notify-2558' | 'im-chat-1-2565'
+	id: string // 'im-notify_2558' | 'im-chat_1_2565'
 };
 
 type NotifierActionParams = {
@@ -29,14 +32,22 @@ type NotifierActionParams = {
 	userInput?: string
 };
 
-const CHAT_MESSAGE_PREFIX = 'im-chat';
-const COPILOT_MESSAGE_PREFIX = 'im-copilot';
-const LINES_MESSAGE_PREFIX = 'im-lines';
-const NOTIFICATION_PREFIX = 'im-notify';
+type MessageNotificationParams = {
+	messageId: number,
+	dialogId: string,
+	isLines: boolean,
+	isImportant: boolean
+}
+
 const ACTION_BUTTON_PREFIX = 'button_';
 const ButtonNumber = {
 	first: '1',
 	second: '2',
+};
+
+export const NotifierShowMessageAction = {
+	skip: 'skip',
+	show: 'show',
 };
 
 export class MessageNotifierManager
@@ -69,29 +80,49 @@ export class MessageNotifierManager
 		this.#subscribeToNotifierEvents();
 	}
 
-	showMessage(params: {message: ImModelMessage, dialog: ImModelChat, user?: ImModelUser, lines: boolean})
+	async handleIncomingMessage(params: MessageNotificationParams)
 	{
-		const { message, dialog, user, lines } = params;
-		let text = '';
-		if (user && dialog.type !== ChatType.user)
+		const { isImportant, dialogId } = params;
+
+		if (await this.#shouldSkipNotification(dialogId))
 		{
-			text += `${user.name}: `;
+			this.#playOpenedChatMessageSound(isImportant);
+
+			return;
 		}
 
-		text += Parser.purifyMessage(message);
+		this.#playMessageSound(isImportant);
+		this.#flashDesktopIcon();
 
-		let id = `${CHAT_MESSAGE_PREFIX}-${dialog.dialogId}-${message.id}`;
+		MessageNotifierManager.getInstance().showMessage(params);
+	}
 
-		if (lines)
+	handleIncomingNotification(params: {notificationId: number, userId: number, isSilent: boolean })
+	{
+		const { notificationId, userId, isSilent } = params;
+
+		const notification = this.#store.getters['notifications/getById'](notificationId);
+		const user = this.#store.getters['users/get'](userId);
+
+		if (!isSilent)
 		{
-			id = `${LINES_MESSAGE_PREFIX}-${dialog.dialogId}-${message.id}`;
+			SoundNotificationManager.getInstance().playOnce(SoundType.reminder);
 		}
-		const notificationOptions = {
-			id,
-			title: dialog.name,
-			icon: dialog.avatar || user?.avatar,
-			text,
-		};
+
+		this.#flashDesktopIcon();
+
+		MessageNotifierManager.getInstance().showNotification(notification, user);
+	}
+
+	showMessage(params: MessageNotificationParams)
+	{
+		const { messageId, dialogId, isLines } = params;
+		const message = this.#store.getters['messages/getById'](messageId);
+		const chat = this.#store.getters['chats/get'](dialogId, true);
+		const user = this.#store.getters['users/get'](message.authorId);
+
+		const builder = new MessageOptionsBuilder({ message, chat, user, isLines });
+		const notificationOptions = builder.build();
 
 		const isDesktopFocused: boolean = DesktopManager.isChatWindow() && document.hasFocus();
 		if (isDesktopFocused)
@@ -132,22 +163,21 @@ export class MessageNotifierManager
 	onNotifierClick(params: NotifierClickParams)
 	{
 		const { id } = params;
-		if (this.#isChatMessage(id))
+
+		const { prefix, dialogId } = NotificationId.parse(id);
+		if (prefix === NotificationIdPrefix.chat)
 		{
-			const dialogId = this.#extractDialogId(id);
 			void Messenger.openChat(dialogId);
 		}
-		else if (this.#isCopilotMessage(id))
+		else if (prefix === NotificationIdPrefix.taskComments)
 		{
-			const dialogId = this.#extractDialogId(id);
-			void Messenger.openCopilot(dialogId);
+			void Messenger.openTaskComments(dialogId);
 		}
-		else if (this.#isLinesMessage(id))
+		else if (prefix === NotificationIdPrefix.lines)
 		{
-			const dialogId = this.#extractDialogId(id);
 			void Messenger.openLines(dialogId);
 		}
-		else if (this.#isNotification(id))
+		else if (prefix === NotificationIdPrefix.notify)
 		{
 			void Messenger.openNotifications();
 		}
@@ -159,8 +189,13 @@ export class MessageNotifierManager
 		user?: ImModelUser,
 	): NotificationOptions
 	{
+		const id = NotificationId.build({
+			prefix: NotificationIdPrefix.notify,
+			notifyId: notification.id,
+		});
+
 		const notificationOptions = {
-			id: `${NOTIFICATION_PREFIX}-${notification.id}`,
+			id,
 			title,
 			icon: user ? user.avatar : '',
 			text: Parser.purifyNotification(notification),
@@ -213,13 +248,14 @@ export class MessageNotifierManager
 	#onNotifierAction(params: NotifierActionParams)
 	{
 		const { id, action, userInput } = params;
-		if (!this.#isNotification(id))
+
+		const { prefix, notifyId } = NotificationId.parse(id);
+		if (prefix !== NotificationIdPrefix.notify)
 		{
 			return;
 		}
 
-		const notificationId = this.#extractNotificationId(id);
-		const notification = this.#store.getters['notifications/getById'](notificationId);
+		const notification = this.#store.getters['notifications/getById'](notifyId);
 		if (userInput)
 		{
 			this.#onNotifierQuickAnswer(notification, userInput);
@@ -259,43 +295,11 @@ export class MessageNotifierManager
 		this.#notificationService.sendConfirmAction(notificationId, value);
 	}
 
-	#isChatMessage(id: string): boolean
-	{
-		return id.startsWith(CHAT_MESSAGE_PREFIX);
-	}
-
-	#isCopilotMessage(id: string): boolean
-	{
-		return id.startsWith(COPILOT_MESSAGE_PREFIX);
-	}
-
-	#isLinesMessage(id: string): boolean
-	{
-		return id.startsWith(LINES_MESSAGE_PREFIX);
-	}
-
-	#isNotification(id: string): boolean
-	{
-		return id.startsWith(NOTIFICATION_PREFIX);
-	}
-
 	#isConfirmButtonAction(action: string, notification: ImModelNotification): boolean
 	{
 		const notificationType = notification.sectionCode;
 
 		return action.startsWith(ACTION_BUTTON_PREFIX) && notificationType === NotificationTypesCodes.confirm;
-	}
-
-	#extractDialogId(id: string): string
-	{
-		// 'im-chat-1-2565'
-		return id.split('-')[2];
-	}
-
-	#extractNotificationId(id: string): string
-	{
-		// 'im-notify-2558'
-		return id.split('-')[2];
 	}
 
 	#extractButtonNumber(action: string): string
@@ -308,5 +312,58 @@ export class MessageNotifierManager
 	{
 		// '2568|Y'
 		return button.COMMAND_PARAMS.split('|');
+	}
+
+	#isChatOpened(dialogId: string): boolean
+	{
+		const isChatOpen = this.#store.getters['application/isChatOpen'](dialogId);
+
+		return Boolean(document.hasFocus() && isChatOpen);
+	}
+
+	#playOpenedChatMessageSound(isImportant: boolean)
+	{
+		if (isImportant)
+		{
+			SoundNotificationManager.getInstance().forcePlayOnce(SoundType.newMessage2);
+
+			return;
+		}
+
+		SoundNotificationManager.getInstance().playOnce(SoundType.newMessage2);
+	}
+
+	#playMessageSound(isImportant: boolean)
+	{
+		if (isImportant)
+		{
+			SoundNotificationManager.getInstance().forcePlayOnce(SoundType.newMessage1);
+
+			return;
+		}
+
+		SoundNotificationManager.getInstance().playOnce(SoundType.newMessage1);
+	}
+
+	#flashDesktopIcon()
+	{
+		if (!DesktopManager.isDesktop())
+		{
+			return;
+		}
+
+		DesktopApi.flashIcon();
+	}
+
+	async #shouldSkipNotification(dialogId: string): Promise<boolean>
+	{
+		if (this.#isChatOpened(dialogId))
+		{
+			return true;
+		}
+
+		const eventResult = await EventEmitter.emitAsync(EventType.notifier.onBeforeShowMessage, { dialogId });
+
+		return eventResult.includes(NotifierShowMessageAction.skip);
 	}
 }

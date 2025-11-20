@@ -6,6 +6,7 @@ export type CoreParams = InterfaceModelParams & {
 	chatType: string,
 	features: FeaturesParams,
 	paths: PathsParams,
+	rights: RightsParams,
 };
 
 type LimitsParams = {
@@ -26,4 +27,19 @@ type FeaturesParams = {
 
 type PathsParams = {
 	editPath: string,
+};
+
+type RightsParams = {
+	flow: UserRightsFlow,
+	tasks: UserRightsTasks,
+};
+
+type UserRightsFlow = {
+	create: boolean,
+};
+
+type UserRightsTasks = {
+	create: boolean,
+	createFromTemplate: boolean,
+	robot: boolean,
 };

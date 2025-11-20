@@ -2225,6 +2225,9 @@ class Peer
 		this.isChrome = false;
 		this.isLegacyMobile = params.isLegacyMobile === true;
 
+		this.lastSuccessedLocaleCandidate = '';
+		this.lastSuccessedRemoteCandidate = '';
+
 		/*sums up from signaling, ready and connection states*/
 		this.calculatedState = this.calculateState();
 
@@ -2587,7 +2590,7 @@ class Peer
 		else
 		{
 			this.localStreams[tag] = this.call.getLocalStream(tag);
-			
+
 			const logMessage = 'Reconnect by replaceMediaStream';
 			this.reconnect({ reconnectionReasonInfo: logMessage });
 		}
@@ -2869,6 +2872,25 @@ class Peer
 							default:
 								return;
 						}
+					}
+
+					if (
+						report.type === 'candidate-pair'
+						&& report.state === 'succeeded'
+						&& report.bytesReceived > 0
+						&& report.bytesSent > 0
+						&& this.lastSuccessedLocaleCandidateId !== report.localCandidateId
+						&& this.lastSuccessedRemoteCandidateId !== report.remoteCandidateId
+					)
+					{
+						this.lastSuccessedLocaleCandidateId = report.localCandidateId;
+						this.lastSuccessedRemoteCandidateId = report.remoteCandidateId;
+
+						Util.sendLog({
+							description: `GOT a succeeded candidate-pair for user ${this.userId}`,
+							localCandidateId: report.localCandidateId,
+							remoteCandidateId: report.remoteCandidateId,
+						});
 					}
 
 					if (needCheckInputPacketLost)
@@ -3168,7 +3190,7 @@ class Peer
 		else if (this.peerConnection.connectionState === "failed")
 		{
 			const logMessage = 'Peer connection failed. Trying to restore connection immediately';
-			
+
 			this.reconnect({
 				reconnectionReason: 'PEER_CONNECTION_FAILED',
 				reconnectionReasonInfo: logMessage,
@@ -3385,7 +3407,7 @@ class Peer
 	_onConnectionOfferReplyTimeout(connectionId)
 	{
 		const logMessage = 'Did not receive connection answer for connection ' + connectionId;
-		
+
 		this.call.setPublishingState(MediaStreamsKinds.Camera, false);
 
 		this.reconnect({ reconnectionReasonInfo: logMessage });
@@ -3394,7 +3416,7 @@ class Peer
 	_onNegotiationNeededReplyTimeout()
 	{
 		const logMessage = 'Did not receive connection offer in time';
-		
+
 		this.reconnect({ reconnectionReasonInfo: logMessage });
 	};
 
@@ -3713,14 +3735,14 @@ class Peer
 			reconnectionReason: reconnectInfoObject?.reconnectionReason || 'TRYING_RESTORE_ICE_CONNECTION',
 			reconnectionReasonInfo: reconnectInfoObject?.reconnectionReasonInfo || '',
 		});
-		
+
 		if (reconnectInfoObject && reconnectInfoObject.reconnectionReasonInfo)
 		{
 			this.log(reconnectInfoObject.reconnectionReasonInfo);
 		}
 
 		this.log("Trying to restore ICE connection. Attempt " + this.connectionAttempt);
-		
+
 		if (this.isInitiator())
 		{
 			this._destroyPeerConnection();

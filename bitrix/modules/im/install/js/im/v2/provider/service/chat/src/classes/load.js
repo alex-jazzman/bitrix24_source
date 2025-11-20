@@ -129,7 +129,7 @@ export class LoadService
 		void userManager.addUsersToModel(usersShort);
 	}
 
-	resetChat(dialogId: string): Promise
+	clearChat(dialogId: string): Promise
 	{
 		const dialog: ImModelChat = this.#store.getters['chats/get'](dialogId, true);
 		this.#store.dispatch('messages/clearChatCollection', { chatId: dialog.chatId });

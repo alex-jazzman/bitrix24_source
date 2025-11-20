@@ -329,7 +329,11 @@ jn.define('more-menu', (require, exports, module) => {
 					() => {
 						const request = new RunActionExecutor(
 							MENU_LIST_ACTION_NAME,
-							{ forceRefresh: forceRefresh ? 1 : 0 },
+							{
+								forceRefresh: forceRefresh ? 1 : 0,
+								userId: env.userId,
+								siteId: env.siteId,
+							},
 						)
 							.setCacheId(`mobile-more-menu${env.userId}`)
 							.setCacheTtl(SECONDS_IN_DAY)
@@ -408,7 +412,11 @@ jn.define('more-menu', (require, exports, module) => {
 		{
 			const request = new RunActionExecutor(
 				MENU_LIST_ACTION_NAME,
-				{ forceRefresh: false },
+				{
+					forceRefresh: 0,
+					userId: env.userId,
+					siteId: env.siteId,
+				},
 			)
 				.setCacheId(`mobile-more-menu${env.userId}`)
 				.setCacheTtl(SECONDS_IN_DAY)

@@ -88,7 +88,7 @@ jn.define('im/messenger/controller/sidebar/channel/tabs/participants/participant
 					icon: Icon.FLAG,
 					testId: 'SIDEBAR_USER_CONTEXT_MENU_NOTES',
 				});
-				if (this.state.permissions.сanLeave)
+				if (this.state.permissions.canLeave)
 				{
 					actionsItems.push({
 						id: SidebarActionType.leaveFromChannel,
@@ -101,7 +101,7 @@ jn.define('im/messenger/controller/sidebar/channel/tabs/participants/participant
 			}
 			else
 			{
-				if (ChatPermission.сanMention(this.props.dialogId))
+				if (ChatPermission.canMention(this.props.dialogId))
 				{
 					actionsItems.push({
 						id: SidebarActionType.mention,
@@ -143,8 +143,8 @@ jn.define('im/messenger/controller/sidebar/channel/tabs/participants/participant
 					}
 				}
 
-				const сanDelete = this.state.permissions.canRemoveParticipants;
-				if (сanDelete && ChatPermission.сanRemoveUserById(userId, this.props.dialogId))
+				const canDelete = this.state.permissions.canRemoveParticipants;
+				if (canDelete && ChatPermission.canRemoveUserById(userId, this.props.dialogId))
 				{
 					actionsItems.push({
 						id: SidebarActionType.removeFromChannel,

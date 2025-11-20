@@ -73,4 +73,4 @@ $MESS["CATALOG_INVENTORY_MANAGEMENT_SLIDER_TITLE_ENABLE_1C"] = "1С-мен ин�
 $MESS["CATALOG_INVENTORY_MANAGEMENT_SLIDER_TITLE_ENABLE_B24"] = "Битрикс24 қойма есебі";
 $MESS["CATALOG_INVENTORY_MANAGEMENT_TITLE_1C"] = "1C-де[break]қойма есебі";
 $MESS["CATALOG_INVENTORY_MANAGEMENT_TITLE_B24"] = "Битрикс24-тегі қойма[break]есебі";
-$MESS["CATALOG_INVENTORY_MANAGEMENT_TITLE_B24_SOLO"] = "Қойма есебі";
+$MESS['CATALOG_INVENTORY_MANAGEMENT_TITLE_B24_SOLO'] = "Қойма есебі";

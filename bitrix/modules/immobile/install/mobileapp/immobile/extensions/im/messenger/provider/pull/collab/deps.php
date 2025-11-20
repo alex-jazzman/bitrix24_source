@@ -11,7 +11,6 @@ return [
 		'im:messenger/lib/helper',
 		'im:messenger/lib/logger',
 		'im:messenger/lib/params',
-		'im:messenger/lib/counters/tab-counters',
 		'im:messenger/lib/notifier',
 		'im:messenger/lib/emitter',
 		'im:messenger/lib/uuid-manager',
@@ -29,6 +28,5 @@ return [
 		'./src/file',
 		'./src/user',
 		'./src/collab-info',
-		'./src/counter',
 	],
 ];

@@ -7,6 +7,7 @@ type CreateDocumentOptions = {
 	uploader: Uploader,
 	documentType: 'docx' | 'xlsx' | 'pptx' | 'board',
 	onAddFile: Function,
+	documentHandlers: { name: string, code: string, supportsUnifiedLink: boolean }[],
 };
 
 export const createDocumentDialog = (options: CreateDocumentOptions = {}): void => {
@@ -61,29 +62,39 @@ export const createDocumentDialog = (options: CreateDocumentOptions = {}): void 
 	}
 	else
 	{
+		const documentService = BX.Disk.getDocumentService();
+		const byUnifiedLink = options.documentHandlers.some((handler) => handler.supportsUnifiedLink
+			&& handler.code === documentService);
+
+		const saveCallback = (response): void => {
+			if (response.status !== 'success')
+			{
+				return;
+			}
+
+			const key = response.object ? 'object' : 'data';
+
+			if (response[key])
+			{
+				uploader.addFile(
+					`n${response[key].id}`,
+					{
+						name: response[key].name,
+						size: response[key].size,
+						preload: true,
+					},
+				);
+
+				onAddFile?.();
+			}
+		};
+
 		const createProcess = new BX.Disk.Document.CreateProcess({
 			typeFile: documentType,
-			serviceCode: BX.Disk.getDocumentService(),
-			onAfterSave: (response): void => {
-				if (response.status !== 'success')
-				{
-					return;
-				}
-
-				if (response.object)
-				{
-					uploader.addFile(
-						`n${response.object.id}`,
-						{
-							name: response.object.name,
-							size: response.object.size,
-							preload: true,
-						},
-					);
-
-					onAddFile?.();
-				}
-			},
+			serviceCode: documentService,
+			byUnifiedLink,
+			onAfterSave: saveCallback,
+			onAfterCreateFile: saveCallback,
 		});
 
 		createProcess.start();

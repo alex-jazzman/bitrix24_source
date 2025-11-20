@@ -251,6 +251,10 @@ this.BX.Call = this.BX.Call || {};
 	    copilotMode: {
 	      type: Boolean,
 	      default: false
+	    },
+	    showIcon: {
+	      type: Boolean,
+	      default: true
 	    }
 	  },
 	  computed: {
@@ -259,7 +263,7 @@ this.BX.Call = this.BX.Call || {};
 	    }
 	  },
 	  template: `
-		<div :class="callButtonIconClasses"></div>
+		<div v-if="showIcon || compactMode" :class="callButtonIconClasses"></div>
 		<div v-if="!compactMode" class="bx-call-chat-header-call-button__text">
 			{{ text }}
 		</div>
@@ -409,7 +413,10 @@ this.BX.Call = this.BX.Call || {};
 	      return this.dialog.type === im_v2_const.ChatType.videoconf;
 	    },
 	    callButtonText() {
-	      const locCode = call_const.CallTypes[this.lastCallType].locCode;
+	      let locCode = call_const.CallTypes[this.lastCallType].locCode;
+	      if (this.hasActiveCurrentCall) {
+	        locCode = 'CALL_CHAT_HEADER_BUTTON_RETURN_TO_CALL_TEXT';
+	      }
 	      return this.loc(locCode);
 	    },
 	    hasActiveCurrentCall() {
@@ -461,7 +468,7 @@ this.BX.Call = this.BX.Call || {};
 	      return this.isCopilotActive && this.userCount >= this.copilotMinUserLimit && !this.isConference && this.isTariffAvailable;
 	    },
 	    callButtonContainerClasses() {
-	      return ['bx-call-chat-header-call-button__scope', 'bx-call-chat-header-call-button__container', ...(this.isConference ? ['--conference'] : []), ...(this.isCopilotCall ? ['--copilot'] : []), ...(!this.isActive ? ['--disabled'] : [])];
+	      return ['--ui-context-content-light', 'bx-call-chat-header-call-button__scope', 'bx-call-chat-header-call-button__container', ...(this.isConference ? ['--conference'] : []), ...(this.isCopilotCall && !this.hasActiveCurrentCall ? ['--copilot'] : []), ...(!this.isActive ? ['--disabled'] : []), ...(this.hasActiveCurrentCall ? ['--return'] : [])];
 	    },
 	    canShowPromo() {
 	      return this.isCopilotCall && im_v2_lib_promo.PromoManager.getInstance().needToShow(this.promoId) && !this.hasActiveCurrentCall && this.isActive;
@@ -576,9 +583,9 @@ this.BX.Call = this.BX.Call || {};
 				@click="onButtonClick"
 				ref="call-button"
 			>
-				<CallButtonTitle :compactMode="compactMode" :copilotMode="isCopilotCall" :text="callButtonText" />
-				<div class="bx-call-chat-header-call-button__separator"></div>
-				<div class="bx-call-chat-header-call-button__chevron_container" @click.stop="onMenuClick">
+				<CallButtonTitle :showIcon="!hasActiveCurrentCall" :compactMode="compactMode" :copilotMode="isCopilotCall" :text="callButtonText" />
+				<div v-if="!hasActiveCurrentCall" class="bx-call-chat-header-call-button__separator"></div>
+				<div v-if="!hasActiveCurrentCall" class="bx-call-chat-header-call-button__chevron_container" @click.stop="onMenuClick">
 					<div class="bx-call-chat-header-call-button__chevron" ref="menu"></div>
 				</div>
 			</div>

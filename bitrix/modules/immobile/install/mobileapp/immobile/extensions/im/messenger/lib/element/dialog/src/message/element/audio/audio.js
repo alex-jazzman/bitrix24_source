@@ -3,19 +3,26 @@
  */
 jn.define('im/messenger/lib/element/dialog/message/element/audio/audio', (require, exports, module) => {
 	const { Type } = require('type');
+	const { isEmpty, isEqual } = require('utils/object');
+	const { Color } = require('tokens');
+	const { Loc } = require('im/messenger/loc');
+	const { TranscriptStatus } = require('im/messenger/const');
+	const { Feature } = require('im/messenger/lib/feature');
 
 	class Audio
 	{
 		/**
 		 * @param {MessagesModelState} messageModel
 		 * @param {FilesModelState} fileModel
+		 * @param {TranscriptModelState | null} transcriptModel
 		 * @param {object} options
 		 * @param {AudioRate} options.audioRate
 		 */
-		constructor(messageModel, fileModel, options = {})
+		constructor(messageModel, fileModel, transcriptModel, options = {})
 		{
 			this.messageModel = messageModel;
 			this.fileModel = fileModel;
+			this.transcriptModel = transcriptModel;
 			this.options = options;
 		}
 
@@ -33,6 +40,7 @@ jn.define('im/messenger/lib/element/dialog/message/element/audio/audio', (requir
 				isPlaying: this.#getIsPlaying(),
 				playingTime: this.#getPlayingTime(),
 				rate: this.#getRate(),
+				speech2text: this.#prepareTranscriptProps(),
 			};
 		}
 
@@ -133,6 +141,44 @@ jn.define('im/messenger/lib/element/dialog/message/element/audio/audio', (requir
 			}
 
 			return 1;
+		}
+
+		#prepareTranscriptProps()
+		{
+			if (!this.#canTranscript())
+			{
+				return null;
+			}
+
+			const hasTranscript = Type.isObject(this.transcriptModel) && !isEmpty(this.transcriptModel);
+			const isPreparedFiles = isEqual(this.messageModel.params?.FILE_ID, this.messageModel.files);
+			const transcript = {
+				text: '',
+				textColor: Color.base2.toHex(),
+				status: TranscriptStatus.ready,
+			};
+			if (!hasTranscript || !isPreparedFiles)
+			{
+				return transcript;
+			}
+
+			transcript.status = this.transcriptModel.status;
+			if (transcript.status === TranscriptStatus.error)
+			{
+				transcript.text = Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_FILE_TRANSCRIPT_ERROR');
+				transcript.textColor = Color.chatOtherBase1_1.toHex();
+
+				return transcript;
+			}
+
+			transcript.text = this.transcriptModel.text;
+
+			return transcript;
+		}
+
+		#canTranscript()
+		{
+			return this.fileModel?.isTranscribable && Feature.isAiFileTranscriptionAvailable;
 		}
 	}
 

@@ -62,17 +62,15 @@ export const BurgerMenuButton = {
 
 		actionMenuItemClickHandler(actionId: string): void
 		{
+			analyticsSendData({ tool: 'structure', category: 'roles', event: 'open_roles' });
+
 			if (actionId === MenuOption.accessRights)
 			{
-				analyticsSendData({ tool: 'structure', category: 'structure', event: 'open_roles' });
-
 				BX.SidePanel.Instance.open('/hr/config/permission/', { usePadding: true });
 			}
 
 			if (actionId === MenuOption.teamAccessRights)
 			{
-				analyticsSendData({ tool: 'structure', category: 'structure', event: 'open_roles' });
-
 				BX.SidePanel.Instance.open('/hr/config/permission/?category=TEAM', { usePadding: true });
 			}
 		},

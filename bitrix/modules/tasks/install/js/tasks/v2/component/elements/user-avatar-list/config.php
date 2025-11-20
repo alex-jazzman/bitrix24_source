@@ -16,7 +16,6 @@ return [
 		'ui.icon-set.api.core',
 		'ui.icon-set.outline',
 		'ui.tooltip',
-		'tasks.v2.component.elements.add-background',
 		'tasks.v2.component.elements.hover-pill',
 		'tasks.v2.component.elements.user-avatar',
 	],

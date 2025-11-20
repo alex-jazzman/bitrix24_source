@@ -4,6 +4,7 @@
 jn.define('im/messenger/controller/search/experimental/selector', (require, exports, module) => {
 	const { EventType } = require('im/messenger/const');
 	const { Loc } = require('im/messenger/loc');
+	const { Feature } = require('im/messenger/lib/feature');
 	const { RecentProvider } = require('im/messenger/controller/search/experimental/provider');
 	const { RecentSearchUiConverter } = require('im/messenger/lib/converter/ui/recent-search');
 	const { Logger } = require('im/messenger/lib/logger');
@@ -53,6 +54,11 @@ jn.define('im/messenger/controller/search/experimental/selector', (require, expo
 
 		open()
 		{
+			if (Feature.isMessengerV2Enabled)
+			{
+				this.ui.showSearchBar();
+			}
+
 			this.loadRecentSearchFromServer();
 			this.isOpen = true;
 			this.drawRecent(this.recentItems);

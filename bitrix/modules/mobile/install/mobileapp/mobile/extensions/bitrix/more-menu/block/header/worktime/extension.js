@@ -70,15 +70,17 @@ jn.define('more-menu/block/header/worktime', (require, exports, module) => {
 
 			this.debouncedSubscribeToPullEvent = debounce(this.subscribeToPullEvent, DEBOUNCE_DELAY, this);
 			this.openWorkTime = this.openWorkTime.bind(this);
+			this.getStatus = this.getStatus.bind(this);
 		}
 
 		componentDidMount()
 		{
 			this.updateLiveTimer();
+			BX.addCustomEvent('onAppActive', this.getStatus);
 
 			BX.addCustomEvent('onPullEvent-timeman', this.debouncedSubscribeToPullEvent);
 
-			this.statusPoller = setInterval(() => this.getStatus(), STATUS_POLL_INTERVAL);
+			this.statusPoller = setInterval(this.getStatus, STATUS_POLL_INTERVAL);
 		}
 
 		componentWillReceiveProps(props)
@@ -106,6 +108,7 @@ jn.define('more-menu/block/header/worktime', (require, exports, module) => {
 		componentWillUnmount()
 		{
 			BX.removeCustomEvent('onPullEvent-timeman', this.debouncedSubscribeToPullEvent);
+			BX.removeCustomEvent('onAppActive', this.getStatus);
 
 			if (this.liveTimer)
 			{

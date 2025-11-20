@@ -2,10 +2,8 @@ import { Event } from 'main.core';
 import { Button as UiButton, AirButtonStyle, ButtonSize } from 'ui.vue3.components.button';
 
 import { Core } from 'tasks.v2.core';
-import { EventName, Model, Option } from 'tasks.v2.const';
+import { EventName, Model, Option, TaskField } from 'tasks.v2.const';
 import { Hint } from 'tasks.v2.component.elements.hint';
-import { checkListMeta } from 'tasks.v2.component.fields.check-list';
-import { filesMeta } from 'tasks.v2.component.fields.files';
 import { fieldHighlighter } from 'tasks.v2.lib.field-highlighter';
 import { analytics } from 'tasks.v2.lib.analytics';
 import { ahaMoments } from 'tasks.v2.lib.aha-moments';
@@ -77,6 +75,21 @@ export const FullCardButton = {
 		{
 			return Array.isArray(this.task?.auditorsIds) && this.task.auditorsIds.length > 0;
 		},
+		auditorsHintOptions(): Object
+		{
+			return {
+				closeIcon: true,
+				offsetLeft: -60,
+				angle: {
+					offset: 140,
+				},
+				bindOptions: {
+					forceBindPosition: true,
+					forceTop: true,
+					position: 'top',
+				},
+			};
+		},
 	},
 	mounted()
 	{
@@ -110,8 +123,8 @@ export const FullCardButton = {
 		{
 			this.hintBindElement = fieldHighlighter
 				.setContainer(this.$root.$el)
-				.addChipHighlight(filesMeta.id)
-				.getChipContainer(filesMeta.id)
+				.addChipHighlight(TaskField.Files)
+				.getChipContainer(TaskField.Files)
 			;
 
 			this.showHint();
@@ -120,8 +133,8 @@ export const FullCardButton = {
 		{
 			this.hintBindElement = fieldHighlighter
 				.setContainer(this.$root.$el)
-				.addChipHighlight(checkListMeta.id)
-				.getChipContainer(checkListMeta.id)
+				.addChipHighlight(TaskField.CheckList)
+				.getChipContainer(TaskField.CheckList)
 			;
 
 			this.showHint();
@@ -189,20 +202,22 @@ export const FullCardButton = {
 				v-if="showAuditorsHint"
 				:bindElement="auditorsHintBindElement"
 				@close="closeAuditorsHint"
+				:options="auditorsHintOptions"
 			>
-				<div class="tasks-compact-card-full-button-auditors-hint-title">
-					{{ loc('TASKS_V2_TCC_AUDITORS_HINT_TITLE') }}
+				<div class="tasks-compact-card-full-button-auditors-hint">
+					<div class="tasks-compact-card-full-button-auditors-hint-title">
+						{{ loc('TASKS_V2_TCC_AUDITORS_HINT_TITLE') }}
+					</div>
+					<div class="tasks-compact-card-full-button-auditors-hint-content">
+						{{ loc('TASKS_V2_TCC_AUDITORS_HINT_CONTENT') }}
+					</div>
+					<div
+						class="tasks-compact-card-full-button-auditors-hint-link"
+						@click.stop="handleAuditorsHintLinkClick"
+					>
+						{{ loc('TASKS_V2_TCC_AUDITORS_HINT_DO_NOT_SHOW_AGAIN') }}
+					</div>
 				</div>
-				<div class="tasks-compact-card-full-button-auditors-hint-content">
-					{{ loc('TASKS_V2_TCC_AUDITORS_HINT_CONTENT') }}	
-				</div>
-				<div 
-					class="tasks-compact-card-full-button-auditors-hint-link"
-					@click.stop="handleAuditorsHintLinkClick"
-				>
-					{{ loc('TASKS_V2_TCC_AUDITORS_HINT_DO_NOT_SHOW_AGAIN') }}
-				</div>
-				
 			</Hint>
 		</div>
 		<Hint

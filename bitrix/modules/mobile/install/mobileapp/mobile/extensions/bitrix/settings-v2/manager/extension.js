@@ -45,7 +45,7 @@ jn.define('settings-v2/manager', (require, exports, module) => {
 
 		prepareItems(items, settingsData)
 		{
-			items = items.map((item) => {
+			const preparedItems = items.map((item) => {
 				if (item.prepareItems)
 				{
 					item.items = item.prepareItems(settingsData);
@@ -54,7 +54,7 @@ jn.define('settings-v2/manager', (require, exports, module) => {
 				return item;
 			});
 
-			return this.filterItems(items, settingsData);
+			return this.filterItems(preparedItems, settingsData);
 		}
 
 		filterItems(items, settingsData)
@@ -79,7 +79,12 @@ jn.define('settings-v2/manager', (require, exports, module) => {
 		async #openWidget({ settingsPage, parentWidget = PageManager })
 		{
 			const { items, title } = settingsPage;
-			const currentWidget = await parentWidget.openWidget('layout', { title });
+			const currentWidget = await parentWidget.openWidget('layout', {
+				titleParams: {
+					text: title,
+					type: 'dialog',
+				},
+			});
 
 			currentWidget.showComponent(
 				new SettingsPage({

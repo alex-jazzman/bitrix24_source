@@ -160,8 +160,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    const settings = main_core.Extension.getSettings('im.v2.lib.layout');
 	    return settings.get('isQuickAccessHidden', false);
 	  }
+	  isValidLayout(layoutName) {
+	    return Object.values(im_v2_const.Layout).includes(layoutName);
+	  }
 	  isChatLayout(layoutName) {
-	    const chatLayouts = [im_v2_const.Layout.chat, im_v2_const.Layout.channel, im_v2_const.Layout.copilot, im_v2_const.Layout.openlines, im_v2_const.Layout.openlinesV2, im_v2_const.Layout.collab];
+	    const chatLayouts = [im_v2_const.Layout.chat, im_v2_const.Layout.channel, im_v2_const.Layout.copilot, im_v2_const.Layout.openlines, im_v2_const.Layout.openlinesV2, im_v2_const.Layout.collab, im_v2_const.Layout.taskComments];
 	    return chatLayouts.includes(layoutName);
 	  }
 	}

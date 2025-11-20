@@ -2,6 +2,9 @@
  * @module im/messenger/controller/sidebar-v2/controller/group-chat
  */
 jn.define('im/messenger/controller/sidebar-v2/controller/group-chat', (require, exports, module) => {
+	const { Type } = require('type');
+	const { inAppUrl } = require('in-app-url');
+	const { DialogType } = require('im/messenger/const');
 	const { Loc } = require('im/messenger/controller/sidebar-v2/loc');
 	const { SidebarBaseController } = require('im/messenger/controller/sidebar-v2/controller/base');
 	const { GroupChatSidebarView } = require('im/messenger/controller/sidebar-v2/controller/group-chat/src/view');
@@ -17,7 +20,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/group-chat', (require, 
 	const { Icon } = require('assets/icons');
 	const { onAddParticipants } = require('im/messenger/controller/sidebar-v2/user-actions/participants');
 	const { onLeaveChat } = require('im/messenger/controller/sidebar-v2/user-actions/user');
-	const { onDeleteChat } = require('im/messenger/controller/sidebar-v2/user-actions/chat');
+	const { onDeleteChat, onClearHistoryChat } = require('im/messenger/controller/sidebar-v2/user-actions/chat');
 	const {
 		createSearchButton,
 		createMuteButton,
@@ -68,6 +71,16 @@ jn.define('im/messenger/controller/sidebar-v2/controller/group-chat', (require, 
 			onDeleteChat(this.dialogId);
 		}
 
+		handleClearHistoryForMeDialogAction()
+		{
+			onClearHistoryChat({ dialogId: this.dialogId, forAll: false });
+		}
+
+		handleClearHistoryForAllDialogAction()
+		{
+			onClearHistoryChat({ dialogId: this.dialogId, forAll: true });
+		}
+
 		async handleEditDialogAction()
 		{
 			this.logger.info('handleEditDialogAction');
@@ -100,7 +113,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/group-chat', (require, 
 		{
 			const muted = this.dialogHelper.isMuted;
 
-			return [
+			const buttons = [
 				createVideoCallButton({
 					onClick: () => this.handleVideoCallAction(),
 					disabled: !this.permissionManager.canCall(),
@@ -121,6 +134,30 @@ jn.define('im/messenger/controller/sidebar-v2/controller/group-chat', (require, 
 					selected: this.dialogHelper.isMessagesAutoDeleteDelayEnabled,
 				}),
 			];
+
+			// TODO: task-tab refactor this and make it part of the integration in the final version
+			const dialog = this.store.getters['dialoguesModel/getById'](this.dialogId);
+			if (dialog.type === DialogType.tasksTask)
+			{
+				const openTaskButton = {
+					id: 'open_task',
+					icon: Icon.GO_TO,
+					title: Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_BUTTON_GO_TO_TASK'),
+					onClick: () => {
+						if (!Type.isStringFilled(dialog.entityLink.url))
+						{
+							return;
+						}
+
+						const url = `${currentDomain}${dialog.entityLink.url}`;
+						inAppUrl.open(url);
+					},
+				};
+
+				buttons.unshift(openTaskButton);
+			}
+
+			return buttons;
 		}
 
 		// endregion

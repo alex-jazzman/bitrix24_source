@@ -64,22 +64,30 @@ export const App = {
 		},
 		groupId: {
 			type: [Number],
-			required: false,
+			default: null,
+		},
+		parentId: {
+			type: [Number],
+			default: null,
+		},
+		relatedToTaskId: {
+			type: [Number],
 			default: null,
 		},
 		deadlineTs: {
 			type: [Number, null],
-			required: false,
 			default: null,
+		},
+		title: {
+			type: [String, null],
+			default: '',
 		},
 		description: {
 			type: [String, null],
-			required: false,
 			default: '',
 		},
 		auditorsIds: {
 			type: Array,
-			required: false,
 			default: () => [],
 		},
 		analytics: {
@@ -183,8 +191,11 @@ export const App = {
 				creatorId: this.currentUserId,
 				responsibleId: this.currentUserId,
 				...(this.groupId ? { groupId: this.groupId } : {}),
+				...(this.title ? { title: this.title } : ''),
 				...(this.description ? { description: this.description } : ''),
 				...(this.auditorsIds ? { auditorsIds: this.auditorsIds } : []),
+				...(this.parentId ? { parentId: this.parentId } : {}),
+				...(this.relatedToTaskId ? { relatedToTaskId: this.relatedToTaskId } : {}),
 				...(this.source ? { source: this.source } : {}),
 			};
 
@@ -266,8 +277,8 @@ export const App = {
 			{
 				this.creationError = true;
 
-				Notifier.notify({
-					id: 'task-message-add-error',
+				Notifier.notifyViaBrowserProvider({
+					id: 'task-notify-add-error',
 					text: error.message,
 				});
 

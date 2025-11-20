@@ -145,7 +145,8 @@
 	color: var(--ui-color-palette-black-base);
 }
 
-.hr-add-employee-empty-tab-entity-btn-text {
+.hr-add-employee-empty-tab-entity-btn-text,
+.hr-add-communications-empty-tab-entity-btn-text {
 	text-transform: none;
 	font-family: var(--ui-font-family-primary, var(--ui-font-family-system));
 	font-size: var(--ui-font-size-xl);

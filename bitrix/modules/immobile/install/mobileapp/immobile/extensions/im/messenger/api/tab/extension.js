@@ -3,12 +3,13 @@
  */
 jn.define('im/messenger/api/tab', (require, exports, module) => {
 	const { Type } = require('type');
-	const { EntityReady } = require('entity-ready');
 
 	const {
 		EventType,
 		ComponentCode,
 	} = require('im/messenger/const');
+	const { createPromiseWithResolvers } = require('im/messenger/lib/utils');
+	const { getApiVersion } = require('im/messenger/api/api-version');
 
 	/**
 	 * @param {TabOptions} options
@@ -78,40 +79,35 @@ jn.define('im/messenger/api/tab', (require, exports, module) => {
 			return Promise.reject(error);
 		}
 
-		await EntityReady.wait('im.navigation');
+		const apiVersion = await getApiVersion();
 
 		const {
 			promise,
 			resolve,
 			reject,
 		} = createPromiseWithResolvers();
+		try
+		{
+			const { sendChangeTabEvent } = require(`im/messenger/api/tab/v${apiVersion}`);
 
-		registerChangeTabResultHandler(
-			tabComponentCode,
-			resolve,
-			reject,
-		);
+			registerChangeTabResultHandler(
+				tabComponentCode,
+				resolve,
+				reject,
+			);
 
-		sendChangeTabEvent(tabComponentCode, options);
+			sendChangeTabEvent(tabComponentCode, options)
+				.catch((error) => {
+					console.error('Messenger api: openTab error', error);
+				})
+			;
+		}
+		catch (error)
+		{
+			reject(error);
+		}
 
 		return promise;
-	}
-
-	function createPromiseWithResolvers()
-	{
-		let resolvePromise = () => {};
-
-		let rejectPromise = () => {};
-		const promise = new Promise((resolve, reject) => {
-			resolvePromise = resolve;
-			rejectPromise = reject;
-		});
-
-		return {
-			promise,
-			resolve: resolvePromise,
-			reject: rejectPromise,
-		};
 	}
 
 	function registerChangeTabResultHandler(tabComponentCode, successHandler, errorHandler)
@@ -137,15 +133,6 @@ jn.define('im/messenger/api/tab', (require, exports, module) => {
 		BX.addCustomEvent(EventType.navigation.changeTabResult, handler);
 
 		return handler;
-	}
-
-	function sendChangeTabEvent(tabComponentCode, options)
-	{
-		BX.postComponentEvent(
-			EventType.navigation.changeTab,
-			[tabComponentCode, options],
-			ComponentCode.imNavigation,
-		);
 	}
 
 	module.exports = {

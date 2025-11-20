@@ -4,6 +4,7 @@
 jn.define('im/messenger/lib/counters/counter-manager/navigation', (require, exports, module) => {
 	const { Event } = require('im/messenger/lib/counters/counter-manager/const');
 	const { getLogger } = require('im/messenger/lib/logger');
+	const { Feature } = require('im/messenger/lib/feature');
 	const { CounterStorageWriter } = require('im/messenger/lib/counters/counter-manager/storage/writer');
 	const { CounterPushMessageHandler } = require('im/messenger/provider/push/message-handler/counter');
 	const { SyncFillerCounter } = require('im/messenger/provider/services/sync/fillers/counter');
@@ -36,10 +37,9 @@ jn.define('im/messenger/lib/counters/counter-manager/navigation', (require, expo
 		{
 			this.pushHandler = new CounterPushMessageHandler(CounterStorageWriter.getInstance());
 			this.syncHandler = new SyncFillerCounter(CounterStorageWriter.getInstance());
-			this.pullHandler = new CounterPullHandler(CounterStorageWriter.getInstance());
 			this.readMessageService = new ReadMessageService();
 			this.writer = CounterStorageWriter.getInstance();
-
+			this.pullHandler = new CounterPullHandler(CounterStorageWriter.getInstance());
 			this.#subscribeEvents();
 			this.#subscribePullEvents();
 		}

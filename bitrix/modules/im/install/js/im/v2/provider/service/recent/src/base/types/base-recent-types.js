@@ -9,10 +9,8 @@ import type {
 } from 'im.v2.provider.service.types';
 
 export type BaseRecentQueryParams = {
-	data: {
-		limit: number,
-		filter: Record,
-	},
+	limit: number,
+	filter: Record,
 };
 
 export type RecentRestResult = {

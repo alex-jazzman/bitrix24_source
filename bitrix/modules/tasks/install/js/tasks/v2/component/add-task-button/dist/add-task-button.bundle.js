@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
-(function (exports,main_core,ui_vue3_components_button,tasks_v2_component_elements_hint,tasks_v2_const,tasks_v2_component_fields_title,tasks_v2_component_fields_files,tasks_v2_component_fields_checkList,tasks_v2_lib_fieldHighlighter,tasks_v2_provider_service_fileService) {
+(function (exports,main_core,ui_vue3_components_button,tasks_v2_component_elements_hint,tasks_v2_const,tasks_v2_lib_fieldHighlighter,tasks_v2_provider_service_fileService) {
 	'use strict';
 
 	// @vue/component
@@ -75,18 +75,18 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    },
 	    highlightTitle() {
 	      this.errorReason = this.loc('TASKS_V2_TITLE_IS_EMPTY');
-	      this.fieldContainer = tasks_v2_lib_fieldHighlighter.fieldHighlighter.setContainer(this.$root.$el).addHighlight(tasks_v2_component_fields_title.titleMeta.id).getFieldContainer(tasks_v2_component_fields_title.titleMeta.id);
+	      this.fieldContainer = tasks_v2_lib_fieldHighlighter.fieldHighlighter.setContainer(this.$root.$el).addHighlight(tasks_v2_const.TaskField.Title).getFieldContainer(tasks_v2_const.TaskField.Title);
 	      this.fieldContainer.querySelector('textarea').focus();
 	      this.showPopup();
 	    },
 	    highlightFiles() {
 	      this.errorReason = this.loc('TASKS_V2_FILE_IS_UPLOADING');
-	      this.fieldContainer = tasks_v2_lib_fieldHighlighter.fieldHighlighter.setContainer(this.$root.$el).addChipHighlight(tasks_v2_component_fields_files.filesMeta.id).getChipContainer(tasks_v2_component_fields_files.filesMeta.id);
+	      this.fieldContainer = tasks_v2_lib_fieldHighlighter.fieldHighlighter.setContainer(this.$root.$el).addChipHighlight(tasks_v2_const.TaskField.Files).getChipContainer(tasks_v2_const.TaskField.Files);
 	      this.showPopup();
 	    },
 	    highlightChecklist() {
 	      this.errorReason = this.loc('TASKS_V2_FILE_IS_UPLOADING');
-	      this.fieldContainer = tasks_v2_lib_fieldHighlighter.fieldHighlighter.setContainer(this.$root.$el).addChipHighlight(tasks_v2_component_fields_checkList.checkListMeta.id).getChipContainer(tasks_v2_component_fields_checkList.checkListMeta.id);
+	      this.fieldContainer = tasks_v2_lib_fieldHighlighter.fieldHighlighter.setContainer(this.$root.$el).addChipHighlight(tasks_v2_const.TaskField.CheckList).getChipContainer(tasks_v2_const.TaskField.CheckList);
 	      this.showPopup();
 	    },
 	    showPopup() {
@@ -126,5 +126,5 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 
 	exports.AddTaskButton = AddTaskButton;
 
-}((this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {}),BX,BX.Vue3.Components,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Const,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service));
+}((this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {}),BX,BX.Vue3.Components,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Const,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service));
 //# sourceMappingURL=add-task-button.bundle.js.map

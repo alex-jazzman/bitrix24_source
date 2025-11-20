@@ -11,6 +11,7 @@ jn.define('im/messenger/model/dialogues/model', (require, exports, module) => {
 	const { dialogDefaultElement } = require('im/messenger/model/dialogues/default-element');
 	const { copilotModel } = require('im/messenger/model/dialogues/copilot/model');
 	const { collabModel } = require('im/messenger/model/dialogues/collab/model');
+	const { aiAssistantModel } = require('im/messenger/model/dialogues/ai-assistant/model');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { ChatPermission } = require('im/messenger/lib/permission-manager');
 	const { ModelUtils } = require('im/messenger/lib/utils');
@@ -27,6 +28,7 @@ jn.define('im/messenger/model/dialogues/model', (require, exports, module) => {
 		modules: {
 			copilotModel,
 			collabModel,
+			aiAssistantModel,
 		},
 		getters: {
 			/**
@@ -73,6 +75,28 @@ jn.define('im/messenger/model/dialogues/model', (require, exports, module) => {
 				});
 
 				return collection;
+			},
+
+			/**
+			 * @function dialoguesModel/getByChatIdList
+			 * @return {Array<DialoguesModelState>}
+			 */
+			getByChatIdList: (state) => (chatIdList) => {
+				if (!Type.isArrayFilled(chatIdList))
+				{
+					return [];
+				}
+
+				const dialogModelList = [];
+				Object.values(state.collection)
+					.forEach((item) => {
+						if (chatIdList.includes(item.chatId))
+						{
+							dialogModelList.push(item);
+						}
+					});
+
+				return dialogModelList;
 			},
 
 			/**
@@ -436,7 +460,7 @@ jn.define('im/messenger/model/dialogues/model', (require, exports, module) => {
 
 			/** @function dialoguesModel/setInputAction */
 			setInputAction: (store, payload) => {
-				const { dialogId, userId, userFirstName, type } = payload;
+				const { dialogId, userId, userFirstName, type, statusMessageCode } = payload;
 				const existingItem = store.state.collection[String(dialogId)];
 
 				if (!existingItem)
@@ -446,19 +470,12 @@ jn.define('im/messenger/model/dialogues/model', (require, exports, module) => {
 
 				const inputActions = clone(existingItem.inputActions);
 				const indexInputActionsByUser = inputActions.findIndex((item) => item.userId === userId);
-				const inputActionsByUser = inputActions[indexInputActionsByUser];
-				const hasCurrentAction = inputActionsByUser?.actions.includes(type);
-				if (hasCurrentAction)
-				{
-					return false;
-				}
 
-				const currentAction = inputActionsByUser?.actions ?? [];
 				const newInputActions = {
 					dialogId,
 					userId,
 					userFirstName,
-					actions: [...currentAction, type],
+					action: { type, statusMessageCode },
 				};
 
 				let validatedInputActions = [];
@@ -487,7 +504,7 @@ jn.define('im/messenger/model/dialogues/model', (require, exports, module) => {
 
 			/** @function dialoguesModel/removeInputAction */
 			removeInputAction: (store, payload) => {
-				const { dialogId, userId, userFirstName } = payload;
+				const { dialogId, userId } = payload;
 				const existingItem = store.state.collection[String(dialogId)];
 
 				if (!existingItem)
@@ -496,29 +513,13 @@ jn.define('im/messenger/model/dialogues/model', (require, exports, module) => {
 				}
 				const inputActions = clone(existingItem.inputActions);
 				const indexInputActionsByUser = inputActions.findIndex((item) => item.userId === userId);
-				const actions = inputActions[indexInputActionsByUser]?.actions;
 
-				if (!Type.isArray(actions))
+				if (indexInputActionsByUser === -1)
 				{
 					return false;
 				}
 
-				const newActions = actions.slice(1);
-				if (newActions.length === 0)
-				{
-					inputActions.splice(indexInputActionsByUser, 1);
-				}
-				else
-				{
-					const newInputActions = {
-						dialogId,
-						userId,
-						userFirstName,
-						actions: newActions,
-					};
-
-					inputActions.splice(indexInputActionsByUser, 1, newInputActions);
-				}
+				inputActions.splice(indexInputActionsByUser, 1);
 
 				return store.commit('update', {
 					actionName: 'updateInputAction',

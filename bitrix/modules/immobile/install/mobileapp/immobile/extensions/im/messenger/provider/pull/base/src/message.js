@@ -15,7 +15,6 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { MessengerParams } = require('im/messenger/lib/params');
-	const { TabCounters } = require('im/messenger/lib/counters/tab-counters');
 	const { parser } = require('im/messenger/lib/parser');
 	const { RecentDataConverter } = require('im/messenger/lib/converter/data/recent');
 	const { MessageDataConverter } = require('im/messenger/lib/converter/data/message');
@@ -31,6 +30,7 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 		DialogType,
 		EventType,
 		UserRole,
+		CounterType,
 	} = require('im/messenger/const');
 	const { NewMessageManager } = require('im/messenger/provider/pull/lib/new-message-manager/base');
 	const { FileUtils } = require('im/messenger/provider/pull/lib/file');
@@ -54,7 +54,7 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 
 		handleMessage(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
@@ -98,12 +98,13 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 							title: userName,
 							text: recentItem.message.text,
 							avatar: userAvatar,
+							recentConfig: params.recentConfig,
 						}).catch((error) => {
 							this.logger.error(`${this.getClassName()}.handleMessage notify error:`, error);
 						});
 					}
 
-					TabCounters.updateDelayed();
+					serviceLocator.get('tab-counters').updateDelayed();
 
 					this.saveShareDialogCache();
 				})
@@ -129,7 +130,7 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 
 		handleMessageChat(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
@@ -143,8 +144,13 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 			{
 				if (MessengerParams.isOpenlinesOperator())
 				{
-					TabCounters.openlinesCounter.detail[params.dialogId] = params.counter;
-					TabCounters.update();
+					const tabCounters = serviceLocator.get('tab-counters');
+					tabCounters.updateCounterDetailByCounterState({
+						chatId: params.chatId,
+						counter: params.counter,
+						type: CounterType.openline,
+					});
+					tabCounters.update();
 				}
 
 				return;
@@ -189,12 +195,13 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 							title: dialogTitle,
 							text: this.createMessageChatNotifyText(recentItem.message.text, userName),
 							avatar,
+							recentConfig: params.recentConfig,
 						}).catch((error) => {
 							this.logger.error(`${this.getClassName()}.handleMessageChat notify error:`, error);
 						});
 					}
 
-					TabCounters.updateDelayed();
+					serviceLocator.get('tab-counters').updateDelayed();
 
 					this.saveShareDialogCache();
 				})
@@ -220,7 +227,7 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 
 		handleMessageUpdate(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
@@ -232,7 +239,7 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 
 		handleMessageParamsUpdate(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
@@ -261,7 +268,7 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 		 */
 		async handleMessageDeleteV2(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
@@ -375,17 +382,18 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 		 * @param {number} params.userId
 		 * @param {string} params.userName
 		 * @param {string} params.userFirstName
+		 * @param {string|null} params.duration
 		 * @param {InputActionNotifyType} params.type
 		 * @return {Promise|boolean}
 		 */
 		async handleInputActionNotify(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
 
-			const { dialogId, userId, type } = params;
+			const { dialogId, userId, type, duration } = params;
 			if (!this.getDialog(dialogId))
 			{
 				return;
@@ -398,8 +406,9 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 
 			const timerId = `${dialogId} ${userId} ${type}`;
 
+			this.inputActionWorkers[timerId]?.stop();
 			this.inputActionWorkers[timerId] = new Worker({
-				frequency: this.inputActionTimer,
+				frequency: duration || this.inputActionTimer,
 				callback: () => {
 					this.store.dispatch('dialoguesModel/removeInputAction', { ...params });
 					delete this.inputActionWorkers[timerId];
@@ -411,7 +420,7 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 
 		handleReadMessage(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
@@ -432,7 +441,7 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 
 		handleReadMessageChat(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
@@ -451,8 +460,13 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 			{
 				if (MessengerParams.isOpenlinesOperator())
 				{
-					TabCounters.openlinesCounter.detail[params.dialogId] = params.counter;
-					TabCounters.update();
+					const tabCounters = serviceLocator.get('tab-counters');
+					tabCounters.updateCounterDetailByCounterState({
+						chatId: params.chatId,
+						counter: params.counter,
+						type: CounterType.openline,
+					});
+					tabCounters.update();
 				}
 
 				return;
@@ -464,7 +478,7 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 
 		handleUnreadMessage(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
@@ -477,7 +491,7 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 
 		handleUnreadMessageChat(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
@@ -501,7 +515,7 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 
 		handleReadMessageOpponent(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
@@ -521,7 +535,7 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 		// eslint-disable-next-line sonarjs/no-identical-functions
 		handleReadMessageChatOpponent(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
@@ -540,7 +554,7 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 
 		handleUnreadMessageOpponent(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
@@ -553,7 +567,7 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 		// eslint-disable-next-line sonarjs/no-identical-functions
 		handleUnreadMessageChatOpponent(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
@@ -679,7 +693,7 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 						channelChatId: chatId,
 					})
 					.then(() => {
-						TabCounters.update();
+						serviceLocator.get('tab-counters').update();
 					})
 					.catch((error) => {
 						this.logger.error(`${this.constructor.name}.fullDeletePostMessage comment delete error`, error);
@@ -774,7 +788,7 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 				{
 					this.store.dispatch('recentModel/set', [recentItem])
 						.then(() => {
-							TabCounters.update();
+							serviceLocator.get('tab-counters').update();
 
 							this.saveShareDialogCache();
 						})
@@ -957,7 +971,7 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 				const channelRecentItem = this.store.getters['recentModel/getById'](`chat${params.parentChatId}`);
 
 				this.store.dispatch('recentModel/set', [channelRecentItem])
-					.then(() => TabCounters.update())
+					.then(() => serviceLocator.get('tab-counters').update())
 				;
 
 				return;
@@ -986,7 +1000,7 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 					},
 				})
 				.then(() => this.store.dispatch('recentModel/set', [recentItem]))
-				.then(() => TabCounters.update())
+				.then(() => serviceLocator.get('tab-counters').update())
 				.catch(
 					(err) => this.logger.error(`${this.getClassName()}.updateCounters.dialoguesModel/update.catch:`, err),
 				);
@@ -1158,7 +1172,7 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 			}
 
 			const dialogData = this.store.getters['dialoguesModel/getById'](dialogId);
-			const type = dialogData?.inputActions?.find((item) => item.userId === userId)?.actions?.[0];
+			const type = dialogData?.inputActions?.find((item) => item.userId === userId)?.action?.type;
 			if (!type)
 			{
 				return;

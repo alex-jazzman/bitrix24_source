@@ -259,14 +259,58 @@ jn.define('im/messenger/lib/logger/manager', (require, exports, module) => {
 	/**
 	 * @param {string} name
 	 * @param {object} options
+	 *
 	 * @return Logger
 	 */
 	const getLogger = (name, options = {}) => {
 		return LoggerManager.getInstance().getLogger(name, options);
 	};
 
+	/**
+	 * @param {string} name
+	 * @param {string|function|object} context
+	 * @param {object} options
+	 *
+	 * @return {Logger}
+	 */
+	const getLoggerWithContext = (name, context, options = {}) => {
+		const className = typeof context === 'string'
+			? context
+			: (context?.name || context?.constructor?.name || 'UnknownClass');
+
+		const logger = getLogger(name, options);
+		const logMethodNameCollection = new Set(['log', 'info', 'warn', 'error', 'trace']);
+
+		const classLoggerProxy = {
+			get(target, property) {
+				const originalMethod = target[property];
+				if (logMethodNameCollection.has(property) && Type.isFunction(originalMethod))
+				{
+					return (...args) => {
+						if (args.length > 0 && typeof args[0] === 'string')
+						{
+							// eslint-disable-next-line no-param-reassign
+							args[0] = `${className}.${args[0]}`;
+						}
+						else
+						{
+							args.unshift(`${className}.`);
+						}
+
+						return originalMethod.apply(target, args);
+					};
+				}
+
+				return originalMethod;
+			},
+		};
+
+		return new Proxy(logger, classLoggerProxy);
+	};
+
 	module.exports = {
 		LoggerManager,
 		getLogger,
+		getLoggerWithContext,
 	};
 });

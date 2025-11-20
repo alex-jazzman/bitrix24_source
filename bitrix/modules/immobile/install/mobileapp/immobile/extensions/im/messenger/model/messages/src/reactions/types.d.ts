@@ -11,6 +11,7 @@ export enum ReactionType {
 }
 
 export type RawReaction = {
+	dialogId: string,
 	messageId: number,
 	reactionCounters: Record<ReactionType, number>
 	reactionUsers: Record<ReactionType, Array<number>>
@@ -29,6 +30,7 @@ type ReactionsModelSetPayload = {
 }
 
 type ReactionsModelSetReactionPayload = {
+	dialogId: string,
 	messageId: number,
 	userId: number,
 	reaction: ReactionType,
@@ -45,6 +47,7 @@ type ReactionsDeleteByChatIdPayload = {
 }
 
 type ReactionsModelState = {
+	dialogId: string,
 	messageId: number,
 	// @ts-ignore
 	ownReactions: Set<ReactionType>,

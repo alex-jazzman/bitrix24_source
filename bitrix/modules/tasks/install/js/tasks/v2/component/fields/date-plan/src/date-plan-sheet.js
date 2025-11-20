@@ -4,7 +4,7 @@ import { DurationFormat } from 'main.date';
 import { DatePicker, DatePickerEvent } from 'ui.date-picker';
 import { mapGetters } from 'ui.vue3.vuex';
 import { Button as UiButton, ButtonColor, ButtonSize } from 'ui.vue3.components.button';
-import { HeadlineMd, TextXs } from 'ui.system.typography.vue';
+import { HeadlineMd, TextSm } from 'ui.system.typography.vue';
 import { BInput, InputDesign } from 'ui.system.input.vue';
 import { BMenu, type MenuOptions } from 'ui.vue3.components.menu';
 import { BIcon, Outline } from 'ui.icon-set.api.vue';
@@ -36,7 +36,7 @@ export const DatePlanSheet = {
 		BIcon,
 		UiButton,
 		HeadlineMd,
-		TextXs,
+		TextSm,
 		BInput,
 		BMenu,
 		DatePlanSwitcher,
@@ -49,6 +49,14 @@ export const DatePlanSheet = {
 		isShown: {
 			type: Boolean,
 			required: true,
+		},
+		getBindElement: {
+			type: Function,
+			default: null,
+		},
+		getTargetContainer: {
+			type: Function,
+			default: null,
 		},
 	},
 	emits: ['close'],
@@ -426,13 +434,18 @@ export const DatePlanSheet = {
 		},
 	},
 	template: `
-		<BottomSheet :isShown="isShown" ref="bottomSheet">
+		<BottomSheet
+			v-if="isShown"
+			:getBindElement="getBindElement"
+			:getTargetContainer="getTargetContainer"
+			ref="bottomSheet"
+		>
 			<div class="tasks-field-date-plan-sheet">
 				<div class="tasks-field-date-plan-header">
 					<HeadlineMd>{{ loc('TASKS_V2_DATE_PLAN_TITLE_SHEET') }}</HeadlineMd>
 					<BIcon class="tasks-field-date-plan-close" :name="Outline.CROSS_L" :hoverable="true" @click="close"/>
 				</div>
-				<TextXs class="tasks-field-date-plan-description">{{ loc('TASKS_V2_DATE_PLAN_DESCRIPTION') }}</TextXs>
+				<TextSm class="tasks-field-date-plan-description">{{ loc('TASKS_V2_DATE_PLAN_DESCRIPTION') }}</TextSm>
 				<div class="tasks-field-date-plan-fields">
 					<BInput
 						:modelValue="formatDate(startTs)"

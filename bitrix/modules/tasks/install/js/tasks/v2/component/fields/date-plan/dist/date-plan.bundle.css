@@ -6,19 +6,18 @@
 	cursor: default;
 }
 
+.tasks-field-date-plan-date-container {
+	margin-left: var(--ui-space-inline-xs2-neg);
+}
+
 .tasks-field-date-plan-date {
-	padding-left: var(--ui-space-inline-2xs);
+	padding-left: var(--ui-space-inline-xs);
 }
 
 .tasks-field-date-plan-content {
 	display: flex;
 	align-items: center;
 	gap: var(--ui-space-inline-xs);
-}
-
-.tasks-field-date-plan-content.--add {
-	color: var(--ui-color-accent-main-primary);
-	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
 }
 
 .tasks-field-date-plan-sheet {

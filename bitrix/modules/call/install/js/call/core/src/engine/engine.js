@@ -1,5 +1,6 @@
 import {Type} from 'main.core'
 import {DesktopApi} from 'im.v2.lib.desktop-api';
+import { JoinResponseError } from '../call_api';
 import {ServerPlainCall} from './server_plain_call'
 import {BitrixCall} from './bitrix_call'
 import {CallStub} from './stub'
@@ -184,6 +185,7 @@ class Engine
 	};
 
 	jwtPullHandlers = {
+		'chatUserAdd': this.#onCallTokenUpdate.bind(this),
 		'Call::callTokenUpdate': this.#onCallTokenUpdate.bind(this),
 		'Call::clearCallTokens': this.#onCallTokenClear.bind(this),
 		'Call::callV2AvailabilityChanged': this.#onCallV2AvailabilityChanged.bind(this),
@@ -314,7 +316,12 @@ class Engine
 			}
 			catch(error)
 			{
-				return reject({name: 'MEDIA_SERVER_UNREACHABLE', message: `Reason: ${error.reason} ${error.data}`});
+				if (Type.isObject(error) && (error instanceof JoinResponseError))
+				{
+					return reject(error);
+				}
+
+				return reject({name: 'MEDIA_SERVER_UNREACHABLE', message: `Reason: ${error?.reason} ${error?.data}`});
 			}
 
 			if (!data?.result?.mediaServerUrl || !data?.result?.roomData)
@@ -379,18 +386,16 @@ class Engine
 
 	createChildCall(parentCall, newProvider, newUsers, config)
 	{
-		return new Promise((resolve, reject) =>
-		{
+		return new Promise((resolve, reject) => {
 			const callParameters = {
+				newProvider,
 				callUuid: parentCall.uuid,
-				newProvider: newProvider,
-				users: newUsers
+				users: newUsers,
 			};
 
-			this.getRestClient().callMethod(ajaxActions.createChatForChildCall, callParameters)
-				.then((response) =>
-				{
-					const createCallResponse = response.data();
+			BX.ajax.runAction(ajaxActions.createChatForChildCall, { data: callParameters })
+				.then((response) => {
+					const createCallResponse = response.data;
 					const token = createCallResponse.token;
 					const chatId = createCallResponse.chatId;
 					const callType = CallType.Instant;
@@ -398,15 +403,14 @@ class Engine
 					const instanceId = Util.getUuidv4();
 
 					Util.getCallConnectionData({
+						instanceId,
+						callType,
 						callToken: token,
-						callType: callType,
 						provider: newProvider,
-						instanceId: instanceId,
 						isVideo: config.videoEnabled,
 						parentUuid: parentCall.uuid,
 					}, chatId)
-						.then((data) =>
-						{
+						.then((data) => {
 							if (!data?.result?.mediaServerUrl || !data?.result?.roomData)
 							{
 								return reject({name: 'MEDIA_SERVER_MISSING_PARAMS', message: `Incorrect signaling response`});
@@ -576,7 +580,11 @@ class Engine
 
 			if (!this.finishedCalls.has(callUuid) && command === 'Call::usersInvited')
 			{
-				call = this.instantiateCall(params.call, params.callToken, params.logToken, params.userData);
+				call.addDialogInfo({
+					userCounter: Object.keys(params.userData).length,
+					...params.call.ASSOCIATED_ENTITY,
+				});
+				this.onCallCreated(call);
 			}
 
 			if (call)

@@ -148,6 +148,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    groupId: (_params$groupId = params.groupId) != null ? _params$groupId : null,
 	    description: (_params$description = params.description) != null ? _params$description : null,
 	    auditorsIds: auditors,
+	    fileIds: params.UF_TASK_WEBDAV_FILES,
 	    analytics: {
 	      context: params.ta_sec,
 	      element: params.ta_el

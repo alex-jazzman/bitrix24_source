@@ -146,6 +146,7 @@ export type RawFile = {
 	extension: string,
 	id: number,
 	image: boolean,
+	isTranscribable: boolean,
 	name: string,
 	progress: number,
 	size: number,

@@ -16,6 +16,7 @@ jn.define('im/in-app-url/routes', (require, exports, module) => {
 	} = require('im/messenger/const');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { DialogOpener } = require('im/messenger/api/dialog-opener');
+	const { getApiVersion } = require('im/messenger/api/api-version');
 
 	const openlinesPrefix = 'imol|';
 
@@ -35,7 +36,7 @@ jn.define('im/in-app-url/routes', (require, exports, module) => {
 	 * @param {string} dialogId
 	 * @param {string|null} messageId
 	 */
-	const openDialog = (componentCode, dialogId, messageId = null) => {
+	const openDialog = async (componentCode, dialogId, messageId = null) => {
 		const openDialogEvent = {
 			dialogId,
 			context: OpenDialogContextType.link,
@@ -47,17 +48,25 @@ jn.define('im/in-app-url/routes', (require, exports, module) => {
 			openDialogEvent.withMessageHighlight = true;
 		}
 
-		MessengerEmitter.emit(
-			EventType.navigation.broadCastEventCheckTabPreload,
-			{
-				broadCastEvent: EventType.messenger.openDialog,
-				toTab: NavigationTabByComponent[componentCode],
-				data: {
-					...openDialogEvent,
+		const apiVersion = await getApiVersion();
+		if (apiVersion === 1)
+		{
+			MessengerEmitter.emit(
+				EventType.navigation.broadCastEventCheckTabPreload,
+				{
+					broadCastEvent: EventType.messenger.openDialog,
+					toTab: NavigationTabByComponent[componentCode],
+					data: {
+						...openDialogEvent,
+					},
 				},
-			},
-			ComponentCode.imNavigation,
-		);
+				ComponentCode.imNavigation,
+			);
+
+			return;
+		}
+
+		MessengerEmitter.emit(EventType.messenger.openDialog, openDialogEvent);
 	};
 
 	/**
@@ -65,7 +74,7 @@ jn.define('im/in-app-url/routes', (require, exports, module) => {
 	 * @param {string} dialogId
 	 * @param {string} context
 	 */
-	const openDialogWithBotContext = (componentCode, dialogId, context) => {
+	const openDialogWithBotContext = async (componentCode, dialogId, context) => {
 		const openDialogEvent = {
 			dialogId,
 			context: OpenDialogContextType.link,
@@ -76,17 +85,25 @@ jn.define('im/in-app-url/routes', (require, exports, module) => {
 			openDialogEvent.botContextData = context;
 		}
 
-		BX.postComponentEvent(
-			EventType.navigation.broadCastEventWithTabChange,
-			[{
-				broadCastEvent: EventType.messenger.openDialog,
-				toTab: NavigationTabByComponent[componentCode],
-				data: {
-					...openDialogEvent,
-				},
-			}],
-			ComponentCode.imNavigation,
-		);
+		const apiVersion = await getApiVersion();
+		if (apiVersion === 1)
+		{
+			BX.postComponentEvent(
+				EventType.navigation.broadCastEventWithTabChange,
+				[{
+					broadCastEvent: EventType.messenger.openDialog,
+					toTab: NavigationTabByComponent[componentCode],
+					data: {
+						...openDialogEvent,
+					},
+				}],
+				ComponentCode.imNavigation,
+			);
+
+			return;
+		}
+
+		MessengerEmitter.emit(EventType.messenger.openDialog, openDialogEvent);
 	};
 
 	/**

@@ -25,6 +25,7 @@ return [
 		'im:messenger/lib/element/recent/item/base',
 		'im:messenger/lib/element/recent/item/chat',
 		'im:messenger/lib/element/recent/item/user',
+		'im:messenger/lib/permission-manager',
 	],
 	'bundle' => [
 		'./src/item/action/action',
@@ -38,6 +39,7 @@ return [
 		'./src/item/chat/support-24-notifier',
 		'./src/item/chat/support-24-question',
 		'./src/item/chat/channel',
+		'./src/item/chat/task-comment',
 		'./src/item/user',
 		'./src/item/user/current',
 		'./src/item/user/bot',

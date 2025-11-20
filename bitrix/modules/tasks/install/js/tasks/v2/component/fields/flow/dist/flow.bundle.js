@@ -3,11 +3,11 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
-(function (exports,main_sidepanel,ui_vue3_vuex,ui_vue3_components_menu,ui_iconSet_api_vue,tasks_v2_component_fields_group,tasks_v2_provider_service_flowService,main_core,tasks_v2_lib_entitySelectorDialog,tasks_v2_core,tasks_v2_provider_service_groupService,tasks_flow_entitySelector,ui_iconSet_api_core,ui_iconSet_outline,tasks_v2_const,tasks_v2_component_elements_chip,tasks_v2_lib_fieldHighlighter,tasks_v2_provider_service_taskService) {
+(function (exports,main_sidepanel,ui_vue3_vuex,ui_vue3_components_menu,ui_iconSet_api_vue,tasks_v2_component_elements_hoverPill,tasks_v2_component_elements_fieldAdd,tasks_v2_component_fields_group,tasks_v2_provider_service_flowService,main_core,tasks_flow_entitySelector,tasks_v2_core,tasks_v2_lib_entitySelectorDialog,tasks_v2_provider_service_groupService,ui_iconSet_api_core,ui_iconSet_outline,tasks_v2_const,tasks_v2_component_elements_chip,tasks_v2_lib_fieldHighlighter,tasks_v2_provider_service_taskService) {
 	'use strict';
 
 	const flowMeta = Object.freeze({
-	  id: 'flowId',
+	  id: tasks_v2_const.TaskField.Flow,
 	  title: main_core.Loc.getMessage('TASKS_V2_FLOW_TITLE')
 	});
 
@@ -75,10 +75,6 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  onUpdateOnce(callback) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _onUpdateOnce)[_onUpdateOnce] = callback;
 	  }
-	  isOpen() {
-	    var _babelHelpers$classPr3, _babelHelpers$classPr4;
-	    return (_babelHelpers$classPr3 = (_babelHelpers$classPr4 = babelHelpers.classPrivateFieldLooseBase(this, _dialog)[_dialog]) == null ? void 0 : _babelHelpers$classPr4.isOpen()) != null ? _babelHelpers$classPr3 : false;
-	  }
 	}
 	function _createDialog2() {
 	  var _Core$getParams$right, _Core$getParams$right2;
@@ -145,7 +141,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  void tasks_v2_core.Core.getStore().dispatch(`${tasks_v2_const.Model.Flows}/insert`, flow);
 	}
 	function _updateFlow2(flowId, groupId) {
-	  var _babelHelpers$classPr5, _babelHelpers$classPr6;
+	  var _babelHelpers$classPr3, _babelHelpers$classPr4;
 	  const creatorId = tasks_v2_core.Core.getStore().getters[`${tasks_v2_const.Model.Interface}/currentUserId`];
 	  void tasks_v2_provider_service_taskService.taskService.update(babelHelpers.classPrivateFieldLooseBase(this, _taskId)[_taskId], {
 	    creatorId,
@@ -153,7 +149,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    groupId,
 	    stageId: 0
 	  });
-	  (_babelHelpers$classPr5 = (_babelHelpers$classPr6 = babelHelpers.classPrivateFieldLooseBase(this, _onUpdateOnce))[_onUpdateOnce]) == null ? void 0 : _babelHelpers$classPr5.call(_babelHelpers$classPr6);
+	  (_babelHelpers$classPr3 = (_babelHelpers$classPr4 = babelHelpers.classPrivateFieldLooseBase(this, _onUpdateOnce))[_onUpdateOnce]) == null ? void 0 : _babelHelpers$classPr3.call(_babelHelpers$classPr4);
 	  babelHelpers.classPrivateFieldLooseBase(this, _clearOnUpdateOnce)[_clearOnUpdateOnce]();
 	}
 	const flowDialog = new FlowDialog();
@@ -164,6 +160,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  components: {
 	    BIcon: ui_iconSet_api_vue.BIcon,
 	    BMenu: ui_vue3_components_menu.BMenu,
+	    HoverPill: tasks_v2_component_elements_hoverPill.HoverPill,
+	    FieldAdd: tasks_v2_component_elements_fieldAdd.FieldAdd,
 	    Stage: tasks_v2_component_fields_group.Stage
 	  },
 	  props: {
@@ -175,7 +173,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  setup() {
 	    return {
 	      flowMeta,
-	      Outline: ui_iconSet_api_core.Outline
+	      Outline: ui_iconSet_api_vue.Outline
 	    };
 	  },
 	  data() {
@@ -203,16 +201,16 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        offsetTop: 8,
 	        items: [{
 	          title: this.loc('TASKS_V2_FLOW_ABOUT'),
-	          icon: ui_iconSet_api_core.Outline.BOTTLENECK,
+	          icon: ui_iconSet_api_vue.Outline.BOTTLENECK,
 	          onClick: this.openFlow
 	        }, {
 	          title: this.loc('TASKS_V2_FLOW_CHANGE'),
-	          icon: ui_iconSet_api_core.Outline.EDIT_L,
+	          icon: ui_iconSet_api_vue.Outline.EDIT_L,
 	          onClick: this.showDialog
 	        }, {
 	          design: ui_vue3_components_menu.MenuItemDesign.Alert,
 	          title: this.loc('TASKS_V2_FLOW_DETACH'),
-	          icon: ui_iconSet_api_core.Outline.CROSS_L,
+	          icon: ui_iconSet_api_vue.Outline.CROSS_L,
 	          onClick: this.clearField
 	        }],
 	        targetContainer: document.body
@@ -237,7 +235,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    showMenu() {
 	      this.isMenuShown = true;
 	    },
-	    handleCrossClick() {
+	    handleClear() {
 	      this.clearField();
 	    },
 	    openFlow() {
@@ -257,28 +255,22 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  },
 	  template: `
 		<div
-			class="tasks-field-flow"
 			:data-task-id="taskId"
 			:data-task-field-id="flowMeta.id"
 			:data-task-field-value="task.flowId"
 		>
-			<div class="tasks-field-flow-flow" ref="container" @click="handleClick">
-				<BIcon class="tasks-field-flow-image" :name="Outline.BOTTLENECK" color="var(--ui-color-accent-main-primary)"/>
-				<template v-if="flow">
-					<div class="tasks-field-flow-title">
-						{{ flow.name }}
-					</div>
-					<BIcon
-						v-if="!isEdit"
-						class="tasks-field-flow-cross"
-						:name="Outline.CROSS_L"
-						@click.capture.stop="handleCrossClick"
-					/>
-				</template>
-				<template v-else>
-					<div class="tasks-field-flow-add-text">{{ loc('TASKS_V2_FLOW_ADD') }}</div>
-				</template>
-			</div>
+			<HoverPill
+				v-if="flow"
+				:withClear="!readonly && !isEdit"
+				@click="handleClick"
+				@clear="handleClear"
+			>
+				<div class="tasks-field-flow">
+					<BIcon :name="Outline.BOTTLENECK"/>
+					<div class="tasks-field-flow-title">{{ flow.name }}</div>
+				</div>
+			</HoverPill>
+			<FieldAdd v-else :icon="Outline.BOTTLENECK" @click="handleClick"/>
 			<Stage v-if="isEdit && flow" :taskId="taskId"/>
 		</div>
 		<BMenu v-if="isMenuShown" :options="menuOptions" @close="isMenuShown = false"/>
@@ -384,5 +376,5 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	exports.FlowChip = FlowChip;
 	exports.flowMeta = flowMeta;
 
-}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.SidePanel,BX.Vue3.Vuex,BX.UI.Vue3.Components,BX.UI.IconSet,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Provider.Service,BX,BX.Tasks.V2.Lib,BX.Tasks.V2,BX.Tasks.V2.Provider.Service,BX.Tasks.Flow,BX.UI.IconSet,BX,BX.Tasks.V2.Const,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service));
+}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.SidePanel,BX.Vue3.Vuex,BX.UI.Vue3.Components,BX.UI.IconSet,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Fields,BX.Tasks.V2.Provider.Service,BX,BX.Tasks.Flow,BX.Tasks.V2,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.UI.IconSet,BX,BX.Tasks.V2.Const,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service));
 //# sourceMappingURL=flow.bundle.js.map

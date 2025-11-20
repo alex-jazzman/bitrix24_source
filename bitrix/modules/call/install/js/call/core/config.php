@@ -6,6 +6,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main\Loader;
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Call\Settings;
 use Bitrix\Call\Integration\AI\CallAISettings;
 
@@ -79,7 +80,7 @@ return [
 				'call_features' => $features,
 				'conference_chat_enabled' => Settings::isConferenceChatEnabled(),
 				'call_use_tcp_sdp' => Settings::useTcpSdp(),
-				'user_jwt' => \Bitrix\Call\JwtCall::getUserJwt(),
+				'user_jwt' => \Bitrix\Call\JwtCall::getUserJwt((int)CurrentUser::get()->getId()),
 			],
 			'settings' => [
 				'ai' => [
@@ -92,6 +93,7 @@ return [
 					'feedBackLink' => CallAISettings::getFeedBackLink(),
 					'baasPromoSlider' => CallAISettings::getBaasSliderCode(),
 					'helpSlider' => CallAISettings::getHelpSliderCode(),
+					'disclaimerArticleCode' => CallAISettings::getDisclaimerArticleCode(),
 				],
 				'call' => [
 					'jwtCallsEnabled' => Settings::isNewCallsEnabled(),

@@ -25,6 +25,7 @@ jn.define('im/messenger/lib/ui/notification/messenger-toast', (require, exports,
 		autoDeleteActive: 'autoDeleteActive',
 		autoDeleteNotActive: 'autoDeleteNotActive',
 		messagesAutoDeleteDisabled: 'messagesAutoDeleteDisabled',
+		clearMessagesHistory: 'clearMessagesHistory',
 	};
 
 	const ToastIconName = {
@@ -82,6 +83,10 @@ jn.define('im/messenger/lib/ui/notification/messenger-toast', (require, exports,
 		get messagesAutoDeleteDisabled()
 		{
 			return Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_TOAST_MESSAGES_AUTO_DELETE_DISABLED');
+		},
+		get clearMessagesHistory()
+		{
+			return Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_TOAST_MESSAGES_CLEAR_HISTORY');
 		},
 	};
 

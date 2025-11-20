@@ -3058,7 +3058,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      node: document.querySelector('#intranet-invitation-btn'),
 	      events: {
 	        click: event => {
-	          if (!this.isCreatorEmailConfirmed && !(this.navigation.current() instanceof LinkPage)) {
+	          if (!this.isCreatorEmailConfirmed && !(this.navigation.current() instanceof LinkPage) && !(this.navigation.current() instanceof LocalEmailPage)) {
 	            this.messageBar.showError(main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_CONFIRM_CREATOR_EMAIL_ERROR'));
 	            return;
 	          }

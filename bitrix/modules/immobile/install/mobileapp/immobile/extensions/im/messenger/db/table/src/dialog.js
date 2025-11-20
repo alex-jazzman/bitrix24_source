@@ -68,6 +68,7 @@ jn.define('im/messenger/db/table/dialog', (require, exports, module) => {
 				{ name: 'textFieldEnabled', type: FieldType.boolean, defaultValue: FieldDefaultValue.trueBoolean },
 				{ name: 'backgroundId', type: FieldType.text, defaultValue: FieldDefaultValue.emptyText },
 				{ name: 'containsCollaber', type: FieldType.boolean, defaultValue: FieldDefaultValue.falseBoolean },
+				{ name: 'entityLink', type: FieldType.object, defaultValue: FieldDefaultValue.emptyObject },
 			];
 		}
 

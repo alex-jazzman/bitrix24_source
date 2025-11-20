@@ -63,6 +63,7 @@ export const DescriptionInline = {
 				onChange: this.handleEditorChange,
 			},
 		};
+
 		this.editor = new TextEditor({ ...DefaultEditorOptions, ...additionalEditorOptions });
 	},
 	mounted(): void

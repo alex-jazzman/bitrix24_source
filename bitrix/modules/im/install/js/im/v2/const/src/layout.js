@@ -11,6 +11,7 @@ export const Layout = {
 	copilot: 'copilot',
 	collab: 'collab',
 	market: 'market',
+	taskComments: 'tasksTask',
 };
 
 export type LayoutType = $Values<typeof Layout>;

@@ -14,6 +14,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/chat', (require, export
 	const { SidebarCommonChatsTab } = require('im/messenger/controller/sidebar-v2/tabs/common-chats');
 	const { SidebarMediaTab } = require('im/messenger/controller/sidebar-v2/tabs/media');
 	const { SidebarParticipantsTab } = require('im/messenger/controller/sidebar-v2/tabs/participants');
+	const { onClearHistoryChat } = require('im/messenger/controller/sidebar-v2/user-actions/chat');
 	const {
 		SidebarContextMenuActionId,
 		SidebarContextMenuActionPosition,
@@ -26,6 +27,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/chat', (require, export
 	const { onAddParticipants } = require('im/messenger/controller/sidebar-v2/user-actions/participants');
 	const {
 		createSearchButton,
+		createMuteButton,
 		createVideoCallButton,
 		createAudioCallButton,
 		createAutoDeleteButton,
@@ -82,6 +84,16 @@ jn.define('im/messenger/controller/sidebar-v2/controller/chat', (require, export
 		}
 
 		// region context menu
+
+		handleClearHistoryForMeDialogAction()
+		{
+			onClearHistoryChat({ dialogId: this.dialogId, forAll: false });
+		}
+
+		handleClearHistoryForAllDialogAction()
+		{
+			onClearHistoryChat({ dialogId: this.dialogId, forAll: true });
+		}
 
 		getHeaderContextMenuItems()
 		{
@@ -143,6 +155,8 @@ jn.define('im/messenger/controller/sidebar-v2/controller/chat', (require, export
 		 */
 		getPrimaryActionButtons()
 		{
+			const muted = this.dialogHelper.isMuted;
+
 			return [
 				createVideoCallButton({
 					onClick: () => this.handleVideoCallAction(),
@@ -154,6 +168,10 @@ jn.define('im/messenger/controller/sidebar-v2/controller/chat', (require, export
 				}),
 				createSearchButton({
 					onClick: () => this.handleSearchAction(),
+				}),
+				this.permissionManager.canMute() && createMuteButton({
+					onClick: () => this.handleToggleMuteAction(),
+					muted,
 				}),
 				createAutoDeleteButton({
 					onClick: (ref) => this.handleToggleAutoDeleteAction(ref),

@@ -9,12 +9,14 @@ jn.define('im/messenger/provider/services/read/service', (require, exports, modu
 		RestMethod,
 	} = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { runAction } = require('im/messenger/lib/rest');
+	const { runAction, callMethod } = require('im/messenger/lib/rest');
 	const { UuidManager } = require('im/messenger/lib/uuid-manager');
 	const { CounterStorageWriter } = require('im/messenger/lib/counters/counter-manager/storage/writer');
 	const { getLogger } = require('im/messenger/lib/logger');
+	const { Feature } = require('im/messenger/lib/feature');
 
 	const { ReadMessageQueue } = require('im/messenger/provider/services/read/read-message-queue');
+	const { CounterStoreWriter } = require('im/messenger/provider/services/read/store-writer');
 
 	const logger = getLogger('counters--read-message-service');
 
@@ -27,19 +29,99 @@ jn.define('im/messenger/provider/services/read/service', (require, exports, modu
 		#core = serviceLocator.get('core');
 		#queue = new ReadMessageQueue();
 		#isProcessing = false;
-		#counterStorageWriter = CounterStorageWriter.getInstance();
+		#counterStorageWriter = null;
+		#isActive = false;
 
 		constructor()
 		{
-			this.#subscribeStoreEvents();
 			this.#subscribeEvents();
 
-			this.#readMessagesFromQueue();
+			if (!Feature.isMessengerV2Enabled)
+			{
+				this.#subscribeStoreEvents();
+				this.readMessagesFromQueue().catch((error) => {
+					logger.error('initializing readMessagesFromQueue error', error);
+				});
+			}
+		}
+
+		/**
+		 * @return {CounterStorageWriter|CounterStoreWriter}
+		 */
+		get counterStorageWriter()
+		{
+			if (this.#counterStorageWriter)
+			{
+				return this.#counterStorageWriter;
+			}
+
+			if (Feature.isMessengerV2Enabled)
+			{
+				this.#counterStorageWriter = new CounterStoreWriter();
+
+				return this.#counterStorageWriter;
+			}
+			this.#counterStorageWriter = CounterStorageWriter.getInstance();
+
+			return this.#counterStorageWriter;
 		}
 
 		get className()
 		{
 			return this.constructor.name;
+		}
+
+		async readMessagesFromQueue()
+		{
+			this.enableReading();
+
+			return this.#readMessagesFromQueue(true);
+		}
+
+		async readAllMessages()
+		{
+			try
+			{
+				await this.#core.getStore().dispatch('counterModel/clear');
+
+				await callMethod('im.dialog.read.all');
+			}
+			catch (error)
+			{
+				logger.error('readAllMessages error', error);
+			}
+		}
+
+		/**
+		 * @param {number} chatId
+		 * @param {Array<number>} messageIdList
+		 * @param {number} lastReadId
+		 * @param {Array<number>} unreadMessageList
+		 * @return {Promise<void>}
+		 */
+		async readMessages({
+			chatId,
+			messageIdList,
+			lastReadId,
+			unreadMessageList = null,
+		})
+		{
+			return this.#readMessagesHandler({
+				chatId,
+				messageIdList,
+				lastReadId,
+				unreadMessageList,
+			});
+		}
+
+		disableReading()
+		{
+			this.#isActive = false;
+		}
+
+		enableReading()
+		{
+			this.#isActive = true;
 		}
 
 		#subscribeStoreEvents()
@@ -90,19 +172,34 @@ jn.define('im/messenger/provider/services/read/service', (require, exports, modu
 
 			logger.log(`${this.className}.readMessagesHandler deductibleCounter`, deductibleCounter);
 
-			this.#counterStorageWriter.decreaseCounter(chatId, deductibleCounter);
+			await this.counterStorageWriter.decreaseCounter(chatId, deductibleCounter);
 
 			await this.#queue.addMessagesToQueue({
 				messageList: messageIdList,
 				chatId,
 			});
 
-			this.#readMessagesFromQueue();
+			if (this.#isProcessing)
+			{
+				return;
+			}
+
+			this.#readMessagesFromQueue()
+				.catch((error) => {
+					logger.error('readMessagesHandler error', error);
+				});
 		};
 
-		async #readMessagesFromQueue()
+		async #readMessagesFromQueue(ignoreAppStatus = false)
 		{
 			logger.log(`${this.className}.readMessagesFromQueue`);
+			if (!this.#isActive)
+			{
+				logger.warn(`${this.className}.readMessagesFromQueue queue is not active. skip`);
+
+				return;
+			}
+
 			if (this.#isProcessing)
 			{
 				logger.warn(`${this.className}.readMessagesFromQueue read is processing. skip`);
@@ -111,7 +208,7 @@ jn.define('im/messenger/provider/services/read/service', (require, exports, modu
 			}
 			this.#isProcessing = true;
 
-			if (this.#core.getAppStatus() === AppStatus.networkWaiting)
+			if (!ignoreAppStatus && this.#core.getAppStatus() === AppStatus.networkWaiting)
 			{
 				logger.warn(`${this.className}.readMessagesFromQueue offline status. skip`);
 				this.#isProcessing = false;
@@ -148,13 +245,17 @@ jn.define('im/messenger/provider/services/read/service', (require, exports, modu
 					lastId,
 				} = result;
 
-				await this.#syncLocalCountersWithServerResponse(chatId, lastId, counter);
+				await this.#syncLocalCountersWithServerResponse(
+					chatId,
+					lastId,
+					counter,
+					messageChunkToRead.hasMoreForChat,
+				);
 
 				await this.#queue.deleteMessages(messageChunkToRead);
 			}
 			catch (readMessagesError)
 			{
-				logger.error(`${this.className}.readMessagesFromQueue readMessageOnServer error`, readMessagesError);
 				if (!Type.isArray(readMessagesError))
 				{
 					// eslint-disable-next-line no-ex-assign
@@ -165,11 +266,11 @@ jn.define('im/messenger/provider/services/read/service', (require, exports, modu
 			finally
 			{
 				this.#isProcessing = false;
-				void this.#readMessagesFromQueue();
+				void this.#readMessagesFromQueue(ignoreAppStatus);
 			}
 		}
 
-		async #syncLocalCountersWithServerResponse(chatId, lastId, counter)
+		async #syncLocalCountersWithServerResponse(chatId, lastId, counter, locked)
 		{
 			const counterState = await this.#getCounterState(chatId);
 			if (!Type.isPlainObject(counterState))
@@ -177,11 +278,12 @@ jn.define('im/messenger/provider/services/read/service', (require, exports, modu
 				return;
 			}
 
-			if (counter !== counterState.counter)
+			if (counter !== counterState.counter || !locked)
 			{
-				this.#counterStorageWriter.set({
+				await this.counterStorageWriter.set({
 					...counterState,
 					counter,
+					locked,
 				});
 			}
 		}
@@ -210,7 +312,7 @@ jn.define('im/messenger/provider/services/read/service', (require, exports, modu
 		 */
 		async #getCounterState(chatId)
 		{
-			return (await this.#counterStorageWriter.getCollection()).findById(chatId);
+			return this.counterStorageWriter.findById(chatId);
 		}
 	}
 

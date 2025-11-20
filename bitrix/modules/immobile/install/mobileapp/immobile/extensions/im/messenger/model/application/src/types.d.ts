@@ -20,6 +20,13 @@ export type ApplicationModelState = {
 	},
 }
 
+export type AppStatusType =
+	'networkWaiting' |
+	'connection' |
+	'sync' |
+	'backgroundSync' |
+	'running';
+
 export type AudioRate = 1.0 | 1.5 | 2.0;
 
 export type ApplicationModelActions =
@@ -35,6 +42,7 @@ export type ApplicationModelMutation =
 	| 'applicationModel/setSettings'
 
 export type ApplicationSetStatusActions = 'setStatus';
+
 export interface ApplicationSetStatusData extends PayloadData
 {
 	status: {
@@ -44,18 +52,21 @@ export interface ApplicationSetStatusData extends PayloadData
 }
 
 export type ApplicationSetSettingsActions = 'setSettings';
+
 export interface ApplicationSetSettingsData extends PayloadData
 {
 	audioRate: string,
 }
 
 export type ApplicationOpenDialogIdActions = 'openDialogId';
+
 export interface ApplicationOpenDialogIdData extends PayloadData
 {
 	dialogId: DialogId;
 }
 
 export type ApplicationCloseDialogIdActions = 'closeDialogId';
+
 export interface ApplicationCloseDialogIdData extends PayloadData
 {
 	dialogId: DialogId;

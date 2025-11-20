@@ -24,7 +24,7 @@ jn.define('im/messenger/lib/promotion', (require, exports, module) => {
 			this.promoCollection = this.buildPromoCollection();
 			this.activePromoList = [];
 			this.currentActivePromo = '';
-			this.messagerInitService = serviceLocator.get('messenger-init-service');
+			this.messengerInitService = serviceLocator.get('messenger-init-service');
 			this.subscribeEvents();
 		}
 
@@ -68,7 +68,7 @@ jn.define('im/messenger/lib/promotion', (require, exports, module) => {
 
 		subscribeInitMessengerEvent()
 		{
-			this.messagerInitService.onInit(this.handlePromotionGet);
+			this.messengerInitService.onInit(this.handlePromotionGet);
 		}
 
 		subscribeNavigationEvents()

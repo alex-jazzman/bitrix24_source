@@ -5,6 +5,7 @@ jn.define('im/messenger/lib/quick-recent-load', (require, exports, module) => {
 	/* global dialogList */
 	const { RecentViewCache } = require('im/messenger/cache');
 	const { getLogger } = require('im/messenger/lib/logger');
+	const { MessengerParams } = require('im/messenger/lib/params');
 	const logger = getLogger('recent--quick-load');
 
 	/**
@@ -12,25 +13,34 @@ jn.define('im/messenger/lib/quick-recent-load', (require, exports, module) => {
 	 */
 	class QuickRecentLoader
 	{
-		constructor()
+		#ui = null;
+
+		constructor(ui, cacheName = this.getCacheName())
 		{
+			this.#ui = ui;
+
 			/** @typedef {RecentViewCache}  */
-			this.cache = new RecentViewCache();
+			this.cache = new RecentViewCache(cacheName);
+		}
+
+		getCacheName()
+		{
+			return `${MessengerParams.getComponentCode() || 'im.messenger'}/recent`;
 		}
 
 		/**
 		 * @void
 		 */
-		static renderItemsOnViewLoaded()
+		static renderItemsOnViewLoaded(ui)
 		{
 			logger.warn('QuickRecentLoader.renderCachedItems');
 
-			new QuickRecentLoader().renderWhenViewIsReady();
+			new QuickRecentLoader(ui).renderWhenViewIsReady();
 		}
 
 		/**
 		 * @param {Array<JNListWidgetSectionItem>} sections
-		 * @param {Array<RecentWidgetItem>} items
+		 * @param {Array<RecentWidgetItem|RecentItem>} items
 		 */
 		saveCache(sections, items)
 		{
@@ -53,14 +63,19 @@ jn.define('im/messenger/lib/quick-recent-load', (require, exports, module) => {
 		}
 
 		/**
-		 * @param {RecentViewCacheData} cacheData
+		 * @param {RecentViewCacheData|boolean} [cacheData]
 		 * @void
 		 */
-		renderCachedItems(cacheData)
+		renderCachedItems(cacheData = this.cache.get())
 		{
+			if (!cacheData)
+			{
+				return;
+			}
+
 			try
 			{
-				dialogList.setItems(cacheData.items, cacheData.sections);
+				this.#ui.setItems(cacheData.items, cacheData.sections);
 				logger.log(`${this.constructor.name}.renderCachedItems dialogList.setItems:`, cacheData.items, cacheData.sections);
 			}
 			catch (error)

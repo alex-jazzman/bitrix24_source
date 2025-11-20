@@ -6,6 +6,7 @@ if (class_exists("im"))
 }
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ModuleManager;
 
 class im extends \CModule
 {
@@ -405,14 +406,25 @@ class im extends \CModule
 		return $defaultGroupId;
 	}
 
-	function DoUninstall()
+	public function DoUninstall(): void
 	{
 		global $APPLICATION;
 
 		$step = (int)($_REQUEST['step'] ?? 1);
+
+		$dependencyErrors = $this->checkUninstallDependencies();
+		if (!empty($dependencyErrors))
+		{
+			$APPLICATION->ThrowException(Loc::getMessage('IM_MODULE_UNINSTALL_ERROR_UNINSTALL_DEPENDENCIES', [
+				'#MODULES#' => implode(', ', $dependencyErrors),
+			]));
+
+			$this->showUninstallUnstep(1);
+		}
+
 		if ($step < 2)
 		{
-			$APPLICATION->IncludeAdminFile(Loc::getMessage("IM_UNINSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/im/install/unstep1.php");
+			$this->showUninstallUnstep(1);
 		}
 		elseif ($step == 2)
 		{
@@ -425,7 +437,7 @@ class im extends \CModule
 
 			$this->UnInstallFiles();
 
-			$APPLICATION->IncludeAdminFile(Loc::getMessage("IM_UNINSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/im/install/unstep2.php");
+			$this->showUninstallUnstep(2);
 		}
 	}
 
@@ -624,5 +636,25 @@ class im extends \CModule
 				),
 			),
 		);
+	}
+
+	private function showUninstallUnstep(int $unstep): void
+	{
+		global $APPLICATION;
+
+		$APPLICATION->IncludeAdminFile(
+			Loc::getMessage("IM_UNINSTALL_TITLE"),
+			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/' . $this->MODULE_ID . "/install/unstep{$unstep}.php"
+		);
+	}
+
+	private function checkUninstallDependencies(): array
+	{
+		if (ModuleManager::isModuleInstalled('tasks'))
+		{
+			return ['tasks'];
+		}
+
+		return [];
 	}
 }

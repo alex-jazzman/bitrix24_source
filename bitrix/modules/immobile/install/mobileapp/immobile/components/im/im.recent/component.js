@@ -12,7 +12,7 @@ var { Theme } = jn.require('im/lib/theme');
 var { Feature } = jn.require('im/messenger/lib/feature');
 var { getTopMenuNotificationsButton: _getTopMenuNotificationsButton } = jn.require('im/messenger/api/notifications-opener');
 
-var REVISION = 20; // api revision - sync with im/lib/revision.php
+var REVISION = 21; // api revision - sync with im/lib/revision.php
 
 /* Clean session variables after page restart */
 BX.message.LIMIT_ONLINE = BX.componentParameters.get('LIMIT_ONLINE', 1380);

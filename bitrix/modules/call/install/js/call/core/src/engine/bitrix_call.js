@@ -856,13 +856,14 @@ export class BitrixCall extends AbstractCall
 			callUuid: this.uuid,
 			callInstanceId: this.instanceId,
 		};
+
 		if (code)
 		{
-			data.code = code
+			data.code = code;
 		}
 
-		CallEngine.getRestClient().callMethod(ajaxActions.decline, data);
-	};
+		BX.ajax.runAction(ajaxActions.decline, { data });
+	}
 
 	hangup(code, reason, finishCall = false)
 	{
@@ -1030,7 +1031,7 @@ export class BitrixCall extends AbstractCall
 
 		this.BitrixCall.on('Failed', this.#onCallDisconnected);
 
-		this.signaling.sendCameraState(Hardware.isCameraOn);
+		//this.signaling.sendCameraState(Hardware.isCameraOn);
 
 		if (!this.BitrixCall.isAudioPublished())
 		{
@@ -1364,6 +1365,11 @@ export class BitrixCall extends AbstractCall
 		const callInstanceId = params.callInstanceId;
 		const peer = this.peers[senderId];
 
+		if (params.code === 603)
+		{
+			this.runCallback(CallEvent.onUserStateChanged, { userId: senderId, callId: params.callId, state: UserState.Declined });
+		}
+
 		if (this.userId === senderId && callInstanceId && this.instanceId !== callInstanceId)
 		{
 			// Call declined by the same user elsewhere
@@ -1553,16 +1559,6 @@ export class BitrixCall extends AbstractCall
 	#onGetUserMediaStarted = (options) =>
 	{
 		this.getUserMediaFulfilled = false;
-
-		if (options.video)
-		{
-			this.signaling.sendCameraState(false);
-		}
-
-		if (options.audio)
-		{
-			this.signaling.sendMicrophoneState(false);
-		}
 	};
 
 	#onGetUserMediaSuccess = (options) =>
@@ -1916,7 +1912,7 @@ export class BitrixCall extends AbstractCall
 		}
 		this.BitrixCall.enableAudio(Hardware.isMicrophoneMuted);
 
-		this.signaling.sendCameraState(Hardware.isCameraOn);
+		//this.signaling.sendCameraState(Hardware.isCameraOn);
 		if (Hardware.isCameraOn)
 		{
 			if (!this.BitrixCall.isVideoPublished())
@@ -2520,8 +2516,9 @@ class Signaling
 		data.callUuid = this.call.uuid;
 		data.callInstanceId = this.call.instanceId;
 		data.requestId = Util.getUuidv4();
-		return CallEngine.getRestClient().callMethod(signalName, data);
-	};
+
+		return BX.ajax.runAction(signalName, { data });
+	}
 }
 
 class Peer

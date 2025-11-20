@@ -107,7 +107,7 @@ jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, e
 		setPermissions()
 		{
 			this.permissions = {
-				update: ChatPermission.сanUpdateDialogByRole(this.dialogModel),
+				update: ChatPermission.canUpdateDialogByRole(this.dialogModel),
 			};
 		}
 
@@ -499,7 +499,13 @@ jn.define('im/messenger/controller/chat-composer/update/group-chat', (require, e
 		onChangeDialogType(isSetOpenEntityType)
 		{
 			const searchable = isSetOpenEntityType ? 'Y' : 'N';
-			this.restChatUpdate({ searchable })
+			const { permissions } = this.dialogModel;
+			this.restChatUpdate({
+				searchable,
+				manageUsersAdd: permissions.manageUsersAdd,
+				manageUsersDelete: permissions.manageUsersDelete,
+				manageMessages: permissions.manageMessages,
+			})
 				.then(async (result) => {
 					if (result !== true)
 					{

@@ -5,14 +5,12 @@ import { EntityTypes } from 'humanresources.company-structure.utils';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 import { UI } from 'ui.notification';
 import { ButtonColor } from 'ui.buttons';
-import { DepartmentContentActions } from '../../../../department-content/src/actions';
 import { DepartmentAPI } from '../../../../department-content/src/api';
-import { UserManagementDialogActions } from '../../../../user-management-dialog/src/actions';
 import { UrlProvidedParamsService } from '../../classes/url-provided-params-service';
 import { TreeNode } from './tree-node/tree-node';
 import { Connectors } from './connectors';
 import { DragAndDrop } from './directives/drag-and-drop';
-import { useChartStore } from 'humanresources.company-structure.chart-store';
+import { useChartStore, UserService } from 'humanresources.company-structure.chart-store';
 import { MoveEmployeeConfirmationPopup, ConfirmationPopup } from 'humanresources.company-structure.structure-components';
 import { mapState } from 'ui.vue3.pinia';
 import { EventEmitter, type BaseEvent } from 'main.core.events';
@@ -71,7 +69,11 @@ export const Tree = {
 
 	computed:
 	{
-		entityType(): string
+		dndTargetEntityType(): string
+		{
+			return this.targetDepartment.entityType || '';
+		},
+		dndSourceEntityType(): string
 		{
 			return this.departments.get(this.focusedNode)?.entityType || '';
 		},
@@ -87,16 +89,29 @@ export const Tree = {
 		{
 			return this.$refs.connectors;
 		},
+		targetDepartment(): ?Object
+		{
+			if (!this.dndUserMoveContext?.targetDepartmentId)
+			{
+				return null;
+			}
+
+			return this.departments.get(this.dndUserMoveContext.targetDepartmentId);
+		},
+		isTeamTarget(): string
+		{
+			return this.targetDepartment?.entityType === EntityTypes.team;
+		},
 		dndPopupDescription(): string
 		{
-			const targetDepartment = this.departments.get(this.dndUserMoveContext.targetDepartmentId);
-			const phrase = targetDepartment.entityType === EntityTypes.team ? 'HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_DESC_TEAM'
-				: 'HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_DESC_DEPARTMENT'
+			const phrase = this.isTeamTarget
+				? 'HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_DESC_ROLE_TEAM'
+				: 'HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_DESC_ROLE_DEPARTMENT'
 			;
 
 			return Loc.getMessage(phrase, {
 				'#USER_NAME#': Text.encode(this.dndUserMoveContext.user.name),
-				'#DEPARTMENT_NAME#': Text.encode(targetDepartment.name),
+				'#DEPARTMENT_NAME#': Text.encode(this.targetDepartment.name),
 				'[link]': `<a class="hr-department-detail-content__move-user-department-user-link" href="${this.dndUserMoveContext.user.url}">`,
 				'[/link]': '</a>',
 			});
@@ -315,8 +330,10 @@ export const Tree = {
 				deepCollapse(expandedNode);
 			}
 		},
-		expand(departmentId: number): void
+		expand(departmentId: number, options: { isManual?: boolean } = {}): void
 		{
+			const { isManual = false } = options;
+
 			this.collapseRecursively(departmentId);
 			this.expandedNodes = [...this.expandedNodes, departmentId];
 			this.connectors.toggleConnectorsVisibility(departmentId, true);
@@ -330,7 +347,10 @@ export const Tree = {
 				this.loadHeads(childrenWithoutHeads);
 			}
 
-			analyticsSendData({ tool: 'structure', category: 'structure', event: 'expand_department' });
+			if (isManual)
+			{
+				analyticsSendData({ tool: 'structure', category: 'structure', event: 'expand_department' });
+			}
 		},
 		focus(nodeId: number, options: Object = {}): void
 		{
@@ -350,7 +370,7 @@ export const Tree = {
 
 			if (hasChildren && shouldExpand)
 			{
-				this.expand(nodeId);
+				this.expand(nodeId, { isManual: true });
 			}
 
 			if (this.focusedNode && !this.expandedNodes.includes(this.focusedNode))
@@ -426,6 +446,9 @@ export const Tree = {
 		},
 		async removeDepartment(nodeId: number): Promise<void>
 		{
+			const store = useChartStore();
+			store.updateChatsInChildrenNodes(nodeId);
+
 			await chartAPI.removeDepartment(nodeId);
 			const removableDepartment = this.departments.get(nodeId);
 			const { parentId, children: removableDepartmentChildren = [] } = removableDepartment;
@@ -591,10 +614,7 @@ export const Tree = {
 			const hoveredNodeId = data.nodeId;
 			const sourceDepartmentId = this.focusedNode;
 
-			const hoveredNode = this.departments.get(hoveredNodeId);
-			const sourceNode = this.departments.get(sourceDepartmentId);
-
-			if (sourceNode.entityType !== hoveredNode.entityType || hoveredNodeId === sourceDepartmentId)
+			if (hoveredNodeId === sourceDepartmentId)
 			{
 				this.userDropTargetNodeId = hoveredNodeId;
 				this.isUserDropAllowed = false;
@@ -644,17 +664,16 @@ export const Tree = {
 		}): Promise<void>
 		{
 			this.showDndConfirmationPopup = false;
-			const { user, targetDepartmentId } = this.dndUserMoveContext;
+			const { user } = this.dndUserMoveContext;
 
-			const targetDepartment = this.departments.get(targetDepartmentId);
-			const userInTarget = (targetDepartment.heads ?? []).find((u) => u.id === user.id)
-				|| (targetDepartment.employees ?? []).find((u) => u.id === user.id);
+			const userInTarget = (this.targetDepartment?.heads ?? []).find((u) => u.id === user.id)
+				|| (this.targetDepartment?.employees ?? []).find((u) => u.id === user.id);
 			const isAlreadyInTarget = Boolean(userInTarget);
 			const isRoleTheSame = isAlreadyInTarget && (userInTarget.role === payload.role);
 
 			if (isAlreadyInTarget && isRoleTheSame)
 			{
-				this.displayDndErrorPopup(user, targetDepartmentId);
+				this.displayDndErrorPopup(user);
 				this.dndUserMoveContext = null;
 
 				return;
@@ -671,13 +690,14 @@ export const Tree = {
 					await this.handleMoveUser(this.dndUserMoveContext, payload, isAlreadyInTarget);
 				}
 
-				const phrase = targetDepartment.entityType === EntityTypes.team ? 'HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_MOVED_SUCCESS_TEAM'
+				const phrase = this.isTeamTarget
+					? 'HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_MOVED_SUCCESS_TEAM'
 					: 'HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_MOVED_SUCCESS_DEPARTMENT'
 				;
 				UI.Notification.Center.notify({
 					content: this.loc(phrase, {
 						'#USER_NAME#': Text.encode(user.name),
-						'#DEPARTMENT_NAME#': Text.encode(targetDepartment.name),
+						'#DEPARTMENT_NAME#': Text.encode(this.targetDepartment?.name),
 						'#USER_ROLE#': Text.encode(payload.roleLabel),
 					}),
 				});
@@ -694,7 +714,7 @@ export const Tree = {
 			const { user, targetDepartmentId } = dndContext;
 			const data = await UserManagementDialogAPI.addUsersToDepartment(targetDepartmentId, [user.id], payload.role);
 
-			UserManagementDialogActions.addUsersToDepartment(
+			UserService.addUsersToEntity(
 				targetDepartmentId,
 				[{ ...user, role: payload.role, badgeText: payload.badgeText ?? null }],
 				data.userCount,
@@ -722,24 +742,23 @@ export const Tree = {
 			}
 
 			const finalUserCount = targetDepartment.userCount + (isAlreadyInTarget ? 0 : 1);
-
-			DepartmentContentActions.removeUserFromDepartment(sourceDepartmentId, user.id, sourceRole);
-			UserManagementDialogActions.addUsersToDepartment(
+			UserService.removeUserFromEntity(sourceDepartmentId, user.id, sourceRole);
+			UserService.addUsersToEntity(
 				targetDepartmentId,
 				[{ ...user, role: payload.role, badgeText: payload.badgeText ?? null }],
 				finalUserCount,
 				payload.role,
 			);
 		},
-		displayDndErrorPopup(user, targetDepartmentId: number): void
+		displayDndErrorPopup(user): void
 		{
-			const targetDepartment = this.departments.get(targetDepartmentId);
-			const phrase = targetDepartment.entityType === EntityTypes.team ? 'HUMANRESOURCES_COMPANY_STRUCTURE_DND_ERROR_POPUP_DESC_TEAM'
+			const phrase = this.isTeamTarget
+				? 'HUMANRESOURCES_COMPANY_STRUCTURE_DND_ERROR_POPUP_DESC_TEAM'
 				: 'HUMANRESOURCES_COMPANY_STRUCTURE_DND_ERROR_POPUP_DESC_DEPARTMENT'
 			;
 			this.dndErrorPopupDescription = Loc.getMessage(phrase, {
 				'#USER_NAME#': Text.encode(user.name),
-				'#DEPARTMENT_NAME#': Text.encode(targetDepartment.name),
+				'#DEPARTMENT_NAME#': Text.encode(this.targetDepartment?.name),
 				'[link]': `<a class="hr-department-detail-content__move-user-department-user-link" href="${user.url}">`,
 				'[/link]': '</a>',
 			});
@@ -771,35 +790,42 @@ export const Tree = {
 		canMoveUser(sourceDepartmentId: number, targetDepartmentId: number): { isAllowed: boolean; combineOnly: boolean }
 		{
 			const permissionChecker = PermissionChecker.getInstance();
-			const sourceDepartmentData = this.departments.get(sourceDepartmentId);
-			const hoveredNodeData = this.departments.get(targetDepartmentId);
+			const source = this.departments.get(sourceDepartmentId);
+			const target = this.departments.get(targetDepartmentId);
 
-			if (!sourceDepartmentData || !hoveredNodeData)
+			if (!source || !target)
 			{
-				return { isAllowed: false, forceCombine: false };
+				return { isAllowed: false, combineOnly: false };
 			}
 
-			const sourcePermissionAction = sourceDepartmentData.entityType === EntityTypes.team
+			const isTeamToDept = source.entityType === EntityTypes.team && target.entityType === EntityTypes.department;
+			if (isTeamToDept)
+			{
+				return { isAllowed: false, combineOnly: false };
+			}
+
+			const sourcePermission = source.entityType === EntityTypes.team
 				? PermissionActions.teamRemoveMember
 				: PermissionActions.employeeRemoveFromDepartment;
-			const canTakeFromSource = permissionChecker.hasPermission(sourcePermissionAction, sourceDepartmentId);
+			const canTakeFromSource = permissionChecker.hasPermission(sourcePermission, sourceDepartmentId);
 
-			const targetPermissionAction = hoveredNodeData.entityType === EntityTypes.team
+			const targetPermission = this.isTeamTarget
 				? PermissionActions.teamAddMember
 				: PermissionActions.employeeAddToDepartment;
-			const canPutToTarget = permissionChecker.hasPermission(targetPermissionAction, targetDepartmentId);
+			const canPutToTarget = permissionChecker.hasPermission(targetPermission, targetDepartmentId);
 
-			if (canTakeFromSource && canPutToTarget)
+			if (!canPutToTarget)
 			{
-				return { isAllowed: true, combineOnly: false };
+				return { isAllowed: false, combineOnly: false };
 			}
 
-			if (!canTakeFromSource && canPutToTarget)
+			const isDeptToTeam = source.entityType === EntityTypes.department && target.entityType === EntityTypes.team;
+			if (isDeptToTeam)
 			{
 				return { isAllowed: true, combineOnly: true };
 			}
 
-			return { isAllowed: false, combineOnly: false };
+			return { isAllowed: true, combineOnly: !canTakeFromSource };
 		},
 	},
 
@@ -831,7 +857,8 @@ export const Tree = {
 				:showRoleSelect="true"
 				:showCombineCheckbox="true"
 				:isCombineOnly="isCombineOnly"
-				:entityType="entityType"
+				:targetType="dndTargetEntityType"
+				:sourceType="dndSourceEntityType"
 				@confirm="confirmUserMove"
 				@close="cancelUserMove"
 			/>

@@ -52,6 +52,10 @@ export type DialoguesModelState = {
 	owner: number,
 	entityType: string,
 	entityId: string,
+	entityLink: {
+		type?: string,
+		url?: string,
+	},
 	dateCreate: Date | null,
 	public: {
 		code: string,
@@ -95,7 +99,12 @@ export type LastMessageViews = {
 export type InputActionNotify = {
 	userId: number
 	userFirstName: string
-	actions: InputActionNotifyType[]
+	action: InputAction
+}
+
+export type InputAction = {
+	type: InputActionNotifyType,
+	statusMessageCode: string | null,
 }
 
 export type InputActionNotifyType = 'writing' | 'recordingVoice' | 'sendingPhoto' | 'sendingFile'

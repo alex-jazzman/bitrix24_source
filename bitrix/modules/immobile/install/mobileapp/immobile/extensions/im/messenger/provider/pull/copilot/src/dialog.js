@@ -6,8 +6,8 @@
 jn.define('im/messenger/provider/pull/copilot/dialog', (require, exports, module) => {
 	const { ChatDialogPullHandler } = require('im/messenger/provider/pull/chat/dialog');
 	const { getLogger } = require('im/messenger/lib/logger');
-	const { TabCounters } = require('im/messenger/lib/counters/tab-counters');
 	const { DialogHelper } = require('im/messenger/lib/helper');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
 	const logger = getLogger('pull-handler--copilot-dialog');
 
@@ -37,16 +37,6 @@ jn.define('im/messenger/provider/pull/copilot/dialog', (require, exports, module
 		{
 			logger.info(`${this.getClassName()}.handleChatChangeColor and nothing happened`, params);
 			// TODO change color action is not available now for copilot chat
-		}
-
-		/**
-		 * @override
-		 * @param {String} dialogId
-		 * @void
-		 */
-		deleteCounters(dialogId)
-		{
-			delete TabCounters.copilotCounter.detail[dialogId];
 		}
 
 		/**

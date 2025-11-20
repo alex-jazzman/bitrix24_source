@@ -2,7 +2,6 @@
 $MESS["TASKS_V2_GROUP_ABOUT"] = "Open project";
 $MESS["TASKS_V2_GROUP_ABOUT_COLLAB"] = "Open collab";
 $MESS["TASKS_V2_GROUP_ABOUT_SCRUM"] = "Open scrum";
-$MESS["TASKS_V2_GROUP_ADD"] = "Add";
 $MESS["TASKS_V2_GROUP_CANT_CHANGE_FLOW"] = "Cannot change project for tasks associated with a flow. Remove the task from the flow before changing the project.";
 $MESS["TASKS_V2_GROUP_CHANGE"] = "Change";
 $MESS["TASKS_V2_GROUP_CLEAR"] = "Detach";

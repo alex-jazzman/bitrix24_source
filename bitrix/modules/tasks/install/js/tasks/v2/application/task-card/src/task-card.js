@@ -7,9 +7,13 @@ export { FullSkeleton };
 export type Params = {
 	taskId?: number,
 	groupId?: number,
+	parentId?: number,
+	relatedToTaskId?: number,
 	deadlineTs?: number,
+	title?: string,
 	description?: string,
 	auditorsIds?: Array,
+	widthOffset?: number,
 	analytics: AnalyticsParams,
 	source?: Source,
 };
@@ -70,7 +74,7 @@ export class TaskCard
 		let card;
 		BX.SidePanel.Instance.open(`tasks-full-card-${params.taskId}`, {
 			contentClassName: 'tasks-full-card-slider-content',
-			width: 1510,
+			width: 1510 - (params.widthOffset || 0),
 			customLeftBoundary: 0,
 			cacheable: false,
 			contentCallback: (slider: Slider): void => {

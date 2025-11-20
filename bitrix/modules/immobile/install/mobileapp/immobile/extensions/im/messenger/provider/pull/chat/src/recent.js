@@ -25,7 +25,7 @@ jn.define('im/messenger/provider/pull/chat/recent', (require, exports, module) =
 		 */
 		handleRecentUpdate(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
@@ -66,7 +66,7 @@ jn.define('im/messenger/provider/pull/chat/recent', (require, exports, module) =
 		 */
 		async handleUserShowInRecent(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}

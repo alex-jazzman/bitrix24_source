@@ -1,5 +1,5 @@
-import {AvatarDetail} from "../../../lib/element/types/chat-avatar";
-import {RecentWidgetItemAction} from "../../../lib/element/types/dialog/recent/base";
+import {AvatarDetail} from "../../../lib/element/chat-avatar/chat-avatar";
+import {RecentWidgetItemAction} from "../../../lib/element/recent/types/base";
 
 export type RecentWidgetItem = {
 	actions: Array<RecentWidgetItemAction>,
@@ -13,7 +13,7 @@ export type RecentWidgetItem = {
 	isSuperEllipseIcon: boolean,
 	menuMode: string,
 	messageCount: number,
-	params: { options: object, id: string, useLetterImage: boolean },
+	params: { options: object, id: string, useLetterImage: boolean, disableTap?: boolean },
 	sectionCode: string,
 	sortValues: { order: number },
 	styles: RecentWidgetItemStyles,

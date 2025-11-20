@@ -5,6 +5,7 @@ import { MessageBar } from './message-bar';
 import { Navigation } from './navigation';
 import { PageProvider } from './page-provider';
 import { LinkPage } from './page/link-page';
+import { LocalEmailPage } from './page/local-email-page';
 import { SubmitButton } from './submit-button';
 import { EventEmitter, BaseEvent } from 'main.core.events';
 import { ActiveDirectory } from './active-directory';
@@ -62,7 +63,11 @@ export default class Form extends EventEmitter
 			node: document.querySelector('#intranet-invitation-btn'),
 			events: {
 				click: (event) => {
-					if (!this.isCreatorEmailConfirmed && !(this.navigation.current() instanceof LinkPage))
+					if (
+						!this.isCreatorEmailConfirmed
+						&& !(this.navigation.current() instanceof LinkPage)
+						&& !(this.navigation.current() instanceof LocalEmailPage)
+					)
 					{
 						this.messageBar.showError(Loc.getMessage('INTRANET_INVITE_DIALOG_CONFIRM_CREATOR_EMAIL_ERROR'));
 

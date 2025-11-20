@@ -1,4 +1,4 @@
-export type ChatOrChannelDetailed = {
+export type CommunicationDetailed = {
 	id: number,
 	avatar: string,
 	color: string,
@@ -12,9 +12,10 @@ export type ChatOrChannelDetailed = {
 };
 
 export type ChatListResponse = {
-	channels: ChatOrChannelDetailed[],
-	chats: ChatOrChannelDetailed[],
-	collabs: ChatOrChannelDetailed[],
+	channels: CommunicationDetailed[],
+	chats: CommunicationDetailed[],
+	collabs: CommunicationDetailed[],
 	channelsNoAccess: number,
 	chatsNoAccess: number,
+	collabsNoAccess: number,
 }

@@ -57,8 +57,16 @@ export type ChatHeaderIntegrationConfig = {
 	},
 };
 
+export type SidebarHeaderIntegrationConfigParams = {
+	addParticipantsEnabled?: boolean,
+	headerContextMenuItems?: string[],
+	primaryActionButtons?: string[],
+	avatarProps?: AvatarBaseProps,
+};
+
 export type SidebarHeaderIntegrationConfig = {
-	enabled: false,
+	enabled: boolean,
+	params?: SidebarHeaderIntegrationConfigParams
 };
 
 export type MessageIntegrationConfig = {

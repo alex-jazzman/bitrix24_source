@@ -1,6 +1,6 @@
 <?php
 $MESS["M_PROFILE_ABOUT_ME_EDIT_MODE_TITLE"] = "ABOUT ME";
-$MESS["M_PROFILE_ABOUT_ME_PLACEHOLDER"] = "Complete";
+$MESS["M_PROFILE_ABOUT_ME_PLACEHOLDER"] = "Tell about yourself";
 $MESS["M_PROFILE_ABOUT_ME_TITLE"] = "About me";
 $MESS["M_PROFILE_AVATAR_CHOOSE_ERROR_TEXT"] = "Try another file. If the problem persists, contact your Bitrix24 administrator.";
 $MESS["M_PROFILE_AVATAR_CHOOSE_ERROR_TITLE"] = "Could not upload image";

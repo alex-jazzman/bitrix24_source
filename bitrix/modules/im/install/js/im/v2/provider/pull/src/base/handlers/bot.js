@@ -2,6 +2,7 @@ import { Core } from 'im.v2.application.core';
 import { UserManager } from 'im.v2.lib.user';
 import { Logger } from 'im.v2.lib.logger';
 
+import type { Store } from 'ui.vue3.vuex';
 import type { BotAddParams, BotUpdateParams } from '../../types/bot';
 
 export class BotPullHandler

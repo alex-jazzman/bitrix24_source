@@ -16,6 +16,9 @@ type ActionPayload = {
 	dialogId: string,
 	userId: number,
 	userName?: string,
+	statusMessageCode: string | null,
+	userFirstName: string,
+	duration: number | null,
 };
 
 const DEFAULT_ACTION_DURATION = 25000;
@@ -50,34 +53,27 @@ export class InputActionListener
 
 	startAction(actionPayload: ActionPayload)
 	{
-		const timerId = this.#buildTimerId(actionPayload);
-
 		if (this.#isAlreadyActive(actionPayload))
 		{
-			this.#clearTimer(timerId);
-			this.#actionTimers[timerId] = this.#setTimer(actionPayload);
-
-			return;
+			this.stopAction(actionPayload);
 		}
 
-		Core.getStore().dispatch('chats/inputActions/start', actionPayload);
-
+		void Core.getStore().dispatch('chats/inputActions/start', actionPayload);
+		const timerId = this.#buildTimerId(actionPayload);
 		this.#actionTimers[timerId] = this.#setTimer(actionPayload);
 	}
 
-	stopAction(actionPayload: ActionPayload)
+	stopAction(actionPayload: { userId: number, dialogId: string })
 	{
 		if (!this.#isAlreadyActive(actionPayload))
 		{
 			return;
 		}
 
-		Core.getStore().dispatch('chats/inputActions/stop', actionPayload);
-	}
+		const timerId = this.#buildTimerId(actionPayload);
+		this.#clearTimer(timerId);
 
-	stopUserActionsInChat(payload: { userId: number, dialogId: string })
-	{
-		Core.getStore().dispatch('chats/inputActions/stopUserActionsInChat', payload);
+		void Core.getStore().dispatch('chats/inputActions/stop', actionPayload);
 	}
 
 	clear()
@@ -90,26 +86,19 @@ export class InputActionListener
 
 	#isAlreadyActive(payload: ActionPayload): boolean
 	{
-		const { type, dialogId, userId } = payload;
-
-		return Core.getStore().getters['chats/inputActions/isActionActive']({
-			type,
-			dialogId,
-			userId,
-		});
+		return Core.getStore().getters['chats/inputActions/isActionActive'](payload);
 	}
 
 	#buildTimerId(payload: ActionPayload): string
 	{
-		const { type, dialogId, userId } = payload;
+		const { dialogId, userId } = payload;
 
-		return `${type}|${dialogId}|${userId}`;
+		return `${dialogId}|${userId}`;
 	}
 
 	#setTimer(payload: ActionPayload): number
 	{
-		const { type, dialogId } = payload;
-		const actionDuration = this.#getActionDuration(type, dialogId);
+		const actionDuration = this.#getActionDuration(payload);
 
 		return setTimeout(() => {
 			this.stopAction(payload);
@@ -122,8 +111,14 @@ export class InputActionListener
 		delete this.#actionTimers[timerId];
 	}
 
-	#getActionDuration(type: InputActionType, dialogId: string): number
+	#getActionDuration(payload: ActionPayload): number
 	{
+		const { type, dialogId, duration } = payload;
+		if (duration && duration > 0)
+		{
+			return duration;
+		}
+
 		const typeDurationMap = ActionDurationMap[type];
 		const chat: ImModelChat = Core.getStore().getters['chats/get'](dialogId, true);
 

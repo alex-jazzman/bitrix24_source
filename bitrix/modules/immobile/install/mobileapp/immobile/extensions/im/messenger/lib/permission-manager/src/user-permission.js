@@ -75,7 +75,7 @@ jn.define('im/messenger/lib/permission-manager/user-permission', (require, expor
 
 		/**
 		 * @desc check user is bot by property user data
-		 * @param {UserState} [userData]
+		 * @param {UsersModelState} [userData]
 		 * @return {boolean}
 		 */
 		isBot(userData = this.userData)
@@ -130,7 +130,7 @@ jn.define('im/messenger/lib/permission-manager/user-permission', (require, expor
 		 * @param {UsersModelState||number} userData
 		 * @return {boolean}
 		 */
-		canPerformActionByUserType(actionType, userData)
+		canPerformActionByUserType(actionType, userData = null)
 		{
 			let userInfo = MessengerParams.getUserInfo();
 			if (userData && this.setUserData(userData))
@@ -190,6 +190,22 @@ jn.define('im/messenger/lib/permission-manager/user-permission', (require, expor
 			const chatPermissions = this.getChatPermissions();
 
 			return chatPermissions?.byUserType?.[userType] ?? {};
+		}
+
+		/**
+		 * @param {UsersModelState} userData
+		 * @returns {boolean}
+		 */
+		canBotSetReactions(userData)
+		{
+			if (!this.setUserData(userData) || !this.isBot(userData))
+			{
+				return false;
+			}
+
+			const reactionsEnabled = this.userData.botData?.reactionsEnabled;
+
+			return Boolean(reactionsEnabled);
 		}
 	}
 

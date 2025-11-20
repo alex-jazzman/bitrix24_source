@@ -1,3 +1,4 @@
+import { Runtime } from 'main.core';
 import { Store } from 'ui.vue3.vuex';
 import { Model } from 'tasks.v2.const';
 import { Core } from 'tasks.v2.core';
@@ -9,6 +10,9 @@ import { mapDtoToModel, prepareCheckLists } from './mappers';
 class CheckListService
 {
 	#getPromises = {};
+	#updateFields: { [taskId: number]: { [checkListId: number]: Partial<CheckListModel> } } = {};
+	#updatePromises: { [taskId: number]: { [checkListId: number]: Resolvable } } = {};
+	#updateServerCheckListDebounced: { [taskId: number]: { [checkListId: number]: Function } } = {};
 
 	async load(taskId: number): Promise<void>
 	{
@@ -57,14 +61,16 @@ class CheckListService
 					},
 				});
 
+				const checkLists = savedList.map((it) => mapDtoToModel(it));
+
 				await Promise.all([
 					this.$store.dispatch(`${Model.Interface}/setDisableCheckListAnimations`, true),
-					this.$store.dispatch(`${Model.CheckList}/upsertMany`, savedList),
+					this.$store.dispatch(`${Model.CheckList}/upsertMany`, checkLists),
 					this.$store.dispatch(`${Model.Tasks}/update`, {
 						id: taskId,
 						fields: {
-							containsChecklist: savedList.length > 0,
-							checklist: savedList.map((item) => item.id),
+							containsChecklist: checkLists.length > 0,
+							checklist: checkLists.map((item) => item.id),
 						},
 					}),
 				]);
@@ -114,26 +120,74 @@ class CheckListService
 
 	async complete(taskId: number, checkListId: number): Promise<void>
 	{
-		await (new ApiClient('tasks.task.', 'data')).post('checklist.complete', {
-			taskId,
-			checkListItemId: checkListId,
-		});
+		await this.#updateCheckListDebounced(taskId, checkListId, { isComplete: true });
 	}
 
 	async renew(taskId: number, checkListId: number): Promise<void>
 	{
-		await (new ApiClient('tasks.task.', 'data')).post('checklist.renew', {
-			taskId,
-			checkListItemId: checkListId,
-		});
+		await this.#updateCheckListDebounced(taskId, checkListId, { isComplete: false });
+	}
+
+	async #updateCheckListDebounced(taskId: number, checkListId: number, fields: Partial<CheckListModel>): Promise<void>
+	{
+		this.#updateFields[taskId] ??= {};
+		this.#updateFields[taskId][checkListId] = { ...this.#updateFields[taskId][checkListId], ...fields };
+
+		this.#updatePromises[taskId] ??= {};
+		this.#updatePromises[taskId][checkListId] ??= new Resolvable();
+
+		this.#updateServerCheckListDebounced[taskId] ??= {};
+		this.#updateServerCheckListDebounced[taskId][checkListId] ??= Runtime.debounce(this.#updateCheckList, 300, this);
+
+		this.#updateServerCheckListDebounced[taskId][checkListId](taskId, checkListId);
+		await this.#updatePromises[taskId][checkListId];
+	}
+
+	async #updateCheckList(taskId: number, checkListId: number): Promise<void>
+	{
+		const fields = this.#updateFields[taskId][checkListId];
+		delete this.#updateFields[taskId][checkListId];
+
+		const promise = this.#updatePromises[taskId][checkListId];
+		delete this.#updatePromises[taskId][checkListId];
+
+		try
+		{
+			// Update store immediately for optimistic UI
+			await this.$store.dispatch(`${Model.CheckList}/update`, {
+				id: checkListId,
+				fields,
+			});
+
+			// Get updated checklists and save to server
+			const task = await this.$store.getters[`${Model.Tasks}/getById`](taskId);
+			const checklists = (await task?.checklist)
+				? this.$store.getters[`${Model.CheckList}/getByIds`](task.checklist)
+				: [];
+
+			await new ApiClient().post('CheckList.save', {
+				task: {
+					id: taskId,
+					checklist: prepareCheckLists(checklists),
+				},
+			});
+
+			promise.resolve();
+		}
+		catch (error)
+		{
+			console.error('CheckListService: update error', error);
+			promise.resolve();
+		}
 	}
 
 	async delete(taskId: number, checkListId: number): Promise<void>
 	{
-		await (new ApiClient('tasks.task.', 'data')).post('checklist.delete', {
-			taskId,
-			checkListItemId: checkListId,
-		});
+		const task = await this.$store.getters[`${Model.Tasks}/getById`](taskId);
+		const checklists = (await task?.checklist)
+			? this.$store.getters[`${Model.CheckList}/getByIds`](task.checklist)
+			: [];
+		await this.save(taskId, checklists);
 	}
 
 	get $store(): Store
@@ -143,3 +197,15 @@ class CheckListService
 }
 
 export const checkListService = new CheckListService();
+
+function Resolvable(): Promise
+{
+	let resolve;
+	const promise = new Promise((res) => {
+		resolve = res;
+	});
+
+	promise.resolve = resolve;
+
+	return promise;
+}

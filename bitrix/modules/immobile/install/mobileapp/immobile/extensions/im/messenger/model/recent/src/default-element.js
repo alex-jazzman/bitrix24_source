@@ -6,7 +6,7 @@ jn.define('im/messenger/model/recent/default-element', (require, exports, module
 	const { MessageStatus } = require('im/messenger/const');
 
 	const recentDefaultElement = Object.freeze({
-		id: 0,
+		id: '',
 		message: {
 			id: 0,
 			senderId: 0,

@@ -9,6 +9,7 @@ jn.define('im/messenger/provider/services/chat/read', (require, exports, module)
 	} = require('im/messenger/const');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { EventType } = require('im/messenger/const');
+	const { Feature } = require('im/messenger/lib/feature');
 
 	const logger = getLogger('read-service--chat');
 	const READ_TIMEOUT = 300;
@@ -62,16 +63,12 @@ jn.define('im/messenger/provider/services/chat/read', (require, exports, module)
 					const unreadMessageList = this.#getUnreadMessageIdList(copiedMessageIds);
 
 					this.#readMessagesOnClient(queueChatId, copiedMessageIds);
-					MessengerEmitter.emit(
-						EventType.dialog.internal.readMessages,
-						{
-							messageIdList: copiedMessageIds,
-							chatId: queueChatId,
-							lastReadId,
-							unreadMessageList,
-						},
-						ComponentCode.imNavigation,
-					);
+					this.sendMessagesToReadService({
+						messageIdList: copiedMessageIds,
+						chatId: queueChatId,
+						lastReadId,
+						unreadMessageList,
+					});
 				});
 			}, READ_TIMEOUT);
 		}
@@ -122,6 +119,39 @@ jn.define('im/messenger/provider/services/chat/read', (require, exports, module)
 				.filter((message) => message.unread === true)
 				.map((message) => message.id)
 			;
+		}
+
+		sendMessagesToReadService({
+			messageIdList,
+			chatId,
+			lastReadId,
+			unreadMessageList,
+		})
+		{
+			if (!Feature.isMessengerV2Enabled)
+			{
+				MessengerEmitter.emit(
+					EventType.dialog.internal.readMessages,
+					{
+						messageIdList,
+						chatId,
+						lastReadId,
+						unreadMessageList,
+					},
+					ComponentCode.imNavigation,
+				);
+
+				return;
+			}
+
+			serviceLocator.get('read-service').readMessages({
+				messageIdList,
+				chatId,
+				lastReadId,
+				unreadMessageList,
+			}).catch((error) => {
+				logger.error('ReadService.sendMessagesToReadService error', error);
+			});
 		}
 	}
 

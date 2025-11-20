@@ -105,6 +105,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('counters/setUnloadedCollabCounters', preparedCollabCounters);
 	  const preparedCopilotCounters = babelHelpers.classPrivateFieldLooseBase(this, _prepareChatCounters)[_prepareChatCounters](counters.COPILOT, counters.COPILOT_UNREAD);
 	  babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('counters/setUnloadedCopilotCounters', preparedCopilotCounters);
+	  const preparedTaskCounters = babelHelpers.classPrivateFieldLooseBase(this, _prepareChatCounters)[_prepareChatCounters](counters.TASKS_TASK, counters.TASKS_TASK_UNREAD);
+	  babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('counters/setUnloadedTaskCounters', preparedTaskCounters);
 	  babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('counters/setCommentCounters', counters.CHANNEL_COMMENT);
 	  babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('notifications/setCounter', counters.TYPE.NOTIFY);
 	  babelHelpers.classPrivateFieldLooseBase(this, _emitCountersUpdate)[_emitCountersUpdate]();
@@ -145,6 +147,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  });
 	  babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].watch(copilotCounterWatch, () => babelHelpers.classPrivateFieldLooseBase(this, _emitCountersUpdateWithDebounce)[_emitCountersUpdateWithDebounce]());
 	  babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].watch(collabCounterWatch, () => babelHelpers.classPrivateFieldLooseBase(this, _emitCountersUpdateWithDebounce)[_emitCountersUpdateWithDebounce]());
+	  babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].watch(taskCounterWatch, () => babelHelpers.classPrivateFieldLooseBase(this, _emitCountersUpdateWithDebounce)[_emitCountersUpdateWithDebounce]());
 	}
 	function _emitLegacyNotificationCounterUpdate2(notificationsCounter) {
 	  const event = new main_core_events.BaseEvent({
@@ -170,6 +173,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    [im_v2_const.NavigationMenuItem.chat]: babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].getters['counters/getTotalChatCounter'],
 	    [im_v2_const.NavigationMenuItem.copilot]: babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].getters['counters/getTotalCopilotCounter'],
 	    [im_v2_const.NavigationMenuItem.collab]: babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].getters['counters/getTotalCollabCounter'],
+	    [im_v2_const.NavigationMenuItem.tasksTask]: babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].getters['counters/getTotalTaskCounter'],
 	    [im_v2_const.NavigationMenuItem.openlines]: babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].getters['counters/getTotalLinesCounter'],
 	    [im_v2_const.NavigationMenuItem.openlinesV2]: babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].getters['counters/getTotalLinesCounter'],
 	    [im_v2_const.NavigationMenuItem.notification]: babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].getters['notifications/getCounter']
@@ -196,6 +200,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const linesCounterWatch = (state, getters) => getters['counters/getTotalLinesCounter'];
 	const copilotCounterWatch = (state, getters) => getters['counters/getTotalCopilotCounter'];
 	const collabCounterWatch = (state, getters) => getters['counters/getTotalCollabCounter'];
+	const taskCounterWatch = (state, getters) => getters['counters/getTotalTaskCounter'];
 
 	exports.CounterManager = CounterManager;
 

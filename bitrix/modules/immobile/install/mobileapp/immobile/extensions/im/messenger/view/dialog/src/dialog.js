@@ -30,6 +30,7 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 	const { DialogJoinButton } = require('im/messenger/view/dialog/join-button');
 	const { DialogSelector } = require('im/messenger/view/dialog/selector');
 	const { DialogRestrictions } = require('im/messenger/view/dialog/restrictions');
+	const { DialogNotifyPanel } = require('im/messenger/view/dialog/notify-panel');
 	const { Theme } = require('im/lib/theme');
 
 	const AfterScrollMessagePosition = Object.freeze({
@@ -276,6 +277,16 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			return this.restrictionsView;
 		}
 
+		/**
+		 * @return {DialogNotifyPanel}
+		 */
+		get notifyPanel()
+		{
+			this.notifyPanelView ??= new DialogNotifyPanel(this.ui.notifyPanel, this.eventFilter);
+
+			return this.notifyPanelView;
+		}
+
 		/* endregion nested objects */
 
 		/* region Events */
@@ -418,8 +429,7 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 		/**
 		 * @return {Promise<{messageList: Array<Message>, indexList: Array<number>}>}
 		 */
-		async getViewableMessages()
-		{
+		getViewableMessages = async () => {
 			const {
 				indexList,
 				messageList,
@@ -1133,7 +1143,7 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			position = AfterScrollMessagePosition.bottom,
 		)
 		{
-			await this.ui.scrollToMessageById(id, withAnimation, afterScrollEndCallback, position);
+			await this.ui.scrollToMessageById(String(id), withAnimation, afterScrollEndCallback, position);
 		}
 
 		/**
@@ -1803,7 +1813,6 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 				indexList,
 				messageList,
 			} = await this.getViewableMessages();
-
 			const messageIdList = messageList
 				.map((message) => message.id)
 				.filter((messageId) => {
@@ -1824,7 +1833,7 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			this.shouldEmitMessageRead = true;
 
 			logger.log(`${this.constructor.name}.afterSetMessages: visible messages:`, messageList);
-			if (!indexList.includes(0))
+			if (indexList.length > 0 && !indexList.includes(0))
 			{
 				this.showScrollToNewMessagesButton();
 			}

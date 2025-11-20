@@ -61,6 +61,11 @@ export class RecentPullHandler
 
 		const addActions = manager.getAddActions();
 		addActions.forEach((actionName) => {
+			if (!actionName)
+			{
+				return;
+			}
+
 			Core.getStore().dispatch(actionName, newRecentItem);
 		});
 	}

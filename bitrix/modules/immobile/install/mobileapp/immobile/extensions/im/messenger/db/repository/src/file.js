@@ -48,7 +48,7 @@ jn.define('im/messenger/db/repository/file', (require, exports, module) => {
 		{
 			const fileListToAdd = [];
 			fileList.forEach((file) => {
-				const fileToAdd = this.validateRestFile(file);
+				const fileToAdd = this.fileTable.validate(this.validateRestFile(file));
 
 				fileListToAdd.push(fileToAdd);
 			});
@@ -60,7 +60,7 @@ jn.define('im/messenger/db/repository/file', (require, exports, module) => {
 		{
 			const fileListMergePromiseList = [];
 			fileList.forEach((file) => {
-				const fileToAdd = this.validatePushFile(file);
+				const fileToAdd = this.fileTable.validate(this.validatePushFile(file));
 				const mergePromise = this.fileTable.merge(fileToAdd.id, (existingFile) => {
 					return {
 						...existingFile,
@@ -147,8 +147,6 @@ jn.define('im/messenger/db/repository/file', (require, exports, module) => {
 				{
 					result.image = false;
 				}
-
-				result.image = JSON.stringify(result.image);
 			}
 
 			if (Type.isString(file.status) && !Type.isUndefined(FileStatus[file.status]))
@@ -188,7 +186,12 @@ jn.define('im/messenger/db/repository/file', (require, exports, module) => {
 
 			if (Type.isObject(file.mediaUrl))
 			{
-				result.mediaUrl = JSON.stringify(file.mediaUrl);
+				result.mediaUrl = file.mediaUrl;
+			}
+
+			if (Type.isBoolean(file.isTranscribable))
+			{
+				result.isTranscribable = file.isTranscribable;
 			}
 
 			return result;

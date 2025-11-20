@@ -166,6 +166,7 @@ export class UserFieldMenu
 			onClick: () => createDocumentDialog({
 				uploader: this.#params.uploader,
 				documentType,
+				documentHandlers: Object.values(userFieldSettings.getDocumentServices()),
 			}),
 		};
 	}

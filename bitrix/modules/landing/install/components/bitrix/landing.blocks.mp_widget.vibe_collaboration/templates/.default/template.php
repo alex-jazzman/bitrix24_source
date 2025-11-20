@@ -185,7 +185,7 @@ $cardConfig = [
 						$target = $linkTarget[$linksZone];
 						$icon = $itermConfig['icon'];
 						$wrap = $itermConfig['wrap'] ?? '';
-						$itemHeight = 50;
+						$itemHeight = 60;
 						if ($wrap === '')
 						{
 							$itemHeight = 83;

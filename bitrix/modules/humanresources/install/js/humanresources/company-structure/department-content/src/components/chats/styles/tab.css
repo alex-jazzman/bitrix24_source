@@ -75,10 +75,14 @@
 	border-bottom: 1px solid transparent;
 	cursor: pointer;
 	color: var(--ui-color-link-primary-base);
-	margin-left: 5px;
 	overflow: hidden;
 	white-space: nowrap;
 	text-overflow: ellipsis;
+}
+
+.hr-department-detail-content__tab-list_item-subtitle_before,
+.hr-department-detail-content__tab-list_item-subtitle_after {
+	white-space: pre;
 }
 
 .hr-department-detail-content__tab-list_orig-node-name:hover {

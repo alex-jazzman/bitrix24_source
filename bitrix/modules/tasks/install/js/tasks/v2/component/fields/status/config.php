@@ -13,8 +13,8 @@ return [
 		'ui.icon-set.api.core',
 		'ui.icon-set.outline',
 		'tasks.v2.component.elements.hint',
-		'tasks.v2.const',
 		'main.core',
+		'tasks.v2.const',
 	],
 	'skip_core' => false,
 ];

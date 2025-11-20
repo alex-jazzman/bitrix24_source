@@ -1,4 +1,4 @@
-import { Dom, Runtime, Tag, Type } from 'main.core';
+import { Dom, Runtime, Tag, Text } from 'main.core';
 import { EventEmitter, type BaseEvent } from 'main.core.events';
 import type { Popup } from 'main.popup';
 
@@ -23,7 +23,7 @@ export class TaskCompactCard
 	{
 		this.#params = params;
 
-		this.#params.taskId = Type.isUndefined(this.#params.taskId) ? 0 : this.#params.taskId;
+		this.#params.taskId = this.#params.taskId || Text.getRandom();
 	}
 
 	async mountCard(popup: Popup): Promise<void>

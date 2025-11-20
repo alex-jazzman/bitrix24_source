@@ -51,6 +51,40 @@ jn.define('settings-v2/structure/src/item-create-helper', (require, exports, mod
 	}
 
 	/**
+	 * @param {SettingInfo} props
+	 * @returns {SettingInfo}
+	 */
+	function createCacheInfo(props)
+	{
+		const {
+			id,
+			title,
+			subtitle,
+			onClick,
+			controller,
+			icon,
+			iconColor,
+			modeText,
+			prefilter,
+		} = props;
+
+		assertDefined(['id', 'title'], props, 'Info');
+
+		return {
+			id,
+			title,
+			subtitle,
+			onClick,
+			controller,
+			icon,
+			iconColor,
+			modeText,
+			prefilter,
+			type: SettingItemType.CACHE_INFO,
+		};
+	}
+
+	/**
 	 * @param {SettingSection} props
 	 * @returns {SettingSection}
 	 */
@@ -62,6 +96,7 @@ jn.define('settings-v2/structure/src/item-create-helper', (require, exports, mod
 			items,
 			prefilter,
 			prepareItems,
+			divider,
 		} = props;
 
 		assertDefined(['id', 'items'], props, 'Section');
@@ -72,6 +107,7 @@ jn.define('settings-v2/structure/src/item-create-helper', (require, exports, mod
 			items,
 			prefilter,
 			prepareItems,
+			divider,
 			type: SettingItemType.SECTION,
 		};
 	}
@@ -117,8 +153,10 @@ jn.define('settings-v2/structure/src/item-create-helper', (require, exports, mod
 			title,
 			onClick,
 			subtitle,
+			divider,
 			icon,
 			prefilter,
+			color,
 		} = props;
 
 		assertDefined(['id', 'title', 'onClick'], props, 'Button');
@@ -128,7 +166,9 @@ jn.define('settings-v2/structure/src/item-create-helper', (require, exports, mod
 			title,
 			onClick,
 			subtitle,
+			divider,
 			icon,
+			color,
 			type: SettingItemType.BUTTON,
 			prefilter,
 		};
@@ -143,6 +183,7 @@ jn.define('settings-v2/structure/src/item-create-helper', (require, exports, mod
 		const {
 			id,
 			controller,
+			divider,
 		} = props;
 
 		assertDefined(['id', 'controller'], props, 'Theme');
@@ -150,7 +191,28 @@ jn.define('settings-v2/structure/src/item-create-helper', (require, exports, mod
 		return {
 			id,
 			controller,
+			divider,
 			type: SettingItemType.THEME,
+		};
+	}
+
+	/**
+	 * @param {SettingStyleSwitch} props
+	 * @returns {SettingStyleSwitch}
+	 */
+	function createStyleSwitch(props)
+	{
+		const {
+			id,
+			controller,
+		} = props;
+
+		assertDefined(['id', 'controller'], props, 'StyleSwitch');
+
+		return {
+			id,
+			controller,
+			type: SettingItemType.STYLE,
 		};
 	}
 
@@ -225,6 +287,7 @@ jn.define('settings-v2/structure/src/item-create-helper', (require, exports, mod
 			controller,
 			title,
 			icon,
+			divider,
 		} = props;
 
 		assertDefined(['id', 'controller'], props, 'LocSelector');
@@ -234,19 +297,114 @@ jn.define('settings-v2/structure/src/item-create-helper', (require, exports, mod
 			controller,
 			title,
 			icon,
+			divider,
 			type: SettingItemType.LOC_SELECTOR,
+		};
+	}
+
+	/**
+	 * @param {SettingCacheIntervalSelector} props
+	 * @return {SettingCacheIntervalSelector}
+	 */
+	function createCacheIntervalSelector(props)
+	{
+		const {
+			id,
+			controller,
+			title,
+			icon,
+		} = props;
+
+		assertDefined(['id', 'controller'], props, 'CacheIntervalSelector');
+
+		return {
+			id,
+			controller,
+			title,
+			icon,
+			type: SettingItemType.CACHE_INTERVAL,
+		};
+	}
+
+	/**
+	 * @param {SettingCacheBanner} props
+	 * @return {SettingCacheBanner}
+	 */
+	function createCacheBanner(props)
+	{
+		const {
+			id,
+		} = props;
+
+		assertDefined(['id'], props, 'CacheIntervalSelector');
+
+		return {
+			id,
+			type: SettingItemType.CACHE_BANNER,
+		};
+	}
+
+	/**
+	 * @param {SettingBanner} props
+	 * @return {SettingBanner}
+	 */
+	function createBanner(props)
+	{
+		const {
+			id,
+			bannerImageName,
+			text,
+			divider,
+		} = props;
+
+		assertDefined(['id', 'text'], props, 'CacheIntervalSelector');
+
+		return {
+			id,
+			bannerImageName,
+			text,
+			divider,
+			type: SettingItemType.BANNER,
+		};
+	}
+
+	/**
+	 * @param {SettingImage} props
+	 * @return {SettingImage}
+	 */
+	function createImage(props)
+	{
+		const {
+			id,
+			name,
+			externalStyle,
+		} = props;
+
+		assertDefined(['id', 'name'], props, 'Image');
+
+		return {
+			id,
+			name,
+			externalStyle,
+			type: SettingItemType.IMAGE,
 		};
 	}
 
 	module.exports = {
 		createLink,
+		createCacheInfo,
 		createSection,
 		createToggle,
 		createButton,
 		createThemeSwitch,
+		createStyleSwitch,
 		createVideoQualitySwitch,
 		createDescription,
 		createVideoBanner,
 		createLocSelector,
+		createCacheIntervalSelector,
+		createCacheBanner,
+		createBanner,
+		createImage,
 	};
 });

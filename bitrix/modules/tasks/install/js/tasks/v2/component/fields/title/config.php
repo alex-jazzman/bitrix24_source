@@ -10,8 +10,8 @@ return [
 	'rel' => [
 		'main.polyfill.core',
 		'tasks.v2.component.elements.growing-text-area',
-		'tasks.v2.const',
 		'tasks.v2.provider.service.task-service',
+		'tasks.v2.const',
 	],
 	'skip_core' => true,
 ];

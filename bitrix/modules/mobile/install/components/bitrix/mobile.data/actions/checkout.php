@@ -12,6 +12,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
  */
 global $APPLICATION, $USER;
 
+use Bitrix\Intranet\Enum\UserRole;
 use Bitrix\Main;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Context;
@@ -304,6 +305,13 @@ else
 		}
 	}
 
+	// Activate Marta AI trigger for mobile app (every time)
+	if (Loader::includeModule('aiassistant') && ServiceLocator::getInstance()->has(\Bitrix\AiAssistant\Trigger\Service\RunnerService::class))
+	{
+		$runnerService = ServiceLocator::getInstance()->get(\Bitrix\AiAssistant\Trigger\Service\RunnerService::class);
+		$runnerService->registerBackgroundTriggerActivation('/mobile/');
+	}
+
 	$menuTabs = $manager->getActiveTabsData();
 
 	$voximplantOptions = [
@@ -388,15 +396,16 @@ else
 	$avaMenuManager = new AvaMenu\Manager($context);
 	$profile = new AvaMenu\Profile\Profile();
 
-	$userType = $profile->getUserType();
+	$userRole = null;
 	$isCollabToolEnabled = true;
-	if (
-		Bitrix\Main\Loader::includeModule('intranet')
-		&& class_exists('\Bitrix\Intranet\Settings\Tools\ToolsManager')
-		&& $userType === 'collaber'
-	)
+
+	if (Loader::includeModule('intranet'))
 	{
-		$isCollabToolEnabled = ToolsManager::getInstance()->checkAvailabilityByToolId('collab');
+		$userRole = (new \Bitrix\Intranet\User((int)$USER->GetID()))->getUserRole();
+		if ($userRole === UserRole::COLLABER)
+		{
+			$isCollabToolEnabled = ToolsManager::getInstance()->checkAvailabilityByToolId('collab');
+		}
 	}
 
 	$data = [
@@ -412,7 +421,7 @@ else
 		"newStyleSupported" => true,
 		"tabs" => $menuTabs,
 		"user" => [
-			"type" => $userType,
+			"type" => $userRole?->value ?? 'employee',
 			"avatar" => $profile->getAvatar(),
 		],
 		'avamenu' => [

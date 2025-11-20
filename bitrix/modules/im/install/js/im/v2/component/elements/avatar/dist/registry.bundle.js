@@ -120,7 +120,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      return im_v2_lib_utils.Utils.text.getFirstLetters(this.dialog.name);
 	    },
 	    showAvatarLetters() {
-	      const SPECIAL_TYPES_WITH_LETTERS = [im_v2_const.ChatType.openChannel, im_v2_const.ChatType.channel];
+	      const SPECIAL_TYPES_WITH_LETTERS = [im_v2_const.ChatType.openChannel, im_v2_const.ChatType.channel, im_v2_const.ChatType.taskComments];
 	      if (SPECIAL_TYPES_WITH_LETTERS.includes(this.dialog.type)) {
 	        return true;
 	      }

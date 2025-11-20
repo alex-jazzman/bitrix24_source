@@ -212,13 +212,17 @@ export const TreeNode = {
 		dropOverlayText(): string
 		{
 			const sourceNode = this.departments.get(this.focusedNode);
-			if (sourceNode.entityType !== this.nodeData.entityType)
+
+			if (
+				sourceNode.entityType === EntityTypes.team
+				&& this.nodeData.entityType === EntityTypes.department
+			)
 			{
 				return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_MOVED_FORBIDDEN');
 			}
 
 			return this.isUserDropAllowed
-				? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_MOVED_ALLOWED')
+				? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_MOVED_APPROVED')
 				: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_MOVED_NO_RIGHTS')
 			;
 		},
@@ -489,7 +493,11 @@ export const TreeNode = {
 						</div>
 					</div>
 					<div class="humanresources-tree__node_description">
-						<HeadList v-if="head" :items="head" :isTeamEntity="isTeamEntity"></HeadList>
+						<HeadList v-if="head"
+								:entityId="nodeId"
+								:items="head"
+								:isTeamEntity="isTeamEntity"
+						/>
 						<div
 							v-else
 							class="humanresources-tree__node_load-skeleton --heads"

@@ -24,6 +24,8 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 	const { Attach } = require('im/messenger/lib/element/dialog/message/element/attach/attach');
 	const { Keyboard } = require('im/messenger/lib/element/dialog/message/element/keyboard/keyboard');
 	const { CommentInfo } = require('im/messenger/lib/element/dialog/message/element/comment-info/comment-info');
+	const { MessageHelper, DialogHelper } = require('im/messenger/lib/helper');
+	const { UserPermission } = require('im/messenger/lib/permission-manager');
 
 	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
 	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
@@ -52,6 +54,7 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 			this.type = this.getType();
 
 			this.id = '';
+			this.authorId = null;
 			this.title = {};
 			this.username = '';
 			/** @deprecated use to this.avatar {AvatarDetail} */
@@ -100,6 +103,7 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 			this
 				.setId(modelMessage.id)
 				.setTestId(modelMessage.id)
+				.setAuthorId(modelMessage.authorId)
 				.setTitle(modelMessage)
 				.setUsername(modelMessage.authorId)
 				.setAvatar(modelMessage.authorId, modelMessage.chatId, modelMessage.id)
@@ -116,7 +120,7 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 				.setShowAvatar(modelMessage, options.showAvatar)
 				.setFontColor(options.fontColor)
 				.setIsBackgroundOn(options.isBackgroundOn)
-				.setShowReaction(options.showReaction)
+				.setShowReaction(modelMessage, options.showReaction)
 				.setCanBeQuoted(options.canBeQuoted)
 				.setCanBeChecked(options.canBeChecked)
 				.setRoundedCorners(true)
@@ -136,6 +140,7 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 			return {
 				align: this.align,
 				attach: this.attach,
+				authorId: this.authorId,
 				avatar: this.avatar,
 				avatarUrl: this.avatarUrl,
 				canBeChecked: this.canBeChecked,
@@ -199,6 +204,18 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 			)
 			{
 				this.id = id.toString();
+
+				return this;
+			}
+
+			return this;
+		}
+
+		setAuthorId(id)
+		{
+			if (Type.isNumber(id))
+			{
+				this.authorId = id;
 
 				return this;
 			}
@@ -617,14 +634,29 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 			return this;
 		}
 
-		setShowReaction(shouldShowReaction)
+		/**
+		 * @param {MessagesModelState} modelMessage
+		 * @param {?boolean} shouldShowReaction
+		 */
+		setShowReaction(modelMessage, shouldShowReaction)
 		{
-			if (!Type.isBoolean(shouldShowReaction))
+			if (Type.isBoolean(shouldShowReaction))
 			{
+				this.showReaction = shouldShowReaction;
+
 				return this;
 			}
 
-			this.showReaction = shouldShowReaction;
+			const dialogHelper = DialogHelper.createByChatId(modelMessage.chatId);
+			if (dialogHelper?.isBot)
+			{
+				const messageHelper = MessageHelper.createById(modelMessage.id);
+				const userModel = serviceLocator.get('core')
+					.getStore()
+					.getters['usersModel/getById'](modelMessage.authorId);
+				const canBotSetReactions = !Type.isNull(userModel) && UserPermission.canBotSetReactions(userModel);
+				this.showReaction = messageHelper?.isBot && canBotSetReactions;
+			}
 
 			return this;
 		}

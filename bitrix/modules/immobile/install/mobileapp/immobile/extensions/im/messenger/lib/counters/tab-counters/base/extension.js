@@ -2,6 +2,7 @@
  * @module im/messenger/lib/counters/tab-counters/base
  */
 jn.define('im/messenger/lib/counters/tab-counters/base', (require, exports, module) => {
+	const { Feature } = require('im/messenger/lib/feature');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { MessengerCounterSender } = require('im/messenger/lib/counters/counter-manager/messenger/sender');
 
@@ -14,14 +15,6 @@ jn.define('im/messenger/lib/counters/tab-counters/base', (require, exports, modu
 	{
 		constructor(options = {})
 		{
-			/**
-			 * @type {MessengerCoreStore}
-			 */
-			this.store = serviceLocator.get('core').getStore();
-			/**
-			 * @type {MessengerInitService}
-			 */
-			this.messagerInitService = serviceLocator.get('messenger-init-service');
 			/**
 			 * @type {Logger}
 			 */
@@ -40,6 +33,24 @@ jn.define('im/messenger/lib/counters/tab-counters/base', (require, exports, modu
 			this.initCounters();
 		}
 
+		/**
+		 * @protected
+		 * @return {MessengerCoreStore|null}
+		 */
+		get store()
+		{
+			return serviceLocator.get('core')?.getStore();
+		}
+
+		/**
+		 * @protected
+		 * @type {MessengerInitService|null}
+		 */
+		get messengerInitService()
+		{
+			return serviceLocator.get('messenger-init-service');
+		}
+
 		bindMethods()
 		{
 			this.handleCountersGet = this.handleCountersGet.bind(this);
@@ -47,7 +58,7 @@ jn.define('im/messenger/lib/counters/tab-counters/base', (require, exports, modu
 
 		subscribeInitMessengerEvent()
 		{
-			this.messagerInitService.onInit(this.handleCountersGet);
+			this.messengerInitService.onInit(this.handleCountersGet);
 		}
 
 		sendCountersToCounterService(counters)
@@ -58,6 +69,9 @@ jn.define('im/messenger/lib/counters/tab-counters/base', (require, exports, modu
 		handleCountersGet()
 		{}
 
+		/**
+		 * @abstract
+		 */
 		initCounters()
 		{}
 
@@ -78,6 +92,7 @@ jn.define('im/messenger/lib/counters/tab-counters/base', (require, exports, modu
 		}
 
 		/**
+		 * @deprecated
 		 * @abstract
 		 * @param {number} chatId
 		 * @return {void}
@@ -86,6 +101,7 @@ jn.define('im/messenger/lib/counters/tab-counters/base', (require, exports, modu
 		{}
 
 		/**
+		 * @deprecated
 		 * @abstract
 		 * @param {CounterState} counterState
 		 * @return {void}
@@ -197,6 +213,20 @@ jn.define('im/messenger/lib/counters/tab-counters/base', (require, exports, modu
 
 			return new Set(mutedChatList);
 		}
+
+		/**
+		 * @return {Array<RecentModelState>}
+		 */
+		getRecentCollection()
+		{
+			return this.store.getters['recentModel/getCollection']();
+		}
+
+		clearNotificationCounters()
+		{}
+
+		setNotificationCounters(counter)
+		{}
 	}
 
 	module.exports = { BaseTabCounters };

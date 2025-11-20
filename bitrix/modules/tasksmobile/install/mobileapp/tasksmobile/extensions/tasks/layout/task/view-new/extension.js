@@ -1119,6 +1119,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 						view: this.view,
 						isStageSelectorInitiallyHidden: this.#isStageSelectorInitiallyHidden(),
 						kanbanOwnerId: this.kanbanOwnerId,
+						isFlowToolDisabled: this.props.isFlowToolDisabled,
 					}),
 				),
 			);

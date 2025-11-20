@@ -26,10 +26,12 @@
 	{
 		/**
 		 * @param {ProjectList} list
+		 * @param {string} navigationTitle
 		 */
-		constructor(list)
+		constructor(list, navigationTitle)
 		{
 			this.list = list.list;
+			this.navigationTitle = navigationTitle || Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_HEADER_PROJECTS');
 		}
 
 		showForList()
@@ -58,7 +60,7 @@
 			this.list.setTitle({
 				useProgress: true,
 				largeMode: true,
-				text: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_HEADER_PROJECTS'),
+				text: this.navigationTitle,
 			});
 		}
 
@@ -67,7 +69,7 @@
 			this.list.setTitle({
 				useProgress: false,
 				largeMode: true,
-				text: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_HEADER_PROJECTS'),
+				text: this.navigationTitle,
 			});
 		}
 	}
@@ -1283,7 +1285,7 @@
 			this.filter = new Filter(this, this.userId);
 			this.moreMenu = new MoreMenu(this);
 			this.welcomeScreen = new WelcomeScreen(this);
-			this.loading = new Loading(this);
+			this.loading = new Loading(this, params.navigationTitle);
 			this.action = new Action(this);
 			this.pull = new Pull(this, this.userId);
 
@@ -1914,6 +1916,7 @@
 			mode: BX.componentParameters.get('MODE', Mode.PROJECT),
 			projectNewsPathTemplate: BX.componentParameters.get('PROJECT_NEWS_PATH_TEMPLATE', ''),
 			projectCalendarWebPathTemplate: BX.componentParameters.get('PROJECT_CALENDAR_WEB_PATH_TEMPLATE', ''),
+			navigationTitle: BX.componentParameters.get('NAVIGATION_TITLE', null),
 		},
 	);
 })();

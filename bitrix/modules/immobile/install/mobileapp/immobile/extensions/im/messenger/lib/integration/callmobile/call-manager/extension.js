@@ -35,7 +35,7 @@ jn.define('im/messenger/lib/integration/callmobile/call-manager', (require, expo
 		{
 			this.core = serviceLocator.get('core');
 			this.store = this.core.getStore();
-			this.messagerInitService = serviceLocator.get('messenger-init-service');
+			this.messengerInitService = serviceLocator.get('messenger-init-service');
 
 			this.bindMethods();
 		}
@@ -47,7 +47,7 @@ jn.define('im/messenger/lib/integration/callmobile/call-manager', (require, expo
 
 		subscribeMessengerInitEvent()
 		{
-			this.messagerInitService.onInit(this.messengerInitHandler);
+			this.messengerInitService.onInit(this.messengerInitHandler);
 		}
 
 		/**

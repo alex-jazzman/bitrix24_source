@@ -1,5 +1,5 @@
 // eslint-disable-next-line no-var,no-implicit-globals
-var REVISION = 20; // API revision - sync with im/lib/revision.php
+var REVISION = 21; // API revision - sync with im/lib/revision.php
 
 /* region Environment variables */
 
@@ -15,6 +15,8 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	window.messenger.destructor();
 }
 
+window.messengerDebug = {};
+
 /* endregion Clearing session variables after script reload */
 
 (async () => {
@@ -29,7 +31,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	await MessengerParams.waitSharedParamsInit();
 
 	const { QuickRecentLoader } = require('im/messenger/lib/quick-recent-load');
-	QuickRecentLoader.renderItemsOnViewLoaded();
+	QuickRecentLoader.renderItemsOnViewLoaded(dialogList);
 
 	const { Type } = require('type');
 	const { Loc } = require('im/messenger/loc');
@@ -75,11 +77,9 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	serviceLocator.add('messenger-init-service', collabInitService);
 
 	const { Feature } = require('im/messenger/lib/feature');
-	const { TabCounters } = require('im/messenger/lib/counters/tab-counters');
 
 	const {
 		CollabMessagePullHandler,
-		CollabCounterPullHandler,
 		CollabFilePullHandler,
 		CollabDialogPullHandler,
 		CollabUserPullHandler,
@@ -319,8 +319,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			super.initPullHandlers();
 			BX.PULL.subscribe(new CollabDialogPullHandler());
 			BX.PULL.subscribe(new CollabMessagePullHandler());
-			// deprecated. delete after counters in memoryStorage go to prod
-			// BX.PULL.subscribe(new CollabCounterPullHandler());
 			BX.PULL.subscribe(new CollabFilePullHandler());
 			BX.PULL.subscribe(new CollabUserPullHandler());
 			BX.PULL.subscribe(new CollabInfoPullHandler());
@@ -386,7 +384,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			this.refreshErrorNoticeFlag = false;
 			this.notifyRefreshErrorWorker.stop();
 
-			TabCounters.update();
+			serviceLocator.get('tab-counters').update();
 
 			return this.ready();
 		}

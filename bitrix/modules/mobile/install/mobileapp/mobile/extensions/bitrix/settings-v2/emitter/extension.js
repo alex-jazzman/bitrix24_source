@@ -13,7 +13,14 @@ jn.define('settings-v2/emitter', (require, exports, module) => {
 				throw new Error(`SettingEvent: ${eventName} is not a filled string`);
 			}
 
-			BX.postComponentEvent(eventName, [eventData], componentCode);
+			if (componentCode)
+			{
+				BX.postComponentEvent(eventName, [eventData], componentCode);
+			}
+			else
+			{
+				BX.postComponentEvent(eventName, [eventData]);
+			}
 		}
 	}
 

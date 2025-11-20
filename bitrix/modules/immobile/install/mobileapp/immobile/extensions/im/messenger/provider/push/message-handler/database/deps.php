@@ -6,6 +6,4 @@ return [
 		'im:messenger/lib/di/service-locator',
 		'im:messenger/provider/push/message-handler/base',
 	],
-	'bundle' => [
-	],
 ];

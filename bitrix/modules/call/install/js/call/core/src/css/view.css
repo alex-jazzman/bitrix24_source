@@ -2,6 +2,21 @@
 	--view-height: 100vh;
 }
 
+.bx-im-messenger__call_container {
+}
+
+.bx-im-messenger__call_container .bx-messenger-call-overlay {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+}
+
+.bx-im-messenger__call_container .bx-messenger-call-overlay.bx-messenger-call-overlay-folded {
+	display: none;
+}
+
 .bx-messenger-videocall-scope {
 	--call-view-copilot-color: #711BF9;
 	--call-view-copilot-second-color: #C8A9F8;

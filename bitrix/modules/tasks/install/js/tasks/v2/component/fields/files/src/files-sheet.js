@@ -36,6 +36,14 @@ export const FilesSheet = {
 			type: Boolean,
 			required: true,
 		},
+		getBindElement: {
+			type: Function,
+			default: null,
+		},
+		getTargetContainer: {
+			type: Function,
+			default: null,
+		},
 	},
 	emits: ['close'],
 	setup(props): { fileService: FileService, uploaderAdapter: VueUploaderAdapter }
@@ -109,7 +117,12 @@ export const FilesSheet = {
 		},
 	},
 	template: `
-		<BottomSheet :isShown="isShown" ref="bottomSheet">
+		<BottomSheet
+			v-if="isShown"
+			:getBindElement="getBindElement"
+			:getTargetContainer="getTargetContainer"
+			ref="bottomSheet"
+		>
 			<div class="tasks-field-files-sheet" :data-task-id="taskId">
 				<div class="tasks-field-files-header">
 					<div class="tasks-field-files-title">
@@ -129,7 +142,7 @@ export const FilesSheet = {
 						:widgetOptions="widgetOptions"
 					/>
 				</div>
-				<div 
+				<div
 					v-if="showFooter"
 					class="tasks-field-files-footer"
 					:class="{ '--with-archive': canDownloadArchive }"

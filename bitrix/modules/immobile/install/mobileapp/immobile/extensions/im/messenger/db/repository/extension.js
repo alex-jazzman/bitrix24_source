@@ -21,6 +21,7 @@ jn.define('im/messenger/db/repository', (require, exports, module) => {
 	const { DraftRepository } = require('im/messenger/db/repository/src/draft');
 	const { VoteRepository } = require('im/messenger/db/repository/vote');
 	const { ReadMessageQueueRepository } = require('im/messenger/db/repository/read-message-queue');
+	const { TranscriptRepository } = require('im/messenger/db/repository/transcript');
 
 	module.exports = {
 		OptionRepository,
@@ -42,5 +43,6 @@ jn.define('im/messenger/db/repository', (require, exports, module) => {
 		DraftRepository,
 		VoteRepository,
 		ReadMessageQueueRepository,
+		TranscriptRepository,
 	};
 });

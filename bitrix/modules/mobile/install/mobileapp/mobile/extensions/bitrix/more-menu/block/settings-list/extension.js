@@ -45,7 +45,7 @@ jn.define('more-menu/block/settings-list', (require, exports, module) => {
 				{
 					id: 'settings',
 					imageName: 'settings',
-					title: Loc.getMessage('MENU_SETTINGS_SECTION_SETTINGS'),
+					title: Loc.getMessage('MENU_SETTINGS_SECTION_SETTINGS_MSGVER_1'),
 					sort: 300,
 					path: '/settings/general',
 					params: {

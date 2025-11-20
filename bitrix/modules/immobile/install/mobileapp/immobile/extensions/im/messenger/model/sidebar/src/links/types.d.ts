@@ -39,11 +39,13 @@ declare type SidebarLinksModelActions =
 	'sidebarModel/sidebarLinksModel/set'
 	| 'sidebarModel/sidebarLinksModel/setFromPagination'
 	| 'sidebarModel/sidebarLinksModel/delete'
+	| 'sidebarModel/sidebarLinksModel/deleteByChatId'
 	| 'sidebarModel/sidebarLinksModel/setHistoryLimitExceeded'
 
 declare type SidebarLinksModelMutation =
 	'sidebarModel/sidebarLinksModel/set'
 	| 'sidebarModel/sidebarLinksModel/delete'
+	| 'sidebarModel/sidebarLinksModel/deleteByChatId'
 	| 'sidebarModel/sidebarLinksModel/setHasNextPage'
 	| 'sidebarModel/sidebarLinksModel/setHistoryLimitExceeded'
 
@@ -64,6 +66,11 @@ declare type SidebarLinksDeleteActions = 'delete';
 declare type SidebarLinksDeleteData = {
 	chatId: chatId,
 	id: linkId,
+}
+
+declare type SidebarLinksDeleteByChatIdActions = 'deleteByChatId';
+declare type SidebarLinksDeleteByChatIdData = {
+	chatId: chatId
 }
 
 declare type SidebarLinksSetHasNextPageActions = 'setHasNextPage';

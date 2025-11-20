@@ -12,6 +12,7 @@ jn.define('im/messenger/provider/push/message-handler/base', (require, exports, 
 	const { RecentDataConverter } = require('im/messenger/lib/converter/data/recent');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { ComponentRequestBroadcaster } = require('im/messenger/lib/component-request-broadcaster');
+	const { Feature } = require('im/messenger/lib/feature');
 
 	const { PushHelper } = require('im/messenger/provider/push/message-handler/lib/helper');
 	const { getLogger } = require('im/messenger/lib/logger');
@@ -23,17 +24,26 @@ jn.define('im/messenger/provider/push/message-handler/base', (require, exports, 
 	 */
 	class BasePushMessageHandler
 	{
-		/** @type {MessengerCoreStore} */
-		#store;
-
 		constructor()
 		{
-			this.#store = serviceLocator.get('core').getStore();
 			this.bindMethods();
-			this.subscribeEvents();
+
+			if (!Feature.isMessengerV2Enabled)
+			{
+				this.subscribeEvents();
+			}
 		}
 
 		/**
+		 * @return {MessengerCoreStore}
+		 */
+		get store()
+		{
+			return serviceLocator.get('core').getStore();
+		}
+
+		/**
+		 * @deprecated
 		 * @abstract
 		 * @return {string}
 		 */
@@ -57,11 +67,17 @@ jn.define('im/messenger/provider/push/message-handler/base', (require, exports, 
 			this.unsubscribeEvents();
 		}
 
+		/**
+		 * @deprecated
+		 */
 		bindMethods()
 		{
 			this.handleMessageBatch = this.handleMessageBatch.bind(this);
 		}
 
+		/**
+		 * @deprecated
+		 */
 		subscribeEvents()
 		{
 			ComponentRequestBroadcaster.getInstance().registerHandler(
@@ -71,6 +87,9 @@ jn.define('im/messenger/provider/push/message-handler/base', (require, exports, 
 			);
 		}
 
+		/**
+		 * @deprecated
+		 */
 		unsubscribeEvents()
 		{
 			ComponentRequestBroadcaster.getInstance().unregisterHandler(
@@ -87,28 +106,25 @@ jn.define('im/messenger/provider/push/message-handler/base', (require, exports, 
 				return;
 			}
 			logger.log(`${this.className}.handleMessageBatch`, eventList);
-
-			const modelData = {
-				dialogs: this.prepareDialogs(componentEventList),
-				users: this.prepareUsers(componentEventList),
-				files: this.prepareFiles(componentEventList),
-				messages: this.prepareMessages(componentEventList),
-				recent: this.prepareRecentItems(componentEventList),
-			};
-
+			const modelData = this.prepareData(eventList);
 			try
 			{
-				await this.setUsers(modelData.users);
-				await this.setDialogs(modelData.dialogs);
-				await this.setFiles(modelData.files);
-				await this.setMessages(modelData.messages);
-				await this.setRecent(modelData.recent);
+				await this.setData(modelData);
 			}
 			catch (error)
 			{
 				logger.error(`${this.className}.handleMessageBatch error`, error);
 			}
 			logger.warn(`${this.className} handleMessageBatch completed`);
+		}
+
+		async setData(modelData)
+		{
+			await this.setUsers(modelData.users);
+			await this.setDialogs(modelData.dialogs);
+			await this.setFiles(modelData.files);
+			await this.setMessages(modelData.messages);
+			await this.setRecent(modelData.recent);
 		}
 
 		async setDialogs(dialogs = [])
@@ -118,7 +134,7 @@ jn.define('im/messenger/provider/push/message-handler/base', (require, exports, 
 				return;
 			}
 
-			await this.#store.dispatch('dialoguesModel/setFromPush', dialogs);
+			await this.store.dispatch('dialoguesModel/setFromPush', dialogs);
 		}
 
 		async setUsers(users = [])
@@ -128,7 +144,7 @@ jn.define('im/messenger/provider/push/message-handler/base', (require, exports, 
 				return;
 			}
 
-			await this.#store.dispatch('usersModel/setFromPush', users);
+			await this.store.dispatch('usersModel/setFromPush', users);
 		}
 
 		async setFiles(files = [])
@@ -138,7 +154,7 @@ jn.define('im/messenger/provider/push/message-handler/base', (require, exports, 
 				return;
 			}
 
-			await this.#store.dispatch('filesModel/setFromPush', files);
+			await this.store.dispatch('filesModel/setFromPush', files);
 		}
 
 		async setMessages(messages = [])
@@ -148,7 +164,7 @@ jn.define('im/messenger/provider/push/message-handler/base', (require, exports, 
 				return;
 			}
 
-			await this.#store.dispatch('messagesModel/setFromPush', messages);
+			await this.store.dispatch('messagesModel/setFromPush', messages);
 		}
 
 		async setRecent(recentItems = [])
@@ -158,7 +174,18 @@ jn.define('im/messenger/provider/push/message-handler/base', (require, exports, 
 				return;
 			}
 
-			await this.#store.dispatch('recentModel/setFromPush', recentItems);
+			await this.store.dispatch('recentModel/setFromPush', recentItems);
+		}
+
+		prepareData(componentEventList)
+		{
+			return {
+				dialogs: this.prepareDialogs(componentEventList),
+				users: this.prepareUsers(componentEventList),
+				files: this.prepareFiles(componentEventList),
+				messages: this.prepareMessages(componentEventList),
+				recent: this.prepareRecentItems(componentEventList),
+			};
 		}
 
 		/**

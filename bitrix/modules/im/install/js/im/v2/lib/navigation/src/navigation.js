@@ -47,6 +47,13 @@ export const NavigationManager = {
 	{
 		return Boolean(Layout[id]);
 	},
+	isMarketApp(payload: NavigationMenuItemParams): boolean
+	{
+		const { id, entityId } = payload;
+		const isMarketMenuItem = id === NavigationMenuItem.market;
+
+		return isMarketMenuItem && Boolean(entityId);
+	},
 };
 
 function onCopilotClick(payload: NavigationMenuItemParams)
@@ -104,14 +111,80 @@ function onMarketClick(payload: NavigationMenuItemParams)
 	MarketManager.openMarketplace();
 }
 
+function handleMenuItem(payload: NavigationMenuItemParams): void
+{
+	const { id: layoutName, entityId: layoutEntityId, asLink } = payload;
+	if (asLink)
+	{
+		openLink({ layoutName, layoutEntityId });
+
+		return;
+	}
+
+	changeLayout({ layoutName, layoutEntityId });
+}
+
+function openLink({ layoutName, layoutEntityId }: LayoutParams): void
+{
+	const LayoutToUrlConfigMap: Record<string, { paramName: string, useParamByDefault: boolean, canUseId: boolean }> = {
+		[NavigationMenuItem.chat]: {
+			paramName: GetParameter.openChat,
+			useParamByDefault: false,
+			canUseId: true,
+		},
+		[NavigationMenuItem.copilot]: {
+			paramName: GetParameter.openCopilotChat,
+			useParamByDefault: true,
+			canUseId: true,
+		},
+		[NavigationMenuItem.collab]: {
+			paramName: GetParameter.openCollab,
+			useParamByDefault: true,
+			canUseId: true,
+		},
+		[NavigationMenuItem.channel]: {
+			paramName: GetParameter.openChannel,
+			useParamByDefault: true,
+			canUseId: true,
+		},
+		[NavigationMenuItem.tasksTask]: {
+			paramName: GetParameter.openTaskComments,
+			useParamByDefault: true,
+			canUseId: true,
+		},
+		[NavigationMenuItem.openlines]: {
+			paramName: GetParameter.openLines,
+			useParamByDefault: true,
+			canUseId: true,
+		},
+		[NavigationMenuItem.notification]: {
+			paramName: GetParameter.openNotifications,
+			useParamByDefault: true,
+			canUseId: false,
+		},
+		[NavigationMenuItem.settings]: {
+			paramName: GetParameter.openSettings,
+			useParamByDefault: true,
+			canUseId: false,
+		},
+	};
+
+	const basePath = Path.online;
+	const urlConfig = LayoutToUrlConfigMap[layoutName];
+	if (!urlConfig)
+	{
+		return;
+	}
+}
+
 function changeLayout({ layoutName, layoutEntityId }: { layoutName: string, layoutEntityId?: string | number })
 {
-	if (!Layout[layoutName])
+	const layoutManager = LayoutManager.getInstance();
+	if (!layoutManager.isValidLayout(layoutName))
 	{
 		return;
 	}
 
-	const layoutManager = LayoutManager.getInstance();
 	let entityId = layoutEntityId;
 
 	const lastOpenedElement = layoutManager.getLastOpenedElement(layoutName);

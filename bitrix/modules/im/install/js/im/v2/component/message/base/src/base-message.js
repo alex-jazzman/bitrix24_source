@@ -1,7 +1,11 @@
+import { Type } from 'main.core';
+import { EventEmitter } from 'main.core.events';
+
+import { Utils } from 'im.v2.lib.utils';
 import { Core } from 'im.v2.application.core';
 import { Parser } from 'im.v2.lib.parser';
 import { ContextMenu, RetryButton, MessageKeyboard, ReactionSelector } from 'im.v2.component.message.elements';
-import { ActionByRole } from 'im.v2.const';
+import { ActionByRole, EventType } from 'im.v2.const';
 import { PermissionManager } from 'im.v2.lib.permission';
 import { ChannelManager } from 'im.v2.lib.channel';
 
@@ -129,12 +133,49 @@ export const BaseMessage = {
 		{
 			Parser.executeClickEvent(event);
 		},
+		openContextMenu(event: PointerEvent & { target: HTMLElement })
+		{
+			const isContextMenuClick = Boolean(event.target.closest('.bx-im-message-context-menu__container'));
+			if (!this.withContextMenu || isContextMenuClick || this.hasSelectedText())
+			{
+				return;
+			}
+
+			event.preventDefault();
+
+			EventEmitter.emit(EventType.dialog.onClickMessageContextMenu, {
+				message: this.message,
+				dialogId: this.dialogId,
+				event,
+			});
+		},
+		async onMessageMouseUp(message: ImModelMessage, event: MouseEvent)
+		{
+			await Utils.browser.waitForSelectionToUpdate();
+			if (!this.hasSelectedText())
+			{
+				return;
+			}
+
+			EventEmitter.emit(EventType.dialog.showQuoteButton, {
+				message,
+				event,
+			});
+		},
+		hasSelectedText(): boolean
+		{
+			const selection = window.getSelection().toString().trim();
+
+			return Type.isStringFilled(selection);
+		},
 	},
 	template: `
 		<div class="bx-im-message-base__wrap bx-im-message-base__scope" :class="containerClasses" :data-id="message.id">
 			<div
 				class="bx-im-message-base__container" 
 				@click="onContainerClick"
+				@contextmenu="openContextMenu"
+				@mouseup="onMessageMouseUp(message, $event)"
 			>
 				<!-- Before content -->
 				<slot name="before-message"></slot>

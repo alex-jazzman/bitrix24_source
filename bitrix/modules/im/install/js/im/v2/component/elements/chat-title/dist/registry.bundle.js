@@ -108,7 +108,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    },
 	    dialogName() {
 	      if (this.customType === ChatTitleType.notes) {
-	        return this.loc('IM_SEARCH_MY_NOTES');
+	        return this.loc('IM_CHAT_TITLE_MY_NOTES');
 	      }
 	      if (this.text) {
 	        return main_core.Text.encode(this.text);
@@ -226,10 +226,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    },
 	    tooltipText() {
 	      if (this.customType === ChatTitleType.notes) {
-	        return this.loc('IM_SEARCH_MY_NOTES');
+	        return this.loc('IM_CHAT_TITLE_MY_NOTES');
 	      }
 	      if (this.isSelfChat && this.showItsYou) {
-	        return `${this.dialog.name} (${this.loc('IM_LIST_RECENT_CHAT_SELF')})`;
+	        return `${this.dialog.name} (${this.loc('IM_CHAT_TITLE_SELF')})`;
 	      }
 	      return this.dialog.name;
 	    },
@@ -254,7 +254,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					v-html="dialogName"
 				></span>
 				<strong v-if="isSelfChat && showItsYou">
-					<span class="bx-im-chat-title__text --self">({{ loc('IM_LIST_RECENT_CHAT_SELF') }})</span>
+					<span class="bx-im-chat-title__text --self">({{ loc('IM_CHAT_TITLE_SELF') }})</span>
 				</strong>
 				<span v-if="withMute && isChatMuted" class="bx-im-chat-title__muted-icon"></span>
 				<BIcon

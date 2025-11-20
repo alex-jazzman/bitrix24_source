@@ -316,7 +316,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      return im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByRole(im_v2_const.ActionByRole.avatar, this.dialogId);
 	    },
 	    isNotes() {
-	      return Number.parseInt(this.dialogId, 10) === im_v2_application_core.Core.getUserId();
+	      return this.$store.getters['chats/isNotes'](this.dialogId);
 	    },
 	    userLink() {
 	      return im_v2_lib_utils.Utils.user.getProfileLink(this.dialogId);

@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
-(function (exports,ui_iconSet_api_vue,ui_iconSet_api_core,ui_iconSet_outline,tasks_v2_const,tasks_v2_provider_service_taskService) {
+(function (exports,ui_iconSet_api_vue,ui_iconSet_outline,tasks_v2_const,tasks_v2_provider_service_taskService) {
 	'use strict';
 
 	// @vue/component
@@ -19,7 +19,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  },
 	  setup() {
 	    return {
-	      Outline: ui_iconSet_api_core.Outline
+	      Outline: ui_iconSet_api_vue.Outline
 	    };
 	  },
 	  computed: {
@@ -57,5 +57,5 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 
 	exports.Importance = Importance;
 
-}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.UI.IconSet,BX.UI.IconSet,BX,BX.Tasks.V2.Const,BX.Tasks.V2.Provider.Service));
+}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.UI.IconSet,BX,BX.Tasks.V2.Const,BX.Tasks.V2.Provider.Service));
 //# sourceMappingURL=importance.bundle.js.map

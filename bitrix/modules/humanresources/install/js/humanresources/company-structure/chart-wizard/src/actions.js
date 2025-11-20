@@ -1,8 +1,8 @@
-import { useChartStore } from 'humanresources.company-structure.chart-store';
+import { useChartStore, UserService } from 'humanresources.company-structure.chart-store';
 import type { DepartmentData } from './types';
 
 export const chartWizardActions = {
-	createDepartment: (departmentData: DepartmentData): void => {
+	createDepartment: async (departmentData: DepartmentData): void => {
 		const { departments, structureMap } = useChartStore();
 		const { id: departmentId, parentId, entityType } = departmentData;
 		const parent = departments.get(parentId);
@@ -18,6 +18,8 @@ export const chartWizardActions = {
 			chats: null,
 			channels: null,
 		});
+
+		await UserService.refreshMultipleUsers();
 	},
 	moveUsersToRootDepartment: (removedUsers: number[], userMovedToRootIds: number[]): void => {
 		const { departments } = useChartStore();
@@ -28,6 +30,8 @@ export const chartWizardActions = {
 			employees: [...(rootNode.employees || []), ...rootEmployees],
 			userCount: rootNode.userCount + rootEmployees.length,
 		});
+
+		UserService.refreshMultipleUsers();
 	},
 	refreshDepartments: (ids: number[]): void => {
 		const store = useChartStore();

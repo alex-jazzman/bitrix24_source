@@ -215,6 +215,10 @@ export class CounterPullHandler
 				setUnloadedCounterAction: 'counters/setUnloadedCopilotCounters',
 				collectionGetter: 'recent/isInCopilotCollection',
 			},
+			[RecentType.taskComments]: {
+				setUnloadedCounterAction: 'counters/setUnloadedTaskCounters',
+				collectionGetter: 'recent/isInTaskCollection',
+			},
 		};
 
 		return handlers[section];

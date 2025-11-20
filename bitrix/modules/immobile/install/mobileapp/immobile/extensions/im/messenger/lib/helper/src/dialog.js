@@ -251,6 +251,11 @@ jn.define('im/messenger/lib/helper/dialog', (require, exports, module) => {
 			return this.dialogModel.type === DialogType.support24Question;
 		}
 
+		get isTaskComment()
+		{
+			return this.dialogModel.type === DialogType.tasksTask;
+		}
+
 		get isCurrentUserOwner()
 		{
 			return Number(this.dialogModel.owner) === serviceLocator.get('core').getUserId();
@@ -295,7 +300,12 @@ jn.define('im/messenger/lib/helper/dialog', (require, exports, module) => {
 
 		get canBeDeleted()
 		{
-			return ChatPermission.сanDeleteChat(this.dialogModel);
+			return ChatPermission.canDeleteChat(this.dialogModel);
+		}
+
+		get canClearHistory()
+		{
+			return false; // TODO Back not ready yet
 		}
 
 		get canCopyChatLink()

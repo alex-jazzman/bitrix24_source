@@ -22,6 +22,10 @@ export const Chat = {
 		{
 			return this.$store.getters[`${Model.Tasks}/getById`](this.taskId);
 		},
+		isEdit(): boolean
+		{
+			return Number.isInteger(this.taskId) && this.taskId > 0;
+		},
 	},
 	watch: {
 		taskId(): void
@@ -39,7 +43,7 @@ export const Chat = {
 			this.app?.bitrixVue.unmount();
 			this.app ??= await Messenger.initApplication('task');
 
-			if (this.taskId > 0)
+			if (this.isEdit)
 			{
 				void this.app.mount({
 					rootContainer: this.$el,
@@ -52,7 +56,7 @@ export const Chat = {
 			{
 				await this.app.mountPlaceholder({
 					rootContainer: this.$el,
-					taskId: this.taskId,
+					taskId: `'${this.taskId}'`,
 				});
 
 				EventEmitter.emit('tasks:card:onMembersCountChange', {

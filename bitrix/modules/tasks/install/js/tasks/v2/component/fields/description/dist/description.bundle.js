@@ -126,6 +126,11 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      file: {
 	        mode: 'disk',
 	        files: this.getFiles()
+	      },
+	      visualOptions: {
+	        borderWidth: 0,
+	        blockSpaceInline: 'var(--ui-space-stack-md2)',
+	        colorBackground: 'transparent'
 	      }
 	    };
 	    babelHelpers.classPrivateFieldLooseBase(this, _editor)[_editor] = new ui_textEditor.TextEditor({
@@ -630,7 +635,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			<div class="tasks-full-card-field-container --small-vertical-padding">
 				<div class="tasks-card-change-description" :class="{ '--no-hover': filesCount }">
 					<template v-if="filesCount">
-						<BIcon 
+						<BIcon
 							:name="Outline.ATTACH"
 							:size=iconSize
 							class="tasks-card-description-field-icon-link"
@@ -669,7 +674,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    };
 	  },
 	  template: `
-		<ActionButton 
+		<ActionButton
 			:icon-name="Outline.GO_TO_L"
 			:title="loc('TASKS_V2_DESCRIPTION_BUTTON_EXPAND')"
 		/>
@@ -793,9 +798,15 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        setTimeout(() => {
 	          this.isNeedTeleport = true;
 	        }, 100);
+	        this.editor.setVisualOptions({
+	          blockSpaceInline: 0
+	        });
 	      } else {
 	        this.isNeedTeleport = false;
 	        this.editor.setMaxHeight(null);
+	        this.editor.setVisualOptions({
+	          blockSpaceInline: 'var(--ui-space-stack-md2)'
+	        });
 	      }
 	    },
 	    onFileBrowserClose() {
@@ -817,17 +828,19 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 						@filesChange="handleEditorChange"
 					/>
 				</Teleport>
-				<div class="tasks-card-description-footer">
-					<div class="tasks-card-description-action-list">
-						<Copilot />
-						<Attach ref="attach" @click="handleAttachButtonClick"/>
-						<Mention @click="handleMentionButtonClick"/>
-					</div>
-					<div
-						class="tasks-card-description-footer-buttons"
-						ref="fullDescriptionArea"
-					>
-						<FullDescription @click="handleExpand"/>
+				<div class="tasks-card-description-footer-container">
+					<div class="tasks-card-description-footer">
+						<div class="tasks-card-description-action-list">
+							<Copilot />
+							<Attach ref="attach" @click="handleAttachButtonClick"/>
+							<Mention @click="handleMentionButtonClick"/>
+						</div>
+						<div
+							class="tasks-card-description-footer-buttons"
+							ref="fullDescriptionArea"
+						>
+							<FullDescription @click="handleExpand"/>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -1113,9 +1126,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    }
 	  },
 	  template: `
-		<slot 
-			:isShown="isSlotShown" 
-			:doOpenInEditMode="doOpenInEditMode" 
+		<slot
+			:isShown="isSlotShown"
+			:doOpenInEditMode="doOpenInEditMode"
 			:close="closeSlot"
 		/>
 		<div
@@ -1169,6 +1182,14 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    doOpenInEditMode: {
 	      type: Boolean,
 	      default: false
+	    },
+	    getBindElement: {
+	      type: Function,
+	      default: null
+	    },
+	    getTargetContainer: {
+	      type: Function,
+	      default: null
 	    }
 	  },
 	  emits: ['show', 'close'],
@@ -1189,7 +1210,13 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    }
 	  },
 	  template: `
-		<BottomSheet :isShown="isShown" :isExpanded="true" ref="bottomSheet">
+		<BottomSheet
+			v-if="isShown"
+			:isExpanded="true"
+			:getBindElement="getBindElement"
+			:getTargetContainer="getTargetContainer"
+			ref="bottomSheet"
+		>
 			<DescriptionEditor
 				ref="editorComponent"
 				:taskId="taskId"

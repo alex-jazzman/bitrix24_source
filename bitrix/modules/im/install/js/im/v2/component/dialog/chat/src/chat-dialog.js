@@ -66,7 +66,11 @@ export const ChatDialog = {
 			type: Boolean,
 			default: true,
 		},
-		resetOnExit: {
+		reloadOnExit: {
+			type: Boolean,
+			default: true,
+		},
+		clearOnExit: {
 			type: Boolean,
 			default: false,
 		},
@@ -371,19 +375,22 @@ export const ChatDialog = {
 		},
 		async handleMessagesOnExit()
 		{
-			if (this.resetOnExit)
+			if (this.clearOnExit)
 			{
-				void this.getChatService().resetChat(this.dialogId);
+				void this.getChatService().clearChat(this.dialogId);
 
 				return;
 			}
 
 			await this.getChatService().readChatQueuedMessages(this.dialog.chatId);
 
-			const LOAD_MESSAGES_ON_EXIT_DELAY = 200;
-			setTimeout(async () => {
-				this.getMessageService().reloadMessageList();
-			}, LOAD_MESSAGES_ON_EXIT_DELAY);
+			if (this.reloadOnExit)
+			{
+				const LOAD_MESSAGES_ON_EXIT_DELAY = 200;
+				setTimeout(async () => {
+					this.getMessageService().reloadMessageList();
+				}, LOAD_MESSAGES_ON_EXIT_DELAY);
+			}
 		},
 		/* region Reading */
 		readQueuedMessages(): void

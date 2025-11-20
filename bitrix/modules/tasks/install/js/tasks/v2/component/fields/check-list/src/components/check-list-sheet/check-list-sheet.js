@@ -14,14 +14,16 @@ export const CheckListSheet = {
 			type: Boolean,
 			required: true,
 		},
+		getBindElement: {
+			type: Function,
+			default: null,
+		},
+		getTargetContainer: {
+			type: Function,
+			default: null,
+		},
 	},
 	emits: ['show', 'close', 'isShown'],
-	data(): Object
-	{
-		return {
-			isExpanded: false,
-		};
-	},
 	computed: {
 		...mapGetters({
 			titleFieldOffsetHeight: `${Model.Interface}/titleFieldOffsetHeight`,
@@ -69,9 +71,10 @@ export const CheckListSheet = {
 	},
 	template: `
 		<BottomSheet
-			:isShown="isShown"
-			:isExpanded="isExpanded"
-			:class="'--check-list'"
+			v-if="isShown"
+			:padding="0"
+			:getBindElement="getBindElement"
+			:getTargetContainer="getTargetContainer"
 			ref="childComponent"
 		>
 			<slot

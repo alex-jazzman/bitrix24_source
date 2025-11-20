@@ -10,7 +10,6 @@ return [
 	'rel' => [
 		'main.polyfill.core',
 		'ui.icon-set.api.vue',
-		'ui.icon-set.api.core',
 		'ui.icon-set.outline',
 		'tasks.v2.const',
 		'tasks.v2.provider.service.task-service',

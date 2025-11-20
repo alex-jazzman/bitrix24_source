@@ -1191,7 +1191,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      type: Boolean,
 	      default: true
 	    },
-	    resetOnExit: {
+	    reloadOnExit: {
+	      type: Boolean,
+	      default: true
+	    },
+	    clearOnExit: {
 	      type: Boolean,
 	      default: false
 	    }
@@ -1446,15 +1450,17 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      });
 	    },
 	    async handleMessagesOnExit() {
-	      if (this.resetOnExit) {
-	        void this.getChatService().resetChat(this.dialogId);
+	      if (this.clearOnExit) {
+	        void this.getChatService().clearChat(this.dialogId);
 	        return;
 	      }
 	      await this.getChatService().readChatQueuedMessages(this.dialog.chatId);
-	      const LOAD_MESSAGES_ON_EXIT_DELAY = 200;
-	      setTimeout(async () => {
-	        this.getMessageService().reloadMessageList();
-	      }, LOAD_MESSAGES_ON_EXIT_DELAY);
+	      if (this.reloadOnExit) {
+	        const LOAD_MESSAGES_ON_EXIT_DELAY = 200;
+	        setTimeout(async () => {
+	          this.getMessageService().reloadMessageList();
+	        }, LOAD_MESSAGES_ON_EXIT_DELAY);
+	      }
 	    },
 	    /* region Reading */
 	    readQueuedMessages() {

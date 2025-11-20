@@ -1,4 +1,4 @@
-import type { ChatOrChannelDetailed } from 'humanresources.company-structure.utils';
+import type { CommunicationDetailed } from 'humanresources.company-structure.utils';
 import { AbstractActionMenu } from '../abstract-action-menu';
 import { OpenChatMenuItem } from '../items/chats/open-chat-menu-item';
 import { UnbindChatMenuItem } from '../items/chats/unbund-chat-menu-item';
@@ -9,9 +9,9 @@ import { UnbindChatMenuItem } from '../items/chats/unbund-chat-menu-item';
  */
 export class ChatListActionMenu extends AbstractActionMenu
 {
-	chat: ChatOrChannelDetailed;
+	chat: CommunicationDetailed;
 
-	constructor(entityType: number, chat: ChatOrChannelDetailed, entityId: number)
+	constructor(entityType: number, chat: CommunicationDetailed, entityId: number)
 	{
 		super(entityId);
 		this.chat = chat;

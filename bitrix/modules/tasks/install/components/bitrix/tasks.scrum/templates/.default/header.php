@@ -186,6 +186,7 @@ $APPLICATION->includeComponent(
 		'USER_ID' => $arParams['USER_ID'] ?? null,
 		'GROUP_ID' => $arParams['GROUP_ID'] ?? null,
 		'SPRINT_ID' => ($arResult['completedSprintId'] ?? -1),
+		'ACTIVE_SPRINT_ID' => (int)($arResult['activeSprintId'] ?? 0),
 		'MENU_GROUP_ID' => $arParams['GROUP_ID'] ?? null,
 		'PATH_TO_USER_TASKS_TEMPLATES' => $arParams['PATH_TO_USER_TASKS_TEMPLATES'] ?? null,
 		'PATH_TO_GROUP_TASKS_TASK' => $arParams['PATH_TO_GROUP_TASKS_TASK'] ?? null,
@@ -242,9 +243,3 @@ if ($isBitrix24Template)
 	$this->EndViewTarget();
 }
 ?>
-<script>
-	BX.ready(function()
-	{
-
-	})
-</script>

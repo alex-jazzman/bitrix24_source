@@ -386,13 +386,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    }
 	    return `[USER=${dialogId}]${name}[/USER]`;
 	  },
-	  getMessageLink(dialogId, messageId) {
-	    const getParams = new URLSearchParams({
-	      [im_v2_const.GetParameter.openChat]: dialogId,
-	      [im_v2_const.GetParameter.openMessage]: messageId
-	    });
-	    return `${location.origin}${im_v2_const.Path.online}?${getParams.toString()}`;
-	  },
 	  async copyToClipboard(textToCopy) {
 	    var _BX$clipboard;
 	    if (!main_core.Type.isString(textToCopy)) {
@@ -638,6 +631,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        break;
 	      case 'mp3':
 	      case 'ogg':
+	      case 'm4a':
 	        type = im_v2_const.FileType.audio;
 	        break;
 	      default:
@@ -692,7 +686,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      return dataAttributes;
 	    }
 	    Object.entries(viewerAttributes).forEach(([key, value]) => {
-	      dataAttributes[`data-${main_core.Text.toKebabCase(key)}`] = value;
+	      dataAttributes[`data-${main_core.Text.toKebabCase(key)}`] = value === null ? '' : value;
 	    });
 
 	    // it should be the same link, which we use in src attribute in <img> or <video> tag
@@ -702,7 +696,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    if (context) {
 	      dataAttributes['data-viewer-group-by'] = `${context}${dataAttributes['data-viewer-group-by']}`;
 	    }
-	    dataAttributes['data-viewer'] = true;
+	    dataAttributes['data-viewer'] = '';
 	    return dataAttributes;
 	  },
 	  createDownloadLink(text, urlDownload, fileName) {

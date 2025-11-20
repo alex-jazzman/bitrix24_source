@@ -33,7 +33,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  async post(endpoint, data) {
 	    const url = this.buildUrl(endpoint);
 	    const response = await main_core.ajax.runAction(url, {
-	      [babelHelpers.classPrivateFieldLooseBase(this, _contentType)[_contentType]]: data
+	      [babelHelpers.classPrivateFieldLooseBase(this, _contentType)[_contentType]]: data,
+	      navigation: data == null ? void 0 : data.navigation
 	    });
 	    return this.handleResponse(response);
 	  }

@@ -36,5 +36,6 @@ return [
 		'./src/comment',
 		'./src/vote',
 		'./src/read-message-queue',
+		'./src/transcript',
 	],
 ];

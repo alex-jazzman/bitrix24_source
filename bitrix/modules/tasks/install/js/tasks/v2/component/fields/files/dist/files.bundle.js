@@ -7,7 +7,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	'use strict';
 
 	const filesMeta = Object.freeze({
-	  id: 'fileIds',
+	  id: tasks_v2_const.TaskField.Files,
 	  title: main_core.Loc.getMessage('TASKS_V2_FILES_TITLE')
 	});
 
@@ -185,8 +185,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				class="tasks-field-files-list --card"
 				ref="files"
 			>
-				<UserFieldWidgetComponent 
-					:uploaderAdapter="uploaderAdapter" 
+				<UserFieldWidgetComponent
+					:uploaderAdapter="uploaderAdapter"
 					:widgetOptions="widgetOptions"
 				/>
 			</div>
@@ -312,6 +312,14 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    isShown: {
 	      type: Boolean,
 	      required: true
+	    },
+	    getBindElement: {
+	      type: Function,
+	      default: null
+	    },
+	    getTargetContainer: {
+	      type: Function,
+	      default: null
 	    }
 	  },
 	  emits: ['close'],
@@ -376,7 +384,12 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    }
 	  },
 	  template: `
-		<BottomSheet :isShown="isShown" ref="bottomSheet">
+		<BottomSheet
+			v-if="isShown"
+			:getBindElement="getBindElement"
+			:getTargetContainer="getTargetContainer"
+			ref="bottomSheet"
+		>
 			<div class="tasks-field-files-sheet" :data-task-id="taskId">
 				<div class="tasks-field-files-header">
 					<div class="tasks-field-files-title">
@@ -396,7 +409,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 						:widgetOptions="widgetOptions"
 					/>
 				</div>
-				<div 
+				<div
 					v-if="showFooter"
 					class="tasks-field-files-footer"
 					:class="{ '--with-archive': canDownloadArchive }"

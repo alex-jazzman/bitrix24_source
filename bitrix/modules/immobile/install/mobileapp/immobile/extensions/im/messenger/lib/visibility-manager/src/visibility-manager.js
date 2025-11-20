@@ -205,7 +205,9 @@ jn.define('im/messenger/lib/visibility-manager/visibility-manager', (require, ex
 			return this.storage.get(VISIBLE_DIALOG_STORAGE_KEY);
 		}
 
+		// TODO: remove after MessengerV2 release
 		/**
+		 * @deprecated
 		 * @param {ActiveTabInfo} activeTabInfo
 		 */
 		async saveActiveTabInfo(activeTabInfo)
@@ -213,7 +215,9 @@ jn.define('im/messenger/lib/visibility-manager/visibility-manager', (require, ex
 			return this.storage.set(ACTIVE_TAB_STORAGE_KEY, activeTabInfo);
 		}
 
+		// TODO: remove after MessengerV2 release
 		/**
+		 * @deprecated
 		 * @return {Promise<ActiveTabInfo|null>}
 		 */
 		async getActiveTabInfo()

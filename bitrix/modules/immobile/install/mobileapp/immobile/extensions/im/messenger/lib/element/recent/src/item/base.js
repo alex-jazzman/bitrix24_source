@@ -7,6 +7,7 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 	const { Type } = require('type');
 	const { Theme } = require('im/lib/theme');
 	const { Uuid } = require('utils/uuid');
+	const { merge } = require('utils/object');
 	const { Icon } = require('assets/icons');
 	const { Feature } = require('im/messenger/lib/feature');
 	const { DraftType } = require('im/messenger/const');
@@ -32,7 +33,6 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		HideAction,
 	} = require('im/messenger/lib/element/recent/item/action/action');
 	const {
-		CounterPrefix,
 		CounterValue,
 		CounterPostfix,
 	} = require('im/messenger/lib/element/recent/const/test-id');
@@ -109,6 +109,7 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 				.createMenuMode()
 				.createActions()
 				.createParams()
+				.createMutedTitleStyle()
 				.createTitleStyle()
 				.createSubtitleStyle()
 				.createDraftRecent()
@@ -167,10 +168,23 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		 */
 		initParams(modelItem, options)
 		{
+			const dialog = this.getDialogById(modelItem.id);
+
+			let counter = 0;
+			if (Feature.isMessengerV2Enabled)
+			{
+				counter = serviceLocator.get('core').getStore().getters['counterModel/getCounterByChatId'](dialog?.chatId);
+			}
+			else
+			{
+				counter = dialog?.counter ?? 0;
+			}
+
 			this.params = {
 				model: {
 					recent: modelItem,
-					dialog: this.getDialogById(modelItem.id),
+					dialog,
+					counter,
 				},
 				options,
 				id: modelItem.id,
@@ -219,6 +233,12 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 
 		createDraftRecent()
 		{
+			const showDraft = this.getRenderProperty('showDraft', true);
+			if (!showDraft)
+			{
+				return this;
+			}
+
 			if (!this.hasDraft())
 			{
 				return this;
@@ -276,6 +296,14 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		 */
 		createDate()
 		{
+			const getOrder = this.getRenderProperty('getOrder');
+			if (Type.isFunction(getOrder))
+			{
+				this.date = getOrder(this);
+
+				return this;
+			}
+
 			const date = DateHelper.cast(this.getItemDate(), new Date());
 			this.date = Math.round(date.getTime() / 1000);
 
@@ -287,6 +315,14 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		 */
 		createDisplayedDate()
 		{
+			const getDisplayedDate = this.getRenderProperty('getDisplayedDate');
+			if (Type.isFunction(getDisplayedDate))
+			{
+				this.displayedDate = getDisplayedDate(this);
+
+				return this;
+			}
+
 			const date = DateHelper.cast(this.getItemDate(), null);
 			this.displayedDate = DateFormatter.getRecentFormat(date);
 
@@ -299,7 +335,14 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		createMessageCount()
 		{
 			const dialog = this.getDialogItem();
-			if (dialog && dialog.counter)
+
+			const counter = this.getCounter();
+			if (counter)
+			{
+				this.messageCount = counter;
+			}
+
+			if (dialog)
 			{
 				const chatId = dialog.chatId;
 				const hasMentions = serviceLocator.get('core').getStore().getters['anchorModel/hasAnchorsByType'](
@@ -307,7 +350,7 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 					AnchorType.mention,
 				);
 
-				this.messageCount = (dialog.counter === 1 && hasMentions) ? 0 : dialog.counter;
+				this.messageCount = (counter === 1 && hasMentions) ? 0 : counter;
 			}
 
 			return this;
@@ -403,6 +446,25 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 						},
 					};
 				}
+			}
+
+			return this;
+		}
+
+		/**
+		 * @return RecentItem
+		 */
+		createMutedTitleStyle()
+		{
+			const isMuted = this.getDialogHelper()?.isMuted;
+
+			if (isMuted)
+			{
+				this.styles.title = merge(this.styles.title, {
+					additionalImage: {
+						name: 'name_status_mute',
+					},
+				});
 			}
 
 			return this;
@@ -674,7 +736,7 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		}
 
 		/**
-		 * @return {DialoguesModelState}
+		 * @return {?DialoguesModelState}
 		 */
 		getDialogById(dialogId)
 		{
@@ -719,6 +781,16 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		}
 
 		/**
+		 * @returns {Date}
+		 */
+		getMessageDate()
+		{
+			const item = this.getModelItem();
+
+			return DateHelper.cast(item.message?.date, new Date());
+		}
+
+		/**
 		 * @returns {RecentMessage}
 		 */
 		getItemMessage()
@@ -738,6 +810,14 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 			return Uuid.isV4(message?.id)
 				? serviceLocator.get('core').getStore().getters['messagesModel/getByTemplateId'](message.id)
 				: serviceLocator.get('core').getStore().getters['messagesModel/getById'](message.id);
+		}
+
+		/**
+		 * @return {number}
+		 */
+		getCounter()
+		{
+			return this.params.model.counter;
 		}
 
 		/**
@@ -831,9 +911,9 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		getReadAction()
 		{
 			const item = this.getModelItem();
-			const dialog = this.getDialogItem();
+			const counter = this.getCounter();
 
-			return (item.unread === true || dialog?.counter > 0) ? ReadAction : UnreadAction;
+			return (item.unread === true || counter > 0) ? ReadAction : UnreadAction;
 		}
 
 		/**
@@ -848,9 +928,25 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		{
 			return `${Path.toExtensions}assets/common/png/${fileName}`;
 		}
+
+		/**
+		 * @param {keyof CommonRenderServiceProps['itemOptions']} name
+		 * @param defaultValue
+		 * @returns {*|null}
+		 */
+		getRenderProperty(name, defaultValue = null)
+		{
+			if (Type.isNil(this.params.options?.[name]))
+			{
+				return defaultValue;
+			}
+
+			return this.params.options[name];
+		}
 	}
 
 	module.exports = {
 		RecentItem,
+		RecentItemSectionCode,
 	};
 });

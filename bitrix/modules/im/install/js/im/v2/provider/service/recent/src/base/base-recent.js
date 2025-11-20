@@ -54,6 +54,14 @@ export class BaseRecentService
 		throw new Error('BaseRecentList: you should implement "getRecentSaveActionName" for child class');
 	}
 
+	getQueryParams(firstPage: boolean = false): BaseRecentQueryParams
+	{
+		return {
+			limit: this.getItemsPerPage(),
+			filter: this.getRequestFilter(firstPage),
+		};
+	}
+
 	getRequestFilter(firstPage: boolean = false): Record
 	{
 		return {
@@ -73,7 +81,11 @@ export class BaseRecentService
 
 	async #requestItems({ firstPage = false } = {}): Promise
 	{
-		const result: RecentRestResult = await runAction(this.getRestMethodName(), this.#getQueryParams(firstPage))
+		const queryParams = {
+			data: this.getQueryParams(firstPage),
+		};
+
+		const result: RecentRestResult = await runAction(this.getRestMethodName(), queryParams)
 			.catch(([error]) => {
 				console.error('BaseRecentList: page request error', error);
 			});
@@ -89,16 +101,6 @@ export class BaseRecentService
 		this.onAfterRequest(firstPage);
 
 		return this.#updateModels(result);
-	}
-
-	#getQueryParams(firstPage: boolean = false): BaseRecentQueryParams
-	{
-		return {
-			data: {
-				limit: this.getItemsPerPage(),
-				filter: this.getRequestFilter(firstPage),
-			},
-		};
 	}
 
 	#updateModels(restResult: RecentRestResult): Promise

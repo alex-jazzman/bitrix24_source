@@ -4,6 +4,7 @@
 jn.define('im/messenger/const/waiting-entity', (require, exports, module) => {
 
 	const WaitingEntity = {
+		chat: 'chat',
 		sync: {
 			filler: {
 				database: 'immobile::sync-filler-database',
@@ -26,6 +27,7 @@ jn.define('im/messenger/const/waiting-entity', (require, exports, module) => {
 			navigation: 'immobile::navigation-core',
 			chat: 'immobile::chat-core',
 		},
+		externalApi: 'immobile::external-api',
 	};
 
 	module.exports = { WaitingEntity };

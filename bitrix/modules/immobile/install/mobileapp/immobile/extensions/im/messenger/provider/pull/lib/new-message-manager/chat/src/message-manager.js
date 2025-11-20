@@ -12,7 +12,10 @@ jn.define('im/messenger/provider/pull/lib/new-message-manager/chat/message-manag
 	{
 		needToProcessMessage()
 		{
-			return this.isMessageSuitableForTab(RecentTab.chat) || this.isCommentChat();
+			return this.isMessageSuitableForTab(RecentTab.chat)
+				|| this.isCommentChat()
+				|| this.isTaskComments()
+			;
 		}
 
 		shouldUpdateRecent()

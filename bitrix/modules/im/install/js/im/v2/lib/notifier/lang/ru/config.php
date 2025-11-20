@@ -43,3 +43,6 @@ $MESS["IM_NOTIFIER_RECENT_PIN_DEFAULT_ERROR"] = "Не удалось закре�
 $MESS["IM_NOTIFIER_RECENT_UNPIN_DEFAULT_ERROR"] = "Не удалось открепить сообщение";
 $MESS['IM_NOTIFIER_COLLAB_COLLABER_NOT_ACCEPT_INVITATION'] = "Не все гости присоединились к коллабе";
 $MESS["IM_NOTIFIER_COLLAB_COPY_LINK_FORBIDDEN_ERROR"] = "Владелец коллабы отключил возможность приглашать гостей";
+$MESS['IM_NOTIFIER_MESSAGE_FORWARD_NOTES_COMPLETE'] = "Сообщение переслано";
+$MESS['IM_NOTIFIER_MESSAGE_FORWARD_NOTES_SEVERAL_MESSAGES_COMPLETE'] = "Сообщения пересланы";
+$MESS['IM_NOTIFIER_MESSAGE_FORWARD_NOTES_OPEN_COMPLETE'] = "Перейти";

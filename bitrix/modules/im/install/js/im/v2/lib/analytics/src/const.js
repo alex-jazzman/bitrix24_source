@@ -56,6 +56,11 @@ export const AnalyticsEvent = Object.freeze({
 	seeLater: 'see_later',
 	select: 'select',
 	addFeedback: 'add_feedback',
+	copyChatLink: 'copy_chat_link',
+	viewTranscription: 'view_transcription',
+	play: 'play',
+	pause: 'pause',
+	changeSpeed: 'change_speed',
 });
 
 export const AnalyticsTool = Object.freeze({
@@ -82,6 +87,7 @@ export const AnalyticsCategory = Object.freeze({
 	call: 'call',
 	collab: 'collab',
 	updateAppPopup: 'update_app_popup',
+	audiomessage: 'audiomessage',
 });
 
 export const AnalyticsType = Object.freeze({
@@ -125,6 +131,7 @@ export const AnalyticsSubSection = Object.freeze({
 	chatSidebar: 'chat_sidebar',
 	chatList: 'chat_list',
 	window: 'window',
+	membersPanel: 'user_list',
 });
 
 export const AnalyticsElement = Object.freeze({

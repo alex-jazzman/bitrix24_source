@@ -74,10 +74,6 @@ export const Messenger = {
 				'--desktop': DesktopManager.isDesktop(),
 			};
 		},
-		callContainerClass(): string[]
-		{
-			return [CallManager.viewContainerClass];
-		},
 	},
 	watch:
 	{
@@ -145,6 +141,5 @@ export const Messenger = {
 				</div>
 			</div>
 		</div>
-		<div :class="callContainerClass"></div>
 	`,
 };

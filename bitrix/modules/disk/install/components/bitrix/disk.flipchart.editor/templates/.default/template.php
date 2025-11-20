@@ -6,6 +6,7 @@
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Web\Json;
 use Bitrix\UI\Buttons\Button;
 use Bitrix\UI\Buttons\Color;
 use Bitrix\UI\Buttons\Size;
@@ -42,7 +43,7 @@ if (!$isMobile && $arResult['SHOULD_SHOW_SHARING_BUTTON'])
 			'id' => 'ext-link',
 			'html' => '<div class="disk-fe-office-access-setting-popup-icon-box">'
 				. '<div class="ui-icon-set --share-1"></div>'
-				. '<div> ' . Loc::getMessage("DISK_BOARDS_HEADER_BTN_SHARING_EXT_LINK") . ' </div>'
+				. '<div> ' . Loc::getMessage("DISK_BOARDS_HEADER_BTN_SHARING_EXT_LINK_MSGVER_1") . ' </div>'
 				. '</div>',
 			'dataset' => [
 				'shouldBlockExternalLinkFeature' => (int)$arResult['SHOULD_BLOCK_EXTERNAL_LINK_FEATURE'],
@@ -53,13 +54,13 @@ if (!$isMobile && $arResult['SHOULD_SHOW_SHARING_BUTTON'])
 			'id' => 'sharing',
 			'html' => '<div class="disk-fe-office-access-setting-popup-icon-box">'
 				. '<div class="ui-icon-set --person-plus-3"></div>'
-				. '<div> ' . Loc::getMessage('DISK_BOARDS_HEADER_BTN_SHARING_SHARE') . ' </div>'
+				. '<div> ' . Loc::getMessage('DISK_BOARDS_HEADER_BTN_SHARING_SHARE_MSGVER_1') . ' </div>'
 				. '</div>',
 		],
 	];
 
 	$setupSharingButton
-		->setText(Loc::getMessage('DISK_FLIPCHART_EDITOR_ACCESS_RIGHTS'))
+		->setText(Loc::getMessage('DISK_FLIPCHART_EDITOR_ACCESS_RIGHTS_MSGVER_1'))
 		->addClass('disk-fe-flipchart-btn-access-setting')
 		->setSize(Size::SMALL)
 		->setColor(Color::PRIMARY)
@@ -179,6 +180,8 @@ if ($isMobile)
 
 	let url = new URL(location.href);
 	url.searchParams.delete('c_element');
+	const boardElementId = url.searchParams.get('elementId');
+	url.searchParams.delete('elementId');
 	history.replaceState(null, '', url.toString());
 
 	new BX.Disk.Flipchart.Board({
@@ -191,7 +194,7 @@ if ($isMobile)
 			uniqueCode: '<?= \CUtil::JSEscape($arResult['FILE_UNIQUE_CODE']) ?>',
 		},
 		sharingControlType: '<?= $arResult['SHARING_CONTROL_TYPE'] ?>',
-		isUnifiedLinkMode: <?= $arResult['IS_UNIFIED_LINK_MODE'] ? 'true' : 'false' ?>,
+		unifiedLinkAccessOnly: <?= Json::encode($arResult['UNIFIED_LINK_ACCESS_ONLY']) ?>,
 	})
 
 	BX.ready(() => {
@@ -200,15 +203,20 @@ if ($isMobile)
 			appUrl: '<?= $arResult['APP_URL'] ?>',
 			token: '<?= $arResult['TOKEN'] ?>',
 			lang: '<?= $arResult['LANGUAGE'] ?>',
+			boardUrl: window.location.origin + window.location.pathname,
 			ui: {
 				colorTheme: 'flipBitrixLight',
-				openTemplatesModal: <?= $arResult['SHOW_TEMPLATES_MODAL'] ? 'true' : 'false' ?>,
+				openTemplatesModal: <?= Json::encode($arResult['SHOW_TEMPLATES_MODAL']) ?>,
 				exportAsFile: true,
 				spinner: 'circular',
+				userKickable: true,
+				confirmUserKick: false,
+				disable: false,
+				scrollToElement: boardElementId,
 			},
 			permissions: {
 				accessLevel: '<?= $arResult['ACCESS_LEVEL'] ?>',
-				editBoard: <?= $arResult['EDIT_BOARD'] ? 'true' : 'false' ?>,
+				editBoard: <?= Json::encode($arResult['EDIT_BOARD']) ?>,
 			},
 			boardData: {
 				fileUrl: '<?= $arResult['DOCUMENT_URL'] ?>',

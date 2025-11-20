@@ -131,7 +131,7 @@ export const MessageText = {
 		},
 		isNotes(): boolean
 		{
-			return Number.parseInt(this.recentItem.dialogId, 10) === Core.getUserId();
+			return this.$store.getters['chats/isNotes'](this.recentItem.dialogId);
 		},
 	},
 	methods:

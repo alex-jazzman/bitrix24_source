@@ -4,6 +4,7 @@
 
 jn.define('im/messenger/lib/params', (require, exports, module) => {
 	const { Type } = require('type');
+	const { Loc } = require('im/messenger/loc');
 	const { MemoryStorage } = require('native/memorystore');
 	const { EntityReady } = require('entity-ready');
 	const { ComponentCode } = require('im/messenger/const');
@@ -25,6 +26,19 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 			this.sharedParamsStorage = sharedParamsStorage;
 
 			EntityReady.addCondition(this.#entityReadySharedParamsKey, () => this.#isReadySharedParams);
+
+			this.setAiAssistantStatusMessages();
+		}
+
+		setAiAssistantStatusMessages()
+		{
+			const configMessages = this.get('MESSAGES', {});
+			if ('AI_ASSISTANT' in configMessages)
+			{
+				Object.entries(configMessages.AI_ASSISTANT).forEach(([code, phase]) => {
+					Loc.setMessage(code, phase);
+				});
+			}
 		}
 
 		async initSharedParams()
@@ -122,11 +136,6 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 			return this.get('IS_BETA_AVAILABLE', false);
 		}
 
-		isChatM1Enabled()
-		{
-			return this.get('IS_CHAT_M1_ENABLED', false);
-		}
-
 		isChatLocalStorageAvailable()
 		{
 			return this.get('IS_CHAT_LOCAL_STORAGE_AVAILABLE', false);
@@ -156,17 +165,17 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 		}
 
 		/**
-		* @return {PlanLimits}
-		*/
+		 * @return {PlanLimits}
+		 */
 		getPlanLimits()
 		{
 			return this.get('PLAN_LIMITS', {});
 		}
 
 		/**
-		* @param {PlanLimits} limits
-		* @return void
-		*/
+		 * @param {PlanLimits} limits
+		 * @return void
+		 */
 		setPlanLimits(limits)
 		{
 			this.set('PLAN_LIMITS', limits);
@@ -208,6 +217,7 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 				intranetInviteAvailable: false,
 				messagesAutoDeleteEnabled: false,
 				voteCreationAvailable: false,
+				aiFileTranscriptionAvailable: false,
 			});
 		}
 
@@ -255,6 +265,11 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 			return this.get('MULTIPLE_ACTION_MESSAGE_LIMIT', 20);
 		}
 
+		getMessengerV2Enabled()
+		{
+			return this.get('IS_MESSENGER_V2_ENABLED', false);
+		}
+
 		/**
 		 * @param {ComponentCode} componentCode
 		 * @return {boolean}
@@ -284,6 +299,19 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 		isComponentRequestBroadcasterAvailable(componentCode)
 		{
 			return this.isComponentAvailable(componentCode) && this.isComponentPreloaded(componentCode);
+		}
+
+		canUseAudioPanel()
+		{
+			return Boolean(this.get('CAN_USE_AUDIO_PANEL', false));
+		}
+
+		/**
+		 * @returns {string}
+		 */
+		getServiceHealthUrl()
+		{
+			return this.get('SERVICE_HEALTH_URL', '');
 		}
 	}
 

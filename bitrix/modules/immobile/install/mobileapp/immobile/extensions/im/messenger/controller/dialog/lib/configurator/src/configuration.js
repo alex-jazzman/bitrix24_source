@@ -25,6 +25,7 @@ jn.define('im/messenger/controller/dialog/lib/configurator/configuration', (requ
 		},
 		sidebar: {
 			enabled: true,
+			params: {},
 		},
 		message: {
 			contextMenu: {
@@ -55,6 +56,7 @@ jn.define('im/messenger/controller/dialog/lib/configurator/configuration', (requ
 		},
 		sidebar: {
 			enabled: true,
+			params: {},
 		},
 		message: {
 			contextMenu: {

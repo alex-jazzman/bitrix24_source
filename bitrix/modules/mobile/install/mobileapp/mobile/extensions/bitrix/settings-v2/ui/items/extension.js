@@ -11,6 +11,12 @@ jn.define('settings-v2/ui/items', (require, exports, module) => {
 	const { VideoQualitySwitchItem } = require('settings-v2/ui/items/src/video-quality-switch');
 	const { VideoBannerItem } = require('settings-v2/ui/items/src/video-banner');
 	const { LocSelectorItem } = require('settings-v2/ui/items/src/loc-selector');
+	const { CacheIntervalSelectorItem } = require('settings-v2/ui/items/src/cache-interval-selector');
+	const { CacheInfoItem } = require('settings-v2/ui/items/src/cache-info');
+	const { CacheBannerItem } = require('settings-v2/ui/items/src/cache-banner');
+	const { BannerItem } = require('settings-v2/ui/items/src/banner');
+	const { ImageItem } = require('settings-v2/ui/items/src/image');
+	const { StyleSwitchItem } = require('settings-v2/ui/items/src/style-switch');
 
 	class ItemFactory
 	{
@@ -34,6 +40,18 @@ jn.define('settings-v2/ui/items', (require, exports, module) => {
 					return new VideoBannerItem(item);
 				case SettingItemType.LOC_SELECTOR:
 					return new LocSelectorItem(item);
+				case SettingItemType.CACHE_INTERVAL:
+					return new CacheIntervalSelectorItem(item);
+				case SettingItemType.CACHE_INFO:
+					return new CacheInfoItem(item);
+				case SettingItemType.CACHE_BANNER:
+					return new CacheBannerItem(item);
+				case SettingItemType.BANNER:
+					return new BannerItem(item);
+				case SettingItemType.IMAGE:
+					return new ImageItem(item);
+				case SettingItemType.STYLE:
+					return new StyleSwitchItem(item);
 				default:
 					return null;
 			}

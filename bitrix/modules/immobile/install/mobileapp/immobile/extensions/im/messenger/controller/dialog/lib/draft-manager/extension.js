@@ -2,9 +2,11 @@
  * @module im/messenger/controller/dialog/lib/draft-manager
  */
 jn.define('im/messenger/controller/dialog/lib/draft-manager', (require, exports, module) => {
+	const { throttle, debounce } = require('utils/function');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { DraftType } = require('im/messenger/const');
 	const { ObjectUtils, AsyncQueue } = require('im/messenger/lib/utils');
+	const { getLoggerWithContext } = require('im/messenger/lib/logger');
 
 	class DraftManager
 	{
@@ -16,13 +18,20 @@ jn.define('im/messenger/controller/dialog/lib/draft-manager', (require, exports,
 		 */
 		constructor({ view, replyManager, dialogId, initWithExternalForward })
 		{
+			this.logger = getLoggerWithContext('dialog--draft-manager', this);
+
 			this.store = serviceLocator.get('core').getStore();
 			this.view = view;
 			this.dialogId = dialogId;
 			this.replyManager = replyManager;
 			this.initWithExternalForward = initWithExternalForward;
-			this.changeTextHandler = this.saveDraft.bind(this);
+
+			this.saveDraftThrottled = throttle(this.saveDraft, 3000, this);
+			this.saveDraftDebounced = debounce(this.saveDraft, 1500, this);
+			this.changeTextHandler = this.changeTextHandler.bind(this);
+
 			this.queue = new AsyncQueue();
+			this.isSaveDraftCanceled = false;
 
 			if (initWithExternalForward)
 			{
@@ -77,11 +86,27 @@ jn.define('im/messenger/controller/dialog/lib/draft-manager', (require, exports,
 			}
 		}
 
+		changeTextHandler(message)
+		{
+			this.isSaveDraftCanceled = false;
+			this.saveDraftThrottled(message);
+			this.saveDraftDebounced(message);
+		}
+
 		/**
 		 * @param {string} message
 		 */
 		saveDraft(message)
 		{
+			if (this.isSaveDraftCanceled)
+			{
+				this.logger.log('saveDraft canceled', message);
+
+				return Promise.resolve();
+			}
+
+			this.logger.log('saveDraft', message);
+
 			/** @type DraftModelState */
 			const draft = {
 				dialogId: this.dialogId,
@@ -169,6 +194,9 @@ jn.define('im/messenger/controller/dialog/lib/draft-manager', (require, exports,
 		 */
 		async clearDraft()
 		{
+			this.logger.log('clearDraft');
+			this.isSaveDraftCanceled = true;
+
 			await this.deleteDraft();
 			await this.updateRecent();
 		}

@@ -31,7 +31,7 @@ export const MiniFormButton = {
 			<div class="tasks-full-card-field-container --small-vertical-padding">
 				<div class="tasks-card-change-description" :class="{ '--no-hover': filesCount }">
 					<template v-if="filesCount">
-						<BIcon 
+						<BIcon
 							:name="Outline.ATTACH"
 							:size=iconSize
 							class="tasks-card-description-field-icon-link"

@@ -7,7 +7,6 @@ jn.define('im/messenger/cache/shared-storage/recent', (require, exports, module)
 	const { throttle } = require('utils/function');
 	const { uniqBy } = require('utils/array');
 
-	const { MessengerParams } = require('im/messenger/lib/params');
 	const { getLogger } = require('im/messenger/lib/logger');
 	const { Cache } = require('im/messenger/cache/base');
 
@@ -18,10 +17,10 @@ jn.define('im/messenger/cache/shared-storage/recent', (require, exports, module)
 	 */
 	class RecentViewCache extends Cache
 	{
-		constructor()
+		constructor(name)
 		{
 			super({
-				name: `${MessengerParams.getComponentCode() || 'im.messenger'}/recent`,
+				name,
 			});
 
 			this.save = throttle(this.save, 2000, this);
@@ -29,7 +28,7 @@ jn.define('im/messenger/cache/shared-storage/recent', (require, exports, module)
 
 		/**
 		 * @param {Array<JNListWidgetSectionItem>} sections
-		 * @param {Array<RecentWidgetItem>} itemList
+		 * @param {Array<RecentWidgetItem|RecentItem>} itemList
 		 */
 		save(sections, itemList)
 		{
@@ -38,7 +37,7 @@ jn.define('im/messenger/cache/shared-storage/recent', (require, exports, module)
 			const state = {
 				sections,
 				items: uniqueItemList
-					.filter((item) => item.id !== 'loadNextPage' && item.sectionCode !== 'call')
+					.filter((item) => item.id !== 'loadNextPage' && item.id !== 'loading' && item.sectionCode !== 'call')
 					.sort(this.sortItemList)
 					.slice(0, 15),
 			};

@@ -230,8 +230,13 @@ export class FileService extends EventEmitter
 		this.#adapter.getUploader().destroy();
 	}
 
-	async sync(ids: FileId[]): Promise<void>
+	async sync(ids: FileId[] | null): Promise<void>
 	{
+		if (!Type.isArrayFilled(ids))
+		{
+			return;
+		}
+
 		if (ids.every((id: FileId) => this.#loadedIds.has(id)))
 		{
 			this.#adapter.getItems().forEach((file) => {

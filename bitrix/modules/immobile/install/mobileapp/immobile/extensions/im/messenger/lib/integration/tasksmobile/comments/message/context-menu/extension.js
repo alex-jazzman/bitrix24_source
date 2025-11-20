@@ -49,7 +49,7 @@ jn.define('im/messenger/lib/integration/tasksmobile/comments/message/context-men
 		async getOrderedActions(message)
 		{
 			return [
-				MarkAsResultAction.id,
+				// MarkAsResultAction.id,
 				...await super.getOrderedActions(),
 			];
 		}

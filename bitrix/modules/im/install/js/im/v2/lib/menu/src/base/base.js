@@ -6,8 +6,8 @@ import { RestClient } from 'rest.client';
 
 import { Core } from 'im.v2.application.core';
 
-import type { MenuItemOptions, MenuOptions, MenuSectionOptions } from 'ui.system.menu';
 import type { PopupTarget } from 'main.popup';
+import type { MenuItemOptions, MenuOptions, MenuSectionOptions } from 'ui.system.menu';
 
 const EVENT_NAMESPACE = 'BX.Messenger.v2.Lib.Menu';
 

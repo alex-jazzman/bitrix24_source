@@ -1,21 +1,24 @@
 <?php
 
+use Bitrix\Disk\Document\Contract\FileCreatable;
 use Bitrix\Disk\Document\Flipchart\Configuration;
 use Bitrix\Disk\Document\LocalDocumentController;
+use Bitrix\Disk\Driver;
 use Bitrix\Disk\Integration\Bitrix24Manager;
+use Bitrix\Main\Loader;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
-	die();
+	die;
 }
 
-if (!\Bitrix\Main\Loader::includeModule('disk'))
+if (!Loader::includeModule('disk'))
 {
 	return [];
 }
 
 $importHandlers = [];
-$handlersManager = \Bitrix\Disk\Driver::getInstance()->getDocumentHandlersManager();
+$handlersManager = Driver::getInstance()->getDocumentHandlersManager();
 foreach ($handlersManager->getHandlersForImport() as $handler)
 {
 	$importHandlers[$handler::getCode()] = [
@@ -30,11 +33,12 @@ if ($canCreateDocuments)
 {
 	foreach ($handlersManager->getHandlers() as $handler)
 	{
-		if ($handler instanceof \Bitrix\Disk\Document\Contract\FileCreatable)
+		if ($handler instanceof FileCreatable)
 		{
 			$documentHandlers[$handler::getCode()] = [
 				'code' => $handler::getCode(),
 				'name' => $handler::getName(),
+				'supportsUnifiedLink' => $handler->supportsUnifiedLink(),
 			];
 		}
 	}
@@ -42,6 +46,7 @@ if ($canCreateDocuments)
 	$documentHandlers[LocalDocumentController::getCode()] = [
 		'code' => LocalDocumentController::getCode(),
 		'name' => LocalDocumentController::getName(),
+		'supportsUnifiedLink' => false,
 	];
 }
 

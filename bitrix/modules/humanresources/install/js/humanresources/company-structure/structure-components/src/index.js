@@ -16,6 +16,7 @@ import {
 } from './options/selectors';
 import { ResponsiveHint } from './components/responsive-hint/responsive-hint';
 import { DefaultHint } from './components/responsive-hint/default-hint';
+import { MoveUserPopup } from './components/move-user-popup/move-user-popup';
 
 export {
 	BasePopup,
@@ -34,4 +35,5 @@ export {
 	CommunicationsTypeDict,
 	ResponsiveHint,
 	DefaultHint,
+	MoveUserPopup,
 };

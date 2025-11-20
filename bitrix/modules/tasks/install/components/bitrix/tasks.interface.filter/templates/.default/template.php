@@ -50,9 +50,18 @@ if (isset($arParams['FILTER']) && is_array($arParams['FILTER']))
 	include(__DIR__ . '/filter_selector.php');
 }
 
-if ((int)$arParams['MENU_GROUP_ID'] === 0 || $arParams['SHOW_CREATE_TASK_BUTTON'] !== 'N')
+$request = \Bitrix\Main\Context::getCurrent()->getRequest();
+$relationToId = $request->get('relationToId');
+
+$showCreateButton = (int)$arParams['MENU_GROUP_ID'] === 0 || $arParams['SHOW_CREATE_TASK_BUTTON'] !== 'N';
+if (!$relationToId && $showCreateButton)
 {
 	include(__DIR__ . '/create_button.php');
+}
+
+if ($relationToId)
+{
+	include(__DIR__ . '/add_relation_button.php');
 }
 
 include(__DIR__.'/filter.php');
@@ -67,17 +76,19 @@ if ($arResult['SPRINT'])
 	include(__DIR__.'/sprint_selector.php');
 }
 
-if ($arParams['SHOW_USER_SORT'] === 'Y' ||
-		  $arParams['USE_GROUP_BY_SUBTASKS'] === 'Y' ||
-		  $arParams['USE_GROUP_BY_GROUPS'] === 'Y' ||
-		  $arParams['USE_EXPORT'] == 'Y' ||
-		  !empty($arParams['POPUP_MENU_ITEMS'])
-)
+$showPopupMenu = $arParams['SHOW_USER_SORT'] === 'Y'
+	|| $arParams['USE_GROUP_BY_SUBTASKS'] === 'Y'
+	|| $arParams['USE_GROUP_BY_GROUPS'] === 'Y'
+	|| $arParams['USE_EXPORT'] == 'Y'
+	|| !empty($arParams['POPUP_MENU_ITEMS'])
+;
+
+if ($showPopupMenu)
 {
 	include(__DIR__.'/popup_menu.php');
 }
 
-if ($arParams["SHOW_QUICK_FORM_BUTTON"] !== "N")
+if (!$relationToId && $arParams["SHOW_QUICK_FORM_BUTTON"] !== "N")
 {
 	include(__DIR__.'/quick_form.php');
 }
@@ -90,6 +101,7 @@ if ($arParams["SHOW_QUICK_FORM_BUTTON"] !== "N")
 			TASKS_INTERFACE_FILTER_PRESETS_MOVED_TEXT: '<?= GetMessageJS('TASKS_INTERFACE_FILTER_PRESETS_MOVED_TEXT_V2') ?> ',
 		});
 
+		const groupId = <?= !empty($arParams['GROUP_ID']) ? (int)$arParams['GROUP_ID'] : 'null' ?>;
 		const analytics = {
 			context: '<?= CUtil::JSEscape($arResult['CREATE_BUTTON_ANALYTICS']['sectionType']) ?>',
 			additionalContext: '<?= CUtil::JSEscape($arResult['CREATE_BUTTON_ANALYTICS']['viewState']) ?>',
@@ -103,10 +115,11 @@ if ($arParams["SHOW_QUICK_FORM_BUTTON"] !== "N")
 				...<?= Json::encode($arResult['roles']) ?>,
 				button: document.getElementById('tasks-buttonRoles'),
 				analytics,
+				groupId,
 			},
 			showPresetTourGuide: <?= $arResult['showPresetTourGuide'] ? 'true' : 'false' ?>,
 			isV2Form: <?= $isV2Form ? 'true' : 'false' ?>,
-			groupId: <?= !empty($arParams['GROUP_ID']) ? (int)$arParams['GROUP_ID'] : 'null' ?>,
+			groupId,
 			analytics,
 		});
 	})

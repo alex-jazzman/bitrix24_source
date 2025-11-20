@@ -2,5 +2,6 @@
 	display: flex;
 	align-items: center;
 	gap: 6px;
+	padding: 2px;
 	line-height: 22px;
 }

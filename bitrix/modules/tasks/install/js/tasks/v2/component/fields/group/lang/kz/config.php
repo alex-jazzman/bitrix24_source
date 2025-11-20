@@ -2,7 +2,6 @@
 $MESS["TASKS_V2_GROUP_ABOUT"] = "Жобаны ашу";
 $MESS["TASKS_V2_GROUP_ABOUT_COLLAB"] = "Коллабты ашу";
 $MESS["TASKS_V2_GROUP_ABOUT_SCRUM"] = "Скрамды ашу";
-$MESS["TASKS_V2_GROUP_ADD"] = "Қосу";
 $MESS["TASKS_V2_GROUP_CANT_CHANGE_FLOW"] = "Ағындағы міндеттерде жобаны өзгерту мүмкін емес. Егер сіз өзгерткіңіз келсе, ағынды алып тастаңыз";
 $MESS["TASKS_V2_GROUP_CHANGE"] = "Өзгерту";
 $MESS["TASKS_V2_GROUP_CLEAR"] = "Ажырату";

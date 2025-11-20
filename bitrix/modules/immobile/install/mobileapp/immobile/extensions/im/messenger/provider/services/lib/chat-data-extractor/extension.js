@@ -8,6 +8,7 @@ jn.define('im/messenger/provider/services/lib/chat-data-extractor', (require, ex
 
 	const { UserManager } = require('im/messenger/lib/user-manager');
 	const { DialogType } = require('im/messenger/const');
+	const { CounterHelper } = require('im/messenger/lib/helper');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
 	/**
@@ -177,7 +178,19 @@ jn.define('im/messenger/provider/services/lib/chat-data-extractor', (require, ex
 
 		getReactions()
 		{
-			return this.restResult.reactions ?? [];
+			if (!Type.isArrayFilled(this.restResult.reactions))
+			{
+				return [];
+			}
+
+			const dialogId = this.getMainChat()?.dialogId ?? 0;
+
+			return this.restResult.reactions.map((reaction) => {
+				// eslint-disable-next-line no-param-reassign
+				reaction.dialogId = dialogId;
+
+				return reaction;
+			});
 		}
 
 		getCopilot()
@@ -188,6 +201,31 @@ jn.define('im/messenger/provider/services/lib/chat-data-extractor', (require, ex
 		getRecentConfig()
 		{
 			return this.restResult.recentConfig ?? null;
+		}
+
+		/**
+		 * @return {Array<CounterModelState>}
+		 */
+		getCounterState()
+		{
+			const chat = this.getMainChat();
+
+			const storedDialogData = serviceLocator.get('core').getStore()
+				.getters['dialoguesModel/getById'](chat.dialogId)
+			;
+
+			if (storedDialogData && storedDialogData.lastReadId > chat.lastId)
+			{
+				return [];
+			}
+
+			return [{
+				chatId: chat.id,
+				counter: chat.counter,
+				type: CounterHelper.getCounterTypeByDialogType(chat.type),
+				disabled: CounterHelper.getDisabledByMuteList(chat.muteList ?? chat.mute_list),
+				parentChatId: chat.parentChatId ?? 0,
+			}];
 		}
 	}
 

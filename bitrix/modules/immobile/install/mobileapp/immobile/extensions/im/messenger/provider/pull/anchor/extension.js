@@ -2,7 +2,7 @@
  * @module im/messenger/provider/pull/anchor
  */
 jn.define('im/messenger/provider/pull/anchor', (require, exports, module) => {
-	const { BasePullHandler } = require('im/messenger/provider/pull/base/pull-handler');
+	const { BasePullHandler } = require('im/messenger/provider/pull/base');
 	const { getLogger } = require('im/messenger/lib/logger');
 
 	/**
@@ -18,7 +18,7 @@ jn.define('im/messenger/provider/pull/anchor', (require, exports, module) => {
 
 		handleAddAnchor(params, extra, command)
 		{
-			this.logger.info(`${this.getClassName()}.handleDeleteAnchor: `, params);
+			this.logger.info(`${this.getClassName()}.handleAddAnchor: `, params);
 			this.store.dispatch('anchorModel/add', params)
 				.catch((err) => this.logger.error(`${this.getClassName()}.handleAddAnchor.catch err:`, err))
 			;
@@ -34,7 +34,7 @@ jn.define('im/messenger/provider/pull/anchor', (require, exports, module) => {
 
 		handleDeleteChatAnchors(params, extra, command)
 		{
-			this.logger.info(`${this.getClassName()}.handleDeleteChatAnchor: `, params);
+			this.logger.info(`${this.getClassName()}.handleDeleteChatAnchors: `, params);
 			this.store.dispatch('anchorModel/deleteByChatId', params)
 				.catch((err) => this.logger.error(`${this.getClassName()}.handleDeleteChatAnchor.catch err:`, err))
 			;

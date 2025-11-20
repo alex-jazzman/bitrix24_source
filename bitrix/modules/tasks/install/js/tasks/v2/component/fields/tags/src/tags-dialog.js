@@ -147,13 +147,9 @@ class TagsDialog
 
 		void taskService.update(taskId, { tags });
 
-		this.#onUpdateOnce?.();
-		this.#clearOnUpdateOnce();
-	}
-
-	#clearOnUpdateOnce = (): void => {
+		this.#onUpdateOnce?.(tags);
 		this.#onUpdateOnce = null;
-	};
+	}
 
 	#getTask(id: number | string): TaskModel
 	{

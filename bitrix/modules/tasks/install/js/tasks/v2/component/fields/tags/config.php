@@ -10,6 +10,7 @@ return [
 	'rel' => [
 		'ui.icon-set.api.vue',
 		'tasks.v2.component.elements.add-background',
+		'tasks.v2.component.elements.field-add',
 		'main.core',
 		'tasks.entity-selector',
 		'tasks.v2.lib.entity-selector-dialog',

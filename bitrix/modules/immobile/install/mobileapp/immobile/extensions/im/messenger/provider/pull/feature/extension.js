@@ -15,7 +15,7 @@ jn.define('im/messenger/provider/pull/feature', (require, exports, module) => {
 		 */
 		handleUpdateFeature(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}

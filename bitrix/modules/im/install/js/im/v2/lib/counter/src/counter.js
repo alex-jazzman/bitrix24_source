@@ -17,6 +17,7 @@ type InitialCounters = {
 	LINES: CounterMap,
 	COLLAB: CounterMap,
 	COPILOT: CounterMap,
+	TASKS_TASK: CounterMap,
 	CHANNEL_COMMENT: {
 		[channelChatId: string]: {
 			[commentChatId: string]: number,
@@ -26,13 +27,16 @@ type InitialCounters = {
 	CHAT_UNREAD: number[],
 	COLLAB_UNREAD: number[],
 	COPILOT_UNREAD: number[],
+	TASKS_TASK_UNREAD: number[],
 	TYPE: {
 		'ALL': number,
 		'CHAT': number,
 		'NOTIFY': number,
 		'LINES': number,
 		'COLLAB': number,
+		'TASK': number,
 		'COPILOT': number,
+		'TASKS_TASK': number,
 	}
 };
 
@@ -40,6 +44,7 @@ type NavigationCountersPayload = {
 	chat: number;
 	copilot: number;
 	collab: number;
+	task: number;
 	openlines: number;
 	openlinesV2: number;
 	notification: number;
@@ -103,6 +108,8 @@ export class CounterManager
 		this.#store.dispatch('counters/setUnloadedCollabCounters', preparedCollabCounters);
 		const preparedCopilotCounters = this.#prepareChatCounters(counters.COPILOT, counters.COPILOT_UNREAD);
 		this.#store.dispatch('counters/setUnloadedCopilotCounters', preparedCopilotCounters);
+		const preparedTaskCounters = this.#prepareChatCounters(counters.TASKS_TASK, counters.TASKS_TASK_UNREAD);
+		this.#store.dispatch('counters/setUnloadedTaskCounters', preparedTaskCounters);
 		this.#store.dispatch('counters/setCommentCounters', counters.CHANNEL_COMMENT);
 		this.#store.dispatch('notifications/setCounter', counters.TYPE.NOTIFY);
 
@@ -152,6 +159,7 @@ export class CounterManager
 
 		this.#store.watch(copilotCounterWatch, () => this.#emitCountersUpdateWithDebounce());
 		this.#store.watch(collabCounterWatch, () => this.#emitCountersUpdateWithDebounce());
+		this.#store.watch(taskCounterWatch, () => this.#emitCountersUpdateWithDebounce());
 	}
 
 	#emitLegacyNotificationCounterUpdate(notificationsCounter: number)
@@ -179,6 +187,7 @@ export class CounterManager
 			[NavigationMenuItem.chat]: this.#store.getters['counters/getTotalChatCounter'],
 			[NavigationMenuItem.copilot]: this.#store.getters['counters/getTotalCopilotCounter'],
 			[NavigationMenuItem.collab]: this.#store.getters['counters/getTotalCollabCounter'],
+			[NavigationMenuItem.tasksTask]: this.#store.getters['counters/getTotalTaskCounter'],
 			[NavigationMenuItem.openlines]: this.#store.getters['counters/getTotalLinesCounter'],
 			[NavigationMenuItem.openlinesV2]: this.#store.getters['counters/getTotalLinesCounter'],
 			[NavigationMenuItem.notification]: this.#store.getters['notifications/getCounter'],
@@ -209,3 +218,4 @@ const chatCounterWatch = (state, getters) => getters['counters/getTotalChatCount
 const linesCounterWatch = (state, getters) => getters['counters/getTotalLinesCounter'];
 const copilotCounterWatch = (state, getters) => getters['counters/getTotalCopilotCounter'];
 const collabCounterWatch = (state, getters) => getters['counters/getTotalCollabCounter'];
+const taskCounterWatch = (state, getters) => getters['counters/getTotalTaskCounter'];

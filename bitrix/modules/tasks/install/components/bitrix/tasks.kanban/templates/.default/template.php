@@ -231,8 +231,7 @@ if (isset($arParams['INCLUDE_INTERFACE_HEADER']) && $arParams['INCLUDE_INTERFACE
 
 	$popupSortItems = $menu->toArray();
 
-if ($arResult['CONTEXT'] !== Context::getSpaces())
-{
+
 	$APPLICATION->IncludeComponent(
 		'bitrix:tasks.interface.header',
 		'',
@@ -313,8 +312,6 @@ if ($arResult['CONTEXT'] !== Context::getSpaces())
 		$component,
 		['HIDE_ICONS' => true]
 	);
-}
-
 }
 else
 {

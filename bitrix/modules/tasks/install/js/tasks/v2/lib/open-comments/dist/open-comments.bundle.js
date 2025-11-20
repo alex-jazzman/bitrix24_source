@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
-(function (exports,tasks_v2_lib_apiClient,tasks_v2_lib_sidePanelInstance) {
+(function (exports,tasks_v2_lib_apiClient) {
 	'use strict';
 
 	const openComments = async taskId => {
@@ -11,7 +11,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  const maxWidth = 650;
 	  const commentsElement = document.createElement('div');
 	  BX.Runtime.html(commentsElement, `<div class="tasks-task-full-card-legacy-comments">${content}</div>`);
-	  tasks_v2_lib_sidePanelInstance.SidePanelInstance.open(sidePanelId, {
+	  BX.SidePanel.Instance.open(sidePanelId, {
 	    customLeftBoundary: 0,
 	    width: maxWidth,
 	    cacheable: false,
@@ -36,5 +36,5 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 
 	exports.openComments = openComments;
 
-}((this.BX.Tasks.V2.Lib = this.BX.Tasks.V2.Lib || {}),BX.Tasks.V2.Lib,BX.Tasks.V2.Lib));
+}((this.BX.Tasks.V2.Lib = this.BX.Tasks.V2.Lib || {}),BX.Tasks.V2.Lib));
 //# sourceMappingURL=open-comments.bundle.js.map

@@ -9,6 +9,8 @@ import { Outline } from 'ui.icon-set.api.core';
 import 'ui.icon-set.outline';
 
 import { EntitySelectorEntity, Model } from 'tasks.v2.const';
+import { AddBackground } from 'tasks.v2.component.elements.add-background';
+import { FieldAdd } from 'tasks.v2.component.elements.field-add';
 import { UserSelectorDialog } from 'tasks.v2.lib.user-selector-dialog';
 import { heightTransition } from 'tasks.v2.lib.height-transition';
 import { hrefClick } from 'tasks.v2.lib.href-click';
@@ -29,6 +31,8 @@ export const ParticipantList = {
 	components: {
 		BIcon,
 		UserAvatarListUsers,
+		AddBackground,
+		FieldAdd,
 		BMenu,
 		Popup,
 	},
@@ -124,7 +128,6 @@ export const ParticipantList = {
 		readonly(): boolean
 		{
 			return !this.task.rights.edit;
-			// return true;
 		},
 	},
 	watch: {
@@ -275,20 +278,21 @@ export const ParticipantList = {
 	},
 	template: `
 		<div v-bind="dataset" ref="users">
-			<div
-				v-if="usersLength > 0"
-				class="tasks-field-users"
-			>
-				<UserAvatarListUsers
-					:users="displayedUsers"
-					:withCross="!withActionMenu"
-					:isDialogShown
-					:readonly
-					ref="userList"
-					@onClick="showDialog"
-					@onUserClick="(userId) => handleClickUser(userId)"
-					@onUserCrossClick="(userId) => removeUser(userId)"
-				/>
+			<div v-if="usersLength > 0">
+				<div class="tasks-field-users-container">
+					<AddBackground v-if="!readonly" :isActive="isDialogShown" @click="showDialog"/>
+					<div class="tasks-field-users">
+						<UserAvatarListUsers
+							:users="displayedUsers"
+							:withCross="!withActionMenu"
+							:readonly
+							ref="userList"
+							@onClick="showDialog"
+							@onUserClick="(userId) => handleClickUser(userId)"
+							@onUserCrossClick="(userId) => removeUser(userId)"
+						/>
+					</div>
+				</div>
 				<div
 					v-if="popupUsers.length > 0"
 					class="tasks-field-participant-list-more"
@@ -298,12 +302,7 @@ export const ParticipantList = {
 					{{ moreFormatted }}
 				</div>
 			</div>
-			<div v-else class="tasks-field-participant-list-empty" @click="showDialog">
-				<BIcon :name="Outline.PERSON"/>
-				<div class="tasks-field-participant-list-empty-text">
-					{{ loc('TASKS_V2_PARTICIPANT_LIST_ADD') }}
-				</div>
-			</div>
+			<FieldAdd v-else :icon="Outline.PERSON" @click="showDialog"/>
 			<div ref="anchor"></div>
 		</div>
 		<BMenu v-if="menuUserId" :options="menuOptions" @close="menuUserId = null"/>

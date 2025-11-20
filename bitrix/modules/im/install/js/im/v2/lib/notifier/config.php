@@ -10,6 +10,8 @@ return [
 	],
 	'rel' => [
 		'ui.notification',
+		'im.v2.application.core',
+		'im.public',
 		'im.v2.const',
 		'main.core',
 	],

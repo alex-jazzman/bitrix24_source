@@ -47,7 +47,7 @@ jn.define('im/messenger/controller/sidebar/collab/tabs/participants/participants
 
 			const canOpenNotes = isYou;
 			const canLeave = UserPermission.canLeaveFromCollab(userId)
-				&& ChatPermission.сanLeaveFromChat(this.props.dialogId)
+				&& ChatPermission.canLeaveFromChat(this.props.dialogId)
 				&& isYou;
 			const canMentionAndSend = !isYou;
 			const canRemoveUser = !isYou && ChatPermission.isOwner();

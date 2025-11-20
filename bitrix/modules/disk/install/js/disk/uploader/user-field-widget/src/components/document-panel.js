@@ -51,6 +51,7 @@ export const DocumentPanel: BitrixVueComponentProps = {
 			createDocumentDialog({
 				uploader: this.uploader,
 				documentType,
+				documentHandlers: Object.values(userFieldSettings.getDocumentServices()),
 				onAddFile: () => this.userFieldControl.showUploaderPanel(),
 			});
 		},

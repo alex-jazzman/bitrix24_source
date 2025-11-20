@@ -120,4 +120,8 @@ export const EventType = Object.freeze({
 	{
 		onBeforeEscape: 'IM.Keys:onBeforeEscape',
 	},
+	notifier:
+	{
+		onBeforeShowMessage: 'IM.Notifier:onBeforeShowMessage',
+	},
 });

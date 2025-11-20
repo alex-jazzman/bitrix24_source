@@ -8,6 +8,8 @@ jn.define('im/messenger/lib/counters/tab-counters/channel', (require, exports, m
 	const logger = LoggerManager.getInstance().getLogger('counters--chat');
 
 	/**
+	 * @deprecated
+	 * @see MessengerCounters
 	 * @class ChannelCounters
 	 */
 	class ChannelCounters extends BaseTabCounters

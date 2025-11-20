@@ -7,7 +7,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	'use strict';
 
 	const creatorMeta = Object.freeze({
-	  id: 'creatorId',
+	  id: tasks_v2_const.TaskField.Creator,
 	  title: main_core.Loc.getMessage('TASKS_V2_CREATOR_TITLE'),
 	  dialogOptions: (context = 'tasks-card-participant') => {
 	    const limits = tasks_v2_core.Core.getParams().limits;

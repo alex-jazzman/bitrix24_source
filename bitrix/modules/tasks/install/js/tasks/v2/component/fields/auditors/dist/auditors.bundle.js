@@ -7,7 +7,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	'use strict';
 
 	const auditorsMeta = Object.freeze({
-	  id: 'auditorsIds',
+	  id: tasks_v2_const.TaskField.Auditors,
 	  title: main_core.Loc.getMessage('TASKS_V2_AUDITORS_TITLE')
 	});
 

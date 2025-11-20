@@ -10,7 +10,7 @@ return [
 	'rel' => [
 		'im.v2.lib.logger',
 		'im.v2.lib.helpdesk',
-		'ui.feedback.form',
+		'im.v2.lib.feedback',
 		'im.v2.component.dialog.chat',
 		'im.v2.lib.theme',
 		'im.v2.lib.demo',

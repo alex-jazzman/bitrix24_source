@@ -58,6 +58,7 @@ export const ContextMenu = {
 			EventEmitter.emit(EventType.dialog.onClickMessageContextMenu, {
 				message: this.message,
 				dialogId: this.dialogId,
+				bindElement: event.currentTarget,
 				event,
 			});
 		},

@@ -13,6 +13,7 @@ type CountersState = {
 	unloadedLinesCounters: {[chatId: string]: number},
 	unloadedCopilotCounters: {[chatId: string]: number},
 	unloadedCollabCounters: {[chatId: string]: number},
+	unloadedTaskCounters: {[chatId: string]: number},
 	commentCounters: CommentsCounters,
 };
 
@@ -41,6 +42,7 @@ export class CountersModel extends BuilderModel
 			unloadedLinesCounters: {},
 			unloadedCopilotCounters: {},
 			unloadedCollabCounters: {},
+			unloadedTaskCounters: {},
 			commentCounters: {},
 		};
 	}
@@ -86,6 +88,18 @@ export class CountersModel extends BuilderModel
 
 				let unloadedChatsCounter = 0;
 				Object.values(state.unloadedCollabCounters).forEach((counter) => {
+					unloadedChatsCounter += counter;
+				});
+
+				return loadedChatsCounter + unloadedChatsCounter;
+			},
+			/** @function counters/getTotalTaskCounter */
+			getTotalTaskCounter: (state: CountersState): number => {
+				const recentCollection = Core.getStore().getters['recent/getTaskCollection'];
+				const loadedChatsCounter = this.#getLoadedChatsCounter(recentCollection);
+
+				let unloadedChatsCounter = 0;
+				Object.values(state.unloadedTaskCounters).forEach((counter) => {
 					unloadedChatsCounter += counter;
 				});
 
@@ -218,6 +232,15 @@ export class CountersModel extends BuilderModel
 
 				store.commit('setUnloadedCollabCounters', payload);
 			},
+			/** @function counters/setUnloadedTaskCounters */
+			setUnloadedTaskCounters: (store, payload: {[chatId: string]: number}) => {
+				if (!Type.isPlainObject(payload))
+				{
+					return;
+				}
+
+				store.commit('setUnloadedTaskCounters', payload);
+			},
 			/** @function counters/setCommentCounters */
 			setCommentCounters: (store, payload: CommentsCounters) => {
 				if (!Type.isPlainObject(payload))
@@ -299,6 +322,17 @@ export class CountersModel extends BuilderModel
 					state.unloadedCollabCounters[chatId] = counter;
 				});
 			},
+			setUnloadedTaskCounters: (state: CountersState, payload: {[chatId: string]: number}) => {
+				Object.entries(payload).forEach(([chatId, counter]) => {
+					if (counter === 0)
+					{
+						delete state.unloadedTaskCounters[chatId];
+
+						return;
+					}
+					state.unloadedTaskCounters[chatId] = counter;
+				});
+			},
 			setCommentCounters: (state: CountersState, payload: CommentsCounters) => {
 				Object.entries(payload).forEach(([channelChatId, countersMap]) => {
 					if (!state.commentCounters[channelChatId])
@@ -343,6 +377,8 @@ export class CountersModel extends BuilderModel
 				state.unloadedLinesCounters = {};
 				state.unloadedCopilotCounters = {};
 				state.unloadedCollabCounters = {};
+				state.unloadedTaskCounters = {};
+				state.commentCounters = {};
 			},
 		};
 	}

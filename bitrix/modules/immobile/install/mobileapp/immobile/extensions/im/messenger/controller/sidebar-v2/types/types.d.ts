@@ -54,7 +54,8 @@ type SidebarPermissionManagerDefaultProps = {
 type SidebarControllerProps = {
 	dialogId: DialogId;
 	dialogLocator: Object;
-}
+	config?: SidebarHeaderIntegrationConfigParams | {};
+};
 
 type SidebarViewTheme = {
 	titleGap?: number,

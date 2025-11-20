@@ -35,6 +35,10 @@ const optionColor = Object.freeze({
 		tokenClass: '--ui-color-palette-white-base',
 		color: '#FFFFFF',
 	},
+	paletteGray70: {
+		tokenClass: '--ui-color-palette-gray-70',
+		color: '#828B95',
+	},
 });
 
 export const getColorCode = (colorKey) => {

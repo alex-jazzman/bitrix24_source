@@ -142,14 +142,26 @@ jn.define('im/messenger/model/sidebar/src/model', (require, exports, module) => 
 					return false;
 				}
 
+				const { dialogId, chatId } = payload;
+				store.dispatch('sidebarModel/deleteTabsData', { chatId }, { root: true });
+
 				store.commit('delete', {
 					actionName: 'delete',
 					data: {
-						dialogId: payload.dialogId,
+						dialogId,
 					},
 				});
 
 				return true;
+			},
+
+			/** @function sidebarModel/deleteTabsData */
+			deleteTabsData: (store, payload) => {
+				const { chatId } = payload;
+
+				store.dispatch('sidebarModel/sidebarLinksModel/deleteByChatId', { chatId }, { root: true });
+				store.dispatch('sidebarModel/sidebarFilesModel/deleteByChatId', { chatId }, { root: true });
+				store.dispatch('sidebarModel/sidebarCommonChatsModel/deleteByChatId', { chatId }, { root: true });
 			},
 
 			/** @function sidebarModel/update */

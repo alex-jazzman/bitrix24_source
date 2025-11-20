@@ -16,6 +16,9 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		clickCreateNew: 'click_create_new',
 		submitCreateNew: 'submit_create_new',
 		audioUse: 'audio_use',
+		play: 'play',
+		pause: 'pause',
+		changeSpeed: 'change_speed',
 		openTab: 'open_tab',
 		openMessenger: 'open_messenger',
 		sendMessage: 'send_message',
@@ -78,6 +81,8 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		message: 'message',
 		chatPopup: 'chat_popup',
 		limitBanner: 'limit_banner',
+		audiomessage: 'audiomessage',
+		audioplayer: 'audioplayer',
 	});
 
 	const Type = Object.freeze({
@@ -181,6 +186,8 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 	const SubSection = Object.freeze({
 		window: 'window',
 		contextMenu: 'context_menu',
+		chatList: 'chat_list',
+		chat: 'chat',
 	});
 
 	const Element = Object.freeze({

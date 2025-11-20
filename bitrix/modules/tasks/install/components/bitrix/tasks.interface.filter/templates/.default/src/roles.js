@@ -8,6 +8,7 @@ import type { AnalyticsSender } from 'tasks.v2.lib.analytics';
 
 export type Params = {
 	button: HTMLElement,
+	groupId: number,
 	items: { [roleId: string]: RoleDto },
 	totalCounter: number,
 	selectedRoleId: string,
@@ -34,6 +35,7 @@ const defaultRole = 'view_all';
 
 export class Roles
 {
+	#groupId: number;
 	#selectedRoleId: string;
 	#roles: { [roleId: string]: Role };
 	#analytics: AnalyticsParams;
@@ -48,6 +50,7 @@ export class Roles
 			return;
 		}
 
+		this.#groupId = params.groupId || 0;
 		this.#selectedRoleId = params.selectedRoleId || defaultRole;
 		this.#roles = {
 			[defaultRole]: {
@@ -102,12 +105,17 @@ export class Roles
 	};
 
 	#handlePull = (data): void => {
-		Object.entries(data[0]).forEach(([roleId, { total }]) => {
+		Object.entries(data[this.#groupId] ?? this.#getEmptyCounters()).forEach(([roleId, { total }]) => {
 			this.#roles[roleId].counter = total;
 		});
 
 		this.#update();
 	};
+
+	#getEmptyCounters(): { [roleId: string]: { total: 0 } }
+	{
+		return Object.fromEntries(Object.keys(this.#roles).map((roleId) => [roleId, { total: 0 }]));
+	}
 
 	#update(): void
 	{

@@ -227,30 +227,30 @@ export const CheckListItemMixin = {
 		{
 			this.$emit('removeItem', this.id);
 		},
-		complete(isComplete: boolean): void
+		async complete(isComplete: boolean): void
 		{
 			if (this.canToggle === false)
 			{
 				return;
 			}
 
-			void this.updateCheckList(this.id, { localCompleteState: isComplete });
+			await this.updateCheckList(this.id, { localCompleteState: isComplete });
 
 			const listParents = new Map();
 			this.checkListManager.syncParentCompletionState(
 				this.id,
-				(id: string | number, fields: Partial<CheckListModel>) => {
+				async (id: string | number, fields: Partial<CheckListModel>) => {
 					listParents.set(id, fields);
-					void this.updateCheckList(id, { localCompleteState: fields.isComplete });
+					await this.updateCheckList(id, { localCompleteState: fields.isComplete });
 				},
 			);
 
 			this.$emit('update', this.id);
 
-			const completionCallback = () => {
-				void this.updateCheckList(this.id, { isComplete });
-				listParents.forEach((fields: Partial<CheckListModel>, id: string | number) => {
-					void this.updateCheckList(id, fields);
+			const completionCallback = async () => {
+				await this.updateCheckList(this.id, { isComplete });
+				listParents.forEach(async (fields: Partial<CheckListModel>, id: string | number) => {
+					await this.updateCheckList(id, fields);
 					this.saveCompleteState(id, fields.isComplete);
 				});
 			};

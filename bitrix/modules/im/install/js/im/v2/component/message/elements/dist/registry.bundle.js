@@ -620,15 +620,31 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      var _this$reactionsData, _this$reactionsData$o;
 	      return ((_this$reactionsData = this.reactionsData) == null ? void 0 : (_this$reactionsData$o = _this$reactionsData.ownReactions) == null ? void 0 : _this$reactionsData$o.size) > 0;
 	    },
-	    isBot() {
+	    isChatWithBot() {
 	      const user = this.$store.getters['users/get'](this.dialog.dialogId);
 	      return (user == null ? void 0 : user.type) === im_v2_const.UserType.bot;
+	    },
+	    areBotReactionsEnabled() {
+	      const bot = this.$store.getters['users/bots/getByUserId'](this.message.authorId);
+	      if (!bot) {
+	        return false;
+	      }
+	      return bot.reactionsEnabled;
 	    },
 	    hasError() {
 	      return this.message.error;
 	    },
+	    isRealMessage() {
+	      return this.$store.getters['messages/isRealMessage'](this.messageId);
+	    },
 	    canSetReactions() {
-	      return main_core.Type.isNumber(this.messageId) && this.canSetReactionsByRole && !this.isBot && !this.hasError;
+	      if (!this.isRealMessage || !this.canSetReactionsByRole || this.hasError) {
+	        return false;
+	      }
+	      if (this.isChatWithBot) {
+	        return this.areBotReactionsEnabled;
+	      }
+	      return true;
 	    },
 	    canSetReactionsByRole() {
 	      const permissionManager = im_v2_lib_permission.PermissionManager.getInstance();
@@ -917,6 +933,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      main_core_events.EventEmitter.emit(im_v2_const.EventType.dialog.onClickMessageContextMenu, {
 	        message: this.message,
 	        dialogId: this.dialogId,
+	        bindElement: event.currentTarget,
 	        event
 	      });
 	    }

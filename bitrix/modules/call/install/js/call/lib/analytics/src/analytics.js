@@ -180,6 +180,7 @@ export class Analytics
 			event: AnalyticsEvent.startCall,
 			type: params.callType,
 			status: `error_${params.errorCode}`,
+			p3: params.errorMessage ? `msg_${params.errorMessage}`.slice(0, 100) : undefined,
 			p5: 'callId_0',
 		};
 
@@ -231,6 +232,7 @@ export class Analytics
 			event: AnalyticsEvent.connect,
 			type: params.callType,
 			status: `error_${params.errorCode}`,
+			p3: params.errorMessage ? `msg_${params.errorMessage}`.slice(0, 100) : undefined,
 			p5: `callId_${params.callId}`,
 		};
 
@@ -265,6 +267,7 @@ export class Analytics
 			event: AnalyticsEvent.reconnect,
 			type: params.callType,
 			status: `error_${params.errorCode}`,
+			p3: params.errorMessage ? `msg_${params.errorMessage}`.slice(0, 100) : undefined,
 			p5: `callId_${params.callId}`,
 		});
 	}

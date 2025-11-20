@@ -39,9 +39,9 @@ jn.define('settings-v2/controller/push-config', (require, exports, module) => {
 				this.setToCache(value);
 
 				BX.rest.callMethod('mobile.push.config.set', this.getSetConfig(value), (response) => {
-					if (response.error || response.answer?.error)
+					if (response.error())
 					{
-						reject(response.error || response.answer.error);
+						reject(response.error());
 					}
 					else
 					{

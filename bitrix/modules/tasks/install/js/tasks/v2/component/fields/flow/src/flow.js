@@ -1,11 +1,12 @@
 import { SidePanel } from 'main.sidepanel';
 import { mapGetters } from 'ui.vue3.vuex';
 import { BMenu, MenuItemDesign, type MenuOptions } from 'ui.vue3.components.menu';
-import { BIcon } from 'ui.icon-set.api.vue';
-import { Outline } from 'ui.icon-set.api.core';
+import { BIcon, Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
 
 import { Model } from 'tasks.v2.const';
+import { HoverPill } from 'tasks.v2.component.elements.hover-pill';
+import { FieldAdd } from 'tasks.v2.component.elements.field-add';
 import { Stage } from 'tasks.v2.component.fields.group';
 import { flowService } from 'tasks.v2.provider.service.flow-service';
 import { taskService } from 'tasks.v2.provider.service.task-service';
@@ -14,6 +15,7 @@ import type { TaskModel } from 'tasks.v2.model.tasks';
 
 import { flowMeta } from './flow-meta';
 import { flowDialog } from './flow-dialog';
+import './flow.css';
 
 // @vue/component
 export const Flow = {
@@ -21,6 +23,8 @@ export const Flow = {
 	components: {
 		BIcon,
 		BMenu,
+		HoverPill,
+		FieldAdd,
 		Stage,
 	},
 	props: {
@@ -113,7 +117,7 @@ export const Flow = {
 		{
 			this.isMenuShown = true;
 		},
-		handleCrossClick(): void
+		handleClear(): void
 		{
 			this.clearField();
 		},
@@ -141,28 +145,22 @@ export const Flow = {
 	},
 	template: `
 		<div
-			class="tasks-field-flow"
 			:data-task-id="taskId"
 			:data-task-field-id="flowMeta.id"
 			:data-task-field-value="task.flowId"
 		>
-			<div class="tasks-field-flow-flow" ref="container" @click="handleClick">
-				<BIcon class="tasks-field-flow-image" :name="Outline.BOTTLENECK" color="var(--ui-color-accent-main-primary)"/>
-				<template v-if="flow">
-					<div class="tasks-field-flow-title">
-						{{ flow.name }}
-					</div>
-					<BIcon
-						v-if="!isEdit"
-						class="tasks-field-flow-cross"
-						:name="Outline.CROSS_L"
-						@click.capture.stop="handleCrossClick"
-					/>
-				</template>
-				<template v-else>
-					<div class="tasks-field-flow-add-text">{{ loc('TASKS_V2_FLOW_ADD') }}</div>
-				</template>
-			</div>
+			<HoverPill
+				v-if="flow"
+				:withClear="!readonly && !isEdit"
+				@click="handleClick"
+				@clear="handleClear"
+			>
+				<div class="tasks-field-flow">
+					<BIcon :name="Outline.BOTTLENECK"/>
+					<div class="tasks-field-flow-title">{{ flow.name }}</div>
+				</div>
+			</HoverPill>
+			<FieldAdd v-else :icon="Outline.BOTTLENECK" @click="handleClick"/>
 			<Stage v-if="isEdit && flow" :taskId="taskId"/>
 		</div>
 		<BMenu v-if="isMenuShown" :options="menuOptions" @close="isMenuShown = false"/>

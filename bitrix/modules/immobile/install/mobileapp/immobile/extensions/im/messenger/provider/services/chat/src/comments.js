@@ -5,11 +5,11 @@ jn.define('im/messenger/provider/services/chat/comments', (require, exports, mod
 	const { RestMethod } = require('im/messenger/const');
 	const { runAction } = require('im/messenger/lib/rest');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { TabCounters } = require('im/messenger/lib/counters/tab-counters');
 	const { MessengerCounterSender } = require('im/messenger/lib/counters/counter-manager/messenger/sender');
-	const { getLogger } = require('im/messenger/lib/logger');
+	const { Feature } = require('im/messenger/lib/feature');
+	const { getLoggerWithContext } = require('im/messenger/lib/logger');
 
-	const logger = getLogger('dialog--chat-service');
+	const logger = getLoggerWithContext('dialog--chat-service', 'CommentsService');
 
 	/**
 	 * @class CommentsService
@@ -33,7 +33,7 @@ jn.define('im/messenger/provider/services/chat/comments', (require, exports, mod
 				data: { dialogId },
 			}).catch((error) => {
 				// eslint-disable-next-line no-console
-				logger.error('CommentsService: subscribe error', error);
+				logger.error('subscribe error', error);
 			});
 		}
 
@@ -49,7 +49,7 @@ jn.define('im/messenger/provider/services/chat/comments', (require, exports, mod
 				},
 			}).catch((error) => {
 				// eslint-disable-next-line no-console
-				logger.error('CommentsService: unsubscribe error', error);
+				logger.error('subscribeByPostId error', error);
 			});
 		}
 
@@ -64,7 +64,7 @@ jn.define('im/messenger/provider/services/chat/comments', (require, exports, mod
 				data: { dialogId },
 			}).catch((error) => {
 				// eslint-disable-next-line no-console
-				logger.error('CommentsService: unsubscribe error', error);
+				logger.error('unsubscribe error', error);
 			});
 		}
 
@@ -80,35 +80,56 @@ jn.define('im/messenger/provider/services/chat/comments', (require, exports, mod
 				},
 			}).catch((error) => {
 				// eslint-disable-next-line no-console
-				logger.error('CommentsService: unsubscribe error', error);
+				logger.error('unsubscribeByPostId error', error);
 			});
 		}
 
 		readChannelComments(dialogId)
 		{
 			const dialog = this.store.getters['dialoguesModel/getById'](dialogId);
-			const currentChannelCounter = this.store.getters['commentModel/getChannelCounters'](dialog.chatId);
-			if (currentChannelCounter === 0)
-			{
-				return Promise.resolve();
-			}
-
-			this.store.dispatch('commentModel/deleteChannelCounters', { channelId: dialog.chatId })
-				.then(() => {
-					MessengerCounterSender.getInstance().sendDeleteChats
-					TabCounters.updateDelayed();
-				})
-				.catch((error) => {
-					logger.error('CommentsService: readAllChannelComments local error', error);
-				})
-			;
+			this.#readChannelCommentsLocal(dialog.chatId);
 
 			return runAction(RestMethod.imV2ChatCommentReadAll, {
 				data: { dialogId },
 			}).catch((error) => {
 				// eslint-disable-next-line no-console
-				logger.error('CommentsService: readAllChannelComments server error', error);
+				logger.error('readAllChannelComments server error', error);
 			});
+		}
+
+		// eslint-disable-next-line consistent-return
+		async #readChannelCommentsLocal(chatId)
+		{
+			if (Feature.isMessengerV2Enabled)
+			{
+				try
+				{
+					await this.store.dispatch('counterModel/readChildChatsCounters', {
+						parentChatId: chatId,
+					});
+				}
+				catch (error)
+				{
+					logger.error('readChannelCommentsLocal error', error);
+				}
+			}
+
+			const currentChannelCounter = this.store.getters['commentModel/getChannelCounters'](chatId);
+			if (currentChannelCounter === 0)
+			{
+				return Promise.resolve();
+			}
+
+			try
+			{
+				await this.store.dispatch('commentModel/deleteChannelCounters', { channelId: chatId });
+				MessengerCounterSender.getInstance().sendReadChannelComments(chatId);
+				serviceLocator.get('tab-counters').updateDelayed();
+			}
+			catch (error)
+			{
+				logger.error('readChannelCommentsLocal old Messenger error', error);
+			}
 		}
 	}
 

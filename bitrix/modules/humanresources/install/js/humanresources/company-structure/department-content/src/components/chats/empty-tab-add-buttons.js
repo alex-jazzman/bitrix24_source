@@ -1,62 +1,109 @@
+import { useChartStore } from 'humanresources.company-structure.chart-store';
 import { RouteActionMenu } from 'humanresources.company-structure.structure-components';
-import './styles/empty-tab-add-buttons.css';
-import { ChatsMenuOption } from './consts';
+import { mapState } from 'ui.vue3.pinia';
+import { ChatsMenuLinkChannel, ChatsMenuLinkChat, ChatsMenuLinkCollab } from './consts';
 import 'ui.icon-set.main';
+import './styles/empty-tab-add-buttons.css';
 
+// @vue/component
 export const EmptyTabAddButtons = {
 	name: 'emptyStateButtons',
-	emits: ['emptyStateAddAction'],
+
 	components: { RouteActionMenu },
+
+	props: {
+		canEditChat: {
+			type: Boolean,
+			required: true,
+		},
+		canEditChannel: {
+			type: Boolean,
+			required: true,
+		},
+		canEditCollab: {
+			type: Boolean,
+			required: true,
+		},
+		isTeamEntity: {
+			type: Boolean,
+			required: true,
+		},
+	},
+
+	emits: ['emptyStateAddAction'],
 
 	data(): Object
 	{
 		return {
-			chatMenuVisible: false,
-			channelMenuVisible: false,
-			chatButtonId: 'hr-empty-tab-chat-add-button',
-			channelButtonId: 'hr-empty-tab-chat-add-button',
+			menuVisible: false,
 		};
 	},
 
-	methods: {
+	computed:
+	{
+		menu(): Object[]
+		{
+			const menu = [];
+
+			if (this.canEditCollab)
+			{
+				menu.push(ChatsMenuLinkCollab);
+			}
+
+			if (this.canEditChannel)
+			{
+				menu.push(ChatsMenuLinkChannel);
+			}
+
+			if (this.canEditChat)
+			{
+				menu.push(ChatsMenuLinkChat);
+			}
+
+			return menu;
+		},
+		...mapState(useChartStore, ['focusedNode']),
+	},
+
+	methods:
+	{
 		loc(phraseCode: string, replacements: { [p: string]: string } = {}): string
 		{
 			return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 		},
-		onChatButtonClick(): void
+		onClick(): void
 		{
-			this.$emit('emptyStateAddAction', ChatsMenuOption.linkChat);
+			this.menuVisible = true;
 		},
-		onChannelButtonClick(): void
+		onActionMenuItemClick(actionId: string): void
 		{
-			this.$emit('emptyStateAddAction', ChatsMenuOption.linkChannel);
+			this.$emit('emptyStateAddAction', actionId);
 		},
 	},
 
 	template: `
-		<div class="hr-department-detail-content__chat-empty-tab-add_buttons-container">
+		<div class="hr-department-detail-content__users-empty-tab-add_buttons-container">
 			<button
-				:ref="chatButtonId"
-				class="ui-btn ui-btn-light-border ui-btn-no-caps ui-btn-round ui-btn-sm hr-department-detail-content__chat-empty-tab-add_chat-button"
-				@click.stop="this.onChatButtonClick()"
-				data-test-id="hr-department-detail-content_chats-tab__empty-tab-add_chat-button"
+				class="hr-add-communications-empty-tab-entity-btn ui-btn ui-btn ui-btn-sm ui-btn-primary ui-btn-round"
+				ref="actionMenuButton"
+				@click.stop="onClick"
+				data-id="hr-department-detail-content__user-empty-tab_add-user-button"
 			>
-				<div class="ui-icon-set --chat-message hr-department-detail-content__chat-empty-tab-add_chat-button-icon"/>
-				<span>
-					{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_TAB_ADD_EMPTY_CHAT_BUTTON') }}
+				<span class="hr-add-communications-empty-tab-entity-btn-text">
+					{{loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_TAB_ADD_EMPTY_STATE_ADD_BUTTON')}}
 				</span>
 			</button>
-			<button
-				:ref="channelButtonId"
-				class="ui-btn ui-btn-light-border ui-btn-no-caps ui-btn-round ui-btn-sm hr-department-detail-content__chat-empty-tab-add_channel-button"
-				@click.stop="onChannelButtonClick()"
-				data-test-id="hr-department-detail-content_chats-tab__empty-tab-add_channel-button"
-			>
-				<div class="ui-icon-set --speaker-mouthpiece hr-department-detail-content__chat-empty-tab-add_chat-button-icon"/>
-				<span>
-					{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_TAB_ADD_EMPTY_CHANNEL_BUTTON') }}
-				</span>
-			</button>
+			<RouteActionMenu
+				v-if="menuVisible"
+				:id="'empty-state-department-detail-add-communications-menu-' + focusedNode"
+				:items="menu"
+				:delimiter="false"
+				:width="302"
+				:bindElement="$refs.actionMenuButton"
+				:containerDataTestId="'empty-state-department-detail-add-communications-menu'"
+				@action="onActionMenuItemClick"
+				@close="menuVisible = false"
+			/>
 		</div>
 	`,
 };

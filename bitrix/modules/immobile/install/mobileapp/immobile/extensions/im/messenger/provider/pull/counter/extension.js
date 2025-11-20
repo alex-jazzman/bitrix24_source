@@ -3,8 +3,12 @@
  */
 jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 	const { Type } = require('type');
-	const { DialogType, CounterType } = require('im/messenger/const');
+	const {
+		CounterType,
+		DialogType,
+	} = require('im/messenger/const');
 	const { UuidManager } = require('im/messenger/lib/uuid-manager');
+	const { CounterStorageWriter } = require('im/messenger/lib/counters/counter-manager/storage/writer');
 	const { BasePullHandler } = require('im/messenger/provider/pull/base');
 	const { UserHelper } = require('im/messenger/lib/helper');
 
@@ -29,7 +33,7 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 		{
 			super({});
 
-			this.#storageWriter = storageWriter;
+			this.#storageWriter = storageWriter ?? CounterStorageWriter.getInstance();
 			this.#uuidManager = UuidManager.getInstance();
 		}
 
@@ -39,7 +43,7 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 		 */
 		handleMessage(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
@@ -74,7 +78,7 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 		 */
 		handleMessageChat(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
@@ -87,13 +91,24 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 				return;
 			}
 
-			const chat = params.chat[params.chatId];
+			const {
+				chatId,
+				counter,
+				counterType,
+			} = params;
+
+			const chat = params.chat[chatId];
+
+			if (chat.type === DialogType.tasksTask || counterType === CounterType.tasksTask)
+			{
+				return;
+			}
 
 			/** @type {CounterState} */
 			const counterState = {
-				chatId: params.chatId,
-				counter: params.counter,
-				type: params.counterType,
+				chatId,
+				counter,
+				type: counterType,
 				parentChatId: chat.parent_chat_id,
 			};
 
@@ -105,7 +120,7 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 		 */
 		async handleMessageDeleteV2(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
@@ -121,6 +136,11 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 				counter,
 				counterType,
 			} = params;
+
+			if (counterType === CounterType.tasksTask)
+			{
+				return;
+			}
 
 			let {
 				parentChatId = 0,
@@ -143,7 +163,7 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 
 		async handleReadMessage(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
@@ -181,7 +201,7 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 		{
 			logger.log(params, extra, command);
 
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
@@ -206,6 +226,11 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 				parentChatId,
 			} = params;
 
+			if (counterType === CounterType.tasksTask)
+			{
+				return;
+			}
+
 			/** @type {CounterState} */
 			const counterState = {
 				chatId,
@@ -219,7 +244,7 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 
 		handleReadAllChannelComments(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
@@ -238,7 +263,7 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 
 		handleUnreadMessage(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
@@ -268,7 +293,7 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 
 		async handleUnreadMessageChat(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
@@ -287,6 +312,11 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 				counterType,
 			} = params;
 
+			if (counterType === CounterType.tasksTask)
+			{
+				return;
+			}
+
 			const storedEvent = await this.#getStoredState(chatId);
 
 			this.setCounter({
@@ -297,9 +327,13 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 			});
 		}
 
-		async handleChatUnread(params, extra, command)
+		/**
+		 * @param {ChatUnreadPullHandlerParams} params
+		 * @param {PullExtraData} extra
+		 */
+		async handleChatUnread(params, extra)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
@@ -308,7 +342,7 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 			{
 				return;
 			}
-			logger.log(`${this.constructor.name}.handleChatUnread`, params, extra, command);
+			logger.log(`${this.constructor.name}.handleChatUnread`, params, extra);
 
 			const {
 				chatId,
@@ -346,7 +380,7 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 
 		handleChatHide(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
@@ -364,7 +398,7 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 
 		handleChatUserLeave(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
@@ -390,11 +424,11 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 
 		handleChatMuteNotify(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
-			logger.log(`${this.constructor.name}.handleChatUserLeave`, params, extra, command);
+			logger.log(`${this.constructor.name}.handleChatMuteNotify`, params, extra, command);
 
 			const {
 				chatId,
@@ -402,6 +436,11 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 				counterType,
 				parentChatId = 0,
 			} = params;
+
+			if (counterType === CounterType.tasksTask)
+			{
+				return;
+			}
 
 			this.setCounter({
 				chatId,

@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,ui_vue3_vuex,rest_client,ui_dialogs_messagebox,im_v2_lib_call,im_v2_provider_service_recent,im_v2_lib_invite,im_public,im_v2_provider_service_chat,ui_system_menu,im_v2_lib_promo,im_v2_application_core,im_v2_lib_parser,im_v2_lib_entityCreator,im_v2_provider_service_message,im_v2_provider_service_disk,im_v2_lib_market,im_v2_lib_utils,im_v2_lib_permission,im_v2_lib_confirm,im_v2_lib_notifier,main_core_events,im_v2_const,im_v2_lib_channel,im_v2_lib_analytics,main_core,ui_iconSet_api_core,im_v2_lib_copilot) {
+(function (exports,ui_vue3_vuex,rest_client,ui_dialogs_messagebox,im_v2_lib_call,im_v2_provider_service_recent,im_v2_lib_invite,im_public,im_v2_provider_service_chat,im_v2_lib_chat,ui_system_menu,im_v2_lib_promo,im_v2_lib_parser,im_v2_lib_entityCreator,im_v2_provider_service_message,im_v2_provider_service_disk,im_v2_lib_market,im_v2_lib_utils,im_v2_lib_permission,im_v2_lib_confirm,im_v2_lib_notifier,main_core_events,im_v2_const,im_v2_lib_channel,im_v2_lib_analytics,im_v2_lib_copilot,main_core,ui_iconSet_api_core,im_v2_application_core,im_v2_lib_feedback) {
 	'use strict';
 
 	const EVENT_NAMESPACE = 'BX.Messenger.v2.Lib.Menu';
@@ -702,7 +702,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      onClick: () => {
 	        var _BX$clipboard;
 	        im_v2_lib_analytics.Analytics.getInstance().messageContextMenu.onCopyLink(this.context.dialogId);
-	        const textToCopy = im_v2_lib_utils.Utils.text.getMessageLink(this.context.dialogId, this.context.id);
+	        const textToCopy = im_v2_lib_chat.ChatManager.buildMessageLink(this.context.dialogId, this.context.id);
 	        if ((_BX$clipboard = BX.clipboard) != null && _BX$clipboard.copy(textToCopy)) {
 	          im_v2_lib_notifier.Notifier.message.onCopyLinkComplete();
 	        }
@@ -1125,17 +1125,20 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	}
 
-	const CopilotChatContext = Object.freeze({
-	  personal: 'chat_copilot_tab_one_by_one',
-	  group: 'chat_copilot_tab_multi'
-	});
 	const MenuSectionCode$4 = Object.freeze({
 	  main: 'main',
 	  select: 'select',
 	  create: 'create',
 	  market: 'market'
 	});
+	var _openForm = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("openForm");
 	class CopilotMessageMenu extends MessageMenu {
+	  constructor(...args) {
+	    super(...args);
+	    Object.defineProperty(this, _openForm, {
+	      value: _openForm2
+	    });
+	  }
 	  getMenuItems() {
 	    const mainGroupItems = [this.getCopyItem(), this.getMarkItem(), this.getFavoriteItem(), this.getForwardItem(), this.getSendFeedbackItem(), this.getDeleteItem()];
 	    return [...this.groupItems(mainGroupItems, MenuSectionCode$4.main), ...this.groupItems([this.getSelectItem()], MenuSectionCode$4.select)];
@@ -1157,56 +1160,21 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      icon: ui_iconSet_api_core.Outline.FEEDBACK,
 	      onClick: () => {
 	        im_v2_lib_analytics.Analytics.getInstance().messageContextMenu.onSendFeedback(this.context.dialogId);
-	        void this.openForm();
+	        void babelHelpers.classPrivateFieldLooseBase(this, _openForm)[_openForm]();
 	        this.menuInstance.close();
 	      }
 	    };
 	  }
-	  async openForm() {
-	    const formId = Math.round(Math.random() * 1000);
-	    await main_core.Runtime.loadExtension(['ui.feedback.form']);
-	    BX.UI.Feedback.Form.open({
-	      id: `im.copilot.feedback-${formId}`,
-	      forms: [{
-	        zones: ['es'],
-	        id: 684,
-	        lang: 'es',
-	        sec: 'svvq1x'
-	      }, {
-	        zones: ['en'],
-	        id: 686,
-	        lang: 'en',
-	        sec: 'tjwodz'
-	      }, {
-	        zones: ['de'],
-	        id: 688,
-	        lang: 'de',
-	        sec: 'nrwksg'
-	      }, {
-	        zones: ['com.br'],
-	        id: 690,
-	        lang: 'com.br',
-	        sec: 'kpte6m'
-	      }, {
-	        zones: ['ru', 'by', 'kz'],
-	        id: 692,
-	        lang: 'ru',
-	        sec: 'jbujn0'
-	      }],
-	      presets: {
-	        sender_page: this.getCopilotChatContext(),
-	        language: main_core.Loc.getMessage('LANGUAGE_ID'),
-	        cp_answer: this.context.text
-	      }
-	    });
-	  }
-	  getCopilotChatContext() {
+	  getUserCounter() {
 	    const chat = this.store.getters['chats/get'](this.context.dialogId);
-	    if (chat.userCounter <= 2) {
-	      return CopilotChatContext.personal;
-	    }
-	    return CopilotChatContext.group;
+	    return chat.userCounter;
 	  }
+	}
+	async function _openForm2() {
+	  void new im_v2_lib_feedback.FeedbackManager().openCopilotForm({
+	    userCounter: this.getUserCounter(),
+	    text: this.context.text
+	  });
 	}
 
 	const MenuSectionCode$5 = Object.freeze({
@@ -1222,8 +1190,22 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	  getNestedItems() {
 	    const mainGroupItems = [this.getCopyFileItem(), this.getMarkItem(), this.getFavoriteItem(), this.getSaveToDiskItem()];
-	    const createGroupItems = [this.getCreateTaskItem(), this.getCreateMeetingItem()];
+	    const createGroupItems = [this.getSendFeedbackItem(), this.getCreateTaskItem(), this.getCreateMeetingItem()];
 	    return [...this.groupItems(mainGroupItems, MenuSectionCode$5.main), ...this.groupItems(createGroupItems, MenuSectionCode$5.create), ...this.groupItems(this.getMarketItems(), MenuSectionCode$5.market)];
+	  }
+	  getSendFeedbackItem() {
+	    const isAiAssistantBot = im_v2_application_core.Core.getStore().getters['users/bots/isAiAssistant'](this.context.authorId);
+	    if (!isAiAssistantBot) {
+	      return null;
+	    }
+	    return {
+	      title: main_core.Loc.getMessage('IM_LIB_MENU_AI_ASSISTANT_FEEDBACK'),
+	      icon: ui_iconSet_api_core.Outline.FEEDBACK,
+	      onClick: () => {
+	        void new im_v2_lib_feedback.FeedbackManager().openAiAssistantForm();
+	        this.menuInstance.close();
+	      }
+	    };
 	  }
 	}
 
@@ -1323,6 +1305,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  registerMenuByCallback(callback, menuClass) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _customMenuByCallback)[_customMenuByCallback].set(callback, menuClass);
 	  }
+	  unregisterMenuByCallback(callback) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _customMenuByCallback)[_customMenuByCallback].delete(callback);
+	  }
 	  registerMenuByMessageType(messageType, menuClass) {
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _hasMenuForMessageType)[_hasMenuForMessageType](messageType)) {
 	      return;
@@ -1406,5 +1391,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.MessageMenu = MessageMenu;
 	exports.AiAssistantMessageMenu = AiAssistantMessageMenu;
 
-}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX.Vue3.Vuex,BX,BX.UI.Dialogs,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.UI.System,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Event,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.UI.IconSet,BX.Messenger.v2.Lib));
+}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX.Vue3.Vuex,BX,BX.UI.Dialogs,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.UI.System,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Event,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.UI.IconSet,BX.Messenger.v2.Application,BX.Messenger.v2.Lib));
 //# sourceMappingURL=registry.bundle.js.map

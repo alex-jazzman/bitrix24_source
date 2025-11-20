@@ -53,3 +53,8 @@ $MESS['COLLAB_GUEST_INVITE_RESTRICTIONS_BOX_DETAILS_BUTTON_TEXT'] = "Подро�
 $MESS['COLLAB_GUEST_INVITE_LANGUAGE_CHOOSER_TEXT'] = "Язык приглашения: [COLOR=#COLOR#][URL]#LANGUAGE#[/URL][/COLOR]";
 $MESS['COLLAB_INVITE_LANGUAGE_CHOOSER_MENU_SECTION_TITLE'] = "по умолчанию";
 $MESS['COLLAB_INVITE_LANGUAGE_CHOOSER_AHA_MOMENT_TEXT'] = "Выберите язык приглашения и интерфейса гостя. Для других участников язык не изменится";
+
+$MESS['COLLAB_GUESTS_INVITE_DISABLED_BY_COLLAB_ADMIN_BOX_TITLE'] = "Пригласить гостя в коллабу";
+$MESS['COLLAB_GUESTS_INVITE_DISABLED_BY_COLLAB_ADMIN_TITLE'] = "Приглашение гостей в коллабу отключено";
+$MESS['COLLAB_GUESTS_INVITE_DISABLED_BY_COLLAB_ADMIN_DESCRIPTION'] = "Обратитесь к администратору коллабы чтобы включить эту возможность";
+$MESS['COLLAB_GUESTS_INVITE_DISABLED_BY_COLLAB_ADMIN_BUTTON_TEXT'] = "Закрыть";

@@ -66,7 +66,7 @@ export class Slider extends BaseSlider
 		if (this.getRightBar() && opened)
 		{
 			const stack = ZIndexManager.getOrAddStack(document.body);
-			if (!this.isMessengerSlider() && !Slider.isMessengerOpen())
+			if (!this.isMessengerSlider() && !Slider.isMessengerOpen() && !Slider.isVideoCallOpen())
 			{
 				stack.bringToFront(this.getRightBar());
 			}
@@ -122,6 +122,13 @@ export class Slider extends BaseSlider
 		return this.#chatMenuBar !== null;
 	}
 
+	static isVideoCallOpen(): boolean
+	{
+		const CallManager = Reflection.getClass('BX.Messenger.v2.Lib.CallManager');
+
+		return CallManager && CallManager.getInstance().hasCurrentCall();
+	}
+
 	getRightBar(): HTMLElement
 	{
 		return document.getElementById('right-bar');
@@ -156,7 +163,7 @@ export class Slider extends BaseSlider
 
 	calculateOuterBoundary(): OuterBoundary
 	{
-		if (this.isMessengerSlider() || Slider.isMessengerOpenBeforeSlider(this))
+		if (this.isMessengerSlider() || Slider.isMessengerOpenBeforeSlider(this) || Slider.isVideoCallOpen())
 		{
 			return {
 				top: this.isMessengerSlider() ? 58 : 16,

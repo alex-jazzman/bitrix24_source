@@ -1712,14 +1712,16 @@ this.BX.Intranet = this.BX.Intranet || {};
 	var _getCounterWrapper$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCounterWrapper");
 	var _setCounterValue = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setCounterValue");
 	var _setEventHandlers = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setEventHandlers");
+	var _updateOptionsFromPull = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateOptionsFromPull");
+	var _emitOrdersUpdate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("emitOrdersUpdate");
 	var _showInfrastructureSlider = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showInfrastructureSlider");
 	class LicenseButton {
 	  static init(options) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1] = options;
 	    babelHelpers.classPrivateFieldLooseBase(this, _buttonWrapper)[_buttonWrapper] = document.querySelector('[data-id="licenseWidgetWrapper"]');
 	    babelHelpers.classPrivateFieldLooseBase(this, _setEventHandlers)[_setEventHandlers]();
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].isCloud && babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].ordersAwaitingPayment > 0) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _setCounterValue)[_setCounterValue](babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].ordersAwaitingPayment);
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].isCloud && babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].shouldShow) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _setCounterValue)[_setCounterValue](babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].ordersTotalCount);
 	    }
 	    main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _buttonWrapper)[_buttonWrapper], 'click', () => {
 	      main_core.Event.unbindAll(babelHelpers.classPrivateFieldLooseBase(this, _buttonWrapper)[_buttonWrapper]);
@@ -1831,18 +1833,37 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      moduleId: 'bitrix24',
 	      command: 'updateCountOrdersAwaitingPayment',
 	      callback: params => {
-	        main_core_events.EventEmitter.emit('BX.Bitrix24.Orders:updateOrdersAwaitingPayment', new main_core_events.BaseEvent({
-	          data: {
-	            counter: Number(params.count)
-	          }
-	        }));
-	        if (params.count > 0) {
-	          babelHelpers.classPrivateFieldLooseBase(this, _setCounterValue)[_setCounterValue](Number(params.count));
-	        }
+	        babelHelpers.classPrivateFieldLooseBase(this, _updateOptionsFromPull)[_updateOptionsFromPull](params);
 	      }
 	    });
 	    main_core_events.EventEmitter.subscribe(main_core_events.EventEmitter.GLOBAL_TARGET, 'Bitrix24InfrastructureSlider:show', babelHelpers.classPrivateFieldLooseBase(this, _showInfrastructureSlider)[_showInfrastructureSlider].bind(this));
 	  }
+	}
+	function _updateOptionsFromPull2(params) {
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].isCloud) {
+	    return;
+	  }
+	  babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].ordersCount = params.orders.ordersCount;
+	  babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].ordersInfo = params.orders.ordersInfo;
+	  if (params.shouldShow) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _setCounterValue)[_setCounterValue](params.ordersTotalCount);
+	  } else {
+	    babelHelpers.classPrivateFieldLooseBase(this, _setCounterValue)[_setCounterValue](0);
+	  }
+	  babelHelpers.classPrivateFieldLooseBase(this, _emitOrdersUpdate)[_emitOrdersUpdate](params);
+	}
+	function _emitOrdersUpdate2(params) {
+	  var _params$orders, _params$orders2;
+	  main_core_events.EventEmitter.emit('BX.Bitrix24.Orders:updateOrdersAwaitingPayment', new main_core_events.BaseEvent({
+	    data: {
+	      orders: {
+	        ordersCount: (_params$orders = params.orders) == null ? void 0 : _params$orders.ordersCount,
+	        ordersInfo: (_params$orders2 = params.orders) == null ? void 0 : _params$orders2.ordersInfo
+	      },
+	      shouldShow: params.shouldShow,
+	      ordersTotalCount: params.ordersTotalCount
+	    }
+	  }));
 	}
 	function _showInfrastructureSlider2() {
 	  const params = babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].infrastructureForm;
@@ -1882,6 +1903,12 @@ this.BX.Intranet = this.BX.Intranet || {};
 	}
 	Object.defineProperty(LicenseButton, _showInfrastructureSlider, {
 	  value: _showInfrastructureSlider2
+	});
+	Object.defineProperty(LicenseButton, _emitOrdersUpdate, {
+	  value: _emitOrdersUpdate2
+	});
+	Object.defineProperty(LicenseButton, _updateOptionsFromPull, {
+	  value: _updateOptionsFromPull2
 	});
 	Object.defineProperty(LicenseButton, _setEventHandlers, {
 	  value: _setEventHandlers2

@@ -495,8 +495,6 @@ BX.addCustomEvent('Tasks.Toolbar:onItem', function(event) {
 </script>
 
 <?php
-if ($arResult['CONTEXT'] !== Context::getSpaces())
-{
 	$APPLICATION->IncludeComponent(
 		'bitrix:tasks.interface.header',
 		'',
@@ -539,7 +537,7 @@ if ($arResult['CONTEXT'] !== Context::getSpaces())
 			'SHOW_USER_SORT' => 'N',
 			'SORT_FIELD' => $arParams['SORT_FIELD'] ?? null,
 			'SORT_FIELD_DIR' => $arParams['SORT_FIELD_DIR'] ?? null,
-			'USE_LIVE_SEARCH' => 'Y',
+			'USE_LIVE_SEARCH' => 'N',
 			'SHOW_SECTION_TEMPLATES' => (isset($arParams['GROUP_ID']) && $arParams['GROUP_ID'] > 0) ? 'N' : 'Y',
 			'DEFAULT_ROLEID' => $arParams['DEFAULT_ROLEID'] ?? null,
 			'USE_AJAX_ROLE_FILTER' => 'Y',
@@ -550,7 +548,6 @@ if ($arResult['CONTEXT'] !== Context::getSpaces())
 		$component,
 		array('HIDE_ICONS' => true)
 	);
-}
 
 if (
 	isset($arResult['ERROR']['FATAL'])

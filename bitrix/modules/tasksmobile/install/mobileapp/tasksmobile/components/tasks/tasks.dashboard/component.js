@@ -1717,6 +1717,7 @@
 					else
 					{
 						title = Loc.getMessage('M_TASKS_VIEW_ROUTER_EMPTY_IN_PROGRESS');
+						description = Loc.getMessage('M_TASKS_VIEW_ROUTER_EMPTY_IN_PROGRESS_DESCRIPTION');
 					}
 
 					uri = this.getEmptyListImage(listOrKanban, false);

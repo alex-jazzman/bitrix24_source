@@ -4,8 +4,6 @@ import 'im.v2.css.tokens';
 
 import { Logger } from 'im.v2.lib.logger';
 import { ChatService } from 'im.v2.provider.service.chat';
-import { SidebarManager, SidebarPreset } from 'im.v2.lib.sidebar';
-import { SidebarMainPanelBlock } from 'im.v2.const';
 
 import { TaskChatPlaceholder } from './placeholder/placeholder';
 import { TaskChatContent } from './content/task-content';
@@ -40,8 +38,6 @@ export const TaskChatOpener = {
 	},
 	created(): Promise
 	{
-		this.registerSidebarConfig();
-
 		return this.onChatOpen();
 	},
 	methods: {
@@ -50,35 +46,17 @@ export const TaskChatOpener = {
 			if (this.dialog.inited)
 			{
 				Logger.warn(`TaskChatOpener: chat ${this.chatId} is already loaded`);
-				// Analytics.getInstance().onOpenChat(this.dialog);
 
 				return;
 			}
 
 			await this.loadChat();
-			// Analytics.getInstance().onOpenChat(this.dialog);
 		},
 		async loadChat(): Promise
 		{
 			Logger.warn(`TaskChatOpener: loading chat ${this.chatId}`);
 			await this.getChatService().loadChatByChatId(this.chatId);
 			Logger.warn(`TaskChatOpener: chat ${this.chatId} is loaded`);
-		},
-		registerSidebarConfig(): void
-		{
-			const sidebarPreset = new SidebarPreset({
-				blocks: [
-					SidebarMainPanelBlock.task,
-					SidebarMainPanelBlock.info,
-					SidebarMainPanelBlock.fileList,
-					SidebarMainPanelBlock.meetingList,
-				],
-				isHeaderMenuEnabled: () => false,
-			});
-
-			SidebarManager.getInstance().registerConfig((chatContext: ImModelChat) => {
-				return chatContext.type === this.chatType;
-			}, sidebarPreset);
 		},
 		getChatService(): ChatService
 		{

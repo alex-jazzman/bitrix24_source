@@ -1641,21 +1641,19 @@ this.BX.Catalog = this.BX.Catalog || {};
 	    }()
 	  }, {
 	    key: "open",
-	    value: function open(url, options) {
-	      if (!main_core.Type.isPlainObject(options)) {
-	        options = {};
-	      }
-	      options = _objectSpread(_objectSpread({}, {
+	    value: function open(url, rawOptions) {
+	      var options = main_core.Type.isPlainObject(rawOptions) ? rawOptions : {};
+	      options = _objectSpread({
 	        cacheable: false,
 	        allowChangeHistory: false,
 	        events: {}
-	      }), options);
+	      }, options);
 	      return new Promise(function (resolve) {
 	        if (main_core.Type.isString(url) && url.length > 1) {
 	          options.events.onClose = function (event) {
 	            resolve(event.getSlider());
 	          };
-	          BX.SidePanel.Instance.open(url, options);
+	          BX.SidePanel.Instance.open(url, rawOptions);
 	        } else {
 	          resolve();
 	        }

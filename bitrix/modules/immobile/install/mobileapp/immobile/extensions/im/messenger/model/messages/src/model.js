@@ -345,6 +345,16 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 			},
 
 			/**
+			 * @function messagesModel/getSendingMessages
+			 * @return {Array<MessagesModelState>}
+			 */
+			getSendingMessages: (state, getters) => (chatId) => {
+				const messages = getters.getByChatId(chatId);
+
+				return messages.filter((message) => message.sending);
+			},
+
+			/**
 			 * @function messagesModel/isUploadingMessage
 			 * @return {boolean}
 			 */

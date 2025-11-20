@@ -97,7 +97,7 @@ jn.define('tasks/layout/flow/list', (require, exports, module) => {
 					onCancel: this.onSearch,
 				});
 
-				this.navigationTitle = new NavigationTitle({ layout: this.layout });
+				this.navigationTitle = new NavigationTitle({ layout: this.layout, title: props.navigationTitle });
 			}
 
 			/** @type {StatefulList} */

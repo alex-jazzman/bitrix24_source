@@ -1,11 +1,8 @@
-import { Store } from 'ui.vue3.vuex';
-
 import { LayoutManager } from 'im.v2.lib.layout';
 import { Messenger } from 'im.public';
 import { ChatType, UserRole } from 'im.v2.const';
 import { Core } from 'im.v2.application.core';
 import { UserManager } from 'im.v2.lib.user';
-import { CopilotManager } from 'im.v2.lib.copilot';
 import { CallManager } from 'im.v2.lib.call';
 import { ChannelManager } from 'im.v2.lib.channel';
 import { InputActionListener } from 'im.v2.lib.input-action';
@@ -13,6 +10,8 @@ import { Logger } from 'im.v2.lib.logger';
 import { getChatRoleForUser } from 'im.v2.lib.role-manager';
 import { Analytics } from 'im.v2.lib.analytics';
 import { Notifier } from 'im.v2.lib.notifier';
+
+import type { Store } from 'ui.vue3.vuex';
 
 import type {
 	ChatOwnerParams,
@@ -27,6 +26,7 @@ import type {
 	ChatConvertParams,
 	ChatDeleteParams,
 	MessagesAutoDeleteDelayParams,
+	Relation,
 } from '../../types/chat';
 import type { RawUser, RawChat } from '../../types/common';
 import type { ImModelChat } from 'im.v2.model';
@@ -92,57 +92,58 @@ export class ChatPullHandler
 	handleChatUserAdd(params: ChatUserAddParams)
 	{
 		Logger.warn('ChatPullHandler: handleChatUserAdd', params);
+		this.#updateChatUsers(params);
+
+		const { newUsers, dialogId, relations } = params;
+
 		const currentUserId = Core.getUserId();
-		if (params.newUsers.includes(currentUserId))
+		if (newUsers.includes(currentUserId))
 		{
-			this.#store.dispatch('chats/update', {
-				dialogId: params.dialogId,
-				fields: { role: UserRole.member },
+			const currentUserRelation: Relation = relations.find((relation) => relation.userId === Core.getUserId());
+			void this.#store.dispatch('chats/update', {
+				dialogId,
+				fields: { role: currentUserRelation.role },
 			});
 		}
-		this.#updateChatUsers(params);
 	}
 
 	handleChatUserLeave(params: ChatUserLeaveParams)
 	{
 		Logger.warn('ChatPullHandler: handleChatUserLeave', params);
-		const currentUserIsKicked = params.userId === Core.getUserId();
+		this.#updateChatUsers(params);
 
-		if (currentUserIsKicked)
+		// chatUserLeave is single user event, so we can safely use first (and only) relation from array
+		const { userId, dialogId, chatId, relations: [relation] } = params;
+		const currentUserIsKicked = userId === Core.getUserId();
+		if (relation?.isHidden || !currentUserIsKicked)
 		{
-			this.#store.dispatch('chats/update', {
-				dialogId: params.dialogId,
-				fields: { inited: false },
-			});
-			this.#store.dispatch('messages/clearChatCollection', { chatId: params.chatId });
+			return;
 		}
 
-		const isChannel = ChannelManager.isChannel(params.dialogId);
+		void this.#store.dispatch('chats/update', {
+			dialogId,
+			fields: { inited: false },
+		});
+		void this.#store.dispatch('messages/clearChatCollection', { chatId });
+
+		const isChannel = ChannelManager.isChannel(dialogId);
 		if (isChannel)
 		{
-			void this.#store.dispatch('counters/deleteForChannel', {
-				channelChatId: params.chatId,
-			});
+			void this.#store.dispatch('counters/deleteForChannel', { channelChatId: chatId });
 		}
 
-		const chatIsOpened = this.#store.getters['application/isChatOpen'](params.dialogId);
-		if (currentUserIsKicked && chatIsOpened)
+		const chatIsOpened = this.#store.getters['application/isChatOpen'](dialogId);
+		if (chatIsOpened)
 		{
-			Messenger.openChat();
+			void Messenger.openChat();
 		}
 
-		const chatHasCall = CallManager.getInstance().getCurrentCallDialogId() === params.dialogId;
-		if (currentUserIsKicked && chatHasCall)
+		CallManager.getInstance().deleteRecentCall(dialogId);
+		const chatHasCall = CallManager.getInstance().getCurrentCallDialogId() === dialogId;
+		if (chatHasCall)
 		{
 			CallManager.getInstance().leaveCurrentCall();
 		}
-
-		if (currentUserIsKicked)
-		{
-			CallManager.getInstance().deleteRecentCall(params.dialogId);
-		}
-
-		this.#updateChatUsers(params);
 	}
 
 	handleInputActionNotify(params: InputActionNotifyParams)
@@ -253,17 +254,6 @@ export class ChatPullHandler
 		}
 	}
 
-	handleChatCopilotRoleUpdate(params)
-	{
-		if (!params.copilotRole)
-		{
-			return;
-		}
-
-		const copilotManager = new CopilotManager();
-		void copilotManager.handleRoleUpdate(params.copilotRole);
-	}
-
 	handleChatUpdate(params: {chat: RawChat})
 	{
 		void this.#store.dispatch('chats/update', {
@@ -359,10 +349,10 @@ export class ChatPullHandler
 		if (params.users)
 		{
 			const userManager = new UserManager();
-			userManager.setUsersToModel(Object.values(params.users));
+			void userManager.setUsersToModel(Object.values(params.users));
 		}
 
-		this.#store.dispatch('chats/update', {
+		void this.#store.dispatch('chats/update', {
 			dialogId: params.dialogId,
 			fields: {
 				userCounter: params.userCount,

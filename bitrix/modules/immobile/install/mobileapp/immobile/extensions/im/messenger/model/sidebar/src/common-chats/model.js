@@ -107,6 +107,18 @@ jn.define('im/messenger/model/sidebar/src/common-chats/model', (require, exports
 					},
 				});
 			},
+
+			/** @function sidebarModel/sidebarCommonChatsModel/deleteByChatId */
+			deleteByChatId: (store, payload) => {
+				const { chatId } = payload;
+
+				store.commit('deleteByChatId', {
+					actionName: 'deleteByChatId',
+					data: {
+						chatId,
+					},
+				});
+			},
 		},
 		mutations: {
 			/**
@@ -145,6 +157,19 @@ jn.define('im/messenger/model/sidebar/src/common-chats/model', (require, exports
 				if (state.collection[chatId] && state.collection[chatId].chats.has(id))
 				{
 					state.collection[chatId].chats.delete(id);
+				}
+			},
+			/**
+			 * @param state
+			 * @param {MutationPayload<SidebarCommonChatsDeleteByChatIdData, SidebarCommonChatsDeleteByChatIdActions>} payload
+			 */
+			deleteByChatId: (state, payload) => {
+				logger.log('SidebarChatsModel: deleteByChatId mutation', payload);
+				const { chatId } = payload.data;
+
+				if (state.collection[chatId])
+				{
+					delete state.collection[chatId];
 				}
 			},
 		},

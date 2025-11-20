@@ -5,14 +5,13 @@
  */
 jn.define('im/messenger/provider/pull/chat/message', (require, exports, module) => {
 	const { Type } = require('type');
-	const { EntityReady } = require('entity-ready');
 
 	const { BaseMessagePullHandler } = require('im/messenger/provider/pull/base');
 	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
 	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 	const { MessengerParams } = require('im/messenger/lib/params');
-	const { TabCounters } = require('im/messenger/lib/counters/tab-counters');
 	const { Notifier } = require('im/messenger/lib/notifier');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const {
 		DialogType,
 		MessagesAutoDeleteDelay,
@@ -41,7 +40,7 @@ jn.define('im/messenger/provider/pull/chat/message', (require, exports, module) 
 		 */
 		handleMessagesAutoDeleteDelayChanged(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
@@ -62,7 +61,7 @@ jn.define('im/messenger/provider/pull/chat/message', (require, exports, module) 
 
 		handleMessageChat(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
@@ -93,7 +92,7 @@ jn.define('im/messenger/provider/pull/chat/message', (require, exports, module) 
 				})
 				.then(() => {
 					this.messageNotify(params, extra, recentMessageManager.getMessageText());
-					TabCounters.updateDelayed();
+					serviceLocator.get('tab-counters').updateDelayed();
 
 					this.saveShareDialogCache();
 				})
@@ -169,7 +168,7 @@ jn.define('im/messenger/provider/pull/chat/message', (require, exports, module) 
 
 		handleReadAllChannelComments(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
@@ -234,6 +233,7 @@ jn.define('im/messenger/provider/pull/chat/message', (require, exports, module) 
 					title: dialogTitle,
 					text: this.createMessageChatNotifyText(messageText, userName),
 					avatar,
+					recentConfig: params.recentConfig,
 				}).catch((error) => {
 					this.logger.error(`${this.getClassName()}.messageNotify notify error:`, error);
 				});

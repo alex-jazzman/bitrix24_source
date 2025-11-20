@@ -54,7 +54,7 @@ export default class WebSDK {
                 userKickable: (_h = params.ui) === null || _h === void 0 ? void 0 : _h.userKickable,
                 confirmUserKick: (_j = params.ui) === null || _j === void 0 ? void 0 : _j.confirmUserKick,
                 scrollToElement: (_k = params.ui) === null || _k === void 0 ? void 0 : _k.scrollToElement,
-                disable: (_l = params.ui) === null || _l === void 0 ? void 0 : _l.disable,
+                features: (_l = params.ui) === null || _l === void 0 ? void 0 : _l.features,
             },
             appContainerDomain: window.location.origin,
             boardData,

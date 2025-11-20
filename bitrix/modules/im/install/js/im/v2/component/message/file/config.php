@@ -27,6 +27,7 @@ return [
 		'im.v2.component.elements.loader',
 		'im.v2.provider.service.message',
 		'im.v2.lib.feature',
+		'im.v2.lib.analytics',
 		'im.v2.component.message.elements',
 		'im.v2.component.message.base',
 		'im.v2.const',

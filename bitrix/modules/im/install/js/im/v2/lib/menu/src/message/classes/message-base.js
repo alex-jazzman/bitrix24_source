@@ -1,3 +1,4 @@
+import { ChatManager } from 'im.v2.lib.chat';
 import { Loc, Type } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { MenuItemDesign } from 'ui.system.menu';
@@ -11,7 +12,7 @@ import { Parser } from 'im.v2.lib.parser';
 import { EntityCreator } from 'im.v2.lib.entity-creator';
 import { MessageService } from 'im.v2.provider.service.message';
 import { DiskService } from 'im.v2.provider.service.disk';
-import { EventType, PlacementType, ActionByRole, PromoId } from 'im.v2.const';
+import { EventType, PlacementType, ActionByRole, PromoId, GetParameter } from 'im.v2.const';
 import { MarketManager } from 'im.v2.lib.market';
 import { Utils } from 'im.v2.lib.utils';
 import { PermissionManager } from 'im.v2.lib.permission';
@@ -59,7 +60,7 @@ export class MessageMenu extends BaseMenu
 		};
 	}
 
-	getMenuItems(): MenuItemOptions | null[]
+	getMenuItems(): (MenuItemOptions | null)[]
 	{
 		const mainGroupItems = [
 			this.getReplyItem(),
@@ -187,7 +188,7 @@ export class MessageMenu extends BaseMenu
 			onClick: () => {
 				Analytics.getInstance().messageContextMenu.onCopyLink(this.context.dialogId);
 
-				const textToCopy = Utils.text.getMessageLink(this.context.dialogId, this.context.id);
+				const textToCopy = ChatManager.buildMessageLink(this.context.dialogId, this.context.id);
 				if (BX.clipboard?.copy(textToCopy))
 				{
 					Notifier.message.onCopyLinkComplete();

@@ -1,3 +1,4 @@
+import { Type } from 'main.core';
 import { Lottie } from 'ui.lottie';
 
 import { InputAction } from 'im.v2.lib.input-action';
@@ -140,8 +141,9 @@ export const InputActions = {
 		getActionTextForSingleUser(): string
 		{
 			const [firstUserRecord] = this.chatInputActions;
-			const { type, userName } = firstUserRecord;
-			const code = LocCodeByActionType[type];
+			const { type, userName, statusMessageCode } = firstUserRecord;
+			const hasCustomMessageCode = this.hasCustomMessageCode(statusMessageCode);
+			const code = hasCustomMessageCode ? statusMessageCode : LocCodeByActionType[type];
 
 			return this.loc(code, { '#USER#': userName });
 		},
@@ -163,6 +165,10 @@ export const InputActions = {
 			}
 
 			this.currentAnimation.destroy();
+		},
+		hasCustomMessageCode(phraseCode: string | null): boolean
+		{
+			return Type.isStringFilled(phraseCode) && Type.isStringFilled(this.loc(phraseCode));
 		},
 		loc(phraseCode: string, replacements: {[string]: string} = {}): string
 		{

@@ -3,7 +3,6 @@
  */
 jn.define('im/messenger/provider/pull/chat', (require, exports, module) => {
 	const { ChatApplicationPullHandler } = require('im/messenger/provider/pull/chat/application');
-	const { ChatCounterPullHandler } = require('im/messenger/provider/pull/chat/counter');
 	const { ChatMessagePullHandler } = require('im/messenger/provider/pull/chat/message');
 	const { ChatFilePullHandler } = require('im/messenger/provider/pull/chat/file');
 	const { ChatDialogPullHandler } = require('im/messenger/provider/pull/chat/dialog');
@@ -14,7 +13,6 @@ jn.define('im/messenger/provider/pull/chat', (require, exports, module) => {
 
 	module.exports = {
 		ChatApplicationPullHandler,
-		ChatCounterPullHandler,
 		ChatMessagePullHandler,
 		ChatFilePullHandler,
 		ChatDialogPullHandler,

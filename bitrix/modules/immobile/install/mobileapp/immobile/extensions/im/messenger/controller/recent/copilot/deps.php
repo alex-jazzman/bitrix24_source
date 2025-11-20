@@ -13,7 +13,6 @@ return [
 		'im:messenger/lib/emitter',
 		'im:messenger/lib/params',
 		'im:messenger/lib/helper',
-		'im:messenger/lib/counters/tab-counters',
 		'im:messenger/lib/counters/counter-manager/messenger/sender',
 		'im:messenger/lib/feature',
 	],

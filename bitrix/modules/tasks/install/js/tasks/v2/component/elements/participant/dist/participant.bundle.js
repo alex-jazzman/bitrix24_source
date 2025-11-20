@@ -52,6 +52,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    readonly: {
 	      type: Boolean,
 	      default: false
+	    },
+	    avatarOnly: {
+	      type: Boolean,
+	      default: false
 	    }
 	  },
 	  emits: ['update'],
@@ -102,7 +106,12 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    }
 	  },
 	  template: `
-		<HoverPill v-bind="dataset" ref="container" @keydown="handleKeydown">
+		<HoverPill
+			v-bind="dataset"
+			:transparentHover="avatarOnly"
+			ref="container"
+			@keydown="handleKeydown"
+		>
 			<UserCustomTagSelector
 				:dialogOptions="dialogOptions"
 				:items="preselected"
@@ -110,6 +119,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				:withActionMenu="selectorWithActionMenu"
 				:clickHandler="onClick"
 				:readonly="readonly"
+				:avatarOnly="avatarOnly"
 				ref="selector"
 				@select="handleUserSelected"
 				@unfreeze="focus"

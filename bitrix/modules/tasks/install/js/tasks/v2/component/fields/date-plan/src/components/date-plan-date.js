@@ -22,8 +22,10 @@ export const DatePlanDate = {
 		},
 	},
 	template: `
-		<HoverPill :readonly="readonly">
-			<div class="tasks-field-date-plan-date">{{ dateFormatted }}</div>
-		</HoverPill>
+		<div class="tasks-field-date-plan-date-container">
+			<HoverPill :readonly="readonly">
+				<div class="tasks-field-date-plan-date">{{ dateFormatted }}</div>
+			</HoverPill>
+		</div>
 	`,
 };

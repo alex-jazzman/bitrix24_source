@@ -36,6 +36,7 @@ jn.define('im/messenger/model/dialogues/default-element', (require, exports, mod
 		owner: 0,
 		entityType: '',
 		entityId: '',
+		entityLink: {},
 		dateCreate: null,
 		public: {
 			code: '',

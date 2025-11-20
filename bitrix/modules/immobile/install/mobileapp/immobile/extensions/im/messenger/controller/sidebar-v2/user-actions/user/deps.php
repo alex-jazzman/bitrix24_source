@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'type',
 		'im:messenger/const',
 		'im:messenger/lib/logger',
 		'im:messenger/lib/emitter',

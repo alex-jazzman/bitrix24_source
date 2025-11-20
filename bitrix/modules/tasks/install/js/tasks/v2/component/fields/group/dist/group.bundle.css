@@ -21,14 +21,9 @@
 	color: var(--ui-color-base-2);
 }
 
-
-.tasks-field-group-add-icon {
+.tasks-field-group-icon {
 	margin-right: 6px;
 	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
-}
-
-.tasks-field-group-add-text {
-	color: var(--ui-color-accent-main-primary);
 }
 
 .tasks-field-group-stage {

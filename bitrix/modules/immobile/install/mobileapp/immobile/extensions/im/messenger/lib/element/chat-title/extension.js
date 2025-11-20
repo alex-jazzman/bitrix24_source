@@ -78,7 +78,7 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 				this.createUserTitle(options);
 			}
 
-			this.setMessagesAutoDeleteDelay();
+			this.setTitleIcons();
 
 			if (!options.ignoreInputActions)
 			{
@@ -201,17 +201,28 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 			this.createUserNameColor(user);
 		}
 
-		setMessagesAutoDeleteDelay()
+		setTitleIcons()
 		{
 			if (!Feature.isTitleIconsInDialogHeaderAvailable)
 			{
 				return;
 			}
 
-			const dialog = this.store.getters['dialoguesModel/getById'](this.dialogId);
-			if (!dialog)
+			const dialogHelper = DialogHelper.createByDialogId(this.dialogId);
+			const dialog = dialogHelper?.dialogModel;
+			if (!dialogHelper || !dialog)
 			{
 				return;
+			}
+
+			if (dialogHelper.isMuted)
+			{
+				this.titleIcons = {
+					right: {
+						name: Icon.SMALL_NOTIFICATION_OFF.getIconName(),
+						tintColor: AppTheme.colors.base3,
+					},
+				};
 			}
 
 			if (dialog.messagesAutoDeleteDelay)
@@ -650,13 +661,19 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 				};
 			}
 
-			const { actions } = inputActionsByUser;
-			if (!messages[actions[0]])
+			const { type, statusMessageCode } = inputActionsByUser.action;
+
+			if (!messages[type])
 			{
 				return '';
 			}
 
-			return Loc.getMessage(messages[actions[0]]);
+			if (!Type.isNull(statusMessageCode))
+			{
+				return Loc.getMessage(statusMessageCode) || Loc.getMessage(messages[UserInputAction.writing]);
+			}
+
+			return Loc.getMessage(messages[type]);
 		}
 
 		/**
@@ -680,13 +697,12 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 
 			if (userCount === 1)
 			{
-				const { actions } = firstUser;
+				const { type } = firstUser.action;
+				const lottieAction = lottie[type];
 
-				if (lottie[actions[0]])
+				if (lottieAction)
 				{
-					return {
-						uri: lottie[actions[0]],
-					};
+					return { uri: lottieAction };
 				}
 
 				return null;

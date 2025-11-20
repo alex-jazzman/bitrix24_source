@@ -5,10 +5,11 @@ import {
 	EntityTypes,
 	WizardApiEntityChangedDict,
 	NodeSettingsTypes,
-	type ChatOrChannelDetailed,
+	type CommunicationDetailed,
 	type UserData,
 	type NodeColorSettingsType,
 } from 'humanresources.company-structure.utils';
+import { UserService } from './classes/user-service';
 
 export type DepartmentData = {
 	id: number;
@@ -19,12 +20,14 @@ export type DepartmentData = {
 	employees: Array<UserData>;
 	userCount: number;
 	chats: Array<number>,
-	chatsDetailed: Array<ChatOrChannelDetailed>,
+	chatsDetailed: Array<CommunicationDetailed>,
 	chatsNoAccess: number,
 	channels: Array<number>,
-	channelsDetailed: Array<ChatOrChannelDetailed>,
+	channelsDetailed: Array<CommunicationDetailed>,
 	channelsNoAccess: number,
-	chatAndChannelsCount?: number,
+	collabsDetailed: Array<CommunicationDetailed>,
+	collabsNoAccess: number,
+	communicationsCount?: number,
 	children?: Array<number>,
 	createDefaultChat: boolean,
 	createDefaultChannel: boolean,
@@ -46,6 +49,7 @@ export const useChartStore = defineStore('hr-org-chart', {
 		userId: 0,
 		/** @var Map<number, { id: number, parentId: number, entityType: string }> */
 		structureMap: new Map(), // map of the entire structure (all entities) with minimal information
+		multipleUsers: [],
 	}),
 	actions: {
 		async refreshDepartments(nodeIds: number[]): Promise<void>
@@ -140,5 +144,55 @@ export const useChartStore = defineStore('hr-org-chart', {
 				this.departments.set(id, { ...this.departments.get(id), prevParentId: prevParent.id });
 			}
 		},
+		updateChatsInChildrenNodes(parentNodeId: number): void
+		{
+			const parentDepartment = this.departments.get(parentNodeId);
+
+			if (!parentDepartment || !parentDepartment.children)
+			{
+				return;
+			}
+
+			this.markDescendantsForChatReload(parentDepartment.children);
+		},
+		markDescendantsForChatReload(childrenIds: Array<number>): void
+		{
+			const store = useChartStore();
+			const queue = [...childrenIds];
+			const visited = new Set();
+			const maxIterations = 10000;
+			let iterations = 0;
+
+			while (queue.length > 0 && iterations < maxIterations)
+			{
+				iterations++;
+				const childId = queue.shift();
+
+				if (visited.has(childId))
+				{
+					continue;
+				}
+				visited.add(childId);
+
+				const childDepartment = store.departments.get(childId);
+				if (!childDepartment)
+				{
+					continue;
+				}
+
+				childDepartment.chatsDetailed = null;
+				childDepartment.channelsDetailed = null;
+				childDepartment.collabsDetailed = null;
+
+				if (childDepartment.children && childDepartment.children.length > 0)
+				{
+					queue.push(...childDepartment.children);
+				}
+			}
+		},
 	},
 });
+
+export {
+	UserService,
+};

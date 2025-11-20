@@ -149,14 +149,17 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    isShown: {
 	      type: Boolean,
 	      required: true
+	    },
+	    getBindElement: {
+	      type: Function,
+	      default: null
+	    },
+	    getTargetContainer: {
+	      type: Function,
+	      default: null
 	    }
 	  },
 	  emits: ['show', 'close', 'isShown'],
-	  data() {
-	    return {
-	      isExpanded: false
-	    };
-	  },
 	  computed: {
 	    ...ui_vue3_vuex.mapGetters({
 	      titleFieldOffsetHeight: `${tasks_v2_const.Model.Interface}/titleFieldOffsetHeight`
@@ -197,9 +200,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  },
 	  template: `
 		<BottomSheet
-			:isShown="isShown"
-			:isExpanded="isExpanded"
-			:class="'--check-list'"
+			v-if="isShown"
+			:padding="0"
+			:getBindElement="getBindElement"
+			:getTargetContainer="getTargetContainer"
 			ref="childComponent"
 		>
 			<slot
@@ -628,7 +632,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	}
 
 	const checkListMeta = Object.freeze({
-	  id: 'checklist',
+	  id: tasks_v2_const.TaskField.CheckList,
 	  title: main_core.Loc.getMessage('TASKS_V2_CHECK_LIST_TITLE')
 	});
 
@@ -701,6 +705,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      return this.isLoading === true && this.isEdit;
 	    },
 	    canCheckListAdd() {
+	      if (!this.isEdit) {
+	        return true;
+	      }
 	      return this.task.rights.checklistAdd === true;
 	    }
 	  },
@@ -1017,27 +1024,27 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    removeItem() {
 	      this.$emit('removeItem', this.id);
 	    },
-	    complete(isComplete) {
+	    async complete(isComplete) {
 	      if (this.canToggle === false) {
 	        return;
 	      }
-	      void this.updateCheckList(this.id, {
+	      await this.updateCheckList(this.id, {
 	        localCompleteState: isComplete
 	      });
 	      const listParents = new Map();
-	      this.checkListManager.syncParentCompletionState(this.id, (id, fields) => {
+	      this.checkListManager.syncParentCompletionState(this.id, async (id, fields) => {
 	        listParents.set(id, fields);
-	        void this.updateCheckList(id, {
+	        await this.updateCheckList(id, {
 	          localCompleteState: fields.isComplete
 	        });
 	      });
 	      this.$emit('update', this.id);
-	      const completionCallback = () => {
-	        void this.updateCheckList(this.id, {
+	      const completionCallback = async () => {
+	        await this.updateCheckList(this.id, {
 	          isComplete
 	        });
-	        listParents.forEach((fields, id) => {
-	          void this.updateCheckList(id, fields);
+	        listParents.forEach(async (fields, id) => {
+	          await this.updateCheckList(id, fields);
 	          this.saveCompleteState(id, fields.isComplete);
 	        });
 	      };
@@ -2412,6 +2419,14 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    isShown: {
 	      type: Boolean,
 	      default: false
+	    },
+	    getBindElement: {
+	      type: Function,
+	      default: null
+	    },
+	    getTargetContainer: {
+	      type: Function,
+	      default: null
 	    }
 	  },
 	  emits: ['show', 'close', 'resize', 'open'],
@@ -2695,6 +2710,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    },
 	    handleInitPopup(baseEvent) {
 	      const [id, bindElement, params] = baseEvent.getCompatData();
+	      if (id === 'b24-bottom-sheet' || id === 'tasks-relation-error') {
+	        return;
+	      }
 	      if (main_core.Type.isDomNode(bindElement)) {
 	        var _this$$refs$list;
 	        const excludedIds = ['popup-submenu-'];
@@ -3441,6 +3459,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			:is="componentName"
 			:taskId="taskId"
 			:isShown="isShown"
+			:getBindElement="getBindElement"
+			:getTargetContainer="getTargetContainer"
 			:isEmpty="emptyList"
 			@show="handleShow"
 			@close="handleClose"

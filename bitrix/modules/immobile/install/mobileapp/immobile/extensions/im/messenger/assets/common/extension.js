@@ -67,11 +67,10 @@ jn.define('im/messenger/assets/common', (require, exports, module) => {
 	class ChatTitleAssets
 	{
 		/**
-		 * @param {string} dialogType
 		 * @param {string} actionType
 		 * @return {string}
 		 */
-		static getLottieUrl(actionType, dialogType)
+		static getLottieUrl(actionType)
 		{
 			const actionTypeInKebabCase = actionType.replaceAll(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
 

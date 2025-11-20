@@ -242,6 +242,7 @@ jn.define('im/messenger/model/messages/reactions/model', (require, exports, modu
 						reactionCounters: item.reactionCounters,
 						reactionUsers: item.reactionUsers,
 						messageId: item.messageId,
+						dialogId: item.dialogId,
 					};
 
 					/** @type {ReactionsModelState} */
@@ -312,9 +313,11 @@ jn.define('im/messenger/model/messages/reactions/model', (require, exports, modu
 		return payload.reactions.map((reactionPayload) => {
 			/** @type {ReactionsModelState} */
 			const result = {
+				dialogId: reactionPayload.dialogId,
 				messageId: reactionPayload.messageId,
 				reactionCounters: Array.isArray(reactionPayload.reactionCounters) ? {} : reactionPayload.reactionCounters,
 				reactionUsers: new Map(),
+				ownReactions: new Set(),
 			};
 
 			if (Type.isArray(reactionPayload.ownReactions) && reactionPayload.ownReactions.length > 0)
@@ -356,6 +359,7 @@ jn.define('im/messenger/model/messages/reactions/model', (require, exports, modu
 	function prepareAddPayload(payload)
 	{
 		const result = clone(reactionDefaultElement);
+		result.dialogId = payload.dialogId;
 		result.messageId = payload.messageId;
 		result.ownReactions.add(payload.reaction);
 		result.reactionCounters[payload.reaction] = 1;

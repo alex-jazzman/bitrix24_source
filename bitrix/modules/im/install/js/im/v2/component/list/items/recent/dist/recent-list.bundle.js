@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,im_v2_provider_service_recent,im_v2_lib_menu,im_v2_lib_draft,im_v2_component_elements_listLoadingState,im_v2_component_list_items_elements_inputActionIndicator,im_v2_lib_dateFormatter,im_v2_lib_channel,main_date,im_v2_lib_parser,call_application_conference,im_public,im_v2_component_elements_chatTitle,im_v2_lib_call,call_lib_analytics,im_v2_lib_createChat,im_v2_component_elements_avatar,im_v2_component_elements_button,im_v2_lib_feature,im_v2_lib_invite,main_core,im_v2_lib_utils,main_core_events,im_v2_application_core,im_v2_const) {
+(function (exports,im_v2_provider_service_recent,im_v2_lib_menu,im_v2_lib_draft,im_v2_component_elements_listLoadingState,im_v2_component_list_items_elements_inputActionIndicator,im_v2_lib_dateFormatter,im_v2_lib_channel,main_date,im_v2_lib_parser,call_application_conference,im_v2_component_elements_chatTitle,im_v2_lib_call,call_lib_analytics,ui_iconSet_api_vue,im_public,im_v2_lib_createChat,im_v2_component_elements_avatar,im_v2_component_elements_button,im_v2_lib_feature,im_v2_lib_invite,im_v2_component_list_items_elements_emptyState,main_core,im_v2_lib_utils,main_core_events,im_v2_application_core,im_v2_const) {
 	'use strict';
 
 	const HiddenTitleByChatType = {
@@ -104,7 +104,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      return !this.isUser;
 	    },
 	    isNotes() {
-	      return Number.parseInt(this.recentItem.dialogId, 10) === im_v2_application_core.Core.getUserId();
+	      return this.$store.getters['chats/isNotes'](this.recentItem.dialogId);
 	    }
 	  },
 	  methods: {
@@ -388,7 +388,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      return im_v2_lib_channel.ChannelManager.isChannel(this.recentItem.dialogId);
 	    },
 	    isNotes() {
-	      return Number.parseInt(this.recentItem.dialogId, 10) === im_v2_application_core.Core.getUserId();
+	      return this.$store.getters['chats/isNotes'](this.recentItem.dialogId);
 	    },
 	    avatarType() {
 	      return this.isNotes ? im_v2_component_elements_avatar.ChatAvatarType.notes : '';
@@ -397,7 +397,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      return this.isNotes ? im_v2_component_elements_chatTitle.ChatTitleType.notes : '';
 	    },
 	    isChatSelected() {
-	      const canBeSelected = [im_v2_const.Layout.chat, im_v2_const.Layout.updateChat, im_v2_const.Layout.collab, im_v2_const.Layout.copilot];
+	      const canBeSelected = [im_v2_const.Layout.chat, im_v2_const.Layout.updateChat, im_v2_const.Layout.collab, im_v2_const.Layout.copilot, im_v2_const.Layout.taskComments];
 	      if (!canBeSelected.includes(this.layout.name)) {
 	        return false;
 	      }
@@ -632,12 +632,14 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  [im_v2_const.ChatType.channel]: main_core.Loc.getMessage('IM_LIST_RECENT_CREATE_CHANNEL_SUBTITLE'),
 	  [im_v2_const.ChatType.collab]: main_core.Loc.getMessage('IM_LIST_RECENT_CREATE_COLLAB_SUBTITLE')
 	};
+	const CLOSE_ICON_SIZE = 20;
 
 	// @vue/component
 	const CreateChat = {
 	  name: 'CreateChat',
 	  components: {
-	    EmptyAvatar: im_v2_component_elements_avatar.EmptyAvatar
+	    EmptyAvatar: im_v2_component_elements_avatar.EmptyAvatar,
+	    BIcon: ui_iconSet_api_vue.BIcon
 	  },
 	  data() {
 	    return {
@@ -648,6 +650,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  },
 	  computed: {
 	    AvatarSize: () => im_v2_component_elements_avatar.AvatarSize,
+	    OutlineIcons: () => ui_iconSet_api_vue.Outline,
+	    Color: () => im_v2_const.Color,
+	    CLOSE_ICON_SIZE: () => CLOSE_ICON_SIZE,
 	    chatCreationIsOpened() {
 	      const {
 	        name: currentLayoutName
@@ -677,6 +682,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        return im_v2_component_elements_avatar.EmptyAvatarType.default;
 	      }
 	      return im_v2_component_elements_avatar.EmptyAvatarType.squared;
+	    },
+	    closeIconColor() {
+	      return this.chatCreationIsOpened ? im_v2_const.Color.white : im_v2_const.Color.black;
 	    }
 	  },
 	  created() {
@@ -713,6 +721,14 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        clearCurrentCreation: false
 	      });
 	    },
+	    onCancel() {
+	      im_v2_lib_createChat.CreateChatManager.getInstance().clearExternalFields();
+	      im_v2_lib_createChat.CreateChatManager.getInstance().setCreationStatus(false);
+	      if (!this.chatCreationIsOpened) {
+	        return;
+	      }
+	      void im_public.Messenger.openChat();
+	    },
 	    loc(phraseCode) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode);
 	    }
@@ -741,6 +757,13 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 							</div>
 						</div>
 					</div>
+					<BIcon
+						:name="OutlineIcons.CROSS_M"
+						:size="CLOSE_ICON_SIZE"
+						:color="closeIconColor"
+						class="bx-im-list-recent-create-chat__icon-close"
+						@click.stop="onCancel"
+					/>
 				</div>
 			</div>
 		</div>
@@ -751,7 +774,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	const EmptyState = {
 	  name: 'EmptyState',
 	  components: {
-	    ChatButton: im_v2_component_elements_button.ChatButton
+	    ChatButton: im_v2_component_elements_button.ChatButton,
+	    RecentEmptyState: im_v2_component_list_items_elements_emptyState.RecentEmptyState
 	  },
 	  computed: {
 	    ButtonSize: () => im_v2_component_elements_button.ButtonSize,
@@ -769,19 +793,18 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    }
 	  },
 	  template: `
-		<div class="bx-im-list-recent-empty-state__container">
-			<div class="bx-im-list-recent-empty-state__image"></div>
-			<div class="bx-im-list-recent-empty-state__title">{{ loc('IM_LIST_RECENT_EMPTY_STATE_TITLE') }}</div>
-			<div class="bx-im-list-recent-empty-state__subtitle">{{ loc('IM_LIST_RECENT_EMPTY_STATE_SUBTITLE') }}</div>
-			<div v-if="canInviteUsers" class="bx-im-list-recent-empty-state__button">
-				<ChatButton
-					:size="ButtonSize.L"
-					:isRounded="true"
-					:text="loc('IM_LIST_RECENT_EMPTY_STATE_INVITE_USERS')"
-					@click="onInviteUsersClick"
-				/>
-			</div>
-		</div>
+		<RecentEmptyState
+			:title="loc('IM_LIST_RECENT_EMPTY_STATE_TITLE')"
+			:subtitle="loc('IM_LIST_RECENT_EMPTY_STATE_SUBTITLE')"
+		>
+			<ChatButton
+				v-if="canInviteUsers"
+				:size="ButtonSize.L"
+				:isRounded="true"
+				:text="loc('IM_LIST_RECENT_EMPTY_STATE_INVITE_USERS')"
+				@click="onInviteUsersClick"
+			/>
+		</RecentEmptyState>
 	`
 	};
 
@@ -1064,5 +1087,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	exports.RecentList = RecentList;
 	exports.RecentItem = RecentItem;
 
-}((this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}),BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.List,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Main,BX.Messenger.v2.Lib,BX.Messenger.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Call.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Lib,BX.Event,BX.Messenger.v2.Application,BX.Messenger.v2.Const));
+}((this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}),BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.List,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Main,BX.Messenger.v2.Lib,BX.Messenger.Application,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Call.Lib,BX.UI.IconSet,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.List,BX,BX.Messenger.v2.Lib,BX.Event,BX.Messenger.v2.Application,BX.Messenger.v2.Const));
 //# sourceMappingURL=recent-list.bundle.js.map

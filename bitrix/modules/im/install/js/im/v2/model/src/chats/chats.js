@@ -189,6 +189,10 @@ export class ChatsModel extends BuilderModel
 
 				return state.collection[dialogId].type === ChatType.support24Question;
 			},
+			/** @function chats/isNotes */
+			isNotes: () => (dialogId: string): boolean => {
+				return Core.getUserId().toString() === dialogId;
+			},
 			/** @function chats/getBackgroundId */
 			getBackgroundId: (state: ChatState) => (dialogId: string): string => {
 				if (!state.collection[dialogId])

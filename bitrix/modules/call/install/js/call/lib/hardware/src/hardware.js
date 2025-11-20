@@ -46,7 +46,6 @@ export class HardwareManager extends EventEmitter
 			this.enumerateDevices()
 				.then((deviceList) =>
 				{
-					console.warn('deviceList', deviceList); // test_remove
 					this._currentDeviceList = this.filterDeviceList(deviceList);
 
 					navigator.mediaDevices.addEventListener('devicechange', BX.debounce(this.onNavigatorDeviceChanged.bind(this), 500));

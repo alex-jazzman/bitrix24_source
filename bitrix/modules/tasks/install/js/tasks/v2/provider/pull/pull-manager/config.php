@@ -11,6 +11,7 @@ return [
 		'main.core.events',
 		'tasks.v2.core',
 		'tasks.v2.provider.service.task-service',
+		'tasks.v2.provider.service.relation-service',
 		'tasks.v2.provider.service.group-service',
 		'tasks.v2.provider.service.flow-service',
 		'tasks.v2.provider.service.user-service',

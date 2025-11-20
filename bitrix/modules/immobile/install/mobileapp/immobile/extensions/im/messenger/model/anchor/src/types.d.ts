@@ -23,6 +23,7 @@ declare type AnchorModelMutation = (
 	'anchorModel/setState'
 	| 'anchorModel/add'
 	| 'anchorModel/delete'
+	| 'anchorModel/deleteMany'
 );
 
 export interface AnchorSetStateData extends PayloadData

@@ -33,6 +33,7 @@ import { Logger } from 'im.v2.lib.logger';
 import { OpenLinesLaunchResources } from 'imopenlines.v2.lib.launch-resources';
 
 import type { RestClient } from 'rest.client';
+import type { PullClient } from 'pull.client';
 
 class CoreApplication
 {
@@ -270,7 +271,7 @@ class CoreApplication
 		return this.restClient;
 	}
 
-	getPullClient(): Pull
+	getPullClient(): PullClient
 	{
 		return this.pullClient;
 	}

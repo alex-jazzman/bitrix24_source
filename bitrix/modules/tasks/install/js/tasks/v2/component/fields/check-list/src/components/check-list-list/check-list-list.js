@@ -96,6 +96,11 @@ export const CheckListList = {
 		},
 		canCheckListAdd(): boolean
 		{
+			if (!this.isEdit)
+			{
+				return true;
+			}
+
 			return this.task.rights.checklistAdd === true;
 		},
 	},

@@ -10,6 +10,7 @@ return [
 		'im:messenger/lib/logger',
 		'im:messenger/lib/params',
 		'im:messenger/lib/rest',
+		'im/messenger/lib/feature',
 		'im:messenger/lib/converter/ui/recent-search',
 		'im:messenger/lib/element/chat-avatar',
 		'im:messenger/lib/element/chat-avatar',

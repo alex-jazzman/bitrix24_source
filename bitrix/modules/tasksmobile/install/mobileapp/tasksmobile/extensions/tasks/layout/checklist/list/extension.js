@@ -815,10 +815,10 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 			if (!this.checklist.canAddAccomplice())
 			{
 				const config = userConfig();
-				const membersMap = item.getMembers();
+
 				void UserListManager.open({
 					title: config.selectorTitle,
-					users: userIds.map((id) => membersMap[id]),
+					users: item.getMembers(),
 					testId: `checklist-user-list-${memberType}`,
 					layoutWidget: this.getParentWidget(),
 				});

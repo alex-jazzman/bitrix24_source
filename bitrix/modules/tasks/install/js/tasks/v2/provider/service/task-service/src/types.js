@@ -1,3 +1,4 @@
+import type { CrmItemDto } from 'tasks.v2.provider.service.crm-service';
 import type { GroupDto, StageDto } from 'tasks.v2.provider.service.group-service';
 import type { FlowDto } from 'tasks.v2.provider.service.flow-service';
 import type { UserDto } from 'tasks.v2.provider.service.user-service';
@@ -16,6 +17,12 @@ export type TaskDto = {
 	fileIds: number[],
 	checklist: number[] | string[],
 	containsChecklist: boolean,
+	parent: TaskDto,
+	parentId: number,
+	subTaskIds: number[],
+	relatedTaskIds: number[],
+	containsSubTasks: boolean,
+	containsRelatedTasks: boolean,
 	group: GroupDto,
 	stage: StageDto,
 	flow: FlowDto,
@@ -25,13 +32,16 @@ export type TaskDto = {
 	accomplices: UserDto[],
 	auditors: UserDto[],
 	tags: TagDto[],
-	parent: TaskDto,
 	chatId: number,
+	crmItemIds: string[],
+	crmItems: CrmItemDto[],
 	allowsChangeDeadline: boolean,
 	allowsChangeDatePlan: boolean,
 	matchesWorkTime: boolean,
 	matchesSubTasksTime: boolean,
 	rights: { [right: string]: boolean },
+	inFavorite: number[],
+	inMute: number[],
 	archiveLink: ?string,
 };
 

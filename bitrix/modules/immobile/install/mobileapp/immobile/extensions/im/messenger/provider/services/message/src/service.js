@@ -14,11 +14,12 @@ jn.define('im/messenger/provider/services/message/service', (require, exports, m
 	 */
 	class MessageService
 	{
-		constructor({ store, chatId })
+		constructor({ store, chatId, dialogId })
 		{
 			/** @type {MessengerCoreStore} */
 			this.store = store;
 			this.chatId = chatId;
+			this.dialogId = dialogId;
 			/** @type {LoadService} */
 			this.loadService = null;
 			/** @type {ReactionService} */
@@ -185,6 +186,7 @@ jn.define('im/messenger/provider/services/message/service', (require, exports, m
 		{
 			this.loadService = new LoadService({
 				chatId: this.chatId,
+				dialogId: this.dialogId,
 			});
 
 			this.reactionService = new ReactionService({

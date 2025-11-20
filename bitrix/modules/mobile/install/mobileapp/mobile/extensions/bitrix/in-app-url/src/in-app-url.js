@@ -1,7 +1,7 @@
 /**
- * @module in-app-url/in-app-url
+ * @module in-app-url/src/in-app-url
  */
-jn.define('in-app-url/in-app-url', (require, exports, module) => {
+jn.define('in-app-url/src/in-app-url', (require, exports, module) => {
 	const { Url } = require('in-app-url/url');
 	const { Route } = require('in-app-url/route');
 	const { getHttpPath } = require('utils/url');

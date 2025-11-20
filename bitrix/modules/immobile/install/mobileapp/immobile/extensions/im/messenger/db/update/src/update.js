@@ -6,8 +6,8 @@ jn.define('im/messenger/db/update/update', (require, exports, module) => {
 
 	const updateDatabase = async () => {
 		const version = new Version();
-		window.imMessengerVersion = version;
-		window.imMessengerUpdater = version.getUpdater();
+		window.messengerDebug.version = version;
+		window.messengerDebug.updater = version.getUpdater();
 
 		await version.execute(1);
 		await version.execute(2);
@@ -30,6 +30,11 @@ jn.define('im/messenger/db/update/update', (require, exports, module) => {
 		await version.execute(19);
 		await version.execute(20);
 		await version.execute(21);
+		await version.execute(22);
+		await version.execute(23);
+		await version.execute(24);
+
+		return true;
 	};
 
 	module.exports = {

@@ -10,6 +10,7 @@ return [
 		'im:messenger/lib/ui/base/avatar',
 		'im:messenger/lib/element/chat-title',
 		'im:messenger/assets/common',
+		'im:messenger/lib/ui/base/checkbox',
 	],
 	'bundle' => [
 		'./item',

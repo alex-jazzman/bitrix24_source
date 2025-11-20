@@ -1,7 +1,7 @@
-import type { JsonObject } from 'main.core';
-import { Loc } from 'main.core';
+import { Loc, type JsonObject } from 'main.core';
 import { Menu, PopupManager } from 'main.popup';
 import { getMemberRoles } from 'humanresources.company-structure.api';
+import { EntityTypes } from 'humanresources.company-structure.utils';
 import { ConfirmationPopup } from '../popup/confirmation-popup';
 
 import type { MemberRolesType } from 'humanresources.company-structure.api';
@@ -15,7 +15,7 @@ export const MoveEmployeeConfirmationPopup = {
 	props: {
 		title: {
 			type: String,
-			default: Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_TITLE'),
+			default: '',
 		},
 		description: {
 			type: String,
@@ -25,7 +25,11 @@ export const MoveEmployeeConfirmationPopup = {
 			type: String,
 			default: Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_CONFIRM_BTN'),
 		},
-		entityType: {
+		targetType: {
+			type: String,
+			default: 'department',
+		},
+		sourceType: {
 			type: String,
 			default: 'department',
 		},
@@ -51,27 +55,65 @@ export const MoveEmployeeConfirmationPopup = {
 	{
 		return {
 			selectedRole: null,
-			combinePosition: this.isCombineOnly,
+			combinePosition: false,
 		};
 	},
 	computed: {
 		memberRoles(): ?MemberRolesType
 		{
-			return getMemberRoles(this.entityType);
+			return getMemberRoles(this.targetType);
 		},
 		selectedRoleLabel(): string
 		{
 			switch (this.selectedRole)
 			{
 				case this.memberRoles.head:
-					return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_HEAD');
+					return this.isTeamTarget
+						? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_TEAM_HEAD')
+						: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_HEAD');
 				case this.memberRoles.deputyHead:
-					return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_DEPUTY');
+					return this.isTeamTarget
+						? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_TEAM_DEPUTY')
+						: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_DEPUTY');
 				case this.memberRoles.employee:
-					return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_EMPLOYEE');
+					return this.isTeamTarget
+						? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_MEMBER')
+						: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_EMPLOYEE');
 				default:
 					return '';
 			}
+		},
+		isCombineCheckboxEnabled(): boolean
+		{
+			return this.isCombineOnly
+				|| (this.sourceType === EntityTypes.team && this.isTeamTarget);
+		},
+		isTeamTarget(): boolean
+		{
+			return this.targetType === EntityTypes.team;
+		},
+		popupTitle(): string
+		{
+			if (this.title)
+			{
+				return this.title;
+			}
+
+			return this.isTeamTarget
+				? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_TITLE_TEAM')
+				: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_TITLE_DEPT');
+		},
+		popupCheckboxText(): string
+		{
+			return this.isTeamTarget
+				? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_CHECKBOX_TEAM')
+				: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_CHECKBOX_DEPT');
+		},
+		showCombineNotice(): boolean
+		{
+			const isDeptToTeam = this.sourceType === EntityTypes.department && this.isTeamTarget;
+
+			return this.isCombineOnly && isDeptToTeam;
 		},
 	},
 	created()
@@ -80,6 +122,7 @@ export const MoveEmployeeConfirmationPopup = {
 		{
 			this.selectedRole = this.excludeEmployeeRole ? this.memberRoles.head : this.memberRoles.employee;
 		}
+		this.combinePosition = this.isCombineCheckboxEnabled;
 	},
 	methods: {
 		loc(phrase: string): string
@@ -128,24 +171,30 @@ export const MoveEmployeeConfirmationPopup = {
 		},
 		roleMenuItems(): array
 		{
-			const memberRoles = getMemberRoles(this.entityType);
-
 			const items = [
 				{
-					id: memberRoles.head,
-					text: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_HEAD'),
+					id: this.memberRoles.head,
+					text: this.isTeamTarget
+						? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_TEAM_HEAD')
+						: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_HEAD'),
 				},
 				{
-					id: memberRoles.deputyHead,
-					text: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_DEPUTY'),
+					id: this.memberRoles.deputyHead,
+					text: this.isTeamTarget
+						? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_TEAM_DEPUTY')
+						: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_DEPUTY'),
 				},
 			];
 
 			if (!this.excludeEmployeeRole)
 			{
+				const employeeRoleText = this.isTeamTarget
+					? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_MEMBER')
+					: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_EMPLOYEE');
+
 				items.push({
-					id: memberRoles.employee,
-					text: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_EMPLOYEE'),
+					id: this.memberRoles.employee,
+					text: employeeRoleText,
 				});
 			}
 
@@ -160,7 +209,7 @@ export const MoveEmployeeConfirmationPopup = {
 	},
 	template: `
 		<ConfirmationPopup
-			:title="title"
+			:title="popupTitle"
 			:width="364"
 			:confirmBtnText="confirmButtonText"
 			@action="handleConfirm"
@@ -177,17 +226,28 @@ export const MoveEmployeeConfirmationPopup = {
 						<div class="ui-ctl-after ui-ctl-icon-angle"></div>
 						<div class="ui-ctl-element">{{ selectedRoleLabel }}</div>
 					</div>
-					<div v-if="showCombineCheckbox" class="ui-ctl ui-ctl-checkbox hr-dnd-confirmation_checkbox">
-						<input
-							type="checkbox"
-							class="ui-ctl-element"
-							v-model="combinePosition"
-							:disabled="isCombineOnly"
-							id="dnd-confirmation-combine-checkbox"
+					<div v-if="showCombineCheckbox">
+						<div
+							v-if="showCombineNotice"
+							class="hr-dnd-confirmation_notice"
 						>
-						<label for="dnd-confirmation-combine-checkbox" class="ui-ctl-label-text">
-							{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_CHECKBOX') }}
-						</label>
+							{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_NOTICE') }}
+						</div>
+						<div 
+							v-else
+							class="ui-ctl ui-ctl-checkbox hr-dnd-confirmation_checkbox"
+						>
+							<input
+								type="checkbox"
+								class="ui-ctl-element"
+								v-model="combinePosition"
+								:disabled="isCombineOnly"
+								id="dnd-confirmation-combine-checkbox"
+							>
+							<label for="dnd-confirmation-combine-checkbox" class="ui-ctl-label-text">
+								{{ popupCheckboxText }}
+							</label>
+						</div>
 					</div>
 				</div>
 			</template>

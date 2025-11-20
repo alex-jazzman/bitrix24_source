@@ -107,7 +107,7 @@ jn.define('ui-system/blocks/setting-selector', (require, exports, module) => {
 
 		renderTitle()
 		{
-			const { title, titleEllipsize, numberOfLinesTitle = 2 } = this.props;
+			const { title, titleEllipsize, numberOfLinesTitle = 2, color = Color.base1 } = this.props;
 
 			if (!title)
 			{
@@ -116,7 +116,7 @@ jn.define('ui-system/blocks/setting-selector', (require, exports, module) => {
 
 			return Text3({
 				text: title,
-				color: Color.base1,
+				color,
 				numberOfLines: numberOfLinesTitle,
 				ellipsize: this.#getEllipsize(titleEllipsize),
 				style: {
@@ -128,7 +128,7 @@ jn.define('ui-system/blocks/setting-selector', (require, exports, module) => {
 
 		renderSubtitle()
 		{
-			const { subtitle, numberOfLinesSubtitle = 2, subtitleEllipsize } = this.props;
+			const { subtitle, numberOfLinesSubtitle = 5, subtitleEllipsize } = this.props;
 
 			if (!subtitle)
 			{
@@ -191,7 +191,7 @@ jn.define('ui-system/blocks/setting-selector', (require, exports, module) => {
 		#renderParameterMode()
 		{
 			const { testId } = this.props;
-			const { chevron, text } = this.#getModeParams();
+			const { chevron, text, iconRef, color } = this.#getModeParams();
 
 			return View(
 				{
@@ -202,12 +202,13 @@ jn.define('ui-system/blocks/setting-selector', (require, exports, module) => {
 				},
 				Boolean(text) && Text4({
 					text,
-					color: Color.base4,
+					color: color ?? Color.base4,
 				}),
 				chevron && IconView({
 					size: 20,
 					icon: Icon.CHEVRON_TO_THE_RIGHT,
-					color: Color.base4,
+					color: color ?? Color.base4,
+					forwardRef: iconRef,
 					style: {
 						marginLeft: Indent.XS.toNumber(),
 					},

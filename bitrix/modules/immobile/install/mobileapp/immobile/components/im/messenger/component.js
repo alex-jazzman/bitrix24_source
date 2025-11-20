@@ -1,5 +1,5 @@
 // eslint-disable-next-line no-var
-var REVISION = 20; // API revision – sync with im/lib/revision.php
+var REVISION = 21; // API revision – sync with im/lib/revision.php
 
 /* region Environment variables */
 
@@ -15,6 +15,8 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	window.messenger.destructor();
 }
 
+window.messengerDebug = {};
+
 /* endregion Clearing session variables after script reload */
 
 (async () => {
@@ -29,16 +31,17 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	await MessengerParams.waitSharedParamsInit();
 
 	const { QuickRecentLoader } = require('im/messenger/lib/quick-recent-load');
-	QuickRecentLoader.renderItemsOnViewLoaded();
+	QuickRecentLoader.renderItemsOnViewLoaded(dialogList);
 
 	const { Type } = require('type');
 	const { Loc } = require('im/messenger/loc');
-	const { get, isEqual, clone } = require('utils/object');
+	const { get, isEqual, isEmpty, clone } = require('utils/object');
 	const { Feature: MobileFeature } = require('feature');
 	const { EntityReady } = require('entity-ready');
 
 	const { Logger } = require('im/messenger/lib/logger');
 	const { ChatApplication } = require('im/messenger/core/chat');
+	const { returnToAudioMessage } = require('im/messenger/controller/dialog/lib/audio-panel');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { MessengerInitService } = require('im/messenger/provider/services/messenger-init');
 
@@ -51,7 +54,9 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		MessengerInitRestMethod,
 		NavigationTabByComponent,
 		DialogType,
+		DialogActionType,
 	} = require('im/messenger/const');
+	const { AfterScrollMessagePosition } = require('im/messenger/view/dialog');
 
 	EntityReady.ready(`${ComponentCode.imMessenger}::launched`);
 
@@ -81,11 +86,9 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 
 	const { showNotificationList } = require('im/messenger/api/notifications-opener');
 	const { Feature } = require('im/messenger/lib/feature');
-	const { TabCounters } = require('im/messenger/lib/counters/tab-counters');
 
 	const {
 		ChatApplicationPullHandler,
-		ChatCounterPullHandler,
 		ChatMessagePullHandler,
 		ChatFilePullHandler,
 		ChatDialogPullHandler,
@@ -125,6 +128,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	const { SidebarLazyFactory } = require('im/messenger/controller/sidebar-v2/factory');
 
 	const { VoteResult } = require('im/messenger/controller/vote/result');
+	const { clearDatabaseHandler } = require('im/messenger/lib/clear-database-handler');
 	/* endregion import */
 
 	class Messenger extends MessengerBase
@@ -258,6 +262,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			this.onAppActive = this.onAppActive.bind(this);
 			this.openRequestRouter = this.openRequestRouter.bind(this);
 			this.onChatSettingChange = this.onChatSettingChange.bind(this);
+			this.onReturnToAudioMessage = this.onReturnToAudioMessage.bind(this);
 		}
 
 		/**
@@ -280,6 +285,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			BX.addCustomEvent(EventType.messenger.openNotifications, this.openNotifications);
 			BX.addCustomEvent(EventType.messenger.destroyDialog, this.destroyDialog);
 			BX.addCustomEvent(EventType.messenger.openVoteResult, this.openVoteResult);
+			BX.addCustomEvent(EventType.messenger.clearDatabase, clearDatabaseHandler);
 		}
 
 		unsubscribeMessengerEvents()
@@ -291,6 +297,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			BX.removeCustomEvent(EventType.messenger.openNotifications, this.openNotifications);
 			BX.removeCustomEvent(EventType.messenger.destroyDialog, this.destroyDialog);
 			BX.removeCustomEvent(EventType.messenger.openVoteResult, this.openVoteResult);
+			BX.removeCustomEvent(EventType.messenger.clearDatabase, clearDatabaseHandler);
 		}
 
 		/**
@@ -312,6 +319,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			BX.addCustomEvent(EventType.app.active, this.onAppActive);
 			BX.addCustomEvent(EventType.app.failRestoreConnection, this.onFailRestoreConnection);
 			BX.addCustomEvent(EventType.setting.chat.change, this.onChatSettingChange);
+			BX.addCustomEvent(EventType.audio.audioPanelReturnClick, this.onReturnToAudioMessage);
 			jnComponent.on(EventType.jnComponent.openRequest, this.openRequestRouter);
 		}
 
@@ -334,6 +342,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			BX.removeCustomEvent(EventType.app.active, this.onAppActive);
 			BX.removeCustomEvent(EventType.app.failRestoreConnection, this.onFailRestoreConnection);
 			BX.removeCustomEvent(EventType.setting.chat.change, this.onChatSettingChange);
+			BX.removeCustomEvent(EventType.audio.audioPanelReturnClick, this.onReturnToAudioMessage);
 			jnComponent.off(EventType.jnComponent.openRequest, this.openRequestRouter);
 		}
 
@@ -411,8 +420,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			super.initPullHandlers();
 			BX.PULL.subscribe(new ChatApplicationPullHandler());
 			BX.PULL.subscribe(new ChatMessagePullHandler());
-			// deprecated. delete after counters in memoryStorage go to prod
-			// BX.PULL.subscribe(new ChatCounterPullHandler());
 			BX.PULL.subscribe(new ChatFilePullHandler());
 			BX.PULL.subscribe(new ChatDialogPullHandler());
 			BX.PULL.subscribe(new ChatUserPullHandler());
@@ -600,7 +607,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			this.refreshErrorNoticeFlag = false;
 			this.notifyRefreshErrorWorker.stop();
 
-			TabCounters.update();
+			serviceLocator.get('tab-counters').update();
 
 			const isRequestedDepartmentColleagues = this.departmentColleaguesStore.get('isRequested');
 			if (!isRequestedDepartmentColleagues)
@@ -703,6 +710,19 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 					Logger.error(error);
 				});
 			}
+		}
+
+		/**
+		 * @param {ReturnAudioData} audioData
+		 * @returns {Promise<void>}
+		 */
+		async onReturnToAudioMessage(audioData)
+		{
+			void returnToAudioMessage({
+				audioData,
+				dialog: this.dialog,
+				openDialog: this.openDialog,
+			});
 		}
 
 		/**
@@ -918,8 +938,9 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		{
 			Logger.log('EventType.notification.open');
 
-			TabCounters.notificationCounter.reset();
-			TabCounters.update();
+			const tabCounters = serviceLocator.get('tab-counters');
+			tabCounters.clearNotificationCounters();
+			tabCounters.update();
 		}
 
 		onNotificationReload()
@@ -1102,6 +1123,10 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	}
 
 	window.messenger = new Messenger();
+	window.messengerDebug.clearDatabaseAndRestart = async () => {
+		const { clearDatabaseAndRestart } = await requireLazy('im:messenger/api/cleaning');
+		void clearDatabaseAndRestart();
+	};
 })().catch((error) => {
 	console.error('Messenger init error', error);
 });

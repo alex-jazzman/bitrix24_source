@@ -79,7 +79,7 @@ jn.define('im/messenger/lib/state-manager/vuex-manager/mutation-handlers-waiter'
 				resolveMutationCompletePromise = resolve;
 			});
 
-			const handlersCompleteHandler = (mutation, state) => {
+			const handlersCompleteHandler = (mutation) => {
 				const actionUuid = mutation?.payload?.actionUid;
 				if (this.actionUid !== actionUuid)
 				{

@@ -1,14 +1,13 @@
 import { EventEmitter } from 'main.core.events';
 
-import { Core } from 'im.v2.application.core';
 import { Analytics } from 'im.v2.lib.analytics';
-import { LayoutManager } from 'im.v2.lib.layout';
-import { ActionByRole, ChatType, EventType, GetParameter, SidebarDetailBlock, Layout, Path } from 'im.v2.const';
+import { ActionByRole, ChatType, EventType, SidebarDetailBlock } from 'im.v2.const';
 import { AddToChat, AddToCollab } from 'im.v2.component.entity-selector';
 import { Loader } from 'im.v2.component.elements.loader';
 import { ChatButton, ButtonColor, ButtonSize } from 'im.v2.component.elements.button';
 import { PermissionManager } from 'im.v2.lib.permission';
 import { Notifier } from 'im.v2.lib.notifier';
+import { ChatManager } from 'im.v2.lib.chat';
 
 import { DetailUser } from './detail-user';
 import { DetailHeader } from '../../elements/detail-header/detail-header';
@@ -65,17 +64,6 @@ export const MembersPanel = {
 
 			return users.map((userId) => userId.toString());
 		},
-		chatLink(): string
-		{
-			const layoutName = LayoutManager.getInstance().getLayout().name;
-			const isCopilot = layoutName === Layout.copilot;
-			const chatGetParameter = isCopilot ? GetParameter.openCopilotChat : GetParameter.openChat;
-			const getParams = new URLSearchParams({
-				[chatGetParameter]: this.dialogId,
-			});
-
-			return `${Core.getHost()}${Path.online}?${getParams.toString()}`;
-		},
 		hasNextPage(): boolean
 		{
 			return this.$store.getters['sidebar/members/hasNextPage'](this.chatId);
@@ -108,6 +96,11 @@ export const MembersPanel = {
 		},
 		needCopyLinkButton(): boolean
 		{
+			if (!BX.clipboard.isCopySupported())
+			{
+				return false;
+			}
+
 			return this.dialog.type !== ChatType.collab;
 		},
 		addMembersPopupComponent(): BitrixVueComponentProps
@@ -170,10 +163,13 @@ export const MembersPanel = {
 		},
 		onCopyInviteClick()
 		{
-			if (BX.clipboard.copy(this.chatLink))
+			const chatLink = ChatManager.buildChatLink(this.dialogId);
+			if (BX.clipboard.copy(chatLink))
 			{
 				Notifier.onCopyLinkComplete();
 			}
+
+			Analytics.getInstance().chatInviteLink.onCopyMembersPanel(this.dialogId);
 		},
 		onBackClick()
 		{

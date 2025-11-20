@@ -1,10 +1,12 @@
 import { Runtime } from 'main.core';
+import { EventEmitter } from 'main.core.events';
 import type { Store } from 'ui.vue3.vuex';
 
-import { Model } from 'tasks.v2.const';
+import { Model, EventName } from 'tasks.v2.const';
 import { Core } from 'tasks.v2.core';
 import { apiClient } from 'tasks.v2.lib.api-client';
 import { fileService } from 'tasks.v2.provider.service.file-service';
+import { subTasksService, relatedTasksService } from 'tasks.v2.provider.service.relation-service';
 import type { TaskModel } from 'tasks.v2.model.tasks';
 
 import { TaskGetExtractor } from './task-get-extractor';
@@ -26,6 +28,8 @@ export const taskService = new class
 			const data = await apiClient.post('Task.get', { task: { id } });
 
 			await this.extractTask(data);
+
+			await this.$store.dispatch(`${Model.Tasks}/removePartiallyLoaded`, id);
 		}
 		catch (error)
 		{
@@ -39,7 +43,7 @@ export const taskService = new class
 		{
 			const { rights } = await apiClient.post('Task.Access.get', { task: { id } });
 
-			await this.#updateStoreTask(id, { rights });
+			await this.updateStoreTask(id, { rights });
 		}
 		catch (error)
 		{
@@ -47,34 +51,58 @@ export const taskService = new class
 		}
 	}
 
-	async add(task: TaskModel): Promise<[number, Error | null]>
+	async add(task: TaskModel): Promise<[number, ?Error]>
 	{
 		try
 		{
 			const data = await apiClient.post('Task.add', { task: mapModelToDto(task) });
-			const id = data.id;
 
 			await this.extractTask(data);
 
-			return [id, null];
+			EventEmitter.emit(EventName.TaskAdd, {
+				...new TaskGetExtractor(data).getTask(),
+				relatedToTaskId: task.relatedToTaskId,
+			});
+
+			if (task.containsRelatedTasks)
+			{
+				void relatedTasksService.list(data.id, true);
+			}
+
+			if (task.relatedToTaskId)
+			{
+				void relatedTasksService.add(task.relatedToTaskId, [data.id]);
+			}
+
+			if (task.parentId)
+			{
+				subTasksService.addStore(task.parentId, [data.id]);
+			}
+
+			return [data.id, null];
 		}
 		catch (error)
 		{
 			console.error('TaskService: add error', error);
 
-			return [0, new Error(error?.errors?.[0]?.message)];
+			return [0, new Error(error.errors?.[0]?.message)];
 		}
 	}
 
 	async update(id: number, fields: TaskModel): Promise<void>
 	{
-		const taskBeforeUpdate = this.#getStoreTask(id);
+		const taskBeforeUpdate = this.getStoreTask(id);
 
-		await this.#updateStoreTask(id, fields);
+		await this.updateStoreTask(id, fields);
 
 		if (!this.isRealId(id))
 		{
 			return;
+		}
+
+		if (this.#hasChanges(taskBeforeUpdate, fields))
+		{
+			EventEmitter.emit(EventName.TaskUpdate, { id, ...fields });
 		}
 
 		try
@@ -83,7 +111,7 @@ export const taskService = new class
 		}
 		catch (error)
 		{
-			await this.#updateStoreTask(id, taskBeforeUpdate);
+			await this.updateStoreTask(id, taskBeforeUpdate);
 
 			console.error('TaskService: update error', error);
 		}
@@ -91,7 +119,7 @@ export const taskService = new class
 
 	async delete(id: number): Promise<void>
 	{
-		const taskBeforeDelete = this.#getStoreTask(id);
+		const taskBeforeDelete = this.getStoreTask(id);
 
 		await this.#deleteStoreTask(id);
 
@@ -220,9 +248,24 @@ export const taskService = new class
 		return Object.entries(fields).some(([field, value]) => JSON.stringify(task[field]) !== JSON.stringify(value));
 	}
 
-	#getStoreTask(id: number): TaskModel
+	async updateStoreTask(id: number, fields: TaskModel): Promise<void>
 	{
-		return { ...this.$store.getters[`${Model.Tasks}/getById`](id) };
+		if (this.hasStoreTask(id))
+		{
+			await this.$store.dispatch(`${Model.Tasks}/update`, { id, fields });
+		}
+	}
+
+	hasStoreTask(id: number): boolean
+	{
+		return this.getStoreTask(id) !== null;
+	}
+
+	getStoreTask(id: number): ?TaskModel
+	{
+		const task = this.$store.getters[`${Model.Tasks}/getById`](id);
+
+		return task ? { ...task } : null;
 	}
 
 	async #insertStoreTask(task: TaskModel): Promise<void>
@@ -230,14 +273,164 @@ export const taskService = new class
 		await this.$store.dispatch(`${Model.Tasks}/insert`, task);
 	}
 
-	async #updateStoreTask(id: number, fields: TaskModel): Promise<void>
-	{
-		await this.$store.dispatch(`${Model.Tasks}/update`, { id, fields });
-	}
-
 	async #deleteStoreTask(id: number): Promise<void>
 	{
 		await this.$store.dispatch(`${Model.Tasks}/delete`, id);
+	}
+
+	async addFavorite(task: TaskModel, userId: number): Promise<void>
+	{
+		const favoriteIdsCurrent = [...this.$store.state.tasks.collection[task.id].inFavorite];
+		await this.updateStoreTask(task.id, { inFavorite: [...favoriteIdsCurrent, userId] });
+		try
+		{
+			const response = await apiClient.post('Task.Favorite.add', { task: { id: task.id } });
+			const isSuccess = response === true;
+			if (isSuccess)
+			{
+				console.log('REQUEST SUCCESS');
+			}
+			else
+			{
+				await this.updateStoreTask(task.id, { inFavorite: favoriteIdsCurrent });
+			}
+
+			return isSuccess;
+		}
+		catch (error)
+		{
+			console.error('TaskService error', error);
+			await this.updateStoreTask(task.id, { inFavorite: favoriteIdsCurrent });
+
+			return false;
+		}
+	}
+
+	async removeFavorite(task: TaskModel, userId: number): Promise<void>
+	{
+		const favoriteIdsCurrent = [...this.$store.state.tasks.collection[task.id].inFavorite];
+		await this.updateStoreTask(task.id, {
+			inFavorite: favoriteIdsCurrent.filter(favoriteId => String(favoriteId) !== String(userId)),
+		});
+		try
+		{
+			const response = await apiClient.post('Task.Favorite.delete', { task: { id: task.id } });
+			const isSuccess = response === true;
+			if (isSuccess)
+			{
+				console.log('REQUEST SUCCESS');
+			}
+			else
+			{
+				await this.updateStoreTask(task.id, { inFavorite: favoriteIdsCurrent });
+			}
+
+			return isSuccess;
+		}
+		catch (error)
+		{
+			console.error('TaskService error', error);
+			await this.updateStoreTask(task.id, { inFavorite: favoriteIdsCurrent });
+
+			return false;
+		}
+	}
+
+	async muteTask(task: TaskModel, userId: number): Promise<void>
+	{
+		const muteIdsCurrent = [...this.$store.state.tasks.collection[task.id].inMute];
+		await this.updateStoreTask(task.id, { inMute: [...muteIdsCurrent, userId] });
+		try
+		{
+			const response = await apiClient.post('Task.Attention.mute', { task: { id: task.id } });
+			const isSuccess = response === true;
+			if (isSuccess)
+			{
+				console.log('REQUEST SUCCESS');
+			}
+			else
+			{
+				await this.updateStoreTask(task.id, { inMute: muteIdsCurrent });
+			}
+
+			return isSuccess;
+		}
+		catch (error)
+		{
+			console.error('TaskService error', error);
+			await this.updateStoreTask(task.id, { inMute: muteIdsCurrent });
+
+			return false;
+		}
+	}
+
+	async unmuteTask(task: TaskModel, userId: number): Promise<void>
+	{
+		const muteIdsCurrent = [...this.$store.state.tasks.collection[task.id].inMute];
+		await this.updateStoreTask(task.id, {
+			inMute: muteIdsCurrent.filter(muteId => String(muteId) !== String(userId)),
+		});
+		try
+		{
+			const response = await apiClient.post('Task.Attention.unmute', { task: { id: task.id } });
+			const isSuccess = response === true;
+			if (isSuccess)
+			{
+				console.log('REQUEST SUCCESS');
+			}
+			else
+			{
+				await this.updateStoreTask(task.id, { inMute: muteIdsCurrent });
+			}
+
+			return isSuccess;
+		}
+		catch (error)
+		{
+			console.error('TaskService error', error);
+			await this.updateStoreTask(task.id, { inMute: muteIdsCurrent });
+
+			return false;
+		}
+	}
+
+	async setAuditors(taskId: number, auditorsIds: number[]): Promise<void>
+	{
+		const auditorsIdsCurrent = [...this.$store.state.tasks.collection[taskId].auditorsIds];
+		const filledFieldsCurrent = { ...this.$store.state.tasks.collection[taskId].filledFields };
+
+		await this.updateStoreTask(taskId, {
+			filledFields: {
+				...filledFieldsCurrent,
+				auditorsIds: true,
+			},
+			auditorsIds: [...auditorsIds],
+		});
+
+		const auditorsNew = auditorsIds.map(auditorId => ({ id: auditorId }));
+		const taskNew: TaskModel = { id: taskId, auditors: auditorsNew };
+		try
+		{
+			const response = await apiClient.post('Task.Stakeholder.Auditor.set', { task: taskNew });
+			const isSuccess = Boolean(response);
+			if (isSuccess)
+			{
+				await this.updateStoreTask(taskId, { auditorsIds: response.auditors.map(auditor => auditor.id) });
+			}
+			else
+			{
+				await this.updateStoreTask(taskId, { auditorsIds: [...auditorsIdsCurrent] });
+			}
+
+			return isSuccess;
+		}
+		catch (error)
+		{
+			console.error('TaskService error', error);
+			await this.updateStoreTask(taskId, { auditorsIds: [...auditorsIdsCurrent] });
+
+			return false;
+		}
 	}
 
 	get $store(): Store

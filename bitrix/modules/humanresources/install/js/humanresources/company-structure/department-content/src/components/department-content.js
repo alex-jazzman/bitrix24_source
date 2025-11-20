@@ -32,8 +32,12 @@ export const DepartmentContent = {
 		};
 	},
 
-	computed: {
-		...mapState(useChartStore, ['focusedNode', 'departments']),
+	computed:
+	{
+		isCollabsAvailable(): boolean
+		{
+			return PermissionChecker.getInstance().isCollabsAvailable;
+		},
 		activeTabComponent(): UsersTab | ChatsTab | null
 		{
 			const activeTab = this.tabs.find((tab) => tab.name === this.activeTab);
@@ -44,9 +48,9 @@ export const DepartmentContent = {
 		{
 			return this.departments.get(this.focusedNode)?.userCount ?? 0;
 		},
-		chatAndChannelsCount(): Number
+		communicationsCount(): Number
 		{
-			return this.departments.get(this.focusedNode)?.chatAndChannelsCount ?? null;
+			return this.departments.get(this.focusedNode)?.communicationsCount ?? null;
 		},
 		tabArray(): Array
 		{
@@ -63,7 +67,7 @@ export const DepartmentContent = {
 				{
 					return {
 						...tab,
-						count: this.chatAndChannelsCount,
+						count: this.communicationsCount,
 					};
 				}
 
@@ -84,9 +88,11 @@ export const DepartmentContent = {
 		{
 			return this.departments.get(this.focusedNode)?.entityType === EntityTypes.team;
 		},
+		...mapState(useChartStore, ['focusedNode', 'departments']),
 	},
 
-	watch: {
+	watch:
+	{
 		description(): void
 		{
 			this.$nextTick(() => {
@@ -131,7 +137,10 @@ export const DepartmentContent = {
 
 			if (name === 'chatsTab')
 			{
-				return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_TITLE');
+				return this.isCollabsAvailable
+					? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_TITLE_W_COLLABS')
+					: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_TITLE')
+				;
 			}
 
 			return '';
@@ -163,8 +172,16 @@ export const DepartmentContent = {
 			{
 				const permissionChecker = PermissionChecker.getInstance();
 				const canEditChats = this.isTeamEntity
-					? permissionChecker.hasPermission(PermissionActions.teamCommunicationEdit, this.focusedNode)
-					: permissionChecker.hasPermission(PermissionActions.departmentCommunicationEdit, this.focusedNode)
+					? (
+						permissionChecker.hasPermission(PermissionActions.teamChatEdit, this.focusedNode)
+						|| permissionChecker.hasPermission(PermissionActions.teamChannelEdit, this.focusedNode)
+						|| permissionChecker.hasPermission(PermissionActions.teamCollabEdit, this.focusedNode)
+					)
+					: (
+						permissionChecker.hasPermission(PermissionActions.departmentChatEdit, this.focusedNode)
+						|| permissionChecker.hasPermission(PermissionActions.departmentChannelEdit, this.focusedNode)
+						|| permissionChecker.hasPermission(PermissionActions.departmentCollabEdit, this.focusedNode)
+					)
 				;
 
 				if (!canEditChats)

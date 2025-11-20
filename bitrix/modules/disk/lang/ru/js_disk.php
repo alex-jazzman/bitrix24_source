@@ -16,6 +16,7 @@ $MESS['DISK_JS_BTN_CANCEL'] = "Отменить";
 $MESS['DISK_JS_BTN_CLOSE'] = "Закрыть";
 $MESS['DISK_JS_BTN_SAVE'] = "Сохранить";
 $MESS['DISK_JS_BTN_DOWNLOAD'] = "Скачать";
+$MESS['DISK_JS_BTN_OPEN'] = "Открыть";
 $MESS['DISK_JS_SHARING_LABEL_TITLE_MODAL_2'] = "Общий доступ";
 $MESS['DISK_JS_SHARING_LABEL_TITLE_MODAL_3'] = "Общий доступ";
 $MESS["DISK_JS_SERVICE_CHOICE_TITLE_SMALL"] = "Выбор способа работы";

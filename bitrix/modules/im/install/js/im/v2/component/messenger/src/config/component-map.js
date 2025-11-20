@@ -1,3 +1,4 @@
+import { Layout } from 'im.v2.const';
 import { ChatContent } from 'im.v2.component.content.chat';
 import { CreateChatContent, UpdateChatContent } from 'im.v2.component.content.chat-forms.forms';
 import { MarketContent } from 'im.v2.component.content.market';
@@ -10,6 +11,7 @@ import { CollabListContainer } from 'im.v2.component.list.container.collab';
 import { CopilotListContainer } from 'im.v2.component.list.container.copilot';
 import { OpenlineListContainer } from 'im.v2.component.list.container.openline';
 import { RecentListContainer } from 'im.v2.component.list.container.recent';
+import { TaskListContainer } from 'im.v2.component.list.container.task';
 
 import type { BitrixVueComponentProps } from 'ui.vue3';
 import type { LayoutType } from 'im.v2.const';
@@ -17,49 +19,53 @@ import type { LayoutType } from 'im.v2.const';
 type ComponentMap = Record<LayoutType, { list: BitrixVueComponentProps, content: BitrixVueComponentProps }>
 
 export const LayoutComponentMap: ComponentMap = {
-	chat: {
+	[Layout.chat]: {
 		list: RecentListContainer,
 		content: ChatContent,
 	},
-	createChat: {
+	[Layout.createChat]: {
 		list: RecentListContainer,
 		content: CreateChatContent,
 	},
-	updateChat: {
+	[Layout.updateChat]: {
 		list: RecentListContainer,
 		content: UpdateChatContent,
 	},
-	channel: {
+	[Layout.channel]: {
 		list: ChannelListContainer,
 		content: ChatContent,
 	},
-	notification: {
+	[Layout.notification]: {
 		list: RecentListContainer,
 		content: NotificationContent,
 	},
-	openlines: {
+	[Layout.openlines]: {
 		content: OpenlinesContent,
 	},
-	openlinesV2: {
+	[Layout.openlinesV2]: {
 		list: OpenlineListContainer,
 		content: OpenlinesV2Content,
 	},
-	conference: {
+	[Layout.conference]: {
 		list: RecentListContainer,
 		content: ChatContent,
 	},
-	settings: {
+	[Layout.settings]: {
 		content: SettingsContent,
 	},
-	copilot: {
+	[Layout.copilot]: {
 		list: CopilotListContainer,
 		content: ChatContent,
 	},
-	collab: {
+	[Layout.collab]: {
 		list: CollabListContainer,
 		content: ChatContent,
 	},
-	market: {
+	[Layout.market]: {
 		content: MarketContent,
+	},
+	[Layout.taskComments]: {
+		list: TaskListContainer,
+		content: ChatContent,
 	},
 };

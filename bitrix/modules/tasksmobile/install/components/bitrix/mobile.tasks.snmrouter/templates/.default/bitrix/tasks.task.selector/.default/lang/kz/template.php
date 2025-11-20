@@ -16,7 +16,6 @@ $MESS["TASKS_STATUS_STATE_UNKNOWN"] = "Белгісіз";
 $MESS["TASK_COLUMN_CREATED_BY"] = "қоюшы";
 $MESS["TASK_COLUMN_DEADLINE"] = "мерзімі";
 $MESS["TASK_COLUMN_PRIORITY"] = "басымдық";
-$MESS["TASK_COLUMN_RESPONSIBLE_ID"] = "жауапты";
 $MESS["TASK_COLUMN_RESPONSIBLE_ID_MSGVER_1"] = "орындаушы";
 $MESS["TASK_COLUMN_STATUS"] = "мәртебе";
 $MESS["TASK_EXPIRED"] = "Мерзімі өтіп кетті";

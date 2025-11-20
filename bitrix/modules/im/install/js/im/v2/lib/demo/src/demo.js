@@ -5,7 +5,7 @@ import { Utils } from 'im.v2.lib.utils';
 
 import { IdGenerator } from './classes/id-generator';
 
-import type { ImModelChat, ImModelMessage, ImModelUser, ImModelFile } from 'im.v2.model';
+import type { ImModelChat, ImModelMessage, ImModelUser, ImModelFile, ImModelTranscription } from 'im.v2.model';
 
 export class DemoChatBuilder
 {
@@ -69,6 +69,11 @@ export class DemoChatBuilder
 		this.#files.push(newFile);
 
 		return newFile;
+	}
+
+	addFileTranscription(transcription: ImModelTranscription)
+	{
+		Core.getStore().dispatch('files/setTranscription', transcription);
 	}
 
 	save(): void

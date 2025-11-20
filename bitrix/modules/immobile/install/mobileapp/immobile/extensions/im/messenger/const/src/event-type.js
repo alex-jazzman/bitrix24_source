@@ -48,6 +48,8 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			openVoteResult: 'ImMobile.Messenger.VoteResult:open',
 			voteResultPullSubscribed: 'ImMobile.Messenger.VoteResult:pullSubscribed',
 			voteResultPullUnsubscribed: 'ImMobile.Messenger.VoteResult:pullUnsubscribed',
+			clearDatabase: 'ImMobile.Messenger:clearDatabase',
+			clearDatabaseResult: 'ImMobile.Messenger:clearDatabaseResult',
 			dev: {
 				openConsole: 'ImMobile.Messenger.Dev:openConsole',
 			},
@@ -85,6 +87,7 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			audioRecordingStart: 'audioRecordingStart',
 			audioRecordingFinish: 'audioRecordingFinish',
 			submitAudio: 'submitAudio',
+			audioTranscriptionTap: 'transcriptionTap',
 			scrollBegin: 'scrollBegin',
 			scrollEnd: 'scrollEnd',
 			messageTap: 'messageTap',
@@ -196,6 +199,9 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			commentsButton: {
 				tap: 'tap',
 			},
+			notifyPanel: {
+				buttonTap: 'buttonTap',
+			},
 		},
 		callManager: {
 			activeCallsReceived: 'ImMobile.CallManager:activeCallsReceived',
@@ -254,6 +260,13 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 		},
 		counters: {
 			clearAll: 'ImMobile.Counters:clearAll',
+		},
+		audio: {
+			audioPanelReturnClick: 'audioPanelReturnClick',
+		},
+		recentManager: {
+			initController: 'RecentManager::initController',
+			resumeController: 'RecentManager::resumeController',
 		},
 	});
 

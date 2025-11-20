@@ -5,6 +5,7 @@ return [
 		'type',
 		'logger',
 		'utils/object',
+		'im:messenger/lib/helper',
 		'im:messenger/lib/feature',
 		'im:messenger/lib/logger',
 	],
@@ -26,5 +27,6 @@ return [
 		'./src/vuex/draft',
 		'./src/vuex/comment',
 		'./src/vuex/vote',
+		'./src/vuex/transcript',
 	],
 ];

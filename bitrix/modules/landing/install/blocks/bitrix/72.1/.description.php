@@ -33,7 +33,7 @@ $return = [
 		],
 		'nodes' => [
 			'.landing-block-node-content' => [
-				'name' => Loc::getMessage('LANDING_BLOCK_WIDGET_72_1_NODE_CONTENT_WIDTH'),
+				'name' => Loc::getMessage('LANDING_BLOCK_WIDGET_72_1_NODE_CONTAINER'),
 				'type' => ['container-max-width'],
 			],
 			'.landing-block-node-containers' => [

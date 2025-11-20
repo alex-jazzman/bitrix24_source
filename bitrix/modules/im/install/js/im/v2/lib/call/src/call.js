@@ -32,6 +32,17 @@ export class CallManager
 	#store: Store;
 	#restClient: RestClient;
 
+	#openChatActionByChatType = {
+		[ChatType.taskComments]: (dialogId: string) => {
+			if (Messenger.isEmbeddedMode() || Messenger.isMessengerSliderOpened())
+			{
+				return Messenger.openTaskComments(dialogId);
+			}
+
+			return Promise.resolve();
+		},
+	};
+
 	#onCallJoinHandler: Function;
 	#onCallLeaveHandler: Function;
 	#onCallDestroyHandler: Function;
@@ -327,6 +338,12 @@ export class CallManager
 				isSliderFocused: () => MessengerSlider.getInstance().isFocused(),
 				isThemeDark: () => false,
 				openMessenger: (dialogId) => {
+					const dialog: ImModelChat = this.#getDialog(dialogId);
+					if (dialog.type in this.#openChatActionByChatType)
+					{
+						return this.#openChatActionByChatType[dialog.type](dialogId);
+					}
+
 					return Messenger.openChat(dialogId);
 				},
 				openHistory: (dialogId) => {
@@ -336,7 +353,6 @@ export class CallManager
 					return Messenger.openSettings();
 				},
 				openHelpArticle: () => {}, // TODO
-				getContainer: () => document.querySelector(`.${CallManager.viewContainerClass}`),
 				getMessageCount: () => this.#store.getters['counters/getTotalChatCounter'],
 				getCurrentDialogId: () => this.#getCurrentDialogId(),
 				isPromoRequired: (promoCode: string) => {

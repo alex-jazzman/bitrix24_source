@@ -34,6 +34,7 @@ export const Feature = {
 	aiAssistantBotAvailable: 'aiAssistantAvailable',
 	aiAssistantChatAvailable: 'aiAssistantChatCreationAvailable',
 	aiFileTranscriptionAvailable: 'aiFileTranscriptionAvailable',
+	isTasksRecentListAvailable: 'isTasksRecentListAvailable',
 };
 
 export const FeatureManager = {

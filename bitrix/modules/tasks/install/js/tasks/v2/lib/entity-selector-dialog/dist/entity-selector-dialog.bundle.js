@@ -16,7 +16,8 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	        maxHeight: minTagSelectorHeight * 2
 	      },
 	      ...dialogOptions,
-	      height: Math.max(minHeight, (_dialogOptions$height = dialogOptions.height) != null ? _dialogOptions$height : window.innerHeight / 2 - minTagSelectorHeight)
+	      height: Math.max(minHeight, (_dialogOptions$height = dialogOptions.height) != null ? _dialogOptions$height : window.innerHeight / 2 - minTagSelectorHeight),
+	      offsetAnimation: false
 	    };
 	    super(options);
 	    Object.defineProperty(this, _inIds, {
@@ -31,11 +32,24 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  selectItemsByIds(items) {
 	    this.getItems().forEach(item => {
 	      const isSelected = babelHelpers.classPrivateFieldLooseBase(this, _inIds)[_inIds](item, items);
-	      if (!item.isSelected() && isSelected) {
+	      if (isSelected) {
 	        item.select(true);
 	      }
-	      if (item.isSelected() && !isSelected) {
+	      if (!isSelected) {
 	        item.deselect(true);
+	      }
+	    });
+	  }
+	  setSelectableByIds({
+	    selectable,
+	    unselectable
+	  }) {
+	    this.getItems().forEach(item => {
+	      if (babelHelpers.classPrivateFieldLooseBase(this, _inIds)[_inIds](item, selectable)) {
+	        item.setDeselectable(true);
+	      }
+	      if (babelHelpers.classPrivateFieldLooseBase(this, _inIds)[_inIds](item, unselectable)) {
+	        item.setDeselectable(false);
 	      }
 	    });
 	  }
@@ -48,6 +62,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  return items.some(it => itemId[0] === it[0] && itemId[1] === it[1]);
 	}
 
+	exports.Item = ui_entitySelector.Item;
 	exports.EntitySelectorDialog = EntitySelectorDialog;
 
 }((this.BX.Tasks.V2.Lib = this.BX.Tasks.V2.Lib || {}),BX.UI.EntitySelector));

@@ -3,7 +3,6 @@ import { Outline } from 'ui.icon-set.api.core';
 import 'ui.icon-set.outline';
 import 'ui.tooltip';
 
-import { AddBackground } from 'tasks.v2.component.elements.add-background';
 import { HoverPill } from 'tasks.v2.component.elements.hover-pill';
 import { UserAvatar } from 'tasks.v2.component.elements.user-avatar';
 
@@ -13,7 +12,6 @@ import './user-avatar-list-users.css';
 export const UserAvatarListUsers = {
 	components: {
 		BIcon,
-		AddBackground,
 		HoverPill,
 		UserAvatar,
 	},
@@ -26,17 +24,12 @@ export const UserAvatarListUsers = {
 			type: Boolean,
 			required: true,
 		},
-		isDialogShown: {
-			type: Boolean,
-			default: false,
-		},
 		readonly: {
 			type: Boolean,
 			default: false,
 		},
 	},
 	emits: [
-		'onClick',
 		'onUserClick',
 		'onUserCrossClick',
 	],
@@ -74,11 +67,6 @@ export const UserAvatarListUsers = {
 						<span class="b24-user-avatar-list-user-title">{{ user.name }}</span>
 					</div>
 				</HoverPill>
-				<AddBackground
-					v-if="!readonly && index === 0"
-					:isActive="isDialogShown"
-					@click="$emit('onClick')"
-				/>
 			</div>
 		</template>
 	`,

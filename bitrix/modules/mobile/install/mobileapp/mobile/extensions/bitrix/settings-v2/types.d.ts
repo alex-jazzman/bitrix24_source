@@ -6,6 +6,7 @@ export type SettingPage = {
 
 type SettingSectionType = 'section';
 type SettingLinkType = 'link';
+type SettingInfoType = 'info';
 type SettingToggleType = 'toggle';
 type SettingButtonType = 'button';
 type SettingThemeSwitchType = 'theme-switch';
@@ -13,6 +14,9 @@ type SettingVideoQualitySwitchType = 'video-quality-switch';
 type SettingVideoBannerType = 'video-banner';
 type SettingLocSelectorType = 'loc-selector';
 type SettingDescriptionType = 'description';
+type SettingBannerType = 'banner';
+type SettingImageType = 'image';
+type SettingStyleSwitchType = 'style-switch';
 
 type SettingItemType =
 	SettingSectionType
@@ -22,7 +26,11 @@ type SettingItemType =
 	| SettingThemeSwitchType
 	| SettingVideoQualitySwitchType
 	| SettingLocSelectorType
-	| SettingDescriptionType;
+	| SettingDescriptionType
+	| SettingInfoType
+	| SettingBannerType
+	| SettingStyleSwitchType
+;
 
 interface BaseSettingController
 {
@@ -56,6 +64,13 @@ export interface SettingLink extends SettingItem
 	icon?: string;
 }
 
+export interface SettingInfo extends SettingItem
+{
+	type: SettingInfoType;
+	subtitle?: string;
+	icon?: string;
+}
+
 export interface SettingToggle extends SettingItem
 {
 	type: SettingToggleType;
@@ -78,6 +93,12 @@ export interface SettingThemeSwitch extends SettingItem
 	icon?: string;
 }
 
+export interface SettingStyleSwitch extends SettingItem
+{
+	type: SettingStyleSwitchType;
+	controller: BaseSettingController;
+}
+
 export interface SettingVideoQualitySwitch extends SettingItem
 {
 	type: SettingVideoQualitySwitchType;
@@ -88,6 +109,31 @@ export interface SettingLocSelector extends SettingItem
 {
 	type: SettingLocSelectorType;
 	controller: BaseSettingController;
+}
+
+export interface SettingCacheIntervalSelector extends SettingItem
+{
+	type: SettingLocSelectorType;
+	controller: BaseSettingController;
+}
+
+export interface SettingCacheBanner extends SettingItem
+{
+	type: SettingVideoBannerType;
+	controller: BaseSettingController;
+}
+
+export interface SettingBanner extends SettingItem
+{
+	type: SettingBannerType;
+	bannerImageName: string;
+	text: string;
+}
+
+export interface SettingImage extends SettingItem
+{
+	type: SettingImageType;
+	name: string;
 }
 
 export interface SettingDescription extends SettingItem

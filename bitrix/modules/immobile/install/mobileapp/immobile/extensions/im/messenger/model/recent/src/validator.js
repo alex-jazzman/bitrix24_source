@@ -21,11 +21,11 @@ jn.define('im/messenger/model/recent/validator', (require, exports, module) => {
 
 		if (Type.isNumber(fields.id) || Type.isStringFilled(fields.id))
 		{
-			result.id = fields.id.toString();
+			result.id = String(fields.id);
 		}
 		else if (Type.isNumber(fields.dialogId) || Type.isStringFilled(fields.dialogId))
 		{
-			result.id = fields.dialogId;
+			result.id = String(fields.dialogId);
 		}
 
 		if (Type.isBoolean(fields.pinned))

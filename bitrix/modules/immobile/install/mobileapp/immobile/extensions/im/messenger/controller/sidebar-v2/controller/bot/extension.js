@@ -10,7 +10,10 @@ jn.define('im/messenger/controller/sidebar-v2/controller/bot', (require, exports
 	const { SidebarAudioTab } = require('im/messenger/controller/sidebar-v2/tabs/audio');
 	const { SidebarMediaTab } = require('im/messenger/controller/sidebar-v2/tabs/media');
 	const { SidebarParticipantsTab } = require('im/messenger/controller/sidebar-v2/tabs/participants');
-	const { createSearchButton } = require('im/messenger/controller/sidebar-v2/ui/primary-button/factory');
+	const {
+		createSearchButton,
+		createMuteButton,
+	} = require('im/messenger/controller/sidebar-v2/ui/primary-button/factory');
 
 	class BotSidebarController extends SidebarBaseController
 	{
@@ -31,9 +34,15 @@ jn.define('im/messenger/controller/sidebar-v2/controller/bot', (require, exports
 		 */
 		getPrimaryActionButtons()
 		{
+			const muted = this.dialogHelper.isMuted;
+
 			return [
 				createSearchButton({
 					onClick: () => this.handleSearchAction(),
+				}),
+				this.permissionManager.canMute() && createMuteButton({
+					onClick: () => this.handleToggleMuteAction(),
+					muted,
 				}),
 			];
 		}

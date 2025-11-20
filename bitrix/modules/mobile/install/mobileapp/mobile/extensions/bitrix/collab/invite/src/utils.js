@@ -101,8 +101,31 @@ jn.define('collab/invite/src/utils', (require, exports, module) => {
 		return inviteBoxInstance;
 	};
 
+	const openCurrentCollabGuestsInviteRestrictionsBox = (props) => {
+		const { parentWidget, onClose } = props;
+
+		const imageUri = makeLibraryImagePath('invite-guests-disabled.svg', 'collab/invite');
+
+		return StatusBox.open({
+			parentWidget,
+			backdropTitle: Loc.getMessage('COLLAB_GUESTS_INVITE_DISABLED_BY_COLLAB_ADMIN_BOX_TITLE'),
+			testId: 'current-collab-guests-invite-restrictions-box',
+			imageUri,
+			height: 440,
+			title: Loc.getMessage('COLLAB_GUESTS_INVITE_DISABLED_BY_COLLAB_ADMIN_TITLE'),
+			description: Loc.getMessage('COLLAB_GUESTS_INVITE_DISABLED_BY_COLLAB_ADMIN_DESCRIPTION'),
+			buttonText: Loc.getMessage('COLLAB_GUESTS_INVITE_DISABLED_BY_COLLAB_ADMIN_BUTTON_TEXT'),
+			buttonDesign: ButtonDesign.OUTLINE,
+			statusBlockStyle: {
+				justifyContent: 'flex-start',
+			},
+			onClose,
+		});
+	};
+
 	module.exports = {
 		showSuccessInvitationToast,
 		openGuestsInviteRestrictionsBox,
+		openCurrentCollabGuestsInviteRestrictionsBox,
 	};
 });

@@ -115,6 +115,16 @@ jn.define('tasks/checklist/flat-tree', (require, exports, module) => {
 					fields.attachments = attachments;
 					fields.totalCount = descendants.length;
 
+					if (Array.isArray(fields.members))
+					{
+						const members = {};
+						fields.members.forEach((member) => {
+							members[member.id] = member;
+						});
+
+						fields.members = members;
+					}
+
 					if (fields.copiedId)
 					{
 						copiedIdMap[fields.copiedId] = item.id;
@@ -733,7 +743,7 @@ jn.define('tasks/checklist/flat-tree', (require, exports, module) => {
 			const itemId = item.getFieldId();
 			const copiedId = item.getCopiedId();
 			const title = this.#getTitleForSaving(item);
-			const members = Object.values(item.getMembers());
+			const members = item.getMembers();
 			const parentId = item.getParentId();
 
 			if (!title || isNil(parentId))
@@ -784,11 +794,15 @@ jn.define('tasks/checklist/flat-tree', (require, exports, module) => {
 			return itemRequestData;
 		}
 
+		/**
+		 * @param {CheckListFlatTreeItem} item
+		 * @returns {string}
+		 */
 		#getTitleForSaving(item)
 		{
 			let title = item.getTitle();
 			const focus = item.isFocused();
-			const members = Object.values(item.getMembers());
+			const members = item.getMembers();
 
 			if (members.length > 0)
 			{
@@ -807,6 +821,10 @@ jn.define('tasks/checklist/flat-tree', (require, exports, module) => {
 			return title;
 		}
 
+		/**
+		 * @param {CheckListFlatTreeItem} item
+		 * @returns {string}
+		 */
 		#preparingTitleForView(item)
 		{
 			const { title, members } = item;

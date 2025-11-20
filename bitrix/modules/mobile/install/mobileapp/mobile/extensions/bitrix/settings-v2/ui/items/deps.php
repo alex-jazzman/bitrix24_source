@@ -2,8 +2,10 @@
 
 return [
 	'extensions' => [
+		'apptheme',
 		'layout/ui/context-menu',
 		'layout/ui/safe-image',
+		'layout/ui/menu',
 		'loc',
 		'settings-v2/const',
 		'settings-v2/services/native',
@@ -13,7 +15,10 @@ return [
 		'ui-system/layout/card',
 		'ui-system/layout/card-list',
 		'ui-system/typography/text',
+		'ui-system/typography',
+		'ui-system/blocks/banners/card-banner',
 		'utils/test',
+		'utils/file',
 	],
 	'bundle' => [
 		'./src/button',
@@ -21,8 +26,14 @@ return [
 		'./src/link',
 		'./src/loc-selector',
 		'./src/theme-switch',
+		'./src/style-switch',
 		'./src/toggle',
 		'./src/video-banner',
 		'./src/video-quality-switch',
+		'./src/cache-interval-selector',
+		'./src/cache-info',
+		'./src/cache-banner',
+		'./src/banner',
+		'./src/image',
 	],
 ];

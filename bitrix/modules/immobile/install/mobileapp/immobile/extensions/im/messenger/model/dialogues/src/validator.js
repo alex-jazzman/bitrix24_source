@@ -212,6 +212,11 @@ jn.define('im/messenger/model/dialogues/validator', (require, exports, module) =
 			result.entityData3 = fields.entityData3;
 		}
 
+		if (Type.isPlainObject(fields.entityLink))
+		{
+			result.entityLink = fields.entityLink;
+		}
+
 		if (!Type.isUndefined(fields.date_create))
 		{
 			fields.dateCreate = fields.date_create;
@@ -544,34 +549,33 @@ jn.define('im/messenger/model/dialogues/validator', (require, exports, module) =
 	}
 
 	/**
-	 * @param {Array<InputActionNotify>} inputAction
+	 * @param {Array<InputActionNotify>} inputActions
 	 * @return {Array<InputActionNotify>}
 	 */
-	function prepareInputActions(inputAction)
+	function prepareInputActions(inputActions)
 	{
-		const result = [];
-
-		inputAction.forEach((inputAction) => {
-			const item = {};
-			const isValidUserId = Type.isNumber(inputAction.userId);
-			const isValidUserFirstName = Type.isString(inputAction.userFirstName);
-			const isValidActions = Type.isArrayFilled(inputAction.actions)
-				&& inputAction.actions.every((action) => Type.isString(action))
-			;
-
-			if (!isValidUserId || !isValidUserFirstName || !isValidActions)
+		const isValidAction = (action) => {
+			if (
+				!Type.isNumber(action.userId)
+				|| !Type.isString(action.userFirstName)
+				|| !Type.isObject(action.action)
+			)
 			{
-				return;
+				return false;
 			}
 
-			item.userId = inputAction.userId;
-			item.userFirstName = inputAction.userFirstName;
-			item.actions = inputAction.actions;
+			const { type, statusMessageCode } = action.action;
 
-			result.push(item);
-		});
+			return Type.isString(type) && (Type.isString(statusMessageCode) || Type.isNull(statusMessageCode));
+		};
 
-		return result;
+		return inputActions
+			.filter((element) => isValidAction(element))
+			.map(({ userId, userFirstName, action }) => ({
+				userId,
+				userFirstName,
+				action,
+			}));
 	}
 
 	/**

@@ -13,6 +13,8 @@ jn.define('im/messenger/lib/counters/tab-counters/copilot', (require, exports, m
 	const logger = getLogger('counters--copilot');
 
 	/**
+	 * @deprecated
+	 * @see MessengerCounters
 	 * @class ChatCounters
 	 */
 	class CopilotCounters extends BaseTabCounters

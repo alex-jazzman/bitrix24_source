@@ -14,6 +14,7 @@ $MESS["DISK_UF_WIDGET_EXTERNAL_DRIVES"] = "Сыртқы дискілер";
 $MESS["DISK_UF_WIDGET_FILE_SIZE"] = "Файл өлшемі: #filesize#";
 $MESS["DISK_UF_WIDGET_INSERT_INTO_THE_TEXT"] = "Мәтінге қою";
 $MESS["DISK_UF_WIDGET_MY_DRIVE"] = "Менің дискім";
+$MESS["DISK_UF_WIDGET_OPEN_FILE_MENU_TITLE"] = "Ашу";
 $MESS["DISK_UF_WIDGET_RENAME_FILE_BUTTON_TITLE"] = "Атауын өзгерту";
 $MESS["DISK_UF_WIDGET_RENAME_FILE_MENU_TITLE"] = "Атауын өзгерту";
 $MESS["DISK_UF_WIDGET_SAVED_IN_DISK_FOLDER"] = "Диск бумасында сақталған";

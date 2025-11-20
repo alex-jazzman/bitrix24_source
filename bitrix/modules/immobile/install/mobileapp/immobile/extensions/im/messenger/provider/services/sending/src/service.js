@@ -204,6 +204,16 @@ jn.define('im/messenger/provider/services/sending/service', (require, exports, m
 		{
 			const diskFolderId = await this.filesUploadService.getDiskFolderId(dialogId);
 
+			// TODO: remove it after solving the problem with listening to voice messages
+			try
+			{
+				window.debugUploadAudio[window.debugUploadAudio.length - 1].uploadFiles = `diskFolderId: ${diskFolderId}`;
+			}
+			catch (e)
+			{
+				console.error(e);
+			}
+
 			const temporaryMessageId = Uuid.getV4();
 
 			const prepareFiles = deviceFileList.map((deviceFile) => this.#prepareFileFromDevice({

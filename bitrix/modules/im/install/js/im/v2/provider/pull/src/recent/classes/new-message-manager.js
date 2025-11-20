@@ -10,6 +10,7 @@ const ActionNameByRecentType = {
 	[RecentType.copilot]: 'recent/setCopilot',
 	[RecentType.openChannel]: 'recent/setChannel',
 	[RecentType.collab]: 'recent/setCollab',
+	[RecentType.taskComments]: 'recent/setTask',
 };
 
 export class NewMessageManager

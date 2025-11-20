@@ -4,6 +4,7 @@ import 'ui.icon-set.outline';
 
 import { Model } from 'tasks.v2.const';
 import { AddBackground } from 'tasks.v2.component.elements.add-background';
+import { FieldAdd } from 'tasks.v2.component.elements.field-add';
 import { taskService } from 'tasks.v2.provider.service.task-service';
 import type { TaskModel } from 'tasks.v2.model.tasks';
 
@@ -16,6 +17,7 @@ export const Tags = {
 	components: {
 		BIcon,
 		AddBackground,
+		FieldAdd,
 	},
 	props: {
 		taskId: {
@@ -34,6 +36,7 @@ export const Tags = {
 	{
 		return {
 			isDialogShown: false,
+			tagsIndexes: {},
 		};
 	},
 	computed: {
@@ -43,7 +46,7 @@ export const Tags = {
 		},
 		tags(): string[]
 		{
-			return this.task.tags;
+			return [...this.task.tags].sort((a, b) => this.tagsIndexes[a] - this.tagsIndexes[b]);
 		},
 		isFilled(): boolean
 		{
@@ -60,6 +63,10 @@ export const Tags = {
 			tagsDialog.setTaskId(this.taskId).updateItems();
 		},
 	},
+	created(): void
+	{
+		this.rememberTagsIndexes(this.tags);
+	},
 	methods: {
 		handleClick(): void
 		{
@@ -69,6 +76,7 @@ export const Tags = {
 			}
 
 			tagsDialog.setTaskId(this.taskId).onCloseOnce(this.handleClose).showTo(this.$refs.anchor);
+			tagsDialog.onUpdateOnce(this.rememberTagsIndexes);
 
 			this.isDialogShown = true;
 		},
@@ -80,6 +88,14 @@ export const Tags = {
 		{
 			const tags = this.tags.filter((it) => it !== tag);
 			void taskService.update(this.taskId, { tags });
+		},
+		rememberTagsIndexes(tags: string[]): void
+		{
+			this.tagsIndexes = tags.reduce((acc, tag, index) => {
+				acc[tag] = index;
+
+				return acc;
+			}, {});
 		},
 	},
 	template: `
@@ -100,10 +116,7 @@ export const Tags = {
 					</div>
 				</div>
 			</template>
-			<template v-if="!isFilled">
-				<BIcon class="tasks-field-tags-add-icon" :name="Outline.TAG"/>
-				<div class="tasks-field-tags-add-text">{{ loc('TASKS_V2_TAGS_ADD') }}</div>
-			</template>
+			<FieldAdd v-if="!isFilled" :icon="Outline.TAG"/>
 			<div class="tasks-field-tags-anchor" ref="anchor"></div>
 		</div>
 	`,

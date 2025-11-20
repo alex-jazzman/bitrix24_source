@@ -1,6 +1,6 @@
 import { apiClient } from 'tasks.v2.lib.api-client';
 
-class OptionService
+export class OptionService
 {
 	async set(optionName: string, value: string): Promise<void>
 	{

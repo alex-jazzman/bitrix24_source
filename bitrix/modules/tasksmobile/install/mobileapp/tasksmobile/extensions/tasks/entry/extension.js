@@ -183,6 +183,7 @@ jn.define('tasks/entry', (require, exports, module) => {
 			} = params;
 			const taskId = data.id || data.taskId;
 			const guid = Entry.getGuid();
+			const isFlowToolDisabled = await checkDisabledToolById('flows', false);
 
 			if (parentWidget)
 			{
@@ -198,6 +199,7 @@ jn.define('tasks/entry', (require, exports, module) => {
 					view,
 					kanbanOwnerId,
 					projectId,
+					isFlowToolDisabled,
 				});
 			}
 			else
@@ -205,6 +207,7 @@ jn.define('tasks/entry', (require, exports, module) => {
 				PageManager.openComponent('JSStackComponent', {
 					name: 'JSStackComponent',
 					componentCode: 'tasks.task.view-new',
+					// eslint-disable-next-line no-undef
 					scriptPath: availableComponents['tasks:tasks.task.view-new'].publicUrl,
 					canOpenInDefault: true,
 					rootWidget: {
@@ -227,6 +230,7 @@ jn.define('tasks/entry', (require, exports, module) => {
 						SHOULD_OPEN_COMMENTS: shouldOpenComments,
 						analyticsLabel,
 						kanbanOwnerId,
+						IS_FLOW_TOOL_DISABLED: isFlowToolDisabled,
 					},
 				});
 			}
@@ -245,8 +249,10 @@ jn.define('tasks/entry', (require, exports, module) => {
 				return;
 			}
 
+			const isFlowToolDisabled = await checkDisabledToolById('flows', false);
+
 			const { CreateNew } = await requireLazy('tasks:layout/task/create-new');
-			CreateNew.open(data);
+			CreateNew.open({ ...data, isFlowToolDisabled });
 		}
 
 		static async openTaskList(data)
@@ -279,6 +285,7 @@ jn.define('tasks/entry', (require, exports, module) => {
 						? Loc.getMessage('TASKSMOBILE_ENTRY_COLLAB_TASK_LIST_TITLE')
 						: (extendedData.groupName || Loc.getMessage('TASKSMOBILE_ENTRY_TASK_LIST_TITLE'))
 				),
+				// eslint-disable-next-line no-undef
 				scriptPath: availableComponents['tasks:tasks.dashboard'].publicUrl,
 				rootWidget: {
 					name: 'layout',
@@ -311,6 +318,7 @@ jn.define('tasks/entry', (require, exports, module) => {
 
 	if (typeof jnComponent?.preload === 'function')
 	{
+		// eslint-disable-next-line no-undef
 		const { publicUrl } = availableComponents['tasks:tasks.task.view-new'] || {};
 
 		if (publicUrl)

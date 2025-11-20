@@ -114,7 +114,7 @@ export const ChatTitle = {
 		{
 			if (this.customType === ChatTitleType.notes)
 			{
-				return this.loc('IM_SEARCH_MY_NOTES');
+				return this.loc('IM_CHAT_TITLE_MY_NOTES');
 			}
 
 			if (this.text)
@@ -296,12 +296,12 @@ export const ChatTitle = {
 		{
 			if (this.customType === ChatTitleType.notes)
 			{
-				return this.loc('IM_SEARCH_MY_NOTES');
+				return this.loc('IM_CHAT_TITLE_MY_NOTES');
 			}
 
 			if (this.isSelfChat && this.showItsYou)
 			{
-				return `${this.dialog.name} (${this.loc('IM_LIST_RECENT_CHAT_SELF')})`;
+				return `${this.dialog.name} (${this.loc('IM_CHAT_TITLE_SELF')})`;
 			}
 
 			return this.dialog.name;
@@ -329,7 +329,7 @@ export const ChatTitle = {
 					v-html="dialogName"
 				></span>
 				<strong v-if="isSelfChat && showItsYou">
-					<span class="bx-im-chat-title__text --self">({{ loc('IM_LIST_RECENT_CHAT_SELF') }})</span>
+					<span class="bx-im-chat-title__text --self">({{ loc('IM_CHAT_TITLE_SELF') }})</span>
 				</strong>
 				<span v-if="withMute && isChatMuted" class="bx-im-chat-title__muted-icon"></span>
 				<BIcon

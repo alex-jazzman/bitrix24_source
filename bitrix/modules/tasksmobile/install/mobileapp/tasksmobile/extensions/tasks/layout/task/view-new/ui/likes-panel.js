@@ -5,7 +5,7 @@ jn.define('tasks/layout/task/view-new/ui/likes-panel', (require, exports, module
 	const { Color, Indent, Component } = require('tokens');
 	const { connect } = require('statemanager/redux/connect');
 	const { menu } = require('native/contextmenu');
-	const { ReactionList } = require('layout/ui/reaction-list');
+	const { ReactionListController } = require('layout/ui/reaction-list');
 	const {
 		selectReactionsByEntity,
 		selectUsersWithReactions,
@@ -164,7 +164,7 @@ jn.define('tasks/layout/task/view-new/ui/likes-panel', (require, exports, module
 
 		#openUserReactionList()
 		{
-			ReactionList.open({
+			ReactionListController.open({
 				entityType: EntityType.TASK,
 				entityId: this.#taskId,
 				voteSignToken: this.props.voteSignToken,

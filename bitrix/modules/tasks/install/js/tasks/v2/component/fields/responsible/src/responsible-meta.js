@@ -1,9 +1,9 @@
 import { Loc } from 'main.core';
 import { Core } from 'tasks.v2.core';
-import { EntitySelectorEntity } from 'tasks.v2.const';
+import { EntitySelectorEntity, TaskField } from 'tasks.v2.const';
 
 export const responsibleMeta = Object.freeze({
-	id: 'responsibleId',
+	id: TaskField.Responsible,
 	title: Loc.getMessage('TASKS_V2_RESPONSIBLE_TITLE'),
 	dialogOptions: (context: string = 'tasks-card-participant') => {
 		const limits = Core.getParams().limits;

@@ -2,12 +2,14 @@
 import { BuilderEntityModel, Store } from 'ui.vue3.vuex';
 import type { ActionTree, GetterTree, MutationTree } from 'ui.vue3.vuex';
 
-import { Model } from 'tasks.v2.const';
+import { Model, TaskField } from 'tasks.v2.const';
 
 import type { TaskModel, TasksModelState } from './types';
 
 const aliasFields = {
-	datePlan: new Set(['startPlanTs', 'endPlanTs', 'matchesSubTasksTime']),
+	[TaskField.DatePlan]: new Set(['startPlanTs', 'endPlanTs', 'matchesSubTasksTime']),
+	[TaskField.SubTasks]: new Set(['containsSubTasks']),
+	[TaskField.RelatedTasks]: new Set(['containsRelatedTasks']),
 };
 
 export class Tasks extends BuilderEntityModel<TasksModelState, TaskModel>
@@ -15,6 +17,13 @@ export class Tasks extends BuilderEntityModel<TasksModelState, TaskModel>
 	getName(): string
 	{
 		return Model.Tasks;
+	}
+
+	getState(): TasksModelState
+	{
+		return {
+			partiallyLoadedIds: new Set(),
+		};
 	}
 
 	getElementState(): TaskModel
@@ -28,6 +37,8 @@ export class Tasks extends BuilderEntityModel<TasksModelState, TaskModel>
 			createdTs: Date.now(),
 			responsibleId: 0,
 			deadlineTs: 0,
+			startPlanTs: null,
+			endPlanTs: null,
 			fileIds: [],
 			checklist: [],
 			containsChecklist: false,
@@ -40,12 +51,19 @@ export class Tasks extends BuilderEntityModel<TasksModelState, TaskModel>
 			statusChangedTs: Date.now(),
 			needsControl: false,
 			filledFields: {},
+			parentId: 0,
+			subTaskIds: [],
+			containsSubTasks: false,
+			relatedTaskIds: [],
+			containsRelatedTasks: false,
 			rights: {
 				edit: true,
 				deadline: true,
 				datePlan: true,
 				delegate: true,
 			},
+			inFavorite: [],
+			inMute: [],
 		};
 	}
 
@@ -55,6 +73,10 @@ export class Tasks extends BuilderEntityModel<TasksModelState, TaskModel>
 			/** @function tasks/wasFieldFilled */
 			wasFieldFilled: (state: TasksModelState) => (id: number | string, fieldName: string): boolean => {
 				return state.collection[id].filledFields?.[fieldName] ?? false;
+			},
+			/** @function tasks/isPartiallyLoaded */
+			isPartiallyLoaded: (state: TasksModelState) => (id: number | string): boolean => {
+				return state.partiallyLoadedIds.has(id);
 			},
 		};
 	}
@@ -70,6 +92,14 @@ export class Tasks extends BuilderEntityModel<TasksModelState, TaskModel>
 			clearFieldsFilled: (store: Store, id: number | string): void => {
 				store.commit('clearFieldsFilled', id);
 			},
+			/** @function tasks/addPartiallyLoaded */
+			addPartiallyLoaded: (store: Store, id: number | string): void => {
+				store.commit('addPartiallyLoaded', id);
+			},
+			/** @function tasks/removePartiaalyLoaded */
+			removePartiallyLoaded: (store: Store, id: number | string): void => {
+				store.commit('removePartiallyLoaded', id);
+			},
 		};
 	}
 
@@ -79,12 +109,12 @@ export class Tasks extends BuilderEntityModel<TasksModelState, TaskModel>
 			upsert: (state: TasksModelState, task: ?TaskModel): void => {
 				BuilderEntityModel.defaultModel.getMutations(this).upsert(state, task);
 
-				this.#setFieldsFilled(state, task);
+				this.#setFieldsFilled(state, task.id);
 			},
 			update: (state: TasksModelState, { id, fields }: { id: number | string, fields: TaskModel }): void => {
 				BuilderEntityModel.defaultModel.getMutations(this).update(state, { id, fields });
 
-				this.#setFieldsFilled(state, { id, ...fields });
+				this.#setFieldsFilled(state, id);
 			},
 			setFieldFilled: (state: TasksModelState, { id, fieldName }: { id: number, fieldName: string }): void => {
 				(state.collection[id].filledFields ??= {})[fieldName] = true;
@@ -97,18 +127,24 @@ export class Tasks extends BuilderEntityModel<TasksModelState, TaskModel>
 
 				state.collection[id].filledFields = {};
 
-				this.#setFieldsFilled(state, { id, ...state.collection[id] });
+				this.#setFieldsFilled(state, id);
+			},
+			addPartiallyLoaded: (state: TasksModelState, id: number | string): void => {
+				state.partiallyLoadedIds.add(id);
+			},
+			removePartiallyLoaded: (state: TasksModelState, id: number | string): void => {
+				state.partiallyLoadedIds.delete(id);
 			},
 		};
 	}
 
-	#setFieldsFilled(state: TasksModelState, fields: TaskModel): void
+	#setFieldsFilled(state: TasksModelState, id: number | string): void
 	{
-		const task = state.collection[fields.id];
+		const task = state.collection[id];
 		const canEdit = task?.rights?.edit;
 
 		task.filledFields ??= {};
-		Object.entries(fields).forEach(([fieldName: string, value: any]) => {
+		Object.entries(task).forEach(([fieldName: string, value: any]) => {
 			const isFilled = Boolean(value) && (!Array.isArray(value) || value.length > 0);
 			if (isFilled)
 			{

@@ -11,6 +11,7 @@ return [
 	'rel' => [
 		'im.v2.lib.local-storage',
 		'ui.system.menu',
+		'im.v2.lib.layout',
 		'ui.vue3.directives.lazyload',
 		'ui.label',
 		'main.date',
@@ -39,9 +40,9 @@ return [
 		'im.v2.lib.market',
 		'im.v2.lib.entity-creator',
 		'im.v2.lib.analytics',
-		'im.v2.lib.layout',
 		'im.v2.component.entity-selector',
 		'im.v2.lib.notifier',
+		'im.v2.lib.chat',
 		'im.v2.lib.copilot',
 		'im.v2.lib.menu',
 		'im.v2.lib.call',

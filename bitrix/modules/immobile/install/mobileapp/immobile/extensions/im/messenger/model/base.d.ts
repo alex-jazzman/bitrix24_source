@@ -1,3 +1,5 @@
+import {MessengerCoreStore} from "../core/types/store";
+
 export interface MutationPayload<TData extends PayloadData, TActions extends string = ''> {
     actionName: TActions,
     actionUuid?: string,
@@ -20,7 +22,12 @@ export interface MessengerModel<TCollection = {}>
 {
     namespaced: boolean,
     state: () => TCollection,
-    getters: Record<string, ((state: TCollection) => function) | ((state: TCollection, getters: Record<string, function>) => function)>
+	getters: Record<string, (
+			(state: TCollection) => function)
+		| ((state: TCollection, getters: Record<string, function>) => function)
+		| ((state: TCollection, getters: Record<string, function>, rootState: MessengerCoreStore["state"]) => function)
+		| ((state: TCollection, getters: Record<string, function>, rootState: MessengerCoreStore["state"], rootGetters: MessengerCoreStore["getters"]) => function)
+	>
     actions: Record<string, (store: MessengerStore<MessengerModel<TCollection>>, payload: any) => void>
     mutations: Record<string, (state: TCollection, payload: MutationPayload) => void>
 }

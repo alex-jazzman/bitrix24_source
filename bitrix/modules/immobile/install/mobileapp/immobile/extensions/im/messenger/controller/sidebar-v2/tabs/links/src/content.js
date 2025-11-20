@@ -40,18 +40,21 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/links/src/content', (require,
 		{
 			this.onStoreSetSidebarLinks = this.onStoreSetSidebarLinks.bind(this);
 			this.onStoreDeleteSidebarLinks = this.onStoreDeleteSidebarLinks.bind(this);
+			this.onStoreDeleteAllDataSidebarLinks = this.onStoreDeleteAllDataSidebarLinks.bind(this);
 		}
 
 		subscribeStoreEvents()
 		{
 			this.storeManager.on('sidebarModel/sidebarLinksModel/set', this.onStoreSetSidebarLinks);
 			this.storeManager.on('sidebarModel/sidebarLinksModel/delete', this.onStoreDeleteSidebarLinks);
+			this.storeManager.on('sidebarModel/sidebarLinksModel/deleteByChatId', this.onStoreDeleteAllDataSidebarLinks);
 		}
 
 		unsubscribeStoreEvents()
 		{
 			this.storeManager.off('sidebarModel/sidebarLinksModel/set', this.onStoreSetSidebarLinks);
 			this.storeManager.off('sidebarModel/sidebarLinksModel/delete', this.onStoreDeleteSidebarLinks);
+			this.storeManager.off('sidebarModel/sidebarLinksModel/deleteByChatId', this.onStoreDeleteAllDataSidebarLinks);
 		}
 
 		onStoreSetSidebarLinks(mutation)
@@ -76,6 +79,18 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/links/src/content', (require,
 			}
 
 			void this.deleteItemById(id);
+		}
+
+		onStoreDeleteAllDataSidebarLinks(mutation)
+		{
+			const { chatId } = mutation.payload.data;
+
+			if (chatId !== this.props.chatId)
+			{
+				return;
+			}
+
+			void this.deleteAllData();
 		}
 
 		convertToSortedList(map)

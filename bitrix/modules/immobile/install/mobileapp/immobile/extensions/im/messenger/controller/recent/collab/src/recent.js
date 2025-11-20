@@ -92,27 +92,11 @@ jn.define('im/messenger/controller/recent/collab/recent', (require, exports, mod
 			void await this.store.dispatch('dialoguesModel/set', modelData.dialogues);
 			void await this.store.dispatch('filesModel/set', modelData.files);
 			void await this.store.dispatch('messagesModel/store', modelData.messages);
-
 			void await this.store.dispatch('recentModel/set', modelData.recent);
 
 			if (this.recentService.pageNavigation.currentPage === 1)
 			{
-				const recentIndex = [];
-				modelData.recent.forEach((item) => recentIndex.push(item.id.toString()));
-
-				const idListForDeleteFromCache = [];
-				this.store.getters['recentModel/getCollection']()
-					.forEach((item) => {
-						if (!recentIndex.includes(item.id.toString()))
-						{
-							idListForDeleteFromCache.push(item.id);
-						}
-					});
-
-				for await (const id of idListForDeleteFromCache)
-				{
-					this.store.dispatch('recentModel/deleteFromModel', { id });
-				}
+				this.deleteItemsFromStore(modelData.recent);
 			}
 
 			MessengerCounterSender.getInstance().sendRecentPageLoaded(modelData.counterState);

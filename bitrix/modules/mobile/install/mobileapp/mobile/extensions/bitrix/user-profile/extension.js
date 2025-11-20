@@ -2,7 +2,7 @@
  * @module user-profile
  */
 jn.define('user-profile', (require, exports, module) => {
-	const Apptheme = require('apptheme');
+	const AppTheme = require('apptheme');
 	const { ajaxPublicErrorHandler } = require('error');
 	const { Loc } = require('loc');
 	const { NotifyManager } = require('notify-manager');
@@ -16,6 +16,8 @@ jn.define('user-profile', (require, exports, module) => {
 	 */
 	class UserProfile
 	{
+		static isOpening = false;
+
 		/**
 		 * @param {Object} params
 		 * @param {number} [params.ownerId=env.userId]
@@ -31,113 +33,130 @@ jn.define('user-profile', (require, exports, module) => {
 			widgetParams = {},
 		} = {})
 		{
-			if (!ownerId)
+			if (UserProfile.isOpening)
 			{
 				return null;
 			}
+			UserProfile.isOpening = true;
 
-			void NotifyManager.showLoadingIndicator();
-			const isEnabled = await fetchNewProfileFeatureEnabled();
-
-			if (!isEnabled)
+			try
 			{
+				if (!ownerId)
+				{
+					return null;
+				}
+
+				void NotifyManager.showLoadingIndicator();
+				const isEnabled = await fetchNewProfileFeatureEnabled();
+
+				if (!isEnabled)
+				{
+					NotifyManager.hideLoadingIndicatorWithoutFallback();
+
+					return UserProfile.openLegacyProfile(ownerId, openInComponent, parentWidget, widgetParams);
+				}
+
+				const response = await fetchTabs({ ownerId, selectedTabId });
 				NotifyManager.hideLoadingIndicatorWithoutFallback();
 
-				return UserProfile.openLegacyProfile(ownerId, openInComponent, parentWidget, widgetParams);
-			}
+				if (response.status === 'error')
+				{
+					void ajaxPublicErrorHandler(response);
 
-			const response = await fetchTabs({ ownerId, selectedTabId });
-			NotifyManager.hideLoadingIndicatorWithoutFallback();
+					return null;
+				}
 
-			if (response.status === 'error')
-			{
-				void ajaxPublicErrorHandler(response);
+				const { tabs, selectedTabId: selectedTabIdFromResponse, canView } = response.data;
+				if (!canView)
+				{
+					showErrorToast({
+						message: Loc.getMessage('M_PROFILE_NO_PERMISSIONS_TOAST_MESSAGE'),
+					});
 
-				return null;
-			}
+					return null;
+				}
+				const {
+					prepareTabs,
+					bindEvents,
+					initTabNestedWidgets,
+				} = await requireLazy('user-profile/tabs-preparer');
 
-			const { tabs, selectedTabId: selectedTabIdFromResponse, canView } = response.data;
-			if (!canView)
-			{
-				showErrorToast({
-					message: Loc.getMessage('M_PROFILE_NO_PERMISSIONS_TOAST_MESSAGE'),
-				});
+				const preparedTabs = prepareTabs(tabs, selectedTabIdFromResponse);
+				const closeIcon = AppTheme.id === 'dark' ? modalIcons.darkArrowDown : modalIcons.lightArrowDown;
+				const params = {
+					...Object.fromEntries(preparedTabs.map((tab) => [tab.id, tab.params])),
+					closeIcon,
+				};
 
-				return null;
-			}
-			const {
-				prepareTabs,
-				bindEvents,
-				initTabNestedWidgets,
-			} = await requireLazy('user-profile/tabs-preparer', false);
+				if (openInComponent)
+				{
+					PageManager.openComponent('JSStackComponent', {
+						// eslint-disable-next-line no-undef
+						scriptPath: availableComponents['user-profile-tabs'].publicUrl,
+						componentCode: 'user-profile-tabs',
+						canOpenInDefault: true,
+						rootWidget: {
+							name: 'tabs',
+							settings: {
+								objectName: 'tabs',
+								title: Loc.getMessage('M_PROFILE_TITLE'),
+								grabTitle: false,
+								modal: true,
+								leftButtons: [
+									{
+										svg: {
+											content: closeIcon,
+										},
+										isCloseButton: true,
+									},
+								],
+								tabs: {
+									items: preparedTabs,
+								},
+							},
+						},
+						params: {
+							ownerId,
+							params,
+						},
+					}, parentWidget);
 
-			const preparedTabs = prepareTabs(tabs, selectedTabIdFromResponse);
-			const closeIcon = Apptheme.id === 'dark' ? modalIcons.darkArrowDown : modalIcons.lightArrowDown;
-			const params = {
-				...Object.fromEntries(preparedTabs.map((tab) => [tab.id, tab.params])),
-				closeIcon,
-			};
+					return null;
+				}
 
-			if (openInComponent)
-			{
-				PageManager.openComponent('JSStackComponent', {
-					// eslint-disable-next-line no-undef
-					scriptPath: availableComponents['user-profile-tabs'].publicUrl,
-					componentCode: 'user-profile-tabs',
-					canOpenInDefault: true,
-					rootWidget: {
-						name: 'tabs',
-						settings: {
-							objectName: 'tabs',
-							title: Loc.getMessage('M_PROFILE_TITLE'),
+				return new Promise((resolve) => {
+					parentWidget
+						.openWidget('tabs', {
+							titleParams: {
+								text: Loc.getMessage('M_PROFILE_TITLE'),
+							},
 							grabTitle: false,
 							modal: true,
-							leftButtons: [{
-								svg: {
-									content: closeIcon,
+							leftButtons: [
+								{
+									svg: {
+										content: closeIcon,
+									},
+									isCloseButton: true,
 								},
-								isCloseButton: true,
-							}],
+							],
 							tabs: {
 								items: preparedTabs,
 							},
-						},
-					},
-					params: {
-						ownerId,
-						params,
-					},
-				}, parentWidget);
-
-				return null;
+						})
+						.then((widget) => {
+							bindEvents(widget, ownerId);
+							initTabNestedWidgets(widget, params);
+							resolve(widget);
+						})
+						.catch(console.error)
+					;
+				});
 			}
-
-			return new Promise((resolve) => {
-				parentWidget
-					.openWidget('tabs', {
-						titleParams: {
-							text: Loc.getMessage('M_PROFILE_TITLE'),
-						},
-						grabTitle: false,
-						modal: true,
-						leftButtons: [{
-							svg: {
-								content: closeIcon,
-							},
-							isCloseButton: true,
-						}],
-						tabs: {
-							items: preparedTabs,
-						},
-					})
-					.then((widget) => {
-						bindEvents(widget, ownerId);
-						initTabNestedWidgets(widget, params);
-						resolve(widget);
-					})
-					.catch(console.error)
-				;
-			});
+			finally
+			{
+				UserProfile.isOpening = false;
+			}
 		}
 
 		static async openLegacyProfile(userId, openInComponent, parentWidget, widgetParams)

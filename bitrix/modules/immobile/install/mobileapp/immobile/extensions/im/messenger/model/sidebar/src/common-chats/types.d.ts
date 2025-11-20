@@ -42,10 +42,12 @@ declare type sidebarCommonChatsModelActions =
 	'sidebarModel/sidebarCommonChatsModel/set'
 	| 'sidebarModel/sidebarCommonChatsModel/setFromPagination'
 	| 'sidebarModel/sidebarCommonChatsModel/delete'
+	| 'sidebarModel/sidebarCommonChatsModel/deleteByChatId'
 
 declare type sidebarCommonChatsModelMutation =
 	'sidebarModel/sidebarCommonChatsModel/set'
 	| 'sidebarModel/sidebarCommonChatsModel/delete'
+	| 'sidebarModel/sidebarCommonChatsModel/deleteByChatId'
 	| 'sidebarModel/sidebarCommonChatsModel/setHasNextPage'
 
 declare type SidebarCommonChatsSetActions = 'set' | 'setFromPagination';
@@ -58,6 +60,11 @@ declare type SidebarCommonChatsDeleteActions = 'delete';
 declare type SidebarCommonChatsDeleteData = {
 	chatId: chatId,
 	id: chatId,
+}
+
+declare type SidebarCommonChatsDeleteByChatIdActions = 'deleteByChatId';
+declare type SidebarCommonChatsDeleteByChatIdData = {
+	chatId: chatId,
 }
 
 declare type SidebarLinksSetHasNextPageActions = 'setHasNextPage';

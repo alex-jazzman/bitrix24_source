@@ -16,6 +16,7 @@ return [
 		'im.v2.lib.local-storage',
 		'im.v2.lib.utils',
 		'im.v2.component.elements.avatar',
+		'im.v2.lib.analytics',
 	],
 	'skip_core' => true,
 ];

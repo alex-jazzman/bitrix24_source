@@ -142,6 +142,11 @@ jn.define('im/messenger/controller/dialog/lib/configurator/configurator', (requi
 			return this.config.sidebar.enabled;
 		}
 
+		get sidebarConfig()
+		{
+			return this.config.sidebar.params;
+		}
+
 		/**
 		 * @private
 		 * @return {Promise<IMessageContextMenu>}

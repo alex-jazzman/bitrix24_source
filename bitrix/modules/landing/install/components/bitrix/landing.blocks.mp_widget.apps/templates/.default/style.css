@@ -32,6 +32,10 @@
 	box-sizing: border-box;
 }
 
+.landing-widget-apps-type-2 .landing-widget-app-mobile {
+	padding: 24px 36px 0 55px;
+}
+
 .landing-widget-app-mobile-content {
 	display: flex;
 	height: 100%;
@@ -254,18 +258,20 @@
 }
 
 .landing-widget-qr-button {
-	background: var(--widget-color-button-mobile);
-	color: var(--widget-color-button-text-mobile);
+	background: var(--widget-color-button-mobile) !important;
+	color: var(--widget-color-button-text-mobile) !important;
 }
 .landing-widget-desktop-button {
-	background: var(--widget-color-button-desktop);
-	color: var(--widget-color-button-text-desktop);
+	background: var(--widget-color-button-desktop) !important;
+	color: var(--widget-color-button-text-desktop) !important;
+	text-decoration: none !important;
 }
 .landing-widget-apps-type-2 .landing-widget-qr-button {
 	background: #0075FF;
 }
 .landing-widget-apps-type-2 .landing-widget-desktop-button {
 	background: #0075FF;
+	color: #ffffff;
 }
 
 .landing-widget-qr-button:hover {
@@ -290,6 +296,7 @@
 	height: 255px;
 	background: url(./images/landing-widget-notebook-2.png) no-repeat;
 	background-size: cover;
+	margin-bottom: 18px;
 }
 
 .landing-widget-app-desktop-logo-inner {

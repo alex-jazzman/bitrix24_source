@@ -53,7 +53,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 				permissions: {
 					canRemoveParticipants: ChatPermission.canRemoveParticipants(props.dialogId),
 					canAddParticipants: ChatPermission.canAddParticipants(props.dialogId),
-					сanLeave: ChatPermission.сanLeaveFromChat(props.dialogId),
+					canLeave: ChatPermission.canLeaveFromChat(props.dialogId),
 				},
 			};
 
@@ -237,7 +237,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 
 		buildItems()
 		{
-			const { participants, permissions: { canAddParticipants: сanAdd } } = this.state;
+			const { participants, permissions: { canAddParticipants: canAdd } } = this.state;
 			const doneItems = [];
 
 			if (participants.length === 0)
@@ -245,7 +245,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 				return doneItems;
 			}
 
-			if (сanAdd)
+			if (canAdd)
 			{
 				doneItems.push({
 					type: 'addrow',
@@ -623,7 +623,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 						icon: Icon.FLAG,
 						testId: 'SIDEBAR_USER_CONTEXT_MENU_NOTES',
 					});
-					if (this.state.permissions.сanLeave)
+					if (this.state.permissions.canLeave)
 					{
 						// TODO copilot dialog always is group chat, then need check count participants
 						if (this.props.isCopilot && participantsCount > 2)
@@ -690,8 +690,8 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-v
 						}
 					}
 
-					const сanDelete = this.state.permissions.canRemoveParticipants;
-					if (сanDelete && ChatPermission.сanRemoveUserById(userId, this.props.dialogId))
+					const canDelete = this.state.permissions.canRemoveParticipants;
+					if (canDelete && ChatPermission.canRemoveUserById(userId, this.props.dialogId))
 					{
 						actionsItems.push({
 							id: SidebarActionType.remove,

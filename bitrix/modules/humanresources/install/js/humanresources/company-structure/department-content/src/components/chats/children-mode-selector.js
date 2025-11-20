@@ -82,11 +82,13 @@ export const ChildrenModeSelector = {
 					id: MenuOption.withoutChildren,
 					title: this.getValueText(false),
 					itemClass: 'hr-department-detail-content__children-mode-selector_menu-item',
+					dataTestId: 'hr-chat-children-mode-selector_menu-item-without',
 				},
 				{
 					id: MenuOption.withChildren,
 					title: this.getValueText(true),
 					itemClass: 'hr-department-detail-content__children-mode-selector_menu-item',
+					dataTestId: 'hr-chat-children-mode-selector_menu-item-with',
 				},
 			];
 		},
@@ -113,7 +115,7 @@ export const ChildrenModeSelector = {
 			<a
 				class="hr-department-detail-content__change-save-mode-control-button"
 				:class="{ '--focused': menuVisible, '--disabled': !hasPermission }"
-				:data-test-id="dataTestId"
+				:dataTestId="dataTestId"
 				ref='saveChildrenModeButton'
 				@click="showMenu"
 			>

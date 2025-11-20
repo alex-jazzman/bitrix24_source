@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,main_core,im_v2_const,im_v2_lib_analytics,im_v2_lib_messageComponent,im_v2_application_core,ui_analytics) {
+(function (exports,main_core,im_v2_lib_analytics,im_v2_lib_messageComponent,ui_analytics,im_v2_application_core,im_v2_const) {
 	'use strict';
 
 	const PSEUDO_CHAT_TYPE_FOR_NOTES = 'notes';
@@ -60,7 +60,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  addToFav: 'add_to_fav',
 	  seeLater: 'see_later',
 	  select: 'select',
-	  addFeedback: 'add_feedback'
+	  addFeedback: 'add_feedback',
+	  copyChatLink: 'copy_chat_link',
+	  viewTranscription: 'view_transcription',
+	  play: 'play',
+	  pause: 'pause',
+	  changeSpeed: 'change_speed'
 	});
 	const AnalyticsTool = Object.freeze({
 	  ai: 'ai',
@@ -84,7 +89,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  chatPopup: 'chat_popup',
 	  call: 'call',
 	  collab: 'collab',
-	  updateAppPopup: 'update_app_popup'
+	  updateAppPopup: 'update_app_popup',
+	  audiomessage: 'audiomessage'
 	});
 	const AnalyticsType = Object.freeze({
 	  ai: 'ai',
@@ -124,7 +130,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  messageLink: 'message_link',
 	  chatSidebar: 'chat_sidebar',
 	  chatList: 'chat_list',
-	  window: 'window'
+	  window: 'window',
+	  membersPanel: 'user_list'
 	});
 	const AnalyticsElement = Object.freeze({
 	  initialBanner: 'initial_banner',
@@ -191,14 +198,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	}
 
+	function isNotes(dialogId) {
+	  return im_v2_application_core.Core.getStore().getters['chats/isNotes'](dialogId);
+	}
+
 	const CUSTOM_CHAT_TYPE = 'custom';
 	function getChatType(chat) {
 	  var _ChatType$chat$type;
+	  if (isNotes(chat.dialogId)) {
+	    return PSEUDO_CHAT_TYPE_FOR_NOTES;
+	  }
 	  return (_ChatType$chat$type = im_v2_const.ChatType[chat.type]) != null ? _ChatType$chat$type : CUSTOM_CHAT_TYPE;
-	}
-
-	function isNotes(dialogId) {
-	  return im_v2_application_core.Core.getUserId().toString() === dialogId;
 	}
 
 	const EntityToEventMap = {
@@ -1338,10 +1348,87 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      tool: AnalyticsTool.im,
 	      category: getCategoryByChatType(chat.type),
 	      event: AnalyticsEvent.pinChat,
-	      p1: `chatType_${isNotes(dialogId) ? PSEUDO_CHAT_TYPE_FOR_NOTES : chat.type}`
+	      p1: `chatType_${PSEUDO_CHAT_TYPE_FOR_NOTES}`
 	    };
 	    ui_analytics.sendData(params);
 	  }
+	}
+
+	var _buildAnalyticsData$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("buildAnalyticsData");
+	class ChatInviteLink {
+	  constructor() {
+	    Object.defineProperty(this, _buildAnalyticsData$1, {
+	      value: _buildAnalyticsData2$1
+	    });
+	  }
+	  onCopyMembersPanel(dialogId) {
+	    ui_analytics.sendData(babelHelpers.classPrivateFieldLooseBase(this, _buildAnalyticsData$1)[_buildAnalyticsData$1](dialogId, AnalyticsSubSection.membersPanel));
+	  }
+	  onCopyContextMenu(dialogId) {
+	    ui_analytics.sendData(babelHelpers.classPrivateFieldLooseBase(this, _buildAnalyticsData$1)[_buildAnalyticsData$1](dialogId, AnalyticsSubSection.contextMenu));
+	  }
+	}
+	function _buildAnalyticsData2$1(dialogId, subSection) {
+	  const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
+	  return {
+	    tool: AnalyticsTool.im,
+	    category: getCategoryByChatType(chat.type),
+	    event: AnalyticsEvent.copyChatLink,
+	    c_section: AnalyticsSection.sidebar,
+	    c_sub_section: subSection
+	  };
+	}
+
+	var _getTypeByChatId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getTypeByChatId");
+	class AudioMessage {
+	  constructor() {
+	    Object.defineProperty(this, _getTypeByChatId, {
+	      value: _getTypeByChatId2
+	    });
+	  }
+	  onViewTranscription(chatId, status) {
+	    const chatType = babelHelpers.classPrivateFieldLooseBase(this, _getTypeByChatId)[_getTypeByChatId](chatId);
+	    const normalizedStatus = status.toLowerCase();
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.im,
+	      category: AnalyticsCategory.audiomessage,
+	      event: AnalyticsEvent.viewTranscription,
+	      status: normalizedStatus,
+	      p1: `chatType_${chatType}`
+	    });
+	  }
+	  onPlay(chatId) {
+	    const chatType = babelHelpers.classPrivateFieldLooseBase(this, _getTypeByChatId)[_getTypeByChatId](chatId);
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.im,
+	      category: AnalyticsCategory.audiomessage,
+	      event: AnalyticsEvent.play,
+	      p1: `chatType_${chatType}`
+	    });
+	  }
+	  onPause(chatId) {
+	    const chatType = babelHelpers.classPrivateFieldLooseBase(this, _getTypeByChatId)[_getTypeByChatId](chatId);
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.im,
+	      category: AnalyticsCategory.audiomessage,
+	      event: AnalyticsEvent.pause,
+	      p1: `chatType_${chatType}`
+	    });
+	  }
+	  onChangeRate(chatId, rate) {
+	    const chatType = babelHelpers.classPrivateFieldLooseBase(this, _getTypeByChatId)[_getTypeByChatId](chatId);
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.im,
+	      category: AnalyticsCategory.audiomessage,
+	      event: AnalyticsEvent.changeSpeed,
+	      p1: `chatType_${chatType}`,
+	      p2: `speed_${rate}`
+	    });
+	  }
+	}
+	function _getTypeByChatId2(chatId) {
+	  const chat = im_v2_application_core.Core.getStore().getters['chats/getByChatId'](chatId);
+	  return getChatType(chat);
 	}
 
 	var _excludedChats = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("excludedChats");
@@ -1381,6 +1468,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    this.messageContextMenu = new MessageContextMenu();
 	    this.sliderInvite = new SliderInvite();
 	    this.chatPins = new ChatPins();
+	    this.chatInviteLink = new ChatInviteLink();
+	    this.audioMessage = new AudioMessage();
 	  }
 	  static getInstance() {
 	    if (!babelHelpers.classPrivateFieldLooseBase(this, _instance)[_instance]) {
@@ -1424,7 +1513,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      tool: AnalyticsTool.im,
 	      category: getCategoryByChatType(chatType),
 	      event: AnalyticsEvent.openExisting,
-	      type: isNotes(dialog.dialogId) ? PSEUDO_CHAT_TYPE_FOR_NOTES : chatType,
+	      type: chatType,
 	      c_section: `${currentLayout}_tab`,
 	      p2: getUserType()
 	    };
@@ -1458,7 +1547,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      tool: AnalyticsTool.im,
 	      category: getCategoryByChatType(chatType),
 	      event: AnalyticsEvent.typeMessage,
-	      p1: `chatType_${isNotes(dialog.dialogId) ? PSEUDO_CHAT_TYPE_FOR_NOTES : chatType}`
+	      p1: `chatType_${chatType}`
 	    };
 	    ui_analytics.sendData(params);
 	  }
@@ -1473,5 +1562,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.getCollabId = getCollabId;
 	exports.getUserType = getUserType;
 
-}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.UI.Analytics));
+}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.UI.Analytics,BX.Messenger.v2.Application,BX.Messenger.v2.Const));
 //# sourceMappingURL=analytics.bundle.js.map

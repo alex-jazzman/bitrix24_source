@@ -54,7 +54,7 @@ jn.define('im/messenger/controller/search/experimental/service/local-search-serv
 		 */
 		getItemsFromRecentStore(queryWords)
 		{
-			const recentItems = this.getAllRecentItems();
+			const recentItems = this.getRecentItemsForSearch();
 
 			const foundItems = new Map();
 			recentItems.forEach((recentItem) => {
@@ -71,9 +71,9 @@ jn.define('im/messenger/controller/search/experimental/service/local-search-serv
 		 * @private
 		 * @return {Array<RecentLocalItem>}
 		 */
-		getAllRecentItems()
+		getRecentItemsForSearch()
 		{
-			const recentItems = this.getRecentListItems();
+			const recentItems = this.getRecentListSearchItems();
 			const searchSessionItems = this.getSearchSessionListItems();
 
 			const itemsMap = new Map();
@@ -94,10 +94,19 @@ jn.define('im/messenger/controller/search/experimental/service/local-search-serv
 		 * @private
 		 * @return {Array<RecentLocalItem>}
 		 */
-		getRecentListItems()
+		getRecentListSearchItems()
 		{
-			return this.store.getters['recentModel/getCollection']().map((item) => {
+			const recentList = this.store.getters['recentModel/getCollection']().map((item) => {
 				return this.prepareRecentItem(item);
+			});
+
+			// TODO: MessengerV2 move to config
+			const exceptDialogTypes = {
+				[DialogType.tasksTask]: true,
+			};
+
+			return recentList.filter((item) => {
+				return !exceptDialogTypes[item.dialog.type];
 			});
 		}
 

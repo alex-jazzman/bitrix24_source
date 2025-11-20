@@ -406,7 +406,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	var _hasMoreItemsToLoad = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hasMoreItemsToLoad");
 	var _lastMessageDate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("lastMessageDate");
 	var _requestItems = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("requestItems");
-	var _getQueryParams = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getQueryParams");
 	var _updateModels = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateModels");
 	var _getChatsWithCounters = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getChatsWithCounters");
 	var _getLastMessageDate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getLastMessageDate");
@@ -424,9 +423,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    });
 	    Object.defineProperty(this, _updateModels, {
 	      value: _updateModels2
-	    });
-	    Object.defineProperty(this, _getQueryParams, {
-	      value: _getQueryParams2
 	    });
 	    Object.defineProperty(this, _requestItems, {
 	      value: _requestItems2
@@ -477,6 +473,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  getRecentSaveActionName() {
 	    throw new Error('BaseRecentList: you should implement "getRecentSaveActionName" for child class');
 	  }
+	  getQueryParams(firstPage = false) {
+	    return {
+	      limit: this.getItemsPerPage(),
+	      filter: this.getRequestFilter(firstPage)
+	    };
+	  }
 	  getRequestFilter(firstPage = false) {
 	    return {
 	      lastMessageDate: firstPage ? null : babelHelpers.classPrivateFieldLooseBase(this, _lastMessageDate)[_lastMessageDate]
@@ -492,7 +494,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	async function _requestItems2({
 	  firstPage = false
 	} = {}) {
-	  const result = await im_v2_lib_rest.runAction(this.getRestMethodName(), babelHelpers.classPrivateFieldLooseBase(this, _getQueryParams)[_getQueryParams](firstPage)).catch(([error]) => {
+	  const queryParams = {
+	    data: this.getQueryParams(firstPage)
+	  };
+	  const result = await im_v2_lib_rest.runAction(this.getRestMethodName(), queryParams).catch(([error]) => {
 	    console.error('BaseRecentList: page request error', error);
 	  });
 	  babelHelpers.classPrivateFieldLooseBase(this, _pagesLoaded)[_pagesLoaded]++;
@@ -505,14 +510,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  babelHelpers.classPrivateFieldLooseBase(this, _isLoading)[_isLoading] = false;
 	  this.onAfterRequest(firstPage);
 	  return babelHelpers.classPrivateFieldLooseBase(this, _updateModels)[_updateModels](result);
-	}
-	function _getQueryParams2(firstPage = false) {
-	  return {
-	    data: {
-	      limit: this.getItemsPerPage(),
-	      filter: this.getRequestFilter(firstPage)
-	    }
-	  };
 	}
 	function _updateModels2(restResult) {
 	  const {

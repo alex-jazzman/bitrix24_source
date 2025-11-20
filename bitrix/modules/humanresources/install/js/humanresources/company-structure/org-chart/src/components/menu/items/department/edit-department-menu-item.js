@@ -45,6 +45,7 @@ export class EditDepartmentMenuItem extends AbstractMenuItem
 			isEditMode: true,
 			showEntitySelector: false,
 			type: 'department',
+			entityType: this.entityType,
 			source: analyticSource,
 			refToFocus,
 		});
@@ -56,14 +57,18 @@ export class EditDepartmentMenuItem extends AbstractMenuItem
 		{
 			return permissionChecker.hasPermission(PermissionActions.teamEdit, entityId)
 				|| permissionChecker.hasPermission(PermissionActions.teamAddMember, entityId)
-				|| permissionChecker.hasPermission(PermissionActions.teamCommunicationEdit, entityId)
+				|| permissionChecker.hasPermission(PermissionActions.teamChatEdit, entityId)
+				|| permissionChecker.hasPermission(PermissionActions.teamChannelEdit, entityId)
+				|| permissionChecker.hasPermission(PermissionActions.teamCollabEdit, entityId)
 				|| permissionChecker.hasPermission(PermissionActions.teamSettingsEdit, entityId)
 			;
 		}
 
 		return permissionChecker.hasPermission(PermissionActions.departmentEdit, entityId)
 			|| permissionChecker.hasPermission(PermissionActions.employeeAddToDepartment, entityId)
-			|| permissionChecker.hasPermission(PermissionActions.departmentCommunicationEdit, entityId)
+			|| permissionChecker.hasPermission(PermissionActions.departmentChatEdit, entityId)
+			|| permissionChecker.hasPermission(PermissionActions.departmentChannelEdit, entityId)
+			|| permissionChecker.hasPermission(PermissionActions.departmentCollabEdit, entityId)
 		;
 	}
 }

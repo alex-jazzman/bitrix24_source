@@ -2,6 +2,7 @@
  * @module im/messenger/controller/sidebar-v2/user-actions/user
  */
 jn.define('im/messenger/controller/sidebar-v2/user-actions/user', (require, exports, module) => {
+	const { Type } = require('type');
 	const { getLogger } = require('im/messenger/lib/logger');
 	const {
 		EventType,
@@ -65,22 +66,27 @@ jn.define('im/messenger/controller/sidebar-v2/user-actions/user', (require, expo
 	function onMentionUser(dialogId, userId)
 	{
 		const dialogCode = serviceLocator.get(dialogId)?.dialogCode;
+		if (!Type.isStringFilled(dialogCode))
+		{
+			return;
+		}
 
-		try
-		{
-			PageManager.getNavigator().popTo(dialogCode)
-				.then(() => {
-					BX.onCustomEvent('onDestroySidebar');
-					BX.onCustomEvent(EventType.dialog.external.mention, [userId, BBCode.user, dialogId]);
-				})
-				.catch((err) => {
-					logger.error('onMentionUser.popTo.catch error', err);
-				});
-		}
-		catch (error)
-		{
-			logger.error('onMentionUser.getNavigator()', error);
-		}
+		PageManager.getNavigator().popTo(dialogCode)
+			.catch((err) => {
+				logger.warn('onMentionUser.popTo.catch error', err);
+
+				// popTo works with a stack. There's no such screen in the im.messenger component stack.
+				// it might be open somewhere else, for example, in the tasks component, so we'll use the event to close it.
+				MessengerEmitter.emit(EventType.sidebar.destroy);
+			})
+			.finally(() => {
+				BX.postComponentEvent(
+					EventType.dialog.external.mention,
+					[userId, BBCode.user, dialogId],
+					ComponentCode.imMessenger,
+				);
+			})
+		;
 	}
 
 	function onOpenNotes()

@@ -2,16 +2,6 @@ import type { GroupModel } from 'tasks.v2.model.groups';
 import type { StageModel } from 'tasks.v2.model.stages';
 import type { GroupDto, StageDto } from './types';
 
-export function mapModelToDto(group: GroupModel): GroupDto
-{
-	return {
-		id: group.id,
-		name: group.name,
-		image: group.image,
-		type: group.type,
-	};
-}
-
 export function mapDtoToModel(groupDto: GroupDto): GroupModel
 {
 	return {

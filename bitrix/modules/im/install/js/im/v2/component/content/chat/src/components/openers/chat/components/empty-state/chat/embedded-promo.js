@@ -31,7 +31,7 @@ export const EmbeddedChatPromoEmptyState = {
 		preparedTitle(): string
 		{
 			return Loc.getMessage('IM_CONTENT_EMBEDDED_CHAT_START_TITLE', {
-				'[color]': '<span class="bx-im-embedded-promo-start__title-highlight">',
+				'[color]': '<span class="--brand-accent-with-icon">',
 				'[/color]': '</span>',
 			});
 		},

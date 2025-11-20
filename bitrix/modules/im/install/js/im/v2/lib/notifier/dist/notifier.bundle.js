@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,ui_notification,im_v2_const,main_core) {
+(function (exports,ui_notification,im_v2_application_core,im_public,im_v2_const,main_core) {
 	'use strict';
 
 	const showNotification = (text, params) => {
@@ -89,6 +89,21 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  },
 	  onAddToFavoriteComplete() {
 	    showNotification(main_core.Loc.getMessage('IM_NOTIFIER_MESSAGE_FAVORITE_ADD_COMPLETE'));
+	  },
+	  onForwardNotesComplete(messagesIds) {
+	    const text = messagesIds.length > 1 ? main_core.Loc.getMessage('IM_NOTIFIER_MESSAGE_FORWARD_NOTES_SEVERAL_MESSAGES_COMPLETE') : main_core.Loc.getMessage('IM_NOTIFIER_MESSAGE_FORWARD_NOTES_COMPLETE');
+	    const dialogId = im_v2_application_core.Core.getUserId().toString();
+	    const notesOpeningAction = {
+	      title: main_core.Loc.getMessage('IM_NOTIFIER_MESSAGE_FORWARD_NOTES_OPEN_COMPLETE'),
+	      events: {
+	        click: () => {
+	          void im_public.Messenger.openChat(dialogId);
+	        }
+	      }
+	    };
+	    showNotification(text, {
+	      actions: [notesOpeningAction]
+	    });
 	  },
 	  handleLoadContextError(error) {
 	    if (error.code === im_v2_const.ErrorCode.message.notFound) {
@@ -283,5 +298,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.Notifier = Notifier;
 
-}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX,BX.Messenger.v2.Const,BX));
+}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX));
 //# sourceMappingURL=notifier.bundle.js.map

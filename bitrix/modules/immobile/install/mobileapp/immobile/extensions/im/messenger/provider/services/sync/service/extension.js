@@ -190,21 +190,25 @@ jn.define('im/messenger/provider/services/sync/service', (require, exports, modu
 				return false;
 			}
 
-			return (this.isSyncInProgress && !extra.fromSyncService) || serviceLocator.get('core').getAppStatus() === AppStatus.connection;
+			return this.isSyncInProgress || serviceLocator.get('core').getAppStatus() === AppStatus.connection;
 		}
 
 		/**
+		 * @param {string} fromDate
+		 * @param {string|null} fromServerDate
+		 * @param {?number} lastId
 		 * @private
 		 */
-		async loadChangelog({ fromDate, fromServerDate })
+		async loadChangelog({ fromDate, fromServerDate, lastId })
 		{
 			const result = await this.loadService.loadPage({
+				lastId,
 				fromDate,
 				fromServerDate,
 				isBackgroundSync: this.isBackground,
 			});
 			const lastServerDate = result.lastServerDate;
-			const hasMore = result.hasMore === true && Type.isStringFilled(lastServerDate);
+			const hasMore = result.hasMore === true && Type.isStringFilled(lastServerDate) && Boolean(result.lastId);
 
 			if (Type.isStringFilled(lastServerDate))
 			{
@@ -216,6 +220,7 @@ jn.define('im/messenger/provider/services/sync/service', (require, exports, modu
 			{
 				await this.loadChangelog({
 					fromServerDate: lastServerDate,
+					lastId: result.lastId,
 				});
 			}
 			else

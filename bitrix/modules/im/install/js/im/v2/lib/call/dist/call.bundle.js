@@ -86,6 +86,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	var _controller = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("controller");
 	var _store = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
 	var _restClient = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("restClient");
+	var _openChatActionByChatType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("openChatActionByChatType");
 	var _onCallJoinHandler = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onCallJoinHandler");
 	var _onCallLeaveHandler = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onCallLeaveHandler");
 	var _onCallDestroyHandler = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onCallDestroyHandler");
@@ -192,6 +193,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    Object.defineProperty(this, _restClient, {
 	      writable: true,
 	      value: void 0
+	    });
+	    Object.defineProperty(this, _openChatActionByChatType, {
+	      writable: true,
+	      value: {
+	        [im_v2_const.ChatType.taskComments]: dialogId => {
+	          if (im_public.Messenger.isEmbeddedMode() || im_public.Messenger.isMessengerSliderOpened()) {
+	            return im_public.Messenger.openTaskComments(dialogId);
+	          }
+	          return Promise.resolve();
+	        }
+	      }
 	    });
 	    Object.defineProperty(this, _onCallJoinHandler, {
 	      writable: true,
@@ -396,6 +408,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      isSliderFocused: () => im_v2_lib_slider.MessengerSlider.getInstance().isFocused(),
 	      isThemeDark: () => false,
 	      openMessenger: dialogId => {
+	        const dialog = babelHelpers.classPrivateFieldLooseBase(this, _getDialog)[_getDialog](dialogId);
+	        if (dialog.type in babelHelpers.classPrivateFieldLooseBase(this, _openChatActionByChatType)[_openChatActionByChatType]) {
+	          return babelHelpers.classPrivateFieldLooseBase(this, _openChatActionByChatType)[_openChatActionByChatType][dialog.type](dialogId);
+	        }
 	        return im_public.Messenger.openChat(dialogId);
 	      },
 	      openHistory: dialogId => {
@@ -406,7 +422,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      },
 	      openHelpArticle: () => {},
 	      // TODO
-	      getContainer: () => document.querySelector(`.${CallManager.viewContainerClass}`),
 	      getMessageCount: () => babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].getters['counters/getTotalChatCounter'],
 	      getCurrentDialogId: () => babelHelpers.classPrivateFieldLooseBase(this, _getCurrentDialogId)[_getCurrentDialogId](),
 	      isPromoRequired: promoCode => {

@@ -9,7 +9,7 @@ export type ShowToastParams = {
 }
 
 export type ShowNotifierParams = {
-	title: string,
+	title?: string,
 	message?: string,
 	imageUrl?: string,
 	time?: number,

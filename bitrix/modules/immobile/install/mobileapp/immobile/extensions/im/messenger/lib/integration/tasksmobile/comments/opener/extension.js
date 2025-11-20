@@ -2,8 +2,11 @@
  * @module im/messenger/lib/integration/tasksmobile/comments/opener
  */
 jn.define('im/messenger/lib/integration/tasksmobile/comments/opener', (require, exports, module) => {
-	const { Loc } = require('im/messenger/loc');
 	const { DialogOpener } = require('im/messenger/api/dialog-opener');
+	const {
+		SidebarContextMenuActionId,
+		SidebarPrimaryActionButtonId,
+	} = require('im/messenger/controller/sidebar-v2/const');
 
 	/**
 	 * @param {number} chatId
@@ -20,16 +23,6 @@ jn.define('im/messenger/lib/integration/tasksmobile/comments/opener', (require, 
 				customData: {},
 			},
 			header: {
-				title: {
-					params: {
-						text: Loc.getMessage('IMMOBILE_INTEGRATION_M_TASK_DETAILS_COMMENTS_TITLE'),
-						type: 'wizard',
-					},
-					controller: {
-						extensionName: 'im:messenger/lib/integration/tasksmobile/comments/header/title',
-						className: 'CommentsHeaderTitle',
-					},
-				},
 				buttons: {
 					controller: {
 						extensionName: 'im:messenger/lib/integration/tasksmobile/comments/header/buttons',
@@ -38,7 +31,22 @@ jn.define('im/messenger/lib/integration/tasksmobile/comments/opener', (require, 
 				},
 			},
 			sidebar: {
-				enabled: false,
+				enabled: true,
+				params: {
+					addParticipantsEnabled: false,
+					headerContextMenuItems: [
+						SidebarContextMenuActionId.COPY_LINK,
+						SidebarContextMenuActionId.PIN,
+						SidebarContextMenuActionId.UNPIN,
+					],
+					primaryActionButtons: [
+						'open_task',
+						SidebarPrimaryActionButtonId.VIDEO_CALL,
+						SidebarPrimaryActionButtonId.AUDIO_CALL,
+						SidebarPrimaryActionButtonId.SEARCH,
+						SidebarPrimaryActionButtonId.MESSAGE_AUTO_DELETE,
+					],
+				},
 			},
 			message: {
 				contextMenu: {

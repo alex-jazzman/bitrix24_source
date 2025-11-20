@@ -28,6 +28,7 @@ $MESS["TASKS_V2_CHECK_LIST_LOADING"] = "Чек парағы жүктеледі";
 $MESS["TASKS_V2_CHECK_LIST_MY_FILTER_HINT_ALL"] = "Барлық тармақтарымды көрсету";
 $MESS["TASKS_V2_CHECK_LIST_MY_FILTER_HINT_MY"] = "Менің тармақтарымды көрсету";
 $MESS["TASKS_V2_CHECK_LIST_NEW_BTN"] = "Жаңа чек парағы";
+$MESS["TASKS_V2_CHECK_LIST_PREVIEW_COMPLETED"] = "Аяқталған чек-парақтары: #number#";
 $MESS["TASKS_V2_CHECK_LIST_READY_BTN"] = "Дайын";
 $MESS["TASKS_V2_CHECK_LIST_STATUS_LABEL"] = "<span>#completed#/#total#</span><span>орындалды</span>";
 $MESS["TASKS_V2_CHECK_LIST_STATUS_LABEL_NEW"] = "#completed#/#total#  орындалды";

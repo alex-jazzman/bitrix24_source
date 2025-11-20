@@ -12,6 +12,7 @@ return [
 		'im:messenger/provider/data',
 	],
 	'bundle' => [
+		'./src/audio',
 		'./src/chat-create',
 		'./src/chat-delete',
 		'./src/collab-entities',

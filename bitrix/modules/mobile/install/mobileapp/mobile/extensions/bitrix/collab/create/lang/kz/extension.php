@@ -1,4 +1,5 @@
 <?php
+$MESS["COLLAB_INVITE_TOAST_GUESTS_INVITE_DISABLED"] = "Битрикс24 әкімшісі қонақтарды коллабтарға шақыру мүмкіндігін өшірді";
 $MESS["M_COLLAB_CREATE_AUTO_DELETE_MESSAGES_ITEM_DAY"] = "1 күн";
 $MESS["M_COLLAB_CREATE_AUTO_DELETE_MESSAGES_ITEM_HOUR"] = "1 сағат";
 $MESS["M_COLLAB_CREATE_AUTO_DELETE_MESSAGES_ITEM_MONTH"] = "1 ай.";
@@ -37,6 +38,7 @@ $MESS["M_COLLAB_CREATE_TITLE"] = "Жаңа коллаба";
 $MESS["M_COLLAB_CREATE_UPLOAD_ERROR_TEXT"] = "Басқа файлды таңдап көріңіз. Егер қате пайда бола берсе, Битрикс24 әкімшісіне хабарласыңыз";
 $MESS["M_COLLAB_CREATE_UPLOAD_ERROR_TITLE"] = "Фотосуретті жүктеу мүмкін болмады";
 $MESS["M_COLLAB_PERMISSIONS_ALL"] = "Барлық қатысушылар";
+$MESS["M_COLLAB_PERMISSIONS_ALLOW_GUESTS_INVITATION_ITEM_TITLE"] = "Қонақтарды коллабқа шақыруға рұқсат ету";
 $MESS["M_COLLAB_PERMISSIONS_EMPLOYEES"] = "Тек қызметкерлер";
 $MESS["M_COLLAB_PERMISSIONS_FALSE"] = "Жоқ";
 $MESS["M_COLLAB_PERMISSIONS_INVITERS_ITEM_TITLE"] = "Қатысушыларды кім шақыра алады";

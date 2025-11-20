@@ -56,6 +56,7 @@ $MESS['IM_SIDEBAR_MENU_DELETE_TASK_CONNECTION'] = "Удалить связь з�
 $MESS['IM_SIDEBAR_MENU_DELETE_MEETING_CONNECTION'] = "Удалить связь встречи с чатом";
 $MESS['IM_SIDEBAR_MENU_MANAGER_ADD'] = "Сделать администратором";
 $MESS['IM_SIDEBAR_MENU_MANAGER_REMOVE'] = "Исключить из администраторов";
+$MESS['IM_SIDEBAR_MENU_COPY_INVITE_LINK'] = "Копировать ссылку";
 
 // empty states
 $MESS['IM_SIDEBAR_LINKS_EMPTY'] = "Нет ссылок";

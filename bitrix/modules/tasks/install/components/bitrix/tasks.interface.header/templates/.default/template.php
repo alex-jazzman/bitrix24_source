@@ -112,6 +112,11 @@ if ($arParams['SHOW_FILTER'] === 'Y')
 ?>
 
 <?php
+$request = \Bitrix\Main\Context::getCurrent()->getRequest();
+$relationToId = $request->get('relationToId');
+
+if (!$relationToId)
+{
 	$APPLICATION->IncludeComponent(
 		'bitrix:tasks.interface.toolbar',
 		'',
@@ -142,6 +147,7 @@ if ($arParams['SHOW_FILTER'] === 'Y')
 		$component,
 		array('HIDE_ICONS' => true)
 	);
+}
 
 ?>
 

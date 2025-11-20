@@ -92,7 +92,10 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  employeeAddToDepartment: 'ACTION_EMPLOYEE_ADD_TO_DEPARTMENT',
 	  employeeRemoveFromDepartment: 'ACTION_EMPLOYEE_REMOVE_FROM_DEPARTMENT',
 	  employeeFire: 'ACTION_FIRE_EMPLOYEE',
-	  departmentCommunicationEdit: 'ACTION_DEPARTMENT_COMMUNICATION_EDIT',
+	  departmentSettingsEdit: 'ACTION_DEPARTMENT_SETTINGS_EDIT',
+	  departmentChatEdit: 'ACTION_DEPARTMENT_CHAT_EDIT',
+	  departmentChannelEdit: 'ACTION_DEPARTMENT_CHANNEL_EDIT',
+	  departmentCollabEdit: 'ACTION_DEPARTMENT_COLLAB_EDIT',
 	  accessEdit: 'ACTION_USERS_ACCESS_EDIT',
 	  teamAccessEdit: 'ACTION_TEAM_ACCESS_EDIT',
 	  inviteToDepartment: 'ACTION_USER_INVITE',
@@ -103,7 +106,9 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  teamAddMember: 'ACTION_TEAM_MEMBER_ADD',
 	  teamRemoveMember: 'ACTION_TEAM_MEMBER_REMOVE',
 	  teamSettingsEdit: 'ACTION_TEAM_SETTINGS_EDIT',
-	  teamCommunicationEdit: 'ACTION_TEAM_COMMUNICATION_EDIT'
+	  teamChatEdit: 'ACTION_TEAM_CHAT_EDIT',
+	  teamChannelEdit: 'ACTION_TEAM_CHANNEL_EDIT',
+	  teamCollabEdit: 'ACTION_TEAM_COLLAB_EDIT'
 	});
 	const PermissionLevels = Object.freeze({
 	  fullCompany: 30,
@@ -119,7 +124,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    this.currentUserPermissions = currentUserPermissions;
 	  }
 	  isCheckerAction(action) {
-	    const teamActions = [PermissionActions.teamView, PermissionActions.teamCreate, PermissionActions.teamEdit, PermissionActions.teamDelete, PermissionActions.teamAddMember, PermissionActions.teamRemoveMember, PermissionActions.teamSettingsEdit, PermissionActions.teamCommunicationEdit];
+	    const teamActions = [PermissionActions.teamView, PermissionActions.teamCreate, PermissionActions.teamEdit, PermissionActions.teamDelete, PermissionActions.teamAddMember, PermissionActions.teamRemoveMember, PermissionActions.teamSettingsEdit, PermissionActions.teamChatEdit, PermissionActions.teamChannelEdit, PermissionActions.teamCollabEdit];
 	    return teamActions.includes(action);
 	  }
 	  hasPermission(action, entityId, permissionValue, minValue) {
@@ -203,7 +208,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 
 	class DepartmentPermissionChecker extends BasePermissionChecker {
 	  isCheckerAction(action) {
-	    const departmentActions = [PermissionActions.structureView, PermissionActions.departmentCreate, PermissionActions.departmentDelete, PermissionActions.departmentEdit, PermissionActions.employeeAddToDepartment, PermissionActions.employeeRemoveFromDepartment, PermissionActions.employeeFire, PermissionActions.departmentCommunicationEdit, PermissionActions.inviteToDepartment];
+	    const departmentActions = [PermissionActions.structureView, PermissionActions.departmentCreate, PermissionActions.departmentDelete, PermissionActions.departmentEdit, PermissionActions.employeeAddToDepartment, PermissionActions.employeeRemoveFromDepartment, PermissionActions.employeeFire, PermissionActions.departmentSettingsEdit, PermissionActions.departmentChatEdit, PermissionActions.departmentChannelEdit, PermissionActions.departmentCollabEdit, PermissionActions.inviteToDepartment];
 	    return departmentActions.includes(action);
 	  }
 	  hasPermission(action, departmentId, permissionValue, minLevel) {
@@ -276,12 +281,14 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      currentUserPermissions,
 	      teamsAvailable,
 	      collabsAvailable,
-	      deputyApprovesBP
+	      deputyApprovesBP,
+	      departmentSettingsAvailable
 	    } = await chartAPI.getDictionary();
 	    this.currentUserPermissions = currentUserPermissions;
 	    this.isTeamsAvailable = teamsAvailable;
 	    this.isCollabsAvailable = collabsAvailable;
 	    this.isDeputyApprovesBPAvailable = deputyApprovesBP;
+	    this.isDepartmentSettingsAvailable = departmentSettingsAvailable;
 	    this.isInitialized = true;
 	  }
 	  hasPermission(action, entityId, minLevel = null) {
@@ -299,6 +306,9 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  }
 	  checkDeputyApprovalBPAvailable() {
 	    return this.isDeputyApprovesBPAvailable;
+	  }
+	  checkDepartmentSettingsAvailable() {
+	    return this.isDepartmentSettingsAvailable;
 	  }
 	  hasPermissionOfAction(action) {
 	    const permissionLevel = this.currentUserPermissions[action];

@@ -2,6 +2,7 @@ import { Loc, Tag } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { Button, ButtonColor, ButtonSize, ButtonState } from 'ui.buttons';
 import { SkipButtonMenu } from './skip-button-menu';
+import { sendData } from 'ui.analytics';
 
 type FooterOptions = {
 	events: {
@@ -138,6 +139,7 @@ export class Footer extends EventEmitter
 			noCaps: true,
 			dropdown: true,
 			menu: this.#skipButtonMenu.getMenu(),
+			onclick: this.#onSkipButtonClick.bind(this),
 		});
 
 		this.#skipButtonMenu.setButton(this.#skipButton);
@@ -151,6 +153,16 @@ export class Footer extends EventEmitter
 		}
 
 		this.emit('onSubmitButtonClick');
+
+		sendData({
+			tool: 'tasks',
+			category: 'task_operations',
+			event: 'click_save_button',
+			type: 'popup',
+			c_section: 'tasks',
+			c_sub_section: 'deadline_field',
+			c_element: 'save_button',
+		});
 	}
 
 	#onCancelButtonClick(): void
@@ -161,6 +173,29 @@ export class Footer extends EventEmitter
 		}
 
 		this.emit('onCancelButtonClick');
+
+		sendData({
+			tool: 'tasks',
+			category: 'task_operations',
+			event: 'click_no_deadline_button',
+			type: 'popup',
+			c_section: 'tasks',
+			c_sub_section: 'deadline_popup',
+			c_element: 'no_deadline_button',
+		});
+	}
+
+	#onSkipButtonClick(): void
+	{
+		sendData({
+			tool: 'tasks',
+			category: 'task_operations',
+			event: 'click_no_remind_button',
+			type: 'popup',
+			c_section: 'tasks',
+			c_sub_section: 'deadline_popup',
+			c_element: 'no_remind_button',
+		});
 	}
 
 	#onSkipMenuItemSelect(event: BaseEvent): void

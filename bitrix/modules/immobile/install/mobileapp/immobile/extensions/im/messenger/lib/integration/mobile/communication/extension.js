@@ -12,7 +12,7 @@ jn.define('im/messenger/lib/integration/mobile/communication', (require, exports
 	{
 		constructor()
 		{
-			this.messagerInitService = serviceLocator.get('messenger-init-service');
+			this.messengerInitService = serviceLocator.get('messenger-init-service');
 			this.bindMethods();
 			this.subscribeInitMessengerEvent();
 		}
@@ -26,7 +26,7 @@ jn.define('im/messenger/lib/integration/mobile/communication', (require, exports
 
 		subscribeInitMessengerEvent()
 		{
-			this.messagerInitService.onInit(this.initMessenger);
+			this.messengerInitService.onInit(this.initMessenger);
 		}
 
 		handleUserCountersGet(portalCounters)

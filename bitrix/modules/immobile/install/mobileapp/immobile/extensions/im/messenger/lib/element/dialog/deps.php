@@ -41,6 +41,7 @@ return [
 		'im:messenger/lib/element/chat-avatar',
 		'im:messenger/controller/dialog/lib/helper/text',
 		'im:messenger/controller/dialog/lib/sidebar',
+		'im:messenger/lib/permission-manager',
 	],
 	'bundle' => [
 		'./src/message/element/attach/attach',

@@ -39,6 +39,9 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 
 		imV2RecentChannelTail: 'im.v2.Recent.Channel.tail',
 		imV2RecentCollabTail: 'im.v2.Recent.Collab.tail',
+		imV2RecentExternalChatTail: 'im.v2.Recent.ExternalChat.tail',
+
+		imV2RecentChannelExtendPullWatch: 'im.v2.Recent.Channel.extendPullWatch',
 
 		imV2ChatGet: 'im.v2.Chat.get',
 		imV2ChatExtendPullWatch: 'im.v2.Chat.extendPullWatch',
@@ -127,6 +130,7 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 		imDiskFileDelete: 'im.disk.file.delete',
 		imDiskFileSave: 'im.disk.file.save',
 		imV2DiskFileSave: 'im.v2.Disk.File.save',
+		imV2DiskFileTranscribe: 'im.v2.Disk.File.transcribe',
 
 		imRecentGet: 'im.recent.get',
 		imRecentList: 'im.recent.list',
@@ -161,6 +165,11 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 		serverTime: 'server.time',
 
 		openlinesDialogGet: 'imopenlines.dialog.get',
+
+		immobileSettingsGet: 'immobile.api.Settings.get',
+		immobileSettingsToggleMessengerV2: 'immobile.api.Settings.toggleMessengerV2',
+
+		immobileMessengerLoad: 'immobile.Messenger.load',
 
 		immobileTabChatLoad: 'immobile.Tab.Chat.load',
 		immobileTabCopilotLoad: 'immobile.Tab.Copilot.load',

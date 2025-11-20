@@ -5,6 +5,10 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 (function (exports) {
 	'use strict';
 
+	const AhaMoment = Object.freeze({
+	  AuditorsInCard: 'auditors_in_card'
+	});
+
 	const Tool = Object.freeze({
 	  Tasks: 'tasks'
 	});
@@ -108,14 +112,25 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  Project: 'project',
 	  Tag: 'task-tag',
 	  User: 'user',
-	  StructureNode: 'structure-node'
+	  StructureNode: 'structure-node',
+	  Deal: 'deal',
+	  Contact: 'contact',
+	  Company: 'company',
+	  Lead: 'lead',
+	  SmartInvoice: 'smart_invoice',
+	  DynamicMultiple: 'dynamic_multiple',
+	  Task: 'task'
 	});
 
 	const EventName = Object.freeze({
 	  CloseCard: 'tasks:card:close',
 	  CloseFullCard: 'tasks:full-card:close',
 	  OpenFullCard: 'tasks:card:openFullCard',
+	  OpenCompactCard: 'tasks:card:openCompactCard',
+	  TaskAdd: 'tasks:card:taskAdd',
+	  TaskUpdate: 'tasks:card:taskUpdate',
 	  OpenSliderCard: 'tasks:card:openSliderCard',
+	  OpenGrid: 'tasks:card:openGrid',
 	  ShowOverlay: 'tasks:card:showOverlay',
 	  HideOverlay: 'tasks:card:hideOverlay',
 	  AdjustPosition: 'tasks:card:adjustPosition',
@@ -130,8 +145,13 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  Collab: 'collab'
 	});
 
+	const Limit = Object.freeze({
+	  RelationList: 3
+	});
+
 	const Model = Object.freeze({
 	  CheckList: 'checklist',
+	  CrmItems: 'crm-items',
 	  Epics: 'epics',
 	  Flows: 'flows',
 	  Groups: 'groups',
@@ -145,6 +165,11 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  Tasks: 'tasks'
 	});
 
+	const Option = Object.freeze({
+	  // AhaMoments
+	  AhaAuditorsInCompactFormPopup: 'aha_auditors_compact_form'
+	});
+
 	const TaskStatus = Object.freeze({
 	  Pending: 'pending',
 	  InProgress: 'in_progress',
@@ -153,26 +178,39 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	  Deferred: 'deferred'
 	});
 
-	const AhaMoment = Object.freeze({
-	  AuditorsInCard: 'auditors_in_card'
+	const TaskField = Object.freeze({
+	  Accomplices: 'accomplicesIds',
+	  Auditors: 'auditorsIds',
+	  CheckList: 'checklist',
+	  Creator: 'creatorId',
+	  Crm: 'crmItemIds',
+	  DatePlan: 'datePlan',
+	  Deadline: 'deadlineTs',
+	  Files: 'fileIds',
+	  Flow: 'flowId',
+	  Group: 'groupId',
+	  Parent: 'parentId',
+	  RelatedTasks: 'relatedTasks',
+	  Responsible: 'responsibleId',
+	  Status: 'status',
+	  SubTasks: 'subTasks',
+	  Tags: 'tags',
+	  Title: 'title'
 	});
 
-	const Option = Object.freeze({
-	  // AhaMoments
-	  AhaAuditorsInCompactFormPopup: 'aha_auditors_compact_form'
-	});
-
+	exports.AhaMoment = AhaMoment;
 	exports.Analytics = Analytics;
 	exports.CardType = CardType;
 	exports.DurationUnit = DurationUnit;
 	exports.EntitySelectorEntity = EntitySelectorEntity;
 	exports.EventName = EventName;
 	exports.GroupType = GroupType;
+	exports.Limit = Limit;
 	exports.Model = Model;
 	exports.Module = Module;
-	exports.TaskStatus = TaskStatus;
-	exports.AhaMoment = AhaMoment;
 	exports.Option = Option;
+	exports.TaskStatus = TaskStatus;
+	exports.TaskField = TaskField;
 
 }((this.BX.Tasks.V2.Const = this.BX.Tasks.V2.Const || {})));
 //# sourceMappingURL=const.bundle.js.map

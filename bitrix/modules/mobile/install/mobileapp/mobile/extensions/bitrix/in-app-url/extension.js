@@ -2,7 +2,7 @@
  * @module in-app-url
  */
 jn.define('in-app-url', (require, exports, module) => {
-	const { InAppUrl } = require('in-app-url/in-app-url');
+	const { InAppUrl } = require('in-app-url/src/in-app-url');
 
 	const inAppUrl = new InAppUrl();
 

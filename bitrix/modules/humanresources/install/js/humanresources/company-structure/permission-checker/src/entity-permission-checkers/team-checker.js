@@ -23,7 +23,9 @@ export class TeamPermissionChecker extends BasePermissionChecker
 			PermissionActions.teamAddMember,
 			PermissionActions.teamRemoveMember,
 			PermissionActions.teamSettingsEdit,
-			PermissionActions.teamCommunicationEdit,
+			PermissionActions.teamChatEdit,
+			PermissionActions.teamChannelEdit,
+			PermissionActions.teamCollabEdit,
 		];
 
 		return teamActions.includes(action);

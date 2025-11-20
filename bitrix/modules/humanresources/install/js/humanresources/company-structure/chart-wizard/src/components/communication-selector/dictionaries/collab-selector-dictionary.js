@@ -1,5 +1,6 @@
 import { getCollabDialogEntity } from 'humanresources.company-structure.structure-components';
 import { AbstractSelectorDictionary } from '../selector-dictionary';
+import { PermissionActions } from 'humanresources.company-structure.permission-checker';
 
 export class CollabSelectorDictionary extends AbstractSelectorDictionary
 {
@@ -18,6 +19,11 @@ export class CollabSelectorDictionary extends AbstractSelectorDictionary
 		},
 	};
 
+	permissionAction = {
+		department: PermissionActions.departmentCollabEdit,
+		team: PermissionActions.teamCollabEdit,
+	};
+
 	getEntityName(): string
 	{
 		return 'project';
@@ -28,12 +34,16 @@ export class CollabSelectorDictionary extends AbstractSelectorDictionary
 		return getCollabDialogEntity();
 	}
 
-	getDialogEvents(): Object
+	getDialogEvents(entityId: number, isTeamEntity: boolean, isEditMode: boolean): Object
 	{
 		return {
 			onLoad: (event: BaseEvent) => {
 				const dialog: Dialog = event.getTarget();
 				dialog.removeTab('projects');
+				if (!this.canEdit(entityId, isTeamEntity, isEditMode))
+				{
+					dialog.getTagSelector().lock();
+				}
 			},
 		};
 	}

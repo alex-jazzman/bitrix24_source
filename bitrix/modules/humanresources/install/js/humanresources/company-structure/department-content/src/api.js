@@ -48,15 +48,41 @@ export const DepartmentAPI = {
 	},
 	saveChats: (
 		nodeId: number,
-		ids: { chat: number[], channel: number[], collab: number[], withChildren: boolean } = {},
-		removeIds: { chat?: number[], channel?: number[], collab?: number[] } = {},
-		parentId: ?number = null,
+		ids: number[],
+		removeIds: number[],
+		withChildren: number = 0,
 	): Promise<Array> => {
 		return postData('humanresources.api.Structure.Node.Member.Chat.saveChatList', {
 			nodeId,
 			ids,
 			removeIds,
-			parentId,
+			withChildren,
+		});
+	},
+	saveChannel: (
+		nodeId: number,
+		ids: number[],
+		removeIds: number[],
+		withChildren: number = 0,
+	): Promise<Array> => {
+		return postData('humanresources.api.Structure.Node.Member.Chat.saveChannelList', {
+			nodeId,
+			ids,
+			removeIds,
+			withChildren,
+		});
+	},
+	saveCollab: (
+		nodeId: number,
+		ids: number[],
+		removeIds: number[],
+		withChildren: number = 0,
+	): Promise<Array> => {
+		return postData('humanresources.api.Structure.Node.Member.Chat.saveCollabList', {
+			nodeId,
+			ids,
+			removeIds,
+			withChildren,
 		});
 	},
 };

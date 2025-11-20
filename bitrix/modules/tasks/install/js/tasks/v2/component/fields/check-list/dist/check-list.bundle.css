@@ -10,6 +10,10 @@
 	padding: 3px 0 22px 0;
 }
 
+.tasks-check-list-wrapper.--sheet {
+	padding: 0 0 22px 0;
+}
+
 .tasks-check-list-content {
 	position: relative;
 	overflow: auto;

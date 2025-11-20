@@ -3,10 +3,7 @@ import { Event } from 'main.core';
 import { Button as UiButton, ButtonSize } from 'ui.vue3.components.button';
 
 import { Hint } from 'tasks.v2.component.elements.hint';
-import { Model } from 'tasks.v2.const';
-import { titleMeta } from 'tasks.v2.component.fields.title';
-import { filesMeta } from 'tasks.v2.component.fields.files';
-import { checkListMeta } from 'tasks.v2.component.fields.check-list';
+import { Model, TaskField } from 'tasks.v2.const';
 import { fieldHighlighter } from 'tasks.v2.lib.field-highlighter';
 import type { TaskModel } from 'tasks.v2.model.tasks';
 import { fileService, EntityTypes } from 'tasks.v2.provider.service.file-service';
@@ -111,8 +108,8 @@ export const AddTaskButton = {
 
 			this.fieldContainer = fieldHighlighter
 				.setContainer(this.$root.$el)
-				.addHighlight(titleMeta.id)
-				.getFieldContainer(titleMeta.id)
+				.addHighlight(TaskField.Title)
+				.getFieldContainer(TaskField.Title)
 			;
 
 			this.fieldContainer.querySelector('textarea').focus();
@@ -125,8 +122,8 @@ export const AddTaskButton = {
 
 			this.fieldContainer = fieldHighlighter
 				.setContainer(this.$root.$el)
-				.addChipHighlight(filesMeta.id)
-				.getChipContainer(filesMeta.id)
+				.addChipHighlight(TaskField.Files)
+				.getChipContainer(TaskField.Files)
 			;
 
 			this.showPopup();
@@ -137,8 +134,8 @@ export const AddTaskButton = {
 
 			this.fieldContainer = fieldHighlighter
 				.setContainer(this.$root.$el)
-				.addChipHighlight(checkListMeta.id)
-				.getChipContainer(checkListMeta.id)
+				.addChipHighlight(TaskField.CheckList)
+				.getChipContainer(TaskField.CheckList)
 			;
 
 			this.showPopup();

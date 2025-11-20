@@ -151,10 +151,6 @@ body {
 	word-wrap: break-word;
 }
 
-.main-color-picker-preview {
-	background: #f25a8f;
-}
-
 .template-landing24  {
 	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 14px;
@@ -168,10 +164,6 @@ body {
 
 input {
 	outline: none;
-}
-.main-color-picker-custom-input {
-	height: 100%;
-	margin-top: 0 !important;
 }
 
 /* new-preview-mod */

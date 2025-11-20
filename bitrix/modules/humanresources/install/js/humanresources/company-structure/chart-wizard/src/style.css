@@ -190,8 +190,7 @@
 }
 
 .chart-wizard__department_item-error,
-.chart-wizard__team-rights__item-options-error
-{
+.chart-wizard__settings__item-options-error {
 	display: flex;
 	align-items: center;
 	font: 13px/16px var(--ui-font-family-primary, var(--ui-font-family-system));
@@ -200,10 +199,24 @@
 }
 
 .chart-wizard__department_item-error .ui-icon-set.--warning,
-.chart-wizard__team-rights__item-options-error .ui-icon-set.--warning
-{
+.chart-wizard__settings__item-options-error .ui-icon-set.--warning {
 	--ui-icon-set__icon-size: 20px;
 	--ui-icon-set__icon-color: var(--ui-field-color-warning);
+}
+
+.chart-wizard__settings__item-options-warning {
+	display: flex;
+	align-items: center;
+	font: 12px var(--ui-font-family-primary, var(--ui-font-family-system));
+	color: var(--ui-color-palette-gray-90);
+	margin-top: 6px;
+}
+
+.chart-wizard__settings__item-options-warning .ui-icon-set.--warning {
+	--ui-icon-set__icon-size: 16px;
+	--ui-icon-set__icon-color: var(--ui-field-color-orange);
+	margin-bottom: -2px;
+	margin-right: 2px;
 }
 
 .chart-wizard__entity {
@@ -287,7 +300,7 @@
 }
 
 .chart-wizard__entity:not(.--enabled) .chart-wizard__entity_title.--soon:after,
-.chart-wizard__team-rights__item-options__item-content_title.--soon:after
+.chart-wizard__settings__item-options__item-content_title.--soon:after
 {
 	content: attr(data-title);
 	display: inline-block;
@@ -362,7 +375,7 @@
 }
 
 .chart-wizard__bind-chat,
-.chart-wizard__team-rights {
+.chart-wizard__settings {
 	flex: 1;
 }
 
@@ -444,22 +457,22 @@
 	margin-bottom: 5px;
 }
 
-.chart-wizard__team-rights__item-description-container {
+.chart-wizard__settings__item-description-container {
 	display: flex;
 }
 
-.chart-wizard__team-rights__item-description-text {
+.chart-wizard__settings__item-description-text {
 	font: 12px/14.32px var(--ui-font-family-system);
 	color: var(--ui-color-palette-gray-90);
 	margin-top: 6px;
 	margin-bottom: 5px;
 }
 
-.chart-wizard__team-rights__item-description-text.--soon {
+.chart-wizard__settings__item-options.--soon .chart-wizard__settings__item-description-text {
 	color: var(--ui-color-palette-gray-60);
 }
 
-.chart-wizard__team-rights__item-description-text b {
+.chart-wizard__settings__item-description-text b {
 	color: var(--ui-color-palette-black-base);
 }
 
@@ -468,7 +481,7 @@
 }
 
 .chart-wizard__bind-chat__item-hint,
-.chart-wizard__team-rights__item-hint {
+.chart-wizard__settings__item-hint {
 	display: flex;
 	flex-direction: row;
 	background: var(--ui-color-palette-blue-10);
@@ -481,17 +494,17 @@
 	margin-bottom: 16px;
 }
 
-.chart-wizard__team-rights__item-hint {
+.chart-wizard__settings__item-hint {
 	padding: 19px 16px;
 }
 
-.chart-wizard__bind-chat__item-hint.--team,
-.chart-wizard__team-rights__item-hint.--team {
+.chart-wizard__bind-chat__item.--team .chart-wizard__bind-chat__item-hint,
+.chart-wizard__settings__item.--team .chart-wizard__settings__item-hint {
 	background: rgba(0, 117, 255, 0.05);;
 }
 
 .chart-wizard__bind-chat__item-hint_logo,
-.chart-wizard__team-rights__item-hint_logo {
+.chart-wizard__settings__item-hint_logo {
 	background-repeat: no-repeat;
 	background-size: contain;
 }
@@ -502,18 +515,22 @@
 	background-image: url(./images/bind-chat/bind-chat-hint-logo.svg);
 }
 
-.chart-wizard__bind-chat__item-hint_logo.--team {
+.chart-wizard__bind-chat__item.--team .chart-wizard__bind-chat__item-hint_logo {
 	background-image: url(./images/bind-chat/bind-chat-team-hint-logo.svg);
 }
 
-.chart-wizard__team-rights__item-hint_logo.--team {
+.chart-wizard__settings__item-hint_logo {
 	width: 112px;
 	height: 112px;
-	background-image: url(./images/team-rights-hint-logo.svg);
+	background-image: url(./images/settings-hint-logo.svg);
+}
+
+.chart-wizard__settings__item.--team .chart-wizard__settings__item-hint_logo {
+	background-image: url(./images/settings-hint-team-logo.svg);
 }
 
 .chart-wizard__bind-chat__item-hint_text,
-.chart-wizard__team-rights__item-hint_text {
+.chart-wizard__settings__item-hint_text {
 	margin-left: 20px;
 	display: flex;
 	flex-direction: column;
@@ -525,24 +542,24 @@
 	gap: 10px;
 }
 
-.chart-wizard__team-rights__item-hint_text {
+.chart-wizard__settings__item-hint_text {
 	gap: 8px;
 }
 
 .chart-wizard__bind-chat__item-hint_title,
-.chart-wizard__team-rights__item-hint_title {
+.chart-wizard__settings__item-hint_title {
 	font: var(--ui-font-size-md)/18px var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--ui-color-palette-black-base);
 	font-weight: var(--ui-font-size-md);
 	margin-bottom: 2px;
 }
 
-.chart-wizard__team-rights__item-hint_title {
+.chart-wizard__settings__item-hint_title {
 	margin-bottom: 4px;
 }
 
 .chart-wizard__bind-chat__item-hint_text-item,
-.chart-wizard__team-rights__item-hint_text-item {
+.chart-wizard__settings__item-hint_text-item {
 	display: flex;
 	flex-direction: row;
 	font: var(--ui-font-size-sm) var(--ui-font-family-primary, var(--ui-font-family-system));
@@ -552,7 +569,7 @@
 }
 
 .chart-wizard__bind-chat__item-hint_text-item_icon,
-.chart-wizard__team-rights__item-hint_text-item_icon {
+.chart-wizard__settings__item-hint_text-item_icon {
 	background-image: url('./images/bind-chat/bind-chat-hint-text-icon.svg');
 	margin-right: 8px;
 	min-width: 17px;
@@ -561,18 +578,18 @@
 	background-size: contain;
 }
 
-.chart-wizard__bind-chat__item-hint_text-item_icon.--team,
-.chart-wizard__team-rights__item-hint_text-item_icon.--team {
+.chart-wizard__bind-chat__item.--team .chart-wizard__bind-chat__item-hint_text-item_icon,
+.chart-wizard__settings__item.--team .chart-wizard__settings__item-hint_text-item_icon {
 	background-image: url('./images/bind-chat/bind-chat-team-hint-text-icon.svg');
 }
 
 .chart-wizard__bind-chat__item-options,
-.chart-wizard__team-rights__item-options {
+.chart-wizard__settings__item-options {
 	display: flex;
 	flex-direction: column;
 }
 
-.chart-wizard__team-rights__item-options {
+.chart-wizard__settings__item-options {
 	margin-top: 16px;
 }
 
@@ -588,7 +605,7 @@
 	padding-bottom: 6px;
 }
 
-.chart-wizard__team-rights__item-options:last-child {
+.chart-wizard__settings__item-options:last-child {
 	margin-top: 12px;
 }
 
@@ -617,7 +634,7 @@
 	line-height: 22px;
 }
 
-.chart-wizard__team-rights__item-options__item-content_title {
+.chart-wizard__settings__item-options__item-content_title {
 	display: flex;
 	flex-direction: row;
 	align-items: center;
@@ -627,8 +644,12 @@
 	line-height: 22px;
 }
 
-.chart-wizard__team-rights__item-options__item-content_title.--soon {
+.chart-wizard__settings__item-options__item-content_title.--soon {
 	color: var(--ui-color-palette-gray-80);
+}
+
+.chart-wizard__settings__item:not(.--team) .chart-wizard__settings__item-options__item-content_title-text.--soon {
+	margin-right: 8px;
 }
 
 .chart-wizard__bind-chat__item-options__item-content_description {
@@ -665,7 +686,7 @@
 }
 
 .chart-wizard__form .ui-ctl-warning .ui-tag-selector-outer-container,
-.chart-wizard__team-rights .ui-ctl-warning .ui-tag-selector-outer-container
+.chart-wizard__settings .ui-ctl-warning .ui-tag-selector-outer-container
 {
 	border-color: var(--ui-field-color-warning);
 }
@@ -684,7 +705,7 @@
 }
 
 .chart-wizard__bind-chat__item-separator,
-.chart-wizard__team-rights__item-separator{
+.chart-wizard__settings__item-separator{
 	height: 1px;
 	background: var(--ui-color-palette-gray-15);
 }
@@ -693,20 +714,20 @@
 	margin: 8px 0;
 }
 
-.chart-wizard__team-rights__item-separator {
+.chart-wizard__settings__item-separator {
 	margin-top: 7px;
 }
 
-.chart-wizard__team-rights__item-dropdown-wrapper {
+.chart-wizard__settings__item-dropdown-wrapper {
 	margin-right: 140px;
 	margin-bottom: 8px;
 }
 
-.chart-wizard__team-rights__item-options:last-child .chart-wizard__team-rights__item-dropdown-wrapper:last-child {
+.chart-wizard__settings__item-options:last-child .chart-wizard__settings__item-dropdown-wrapper:last-child {
 	margin-bottom: 0;
 }
 
-.chart-wizard__team-rights_ui-hint-disabled {
+.chart-wizard__settings_ui-hint-disabled {
 	display: inline-block;
 	width: 26px;
 	height: 26px;
@@ -721,10 +742,6 @@
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
-}
-
-.chart-wizard__bind-chat__item-checkbox_warning.--bottom-space {
-	margin-bottom: 16px;
 }
 
 .chart-wizard__bind-chat__item-checkbox_warning span {

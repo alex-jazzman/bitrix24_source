@@ -2,6 +2,7 @@
 
 use Bitrix\Disk\Analytics\DiskAnalytics;
 use Bitrix\Disk\Configuration;
+use Bitrix\Disk\Document\Flipchart\BoardService;
 use Bitrix\Disk\Document\SessionTerminationServiceFactory;
 use Bitrix\Disk\Driver;
 use Bitrix\Disk\ExternalLink;
@@ -23,7 +24,6 @@ use Bitrix\Disk\Security\SecurityContext;
 use Bitrix\Disk\Sharing;
 use Bitrix\Disk\Storage;
 use Bitrix\Disk\TypeFile;
-use Bitrix\Disk\Internal\Service\UnifiedLink\Configuration as UnifiedLinkConfiguration;
 use Bitrix\Disk\Internal\Access\UnifiedLink\UnifiedLinkAccessCheckHandler;
 use Bitrix\Disk\Internal\Access\UnifiedLink\UnifiedLinkAccessLevel;
 use Bitrix\Disk\Internal\Command\UnifiedLink\SetAccessCommand;
@@ -32,6 +32,7 @@ use Bitrix\Disk\Ui;
 use Bitrix\Main\Analytics\AnalyticsEvent;
 use Bitrix\Main\Application;
 use Bitrix\Main\DI\ServiceLocator;
+use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Entity\Query;
 use Bitrix\Main\EventResult;
@@ -1026,7 +1027,8 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 			'owner' => $this->getOwner($object),
 		);
 
-		if ($object instanceof File && UnifiedLinkConfiguration::supportsUnifiedLink($object)) {
+		if ($object instanceof File && $object->supportsUnifiedLink())
+		{
 			$response['unifiedLink'] = $this->getUnifiedLinkData($object);
 		}
 
@@ -1108,7 +1110,7 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 			),
 		);
 
-		if ($object instanceof File && UnifiedLinkConfiguration::supportsUnifiedLink($object))
+		if ($object instanceof File && $object->supportsUnifiedLink())
 		{
 			$response['unifiedLink'] = $this->getUnifiedLinkData($object);
 		}
@@ -1129,10 +1131,9 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 
 	private function getUnifiedLinkCurrentAccessLevel(File $object): UnifiedLinkAccessLevel
 	{
-		return $this->serviceLocator
-			->get(UnifiedLinkAccessCheckHandler::class)
-			->check($object)
-		;
+		$userId = (int)CurrentUser::get()->getId();
+
+		return (new UnifiedLinkAccessCheckHandler($userId))->check($object);
 	}
 
 	protected function getOwner(BaseObject $object): array
@@ -1273,6 +1274,9 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 
 		\Bitrix\Disk\Driver::getInstance()->getTrackedObjectManager()->refresh($object);
 
+		$isBoard = $object instanceof \Bitrix\Disk\File && $object->getTypeFile() == TypeFile::FLIPCHART;
+		$isFolder = $object instanceof \Bitrix\Disk\Folder;
+
 		$currentUserId = $this->getUser()->getId();
 		$entityToNewShared = $this->request->getPost('entityToNewShared');
 		if(!empty($entityToNewShared) && is_array($entityToNewShared))
@@ -1289,6 +1293,10 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 					if ($result->isSuccess())
 					{
 						$unifiedLinkAccessChanged = true;
+						if ($isBoard)
+						{
+							BoardService::kickUnallowedUsers($object);
+						}
 					}
 					else
 					{
@@ -1377,7 +1385,7 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 						]);
 					}
 
-					if ((int)$object->getType() === ObjectTable::TYPE_FILE && (int)$object->getRealObject()->getTypeFile() === TypeFile::FLIPCHART)
+					if ($isBoard)
 					{
 						Application::getInstance()->addBackgroundJob(function() {
 							$event = new AnalyticsEvent('give_access', 'boards', 'boards');
@@ -1411,6 +1419,15 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 						/** @var \Bitrix\Disk\Sharing $sharingModel */
 						$sharingModel = Sharing::buildFromArray($sharingRow);
 						$sharingModel->changeTaskName($newExtendedRightsReformat[$sharingRow['TO_ENTITY']]);
+
+						if ($isBoard)
+						{
+							Application::getInstance()->addBackgroundJob(
+								function () use ($object) {
+									BoardService::kickUnallowedUsers($object);
+								}
+							);
+						}
 					}
 					else
 					{
@@ -1455,6 +1472,12 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 				}
 			);
 
+			if ($isFolder)
+			{
+				/** @var Folder $object */
+				$this->terminateSessionsForAllBoardsInFolder($object, $securityContext, $deletedOrChangedSharingItems);
+			}
+
 			$this->sendJsonSuccessResponse([
 				'unifiedLinkAccessChanged' => $unifiedLinkAccessChanged,
 			]);
@@ -1472,12 +1495,47 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 			}
 
 			Application::getInstance()->addBackgroundJob(
-				function () use ($object, $deletedSharingItems) {
+				function () use ($object, $deletedSharingItems, $isBoard) {
 					$this->terminateAllSessionsForChangedOrDeletedSharingItems($object->getId(), $deletedSharingItems);
+					if ($isBoard)
+					{
+						BoardService::kickUnallowedUsers($object);
+					}
 				}
 			);
 
+			if ($isFolder)
+			{
+				/** @var Folder $object */
+				$this->terminateSessionsForAllBoardsInFolder($object, $securityContext, $deletedSharingItems);
+			}
+
 			$this->sendJsonSuccessResponse();
+		}
+	}
+
+	protected function terminateSessionsForAllBoardsInFolder(Folder $object, SecurityContext $securityContext, array $deletedOrChangedSharingItems)
+	{
+		$objectsInFolder = $object->getDescendants($securityContext);
+		$boardsInFolder = [];
+		foreach ($objectsInFolder as $descObject)
+		{
+			if ($descObject->getRealObject() instanceof File && $descObject->getRealObject()->getTypeFile() == TypeFile::FLIPCHART)
+			{
+				$boardsInFolder[] = $descObject->getRealObject();
+			}
+		}
+		if ($boardsInFolder)
+		{
+			Application::getInstance()->addBackgroundJob(
+				function () use ($boardsInFolder, $deletedOrChangedSharingItems) {
+					foreach ($boardsInFolder as $board)
+					{
+						$this->terminateAllSessionsForChangedOrDeletedSharingItems($board->getId(), $deletedOrChangedSharingItems);
+						BoardService::kickUnallowedUsers($board);
+					}
+				}
+			);
 		}
 	}
 

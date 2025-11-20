@@ -25,6 +25,7 @@ use Bitrix\Main\Application;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main;
 use Bitrix\Main\Page\Asset;
+use Bitrix\Main\Web\Json;
 use Bitrix\UI\Buttons\Button;
 use Bitrix\UI\Buttons\Color;
 use Bitrix\UI\Buttons\Icon;
@@ -671,14 +672,14 @@ BX(function () {
 						text: "<?=CUtil::JSEscape(Loc::getMessage('DISK_FOLDER_MW_CREATE_TYPE_DOC')) ?>",
 						onclick: function(event, popupItem){
 							popupItem.getMenuWindow().getParentMenuWindow().close();
-							BX.Disk['FolderListClass_<?= $component->getComponentId() ?>'].runCreatingFile('docx', '<?=$handler['code']?>');
+							BX.Disk['FolderListClass_<?= $component->getComponentId() ?>'].runCreatingFile('docx', '<?=$handler['code']?>', null, <?=Json::encode($handler['supportsUnifiedLink'])?>);
 						}
 					},
 					{
 						text: "<?=CUtil::JSEscape(Loc::getMessage('DISK_FOLDER_MW_CREATE_TYPE_XLS')) ?>",
 						onclick: function(event, popupItem){
 							popupItem.getMenuWindow().getParentMenuWindow().close();
-							BX.Disk['FolderListClass_<?= $component->getComponentId() ?>'].runCreatingFile('xlsx', '<?=$handler['code']?>');
+							BX.Disk['FolderListClass_<?= $component->getComponentId() ?>'].runCreatingFile('xlsx', '<?=$handler['code']?>', null, <?=Json::encode($handler['supportsUnifiedLink'])?>);
 						}
 
 					},
@@ -686,7 +687,7 @@ BX(function () {
 						text: "<?=CUtil::JSEscape(Loc::getMessage('DISK_FOLDER_MW_CREATE_TYPE_PPT')) ?>",
 						onclick: function(event, popupItem){
 							popupItem.getMenuWindow().getParentMenuWindow().close();
-							BX.Disk['FolderListClass_<?= $component->getComponentId() ?>'].runCreatingFile('pptx', '<?=$handler['code']?>');
+							BX.Disk['FolderListClass_<?= $component->getComponentId() ?>'].runCreatingFile('pptx', '<?=$handler['code']?>', null, <?=Json::encode($handler['supportsUnifiedLink'])?>);
 						}
 					}
 				]

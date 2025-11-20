@@ -44,6 +44,7 @@ $MESS["IM_SIDEBAR_MEETINGS_EMPTY"] = "Кездесулер жоқ";
 $MESS["IM_SIDEBAR_MEETING_DETAIL_TITLE"] = "Кездесулер";
 $MESS["IM_SIDEBAR_MEMBERS_CHANNEL_DETAIL_TITLE"] = "Жазылушылар: #NUMBER#";
 $MESS["IM_SIDEBAR_MEMBERS_DETAIL_TITLE"] = "Қатысушылар: #NUMBER#";
+$MESS["IM_SIDEBAR_MENU_COPY_INVITE_LINK"] = "Сілтемені көшіру";
 $MESS["IM_SIDEBAR_MENU_COPY_LINK"] = "Сілтемені көшіру";
 $MESS["IM_SIDEBAR_MENU_COPY_MEETING_LINK"] = "Кездесу сілтемесін көшіру";
 $MESS["IM_SIDEBAR_MENU_COPY_TASK_LINK"] = "Міндет сілтемесін көшіру";

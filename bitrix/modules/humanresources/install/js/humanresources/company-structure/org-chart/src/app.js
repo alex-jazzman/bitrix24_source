@@ -10,11 +10,12 @@ import { DetailPanel } from './components/detail-panel/detail-panel';
 import { FirstPopup } from './components/first-popup/first-popup';
 import { useChartStore } from 'humanresources.company-structure.chart-store';
 import { ChartWizard } from 'humanresources.company-structure.chart-wizard';
-import { getInvitedUserData } from 'humanresources.company-structure.utils';
+import { EntityTypes, getInvitedUserData } from 'humanresources.company-structure.utils';
 import { chartAPI } from './api';
 import { events, detailPanelWidth } from './consts';
 import { OrgChartActions } from './actions';
 import { sendData as analyticsSendData } from 'ui.analytics';
+import { addCustomEvent, removeCustomEvent } from 'main.core';
 
 import type { ChartData } from './types';
 import './style.css';
@@ -58,6 +59,8 @@ export const Chart = {
 			},
 			// so we block all controls until transition isn't completed
 			isTransitionCompleted: false,
+			analyticsQueue: [],
+			isAnalyticsBusy: false,
 		};
 	},
 
@@ -90,9 +93,10 @@ export const Chart = {
 
 			return map;
 		}, new Map());
+		const multipleUsers = departmentsData.multipleMembers ?? [];
 		const parsedDepartments = chartAPI.createTreeDataStore(departments);
 		const availableDepartments = currentDepartments.filter((item) => parsedDepartments.has(item));
-		OrgChartActions.applyData(parsedDepartments, availableDepartments, userId, structureMap);
+		OrgChartActions.applyData(parsedDepartments, availableDepartments, userId, structureMap, multipleUsers);
 		this.rootOffset = 100;
 		this.transformCanvas();
 		this.canvas.shown = true;
@@ -108,6 +112,9 @@ export const Chart = {
 		EventEmitter.subscribe(events.HR_ENTITY_REMOVE, this.removeDepartmentEventHandler);
 		EventEmitter.subscribe(events.HR_ORG_CHART_TRANSFORM_CANVAS, this.onCanvasTransformWhenDragging);
 		EventEmitter.subscribe(events.HR_ORG_CHART_LOCATE_TO_DEPARTMENT, this.onLocate);
+
+		this.handleAnalyticsAjaxSuccess = this.handleAnalyticsAjaxSuccess.bind(this);
+		addCustomEvent('OnAjaxSuccess', this.handleAnalyticsAjaxSuccess);
 	},
 
 	unmounted(): void
@@ -117,6 +124,8 @@ export const Chart = {
 		EventEmitter.unsubscribe(events.HR_ENTITY_REMOVE, this.removeDepartmentEventHandler);
 		EventEmitter.unsubscribe(events.HR_ORG_CHART_TRANSFORM_CANVAS, this.onCanvasTransformWhenDragging);
 		EventEmitter.unsubscribe(events.HR_ORG_CHART_LOCATE_TO_DEPARTMENT, this.onLocate);
+
+		removeCustomEvent('OnAjaxSuccess', this.handleAnalyticsAjaxSuccess);
 	},
 
 	methods:
@@ -159,6 +168,36 @@ export const Chart = {
 		{
 			this.onShowWizard(data);
 		},
+		sendAnalyticsSequentially(data)
+		{
+			this.analyticsQueue.push(data);
+			this.processAnalyticsQueue();
+		},
+		processAnalyticsQueue()
+		{
+			if (this.isAnalyticsBusy || this.analyticsQueue.length === 0)
+			{
+				return;
+			}
+
+			this.isAnalyticsBusy = true;
+			const dataToSend = this.analyticsQueue[0];
+
+			analyticsSendData(dataToSend);
+		},
+
+		handleAnalyticsAjaxSuccess()
+		{
+			if (!this.isAnalyticsBusy)
+			{
+				return;
+			}
+
+			this.analyticsQueue.shift();
+			this.isAnalyticsBusy = false;
+
+			this.processAnalyticsQueue();
+		},
 		onShowWizard({
 			nodeId = 0,
 			isEditMode = false,
@@ -167,8 +206,26 @@ export const Chart = {
 			source = '',
 			entityType,
 			refToFocus,
-		}: { nodeId: number; isEditMode: boolean, showEntitySelector: boolean, source: string } = {}): void
+		}: {
+			nodeId: number;
+			isEditMode: boolean,
+			type: string,
+			showEntitySelector: boolean,
+			source: string,
+			entityType: string,
+			refToFocus: any
+		} = {}): void
 		{
+			let analyticsType = null;
+			if (entityType === EntityTypes.team)
+			{
+				analyticsType = 'team';
+			}
+			else if (entityType === EntityTypes.department || entityType === EntityTypes.company)
+			{
+				analyticsType = 'dept';
+			}
+
 			this.wizard = {
 				...this.wizard,
 				shown: true,
@@ -183,10 +240,32 @@ export const Chart = {
 
 			if (!isEditMode && source !== AnalyticsSourceType.HEADER)
 			{
+				this.sendAnalyticsSequentially({
+					tool: 'structure',
+					category: 'structure',
+					event: 'create_wizard',
+					type: analyticsType,
+					c_element: source,
+				});
+
+				if (entityType === EntityTypes.team)
+				{
+					this.sendAnalyticsSequentially({
+						tool: 'structure',
+						category: 'structure',
+						event: 'create_team_step1',
+						type: analyticsType,
+						c_element: source,
+					});
+				}
+			}
+
+			if (isEditMode)
+			{
 				analyticsSendData({
 					tool: 'structure',
 					category: 'structure',
-					event: 'create_dept_step1',
+					event: `edit_${analyticsType}`,
 					c_element: source,
 				});
 			}
@@ -198,7 +277,8 @@ export const Chart = {
 					analyticsSendData({
 						tool: 'structure',
 						category: 'structure',
-						event: 'create_dept_step1',
+						event: `create_${analyticsType}_step1`,
+						type: analyticsType,
 						c_element: source,
 					});
 					break;
@@ -206,7 +286,8 @@ export const Chart = {
 					analyticsSendData({
 						tool: 'structure',
 						category: 'structure',
-						event: 'create_dept_step2',
+						event: `create_${analyticsType}_step2`,
+						type: analyticsType,
 						c_element: source,
 					});
 					break;
@@ -214,7 +295,8 @@ export const Chart = {
 					analyticsSendData({
 						tool: 'structure',
 						category: 'structure',
-						event: 'create_dept_step3',
+						event: `create_${analyticsType}_step3`,
+						type: analyticsType,
 						c_element: source,
 					});
 					break;
@@ -222,7 +304,8 @@ export const Chart = {
 					analyticsSendData({
 						tool: 'structure',
 						category: 'structure',
-						event: 'create_dept_step4',
+						event: `create_${analyticsType}_step4`,
+						type: analyticsType,
 						c_element: source,
 					});
 					break;

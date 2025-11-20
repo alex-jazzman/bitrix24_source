@@ -24,6 +24,7 @@ jn.define('im/messenger/provider/services/sync/fillers/base', (require, exports,
 		constructor()
 		{
 			this.core = serviceLocator.get('core');
+			/** @type {MessengerCoreStore} */
 			this.store = this.core.getStore();
 
 			this.userManager = new UserManager(this.store);
@@ -79,7 +80,6 @@ jn.define('im/messenger/provider/services/sync/fillers/base', (require, exports,
 		}
 
 		/**
-		 * @abstract
 		 * @param {SyncRequestResultReceivedEvent} data
 		 */
 		async fillData(data)
@@ -88,7 +88,6 @@ jn.define('im/messenger/provider/services/sync/fillers/base', (require, exports,
 		}
 
 		/**
-		 * @abstract
 		 * @return {string}
 		 *
 		 * @desc the method should return a prefix unique for each filler, which determines the need for event processing
@@ -143,7 +142,7 @@ jn.define('im/messenger/provider/services/sync/fillers/base', (require, exports,
 			this.closeDeletedCommentsChats(syncListResult.messageSync.completeDeletedMessages);
 			await this.processDialogues(syncListResult);
 			await this.processFiles(syncListResult.files);
-			await this.processReactions(syncListResult.reactions);
+			await this.processReactions(syncListResult);
 			await this.processMessages(syncListResult);
 			await this.processPins(syncListResult);
 			await this.processRecent(syncListResult);
@@ -265,17 +264,51 @@ jn.define('im/messenger/provider/services/sync/fillers/base', (require, exports,
 		}
 
 		/**
-		 * @param {Array<SyncRawReaction>} reactions
+		 * @param {SyncListResult} syncListResult
 		 * @return Promise
 		 */
-		async processReactions(reactions)
+		async processReactions(syncListResult)
 		{
-			if (!Type.isArrayFilled(reactions))
+			if (!Type.isArrayFilled(syncListResult.reactions))
 			{
 				return;
 			}
 
+			const reactions = this.getReactionsFromSyncListResult(syncListResult);
+
 			await this.store.dispatch('messagesModel/reactionsModel/setFromSync', { reactions });
+		}
+
+		/**
+		 * @param {SyncListResult} syncListResult
+		 * @return Array<SyncReaction>
+		 */
+		getReactionsFromSyncListResult(syncListResult)
+		{
+			let reactions = syncListResult.reactions;
+			const messageIdCollection = {};
+			reactions.forEach((reaction) => {
+				messageIdCollection[reaction.messageId] = {
+					chatId: 0,
+					dialogId: '',
+				};
+			});
+			syncListResult.messages.forEach((message) => {
+				const messageId = message.id;
+				if (messageIdCollection[messageId])
+				{
+					const chatId = message.chat_id;
+					messageIdCollection[messageId].dialogId = syncListResult.dialogIds[chatId];
+				}
+			});
+			reactions = reactions.map((reaction) => {
+				// eslint-disable-next-line no-param-reassign
+				reaction.dialogId = messageIdCollection[reaction.messageId].dialogId;
+
+				return reaction;
+			});
+
+			return reactions;
 		}
 
 		/**

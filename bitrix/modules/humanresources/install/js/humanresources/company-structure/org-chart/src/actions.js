@@ -1,19 +1,26 @@
 import { useChartStore } from 'humanresources.company-structure.chart-store';
-import { getMemberRoles, memberRoles } from 'humanresources.company-structure.api';
+import { memberRoles } from 'humanresources.company-structure.api';
 import { EntityTypes } from 'humanresources.company-structure.utils';
 import { chartAPI } from './api';
 import type { TreeItem } from './types';
 import type { UserData } from 'humanresources.company-structure.utils';
 
 export const OrgChartActions = {
-	applyData: (departments: Map<Number, TreeItem>, currentDepartments: number[], userId: number, map: Array): void => {
+	applyData: (
+		departments: Map<Number, TreeItem>,
+		currentDepartments: number[],
+		userId: number,
+		structureMap: Array,
+		multipleUsers,
+	): void => {
 		const store = useChartStore();
 		store.$patch({
 			departments,
 			currentDepartments,
 			userId,
 			searchedUserId: userId,
-			structureMap: map,
+			structureMap,
+			multipleUsers,
 		});
 	},
 	focusDepartment: (departmentId: number): void => {

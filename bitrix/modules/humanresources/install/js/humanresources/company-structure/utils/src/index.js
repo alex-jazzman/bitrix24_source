@@ -3,7 +3,7 @@ import type { UserData } from './user-item';
 import { getColorCode } from './color';
 import { EntityTypes, NodeSettingsTypes, WizardApiEntityChangedDict, ChatTypes } from './consts';
 import { NodeColorsSettingsDict, type NodeColorSettingsType, getNodeColorSettings } from './node-color';
-import type { ChatOrChannelDetailed, ChatListResponse } from './types';
+import type { CommunicationDetailed, ChatListResponse } from './types';
 
 export {
 	getUserDataBySelectorItem,
@@ -20,6 +20,6 @@ export {
 export type {
 	UserData,
 	NodeColorSettingsType,
-	ChatOrChannelDetailed,
+	CommunicationDetailed,
 	ChatListResponse,
 };

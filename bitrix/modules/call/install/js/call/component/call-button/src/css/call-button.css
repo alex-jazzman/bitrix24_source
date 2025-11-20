@@ -22,11 +22,17 @@
 	border-radius: 56px;
 	margin-right: 22px;
 	cursor: pointer;
-	transition: background-color 0.2s;
+	transition: background-color 0.2s, background-image 0.2s;
 }
 
 .bx-call-chat-header-call-button__container.--copilot {
 	background-color: var(--call-chat-header-call-button__background-copilot-color_container);
+}
+
+.bx-call-chat-header-call-button__container.--return {
+	padding-left: 10px;
+	padding-right: 8px;
+	background-color: var(--ui-color-g-content-blue-2);
 }
 
 .bx-call-chat-header-call-button__container:hover {
@@ -35,6 +41,10 @@
 
 .bx-call-chat-header-call-button__container:hover.--copilot {
 	background-color: var(--call-chat-header-call-button__background-copilot-color_container-hover);
+}
+
+.bx-call-chat-header-call-button__container:hover.--return {
+	background-color: var(--ui-color-blue-80);
 }
 
 .bx-call-chat-header-call-button__container.--disabled {
@@ -54,6 +64,10 @@
 	font: var(--ui-font-size-xs, 12px)/var(--ui-font-line-height-2xs, 1.3) var(--ui-font-family-primary, var(--ui-font-family-system));
 	font-weight: var(--ui-font-weight-medium, 500);
 	color: var(--call-chat-header-call-button__font-color);
+}
+
+.bx-call-chat-header-call-button__container.--return .bx-call-chat-header-call-button__text {
+	color: var(--ui-color-palette-white-base);
 }
 
 .bx-call-chat-header-call-button__icon {

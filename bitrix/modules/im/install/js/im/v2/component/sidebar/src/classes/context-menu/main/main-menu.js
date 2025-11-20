@@ -1,15 +1,17 @@
 import { Loc } from 'main.core';
+import { MenuItemDesign } from 'ui.system.menu';
 
 import { ChatService } from 'im.v2.provider.service.chat';
 import { Utils } from 'im.v2.lib.utils';
 import { RecentMenu } from 'im.v2.lib.menu';
 import { LayoutManager } from 'im.v2.lib.layout';
-import { ActionByRole, ActionByUserType, ChatType, Layout } from 'im.v2.const';
+import { ActionByRole, ActionByUserType, Layout } from 'im.v2.const';
 import { PermissionManager } from 'im.v2.lib.permission';
 import { Analytics } from 'im.v2.lib.analytics';
 import { showDeleteChatConfirm } from 'im.v2.lib.confirm';
 import { Notifier } from 'im.v2.lib.notifier';
-import { MenuItemDesign } from 'ui.system.menu';
+import { ChatManager } from 'im.v2.lib.chat';
+import { CopilotManager } from 'im.v2.lib.copilot';
 
 import type { MenuItemOptions, MenuOptions } from 'ui.system.menu';
 
@@ -46,10 +48,44 @@ export class MainMenu extends RecentMenu
 			this.getOpenProfileItem(),
 			this.getOpenUserCalendarItem(),
 			this.getChatsWithUserItem(),
+			this.getCopyInviteLinkItem(),
 			this.getHideItem(),
 			this.getLeaveItem(),
 			this.getDeleteItem(),
 		];
+	}
+
+	getCopyInviteLinkItem(): ?MenuItemOptions
+	{
+		if (!BX.clipboard.isCopySupported())
+		{
+			return null;
+		}
+
+		if (this.isUser() || this.isCollabChat())
+		{
+			return null;
+		}
+
+		const isGroupCopilotChat = (new CopilotManager()).isGroupCopilotChat(this.context.dialogId);
+		const isCopilotChat = (new CopilotManager()).isCopilotChat(this.context.dialogId);
+		if (isCopilotChat && !isGroupCopilotChat)
+		{
+			return null;
+		}
+
+		return {
+			title: Loc.getMessage('IM_SIDEBAR_MENU_COPY_INVITE_LINK'),
+			onClick: () => {
+				const chatLink = ChatManager.buildChatLink(this.context.dialogId);
+				if (BX.clipboard.copy(chatLink))
+				{
+					Notifier.onCopyLinkComplete();
+				}
+
+				Analytics.getInstance().chatInviteLink.onCopyContextMenu(this.context.dialogId);
+			},
+		};
 	}
 
 	getEditItem(): ?MenuItemOptions
@@ -133,7 +169,7 @@ export class MainMenu extends RecentMenu
 		}
 
 		const hasCreateChatAccess = this.permissionManager.canPerformActionByUserType(ActionByUserType.createChat);
-		if (this.#isPersonalChat() && !hasCreateChatAccess)
+		if (this.isUser() && !hasCreateChatAccess)
 		{
 			return null;
 		}
@@ -183,12 +219,5 @@ export class MainMenu extends RecentMenu
 		}
 
 		return false;
-	}
-
-	#isPersonalChat(): boolean
-	{
-		const chat = this.getChat(this.context.dialogId);
-
-		return chat.type === ChatType.user;
 	}
 }

@@ -142,10 +142,10 @@ jn.define('im/messenger/controller/dialog/lib/text-field', (require, exports, mo
 		 */
 		#shouldHideByPermissions()
 		{
-			const сanPost = ChatPermission.сanPost(this.dialogId);
+			const canPost = ChatPermission.canPost(this.dialogId);
 			const isGroupDialog = DialogHelper.isDialogId(this.dialogId);
 
-			return !сanPost && isGroupDialog;
+			return !canPost && isGroupDialog;
 		}
 
 		/**

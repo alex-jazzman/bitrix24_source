@@ -9,7 +9,6 @@ jn.define('im/messenger/lib/element/recent/item/chat', (require, exports, module
 	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { merge } = require('utils/object');
 
 	/**
 	 * @class ChatItem
@@ -23,27 +22,6 @@ jn.define('im/messenger/lib/element/recent/item/chat', (require, exports, module
 		constructor(modelItem = {}, options = {})
 		{
 			super(modelItem, options);
-		}
-
-		createTitleStyle()
-		{
-			const dialog = this.getDialogItem();
-
-			if (!dialog || !Type.isArray(dialog.muteList))
-			{
-				return this;
-			}
-
-			if (dialog.muteList.includes(serviceLocator.get('core').getUserId()))
-			{
-				this.styles.title = merge(this.styles.title, {
-					additionalImage: {
-						name: 'name_status_mute',
-					},
-				});
-			}
-
-			return this;
 		}
 
 		createSubtitle()

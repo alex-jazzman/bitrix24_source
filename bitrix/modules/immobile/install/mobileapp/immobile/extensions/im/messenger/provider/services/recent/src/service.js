@@ -7,7 +7,6 @@ jn.define('im/messenger/provider/services/recent/service', (require, exports, mo
 	const { RecentRest } = require('im/messenger/provider/rest');
 	const { PinService } = require('im/messenger/provider/services/recent/pin');
 	const { HideService } = require('im/messenger/provider/services/recent/hide');
-	const { TabCounters } = require('im/messenger/lib/counters/tab-counters');
 	const { Feature } = require('im/messenger/lib/feature');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { clone } = require('utils/object');
@@ -106,7 +105,13 @@ jn.define('im/messenger/provider/services/recent/service', (require, exports, mo
 
 		/**
 		 * @param {ListByDialogTypeFilter} filterDb
-		 * @return {Promise<any>}
+		 * @return {Promise<{
+		 * items: Array<RecentStoredData>,
+		 * users: Array<UserStoredData>,
+		 * messages: Array,
+		 * files: Array,
+		 * hasMore: boolean
+		 * }>}
 		 */
 		async getPageFromDb(filterDb = {})
 		{
@@ -116,8 +121,12 @@ jn.define('im/messenger/provider/services/recent/service', (require, exports, mo
 
 				try
 				{
-					this.hasMoreFromDb = await this.loadPageFromDb(this.lastActivityDate, filterDb);
+					const result = await this.loadPageFromDb(this.lastActivityDate, filterDb);
+					this.hasMoreFromDb = result.hasMore;
+
 					this.pageNavigation.hasNextPage = this.hasMoreFromDb;
+
+					return result;
 				}
 				catch (error)
 				{
@@ -128,21 +137,34 @@ jn.define('im/messenger/provider/services/recent/service', (require, exports, mo
 					this.isLoadingPageFromDb = false;
 				}
 			}
+
+			return Promise.resolve({
+				items: [],
+				users: [],
+				messages: [],
+				files: [],
+				hasMore: false,
+			});
 		}
 
 		/**
 		 * @param {string} lastActivityDate
 		 * @param {ListByDialogTypeFilter} filterDb
-		 * @return {Promise<hasMore:boolean>}
+		 * @return {Promise<{
+		 * items: Array<RecentStoredData>,
+		 * users: Array<UserStoredData>,
+		 * messages: Array,
+		 * files: Array,
+		 * hasMore: boolean
+		 * }>}
 		 */
 		async loadPageFromDb(lastActivityDate, filterDb)
 		{
 			Logger.log(`${this.constructor.name} loadPageFromDb, lastActivityDate`, lastActivityDate, filterDb);
 			const result = await this.recentRepository.getListByDialogTypeFilter({ ...filterDb, lastActivityDate });
-			await this.updateModelsByDbResult(result);
 			this.setLastActivityDateByItems(result.items);
 
-			return result.hasMore;
+			return result;
 		}
 
 		/**
@@ -158,27 +180,6 @@ jn.define('im/messenger/provider/services/recent/service', (require, exports, mo
 			catch (error)
 			{
 				Logger.error(`${this.constructor.name}.setLastActivityDateByItems.catch:`, error);
-			}
-		}
-
-		/**
-		 * @param {{items: Array, users: Array, messages: Array, files: Array, hasMore: boolean}} result
-		 * @return {Promise<void>}
-		 */
-		async updateModelsByDbResult(result)
-		{
-			try
-			{
-				const dialogues = result.items.map((item) => item.chat);
-				await this.store.dispatch('dialoguesModel/setCollectionFromLocalDatabase', dialogues);
-				await this.store.dispatch('usersModel/merge', result.users);
-				await this.store.dispatch('messagesModel/store', result.messages);
-				await this.store.dispatch('filesModel/setFromLocalDatabase', result.files);
-				await this.store.dispatch('recentModel/set', result.items);
-			}
-			catch (error)
-			{
-				Logger.error(`${this.constructor.name}.updateModelsByDbResult.catch:`, error);
 			}
 		}
 
@@ -241,6 +242,7 @@ jn.define('im/messenger/provider/services/recent/service', (require, exports, mo
 		 */
 		removeUnreadState(dialogId)
 		{
+			// eslint-disable-next-line max-len
 			const recentItem = clone(this.store.getters['recentModel/getById'](dialogId));
 			if (!recentItem)
 			{
@@ -268,15 +270,15 @@ jn.define('im/messenger/provider/services/recent/service', (require, exports, mo
 		}
 
 		/**
-		 * @param {object} params
-		 * @param {string|number} params.id
-		 * @param {boolean} params.unread
+		 * @param {object} recentFields
+		 * @param {string|number} recentFields.id
+		 * @param {boolean} recentFields.unread
 		 */
-		setRecentModelWithCounters(params)
+		setRecentModelWithCounters(recentFields)
 		{
-			this.store.dispatch('recentModel/set', [params])
+			this.store.dispatch('recentModel/set', [recentFields])
 				.then(() => {
-					TabCounters.update();
+					serviceLocator.get('tab-counters').update();
 				})
 				.catch((err) => Logger.error(
 					`${this.constructor.name}.setRecentModelWithCounters.recentModel/set.catch:`,

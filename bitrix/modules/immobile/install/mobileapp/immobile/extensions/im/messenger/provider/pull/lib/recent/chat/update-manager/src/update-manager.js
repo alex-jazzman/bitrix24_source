@@ -3,6 +3,8 @@
  */
 jn.define('im/messenger/provider/pull/lib/recent/chat/update-manager/update-manager', (require, exports, module) => {
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
+	const { RecentDataConverter } = require('im/messenger/lib/converter/data/recent');
+
 	/**
 	 * @class ChatRecentUpdateManager
 	 */
@@ -41,13 +43,47 @@ jn.define('im/messenger/provider/pull/lib/recent/chat/update-manager/update-mana
 		}
 
 		/**
-		 * @return {RawMessage}
+		 * @return {RawMessage} // todo check types
 		 */
 		getLastMessage()
 		{
 			const [lastMessage] = this.#params.messages;
 
-			return lastMessage;
+			return { ...lastMessage };
+		}
+
+		/**
+		 * @return {Partial<RawMessage>} // todo check types
+		 */
+		getPreparedLastMessage()
+		{
+			const message = this.getLastMessage();
+			const currentUserId = serviceLocator.get('core').getUserId();
+			message.status = message.author_id === currentUserId ? 'received' : '';
+			message.senderId = message.author_id;
+
+			return message;
+		}
+
+		/**
+		 * @return {RecentModelState}
+		 */
+		getPreparedRecentItem()
+		{
+			const message = this.getPreparedLastMessage();
+
+			const userData = message.author_id > 0
+				? this.#params.users[message.author_id]
+				: { id: 0 };
+
+			return RecentDataConverter.fromPullToModel({
+				id: this.getDialogId(),
+				chat: this.#params.chat,
+				user: userData,
+				counter: this.#params.counter,
+				lastActivityDate: this.#params.lastActivityDate,
+				message,
+			});
 		}
 
 		#setUsers()

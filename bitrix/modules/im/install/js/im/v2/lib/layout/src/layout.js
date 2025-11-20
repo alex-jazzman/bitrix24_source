@@ -178,6 +178,11 @@ export class LayoutManager
 		return settings.get('isQuickAccessHidden', false);
 	}
 
+	isValidLayout(layoutName: string): boolean
+	{
+		return Object.values(Layout).includes(layoutName);
+	}
+
 	isChatLayout(layoutName: string): boolean
 	{
 		const chatLayouts = [
@@ -187,6 +192,7 @@ export class LayoutManager
 			Layout.openlines,
 			Layout.openlinesV2,
 			Layout.collab,
+			Layout.taskComments,
 		];
 
 		return chatLayouts.includes(layoutName);

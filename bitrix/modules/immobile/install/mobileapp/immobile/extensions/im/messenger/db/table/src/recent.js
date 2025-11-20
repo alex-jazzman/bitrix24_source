@@ -94,7 +94,7 @@ jn.define('im/messenger/db/table/recent', (require, exports, module) => {
 
 		/**
 		 * @param {ListByDialogTypeFilter}
-		 * @return {Promise<{items: Array, users: Array, messages: Array, files: Array, hasMore: boolean}>}
+		 * @return {Promise<RecentListResult>}
 		 */
 		async getListByDialogTypeFilter({ dialogTypes = [], exceptDialogTypes = [], lastActivityDate = null, limit })
 		{
@@ -185,12 +185,14 @@ jn.define('im/messenger/db/table/recent', (require, exports, module) => {
 				};
 			}
 
+			// TODO: MessengerV2 move to config
 			const filterString = this.createFilter(
 				{
 					exceptDialogTypes: [
 						DialogType.copilot,
 						DialogType.lines,
 						DialogType.comment,
+						DialogType.tasksTask,
 					],
 				},
 			);

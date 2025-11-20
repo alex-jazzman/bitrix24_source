@@ -11,7 +11,6 @@ return [
 		'im:messenger/provider/rest',
 		'im:messenger/lib/emitter',
 		'im:messenger/lib/params',
-		'im:messenger/lib/counters/tab-counters',
 		'im:messenger/lib/counters/counter-manager/messenger/sender',
 	],
 	'bundle' => [

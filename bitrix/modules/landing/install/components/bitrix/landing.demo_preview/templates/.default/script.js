@@ -21,23 +21,18 @@
 		this.previewContainer = document.querySelector(".landing-template-preview");
 		this.closeButton = document.querySelector(".landing-template-preview-close");
 		this.createButton = document.querySelector(".landing-template-preview-create");
-		this.createByImportButton = document.querySelector(".landing-template-preview-create-by-import");
 		this.title = document.querySelector(".landing-template-preview-input-title");
 		this.description = document.querySelector(".landing-template-preview-input-description");
-		this.themesPalette = document.querySelector(".landing-template-preview-themes");
-		this.themesSiteColorNode = document.querySelector(".landing-template-preview-site-color");
 		this.imageContainer = document.querySelector(".preview-desktop-body-image");
 		this.loaderContainer = document.querySelector(".preview-desktop-body-loader-container");
 		this.previewFrame = document.querySelector(".preview-desktop-body-preview-frame");
 		this.baseUrlNode = document.querySelector(".landing-template-preview-base-url");
-		this.siteGroupPalette = document.querySelector(".landing-template-preview-site-group");
 		this.loader = new BX.Loader({});
 		this.messages = params.messages || {};
 		this.loaderText = null;
 		this.progressBar = null;
 		this.IsLoadedFrame = false;
 		this.baseUrl = '';
-		this.color = null;
 		this.ajaxUrl = '';
 		this.ajaxParams = {};
 
@@ -113,7 +108,6 @@
 			}
 
 			this.setBaseUrl();
-			this.setDefaultColor();
 			this.showPreview();
 			this.buildHeader();
 
@@ -135,38 +129,12 @@
 			}
 		},
 
-		setColor: function (theme)
-		{
-			if (theme !== undefined)
-			{
-				this.color = theme;
-			}
-		},
-
-		setDefaultColor: function ()
-		{
-			if (this.getActiveColorNode())
-			{
-				this.color = data(this.getActiveColorNode(), "data-value");
-			}
-		},
-
-		getColor: function ()
-		{
-			return this.color;
-		},
-
 		createPreviewUrl: function ()
 		{
 			var queryParams = {};
 			if (!this.baseUrl)
 			{
 				this.setBaseUrl();
-			}
-
-			if (this.getColor())
-			{
-				queryParams = {color: this.getColor()};
 			}
 
 			return addQueryParams(this.baseUrl, queryParams);
@@ -179,30 +147,6 @@
 				new BX.Landing.SaveBtn(this.createButton);
 			}
 			this.IsLoadedFrame = true;
-		},
-
-		/**
-		 *
-		 * @returns {HTMLElement|null}
-		 */
-		getActiveColorNode: function ()
-		{
-			var active = this.themesPalette.querySelector(".active");
-			if (!active && this.themesSiteColorNode)
-			{
-				active = this.themesSiteColorNode.querySelector(".active");
-			}
-
-			return active;
-		},
-
-		/**
-		 *
-		 * @returns {HTMLElement}
-		 */
-		getActiveSiteGroupItem: function ()
-		{
-			return this.siteGroupPalette.querySelector(".active");
 		},
 
 		/**
@@ -423,19 +367,6 @@
 		{
 			var result = {};
 
-			if (this.getActiveColorNode())
-			{
-				if (this.themesSiteColorNode && this.getActiveColorNode().parentElement === this.themesSiteColorNode)
-				{
-					result[this.themesSiteColorNode.dataset.name] = this.getActiveColorNode().dataset.value;
-				}
-
-				if (this.siteGroupPalette)
-				{
-					result[this.siteGroupPalette.dataset.name] = this.getActiveSiteGroupItem().dataset.value;
-				}
-				result[this.themesPalette.dataset.name] = this.getActiveColorNode().dataset.value;
-			}
 			result[this.title.dataset.name] = this.title.value.replaceAll('&', '').replaceAll('?', '');
 			result[this.description.dataset.name] = this.description.value;
 
@@ -483,7 +414,7 @@
 				metrikaParams.p5 = ['errorType', 'need_market_subscription'];
 				this.metrika.sendData(metrikaParams);
 
-				top.BX.UI.InfoHelper.show('limit_subscription_market_templates');
+				top.BX.UI.InfoHelper.show('limit_subscription_market_access_buy_marketplus');
 				new Promise(resolve => {
 					const timerId = setInterval(() => {
 						if (BX.Dom.hasClass(this.createButton, 'ui-btn-clock'))

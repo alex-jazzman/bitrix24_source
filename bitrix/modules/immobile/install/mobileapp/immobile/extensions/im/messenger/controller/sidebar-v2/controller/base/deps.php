@@ -12,6 +12,7 @@ return [
 		'ui-system/typography',
 		'ui-system/layout/area',
 		'ui-system/blocks/icon',
+		'utils/object',
 
 		'im:messenger/const',
 		'im:messenger/provider/services/chat',

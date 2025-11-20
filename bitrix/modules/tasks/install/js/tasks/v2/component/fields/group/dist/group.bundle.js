@@ -3,11 +3,11 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
-(function (exports,tasks_v2_component_elements_hoverPill,tasks_v2_lib_heightTransition,ui_vue3_components_menu,ui_iconSet_crm,tasks_v2_component_elements_userCustomTagSelector,ui_iconSet_api_vue,tasks_v2_lib_color,ui_vue3_directives_hint,ui_vue3_components_popup,ui_vue3_components_button,tasks_v2_lib_openGroup,tasks_v2_provider_service_groupService,tasks_v2_provider_service_userService,tasks_v2_lib_entitySelectorDialog,main_core,ui_iconSet_api_core,ui_iconSet_outline,tasks_v2_core,tasks_v2_const,tasks_v2_component_elements_chip,tasks_v2_component_elements_hint,tasks_v2_lib_fieldHighlighter,tasks_v2_lib_analytics,tasks_v2_provider_service_taskService) {
+(function (exports,tasks_v2_component_elements_hoverPill,tasks_v2_component_elements_fieldAdd,tasks_v2_lib_heightTransition,ui_vue3_components_menu,ui_iconSet_crm,tasks_v2_component_elements_userCustomTagSelector,ui_iconSet_api_vue,tasks_v2_lib_color,ui_vue3_directives_hint,ui_vue3_components_popup,ui_vue3_components_button,tasks_v2_lib_openGroup,tasks_v2_provider_service_groupService,tasks_v2_provider_service_userService,tasks_v2_lib_entitySelectorDialog,main_core,ui_iconSet_api_core,ui_iconSet_outline,tasks_v2_core,tasks_v2_const,tasks_v2_component_elements_chip,tasks_v2_component_elements_hint,tasks_v2_lib_fieldHighlighter,tasks_v2_lib_analytics,tasks_v2_provider_service_taskService) {
 	'use strict';
 
 	const groupMeta = Object.freeze({
-	  id: 'groupId',
+	  id: tasks_v2_const.TaskField.Group,
 	  title: main_core.Loc.getMessage('TASKS_V2_GROUP_TITLE'),
 	  getTitle: groupId => {
 	    var _GroupType$Collab$Gro;
@@ -729,6 +729,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    Scrum,
 	    Hint: tasks_v2_component_elements_hint.Hint,
 	    HoverPill: tasks_v2_component_elements_hoverPill.HoverPill,
+	    FieldAdd: tasks_v2_component_elements_fieldAdd.FieldAdd,
 	    GroupPopup
 	  },
 	  props: {
@@ -791,7 +792,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    },
 	    groupImage() {
 	      var _this$group3;
-	      return (_this$group3 = this.group) == null ? void 0 : _this$group3.image;
+	      return encodeURI((_this$group3 = this.group) == null ? void 0 : _this$group3.image);
 	    },
 	    hintText() {
 	      return this.loc('TASKS_V2_GROUP_CANT_CHANGE_FLOW');
@@ -867,13 +868,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					@clear="clearField"
 				>
 					<img v-if="groupImage" class="tasks-field-group-image" :src="groupImage" :alt="groupName"/>
-					<BIcon v-else class="tasks-field-group-add-icon" :name="Outline.FOLDER"/>
+					<BIcon v-else class="tasks-field-group-icon" :name="Outline.FOLDER"/>
 					<div class="tasks-field-group-title">{{ groupName }}</div>
 				</HoverPill>
-				<HoverPill v-else>
-					<BIcon class="tasks-field-group-add-icon" :name="Outline.FOLDER_PLUS"/>
-					<div class="tasks-field-group-add-text">{{ loc('TASKS_V2_GROUP_ADD') }}</div>
-				</HoverPill>
+				<FieldAdd v-else :icon="Outline.FOLDER_PLUS"/>
 			</div>
 			<Stage v-if="isEdit && group && !task.flowId" :taskId="taskId"/>
 			<Scrum v-if="isScrum && !task.flowId" :taskId="taskId"/>
@@ -1069,5 +1067,5 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	exports.GroupChip = GroupChip;
 	exports.groupMeta = groupMeta;
 
-}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Lib,BX.UI.Vue3.Components,BX,BX.Tasks.V2.Component.Elements,BX.UI.IconSet,BX.Tasks.V2.Lib,BX.Vue3.Directives,BX.UI.Vue3.Components,BX.Vue3.Components,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Lib,BX,BX.UI.IconSet,BX,BX.Tasks.V2,BX.Tasks.V2.Const,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service));
+}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Lib,BX.UI.Vue3.Components,BX,BX.Tasks.V2.Component.Elements,BX.UI.IconSet,BX.Tasks.V2.Lib,BX.Vue3.Directives,BX.UI.Vue3.Components,BX.Vue3.Components,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Lib,BX,BX.UI.IconSet,BX,BX.Tasks.V2,BX.Tasks.V2.Const,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service));
 //# sourceMappingURL=group.bundle.js.map

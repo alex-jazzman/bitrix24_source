@@ -12,6 +12,7 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
+	const { Feature } = require('im/messenger/lib/feature');
 
 	const {
 		RestMethod,
@@ -28,12 +29,15 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 	const { AnalyticsEvent } = require('analytics');
 	const { CopilotRoleSelector } = require('layout/ui/copilot-role-selector');
 
+	/**
+	 * @class DialogCreator
+	 */
 	class DialogCreator
 	{
 		constructor(options = {})
 		{
 			this.store = serviceLocator.get('core').getStore();
-			this.messagerInitService = serviceLocator.get('messenger-init-service');
+			this.messengerInitService = serviceLocator.get('messenger-init-service');
 			this.selector = () => {};
 			this.bindMethods();
 			this.subscribeInitMessengerEvent();
@@ -41,7 +45,7 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 
 		subscribeInitMessengerEvent()
 		{
-			this.messagerInitService.onInit(this.handleUserGet);
+			this.messengerInitService.onInit(this.handleUserGet);
 		}
 
 		bindMethods()
@@ -66,10 +70,13 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 			{
 				const { openCollabCreate } = await requireLazy('collab/create');
 
-				await openCollabCreate({
-					navigationTab: NavigationTab.imCollabMessenger,
-					// todo provide some analytics here
-				});
+				const openCollabCreateOptions = {};
+				if (!Feature.isMessengerV2Enabled)
+				{
+					openCollabCreateOptions.navigationTab = NavigationTab.imCollabMessenger;
+				}
+
+				await openCollabCreate(openCollabCreateOptions);
 			}
 			catch (error)
 			{
@@ -129,18 +136,27 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 				{
 					setTimeout(
 						() => {
-							MessengerEmitter.emit(
-								EventType.navigation.broadCastEventCheckTabPreload,
-								{
-									broadCastEvent: EventType.messenger.openDialog,
-									toTab: NavigationTabByComponent[ComponentCode.imCopilotMessenger],
-									data: {
-										dialogId: `chat${chatId}`,
-										context: OpenDialogContextType.chatCreation,
+							const openDialogParams = {
+								dialogId: `chat${chatId}`,
+								context: OpenDialogContextType.chatCreation,
+							};
+
+							if (Feature.isMessengerV2Enabled)
+							{
+								void serviceLocator.get('dialog-manager').openDialog(openDialogParams);
+							}
+							else
+							{
+								MessengerEmitter.emit(
+									EventType.navigation.broadCastEventCheckTabPreload,
+									{
+										broadCastEvent: EventType.messenger.openDialog,
+										toTab: NavigationTabByComponent[ComponentCode.imCopilotMessenger],
+										data: openDialogParams,
 									},
-								},
-								ComponentCode.imNavigation,
-							);
+									ComponentCode.imNavigation,
+								);
+							}
 
 							const analytics = new AnalyticsEvent()
 								.setTool(Analytics.Tool.ai)

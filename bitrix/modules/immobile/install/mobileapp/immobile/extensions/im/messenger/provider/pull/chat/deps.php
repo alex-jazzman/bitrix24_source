@@ -14,7 +14,6 @@ return [
 		'im:messenger/lib/helper',
 		'im:messenger/lib/logger',
 		'im:messenger/lib/params',
-		'im:messenger/lib/counters/tab-counters',
 		'im:messenger/lib/counters/counter-manager/messenger/sender',
 		'im:messenger/lib/counters/counter-manager/messenger/actions',
 		'im:messenger/lib/parser',
@@ -42,6 +41,5 @@ return [
 		'./src/online',
 		'./src/recent',
 		'./src/application',
-		'./src/counter',
 	],
 ];

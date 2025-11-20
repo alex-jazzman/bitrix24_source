@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
-(function (exports,pull_queuemanager,main_core_events,tasks_v2_core,tasks_v2_provider_service_taskService,tasks_v2_provider_service_groupService,tasks_v2_provider_service_flowService,tasks_v2_provider_service_userService,main_core,tasks_v2_const) {
+(function (exports,pull_queuemanager,main_core_events,tasks_v2_core,tasks_v2_provider_service_taskService,tasks_v2_provider_service_relationService,tasks_v2_provider_service_groupService,tasks_v2_provider_service_flowService,tasks_v2_provider_service_userService,main_core,tasks_v2_const) {
 	'use strict';
 
 	class BasePullHandler {
@@ -40,6 +40,7 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    statusChangedTs: prepareValue(after.STATUS, Date.now()),
 	    accomplicesIds: prepareValue(after.ACCOMPLICES, mapUserIds(after.ACCOMPLICES)),
 	    auditorsIds: prepareValue(after.AUDITORS, mapUserIds(after.AUDITORS)),
+	    parentId: prepareValue(after.PARENT_ID, Number(after.PARENT_ID) || 0),
 	    tags: prepareValue(after.TAGS, after.TAGS ? after.TAGS.split(',') : [])
 	  };
 	  return Object.fromEntries(Object.entries(task).filter(([, value]) => !main_core.Type.isUndefined(value)));
@@ -151,18 +152,19 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    Object.defineProperty(this, _handleTaskUpdated, {
 	      writable: true,
 	      value: data => {
-	        if (data.USER_ID === babelHelpers.classPrivateFieldLooseBase(this, _currentUserId)[_currentUserId]) {
-	          return;
-	        }
 	        babelHelpers.classPrivateFieldLooseBase(this, _upsertStage)[_upsertStage](data.AFTER.STAGE_INFO);
+	        const task = mapPushToModel(data);
+	        if (data.BEFORE.PARENT_ID) {
+	          tasks_v2_provider_service_relationService.subTasksService.deleteStore(data.BEFORE.PARENT_ID, [task.id]);
+	        }
+	        if (task.parentId) {
+	          tasks_v2_provider_service_relationService.subTasksService.addStore(task.parentId, [task.id]);
+	        }
 	      }
 	    });
 	    Object.defineProperty(this, _handleTaskUpdatedDelayed, {
 	      writable: true,
 	      value: async data => {
-	        if (data.USER_ID === babelHelpers.classPrivateFieldLooseBase(this, _currentUserId)[_currentUserId]) {
-	          return;
-	        }
 	        const task = mapPushToModel(data);
 	        if (babelHelpers.classPrivateFieldLooseBase(this, _needToLoadTask)[_needToLoadTask](data)) {
 	          void babelHelpers.classPrivateFieldLooseBase(this, _loadTask)[_loadTask](task);
@@ -186,7 +188,10 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    Object.defineProperty(this, _handleTaskDeleted, {
 	      writable: true,
 	      value: data => {
-	        main_core_events.EventEmitter.emit(tasks_v2_const.EventName.CloseFullCard);
+	        tasks_v2_provider_service_relationService.subTasksService.deleteStore(data.BEFORE.PARENT_ID, [data.TASK_ID]);
+	        main_core_events.EventEmitter.emit(tasks_v2_const.EventName.CloseFullCard, {
+	          taskId: data.TASK_ID
+	        });
 	        void this.$store.dispatch(`${tasks_v2_const.Model.Tasks}/delete`, data.TASK_ID);
 	      }
 	    });
@@ -403,5 +408,5 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 
 	exports.PullManager = PullManager;
 
-}((this.BX.Tasks.V2.Provider.Pull = this.BX.Tasks.V2.Provider.Pull || {}),BX.Pull,BX.Event,BX.Tasks.V2,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX,BX.Tasks.V2.Const));
+}((this.BX.Tasks.V2.Provider.Pull = this.BX.Tasks.V2.Provider.Pull || {}),BX.Pull,BX.Event,BX.Tasks.V2,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Provider.Service,BX,BX.Tasks.V2.Const));
 //# sourceMappingURL=pull-manager.bundle.js.map

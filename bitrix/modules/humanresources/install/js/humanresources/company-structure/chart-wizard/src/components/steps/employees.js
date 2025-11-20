@@ -1,16 +1,26 @@
 import { getMemberRoles, memberRolesKeys } from 'humanresources.company-structure.api';
-import { EntityTypes, getUserDataBySelectorItem, WizardApiEntityChangedDict } from 'humanresources.company-structure.utils';
+import { MoveUserPopup } from 'humanresources.company-structure.structure-components';
+import {
+	EntityTypes,
+	getUserDataBySelectorItem,
+	UserData,
+	WizardApiEntityChangedDict,
+} from 'humanresources.company-structure.utils';
 import { ChangeSaveModeControl } from '../change-save-mode-control/change-save-mode-control';
 import { TagSelector, type ItemOptions } from 'ui.entity-selector';
 
 export const Employees = {
 	name: 'employees',
 
-	components: { ChangeSaveModeControl },
+	components: { ChangeSaveModeControl, MoveUserPopup },
 
 	emits: ['applyData', 'saveModeChanged'],
 
 	props: {
+		entityId: {
+			type: Number,
+			required: true,
+		},
 		heads: {
 			type: Array,
 			required: true,
@@ -29,6 +39,15 @@ export const Employees = {
 		},
 	},
 
+	data(): { showMoveUserPopup: boolean, movedUserData: ?UserData, movedUserRole: ?string }
+	{
+		return {
+			showMoveUserPopup: false,
+			movedUserData: null,
+			movedUserRole: null,
+		};
+	},
+
 	created(): void
 	{
 		this.memberRoles = getMemberRoles(this.entityType);
@@ -39,6 +58,7 @@ export const Employees = {
 		this.headSelector = this.getUserSelector(memberRolesKeys.head);
 		this.deputySelector = this.getUserSelector(memberRolesKeys.deputyHead);
 		this.employeesSelector = this.getUserSelector(memberRolesKeys.employee);
+		this.moveUsersMap = {};
 		this.userCount = 0;
 
 		// store initial users to control applyData method in tagSelector
@@ -208,7 +228,16 @@ export const Employees = {
 			const isEmployee = role === this.memberRoles.employee;
 			if (!tag.rendered)
 			{
+				if (this.movedUserData?.id === userData.id)
+				{
+					return;
+				}
+
 				this.removedUsers = this.removedUsers.filter((user) => user.id !== userData.id);
+				Object.keys(this.moveUsersMap).forEach((nodeId) => {
+					this.moveUsersMap[nodeId] = this.moveUsersMap[nodeId].filter((user) => user.id !== userData.id);
+				});
+
 				if (isEmployee)
 				{
 					this.departmentEmployees = [...this.departmentEmployees, { ...userData }];
@@ -223,23 +252,80 @@ export const Employees = {
 				return;
 			}
 
-			const { preselectedItems = [] } = tag.selector.dialog;
-			const parsedPreselected = preselectedItems.flat().filter((item) => item !== 'user');
-			if (parsedPreselected.includes(userData.id))
-			{
-				this.removedUsers = [...this.removedUsers, { ...userData, role }];
-			}
+			this.movedUserData = userData;
+			this.movedUserRole = role;
 
-			if (isEmployee)
+			if (!this.isTeamEntity && this.isUserPreselected(tag.selector, userData.id))
 			{
-				this.departmentEmployees = this.departmentEmployees.filter((employee) => employee.id !== tag.id);
+				this.showMoveUserPopup = true;
 			}
 			else
 			{
-				this.departmentHeads = this.departmentHeads.filter((head) => head.id !== tag.id);
+				this.handleMoveUserAction(null);
+			}
+		},
+		handleMoveUserAction(newNodeId: ?number): void
+		{
+			// return user to selector if we try to move user to the same department/team
+			if (newNodeId === this.entityId)
+			{
+				this.handleAbortMove();
+
+				return;
+			}
+
+			const selector = this.getSelectorByRole(this.movedUserRole);
+
+			if (this.isUserPreselected(selector, this.movedUserData.id))
+			{
+				this.removedUsers = [...this.removedUsers, { ...this.movedUserData, role: this.movedUserRole }];
+				if (newNodeId)
+				{
+					this.moveUsersMap[newNodeId] = this.moveUsersMap[newNodeId]
+						? [...this.moveUsersMap[newNodeId], this.movedUserData]
+						: [this.movedUserData]
+					;
+				}
+			}
+
+			const isEmployee = this.movedUserRole === this.memberRoles.employee;
+			if (isEmployee)
+			{
+				this.departmentEmployees = this.departmentEmployees.filter((employee) => employee.id !== this.movedUserData.id);
+			}
+			else
+			{
+				this.departmentHeads = this.departmentHeads.filter((head) => head.id !== this.movedUserData.id);
 			}
 
 			this.userCount -= 1;
+			this.showMoveUserPopup = false;
+			this.movedUserData = null;
+			this.movedUserRole = null;
+
+			this.applyData();
+		},
+		handleAbortMove()
+		{
+			const selector = this.getSelectorByRole(this.movedUserRole);
+			const tag = selector.getDialog().getItem({ id: this.movedUserData.id, entityId: 'user' });
+			tag.select();
+
+			this.showMoveUserPopup = false;
+			this.movedUserData = null;
+			this.movedUserRole = null;
+		},
+		getSelectorByRole(role: string): TagSelector
+		{
+			switch (role)
+			{
+				case this.memberRoles.head:
+					return this.headSelector;
+				case this.memberRoles.deputyHead:
+					return this.deputySelector;
+				default:
+					return this.employeesSelector;
+			}
 		},
 		applyData(): void
 		{
@@ -248,6 +334,7 @@ export const Employees = {
 				heads: this.departmentHeads,
 				employees: this.departmentEmployees,
 				removedUsers: this.removedUsers,
+				moveUsersMap: this.moveUsersMap,
 				userCount: this.userCount,
 				isDepartmentDataChanged: true,
 			});
@@ -255,6 +342,16 @@ export const Employees = {
 		handleSaveModeChangedChanged(actionId: string): void
 		{
 			this.$emit('saveModeChanged', actionId);
+		},
+		isUserPreselected(selector: TagSelector, userId: number): boolean
+		{
+			const { preselectedItems = [] } = selector.dialog;
+			const parsedPreselected = preselectedItems
+				.flat()
+				.filter((preselectedItem) => preselectedItem !== 'user')
+			;
+
+			return parsedPreselected.includes(userId);
 		},
 	},
 
@@ -351,5 +448,16 @@ export const Employees = {
 				</div>
 			</div>
 		</div>
+		<MoveUserPopup
+			v-if="showMoveUserPopup"
+			:originalNodeId="entityId"
+			:user="movedUserData"
+			:entityType="entityType"
+			:executeAction="false"
+			:onlyMove="false"
+			@action="handleMoveUserAction"
+			@close="handleAbortMove"
+			@remove="handleMoveUserAction"
+		/>
 	`,
 };

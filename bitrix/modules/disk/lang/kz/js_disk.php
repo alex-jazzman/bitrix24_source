@@ -2,6 +2,7 @@
 $MESS["DISK_JS_BTN_CANCEL"] = "Болдырмау";
 $MESS["DISK_JS_BTN_CLOSE"] = "Жабу";
 $MESS["DISK_JS_BTN_DOWNLOAD"] = "Жүктеу";
+$MESS["DISK_JS_BTN_OPEN"] = "Ашу";
 $MESS["DISK_JS_BTN_SAVE"] = "Сақтау";
 $MESS["DISK_JS_DOCUMENT_ONLYOFFICE_SAVED"] = "#name# құжаты жаңартылды ";
 $MESS["DISK_JS_DOCUMENT_ONLYOFFICE_SAVE_PROCESS"] = "Құжатты сақтау жүріп жатыр: #name#";

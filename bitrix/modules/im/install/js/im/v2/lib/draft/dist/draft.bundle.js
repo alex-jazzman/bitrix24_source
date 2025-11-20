@@ -55,6 +55,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const SHOW_DRAFT_IN_RECENT_TIMEOUT = 1500;
 	const STORAGE_KEY = 'recentDraft';
 	const NOT_AVAILABLE_CHAT_TYPES = new Set([im_v2_const.ChatType.comment]);
+	const STANDALONE_SECTION_CHAT_TYPES = new Set([im_v2_const.ChatType.taskComments]);
+	var _getChat = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getChat");
 	class DraftManager {
 	  static getInstance() {
 	    if (!DraftManager.instance) {
@@ -63,34 +65,26 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    return DraftManager.instance;
 	  }
 	  constructor() {
+	    Object.defineProperty(this, _getChat, {
+	      value: _getChat2
+	    });
 	    this.inited = false;
 	    this.drafts = {};
-	    this.initPromise = new Promise(resolve => {
-	      this.initPromiseResolver = resolve;
-	    });
 	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.layout.onLayoutChange, this.onLayoutChange.bind(this));
 	  }
 	  async initDraftHistory() {
-	    if (this.inited) {
-	      return;
-	    }
-	    this.inited = true;
 	    let draftHistory = null;
 	    try {
 	      draftHistory = await IndexedDbManager.getInstance().get(STORAGE_KEY, {});
 	    } catch (error) {
 	      // eslint-disable-next-line no-console
 	      console.error('DraftManager: error initing draft history', error);
-	      this.initPromiseResolver();
 	      return;
 	    }
 	    this.fillDraftsFromStorage(draftHistory);
 	    im_v2_lib_logger.Logger.warn('DraftManager: initDrafts:', this.drafts);
-	    this.initPromiseResolver();
 	    this.setRecentListDraftText();
-	  }
-	  ready() {
-	    return this.initPromise;
+	    this.inited = true;
 	  }
 	  fillDraftsFromStorage(draftHistory) {
 	    if (!main_core.Type.isPlainObject(draftHistory)) {
@@ -146,9 +140,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    if (!this.canSetRecentItemDraftText(dialogId)) {
 	      return;
 	    }
+	    const {
+	      type: chatType
+	    } = babelHelpers.classPrivateFieldLooseBase(this, _getChat)[_getChat](dialogId);
 	    void im_v2_application_core.Core.getStore().dispatch('recent/setDraft', {
 	      id: dialogId,
-	      text
+	      text,
+	      addFakeItems: !STANDALONE_SECTION_CHAT_TYPES.has(chatType)
 	    });
 	  }
 	  onLayoutChange(event) {
@@ -192,12 +190,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    return result;
 	  }
 	  canSetRecentItemDraftText(dialogId) {
-	    const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
+	    const chat = babelHelpers.classPrivateFieldLooseBase(this, _getChat)[_getChat](dialogId);
 	    if (!chat) {
 	      return false;
 	    }
 	    return !NOT_AVAILABLE_CHAT_TYPES.has(chat.type);
 	  }
+	}
+	function _getChat2(dialogId) {
+	  return im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
 	}
 	DraftManager.instance = null;
 

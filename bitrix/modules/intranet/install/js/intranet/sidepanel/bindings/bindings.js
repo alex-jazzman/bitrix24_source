@@ -549,7 +549,7 @@
 			},
 			{
 				condition: [
-					/\?(IM_DIALOG|IM_HISTORY|IM_LINES|IM_COPILOT|IM_CHANNEL|IM_COLLAB)=([^&]+)(&IM_MESSAGE=([^&]+))?(?:&BOT_CONTEXT=([^&]+))?/i
+					/\?(IM_DIALOG|IM_HISTORY|IM_LINES|IM_COPILOT|IM_CHANNEL|IM_COLLAB|IM_TASK)=([^&]+)(&IM_MESSAGE=([^&]+))?(?:&BOT_CONTEXT=([^&]+))?/i
 				],
 				handler: function(event, link)
 				{
@@ -585,6 +585,10 @@
 					else if (type === 'IM_COLLAB')
 					{
 						BX.Messenger.Public.openCollab(dialogId);
+					}
+					else if (type === 'IM_TASK')
+					{
+						BX.Messenger.Public.openTaskComments(dialogId, messageId);
 					}
 					else if (botContext.length !== 0)
 					{

@@ -6,6 +6,7 @@ return [
 		'im:messenger/lib/emitter',
 		'im:messenger/lib/logger',
 		'im:messenger/lib/ui/notification',
+		'im:messenger/lib/clear-history',
 		'im:messenger/provider/services/chat',
 		'im:messenger/provider/services/analytics',
 		'im:messenger/provider/data',

@@ -339,6 +339,15 @@ jn.define('im/messenger/controller/recent/lib/renderer', (require, exports, modu
 
 			return viewItem && isEqual(viewItem, item);
 		}
+
+		/**
+		 * @desc force stopping worker, used only for dev test
+		 * @void
+		 */
+		stopWorker()
+		{
+			this.updateWorker.stop();
+		}
 	}
 
 	module.exports = {

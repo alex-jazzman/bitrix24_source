@@ -6,6 +6,7 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 
 	const {
 		FileType,
+		FileAudioType,
 		UrlGetParameter,
 		MessageComponent,
 		MessageParams,
@@ -14,6 +15,7 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 	const { getLogger } = require('im/messenger/lib/logger');
 	const { emojiRegex } = require('im/messenger/lib/utils');
 	const { SmileManager } = require('im/messenger/lib/smile-manager');
+	const { Feature } = require('im/messenger/lib/feature');
 
 	const logger = getLogger('helpers--message');
 
@@ -287,6 +289,11 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 				return false;
 			}
 
+			if (this.filesModel[0].extension === FileAudioType.m4a && !Feature.isAudioRecordM4ASupported)
+			{
+				return false;
+			}
+
 			return this.filesModel[0].type === FileType.audio;
 		}
 
@@ -396,6 +403,16 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 		get isAiAssistant()
 		{
 			return this.messageModel.params?.componentId === MessageParams.ComponentId.AiAssistantMessage;
+		}
+
+		/**
+		 * @returns {boolean}
+		 */
+		get isBot()
+		{
+			const userModel = this.#store.getters['usersModel/getById'](this.messageModel.authorId);
+
+			return Boolean(userModel?.bot);
 		}
 
 		getComponentId()

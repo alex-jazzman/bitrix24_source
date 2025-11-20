@@ -3,6 +3,7 @@ import { EventEmitter } from 'main.core.events';
 import { BuilderModel } from 'ui.vue3.vuex';
 
 import { Layout, EventType } from 'im.v2.const';
+import { LayoutManager } from 'im.v2.lib.layout';
 
 import { SettingsModel } from './nested-modules/settings/settings';
 import { TariffRestrictionsModel } from './nested-modules/tariff-restrictions/tariff-restrictions';
@@ -53,8 +54,7 @@ export class ApplicationModel extends BuilderModel
 			},
 			/** @function application/isChatOpen */
 			isChatOpen: (state) => (dialogId: string): boolean => {
-				const allowedLayouts = [Layout.chat, Layout.copilot, Layout.channel, Layout.collab];
-				if (!allowedLayouts.includes(state.layout.name))
+				if (!LayoutManager.getInstance().isChatLayout(state.layout.name))
 				{
 					return false;
 				}
@@ -123,7 +123,7 @@ export class ApplicationModel extends BuilderModel
 
 	validateLayout(name: string): string
 	{
-		if (!Layout[name])
+		if (!LayoutManager.getInstance().isValidLayout(name))
 		{
 			return Layout.chat;
 		}
@@ -133,7 +133,7 @@ export class ApplicationModel extends BuilderModel
 
 	validateLayoutEntityId(name: string, entityId: string): string
 	{
-		if (!Layout[name])
+		if (!LayoutManager.getInstance().isValidLayout(name))
 		{
 			return '';
 		}

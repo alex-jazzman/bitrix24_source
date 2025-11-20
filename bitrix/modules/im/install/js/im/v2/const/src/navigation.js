@@ -10,6 +10,7 @@ export const NavigationMenuItem = Object.freeze({
 	[Layout.notification]: Layout.notification,
 	[Layout.market]: Layout.market,
 	[Layout.settings]: Layout.settings,
+	[Layout.taskComments]: Layout.taskComments,
 	call: 'call',
 	timemanager: 'timemanager',
 	homepage: 'homepage',

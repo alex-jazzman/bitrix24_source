@@ -63,14 +63,14 @@ $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_HINT_3_W_COLLABS'] 
 
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_CHATS_TITLE'] = 'Чаты';
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_CHATS_DESCRIPTION'] = 'Выберите, в какие чаты добавить сотрудников отдела';
-$MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_CHATS_ADD_CHECKBOX_LABEL_MSGVER_2'] = '<span>+</span> Хочу создать чат для всего отдела';
+$MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_CHATS_ADD_CHECKBOX_LABEL_MSGVER_2'] = '<span>+</span> Хочу создать новый чат для всего отдела';
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_CHATS_REMOVE_CHECKBOX_LABEL_MSGVER_1'] = 'Создадим чат для всего отдела';
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_CHATS_REMOVE_CHECKBOX_LABEL_NOT_INSIDE'] = 'Создадим чат для всего отдела. Чтобы увидеть его, добавьте себя в отдел';
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_CHATS_ADD_CHECKBOX_HINT_MSGVER_1'] = 'Все участники сразу добавятся в новый чат. Состав чата автообновляется при любых изменениях в отделе';
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_CHATS_ADD_CHECKBOX_WARNING'] = 'Чтобы создать чат отдела, добавьте руководителя на предыдущем шаге. Он будет владельцем этого чата';
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_CHANNELS_TITLE'] = 'Каналы';
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_CHANNELS_DESCRIPTION'] = 'Выберите, в какие каналы добавить сотрудников отдела';
-$MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_CHANNELS_ADD_CHECKBOX_LABEL_MSGVER_2'] = '<span>+</span> Хочу создать канал для всего отдела';
+$MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_CHANNELS_ADD_CHECKBOX_LABEL_MSGVER_2'] = '<span>+</span> Хочу создать новый канал для всего отдела';
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_CHANNELS_REMOVE_CHECKBOX_LABEL_MSGVER_1'] = 'Создадим канал для всего отдела';
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_CHANNELS_REMOVE_CHECKBOX_LABEL_NOT_INSIDE'] = 'Создадим канал для всего отдела. Чтобы увидеть его, добавьте себя в отдел';
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_CHANNELS_ADD_CHECKBOX_HINT_MSGVER_1'] = 'Все участники сразу добавятся в новый канал. Состав канала автообновляется при любых изменениях в отделе';
@@ -84,13 +84,13 @@ $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_COLLAB_ADD_CHECKB
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_SELECT_COLLAB_ADD_CHECKBOX_WARNING'] = 'Чтобы создать коллабу отдела, добавьте руководителя на предыдущем шаге. Он будет владельцем этой коллабы';
 
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_CHATS_DESCRIPTION'] = 'Выберите, в какие чаты добавить участников команды';
-$MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_CHATS_ADD_CHECKBOX_LABEL_MSGVER_1'] = '<span>+</span> Хочу создать чат для всей команды';
+$MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_CHATS_ADD_CHECKBOX_LABEL_MSGVER_1'] = '<span>+</span> Хочу создать новый чат для всей команды';
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_CHATS_REMOVE_CHECKBOX_LABEL_MSGVER_1'] = 'Создадим чат для всей команды';
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_CHATS_REMOVE_CHECKBOX_LABEL_NOT_INSIDE'] = 'Создадим чат для всей команды. Чтобы увидеть его, добавьте себя в команду';
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_CHATS_ADD_CHECKBOX_HINT'] = 'Все участники сразу добавятся в новый чат. Состав чата автообновляется при любых изменениях в команде';
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_CHATS_ADD_CHECKBOX_WARNING'] = 'Чтобы создать чат команды, добавьте руководителя на предыдущем шаге. Он будет владельцем этого чата';
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_CHANNELS_DESCRIPTION'] = 'Выберите, в какие каналы добавить участников команды';
-$MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_CHANNELS_ADD_CHECKBOX_LABEL_MSGVER_1'] = '<span>+</span> Хочу создать канал для всей команды';
+$MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_CHANNELS_ADD_CHECKBOX_LABEL_MSGVER_1'] = '<span>+</span> Хочу создать новый канал для всей команды';
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_CHANNELS_REMOVE_CHECKBOX_LABEL_MSGVER_1'] = 'Создадим канал для всей команды';
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_CHANNELS_REMOVE_CHECKBOX_LABEL_NOT_INSIDE'] = 'Создадим канал для всей команды. Чтобы увидеть его, добавьте себя в команду';
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_CHANNELS_ADD_CHECKBOX_HINT'] = 'Все участники сразу добавятся в новый канал. Состав канала автообновляется при любых изменениях в команде';
@@ -104,19 +104,29 @@ $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_SELECT_COLLAB_ADD_C
 
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_RIGHTS_TITLE'] = 'Полномочия руководителей команды';
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_RIGHTS_BREADCRUMBS'] = 'Настройки';
+$MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_SETTINGS_BREADCRUMBS'] = 'Настройки';
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_RIGHTS_DEPARTMENT_HEAD_ITEM'] = 'Руководитель отдела';
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_RIGHTS_TEAM_HEAD_ITEM'] = 'Руководитель команды';
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_RIGHTS_DEPARTMENT_DEPUTY_ITEM'] = 'Заместитель руководителя отдела';
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_RIGHTS_TEAM_DEPUTY_ITEM'] = 'Заместитель руководителя команды';
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_RIGHTS_SOON_ITEM_BADGE'] = 'СКОРО';
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_RIGHTS_HINT_TITLE'] = 'Руководитель команды и его заместитель могут взять на себя часть управленческих функций. Например, вместо руководителя отдела или параллельно с ним, они смогут:';
+$MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_SETTINGS_HINT_TITLE'] = 'Заместитель отдела может взять на себя часть управленческих функций. Например, вместо руководителя отдела или параллельно с ним, он сможет:';
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_RIGHTS_HINT_1'] = 'согласовывать отпуска и командировки сотрудников';
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_RIGHTS_HINT_2'] = 'получать рабочие отчёты';
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_RIGHTS_BUSINESS_PROC_TITLE'] = 'Кто согласовывает бизнес-процессы';
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_RIGHTS_BUSINESS_PROC_DESCRIPTION'] = 'Выберите, кто из руководителей или заместителей будет участвовать в бизнес-процессах участников команды <b>#DEPARTMENT_NAME#</b>';
+$MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_SETTINGS_BUSINESS_PROC_DESCRIPTION'] = 'Выберите, кто из руководителей или заместителей будет участвовать в бизнес-процессах сотрудников отдела';
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_RIGHTS_BUSINESS_PROC_HEAD_ERROR'] = 'Добавьте руководителя или заместителя';
+$MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_SETTINGS_BUSINESS_PROC_HAS_HEAD_NO_DEPUTY'] = 'Заместитель руководителя отдела пока не назначен, бизнес-процессы будет согласовывать руководитель отдела';
+$MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_SETTINGS_BUSINESS_PROC_NO_HEAD_HAS_DEPUTY'] = 'Руководитель отдела пока не назначен, бизнес-процессы будет согласовывать заместитель руководителя отдела';
+$MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_SETTINGS_BUSINESS_PROC_NO_HEAD_NO_DEPUTY'] = 'Руководитель отдела и его заместитель пока не назначены, бизнес-процессы будет согласовывать вышестоящий руководитель ';
+$MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_SETTINGS_BUSINESS_PROC_NO_HEAD'] = 'Руководитель отдела пока не назначен, бизнес-процессы будет согласовывать вышестоящий руководитель ';
+$MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_SETTINGS_BUSINESS_PROC_NO_DEPUTY'] = 'Заместитель руководителя отдела пока не назначен, бизнес-процессы будет согласовывать вышестоящий руководитель ';
+$MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_SETTINGS_BUSINESS_PROC_EMPTY'] = 'Бизнес-процессы будет согласовывать вышестоящий руководитель';
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_RIGHTS_REPORTS_TITLE'] = 'Кто получает рабочие отчёты';
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_RIGHTS_REPORTS_DESCRIPTION'] = 'Выберите, кто из руководителей или заместителей будет получать рабочие отчёты участников команды <b>#DEPARTMENT_NAME#</b>';
+$MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_SETTINGS_REPORTS_DESCRIPTION'] = 'Выберите, кто из руководителей или заместителей будет получать рабочие отчёты сотрудников отдела';
 
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TREE_PREVIEW_DEPARTMENT_TITLE'] = 'Отдел в компании';
 $MESS['HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TREE_PREVIEW_TEAM_TITLE'] = 'Команда в компании';

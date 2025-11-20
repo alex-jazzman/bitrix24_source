@@ -2,6 +2,7 @@ import { Extension } from 'main.core';
 import { Builder, BuilderModel, Store } from 'ui.vue3.vuex';
 
 import { CheckList } from 'tasks.v2.model.check-list';
+import { CrmItems } from 'tasks.v2.model.crm-items';
 import { Epics } from 'tasks.v2.model.epics';
 import { Flows } from 'tasks.v2.model.flows';
 import { Groups } from 'tasks.v2.model.groups';
@@ -75,6 +76,7 @@ class CoreApplication
 
 		this.#builder
 			.addModel(CheckList.create())
+			.addModel(CrmItems.create())
 			.addModel(Epics.create())
 			.addModel(Flows.create())
 			.addModel(Groups.create())

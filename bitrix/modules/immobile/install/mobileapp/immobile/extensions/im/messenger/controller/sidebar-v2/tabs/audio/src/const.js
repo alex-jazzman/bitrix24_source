@@ -1,7 +1,7 @@
 /**
- * @module im/messenger/controller/sidebar-v2/tabs/audio/const
+ * @module im/messenger/controller/sidebar-v2/tabs/audio/src/const
  */
-jn.define('im/messenger/controller/sidebar-v2/tabs/audio/const', (require, exports, module) => {
+jn.define('im/messenger/controller/sidebar-v2/tabs/audio/src/const', (require, exports, module) => {
 	const PlayerStage = Object.freeze({
 		PLAYING: 'playing',
 		PAUSED: 'paused',

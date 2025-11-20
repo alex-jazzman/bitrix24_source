@@ -52,7 +52,7 @@ jn.define('collab/invite/src/guests-tab-content', (require, exports, module) => 
 	 * @property {boolean} pending
 	 * @property {boolean} isBitrix24Included
 	 * @property {CollabInviteAnalytics} analytics
-	 * @property {boolean} canInviteCollabers
+	 * @property {boolean} canInviteCollabersInPortalSettings
 	 * @property {object} languages
 
 	 * @class GuestsTabContent
@@ -62,9 +62,14 @@ jn.define('collab/invite/src/guests-tab-content', (require, exports, module) => 
 		constructor(props)
 		{
 			super(props);
+			const {
+				pending,
+				isBitrix24Included,
+			} = this.props;
+
 			this.state = {
-				pending: this.props.pending,
-				isBitrix24Included: this.props.isBitrix24Included,
+				pending,
+				isBitrix24Included,
 				languageCode: this.#getDefaultLanguageCode(),
 			};
 
@@ -80,7 +85,9 @@ jn.define('collab/invite/src/guests-tab-content', (require, exports, module) => 
 
 		render()
 		{
-			if (this.state.pending)
+			const { pending } = this.state;
+
+			if (pending)
 			{
 				return this.#renderSkeleton();
 			}
@@ -163,7 +170,7 @@ jn.define('collab/invite/src/guests-tab-content', (require, exports, module) => 
 
 		#renderButtons()
 		{
-			const { canInviteCollabers, boxLayout } = this.props;
+			const { canInviteCollabersInPortalSettings, boxLayout } = this.props;
 
 			return BoxFooter(
 				{
@@ -182,7 +189,7 @@ jn.define('collab/invite/src/guests-tab-content', (require, exports, module) => 
 							marginBottom: Indent.L.toNumber(),
 						},
 						onClick: async () => {
-							if (!canInviteCollabers)
+							if (!canInviteCollabersInPortalSettings)
 							{
 								await openGuestsInviteRestrictionsBox({
 									parentWidget: boxLayout,
@@ -261,8 +268,8 @@ jn.define('collab/invite/src/guests-tab-content', (require, exports, module) => 
 		};
 
 		#openOtherInviteCasesMenu = async () => {
-			const { canInviteCollabers, boxLayout } = this.props;
-			if (!canInviteCollabers)
+			const { canInviteCollabersInPortalSettings, boxLayout } = this.props;
+			if (!canInviteCollabersInPortalSettings)
 			{
 				await openGuestsInviteRestrictionsBox({
 					parentWidget: boxLayout,
@@ -625,8 +632,8 @@ jn.define('collab/invite/src/guests-tab-content', (require, exports, module) => 
 		};
 
 		#openEmailInputBox = async () => {
-			const { canInviteCollabers, boxLayout } = this.props;
-			if (!canInviteCollabers)
+			const { canInviteCollabersInPortalSettings, boxLayout } = this.props;
+			if (!canInviteCollabersInPortalSettings)
 			{
 				await openGuestsInviteRestrictionsBox({
 					parentWidget: boxLayout,

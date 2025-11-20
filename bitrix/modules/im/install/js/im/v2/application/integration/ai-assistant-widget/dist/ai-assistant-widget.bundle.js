@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,im_v2_application_core,im_v2_css_classes,im_v2_lib_logger,im_v2_provider_service_chat,im_v2_component_content_chat,ui_iconSet_api_vue,main_core_events,im_v2_component_content_elements,im_v2_const) {
+(function (exports,im_v2_application_core,im_v2_css_classes,im_v2_lib_logger,im_v2_provider_service_chat,im_v2_component_content_chat,im_v2_lib_messageNotifier,ui_iconSet_api_vue,main_core_events,im_v2_component_content_elements,im_v2_const) {
 	'use strict';
 
 	const MINIMIZE_EVENT_NAME = 'IM.AiAssistantWidget:minimize';
@@ -68,6 +68,21 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    withSidebar: {
 	      type: Boolean,
 	      default: true
+	    }
+	  },
+	  created() {
+	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.notifier.onBeforeShowMessage, this.onBeforeNotificationShow);
+	  },
+	  beforeUnmount() {
+	    main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.notifier.onBeforeShowMessage, this.onBeforeNotificationShow);
+	  },
+	  methods: {
+	    onBeforeNotificationShow(event) {
+	      const eventData = event.getData();
+	      if (eventData.dialogId !== this.dialogId) {
+	        return im_v2_lib_messageNotifier.NotifierShowMessageAction.show;
+	      }
+	      return im_v2_lib_messageNotifier.NotifierShowMessageAction.skip;
 	    }
 	  },
 	  template: `
@@ -175,5 +190,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.AiAssistantWidgetApplication = AiAssistantWidgetApplication;
 
-}((this.BX.Messenger.v2.Application = this.BX.Messenger.v2.Application || {}),BX.Messenger.v2.Application,BX.Messenger.v2.Css,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Component.Content,BX.UI.IconSet,BX.Event,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Const));
+}((this.BX.Messenger.v2.Application = this.BX.Messenger.v2.Application || {}),BX.Messenger.v2.Application,BX.Messenger.v2.Css,BX.Messenger.v2.Lib,BX.Messenger.v2.Service,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Lib,BX.UI.IconSet,BX.Event,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Const));
 //# sourceMappingURL=ai-assistant-widget.bundle.js.map

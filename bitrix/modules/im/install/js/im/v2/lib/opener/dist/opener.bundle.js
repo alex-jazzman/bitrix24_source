@@ -153,6 +153,26 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      entityId: preparedDialogId
 	    });
 	  },
+	  async openChannel(dialogId = '') {
+	    const preparedDialogId = dialogId.toString();
+	    await im_v2_lib_slider.MessengerSlider.getInstance().openSlider();
+	    return im_v2_lib_layout.LayoutManager.getInstance().setLayout({
+	      name: im_v2_const.Layout.channel,
+	      entityId: preparedDialogId
+	    });
+	  },
+	  async openTaskComments(dialogId = '', messageId = 0) {
+	    const preparedDialogId = dialogId.toString();
+	    await im_v2_lib_slider.MessengerSlider.getInstance().openSlider();
+	    const layoutParams = {
+	      name: im_v2_const.Layout.taskComments,
+	      entityId: preparedDialogId
+	    };
+	    if (messageId > 0) {
+	      layoutParams.contextId = messageId;
+	    }
+	    return im_v2_lib_layout.LayoutManager.getInstance().setLayout(layoutParams);
+	  },
 	  openHistory(dialogId = '') {
 	    if (im_v2_lib_utils.Utils.dialog.isDialogId(dialogId)) {
 	      return this.openChat(dialogId);

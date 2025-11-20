@@ -130,6 +130,21 @@ export const ManagementDialog = {
 					onLoad: (event) => {
 						const dialog: Dialog = event.getTarget();
 						this.toggleItems(dialog);
+
+						const tabs = dialog.getTabs();
+						for (const tab of tabs)
+						{
+							if (tab.id === 'recents')
+							{
+								tab.select();
+							}
+
+							if (!['recents', 'search'].includes(tab.id))
+							{
+								tab.deselect();
+								tab.setVisible(false);
+							}
+						}
 					},
 					'SearchTab:onLoad': (event) => {
 						const dialog: Dialog = event.getTarget();

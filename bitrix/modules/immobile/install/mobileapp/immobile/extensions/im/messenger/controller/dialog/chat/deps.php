@@ -32,7 +32,6 @@ return [
 		'im:messenger/controller/users-read-message-list',
 		'im:messenger/lib/converter/data/recent',
 		'im:messenger/lib/converter/ui/message',
-		'im:messenger/lib/counters/tab-counters',
 		'im:messenger/lib/counters/counter-manager/messenger/sender',
 		'im:messenger/lib/date-formatter',
 		'im:messenger/lib/emitter',
@@ -93,6 +92,9 @@ return [
 		'im:messenger/controller/dialog/lib/app-rating-client',
 		'im:messenger/controller/dialog/lib/media-gallery',
 		'im:messenger/controller/dialog/lib/floating-buttons-bar-manager',
+		'im:messenger/controller/dialog/lib/audio-panel',
+		'im:messenger/controller/dialog/lib/notify-panel-manager',
+		'im:messenger/controller/dialog/lib/transcript-manager',
 	],
 	'bundle' => [
 		'./src/dialog',

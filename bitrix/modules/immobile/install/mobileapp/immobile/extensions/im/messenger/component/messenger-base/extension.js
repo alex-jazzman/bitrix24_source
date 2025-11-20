@@ -25,6 +25,8 @@ jn.define('im/messenger/component/messenger-base', async (require, exports, modu
 	const { Anchors } = require('im/messenger/lib/anchors');
 	const { MessengerCounterHandler } = require('im/messenger/lib/counters/counter-manager/messenger/handler');
 	const { Feature } = require('im/messenger/lib/feature');
+	const { createTabCountersByComponent } = require('im/messenger/lib/counters/tab-counters');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
 	const REFRESH_AFTER_ERROR_INTERVAL = 10000;
 
@@ -96,6 +98,8 @@ jn.define('im/messenger/component/messenger-base', async (require, exports, modu
 			this.searchSelector = null;
 			/** @type {DialogCreator || null} */
 			this.dialogCreator = null;
+			this.tabCounters = createTabCountersByComponent();
+			serviceLocator.add('tab-counters', this.tabCounters);
 			this.visibilityManager = VisibilityManager.getInstance();
 
 			this.callManager = CallManager.getInstance();

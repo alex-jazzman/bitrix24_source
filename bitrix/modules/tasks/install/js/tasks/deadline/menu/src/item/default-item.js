@@ -39,7 +39,7 @@ export class DefaultItem extends Item
 
 		const subItems = [
 			new MenuItem({
-				dataset: { id: `${this.MENU_ID}-day` },
+				dataset: { id: `${this.MENU_ID}-day`, analytics: 'one_day_button' },
 				text: Loc.getMessage('TASKS_DEADLINE_MENU_DEFAULT_ITEM_1_DAY'),
 				value: this.#SECONDS_IN_DAY,
 				isExactTime: false,
@@ -47,7 +47,7 @@ export class DefaultItem extends Item
 				onclick,
 			}),
 			new MenuItem({
-				dataset: { id: `${this.MENU_ID}-three-days` },
+				dataset: { id: `${this.MENU_ID}-three-days`, analytics: 'three_days_button' },
 				text: Loc.getMessage('TASKS_DEADLINE_MENU_DEFAULT_ITEM_3_DAYS'),
 				value: 3 * this.#SECONDS_IN_DAY,
 				isExactTime: false,
@@ -55,7 +55,7 @@ export class DefaultItem extends Item
 				onclick,
 			}),
 			new MenuItem({
-				dataset: { id: `${this.MENU_ID}-week` },
+				dataset: { id: `${this.MENU_ID}-week`, analytics: 'one_week_button' },
 				text: Loc.getMessage('TASKS_DEADLINE_MENU_DEFAULT_ITEM_1_WEEK'),
 				value: this.#SECONDS_IN_WEEK,
 				isExactTime: false,
@@ -63,7 +63,7 @@ export class DefaultItem extends Item
 				onclick,
 			}),
 			new MenuItem({
-				dataset: { id: `${this.MENU_ID}-two-weeks` },
+				dataset: { id: `${this.MENU_ID}-two-weeks`, analytics: 'two_weeks_button' },
 				text: Loc.getMessage('TASKS_DEADLINE_MENU_DEFAULT_ITEM_2_WEEKS'),
 				value: 2 * this.#SECONDS_IN_WEEK,
 				isExactTime: false,
@@ -71,7 +71,7 @@ export class DefaultItem extends Item
 				onclick,
 			}),
 			new MenuItem({
-				dataset: { id: `${this.MENU_ID}-empty` },
+				dataset: { id: `${this.MENU_ID}-empty`, analytics: 'no_deadline' },
 				text: Loc.getMessage('TASKS_DEADLINE_MENU_DEFAULT_ITEM_EMPTY'),
 				value: 0,
 				isExactTime: false,
@@ -185,6 +185,15 @@ export class DefaultItem extends Item
 					default: deadline,
 					isExactTime: item.isExactTime ? 'Y' : 'N',
 				},
+			},
+			analytics: {
+				tool: 'tasks',
+				category: 'task_operations',
+				event: 'click_settings',
+				type: 'task',
+				c_section: 'tasks',
+				c_sub_section: 'default_deadline_selected',
+				c_element: item.dataset?.analytics,
 			},
 		})
 			.catch((error): void => this.onPromiseError(error))

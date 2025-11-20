@@ -164,11 +164,14 @@ export const MiniForm = {
 				setTimeout(() => {
 					this.isNeedTeleport = true;
 				}, 100);
+
+				this.editor.setVisualOptions({ blockSpaceInline: 0 });
 			}
 			else
 			{
 				this.isNeedTeleport = false;
 				this.editor.setMaxHeight(null);
+				this.editor.setVisualOptions({ blockSpaceInline: 'var(--ui-space-stack-md2)' });
 			}
 		},
 		onFileBrowserClose(): void
@@ -191,17 +194,19 @@ export const MiniForm = {
 						@filesChange="handleEditorChange"
 					/>
 				</Teleport>
-				<div class="tasks-card-description-footer">
-					<div class="tasks-card-description-action-list">
-						<Copilot />
-						<Attach ref="attach" @click="handleAttachButtonClick"/>
-						<Mention @click="handleMentionButtonClick"/>
-					</div>
-					<div
-						class="tasks-card-description-footer-buttons"
-						ref="fullDescriptionArea"
-					>
-						<FullDescription @click="handleExpand"/>
+				<div class="tasks-card-description-footer-container">
+					<div class="tasks-card-description-footer">
+						<div class="tasks-card-description-action-list">
+							<Copilot />
+							<Attach ref="attach" @click="handleAttachButtonClick"/>
+							<Mention @click="handleMentionButtonClick"/>
+						</div>
+						<div
+							class="tasks-card-description-footer-buttons"
+							ref="fullDescriptionArea"
+						>
+							<FullDescription @click="handleExpand"/>
+						</div>
 					</div>
 				</div>
 			</div>

@@ -1,5 +1,5 @@
 // eslint-disable-next-line no-var,no-implicit-globals
-var REVISION = 20; // API revision - sync with im/lib/revision.php
+var REVISION = 21; // API revision - sync with im/lib/revision.php
 
 /* region Environment variables */
 
@@ -15,6 +15,8 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	window.messenger.destructor();
 }
 
+window.messengerDebug = {};
+
 /* endregion Clearing session variables after script reload */
 
 (async () => {
@@ -29,7 +31,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	await MessengerParams.waitSharedParamsInit();
 
 	const { QuickRecentLoader } = require('im/messenger/lib/quick-recent-load');
-	QuickRecentLoader.renderItemsOnViewLoaded();
+	QuickRecentLoader.renderItemsOnViewLoaded(dialogList);
 
 	const DialogList = dialogList;
 	const { Type } = require('type');
@@ -81,7 +83,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		CopilotMessagePullHandler,
 		CopilotFilePullHandler,
 		CopilotUserPullHandler,
-		CopilotCounterPullHandler,
 	} = require('im/messenger/provider/pull/copilot');
 	const { PlanLimitsPullHandler } = require('im/messenger/provider/pull/plan-limits');
 
@@ -91,7 +92,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	const { RecentView } = require('im/messenger/view/recent');
 	const { CopilotDialog } = require('im/messenger/controller/dialog/copilot');
 	const { CopilotAssets } = require('im/messenger/controller/dialog/lib/assets');
-	const { TabCounters } = require('im/messenger/lib/counters/tab-counters');
 	const { Communication } = require('im/messenger/lib/integration/mobile/communication');
 	const { CopilotPushMessageHandler } = require('im/messenger/provider/push/message-handler/copilot');
 	const { DialogCreator } = require('im/messenger/controller/dialog-creator');
@@ -335,8 +335,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			super.initPullHandlers();
 			BX.PULL.subscribe(new CopilotDialogPullHandler());
 			BX.PULL.subscribe(new CopilotMessagePullHandler());
-			// deprecated. delete after counters in memoryStorage go to prod
-			// BX.PULL.subscribe(new CopilotCounterPullHandler());
 			BX.PULL.subscribe(new CopilotFilePullHandler());
 			BX.PULL.subscribe(new CopilotUserPullHandler());
 			BX.PULL.subscribe(new PlanLimitsPullHandler());
@@ -427,7 +425,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			this.refreshErrorNoticeFlag = false;
 			this.notifyRefreshErrorWorker.stop();
 
-			TabCounters.update();
+			serviceLocator.get('tab-counters').update();
 
 			return this.ready();
 		}

@@ -10,6 +10,7 @@ jn.define('im/messenger/controller/dialog/lib/floating-buttons-bar-manager', (re
 
 	const { AnchorType } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
+	const { Feature } = require('im/messenger/lib/feature');
 	const { RestMethod } = require('im/messenger/const');
 
 	const ButtonId = {
@@ -209,7 +210,10 @@ jn.define('im/messenger/controller/dialog/lib/floating-buttons-bar-manager', (re
 		};
 
 		getCommentsButton = () => {
-			const postsCountWithCounters = this.store.getters['commentModel/getPostsCountWithCounters'](this.getChatId());
+			const postsCountWithCounters = Feature.isMessengerV2Enabled
+				? this.store.getters['counterModel/getNumberChildCounters'](this.getChatId())
+				: this.store.getters['commentModel/getPostsCountWithCounters'](this.getChatId())
+			;
 
 			if (!postsCountWithCounters)
 			{
@@ -472,7 +476,7 @@ jn.define('im/messenger/controller/dialog/lib/floating-buttons-bar-manager', (re
 			void this.contextManager?.goToMessageContextByCommentChatId({
 				dialogId: this.dialogId,
 				commentChatId: this.lastScrolledCommentChatId,
-			});
+			})
 		};
 
 		#getNextMessageIdWithReactionToJump = () => {
@@ -507,15 +511,27 @@ jn.define('im/messenger/controller/dialog/lib/floating-buttons-bar-manager', (re
 
 		#getNextCommentChatIdToJump()
 		{
-			const channelComments = this.store.getters['commentModel/getChannelCounterCollection'](this.getChatId());
-
-			const commentChatIds = Object.keys(channelComments).map((chatId) => {
-				return Number(chatId);
-			});
+			const commentChatIds = this.#getCommentChatIds();
 
 			commentChatIds.sort((a, b) => a - b);
 
 			return this.#getNextIdToJump(commentChatIds, this.lastScrolledCommentChatId);
+		}
+
+		#getCommentChatIds()
+		{
+			if (!Feature.isMessengerV2Enabled)
+			{
+				const channelComments = this.store.getters['commentModel/getChannelCounterCollection'](this.getChatId());
+
+				return Object.keys(channelComments).map((chatId) => {
+					return Number(chatId);
+				});
+			}
+
+			const counterList = this.store.getters['counterModel/getByParentChatId'](this.getChatId());
+
+			return counterList.map((counterState) => counterState.chatId);
 		}
 
 		#getNextIdToJump(sortedIds, lastId) {

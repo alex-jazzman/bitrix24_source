@@ -1,5 +1,5 @@
 <?php
-$MESS["HUMANRESOURCES_CHAT_SERVICE_NOT_AVAILABLE"] = "Модуль недоступен. Обратитесь к администратору вашего Битрикс24";
+$MESS["HUMANRESOURCES_CHAT_SERVICE_NOT_AVAILABLE_MSGVER_1"] = "Модуль <b>Веб-мессенджер</b> недоступен. Обратитесь к администратору вашего Битрикс24";
 $MESS["HUMANRESOURCES_CHAT_SERVICE_CREATION_ERROR_CHAT"] = "Не удалось создать чат";
 $MESS["HUMANRESOURCES_CHAT_SERVICE_CREATION_ERROR_CHANNEL"] = "Не удалось создать канал";
 $MESS["HUMANRESOURCES_CHAT_SERVICE_CHAT_TYPE_OPEN_CHAT_SUBTITLE"] = "Открытый чат";

@@ -225,7 +225,14 @@ jn.define('collab/create', (require, exports, module) => {
 
 			const { data } = response;
 			const { name, description, ownerId, moderatorMembers, options, additionalInfo, permissions } = data;
-			const { whoCanInvite, manageMessages, showHistory, messagesAutoDeleteDelay } = options;
+			const {
+				whoCanInvite,
+				allowGuestsInvitation,
+				manageMessages,
+				showHistory,
+				messagesAutoDeleteDelay,
+				canInviteCollabers,
+			} = options;
 			const { tasks } = permissions;
 			const { users, image } = additionalInfo;
 
@@ -233,6 +240,7 @@ jn.define('collab/create', (require, exports, module) => {
 				name,
 				description,
 				messagesAutoDeleteDelay,
+				canInviteCollabersInPortalSettings: canInviteCollabers === 'Y',
 				image: isNil(image) ? null : {
 					id: image.id,
 					previewUrl: encodeURI(image.src),
@@ -242,6 +250,7 @@ jn.define('collab/create', (require, exports, module) => {
 					moderators: moderatorMembers.map((id) => users[id]),
 					showHistory,
 					inviters: whoCanInvite,
+					allowGuestsInvitation,
 					messageWriters: manageMessages,
 				},
 				taskPermissions: tasks,
@@ -388,11 +397,15 @@ jn.define('collab/create', (require, exports, module) => {
 
 		#renderPermissionsScreen()
 		{
+			const { canInviteCollabersInPortalSettings, permissions } = this.settings;
+			const { layoutWidget } = this.props;
+
 			return CollabCreatePermissions({
-				...this.settings.permissions,
+				...permissions,
+				canInviteCollabersInPortalSettings,
 				testId: this.testId,
 				onChange: this.#onPermissionScreenSettingsChange,
-				layoutWidget: this.props.layoutWidget,
+				layoutWidget,
 			});
 		}
 
@@ -461,7 +474,7 @@ jn.define('collab/create', (require, exports, module) => {
 
 		#getSettingsForUpdateRequest = () => {
 			const { name, description, image, permissions, taskPermissions } = this.settings;
-			const { owner, moderators, showHistory, inviters, messageWriters } = permissions;
+			const { owner, moderators, showHistory, inviters, allowGuestsInvitation, messageWriters } = permissions;
 
 			const changedProps = {};
 			if (name !== this.props.settings.name)
@@ -510,6 +523,14 @@ jn.define('collab/create', (require, exports, module) => {
 				};
 			}
 
+			if (allowGuestsInvitation !== this.props.settings.permissions.allowGuestsInvitation)
+			{
+				changedProps.options = {
+					...changedProps.options,
+					allowGuestsInvitation,
+				};
+			}
+
 			if (messageWriters !== this.props.settings.permissions.messageWriters)
 			{
 				changedProps.options = {
@@ -549,7 +570,7 @@ jn.define('collab/create', (require, exports, module) => {
 
 		#getSettingsForCreateRequest = () => {
 			const { name, description, image, permissions, taskPermissions, messagesAutoDeleteDelay } = this.settings;
-			const { owner, moderators, showHistory, inviters, messageWriters } = permissions;
+			const { owner, moderators, showHistory, inviters, allowGuestsInvitation, messageWriters } = permissions;
 
 			return {
 				ownerId: owner.id,
@@ -560,6 +581,7 @@ jn.define('collab/create', (require, exports, module) => {
 
 				options: {
 					whoCanInvite: inviters,
+					allowGuestsInvitation,
 					manageMessages: messageWriters,
 					messagesAutoDeleteDelay,
 					showHistory,

@@ -1,16 +1,17 @@
 import { hint, type HintParams } from 'ui.vue3.directives.hint';
-import { BIcon, Outline } from 'ui.icon-set.api.vue';
+import { Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
 
 import { Model } from 'tasks.v2.const';
 import { HoverPill } from 'tasks.v2.component.elements.hover-pill';
+import { FieldAdd } from 'tasks.v2.component.elements.field-add';
 import { tooltip } from 'tasks.v2.component.elements.hint';
 import type { TaskModel } from 'tasks.v2.model.tasks';
 
 export const DatePlanContent = {
 	components: {
-		BIcon,
 		HoverPill,
+		FieldAdd,
 	},
 	directives: { hint },
 	props: {
@@ -42,17 +43,12 @@ export const DatePlanContent = {
 		},
 	},
 	template: `
-		<HoverPill :readonly="task.matchesSubTasksTime">
-			<div class="tasks-field-date-plan-content" :class="{ '--add': !task.matchesSubTasksTime }">
-				<template v-if="task.matchesSubTasksTime">
-					<div>{{ loc('TASKS_V2_DATE_PLAN_MATCH_SUBTASKS_TIME_STATE') }}</div>
-					<div v-hint="tooltip" class="tasks-hint-badge" ref="hint">?</div>
-				</template>
-				<template v-else>
-					<BIcon :name="Outline.PLANNING"/>
-					<div>{{ loc('TASKS_V2_DATE_PLAN_ADD') }}</div>
-				</template>
+		<HoverPill v-if="task.matchesSubTasksTime" :readonly="true">
+			<div class="tasks-field-date-plan-content">
+				<div>{{ loc('TASKS_V2_DATE_PLAN_MATCH_SUBTASKS_TIME_STATE') }}</div>
+				<div v-hint="tooltip" class="tasks-hint-badge" ref="hint">?</div>
 			</div>
 		</HoverPill>
+		<FieldAdd v-else :icon="Outline.PLANNING"/>
 	`,
 };

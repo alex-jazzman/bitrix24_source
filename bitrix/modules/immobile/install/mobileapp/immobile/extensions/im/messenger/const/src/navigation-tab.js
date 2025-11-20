@@ -4,6 +4,9 @@
 jn.define('im/messenger/const/navigation-tab', (require, exports, module) => {
 	const { ComponentCode } = require('im/messenger/const/component-code');
 
+	/**
+	 * @deprecated
+	 */
 	const NavigationTab = {
 		imMessenger: 'chats',
 		imCopilotMessenger: 'copilot',
@@ -11,6 +14,15 @@ jn.define('im/messenger/const/navigation-tab', (require, exports, module) => {
 		imCollabMessenger: 'collab',
 		imNotify: 'notifications',
 		imOpenlinesRecent: 'openlines',
+	};
+
+	const NavigationTabId = {
+		chats: 'chats',
+		copilot: 'copilot',
+		channel: 'channel',
+		collab: 'collab',
+		openlines: 'openlines',
+		task: 'task',
 	};
 
 	const NavigationTabByComponent = {
@@ -22,5 +34,9 @@ jn.define('im/messenger/const/navigation-tab', (require, exports, module) => {
 		[ComponentCode.imOpenlinesRecent]: NavigationTab.imOpenlinesRecent,
 	};
 
-	module.exports = { NavigationTab, NavigationTabByComponent };
+	module.exports = {
+		NavigationTab,
+		NavigationTabId,
+		NavigationTabByComponent,
+	};
 });

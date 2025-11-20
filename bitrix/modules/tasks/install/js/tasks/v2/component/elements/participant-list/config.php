@@ -15,6 +15,8 @@ return [
 		'ui.icon-set.api.vue',
 		'ui.icon-set.api.core',
 		'ui.icon-set.outline',
+		'tasks.v2.component.elements.add-background',
+		'tasks.v2.component.elements.field-add',
 		'tasks.v2.lib.user-selector-dialog',
 		'tasks.v2.lib.height-transition',
 		'tasks.v2.lib.href-click',

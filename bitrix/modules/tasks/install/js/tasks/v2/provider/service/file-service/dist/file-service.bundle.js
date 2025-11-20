@@ -312,6 +312,9 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _adapter)[_adapter].getUploader().destroy();
 	  }
 	  async sync(ids) {
+	    if (!main_core.Type.isArrayFilled(ids)) {
+	      return;
+	    }
 	    if (ids.every(id => babelHelpers.classPrivateFieldLooseBase(this, _loadedIds)[_loadedIds].has(id))) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _adapter)[_adapter].getItems().forEach(file => {
 	        const uploaderIds = [file.serverFileId];

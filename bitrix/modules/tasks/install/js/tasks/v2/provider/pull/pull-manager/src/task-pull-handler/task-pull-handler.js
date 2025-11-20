@@ -5,6 +5,7 @@ import type { Store } from 'ui.vue3.vuex';
 import { EventName, Model } from 'tasks.v2.const';
 import { Core } from 'tasks.v2.core';
 import { taskService } from 'tasks.v2.provider.service.task-service';
+import { subTasksService } from 'tasks.v2.provider.service.relation-service';
 import { GroupMappers, groupService, type StageDto } from 'tasks.v2.provider.service.group-service';
 import { flowService } from 'tasks.v2.provider.service.flow-service';
 import { userService } from 'tasks.v2.provider.service.user-service';
@@ -66,20 +67,22 @@ export class TaskPullHandler extends BasePullHandler
 	};
 
 	#handleTaskUpdated = (data: PushData): void => {
-		if (data.USER_ID === this.#currentUserId)
+		this.#upsertStage(data.AFTER.STAGE_INFO);
+
+		const task = mapPushToModel(data);
+
+		if (data.BEFORE.PARENT_ID)
 		{
-			return;
+			subTasksService.deleteStore(data.BEFORE.PARENT_ID, [task.id]);
 		}
 
-		this.#upsertStage(data.AFTER.STAGE_INFO);
+		if (task.parentId)
+		{
+			subTasksService.addStore(task.parentId, [task.id]);
+		}
 	};
 
 	#handleTaskUpdatedDelayed = async (data: PushData): Promise<void> => {
-		if (data.USER_ID === this.#currentUserId)
-		{
-			return;
-		}
-
 		const task = mapPushToModel(data);
 
 		if (this.#needToLoadTask(data))
@@ -103,8 +106,9 @@ export class TaskPullHandler extends BasePullHandler
 
 	#handleTaskViewed = (data): void => {};
 
-	#handleTaskDeleted = (data): void => {
-		EventEmitter.emit(EventName.CloseFullCard);
+	#handleTaskDeleted = (data: PushData): void => {
+		subTasksService.deleteStore(data.BEFORE.PARENT_ID, [data.TASK_ID]);
+		EventEmitter.emit(EventName.CloseFullCard, { taskId: data.TASK_ID });
 		void this.$store.dispatch(`${Model.Tasks}/delete`, data.TASK_ID);
 	};
 

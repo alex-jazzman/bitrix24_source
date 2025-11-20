@@ -26,6 +26,7 @@ jn.define('im/messenger/lib/element/recent/item/user/bot', (require, exports, mo
 			this.actions = [
 				this.getPinAction(),
 				this.getReadAction(),
+				this.getMuteAction(),
 			];
 
 			if (this.canHide())

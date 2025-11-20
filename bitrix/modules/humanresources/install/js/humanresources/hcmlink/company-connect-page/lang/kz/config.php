@@ -1,5 +1,5 @@
 <?php
-$MESS["HUMANRESOURCES_HCMLINK_CONNECTOR_PAGE_ACTION_INSTALL"] = "Жаңа коннектор қосыңыз";
+$MESS["HUMANRESOURCES_HCMLINK_CONNECTOR_PAGE_ACTION_INSTALL_V1"] = "Интеграцияны қосу";
 $MESS["HUMANRESOURCES_HCMLINK_CONNECTOR_PAGE_HEAD_DESCRIPTION"] = "1С интеграциясы кадрлық процестерді тиімдірек <br />және айқын етуге көмектеседі, қызметкерлердің уақытын үнемдейді және қателіктер ықтималдығын азайтады";
 $MESS["HUMANRESOURCES_HCMLINK_CONNECTOR_PAGE_PARAGRAPH_1"] = "Барлық кадрлық құжаттарға онлайн қол қойылады және 1С де беріледі";
 $MESS["HUMANRESOURCES_HCMLINK_CONNECTOR_PAGE_PARAGRAPH_2"] = "Қызметкерлердің деректерін қолмен енгізудің қажеті жоқ-қол қою кезінде құжаттар автоматты түрде 1С-тан толтырылады";

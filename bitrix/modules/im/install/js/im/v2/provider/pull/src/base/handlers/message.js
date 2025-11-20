@@ -1,6 +1,4 @@
 import { EventEmitter } from 'main.core.events';
-import { Store } from 'ui.vue3.vuex';
-
 import { CopilotManager } from 'im.v2.lib.copilot';
 import { Core } from 'im.v2.application.core';
 import { Logger } from 'im.v2.lib.logger';
@@ -12,6 +10,7 @@ import { MessageService } from 'im.v2.provider.service.message';
 
 import { MessageDeleteManager } from './classes/message-delete-manager';
 
+import type { Store } from 'ui.vue3.vuex';
 import type { ImModelChat, ImModelMessage } from 'im.v2.model';
 
 import type {
@@ -28,8 +27,6 @@ import type {
 	DeleteReactionParams,
 	MessageDeleteCompletePreparedParams,
 	PrepareDeleteMessageParams,
-	EngineUpdateParams,
-	FileTranscriptionParams,
 } from '../../types/message';
 import type { PullExtraParams, RawFile, RawUser, RawMessage, RawChat } from '../../types/common';
 
@@ -101,7 +98,7 @@ export class MessagePullHandler
 			this.#handleAddingMessageToModel(params);
 		}
 
-		InputActionListener.getInstance().stopUserActionsInChat({
+		InputActionListener.getInstance().stopAction({
 			userId: params.message.senderId,
 			dialogId: params.dialogId,
 		});
@@ -109,31 +106,10 @@ export class MessagePullHandler
 		this.#updateDialog(params);
 	}
 
-	handleChangeEngine(params: EngineUpdateParams)
-	{
-		Logger.warn('MessagePullHandler: handleChangeEngine', params);
-		const { chatId, engineCode } = params;
-		const dialog: ImModelChat = this.#store.getters['chats/getByChatId'](chatId);
-
-		if (!dialog)
-		{
-			return;
-		}
-
-		this.#store.dispatch('copilot/chats/updateModel', { dialogId: dialog.dialogId, aiModel: engineCode });
-	}
-
-	handleFileTranscription(params: FileTranscriptionParams)
-	{
-		Logger.warn('MessagePullHandler: handleFileTranscription', params);
-
-		this.#store.dispatch('files/setTranscription', params);
-	}
-
 	handleMessageUpdate(params: MessageUpdateParams)
 	{
 		Logger.warn('MessagePullHandler: handleMessageUpdate', params);
-		InputActionListener.getInstance().stopUserActionsInChat({
+		InputActionListener.getInstance().stopAction({
 			userId: params.senderId,
 			dialogId: params.dialogId,
 		});

@@ -46,6 +46,10 @@ $return = [
 			'type' => ['widget'],
 		],
 		'nodes' => [
+			'.landing-block-node-content' => [
+				'name' => Loc::getMessage('LANDING_BLOCK_WIDGET_70_2_NODE_CONTAINER'),
+				'type' => ['container-max-width'],
+			],
 			'.landing-block-node-title' => [
 				'name' => Loc::getMessage('LANDING_BLOCK_WIDGET_70_2_NODE_TITLE'),
 				'type' => ['typo'],
@@ -56,7 +60,11 @@ $return = [
 			],
 			'.landing-block-node-card-container' => [
 				'name' => Loc::getMessage('LANDING_BLOCK_WIDGET_70_2_NODE_CONTAINER'),
-				'type' => ['background-color', 'border-radius'],
+				'type' => ['container-max-width', 'background-color', 'border-radius'],
+			],
+			'.landing-block-node-card' => [
+				'name' => Loc::getMessage('LANDING_BLOCK_WIDGET_70_2_NODE_CARD'),
+				'type' => [],
 			],
 			'.landing-block-node-card-link' => [
 				'name' => Loc::getMessage('LANDING_BLOCK_WIDGET_70_2_NODE_CARD'),

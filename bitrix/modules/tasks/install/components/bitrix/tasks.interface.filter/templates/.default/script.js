@@ -493,6 +493,7 @@ this.BX = this.BX || {};
 	Preset.DELAY = 1000;
 
 	const defaultRole = 'view_all';
+	var _groupId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("groupId");
 	var _selectedRoleId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("selectedRoleId");
 	var _roles = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("roles");
 	var _analytics = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("analytics");
@@ -502,6 +503,7 @@ this.BX = this.BX || {};
 	var _bindEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bindEvents");
 	var _handleFilterBeforeApply = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleFilterBeforeApply");
 	var _handlePull = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handlePull");
+	var _getEmptyCounters = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getEmptyCounters");
 	var _update = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("update");
 	var _menuItems = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("menuItems");
 	var _roleName = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("roleName");
@@ -535,11 +537,18 @@ this.BX = this.BX || {};
 	    Object.defineProperty(this, _update, {
 	      value: _update2
 	    });
+	    Object.defineProperty(this, _getEmptyCounters, {
+	      value: _getEmptyCounters2
+	    });
 	    Object.defineProperty(this, _bindEvents, {
 	      value: _bindEvents2
 	    });
 	    Object.defineProperty(this, _initButton, {
 	      value: _initButton2
+	    });
+	    Object.defineProperty(this, _groupId, {
+	      writable: true,
+	      value: void 0
 	    });
 	    Object.defineProperty(this, _selectedRoleId, {
 	      writable: true,
@@ -575,7 +584,8 @@ this.BX = this.BX || {};
 	    Object.defineProperty(this, _handlePull, {
 	      writable: true,
 	      value: data => {
-	        Object.entries(data[0]).forEach(([roleId, {
+	        var _data$babelHelpers$cl;
+	        Object.entries((_data$babelHelpers$cl = data[babelHelpers.classPrivateFieldLooseBase(this, _groupId)[_groupId]]) != null ? _data$babelHelpers$cl : babelHelpers.classPrivateFieldLooseBase(this, _getEmptyCounters)[_getEmptyCounters]()).forEach(([roleId, {
 	          total
 	        }]) => {
 	          babelHelpers.classPrivateFieldLooseBase(this, _roles)[_roles][roleId].counter = total;
@@ -586,6 +596,7 @@ this.BX = this.BX || {};
 	    if (!params.button) {
 	      return;
 	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _groupId)[_groupId] = params.groupId || 0;
 	    babelHelpers.classPrivateFieldLooseBase(this, _selectedRoleId)[_selectedRoleId] = params.selectedRoleId || defaultRole;
 	    babelHelpers.classPrivateFieldLooseBase(this, _roles)[_roles] = {
 	      [defaultRole]: {
@@ -620,6 +631,11 @@ this.BX = this.BX || {};
 	    command: 'user_counter',
 	    callback: babelHelpers.classPrivateFieldLooseBase(this, _handlePull)[_handlePull]
 	  });
+	}
+	function _getEmptyCounters2() {
+	  return Object.fromEntries(Object.keys(babelHelpers.classPrivateFieldLooseBase(this, _roles)[_roles]).map(roleId => [roleId, {
+	    total: 0
+	  }]));
 	}
 	function _update2() {
 	  babelHelpers.classPrivateFieldLooseBase(this, _button)[_button].setText(babelHelpers.classPrivateFieldLooseBase(this, _roleName)[_roleName]);

@@ -4,6 +4,7 @@ import { Spinner, SpinnerSize } from 'im.v2.component.elements.loader';
 import { Color, TranscriptionStatus } from 'im.v2.const';
 import { MessageService } from 'im.v2.provider.service.message';
 import { Feature, FeatureManager } from 'im.v2.lib.feature';
+import { Analytics } from 'im.v2.lib.analytics';
 
 import '../../css/items/transcription.css';
 
@@ -59,7 +60,8 @@ export const TranscriptionButtonItem = {
 		},
 		withTranscription(): boolean
 		{
-			return FeatureManager.isFeatureAvailable(Feature.aiFileTranscriptionAvailable)
+			return this.file.isTranscribable
+				&& FeatureManager.isFeatureAvailable(Feature.aiFileTranscriptionAvailable)
 				&& FeatureManager.isFeatureAvailable(Feature.copilotAvailable);
 		},
 	},
@@ -69,6 +71,7 @@ export const TranscriptionButtonItem = {
 		{
 			if (oldValue === TranscriptionStatus.PENDING)
 			{
+				Analytics.getInstance().audioMessage.onViewTranscription(this.chatId, newValue);
 				this.open();
 			}
 		},
@@ -91,6 +94,7 @@ export const TranscriptionButtonItem = {
 
 			if (this.isSuccess)
 			{
+				Analytics.getInstance().audioMessage.onViewTranscription(this.chatId, TranscriptionStatus.SUCCESS);
 				this.open();
 
 				return;

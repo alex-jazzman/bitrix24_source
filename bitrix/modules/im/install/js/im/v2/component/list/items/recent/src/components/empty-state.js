@@ -1,15 +1,13 @@
 import { ChatButton, ButtonSize, ButtonColor } from 'im.v2.component.elements.button';
 import { Feature, FeatureManager } from 'im.v2.lib.feature';
 import { InviteManager } from 'im.v2.lib.invite';
-
-import '../css/empty-state.css';
+import { RecentEmptyState } from 'im.v2.component.list.items.elements.empty-state';
 
 // @vue/component
 export const EmptyState = {
 	name: 'EmptyState',
-	components: { ChatButton },
-	computed:
-	{
+	components: { ChatButton, RecentEmptyState },
+	computed: {
 		ButtonSize: () => ButtonSize,
 		ButtonColor: () => ButtonColor,
 		canInviteUsers(): boolean
@@ -17,8 +15,7 @@ export const EmptyState = {
 			return FeatureManager.isFeatureAvailable(Feature.intranetInviteAvailable);
 		},
 	},
-	methods:
-	{
+	methods: {
 		onInviteUsersClick(): void
 		{
 			InviteManager.openInviteSlider();
@@ -29,18 +26,17 @@ export const EmptyState = {
 		},
 	},
 	template: `
-		<div class="bx-im-list-recent-empty-state__container">
-			<div class="bx-im-list-recent-empty-state__image"></div>
-			<div class="bx-im-list-recent-empty-state__title">{{ loc('IM_LIST_RECENT_EMPTY_STATE_TITLE') }}</div>
-			<div class="bx-im-list-recent-empty-state__subtitle">{{ loc('IM_LIST_RECENT_EMPTY_STATE_SUBTITLE') }}</div>
-			<div v-if="canInviteUsers" class="bx-im-list-recent-empty-state__button">
-				<ChatButton
-					:size="ButtonSize.L"
-					:isRounded="true"
-					:text="loc('IM_LIST_RECENT_EMPTY_STATE_INVITE_USERS')"
-					@click="onInviteUsersClick"
-				/>
-			</div>
-		</div>
+		<RecentEmptyState
+			:title="loc('IM_LIST_RECENT_EMPTY_STATE_TITLE')"
+			:subtitle="loc('IM_LIST_RECENT_EMPTY_STATE_SUBTITLE')"
+		>
+			<ChatButton
+				v-if="canInviteUsers"
+				:size="ButtonSize.L"
+				:isRounded="true"
+				:text="loc('IM_LIST_RECENT_EMPTY_STATE_INVITE_USERS')"
+				@click="onInviteUsersClick"
+			/>
+		</RecentEmptyState>
 	`,
 };

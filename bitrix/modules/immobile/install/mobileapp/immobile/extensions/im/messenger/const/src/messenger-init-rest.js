@@ -15,6 +15,12 @@ jn.define('im/messenger/const/messenger-init-rest', (require, exports, module) =
 		tariffRestriction: 'tariffRestriction',
 		activeCalls: 'activeCalls',
 		anchors: 'anchors',
+
+		chatsList: 'chatsList',
+		copilotList: 'copilotList',
+		channelList: 'channelList',
+		collabList: 'collabList',
+		taskList: 'taskList',
 	});
 
 	module.exports = {

@@ -87,6 +87,14 @@ export const CheckList = {
 			type: Boolean,
 			default: false,
 		},
+		getBindElement: {
+			type: Function,
+			default: null,
+		},
+		getTargetContainer: {
+			type: Function,
+			default: null,
+		},
 	},
 	emits: ['show', 'close', 'resize', 'open'],
 	setup(): Object
@@ -495,6 +503,10 @@ export const CheckList = {
 		handleInitPopup(baseEvent: BaseEvent): void
 		{
 			const [id, bindElement, params] = baseEvent.getCompatData();
+			if (id === 'b24-bottom-sheet' || id === 'tasks-relation-error')
+			{
+				return;
+			}
 
 			if (Type.isDomNode(bindElement))
 			{
@@ -1558,6 +1570,8 @@ export const CheckList = {
 			:is="componentName"
 			:taskId="taskId"
 			:isShown="isShown"
+			:getBindElement="getBindElement"
+			:getTargetContainer="getTargetContainer"
 			:isEmpty="emptyList"
 			@show="handleShow"
 			@close="handleClose"

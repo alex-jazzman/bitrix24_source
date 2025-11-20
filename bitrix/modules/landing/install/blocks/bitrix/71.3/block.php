@@ -2,7 +2,7 @@
 	class="landing-block g-pl-30 g-pr-30 g-pt-30 g-pb-25 g-cursor-default g-pos-rel g-bg"
 	style="--bg: #ffffff; z-index: 3;"
 >
-	<div class="landing-block-node-container row g-pt-35 g-pb-40 g-rounded-20 g-pos-rel">
+	<div class="landing-block-node-container row g-pt-35 g-pb-40 g-rounded-20 g-pos-rel m-auto g-max-width-container">
 		<div
 			class="landing-block-node-tab d-flex justify-content-center g-pl-25 g-pr-25 g-color g-pos-abs g-bg g-font-size-12 g-brd-1 g-brd-style-solid g-border-color"
 			style="--color: #000; top: -15px; left: 14px; border-radius: 22px; height: fit-content; min-height: 22px; --bg: transparent; --border-color: var(--primary);"

@@ -1041,7 +1041,12 @@ $arUrlRewrite = array(
 	],
 	[
 		'CONDITION' => '#^/task/comments/([0-9]+)#',
-		'RULE' => 'action=tasks.V2.LegacyComment.get&taskId=$1',
-		'PATH' => '/bitrix/services/main/ajax.php',
+		'RULE' => 'taskId=$1',
+		'PATH' => '/tasks/comments.php',
+	],
+	[
+		'CONDITION' => '#^/extranet/task/comments/([0-9]+)#',
+		'RULE' => 'taskId=$1',
+		'PATH' => '/extranet/tasks/comments.php',
 	],
 );

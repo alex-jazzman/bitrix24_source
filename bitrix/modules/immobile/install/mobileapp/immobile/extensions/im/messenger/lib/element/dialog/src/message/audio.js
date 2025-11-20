@@ -5,6 +5,7 @@ jn.define('im/messenger/lib/element/dialog/message/audio', (require, exports, mo
 	const { Type } = require('type');
 
 	const { MessageType } = require('im/messenger/const');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Message } = require('im/messenger/lib/element/dialog/message/base');
 	const { Audio } = require('im/messenger/lib/element/dialog/message/element/audio/audio');
 
@@ -29,7 +30,10 @@ jn.define('im/messenger/lib/element/dialog/message/audio', (require, exports, mo
 
 			this.setShowTail(true);
 
-			const audio = new Audio(modelMessage, file, options);
+			const transcript = serviceLocator.get('core')
+				.getStore()
+				.getters['filesModel/transcriptModel/getById'](file.id);
+			const audio = new Audio(modelMessage, file, transcript, options);
 			this.audio = audio.toMessageFormat();
 
 			/* region deprecated properties */

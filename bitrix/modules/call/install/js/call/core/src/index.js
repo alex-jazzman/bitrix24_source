@@ -23,6 +23,7 @@ import {Hardware} from './call_hardware';
 import Util from './util';
 import { CallAI } from './call_ai';
 import {VideoStrategy} from './video_strategy';
+import { JoinResponseError } from './call_api';
 import {View} from './view/view';
 import { CopilotPopup } from './view/copilot-popup';
 import { ParticipantsPermissionPopup } from './view/participants-permission-popup';
@@ -40,6 +41,7 @@ import 'voximplant';
 applyHacks();
 
 export {
+	JoinResponseError,
 	BackgroundDialog,
 	CallController as Controller,
 	CallEngine as Engine,

@@ -6,7 +6,10 @@ export const PermissionActions = Object.freeze({
 	employeeAddToDepartment: 'ACTION_EMPLOYEE_ADD_TO_DEPARTMENT',
 	employeeRemoveFromDepartment: 'ACTION_EMPLOYEE_REMOVE_FROM_DEPARTMENT',
 	employeeFire: 'ACTION_FIRE_EMPLOYEE',
-	departmentCommunicationEdit: 'ACTION_DEPARTMENT_COMMUNICATION_EDIT',
+	departmentSettingsEdit: 'ACTION_DEPARTMENT_SETTINGS_EDIT',
+	departmentChatEdit: 'ACTION_DEPARTMENT_CHAT_EDIT',
+	departmentChannelEdit: 'ACTION_DEPARTMENT_CHANNEL_EDIT',
+	departmentCollabEdit: 'ACTION_DEPARTMENT_COLLAB_EDIT',
 	accessEdit: 'ACTION_USERS_ACCESS_EDIT',
 	teamAccessEdit: 'ACTION_TEAM_ACCESS_EDIT',
 	inviteToDepartment: 'ACTION_USER_INVITE',
@@ -17,7 +20,9 @@ export const PermissionActions = Object.freeze({
 	teamAddMember: 'ACTION_TEAM_MEMBER_ADD',
 	teamRemoveMember: 'ACTION_TEAM_MEMBER_REMOVE',
 	teamSettingsEdit: 'ACTION_TEAM_SETTINGS_EDIT',
-	teamCommunicationEdit: 'ACTION_TEAM_COMMUNICATION_EDIT',
+	teamChatEdit: 'ACTION_TEAM_CHAT_EDIT',
+	teamChannelEdit: 'ACTION_TEAM_CHANNEL_EDIT',
+	teamCollabEdit: 'ACTION_TEAM_COLLAB_EDIT',
 });
 
 export const PermissionLevels = Object.freeze({

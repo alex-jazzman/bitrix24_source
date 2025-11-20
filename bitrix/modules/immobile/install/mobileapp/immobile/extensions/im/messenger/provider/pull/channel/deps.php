@@ -4,7 +4,6 @@ return [
 	'extensions' => [
 		'type',
 		'im:messenger/const',
-		'im:messenger/lib/counters/tab-counters',
 		'im:messenger/lib/params',
 		'im:messenger/lib/logger',
 		'im:messenger/lib/emitter',

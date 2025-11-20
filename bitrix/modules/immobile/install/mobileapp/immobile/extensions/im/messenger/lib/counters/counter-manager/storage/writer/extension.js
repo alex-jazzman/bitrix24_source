@@ -13,6 +13,7 @@ jn.define('im/messenger/lib/counters/counter-manager/storage/writer', (require, 
 	const logger = getLogger('counters--storage-writer');
 
 	/**
+	 * @deprecated
 	 * @class CounterStorageWriter
 	 */
 	class CounterStorageWriter
@@ -55,6 +56,15 @@ jn.define('im/messenger/lib/counters/counter-manager/storage/writer', (require, 
 			}
 
 			return this.#collection;
+		}
+
+		/**
+		 * @param chatId
+		 * @return {?CounterState}
+		 */
+		async findById(chatId)
+		{
+			return (await this.getCollection()).findById(chatId);
 		}
 
 		/**

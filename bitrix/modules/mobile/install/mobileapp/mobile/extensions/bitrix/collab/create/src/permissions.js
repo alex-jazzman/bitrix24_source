@@ -12,12 +12,14 @@ jn.define('collab/create/src/permissions', (require, exports, module) => {
 	const { Type } = require('type');
 	const { Icon } = require('assets/icons');
 	const { MemberSelector } = require('im/messenger/controller/selector/member');
+	const { showToast } = require('toast');
 
 	const Permission = {
 		OWNER: 'owner',
 		MODERATORS: 'moderators',
 		SHOW_HISTORY: 'showHistory',
 		INVITERS: 'inviters',
+		ALLOW_GUESTS_INVITATION: 'allowGuestsInvitation',
 		MESSAGE_WRITERS: 'messageWriters',
 	};
 
@@ -39,6 +41,7 @@ jn.define('collab/create/src/permissions', (require, exports, module) => {
 	 * @property {Array<Object>} moderators
 	 * @property {PermissionBooleanValueType} showHistory
 	 * @property {PermissionValueType} inviters
+	 * @property {PermissionBooleanValueType} allowGuestsInvitation
 	 * @property {PermissionValueType} messageWriters
 	 * @property {function} onChange
 	 * @property {LayoutWidget} layoutWidget
@@ -59,12 +62,22 @@ jn.define('collab/create/src/permissions', (require, exports, module) => {
 
 		#initializeState()
 		{
+			const {
+				owner,
+				moderators,
+				showHistory,
+				inviters,
+				allowGuestsInvitation,
+				messageWriters,
+			} = this.props;
+
 			this.state = {
-				owner: this.props.owner ?? {},
-				moderators: this.props.moderators ?? [],
-				showHistory: this.props.showHistory ?? PermissionBooleanValueType.TRUE,
-				inviters: this.props.inviters ?? PermissionValueType.ALL,
-				messageWriters: this.props.messageWriters ?? PermissionValueType.ALL,
+				owner: owner ?? {},
+				moderators: moderators ?? [],
+				showHistory: showHistory ?? PermissionBooleanValueType.TRUE,
+				inviters: inviters ?? PermissionValueType.ALL,
+				allowGuestsInvitation: allowGuestsInvitation ?? PermissionBooleanValueType.TRUE,
+				messageWriters: messageWriters ?? PermissionValueType.ALL,
 			};
 		}
 
@@ -103,6 +116,8 @@ jn.define('collab/create/src/permissions', (require, exports, module) => {
 
 		#renderPermissionsListArea()
 		{
+			const { canInviteCollabersInPortalSettings } = this.props;
+
 			return Area(
 				{
 					testId: `${this.testId}-area-permissions-list`,
@@ -138,6 +153,13 @@ jn.define('collab/create/src/permissions', (require, exports, module) => {
 							title: Loc.getMessage('M_COLLAB_PERMISSIONS_INVITERS_ITEM_TITLE'),
 							subtitle: this.#getSubTitleByPermissionValueType(this.state.inviters),
 							design: SettingSelectorListItemDesign.OPENER,
+						},
+						{
+							id: Permission.ALLOW_GUESTS_INVITATION,
+							title: Loc.getMessage('M_COLLAB_PERMISSIONS_ALLOW_GUESTS_INVITATION_ITEM_TITLE'),
+							subtitle: this.#getSubTitleByPermissionBooleanValueType(this.state.allowGuestsInvitation),
+							design: SettingSelectorListItemDesign.OPENER,
+							disabled: !canInviteCollabersInPortalSettings,
 						},
 						{
 							id: Permission.MESSAGE_WRITERS,
@@ -197,6 +219,7 @@ jn.define('collab/create/src/permissions', (require, exports, module) => {
 				moderators,
 				showHistory,
 				inviters,
+				allowGuestsInvitation,
 				messageWriters,
 			} = this.state;
 			this.props.onChange?.({
@@ -204,6 +227,7 @@ jn.define('collab/create/src/permissions', (require, exports, module) => {
 				moderators,
 				showHistory,
 				inviters,
+				allowGuestsInvitation,
 				messageWriters,
 			});
 		};
@@ -253,6 +277,7 @@ jn.define('collab/create/src/permissions', (require, exports, module) => {
 		};
 
 		#onPermissionsItemClick = (item) => {
+			const { canInviteCollabersInPortalSettings } = this.props;
 			switch (item.id)
 			{
 				case Permission.OWNER:
@@ -272,6 +297,26 @@ jn.define('collab/create/src/permissions', (require, exports, module) => {
 					this.invitersMenu.show({
 						target: this.settingsSelectorItemsRefsMap.get(Permission.INVITERS).ref,
 					});
+					break;
+				case Permission.ALLOW_GUESTS_INVITATION:
+					if (canInviteCollabersInPortalSettings)
+					{
+						this.invitersMenu = new UIMenu(
+							this.#getPermissionBooleanValueTypesItemsForMenu(Permission.ALLOW_GUESTS_INVITATION),
+						);
+						this.invitersMenu.show({
+							target: this.settingsSelectorItemsRefsMap.get(Permission.ALLOW_GUESTS_INVITATION).ref,
+						});
+					}
+					else
+					{
+						showToast(
+							{
+								message: Loc.getMessage('COLLAB_INVITE_TOAST_GUESTS_INVITE_DISABLED'),
+								time: 5,
+							},
+						);
+					}
 					break;
 				case Permission.MESSAGE_WRITERS:
 					this.messageWritersMenu = new UIMenu(this.#getPermissionValueTypesItemsForMenu(Permission.MESSAGE_WRITERS));

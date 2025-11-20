@@ -21,9 +21,9 @@ jn.define('user-profile/common-tab', (require, exports, module) => {
 	const { ajaxPublicErrorHandler } = require('error');
 	const { TabType } = require('user-profile/const');
 	const { confirmClosing } = require('alert');
-	const { Icon } = require('assets/icons');
 	const { AvaMenu } = require('ava-menu');
 	const { withCurrentDomain } = require('utils/url');
+	const { FieldChangeManager } = require('user-profile/common-tab/src/field-change-manager');
 
 	const CloseEditActions = {
 		SAVE_AND_EXIT: 'save_and_exit',
@@ -59,7 +59,7 @@ jn.define('user-profile/common-tab', (require, exports, module) => {
 			this.contentOpacity = Animated.newCalculatedValue(1);
 
 			this.scrollViewRef = null;
-			this.fieldsToSave = {};
+			this.fieldsManager = new FieldChangeManager();
 			this.closeButtonUpdated = false;
 
 			this.state = {
@@ -119,12 +119,7 @@ jn.define('user-profile/common-tab', (require, exports, module) => {
 			}
 
 			this.saveButtonRef.setLoading(this.isSaving);
-			this.saveButtonRef.setDisabled(!this.canSave());
-		}
-
-		canSave()
-		{
-			return Object.keys(this.fieldsToSave).length > 0;
+			this.saveButtonRef.setDisabled(!this.fieldsManager.canSave());
 		}
 
 		render()
@@ -157,7 +152,7 @@ jn.define('user-profile/common-tab', (require, exports, module) => {
 							Button({
 								testId: this.getTestId('button-save'),
 								stretched: true,
-								disabled: !this.canSave(),
+								disabled: !this.fieldsManager.canSave(),
 								size: ButtonSize.L,
 								text: Loc.getMessage('M_PROFILE_EDIT_BUTTON_SAVE'),
 								withStateDecorator: true,
@@ -239,9 +234,9 @@ jn.define('user-profile/common-tab', (require, exports, module) => {
 			this.scrollViewRef?.scrollToBegin(false);
 		}
 
-		onFieldChange(key, value)
+		onFieldChange(key, value, isValid)
 		{
-			this.fieldsToSave[key] = value;
+			this.fieldsManager.setField(key, value, isValid);
 			this.#updateSaveButtonState();
 		}
 
@@ -249,7 +244,7 @@ jn.define('user-profile/common-tab', (require, exports, module) => {
 		{
 			const { parentWidget } = this.props;
 			this.isSaving = false;
-			this.fieldsToSave = {};
+			this.fieldsManager.clear();
 
 			Haptics.impactLight();
 
@@ -308,9 +303,9 @@ jn.define('user-profile/common-tab', (require, exports, module) => {
 
 		onEditScreenClose = async () => {
 			const { tabsWidget } = this.props;
-			if (this.canSave())
+			if (this.fieldsManager.hasChanges())
 			{
-				const action = await this.showSaveEditChangesAlert();
+				const action = await this.showSaveEditChangesAlert(this.fieldsManager.canSave());
 				switch (action)
 				{
 					case CloseEditActions.EXIT_WITHOUT_SAVE:
@@ -336,12 +331,13 @@ jn.define('user-profile/common-tab', (require, exports, module) => {
 			}
 		};
 
-		showSaveEditChangesAlert = async () => {
+		showSaveEditChangesAlert = async (hasSaveAndClose) => {
 			return new Promise((resolve) => {
 				confirmClosing({
 					onSave: () => resolve(CloseEditActions.SAVE_AND_EXIT),
 					onClose: () => resolve(CloseEditActions.EXIT_WITHOUT_SAVE),
 					onCancel: () => resolve(CloseEditActions.CONTINUE_EDIT),
+					hasSaveAndClose,
 				});
 			});
 		};
@@ -374,7 +370,7 @@ jn.define('user-profile/common-tab', (require, exports, module) => {
 		};
 
 		#saveChanges = async () => {
-			if (!this.canSave() || this.isSaving)
+			if (!this.fieldsManager.canSave() || this.isSaving)
 			{
 				return false;
 			}
@@ -384,33 +380,35 @@ jn.define('user-profile/common-tab', (require, exports, module) => {
 			void NotifyManager.showLoadingIndicator();
 			Haptics.impactLight();
 
-			const response = await BX.ajax.runAction('mobile.Profile.save', {
-				json: {
-					ownerId: this.props.ownerId,
-					fieldsToSave: this.fieldsToSave,
-				},
-			})
-				.catch(async (result) => {
-					await ajaxPublicErrorHandler(result);
-					NotifyManager.hideLoadingIndicator(false);
-					this.isSaving = false;
-					this.#updateSaveButtonState();
-				});
-
-			NotifyManager.hideLoadingIndicator(response.status === 'success');
-			if (response.status === 'success')
+			let response = {};
+			try
 			{
-				this.fieldsToSave = {};
-				this.#updateFields(response.data);
+				response = await this.fieldsManager.saveChanges(this.props.ownerId);
+			}
+			catch (result)
+			{
+				await ajaxPublicErrorHandler(result);
+				NotifyManager.hideLoadingIndicator(false);
+				this.isSaving = false;
+				this.#updateSaveButtonState();
+			}
+
+			const { status, data } = response;
+			const isSuccess = status === 'success';
+			NotifyManager.hideLoadingIndicator(isSuccess);
+			if (isSuccess)
+			{
+				this.fieldsManager.clear();
+				this.#updateFields(data);
 				await this.#deactivateEditMode();
-				this.#updateCurrentUserInfoInAvaMenu(response.data);
+				this.#updateCurrentUserInfoInAvaMenu(data);
 			}
 			else
 			{
-				await ajaxPublicErrorHandler(result);
+				await ajaxPublicErrorHandler(response);
 			}
 
-			return response.status === 'success';
+			return isSuccess;
 		};
 
 		#updateCurrentUserInfoInAvaMenu(data)

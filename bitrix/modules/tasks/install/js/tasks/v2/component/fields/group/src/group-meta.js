@@ -1,9 +1,9 @@
 import { Loc } from 'main.core';
 import { Core } from 'tasks.v2.core';
-import { GroupType, Model } from 'tasks.v2.const';
+import { GroupType, Model, TaskField } from 'tasks.v2.const';
 
 export const groupMeta = Object.freeze({
-	id: 'groupId',
+	id: TaskField.Group,
 	title: Loc.getMessage('TASKS_V2_GROUP_TITLE'),
 	getTitle: (groupId: number) => {
 		const group = Core.getStore().getters[`${Model.Groups}/getById`](groupId);

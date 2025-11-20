@@ -45,10 +45,11 @@
 	position: relative;
 	display: inline-flex;
 	flex-direction: column;
-	max-width: 100%
+	max-width: 100%;
 }
 
 .bx-im-message-base__container::before {
+	pointer-events: none;
 	position: absolute;
 	left: -60vw;
 	right: -60vw;

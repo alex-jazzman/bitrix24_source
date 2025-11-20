@@ -12,6 +12,7 @@ jn.define('im/messenger/lib/element/recent', (require, exports, module) => {
 	const { Support24NotifierItem } = require('im/messenger/lib/element/recent/item/chat/support-24-notifier');
 	const { ChannelItem } = require('im/messenger/lib/element/recent/item/chat/channel');
 	const { Support24QuestionItem } = require('im/messenger/lib/element/recent/item/chat/support-24-question');
+	const { TaskCommentItem } = require('im/messenger/lib/element/recent/item/chat/task-comment');
 	const { UserItem } = require('im/messenger/lib/element/recent/item/user');
 	const { CurrentUserItem } = require('im/messenger/lib/element/recent/item/user/current');
 	const { BotItem } = require('im/messenger/lib/element/recent/item/user/bot');
@@ -33,6 +34,7 @@ jn.define('im/messenger/lib/element/recent', (require, exports, module) => {
 		Support24NotifierItem,
 		ChannelItem,
 		Support24QuestionItem,
+		TaskCommentItem,
 		UserItem,
 		CurrentUserItem,
 		BotItem,

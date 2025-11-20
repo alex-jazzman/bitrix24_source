@@ -1,4 +1,4 @@
-import type { ChatOrChannelDetailed } from 'humanresources.company-structure.utils';
+import type { CommunicationDetailed } from 'humanresources.company-structure.utils';
 import { getColorCode, ChatTypes } from 'humanresources.company-structure.utils';
 import { Main } from 'ui.icon-set.api.core';
 import { AbstractMenuItem } from '../abstract-menu-item';
@@ -13,24 +13,31 @@ import { Loc } from 'main.core';
  */
 export class OpenChatMenuItem extends AbstractMenuItem
 {
-	chat: ChatOrChannelDetailed;
+	chat: CommunicationDetailed;
 
-	constructor(entityType: string, chat: ChatOrChannelDetailed)
+	static Dictionary = Object.freeze({
+		[ChatTypes.chat]: {
+			title: 'HUMANRESOURCES_COMPANY_STRUCTURE_CHAT_LIST_ACTION_MENU_OPEN_CHAT_TITLE',
+			description: 'HUMANRESOURCES_COMPANY_STRUCTURE_CHAT_LIST_ACTION_MENU_OPEN_CHAT_DESCRIPTION',
+		},
+		[ChatTypes.channel]: {
+			title: 'HUMANRESOURCES_COMPANY_STRUCTURE_CHAT_LIST_ACTION_MENU_OPEN_CHANNEL_TITLE',
+			description: 'HUMANRESOURCES_COMPANY_STRUCTURE_CHAT_LIST_ACTION_MENU_OPEN_CHANNEL_DESCRIPTION',
+		},
+		[ChatTypes.collab]: {
+			title: 'HUMANRESOURCES_COMPANY_STRUCTURE_CHAT_LIST_ACTION_MENU_OPEN_COLLAB_TITLE',
+			description: 'HUMANRESOURCES_COMPANY_STRUCTURE_CHAT_LIST_ACTION_MENU_OPEN_COLLAB_DESCRIPTION',
+		},
+	});
+
+	constructor(entityType: string, chat: CommunicationDetailed)
 	{
-		const title = chat.type === ChatTypes.chat
-			? Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_CHAT_LIST_ACTION_MENU_OPEN_CHAT_TITLE')
-			: Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_CHAT_LIST_ACTION_MENU_OPEN_CHANNEL_TITLE')
-		;
-
-		const description = chat.type === ChatTypes.chat
-			? Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_CHAT_LIST_ACTION_MENU_OPEN_CHAT_DESCRIPTION')
-			: Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_CHAT_LIST_ACTION_MENU_OPEN_CHANNEL_DESCRIPTION')
-		;
+		const { title, description } = OpenChatMenuItem.Dictionary[chat.type] || {};
 
 		super({
 			id: MenuActions.openChat,
-			title,
-			description,
+			title: Loc.getMessage(title),
+			description: Loc.getMessage(description),
 			bIcon: {
 				name: Main.EDIT_PENCIL,
 				size: 20,

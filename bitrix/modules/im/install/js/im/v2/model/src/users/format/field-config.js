@@ -177,4 +177,9 @@ export const botFieldsConfig: FieldsConfig = [
 		targetFieldName: 'backgroundId',
 		checkFunction: Type.isString,
 	},
+	{
+		fieldName: 'reactionsEnabled',
+		targetFieldName: 'reactionsEnabled',
+		checkFunction: Type.isBoolean,
+	},
 ];

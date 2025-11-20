@@ -55,5 +55,8 @@ return [
 		'./src/file-download-types',
 		'./src/anchor-type',
 		'./src/pin',
+		'./src/audio',
+		'./src/refresher',
+		'./src/transcript-status',
 	],
 ];

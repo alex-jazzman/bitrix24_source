@@ -22,12 +22,12 @@ jn.define('im/messenger/lib/feature', (require, exports, module) => {
 		 */
 		static isLocalStorageEnabledDuringApplicationStartup = null;
 
-		static getIsLocalStorageEnabledDuringApplicationStartup() {
+		static getIsLocalStorageEnabledDuringApplicationStartup()
+		{
 			if (this.isLocalStorageEnabledDuringApplicationStartup === null)
 			{
 				this.isLocalStorageEnabledDuringApplicationStartup = (
-					MessengerParams.isChatM1Enabled()
-					&& MessengerParams.isChatLocalStorageAvailable()
+					MessengerParams.isChatLocalStorageAvailable()
 					&& Feature.isLocalStorageSupported
 					&& Feature.getChatSettings().localStorageEnable
 				);
@@ -61,11 +61,6 @@ jn.define('im/messenger/lib/feature', (require, exports, module) => {
 		static get isChatBetaEnabled()
 		{
 			return Feature.getChatSettings().chatBetaEnable;
-		}
-
-		static get isChatV2Enabled()
-		{
-			return MessengerParams.isChatM1Enabled();
 		}
 
 		static get isLocalStorageEnabled()
@@ -315,6 +310,42 @@ jn.define('im/messenger/lib/feature', (require, exports, module) => {
 		static get isDialogHeaderButtonIconSupported()
 		{
 			return Application.getApiVersion() >= 60;
+		}
+
+		static isAudioPanelSupported()
+		{
+			return NativeFeature?.isFeatureEnabled('audioplayer_api_v1')
+				&& MessengerParams.canUseAudioPanel();
+		}
+
+		static get isNotifyPanelAvailable()
+		{
+			return NativeFeature?.isFeatureEnabled('chat_notify_panel');
+		}
+
+		static get isMessengerV2Enabled()
+		{
+			return MessengerParams.getMessengerV2Enabled();
+		}
+
+		static get isTabsWidgetApiV2Supported()
+		{
+			return NativeFeature?.isFeatureEnabled('tabswidget_api_v2');
+		}
+
+		static get isAiFileTranscriptionAvailable()
+		{
+			return MessengerParams.getImFeatures().aiFileTranscriptionAvailable;
+		}
+
+		static get isAudioRecordM4ASupported()
+		{
+			return NativeFeature?.isFeatureEnabled('audio_record_m4a_support');
+		}
+
+		static get isAudioRecordM4AEnabled()
+		{
+			return this.isAudioRecordM4ASupported && this.isAiFileTranscriptionAvailable;
 		}
 	}
 

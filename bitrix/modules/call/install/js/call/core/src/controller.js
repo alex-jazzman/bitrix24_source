@@ -44,7 +44,7 @@ import { Analytics } from 'call.lib.analytics';
 import { CallTokenManager } from 'call.lib.call-token-manager';
 import { CopilotPopup, CopilotPopupType } from './view/copilot-popup';
 import { CallAI } from './call_ai';
-import { RecorderStatus } from './call_api.js';
+import { JoinResponseError, RecorderStatus } from './call_api.js';
 import { ParticipantsPermissionPopup } from './view/participants-permission-popup';
 import {PictureInPictureWindow} from './view/pictureInPictureWindow';
 import { CallSettingsManager } from 'call.lib.settings-manager';
@@ -966,19 +966,32 @@ export class CallController extends EventEmitter
 		}
 	}
 
+	getExternalContainer()
+	{
+		let externalContainer = document.querySelector(`.${BX.Messenger.v2.Lib.CallManager.viewContainerClass}`);
+
+		if (!externalContainer)
+		{
+			externalContainer = BX.create('div', {
+				props: { className: BX.Messenger.v2.Lib.CallManager.viewContainerClass },
+			});
+
+			document.body.appendChild(externalContainer);
+		}
+
+		return externalContainer;
+	}
+
 	createContainer()
 	{
 		this.container = BX.create("div", {
 			props: {className: `bx-messenger-call-overlay ${Util.isChatMountInPage() ? '--fixed' : ''}`},
 		});
 
-		const externalContainer = this.messengerFacade.getContainer();
+		const externalContainer = this.getExternalContainer();
 		externalContainer.insertBefore(this.container, externalContainer.firstChild);
 
-		if (Util.isChatMountInPage())
-		{
-			ZIndexManager.getOrAddStack(document.body).register(this.container);
-		}
+		ZIndexManager.getOrAddStack(document.body).register(this.container);
 
 		externalContainer.classList.add("bx-messenger-call");
 	}
@@ -990,7 +1003,7 @@ export class CallController extends EventEmitter
 			ZIndexManager.getStack(document.body).unregister(this.container);
 			Dom.remove(this.container);
 			this.container = null;
-			this.messengerFacade.getContainer().classList.remove("bx-messenger-call");
+			this.getExternalContainer().classList.remove("bx-messenger-call");
 		}
 	}
 
@@ -1637,6 +1650,10 @@ export class CallController extends EventEmitter
 				{
 					errorCode = error;
 				}
+				else if (Type.isObject(error) && error instanceof JoinResponseError)
+				{
+					errorCode = error.name;
+				}
 				else if (typeof (error) == "object" && error.code)
 				{
 					errorCode = error.code == 'access_denied' ? 'ACCESS_DENIED' : error.code
@@ -1655,6 +1672,7 @@ export class CallController extends EventEmitter
 					Analytics.getInstance().onStartCallError({
 						callType: this.getCallType(provider),
 						errorCode,
+						errorMessage: error?.message,
 					});
 
 					this._onCallFailure({
@@ -1892,6 +1910,10 @@ export class CallController extends EventEmitter
 				{
 					errorCode = error;
 				}
+				else if (Type.isObject(error) && error instanceof JoinResponseError)
+				{
+					errorCode = error.name;
+				}
 				else if (Type.isObject(error) && error.code)
 				{
 					errorCode = error.code === 'access_denied' ? 'ACCESS_DENIED' : error.code;
@@ -1901,6 +1923,7 @@ export class CallController extends EventEmitter
 					callType: this.getCallType(),
 					errorCode,
 					callId: this._getCallIdentifier(this.currentCall),
+					errorMessage: error?.message,
 				});
 			});
 	}
@@ -2107,8 +2130,7 @@ export class CallController extends EventEmitter
 			this.detached = true;
 			this.callView.hide();
 			this.floatingWindow.setTitle(this.currentCall.associatedEntity.name);
-			Util.getUserAvatars(this._getCallIdentifier(this.currentCall), this.getActiveCallUsers()).then((result) =>
-			{
+			Util.getUserAvatars(this.currentCall.id, this.getActiveCallUsers()).then((result) => {
 				this.floatingWindow.setAvatars(result);
 				this.floatingWindow.show();
 			});
@@ -2728,7 +2750,7 @@ export class CallController extends EventEmitter
 			case FILE_TYPE_PPTX:
 				return Analytics.AnalyticsType.presentation;
 		}
-		
+
 		return '';
 	}
 
@@ -2754,6 +2776,7 @@ export class CallController extends EventEmitter
 			this.container.classList.remove('bx-messenger-call-overlay-folded');
 			this.callView.setSize(View.Size.Full);
 			this.callViewState = ViewState.Opened;
+			ZIndexManager.getStack(document.body).bringToFront(this.container);
 			if (this.sidebar)
 			{
 				this.sidebar.toggleHidden(false);
@@ -3064,7 +3087,7 @@ export class CallController extends EventEmitter
 						associatedEntity: this.currentCall.associatedEntity,
 					});
 
-					this.currentCall.decline();
+					this.currentCall.decline(603);
 					this.currentCall = null;
 
 					if (this.promotedToAdminTimeout)
@@ -3185,11 +3208,8 @@ export class CallController extends EventEmitter
 					}
 
 					this.bindCallViewEvents();
-					if (
-						this.currentCall instanceof PlainCall
-						|| !CallSettingsManager.jwtCallsEnabled
-						|| this.currentCall?.scheme === CallScheme.classic
-					)
+
+					if (this.isLegacyCall(this.currentCall.provider, this.currentCall.scheme))
 					{
 						this.updateCallViewUsers(this.currentCall.id, this.getCallUsers(true));
 					}
@@ -3222,6 +3242,28 @@ export class CallController extends EventEmitter
 					this.createVideoStrategy();
 
 					this._onUpdateLastUsedCameraId();
+				})
+				.catch((error) => {
+					let errorCode = 'UNKNOWN_ERROR';
+					if (Type.isString(error))
+					{
+						errorCode = error;
+					}
+					else if (Type.isObject(error) && error instanceof JoinResponseError)
+					{
+						errorCode = error.name;
+					}
+					else if (Type.isObject(error) && error.code)
+					{
+						errorCode = error.code === 'access_denied' ? 'ACCESS_DENIED' : error.code;
+					}
+
+					Analytics.getInstance().onJoinCallError({
+						callType: this.getCallType(),
+						errorCode,
+						callId: this._getCallIdentifier(this.currentCall),
+						errorMessage: error?.message,
+					});
 				});
 		});
 	}
@@ -3271,10 +3313,7 @@ export class CallController extends EventEmitter
 
 	_onCallViewShow()
 	{
-		if (Util.isChatMountInPage())
-		{
-			ZIndexManager.getStack(document.body).bringToFront(this.container);
-		}
+		ZIndexManager.getStack(document.body).bringToFront(this.container);
 
 		this.callView.setButtonCounter("chat", this.messengerFacade.getMessageCount());
 		this.callViewState = ViewState.Opened;
@@ -4198,7 +4237,7 @@ export class CallController extends EventEmitter
 		{
 			this.currentCall.startScreenSharing();
 			this.togglePictureInPictureCallWindow();
-			CallEngine.getRestClient().callMethod("call.Call.onShareScreen", {callId: this.currentCall.id, callUuid: this.currentCall.uuid});
+			BX.ajax.runAction('call.Call.onShareScreen', { data: { callId: this.currentCall.id, callUuid: this.currentCall.uuid } });
 		}
 	}
 
@@ -4698,15 +4737,26 @@ export class CallController extends EventEmitter
 		}
 		else if (e.state == UserState.Declined)
 		{
-			if (this.isLegacyCall(this.currentCall.provider, this.currentCall.scheme))
+			const isLegacyCall = this.isLegacyCall(this.currentCall.provider, this.currentCall.scheme);
+			const isBitrixCall = this.currentCall.provider === Provider.Bitrix;
+			const callId = isLegacyCall || !isBitrixCall ? this.currentCall.id : e.callId;
+			if (this.callView)
 			{
-				Util.getUser(this.currentCall.id, e.userId).then((userData) =>
-				{
-					this.showNotification(Util.getCustomMessage("IM_M_CALL_USER_DECLINED", {
-						gender: userData.gender,
-						name: userData.name
-					}));
-				});
+				(async () => {
+					try
+					{
+						const userData = await Util.getUser(callId, e.userId);
+						const notyText = Util.getCustomMessage('IM_M_CALL_USER_DECLINED', {
+							gender: userData.gender,
+							name: userData.name,
+						});
+						this.showNotification(notyText);
+					}
+					catch (error)
+					{
+						console.warn('not found userData:', error);
+					}
+				})();
 			}
 		}
 		else if (e.state === UserState.Busy && this.isLegacyCall(this.currentCall.provider, this.currentCall.scheme))
@@ -5789,7 +5839,7 @@ export class CallController extends EventEmitter
 				fileName = "call_record_" + callId;
 			}
 
-			CallEngine.getRestClient().callMethod("call.Call.onStartRecord", {callId: this.currentCall.id, callUuid: this.currentCall.uuid});
+			BX.ajax.runAction('call.Call.onStartRecord', { data: { callId: this.currentCall.id, callUuid: this.currentCall.uuid } });
 
 			Analytics.getInstance().onRecordStart({
 				callId: this._getCallIdentifier(this.currentCall),
@@ -5931,7 +5981,7 @@ export class CallController extends EventEmitter
 
 			if (this.currentCallIsNew && this.isLegacyCall(this.currentCall.provider, this.currentCall.scheme))
 			{
-				CallEngine.getRestClient().callMethod('im.call.interrupt', {callId: this.currentCall.id});
+				BX.ajax.runAction('im.call.interrupt', { data: { callId: this.currentCall.id } });
 			}
 
 			this.currentCall.destroy();
@@ -6004,7 +6054,8 @@ export class CallController extends EventEmitter
 		Analytics.getInstance().onReconnectError({
 			callId:  this._getCallIdentifier(this.currentCall),
 			callType: this.getCallType(),
-			errorCode: e?.code,
+			errorCode: e?.error?.code,
+			errorMessage: e?.error?.message,
 		});
 	}
 
@@ -6946,7 +6997,7 @@ export class CallController extends EventEmitter
 		this.riseYouHandToTalkPopup = new CallHint({
 			callFolded: this.folded,
 			bindElement: this.folded ? null : this.callView.buttons.microphone.elements.icon,
-			targetContainer: this.folded ? this.messengerFacade.getContainer() : this.callView.container,
+			targetContainer: this.folded ? this.getExternalContainer() : this.callView.container,
 			icon: 'raise-hand',
 			showAngle: true,
 			initiatorName: params.initiatorName,
@@ -7004,7 +7055,7 @@ export class CallController extends EventEmitter
 		this.mutePopup = new CallHint({
 			callFolded: this.folded,
 			bindElement: this.folded ? null : this.callView.buttons.microphone.elements.icon,
-			targetContainer: this.folded ? this.messengerFacade.getContainer() : this.callView.container,
+			targetContainer: this.folded ? this.getExternalContainer() : this.callView.container,
 			icon: 'mic-off',
 			buttons: [
 				this.createUnmuteButton()
@@ -7029,7 +7080,7 @@ export class CallController extends EventEmitter
 		this.mutePopup = new CallHint({
 			callFolded: this.folded,
 			bindElement: this.folded ? null : this.callView.buttons.microphone.elements.icon,
-			targetContainer: this.folded ? this.messengerFacade.getContainer() : this.callView.container,
+			targetContainer: this.folded ? this.getExternalContainer() : this.callView.container,
 			title: Text.encode(BX.message("IM_CALL_MIC_AUTO_MUTED")),
 			icon: 'mic-off',
 			buttons: [
@@ -7251,7 +7302,7 @@ export class CallController extends EventEmitter
 		this.roomJoinedPopup = new CallHint({
 			callFolded: this.folded,
 			bindElement: this.folded ? null : this.callView.buttons.microphone.elements.icon,
-			targetContainer: this.folded ? this.messengerFacade.getContainer() : this.callView.container,
+			targetContainer: this.folded ? this.getExternalContainer() : this.callView.container,
 			title: title,
 			buttonsLayout: "bottom",
 			autoCloseDelay: 0,
@@ -7308,7 +7359,7 @@ export class CallController extends EventEmitter
 		this.micTakenFromPopup = new CallHint({
 			callFolded: this.folded,
 			bindElement: this.folded ? null : this.callView.buttons.microphone.elements.icon,
-			targetContainer: this.folded ? this.messengerFacade.getContainer() : this.callView.container,
+			targetContainer: this.folded ? this.getExternalContainer() : this.callView.container,
 			title: BX.Text.encode(title),
 			buttonsLayout: "right",
 			autoCloseDelay: 5000,
@@ -7345,7 +7396,7 @@ export class CallController extends EventEmitter
 		this.micTakenByPopup = new CallHint({
 			callFolded: this.folded,
 			bindElement: this.folded ? null : this.callView.buttons.microphone.elements.icon,
-			targetContainer: this.folded ? this.messengerFacade.getContainer() : this.callView.container,
+			targetContainer: this.folded ? this.getExternalContainer() : this.callView.container,
 			title: BX.Text.encode(BX.message("IM_CALL_ROOM_MIC_TAKEN_BY").replace('#USER_NAME#', userModel.name)),
 			buttonsLayout: "right",
 			autoCloseDelay: 5000,

@@ -6,14 +6,6 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 (function (exports,tasks_v2_const,tasks_v2_core,tasks_v2_lib_apiClient) {
 	'use strict';
 
-	function mapModelToDto(group) {
-	  return {
-	    id: group.id,
-	    name: group.name,
-	    image: group.image,
-	    type: group.type
-	  };
-	}
 	function mapDtoToModel(groupDto) {
 	  var _groupDto$image, _groupDto$stages;
 	  return {
@@ -170,7 +162,6 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	}
 
 	const GroupMappers = {
-	  mapModelToDto,
 	  mapDtoToModel,
 	  mapStageDtoToModel
 	};

@@ -34,7 +34,11 @@ jn.define('im/messenger/provider/services/chat/mute', (require, exports, module)
 		muteChat(dialogId)
 		{
 			Logger.log('ChatService: muteChat', dialogId);
+			const dialogModel = this.store.getters['dialoguesModel/getById'](dialogId);
 			this.store.dispatch('dialoguesModel/mute', { dialogId });
+			this.store.dispatch('counterModel/disableChatCounter', {
+				chatId: dialogModel?.chatId,
+			});
 			const queryParams = { dialog_id: dialogId, action: 'Y' };
 
 			this.sendMuteRequestDebounced(queryParams);
@@ -43,7 +47,11 @@ jn.define('im/messenger/provider/services/chat/mute', (require, exports, module)
 		unmuteChat(dialogId)
 		{
 			Logger.log('ChatService: unmuteChat', dialogId);
+			const dialogModel = this.store.getters['dialoguesModel/getById'](dialogId);
 			this.store.dispatch('dialoguesModel/unmute', { dialogId });
+			this.store.dispatch('counterModel/enableChatCounter', {
+				chatId: dialogModel?.chatId,
+			});
 			const queryParams = { dialog_id: dialogId, action: 'N' };
 
 			this.sendMuteRequestDebounced(queryParams);
@@ -86,9 +94,14 @@ jn.define('im/messenger/provider/services/chat/mute', (require, exports, module)
 				dialogId: dialog_id,
 				isMute,
 			};
+			const dialogModel = this.store.getters['dialoguesModel/getById'](dialog_id);
 
 			const dialogMuteAction = isMute ? 'dialoguesModel/mute' : 'dialoguesModel/unmute';
 			this.store.dispatch(dialogMuteAction, data);
+			this.store.dispatch('counterModel/setDisableChatCounter', {
+				chatId: dialogModel?.chatId,
+				disabled: isMute,
+			});
 			this.store.dispatch('sidebarModel/changeMute', { data });
 		}
 	}

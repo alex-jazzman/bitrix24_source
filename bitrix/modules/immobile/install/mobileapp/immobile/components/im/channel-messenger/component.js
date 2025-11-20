@@ -1,5 +1,5 @@
 // eslint-disable-next-line no-var
-var REVISION = 20; // API revision - sync with im/lib/revision.php
+var REVISION = 21; // API revision - sync with im/lib/revision.php
 
 /* region Environment variables */
 
@@ -15,6 +15,8 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	window.messenger.destructor();
 }
 
+window.messengerDebug = {};
+
 /* endregion Clearing session variables after script reload */
 
 (async () => {
@@ -29,7 +31,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	await MessengerParams.waitSharedParamsInit();
 
 	const { QuickRecentLoader } = require('im/messenger/lib/quick-recent-load');
-	QuickRecentLoader.renderItemsOnViewLoaded();
+	QuickRecentLoader.renderItemsOnViewLoaded(dialogList);
 
 	const DialogList = dialogList;
 	const { Type } = require('type');
@@ -94,7 +96,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	const { ChannelRecent } = require('im/messenger/controller/recent/channel');
 	const { RecentView } = require('im/messenger/view/recent');
 	const { Dialog } = require('im/messenger/controller/dialog/chat');
-	const { TabCounters } = require('im/messenger/lib/counters/tab-counters');
 	const { runAction } = require('im/messenger/lib/rest');
 	const { Communication } = require('im/messenger/lib/integration/mobile/communication');
 	const { RecentSelector } = require('im/messenger/controller/search/experimental');
@@ -440,7 +441,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			this.refreshErrorNoticeFlag = false;
 			this.notifyRefreshErrorWorker.stop();
 
-			TabCounters.update();
+			serviceLocator.get('tab-counters').update();
 
 			return this.ready();
 		}

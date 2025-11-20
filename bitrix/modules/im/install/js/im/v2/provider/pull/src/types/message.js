@@ -12,7 +12,7 @@ export type MessageAddParams = {
 	chatId: number,
 	counter: number,
 	counterType: CounterTypeItem,
-	dialogId: string,
+	dialogId: string | number,
 	files: {[fileId: string]: RawFile} | [],
 	lines: RawLines | null,
 	message: RawMessage,
@@ -234,12 +234,6 @@ export type DeleteReactionParams = {
 	userId: number
 };
 
-export type EngineUpdateParams = {
-	chatId: number,
-	engineCode: string,
-	engineName: string,
-};
-
 type ReactionType = $Values<typeof Reaction>;
 
 type RawReaction = {
@@ -253,10 +247,4 @@ type ReactionUser = {
 	id: number,
 	name: string,
 	avatar: string
-};
-
-export type FileTranscriptionParams = {
-	fileId: number,
-	status: 'Success' | 'Pending' | 'Error',
-	transcriptText: string | null,
 };

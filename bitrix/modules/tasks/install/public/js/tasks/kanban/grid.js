@@ -113,7 +113,7 @@ BX.Tasks.Kanban.Grid.prototype = {
 	 * @returns {void}
 	 */
 	bindEvents: function() {
-		if (!this.isBindEvents) {
+		if (!this.isBindEvents && !this.isScrumGrid()) {
 			BX.Event.EventEmitter.subscribe('tasks-kanban-settings-fields-view', function ()
 			{
 				this.showFieldsSelectPopup();
@@ -351,7 +351,7 @@ BX.Tasks.Kanban.Grid.prototype = {
 	 */
 	showFieldsSelectPopup: function()
 	{
-		var gridData = this.getData();
+		const gridData = this.getData();
 		const checkboxListPopup = new BX.UI.CheckboxList({
 			columnCount: 3,
 			lang: {
@@ -363,12 +363,18 @@ BX.Tasks.Kanban.Grid.prototype = {
 			events: {
 				onApply: (event) => {
 					this.ajax('saveUserSelectedFields', {
-						fields: event.data.fields
-					}).then(
-						(response) => {
-							this.onApplyFilter();
-						}
-					);
+						fields: event.data.fields,
+					})
+						.then(() => {
+							if (this.isScrumGrid())
+							{
+								BX.Tasks.Scrum.Kanban.onApplyFilter();
+							}
+							else
+							{
+								this.onApplyFilter();
+							}
+						});
 				},
 			},
 		});

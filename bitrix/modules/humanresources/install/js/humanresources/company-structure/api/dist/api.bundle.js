@@ -8,6 +8,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  HEADER: 'header',
 	  CARD: 'card',
 	  DETAIL: 'dept_menu',
+	  NODE_DETAIL: 'details',
 	  PLUS: 'plus'
 	});
 

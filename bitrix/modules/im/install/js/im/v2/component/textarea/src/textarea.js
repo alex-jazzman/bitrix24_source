@@ -694,6 +694,8 @@ export const ChatTextarea = {
 		},
 		async onPaste(event: ClipboardEvent)
 		{
+			this.text = Textarea.handlePasteUrl(this.$refs.textarea, event);
+
 			if (!this.withUploadMenu)
 			{
 				return;

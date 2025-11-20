@@ -2,8 +2,8 @@
  * @module im/messenger/provider/services/recent/pin
  */
 jn.define('im/messenger/provider/services/recent/pin', (require, exports, module) => {
-	const { Loc } = require('loc');
 	const { Alert, ButtonType } = require('alert');
+	const { Loc } = require('im/messenger/loc');
 	const { ErrorType } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Runtime } = require('runtime');
@@ -64,7 +64,7 @@ jn.define('im/messenger/provider/services/recent/pin', (require, exports, module
 					{
 						Alert.confirm(
 							null,
-							Loc.getMessage('IMMOBILE_RECENT_PIN_ERROR_MAX_PINNED'),
+							Loc.getMessage('IMMOBILE_MESSENGER_PROVIDER_SERVICES_RECENT_ERROR_MAX_PINNED'),
 							[
 								{
 									type: ButtonType.DEFAULT,

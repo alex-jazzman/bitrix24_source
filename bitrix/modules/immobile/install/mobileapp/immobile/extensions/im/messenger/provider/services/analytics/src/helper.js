@@ -2,7 +2,7 @@
  * @module im/messenger/provider/services/analytics/helper
  */
 jn.define('im/messenger/provider/services/analytics/helper', (require, exports, module) => {
-	const { Analytics, DialogType } = require('im/messenger/const');
+	const { Analytics, DialogType, ComponentCode } = require('im/messenger/const');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { ObjectUtils } = require('im/messenger/lib/utils');
@@ -81,6 +81,30 @@ jn.define('im/messenger/provider/services/analytics/helper', (require, exports, 
 				default:
 					return Analytics.Category.chat;
 			}
+		}
+
+		getSectionCode()
+		{
+			switch (MessengerParams.getComponentCode())
+			{
+				case ComponentCode.imChannelMessenger:
+					return Analytics.Section.channelTab;
+				case ComponentCode.imCopilotMessenger:
+					return Analytics.Section.copilotTab;
+				case ComponentCode.imCollabMessenger:
+					return Analytics.Section.collabTab;
+				default:
+					return Analytics.Section.chatTab;
+			}
+		}
+
+		/**
+		 * @param {boolean} dialog
+		 * @returns {string}
+		 */
+		getChatSubSectionCode(dialog)
+		{
+			return dialog ? Analytics.SubSection.chat : Analytics.SubSection.chatList;
 		}
 
 		getP1ByChatType(type)

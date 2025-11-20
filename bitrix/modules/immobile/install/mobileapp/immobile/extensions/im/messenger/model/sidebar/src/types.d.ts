@@ -21,6 +21,7 @@ export type SidebarModelActions =
 	| 'sidebarModel/changeMute'
 	| 'sidebarModel/setHistoryLimitExceeded'
 	| 'sidebarModel/removeHistoryLimitExceeded'
+	| 'sidebarModel/deleteTabsData'
 
 export type SidebarModelMutation =
 	'sidebarModel/add'

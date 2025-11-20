@@ -19,6 +19,7 @@ export type TaskV2Params = {
 	ta_el: string,
 	description?: string,
 	auditors?: string,
+	UF_TASK_WEBDAV_FILES: string[],
 };
 
 export class EntityCreator
@@ -149,6 +150,7 @@ export class EntityCreator
 			groupId: params.groupId ?? null,
 			description: params.description ?? null,
 			auditorsIds: auditors,
+			fileIds: params.UF_TASK_WEBDAV_FILES,
 			analytics: {
 				context: params.ta_sec,
 				element: params.ta_el,

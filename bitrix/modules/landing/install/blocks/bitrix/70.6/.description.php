@@ -52,7 +52,7 @@ $return = [
 			],
 			'.landing-block-node-content-container' => [
 				'name' => Loc::getMessage('LANDING_BLOCK_WIDGET_70_6_NODE_CARD_CONTAINER'),
-				'type' => ['padding-left', 'padding-right'],
+				'type' => ['container-max-width', 'padding-left', 'padding-right'],
 			],
 			'.landing-block-node-text' => [
 				'name' => Loc::getMessage('LANDING_BLOCK_WIDGET_70_6_NODE_TEXT'),

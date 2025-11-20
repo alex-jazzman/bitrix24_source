@@ -22,5 +22,8 @@ return [
 		'./src/copilot/model',
 		'./src/copilot/validator',
 		'./src/copilot/default-element',
+		'./src/ai-assistant/model',
+		'./src/ai-assistant/validator',
+		'./src/ai-assistant/default-element',
 	],
 ];

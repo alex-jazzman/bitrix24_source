@@ -11,7 +11,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/collab', (require, expo
 	const { SidebarLinksTab } = require('im/messenger/controller/sidebar-v2/tabs/links');
 	const { Loc } = require('im/messenger/controller/sidebar-v2/loc');
 	const { onAddParticipants } = require('im/messenger/controller/sidebar-v2/user-actions/participants');
-	const { onDeleteChat } = require('im/messenger/controller/sidebar-v2/user-actions/chat');
+	const { onDeleteChat, onClearHistoryChat } = require('im/messenger/controller/sidebar-v2/user-actions/chat');
 	const { onLeaveChat } = require('im/messenger/controller/sidebar-v2/user-actions/user');
 	const {
 		SidebarContextMenuActionId,
@@ -144,6 +144,16 @@ jn.define('im/messenger/controller/sidebar-v2/controller/collab', (require, expo
 					});
 				},
 			});
+		}
+
+		handleClearHistoryForMeDialogAction()
+		{
+			onClearHistoryChat({ dialogId: this.dialogId, forAll: false });
+		}
+
+		handleClearHistoryForAllDialogAction()
+		{
+			onClearHistoryChat({ dialogId: this.dialogId, forAll: true });
 		}
 
 		async handleEditDialogAction()

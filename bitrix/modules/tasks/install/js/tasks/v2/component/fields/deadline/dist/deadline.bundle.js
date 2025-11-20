@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
-(function (exports,ui_system_typography_vue,tasks_v2_component_elements_hoverPill,tasks_v2_lib_heightTransition,ui_vue3_components_popup,tasks_v2_provider_service_taskService,main_date,ui_datePicker,ui_iconSet_api_vue,ui_iconSet_api_core,ui_iconSet_outline,tasks_v2_const,tasks_v2_lib_calendar,tasks_v2_lib_timezone,tasks_v2_lib_analytics,main_core) {
+(function (exports,ui_system_typography_vue,tasks_v2_component_elements_hoverPill,tasks_v2_lib_heightTransition,ui_vue3_components_popup,tasks_v2_provider_service_taskService,main_date,ui_datePicker,ui_iconSet_api_vue,ui_iconSet_api_core,ui_iconSet_outline,tasks_v2_lib_calendar,tasks_v2_lib_timezone,tasks_v2_lib_analytics,main_core,tasks_v2_const) {
 	'use strict';
 
 	// @vue/component
@@ -141,6 +141,11 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  },
 	  template: `
 		<div class="tasks-field-deadline-popup">
+			<div class="tasks-field-deadline-picker-container">
+				<div class="tasks-field-deadline-picker" ref="picker">
+					<BIcon v-if="false" class="tasks-field-deadline-picker-settings" :name="Outline.FILTER_2_LINES"/>
+				</div>
+			</div>
 			<div class="tasks-field-deadline-presets">
 				<template v-for="(preset, index) of presets" :key="index">
 					<div
@@ -154,11 +159,6 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 						<div class="tasks-field-deadline-preset-date">{{ preset.formatted }}</div>
 					</div>
 				</template>
-			</div>
-			<div class="tasks-field-deadline-picker-container">
-				<div class="tasks-field-deadline-picker" ref="picker">
-					<BIcon v-if="false" class="tasks-field-deadline-picker-settings" :name="Outline.FILTER_2_LINES"/>
-				</div>
 			</div>
 			<div v-if="false" class="tasks-field-deadline-settings">
 			</div>
@@ -223,7 +223,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	};
 
 	const deadlineMeta = Object.freeze({
-	  id: 'deadlineTs',
+	  id: tasks_v2_const.TaskField.Deadline,
 	  title: main_core.Loc.getMessage('TASKS_V2_DEADLINE_TITLE')
 	});
 
@@ -376,7 +376,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	};
 
 	exports.Deadline = Deadline;
+	exports.DeadlinePopup = DeadlinePopup;
 	exports.deadlineMeta = deadlineMeta;
 
-}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.UI.System.Typography.Vue,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Lib,BX.UI.Vue3.Components,BX.Tasks.V2.Provider.Service,BX.Main,BX.UI.DatePicker,BX.UI.IconSet,BX.UI.IconSet,BX,BX.Tasks.V2.Const,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX));
+}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.UI.System.Typography.Vue,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Lib,BX.UI.Vue3.Components,BX.Tasks.V2.Provider.Service,BX.Main,BX.UI.DatePicker,BX.UI.IconSet,BX.UI.IconSet,BX,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX,BX.Tasks.V2.Const));
 //# sourceMappingURL=deadline.bundle.js.map

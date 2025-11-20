@@ -40,6 +40,7 @@ jn.define('im/messenger/db/table/file', (require, exports, module) => {
 				{ name: 'urlShow', type: FieldType.text },
 				{ name: 'urlDownload', type: FieldType.text },
 				{ name: 'mediaUrl', type: FieldType.json, defaultValue: FieldDefaultValue.emptyObject },
+				{ name: 'isTranscribable', type: FieldType.boolean, defaultValue: FieldDefaultValue.falseBoolean },
 			];
 		}
 	}

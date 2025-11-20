@@ -33,6 +33,10 @@ export const Responsible = {
 			type: Boolean,
 			default: false,
 		},
+		avatarOnly: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	setup(): Object
 	{
@@ -120,7 +124,7 @@ export const Responsible = {
 	template: `
 		<div v-if="isFlowFilledOnAdd" class="tasks-field-responsible-auto">
 			<BIcon :name="Outline.BOTTLENECK" color="var(--ui-color-accent-main-primary)"></BIcon>
-			<div>
+			<div v-if="!avatarOnly">
 				{{ loc('TASKS_V2_RESPONSIBLE_AUTO') }}
 			</div>
 		</div>
@@ -135,6 +139,7 @@ export const Responsible = {
 			:selectorWithActionMenu="selectorWithActionMenu"
 			:dataset="dataset"
 			:readonly="readonly"
+			:avatarOnly="avatarOnly"
 			@update="updateTask"
 		/>
 	`,

@@ -5,12 +5,15 @@
 	console.log('Navigation is loaded.');
 	const require = jn.require;
 
+	window.messengerDebug = {};
+
 	/**
 	 * @description Import MessengerParams and initSharedParams should be higher than other imports.
 	 */
 	const { MessengerParams } = require('im/messenger/lib/params');
 	await MessengerParams.initSharedParams();
 
+	const { MemoryStorage } = require('native/memorystore');
 	const { EntityReady } = require('entity-ready');
 
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
@@ -37,7 +40,13 @@
 
 	const { NotifyManager } = require('notify-manager');
 
-	const { EventType, ComponentCode, NavigationTab, NavigationTabByComponent } = require('im/messenger/const');
+	const {
+		EventType,
+		ComponentCode,
+		NavigationTab,
+		NavigationTabByComponent,
+		WaitingEntity,
+	} = require('im/messenger/const');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { Feature } = require('im/messenger/lib/feature');
 
@@ -110,7 +119,14 @@
 			this.bindMethods();
 			this.subscribeEvents();
 
-			EntityReady.ready('im.navigation');
+			this.enableMessengerApi()
+				.catch((error) => {
+					console.error('im.navigation: enable external api error', error);
+				})
+				.finally(() => {
+					EntityReady.ready('im.navigation');
+				})
+			;
 
 			if (PageManager.getNavigator().isActiveTab())
 			{
@@ -547,6 +563,15 @@
 		onAppStatusChange(event)
 		{
 			core.setAppStatus(event.name, event.value);
+		}
+
+		async enableMessengerApi()
+		{
+			const memoryStorage = new MemoryStorage('immobile::external-api');
+			await memoryStorage.set('apiVersion', 1);
+
+			EntityReady.addCondition(WaitingEntity.externalApi, () => true);
+			EntityReady.ready(WaitingEntity.externalApi);
 		}
 	}
 

@@ -1,12 +1,10 @@
-import { RouteActionMenu, ConfirmationPopup } from 'humanresources.company-structure.structure-components';
+import { RouteActionMenu, ConfirmationPopup, MoveUserPopup } from 'humanresources.company-structure.structure-components';
 import { Text } from 'main.core';
 import { UserListActionMenu, MenuActions } from 'humanresources.company-structure.org-chart';
 import { DepartmentAPI } from '../../../api';
-import { DepartmentContentActions } from '../../../actions';
 import { memberRoles } from 'humanresources.company-structure.api';
-import { useChartStore } from 'humanresources.company-structure.chart-store';
+import { useChartStore, UserService } from 'humanresources.company-structure.chart-store';
 import { mapState } from 'ui.vue3.pinia';
-import { MoveUserActionPopup } from './move-user-action-popup';
 import { UI } from 'ui.notification';
 import { EntityTypes } from 'humanresources.company-structure.utils';
 
@@ -29,7 +27,7 @@ export const UserListItemActionButton = {
 	components: {
 		RouteActionMenu,
 		ConfirmationPopup,
-		MoveUserActionPopup,
+		MoveUserPopup,
 	},
 
 	data(): Object
@@ -39,6 +37,7 @@ export const UserListItemActionButton = {
 			showRemoveUserConfirmationPopup: false,
 			showRemoveUserConfirmationActionLoader: false,
 			showMoveUserPopup: false,
+			showMoveUserPopupOnlyMoveMode: false,
 			showFireUserPopup: false,
 			fireUserLoad: false,
 		};
@@ -57,11 +56,20 @@ export const UserListItemActionButton = {
 		{
 			if (actionId === MenuActions.removeUserFromDepartment)
 			{
-				this.showRemoveUserConfirmationPopup = true;
+				if (this.isTeamEntity)
+				{
+					this.showRemoveUserConfirmationPopup = true;
+				}
+				else
+				{
+					this.showMoveUserPopupOnlyMoveMode = false;
+					this.showMoveUserPopup = true;
+				}
 			}
 
 			if (actionId === MenuActions.moveUserToAnotherDepartment)
 			{
+				this.showMoveUserPopupOnlyMoveMode = true;
 				this.showMoveUserPopup = true;
 			}
 
@@ -78,6 +86,7 @@ export const UserListItemActionButton = {
 			const departmentId = this.focusedNode;
 			this.showRemoveUserConfirmationActionLoader = false;
 			this.showRemoveUserConfirmationPopup = false;
+			this.showMoveUserPopup = false;
 
 			try
 			{
@@ -109,7 +118,7 @@ export const UserListItemActionButton = {
 			const role = this.user.role;
 			if (isUserInMultipleDepartments || this.isTeamEntity)
 			{
-				DepartmentContentActions.removeUserFromDepartment(departmentId, userId, role);
+				UserService.removeUserFromEntity(departmentId, userId, role);
 
 				return;
 			}
@@ -120,7 +129,7 @@ export const UserListItemActionButton = {
 				return;
 			}
 
-			DepartmentContentActions.moveUserToDepartment(
+			UserService.moveUserToEntity(
 				departmentId,
 				userId,
 				rootDepartment.id,
@@ -159,8 +168,8 @@ export const UserListItemActionButton = {
 				return;
 			}
 
-			DepartmentContentActions.removeUserFromDepartment(this.focusedNode, userId, this.user.role);
-			await DepartmentContentActions.removeUserFromAllDepartments(userId);
+			UserService.removeUserFromEntity(this.focusedNode, userId, this.user.role);
+			await UserService.removeUserFromAllEntities(userId);
 			this.showFireUserPopup = false;
 			this.fireUserLoad = false;
 		},
@@ -323,13 +332,15 @@ export const UserListItemActionButton = {
 				</div>
 			</template>
 		</ConfirmationPopup>
-		<MoveUserActionPopup
+		<MoveUserPopup
 			v-if="showMoveUserPopup"
-			:parentId="focusedNode"
+			:originalNodeId="focusedNode"
 			:user="user"
 			:entityType="entityType"
+			:onlyMove="showMoveUserPopupOnlyMoveMode"
 			@action="handleMoveUserAction"
 			@close="handleMoveUserClose"
+			@remove="removeUser"
 		/>
 	`,
 };

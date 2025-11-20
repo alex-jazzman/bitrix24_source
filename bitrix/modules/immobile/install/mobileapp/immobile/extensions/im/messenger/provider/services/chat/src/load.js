@@ -11,11 +11,11 @@ jn.define('im/messenger/provider/services/chat/load', (require, exports, module)
 	const { RestMethod, EventType, DialogType } = require('im/messenger/const');
 	const { ChatDataExtractor } = require('im/messenger/provider/services/lib/chat-data-extractor');
 	const { MessageService } = require('im/messenger/provider/services/message');
-	const { TabCounters } = require('im/messenger/lib/counters/tab-counters');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { getLogger } = require('im/messenger/lib/logger');
 	const { RecentDataConverter } = require('im/messenger/lib/converter/data/recent');
 	const { runAction } = require('im/messenger/lib/rest');
+	const { Feature } = require('im/messenger/lib/feature');
 	const { MessageContextCreator } = require('im/messenger/provider/services/lib/message-context-creator');
 	const { CallManager } = require('im/messenger/lib/integration/callmobile/call-manager');
 
@@ -243,6 +243,13 @@ jn.define('im/messenger/provider/services/chat/load', (require, exports, module)
 
 			void await this.store.dispatch('dialoguesModel/set', dialogList);
 
+			if (Feature.isMessengerV2Enabled)
+			{
+				void await this.store.dispatch('counterModel/setList', {
+					counterList: extractor.getCounterState(),
+				});
+			}
+
 			const collabPromise = this.store.dispatch('dialoguesModel/collabModel/set', extractor.getCollabInfo());
 
 			const filesPromise = this.store.dispatch('filesModel/set', extractor.getFiles());
@@ -255,11 +262,12 @@ jn.define('im/messenger/provider/services/chat/load', (require, exports, module)
 				.createMessageDoublyLinkedListForDialog(extractor.getMainChat(), extractor.getMessages())
 			;
 			const messagesWithUploadingMessages = this.addUploadingMessagesToMessageList(messages);
+			const sendingMessages = this.addSendingMessagesToMessageList(messagesWithUploadingMessages);
 
 			const messagesPromise = [
 				this.store.dispatch('messagesModel/store', extractor.getMessagesToStore()),
 				this.store.dispatch('messagesModel/setChatCollection', {
-					messages: messagesWithUploadingMessages,
+					messages: sendingMessages,
 					clearCollection: true,
 				}),
 				this.store.dispatch('messagesModel/pinModel/setChatCollection', {
@@ -278,7 +286,10 @@ jn.define('im/messenger/provider/services/chat/load', (require, exports, module)
 
 			await Promise.all(messagesPromise);
 
-			await this.updateCounters(dialogList);
+			if (!Feature.isMessengerV2Enabled)
+			{
+				await this.updateCounters(dialogList);
+			}
 
 			return extractor.getChatId();
 		}
@@ -308,10 +319,12 @@ jn.define('im/messenger/provider/services/chat/load', (require, exports, module)
 				.createMessageDoublyLinkedListForDialog(extractor.getMainChat(), extractor.getMessages())
 			;
 			const messagesWithUploadingMessages = this.addUploadingMessagesToMessageList(messages);
+			const sendingMessages = this.addSendingMessagesToMessageList(messagesWithUploadingMessages);
+
 			const messagesPromise = [
 				this.store.dispatch('messagesModel/store', extractor.getMessagesToStore()),
 				this.store.dispatch('messagesModel/setChatCollection', {
-					messages: messagesWithUploadingMessages,
+					messages: sendingMessages,
 					clearCollection: true,
 				}),
 				this.store.dispatch('messagesModel/pinModel/setChatCollection', {
@@ -449,7 +462,7 @@ jn.define('im/messenger/provider/services/chat/load', (require, exports, module)
 
 			MessengerEmitter.emit(EventType.messenger.renderRecent);
 
-			TabCounters.updateDelayed();
+			serviceLocator.get('tab-counters').updateDelayed();
 		}
 
 		/**
@@ -507,6 +520,34 @@ jn.define('im/messenger/provider/services/chat/load', (require, exports, module)
 					messageList.splice(messageIndex + 1, 0, ...uploadingMessages);
 				}
 			}
+
+			return messageList;
+		}
+
+		/**
+		 * @param {Array<RawMessage>} messageList
+		 * @returns {Array<MessagesModelState | RawMessage>}
+		 */
+		addSendingMessagesToMessageList(messageList)
+		{
+			if (!Type.isArrayFilled(messageList))
+			{
+				return messageList;
+			}
+
+			const chatId = messageList[0].chat_id;
+			const sendingMessageList = this.store.getters['messagesModel/getSendingMessages'](chatId);
+			if (!Type.isArrayFilled(sendingMessageList))
+			{
+				return messageList;
+			}
+
+			const updatedSendingMessageList = sendingMessageList.map((message, index, array) => ({
+				...message,
+				date: new Date(Date.now() - array.length),
+			}));
+
+			messageList.push(...updatedSendingMessageList);
 
 			return messageList;
 		}

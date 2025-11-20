@@ -1,4 +1,5 @@
 <?php
+$MESS["COLLAB_INVITE_TOAST_GUESTS_INVITE_DISABLED"] = "Your Bitrix24 administrator has disabled the invite to join feature.";
 $MESS["M_COLLAB_CREATE_AUTO_DELETE_MESSAGES_ITEM_DAY"] = "1 day";
 $MESS["M_COLLAB_CREATE_AUTO_DELETE_MESSAGES_ITEM_HOUR"] = "1 hour";
 $MESS["M_COLLAB_CREATE_AUTO_DELETE_MESSAGES_ITEM_MONTH"] = "1 month";
@@ -37,6 +38,7 @@ $MESS["M_COLLAB_CREATE_TITLE"] = "New collab";
 $MESS["M_COLLAB_CREATE_UPLOAD_ERROR_TEXT"] = "Try another file. If the problem persists, contact your Bitrix24 administrator.";
 $MESS["M_COLLAB_CREATE_UPLOAD_ERROR_TITLE"] = "Could not upload image.";
 $MESS["M_COLLAB_PERMISSIONS_ALL"] = "All members";
+$MESS["M_COLLAB_PERMISSIONS_ALLOW_GUESTS_INVITATION_ITEM_TITLE"] = "Allow inviting guests to this collab";
 $MESS["M_COLLAB_PERMISSIONS_EMPLOYEES"] = "Employees only";
 $MESS["M_COLLAB_PERMISSIONS_FALSE"] = "No";
 $MESS["M_COLLAB_PERMISSIONS_INVITERS_ITEM_TITLE"] = "Invite members";

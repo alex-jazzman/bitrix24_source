@@ -20,6 +20,8 @@ jn.define('im/messenger/lib/counters/tab-counters/chat', (require, exports, modu
 	const logger = getLogger('chat-counters');
 
 	/**
+	 * @deprecated
+	 * @see MessengerCounters
 	 * @class ChatCounters
 	 */
 	class ChatCounters extends BaseTabCounters
@@ -140,7 +142,7 @@ jn.define('im/messenger/lib/counters/tab-counters/chat', (require, exports, modu
 			this.collabCounter.reset();
 			this.copilotCounter.reset();
 
-			this.chatCounter.value = this.store.getters['recentModel/getCollection']()
+			this.chatCounter.value = this.getRecentCollection()
 				.reduce((counter, item) => {
 					const dialog = this.getDialog(item);
 					if (!this.validateDialog(item, dialog))
@@ -150,14 +152,7 @@ jn.define('im/messenger/lib/counters/tab-counters/chat', (require, exports, modu
 
 					this.deleteCounterDetails(this.chatCounter, item, dialog.chatId);
 
-					if (DialogHelper.isChatId(dialog.dialogId))
-					{
-						return counter + this.calculateItemCounter(item, dialog);
-					}
-
-					if (
-						DialogHelper.isDialogId(dialog.dialogId)
-						&& !(dialog && dialog.muteList.includes(this.userId)))
+					if (Type.isArray(dialog.muteList) && !dialog.muteList.includes(this.userId))
 					{
 						return counter + this.calculateChatCounter(item, dialog);
 					}
@@ -177,7 +172,7 @@ jn.define('im/messenger/lib/counters/tab-counters/chat', (require, exports, modu
 
 			if (!this.isCollabLaunched)
 			{
-				this.collabCounter.value = this.store.getters['recentModel/getCollection']()
+				this.collabCounter.value = this.getRecentCollection()
 					.reduce((counter, item) => {
 						const dialog = this.getDialog(item);
 						if (!this.validateDialog(item, dialog))
@@ -202,7 +197,7 @@ jn.define('im/messenger/lib/counters/tab-counters/chat', (require, exports, modu
 
 			if (!this.isCopilotLaunched)
 			{
-				this.copilotCounter.value = this.store.getters['recentModel/getCollection']()
+				this.copilotCounter.value = this.getRecentCollection()
 					.reduce((counter, item) => {
 						const dialog = this.getDialog(item);
 						if (!this.validateDialog(item, dialog))
@@ -348,6 +343,11 @@ jn.define('im/messenger/lib/counters/tab-counters/chat', (require, exports, modu
 			{
 				delete this.copilotCounter.detail[counterId];
 			}
+
+			if (!Type.isNil(this.openlinesCounter.detail[counterId]))
+			{
+				delete this.openlinesCounter.detail[counterId];
+			}
 		}
 
 		updateCounterDetailByCounterState(counterState)
@@ -403,6 +403,16 @@ jn.define('im/messenger/lib/counters/tab-counters/chat', (require, exports, modu
 			}
 
 			this.chatCounter.detail[counterId] = counter;
+		}
+
+		setNotificationCounters(counter)
+		{
+			this.notificationCounter.value = counter;
+		}
+
+		clearNotificationCounters()
+		{
+			this.notificationCounter.value = 0;
 		}
 	}
 

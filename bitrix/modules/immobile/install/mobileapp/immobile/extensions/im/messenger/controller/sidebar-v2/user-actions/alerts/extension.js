@@ -10,6 +10,9 @@ jn.define('im/messenger/controller/sidebar-v2/user-actions/alerts', (require, ex
 		showDeleteChatAlert,
 		showDeleteChannelAlert,
 		showDeleteCollabAlert,
+
+		showClearHistoryChatAlert,
+		showClearHistoryCollabAlert,
 	} = require('im/messenger/lib/ui/alert');
 	const { ToastType } = require('im/messenger/lib/ui/notification');
 
@@ -58,6 +61,25 @@ jn.define('im/messenger/controller/sidebar-v2/user-actions/alerts', (require, ex
 	}
 
 	/**
+	 * @param {DialogId} dialogId
+	 * @return {function}
+	 */
+	function resolveClearHistoryDialogConfirmFn(dialogId)
+	{
+		const sidebarType = resolveSidebarType(dialogId);
+
+		// eslint-disable-next-line sonarjs/no-small-switch
+		switch (sidebarType)
+		{
+			case SidebarType.collab:
+				return showClearHistoryCollabAlert;
+
+			default:
+				return showClearHistoryChatAlert;
+		}
+	}
+
+	/**
 	 * @param {string} dialogId
 	 * @return {string}
 	 */
@@ -82,5 +104,6 @@ jn.define('im/messenger/controller/sidebar-v2/user-actions/alerts', (require, ex
 		resolveLeaveDialogConfirmFn,
 		resolveDeleteDialogConfirmFn,
 		resolveDeleteDialogToastType,
+		resolveClearHistoryDialogConfirmFn,
 	};
 });

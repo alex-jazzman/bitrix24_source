@@ -28,7 +28,8 @@ export type ChatUserAddParams = {
 	containsCollaber: boolean,
 	users: {[userId: string]: RawUser},
 	newUsers: number[],
-	userCount: number
+	userCount: number,
+	relations: Relation[],
 };
 
 export type ChatUserLeaveParams = {
@@ -40,6 +41,7 @@ export type ChatUserLeaveParams = {
 	userId: number,
 	chatExtranet: boolean,
 	containsCollaber: boolean,
+	relations: Relation[],
 };
 
 export type StartWritingParams = {
@@ -53,6 +55,9 @@ export type InputActionNotifyParams = {
 	userId: number,
 	userName: string,
 	type: InputActionType,
+	statusMessageCode: string | null,
+	userFirstName: string | null,
+	duration: number | null,
 };
 
 export type ChatUnreadParams = {
@@ -113,4 +118,12 @@ export type MessagesAutoDeleteDelayParams = {
 	chatId: number,
 	dialogId: string,
 	delay: number,
+};
+
+export type Relation = {
+	id: number,
+	userId: number,
+	chatId: number,
+	isHidden: boolean,
+	role: 'guest' | 'member' | 'admin' | 'owner',
 };

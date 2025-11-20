@@ -59,23 +59,20 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    return babelHelpers.classPrivateFieldLooseBase(this, _instance)[_instance];
 	  }
 	  startAction(actionPayload) {
-	    const timerId = babelHelpers.classPrivateFieldLooseBase(this, _buildTimerId)[_buildTimerId](actionPayload);
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _isAlreadyActive)[_isAlreadyActive](actionPayload)) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _clearTimer)[_clearTimer](timerId);
-	      babelHelpers.classPrivateFieldLooseBase(this, _actionTimers)[_actionTimers][timerId] = babelHelpers.classPrivateFieldLooseBase(this, _setTimer)[_setTimer](actionPayload);
-	      return;
+	      this.stopAction(actionPayload);
 	    }
-	    im_v2_application_core.Core.getStore().dispatch('chats/inputActions/start', actionPayload);
+	    void im_v2_application_core.Core.getStore().dispatch('chats/inputActions/start', actionPayload);
+	    const timerId = babelHelpers.classPrivateFieldLooseBase(this, _buildTimerId)[_buildTimerId](actionPayload);
 	    babelHelpers.classPrivateFieldLooseBase(this, _actionTimers)[_actionTimers][timerId] = babelHelpers.classPrivateFieldLooseBase(this, _setTimer)[_setTimer](actionPayload);
 	  }
 	  stopAction(actionPayload) {
 	    if (!babelHelpers.classPrivateFieldLooseBase(this, _isAlreadyActive)[_isAlreadyActive](actionPayload)) {
 	      return;
 	    }
-	    im_v2_application_core.Core.getStore().dispatch('chats/inputActions/stop', actionPayload);
-	  }
-	  stopUserActionsInChat(payload) {
-	    im_v2_application_core.Core.getStore().dispatch('chats/inputActions/stopUserActionsInChat', payload);
+	    const timerId = babelHelpers.classPrivateFieldLooseBase(this, _buildTimerId)[_buildTimerId](actionPayload);
+	    babelHelpers.classPrivateFieldLooseBase(this, _clearTimer)[_clearTimer](timerId);
+	    void im_v2_application_core.Core.getStore().dispatch('chats/inputActions/stop', actionPayload);
 	  }
 	  clear() {
 	    Object.values(babelHelpers.classPrivateFieldLooseBase(this, _actionTimers)[_actionTimers]).forEach(timerId => {
@@ -85,31 +82,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	}
 	function _isAlreadyActive2(payload) {
-	  const {
-	    type,
-	    dialogId,
-	    userId
-	  } = payload;
-	  return im_v2_application_core.Core.getStore().getters['chats/inputActions/isActionActive']({
-	    type,
-	    dialogId,
-	    userId
-	  });
+	  return im_v2_application_core.Core.getStore().getters['chats/inputActions/isActionActive'](payload);
 	}
 	function _buildTimerId2(payload) {
 	  const {
-	    type,
 	    dialogId,
 	    userId
 	  } = payload;
-	  return `${type}|${dialogId}|${userId}`;
+	  return `${dialogId}|${userId}`;
 	}
 	function _setTimer2(payload) {
-	  const {
-	    type,
-	    dialogId
-	  } = payload;
-	  const actionDuration = babelHelpers.classPrivateFieldLooseBase(this, _getActionDuration)[_getActionDuration](type, dialogId);
+	  const actionDuration = babelHelpers.classPrivateFieldLooseBase(this, _getActionDuration)[_getActionDuration](payload);
 	  return setTimeout(() => {
 	    this.stopAction(payload);
 	  }, actionDuration);
@@ -118,8 +101,16 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  clearTimeout(babelHelpers.classPrivateFieldLooseBase(this, _actionTimers)[_actionTimers][timerId]);
 	  delete babelHelpers.classPrivateFieldLooseBase(this, _actionTimers)[_actionTimers][timerId];
 	}
-	function _getActionDuration2(type, dialogId) {
+	function _getActionDuration2(payload) {
 	  var _typeDurationMap$chat;
+	  const {
+	    type,
+	    dialogId,
+	    duration
+	  } = payload;
+	  if (duration && duration > 0) {
+	    return duration;
+	  }
 	  const typeDurationMap = ActionDurationMap[type];
 	  const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId, true);
 	  return (_typeDurationMap$chat = typeDurationMap[chat.type]) != null ? _typeDurationMap$chat : typeDurationMap.default;

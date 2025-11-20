@@ -7,10 +7,18 @@ import { mapState } from 'ui.vue3.pinia';
 import { DepartmentContentActions } from '../../actions';
 import { DepartmentAPI } from '../../api';
 import { Messenger } from 'im.public.iframe';
+import { ActionButtonDictionary, ActionButtonDictionaryItem } from './dictionaries/action-button-dictionary';
+
+type DataType = {
+	isMenuVisible: boolean,
+	showUnbindConfirmationPopup: boolean,
+	unbindLoader: boolean,
+	dictionary: ActionButtonDictionaryItem | {},
+};
 
 // @vue/component
-export const ChatListItemActionButton = {
-	name: 'chatListItemActionButton',
+export const CommunicationListItemActionButton = {
+	name: 'communicationListItemActionButton',
 
 	components: {
 		RouteActionMenu,
@@ -18,8 +26,8 @@ export const ChatListItemActionButton = {
 	},
 
 	props: {
-		/** @type ChatOrChannelDetailed */
-		chat: {
+		/** @type CommunicationDetailed */
+		communication: {
 			type: Object,
 			required: true,
 		},
@@ -29,88 +37,101 @@ export const ChatListItemActionButton = {
 		},
 	},
 
-	data(): Object
+	data(): DataType
 	{
 		return {
-			menuVisible: false,
-			showUnbindChatConfirmationPopup: false,
-			unbindChatLoader: false,
+			isMenuVisible: false,
+			showUnbindConfirmationPopup: false,
+			unbindLoader: false,
+			dictionary: {},
 		};
 	},
 
-	computed: {
-		getUnbindChatTitle(): string
+	computed:
+	{
+		entityType(): boolean
 		{
-			const entityType = this.isTeamEntity ? 'TEAM' : 'DEPARTMENT';
-			const chatType = this.isChat ? 'CHAT' : 'CHANNEL';
-
-			return this.loc(`HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_UNBIND_POPUP_${chatType}_FROM_${entityType}_TITLE`);
-		},
-		getUnbindChatDescription(): string
-		{
-			const entityType = this.isTeamEntity ? 'TEAM' : 'DEPARTMENT';
-			const chatType = this.isChat ? 'CHAT' : 'CHANNEL';
-
-			return this.loc(`HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_UNBIND_POPUP_${chatType}_FROM_${entityType}_DESCRIPTION`);
+			return this.departments.get(this.nodeId)?.entityType;
 		},
 		isTeamEntity(): boolean
 		{
 			return this.departments.get(this.nodeId)?.entityType === EntityTypes.team;
 		},
-		isChat(): boolean
-		{
-			return this.chat.type === ChatTypes.chat;
-		},
 		menu(): ChatListActionMenu
 		{
 			const entityType = this.departments.get(this.nodeId)?.entityType;
 
-			return new ChatListActionMenu(entityType, this.chat, this.nodeId);
+			return new ChatListActionMenu(entityType, this.communication, this.nodeId);
+		},
+		buttonDataId(): string
+		{
+			const type = this.communication.type.toLowerCase();
+
+			return `hr-department-detail-content__${type}-list_chat-${this.communication.id}-action-btn`;
 		},
 		...mapState(useChartStore, ['departments']),
 	},
 
+	created(): void
+	{
+		this.dictionary = (ActionButtonDictionary[this.communication.type.toLowerCase()]
+				&& ActionButtonDictionary[this.communication.type.toLowerCase()][this.entityType.toLowerCase()])
+			|| {}
+		;
+	},
+
 	methods:
 	{
-		toggleMenu(): void
-		{
-			this.menuVisible = !this.menuVisible;
-		},
 		loc(phraseCode: string, replacements: { [p: string]: string } = {}): string
 		{
 			return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
+		},
+		toggleMenu(): void
+		{
+			this.isMenuVisible = !this.isMenuVisible;
 		},
 		onActionMenuItemClick(actionId: string): void
 		{
 			if (actionId === MenuActions.openChat)
 			{
-				Messenger.openChat(this.chat.dialogId);
+				Messenger.openChat(this.communication.dialogId);
 			}
 			else if (actionId === MenuActions.unbindChat)
 			{
-				this.showUnbindChatConfirmationPopup = true;
+				this.showUnbindConfirmationPopup = true;
 			}
 		},
-		cancelUnbindChat(): void
+		cancelUnbind(): void
 		{
-			this.showUnbindChatConfirmationPopup = false;
+			this.showUnbindConfirmationPopup = false;
 		},
-		async unbindChat(): Promise<void>
+		async unbind(): Promise<void>
 		{
-			this.unbindChatLoader = true;
-			const entityType = this.isTeamEntity ? 'TEAM' : 'DEPARTMENT';
-			const chatType = this.isChat ? 'CHAT' : 'CHANNEL';
+			this.unbindLoader = true;
 
 			try
 			{
-				await DepartmentAPI.updateChats(this.nodeId, [], [this.chat.id]);
+				switch (this.communication.type)
+				{
+					case ChatTypes.chat:
+						await DepartmentAPI.saveChats(this.nodeId, [], [this.communication.id]);
+						break;
+					case ChatTypes.channel:
+						await DepartmentAPI.saveChannel(this.nodeId, [], [this.communication.id]);
+						break;
+					case ChatTypes.collab:
+						await DepartmentAPI.saveCollab(this.nodeId, [], [this.communication.id]);
+						break;
+					default:
+						break;
+				}
 			}
 			catch (error)
 			{
 				if (error.code !== 'STRUCTURE_ACCESS_DENIED')
 				{
 					UI.Notification.Center.notify({
-						content: this.loc(`HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_UNBIND_POPUP_${chatType}_FROM_${entityType}_ERROR`),
+						content: this.loc(this.dictionary.error),
 						autoHideDelay: 2000,
 					});
 				}
@@ -119,23 +140,22 @@ export const ChatListItemActionButton = {
 			}
 			finally
 			{
-				this.unbindChatLoader = false;
-				this.showUnbindChatConfirmationPopup = false;
+				this.unbindLoader = false;
+				this.showUnbindConfirmationPopup = false;
 			}
 
-			DepartmentContentActions.unbindChatFromNode(this.nodeId, this.chat.id);
+			DepartmentContentActions.unbindChatFromNode(this.nodeId, this.communication.id, this.communication.type);
 
-			const isOwnChat = !this.chat.originalNodeId || this.chat.originalNodeId === this.nodeId;
+			const isOwn = !this.communication.originalNodeId || this.communication.originalNodeId === this.nodeId;
 
-			if (isOwnChat)
+			if (isOwn)
 			{
-				DepartmentContentActions.updateChatsInChildrenNodes(
-					this.nodeId,
-				);
+				const store = useChartStore();
+				store.updateChatsInChildrenNodes(this.nodeId);
 			}
 
 			UI.Notification.Center.notify({
-				content: this.loc(`HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_UNBIND_POPUP_${chatType}_FROM_${entityType}_SUCCESS`),
+				content: this.loc(this.dictionary.success),
 				autoHideDelay: 2000,
 			});
 		},
@@ -145,35 +165,35 @@ export const ChatListItemActionButton = {
 		<button
 			v-if="menu.items.length"
 			class="ui-icon-set --more hr-department-detail-content__tab-list_item-action-btn --chat-item-action-btn ui-icon-set"
-			:class="{ '--focused': menuVisible }"
+			:class="{ '--focused': isMenuVisible }"
 			@click.stop="toggleMenu()"
-			ref="actionChatButton"
-			:data-id="'hr-department-detail-content__'+ chat.type.toLowerCase() + '-list_chat-' + chat.id + '-action-btn'"
+			ref="actionCommunicationButton"
+			:data-id="buttonDataId"
 		/>
 		<RouteActionMenu
-			v-if="menuVisible"
-			:id="'tree-node-department-menu-chat_' + this.nodeId + '_' + chat.id"
+			v-if="isMenuVisible"
+			:id="'tree-node-department-menu-chat_' + this.nodeId + '_' + communication.id"
 			:items="menu.items"
 			:width="302"
-			:bindElement="$refs.actionChatButton"
+			:bindElement="$refs.actionCommunicationButton"
 			@action="onActionMenuItemClick"
-			@close="menuVisible = false"
+			@close="isMenuVisible = false"
 		/>
 		<ConfirmationPopup
-			ref="unbindChatConfirmationPopup"
-			v-if="showUnbindChatConfirmationPopup"
-			:showActionButtonLoader="unbindChatLoader"
-			:title="getUnbindChatTitle"
+			ref="unbindConfirmationPopup"
+			v-if="showUnbindConfirmationPopup"
+			:showActionButtonLoader="unbindLoader"
+			:title="loc(dictionary.title)"
 			:confirmBtnText="loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_UNBIND_POPUP_CONFIRM_BUTTON')"
 			confirmButtonClass="ui-btn-danger"
-			@action="unbindChat"
-			@close="cancelUnbindChat"
+			@action="unbind"
+			@close="cancelUnbind"
 			:width="364"
 		>
 			<template v-slot:content>
 				<div class="hr-department-detail-content__user-action-text-container">
 					<div
-						v-html="getUnbindChatDescription"
+						v-html="loc(dictionary.description)"
 					/>
 				</div>
 			</template>

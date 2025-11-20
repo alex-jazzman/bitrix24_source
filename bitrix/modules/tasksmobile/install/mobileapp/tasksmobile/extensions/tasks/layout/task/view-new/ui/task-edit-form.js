@@ -133,6 +133,7 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 			canMoveStage,
 			kanbanOwnerId,
 			isStageSelectorInitiallyHidden,
+			isFlowToolDisabled,
 		} = props;
 
 		const taskCreateButtonAnalytics = {
@@ -459,7 +460,7 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 					},
 					compact: ProjectFieldCompact,
 				},
-				{
+				!isFlowToolDisabled && {
 					factory: TaskFlowField,
 					props: {
 						id: Field.FLOW,
@@ -846,6 +847,7 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 			timerState: selectTimerState(task),
 			view: ownProps.view,
 			canMoveStage,
+			isFlowToolDisabled: ownProps.isFlowToolDisabled,
 		};
 	};
 

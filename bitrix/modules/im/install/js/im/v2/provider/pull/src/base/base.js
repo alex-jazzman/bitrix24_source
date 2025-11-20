@@ -8,6 +8,7 @@ import { SettingsPullHandler } from './handlers/settings';
 import { CommentsPullHandler } from './handlers/comments';
 import { ApplicationPullHandler } from './handlers/application';
 import { CollabPullHandler } from './handlers/collab';
+import { AiPullHandler } from './handlers/ai';
 
 export class BasePullHandler
 {
@@ -21,6 +22,7 @@ export class BasePullHandler
 	#applicationPullHandler: ApplicationPullHandler;
 	#collabPullHandler: CollabPullHandler;
 	#botPullHandler: BotPullHandler;
+	#aiPullHandler: AiPullHandler;
 
 	constructor()
 	{
@@ -34,6 +36,7 @@ export class BasePullHandler
 		this.#applicationPullHandler = new ApplicationPullHandler();
 		this.#collabPullHandler = new CollabPullHandler();
 		this.#botPullHandler = new BotPullHandler();
+		this.#aiPullHandler = new AiPullHandler();
 	}
 
 	getModuleId(): string
@@ -50,16 +53,6 @@ export class BasePullHandler
 	handleMessageChat(params)
 	{
 		this.#messageHandler.handleMessageAdd(params);
-	}
-
-	handleChangeEngine(params)
-	{
-		this.#messageHandler.handleChangeEngine(params);
-	}
-
-	handleFileTranscription(params)
-	{
-		this.#messageHandler.handleFileTranscription(params);
 	}
 
 	handleMessageUpdate(params)
@@ -199,11 +192,6 @@ export class BasePullHandler
 		this.#chatHandler.handleChatConvert(params);
 	}
 
-	handleChatCopilotRoleUpdate(params)
-	{
-		this.#chatHandler.handleChatCopilotRoleUpdate(params);
-	}
-
 	handleMessagesAutoDeleteDelayChanged(params)
 	{
 		this.#chatHandler.handleMessagesAutoDeleteDelayChanged(params);
@@ -289,5 +277,22 @@ export class BasePullHandler
 	{
 		this.#botPullHandler.handleBotUpdate(params);
 	}
-	// endregion 'application'
+	// endregion 'bot'
+
+	// region 'ai'
+	handleChangeEngine(params)
+	{
+		this.#aiPullHandler.handleChangeEngine(params);
+	}
+
+	handleFileTranscription(params)
+	{
+		this.#aiPullHandler.handleFileTranscription(params);
+	}
+
+	handleChatCopilotRoleUpdate(params)
+	{
+		this.#aiPullHandler.handleChatCopilotRoleUpdate(params);
+	}
+	// endregion 'ai'
 }

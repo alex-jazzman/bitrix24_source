@@ -1,5 +1,5 @@
 <?php
-$MESS["LANDING_BLOCK_WIDGET_70_4_NAME"] = "Tiles with title, text and color bar on the left, all in rounded frame";
+$MESS["LANDING_BLOCK_WIDGET_70_4_NAME"] = "Blocks with title, text and color bar on the left, all in rounded frame";
 $MESS["LANDING_BLOCK_WIDGET_70_4_NODE_CARD"] = "Tile";
 $MESS["LANDING_BLOCK_WIDGET_70_4_NODE_CARD_LINE"] = "Tile color bar";
 $MESS["LANDING_BLOCK_WIDGET_70_4_NODE_CARD_LINK"] = "Link";

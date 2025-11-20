@@ -641,13 +641,6 @@ else
 </script>
 
 <?php
-//if ($isBitrix24Template)
-//{
-//	$this->SetViewTarget('inside_pagetitle');
-//}
-
-if ($arResult['CONTEXT'] !== Context::getSpaces())
-{
 	$APPLICATION->IncludeComponent(
 		'bitrix:tasks.interface.header',
 		'',
@@ -700,7 +693,6 @@ if ($arResult['CONTEXT'] !== Context::getSpaces())
 		$component,
 		['HIDE_ICONS' => true]
 	);
-}
 
 if (
 	isset($arResult['ERROR']['FATAL'])

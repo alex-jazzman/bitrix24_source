@@ -78,19 +78,3 @@
 	height: 1px;
 	overflow: hidden;
 }
-
-.bx-im-messenger__call_container {
-}
-
-.bx-im-messenger__call_container .bx-messenger-call-overlay {
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	z-index: 200;
-}
-
-.bx-im-messenger__call_container .bx-messenger-call-overlay.bx-messenger-call-overlay-folded {
-	display: none;
-}

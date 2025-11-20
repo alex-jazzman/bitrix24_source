@@ -35,7 +35,7 @@ export const AiAssistantBotContent = {
 				<ChatTextarea
 					:dialogId="dialogId"
 					:key="dialogId"
-					:placeholder="loc('IM_CONTENT_AIASSISTANT_TEXTAREA_PLACEHOLDER')"
+					:placeholder="loc('IM_CONTENT_AIASSISTANT_TEXTAREA_PLACEHOLDER_MSGVER_1')"
 					:withMarket="false"
 					:withEdit="false"
 					:withUploadMenu="false"

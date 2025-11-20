@@ -298,7 +298,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    void babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].dispatch('messages/comments/set', commentInfo);
 	    void userManager.addUsersToModel(usersShort);
 	  }
-	  resetChat(dialogId) {
+	  clearChat(dialogId) {
 	    const dialog = babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].getters['chats/get'](dialogId, true);
 	    babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].dispatch('messages/clearChatCollection', {
 	      chatId: dialog.chatId
@@ -1493,8 +1493,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  prepareDialogId(dialogId) {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _loadService)[_loadService].prepareDialogId(dialogId);
 	  }
-	  resetChat(dialogId) {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _loadService)[_loadService].resetChat(dialogId);
+	  clearChat(dialogId) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _loadService)[_loadService].clearChat(dialogId);
 	  }
 	  // endregion 'load'
 

@@ -138,6 +138,7 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 				analyticsLabel: data.analyticsLabel || {},
 				parentWidget: data.layoutWidget,
 				kanbanOwnerId: data.kanbanOwnerId || env.userId,
+				isFlowToolDisabled: data.isFlowToolDisabled,
 			});
 
 			parentWidget.openWidget('layout', {
@@ -249,9 +250,9 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 			});
 		}
 
-		#isCollaberOrExtranet = () => {
-			return env.isCollaber || env.extranet;
-		};
+		#isCollaberOrExtranet = () => env.isCollaber || env.extranet;
+
+		#canShowFlowField = () => !this.props.isFlowToolDisabled && !this.#isCollaberOrExtranet();
 
 		#preloadDefaultCollab()
 		{
@@ -813,7 +814,7 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 						},
 						compact: ProjectField,
 					},
-					!this.#isCollaberOrExtranet() && {
+					this.#canShowFlowField() && {
 						factory: TaskFlowField,
 						props: {
 							id: Fields.FLOW,

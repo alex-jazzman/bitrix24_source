@@ -5,7 +5,6 @@ jn.define('im/messenger/lib/counters/counter-manager/messenger/handler', (requir
 	const { Type } = require('type');
 	const { DialogType } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { TabCounters } = require('im/messenger/lib/counters/tab-counters');
 	const { getLogger } = require('im/messenger/lib/logger');
 
 	const { CounterStorageReader } = require('im/messenger/lib/counters/counter-manager/storage/reader');
@@ -39,6 +38,11 @@ jn.define('im/messenger/lib/counters/counter-manager/messenger/handler', (requir
 			this.#reader.subscribeOnStorageChange(this.#onCounterChanged);
 		}
 
+		get tabCounters()
+		{
+			return serviceLocator.get('tab-counters');
+		}
+
 		/**
 		 * @param {{ updatingCounters: Array<CounterState>, deletedCounters: Array<number>}} changedCounterResult
 		 */
@@ -69,7 +73,7 @@ jn.define('im/messenger/lib/counters/counter-manager/messenger/handler', (requir
 					continue;
 				}
 
-				TabCounters.updateCounterDetailByCounterState(counterState);
+				this.tabCounters.updateCounterDetailByCounterState(counterState);
 				updatingCountersPromiseList.push(
 					this.#updateLocalCounter(chatId, parentChatId, type, counter),
 				);
@@ -79,10 +83,10 @@ jn.define('im/messenger/lib/counters/counter-manager/messenger/handler', (requir
 
 			for (const chatId of deletedCounters)
 			{
-				TabCounters.deleteCounterByChatId(chatId);
+				this.tabCounters.deleteCounterByChatId(chatId);
 			}
 
-			TabCounters.update();
+			this.tabCounters.update();
 		};
 
 		async #updateLocalCounter(chatId, parentChatId, type, counter)

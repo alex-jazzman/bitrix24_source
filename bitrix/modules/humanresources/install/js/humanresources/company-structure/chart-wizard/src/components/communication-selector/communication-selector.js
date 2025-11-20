@@ -3,7 +3,9 @@ import {
 	CommunicationsTypeDict,
 	DefaultHint,
 } from 'humanresources.company-structure.structure-components';
-import type { ChatOrChannelDetailed } from 'humanresources.company-structure.utils';
+// eslint-disable-next-line no-unused-vars
+import type { CommunicationDetailed } from 'humanresources.company-structure.utils';
+import { PermissionActions, PermissionChecker } from 'humanresources.company-structure.permission-checker';
 import { Item, TagSelector } from 'ui.entity-selector';
 import { Set as IconSet } from 'ui.icon-set.api.core';
 import { BIcon } from 'ui.icon-set.api.vue';
@@ -23,6 +25,10 @@ export const CommunicationSelector = {
 	},
 
 	props: {
+		entityId: {
+			type: Number,
+			required: true,
+		},
 		name: {
 			type: String,
 			required: true,
@@ -39,7 +45,11 @@ export const CommunicationSelector = {
 			type: Boolean,
 			required: true,
 		},
-		/** @type ChatOrChannelDetailed[] */
+		isEditMode: {
+			type: Boolean,
+			required: true,
+		},
+		/** @type CommunicationDetailed[] */
 		initCommunications: {
 			type: Array,
 			required: true,
@@ -57,6 +67,7 @@ export const CommunicationSelector = {
 	{
 		return {
 			createDefault: false,
+			permissionChecker: null,
 		};
 	},
 
@@ -89,6 +100,39 @@ export const CommunicationSelector = {
 		warningText(): string
 		{
 			return this.loc(this.selectorDictionary.getPhrase('warningText', this.isTeamEntity));
+		},
+		canBeEdit(): boolean
+		{
+			if (!this.isEditMode)
+			{
+				return true;
+			}
+
+			if (this.type === CommunicationsTypeDict.chat)
+			{
+				return this.isTeamEntity
+					? this.permissionChecker.hasPermission(PermissionActions.teamChatEdit, this.entityId)
+					: this.permissionChecker.hasPermission(PermissionActions.departmentChatEdit, this.entityId)
+				;
+			}
+
+			if (this.type === CommunicationsTypeDict.channel)
+			{
+				return this.isTeamEntity
+					? this.permissionChecker.hasPermission(PermissionActions.teamChannelEdit, this.entityId)
+					: this.permissionChecker.hasPermission(PermissionActions.departmentChannelEdit, this.entityId)
+				;
+			}
+
+			if (this.type === CommunicationsTypeDict.collab)
+			{
+				return this.isTeamEntity
+					? this.permissionChecker.hasPermission(PermissionActions.teamCollabEdit, this.entityId)
+					: this.permissionChecker.hasPermission(PermissionActions.departmentCollabEdit, this.entityId)
+				;
+			}
+
+			return false;
 		},
 	},
 
@@ -141,6 +185,7 @@ export const CommunicationSelector = {
 
 	created(): void
 	{
+		this.permissionChecker = PermissionChecker.getInstance();
 		this.communications = [];
 		// store initial values to control applyData method in tagSelector
 		this.initialItemsSet = this.initCommunications
@@ -221,17 +266,18 @@ export const CommunicationSelector = {
 						this.applyData();
 					},
 				},
+				locked: !this.canBeEdit,
 				dialogOptions: {
 					enableSearch: true,
 					height: 250,
 					width: 380,
 					dropdownMode: true,
-					events: this.selectorDictionary.getDialogEvents(),
+					events: this.selectorDictionary.getDialogEvents(this.entityId, this.isTeamEntity, this.isEditMode),
 					recentTabOptions: getCommunicationsRecentTabOptions(this.entityType, this.type),
 					items: [this.getDefaultItem(entity.tagOptions?.default, entity.itemOptions?.default)],
 					preselectedItems: this.initCommunications.map((item) => [
-					 this.selectorDictionary.getEntityName(),
-					 this.selectorDictionary.getTagId(item),
+						this.selectorDictionary.getEntityName(),
+						this.selectorDictionary.getTagId(item),
 					]),
 					entities: [entity],
 				},
@@ -271,9 +317,9 @@ export const CommunicationSelector = {
 			class="chart-wizard__bind-chat__item-checkbox_container"
 		>
 			<div
-				@click="createDefault = headsCreated"
+				@click="createDefault = headsCreated && canBeEdit"
 				class="chart-wizard__bind-chat__item-create"
-				:class="{ '--disabled': !headsCreated }"
+				:class="{ '--disabled': !headsCreated || !canBeEdit }"
 				:data-test-id="selectorDictionary.getTestId('hr-company-structure_chart-wizard__make-default-chat-create')"
 				v-html="createText"
 			>
@@ -284,7 +330,7 @@ export const CommunicationSelector = {
 			<div class="ui-icon-set --o-circle-check"></div>
 			<div
 				class="chart-wizard__bind-chat__item-remove"
-				:class="{ '--disabled': !headsCreated }"
+				:class="{ '--disabled': !headsCreated || !canBeEdit }"
 				:data-test-id="selectorDictionary.getTestId('hr-company-structure_chart-wizard__make-default-chat-remove')"
 			>
 				{{ removeText }}

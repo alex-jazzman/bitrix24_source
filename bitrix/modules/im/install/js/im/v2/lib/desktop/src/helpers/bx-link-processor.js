@@ -65,6 +65,15 @@ export const BxLinkProcessor = {
 		{
 			void Messenger.openCollab(params.dialogId);
 		}
+		else if (command === DesktopBxLink.channel)
+		{
+			void Messenger.openChannel(params.dialogId);
+		}
+		else if (command === DesktopBxLink.taskComments)
+		{
+			const messageId = params.messageId ?? 0;
+			void Messenger.openTaskComments(params.dialogId, messageId);
+		}
 		else if (command === DesktopBxLink.settings)
 		{
 			void Messenger.openSettings({ onlyPanel: params.section });

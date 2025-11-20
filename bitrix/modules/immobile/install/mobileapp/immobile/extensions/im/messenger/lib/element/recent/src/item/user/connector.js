@@ -22,6 +22,17 @@ jn.define('im/messenger/lib/element/recent/item/user/connector', (require, expor
 
 		createTitleStyle()
 		{
+			const isMuted = this.getDialogHelper()?.isMuted;
+
+			if (isMuted)
+			{
+				this.styles.title = merge(this.styles.title, {
+					additionalImage: {
+						name: 'name_status_mute',
+					},
+				});
+			}
+
 			this.styles.title = merge(this.styles.title, {
 				image: {
 					name: 'name_status_network',

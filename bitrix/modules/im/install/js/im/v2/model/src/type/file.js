@@ -22,6 +22,7 @@ export type File = {
 	type: string,
 	extension: string,
 	icon: string,
+	isTranscribable: boolean,
 	name: string,
 	size: number,
 	image: null | boolean | {width: number, height: number},

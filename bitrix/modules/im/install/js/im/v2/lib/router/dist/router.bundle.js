@@ -25,9 +25,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      void im_public.Messenger.openChatWithBotContext(dialogId, context);
 	    } else if (urlParams.has(im_v2_const.GetParameter.openChat)) {
 	      const dialogId = urlParams.get(im_v2_const.GetParameter.openChat);
-	      let messageId = urlParams.get(im_v2_const.GetParameter.openMessage);
-	      messageId = messageId ? Number(messageId) : 0;
-	      void im_public.Messenger.openChat(dialogId, messageId);
+	      void im_public.Messenger.openChat(dialogId, extractMessageId(urlParams));
 	    } else if (urlParams.has(im_v2_const.GetParameter.openSettings)) {
 	      const settingsSection = urlParams.get(im_v2_const.GetParameter.openSettings);
 	      void im_public.Messenger.openSettings({
@@ -45,8 +43,16 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    } else if (urlParams.has(im_v2_const.GetParameter.openCollab)) {
 	      const dialogId = urlParams.get(im_v2_const.GetParameter.openCollab);
 	      void im_public.Messenger.openCollab(dialogId != null ? dialogId : '');
+	    } else if (urlParams.has(im_v2_const.GetParameter.openTaskComments)) {
+	      const dialogId = urlParams.get(im_v2_const.GetParameter.openTaskComments);
+	      void im_public.Messenger.openTaskComments(dialogId != null ? dialogId : '', extractMessageId(urlParams));
 	    }
 	  }
+	};
+	const extractMessageId = urlParams => {
+	  let messageId = urlParams.get(im_v2_const.GetParameter.openMessage);
+	  messageId = messageId ? Number(messageId) : 0;
+	  return messageId;
 	};
 
 	exports.Router = Router;

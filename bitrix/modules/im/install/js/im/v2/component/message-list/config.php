@@ -73,6 +73,7 @@ return [
 		'im.v2.component.message.ai-assistant.answer',
 	],
 	'skip_core' => false,
+	'lang_additional' => \Bitrix\Im\V2\Chat\InputAction\StatusMessageProvider::get(),
 	'settings' => [
 		'multipleActionMessageLimit' => $messageLimit,
 	],

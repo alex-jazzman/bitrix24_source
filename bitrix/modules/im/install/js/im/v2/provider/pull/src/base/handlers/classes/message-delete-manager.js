@@ -63,7 +63,7 @@ export class MessageDeleteManager
 
 	#stopWriting(dialogId: number, userId: number)
 	{
-		InputActionListener.getInstance().stopUserActionsInChat({ dialogId, userId });
+		InputActionListener.getInstance().stopAction({ dialogId, userId });
 	}
 
 	#closeChannelComments(params: MessageDeleteCompletePreparedParams)

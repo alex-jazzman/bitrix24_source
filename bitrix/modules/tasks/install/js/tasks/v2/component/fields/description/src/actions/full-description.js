@@ -16,7 +16,7 @@ export const FullDescription = {
 		};
 	},
 	template: `
-		<ActionButton 
+		<ActionButton
 			:icon-name="Outline.GO_TO_L"
 			:title="loc('TASKS_V2_DESCRIPTION_BUTTON_EXPAND')"
 		/>

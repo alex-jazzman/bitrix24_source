@@ -49,6 +49,7 @@ $MESS['M_COLLAB_PERMISSIONS_SHOW_HISTORY_ITEM_TITLE'] = 'Показывать и
 $MESS['M_COLLAB_PERMISSIONS_MODERATORS_ITEM_SUBTITLE_NONE'] = 'Нет модераторов';
 $MESS['M_COLLAB_PERMISSIONS_INVITERS_ITEM_TITLE'] = 'Кто может приглашать участников';
 $MESS['M_COLLAB_PERMISSIONS_MESSAGE_WRITERS_ITEM_TITLE'] = 'Кто может писать сообщения в чат';
+$MESS['M_COLLAB_PERMISSIONS_ALLOW_GUESTS_INVITATION_ITEM_TITLE'] = 'Разрешить приглашать гостей в коллабу';
 
 $MESS['M_COLLAB_PERMISSIONS_ALL'] = 'Все участники';
 $MESS['M_COLLAB_PERMISSIONS_EMPLOYEES'] = 'Только сотрудники';
@@ -85,3 +86,5 @@ $MESS['M_COLLAB_TASK_PERMISSIONS_SORT'] = 'Кто может сортирова�
 $MESS['M_COLLAB_TASK_PERMISSIONS_CREATE_TASKS'] = 'Кто может создавать задачи в коллабе';
 $MESS['M_COLLAB_TASK_PERMISSIONS_EDIT_TASKS'] = 'Кто может изменять задачи коллабы';
 $MESS['M_COLLAB_TASK_PERMISSIONS_DELETE_TASKS'] = 'Кто может удалять задачи коллабы';
+
+$MESS['COLLAB_INVITE_TOAST_GUESTS_INVITE_DISABLED'] = 'Администратор вашего Битрикс24 отключил возможность приглашать гостей в коллабы';

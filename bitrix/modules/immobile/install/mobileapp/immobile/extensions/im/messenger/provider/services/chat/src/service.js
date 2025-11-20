@@ -12,6 +12,7 @@ jn.define('im/messenger/provider/services/chat/service', (require, exports, modu
 	const { CreateService } = require('im/messenger/provider/services/chat/create');
 	const { InputActionNotifyService } = require('im/messenger/provider/services/chat/input-action-notify');
 	const { BotService } = require('im/messenger/provider/services/chat/bot');
+	const { HealthCheckService } = require('im/messenger/provider/services/chat/health-check');
 
 	/**
 	 * @class ChatService
@@ -36,6 +37,8 @@ jn.define('im/messenger/provider/services/chat/service', (require, exports, modu
 		#inputActionNotifyService;
 		/** @type {BotService} */
 		#botService;
+		/** @type {HealthCheckService} */
+		#healthCheckService;
 
 		constructor()
 		{
@@ -103,6 +106,13 @@ jn.define('im/messenger/provider/services/chat/service', (require, exports, modu
 			this.#botService = this.#botService ?? new BotService();
 
 			return this.#botService;
+		}
+
+		get healthCheckService()
+		{
+			this.#healthCheckService = this.#healthCheckService ?? new HealthCheckService();
+
+			return this.#healthCheckService;
 		}
 
 		async writingMessageNotify(dialogId)

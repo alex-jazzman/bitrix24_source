@@ -1,6 +1,6 @@
 import { Type, Loc, Text, Dom } from 'main.core';
 
-import { FakeMessagePrefix, FakeDraftMessagePrefix, GetParameter, Path } from 'im.v2.const';
+import { FakeMessagePrefix, FakeDraftMessagePrefix } from 'im.v2.const';
 
 import { emojiRegex } from './emoji-regex';
 
@@ -215,16 +215,6 @@ export const TextUtil = {
 		}
 
 		return `[USER=${dialogId}]${name}[/USER]`;
-	},
-
-	getMessageLink(dialogId: string, messageId: number): string
-	{
-		const getParams = new URLSearchParams({
-			[GetParameter.openChat]: dialogId,
-			[GetParameter.openMessage]: messageId,
-		});
-
-		return `${location.origin}${Path.online}?${getParams.toString()}`;
 	},
 
 	async copyToClipboard(textToCopy: string): Promise<void>

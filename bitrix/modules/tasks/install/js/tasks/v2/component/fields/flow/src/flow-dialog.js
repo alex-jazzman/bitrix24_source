@@ -1,13 +1,14 @@
 import { Extension, Runtime } from 'main.core';
-import { EntitySelectorDialog, type ItemId } from 'tasks.v2.lib.entity-selector-dialog';
+
+import { EmptyStub, Footer } from 'tasks.flow.entity-selector';
 import { Core } from 'tasks.v2.core';
 import { EntitySelectorEntity, Model } from 'tasks.v2.const';
-import type { GroupModel } from 'tasks.v2.model.groups';
+import { EntitySelectorDialog, type ItemId } from 'tasks.v2.lib.entity-selector-dialog';
 import { groupService } from 'tasks.v2.provider.service.group-service';
 import { taskService } from 'tasks.v2.provider.service.task-service';
-import type { TaskModel } from 'tasks.v2.model.tasks';
 import type { FlowModel } from 'tasks.v2.model.flows';
-import { EmptyStub, Footer } from 'tasks.flow.entity-selector';
+import type { GroupModel } from 'tasks.v2.model.groups';
+import type { TaskModel } from 'tasks.v2.model.tasks';
 
 class FlowDialog
 {
@@ -32,11 +33,6 @@ class FlowDialog
 	onUpdateOnce(callback: Function): void
 	{
 		this.#onUpdateOnce = callback;
-	}
-
-	isOpen(): boolean
-	{
-		return this.#dialog?.isOpen() ?? false;
 	}
 
 	#createDialog(): EntitySelectorDialog

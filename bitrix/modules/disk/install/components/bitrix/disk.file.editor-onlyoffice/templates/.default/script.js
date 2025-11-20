@@ -481,6 +481,7 @@ this.BX.Disk = this.BX.Disk || {};
 	    babelHelpers.defineProperty(this, "usersInDocument", null);
 	    babelHelpers.defineProperty(this, "sharingControlType", null);
 	    babelHelpers.defineProperty(this, "brokenDocumentOpened", false);
+	    babelHelpers.defineProperty(this, "unifiedLinkAccessOnly", false);
 	    var options = main_core.Type.isPlainObject(editorOptions) ? editorOptions : {};
 	    this.pullConfig = options.pullConfig;
 	    this.documentSession = options.documentSession;
@@ -505,6 +506,7 @@ this.BX.Disk = this.BX.Disk || {};
 	      context: this.context,
 	      userBoxNode: this.userBoxNode
 	    });
+	    this.unifiedLinkAccessOnly = options.unifiedLinkAccessOnly;
 	    this.initializeEditor(options.editorJson);
 	    var currentSlider = BX.SidePanel.Instance.getSliderByWindow(window);
 	    if (currentSlider) {
@@ -685,7 +687,11 @@ this.BX.Disk = this.BX.Disk || {};
 	        eval(menuItem.dataset.blockerExternalLinkFeature);
 	        return;
 	      }
-	      disk_externalLink.ExternalLink.showPopup(this.context.object.id);
+	      if (this.unifiedLinkAccessOnly) {
+	        disk_externalLink.ExternalLinkForUnifiedLink.showPopup(this.context.object.uniqueCode);
+	      } else {
+	        disk_externalLink.ExternalLink.showPopup(this.context.object.id);
+	      }
 	    }
 	  }, {
 	    key: "handleClickEditSubItems",
@@ -961,14 +967,17 @@ this.BX.Disk = this.BX.Disk || {};
 	    babelHelpers.classCallCheck(this, Waiting);
 	    babelHelpers.defineProperty(this, "documentSession", null);
 	    babelHelpers.defineProperty(this, "object", null);
+	    babelHelpers.defineProperty(this, "unifiedLinkMode", false);
 	    var options = main_core.Type.isPlainObject(waitingOptions) ? waitingOptions : {};
 	    this.documentSession = options.documentSession;
 	    this.object = options.object;
+	    this.unifiedLinkMode = options.unifiedLinkMode;
 	    var loader = new BX.Loader({
 	      target: options.targetNode
 	    });
 	    loader.show();
 	    this.bindEvents();
+	    this.handleSavedDocument({});
 	  }
 	  babelHelpers.createClass(Waiting, [{
 	    key: "bindEvents",
@@ -983,6 +992,7 @@ this.BX.Disk = this.BX.Disk || {};
 	  }, {
 	    key: "handleSavedDocument",
 	    value: function handleSavedDocument(data) {
+	      var _this = this;
 	      console.log('handleSavedDocument', data);
 	      main_core.ajax.runAction('disk.api.onlyoffice.continueWithNewSession', {
 	        mode: 'ajax',
@@ -992,7 +1002,11 @@ this.BX.Disk = this.BX.Disk || {};
 	        }
 	      }).then(function (response) {
 	        if (response.status === 'success') {
-	          document.location.href = response.data.documentSession.link;
+	          if (_this.unifiedLinkMode) {
+	            window.location.reload();
+	          } else {
+	            document.location.href = response.data.documentSession.link;
+	          }
 	        }
 	      });
 	    }

@@ -1,5 +1,5 @@
 <?php
-$MESS["LANDING_BLOCK_WIDGET_70_2_NAME"] = "Tiles with icon and text in rounded frame";
+$MESS["LANDING_BLOCK_WIDGET_70_2_NAME"] = "Blocks with icon and text in rounded frame";
 $MESS["LANDING_BLOCK_WIDGET_70_2_NODE_BUTTON"] = "Button";
 $MESS["LANDING_BLOCK_WIDGET_70_2_NODE_CARD"] = "Tile";
 $MESS["LANDING_BLOCK_WIDGET_70_2_NODE_CARD_TITLE"] = "Tile title";

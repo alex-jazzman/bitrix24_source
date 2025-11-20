@@ -1,6 +1,8 @@
 import {DialogType} from "../../../model/types/dialogues";
 import {DialogId} from "../../../types/common";
 import {MessageStatus} from "../../../model/types/recent";
+import {MessagesStoreData} from "../../../model/messages/src/types/messages";
+import {DraftStoredData} from "./draft";
 
 declare type ListByDialogTypeFilter = {
 	dialogTypes?: Array<DialogType>,
@@ -39,3 +41,12 @@ declare type PinnedListByDialogTypeFilter = {
 	dialogTypes?: Array<DialogType>,
 	exceptDialogTypes?: Array<DialogType>,
 }
+
+declare type RecentListResult = {
+	items: Array<RecentStoredData>,
+	users: Array<UserStoredData>,
+	messages: Array,
+	files: Array,
+	draft: Array<DraftStoredData>,
+	hasMore: boolean,
+};

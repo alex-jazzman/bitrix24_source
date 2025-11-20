@@ -73,3 +73,162 @@ $MESS["TASKS_IM_TASK_TIMER_STARTED_F"] = "#USER# включила учет ра�
 
 $MESS["TASKS_IM_TASK_TIMER_STOPPED_M"] = "#USER# выключил учет рабочего времени";
 $MESS["TASKS_IM_TASK_TIMER_STOPPED_F"] = "#USER# выключила учет рабочего времени";
+
+// checklists
+$MESS["TASKS_IM_CHECKLIST_ITEMS_ADDED_M"] = "#USER# добавил #ITEM_COUNT# пункт в чек-лист #CHECKLIST_NAME#";
+$MESS["TASKS_IM_CHECKLIST_ITEMS_ADDED_M_PLURAL_0"] = "#USER# добавил #ITEM_COUNT# пункт в чек-лист #CHECKLIST_NAME#";
+$MESS["TASKS_IM_CHECKLIST_ITEMS_ADDED_M_PLURAL_1"] = "#USER# добавил #ITEM_COUNT# пункта в чек-лист #CHECKLIST_NAME#";
+$MESS["TASKS_IM_CHECKLIST_ITEMS_ADDED_M_PLURAL_2"] = "#USER# добавил #ITEM_COUNT# пунктов в чек-лист #CHECKLIST_NAME#";
+
+$MESS["TASKS_IM_CHECKLIST_ITEMS_ADDED_F"] = "#USER# добавила #ITEM_COUNT# пункт в чек-лист #CHECKLIST_NAME#";
+$MESS["TASKS_IM_CHECKLIST_ITEMS_ADDED_F_PLURAL_0"] = "#USER# добавила #ITEM_COUNT# пункт в чек-лист #CHECKLIST_NAME#";
+$MESS["TASKS_IM_CHECKLIST_ITEMS_ADDED_F_PLURAL_1"] = "#USER# добавила #ITEM_COUNT# пункта в чек-лист #CHECKLIST_NAME#";
+$MESS["TASKS_IM_CHECKLIST_ITEMS_ADDED_F_PLURAL_2"] = "#USER# добавила #ITEM_COUNT# пунктов в чек-лист #CHECKLIST_NAME#";
+
+
+$MESS["TASKS_IM_CHECKLIST_ITEMS_DELETED_M"] = "#USER# удалил #ITEM_COUNT# пункт в чек-листе #CHECKLIST_NAME#";
+$MESS["TASKS_IM_CHECKLIST_ITEMS_DELETED_M_PLURAL_0"] = "#USER# удалил #ITEM_COUNT# пункт в чек-листе #CHECKLIST_NAME#";
+$MESS["TASKS_IM_CHECKLIST_ITEMS_DELETED_M_PLURAL_1"] = "#USER# удалил #ITEM_COUNT# пункта в чек-листе #CHECKLIST_NAME#";
+$MESS["TASKS_IM_CHECKLIST_ITEMS_DELETED_M_PLURAL_2"] = "#USER# удалил #ITEM_COUNT# пунктов в чек-листе #CHECKLIST_NAME#";
+
+$MESS["TASKS_IM_CHECKLIST_ITEMS_DELETED_F"] = "#USER# удалила #ITEM_COUNT# пункт в чек-листе #CHECKLIST_NAME#";
+$MESS["TASKS_IM_CHECKLIST_ITEMS_DELETED_F_PLURAL_0"] = "#USER# удалила #ITEM_COUNT# пункт в чек-листе #CHECKLIST_NAME#";
+$MESS["TASKS_IM_CHECKLIST_ITEMS_DELETED_F_PLURAL_1"] = "#USER# удалила #ITEM_COUNT# пункта в чек-листе #CHECKLIST_NAME#";
+$MESS["TASKS_IM_CHECKLIST_ITEMS_DELETED_F_PLURAL_2"] = "#USER# удалила #ITEM_COUNT# пунктов в чек-листе #CHECKLIST_NAME#";
+
+$MESS["TASKS_IM_CHECKLIST_ITEMS_MODIFIED_M"] = "#USER# изменил #ITEM_COUNT# пункт чек-листа #CHECKLIST_NAME#";
+$MESS["TASKS_IM_CHECKLIST_ITEMS_MODIFIED_M_PLURAL_0"] = "#USER# изменил #ITEM_COUNT# пункт чек-листа #CHECKLIST_NAME#";
+$MESS["TASKS_IM_CHECKLIST_ITEMS_MODIFIED_M_PLURAL_1"] = "#USER# изменил #ITEM_COUNT# пункта чек-листа #CHECKLIST_NAME#";
+$MESS["TASKS_IM_CHECKLIST_ITEMS_MODIFIED_M_PLURAL_2"] = "#USER# изменил #ITEM_COUNT# пунктов чек-листа #CHECKLIST_NAME#";
+
+$MESS["TASKS_IM_CHECKLIST_ITEMS_MODIFIED_F"] = "#USER# изменила #ITEM_COUNT# пункт чек-листа #CHECKLIST_NAME#";
+$MESS["TASKS_IM_CHECKLIST_ITEMS_MODIFIED_F_PLURAL_0"] = "#USER# изменила #ITEM_COUNT# пункт чек-листа #CHECKLIST_NAME#";
+$MESS["TASKS_IM_CHECKLIST_ITEMS_MODIFIED_F_PLURAL_1"] = "#USER# изменила #ITEM_COUNT# пункта чек-листа #CHECKLIST_NAME#";
+$MESS["TASKS_IM_CHECKLIST_ITEMS_MODIFIED_F_PLURAL_2"] = "#USER# изменила #ITEM_COUNT# пунктов чек-листа #CHECKLIST_NAME#";
+
+$MESS["TASKS_IM_CHECKLIST_ITEMS_COMPLETED_M"] = "#USER# выполнил #ITEM_COUNT# пункт в чек-листе #CHECKLIST_NAME#";
+$MESS["TASKS_IM_CHECKLIST_ITEMS_COMPLETED_M_PLURAL_0"] = "#USER# выполнил #ITEM_COUNT# пункт в чек-листе #CHECKLIST_NAME#";
+$MESS["TASKS_IM_CHECKLIST_ITEMS_COMPLETED_M_PLURAL_1"] = "#USER# выполнил #ITEM_COUNT# пункта в чек-листе #CHECKLIST_NAME#";
+$MESS["TASKS_IM_CHECKLIST_ITEMS_COMPLETED_M_PLURAL_2"] = "#USER# выполнил #ITEM_COUNT# пунктов в чек-листе #CHECKLIST_NAME#";
+
+$MESS["TASKS_IM_CHECKLIST_ITEMS_COMPLETED_F"] = "#USER# выполнила #ITEM_COUNT# пункт в чек-листе #CHECKLIST_NAME#";
+$MESS["TASKS_IM_CHECKLIST_ITEMS_COMPLETED_F_PLURAL_0"] = "#USER# выполнила #ITEM_COUNT# пункт в чек-листе #CHECKLIST_NAME#";
+$MESS["TASKS_IM_CHECKLIST_ITEMS_COMPLETED_F_PLURAL_1"] = "#USER# выполнила #ITEM_COUNT# пункта в чек-листе #CHECKLIST_NAME#";
+$MESS["TASKS_IM_CHECKLIST_ITEMS_COMPLETED_F_PLURAL_2"] = "#USER# выполнила #ITEM_COUNT# пунктов в чек-листе #CHECKLIST_NAME#";
+
+$MESS["TASKS_IM_CHECKLIST_SINGLE_ITEM_COMPLETED_M"] = "#USER# выполнил пункт \"#ITEM_NAME#\" в чек-листе #CHECKLIST_NAME#";
+$MESS["TASKS_IM_CHECKLIST_SINGLE_ITEM_COMPLETED_F"] = "#USER# выполнила пункт \"#ITEM_NAME#\" в чек-листе #CHECKLIST_NAME#";
+
+$MESS["TASKS_IM_CHECKLIST_ITEMS_UNCHECKED_M"] = "#USER# вернул в работу #ITEM_COUNT# пункт в чек-листе #CHECKLIST_NAME#";
+$MESS["TASKS_IM_CHECKLIST_ITEMS_UNCHECKED_M_PLURAL_0"] = "#USER# вернул в работу #ITEM_COUNT# пункт в чек-листе #CHECKLIST_NAME#";
+$MESS["TASKS_IM_CHECKLIST_ITEMS_UNCHECKED_M_PLURAL_1"] = "#USER# вернул в работу #ITEM_COUNT# пункта в чек-листе #CHECKLIST_NAME#";
+$MESS["TASKS_IM_CHECKLIST_ITEMS_UNCHECKED_M_PLURAL_2"] = "#USER# вернул в работу #ITEM_COUNT# пунктов в чек-листе #CHECKLIST_NAME#";
+
+$MESS["TASKS_IM_CHECKLIST_ITEMS_UNCHECKED_F"] = "#USER# вернула в работу #ITEM_COUNT# пункт в чек-листе #CHECKLIST_NAME#";
+$MESS["TASKS_IM_CHECKLIST_ITEMS_UNCHECKED_F_PLURAL_0"] = "#USER# вернула в работу #ITEM_COUNT# пункт в чек-листе #CHECKLIST_NAME#";
+$MESS["TASKS_IM_CHECKLIST_ITEMS_UNCHECKED_F_PLURAL_1"] = "#USER# вернула в работу #ITEM_COUNT# пункта в чек-листе #CHECKLIST_NAME#";
+$MESS["TASKS_IM_CHECKLIST_ITEMS_UNCHECKED_F_PLURAL_2"] = "#USER# вернула в работу #ITEM_COUNT# пунктов в чек-листе #CHECKLIST_NAME#";
+
+$MESS["TASKS_IM_CHECKLIST_SINGLE_ITEM_UNCHECKED_M"] = "#USER# вернул в работу пункт \"#ITEM_NAME#\" в чек-листе #CHECKLIST_NAME#";
+$MESS["TASKS_IM_CHECKLIST_SINGLE_ITEM_UNCHECKED_F"] = "#USER# вернула в работу пункт \"#ITEM_NAME#\" в чек-листе #CHECKLIST_NAME#";
+
+$MESS["TASKS_IM_CHECKLIST_OBSERVER_ASSIGNED_M"] = "#USER# добавил в чек-лист #CHECKLIST_NAME# наблюдателя #ASSIGNEE_NAME#";
+$MESS["TASKS_IM_CHECKLIST_OBSERVER_ASSIGNED_F"] = "#USER# добавила в чек-лист #CHECKLIST_NAME# наблюдателя #ASSIGNEE_NAME#";
+
+$MESS["TASKS_IM_CHECKLIST_COEXECUTOR_ASSIGNED_M"] = "#USER# добавил в чек-лист #CHECKLIST_NAME# соисполнителя #ASSIGNEE_NAME#";
+$MESS["TASKS_IM_CHECKLIST_COEXECUTOR_ASSIGNED_F"] = "#USER# добавила в чек-лист #CHECKLIST_NAME# соисполнителя #ASSIGNEE_NAME#";
+
+$MESS["TASKS_IM_CHECKLIST_FILES_ADDED_M"] = "#USER# добавил #FILES_COUNT# файл в чек-лист #CHECKLIST_NAME#";
+$MESS["TASKS_IM_CHECKLIST_FILES_ADDED_M_PLURAL_0"] = "#USER# добавил #FILES_COUNT# файл в чек-лист #CHECKLIST_NAME#";
+$MESS["TASKS_IM_CHECKLIST_FILES_ADDED_M_PLURAL_1"] = "#USER# добавил #FILES_COUNT# файла в чек-лист #CHECKLIST_NAME#";
+$MESS["TASKS_IM_CHECKLIST_FILES_ADDED_M_PLURAL_2"] = "#USER# добавил #FILES_COUNT# файлов в чек-лист #CHECKLIST_NAME#";
+
+$MESS["TASKS_IM_CHECKLIST_FILES_ADDED_F"] = "#USER# добавила #FILES_COUNT# файл в чек-лист #CHECKLIST_NAME#";
+$MESS["TASKS_IM_CHECKLIST_FILES_ADDED_F_PLURAL_0"] = "#USER# добавила #FILES_COUNT# файл в чек-лист #CHECKLIST_NAME#";
+$MESS["TASKS_IM_CHECKLIST_FILES_ADDED_F_PLURAL_1"] = "#USER# добавила #FILES_COUNT# файла в чек-лист #CHECKLIST_NAME#";
+$MESS["TASKS_IM_CHECKLIST_FILES_ADDED_F_PLURAL_2"] = "#USER# добавила #FILES_COUNT# файлов в чек-лист #CHECKLIST_NAME#";
+
+$MESS["TASKS_IM_CHECKLIST_COMPLETED_M"] = "#USER# выполнил чек-лист #CHECKLIST_NAME#";
+$MESS["TASKS_IM_CHECKLIST_COMPLETED_F"] = "#USER# выполнила чек-лист #CHECKLIST_NAME#";
+
+$MESS["TASKS_IM_CHECKLIST_GROUPED_OPERATIONS_M"] = "#USER# отредактировал чек-лист #CHECKLIST_NAME#:\n#OPERATIONS#";
+$MESS["TASKS_IM_CHECKLIST_GROUPED_OPERATIONS_F"] = "#USER# отредактировала чек-лист #CHECKLIST_NAME#:\n#OPERATIONS#";
+
+$MESS["TASKS_IM_CHECKLIST_GROUPED_COMPLETED"] = "• выполнил #COUNT# пункт";
+$MESS["TASKS_IM_CHECKLIST_GROUPED_COMPLETED_PLURAL_0"] = "• выполнил #COUNT# пункт";
+$MESS["TASKS_IM_CHECKLIST_GROUPED_COMPLETED_PLURAL_1"] = "• выполнил #COUNT# пункта";
+$MESS["TASKS_IM_CHECKLIST_GROUPED_COMPLETED_PLURAL_2"] = "• выполнил #COUNT# пунктов";
+
+$MESS["TASKS_IM_CHECKLIST_GROUPED_COMPLETED_F"] = "• выполнила #COUNT# пункт";
+$MESS["TASKS_IM_CHECKLIST_GROUPED_COMPLETED_F_PLURAL_0"] = "• выполнила #COUNT# пункт";
+$MESS["TASKS_IM_CHECKLIST_GROUPED_COMPLETED_F_PLURAL_1"] = "• выполнила #COUNT# пункта";
+$MESS["TASKS_IM_CHECKLIST_GROUPED_COMPLETED_F_PLURAL_2"] = "• выполнила #COUNT# пунктов";
+
+$MESS["TASKS_IM_CHECKLIST_GROUPED_MODIFIED"] = "• изменил #COUNT# пункт";
+$MESS["TASKS_IM_CHECKLIST_GROUPED_MODIFIED_PLURAL_0"] = "• изменил #COUNT# пункт";
+$MESS["TASKS_IM_CHECKLIST_GROUPED_MODIFIED_PLURAL_1"] = "• изменил #COUNT# пункта";
+$MESS["TASKS_IM_CHECKLIST_GROUPED_MODIFIED_PLURAL_2"] = "• изменил #COUNT# пунктов";
+
+$MESS["TASKS_IM_CHECKLIST_GROUPED_MODIFIED_F"] = "• изменила #COUNT# пункт";
+$MESS["TASKS_IM_CHECKLIST_GROUPED_MODIFIED_F_PLURAL_0"] = "• изменила #COUNT# пункт";
+$MESS["TASKS_IM_CHECKLIST_GROUPED_MODIFIED_F_PLURAL_1"] = "• изменила #COUNT# пункта";
+$MESS["TASKS_IM_CHECKLIST_GROUPED_MODIFIED_F_PLURAL_2"] = "• изменила #COUNT# пунктов";
+
+$MESS["TASKS_IM_CHECKLIST_GROUPED_DELETED"] = "• удалил #COUNT# пункт";
+$MESS["TASKS_IM_CHECKLIST_GROUPED_DELETED_PLURAL_0"] = "• удалил #COUNT# пункт";
+$MESS["TASKS_IM_CHECKLIST_GROUPED_DELETED_PLURAL_1"] = "• удалил #COUNT# пункта";
+$MESS["TASKS_IM_CHECKLIST_GROUPED_DELETED_PLURAL_2"] = "• удалил #COUNT# пунктов";
+
+$MESS["TASKS_IM_CHECKLIST_GROUPED_DELETED_F"] = "• удалила #COUNT# пункт";
+$MESS["TASKS_IM_CHECKLIST_GROUPED_DELETED_F_PLURAL_0"] = "• удалила #COUNT# пункт";
+$MESS["TASKS_IM_CHECKLIST_GROUPED_DELETED_F_PLURAL_1"] = "• удалила #COUNT# пункта";
+$MESS["TASKS_IM_CHECKLIST_GROUPED_DELETED_F_PLURAL_2"] = "• удалила #COUNT# пунктов";
+
+$MESS["TASKS_IM_CHECKLIST_GROUPED_ADDED"] = "• добавил #COUNT# пункт";
+$MESS["TASKS_IM_CHECKLIST_GROUPED_ADDED_PLURAL_0"] = "• добавил #COUNT# пункт";
+$MESS["TASKS_IM_CHECKLIST_GROUPED_ADDED_PLURAL_1"] = "• добавил #COUNT# пункта";
+$MESS["TASKS_IM_CHECKLIST_GROUPED_ADDED_PLURAL_2"] = "• добавил #COUNT# пунктов";
+
+$MESS["TASKS_IM_CHECKLIST_GROUPED_ADDED_F"] = "• добавила #COUNT# пункт";
+$MESS["TASKS_IM_CHECKLIST_GROUPED_ADDED_F_PLURAL_0"] = "• добавила #COUNT# пункт";
+$MESS["TASKS_IM_CHECKLIST_GROUPED_ADDED_F_PLURAL_1"] = "• добавила #COUNT# пункта";
+$MESS["TASKS_IM_CHECKLIST_GROUPED_ADDED_F_PLURAL_2"] = "• добавила #COUNT# пунктов";
+
+$MESS["TASKS_IM_CHECKLIST_GROUPED_UNCHECKED"] = "• вернул в работу #COUNT# пункт";
+$MESS["TASKS_IM_CHECKLIST_GROUPED_UNCHECKED_PLURAL_0"] = "• вернул в работу #COUNT# пункт";
+$MESS["TASKS_IM_CHECKLIST_GROUPED_UNCHECKED_PLURAL_1"] = "• вернул в работу #COUNT# пункта";
+$MESS["TASKS_IM_CHECKLIST_GROUPED_UNCHECKED_PLURAL_2"] = "• вернул в работу #COUNT# пунктов";
+
+$MESS["TASKS_IM_CHECKLIST_GROUPED_UNCHECKED_F"] = "• вернула в работу #COUNT# пункт";
+$MESS["TASKS_IM_CHECKLIST_GROUPED_UNCHECKED_F_PLURAL_0"] = "• вернула в работу #COUNT# пункт";
+$MESS["TASKS_IM_CHECKLIST_GROUPED_UNCHECKED_F_PLURAL_1"] = "• вернула в работу #COUNT# пункта";
+$MESS["TASKS_IM_CHECKLIST_GROUPED_UNCHECKED_F_PLURAL_2"] = "• вернула в работу #COUNT# пунктов";
+
+$MESS["TASKS_IM_CHECKLIST_GROUPED_ACCOMPLICE_ASSIGNED"] = "• добавил соисполнителя";
+$MESS["TASKS_IM_CHECKLIST_GROUPED_ACCOMPLICE_ASSIGNED_F"] = "• добавила соисполнителя";
+
+$MESS["TASKS_IM_CHECKLIST_GROUPED_AUDITOR_ASSIGNED"] = "• добавил наблюдателя";
+$MESS["TASKS_IM_CHECKLIST_GROUPED_AUDITOR_ASSIGNED_F"] = "• добавила наблюдателя";
+
+$MESS["TASKS_IM_CHECKLIST_GROUPED_FILES_ADDED"] = "• добавил #COUNT# файл";
+$MESS["TASKS_IM_CHECKLIST_GROUPED_FILES_ADDED_PLURAL_0"] = "• добавил #COUNT# файл";
+$MESS["TASKS_IM_CHECKLIST_GROUPED_FILES_ADDED_PLURAL_1"] = "• добавил #COUNT# файла";
+$MESS["TASKS_IM_CHECKLIST_GROUPED_FILES_ADDED_PLURAL_2"] = "• добавил #COUNT# файлов";
+
+$MESS["TASKS_IM_CHECKLIST_GROUPED_FILES_ADDED_F"] = "• добавила #COUNT# файл";
+$MESS["TASKS_IM_CHECKLIST_GROUPED_FILES_ADDED_F_PLURAL_0"] = "• добавила #COUNT# файл";
+$MESS["TASKS_IM_CHECKLIST_GROUPED_FILES_ADDED_F_PLURAL_1"] = "• добавила #COUNT# файла";
+$MESS["TASKS_IM_CHECKLIST_GROUPED_FILES_ADDED_F_PLURAL_2"] = "• добавила #COUNT# файлов";
+
+$MESS["TASKS_IM_CHECKLIST_ADDED_M"] = "#USER# добавил чек-лист #CHECKLIST_NAME# с #ITEM_COUNT# пунктами";
+$MESS["TASKS_IM_CHECKLIST_ADDED_M_PLURAL_0"] = "#USER# добавил чек-лист #CHECKLIST_NAME# с #ITEM_COUNT# пунктом";
+$MESS["TASKS_IM_CHECKLIST_ADDED_M_PLURAL_1"] = "#USER# добавил чек-лист #CHECKLIST_NAME# с #ITEM_COUNT# пунктами";
+$MESS["TASKS_IM_CHECKLIST_ADDED_M_PLURAL_2"] = "#USER# добавил чек-лист #CHECKLIST_NAME# с #ITEM_COUNT# пунктами";
+
+$MESS["TASKS_IM_CHECKLIST_ADDED_F"] = "#USER# добавила чек-лист #CHECKLIST_NAME# с #ITEM_COUNT# пунктами";
+$MESS["TASKS_IM_CHECKLIST_ADDED_F_PLURAL_0"] = "#USER# добавила чек-лист #CHECKLIST_NAME# с #ITEM_COUNT# пунктом";
+$MESS["TASKS_IM_CHECKLIST_ADDED_F_PLURAL_1"] = "#USER# добавила чек-лист #CHECKLIST_NAME# с #ITEM_COUNT# пунктами";
+$MESS["TASKS_IM_CHECKLIST_ADDED_F_PLURAL_2"] = "#USER# добавила чек-лист #CHECKLIST_NAME# с #ITEM_COUNT# пунктами";
+
+$MESS["TASKS_IM_CHECKLIST_DELETED_M"] = "#USER# удалил чек-лист #CHECKLIST_NAME#";
+$MESS["TASKS_IM_CHECKLIST_DELETED_F"] = "#USER# удалила чек-лист #CHECKLIST_NAME#";

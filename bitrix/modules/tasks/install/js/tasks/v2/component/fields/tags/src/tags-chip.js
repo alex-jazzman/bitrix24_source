@@ -56,11 +56,7 @@ export const TagsChip = {
 			}
 
 			tagsDialog.setTaskId(this.taskId).showTo(this.$el);
-
-			if (!this.isAutonomous)
-			{
-				tagsDialog.onUpdateOnce(this.highlightField);
-			}
+			tagsDialog.onUpdateOnce(this.highlightField);
 		},
 		highlightField(): void
 		{

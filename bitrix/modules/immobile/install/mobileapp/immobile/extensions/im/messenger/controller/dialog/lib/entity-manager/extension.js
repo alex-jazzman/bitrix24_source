@@ -4,6 +4,7 @@
 
 jn.define('im/messenger/controller/dialog/lib/entity-manager', (require, exports, module) => {
 	const { isModuleInstalled } = require('module');
+	const { Type } = require('type');
 
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { LoggerManager } = require('im/messenger/lib/logger');
@@ -35,13 +36,17 @@ jn.define('im/messenger/controller/dialog/lib/entity-manager', (require, exports
 		}
 
 		/**
-		 * @param {number} messageId
+		 * @param {?number|string} messageId
+		 * @param {?number} chatId
 		 * @return {Promise<PrepareTaskData>}
 		 */
-		#getCreateTaskData(messageId)
+		#getCreateTaskData({ messageId, chatId })
 		{
 			return new Promise((resolve, reject) => {
-				BX.rest.callMethod(RestMethod.imChatTaskPrepare, { MESSAGE_ID: messageId })
+				BX.rest.callMethod(RestMethod.imChatTaskPrepare, {
+					MESSAGE_ID: messageId,
+					CHAT_ID: chatId,
+				})
 					.then((result) => {
 						logger.log(`${this.constructor.name}.getCreateTaskData result`, result.data());
 						resolve(result.data());
@@ -70,7 +75,7 @@ jn.define('im/messenger/controller/dialog/lib/entity-manager', (require, exports
 			}
 		}
 
-		createTask()
+		async createTask()
 		{
 			const dialog = this.store.getters['dialoguesModel/getById'](this.dialogId);
 			if (!isModuleInstalled('tasks') || !dialog)
@@ -78,10 +83,37 @@ jn.define('im/messenger/controller/dialog/lib/entity-manager', (require, exports
 				return;
 			}
 
+			const auditors = [];
+			try
+			{
+				const taskData = await this.#getCreateTaskData({ chatId: dialog.chatId });
+
+				if (Type.isStringFilled(taskData.params?.AUDITORS))
+				{
+					const auditorsIds = taskData.params.AUDITORS.split(',');
+					auditorsIds.forEach((id) => {
+						const user = this.store.getters['usersModel/getById'](id);
+
+						const auditor = { id };
+						if (Type.isStringFilled(user?.name))
+						{
+							auditor.name = user.name;
+						}
+
+						auditors.push(auditor);
+					});
+				}
+			}
+			catch (error)
+			{
+				logger.error(`${this.constructor.name}.createTask get auditors error find ${error}`);
+			}
+
 			const openTaskCreateFormOptions = {
 				initialTaskData: {
 					title: '',
 					description: '',
+					auditors,
 					IM_CHAT_ID: dialog.chatId,
 				},
 				closeAfterSave: true,
@@ -109,7 +141,7 @@ jn.define('im/messenger/controller/dialog/lib/entity-manager', (require, exports
 		 */
 		async createTaskFomMessage(messageData)
 		{
-			const taskData = await this.#getCreateTaskData(messageData.id);
+			const taskData = await this.#getCreateTaskData({ messageId: messageData.id });
 
 			if (!taskData.params || !isModuleInstalled('tasks'))
 			{

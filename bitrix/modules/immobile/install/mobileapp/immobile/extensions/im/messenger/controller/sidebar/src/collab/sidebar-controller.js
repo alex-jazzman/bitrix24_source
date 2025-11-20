@@ -97,19 +97,19 @@ jn.define('im/messenger/controller/sidebar/collab/sidebar-controller', (require,
 
 		canEdit()
 		{
-			return ChatPermission.сanUpdateDialogByRole(this.dialogId);
+			return ChatPermission.canUpdateDialogByRole(this.dialogId);
 		}
 
 		canLeave()
 		{
 			const userId = serviceLocator.get('core').getUserId();
 
-			return UserPermission.canLeaveFromCollab(userId) && ChatPermission.сanLeaveFromChat(this.dialogId);
+			return UserPermission.canLeaveFromCollab(userId) && ChatPermission.canLeaveFromChat(this.dialogId);
 		}
 
 		canDelete()
 		{
-			return ChatPermission.сanDeleteChat(this.dialogId);
+			return ChatPermission.canDeleteChat(this.dialogId);
 		}
 
 		async onHeaderMenuEditDialog()

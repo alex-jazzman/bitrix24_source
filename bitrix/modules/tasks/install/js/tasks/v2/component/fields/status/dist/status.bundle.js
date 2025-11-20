@@ -3,11 +3,11 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
-(function (exports,main_date,ui_iconSet_api_vue,ui_iconSet_api_core,ui_iconSet_outline,tasks_v2_component_elements_hint,tasks_v2_const,main_core) {
+(function (exports,main_date,ui_iconSet_api_vue,ui_iconSet_api_core,ui_iconSet_outline,tasks_v2_component_elements_hint,main_core,tasks_v2_const) {
 	'use strict';
 
 	const statusMeta = Object.freeze({
-	  id: 'status',
+	  id: tasks_v2_const.TaskField.Status,
 	  title: main_core.Loc.getMessage('TASKS_V2_STATUS_TITLE')
 	});
 
@@ -142,5 +142,5 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	exports.Status = Status;
 	exports.statusMeta = statusMeta;
 
-}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.Main,BX.UI.IconSet,BX.UI.IconSet,BX,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Const,BX));
+}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.Main,BX.UI.IconSet,BX.UI.IconSet,BX,BX.Tasks.V2.Component.Elements,BX,BX.Tasks.V2.Const));
 //# sourceMappingURL=status.bundle.js.map

@@ -6,12 +6,12 @@ jn.define('im/messenger/provider/services/sync/fillers/database', (require, expo
 	const { clone } = require('utils/object');
 	const { EventType, ComponentCode, WaitingEntity } = require('im/messenger/const');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
-	const { getLogger } = require('im/messenger/lib/logger');
+	const { getLoggerWithContext } = require('im/messenger/lib/logger');
 	const { ChatDataProvider } = require('im/messenger/provider/data');
 
 	const { SyncFillerBase } = require('im/messenger/provider/services/sync/fillers/base');
 
-	const logger = getLogger('sync-service');
+	const logger = getLoggerWithContext('sync-service', 'SyncFillerDatabase');
 
 	/**
 	 * @class SyncFillerDatabase
@@ -55,6 +55,25 @@ jn.define('im/messenger/provider/services/sync/fillers/database', (require, expo
 
 		/**
 		 * @param {SyncListResult} result
+		 */
+		async fillDataWithoutEmit(result)
+		{
+			logger.log('fillDataWithoutEmit:', result);
+
+			try
+			{
+				await this.updateDatabase(this.prepareResult(result));
+			}
+			catch (error)
+			{
+				logger.error('fillDataWithoutEmit catch:', error);
+
+				throw error;
+			}
+		}
+
+		/**
+		 * @param {SyncListResult} result
 		 * @return {SyncListResult}
 		 */
 		prepareResult(result)
@@ -77,7 +96,7 @@ jn.define('im/messenger/provider/services/sync/fillers/database', (require, expo
 			await this.fillUsers(syncListResult.users, syncListResult.usersShort);
 			await this.fillFiles(syncListResult.files, syncListResult.dialogIds);
 			await this.fillDialogues(syncListResult);
-			await this.fillReactions(syncListResult.reactions);
+			await this.fillReactions(syncListResult);
 			await this.fillMessages(syncListResult);
 			await this.fillPins(syncListResult);
 			await this.fillRecent(syncListResult);
@@ -295,15 +314,17 @@ jn.define('im/messenger/provider/services/sync/fillers/database', (require, expo
 		}
 
 		/**
-		 * @param {Array<SyncRawReaction>} reactions
+		 * @param {SyncListResult} syncListResult
 		 * @return {Promise<void>}
 		 */
-		async fillReactions(reactions)
+		async fillReactions(syncListResult)
 		{
-			if (!Type.isArrayFilled(reactions))
+			if (!Type.isArrayFilled(syncListResult.reactions))
 			{
 				return;
 			}
+
+			const reactions = this.getReactionsFromSyncListResult(syncListResult);
 
 			await this.reactionRepository.saveFromRest(reactions);
 		}

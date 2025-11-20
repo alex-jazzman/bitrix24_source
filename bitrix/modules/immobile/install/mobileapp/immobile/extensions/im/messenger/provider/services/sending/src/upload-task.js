@@ -25,6 +25,16 @@ jn.define('im/messenger/provider/services/sending/upload-task', (require, export
 			const cloudChunkSize = 5 * megabyte;
 			const chunkSize = serviceLocator.get('core').isCloud() || serviceLocator.get('core').hasActiveCloudStorageBucket() ? cloudChunkSize : megabyte;
 
+			// TODO: remove it after solving the problem with listening to voice messages
+			try
+			{
+				window.debugUploadAudio[window.debugUploadAudio.length - 1].uploadTaskData = `folderId: ${folderId}`;
+			}
+			catch (e)
+			{
+				console.error(e);
+			}
+
 			this.taskId = taskId;
 			this.controller = 'disk.uf.integration.diskUploaderController';
 			this.controllerOptions = {

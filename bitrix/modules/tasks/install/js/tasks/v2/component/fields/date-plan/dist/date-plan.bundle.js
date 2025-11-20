@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
-(function (exports,tasks_v2_component_elements_fieldList,tasks_v2_component_elements_hoverPill,ui_system_chip_vue,ui_iconSet_api_core,main_core,main_date,ui_datePicker,ui_vue3_vuex,ui_vue3_components_button,ui_system_input_vue,ui_vue3_components_menu,ui_iconSet_api_vue,ui_iconSet_outline,tasks_v2_const,tasks_v2_component_elements_bottomSheet,tasks_v2_lib_fieldHighlighter,tasks_v2_lib_calendar,tasks_v2_lib_timezone,tasks_v2_provider_service_taskService,ui_system_typography_vue,ui_switcher,ui_vue3_components_switcher,ui_vue3_directives_hint,tasks_v2_component_elements_hint) {
+(function (exports,tasks_v2_component_elements_fieldList,tasks_v2_component_elements_hoverPill,tasks_v2_component_elements_fieldAdd,ui_system_chip_vue,ui_iconSet_api_core,main_core,main_date,ui_datePicker,ui_vue3_vuex,ui_vue3_components_button,ui_system_input_vue,ui_vue3_components_menu,ui_iconSet_api_vue,ui_iconSet_outline,tasks_v2_const,tasks_v2_component_elements_bottomSheet,tasks_v2_lib_fieldHighlighter,tasks_v2_lib_calendar,tasks_v2_lib_timezone,tasks_v2_provider_service_taskService,ui_system_typography_vue,ui_switcher,ui_vue3_components_switcher,ui_vue3_directives_hint,tasks_v2_component_elements_hint) {
 	'use strict';
 
 	const DatePlanDate = {
@@ -28,16 +28,18 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    }
 	  },
 	  template: `
-		<HoverPill :readonly="readonly">
-			<div class="tasks-field-date-plan-date">{{ dateFormatted }}</div>
-		</HoverPill>
+		<div class="tasks-field-date-plan-date-container">
+			<HoverPill :readonly="readonly">
+				<div class="tasks-field-date-plan-date">{{ dateFormatted }}</div>
+			</HoverPill>
+		</div>
 	`
 	};
 
 	const DatePlanContent = {
 	  components: {
-	    BIcon: ui_iconSet_api_vue.BIcon,
-	    HoverPill: tasks_v2_component_elements_hoverPill.HoverPill
+	    HoverPill: tasks_v2_component_elements_hoverPill.HoverPill,
+	    FieldAdd: tasks_v2_component_elements_fieldAdd.FieldAdd
 	  },
 	  directives: {
 	    hint: ui_vue3_directives_hint.hint
@@ -68,23 +70,18 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    }
 	  },
 	  template: `
-		<HoverPill :readonly="task.matchesSubTasksTime">
-			<div class="tasks-field-date-plan-content" :class="{ '--add': !task.matchesSubTasksTime }">
-				<template v-if="task.matchesSubTasksTime">
-					<div>{{ loc('TASKS_V2_DATE_PLAN_MATCH_SUBTASKS_TIME_STATE') }}</div>
-					<div v-hint="tooltip" class="tasks-hint-badge" ref="hint">?</div>
-				</template>
-				<template v-else>
-					<BIcon :name="Outline.PLANNING"/>
-					<div>{{ loc('TASKS_V2_DATE_PLAN_ADD') }}</div>
-				</template>
+		<HoverPill v-if="task.matchesSubTasksTime" :readonly="true">
+			<div class="tasks-field-date-plan-content">
+				<div>{{ loc('TASKS_V2_DATE_PLAN_MATCH_SUBTASKS_TIME_STATE') }}</div>
+				<div v-hint="tooltip" class="tasks-hint-badge" ref="hint">?</div>
 			</div>
 		</HoverPill>
+		<FieldAdd v-else :icon="Outline.PLANNING"/>
 	`
 	};
 
 	const datePlanMeta = Object.freeze({
-	  id: 'datePlan',
+	  id: tasks_v2_const.TaskField.DatePlan,
 	  title: main_core.Loc.getMessage('TASKS_V2_DATE_PLAN_TITLE')
 	});
 
@@ -230,7 +227,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 
 	const DatePlanSwitcher = {
 	  components: {
-	    TextXs: ui_system_typography_vue.TextXs,
+	    TextSm: ui_system_typography_vue.TextSm,
 	    Switcher: ui_vue3_components_switcher.Switcher
 	  },
 	  directives: {
@@ -270,7 +267,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  template: `
 		<div class="tasks-field-date-plan-switcher" @click="$emit('update:modelValue', !modelValue)">
 			<Switcher :isChecked="modelValue" :options="switcherOptions"/>
-			<TextXs>{{ text }}</TextXs>
+			<TextSm>{{ text }}</TextSm>
 			<div v-if="hint" v-hint="tooltip" class="tasks-hint-badge" ref="hint" @click.capture.stop>?</div>
 		</div>
 	`
@@ -285,7 +282,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    BIcon: ui_iconSet_api_vue.BIcon,
 	    UiButton: ui_vue3_components_button.Button,
 	    HeadlineMd: ui_system_typography_vue.HeadlineMd,
-	    TextXs: ui_system_typography_vue.TextXs,
+	    TextSm: ui_system_typography_vue.TextSm,
 	    BInput: ui_system_input_vue.BInput,
 	    BMenu: ui_vue3_components_menu.BMenu,
 	    DatePlanSwitcher
@@ -298,6 +295,14 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    isShown: {
 	      type: Boolean,
 	      required: true
+	    },
+	    getBindElement: {
+	      type: Function,
+	      default: null
+	    },
+	    getTargetContainer: {
+	      type: Function,
+	      default: null
 	    }
 	  },
 	  emits: ['close'],
@@ -613,13 +618,18 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    }
 	  },
 	  template: `
-		<BottomSheet :isShown="isShown" ref="bottomSheet">
+		<BottomSheet
+			v-if="isShown"
+			:getBindElement="getBindElement"
+			:getTargetContainer="getTargetContainer"
+			ref="bottomSheet"
+		>
 			<div class="tasks-field-date-plan-sheet">
 				<div class="tasks-field-date-plan-header">
 					<HeadlineMd>{{ loc('TASKS_V2_DATE_PLAN_TITLE_SHEET') }}</HeadlineMd>
 					<BIcon class="tasks-field-date-plan-close" :name="Outline.CROSS_L" :hoverable="true" @click="close"/>
 				</div>
-				<TextXs class="tasks-field-date-plan-description">{{ loc('TASKS_V2_DATE_PLAN_DESCRIPTION') }}</TextXs>
+				<TextSm class="tasks-field-date-plan-description">{{ loc('TASKS_V2_DATE_PLAN_DESCRIPTION') }}</TextSm>
 				<div class="tasks-field-date-plan-fields">
 					<BInput
 						:modelValue="formatDate(startTs)"
@@ -700,5 +710,5 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	exports.DatePlanSheet = DatePlanSheet;
 	exports.datePlanMeta = datePlanMeta;
 
-}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.UI.System.Chip.Vue,BX.UI.IconSet,BX,BX.Main,BX.UI.DatePicker,BX.Vue3.Vuex,BX.Vue3.Components,BX.UI.System.Input.Vue,BX.UI.Vue3.Components,BX.UI.IconSet,BX,BX.Tasks.V2.Const,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.UI.System.Typography.Vue,BX.UI,BX.UI.Vue3.Components,BX.Vue3.Directives,BX.Tasks.V2.Component.Elements));
+}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.UI.System.Chip.Vue,BX.UI.IconSet,BX,BX.Main,BX.UI.DatePicker,BX.Vue3.Vuex,BX.Vue3.Components,BX.UI.System.Input.Vue,BX.UI.Vue3.Components,BX.UI.IconSet,BX,BX.Tasks.V2.Const,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.UI.System.Typography.Vue,BX.UI,BX.UI.Vue3.Components,BX.Vue3.Directives,BX.Tasks.V2.Component.Elements));
 //# sourceMappingURL=date-plan.bundle.js.map

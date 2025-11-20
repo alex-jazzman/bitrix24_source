@@ -335,6 +335,11 @@ jn.define('im/messenger/db/repository/dialog', (require, exports, module) => {
 				result.entityId = dialog.entity_id.toString();
 			}
 
+			if (Type.isPlainObject(dialog.entityLink))
+			{
+				result.entityLink = dialog.entityLink;
+			}
+
 			if (!Type.isUndefined(dialog.dateCreate))
 			{
 				result.dateCreate = DateHelper.cast(dialog.dateCreate);

@@ -34,10 +34,12 @@ this.BX.Call = this.BX.Call || {};
 	  openResume: 'open_resume',
 	  clickCallButton: 'click_call_button',
 	  clickStartConf: 'click_start_conf',
+	  clickJoin: 'click_join',
 	  aiRecordStart: 'ai_record_start',
 	  aiOn: 'ai_on',
 	  aiOff: 'ai_off',
 	  openTab: 'open_tab',
+	  openSlider: 'open_slider',
 	  clickCreateEvent: 'click_create_event',
 	  clickCreateTask: 'click_create_task',
 	  viewPopup: 'view_popup',
@@ -188,6 +190,14 @@ this.BX.Call = this.BX.Call || {};
 	      category: AnalyticsCategory.callFollowup,
 	      event: AnalyticsEvent.openTab,
 	      type: params.tabName,
+	      p5: `callId_${params.callId}`
+	    });
+	  }
+	  onOpenFollowUpSlider(params) {
+	    ui_analytics.sendData({
+	      tool: AnalyticsTool.im,
+	      category: AnalyticsCategory.callFollowup,
+	      event: AnalyticsEvent.openSlider,
 	      p5: `callId_${params.callId}`
 	    });
 	  }
@@ -423,6 +433,7 @@ this.BX.Call = this.BX.Call || {};
 	      event: AnalyticsEvent.startCall,
 	      type: params.callType,
 	      status: `error_${params.errorCode}`,
+	      p3: params.errorMessage ? `msg_${params.errorMessage}`.slice(0, 100) : undefined,
 	      p5: 'callId_0'
 	    };
 	    ui_analytics.sendData(resultData);
@@ -460,6 +471,7 @@ this.BX.Call = this.BX.Call || {};
 	      event: AnalyticsEvent.connect,
 	      type: params.callType,
 	      status: `error_${params.errorCode}`,
+	      p3: params.errorMessage ? `msg_${params.errorMessage}`.slice(0, 100) : undefined,
 	      p5: `callId_${params.callId}`
 	    };
 	    ui_analytics.sendData(resultData);
@@ -486,6 +498,7 @@ this.BX.Call = this.BX.Call || {};
 	      event: AnalyticsEvent.reconnect,
 	      type: params.callType,
 	      status: `error_${params.errorCode}`,
+	      p3: params.errorMessage ? `msg_${params.errorMessage}`.slice(0, 100) : undefined,
 	      p5: `callId_${params.callId}`
 	    });
 	  }

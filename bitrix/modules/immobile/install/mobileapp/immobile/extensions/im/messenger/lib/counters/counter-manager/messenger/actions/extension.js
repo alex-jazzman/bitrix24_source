@@ -2,8 +2,8 @@
  * @module im/messenger/lib/counters/counter-manager/messenger/actions
  */
 jn.define('im/messenger/lib/counters/counter-manager/messenger/actions', (require, exports, module) => {
-	const { TabCounters } = require('im/messenger/lib/counters/tab-counters');
 	const { MessengerCounterSender } = require('im/messenger/lib/counters/counter-manager/messenger/sender');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { ChatDataProvider } = require('im/messenger/provider/data');
 
 	async function readAllCountersOnClient()
@@ -13,7 +13,7 @@ jn.define('im/messenger/lib/counters/counter-manager/messenger/actions', (requir
 		await chatDataProvider.clearCounters();
 
 		MessengerCounterSender.getInstance().sendReadAll();
-		TabCounters.clearAll();
+		serviceLocator.get('tab-counters').clearAll();
 	}
 
 	module.exports = {

@@ -57,7 +57,7 @@ jn.define('im/messenger/lib/ui/notification', (require, exports, module) => {
 		 * @param {ShowToastParams} params
 		 * @param layoutWidget
 		 */
-		static showOfflineToast(params, layoutWidget = null)
+		static showOfflineToast(params = {}, layoutWidget = null)
 		{
 			MessengerToast.showOfflineToast(params, layoutWidget);
 		}

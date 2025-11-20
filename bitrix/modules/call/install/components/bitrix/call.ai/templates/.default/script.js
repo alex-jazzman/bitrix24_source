@@ -19,6 +19,8 @@
 		playbackMarks: [],
 		scrolling: false,
 		scrollTimer: null,
+		lastActiveScrollTab: null,
+		viewedTabs: [],
 		deletePopupInstance: null,
 		init: function()
 		{
@@ -30,16 +32,17 @@
 			this.initUserList();
 			this.initPlaybackMarks();
 			this.initGradeChart();
+
+		Analytics.getInstance().copilot.onOpenFollowUpSlider({
+				callId: this.callId,
+			});
 		},
 		onTabClick: function(e)
 		{
 			const { tabId, tabName } = e.target.dataset;
 			this.hideAllTabs();
 
-			Analytics.getInstance().copilot.onOpenFollowUpTab({
-				callId: this.callId,
-				tabName,
-			});
+			this.sendOpenFollowUpTabAnalytics(tabName);
 
 			for (let i = 0; i < this.tabButtons.length; i++) {
 				this.tabButtons[i].className = this.tabButtons[i].className.replace(' --active-button', '');
@@ -270,24 +273,24 @@
 		clickDisclaimer: function()
 		{
 			const infoHelper = top.BX.Helper || window.top.BX.Helper;
-			const ARTICLE_CODE = '20412666';
-
 			if (!infoHelper)
 			{
 				return;
 			}
-
 			if (infoHelper.isOpen())
 			{
 				infoHelper.close();
 			}
+
+			const callAi = top.BX.Call.CallAI || window.top.BX.Call.CallAI;
+			const ARTICLE_CODE = callAi.disclaimerArticleCode;
 
 			infoHelper.show(`redirect=detail&code=${ARTICLE_CODE}`);
 		},
 		scrollToTab: function(e)
 		{
 			this.scrolling = true;
-			const tabId = e.target.dataset.tabId;
+			const { tabId, tabName } = e.target.dataset;
 			const element = document.getElementById(tabId);
 
 			if (element)
@@ -309,6 +312,8 @@
 					top: offsetTop - marginTop,
 					behavior: 'smooth',
 				});
+
+				this.sendOpenFollowUpTabAnalytics(tabName);
 			}
 
 			if (this.scrollTimer)
@@ -333,15 +338,43 @@
 				const rect = content.getBoundingClientRect();
 				const parentRect = this.contentWrapper.getBoundingClientRect();
 
-				if (rect.top <= parentRect.top + 100 && rect.bottom >= parentRect.top + 100) {
+				if (rect.top <= parentRect.top + 100 && rect.bottom >= parentRect.top + 100)
+				{
 					activeTab = this.tabTitle[index];
 				}
 			});
 
-			if (activeTab) {
+			if (this.contentWrapper.scrollTop + this.contentWrapper.clientHeight >= this.contentWrapper.scrollHeight)
+			{
+				this.tabContents.forEach((content, index) => {
+					this.checkViewedTabs(this.tabTitle[index].dataset.tabName);
+				});
+				activeTab = this.tabTitle[this.tabContents.length - 1];
+			}
+
+			if (activeTab && this.lastActiveScrollTab !== activeTab)
+			{
+				this.lastActiveScrollTab = activeTab;
 				this.tabTitle.forEach(title => title.classList.remove('--active'));
 				activeTab.classList.add('--active');
+
+				this.checkViewedTabs(activeTab.dataset.tabName);
 			}
+		},
+		checkViewedTabs: function(tabName)
+		{
+			if (!this.viewedTabs.includes(tabName))
+			{
+				this.sendOpenFollowUpTabAnalytics(tabName);
+				this.viewedTabs.push(tabName);
+			}
+		},
+		sendOpenFollowUpTabAnalytics: function(tabName)
+		{
+			Analytics.getInstance().copilot.onOpenFollowUpTab({
+				callId: this.callId,
+				tabName: tabName,
+			});
 		},
 		generateGradientElevent: function(gradientName, startColor, stopColor, gradientType)
 		{

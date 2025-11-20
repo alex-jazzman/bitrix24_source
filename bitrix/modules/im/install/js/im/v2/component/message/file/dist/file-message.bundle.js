@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,im_v2_component_message_unsupported,im_v2_provider_service_uploading,ui_uploader_core,im_v2_component_elements_mediaGallery,im_v2_component_elements_videoplayer,im_v2_provider_service_disk,im_v2_lib_menu,im_v2_lib_notifier,ui_icons_disk,im_v2_lib_utils,main_core,im_v2_component_elements_audioplayer,im_v2_component_elements_progressbar,im_v2_component_animation,ui_iconSet_api_vue,im_v2_component_elements_loader,im_v2_provider_service_message,im_v2_lib_feature,im_v2_component_message_elements,im_v2_component_message_base,im_v2_const) {
+(function (exports,im_v2_component_message_unsupported,im_v2_provider_service_uploading,ui_uploader_core,im_v2_component_elements_mediaGallery,im_v2_component_elements_videoplayer,im_v2_provider_service_disk,im_v2_lib_menu,im_v2_lib_notifier,ui_icons_disk,im_v2_lib_utils,main_core,im_v2_component_elements_audioplayer,im_v2_component_elements_progressbar,im_v2_component_animation,ui_iconSet_api_vue,im_v2_component_elements_loader,im_v2_provider_service_message,im_v2_lib_feature,im_v2_lib_analytics,im_v2_component_message_elements,im_v2_component_message_base,im_v2_const) {
 	'use strict';
 
 	const VIDEO_SIZE_TO_AUTOPLAY = 5000000;
@@ -771,12 +771,13 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      return this.isOpened ? ui_iconSet_api_vue.Outline.CHEVRON_TOP_M : ui_iconSet_api_vue.Outline.TRANSCRIPTION;
 	    },
 	    withTranscription() {
-	      return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.aiFileTranscriptionAvailable) && im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.copilotAvailable);
+	      return this.file.isTranscribable && im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.aiFileTranscriptionAvailable) && im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.copilotAvailable);
 	    }
 	  },
 	  watch: {
 	    status(newValue, oldValue) {
 	      if (oldValue === im_v2_const.TranscriptionStatus.PENDING) {
+	        im_v2_lib_analytics.Analytics.getInstance().audioMessage.onViewTranscription(this.chatId, newValue);
 	        this.open();
 	      }
 	    }
@@ -791,6 +792,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        return;
 	      }
 	      if (this.isSuccess) {
+	        im_v2_lib_analytics.Analytics.getInstance().audioMessage.onViewTranscription(this.chatId, im_v2_const.TranscriptionStatus.SUCCESS);
 	        this.open();
 	        return;
 	      }
@@ -1195,5 +1197,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	exports.FileMessage = FileMessage;
 	exports.MediaContent = MediaContent;
 
-}((this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}),BX.Messenger.v2.Component.Message,BX.Messenger.v2.Service,BX.UI.Uploader,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Animation,BX.UI.IconSet,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Const));
+}((this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}),BX.Messenger.v2.Component.Message,BX.Messenger.v2.Service,BX.UI.Uploader,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Animation,BX.UI.IconSet,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Const));
 //# sourceMappingURL=file-message.bundle.js.map

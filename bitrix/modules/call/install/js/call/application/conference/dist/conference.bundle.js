@@ -211,7 +211,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	var ConferenceApplication = /*#__PURE__*/function () {
 	  /* region 01. Initialize */
 	  function ConferenceApplication() {
-	    var _this = this;
+	    var _this$params$callToke,
+	      _this = this;
 	    var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 	    babelHelpers.classCallCheck(this, ConferenceApplication);
 	    _classPrivateMethodInitSpec(this, _stopRecordCall);
@@ -235,7 +236,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    // this.callView = null;
 	    this.preCall = null;
 	    this.currentCall = null;
-	    this.callToken = null;
+	    this.callToken = (_this$params$callToke = this.params.callToken) !== null && _this$params$callToke !== void 0 ? _this$params$callToke : null;
 	    this.videoStrategy = null;
 	    this.callDetails = {};
 	    this.showFeedback = true;
@@ -761,15 +762,16 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    value: function tryJoinExistingCall() {
 	      var _this12 = this;
 	      return new Promise(function (resolve, reject) {
-	        var provider = Call.Provider.Bitrix;
 	        var url = call_lib_settingsManager.CallSettingsManager.jwtCallsEnabled ? 'call.Call.tryJoinCall' : 'im.call.tryJoinCall';
 	        var callTypeKey = call_lib_settingsManager.CallSettingsManager.jwtCallsEnabled ? 'callType' : 'type';
-	        _this12.restClient.callMethod(url, babelHelpers.defineProperty({
-	          entityType: 'chat',
-	          entityId: _this12.params.dialogId,
-	          provider: provider
-	        }, callTypeKey, Call.Type.Permanent)).then(function (result) {
-	          var data = result.data();
+	        BX.ajax.runAction(url, {
+	          data: babelHelpers.defineProperty({
+	            entityType: 'chat',
+	            entityId: _this12.params.dialogId,
+	            provider: Call.Provider.Bitrix
+	          }, callTypeKey, Call.Type.Permanent)
+	        }).then(function (result) {
+	          var data = result.data;
 	          im_lib_logger.Logger.warn('tryJoinCall', data);
 	          if (data.success) {
 	            _this12.waitingForCallStatus = true;
@@ -790,6 +792,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          } else {
 	            _this12.setConferenceStatus(false);
 	          }
+	          resolve();
+	        })["catch"](function () {
+	          _this12.setConferenceStatus(false);
 	          resolve();
 	        });
 	      });
@@ -1181,10 +1186,14 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        }
 	      }
 	      this.controller.getStore().commit('conference/startCall');
-	      var callTokenPromise = call_lib_settingsManager.CallSettingsManager.jwtCallsEnabled ? call_lib_callTokenManager.CallTokenManager.getToken(this.params.chatId) : Promise.resolve();
+	      var callTokenPromise = Promise.resolve(this.callToken);
+	      if (call_lib_settingsManager.CallSettingsManager.jwtCallsEnabled && !this.callToken) {
+	        callTokenPromise = call_lib_callTokenManager.CallTokenManager.getToken(this.params.chatId);
+	      }
 	      callTokenPromise.then(function (callToken) {
 	        _this17.callToken = callToken;
-	        _this17.callEngine.createCall(_this17.getCallConfig(videoEnabled)).then(function (e) {
+	        call_lib_callTokenManager.CallTokenManager.setToken(_this17.params.chatId, _this17.callToken);
+	        return _this17.callEngine.createCall(_this17.getCallConfig(videoEnabled)).then(function (e) {
 	          console.warn('call created', e);
 	          im_lib_logger.Logger.warn('call created', e);
 	          _this17.currentCall = e.call;
@@ -1259,17 +1268,20 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          }
 	          _this17.onUpdateLastUsedCameraId();
 	        });
-	      })["catch"](function (e) {
-	        im_lib_logger.Logger.error('creating call error', e);
+	      })["catch"](function (error) {
+	        im_lib_logger.Logger.error('creating call error', error);
 	        var errorCode = 'UNKNOWN_ERROR';
 	        if (main_core.Type.isString(error)) {
 	          errorCode = error;
+	        } else if (main_core.Type.isObject(error) && error instanceof Call.JoinResponseError) {
+	          errorCode = error.name;
 	        } else if (main_core.Type.isPlainObject(error) && error.code) {
 	          errorCode = error.code == 'access_denied' ? 'ACCESS_DENIED' : error.code;
 	        }
 	        call_lib_analytics.Analytics.getInstance().onStartCallError({
 	          callType: call_lib_analytics.Analytics.AnalyticsType.videoconf,
-	          errorCode: errorCode
+	          errorCode: errorCode,
+	          errorMessage: error === null || error === void 0 ? void 0 : error.message
 	        });
 	        _this17.initCallPromise = null;
 	      });
@@ -1300,14 +1312,16 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      }
 	      this.callView.setUiState(Call.View.UiState.Calling);
 	      var isLegacyCall = Boolean(callId) || this.callScheme === Call.CallScheme.classic || !this.callScheme && !call_lib_settingsManager.CallSettingsManager.jwtCallsEnabled;
-	      this.initCallPromise = isLegacyCall ? new Promise(function (resolve) {
-	        resolve();
-	      }) : call_lib_callTokenManager.CallTokenManager.getToken(this.params.chatId);
+	      this.initCallPromise = Promise.resolve(this.callToken);
+	      if (!isLegacyCall && !this.callToken) {
+	        this.initCallPromise = call_lib_callTokenManager.CallTokenManager.getToken(this.params.chatId);
+	      }
 	      this.initCallPromise.then(function (callToken) {
 	        if (isLegacyCall) {
 	          return Call.EngineLegacy.getCallWithId(callId, _this18.getCallConfig(video));
 	        }
 	        _this18.callToken = callToken;
+	        call_lib_callTokenManager.CallTokenManager.setToken(_this18.params.chatId, _this18.callToken);
 	        return Call.Engine.getCallWithId(callUuid, _this18.getCallConfig(video, callUuid));
 	      }).then(function (result) {
 	        var _this18$currentCall, _this18$currentCall2;
@@ -1358,10 +1372,19 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        _this18.onUpdateLastUsedCameraId();
 	      })["catch"](function (error) {
 	        console.error(error);
+	        var errorCode = 'UNKNOWN_ERROR';
+	        if (main_core.Type.isString(error)) {
+	          errorCode = error;
+	        } else if (main_core.Type.isObject(error) && error instanceof Call.JoinResponseError) {
+	          errorCode = error.name;
+	        } else if (main_core.Type.isPlainObject(error) && error.code) {
+	          errorCode = error.code === 'access_denied' ? 'ACCESS_DENIED' : error.code;
+	        }
 	        call_lib_analytics.Analytics.getInstance().onJoinCallError({
 	          callType: call_lib_analytics.Analytics.AnalyticsType.videoconf,
-	          errorCode: main_core.Type.isString(error) ? error : error === null || error === void 0 ? void 0 : error.code,
-	          callId: callUuid
+	          errorCode: errorCode,
+	          callId: callUuid,
+	          errorMessage: error === null || error === void 0 ? void 0 : error.message
 	        });
 	        _this18.initCallPromise = null;
 	      });
@@ -2160,8 +2183,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          this.webScreenSharePopup.close();
 	        }
 	      } else {
-	        this.restClient.callMethod("call.Call.onShareScreen", {
-	          callUuid: this.currentCall.uuid
+	        BX.ajax.runAction('call.Call.onShareScreen', {
+	          data: {
+	            callUuid: this.currentCall.uuid
+	          }
 	        });
 	        this.currentCall.startScreenSharing();
 	        this.togglePictureInPictureCallWindow();
@@ -3425,9 +3450,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        this.mutePopup = null;
 	      }
 	      this.riseYouHandToTalkPopup = new Call.Hint({
-	        callFolded: this.folded,
-	        bindElement: this.folded ? null : this.callView.buttons.microphone.elements.icon,
-	        targetContainer: this.folded ? this.messengerFacade.getContainer() : this.callView.container,
+	        callFolded: false,
+	        bindElement: this.callView.buttons.microphone.elements.icon,
+	        targetContainer: this.callView.container,
 	        icon: 'raise-hand',
 	        showAngle: true,
 	        initiatorName: params.initiatorName,

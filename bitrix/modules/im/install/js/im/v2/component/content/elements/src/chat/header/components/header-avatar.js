@@ -36,7 +36,7 @@ export const HeaderAvatar = {
 		},
 		isNotes(): boolean
 		{
-			return Number.parseInt(this.dialogId, 10) === Core.getUserId();
+			return this.$store.getters['chats/isNotes'](this.dialogId);
 		},
 		userLink(): string
 		{

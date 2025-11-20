@@ -36,22 +36,22 @@ export default class Slider
 		}
 	}
 
-	static open(url, options)
+	static open(url, rawOptions): Promise
 	{
-		if(!Type.isPlainObject(options))
-		{
-			options = {};
-		}
-		options = {...{cacheable: false, allowChangeHistory: false, events: {}}, ...options};
-		return new Promise((resolve) =>
-		{
-			if(Type.isString(url) && url.length > 1)
+		let options = Type.isPlainObject(rawOptions)
+			? rawOptions
+			: {}
+		;
+		options = { cacheable: false, allowChangeHistory: false, events: {}, ...options };
+
+		return new Promise((resolve) => {
+			if (Type.isString(url) && url.length > 1)
 			{
 				options.events.onClose = function(event)
 				{
 					resolve(event.getSlider());
 				};
-				BX.SidePanel.Instance.open(url, options);
+				BX.SidePanel.Instance.open(url, rawOptions);
 			}
 			else
 			{

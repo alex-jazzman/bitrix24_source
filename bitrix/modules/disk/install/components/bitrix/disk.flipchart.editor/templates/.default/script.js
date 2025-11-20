@@ -145,7 +145,7 @@ this.BX.Disk = this.BX.Disk || {};
             userKickable: (_h = params.ui) === null || _h === void 0 ? void 0 : _h.userKickable,
             confirmUserKick: (_j = params.ui) === null || _j === void 0 ? void 0 : _j.confirmUserKick,
             scrollToElement: (_k = params.ui) === null || _k === void 0 ? void 0 : _k.scrollToElement,
-            disable: (_l = params.ui) === null || _l === void 0 ? void 0 : _l.disable
+            features: (_l = params.ui) === null || _l === void 0 ? void 0 : _l.features
           },
           appContainerDomain: window.location.origin,
           boardData: boardData
@@ -282,11 +282,11 @@ this.BX.Disk = this.BX.Disk || {};
         babelHelpers.classCallCheck(this, Board);
         babelHelpers.defineProperty(this, "setupSharingButton", null);
         babelHelpers.defineProperty(this, "data", null);
-        babelHelpers.defineProperty(this, "isUnifiedLinkMode", false);
+        babelHelpers.defineProperty(this, "unifiedLinkAccessOnly", false);
         this.setupSharingButton = ui_buttons.ButtonManager.createByUniqId(options.panelButtonUniqIds.setupSharing);
         this.data = options.boardData;
         this.sharingControlType = options.sharingControlType;
-        this.isUnifiedLinkMode = options.isUnifiedLinkMode;
+        this.unifiedLinkAccessOnly = options.unifiedLinkAccessOnly;
         this.bindEvents();
       }
       babelHelpers.createClass(Board, [{
@@ -312,7 +312,7 @@ this.BX.Disk = this.BX.Disk || {};
             eval(menuItem.dataset.blockerExternalLinkFeature);
             return;
           }
-          if (this.isUnifiedLinkMode) {
+          if (this.unifiedLinkAccessOnly) {
             disk_externalLink.ExternalLinkForUnifiedLink.showPopup(this.data.uniqueCode);
           } else {
             disk_externalLink.ExternalLink.showPopup(this.data.id);

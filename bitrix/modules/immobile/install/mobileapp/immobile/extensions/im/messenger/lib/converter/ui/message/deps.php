@@ -8,5 +8,6 @@ return [
 		'im:messenger/lib/element/dialog',
 		'im:messenger/lib/feature',
 		'im:messenger/lib/helper',
+		'im:messenger/lib/permission-manager',
 	],
 ];

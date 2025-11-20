@@ -2,54 +2,58 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,planner,ui_fontawesome4,im_integration_viewer,ui_designTokens,ui_fonts_opensans,im_v2_css_tokens,im_v2_css_icons,im_v2_css_classes,im_v2_lib_counter,im_v2_lib_escManager,im_v2_lib_logger,im_v2_lib_init,im_v2_const,im_v2_lib_call,im_v2_lib_theme,im_v2_lib_desktop,im_v2_lib_layout,im_v2_component_content_chat,im_v2_component_content_chatForms_forms,im_v2_component_content_market,im_v2_component_content_notification,im_v2_component_content_openlines,im_v2_component_content_openlinesV2,im_v2_component_content_settings,im_v2_component_list_container_channel,im_v2_component_list_container_collab,im_v2_component_list_container_copilot,im_v2_component_list_container_openline,im_v2_component_list_container_recent) {
+(function (exports,planner,ui_fontawesome4,im_integration_viewer,ui_designTokens,ui_fonts_opensans,im_v2_css_tokens,im_v2_css_icons,im_v2_css_classes,im_v2_lib_counter,im_v2_lib_escManager,im_v2_lib_logger,im_v2_lib_init,im_v2_lib_call,im_v2_lib_theme,im_v2_lib_desktop,im_v2_lib_layout,im_v2_const,im_v2_component_content_chat,im_v2_component_content_chatForms_forms,im_v2_component_content_market,im_v2_component_content_notification,im_v2_component_content_openlines,im_v2_component_content_openlinesV2,im_v2_component_content_settings,im_v2_component_list_container_channel,im_v2_component_list_container_collab,im_v2_component_list_container_copilot,im_v2_component_list_container_openline,im_v2_component_list_container_recent,im_v2_component_list_container_task) {
 	'use strict';
 
 	const LayoutComponentMap = {
-	  chat: {
+	  [im_v2_const.Layout.chat]: {
 	    list: im_v2_component_list_container_recent.RecentListContainer,
 	    content: im_v2_component_content_chat.ChatContent
 	  },
-	  createChat: {
+	  [im_v2_const.Layout.createChat]: {
 	    list: im_v2_component_list_container_recent.RecentListContainer,
 	    content: im_v2_component_content_chatForms_forms.CreateChatContent
 	  },
-	  updateChat: {
+	  [im_v2_const.Layout.updateChat]: {
 	    list: im_v2_component_list_container_recent.RecentListContainer,
 	    content: im_v2_component_content_chatForms_forms.UpdateChatContent
 	  },
-	  channel: {
+	  [im_v2_const.Layout.channel]: {
 	    list: im_v2_component_list_container_channel.ChannelListContainer,
 	    content: im_v2_component_content_chat.ChatContent
 	  },
-	  notification: {
+	  [im_v2_const.Layout.notification]: {
 	    list: im_v2_component_list_container_recent.RecentListContainer,
 	    content: im_v2_component_content_notification.NotificationContent
 	  },
-	  openlines: {
+	  [im_v2_const.Layout.openlines]: {
 	    content: im_v2_component_content_openlines.OpenlinesContent
 	  },
-	  openlinesV2: {
+	  [im_v2_const.Layout.openlinesV2]: {
 	    list: im_v2_component_list_container_openline.OpenlineListContainer,
 	    content: im_v2_component_content_openlinesV2.OpenlinesV2Content
 	  },
-	  conference: {
+	  [im_v2_const.Layout.conference]: {
 	    list: im_v2_component_list_container_recent.RecentListContainer,
 	    content: im_v2_component_content_chat.ChatContent
 	  },
-	  settings: {
+	  [im_v2_const.Layout.settings]: {
 	    content: im_v2_component_content_settings.SettingsContent
 	  },
-	  copilot: {
+	  [im_v2_const.Layout.copilot]: {
 	    list: im_v2_component_list_container_copilot.CopilotListContainer,
 	    content: im_v2_component_content_chat.ChatContent
 	  },
-	  collab: {
+	  [im_v2_const.Layout.collab]: {
 	    list: im_v2_component_list_container_collab.CollabListContainer,
 	    content: im_v2_component_content_chat.ChatContent
 	  },
-	  market: {
+	  [im_v2_const.Layout.market]: {
 	    content: im_v2_component_content_market.MarketContent
+	  },
+	  [im_v2_const.Layout.taskComments]: {
+	    list: im_v2_component_list_container_task.TaskListContainer,
+	    content: im_v2_component_content_chat.ChatContent
 	  }
 	};
 
@@ -92,9 +96,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        '--light-theme': im_v2_lib_theme.ThemeManager.isLightTheme(),
 	        '--desktop': im_v2_lib_desktop.DesktopManager.isDesktop()
 	      };
-	    },
-	    callContainerClass() {
-	      return [im_v2_lib_call.CallManager.viewContainerClass];
 	    }
 	  },
 	  watch: {
@@ -156,11 +157,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				</div>
 			</div>
 		</div>
-		<div :class="callContainerClass"></div>
 	`
 	};
 
 	exports.Messenger = Messenger;
 
-}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX,BX,BX.Messenger.Integration.Viewer,BX,BX,BX.Messenger.v2.Css,BX.Messenger.v2.Css,BX.Messenger.v2.Css,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.List,BX.Messenger.v2.Component.List,BX.Messenger.v2.Component.List,BX.Messenger.v2.Component.List,BX.Messenger.v2.Component.List));
+}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX,BX,BX.Messenger.Integration.Viewer,BX,BX,BX.Messenger.v2.Css,BX.Messenger.v2.Css,BX.Messenger.v2.Css,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.List,BX.Messenger.v2.Component.List,BX.Messenger.v2.Component.List,BX.Messenger.v2.Component.List,BX.Messenger.v2.Component.List,BX.Messenger.v2.Component.List));
 //# sourceMappingURL=messenger.bundle.js.map

@@ -37,7 +37,6 @@ $MESS["M_TASKS_ACTIONS_MENU_PIN_SUCCESS"] = "Міндет бекітілді";
 $MESS["M_TASKS_ACTIONS_MENU_READ"] = "Оқу";
 $MESS["M_TASKS_ACTIONS_MENU_REMOVE_CANCEL"] = "Болдырмау";
 $MESS["M_TASKS_ACTIONS_MENU_REMOVE_CONFIRM"] = "Міндетті жою керек пе?";
-$MESS["M_TASKS_ACTIONS_MENU_REMOVE_MESSAGE"] = "Міндет жойылды";
 $MESS["M_TASKS_ACTIONS_MENU_REMOVE_MSGVER_1"] = "Міндетті жою";
 $MESS["M_TASKS_ACTIONS_MENU_RENEW"] = "Қайта бастау";
 $MESS["M_TASKS_ACTIONS_MENU_RENEW_SUCCESS"] = "Міндет жұмыс барысына оралды";

@@ -10,7 +10,6 @@ use Bitrix\Tasks\Flow\Integration\AI\Control\AdviceService;
 use Bitrix\Tasks\Flow\Integration\AI\Control\CollectedDataService;
 use Bitrix\Tasks\Flow\Integration\Socialnetwork\GroupService;
 use Bitrix\Tasks\Flow\Kanban\BizProcService;
-use Bitrix\Tasks\Flow\Kanban\KanbanService;
 use Bitrix\Tasks\Flow\Provider\FlowMemberFacade;
 use Bitrix\Tasks\Flow\Template\Access\Permission\TemplatePermissionService;
 use Bitrix\Tasks\Internals\Registry\TaskRegistry;
@@ -18,9 +17,13 @@ use Bitrix\Tasks\Internals\UserOption\Service\AutoMuteService;
 use Bitrix\Tasks\Replication\Replicator\RegularTemplateTaskReplicator;
 use Bitrix\Tasks\V2\Internal\Access\Factory\ControllerFactory;
 use Bitrix\Tasks\V2\Internal\Access\Factory\ControllerFactoryInterface;
+use Bitrix\Tasks\V2\Internal\Repository\GanttLinkRepositoryInterface;
+use Bitrix\Tasks\V2\Internal\Repository\InMemoryTariffRestrictionRepository;
 use Bitrix\Tasks\V2\Internal\Repository\InMemoryTaskParameterRepository;
+use Bitrix\Tasks\V2\Internal\Repository\ParentTaskRepositoryInterface;
+use Bitrix\Tasks\V2\Internal\Repository\TariffRestrictionRepositoryInterface;
 use Bitrix\Tasks\V2\Internal\Repository\TaskParameterRepositoryInterface;
-use Bitrix\Tasks\V2\Internal\Service\Link\LinkBuilderFactory;
+use Bitrix\Tasks\V2\Internal\Repository\TaskTagRepositoryInterface;
 
 return [
 	'value' => [
@@ -116,6 +119,12 @@ return [
 		Bitrix\Tasks\V2\Internal\Repository\FlowRepositoryInterface::class => [
 			'className' => Bitrix\Tasks\V2\Internal\Repository\InMemoryFlowRepository::class,
 		],
+		Bitrix\Tasks\V2\Internal\Repository\SubTaskRepositoryInterface::class => [
+			'className' => Bitrix\Tasks\V2\Internal\Repository\InMemorySubTaskRepository::class,
+		],
+		Bitrix\Tasks\V2\Internal\Repository\RelatedTaskRepositoryInterface::class => [
+			'className' => Bitrix\Tasks\V2\Internal\Repository\InMemoryRelatedTaskRepository::class,
+		],
 		Bitrix\Tasks\V2\Internal\Repository\CheckListRepositoryInterface::class => [
 			'className' => Bitrix\Tasks\V2\Internal\Repository\CheckListRepository::class,
 		],
@@ -205,6 +214,18 @@ return [
 		],
 		Bitrix\Tasks\V2\Internal\Repository\OptionRepositoryInterface::class => [
 			'className' => Bitrix\Tasks\V2\Internal\Repository\OptionRepository::class,
+		],
+		TaskTagRepositoryInterface::class => [
+			'className' => Bitrix\Tasks\V2\Internal\Repository\InMemoryTaskTagRepository::class,
+		],
+		GanttLinkRepositoryInterface::class => [
+			'className' => Bitrix\Tasks\V2\Internal\Repository\GanttLinkRepository::class,
+		],
+		TariffRestrictionRepositoryInterface::class => [
+			'className' => InMemoryTariffRestrictionRepository::class,
+		],
+		ParentTaskRepositoryInterface::class => [
+			'className' => \Bitrix\Tasks\V2\Internal\Repository\ParentTaskRepository::class,
 		],
 		// endregion
 	],

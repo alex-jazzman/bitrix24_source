@@ -3,7 +3,6 @@
 class_alias('\\Bitrix\\Tasks\\Integration\\Report\\Internals\\TaskTable', 'Bitrix\\Tasks\\TaskTable');
 
 class_alias('\\Bitrix\\Tasks\\Internals\\Task\\MemberTable', 'Bitrix\\Tasks\\MemberTable');
-class_alias('\\Bitrix\\Tasks\\Internals\\Task\\ProjectDependenceTable', 'Bitrix\\Tasks\\Task\\DependenceTable');
 
 class_alias('\\Bitrix\\Tasks\\Internals\\Task\\Template\\DependenceTable', 'Bitrix\\Tasks\\Template\\DependencyTable');
 

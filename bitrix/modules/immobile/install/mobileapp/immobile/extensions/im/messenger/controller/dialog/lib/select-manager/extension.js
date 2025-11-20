@@ -126,10 +126,10 @@ jn.define('im/messenger/controller/dialog/lib/select-manager', (require, exports
 			this.restoreQuoteMessageProcess();
 			this.deactivateSelectEventFilter();
 			await this.viewDisableSelectMessagesMode(animated);
-			this.updateRightHeaderButton();
-			this.restoreLeftHeaderButton();
 			await this.actionPanelHide(animated);
 			this.viewUpdateRestrictions({ longTap: true, reaction: true, quote: true });
+			this.updateRightHeaderButton();
+			this.restoreLeftHeaderButton();
 			this.unsubscribeView();
 		}
 

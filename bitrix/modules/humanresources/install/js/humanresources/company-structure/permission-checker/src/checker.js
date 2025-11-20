@@ -42,12 +42,14 @@ export class PermissionCheckerClass
 			teamsAvailable,
 			collabsAvailable,
 			deputyApprovesBP,
+			departmentSettingsAvailable,
 		} = await chartAPI.getDictionary();
 
 		this.currentUserPermissions = currentUserPermissions;
 		this.isTeamsAvailable = teamsAvailable;
 		this.isCollabsAvailable = collabsAvailable;
 		this.isDeputyApprovesBPAvailable = deputyApprovesBP;
+		this.isDepartmentSettingsAvailable = departmentSettingsAvailable;
 
 		this.isInitialized = true;
 	}
@@ -90,6 +92,11 @@ export class PermissionCheckerClass
 	checkDeputyApprovalBPAvailable(): boolean
 	{
 		return this.isDeputyApprovesBPAvailable;
+	}
+
+	checkDepartmentSettingsAvailable(): boolean
+	{
+		return this.isDepartmentSettingsAvailable;
 	}
 
 	hasPermissionOfAction(action: string): boolean

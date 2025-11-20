@@ -10,6 +10,7 @@
 	const guid = BX.componentParameters.get('GUID') || uuid();
 	const shouldOpenComments = BX.componentParameters.get('SHOULD_OPEN_COMMENTS', false);
 	const analyticsLabel = BX.componentParameters.get('analyticsLabel') || {};
+	const isFlowToolDisabled = BX.componentParameters.get('IS_FLOW_TOOL_DISABLED', false);
 
 	tariffPlanRestrictionsReady()
 		.then(() => {
@@ -22,6 +23,7 @@
 						guid,
 						shouldOpenComments,
 						analyticsLabel,
+						isFlowToolDisabled,
 					}),
 				);
 			});

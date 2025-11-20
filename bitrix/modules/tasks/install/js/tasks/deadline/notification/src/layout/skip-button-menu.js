@@ -2,6 +2,7 @@ import { Loc, Dom } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { MenuItem } from 'main.popup';
 import { Button } from 'ui.buttons';
+import { sendData } from 'ui.analytics';
 
 type SkipButtonMenuOptions = {
 	events: {
@@ -48,13 +49,16 @@ export class SkipButtonMenu extends EventEmitter
 		this.#button = button;
 	}
 
-	#onMenuItemClick(period: string, text: string): void
+	#onMenuItemClick(item: Object): void
 	{
 		const buttonMenu = this.#button?.getMenuWindow();
 		if (!buttonMenu)
 		{
 			return;
 		}
+
+		const period = item.id;
+		const text = item.text;
 
 		if (this.#period === period)
 		{
@@ -76,6 +80,16 @@ export class SkipButtonMenu extends EventEmitter
 			data: { buttonMenu, text },
 		});
 		this.emit('onMenuItemSelect', event);
+
+		sendData({
+			tool: 'tasks',
+			category: 'task_operations',
+			event: 'period_click_type',
+			type: 'popup',
+			c_section: 'tasks',
+			c_sub_section: 'deadline_popup',
+			c_element: item.dataset?.analytics,
+		});
 	}
 
 	#refreshMenuItemsIcons(items: MenuItem[], period: string): void
@@ -102,25 +116,25 @@ export class SkipButtonMenu extends EventEmitter
 	{
 		this.#items = [
 			{
-				dataset: { id: 'tasks-deadline-notification-skip-day' },
+				dataset: { id: 'tasks-deadline-notification-skip-day', analytics: 'today_button' },
 				id: 'day',
 				text: Loc.getMessage('TASKS_DEADLINE_NOTIFICATION_DAY'),
 				className: this.#ITEMS_CLASSES,
 			},
 			{
-				dataset: { id: 'tasks-deadline-notification-skip-week' },
+				dataset: { id: 'tasks-deadline-notification-skip-week', analytics: 'current_week_button' },
 				id: 'week',
 				text: Loc.getMessage('TASKS_DEADLINE_NOTIFICATION_WEEK'),
 				className: this.#ITEMS_CLASSES,
 			},
 			{
-				dataset: { id: 'tasks-deadline-notification-skip-month' },
+				dataset: { id: 'tasks-deadline-notification-skip-month', analytics: 'current_month_button' },
 				id: 'month',
 				text: Loc.getMessage('TASKS_DEADLINE_NOTIFICATION_MONTH'),
 				className: this.#ITEMS_CLASSES,
 			},
 			{
-				dataset: { id: 'tasks-deadline-notification-skip-forever' },
+				dataset: { id: 'tasks-deadline-notification-skip-forever', analytics: 'never_button' },
 				id: 'forever',
 				text: Loc.getMessage('TASKS_DEADLINE_NOTIFICATION_FOREVER'),
 				className: this.#ITEMS_CLASSES,
@@ -128,7 +142,7 @@ export class SkipButtonMenu extends EventEmitter
 		];
 
 		this.#items.forEach((item: Object): void => {
-			item.onclick = this.#onMenuItemClick.bind(this, item.id, item.text);
+			item.onclick = this.#onMenuItemClick.bind(this, item);
 		});
 	}
 }

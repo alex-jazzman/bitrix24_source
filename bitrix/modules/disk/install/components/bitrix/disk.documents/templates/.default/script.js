@@ -543,12 +543,21 @@ this.BX.Disk = this.BX.Disk || {};
 	        });
 	        return;
 	      }
+	      var byUnifiedLink = this.documentHandlers.some(function (handler) {
+	        return handler.supportsUnifiedLink && handler.code === service;
+	      });
 	      var createProcess = new BX.Disk.Document.CreateProcess({
 	        typeFile: documentType,
 	        serviceCode: service,
+	        byUnifiedLink: byUnifiedLink,
 	        onAfterSave: function onAfterSave(response) {
 	          if (response.status === 'success') {
 	            _this.reloadGridAndFocus(response.object.id);
+	          }
+	        },
+	        onAfterCreateFile: function onAfterCreateFile(response) {
+	          if (response.status === 'success') {
+	            _this.reloadGridAndFocus(response.data.id);
 	          }
 	        }
 	      });
@@ -630,6 +639,7 @@ this.BX.Disk = this.BX.Disk || {};
 	  }]);
 	  return Toolbar;
 	}();
+	babelHelpers.defineProperty(Toolbar, "documentHandlers", []);
 
 	var Item = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(Item, _EventEmitter);

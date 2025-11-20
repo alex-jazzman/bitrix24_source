@@ -39,9 +39,10 @@ jn.define('im/messenger/controller/sidebar-v2/factory', (require, exports, modul
 		 * @public
 		 * @param {string} dialogId
 		 * @param {ServiceLocator} dialogLocator
+		 * @param {SidebarHeaderIntegrationConfigParams | {}} config
 		 * @return {Promise<SidebarBaseController>}
 		 */
-		async make(dialogId, dialogLocator)
+		async make(dialogId, dialogLocator, config = {})
 		{
 			const type = resolveSidebarType(dialogId);
 
@@ -61,7 +62,7 @@ jn.define('im/messenger/controller/sidebar-v2/factory', (require, exports, modul
 			{
 				const { ControllerClass } = await requireLazy(SidebarImplementation[type], true);
 
-				const controller = (new ControllerClass().init({ dialogId, dialogLocator }));
+				const controller = (new ControllerClass().init({ dialogId, dialogLocator, config }));
 
 				this.openingRegistry.delete(dialogId);
 

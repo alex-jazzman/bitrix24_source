@@ -145,6 +145,36 @@ export const Opener = {
 		});
 	},
 
+	async openChannel(dialogId: string = ''): Promise
+	{
+		const preparedDialogId = dialogId.toString();
+
+		await MessengerSlider.getInstance().openSlider();
+
+		return LayoutManager.getInstance().setLayout({
+			name: Layout.channel,
+			entityId: preparedDialogId,
+		});
+	},
+
+	async openTaskComments(dialogId: string = '', messageId: number = 0): Promise
+	{
+		const preparedDialogId = dialogId.toString();
+
+		await MessengerSlider.getInstance().openSlider();
+
+		const layoutParams = {
+			name: Layout.taskComments,
+			entityId: preparedDialogId,
+		};
+		if (messageId > 0)
+		{
+			layoutParams.contextId = messageId;
+		}
+
+		return LayoutManager.getInstance().setLayout(layoutParams);
+	},
+
 	openHistory(dialogId: string | number = ''): Promise
 	{
 		if (Utils.dialog.isDialogId(dialogId))

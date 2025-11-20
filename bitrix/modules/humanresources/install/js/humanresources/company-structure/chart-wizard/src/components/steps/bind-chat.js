@@ -1,7 +1,7 @@
 import { getMemberRoles } from 'humanresources.company-structure.api';
 import { PermissionChecker } from 'humanresources.company-structure.permission-checker';
+import { EntityTypes, WizardApiEntityChangedDict, type CommunicationDetailed } from 'humanresources.company-structure.utils';
 import { useChartStore } from 'humanresources.company-structure.chart-store';
-import { EntityTypes, WizardApiEntityChangedDict, type ChatOrChannelDetailed } from 'humanresources.company-structure.utils';
 import { mapState } from 'ui.vue3.pinia';
 import { CommunicationSelector } from '../communication-selector/communication-selector';
 import { CommunicationsTypeDict } from 'humanresources.company-structure.structure-components';
@@ -13,6 +13,10 @@ export const BindChat = {
 	components: { CommunicationSelector },
 
 	props: {
+		entityId: {
+			type: Number,
+			required: true,
+		},
 		heads: {
 			type: Array,
 			required: false,
@@ -40,16 +44,17 @@ export const BindChat = {
 			type: Boolean,
 			required: true,
 		},
-		/** @type ChatOrChannelDetailed[] */
+		/** @type CommunicationDetailed[] */
 		initChats: {
 			type: Array,
 			required: true,
 		},
-		/** @type ChatOrChannelDetailed[] */
+		/** @type CommunicationDetailed[] */
 		initChannels: {
 			type: Array,
 			required: true,
 		},
+		/** @type CommunicationDetailed[] */
 		initCollabs: {
 			type: Array,
 			required: true,
@@ -140,15 +145,15 @@ export const BindChat = {
 
 	watch:
 	{
-		initChats(value: ChatOrChannelDetailed[]): void
+		initChats(value: CommunicationDetailed[]): void
 		{
 			this.chats = value.map((item) => item.id);
 		},
-		initChannels(value: ChatOrChannelDetailed[]): void
+		initChannels(value: CommunicationDetailed[]): void
 		{
 			this.channels = value.map((item) => item.id);
 		},
-		initCollabs(value: ChatOrChannelDetailed[]): void
+		initCollabs(value: CommunicationDetailed[]): void
 		{
 			this.collabs = value.map((item) => item.id);
 		},
@@ -215,9 +220,9 @@ export const BindChat = {
 
 	template: `
 		<div class="chart-wizard__bind-chat">
-			<div class="chart-wizard__bind-chat__item">
-				<div v-if="!isEditMode" class="chart-wizard__bind-chat__item-hint" :class="{ '--team': isTeamEntity }">
-					<div class="chart-wizard__bind-chat__item-hint_logo" :class="{ '--team': isTeamEntity }"></div>
+			<div class="chart-wizard__bind-chat__item" :class="{ '--team': isTeamEntity }">
+				<div v-if="!isEditMode" class="chart-wizard__bind-chat__item-hint">
+					<div class="chart-wizard__bind-chat__item-hint_logo"></div>
 					<div class="chart-wizard__bind-chat__item-hint_text">
 						<div
 							class="chart-wizard__bind-chat__item-hint_title"
@@ -227,10 +232,7 @@ export const BindChat = {
 						<div v-for="hint in hints"
 							 class="chart-wizard__bind-chat__item-hint_text-item"
 						>
-							<div
-								class="chart-wizard__bind-chat__item-hint_text-item_icon"
-								:class="{ '--team': isTeamEntity }"
-							></div>
+							<div class="chart-wizard__bind-chat__item-hint_text-item_icon"></div>
 							<span>{{ hint }}</span>
 						</div>
 					</div>
@@ -249,12 +251,14 @@ export const BindChat = {
 						}}
 					</span>
 					<CommunicationSelector
+						:entityId="entityId"
 						:name="name"
 						:headsCreated="headsCreated"
 						:hasCurrentUser="hasCurrentUser"
 						:initCommunications="initCollabs"
 						:type="ChatTypeDict.collab"
 						:isTeamEntity="isTeamEntity"
+						:isEditMode="isEditMode"
 						@applyData="onCommunicationSelectorChanged"
 					/>
 				</div>
@@ -273,12 +277,14 @@ export const BindChat = {
 						}}
 					</span>
 					<CommunicationSelector
+						:entityId="entityId"
 						:name="name"
 						:headsCreated="headsCreated"
 						:hasCurrentUser="hasCurrentUser"
 						:initCommunications="initChannels"
 						:type="ChatTypeDict.channel"
 						:isTeamEntity="isTeamEntity"
+						:isEditMode="isEditMode"
 						@applyData="onCommunicationSelectorChanged"
 					/>
 				</div>
@@ -296,12 +302,14 @@ export const BindChat = {
 						}}
 					</span>
 					<CommunicationSelector
+						:entityId="entityId"
 						:name="name"
 						:headsCreated="headsCreated"
-						:initCommunications="initChats"
 						:hasCurrentUser="hasCurrentUser"
+						:initCommunications="initChats"
 						:type="ChatTypeDict.chat"
 						:isTeamEntity="isTeamEntity"
+						:isEditMode="isEditMode"
 						@applyData="onCommunicationSelectorChanged"
 					/>
 				</div>

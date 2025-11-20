@@ -8,7 +8,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message', (require, e
 		MessageParams,
 	} = require('im/messenger/const');
 	const { Feature, MobileFeature } = require('im/messenger/lib/feature');
-	const { ChatPermission } = require('im/messenger/lib/permission-manager');
+	const { ChatPermission, UserPermission } = require('im/messenger/lib/permission-manager');
 	const { MessageHelper, DialogHelper } = require('im/messenger/lib/helper');
 
 	/**
@@ -50,7 +50,16 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message', (require, e
 
 		isPossibleReact()
 		{
-			// return this.dialogModel.type !== DialogType.copilot; TODO experimental solution
+			if (this.#dialogHelper.isBot && this.#isYour())
+			{
+				return false;
+			}
+
+			if (this.#isBot())
+			{
+				return UserPermission.canBotSetReactions(this.userModel);
+			}
+
 			return true;
 		}
 
@@ -66,7 +75,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message', (require, e
 				return false;
 			}
 
-			return ChatPermission.сanReply(this.dialogModel);
+			return ChatPermission.canReply(this.dialogModel);
 		}
 
 		isPossibleCopy()
@@ -91,7 +100,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message', (require, e
 				return false;
 			}
 
-			if (!ChatPermission.сanPost(this.dialogModel))
+			if (!ChatPermission.canPost(this.dialogModel))
 			{
 				return false;
 			}
@@ -106,7 +115,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message', (require, e
 				return false;
 			}
 
-			if (!ChatPermission.сanPost(this.dialogModel))
+			if (!ChatPermission.canPost(this.dialogModel))
 			{
 				return false;
 			}
@@ -157,7 +166,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message', (require, e
 
 		isPossibleCallFeedback()
 		{
-			return !this.#isYour() && !this.#isSystem() && (this.isDialogCopilot() || this.#isAiAssistantMessage());
+			return !this.#isYour() && !this.#isSystem() && (this.isDialogCopilot() || this.isAiAssistantMessage());
 		}
 
 		isPossibleMultiselect()
@@ -196,7 +205,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message', (require, e
 				return !this.#isDeleted();
 			}
 
-			if (ChatPermission.сanDeleteOtherMessage(this.dialogModel))
+			if (ChatPermission.canDeleteOtherMessage(this.dialogModel))
 			{
 				return !this.#isDeleted();
 			}
@@ -346,14 +355,14 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message', (require, e
 			return this.dialogModel.type === DialogType.copilot;
 		}
 
-		#isAiAssistantMessage()
+		isAiAssistantMessage()
 		{
 			return this.messageModel.params?.componentId === MessageParams.ComponentId.AiAssistantMessage;
 		}
 
 		#isBot()
 		{
-			return this.userModel.bot;
+			return Boolean(this.userModel?.bot);
 		}
 
 		#isMessageToCopilot()

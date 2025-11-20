@@ -367,6 +367,22 @@ jn.define('im/messenger/controller/dialog/lib/context-manager/context-manager', 
 			context = OpenDialogContextType.default,
 		)
 		{
+			if (Feature.isMessengerV2Enabled)
+			{
+				serviceLocator.get('dialog-manager').openDialog({
+					dialogId,
+					messageId,
+					withMessageHighlight,
+					context,
+				})
+					.catch((error) => {
+						logger.error(`${this.constructor.name}.#goToAnotherDialogMessageContext error`, error);
+
+						ComponentCodeService.showToastByErrorCode(error[0]?.code);
+					});
+
+				return;
+			}
 			let componentCode = null;
 			try
 			{

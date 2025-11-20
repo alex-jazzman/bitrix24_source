@@ -54,19 +54,8 @@
 	--ui-icon-set__icon-size: 16px;
 }
 
-
-
-.tasks-field-tags-add-icon {
-	margin-right: var(--ui-space-inline-2xs2);
-	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
-}
-
-.tasks-field-tags-add-text {
-	color: var(--ui-color-accent-main-primary);
-}
-
 .tasks-field-tags-anchor {
-	position: absolute;
+	position: sticky;
 	bottom: 0;
 	left: 0;
 }

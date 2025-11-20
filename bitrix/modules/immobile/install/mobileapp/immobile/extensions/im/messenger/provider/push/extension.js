@@ -13,11 +13,12 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 		ComponentCode,
 		OpenDialogContextType,
 		WaitingEntity,
+		NavigationTabId,
 	} = require('im/messenger/const');
 	const { Feature } = require('im/messenger/lib/feature');
 	const { ComponentRequestBroadcaster } = require('im/messenger/lib/component-request-broadcaster');
-	const { getLogger } = require('im/messenger/lib/logger');
-	const logger = getLogger('push-handler');
+	const { getLoggerWithContext } = require('im/messenger/lib/logger');
+	const logger = getLoggerWithContext('push-handler', 'PushHandler');
 
 	class PushHandler
 	{
@@ -57,13 +58,13 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 			if (!Feature.isInstantPushEnabled)
 			{
 				const pushEvents = this.manager.get();
-				logger.log(`${this.constructor.name}.get push sync`, pushEvents);
+				logger.log('get push sync', pushEvents);
 
 				return pushEvents;
 			}
 
 			const pushEvents = await this.manager.getAsync();
-			logger.log(`${this.constructor.name}.get push async`, pushEvents);
+			logger.log('get push async', pushEvents);
 
 			return pushEvents;
 		}
@@ -79,12 +80,12 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 
 			if (!list || !list.IM_MESS || list.IM_MESS.length <= 0)
 			{
-				logger.info(`${this.className}.getPushEventList: list is empty`);
+				logger.info('getPushEventList: list is empty');
 
 				return eventList;
 			}
 
-			logger.info(`${this.className}.getPushEventList: parse push messages`, list.IM_MESS);
+			logger.info('getPushEventList: parse push messages', list.IM_MESS);
 
 			list.IM_MESS.forEach((push) => {
 				if (push?.data?.cmd !== 'message' && push?.data?.cmd !== 'messageChat')
@@ -147,7 +148,7 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 		async updateList(needClearHistory = true)
 		{
 			const eventList = await this.getPushEventList();
-			logger.info(`${this.className}.updateList: parse push messages`, eventList);
+			logger.info('updateList: parse push messages', eventList);
 
 			const isDialogOpen = this.store.getters['applicationModel/isSomeDialogOpen'];
 
@@ -180,11 +181,11 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 				}
 				catch (error)
 				{
-					logger.error(`${this.className}: an error occurred when broadcasting push messages`, eventList, error);
+					logger.error('updateList: an error occurred when broadcasting push messages', eventList, error);
 				}
 				finally
 				{
-					logger.warn(`${this.className}: broadcasting messages was completed`);
+					logger.warn('updateList: broadcasting messages was completed');
 				}
 			}
 
@@ -244,7 +245,7 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 				return false;
 			}
 
-			logger.info(`${this.className}.executeAction: execute push-notification`, push);
+			logger.info('executeAction: execute push-notification', push);
 
 			const pushParams = ChatDataConverter.getPushFormat(push);
 
@@ -263,11 +264,7 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 						openDialogParams.messageId = pushParams.PARAMS.MESSAGE_ID;
 					}
 
-					MessengerEmitter.emit(
-						EventType.messenger.openDialog,
-						openDialogParams,
-						ComponentCode.imMessenger,
-					);
+					this.#openDialog(openDialogParams);
 				}
 
 				return true;
@@ -277,6 +274,15 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 			{
 				if (MessengerParams.isOpenlinesOperator() && pushParams.CHAT_TYPE === 'L')
 				{
+					if (Feature.isMessengerV2Enabled)
+					{
+						const navigationController = serviceLocator.get('navigation-controller');
+						navigationController.makeMessengerTabActive();
+						navigationController.setActiveTab(NavigationTabId.openlines);
+
+						return false;
+					}
+
 					if (!PageManager.getNavigator().isActiveTab())
 					{
 						PageManager.getNavigator().makeTabActive();
@@ -344,6 +350,24 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 		#removeAttachmentSuffixFromMessageText(text, attachmentSuffix)
 		{
 			return text.replaceAll(attachmentSuffix, '');
+		}
+
+		#openDialog(openDialogParams)
+		{
+			if (Feature.isMessengerV2Enabled)
+			{
+				serviceLocator.get('dialog-manager').openDialog(openDialogParams)
+					.catch((error) => {
+						logger.error('openDialog error', error);
+					});
+
+				return;
+			}
+			MessengerEmitter.emit(
+				EventType.messenger.openDialog,
+				openDialogParams,
+				ComponentCode.imMessenger,
+			);
 		}
 	}
 

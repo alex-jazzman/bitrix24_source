@@ -17,7 +17,6 @@ Extension::load([
 	'ui.buttons',
 ]);
 
-//todo: need add to apps-en.png
 $imgSrc = 'https://cdn.bitrix24.site/bitrix/images/landing/vibe/collaboration/apps-en.png';
 if (in_array(\CBitrix24::getPortalZone(), ['ru', 'kz', 'by', 'uz'], true))
 {

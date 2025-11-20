@@ -185,7 +185,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    const opened = super.open();
 	    if (this.getRightBar() && opened) {
 	      const stack = main_core.ZIndexManager.getOrAddStack(document.body);
-	      if (!this.isMessengerSlider() && !Slider.isMessengerOpen()) {
+	      if (!this.isMessengerSlider() && !Slider.isMessengerOpen() && !Slider.isVideoCallOpen()) {
 	        stack.bringToFront(this.getRightBar());
 	      }
 	    }
@@ -220,6 +220,10 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  isMessengerSlider() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _chatMenuBar)[_chatMenuBar] !== null;
 	  }
+	  static isVideoCallOpen() {
+	    const CallManager = main_core.Reflection.getClass('BX.Messenger.v2.Lib.CallManager');
+	    return CallManager && CallManager.getInstance().hasCurrentCall();
+	  }
 	  getRightBar() {
 	    return document.getElementById('right-bar');
 	  }
@@ -239,7 +243,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  }
 	  calculateOuterBoundary() {
 	    var _this$getRightBar;
-	    if (this.isMessengerSlider() || Slider.isMessengerOpenBeforeSlider(this)) {
+	    if (this.isMessengerSlider() || Slider.isMessengerOpenBeforeSlider(this) || Slider.isVideoCallOpen()) {
 	      return {
 	        top: this.isMessengerSlider() ? 58 : 16,
 	        right: 18

@@ -65,9 +65,9 @@ export class ChatService
 		return this.#loadService.prepareDialogId(dialogId);
 	}
 
-	resetChat(dialogId: string): Promise
+	clearChat(dialogId: string): Promise
 	{
-		return this.#loadService.resetChat(dialogId);
+		return this.#loadService.clearChat(dialogId);
 	}
 	// endregion 'load'
 

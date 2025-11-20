@@ -201,15 +201,10 @@ jn.define('im/messenger/model/sidebar/src/files/model', (require, exports, modul
 			},
 
 			/**
-			 * @template TKey, TValue
-			 * @typedef {Object.<TKey, TValue>} Dictionary
-			 */
-
-			/**
 			 * @function sidebarModel/sidebarFilesModel/deleteFilesGroupedByChatId
 			 * @param {Object} store
 			 * @param {Object} payload
-			 * @param {Dictionary<number, Array<string|number>>} payload.filesGroupedByChatId
+			 * @param {Record<number, Array<string|number>>} payload.filesGroupedByChatId
 			 */
 			deleteFilesGroupedByChatId: (store, payload) => {
 				const { filesGroupedByChatId } = payload;
@@ -226,6 +221,23 @@ jn.define('im/messenger/model/sidebar/src/files/model', (require, exports, modul
 							},
 						});
 					});
+				});
+			},
+
+			/**
+			 * @function sidebarModel/sidebarFilesModel/deleteByChatId
+			 * @param {Object} store
+			 * @param {Object} payload
+			 * @param {number} payload.chatId
+			 */
+			deleteByChatId: (store, payload) => {
+				const { chatId } = payload;
+
+				store.commit('deleteByChatId', {
+					actionName: 'deleteByChatId',
+					data: {
+						chatId,
+					},
 				});
 			},
 		},
@@ -292,6 +304,19 @@ jn.define('im/messenger/model/sidebar/src/files/model', (require, exports, modul
 						state.collection[chatId][subType].items.delete(id);
 					}
 				});
+			},
+			/**
+			 * @param state
+			 * @param {MutationPayload<SidebarFilesDeleteByChatIdActions, SidebarFilesDeleteByChatIdData>} payload
+			 */
+			deleteByChatId: (state, payload) => {
+				logger.log('sidebarFilesModel: deleteByChatId mutation', payload);
+
+				const { chatId } = payload.data;
+				if (state.collection[chatId])
+				{
+					delete state.collection[chatId];
+				}
 			},
 			/**
 			 * @param state

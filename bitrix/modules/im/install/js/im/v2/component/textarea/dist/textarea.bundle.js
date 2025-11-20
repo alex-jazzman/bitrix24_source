@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,ui_iconSet_outline,im_v2_lib_localStorage,im_v2_provider_service_message,im_v2_lib_soundNotification,im_v2_lib_inputAction,ui_uploader_core,im_v2_lib_escManager,im_v2_lib_desktopApi,im_v2_component_elements_tabs,im_v2_lib_smileManager,im_v2_provider_service_sending,im_v2_lib_helpdesk,im_v2_lib_rest,calendar_sharing_interface,vote_application,im_v2_component_elements_menu,im_v2_lib_entityCreator,im_v2_lib_analytics,im_v2_lib_feature,im_v2_lib_permission,im_v2_lib_notifier,file_dialog,im_v2_model,main_popup,im_v2_lib_draft,im_v2_lib_hotkey,im_v2_lib_textarea,im_v2_provider_service_uploading,im_v2_component_elements_mediaGallery,im_v2_component_elements_sendButton,ui_icons,main_core_events,im_v2_component_elements_scrollWithGradient,im_v2_lib_textHighlighter,im_v2_component_elements_chatTitle,im_v2_component_elements_avatar,im_v2_lib_user,im_v2_lib_logger,im_v2_lib_search,im_v2_lib_utils,im_v2_application_core,im_v2_lib_parser,main_core,im_v2_component_elements_loader,im_v2_lib_market,im_v2_component_elements_popup,ui_iconSet_api_vue,im_v2_component_elements_autoDelete,im_v2_provider_service_chat,im_v2_lib_autoDelete,im_v2_const) {
+(function (exports,ui_iconSet_outline,im_v2_lib_localStorage,im_v2_provider_service_message,im_v2_lib_soundNotification,im_v2_lib_inputAction,ui_uploader_core,im_v2_lib_escManager,im_v2_lib_desktopApi,im_v2_component_elements_tabs,im_v2_lib_smileManager,im_v2_provider_service_sending,im_v2_lib_helpdesk,im_v2_lib_rest,calendar_sharing_interface,vote_application,im_v2_component_elements_menu,im_v2_lib_entityCreator,im_v2_lib_analytics,im_v2_lib_feature,im_v2_lib_permission,im_v2_lib_notifier,file_dialog,im_v2_model,main_popup,im_v2_lib_draft,im_v2_lib_hotkey,im_v2_lib_textarea,im_v2_provider_service_uploading,im_v2_component_elements_mediaGallery,im_v2_component_elements_sendButton,ui_icons,im_v2_lib_copilot,main_core_events,im_v2_component_elements_scrollWithGradient,im_v2_lib_textHighlighter,im_v2_component_elements_chatTitle,im_v2_component_elements_avatar,im_v2_lib_user,im_v2_lib_logger,im_v2_lib_search,im_v2_lib_utils,im_v2_application_core,im_v2_lib_parser,main_core,im_v2_component_elements_loader,im_v2_lib_market,im_v2_component_elements_popup,ui_iconSet_api_vue,im_v2_component_elements_autoDelete,im_v2_provider_service_chat,im_v2_lib_autoDelete,im_v2_const) {
 	'use strict';
 
 	const MentionSymbols = new Set(['@', '+']);
@@ -5602,7 +5602,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	}
 	function _isSelfDialogId2(dialogId) {
-	  return dialogId === im_v2_application_core.Core.getUserId().toString();
+	  return im_v2_application_core.Core.getStore().getters['chats/isNotes'](dialogId);
 	}
 	function _getDialogIds2(items) {
 	  return items.map(item => item.dialogId);
@@ -5902,9 +5902,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    isCopilotType() {
 	      return this.dialog.type === im_v2_const.ChatType.copilot;
 	    },
+	    isGroupCopilotChat() {
+	      return new im_v2_lib_copilot.CopilotManager().isGroupCopilotChat(this.dialogId);
+	    },
 	    needToShowMentionPopup() {
 	      if (this.isCopilotType) {
-	        return this.dialog.userCounter > 2;
+	        return this.isGroupCopilotChat;
 	      }
 	      return true;
 	    },
@@ -5913,7 +5916,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        return [];
 	      }
 	      const copilotUserId = this.$store.getters['users/bots/getCopilotUserId'];
-	      if (copilotUserId && this.dialog.userCounter > 2) {
+	      if (copilotUserId && this.isGroupCopilotChat) {
 	        return [copilotUserId.toString()];
 	      }
 	      return [];
@@ -7326,6 +7329,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      this.openForwardPanel(messagesIds);
 	    },
 	    async onPaste(event) {
+	      this.text = im_v2_lib_textarea.Textarea.handlePasteUrl(this.$refs.textarea, event);
 	      if (!this.withUploadMenu) {
 	        return;
 	      }
@@ -7603,5 +7607,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.ChatTextarea = ChatTextarea;
 
-}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Service??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.UI?.Uploader??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Service??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Calendar?.Sharing??{},BX?.Vote??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX??{},BX?.Messenger?.v2?.Model??{},BX?.Main??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Service??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Component?.Elements??{},BX??{},BX?.Event??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Application??{},BX?.Messenger?.v2?.Lib??{},BX??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.UI?.IconSet??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Service??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Const??{}));
+}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Service??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.UI?.Uploader??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Service??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Calendar?.Sharing??{},BX?.Vote??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX??{},BX?.Messenger?.v2?.Model??{},BX?.Main??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Service??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Component?.Elements??{},BX??{},BX?.Messenger?.v2?.Lib??{},BX?.Event??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Application??{},BX?.Messenger?.v2?.Lib??{},BX??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.UI?.IconSet??{},BX?.Messenger?.v2?.Component?.Elements??{},BX?.Messenger?.v2?.Service??{},BX?.Messenger?.v2?.Lib??{},BX?.Messenger?.v2?.Const??{}));
 //# sourceMappingURL=textarea.bundle.js.map

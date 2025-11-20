@@ -9,6 +9,7 @@ return [
 	'js' => 'dist/group.bundle.js',
 	'rel' => [
 		'tasks.v2.component.elements.hover-pill',
+		'tasks.v2.component.elements.field-add',
 		'tasks.v2.lib.height-transition',
 		'ui.vue3.components.menu',
 		'ui.icon-set.crm',

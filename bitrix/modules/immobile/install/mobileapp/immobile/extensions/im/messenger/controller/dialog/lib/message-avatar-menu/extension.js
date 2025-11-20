@@ -59,7 +59,7 @@ jn.define('im/messenger/controller/dialog/lib/message-avatar-menu', (require, ex
 
 			];
 
-			if (this.options.сanMention)
+			if (this.options.canMention)
 			{
 				actions.push({
 					id: 'mention',

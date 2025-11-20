@@ -7,6 +7,8 @@ import { DateRounder } from 'tasks.date-rounder';
 import { DeadlineSelector } from './layout/deadline-selector/deadline-selector';
 import { Footer } from './layout/footer';
 import { DefaultDeadlineSelector } from './layout/default-deadline-selector';
+import { sendData } from 'ui.analytics';
+
 import './style.css';
 
 type NotificationOptions = {
@@ -47,6 +49,14 @@ export class Notification extends EventEmitter
 	show(): void
 	{
 		this.#popup.show();
+
+		sendData({
+			tool: 'tasks',
+			category: 'task_operations',
+			event: 'deadline_popup_show',
+			type: 'popup',
+			c_section: 'tasks',
+		});
 	}
 
 	close(): void

@@ -9,6 +9,7 @@ jn.define('im/messenger/model/files/model', (require, exports, module) => {
 
 	const { fileDefaultElement } = require('im/messenger/model/files/default-element');
 	const { validate } = require('im/messenger/model/files/validator');
+	const { transcriptModel } = require('im/messenger/model/files/transcript/model');
 
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const logger = LoggerManager.getInstance().getLogger('model--files');
@@ -19,6 +20,9 @@ jn.define('im/messenger/model/files/model', (require, exports, module) => {
 		state: () => ({
 			collection: {},
 		}),
+		modules: {
+			transcriptModel,
+		},
 		getters: {
 			/**
 			 * @function filesModel/hasFile

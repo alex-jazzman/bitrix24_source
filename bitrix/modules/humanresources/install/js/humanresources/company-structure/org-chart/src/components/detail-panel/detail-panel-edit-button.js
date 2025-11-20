@@ -45,7 +45,7 @@ export const DetailPanelEditButton = {
 		},
 		menu(): EntityActionMenu
 		{
-			return new EntityActionMenu(this.entityId, this.entityType, AnalyticsSourceType.DETAIL);
+			return new EntityActionMenu(this.entityId, this.entityType, AnalyticsSourceType.NODE_DETAIL);
 		},
 	},
 

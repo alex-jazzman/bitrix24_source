@@ -38,35 +38,35 @@ export class NotificationItem extends Item
 				className: this.#SUBITEMS_CLASS_NAME,
 			}),
 			new MenuItem({
-				dataset: { id: `${this.MENU_ID}-always` },
+				dataset: { id: `${this.MENU_ID}-always`, analytics: 'daily_remind' },
 				text: Loc.getMessage('TASKS_DEADLINE_MENU_NOTIFICATION_ITEM_DONT_SKIP'),
 				value: '',
 				className: this.#SUBITEMS_CLASS_NAME,
 				onclick,
 			}),
 			new MenuItem({
-				dataset: { id: `${this.MENU_ID}-day` },
+				dataset: { id: `${this.MENU_ID}-day`, analytics: 'no_remind_today' },
 				text: Loc.getMessage('TASKS_DEADLINE_MENU_NOTIFICATION_ITEM_SKIP_FOR_DAY'),
 				value: 'day',
 				className: this.#SUBITEMS_CLASS_NAME,
 				onclick,
 			}),
 			new MenuItem({
-				dataset: { id: `${this.MENU_ID}-week` },
+				dataset: { id: `${this.MENU_ID}-week`, analytics: 'no_remind_current_week' },
 				text: Loc.getMessage('TASKS_DEADLINE_MENU_NOTIFICATION_ITEM_SKIP_FOR_WEEK'),
 				value: 'week',
 				className: this.#SUBITEMS_CLASS_NAME,
 				onclick,
 			}),
 			new MenuItem({
-				dataset: { id: `${this.MENU_ID}-month` },
+				dataset: { id: `${this.MENU_ID}-month`, analytics: 'no_remind_current_month' },
 				text: Loc.getMessage('TASKS_DEADLINE_MENU_NOTIFICATION_ITEM_SKIP_FOR_MONTH'),
 				value: 'month',
 				className: this.#SUBITEMS_CLASS_NAME,
 				onclick,
 			}),
 			new MenuItem({
-				dataset: { id: `${this.MENU_ID}-forever` },
+				dataset: { id: `${this.MENU_ID}-forever`, analytics: 'never_remind' },
 				text: Loc.getMessage('TASKS_DEADLINE_MENU_NOTIFICATION_ITEM_SKIP_FOREVER'),
 				value: 'forever',
 				className: this.#SUBITEMS_CLASS_NAME,
@@ -131,6 +131,15 @@ export class NotificationItem extends Item
 				notificationData: {
 					skipPeriod,
 				},
+			},
+			analytics: {
+				tool: 'tasks',
+				category: 'task_operations',
+				event: 'click_settings',
+				type: 'task',
+				c_section: 'tasks',
+				c_sub_section: 'deadline_management',
+				c_element: item.dataset?.analytics,
 			},
 		})
 			.catch((error): void => this.onPromiseError(error))

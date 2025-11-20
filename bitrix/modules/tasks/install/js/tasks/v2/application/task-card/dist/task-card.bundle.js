@@ -122,7 +122,7 @@ this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 	    let card;
 	    BX.SidePanel.Instance.open(`tasks-full-card-${params.taskId}`, {
 	      contentClassName: 'tasks-full-card-slider-content',
-	      width: 1510,
+	      width: 1510 - (params.widthOffset || 0),
 	      customLeftBoundary: 0,
 	      cacheable: false,
 	      contentCallback: slider => {

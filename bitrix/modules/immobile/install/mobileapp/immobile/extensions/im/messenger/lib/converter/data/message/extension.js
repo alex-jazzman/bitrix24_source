@@ -10,6 +10,11 @@ jn.define('im/messenger/lib/converter/data/message', (require, exports, module) 
 	 */
 	class MessageDataConverter
 	{
+		static fromPullToMessage(params = {})
+		{
+			return MessageDataConverter.fromPushToMessage(params);
+		}
+
 		static fromPushToMessage(params = {})
 		{
 			const modelMessage = {

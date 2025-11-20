@@ -164,7 +164,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    const onclick = babelHelpers.classPrivateFieldLooseBase(this, _onMenuItemClick)[_onMenuItemClick].bind(this);
 	    const subItems = [new main_popup.MenuItem({
 	      dataset: {
-	        id: `${this.MENU_ID}-day`
+	        id: `${this.MENU_ID}-day`,
+	        analytics: 'one_day_button'
 	      },
 	      text: main_core.Loc.getMessage('TASKS_DEADLINE_MENU_DEFAULT_ITEM_1_DAY'),
 	      value: babelHelpers.classPrivateFieldLooseBase(this, _SECONDS_IN_DAY)[_SECONDS_IN_DAY],
@@ -173,7 +174,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      onclick
 	    }), new main_popup.MenuItem({
 	      dataset: {
-	        id: `${this.MENU_ID}-three-days`
+	        id: `${this.MENU_ID}-three-days`,
+	        analytics: 'three_days_button'
 	      },
 	      text: main_core.Loc.getMessage('TASKS_DEADLINE_MENU_DEFAULT_ITEM_3_DAYS'),
 	      value: 3 * babelHelpers.classPrivateFieldLooseBase(this, _SECONDS_IN_DAY)[_SECONDS_IN_DAY],
@@ -182,7 +184,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      onclick
 	    }), new main_popup.MenuItem({
 	      dataset: {
-	        id: `${this.MENU_ID}-week`
+	        id: `${this.MENU_ID}-week`,
+	        analytics: 'one_week_button'
 	      },
 	      text: main_core.Loc.getMessage('TASKS_DEADLINE_MENU_DEFAULT_ITEM_1_WEEK'),
 	      value: babelHelpers.classPrivateFieldLooseBase(this, _SECONDS_IN_WEEK)[_SECONDS_IN_WEEK],
@@ -191,7 +194,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      onclick
 	    }), new main_popup.MenuItem({
 	      dataset: {
-	        id: `${this.MENU_ID}-two-weeks`
+	        id: `${this.MENU_ID}-two-weeks`,
+	        analytics: 'two_weeks_button'
 	      },
 	      text: main_core.Loc.getMessage('TASKS_DEADLINE_MENU_DEFAULT_ITEM_2_WEEKS'),
 	      value: 2 * babelHelpers.classPrivateFieldLooseBase(this, _SECONDS_IN_WEEK)[_SECONDS_IN_WEEK],
@@ -200,7 +204,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      onclick
 	    }), new main_popup.MenuItem({
 	      dataset: {
-	        id: `${this.MENU_ID}-empty`
+	        id: `${this.MENU_ID}-empty`,
+	        analytics: 'no_deadline'
 	      },
 	      text: main_core.Loc.getMessage('TASKS_DEADLINE_MENU_DEFAULT_ITEM_EMPTY'),
 	      value: 0,
@@ -275,6 +280,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }
 	}
 	function _onMenuItemClick2(event, item) {
+	  var _item$dataset;
 	  const deadline = item.value;
 	  if (!main_core.Type.isNumber(deadline)) {
 	    return;
@@ -292,6 +298,15 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        default: deadline,
 	        isExactTime: item.isExactTime ? 'Y' : 'N'
 	      }
+	    },
+	    analytics: {
+	      tool: 'tasks',
+	      category: 'task_operations',
+	      event: 'click_settings',
+	      type: 'task',
+	      c_section: 'tasks',
+	      c_sub_section: 'default_deadline_selected',
+	      c_element: (_item$dataset = item.dataset) == null ? void 0 : _item$dataset.analytics
 	    }
 	  }).catch(error => this.onPromiseError(error));
 	}
@@ -358,7 +373,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      className: babelHelpers.classPrivateFieldLooseBase(this, _SUBITEMS_CLASS_NAME$1)[_SUBITEMS_CLASS_NAME$1]
 	    }), new main_popup.MenuItem({
 	      dataset: {
-	        id: `${this.MENU_ID}-always`
+	        id: `${this.MENU_ID}-always`,
+	        analytics: 'daily_remind'
 	      },
 	      text: main_core.Loc.getMessage('TASKS_DEADLINE_MENU_NOTIFICATION_ITEM_DONT_SKIP'),
 	      value: '',
@@ -366,7 +382,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      onclick
 	    }), new main_popup.MenuItem({
 	      dataset: {
-	        id: `${this.MENU_ID}-day`
+	        id: `${this.MENU_ID}-day`,
+	        analytics: 'no_remind_today'
 	      },
 	      text: main_core.Loc.getMessage('TASKS_DEADLINE_MENU_NOTIFICATION_ITEM_SKIP_FOR_DAY'),
 	      value: 'day',
@@ -374,7 +391,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      onclick
 	    }), new main_popup.MenuItem({
 	      dataset: {
-	        id: `${this.MENU_ID}-week`
+	        id: `${this.MENU_ID}-week`,
+	        analytics: 'no_remind_current_week'
 	      },
 	      text: main_core.Loc.getMessage('TASKS_DEADLINE_MENU_NOTIFICATION_ITEM_SKIP_FOR_WEEK'),
 	      value: 'week',
@@ -382,7 +400,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      onclick
 	    }), new main_popup.MenuItem({
 	      dataset: {
-	        id: `${this.MENU_ID}-month`
+	        id: `${this.MENU_ID}-month`,
+	        analytics: 'no_remind_current_month'
 	      },
 	      text: main_core.Loc.getMessage('TASKS_DEADLINE_MENU_NOTIFICATION_ITEM_SKIP_FOR_MONTH'),
 	      value: 'month',
@@ -390,7 +409,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      onclick
 	    }), new main_popup.MenuItem({
 	      dataset: {
-	        id: `${this.MENU_ID}-forever`
+	        id: `${this.MENU_ID}-forever`,
+	        analytics: 'never_remind'
 	      },
 	      text: main_core.Loc.getMessage('TASKS_DEADLINE_MENU_NOTIFICATION_ITEM_SKIP_FOREVER'),
 	      value: 'forever',
@@ -429,6 +449,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }
 	}
 	function _onMenuItemClick2$1(event, item) {
+	  var _item$dataset;
 	  const skipPeriod = item.value;
 	  if (!main_core.Type.isString(skipPeriod)) {
 	    return;
@@ -445,6 +466,15 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      notificationData: {
 	        skipPeriod
 	      }
+	    },
+	    analytics: {
+	      tool: 'tasks',
+	      category: 'task_operations',
+	      event: 'click_settings',
+	      type: 'task',
+	      c_section: 'tasks',
+	      c_sub_section: 'deadline_management',
+	      c_element: (_item$dataset = item.dataset) == null ? void 0 : _item$dataset.analytics
 	    }
 	  }).catch(error => this.onPromiseError(error));
 	}

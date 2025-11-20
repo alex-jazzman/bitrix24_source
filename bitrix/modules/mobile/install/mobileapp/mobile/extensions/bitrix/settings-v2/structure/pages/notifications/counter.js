@@ -6,6 +6,7 @@ jn.define('settings-v2/structure/pages/notifications/counter', (require, exports
 		createSection,
 		createToggle,
 		createDescription,
+		createImage,
 	} = require('settings-v2/structure/src/item-create-helper');
 	const { NotificationCounterSettingController } = require('settings-v2/controller/notification-counter');
 	const { NotificationLoadService } = require('settings-v2/services/notification-load');
@@ -13,21 +14,17 @@ jn.define('settings-v2/structure/pages/notifications/counter', (require, exports
 	const { SettingsPageId, NotificationCounterKey } = require('settings-v2/const');
 	const { Loc } = require('loc');
 
-	const requestSettingsData = () => {
-		return new Promise((resolve, reject) => {
-			const cachedCounterTypes = Application.storage.get(NotificationCounterKey.TYPES);
-			const cachedCounterConfig = Application.storage.get(NotificationCounterKey.CONFIG);
-			if (cachedCounterTypes && cachedCounterConfig)
-			{
-				resolve(cachedCounterTypes);
+	const requestSettingsData = async () => {
+		const cachedCounterTypes = Application.storage.get(NotificationCounterKey.TYPES);
+		const cachedCounterConfig = Application.storage.get(NotificationCounterKey.CONFIG);
+		if (cachedCounterTypes && cachedCounterConfig)
+		{
+			return cachedCounterTypes;
+		}
 
-				return;
-			}
+		const data = await NotificationLoadService.fetchCounterSettings();
 
-			(new NotificationLoadService()).fetchCounterSettings().then((data) => {
-				resolve(data.counterTypes);
-			}).catch(console.error);
-		});
+		return data.counterTypes;
 	};
 
 	const prepareItems = (countersData) => {
@@ -63,6 +60,13 @@ jn.define('settings-v2/structure/pages/notifications/counter', (require, exports
 		title: Loc.getMessage('SETTINGS_V2_STRUCTURE_NOTIFICATIONS_COUNTER_TITLE'),
 		requestSettingsData,
 		items: [
+			createImage({
+				id: 'notifications-counter-image',
+				name: 'notifications-counter',
+				externalStyle: {
+					height: 246,
+				},
+			}),
 			createSection(
 				{
 					id: 'notifications-counter-section',

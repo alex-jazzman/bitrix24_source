@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
-(function (exports,ui_formElements_view,tasks_dateRounder,main_date,ui_datePicker,main_core_events,main_popup,ui_buttons,main_core,tasks_intervalSelector) {
+(function (exports,ui_formElements_view,tasks_dateRounder,main_date,ui_datePicker,main_core_events,main_popup,ui_buttons,main_core,tasks_intervalSelector,ui_analytics) {
 	'use strict';
 
 	var _EVENT_NAMESPACE = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("EVENT_NAMESPACE");
@@ -432,12 +432,14 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _button)[_button] = button;
 	  }
 	}
-	function _onMenuItemClick2(period, text) {
-	  var _babelHelpers$classPr;
+	function _onMenuItemClick2(item) {
+	  var _babelHelpers$classPr, _item$dataset;
 	  const buttonMenu = (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _button)[_button]) == null ? void 0 : _babelHelpers$classPr.getMenuWindow();
 	  if (!buttonMenu) {
 	    return;
 	  }
+	  const period = item.id;
+	  const text = item.text;
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _period)[_period] === period) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _period)[_period] = '';
 	    babelHelpers.classPrivateFieldLooseBase(this, _refreshMenuItemsIcons)[_refreshMenuItemsIcons](buttonMenu.getMenuItems(), babelHelpers.classPrivateFieldLooseBase(this, _period)[_period]);
@@ -458,6 +460,15 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    }
 	  });
 	  this.emit('onMenuItemSelect', event);
+	  ui_analytics.sendData({
+	    tool: 'tasks',
+	    category: 'task_operations',
+	    event: 'period_click_type',
+	    type: 'popup',
+	    c_section: 'tasks',
+	    c_sub_section: 'deadline_popup',
+	    c_element: (_item$dataset = item.dataset) == null ? void 0 : _item$dataset.analytics
+	  });
 	}
 	function _refreshMenuItemsIcons2(items, period) {
 	  items.forEach(item => {
@@ -475,35 +486,39 @@ this.BX.Tasks = this.BX.Tasks || {};
 	function _init2$2() {
 	  babelHelpers.classPrivateFieldLooseBase(this, _items)[_items] = [{
 	    dataset: {
-	      id: 'tasks-deadline-notification-skip-day'
+	      id: 'tasks-deadline-notification-skip-day',
+	      analytics: 'today_button'
 	    },
 	    id: 'day',
 	    text: main_core.Loc.getMessage('TASKS_DEADLINE_NOTIFICATION_DAY'),
 	    className: babelHelpers.classPrivateFieldLooseBase(this, _ITEMS_CLASSES)[_ITEMS_CLASSES]
 	  }, {
 	    dataset: {
-	      id: 'tasks-deadline-notification-skip-week'
+	      id: 'tasks-deadline-notification-skip-week',
+	      analytics: 'current_week_button'
 	    },
 	    id: 'week',
 	    text: main_core.Loc.getMessage('TASKS_DEADLINE_NOTIFICATION_WEEK'),
 	    className: babelHelpers.classPrivateFieldLooseBase(this, _ITEMS_CLASSES)[_ITEMS_CLASSES]
 	  }, {
 	    dataset: {
-	      id: 'tasks-deadline-notification-skip-month'
+	      id: 'tasks-deadline-notification-skip-month',
+	      analytics: 'current_month_button'
 	    },
 	    id: 'month',
 	    text: main_core.Loc.getMessage('TASKS_DEADLINE_NOTIFICATION_MONTH'),
 	    className: babelHelpers.classPrivateFieldLooseBase(this, _ITEMS_CLASSES)[_ITEMS_CLASSES]
 	  }, {
 	    dataset: {
-	      id: 'tasks-deadline-notification-skip-forever'
+	      id: 'tasks-deadline-notification-skip-forever',
+	      analytics: 'never_button'
 	    },
 	    id: 'forever',
 	    text: main_core.Loc.getMessage('TASKS_DEADLINE_NOTIFICATION_FOREVER'),
 	    className: babelHelpers.classPrivateFieldLooseBase(this, _ITEMS_CLASSES)[_ITEMS_CLASSES]
 	  }];
 	  babelHelpers.classPrivateFieldLooseBase(this, _items)[_items].forEach(item => {
-	    item.onclick = babelHelpers.classPrivateFieldLooseBase(this, _onMenuItemClick)[_onMenuItemClick].bind(this, item.id, item.text);
+	    item.onclick = babelHelpers.classPrivateFieldLooseBase(this, _onMenuItemClick)[_onMenuItemClick].bind(this, item);
 	  });
 	}
 
@@ -517,6 +532,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	var _init$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("init");
 	var _onSubmitButtonClick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onSubmitButtonClick");
 	var _onCancelButtonClick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onCancelButtonClick");
+	var _onSkipButtonClick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onSkipButtonClick");
 	var _onSkipMenuItemSelect = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onSkipMenuItemSelect");
 	var _onSkipMenuItemDeselect = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onSkipMenuItemDeselect");
 	class Footer extends main_core_events.EventEmitter {
@@ -527,6 +543,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    });
 	    Object.defineProperty(this, _onSkipMenuItemSelect, {
 	      value: _onSkipMenuItemSelect2
+	    });
+	    Object.defineProperty(this, _onSkipButtonClick, {
+	      value: _onSkipButtonClick2
 	    });
 	    Object.defineProperty(this, _onCancelButtonClick, {
 	      value: _onCancelButtonClick2
@@ -650,7 +669,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    color: ui_buttons.ButtonColor.LINK,
 	    noCaps: true,
 	    dropdown: true,
-	    menu: babelHelpers.classPrivateFieldLooseBase(this, _skipButtonMenu)[_skipButtonMenu].getMenu()
+	    menu: babelHelpers.classPrivateFieldLooseBase(this, _skipButtonMenu)[_skipButtonMenu].getMenu(),
+	    onclick: babelHelpers.classPrivateFieldLooseBase(this, _onSkipButtonClick)[_onSkipButtonClick].bind(this)
 	  });
 	  babelHelpers.classPrivateFieldLooseBase(this, _skipButtonMenu)[_skipButtonMenu].setButton(babelHelpers.classPrivateFieldLooseBase(this, _skipButton)[_skipButton]);
 	}
@@ -659,12 +679,41 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    return;
 	  }
 	  this.emit('onSubmitButtonClick');
+	  ui_analytics.sendData({
+	    tool: 'tasks',
+	    category: 'task_operations',
+	    event: 'click_save_button',
+	    type: 'popup',
+	    c_section: 'tasks',
+	    c_sub_section: 'deadline_field',
+	    c_element: 'save_button'
+	  });
 	}
 	function _onCancelButtonClick2() {
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _cancelButton)[_cancelButton].isDisabled()) {
 	    return;
 	  }
 	  this.emit('onCancelButtonClick');
+	  ui_analytics.sendData({
+	    tool: 'tasks',
+	    category: 'task_operations',
+	    event: 'click_no_deadline_button',
+	    type: 'popup',
+	    c_section: 'tasks',
+	    c_sub_section: 'deadline_popup',
+	    c_element: 'no_deadline_button'
+	  });
+	}
+	function _onSkipButtonClick2() {
+	  ui_analytics.sendData({
+	    tool: 'tasks',
+	    category: 'task_operations',
+	    event: 'click_no_remind_button',
+	    type: 'popup',
+	    c_section: 'tasks',
+	    c_sub_section: 'deadline_popup',
+	    c_element: 'no_remind_button'
+	  });
 	}
 	function _onSkipMenuItemSelect2(event) {
 	  const {
@@ -884,6 +933,13 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }
 	  show() {
 	    babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup].show();
+	    ui_analytics.sendData({
+	      tool: 'tasks',
+	      category: 'task_operations',
+	      event: 'deadline_popup_show',
+	      type: 'popup',
+	      c_section: 'tasks'
+	    });
 	  }
 	  close() {
 	    babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup].close();
@@ -1123,5 +1179,5 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	exports.Notification = Notification;
 
-}((this.BX.Tasks.Deadline = this.BX.Tasks.Deadline || {}),BX.UI.FormElements,BX.Tasks,BX.Main,BX.UI.DatePicker,BX.Event,BX.Main,BX.UI,BX,BX.Tasks));
+}((this.BX.Tasks.Deadline = this.BX.Tasks.Deadline || {}),BX.UI.FormElements,BX.Tasks,BX.Main,BX.UI.DatePicker,BX.Event,BX.Main,BX.UI,BX,BX.Tasks,BX.UI.Analytics));
 //# sourceMappingURL=notification.bundle.js.map

@@ -44,7 +44,7 @@ jn.define('tasks/statemanager/redux/slices/flows/src/tool', (require, exports, m
 		groupId,
 		templateId,
 		efficiency,
-		efficiencySuccess: Number(efficiency) >= 70,
+		efficiencySuccess: Number(efficiency) >= 80,
 		active,
 		demo,
 		enableFlowUrl,

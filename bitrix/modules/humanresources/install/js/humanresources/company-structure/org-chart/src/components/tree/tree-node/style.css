@@ -332,6 +332,34 @@
 	white-space: nowrap;
 }
 
+.humanresources-tree__node_head-subordinates {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+
+	margin-left: 4px;
+	background-color: var(--ui-color-palette-gray-10);
+	border-radius: 32px;
+	padding: 2px 8px 3px 8px;
+	color: var(--ui-color-palette-gray-90);
+}
+
+.humanresources-tree__node_head-subordinates:hover {
+	background-color: var(--ui-color-palette-gray-20);
+}
+
+.humanresources-tree__node_head-name-container {
+	display: flex;
+	flex-direction: row;
+}
+
+.hr-company-structure_org-chart-tree__node-subordinates-text {
+	font-size: var(--ui-font-size-4xs);
+	line-height: var(--ui-font-line-height-reset);
+	font-weight: var(--ui-font-weight-semi-bold, 600);
+	color: var(--ui-color-palette-gray-80);
+}
+
 .humanresources-tree__node_head-name,
 .humanresources-tree__node_head-position {
 	display: block;

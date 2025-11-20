@@ -10,5 +10,7 @@ return [
 		'im:messenger/lib/params',
 		'im:chat/utils',
 		'im:lib/theme',
+		'im:messenger/lib/feature',
+		'im:messenger-v2/controller/recent/manager',
 	],
 ];

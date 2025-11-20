@@ -7,7 +7,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	'use strict';
 
 	const accomplicesMeta = Object.freeze({
-	  id: 'accomplicesIds',
+	  id: tasks_v2_const.TaskField.Accomplices,
 	  title: main_core.Loc.getMessage('TASKS_V2_ACCOMPLICES_TITLE')
 	});
 

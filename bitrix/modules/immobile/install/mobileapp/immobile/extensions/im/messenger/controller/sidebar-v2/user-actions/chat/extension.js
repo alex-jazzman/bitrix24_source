@@ -5,16 +5,46 @@ jn.define('im/messenger/controller/sidebar-v2/user-actions/chat', (require, expo
 	const { ChatService } = require('im/messenger/provider/services/chat');
 	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
+	const { ClearChatHistory } = require('im/messenger/lib/clear-history');
 	const { EventType } = require('im/messenger/const');
 	const { getLogger } = require('im/messenger/lib/logger');
-	const { Notification } = require('im/messenger/lib/ui/notification');
+	const { Notification, ToastType } = require('im/messenger/lib/ui/notification');
 	const { ChatDataProvider, RecentDataProvider } = require('im/messenger/provider/data');
 	const { backToRecentChats } = require('im/messenger/controller/sidebar-v2/user-actions/navigation');
-	const { resolveDeleteDialogConfirmFn, resolveDeleteDialogToastType } = require('im/messenger/controller/sidebar-v2/user-actions/alerts');
+	const { resolveDeleteDialogConfirmFn, resolveDeleteDialogToastType, resolveClearHistoryDialogConfirmFn } = require('im/messenger/controller/sidebar-v2/user-actions/alerts');
 	const { SIDEBAR_DEFAULT_TOAST_OFFSET } = require('im/messenger/controller/sidebar-v2/const');
 
 	const analyticsService = AnalyticsService.getInstance();
 	const logger = getLogger('SidebarV2.UserActions.Chat');
+
+	/**
+	 *
+	 * @param {DialogId} dialogId
+	 * @param {boolean} forAll
+	 */
+	function onClearHistoryChat({ dialogId, forAll })
+	{
+		const confirm = resolveClearHistoryDialogConfirmFn(dialogId);
+
+		confirm({
+			forAll,
+			deleteCallback: () => onClearHistoryChatConfirmed(dialogId),
+		});
+	}
+
+	async function onClearHistoryChatConfirmed(dialogId)
+	{
+		try
+		{
+			await ClearChatHistory.clear(dialogId);
+			Notification.showToast(ToastType.clearMessagesHistory);
+		}
+		catch (error)
+		{
+			logger.error('onClearHistoryChat.error', error);
+			Notification.showErrorToast();
+		}
+	}
 
 	function onDeleteChat(dialogId, { onError } = {})
 	{
@@ -71,5 +101,5 @@ jn.define('im/messenger/controller/sidebar-v2/user-actions/chat', (require, expo
 		}
 	}
 
-	module.exports = { onDeleteChat };
+	module.exports = { onDeleteChat, onClearHistoryChat };
 });

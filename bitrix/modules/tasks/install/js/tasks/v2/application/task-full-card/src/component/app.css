@@ -44,11 +44,16 @@
 }
 
 .tasks-full-card-content {
+	position: relative;
 	flex: 1;
 	display: flex;
 	flex-direction: column;
 	overflow-y: scroll;
 	--scrollbar-width: 5px;
+}
+
+.tasks-full-card.--blur .tasks-full-card-content {
+	filter: blur(2px);
 }
 
 .tasks-full-card-content.--disable-scroll {
@@ -83,12 +88,6 @@
 	transition: .2s;
 }
 
-.tasks-full-card-title {
-	display: flex;
-	--padding-bottom: 12px;
-	padding: 22px calc(22px - var(--scrollbar-width)) var(--padding-bottom) 22px;
-}
-
 .tasks-full-card .tasks-card-description-field {
 	margin: 0 calc(var(--ui-space-inline-xl) - var(--scrollbar-width)) var(--ui-space-stack-md) var(--ui-space-inline-md2);
 }
@@ -100,20 +99,13 @@
 	padding: 0 calc(22px - var(--scrollbar-width)) 22px 22px;
 }
 
-.tasks-full-card-chips {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 10px;
-	padding-top: 6px;
-}
-
 .tasks-full-card-footer {
 	box-sizing: border-box;
 	z-index: 1;
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
-	min-height: 86px;
+	min-height: 78px;
 	margin-top: auto;
 	padding: 20px 22px;
 	background: var(--ui-color-base-8);
@@ -137,7 +129,7 @@
 }
 
 .tasks-full-card-field-container.--description-preview {
-	padding: 0 var(--ui-space-inset-md2);
+	padding: 0;
 }
 
 .tasks-full-card-chips-fields {

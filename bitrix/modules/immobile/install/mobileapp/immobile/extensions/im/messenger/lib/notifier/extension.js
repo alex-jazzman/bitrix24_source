@@ -8,9 +8,24 @@ jn.define('im/messenger/lib/notifier', (require, exports, module) => {
 
 	const { Theme } = require('im/lib/theme');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
-	const { EventType } = require('im/messenger/const');
+	const {
+		EventType,
+		RecentTab,
+		NavigationTabId,
+	} = require('im/messenger/const');
 	const { VisibilityManager } = require('im/messenger/lib/visibility-manager');
 	const { MessengerParams } = require('im/messenger/lib/params');
+	const { Feature } = require('im/messenger/lib/feature');
+	const { RecentManager } = require('im/messenger-v2/controller/recent/manager');
+
+	// TODO: MessengerV2 move to helper
+	const RecentTabByNavigationTab = {
+		[NavigationTabId.chats]: RecentTab.chat,
+		[NavigationTabId.copilot]: RecentTab.copilot,
+		[NavigationTabId.collab]: RecentTab.collab,
+		[NavigationTabId.channel]: RecentTab.openChannel,
+		[NavigationTabId.task]: RecentTab.tasksTask,
+	};
 
 	/**
 	 * @class Notifier
@@ -50,6 +65,7 @@ jn.define('im/messenger/lib/notifier', (require, exports, module) => {
 		 * @param {string} options.dialogId
 		 * @param {string} options.title
 		 * @param {string} options.text
+		 * @param {object} options.recentConfig
 		 * @param {string} [options.avatar]
 		 * @param delay
 		 *
@@ -77,10 +93,26 @@ jn.define('im/messenger/lib/notifier', (require, exports, module) => {
 			const navigationContext = await PageManager.getNavigator().getNavigationContext();
 			if (navigationContext.isTabActive)
 			{
-				const activeTabInfo = await this.visibilityManager.getActiveTabInfo();
-				if (activeTabInfo.componentCode === MessengerParams.getComponentCode())
+				if (Feature.isMessengerV2Enabled)
 				{
-					return false;
+					if (Type.isPlainObject(options.recentConfig) && Type.isArrayFilled(options.recentConfig.sections))
+					{
+						const sections = options.recentConfig.sections;
+						const tabId = RecentManager.getInstance().getActiveRecentId();
+						const currentRecentTab = RecentTabByNavigationTab[tabId];
+						if (sections.includes(currentRecentTab))
+						{
+							return false;
+						}
+					}
+				}
+				else
+				{
+					const activeTabInfo = await this.visibilityManager.getActiveTabInfo();
+					if (activeTabInfo.componentCode === MessengerParams.getComponentCode())
+					{
+						return false;
+					}
 				}
 			}
 

@@ -10,6 +10,7 @@ jn.define('im/messenger/lib/element/dialog/message/element/comment-info/comment-
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { ColorUtils } = require('im/messenger/lib/utils');
 	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
+	const { Feature } = require('im/messenger/lib/feature');
 
 	/**
 	 * @class CommentInfo
@@ -92,12 +93,21 @@ jn.define('im/messenger/lib/element/dialog/message/element/comment-info/comment-
 		 */
 		#getUnreadCounter()
 		{
-			const unreadCounter = serviceLocator.get('core').getStore()
-				.getters['commentModel/getCommentCounter']?.({
-					channelId: this.#channelId,
-					commentChatId: this.#commentInfo.chatId,
-				})
-			;
+			const store = serviceLocator.get('core').getStore();
+			let unreadCounter = 0;
+
+			if (Feature.isMessengerV2Enabled)
+			{
+				unreadCounter = store.getters['counterModel/getCounterByChatId'](this.#commentInfo.chatId);
+			}
+			else
+			{
+				unreadCounter = store
+					.getters['commentModel/getCommentCounter']?.({
+						channelId: this.#channelId,
+						commentChatId: this.#commentInfo.chatId,
+					});
+			}
 
 			if (unreadCounter === 0)
 			{

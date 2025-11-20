@@ -17,6 +17,7 @@ jn.define('im/messenger/db/model-writer/vuex', (require, exports, module) => {
 	const { DraftWriter } = require('im/messenger/db/model-writer/src/vuex/draft');
 	const { CommentWriter } = require('im/messenger/db/model-writer/src/vuex/comment');
 	const { VoteWriter } = require('im/messenger/db/model-writer/vuex/vote');
+	const { TranscriptWriter } = require('im/messenger/db/model-writer/vuex/transcript');
 
 	class VuexModelWriter
 	{
@@ -34,6 +35,7 @@ jn.define('im/messenger/db/model-writer/vuex', (require, exports, module) => {
 		 *  reaction: ReactionRepository,
 		 *  comment: CommentRepository,
 		 *  vote: VoteRepository,
+		 *  transcript: TranscriptRepository
 		 * }} options.repository
 		 */
 		constructor(options)
@@ -66,6 +68,7 @@ jn.define('im/messenger/db/model-writer/vuex', (require, exports, module) => {
 			this.draftWriter = new DraftWriter(writerOptions);
 			this.commentWriter = new CommentWriter(writerOptions);
 			this.voteWriter = new VoteWriter(writerOptions);
+			this.transcriptWriter = new TranscriptWriter(writerOptions);
 		}
 	}
 

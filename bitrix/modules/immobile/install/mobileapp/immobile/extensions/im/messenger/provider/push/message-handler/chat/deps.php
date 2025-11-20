@@ -5,6 +5,4 @@ return [
 		'im:messenger/provider/push/message-handler/base',
 		'im:messenger/lib/feature',
 	],
-	'bundle' => [
-	],
 ];

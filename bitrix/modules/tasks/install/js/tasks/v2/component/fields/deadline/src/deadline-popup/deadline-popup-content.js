@@ -175,6 +175,11 @@ export const DeadlinePopupContent = {
 	},
 	template: `
 		<div class="tasks-field-deadline-popup">
+			<div class="tasks-field-deadline-picker-container">
+				<div class="tasks-field-deadline-picker" ref="picker">
+					<BIcon v-if="false" class="tasks-field-deadline-picker-settings" :name="Outline.FILTER_2_LINES"/>
+				</div>
+			</div>
 			<div class="tasks-field-deadline-presets">
 				<template v-for="(preset, index) of presets" :key="index">
 					<div
@@ -188,11 +193,6 @@ export const DeadlinePopupContent = {
 						<div class="tasks-field-deadline-preset-date">{{ preset.formatted }}</div>
 					</div>
 				</template>
-			</div>
-			<div class="tasks-field-deadline-picker-container">
-				<div class="tasks-field-deadline-picker" ref="picker">
-					<BIcon v-if="false" class="tasks-field-deadline-picker-settings" :name="Outline.FILTER_2_LINES"/>
-				</div>
 			</div>
 			<div v-if="false" class="tasks-field-deadline-settings">
 			</div>

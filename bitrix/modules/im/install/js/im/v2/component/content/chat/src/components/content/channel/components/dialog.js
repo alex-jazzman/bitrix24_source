@@ -132,7 +132,7 @@ export const ChannelDialog = {
 		},
 	},
 	template: `
-		<ChatDialog ref="dialog" :dialogId="dialogId" :resetOnExit="isGuest">
+		<ChatDialog ref="dialog" :dialogId="dialogId" :clearOnExit="isGuest">
 			<template #additional-float-button>
 				<CommentsButton
 					v-if="showCommentsButton"

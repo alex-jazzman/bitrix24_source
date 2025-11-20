@@ -19,6 +19,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    readonly: {
 	      type: Boolean,
 	      default: false
+	    },
+	    transparentHover: {
+	      type: Boolean,
+	      default: false
 	    }
 	  },
 	  emits: ['clear'],
@@ -28,7 +32,11 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    };
 	  },
 	  template: `
-		<div class="b24-hover-pill" :class="{ '--readonly': readonly }" tabindex="0">
+		<div
+			class="b24-hover-pill"
+			:class="{ '--readonly': readonly, '--transparent': transparentHover }"
+			tabindex="0"
+		>
 			<div class="b24-hover-pill-content">
 				<slot/>
 			</div>

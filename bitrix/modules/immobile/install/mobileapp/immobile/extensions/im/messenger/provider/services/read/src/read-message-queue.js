@@ -36,7 +36,11 @@ jn.define('im/messenger/provider/services/read/read-message-queue', (require, ex
 		}
 
 		/**
-		 * @returns {Promise<{chatId: number, messageList: Array<number>}>}
+		 * @returns {Promise<{
+		 * chatId: number,
+		 * messageList: Array<number>,
+		 * hasMoreForChat: boolean,
+		 * }>}
 		 */
 		async getMessageChunk()
 		{
@@ -54,9 +58,12 @@ jn.define('im/messenger/provider/services/read/read-message-queue', (require, ex
 				.slice(0, MESSAGE_CHUNK_SIZE)
 			;
 
+			const hasMoreForChat = messageList.length !== this.#localQueue[chatId].size;
+
 			return {
 				chatId: Number(chatId),
 				messageList,
+				hasMoreForChat,
 			};
 		}
 

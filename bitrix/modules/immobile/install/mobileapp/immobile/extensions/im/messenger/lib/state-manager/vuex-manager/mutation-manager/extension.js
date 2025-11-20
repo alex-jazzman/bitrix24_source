@@ -20,7 +20,8 @@ jn.define('im/messenger/lib/state-manager/vuex-manager/mutation-manager', (requi
 			if (this.checkPostCompleteByMutation(mutation))
 			{
 				logger.log('MessengerMutationManager: handlers are executed for', mutation);
-				this.postCompleteEvent(mutation, state);
+				// don't send state in the event, this overloads the app
+				this.postCompleteEvent(mutation);
 			}
 		}
 
@@ -30,7 +31,8 @@ jn.define('im/messenger/lib/state-manager/vuex-manager/mutation-manager', (requi
 		 */
 		checkPostCompleteByMutation(mutation)
 		{
-			if (mutation?.type.includes('messagesModel'))
+			const availableMutationsName = ['messagesModel'];
+			if (availableMutationsName.some((modelName) => mutation?.type.includes(modelName)))
 			{
 				return true;
 			}
@@ -40,12 +42,11 @@ jn.define('im/messenger/lib/state-manager/vuex-manager/mutation-manager', (requi
 
 		/**
 		 * @param {Object} mutation
-		 * @param {Object} state
 		 * @void
 		 */
-		postCompleteEvent(mutation, state)
+		postCompleteEvent(mutation)
 		{
-			BX.postComponentEvent(MessengerMutationManagerEvent.handleComplete, [mutation, state]);
+			BX.postComponentEvent(MessengerMutationManagerEvent.handleComplete, [mutation]);
 		}
 	}
 

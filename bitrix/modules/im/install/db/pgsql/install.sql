@@ -198,6 +198,7 @@ CREATE TABLE b_im_bot (
 	METHOD_MESSAGE_DELETE varchar(255),
 	METHOD_WELCOME_MESSAGE varchar(255),
 	METHOD_CONTEXT_GET varchar(255),
+	METHOD_REACTION_CHANGE varchar(255),
 	TEXT_PRIVATE_WELCOME_MESSAGE text,
 	TEXT_CHAT_WELCOME_MESSAGE text,
 	COUNT_COMMAND int DEFAULT 0,
@@ -208,6 +209,7 @@ CREATE TABLE b_im_bot (
 	VERIFIED char(1) DEFAULT 'N',
 	OPENLINE char(1) DEFAULT 'N',
 	HIDDEN char(1) DEFAULT 'N',
+	REACTIONS_ENABLED char(1) DEFAULT 'N',
 	BACKGROUND_ID varchar(50),
 	PRIMARY KEY (BOT_ID)
 );
@@ -665,8 +667,6 @@ CREATE TABLE b_im_log (
 );
 CREATE UNIQUE INDEX ux_b_im_log_user_id_entity_type_entity_id ON b_im_log (user_id, entity_type, entity_id);
 CREATE INDEX ix_b_im_log_user_id_date_create ON b_im_log (user_id, date_create);
-CREATE INDEX ix_b_im_log_user_id ON b_im_log (user_id);
-CREATE INDEX ix_b_im_log_date_delete ON b_im_log (date_delete);
 
 CREATE TABLE b_im_last_message
 (

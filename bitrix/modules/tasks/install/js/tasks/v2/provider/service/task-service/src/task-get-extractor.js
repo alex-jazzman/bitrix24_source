@@ -42,10 +42,10 @@ export class TaskGetExtractor
 	getUsers(): UserModel[]
 	{
 		return [
-			this.#data.creator,
-			this.#data.responsible,
-			...this.#data.accomplices,
-			...this.#data.auditors,
+			this.#data.creator ?? [],
+			this.#data.responsible ?? [],
+			...this.#data?.accomplices ?? [],
+			...this.#data?.auditors ?? [],
 		].map((userDto: UserDto): UserModel => UserMappers.mapDtoToModel(userDto));
 	}
 }

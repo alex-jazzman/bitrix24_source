@@ -102,7 +102,7 @@ export const ChatDescription = {
 
 			if (this.isCopilotChat)
 			{
-				return CopilotManager.getAIModelName(this.dialogId);
+				return (new CopilotManager()).getAIModelName(this.dialogId);
 			}
 
 			if (this.isBot)

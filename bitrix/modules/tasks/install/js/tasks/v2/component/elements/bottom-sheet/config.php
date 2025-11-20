@@ -8,7 +8,8 @@ return [
 	'css' => 'dist/bottom-sheet.bundle.css',
 	'js' => 'dist/bottom-sheet.bundle.js',
 	'rel' => [
-		'main.core',
+		'main.polyfill.core',
+		'ui.vue3.components.popup',
 	],
-	'skip_core' => false,
+	'skip_core' => true,
 ];

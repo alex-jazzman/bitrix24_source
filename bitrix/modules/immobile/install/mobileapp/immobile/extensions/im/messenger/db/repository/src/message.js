@@ -7,6 +7,7 @@ jn.define('im/messenger/db/repository/message', (require, exports, module) => {
 	const { Feature } = require('im/messenger/lib/feature');
 	const {
 		FileTable,
+		TranscriptTable,
 		UserTable,
 		ReactionTable,
 		MessageTable,
@@ -36,6 +37,7 @@ jn.define('im/messenger/db/repository/message', (require, exports, module) => {
 		constructor()
 		{
 			this.fileTable = new FileTable();
+			this.tanscriptTable = new TranscriptTable();
 			this.userTable = new UserTable();
 			this.reactionTable = new ReactionTable();
 			this.messageTable = new MessageTable();
@@ -492,7 +494,7 @@ jn.define('im/messenger/db/repository/message', (require, exports, module) => {
 			}
 			catch (error)
 			{
-				logger.error('MessageRepository: messageTable.deleteByIdList error: ', error);
+				logger.error(`${this.constructor.name}: messageTable.deleteByIdList error: `, error);
 			}
 
 			try
@@ -501,7 +503,16 @@ jn.define('im/messenger/db/repository/message', (require, exports, module) => {
 			}
 			catch (error)
 			{
-				logger.error('MessageRepository: fileTable.deleteByIdList error: ', error);
+				logger.error(`${this.constructor.name}: fileTable.deleteByIdList error: `, error);
+			}
+
+			try
+			{
+				await this.tanscriptTable.deleteByIdList(fileIdList);
+			}
+			catch (error)
+			{
+				logger.error(`${this.constructor.name}: tanscriptTable.deleteByIdList error: `, error);
 			}
 
 			try
@@ -510,7 +521,7 @@ jn.define('im/messenger/db/repository/message', (require, exports, module) => {
 			}
 			catch (error)
 			{
-				logger.error('MessageRepository: voteTable.deleteByIdList error: ', error);
+				logger.error(`${this.constructor.name}: voteTable.deleteByIdList error: `, error);
 			}
 		}
 

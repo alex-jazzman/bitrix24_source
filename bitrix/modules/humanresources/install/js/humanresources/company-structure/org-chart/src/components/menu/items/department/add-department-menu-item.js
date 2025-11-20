@@ -88,6 +88,7 @@ export class AddDepartmentMenuItem extends AbstractMenuItem
 				isEditMode: false,
 				showEntitySelector: true,
 				source: analyticSource,
+				entityType,
 			});
 		}
 	}

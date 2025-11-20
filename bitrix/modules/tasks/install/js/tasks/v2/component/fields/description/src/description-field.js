@@ -86,9 +86,9 @@ export const DescriptionField = {
 		},
 	},
 	template: `
-		<slot 
-			:isShown="isSlotShown" 
-			:doOpenInEditMode="doOpenInEditMode" 
+		<slot
+			:isShown="isSlotShown"
+			:doOpenInEditMode="doOpenInEditMode"
 			:close="closeSlot"
 		/>
 		<div

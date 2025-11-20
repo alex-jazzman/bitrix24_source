@@ -116,6 +116,16 @@ jn.define('im/messenger/provider/push/message-handler/lib/helper', (require, exp
 			return this.getChatType() === DialogType.copilot;
 		}
 
+		isCollabChat()
+		{
+			return this.getChatType() === DialogType.collab;
+		}
+
+		isTaskChat()
+		{
+			return this.getChatType() === DialogType.tasksTask;
+		}
+
 		isLines()
 		{
 			return !Type.isNil(this.#event.params.lines);

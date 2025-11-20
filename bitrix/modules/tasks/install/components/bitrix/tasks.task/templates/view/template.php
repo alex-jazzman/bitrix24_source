@@ -1008,6 +1008,8 @@ if (!empty($request->get('ta_sec')))
 		$request->get('ta_el'),
 		$request->get('ta_sub'),
 		$params,
+		$request->get('ta_ev'),
+		$request->get('ta_type')
 	);
 }
 ?>

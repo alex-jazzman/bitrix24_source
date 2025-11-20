@@ -6,7 +6,7 @@
 jn.define('im/messenger/provider/pull/chat/user', (require, exports, module) => {
 	const { BasePullHandler } = require('im/messenger/provider/pull/base');
 	const { RecentDataConverter } = require('im/messenger/lib/converter/data/recent');
-	const { TabCounters } = require('im/messenger/lib/counters/tab-counters');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { getLogger } = require('im/messenger/lib/logger');
 	const logger = getLogger('pull-handler--chat-user');
 
@@ -17,7 +17,7 @@ jn.define('im/messenger/provider/pull/chat/user', (require, exports, module) => 
 	{
 		handleUserInvite(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
@@ -34,7 +34,7 @@ jn.define('im/messenger/provider/pull/chat/user', (require, exports, module) => 
 
 		handleBotDelete(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
@@ -42,7 +42,7 @@ jn.define('im/messenger/provider/pull/chat/user', (require, exports, module) => 
 			logger.info('ChatUserPullHandler.handleBotDelete', params);
 
 			this.store.dispatch('recentModel/delete', { id: params.botId })
-				.then(() => TabCounters.update())
+				.then(() => serviceLocator.get('tab-counters').update())
 				.catch((err) => logger.error('ChatUserPullHandler.handleDeleteBot.recentModel/delete.catch:', err))
 			;
 		}
@@ -55,7 +55,7 @@ jn.define('im/messenger/provider/pull/chat/user', (require, exports, module) => 
 		 */
 		handleUserUpdate(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
@@ -74,7 +74,7 @@ jn.define('im/messenger/provider/pull/chat/user', (require, exports, module) => 
 		 */
 		handleBotAdd(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
@@ -92,7 +92,7 @@ jn.define('im/messenger/provider/pull/chat/user', (require, exports, module) => 
 		 */
 		handleBotUpdate(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}

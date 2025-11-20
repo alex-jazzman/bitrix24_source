@@ -30,18 +30,21 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/files/src/content', (require,
 		{
 			this.storeManager.on('sidebarModel/sidebarFilesModel/set', this.onSetSidebarFilesStore);
 			this.storeManager.on('sidebarModel/sidebarFilesModel/delete', this.onDeleteSidebarFilesStore);
+			this.storeManager.on('sidebarModel/sidebarFilesModel/deleteByChatId', this.onDeleteAllDataSidebarFilesStore);
 		}
 
 		unsubscribeStoreEvents()
 		{
 			this.storeManager.off('sidebarModel/sidebarFilesModel/set', this.onSetSidebarFilesStore);
 			this.storeManager.off('sidebarModel/sidebarFilesModel/delete', this.onDeleteSidebarFilesStore);
+			this.storeManager.off('sidebarModel/sidebarFilesModel/deleteByChatId', this.onDeleteAllDataSidebarFilesStore);
 		}
 
 		bindMethods()
 		{
 			this.onSetSidebarFilesStore = this.onSetSidebarFilesStore.bind(this);
 			this.onDeleteSidebarFilesStore = this.onDeleteSidebarFilesStore.bind(this);
+			this.onDeleteAllDataSidebarFilesStore = this.onDeleteAllDataSidebarFilesStore.bind(this);
 		}
 
 		getItemsFromStore()
@@ -95,6 +98,23 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/files/src/content', (require,
 			}
 
 			void this.deleteItemById(id);
+		}
+
+		/**
+		 * @param {object} mutation
+		 * @param {object} mutation.payload
+		 * @param {SidebarFilesDeleteByChatIdData} mutation.payload.data
+		 */
+		onDeleteAllDataSidebarFilesStore(mutation)
+		{
+			const { chatId } = mutation.payload.data;
+
+			if (chatId !== this.chatId)
+			{
+				return;
+			}
+
+			void this.deleteAllData();
 		}
 
 		/**

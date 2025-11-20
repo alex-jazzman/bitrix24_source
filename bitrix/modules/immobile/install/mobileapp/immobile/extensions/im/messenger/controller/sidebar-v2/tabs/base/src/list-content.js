@@ -164,6 +164,21 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/base/src/list-content', (requ
 		}
 
 		/**
+		 * @protected
+		 * @param {string} [animation='none']
+		 * @return {Promise<void>}
+		 */
+		async deleteAllData(animation = 'none')
+		{
+			return new Promise((resolve) => {
+				const rowKeys = new Set(this.getItems().map((item) => item.getKey()));
+				const afterDelete = () => this.setState({ items: [] }, resolve);
+
+				this.listViewRef.deleteRowsByKeys([...rowKeys], animation, afterDelete);
+			});
+		}
+
+		/**
 		 * @param {Array<SidebarTabListItemModel>} items
 		 * @param {string} animation
 		 * @returns {Promise<void>}

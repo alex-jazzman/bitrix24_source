@@ -206,7 +206,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	});
 
 	const isNotes = chatContext => {
-	  return chatContext.type === im_v2_const.ChatType.user && Number(chatContext.dialogId) === im_v2_application_core.Core.getUserId();
+	  return im_v2_application_core.Core.getStore().getters['chats/isNotes'](chatContext.dialogId);
 	};
 	const notesPreset = new SidebarPreset({
 	  blocks: [im_v2_const.SidebarMainPanelBlock.notes, im_v2_const.SidebarMainPanelBlock.tariffLimit, im_v2_const.SidebarMainPanelBlock.info, im_v2_const.SidebarMainPanelBlock.fileList, im_v2_const.SidebarMainPanelBlock.fileUnsortedList]
@@ -254,6 +254,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const isCopilot = chatContext => chatContext.type === im_v2_const.ChatType.copilot;
 	const copilotPreset = new SidebarPreset({
 	  blocks: [im_v2_const.SidebarMainPanelBlock.copilot, im_v2_const.SidebarMainPanelBlock.tariffLimit, im_v2_const.SidebarMainPanelBlock.copilotInfo, im_v2_const.SidebarMainPanelBlock.taskList, im_v2_const.SidebarMainPanelBlock.meetingList]
+	});
+
+	const isTaskComments = chatContext => chatContext.type === im_v2_const.ChatType.taskComments;
+	const taskCommentsPreset = new SidebarPreset({
+	  blocks: [im_v2_const.SidebarMainPanelBlock.task, im_v2_const.SidebarMainPanelBlock.info, im_v2_const.SidebarMainPanelBlock.fileList, im_v2_const.SidebarMainPanelBlock.meetingList],
+	  isHeaderMenuEnabled: () => false
 	});
 
 	var _instance = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("instance");
@@ -308,6 +314,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	}
 	function _registerDefaultConfigs2() {
 	  // most specific configs first
+	  babelHelpers.classPrivateFieldLooseBase(this, _defaultConfigMap)[_defaultConfigMap].set(isTaskComments, taskCommentsPreset);
 	  babelHelpers.classPrivateFieldLooseBase(this, _defaultConfigMap)[_defaultConfigMap].set(isCopilot, copilotPreset);
 	  babelHelpers.classPrivateFieldLooseBase(this, _defaultConfigMap)[_defaultConfigMap].set(isChannel, channelPreset);
 	  babelHelpers.classPrivateFieldLooseBase(this, _defaultConfigMap)[_defaultConfigMap].set(isComment, commentPreset);

@@ -74,7 +74,12 @@ jn.define('settings-v2/ui/items/src/loc-selector', (require, exports, module) =>
 
 			const title = Loc.getMessage('SETTINGS_V2_STRUCTURE_UI_ITEMS_LOC_SELECTOR_TITLE');
 
-			this.selectWidget = await this.layoutWidget.openWidget('layout', { title });
+			this.selectWidget = await this.layoutWidget.openWidget('layout', {
+				titleParams: {
+					text: title,
+					type: 'dialog',
+				},
+			});
 			this.selectWidget.showComponent(menu);
 		};
 

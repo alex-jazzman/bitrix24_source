@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
-(function (exports,tasks_v2_model_users,tasks_v2_provider_service_userService,ui_vue3_vuex,tasks_v2_const,tasks_v2_core,tasks_v2_lib_apiClient) {
+(function (exports,tasks_v2_model_users,tasks_v2_provider_service_userService,main_core,ui_vue3_vuex,tasks_v2_const,tasks_v2_core,tasks_v2_lib_apiClient) {
 	'use strict';
 
 	function prepareCheckLists(checklist) {
@@ -12,9 +12,11 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    parentNodeIdMap.set(item.id, item.nodeId);
 	  });
 	  return checklist.map(item => {
+	    const title = prepareTitle(item);
 	    const parentNodeId = item.parentId ? parentNodeIdMap.get(item.parentId) : 0;
 	    return {
 	      ...item,
+	      title,
 	      parentNodeId
 	    };
 	  });
@@ -93,6 +95,9 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    return [item.nodeId, node];
 	  }));
 	}
+	function getUserIdsFromChecklists(checkLists, userType) {
+	  return checkLists.flatMap(item => (item[userType] || []).map(user => user.id)).filter((id, idx, arr) => arr.indexOf(id) === idx);
+	}
 	function prepareTitle(item) {
 	  var _item$accomplices2, _item$auditors2;
 	  const names = [...((_item$accomplices2 = item.accomplices) != null ? _item$accomplices2 : []).map(member => member.name), ...((_item$auditors2 = item.auditors) != null ? _item$auditors2 : []).map(member => member.name)].join(' ');
@@ -103,9 +108,32 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	}
 
 	var _getPromises = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getPromises");
+	var _updateFields = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateFields");
+	var _updatePromises = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updatePromises");
+	var _updateServerCheckListDebounced = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateServerCheckListDebounced");
+	var _updateCheckListDebounced = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateCheckListDebounced");
+	var _updateCheckList = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateCheckList");
 	class CheckListService {
 	  constructor() {
+	    Object.defineProperty(this, _updateCheckList, {
+	      value: _updateCheckList2
+	    });
+	    Object.defineProperty(this, _updateCheckListDebounced, {
+	      value: _updateCheckListDebounced2
+	    });
 	    Object.defineProperty(this, _getPromises, {
+	      writable: true,
+	      value: {}
+	    });
+	    Object.defineProperty(this, _updateFields, {
+	      writable: true,
+	      value: {}
+	    });
+	    Object.defineProperty(this, _updatePromises, {
+	      writable: true,
+	      value: {}
+	    });
+	    Object.defineProperty(this, _updateServerCheckListDebounced, {
 	      writable: true,
 	      value: {}
 	    });
@@ -147,11 +175,12 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	            checklist: prepareCheckLists(checklists)
 	          }
 	        });
-	        await Promise.all([this.$store.dispatch(`${tasks_v2_const.Model.Interface}/setDisableCheckListAnimations`, true), this.$store.dispatch(`${tasks_v2_const.Model.CheckList}/upsertMany`, savedList), this.$store.dispatch(`${tasks_v2_const.Model.Tasks}/update`, {
+	        const checkLists = savedList.map(it => mapDtoToModel(it));
+	        await Promise.all([this.$store.dispatch(`${tasks_v2_const.Model.Interface}/setDisableCheckListAnimations`, true), this.$store.dispatch(`${tasks_v2_const.Model.CheckList}/upsertMany`, checkLists), this.$store.dispatch(`${tasks_v2_const.Model.Tasks}/update`, {
 	          id: taskId,
 	          fields: {
-	            containsChecklist: savedList.length > 0,
-	            checklist: savedList.map(item => item.id)
+	            containsChecklist: checkLists.length > 0,
+	            checklist: checkLists.map(item => item.id)
 	          }
 	        })]);
 	        void this.$store.dispatch(`${tasks_v2_const.Model.Interface}/setDisableCheckListAnimations`, false);
@@ -188,35 +217,82 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	    });
 	  }
 	  async complete(taskId, checkListId) {
-	    await new tasks_v2_lib_apiClient.ApiClient('tasks.task.', 'data').post('checklist.complete', {
-	      taskId,
-	      checkListItemId: checkListId
+	    await babelHelpers.classPrivateFieldLooseBase(this, _updateCheckListDebounced)[_updateCheckListDebounced](taskId, checkListId, {
+	      isComplete: true
 	    });
 	  }
 	  async renew(taskId, checkListId) {
-	    await new tasks_v2_lib_apiClient.ApiClient('tasks.task.', 'data').post('checklist.renew', {
-	      taskId,
-	      checkListItemId: checkListId
+	    await babelHelpers.classPrivateFieldLooseBase(this, _updateCheckListDebounced)[_updateCheckListDebounced](taskId, checkListId, {
+	      isComplete: false
 	    });
 	  }
 	  async delete(taskId, checkListId) {
-	    await new tasks_v2_lib_apiClient.ApiClient('tasks.task.', 'data').post('checklist.delete', {
-	      taskId,
-	      checkListItemId: checkListId
-	    });
+	    const task = await this.$store.getters[`${tasks_v2_const.Model.Tasks}/getById`](taskId);
+	    const checklists = (await (task == null ? void 0 : task.checklist)) ? this.$store.getters[`${tasks_v2_const.Model.CheckList}/getByIds`](task.checklist) : [];
+	    await this.save(taskId, checklists);
 	  }
 	  get $store() {
 	    return tasks_v2_core.Core.getStore();
 	  }
 	}
+	async function _updateCheckListDebounced2(taskId, checkListId, fields) {
+	  var _babelHelpers$classPr3, _babelHelpers$classPr4, _babelHelpers$classPr5, _babelHelpers$classPr6, _babelHelpers$classPr7, _babelHelpers$classPr8, _babelHelpers$classPr9, _babelHelpers$classPr10, _babelHelpers$classPr11, _babelHelpers$classPr12;
+	  (_babelHelpers$classPr4 = (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _updateFields)[_updateFields])[taskId]) != null ? _babelHelpers$classPr4 : _babelHelpers$classPr3[taskId] = {};
+	  babelHelpers.classPrivateFieldLooseBase(this, _updateFields)[_updateFields][taskId][checkListId] = {
+	    ...babelHelpers.classPrivateFieldLooseBase(this, _updateFields)[_updateFields][taskId][checkListId],
+	    ...fields
+	  };
+	  (_babelHelpers$classPr6 = (_babelHelpers$classPr5 = babelHelpers.classPrivateFieldLooseBase(this, _updatePromises)[_updatePromises])[taskId]) != null ? _babelHelpers$classPr6 : _babelHelpers$classPr5[taskId] = {};
+	  (_babelHelpers$classPr8 = (_babelHelpers$classPr7 = babelHelpers.classPrivateFieldLooseBase(this, _updatePromises)[_updatePromises][taskId])[checkListId]) != null ? _babelHelpers$classPr8 : _babelHelpers$classPr7[checkListId] = new Resolvable();
+	  (_babelHelpers$classPr10 = (_babelHelpers$classPr9 = babelHelpers.classPrivateFieldLooseBase(this, _updateServerCheckListDebounced)[_updateServerCheckListDebounced])[taskId]) != null ? _babelHelpers$classPr10 : _babelHelpers$classPr9[taskId] = {};
+	  (_babelHelpers$classPr12 = (_babelHelpers$classPr11 = babelHelpers.classPrivateFieldLooseBase(this, _updateServerCheckListDebounced)[_updateServerCheckListDebounced][taskId])[checkListId]) != null ? _babelHelpers$classPr12 : _babelHelpers$classPr11[checkListId] = main_core.Runtime.debounce(babelHelpers.classPrivateFieldLooseBase(this, _updateCheckList)[_updateCheckList], 300, this);
+	  babelHelpers.classPrivateFieldLooseBase(this, _updateServerCheckListDebounced)[_updateServerCheckListDebounced][taskId][checkListId](taskId, checkListId);
+	  await babelHelpers.classPrivateFieldLooseBase(this, _updatePromises)[_updatePromises][taskId][checkListId];
+	}
+	async function _updateCheckList2(taskId, checkListId) {
+	  const fields = babelHelpers.classPrivateFieldLooseBase(this, _updateFields)[_updateFields][taskId][checkListId];
+	  delete babelHelpers.classPrivateFieldLooseBase(this, _updateFields)[_updateFields][taskId][checkListId];
+	  const promise = babelHelpers.classPrivateFieldLooseBase(this, _updatePromises)[_updatePromises][taskId][checkListId];
+	  delete babelHelpers.classPrivateFieldLooseBase(this, _updatePromises)[_updatePromises][taskId][checkListId];
+	  try {
+	    // Update store immediately for optimistic UI
+	    await this.$store.dispatch(`${tasks_v2_const.Model.CheckList}/update`, {
+	      id: checkListId,
+	      fields
+	    });
+
+	    // Get updated checklists and save to server
+	    const task = await this.$store.getters[`${tasks_v2_const.Model.Tasks}/getById`](taskId);
+	    const checklists = (await (task == null ? void 0 : task.checklist)) ? this.$store.getters[`${tasks_v2_const.Model.CheckList}/getByIds`](task.checklist) : [];
+	    await new tasks_v2_lib_apiClient.ApiClient().post('CheckList.save', {
+	      task: {
+	        id: taskId,
+	        checklist: prepareCheckLists(checklists)
+	      }
+	    });
+	    promise.resolve();
+	  } catch (error) {
+	    console.error('CheckListService: update error', error);
+	    promise.resolve();
+	  }
+	}
 	const checkListService = new CheckListService();
+	function Resolvable() {
+	  let resolve;
+	  const promise = new Promise(res => {
+	    resolve = res;
+	  });
+	  promise.resolve = resolve;
+	  return promise;
+	}
 
 	const CheckListMappers = {
-	  mapModelToSliderData
+	  mapModelToSliderData,
+	  getUserIdsFromChecklists
 	};
 
 	exports.CheckListMappers = CheckListMappers;
 	exports.checkListService = checkListService;
 
-}((this.BX.Tasks.V2.Provider.Service = this.BX.Tasks.V2.Provider.Service || {}),BX.Tasks.V2.Model,BX.Tasks.V2.Provider.Service,BX.Vue3.Vuex,BX.Tasks.V2.Const,BX.Tasks.V2,BX.Tasks.V2.Lib));
+}((this.BX.Tasks.V2.Provider.Service = this.BX.Tasks.V2.Provider.Service || {}),BX.Tasks.V2.Model,BX.Tasks.V2.Provider.Service,BX,BX.Vue3.Vuex,BX.Tasks.V2.Const,BX.Tasks.V2,BX.Tasks.V2.Lib));
 //# sourceMappingURL=check-list-service.bundle.js.map

@@ -2,7 +2,7 @@ import { UI } from 'ui.notification';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 import { mapState } from 'ui.vue3.pinia';
 import { Event } from 'main.core';
-import { useChartStore } from 'humanresources.company-structure.chart-store';
+import { useChartStore, UserService } from 'humanresources.company-structure.chart-store';
 import { getMemberRoles, reportedErrorTypes } from 'humanresources.company-structure.api';
 import { DepartmentContentActions } from 'humanresources.company-structure.department-content';
 import { StepIds, AuthorityTypes } from '../consts';
@@ -11,7 +11,7 @@ import { Department } from './steps/department';
 import { Employees } from './steps/employees';
 import { BindChat } from './steps/bind-chat';
 import { Entities } from './steps/entities';
-import { TeamRights } from './steps/team-rights';
+import { Settings } from './steps/settings';
 import { AccessDenied } from './steps/access-denied';
 import { WizardAPI } from '../api';
 import { chartWizardActions } from '../actions';
@@ -33,7 +33,7 @@ export const ChartWizard = {
 
 	emits: ['modifyTree', 'close'],
 
-	components: { Department, Employees, BindChat, TreePreview, Entities, TeamRights, AccessDenied },
+	components: { Department, Employees, BindChat, TreePreview, Entities, Settings, AccessDenied },
 
 	props: {
 		nodeId: {
@@ -93,6 +93,7 @@ export const ChartWizard = {
 				},
 			},
 			removedUsers: [],
+			moveUsersMap: [],
 			employeesIds: [],
 			departmentSettings: {
 				[NodeSettingsTypes.businessProcAuthority]: new Set([AuthorityTypes.departmentHead]),
@@ -163,6 +164,15 @@ export const ChartWizard = {
 
 			return this.permissionChecker.checkDeputyApprovalBPAvailable();
 		},
+		isDepartmentSettingsAvailable(): boolean
+		{
+			if (!this.permissionChecker)
+			{
+				return false;
+			}
+
+			return this.permissionChecker.checkDepartmentSettingsAvailable();
+		},
 		componentInfo(): { name: string, params?: Object }
 		{
 			if (!this.currentStep.isPermitted)
@@ -199,6 +209,7 @@ export const ChartWizard = {
 				[StepIds.employees]: {
 					name: 'Employees',
 					params: {
+						entityId: this.nodeId,
 						heads,
 						entityType,
 						employeesIds: this.employeesIds,
@@ -208,6 +219,7 @@ export const ChartWizard = {
 				[StepIds.bindChat]: {
 					name: 'BindChat',
 					params: {
+						entityId: this.nodeId,
 						heads,
 						employees,
 						employeesIds: this.employeesIds,
@@ -219,11 +231,13 @@ export const ChartWizard = {
 						initCollabs: this.initCollabs,
 					},
 				},
-				[StepIds.teamRights]: {
-					name: 'TeamRights',
+				[StepIds.settings]: {
+					name: 'Settings',
 					params: {
 						name,
+						heads,
 						settings: this.departmentSettings,
+						entityType,
 						features: {
 							isDeputyApprovesBPAvailable: this.isDeputyApprovesBPAvailable,
 						},
@@ -259,6 +273,10 @@ export const ChartWizard = {
 		isTeamEntity(): boolean
 		{
 			return this.departmentData?.entityType === EntityTypes.team;
+		},
+		entityAnalyticsCategory(): string
+		{
+			return this.isTeamEntity ? 'team' : 'dept';
 		},
 		createButtonText(): string
 		{
@@ -337,6 +355,7 @@ export const ChartWizard = {
 				const rawSettings = await WizardAPI.getSettings(this.nodeId);
 				const newSettings = this.mapRawSettings(rawSettings);
 
+				this.departmentSettings[NodeSettingsTypes.businessProcAuthority] = new Set();
 				this.departmentSettings = {
 					...this.departmentSettings,
 					...newSettings,
@@ -429,6 +448,7 @@ export const ChartWizard = {
 					tool: 'structure',
 					category: 'structure',
 					event: 'cancel_wizard',
+					type: this.entityAnalyticsCategory,
 					c_element: this.source,
 				});
 			}
@@ -475,6 +495,7 @@ export const ChartWizard = {
 			const {
 				isValid = true,
 				removedUsers = [],
+				moveUsersMap = {},
 				isDepartmentDataChanged = true,
 				apiEntityChanged = null,
 				...departmentData
@@ -496,6 +517,7 @@ export const ChartWizard = {
 			}
 
 			this.removedUsers = removedUsers;
+			this.moveUsersMap = moveUsersMap;
 			if (isValid)
 			{
 				this.shouldErrorHighlight = false;
@@ -571,33 +593,32 @@ export const ChartWizard = {
 						: 'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_BINDCHAT_TEAM_TITLE_BREADCRUMBS',
 					hasBreadcrumbs: true,
 					hasTreePreview: false,
-					isEditPermitted: isTeamEntity
-						? this.permissionChecker.hasPermission(PermissionActions.teamCommunicationEdit, departmentId)
-						: this.permissionChecker.hasPermission(PermissionActions.departmentCommunicationEdit, departmentId),
+					isEditPermitted: this.checkCommunicationEditPermission(departmentId, isTeamEntity),
 					dataTestIdPart: 'bind-chat',
 				},
-				teamRights: {
-					id: StepIds.teamRights,
+				settings: {
+					id: StepIds.settings,
+					breadcrumbsTitleDepartment: 'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_DEPARTMENT_SETTINGS_BREADCRUMBS',
 					breadcrumbsTitleTeam: 'HUMANRESOURCES_COMPANY_STRUCTURE_WIZARD_TEAM_RIGHTS_BREADCRUMBS',
 					hasBreadcrumbs: true,
 					hasTreePreview: false,
 					isEditPermitted: isTeamEntity
 						? this.permissionChecker.hasPermission(PermissionActions.teamSettingsEdit, departmentId)
-						: this.permissionChecker.hasPermission(PermissionActions.departmentEdit, departmentId),
+						: this.permissionChecker.hasPermission(PermissionActions.departmentSettingsEdit, departmentId),
 					dataTestIdPart: 'team-rights',
 				},
 			};
 		},
 		createSteps(entityType: string = 'DEPARTMENT', departmentId: number = null): void
 		{
-			const { entity, department, employees, bindChat, teamRights } = this.getAllSteps(entityType, departmentId);
+			const { entity, department, employees, bindChat, settings } = this.getAllSteps(entityType, departmentId);
 
 			const steps: Step[] = this.showEntitySelector ? [entity] : [];
 			steps.push(department, employees, bindChat);
 
 			if (entityType === EntityTypes.team)
 			{
-				steps.push(teamRights);
+				steps.push(settings);
 				steps.forEach((step: Step): void => {
 					Object.assign(step, {
 						breadcrumbsTitle: step.breadcrumbsTitleTeam ? this.loc(step.breadcrumbsTitleTeam) : '',
@@ -606,6 +627,11 @@ export const ChartWizard = {
 			}
 			else
 			{
+				if (this.isDepartmentSettingsAvailable)
+				{
+					steps.push(settings);
+				}
+
 				steps.forEach((step: Step): void => {
 					Object.assign(step, {
 						breadcrumbsTitle: step.breadcrumbsTitleDepartment ? this.loc(step.breadcrumbsTitleDepartment) : '',
@@ -724,20 +750,20 @@ export const ChartWizard = {
 					[this.memberRoles.employee]: employeesIds,
 				};
 
-				let settingsNode = {};
+				const nodeSettings = {
+					[NodeSettingsTypes.businessProcAuthority]:
+						{
+							values: [...settings[NodeSettingsTypes.businessProcAuthority]],
+							replace: true,
+						},
+				};
+
 				let newDepartment = {};
 				let updatedDepartmentIds = false;
 				let userMovedToRootIds = false;
 
 				if (entityType === EntityTypes.team)
 				{
-					settingsNode = {
-						[NodeSettingsTypes.businessProcAuthority]:
-						{
-							values: [...settings[NodeSettingsTypes.businessProcAuthority]],
-							replace: true,
-						},
-					};
 
 					({
 						node: newDepartment,
@@ -755,7 +781,7 @@ export const ChartWizard = {
 						channels,
 						Number(createDefaultCollab),
 						collabs,
-						settingsNode,
+						nodeSettings,
 					));
 				}
 				else if (entityType === EntityTypes.department)
@@ -776,7 +802,7 @@ export const ChartWizard = {
 						channels,
 						Number(createDefaultCollab),
 						collabs,
-						settingsNode,
+						nodeSettings,
 					));
 				}
 
@@ -794,13 +820,7 @@ export const ChartWizard = {
 			}
 			catch (error)
 			{
-				if (!reportedErrorTypes.has(error.code))
-				{
-					UI.Notification.Center.notify({
-						content: error.message,
-						autoHideDelay: 4000,
-					});
-				}
+				this.reportError(error);
 
 				return;
 			}
@@ -809,7 +829,7 @@ export const ChartWizard = {
 				this.waiting = false;
 			}
 
-			chartWizardActions.createDepartment({ ...this.departmentData, id: departmentId, accessCode });
+			await chartWizardActions.createDepartment({ ...this.departmentData, id: departmentId, accessCode });
 			this.$emit('modifyTree', { id: departmentId, parentId, showConfetti: true });
 
 			const { headsIds, deputiesIds, employeesIds } = this.calculateEmployeeIds();
@@ -818,11 +838,15 @@ export const ChartWizard = {
 				{
 					tool: 'structure',
 					category: 'structure',
-					event: 'create_dept',
+					event: `create_${this.entityAnalyticsCategory}`,
 					c_element: this.source,
-					p2: `headAmount_${headsIds.length}`,
-					p3: `secondHeadAmount_${deputiesIds.length}`,
-					p4: `employeeAmount_${employeesIds.length}`,
+					...(!this.isTeamEntity && {
+						p1: `deptChat_${createDefaultChat ? 'Y' : 'N'}`,
+						p2: `headAmount_${headsIds.length}`,
+						p3: `secondHeadAmount_${deputiesIds.length}`,
+						p4: `employeeAmount_${employeesIds.length}`,
+						p5: `deptChannel_${createDefaultChannel ? 'Y' : 'N'}`,
+					}),
 				},
 			);
 			this.close();
@@ -855,13 +879,44 @@ export const ChartWizard = {
 			const targetNodeId = currentNode?.parentId === parentId ? null : parentId;
 			this.waiting = true;
 
+			const moveUsersResult = await this.moveUsers();
+
+			let allUpdatedDepartmentIds = [];
+			// Process move users results to update UserService
+			if (moveUsersResult.results?.length > 0)
+			{
+				for (const result of moveUsersResult.results)
+				{
+					// Collect all updatedDepartmentIds
+					if (result.response?.updatedDepartmentIds && Array.isArray(result.response.updatedDepartmentIds))
+					{
+						allUpdatedDepartmentIds = [...allUpdatedDepartmentIds, ...result.response.updatedDepartmentIds];
+					}
+
+					if (result.users?.length > 0)
+					{
+						// Call UserService.moveUsersToEntity for this batch
+						UserService.moveUsersToEntity(
+							Number(result.departmentId),
+							result.users,
+							result.response?.userCount,
+							[],
+						);
+					}
+				}
+
+				allUpdatedDepartmentIds = [...new Set(allUpdatedDepartmentIds)].filter((nodeId) => nodeId !== id);
+			}
+
 			const usersPromise = this.apiEntityChanged.has(WizardApiEntityChangedDict.employees)
 				? this.getUsersPromise(id)
-				: Promise.resolve();
+				: Promise.resolve()
+			;
 
 			const departmentPromise = this.apiEntityChanged.has(WizardApiEntityChangedDict.department)
 				? WizardAPI.updateDepartment(id, targetNodeId, name, description, teamColor?.name)
-				: Promise.resolve();
+				: Promise.resolve()
+			;
 
 			const settingsPromise = this.apiEntityChanged.has(WizardApiEntityChangedDict.settings)
 				? WizardAPI.updateSettings(
@@ -874,86 +929,133 @@ export const ChartWizard = {
 					},
 					parentId,
 				)
-				: Promise.resolve();
+				: Promise.resolve()
+			;
 
 			this.pickEditAnalytics(id, parentId);
+
+			let usersResponse = null;
 			try
 			{
-				const [usersResponse] = await Promise.all([usersPromise, departmentPromise, settingsPromise]);
-
-				if (this.apiEntityChanged.has(WizardApiEntityChangedDict.bindChats))
-				{
-					await WizardAPI.saveChats(
-						id,
-						{
-							chat: chats.filter((chatId) => !this.initChats.some((chat) => chat.id === chatId)),
-							channel: channels.filter((channelId) => !this.initChannels.some((channel) => channel.id === channelId)),
-							collab: collabs.filter((collabId) => !this.initCollabs.some((collab) => Number(collab.id) === collabId)),
-						},
-						{
-							chat: Number(createDefaultChat),
-							channel: Number(createDefaultChannel),
-							collab: Number(createDefaultCollab),
-						},
-						{
-							chat: this.initChats.filter((chat) => !chats.includes(chat.id)).map((chat) => chat.id),
-							channel: this.initChannels
-								.filter((channel) => !channels.includes(channel.id))
-								.map((channel) => channel.id),
-							collab: this.initCollabs
-								.filter((collab) => !collabs.includes(Number(collab.id)))
-								.map((collab) => collab.id),
-						},
-					);
-
-					this.departmentData.chatsDetailed = null;
-					this.departmentData.channelsDetailed = null;
-
-					if (this.isEditMode && id && DepartmentContentActions?.updateChatsInChildrenNodes)
-					{
-						DepartmentContentActions.updateChatsInChildrenNodes(this.nodeId);
-					}
-				}
-
-				let userMovedToRootIds = [];
-				if (this.removedUsers.length > 0)
-				{
-					userMovedToRootIds = usersResponse?.userMovedToRootIds ?? [];
-					if (userMovedToRootIds.length > 0)
-					{
-						chartWizardActions.moveUsersToRootDepartment(this.removedUsers, userMovedToRootIds);
-					}
-				}
-
-				const store = useChartStore();
-				if (userMovedToRootIds.includes(this.userId))
-				{
-					store.changeCurrentDepartment(id, this.rootId);
-				}
-				else if (this.removedUsers.some((user) => user.id === this.userId))
-				{
-					store.changeCurrentDepartment(id);
-				}
-				else
-				{
-					chartWizardActions.tryToAddCurrentDepartment(this.departmentData, id);
-				}
-
-				store.updateDepartment(this.departmentData);
+				[usersResponse] = await Promise.all([
+					usersPromise,
+					departmentPromise,
+					settingsPromise,
+				]);
 			}
 			catch (e)
 			{
-				console.error(e);
+				this.reportError(e);
+				this.waiting = false;
 
 				return;
 			}
-			finally
+
+			if (this.apiEntityChanged.has(WizardApiEntityChangedDict.bindChats))
 			{
-				this.waiting = false;
+				const chatsToAdd = chats.filter((chatId) => !this.initChats.some((chat) => chat.id === chatId));
+				const chatsToRemove = this.initChats.filter((chat) => !chats.includes(chat.id)).map((chat) => chat.id);
+
+				if (chatsToAdd.length > 0 || chatsToRemove.length > 0 || Number(createDefaultChat) !== 0)
+				{
+					try
+					{
+						await WizardAPI.saveChats(id, chatsToAdd, Number(createDefaultChat), chatsToRemove);
+					}
+					catch (e)
+					{
+						this.reportError(e);
+					}
+				}
+
+				const channelsToAdd = channels.filter(
+					(channelId) => !this.initChannels.some((channel) => channel.id === channelId),
+				);
+				const channelsToRemove = this.initChannels.filter(
+					(channel) => !channels.includes(channel.id),
+				).map((channel) => channel.id);
+
+				if (channelsToAdd.length > 0 || channelsToRemove.length > 0 || Number(createDefaultChannel) !== 0)
+				{
+					try
+					{
+						await WizardAPI.saveChannels(id, channelsToAdd, Number(createDefaultChannel), channelsToRemove);
+					}
+					catch (e)
+					{
+						this.reportError(e);
+					}
+				}
+
+				const collabsToAdd = collabs.filter(
+					(collabId) => !this.initCollabs.some((collab) => Number(collab.id) === collabId),
+				);
+				const collabsToRemove = this.initCollabs.filter(
+					(collab) => !collabs.includes(Number(collab.id)),
+				).map((collab) => collab.id);
+
+				if (collabsToAdd.length > 0 || collabsToRemove.length > 0 || Number(createDefaultCollab) !== 0)
+				{
+					try
+					{
+						await WizardAPI.saveCollabs(id, collabsToAdd, Number(createDefaultCollab), collabsToRemove);
+					}
+					catch (e)
+					{
+						this.reportError(e);
+					}
+				}
+
+				this.departmentData.chatsDetailed = null;
+				this.departmentData.channelsDetailed = null;
+				this.departmentData.collabssDetailed = null;
+
+				if (this.isEditMode && id && DepartmentContentActions?.updateChatsInChildrenNodes)
+				{
+					DepartmentContentActions.updateChatsInChildrenNodes(this.nodeId);
+				}
 			}
 
+			let userMovedToRootIds = [];
+			if (this.removedUsers.length > 0)
+			{
+				userMovedToRootIds = usersResponse?.userMovedToRootIds ?? [];
+				if (userMovedToRootIds.length > 0)
+				{
+					chartWizardActions.moveUsersToRootDepartment(this.removedUsers, userMovedToRootIds);
+				}
+			}
+
+			const store = useChartStore();
+			if (userMovedToRootIds.includes(this.userId))
+			{
+				store.changeCurrentDepartment(id, this.rootId);
+			}
+			else if (this.removedUsers.some((user) => user.id === this.userId))
+			{
+				store.changeCurrentDepartment(id);
+			}
+			else
+			{
+				chartWizardActions.tryToAddCurrentDepartment(this.departmentData, id);
+			}
+
+			store.updateDepartment(this.departmentData);
+			store.refreshDepartments(allUpdatedDepartmentIds);
+
+			this.waiting = false;
 			this.$emit('modifyTree', { id, parentId });
 			this.close();
+		},
+		reportError(error: Error, delay: number = 4000): void
+		{
+			if (!reportedErrorTypes.has(error.code))
+			{
+				UI.Notification.Center.notify({
+					content: error.message,
+					autoHideDelay: delay,
+				});
+			}
 		},
 		handleSaveModeChanged(actionId: string): void
 		{
@@ -1009,16 +1111,16 @@ export const ChartWizard = {
 			switch (this.currentStep.id)
 			{
 				case StepIds.department:
-					event = 'create_dept_step1';
+					event = `create_${this.entityAnalyticsCategory}_step1`;
 					break;
 				case StepIds.employees:
-					event = 'create_dept_step2';
+					event = `create_${this.entityAnalyticsCategory}_step2`;
 					break;
 				case StepIds.bindChat:
-					event = 'create_dept_step3';
+					event = `create_${this.entityAnalyticsCategory}_step3`;
 					break;
-				case StepIds.teamRights:
-					event = 'create_dept_step4';
+				case StepIds.settings:
+					event = `create_${this.entityAnalyticsCategory}_step4`;
 					break;
 				default:
 					break;
@@ -1030,9 +1132,70 @@ export const ChartWizard = {
 					tool: 'structure',
 					category: 'structure',
 					event,
+					type: this.entityAnalyticsCategory,
 					c_element: this.source,
 				});
 			}
+		},
+		checkCommunicationEditPermission(entityId: number, isTeamEntity: boolean): boolean
+		{
+			return isTeamEntity
+				? (
+					this.permissionChecker.hasPermission(PermissionActions.teamChatEdit, entityId)
+					|| this.permissionChecker.hasPermission(PermissionActions.teamChannelEdit, entityId)
+					|| this.permissionChecker.hasPermission(PermissionActions.teamCollabEdit, entityId)
+				)
+				: (
+					this.permissionChecker.hasPermission(PermissionActions.departmentChatEdit, entityId)
+					|| this.permissionChecker.hasPermission(PermissionActions.departmentChannelEdit, entityId)
+					|| this.permissionChecker.hasPermission(PermissionActions.departmentCollabEdit, entityId)
+				)
+			;
+		},
+		async moveUsers(): Promise<Object>
+		{
+			if (!this.isEditMode || !this.moveUsersMap || Object.keys(this.moveUsersMap).length === 0)
+			{
+				return { success: true, results: [] };
+			}
+
+			const results = [];
+			const errors = [];
+
+			// Execute promises for each department
+			for (const [departmentId, users] of Object.entries(this.moveUsersMap))
+			{
+				const userIds = users.map((user) => user.id);
+				try
+				{
+					// Create the department user IDs structure expected by the API
+					const departmentUserIds = {
+						[this.memberRoles.employee]: userIds,
+						[this.memberRoles.head]: [],
+						[this.memberRoles.deputyHead]: [],
+					};
+
+					// Call the API to move users to this department and await the result
+					// eslint-disable-next-line no-await-in-loop
+					const response = await WizardAPI.moveUsers(Number(departmentId), departmentUserIds);
+					results.push({ departmentId: Number(departmentId), users, response });
+				}
+				catch (error)
+				{
+					errors.push({
+						departmentId: Number(departmentId),
+						users,
+						error: error.message || 'Unknown error moving users',
+					});
+					this.reportError(error);
+				}
+			}
+
+			return {
+				success: errors.length === 0,
+				results,
+				errors: errors.length > 0 ? errors : null,
+			};
 		},
 	},
 

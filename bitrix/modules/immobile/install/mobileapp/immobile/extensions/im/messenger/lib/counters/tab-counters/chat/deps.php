@@ -12,6 +12,4 @@ return [
 		'im:messenger/lib/helper',
 		'im:messenger/const',
 	],
-	'bundle' => [
-	],
 ];

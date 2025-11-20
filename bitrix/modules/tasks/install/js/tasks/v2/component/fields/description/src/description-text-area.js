@@ -4,7 +4,7 @@ import { Type } from 'main.core';
 import type { UserFieldWidgetOptions } from 'disk.uploader.user-field-widget';
 import { UserFieldWidgetComponent } from 'disk.uploader.user-field-widget';
 
-import { TextEditorComponent } from 'ui.text-editor';
+import { TextEditorComponent, type TextEditor } from 'ui.text-editor';
 import type { VueUploaderAdapter } from 'ui.uploader.vue';
 
 import { Model } from 'tasks.v2.const';
@@ -43,7 +43,7 @@ export const DescriptionTextArea = {
 			uploaderAdapter: fileService.get(props.taskId).getAdapter(),
 		};
 	},
-	data(): void
+	data(): { files: Array<Object> }
 	{
 		return {
 			files: this.fileService.getFiles(),

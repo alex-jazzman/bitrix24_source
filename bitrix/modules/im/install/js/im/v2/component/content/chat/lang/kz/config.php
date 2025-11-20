@@ -1,5 +1,5 @@
 <?php
-$MESS["IM_CONTENT_AIASSISTANT_TEXTAREA_PLACEHOLDER"] = "Жеке көмекшіңізге жазыңыз";
+$MESS["IM_CONTENT_AIASSISTANT_TEXTAREA_PLACEHOLDER_MSGVER_1"] = "Маған сұрақ қойыңыз";
 $MESS["IM_CONTENT_AI_ASSISTANT_CHAT_HEADER_TITLE"] = "Сіздің жеке көмекшіңіз";
 $MESS["IM_CONTENT_BLOCKED_TEXTAREA_JOIN_CHANNEL_V2"] = "Арнаға жазылу";
 $MESS["IM_CONTENT_CHANNEL_START_MESSAGE_SUBTITLE"] = "Сіз арнаға жазылғаннан кейін, ол сіздің чаттар тізіміне ауысады";
@@ -56,3 +56,8 @@ $MESS["IM_CONTENT_EMBEDDED_CHAT_START_TOOL_CHATS"] = "Чаттар";
 $MESS["IM_CONTENT_EMBEDDED_CHAT_START_TOOL_DOCS"] = "Құжаттар";
 $MESS["IM_CONTENT_EMBEDDED_CHAT_START_TOOL_FILES"] = "Файлдар";
 $MESS["IM_CONTENT_EMBEDDED_CHAT_START_TOOL_TASKS"] = "Міндеттер";
+$MESS["IM_CONTENT_TASK_START_FEATURE_AI"] = "Барлық жұмыс процестерінде AI пайдаланыңыз";
+$MESS["IM_CONTENT_TASK_START_FEATURE_CALL"] = "Қоңырау шалыңыз және файлдарды бөлісіңіз";
+$MESS["IM_CONTENT_TASK_START_FEATURE_CHANGES"] = "Міндеттердегі өзгерістерді қадағалаңыз";
+$MESS["IM_CONTENT_TASK_START_FEATURE_RESULT"] = "Міндеттерді талқылаңыз және нәтижелерді қосыңыз";
+$MESS["IM_CONTENT_TASK_START_TITLE"] = "Чат форматындағы [color]24[/color] міндет — ыңғайлы және оңай";

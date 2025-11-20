@@ -1080,6 +1080,15 @@ this.BX.Disk = this.BX.Disk || {};
 	  }
 	  build() {
 	    babelHelpers.classPrivateFieldLooseBase(this, _menu)[_menu].getPopupWindow().setMaxWidth(500);
+	    if (main_core.Type.isStringFilled(babelHelpers.classPrivateFieldLooseBase(this, _item)[_item].customData.viewLink)) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _menu)[_menu].addMenuItem({
+	        id: 'view',
+	        text: main_core.Loc.getMessage('DISK_UF_WIDGET_OPEN_FILE_MENU_TITLE'),
+	        href: babelHelpers.classPrivateFieldLooseBase(this, _item)[_item].customData.viewLink,
+	        target: '_blank',
+	        onclick: (event, menuItem) => menuItem.getMenuWindow().close()
+	      }, 'download');
+	    }
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _userFieldControl$1)[_userFieldControl$1].canItemAllowEdit(babelHelpers.classPrivateFieldLooseBase(this, _item)[_item])) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _menu)[_menu].addMenuItem({
 	        delimiter: true
@@ -1578,22 +1587,28 @@ this.BX.Disk = this.BX.Disk || {};
 	      }
 	    });
 	  } else {
+	    const documentService = BX.Disk.getDocumentService();
+	    const byUnifiedLink = options.documentHandlers.some(handler => handler.supportsUnifiedLink && handler.code === documentService);
+	    const saveCallback = response => {
+	      if (response.status !== 'success') {
+	        return;
+	      }
+	      const key = response.object ? 'object' : 'data';
+	      if (response[key]) {
+	        uploader.addFile(`n${response[key].id}`, {
+	          name: response[key].name,
+	          size: response[key].size,
+	          preload: true
+	        });
+	        onAddFile == null ? void 0 : onAddFile();
+	      }
+	    };
 	    const createProcess = new BX.Disk.Document.CreateProcess({
 	      typeFile: documentType,
-	      serviceCode: BX.Disk.getDocumentService(),
-	      onAfterSave: response => {
-	        if (response.status !== 'success') {
-	          return;
-	        }
-	        if (response.object) {
-	          uploader.addFile(`n${response.object.id}`, {
-	            name: response.object.name,
-	            size: response.object.size,
-	            preload: true
-	          });
-	          onAddFile == null ? void 0 : onAddFile();
-	        }
-	      }
+	      serviceCode: documentService,
+	      byUnifiedLink,
+	      onAfterSave: saveCallback,
+	      onAfterCreateFile: saveCallback
 	    });
 	    createProcess.start();
 	  }
@@ -1818,6 +1833,7 @@ this.BX.Disk = this.BX.Disk || {};
 	      createDocumentDialog({
 	        uploader: this.uploader,
 	        documentType,
+	        documentHandlers: Object.values(userFieldSettings.getDocumentServices()),
 	        onAddFile: () => this.userFieldControl.showUploaderPanel()
 	      });
 	    },
@@ -2218,7 +2234,8 @@ this.BX.Disk = this.BX.Disk || {};
 	    svg: babelHelpers.classPrivateFieldLooseBase(this, _getDocumentSvg)[_getDocumentSvg](documentType),
 	    onClick: () => createDocumentDialog({
 	      uploader: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].uploader,
-	      documentType
+	      documentType,
+	      documentHandlers: Object.values(userFieldSettings.getDocumentServices())
 	    })
 	  };
 	}

@@ -26,6 +26,7 @@ export class ApiClient
 		const url = this.buildUrl(endpoint);
 		const response = await ajax.runAction(url, {
 			[this.#contentType]: data,
+			navigation: data?.navigation,
 		});
 
 		return this.handleResponse(response);

@@ -116,7 +116,7 @@ jn.define('tasks/dashboard/filter', (require, exports, module) => {
 
 			this.currentUserId = Number(currentUserId);
 			this.ownerId = Number(ownerId);
-			this.projectId = Number(projectId);
+			this.projectId = Number(projectId ?? 0);
 			this.isTabsMode = isTabsMode;
 			this.tabsGuid = tabsGuid;
 

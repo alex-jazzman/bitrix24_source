@@ -216,8 +216,8 @@ export const Files = {
 				class="tasks-field-files-list --card"
 				ref="files"
 			>
-				<UserFieldWidgetComponent 
-					:uploaderAdapter="uploaderAdapter" 
+				<UserFieldWidgetComponent
+					:uploaderAdapter="uploaderAdapter"
 					:widgetOptions="widgetOptions"
 				/>
 			</div>

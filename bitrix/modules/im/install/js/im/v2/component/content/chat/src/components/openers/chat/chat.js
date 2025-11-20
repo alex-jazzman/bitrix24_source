@@ -10,7 +10,6 @@ import { ChannelManager } from 'im.v2.lib.channel';
 import { PromoManager } from 'im.v2.lib.promo';
 import { ChatService } from 'im.v2.provider.service.chat';
 import { BaseChatContent } from 'im.v2.component.content.elements';
-import { Core } from 'im.v2.application.core';
 
 import { ChannelContent } from '../../content/channel/channel';
 import { CollabContent } from '../../content/collab/collab';
@@ -18,12 +17,14 @@ import { MultidialogContent } from '../../content/multidialog/multidialog';
 import { NotesContent } from '../../content/notes/notes-content';
 import { CopilotContent } from '../../content/copilot/copilot';
 import { AiAssistantBotContent } from '../../content/ai-assistant-bot/ai-assistant-bot';
+import { TaskCommentsContent } from '../../content/task-comments/task-comments';
 import { BaseEmptyState as EmptyState } from './components/empty-state/base';
 import { ChannelEmptyState } from './components/empty-state/channel';
 import { EmbeddedChatPromoEmptyState } from './components/empty-state/chat/embedded-promo';
 import { EmbeddedChatEmptyState } from './components/empty-state/chat/embedded';
 import { CollabEmptyState } from './components/empty-state/collab/collab';
 import { CopilotEmptyState } from './components/empty-state/copilot/copilot';
+import { TaskEmptyState } from './components/empty-state/task/task';
 import { UserService } from './classes/user-service';
 
 import './css/default-chat-content.css';
@@ -75,7 +76,7 @@ export const ChatOpener = {
 		},
 		isNotes(): boolean
 		{
-			return Number.parseInt(this.dialogId, 10) === Core.getUserId();
+			return this.$store.getters['chats/isNotes'](this.dialogId);
 		},
 		isCopilot(): boolean
 		{
@@ -84,6 +85,10 @@ export const ChatOpener = {
 		isAiAssistantBot(): boolean
 		{
 			return this.$store.getters['users/bots/isAiAssistant'](this.dialogId);
+		},
+		isTaskComments(): boolean
+		{
+			return this.dialog.type === ChatType.taskComments;
 		},
 		isGuest(): boolean
 		{
@@ -116,6 +121,10 @@ export const ChatOpener = {
 					condition: this.isAiAssistantBot,
 					component: AiAssistantBotContent,
 				},
+				{
+					condition: this.isTaskComments,
+					component: TaskCommentsContent,
+				},
 			];
 		},
 		contentComponent(): BitrixVueComponentProps
@@ -133,6 +142,7 @@ export const ChatOpener = {
 				[Layout.collab]: CollabEmptyState,
 				[Layout.copilot]: CopilotEmptyState,
 				[Layout.chat]: this.chatEmptyStateComponent,
+				[Layout.taskComments]: TaskEmptyState,
 				default: EmptyState,
 			};
 

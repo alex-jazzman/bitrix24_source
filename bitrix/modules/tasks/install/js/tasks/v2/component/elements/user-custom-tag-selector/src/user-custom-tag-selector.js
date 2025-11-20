@@ -51,6 +51,10 @@ export const UserCustomTagSelector = {
 			type: Boolean,
 			default: false,
 		},
+		avatarOnly: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	emits: [
 		'freeze',
@@ -286,7 +290,9 @@ export const UserCustomTagSelector = {
 						<div class="b24-user-selector-user-image">
 							<UserAvatar :src="userAvatar" :type="userType"/>
 						</div>
-						<div class="b24-user-selector-user-name">{{ userName }}</div>
+						<div v-if="!avatarOnly" class="b24-user-selector-user-name">
+							{{ userName }}
+						</div>
 					</div>
 				</div>
 				<div
@@ -296,7 +302,9 @@ export const UserCustomTagSelector = {
 					@click="showDialog"
 				>
 					<UserAvatar/>
-					{{ loc('UCTS_ADD_BTN') }}
+					<template v-if="!avatarOnly">
+						{{ loc('UCTS_ADD_BTN') }}
+					</template>
 				</div>
 			</template>
 		</div>

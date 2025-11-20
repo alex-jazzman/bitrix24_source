@@ -8,12 +8,12 @@ jn.define('im/messenger/provider/services/sync/fillers/counter', (require, expor
 		EventType,
 		ComponentCode,
 	} = require('im/messenger/const');
-	const { EntityReady } = require('entity-ready');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { CounterHelper } = require('im/messenger/lib/helper');
+	const { CounterStorageWriter } = require('im/messenger/lib/counters/counter-manager/storage/writer');
 
-	const { getLogger } = require('im/messenger/lib/logger');
-	const logger = getLogger('sync-service');
+	const { getLoggerWithContext } = require('im/messenger/lib/logger');
+	const logger = getLoggerWithContext('sync-service', 'SyncFillerCounter');
 
 	/**
 	 * @class SyncFillerCounter
@@ -21,24 +21,13 @@ jn.define('im/messenger/provider/services/sync/fillers/counter', (require, expor
 	class SyncFillerCounter extends SyncFillerBase
 	{
 		/**
-		 * @param {CounterStorageWriter} storageWriter
+		 * @param {CounterStorageWriter|undefined} storageWriter
 		 */
 		constructor(storageWriter)
 		{
 			super();
 			/** @type {CounterStorageWriter} */
-			this.storageWriter = storageWriter;
-			this.processedResultUuidCollection = new Set();
-
-			// TODO remove after updating freeze debug
-			this.debugInfo = {
-				steps: [],
-				isViewLoaded: null,
-				readyEntitiesCollection: [],
-				fillDataMethodExecuted: false,
-			};
-
-			this.isReady = true;
+			this.storageWriter = storageWriter ?? CounterStorageWriter.getInstance();
 		}
 
 		getUuidPrefix()
@@ -56,31 +45,12 @@ jn.define('im/messenger/provider/services/sync/fillers/counter', (require, expor
 			return result;
 		}
 
+		/**
+		 * @param {SyncRequestResultReceivedEvent} data
+		 */
 		async fillData(data)
 		{
-			if (this.processedResultUuidCollection.has(data.uuid))
-			{
-				MessengerEmitter.emit(
-					EventType.sync.requestResultSaved,
-					{ uuid },
-					ComponentCode.imMessenger,
-				);
-
-				return;
-			}
-
-			this.debugInfo = {
-				data,
-				steps: [],
-				isViewLoaded: null,
-				readyEntitiesCollection: [],
-				fillDataMethodExecuted: true,
-			};
-
-			this.debugInfo.isViewLoaded = window.isViewLoaded;
-			this.debugInfo.readyEntitiesCollection = [...EntityReady.readyEntitiesCollection];
-			this.debugInfo.steps.push(1);
-			logger.log(`${this.constructor.name}.fillData`, data);
+			logger.log('fillData', data);
 			const {
 				uuid,
 				result,
@@ -88,35 +58,58 @@ jn.define('im/messenger/provider/services/sync/fillers/counter', (require, expor
 
 			try
 			{
-				this.debugInfo.steps.push(2);
-				const counterCollectionToUpdate = this.#prepareCounterCollectionToUpdate(result);
-				logger.log(`${this.constructor.name}.fillData counterCollectionToUpdate`, counterCollectionToUpdate);
-				this.debugInfo.steps.push(3);
-				const chatIdListToDelete = this.#prepareChatIdListToDelete(result);
-				logger.log(`${this.constructor.name}.fillData chatIdListToDelete`, chatIdListToDelete);
-				this.debugInfo.steps.push(5);
-				void this.storageWriter.setCollection(counterCollectionToUpdate);
-				this.debugInfo.steps.push(6);
-				void this.storageWriter.deleteFromCollection(chatIdListToDelete);
-				this.debugInfo.steps.push(7);
+				this.applyData(result);
+
 				MessengerEmitter.emit(
 					EventType.sync.requestResultSaved,
 					{ uuid },
 					ComponentCode.imMessenger,
 				);
-				this.debugInfo.steps.push(8);
-
-				this.processedResultUuidCollection.add(uuid);
 			}
 			catch (error)
 			{
-				logger.error(`${this.constructor.name}.fillData catch:`, error);
+				logger.error('fillData catch:', error);
 
 				MessengerEmitter.emit(EventType.sync.requestResultSaved, {
 					uuid,
-					error: `${this.constructor.name}.fillData error: ${error.message}`,
+					error: `fillData error: ${error.message}`,
 				}, ComponentCode.imMessenger);
 			}
+		}
+
+		/**
+		 * @param {SyncListResult} result
+		 */
+		async fillDataWithoutEmit(result)
+		{
+			logger.log('fillDataWithoutEmit:', result);
+
+			try
+			{
+				this.applyData(result);
+			}
+			catch (error)
+			{
+				logger.error('fillDataWithoutEmit catch: ', error);
+
+				throw error;
+			}
+		}
+
+		/**
+		 * @param {SyncListResult} data
+		 * @void
+		 */
+		applyData(data)
+		{
+			const counterCollectionToUpdate = this.#prepareCounterCollectionToUpdate(data);
+			logger.log('counterCollectionToUpdate', counterCollectionToUpdate);
+
+			const chatIdListToDelete = this.#prepareChatIdListToDelete(data);
+			logger.log('chatIdListToDelete', chatIdListToDelete);
+
+			void this.storageWriter.setCollection(counterCollectionToUpdate);
+			void this.storageWriter.deleteFromCollection(chatIdListToDelete);
 		}
 
 		/**

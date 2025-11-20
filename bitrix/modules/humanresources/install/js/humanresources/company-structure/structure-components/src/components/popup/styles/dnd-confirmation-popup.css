@@ -22,3 +22,7 @@
 .ui-ctl + .ui-ctl.hr-dnd-confirmation_checkbox {
 	margin-left: 1px;
 }
+
+.hr-dnd-confirmation_notice {
+	max-width: 305px;
+}

@@ -120,13 +120,40 @@ const ReconnectionReason = {
 	JoinResponseError: 'JoinResponseError',
 };
 
-const ErrorPreventingReconnection = {
+export const JoinRequestFailedCodes = {
 	CanNotCreateRoom: 1,
 	InputError: 2,
 	AccessDenied: 3,
 	RoomNotFound: 5,
 	MalfunctioningSignaling: 7,
+	JsonParsingError: 'JsonParsingError',
+	UnexpectedResponse: 'UnexpectedResponse',
+	UnknownError: 'UnknownError',
 };
+
+export class JoinResponseError extends Error
+{
+	constructor(message, code) {
+		let errorCode = null;
+		let name = null;
+		const fondedCodePair = Object
+			.entries(JoinRequestFailedCodes)
+			.find(([_, failedCode]) => failedCode === code);
+		if (fondedCodePair)
+		{
+			[name, errorCode] = fondedCodePair;
+		}
+
+		if (!name)
+		{
+			name = 'UnknownError';
+		}
+
+		super(message);
+		this.name = name;
+		this.code = errorCode ?? code;
+	}
+}
 
 export class Call {
 	sender = null;
@@ -155,6 +182,7 @@ export class Call {
 		iceServers: null,
 		socketConnect: null,
 		peerConnectionFailed: false,
+		pendingOffer: null,
 		pendingCandidates: {
 			recipient: [],
 			sender: [],
@@ -279,7 +307,7 @@ export class Call {
 	initConnectionEvent()
 	{
 		const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-		
+
 		if (!connection)
 		{
 			return;
@@ -608,6 +636,9 @@ export class Call {
 			{
 				if (error.name !== 'AbortError' && !this.#privateProperties.abortController.signal.aborted)
 				{
+					// don't write error.name and error.message to analytics now,
+					// because we don't watch failed reconnecting requests now
+
 					this.#reconnect({
 						reconnectionReason: 'GET_MEDIASERVER_INFO',
 						reconnectionReasonInfo: error?.name || '',
@@ -666,7 +697,8 @@ export class Call {
 		this.triggerEvents('Reconnecting', [data]);
 	};
 
-	#beforeDisconnect() {
+	#beforeDisconnect()
+	{
 		window.removeEventListener('unload', this.sendLeaveBound);
 		this.#clearPingInterval();
 		this.#clearPingTimeout();
@@ -674,6 +706,8 @@ export class Call {
 
 		this.#privateProperties.mediaServerUrl = '';
 		this.#privateProperties.roomData = '';
+		this.#privateProperties.pendingOffer = null;
+		this.#privateProperties.pendingCandidates = { recipient: [], sender: [] };
 
 		this.#privateProperties.localTracks = {};
 		this.#privateProperties.isWaitAnswer = false;
@@ -723,11 +757,10 @@ export class Call {
 
 		return new Promise((resolve, reject) => {
 			const isErrorPreventingReconnection = (code) => {
-				return code === ErrorPreventingReconnection.CanNotCreateRoom
-					|| code === ErrorPreventingReconnection.InputError
-					|| code === ErrorPreventingReconnection.AccessDenied
-					|| code === ErrorPreventingReconnection.RoomNotFound
-					|| code === ErrorPreventingReconnection.MalfunctioningSignaling;
+				const reconnectionStoppableCodeNames = new Set(['InputError', 'AccessDenied', 'RoomNotFound', 'MalfunctioningSignaling', 'CanNotCreateRoom']);
+
+				return Object.entries(JoinRequestFailedCodes)
+					.some(([failedName, failedCode]) => reconnectionStoppableCodeNames.has(failedName) && failedCode === code);
 			};
 
 			request
@@ -757,9 +790,26 @@ export class Call {
 					)
 					{
 						this.#privateProperties.abortController.abort();
+						/*
+						let errorCode = 'UNKNOWN_ERROR';
+						if (Type.isObject(error) && error instanceof JoinResponseError)
+						{
+							errorCode = error.name;
+						}
+						else if (Type.isObject(error) && error.code)
+						{
+							errorCode = error.code === 'access_denied' 'ACCESS_DENIED' : error.code;
+						}
+
+						this.triggerEvents('ReconnectingFailed', [null, {
+							code: errorCode,
+							message: error?.message,
+						}]);
+						*/
+
 						reject({
 							name: 'MEDIASERVER_UNEXPECTED_ANSWER',
-							message: error.message,
+							message: error?.message,
 						});
 					}
 					else
@@ -768,9 +818,12 @@ export class Call {
 							? ReconnectionReason.JoinResponseError
 							: ReconnectionReason.NetworkError;
 
+						// don't write error.name and error.message to analytics now,
+						// because we don't watch failed reconnecting requests now
+
 						reject({
 							name: 'MEDIASERVER_ERROR',
-							message: `Reason: ${error.message}`,
+							message: `Reason: ${error?.message}`,
 						});
 					}
 				});
@@ -844,9 +897,12 @@ export class Call {
 
 		if (data?.answer){
 			await this.#answerHandler(data);
-		} else if (data?.offer) {
+		}
+		else if (data?.offer)
+		{
 			await this.#offerHandler(data);
-		} else if (data?.joinResponse) {
+		}
+		else if (data?.joinResponse) {
 			if (data.joinResponse.role)
 			{
 				Util.setCurrentUserRole(data.joinResponse.role);
@@ -1295,20 +1351,20 @@ export class Call {
 		else if (state === 'failed' || state === 'disconnected')
 		{
 			const logMessage = `State of ${subscriber ? 'recipient' : 'sender'} PEER CONNECTION changed to ${state}`;
-			this.setLog(logMessage, LOG_LEVEL.WARNING);	
+			this.setLog(logMessage, LOG_LEVEL.WARNING);
 		}
 	}
-	
+
 	onIceConnectionStateChange(subscriber)
 	{
 		const state = subscriber
 			? this.recipient.iceConnectionState
 			: this.sender.iceConnectionState;
-			
+
 		if (state === 'failed' || state === 'disconnected')
 		{
 			const logMessage = `State of ${subscriber ? 'recipient' : 'sender'} ICE connection changed to ${state}`;
-			this.setLog(logMessage, LOG_LEVEL.WARNING);			
+			this.setLog(logMessage, LOG_LEVEL.WARNING);
 		}
 	}
 
@@ -2983,7 +3039,7 @@ export class Call {
 	}
 
 	setLog(log, level) {
-		level = LOG_LEVEL[level] || LOG_LEVEL.info;
+		level = LOG_LEVEL[level] || LOG_LEVEL.INFO;
 
 		if (this.#privateProperties.isloggingEnable)
 		{
@@ -3109,8 +3165,18 @@ export class Call {
 		}
 	}
 
-	async #offerHandler(data) {
+	async #offerHandler(data)
+	{
 		this.setLog('Handling a remote offer', LOG_LEVEL.INFO);
+
+		if (!this.recipient)
+		{
+			this.setLog('Handling a remote offer deferred');
+			this.#privateProperties.pendingOffer = data;
+
+			return;
+		}
+
 		try
 		{
 			if (Util.useTcpSdp())
@@ -3118,8 +3184,7 @@ export class Call {
 				data.offer.sdp = this.#removeUdpFromSdp(data.offer.sdp);
 			}
 			await this.recipient.setRemoteDescription(data.offer);
-			this.#privateProperties.pendingCandidates.recipient.forEach((candidate) =>
-			{
+			this.#privateProperties.pendingCandidates.recipient.forEach((candidate) => {
 				this.recipient.addIceCandidate(candidate);
 				this.setLog('Added a deferred ICE candidate', LOG_LEVEL.INFO);
 			});
@@ -3157,7 +3222,8 @@ export class Call {
 		}
 	}
 
-	#addIceCandidate(trickle) {
+	#addIceCandidate(trickle)
+	{
 		this.setLog('Start adding an ICE candidate', LOG_LEVEL.INFO);
 		try
 		{
@@ -3170,10 +3236,11 @@ export class Call {
 
 			if (trickle.target)
 			{
-				if (this.recipient.remoteDescription)
+				if (this.recipient?.remoteDescription)
 				{
 					this.recipient.addIceCandidate(candidate);
 					this.setLog('Adding an ICE candidate succeeded', LOG_LEVEL.INFO);
+
 					return;
 				}
 
@@ -3183,10 +3250,11 @@ export class Call {
 			}
 			else
 			{
-				if (this.sender.remoteDescription)
+				if (this.sender?.remoteDescription)
 				{
 					this.sender.addIceCandidate(candidate);
 					this.setLog('Adding an ICE candidate succeeded', LOG_LEVEL.INFO);
+
 					return;
 				}
 
@@ -3704,6 +3772,12 @@ export class Call {
 		this.recipient.addEventListener('icecandidate', e => this.onIceCandidate('SUBSCRIBER', e));
 		this.recipient.addEventListener('connectionstatechange', e => this.onConnectionStateChange(true));
 		this.recipient.addEventListener('iceconnectionstatechange', e => this.onIceConnectionStateChange(true));
+
+		if (this.#privateProperties.pendingOffer)
+		{
+			this.#offerHandler(this.#privateProperties.pendingOffer);
+			this.#privateProperties.pendingOffer = null;
+		}
 
 		const getStatsHandle = async () => {
 			try

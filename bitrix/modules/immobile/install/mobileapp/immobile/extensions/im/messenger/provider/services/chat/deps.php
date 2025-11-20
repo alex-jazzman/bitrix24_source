@@ -11,7 +11,6 @@ return [
 		'im:messenger/const',
 		'im:messenger/provider/services/lib/chat-data-extractor',
 		'im:messenger/provider/services/message',
-		'im:messenger/lib/counters/tab-counters',
 		'im:messenger/lib/counters/counter-manager/messenger/sender',
 		'im:messenger/lib/emitter',
 		'im:messenger/lib/logger',
@@ -34,5 +33,6 @@ return [
 		'./src/service',
 		'./src/update',
 		'./src/user',
+		'./src/health-check',
 	],
 ];

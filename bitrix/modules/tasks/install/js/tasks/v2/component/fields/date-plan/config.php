@@ -10,6 +10,7 @@ return [
 	'rel' => [
 		'tasks.v2.component.elements.field-list',
 		'tasks.v2.component.elements.hover-pill',
+		'tasks.v2.component.elements.field-add',
 		'ui.system.chip.vue',
 		'ui.icon-set.api.core',
 		'main.core',

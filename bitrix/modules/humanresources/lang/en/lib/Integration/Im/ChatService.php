@@ -5,4 +5,4 @@ $MESS["HUMANRESOURCES_CHAT_SERVICE_CHAT_TYPE_PRIVATE_CHANNEL_SUBTITLE"] = "Priva
 $MESS["HUMANRESOURCES_CHAT_SERVICE_CHAT_TYPE_PRIVATE_CHAT_SUBTITLE"] = "Private chat";
 $MESS["HUMANRESOURCES_CHAT_SERVICE_CREATION_ERROR_CHANNEL"] = "Could not create channel.";
 $MESS["HUMANRESOURCES_CHAT_SERVICE_CREATION_ERROR_CHAT"] = "Could not create chat.";
-$MESS["HUMANRESOURCES_CHAT_SERVICE_NOT_AVAILABLE"] = "Module is not available. Please contact your Bitrix24 administrator.";
+$MESS["HUMANRESOURCES_CHAT_SERVICE_NOT_AVAILABLE_MSGVER_1"] = "The <b>Instant messenger</b> module is not installed. Please contact your Bitrix24 administrator.";

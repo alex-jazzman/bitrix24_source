@@ -151,6 +151,7 @@ jn.define('user-profile/common-tab/src/block/tags/view', (require, exports, modu
 					style: {
 						justifyContent: 'center',
 						alignContent: 'center',
+						alignItems: 'center',
 						flexDirection: 'row',
 						borderRadius: Component.elementAccentCorner.toNumber(),
 						backgroundColor: Color.accentSoftBlue3.toHex(),
@@ -170,7 +171,7 @@ jn.define('user-profile/common-tab/src/block/tags/view', (require, exports, modu
 						style: {
 							flexDirection: 'row',
 							alignItems: 'center',
-							alignSelf: 'flex-start',
+							alignContent: 'center',
 							marginLeft: Indent.XS.toNumber(),
 							flexShrink: 1,
 							flexGrow: 1,

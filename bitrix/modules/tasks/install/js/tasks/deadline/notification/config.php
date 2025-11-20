@@ -20,6 +20,7 @@ return [
 		'ui.buttons',
 		'main.core',
 		'tasks.interval-selector',
+		'ui.analytics',
 	],
 	'settings' => [
 		'portalSettings' => (new PortalSchedule())->getSettings(),

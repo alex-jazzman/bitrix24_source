@@ -8,7 +8,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/copilot/src/permission-
 	{
 		canLeave()
 		{
-			return this.chatPermission.сanLeaveFromChat(this.dialogId)
+			return this.chatPermission.canLeaveFromChat(this.dialogId)
 				&& this.dialogHelper.dialogModel.userCounter > 2;
 		}
 	}

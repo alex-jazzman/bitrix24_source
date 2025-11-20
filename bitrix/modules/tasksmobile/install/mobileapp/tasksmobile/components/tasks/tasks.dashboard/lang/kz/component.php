@@ -19,6 +19,7 @@ $MESS["M_TASKS_VIEW_ROUTER_DEADLINE_STAGE_PERIOD4"] = "Келесі аптаны
 $MESS["M_TASKS_VIEW_ROUTER_DEADLINE_STAGE_PERIOD5"] = "Сіздің барлық мерзімсіз міндеттеріңіз осында пайда болады";
 $MESS["M_TASKS_VIEW_ROUTER_DEADLINE_STAGE_PERIOD6"] = "Екі аптадан асатын барлық міндеттеріңіз осында пайда болады";
 $MESS["M_TASKS_VIEW_ROUTER_EMPTY_IN_PROGRESS"] = "Сізде жұмыста міндеттер жоқ";
+$MESS["M_TASKS_VIEW_ROUTER_EMPTY_IN_PROGRESS_DESCRIPTION"] = "Міндеттер жасаңыз және барлығын уақытында орындау үшін орындалуын бақылаңыз";
 $MESS["M_TASKS_VIEW_ROUTER_EMPTY_LIST_SEARCH_DESCRIPTION_MSGVER_1"] = "Басқа сүзгіні таңдап көріңіз немесе басқаша жазып көріңіз";
 $MESS["M_TASKS_VIEW_ROUTER_EMPTY_LIST_SEARCH_TITLE_MSGVER_1"] = "Мұндай міндеттер жоқ";
 $MESS["M_TASKS_VIEW_ROUTER_KANBAN_FILTER_DESCRIPTION"] = "Міндеттерді осы жерге апарыңыз немесе жаңаларын қосу үшін + батырмасын басыңыз";

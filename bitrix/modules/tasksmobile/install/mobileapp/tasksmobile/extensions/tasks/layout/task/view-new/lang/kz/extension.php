@@ -1,6 +1,5 @@
 <?php
 $MESS["M_TASK_DETAILS_APPROVE_BUTTON"] = "Қабылдау";
-$MESS["M_TASK_DETAILS_COMMENTS_BUTTON"] = "#COMMENTS_COUNT# пікірлер";
 $MESS["M_TASK_DETAILS_COMMENTS_BUTTON_EMPTY"] = "Пікірлер";
 $MESS["M_TASK_DETAILS_COMMENTS_BUTTON_MSGVER_1"] = "Пікірлер: #COMMENTS_COUNT#";
 $MESS["M_TASK_DETAILS_COMMENTS_TITLE"] = "Пікірлер";
@@ -18,17 +17,14 @@ $MESS["M_TASK_DETAILS_FIELD_DESCRIPTION_PLACEHOLDER"] = "Не істеу кер�
 $MESS["M_TASK_DETAILS_FIELD_DESCRIPTION_TITLE"] = "Міндеттің сипаттамасы";
 $MESS["M_TASK_DETAILS_FIELD_RESPONSIBLE_TITLE"] = "Орындаушы";
 $MESS["M_TASK_DETAILS_FIELD_TITLE_PLACEHOLDER"] = "Міндеттің атауы";
-$MESS["M_TASK_DETAILS_FILES_TITLE"] = "Файлдар";
-$MESS["M_TASK_DETAILS_LIKE_BUTTON"] = "Ұнайды";
 $MESS["M_TASK_DETAILS_NO_TASK_POPUP_DESCRIPTION"] = "Міндет табылмады немесе міндетке қол жеткізуге тыйым салынған";
 $MESS["M_TASK_DETAILS_NO_TASK_POPUP_TITLE"] = "Қолжетімсіз";
 $MESS["M_TASK_DETAILS_PARENT_TASK_DEFAULT_TITLE"] = "Базалық міндет";
-$MESS["M_TASK_DETAILS_PLANNING_FINISH_DATE_IS_OUT_OF_PROJECT_RANGE"] = "Аяқтау күні жобаның уақыт шеңберінен тыс";
-$MESS["M_TASK_DETAILS_PLANNING_START_AND_END_DATE_IS_OUT_OF_PROJECT_RANGE"] = "Басталу және аяқталу күндері жобаның уақыт шеңберінен тыс";
-$MESS["M_TASK_DETAILS_PLANNING_START_DATE_IS_OUT_OF_PROJECT_RANGE"] = "Басталу күні жобаның уақыт шеңберінен тыс";
 $MESS["M_TASK_DETAILS_START_BUTTON"] = "Бастау";
 $MESS["M_TASK_DETAILS_WIDGET_TITLE_MSGVER_1"] = "Міндет";
 $MESS["M_TASK_FORM_FIELD_CHECKLIST_TITLE"] = "Чек-парақтары";
 $MESS["M_TASK_RATING_LIKE_NO"] = "Жоқ";
+$MESS["M_TASK_RATING_LIKE_NO_WITH_COUNTER"] = "Жоқ: #QUANTITY#";
 $MESS["M_TASK_RATING_LIKE_QUESTION"] = "Сізге ұнай ма?";
 $MESS["M_TASK_RATING_LIKE_YES"] = "Иә";
+$MESS["M_TASK_RATING_LIKE_YES_WITH_COUNTER"] = "Иә: #QUANTITY#";

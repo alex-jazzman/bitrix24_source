@@ -54,6 +54,11 @@ export class MessageMenuManager
 		this.#customMenuByCallback.set(callback, menuClass);
 	}
 
+	unregisterMenuByCallback(callback: MenuCheckFunction): void
+	{
+		this.#customMenuByCallback.delete(callback);
+	}
+
 	registerMenuByMessageType(messageType: MessageType, menuClass: MessageMenu): void
 	{
 		if (this.#hasMenuForMessageType(messageType))

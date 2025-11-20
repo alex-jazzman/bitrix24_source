@@ -28,7 +28,7 @@ declare type RecentMessage = {
 }
 
 export type RecentModelState = {
-	id: DialogId,
+	id: string,
 	message: RecentMessage,
 	dateMessage: Date | null,
 	lastActivityDate: Date,

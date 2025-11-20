@@ -57,6 +57,10 @@ export const Participant = {
 			type: Boolean,
 			default: false,
 		},
+		avatarOnly: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	emits: ['update'],
 	data(): Object
@@ -122,7 +126,12 @@ export const Participant = {
 		},
 	},
 	template: `
-		<HoverPill v-bind="dataset" ref="container" @keydown="handleKeydown">
+		<HoverPill
+			v-bind="dataset"
+			:transparentHover="avatarOnly"
+			ref="container"
+			@keydown="handleKeydown"
+		>
 			<UserCustomTagSelector
 				:dialogOptions="dialogOptions"
 				:items="preselected"
@@ -130,6 +139,7 @@ export const Participant = {
 				:withActionMenu="selectorWithActionMenu"
 				:clickHandler="onClick"
 				:readonly="readonly"
+				:avatarOnly="avatarOnly"
 				ref="selector"
 				@select="handleUserSelected"
 				@unfreeze="focus"

@@ -158,6 +158,7 @@ export const FileUtil = {
 
 			case 'mp3':
 			case 'ogg':
+			case 'm4a':
 				type = FileType.audio;
 				break;
 			default:
@@ -233,7 +234,7 @@ export const FileUtil = {
 		}
 
 		Object.entries(viewerAttributes).forEach(([key, value]) => {
-			dataAttributes[`data-${Text.toKebabCase(key)}`] = value;
+			dataAttributes[`data-${Text.toKebabCase(key)}`] = value === null ? '' : value;
 		});
 
 		// it should be the same link, which we use in src attribute in <img> or <video> tag
@@ -247,7 +248,7 @@ export const FileUtil = {
 			dataAttributes['data-viewer-group-by'] = `${context}${dataAttributes['data-viewer-group-by']}`;
 		}
 
-		dataAttributes['data-viewer'] = true;
+		dataAttributes['data-viewer'] = '';
 
 		return dataAttributes;
 	},

@@ -1,5 +1,5 @@
 <?php
-$MESS["IM_CONTENT_AIASSISTANT_TEXTAREA_PLACEHOLDER"] = "Send a message to your personal assistant";
+$MESS["IM_CONTENT_AIASSISTANT_TEXTAREA_PLACEHOLDER_MSGVER_1"] = "Ask me anything";
 $MESS["IM_CONTENT_AI_ASSISTANT_CHAT_HEADER_TITLE"] = "Your personal assistant";
 $MESS["IM_CONTENT_BLOCKED_TEXTAREA_JOIN_CHANNEL_V2"] = "Subscribe";
 $MESS["IM_CONTENT_CHANNEL_START_MESSAGE_SUBTITLE"] = "Channel will show up in your chat list as soon as you subscribe to it.";
@@ -41,7 +41,7 @@ $MESS["IM_CONTENT_COPILOT_HEADER_USER_COUNT_PLURAL_1"] = "#COUNT# members";
 $MESS["IM_CONTENT_COPILOT_HEADER_USER_COUNT_PLURAL_2"] = "#COUNT# members";
 $MESS["IM_CONTENT_COPILOT_TEXTAREA_PLACEHOLDER"] = "Write your question";
 $MESS["IM_CONTENT_EMBEDDED_CHAT_START_FEATURE_AI"] = "AI is part of the daily routine";
-$MESS["IM_CONTENT_EMBEDDED_CHAT_START_FEATURE_EASE"] = "Intuitive user interface";
+$MESS["IM_CONTENT_EMBEDDED_CHAT_START_FEATURE_EASE"] = "User-friendly interface";
 $MESS["IM_CONTENT_EMBEDDED_CHAT_START_FEATURE_INVITE_MSGVER_2"] = "[action]Invite users[/action] to start collaborating";
 $MESS["IM_CONTENT_EMBEDDED_CHAT_START_FEATURE_SAFETY"] = "Secure communications";
 $MESS["IM_CONTENT_EMBEDDED_CHAT_START_FEATURE_SUBTITLE"] = "Select a chat to start communicating";
@@ -56,3 +56,8 @@ $MESS["IM_CONTENT_EMBEDDED_CHAT_START_TOOL_CHATS"] = "Chats";
 $MESS["IM_CONTENT_EMBEDDED_CHAT_START_TOOL_DOCS"] = "Documents";
 $MESS["IM_CONTENT_EMBEDDED_CHAT_START_TOOL_FILES"] = "Files";
 $MESS["IM_CONTENT_EMBEDDED_CHAT_START_TOOL_TASKS"] = "Tasks";
+$MESS["IM_CONTENT_TASK_START_FEATURE_AI"] = "Use AI for routine tasks";
+$MESS["IM_CONTENT_TASK_START_FEATURE_CALL"] = "Make calls and share files";
+$MESS["IM_CONTENT_TASK_START_FEATURE_CHANGES"] = "Follow task updates";
+$MESS["IM_CONTENT_TASK_START_FEATURE_RESULT"] = "Discuss and complete tasks";
+$MESS["IM_CONTENT_TASK_START_TITLE"] = "Tasks[color]24[/color]: a new way of handling tasks in the chat";

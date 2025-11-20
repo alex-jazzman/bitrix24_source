@@ -44,7 +44,7 @@ jn.define('im/messenger/provider/services/sync/service/load', (require, exports,
 
 		constructor()
 		{
-			/** @type {AppStatus['sync'] | AppStatus['backgroundSync']} */
+			/** @type {AppStatusType} */
 			this.syncMode = AppStatus.sync;
 			this.errorList = [];
 			this.retryLog = [];
@@ -56,24 +56,22 @@ jn.define('im/messenger/provider/services/sync/service/load', (require, exports,
 		}
 
 		/**
-		 * @param fromDate
-		 * @param fromServerDate
+		 * @param {string} fromDate
+		 * @param {string|null} fromServerDate
+		 * @param {?number} lastId
 		 * @return {Promise<Partial<SyncLoadServiceLoadPageResult>>}
 		 */
-		async loadPage({ fromDate, fromServerDate })
+		async loadPage({ fromDate, fromServerDate, lastId })
 		{
+			const lastDate = Type.isStringFilled(fromServerDate) ? fromServerDate : fromDate;
 			const syncListOptions = {
-				filter: {},
+				lastDate,
 				limit: 500,
 			};
 
-			if (Type.isStringFilled(fromServerDate))
+			if (Type.isNumber(lastId))
 			{
-				syncListOptions.filter.lastDate = fromServerDate;
-			}
-			else
-			{
-				syncListOptions.filter.lastDate = fromDate;
+				syncListOptions.lastId = lastId;
 			}
 
 			try
@@ -182,12 +180,14 @@ jn.define('im/messenger/provider/services/sync/service/load', (require, exports,
 
 				if (isEqual(expectedRequestResultSavedIdList.sort(), [...requestResultSavedIdList].sort()))
 				{
+					logger.log('SyncService: All fillers have recorded the data');
 					clearTimeout(noResponseCheckTimeout);
 					BX.removeCustomEvent(EventType.sync.requestResultSaved, fillCompleteHandler);
 
 					resolveSyncListPromise({
-						hasMore: result.hasMore,
-						lastServerDate: result.lastServerDate,
+						hasMore: result.navigationData.hasMore,
+						lastServerDate: result.navigationData.lastServerDate,
+						lastId: result.navigationData.lastId,
 					});
 				}
 			};

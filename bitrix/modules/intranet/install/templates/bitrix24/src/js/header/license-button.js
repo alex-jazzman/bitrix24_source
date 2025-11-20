@@ -9,7 +9,22 @@ import {Counter, CounterColor, CounterStyle} from 'ui.cnt';
 import { PULL } from 'pull.client';
 
 type LicenseButtonOptions = {
-	ordersAwaitingPayment: number,
+	ordersCount: {
+		awaitingPayment: number,
+		failedPayment: number,
+		awaitingInvoice: number,
+		inCheckout: number,
+	},
+	ordersInfo: {
+		lastCheckoutTime: number,
+		showDelay: number,
+		hideAfterCheckoutDelay: number,
+		checkoutPath: string,
+		invoicePath: string,
+		isAvailable: boolean,
+	},
+	shouldShow: boolean,
+	ordersTotalCount: number,
 	skeleton: Object,
 	isSidePanelDemoLicense: boolean,
 	isAdmin: boolean,
@@ -32,9 +47,9 @@ export class LicenseButton
 		this.#buttonWrapper = document.querySelector('[data-id="licenseWidgetWrapper"]');
 		this.#setEventHandlers();
 
-		if (this.#options.isCloud && this.#options.ordersAwaitingPayment > 0)
+		if (this.#options.isCloud && this.#options.shouldShow)
 		{
-			this.#setCounterValue(this.#options.ordersAwaitingPayment);
+			this.#setCounterValue(this.#options.ordersTotalCount);
 		}
 
 		Event.bind(this.#buttonWrapper, 'click', () => {
@@ -193,20 +208,47 @@ export class LicenseButton
 				moduleId: 'bitrix24',
 				command: 'updateCountOrdersAwaitingPayment',
 				callback: (params) => {
-					EventEmitter.emit('BX.Bitrix24.Orders:updateOrdersAwaitingPayment', new BaseEvent({
-						data: {
-							counter: Number(params.count),
-						},
-					}));
-
-					if (params.count > 0)
-					{
-						this.#setCounterValue(Number(params.count));
-					}
+					this.#updateOptionsFromPull(params);
 				},
 			});
 			EventEmitter.subscribe(EventEmitter.GLOBAL_TARGET, 'Bitrix24InfrastructureSlider:show', this.#showInfrastructureSlider.bind(this));
 		}
+	}
+
+	static #updateOptionsFromPull(params): void
+	{
+		if (!this.#options.isCloud)
+		{
+			return;
+		}
+
+		this.#options.ordersCount = params.orders.ordersCount;
+		this.#options.ordersInfo = params.orders.ordersInfo;
+
+		if (params.shouldShow)
+		{
+			this.#setCounterValue(params.ordersTotalCount);
+		}
+		else
+		{
+			this.#setCounterValue(0);
+		}
+
+		this.#emitOrdersUpdate(params);
+	}
+
+	static #emitOrdersUpdate(params): void
+	{
+		EventEmitter.emit('BX.Bitrix24.Orders:updateOrdersAwaitingPayment', new BaseEvent({
+			data: {
+				orders: {
+					ordersCount: params.orders?.ordersCount,
+					ordersInfo: params.orders?.ordersInfo,
+				},
+				shouldShow: params.shouldShow,
+				ordersTotalCount: params.ordersTotalCount,
+			},
+		}));
 	}
 
 	static #showInfrastructureSlider(): void

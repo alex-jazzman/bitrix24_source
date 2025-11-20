@@ -32,6 +32,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  },
 	  isLayout(id) {
 	    return Boolean(im_v2_const.Layout[id]);
+	  },
+	  isMarketApp(payload) {
+	    const {
+	      id,
+	      entityId
+	    } = payload;
+	    const isMarketMenuItem = id === im_v2_const.NavigationMenuItem.market;
+	    return isMarketMenuItem && Boolean(entityId);
 	  }
 	};
 	function onCopilotClick(payload) {
@@ -83,10 +91,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  layoutName,
 	  layoutEntityId
 	}) {
-	  if (!im_v2_const.Layout[layoutName]) {
+	  const layoutManager = im_v2_lib_layout.LayoutManager.getInstance();
+	  if (!layoutManager.isValidLayout(layoutName)) {
 	    return;
 	  }
-	  const layoutManager = im_v2_lib_layout.LayoutManager.getInstance();
 	  let entityId = layoutEntityId;
 	  const lastOpenedElement = layoutManager.getLastOpenedElement(layoutName);
 	  if (!entityId && lastOpenedElement) {

@@ -7669,13 +7669,15 @@ this.BX.Tasks = this.BX.Tasks || {};
 	var SprintSidePanel = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(SprintSidePanel, _EventEmitter);
 	  function SprintSidePanel(params) {
+	    var _params$pathToBurnDow;
 	    var _this;
 	    babelHelpers.classCallCheck(this, SprintSidePanel);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(SprintSidePanel).call(this, params));
+	    _this.setEventNamespace('BX.Tasks.Scrum.SprintSidePanel');
 	    _this.sidePanel = params.sidePanel;
 	    _this.groupId = parseInt(params.groupId, 10);
 	    _this.views = params.views;
-	    _this.pathToBurnDown = params.pathToBurnDown ? params.pathToBurnDown : '';
+	    _this.pathToBurnDown = (_params$pathToBurnDow = params.pathToBurnDown) !== null && _params$pathToBurnDow !== void 0 ? _params$pathToBurnDow : '';
 	    return _this;
 	  }
 	  babelHelpers.createClass(SprintSidePanel, [{
@@ -7688,7 +7690,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      }).then(function (extension) {
 	        if (extension) {
 	          extension.subscribe('afterStart', function (baseEvent) {
-	            location.href = _this2.views['activeSprint'].url;
+	            var _this2$views$find;
+	            location.href = (_this2$views$find = _this2.views.find(function (view) {
+	              return view.id === 'activeSprint';
+	            })) === null || _this2$views$find === void 0 ? void 0 : _this2$views$find.url;
 	          });
 	        }
 	      });
@@ -7702,7 +7707,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      }).then(function (extension) {
 	        if (extension) {
 	          extension.subscribe('afterComplete', function (baseEvent) {
-	            location.href = _this3.views['plan'].url;
+	            var _this3$views$find;
+	            location.href = (_this3$views$find = _this3.views.find(function (view) {
+	              return view.id === 'plan';
+	            })) === null || _this3$views$find === void 0 ? void 0 : _this3$views$find.url;
 	          });
 	          extension.subscribe('taskClick', function (baseEvent) {
 	            _this3.emit('showTask', baseEvent.getData());

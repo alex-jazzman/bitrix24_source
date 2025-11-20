@@ -40,7 +40,7 @@ export const DetailUser = {
 		{
 			if (this.isCopilot)
 			{
-				return CopilotManager.getAIModelName(this.dialogId);
+				return (new CopilotManager()).getAIModelName(this.dialogId);
 			}
 
 			return this.$store.getters['users/getPosition'](this.dialogId);

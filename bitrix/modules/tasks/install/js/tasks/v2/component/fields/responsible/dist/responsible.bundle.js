@@ -7,7 +7,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	'use strict';
 
 	const responsibleMeta = Object.freeze({
-	  id: 'responsibleId',
+	  id: tasks_v2_const.TaskField.Responsible,
 	  title: main_core.Loc.getMessage('TASKS_V2_RESPONSIBLE_TITLE'),
 	  dialogOptions: (context = 'tasks-card-participant') => {
 	    const limits = tasks_v2_core.Core.getParams().limits;
@@ -49,6 +49,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      required: true
 	    },
 	    selectorWithActionMenu: {
+	      type: Boolean,
+	      default: false
+	    },
+	    avatarOnly: {
 	      type: Boolean,
 	      default: false
 	    }
@@ -118,7 +122,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  template: `
 		<div v-if="isFlowFilledOnAdd" class="tasks-field-responsible-auto">
 			<BIcon :name="Outline.BOTTLENECK" color="var(--ui-color-accent-main-primary)"></BIcon>
-			<div>
+			<div v-if="!avatarOnly">
 				{{ loc('TASKS_V2_RESPONSIBLE_AUTO') }}
 			</div>
 		</div>
@@ -133,6 +137,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			:selectorWithActionMenu="selectorWithActionMenu"
 			:dataset="dataset"
 			:readonly="readonly"
+			:avatarOnly="avatarOnly"
 			@update="updateTask"
 		/>
 	`

@@ -114,22 +114,7 @@ jn.define('im/messenger/controller/recent/channel/recent', (require, exports, mo
 
 			if (this.recentService.pageNavigation.currentPage === 1)
 			{
-				const recentIndex = [];
-				modelData.recent.forEach((item) => recentIndex.push(item.id.toString()));
-
-				const idListForDeleteFromCache = [];
-				this.store.getters['recentModel/getCollection']()
-					.forEach((item) => {
-						if (!recentIndex.includes(item.id.toString()))
-						{
-							idListForDeleteFromCache.push(item.id);
-						}
-					});
-
-				for (const id of idListForDeleteFromCache)
-				{
-					this.store.dispatch('recentModel/deleteFromModel', { id });
-				}
+				this.deleteItemsFromStore(modelData.recent);
 			}
 		}
 

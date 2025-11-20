@@ -76,7 +76,7 @@ export const RecentItem = {
 		},
 		isNotes(): boolean
 		{
-			return Number.parseInt(this.recentItem.dialogId, 10) === Core.getUserId();
+			return this.$store.getters['chats/isNotes'](this.recentItem.dialogId);
 		},
 		avatarType(): string
 		{
@@ -88,7 +88,7 @@ export const RecentItem = {
 		},
 		isChatSelected(): boolean
 		{
-			const canBeSelected = [Layout.chat, Layout.updateChat, Layout.collab, Layout.copilot];
+			const canBeSelected = [Layout.chat, Layout.updateChat, Layout.collab, Layout.copilot, Layout.taskComments];
 			if (!canBeSelected.includes(this.layout.name))
 			{
 				return false;

@@ -100,5 +100,5 @@
 .task-skeleton .--chat-bg {
 	flex: 1;
 	display: grid;
-	background: url(/bitrix/js/im/images/chat-v2-background/pattern-white.svg) 100% 0, #9fcfff url(/bitrix/js/im/images/chat-v2-background/1.png) 50%/cover no-repeat;
+	background: #9fcfff url(/bitrix/js/im/images/chat-v2-background/1.png) 50%/cover no-repeat;
 }

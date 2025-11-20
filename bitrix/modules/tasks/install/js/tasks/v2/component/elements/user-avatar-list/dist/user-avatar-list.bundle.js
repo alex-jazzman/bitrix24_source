@@ -3,14 +3,13 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
-(function (exports,ui_vue3_components_popup,tasks_v2_lib_hrefClick,tasks_v2_provider_service_userService,ui_iconSet_api_vue,ui_iconSet_api_core,ui_iconSet_outline,ui_tooltip,tasks_v2_component_elements_addBackground,tasks_v2_component_elements_hoverPill,tasks_v2_component_elements_userAvatar) {
+(function (exports,ui_vue3_components_popup,tasks_v2_lib_hrefClick,tasks_v2_provider_service_userService,ui_iconSet_api_vue,ui_iconSet_api_core,ui_iconSet_outline,ui_tooltip,tasks_v2_component_elements_hoverPill,tasks_v2_component_elements_userAvatar) {
 	'use strict';
 
 	// @vue/component
 	const UserAvatarListUsers = {
 	  components: {
 	    BIcon: ui_iconSet_api_vue.BIcon,
-	    AddBackground: tasks_v2_component_elements_addBackground.AddBackground,
 	    HoverPill: tasks_v2_component_elements_hoverPill.HoverPill,
 	    UserAvatar: tasks_v2_component_elements_userAvatar.UserAvatar
 	  },
@@ -23,16 +22,12 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      type: Boolean,
 	      required: true
 	    },
-	    isDialogShown: {
-	      type: Boolean,
-	      default: false
-	    },
 	    readonly: {
 	      type: Boolean,
 	      default: false
 	    }
 	  },
-	  emits: ['onClick', 'onUserClick', 'onUserCrossClick'],
+	  emits: ['onUserClick', 'onUserCrossClick'],
 	  setup() {
 	    return {
 	      Outline: ui_iconSet_api_core.Outline
@@ -66,11 +61,6 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 						<span class="b24-user-avatar-list-user-title">{{ user.name }}</span>
 					</div>
 				</HoverPill>
-				<AddBackground
-					v-if="!readonly && index === 0"
-					:isActive="isDialogShown"
-					@click="$emit('onClick')"
-				/>
 			</div>
 		</template>
 	`
@@ -177,5 +167,5 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	exports.UserAvatarList = UserAvatarList;
 	exports.UserAvatarListUsers = UserAvatarListUsers;
 
-}((this.BX.Tasks.V2.Component.Elements = this.BX.Tasks.V2.Component.Elements || {}),BX.UI.Vue3.Components,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.UI.IconSet,BX.UI.IconSet,BX,BX.UI,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements));
+}((this.BX.Tasks.V2.Component.Elements = this.BX.Tasks.V2.Component.Elements || {}),BX.UI.Vue3.Components,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.UI.IconSet,BX.UI.IconSet,BX,BX.UI,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements));
 //# sourceMappingURL=user-avatar-list.bundle.js.map

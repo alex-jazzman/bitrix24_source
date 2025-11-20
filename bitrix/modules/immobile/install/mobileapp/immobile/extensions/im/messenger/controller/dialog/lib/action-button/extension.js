@@ -6,7 +6,6 @@ jn.define('im/messenger/controller/dialog/lib/action-button', (require, exports,
 	const { AutoDeleteMessages } = require('im/messenger/lib/messages-auto-delete');
 	const { MessagesAutoDeleteContextMenu } = require('im/messenger/lib/ui/context-menu/messages-auto-delete');
 	const { DialogHelper } = require('im/messenger/lib/helper');
-	const { Feature } = require('im/messenger/lib/feature');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
 	const {

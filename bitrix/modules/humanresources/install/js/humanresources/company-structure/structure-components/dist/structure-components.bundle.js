@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Humanresources = this.BX.Humanresources || {};
-(function (exports,ui_iconSet_api_vue,main_popup,humanresources_companyStructure_api,ui_entitySelector,ui_iconSet_actions,humanresources_companyStructure_utils,main_core) {
+(function (exports,main_popup,ui_iconSet_actions,ui_hint,main_core,ui_entitySelector,ui_notification,ui_vue3_pinia,ui_iconSet_api_core,ui_iconSet_api_vue,humanresources_companyStructure_chartStore,humanresources_companyStructure_permissionChecker,humanresources_companyStructure_utils,humanresources_companyStructure_api) {
 	'use strict';
 
 	const POPUP_CONTAINER_PREFIX = '#popup-window-content-';
@@ -743,7 +743,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  props: {
 	    title: {
 	      type: String,
-	      default: main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_TITLE')
+	      default: ''
 	    },
 	    description: {
 	      type: String,
@@ -753,7 +753,11 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      type: String,
 	      default: main_core.Loc.getMessage('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_CONFIRM_BTN')
 	    },
-	    entityType: {
+	    targetType: {
+	      type: String,
+	      default: 'department'
+	    },
+	    sourceType: {
 	      type: String,
 	      default: 'department'
 	    },
@@ -778,30 +782,50 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  data() {
 	    return {
 	      selectedRole: null,
-	      combinePosition: this.isCombineOnly
+	      combinePosition: false
 	    };
 	  },
 	  computed: {
 	    memberRoles() {
-	      return humanresources_companyStructure_api.getMemberRoles(this.entityType);
+	      return humanresources_companyStructure_api.getMemberRoles(this.targetType);
 	    },
 	    selectedRoleLabel() {
 	      switch (this.selectedRole) {
 	        case this.memberRoles.head:
-	          return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_HEAD');
+	          return this.isTeamTarget ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_TEAM_HEAD') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_HEAD');
 	        case this.memberRoles.deputyHead:
-	          return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_DEPUTY');
+	          return this.isTeamTarget ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_TEAM_DEPUTY') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_DEPUTY');
 	        case this.memberRoles.employee:
-	          return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_EMPLOYEE');
+	          return this.isTeamTarget ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_MEMBER') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_EMPLOYEE');
 	        default:
 	          return '';
 	      }
+	    },
+	    isCombineCheckboxEnabled() {
+	      return this.isCombineOnly || this.sourceType === humanresources_companyStructure_utils.EntityTypes.team && this.isTeamTarget;
+	    },
+	    isTeamTarget() {
+	      return this.targetType === humanresources_companyStructure_utils.EntityTypes.team;
+	    },
+	    popupTitle() {
+	      if (this.title) {
+	        return this.title;
+	      }
+	      return this.isTeamTarget ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_TITLE_TEAM') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_TITLE_DEPT');
+	    },
+	    popupCheckboxText() {
+	      return this.isTeamTarget ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_CHECKBOX_TEAM') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_CHECKBOX_DEPT');
+	    },
+	    showCombineNotice() {
+	      const isDeptToTeam = this.sourceType === humanresources_companyStructure_utils.EntityTypes.department && this.isTeamTarget;
+	      return this.isCombineOnly && isDeptToTeam;
 	    }
 	  },
 	  created() {
 	    if (this.showRoleSelect) {
 	      this.selectedRole = this.excludeEmployeeRole ? this.memberRoles.head : this.memberRoles.employee;
 	    }
+	    this.combinePosition = this.isCombineCheckboxEnabled;
 	  },
 	  methods: {
 	    loc(phrase) {
@@ -839,18 +863,18 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      menu.show();
 	    },
 	    roleMenuItems() {
-	      const memberRoles = humanresources_companyStructure_api.getMemberRoles(this.entityType);
 	      const items = [{
-	        id: memberRoles.head,
-	        text: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_HEAD')
+	        id: this.memberRoles.head,
+	        text: this.isTeamTarget ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_TEAM_HEAD') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_HEAD')
 	      }, {
-	        id: memberRoles.deputyHead,
-	        text: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_DEPUTY')
+	        id: this.memberRoles.deputyHead,
+	        text: this.isTeamTarget ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_TEAM_DEPUTY') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_DEPUTY')
 	      }];
 	      if (!this.excludeEmployeeRole) {
+	        const employeeRoleText = this.isTeamTarget ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_MEMBER') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_EMPLOYEE');
 	        items.push({
-	          id: memberRoles.employee,
-	          text: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_BADGE_EMPLOYEE')
+	          id: this.memberRoles.employee,
+	          text: employeeRoleText
 	        });
 	      }
 	      return items.map(item => ({
@@ -864,7 +888,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  },
 	  template: `
 		<ConfirmationPopup
-			:title="title"
+			:title="popupTitle"
 			:width="364"
 			:confirmBtnText="confirmButtonText"
 			@action="handleConfirm"
@@ -881,17 +905,28 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 						<div class="ui-ctl-after ui-ctl-icon-angle"></div>
 						<div class="ui-ctl-element">{{ selectedRoleLabel }}</div>
 					</div>
-					<div v-if="showCombineCheckbox" class="ui-ctl ui-ctl-checkbox hr-dnd-confirmation_checkbox">
-						<input
-							type="checkbox"
-							class="ui-ctl-element"
-							v-model="combinePosition"
-							:disabled="isCombineOnly"
-							id="dnd-confirmation-combine-checkbox"
+					<div v-if="showCombineCheckbox">
+						<div
+							v-if="showCombineNotice"
+							class="hr-dnd-confirmation_notice"
 						>
-						<label for="dnd-confirmation-combine-checkbox" class="ui-ctl-label-text">
-							{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_CHECKBOX') }}
-						</label>
+							{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_DND_USER_CONFIRM_POPUP_NOTICE') }}
+						</div>
+						<div 
+							v-else
+							class="ui-ctl ui-ctl-checkbox hr-dnd-confirmation_checkbox"
+						>
+							<input
+								type="checkbox"
+								class="ui-ctl-element"
+								v-model="combinePosition"
+								:disabled="isCombineOnly"
+								id="dnd-confirmation-combine-checkbox"
+							>
+							<label for="dnd-confirmation-combine-checkbox" class="ui-ctl-label-text">
+								{{ popupCheckboxText }}
+							</label>
+						</div>
 					</div>
 				</div>
 			</template>
@@ -900,10 +935,13 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	};
 
 	const Hint = {
-	  mounted(el) {
+	  mounted(el, binding) {
+	    const value = main_core.Type.isString(binding == null ? void 0 : binding.value) ? binding.value.trim() : '';
 	    let hint = null;
-	    main_core.Event.bind(el, 'mouseenter', () => {
-	      if (el.scrollWidth === el.offsetWidth) {
+	    const shouldShow = () => value ? true : el.scrollWidth !== el.offsetWidth;
+	    const getText = () => main_core.Text.encode(value || el.textContent);
+	    const onMouseEnter = () => {
+	      if (!shouldShow()) {
 	        return;
 	      }
 	      hint = main_core.Reflection.getClass('BX.UI.Hint').createInstance({
@@ -915,12 +953,14 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	          offsetLeft: el.getBoundingClientRect().width / 2
 	        }
 	      });
-	      hint.show(el, main_core.Text.encode(el.textContent));
-	    });
-	    main_core.Event.bind(el, 'mouseleave', () => {
+	      hint.show(el, getText());
+	    };
+	    const onMouseLeave = () => {
 	      var _hint;
 	      (_hint = hint) == null ? void 0 : _hint.hide();
-	    });
+	    };
+	    main_core.Event.bind(el, 'mouseenter', onMouseEnter);
+	    main_core.Event.bind(el, 'mouseleave', onMouseLeave);
 	  }
 	};
 
@@ -1052,6 +1092,16 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	          onLoad: event => {
 	            const dialog = event.getTarget();
 	            this.toggleItems(dialog);
+	            const tabs = dialog.getTabs();
+	            for (const tab of tabs) {
+	              if (tab.id === 'recents') {
+	                tab.select();
+	              }
+	              if (!['recents', 'search'].includes(tab.id)) {
+	                tab.deselect();
+	                tab.setVisible(false);
+	              }
+	            }
 	          },
 	          'SearchTab:onLoad': event => {
 	            const dialog = event.getTarget();
@@ -1352,6 +1402,333 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	`
 	};
 
+	const MoveAPI = {
+	  moveUserToDepartment: (nodeId, userId, targetNodeId, role) => {
+	    return humanresources_companyStructure_api.postData('humanresources.api.Structure.Node.Member.moveUser', {
+	      nodeId,
+	      userId,
+	      targetNodeId,
+	      roleXmlId: role
+	    });
+	  }
+	};
+
+	// @vue/component
+	const MoveUserPopup = {
+	  name: 'MoveUserPopup',
+	  components: {
+	    ConfirmationPopup,
+	    BIcon: ui_iconSet_api_vue.BIcon
+	  },
+	  props: {
+	    originalNodeId: {
+	      type: Number,
+	      required: true
+	    },
+	    user: {
+	      type: Object,
+	      required: true
+	    },
+	    entityType: {
+	      type: String,
+	      required: true
+	    },
+	    executeAction: {
+	      type: Boolean,
+	      default: true
+	    },
+	    onlyMove: {
+	      type: Boolean,
+	      default: true
+	    }
+	  },
+	  emits: ['close', 'action', 'remove'],
+	  data() {
+	    return {
+	      showMoveUserActionLoader: false,
+	      hasPermission: true,
+	      showUserAlreadyBelongsToDepartmentPopup: false,
+	      accessDenied: false,
+	      selectedParentDepartment: null
+	    };
+	  },
+	  computed: {
+	    ...ui_vue3_pinia.mapState(humanresources_companyStructure_chartStore.useChartStore, ['departments', 'focusedNode']),
+	    includedNodeEntityTypesInDialog() {
+	      return this.isTeamEntity ? ['team'] : ['department'];
+	    },
+	    getMoveUserActionPhrase() {
+	      let phraseCode = '';
+	      if (this.isTeamEntity) {
+	        phraseCode = 'HUMANRESOURCES_COMPANY_STRUCTURE_MOVE_TO_ANOTHER_TEAM_REMOVE_USER_DESCRIPTION';
+	      } else if (this.onlyMove) {
+	        phraseCode = 'HUMANRESOURCES_COMPANY_STRUCTURE_MOVE_TO_ANOTHER_DEPARTMENT_POPUP_DESCRIPTION_ONLY_MOVE';
+	      } else {
+	        return null;
+	      }
+	      phraseCode += this.user.gender === 'F' ? '_F' : '_M';
+	      return this.getStandardPhrase(phraseCode, this.originalNodeId);
+	    },
+	    getMoveUserActionPhraseWarning() {
+	      var _this$departments$get, _this$selectedParentD, _this$user$name;
+	      if (this.isTeamEntity) {
+	        return null;
+	      }
+	      const departmentName = main_core.Text.encode((_this$departments$get = this.departments.get((_this$selectedParentD = this.selectedParentDepartment) != null ? _this$selectedParentD : 0).name) != null ? _this$departments$get : '');
+	      const userName = main_core.Text.encode((_this$user$name = this.user.name) != null ? _this$user$name : '');
+	      return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_MOVE_TO_ANOTHER_DEPARTMENT_ALREADY_BELONGS_TO', {
+	        '#USER_NAME#': userName,
+	        '#DEPARTMENT_NAME#': departmentName
+	      }).replace('[link]', '').replace('[/link]', '');
+	    },
+	    getUserAlreadyBelongsToDepartmentPopupPhrase() {
+	      let phraseCode = '';
+	      if (this.isTeamEntity) {
+	        phraseCode = 'HUMANRESOURCES_COMPANY_STRUCTURE_MOVE_TO_ANOTHER_DEPARTMENT_ALREADY_BELONGS_TO_TEAM_DESCRIPTION';
+	        phraseCode += this.user.gender === 'F' ? '_F' : '_M';
+	      } else {
+	        phraseCode = 'HUMANRESOURCES_COMPANY_STRUCTURE_MOVE_TO_ANOTHER_DEPARTMENT_ALREADY_BELONGS_TO_DEPARTMENT_DESCRIPTION';
+	      }
+	      return this.getStandardPhrase(phraseCode, this.selectedParentDepartment);
+	    },
+	    memberRoles() {
+	      return humanresources_companyStructure_api.getMemberRoles(this.entityType);
+	    },
+	    isTeamEntity() {
+	      return this.entityType === humanresources_companyStructure_utils.EntityTypes.team;
+	    },
+	    confirmTitle() {
+	      if (this.isTeamEntity) {
+	        return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_MOVE_TO_ANOTHER_TEAM_POPUP_CONFIRM_TITLE');
+	      }
+	      if (this.onlyMove) {
+	        return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_MOVE_TO_ANOTHER_DEPARTMENT_TITLE_ONLY_MOVE');
+	      }
+	      return this.userHasOtherDepartments ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_MOVE_TO_ANOTHER_DEPARTMENT_MULTIROLE_TITLE') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_MOVE_TO_ANOTHER_DEPARTMENT_TITLE');
+	    },
+	    confirmDescription() {
+	      if (this.isTeamEntity) {
+	        return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_MOVE_TO_ANOTHER_TEAM_POPUP_ACTION_SELECT_TEAM_DESCRIPTION');
+	      }
+	      if (this.onlyMove) {
+	        return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_MOVE_TO_ANOTHER_DEPARTMENT_SELECT_DEPARTMENT_DESCRIPTION');
+	      }
+	      return this.userHasOtherDepartments ? this.getStandardPhrase('HUMANRESOURCES_COMPANY_STRUCTURE_MOVE_TO_ANOTHER_DEPARTMENT_POPUP_MULTIROLE_DESCRIPTION', this.originalNodeId) : this.getStandardPhrase('HUMANRESOURCES_COMPANY_STRUCTURE_MOVE_TO_ANOTHER_DEPARTMENT_POPUP_DESCRIPTION', this.originalNodeId);
+	    },
+	    isInSelectedNode() {
+	      const store = humanresources_companyStructure_chartStore.useChartStore();
+	      const nodeIds = store.multipleUsers[this.user.id];
+	      return this.selectedParentDepartment && main_core.Type.isArray(nodeIds) && nodeIds.includes(this.selectedParentDepartment);
+	    },
+	    parentNodeId() {
+	      const originalNode = this.departments.get(this.originalNodeId);
+	      const parentId = originalNode.parentId;
+	      if (!parentId) {
+	        return this.originalNodeId;
+	      }
+	      const parentNode = this.departments.get(parentId);
+	      return parentNode && parentNode.entityType === originalNode.entityType ? parentId : this.originalNodeId;
+	    },
+	    iconSet() {
+	      return ui_iconSet_api_core.Set;
+	    },
+	    userHasOtherDepartments() {
+	      const store = humanresources_companyStructure_chartStore.useChartStore();
+	      const nodeIds = store.multipleUsers[this.user.id];
+	      return main_core.Type.isArray(nodeIds) && nodeIds.length > 1;
+	    },
+	    confirmButtonText() {
+	      if (this.onlyMove) {
+	        return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_MOVE_TO_ANOTHER_DEPARTMENT_MOVE_BUTTON_ONLY_MOVE');
+	      }
+	      return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_MOVE_TO_ANOTHER_DEPARTMENT_MOVE_BUTTON');
+	    },
+	    lockMoveUserActionButton() {
+	      return !this.hasPermission || !this.userHasOtherDepartments && !this.selectedParentDepartment || this.onlyMove && !this.selectedParentDepartment;
+	    },
+	    isWarningVisible() {
+	      return this.isInSelectedNode && this.getMoveUserActionPhraseWarning;
+	    }
+	  },
+	  created() {
+	    this.permissionChecker = humanresources_companyStructure_permissionChecker.PermissionChecker.getInstance();
+	    if (!this.permissionChecker) {
+	      return;
+	    }
+	    this.action = this.isTeamEntity ? humanresources_companyStructure_permissionChecker.PermissionActions.teamAddMember : humanresources_companyStructure_permissionChecker.PermissionActions.employeeAddToDepartment;
+	    this.selectedDepartmentId = 0;
+	  },
+	  mounted() {
+	    const departmentContainer = this.$refs['department-selector'];
+	    this.departmentSelector = this.createTagSelector();
+	    this.departmentSelector.renderTo(departmentContainer);
+	  },
+	  methods: {
+	    createTagSelector() {
+	      return new ui_entitySelector.TagSelector({
+	        events: {
+	          onTagAdd: event => {
+	            this.accessDenied = false;
+	            const {
+	              tag
+	            } = event.data;
+	            this.selectedParentDepartment = tag.id;
+	            if (humanresources_companyStructure_permissionChecker.PermissionChecker.hasPermission(this.action, tag.id)) {
+	              this.hasPermission = true;
+	              return;
+	            }
+	            this.accessDenied = true;
+	            this.hasPermission = false;
+	          },
+	          onTagRemove: () => {
+	            this.selectedParentDepartment = null;
+	          }
+	        },
+	        multiple: false,
+	        dialogOptions: {
+	          width: 425,
+	          height: 350,
+	          dropdownMode: true,
+	          hideOnDeselect: true,
+	          entities: [{
+	            id: 'structure-node',
+	            options: {
+	              selectMode: 'departmentsOnly',
+	              restricted: 'addMember',
+	              includedNodeEntityTypes: this.includedNodeEntityTypesInDialog,
+	              useMultipleTabs: true
+	            }
+	          }]
+	        }
+	      });
+	    },
+	    loc(phraseCode, replacements = {}) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
+	    },
+	    async confirmMoveUser() {
+	      var _this$departments$get2, _this$departments$get3, _this$user$role;
+	      const departmentId = this.focusedNode;
+	      const userId = this.user.id;
+	      const targetNodeId = this.selectedParentDepartment;
+	      if (!targetNodeId) {
+	        this.$emit('remove');
+	        return;
+	      }
+	      if (!this.executeAction) {
+	        this.$emit('action', targetNodeId);
+	        return;
+	      }
+	      this.showMoveUserActionLoader = true;
+	      try {
+	        await MoveAPI.moveUserToDepartment(departmentId, userId, targetNodeId);
+	      } catch (error) {
+	        var _error$code;
+	        this.showMoveUserActionLoader = false;
+	        const code = (_error$code = error.code) != null ? _error$code : 0;
+	        if (code === 'MEMBER_ALREADY_BELONGS_TO_NODE') {
+	          this.showUserAlreadyBelongsToDepartmentPopup = true;
+	        } else {
+	          const phraseCode = this.isTeamEntity ? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_MOVE_TO_ANOTHER_TEAM_ERROR') : this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_MOVE_TO_ANOTHER_DEPARTMENT_ERROR');
+	          ui_notification.UI.Notification.Center.notify({
+	            content: phraseCode,
+	            autoHideDelay: 2000
+	          });
+	          this.$emit('close');
+	        }
+	        return;
+	      }
+	      const departmentName = main_core.Text.encode((_this$departments$get2 = (_this$departments$get3 = this.departments.get(targetNodeId)) == null ? void 0 : _this$departments$get3.name) != null ? _this$departments$get2 : '');
+	      const phraseCode = this.isTeamEntity ? 'HUMANRESOURCES_COMPANY_STRUCTURE_MOVE_TO_ANOTHER_TEAM_SUCCESS_MESSAGE' : 'HUMANRESOURCES_COMPANY_STRUCTURE_MOVE_TO_ANOTHER_DEPARTMENT_SUCCESS_MESSAGE';
+	      ui_notification.UI.Notification.Center.notify({
+	        content: this.loc(phraseCode, {
+	          '#DEPARTMENT_NAME#': departmentName
+	        }),
+	        autoHideDelay: 2000
+	      });
+	      humanresources_companyStructure_chartStore.UserService.moveUserToEntity(departmentId, userId, targetNodeId, (_this$user$role = this.user.role) != null ? _this$user$role : this.memberRoles.employee);
+	      this.$emit('action', targetNodeId);
+	      this.showMoveUserActionLoader = false;
+	    },
+	    closeAction() {
+	      this.$emit('close');
+	    },
+	    closeUserAlreadyBelongsToDepartmentPopup() {
+	      this.showUserAlreadyBelongsToDepartmentPopup = false;
+	      this.closeAction();
+	    },
+	    getStandardPhrase(phrase, departmentId) {
+	      var _this$departments$get4, _this$departments$get5, _this$user$name2;
+	      const departmentName = main_core.Text.encode((_this$departments$get4 = (_this$departments$get5 = this.departments.get(departmentId != null ? departmentId : 0)) == null ? void 0 : _this$departments$get5.name) != null ? _this$departments$get4 : '');
+	      const userName = main_core.Text.encode((_this$user$name2 = this.user.name) != null ? _this$user$name2 : '');
+	      return this.loc(phrase, {
+	        '#USER_NAME#': userName,
+	        '#DEPARTMENT_NAME#': departmentName
+	      }).replace('[link]', `<a class="hr-department-detail-content__move-user-department-user-link" href="${this.user.url}">`).replace('[/link]', '</a>');
+	    }
+	  },
+	  template: `
+		<ConfirmationPopup
+			@action="confirmMoveUser"
+			@close="closeAction"
+			:showActionButtonLoader="showMoveUserActionLoader"
+			:lockActionButton="lockMoveUserActionButton"
+			:title="confirmTitle"
+			:confirmBtnText = "confirmButtonText"
+			:width="364"
+		>
+			<template v-slot:content>
+				<div class="hr-department-detail-content__user-action-text-container">
+					<div v-if="getMoveUserActionPhrase" v-html="getMoveUserActionPhrase"/>
+					<span v-html="confirmDescription"/>
+				</div>
+				<div
+					class="hr-department-detail-content__move-user-department-selector"
+					ref="department-selector"
+					:class="{ 'ui-ctl-warning': accessDenied }"
+				/>
+				<div v-if="isWarningVisible" class="hr-department-detail-content__move-user-department_item-warning">
+					<BIcon
+						:name="iconSet.WARNING"
+						color="#FFA900"
+						:size="20"
+					></BIcon>
+					<span v-html="getMoveUserActionPhraseWarning"/>
+				</div>
+				<div
+					v-if="accessDenied"
+					class="hr-department-detail-content__move-user-department_item-error"
+				>
+					<div class="ui-icon-set --warning"></div>
+					<span
+						class="hr-department-detail-content__move-user-department_item-error-message"
+					>
+							{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_MOVE_TO_ANOTHER_DEPARTMENT_PERMISSION_ERROR') }}
+					</span>
+				</div>
+			</template>
+		</ConfirmationPopup>
+		<ConfirmationPopup
+			@action="closeUserAlreadyBelongsToDepartmentPopup"
+			@close="closeUserAlreadyBelongsToDepartmentPopup"
+			v-if="showUserAlreadyBelongsToDepartmentPopup"
+			:withoutTitleBar = true
+			:onlyConfirmButtonMode = true
+			:confirmBtnText = "loc('HUMANRESOURCES_COMPANY_STRUCTURE_MOVE_TO_ANOTHER_DEPARTMENT_ALREADY_BELONGS_CLOSE_BUTTON')"
+			:width="300"
+		>
+			<template v-slot:content>
+				<div class="hr-department-detail-content__user-action-text-container">
+					<div 
+						class="hr-department-detail-content__user-belongs-to-department-text-container"
+						v-html="getUserAlreadyBelongsToDepartmentPopupPhrase"
+					/>
+				</div>
+				<div class="hr-department-detail-content__move-user-department-selector" ref="department-selector"></div>
+			</template>
+		</ConfirmationPopup>
+	`
+	};
+
 	exports.BasePopup = BasePopup;
 	exports.BaseActionMenu = BaseActionMenu;
 	exports.RouteActionMenu = RouteActionMenu;
@@ -1368,6 +1745,7 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	exports.CommunicationsTypeDict = CommunicationsTypeDict;
 	exports.ResponsiveHint = ResponsiveHint;
 	exports.DefaultHint = DefaultHint;
+	exports.MoveUserPopup = MoveUserPopup;
 
-}((this.BX.Humanresources.CompanyStructure = this.BX.Humanresources.CompanyStructure || {}),BX.UI.IconSet,BX.Main,BX.Humanresources.CompanyStructure,BX.UI.EntitySelector,BX,BX.Humanresources.CompanyStructure,BX));
+}((this.BX.Humanresources.CompanyStructure = this.BX.Humanresources.CompanyStructure || {}),BX.Main,BX,BX,BX,BX.UI.EntitySelector,BX,BX.Vue3.Pinia,BX.UI.IconSet,BX.UI.IconSet,BX.Humanresources.CompanyStructure,BX.Humanresources.CompanyStructure,BX.Humanresources.CompanyStructure,BX.Humanresources.CompanyStructure));
 //# sourceMappingURL=structure-components.bundle.js.map

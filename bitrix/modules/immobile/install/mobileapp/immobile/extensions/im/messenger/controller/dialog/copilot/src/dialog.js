@@ -150,6 +150,7 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 				this.messageService = new MessageService({
 					store: this.store,
 					chatId: this.getChatId(),
+					dialogId: this.getDialogId(),
 				});
 			}
 

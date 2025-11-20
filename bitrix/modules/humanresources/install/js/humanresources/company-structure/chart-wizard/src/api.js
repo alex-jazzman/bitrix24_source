@@ -15,6 +15,7 @@ export const WizardAPI = {
 		bindingChannelIds: number[],
 		createCollab: number,
 		bindingCollabIds: number[],
+		settings: {},
 	): Promise<void> => {
 		return postData('humanresources.api.Structure.Department.create', {
 			name,
@@ -28,6 +29,7 @@ export const WizardAPI = {
 			bindingChannelIds,
 			createCollab,
 			bindingCollabIds,
+			settings,
 		});
 	},
 	createTeam: (
@@ -108,14 +110,40 @@ export const WizardAPI = {
 	},
 	saveChats: (
 		nodeId: number,
-		ids: { chat?: number[], channel?: number[], collab?: number[] },
-		createDefault: { chat?: boolean[], channel?: boolean[], collab?: boolean[] } = {},
-		removeIds: { chat?: number[], channel?: number[], collab?: number[] } = {},
+		ids: number[],
+		createDefault: number,
+		removeIds: number[],
 	): Promise<void> => {
 		return postData('humanresources.api.Structure.Node.Member.Chat.saveChatList', {
 			nodeId,
-			ids,
 			createDefault,
+			ids,
+			removeIds,
+		});
+	},
+	saveChannels: (
+		nodeId: number,
+		ids: number[],
+		createDefault: number,
+		removeIds: number[],
+	): Promise<void> => {
+		return postData('humanresources.api.Structure.Node.Member.Chat.saveChannelList', {
+			nodeId,
+			createDefault,
+			ids,
+			removeIds,
+		});
+	},
+	saveCollabs: (
+		nodeId: number,
+		ids: number[],
+		createDefault: number,
+		removeIds: number[],
+	): Promise<void> => {
+		return postData('humanresources.api.Structure.Node.Member.Chat.saveCollabList', {
+			nodeId,
+			createDefault,
+			ids,
 			removeIds,
 		});
 	},

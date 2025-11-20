@@ -7048,9 +7048,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      const [firstUserRecord] = this.chatInputActions;
 	      const {
 	        type,
-	        userName
+	        userName,
+	        statusMessageCode
 	      } = firstUserRecord;
-	      const code = LocCodeByActionType[type];
+	      const hasCustomMessageCode = this.hasCustomMessageCode(statusMessageCode);
+	      const code = hasCustomMessageCode ? statusMessageCode : LocCodeByActionType[type];
 	      return this.loc(code, {
 	        '#USER#': userName
 	      });
@@ -7069,6 +7071,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        return;
 	      }
 	      this.currentAnimation.destroy();
+	    },
+	    hasCustomMessageCode(phraseCode) {
+	      return main_core.Type.isStringFilled(phraseCode) && main_core.Type.isStringFilled(this.loc(phraseCode));
 	    },
 	    loc(phraseCode, replacements = {}) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
@@ -8376,7 +8381,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      const {
 	        message,
 	        event,
-	        dialogId
+	        dialogId,
+	        bindElement
 	      } = eventData.getData();
 	      if (dialogId !== this.dialogId) {
 	        return;
@@ -8398,18 +8404,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        ...message
 	      };
 	      const messageMenuManager = im_v2_lib_menu.MessageMenuManager.getInstance();
-	      messageMenuManager.openMenu(context, event.currentTarget);
-	    },
-	    async onMessageMouseUp(message, event) {
-	      await im_v2_lib_utils.Utils.browser.waitForSelectionToUpdate();
-	      const selection = window.getSelection().toString().trim();
-	      if (selection.length === 0) {
-	        return;
+	      let target = {
+	        left: event.clientX,
+	        top: event.clientY
+	      };
+	      if (bindElement) {
+	        target = bindElement;
 	      }
-	      main_core_events.EventEmitter.emit(im_v2_const.EventType.dialog.showQuoteButton, {
-	        message,
-	        event
-	      });
+	      messageMenuManager.openMenu(context, target);
 	    },
 	    initObserverManager() {
 	      this.observer = new ObserverManager(this.dialogId);
@@ -8455,7 +8457,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 									:key="message.id"
 									:data-viewed="message.viewed"
 									:containerHeight="containerHeight"
-									@mouseup="onMessageMouseUp(message, $event)"
 								>
 								</component>
 							</template>

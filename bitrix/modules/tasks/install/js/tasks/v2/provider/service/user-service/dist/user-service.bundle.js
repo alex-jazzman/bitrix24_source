@@ -6,19 +6,12 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 (function (exports,tasks_v2_const,tasks_v2_core,tasks_v2_lib_apiClient) {
 	'use strict';
 
-	function mapModelToDto(user) {
-	  return {
-	    id: user.id,
-	    name: user.name,
-	    image: user.image,
-	    type: user.type
-	  };
-	}
 	function mapDtoToModel(userDto) {
+	  var _userDto$image;
 	  return {
 	    id: userDto.id,
 	    name: userDto.name,
-	    image: userDto.image,
+	    image: (_userDto$image = userDto.image) == null ? void 0 : _userDto$image.src,
 	    type: userDto.type
 	  };
 	}
@@ -65,7 +58,6 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	const userService = new UserService();
 
 	const UserMappers = {
-	  mapModelToDto,
 	  mapDtoToModel
 	};
 

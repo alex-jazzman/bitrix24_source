@@ -18,6 +18,9 @@ type Opener = {
 	forwardEntityToChat: (dialogId: string, entityConfig: ForwardedEntityConfig) => Promise,
 	openLines: (dialogId?: string) => Promise,
 	openCopilot: (dialogId?: string) => Promise,
+	openCollab: (dialogId?: string) => Promise,
+	openChannel: (dialogId?: string) => Promise,
+	openTaskComments: (dialogId?: string) => Promise,
 	openLinesHistory: (dialogId?: string) => Promise,
 	openNotifications: () => Promise,
 	openRecentSearch: () => Promise,
@@ -142,6 +145,37 @@ class Messenger
 		}
 
 		return getOpener()?.openCollab(dialogId);
+	}
+
+	async openChannel(dialogId: string = ''): Promise
+	{
+		const DesktopManager = Reflection.getClass('BX.Messenger.v2.Lib.DesktopManager');
+		const isRedirectAllowed = await DesktopManager?.getInstance().checkForRedirect();
+		if (isRedirectAllowed)
+		{
+			return DesktopManager?.getInstance().redirectToChannel(dialogId);
+		}
+
+		return getOpener()?.openChannel(dialogId);
+	}
+
+	async openTaskComments(dialogId: string = '', messageId: number = 0): Promise
+	{
+		const FeatureManager = Reflection.getClass('BX.Messenger.v2.Lib.FeatureManager');
+		const Feature = Reflection.getClass('BX.Messenger.v2.Lib.Feature');
+		if (!FeatureManager?.isFeatureAvailable(Feature.isTasksRecentListAvailable))
+		{
+			return Promise.resolve();
+		}
+
+		const DesktopManager = Reflection.getClass('BX.Messenger.v2.Lib.DesktopManager');
+		const isRedirectAllowed = await DesktopManager?.getInstance().checkForRedirect();
+		if (isRedirectAllowed)
+		{
+			return DesktopManager?.getInstance().redirectToTaskComments(dialogId, messageId);
+		}
+
+		return getOpener()?.openTaskComments(dialogId, messageId);
 	}
 
 	async openLinesHistory(dialogId: string = ''): Promise
@@ -389,10 +423,10 @@ class Messenger
 	async openNavigationItem({ id, entityId, target }: NavigationMenuItemParams): Promise<void>
 	{
 		const DesktopManager = Reflection.getClass('BX.Messenger.v2.Lib.DesktopManager');
-		const NavigationManager = Reflection.getClass('BX.Messenger.v2.Lib.NavigationManager');
+		const LayoutManager = Reflection.getClass('BX.Messenger.v2.Lib.LayoutManager');
 
 		const isRedirectAllowed = await DesktopManager?.getInstance().checkForRedirect();
-		const isLayout = NavigationManager?.isLayout(id);
+		const isLayout = LayoutManager?.getInstance().isValidLayout(id);
 		if (isRedirectAllowed && isLayout)
 		{
 			return DesktopManager?.getInstance().redirectToLayout({ id, entityId });

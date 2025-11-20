@@ -22,7 +22,7 @@ export class ChatPins
 			tool: AnalyticsTool.im,
 			category: getCategoryByChatType(chat.type),
 			event: AnalyticsEvent.pinChat,
-			p1: `chatType_${isNotes(dialogId) ? PSEUDO_CHAT_TYPE_FOR_NOTES : chat.type}`,
+			p1: `chatType_${PSEUDO_CHAT_TYPE_FOR_NOTES}`,
 		};
 
 		sendData(params);

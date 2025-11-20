@@ -35,19 +35,21 @@ export const FooterCreate = {
 	methods: {
 		close(): void
 		{
-			Event.EventEmitter.emit(EventName.CloseFullCard);
+			Event.EventEmitter.emit(EventName.CloseFullCard, { taskId: this.taskId });
 		},
 	},
 	template: `
 		<div class="tasks-full-card-footer-create">
-			<AddTaskButton :taskId="taskId" @addTask="$emit('addTask')"/>
-			<UiButton
-				:text="loc('TASKS_V2_TASK_FULL_CARD_CANCEL')"
-				:size="ButtonSize.LARGE"
-				:style="AirButtonStyle.PLAIN"
-				data-task-cancel-button
-				@click="close"
-			/>
+			<div class="tasks-full-card-footer-main-buttons">
+				<AddTaskButton :taskId="taskId" @addTask="$emit('addTask')"/>
+				<UiButton
+					:text="loc('TASKS_V2_TASK_FULL_CARD_CANCEL')"
+					:size="ButtonSize.LARGE"
+					:style="AirButtonStyle.PLAIN"
+					data-task-cancel-button
+					@click="close"
+				/>
+			</div>
 			<UiButton
 				v-if="isTemplateEnabled"
 				class="tasks-full-card-footer-template-button"

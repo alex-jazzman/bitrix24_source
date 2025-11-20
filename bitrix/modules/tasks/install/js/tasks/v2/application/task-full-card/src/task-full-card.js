@@ -1,4 +1,5 @@
-import { Event } from 'main.core';
+import { Event, Runtime, Text } from 'main.core';
+import { EventEmitter, type BaseEvent } from 'main.core.events';
 import type { Popup } from 'main.popup';
 import type { Slider } from 'main.sidepanel';
 
@@ -16,10 +17,14 @@ export class TaskFullCard
 	#params: Params;
 	#slider: Slider;
 	#application: ?VueCreateAppResult;
+	#handlers: { [eventName: string]: Function };
+	#needToReloadGrid: boolean = false;
 
 	constructor(params: Params = {})
 	{
 		this.#params = params;
+
+		this.#params.taskId = this.#params.taskId || Text.getRandom();
 	}
 
 	async mountCard(slider: Slider): Promise<void>
@@ -41,6 +46,12 @@ export class TaskFullCard
 		this.#unmountApplication();
 
 		this.#unsubscribe();
+
+		if (this.#needToReloadGrid && BX.Tasks.Util)
+		{
+			const id = this.#params.taskId;
+			BX.Tasks.Util.fireGlobalTaskEvent('UPDATE', { ID: id }, { STAY_AT_PAGE: true }, { id });
+		}
 	}
 
 	async #mountApplication(container: HTMLElement): Promise<VueCreateAppResult>
@@ -66,22 +77,71 @@ export class TaskFullCard
 
 	#subscribe(): void
 	{
-		Event.EventEmitter.subscribe(EventName.CloseFullCard, this.#onClose);
-		Event.EventEmitter.subscribe('BX.Main.Popup:onShow', this.#handlePopupShow);
+		this.#handlers = {
+			[EventName.TaskUpdate]: this.#handleTaskUpdate,
+			[EventName.CloseFullCard]: this.#onClose,
+			[EventName.OpenFullCard]: this.#openFullCard,
+			[EventName.OpenCompactCard]: this.#openCompactCard,
+			[EventName.OpenGrid]: this.#openGrid,
+			'BX.Main.Popup:onShow': this.#handlePopupShow,
+		};
+
+		Object.entries(this.#handlers).forEach(([event, handler]) => EventEmitter.subscribe(event, handler));
 	}
 
 	#unsubscribe(): void
 	{
-		Event.EventEmitter.unsubscribe(EventName.CloseFullCard, this.#onClose);
-		Event.EventEmitter.unsubscribe('BX.Main.Popup:onShow', this.#handlePopupShow);
+		Object.entries(this.#handlers).forEach(([event, handler]) => EventEmitter.unsubscribe(event, handler));
 	}
 
-	#onClose = (): void => {
-		this.#slider.close();
+	#handleTaskUpdate = (event: BaseEvent): void => {
+		if (event.getData().id === this.#params.taskId)
+		{
+			const fieldsForReloadGrid = new Set(['deadlineTs', 'responsibleId']);
+			const fields = Object.keys(event.getData());
+			if (fields.some((field: string) => fieldsForReloadGrid.has(field)))
+			{
+				this.#needToReloadGrid = true;
+			}
+		}
 	};
 
-	#handlePopupShow = (event): void => {
+	#onClose = (event: BaseEvent): void => {
+		if (event.getData().taskId === this.#params.taskId)
+		{
+			this.#slider.close();
+		}
+	};
+
+	#openFullCard = async (baseEvent: BaseEvent): Promise<void> => {
+		const { TaskCard } = await Runtime.loadExtension('tasks.v2.application.task-card');
+
+		const params = baseEvent.getData();
+
+		TaskCard.showFullCard(params);
+	};
+
+	#openCompactCard = async (baseEvent: BaseEvent): Promise<void> => {
+		const { TaskCard } = await Runtime.loadExtension('tasks.v2.application.task-card');
+
+		const params = baseEvent.getData();
+
+		TaskCard.showCompactCard(params);
+	};
+
+	#openGrid = (baseEvent: BaseEvent): void => {
+		const { taskId, type } = baseEvent.getData();
+		const userId = Core.getParams().currentUserId;
+
+		BX.SidePanel.Instance.open(`/company/personal/user/${userId}/tasks/?relationToId=${taskId}&relationType=${type}`);
+	};
+
+	#handlePopupShow = (event: BaseEvent): void => {
 		const popup: Popup = event.getCompatData()[0];
+		if (popup.getTargetContainer() !== document.body)
+		{
+			return;
+		}
 
 		const onScroll = () => popup.adjustPosition();
 		const onClose = () => {

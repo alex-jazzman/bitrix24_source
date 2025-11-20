@@ -23,7 +23,7 @@ jn.define('im/messenger/provider/pull/channel/dialog', (require, exports, module
 
 		async handleChatUserLeave(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}

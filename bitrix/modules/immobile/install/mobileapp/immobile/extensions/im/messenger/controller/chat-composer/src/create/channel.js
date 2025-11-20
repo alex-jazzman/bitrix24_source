@@ -23,6 +23,7 @@ jn.define('im/messenger/controller/chat-composer/create/channel', (require, expo
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { EntitySelectorHelper } = require('im/messenger/lib/helper');
 	const { Notification } = require('im/messenger/lib/ui/notification');
+	const { Feature } = require('im/messenger/lib/feature');
 
 	const { ChatService } = require('im/messenger/provider/services/chat');
 
@@ -336,27 +337,33 @@ jn.define('im/messenger/controller/chat-composer/create/channel', (require, expo
 		{
 			this.layoutWidget.close();
 
+			const openDialogParams = {
+				dialogId: `chat${chatId}`,
+				context: OpenDialogContextType.chatCreation,
+			};
+
 			if (this.dialogInfo.type === DialogType.channel)
 			{
-				MessengerEmitter.emit(
-					EventType.navigation.broadCastEventWithTabChange,
-					{
-						broadCastEvent: EventType.messenger.openDialog,
-						toTab: NavigationTabByComponent[ComponentCode.imMessenger],
-						data: {
-							dialogId: `chat${chatId}`,
-							context: OpenDialogContextType.chatCreation,
+				if (Feature.isMessengerV2Enabled)
+				{
+					void serviceLocator.get('dialog-manager').openDialog(openDialogParams);
+				}
+				else
+				{
+					MessengerEmitter.emit(
+						EventType.navigation.broadCastEventWithTabChange,
+						{
+							broadCastEvent: EventType.messenger.openDialog,
+							toTab: NavigationTabByComponent[ComponentCode.imMessenger],
+							data: openDialogParams,
 						},
-					},
-					ComponentCode.imNavigation,
-				);
+						ComponentCode.imNavigation,
+					);
+				}
 			}
 			else
 			{
-				MessengerEmitter.emit(EventType.messenger.openDialog, {
-					dialogId: `chat${chatId}`,
-					context: OpenDialogContextType.chatCreation,
-				});
+				MessengerEmitter.emit(EventType.messenger.openDialog, openDialogParams);
 			}
 		}
 

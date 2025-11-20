@@ -65,6 +65,7 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		FileType,
 		FileEmojiType,
 		FileImageType,
+		FileAudioType,
 	} = require('im/messenger/const/file-type');
 	const { Color } = require('im/messenger/const/color');
 	const {
@@ -81,7 +82,7 @@ jn.define('im/messenger/const', (require, exports, module) => {
 	const { CopilotButtonType, CopilotPromptType } = require('im/messenger/const/copilot-button');
 	const { ComponentCode } = require('im/messenger/const/component-code');
 	const { Analytics } = require('im/messenger/const/analytics');
-	const { NavigationTab, NavigationTabByComponent } = require('im/messenger/const/navigation-tab');
+	const { NavigationTab, NavigationTabId, NavigationTabByComponent } = require('im/messenger/const/navigation-tab');
 	const {
 		KeyboardButtonContext,
 		KeyboardButtonType,
@@ -103,10 +104,14 @@ jn.define('im/messenger/const', (require, exports, module) => {
 	const { AnchorType } = require('im/messenger/const/anchor-type');
 	const { FileDownloadType } = require('im/messenger/const/src/file-download-types');
 	const { PinCount } = require('im/messenger/const/pin');
+	const { AudioEvents } = require('im/messenger/const/src/audio');
+	const { RefreshMode } = require('im/messenger/const/refresher');
+	const { TranscriptStatus, TranscriptResponseStatus } = require('im/messenger/const/transcript-status');
 
 	module.exports = {
 		AiAssistantButtonType,
 		AppStatus,
+		AudioEvents,
 		Analytics,
 		AttachType,
 		AttachPickerId,
@@ -145,6 +150,7 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		FileType,
 		FileEmojiType,
 		FileImageType,
+		FileAudioType,
 		UserType,
 		UserExternalType,
 		UserRole,
@@ -167,6 +173,7 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		CopilotPromptType,
 		ComponentCode,
 		NavigationTab,
+		NavigationTabId,
 		NavigationTabByComponent,
 		KeyboardButtonContext,
 		KeyboardButtonType,
@@ -188,5 +195,8 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		MessageMenuActionType,
 		AnchorType,
 		FileDownloadType,
+		RefreshMode,
+		TranscriptStatus,
+		TranscriptResponseStatus,
 	};
 });

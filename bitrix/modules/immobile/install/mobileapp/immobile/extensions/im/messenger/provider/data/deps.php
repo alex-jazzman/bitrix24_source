@@ -15,5 +15,7 @@ return [
 		'./src/chat/entity-updater',
 		'./src/recent',
 		'./src/recent/deleter',
+		'./src/message',
+		'./src/message/deleter',
 	],
 ];

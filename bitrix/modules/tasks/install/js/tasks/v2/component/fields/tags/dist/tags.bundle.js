@@ -3,11 +3,11 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
-(function (exports,ui_iconSet_api_vue,tasks_v2_component_elements_addBackground,main_core,tasks_entitySelector,tasks_v2_lib_entitySelectorDialog,tasks_v2_core,tasks_v2_provider_service_taskService,ui_iconSet_api_core,ui_iconSet_outline,tasks_v2_const,tasks_v2_component_elements_chip,tasks_v2_lib_fieldHighlighter) {
+(function (exports,ui_iconSet_api_vue,tasks_v2_component_elements_addBackground,tasks_v2_component_elements_fieldAdd,main_core,tasks_entitySelector,tasks_v2_lib_entitySelectorDialog,tasks_v2_core,tasks_v2_provider_service_taskService,ui_iconSet_api_core,ui_iconSet_outline,tasks_v2_const,tasks_v2_component_elements_chip,tasks_v2_lib_fieldHighlighter) {
 	'use strict';
 
 	const tagsMeta = Object.freeze({
-	  id: 'tags',
+	  id: tasks_v2_const.TaskField.Tags,
 	  title: main_core.Loc.getMessage('TASKS_V2_TAGS_TITLE')
 	});
 
@@ -18,7 +18,6 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	var _getItems = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getItems");
 	var _getDialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDialog");
 	var _updateTask = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateTask");
-	var _clearOnUpdateOnce = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("clearOnUpdateOnce");
 	var _getTask = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getTask");
 	var _currentUserId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("currentUserId");
 	class TagsDialog {
@@ -50,12 +49,6 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    Object.defineProperty(this, _onUpdateOnce, {
 	      writable: true,
 	      value: null
-	    });
-	    Object.defineProperty(this, _clearOnUpdateOnce, {
-	      writable: true,
-	      value: () => {
-	        babelHelpers.classPrivateFieldLooseBase(this, _onUpdateOnce)[_onUpdateOnce] = null;
-	      }
 	    });
 	  }
 	  setTaskId(taskId) {
@@ -164,8 +157,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  void tasks_v2_provider_service_taskService.taskService.update(taskId, {
 	    tags
 	  });
-	  (_babelHelpers$classPr4 = (_babelHelpers$classPr5 = babelHelpers.classPrivateFieldLooseBase(this, _onUpdateOnce))[_onUpdateOnce]) == null ? void 0 : _babelHelpers$classPr4.call(_babelHelpers$classPr5);
-	  babelHelpers.classPrivateFieldLooseBase(this, _clearOnUpdateOnce)[_clearOnUpdateOnce]();
+	  (_babelHelpers$classPr4 = (_babelHelpers$classPr5 = babelHelpers.classPrivateFieldLooseBase(this, _onUpdateOnce))[_onUpdateOnce]) == null ? void 0 : _babelHelpers$classPr4.call(_babelHelpers$classPr5, tags);
+	  babelHelpers.classPrivateFieldLooseBase(this, _onUpdateOnce)[_onUpdateOnce] = null;
 	}
 	function _getTask2(id) {
 	  return this.$store.getters[`${tasks_v2_const.Model.Tasks}/getById`](id);
@@ -179,7 +172,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	const Tags = {
 	  components: {
 	    BIcon: ui_iconSet_api_vue.BIcon,
-	    AddBackground: tasks_v2_component_elements_addBackground.AddBackground
+	    AddBackground: tasks_v2_component_elements_addBackground.AddBackground,
+	    FieldAdd: tasks_v2_component_elements_fieldAdd.FieldAdd
 	  },
 	  props: {
 	    taskId: {
@@ -195,7 +189,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  },
 	  data() {
 	    return {
-	      isDialogShown: false
+	      isDialogShown: false,
+	      tagsIndexes: {}
 	    };
 	  },
 	  computed: {
@@ -203,7 +198,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      return this.$store.getters[`${tasks_v2_const.Model.Tasks}/getById`](this.taskId);
 	    },
 	    tags() {
-	      return this.task.tags;
+	      return [...this.task.tags].sort((a, b) => this.tagsIndexes[a] - this.tagsIndexes[b]);
 	    },
 	    isFilled() {
 	      return this.tags.length > 0;
@@ -217,12 +212,16 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      tagsDialog.setTaskId(this.taskId).updateItems();
 	    }
 	  },
+	  created() {
+	    this.rememberTagsIndexes(this.tags);
+	  },
 	  methods: {
 	    handleClick() {
 	      if (this.readonly) {
 	        return;
 	      }
 	      tagsDialog.setTaskId(this.taskId).onCloseOnce(this.handleClose).showTo(this.$refs.anchor);
+	      tagsDialog.onUpdateOnce(this.rememberTagsIndexes);
 	      this.isDialogShown = true;
 	    },
 	    handleClose() {
@@ -233,6 +232,12 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	      void tasks_v2_provider_service_taskService.taskService.update(this.taskId, {
 	        tags
 	      });
+	    },
+	    rememberTagsIndexes(tags) {
+	      this.tagsIndexes = tags.reduce((acc, tag, index) => {
+	        acc[tag] = index;
+	        return acc;
+	      }, {});
 	    }
 	  },
 	  template: `
@@ -253,10 +258,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					</div>
 				</div>
 			</template>
-			<template v-if="!isFilled">
-				<BIcon class="tasks-field-tags-add-icon" :name="Outline.TAG"/>
-				<div class="tasks-field-tags-add-text">{{ loc('TASKS_V2_TAGS_ADD') }}</div>
-			</template>
+			<FieldAdd v-if="!isFilled" :icon="Outline.TAG"/>
 			<div class="tasks-field-tags-anchor" ref="anchor"></div>
 		</div>
 	`
@@ -300,9 +302,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	        return;
 	      }
 	      tagsDialog.setTaskId(this.taskId).showTo(this.$el);
-	      if (!this.isAutonomous) {
-	        tagsDialog.onUpdateOnce(this.highlightField);
-	      }
+	      tagsDialog.onUpdateOnce(this.highlightField);
 	    },
 	    highlightField() {
 	      void tasks_v2_lib_fieldHighlighter.fieldHighlighter.setContainer(this.$root.$el).highlight(tagsMeta.id);
@@ -326,5 +326,5 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	exports.TagsChip = TagsChip;
 	exports.tagsMeta = tagsMeta;
 
-}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.UI.IconSet,BX.Tasks.V2.Component.Elements,BX,BX.Tasks.EntitySelector,BX.Tasks.V2.Lib,BX.Tasks.V2,BX.Tasks.V2.Provider.Service,BX.UI.IconSet,BX,BX.Tasks.V2.Const,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Lib));
+}((this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}),BX.UI.IconSet,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX,BX.Tasks.EntitySelector,BX.Tasks.V2.Lib,BX.Tasks.V2,BX.Tasks.V2.Provider.Service,BX.UI.IconSet,BX,BX.Tasks.V2.Const,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Lib));
 //# sourceMappingURL=tags.bundle.js.map

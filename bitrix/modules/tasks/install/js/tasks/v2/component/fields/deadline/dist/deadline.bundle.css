@@ -5,7 +5,7 @@
 }
 
 .tasks-field-deadline-icon {
-	margin-right: var(--ui-space-inline-xs);
+	margin-right: var(--ui-space-inline-2xs2);
 	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
 }
 

@@ -37,6 +37,7 @@ export class BotsModel extends BuilderModel
 			isSupportOpenline: false,
 			isHuman: false,
 			backgroundId: '',
+			reactionsEnabled: false,
 		};
 	}
 

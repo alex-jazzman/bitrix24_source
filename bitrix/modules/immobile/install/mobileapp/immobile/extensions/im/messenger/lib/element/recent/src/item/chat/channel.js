@@ -2,6 +2,7 @@
  * @module im/messenger/lib/element/recent/item/chat/channel
  */
 jn.define('im/messenger/lib/element/recent/item/chat/channel', (require, exports, module) => {
+	const { Type } = require('type');
 	const { Theme } = require('im/lib/theme');
 	const {
 		ComponentCode,
@@ -9,7 +10,9 @@ jn.define('im/messenger/lib/element/recent/item/chat/channel', (require, exports
 	} = require('im/messenger/const');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { ChatItem } = require('im/messenger/lib/element/recent/item/chat');
+	const { RecentItemSectionCode } = require('im/messenger/lib/element/recent/item/base');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
+	const { Feature } = require('im/messenger/lib/feature');
 	const { Color } = require('tokens');
 	const { Icon } = require('assets/icons');
 
@@ -37,8 +40,18 @@ jn.define('im/messenger/lib/element/recent/item/chat/channel', (require, exports
 			super.initParams(modelItem, options);
 
 			this.dialog = this.params.model.dialog;
-			const postsCountWithCounters = serviceLocator.get('core').getStore()
-				.getters['commentModel/getPostsCountWithCounters'](this.dialog?.chatId);
+			const store = serviceLocator.get('core').getStore();
+			let postsCountWithCounters = 0;
+			if (Feature.isMessengerV2Enabled)
+			{
+				postsCountWithCounters = store.getters['counterModel/getNumberChildCounters'](this.dialog?.chatId);
+			}
+			else
+			{
+				postsCountWithCounters = store
+					.getters['commentModel/getPostsCountWithCounters'](this.dialog?.chatId)
+				;
+			}
 
 			this.params.model = {
 				...this.params.model,
@@ -81,7 +94,8 @@ jn.define('im/messenger/lib/element/recent/item/chat/channel', (require, exports
 
 		createMessageCount()
 		{
-			if (MessengerParams.getComponentCode() === ComponentCode.imChannelMessenger)
+			const showCounter = this.getRenderProperty('showCounter', true);
+			if (!showCounter)
 			{
 				return this;
 			}
@@ -92,9 +106,10 @@ jn.define('im/messenger/lib/element/recent/item/chat/channel', (require, exports
 				return this;
 			}
 
-			if (dialog.counter)
+			const counter = this.getCounter();
+			if (counter)
 			{
-				this.messageCount = dialog.counter;
+				this.messageCount = counter;
 			}
 			else if (this.getCommentsCounterItem())
 			{
@@ -106,7 +121,8 @@ jn.define('im/messenger/lib/element/recent/item/chat/channel', (require, exports
 
 		createCounterStyle()
 		{
-			if (MessengerParams.getComponentCode() === ComponentCode.imChannelMessenger)
+			const showCounter = this.getRenderProperty('showCounter', true);
+			if (!showCounter)
 			{
 				return this;
 			}
@@ -124,14 +140,16 @@ jn.define('im/messenger/lib/element/recent/item/chat/channel', (require, exports
 				return this;
 			}
 
-			if (dialog.counter > 0)
+			const counter = this.getCounter();
+
+			if (counter > 0)
 			{
 				this.styles.counter.backgroundColor = Theme.colors.accentMainPrimaryalt;
 
 				return this;
 			}
 
-			if (this.getCommentsCounterItem() > 0 && !dialog.counter)
+			if (this.getCommentsCounterItem() > 0 && !counter)
 			{
 				this.styles.counter.backgroundColor = Theme.colors.accentMainSuccess;
 
@@ -191,7 +209,8 @@ jn.define('im/messenger/lib/element/recent/item/chat/channel', (require, exports
 
 		createActions()
 		{
-			if (!this.params.options.isNeedShowActions)
+			const showActions = this.getRenderProperty('showActions', true);
+			if (!showActions)
 			{
 				this.actions = [];
 
@@ -222,7 +241,7 @@ jn.define('im/messenger/lib/element/recent/item/chat/channel', (require, exports
 
 			if (
 				this.getCommentsCounterItem()
-				&& this.getDialogItem().counter
+				&& this.getCounter()
 				&& !hasMention
 			)
 			{
@@ -237,6 +256,30 @@ jn.define('im/messenger/lib/element/recent/item/chat/channel', (require, exports
 			}
 
 			return this;
+		}
+
+		createSectionCode()
+		{
+			const showPin = this.getRenderProperty('showPin', true);
+			if (!showPin)
+			{
+				this.sectionCode = RecentItemSectionCode.general;
+
+				return this;
+			}
+
+			return super.createSectionCode();
+		}
+
+		createPinnedStyle()
+		{
+			const showPin = this.getRenderProperty('showPin', true);
+			if (!showPin)
+			{
+				return this;
+			}
+
+			return super.createPinnedStyle();
 		}
 
 		needShowLikes()

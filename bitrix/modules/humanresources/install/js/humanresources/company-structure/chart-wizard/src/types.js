@@ -20,7 +20,7 @@ type WizardData = {
 	saveMode: 'moveUsers' | 'addUsers';
 };
 
-export type StepIdType = 'entities' | 'department' | 'employees' | 'bindChat' | 'teamRights';
+export type StepIdType = 'entities' | 'department' | 'employees' | 'bindChat' | 'settings';
 
 type Step = {
 	id: StepIdType;

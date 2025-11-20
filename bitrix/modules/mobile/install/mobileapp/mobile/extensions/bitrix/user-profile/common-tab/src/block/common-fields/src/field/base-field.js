@@ -7,6 +7,8 @@ jn.define('user-profile/common-tab/src/block/common-fields/src/field/base-field'
 	const { Color, Indent } = require('tokens');
 	const { Link4 } = require('ui-system/blocks/link');
 	const { Loc } = require('loc');
+	const { PropTypes } = require('utils/validation');
+	const { Text7 } = require('ui-system/typography/text');
 
 	/**
 	 * @typedef {Object} FieldProps
@@ -16,6 +18,9 @@ jn.define('user-profile/common-tab/src/block/common-fields/src/field/base-field'
 	 * @property {string} title
 	 * @property {string} value
 	 * @property {boolean} isFirst
+	 * @property {function} onChange
+	 * @property {function} onFocus
+	 * @property {string} id
 
 	 * @class BaseField
 	 */
@@ -41,35 +46,85 @@ jn.define('user-profile/common-tab/src/block/common-fields/src/field/base-field'
 		{
 			this.state = {
 				value: props.value ?? null,
+				isValid: props.isValid ?? true,
 			};
 		}
 
 		render()
 		{
 			const { isEditMode, isMultiple } = this.props;
-			const { value } = this.state;
+			const { value, isValid } = this.state;
 
 			return View(
-				{ style: this.getFieldContainerStyle() },
-				this.#renderFieldTitle(),
-				!isEditMode && !isMultiple && this.renderViewModeFieldValue(value, 0),
-				isEditMode && !isMultiple && this.renderEditModeFieldValue(value, 0),
-				!isEditMode && isMultiple && this.renderViewModeFieldMultipleValues(),
-				isEditMode && isMultiple && this.renderEditModeFieldMultipleValues(),
+				{
+					testId: this.getTestId('field-container-wrapper'),
+					style: this.getFieldContainerWrapperStyle(),
+				},
+				View(
+					{
+						testId: this.getTestId('field-container'),
+						style: this.getFieldContainerStyle(),
+					},
+					this.#renderFieldTitle(),
+					!isEditMode && !isMultiple && this.renderViewModeFieldValue(value, 0),
+					isEditMode && !isMultiple && this.renderEditModeFieldValue(value, 0),
+					!isEditMode && isMultiple && this.renderViewModeFieldMultipleValues(),
+					isEditMode && isMultiple && this.renderEditModeFieldMultipleValues(),
+				),
+				isEditMode && !isValid && this.#renderErrorText(),
 			);
+		}
+
+		#renderErrorText()
+		{
+			return Text7({
+				numberOfLines: 1,
+				ellipsize: 'middle',
+				text: this.getErrorText(),
+				color: Color.accentMainAlert,
+				style: {
+					position: 'absolute',
+					bottom: Indent.L.toNumber() / 2,
+					backgroundColor: Color.bgContentPrimary.toHex(),
+					marginHorizontal: Indent.M.toNumber(),
+					paddingHorizontal: Indent.XS.toNumber(),
+					textAlign: 'center',
+				},
+			});
+		}
+
+		getErrorText()
+		{
+			return '';
+		}
+
+		getFieldContainerWrapperStyle()
+		{
+			const { isEditMode } = this.props;
+
+			return {
+				paddingBottom: isEditMode ? Indent.L.toNumber() : 0,
+			};
 		}
 
 		getFieldContainerStyle()
 		{
 			const { isEditMode, isFirst } = this.props;
+			const { isValid } = this.state;
 
 			return {
 				marginTop: isFirst ? 0 : Indent.XL2.toNumber(),
-				alignItems: 'flex-start',
 				paddingBottom: isEditMode ? Indent.L.toNumber() : 0,
-				borderBottomColor: Color.bgSeparatorSecondary.toHex(),
+				alignItems: 'flex-start',
+				borderBottomColor: isValid ? Color.bgSeparatorSecondary.toHex() : Color.accentMainAlert.toHex(),
 				borderBottomWidth: isEditMode ? 1 : 0,
+				...this.getFieldContainerCustomStyle(),
 			};
+		}
+
+		getFieldContainerCustomStyle()
+		{
+			return {};
 		}
 
 		#renderFieldTitle()
@@ -197,6 +252,23 @@ jn.define('user-profile/common-tab/src/block/common-fields/src/field/base-field'
 			onFocus?.(this.refs?.[idx]);
 		};
 	}
+
+	BaseField.propTypes = {
+		id: PropTypes.string.isRequired,
+		testId: PropTypes.string.isRequired,
+		isEditMode: PropTypes.bool.isRequired,
+		isMultiple: PropTypes.bool.isRequired,
+		title: PropTypes.string.isRequired,
+		value: PropTypes.any,
+		isFirst: PropTypes.bool,
+		onChange: PropTypes.func,
+		onFocus: PropTypes.func,
+	};
+
+	BaseField.defaultProps = {
+		value: null,
+		isFirst: false,
+	};
 
 	module.exports = {
 		BaseField,

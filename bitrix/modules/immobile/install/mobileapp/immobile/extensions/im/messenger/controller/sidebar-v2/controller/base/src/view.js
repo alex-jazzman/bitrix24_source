@@ -3,6 +3,7 @@
  */
 jn.define('im/messenger/controller/sidebar-v2/controller/base/src/view', (require, exports, module) => {
 	const { Type } = require('type');
+	const { isEmpty } = require('utils/object');
 
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { LoggerManager } = require('im/messenger/lib/logger');
@@ -17,6 +18,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base/src/view', (requir
 	const { IconView, Icon } = require('ui-system/blocks/icon');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { H4, BBCodeText, Text4 } = require('ui-system/typography');
+	const { Avatar, AvatarShape } = require('ui-system/blocks/avatar');
 
 	const isIos = Application.getPlatform() === 'ios';
 	const isAndroid = !isIos;
@@ -68,6 +70,8 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base/src/view', (requir
 				? props.callbacks.callUserProfile
 				: () => {}
 			;
+
+			this.customAvatarProps = props.customAvatarProps;
 		}
 
 		get chatTitle()
@@ -332,18 +336,40 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base/src/view', (requir
 
 		renderAvatar()
 		{
+			const isCustomAvatar = !isEmpty(this.customAvatarProps);
+			const testId = 'avatar';
+			const marginRight = Indent.XL3.toNumber();
+			let avatar = null;
+
+			if (isCustomAvatar)
+			{
+				avatar = Avatar({
+					testId,
+					...this.customAvatarProps,
+					shape: AvatarShape[this.customAvatarProps.shape] ?? AvatarShape.CIRCLE,
+					style: {
+						marginRight,
+						...this.customAvatarProps.style,
+					},
+				});
+			}
+			else
+			{
+				avatar = SidebarAvatar({
+					testId,
+					dialogId: this.dialogId,
+					size: 72,
+					style: {
+						marginRight,
+					},
+				});
+			}
+
 			return View(
 				{
 					onClick: () => this.callUserProfile(),
 				},
-				SidebarAvatar({
-					dialogId: this.dialogId,
-					size: 72,
-					testId: 'avatar',
-					style: {
-						marginRight: Indent.XL3.toNumber(),
-					},
-				}),
+				avatar,
 			);
 		}
 

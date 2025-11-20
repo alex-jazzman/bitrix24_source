@@ -80,7 +80,7 @@ jn.define('im/messenger/controller/sidebar/base/sidebar-controller', (require, e
 
 		canEdit()
 		{
-			return ChatPermission.сanEditDialog(this.dialogId);
+			return ChatPermission.canEditDialog(this.dialogId);
 		}
 
 		canLeave()
@@ -90,7 +90,7 @@ jn.define('im/messenger/controller/sidebar/base/sidebar-controller', (require, e
 				return false;
 			}
 
-			const canLeave = ChatPermission.сanLeaveFromChat(this.dialogId);
+			const canLeave = ChatPermission.canLeaveFromChat(this.dialogId);
 			if (this.helper.isCopilot)
 			{
 				return canLeave && this.helper.dialogModel.userCounter > 2;

@@ -6,7 +6,7 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/audio/src/ui/audio-icon', (re
 	const { IconView, Icon } = require('ui-system/blocks/icon');
 	const { Color } = require('tokens');
 	const { IconLoader } = require('im/messenger/controller/sidebar-v2/tabs/audio/src/ui/icon-loader');
-	const { PlayerStage } = require('im/messenger/controller/sidebar-v2/tabs/audio/const');
+	const { PlayerStage } = require('im/messenger/controller/sidebar-v2/tabs/audio/src/const');
 
 	/**
 	 * @param {PlayerStage} stage

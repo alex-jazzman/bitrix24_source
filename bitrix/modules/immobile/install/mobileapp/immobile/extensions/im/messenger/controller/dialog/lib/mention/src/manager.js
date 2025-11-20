@@ -549,6 +549,7 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 
 			itemIds.forEach((itemId) => {
 				const item = this.prepareItemForDrawing(itemId);
+
 				const recentItem = serviceLocator.get('core').getStore().getters['recentModel/getById'](item.id)
 					?? serviceLocator.get('core').getStore().getters['recentModel/searchModel/getById'](item.id)
 				;

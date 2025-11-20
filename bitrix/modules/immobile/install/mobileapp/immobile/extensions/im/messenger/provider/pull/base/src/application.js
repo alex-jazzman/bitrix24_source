@@ -19,7 +19,7 @@ jn.define('im/messenger/provider/pull/base/application', (require, exports, modu
 	{
 		handleApplicationOpenChat(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}

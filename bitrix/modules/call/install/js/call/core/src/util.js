@@ -1,7 +1,13 @@
 import { Type, Extension } from 'main.core';
 import { CallEngine, Provider, RoomType } from './engine/engine';
 import { CallEngineLegacy } from './engine/engine_legacy';
-import { ClientPlatform, ClientVersion, MediaStreamsKinds } from './call_api';
+import {
+	ClientPlatform,
+	ClientVersion,
+	MediaStreamsKinds,
+	JoinRequestFailedCodes,
+	JoinResponseError,
+} from './call_api';
 import { CallTokenManager } from 'call.lib.call-token-manager';
 import { CallSettingsManager } from 'call.lib.settings-manager';
 import { CallAI } from './call_ai';
@@ -216,39 +222,41 @@ function updateUserData(callId, users)
 		usersToUpdate.push(users[i]);
 	}
 
-	let result = new Promise((resolve, reject) =>
-	{
+	const result = new Promise((resolve, reject) => {
 		if (usersToUpdate.length === 0 || !callId)
 		{
-			return resolve();
+			resolve();
+
+			return;
 		}
 
-		CallEngine.getRestClient().callMethod("im.call.getUsers", {
-			callId: callId,
-			userIds: usersToUpdate
-		}).then((response) =>
-		{
-			const result = Type.isPlainObject(response.answer.result) ? response.answer.result : {};
-			users.forEach((userId) =>
-			{
-				if (result[userId])
+		BX.ajax.runAction('im.call.getUsers', {
+			data: {
+				callId,
+				userIds: usersToUpdate,
+			},
+		}).then((response) => {
+			const data = Type.isPlainObject(response.data) ? response.data : {};
+
+			users.forEach((userId) => {
+				if (data[userId])
 				{
-					userData[userId] = result[userId];
+					userData[userId] = data[userId];
 				}
 				delete usersInProcess[userId];
 			});
-			resolve();
 
-		}).catch(function (error)
-		{
+			resolve();
+		}).catch((error) => {
 			reject(error.answer);
 		});
 	});
 
-	for (let i = 0; i < usersToUpdate.length; i++)
+	for (const userId of usersToUpdate)
 	{
-		usersInProcess[usersToUpdate[i]] = result;
+		usersInProcess[userId] = result;
 	}
+
 	return result;
 }
 
@@ -1015,21 +1023,45 @@ const getCallConnectionData = async (callOptions, chatId, mustCreate = true) => 
 			...callOptions,
 		});
 
+		let responseInfo = null;
 		fetch(url, {
 			method: 'POST',
 			body: data,
 			signal: abortController.signal,
 		})
 			.then((response) => {
+				responseInfo = { status: response?.status, ok: response?.ok };
+
 				return response.json();
 			})
+			.catch((error) => {
+				if (error instanceof SyntaxError)
+				{
+					throw new JoinResponseError(error.message, JoinRequestFailedCodes.JsonParsingError);
+				}
+				else
+				{
+					throw error;
+				}
+			})
 			.then((response) => {
+				if (!responseInfo?.ok)
+				{
+					if (response?.error)
+					{
+						throw new JoinResponseError(response?.error?.message, response?.error?.code);
+					}
+					else
+					{
+						throw new JoinResponseError(`Response status: ${responseInfo.status}`, JoinRequestFailedCodes.UnexpectedResponse);
+					}
+				}
 				resolve(response);
 			})
 			.catch((error) => {
 				try
 				{
-					if (error.xhr.responseText)
+					if (error?.xhr?.responseText)
 					{
 						const response = JSON.parse(error.xhr.responseText);
 						if (response.error)

@@ -5,10 +5,10 @@ jn.define('im/messenger/provider/pull/chat/notification', (require, exports, mod
 	const { Type } = require('type');
 	const { Loc } = require('im/messenger/loc');
 	const { BasePullHandler } = require('im/messenger/provider/pull/base');
-	const { TabCounters } = require('im/messenger/lib/counters/tab-counters');
 	const { EventType } = require('im/messenger/const');
 	const { Notifier } = require('im/messenger/lib/notifier');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { getLogger } = require('im/messenger/lib/logger');
 	const logger = getLogger('pull-handler--notification');
 
@@ -19,7 +19,7 @@ jn.define('im/messenger/provider/pull/chat/notification', (require, exports, mod
 	{
 		handleNotifyAdd(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
@@ -54,9 +54,11 @@ jn.define('im/messenger/provider/pull/chat/notification', (require, exports, mod
 				}
 			}
 
-			TabCounters.notificationCounter.value = params.counter;
+			const tabCounters = serviceLocator.get('tab-counters');
+
+			tabCounters.setNotificationCounters(params.counter);
 			MessengerEmitter.emit(EventType.notification.reload, params);
-			TabCounters.update();
+			tabCounters.update();
 
 			const userName = params.userName ? params.userName : '';
 			if (extra && extra.server_time_ago <= 5)
@@ -74,45 +76,64 @@ jn.define('im/messenger/provider/pull/chat/notification', (require, exports, mod
 			}
 		}
 
+		handleNotifyDelete(params, extra)
+		{
+			if (this.interceptEvent(extra))
+			{
+				return;
+			}
+
+			logger.info(`${this.constructor.name}.handleNotifyDelete`, params);
+
+			const tabCounters = serviceLocator.get('tab-counters');
+			tabCounters.setNotificationCounters(params.counter);
+			tabCounters.update();
+
+			MessengerEmitter.emit(EventType.notification.reload, params);
+		}
+
 		handleNotifyRead(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
 
 			logger.info('NotificationPullHandler.handleNotifyRead', params);
 
-			TabCounters.notificationCounter.value = params.counter;
-			TabCounters.update();
+			const tabCounters = serviceLocator.get('tab-counters');
+			tabCounters.setNotificationCounters(params.counter);
+			tabCounters.update();
 		}
 
 		handleNotifyUnread(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
 
 			logger.info('NotificationPullHandler.handleNotifyUnread', params);
 
-			TabCounters.notificationCounter.value = params.counter;
-			TabCounters.update();
+			const tabCounters = serviceLocator.get('tab-counters');
+			tabCounters.setNotificationCounters(params.counter);
+			tabCounters.update();
 
 			MessengerEmitter.emit(EventType.notification.reload, params);
 		}
 
 		handleNotifyConfirm(params, extra, command)
 		{
-			if (this.interceptEvent(params, extra, command))
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
 
 			logger.info('NotificationPullHandler.handleNotifyConfirm', params);
 
-			TabCounters.notificationCounter.value = params.counter;
-			TabCounters.update();
+			const tabCounters = serviceLocator.get('tab-counters');
+			tabCounters.setNotificationCounters(params.counter);
+			tabCounters.update();
 
 			MessengerEmitter.emit(EventType.notification.reload, params);
 		}

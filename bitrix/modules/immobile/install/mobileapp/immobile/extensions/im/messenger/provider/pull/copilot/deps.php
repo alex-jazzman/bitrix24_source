@@ -7,7 +7,6 @@ return [
 		'im:messenger/lib/di/service-locator',
 		'im:messenger/lib/helper',
 		'im:messenger/lib/logger',
-		'im:messenger/lib/counters/tab-counters',
 		'im:messenger/lib/parser',
 		'im:messenger/lib/emitter',
 		'im:messenger/lib/uuid-manager',
@@ -24,6 +23,5 @@ return [
 		'./src/message',
 		'./src/file',
 		'./src/user',
-		'./src/counter',
 	],
 ];

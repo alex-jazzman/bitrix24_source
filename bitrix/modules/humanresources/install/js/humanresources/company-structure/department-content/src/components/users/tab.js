@@ -266,12 +266,12 @@ export const UsersTab = {
 				&& (this.dragState.initialList === 'head' || this.dragState.initialList === 'deputyHead')
 			;
 		},
-		dndConfirmationPopupTitle(): string
+		dndConfirmationPopupTitle(): ?string
 		{
 			const toHead = this.dragState.targetList === 'head';
 
 			return toHead
-				? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_DND_POPUP_CONFIRM_TITLE_TO_HEAD')
+				? undefined
 				: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_DND_POPUP_CONFIRM_TITLE');
 		},
 		dndConfirmationPopupBtn(): string
@@ -856,7 +856,7 @@ export const UsersTab = {
 				await UserManagementDialogAPI.addUsersToDepartment(this.focusedNode, [userId], targetRole);
 
 				UI.Notification.Center.notify({
-					content: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_DND_SUCCESS'),
+					content: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_DND_SUCCEED'),
 					autoHideDelay: 3000,
 				});
 			}
@@ -894,8 +894,8 @@ export const UsersTab = {
 			if (toHead)
 			{
 				phraseCode = isTeam
-					? 'HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_DND_POPUP_CONFIRM_DESC_TO_TEAM_HEAD'
-					: 'HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_DND_POPUP_CONFIRM_DESC_TO_HEAD';
+					? 'HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_DND_POPUP_CONFIRM_DESC_TEAM_HEAD'
+					: 'HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_DND_POPUP_CONFIRM_DESC_HEAD';
 			}
 			else
 			{
@@ -1065,7 +1065,7 @@ export const UsersTab = {
 				:confirmButtonText="dndConfirmationPopupBtn"
 				:showRoleSelect="showDndRoleSelect"
 				:excludeEmployeeRole="true"
-				:entityType="entityType"
+				:targetType="entityType"
 				@confirm="confirmDndUserMove"
 				@close="cancelDndUserMove"
 			/>

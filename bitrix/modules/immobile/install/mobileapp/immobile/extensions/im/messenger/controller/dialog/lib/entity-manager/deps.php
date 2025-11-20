@@ -3,6 +3,7 @@
 return [
 	'extensions' => [
 		'module',
+		'type',
 		'utils/uuid',
 		'im:messenger/const',
 		'im:messenger/controller/vote/creation',

@@ -9,6 +9,7 @@ jn.define('im/messenger/provider/services/messenger-init/service', (require, exp
 		MessengerInitRestMethod,
 		ComponentCode,
 	} = require('im/messenger/const');
+	const { Feature } = require('im/messenger/lib/feature');
 	const { runAction } = require('im/messenger/lib/rest');
 	const { MessengerParams } = require('im/messenger/lib/params');
 
@@ -48,10 +49,13 @@ jn.define('im/messenger/provider/services/messenger-init/service', (require, exp
 		 */
 		async runAction(methodList)
 		{
-			const isNeedWait = !this.#isMessengerComponent() && !this.#hasCommonActionResultStore();
-			if (isNeedWait)
+			if (!Feature.isMessengerV2Enabled)
 			{
-				await this.#waitChatCommonActionResult();
+				const isNeedWait = !this.#isMessengerComponent() && !this.#hasCommonActionResultStore();
+				if (isNeedWait)
+				{
+					await this.#waitChatCommonActionResult();
+				}
 			}
 
 			const data = this.#prepareActionData(methodList);

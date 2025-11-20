@@ -23,6 +23,7 @@ return [
 		'main.core',
 		'ui.vue3.vuex',
 		'tasks.v2.model.check-list',
+		'tasks.v2.model.crm-items',
 		'tasks.v2.model.epics',
 		'tasks.v2.model.flows',
 		'tasks.v2.model.groups',

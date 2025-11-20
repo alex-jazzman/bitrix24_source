@@ -34,6 +34,7 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/participants', (require, expo
 			return (props = {}) => new SidebarParticipantsTabContent({
 				dialog: this.dialogData,
 				dataProvider: this.getDataProvider(),
+				dialogLocator: this.dialogLocator,
 				...props,
 			});
 		}

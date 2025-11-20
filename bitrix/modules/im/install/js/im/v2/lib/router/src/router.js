@@ -33,9 +33,7 @@ export const Router = {
 		else if (urlParams.has(GetParameter.openChat))
 		{
 			const dialogId = urlParams.get(GetParameter.openChat);
-			let messageId = urlParams.get(GetParameter.openMessage);
-			messageId = messageId ? Number(messageId) : 0;
-			void Messenger.openChat(dialogId, messageId);
+			void Messenger.openChat(dialogId, extractMessageId(urlParams));
 		}
 		else if (urlParams.has(GetParameter.openSettings))
 		{
@@ -60,5 +58,18 @@ export const Router = {
 			const dialogId = urlParams.get(GetParameter.openCollab);
 			void Messenger.openCollab(dialogId ?? '');
 		}
+		else if (urlParams.has(GetParameter.openTaskComments))
+		{
+			const dialogId = urlParams.get(GetParameter.openTaskComments);
+
+			void Messenger.openTaskComments(dialogId ?? '', extractMessageId(urlParams));
+		}
 	},
+};
+
+const extractMessageId = (urlParams: URLSearchParams): number => {
+	let messageId = urlParams.get(GetParameter.openMessage);
+	messageId = messageId ? Number(messageId) : 0;
+
+	return messageId;
 };

@@ -36,7 +36,6 @@ $MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_COPILOT_BANNER_TITLE_ADD_USERS'] = 'До�
 $MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_COPILOT_BANNER_TEXT_ADD_USERS_MORE'] = '#USERNAME_1# и #LINK_START#еще +#USERS_COUNT##LINK_END#';
 $MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_COPILOT_BANNER_DESC_ADD_USERS'] = 'Нажмите @ или +, чтобы упомянуть участника';
 
-
 $MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_CHAT_CREATE_BANNER_DESC'] = 'Общайтесь, делитесь файлами, комментируйте сообщения коллег и ставьте лайки';
 $MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_CHAT_CREATE_BANNER_ADD_USERS'] = 'Добавить участников';
 $MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_CHAT_NOTES_BANNER_TITLE'] = 'Мои заметки';
@@ -79,6 +78,8 @@ $MESS["IMMOBILE_ELEMENT_DIALOG_MESSAGE_VOTE_NO_VOTED_BUTTON"] = "Нет голо
 $MESS["IMMOBILE_ELEMENT_DIALOG_MESSAGE_VOTE_VOTED_BUTTON_PLURAL_0"] = "#COUNT# голос";
 $MESS["IMMOBILE_ELEMENT_DIALOG_MESSAGE_VOTE_VOTED_BUTTON_PLURAL_1"] = "#COUNT# голоса";
 $MESS["IMMOBILE_ELEMENT_DIALOG_MESSAGE_VOTE_VOTED_BUTTON_PLURAL_2"] = "#COUNT# голосов";
+
+$MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_FILE_TRANSCRIPT_ERROR'] = "Не удалось расшифровать аудио";
 
 // Sign message
 $MESS["IMMOBILE_MESSAGE_SIGN_INVITE_COMPANY_TITLE"] = "Подпишите документ";

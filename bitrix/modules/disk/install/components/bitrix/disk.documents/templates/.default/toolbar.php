@@ -12,6 +12,7 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 /** @var string $componentPath */
 
 use Bitrix\Disk\Document\OnlyOffice\OnlyOfficeHandler;
+use Bitrix\Main\Web\Json;
 use Bitrix\UI\Toolbar\Facade\Toolbar;
 use Bitrix\Main\Application;
 use Bitrix\Main\Localization\Loc;
@@ -30,7 +31,7 @@ Toolbar::addFilter([
 	'GRID_ID' => $arResult['GRID_ID'],
 	'FILTER_ID' => $arResult['FILTER_ID'],
 	'FILTER' => $arResult['FILTER'],
-	'FILTER_PRESETS' => $arResult['FILTER_PRESETS'],
+	'FILTER_PRESETS' => $arResult['FILTER_PRESETS'] ?? [],
 	'ENABLE_LIVE_SEARCH' => true,
 	'ENABLE_LABEL' => true,
 	'RESET_TO_DEFAULT_MODE' => false,
@@ -42,6 +43,7 @@ $items = array_map(function ($item) use ($defaultHandler) {
 	{
 		$defaultHandler = $item;
 	}
+
 	return [
 		'text' => $item['name'],
 		'code' => $item['code'],

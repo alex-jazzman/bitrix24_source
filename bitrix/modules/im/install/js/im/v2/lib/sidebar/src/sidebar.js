@@ -14,6 +14,7 @@ import { isAiAssistantBot, aiAssistantBotPreset } from './configs/ai-assistant-b
 import { isComment, commentPreset } from './configs/comment';
 import { isChannel, channelPreset } from './configs/channel';
 import { isCopilot, copilotPreset } from './configs/copilot';
+import { isTaskComments, taskCommentsPreset } from './configs/task-comments';
 
 import type { ImModelChat } from 'im.v2.model';
 
@@ -77,6 +78,7 @@ export class SidebarManager
 	#registerDefaultConfigs()
 	{
 		// most specific configs first
+		this.#defaultConfigMap.set(isTaskComments, taskCommentsPreset);
 		this.#defaultConfigMap.set(isCopilot, copilotPreset);
 		this.#defaultConfigMap.set(isChannel, channelPreset);
 		this.#defaultConfigMap.set(isComment, commentPreset);

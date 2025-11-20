@@ -8,7 +8,7 @@ import ClientCommandHandler from "./client-command-handler";
 import ServerCommandHandler from "./server-command-handler";
 import UserManager from "./user-manager";
 import {LegacyPopup, SharingControlType} from "disk.sharing-legacy-popup";
-import {ExternalLink} from "disk.external-link";
+import { ExternalLink, ExternalLinkForUnifiedLink } from "disk.external-link";
 import {PromoPopup} from "disk.onlyoffice-promo-popup";
 import CustomErrorControl from "./custom-error-controls";
 
@@ -38,6 +38,7 @@ export default class OnlyOffice
 	usersInDocument: UserManager = null;
 	sharingControlType: ?SharingControlType = null;
 	brokenDocumentOpened: boolean = false;
+	unifiedLinkAccessOnly: boolean = false;
 
 	constructor(editorOptions: EditorOptions)
 	{
@@ -66,6 +67,7 @@ export default class OnlyOffice
 			context: this.context,
 			userBoxNode: this.userBoxNode,
 		});
+		this.unifiedLinkAccessOnly = options.unifiedLinkAccessOnly;
 
 		this.initializeEditor(options.editorJson);
 
@@ -298,7 +300,14 @@ export default class OnlyOffice
 			return;
 		}
 
-		ExternalLink.showPopup(this.context.object.id);
+		if (this.unifiedLinkAccessOnly)
+		{
+			ExternalLinkForUnifiedLink.showPopup(this.context.object.uniqueCode);
+		}
+		else
+		{
+			ExternalLink.showPopup(this.context.object.id);
+		}
 	}
 
 	handleClickEditSubItems(event, menuItem: MenuItem): void

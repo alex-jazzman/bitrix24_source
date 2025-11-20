@@ -2,6 +2,7 @@
  * @module im/messenger/controller/sidebar-v2/controller/base
  */
 jn.define('im/messenger/controller/sidebar-v2/controller/base', (require, exports, module) => {
+	const { Type } = require('type');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const { EventType, Analytics } = require('im/messenger/const');
@@ -21,6 +22,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base', (require, export
 		SidebarContextMenuActionId,
 		SidebarContextMenuActionPosition,
 		SIDEBAR_DEFAULT_TOAST_OFFSET,
+		SidebarContextMenuActionSection,
 	} = require('im/messenger/controller/sidebar-v2/const');
 	const { UIMenu } = require('layout/ui/menu');
 	const { Icon } = require('assets/icons');
@@ -43,9 +45,9 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base', (require, export
 		async init(props)
 		{
 			this.props = props;
-
 			this.dialogId = props.dialogId;
 			this.dialogLocator = props.dialogLocator;
+			this.config = props.config;
 
 			this.store = serviceLocator.get('core').getStore();
 			this.storeManager = serviceLocator.get('core').getStoreManager();
@@ -70,7 +72,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base', (require, export
 			this.headerContextMenu = null;
 
 			/** @type {SidebarContextMenuItem[]} */
-			this.headerContextMenuItems = this.getHeaderContextMenuItems().sort((a, b) => a.sort - b.sort);
+			this.headerContextMenuItems = this.#prepareHeaderContextMenuItem();
 
 			/** @type {SidebarBaseTab[]} */
 			this.tabs = this.createTabs();
@@ -165,7 +167,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base', (require, export
 		{
 			return {
 				dialogId: this.dialogId,
-				primaryActionButtons: this.getPrimaryActionButtons().filter(Boolean),
+				primaryActionButtons: this.#preparePrimaryActionButtons(),
 				tabs: this.getTabs(),
 				widget: this.widget,
 				widgetNavigator: this.widgetNavigator,
@@ -174,6 +176,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base', (require, export
 				chatTitle: ChatTitle.createFromDialogId(this.dialogId, {
 					ignoreInputActions: true,
 				}),
+				customAvatarProps: this.config.avatarProps,
 			};
 		}
 
@@ -303,11 +306,66 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base', (require, export
 				this.permissionManager.canEdit() ? this.getHeaderContextMenuItemEdit() : null,
 				this.permissionManager.canCopyLink() ? this.getHeaderContextMenuItemCopyLink() : null,
 				this.permissionManager.canLeave() ? this.getHeaderContextMenuItemLeave() : null,
+				this.permissionManager.canClearHistory() ? this.getHeaderContextMenuItemClearHistory() : null,
 				this.permissionManager.canDelete() ? this.getHeaderContextMenuItemDelete() : null,
 				this.permissionManager.canHide() ? this.getHeaderContextMenuItemHide() : null,
 			];
 
 			return items.filter(Boolean);
+		}
+
+		/**
+		 * @return {SidebarContextMenuItem[]}
+		 */
+		#prepareHeaderContextMenuItem()
+		{
+			const { headerContextMenuItems } = this.config;
+			const sortedHeaderContextMenuItem = this.getHeaderContextMenuItems().sort((a, b) => a.sort - b.sort);
+
+			if (Type.isArrayFilled(headerContextMenuItems))
+			{
+				return sortedHeaderContextMenuItem.filter((item) => headerContextMenuItems.includes(item.id));
+			}
+
+			return sortedHeaderContextMenuItem;
+		}
+
+		/**
+		 * @protected
+		 * @return {SidebarContextMenuItem}
+		 */
+		getHeaderContextMenuItemClearHistory()
+		{
+			return {
+				id: SidebarContextMenuActionId.CLEAR_HISTORY,
+				title: Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_ACTION_CLEAR_HISTORY'),
+				icon: Icon.CIRCLE_CROSS,
+				testId: 'sidebar-context-menu-item-clear-history',
+				sort: SidebarContextMenuActionPosition.BOTTOM,
+				nextMenu: {
+					icon: Icon.ARROW_TO_THE_LEFT,
+					sections: [{ id: SidebarContextMenuActionSection.CLEAR_HISTORY }],
+					title: Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_ACTION_CLEAR_HISTORY'),
+					items: [
+						{
+							id: SidebarContextMenuActionId.CLEAR_HISTORY_FOR_ME,
+							sectionCode: SidebarContextMenuActionSection.CLEAR_HISTORY,
+							title: Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_ACTION_CLEAR_HISTORY_FOR_ME'),
+							testId: 'sidebar-context-menu-item-clear-history-for-me',
+							sort: SidebarContextMenuActionPosition.TOP,
+							onItemSelected: () => this.handleClearHistoryForMeDialogAction(),
+						},
+						{
+							id: SidebarContextMenuActionId.CLEAR_HISTORY_FOR_ALL,
+							sectionCode: SidebarContextMenuActionSection.CLEAR_HISTORY,
+							title: Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_ACTION_CLEAR_HISTORY_FOR_ALL'),
+							testId: 'sidebar-context-menu-item-clear-history-for-all',
+							sort: SidebarContextMenuActionPosition.TOP,
+							onItemSelected: () => this.handleClearHistoryForAllDialogAction(),
+						},
+					],
+				},
+			};
 		}
 
 		/**
@@ -508,6 +566,12 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base', (require, export
 		handleDeleteDialogAction()
 		{}
 
+		handleClearHistoryForMeDialogAction()
+		{}
+
+		handleClearHistoryForAllDialogAction()
+		{}
+
 		/**
 		 * @return {void}
 		 */
@@ -533,6 +597,22 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base', (require, export
 		getPrimaryActionButtons()
 		{
 			return [];
+		}
+
+		/**
+		 * @return {SidebarPrimaryActionButton[]}
+		 */
+		#preparePrimaryActionButtons()
+		{
+			const { primaryActionButtons } = this.config;
+			const filteredPrimaryActionButtons = this.getPrimaryActionButtons().filter(Boolean);
+
+			if (Type.isArrayFilled(primaryActionButtons))
+			{
+				return filteredPrimaryActionButtons.filter((item) => primaryActionButtons.includes(item.id));
+			}
+
+			return filteredPrimaryActionButtons;
 		}
 
 		/**

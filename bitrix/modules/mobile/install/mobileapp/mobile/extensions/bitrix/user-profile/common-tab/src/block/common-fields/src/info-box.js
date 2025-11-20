@@ -10,17 +10,25 @@ jn.define('user-profile/common-tab/src/block/common-fields/src/info-box', (requi
 	const { AreaList } = require('ui-system/layout/area-list');
 	const { FieldFactory } = require('user-profile/common-tab/src/block/common-fields/src/field/factory');
 	const { isFieldValueEmpty } = require('user-profile/common-tab/src/block/common-fields/src/utils');
+	const { BottomSheet } = require('bottom-sheet');
 
 	/**
+	 * @typedef {Object} InfoBoxProps
+	 * @property {string} testId
+	 * @property {Array} [sections = []]
+
 	 * @class InfoBox
 	 */
 	class InfoBox extends LayoutComponent
 	{
+		/**
+		 * @param {InfoBoxProps} props
+		 */
 		constructor(props)
 		{
 			super(props);
 			this.getTestId = createTestIdGenerator({
-				prefix: `info-box-${props.testId}`,
+				prefix: 'info-box',
 				context: this,
 			});
 		}
@@ -79,45 +87,44 @@ jn.define('user-profile/common-tab/src/block/common-fields/src/info-box', (requi
 		}
 	}
 
+	InfoBox.propTypes = {
+		testId: PropTypes.string.isRequired,
+		sections: PropTypes.array,
+	};
+
 	/**
+	 * @param {string} testId
 	 * @param {Object} [parentWidget = PageManager]
-	 * @param {Object} openWidgetConfig
-	 * @param {Array} sections
+	 * @param {Array} [sections = []]
 	 */
 	const openInfoBox = ({
+		testId,
 		parentWidget = PageManager,
-		openWidgetConfig = {},
 		sections = [],
 	}) => {
-		const config = {
-			enableNavigationBarBorder: false,
+		(new BottomSheet({
+			component: new InfoBox({
+				testId,
+				sections,
+			}),
 			titleParams: {
-				text: Loc.getMessage('M_PROFILE_COMMON_FIELDS_INFO_BOX_TITLE'),
 				type: 'dialog',
+				text: Loc.getMessage('M_PROFILE_COMMON_FIELDS_INFO_BOX_TITLE'),
+				largeMode: true,
 			},
-			modal: true,
-			backdrop: {
-				showOnTop: true,
-				onlyMediumPosition: false,
-				mediumPositionHeight: 600,
-				bounceEnable: true,
-				swipeAllowed: true,
-				swipeContentAllowed: false,
-				horizontalSwipeAllowed: false,
-				shouldResizeContent: true,
-				adoptHeightByKeyboard: true,
-			},
-			...openWidgetConfig,
-			onReady: (readyLayout) => {
-				readyLayout.showComponent(new InfoBox({
-					layout: readyLayout,
-					parentWidget,
-					sections,
-				}));
-			},
-		};
-
-		parentWidget.openWidget?.('layout', config);
+		}))
+			.setParentWidget(parentWidget)
+			.hideNavigationBarBorder()
+			.disableOnlyMediumPosition()
+			.setMediumPositionHeight(680)
+			.enableBounce()
+			.enableSwipe()
+			.disableContentSwipe()
+			.disableHorizontalSwipe()
+			.enableResizeContent()
+			.enableAdoptHeightByKeyboard()
+			.open()
+			.catch((e) => console.error(e));
 	};
 
 	module.exports = {

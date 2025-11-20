@@ -1050,6 +1050,8 @@ BX.namespace('Tasks.Component');
 			url.searchParams.delete('ta_sec');
 			url.searchParams.delete('ta_sub');
 			url.searchParams.delete('ta_el');
+			url.searchParams.delete('ta_ev');
+			url.searchParams.delete('ta_type');
 			window.history.replaceState(null, null, url.toString());
 		}
 	};

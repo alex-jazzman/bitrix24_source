@@ -2,7 +2,7 @@
 	class="landing-block g-pl-30 g-pr-30 g-pt-30 g-pb-30 g-bg g-cursor-default"
 	style="--bg: #ffffff;"
 >
-	<div class="landing-block-node-content-container g-pl-25 g-pr-25">
+	<div class="landing-block-node-content-container g-pl-25 g-pr-25 m-auto g-max-width-container">
 		<div class="landing-block-node-content g-mb-20">
 			<div class="landing-block-node-title g-color-main g-font-size-25 g-font-weight-600 g-mb-6">
 				Title

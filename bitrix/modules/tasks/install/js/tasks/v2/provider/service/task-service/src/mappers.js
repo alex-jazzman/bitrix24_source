@@ -20,6 +20,8 @@ export function mapModelToDto(task: TaskModel): TaskDto
 		endPlanTs: prepareValue(task.endPlanTs, Math.floor(task.endPlanTs / 1000)),
 		fileIds: prepareValue(task.fileIds),
 		checklist: prepareValue(task.checklist),
+		parent: prepareValue(task.parentId, { id: task.parentId }),
+		dependsOn: prepareValue(task.relatedTaskIds),
 		group: prepareValue(task.groupId, { id: task.groupId }),
 		stage: prepareValue(task.stageId, { id: task.stageId }),
 		flow: prepareValue(task.flowId, { id: task.flowId }),
@@ -30,12 +32,12 @@ export function mapModelToDto(task: TaskModel): TaskDto
 		auditors: prepareValue(task.auditorsIds, task.auditorsIds?.map((id) => ({ id }))),
 		tags: prepareValue(task.tags, mapTags(task.tags ?? [])),
 		chatId: prepareValue(task.chatId),
+		crmItemIds: prepareValue(task.crmItemIds),
 		allowsChangeDeadline: prepareValue(task.allowsChangeDeadline),
 		allowsChangeDatePlan: prepareValue(task.allowsChangeDatePlan),
 		matchesWorkTime: prepareValue(task.matchesWorkTime),
 		matchesSubTasksTime: prepareValue(task.matchesSubTasksTime),
 		source: prepareValue(task.source),
-		parent: undefined,
 	};
 }
 
@@ -46,9 +48,9 @@ export function mapDtoToModel(taskDto: TaskDto): TaskModel
 		title: taskDto.title,
 		isImportant: taskDto.priority === 'high',
 		description: taskDto.description,
-		creatorId: taskDto.creator.id,
+		creatorId: taskDto.creator?.id,
 		createdTs: taskDto.createdTs * 1000,
-		responsibleId: taskDto.responsible.id,
+		responsibleId: taskDto.responsible?.id,
 		deadlineTs: taskDto.deadlineTs * 1000,
 		needsControl: taskDto.needsControl,
 		startPlanTs: taskDto.startPlanTs * 1000,
@@ -56,20 +58,26 @@ export function mapDtoToModel(taskDto: TaskDto): TaskModel
 		fileIds: taskDto.fileIds,
 		checklist: taskDto.checklist ?? [],
 		containsChecklist: taskDto.containsChecklist,
+		parentId: taskDto.parentId ?? 0,
+		containsSubTasks: taskDto.containsSubTasks,
+		containsRelatedTasks: taskDto.containsRelatedTasks,
 		groupId: taskDto.group?.id,
 		stageId: taskDto.stage?.id ?? 0,
 		flowId: taskDto.flow?.id,
 		status: taskDto.status,
 		statusChangedTs: taskDto.statusChangedTs * 1000,
-		accomplicesIds: taskDto.accomplices.map(({ id }) => id),
-		auditorsIds: taskDto.auditors.map(({ id }) => id),
+		accomplicesIds: taskDto.accomplices?.map(({ id }) => id) ?? [],
+		auditorsIds: taskDto.auditors?.map(({ id }) => id) ?? [],
 		chatId: taskDto.chatId,
+		crmItemIds: prepareValue(taskDto.crmItemIds),
 		allowsChangeDeadline: prepareValue(taskDto.allowsChangeDeadline),
 		allowsChangeDatePlan: prepareValue(taskDto.allowsChangeDatePlan),
 		matchesWorkTime: prepareValue(taskDto.matchesWorkTime),
 		matchesSubTasksTime: prepareValue(taskDto.matchesSubTasksTime),
 		rights: prepareValue(taskDto.rights),
 		tags: prepareValue(taskDto.tags, taskDto.tags?.map(({ name }) => name)),
+		inFavorite: taskDto.inFavorite || [],
+		inMute: taskDto.inMute || [],
 		archiveLink: prepareValue(taskDto.archiveLink),
 	};
 
@@ -78,6 +86,9 @@ export function mapDtoToModel(taskDto: TaskDto): TaskModel
 
 export function mapModelToSliderData(task: TaskModel, checkLists: CheckListModel[]): TaskSliderData
 {
+	const accomplices = CheckListMappers.getUserIdsFromChecklists(checkLists, 'accomplices');
+	const auditors = CheckListMappers.getUserIdsFromChecklists(checkLists, 'auditors');
+
 	const data = {
 		TITLE: prepareValue(task.title),
 		DESCRIPTION: prepareValue(task.description, mapDescription(task.description)),
@@ -87,6 +98,8 @@ export function mapModelToSliderData(task: TaskModel, checkLists: CheckListModel
 		IS_IMPORTANT: prepareValue(task.isImportant, task.isImportant ? 'Y' : null),
 		FILE_IDS: prepareValue(task.fileIds, task.fileIds?.length > 0 ? task.fileIds : null),
 		CHECKLIST: CheckListMappers.mapModelToSliderData(checkLists),
+		ACCOMPLICES: prepareValue(accomplices, accomplices.length > 0 ? accomplices : null),
+		AUDITORS: prepareValue(auditors, auditors.length > 0 ? auditors : null),
 	};
 
 	return Object.fromEntries(Object.entries(data).filter(([, value]) => value));

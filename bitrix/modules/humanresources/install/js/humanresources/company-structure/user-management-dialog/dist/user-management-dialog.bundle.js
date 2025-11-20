@@ -14,43 +14,6 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	      return '';
 	    }
 	    return targetDepartment.name;
-	  },
-	  moveUsersToDepartment: (nodeId, users, userCount, updatedDepartmentIds) => {
-	    var _targetDepartment$emp;
-	    const store = humanresources_companyStructure_chartStore.useChartStore();
-	    const targetDepartment = store.departments.get(nodeId);
-	    if (!targetDepartment) {
-	      return;
-	    }
-	    const newMemberUserIds = new Set(users.map(user => user.id));
-	    const employees = ((_targetDepartment$emp = targetDepartment.employees) != null ? _targetDepartment$emp : []).filter(user => !newMemberUserIds.has(user.id));
-	    const headsUserIds = new Set(targetDepartment.heads.map(head => head.id));
-	    const newUsers = users.filter(user => !headsUserIds.has(user.id));
-	    employees.push(...newUsers);
-	    targetDepartment.employees = employees;
-	    targetDepartment.userCount = userCount;
-	    if (updatedDepartmentIds.length > 0) {
-	      void store.refreshDepartments(updatedDepartmentIds);
-	    }
-	  },
-	  addUsersToDepartment: (nodeId, users, userCount, role) => {
-	    var _targetDepartment$hea, _targetDepartment$emp2;
-	    const store = humanresources_companyStructure_chartStore.useChartStore();
-	    const targetDepartment = store.departments.get(nodeId);
-	    if (!targetDepartment) {
-	      return;
-	    }
-	    const memberRoles = humanresources_companyStructure_api.getMemberRoles(targetDepartment.entityType);
-	    const newMemberUserIds = new Set(users.map(user => user.id));
-	    if (newMemberUserIds.has(store.userId)) {
-	      store.changeCurrentDepartment(0, targetDepartment.id);
-	    }
-	    const heads = ((_targetDepartment$hea = targetDepartment.heads) != null ? _targetDepartment$hea : []).filter(user => !newMemberUserIds.has(user.id));
-	    const employees = ((_targetDepartment$emp2 = targetDepartment.employees) != null ? _targetDepartment$emp2 : []).filter(user => !newMemberUserIds.has(user.id));
-	    (role === memberRoles.employee ? employees : heads).push(...users);
-	    targetDepartment.heads = heads;
-	    targetDepartment.employees = employees;
-	    targetDepartment.userCount = userCount;
 	  }
 	};
 
@@ -175,11 +138,11 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	    }
 	    if (this.type === 'add') {
 	      var _data$userCount, _this$role;
-	      UserManagementDialogActions.addUsersToDepartment(this.nodeId, this.users, (_data$userCount = data.userCount) != null ? _data$userCount : 0, (_this$role = this.role) != null ? _this$role : this.memberRoles.employee);
+	      humanresources_companyStructure_chartStore.UserService.addUsersToEntity(this.nodeId, this.users, (_data$userCount = data.userCount) != null ? _data$userCount : 0, (_this$role = this.role) != null ? _this$role : this.memberRoles.employee);
 	    }
 	    if (this.type === 'move') {
 	      var _data$userCount2, _data$updatedDepartme;
-	      UserManagementDialogActions.moveUsersToDepartment(this.nodeId, this.users, (_data$userCount2 = data.userCount) != null ? _data$userCount2 : 0, (_data$updatedDepartme = data.updatedDepartmentIds) != null ? _data$updatedDepartme : []);
+	      humanresources_companyStructure_chartStore.UserService.moveUsersToEntity(this.nodeId, this.users, (_data$userCount2 = data.userCount) != null ? _data$userCount2 : 0, (_data$updatedDepartme = data.updatedDepartmentIds) != null ? _data$updatedDepartme : []);
 	    }
 	    const notificationCode = this.getNotificationMessageCode();
 	    if (notificationCode) {

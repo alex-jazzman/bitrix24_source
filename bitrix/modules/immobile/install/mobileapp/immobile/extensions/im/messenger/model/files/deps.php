@@ -13,5 +13,8 @@ return [
 		'./src/model',
 		'./src/validator',
 		'./src/default-element',
+		'./src/transcript/model',
+		'./src/transcript/validator',
+		'./src/transcript/default-element',
 	],
 ];

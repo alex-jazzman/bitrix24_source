@@ -4,6 +4,7 @@ export type PushData = {
 	USER_ID: number,
 	TASK_ID: number,
 	AFTER: TaskPush,
+	BEFORE: TaskPush,
 };
 
 export type TaskPush = {
@@ -18,4 +19,5 @@ export type TaskPush = {
 	STATUS: number,
 	ACCOMPLICES: string,
 	AUDITORS: string,
+	PARENT_ID: number,
 };

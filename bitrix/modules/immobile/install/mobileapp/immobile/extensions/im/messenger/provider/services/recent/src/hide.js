@@ -7,7 +7,6 @@ jn.define('im/messenger/provider/services/recent/hide', (require, exports, modul
 	const { EventType } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
-	const { TabCounters } = require('im/messenger/lib/counters/tab-counters');
 	const { Runtime } = require('runtime');
 	const { Logger } = require('im/messenger/lib/logger');
 
@@ -78,7 +77,7 @@ jn.define('im/messenger/provider/services/recent/hide', (require, exports, modul
 			await this.store.dispatch('recentModel/set', [recentItem]);
 
 			this.#renderRecent();
-			TabCounters.update();
+			serviceLocator.get('tab-counters').update();
 		}
 
 		/**
@@ -89,7 +88,7 @@ jn.define('im/messenger/provider/services/recent/hide', (require, exports, modul
 			await this.store.dispatch('recentModel/delete', { id: recentItem.id });
 
 			this.#renderRecent();
-			TabCounters.update();
+			serviceLocator.get('tab-counters').update();
 		}
 
 		/**

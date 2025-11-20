@@ -22,6 +22,7 @@ return [
 		'im.v2.component.animation',
 		'ui.dialogs.tooltip',
 		'im.v2.component.elements.chat-title',
+		'im.v2.lib.copilot',
 		'im.v2.component.entity-selector',
 		'main.popup',
 		'im.v2.component.elements.popup',

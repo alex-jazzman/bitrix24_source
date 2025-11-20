@@ -1,3 +1,9 @@
+import { Loc } from 'main.core';
+import { Outline as OutlineIcons } from 'ui.icon-set.api.core';
+
+import { Core } from 'im.v2.application.core';
+import { FeedbackManager } from 'im.v2.lib.feedback';
+
 import { MessageMenu } from './message-base';
 
 import type { MenuItemOptions } from 'ui.system.menu';
@@ -33,6 +39,7 @@ export class AiAssistantMessageMenu extends MessageMenu
 		];
 
 		const createGroupItems = [
+			this.getSendFeedbackItem(),
 			this.getCreateTaskItem(),
 			this.getCreateMeetingItem(),
 		];
@@ -42,5 +49,24 @@ export class AiAssistantMessageMenu extends MessageMenu
 			...this.groupItems(createGroupItems, MenuSectionCode.create),
 			...this.groupItems(this.getMarketItems(), MenuSectionCode.market),
 		];
+	}
+
+	getSendFeedbackItem(): MenuItemOptions
+	{
+		const isAiAssistantBot = Core.getStore().getters['users/bots/isAiAssistant'](this.context.authorId);
+
+		if (!isAiAssistantBot)
+		{
+			return null;
+		}
+
+		return {
+			title: Loc.getMessage('IM_LIB_MENU_AI_ASSISTANT_FEEDBACK'),
+			icon: OutlineIcons.FEEDBACK,
+			onClick: () => {
+				void (new FeedbackManager()).openAiAssistantForm();
+				this.menuInstance.close();
+			},
+		};
 	}
 }

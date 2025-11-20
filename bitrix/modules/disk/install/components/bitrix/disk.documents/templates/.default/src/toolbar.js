@@ -1,14 +1,9 @@
-import {BaseEvent, EventEmitter} from "main.core.events";
-import CommonGrid from "./grid/common-grid";
-import {Options as GridOptions} from "./options";
-import {Reflection} from "main.core";
+import { Options as GridOptions } from './options';
+import { DocumentHandler } from './types';
 
 export default class Toolbar
 {
-	constructor()
-	{
-
-	}
+	static documentHandlers: DocumentHandler[] = [];
 
 	static reloadGridAndFocus(rowId: ?number)
 	{
@@ -35,15 +30,25 @@ export default class Toolbar
 			return;
 		}
 
+		const byUnifiedLink = this.documentHandlers.some((handler) => handler.supportsUnifiedLink
+			&& handler.code === service);
+
 		const createProcess = new BX.Disk.Document.CreateProcess({
 			typeFile: documentType,
 			serviceCode: service,
+			byUnifiedLink,
 			onAfterSave: (response) => {
 				if (response.status === 'success')
 				{
 					this.reloadGridAndFocus(response.object.id);
 				}
-			}
+			},
+			onAfterCreateFile: (response) => {
+				if (response.status === 'success')
+				{
+					this.reloadGridAndFocus(response.data.id);
+				}
+			},
 		});
 
 		createProcess.start();

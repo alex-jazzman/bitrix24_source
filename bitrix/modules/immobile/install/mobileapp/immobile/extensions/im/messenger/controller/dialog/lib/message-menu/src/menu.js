@@ -794,11 +794,18 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/menu', (require, expo
 			}).save();
 		}
 
-		onFeedback()
+		/**
+		 * @param {MessageMenuMessage} message
+		 */
+		onFeedback(message)
 		{
-			const openFormFallback = () => {
-				const formId = 'copilotRoles';
+			let formId = 'copilotRoles';
+			if (message.isAiAssistantMessage())
+			{
+				formId = 'aiAssistant';
+			}
 
+			const openFormFallback = () => {
 				const hiddenFields = encodeURIComponent(JSON.stringify({
 					from_domain: currentDomain,
 					back_version: Application.getAppVersion(),
@@ -835,7 +842,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/menu', (require, expo
 				if (FeedbackForm)
 				{
 					(new FeedbackForm({
-						formId: 'copilotRoles',
+						formId,
 						senderPage: 'MessageMenu',
 					})).openInBackdrop();
 				}

@@ -20,6 +20,10 @@
 	outline: 2px solid var(--ui-color-design-outline-a1-content-divider);
 }
 
+.b24-hover-pill:hover.--transparent {
+	--hover-color: transparent;
+}
+
 .b24-hover-pill-content {
 	overflow: hidden;
 	display: flex;

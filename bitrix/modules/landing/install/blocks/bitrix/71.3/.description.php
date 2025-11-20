@@ -59,7 +59,7 @@ $return = [
 		'nodes' => [
 			'.landing-block-node-container' => [
 				'name' => Loc::getMessage('LANDING_BLOCK_WIDGET_71_3_NODE_ELEMENT'),
-				'type' => ['background-color', 'padding-top', 'padding-bottom'],
+				'type' => ['container-max-width', 'background-color', 'padding-top', 'padding-bottom'],
 			],
 			'.landing-block-node-title' => [
 				'name' => Loc::getMessage('LANDING_BLOCK_WIDGET_71_3_NODE_TITLE'),
@@ -79,7 +79,7 @@ $return = [
 			],
 			'.landing-block-node-card' => [
 				'name' => Loc::getMessage('LANDING_BLOCK_WIDGET_71_3_NODE_CARD'),
-				'type' => ['border-color', 'background-color', 'border-color-hover', 'background-hover'],
+				'type' => ['border-color', 'background-color', 'border-color-hover', 'background-hover', 'paddings'],
 			],
 			'.landing-block-node-card-badge' => [
 				'name' => Loc::getMessage('LANDING_BLOCK_WIDGET_71_3_NODE_CARD_BADGE'),

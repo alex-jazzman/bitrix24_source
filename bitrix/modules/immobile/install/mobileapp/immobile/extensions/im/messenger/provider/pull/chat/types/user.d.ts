@@ -60,3 +60,10 @@ export type RawPullBotData = {
 	openline: boolean,
 	type: string,
 }
+
+export type UserInvitePullHandlerParams = {
+	userId: number,
+	invited: boolean,
+	user: RawPullUserData,
+	date: string,
+};

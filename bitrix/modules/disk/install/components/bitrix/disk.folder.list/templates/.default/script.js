@@ -867,7 +867,7 @@ BX.Disk.FolderListClass = (function() {
 		}).show();
 	};
 
-	FolderListClass.prototype.runCreatingFile = function(documentType, service, onSuccess = null) {
+	FolderListClass.prototype.runCreatingFile = function(documentType, service, onSuccess = null, byUnifiedLink = false) {
 		if (BX.message('disk_restriction'))
 		{
 			this.blockFeatures();
@@ -895,6 +895,7 @@ BX.Disk.FolderListClass = (function() {
 			typeFile: documentType,
 			targetFolderId: BX.Disk.Page.getFolder().id,
 			serviceCode: service,
+			byUnifiedLink,
 			onAfterSave: function(response) {
 				if (response.status === 'success')
 				{
@@ -905,6 +906,12 @@ BX.Disk.FolderListClass = (function() {
 					}
 				}
 			}.bind(this),
+			onAfterCreateFile: (response) => {
+				if (response.status === 'success')
+				{
+					this.commonGrid.reload();
+				}
+			},
 		});
 
 		createProcess.start();

@@ -212,6 +212,11 @@ jn.define('im/messenger/model/files/validator', (require, exports, module) => {
 			result.mediaUrl = fields.mediaUrl;
 		}
 
+		if (Type.isBoolean(fields.isTranscribable))
+		{
+			result.isTranscribable = fields.isTranscribable;
+		}
+
 		return result;
 	}
 

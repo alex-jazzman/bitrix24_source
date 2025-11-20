@@ -4,7 +4,6 @@
 jn.define('im/messenger/controller/recent/chat/recent', (require, exports, module) => {
 	const { Type } = require('type');
 	const { clone } = require('utils/object');
-	const { TabCounters } = require('im/messenger/lib/counters/tab-counters');
 	const { CallManager } = require('im/messenger/lib/integration/callmobile/call-manager');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { BaseRecent } = require('im/messenger/controller/recent/lib');
@@ -14,6 +13,7 @@ jn.define('im/messenger/controller/recent/chat/recent', (require, exports, modul
 	const { ShareDialogCache } = require('im/messenger/cache/share-dialog');
 	const { MessengerCounterSender } = require('im/messenger/lib/counters/counter-manager/messenger/sender');
 	const { readAllCountersOnClient } = require('im/messenger/lib/counters/counter-manager/messenger/actions');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { getLogger } = require('im/messenger/lib/logger');
 	const logger = getLogger('recent--chat-recent');
 
@@ -193,7 +193,7 @@ jn.define('im/messenger/controller/recent/chat/recent', (require, exports, modul
 			if (recentItem)
 			{
 				this.updateItems([recentItem]);
-				TabCounters.update();
+				serviceLocator.get('tab-counters').update();
 			}
 		}
 
@@ -234,7 +234,7 @@ jn.define('im/messenger/controller/recent/chat/recent', (require, exports, modul
 			if (Type.isArrayFilled(recentItemList))
 			{
 				this.updateItems(recentItemList);
-				TabCounters.update();
+				serviceLocator.get('tab-counters').update();
 			}
 		}
 
@@ -270,24 +270,9 @@ jn.define('im/messenger/controller/recent/chat/recent', (require, exports, modul
 			void await this.store.dispatch('dialoguesModel/set', modelData.dialogues);
 			void await this.store.dispatch('dialoguesModel/copilotModel/setCollection', modelData.copilot);
 			void await this.store.dispatch('recentModel/set', modelData.recent);
-
 			if (this.recentService.pageNavigation.currentPage === 2)
 			{
-				const recentIndex = [];
-				modelData.recent.forEach((item) => recentIndex.push(item.id.toString()));
-
-				const idListForDeleteFromCache = [];
-				this.store.getters['recentModel/getCollection']()
-					.forEach((item) => {
-						if (!recentIndex.includes(item.id.toString()))
-						{
-							idListForDeleteFromCache.push(item.id);
-						}
-					});
-
-				idListForDeleteFromCache.forEach((id) => {
-					this.store.dispatch('recentModel/deleteFromModel', { id });
-				});
+				this.deleteItemsFromStore(modelData.recent);
 
 				await this.saveShareDialogCache();
 			}

@@ -37,6 +37,7 @@ export type FilesModelState = {
 	init: boolean,
 	viewerAttrs: Object,
 	localUrl?: string,
+	isTranscribable?: boolean,
 	mediaUrl?: {
 		preview?: Record<number, string>
 	}
@@ -119,4 +120,3 @@ export interface FilesSetFromPushData extends PayloadData
 {
 	fileList: Array<FilesModelState>,
 }
-

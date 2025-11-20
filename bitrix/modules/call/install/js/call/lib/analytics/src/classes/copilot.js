@@ -76,6 +76,16 @@ export class Copilot
 			p5: `callId_${params.callId}`,
 		});
 	}
+	
+	onOpenFollowUpSlider(params)
+	{
+		sendData({
+			tool: AnalyticsTool.im,
+			category: AnalyticsCategory.callFollowup,
+			event: AnalyticsEvent.openSlider,
+			p5: `callId_${params.callId}`,
+		});
+	}
 
 	onFollowUpCreateEventClick(params)
 	{

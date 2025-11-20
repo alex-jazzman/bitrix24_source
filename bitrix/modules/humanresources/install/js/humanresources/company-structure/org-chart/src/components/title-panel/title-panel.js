@@ -8,6 +8,7 @@ import { AnalyticsSourceType } from 'humanresources.company-structure.api';
 import { UI } from 'ui.notification';
 import { Dom } from 'main.core';
 import { BIcon, Set } from 'ui.icon-set.api.vue';
+import { ResponsiveHint } from 'humanresources.company-structure.structure-components';
 
 import './style.css';
 
@@ -18,6 +19,7 @@ export const TitlePanel = {
 		SearchBar,
 		BIcon,
 		Set,
+		ResponsiveHint,
 	},
 
 	data(): Object
@@ -27,6 +29,7 @@ export const TitlePanel = {
 			canAddNode: false,
 			toolbarStarActive: false,
 			isHovered: false,
+			hintKey: 0,
 		};
 	},
 
@@ -56,7 +59,12 @@ export const TitlePanel = {
 		}
 
 		const observer = new MutationObserver(() => {
-			this.toolbarStarActive = Dom.hasClass(this.toolbarStarElement, 'ui-toolbar-star-active');
+			const newState = Dom.hasClass(this.toolbarStarElement, 'ui-toolbar-star-active');
+			if (this.toolbarStarActive !== newState)
+			{
+				this.toolbarStarActive = newState;
+				this.hintKey++;
+			}
 		});
 
 		observer.observe(this.toolbarStarElement, { attributes: true, attributeFilter: ['class'] });
@@ -73,11 +81,11 @@ export const TitlePanel = {
 		{
 			return Set;
 		},
-		toolbarStarIcon(): string | null
+		toolbarStarIcon(): string
 		{
 			if (this.isAirTemplate)
 			{
-				return null;
+				return this.set.FAVORITE_0;
 			}
 
 			if (this.isHovered || this.toolbarStarActive)
@@ -99,6 +107,13 @@ export const TitlePanel = {
 			}
 
 			return this.toolbarStarActive ? 'humanresources-title-panel__unpin' : 'humanresources-title-panel__pin';
+		},
+		starHintText(): string
+		{
+			return this.toolbarStarActive
+				? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_LEFT_MENU_UN_SAVE_HINT')
+				: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_LEFT_MENU_SAVE_HINT')
+			;
 		},
 	},
 
@@ -133,14 +148,23 @@ export const TitlePanel = {
 			<p class="humanresources-title-panel__title">
 				{{ loc('HUMANRESOURCES_COMPANY_STRUCTURE_TITLE') }}
 			</p>
-			<BIcon
-				:name="toolbarStarIcon"
-				:size="24"
-				color="rgba(149, 156, 164, 1)"
-				:class="toolbarClassIcon"
-				@mouseover="isHovered = true"
-				@mouseleave="isHovered = false" @click="triggerFavoriteStar"
-			></BIcon>
+			<ResponsiveHint v-if="!isAirTemplate" :content="starHintText" :key="'hint-air-' + hintKey">
+				<BIcon
+					:name="toolbarStarIcon"
+					:size="24"
+					color="rgba(149, 156, 164, 1)"
+					:class="toolbarClassIcon"
+					@mouseover="isHovered = true"
+					@mouseleave="isHovered = false" 
+					@click="triggerFavoriteStar"
+				></BIcon>
+			</ResponsiveHint>
+			<ResponsiveHint v-else :content="starHintText" :key="'hint-other-' + hintKey">
+				<div 
+					:class="['ui-icon-set', '--size-sm', toolbarClassIcon]" 
+					@click="triggerFavoriteStar"
+				></div>
+			</ResponsiveHint>
 			<AddButton
 				v-if="canAddNode"
 				@addDepartment="addDepartment"

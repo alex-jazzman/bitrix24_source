@@ -58,6 +58,7 @@ declare type MessageParams = {
 	URL_ID?: Array<string>,
 	componentId: string,
 	COMPONENT_PARAMS?: Object,
+	CHAT_MESSAGE?: number,
 }
 
 declare type AttachConfig = {

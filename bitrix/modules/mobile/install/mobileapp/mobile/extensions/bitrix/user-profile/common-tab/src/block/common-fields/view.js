@@ -10,14 +10,17 @@ jn.define('user-profile/common-tab/src/block/common-fields/view', (require, expo
 	const { openInfoBox } = require('user-profile/common-tab/src/block/common-fields/src/info-box');
 	const { BaseEditWrapper } = require('user-profile/common-tab/src/block/base-edit');
 	const { isFieldValueEmpty } = require('user-profile/common-tab/src/block/common-fields/src/utils');
+	const { PropTypes } = require('utils/validation');
 
 	const ViewModeFieldIds = ['PERSONAL_MOBILE', 'UF_PHONE_INNER', 'EMAIL', 'DEPARTMENT_HEAD', 'UF_DEPARTMENT', 'PERSONAL_BIRTHDAY'];
 
 	/**
 	 * @typedef {Object} CommonFieldsProps
-	 * @property {string} [testId]
-	 * @property {Object} parentWidget
-	 * @property {Array} sections
+	 * @property {boolean} isEditMode
+	 * @property {Array} [sections = []]
+	 * @property {function} [onFocus]
+	 * @property {function} [onChange]
+	 * @property {Object} [parentWidget]
 
 	 * @class CommonFields
 	 */
@@ -92,18 +95,20 @@ jn.define('user-profile/common-tab/src/block/common-fields/view', (require, expo
 			return (isEditMode && isEditable) || (!isEditMode && !isFieldValueEmpty(field));
 		};
 
-		onFieldValueChange = (fieldId, value) => {
+		onFieldValueChange = (fieldId, value, isValid = true) => {
 			const { onChange } = this.props;
 			const { id, type } = this.#getFieldById(fieldId);
-			this.changedFields = {
-				...this.changedFields,
-				[fieldId]: {
-					id,
-					type,
-					value,
-				},
+			this.changedFields[fieldId] = {
+				id,
+				type,
+				value,
+				isValid,
 			};
-			onChange?.('commonFields', this.changedFields);
+			onChange?.('commonFields', this.changedFields, this.isChangedFieldsValid());
+		};
+
+		isChangedFieldsValid = () => {
+			return Object.values(this.changedFields).every((field) => field.isValid);
 		};
 
 		#getFieldById(fieldId)
@@ -157,8 +162,9 @@ jn.define('user-profile/common-tab/src/block/common-fields/view', (require, expo
 		}
 
 		onShowAllFieldsLinkClick = () => {
-			const { sections, parentWidget } = this.props;
+			const { sections = [], parentWidget } = this.props;
 			openInfoBox({
+				testId: this.getTestId('common-fields-details'),
 				sections,
 				parentWidget,
 			});
@@ -176,6 +182,18 @@ jn.define('user-profile/common-tab/src/block/common-fields/view', (require, expo
 			});
 		}
 	}
+
+	CommonFields.defaultProps = {
+		sections: [],
+	};
+
+	CommonFields.propTypes = {
+		isEditMode: PropTypes.bool.isRequired,
+		sections: PropTypes.array,
+		onFocus: PropTypes.func,
+		onChange: PropTypes.func,
+		parentWidget: PropTypes.object,
+	};
 
 	module.exports = {
 		/**

@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
-(function (exports,main_core,ui_entitySelector,ui_vue3_components_menu,ui_vue3_components_popup,ui_iconSet_api_vue,ui_iconSet_api_core,ui_iconSet_outline,tasks_v2_lib_userSelectorDialog,tasks_v2_lib_heightTransition,tasks_v2_lib_hrefClick,tasks_v2_provider_service_userService,tasks_v2_component_elements_userAvatarList,tasks_v2_core,tasks_v2_const) {
+(function (exports,main_core,ui_entitySelector,ui_vue3_components_menu,ui_vue3_components_popup,ui_iconSet_api_vue,ui_iconSet_api_core,ui_iconSet_outline,tasks_v2_component_elements_addBackground,tasks_v2_component_elements_fieldAdd,tasks_v2_lib_userSelectorDialog,tasks_v2_lib_heightTransition,tasks_v2_lib_hrefClick,tasks_v2_provider_service_userService,tasks_v2_component_elements_userAvatarList,tasks_v2_core,tasks_v2_const) {
 	'use strict';
 
 	const participantMeta = Object.freeze({
@@ -38,6 +38,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  components: {
 	    BIcon: ui_iconSet_api_vue.BIcon,
 	    UserAvatarListUsers: tasks_v2_component_elements_userAvatarList.UserAvatarListUsers,
+	    AddBackground: tasks_v2_component_elements_addBackground.AddBackground,
+	    FieldAdd: tasks_v2_component_elements_fieldAdd.FieldAdd,
 	    BMenu: ui_vue3_components_menu.BMenu,
 	    Popup: ui_vue3_components_popup.Popup
 	  },
@@ -121,10 +123,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	    },
 	    readonly() {
 	      return !this.task.rights.edit;
-	      // return true;
 	    }
 	  },
-
 	  watch: {
 	    usersLength() {
 	      if (this.popupUsers.length === 0) {
@@ -247,20 +247,21 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	  },
 	  template: `
 		<div v-bind="dataset" ref="users">
-			<div
-				v-if="usersLength > 0"
-				class="tasks-field-users"
-			>
-				<UserAvatarListUsers
-					:users="displayedUsers"
-					:withCross="!withActionMenu"
-					:isDialogShown
-					:readonly
-					ref="userList"
-					@onClick="showDialog"
-					@onUserClick="(userId) => handleClickUser(userId)"
-					@onUserCrossClick="(userId) => removeUser(userId)"
-				/>
+			<div v-if="usersLength > 0">
+				<div class="tasks-field-users-container">
+					<AddBackground v-if="!readonly" :isActive="isDialogShown" @click="showDialog"/>
+					<div class="tasks-field-users">
+						<UserAvatarListUsers
+							:users="displayedUsers"
+							:withCross="!withActionMenu"
+							:readonly
+							ref="userList"
+							@onClick="showDialog"
+							@onUserClick="(userId) => handleClickUser(userId)"
+							@onUserCrossClick="(userId) => removeUser(userId)"
+						/>
+					</div>
+				</div>
 				<div
 					v-if="popupUsers.length > 0"
 					class="tasks-field-participant-list-more"
@@ -270,12 +271,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					{{ moreFormatted }}
 				</div>
 			</div>
-			<div v-else class="tasks-field-participant-list-empty" @click="showDialog">
-				<BIcon :name="Outline.PERSON"/>
-				<div class="tasks-field-participant-list-empty-text">
-					{{ loc('TASKS_V2_PARTICIPANT_LIST_ADD') }}
-				</div>
-			</div>
+			<FieldAdd v-else :icon="Outline.PERSON" @click="showDialog"/>
 			<div ref="anchor"></div>
 		</div>
 		<BMenu v-if="menuUserId" :options="menuOptions" @close="menuUserId = null"/>
@@ -302,5 +298,5 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	exports.ParticipantList = ParticipantList;
 	exports.participantMeta = participantMeta;
 
-}((this.BX.Tasks.V2.Component.Elements = this.BX.Tasks.V2.Component.Elements || {}),BX,BX.UI.EntitySelector,BX.UI.Vue3.Components,BX.UI.Vue3.Components,BX.UI.IconSet,BX.UI.IconSet,BX,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Component.Elements,BX.Tasks.V2,BX.Tasks.V2.Const));
+}((this.BX.Tasks.V2.Component.Elements = this.BX.Tasks.V2.Component.Elements || {}),BX,BX.UI.EntitySelector,BX.UI.Vue3.Components,BX.UI.Vue3.Components,BX.UI.IconSet,BX.UI.IconSet,BX,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Component.Elements,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Lib,BX.Tasks.V2.Provider.Service,BX.Tasks.V2.Component.Elements,BX.Tasks.V2,BX.Tasks.V2.Const));
 //# sourceMappingURL=participant-list.bundle.js.map

@@ -3,10 +3,12 @@
  */
 jn.define('user-profile/common-tab/src/block/common-fields/src/field/phone-field', (require, exports, module) => {
 	const { BaseField } = require('user-profile/common-tab/src/block/common-fields/src/field/base-field');
-	const { isPhoneNumber, getFormattedNumber } = require('utils/phone');
+	const { getFormattedNumber } = require('utils/phone');
 	const { Text4 } = require('ui-system/typography/text');
 	const { Link4 } = require('ui-system/blocks/link');
 	const { Color, Indent } = require('tokens');
+	const { debounce } = require('utils/function');
+	const { Loc } = require('loc');
 	const {
 		InputSize,
 		InputDesign,
@@ -16,11 +18,18 @@ jn.define('user-profile/common-tab/src/block/common-fields/src/field/phone-field
 
 	class PhoneField extends BaseField
 	{
+		constructor(props)
+		{
+			super(props);
+			this.debouncedUpdateIsValidState = debounce(this.#updateIsValidState, 300);
+		}
+
 		renderViewModeFieldValue(value, idx)
 		{
 			const { id } = this.props;
+			const { isValid } = this.state;
 
-			if (isPhoneNumber)
+			if (isValid)
 			{
 				return Link4({
 					testId: this.getTestId(`phone-${id.toLowerCase()}-${idx}`),
@@ -37,6 +46,16 @@ jn.define('user-profile/common-tab/src/block/common-fields/src/field/phone-field
 				text: value,
 				color: Color.base1,
 			});
+		}
+
+		initState(props)
+		{
+			const { value, isValid } = props;
+
+			this.state = {
+				value: value ?? null,
+				isValid: isValid ?? true,
+			};
 		}
 
 		renderEditModeFieldValue(value, idx)
@@ -56,27 +75,57 @@ jn.define('user-profile/common-tab/src/block/common-fields/src/field/phone-field
 		}
 
 		#onPhoneChange = (newValue) => {
-			const { onChange } = this.props;
-			this.setState({ value: newValue }, () => {
-				onChange?.(newValue);
-			});
+			this.setState({
+				value: newValue,
+			}, () => this.debouncedUpdateIsValidState());
 		};
 
-		getFieldContainerStyle()
-		{
-			const { isEditMode, isFirst } = this.props;
+		#updateIsValidState = async () => {
+			const { onChange } = this.props;
+			const { value } = this.state;
+			const isValid = await this.#isPhoneNumberValid(value);
+			this.setState({ isValid }, () => onChange?.(value, isValid));
+		};
 
-			return {
-				marginTop: isFirst ? 0 : Indent.XL2.toNumber(),
-				alignItems: 'flex-start',
-				borderBottomColor: Color.bgSeparatorSecondary.toHex(),
-				borderBottomWidth: isEditMode ? 1 : 0,
-			};
-		}
+		#isPhoneNumberValid = async (phoneNumber) => {
+			if (phoneNumber === '')
+			{
+				return true;
+			}
+
+			const response = await BX.ajax.runAction('mobile.Profile.isPhoneNumberValid', {
+				json: {
+					phoneNumber,
+				},
+			})
+				.catch((result) => {
+					console.error(result);
+				});
+			if (response?.status === 'success')
+			{
+				return response.data;
+			}
+
+			return false;
+		};
 
 		getFieldTitleStyle()
 		{
 			return {};
+		}
+
+		getErrorText()
+		{
+			return Loc.getMessage('M_PROFILE_COMMON_FIELDS_PHONE_ERROR_TEXT');
+		}
+
+		getFieldContainerCustomStyle()
+		{
+			const { isEditMode } = this.props;
+
+			return {
+				paddingBottom: isEditMode ? Indent.XS.toNumber() : 0,
+			};
 		}
 	}
 

@@ -6,7 +6,7 @@ jn.define('settings-v2/services/notification-load', (require, exports, module) =
 
 	class NotificationLoadService
 	{
-		async fetchPushSettings()
+		static async fetchPushSettings()
 		{
 			return new Promise((resolve) => {
 				BX.rest.callBatch(
@@ -15,8 +15,8 @@ jn.define('settings-v2/services/notification-load', (require, exports, module) =
 						pushTypes: ['mobile.push.types.get'],
 					},
 					(result) => {
-						const pushTypes = this.processResponse(result.pushTypes, PushConfigKeys.TYPES);
-						const pushConfig = this.processResponse(result.pushConfig, PushConfigKeys.CONFIG);
+						const pushTypes = NotificationLoadService.processResponse(result.pushTypes, PushConfigKeys.TYPES);
+						const pushConfig = NotificationLoadService.processResponse(result.pushConfig, PushConfigKeys.CONFIG);
 
 						resolve({
 							pushTypes,
@@ -27,7 +27,7 @@ jn.define('settings-v2/services/notification-load', (require, exports, module) =
 			});
 		}
 
-		async fetchCounterSettings()
+		static async fetchCounterSettings()
 		{
 			return new Promise((resolve) => {
 				BX.rest.callBatch(
@@ -36,8 +36,14 @@ jn.define('settings-v2/services/notification-load', (require, exports, module) =
 						counterConfig: ['mobile.counter.config.get'],
 					},
 					(result) => {
-						const counterTypes = this.processResponse(result.counterType, NotificationCounterKey.TYPES);
-						const counterConfig = this.processResponse(result.counterConfig, NotificationCounterKey.CONFIG);
+						const counterTypes = NotificationLoadService.processResponse(
+							result.counterType,
+							NotificationCounterKey.TYPES,
+						);
+						const counterConfig = NotificationLoadService.processResponse(
+							result.counterConfig,
+							NotificationCounterKey.CONFIG,
+						);
 
 						resolve({
 							counterTypes,
@@ -48,7 +54,7 @@ jn.define('settings-v2/services/notification-load', (require, exports, module) =
 			});
 		}
 
-		async fetchAll()
+		static async fetchAll()
 		{
 			return new Promise((resolve) => {
 				BX.rest.callBatch(
@@ -59,10 +65,22 @@ jn.define('settings-v2/services/notification-load', (require, exports, module) =
 						counterConfig: ['mobile.counter.config.get'],
 					},
 					(result) => {
-						const pushTypes = this.processResponse(result.pushTypes, PushConfigKeys.TYPES);
-						const pushConfig = this.processResponse(result.pushConfig, PushConfigKeys.CONFIG);
-						const counterTypes = this.processResponse(result.counterTypes, NotificationCounterKey.TYPES);
-						const counterConfig = this.processResponse(result.counterConfig, NotificationCounterKey.CONFIG);
+						const pushTypes = NotificationLoadService.processResponse(
+							result.pushTypes,
+							PushConfigKeys.TYPES,
+						);
+						const pushConfig = NotificationLoadService.processResponse(
+							result.pushConfig,
+							PushConfigKeys.CONFIG,
+						);
+						const counterTypes = NotificationLoadService.processResponse(
+							result.counterTypes,
+							NotificationCounterKey.TYPES,
+						);
+						const counterConfig = NotificationLoadService.processResponse(
+							result.counterConfig,
+							NotificationCounterKey.CONFIG,
+						);
 
 						resolve({
 							pushTypes,
@@ -75,7 +93,7 @@ jn.define('settings-v2/services/notification-load', (require, exports, module) =
 			});
 		}
 
-		processResponse(response, key)
+		static processResponse(response, key)
 		{
 			if (response.answer?.error || !response.answer?.result)
 			{

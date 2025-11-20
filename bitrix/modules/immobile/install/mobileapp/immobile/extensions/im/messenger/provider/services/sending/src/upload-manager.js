@@ -196,6 +196,7 @@ jn.define('im/messenger/provider/services/sending/upload-manager', (require, exp
 				params: {
 					dialogId,
 					temporaryMessageId,
+					isTranscribable: deviceFile.isTranscribable ?? false,
 				},
 			};
 
@@ -223,6 +224,31 @@ jn.define('im/messenger/provider/services/sending/upload-manager', (require, exp
 			}
 
 			const task = new UploadTask(taskOptions);
+
+			// TODO: remove it after solving the problem with listening to voice messages
+			try
+			{
+				window.debugUploadAudio[window.debugUploadAudio.length - 1].getFileDataAndTask = {
+					fileData: {
+						taskId: temporaryFileId,
+						file: {
+							...deviceFile,
+							name: fileInfo.name,
+							size: fileInfo.size,
+							extension: fileInfo.extension,
+							path: fileInfo.path,
+							type: fileInfo.type,
+							start: fileInfo.start,
+							end: fileInfo.end,
+						},
+					},
+					task,
+				};
+			}
+			catch (e)
+			{
+				console.error(e);
+			}
 
 			return {
 				fileData: {

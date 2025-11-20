@@ -150,7 +150,7 @@ jn.define('im/messenger/controller/sidebar/channel/sidebar-controller', (require
 			{
 				this.isGeneral = dialogState.type === DialogType.generalChannel;
 			}
-			this.сanLeave = ChatPermission.сanLeaveFromChat(this.dialogId);
+			this.canLeave = ChatPermission.canLeaveFromChat(this.dialogId);
 		}
 
 		initTabsData()
@@ -239,7 +239,7 @@ jn.define('im/messenger/controller/sidebar/channel/sidebar-controller', (require
 		 */
 		createButtons()
 		{
-			const disable = this.isGeneral || !this.сanLeave;
+			const disable = this.isGeneral || !this.canLeave;
 
 			return [
 				this.createMuteButton(),

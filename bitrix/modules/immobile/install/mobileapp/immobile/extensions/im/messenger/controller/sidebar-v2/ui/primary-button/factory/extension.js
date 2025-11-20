@@ -5,9 +5,10 @@ jn.define('im/messenger/controller/sidebar-v2/ui/primary-button/factory', (requi
 	const { Icon } = require('assets/icons');
 	const { Loc } = require('im/messenger/controller/sidebar-v2/loc');
 	const { Feature } = require('im/messenger/lib/feature');
+	const { SidebarPrimaryActionButtonId } = require('im/messenger/controller/sidebar-v2/const');
 
 	const createSearchButton = ({ onClick, ...rest }) => ({
-		id: 'search',
+		id: SidebarPrimaryActionButtonId.SEARCH,
 		icon: Icon.SEARCH,
 		title: Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_BUTTON_SEARCH'),
 		onClick,
@@ -15,7 +16,7 @@ jn.define('im/messenger/controller/sidebar-v2/ui/primary-button/factory', (requi
 	});
 
 	const createMuteButton = ({ onClick, muted, ...rest }) => ({
-		id: 'mute',
+		id: SidebarPrimaryActionButtonId.MUTE,
 		testIdSuffix: muted ? 'muted' : 'unmuted',
 		icon: muted ? Icon.NOTIFICATION_OFF : Icon.NOTIFICATION,
 		title: Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_BUTTON_MUTE'),
@@ -24,7 +25,7 @@ jn.define('im/messenger/controller/sidebar-v2/ui/primary-button/factory', (requi
 	});
 
 	const createVideoCallButton = ({ onClick, disabled, ...rest }) => ({
-		id: 'video-call',
+		id: SidebarPrimaryActionButtonId.VIDEO_CALL,
 		icon: Icon.RECORD_VIDEO,
 		title: Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_BUTTON_VIDEO_CALL'),
 		onClick,
@@ -33,7 +34,7 @@ jn.define('im/messenger/controller/sidebar-v2/ui/primary-button/factory', (requi
 	});
 
 	const createAudioCallButton = ({ onClick, disabled, ...rest }) => ({
-		id: 'audio-call',
+		id: SidebarPrimaryActionButtonId.AUDIO_CALL,
 		icon: Icon.PHONE_UP,
 		title: Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_BUTTON_AUDIO_CALL'),
 		onClick,
@@ -43,7 +44,7 @@ jn.define('im/messenger/controller/sidebar-v2/ui/primary-button/factory', (requi
 
 	const createAutoDeleteButton = ({ onClick, selected, ...rest }) => {
 		return {
-			id: 'messages-auto-delete',
+			id: SidebarPrimaryActionButtonId.MESSAGE_AUTO_DELETE,
 			icon: Icon.TIMER_DOT,
 			title: Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_BUTTON_AUTO_DELETE'),
 			onClick,

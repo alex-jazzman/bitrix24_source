@@ -7,6 +7,7 @@ jn.define('settings-v2/structure/pages/root', (require, exports, module) => {
 	const { copyToClipboard } = require('utils/copy');
 	const { FeedbackForm } = require('layout/ui/feedback-form-opener');
 	const { checkFeatureFlag, FeatureFlagType } = require('feature-flag');
+	const { Feature } = require('feature');
 
 	const { SettingsPageId } = require('settings-v2/const');
 	const { NativeSettingController } = require('settings-v2/controller/native');
@@ -45,7 +46,6 @@ jn.define('settings-v2/structure/pages/root', (require, exports, module) => {
 		items: [
 			createSection({
 				id: 'application-settings',
-				title: Loc.getMessage('SETTINGS_V2_STRUCTURE_ROOT_APP_SETTINGS'),
 				items: [
 					createLink({
 						id: 'messenger',
@@ -64,13 +64,13 @@ jn.define('settings-v2/structure/pages/root', (require, exports, module) => {
 						title: Loc.getMessage('SETTINGS_V2_STRUCTURE_ROOT_SYNC'),
 						icon: Icon.REFRESH,
 						nextPage: SettingsPageId.SYNC,
-						prefilter: () => isAndroid,
 					}),
 					createLink({
 						id: 'memory',
 						title: Loc.getMessage('SETTINGS_V2_STRUCTURE_ROOT_MEMORY'),
 						icon: Icon.STORAGE,
 						nextPage: SettingsPageId.MEMORY,
+						prefilter: Feature.isNativeSettingsCacheApiSupported,
 					}),
 					createLink({
 						id: 'video-quality',
@@ -84,6 +84,7 @@ jn.define('settings-v2/structure/pages/root', (require, exports, module) => {
 						title: Loc.getMessage('SETTINGS_V2_STRUCTURE_ROOT_LOC'),
 						icon: Icon.EARTH,
 						controller: createLocController(),
+						divider: false,
 					}),
 				],
 			}),
@@ -91,10 +92,13 @@ jn.define('settings-v2/structure/pages/root', (require, exports, module) => {
 				id: 'additionally-settings',
 				title: Loc.getMessage('SETTINGS_V2_STRUCTURE_ROOT_ADDITIONAL_SETTINGS'),
 				items: [
-					createLink({
+					createButton({
 						id: 'license',
 						title: Loc.getMessage('SETTINGS_V2_STRUCTURE_ROOT_LICENSE'),
-						nextPage: SettingsPageId.LICENSE,
+						onClick: () => PageManager.openPage({
+							url: 'https://www.1c-bitrix.ru/download/files/law/eula-desktop.pdf'
+						}),
+						icon: Icon.CHEVRON_TO_THE_RIGHT,
 					}),
 					createButton({
 						id: 'feedback',

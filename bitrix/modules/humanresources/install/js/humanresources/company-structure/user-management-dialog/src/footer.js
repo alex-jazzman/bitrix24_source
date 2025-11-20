@@ -1,5 +1,6 @@
 import { Dom, Event, Tag, Loc, Type, Text } from 'main.core';
 import { BaseFooter, type FooterOptions, type ItemOptions, type Tab } from 'ui.entity-selector';
+import { UserService } from 'humanresources.company-structure.chart-store';
 import { EntityTypes, getUserDataBySelectorItem } from 'humanresources.company-structure.utils';
 import { getMemberRoles, type MemberRolesType } from 'humanresources.company-structure.api';
 import type { BaseEvent } from 'main.core.events';
@@ -172,7 +173,7 @@ export class BaseUserManagementDialogFooter extends BaseFooter
 
 		if (this.type === 'add')
 		{
-			UserManagementDialogActions.addUsersToDepartment(
+			UserService.addUsersToEntity(
 				this.nodeId,
 				this.users,
 				data.userCount ?? 0,
@@ -182,7 +183,7 @@ export class BaseUserManagementDialogFooter extends BaseFooter
 
 		if (this.type === 'move')
 		{
-			UserManagementDialogActions.moveUsersToDepartment(
+			UserService.moveUsersToEntity(
 				this.nodeId,
 				this.users,
 				data.userCount ?? 0,

@@ -22,6 +22,7 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	}
 	const optionService = new OptionService();
 
+	exports.OptionService = OptionService;
 	exports.optionService = optionService;
 
 }((this.BX.Tasks.V2.Provider.Service = this.BX.Tasks.V2.Provider.Service || {}),BX.Tasks.V2.Lib));

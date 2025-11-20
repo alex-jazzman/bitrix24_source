@@ -24,6 +24,7 @@ $this->setFrameMode(true);
 
 // assets
 $assets = Assets\Manager::getInstance();
+Asset::getInstance()->addCSS('/bitrix/components/bitrix/landing.mainpage.pub/templates/.default/bootstrap-mainpage.css');
 Asset::getInstance()->addCSS('/bitrix/components/bitrix/landing.mainpage.pub/templates/.default/style-widgets.css');
 
 $isAnalyticsEnabled = false;

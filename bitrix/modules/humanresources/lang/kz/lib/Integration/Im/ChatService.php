@@ -5,4 +5,4 @@ $MESS["HUMANRESOURCES_CHAT_SERVICE_CHAT_TYPE_PRIVATE_CHANNEL_SUBTITLE"] = "Жа�
 $MESS["HUMANRESOURCES_CHAT_SERVICE_CHAT_TYPE_PRIVATE_CHAT_SUBTITLE"] = "Жабық чат";
 $MESS["HUMANRESOURCES_CHAT_SERVICE_CREATION_ERROR_CHANNEL"] = "Арнаны құру мүмкін болмады";
 $MESS["HUMANRESOURCES_CHAT_SERVICE_CREATION_ERROR_CHAT"] = "Чат құру мүмкін болмады";
-$MESS["HUMANRESOURCES_CHAT_SERVICE_NOT_AVAILABLE"] = "Модуль қолжетімсіз. Битрикс24 әкімшісіне хабарласыңыз";
+$MESS["HUMANRESOURCES_CHAT_SERVICE_NOT_AVAILABLE_MSGVER_1"] = "<b>Веб-мессенджер</b> модулі қолжетімсіз. Битрикс24 әкімшісіне хабарласыңыз";

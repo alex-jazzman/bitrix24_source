@@ -6,7 +6,7 @@ import { SidebarPreset } from '../classes/preset';
 import type { ImModelChat } from 'im.v2.model';
 
 const isNotes = (chatContext: ImModelChat) => {
-	return chatContext.type === ChatType.user && Number(chatContext.dialogId) === Core.getUserId();
+	return Core.getStore().getters['chats/isNotes'](chatContext.dialogId);
 };
 
 const notesPreset = new SidebarPreset({

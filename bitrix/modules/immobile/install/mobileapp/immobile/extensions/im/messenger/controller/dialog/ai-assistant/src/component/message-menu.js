@@ -50,12 +50,13 @@ jn.define('im/messenger/controller/dialog/ai-assistant/component/message-menu', 
 		getAiAssistantActions()
 		{
 			return [
+				MessageMenuActionType.reaction,
 				MessageMenuActionType.reply,
 				MessageMenuActionType.copy,
 				MessageMenuActionType.copyLink,
 				MessageMenuActionType.pin,
 				MessageMenuActionType.forward,
-				// MessageMenuActionType.feedback, TODO: enable after edits to the feedback form
+				MessageMenuActionType.feedback,
 				MessageMenuActionType.create,
 				MessageMenuActionType.multiselect,
 			];

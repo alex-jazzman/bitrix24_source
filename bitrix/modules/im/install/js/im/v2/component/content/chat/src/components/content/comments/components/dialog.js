@@ -66,7 +66,7 @@ export const CommentsDialog = {
 		},
 	},
 	template: `
-		<ChatDialog ref="dialog" :dialogId="dialogId" :saveScrollOnExit="false" :resetOnExit="true">
+		<ChatDialog ref="dialog" :dialogId="dialogId" :saveScrollOnExit="false" :clearOnExit="true">
 			<template v-if="dialogInited" #pinned-panel>
 				<PinnedMessages
 					:dialogId="dialogId"

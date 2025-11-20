@@ -18,7 +18,6 @@ $MESS["LANDING_TPL_HEADER_LOGO_KB"] = "Білім қорлары";
 $MESS["LANDING_TPL_HEADER_LOGO_MAINPAGE"] = "Вайб";
 $MESS["LANDING_TPL_HEADER_LOGO_SITE"] = "Сайттар";
 $MESS["LANDING_TPL_HEADER_RIGHT_CREATE_HINT_MSGVER_1"] = "Сіздің сайттарды құруға құқығыңыз жоқ Өз Битрикс24 әкімшісіне хабарласыңыз.";
-$MESS["LANDING_TPL_MY_COLOR"] = "Өз түсі";
 $MESS["LANDING_TPL_POPUP_REPEAT_BUTTON"] = "Қайта қосу";
 $MESS["LANDING_TPL_POPUP_REPEAT_TEXT"] = "Бірдеңе дұрыс болмады, процесті қайта бастап көріңіз";
 $MESS["LANDING_TPL_POPUP_TEXT"] = "Сайтты ашу үшін телефон камерасын QR кодына бағыттаңыз";

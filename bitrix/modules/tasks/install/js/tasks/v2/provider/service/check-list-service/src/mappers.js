@@ -12,9 +12,10 @@ export function prepareCheckLists(checklist: CheckListModel[]): CheckListModel[]
 	});
 
 	return checklist.map((item: CheckListModel) => {
+		const title = prepareTitle(item);
 		const parentNodeId = item.parentId ? parentNodeIdMap.get(item.parentId) : 0;
 
-		return { ...item, parentNodeId };
+		return { ...item, title, parentNodeId };
 	});
 }
 
@@ -102,6 +103,16 @@ export function mapModelToSliderData(checkLists: CheckListModel[]): CheckListSli
 			return [item.nodeId, node];
 		}),
 	);
+}
+
+export function getUserIdsFromChecklists(
+	checkLists: CheckListModel[],
+	userType: 'accomplices' | 'auditors',
+): number[]
+{
+	return checkLists
+		.flatMap((item: CheckListModel) => (item[userType] || []).map((user: User) => user.id))
+		.filter((id, idx, arr) => arr.indexOf(id) === idx);
 }
 
 export function prepareTitle(item: CheckListModel): string

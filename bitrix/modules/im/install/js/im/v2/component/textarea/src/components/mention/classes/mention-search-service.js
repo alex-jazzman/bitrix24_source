@@ -54,7 +54,7 @@ export class MentionSearchService
 
 	#isSelfDialogId(dialogId: string): boolean
 	{
-		return dialogId === Core.getUserId().toString();
+		return Core.getStore().getters['chats/isNotes'](dialogId);
 	}
 
 	#getDialogIds(items: SearchResultItem[]): string[]

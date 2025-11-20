@@ -12,17 +12,18 @@ jn.define('im/messenger/provider/services/queue/service', (require, exports, mod
 	 */
 	class QueueService
 	{
-		/*
-		* @return {SendingService}
-		*/
+		static #instance = null;
+		/**
+		 * @return {QueueService}
+		 */
 		static getInstance()
 		{
-			if (!this.instance)
+			if (!this.#instance)
 			{
-				this.instance = new this();
+				this.#instance = new this();
 			}
 
-			return this.instance;
+			return this.#instance;
 		}
 
 		constructor()

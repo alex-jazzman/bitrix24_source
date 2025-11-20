@@ -32,5 +32,6 @@ return [
 		'./src/join-button',
 		'./src/selector',
 		'./src/restrictions',
+		'./src/notify-panel',
 	],
 ];

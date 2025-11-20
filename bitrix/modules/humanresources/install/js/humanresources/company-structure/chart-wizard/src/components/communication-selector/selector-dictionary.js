@@ -1,8 +1,10 @@
+import { PermissionChecker } from 'humanresources.company-structure.permission-checker';
 type AvailablePhrases = 'hintText' | 'createText' | 'removeText' | 'warningText';
 
 export class AbstractSelectorDictionary
 {
 	phrases: Record<AvailablePhrases, { team: string, default: string }> = {};
+	permissionAction: { team: string, department: string } = { team: '', department: '' };
 
 	getPhrase(key: AvailablePhrases, isTeamEntity: boolean): string
 	{
@@ -33,12 +35,41 @@ export class AbstractSelectorDictionary
 
 	getEntity(): Object {}
 
-	getDialogEvents(): Object
+	getDialogEvents(entityId: number, isTeamEntity: boolean, isEditMode: boolean): Object
 	{
-		return {};
+		return {
+			onLoad: (event: BaseEvent) => {
+				const dialog: Dialog = event.getTarget();
+				if (!this.canEdit(entityId, isTeamEntity, isEditMode))
+				{
+					dialog.getTagSelector().lock();
+				}
+			},
+		};
 	}
 
 	getTestId(blueprint: string): string {}
+
+	canEdit(entityId: number, isTeamEntity: boolean, isEditMode: boolean): boolean
+	{
+		if (!isEditMode)
+		{
+			return true;
+		}
+
+		const permissionChecker = PermissionChecker.getInstance();
+		if (!permissionChecker)
+		{
+			return false;
+		}
+
+		const permissionAction = isTeamEntity
+			? this.permissionAction.team
+			: this.permissionAction.department
+		;
+
+		return permissionChecker.hasPermission(permissionAction, entityId);
+	}
 
 	getRemovePhrase(hasCurrentUser: boolean, isTeamEntity: boolean): string
 	{

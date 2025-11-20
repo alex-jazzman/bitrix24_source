@@ -147,54 +147,6 @@ describe('input actions model', () => {
 				assert.equal(chatList.length, 1);
 			});
 		});
-
-		describe('stopUserActionsInChat', () => {
-			it('should remove all user actions for provided chat', () => {
-				const payload1 = {
-					type: InputAction.writing,
-					dialogId: 'chat1',
-					userId: 1,
-					userName: 'User1',
-				};
-				const payload2 = {
-					type: InputAction.writing,
-					dialogId: 'chat1',
-					userId: 2,
-					userName: 'User2',
-				};
-				const payload3 = {
-					type: InputAction.sendingFile,
-					dialogId: 'chat1',
-					userId: 1,
-					userName: 'User1',
-				};
-				const payload4 = {
-					type: InputAction.writing,
-					dialogId: 'chat2',
-					userId: 1,
-					userName: 'User1',
-				};
-				store.dispatch('chats/inputActions/start', payload1);
-				store.dispatch('chats/inputActions/start', payload2);
-				store.dispatch('chats/inputActions/start', payload3);
-				store.dispatch('chats/inputActions/start', payload4);
-
-				let chatList = state.collection[payload1.dialogId];
-				let chatList2 = state.collection[payload4.dialogId];
-				assert.equal(chatList.length, 3);
-				assert.equal(chatList2.length, 1);
-
-				store.dispatch('chats/inputActions/stopUserActionsInChat', {
-					userId: payload1.userId,
-					dialogId: payload1.dialogId,
-				});
-
-				chatList = state.collection[payload1.dialogId];
-				chatList2 = state.collection[payload4.dialogId];
-				assert.equal(chatList.length, 1);
-				assert.equal(chatList2.length, 1);
-			});
-		});
 	});
 
 	describe('getters', () => {

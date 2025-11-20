@@ -20,6 +20,7 @@ export function mapPushToModel({ AFTER: after, TASK_ID: id }: PushData): TaskMod
 		statusChangedTs: prepareValue(after.STATUS, Date.now()),
 		accomplicesIds: prepareValue(after.ACCOMPLICES, mapUserIds(after.ACCOMPLICES)),
 		auditorsIds: prepareValue(after.AUDITORS, mapUserIds(after.AUDITORS)),
+		parentId: prepareValue(after.PARENT_ID, Number(after.PARENT_ID) || 0),
 		tags: prepareValue(after.TAGS, after.TAGS ? after.TAGS.split(',') : []),
 	};
 

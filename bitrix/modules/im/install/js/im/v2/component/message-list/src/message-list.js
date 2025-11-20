@@ -33,6 +33,13 @@ export { AuthorGroup } from './components/block/author-group';
 export { MessageComponents } from './utils/message-components';
 export { CollectionManager } from './classes/collection-manager/collection-manager';
 
+type ContextMenuEvent = BaseEvent<{
+	message: ImModelMessage,
+	dialogId: string,
+	event: PointerEvent,
+	bindElement?: HTMLElement
+}>
+
 // @vue/component
 export const MessageList = {
 	name: 'MessageList',
@@ -190,9 +197,9 @@ export const MessageList = {
 			const avatarMenu = new AvatarMenu();
 			avatarMenu.openMenu({ user, dialog: this.dialog }, event.currentTarget);
 		},
-		onMessageContextMenuClick(eventData: BaseEvent<{ message: ImModelMessage, dialogId: string, event: PointerEvent }>)
+		onMessageContextMenuClick(eventData: ContextMenuEvent)
 		{
-			const { message, event, dialogId } = eventData.getData();
+			const { message, event, dialogId, bindElement } = eventData.getData();
 			if (dialogId !== this.dialogId)
 			{
 				return;
@@ -221,21 +228,18 @@ export const MessageList = {
 			const context = { dialogId: this.dialogId, ...message };
 
 			const messageMenuManager = MessageMenuManager.getInstance();
-			messageMenuManager.openMenu(context, event.currentTarget);
-		},
-		async onMessageMouseUp(message: ImModelMessage, event: MouseEvent)
-		{
-			await Utils.browser.waitForSelectionToUpdate();
-			const selection = window.getSelection().toString().trim();
-			if (selection.length === 0)
+
+			let target = {
+				left: event.clientX,
+				top: event.clientY,
+			};
+
+			if (bindElement)
 			{
-				return;
+				target = bindElement;
 			}
 
-			EventEmitter.emit(EventType.dialog.showQuoteButton, {
-				message,
-				event,
-			});
+			messageMenuManager.openMenu(context, target);
 		},
 		initObserverManager()
 		{
@@ -285,7 +289,6 @@ export const MessageList = {
 									:key="message.id"
 									:data-viewed="message.viewed"
 									:containerHeight="containerHeight"
-									@mouseup="onMessageMouseUp(message, $event)"
 								>
 								</component>
 							</template>

@@ -85,8 +85,35 @@ jn.define('im/messenger/provider/rest/recent', (require, exports, module) => {
 			return BX.rest.callMethod(RestMethod.imV2RecentCollabTail, methodParams);
 		}
 
+		getExternalChatList(options = {})
+		{
+			const methodParams = {};
+
+			if (Type.isStringFilled(options.type))
+			{
+				methodParams.type = options.type;
+			}
+
+			if (Type.isNumber(options.limit))
+			{
+				methodParams.limit = options.limit;
+			}
+
+			if (Type.isPlainObject(options.filter))
+			{
+				methodParams.filter = {};
+
+				if (Type.isNumber(options.filter.lastMessageDate) || Type.isStringFilled(options.filter.lastMessageDate))
+				{
+					methodParams.filter.lastMessageDate = options.filter.lastMessageDate;
+				}
+			}
+
+			return BX.rest.callMethod(RestMethod.imV2RecentExternalChatTail, methodParams);
+		}
+
 		/**
-		 * @param {DialogId} dialogId
+		 * @param {number|string} dialogId
 		 */
 		pinChat(dialogId)
 		{
@@ -112,7 +139,7 @@ jn.define('im/messenger/provider/rest/recent', (require, exports, module) => {
 		}
 
 		/**
-		 * @param {DialogId} dialogId
+		 * @param {DialogId|string} dialogId
 		 */
 		unpinChat(dialogId)
 		{

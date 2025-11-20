@@ -102,7 +102,7 @@
 
 .landing-widget-bp-content-item-button a,
 .landing-widget-bp-content-item-button div {
-	color: var(--widget-color-bg-button-text, var(--widget-color-bg-button-text-main-default));
+	color: var(--widget-color-bg-button-text, var(--widget-color-bg-button-text-main-default)) !important;
 }
 
 .landing-widget-bp-content-item-button div {
@@ -245,7 +245,7 @@
 .landing-widget-view-sidebar .landing-widget-bp-content-item-button a:hover,
 .landing-widget-view-sidebar .landing-widget-bp-content-item-button div,
 .landing-widget-view-sidebar .landing-widget-bp-content-item-button div:hover {
-	color: var(--widget-color-bg-button-text, var(--widget-color-bg-button-text-sidebar-default));
+	color: var(--widget-color-bg-button-text, var(--widget-color-bg-button-text-sidebar-default)) !important;
 }
 
 .landing-widget-view-sidebar .landing-widget-bp-content-item-line {

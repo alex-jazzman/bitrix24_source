@@ -1,4 +1,4 @@
-import { TextXs } from 'ui.system.typography.vue';
+import { TextSm } from 'ui.system.typography.vue';
 import { SwitcherSize, type SwitcherOptions } from 'ui.switcher';
 import { Switcher } from 'ui.vue3.components.switcher';
 import { hint, type HintParams } from 'ui.vue3.directives.hint';
@@ -7,7 +7,7 @@ import { tooltip } from 'tasks.v2.component.elements.hint';
 
 export const DatePlanSwitcher = {
 	components: {
-		TextXs,
+		TextSm,
 		Switcher,
 	},
 	directives: { hint },
@@ -47,7 +47,7 @@ export const DatePlanSwitcher = {
 	template: `
 		<div class="tasks-field-date-plan-switcher" @click="$emit('update:modelValue', !modelValue)">
 			<Switcher :isChecked="modelValue" :options="switcherOptions"/>
-			<TextXs>{{ text }}</TextXs>
+			<TextSm>{{ text }}</TextSm>
 			<div v-if="hint" v-hint="tooltip" class="tasks-hint-badge" ref="hint" @click.capture.stop>?</div>
 		</div>
 	`,

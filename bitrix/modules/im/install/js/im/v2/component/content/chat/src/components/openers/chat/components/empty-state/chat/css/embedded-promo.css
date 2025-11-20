@@ -33,26 +33,6 @@
 	color: var(--im-embedded-promo-start__font-color_title);
 }
 
-.bx-im-embedded-promo-start__title-highlight {
-	position: relative;
-	margin: 0 1px;
-	padding-right: 15px;
-	color: var(--im-embedded-promo-start__font-color_title-highlight);
-}
-
-.bx-im-embedded-promo-start__title-highlight::after {
-	box-sizing: border-box;
-	content: '';
-	position: absolute;
-	top: 4px;
-	width: 15px;
-	height: 15px;
-	padding: 0 1px;
-	background-image: url('./images/clock.svg');
-	background-repeat: no-repeat;
-	background-position: center;
-}
-
 .bx-im-embedded-promo-start__tools {
 	display: flex;
 	flex-wrap: wrap;

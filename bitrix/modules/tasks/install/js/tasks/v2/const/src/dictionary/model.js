@@ -1,5 +1,6 @@
 export const Model = Object.freeze({
 	CheckList: 'checklist',
+	CrmItems: 'crm-items',
 	Epics: 'epics',
 	Flows: 'flows',
 	Groups: 'groups',

@@ -12,6 +12,7 @@ jn.define('collab/invite', (require, exports, module) => {
 	const {
 		showSuccessInvitationToast,
 		openGuestsInviteRestrictionsBox,
+		openCurrentCollabGuestsInviteRestrictionsBox,
 	} = require('collab/invite/src/utils');
 	const { Haptics } = require('haptics');
 	const { Alert, ButtonType } = require('alert');
@@ -54,10 +55,24 @@ jn.define('collab/invite', (require, exports, module) => {
 		};
 
 		#onTabSelected = async (item) => {
-			const { canInviteCollabers } = this.settings;
-			if (!canInviteCollabers && item.id === TabType.GUESTS && Feature.isSelectorWidgetOnViewHiddenEventBugFixed())
+			const { canInviteCollabersInPortalSettings, allowGuestsInvitation } = this.settings;
+			if (!canInviteCollabersInPortalSettings
+				&& item.id === TabType.GUESTS
+				&& Feature.isSelectorWidgetOnViewHiddenEventBugFixed())
 			{
-				this.inviteBoxInstance = await openGuestsInviteRestrictionsBox({
+				await openGuestsInviteRestrictionsBox({
+					parentWidget: this.tabsWidget,
+					onClose: () => {
+						this.tabsWidget.setActiveItem(TabType.EMPLOYEES);
+					},
+				});
+
+				return;
+			}
+
+			if (!allowGuestsInvitation && item.id === TabType.GUESTS && Feature.isSelectorWidgetOnViewHiddenEventBugFixed())
+			{
+				await openCurrentCollabGuestsInviteRestrictionsBox({
 					parentWidget: this.tabsWidget,
 					onClose: () => {
 						this.tabsWidget.setActiveItem(TabType.EMPLOYEES);
@@ -108,7 +123,8 @@ jn.define('collab/invite', (require, exports, module) => {
 				pending: !this.settings,
 				isBitrix24Included: this.settings?.isBitrix24Included ?? false,
 				analytics: this.analytics,
-				canInviteCollabers: this.settings?.canInviteCollabers ?? false,
+				canInviteCollabersInPortalSettings: this.settings?.canInviteCollabersInPortalSettings ?? false,
+				allowGuestsInvitation: this.settings?.allowGuestsInvitation ?? false,
 				languages: this.settings?.languages ?? [],
 			});
 
@@ -181,7 +197,7 @@ jn.define('collab/invite', (require, exports, module) => {
 		};
 
 		#getTabsData = () => {
-			const { canInviteCollabers } = this.settings;
+			const { canInviteCollabersInPortalSettings, allowGuestsInvitation } = this.settings;
 
 			const guestsTab = {
 				id: TabType.GUESTS,
@@ -205,7 +221,9 @@ jn.define('collab/invite', (require, exports, module) => {
 				},
 			};
 
-			const items = !canInviteCollabers && Feature.isSelectorWidgetOnViewHiddenEventBugFixed()
+			const items = (
+				!canInviteCollabersInPortalSettings || !allowGuestsInvitation
+			) && Feature.isSelectorWidgetOnViewHiddenEventBugFixed()
 				? [employeesTab, guestsTab]
 				: [guestsTab, employeesTab];
 			items[0].active = true;

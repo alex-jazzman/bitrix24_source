@@ -31,6 +31,7 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 		// CounterRepository,
 		// SidebarFileRepository, TODO: The backend is not ready yet
 		VoteRepository,
+		TranscriptRepository,
 	} = require('im/messenger/db/repository');
 	const { Updater } = require('im/messenger/db/update');
 	const {
@@ -85,6 +86,7 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 				readMessageQueue: null,
 				// sidebarFile: null, TODO: The backend is not ready yet
 				vote: null,
+				transcript: null,
 			};
 
 			this.store = null;
@@ -137,7 +139,8 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 			{
 				Feature.disableLocalStorageReadOnlyMode();
 			}
-			window.imMessengerUpdater = new Updater();
+			window.messengerDebug ??= {};
+			window.messengerDebug.updater = new Updater();
 
 			this.initRepository();
 		}
@@ -185,6 +188,7 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 				// this.repository.counter.counterTable.drop();
 				// this.repository.sidebarFile.sidebarFileTable.drop(); TODO: The backend is not ready yet
 				this.repository.vote.voteTable.drop();
+				this.repository.transcript.transcriptTable.drop();
 
 				logger.warn('CoreApplication drop database complete');
 			};
@@ -210,6 +214,7 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 				// sidebarFile: new SidebarFileRepository(),
 				// counter: new CounterRepository(),
 				vote: new VoteRepository(),
+				transcript: new TranscriptRepository(),
 			};
 		}
 
@@ -243,6 +248,7 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 			this.repository.copilot.copilotTable.createDatabaseTableInstance();
 			this.repository.draft.draftTable.createDatabaseTableInstance();
 			this.repository.comment.commentTable.createDatabaseTableInstance();
+			this.repository.transcript.transcriptTable.createDatabaseTableInstance();
 		}
 
 		getStoreModules()
@@ -362,6 +368,11 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 			return this.store.getters['applicationModel/getStatus']();
 		}
 
+		/**
+		 * @param {AppStatusType} name
+		 * @param {boolean} value
+		 * @return {Promise<void>}
+		 */
 		async setAppStatus(name, value)
 		{
 			return this.store.dispatch('applicationModel/setStatus', { name, value });

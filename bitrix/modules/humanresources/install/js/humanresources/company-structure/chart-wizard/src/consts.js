@@ -10,7 +10,7 @@ export const StepIds: Record<StepIdType, StepIdType> = Object.freeze({
 	department: 'department',
 	employees: 'employees',
 	bindChat: 'bindChat',
-	teamRights: 'teamRights',
+	settings: 'settings',
 });
 
 export const AuthorityTypes: Record<string> = {

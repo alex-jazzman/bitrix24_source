@@ -23,6 +23,7 @@ declare type ImFeatures = {
 	intranetInviteAvailable: boolean,
 	messagesAutoDeleteEnabled: boolean,
 	voteCreationAvailable: boolean,
+	aiFileTranscriptionAvailable: boolean,
 }
 
 declare type UserInfo = {

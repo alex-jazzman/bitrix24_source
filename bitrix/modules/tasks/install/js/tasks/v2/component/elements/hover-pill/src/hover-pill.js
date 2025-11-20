@@ -17,6 +17,10 @@ export const HoverPill = {
 			type: Boolean,
 			default: false,
 		},
+		transparentHover: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	emits: ['clear'],
 	setup(): Object
@@ -26,7 +30,11 @@ export const HoverPill = {
 		};
 	},
 	template: `
-		<div class="b24-hover-pill" :class="{ '--readonly': readonly }" tabindex="0">
+		<div
+			class="b24-hover-pill"
+			:class="{ '--readonly': readonly, '--transparent': transparentHover }"
+			tabindex="0"
+		>
 			<div class="b24-hover-pill-content">
 				<slot/>
 			</div>

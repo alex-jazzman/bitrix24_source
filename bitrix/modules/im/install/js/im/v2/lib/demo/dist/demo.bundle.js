@@ -101,6 +101,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _files)[_files].push(newFile);
 	    return newFile;
 	  }
+	  addFileTranscription(transcription) {
+	    im_v2_application_core.Core.getStore().dispatch('files/setTranscription', transcription);
+	  }
 	  save() {
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _messages)[_messages].length > 0) {
 	      const [newestMessage] = babelHelpers.classPrivateFieldLooseBase(this, _messages)[_messages].slice(-1);

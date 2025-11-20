@@ -9,14 +9,14 @@ export default class Board
 	setupSharingButton: Button = null;
 	data: BoardData = null;
 	sharingControlType: SharingControlType;
-	isUnifiedLinkMode: boolean = false;
+	unifiedLinkAccessOnly: boolean = false;
 
 	constructor(options)
 	{
 		this.setupSharingButton = ButtonManager.createByUniqId(options.panelButtonUniqIds.setupSharing);
 		this.data = options.boardData;
 		this.sharingControlType = options.sharingControlType;
-		this.isUnifiedLinkMode = options.isUnifiedLinkMode;
+		this.unifiedLinkAccessOnly = options.unifiedLinkAccessOnly;
 
 		this.bindEvents();
 	}
@@ -50,7 +50,7 @@ export default class Board
 			return;
 		}
 
-		if (this.isUnifiedLinkMode)
+		if (this.unifiedLinkAccessOnly)
 		{
 			ExternalLinkForUnifiedLink.showPopup(this.data.uniqueCode);
 		}

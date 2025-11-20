@@ -4,6 +4,8 @@
 jn.define('settings-v2/controller/native', (require, exports, module) => {
 	const { BaseSettingController } = require('settings-v2/controller/base');
 	const { appConfig } = require('native/config');
+	const { Alert, ButtonType } = require('alert');
+	const { Loc } = require('loc');
 
 	class NativeSettingController extends BaseSettingController
 	{
@@ -35,11 +37,33 @@ jn.define('settings-v2/controller/native', (require, exports, module) => {
 			try
 			{
 				const currentSetting = await this.getCurrentSetting();
-				await currentSetting.set(value);
-
-				if (this.onChange)
+				if (currentSetting.reloadOnChanged)
 				{
-					this.onChange(value);
+					Alert.confirm(
+						Loc.getMessage('SETTINGS_V2_CONTROLLER_RELOADED_SETTING_CHANGE_TITLE'),
+						Loc.getMessage('SETTINGS_V2_CONTROLLER_RELOADED_SETTING_CHANGE_DESCRIPTION'),
+						[
+							{
+								type: ButtonType.DEFAULT,
+								onPress: async () => {
+									if (this.onChange)
+									{
+										this.onChange(value);
+									}
+									dialogs.showLoadingIndicator();
+									await currentSetting.set(value);
+								},
+							},
+						],
+					);
+				}
+				else
+				{
+					await currentSetting.set(value);
+					if (this.onChange)
+					{
+						this.onChange(value);
+					}
 				}
 			}
 			catch (e)

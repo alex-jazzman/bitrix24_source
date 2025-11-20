@@ -171,6 +171,11 @@ jn.define('im/messenger/provider/pull/lib/new-message-manager/base/message-manag
 			return this.getChatType() === DialogType.comment;
 		}
 
+		isTaskComments()
+		{
+			return this.getChatType() === DialogType.tasksTask;
+		}
+
 		isChannelChat()
 		{
 			return [DialogType.channel, DialogType.openChannel, DialogType.generalChannel].includes(this.getChatType());

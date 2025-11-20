@@ -35,7 +35,7 @@ export const chartAPI = {
 	getCurrentDepartments: (): Promise<number[]> => {
 		return getData('humanresources.api.Structure.Node.current');
 	},
-	getDictionary: (): Promise<string> => {
+	getDictionary: (): Promise<Object> => {
 		return getData('humanresources.api.Structure.dictionary');
 	},
 	getUserId: (): Promise<number> => {

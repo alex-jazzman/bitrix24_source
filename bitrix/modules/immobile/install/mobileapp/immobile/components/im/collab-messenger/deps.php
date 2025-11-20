@@ -24,7 +24,6 @@ return [
 		'im:messenger/controller/dialog-creator',
 		'im:messenger/view/recent',
 		'im:messenger/lib/logger',
-		'im:messenger/lib/counters/tab-counters',
 		'im:messenger/model',
 		'im:messenger/view/dialog',
 		'im:messenger/provider/pull/chat',

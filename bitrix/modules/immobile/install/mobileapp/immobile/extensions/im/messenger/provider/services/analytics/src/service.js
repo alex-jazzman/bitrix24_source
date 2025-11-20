@@ -7,6 +7,7 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 	const { Analytics } = require('im/messenger/const');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
+	const { AnalyticsHelper } = require('im/messenger/provider/services/analytics/helper');
 
 	const { MessageDelete } = require('im/messenger/provider/services/analytics/message-delete');
 	const { ChatDelete } = require('im/messenger/provider/services/analytics/chat-delete');
@@ -26,8 +27,7 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 	const { ChatOpen } = require('im/messenger/provider/services/analytics/chat-open');
 	const { ChatPin } = require('im/messenger/provider/services/analytics/chat-pin');
 	const { NavigationTab } = require('im/messenger/provider/services/analytics/navigation-tab');
-
-	const { AnalyticsHelper } = require('im/messenger/provider/services/analytics/helper');
+	const { AudioAnalytics } = require('im/messenger/provider/services/analytics/src/audio');
 
 	/** @type {AnalyticsService} */
 	let instance = null;
@@ -37,6 +37,8 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 	 */
 	class AnalyticsService
 	{
+		/** @type {AudioAnalytics} */
+		#audio;
 		/** @type {MessageDelete} */
 		#messageDelete;
 		/** @type {ChatDelete} */
@@ -74,7 +76,7 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 		/** @type {ChatPin} */
 		#chatPin;
 		/** @type {NavigationTab} */
-		#navigationTab;
+		#navigation;
 
 		static getInstance()
 		{
@@ -227,12 +229,44 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 			return this.#chatPin;
 		}
 
-		/** @protected */
-		get navigationTab()
+		get audio()
 		{
-			this.#navigationTab = this.#navigationTab ?? new NavigationTab();
+			this.#audio = this.#audio ?? new AudioAnalytics();
 
-			return this.#navigationTab;
+			return this.#audio;
+		}
+
+		/**
+		 * @param {DialogId} dialogId
+		 */
+		sendClickToPlayAudioInChat({ dialogId })
+		{
+			return this.audio.sendClickToPlayAudioInChat({ dialogId });
+		}
+
+		/**
+		 * @param {DialogId} dialogId
+		 */
+		sendClickToPauseAudioInChat({ dialogId })
+		{
+			return this.audio.sendClickToPauseAudioInChat({ dialogId });
+		}
+
+		/**
+		 * @param {DialogId} dialogId
+		 * @param {AudioRate} speed
+		 */
+		sendClickToChangeAudioSpeedInChat({ dialogId, speed })
+		{
+			return this.audio.sendClickToChangeAudioSpeedInChat({ dialogId, speed });
+		}
+
+		/** @protected */
+		get navigation()
+		{
+			this.#navigation = this.#navigation ?? new NavigationTab();
+
+			return this.#navigation;
 		}
 
 		sendMessageDeleteActionClicked({ messageId, dialogId })
@@ -562,7 +596,7 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 		 */
 		sendChangeNavigationTab(currentTab, analyticsOptions)
 		{
-			this.navigationTab.sendChangeTab(currentTab, analyticsOptions);
+			this.navigation.sendChangeTab(currentTab, analyticsOptions);
 		}
 	}
 

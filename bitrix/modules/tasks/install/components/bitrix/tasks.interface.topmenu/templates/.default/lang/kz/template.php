@@ -13,7 +13,6 @@ $MESS["TASKS_PANEL_TAB_RECYCLEBIN"] = "Себет";
 $MESS["TASKS_PANEL_TAB_REPORTBOARD"] = "Есептер тақтасы";
 $MESS["TASKS_PANEL_TAB_REPORTS"] = "Есептер";
 $MESS["TASKS_PANEL_TAB_SCRUM"] = "Скрам";
-$MESS["TASKS_PANEL_TAB_SPACE"] = "Кеңістіктер";
 $MESS["TASKS_PANEL_TAB_TASKS"] = "Міндеттер";
 $MESS["TASKS_PANEL_TAB_TEMPLATES"] = "Қалыптар";
 $MESS["TASKS_PANEL_TEXT_EFFECTIVE"] = "<strong>Тиімділік</strong> – ағымдағы міндеттердің санын есепке алуға, сондай-ақ олардың орындалу мерзімдерін бақылауға арналған құрал.";

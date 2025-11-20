@@ -6,6 +6,7 @@ import 'ui.icon-set.outline';
 import { GroupType, Model } from 'tasks.v2.const';
 import { Hint } from 'tasks.v2.component.elements.hint';
 import { HoverPill } from 'tasks.v2.component.elements.hover-pill';
+import { FieldAdd } from 'tasks.v2.component.elements.field-add';
 import { heightTransition } from 'tasks.v2.lib.height-transition';
 import { openGroup } from 'tasks.v2.lib.open-group';
 import { taskService } from 'tasks.v2.provider.service.task-service';
@@ -28,6 +29,7 @@ export const Group = {
 		Scrum,
 		Hint,
 		HoverPill,
+		FieldAdd,
 		GroupPopup,
 	},
 	props: {
@@ -100,7 +102,7 @@ export const Group = {
 		},
 		groupImage(): string
 		{
-			return this.group?.image;
+			return encodeURI(this.group?.image);
 		},
 		hintText(): string
 		{
@@ -200,13 +202,10 @@ export const Group = {
 					@clear="clearField"
 				>
 					<img v-if="groupImage" class="tasks-field-group-image" :src="groupImage" :alt="groupName"/>
-					<BIcon v-else class="tasks-field-group-add-icon" :name="Outline.FOLDER"/>
+					<BIcon v-else class="tasks-field-group-icon" :name="Outline.FOLDER"/>
 					<div class="tasks-field-group-title">{{ groupName }}</div>
 				</HoverPill>
-				<HoverPill v-else>
-					<BIcon class="tasks-field-group-add-icon" :name="Outline.FOLDER_PLUS"/>
-					<div class="tasks-field-group-add-text">{{ loc('TASKS_V2_GROUP_ADD') }}</div>
-				</HoverPill>
+				<FieldAdd v-else :icon="Outline.FOLDER_PLUS"/>
 			</div>
 			<Stage v-if="isEdit && group && !task.flowId" :taskId="taskId"/>
 			<Scrum v-if="isScrum && !task.flowId" :taskId="taskId"/>

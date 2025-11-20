@@ -140,6 +140,15 @@ class call extends \CModule
 			'onChatUserLeave'
 		);
 
+		/** @see \Bitrix\Call\EventHandler::onChatUserAdd */
+		$eventManager->registerEventHandler(
+			'im',
+			'OnChatUserAdd',
+			'call',
+			'\Bitrix\Call\EventHandler',
+			'onChatUserAdd'
+		);
+
 		/** @see \Bitrix\Call\Integration\AI\CallAIService::finishTasks */
 		\CAgent::AddAgent(
 			'Bitrix\Call\Integration\AI\CallAIService::finishTasks();',
@@ -171,6 +180,17 @@ class call extends \CModule
 			'',
 			'Y',
 			\ConvertTimeStamp(time()+\CTimeZone::GetOffset() + rand(100, 500), 'FULL')
+		);
+
+		/** @see \Bitrix\Call\Integration\Im\CallFollowupBot::delayRegister */
+		\CAgent::AddAgent(
+			'Bitrix\Call\Integration\Im\CallFollowupBot::delayRegister();',
+			'call',
+			'N',
+			100,
+			'',
+			'Y',
+			\ConvertTimeStamp(time() + \CTimeZone::GetOffset() + \rand(600, 900), 'FULL')
 		);
 
 		return true;
@@ -223,9 +243,14 @@ class call extends \CModule
 	{
 		global $APPLICATION, $DB;
 
-		if (\Bitrix\Main\Loader::includeModule('call') && \Bitrix\Call\Settings::isNewCallsEnabled())
+		if (\Bitrix\Main\Loader::includeModule('call'))
 		{
-			\Bitrix\Call\JwtCall::unregisterPortal();
+			if (\Bitrix\Call\Settings::isNewCallsEnabled())
+			{
+				\Bitrix\Call\JwtCall::unregisterPortal();
+			}
+
+			\Bitrix\Call\Integration\Im\CallFollowupBot::unRegister();
 		}
 
 		$connection = \Bitrix\Main\Application::getConnection();

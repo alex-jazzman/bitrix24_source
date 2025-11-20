@@ -8,6 +8,7 @@ jn.define('im/messenger/cache/share-dialog', (require, exports, module) => {
 	const { utils } = require('native/im');
 
 	const { DateHelper } = require('im/messenger/lib/helper');
+	const { Feature } = require('im/messenger/lib/feature');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { ComponentCode } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
@@ -34,10 +35,10 @@ jn.define('im/messenger/cache/share-dialog', (require, exports, module) => {
 		{
 			try
 			{
-				const recentFirstPage = this.store.getters['recentModel/getRecentPage'](1, 50);
+				const recentFirstPage = this.getRecentFirstPage();
 
 				const componentCode = MessengerParams.getComponentCode();
-				if (componentCode === ComponentCode.imCopilotMessenger)
+				if (componentCode === ComponentCode.imCopilotMessenger || recentFirstPage.length === 0)
 				{
 					return;
 				}
@@ -70,6 +71,19 @@ jn.define('im/messenger/cache/share-dialog', (require, exports, module) => {
 			{
 				logger.error(`${this.className}.saveRecentItemList error`, error);
 			}
+		}
+
+		/**
+		 * @return {Array<RecentModelState>}
+		 */
+		getRecentFirstPage(count = 50)
+		{
+			if (Feature.isMessengerV2Enabled)
+			{
+				return this.store.getters['recentModel/getChatFirstPage']();
+			}
+
+			return this.store.getters['recentModel/getRecentPage'](1, count);
 		}
 	}
 

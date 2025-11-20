@@ -147,6 +147,11 @@ jn.define('settings-v2/ui/page', (require, exports, module) => {
 		{
 			if (item.type === SettingItemType.SECTION)
 			{
+				if (!Type.isArrayFilled(item.items))
+				{
+					return null;
+				}
+
 				return Area(
 					{
 						testId: this.getTestId(item.id),
@@ -177,7 +182,7 @@ jn.define('settings-v2/ui/page', (require, exports, module) => {
 				style: {
 					paddingVertical: Indent.XL.toNumber(),
 				},
-				iconColor: Color.accentMainPrimary,
+				iconColor: item.iconColor ?? Color.accentMainPrimary,
 			};
 		}
 	}

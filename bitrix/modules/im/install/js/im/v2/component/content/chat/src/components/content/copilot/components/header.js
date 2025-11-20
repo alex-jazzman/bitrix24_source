@@ -6,6 +6,7 @@ import { EditableChatTitle } from 'im.v2.component.elements.chat-title';
 import { AvatarSize, ChatAvatar } from 'im.v2.component.elements.avatar';
 import { ChatHeader } from 'im.v2.component.content.elements';
 import { EventType, SidebarDetailBlock } from 'im.v2.const';
+import { CopilotManager } from 'im.v2.lib.copilot';
 
 import { AddToChatButton } from './add-to-chat/add-to-chat-button';
 
@@ -43,7 +44,7 @@ export const CopilotChatHeader = {
 		},
 		isGroupCopilotChat(): boolean
 		{
-			return this.dialog.userCounter > 2;
+			return (new CopilotManager()).isGroupCopilotChat(this.dialogId);
 		},
 		copilotRole(): string
 		{

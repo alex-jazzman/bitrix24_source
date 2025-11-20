@@ -163,7 +163,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/controller', (require
 				return;
 			}
 
-			if (!ChatPermission.сanOpenMessageMenu(this.dialogId))
+			if (!ChatPermission.canOpenMessageMenu(this.dialogId))
 			{
 				Haptics.notifyFailure();
 

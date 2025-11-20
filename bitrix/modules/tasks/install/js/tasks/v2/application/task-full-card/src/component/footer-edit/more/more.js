@@ -16,7 +16,7 @@ import './more.css';
 
 // @vue/component
 export const More = {
-	name: 'TaskFullCardMore',
+	name: 'TaskFullCardMoreActionsStatus',
 	components: {
 		BIcon,
 		BMenu,
@@ -275,7 +275,7 @@ export const More = {
 				icon: Outline.TRASHCAN,
 				onClick: (): void => {
 					void taskService.delete(this.taskId);
-					Event.EventEmitter.emit(EventName.CloseFullCard);
+					Event.EventEmitter.emit(EventName.CloseFullCard, { taskId: this.taskId });
 				},
 			};
 		},

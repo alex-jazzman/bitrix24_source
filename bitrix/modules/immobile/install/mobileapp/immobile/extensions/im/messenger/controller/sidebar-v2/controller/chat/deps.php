@@ -23,6 +23,7 @@ return [
 		'im:messenger/controller/sidebar-v2/services/user-department-service',
 		'im:messenger/controller/sidebar-v2/user-actions/participants',
 		'im:messenger/controller/sidebar-v2/ui/primary-button/factory',
+		'im:messenger/controller/sidebar-v2/user-actions/chat',
 	],
 	'bundle' => [
 		'./src/view',

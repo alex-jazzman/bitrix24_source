@@ -30,10 +30,11 @@ jn.define('im/messenger/provider/services/message/load', (require, exports, modu
 			return 50;
 		}
 
-		constructor({ chatId })
+		constructor({ chatId, dialogId })
 		{
 			this.store = serviceLocator.get('core').getStore();
 			this.chatId = chatId;
+			this.dialogId = dialogId;
 			/**
 			 * @type {MessageRepository}
 			 */
@@ -261,7 +262,12 @@ jn.define('im/messenger/provider/services/message/load', (require, exports, modu
 				;
 				this.preparedHistoryMessages = this.addUploadingMessagesToMessageList(this.preparedHistoryMessages);
 				this.reactions = {
-					reactions: result.reactions,
+					reactions: result.reactions.map((reaction) => {
+						// eslint-disable-next-line no-param-reassign
+						reaction.dialogId = this.dialogId;
+
+						return reaction;
+					}),
 					usersShort: result.usersShort,
 				};
 
@@ -336,7 +342,12 @@ jn.define('im/messenger/provider/services/message/load', (require, exports, modu
 				this.preparedUnreadMessages = this.addUploadingMessagesToMessageList(this.preparedUnreadMessages);
 
 				this.reactions = {
-					reactions: result.reactions,
+					reactions: result.reactions.map((reaction) => {
+						// eslint-disable-next-line no-param-reassign
+						reaction.dialogId = this.dialogId;
+
+						return reaction;
+					}),
 					usersShort: result.usersShort,
 				};
 
@@ -574,7 +585,7 @@ jn.define('im/messenger/provider/services/message/load', (require, exports, modu
 
 			if (Type.isArrayFilled(result.reactionList))
 			{
-				await this.store.dispatch('messagesModel/reactionsModel/set', {
+				await this.store.dispatch('messagesModel/reactionsModel/setFromLocalDatabase', {
 					reactions: result.reactionList,
 				});
 			}

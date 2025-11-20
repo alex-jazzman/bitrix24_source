@@ -13,14 +13,18 @@ export type ChatInputActions = InputActionUserRecord[];
 type InputActionUserRecord = {
 	type: InputActionType,
 	userId: number,
-	userName: string
+	userName: string,
+	statusMessageCode: string | null,
+	duration: number | null,
 };
 
 type InputActionPayload = {
 	type: InputActionType,
 	dialogId: string,
 	userId: number,
-	userName?: string
+	userName?: string,
+	statusMessageCode: string | null,
+	duration: number | null,
 };
 
 /* eslint-disable no-param-reassign */
@@ -58,7 +62,7 @@ export class InputActionsModel extends BuilderModel
 			},
 			/** @function chats/inputActions/isActionActive */
 			isActionActive: (state: InputActionState) => (payload: InputActionPayload): boolean => {
-				const { dialogId, type, userId } = payload;
+				const { dialogId, userId } = payload;
 				if (!state.collection[dialogId])
 				{
 					return false;
@@ -66,7 +70,7 @@ export class InputActionsModel extends BuilderModel
 
 				const chatActionList = state.collection[dialogId];
 
-				return this.isAlreadyActive(chatActionList, type, userId);
+				return this.isAlreadyActive(chatActionList, userId);
 			},
 		};
 	}
@@ -76,14 +80,14 @@ export class InputActionsModel extends BuilderModel
 		return {
 			/** @function chats/inputActions/start */
 			start: (store, payload: InputActionPayload) => {
-				const { dialogId, type, userId } = payload;
+				const { dialogId, userId } = payload;
 				if (!store.state.collection[dialogId])
 				{
 					store.commit('initCollection', dialogId);
 				}
 
 				const chatActionList = store.state.collection[dialogId];
-				const isAlreadyActive = this.isAlreadyActive(chatActionList, type, userId);
+				const isAlreadyActive = this.isAlreadyActive(chatActionList, userId);
 				if (isAlreadyActive)
 				{
 					return;
@@ -93,31 +97,20 @@ export class InputActionsModel extends BuilderModel
 			},
 			/** @function chats/inputActions/stop */
 			stop: (store, payload: InputActionPayload) => {
-				const { dialogId, type, userId } = payload;
+				const { dialogId, userId } = payload;
 				const chatActionList = store.state.collection[dialogId];
 				if (!chatActionList)
 				{
 					return;
 				}
 
-				const isAlreadyActive = this.isAlreadyActive(chatActionList, type, userId);
+				const isAlreadyActive = this.isAlreadyActive(chatActionList, userId);
 				if (!isAlreadyActive)
 				{
 					return;
 				}
 
 				store.commit('stop', payload);
-			},
-			/** @function chats/inputActions/stopUserActionsInChat */
-			stopUserActionsInChat: (store, payload: { userId: number, dialogId: string }) => {
-				const { dialogId } = payload;
-				const chatActionList = store.state.collection[dialogId];
-				if (!chatActionList)
-				{
-					return;
-				}
-
-				store.commit('stopUserActionsInChat', payload);
 			},
 		};
 	}
@@ -126,24 +119,18 @@ export class InputActionsModel extends BuilderModel
 	{
 		return {
 			start: (state: InputActionState, payload: InputActionPayload) => {
-				const { dialogId, type, userId, userName } = payload;
+				const { dialogId, type, userId, userName, duration, statusMessageCode } = payload;
 
 				const chatActionList = state.collection[dialogId];
 				chatActionList.push({
 					type,
 					userId,
 					userName,
+					duration,
+					statusMessageCode,
 				});
 			},
 			stop: (state: InputActionState, payload: InputActionPayload) => {
-				const { dialogId, type, userId } = payload;
-
-				const chatActionList = state.collection[dialogId];
-				state.collection[dialogId] = chatActionList.filter((userRecord) => {
-					return userRecord.userId !== userId || userRecord.type !== type;
-				});
-			},
-			stopUserActionsInChat: (state: InputActionState, payload: { userId: number, dialogId: string }) => {
 				const { dialogId, userId } = payload;
 
 				const chatActionList = state.collection[dialogId];
@@ -157,10 +144,8 @@ export class InputActionsModel extends BuilderModel
 		};
 	}
 
-	isAlreadyActive(list: InputActionUserRecord[], type: InputActionType, userId: number): boolean
+	isAlreadyActive(list: InputActionUserRecord[], userId: number): boolean
 	{
-		return list.some((userRecord) => {
-			return userRecord.userId === userId && userRecord.type === type;
-		});
+		return list.some((userRecord) => userRecord.userId === userId);
 	}
 }

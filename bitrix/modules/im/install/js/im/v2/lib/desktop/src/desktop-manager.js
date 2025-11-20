@@ -181,6 +181,27 @@ export class DesktopManager
 		return Promise.resolve();
 	}
 
+	redirectToChannel(dialogId: string = ''): Promise
+	{
+		Logger.warn('Desktop: redirectToChannel', dialogId);
+		this.openBxLink(`bx://${DesktopBxLink.channel}/dialogId/${dialogId}`);
+
+		return Promise.resolve();
+	}
+
+	redirectToTaskComments(dialogId: string = '', messageId: number = 0): Promise
+	{
+		Logger.warn('Desktop: redirectToTaskComments', dialogId);
+		let link = `bx://${DesktopBxLink.taskComments}/dialogId/${dialogId}`;
+		if (messageId > 0)
+		{
+			link += `/messageId/${messageId}`;
+		}
+		this.openBxLink(link);
+
+		return Promise.resolve();
+	}
+
 	redirectToNotifications(): Promise
 	{
 		Logger.warn('Desktop: redirectToNotifications');

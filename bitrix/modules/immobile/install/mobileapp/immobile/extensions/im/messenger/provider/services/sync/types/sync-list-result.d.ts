@@ -17,8 +17,11 @@ declare type SyncListResult = {
 	chats: Array<SyncRawChat>,
 	copilot: null | CopilotSyncData,
 	dialogIds: Record<number, string> | [],
-	hasMore: boolean,
-	lastServerDate: string | null, // null only when the log is empty on server
+	navigationData: {
+		lastServerDate: string | null, // null only when the log is empty on server
+		hasMore: boolean,
+		lastId: number | null,
+	}
 	files: Array<SyncRawFile>,
 	reactions: Array<SyncRawReaction>,
 	messages: Array<SyncRawMessage>,
@@ -50,6 +53,7 @@ export type CopilotSyncData = {
 	chats: Array<ChatsCopilotDataItem> | null,
 	messages: Array<MessageCopilotDataItem> | null,
 	roles: Record<string, CopilotRoleData> | null,
+	engines: object,
 }
 
 export type SyncRawMessage = {
@@ -173,6 +177,10 @@ export type SyncRawReaction = {
 	reactionUsers: { [reactionType: string]: Array<number> },
 };
 
+export type SyncReaction = SyncRawReaction & {
+	dialogId: string,
+};
+
 export type SyncRawUser = {
 	absent: false | string,
 	active: boolean,
@@ -229,6 +237,7 @@ export type SyncRawRecentItem = {
 export type SyncLoadServiceLoadPageResult = {
 	hasMore: boolean,
 	lastServerDate: string,
+	lastId: number | null,
 	addedMessageIdList: Array<number>,
 	deletedChatIdList: Array<number>,
 	deletedMessageIdList: Array<number>,

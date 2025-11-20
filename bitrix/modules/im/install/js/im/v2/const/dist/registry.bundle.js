@@ -59,6 +59,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  imV2ChatTaskPrepare: 'im.v2.Chat.Task.prepare',
 	  imV2RecentChannelTail: 'im.v2.Recent.Channel.Tail',
 	  imV2RecentCollabTail: 'im.v2.Recent.Collab.Tail',
+	  imV2RecentExternalChatTail: 'im.v2.Recent.ExternalChat.Tail',
 	  imV2ChatCopilotUpdateRole: 'im.v2.Chat.Copilot.updateRole',
 	  imV2ChatCopilotUpdateAiModel: 'im.v2.Chat.Copilot.updateEngine',
 	  imV2AccessCheck: 'im.v2.Access.check',
@@ -245,6 +246,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  },
 	  key: {
 	    onBeforeEscape: 'IM.Keys:onBeforeEscape'
+	  },
+	  notifier: {
+	    onBeforeShowMessage: 'IM.Notifier:onBeforeShowMessage'
 	  }
 	});
 
@@ -262,6 +266,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  sonetGroup: 'sonetGroup',
 	  calendar: 'calendar',
 	  tasks: 'tasks',
+	  taskComments: 'tasksTask',
 	  thread: 'thread',
 	  mail: 'mail',
 	  lines: 'lines',
@@ -408,7 +413,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  default: 'default',
 	  copilot: 'copilot',
 	  openChannel: 'openChannel',
-	  collab: 'collab'
+	  collab: 'collab',
+	  taskComments: 'tasksTask'
 	};
 
 	const NotificationTypesCodes = Object.freeze({
@@ -432,7 +438,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  settings: 'settings',
 	  copilot: 'copilot',
 	  collab: 'collab',
-	  market: 'market'
+	  market: 'market',
+	  taskComments: 'tasksTask'
 	};
 
 	const SearchEntityIdTypes = {
@@ -593,6 +600,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  timeManager: 'timemanpwt',
 	  copilot: 'copilot',
 	  collab: 'collab',
+	  channel: 'channel',
+	  taskComments: 'taskComments',
 	  settings: 'settings',
 	  openTab: 'openTab',
 	  openPage: 'openPage',
@@ -818,6 +827,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  openCopilotChat: 'IM_COPILOT',
 	  openChannel: 'IM_CHANNEL',
 	  openCollab: 'IM_COLLAB',
+	  openTaskComments: 'IM_TASK',
 	  botContext: 'BOT_CONTEXT',
 	  desktopChatTabMode: 'IM_TAB',
 	  backgroundType: 'IM_BACKGROUND',
@@ -901,6 +911,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  [Layout.notification]: Layout.notification,
 	  [Layout.market]: Layout.market,
 	  [Layout.settings]: Layout.settings,
+	  [Layout.taskComments]: Layout.taskComments,
 	  call: 'call',
 	  timemanager: 'timemanager',
 	  homepage: 'homepage'

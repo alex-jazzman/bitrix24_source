@@ -15,7 +15,6 @@ use Bitrix\Tasks\Flow\FlowFeature;
 use Bitrix\Tasks\Integration\BIConnector\TaskBIAnalytics;
 use Bitrix\Tasks\Integration\Bitrix24;
 use Bitrix\Tasks\Integration\Extranet\User;
-use Bitrix\Tasks\Integration\Socialnetwork\Space\SpaceService;
 use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Internals\Routes\RouteDictionary;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\ProjectLimit;
@@ -143,9 +142,8 @@ $createGroupLink = CComponentEngine::makePathFromTemplate(
 	['user_id' => $arParams['LOGGED_USER_ID']]
 );
 
-$isSpacesAvailable = SpaceService::isAvailable(true);
 
-$projectsUrl = $isSpacesAvailable ? '/spaces/' : $tasksLink.'projects/'.$strIframe;
+$projectsUrl = $tasksLink.'projects/'.$strIframe;
 
 if ($isProjectLimitExceeded)
 {
@@ -161,7 +159,7 @@ $isCollaber = User::isCollaber($arParams['USER_ID']);
 if (!$isCollaber)
 {
 $arResult['ITEMS'][] = [
-	"TEXT" => $isSpacesAvailable ? GetMessage("TASKS_PANEL_TAB_SPACE") : GetMessage("TASKS_PANEL_TAB_PROJECTS"),
+	"TEXT" => GetMessage("TASKS_PANEL_TAB_PROJECTS"),
 	"URL" => $projectsUrl,
 	"ID" => "view_projects",
 	"IS_ACTIVE" => ($arParams["MARK_SECTION_PROJECTS_LIST"] === "Y"),

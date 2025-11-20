@@ -3,37 +3,19 @@ import {
 	PermissionChecker,
 	PermissionLevels,
 } from 'humanresources.company-structure.permission-checker';
-import { EntityTypes, type ChatListResponse } from 'humanresources.company-structure.utils';
+import { EntityTypes, type ChatListResponse, type CommunicationDetailed } from 'humanresources.company-structure.utils';
 import { DepartmentContentActions } from '../../actions';
 import { DepartmentAPI } from '../../api';
 import { SearchInput } from '../base-components/search/search-input';
-import { TabList } from '../base-components/list/list';
 import { EmptyState } from '../base-components/empty-state/empty-state';
-import { ChildrenModeSelector } from './children-mode-selector';
 import { EmptyTabAddButtons } from './empty-tab-add-buttons';
-import { ChatListItem } from './list-item';
-import {
-	ChatsMenuOption,
-	ChatsMenuLinkChat,
-	ChatsMenuLinkChannel,
-	ChatListDataTestIds,
-	ChannelListDataTestIds,
-	ChatLinkDialogDataTestIds,
-	ChannelLinkDialogDataTestIds,
-} from './consts';
-import {
-	getChatDialogEntity,
-	getChannelDialogEntity,
-	CommunicationsTypeDict,
-	getCommunicationsRecentTabOptions,
-	ManagementDialog,
-	type ManagementDialogDataTestIds,
-} from 'humanresources.company-structure.structure-components';
+import { ChannelListDataTestIds, ChatListDataTestIds, CollabListDataTestIds, ChatsMenuOption } from './consts';
+import { CommunicationsTypeDict } from 'humanresources.company-structure.structure-components';
 import { useChartStore } from 'humanresources.company-structure.chart-store';
 import { mapState } from 'ui.vue3.pinia';
 import { Loc, Type } from 'main.core';
-import type { TabOptions } from 'ui.entity-selector';
-import type { ChatOrChannelDetailed } from 'humanresources.company-structure.utils';
+import { CommunicationList } from './communication-list.js';
+import { LinkDialog } from './link-dialog.js';
 
 import './styles/tab.css';
 
@@ -42,31 +24,22 @@ export const ChatsTab = {
 
 	components: {
 		SearchInput,
-		TabList,
 		EmptyState,
 		EmptyTabAddButtons,
-		ChatListItem,
-		ManagementDialog,
-		ChildrenModeSelector,
+		CommunicationList,
+		LinkDialog,
 	},
 
 	data(): Object
 	{
 		return {
-			isChatLinkActive: false,
 			chatLinkDialogVisible: false,
-			isChannelLinkActive: false,
 			channelLinkDialogVisible: false,
+			collabLinkDialogVisible: false,
 			isLoading: false,
 			searchQuery: '',
-			addChatsWithChildren: false,
-			addChannelsWithChildren: false,
+			permissionChecker: null,
 		};
-	},
-
-	created(): void
-	{
-		this.loadChatAction();
 	},
 
 	methods:
@@ -98,13 +71,19 @@ export const ChatsTab = {
 				return null;
 			}
 
-			if (!force && Type.isArray(department.chatsDetailed) && Type.isArray(department.channelsDetailed))
+			if (!force
+				&& Type.isArray(department.chatsDetailed)
+				&& Type.isArray(department.channelsDetailed)
+				&& Type.isArray(department.collabsDetailed)
+			)
 			{
 				return {
 					chats: department.chatsDetailed,
 					channels: department.channelsDetailed,
+					collabs: department.collabsDetailed,
 					chatsNoAccess: department.chatsNoAccess,
 					channelsNoAccess: department.channelsNoAccess,
+					collabsNoAccess: department.collabsNoAccess,
 				};
 			}
 
@@ -116,39 +95,54 @@ export const ChatsTab = {
 				nodeId,
 				loadedChatsAndChannels.chats ?? [],
 				loadedChatsAndChannels.channels ?? [],
+				loadedChatsAndChannels.collabs ?? [],
 				loadedChatsAndChannels.chatsNoAccess ?? 0,
 				loadedChatsAndChannels.channelsNoAccess ?? 0,
+				loadedChatsAndChannels.collabsNoAccess ?? 0,
 			);
 			this.$emit('hideDetailLoader');
 			this.isLoading = false;
 
 			return loadedChatsAndChannels;
 		},
-		getChatListMenuItems(): Array
-		{
-			return this.canEdit ? [ChatsMenuLinkChat] : [];
-		},
-		getChannelListMenuItems(): Array
-		{
-			return this.canEdit ? [ChatsMenuLinkChannel] : [];
-		},
 		onActionMenuItemClick(actionId: string): void
 		{
-			if (actionId === ChatsMenuOption.linkChat)
+			switch (actionId)
 			{
-				this.chatLinkDialogVisible = true;
-			}
-
-			if (actionId === ChatsMenuOption.linkChannel)
-			{
-				this.channelLinkDialogVisible = true;
+				case ChatsMenuOption.linkChat:
+					this.chatLinkDialogVisible = true;
+					break;
+				case ChatsMenuOption.linkChannel:
+					this.channelLinkDialogVisible = true;
+					break;
+				case ChatsMenuOption.linkCollab:
+					this.collabLinkDialogVisible = true;
+					break;
+				default:
+					break;
 			}
 		},
 		getAddEmptyStateList(): { text: string }[]
 		{
 			let stateArray = [];
 
-			if (this.isTeamEntity)
+			if (this.isCollabsAvailable && this.isTeamEntity)
+			{
+				stateArray = [
+					this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_TAB_ADD_EMPTY_STATE_TEAM_LIST_W_COLLABS_ITEM_1'),
+					this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_TAB_ADD_EMPTY_STATE_LIST_W_COLLABS_ITEM_2'),
+					this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_TAB_ADD_EMPTY_STATE_TEAM_LIST_W_COLLABS_ITEM_3'),
+				];
+			}
+			else if (this.isCollabsAvailable)
+			{
+				stateArray = [
+					this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_TAB_ADD_EMPTY_STATE_LIST_W_COLLABS_ITEM_1'),
+					this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_TAB_ADD_EMPTY_STATE_LIST_W_COLLABS_ITEM_2'),
+					this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_TAB_ADD_EMPTY_STATE_LIST_W_COLLABS_ITEM_3'),
+				];
+			}
+			else if (this.isTeamEntity)
 			{
 				stateArray = [
 					this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_TAB_ADD_EMPTY_STATE_TEAM_LIST_ITEM_1_MSGVER_1'),
@@ -167,111 +161,29 @@ export const ChatsTab = {
 
 			return stateArray.map((item) => ({ text: item }));
 		},
-		getChatListDataTestIds(): Object
-		{
-			return ChatListDataTestIds;
-		},
-		getChannelListDataTestIds(): Object
-		{
-			return ChannelListDataTestIds;
-		},
-		getChatLinkDialogEntities(): Array
-		{
-			const entity = getChatDialogEntity();
-			entity.options.excludeIds = this.chats.map((item) => item.id);
-
-			return [entity];
-		},
-		getChannelLinkDialogEntities(): Array
-		{
-			const entity = getChannelDialogEntity();
-			entity.options.excludeIds = this.channels.map((item) => item.id);
-
-			return [entity];
-		},
-		getChatLinkRecentTabOptions(): TabOptions
-		{
-			return getCommunicationsRecentTabOptions(this.teamEntity, CommunicationsTypeDict.chat);
-		},
-		getChannelLinkRecentTabOptions(): TabOptions
-		{
-			return getCommunicationsRecentTabOptions(this.teamEntity, CommunicationsTypeDict.channel);
-		},
-		async linkChats(chatsItems: Array): void
-		{
-			this.isChatLinkActive = true;
-			const chats = (chatsItems).map((chatItem) => Number(chatItem.id.replace('chat', '')));
-			const nodeId = this.focusedNode;
-			const ids = { chat: chats, withChildren: this.addChatsWithChildren };
-			try
-			{
-				await DepartmentAPI.saveChats(nodeId, ids);
-				const loadedChatsAndChannels = await this.loadChatAction(true);
-
-				if (this.addChatsWithChildren && loadedChatsAndChannels)
-				{
-					const newChats = loadedChatsAndChannels.chats.filter((chat) => chats.includes(chat.id));
-
-					if (newChats.length > 0)
-					{
-						DepartmentContentActions.updateChatsInChildrenNodes(nodeId);
-					}
-				}
-			}
-			catch
-			{ /* empty */ }
-			this.isChatLinkActive = false;
-			this.chatLinkDialogVisible = false;
-			this.addChatsWithChildren = false;
-		},
-		async linkChannel(chatsItems: Array): void
-		{
-			this.isChannelLinkActive = true;
-			const channels = (chatsItems).map((chatItem) => Number(chatItem.id.replace('chat', '')));
-			const nodeId = this.focusedNode;
-			const ids = { channel: channels, withChildren: this.addChannelsWithChildren };
-			try
-			{
-				await DepartmentAPI.saveChats(nodeId, ids);
-				const loadedChatsAndChannels = await this.loadChatAction(true);
-
-				if (this.addChannelsWithChildren && loadedChatsAndChannels)
-				{
-					const newChannels = loadedChatsAndChannels.channels.filter((channel) => channels.includes(channel.id));
-
-					if (newChannels.length > 0)
-					{
-						DepartmentContentActions.updateChatsInChildrenNodes(
-							nodeId,
-						);
-					}
-				}
-			}
-			catch
-			{ /* empty */ }
-			this.isChannelLinkActive = false;
-			this.channelLinkDialogVisible = false;
-			this.addChannelsWithChildren = false;
-		},
-		getChatLinkDialogDataTestIds(): { ...ManagementDialogDataTestIds, addWithChildrenDataTestId: string }
-		{
-			return ChatLinkDialogDataTestIds;
-		},
-		getChannelLinkDialogDataTestIds(): { ...ManagementDialogDataTestIds, addWithChildrenDataTestId: string }
-		{
-			return ChannelLinkDialogDataTestIds;
-		},
 	},
 
 	computed:
 	{
-		chats(): Array<ChatOrChannelDetailed>
+		isCollabsAvailable(): boolean
+		{
+			return PermissionChecker.getInstance().isCollabsAvailable;
+		},
+		communicationTypes(): Record<string, string>
+		{
+			return CommunicationsTypeDict;
+		},
+		chats(): CommunicationDetailed[]
 		{
 			return this.departments.get(this.focusedNode)?.chatsDetailed ?? [];
 		},
-		channels(): Array<ChatOrChannelDetailed>
+		channels(): CommunicationDetailed[]
 		{
 			return this.departments.get(this.focusedNode)?.channelsDetailed ?? [];
+		},
+		collabs(): CommunicationDetailed[]
+		{
+			return this.departments.get(this.focusedNode)?.collabsDetailed ?? [];
 		},
 		chatsNoAccess(): number
 		{
@@ -281,159 +193,167 @@ export const ChatsTab = {
 		{
 			return this.departments.get(this.focusedNode)?.channelsNoAccess ?? 0;
 		},
-		chatsNoAccessText(): string
+		collabsNoAccess(): number
 		{
-			const phrase = this.chats.length > 0
-				? 'HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_CHAT_LIST_ITEM_MORE_HIDDEN_TEXT'
-				: 'HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_CHAT_LIST_ITEM_EMPTY_HIDDEN_TEXT'
-			;
-
-			return this.locPlural(phrase, this.chatsNoAccess);
+			return this.departments.get(this.focusedNode)?.collabsNoAccess ?? 0;
 		},
-		channelsNoAccessText(): string
-		{
-			const phrase = this.channels.length > 0
-				? 'HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_CHANNEL_LIST_ITEM_MORE_HIDDEN_TEXT'
-				: 'HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_CHANNEL_LIST_ITEM_EMPTY_HIDDEN_TEXT'
-			;
-
-			return this.locPlural(phrase, this.channelsNoAccess);
-		},
-		filteredChats(): Array<ChatOrChannelDetailed>
+		filteredChats(): Array<CommunicationDetailed>
 		{
 			return this.chats.filter(
 				(chat) => chat.title.toLowerCase().includes(this.searchQuery.toLowerCase()),
 			);
 		},
-		filteredChannels(): Array<ChatOrChannelDetailed>
+		filteredChannels(): Array<CommunicationDetailed>
 		{
 			return this.channels.filter(
 				(channel) => channel.title.toLowerCase().includes(this.searchQuery.toLowerCase()),
+			);
+		},
+		filteredCollabs(): Array<CommunicationDetailed>
+		{
+			return this.collabs.filter(
+				(collab) => collab.title.toLowerCase().includes(this.searchQuery.toLowerCase()),
 			);
 		},
 		showAddEmptyState(): boolean
 		{
 			return this.chats.length === 0
 				&& this.channels.length === 0
+				&& this.collabs.length === 0
 				&& this.chatsNoAccess === 0
 				&& this.channelsNoAccess === 0
+				&& this.collabsNoAccess === 0
 			;
 		},
 		showSearchEmptyState(): boolean
 		{
-			return (this.chats.length > 0 || this.channels.length > 0)
+			return (this.chats.length > 0 || this.channels.length > 0 || this.collabs.length > 0)
 				&& this.filteredChats.length === 0
 				&& this.filteredChannels.length === 0
+				&& this.filteredCollabs.length === 0
 			;
 		},
-		getLinkedChatIds(): Array<string>
-		{
-			return (this.chats).map((chatItem) => `chat${chatItem.id}`);
-		},
-		getLinkedChannelIds(): Array<string>
-		{
-			return (this.channels).map((channelItem) => `chat${channelItem.id}`);
-		},
-		isChatsLoaded(): Boolean
+		areChatsLoaded(): Boolean
 		{
 			const department = this.departments.get(this.focusedNode);
 
-			return Boolean(Type.isArray(department.chatsDetailed) && Type.isArray(department.channelsDetailed));
+			return Boolean(Type.isArray(department.chatsDetailed)
+				&& Type.isArray(department.channelsDetailed)
+				&& Type.isArray(department.collabsDetailed))
+			;
 		},
-		teamEntity(): boolean
+		entityType(): boolean
 		{
 			return this.departments.get(this.focusedNode)?.entityType;
 		},
 		isTeamEntity(): boolean
 		{
-			return this.teamEntity === EntityTypes.team;
+			return this.entityType === EntityTypes.team;
 		},
 		getAddEmptyStateTitle(): string
 		{
+			if (this.isCollabsAvailable)
+			{
+				return this.isTeamEntity
+					? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_TAB_ADD_EMPTY_STATE_TEAM_TITLE_W_COLLABS')
+					: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_TAB_ADD_EMPTY_STATE_TITLE_W_COLLABS')
+				;
+			}
+
 			return this.isTeamEntity
 				? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_TAB_ADD_EMPTY_STATE_TEAM_TITLE')
 				: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_TAB_ADD_EMPTY_STATE_TITLE')
 			;
 		},
-		getAddChatDescription(): string
+		canEditChat(): boolean
 		{
 			return this.isTeamEntity
-				? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_CHAT_LINK_DIALOG_TEAM_DESC')
-				: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_CHAT_LINK_DIALOG_DESC')
+				? this.permissionChecker.hasPermission(PermissionActions.teamChatEdit, this.focusedNode)
+				: this.permissionChecker.hasPermission(PermissionActions.departmentChatEdit, this.focusedNode)
 			;
 		},
-		getAddChannelDescription(): string
+		canEditChannel(): boolean
 		{
 			return this.isTeamEntity
-				? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_CHANNEL_LINK_DIALOG_TEAM_DESC')
-				: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_CHANNEL_LINK_DIALOG_DESC')
+				? this.permissionChecker.hasPermission(PermissionActions.teamChannelEdit, this.focusedNode)
+				: this.permissionChecker.hasPermission(PermissionActions.departmentChannelEdit, this.focusedNode)
 			;
 		},
-		chatMenuItems(): boolean
-		{
-			return this.getChatListMenuItems();
-		},
-		channelMenuItems(): boolean
-		{
-			return this.getChannelListMenuItems();
-		},
-		emptyChatTitle(): string
-		{
-			if (this.canEdit)
-			{
-				return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_CHAT_LIST_ITEM_TEXT_MSGVER_1');
-			}
-
-			return this.isTeamEntity
-				? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_CHAT_LIST_ITEM_NO_TEAM_TEXT_MSGVER_1')
-				: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_CHAT_LIST_ITEM_NO_DEPARTMENT_TEXT_MSGVER_1')
-			;
-		},
-		emptyChannelTitle(): string
-		{
-			if (this.canEdit)
-			{
-				return this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_CHANNEL_LIST_ITEM_TEXT_MSGVER_1');
-			}
-
-			return this.isTeamEntity
-				? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_CHANNEL_LIST_ITEM_NO_TEAM_TEXT_MSGVER_1')
-				: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_EMPTY_CHANNEL_LIST_ITEM_NO_DEPARTMENT_TEXT_MSGVER_1')
-			;
-		},
-		canEdit(): boolean
-		{
-			const permissionChecker = PermissionChecker.getInstance();
-
-			return this.isTeamEntity
-				? permissionChecker.hasPermission(PermissionActions.teamCommunicationEdit, this.focusedNode)
-				: permissionChecker.hasPermission(PermissionActions.departmentCommunicationEdit, this.focusedNode)
-			;
-		},
-		getDialogExtraSubtitleLabel(): string
+		canEditCollab(): boolean
 		{
 			return this.isTeamEntity
-				? this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_WITH_SUBTEAMS_LABEL')
-				: this.loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_WITH_SUBDEPARTMENTS_LABEL')
+				? this.permissionChecker.hasPermission(PermissionActions.teamCollabEdit, this.focusedNode)
+				: this.permissionChecker.hasPermission(PermissionActions.departmentCollabEdit, this.focusedNode)
 			;
 		},
-		canAddWithChildren(): boolean
+		canAddChatWithChildren(): boolean
 		{
-			const permissionChecker = PermissionChecker.getInstance();
 			if (this.isTeamEntity)
 			{
-				const teamTeamMinValue = { TEAM: PermissionLevels.selfAndSub };
-				const teamDepartmentMinValue = { DEPARTMENT: PermissionLevels.selfAndSub };
-				const teamAction = PermissionActions.teamCommunicationEdit;
-
-				return permissionChecker.hasPermission(teamAction, this.focusedNode, teamTeamMinValue)
-					|| permissionChecker.hasPermission(teamAction, this.focusedNode, teamDepartmentMinValue)
+				return this.permissionChecker.hasPermission(
+					PermissionActions.teamChatEdit,
+					this.focusedNode,
+					{ TEAM: PermissionLevels.selfAndSub },
+				)
+					|| this.permissionChecker.hasPermission(
+						PermissionActions.teamChatEdit,
+						this.focusedNode,
+						{ DEPARTMENT: PermissionLevels.selfAndSub },
+					)
 				;
 			}
 
-			const departmentAction = PermissionActions.departmentCommunicationEdit;
+			return this.permissionChecker.hasPermission(
+				PermissionActions.departmentChatEdit,
+				this.focusedNode,
+				PermissionLevels.selfAndSub,
+			);
+		},
+		canAddChannelWithChildren(): boolean
+		{
+			if (this.isTeamEntity)
+			{
+				return this.permissionChecker.hasPermission(
+					PermissionActions.teamChannelEdit,
+					this.focusedNode,
+					{ TEAM: PermissionLevels.selfAndSub },
+				)
+					|| this.permissionChecker.hasPermission(
+						PermissionActions.teamChannelEdit,
+						this.focusedNode,
+						{ DEPARTMENT: PermissionLevels.selfAndSub },
+					)
+				;
+			}
 
-			return permissionChecker.hasPermission(departmentAction, this.focusedNode, PermissionLevels.selfAndSub);
+			return this.permissionChecker.hasPermission(
+				PermissionActions.departmentChannelEdit,
+				this.focusedNode,
+				PermissionLevels.selfAndSub,
+			);
+		},
+		canAddCollabWithChildren(): boolean
+		{
+			if (this.isTeamEntity)
+			{
+				return this.permissionChecker.hasPermission(
+					PermissionActions.teamCollabEdit,
+					this.focusedNode,
+					{ TEAM: PermissionLevels.selfAndSub },
+				)
+					|| this.permissionChecker.hasPermission(
+						PermissionActions.teamCollabEdit,
+						this.focusedNode,
+						{ DEPARTMENT: PermissionLevels.selfAndSub },
+					)
+				;
+			}
+
+			return this.permissionChecker.hasPermission(
+				PermissionActions.departmentCollabEdit,
+				this.focusedNode,
+				PermissionLevels.selfAndSub,
+			);
 		},
 		hideEmptyChatItem(): boolean
 		{
@@ -443,18 +363,36 @@ export const ChatsTab = {
 		{
 			return this.searchQuery.length > 0 || this.channelsNoAccess > 0;
 		},
+		getChatListDataTestIds(): Object
+		{
+			return ChatListDataTestIds;
+		},
+		getChannelListDataTestIds(): Object
+		{
+			return ChannelListDataTestIds;
+		},
+		getCollabListDataTestIds(): Object
+		{
+			return CollabListDataTestIds;
+		},
 		...mapState(useChartStore, ['focusedNode', 'departments']),
 	},
 
 	watch:
 	{
-		isChatsLoaded(isChatsLoaded): void
+		areChatsLoaded(isChatsLoaded): void
 		{
 			if (isChatsLoaded === false)
 			{
 				this.loadChatAction();
 			}
 		},
+	},
+
+	created(): void
+	{
+		this.permissionChecker = PermissionChecker.getInstance();
+		this.loadChatAction();
 	},
 
 	template: `
@@ -470,56 +408,43 @@ export const ChatsTab = {
 					v-if="!showSearchEmptyState"
 					class="hr-department-detail-content__lists-container"
 				>
-					<TabList
-						id='hr-department-detail-content_chats-tab__chat-list'
-						:title="loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_CHAT_LIST_TITLE')"
-						:count="chats.length + chatsNoAccess"
-						:menuItems="chatMenuItems"
-						:listItems="filteredChats"
-						:emptyItemTitle="emptyChatTitle"
-						emptyItemImageClass="hr-department-detail-content__chat-empty-tab-list-item_tab-icon"
-						:hideEmptyItem="hideEmptyChatItem"
-						:withAddPermission="canEdit"
+					<CommunicationList
+						v-if="isCollabsAvailable"
+						:communications="collabs"
+						:filteredCommunications="filteredCollabs"
+						:communicationsNoAccess="collabsNoAccess"
+						:canEdit="canEditCollab"
+						:searchQuery="searchQuery"
+						:focusedNode="focusedNode"
+						:communicationType="communicationTypes.collab"
+						:isTeamEntity="isTeamEntity"
+						:dataTestId="getCollabListDataTestIds"
 						@tabListAction="onActionMenuItemClick"
-						:dataTestIds="getChatListDataTestIds()"
-					>
-						<template v-slot="{ item }">
-							<ChatListItem :chat="item" :nodeId="focusedNode"/>
-						</template>
-						<template v-if="chatsNoAccess > 0" v-slot:footer>
-							<div 
-								class="hr-department-detail-content__tab-list_communications-hidden"
-								data-test-id="hr-department-content_chats-tab__list_chat-hidden-text"
-							>
-								{{ chatsNoAccessText }}
-							</div>
-						</template>
-					</TabList>
-					<TabList
-						id='hr-department-detail-content_chats-tab__channel-list'
-						:title="loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_CHANNEL_LIST_TITLE')"
-						:count="channels.length + channelsNoAccess"
-						:menuItems="channelMenuItems"
-						:listItems="filteredChannels"
-						:emptyItemTitle="emptyChannelTitle"
-						emptyItemImageClass="hr-department-detail-content__chat-empty-tab-list-item_tab-icon"
-						:hideEmptyItem="hideEmptyChannelItem"
-						:withAddPermission="canEdit"
+					/>
+					<CommunicationList
+						:communications="channels"
+						:filteredCommunications="filteredChannels"
+						:communicationsNoAccess="channelsNoAccess"
+						:canEdit="canEditChannel"
+						:searchQuery="searchQuery"
+						:focusedNode="focusedNode"
+						:communicationType="communicationTypes.channel"
+						:isTeamEntity="isTeamEntity"
+						:dataTestId="getChannelListDataTestIds"
 						@tabListAction="onActionMenuItemClick"
-						:dataTestIds="getChannelListDataTestIds()"
-					>
-						<template v-slot="{ item }">
-							<ChatListItem :chat="item" :nodeId="focusedNode"/>
-						</template>
-						<template v-if="channelsNoAccess > 0" v-slot:footer>
-							<div
-								class="hr-department-detail-content__tab-list_communications-hidden"
-								data-test-id="hr-department-content_chats-tab__list_channel-hidden-text"
-							>
-								{{ channelsNoAccessText }}
-							</div>
-						</template>
-					</TabList>
+					/>
+					<CommunicationList
+						:communications="chats"
+						:filteredCommunications="filteredChats"
+						:communicationsNoAccess="chatsNoAccess"
+						:canEdit="canEditChat"
+						:searchQuery="searchQuery"
+						:focusedNode="focusedNode"
+						:communicationType="communicationTypes.chat"
+						:isTeamEntity="isTeamEntity"
+						:dataTestId="getChatListDataTestIds"
+						@tabListAction="onActionMenuItemClick"
+					/>
 				</div>
 				<EmptyState 
 					v-else
@@ -536,56 +461,48 @@ export const ChatsTab = {
 			>
 				<template v-slot:content>
 					<EmptyTabAddButtons
+						:isTeamEntity="isTeamEntity"
+						:canEditChat="canEditChat"
+						:canEditChannel="canEditChannel"
+						:canEditCollab="canEditCollab"
 						@emptyStateAddAction="onActionMenuItemClick"
 					/>
 				</template>
 			</EmptyState>
-			<ManagementDialog
-				v-if="chatLinkDialogVisible"
-				id="hr-department-detail-content-chats-tab-chat-link-dialog"
-				:entities="getChatLinkDialogEntities()"
-				:recentTabOptions="getChatLinkRecentTabOptions()"
-				:hiddenItemsIds="getLinkedChatIds"
-				:title="loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_CHAT_LINK_DIALOG_TITLE')"
-				:description="getAddChatDescription"
-				:isActive="isChatLinkActive"
-				@managementDialogAction="linkChats"
-				@close="chatLinkDialogVisible = false"
-				:dataTestIds="getChatLinkDialogDataTestIds()"
-			>
-				<template v-slot:extra-subtitle>
-					<ChildrenModeSelector
-						:isTeamEntity="isTeamEntity"
-						:data-test-id="getChatLinkDialogDataTestIds().addWithChildrenDataTestId"
-						:hasPermission="canAddWithChildren"
-						:text="loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_MODE_CHATS_TEXT')"
-						@saveChildrenMode="addChatsWithChildren = $event"
-					/>
-				</template>
-			</ManagementDialog>
-			<ManagementDialog
-				v-if="channelLinkDialogVisible"
-				id="hr-department-detail-content-chats-tab-channel-link-dialog"
-				:entities="getChannelLinkDialogEntities()"
-				:recentTabOptions="getChannelLinkRecentTabOptions()"
-				:hiddenItemsIds="getLinkedChannelIds"
-				:title="loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_CHANNEL_LINK_DIALOG_TITLE')"
-				:description="getAddChannelDescription"
-				:isActive="isChannelLinkActive"
-				@managementDialogAction="linkChannel"
+			<LinkDialog
+				v-if="isCollabsAvailable"
+				:communications="collabs"
+				:communicationType="communicationTypes.collab"
+				:focusedNode="focusedNode"
+				:isTeamEntity="isTeamEntity"
+				:entityType="entityType"
+				:isVisible="collabLinkDialogVisible"
+				:canAddWithChildren="canAddCollabWithChildren"
+				@close="collabLinkDialogVisible = false"
+				@reloadList="loadChatAction(true)"
+			/>
+			<LinkDialog
+				:communications="channels"
+				:communicationType="communicationTypes.channel"
+				:focusedNode="focusedNode"
+				:isTeamEntity="isTeamEntity"
+				:entityType="entityType"
+				:isVisible="channelLinkDialogVisible"
+				:canAddWithChildren="canAddChannelWithChildren"
 				@close="channelLinkDialogVisible = false"
-				:dataTestIds="getChannelLinkDialogDataTestIds()"
-			>
-				<template v-slot:extra-subtitle>
-					<ChildrenModeSelector
-						:isTeamEntity="isTeamEntity"
-						:data-test-id="getChatLinkDialogDataTestIds().addWithChildrenDataTestId"
-						:hasPermission="canAddWithChildren"
-						:text="loc('HUMANRESOURCES_COMPANY_STRUCTURE_DEPARTMENT_CONTENT_TAB_CHATS_MODE_CHANNELS_TEXT')"
-						@saveChildrenMode="addChannelsWithChildren = $event"
-					/>
-				</template>
-			</ManagementDialog>
+				@reloadList="loadChatAction(true)"
+			/>
+			<LinkDialog
+				:communications="chats"
+				:communicationType="communicationTypes.chat"
+				:focusedNode="focusedNode"
+				:isTeamEntity="isTeamEntity"
+				:entityType="entityType"
+				:isVisible="chatLinkDialogVisible"
+				:canAddWithChildren="canAddChatWithChildren"
+				@close="chatLinkDialogVisible = false"
+				@reloadList="loadChatAction(true)"
+			/>
 		</div>
 	`,
 };

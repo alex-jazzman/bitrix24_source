@@ -13,7 +13,7 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/audio/src/item', (require, ex
 	const { TitleDate } = require('im/messenger/controller/sidebar-v2/tabs/audio/src/ui/title-date');
 	const { AudioActionMenu } = require('im/messenger/controller/sidebar-v2/tabs/audio/src/action-menu');
 	const { AudioIcon } = require('im/messenger/controller/sidebar-v2/tabs/audio/src/ui/audio-icon');
-	const { PlayerStage } = require('im/messenger/controller/sidebar-v2/tabs/audio/const');
+	const { PlayerStage } = require('im/messenger/controller/sidebar-v2/tabs/audio/src/const');
 	const { Owner } = require('im/messenger/controller/sidebar-v2/tabs/audio/src/ui/owner');
 
 	const logger = getLogger('sidebar-v2-audio-item');

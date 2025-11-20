@@ -12,6 +12,7 @@ export const ChatType = Object.freeze({
 	sonetGroup: 'sonetGroup',
 	calendar: 'calendar',
 	tasks: 'tasks',
+	taskComments: 'tasksTask',
 	thread: 'thread',
 	mail: 'mail',
 	lines: 'lines',

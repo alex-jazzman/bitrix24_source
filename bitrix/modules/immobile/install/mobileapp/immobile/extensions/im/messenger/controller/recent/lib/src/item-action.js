@@ -16,7 +16,6 @@ jn.define('im/messenger/controller/recent/lib/item-action', (require, exports, m
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { EventType, ErrorType } = require('im/messenger/const');
-	const { TabCounters } = require('im/messenger/lib/counters/tab-counters');
 	const {
 		RecentRest,
 		ChatRest,
@@ -120,7 +119,7 @@ jn.define('im/messenger/controller/recent/lib/item-action', (require, exports, m
 				.then(() => {
 					this.renderRecent();
 
-					TabCounters.update();
+					serviceLocator.get('tab-counters').update();
 				})
 			;
 
@@ -132,7 +131,7 @@ jn.define('im/messenger/controller/recent/lib/item-action', (require, exports, m
 						.then(() => {
 							this.renderRecent();
 
-							TabCounters.update();
+							serviceLocator.get('tab-counters').update();
 						})
 					;
 				})
@@ -150,7 +149,7 @@ jn.define('im/messenger/controller/recent/lib/item-action', (require, exports, m
 			const recentProvider = new RecentDataProvider();
 
 			recentProvider.deleteFromSource(RecentDataProvider.source.model, { dialogId: recentItem.id })
-				.then(() => TabCounters.update())
+				.then(() => serviceLocator.get('tab-counters').update())
 				.catch((err) => logger.error('Recent item leave error: ', err))
 			;
 
@@ -169,7 +168,7 @@ jn.define('im/messenger/controller/recent/lib/item-action', (require, exports, m
 					logger.error('Recent item leave error: ', result.error());
 
 					this.store.dispatch('recentModel/set', [recentItem])
-						.then(() => TabCounters.update())
+						.then(() => serviceLocator.get('tab-counters').update())
 						.catch((err) => logger.error('ChatRest.leave.recentModel/set.catch', err))
 					;
 				})
@@ -263,7 +262,7 @@ jn.define('im/messenger/controller/recent/lib/item-action', (require, exports, m
 				.then(() => {
 					this.renderRecent();
 
-					TabCounters.update();
+					serviceLocator.get('tab-counters').update();
 				});
 
 			RecentRest.readChat({
@@ -282,7 +281,7 @@ jn.define('im/messenger/controller/recent/lib/item-action', (require, exports, m
 						.then(() => {
 							this.renderRecent();
 
-							TabCounters.update();
+							serviceLocator.get('tab-counters').update();
 						});
 				})
 			;
@@ -303,7 +302,7 @@ jn.define('im/messenger/controller/recent/lib/item-action', (require, exports, m
 			}]).then(() => {
 				this.renderRecent();
 
-				TabCounters.update();
+				serviceLocator.get('tab-counters').update();
 			});
 
 			RecentRest.unreadChat({ dialogId: itemId })
@@ -313,7 +312,7 @@ jn.define('im/messenger/controller/recent/lib/item-action', (require, exports, m
 					this.store.dispatch('recentModel/set', [recentItem]).then(() => {
 						this.renderRecent();
 
-						TabCounters.update();
+						serviceLocator.get('tab-counters').update();
 					});
 				})
 			;
@@ -333,19 +332,19 @@ jn.define('im/messenger/controller/recent/lib/item-action', (require, exports, m
 			if (shouldMute)
 			{
 				muteList.add(userId);
-				TabCounters.addChatToMutedCollection(dialog.chatId);
+				serviceLocator.get('tab-counters').addChatToMutedCollection(dialog.chatId);
 			}
 			else
 			{
 				muteList.delete(userId);
-				TabCounters.deleteChatFromMutedCollection(dialog.chatId);
+				serviceLocator.get('tab-counters').deleteChatFromMutedCollection(dialog.chatId);
 			}
 
 			this.store.dispatch('dialoguesModel/set', [{
 				dialogId: itemId,
 				muteList: [...muteList],
 			}]).then(() => {
-				TabCounters.update();
+				serviceLocator.get('tab-counters').update();
 			});
 
 			ChatRest.mute({
@@ -358,7 +357,7 @@ jn.define('im/messenger/controller/recent/lib/item-action', (require, exports, m
 					this.store.dispatch('dialoguesModel/set', [dialog]).then(() => {
 						this.renderRecent();
 
-						TabCounters.update();
+						serviceLocator.get('tab-counters').update();
 					});
 				})
 			;

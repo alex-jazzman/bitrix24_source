@@ -77,6 +77,10 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	  whiteBase: {
 	    tokenClass: '--ui-color-palette-white-base',
 	    color: '#FFFFFF'
+	  },
+	  paletteGray70: {
+	    tokenClass: '--ui-color-palette-gray-70',
+	    color: '#828B95'
 	  }
 	});
 	var getColorCode = function getColorCode(colorKey) {
@@ -107,7 +111,8 @@ this.BX.Humanresources = this.BX.Humanresources || {};
 	};
 	var ChatTypes = Object.freeze({
 	  channel: 'CHANNEL',
-	  chat: 'CHAT'
+	  chat: 'CHAT',
+	  collab: 'COLLAB'
 	});
 
 	/**

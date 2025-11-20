@@ -20,6 +20,8 @@ declare type DialogOpenOptions = {
 	 * @see OpenDialogContextType
 	 */
 	context: string,
+	onClose?: function,
+	makeTabActive?: boolean,
 }
 
 declare type DialogTitleParams = {

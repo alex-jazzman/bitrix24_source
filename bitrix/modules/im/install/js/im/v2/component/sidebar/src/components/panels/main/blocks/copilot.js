@@ -1,5 +1,6 @@
 import { ChatTitle } from 'im.v2.component.elements.chat-title';
 import { ChatAvatar, AvatarSize } from 'im.v2.component.elements.avatar';
+import { CopilotManager } from 'im.v2.lib.copilot';
 import { Feature, FeatureManager } from 'im.v2.lib.feature';
 
 import { CopilotRole } from '../../../elements/copilot-role/copilot-role';
@@ -34,7 +35,7 @@ export const CopilotPreview = {
 		},
 		showMembers(): boolean
 		{
-			return this.dialog.userCounter > 2;
+			return (new CopilotManager()).isGroupCopilotChat(this.dialogId);
 		},
 		isAIModelChangeAllowed(): boolean
 		{

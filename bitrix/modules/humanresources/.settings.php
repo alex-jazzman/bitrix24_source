@@ -24,6 +24,9 @@ return [
 			'humanresources.internal.service.nodeMemberService' => [
 				'className' => \Bitrix\HumanResources\Internals\Service\Structure\NodeMemberService::class,
 			],
+			'humanresources.service.internal.nodeCollabService' => [
+				'className' => \Bitrix\HumanResources\Internals\Service\Structure\NodeCollabService::class,
+			],
 			'humanresources.service.internal.nodeSettingsService' => [
 				'className' => \Bitrix\HumanResources\Internals\Service\Structure\NodeSettingsService::class,
 			],
@@ -264,6 +267,9 @@ return [
 			],
 			'humanresources.internal.service.structure.nodeAccessService' => [
 				'className' => \Bitrix\HumanResources\Internals\Service\Structure\NodeAccessCodeService::class,
+			],
+			'humanresources.internal.repository.structure.node.nodeMemberRepository' => [
+				'className' => \Bitrix\HumanResources\Internals\Repository\Structure\Node\NodeMemberRepository::class,
 			],
 			'humanresources.public.service.node.userService' => [
 				'className' => \Bitrix\HumanResources\Public\Service\Node\UserService::class,

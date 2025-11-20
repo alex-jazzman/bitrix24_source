@@ -70,6 +70,11 @@ jn.define('feature', (require, exports, module) => {
 		{
 			return Boolean(feature?.isFeatureEnabled('module-config-app-settings'));
 		}
+
+		static isNativeSettingsCacheApiSupported()
+		{
+			return Boolean(feature?.isFeatureEnabled('cache_module_api'));
+		}
 	}
 
 	/**

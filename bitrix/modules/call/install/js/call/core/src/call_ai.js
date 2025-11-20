@@ -12,6 +12,7 @@ export type CallAiOptions = {
 	feedBackLink?: string;
 	baasPromoSlider?: string;
 	helpSlider?: string;
+	disclaimerArticleCode?: string;
 };
 
 export const CallAiError = {
@@ -35,6 +36,7 @@ class CallAi
 		this.feedBackLink = '';
 		this.baasPromoSlider = '';
 		this.helpSlider = '';
+		this.disclaimerArticleCode = '';
 
 		if (Extension.getSettings('call.core').ai)
 		{
@@ -79,6 +81,10 @@ class CallAi
 		if (options.helpSlider)
 		{
 			this.helpSlider = options.helpSlider;
+		}
+		if (options.disclaimerArticleCode)
+		{
+			this.disclaimerArticleCode = options.disclaimerArticleCode;
 		}
 	}
 
@@ -161,6 +167,15 @@ class CallAi
 	set helpSlider(value: string)
 	{
 		this._helpSlider = value;
+	}
+
+	get disclaimerArticleCode(): string
+	{
+		return this._disclaimerArticleCode;
+	}
+	set disclaimerArticleCode(value: string)
+	{
+		this._disclaimerArticleCode = value;
 	}
 
 	handleCopilotError(errorType: string)

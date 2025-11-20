@@ -4,7 +4,7 @@ import { sendData } from 'ui.analytics';
 import { ChatType, Layout, UserRole } from 'im.v2.const';
 import { Core } from 'im.v2.application.core';
 
-import { AnalyticsEvent, AnalyticsTool, AnalyticsCategory, PSEUDO_CHAT_TYPE_FOR_NOTES } from './const';
+import { AnalyticsEvent, AnalyticsTool, AnalyticsCategory } from './const';
 
 import { getCollabId } from './helpers/get-collab-id';
 import { getUserType } from './helpers/get-user-type';
@@ -31,6 +31,8 @@ import { DesktopUpdateBanner } from './classes/desktop-update-banner';
 import { MessageContextMenu } from './classes/message-context-menu';
 import { SliderInvite } from './classes/slider-invite';
 import { ChatPins } from './classes/chat-pins';
+import { ChatInviteLink } from './classes/chat-invite-link';
+import { AudioMessage } from './classes/audiomessage';
 
 import type { ImModelChat } from 'im.v2.model';
 
@@ -65,6 +67,8 @@ export class Analytics
 	messageContextMenu: MessageContextMenu = new MessageContextMenu();
 	sliderInvite: SliderInvite = new SliderInvite();
 	chatPins: ChatPins = new ChatPins();
+	chatInviteLink: ChatInviteLink = new ChatInviteLink();
+	audioMessage: AudioMessage = new AudioMessage();
 
 	static #instance: Analytics;
 
@@ -139,7 +143,7 @@ export class Analytics
 			tool: AnalyticsTool.im,
 			category: getCategoryByChatType(chatType),
 			event: AnalyticsEvent.openExisting,
-			type: isNotes(dialog.dialogId) ? PSEUDO_CHAT_TYPE_FOR_NOTES : chatType,
+			type: chatType,
 			c_section: `${currentLayout}_tab`,
 			p2: getUserType(),
 		};
@@ -190,7 +194,7 @@ export class Analytics
 			tool: AnalyticsTool.im,
 			category: getCategoryByChatType(chatType),
 			event: AnalyticsEvent.typeMessage,
-			p1: `chatType_${isNotes(dialog.dialogId) ? PSEUDO_CHAT_TYPE_FOR_NOTES : chatType}`,
+			p1: `chatType_${chatType}`,
 		};
 
 		sendData(params);

@@ -110,7 +110,7 @@ export const Avatar = {
 		},
 		showAvatarLetters(): boolean
 		{
-			const SPECIAL_TYPES_WITH_LETTERS = [ChatType.openChannel, ChatType.channel];
+			const SPECIAL_TYPES_WITH_LETTERS = [ChatType.openChannel, ChatType.channel, ChatType.taskComments];
 			if (SPECIAL_TYPES_WITH_LETTERS.includes(this.dialog.type))
 			{
 				return true;

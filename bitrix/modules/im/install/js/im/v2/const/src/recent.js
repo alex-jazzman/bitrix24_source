@@ -8,4 +8,5 @@ export const RecentType = {
 	copilot: 'copilot',
 	openChannel: 'openChannel',
 	collab: 'collab',
+	taskComments: 'tasksTask',
 };

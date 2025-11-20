@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,ui_fonts_opensans,main_polyfill_intersectionobserver,main_core_events,im_v2_const,im_v2_lib_localStorage,im_v2_lib_utils,im_v2_component_elements_avatar) {
+(function (exports,ui_fonts_opensans,main_polyfill_intersectionobserver,main_core_events,im_v2_const,im_v2_lib_localStorage,im_v2_lib_utils,im_v2_component_elements_avatar,im_v2_lib_analytics) {
 	'use strict';
 
 	const ID_KEY = 'im:audioplayer:id';
@@ -232,6 +232,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      }
 	      const commonCurrentRate = this.getRateFromLS();
 	      const newRate = this.getNextPlaybackRate(commonCurrentRate);
+	      im_v2_lib_analytics.Analytics.getInstance().audioMessage.onChangeRate(this.file.chatId, newRate);
 	      this.setRateInLS(newRate);
 	      this.updateRate(newRate);
 	    },
@@ -357,11 +358,13 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	          }
 	          break;
 	        case 'pause':
+	          im_v2_lib_analytics.Analytics.getInstance().audioMessage.onPause(this.file.chatId);
 	          if (this.state !== im_v2_const.AudioPlaybackState.stop) {
 	            this.state = im_v2_const.AudioPlaybackState.pause;
 	          }
 	          break;
 	        case 'play':
+	          im_v2_lib_analytics.Analytics.getInstance().audioMessage.onPlay(this.file.chatId);
 	          this.state = im_v2_const.AudioPlaybackState.play;
 	          if (this.state === im_v2_const.AudioPlaybackState.stop) {
 	            this.progress = 0;
@@ -474,5 +477,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.AudioPlayer = AudioPlayer;
 
-}((this.BX.Messenger.v2.Component.Elements = this.BX.Messenger.v2.Component.Elements || {}),BX,BX,BX.Event,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements));
+}((this.BX.Messenger.v2.Component.Elements = this.BX.Messenger.v2.Component.Elements || {}),BX,BX,BX.Event,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib));
 //# sourceMappingURL=audioplayer.bundle.js.map

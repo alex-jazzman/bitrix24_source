@@ -9,7 +9,6 @@ $MESS['TASKS_V2_GROUP_ABOUT_COLLAB'] = 'Открыть коллабу';
 $MESS['TASKS_V2_GROUP_ABOUT_SCRUM'] = 'Открыть скрам';
 $MESS['TASKS_V2_GROUP_CHANGE'] = 'Изменить';
 $MESS['TASKS_V2_GROUP_CLEAR'] = 'Отвязать';
-$MESS['TASKS_V2_GROUP_ADD'] = 'Добавить';
 $MESS['TASKS_V2_GROUP_STAGE_HINT'] = 'Выбор стадии';
 $MESS['TASKS_V2_GROUP_EPIC_EMPTY'] = 'Не выбран';
 $MESS['TASKS_V2_GROUP_EPIC_HINT'] = 'Эпик';

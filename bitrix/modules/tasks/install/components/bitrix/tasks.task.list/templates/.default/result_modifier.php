@@ -46,8 +46,20 @@ if (Main\ModuleManager::isModuleInstalled('rest') && !$isExtranetUser)
 
 CJSCore::Init(['tasks_util_query', 'task_popups']);
 
+if (!empty($arParams['relationToId']))
+{
+	Toolbar::deleteFavoriteStar();
+}
+
 //region TITLE
-if ($arParams['PROJECT_VIEW'] === 'Y')
+if (!empty($arParams['relationToId']))
+{
+	$title = $shortTitle = match ($arParams['relationType'] ?? null) {
+		default => Loc::getMessage('TASKS_TITLE_SUBTASKS'),
+		'relatedTasks' => Loc::getMessage('TASKS_TITLE_RELATED_TASKS'),
+	};
+}
+else if ($arParams['PROJECT_VIEW'] === 'Y')
 {
 	$title = $shortTitle = Loc::getMessage('TASKS_TITLE_PROJECT');
 }

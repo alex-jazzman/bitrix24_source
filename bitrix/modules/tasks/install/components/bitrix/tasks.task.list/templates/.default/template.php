@@ -108,8 +108,7 @@ $APPLICATION->SetPageProperty(
 	"{$bodyClass} page-one-column transparent-workarea {$collabClass}"
 );
 
-if ($arResult['CONTEXT'] !== Context::getSpaces())
-{
+Asset::getInstance()->addCss('/bitrix/components/bitrix/tasks.interface.toolbar/templates/.default/style.css');
 	$APPLICATION->IncludeComponent(
 		'bitrix:tasks.interface.header',
 		'',
@@ -170,7 +169,6 @@ if ($arResult['CONTEXT'] !== Context::getSpaces())
 		$component,
 		['HIDE_ICONS' => true]
 	);
-}
 ?>
 
 <?php

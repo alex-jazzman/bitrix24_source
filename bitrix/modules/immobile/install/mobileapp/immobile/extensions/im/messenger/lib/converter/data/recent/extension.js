@@ -8,6 +8,7 @@ jn.define('im/messenger/lib/converter/data/recent', (require, exports, module) =
 	const { clone } = require('utils/object');
 	const { Uuid } = require('utils/uuid');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
+	const { Feature } = require('im/messenger/lib/feature');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const {	MessageStatus	} = require('im/messenger/const');
 
@@ -22,6 +23,16 @@ jn.define('im/messenger/lib/converter/data/recent', (require, exports, module) =
 	 */
 	class RecentDataConverter
 	{
+		/**
+		 * @param {object} element
+		 * @param {string} element.id
+		 * @return {RecentModelState}
+		 */
+		static fromPullToModel(element)
+		{
+			return RecentDataConverter.fromPushToModel(element);
+		}
+
 		// TODO: moved from old im.recent, need to refactor
 		/**
 		 * @return {object|false}
@@ -29,7 +40,7 @@ jn.define('im/messenger/lib/converter/data/recent', (require, exports, module) =
 		static fromPushToModel(element)
 		{
 			let newElement = {};
-			const recentItem = serviceLocator.get('core').getStore().getters['recentModel/getById'](element.id);
+			const recentItem = RecentDataConverter.getRecentItemFromStore(element.id);
 			if (recentItem)
 			{
 				newElement = clone(recentItem);
@@ -216,6 +227,31 @@ jn.define('im/messenger/lib/converter/data/recent', (require, exports, module) =
 		 * @param {Object} params.invited
 		 * @return {RecentModelState}
 		 */
+		static fromPullUserInviteToModel(params)
+		{
+			return RecentDataConverter.fromPushUserInviteToModel(params);
+		}
+
+		/**
+		 * @param {Object} params
+		 * @param {Object} params.user
+		 * @param {number} params.user.id
+		 * @return {RecentModelState}
+		 */
+		static fromPullUserUpdateToModel(params)
+		{
+			return RecentDataConverter.fromPullToModel({
+				id: params.user.id,
+				user: params.user,
+			});
+		}
+
+		/**
+		 * @param {Object} params
+		 * @param {Object} params.user
+		 * @param {Object} params.invited
+		 * @return {RecentModelState}
+		 */
 		static fromPushUserInviteToModel(params)
 		{
 			const { user, invited } = params;
@@ -250,6 +286,17 @@ jn.define('im/messenger/lib/converter/data/recent', (require, exports, module) =
 				},
 				options: {},
 			};
+		}
+
+		/**
+		 * @param {string} id
+		 * @return {?RecentModelState}
+		*/
+		static getRecentItemFromStore(id)
+		{
+			const store = serviceLocator.get('core').getStore();
+
+			return store.getters['recentModel/getById'](id);
 		}
 	}
 

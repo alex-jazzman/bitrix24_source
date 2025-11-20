@@ -13,6 +13,8 @@ jn.define('im/messenger/lib/counters/tab-counters/collab', (require, exports, mo
 	const logger = LoggerManager.getInstance().getLogger('counters--collab');
 
 	/**
+	 * @deprecated
+	 * @see MessengerCounters
 	 * @class CollabCounters
 	 */
 	class CollabCounters extends BaseTabCounters

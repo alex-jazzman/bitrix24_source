@@ -12,6 +12,7 @@ jn.define('im/messenger/lib/element/recent/item/user', (require, exports, module
 	const { RecentItem } = require('im/messenger/lib/element/recent/item/base');
 	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
+	const { ChatPermission } = require('im/messenger/lib/permission-manager');
 
 	/**
 	 * @class UserItem
@@ -167,12 +168,14 @@ jn.define('im/messenger/lib/element/recent/item/user', (require, exports, module
 
 		createActions()
 		{
+			const canMuted = ChatPermission.сanMute(this.getDialogItem().dialogId);
+
 			this.actions = [
 				this.getPinAction(),
 				this.getReadAction(),
-				this.getProfileAction(),
+				canMuted && this.getMuteAction(),
 				this.getHideAction(),
-			];
+			].filter(Boolean);
 
 			return this;
 		}

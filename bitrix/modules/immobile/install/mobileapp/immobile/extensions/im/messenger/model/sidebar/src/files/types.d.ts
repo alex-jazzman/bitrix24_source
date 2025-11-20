@@ -32,6 +32,7 @@ declare type SidebarFilesModelActions =
 	| 'sidebarModel/sidebarFilesModel/delete'
 	| 'sidebarModel/sidebarFilesModel/setHistoryLimitExceeded'
 	| 'sidebarModel/sidebarFilesModel/deleteFilesGroupedByChatId'
+	| 'sidebarModel/sidebarFilesModel/deleteByChatId'
 	;
 
 declare type SidebarFilesModelMutation =
@@ -39,6 +40,7 @@ declare type SidebarFilesModelMutation =
 	| 'sidebarModel/sidebarFilesModel/delete'
 	| 'sidebarModel/sidebarFilesModel/setHasNextPage'
 	| 'sidebarModel/sidebarFilesModel/setHistoryLimitExceeded'
+	| 'sidebarModel/sidebarFilesModel/deleteByChatId'
 	;
 
 declare type SidebarFilesSetActions = 'set' | 'setFromPagination';
@@ -60,6 +62,11 @@ declare type SidebarFilesDeleteActions = 'delete';
 declare type SidebarFilesDeleteData = {
 	chatId: chatId,
 	id: number,
+}
+
+declare type SidebarFilesDeleteByChatIdActions = 'deleteByChatId';
+declare type SidebarFilesDeleteByChatIdData = {
+	chatId: chatId,
 }
 
 declare type SidebarFilesSetHasNextPageActions = 'setHasNextPage';

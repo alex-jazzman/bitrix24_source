@@ -19,7 +19,6 @@ return [
 		'im:messenger/lib/logger',
 		'im:messenger/lib/feature',
 		'im:messenger/lib/permission-manager',
-		'im:messenger/lib/counters/tab-counters',
 		'im:messenger/lib/notifier',
 		'im:messenger/lib/emitter',
 		'im:messenger/lib/uuid-manager',

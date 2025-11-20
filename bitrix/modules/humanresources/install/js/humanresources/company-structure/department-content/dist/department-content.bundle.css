@@ -146,7 +146,8 @@
 	color: var(--ui-color-palette-black-base);
 }
 
-.hr-add-employee-empty-tab-entity-btn-text {
+.hr-add-employee-empty-tab-entity-btn-text,
+.hr-add-communications-empty-tab-entity-btn-text {
 	text-transform: none;
 	font-family: var(--ui-font-family-primary, var(--ui-font-family-system));
 	font-size: var(--ui-font-size-xl);
@@ -199,11 +200,6 @@ body.--user-dragging .hr-department-detail-content__user-container:hover {
 
 .hr-department-detail-content__user-role-select .ui-ctl-element {
 	border-radius: 9px;
-}
-
-.hr-department-detail-content__user-action-text-container.--role-select {
-	padding-bottom: 10px;
-	line-height: var(--ui-font-line-height-2xs);
 }
 
 .hr-department-detail-content__user-role-select .ui-ctl-after {
@@ -286,10 +282,14 @@ body.--user-dragging .hr-department-detail-content__user-container:hover {
 	border-bottom: 1px solid transparent;
 	cursor: pointer;
 	color: var(--ui-color-link-primary-base);
-	margin-left: 5px;
 	overflow: hidden;
 	white-space: nowrap;
 	text-overflow: ellipsis;
+}
+
+.hr-department-detail-content__tab-list_item-subtitle_before,
+.hr-department-detail-content__tab-list_item-subtitle_after {
+	white-space: pre;
 }
 
 .hr-department-detail-content__tab-list_orig-node-name:hover {
@@ -630,7 +630,7 @@ body.--user-dragging .hr-department-detail-content__user-container:hover {
 }
 
 .hr-department-detail-content_tab__empty-state-list {
-	margin: 14px 12px 0;
+	margin: 14px 10px 0;
 	display: flex;
 	flex-direction: column;
 	gap: 8px
@@ -642,11 +642,11 @@ body.--user-dragging .hr-department-detail-content__user-container:hover {
 
 .hr-department-detail-content_tab__empty-state-list--item-text {
 	font-size: var(--ui-font-size-sm);
-	line-height: var(--ui-font-line-height-3xs);
 	font-weight: var(--ui-font-weight-normal);
 	color: var(--ui-color-palette-gray-90);
 
-	padding-left: 24px;
+	padding-left: 26px;
+	padding-top: 4px;
 }
 
 .hr-department-detail-content_tab__empty-state-list-item-check {
@@ -943,39 +943,4 @@ body.--user-dragging .hr-department-detail-content__user-container:hover {
 
 .hr-department-detail-content__tab-list_header-button.--focused::before {
 	transform: rotate(180deg);
-}
-
-.hr-department-detail-content__user-action-text-container {
-	display: flex;
-	flex-direction: column;
-	gap: 5px;
-	padding-bottom: 14px;
-
-	font-weight: var(--ui-font-weight-normal);
-	font-size: var(--ui-font-size-md);
-	line-height: var(--ui-font-line-height-3xs);
-	color: var(--ui-color-palette-gray-90);
-}
-
-.hr-department-detail-content__user-belongs-to-department-text-container {
-	text-align: center;
-}
-
-.hr-department-detail-content__move-user-department-user-link {
-	text-decoration: none;
-	border-bottom: 1px dashed;
-	cursor: pointer;
-}
-
-.hr-department-detail-content__move-user-department_item-error {
-	display: flex;
-	align-items: center;
-	font: 13px/16px var(--ui-font-family-primary, var(--ui-font-family-system));
-	color: var(--ui-field-color-warning);
-	margin-top: 3px;
-}
-
-.hr-department-detail-content__move-user-department_item-error .ui-icon-set.--warning {
-	--ui-icon-set__icon-size: 20px;
-	--ui-icon-set__icon-color: var(--ui-field-color-warning);
 }
