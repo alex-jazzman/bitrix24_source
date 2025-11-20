@@ -85,6 +85,11 @@ namespace Bitrix\Crm\Order {
     }
 }
 
+namespace {
+    class CHTMLPagesCache extends \Bitrix\Main\Composite\Helper {
+    }
+}
+
 namespace Bitrix\Main\Entity\Field {
     class IReadable extends \Bitrix\Main\ORM\Fields\IReadable {
     }
@@ -372,11 +377,6 @@ namespace Bitrix\Main\Page {
 
 namespace Bitrix\Main\Page {
     class Frame extends \Bitrix\Main\Composite\Engine {
-    }
-}
-
-namespace {
-    class CHTMLPagesCache extends \Bitrix\Main\Composite\Helper {
     }
 }
 
@@ -702,5 +702,80 @@ namespace Bitrix\Tasks\Util {
 
 namespace Bitrix\Tasks\Internals\Log {
     class Logger extends \Bitrix\Tasks\Internals\Log\LogFacade {
+    }
+}
+
+namespace Bitrix\Baas {
+    class Service extends \Bitrix\Baas\Entity\Service {
+    }
+}
+
+namespace Bitrix\Baas\Controller\ServerPort {
+    class Domain extends \Bitrix\Baas\Controller\ServerPort\Lead {
+    }
+}
+
+namespace Bitrix\Iblock {
+    class SiteTable extends \Bitrix\Iblock\IblockSiteTable {
+    }
+}
+
+namespace Bitrix\Tasks {
+    class Integration extends \Bitrix\Tasks\Integration\Integration {
+    }
+}
+
+namespace Bitrix\Tasks {
+    class Util extends \Bitrix\Tasks\Util\Util {
+    }
+}
+
+namespace Bitrix\Tasks {
+    class UI extends \Bitrix\Tasks\Util\UI {
+    }
+}
+
+namespace Bitrix\Tasks\Provider {
+    class TaskQuery extends \Bitrix\Tasks\Provider\Query\TaskQuery {
+    }
+}
+
+namespace Bitrix\Tasks\V2\Internals\Control\Task\Action\Add\Async\Message {
+    class AddLastActivity extends \Bitrix\Tasks\V2\Internal\Service\Task\Action\Add\Async\Message\AddLastActivity {
+    }
+}
+
+namespace Bitrix\Tasks\V2\Internals\Control\Task\Action\Add\Async\Message {
+    class AddDavSync extends \Bitrix\Tasks\V2\Internal\Service\Task\Action\Add\Async\Message\AddDavSync {
+    }
+}
+
+namespace Bitrix\Tasks\V2\Internals\Control\Task\Action\Add\Async\Message {
+    class AddScenario extends \Bitrix\Tasks\V2\Internal\Service\Task\Action\Add\Async\Message\AddScenario {
+    }
+}
+
+namespace Bitrix\Tasks\V2\Internals\Control\Task\Action\Add\Async\Message {
+    class AddSearchIndex extends \Bitrix\Tasks\V2\Internal\Service\Task\Action\Add\Async\Message\AddSearchIndex {
+    }
+}
+
+namespace Bitrix\Tasks\V2\Internals\Control\Task\Action\Add\Async\Receiver {
+    class AddLastActivity extends \Bitrix\Tasks\V2\Internal\Service\Task\Action\Add\Async\Receiver\AddLastActivity {
+    }
+}
+
+namespace Bitrix\Tasks\V2\Internals\Control\Task\Action\Add\Async\Receiver {
+    class AddDavSync extends \Bitrix\Tasks\V2\Internal\Service\Task\Action\Add\Async\Receiver\AddDavSync {
+    }
+}
+
+namespace Bitrix\Tasks\V2\Internals\Control\Task\Action\Add\Async\Receiver {
+    class AddScenario extends \Bitrix\Tasks\V2\Internal\Service\Task\Action\Add\Async\Receiver\AddScenario {
+    }
+}
+
+namespace Bitrix\Tasks\V2\Internals\Control\Task\Action\Add\Async\Receiver {
+    class AddSearchIndex extends \Bitrix\Tasks\V2\Internal\Service\Task\Action\Add\Async\Receiver\AddSearchIndex {
     }
 }
