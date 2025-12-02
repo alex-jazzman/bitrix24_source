@@ -5867,9 +5867,10 @@ this.BX.UI = this.BX.UI || {};
 	    });
 	    return true;
 	  }, ui_lexical_core.COMMAND_PRIORITY_LOW), this.getEditor().registerCommand(HIDE_DIALOG_COMMAND, payload => {
-	    if (!payload || payload.sender !== 'mention') {
-	      babelHelpers.classPrivateFieldLooseBase(this, _hideDialog)[_hideDialog]();
+	    if ((payload == null ? void 0 : payload.sender) === 'mention' || (payload == null ? void 0 : payload.context) === 'resize' && babelHelpers.classPrivateFieldLooseBase(this, _mentionListening)[_mentionListening]) {
+	      return false;
 	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _hideDialog)[_hideDialog]();
 	    return false;
 	  }, ui_lexical_core.COMMAND_PRIORITY_LOW), this.getEditor().registerCommand(DIALOG_VISIBILITY_COMMAND, () => {
 	    return this.isDialogVisible();
@@ -7641,7 +7642,8 @@ this.BX.UI = this.BX.UI || {};
 	  list: {
 	    listitem: 'ui-typography-li',
 	    nested: {
-	      listitem: 'ui-text-editor__nestedListItem'
+	      list: '--nested',
+	      listitem: 'ui-text-editor__nestedListItem --nested'
 	    },
 	    olDepth: ['ui-typography-ol ui-text-editor__ol1', 'ui-typography-ol ui-text-editor__ol2', 'ui-typography-ol ui-text-editor__ol3', 'ui-typography-ol ui-text-editor__ol4', 'ui-typography-ol ui-text-editor__ol5'],
 	    ul: 'ui-typography-ul'
@@ -8630,7 +8632,45 @@ this.BX.UI = this.BX.UI || {};
 	  this.emit('onUnlink');
 	}
 
-	function validateUrl(url) {
+	/* eslint-disable no-underscore-dangle */
+	class CustomLinkNode extends ui_lexical_link.LinkNode {
+	  constructor(url = '', attributes = {}, key = null) {
+	    super(url, attributes, key);
+	  }
+	  static getType() {
+	    return 'custom-link';
+	  }
+	  static clone(node) {
+	    return new CustomLinkNode(node.__url, {
+	      rel: node.__rel,
+	      target: node.__target,
+	      title: node.__title
+	    }, node.__key);
+	  }
+	  static importJSON(serializedLinkNode) {
+	    return super.importJSON(serializedLinkNode);
+	  }
+	  exportJSON() {
+	    return {
+	      ...super.exportJSON(),
+	      type: 'custom-link',
+	      version: 1
+	    };
+	  }
+	  createDOM(config) {
+	    const element = super.createDOM(config);
+	    element.setAttribute('data-slider-ignore-autobinding', 'true');
+	    return element;
+	  }
+	}
+	function $createCustomLinkNode(url = '', attributes = {}) {
+	  return ui_lexical_core.$applyNodeReplacement(new CustomLinkNode(url, attributes));
+	}
+
+	function validateUrl(url, allowDomainRelativeUrl = true) {
+	  if (allowDomainRelativeUrl) {
+	    return /^(http:|https:|mailto:|tel:|sms:|\/)/i.test(url);
+	  }
 	  return /^(http:|https:|mailto:|tel:|sms:)/i.test(url);
 	}
 
@@ -8639,6 +8679,7 @@ this.BX.UI = this.BX.UI || {};
 	var _linkEditor = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("linkEditor");
 	var _onEditorScroll$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onEditorScroll");
 	var _lastSelection$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("lastSelection");
+	var _exportBBCode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("exportBBCode");
 	var _registerListeners$4 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerListeners");
 	var _registerCommands$9 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerCommands");
 	var _registerToggleLinkCommand = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerToggleLinkCommand");
@@ -8706,6 +8747,28 @@ this.BX.UI = this.BX.UI || {};
 	      writable: true,
 	      value: null
 	    });
+	    Object.defineProperty(this, _exportBBCode, {
+	      writable: true,
+	      value: lexicalNode => {
+	        const url = lexicalNode.getURL();
+	        const children = lexicalNode.getChildren();
+	        const isSimpleText = children.length === 1 && ui_lexical_core.$isTextNode(children[0]) && children[0].getFormat() === 0;
+	        const scheme = this.getEditor().getBBCodeScheme();
+	        if (isSimpleText && children[0].getTextContent() === url) {
+	          return {
+	            node: scheme.createElement({
+	              name: 'url'
+	            })
+	          };
+	        }
+	        return {
+	          node: scheme.createElement({
+	            name: 'url',
+	            value: url
+	          })
+	        };
+	      }
+	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _registerCommands$9)[_registerCommands$9]();
 	    babelHelpers.classPrivateFieldLooseBase(this, _registerListeners$4)[_registerListeners$4]();
 	    babelHelpers.classPrivateFieldLooseBase(this, _registerComponents$c)[_registerComponents$c]();
@@ -8714,7 +8777,17 @@ this.BX.UI = this.BX.UI || {};
 	    return 'Link';
 	  }
 	  static getNodes(editor) {
-	    return [ui_lexical_link.LinkNode];
+	    return [ui_lexical_link.LinkNode, CustomLinkNode, {
+	      replace: ui_lexical_link.LinkNode,
+	      with: node => {
+	        return $createCustomLinkNode(node.__url, {
+	          rel: node.__rel,
+	          target: node.__target,
+	          title: node.__title
+	        });
+	      },
+	      withClass: CustomLinkNode
+	    }];
 	  }
 	  importBBCode() {
 	    return {
@@ -8743,34 +8816,18 @@ this.BX.UI = this.BX.UI || {};
 	  }
 	  exportBBCode() {
 	    return {
-	      link: lexicalNode => {
-	        const url = lexicalNode.getURL();
-	        const children = lexicalNode.getChildren();
-	        const isSimpleText = children.length === 1 && ui_lexical_core.$isTextNode(children[0]) && children[0].getFormat() === 0;
-	        const scheme = this.getEditor().getBBCodeScheme();
-	        if (isSimpleText && children[0].getTextContent() === url) {
-	          return {
-	            node: scheme.createElement({
-	              name: 'url'
-	            })
-	          };
-	        }
-	        return {
-	          node: scheme.createElement({
-	            name: 'url',
-	            value: url
-	          })
-	        };
-	      }
+	      link: babelHelpers.classPrivateFieldLooseBase(this, _exportBBCode)[_exportBBCode],
+	      'custom-link': babelHelpers.classPrivateFieldLooseBase(this, _exportBBCode)[_exportBBCode]
 	    };
 	  }
 	  validateScheme() {
 	    return {
 	      nodes: [{
-	        nodeClass: ui_lexical_link.LinkNode
+	        nodeClass: CustomLinkNode
 	      }],
 	      bbcodeMap: {
-	        link: 'url'
+	        link: 'url',
+	        'custom-link': 'url'
 	      }
 	    };
 	  }
@@ -9012,7 +9069,7 @@ this.BX.UI = this.BX.UI || {};
 	      return false;
 	    }
 	    const clipboardText = event.clipboardData.getData('text');
-	    if (!validateUrl(clipboardText)) {
+	    if (!validateUrl(clipboardText, false)) {
 	      return false;
 	    }
 
@@ -9098,6 +9155,43 @@ this.BX.UI = this.BX.UI || {};
 		LinkPlugin: LinkPlugin
 	});
 
+	/* eslint-disable no-underscore-dangle */
+	class CustomAutoLinkNode extends ui_lexical_link.AutoLinkNode {
+	  constructor(url = '', attributes = {}, key = null) {
+	    super(url, attributes, key);
+	  }
+	  static getType() {
+	    return 'custom-autolink';
+	  }
+	  static clone(node) {
+	    return new CustomAutoLinkNode(node.__url, {
+	      isUnlinked: node.__isUnlinked,
+	      rel: node.__rel,
+	      target: node.__target,
+	      title: node.__title
+	    }, node.__key);
+	  }
+	  static importJSON(serializedLinkNode) {
+	    return super.importJSON(serializedLinkNode);
+	  }
+	  exportJSON() {
+	    return {
+	      ...super.exportJSON(),
+	      type: 'custom-autolink',
+	      version: 1
+	    };
+	  }
+	  createDOM(config) {
+	    const element = super.createDOM(config);
+	    element.setAttribute('data-slider-ignore-autobinding', 'true');
+	    return element;
+	  }
+	}
+	function $createCustomAutoLinkNode(url = '', attributes = {}) {
+	  return ui_lexical_core.$applyNodeReplacement(new CustomAutoLinkNode(url, attributes));
+	}
+
+	/* eslint-disable no-underscore-dangle */
 	const URL_REGEX = /((https?:\/\/(www\.)?)|(www\.))[\w#%+.:=@~-]{1,256}\.[\d()A-Za-z]{1,6}\b([\w#%&()+./:=?@[\]~-]*)(?<![%()+.:\]-])/;
 	const EMAIL_REGEX = /(([^\s"(),.:;<>@[\\\]]+(\.[^\s"(),.:;<>@[\\\]]+)*)|(".+"))@((\[(?:\d{1,3}\.){3}\d{1,3}])|(([\dA-Za-z-]+\.)+[A-Za-z]{2,}))/;
 	const MATCHERS = [createLinkMatcherWithRegExp(URL_REGEX, text => {
@@ -9118,11 +9212,30 @@ this.BX.UI = this.BX.UI || {};
 	    return 'AutoLink';
 	  }
 	  static getNodes(editor) {
-	    return [ui_lexical_link.AutoLinkNode];
+	    return [ui_lexical_link.AutoLinkNode, CustomAutoLinkNode, {
+	      replace: ui_lexical_link.AutoLinkNode,
+	      with: node => {
+	        return $createCustomAutoLinkNode(node.__url, {
+	          isUnlinked: node.__isUnlinked,
+	          rel: node.__rel,
+	          target: node.__target,
+	          title: node.__title
+	        });
+	      },
+	      withClass: CustomAutoLinkNode
+	    }];
 	  }
 	  exportBBCode() {
 	    return {
 	      autolink: () => {
+	        const scheme = this.getEditor().getBBCodeScheme();
+	        return {
+	          node: scheme.createElement({
+	            name: 'url'
+	          })
+	        };
+	      },
+	      'custom-autolink': () => {
 	        const scheme = this.getEditor().getBBCodeScheme();
 	        return {
 	          node: scheme.createElement({
@@ -9135,10 +9248,11 @@ this.BX.UI = this.BX.UI || {};
 	  validateScheme() {
 	    return {
 	      nodes: [{
-	        nodeClass: ui_lexical_link.AutoLinkNode
+	        nodeClass: CustomAutoLinkNode
 	      }],
 	      bbcodeMap: {
-	        autolink: 'url'
+	        autolink: 'url',
+	        'custom-autolink': 'url'
 	      }
 	    };
 	  }
@@ -11533,15 +11647,11 @@ this.BX.UI = this.BX.UI || {};
 	  if (!selection.isCollapsed() && rawTextContent === '') {
 	    return false;
 	  }
-	  const node = getSelectedNode(selection);
-	  const parent = node.getParent();
-	  if (ui_lexical_link.$isLinkNode(parent) || ui_lexical_link.$isLinkNode(node)) {
-	    return false;
-	  }
 	  const isSomeDialogVisible = this.getEditor().dispatchCommand(DIALOG_VISIBILITY_COMMAND);
 	  if (isSomeDialogVisible) {
 	    return false;
 	  }
+	  const node = getSelectedNode(selection);
 	  return ui_lexical_core.$isTextNode(node);
 	}
 

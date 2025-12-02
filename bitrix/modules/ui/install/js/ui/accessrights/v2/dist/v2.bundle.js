@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.UI = this.BX.UI || {};
 this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
-(function (exports,ui_dialogs_messagebox,ui_iconSet_api_vue,ui_buttons,ui_vue3_components_popup,ui_entitySelector,ui_vue3,ui_vue3_directives_hint,ui_vue3_components_switcher,main_popup,ui_ears,ui_hint,ui_vue3_components_richMenu,ui_notification,ui_analytics,ui_vue3_vuex,main_core_events,main_core) {
+(function (exports,ui_dialogs_messagebox,ui_accessrights_v2_itemListSelector,ui_system_chip_vue,ui_iconSet_api_vue,ui_buttons,ui_vue3_components_popup,ui_entitySelector,ui_vue3_directives_hint,ui_vue3_components_switcher,main_popup,ui_ears,ui_hint,ui_vue3_components_richMenu,ui_vue3,ui_notification,ui_analytics,ui_vue3_vuex,main_core_events,main_core,main_loader) {
 	'use strict';
 
 	/**
@@ -85,6 +85,280 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	  }
 	}
 
+	const EntitySelectorContext = Object.freeze({
+	  ROLE: 'ui.accessrights.v2~role-selector',
+	  MEMBER: 'ui.accessrights.v2~member-selector',
+	  VARIABLE: 'ui.accessrights.v2~variable-selector',
+	  USER: 'ui.accessrights.v2~user-selector'
+	});
+	const EntitySelectorEntities = Object.freeze({
+	  ROLE: 'ui.accessrights.v2~role',
+	  VARIABLE: 'ui.accessrights.v2~variable'
+	});
+
+	const STRUCTURE_NODE_ENTITY_TYPE = Object.freeze({
+	  TEAM: 'team',
+	  DEPARTMENT: 'department'
+	});
+	const STRUCTURE_NODE_ENTITY_TYPE_INFO = Object.freeze({
+	  [STRUCTURE_NODE_ENTITY_TYPE.DEPARTMENT]: {
+	    commonPrefix: 'SND',
+	    recursivePrefix: 'SNDR',
+	    memberType: 'structuredepartments'
+	  },
+	  [STRUCTURE_NODE_ENTITY_TYPE.TEAM]: {
+	    commonPrefix: 'SNT',
+	    recursivePrefix: 'SNTR',
+	    memberType: 'structureteams'
+	  }
+	});
+	var _options = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("options");
+	class SelectorService {
+	  constructor(options) {
+	    Object.defineProperty(this, _options, {
+	      writable: true,
+	      value: void 0
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _options)[_options] = options;
+	  }
+	  createDialog(dialogOptions) {
+	    var _dialogOptions$entiti;
+	    return new ui_entitySelector.Dialog({
+	      ...dialogOptions,
+	      context: EntitySelectorContext.MEMBER,
+	      enableSearch: true,
+	      alwaysShowLabels: true,
+	      cacheable: false,
+	      entities: (_dialogOptions$entiti = dialogOptions.entities) != null ? _dialogOptions$entiti : this.entities()
+	    });
+	  }
+	  entities() {
+	    const entities = [{
+	      id: 'user',
+	      options: {
+	        intranetUsersOnly: true,
+	        emailUsers: false,
+	        inviteEmployeeLink: false,
+	        inviteGuestLink: false
+	      }
+	    }];
+	    const includedNodeEntityTypes = [];
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].useStructureDepartmentsProviderTab) {
+	      includedNodeEntityTypes.push('department');
+	    }
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].addStructureTeamsProviderTab) {
+	      includedNodeEntityTypes.push('team');
+	    }
+	    if (includedNodeEntityTypes.length > 0) {
+	      entities.push({
+	        id: 'structure-node',
+	        options: {
+	          selectMode: 'usersAndDepartments',
+	          allowSelectRootDepartment: true,
+	          allowFlatDepartments: true,
+	          includedNodeEntityTypes,
+	          useMultipleTabs: true,
+	          visual: {
+	            avatarMode: 'node',
+	            tagStyle: 'none'
+	          }
+	        }
+	      });
+	    }
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].useStructureDepartmentsProviderTab) {
+	      entities.push({
+	        id: 'department',
+	        options: {
+	          selectMode: 'usersAndDepartments',
+	          allowSelectRootDepartment: true,
+	          allowFlatDepartments: true
+	        }
+	      });
+	    }
+	    entities.push({
+	      id: 'site-groups',
+	      dynamicLoad: true,
+	      dynamicSearch: true
+	    });
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].addStructureRolesProviderTab) {
+	      entities.push({
+	        id: 'structure-role',
+	        options: {
+	          includedNodeEntityTypes: ['team', 'department']
+	        },
+	        dynamicLoad: true,
+	        dynamicSearch: true
+	      });
+	    }
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].addProjectsProviderTab) {
+	      entities.push({
+	        id: 'project-access-codes'
+	      });
+	    }
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].addUserGroupsProviderTab) {
+	      entities.push({
+	        id: 'user-groups',
+	        dynamicLoad: true,
+	        options: {}
+	      });
+	    }
+	    return entities;
+	  }
+
+	  // eslint-disable-next-line sonarjs/cognitive-complexity
+	  getItemIdByAccessCode(accessCode) {
+	    if (/^I?U(\d+)$/.test(accessCode)) {
+	      const match = accessCode.match(/^I?U(\d+)$/) || null;
+	      const userId = match ? match[1] : null;
+	      return ['user', userId];
+	    }
+	    if (/^DR(\d+)$/.test(accessCode)) {
+	      const match = accessCode.match(/^DR(\d+)$/) || null;
+	      const departmentId = match ? match[1] : null;
+	      return ['department', departmentId];
+	    }
+	    if (/^D(\d+)$/.test(accessCode)) {
+	      const match = accessCode.match(/^D(\d+)$/) || null;
+	      const departmentId = match ? match[1] : null;
+	      return ['department', `${departmentId}:F`];
+	    }
+	    if (/^G(\d+)$/.test(accessCode)) {
+	      const match = accessCode.match(/^G(\d+)$/) || null;
+	      const groupId = match ? match[1] : null;
+	      return ['site-groups', groupId];
+	    }
+	    if (/^(?:ATD|ATE|ATT|AD|AE|AT)[1-9]\d*$/.test(accessCode)) {
+	      return ['structure-role', accessCode];
+	    }
+	    if (accessCode.at(0) === 'A') {
+	      return ['user-groups', accessCode];
+	    }
+	    if (/^SG(\d+)_([AEK])$/.test(accessCode)) {
+	      return ['project-access-codes', accessCode];
+	    }
+	    if (/^SNT(\d+)$/.test(accessCode)) {
+	      const match = accessCode.match(/^SNT(\d+)$/) || null;
+	      const structureNodeId = match ? match[1] : null;
+	      return ['structure-node', `${structureNodeId}:F`];
+	    }
+	    if (/^SNTR(\d+)$/.test(accessCode)) {
+	      const match = accessCode.match(/^SNTR(\d+)$/) || null;
+	      const structureNodeId = match ? match[1] : null;
+	      return ['structure-node', structureNodeId];
+	    }
+	    if (/^SND(\d+)$/.test(accessCode)) {
+	      const match = accessCode.match(/^SND(\d+)$/) || null;
+	      const structureNodeId = match ? match[1] : null;
+	      return ['structure-node', `${structureNodeId}:F`];
+	    }
+	    if (/^SNDR(\d+)$/.test(accessCode)) {
+	      const match = accessCode.match(/^SNDR(\d+)$/) || null;
+	      const structureNodeId = match ? match[1] : null;
+	      return ['structure-node', structureNodeId];
+	    }
+	    return ['unknown', accessCode];
+	  }
+	  getMemberTypeByItem(item) {
+	    switch (item.entityId) {
+	      case 'user':
+	        return 'users';
+	      case 'intranet':
+	      case 'department':
+	        return 'departments';
+	      case 'socnetgroup':
+	      case 'project-access-codes':
+	        return 'sonetgroups';
+	      case 'group':
+	        return 'groups';
+	      case 'structure-node':
+	        return this.getItemStructureNodeEntityTypeInfo(item, STRUCTURE_NODE_ENTITY_TYPE.TEAM).memberType;
+	      case 'site-groups':
+	      case 'user-groups':
+	      case 'structure-role':
+	        return 'usergroups';
+	      default:
+	        return '';
+	    }
+	  }
+	  getItemStructureNodeEntityTypeInfo(item, defaultNodeEntityType) {
+	    var _item$getCustomData$g, _item$getCustomData$g2;
+	    const availableNodeEntityTypes = Object.values(STRUCTURE_NODE_ENTITY_TYPE);
+	    let itemNodeEntityType = (_item$getCustomData$g = item.getCustomData().get('nodeEntityType')) != null ? _item$getCustomData$g : '';
+	    if (availableNodeEntityTypes.includes(itemNodeEntityType)) {
+	      return STRUCTURE_NODE_ENTITY_TYPE_INFO[itemNodeEntityType];
+	    }
+	    const accessCode = (_item$getCustomData$g2 = item.getCustomData().get('accessCode')) != null ? _item$getCustomData$g2 : '';
+	    Object.entries(STRUCTURE_NODE_ENTITY_TYPE_INFO).forEach(([nodeEntityType, info]) => {
+	      if (accessCode.startsWith(info.commonPrefix)) {
+	        itemNodeEntityType = nodeEntityType;
+	      }
+	    });
+	    if (!availableNodeEntityTypes.includes(itemNodeEntityType)) {
+	      itemNodeEntityType = defaultNodeEntityType;
+	    }
+	    return STRUCTURE_NODE_ENTITY_TYPE_INFO[itemNodeEntityType];
+	  }
+
+	  // eslint-disable-next-line sonarjs/cognitive-complexity
+	  getAccessCodeByItem(item) {
+	    const entityId = item.entityId;
+	    if (entityId === 'user') {
+	      return `U${item.id}`;
+	    }
+	    if (entityId === 'department') {
+	      if (main_core.Type.isString(item.id) && item.id.endsWith(':F')) {
+	        const match = item.id.match(/^(\d+):F$/);
+	        const originalId = match ? match[1] : null;
+
+	        // only members of the department itself
+	        return `D${originalId}`;
+	      }
+
+	      // whole department recursively
+	      return `DR${item.id}`;
+	    }
+	    if (entityId === 'structure-node') {
+	      const itemNodeEntityType = this.getItemStructureNodeEntityTypeInfo(item, STRUCTURE_NODE_ENTITY_TYPE.TEAM);
+	      if (main_core.Type.isString(item.id) && item.id.endsWith(':F')) {
+	        const match = item.id.match(/^(\d+):F$/);
+	        const originalId = match ? match[1] : null;
+	        const prefix = itemNodeEntityType.commonPrefix;
+	        return `${prefix}${originalId}`;
+	      }
+	      const prefix = itemNodeEntityType.recursivePrefix;
+	      return `${prefix}${item.id}`;
+	    }
+	    if (entityId === 'site-groups') {
+	      return `G${item.id}`;
+	    }
+	    if (entityId === 'structure-role') {
+	      return item.id;
+	    }
+	    if (entityId === 'user-groups') {
+	      return item.id;
+	    }
+	    if (entityId === 'project-access-codes') {
+	      return item.id;
+	    }
+	    return '';
+	  }
+	  getItemIdsByAccessCodes(accessCodes) {
+	    const map = new Map();
+	    accessCodes.forEach(accessCode => {
+	      map.set(accessCode, this.getItemIdByAccessCode(accessCode));
+	    });
+	    return map;
+	  }
+	  getMemberByItem(item) {
+	    return {
+	      id: this.getAccessCodeByItem(item),
+	      type: this.getMemberTypeByItem(item),
+	      name: item.title.text,
+	      avatar: main_core.Type.isStringFilled(item.avatar) ? item.avatar : null
+	    };
+	  }
+	}
+
 	var _cache = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("cache");
 	class ServiceLocator {
 	  /**
@@ -132,20 +406,13 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	      return null;
 	    });
 	  }
+	  static getSelectorService(memberOptions) {
+	    return new SelectorService(memberOptions);
+	  }
 	}
 	Object.defineProperty(ServiceLocator, _cache, {
 	  writable: true,
 	  value: new main_core.Cache.MemoryCache()
-	});
-
-	const EntitySelectorContext = Object.freeze({
-	  ROLE: 'ui.accessrights.v2~role-selector',
-	  MEMBER: 'ui.accessrights.v2~member-selector',
-	  VARIABLE: 'ui.accessrights.v2~variable-selector'
-	});
-	const EntitySelectorEntities = Object.freeze({
-	  ROLE: 'ui.accessrights.v2~role',
-	  VARIABLE: 'ui.accessrights.v2~variable'
 	});
 
 	const Selector = {
@@ -166,229 +433,45 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	    selectedItems() {
 	      const result = [];
 	      for (const accessCode of this.userGroup.members.keys()) {
-	        result.push(this.getItemIdByAccessCode(accessCode));
+	        result.push(this.getSelectorService().getItemIdByAccessCode(accessCode));
 	      }
 	      return result;
 	    },
 	    ...ui_vue3_vuex.mapState({
 	      options: state => state.application.options,
-	      addUserGroupsProviderTab: state => state.application.options.additionalMembersParams.addUserGroupsProviderTab,
-	      addProjectsProviderTab: state => state.application.options.additionalMembersParams.addProjectsProviderTab,
-	      addStructureTeamsProviderTab: state => state.application.options.additionalMembersParams.addStructureTeamsProviderTab,
-	      addStructureRolesProviderTab: state => state.application.options.additionalMembersParams.addStructureRolesProviderTab
+	      memberOptions: state => state.application.options.additionalMembersParams
 	    })
 	  },
 	  mounted() {
-	    const entities = this.getEntities();
-	    new ui_entitySelector.Dialog({
-	      enableSearch: true,
-	      context: EntitySelectorContext.MEMBER,
-	      alwaysShowLabels: true,
-	      entities,
+	    this.getSelectorService().createDialog({
 	      targetNode: this.bindNode,
 	      preselectedItems: this.selectedItems,
-	      cacheable: false,
 	      events: {
-	        'Item:onSelect': this.onMemberAdd,
-	        'Item:onDeselect': this.onMemberRemove,
-	        onHide: () => {
-	          this.$emit('close');
-	        }
+	        onHide: this.onHide
 	      }
 	    }).show();
 	  },
 	  methods: {
-	    // eslint-disable-next-line sonarjs/cognitive-complexity
-	    getItemIdByAccessCode(accessCode) {
-	      if (/^I?U(\d+)$/.test(accessCode)) {
-	        const match = accessCode.match(/^I?U(\d+)$/) || null;
-	        const userId = match ? match[1] : null;
-	        return ['user', userId];
-	      }
-	      if (/^DR(\d+)$/.test(accessCode)) {
-	        const match = accessCode.match(/^DR(\d+)$/) || null;
-	        const departmentId = match ? match[1] : null;
-	        return ['department', departmentId];
-	      }
-	      if (/^D(\d+)$/.test(accessCode)) {
-	        const match = accessCode.match(/^D(\d+)$/) || null;
-	        const departmentId = match ? match[1] : null;
-	        return ['department', `${departmentId}:F`];
-	      }
-	      if (/^G(\d+)$/.test(accessCode)) {
-	        const match = accessCode.match(/^G(\d+)$/) || null;
-	        const groupId = match ? match[1] : null;
-	        return ['site-groups', groupId];
-	      }
-	      if (/^(?:ATD|ATE|ATT|AD|AE|AT)[1-9]\d*$/.test(accessCode)) {
-	        return ['structure-role', accessCode];
-	      }
-	      if (accessCode.at(0) === 'A') {
-	        return ['user-groups', accessCode];
-	      }
-	      if (/^SG(\d+)_([AEK])$/.test(accessCode)) {
-	        return ['project-access-codes', accessCode];
-	      }
-	      if (/^SNT(\d+)$/.test(accessCode)) {
-	        const match = accessCode.match(/^SNT(\d+)$/) || null;
-	        const structureNodeId = match ? match[1] : null;
-	        return ['structure-node', `${structureNodeId}:F`];
-	      }
-	      if (/^SNTR(\d+)$/.test(accessCode)) {
-	        const match = accessCode.match(/^SNTR(\d+)$/) || null;
-	        const structureNodeId = match ? match[1] : null;
-	        return ['structure-node', structureNodeId];
-	      }
-	      return ['unknown', accessCode];
-	    },
-	    onMemberAdd(event) {
-	      const member = this.getMemberFromEvent(event);
-	      this.$store.dispatch('userGroups/addMember', {
-	        userGroupId: this.userGroup.id,
-	        accessCode: member.id,
-	        member
+	    onHide(event) {
+	      const dialog = event.getTarget();
+	      const members = [];
+	      dialog.selectedItems.forEach(item => {
+	        members.push(this.getSelectorService().getMemberByItem(item));
 	      });
-	    },
-	    onMemberRemove(event) {
-	      const member = this.getMemberFromEvent(event);
-	      this.$store.dispatch('userGroups/removeMember', {
+	      this.$store.dispatch('userGroups/updateMembersForUserGroup', {
 	        userGroupId: this.userGroup.id,
-	        accessCode: member.id
+	        members
 	      });
+	      this.$emit('close');
 	    },
 	    getMemberFromEvent(event) {
 	      const {
 	        item
 	      } = event.getData();
-	      return {
-	        id: this.getAccessCodeByItem(item),
-	        type: this.getMemberTypeByItem(item),
-	        name: item.title.text,
-	        avatar: main_core.Type.isStringFilled(item.avatar) ? item.avatar : null
-	      };
+	      return this.getSelectorService().getMemberByItem(item);
 	    },
-	    // eslint-disable-next-line sonarjs/cognitive-complexity
-	    getAccessCodeByItem(item) {
-	      const entityId = item.entityId;
-	      if (entityId === 'user') {
-	        return `U${item.id}`;
-	      }
-	      if (entityId === 'department') {
-	        if (main_core.Type.isString(item.id) && item.id.endsWith(':F')) {
-	          const match = item.id.match(/^(\d+):F$/);
-	          const originalId = match ? match[1] : null;
-
-	          // only members of the department itself
-	          return `D${originalId}`;
-	        }
-
-	        // whole department recursively
-	        return `DR${item.id}`;
-	      }
-	      if (entityId === 'structure-node') {
-	        if (main_core.Type.isString(item.id) && item.id.endsWith(':F')) {
-	          const match = item.id.match(/^(\d+):F$/);
-	          const originalId = match ? match[1] : null;
-	          return `SNT${originalId}`;
-	        }
-	        return `SNTR${item.id}`;
-	      }
-	      if (entityId === 'site-groups') {
-	        return `G${item.id}`;
-	      }
-	      if (entityId === 'user-groups') {
-	        return item.id;
-	      }
-	      if (entityId === 'structure-role') {
-	        return item.id;
-	      }
-	      if (entityId === 'project-access-codes') {
-	        return item.id;
-	      }
-	      return '';
-	    },
-	    getMemberTypeByItem(item) {
-	      switch (item.entityId) {
-	        case 'user':
-	          return 'users';
-	        case 'intranet':
-	        case 'department':
-	          return 'departments';
-	        case 'socnetgroup':
-	        case 'project-access-codes':
-	          return 'sonetgroups';
-	        case 'group':
-	          return 'groups';
-	        case 'structure-node':
-	          return 'structureteams';
-	        case 'site-groups':
-	        case 'user-groups':
-	        case 'structure-role':
-	          return 'usergroups';
-	        default:
-	          return '';
-	      }
-	    },
-	    getEntities() {
-	      const entities = [{
-	        id: 'user',
-	        options: {
-	          intranetUsersOnly: true,
-	          emailUsers: false,
-	          inviteEmployeeLink: false,
-	          inviteGuestLink: false
-	        }
-	      }, {
-	        id: 'department',
-	        options: {
-	          selectMode: 'usersAndDepartments',
-	          allowSelectRootDepartment: true,
-	          allowFlatDepartments: true
-	        }
-	      }, {
-	        id: 'site-groups',
-	        dynamicLoad: true,
-	        dynamicSearch: true
-	      }];
-	      if (this.addStructureRolesProviderTab) {
-	        entities.push({
-	          id: 'structure-role',
-	          options: {
-	            includedNodeEntityTypes: ['team', 'department']
-	          },
-	          dynamicLoad: true,
-	          dynamicSearch: true
-	        });
-	      }
-	      if (this.addStructureTeamsProviderTab) {
-	        entities.push({
-	          id: 'structure-node',
-	          options: {
-	            selectMode: 'usersAndDepartments',
-	            includedNodeEntityTypes: ['team'],
-	            allowSelectRootDepartment: true,
-	            allowFlatDepartments: true,
-	            useMultipleTabs: true,
-	            visual: {
-	              avatarMode: 'node',
-	              tagStyle: 'none'
-	            }
-	          }
-	        });
-	      }
-	      if (this.addProjectsProviderTab) {
-	        entities.push({
-	          id: 'project-access-codes'
-	        });
-	      }
-	      if (this.addUserGroupsProviderTab) {
-	        entities.push({
-	          id: 'user-groups',
-	          dynamicLoad: true,
-	          options: {}
-	        });
-	      }
-	      return entities;
+	    getSelectorService() {
+	      return ServiceLocator.getSelectorService(this.memberOptions);
 	    }
 	  },
 	  // just a template stub
@@ -406,13 +489,13 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	  },
 	  computed: {
 	    avatarBackgroundImage() {
-	      return `url(${encodeURI(this.member.avatar)})`;
+	      return `url('${encodeURI(this.member.avatar)}')`;
 	    },
 	    noAvatarClass() {
 	      if (this.member.type === 'groups') {
 	        return 'ui-icon-common-user-group';
 	      }
-	      if (this.member.type === 'sonetgroups' || this.member.type === 'departments') {
+	      if (this.member.type === 'sonetgroups' || this.member.type === 'departments' || this.member.type === 'structuredepartments') {
 	        return 'ui-icon-common-company';
 	      }
 	      if (this.member.type === 'usergroups') {
@@ -422,15 +505,27 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	        return 'ui-icon-common-my-plan';
 	      }
 	      return 'ui-icon-common-user';
+	    },
+	    memberTitle() {
+	      if (main_core.Type.isStringFilled(this.member.name)) {
+	        return this.member.name;
+	      }
+	      return '';
 	    }
 	  },
 	  template: `
 		<div class='ui-access-rights-v2-members-item'>
-			<a v-if="member.avatar" class='ui-access-rights-v2-members-item-avatar' :title="member.name" :style="{
-				backgroundImage: avatarBackgroundImage,
-				backgroundSize: 'cover',
-			}"></a>
-			<a v-else class='ui-icon ui-access-rights-v2-members-item-icon' :class="noAvatarClass" :title="member.name">
+			<a
+				v-if="member.avatar"
+				class='ui-access-rights-v2-members-item-avatar'
+				:title="memberTitle"
+				:style="{
+						backgroundImage: avatarBackgroundImage,
+						backgroundSize: 'cover',
+					}"
+			>
+			</a>
+			<a v-else class='ui-icon ui-access-rights-v2-members-item-icon' :class="noAvatarClass" :title="memberTitle">
 				<i></i>
 			</a>
 		</div>
@@ -753,6 +848,1045 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	  }
 	}
 
+	const NEW_USER_GROUP_ID_PREFIX = 'new~~~';
+	const SELECTED_ALL_USER_ID = 'all-users';
+	var _initialUserGroups = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initialUserGroups");
+	var _sortConfig = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sortConfig");
+	var _selectedMember = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("selectedMember");
+	var _getUserGroupsCollectionBySelectedMember = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getUserGroupsCollectionBySelectedMember");
+	var _setAccessRightValuesAction = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setAccessRightValuesAction");
+	var _setAccessRightValuesForShownAction = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setAccessRightValuesForShownAction");
+	var _setMinAccessRightValuesAction = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setMinAccessRightValuesAction");
+	var _setMinAccessRightValuesInSectionAction = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setMinAccessRightValuesInSectionAction");
+	var _setMinAccessRightValuesForRight = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setMinAccessRightValuesForRight");
+	var _getMinValueForColumnAction = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getMinValueForColumnAction");
+	var _getMinValue = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getMinValue");
+	var _setMaxAccessRightValuesAction = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setMaxAccessRightValuesAction");
+	var _setMaxAccessRightValuesInSectionAction = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setMaxAccessRightValuesInSectionAction");
+	var _setMaxAccessRightValuesForRight = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setMaxAccessRightValuesForRight");
+	var _getMaxValueForColumnAction = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getMaxValueForColumnAction");
+	var _getMaxValue = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getMaxValue");
+	var _copySectionValuesAction = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("copySectionValuesAction");
+	var _setRoleTitleAction = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setRoleTitleAction");
+	var _addMemberAction = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("addMemberAction");
+	var _isMemberValid = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isMemberValid");
+	var _removeMemberAction = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("removeMemberAction");
+	var _updateMembersForUserGroupAction = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateMembersForUserGroupAction");
+	var _copyUserGroupAction = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("copyUserGroupAction");
+	var _addUserGroupAction = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("addUserGroupAction");
+	var _removeUserGroupAction = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("removeUserGroupAction");
+	var _updateUserGroupSortAction = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateUserGroupSortAction");
+	var _updateSortConfigForSelectedMemberAction = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateSortConfigForSelectedMemberAction");
+	var _updateSortConfigAction = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateSortConfigAction");
+	var _selectMemberAction = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("selectMemberAction");
+	var _hideUserGroupAction = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hideUserGroupAction");
+	var _updateSortConfig = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateSortConfig");
+	var _isUserGroupExists = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isUserGroupExists");
+	var _isValidSortConfigForSelectedMember = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isValidSortConfigForSelectedMember");
+	var _isValidSortConfig = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isValidSortConfig");
+	var _isValidSelectedMember = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isValidSelectedMember");
+	var _getUserGroup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getUserGroup");
+	var _isValueExistsInStructure = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isValueExistsInStructure");
+	var _deleteRightAction = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("deleteRightAction");
+	var _isValueModified = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isValueModified");
+	var _isSetsEqual = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isSetsEqual");
+	var _isUserGroupModified = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isUserGroupModified");
+	class UserGroupsModel extends ui_vue3_vuex.BuilderModel {
+	  constructor(...args) {
+	    super(...args);
+	    Object.defineProperty(this, _isUserGroupModified, {
+	      value: _isUserGroupModified2
+	    });
+	    Object.defineProperty(this, _isSetsEqual, {
+	      value: _isSetsEqual2
+	    });
+	    Object.defineProperty(this, _isValueModified, {
+	      value: _isValueModified2
+	    });
+	    Object.defineProperty(this, _deleteRightAction, {
+	      value: _deleteRightAction2
+	    });
+	    Object.defineProperty(this, _isValueExistsInStructure, {
+	      value: _isValueExistsInStructure2
+	    });
+	    Object.defineProperty(this, _getUserGroup, {
+	      value: _getUserGroup2
+	    });
+	    Object.defineProperty(this, _isValidSelectedMember, {
+	      value: _isValidSelectedMember2
+	    });
+	    Object.defineProperty(this, _isValidSortConfig, {
+	      value: _isValidSortConfig2
+	    });
+	    Object.defineProperty(this, _isValidSortConfigForSelectedMember, {
+	      value: _isValidSortConfigForSelectedMember2
+	    });
+	    Object.defineProperty(this, _isUserGroupExists, {
+	      value: _isUserGroupExists2
+	    });
+	    Object.defineProperty(this, _updateSortConfig, {
+	      value: _updateSortConfig2
+	    });
+	    Object.defineProperty(this, _hideUserGroupAction, {
+	      value: _hideUserGroupAction2
+	    });
+	    Object.defineProperty(this, _selectMemberAction, {
+	      value: _selectMemberAction2
+	    });
+	    Object.defineProperty(this, _updateSortConfigAction, {
+	      value: _updateSortConfigAction2
+	    });
+	    Object.defineProperty(this, _updateSortConfigForSelectedMemberAction, {
+	      value: _updateSortConfigForSelectedMemberAction2
+	    });
+	    Object.defineProperty(this, _updateUserGroupSortAction, {
+	      value: _updateUserGroupSortAction2
+	    });
+	    Object.defineProperty(this, _removeUserGroupAction, {
+	      value: _removeUserGroupAction2
+	    });
+	    Object.defineProperty(this, _addUserGroupAction, {
+	      value: _addUserGroupAction2
+	    });
+	    Object.defineProperty(this, _copyUserGroupAction, {
+	      value: _copyUserGroupAction2
+	    });
+	    Object.defineProperty(this, _updateMembersForUserGroupAction, {
+	      value: _updateMembersForUserGroupAction2
+	    });
+	    Object.defineProperty(this, _removeMemberAction, {
+	      value: _removeMemberAction2
+	    });
+	    Object.defineProperty(this, _isMemberValid, {
+	      value: _isMemberValid2
+	    });
+	    Object.defineProperty(this, _addMemberAction, {
+	      value: _addMemberAction2
+	    });
+	    Object.defineProperty(this, _setRoleTitleAction, {
+	      value: _setRoleTitleAction2
+	    });
+	    Object.defineProperty(this, _copySectionValuesAction, {
+	      value: _copySectionValuesAction2
+	    });
+	    Object.defineProperty(this, _getMaxValue, {
+	      value: _getMaxValue2
+	    });
+	    Object.defineProperty(this, _getMaxValueForColumnAction, {
+	      value: _getMaxValueForColumnAction2
+	    });
+	    Object.defineProperty(this, _setMaxAccessRightValuesForRight, {
+	      value: _setMaxAccessRightValuesForRight2
+	    });
+	    Object.defineProperty(this, _setMaxAccessRightValuesInSectionAction, {
+	      value: _setMaxAccessRightValuesInSectionAction2
+	    });
+	    Object.defineProperty(this, _setMaxAccessRightValuesAction, {
+	      value: _setMaxAccessRightValuesAction2
+	    });
+	    Object.defineProperty(this, _getMinValue, {
+	      value: _getMinValue2
+	    });
+	    Object.defineProperty(this, _getMinValueForColumnAction, {
+	      value: _getMinValueForColumnAction2
+	    });
+	    Object.defineProperty(this, _setMinAccessRightValuesForRight, {
+	      value: _setMinAccessRightValuesForRight2
+	    });
+	    Object.defineProperty(this, _setMinAccessRightValuesInSectionAction, {
+	      value: _setMinAccessRightValuesInSectionAction2
+	    });
+	    Object.defineProperty(this, _setMinAccessRightValuesAction, {
+	      value: _setMinAccessRightValuesAction2
+	    });
+	    Object.defineProperty(this, _setAccessRightValuesForShownAction, {
+	      value: _setAccessRightValuesForShownAction2
+	    });
+	    Object.defineProperty(this, _setAccessRightValuesAction, {
+	      value: _setAccessRightValuesAction2
+	    });
+	    Object.defineProperty(this, _getUserGroupsCollectionBySelectedMember, {
+	      value: _getUserGroupsCollectionBySelectedMember2
+	    });
+	    Object.defineProperty(this, _initialUserGroups, {
+	      writable: true,
+	      value: new Map()
+	    });
+	    Object.defineProperty(this, _sortConfig, {
+	      writable: true,
+	      value: {}
+	    });
+	    Object.defineProperty(this, _selectedMember, {
+	      writable: true,
+	      value: void 0
+	    });
+	  }
+	  getName() {
+	    return 'userGroups';
+	  }
+	  setInitialUserGroups(groups) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _initialUserGroups)[_initialUserGroups] = groups;
+	    return this;
+	  }
+	  setSortConfig(sortConfig) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _sortConfig)[_sortConfig] = sortConfig;
+	    return this;
+	  }
+	  setSelectedMember(selectedMember) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _selectedMember)[_selectedMember] = selectedMember;
+	    return this;
+	  }
+	  getState() {
+	    return {
+	      collection: main_core.Runtime.clone(babelHelpers.classPrivateFieldLooseBase(this, _initialUserGroups)[_initialUserGroups]),
+	      deleted: new Set(),
+	      selectedMember: babelHelpers.classPrivateFieldLooseBase(this, _selectedMember)[_selectedMember],
+	      sortConfig: babelHelpers.classPrivateFieldLooseBase(this, _sortConfig)[_sortConfig]
+	    };
+	  }
+	  getElementState(params = {}) {
+	    return {
+	      id: `${NEW_USER_GROUP_ID_PREFIX}${main_core.Text.getRandom()}`,
+	      isNew: true,
+	      isModified: true,
+	      title: main_core.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_ROLE_NAME'),
+	      accessRights: new Map(),
+	      members: new Map()
+	    };
+	  }
+	  getGetters() {
+	    return {
+	      shown: (state, getters, rootState) => {
+	        var _state$selectedMember, _state$selectedMember2;
+	        const selectedMemberId = (_state$selectedMember = (_state$selectedMember2 = state.selectedMember) == null ? void 0 : _state$selectedMember2.id) != null ? _state$selectedMember : SELECTED_ALL_USER_ID;
+	        const collection = babelHelpers.classPrivateFieldLooseBase(this, _getUserGroupsCollectionBySelectedMember)[_getUserGroupsCollectionBySelectedMember](state);
+	        if (!state.sortConfig || !state.sortConfig[selectedMemberId]) {
+	          if (rootState.application.options.maxVisibleUserGroups > 0) {
+	            return new Map([...collection].slice(0, rootState.application.options.maxVisibleUserGroups));
+	          }
+	          return collection;
+	        }
+	        const sortedGroups = [...collection].filter(([userGroupId]) => state.sortConfig[selectedMemberId][userGroupId] >= 0).sort(([idA], [idB]) => {
+	          var _state$sortConfig$sel, _state$sortConfig$sel2;
+	          return ((_state$sortConfig$sel = state.sortConfig[selectedMemberId][idA]) != null ? _state$sortConfig$sel : Infinity) - ((_state$sortConfig$sel2 = state.sortConfig[selectedMemberId][idB]) != null ? _state$sortConfig$sel2 : Infinity);
+	        });
+	        if (rootState.application.options.maxVisibleUserGroups > 0) {
+	          return new Map(sortedGroups.slice(0, rootState.application.options.maxVisibleUserGroups));
+	        }
+	        return new Map(sortedGroups);
+	      },
+	      userGroupsBySelectedMember: state => {
+	        return babelHelpers.classPrivateFieldLooseBase(this, _getUserGroupsCollectionBySelectedMember)[_getUserGroupsCollectionBySelectedMember](state);
+	      },
+	      getEmptyAccessRightValue: (state, getters, rootState, rootGetters) => (userGroupId, sectionCode, valueId) => {
+	        const values = rootGetters['accessRights/getEmptyValue'](sectionCode, valueId);
+	        return {
+	          id: valueId,
+	          values,
+	          isModified: state.collection.get(userGroupId).isNew
+	        };
+	      },
+	      defaultAccessRightValues: (state, getters, rootState) => {
+	        const result = new Map();
+	        for (const section of rootState.accessRights.collection.values()) {
+	          for (const [rightId, right] of section.rights) {
+	            if (main_core.Type.isNil(right.defaultValue)) {
+	              continue;
+	            }
+	            result.set(rightId, {
+	              id: rightId,
+	              values: right.defaultValue,
+	              isModified: true
+	            });
+	          }
+	        }
+	        return result;
+	      },
+	      isModified: state => {
+	        if (state.deleted.size > 0) {
+	          return true;
+	        }
+	        for (const userGroup of state.collection.values()) {
+	          if (userGroup.isNew || userGroup.isModified) {
+	            return true;
+	          }
+	          for (const value of userGroup.accessRights.values()) {
+	            if (value.isModified) {
+	              return true;
+	            }
+	          }
+	        }
+	        return false;
+	      },
+	      isMaxVisibleUserGroupsReached: (state, getters, rootState, rootGetters) => {
+	        if (!rootGetters['application/isMaxVisibleUserGroupsSet']) {
+	          return false;
+	        }
+	        return getters.shown.size >= rootState.application.options.maxVisibleUserGroups;
+	      }
+	    };
+	  }
+	  getActions() {
+	    return {
+	      setAccessRightValues: (store, payload) => {
+	        babelHelpers.classPrivateFieldLooseBase(this, _setAccessRightValuesAction)[_setAccessRightValuesAction](store, payload);
+	      },
+	      setAccessRightValuesForShown: (store, payload) => {
+	        babelHelpers.classPrivateFieldLooseBase(this, _setAccessRightValuesForShownAction)[_setAccessRightValuesForShownAction](store, payload);
+	      },
+	      setMinAccessRightValues: (store, payload) => {
+	        babelHelpers.classPrivateFieldLooseBase(this, _setMinAccessRightValuesAction)[_setMinAccessRightValuesAction](store, payload);
+	      },
+	      setMaxAccessRightValues: (store, payload) => {
+	        babelHelpers.classPrivateFieldLooseBase(this, _setMaxAccessRightValuesAction)[_setMaxAccessRightValuesAction](store, payload);
+	      },
+	      setMinAccessRightValuesInSection: (store, payload) => {
+	        babelHelpers.classPrivateFieldLooseBase(this, _setMinAccessRightValuesInSectionAction)[_setMinAccessRightValuesInSectionAction](store, payload);
+	      },
+	      setMaxAccessRightValuesInSection: (store, payload) => {
+	        babelHelpers.classPrivateFieldLooseBase(this, _setMaxAccessRightValuesInSectionAction)[_setMaxAccessRightValuesInSectionAction](store, payload);
+	      },
+	      setMinAccessRightValuesForRight: (store, payload) => {
+	        babelHelpers.classPrivateFieldLooseBase(this, _setMinAccessRightValuesForRight)[_setMinAccessRightValuesForRight](store, payload);
+	      },
+	      setMaxAccessRightValuesForRight: (store, payload) => {
+	        babelHelpers.classPrivateFieldLooseBase(this, _setMaxAccessRightValuesForRight)[_setMaxAccessRightValuesForRight](store, payload);
+	      },
+	      setRoleTitle: (store, payload) => {
+	        babelHelpers.classPrivateFieldLooseBase(this, _setRoleTitleAction)[_setRoleTitleAction](store, payload);
+	      },
+	      addMember: (store, payload) => {
+	        babelHelpers.classPrivateFieldLooseBase(this, _addMemberAction)[_addMemberAction](store, payload);
+	      },
+	      removeMember: (store, payload) => {
+	        babelHelpers.classPrivateFieldLooseBase(this, _removeMemberAction)[_removeMemberAction](store, payload);
+	      },
+	      updateMembersForUserGroup: (store, payload) => {
+	        babelHelpers.classPrivateFieldLooseBase(this, _updateMembersForUserGroupAction)[_updateMembersForUserGroupAction](store, payload);
+	      },
+	      copyUserGroup: (store, payload) => {
+	        babelHelpers.classPrivateFieldLooseBase(this, _copyUserGroupAction)[_copyUserGroupAction](store, payload);
+	      },
+	      copySectionValues: (store, payload) => {
+	        babelHelpers.classPrivateFieldLooseBase(this, _copySectionValuesAction)[_copySectionValuesAction](store, payload);
+	      },
+	      addUserGroup: store => {
+	        babelHelpers.classPrivateFieldLooseBase(this, _addUserGroupAction)[_addUserGroupAction](store);
+	      },
+	      removeUserGroup: (store, payload) => {
+	        babelHelpers.classPrivateFieldLooseBase(this, _removeUserGroupAction)[_removeUserGroupAction](store, payload);
+	      },
+	      updateUserGroupSort: (store, payload) => {
+	        babelHelpers.classPrivateFieldLooseBase(this, _updateUserGroupSortAction)[_updateUserGroupSortAction](store, payload);
+	      },
+	      updateSortConfigForSelectedMember: (store, payload) => {
+	        babelHelpers.classPrivateFieldLooseBase(this, _updateSortConfigForSelectedMemberAction)[_updateSortConfigForSelectedMemberAction](store, payload);
+	      },
+	      updateSortConfig: (store, payload) => {
+	        babelHelpers.classPrivateFieldLooseBase(this, _updateSortConfigAction)[_updateSortConfigAction](store, payload);
+	      },
+	      deleteRight: (store, payload) => {
+	        babelHelpers.classPrivateFieldLooseBase(this, _deleteRightAction)[_deleteRightAction](store, payload);
+	      },
+	      selectMember: (store, payload) => {
+	        babelHelpers.classPrivateFieldLooseBase(this, _selectMemberAction)[_selectMemberAction](store, payload);
+	      }
+	    };
+	  }
+	  getMutations() {
+	    return {
+	      setAccessRightValues: (state, {
+	        userGroupId,
+	        valueId,
+	        values,
+	        isModified
+	      }) => {
+	        const userGroup = babelHelpers.classPrivateFieldLooseBase(this, _getUserGroup)[_getUserGroup](state, userGroupId);
+	        const accessRightValue = userGroup.accessRights.get(valueId);
+	        if (!accessRightValue) {
+	          userGroup.accessRights.set(valueId, {
+	            id: valueId,
+	            values,
+	            isModified
+	          });
+	          return;
+	        }
+	        accessRightValue.values = values;
+	        accessRightValue.isModified = isModified;
+	      },
+	      setRoleTitle: (state, {
+	        userGroupId,
+	        title
+	      }) => {
+	        const userGroup = babelHelpers.classPrivateFieldLooseBase(this, _getUserGroup)[_getUserGroup](state, userGroupId);
+	        userGroup.title = title;
+	        userGroup.isModified = babelHelpers.classPrivateFieldLooseBase(this, _isUserGroupModified)[_isUserGroupModified](userGroup);
+	      },
+	      addMember: (state, {
+	        userGroupId,
+	        accessCode,
+	        member
+	      }) => {
+	        const userGroup = babelHelpers.classPrivateFieldLooseBase(this, _getUserGroup)[_getUserGroup](state, userGroupId);
+	        userGroup.members.set(accessCode, member);
+	        userGroup.isModified = babelHelpers.classPrivateFieldLooseBase(this, _isUserGroupModified)[_isUserGroupModified](userGroup);
+	      },
+	      removeMember: (state, {
+	        userGroupId,
+	        accessCode
+	      }) => {
+	        const userGroup = babelHelpers.classPrivateFieldLooseBase(this, _getUserGroup)[_getUserGroup](state, userGroupId);
+	        userGroup.members.delete(accessCode);
+	        userGroup.isModified = babelHelpers.classPrivateFieldLooseBase(this, _isUserGroupModified)[_isUserGroupModified](userGroup);
+	      },
+	      updateMembersForUserGroup: (state, {
+	        userGroupId,
+	        memberCollection
+	      }) => {
+	        const userGroup = babelHelpers.classPrivateFieldLooseBase(this, _getUserGroup)[_getUserGroup](state, userGroupId);
+	        userGroup.members = memberCollection;
+	        userGroup.isModified = babelHelpers.classPrivateFieldLooseBase(this, _isUserGroupModified)[_isUserGroupModified](userGroup);
+	      },
+	      addUserGroup: (state, {
+	        userGroup
+	      }) => {
+	        state.collection.set(userGroup.id, userGroup);
+	      },
+	      removeUserGroup: (state, {
+	        userGroupId
+	      }) => {
+	        state.collection.delete(userGroupId);
+	      },
+	      markUserGroupForDeletion: (state, {
+	        userGroupId
+	      }) => {
+	        state.deleted.add(userGroupId);
+	      },
+	      updateSortConfigForSelectedMember: (state, {
+	        sortConfigForSelectedMember
+	      }) => {
+	        var _state$selectedMember3, _state$selectedMember4;
+	        const selectedMemberId = (_state$selectedMember3 = (_state$selectedMember4 = state.selectedMember) == null ? void 0 : _state$selectedMember4.id) != null ? _state$selectedMember3 : SELECTED_ALL_USER_ID;
+	        // eslint-disable-next-line no-param-reassign
+	        state.sortConfig[selectedMemberId] = sortConfigForSelectedMember;
+	      },
+	      updateSortConfig: (state, {
+	        sortConfig
+	      }) => {
+	        // eslint-disable-next-line no-param-reassign
+	        state.sortConfig = sortConfig;
+	      },
+	      deleteRight: (state, {
+	        rightId
+	      }) => {
+	        for (const role of state.collection.values()) {
+	          if (role.accessRights.get(rightId)) {
+	            role.accessRights.delete(rightId);
+	          }
+	        }
+	      },
+	      selectMember: (state, {
+	        member
+	      }) => {
+	        // eslint-disable-next-line no-param-reassign
+	        state.selectedMember = member;
+	      }
+	    };
+	  }
+	}
+	function _getUserGroupsCollectionBySelectedMember2(state) {
+	  var _state$selectedMember5, _state$selectedMember6, _state$selectedMember7;
+	  const result = new Map();
+	  const selectedMemberId = (_state$selectedMember5 = (_state$selectedMember6 = state.selectedMember) == null ? void 0 : _state$selectedMember6.id) != null ? _state$selectedMember5 : SELECTED_ALL_USER_ID;
+	  const accessCodes = (_state$selectedMember7 = state.selectedMember) != null && _state$selectedMember7.accessCodes ? [...state.selectedMember.accessCodes] : [];
+	  for (const [userGroupId, userGroup] of state.collection) {
+	    if (selectedMemberId === SELECTED_ALL_USER_ID || accessCodes.some(code => userGroup.members.has(code))) {
+	      result.set(userGroupId, userGroup);
+	    }
+	  }
+	  return result;
+	}
+	function _setAccessRightValuesAction2(store, payload) {
+	  if (!main_core.Type.isSet(payload.values)) {
+	    console.warn('ui.accessrights.v2: Attempt to set not-Set values', payload);
+	    return;
+	  }
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _isUserGroupExists)[_isUserGroupExists](store, payload.userGroupId)) {
+	    console.warn('ui.accessrights.v2: Attempt to set value to a user group that dont exists', payload);
+	    return;
+	  }
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _isValueExistsInStructure)[_isValueExistsInStructure](store, payload.sectionCode, payload.valueId)) {
+	    console.warn('ui.accessrights.v2: Attempt to set value to a right that dont exists in structure', payload);
+	    return;
+	  }
+	  store.commit('setAccessRightValues', {
+	    userGroupId: payload.userGroupId,
+	    valueId: payload.valueId,
+	    values: payload.values,
+	    isModified: babelHelpers.classPrivateFieldLooseBase(this, _isValueModified)[_isValueModified](payload.userGroupId, payload.valueId, payload.values, store.rootGetters['accessRights/getEmptyValue'](payload.sectionCode, payload.valueId))
+	  });
+	}
+	function _setAccessRightValuesForShownAction2(store, payload) {
+	  for (const userGroupId of store.getters.shown.keys()) {
+	    void store.dispatch('setAccessRightValues', {
+	      ...payload,
+	      userGroupId
+	    });
+	  }
+	}
+	function _setMinAccessRightValuesAction2(store, {
+	  userGroupId
+	}) {
+	  for (const sectionCode of store.rootState.accessRights.collection.keys()) {
+	    void store.dispatch('setMinAccessRightValuesInSection', {
+	      userGroupId,
+	      sectionCode
+	    });
+	  }
+	  void store.dispatch('accessRights/expandAllSections', null, {
+	    root: true
+	  });
+	}
+	function _setMinAccessRightValuesInSectionAction2(store, {
+	  userGroupId,
+	  sectionCode
+	}) {
+	  const section = store.rootState.accessRights.collection.get(sectionCode);
+	  if (!section) {
+	    console.warn('ui.accessrights.v2: attempt to set min values in section that dont exists', {
+	      sectionCode
+	    });
+	    return;
+	  }
+	  for (const item of section.rights.values()) {
+	    const valueToSet = babelHelpers.classPrivateFieldLooseBase(this, _getMinValueForColumnAction)[_getMinValueForColumnAction](item, store.rootGetters['accessRights/getEmptyValue'](section.sectionCode, item.id));
+	    if (main_core.Type.isNil(valueToSet)) {
+	      continue;
+	    }
+	    void store.dispatch('setAccessRightValues', {
+	      userGroupId,
+	      sectionCode: section.sectionCode,
+	      valueId: item.id,
+	      values: valueToSet
+	    });
+	  }
+	}
+	function _setMinAccessRightValuesForRight2(store, {
+	  sectionCode,
+	  rightId
+	}) {
+	  var _store$rootState$acce;
+	  const right = (_store$rootState$acce = store.rootState.accessRights.collection.get(sectionCode)) == null ? void 0 : _store$rootState$acce.rights.get(rightId);
+	  if (!right) {
+	    console.warn('ui.accessrights.v2: attempt to set min values for right that dont exists', {
+	      sectionCode,
+	      rightId
+	    });
+	    return;
+	  }
+	  const valueToSet = babelHelpers.classPrivateFieldLooseBase(this, _getMinValue)[_getMinValue](right);
+	  if (main_core.Type.isNil(valueToSet)) {
+	    console.warn('ui.accessrights.v2: attempt to set min values for right that dont have min value set', {
+	      sectionCode,
+	      rightId
+	    });
+	    return;
+	  }
+	  void store.dispatch('setAccessRightValuesForShown', {
+	    sectionCode,
+	    valueId: rightId,
+	    values: valueToSet
+	  });
+	}
+	function _getMinValueForColumnAction2(item, emptyValue) {
+	  const setEmpty = main_core.Type.isBoolean(item.setEmptyOnSetMinMaxValueInColumn) && item.setEmptyOnSetMinMaxValueInColumn;
+	  if (setEmpty) {
+	    return emptyValue;
+	  }
+	  return babelHelpers.classPrivateFieldLooseBase(this, _getMinValue)[_getMinValue](item);
+	}
+	function _getMinValue2(item) {
+	  var _ServiceLocator$getVa;
+	  return (_ServiceLocator$getVa = ServiceLocator.getValueTypeByRight(item)) == null ? void 0 : _ServiceLocator$getVa.getMinValue(item);
+	}
+	function _setMaxAccessRightValuesAction2(store, {
+	  userGroupId
+	}) {
+	  for (const sectionCode of store.rootState.accessRights.collection.keys()) {
+	    void store.dispatch('setMaxAccessRightValuesInSection', {
+	      userGroupId,
+	      sectionCode
+	    });
+	  }
+	  void store.dispatch('accessRights/expandAllSections', null, {
+	    root: true
+	  });
+	}
+	function _setMaxAccessRightValuesInSectionAction2(store, {
+	  userGroupId,
+	  sectionCode
+	}) {
+	  const section = store.rootState.accessRights.collection.get(sectionCode);
+	  if (!section) {
+	    console.warn('ui.accessrights.v2: attempt to set max values in section that dont exists', {
+	      sectionCode
+	    });
+	    return;
+	  }
+	  for (const item of section.rights.values()) {
+	    const valueToSet = babelHelpers.classPrivateFieldLooseBase(this, _getMaxValueForColumnAction)[_getMaxValueForColumnAction](item, store.rootGetters['accessRights/getEmptyValue'](section.sectionCode, item.id));
+	    if (main_core.Type.isNil(valueToSet)) {
+	      continue;
+	    }
+	    void store.dispatch('setAccessRightValues', {
+	      userGroupId,
+	      sectionCode: section.sectionCode,
+	      valueId: item.id,
+	      values: valueToSet
+	    });
+	  }
+	}
+	function _setMaxAccessRightValuesForRight2(store, {
+	  sectionCode,
+	  rightId
+	}) {
+	  var _store$rootState$acce2;
+	  const right = (_store$rootState$acce2 = store.rootState.accessRights.collection.get(sectionCode)) == null ? void 0 : _store$rootState$acce2.rights.get(rightId);
+	  if (!right) {
+	    console.warn('ui.accessrights.v2: attempt to set max values for right that dont exists', {
+	      sectionCode,
+	      rightId
+	    });
+	    return;
+	  }
+	  const valueToSet = babelHelpers.classPrivateFieldLooseBase(this, _getMaxValue)[_getMaxValue](right);
+	  if (main_core.Type.isNil(valueToSet)) {
+	    console.warn('ui.accessrights.v2: attempt to set max values for right that dont have max value set', {
+	      sectionCode,
+	      rightId
+	    });
+	    return;
+	  }
+	  void store.dispatch('setAccessRightValuesForShown', {
+	    sectionCode,
+	    valueId: rightId,
+	    values: valueToSet
+	  });
+	}
+	function _getMaxValueForColumnAction2(item, emptyValue) {
+	  const setEmpty = main_core.Type.isBoolean(item.setEmptyOnSetMinMaxValueInColumn) && item.setEmptyOnSetMinMaxValueInColumn;
+	  if (setEmpty) {
+	    return emptyValue;
+	  }
+	  return babelHelpers.classPrivateFieldLooseBase(this, _getMaxValue)[_getMaxValue](item);
+	}
+	function _getMaxValue2(item) {
+	  var _ServiceLocator$getVa2;
+	  return (_ServiceLocator$getVa2 = ServiceLocator.getValueTypeByRight(item)) == null ? void 0 : _ServiceLocator$getVa2.getMaxValue(item);
+	}
+	function _copySectionValuesAction2(store, payload) {
+	  const src = babelHelpers.classPrivateFieldLooseBase(this, _getUserGroup)[_getUserGroup](store.state, payload.srcUserGroupId);
+	  if (!src) {
+	    console.warn('ui.accessrights.v2: Attempt to copy values from user group that dont exists', payload);
+	    return;
+	  }
+	  const section = store.rootState.accessRights.collection.get(payload.sectionCode);
+	  if (!section) {
+	    console.warn('ui.accessrights.v2: Attempt to copy values for section that dont exists', payload);
+	    return;
+	  }
+	  for (const rightId of section.rights.keys()) {
+	    const value = src.accessRights.get(rightId);
+	    if (value) {
+	      void store.dispatch('setAccessRightValues', {
+	        userGroupId: payload.dstUserGroupId,
+	        sectionCode: section.sectionCode,
+	        valueId: value.id,
+	        values: value.values
+	      });
+	    } else {
+	      const emptyValue = store.rootGetters['accessRights/getEmptyValue'](section.sectionCode, rightId);
+	      void store.dispatch('setAccessRightValues', {
+	        userGroupId: payload.dstUserGroupId,
+	        sectionCode: section.sectionCode,
+	        valueId: rightId,
+	        values: emptyValue
+	      });
+	    }
+	  }
+	}
+	function _setRoleTitleAction2(store, payload) {
+	  if (!main_core.Type.isString(payload.title)) {
+	    console.warn('ui.accessrights.v2: Attempt to set role title with something other than string', payload);
+	    return;
+	  }
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _isUserGroupExists)[_isUserGroupExists](store, payload.userGroupId)) {
+	    console.warn('ui.accessrights.v2: Attempt to update user group that dont exists', payload);
+	    return;
+	  }
+	  store.commit('setRoleTitle', payload);
+	}
+	function _addMemberAction2(store, payload) {
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _isUserGroupExists)[_isUserGroupExists](store, payload.userGroupId)) {
+	    console.warn('ui.accessrights.v2: Attempt to add member to a user group that dont exists', payload);
+	    return;
+	  }
+	  if (!main_core.Type.isStringFilled(payload.accessCode) || !babelHelpers.classPrivateFieldLooseBase(this, _isMemberValid)[_isMemberValid](payload)) {
+	    console.warn('ui.accessrights.v2: Attempt to add member with invalid payload', payload);
+	    return;
+	  }
+	  store.commit('addMember', payload);
+	}
+	function _isMemberValid2(payload) {
+	  return main_core.Type.isStringFilled(payload.member.id) && main_core.Type.isStringFilled(payload.member.type) && main_core.Type.isStringFilled(payload.member.name) && (main_core.Type.isNil(payload.member.avatar) || main_core.Type.isStringFilled(payload.member.avatar));
+	}
+	function _removeMemberAction2(store, payload) {
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _isUserGroupExists)[_isUserGroupExists](store, payload.userGroupId)) {
+	    console.warn('ui.accessrights.v2: Attempt to remove member from a user group that dont exists', payload);
+	    return;
+	  }
+	  if (!main_core.Type.isStringFilled(payload.accessCode)) {
+	    console.warn('ui.accessrights.v2: Attempt to remove member with invalid payload', payload);
+	    return;
+	  }
+	  store.commit('removeMember', payload);
+	}
+	function _updateMembersForUserGroupAction2(store, payload) {
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _isUserGroupExists)[_isUserGroupExists](store, payload.userGroupId)) {
+	    console.warn('ui.accessrights.v2: Attempt to remove member from a user group that dont exists', payload);
+	    return;
+	  }
+	  const memberCollection = new Map();
+	  payload.members.forEach(member => {
+	    if (!main_core.Type.isStringFilled(member.id) || !main_core.Type.isStringFilled(member.type) || !main_core.Type.isStringFilled(member.name) || !(main_core.Type.isNil(member.avatar) || main_core.Type.isStringFilled(member.avatar))) {
+	      console.warn('ui.accessrights.v2: Attempt to add member with invalid payload', member);
+	    } else {
+	      memberCollection.set(member.id, member);
+	    }
+	  });
+	  store.commit('updateMembersForUserGroup', {
+	    userGroupId: payload.userGroupId,
+	    memberCollection
+	  });
+	}
+	function _copyUserGroupAction2(store, {
+	  userGroupId
+	}) {
+	  const sourceGroup = babelHelpers.classPrivateFieldLooseBase(this, _getUserGroup)[_getUserGroup](store.state, userGroupId);
+	  if (!sourceGroup) {
+	    console.warn('ui.accessrights.v2: Attempt to copy user group that dont exists', {
+	      userGroupId
+	    });
+	    return;
+	  }
+	  const emptyGroup = this.getElementState();
+	  const copy = {
+	    ...main_core.Runtime.clone(sourceGroup),
+	    id: emptyGroup.id,
+	    title: main_core.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_COPIED_ROLE_NAME', {
+	      '#ORIGINAL#': sourceGroup.title
+	    }),
+	    isNew: true,
+	    isModified: true
+	  };
+	  for (const value of copy.accessRights.values()) {
+	    // is a new group all values are modified
+	    value.isModified = true;
+	  }
+	  const updatedSortConfig = babelHelpers.classPrivateFieldLooseBase(this, _updateSortConfig)[_updateSortConfig](store.state.sortConfig, copy.id);
+	  babelHelpers.classPrivateFieldLooseBase(this, _updateSortConfigAction)[_updateSortConfigAction](store, {
+	    sortConfig: updatedSortConfig
+	  });
+	  store.commit('addUserGroup', {
+	    userGroup: copy
+	  });
+	}
+	function _addUserGroupAction2(store) {
+	  var _store$state$selected;
+	  const newGroup = {
+	    ...this.getElementState(),
+	    accessRights: main_core.Runtime.clone(store.getters.defaultAccessRightValues),
+	    members: new Map()
+	  };
+	  if (store.state.selectedMember && store.state.selectedMember.member) {
+	    newGroup.members.set(store.state.selectedMember.member.id, store.state.selectedMember.member);
+	  }
+	  const updatedSortConfig = babelHelpers.classPrivateFieldLooseBase(this, _updateSortConfig)[_updateSortConfig](store.state.sortConfig, newGroup.id, (_store$state$selected = store.state.selectedMember) == null ? void 0 : _store$state$selected.id);
+	  babelHelpers.classPrivateFieldLooseBase(this, _updateSortConfigAction)[_updateSortConfigAction](store, {
+	    sortConfig: updatedSortConfig
+	  });
+	  store.commit('addUserGroup', {
+	    userGroup: newGroup
+	  });
+	}
+	function _removeUserGroupAction2(store, {
+	  userGroupId
+	}) {
+	  const userGroup = babelHelpers.classPrivateFieldLooseBase(this, _getUserGroup)[_getUserGroup](store.state, userGroupId);
+	  if (!userGroup) {
+	    console.warn('ui.accessrights.v2: Attempt to remove user group that dont exists', {
+	      userGroupId
+	    });
+	    return;
+	  }
+	  store.commit('removeUserGroup', {
+	    userGroupId
+	  });
+	  if (!userGroup.isNew) {
+	    store.commit('markUserGroupForDeletion', {
+	      userGroupId
+	    });
+	  }
+	}
+	function _updateUserGroupSortAction2(store, {
+	  userGroupId,
+	  sort
+	}) {
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _isUserGroupExists)[_isUserGroupExists](store, userGroupId)) {
+	    console.warn('ui.accessrights.v2: Attempt to show user group that dont exists', {
+	      userGroupId
+	    });
+	    return;
+	  }
+	  store.commit('updateUserGroupSort', {
+	    userGroupId,
+	    sort
+	  });
+	}
+	function _updateSortConfigForSelectedMemberAction2(store, {
+	  sortConfigForSelectedMember
+	}) {
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _isValidSortConfigForSelectedMember)[_isValidSortConfigForSelectedMember](sortConfigForSelectedMember)) {
+	    console.warn('ui.accessrights.v2: Invalid sort configuration provided', sortConfigForSelectedMember);
+	    return;
+	  }
+	  store.commit('updateSortConfigForSelectedMember', {
+	    sortConfigForSelectedMember
+	  });
+	}
+	function _updateSortConfigAction2(store, {
+	  sortConfig
+	}) {
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _isValidSortConfig)[_isValidSortConfig](sortConfig)) {
+	    console.warn('ui.accessrights.v2: Invalid sort configuration provided', sortConfig);
+	    return;
+	  }
+	  store.commit('updateSortConfig', {
+	    sortConfig
+	  });
+	}
+	function _selectMemberAction2(store, payload) {
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _isValidSelectedMember)[_isValidSelectedMember](payload.member)) {
+	    console.warn('ui.accessrights.v2: Invalid selected member provided', payload.member);
+	    return;
+	  }
+	  store.commit('selectMember', main_core.Runtime.clone(payload));
+	}
+	function _hideUserGroupAction2(store, {
+	  userGroupId
+	}) {
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _isUserGroupExists)[_isUserGroupExists](store, userGroupId)) {
+	    console.warn('ui.accessrights.v2: Attempt to shrink user group that dont exists', {
+	      userGroupId
+	    });
+	    return;
+	  }
+	  store.commit('hideUserGroup', {
+	    userGroupId
+	  });
+	}
+	function _updateSortConfig2(currentSorting, groupId, selectedMemberId) {
+	  const userIdsToUpdate = new Set([SELECTED_ALL_USER_ID]);
+	  if (selectedMemberId) {
+	    userIdsToUpdate.add(selectedMemberId);
+	  }
+	  const newSortConfig = {
+	    ...currentSorting
+	  };
+	  for (const userId of userIdsToUpdate) {
+	    if (!newSortConfig[userId]) {
+	      continue;
+	    }
+	    const currentValues = Object.values(newSortConfig[userId]);
+	    const maxValue = currentValues.length > 0 ? Math.max(...currentValues) : 0;
+	    newSortConfig[userId] = {
+	      ...newSortConfig[userId],
+	      [groupId]: maxValue + 1
+	    };
+	  }
+	  return newSortConfig;
+	}
+	function _isUserGroupExists2(store, userGroupId) {
+	  const group = babelHelpers.classPrivateFieldLooseBase(this, _getUserGroup)[_getUserGroup](store.state, userGroupId);
+	  return Boolean(group);
+	}
+	function _isValidSortConfigForSelectedMember2(config) {
+	  return Object.values(config).every(value => main_core.Type.isNumber(value));
+	}
+	function _isValidSortConfig2(config) {
+	  return Object.values(config).every(userConfig => babelHelpers.classPrivateFieldLooseBase(this, _isValidSortConfigForSelectedMember)[_isValidSortConfigForSelectedMember](userConfig));
+	}
+	function _isValidSelectedMember2(selectedMember) {
+	  if (selectedMember.id === SELECTED_ALL_USER_ID) {
+	    return true;
+	  }
+	  return main_core.Type.isString(selectedMember.id) && main_core.Type.isObject(selectedMember.member) && main_core.Type.isArray(selectedMember.accessCodes);
+	}
+	function _getUserGroup2(state, userGroupId) {
+	  return state.collection.get(userGroupId);
+	}
+	function _isValueExistsInStructure2(store, sectionCode, valueId) {
+	  const section = store.rootState.accessRights.collection.get(sectionCode);
+	  return section == null ? void 0 : section.rights.has(valueId);
+	}
+	function _deleteRightAction2(store, {
+	  rightId
+	}) {
+	  store.commit('deleteRight', {
+	    rightId
+	  });
+	}
+	function _isValueModified2(userGroupId, valueId, values, emptyValue) {
+	  var _initialGroup$accessR, _initialGroup$accessR2;
+	  const initialGroup = babelHelpers.classPrivateFieldLooseBase(this, _initialUserGroups)[_initialUserGroups].get(userGroupId);
+	  if (!initialGroup) {
+	    // its a newly created group, all values are modified
+
+	    return true;
+	  }
+	  const initialValues = (_initialGroup$accessR = (_initialGroup$accessR2 = initialGroup.accessRights.get(valueId)) == null ? void 0 : _initialGroup$accessR2.values) != null ? _initialGroup$accessR : emptyValue;
+
+	  // use native Sets instead of Vue-wrapped proxy-sets, they throw an error on `symmetricDifference`
+	  return !babelHelpers.classPrivateFieldLooseBase(this, _isSetsEqual)[_isSetsEqual](new Set(initialValues), new Set(values));
+	}
+	function _isSetsEqual2(a, b) {
+	  if (main_core.Type.isFunction(a.symmetricDifference)) {
+	    // native way to compare sets for modern browsers
+	    return a.symmetricDifference(b).size === 0;
+	  }
+
+	  // polyfill
+
+	  if (a.size !== b.size) {
+	    return false;
+	  }
+	  for (const value of a) {
+	    if (!b.has(value)) {
+	      return false;
+	    }
+	  }
+	  for (const value of b) {
+	    if (!a.has(value)) {
+	      return false;
+	    }
+	  }
+	  return true;
+	}
+	function _isUserGroupModified2(userGroup) {
+	  if (userGroup.isNew) {
+	    return true;
+	  }
+	  const initialGroup = babelHelpers.classPrivateFieldLooseBase(this, _initialUserGroups)[_initialUserGroups].get(userGroup.id);
+	  if (!initialGroup) {
+	    throw new Error('ui.accessrights.v2: initial user group not found');
+	  }
+	  if (userGroup.title !== initialGroup.title) {
+	    return true;
+	  }
+	  const initialAccessCodes = new Set(initialGroup.members.keys());
+	  const currentAccessCodes = new Set(userGroup.members.keys());
+	  return !babelHelpers.classPrivateFieldLooseBase(this, _isSetsEqual)[_isSetsEqual](initialAccessCodes, currentAccessCodes);
+	}
+
+	function shouldRowBeRendered(accessRightItem) {
+	  if (!accessRightItem.isShown) {
+	    return false;
+	  }
+	  return !accessRightItem.group || accessRightItem.isGroupExpanded;
+	}
+	function getSelectedVariables(variables, selected, isAllSelected) {
+	  if (isAllSelected) {
+	    return variables;
+	  }
+	  const selectedVariables = new Map();
+	  for (const [variableId, variable] of variables) {
+	    if (selected.has(variableId)) {
+	      selectedVariables.set(variableId, variable);
+	    }
+	  }
+	  return selectedVariables;
+	}
+	function getMultipleSelectedVariablesTitle(selectedVariables) {
+	  const lastVariable = [...selectedVariables.values()].pop();
+	  if (selectedVariables.size === 1) {
+	    return lastVariable.title;
+	  }
+	  return main_core.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_HAS_SELECTED_ITEMS', {
+	    '#FIRST_ITEM_NAME#': cutLongTitle(lastVariable.title),
+	    '#COUNT_REST_ITEMS#': selectedVariables.size - 1
+	  });
+	}
+	function cutLongTitle(title) {
+	  const VARIABLE_TITLE_MAX_LENGTH = 15;
+	  if (title.length > VARIABLE_TITLE_MAX_LENGTH) {
+	    return `${title.slice(0, VARIABLE_TITLE_MAX_LENGTH)}...`;
+	  }
+	  return title;
+	}
+	function getMultipleSelectedVariablesHintHtml(selectedVariables, hintTitle, allVariables) {
+	  if (selectedVariables.size < 2) {
+	    return '';
+	  }
+	  let listItems = '';
+	  for (const value of makeSortedVariablesArray(selectedVariables, allVariables)) {
+	    listItems += `<li>${main_core.Text.encode(value.title)}</li>`;
+	  }
+	  return `
+		<p>${main_core.Text.encode(hintTitle)}</p>
+		<ul>${listItems}</ul>
+	`;
+	}
+	function makeSortedVariablesArray(toSort, example) {
+	  const orderMap = new Map();
+	  let index = 0;
+	  for (const [variableId] of example) {
+	    orderMap.set(variableId, index);
+	    index++;
+	  }
+	  return [...toSort.values()].sort((a, b) => {
+	    const indexA = orderMap.get(a.id);
+	    const indexB = orderMap.get(b.id);
+	    if (main_core.Type.isNil(indexA)) {
+	      return 1;
+	    }
+	    if (main_core.Type.isNil(indexB)) {
+	      return -1;
+	    }
+	    return indexA - indexB;
+	  });
+	}
+	const DEFAULT_ALIAS_SEPARATOR = '|';
+	function parseAliasKey(key, separator = DEFAULT_ALIAS_SEPARATOR) {
+	  const parts = key.split(separator);
+	  return new Set(parts);
+	}
+	function compileAliasKey(parts, separator = DEFAULT_ALIAS_SEPARATOR) {
+	  const sortedParts = [...parts].sort();
+	  return sortedParts.join(separator);
+	}
+	function normalizeAliasKey(key, separator = DEFAULT_ALIAS_SEPARATOR) {
+	  const parsed = parseAliasKey(key, separator);
+	  return compileAliasKey(parsed, separator);
+	}
+	function saveSortConfigForAllUserGroups(categoryName, sortConfig) {
+	  return main_core.ajax.runAction('ui.accessrights.setUserSortConfig', {
+	    data: {
+	      name: categoryName,
+	      userSortConfig: sortConfig
+	    }
+	  });
+	}
+
 	const CellLayout = {
 	  template: `
 		<div class='ui-access-rights-v2-column-item'>
@@ -789,29 +1923,35 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	    ...ui_vue3_vuex.mapState({
 	      allUserGroups: state => state.userGroups.collection,
 	      maxVisibleUserGroups: state => state.application.options.maxVisibleUserGroups,
-	      guid: state => state.application.guid
+	      guid: state => state.application.guid,
+	      userSortConfigName: state => state.application.options.userSortConfigName,
+	      selectedMember: state => state.userGroups.selectedMember,
+	      sortConfig: state => state.userGroups.sortConfig
 	    }),
 	    ...ui_vue3_vuex.mapGetters({
 	      isMaxVisibleUserGroupsSet: 'application/isMaxVisibleUserGroupsSet',
-	      isMaxVisibleUserGroupsReached: 'userGroups/isMaxVisibleUserGroupsReached'
+	      isMaxVisibleUserGroupsReached: 'userGroups/isMaxVisibleUserGroupsReached',
+	      userGroupsBySelectedMember: 'userGroups/userGroupsBySelectedMember'
 	    }),
 	    shownGroupsCounter() {
 	      return this.$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_ROLE_COUNTER', {
 	        '#VISIBLE_ROLES#': this.userGroups.size,
-	        '#ALL_ROLES#': this.allUserGroups.size,
+	        '#ALL_ROLES#': this.userGroupsBySelectedMember.size,
 	        '#GREY_START#': '<span style="opacity: var(--ui-opacity-30)">',
 	        '#GREY_FINISH#': '</span>'
 	      });
 	    },
 	    copyDialogItems() {
-	      return ItemsMapper.mapUserGroups(this.allUserGroups);
+	      return ItemsMapper.mapUserGroups(this.userGroupsBySelectedMember);
 	    },
 	    viewDialogItems() {
 	      const result = [];
-	      for (const copyDialogItem of this.copyDialogItems) {
+	      const selectedMemberId = this.selectedMember ? this.selectedMember.id : SELECTED_ALL_USER_ID;
+	      for (const copyDialogItem of ItemsMapper.mapUserGroups(this.userGroupsBySelectedMember)) {
 	        result.push({
 	          ...copyDialogItem,
-	          selected: this.userGroups.has(copyDialogItem.id)
+	          selected: this.userGroups.has(copyDialogItem.id),
+	          sort: this.sortConfig[selectedMemberId] ? this.sortConfig[selectedMemberId][copyDialogItem.id] : null
 	        });
 	      }
 	      return result;
@@ -849,7 +1989,7 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	        dropdownMode: true,
 	        enableSearch: true,
 	        cacheable: false,
-	        items: this.copyDialogItems,
+	        items: this.viewDialogItems,
 	        events: {
 	          'Item:onSelect': dialogEvent => {
 	            const {
@@ -864,38 +2004,29 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	      copyDialog.show();
 	    },
 	    showViewDialog(target) {
-	      this.viewDialog = new ui_entitySelector.Dialog({
-	        context: EntitySelectorContext.ROLE,
-	        footer: this.isMaxVisibleUserGroupsSet ? this.$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_ROLE_SELECTOR_MAX_VISIBLE_WARNING', {
+	      this.viewDialog = new ui_accessrights_v2_itemListSelector.ItemListSelector({
+	        title: this.$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_ROLES_SELECTOR_TITLE'),
+	        subtitle: this.maxVisibleUserGroups ? main_core.Loc.getMessagePlural('JS_UI_ACCESSRIGHTS_V2_ROLES_SELECTOR_SUBTITLE', this.maxVisibleUserGroups, {
 	          '#COUNT#': this.maxVisibleUserGroups
 	        }) : null,
 	        targetNode: target,
-	        multiple: true,
-	        dropdownMode: true,
-	        enableSearch: true,
-	        cacheable: false,
 	        items: this.viewDialogItems,
+	        maxSelected: this.maxVisibleUserGroups,
 	        events: {
-	          'Item:onBeforeSelect': dialogEvent => {
-	            if (this.isMaxVisibleUserGroupsSet && this.viewDialog.getSelectedItems().length >= this.maxVisibleUserGroups) {
-	              dialogEvent.preventDefault();
+	          onSave: () => {
+	            var _this$selectedMember;
+	            const selectedItems = this.viewDialog.getSelectedItems();
+	            const userSortConfig = {};
+	            selectedItems.forEach((item, index) => {
+	              userSortConfig[item.id] = index;
+	            });
+	            this.$store.dispatch('userGroups/updateSortConfigForSelectedMember', {
+	              sortConfigForSelectedMember: userSortConfig
+	            });
+	            if (!((_this$selectedMember = this.selectedMember) != null && _this$selectedMember.id) || this.selectedMember.id === SELECTED_ALL_USER_ID) {
+	              saveSortConfigForAllUserGroups(this.userSortConfigName, userSortConfig);
 	            }
-	          },
-	          'Item:onSelect': dialogEvent => {
-	            const {
-	              item
-	            } = dialogEvent.getData();
-	            this.$store.dispatch('userGroups/showUserGroup', {
-	              userGroupId: item.getId()
-	            });
-	          },
-	          'Item:onDeselect': dialogEvent => {
-	            const {
-	              item
-	            } = dialogEvent.getData();
-	            this.$store.dispatch('userGroups/hideUserGroup', {
-	              userGroupId: item.getId()
-	            });
+	            this.viewDialog = null;
 	          },
 	          onHide: () => {
 	            this.viewDialog = null;
@@ -1222,86 +2353,179 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	`
 	};
 
-	function shouldRowBeRendered(accessRightItem) {
-	  if (!accessRightItem.isShown) {
-	    return false;
-	  }
-	  return !accessRightItem.group || accessRightItem.isGroupExpanded;
-	}
-	function getSelectedVariables(variables, selected, isAllSelected) {
-	  if (isAllSelected) {
-	    return variables;
-	  }
-	  const selectedVariables = new Map();
-	  for (const [variableId, variable] of variables) {
-	    if (selected.has(variableId)) {
-	      selectedVariables.set(variableId, variable);
+	const MemberSelector = {
+	  name: 'MemberSelector',
+	  components: {
+	    Chip: ui_system_chip_vue.Chip
+	  },
+	  data() {
+	    return {
+	      accessCodesCache: {}
+	    };
+	  },
+	  computed: {
+	    selectedMember: {
+	      get() {
+	        return this.$store.state.userGroups.selectedMember;
+	      },
+	      set(member) {
+	        this.$store.dispatch('userGroups/selectMember', {
+	          member
+	        });
+	      }
+	    },
+	    selectedMemberName() {
+	      var _this$selectedMember, _this$selectedMember$;
+	      if (!this.selectedMember.id || this.selectedMember.id === SELECTED_ALL_USER_ID || !((_this$selectedMember = this.selectedMember) != null && (_this$selectedMember$ = _this$selectedMember.member) != null && _this$selectedMember$.name)) {
+	        return this.$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_USER_SELECTOR_ALL_USERS');
+	      }
+	      return this.selectedMember.member.name;
+	    },
+	    selectedMemberAvatar() {
+	      var _this$selectedMember$2, _this$selectedMember2, _this$selectedMember3;
+	      if (!this.selectedMember.id || this.selectedMember.id === SELECTED_ALL_USER_ID) {
+	        return null;
+	      }
+	      return (_this$selectedMember$2 = (_this$selectedMember2 = this.selectedMember) == null ? void 0 : (_this$selectedMember3 = _this$selectedMember2.member) == null ? void 0 : _this$selectedMember3.avatar) != null ? _this$selectedMember$2 : '/bitrix/js/ui/accessrights/v2/images/user-avatar.svg';
+	    },
+	    avatarBackgroundImage() {
+	      return `url(${encodeURI(this.selectedMemberAvatar)})`;
+	    },
+	    selectedItems() {
+	      if (this.selectedMember && this.selectedMember.id && this.selectedMember.id !== SELECTED_ALL_USER_ID) {
+	        return [[this.selectedMember.entityType, this.selectedMember.entityId]];
+	      }
+	      return [['meta-user', SELECTED_ALL_USER_ID]];
+	    },
+	    ...ui_vue3_vuex.mapState({
+	      memberOptions: state => state.application.options.additionalMembersParams
+	    })
+	  },
+	  methods: {
+	    openUserSelector() {
+	      this.getSelectorService().createDialog({
+	        targetNode: this.$refs.userSelector,
+	        preselectedItems: this.selectedItems,
+	        multiple: false,
+	        hideOnSelect: true,
+	        hideOnDeselect: true,
+	        events: {
+	          'Item:onSelect': this.onMemberSelect,
+	          'Item:onDeselect': this.onMemberDeselect
+	        },
+	        entities: this.getEntities()
+	      }).show();
+	    },
+	    getEntities() {
+	      const entities = this.getSelectorService().entities();
+	      entities.push({
+	        id: 'meta-user',
+	        options: {
+	          'all-users': true
+	        }
+	      });
+	      return entities;
+	    },
+	    onMemberSelect(event) {
+	      const {
+	        item
+	      } = event.getData();
+	      const cacheKey = item.id === SELECTED_ALL_USER_ID ? SELECTED_ALL_USER_ID : item.entityId + item.id;
+	      const newSelectedMember = {
+	        id: cacheKey,
+	        entityId: item.id,
+	        entityType: item.entityId,
+	        member: this.getSelectorService().getMemberByItem(item)
+	      };
+	      const cachedAccessCodes = this.getAccessCodesFromCache(cacheKey);
+	      if (cachedAccessCodes.length > 0 || item.id === SELECTED_ALL_USER_ID) {
+	        this.selectedMember = {
+	          ...newSelectedMember,
+	          accessCodes: cachedAccessCodes
+	        };
+	        return;
+	      }
+	      if (!this.shouldUseAjax(item)) {
+	        this.selectedMember = {
+	          ...newSelectedMember,
+	          accessCodes: this.getDefaultAccessCodesByItem(item)
+	        };
+	        return;
+	      }
+	      this.$store.commit('application/setProgress', true);
+	      main_core.ajax.runAction('ui.accessrights.getAccessCodes', {
+	        data: {
+	          id: newSelectedMember.member.id,
+	          params: this.$store.state.application.options.additionalSaveParams,
+	          moduleId: this.$store.state.application.options.moduleId
+	        }
+	      }).then(response => {
+	        var _response$data;
+	        let accessCodes = (_response$data = response.data) != null ? _response$data : [];
+	        if (accessCodes.length === 0) {
+	          accessCodes = this.getDefaultAccessCodesByItem(item);
+	        }
+	        this.selectedMember = {
+	          ...newSelectedMember,
+	          accessCodes
+	        };
+	        this.accessCodesCache[cacheKey] = new Set(accessCodes);
+	        this.$store.commit('application/setProgress', false);
+	      }).catch(() => {
+	        const accessCodes = this.getDefaultAccessCodesByItem(item);
+	        this.selectedMember = {
+	          ...newSelectedMember,
+	          accessCodes
+	        };
+	        this.accessCodesCache[cacheKey] = accessCodes;
+	        this.$store.commit('application/setProgress', false);
+	      });
+	    },
+	    shouldUseAjax(item) {
+	      const entityTypes = ['user', 'department', 'structure-node'];
+	      return entityTypes.includes(item.entityId);
+	    },
+	    onMemberDeselect(event) {
+	      this.selectedMember = {
+	        id: SELECTED_ALL_USER_ID,
+	        entityId: SELECTED_ALL_USER_ID,
+	        entityType: 'meta-user',
+	        accessCodes: []
+	      };
+	    },
+	    getDefaultAccessCodesByItem(item) {
+	      if (item.entityId === 'structure-role') {
+	        var _item$id$match;
+	        const itemId = (_item$id$match = item.id.match(/^(?:ATD|ATE|ATT|AD|AE|AT)([1-9]\d*)$/)) == null ? void 0 : _item$id$match[1];
+	        const accessCodes = [this.getSelectorService().getAccessCodeByItem(item), `AE${itemId}`];
+	        return [...new Set(accessCodes)];
+	      }
+	      if (item.entityId === 'project-access-codes') {
+	        var _item$id$match2;
+	        const itemId = (_item$id$match2 = item.id.match(/^SG(\d+)_([AEK])$/)) == null ? void 0 : _item$id$match2[1];
+	        const accessCodes = [this.getSelectorService().getAccessCodeByItem(item), `SG${itemId}_K`];
+	        return [...new Set(accessCodes)];
+	      }
+	      return [this.getSelectorService().getAccessCodeByItem(item)];
+	    },
+	    getAccessCodesFromCache(id) {
+	      return this.accessCodesCache[id] || [];
+	    },
+	    getSelectorService() {
+	      return ServiceLocator.getSelectorService(this.memberOptions);
 	    }
-	  }
-	  return selectedVariables;
-	}
-	function getMultipleSelectedVariablesTitle(selectedVariables) {
-	  const lastVariable = [...selectedVariables.values()].pop();
-	  if (selectedVariables.size === 1) {
-	    return lastVariable.title;
-	  }
-	  return main_core.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_HAS_SELECTED_ITEMS', {
-	    '#FIRST_ITEM_NAME#': cutLongTitle(lastVariable.title),
-	    '#COUNT_REST_ITEMS#': selectedVariables.size - 1
-	  });
-	}
-	function cutLongTitle(title) {
-	  const VARIABLE_TITLE_MAX_LENGTH = 15;
-	  if (title.length > VARIABLE_TITLE_MAX_LENGTH) {
-	    return `${title.slice(0, VARIABLE_TITLE_MAX_LENGTH)}...`;
-	  }
-	  return title;
-	}
-	function getMultipleSelectedVariablesHintHtml(selectedVariables, hintTitle, allVariables) {
-	  if (selectedVariables.size < 2) {
-	    return '';
-	  }
-	  let listItems = '';
-	  for (const value of makeSortedVariablesArray(selectedVariables, allVariables)) {
-	    listItems += `<li>${main_core.Text.encode(value.title)}</li>`;
-	  }
-	  return `
-		<p>${main_core.Text.encode(hintTitle)}</p>
-		<ul>${listItems}</ul>
-	`;
-	}
-	function makeSortedVariablesArray(toSort, example) {
-	  const orderMap = new Map();
-	  let index = 0;
-	  for (const [variableId] of example) {
-	    orderMap.set(variableId, index);
-	    index++;
-	  }
-	  return [...toSort.values()].sort((a, b) => {
-	    const indexA = orderMap.get(a.id);
-	    const indexB = orderMap.get(b.id);
-	    if (main_core.Type.isNil(indexA)) {
-	      return 1;
-	    }
-	    if (main_core.Type.isNil(indexB)) {
-	      return -1;
-	    }
-	    return indexA - indexB;
-	  });
-	}
-	const DEFAULT_ALIAS_SEPARATOR = '|';
-	function parseAliasKey(key, separator = DEFAULT_ALIAS_SEPARATOR) {
-	  const parts = key.split(separator);
-	  return new Set(parts);
-	}
-	function compileAliasKey(parts, separator = DEFAULT_ALIAS_SEPARATOR) {
-	  const sortedParts = [...parts].sort();
-	  return sortedParts.join(separator);
-	}
-	function normalizeAliasKey(key, separator = DEFAULT_ALIAS_SEPARATOR) {
-	  const parsed = parseAliasKey(key, separator);
-	  return compileAliasKey(parsed, separator);
-	}
+	  },
+	  template: `
+		<div ref="userSelector" class="ui-access-rights-v2-user-selector">
+			<Chip
+				:image="selectedMemberAvatar ? { src: selectedMemberAvatar, alt: selectedMemberName } : ''"
+				:dropdown="true"
+				:text=selectedMemberName
+				@click="openUserSelector"
+			/>
+		</div>
+	`
+	};
 
 	var _internalizeExternalSection = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("internalizeExternalSection");
 	var _internalizeExternalIcon = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("internalizeExternalIcon");
@@ -3979,23 +5203,35 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	`
 	};
 
+	const GridSkeleton = {
+	  name: 'GridSkeleton',
+	  template: `
+		<div class="ui-access-rights-v2-grid-skeleton" />
+	`
+	};
+
 	const Grid = {
 	  name: 'Grid',
 	  components: {
 	    Section,
 	    Header,
-	    SearchBox
+	    SearchBox,
+	    MemberSelector,
+	    GridSkeleton
 	  },
 	  loader: null,
 	  computed: {
 	    ...ui_vue3_vuex.mapState({
 	      isProgress: state => state.application.isProgress,
 	      guid: state => state.application.guid,
-	      searchContainerSelector: state => state.application.options.searchContainerSelector
+	      searchContainerSelector: state => state.application.options.searchContainerSelector,
+	      maxVisibleUserGroups: state => state.application.options.maxVisibleUserGroups,
+	      sortConfig: state => state.userGroups.sortConfig,
+	      selectedMember: state => state.userGroups.selectedMember
 	    }),
 	    ...ui_vue3_vuex.mapGetters({
 	      shownSections: 'accessRights/shown',
-	      shownUserGroups: 'userGroups/shown'
+	      userGroups: 'userGroups/shown'
 	    })
 	  },
 	  mounted() {
@@ -4098,26 +5334,30 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	  },
 	  template: `
 		<Teleport v-if="searchContainerSelector" :to="searchContainerSelector">
-			<SearchBox/>
+			<div class="ui-access-rights-v2-search-container">
+				<MemberSelector/>
+				<SearchBox/>
+			</div>
 		</Teleport>
-		<div ref="container" class='ui-access-rights-v2' :class="{
-			'ui-access-rights-v2-block': isProgress,
-		}">
-			<Header :user-groups="shownUserGroups"/>
-			<Section
-				v-for="[sectionCode, accessRightSection] in shownSections"
-				:key="sectionCode"
-				:code="accessRightSection.sectionCode"
-				:is-expanded="accessRightSection.isExpanded"
-				:title="accessRightSection.sectionTitle"
-				:sub-title="accessRightSection.sectionSubTitle"
-				:hint="accessRightSection.sectionHint"
-				:icon="accessRightSection.sectionIcon"
-				:rights="accessRightSection.rights"
-				:action="accessRightSection.action"
-				:user-groups="shownUserGroups"
-				ref="sections"
-			/>
+		<div ref="container" class='ui-access-rights-v2'>
+			<GridSkeleton v-if="isProgress" />
+			<template v-else>
+				<Header :user-groups="userGroups"/>
+				<Section
+					v-for="[sectionCode, accessRightSection] in shownSections"
+					:key="sectionCode"
+					:code="accessRightSection.sectionCode"
+					:is-expanded="accessRightSection.isExpanded"
+					:title="accessRightSection.sectionTitle"
+					:sub-title="accessRightSection.sectionSubTitle"
+					:hint="accessRightSection.sectionHint"
+					:icon="accessRightSection.sectionIcon"
+					:rights="accessRightSection.rights"
+					:action="accessRightSection.action"
+					:user-groups="userGroups"
+					ref="sections"
+				/>
+			</template>
 		</div>
 	`
 	};
@@ -4326,7 +5566,7 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	const MODE = 'ajax';
 	const BODY_TYPE = 'data';
 	var _guid = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("guid");
-	var _options = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("options");
+	var _options$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("options");
 	class ApplicationModel extends ui_vue3_vuex.BuilderModel {
 	  constructor(...args) {
 	    super(...args);
@@ -4334,7 +5574,7 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	      writable: true,
 	      value: void 0
 	    });
-	    Object.defineProperty(this, _options, {
+	    Object.defineProperty(this, _options$1, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -4343,7 +5583,7 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	    return 'application';
 	  }
 	  setOptions(options) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _options)[_options] = options;
+	    babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1] = options;
 	    return this;
 	  }
 	  setGuid(guid) {
@@ -4352,7 +5592,7 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	  }
 	  getState() {
 	    return {
-	      options: babelHelpers.classPrivateFieldLooseBase(this, _options)[_options],
+	      options: babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1],
 	      guid: babelHelpers.classPrivateFieldLooseBase(this, _guid)[_guid],
 	      isProgress: false
 	    };
@@ -4367,6 +5607,9 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	      },
 	      guid: state => {
 	        return state.guid;
+	      },
+	      additionalMembersParams: state => {
+	        return state.options.additionalMembersParams;
 	      }
 	    };
 	  }
@@ -4380,749 +5623,11 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	  }
 	}
 
-	const NEW_USER_GROUP_ID_PREFIX = 'new~~~';
-	var _initialUserGroups = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initialUserGroups");
-	var _setAccessRightValuesAction = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setAccessRightValuesAction");
-	var _setAccessRightValuesForShownAction = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setAccessRightValuesForShownAction");
-	var _setMinAccessRightValuesAction = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setMinAccessRightValuesAction");
-	var _setMinAccessRightValuesInSectionAction = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setMinAccessRightValuesInSectionAction");
-	var _setMinAccessRightValuesForRight = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setMinAccessRightValuesForRight");
-	var _getMinValueForColumnAction = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getMinValueForColumnAction");
-	var _getMinValue = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getMinValue");
-	var _setMaxAccessRightValuesAction = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setMaxAccessRightValuesAction");
-	var _setMaxAccessRightValuesInSectionAction = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setMaxAccessRightValuesInSectionAction");
-	var _setMaxAccessRightValuesForRight = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setMaxAccessRightValuesForRight");
-	var _getMaxValueForColumnAction = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getMaxValueForColumnAction");
-	var _getMaxValue = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getMaxValue");
-	var _copySectionValuesAction = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("copySectionValuesAction");
-	var _setRoleTitleAction = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setRoleTitleAction");
-	var _addMemberAction = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("addMemberAction");
-	var _removeMemberAction = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("removeMemberAction");
-	var _copyUserGroupAction = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("copyUserGroupAction");
-	var _addUserGroupAction = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("addUserGroupAction");
-	var _removeUserGroupAction = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("removeUserGroupAction");
-	var _showUserGroupAction = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showUserGroupAction");
-	var _hideUserGroupAction = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hideUserGroupAction");
-	var _isUserGroupExists = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isUserGroupExists");
-	var _getUserGroup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getUserGroup");
-	var _isValueExistsInStructure = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isValueExistsInStructure");
-	var _deleteRightAction = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("deleteRightAction");
-	var _isValueModified = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isValueModified");
-	var _isSetsEqual = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isSetsEqual");
-	var _isUserGroupModified = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isUserGroupModified");
-	class UserGroupsModel extends ui_vue3_vuex.BuilderModel {
-	  constructor(...args) {
-	    super(...args);
-	    Object.defineProperty(this, _isUserGroupModified, {
-	      value: _isUserGroupModified2
-	    });
-	    Object.defineProperty(this, _isSetsEqual, {
-	      value: _isSetsEqual2
-	    });
-	    Object.defineProperty(this, _isValueModified, {
-	      value: _isValueModified2
-	    });
-	    Object.defineProperty(this, _deleteRightAction, {
-	      value: _deleteRightAction2
-	    });
-	    Object.defineProperty(this, _isValueExistsInStructure, {
-	      value: _isValueExistsInStructure2
-	    });
-	    Object.defineProperty(this, _getUserGroup, {
-	      value: _getUserGroup2
-	    });
-	    Object.defineProperty(this, _isUserGroupExists, {
-	      value: _isUserGroupExists2
-	    });
-	    Object.defineProperty(this, _hideUserGroupAction, {
-	      value: _hideUserGroupAction2
-	    });
-	    Object.defineProperty(this, _showUserGroupAction, {
-	      value: _showUserGroupAction2
-	    });
-	    Object.defineProperty(this, _removeUserGroupAction, {
-	      value: _removeUserGroupAction2
-	    });
-	    Object.defineProperty(this, _addUserGroupAction, {
-	      value: _addUserGroupAction2
-	    });
-	    Object.defineProperty(this, _copyUserGroupAction, {
-	      value: _copyUserGroupAction2
-	    });
-	    Object.defineProperty(this, _removeMemberAction, {
-	      value: _removeMemberAction2
-	    });
-	    Object.defineProperty(this, _addMemberAction, {
-	      value: _addMemberAction2
-	    });
-	    Object.defineProperty(this, _setRoleTitleAction, {
-	      value: _setRoleTitleAction2
-	    });
-	    Object.defineProperty(this, _copySectionValuesAction, {
-	      value: _copySectionValuesAction2
-	    });
-	    Object.defineProperty(this, _getMaxValue, {
-	      value: _getMaxValue2
-	    });
-	    Object.defineProperty(this, _getMaxValueForColumnAction, {
-	      value: _getMaxValueForColumnAction2
-	    });
-	    Object.defineProperty(this, _setMaxAccessRightValuesForRight, {
-	      value: _setMaxAccessRightValuesForRight2
-	    });
-	    Object.defineProperty(this, _setMaxAccessRightValuesInSectionAction, {
-	      value: _setMaxAccessRightValuesInSectionAction2
-	    });
-	    Object.defineProperty(this, _setMaxAccessRightValuesAction, {
-	      value: _setMaxAccessRightValuesAction2
-	    });
-	    Object.defineProperty(this, _getMinValue, {
-	      value: _getMinValue2
-	    });
-	    Object.defineProperty(this, _getMinValueForColumnAction, {
-	      value: _getMinValueForColumnAction2
-	    });
-	    Object.defineProperty(this, _setMinAccessRightValuesForRight, {
-	      value: _setMinAccessRightValuesForRight2
-	    });
-	    Object.defineProperty(this, _setMinAccessRightValuesInSectionAction, {
-	      value: _setMinAccessRightValuesInSectionAction2
-	    });
-	    Object.defineProperty(this, _setMinAccessRightValuesAction, {
-	      value: _setMinAccessRightValuesAction2
-	    });
-	    Object.defineProperty(this, _setAccessRightValuesForShownAction, {
-	      value: _setAccessRightValuesForShownAction2
-	    });
-	    Object.defineProperty(this, _setAccessRightValuesAction, {
-	      value: _setAccessRightValuesAction2
-	    });
-	    Object.defineProperty(this, _initialUserGroups, {
-	      writable: true,
-	      value: new Map()
-	    });
-	  }
-	  getName() {
-	    return 'userGroups';
-	  }
-	  setInitialUserGroups(groups) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _initialUserGroups)[_initialUserGroups] = groups;
-	    return this;
-	  }
-	  getState() {
-	    return {
-	      collection: main_core.Runtime.clone(babelHelpers.classPrivateFieldLooseBase(this, _initialUserGroups)[_initialUserGroups]),
-	      deleted: new Set()
-	    };
-	  }
-	  getElementState(params = {}) {
-	    return {
-	      id: `${NEW_USER_GROUP_ID_PREFIX}${main_core.Text.getRandom()}`,
-	      isNew: true,
-	      isModified: true,
-	      isShown: true,
-	      title: main_core.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_ROLE_NAME'),
-	      accessRights: new Map(),
-	      members: new Map()
-	    };
-	  }
-	  getGetters() {
-	    return {
-	      shown: state => {
-	        const result = new Map();
-	        for (const [userGroupId, userGroup] of state.collection) {
-	          if (userGroup.isShown) {
-	            result.set(userGroupId, userGroup);
-	          }
-	        }
-	        return result;
-	      },
-	      getEmptyAccessRightValue: (state, getters, rootState, rootGetters) => (userGroupId, sectionCode, valueId) => {
-	        const values = rootGetters['accessRights/getEmptyValue'](sectionCode, valueId);
-	        return {
-	          id: valueId,
-	          values,
-	          isModified: state.collection.get(userGroupId).isNew
-	        };
-	      },
-	      defaultAccessRightValues: (state, getters, rootState) => {
-	        const result = new Map();
-	        for (const section of rootState.accessRights.collection.values()) {
-	          for (const [rightId, right] of section.rights) {
-	            if (main_core.Type.isNil(right.defaultValue)) {
-	              continue;
-	            }
-	            result.set(rightId, {
-	              id: rightId,
-	              values: right.defaultValue,
-	              isModified: true
-	            });
-	          }
-	        }
-	        return result;
-	      },
-	      isModified: state => {
-	        if (state.deleted.size > 0) {
-	          return true;
-	        }
-	        for (const userGroup of state.collection.values()) {
-	          if (userGroup.isNew || userGroup.isModified) {
-	            return true;
-	          }
-	          for (const value of userGroup.accessRights.values()) {
-	            if (value.isModified) {
-	              return true;
-	            }
-	          }
-	        }
-	        return false;
-	      },
-	      isMaxVisibleUserGroupsReached: (state, getters, rootState, rootGetters) => {
-	        if (!rootGetters['application/isMaxVisibleUserGroupsSet']) {
-	          return false;
-	        }
-	        return getters.shown.size >= rootState.application.options.maxVisibleUserGroups;
-	      }
-	    };
-	  }
-	  getActions() {
-	    return {
-	      setAccessRightValues: (store, payload) => {
-	        babelHelpers.classPrivateFieldLooseBase(this, _setAccessRightValuesAction)[_setAccessRightValuesAction](store, payload);
-	      },
-	      setAccessRightValuesForShown: (store, payload) => {
-	        babelHelpers.classPrivateFieldLooseBase(this, _setAccessRightValuesForShownAction)[_setAccessRightValuesForShownAction](store, payload);
-	      },
-	      setMinAccessRightValues: (store, payload) => {
-	        babelHelpers.classPrivateFieldLooseBase(this, _setMinAccessRightValuesAction)[_setMinAccessRightValuesAction](store, payload);
-	      },
-	      setMaxAccessRightValues: (store, payload) => {
-	        babelHelpers.classPrivateFieldLooseBase(this, _setMaxAccessRightValuesAction)[_setMaxAccessRightValuesAction](store, payload);
-	      },
-	      setMinAccessRightValuesInSection: (store, payload) => {
-	        babelHelpers.classPrivateFieldLooseBase(this, _setMinAccessRightValuesInSectionAction)[_setMinAccessRightValuesInSectionAction](store, payload);
-	      },
-	      setMaxAccessRightValuesInSection: (store, payload) => {
-	        babelHelpers.classPrivateFieldLooseBase(this, _setMaxAccessRightValuesInSectionAction)[_setMaxAccessRightValuesInSectionAction](store, payload);
-	      },
-	      setMinAccessRightValuesForRight: (store, payload) => {
-	        babelHelpers.classPrivateFieldLooseBase(this, _setMinAccessRightValuesForRight)[_setMinAccessRightValuesForRight](store, payload);
-	      },
-	      setMaxAccessRightValuesForRight: (store, payload) => {
-	        babelHelpers.classPrivateFieldLooseBase(this, _setMaxAccessRightValuesForRight)[_setMaxAccessRightValuesForRight](store, payload);
-	      },
-	      setRoleTitle: (store, payload) => {
-	        babelHelpers.classPrivateFieldLooseBase(this, _setRoleTitleAction)[_setRoleTitleAction](store, payload);
-	      },
-	      addMember: (store, payload) => {
-	        babelHelpers.classPrivateFieldLooseBase(this, _addMemberAction)[_addMemberAction](store, payload);
-	      },
-	      removeMember: (store, payload) => {
-	        babelHelpers.classPrivateFieldLooseBase(this, _removeMemberAction)[_removeMemberAction](store, payload);
-	      },
-	      copyUserGroup: (store, payload) => {
-	        babelHelpers.classPrivateFieldLooseBase(this, _copyUserGroupAction)[_copyUserGroupAction](store, payload);
-	      },
-	      copySectionValues: (store, payload) => {
-	        babelHelpers.classPrivateFieldLooseBase(this, _copySectionValuesAction)[_copySectionValuesAction](store, payload);
-	      },
-	      addUserGroup: store => {
-	        babelHelpers.classPrivateFieldLooseBase(this, _addUserGroupAction)[_addUserGroupAction](store);
-	      },
-	      removeUserGroup: (store, payload) => {
-	        babelHelpers.classPrivateFieldLooseBase(this, _removeUserGroupAction)[_removeUserGroupAction](store, payload);
-	      },
-	      showUserGroup: (store, payload) => {
-	        babelHelpers.classPrivateFieldLooseBase(this, _showUserGroupAction)[_showUserGroupAction](store, payload);
-	      },
-	      hideUserGroup: (store, payload) => {
-	        babelHelpers.classPrivateFieldLooseBase(this, _hideUserGroupAction)[_hideUserGroupAction](store, payload);
-	      },
-	      deleteRight: (store, payload) => {
-	        babelHelpers.classPrivateFieldLooseBase(this, _deleteRightAction)[_deleteRightAction](store, payload);
-	      }
-	    };
-	  }
-	  getMutations() {
-	    return {
-	      setAccessRightValues: (state, {
-	        userGroupId,
-	        valueId,
-	        values,
-	        isModified
-	      }) => {
-	        const userGroup = babelHelpers.classPrivateFieldLooseBase(this, _getUserGroup)[_getUserGroup](state, userGroupId);
-	        const accessRightValue = userGroup.accessRights.get(valueId);
-	        if (!accessRightValue) {
-	          userGroup.accessRights.set(valueId, {
-	            id: valueId,
-	            values,
-	            isModified
-	          });
-	          return;
-	        }
-	        accessRightValue.values = values;
-	        accessRightValue.isModified = isModified;
-	      },
-	      setRoleTitle: (state, {
-	        userGroupId,
-	        title
-	      }) => {
-	        const userGroup = babelHelpers.classPrivateFieldLooseBase(this, _getUserGroup)[_getUserGroup](state, userGroupId);
-	        userGroup.title = title;
-	        userGroup.isModified = babelHelpers.classPrivateFieldLooseBase(this, _isUserGroupModified)[_isUserGroupModified](userGroup);
-	      },
-	      addMember: (state, {
-	        userGroupId,
-	        accessCode,
-	        member
-	      }) => {
-	        const userGroup = babelHelpers.classPrivateFieldLooseBase(this, _getUserGroup)[_getUserGroup](state, userGroupId);
-	        userGroup.members.set(accessCode, member);
-	        userGroup.isModified = babelHelpers.classPrivateFieldLooseBase(this, _isUserGroupModified)[_isUserGroupModified](userGroup);
-	      },
-	      removeMember: (state, {
-	        userGroupId,
-	        accessCode
-	      }) => {
-	        const userGroup = babelHelpers.classPrivateFieldLooseBase(this, _getUserGroup)[_getUserGroup](state, userGroupId);
-	        userGroup.members.delete(accessCode);
-	        userGroup.isModified = babelHelpers.classPrivateFieldLooseBase(this, _isUserGroupModified)[_isUserGroupModified](userGroup);
-	      },
-	      addUserGroup: (state, {
-	        userGroup
-	      }) => {
-	        state.collection.set(userGroup.id, userGroup);
-	      },
-	      removeUserGroup: (state, {
-	        userGroupId
-	      }) => {
-	        state.collection.delete(userGroupId);
-	      },
-	      markUserGroupForDeletion: (state, {
-	        userGroupId
-	      }) => {
-	        state.deleted.add(userGroupId);
-	      },
-	      showUserGroup: (state, {
-	        userGroupId
-	      }) => {
-	        // eslint-disable-next-line no-param-reassign
-	        state.collection.get(userGroupId).isShown = true;
-	      },
-	      hideUserGroup: (state, {
-	        userGroupId
-	      }) => {
-	        // eslint-disable-next-line no-param-reassign
-	        state.collection.get(userGroupId).isShown = false;
-	      },
-	      deleteRight: (state, {
-	        rightId
-	      }) => {
-	        for (const role of state.collection.values()) {
-	          if (role.accessRights.get(rightId)) {
-	            role.accessRights.delete(rightId);
-	          }
-	        }
-	      }
-	    };
-	  }
-	}
-	function _setAccessRightValuesAction2(store, payload) {
-	  if (!main_core.Type.isSet(payload.values)) {
-	    console.warn('ui.accessrights.v2: Attempt to set not-Set values', payload);
-	    return;
-	  }
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _isUserGroupExists)[_isUserGroupExists](store, payload.userGroupId)) {
-	    console.warn('ui.accessrights.v2: Attempt to set value to a user group that dont exists', payload);
-	    return;
-	  }
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _isValueExistsInStructure)[_isValueExistsInStructure](store, payload.sectionCode, payload.valueId)) {
-	    console.warn('ui.accessrights.v2: Attempt to set value to a right that dont exists in structure', payload);
-	    return;
-	  }
-	  store.commit('setAccessRightValues', {
-	    userGroupId: payload.userGroupId,
-	    valueId: payload.valueId,
-	    values: payload.values,
-	    isModified: babelHelpers.classPrivateFieldLooseBase(this, _isValueModified)[_isValueModified](payload.userGroupId, payload.valueId, payload.values, store.rootGetters['accessRights/getEmptyValue'](payload.sectionCode, payload.valueId))
-	  });
-	}
-	function _setAccessRightValuesForShownAction2(store, payload) {
-	  for (const userGroupId of store.getters.shown.keys()) {
-	    void store.dispatch('setAccessRightValues', {
-	      ...payload,
-	      userGroupId
-	    });
-	  }
-	}
-	function _setMinAccessRightValuesAction2(store, {
-	  userGroupId
-	}) {
-	  for (const sectionCode of store.rootState.accessRights.collection.keys()) {
-	    void store.dispatch('setMinAccessRightValuesInSection', {
-	      userGroupId,
-	      sectionCode
-	    });
-	  }
-	  void store.dispatch('accessRights/expandAllSections', null, {
-	    root: true
-	  });
-	}
-	function _setMinAccessRightValuesInSectionAction2(store, {
-	  userGroupId,
-	  sectionCode
-	}) {
-	  const section = store.rootState.accessRights.collection.get(sectionCode);
-	  if (!section) {
-	    console.warn('ui.accessrights.v2: attempt to set min values in section that dont exists', {
-	      sectionCode
-	    });
-	    return;
-	  }
-	  for (const item of section.rights.values()) {
-	    const valueToSet = babelHelpers.classPrivateFieldLooseBase(this, _getMinValueForColumnAction)[_getMinValueForColumnAction](item, store.rootGetters['accessRights/getEmptyValue'](section.sectionCode, item.id));
-	    if (main_core.Type.isNil(valueToSet)) {
-	      continue;
-	    }
-	    void store.dispatch('setAccessRightValues', {
-	      userGroupId,
-	      sectionCode: section.sectionCode,
-	      valueId: item.id,
-	      values: valueToSet
-	    });
-	  }
-	}
-	function _setMinAccessRightValuesForRight2(store, {
-	  sectionCode,
-	  rightId
-	}) {
-	  var _store$rootState$acce;
-	  const right = (_store$rootState$acce = store.rootState.accessRights.collection.get(sectionCode)) == null ? void 0 : _store$rootState$acce.rights.get(rightId);
-	  if (!right) {
-	    console.warn('ui.accessrights.v2: attempt to set min values for right that dont exists', {
-	      sectionCode,
-	      rightId
-	    });
-	    return;
-	  }
-	  const valueToSet = babelHelpers.classPrivateFieldLooseBase(this, _getMinValue)[_getMinValue](right);
-	  if (main_core.Type.isNil(valueToSet)) {
-	    console.warn('ui.accessrights.v2: attempt to set min values for right that dont have min value set', {
-	      sectionCode,
-	      rightId
-	    });
-	    return;
-	  }
-	  void store.dispatch('setAccessRightValuesForShown', {
-	    sectionCode,
-	    valueId: rightId,
-	    values: valueToSet
-	  });
-	}
-	function _getMinValueForColumnAction2(item, emptyValue) {
-	  const setEmpty = main_core.Type.isBoolean(item.setEmptyOnSetMinMaxValueInColumn) && item.setEmptyOnSetMinMaxValueInColumn;
-	  if (setEmpty) {
-	    return emptyValue;
-	  }
-	  return babelHelpers.classPrivateFieldLooseBase(this, _getMinValue)[_getMinValue](item);
-	}
-	function _getMinValue2(item) {
-	  var _ServiceLocator$getVa;
-	  return (_ServiceLocator$getVa = ServiceLocator.getValueTypeByRight(item)) == null ? void 0 : _ServiceLocator$getVa.getMinValue(item);
-	}
-	function _setMaxAccessRightValuesAction2(store, {
-	  userGroupId
-	}) {
-	  for (const sectionCode of store.rootState.accessRights.collection.keys()) {
-	    void store.dispatch('setMaxAccessRightValuesInSection', {
-	      userGroupId,
-	      sectionCode
-	    });
-	  }
-	  void store.dispatch('accessRights/expandAllSections', null, {
-	    root: true
-	  });
-	}
-	function _setMaxAccessRightValuesInSectionAction2(store, {
-	  userGroupId,
-	  sectionCode
-	}) {
-	  const section = store.rootState.accessRights.collection.get(sectionCode);
-	  if (!section) {
-	    console.warn('ui.accessrights.v2: attempt to set max values in section that dont exists', {
-	      sectionCode
-	    });
-	    return;
-	  }
-	  for (const item of section.rights.values()) {
-	    const valueToSet = babelHelpers.classPrivateFieldLooseBase(this, _getMaxValueForColumnAction)[_getMaxValueForColumnAction](item, store.rootGetters['accessRights/getEmptyValue'](section.sectionCode, item.id));
-	    if (main_core.Type.isNil(valueToSet)) {
-	      continue;
-	    }
-	    void store.dispatch('setAccessRightValues', {
-	      userGroupId,
-	      sectionCode: section.sectionCode,
-	      valueId: item.id,
-	      values: valueToSet
-	    });
-	  }
-	}
-	function _setMaxAccessRightValuesForRight2(store, {
-	  sectionCode,
-	  rightId
-	}) {
-	  var _store$rootState$acce2;
-	  const right = (_store$rootState$acce2 = store.rootState.accessRights.collection.get(sectionCode)) == null ? void 0 : _store$rootState$acce2.rights.get(rightId);
-	  if (!right) {
-	    console.warn('ui.accessrights.v2: attempt to set max values for right that dont exists', {
-	      sectionCode,
-	      rightId
-	    });
-	    return;
-	  }
-	  const valueToSet = babelHelpers.classPrivateFieldLooseBase(this, _getMaxValue)[_getMaxValue](right);
-	  if (main_core.Type.isNil(valueToSet)) {
-	    console.warn('ui.accessrights.v2: attempt to set max values for right that dont have max value set', {
-	      sectionCode,
-	      rightId
-	    });
-	    return;
-	  }
-	  void store.dispatch('setAccessRightValuesForShown', {
-	    sectionCode,
-	    valueId: rightId,
-	    values: valueToSet
-	  });
-	}
-	function _getMaxValueForColumnAction2(item, emptyValue) {
-	  const setEmpty = main_core.Type.isBoolean(item.setEmptyOnSetMinMaxValueInColumn) && item.setEmptyOnSetMinMaxValueInColumn;
-	  if (setEmpty) {
-	    return emptyValue;
-	  }
-	  return babelHelpers.classPrivateFieldLooseBase(this, _getMaxValue)[_getMaxValue](item);
-	}
-	function _getMaxValue2(item) {
-	  var _ServiceLocator$getVa2;
-	  return (_ServiceLocator$getVa2 = ServiceLocator.getValueTypeByRight(item)) == null ? void 0 : _ServiceLocator$getVa2.getMaxValue(item);
-	}
-	function _copySectionValuesAction2(store, payload) {
-	  const src = babelHelpers.classPrivateFieldLooseBase(this, _getUserGroup)[_getUserGroup](store.state, payload.srcUserGroupId);
-	  if (!src) {
-	    console.warn('ui.accessrights.v2: Attempt to copy values from user group that dont exists', payload);
-	    return;
-	  }
-	  const section = store.rootState.accessRights.collection.get(payload.sectionCode);
-	  if (!section) {
-	    console.warn('ui.accessrights.v2: Attempt to copy values for section that dont exists', payload);
-	    return;
-	  }
-	  for (const rightId of section.rights.keys()) {
-	    const value = src.accessRights.get(rightId);
-	    if (value) {
-	      void store.dispatch('setAccessRightValues', {
-	        userGroupId: payload.dstUserGroupId,
-	        sectionCode: section.sectionCode,
-	        valueId: value.id,
-	        values: value.values
-	      });
-	    } else {
-	      const emptyValue = store.rootGetters['accessRights/getEmptyValue'](section.sectionCode, rightId);
-	      void store.dispatch('setAccessRightValues', {
-	        userGroupId: payload.dstUserGroupId,
-	        sectionCode: section.sectionCode,
-	        valueId: rightId,
-	        values: emptyValue
-	      });
-	    }
-	  }
-	}
-	function _setRoleTitleAction2(store, payload) {
-	  if (!main_core.Type.isString(payload.title)) {
-	    console.warn('ui.accessrights.v2: Attempt to set role title with something other than string', payload);
-	    return;
-	  }
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _isUserGroupExists)[_isUserGroupExists](store, payload.userGroupId)) {
-	    console.warn('ui.accessrights.v2: Attempt to update user group that dont exists', payload);
-	    return;
-	  }
-	  store.commit('setRoleTitle', payload);
-	}
-	function _addMemberAction2(store, payload) {
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _isUserGroupExists)[_isUserGroupExists](store, payload.userGroupId)) {
-	    console.warn('ui.accessrights.v2: Attempt to add member to a user group that dont exists', payload);
-	    return;
-	  }
-	  if (!main_core.Type.isStringFilled(payload.accessCode) || !main_core.Type.isStringFilled(payload.member.id) || !main_core.Type.isStringFilled(payload.member.type) || !main_core.Type.isStringFilled(payload.member.name) || !(main_core.Type.isNil(payload.member.avatar) || main_core.Type.isStringFilled(payload.member.avatar))) {
-	    console.warn('ui.accessrights.v2: Attempt to add member with invalid payload', payload);
-	    return;
-	  }
-	  store.commit('addMember', payload);
-	}
-	function _removeMemberAction2(store, payload) {
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _isUserGroupExists)[_isUserGroupExists](store, payload.userGroupId)) {
-	    console.warn('ui.accessrights.v2: Attempt to remove member from a user group that dont exists', payload);
-	    return;
-	  }
-	  if (!main_core.Type.isStringFilled(payload.accessCode)) {
-	    console.warn('ui.accessrights.v2: Attempt to remove member with invalid payload', payload);
-	    return;
-	  }
-	  store.commit('removeMember', payload);
-	}
-	function _copyUserGroupAction2(store, {
-	  userGroupId
-	}) {
-	  const sourceGroup = babelHelpers.classPrivateFieldLooseBase(this, _getUserGroup)[_getUserGroup](store.state, userGroupId);
-	  if (!sourceGroup) {
-	    console.warn('ui.accessrights.v2: Attempt to copy user group that dont exists', {
-	      userGroupId
-	    });
-	    return;
-	  }
-	  const emptyGroup = this.getElementState();
-	  const copy = {
-	    ...main_core.Runtime.clone(sourceGroup),
-	    id: emptyGroup.id,
-	    title: main_core.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_COPIED_ROLE_NAME', {
-	      '#ORIGINAL#': sourceGroup.title
-	    }),
-	    isNew: true,
-	    isModified: true,
-	    isShown: true
-	  };
-	  for (const value of copy.accessRights.values()) {
-	    // is a new group all values are modified
-	    value.isModified = true;
-	  }
-	  store.commit('addUserGroup', {
-	    userGroup: copy
-	  });
-	}
-	function _addUserGroupAction2(store) {
-	  const newGroup = this.getElementState();
-	  newGroup.accessRights = main_core.Runtime.clone(store.getters.defaultAccessRightValues);
-	  store.commit('addUserGroup', {
-	    userGroup: newGroup
-	  });
-	}
-	function _removeUserGroupAction2(store, {
-	  userGroupId
-	}) {
-	  const userGroup = babelHelpers.classPrivateFieldLooseBase(this, _getUserGroup)[_getUserGroup](store.state, userGroupId);
-	  if (!userGroup) {
-	    console.warn('ui.accessrights.v2: Attempt to remove user group that dont exists', {
-	      userGroupId
-	    });
-	    return;
-	  }
-	  store.commit('removeUserGroup', {
-	    userGroupId
-	  });
-	  if (!userGroup.isNew) {
-	    store.commit('markUserGroupForDeletion', {
-	      userGroupId
-	    });
-	  }
-	}
-	function _showUserGroupAction2(store, {
-	  userGroupId
-	}) {
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _isUserGroupExists)[_isUserGroupExists](store, userGroupId)) {
-	    console.warn('ui.accessrights.v2: Attempt to show user group that dont exists', {
-	      userGroupId
-	    });
-	    return;
-	  }
-	  store.commit('showUserGroup', {
-	    userGroupId
-	  });
-	}
-	function _hideUserGroupAction2(store, {
-	  userGroupId
-	}) {
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _isUserGroupExists)[_isUserGroupExists](store, userGroupId)) {
-	    console.warn('ui.accessrights.v2: Attempt to shrink user group that dont exists', {
-	      userGroupId
-	    });
-	    return;
-	  }
-	  store.commit('hideUserGroup', {
-	    userGroupId
-	  });
-	}
-	function _isUserGroupExists2(store, userGroupId) {
-	  const group = babelHelpers.classPrivateFieldLooseBase(this, _getUserGroup)[_getUserGroup](store.state, userGroupId);
-	  return Boolean(group);
-	}
-	function _getUserGroup2(state, userGroupId) {
-	  return state.collection.get(userGroupId);
-	}
-	function _isValueExistsInStructure2(store, sectionCode, valueId) {
-	  const section = store.rootState.accessRights.collection.get(sectionCode);
-	  return section == null ? void 0 : section.rights.has(valueId);
-	}
-	function _deleteRightAction2(store, {
-	  rightId
-	}) {
-	  store.commit('deleteRight', {
-	    rightId
-	  });
-	}
-	function _isValueModified2(userGroupId, valueId, values, emptyValue) {
-	  var _initialGroup$accessR, _initialGroup$accessR2;
-	  const initialGroup = babelHelpers.classPrivateFieldLooseBase(this, _initialUserGroups)[_initialUserGroups].get(userGroupId);
-	  if (!initialGroup) {
-	    // its a newly created group, all values are modified
-
-	    return true;
-	  }
-	  const initialValues = (_initialGroup$accessR = (_initialGroup$accessR2 = initialGroup.accessRights.get(valueId)) == null ? void 0 : _initialGroup$accessR2.values) != null ? _initialGroup$accessR : emptyValue;
-
-	  // use native Sets instead of Vue-wrapped proxy-sets, they throw an error on `symmetricDifference`
-	  return !babelHelpers.classPrivateFieldLooseBase(this, _isSetsEqual)[_isSetsEqual](new Set(initialValues), new Set(values));
-	}
-	function _isSetsEqual2(a, b) {
-	  if (main_core.Type.isFunction(a.symmetricDifference)) {
-	    // native way to compare sets for modern browsers
-	    return a.symmetricDifference(b).size === 0;
-	  }
-
-	  // polyfill
-
-	  if (a.size !== b.size) {
-	    return false;
-	  }
-	  for (const value of a) {
-	    if (!b.has(value)) {
-	      return false;
-	    }
-	  }
-	  for (const value of b) {
-	    if (!a.has(value)) {
-	      return false;
-	    }
-	  }
-	  return true;
-	}
-	function _isUserGroupModified2(userGroup) {
-	  if (userGroup.isNew) {
-	    return true;
-	  }
-	  const initialGroup = babelHelpers.classPrivateFieldLooseBase(this, _initialUserGroups)[_initialUserGroups].get(userGroup.id);
-	  if (!initialGroup) {
-	    throw new Error('ui.accessrights.v2: initial user group not found');
-	  }
-	  if (userGroup.title !== initialGroup.title) {
-	    return true;
-	  }
-	  const initialAccessCodes = new Set(initialGroup.members.keys());
-	  const currentAccessCodes = new Set(userGroup.members.keys());
-	  return !babelHelpers.classPrivateFieldLooseBase(this, _isSetsEqual)[_isSetsEqual](initialAccessCodes, currentAccessCodes);
-	}
-
-	function createStore(options, userGroups, accessRights, appGuid) {
-	  const userGroupsModel = UserGroupsModel.create().setInitialUserGroups(userGroups);
+	function createStore(options, userGroups, accessRights, appGuid, userGroupsOption) {
+	  var _userGroupsOption$sor, _userGroupsOption$sel;
+	  const sortConfig = (_userGroupsOption$sor = userGroupsOption.sortConfig) != null ? _userGroupsOption$sor : {};
+	  const selectedMember = (_userGroupsOption$sel = userGroupsOption.selectedMember) != null ? _userGroupsOption$sel : {};
+	  const userGroupsModel = UserGroupsModel.create().setInitialUserGroups(userGroups).setSortConfig(sortConfig).setSelectedMember(selectedMember);
 	  const accessRightsModel = AccessRightsModel.create().setInitialAccessRights(accessRights);
 	  const {
 	    store
@@ -5247,7 +5752,7 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	  }
 	  // noinspection OverlyComplexFunctionJS
 	  transform(externalSource) {
-	    var _externalSource$addit, _externalSource$addit2, _externalSource$addit3, _externalSource$addit4, _externalSource$addit5, _externalSource$addit6, _externalSource$addit7, _externalSource$addit8;
+	    var _externalSource$addit, _externalSource$addit2, _externalSource$addit3, _externalSource$addit4, _externalSource$addit5, _externalSource$addit6, _externalSource$addit7, _externalSource$addit8, _externalSource$addit9, _externalSource$addit10, _externalSource$userS;
 	    // freeze tells vue that we don't need reactivity on this state
 	    // and prevents accidental modification as well
 	    return babelHelpers.classPrivateFieldLooseBase(this, _deepFreeze)[_deepFreeze]({
@@ -5255,7 +5760,7 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	      actionSave: main_core.Type.isStringFilled(externalSource.actionSave) ? externalSource.actionSave : ACTION_SAVE,
 	      mode: main_core.Type.isStringFilled(externalSource.mode) ? externalSource.mode : MODE,
 	      bodyType: main_core.Type.isStringFilled(externalSource.bodyType) ? externalSource.bodyType : BODY_TYPE,
-	      additionalSaveParams: main_core.Type.isPlainObject(externalSource.additionalSaveParams) ? externalSource.additionalSaveParams : null,
+	      additionalSaveParams: main_core.Type.isPlainObject(externalSource.additionalSaveParams) ? externalSource.additionalSaveParams : [],
 	      isSaveOnlyChangedRights: main_core.Type.isBoolean(externalSource.isSaveOnlyChangedRights) ? externalSource.isSaveOnlyChangedRights : false,
 	      maxVisibleUserGroups: main_core.Type.isInteger(externalSource.maxVisibleUserGroups) ? externalSource.maxVisibleUserGroups : null,
 	      searchContainerSelector: main_core.Type.isStringFilled(externalSource.searchContainerSelector) ? externalSource.searchContainerSelector : null,
@@ -5263,14 +5768,18 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	        addUserGroupsProviderTab: Boolean((_externalSource$addit = (_externalSource$addit2 = externalSource.additionalMembersParams) == null ? void 0 : _externalSource$addit2.addUserGroupsProviderTab) != null ? _externalSource$addit : false),
 	        addProjectsProviderTab: Boolean((_externalSource$addit3 = (_externalSource$addit4 = externalSource.additionalMembersParams) == null ? void 0 : _externalSource$addit4.addProjectsProviderTab) != null ? _externalSource$addit3 : true),
 	        addStructureTeamsProviderTab: Boolean((_externalSource$addit5 = (_externalSource$addit6 = externalSource.additionalMembersParams) == null ? void 0 : _externalSource$addit6.addStructureTeamsProviderTab) != null ? _externalSource$addit5 : false),
-	        addStructureRolesProviderTab: Boolean((_externalSource$addit7 = (_externalSource$addit8 = externalSource.additionalMembersParams) == null ? void 0 : _externalSource$addit8.addStructureRolesProviderTab) != null ? _externalSource$addit7 : false)
+	        useStructureDepartmentsProviderTab: Boolean((_externalSource$addit7 = (_externalSource$addit8 = externalSource.additionalMembersParams) == null ? void 0 : _externalSource$addit8.useStructureDepartmentsProviderTab) != null ? _externalSource$addit7 : false),
+	        addStructureRolesProviderTab: Boolean((_externalSource$addit9 = (_externalSource$addit10 = externalSource.additionalMembersParams) == null ? void 0 : _externalSource$addit10.addStructureRolesProviderTab) != null ? _externalSource$addit9 : false)
 	      } : {
 	        addUserGroupsProviderTab: false,
 	        addProjectsProviderTab: true,
 	        addStructureTeamsProviderTab: false,
+	        useStructureDepartmentsProviderTab: false,
 	        addStructureRolesProviderTab: false
 	      },
-	      isSaveAccessRightsList: main_core.Type.isBoolean(externalSource.isSaveAccessRightsList) ? externalSource.isSaveAccessRightsList : false
+	      userSortConfigName: String((_externalSource$userS = externalSource.userSortConfigName) != null ? _externalSource$userS : externalSource.component),
+	      isSaveAccessRightsList: main_core.Type.isBoolean(externalSource.isSaveAccessRightsList) ? externalSource.isSaveAccessRightsList : false,
+	      moduleId: main_core.Type.isString(externalSource.moduleId) ? externalSource.moduleId : ''
 	    });
 	  }
 	}
@@ -5315,9 +5824,6 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	    const result = new Map();
 	    for (const externalGroup of externalSource) {
 	      const internalGroup = babelHelpers.classPrivateFieldLooseBase(this, _internalizeExternalGroup)[_internalizeExternalGroup](externalGroup);
-	      if (babelHelpers.classPrivateFieldLooseBase(this, _maxVisibleUserGroups)[_maxVisibleUserGroups] > 0 && result.size >= babelHelpers.classPrivateFieldLooseBase(this, _maxVisibleUserGroups)[_maxVisibleUserGroups]) {
-	        internalGroup.isShown = false;
-	      }
 	      result.set(internalGroup.id, internalGroup);
 	    }
 	    return result;
@@ -5328,7 +5834,6 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	    id: String(externalGroup.id),
 	    isNew: false,
 	    isModified: false,
-	    isShown: true,
 	    title: String(externalGroup.title),
 	    accessRights: new Map(),
 	    members: new Map()
@@ -5369,20 +5874,21 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	}
 	function _internalizeExternalMember2(externalMember) {
 	  return {
-	    type: String(externalMember.type),
 	    id: String(externalMember.id),
-	    name: String(externalMember.name),
+	    type: main_core.Type.isStringFilled(externalMember.type) ? externalMember.type : null,
+	    name: main_core.Type.isStringFilled(externalMember.name) ? externalMember.name : null,
 	    avatar: main_core.Type.isStringFilled(externalMember.avatar) ? externalMember.avatar : null
 	  };
 	}
 
 	var _srcUserGroups = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("srcUserGroups");
 	var _maxVisibleUserGroups$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("maxVisibleUserGroups");
-	var _ensureThatNoMoreUserGroupsThanMaxIsShown = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("ensureThatNoMoreUserGroupsThanMaxIsShown");
+	var _sortConfig$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sortConfig");
+	var _addUserGroupInSortConfig = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("addUserGroupInSortConfig");
 	class ShownUserGroupsCopier {
-	  constructor(srcUserGroups, maxVisibleUserGroups) {
-	    Object.defineProperty(this, _ensureThatNoMoreUserGroupsThanMaxIsShown, {
-	      value: _ensureThatNoMoreUserGroupsThanMaxIsShown2
+	  constructor(srcUserGroups, maxVisibleUserGroups, sortConfig) {
+	    Object.defineProperty(this, _addUserGroupInSortConfig, {
+	      value: _addUserGroupInSortConfig2
 	    });
 	    Object.defineProperty(this, _srcUserGroups, {
 	      writable: true,
@@ -5392,10 +5898,15 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	      writable: true,
 	      value: null
 	    });
+	    Object.defineProperty(this, _sortConfig$1, {
+	      writable: true,
+	      value: void 0
+	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _srcUserGroups)[_srcUserGroups] = srcUserGroups;
 	    if (main_core.Type.isInteger(maxVisibleUserGroups)) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _maxVisibleUserGroups$1)[_maxVisibleUserGroups$1] = maxVisibleUserGroups;
 	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _sortConfig$1)[_sortConfig$1] = sortConfig;
 	  }
 
 	  /**
@@ -5404,33 +5915,33 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	  transform(externalSource) {
 	    for (const [userGroupId, userGroup] of externalSource) {
 	      const srcUserGroup = babelHelpers.classPrivateFieldLooseBase(this, _srcUserGroups)[_srcUserGroups].get(userGroupId);
-	      if (srcUserGroup) {
-	        userGroup.isShown = srcUserGroup.isShown;
-	      } else {
+	      if (!srcUserGroup) {
 	        // likely it's a just created user group
-	        userGroup.isShown = true;
+	        babelHelpers.classPrivateFieldLooseBase(this, _addUserGroupInSortConfig)[_addUserGroupInSortConfig](userGroup);
 	      }
-	    }
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _maxVisibleUserGroups$1)[_maxVisibleUserGroups$1] > 0) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _ensureThatNoMoreUserGroupsThanMaxIsShown)[_ensureThatNoMoreUserGroupsThanMaxIsShown](externalSource);
 	    }
 	    return externalSource;
 	  }
-	}
-	function _ensureThatNoMoreUserGroupsThanMaxIsShown2(userGroups) {
-	  let shownCount = 0;
-	  for (const userGroup of userGroups.values()) {
-	    if (!userGroup.isShown) {
-	      continue;
-	    }
-	    shownCount++;
-	    if (shownCount > babelHelpers.classPrivateFieldLooseBase(this, _maxVisibleUserGroups$1)[_maxVisibleUserGroups$1]) {
-	      userGroup.isShown = false;
-	    }
+	  getSortConfig() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _sortConfig$1)[_sortConfig$1];
 	  }
 	}
+	function _addUserGroupInSortConfig2(userGroup) {
+	  const updateUserSortConfig = userId => {
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _sortConfig$1)[_sortConfig$1][userId]) {
+	      return;
+	    }
+	    const values = Object.values(babelHelpers.classPrivateFieldLooseBase(this, _sortConfig$1)[_sortConfig$1][userId]);
+	    const maxSortValue = values.length > 0 ? Math.max(...values) : 0;
+	    babelHelpers.classPrivateFieldLooseBase(this, _sortConfig$1)[_sortConfig$1][userId][userGroup.id] = maxSortValue + 1;
+	  };
+	  for (const [memberId] of userGroup.members) {
+	    updateUserSortConfig(memberId);
+	  }
+	  updateUserSortConfig(SELECTED_ALL_USER_ID);
+	}
 
-	var _options$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("options");
+	var _options$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("options");
 	var _renderTo = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderTo");
 	var _buttonPanel = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("buttonPanel");
 	var _guid$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("guid");
@@ -5444,23 +5955,35 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	var _userGroupsModel = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("userGroupsModel");
 	var _accessRightsModel = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("accessRightsModel");
 	var _analyticsManager = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("analyticsManager");
+	var _selectedMember$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("selectedMember");
+	var _sortConfigForAllUserGroups = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sortConfigForAllUserGroups");
 	var _confirmationPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("confirmationPopup");
+	var _getRenderTo = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getRenderTo");
 	var _bindEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bindEvents");
 	var _unbindEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("unbindEvents");
 	var _tryShowFeaturePromoter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("tryShowFeaturePromoter");
 	var _showNotification = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showNotification");
+	var _saveUserSortConfig = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("saveUserSortConfig");
 	var _runSaveAjaxRequest = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("runSaveAjaxRequest");
 	var _confirmBeforeClosingModifiedSlider = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("confirmBeforeClosingModifiedSlider");
+	var _getSortConfigForAllUserGroups = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getSortConfigForAllUserGroups");
 	/**
 	 * @memberOf BX.UI.AccessRights.V2
 	 */
 	class App {
 	  constructor(options) {
+	    var _options$userSortConf;
+	    Object.defineProperty(this, _getSortConfigForAllUserGroups, {
+	      value: _getSortConfigForAllUserGroups2
+	    });
 	    Object.defineProperty(this, _confirmBeforeClosingModifiedSlider, {
 	      value: _confirmBeforeClosingModifiedSlider2
 	    });
 	    Object.defineProperty(this, _runSaveAjaxRequest, {
 	      value: _runSaveAjaxRequest2
+	    });
+	    Object.defineProperty(this, _saveUserSortConfig, {
+	      value: _saveUserSortConfig2
 	    });
 	    Object.defineProperty(this, _showNotification, {
 	      value: _showNotification2
@@ -5474,7 +5997,10 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	    Object.defineProperty(this, _bindEvents, {
 	      value: _bindEvents2
 	    });
-	    Object.defineProperty(this, _options$1, {
+	    Object.defineProperty(this, _getRenderTo, {
+	      value: _getRenderTo2
+	    });
+	    Object.defineProperty(this, _options$2, {
 	      writable: true,
 	      value: {}
 	    });
@@ -5530,13 +6056,24 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    Object.defineProperty(this, _selectedMember$1, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _sortConfigForAllUserGroups, {
+	      writable: true,
+	      value: void 0
+	    });
 	    Object.defineProperty(this, _confirmationPopup, {
 	      writable: true,
 	      value: null
 	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1] = options || {};
-	    babelHelpers.classPrivateFieldLooseBase(this, _renderTo)[_renderTo] = babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].renderTo;
+	    babelHelpers.classPrivateFieldLooseBase(this, _options$2)[_options$2] = options || {};
+	    babelHelpers.classPrivateFieldLooseBase(this, _renderTo)[_renderTo] = babelHelpers.classPrivateFieldLooseBase(this, _getRenderTo)[_getRenderTo]();
 	    babelHelpers.classPrivateFieldLooseBase(this, _buttonPanel)[_buttonPanel] = BX.UI.ButtonPanel || null;
+	    babelHelpers.classPrivateFieldLooseBase(this, _sortConfigForAllUserGroups)[_sortConfigForAllUserGroups] = options.sortConfigForAllUserGroups;
+	    babelHelpers.classPrivateFieldLooseBase(this, _selectedMember$1)[_selectedMember$1] = options.selectedMember;
+	    babelHelpers.classPrivateFieldLooseBase(this, _options$2)[_options$2].userSortConfigName = (_options$userSortConf = options.userSortConfigName) != null ? _options$userSortConf : options.component;
 	    babelHelpers.classPrivateFieldLooseBase(this, _guid$1)[_guid$1] = main_core.Text.getRandom(16);
 	    babelHelpers.classPrivateFieldLooseBase(this, _bindEvents)[_bindEvents]();
 	  }
@@ -5573,10 +6110,11 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	      babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].commit('application/setProgress', true);
 	      babelHelpers.classPrivateFieldLooseBase(this, _runSaveAjaxRequest)[_runSaveAjaxRequest]().then(({
 	        userGroups,
-	        accessRights
+	        accessRights,
+	        sortConfig
 	      }) => {
 	        babelHelpers.classPrivateFieldLooseBase(this, _analyticsManager)[_analyticsManager].onSaveSuccess();
-	        babelHelpers.classPrivateFieldLooseBase(this, _userGroupsModel)[_userGroupsModel].setInitialUserGroups(userGroups);
+	        babelHelpers.classPrivateFieldLooseBase(this, _userGroupsModel)[_userGroupsModel].setInitialUserGroups(userGroups).setSortConfig(sortConfig).setSelectedMember(this.getSelectedMember());
 	        if (accessRights) {
 	          babelHelpers.classPrivateFieldLooseBase(this, _accessRightsModel)[_accessRightsModel].setInitialAccessRights(accessRights);
 	        }
@@ -5589,6 +6127,7 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 
 	        // reset modification flags and stuff
 	        babelHelpers.classPrivateFieldLooseBase(this, _resetState)[_resetState]();
+	        babelHelpers.classPrivateFieldLooseBase(this, _saveUserSortConfig)[_saveUserSortConfig](sortConfig[SELECTED_ALL_USER_ID]);
 	        babelHelpers.classPrivateFieldLooseBase(this, _showNotification)[_showNotification](main_core.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_SETTINGS_HAVE_BEEN_SAVED'));
 	      }).catch(response => {
 	        var _response$errors, _response$errors$;
@@ -5613,31 +6152,49 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	    });
 	  }
 	  draw() {
-	    const applicationOptions = new ApplicationInternalizer().transform(babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1]);
-	    const {
-	      store,
-	      resetState,
-	      userGroupsModel,
-	      accessRightsModel
-	    } = createStore(applicationOptions, new UserGroupsInternalizer(applicationOptions.maxVisibleUserGroups).transform(babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].userGroups), new AccessRightsInternalizer().transform(babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].accessRights), babelHelpers.classPrivateFieldLooseBase(this, _guid$1)[_guid$1]);
-	    babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1] = store;
-	    babelHelpers.classPrivateFieldLooseBase(this, _resetState)[_resetState] = resetState;
-	    babelHelpers.classPrivateFieldLooseBase(this, _userGroupsModel)[_userGroupsModel] = userGroupsModel;
-	    babelHelpers.classPrivateFieldLooseBase(this, _accessRightsModel)[_accessRightsModel] = accessRightsModel;
-	    babelHelpers.classPrivateFieldLooseBase(this, _unwatch)[_unwatch] = babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].watch((state, getters) => getters['application/isModified'], newValue => {
-	      if (newValue) {
-	        var _babelHelpers$classPr2;
-	        (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _buttonPanel)[_buttonPanel]) == null ? void 0 : _babelHelpers$classPr2.show();
-	      } else {
-	        var _babelHelpers$classPr3;
-	        (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _buttonPanel)[_buttonPanel]) == null ? void 0 : _babelHelpers$classPr3.hide();
-	      }
+	    const loader = new main_loader.Loader({
+	      target: babelHelpers.classPrivateFieldLooseBase(this, _renderTo)[_renderTo]
 	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _app)[_app] = ui_vue3.BitrixVue.createApp(Grid);
-	    babelHelpers.classPrivateFieldLooseBase(this, _app)[_app].use(babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1]);
-	    main_core.Dom.clean(babelHelpers.classPrivateFieldLooseBase(this, _renderTo)[_renderTo]);
-	    babelHelpers.classPrivateFieldLooseBase(this, _rootComponent)[_rootComponent] = babelHelpers.classPrivateFieldLooseBase(this, _app)[_app].mount(babelHelpers.classPrivateFieldLooseBase(this, _renderTo)[_renderTo]);
-	    babelHelpers.classPrivateFieldLooseBase(this, _analyticsManager)[_analyticsManager] = new AnalyticsManager(babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1], babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1].analytics);
+	    loader.show();
+	    babelHelpers.classPrivateFieldLooseBase(this, _getSortConfigForAllUserGroups)[_getSortConfigForAllUserGroups]().then(result => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _sortConfigForAllUserGroups)[_sortConfigForAllUserGroups] = result;
+	    }).catch(() => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _sortConfigForAllUserGroups)[_sortConfigForAllUserGroups] = null;
+	    }).finally(() => {
+	      const applicationOptions = new ApplicationInternalizer().transform(babelHelpers.classPrivateFieldLooseBase(this, _options$2)[_options$2]);
+	      const userGroupsOptions = {
+	        sortConfig: {},
+	        selectedMember: babelHelpers.classPrivateFieldLooseBase(this, _selectedMember$1)[_selectedMember$1]
+	      };
+	      if (main_core.Type.isObject(babelHelpers.classPrivateFieldLooseBase(this, _sortConfigForAllUserGroups)[_sortConfigForAllUserGroups])) {
+	        userGroupsOptions.sortConfig[SELECTED_ALL_USER_ID] = babelHelpers.classPrivateFieldLooseBase(this, _sortConfigForAllUserGroups)[_sortConfigForAllUserGroups];
+	      }
+	      const {
+	        store,
+	        resetState,
+	        userGroupsModel,
+	        accessRightsModel
+	      } = createStore(applicationOptions, new UserGroupsInternalizer(applicationOptions.maxVisibleUserGroups).transform(babelHelpers.classPrivateFieldLooseBase(this, _options$2)[_options$2].userGroups), new AccessRightsInternalizer().transform(babelHelpers.classPrivateFieldLooseBase(this, _options$2)[_options$2].accessRights), babelHelpers.classPrivateFieldLooseBase(this, _guid$1)[_guid$1], userGroupsOptions);
+	      babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1] = store;
+	      babelHelpers.classPrivateFieldLooseBase(this, _resetState)[_resetState] = resetState;
+	      babelHelpers.classPrivateFieldLooseBase(this, _userGroupsModel)[_userGroupsModel] = userGroupsModel;
+	      babelHelpers.classPrivateFieldLooseBase(this, _accessRightsModel)[_accessRightsModel] = accessRightsModel;
+	      babelHelpers.classPrivateFieldLooseBase(this, _unwatch)[_unwatch] = babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].watch((state, getters) => getters['application/isModified'], newValue => {
+	        if (newValue) {
+	          var _babelHelpers$classPr2;
+	          (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _buttonPanel)[_buttonPanel]) == null ? void 0 : _babelHelpers$classPr2.show();
+	        } else {
+	          var _babelHelpers$classPr3;
+	          (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _buttonPanel)[_buttonPanel]) == null ? void 0 : _babelHelpers$classPr3.hide();
+	        }
+	      });
+	      babelHelpers.classPrivateFieldLooseBase(this, _app)[_app] = ui_vue3.BitrixVue.createApp(Grid);
+	      babelHelpers.classPrivateFieldLooseBase(this, _app)[_app].use(babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1]);
+	      loader.hide();
+	      main_core.Dom.clean(babelHelpers.classPrivateFieldLooseBase(this, _renderTo)[_renderTo]);
+	      babelHelpers.classPrivateFieldLooseBase(this, _rootComponent)[_rootComponent] = babelHelpers.classPrivateFieldLooseBase(this, _app)[_app].mount(babelHelpers.classPrivateFieldLooseBase(this, _renderTo)[_renderTo]);
+	      babelHelpers.classPrivateFieldLooseBase(this, _analyticsManager)[_analyticsManager] = new AnalyticsManager(babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1], babelHelpers.classPrivateFieldLooseBase(this, _options$2)[_options$2].analytics);
+	    });
 	  }
 	  destroy() {
 	    babelHelpers.classPrivateFieldLooseBase(this, _analyticsManager)[_analyticsManager] = null;
@@ -5649,7 +6206,7 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1] = null;
 	    babelHelpers.classPrivateFieldLooseBase(this, _resetState)[_resetState] = null;
 	    babelHelpers.classPrivateFieldLooseBase(this, _userGroupsModel)[_userGroupsModel] = null;
-	    babelHelpers.classPrivateFieldLooseBase(this, _options$1)[_options$1] = null;
+	    babelHelpers.classPrivateFieldLooseBase(this, _options$2)[_options$2] = null;
 	    babelHelpers.classPrivateFieldLooseBase(this, _buttonPanel)[_buttonPanel] = null;
 	    main_core.Dom.clean(babelHelpers.classPrivateFieldLooseBase(this, _renderTo)[_renderTo]);
 	    babelHelpers.classPrivateFieldLooseBase(this, _renderTo)[_renderTo] = null;
@@ -5665,9 +6222,18 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	  scrollToSection(sectionCode) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _rootComponent)[_rootComponent].scrollToSection(sectionCode);
 	  }
+	  getSelectedMember() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].state.userGroups.selectedMember;
+	  }
 	  getGuid() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _guid$1)[_guid$1];
 	  }
+	}
+	function _getRenderTo2() {
+	  if (main_core.Type.isElementNode(babelHelpers.classPrivateFieldLooseBase(this, _options$2)[_options$2].renderTo)) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _options$2)[_options$2].renderTo;
+	  }
+	  return document.getElementById(babelHelpers.classPrivateFieldLooseBase(this, _options$2)[_options$2].renderToContainerId);
 	}
 	function _bindEvents2() {
 	  babelHelpers.classPrivateFieldLooseBase(this, _handleSliderClose)[_handleSliderClose] = event => {
@@ -5714,6 +6280,20 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	    autoHideDelay: 3000
 	  });
 	}
+	function _saveUserSortConfig2(userSortConfig) {
+	  if (!main_core.Type.isObject(userSortConfig)) {
+	    return;
+	  }
+	  const userGroups = babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].state.userGroups.collection;
+	  const validUserSortConfig = {};
+	  for (const [groupId, sortValue] of Object.entries(userSortConfig)) {
+	    if (userGroups.has(groupId)) {
+	      validUserSortConfig[groupId] = sortValue;
+	    }
+	  }
+	  babelHelpers.classPrivateFieldLooseBase(this, _sortConfigForAllUserGroups)[_sortConfigForAllUserGroups] = validUserSortConfig;
+	  return saveSortConfigForAllUserGroups(babelHelpers.classPrivateFieldLooseBase(this, _options$2)[_options$2].userSortConfigName, babelHelpers.classPrivateFieldLooseBase(this, _sortConfigForAllUserGroups)[_sortConfigForAllUserGroups]);
+	}
 	function _runSaveAjaxRequest2() {
 	  const internalUserGroups = babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].state.userGroups.collection;
 	  let userGroups = null;
@@ -5743,14 +6323,18 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	      }
 	    }).then(response => {
 	      const maxVisibleUserGroups = babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].state.application.options.maxVisibleUserGroups;
+	      const sortConfig = babelHelpers.classPrivateFieldLooseBase(this, _store$1)[_store$1].state.userGroups.sortConfig;
 	      const newUserGroups = new UserGroupsInternalizer(maxVisibleUserGroups).transform(response.data.USER_GROUPS);
-	      new ShownUserGroupsCopier(internalUserGroups, maxVisibleUserGroups).transform(newUserGroups);
+	      const transformer = new ShownUserGroupsCopier(internalUserGroups, maxVisibleUserGroups, sortConfig);
+	      transformer.transform(newUserGroups);
+	      const newSortConfig = transformer.getSortConfig();
 	      let newAccessRights = null;
 	      if (response.data.ACCESS_RIGHTS) {
 	        newAccessRights = new AccessRightsInternalizer().transform(response.data.ACCESS_RIGHTS);
 	      }
 	      resolve({
 	        userGroups: newUserGroups,
+	        sortConfig: newSortConfig,
 	        accessRights: newAccessRights
 	      });
 	    }).catch(reject);
@@ -5796,8 +6380,22 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	  });
 	  babelHelpers.classPrivateFieldLooseBase(this, _confirmationPopup)[_confirmationPopup].show();
 	}
+	function _getSortConfigForAllUserGroups2() {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _sortConfigForAllUserGroups)[_sortConfigForAllUserGroups]) {
+	    return Promise.resolve(babelHelpers.classPrivateFieldLooseBase(this, _sortConfigForAllUserGroups)[_sortConfigForAllUserGroups]);
+	  }
+	  return new Promise(resolve => {
+	    main_core.ajax.runAction('ui.accessrights.getUserSortConfig', {
+	      data: {
+	        name: babelHelpers.classPrivateFieldLooseBase(this, _options$2)[_options$2].userSortConfigName
+	      }
+	    }).then(response => resolve(response.data ? {
+	      ...response.data
+	    } : null)).catch(() => resolve(null));
+	  });
+	}
 
 	exports.App = App;
 
-}((this.BX.UI.AccessRights.V2 = this.BX.UI.AccessRights.V2 || {}),BX.UI.Dialogs,BX.UI.IconSet,BX.UI,BX.UI.Vue3.Components,BX.UI.EntitySelector,BX.Vue3,BX.Vue3.Directives,BX.UI.Vue3.Components,BX.Main,BX.UI,BX,BX.UI.Vue3.Components,BX,BX.UI.Analytics,BX.Vue3.Vuex,BX.Event,BX));
+}((this.BX.UI.AccessRights.V2 = this.BX.UI.AccessRights.V2 || {}),BX.UI.Dialogs,BX.UI.AccessRights.V2,BX.UI.System.Chip.Vue,BX.UI.IconSet,BX.UI,BX.UI.Vue3.Components,BX.UI.EntitySelector,BX.Vue3.Directives,BX.UI.Vue3.Components,BX.Main,BX.UI,BX,BX.UI.Vue3.Components,BX.Vue3,BX,BX.UI.Analytics,BX.Vue3.Vuex,BX.Event,BX,BX));
 //# sourceMappingURL=v2.bundle.js.map

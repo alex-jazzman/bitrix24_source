@@ -1,12 +1,12 @@
-<?
-/*
-##############################################
-# Bitrix: SiteManager						 #
-# Copyright (c) 2004 - 2016 Bitrix			 #
-# https://www.bitrixsoft.com				 #
-# mailto:admin@bitrix.ru					 #
-##############################################
-*/
+<?php
+
+/**
+ * Bitrix Framework
+ * @package bitrix
+ * @subpackage vote
+ * @copyright 2001-2025 Bitrix
+ */
+
 /**
  * @global CMain $APPLICATION
  * @global CUser $USER

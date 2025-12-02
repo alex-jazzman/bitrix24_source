@@ -59,6 +59,7 @@ function updateEvents(element: HTMLElement, params: HintParams | Function): void
 
 function unbindEvents(element: HTMLElement): void
 {
+	clearTimeouts();
 	Object.entries(handlersMap.get(element) ?? {}).forEach(([event, handler]) => Event.unbind(element, event, handler));
 	handlersMap.delete(element);
 }

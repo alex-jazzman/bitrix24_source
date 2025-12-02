@@ -1,3 +1,5 @@
+/* eslint-disable no-underscore-dangle */
+
 import { Type } from 'main.core';
 
 import {
@@ -17,6 +19,8 @@ import {
 	AutoLinkNode,
 	type LinkAttributes,
 } from 'ui.lexical.link';
+
+import { $createCustomAutoLinkNode, CustomAutoLinkNode } from './custom-autolink-node';
 
 import BasePlugin from '../base-plugin';
 import { type TextEditor } from '../../text-editor';
@@ -69,13 +73,38 @@ export class AutoLinkPlugin extends BasePlugin
 
 	static getNodes(editor: TextEditor): Array<Class<LexicalNode>>
 	{
-		return [AutoLinkNode];
+		return [
+			AutoLinkNode,
+			CustomAutoLinkNode,
+			{
+				replace: AutoLinkNode,
+				with: (node: AutoLinkNode) => {
+					return $createCustomAutoLinkNode(
+						node.__url,
+						{
+							isUnlinked: node.__isUnlinked,
+							rel: node.__rel,
+							target: node.__target,
+							title: node.__title,
+						},
+					);
+				},
+				withClass: CustomAutoLinkNode,
+			},
+		];
 	}
 
 	exportBBCode(): BBCodeExportConversion
 	{
 		return {
 			autolink: (): BBCodeExportOutput => {
+				const scheme = this.getEditor().getBBCodeScheme();
+
+				return {
+					node: scheme.createElement({ name: 'url' }),
+				};
+			},
+			'custom-autolink': (): BBCodeExportOutput => {
 				const scheme = this.getEditor().getBBCodeScheme();
 
 				return {
@@ -89,10 +118,11 @@ export class AutoLinkPlugin extends BasePlugin
 	{
 		return {
 			nodes: [{
-				nodeClass: AutoLinkNode,
+				nodeClass: CustomAutoLinkNode,
 			}],
 			bbcodeMap: {
 				autolink: 'url',
+				'custom-autolink': 'url',
 			},
 		};
 	}

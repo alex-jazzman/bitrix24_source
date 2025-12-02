@@ -4,21 +4,26 @@ import { mapGetters, mapState } from 'ui.vue3.vuex';
 import { ServiceLocator } from '../service/service-locator';
 import { Header } from './header';
 import { SearchBox } from './searchbox';
+import { MemberSelector } from './member-selector';
 import { Section } from './section';
+import { GridSkeleton } from './loader/grid/grid-skeleton';
 
 export const Grid = {
 	name: 'Grid',
-	components: { Section, Header, SearchBox },
+	components: { Section, Header, SearchBox, MemberSelector, GridSkeleton },
 	loader: null,
 	computed: {
 		...mapState({
 			isProgress: (state) => state.application.isProgress,
 			guid: (state) => state.application.guid,
 			searchContainerSelector: (state) => state.application.options.searchContainerSelector,
+			maxVisibleUserGroups: (state) => state.application.options.maxVisibleUserGroups,
+			sortConfig: (state) => state.userGroups.sortConfig,
+			selectedMember: (state) => state.userGroups.selectedMember,
 		}),
 		...mapGetters({
 			shownSections: 'accessRights/shown',
-			shownUserGroups: 'userGroups/shown',
+			userGroups: 'userGroups/shown',
 		}),
 	},
 	mounted()
@@ -106,26 +111,30 @@ export const Grid = {
 	},
 	template: `
 		<Teleport v-if="searchContainerSelector" :to="searchContainerSelector">
-			<SearchBox/>
+			<div class="ui-access-rights-v2-search-container">
+				<MemberSelector/>
+				<SearchBox/>
+			</div>
 		</Teleport>
-		<div ref="container" class='ui-access-rights-v2' :class="{
-			'ui-access-rights-v2-block': isProgress,
-		}">
-			<Header :user-groups="shownUserGroups"/>
-			<Section
-				v-for="[sectionCode, accessRightSection] in shownSections"
-				:key="sectionCode"
-				:code="accessRightSection.sectionCode"
-				:is-expanded="accessRightSection.isExpanded"
-				:title="accessRightSection.sectionTitle"
-				:sub-title="accessRightSection.sectionSubTitle"
-				:hint="accessRightSection.sectionHint"
-				:icon="accessRightSection.sectionIcon"
-				:rights="accessRightSection.rights"
-				:action="accessRightSection.action"
-				:user-groups="shownUserGroups"
-				ref="sections"
-			/>
+		<div ref="container" class='ui-access-rights-v2'>
+			<GridSkeleton v-if="isProgress" />
+			<template v-else>
+				<Header :user-groups="userGroups"/>
+				<Section
+					v-for="[sectionCode, accessRightSection] in shownSections"
+					:key="sectionCode"
+					:code="accessRightSection.sectionCode"
+					:is-expanded="accessRightSection.isExpanded"
+					:title="accessRightSection.sectionTitle"
+					:sub-title="accessRightSection.sectionSubTitle"
+					:hint="accessRightSection.sectionHint"
+					:icon="accessRightSection.sectionIcon"
+					:rights="accessRightSection.rights"
+					:action="accessRightSection.action"
+					:user-groups="userGroups"
+					ref="sections"
+				/>
+			</template>
 		</div>
 	`,
 };

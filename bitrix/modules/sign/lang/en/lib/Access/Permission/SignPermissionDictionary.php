@@ -1,6 +1,6 @@
 <?php
 $MESS["SIGN_ACCESS_RIGHTS"] = "Edit access permissions";
-$MESS["SIGN_B2E_MEMBER_DYNAMIC_FIELDS_DELETE"] = "Delete custom information fields";
+$MESS["SIGN_B2E_MEMBER_DYNAMIC_FIELDS_DELETE"] = "Delete custom document fields";
 $MESS["SIGN_B2E_MY_SAFE"] = "View \"Company vault\" area";
 $MESS["SIGN_B2E_MY_SAFE_DOCUMENTS"] = "Access documents in Company vault";
 $MESS["SIGN_B2E_MY_SAFE_FIRED"] = "Show dismissed employees in the \"Company vault\" filter";

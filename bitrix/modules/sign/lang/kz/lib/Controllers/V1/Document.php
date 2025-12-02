@@ -1,4 +1,3 @@
 <?php
-$MESS["SIGN_CONTROLLERS_V1_DOCUMENT_START_B2E_INVITE_TEXT"] = "Құжатқа қол қойыңыз";
 $MESS["SIGN_CONTROLLER_DOCUMENTS_NOT_FOUND"] = "Құжаттар табылмады";
 $MESS["SIGN_CONTROLLER_DOCUMENT_NOT_FOUND"] = "Құжат табылмады";

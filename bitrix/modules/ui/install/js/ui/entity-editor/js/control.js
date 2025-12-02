@@ -4707,6 +4707,12 @@ if(typeof BX.UI.EntityEditorSection === "undefined")
 
 		fieldData['HELP_MESSAGE'] = params?.HELP_MESSAGE ?? '';
 
+		const additional = BX.prop.getObject(params, 'additional', {});
+		if (additional)
+		{
+			fieldData['ADDITIONAL'] = additional;
+		}
+
 		var showAlways = BX.prop.getBoolean(params, "showAlways", null);
 		var label = BX.prop.getString(params, "label", "");
 		var field = BX.prop.get(params, "field", null);

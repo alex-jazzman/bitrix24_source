@@ -3,7 +3,7 @@ import { Builder, type Store } from 'ui.vue3.vuex';
 import type { AccessRightsCollection } from './model/access-rights-model';
 import { AccessRightsModel } from './model/access-rights-model';
 import { ApplicationModel, type Options } from './model/application-model';
-import type { UserGroupsCollection } from './model/user-groups-model';
+import type { UserGroupsCollection, UserGroupsOption } from './model/user-groups-model';
 import { UserGroupsModel } from './model/user-groups-model';
 
 export function createStore(
@@ -11,14 +11,20 @@ export function createStore(
 	userGroups: UserGroupsCollection,
 	accessRights: AccessRightsCollection,
 	appGuid: string | number,
+	userGroupsOption: UserGroupsOption,
 ): {
 	store: Store,
 	resetState: () => Promise<void>,
 	userGroupsModel: UserGroupsModel,
 }
 {
+	const sortConfig = userGroupsOption.sortConfig ?? {};
+	const selectedMember = userGroupsOption.selectedMember ?? {};
+
 	const userGroupsModel = UserGroupsModel.create()
 		.setInitialUserGroups(userGroups)
+		.setSortConfig(sortConfig)
+		.setSelectedMember(selectedMember)
 	;
 
 	const accessRightsModel = AccessRightsModel.create()

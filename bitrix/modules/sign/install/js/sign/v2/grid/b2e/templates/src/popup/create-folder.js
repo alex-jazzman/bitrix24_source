@@ -1,4 +1,4 @@
-import { Dom, Loc } from 'main.core';
+import { Dom, Loc, Event } from 'main.core';
 
 export class CreateFolderPopup
 {
@@ -6,6 +6,22 @@ export class CreateFolderPopup
 	{
 		return new Promise((resolve) => {
 			const uniqueId = `folderNameInput_${Date.now()}`;
+
+			const handleSubmit = () => {
+				const folderName = document.getElementById(uniqueId).value;
+				if (folderName)
+				{
+					resolve(folderName);
+					popup.close();
+				}
+				else
+				{
+					BX.UI.Notification.Center.notify({
+						content: Loc.getMessage('SIGN_TEMPLATE_GRID_CREATE_FOLDER_HINT_TITLE_NOT_EMPTY'),
+					});
+				}
+			};
+
 			const popup = new BX.PopupWindow(`folderNamePopup_${uniqueId}`, null, {
 				className: 'sign-b2e-grid-templates-popup',
 				content: `
@@ -29,20 +45,7 @@ export class CreateFolderPopup
 							: Loc.getMessage('SIGN_TEMPLATE_GRID_CREATE_FOLDER_SAVE_BUTTON_TEXT'),
 						className: 'popup-window-button-blue',
 						events: {
-							click() {
-								const folderName = document.getElementById(uniqueId).value;
-								if (folderName)
-								{
-									resolve(folderName);
-									popup.close();
-								}
-								else
-								{
-									BX.UI.Notification.Center.notify({
-										content: Loc.getMessage('SIGN_TEMPLATE_GRID_CREATE_FOLDER_HINT_TITLE_NOT_EMPTY'),
-									});
-								}
-							},
+							click: handleSubmit,
 						},
 					}),
 					new BX.PopupWindowButton({
@@ -62,6 +65,16 @@ export class CreateFolderPopup
 				events: {
 					onPopupShow() {
 						Dom.style(this.popupContainer, 'backgroundColor', 'rgba(255, 255, 255)');
+						const input = document.getElementById(uniqueId);
+						input.focus();
+						input.setSelectionRange(input.value.length, input.value.length);
+						Event.bind(input, 'keydown', (event) => {
+							if (event.key === 'Enter')
+							{
+								event.preventDefault();
+								handleSubmit();
+							}
+						});
 					},
 				},
 			});

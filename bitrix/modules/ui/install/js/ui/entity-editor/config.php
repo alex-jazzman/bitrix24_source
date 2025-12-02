@@ -57,5 +57,6 @@ return [
 	],
 	'settings' => [
 		'isFileUserFieldViewingModesAvailable' => method_exists(FileType::class, 'isAvailableDefaultView'),
+		'isFileUserFieldIsAllowSwitchViewAvailable' => method_exists(FileType::class, 'getCorrectViewOrNull'),
 	],
 ];

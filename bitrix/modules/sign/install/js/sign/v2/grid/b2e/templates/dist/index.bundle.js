@@ -30,6 +30,17 @@ this.BX.Sign.V2.Grid = this.BX.Sign.V2.Grid || {};
 	  async show(inputText = null) {
 	    return new Promise(resolve => {
 	      const uniqueId = `folderNameInput_${Date.now()}`;
+	      const handleSubmit = () => {
+	        const folderName = document.getElementById(uniqueId).value;
+	        if (folderName) {
+	          resolve(folderName);
+	          popup.close();
+	        } else {
+	          BX.UI.Notification.Center.notify({
+	            content: main_core.Loc.getMessage('SIGN_TEMPLATE_GRID_CREATE_FOLDER_HINT_TITLE_NOT_EMPTY')
+	          });
+	        }
+	      };
 	      const popup = new BX.PopupWindow(`folderNamePopup_${uniqueId}`, null, {
 	        className: 'sign-b2e-grid-templates-popup',
 	        content: `
@@ -50,17 +61,7 @@ this.BX.Sign.V2.Grid = this.BX.Sign.V2.Grid || {};
 	          text: inputText === null ? main_core.Loc.getMessage('SIGN_TEMPLATE_GRID_CREATE_FOLDER_CREATE_BUTTON_TEXT') : main_core.Loc.getMessage('SIGN_TEMPLATE_GRID_CREATE_FOLDER_SAVE_BUTTON_TEXT'),
 	          className: 'popup-window-button-blue',
 	          events: {
-	            click() {
-	              const folderName = document.getElementById(uniqueId).value;
-	              if (folderName) {
-	                resolve(folderName);
-	                popup.close();
-	              } else {
-	                BX.UI.Notification.Center.notify({
-	                  content: main_core.Loc.getMessage('SIGN_TEMPLATE_GRID_CREATE_FOLDER_HINT_TITLE_NOT_EMPTY')
-	                });
-	              }
-	            }
+	            click: handleSubmit
 	          }
 	        }), new BX.PopupWindowButton({
 	          text: main_core.Loc.getMessage('SIGN_TEMPLATE_GRID_CREATE_FOLDER_CANCEL_BUTTON_TEXT'),
@@ -77,6 +78,15 @@ this.BX.Sign.V2.Grid = this.BX.Sign.V2.Grid || {};
 	        events: {
 	          onPopupShow() {
 	            main_core.Dom.style(this.popupContainer, 'backgroundColor', 'rgba(255, 255, 255)');
+	            const input = document.getElementById(uniqueId);
+	            input.focus();
+	            input.setSelectionRange(input.value.length, input.value.length);
+	            main_core.Event.bind(input, 'keydown', event => {
+	              if (event.key === 'Enter') {
+	                event.preventDefault();
+	                handleSubmit();
+	              }
+	            });
 	          }
 	        }
 	      });

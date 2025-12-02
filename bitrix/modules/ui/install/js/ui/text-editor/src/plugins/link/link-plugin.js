@@ -21,6 +21,7 @@ import type { SchemeValidationOptions } from '../../types/scheme-validation-opti
 import { TextEditorLexicalNode } from '../../types/text-editor-lexical-node';
 import BasePlugin from '../base-plugin';
 import { LinkEditor } from './link-editor';
+import { $createCustomLinkNode, CustomLinkNode } from './custom-link-node';
 
 import { sanitizeUrl } from '../../helpers/sanitize-url';
 import { validateUrl } from '../../helpers/validate-url';
@@ -45,6 +46,7 @@ import {
 	type RangeSelection,
 	type NodeKey,
 	type LexicalCommand,
+	type LexicalNodeReplacement,
 } from 'ui.lexical.core';
 
 import { $wrapNodeInElement, $findMatchingParent, mergeRegister } from 'ui.lexical.utils';
@@ -84,9 +86,26 @@ export class LinkPlugin extends BasePlugin
 		return 'Link';
 	}
 
-	static getNodes(editor: TextEditor): Array<Class<LexicalNode>>
+	static getNodes(editor: TextEditor): Array<Class<LexicalNode> | LexicalNodeReplacement>
 	{
-		return [LinkNode];
+		return [
+			LinkNode,
+			CustomLinkNode,
+			{
+				replace: LinkNode,
+				with: (node: LinkNode) => {
+					return $createCustomLinkNode(
+						node.__url,
+						{
+							rel: node.__rel,
+							target: node.__target,
+							title: node.__title,
+						},
+					);
+				},
+				withClass: CustomLinkNode,
+			},
+		];
 	}
 
 	importBBCode(): BBCodeImportConversion
@@ -118,38 +137,42 @@ export class LinkPlugin extends BasePlugin
 	exportBBCode(): BBCodeExportConversion
 	{
 		return {
-			link: (lexicalNode: LinkNode): BBCodeExportOutput => {
-				const url = lexicalNode.getURL();
-				const children = lexicalNode.getChildren();
-				const isSimpleText = (
-					children.length === 1
-					&& $isTextNode(children[0])
-					&& children[0].getFormat() === 0
-				);
-
-				const scheme = this.getEditor().getBBCodeScheme();
-				if (isSimpleText && children[0].getTextContent() === url)
-				{
-					return {
-						node: scheme.createElement({ name: 'url' }),
-					};
-				}
-
-				return {
-					node: scheme.createElement({ name: 'url', value: url }),
-				};
-			},
+			link: this.#exportBBCode,
+			'custom-link': this.#exportBBCode,
 		};
 	}
+
+	#exportBBCode = (lexicalNode: LinkNode): BBCodeExportOutput => {
+		const url = lexicalNode.getURL();
+		const children = lexicalNode.getChildren();
+		const isSimpleText = (
+			children.length === 1
+			&& $isTextNode(children[0])
+			&& children[0].getFormat() === 0
+		);
+
+		const scheme = this.getEditor().getBBCodeScheme();
+		if (isSimpleText && children[0].getTextContent() === url)
+		{
+			return {
+				node: scheme.createElement({ name: 'url' }),
+			};
+		}
+
+		return {
+			node: scheme.createElement({ name: 'url', value: url }),
+		};
+	};
 
 	validateScheme(): SchemeValidationOptions | null
 	{
 		return {
 			nodes: [{
-				nodeClass: LinkNode,
+				nodeClass: CustomLinkNode,
 			}],
 			bbcodeMap: {
 				link: 'url',
+				'custom-link': 'url',
 			},
 		};
 	}
@@ -502,7 +525,7 @@ export class LinkPlugin extends BasePlugin
 				}
 
 				const clipboardText = event.clipboardData.getData('text');
-				if (!validateUrl(clipboardText))
+				if (!validateUrl(clipboardText, false))
 				{
 					return false;
 				}

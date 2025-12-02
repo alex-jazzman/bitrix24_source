@@ -26,6 +26,7 @@ $wizard->IncludeWizardLang('scripts/convert.php', $lang);
 require_once $_SERVER['DOCUMENT_ROOT'] . $wizard->path . '/wizard.php';
 
 $myConnection = \Bitrix\Main\Application::getConnection();
+$mySqlHelper = $myConnection->getSqlHelper();
 $pgConnection = \Bitrix\Main\Application::getConnection($_REQUEST['connection']);
 
 $error = '';
@@ -85,8 +86,8 @@ else
 				$strSelect = '
 					SELECT *
 					FROM ' . $tableInfo['TABLE_NAME'] . '
-					' . ($tableInfo['LAST_ID'] <> '' ? 'WHERE ' . $tableInfo['KEY_COLUMN'] . " > '" . $tableInfo['LAST_ID'] . "'" : '') . '
-					ORDER BY ' . $tableInfo['KEY_COLUMN'] . '
+					' . ($tableInfo['LAST_ID'] <> '' ? 'WHERE ' . $mySqlHelper->quote($tableInfo['KEY_COLUMN']) . " > '" . $tableInfo['LAST_ID'] . "'" : '') . '
+					ORDER BY ' . $mySqlHelper->quote($tableInfo['KEY_COLUMN']) . '
 					LIMIT ' . $pageSize . '
 				';
 			}

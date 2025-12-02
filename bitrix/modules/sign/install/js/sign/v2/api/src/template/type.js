@@ -43,7 +43,6 @@ export type TemplateFolder = {
 	dateCreate: Object;
 	dateModify: Object;
 	status: string;
-	uid: string;
 	visibility: 'visible' | 'invisible';
 }
 

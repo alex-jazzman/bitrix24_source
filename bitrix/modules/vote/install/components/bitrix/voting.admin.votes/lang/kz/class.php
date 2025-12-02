@@ -9,7 +9,6 @@ $MESS["VOTE_CONFIRM_DEL_VOTE"] = "Сауалнаманы жойғыңыз кел
 $MESS["VOTE_CONFIRM_RESET_VOTE"] = "Бұл сауалнаманың нәтижелерін жойғыңыз келетініне сенімдісіз бе?";
 $MESS["VOTE_COPY"] = "Көшіру";
 $MESS["VOTE_LAMP_ACTIVE"] = "Сауалнама белсенді";
-$MESS["VOTE_LIST_PAGE_TITLE"] = "Сауалнамалар";
 $MESS["VOTE_NOT_ACTIVE"] = "Сауалнама белсенді емес.";
 $MESS["VOTE_PREVIEW"] = "Алдын ала қарау";
 $MESS["VOTE_QUESTIONS"] = "Сұрақтарға көшу";

@@ -16,7 +16,7 @@ export class ApplicationInternalizer implements Transformer<Options, Readonly<Op
 			bodyType: Type.isStringFilled(externalSource.bodyType) ? externalSource.bodyType : BODY_TYPE,
 			additionalSaveParams: Type.isPlainObject(externalSource.additionalSaveParams)
 				? externalSource.additionalSaveParams
-				: null,
+				: [],
 			isSaveOnlyChangedRights: Type.isBoolean(externalSource.isSaveOnlyChangedRights)
 				? externalSource.isSaveOnlyChangedRights
 				: false,
@@ -30,18 +30,28 @@ export class ApplicationInternalizer implements Transformer<Options, Readonly<Op
 				? {
 					addUserGroupsProviderTab: Boolean(externalSource.additionalMembersParams?.addUserGroupsProviderTab ?? false),
 					addProjectsProviderTab: Boolean(externalSource.additionalMembersParams?.addProjectsProviderTab ?? true),
-					addStructureTeamsProviderTab: Boolean(externalSource.additionalMembersParams?.addStructureTeamsProviderTab ?? false),
-					addStructureRolesProviderTab: Boolean(externalSource.additionalMembersParams?.addStructureRolesProviderTab ?? false),
+					addStructureTeamsProviderTab: Boolean(
+						externalSource.additionalMembersParams?.addStructureTeamsProviderTab ?? false,
+					),
+					useStructureDepartmentsProviderTab: Boolean(
+						externalSource.additionalMembersParams?.useStructureDepartmentsProviderTab ?? false,
+					),
+					addStructureRolesProviderTab: Boolean(
+						externalSource.additionalMembersParams?.addStructureRolesProviderTab ?? false,
+					),
 				}
 				: {
 					addUserGroupsProviderTab: false,
 					addProjectsProviderTab: true,
 					addStructureTeamsProviderTab: false,
+					useStructureDepartmentsProviderTab: false,
 					addStructureRolesProviderTab: false,
 				},
+			userSortConfigName: String(externalSource.userSortConfigName ?? externalSource.component),
 			isSaveAccessRightsList: Type.isBoolean(externalSource.isSaveAccessRightsList)
 				? externalSource.isSaveAccessRightsList
 				: false,
+			moduleId: Type.isString(externalSource.moduleId) ? externalSource.moduleId : '',
 		});
 	}
 

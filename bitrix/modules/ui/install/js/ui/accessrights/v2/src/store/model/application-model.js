@@ -16,13 +16,17 @@ export type Options = {
 	maxVisibleUserGroups: ?number,
 	searchContainerSelector: ?string,
 	additionalMembersParams: AdditionalMembersParams,
+	userSortConfigName: string,
 	isSaveAccessRightsList: boolean,
+	moduleId: string,
 }
 
 export type AdditionalMembersParams = {
 	addUserGroupsProviderTab?: boolean,
 	addProjectsProviderTab?: boolean,
 	addStructureTeamsProviderTab?: boolean,
+	addStructureRolesProviderTab?: boolean,
+	useStructureDepartmentsProviderTab?: boolean,
 };
 
 export const ACTION_SAVE = 'save';
@@ -73,6 +77,9 @@ export class ApplicationModel extends BuilderModel
 			},
 			guid: (state): string => {
 				return state.guid;
+			},
+			additionalMembersParams: (state): AdditionalMembersParams => {
+				return state.options.additionalMembersParams;
 			},
 		};
 	}

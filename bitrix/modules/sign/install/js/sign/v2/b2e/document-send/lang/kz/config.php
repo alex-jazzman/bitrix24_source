@@ -7,7 +7,6 @@ $MESS["SIGN_DOCUMENT_SEND_COMMUNICATION_CHANEL_SMS"] = "SMS арқылы";
 $MESS["SIGN_DOCUMENT_SEND_COMMUNICATION_TITLE_MSGVER_1"] = "Құжатқа сілтемені қайда жіберу керек";
 $MESS["SIGN_DOCUMENT_SEND_DATETIME_LIMIT_SELECTOR_GOSKEY_ALERT"] = "Мемлекеттік кілтке жіберілген құжаттар өкіл қол қойғаннан кейін келесі 24 сағат ішінде автоматты түрде орнатылмайды, тіпті егер сіз көрсеткен мерзім аяқталған болса да";
 $MESS["SIGN_DOCUMENT_SEND_DATETIME_LIMIT_SELECTOR_HINT"] = "Осы уақытқа дейін барлық қатысушылар құжатқа қол қоюы керек";
-$MESS["SIGN_DOCUMENT_SEND_DEADLINE"] = "Ақырғы мерзім: шектелмеген";
 $MESS["SIGN_DOCUMENT_SEND_FIRST_PARTY"] = "Бірінші тарап";
 $MESS["SIGN_DOCUMENT_SEND_FIRST_PARTY_TEMPLATE"] = "Компания атынан кім қол қояды";
 $MESS["SIGN_DOCUMENT_SEND_HEADER_1"] = "Деректерді тексеріңіз";

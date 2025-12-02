@@ -130,18 +130,8 @@ export class Signers
 
 	async deleteSigners(listId: number, userIds: number[]): Promise<void>
 	{
-		const messageContent = Tag.render`
-			<div>
-				${Loc.getMessage('SIGN_SIGNERS_SIGNER_DELETE_CONFIRMATION_MESSAGE')}
-			</div>
-		`;
-
-		Dom.style(messageContent, 'margin-top', '5%');
-		Dom.style(messageContent, 'color', '#535c69');
-
 		BX.UI.Dialogs.MessageBox.show({
-			title: Loc.getMessage('SIGN_SIGNERS_SIGNER_DELETE_CONFIRMATION_TITLE'),
-			message: messageContent.outerHTML,
+			message: Loc.getMessage('SIGN_SIGNERS_SIGNER_DELETE_CONFIRMATION_TITLE'),
 			modal: true,
 			buttons: [
 				new BX.UI.Button({

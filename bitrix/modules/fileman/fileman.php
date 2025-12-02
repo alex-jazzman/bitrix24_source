@@ -1,13 +1,12 @@
 <?php
 
-/*
-##############################################
-# Bitrix: SiteManager                        #
-# Copyright (c) 2002-2005 Bitrix             #
-# https://www.bitrixsoft.com                 #
-# mailto:admin@bitrixsoft.com                #
-##############################################
-*/
+/**
+ * Bitrix Framework
+ * @package bitrix
+ * @subpackage fileman
+ * @copyright 2001-2025 Bitrix
+ */
+
 IncludeModuleLangFile(__FILE__);
 define("DEBUG_FILE_MAN", false);
 if(!defined("CACHED_stickers_count")) define("CACHED_stickers_count", 36000000);

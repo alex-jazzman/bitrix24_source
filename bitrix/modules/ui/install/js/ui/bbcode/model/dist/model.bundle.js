@@ -1553,7 +1553,8 @@ this.BX.UI = this.BX.UI || {};
 	      }
 	    }), new BBCodeTagScheme({
 	      name: ['*'],
-	      allowedChildren: ['#text', '#linebreak', '#inline', '#inlineBlock'],
+	      group: ['#shadowRoot'],
+	      allowedChildren: ['#text', '#linebreak', '#inline', '#inlineBlock', '#block'],
 	      stringify: (node, scheme, toStringOptions) => {
 	        const openingTag = node.getOpeningTag();
 	        const content = node.getContent(toStringOptions).trim();

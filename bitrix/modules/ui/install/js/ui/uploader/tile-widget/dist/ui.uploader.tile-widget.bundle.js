@@ -590,7 +590,7 @@ this.BX.UI = this.BX.UI || {};
 	      if (previewUrl) {
 	        params['data-viewer-preview'] = previewUrl;
 	      }
-	      if (this.viewerGroupBy) {
+	      if (this.viewerGroupBy && viewerAttrs.viewerType !== 'cloud-document' && viewerAttrs.viewerType !== 'board') {
 	        params['data-viewer-group-by'] = this.viewerGroupBy;
 	      }
 	      return params;

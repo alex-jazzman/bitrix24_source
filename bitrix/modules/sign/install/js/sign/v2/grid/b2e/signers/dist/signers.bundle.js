@@ -115,8 +115,7 @@ this.BX.Sign.V2.Grid = this.BX.Sign.V2.Grid || {};
 	}
 
 	let _$1 = t => t,
-	  _t$1,
-	  _t2$1;
+	  _t$1;
 	const GRID_SIGNERS_LISTS = 'SIGN_B2E_SIGNERS_LIST_GRID';
 	const GRID_SIGNERS = 'SIGN_B2E_SIGNERS_LIST_GRID_EDIT';
 	var _api = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("api");
@@ -220,16 +219,8 @@ this.BX.Sign.V2.Grid = this.BX.Sign.V2.Grid || {};
 	    await this.deleteSigners(listId, selectedIds);
 	  }
 	  async deleteSigners(listId, userIds) {
-	    const messageContent = main_core.Tag.render(_t2$1 || (_t2$1 = _$1`
-			<div>
-				${0}
-			</div>
-		`), main_core.Loc.getMessage('SIGN_SIGNERS_SIGNER_DELETE_CONFIRMATION_MESSAGE'));
-	    main_core.Dom.style(messageContent, 'margin-top', '5%');
-	    main_core.Dom.style(messageContent, 'color', '#535c69');
 	    BX.UI.Dialogs.MessageBox.show({
-	      title: main_core.Loc.getMessage('SIGN_SIGNERS_SIGNER_DELETE_CONFIRMATION_TITLE'),
-	      message: messageContent.outerHTML,
+	      message: main_core.Loc.getMessage('SIGN_SIGNERS_SIGNER_DELETE_CONFIRMATION_TITLE'),
 	      modal: true,
 	      buttons: [new BX.UI.Button({
 	        text: main_core.Loc.getMessage('SIGN_SIGNERS_GRID_DELETE_POPUP_YES'),

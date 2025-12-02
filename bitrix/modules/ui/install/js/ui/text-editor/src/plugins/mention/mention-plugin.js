@@ -293,10 +293,12 @@ export class MentionPlugin extends BasePlugin
 			this.getEditor().registerCommand(
 				HIDE_DIALOG_COMMAND,
 				(payload): boolean => {
-					if (!payload || payload.sender !== 'mention')
+					if (payload?.sender === 'mention' || (payload?.context === 'resize' && this.#mentionListening))
 					{
-						this.#hideDialog();
+						return false;
 					}
+
+					this.#hideDialog();
 
 					return false;
 				},

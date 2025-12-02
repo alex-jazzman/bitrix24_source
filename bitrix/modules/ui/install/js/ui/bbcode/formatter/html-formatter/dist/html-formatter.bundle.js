@@ -513,6 +513,13 @@ this.BX.UI.BBCode = this.BX.UI.BBCode || {};
 	  return nodes;
 	}
 
+	function validateUrl(url, allowDomainRelativeUrl = true) {
+	  if (allowDomainRelativeUrl) {
+	    return /^(http:|https:|mailto:|tel:|sms:|\/)/i.test(url);
+	  }
+	  return /^(http:|https:|mailto:|tel:|sms:)/i.test(url);
+	}
+
 	class LinkNodeFormatter extends ui_bbcode_formatter.NodeFormatter {
 	  constructor(options = {}) {
 	    super({
@@ -521,7 +528,7 @@ this.BX.UI.BBCode = this.BX.UI.BBCode || {};
 	        node
 	      }) {
 	        const nodeValue = LinkNodeFormatter.fetchNodeValue(node);
-	        return !LinkNodeFormatter.startsWithJavascriptScheme(nodeValue);
+	        return validateUrl(nodeValue);
 	      },
 	      before({
 	        node,
@@ -599,14 +606,6 @@ this.BX.UI.BBCode = this.BX.UI.BBCode || {};
 	      return value;
 	    }
 	    return node.toPlainText();
-	  }
-	  static startsWithJavascriptScheme(sourceHref) {
-	    if (main_core.Type.isStringFilled(sourceHref)) {
-	      // eslint-disable-next-line no-control-regex
-	      const regexp = /^[\u0000-\u001F ]*j[\t\n\r]*a[\t\n\r]*v[\t\n\r]*a[\t\n\r]*s[\t\n\r]*c[\t\n\r]*r[\t\n\r]*i[\t\n\r]*p[\t\n\r]*t[\t\n\r]*:/i;
-	      return regexp.test(sourceHref);
-	    }
-	    return false;
 	  }
 	}
 

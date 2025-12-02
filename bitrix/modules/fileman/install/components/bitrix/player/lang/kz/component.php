@@ -1,4 +1,5 @@
 <?php
+$MESS["ABOUT_LINK"] = "https://www.1c-bitrix.ru/products/cms/features/mediaplayer.php";
 $MESS["ABOUT_TEXT"] = "1С-Битрикс: Медиа-плеер";
 $MESS["INCORRECT_FILE"] = "Ойнатылатын файл табылмады.";
 $MESS["INCORRECT_PLAYLIST"] = "Көрсетілген ойнатулар тізімі табылмады.";

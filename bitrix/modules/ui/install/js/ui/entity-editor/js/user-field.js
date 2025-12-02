@@ -726,6 +726,10 @@ if(typeof BX.UI.EntityEditorUserField === "undefined")
 	{
 		return BX.prop.getString(this.getFieldInfo(), "ENTITY_VALUE_ID", "");
 	};
+	BX.UI.EntityEditorUserField.prototype.getAdditional = function()
+	{
+		return BX.prop.getObject(this.getFieldInfo(), "ADDITIONAL", {});
+	};
 	BX.UI.EntityEditorUserField.prototype.getFieldValue = function()
 	{
 		var fieldData = this.getValue();
@@ -1980,11 +1984,7 @@ if(typeof BX.UI.EntityEditorUserFieldConfigurator === "undefined")
 		}
 		//endregion
 
-		if (
-			this.getEditor().canChangeCommonConfiguration()
-			&& this._typeId === BX.UI.EntityUserFieldType.file
-			&& BX.Extension.getSettings('ui.entity-editor').get('isFileUserFieldViewingModesAvailable')
-		)
+		if (this.isFileViewSettingsAvailable())
 		{
 			this._userFieldFileViewConfigurator = new BX.UI.EntityEditorUserFieldFileViewConfigurator(this);
 			this._fileViewCheckBox = this._userFieldFileViewConfigurator.getOption();
@@ -2009,10 +2009,7 @@ if(typeof BX.UI.EntityEditorUserFieldConfigurator === "undefined")
 			params['display'] = this._enumConfigurator.getDisplaySelectValue();
 		}
 
-		if (
-			this._typeId === BX.UI.EntityUserFieldType.file
-			&& BX.Extension.getSettings('ui.entity-editor').get('isFileUserFieldViewingModesAvailable')
-		)
+		if (this.isFileViewSettingsAvailable())
 		{
 			params['settings'] ??= {};
 			params['settings']['DEFAULT_VIEW'] = this._fileViewCheckBox.checked ? this._userFieldFileViewConfigurator.getSettingsValue() : false;
@@ -2041,6 +2038,8 @@ if(typeof BX.UI.EntityEditorUserFieldConfigurator === "undefined")
 				params["enableTime"] = this._isTimeEnabledCheckBox.checked;
 			}
 		}
+
+		params['additional'] = this.getField()?.getAdditional() ?? {};
 
 		return params;
 	};
@@ -2081,6 +2080,28 @@ if(typeof BX.UI.EntityEditorUserFieldConfigurator === "undefined")
 		}
 
 		return checkBox;
+	};
+
+	BX.UI.EntityEditorUserFieldConfigurator.prototype.isFileViewSettingsAvailable = function ()
+	{
+		const isFile = this._typeId === BX.UI.EntityUserFieldType.file;
+		if (!isFile || !this.getEditor().canChangeCommonConfiguration())
+		{
+			return false;
+		}
+
+		const entityEditorSettings = BX.Extension.getSettings('ui.entity-editor');
+
+		const isViewingModesAvailable = entityEditorSettings.get('isFileUserFieldViewingModesAvailable');
+		if (!isViewingModesAvailable)
+		{
+			return false;
+		}
+
+		const isAllowSwitchViewAvailable = entityEditorSettings.get('isFileUserFieldIsAllowSwitchViewAvailable');
+		const isAllowSwitchView = this.getField()?.getAdditional()?.['IS_ALLOW_SWITCH_VIEW'] === 'Y';
+
+		return !isAllowSwitchViewAvailable || isAllowSwitchView;
 	};
 
 	BX.UI.EntityEditorUserFieldConfigurator.create = function(id, settings)

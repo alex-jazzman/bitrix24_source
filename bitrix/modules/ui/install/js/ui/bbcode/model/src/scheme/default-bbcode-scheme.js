@@ -81,7 +81,8 @@ export class DefaultBBCodeScheme extends BBCodeScheme
 			}),
 			new BBCodeTagScheme({
 				name: ['*'],
-				allowedChildren: ['#text', '#linebreak', '#inline', '#inlineBlock'],
+				group: ['#shadowRoot'],
+				allowedChildren: ['#text', '#linebreak', '#inline', '#inlineBlock', '#block'],
 				stringify: (node: BBCodeElementNode, scheme: BBCodeScheme, toStringOptions: BBCodeToStringOptions) => {
 					const openingTag: string = node.getOpeningTag();
 					const content: string = node.getContent(toStringOptions).trim();

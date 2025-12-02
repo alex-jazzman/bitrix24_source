@@ -454,7 +454,7 @@ if ($arResult["DO_NOT_CACHE"] || $this->StartResultCache($arParams["CACHE_TIME"]
 		];
 		//endregion
 
-		$dbMessageIterator = new CDBResult(Forum\MessageTable::getList($getListParams)->fetchAll());
+		$dbMessageIterator = new _CMessageDBResult(Forum\MessageTable::getList($getListParams)->fetchAll());
 
 		$dbMessageIterator->NavRecordCount = $totalCount;
 		$dbMessageIterator->NavStart(

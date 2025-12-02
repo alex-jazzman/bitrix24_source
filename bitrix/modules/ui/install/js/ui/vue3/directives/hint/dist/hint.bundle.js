@@ -107,6 +107,7 @@ this.BX.Vue3 = this.BX.Vue3 || {};
 	}
 	function unbindEvents(element) {
 	  var _handlersMap$get;
+	  clearTimeouts();
 	  Object.entries((_handlersMap$get = handlersMap.get(element)) != null ? _handlersMap$get : {}).forEach(([event, handler]) => main_core.Event.unbind(element, event, handler));
 	  handlersMap.delete(element);
 	}

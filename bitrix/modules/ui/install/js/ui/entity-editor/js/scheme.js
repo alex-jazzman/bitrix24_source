@@ -200,21 +200,30 @@ if(typeof BX.UI.EntitySchemeElement === "undefined")
 				this._elements.push(BX.UI.EntitySchemeElement.create(elementData[i]));
 			}
 		},
-		prepareAdditionalParameters: function()
+		prepareAdditionalParameters()
 		{
-			var fieldInfo = this._data.fieldInfo || null;
-			if (
-				fieldInfo
-				&& fieldInfo.ADDITIONAL === undefined
-				&& fieldInfo.USER_TYPE_ID === BX.UI.EntityUserFieldType.file
-				&& BX.UI.EntitySchemeElement.userFieldFileUrlTemplate !== undefined
-			)
+			const fieldInfo = this.getData().fieldInfo ?? null;
+			if (fieldInfo)
 			{
-				var template = BX.UI.EntitySchemeElement.userFieldFileUrlTemplate;
-				template = template.replace('#owner_id#', fieldInfo.ENTITY_VALUE_ID)
-					.replace('#field_name#', fieldInfo.FIELD);
-				fieldInfo.ADDITIONAL = {};
-				fieldInfo.ADDITIONAL.URL_TEMPLATE = template;
+				fieldInfo.ADDITIONAL ??= {};
+
+				if (fieldInfo.USER_TYPE_ID === BX.UI.EntityUserFieldType.file)
+				{
+					const userFieldFileUrlTemplate = BX.UI.EntitySchemeElement.userFieldFileUrlTemplate;
+					if (userFieldFileUrlTemplate)
+					{
+						fieldInfo.ADDITIONAL.URL_TEMPLATE = userFieldFileUrlTemplate
+							.replace('#owner_id#', fieldInfo.ENTITY_VALUE_ID)
+							.replace('#field_name#', fieldInfo.FIELD)
+						;
+					}
+
+					const isAllowSwitchView = BX.UI.EntitySchemeElement.userFieldFileIsAllowSwitchView;
+					if (isAllowSwitchView)
+					{
+						fieldInfo.ADDITIONAL.IS_ALLOW_SWITCH_VIEW = isAllowSwitchView;
+					}
+				}
 			}
 		},
 		mergeSettings: function(settings)
