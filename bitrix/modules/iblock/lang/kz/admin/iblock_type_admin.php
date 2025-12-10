@@ -19,4 +19,4 @@ $MESS["MAIN_ADMIN_LIST_DELETE"] = "жою";
 $MESS["MAIN_ADMIN_LIST_FILTER_1ST"] = "Іздеу үшін жол енгізіңіз";
 $MESS["MAIN_ADMIN_LIST_SELECTED"] = "Таңдалған:";
 $MESS["MAIN_ADMIN_MENU_DELETE"] = "Жою";
-$MESS["MAIN_ADMIN_MENU_EDIT"] = "Өзгерту";
+$MESS['MAIN_ADMIN_MENU_EDIT'] = "Өзгерту";

@@ -17,9 +17,14 @@ import {
 	$isAutoLinkNode,
 	$isLinkNode,
 	AutoLinkNode,
-	type LinkAttributes,
+	type LinkAttributes, LinkNode,
 } from 'ui.lexical.link';
 
+import { $findMatchingParent } from 'ui.lexical.utils';
+
+import { UNFORMATTED } from '../../constants';
+import { type TextEditorLexicalNode } from '../../types/text-editor-lexical-node';
+import { exportLinkNode } from '../link';
 import { $createCustomAutoLinkNode, CustomAutoLinkNode } from './custom-autolink-node';
 
 import BasePlugin from '../base-plugin';
@@ -97,20 +102,8 @@ export class AutoLinkPlugin extends BasePlugin
 	exportBBCode(): BBCodeExportConversion
 	{
 		return {
-			autolink: (): BBCodeExportOutput => {
-				const scheme = this.getEditor().getBBCodeScheme();
-
-				return {
-					node: scheme.createElement({ name: 'url' }),
-				};
-			},
-			'custom-autolink': (): BBCodeExportOutput => {
-				const scheme = this.getEditor().getBBCodeScheme();
-
-				return {
-					node: scheme.createElement({ name: 'url' }),
-				};
-			},
+			autolink: (lexicalNode: LinkNode): BBCodeExportOutput => exportLinkNode(lexicalNode, this.getEditor()),
+			'custom-autolink': (lexicalNode: LinkNode): BBCodeExportOutput => exportLinkNode(lexicalNode, this.getEditor()),
 		};
 	}
 
@@ -146,7 +139,17 @@ export class AutoLinkPlugin extends BasePlugin
 						&& (startsWithSeparator(textNode.getTextContent()) || !$isAutoLinkNode(previous))
 					)
 					{
-						handleLinkCreation(textNode, MATCHERS, onChange);
+						const $isUnformatted = $findMatchingParent(
+							textNode,
+							(parentNode: TextEditorLexicalNode) => {
+								return (parentNode.__flags & UNFORMATTED) !== 0;
+							},
+						);
+
+						if (!$isUnformatted)
+						{
+							handleLinkCreation(textNode, MATCHERS, onChange);
+						}
 					}
 
 					handleBadNeighbors(textNode, MATCHERS, onChange);

@@ -29,5 +29,6 @@ $MESS["CALL_NOTIFY_TASK_DROPPED_F"] = "#USER# видалила аналіз [url
 $MESS["CALL_NOTIFY_TASK_DROPPED_M"] = "#USER# видалив аналіз [url=#CALL_START#] дзвінка №#CALL_ID#[/url].";
 $MESS["CALL_NOTIFY_TASK_FAILED"] = "CoPilot не зміг підготувати аналіз [url=#CALL_START#]дзвінка №#CALL_ID#[/url].";
 $MESS["CALL_NOTIFY_TASK_START"] = "CoPilot аналізує [url=#CALL_START#]дзвінок №#CALL_ID#[/url].";
+$MESS["CALL_NOTIFY_TASK_START_V2"] = "CoPilot аналізує [url=#CALL_START#]дзвінок №#CALL_ID#[/url]. Щойно обробка закінчиться, аналіз з'явиться в чаті.";
 $MESS["CALL_NOTIFY_TASK_WAIT"] = "CoPilot обробляє запис [url=#CALL_START#]дзвінка №#CALL_ID#[/url]. Зачекайте трохи.";
 $MESS["CALL_NOTIFY_USERS"] = "Учасники: #USERS#";

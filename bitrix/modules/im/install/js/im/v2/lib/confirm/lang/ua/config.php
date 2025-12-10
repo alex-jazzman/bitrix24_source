@@ -13,6 +13,7 @@ $MESS["IM_LIB_CONFIRM_LEAVE_COLLAB_TEXT"] = "У вас не буде досту�
 $MESS["IM_LIB_CONFIRM_LEAVE_COLLAB_TITLE"] = "Вийти з колаби?";
 $MESS["IM_LIB_CONFIRM_READ_MESSAGES_TEXT_CONFIRM"] = "Прочитати";
 $MESS["IM_LIB_CONFIRM_READ_MESSAGES_TITLE"] = "Усі непрочитані повідомлення буде позначено як прочитані.";
+$MESS["IM_LIB_CONFIRM_READ_MESSAGES_TITLE_MSGVER_1"] = "Прочитати все?";
 $MESS["IM_LIB_CONFIRM_RESTART_DESKTOP"] = "Зміни набудуть чинності після перезавантаження застосунку.";
 $MESS["IM_LIB_CONFIRM_RESTART_DESKTOP_LATER"] = "Пізніше";
 $MESS["IM_LIB_CONFIRM_RESTART_DESKTOP_OK"] = "OK";

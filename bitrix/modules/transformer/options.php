@@ -85,11 +85,11 @@ if($_POST['Update'] <> '' && check_bitrix_sessid())
 	</tr>
 	<tr>
 		<td width="40%"><?=GetMessage("TRANSFORMER_CONNECTION_TIME")?>:</td>
-		<td width="60%"><input type="text" name="CONNECTION_TIME" value="<?=COption::GetOptionInt("transformer", "connection_time", 2);?>" /></td>
+		<td width="60%"><input type="text" name="CONNECTION_TIME" value="<?=COption::GetOptionInt("transformer", "connection_time");?>" /></td>
 	</tr>
 	<tr>
 		<td width="40%"><?=GetMessage("TRANSFORMER_STREAM_TIME")?>:</td>
-		<td width="60%"><input type="text" name="STREAM_TIME" value="<?=COption::GetOptionInt("transformer", "stream_time", 2);?>" /></td>
+		<td width="60%"><input type="text" name="STREAM_TIME" value="<?=COption::GetOptionInt("transformer", "stream_time");?>" /></td>
 	</tr>
 	<?$tabControl->Buttons();?>
 	<input type="submit" name="Update" value="<?echo GetMessage('MAIN_SAVE')?>">

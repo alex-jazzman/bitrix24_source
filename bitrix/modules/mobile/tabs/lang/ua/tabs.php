@@ -4,6 +4,7 @@ $MESS["TAB_DISK_NAVIGATION_TAB_MY_FILES"] = "Мої файли";
 $MESS["TAB_DISK_NAVIGATION_TAB_RECENT"] = "Нещодавні";
 $MESS["TAB_NAME_CALENDAR"] = "Календар";
 $MESS["TAB_NAME_CALENDAR_SHORT"] = "Календар";
+$MESS["TAB_NAME_CALL_LIST"] = "Дзвінки";
 $MESS["TAB_NAME_CATALOG_STORE"] = "Складський облік";
 $MESS["TAB_NAME_CATALOG_STORE_SHORT"] = "Склади";
 $MESS["TAB_NAME_CRM"] = "CRM";

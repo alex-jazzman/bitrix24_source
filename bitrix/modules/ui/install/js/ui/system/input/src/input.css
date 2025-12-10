@@ -16,20 +16,20 @@
 
 /* Size */
 .ui-system-input {
-	--padding-vertical: var(--ui-space-stack-xs);
+	--padding-vertical: 4px;
+	--min-height: 38px;
 	--font-size: var(--ui-font-size-lg);
 	--label-font-size: var(--ui-font-size-sm);
 	--label-line-height: var(--ui-font-line-height-2xs);
 }
 
 .ui-system-input.--m {
-	--padding-vertical: var(--ui-space-stack-2xs2);
+	--min-height: 34px;
 	--font-size: var(--ui-font-size-md);
 }
 
 .ui-system-input.--s {
-	--padding-horizontal: var(--ui-space-inline-xs);
-	--padding-vertical: var(--ui-space-stack-2xs);
+	--min-height: 28px;
 	--font-size: var(--ui-font-size-xs);
 	--line-height: var(--ui-font-line-height-3xs);
 	--label-font-size: var(--ui-font-size-4xs);
@@ -99,34 +99,11 @@
 /* Icons */
 .ui-system-input {
 	--icon-size: 20px;
-	--icon-padding-size: calc(var(--icon-size) + var(--ui-space-inline-2xs));
-	--icon-padding: 0px;
-	--clear-padding: 0px;
-	--dropdown-padding: 0px;
 }
 
-.ui-system-input.--with-icon {
-	--icon-padding: var(--icon-padding-size);
-}
-
-.ui-system-input.--with-clear {
-	--clear-padding: var(--icon-padding-size);
-}
-
-.ui-system-input.--with-dropdown {
-	--dropdown-padding: var(--icon-padding-size);
-}
-
-.ui-system-input-value ~ .ui-icon-set {
-	position: absolute;
-	top: 50%;
-	transform: translateY(-50%);
+.ui-system-input-container .ui-icon-set {
 	--ui-icon-set__icon-color: var(--ui-color-base-3);
 	--ui-icon-set__icon-size: var(--icon-size);
-}
-.ui-system-input-value.ui-system-input-value_multi ~ .ui-icon-set {
-	top: var(--padding-horizontal);
-	transform: none;
 }
 
 
@@ -140,9 +117,45 @@
 	min-width: 0;
 }
 
+.ui-system-input.--stretched {
+	flex: 1;
+}
+
 .ui-system-input-container {
-	position: relative;
+	box-sizing: border-box;
+	overflow: hidden;
 	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	min-height: var(--min-height);
+	padding: 0 var(--padding-horizontal);
+	border-radius: var(--ui-border-radius-sm);
+	border: 1px solid var(--border-color);
+	background: var(--background);
+	cursor: text;
+}
+
+.ui-system-input.--active .ui-system-input-container {
+	border-color: var(--border-color-active);
+}
+
+.ui-system-input.--with-chips .ui-system-input-container {
+	padding-left: 6px;
+}
+
+.ui-system-input.--clickable .ui-system-input-container {
+	cursor: pointer;
+}
+
+
+/* Chips */
+.ui-system-input-chip {
+	align-self: flex-start;
+	margin-top: var(--padding-vertical);
+}
+
+.ui-system-input-chip:last-of-type {
+	margin: var(--padding-vertical) var(--padding-vertical) var(--padding-vertical) 0;
 }
 
 
@@ -168,6 +181,9 @@
 	position: absolute;
 	bottom: 0;
 	left: var(--inline-label-margin);
+	max-width: calc(100% - 2 * (var(--ui-space-inline-2xs) + var(--inline-label-margin)));
+	overflow: hidden;
+	text-overflow: ellipsis;
 	margin: 0;
 	padding: 0 var(--ui-space-inline-2xs);
 	background: var(--label-background);
@@ -179,41 +195,36 @@
 .ui-system-input-value {
 	flex: 1;
 	min-width: 0;
-	padding: var(--padding-vertical);
-	padding-left: calc(var(--padding-horizontal) + var(--icon-padding));
-	padding-right: calc(var(--padding-horizontal) + var(--clear-padding) + var(--dropdown-padding));
-	border-radius: var(--ui-border-radius-sm);
-	border: var(--ui-border-width-thin) solid var(--border-color);
-	background: var(--background);
+	border: none;
 	color: var(--text-color);
 	font-size: var(--font-size);
 	line-height: var(--ui-font-line-height-sm);
 	text-align: var(--align);
-}
-.ui-system-input-value.ui-system-input-value_multi {
-	padding-top: calc(var(--padding-vertical) + 2px);
+	cursor: text;
 }
 
 .ui-system-input-value::placeholder {
 	color: var(--placeholder-color);
 }
 
-.ui-system-input.--active .ui-system-input-value,
-.ui-system-input-value:focus {
-	border-color: var(--border-color-active);
+.ui-system-input.--clickable .ui-system-input-value {
+	cursor: pointer;
+}
+
+.ui-system-input.--with-chips.--clickable .ui-system-input-value {
+	min-width: var(--placeholder-length, 0);
 }
 
 
 /* Icon */
 .ui-system-input-icon {
-	left: var(--padding-horizontal);
+	margin-right: var(--ui-space-inline-2xs);
 	pointer-events: none;
 }
 
 
 /* Clear */
 .ui-system-input-cross {
-	right: calc(var(--padding-horizontal) + var(--dropdown-padding));
 	opacity: var(--ui-opacity-50);
 	cursor: pointer;
 }
@@ -226,6 +237,5 @@
 /* Dropdown */
 .ui-system-input-dropdown {
 	--ui-icon-set__icon-color: var(--ui-color-base-2);
-	right: var(--padding-horizontal);
 	pointer-events: none;
 }

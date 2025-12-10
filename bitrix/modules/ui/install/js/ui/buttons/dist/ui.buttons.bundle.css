@@ -1309,13 +1309,23 @@ a.ui-btn-split:focus,
 }
 
 .ui-btn.--air:hover:not([disabled]),
-.ui-btn.--air:hover:not(.ui-btn-disabled) {
+.ui-btn.--air:hover:not(.ui-btn-disabled),
+.ui-btn.--air.ui-btn-hover:not([disabled]),
+.ui-btn.--air.ui-btn-hover:not(.ui-btn-disabled),
+.ui-btn.--air:focus:not([disabled]),
+.ui-btn.--air:focus:not(.ui-btn-disabled),
+.ui-btn.--air.ui-btn-focus:not([disabled]),
+.ui-btn.--air.ui-btn-focus:not(.ui-btn-disabled) {
 	background: var(--ui-btn-background-gradient-hover), var(--ui-btn-custom-background, none);
 	border-color: var(--ui-btn-border-color-hover);
 }
 
 .ui-btn.--air:active:not([disabled]),
-.ui-btn.--air:active:not(.ui-btn-disabled) {
+.ui-btn.--air.ui-btn-active:not([disabled]),
+.ui-btn.--air:active:not(.ui-btn-disabled),
+.ui-btn.--air.ui-btn-active:not(.ui-btn-disabled),
+.ui-btn.--air:active:hover:not(.ui-btn-disabled),
+.ui-btn.--air.ui-btn-active:hover:not(.ui-btn-disabled) {
 	background: var(--ui-btn-background-gradient-active), var(--ui-btn-custom-background, none);
 	border-color: var(--ui-btn-border-color-active);
 }

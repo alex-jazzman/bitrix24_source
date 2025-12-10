@@ -94,4 +94,4 @@ $MESS["IBLOCK_ADM_IMP_TOTAL_COR1"] = "Дұрыс жүктелген";
 $MESS["IBLOCK_ADM_IMP_TOTAL_COR2"] = "жазбалар.";
 $MESS["IBLOCK_ADM_IMP_TOTAL_ERRS"] = "Қателері бар жазбалар:";
 $MESS["IBLOCK_ADM_IMP_TZP"] = "нүктелі үтір";
-$MESS["IBLOCK_ADM_IMP_ZPT"] = "үтір";
+$MESS['IBLOCK_ADM_IMP_ZPT'] = "үтір";

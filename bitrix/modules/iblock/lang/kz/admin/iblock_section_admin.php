@@ -51,4 +51,4 @@ $MESS["IBSEC_A_UP"] = "Бір деңгейге жоғары";
 $MESS["IBSEC_A_UPDERR"] = "Жазбаны өзгертудің қатесі:";
 $MESS["IBSEC_A_UP_TITLE"] = "Жоғарыдағы папкаға өту үшін басыңыз";
 $MESS["IBSEC_A_USERINFO"] = "Пайдаланушы параметрлерін көру";
-$MESS["IBSEC_A_XML_ID_MSGVER_1"] = "Сыртқы код";
+$MESS['IBSEC_A_XML_ID_MSGVER_1'] = "Сыртқы код";

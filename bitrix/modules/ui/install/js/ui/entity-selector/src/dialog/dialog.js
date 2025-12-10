@@ -1,5 +1,5 @@
 // eslint-disable-next-line max-classes-per-file
-import { Type, Text, Tag, Dom, ajax as Ajax, Cache, Loc, Runtime, Reflection } from 'main.core';
+import { Type, Text, Tag, Dom, ajax as Ajax, Cache, Loc, Runtime, Reflection, type JsonObject } from 'main.core';
 import { EventEmitter, BaseEvent } from 'main.core.events';
 import { Popup } from 'main.popup';
 import { Loader } from 'main.loader';
@@ -85,7 +85,7 @@ export default class Dialog extends EventEmitter
 	height: number = 420;
 
 	maxLabelWidth: number = 160;
-	minLabelWidth: number = 45;
+	minLabelWidth: number = 38;
 	alwaysShowLabels: boolean = false;
 
 	showAvatars: boolean = true;
@@ -119,6 +119,7 @@ export default class Dialog extends EventEmitter
 	clearUnavailableItems: boolean = false;
 	overlappingObserver: MutationObserver = null;
 	offsetAnimation: boolean = true;
+	customData: JsonObject = Object.create(null);
 
 	static getById(id: string): ?Dialog
 	{
@@ -1479,12 +1480,55 @@ export default class Dialog extends EventEmitter
 		return this.undeselectedItems;
 	}
 
+	setCustomData(property: ?string | { [key: string]: any }, value?: any): void
+	{
+		if (Type.isNull(property))
+		{
+			this.customData = Object.create(null);
+		}
+		else if (Type.isPlainObject(property))
+		{
+			Object.entries(property).forEach((item) => {
+				const [currentKey, currentValue] = item;
+				this.setCustomData(currentKey, currentValue);
+			});
+		}
+		else if (Type.isString(property))
+		{
+			if (Type.isNull(value))
+			{
+				delete this.customData[property];
+			}
+			else if (!Type.isUndefined(value))
+			{
+				this.customData[property] = value;
+			}
+		}
+	}
+
+	getCustomData(property?: string): any
+	{
+		if (Type.isUndefined(property))
+		{
+			return this.customData;
+		}
+
+		if (Type.isStringFilled(property))
+		{
+			return this.customData[property];
+		}
+
+		return undefined;
+	}
+
 	/**
 	 * @private
 	 */
 	setOptions(dialogOptions: DialogOptions): void
 	{
 		const options = Type.isPlainObject(dialogOptions) ? dialogOptions : {};
+
+		this.setCustomData(options.customData);
 
 		if (Type.isArray(options.tabs))
 		{
@@ -2117,6 +2161,8 @@ export default class Dialog extends EventEmitter
 
 		const query = this.getTagSelector().getTextBoxValue();
 		this.search(query);
+
+		this.adjustByTagSelector();
 	}
 
 	/**

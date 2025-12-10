@@ -133,14 +133,25 @@ export class Actions
 				if (!result.error)
 				{
 					const settings = Extension.getSettings('ui.info-helper');
+					let url = window.location.href;
 
 					if (settings.region === 'ru' && settings.licenseNeverPayed)
 					{
-						Actions.openInformer({ code: 'limit_market_trial_active' });
+						url += url.includes('?') ? '&' : '?';
+						url += 'feature_promoter=limit_market_trial_active';
+
+						window.location.href = url;
 					}
 					else if (settings.marketUrl)
 					{
-						Actions.openSlider({ url: settings.marketUrl });
+						if (url.includes(settings.marketUrl))
+						{
+							window.location.reload();
+						}
+						else
+						{
+							window.location.href = settings.marketUrl;
+						}
 					}
 				}
 			};

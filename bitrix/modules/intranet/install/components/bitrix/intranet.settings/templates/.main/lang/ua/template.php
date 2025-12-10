@@ -159,6 +159,7 @@ $MESS["INTRANET_SETTINGS_GO_TO_EVENT_LOG_LINK"] = "Перегляд журнал
 $MESS["INTRANET_SETTINGS_GO_TO_USER_LIST_LINK"] = "Перейти до списку співробітників";
 $MESS["INTRANET_SETTINGS_GUIDE"] = "Інструкція з налаштування";
 $MESS["INTRANET_SETTINGS_LOGIN_EVENTS"] = "Журнал подій";
+$MESS["INTRANET_SETTINGS_MAINPAGE_BICONNECTOR_LANGUAGE_HINT"] = "Мова звітів зміниться для всіх користувачів, але це не вплине на решту інтерфейсу Бітрікс24. Після зміни мови звіти буде перевстановлено — це може тривати кілька хвилин.";
 $MESS["INTRANET_SETTINGS_MAINPAGE_BUTTON_EDIT"] = "Редагувати";
 $MESS["INTRANET_SETTINGS_MAINPAGE_BUTTON_MARKET"] = "Вибрати шаблон";
 $MESS["INTRANET_SETTINGS_MAINPAGE_BUTTON_PARTNERS"] = "Замовити в партнерів";

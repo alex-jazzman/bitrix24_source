@@ -1,13 +1,24 @@
 <?php
 $MESS["TASKS_V2_STATUS_COMPLETED"] = "Виконане";
 $MESS["TASKS_V2_STATUS_COMPLETED_AT"] = "Виконане #DATE# #TIME#";
+$MESS["TASKS_V2_STATUS_COMPLETED_AT_MSGVER_1"] = "Завершено #DATE# #TIME#";
+$MESS["TASKS_V2_STATUS_COMPLETED_MSGVER_1"] = "Завершено";
+$MESS["TASKS_V2_STATUS_COMPLETE_ACTION"] = "Завершити";
 $MESS["TASKS_V2_STATUS_CREATED_AT"] = "Поставлено #DATE# о #TIME#";
 $MESS["TASKS_V2_STATUS_DEFERRED"] = "Відкладене";
 $MESS["TASKS_V2_STATUS_DEFERRED_AT"] = "Відкладене #DATE# #TIME#";
+$MESS["TASKS_V2_STATUS_DEFER_ACTION"] = "Відкласти";
 $MESS["TASKS_V2_STATUS_IN_PROGRESS"] = "У роботі";
 $MESS["TASKS_V2_STATUS_IN_PROGRESS_FROM"] = "Виконується з #DATE# #TIME#";
+$MESS["TASKS_V2_STATUS_NEEDS_CONTROL_HINT"] = "Завдання з контролем після завершення.";
+$MESS["TASKS_V2_STATUS_PAUSE_ACTION"] = "Призупинити";
 $MESS["TASKS_V2_STATUS_PENDING"] = "Очікує на виконання";
 $MESS["TASKS_V2_STATUS_PENDING_FROM"] = "Очікує на виконання з #DATE# #TIME#";
+$MESS["TASKS_V2_STATUS_RENEW_ACTION"] = "Повернути в роботу";
+$MESS["TASKS_V2_STATUS_RESUME_ACTION"] = "Відновити";
+$MESS["TASKS_V2_STATUS_START_ACTION"] = "Почати виконання";
 $MESS["TASKS_V2_STATUS_SUPPOSEDLY_COMPLETED"] = "На перевірці";
 $MESS["TASKS_V2_STATUS_SUPPOSEDLY_COMPLETED_FROM"] = "На перевірці з #DATE# #TIME#";
+$MESS["TASKS_V2_STATUS_SUPPOSEDLY_COMPLETED_FROM_MSGVER_1"] = "Очікує на контроль з #DATE# #TIME#";
+$MESS["TASKS_V2_STATUS_SUPPOSEDLY_COMPLETED_MSGVER_1"] = "Очікує на контроль";
 $MESS["TASKS_V2_STATUS_TITLE"] = "Статус:";

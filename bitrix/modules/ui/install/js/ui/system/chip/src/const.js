@@ -1,6 +1,21 @@
 export const ChipDesign = Object.freeze({
 	Filled: 'filled',
+	FilledSuccess: 'filled-success',
+	FilledAlert: 'filled-alert',
+	FilledWarning: 'filled-warning',
+	FilledNoAccent: 'filled-warning',
+	FilledInverted: 'filled-inverted',
+	FilledSuccessInverted: 'filled-success-inverted',
+	FilledAlertInverted: 'filled-alert-inverted',
+	FilledWarningInverted: 'filled-warning-inverted',
+	FilledNoAccentInverted: 'filled-no-accent-inverted',
+	Tinted: 'tinted',
+	TintedSuccess: 'tinted-success',
+	TintedAlert: 'tinted-alert',
+	TintedWarning: 'tinted-warning',
+	TintedNoAccent: 'tinted-no-accent',
 	OutlineAccent: 'outline-accent',
+	OutlineAccent2: 'outline-accent-2',
 	OutlineSuccess: 'outline-success',
 	OutlineAlert: 'outline-alert',
 	OutlineWarning: 'outline-warning',
@@ -11,6 +26,9 @@ export const ChipDesign = Object.freeze({
 	Shadow: 'shadow',
 	ShadowAccent: 'shadow-accent',
 	ShadowDisabled: 'shadow-disabled',
+	ShadowOutlineAccent2: 'shadow-outline-accent-2',
+	ShadowOutline: 'shadow-outline',
+	Disabled: 'disabled',
 });
 
 export const ChipSize = Object.freeze({

@@ -13,6 +13,11 @@ export const DialogAnglePositions = Object.freeze({
 	leftBottom: 'leftBottom',
 });
 
+export const DialogBackground = Object.freeze({
+	default: 'default',
+	vibrant: 'vibrant',
+});
+
 export const aliases = {
 	onShow: { namespace: 'BX.UI.System.Dialog', eventName: 'onShow' },
 	onAfterShow: { namespace: 'BX.UI.System.Dialog', eventName: 'onAfterShow' },

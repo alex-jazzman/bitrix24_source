@@ -63,10 +63,86 @@
 	--background: var(--ui-color-accent-main-primary);
 }
 
+.ui-chip.--filled-success {
+	--text-color: var(--ui-color-design-filled-success-content);
+	--background: var(--ui-color-design-filled-success-bg);
+}
+
+.ui-chip.--filled-alert {
+	--text-color: var(--ui-color-design-filled-alert-content);
+	--background: var(--ui-color-design-filled-alert-bg);
+}
+
+.ui-chip.--filled-warning {
+	--text-color: var(--ui-color-design-filled-warning-content);
+	--background: var(--ui-color-design-filled-warning-bg);
+}
+
+.ui-chip.--filled-no-accent {
+	--text-color: var(--ui-color-design-filled-na-content);
+	--background: var(--ui-color-design-filled-na-bg);
+}
+
+.ui-chip.--filled-inverted {
+	--text-color: var(--ui-color-design-filled-bg);
+	--background: var(--ui-color-design-filled-content);
+}
+
+.ui-chip.--filled-success-inverted {
+	--text-color: var(--ui-color-design-filled-success-bg);
+	--background: var(--ui-color-design-filled-success-content);
+}
+
+.ui-chip.--filled-warning-inverted {
+	--text-color: var(--ui-color-design-filled-warning-bg);
+	--background: var(--ui-color-design-filled-warning-content);
+}
+
+.ui-chip.--filled-alert-inverted {
+	--text-color: var(--ui-color-design-filled-alert-bg);
+	--background: var(--ui-color-design-filled-alert-content);
+}
+
+.ui-chip.--filled-no-accent-inverted {
+	--text-color: var(--ui-color-design-filled-na-bg);
+	--background: var(--ui-color-design-filled-na-content);
+}
+
+.ui-chip.--tinted {
+	--text-color: var(--ui-color-accent-main-link);
+	--background: var(--ui-color-accent-soft-blue-2);
+}
+
+.ui-chip.--tinted-success {
+	--text-color: var(--ui-color-design-tinted-success-content);
+	--background: var(--ui-color-design-tinted-success-bg);
+}
+
+.ui-chip.--tinted-alert {
+	--text-color: var(--ui-color-design-tinted-alert-content);
+	--background: var(--ui-color-design-tinted-alert-bg);
+}
+
+.ui-chip.--tinted-warning {
+	--text-color: var(--ui-color-design-tinted-warning-content);
+	--background: var(--ui-color-design-tinted-warning-bg);
+}
+
+.ui-chip.--tinted-no-accent {
+	--text-color: var(--ui-color-design-tinted-na-content);
+	--background: var(--ui-color-design-tinted-na-bg);
+}
+
 .ui-chip.--outline-accent {
 	--text-color: var(--ui-color-accent-main-primary);
 	--border-color: var(--ui-color-accent-soft-blue-1);
 	--border-color-hover: var(--ui-color-accent-main-primary-alt-2);
+}
+
+.ui-chip.--outline-accent-2 {
+	--text-color: var(--ui-color-design-outline-a2-content);
+	--border-color: var(--ui-color-design-outline-a2-stroke);
+	--border-color-hover: var(--ui-color-design-outline-a2-stroke);
 }
 
 .ui-chip.--outline-success {
@@ -101,8 +177,8 @@
 }
 
 .ui-chip.--outline-copilot {
-	--text-color: var(--ui-color-copilot-accent-primary);
-	--border-color: var(--ui-color-copilot-bg-content-2);
+	--text-color: var(--ui-color-design-outline-copilot-content);
+	--border-color: var(--ui-color-design-outline-copilot-stroke);
 }
 
 .ui-chip.--shadow-no-accent {
@@ -132,6 +208,26 @@
 	--cursor: default;
 }
 
+.ui-chip.--shadow-outline-accent-2 {
+	--text-color: var(--ui-color-design-outline-a2-content);
+	--border-color: var(--ui-color-design-outline-a2-stroke);
+	--box-shadow: 0 1px 1px rgba(0, 0, 0, 0.02);
+	--cursor: default;
+}
+
+.ui-chip.--shadow-outline {
+	--text-color: var(--ui-color-design-outline-content);
+	--border-color: var(--ui-color-design-outline-stroke);
+	--box-shadow: 0 1px 1px rgba(0, 0, 0, 0.02);
+	--cursor: default;
+}
+
+.ui-chip.--disabled {
+	--text-color: var(--ui-color-base-5);
+	--background: var(--ui-color-base-7);
+	--border-color: var(--ui-color-base-7);
+}
+
 .ui-chip.--lock {
 	--text-color: var(--ui-color-base-5);
 	--background: var(--ui-color-base-7);
@@ -148,8 +244,6 @@
 	display: flex;
 	align-items: center;
 	min-height: var(--min-height);
-	max-width: -webkit-max-content;
-	max-width: max-content;
 	padding: var(--padding);
 	border-radius: var(--ui-border-radius-sm);
 	background: var(--background);
@@ -161,6 +255,11 @@
 
 .ui-chip.--rounded {
 	border-radius: var(--ui-border-radius-pill);
+}
+
+.ui-chip.--compact {
+	max-width: -webkit-max-content;
+	max-width: max-content;
 }
 
 .ui-chip.--trimmable {

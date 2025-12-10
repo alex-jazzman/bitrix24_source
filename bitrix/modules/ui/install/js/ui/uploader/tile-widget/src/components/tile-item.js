@@ -224,11 +224,7 @@ export const TileItem: BitrixVueComponentProps = {
 				params['data-viewer-preview'] = previewUrl;
 			}
 
-			if (
-				this.viewerGroupBy
-				&& viewerAttrs.viewerType !== 'cloud-document'
-				&& viewerAttrs.viewerType !== 'board'
-			)
+			if (this.viewerGroupBy && Type.isUndefined(viewerAttrs.viewerSeparateItem))
 			{
 				params['data-viewer-group-by'] = this.viewerGroupBy;
 			}

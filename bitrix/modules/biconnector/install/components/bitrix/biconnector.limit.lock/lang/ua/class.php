@@ -8,15 +8,20 @@ $MESS["CC_BLL_CONSTRUCTOR_CONTENT_WARNING"] = "<p>На вашому тарифі
 <p><a href=\"#ABOUT_LIMITS_HREF#\" target=\"blank\">Як уникнути блокування</a></p>";
 $MESS["CC_BLL_CONSTRUCTOR_TITLE_BLOCKED"] = "BI-конструктор заблокований до #LIMIT_END_DATE#";
 $MESS["CC_BLL_CONSTRUCTOR_TITLE_WARNING"] = "Перевищено ліміт даних";
+$MESS["CC_BLL_CONTENT_BLOCKED"] = "Вивантаження даних у зовнішні системи заблоковано через регулярне перевищення ліміту за кількістю рядків. Ви можете зняти блокування, щоб продовжити вивантаження даних. <a href=\"#UNBLOKING_HELP_URL#\" target=\"blank\">Докладніше</a>";
 $MESS["CC_BLL_CONTENT_BLOCKED_BOX_MSGVER_1"] = "<p>Термін дії вашої ліцензії на Бітрікс24 закінчився #SHORT_DATE#. Працювати з BI-аналітикою можна лише за активної ліцензії.</p>
 <p>Подовжте ліцензію, щоб і надалі користуватися BI-аналітикою.</p>
 <p><a href=\"#ABOUT_LIMITS_HREF#\" target=\"blank\">Докладніше</a></p>";
+$MESS["CC_BLL_CONTENT_BLOCKED_BOX_MSGVER_2"] = "<p>Термін дії вашої ліцензії на Бітрікс24 закінчився #SHORT_DATE#. Працювати з BI-аналітикою можна лише за активної ліцензії.</p>
+<p>Подовжте ліцензію, щоб і надалі користуватися BI-аналітикою. <a href=\"#ABOUT_LIMITS_HREF#\" target=\"blank\">Докладніше</a></p>";
 $MESS["CC_BLL_CONTENT_BLOCKED_MSGVER_1"] = "<p>Вивантаження даних заблоковано через регулярне перевищення тарифного ліміту за кількістю рядків, що передаються до зовнішньої системи: <b>#LIMIT#</b>.</p>
 <p>Щоб знову працювати зі звітами, перейдіть на тариф із відповідним лімітом.</p>
 <p><a href=\"#ABOUT_LIMITS_HREF#\" target=\"blank\">Як уникнути блокування</a></p>";
 $MESS["CC_BLL_CONTENT_WARNING_BOX_MSGVER_1"] = "<p>Термін дії вашої ліцензії на Бітрікс24 закінчиться #SHORT_DATE#. Працювати з BI-аналітикою можна лише за активної ліцензії.</p>
 <p>Подовжте ліцензію, щоб і надалі користуватися BI-аналітикою.</p>
 <p><a href=\"#ABOUT_LIMITS_HREF#\" target=\"blank\">Докладніше</a></p>";
+$MESS["CC_BLL_CONTENT_WARNING_BOX_MSGVER_2"] = "<p>Термін дії вашої ліцензії на Бітрікс24 закінчиться #SHORT_DATE#. Працювати з BI-аналітикою можна лише за активної ліцензії.</p>
+<p>Подовжте ліцензію, щоб і надалі користуватися BI-аналітикою. <a href=\"#ABOUT_LIMITS_HREF#\" target=\"blank\">Докладніше</a></p>";
 $MESS["CC_BLL_CONTENT_WARNING_MSGVER_1"] = "<p>На вашому тарифі діє ліміт за кількістю рядків, що передаються до зовнішньої системи: <b>#LIMIT#</b>.</p>
 <p>Якщо ліміт перевищиться, вивантаження даних заблокується #SHORT_DATE#, а доступ до звітів буде закрито.</p>
 <p>Щоб уникнути блокування, перегляньте наші рекомендації або перейдіть на тариф із відповідним лімітом.</p>
@@ -24,6 +29,7 @@ $MESS["CC_BLL_CONTENT_WARNING_MSGVER_1"] = "<p>На вашому тарифі д
 $MESS["CC_BLL_LATER_BUTTON_MSGVER_1"] = "Зрозуміло";
 $MESS["CC_BLL_LICENSE_BUTTON_BOX"] = "Подовжити ліцензію";
 $MESS["CC_BLL_LICENSE_BUTTON_CLOUD"] = "Покращити тариф";
+$MESS["CC_BLL_TITLE_BLOCKED"] = "Робота зі звітами заблокована";
 $MESS["CC_BLL_TITLE_BOX_BLOCKED"] = "Роботу зі звітами призупинено з #SHORT_DATE#";
 $MESS["CC_BLL_TITLE_BOX_WARNING"] = "Ліцензія на Бітрікс24 закінчується #SHORT_DATE#";
 $MESS["CC_BLL_TITLE_CLOUD_BLOCKED"] = "Роботу зі звітами призупинено з #SHORT_DATE#";

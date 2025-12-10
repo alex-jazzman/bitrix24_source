@@ -1,5 +1,8 @@
 <?php
+$MESS["M_TASK_CHAT_BUTTON_AHA_MOMENT_DESCRIPTION"] = "У чаті можна обговорювати деталі, телефонувати, обмінюватися файлами та контролювати всі зміни за завданням.";
+$MESS["M_TASK_CHAT_BUTTON_AHA_MOMENT_TITLE"] = "Чат тепер знаходиться прямо в завданні";
 $MESS["M_TASK_DETAILS_APPROVE_BUTTON"] = "Прийняти";
+$MESS["M_TASK_DETAILS_CHAT_BUTTON"] = "Чат завдання";
 $MESS["M_TASK_DETAILS_COMMENTS_BUTTON_EMPTY"] = "Коментарі";
 $MESS["M_TASK_DETAILS_COMMENTS_BUTTON_MSGVER_1"] = "Коментарі: #COMMENTS_COUNT#";
 $MESS["M_TASK_DETAILS_COMMENTS_TITLE"] = "Коментарі";
@@ -28,3 +31,4 @@ $MESS["M_TASK_RATING_LIKE_NO_WITH_COUNTER"] = "Ні: #QUANTITY#";
 $MESS["M_TASK_RATING_LIKE_QUESTION"] = "Вам подобається?";
 $MESS["M_TASK_RATING_LIKE_YES"] = "Так";
 $MESS["M_TASK_RATING_LIKE_YES_WITH_COUNTER"] = "Так: #QUANTITY#";
+$MESS["M_TASK_TOAST_FILES_DELETE_DENIED"] = "Не можна видалити файли, додані іншою особою.";

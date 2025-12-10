@@ -15,3 +15,7 @@
 	white-space: break-spaces;
 	overflow-wrap: anywhere;
 }
+
+.ui-typography-li.--nested {
+	list-style-type: none;
+}

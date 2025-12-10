@@ -11,7 +11,7 @@ this.BX.UI = this.BX.UI || {};
 	      type: String,
 	      required: true,
 	      validator(value) {
-	        return Object.values(ui_iconSet_api_core.Set).includes(value) || Object.values(ui_iconSet_api_core.Outline).includes(value) || Object.values(ui_iconSet_api_core.Solid).includes(value);
+	        return Object.values(ui_iconSet_api_core.Set).includes(value) || Object.values(ui_iconSet_api_core.Outline).includes(value) || Object.values(ui_iconSet_api_core.Solid).includes(value) || Object.values(ui_iconSet_api_core.SmallOutline).includes(value);
 	      }
 	    },
 	    color: {
@@ -31,11 +31,15 @@ this.BX.UI = this.BX.UI || {};
 	    hoverableAlt: {
 	      type: Boolean,
 	      default: false
+	    },
+	    responsive: {
+	      type: Boolean,
+	      default: false
 	    }
 	  },
 	  computed: {
 	    className() {
-	      return ['ui-icon-set', `--${this.name}`, this.hoverableClassnameModifier];
+	      return ['ui-icon-set', `--${this.name}`, this.hoverableClassnameModifier, this.responsiveClassnameModifier];
 	    },
 	    hoverableClassnameModifier() {
 	      if (this.hoverable) {
@@ -46,7 +50,13 @@ this.BX.UI = this.BX.UI || {};
 	      }
 	      return '';
 	    },
+	    responsiveClassnameModifier() {
+	      return this.responsive ? '--responsive' : '';
+	    },
 	    inlineSize() {
+	      if (this.responsive) {
+	        return '';
+	      }
 	      return this.size ? `--ui-icon-set__icon-size: ${this.size}px;` : '';
 	    },
 	    inlineColor() {

@@ -1,0 +1,5 @@
+<?php
+$MESS["MAIL_ACCESS_RIGHTS_DEPARTMENT_WITH_SUBDEPARTMENTS"] = "Свого відділу та підрозділів";
+$MESS["MAIL_ACCESS_RIGHTS_SELF_DEPARTMENT"] = "Свого відділу";
+$MESS["MAIL_ACCESS_RIGHTS_VARIABLES_ALL"] = "Усіх співробітників";
+$MESS["MAIL_ACCESS_RIGHTS_VARIABLES_NONE"] = "Немає доступу";

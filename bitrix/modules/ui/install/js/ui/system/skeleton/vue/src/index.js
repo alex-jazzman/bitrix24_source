@@ -1,2 +1,2 @@
 export { BLine } from './line';
-export { Circle } from './circle';
+export { BCircle, BCircle as Circle } from './circle';

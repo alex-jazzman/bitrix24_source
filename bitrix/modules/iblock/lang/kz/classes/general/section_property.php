@@ -7,4 +7,4 @@ $MESS["SP_DISPLAY_TYPE_H"] = "Аты мен суреттері бар жалау
 $MESS["SP_DISPLAY_TYPE_K"] = "Радиобатырмалар";
 $MESS["SP_DISPLAY_TYPE_P"] = "Ашылмалы тізім";
 $MESS["SP_DISPLAY_TYPE_R"] = "Аттары мен суреттері бар ашылмалы тізім";
-$MESS["SP_DISPLAY_TYPE_U"] = "Күнтізбе";
+$MESS['SP_DISPLAY_TYPE_U'] = "Күнтізбе";

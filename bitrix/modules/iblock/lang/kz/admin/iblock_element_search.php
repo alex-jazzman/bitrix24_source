@@ -20,4 +20,4 @@ $MESS["IBLOCK_ELSEARCH_SELECT"] = "Таңдау";
 $MESS["IBLOCK_ELSEARCH_TITLE"] = "Элементті іздеу";
 $MESS["IBLOCK_ELSEARCH_USERINFO"] = "Пайдаланушы параметрлерін көру";
 $MESS["IBLOCK_FIELD_CODE"] = "Символдық код";
-$MESS["IBLOCK_FIELD_EXTERNAL_ID"] = "Сыртқы код";
+$MESS['IBLOCK_FIELD_EXTERNAL_ID'] = "Сыртқы код";

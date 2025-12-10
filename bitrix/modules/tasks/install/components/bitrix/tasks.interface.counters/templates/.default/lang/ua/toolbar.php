@@ -1,5 +1,7 @@
 <?php
+$MESS["TASKS_COUNTERS_CHAT_BUTTON"] = "Чати завдань";
 $MESS["TASKS_COUNTER_EXPIRED"] = "Протерміновані";
+$MESS["TASKS_COUNTER_MENTIONS"] = "Згадки";
 $MESS["TASKS_COUNTER_MORE"] = "Ще";
 $MESS["TASKS_COUNTER_MY"] = "Мої:";
 $MESS["TASKS_COUNTER_MY_TASKS"] = "Мої завдання:";

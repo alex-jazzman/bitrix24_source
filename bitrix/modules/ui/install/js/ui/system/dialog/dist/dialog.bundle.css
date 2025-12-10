@@ -1,6 +1,19 @@
 .ui-system-dialog {
 	--ui-system-dialog-padding-x: 24px;
-	--ui-color-bg-content: #fff;
+	--ui-color-bg-content: var(--ui-color-bg-content-primary);
+	--popup-window-background-color: var(--ui-color-bg-content);
+}
+
+.ui-system-dialog.--bg-vibrant {
+	--ui-color-bg-content: var(--ui-color-bg-vibrant-less);
+
+	-webkit-backdrop-filter: var(--ui-bg-blur-default);
+
+	        backdrop-filter: var(--ui-bg-blur-default);
+}
+
+.ui-system-dialog.--bg-default {
+	--ui-color-bg-content: var(--ui-color-bg-content-primary);
 }
 
 body.ui-system-dialog__disable-scrolling {

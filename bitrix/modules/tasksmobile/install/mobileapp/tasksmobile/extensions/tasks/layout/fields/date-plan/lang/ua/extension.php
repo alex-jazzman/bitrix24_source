@@ -13,6 +13,6 @@ $MESS["M_TASKS_DATE_PLAN_EDIT_FORM_END_DATE_PLAN_INPUT_LIST_TITLE"] = "Дата 
 $MESS["M_TASKS_DATE_PLAN_EDIT_FORM_START_DATE_OUT_OF_RANGE"] = "Запланована дата початку завдання стоїть за рамками проєкту";
 $MESS["M_TASKS_DATE_PLAN_EDIT_FORM_START_DATE_PLAN_INPUT_LABEL"] = "Дата початку";
 $MESS["M_TASKS_DATE_PLAN_EDIT_FORM_START_DATE_PLAN_INPUT_LIST_TITLE"] = "Дата початку";
-$MESS["M_TASKS_DATE_PLAN_EDIT_FORM_SUBTITLE"] = "Заплануйте, коли виконавець повинен почати й завершити роботу над завданням";
+$MESS["M_TASKS_DATE_PLAN_EDIT_FORM_SUBTITLE"] = "Заплануйте, коли виконавець має розпочати й завершити роботу над завданням";
 $MESS["M_TASKS_DATE_PLAN_EDIT_FORM_TITLE"] = "Планування строків";
 $MESS["M_TASKS_DATE_PLAN_SAVE"] = "Зберегти";

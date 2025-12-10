@@ -1,6 +1,7 @@
 import AvatarBase from './avatar-base';
 import AvatarRound from './avatar-round';
 import AvatarRoundCopilot from './avatar-round-copilot';
+import AvatarRoundMarta from './avatar-round-marta';
 import AvatarRoundGuest from './avatar-round-guest';
 import AvatarRoundExtranet from './avatar-round-extranet';
 import AvatarRoundAccent from './avatar-round-accent';
@@ -19,6 +20,7 @@ export {
 	AvatarBase,
 	AvatarRound,
 	AvatarRoundCopilot,
+	AvatarRoundMarta,
 	AvatarRoundGuest,
 	AvatarRoundExtranet,
 	AvatarRoundAccent,

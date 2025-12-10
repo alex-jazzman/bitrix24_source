@@ -1,7 +1,7 @@
 <?php
 $MESS["CRM_ACTION_COMPLETED"] = "завершено";
 $MESS["CRM_ACTION_CUSTOMER"] = "Клієнт";
-$MESS["CRM_ACTION_END_TIME"] = "Крайній термін";
+$MESS["CRM_ACTION_END_TIME"] = "Кінцевий термін";
 $MESS["CRM_ACTION_EXPIRED"] = "протерміновано";
 $MESS["CRM_ACTION_GO_TO_FULL_VIEW"] = "Перейти до повного списку";
 $MESS["CRM_ACTION_IMPORTANT"] = "Важлива справа";

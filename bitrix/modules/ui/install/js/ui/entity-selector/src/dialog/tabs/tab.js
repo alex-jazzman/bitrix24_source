@@ -1,5 +1,5 @@
 import { Type, Tag, Dom, Cache, Reflection } from 'main.core';
-import { Icon } from 'ui.icon-set.api.core';
+import { Icon, Outline } from 'ui.icon-set.api.core';
 import 'ui.icon-set.outline';
 
 import ItemNode from '../../item/item-node';
@@ -67,7 +67,7 @@ export default class Tab
 		this.setVisible(options.visible);
 		this.setTitle(options.title);
 		this.setItemMaxDepth(options.itemMaxDepth);
-		this.setIcon(options.icon);
+		this.setIcon(options.icon ?? Outline.ARROW_RIGHT_L);
 		this.setTextColor(options.textColor);
 		this.setBgColor(options.bgColor);
 		this.setStub(options.stub, options.stubOptions);
@@ -400,7 +400,7 @@ export default class Tab
 			const className = this.isVisible() ? '' : ' ui-selector-tab-label-hidden';
 			return Tag.render`
 				<div
-					class="ui-selector-tab-label${className}"
+					class="ui-selector-tab-label${className} --ui-hoverable"
 					onclick="${this.handleLabelClick.bind(this)}"
 					onmouseenter="${this.handleLabelMouseEnter.bind(this)}"
 					onmouseleave="${this.handleLabelMouseLeave.bind(this)}"
@@ -456,11 +456,12 @@ export default class Tab
 		try
 		{
 			Dom.append(new Icon({ icon }).render(), this.getIconContainer());
-			Dom.style(this.getIconContainer(), 'background-image', 'none');
+			Dom.style(this.getIconContainer(), 'mask-image', 'none');
+			Dom.style(this.getIconContainer(), 'background-color', 'transparent');
 		}
 		catch
 		{
-			Dom.style(this.getIconContainer(), 'background-image', icon ? `url('${encodeUrl(icon)}')` : null);
+			Dom.style(this.getIconContainer(), 'mask-image', icon ? `url('${encodeUrl(icon)}')` : null);
 		}
 
 		const titleNode = this.getTitleNode();

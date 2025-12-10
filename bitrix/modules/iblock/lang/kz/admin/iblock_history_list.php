@@ -17,4 +17,4 @@ $MESS["IBLOCK_ADM_HISTORY_RESTORE_ERROR"] = "# жазбасын қалпына �
 $MESS["IBLOCK_ADM_HISTORY_TITLE"] = "# #ID# жазбасының өзгерістер тарихы";
 $MESS["IBLOCK_ADM_HISTORY_UPDERR3"] = "Өзгерту қатесі: кіруге тыйым салынады";
 $MESS["IBLOCK_ADM_HISTORY_VIEW"] = "Қарау";
-$MESS["IBLOCK_ADM_HISTORY_VIEW_ALT"] = "Жазбаны қарау";
+$MESS['IBLOCK_ADM_HISTORY_VIEW_ALT'] = "Жазбаны қарау";

@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.UI = this.BX.UI || {};
-(function (exports,main_popup,main_core_collections,ui_iconSet_outline,ui_iconSet_api_core,main_core_events,main_core,main_loader) {
+(function (exports,main_popup,main_core_collections,main_core_events,ui_iconSet_outline,ui_iconSet_api_core,main_core,main_loader) {
 	'use strict';
 
 	let ItemNodeComparator = /*#__PURE__*/function () {
@@ -210,11 +210,13 @@ this.BX.UI = this.BX.UI || {};
 	    babelHelpers.defineProperty(this, "title", null);
 	    babelHelpers.defineProperty(this, "textColor", null);
 	    babelHelpers.defineProperty(this, "bgColor", null);
+	    babelHelpers.defineProperty(this, "border", null);
 	    babelHelpers.defineProperty(this, "containers", new WeakMap());
 	    const options = main_core.Type.isPlainObject(badgeOptions) ? badgeOptions : {};
 	    this.setTitle(options.title);
 	    this.setTextColor(options.textColor);
 	    this.setBgColor(options.bgColor);
+	    this.setBorder(options.border);
 	  }
 	  babelHelpers.createClass(ItemBadge, [{
 	    key: "getTitle",
@@ -259,6 +261,18 @@ this.BX.UI = this.BX.UI || {};
 	      }
 	    }
 	  }, {
+	    key: "getBorder",
+	    value: function getBorder() {
+	      return this.border;
+	    }
+	  }, {
+	    key: "setBorder",
+	    value: function setBorder(border) {
+	      if (main_core.Type.isString(border) || border === null) {
+	        this.border = border;
+	      }
+	    }
+	  }, {
 	    key: "getContainer",
 	    value: function getContainer(target) {
 	      let container = this.containers.get(target);
@@ -281,6 +295,7 @@ this.BX.UI = this.BX.UI || {};
 	      }
 	      main_core.Dom.style(container, 'color', this.getTextColor());
 	      main_core.Dom.style(container, 'background-color', this.getBgColor());
+	      main_core.Dom.style(container, 'border', this.getBorder());
 	      main_core.Dom.append(container, target);
 	    }
 	  }, {
@@ -289,7 +304,8 @@ this.BX.UI = this.BX.UI || {};
 	      return {
 	        title: this.getTitleNode(),
 	        textColor: this.getTextColor(),
-	        bgColor: this.getBgColor()
+	        bgColor: this.getBgColor(),
+	        border: this.getBorder()
 	      };
 	    }
 	  }]);
@@ -579,7 +595,9 @@ this.BX.UI = this.BX.UI || {};
 	        border: null,
 	        borderRadius: null,
 	        outline: null,
-	        outlineOffset: null
+	        outlineOffset: null,
+	        icon: null,
+	        iconColor: null
 	      };
 	      this.textColor = '';
 	      this.link = '';
@@ -977,6 +995,7 @@ this.BX.UI = this.BX.UI || {};
 	  }, {
 	    key: "render",
 	    value: function render(appendChildren = false) {
+	      var _this$getAvatarOption;
 	      if (this.isRoot()) {
 	        this.renderRoot(appendChildren);
 	        return;
@@ -1025,6 +1044,7 @@ this.BX.UI = this.BX.UI || {};
 	      } else {
 	        this.getTitleContainer().style.removeProperty('color');
 	      }
+	      main_core.Dom.clean(this.getAvatarContainer());
 	      const avatar = this.getAvatar();
 	      if (main_core.Type.isStringFilled(avatar)) {
 	        this.getAvatarContainer().style.backgroundImage = `url('${encodeUrl(avatar)}')`;
@@ -1064,6 +1084,15 @@ this.BX.UI = this.BX.UI || {};
 	      main_core.Dom.style(this.getAvatarContainer(), 'outline', outline);
 	      const outlineOffset = this.getAvatarOption('outlineOffset');
 	      main_core.Dom.style(this.getAvatarContainer(), 'outline-offset', outlineOffset);
+	      const icon = {
+	        icon: this.getAvatarOption('icon'),
+	        size: bgSize !== null && bgSize !== void 0 ? bgSize : undefined,
+	        color: (_this$getAvatarOption = this.getAvatarOption('iconColor')) !== null && _this$getAvatarOption !== void 0 ? _this$getAvatarOption : undefined
+	      };
+	      if (ui_iconSet_api_core.Icon.isValid(icon)) {
+	        main_core.Dom.style(this.getAvatarContainer(), 'background-image', 'none');
+	        main_core.Dom.append(new ui_iconSet_api_core.Icon(icon).render(), this.getAvatarContainer());
+	      }
 	      main_core.Dom.clean(this.getBadgeContainer());
 	      this.getBadges().forEach(badge => {
 	        badge.renderTo(this.getBadgeContainer());
@@ -1233,6 +1262,22 @@ this.BX.UI = this.BX.UI || {};
 	      } else if (this.getOuterContainer().classList.contains('--hidden')) {
 	        main_core.Dom.removeClass(this.getOuterContainer(), '--hidden');
 	      }
+	    }
+	  }, {
+	    key: "lock",
+	    value: function lock() {
+	      if (this.hasChildren() || this.isDynamic()) {
+	        return;
+	      }
+	      main_core.Dom.addClass(this.getOuterContainer(), 'ui-selector-item-box-locked');
+	    }
+	  }, {
+	    key: "unlock",
+	    value: function unlock() {
+	      if (this.hasChildren() || this.isDynamic()) {
+	        return;
+	      }
+	      main_core.Dom.removeClass(this.getOuterContainer(), 'ui-selector-item-box-locked');
 	    }
 	  }, {
 	    key: "getTitle",
@@ -1469,6 +1514,8 @@ this.BX.UI = this.BX.UI || {};
 	          if (this.getDepthLevel() >= this.getTab().getItemMaxDepth()) {
 	            className += ' ui-selector-item-box-max-depth';
 	          }
+	        } else if (this.getItem().isLocked()) {
+	          className += ' ui-selector-item-box-locked';
 	        } else if (this.getItem().isSelected()) {
 	          className += ' ui-selector-item-box-selected';
 	        }
@@ -1499,7 +1546,7 @@ this.BX.UI = this.BX.UI || {};
 	    value: function getContainer() {
 	      return this.cache.remember('container', () => {
 	        const div = document.createElement('div');
-	        div.className = 'ui-selector-item';
+	        div.className = 'ui-selector-item --ui-hoverable';
 	        main_core.Event.bind(div, 'click', this.handleClick.bind(this));
 	        main_core.Event.bind(div, 'mouseenter', this.handleMouseEnter.bind(this));
 	        main_core.Event.bind(div, 'mouseleave', this.handleMouseLeave.bind(this));
@@ -1586,7 +1633,7 @@ this.BX.UI = this.BX.UI || {};
 	    value: function getIndicatorContainer() {
 	      return this.cache.remember('indicator', () => {
 	        const div = document.createElement('div');
-	        div.className = 'ui-selector-item-indicator';
+	        div.className = 'ui-selector-item-indicator ui-icon-set__scope';
 	        return div;
 	      });
 	    }
@@ -1725,22 +1772,24 @@ this.BX.UI = this.BX.UI || {};
 	        } else {
 	          this.expand();
 	        }
+	      } else if (this.getItem().isSelected()) {
+	        if (this.getItem().isDeselectable()) {
+	          this.getItem().deselect({
+	            node: this
+	          });
+	        }
+	        if (!this.getItem().isSelected() && this.getDialog().shouldHideOnDeselect()) {
+	          this.getDialog().hide();
+	        }
 	      } else {
-	        if (this.getItem().isSelected()) {
-	          if (this.getItem().isDeselectable()) {
-	            this.getItem().deselect();
-	          }
-	          if (this.getDialog().shouldHideOnDeselect()) {
-	            this.getDialog().hide();
-	          }
-	        } else {
-	          this.getItem().select();
-	          if (this.getDialog().shouldClearSearchOnSelect()) {
-	            this.getDialog().clearSearch();
-	          }
-	          if (this.getDialog().shouldHideOnSelect()) {
-	            this.getDialog().hide();
-	          }
+	        this.getItem().select({
+	          node: this
+	        });
+	        if (this.getDialog().shouldClearSearchOnSelect()) {
+	          this.getDialog().clearSearch();
+	        }
+	        if (this.getItem().isSelected() && this.getDialog().shouldHideOnSelect()) {
+	          this.getDialog().hide();
 	        }
 	      }
 	      this.getDialog().focusSearch();
@@ -2606,6 +2655,7 @@ this.BX.UI = this.BX.UI || {};
 	    babelHelpers.defineProperty(this, "saveable", true);
 	    babelHelpers.defineProperty(this, "deselectable", true);
 	    babelHelpers.defineProperty(this, "hidden", false);
+	    babelHelpers.defineProperty(this, "locked", false);
 	    babelHelpers.defineProperty(this, "searchIndex", null);
 	    babelHelpers.defineProperty(this, "customData", null);
 	    babelHelpers.defineProperty(this, "sort", null);
@@ -2621,7 +2671,8 @@ this.BX.UI = this.BX.UI || {};
 	    this.id = options.id;
 	    this.entityId = options.entityId.toLowerCase();
 	    this.entityType = main_core.Type.isStringFilled(options.entityType) ? options.entityType : 'default';
-	    this.selected = main_core.Type.isBoolean(options.selected) ? options.selected : false;
+	    this.locked = main_core.Type.isBoolean(options.locked) ? options.locked : false;
+	    this.selected = main_core.Type.isBoolean(options.selected) && !this.locked ? options.selected : false;
 	    this.customData = TypeUtils.createMapFromOptions(options.customData);
 	    this.tagOptions = TypeUtils.createMapFromOptions(options.tagOptions);
 	    this.setTitle(options.title);
@@ -2960,16 +3011,31 @@ this.BX.UI = this.BX.UI || {};
 	    }
 	  }, {
 	    key: "select",
-	    value: function select(preselectedMode = false) {
+	    value: function select(selectOptions = {}) {
 	      if (this.selected) {
 	        return;
 	      }
+	      const options = main_core.Type.isBoolean(selectOptions) // Compatibility signature select(preselectedMode: boolean = false)
+	      ? {
+	        emitEvents: !selectOptions,
+	        animate: !selectOptions
+	      } : selectOptions;
+	      const {
+	        emitEvents,
+	        animate,
+	        node
+	      } = {
+	        emitEvents: true,
+	        animate: true,
+	        node: null,
+	        ...options
+	      };
 	      const dialog = this.getDialog();
-	      const emitEvents = dialog && !preselectedMode;
-	      if (emitEvents) {
+	      if (dialog && emitEvents) {
 	        const event = new main_core_events.BaseEvent({
 	          data: {
-	            item: this
+	            item: this,
+	            node
 	          }
 	        });
 	        dialog.emit('Item:onBeforeSelect', event);
@@ -2977,33 +3043,53 @@ this.BX.UI = this.BX.UI || {};
 	          return;
 	        }
 	      }
+	      if (this.isLocked()) {
+	        return;
+	      }
 	      this.selected = true;
 	      if (dialog) {
-	        dialog.handleItemSelect(this, !preselectedMode);
+	        dialog.handleItemSelect(this, animate);
 	      }
 	      if (this.isRendered()) {
-	        this.getNodes().forEach(node => {
-	          node.select();
+	        this.getNodes().forEach(itemNode => {
+	          itemNode.select();
 	        });
 	      }
-	      if (emitEvents) {
+	      if (dialog && emitEvents) {
 	        dialog.emit('Item:onSelect', {
-	          item: this
+	          item: this,
+	          node
 	        });
 	        dialog.saveRecentItem(this);
 	      }
 	    }
 	  }, {
 	    key: "deselect",
-	    value: function deselect(preselectedMode = false) {
+	    value: function deselect(deselectOptions = {}) {
 	      if (!this.selected) {
 	        return;
 	      }
+	      const options = main_core.Type.isBoolean(deselectOptions) // Compatibility signature select(preselectedMode: boolean = false)
+	      ? {
+	        emitEvents: !deselectOptions,
+	        animate: !deselectOptions
+	      } : deselectOptions;
+	      const {
+	        emitEvents,
+	        animate,
+	        node
+	      } = {
+	        emitEvents: true,
+	        animate: true,
+	        node: null,
+	        ...options
+	      };
 	      const dialog = this.getDialog();
-	      if (dialog) {
+	      if (dialog && emitEvents) {
 	        const event = new main_core_events.BaseEvent({
 	          data: {
-	            item: this
+	            item: this,
+	            node
 	          }
 	        });
 	        dialog.emit('Item:onBeforeDeselect', event);
@@ -3013,14 +3099,17 @@ this.BX.UI = this.BX.UI || {};
 	      }
 	      this.selected = false;
 	      if (this.isRendered()) {
-	        this.getNodes().forEach(node => {
-	          node.deselect();
+	        this.getNodes().forEach(itemNode => {
+	          itemNode.deselect();
 	        });
 	      }
 	      if (dialog) {
-	        dialog.handleItemDeselect(this, !preselectedMode);
+	        dialog.handleItemDeselect(this, animate);
+	      }
+	      if (dialog && emitEvents) {
 	        dialog.emit('Item:onDeselect', {
-	          item: this
+	          item: this,
+	          node
 	        });
 	      }
 	    }
@@ -3092,6 +3181,74 @@ this.BX.UI = this.BX.UI || {};
 	      return this.hidden;
 	    }
 	  }, {
+	    key: "lock",
+	    value: function lock() {
+	      if (this.locked) {
+	        return;
+	      }
+	      const dialog = this.getDialog();
+	      if (dialog) {
+	        const event = new main_core_events.BaseEvent({
+	          data: {
+	            item: this
+	          }
+	        });
+	        dialog.emit('Item:onBeforeLock', event);
+	        if (event.isDefaultPrevented()) {
+	          return;
+	        }
+	      }
+	      if (this.isSelected()) {
+	        return;
+	      }
+	      this.locked = true;
+	      if (this.isRendered()) {
+	        this.getNodes().forEach(node => {
+	          node.lock();
+	        });
+	      }
+	      if (dialog) {
+	        dialog.emit('Item:onLock', {
+	          item: this
+	        });
+	      }
+	    }
+	  }, {
+	    key: "unlock",
+	    value: function unlock() {
+	      if (!this.locked) {
+	        return;
+	      }
+	      const dialog = this.getDialog();
+	      if (dialog) {
+	        const event = new main_core_events.BaseEvent({
+	          data: {
+	            item: this
+	          }
+	        });
+	        dialog.emit('Item:onBeforeUnlock', event);
+	        if (event.isDefaultPrevented()) {
+	          return;
+	        }
+	      }
+	      this.locked = false;
+	      if (this.isRendered()) {
+	        this.getNodes().forEach(node => {
+	          node.unlock();
+	        });
+	      }
+	      if (dialog) {
+	        dialog.emit('Item:onUnlock', {
+	          item: this
+	        });
+	      }
+	    }
+	  }, {
+	    key: "isLocked",
+	    value: function isLocked() {
+	      return this.locked;
+	    }
+	  }, {
 	    key: "setContextSort",
 	    value: function setContextSort(sort) {
 	      if (main_core.Type.isNumber(sort) || sort === null) {
@@ -3144,6 +3301,28 @@ this.BX.UI = this.BX.UI || {};
 	    key: "getCustomData",
 	    value: function getCustomData() {
 	      return this.customData;
+	    }
+	  }, {
+	    key: "setCustomData",
+	    value: function setCustomData(property, value) {
+	      if (main_core.Type.isNull(property)) {
+	        this.customData = new Map();
+	        _classPrivateMethodGet$1(this, _renderNodes, _renderNodes2).call(this);
+	      } else if (main_core.Type.isPlainObject(property)) {
+	        Object.entries(property).forEach(item => {
+	          const [currentKey, currentValue] = item;
+	          this.customData.set(currentKey, currentValue);
+	        });
+	        _classPrivateMethodGet$1(this, _renderNodes, _renderNodes2).call(this);
+	      } else if (main_core.Type.isString(property)) {
+	        if (main_core.Type.isNull(value)) {
+	          this.customData.delete(property);
+	          _classPrivateMethodGet$1(this, _renderNodes, _renderNodes2).call(this);
+	        } else if (!main_core.Type.isUndefined(value)) {
+	          this.customData.set(property, value);
+	          _classPrivateMethodGet$1(this, _renderNodes, _renderNodes2).call(this);
+	        }
+	      }
 	    }
 	  }, {
 	    key: "isRendered",
@@ -3288,6 +3467,7 @@ this.BX.UI = this.BX.UI || {};
 	        searchable: this.isSearchable(),
 	        saveable: this.isSaveable(),
 	        hidden: this.isHidden(),
+	        locked: this.isLocked(),
 	        title: this.getTitleNode(),
 	        link: this.getLink(),
 	        linkTitle: this.getLinkTitleNode(),
@@ -3394,17 +3574,12 @@ this.BX.UI = this.BX.UI || {};
 	  _t2,
 	  _t3,
 	  _t4;
-	function _classPrivateMethodInitSpec$2(obj, privateSet) { _checkPrivateRedeclaration$2(obj, privateSet); privateSet.add(obj); }
-	function _checkPrivateRedeclaration$2(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet$2(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
-	var _isIconSet = /*#__PURE__*/new WeakSet();
 	let DefaultStub = /*#__PURE__*/function (_BaseStub) {
 	  babelHelpers.inherits(DefaultStub, _BaseStub);
 	  function DefaultStub(tab, options) {
 	    var _this;
 	    babelHelpers.classCallCheck(this, DefaultStub);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(DefaultStub).call(this, tab, options));
-	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _isIconSet);
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "content", null);
 	    return _this;
 	  }
@@ -3419,7 +3594,9 @@ this.BX.UI = this.BX.UI || {};
 	        if (main_core.Type.isNumber(this.getOption('iconOpacity'))) {
 	          iconOpacity = Math.min(100, Math.max(0, this.getOption('iconOpacity')));
 	        }
-	        const iconStyle = main_core.Type.isStringFilled(icon) && !_classPrivateMethodGet$2(this, _isIconSet, _isIconSet2).call(this, icon) ? `style="background-image: url('${encodeUrl(icon)}'); opacity: ${iconOpacity / 100};"` : '';
+	        const iconStyle = main_core.Type.isStringFilled(icon) && !ui_iconSet_api_core.Icon.isValid({
+	          icon
+	        }) ? `style="background-image: url('${encodeUrl(icon)}'); opacity: ${iconOpacity / 100};"` : '';
 	        const arrow = this.getOption('arrow', false) && this.getTab().getDialog().getActiveFooter() !== null;
 	        return main_core.Tag.render(_t$1 || (_t$1 = _$1`
 				<div class="ui-selector-tab-default-stub">
@@ -3452,16 +3629,6 @@ this.BX.UI = this.BX.UI || {};
 	  }]);
 	  return DefaultStub;
 	}(BaseStub);
-	function _isIconSet2(icon) {
-	  try {
-	    new ui_iconSet_api_core.Icon({
-	      icon
-	    });
-	    return true;
-	  } catch {
-	    return false;
-	  }
-	}
 
 	let _$2 = t => t,
 	  _t$2;
@@ -3622,6 +3789,7 @@ this.BX.UI = this.BX.UI || {};
 	 */
 	let Tab = /*#__PURE__*/function () {
 	  function Tab(dialog, tabOptions) {
+	    var _options$icon;
 	    babelHelpers.classCallCheck(this, Tab);
 	    babelHelpers.defineProperty(this, "id", null);
 	    babelHelpers.defineProperty(this, "title", null);
@@ -3658,7 +3826,7 @@ this.BX.UI = this.BX.UI || {};
 	    this.setVisible(options.visible);
 	    this.setTitle(options.title);
 	    this.setItemMaxDepth(options.itemMaxDepth);
-	    this.setIcon(options.icon);
+	    this.setIcon((_options$icon = options.icon) !== null && _options$icon !== void 0 ? _options$icon : ui_iconSet_api_core.Outline.ARROW_RIGHT_L);
 	    this.setTextColor(options.textColor);
 	    this.setBgColor(options.bgColor);
 	    this.setStub(options.stub, options.stubOptions);
@@ -3946,7 +4114,7 @@ this.BX.UI = this.BX.UI || {};
 	        const className = this.isVisible() ? '' : ' ui-selector-tab-label-hidden';
 	        return main_core.Tag.render(_t2$1 || (_t2$1 = _$4`
 				<div
-					class="ui-selector-tab-label${0}"
+					class="ui-selector-tab-label${0} --ui-hoverable"
 					onclick="${0}"
 					onmouseenter="${0}"
 					onmouseleave="${0}"
@@ -4001,9 +4169,10 @@ this.BX.UI = this.BX.UI || {};
 	        main_core.Dom.append(new ui_iconSet_api_core.Icon({
 	          icon
 	        }).render(), this.getIconContainer());
-	        main_core.Dom.style(this.getIconContainer(), 'background-image', 'none');
+	        main_core.Dom.style(this.getIconContainer(), 'mask-image', 'none');
+	        main_core.Dom.style(this.getIconContainer(), 'background-color', 'transparent');
 	      } catch {
-	        main_core.Dom.style(this.getIconContainer(), 'background-image', icon ? `url('${encodeUrl(icon)}')` : null);
+	        main_core.Dom.style(this.getIconContainer(), 'mask-image', icon ? `url('${encodeUrl(icon)}')` : null);
 	      }
 	      const titleNode = this.getTitleNode();
 	      if (titleNode) {
@@ -4167,8 +4336,8 @@ this.BX.UI = this.BX.UI || {};
 	  return Tab;
 	}();
 
-	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration$3(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration$3(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration$2(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$2(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 
 	/**
 	 * @namespace BX.UI.Uploader
@@ -4203,8 +4372,8 @@ this.BX.UI = this.BX.UI || {};
 	}(main_core.BaseError);
 
 	let _Symbol$iterator;
-	function _classPrivateFieldInitSpec$1(obj, privateMap, value) { _checkPrivateRedeclaration$4(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration$4(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateFieldInitSpec$1(obj, privateMap, value) { _checkPrivateRedeclaration$3(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$3(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	var _errors = /*#__PURE__*/new WeakMap();
 	_Symbol$iterator = Symbol.iterator;
 	/**
@@ -4568,6 +4737,7 @@ this.BX.UI = this.BX.UI || {};
 	  }, {
 	    key: "render",
 	    value: function render() {
+	      var _this$getAvatarOption;
 	      const titleNode = this.getTitleNode();
 	      if (titleNode) {
 	        var _this$constructor;
@@ -4591,13 +4761,23 @@ this.BX.UI = this.BX.UI || {};
 	      const borderRadius = this.getAvatarOption('borderRadius');
 	      const outline = this.getAvatarOption('outline');
 	      const outlineOffset = this.getAvatarOption('outlineOffset');
+	      main_core.Dom.clean(this.getAvatarContainer());
 	      main_core.Dom.style(this.getAvatarContainer(), 'background-color', bgColor);
 	      main_core.Dom.style(this.getAvatarContainer(), 'background-size', bgSize);
 	      main_core.Dom.style(this.getAvatarContainer(), 'border', border);
 	      main_core.Dom.style(this.getAvatarContainer(), 'border-radius', borderRadius);
 	      main_core.Dom.style(this.getAvatarContainer(), 'outline', outline);
 	      main_core.Dom.style(this.getAvatarContainer(), 'outline-offset', outlineOffset);
-	      const hasAvatar = avatar || bgColor && bgColor !== 'none' || bgImage && bgImage !== 'none';
+	      const icon = {
+	        icon: this.getAvatarOption('icon'),
+	        size: bgSize !== null && bgSize !== void 0 ? bgSize : undefined,
+	        color: (_this$getAvatarOption = this.getAvatarOption('iconColor')) !== null && _this$getAvatarOption !== void 0 ? _this$getAvatarOption : undefined
+	      };
+	      if (ui_iconSet_api_core.Icon.isValid(icon)) {
+	        main_core.Dom.style(this.getAvatarContainer(), 'background-image', 'none');
+	        main_core.Dom.append(new ui_iconSet_api_core.Icon(icon).render(), this.getAvatarContainer());
+	      }
+	      const hasAvatar = avatar || bgColor && bgColor !== 'none' || bgImage && bgImage !== 'none' || ui_iconSet_api_core.Icon.isValid(icon);
 	      if (hasAvatar) {
 	        main_core.Dom.addClass(this.getContainer(), 'ui-tag-selector-tag--has-avatar');
 	      } else {
@@ -4683,7 +4863,7 @@ this.BX.UI = this.BX.UI || {};
 	    value: function getRemoveIcon() {
 	      return this.cache.remember('remove-icon', () => {
 	        return main_core.Tag.render(_t6 || (_t6 = _$5`
-				<div class="ui-tag-selector-tag-remove" onclick="${0}"></div>
+				<div class="ui-tag-selector-tag-remove ui-icon-set__scope" onclick="${0}"></div>
 			`), this.handleRemoveIconClick.bind(this));
 	      });
 	    }
@@ -5078,7 +5258,7 @@ this.BX.UI = this.BX.UI || {};
 	        let className = this.isReadonly() ? ' ui-tag-selector-container-readonly' : '';
 	        className += this.isLocked() ? ' ui-tag-selector-container-locked' : '';
 	        return main_core.Tag.render(_t$6 || (_t$6 = _$6`
-				<div class="ui-tag-selector-outer-container${0}">${0}</div>
+				<div class="ui-tag-selector-outer-container --air --ui-context-content-light${0}">${0}</div>
 			`), className, this.getContainer());
 	      });
 	    }
@@ -5131,7 +5311,7 @@ this.BX.UI = this.BX.UI || {};
 			`), className, main_core.Text.encode(this.getPlaceholder()), this.handleTextBoxInput.bind(this), this.handleTextBoxBlur.bind(this), this.handleTextBoxKeyUp.bind(this), this.handleTextBoxKeyDown.bind(this));
 	        const width = this.getTextBoxWidth();
 	        if (width !== null) {
-	          main_core.Dom.style(input, 'width', main_core.Type.isStringFilled(width) ? width : `${width}px`);
+	          main_core.Dom.style(input, 'min-width', main_core.Type.isStringFilled(width) ? width : `${width}px`);
 	        }
 	        if (this.isLocked()) {
 	          input.disabled = true;
@@ -5198,12 +5378,12 @@ this.BX.UI = this.BX.UI || {};
 	      if (main_core.Type.isStringFilled(width) || width === null) {
 	        this.textBoxWidth = width;
 	        if (this.isRendered()) {
-	          main_core.Dom.style(this.getTextBox(), 'width', width);
+	          main_core.Dom.style(this.getTextBox(), 'min-width', width);
 	        }
 	      } else if (main_core.Type.isNumber(width) && width > 0) {
 	        this.textBoxWidth = width;
 	        if (this.isRendered()) {
-	          main_core.Dom.style(this.getTextBox(), 'width', `${width}px`);
+	          main_core.Dom.style(this.getTextBox(), 'min-width', `${width}px`);
 	        }
 	      }
 	    }
@@ -6056,7 +6236,6 @@ this.BX.UI = this.BX.UI || {};
 	  babelHelpers.inherits(RecentTab, _Tab);
 	  function RecentTab(dialog, tabOptions) {
 	    babelHelpers.classCallCheck(this, RecentTab);
-	    const icon = 'data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2223%22%20height%3D%2223%22%20fill%3D%' + '22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M14.432%2013.985a.96.' + '96%200%2000-.96-.96H8.505a.96.96%200%20000%201.92h4.967c.53%200%20.96-.43.96-.96zM14.432%2011.' + '009a.96.96%200%2000-.96-.96H8.505a.96.96%200%20000%201.92h4.967c.53%200%20.96-.43.96-.96zM14.' + '432%208.033a.96.96%200%2000-.96-.96H8.505a.96.96%200%20000%201.92h4.967c.53%200%20.96-.43.96-.' + '96z%22%20fill%3D%22%23ABB1B8%22/%3E%3Cpath%20fill-rule%3D%22evenodd%22%20clip-rule%3D%22evenodd' + '%22%20d%3D%22M10.988%2019.52c1.8%200%203.469-.558%204.844-1.51l2.205%202.204a1.525%201.525%200%20' + '102.157-2.157l-2.205-2.205a8.512%208.512%200%2010-7%203.668zm0-2.403a6.108%206.108%200%20100-12.2' + '16%206.108%206.108%200%20000%2012.216z%22%20fill%3D%22%23ABB1B8%22/%3E%3C/svg%3E';
 	    const defaults = {
 	      title: main_core.Loc.getMessage('UI_SELECTOR_RECENT_TAB_TITLE'),
 	      itemOrder: {
@@ -6064,12 +6243,7 @@ this.BX.UI = this.BX.UI || {};
 	      },
 	      visible: !dialog.isDropdownMode(),
 	      stub: !dialog.isDropdownMode(),
-	      icon: {
-	        //default: '/bitrix/js/ui/entity-selector/src/css/images/recent-tab-icon.svg',
-	        //selected: '/bitrix/js/ui/entity-selector/src/css/images/recent-tab-icon-selected.svg'
-	        default: icon,
-	        selected: icon.replace(/ABB1B8/g, 'fff')
-	      }
+	      icon: ui_iconSet_api_core.Outline.SEARCH
 	    };
 	    const options = Object.assign({}, defaults, tabOptions);
 	    options.id = 'recents';
@@ -6921,7 +7095,7 @@ this.BX.UI = this.BX.UI || {};
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "width", 565);
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "height", 420);
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "maxLabelWidth", 160);
-	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "minLabelWidth", 45);
+	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "minLabelWidth", 38);
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "alwaysShowLabels", false);
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "showAvatars", true);
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "compactView", false);
@@ -6946,6 +7120,7 @@ this.BX.UI = this.BX.UI || {};
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "clearUnavailableItems", false);
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "overlappingObserver", null);
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "offsetAnimation", true);
+	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "customData", Object.create(null));
 	    _this.setEventNamespace('BX.UI.EntitySelector.Dialog');
 	    const options = main_core.Type.isPlainObject(dialogOptions) ? dialogOptions : {};
 	    _this.id = main_core.Type.isStringFilled(options.id) ? options.id : `ui-selector-${main_core.Text.getRandom().toLowerCase()}`;
@@ -7970,6 +8145,35 @@ this.BX.UI = this.BX.UI || {};
 	    value: function getUndeselectedItems() {
 	      return this.undeselectedItems;
 	    }
+	  }, {
+	    key: "setCustomData",
+	    value: function setCustomData(property, value) {
+	      if (main_core.Type.isNull(property)) {
+	        this.customData = Object.create(null);
+	      } else if (main_core.Type.isPlainObject(property)) {
+	        Object.entries(property).forEach(item => {
+	          const [currentKey, currentValue] = item;
+	          this.setCustomData(currentKey, currentValue);
+	        });
+	      } else if (main_core.Type.isString(property)) {
+	        if (main_core.Type.isNull(value)) {
+	          delete this.customData[property];
+	        } else if (!main_core.Type.isUndefined(value)) {
+	          this.customData[property] = value;
+	        }
+	      }
+	    }
+	  }, {
+	    key: "getCustomData",
+	    value: function getCustomData(property) {
+	      if (main_core.Type.isUndefined(property)) {
+	        return this.customData;
+	      }
+	      if (main_core.Type.isStringFilled(property)) {
+	        return this.customData[property];
+	      }
+	      return undefined;
+	    }
 	    /**
 	     * @private
 	     */
@@ -7977,6 +8181,7 @@ this.BX.UI = this.BX.UI || {};
 	    key: "setOptions",
 	    value: function setOptions(dialogOptions) {
 	      const options = main_core.Type.isPlainObject(dialogOptions) ? dialogOptions : {};
+	      this.setCustomData(options.customData);
 	      if (main_core.Type.isArray(options.tabs)) {
 	        options.tabs.forEach(tab => {
 	          this.addTab(tab);
@@ -8489,6 +8694,7 @@ this.BX.UI = this.BX.UI || {};
 	      }
 	      const query = this.getTagSelector().getTextBoxValue();
 	      this.search(query);
+	      this.adjustByTagSelector();
 	    }
 	    /**
 	     * @private
@@ -8872,5 +9078,5 @@ this.BX.UI = this.BX.UI || {};
 	exports.DefaultStub = DefaultStub;
 	exports.EntityError = EntityError;
 
-}((this.BX.UI.EntitySelector = this.BX.UI.EntitySelector || {}),BX.Main,BX.Collections,BX,BX.UI.IconSet,BX.Event,BX,BX));
+}((this.BX.UI.EntitySelector = this.BX.UI.EntitySelector || {}),BX.Main,BX.Collections,BX.Event,BX,BX.UI.IconSet,BX,BX));
 //# sourceMappingURL=entity-selector.bundle.js.map

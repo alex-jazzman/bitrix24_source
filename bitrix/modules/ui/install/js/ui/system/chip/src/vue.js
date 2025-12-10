@@ -2,9 +2,8 @@ import { BIcon, Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
 
 import { ChipDesign, ChipSize } from './const';
-export { ChipDesign, ChipSize };
-import type { ChipImage } from './types';
-export type { ChipImage };
+export * from './const';
+export * from './types';
 
 import './chip.css';
 
@@ -60,6 +59,10 @@ export const Chip = {
 			type: Boolean,
 			default: false,
 		},
+		compact: {
+			type: Boolean,
+			default: true,
+		},
 		trimmable: {
 			type: Boolean,
 			default: false,
@@ -89,6 +92,7 @@ export const Chip = {
 				'--' + size,
 				{
 					'--rounded': rounded,
+					'--compact': compact,
 					'--trimmable': trimmable,
 					'--lock': lock,
 					'--with-right-icon': withClear || dropdown,

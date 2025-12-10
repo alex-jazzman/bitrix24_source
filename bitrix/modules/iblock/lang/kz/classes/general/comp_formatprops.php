@@ -39,4 +39,4 @@ $MESS["T_IBLOCK_MON_8"] = "Там";
 $MESS["T_IBLOCK_MON_9"] = "Қыр";
 $MESS["T_IBLOCK_MON_10"] = "Қаз";
 $MESS["T_IBLOCK_MON_11"] = "Қар";
-$MESS["T_IBLOCK_MON_12"] = "Жел";
+$MESS['T_IBLOCK_MON_12'] = "Жел";

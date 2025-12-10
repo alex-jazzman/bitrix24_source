@@ -2,7 +2,7 @@
 $MESS["TASKS_ASSIGNEE"] = "Виконавець";
 $MESS["TASKS_DATE_COMPLETED"] = "Дата завершення";
 $MESS["TASKS_DATE_CREATED"] = "Дата створення";
-$MESS["TASKS_DATE_DEADLINE"] = "Крайній термін";
+$MESS["TASKS_DATE_DEADLINE"] = "Кінцевий термін";
 $MESS["TASKS_DATE_END"] = "Дата фінішу";
 $MESS["TASKS_DATE_START"] = "Дата старту";
 $MESS["TASKS_DATE_STARTED"] = "Початок виконання";

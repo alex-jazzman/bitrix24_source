@@ -1,11 +1,19 @@
 <?php
 $MESS["TASKS_V2_DEADLINE_AUTO"] = "Установлюється автоматично";
+$MESS["TASKS_V2_DEADLINE_CAN_CHANGE_HINT"] = "Постановник заборонив змінювати кінцевий термін у цьому завданні.";
+$MESS["TASKS_V2_DEADLINE_CAN_MAX_CHANGE_DATE_HINT"] = "Постановник заборонив установлювати кінцевий термін пізніше #DATE#.";
+$MESS["TASKS_V2_DEADLINE_CAN_MAX_CHANGE_HINT_1"] = "Постановник обмежив кількість змін кінцевого терміну.";
+$MESS["TASKS_V2_DEADLINE_CAN_MAX_CHANGE_HINT_2"] = "Термін більше не можна змінити.";
+$MESS["TASKS_V2_DEADLINE_CHANGE_REASON_POPUP_BTN_CANCEL"] = "Скасувати";
+$MESS["TASKS_V2_DEADLINE_CHANGE_REASON_POPUP_BTN_SAVE"] = "Зберегти";
+$MESS["TASKS_V2_DEADLINE_CHANGE_REASON_POPUP_MESSAGE"] = "Постановник запитав про причину зміни кінцевого терміну. Після збереження її буде видно в чаті завдання.";
+$MESS["TASKS_V2_DEADLINE_CHANGE_REASON_POPUP_TITLE"] = "Причина перенесення терміну";
 $MESS["TASKS_V2_DEADLINE_EMPTY"] = "Без терміну";
 $MESS["TASKS_V2_DEADLINE_EXPIRED"] = "Протерміноване на #EXPIRED_DURATION#";
 $MESS["TASKS_V2_DEADLINE_FORMAT"] = "#DATE# #TIME#";
 $MESS["TASKS_V2_DEADLINE_IN_A_WEEK"] = "Через тиждень";
 $MESS["TASKS_V2_DEADLINE_IN_THE_END_OF_THE_MONTH"] = "Наприкінці місяця";
 $MESS["TASKS_V2_DEADLINE_IN_THE_END_OF_THE_WEEK"] = "Наприкінці тижня";
-$MESS["TASKS_V2_DEADLINE_TITLE"] = "Крайній термін:";
+$MESS["TASKS_V2_DEADLINE_TITLE"] = "Кінцевий термін:";
 $MESS["TASKS_V2_DEADLINE_TODAY"] = "Сьогодні";
 $MESS["TASKS_V2_DEADLINE_TOMORROW"] = "Завтра";

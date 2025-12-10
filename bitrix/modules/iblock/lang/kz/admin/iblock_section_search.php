@@ -21,4 +21,4 @@ $MESS["IBLOCK_SECSEARCH_SORT"] = "Сұрыптау";
 $MESS["IBLOCK_SECSEARCH_TIMESTAMP"] = "Өзгерту күні";
 $MESS["IBLOCK_SECSEARCH_TITLE"] = "Бөлімді іздеу";
 $MESS["IBLOCK_SECSEARCH_USERINFO"] = "Пайдаланушы параметрлерін көру";
-$MESS["IBLOCK_SECSEARCH_XML_ID_MSGVER_1"] = "Сыртқы код";
+$MESS['IBLOCK_SECSEARCH_XML_ID_MSGVER_1'] = "Сыртқы код";

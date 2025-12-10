@@ -10,4 +10,4 @@ $MESS["BX_IBLOCK_REDIRECT_ENTITY_ERR_SECTION_NOT_FOUND"] = "Бөлім табы�
 $MESS["BX_IBLOCK_REDIRECT_ENTITY_FILTER_ENTITY"] = "Мәні:";
 $MESS["BX_IBLOCK_REDIRECT_ENTITY_FILTER_ID"] = "Мән ID-і:";
 $MESS["BX_IBLOCK_REDIRECT_ENTITY_NOTE"] = "Іздеу кезінде мәнге кіру құқығы ескеріледі. Егер құқықтар жеткіліксіз болса, мән табылмағаны туралы хабарлама шығады.";
-$MESS["BX_IBLOCK_REDIRECT_ENTITY_TITLE_EXT"] = "Ақпараттық блокқа / бөлімге / элементке өту";
+$MESS['BX_IBLOCK_REDIRECT_ENTITY_TITLE_EXT'] = "Ақпараттық блокқа / бөлімге / элементке өту";

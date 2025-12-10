@@ -10,4 +10,4 @@ $MESS["BX_MOD_CATALOG_ADMIN_CIS_MAIN_ADMIN_LIST_CHECKED"] = "Белгіленг�
 $MESS["BX_MOD_CATALOG_ADMIN_CIS_MAIN_ADMIN_LIST_SELECTED"] = "Таңдалған:";
 $MESS["BX_MOD_CATALOG_ADMIN_CIS_NAV"] = "Ақпараттық блоктар";
 $MESS["BX_MOD_CATALOG_ADMIN_CIS_SELECT"] = "Таңдау";
-$MESS["BX_MOD_CATALOG_ADMIN_CIS_TITLE"] = "Ақпараттық блокты таңдау";
+$MESS['BX_MOD_CATALOG_ADMIN_CIS_TITLE'] = "Ақпараттық блокты таңдау";

@@ -62,6 +62,12 @@ this.BX.Vue3 = this.BX.Vue3 || {};
 	      type: String,
 	      default: ''
 	    },
+	    type: {
+	      type: String,
+	      required: false,
+	      default: 'button',
+	      validator: type => ['button', 'submit', 'reset'].includes(type)
+	    },
 	    dataset: {
 	      type: Object,
 	      default: () => ({})
@@ -225,6 +231,10 @@ this.BX.Vue3 = this.BX.Vue3 || {};
 	        var _this$button15;
 	        (_this$button15 = this.button) == null ? void 0 : _this$button15.stopShimmer();
 	      }
+	    },
+	    type(type) {
+	      var _this$button16;
+	      main_core.Dom.attr((_this$button16 = this.button) == null ? void 0 : _this$button16.getContainer(), 'type', type);
 	    }
 	  },
 	  created() {
@@ -268,8 +278,8 @@ this.BX.Vue3 = this.BX.Vue3 || {};
 	    }
 	    if (this.rightCounterValue) {
 	      button.setRightCounter({
-	        value: this.leftCounterValue,
-	        color: this.leftCounterColor
+	        value: this.rightCounterValue,
+	        color: this.rightCounterColor
 	      });
 	    }
 	    if (this.shimmer) {
@@ -278,14 +288,15 @@ this.BX.Vue3 = this.BX.Vue3 || {};
 	    this.button = button;
 	  },
 	  mounted() {
-	    var _this$button16;
-	    const button = (_this$button16 = this.button) == null ? void 0 : _this$button16.render();
+	    var _this$button17;
+	    const button = (_this$button17 = this.button) == null ? void 0 : _this$button17.render();
+	    main_core.Dom.attr(button, 'type', this.type);
 	    this.$refs.button.after(button);
 	    this.isMounted = true;
 	  },
 	  unmounted() {
-	    var _this$button17, _this$button17$getCon;
-	    (_this$button17 = this.button) == null ? void 0 : (_this$button17$getCon = _this$button17.getContainer()) == null ? void 0 : _this$button17$getCon.remove();
+	    var _this$button18, _this$button18$getCon;
+	    (_this$button18 = this.button) == null ? void 0 : (_this$button18$getCon = _this$button18.getContainer()) == null ? void 0 : _this$button18$getCon.remove();
 	  },
 	  template: `
 		<button v-if="!isMounted" ref="button"></button>

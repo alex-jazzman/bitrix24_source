@@ -25,4 +25,4 @@ $MESS["IBLOCK_CML2_STOP_EXPORT"] = "Экспортты тоқтату";
 $MESS["IBLOCK_CML2_TAB"] = "Экспорт";
 $MESS["IBLOCK_CML2_TAB_TITLE"] = "Экспортты баптау";
 $MESS["IBLOCK_CML2_TITLE"] = "XML экспорты";
-$MESS["IBLOCK_CML2_URL_DATA_FILE"] = "Жүктеуге арналған файл";
+$MESS['IBLOCK_CML2_URL_DATA_FILE'] = "Жүктеуге арналған файл";

@@ -49,7 +49,7 @@ this.BX.UI.System.Skeleton = this.BX.UI.System.Skeleton || {};
 	};
 
 	// @vue/component
-	const Circle = {
+	const BCircle = {
 	  components: {
 	    BLine
 	  },
@@ -65,7 +65,8 @@ this.BX.UI.System.Skeleton = this.BX.UI.System.Skeleton || {};
 	};
 
 	exports.BLine = BLine;
-	exports.Circle = Circle;
+	exports.BCircle = BCircle;
+	exports.Circle = BCircle;
 
 }((this.BX.UI.System.Skeleton.Vue = this.BX.UI.System.Skeleton.Vue || {}),BX.UI.System));
 //# sourceMappingURL=vue.bundle.js.map

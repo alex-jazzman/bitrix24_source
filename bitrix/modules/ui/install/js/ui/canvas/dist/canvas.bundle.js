@@ -79,11 +79,11 @@ this.BX = this.BX || {};
 	    }
 	  },
 	  methods: {
-	    onmousedown(event) {
+	    onMouseDown(event) {
 	      this.dragOn = true;
 	      this.dragDirection = null;
 	    },
-	    onmousemove(event) {
+	    onMouseMove(event) {
 	      if (!this.dragOn) {
 	        return;
 	      }
@@ -107,18 +107,18 @@ this.BX = this.BX || {};
 	        this.$emit('update:modelValue', this.transform);
 	      });
 	    },
-	    onmouseup() {
+	    onMouseUp() {
 	      this.dragOn = false;
 	      this.dragging = false;
 	      this.dragDirection = null;
 	    },
-	    oncontextmenu(event) {
+	    onContextMenu(event) {
 	      event.preventDefault();
 	    },
 	    isTrackpad(event) {
 	      return event.wheelDeltaY ? event.wheelDeltaY === -3 * event.deltaY : event.deltaMode === 0;
 	    },
-	    onwheel(event) {
+	    onWheel(event) {
 	      const isTrackpad = this.isTrackpad(event);
 	      if (event.ctrlKey) {
 	        const zoomChange = isTrackpad ? -event.deltaY * this.zoomSensitivity : -Math.sign(event.deltaY) * this.zoomSensitivityMouse;
@@ -156,11 +156,11 @@ this.BX = this.BX || {};
 			class="ui-transform-canvas"
 			:class="canvasClass"
 			:style="canvasStyles"
-			@mousedown="onmousedown"
-			@mousemove="onmousemove"
-			@mouseup="onmouseup"
-			@wheel="onwheel"
-			@contextmenu="oncontextmenu"
+			@mousedown="onMouseDown"
+			@mousemove="onMouseMove"
+			@mouseup="onMouseUp"
+			@wheel="onWheel"
+			@contextmenu="onContextMenu"
 		>
 			<div
 				class="ui-transform-canvas__transform"

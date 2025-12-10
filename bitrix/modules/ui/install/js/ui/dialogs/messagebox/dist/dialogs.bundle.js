@@ -57,7 +57,7 @@ this.BX.UI = this.BX.UI || {};
 	    } else if (this.getTitle() !== null) {
 	      this.mediumButtonSize = true;
 	    }
-	    if (this.getTitle() !== null) {
+	    if (this.getTitle() !== null && main_core.Type.isUndefined(this.popupOptions.closeIcon)) {
 	      this.popupOptions.closeIcon = true;
 	    }
 	    if (this.isMediumButtonSize()) {

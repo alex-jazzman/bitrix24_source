@@ -56,7 +56,7 @@ export default class MessageBox
 			this.mediumButtonSize = true;
 		}
 
-		if (this.getTitle() !== null)
+		if (this.getTitle() !== null && Type.isUndefined(this.popupOptions.closeIcon))
 		{
 			this.popupOptions.closeIcon = true;
 		}

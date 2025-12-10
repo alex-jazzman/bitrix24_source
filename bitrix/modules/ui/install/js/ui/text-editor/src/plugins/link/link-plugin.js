@@ -137,32 +137,10 @@ export class LinkPlugin extends BasePlugin
 	exportBBCode(): BBCodeExportConversion
 	{
 		return {
-			link: this.#exportBBCode,
-			'custom-link': this.#exportBBCode,
+			link: (lexicalNode: LinkNode): BBCodeExportOutput => exportLinkNode(lexicalNode, this.getEditor()),
+			'custom-link': (lexicalNode: LinkNode): BBCodeExportOutput => exportLinkNode(lexicalNode, this.getEditor()),
 		};
 	}
-
-	#exportBBCode = (lexicalNode: LinkNode): BBCodeExportOutput => {
-		const url = lexicalNode.getURL();
-		const children = lexicalNode.getChildren();
-		const isSimpleText = (
-			children.length === 1
-			&& $isTextNode(children[0])
-			&& children[0].getFormat() === 0
-		);
-
-		const scheme = this.getEditor().getBBCodeScheme();
-		if (isSimpleText && children[0].getTextContent() === url)
-		{
-			return {
-				node: scheme.createElement({ name: 'url' }),
-			};
-		}
-
-		return {
-			node: scheme.createElement({ name: 'url', value: url }),
-		};
-	};
 
 	validateScheme(): SchemeValidationOptions | null
 	{
@@ -516,7 +494,6 @@ export class LinkPlugin extends BasePlugin
 				const selection: RangeSelection = $getSelection();
 				if (
 					!$isRangeSelection(selection)
-					|| selection.isCollapsed()
 					|| !(event instanceof ClipboardEvent)
 					|| event.clipboardData === null
 				)
@@ -530,8 +507,17 @@ export class LinkPlugin extends BasePlugin
 					return false;
 				}
 
-				// If we select nodes that are elements then avoid applying the link.
-				if (!selection.getNodes().some((node) => $isElementNode(node)))
+				if (selection.isCollapsed())
+				{
+					const success = this.getEditor().dispatchCommand(TOGGLE_LINK_COMMAND, { url: clipboardText });
+					if (success)
+					{
+						event.preventDefault();
+
+						return true;
+					}
+				}
+				else if (!selection.getNodes().some((node) => $isElementNode(node)))
 				{
 					$toggleLink(clipboardText);
 					event.preventDefault();
@@ -648,4 +634,27 @@ export class LinkPlugin extends BasePlugin
 			this.#linkEditor.destroy();
 		}
 	}
+}
+
+export function exportLinkNode(lexicalNode: LinkNode, editor: TextEditor): BBCodeExportOutput
+{
+	const url = lexicalNode.getURL();
+	const children = lexicalNode.getChildren();
+	const isSimpleText = (
+		children.length === 1
+		&& $isTextNode(children[0])
+		&& children[0].getFormat() === 0
+	);
+
+	const scheme = editor.getBBCodeScheme();
+	if (isSimpleText && children[0].getTextContent() === url)
+	{
+		return {
+			node: scheme.createElement({ name: 'url' }),
+		};
+	}
+
+	return {
+		node: scheme.createElement({ name: 'url', value: url }),
+	};
 }

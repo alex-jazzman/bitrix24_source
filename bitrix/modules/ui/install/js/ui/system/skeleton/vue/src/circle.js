@@ -1,7 +1,7 @@
 import { BLine } from './line';
 
 // @vue/component
-export const Circle = {
+export const BCircle = {
 	components: {
 		BLine,
 	},

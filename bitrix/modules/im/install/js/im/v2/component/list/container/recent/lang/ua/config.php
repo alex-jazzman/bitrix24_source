@@ -17,6 +17,7 @@ $MESS["IM_RECENT_CREATE_INVITE_SUBTITLE"] = "Щоб швидше почати р
 $MESS["IM_RECENT_CREATE_INVITE_TITLE"] = "Запросіть команду";
 $MESS["IM_RECENT_HEADER_MENU_CHAT_GROUPS_SUBTITLE"] = "Згрупуйте чати за папками для швидкого доступу до потрібного діалогу.";
 $MESS["IM_RECENT_HEADER_MENU_CHAT_GROUPS_TITLE"] = "Створити папки";
+$MESS["IM_RECENT_HEADER_MENU_READ_ALL_CONFIRM_TEXT"] = "Усі непрочитані повідомлення будуть позначені як прочитані.";
 $MESS["IM_RECENT_HEADER_MENU_READ_ALL_MSGVER_1"] = "Прочитати все";
 $MESS["IM_RECENT_HEADER_MENU_SHOW_ALL"] = "Показати все";
 $MESS["IM_RECENT_HEADER_MENU_SHOW_UNREAD_ONLY"] = "Показати непрочитані чати";

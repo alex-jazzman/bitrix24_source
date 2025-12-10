@@ -22,3 +22,4 @@ $MESS["BOOKING_CONFIRM_PAGE_MESSAGEBOX_CONFIRM_TILE"] = "Підтвердити 
 $MESS["BOOKING_CONFIRM_PAGE_MESSAGEBOX_TEXT"] = "Якщо ваші плани змінилися, ви завжди можете вибрати більш слушну дату й час";
 $MESS["BOOKING_CONFIRM_PAGE_MESSAGEBOX_TILE"] = "Скасувати ваш запис?";
 $MESS["BOOKING_CONFIRM_PAGE_TIME_RANGE"] = "#FROM# — #TO#";
+$MESS["BOOKING_CONFIRM_PAGE_TOTAL_PRICE_TITLE"] = "Усього";

@@ -6,4 +6,4 @@ $MESS["IBLOCK_PROP_ELEMENT_LIST_SETTING_MULTIPLE"] = "Бірнеше таңда�
 $MESS["IBLOCK_PROP_ELEMENT_LIST_SETTING_SECTION_GROUP"] = "Бөлімдері бойынша топтастыру";
 $MESS["IBLOCK_PROP_ELEMENT_LIST_SETTING_SIZE"] = "Тізім биіктігі";
 $MESS["IBLOCK_PROP_ELEMENT_LIST_SETTING_WIDTH"] = "Ені бойынша шектеу (0 - шектемеу)";
-$MESS["IBLOCK_PROP_ELIST_DESC"] = "Тізім ретінде элементтерге байланыстыру";
+$MESS['IBLOCK_PROP_ELIST_DESC'] = "Тізім ретінде элементтерге байланыстыру";

@@ -665,6 +665,10 @@ this.BX = this.BX || {};
 	babelHelpers.defineProperty(ButtonIcon, "TWO_PERSONS", 'ui-btn-icon-two-persons');
 	babelHelpers.defineProperty(ButtonIcon, "COPILOT", 'ui-btn-icon-copilot');
 	babelHelpers.defineProperty(ButtonIcon, "RELOAD", 'ui-btn-icon-reload');
+	babelHelpers.defineProperty(ButtonIcon, "WORKFLOW", 'ui-btn-icon-workflow');
+	babelHelpers.defineProperty(ButtonIcon, "PERSON", 'ui-btn-icon-person');
+	babelHelpers.defineProperty(ButtonIcon, "WORKFLOW_STOP", 'ui-btn-icon-workflow-stop');
+	babelHelpers.defineProperty(ButtonIcon, "MARKET", 'ui-btn-icon-market');
 
 	/**
 	 * @namespace {BX.UI}

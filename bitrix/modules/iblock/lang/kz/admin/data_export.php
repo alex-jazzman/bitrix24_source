@@ -37,4 +37,4 @@ $MESS["IBLOCK_ADM_EXP_TAB1_ALT"] = "Экспорттау үшін ақпарат
 $MESS["IBLOCK_ADM_EXP_TAB2"] = "Экспорттау параметрлері";
 $MESS["IBLOCK_ADM_EXP_TAB2_ALT"] = "Экспорттау параметрлерінің баптаулары";
 $MESS["IBLOCK_ADM_EXP_TAB3"] = "Нәтижесі";
-$MESS["IBLOCK_ADM_EXP_TAB3_ALT"] = "Экспорттау нәтижесі";
+$MESS['IBLOCK_ADM_EXP_TAB3_ALT'] = "Экспорттау нәтижесі";

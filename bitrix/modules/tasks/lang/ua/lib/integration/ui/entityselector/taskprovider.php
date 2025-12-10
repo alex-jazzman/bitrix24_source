@@ -1,0 +1,2 @@
+<?php
+$MESS["TASKS_UI_ENTITY_SELECTOR_TASK_PROVIDER_TASK"] = "Завдання";

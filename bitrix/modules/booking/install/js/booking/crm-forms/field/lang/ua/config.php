@@ -6,6 +6,7 @@ $MESS["BOOKING_CRM_FORMS_DEFAULT_RESOURCE_FIELD_LABEL"] = "Виберіть ре
 $MESS["BOOKING_CRM_FORMS_DEFAULT_RESOURCE_FIELD_PLACEHOLDER"] = "Не вибрано";
 $MESS["BOOKING_CRM_FORMS_FIELD_DATE_TIME_TITLE"] = "Виберіть дату й час";
 $MESS["BOOKING_CRM_FORMS_FIELD_TIME_TITLE"] = "Виберіть час на #DATE#";
+$MESS["BOOKING_CRM_FORMS_RESOURCE_DESCRIPTION_MORE"] = "... ще";
 $MESS["BOOKING_CRM_FORMS_RESOURCE_NO_SLOTS_MESSAGE"] = "Немає вільних слотів цього дня,#BR# спробуйте вибрати іншу дату.";
 $MESS["BOOKING_CRM_FORMS_RESOURCE_RESOURCE_NOT_WORKING_MESSAGE"] = "Це вихідний день, спробуйте вибрати іншу дату.";
 $MESS["BOOKING_CRM_FORMS_SHOW_MORE_SLOTS"] = "Показати ще";

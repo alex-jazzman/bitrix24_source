@@ -1,0 +1,3 @@
+<?php
+$MESS["BOOKING_POPUP_TWO_TABS_CANSEL"] = "Скасувати";
+$MESS["BOOKING_POPUP_TWO_TABS_SAVE"] = "Зберегти";

@@ -116,6 +116,7 @@ $MESS["BITRIX24_THEME_SHINING_INTELLIGENCE"] = "Блискучий інтеле�
 $MESS["BITRIX24_THEME_SKYSCRAPER"] = "Хмарочос";
 $MESS["BITRIX24_THEME_SLOPE"] = "Схил";
 $MESS["BITRIX24_THEME_SNOW_VILLAGE"] = "Полярна ніч";
+$MESS["BITRIX24_THEME_SPACE"] = "Космос";
 $MESS["BITRIX24_THEME_STARFISH"] = "Морська зірка";
 $MESS["BITRIX24_THEME_STARS"] = "Зірки";
 $MESS["BITRIX24_THEME_STEEL_WALL"] = "Сталева стіна";

@@ -1,0 +1,5 @@
+<?php
+$MESS["TASKS_V2_ENTITY_TEXT_COLLAPSE"] = "Згорнути";
+$MESS["TASKS_V2_ENTITY_TEXT_EDIT"] = "Змінити";
+$MESS["TASKS_V2_ENTITY_TEXT_EXPAND"] = "Розгорнути";
+$MESS["TASKS_V2_ENTITY_TEXT_MORE"] = "ще";

@@ -1,6 +1,7 @@
 <?php
 $MESS["MENU_BITRIX24_SECTION_TITLE"] = "Ваш Бітрікс24";
 $MESS["MENU_BIZPROC_SECTION_TITLE"] = "Автоматизація";
+$MESS["MENU_CALLS_SECTION_TITLE"] = "Дзвінки";
 $MESS["MENU_CRM_DYNAMIC_SECTION_TITLE"] = "Цифрові робочі місця";
 $MESS["MENU_CRM_SECTION_TITLE"] = "CRM";
 $MESS["MENU_MARKETPLACE_SECTION_TITLE"] = "Маркет";

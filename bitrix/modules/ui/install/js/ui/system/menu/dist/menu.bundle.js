@@ -346,11 +346,12 @@ this.BX.UI = this.BX.UI || {};
 		`), classNameIsUiButton, classNameDesign, isUiButton ? new ui_buttons.Button(uiButtonOptions).render() : main_core.Tag.render(_t2 || (_t2 = _`
 						<button
 							class="ui-popup-menu-item-action"
+							title="${0}"
 							onclick="${0}"
 							onmouseenter="${0}"
 							onmouseleave="${0}"
 						>${0}${0}</button>
-					`), babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].onClick, babelHelpers.classPrivateFieldLooseBase(this, _onMouseEnter)[_onMouseEnter], babelHelpers.classPrivateFieldLooseBase(this, _onMouseLeave)[_onMouseLeave], babelHelpers.classPrivateFieldLooseBase(this, _renderHeader)[_renderHeader](), babelHelpers.classPrivateFieldLooseBase(this, _renderButtons)[_renderButtons]()));
+					`), main_core.Text.encode(babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].title), babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].onClick, babelHelpers.classPrivateFieldLooseBase(this, _onMouseEnter)[_onMouseEnter], babelHelpers.classPrivateFieldLooseBase(this, _onMouseLeave)[_onMouseLeave], babelHelpers.classPrivateFieldLooseBase(this, _renderHeader)[_renderHeader](), babelHelpers.classPrivateFieldLooseBase(this, _renderButtons)[_renderButtons]()));
 	    return babelHelpers.classPrivateFieldLooseBase(this, _element)[_element];
 	  }
 	  closeSubMenuWithTimeout() {

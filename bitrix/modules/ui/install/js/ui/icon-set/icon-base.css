@@ -21,6 +21,15 @@
 	transition: 150ms ease-in-out background;
 }
 
+.ui-icon-set.--fixed-color {
+	-webkit-mask-image: none;
+	background: var(--ui-icon-set__icon-path);
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: center;
+	transition: 150ms ease-in-out background;
+}
+
 .ui-icon-set:hover {
 	transition-duration: 0s;
 }
@@ -39,4 +48,10 @@
 
 .ui-icon-set.--hoverable-alt:active {
 	background: color-mix(in srgb, var(--ui-icon-set__icon-color, var(--ui-icon-set__icon-base-color)) 100%, var(--ui-color-bg-state-click-alt-overlay-hex) var(--ui-color-bg-state-click-alt-overlay-opacity));
+}
+
+.ui-icon-set.--responsive {
+	width: 100%;
+	height: 100%;
+	aspect-ratio: 1 / 1;
 }

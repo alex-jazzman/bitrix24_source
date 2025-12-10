@@ -7,6 +7,7 @@ $MESS["IMMOBILE_MESSENGER_UI_NOTIFY_TOAST_DELETE_CHANNEL"] = "Канал вид�
 $MESS["IMMOBILE_MESSENGER_UI_NOTIFY_TOAST_DELETE_CHAT"] = "Чат видалено";
 $MESS["IMMOBILE_MESSENGER_UI_NOTIFY_TOAST_DELETE_COLLAB"] = "Видаляємо колабу. Це займе якийсь час.";
 $MESS["IMMOBILE_MESSENGER_UI_NOTIFY_TOAST_ERROR"] = "Не вдалося виконати дію, спробуйте пізніше.";
+$MESS["IMMOBILE_MESSENGER_UI_NOTIFY_TOAST_ERROR_CONVERT_ROUND_VIDEO"] = "Не вистачає пам'яті для запису, звільніть місце на пристрої.";
 $MESS["IMMOBILE_MESSENGER_UI_NOTIFY_TOAST_MESSAGES_AUTO_DELETE_DISABLED"] = "Адміністратор вашого Бітрікс24 вимкнув автовидалення.";
 $MESS["IMMOBILE_MESSENGER_UI_NOTIFY_TOAST_MESSAGE_NOT_FOUND"] = "Повідомлення не знайдено";
 $MESS["IMMOBILE_MESSENGER_UI_NOTIFY_TOAST_SELECT_MESSAGE_LIMIT"] = "Вибрано максимальну кількість повідомлень.";

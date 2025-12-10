@@ -2,6 +2,7 @@
 $MESS["BX_CATALOG_PRODUCT_ACTION_ERR_BAD_CATALOG"] = "Інфоблок не є торговим каталогом";
 $MESS["BX_CATALOG_PRODUCT_ACTION_ERR_BAD_FIELDS"] = "Некоректний набір параметрів товару для оновлення";
 $MESS["BX_CATALOG_PRODUCT_ACTION_ERR_BAD_IBLOCK_ID"] = "Неправильний ідентифікатор інфоблока";
+$MESS["BX_CATALOG_PRODUCT_ACTION_ERR_CANNOT_CHANGE_TYPE"] = "Не вдалося змінити тип у #NAMES#. Спробуйте ще раз.";
 $MESS["BX_CATALOG_PRODUCT_ACTION_ERR_CANNOT_SET_FIELD_BY_TYPE"] = "Не можна встановлювати вибрані параметри товарам #NAMES#";
 $MESS["BX_CATALOG_PRODUCT_ACTION_ERR_EMPTY_ELEMENTS"] = "Не заданий список елементів для змін";
 $MESS["BX_CATALOG_PRODUCT_ACTION_ERR_EMPTY_FIELDS"] = "Відсутні параметри товару для оновлення";

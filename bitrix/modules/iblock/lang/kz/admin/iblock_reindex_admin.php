@@ -11,4 +11,4 @@ $MESS["IBLOCK_RADM_REINDEX"] = "Құру";
 $MESS["IBLOCK_RADM_REINDEX_ALL"] = "Барлығын жасау";
 $MESS["IBLOCK_RADM_REINDEX_DISABLE"] = "Өшіру";
 $MESS["IBLOCK_RADM_REINDEX_DISABLE_CONFIRM"] = "Осы ақпараттық блок үшін фасеттік индексті өшіргіңіз келетініне сенімдісіз бе?";
-$MESS["IBLOCK_RADM_TITLE"] = "Ақпараттық блоктардың фасеттік индекстері";
+$MESS['IBLOCK_RADM_TITLE'] = "Ақпараттық блоктардың фасеттік индекстері";

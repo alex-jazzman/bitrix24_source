@@ -183,16 +183,16 @@
               "value": "#FFFFFF00"
             },
             {
-              "name": "backgrounds/content/bg-content-secondary",
-              "type": "color",
-              "isAlias": false,
-              "value": "#FAFCFD"
-            },
-            {
               "name": "divider/optical/divider-optical-on-overlay-weight",
               "type": "number",
               "isAlias": false,
               "value": 0
+            },
+            {
+              "name": "backgrounds/content/bg-content-secondary",
+              "type": "color",
+              "isAlias": false,
+              "value": "#F6FAFB"
             },
             {
               "name": "backgrounds/content/bg-content-tertiary",
@@ -204,7 +204,7 @@
               "name": "backgrounds/vibrant/bg-vibrant-accent",
               "type": "color",
               "isAlias": false,
-              "value": "#FFFFFFF5"
+              "value": "#FAFBFCF5"
             },
             {
               "name": "backgrounds/state/bg-state-hover-default",
@@ -258,19 +258,19 @@
               "name": "backgrounds/vibrant/bg-vibrant-default",
               "type": "color",
               "isAlias": false,
-              "value": "#FFFFFFEB"
+              "value": "#FAFBFCEB"
             },
             {
               "name": "backgrounds/vibrant/bg-vibrant-less",
               "type": "color",
               "isAlias": false,
-              "value": "#FFFFFFDB"
+              "value": "#FAFBFCDB"
             },
             {
               "name": "backgrounds/vibrant/bg-vibrant-less-more",
               "type": "color",
               "isAlias": false,
-              "value": "#FFFFFFCC"
+              "value": "#FAFBFCCC"
             },
             {
               "name": "backgrounds/content/bg-content-inapp",
@@ -888,6 +888,15 @@
               }
             },
             {
+              "name": "design/tinted success/default/design-tinted-success-bg-alt",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "accent/soft/accent-soft-green-3"
+              }
+            },
+            {
               "name": "design/tinted success/default/design-tinted-success-stroke",
               "type": "color",
               "isAlias": true,
@@ -966,6 +975,15 @@
               "value": {
                 "collection": "design",
                 "name": "accent/main/accent-main-link"
+              }
+            },
+            {
+              "name": "design/tinted/default/design-tinted-content-alt",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "accent/extra/accent-extra-darkblue"
               }
             },
             {
@@ -1111,6 +1129,63 @@
               "type": "color",
               "isAlias": false,
               "value": "#FFEBD0"
+            },
+            {
+              "name": "design/tinted violet/default/design-tinted-violet-bg",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "accent/soft/accent-soft-violet-2"
+              }
+            },
+            {
+              "name": "design/tinted violet/default/design-tinted-violet-stroke",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "accent/soft/accent-soft-violet-2"
+              }
+            },
+            {
+              "name": "design/tinted violet/default/design-tinted-violet-stroke-weight",
+              "type": "number",
+              "isAlias": false,
+              "value": 0
+            },
+            {
+              "name": "design/tinted violet/default/design-tinted-violet-content",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "accent/soft/accent-soft-element-violet"
+              }
+            },
+            {
+              "name": "design/tinted violet/default/design-tinted-violet-content-icon",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "accent/soft/accent-soft-element-violet"
+              }
+            },
+            {
+              "name": "design/tinted violet/default/design-tinted-violet-content-chevron",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "accent/soft/accent-soft-element-violet"
+              }
+            },
+            {
+              "name": "design/tinted violet/default/design-tinted-violet-content-divider",
+              "type": "color",
+              "isAlias": false,
+              "value": "#F2D0FF"
             },
             {
               "name": "design/tinted no accent/default/design-tinted-na-bg",
@@ -1287,6 +1362,15 @@
               }
             },
             {
+              "name": "design/outline accent 2/default/design-outline-a2-content-icon-secondary",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "accent/main/accent-main-primary-alt-2"
+              }
+            },
+            {
               "name": "design/outline accent 2/default/design-outline-a2-content-chevron",
               "type": "color",
               "isAlias": true,
@@ -1300,6 +1384,15 @@
               "type": "color",
               "isAlias": false,
               "value": "#D0E6FF"
+            },
+            {
+              "name": "design/outline accent 2/focused/design-outline-a2-focused-bg",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "accent/soft/accent-soft-blue-3"
+              }
             },
             {
               "name": "design/outline/default/design-outline-bg",
@@ -1959,21 +2052,21 @@
               }
             },
             {
-              "name": "design/plain no accent/focused/design-plain-na-focused-bg",
-              "type": "color",
-              "isAlias": true,
-              "value": {
-                "collection": "design",
-                "name": "backgrounds/content/bg-content-primary"
-              }
-            },
-            {
               "name": "design/selection/default/design-selection-bg",
               "type": "color",
               "isAlias": true,
               "value": {
                 "collection": "design",
                 "name": "accent/soft/accent-soft-blue-3"
+              }
+            },
+            {
+              "name": "design/plain no accent/focused/design-plain-na-focused-bg",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "backgrounds/content/bg-content-primary"
               }
             },
             {
@@ -2004,6 +2097,15 @@
               }
             },
             {
+              "name": "design/selection/default/design-selection-content",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "accent/main/accent-main-primary"
+              }
+            },
+            {
               "name": "design/plain no accent/focused/design-plain-na-focused-stroke",
               "type": "color",
               "isAlias": true,
@@ -2013,7 +2115,7 @@
               }
             },
             {
-              "name": "design/selection/default/design-selection-content",
+              "name": "design/selection/default/design-selection-content-icon",
               "type": "color",
               "isAlias": true,
               "value": {
@@ -2031,15 +2133,6 @@
               }
             },
             {
-              "name": "design/selection/default/design-selection-content-icon",
-              "type": "color",
-              "isAlias": true,
-              "value": {
-                "collection": "design",
-                "name": "accent/main/accent-main-primary"
-              }
-            },
-            {
               "name": "design/selection/default/design-selection-content-icon-secondary",
               "type": "color",
               "isAlias": true,
@@ -2049,21 +2142,21 @@
               }
             },
             {
-              "name": "design/selection/default/design-selection-content-chevron",
-              "type": "color",
-              "isAlias": true,
-              "value": {
-                "collection": "design",
-                "name": "accent/main/accent-main-primary"
-              }
-            },
-            {
               "name": "design/plain no accent/focused/design-plain-na-focused-content",
               "type": "color",
               "isAlias": true,
               "value": {
                 "collection": "design",
                 "name": "base/base-1"
+              }
+            },
+            {
+              "name": "design/selection/default/design-selection-content-chevron",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "accent/main/accent-main-primary"
               }
             },
             {
@@ -2793,6 +2886,42 @@
               "value": "#E5E8EC"
             },
             {
+              "name": "component/drawer/drawer-labels-bg-default-primary",
+              "type": "color",
+              "isAlias": false,
+              "value": "#4685B7"
+            },
+            {
+              "name": "component/drawer/drawer-labels-bg-default-secondary",
+              "type": "color",
+              "isAlias": false,
+              "value": "#3E7AAA"
+            },
+            {
+              "name": "component/drawer/drawer-labels-bg-hover",
+              "type": "color",
+              "isAlias": false,
+              "value": "#5596CB"
+            },
+            {
+              "name": "component/drawer/drawer-labels-bg-disabled",
+              "type": "color",
+              "isAlias": false,
+              "value": "#346891"
+            },
+            {
+              "name": "component/drawer/drawer-labels-stroke-primary",
+              "type": "color",
+              "isAlias": false,
+              "value": "#5090C4"
+            },
+            {
+              "name": "component/drawer/drawer-labels-stroke-secondary",
+              "type": "color",
+              "isAlias": false,
+              "value": "#4783B3"
+            },
+            {
               "name": "component/glance/glance-gradient-1",
               "type": "color",
               "isAlias": false,
@@ -2811,157 +2940,10 @@
               "value": "#FFFFFF00"
             },
             {
-              "name": "component/leftmenu/leftmenu-bg",
-              "type": "color",
-              "isAlias": true,
-              "value": {
-                "collection": "design",
-                "name": "backgrounds/content/bg-content-secondary"
-              }
-            },
-            {
-              "name": "component/leftmenu/leftmenu-bg-expanded",
-              "type": "color",
-              "isAlias": true,
-              "value": {
-                "collection": "design",
-                "name": "backgrounds/content/bg-content-secondary"
-              }
-            },
-            {
-              "name": "component/leftmenu/leftmenu-bg-stroke",
-              "type": "color",
-              "isAlias": false,
-              "value": "#FFFFFF00"
-            },
-            {
-              "name": "component/leftmenu/leftmenu-bg-stroke-weight",
-              "type": "number",
-              "isAlias": false,
-              "value": 0
-            },
-            {
-              "name": "component/leftmenu/leftmenu-bg-stroke-expanded",
-              "type": "color",
-              "isAlias": false,
-              "value": "#FFFFFF00"
-            },
-            {
-              "name": "component/leftmenu/leftmenu-bg-stroke- expanded-weight",
-              "type": "number",
-              "isAlias": false,
-              "value": 0
-            },
-            {
-              "name": "component/leftmenu/leftmenu-bg-overlayed",
-              "type": "color",
-              "isAlias": false,
-              "value": "#21334CF0"
-            },
-            {
-              "name": "component/leftmenu/leftmenu-bg-blur",
-              "type": "number",
-              "isAlias": false,
-              "value": 0
-            },
-            {
-              "name": "component/leftmenu/leftmenu-bg-blur-expanded",
-              "type": "number",
-              "isAlias": false,
-              "value": 0
-            },
-            {
-              "name": "component/leftmenu/leftmenu-width",
-              "type": "number",
-              "isAlias": false,
-              "value": 66
-            },
-            {
-              "name": "component/leftmenu/leftmenu-width-expanded",
-              "type": "number",
-              "isAlias": false,
-              "value": 240
-            },
-            {
-              "name": "component/leftmenu/leftmenu-bg-divider",
-              "type": "color",
-              "isAlias": true,
-              "value": {
-                "collection": "design",
-                "name": "divider/content/divider-default"
-              }
-            },
-            {
-              "name": "component/leftmenu/group/left-menu-group-bg",
-              "type": "color",
-              "isAlias": false,
-              "value": "#FFFFFF00"
-            },
-            {
-              "name": "component/leftmenu/group/left-menu-group-stroke",
-              "type": "color",
-              "isAlias": true,
-              "value": {
-                "collection": "design",
-                "name": "divider/content/divider-default"
-              }
-            },
-            {
-              "name": "component/leftmenu/group/left-menu-group-stroke-weight",
-              "type": "number",
-              "isAlias": true,
-              "value": {
-                "collection": "fixed",
-                "name": "global/border/width/border-width-thin"
-              }
-            },
-            {
               "name": "component/input/blur/design-input-blur",
               "type": "number",
               "isAlias": false,
               "value": 0
-            },
-            {
-              "name": "component/popup/bg-popup-content-primary",
-              "type": "color",
-              "isAlias": false,
-              "value": "#FFFFFF"
-            },
-            {
-              "name": "component/section/bg-section",
-              "type": "color",
-              "isAlias": false,
-              "value": "#F3F6F9"
-            },
-            {
-              "name": "component/popup/bg-popup-content-secondary",
-              "type": "color",
-              "isAlias": false,
-              "value": "#FFFFFFC7"
-            },
-            {
-              "name": "component/popup/bg-popup-content-tertiary",
-              "type": "color",
-              "isAlias": false,
-              "value": "#FFFFFF70"
-            },
-            {
-              "name": "component/popup/bg-popup-primary",
-              "type": "color",
-              "isAlias": false,
-              "value": "#FFFFFF"
-            },
-            {
-              "name": "component/popup/bg-popup-secondary",
-              "type": "color",
-              "isAlias": false,
-              "value": "#F5F5F5"
-            },
-            {
-              "name": "component/popup/bg-popup-transparent",
-              "type": "color",
-              "isAlias": false,
-              "value": "#F5F5F5CC"
             },
             {
               "name": "component/input/default/input-default-bg",
@@ -3223,6 +3205,201 @@
               "type": "color",
               "isAlias": false,
               "value": "#FFFFFF"
+            },
+            {
+              "name": "component/leftmenu/leftmenu-bg",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "backgrounds/content/bg-content-secondary"
+              }
+            },
+            {
+              "name": "component/marta/marta-stroke-gradient-1",
+              "type": "color",
+              "isAlias": false,
+              "value": "#FFFFFF"
+            },
+            {
+              "name": "component/marta/marta-stroke-gradient-2",
+              "type": "color",
+              "isAlias": false,
+              "value": "#10B96A"
+            },
+            {
+              "name": "component/marta/marta-bg-gradient-1",
+              "type": "color",
+              "isAlias": false,
+              "value": "#58D7D5"
+            },
+            {
+              "name": "component/leftmenu/leftmenu-bg-expanded",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "backgrounds/content/bg-content-secondary"
+              }
+            },
+            {
+              "name": "component/marta/marta-bg-gradient-2",
+              "type": "color",
+              "isAlias": false,
+              "value": "#0277FF"
+            },
+            {
+              "name": "component/marta/marta-avatar-gradient-1",
+              "type": "color",
+              "isAlias": false,
+              "value": "#30B5F7"
+            },
+            {
+              "name": "component/marta/marta-avatar-gradient-2",
+              "type": "color",
+              "isAlias": false,
+              "value": "#7CFFC2"
+            },
+            {
+              "name": "component/marta/marta-avatar-gradient-3",
+              "type": "color",
+              "isAlias": false,
+              "value": "#3BF39C"
+            },
+            {
+              "name": "component/marta/marta-avatar-gradient-4",
+              "type": "color",
+              "isAlias": false,
+              "value": "#0075FF"
+            },
+            {
+              "name": "component/leftmenu/leftmenu-bg-stroke",
+              "type": "color",
+              "isAlias": false,
+              "value": "#FFFFFF00"
+            },
+            {
+              "name": "component/leftmenu/leftmenu-bg-stroke-weight",
+              "type": "number",
+              "isAlias": false,
+              "value": 0
+            },
+            {
+              "name": "component/leftmenu/leftmenu-bg-stroke-expanded",
+              "type": "color",
+              "isAlias": false,
+              "value": "#FFFFFF00"
+            },
+            {
+              "name": "component/leftmenu/leftmenu-bg-stroke- expanded-weight",
+              "type": "number",
+              "isAlias": false,
+              "value": 0
+            },
+            {
+              "name": "component/leftmenu/leftmenu-bg-overlayed",
+              "type": "color",
+              "isAlias": false,
+              "value": "#21334CF0"
+            },
+            {
+              "name": "component/leftmenu/leftmenu-bg-blur",
+              "type": "number",
+              "isAlias": false,
+              "value": 0
+            },
+            {
+              "name": "component/leftmenu/leftmenu-bg-blur-expanded",
+              "type": "number",
+              "isAlias": false,
+              "value": 0
+            },
+            {
+              "name": "component/leftmenu/leftmenu-width",
+              "type": "number",
+              "isAlias": false,
+              "value": 66
+            },
+            {
+              "name": "component/leftmenu/leftmenu-width-expanded",
+              "type": "number",
+              "isAlias": false,
+              "value": 240
+            },
+            {
+              "name": "component/leftmenu/leftmenu-bg-divider",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "divider/content/divider-default"
+              }
+            },
+            {
+              "name": "component/leftmenu/group/left-menu-group-bg",
+              "type": "color",
+              "isAlias": false,
+              "value": "#FFFFFF00"
+            },
+            {
+              "name": "component/leftmenu/group/left-menu-group-stroke",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "divider/content/divider-default"
+              }
+            },
+            {
+              "name": "component/leftmenu/group/left-menu-group-stroke-weight",
+              "type": "number",
+              "isAlias": true,
+              "value": {
+                "collection": "fixed",
+                "name": "global/border/width/border-width-thin"
+              }
+            },
+            {
+              "name": "component/popup/bg-popup-content-primary",
+              "type": "color",
+              "isAlias": false,
+              "value": "#FFFFFF"
+            },
+            {
+              "name": "component/section/bg-section",
+              "type": "color",
+              "isAlias": false,
+              "value": "#F3F6F9"
+            },
+            {
+              "name": "component/popup/bg-popup-content-secondary",
+              "type": "color",
+              "isAlias": false,
+              "value": "#FFFFFFC7"
+            },
+            {
+              "name": "component/popup/bg-popup-content-tertiary",
+              "type": "color",
+              "isAlias": false,
+              "value": "#FFFFFF70"
+            },
+            {
+              "name": "component/popup/bg-popup-primary",
+              "type": "color",
+              "isAlias": false,
+              "value": "#FFFFFF"
+            },
+            {
+              "name": "component/popup/bg-popup-secondary",
+              "type": "color",
+              "isAlias": false,
+              "value": "#F5F5F5"
+            },
+            {
+              "name": "component/popup/bg-popup-transparent",
+              "type": "color",
+              "isAlias": false,
+              "value": "#F5F5F5CC"
             },
             {
               "name": "component/stage/stage-bg-1",
@@ -3660,16 +3837,16 @@
               "value": "#FFFFFF2E"
             },
             {
-              "name": "pallete/white/white-base",
-              "type": "color",
-              "isAlias": false,
-              "value": "#FFFFFF"
-            },
-            {
               "name": "pallete/blue/blue-09",
               "type": "color",
               "isAlias": false,
               "value": "#F3F8FF"
+            },
+            {
+              "name": "pallete/white/white-base",
+              "type": "color",
+              "isAlias": false,
+              "value": "#FFFFFF"
             },
             {
               "name": "pallete/blue/blue-10",
@@ -4978,6 +5155,75 @@
               "type": "color",
               "isAlias": false,
               "value": "#FFFFFF3D"
+            },
+            {
+              "name": "component/input/less accent/input-less-accent-bg",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "backgrounds/content/bg-content-secondary"
+              }
+            },
+            {
+              "name": "component/input/less accent/input-less-accent-stroke",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-7"
+              }
+            },
+            {
+              "name": "component/input/less accent/input-less-accent-stroke-weight",
+              "type": "number",
+              "isAlias": false,
+              "value": 0
+            },
+            {
+              "name": "component/input/less accent/input-less-accent-label",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-5"
+              }
+            },
+            {
+              "name": "component/input/less accent/input-less-accent-content",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-4"
+              }
+            },
+            {
+              "name": "component/input/less accent/input-less-accent-content-icon",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-5"
+              }
+            },
+            {
+              "name": "component/input/less accent/input-less-accent-content-chevron",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-5"
+              }
+            },
+            {
+              "name": "component/input/less accent/input-less-accent-content-divider",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-6"
+              }
             }
           ]
         },
@@ -5165,12 +5411,6 @@
               "value": "#FFFFFF14"
             },
             {
-              "name": "backgrounds/content/bg-content-secondary",
-              "type": "color",
-              "isAlias": false,
-              "value": "#1F1F1F"
-            },
-            {
               "name": "divider/optical/divider-optical-on-overlay-weight",
               "type": "number",
               "isAlias": true,
@@ -5178,6 +5418,12 @@
                 "collection": "fixed",
                 "name": "global/border/width/border-width-thin"
               }
+            },
+            {
+              "name": "backgrounds/content/bg-content-secondary",
+              "type": "color",
+              "isAlias": false,
+              "value": "#1F1F1F"
             },
             {
               "name": "backgrounds/content/bg-content-tertiary",
@@ -5876,6 +6122,15 @@
               }
             },
             {
+              "name": "design/tinted success/default/design-tinted-success-bg-alt",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "accent/soft/accent-soft-green-3"
+              }
+            },
+            {
               "name": "design/tinted success/default/design-tinted-success-stroke",
               "type": "color",
               "isAlias": true,
@@ -5954,6 +6209,15 @@
               "value": {
                 "collection": "design",
                 "name": "accent/main/accent-main-link"
+              }
+            },
+            {
+              "name": "design/tinted/default/design-tinted-content-alt",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "accent/extra/accent-extra-darkblue"
               }
             },
             {
@@ -6099,6 +6363,63 @@
               "type": "color",
               "isAlias": false,
               "value": "#7E5200"
+            },
+            {
+              "name": "design/tinted violet/default/design-tinted-violet-bg",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "accent/soft/accent-soft-violet-2"
+              }
+            },
+            {
+              "name": "design/tinted violet/default/design-tinted-violet-stroke",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "accent/soft/accent-soft-violet-2"
+              }
+            },
+            {
+              "name": "design/tinted violet/default/design-tinted-violet-stroke-weight",
+              "type": "number",
+              "isAlias": false,
+              "value": 0
+            },
+            {
+              "name": "design/tinted violet/default/design-tinted-violet-content",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "accent/soft/accent-soft-element-violet"
+              }
+            },
+            {
+              "name": "design/tinted violet/default/design-tinted-violet-content-icon",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "accent/soft/accent-soft-element-violet"
+              }
+            },
+            {
+              "name": "design/tinted violet/default/design-tinted-violet-content-chevron",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "accent/soft/accent-soft-element-violet"
+              }
+            },
+            {
+              "name": "design/tinted violet/default/design-tinted-violet-content-divider",
+              "type": "color",
+              "isAlias": false,
+              "value": "#60007E"
             },
             {
               "name": "design/tinted no accent/default/design-tinted-na-bg",
@@ -6275,6 +6596,12 @@
               }
             },
             {
+              "name": "design/outline accent 2/default/design-outline-a2-content-icon-secondary",
+              "type": "color",
+              "isAlias": false,
+              "value": "#5EAEFF"
+            },
+            {
               "name": "design/outline accent 2/default/design-outline-a2-content-chevron",
               "type": "color",
               "isAlias": true,
@@ -6288,6 +6615,15 @@
               "type": "color",
               "isAlias": false,
               "value": "#003F7E"
+            },
+            {
+              "name": "design/outline accent 2/focused/design-outline-a2-focused-bg",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "accent/soft/accent-soft-blue-3"
+              }
             },
             {
               "name": "design/outline/default/design-outline-bg",
@@ -6947,6 +7283,12 @@
               }
             },
             {
+              "name": "design/selection/default/design-selection-bg",
+              "type": "color",
+              "isAlias": false,
+              "value": "#1F3048"
+            },
+            {
               "name": "design/plain no accent/focused/design-plain-na-focused-bg",
               "type": "color",
               "isAlias": true,
@@ -6954,12 +7296,6 @@
                 "collection": "design",
                 "name": "divider/content/divider-accent"
               }
-            },
-            {
-              "name": "design/selection/default/design-selection-bg",
-              "type": "color",
-              "isAlias": false,
-              "value": "#1F3048"
             },
             {
               "name": "design/selection/default/design-selection-stroke",
@@ -6986,6 +7322,12 @@
               }
             },
             {
+              "name": "design/selection/default/design-selection-content",
+              "type": "color",
+              "isAlias": false,
+              "value": "#2A94FF"
+            },
+            {
               "name": "design/plain no accent/focused/design-plain-na-focused-stroke",
               "type": "color",
               "isAlias": true,
@@ -6995,7 +7337,7 @@
               }
             },
             {
-              "name": "design/selection/default/design-selection-content",
+              "name": "design/selection/default/design-selection-content-icon",
               "type": "color",
               "isAlias": false,
               "value": "#2A94FF"
@@ -7010,22 +7352,10 @@
               }
             },
             {
-              "name": "design/selection/default/design-selection-content-icon",
-              "type": "color",
-              "isAlias": false,
-              "value": "#2A94FF"
-            },
-            {
               "name": "design/selection/default/design-selection-content-icon-secondary",
               "type": "color",
               "isAlias": false,
               "value": "#5EAEFF"
-            },
-            {
-              "name": "design/selection/default/design-selection-content-chevron",
-              "type": "color",
-              "isAlias": false,
-              "value": "#2A94FF"
             },
             {
               "name": "design/plain no accent/focused/design-plain-na-focused-content",
@@ -7035,6 +7365,12 @@
                 "collection": "design",
                 "name": "base/base-1"
               }
+            },
+            {
+              "name": "design/selection/default/design-selection-content-chevron",
+              "type": "color",
+              "isAlias": false,
+              "value": "#2A94FF"
             },
             {
               "name": "design/selection/default/design-selection-content-divider",
@@ -7760,6 +8096,42 @@
               "value": "#1E1E1E"
             },
             {
+              "name": "component/drawer/drawer-labels-bg-default-primary",
+              "type": "color",
+              "isAlias": false,
+              "value": "#4D74AD"
+            },
+            {
+              "name": "component/drawer/drawer-labels-bg-default-secondary",
+              "type": "color",
+              "isAlias": false,
+              "value": "#406497"
+            },
+            {
+              "name": "component/drawer/drawer-labels-bg-hover",
+              "type": "color",
+              "isAlias": false,
+              "value": "#5581C2"
+            },
+            {
+              "name": "component/drawer/drawer-labels-bg-disabled",
+              "type": "color",
+              "isAlias": false,
+              "value": "#365C91"
+            },
+            {
+              "name": "component/drawer/drawer-labels-stroke-primary",
+              "type": "color",
+              "isAlias": false,
+              "value": "#5581C2"
+            },
+            {
+              "name": "component/drawer/drawer-labels-stroke-secondary",
+              "type": "color",
+              "isAlias": false,
+              "value": "#496FA5"
+            },
+            {
               "name": "component/glance/glance-gradient-1",
               "type": "color",
               "isAlias": false,
@@ -7778,151 +8150,10 @@
               "value": "#FFFFFF00"
             },
             {
-              "name": "component/leftmenu/leftmenu-bg",
-              "type": "color",
-              "isAlias": false,
-              "value": "#262626"
-            },
-            {
-              "name": "component/leftmenu/leftmenu-bg-expanded",
-              "type": "color",
-              "isAlias": false,
-              "value": "#262626"
-            },
-            {
-              "name": "component/leftmenu/leftmenu-bg-stroke",
-              "type": "color",
-              "isAlias": false,
-              "value": "#3B3B3B"
-            },
-            {
-              "name": "component/leftmenu/leftmenu-bg-stroke-weight",
-              "type": "number",
-              "isAlias": false,
-              "value": 0
-            },
-            {
-              "name": "component/leftmenu/leftmenu-bg-stroke-expanded",
-              "type": "color",
-              "isAlias": false,
-              "value": "#3B3B3B"
-            },
-            {
-              "name": "component/leftmenu/leftmenu-bg-stroke- expanded-weight",
-              "type": "number",
-              "isAlias": false,
-              "value": 0
-            },
-            {
-              "name": "component/leftmenu/leftmenu-bg-overlayed",
-              "type": "color",
-              "isAlias": false,
-              "value": "#344A67F0"
-            },
-            {
-              "name": "component/leftmenu/leftmenu-bg-blur",
-              "type": "number",
-              "isAlias": false,
-              "value": 0
-            },
-            {
-              "name": "component/leftmenu/leftmenu-bg-blur-expanded",
-              "type": "number",
-              "isAlias": false,
-              "value": 0
-            },
-            {
-              "name": "component/leftmenu/leftmenu-width",
-              "type": "number",
-              "isAlias": false,
-              "value": 66
-            },
-            {
-              "name": "component/leftmenu/leftmenu-width-expanded",
-              "type": "number",
-              "isAlias": false,
-              "value": 240
-            },
-            {
-              "name": "component/leftmenu/leftmenu-bg-divider",
-              "type": "color",
-              "isAlias": true,
-              "value": {
-                "collection": "design",
-                "name": "divider/content/divider-default"
-              }
-            },
-            {
-              "name": "component/leftmenu/group/left-menu-group-bg",
-              "type": "color",
-              "isAlias": false,
-              "value": "#00000000"
-            },
-            {
-              "name": "component/leftmenu/group/left-menu-group-stroke",
-              "type": "color",
-              "isAlias": true,
-              "value": {
-                "collection": "design",
-                "name": "divider/content/divider-default"
-              }
-            },
-            {
-              "name": "component/leftmenu/group/left-menu-group-stroke-weight",
-              "type": "number",
-              "isAlias": true,
-              "value": {
-                "collection": "fixed",
-                "name": "global/border/width/border-width-thin"
-              }
-            },
-            {
               "name": "component/input/blur/design-input-blur",
               "type": "number",
               "isAlias": false,
               "value": 0
-            },
-            {
-              "name": "component/popup/bg-popup-content-primary",
-              "type": "color",
-              "isAlias": false,
-              "value": "#1E1E1E"
-            },
-            {
-              "name": "component/section/bg-section",
-              "type": "color",
-              "isAlias": false,
-              "value": "#1E1E1E"
-            },
-            {
-              "name": "component/popup/bg-popup-content-secondary",
-              "type": "color",
-              "isAlias": false,
-              "value": "#1E1E1E"
-            },
-            {
-              "name": "component/popup/bg-popup-content-tertiary",
-              "type": "color",
-              "isAlias": false,
-              "value": "#1E1E1E"
-            },
-            {
-              "name": "component/popup/bg-popup-primary",
-              "type": "color",
-              "isAlias": false,
-              "value": "#1E1E1E"
-            },
-            {
-              "name": "component/popup/bg-popup-secondary",
-              "type": "color",
-              "isAlias": false,
-              "value": "#1E1E1E"
-            },
-            {
-              "name": "component/popup/bg-popup-transparent",
-              "type": "color",
-              "isAlias": false,
-              "value": "#1E1E1E"
             },
             {
               "name": "component/input/default/input-default-bg",
@@ -8184,6 +8415,195 @@
               "type": "color",
               "isAlias": false,
               "value": "#FFFFFF"
+            },
+            {
+              "name": "component/leftmenu/leftmenu-bg",
+              "type": "color",
+              "isAlias": false,
+              "value": "#262626"
+            },
+            {
+              "name": "component/marta/marta-stroke-gradient-1",
+              "type": "color",
+              "isAlias": false,
+              "value": "#FFFFFF"
+            },
+            {
+              "name": "component/marta/marta-stroke-gradient-2",
+              "type": "color",
+              "isAlias": false,
+              "value": "#10B96A"
+            },
+            {
+              "name": "component/marta/marta-bg-gradient-1",
+              "type": "color",
+              "isAlias": false,
+              "value": "#58D7D5"
+            },
+            {
+              "name": "component/leftmenu/leftmenu-bg-expanded",
+              "type": "color",
+              "isAlias": false,
+              "value": "#262626"
+            },
+            {
+              "name": "component/marta/marta-bg-gradient-2",
+              "type": "color",
+              "isAlias": false,
+              "value": "#0277FF"
+            },
+            {
+              "name": "component/marta/marta-avatar-gradient-1",
+              "type": "color",
+              "isAlias": false,
+              "value": "#30B5F7"
+            },
+            {
+              "name": "component/marta/marta-avatar-gradient-2",
+              "type": "color",
+              "isAlias": false,
+              "value": "#7CFFC2"
+            },
+            {
+              "name": "component/marta/marta-avatar-gradient-3",
+              "type": "color",
+              "isAlias": false,
+              "value": "#3BF39C"
+            },
+            {
+              "name": "component/marta/marta-avatar-gradient-4",
+              "type": "color",
+              "isAlias": false,
+              "value": "#0075FF"
+            },
+            {
+              "name": "component/leftmenu/leftmenu-bg-stroke",
+              "type": "color",
+              "isAlias": false,
+              "value": "#3B3B3B"
+            },
+            {
+              "name": "component/leftmenu/leftmenu-bg-stroke-weight",
+              "type": "number",
+              "isAlias": false,
+              "value": 0
+            },
+            {
+              "name": "component/leftmenu/leftmenu-bg-stroke-expanded",
+              "type": "color",
+              "isAlias": false,
+              "value": "#3B3B3B"
+            },
+            {
+              "name": "component/leftmenu/leftmenu-bg-stroke- expanded-weight",
+              "type": "number",
+              "isAlias": false,
+              "value": 0
+            },
+            {
+              "name": "component/leftmenu/leftmenu-bg-overlayed",
+              "type": "color",
+              "isAlias": false,
+              "value": "#344A67F0"
+            },
+            {
+              "name": "component/leftmenu/leftmenu-bg-blur",
+              "type": "number",
+              "isAlias": false,
+              "value": 0
+            },
+            {
+              "name": "component/leftmenu/leftmenu-bg-blur-expanded",
+              "type": "number",
+              "isAlias": false,
+              "value": 0
+            },
+            {
+              "name": "component/leftmenu/leftmenu-width",
+              "type": "number",
+              "isAlias": false,
+              "value": 66
+            },
+            {
+              "name": "component/leftmenu/leftmenu-width-expanded",
+              "type": "number",
+              "isAlias": false,
+              "value": 240
+            },
+            {
+              "name": "component/leftmenu/leftmenu-bg-divider",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "divider/content/divider-default"
+              }
+            },
+            {
+              "name": "component/leftmenu/group/left-menu-group-bg",
+              "type": "color",
+              "isAlias": false,
+              "value": "#00000000"
+            },
+            {
+              "name": "component/leftmenu/group/left-menu-group-stroke",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "divider/content/divider-default"
+              }
+            },
+            {
+              "name": "component/leftmenu/group/left-menu-group-stroke-weight",
+              "type": "number",
+              "isAlias": true,
+              "value": {
+                "collection": "fixed",
+                "name": "global/border/width/border-width-thin"
+              }
+            },
+            {
+              "name": "component/popup/bg-popup-content-primary",
+              "type": "color",
+              "isAlias": false,
+              "value": "#1E1E1E"
+            },
+            {
+              "name": "component/section/bg-section",
+              "type": "color",
+              "isAlias": false,
+              "value": "#1E1E1E"
+            },
+            {
+              "name": "component/popup/bg-popup-content-secondary",
+              "type": "color",
+              "isAlias": false,
+              "value": "#1E1E1E"
+            },
+            {
+              "name": "component/popup/bg-popup-content-tertiary",
+              "type": "color",
+              "isAlias": false,
+              "value": "#1E1E1E"
+            },
+            {
+              "name": "component/popup/bg-popup-primary",
+              "type": "color",
+              "isAlias": false,
+              "value": "#1E1E1E"
+            },
+            {
+              "name": "component/popup/bg-popup-secondary",
+              "type": "color",
+              "isAlias": false,
+              "value": "#1E1E1E"
+            },
+            {
+              "name": "component/popup/bg-popup-transparent",
+              "type": "color",
+              "isAlias": false,
+              "value": "#1E1E1E"
             },
             {
               "name": "component/stage/stage-bg-1",
@@ -8615,13 +9035,13 @@
               "value": "#00000029"
             },
             {
-              "name": "pallete/white/white-base",
+              "name": "pallete/blue/blue-09",
               "type": "color",
               "isAlias": false,
               "value": "#FFFFFF"
             },
             {
-              "name": "pallete/blue/blue-09",
+              "name": "pallete/white/white-base",
               "type": "color",
               "isAlias": false,
               "value": "#FFFFFF"
@@ -9933,6 +10353,75 @@
               "type": "color",
               "isAlias": false,
               "value": "#FFFFFF3D"
+            },
+            {
+              "name": "component/input/less accent/input-less-accent-bg",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "backgrounds/content/bg-content-secondary"
+              }
+            },
+            {
+              "name": "component/input/less accent/input-less-accent-stroke",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-7"
+              }
+            },
+            {
+              "name": "component/input/less accent/input-less-accent-stroke-weight",
+              "type": "number",
+              "isAlias": false,
+              "value": 0
+            },
+            {
+              "name": "component/input/less accent/input-less-accent-label",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-5"
+              }
+            },
+            {
+              "name": "component/input/less accent/input-less-accent-content",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-4"
+              }
+            },
+            {
+              "name": "component/input/less accent/input-less-accent-content-icon",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-5"
+              }
+            },
+            {
+              "name": "component/input/less accent/input-less-accent-content-chevron",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-5"
+              }
+            },
+            {
+              "name": "component/input/less accent/input-less-accent-content-divider",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-6"
+              }
             }
           ]
         },
@@ -10120,12 +10609,6 @@
               "value": "#00000014"
             },
             {
-              "name": "backgrounds/content/bg-content-secondary",
-              "type": "color",
-              "isAlias": false,
-              "value": "#0000000A"
-            },
-            {
               "name": "divider/optical/divider-optical-on-overlay-weight",
               "type": "number",
               "isAlias": true,
@@ -10133,6 +10616,12 @@
                 "collection": "fixed",
                 "name": "global/border/width/border-width-thin"
               }
+            },
+            {
+              "name": "backgrounds/content/bg-content-secondary",
+              "type": "color",
+              "isAlias": false,
+              "value": "#0000000A"
             },
             {
               "name": "backgrounds/content/bg-content-tertiary",
@@ -10825,6 +11314,15 @@
               }
             },
             {
+              "name": "design/tinted success/default/design-tinted-success-bg-alt",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-7"
+              }
+            },
+            {
               "name": "design/tinted success/default/design-tinted-success-stroke",
               "type": "color",
               "isAlias": true,
@@ -10898,6 +11396,15 @@
             },
             {
               "name": "design/tinted/default/design-tinted-content",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-0"
+              }
+            },
+            {
+              "name": "design/tinted/default/design-tinted-content-alt",
               "type": "color",
               "isAlias": true,
               "value": {
@@ -11054,6 +11561,66 @@
             },
             {
               "name": "design/tinted warning/default/design-tinted-warning-content-divider",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-7"
+              }
+            },
+            {
+              "name": "design/tinted violet/default/design-tinted-violet-bg",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-8"
+              }
+            },
+            {
+              "name": "design/tinted violet/default/design-tinted-violet-stroke",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-white-fixed"
+              }
+            },
+            {
+              "name": "design/tinted violet/default/design-tinted-violet-stroke-weight",
+              "type": "number",
+              "isAlias": false,
+              "value": 0
+            },
+            {
+              "name": "design/tinted violet/default/design-tinted-violet-content",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-0"
+              }
+            },
+            {
+              "name": "design/tinted violet/default/design-tinted-violet-content-icon",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-0"
+              }
+            },
+            {
+              "name": "design/tinted violet/default/design-tinted-violet-content-chevron",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-4"
+              }
+            },
+            {
+              "name": "design/tinted violet/default/design-tinted-violet-content-divider",
               "type": "color",
               "isAlias": true,
               "value": {
@@ -11239,6 +11806,15 @@
               }
             },
             {
+              "name": "design/outline accent 2/default/design-outline-a2-content-icon-secondary",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-2"
+              }
+            },
+            {
               "name": "design/outline accent 2/default/design-outline-a2-content-chevron",
               "type": "color",
               "isAlias": true,
@@ -11255,6 +11831,12 @@
                 "collection": "design",
                 "name": "base/base-7"
               }
+            },
+            {
+              "name": "design/outline accent 2/focused/design-outline-a2-focused-bg",
+              "type": "color",
+              "isAlias": false,
+              "value": "#00000014"
             },
             {
               "name": "design/outline/default/design-outline-bg",
@@ -11920,13 +12502,13 @@
               }
             },
             {
-              "name": "design/plain no accent/focused/design-plain-na-focused-bg",
+              "name": "design/selection/default/design-selection-bg",
               "type": "color",
               "isAlias": false,
               "value": "#00000014"
             },
             {
-              "name": "design/selection/default/design-selection-bg",
+              "name": "design/plain no accent/focused/design-plain-na-focused-bg",
               "type": "color",
               "isAlias": false,
               "value": "#00000014"
@@ -11950,13 +12532,22 @@
               "value": 0
             },
             {
+              "name": "design/selection/default/design-selection-content",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-1"
+              }
+            },
+            {
               "name": "design/plain no accent/focused/design-plain-na-focused-stroke",
               "type": "color",
               "isAlias": false,
               "value": "#00000014"
             },
             {
-              "name": "design/selection/default/design-selection-content",
+              "name": "design/selection/default/design-selection-content-icon",
               "type": "color",
               "isAlias": true,
               "value": {
@@ -11974,15 +12565,6 @@
               }
             },
             {
-              "name": "design/selection/default/design-selection-content-icon",
-              "type": "color",
-              "isAlias": true,
-              "value": {
-                "collection": "design",
-                "name": "base/base-1"
-              }
-            },
-            {
               "name": "design/selection/default/design-selection-content-icon-secondary",
               "type": "color",
               "isAlias": true,
@@ -11992,21 +12574,21 @@
               }
             },
             {
-              "name": "design/selection/default/design-selection-content-chevron",
-              "type": "color",
-              "isAlias": true,
-              "value": {
-                "collection": "design",
-                "name": "base/base-0"
-              }
-            },
-            {
               "name": "design/plain no accent/focused/design-plain-na-focused-content",
               "type": "color",
               "isAlias": true,
               "value": {
                 "collection": "design",
                 "name": "base/base-1"
+              }
+            },
+            {
+              "name": "design/selection/default/design-selection-content-chevron",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-0"
               }
             },
             {
@@ -12736,6 +13318,42 @@
               "value": "#E5E8EC00"
             },
             {
+              "name": "component/drawer/drawer-labels-bg-default-primary",
+              "type": "color",
+              "isAlias": false,
+              "value": "#4D74AD"
+            },
+            {
+              "name": "component/drawer/drawer-labels-bg-default-secondary",
+              "type": "color",
+              "isAlias": false,
+              "value": "#406497"
+            },
+            {
+              "name": "component/drawer/drawer-labels-bg-hover",
+              "type": "color",
+              "isAlias": false,
+              "value": "#5581C2"
+            },
+            {
+              "name": "component/drawer/drawer-labels-bg-disabled",
+              "type": "color",
+              "isAlias": false,
+              "value": "#365C91"
+            },
+            {
+              "name": "component/drawer/drawer-labels-stroke-primary",
+              "type": "color",
+              "isAlias": false,
+              "value": "#5581C2"
+            },
+            {
+              "name": "component/drawer/drawer-labels-stroke-secondary",
+              "type": "color",
+              "isAlias": false,
+              "value": "#496FA5"
+            },
+            {
               "name": "component/glance/glance-gradient-1",
               "type": "color",
               "isAlias": false,
@@ -12754,157 +13372,10 @@
               "value": "#FFFFFF00"
             },
             {
-              "name": "component/leftmenu/leftmenu-bg",
-              "type": "color",
-              "isAlias": false,
-              "value": "#00000008"
-            },
-            {
-              "name": "component/leftmenu/leftmenu-bg-expanded",
-              "type": "color",
-              "isAlias": false,
-              "value": "#00000005"
-            },
-            {
-              "name": "component/leftmenu/leftmenu-bg-stroke",
-              "type": "color",
-              "isAlias": false,
-              "value": "#00000000"
-            },
-            {
-              "name": "component/leftmenu/leftmenu-bg-stroke-weight",
-              "type": "number",
-              "isAlias": false,
-              "value": 0
-            },
-            {
-              "name": "component/leftmenu/leftmenu-bg-stroke-expanded",
-              "type": "color",
-              "isAlias": false,
-              "value": "#0000000A"
-            },
-            {
-              "name": "component/leftmenu/leftmenu-bg-stroke- expanded-weight",
-              "type": "number",
-              "isAlias": true,
-              "value": {
-                "collection": "fixed",
-                "name": "global/border/width/border-width-thin"
-              }
-            },
-            {
-              "name": "component/leftmenu/leftmenu-bg-overlayed",
-              "type": "color",
-              "isAlias": false,
-              "value": "#21334CF0"
-            },
-            {
-              "name": "component/leftmenu/leftmenu-bg-blur",
-              "type": "number",
-              "isAlias": true,
-              "value": {
-                "collection": "fixed",
-                "name": "global/bg-blur/bg-blur-default"
-              }
-            },
-            {
-              "name": "component/leftmenu/leftmenu-bg-blur-expanded",
-              "type": "number",
-              "isAlias": false,
-              "value": 0
-            },
-            {
-              "name": "component/leftmenu/leftmenu-width",
-              "type": "number",
-              "isAlias": false,
-              "value": 66
-            },
-            {
-              "name": "component/leftmenu/leftmenu-width-expanded",
-              "type": "number",
-              "isAlias": false,
-              "value": 240
-            },
-            {
-              "name": "component/leftmenu/leftmenu-bg-divider",
-              "type": "color",
-              "isAlias": false,
-              "value": "#0000001A"
-            },
-            {
-              "name": "component/leftmenu/group/left-menu-group-bg",
-              "type": "color",
-              "isAlias": true,
-              "value": {
-                "collection": "design",
-                "name": "backgrounds/content/bg-content-tertiary"
-              }
-            },
-            {
-              "name": "component/leftmenu/group/left-menu-group-stroke",
-              "type": "color",
-              "isAlias": true,
-              "value": {
-                "collection": "design",
-                "name": "divider/content/divider-less"
-              }
-            },
-            {
-              "name": "component/leftmenu/group/left-menu-group-stroke-weight",
-              "type": "number",
-              "isAlias": true,
-              "value": {
-                "collection": "fixed",
-                "name": "global/border/width/border-width-thin"
-              }
-            },
-            {
               "name": "component/input/blur/design-input-blur",
               "type": "number",
               "isAlias": false,
               "value": 24
-            },
-            {
-              "name": "component/popup/bg-popup-content-primary",
-              "type": "color",
-              "isAlias": false,
-              "value": "#2C2C2CE6"
-            },
-            {
-              "name": "component/section/bg-section",
-              "type": "color",
-              "isAlias": false,
-              "value": "#1E1E1E00"
-            },
-            {
-              "name": "component/popup/bg-popup-content-secondary",
-              "type": "color",
-              "isAlias": false,
-              "value": "#1E1E1EC7"
-            },
-            {
-              "name": "component/popup/bg-popup-content-tertiary",
-              "type": "color",
-              "isAlias": false,
-              "value": "#1E1E1E70"
-            },
-            {
-              "name": "component/popup/bg-popup-primary",
-              "type": "color",
-              "isAlias": false,
-              "value": "#1E1E1ECC"
-            },
-            {
-              "name": "component/popup/bg-popup-secondary",
-              "type": "color",
-              "isAlias": false,
-              "value": "#1E1E1ECC"
-            },
-            {
-              "name": "component/popup/bg-popup-transparent",
-              "type": "color",
-              "isAlias": false,
-              "value": "#1E1E1ECC"
             },
             {
               "name": "component/input/default/input-default-bg",
@@ -13139,6 +13610,201 @@
               "type": "color",
               "isAlias": false,
               "value": "#FFFFFF"
+            },
+            {
+              "name": "component/leftmenu/leftmenu-bg",
+              "type": "color",
+              "isAlias": false,
+              "value": "#00000008"
+            },
+            {
+              "name": "component/marta/marta-stroke-gradient-1",
+              "type": "color",
+              "isAlias": false,
+              "value": "#FFFFFF"
+            },
+            {
+              "name": "component/marta/marta-stroke-gradient-2",
+              "type": "color",
+              "isAlias": false,
+              "value": "#10B96A"
+            },
+            {
+              "name": "component/marta/marta-bg-gradient-1",
+              "type": "color",
+              "isAlias": false,
+              "value": "#58D7D5"
+            },
+            {
+              "name": "component/leftmenu/leftmenu-bg-expanded",
+              "type": "color",
+              "isAlias": false,
+              "value": "#00000005"
+            },
+            {
+              "name": "component/marta/marta-bg-gradient-2",
+              "type": "color",
+              "isAlias": false,
+              "value": "#0277FF"
+            },
+            {
+              "name": "component/marta/marta-avatar-gradient-1",
+              "type": "color",
+              "isAlias": false,
+              "value": "#30B5F7"
+            },
+            {
+              "name": "component/marta/marta-avatar-gradient-2",
+              "type": "color",
+              "isAlias": false,
+              "value": "#7CFFC2"
+            },
+            {
+              "name": "component/marta/marta-avatar-gradient-3",
+              "type": "color",
+              "isAlias": false,
+              "value": "#3BF39C"
+            },
+            {
+              "name": "component/marta/marta-avatar-gradient-4",
+              "type": "color",
+              "isAlias": false,
+              "value": "#0075FF"
+            },
+            {
+              "name": "component/leftmenu/leftmenu-bg-stroke",
+              "type": "color",
+              "isAlias": false,
+              "value": "#00000000"
+            },
+            {
+              "name": "component/leftmenu/leftmenu-bg-stroke-weight",
+              "type": "number",
+              "isAlias": false,
+              "value": 0
+            },
+            {
+              "name": "component/leftmenu/leftmenu-bg-stroke-expanded",
+              "type": "color",
+              "isAlias": false,
+              "value": "#0000000A"
+            },
+            {
+              "name": "component/leftmenu/leftmenu-bg-stroke- expanded-weight",
+              "type": "number",
+              "isAlias": true,
+              "value": {
+                "collection": "fixed",
+                "name": "global/border/width/border-width-thin"
+              }
+            },
+            {
+              "name": "component/leftmenu/leftmenu-bg-overlayed",
+              "type": "color",
+              "isAlias": false,
+              "value": "#21334CF0"
+            },
+            {
+              "name": "component/leftmenu/leftmenu-bg-blur",
+              "type": "number",
+              "isAlias": true,
+              "value": {
+                "collection": "fixed",
+                "name": "global/bg-blur/bg-blur-default"
+              }
+            },
+            {
+              "name": "component/leftmenu/leftmenu-bg-blur-expanded",
+              "type": "number",
+              "isAlias": false,
+              "value": 0
+            },
+            {
+              "name": "component/leftmenu/leftmenu-width",
+              "type": "number",
+              "isAlias": false,
+              "value": 66
+            },
+            {
+              "name": "component/leftmenu/leftmenu-width-expanded",
+              "type": "number",
+              "isAlias": false,
+              "value": 240
+            },
+            {
+              "name": "component/leftmenu/leftmenu-bg-divider",
+              "type": "color",
+              "isAlias": false,
+              "value": "#0000001A"
+            },
+            {
+              "name": "component/leftmenu/group/left-menu-group-bg",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "backgrounds/content/bg-content-tertiary"
+              }
+            },
+            {
+              "name": "component/leftmenu/group/left-menu-group-stroke",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "divider/content/divider-less"
+              }
+            },
+            {
+              "name": "component/leftmenu/group/left-menu-group-stroke-weight",
+              "type": "number",
+              "isAlias": true,
+              "value": {
+                "collection": "fixed",
+                "name": "global/border/width/border-width-thin"
+              }
+            },
+            {
+              "name": "component/popup/bg-popup-content-primary",
+              "type": "color",
+              "isAlias": false,
+              "value": "#2C2C2CE6"
+            },
+            {
+              "name": "component/section/bg-section",
+              "type": "color",
+              "isAlias": false,
+              "value": "#1E1E1E00"
+            },
+            {
+              "name": "component/popup/bg-popup-content-secondary",
+              "type": "color",
+              "isAlias": false,
+              "value": "#1E1E1EC7"
+            },
+            {
+              "name": "component/popup/bg-popup-content-tertiary",
+              "type": "color",
+              "isAlias": false,
+              "value": "#1E1E1E70"
+            },
+            {
+              "name": "component/popup/bg-popup-primary",
+              "type": "color",
+              "isAlias": false,
+              "value": "#1E1E1ECC"
+            },
+            {
+              "name": "component/popup/bg-popup-secondary",
+              "type": "color",
+              "isAlias": false,
+              "value": "#1E1E1ECC"
+            },
+            {
+              "name": "component/popup/bg-popup-transparent",
+              "type": "color",
+              "isAlias": false,
+              "value": "#1E1E1ECC"
             },
             {
               "name": "component/stage/stage-bg-1",
@@ -13564,13 +14230,13 @@
               "value": "#FFFFFF24"
             },
             {
-              "name": "pallete/white/white-base",
+              "name": "pallete/blue/blue-09",
               "type": "color",
               "isAlias": false,
               "value": "#FFFFFF"
             },
             {
-              "name": "pallete/blue/blue-09",
+              "name": "pallete/white/white-base",
               "type": "color",
               "isAlias": false,
               "value": "#FFFFFF"
@@ -14879,6 +15545,75 @@
               "type": "color",
               "isAlias": false,
               "value": "#FFFFFF14"
+            },
+            {
+              "name": "component/input/less accent/input-less-accent-bg",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "backgrounds/content/bg-content-secondary"
+              }
+            },
+            {
+              "name": "component/input/less accent/input-less-accent-stroke",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "backgrounds/content/bg-content-primary"
+              }
+            },
+            {
+              "name": "component/input/less accent/input-less-accent-stroke-weight",
+              "type": "number",
+              "isAlias": false,
+              "value": 0
+            },
+            {
+              "name": "component/input/less accent/input-less-accent-label",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-5"
+              }
+            },
+            {
+              "name": "component/input/less accent/input-less-accent-content",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-6"
+              }
+            },
+            {
+              "name": "component/input/less accent/input-less-accent-content-icon",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-7"
+              }
+            },
+            {
+              "name": "component/input/less accent/input-less-accent-content-chevron",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-7"
+              }
+            },
+            {
+              "name": "component/input/less accent/input-less-accent-content-divider",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-8"
+              }
             }
           ]
         },
@@ -15066,12 +15801,6 @@
               "value": "#FFFFFF1F"
             },
             {
-              "name": "backgrounds/content/bg-content-secondary",
-              "type": "color",
-              "isAlias": false,
-              "value": "#FFFFFF1F"
-            },
-            {
               "name": "divider/optical/divider-optical-on-overlay-weight",
               "type": "number",
               "isAlias": true,
@@ -15079,6 +15808,12 @@
                 "collection": "fixed",
                 "name": "global/border/width/border-width-thin"
               }
+            },
+            {
+              "name": "backgrounds/content/bg-content-secondary",
+              "type": "color",
+              "isAlias": false,
+              "value": "#FFFFFF1F"
             },
             {
               "name": "backgrounds/content/bg-content-tertiary",
@@ -15771,6 +16506,15 @@
               }
             },
             {
+              "name": "design/tinted success/default/design-tinted-success-bg-alt",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-7"
+              }
+            },
+            {
               "name": "design/tinted success/default/design-tinted-success-stroke",
               "type": "color",
               "isAlias": true,
@@ -15844,6 +16588,15 @@
             },
             {
               "name": "design/tinted/default/design-tinted-content",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-0"
+              }
+            },
+            {
+              "name": "design/tinted/default/design-tinted-content-alt",
               "type": "color",
               "isAlias": true,
               "value": {
@@ -16000,6 +16753,66 @@
             },
             {
               "name": "design/tinted warning/default/design-tinted-warning-content-divider",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-7"
+              }
+            },
+            {
+              "name": "design/tinted violet/default/design-tinted-violet-bg",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-8"
+              }
+            },
+            {
+              "name": "design/tinted violet/default/design-tinted-violet-stroke",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-white-fixed"
+              }
+            },
+            {
+              "name": "design/tinted violet/default/design-tinted-violet-stroke-weight",
+              "type": "number",
+              "isAlias": false,
+              "value": 0
+            },
+            {
+              "name": "design/tinted violet/default/design-tinted-violet-content",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-0"
+              }
+            },
+            {
+              "name": "design/tinted violet/default/design-tinted-violet-content-icon",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-0"
+              }
+            },
+            {
+              "name": "design/tinted violet/default/design-tinted-violet-content-chevron",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-4"
+              }
+            },
+            {
+              "name": "design/tinted violet/default/design-tinted-violet-content-divider",
               "type": "color",
               "isAlias": true,
               "value": {
@@ -16185,6 +16998,15 @@
               }
             },
             {
+              "name": "design/outline accent 2/default/design-outline-a2-content-icon-secondary",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-2"
+              }
+            },
+            {
               "name": "design/outline accent 2/default/design-outline-a2-content-chevron",
               "type": "color",
               "isAlias": true,
@@ -16201,6 +17023,12 @@
                 "collection": "design",
                 "name": "base/base-7"
               }
+            },
+            {
+              "name": "design/outline accent 2/focused/design-outline-a2-focused-bg",
+              "type": "color",
+              "isAlias": false,
+              "value": "#FFFFFF4D"
             },
             {
               "name": "design/outline/default/design-outline-bg",
@@ -16866,16 +17694,16 @@
               }
             },
             {
-              "name": "design/plain no accent/focused/design-plain-na-focused-bg",
-              "type": "color",
-              "isAlias": false,
-              "value": "#FFFFFF1F"
-            },
-            {
               "name": "design/selection/default/design-selection-bg",
               "type": "color",
               "isAlias": false,
               "value": "#FFFFFF4D"
+            },
+            {
+              "name": "design/plain no accent/focused/design-plain-na-focused-bg",
+              "type": "color",
+              "isAlias": false,
+              "value": "#FFFFFF1F"
             },
             {
               "name": "design/selection/default/design-selection-stroke",
@@ -16896,13 +17724,22 @@
               "value": 0
             },
             {
+              "name": "design/selection/default/design-selection-content",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-0"
+              }
+            },
+            {
               "name": "design/plain no accent/focused/design-plain-na-focused-stroke",
               "type": "color",
               "isAlias": false,
               "value": "#FFFFFF1F"
             },
             {
-              "name": "design/selection/default/design-selection-content",
+              "name": "design/selection/default/design-selection-content-icon",
               "type": "color",
               "isAlias": true,
               "value": {
@@ -16920,15 +17757,6 @@
               }
             },
             {
-              "name": "design/selection/default/design-selection-content-icon",
-              "type": "color",
-              "isAlias": true,
-              "value": {
-                "collection": "design",
-                "name": "base/base-0"
-              }
-            },
-            {
               "name": "design/selection/default/design-selection-content-icon-secondary",
               "type": "color",
               "isAlias": true,
@@ -16938,21 +17766,21 @@
               }
             },
             {
-              "name": "design/selection/default/design-selection-content-chevron",
-              "type": "color",
-              "isAlias": true,
-              "value": {
-                "collection": "design",
-                "name": "base/base-0"
-              }
-            },
-            {
               "name": "design/plain no accent/focused/design-plain-na-focused-content",
               "type": "color",
               "isAlias": true,
               "value": {
                 "collection": "design",
                 "name": "base/base-1"
+              }
+            },
+            {
+              "name": "design/selection/default/design-selection-content-chevron",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-0"
               }
             },
             {
@@ -17682,6 +18510,42 @@
               "value": "#E5E8EC00"
             },
             {
+              "name": "component/drawer/drawer-labels-bg-default-primary",
+              "type": "color",
+              "isAlias": false,
+              "value": "#4D74AD"
+            },
+            {
+              "name": "component/drawer/drawer-labels-bg-default-secondary",
+              "type": "color",
+              "isAlias": false,
+              "value": "#406497"
+            },
+            {
+              "name": "component/drawer/drawer-labels-bg-hover",
+              "type": "color",
+              "isAlias": false,
+              "value": "#5581C2"
+            },
+            {
+              "name": "component/drawer/drawer-labels-bg-disabled",
+              "type": "color",
+              "isAlias": false,
+              "value": "#365C91"
+            },
+            {
+              "name": "component/drawer/drawer-labels-stroke-primary",
+              "type": "color",
+              "isAlias": false,
+              "value": "#5581C2"
+            },
+            {
+              "name": "component/drawer/drawer-labels-stroke-secondary",
+              "type": "color",
+              "isAlias": false,
+              "value": "#496FA5"
+            },
+            {
               "name": "component/glance/glance-gradient-1",
               "type": "color",
               "isAlias": false,
@@ -17700,157 +18564,10 @@
               "value": "#FFFFFF00"
             },
             {
-              "name": "component/leftmenu/leftmenu-bg",
-              "type": "color",
-              "isAlias": false,
-              "value": "#FFFFFF0F"
-            },
-            {
-              "name": "component/leftmenu/leftmenu-bg-expanded",
-              "type": "color",
-              "isAlias": false,
-              "value": "#FFFFFF0A"
-            },
-            {
-              "name": "component/leftmenu/leftmenu-bg-stroke",
-              "type": "color",
-              "isAlias": false,
-              "value": "#FFFFFF00"
-            },
-            {
-              "name": "component/leftmenu/leftmenu-bg-stroke-weight",
-              "type": "number",
-              "isAlias": false,
-              "value": 0
-            },
-            {
-              "name": "component/leftmenu/leftmenu-bg-stroke-expanded",
-              "type": "color",
-              "isAlias": false,
-              "value": "#FFFFFF0F"
-            },
-            {
-              "name": "component/leftmenu/leftmenu-bg-stroke- expanded-weight",
-              "type": "number",
-              "isAlias": true,
-              "value": {
-                "collection": "fixed",
-                "name": "global/border/width/border-width-thin"
-              }
-            },
-            {
-              "name": "component/leftmenu/leftmenu-bg-overlayed",
-              "type": "color",
-              "isAlias": false,
-              "value": "#21334CF0"
-            },
-            {
-              "name": "component/leftmenu/leftmenu-bg-blur",
-              "type": "number",
-              "isAlias": true,
-              "value": {
-                "collection": "fixed",
-                "name": "global/bg-blur/bg-blur-default"
-              }
-            },
-            {
-              "name": "component/leftmenu/leftmenu-bg-blur-expanded",
-              "type": "number",
-              "isAlias": false,
-              "value": 0
-            },
-            {
-              "name": "component/leftmenu/leftmenu-width",
-              "type": "number",
-              "isAlias": false,
-              "value": 66
-            },
-            {
-              "name": "component/leftmenu/leftmenu-width-expanded",
-              "type": "number",
-              "isAlias": false,
-              "value": 240
-            },
-            {
-              "name": "component/leftmenu/leftmenu-bg-divider",
-              "type": "color",
-              "isAlias": false,
-              "value": "#FFFFFF1A"
-            },
-            {
-              "name": "component/leftmenu/group/left-menu-group-bg",
-              "type": "color",
-              "isAlias": true,
-              "value": {
-                "collection": "design",
-                "name": "backgrounds/content/bg-content-tertiary"
-              }
-            },
-            {
-              "name": "component/leftmenu/group/left-menu-group-stroke",
-              "type": "color",
-              "isAlias": true,
-              "value": {
-                "collection": "design",
-                "name": "divider/content/divider-less"
-              }
-            },
-            {
-              "name": "component/leftmenu/group/left-menu-group-stroke-weight",
-              "type": "number",
-              "isAlias": true,
-              "value": {
-                "collection": "fixed",
-                "name": "global/border/width/border-width-thin"
-              }
-            },
-            {
               "name": "component/input/blur/design-input-blur",
               "type": "number",
               "isAlias": false,
               "value": 24
-            },
-            {
-              "name": "component/popup/bg-popup-content-primary",
-              "type": "color",
-              "isAlias": false,
-              "value": "#2C2C2CE6"
-            },
-            {
-              "name": "component/section/bg-section",
-              "type": "color",
-              "isAlias": false,
-              "value": "#F3F6F900"
-            },
-            {
-              "name": "component/popup/bg-popup-content-secondary",
-              "type": "color",
-              "isAlias": false,
-              "value": "#1E1E1EC7"
-            },
-            {
-              "name": "component/popup/bg-popup-content-tertiary",
-              "type": "color",
-              "isAlias": false,
-              "value": "#1E1E1E70"
-            },
-            {
-              "name": "component/popup/bg-popup-primary",
-              "type": "color",
-              "isAlias": false,
-              "value": "#1E1E1ECC"
-            },
-            {
-              "name": "component/popup/bg-popup-secondary",
-              "type": "color",
-              "isAlias": false,
-              "value": "#1E1E1ECC"
-            },
-            {
-              "name": "component/popup/bg-popup-transparent",
-              "type": "color",
-              "isAlias": false,
-              "value": "#1E1E1ECC"
             },
             {
               "name": "component/input/default/input-default-bg",
@@ -18085,6 +18802,201 @@
               "type": "color",
               "isAlias": false,
               "value": "#FFFFFF"
+            },
+            {
+              "name": "component/leftmenu/leftmenu-bg",
+              "type": "color",
+              "isAlias": false,
+              "value": "#FFFFFF0F"
+            },
+            {
+              "name": "component/marta/marta-stroke-gradient-1",
+              "type": "color",
+              "isAlias": false,
+              "value": "#FFFFFF"
+            },
+            {
+              "name": "component/marta/marta-stroke-gradient-2",
+              "type": "color",
+              "isAlias": false,
+              "value": "#10B96A"
+            },
+            {
+              "name": "component/marta/marta-bg-gradient-1",
+              "type": "color",
+              "isAlias": false,
+              "value": "#58D7D5"
+            },
+            {
+              "name": "component/leftmenu/leftmenu-bg-expanded",
+              "type": "color",
+              "isAlias": false,
+              "value": "#FFFFFF0A"
+            },
+            {
+              "name": "component/marta/marta-bg-gradient-2",
+              "type": "color",
+              "isAlias": false,
+              "value": "#0277FF"
+            },
+            {
+              "name": "component/marta/marta-avatar-gradient-1",
+              "type": "color",
+              "isAlias": false,
+              "value": "#30B5F7"
+            },
+            {
+              "name": "component/marta/marta-avatar-gradient-2",
+              "type": "color",
+              "isAlias": false,
+              "value": "#7CFFC2"
+            },
+            {
+              "name": "component/marta/marta-avatar-gradient-3",
+              "type": "color",
+              "isAlias": false,
+              "value": "#3BF39C"
+            },
+            {
+              "name": "component/marta/marta-avatar-gradient-4",
+              "type": "color",
+              "isAlias": false,
+              "value": "#0075FF"
+            },
+            {
+              "name": "component/leftmenu/leftmenu-bg-stroke",
+              "type": "color",
+              "isAlias": false,
+              "value": "#FFFFFF00"
+            },
+            {
+              "name": "component/leftmenu/leftmenu-bg-stroke-weight",
+              "type": "number",
+              "isAlias": false,
+              "value": 0
+            },
+            {
+              "name": "component/leftmenu/leftmenu-bg-stroke-expanded",
+              "type": "color",
+              "isAlias": false,
+              "value": "#FFFFFF0F"
+            },
+            {
+              "name": "component/leftmenu/leftmenu-bg-stroke- expanded-weight",
+              "type": "number",
+              "isAlias": true,
+              "value": {
+                "collection": "fixed",
+                "name": "global/border/width/border-width-thin"
+              }
+            },
+            {
+              "name": "component/leftmenu/leftmenu-bg-overlayed",
+              "type": "color",
+              "isAlias": false,
+              "value": "#21334CF0"
+            },
+            {
+              "name": "component/leftmenu/leftmenu-bg-blur",
+              "type": "number",
+              "isAlias": true,
+              "value": {
+                "collection": "fixed",
+                "name": "global/bg-blur/bg-blur-default"
+              }
+            },
+            {
+              "name": "component/leftmenu/leftmenu-bg-blur-expanded",
+              "type": "number",
+              "isAlias": false,
+              "value": 0
+            },
+            {
+              "name": "component/leftmenu/leftmenu-width",
+              "type": "number",
+              "isAlias": false,
+              "value": 66
+            },
+            {
+              "name": "component/leftmenu/leftmenu-width-expanded",
+              "type": "number",
+              "isAlias": false,
+              "value": 240
+            },
+            {
+              "name": "component/leftmenu/leftmenu-bg-divider",
+              "type": "color",
+              "isAlias": false,
+              "value": "#FFFFFF1A"
+            },
+            {
+              "name": "component/leftmenu/group/left-menu-group-bg",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "backgrounds/content/bg-content-tertiary"
+              }
+            },
+            {
+              "name": "component/leftmenu/group/left-menu-group-stroke",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "divider/content/divider-less"
+              }
+            },
+            {
+              "name": "component/leftmenu/group/left-menu-group-stroke-weight",
+              "type": "number",
+              "isAlias": true,
+              "value": {
+                "collection": "fixed",
+                "name": "global/border/width/border-width-thin"
+              }
+            },
+            {
+              "name": "component/popup/bg-popup-content-primary",
+              "type": "color",
+              "isAlias": false,
+              "value": "#2C2C2CE6"
+            },
+            {
+              "name": "component/section/bg-section",
+              "type": "color",
+              "isAlias": false,
+              "value": "#F3F6F900"
+            },
+            {
+              "name": "component/popup/bg-popup-content-secondary",
+              "type": "color",
+              "isAlias": false,
+              "value": "#1E1E1EC7"
+            },
+            {
+              "name": "component/popup/bg-popup-content-tertiary",
+              "type": "color",
+              "isAlias": false,
+              "value": "#1E1E1E70"
+            },
+            {
+              "name": "component/popup/bg-popup-primary",
+              "type": "color",
+              "isAlias": false,
+              "value": "#1E1E1ECC"
+            },
+            {
+              "name": "component/popup/bg-popup-secondary",
+              "type": "color",
+              "isAlias": false,
+              "value": "#1E1E1ECC"
+            },
+            {
+              "name": "component/popup/bg-popup-transparent",
+              "type": "color",
+              "isAlias": false,
+              "value": "#1E1E1ECC"
             },
             {
               "name": "component/stage/stage-bg-1",
@@ -18510,13 +19422,13 @@
               "value": "#FFFFFF24"
             },
             {
-              "name": "pallete/white/white-base",
+              "name": "pallete/blue/blue-09",
               "type": "color",
               "isAlias": false,
               "value": "#FFFFFF"
             },
             {
-              "name": "pallete/blue/blue-09",
+              "name": "pallete/white/white-base",
               "type": "color",
               "isAlias": false,
               "value": "#FFFFFF"
@@ -19825,6 +20737,75 @@
               "type": "color",
               "isAlias": false,
               "value": "#FFFFFF1A"
+            },
+            {
+              "name": "component/input/less accent/input-less-accent-bg",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "backgrounds/content/bg-content-secondary"
+              }
+            },
+            {
+              "name": "component/input/less accent/input-less-accent-stroke",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "backgrounds/content/bg-content-primary"
+              }
+            },
+            {
+              "name": "component/input/less accent/input-less-accent-stroke-weight",
+              "type": "number",
+              "isAlias": false,
+              "value": 0
+            },
+            {
+              "name": "component/input/less accent/input-less-accent-label",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-5"
+              }
+            },
+            {
+              "name": "component/input/less accent/input-less-accent-content",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-6"
+              }
+            },
+            {
+              "name": "component/input/less accent/input-less-accent-content-icon",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-7"
+              }
+            },
+            {
+              "name": "component/input/less accent/input-less-accent-content-chevron",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-7"
+              }
+            },
+            {
+              "name": "component/input/less accent/input-less-accent-content-divider",
+              "type": "color",
+              "isAlias": true,
+              "value": {
+                "collection": "design",
+                "name": "base/base-8"
+              }
             }
           ]
         }
@@ -20524,21 +21505,21 @@
               }
             },
             {
-              "name": "component/button/space/hug/button-XS-hug-space-inset",
-              "type": "number",
-              "isAlias": true,
-              "value": {
-                "collection": "fixed",
-                "name": "global/space/inset/space-inset-xs"
-              }
-            },
-            {
               "name": "component/button/space/submenu/button-submenu-XL-space-inset",
               "type": "number",
               "isAlias": true,
               "value": {
                 "collection": "fixed",
                 "name": "global/space/inset/space-inset-sm"
+              }
+            },
+            {
+              "name": "component/button/space/hug/button-XS-hug-space-inset",
+              "type": "number",
+              "isAlias": true,
+              "value": {
+                "collection": "fixed",
+                "name": "global/space/inset/space-inset-xs"
               }
             },
             {
@@ -20956,7 +21937,7 @@
               "name": "component/chips/height/chips-L-height",
               "type": "number",
               "isAlias": false,
-              "value": 32
+              "value": 34
             },
             {
               "name": "component/chips/height/chips-M-height",
@@ -22103,7 +23084,7 @@
           "name": "Style",
           "variables": [
             {
-              "name": "Text/text 1",
+              "name": "Text/text 1 (2XL)",
               "type": "typography",
               "isAlias": false,
               "value": {
@@ -22119,7 +23100,7 @@
               }
             },
             {
-              "name": "Text/text 1 accent",
+              "name": "Text/text 1 (2XL) accent",
               "type": "typography",
               "isAlias": false,
               "value": {
@@ -22135,7 +23116,7 @@
               }
             },
             {
-              "name": "Text/text 2",
+              "name": "Text/text 2 (XL)",
               "type": "typography",
               "isAlias": false,
               "value": {
@@ -22151,7 +23132,7 @@
               }
             },
             {
-              "name": "Text/text 2 accent",
+              "name": "Text/text 2 (XL) accent",
               "type": "typography",
               "isAlias": false,
               "value": {
@@ -22167,7 +23148,7 @@
               }
             },
             {
-              "name": "Text/text 3",
+              "name": "Text/text 3 (L)",
               "type": "typography",
               "isAlias": false,
               "value": {
@@ -22183,7 +23164,7 @@
               }
             },
             {
-              "name": "Text/text 3 accent",
+              "name": "Text/text 3 (L) accent",
               "type": "typography",
               "isAlias": false,
               "value": {
@@ -22199,7 +23180,7 @@
               }
             },
             {
-              "name": "Text/text 4",
+              "name": "Text/text 4 (M)",
               "type": "typography",
               "isAlias": false,
               "value": {
@@ -22215,7 +23196,7 @@
               }
             },
             {
-              "name": "Text/text 4 accent",
+              "name": "Text/text 4 (M) accent",
               "type": "typography",
               "isAlias": false,
               "value": {
@@ -22231,7 +23212,7 @@
               }
             },
             {
-              "name": "Text/text 5",
+              "name": "Text/text 5 (S)",
               "type": "typography",
               "isAlias": false,
               "value": {
@@ -22247,7 +23228,7 @@
               }
             },
             {
-              "name": "Text/text 5 accent",
+              "name": "Text/text 5 (S) accent",
               "type": "typography",
               "isAlias": false,
               "value": {
@@ -22263,7 +23244,7 @@
               }
             },
             {
-              "name": "Text/text 6",
+              "name": "Text/text 6 (XS)",
               "type": "typography",
               "isAlias": false,
               "value": {
@@ -22279,7 +23260,7 @@
               }
             },
             {
-              "name": "Text/text 6 accent",
+              "name": "Text/text 6 (XS) accent",
               "type": "typography",
               "isAlias": false,
               "value": {
@@ -22295,7 +23276,7 @@
               }
             },
             {
-              "name": "Text/text 7",
+              "name": "Text/text 7 (2XS)",
               "type": "typography",
               "isAlias": false,
               "value": {
@@ -22311,7 +23292,7 @@
               }
             },
             {
-              "name": "Text/text 7 accent",
+              "name": "Text/text 7 (2XS) accent",
               "type": "typography",
               "isAlias": false,
               "value": {
@@ -22327,7 +23308,7 @@
               }
             },
             {
-              "name": "Text/text 8",
+              "name": "Text/text 8 (3XS)",
               "type": "typography",
               "isAlias": false,
               "value": {
@@ -22343,7 +23324,7 @@
               }
             },
             {
-              "name": "Text/text 8 accent",
+              "name": "Text/text 8 (3XS) accent",
               "type": "typography",
               "isAlias": false,
               "value": {
@@ -22359,7 +23340,7 @@
               }
             },
             {
-              "name": "Text/text capital 1",
+              "name": "Text/text capital 1 (M)",
               "type": "typography",
               "isAlias": false,
               "value": {
@@ -22375,7 +23356,7 @@
               }
             },
             {
-              "name": "Text/text capital 1 accent",
+              "name": "Text/text capital 1 (M) accent",
               "type": "typography",
               "isAlias": false,
               "value": {
@@ -22391,7 +23372,7 @@
               }
             },
             {
-              "name": "Text/text capital 2",
+              "name": "Text/text capital 2 (S)",
               "type": "typography",
               "isAlias": false,
               "value": {
@@ -22407,7 +23388,7 @@
               }
             },
             {
-              "name": "Text/text capital 2 accent",
+              "name": "Text/text capital 2 (S) accent",
               "type": "typography",
               "isAlias": false,
               "value": {
@@ -22423,7 +23404,7 @@
               }
             },
             {
-              "name": "Heading/H1",
+              "name": "Heading/H1 (2XL)",
               "type": "typography",
               "isAlias": false,
               "value": {
@@ -22439,7 +23420,7 @@
               }
             },
             {
-              "name": "Heading/H1 accent",
+              "name": "Heading/H1 (2XL) accent",
               "type": "typography",
               "isAlias": false,
               "value": {
@@ -22455,7 +23436,7 @@
               }
             },
             {
-              "name": "Heading/H2",
+              "name": "Heading/H2 (XL)",
               "type": "typography",
               "isAlias": false,
               "value": {
@@ -22471,7 +23452,7 @@
               }
             },
             {
-              "name": "Heading/H2 accent",
+              "name": "Heading/H2 (XL) accent",
               "type": "typography",
               "isAlias": false,
               "value": {
@@ -22487,7 +23468,7 @@
               }
             },
             {
-              "name": "Heading/H3",
+              "name": "Heading/H3 (L)",
               "type": "typography",
               "isAlias": false,
               "value": {
@@ -22503,7 +23484,7 @@
               }
             },
             {
-              "name": "Heading/H3 accent",
+              "name": "Heading/H3 (L) accent",
               "type": "typography",
               "isAlias": false,
               "value": {
@@ -22519,7 +23500,7 @@
               }
             },
             {
-              "name": "Heading/H4",
+              "name": "Heading/H4 (M)",
               "type": "typography",
               "isAlias": false,
               "value": {
@@ -22535,7 +23516,7 @@
               }
             },
             {
-              "name": "Heading/H4 accent",
+              "name": "Heading/H4 (M) accent",
               "type": "typography",
               "isAlias": false,
               "value": {
@@ -22551,7 +23532,7 @@
               }
             },
             {
-              "name": "Heading/H5",
+              "name": "Heading/H5 (S)",
               "type": "typography",
               "isAlias": false,
               "value": {
@@ -22567,7 +23548,7 @@
               }
             },
             {
-              "name": "Heading/H5 accent",
+              "name": "Heading/H5 (S) accent",
               "type": "typography",
               "isAlias": false,
               "value": {

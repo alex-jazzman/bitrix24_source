@@ -46,6 +46,7 @@
 }
 
 .ui-popup-menu-item-header {
+	overflow: hidden;
 	padding: var(--pmenu-cell-padding-TB) 0 var(--pmenu-cell-padding-TB) 0;
 }
 
@@ -56,6 +57,8 @@
 
 /* ui-popup-menu-item-title-text */
 .ui-popup-menu-item-title-text {
+	text-overflow: ellipsis;
+	overflow: hidden;
 	line-height: var(--pmenu-title-line-height);
 	color: var(--ui-color-base-1);
 	font-size: var(--ui-font-size-md);

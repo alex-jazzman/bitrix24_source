@@ -1,0 +1,21 @@
+<?php
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_CONNECTED_TITLE"] = "Чудово!";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_CONNECT_CONFIRM_BTN"] = "Підтвердити";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_CONNECT_DESC"] = "Тепер ви можете підтверджувати вхід із цього пристрою.";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_CONNECT_NEXT_BTN"] = "Продовжити";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_CONNECT_QR_DESCRIPTION"] = "Установіть мобільний застосунок або відкрийте його через QR-код, якщо він у вас уже є. Мобільний застосунок необхідний для підтвердження входу.";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_CONNECT_TITLE"] = "Установіть мобільний застосунок";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_COOLDOWN"] = "Запросити повторно можна через #SEC# с.";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_DANGER"] = "Нікому не показуйте цей QR-код. Він містить інформацію для входу під вашим ім'ям.";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_ENTER_CODE_SUBTITLE"] = "Введіть номер телефону:";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_ENTER_CODE_TITLE"] = "Підтвердьте номер телефону";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_LIST_1"] = "Наведіть камеру телефона на QR-код.";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_LIST_1_MSGVER_1"] = "Наведіть камеру телефона на QR-код (або [LINK]перейдіть за посиланням[/LINK], якщо у вас Huawei).";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_LIST_2"] = "Перейдіть за посиланням на екрані.";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_LIST_3"] = "Установіть застосунок.";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_LIST_4"] = "Скануйте QR-код ще раз для входу в застосунок.";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_NUMBER_DESC"] = "Якщо у вас не буде доступу до застосунку, ви зможете ввійти за допомогою коду із SMS.";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_NUMBER_TITLE"] = "Номер для резервного входу";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_RESEND_CODE"] = "Отримати новий код";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_SUCCESS_SUBTITLE"] = "Ваш обліковий запис під надійним захистом.";
+$MESS["INTRANET_PUSH_OTP_CONNECT_POPUP_SUCCESS_TITLE"] = "Готово!";

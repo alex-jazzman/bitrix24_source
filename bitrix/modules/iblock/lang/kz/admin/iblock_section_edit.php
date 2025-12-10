@@ -71,4 +71,4 @@ $MESS["IBSEC_E_TAB_RIGHTS"] = "Қолжетімділік";
 $MESS["IBSEC_E_TAB_RIGHTS_TITLE"] = "Қолжетімділік құқығы";
 $MESS["IBSEC_E_TRANSLATION_SERVICE_NOT_CONFIGURED"] = "Сыртқы аударма қызметі бапталмаған. <a href=\"settings.php?mid=main\">Негізгі модульде</a> сервисті баптаңыз.";
 $MESS["IBSEC_E_USER_FIELDS_ADD_HREF"] = "Пайдаланушы қасиетін қосу";
-$MESS["IBSEC_E_WARNING"] = "Ескертпе.";
+$MESS['IBSEC_E_WARNING'] = "Ескертпе.";

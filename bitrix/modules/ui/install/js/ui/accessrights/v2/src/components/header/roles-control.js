@@ -53,7 +53,7 @@ export const RolesControl = {
 		},
 		viewDialogItems(): ItemOptions[] {
 			const result: ItemOptions[] = [];
-			const selectedMemberId = this.selectedMember ? this.selectedMember.id : SELECTED_ALL_USER_ID;
+			const selectedMemberId = this.selectedMember?.id ? this.selectedMember.id : SELECTED_ALL_USER_ID;
 
 			for (const copyDialogItem of ItemsMapper.mapUserGroups(this.userGroupsBySelectedMember))
 			{
@@ -106,7 +106,7 @@ export const RolesControl = {
 				dropdownMode: true,
 				enableSearch: true,
 				cacheable: false,
-				items: this.viewDialogItems,
+				items: this.copyDialogItems,
 				events: {
 					'Item:onSelect': (dialogEvent: BaseEvent) => {
 						const { item } = dialogEvent.getData();

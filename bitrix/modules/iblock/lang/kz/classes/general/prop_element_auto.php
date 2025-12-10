@@ -31,4 +31,4 @@ $MESS["BT_UT_EAUTOCOMPLETE_SETTING_TITLE"] = "Автотолтыру арқыл�
 $MESS["BT_UT_EAUTOCOMPLETE_SETTING_VIEW"] = "Көрсетілім интерфейсі";
 $MESS["BT_UT_EAUTOCOMPLETE_VIEW_AUTO"] = "Автотолтыру жолы";
 $MESS["BT_UT_EAUTOCOMPLETE_VIEW_ELEMENT"] = "Автотолтыру жолын және іздеу жолағынан таңдау";
-$MESS["BT_UT_EAUTOCOMPLETE_VIEW_TREE"] = "Автотолтыру жолын және тізімді таңдау";
+$MESS['BT_UT_EAUTOCOMPLETE_VIEW_TREE'] = "Автотолтыру жолын және тізімді таңдау";

@@ -58,4 +58,4 @@ $MESS["BT_ADM_IEP_PROP_USER_TYPE_SETTINGS"] = "Қосымша баптаулар
 $MESS["BT_ADM_IEP_PROP_WITH_DESC"] = "Мәнді сипаттау үшін өрісті шығару:";
 $MESS["BT_ADM_IEP_SECTION_TITLE_PROPERTY_FEATURES"] = "Сипат параметрлері";
 $MESS["BT_ADM_IEP_TAB"] = "Қасиет";
-$MESS["BT_ADM_IEP_TAB_TITLE"] = "Баптаулар қасиеттері";
+$MESS['BT_ADM_IEP_TAB_TITLE'] = "Баптаулар қасиеттері";

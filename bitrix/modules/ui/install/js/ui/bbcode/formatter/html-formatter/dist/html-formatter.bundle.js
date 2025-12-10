@@ -423,11 +423,12 @@ this.BX.UI.BBCode = this.BX.UI.BBCode || {};
 	      convert({
 	        node
 	      }) {
+	        const nested = node.getChildren().some(child => child.getName() === 'list');
 	        return main_core.Dom.create({
 	          tag: 'li',
 	          attrs: {
 	            ...node.getAttributes(),
-	            className: 'ui-typography-li'
+	            className: `ui-typography-li${nested ? ' --nested' : ''}`
 	          }
 	        });
 	      },
@@ -785,7 +786,8 @@ this.BX.UI.BBCode = this.BX.UI.BBCode || {};
 	function createImageNode({
 	  src,
 	  width,
-	  height
+	  height,
+	  viewerAttrs = {}
 	}) {
 	  return main_core.Dom.create({
 	    tag: 'span',
@@ -793,7 +795,8 @@ this.BX.UI.BBCode = this.BX.UI.BBCode || {};
 	      className: 'ui-typography-image-container'
 	    },
 	    dataset: {
-	      decorator: true
+	      decorator: true,
+	      ...viewerAttrs
 	    },
 	    children: [main_core.Dom.create({
 	      tag: 'img',
@@ -853,6 +856,7 @@ this.BX.UI.BBCode = this.BX.UI.BBCode || {};
 	  url,
 	  width,
 	  height,
+	  viewerAttrs = {},
 	  type
 	}) {
 	  const video = main_core.Dom.create({
@@ -888,7 +892,8 @@ this.BX.UI.BBCode = this.BX.UI.BBCode || {};
 	      className: 'ui-typography-video-container'
 	    },
 	    dataset: {
-	      decorator: true
+	      decorator: true,
+	      ...viewerAttrs
 	    },
 	    children: [video]
 	  });
@@ -975,6 +980,7 @@ this.BX.UI.BBCode = this.BX.UI.BBCode || {};
 	  constructor(options = {}) {
 	    const formatter = options.formatter;
 	    const fileMode = formatter.getFileMode();
+	    const viewerGroupBy = main_core.Text.getRandom();
 	    super({
 	      name: fileMode || '__unknown__',
 	      convert({
@@ -998,10 +1004,18 @@ this.BX.UI.BBCode = this.BX.UI.BBCode || {};
 	          return createTextNode();
 	        }
 	        const info = data == null ? void 0 : (_data$files = data.files) == null ? void 0 : _data$files.find(file => {
-	          return file.serverFileId.toString() === serverFileId.toString();
+	          var _file$customData;
+	          return file.serverFileId.toString() === serverFileId.toString() || `n${(_file$customData = file.customData) == null ? void 0 : _file$customData.objectId.toString()}` === serverFileId.toString();
 	        });
 	        if (!info) {
 	          return createTextNode();
+	        }
+	        const viewerAttrsExist = main_core.Type.isPlainObject(info.viewerAttrs);
+	        const viewerAttrs = viewerAttrsExist ? {
+	          ...info.viewerAttrs
+	        } : {};
+	        if (viewerAttrsExist && !main_core.Type.isStringFilled(viewerAttrs.viewerGroupBy) && main_core.Type.isUndefined(viewerAttrs.viewerSeparateItem)) {
+	          viewerAttrs.viewerGroupBy = viewerGroupBy;
 	        }
 	        if (info.isImage) {
 	          let width = main_core.Text.toInteger(node.getAttribute('width'));
@@ -1011,7 +1025,8 @@ this.BX.UI.BBCode = this.BX.UI.BBCode || {};
 	          return createImageNode({
 	            width,
 	            height,
-	            src: info.serverPreviewUrl
+	            src: info.serverPreviewUrl,
+	            viewerAttrs
 	          });
 	        }
 	        if (info.isVideo) {
@@ -1021,6 +1036,7 @@ this.BX.UI.BBCode = this.BX.UI.BBCode || {};
 	          height = main_core.Type.isNumber(height) && height > 0 ? Math.round(height) : null;
 	          return createVideoNode({
 	            url: info.downloadUrl,
+	            viewerAttrs,
 	            width,
 	            height
 	          });
@@ -1034,7 +1050,8 @@ this.BX.UI.BBCode = this.BX.UI.BBCode || {};
 	          text: info.name || 'unknown',
 	          dataset: {
 	            fileId: info.serverFileId,
-	            fileInfo: JSON.stringify(info)
+	            fileInfo: JSON.stringify(info),
+	            ...viewerAttrs
 	          }
 	        });
 	      },

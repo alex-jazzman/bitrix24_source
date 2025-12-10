@@ -171,6 +171,12 @@
 
 /*endregion*/
 
+.ui-btn.ui-btn-icon-market.--air,
+.ui-btn-split.ui-btn-icon-market.--air .ui-btn-main,
+.ui-btn-split.--air .ui-btn-main.ui-btn-icon-market {
+	--ui-btn-icon: var(--o-ui-icon-set__path_market);
+}
+
 /*region ui-btn-icon-add for air buttons */
 .ui-btn.ui-btn-icon-add.--air,
 .ui-btn-split.ui-btn-icon-add.--air .ui-btn-main,
@@ -850,6 +856,9 @@
 .ui-btn-icon-lock.ui-btn-light-border,
 .bitrix24-dark-theme .ui-btn-icon-lock.ui-btn-themes { --ui-btn-icon: url(/bitrix/js/ui/buttons/icons/images/ui-lock-dark.svg?v=1.1); }
 
+.ui-btn.--air.ui-btn-icon-lock {
+	--ui-btn-icon: var(--o-ui-icon-set__path_lock-m);
+}
 /*endregion*/
 
 /*region ui-btn-icon-print*/
@@ -1745,3 +1754,72 @@
 .ui-btn-icon-outline-add {
 	--ui-btn-icon: url(/bitrix/js/ui/buttons/icons/images/outline-plus-l.svg);
 }
+
+/* region ui-btn-icon-workflow */
+.ui-btn-icon-workflow.ui-btn,
+.ui-btn-icon-workflow.ui-btn-split,
+.ui-btn-icon-workflow.ui-btn-danger,
+.ui-btn-icon-workflow.ui-btn-primary,
+.ui-btn-icon-workflow.ui-btn-default,
+.ui-btn-icon-workflow.ui-btn-danger-dark,
+.ui-btn-icon-workflow.ui-btn-success-dark,
+.ui-btn-icon-workflow.ui-btn-primary-dark,
+.bitrix24-light-theme .ui-btn-icon-workflow.ui-btn-themes {
+	--ui-btn-icon: url(/bitrix/js/ui/buttons/icons/images/ui-workflow-white.svg);
+}
+
+.ui-btn-icon-workflow.ui-btn-link,
+.ui-btn-icon-workflow.ui-btn-light,
+.ui-btn-icon-workflow.ui-btn-success,
+.ui-btn-icon-workflow.ui-btn-secondary,
+.ui-btn-icon-workflow.ui-btn-light-border,
+.bitrix24-dark-theme .ui-btn-icon-workflow.ui-btn-themes {
+	--ui-btn-icon: url(/bitrix/js/ui/buttons/icons/images/ui-workflow-dark.svg);
+}
+/* endregion */
+
+/* region ui-btn-icon-person */
+.ui-btn-icon-person.ui-btn,
+.ui-btn-icon-person.ui-btn-split,
+.ui-btn-icon-person.ui-btn-danger,
+.ui-btn-icon-person.ui-btn-primary,
+.ui-btn-icon-person.ui-btn-default,
+.ui-btn-icon-person.ui-btn-danger-dark,
+.ui-btn-icon-person.ui-btn-success-dark,
+.ui-btn-icon-person.ui-btn-primary-dark,
+.bitrix24-light-theme .ui-btn-icon-person.ui-btn-themes {
+	--ui-btn-icon: url(/bitrix/js/ui/buttons/icons/images/ui-person-white.svg);
+}
+
+.ui-btn-icon-person.ui-btn-link,
+.ui-btn-icon-person.ui-btn-light,
+.ui-btn-icon-person.ui-btn-success,
+.ui-btn-icon-person.ui-btn-secondary,
+.ui-btn-icon-person.ui-btn-light-border,
+.bitrix24-dark-theme .ui-btn-icon-person.ui-btn-themes {
+	--ui-btn-icon: url(/bitrix/js/ui/buttons/icons/images/ui-person-dark.svg);
+}
+/* endregion */
+
+/* region ui-btn-icon-workflow-stop */
+.ui-btn-icon-workflow-stop.ui-btn,
+.ui-btn-icon-workflow-stop.ui-btn-split,
+.ui-btn-icon-workflow-stop.ui-btn-danger,
+.ui-btn-icon-workflow-stop.ui-btn-primary,
+.ui-btn-icon-workflow-stop.ui-btn-default,
+.ui-btn-icon-workflow-stop.ui-btn-danger-dark,
+.ui-btn-icon-workflow-stop.ui-btn-success-dark,
+.ui-btn-icon-workflow-stop.ui-btn-primary-dark,
+.bitrix24-light-theme .ui-btn-icon-workflow-stop.ui-btn-themes {
+	--ui-btn-icon: url(/bitrix/js/ui/buttons/icons/images/ui-workflow-stop-white.svg);
+}
+
+.ui-btn-icon-workflow-stop.ui-btn-link,
+.ui-btn-icon-workflow-stop.ui-btn-light,
+.ui-btn-icon-workflow-stop.ui-btn-success,
+.ui-btn-icon-workflow-stop.ui-btn-secondary,
+.ui-btn-icon-workflow-stop.ui-btn-light-border,
+.bitrix24-dark-theme .ui-btn-icon-workflow-stop.ui-btn-themes {
+	--ui-btn-icon: url(/bitrix/js/ui/buttons/icons/images/ui-workflow-stop-dark.svg);
+}
+/* endregion */

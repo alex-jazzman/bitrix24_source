@@ -273,6 +273,9 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	    },
 	    getOrder() {
 	      this.searchQuery = '';
+	      this.filteredItems.forEach((item, index) => {
+	        item.sort = index;
+	      });
 	      return this.filteredItems;
 	    }
 	  },

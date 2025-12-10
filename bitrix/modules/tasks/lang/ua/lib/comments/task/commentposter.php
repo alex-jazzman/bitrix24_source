@@ -1,4 +1,5 @@
 <?php
+$MESS["COMMENT_POSTER_COMMENT_TASK_ADD_AI_FAILED_TO_RESOLVE_RESPONSIBLE"] = "#RESPONSIBLE#, CoPilot не зміг визначити, кого потрібно призначити виконавцем, тому призначив вас.";
 $MESS["COMMENT_POSTER_COMMENT_TASK_ADD_MYSELF"] = "Поставлено завдання.";
 $MESS["COMMENT_POSTER_COMMENT_TASK_ADD_SOMEONE"] = "Поставлено завдання для #RESPONSIBLE#.";
 $MESS["COMMENT_POSTER_COMMENT_TASK_ADD_SOMEONE_CONTROL"] = "Поставлено завдання для #RESPONSIBLE#.

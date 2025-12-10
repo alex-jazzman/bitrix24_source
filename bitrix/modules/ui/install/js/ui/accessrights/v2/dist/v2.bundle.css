@@ -575,6 +575,7 @@ div.ui-access-rights-v2-members-item-new:last-of-type {
 	--ui-icon-set__icon-size: 20px;
 	--ui-icon-set__icon-color: var(--ui-color-base-5);
 }
+
 .ui-access-rights-v2-search-container {
 	display: flex;
 	gap: 12px;

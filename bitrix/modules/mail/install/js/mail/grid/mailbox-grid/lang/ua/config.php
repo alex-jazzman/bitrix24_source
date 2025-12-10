@@ -1,4 +1,5 @@
 <?php
+$MESS["MAIL_MAILBOX_LIST_ACTION_BUTTON_ACCESS_LOCK"] = "Недостатньо прав для налаштування.";
 $MESS["MAIL_MAILBOX_LIST_ACTION_BUTTON_ERROR_ACTION"] = "Під'єднати";
 $MESS["MAIL_MAILBOX_LIST_ACTION_BUTTON_ERROR_MESSAGE"] = "Помилка підключення";
 $MESS["MAIL_MAILBOX_LIST_ACTION_BUTTON_TITLE"] = "Налаштувати";

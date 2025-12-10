@@ -27,7 +27,7 @@ export default class DefaultStub extends BaseStub
 				iconOpacity = Math.min(100, Math.max(0, this.getOption('iconOpacity')));
 			}
 
-			const iconStyle = Type.isStringFilled(icon) && !this.#isIconSet(icon)
+			const iconStyle = Type.isStringFilled(icon) && !Icon.isValid({ icon })
 				? `style="background-image: url('${encodeUrl(icon)}'); opacity: ${iconOpacity / 100};"`
 				: ''
 			;
@@ -45,20 +45,6 @@ export default class DefaultStub extends BaseStub
 				</div>
 			`;
 		});
-	}
-
-	#isIconSet(icon: string): boolean
-	{
-		try
-		{
-			new Icon({ icon });
-
-			return true;
-		}
-		catch
-		{
-			return false;
-		}
 	}
 
 	getDefaultTitle(): string

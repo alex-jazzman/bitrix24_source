@@ -5,7 +5,8 @@ import { Outline, Icon, IconHoverMode } from 'ui.icon-set.api.core';
 import 'ui.icon-set.outline';
 
 import type { DialogAnglePositon, DialogEvents, DialogStickPosition } from './type';
-import { DialogAnglePositions, aliases } from './const';
+import { DialogAnglePositions, DialogBackground, aliases } from './const';
+import { getClosestZIndexElement } from './helpers/get-closest-z-index';
 
 import './css/dialog.css';
 
@@ -26,6 +27,7 @@ export type DialogOptions = {
 	disableScrolling?: boolean;
 	closeByEsc?: boolean;
 	closeByClickOutside?: boolean;
+	background?: DialogBackground;
 
 	// stickPosition: ?DialogStickPosition;
 	// bindElement?: DialogBindElement;
@@ -48,6 +50,7 @@ export class Dialog extends Event.EventEmitter
 	#disableScrolling: boolean;
 	#closeByClickOutside: ?boolean;
 	#closeByEsc: ?boolean;
+	#dialogBackground: DialogBackground;
 
 	#stickPosition: ?DialogStickPosition;
 	#bindElement: ?DialogBindElement;
@@ -76,6 +79,7 @@ export class Dialog extends Event.EventEmitter
 		this.#closeByClickOutside = options.closeByClickOutside ?? true;
 		this.#closeByEsc = options.closeByEsc ?? true;
 		this.#width = options.width;
+		this.#dialogBackground = options.background || DialogBackground.default;
 
 		// this.#stickPosition = options.stickPosition;
 		// this.#anglePosition = options.anglePosition;
@@ -204,6 +208,25 @@ export class Dialog extends Event.EventEmitter
 				backgroundColor: 'rgba(0, 32, 78, 0.46)',
 				opacity: 100,
 			} : undefined,
+			autoHideHandler: (event: PointerEvent) => {
+				if (event.target.closest('.ui-system-dialog'))
+				{
+					event.preventDefault();
+
+					return false;
+				}
+
+				const zIndex = getClosestZIndexElement(event.target);
+
+				if (zIndex > this.#getPopup().getZindex())
+				{
+					event.preventDefault();
+
+					return false;
+				}
+
+				return true;
+			},
 			autoHide: this.#closeByClickOutside,
 			closeByEsc: this.#closeByEsc,
 			cacheable: false,
@@ -487,6 +510,8 @@ export class Dialog extends Event.EventEmitter
 
 			classes.push(`popup-window-angle-${angleClass}`);
 		}
+
+		classes.push(`--bg-${this.#dialogBackground}`);
 
 		return classes.join(' ');
 	}

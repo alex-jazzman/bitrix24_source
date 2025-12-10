@@ -61,6 +61,7 @@ export class MenuItem
 					: Tag.render`
 						<button
 							class="ui-popup-menu-item-action"
+							title="${Text.encode(this.#options.title)}"
 							onclick="${this.#options.onClick}"
 							onmouseenter="${this.#onMouseEnter}"
 							onmouseleave="${this.#onMouseLeave}"

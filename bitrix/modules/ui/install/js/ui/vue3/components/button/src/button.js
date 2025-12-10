@@ -1,4 +1,4 @@
-import { Type } from 'main.core';
+import { Type, Dom } from 'main.core';
 import {
 	Button as UIButton,
 	ButtonColor, ButtonSize,
@@ -70,6 +70,12 @@ export const Button: BitrixVueComponentProps | { button: ?UIButton } = {
 		id: {
 			type: String,
 			default: '',
+		},
+		type: {
+			type: String,
+			required: false,
+			default: 'button',
+			validator: (type) => ['button', 'submit', 'reset'].includes(type),
 		},
 		dataset: {
 			type: Object,
@@ -255,6 +261,10 @@ export const Button: BitrixVueComponentProps | { button: ?UIButton } = {
 				this.button?.stopShimmer();
 			}
 		},
+		type(type): void
+		{
+			Dom.attr(this.button?.getContainer(), 'type', type);
+		},
 	},
 	created(): void
 	{
@@ -310,8 +320,8 @@ export const Button: BitrixVueComponentProps | { button: ?UIButton } = {
 		if (this.rightCounterValue)
 		{
 			button.setRightCounter({
-				value: this.leftCounterValue,
-				color: this.leftCounterColor,
+				value: this.rightCounterValue,
+				color: this.rightCounterColor,
 			});
 		}
 
@@ -325,6 +335,8 @@ export const Button: BitrixVueComponentProps | { button: ?UIButton } = {
 	mounted(): void
 	{
 		const button = this.button?.render();
+
+		Dom.attr(button, 'type', this.type);
 
 		this.$refs.button.after(button);
 

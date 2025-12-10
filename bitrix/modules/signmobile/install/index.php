@@ -68,6 +68,14 @@ class SignMobile extends CModule
 			'onBeforeTabsGet',
 		);
 
+		$eventManager->registerEventHandler(
+			'mobile',
+			'onMobileMenuStructureBuilt',
+			'signmobile',
+			'Bitrix\SignMobile\MobileMenuManager',
+			'onMobileMenuStructureBuilt',
+		);
+
 		return true;
 	}
 
@@ -108,6 +116,14 @@ class SignMobile extends CModule
 			$this->MODULE_ID,
 			Bitrix\SignMobile\SignTab::class,
 			'onBeforeTabsGet',
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'mobile',
+			'onMobileMenuStructureBuilt',
+			'signmobile',
+			'Bitrix\SignMobile\MobileMenuManager',
+			'onMobileMenuStructureBuilt',
 		);
 
 		ModuleManager::unRegisterModule($this->MODULE_ID);

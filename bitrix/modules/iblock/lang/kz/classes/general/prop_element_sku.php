@@ -12,4 +12,4 @@ $MESS["BT_UT_SKU_SETTING_MAX_WIDTH"] = "Енгізу өрісінің пиксе
 $MESS["BT_UT_SKU_SETTING_MIN_HEIGHT"] = "Бірнеше қасиет болса, енгізу өрісінің пиксельдегі ең аз биіктігі";
 $MESS["BT_UT_SKU_SETTING_REP_SYMBOL"] = "Көрсетілген кезде тыйым салынған символдарды алмастыратын символ";
 $MESS["BT_UT_SKU_SETTING_TITLE"] = "SKU баптаулары";
-$MESS["BT_UT_SKU_SETTING_VIEW"] = "Көрсетілім интерфейсі";
+$MESS['BT_UT_SKU_SETTING_VIEW'] = "Көрсетілім интерфейсі";

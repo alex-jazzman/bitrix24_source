@@ -61,5 +61,5 @@ $MESS["T_IBLOCK_DESC_PAGER_TEMPLATE_SITE_DEFAULT"] = "Жалпы қалып";
 $MESS["T_IBLOCK_DESC_PAGER_TEMPLATE_SYSTEM"] = "Кірістірілген қалып";
 $MESS["T_IBLOCK_DESC_PAGER_TITLE"] = "Санаттар атауы";
 $MESS["T_IBLOCK_DESC_PARAMS_NAME"] = "Сілтемелерді құруға арналған айнымалылары бар массивтің аты";
-$MESS["T_IBLOCK_DESC_SHOW_ALL"] = "\"Барлығы\" сілтемесін көрсету";
-$MESS["T_IBLOCK_DESC_TOP_PAGER"] = "Тізімнің үстінде көрсету";
+$MESS['T_IBLOCK_DESC_SHOW_ALL'] = "\"Барлығы\" сілтемесін көрсету";
+$MESS['T_IBLOCK_DESC_TOP_PAGER'] = "Тізімнің үстінде көрсету";

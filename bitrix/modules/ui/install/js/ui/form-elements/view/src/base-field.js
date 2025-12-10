@@ -48,6 +48,14 @@ export class BaseField extends EventEmitter
 		this.#isFieldDisabled = Type.isBoolean(params.isFieldDisabled) ? params.isFieldDisabled : false;
 
 		this.#badge = Type.isStringFilled(params.badge) ? new Badge({ text: params.badge }) : null;
+
+		EventEmitter.subscribe(
+			EventEmitter.GLOBAL_TARGET,
+			'BX.Intranet.Settings:onBeforeSave',
+			() => {
+				this.cleanError();
+			}
+		);
 	}
 
 	getHelpMessage(): ?HelpMessage
@@ -72,16 +80,19 @@ export class BaseField extends EventEmitter
 	setErrors(errorMessages): void
 	{
 		this.cleanError();
-		Dom.addClass(this.getErrorBox(), '--error');
-		for (let message of errorMessages)
+		if (Type.isArray(errorMessages) && errorMessages.length > 0)
 		{
-			let error = Tag.render`
+			Dom.addClass(this.getErrorBox(), '--error');
+			for (const message of errorMessages)
+			{
+				const error = Tag.render`
 				<div class="ui-section__error-message">
 					<span class="ui-icon-set --warning"></span>
 					<span>${message}</span>
 				</div>
 			`;
-			Dom.append(error, this.renderErrors());
+				Dom.append(error, this.renderErrors());
+			}
 		}
 	}
 

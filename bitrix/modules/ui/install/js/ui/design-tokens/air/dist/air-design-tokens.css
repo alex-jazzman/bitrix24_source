@@ -1,6 +1,6 @@
 /**
  * Do not edit directly
- * Generated on Tue, 08 Jul 2025 12:00:23 GMT
+ * Generated on Mon, 06 Oct 2025 14:34:49 GMT
  */
 
 :root, .--ui-context-content-light {
@@ -33,10 +33,10 @@
   --ui-divider-optical-1-weight: 0px;
   --ui-divider-optical-2-weight: 0px;
   --ui-color-divider-optical-on-overlay: #FFFFFF00;
-  --ui-color-bg-content-secondary: #FAFCFD;
   --ui-divider-optical-on-overlay-weight: 0px;
+  --ui-color-bg-content-secondary: #F6FAFB;
   --ui-color-bg-content-tertiary: #EEF2F4;
-  --ui-color-bg-vibrant-accent: #FFFFFFF5;
+  --ui-color-bg-vibrant-accent: #FAFBFCF5;
   --ui-color-bg-state-hover-default-hex: #000000;
   --ui-color-bg-state-hover-default-opacity: 3%;
   --ui-color-bg-state-hover-default: #00000008;
@@ -61,9 +61,9 @@
   --ui-color-bg-state-click-alt-overlay-hex: #FFFFFF;
   --ui-color-bg-state-click-alt-overlay-opacity: 50%;
   --ui-color-bg-state-click-alt-overlay: #FFFFFF80;
-  --ui-color-bg-vibrant-default: #FFFFFFEB;
-  --ui-color-bg-vibrant-less: #FFFFFFDB;
-  --ui-color-bg-vibrant-less-more: #FFFFFFCC;
+  --ui-color-bg-vibrant-default: #FAFBFCEB;
+  --ui-color-bg-vibrant-less: #FAFBFCDB;
+  --ui-color-bg-vibrant-less-more: #FAFBFCCC;
   --ui-color-bg-content-inapp: #085DC1;
   --ui-color-bg-content-primary-layer: #FFFFFF;
   --ui-color-bg-content-light: #FFFFFF;
@@ -141,6 +141,7 @@
   --ui-color-design-tinted-a1-content-chevron: var(--ui-color-base-white-fixed);
   --ui-color-design-tinted-a1-content-divider: #FFFFFF3D;
   --ui-color-design-tinted-success-bg: var(--ui-color-accent-soft-green-2);
+  --ui-color-design-tinted-success-bg-alt: var(--ui-color-accent-soft-green-3);
   --ui-color-design-tinted-success-stroke: var(--ui-color-accent-soft-green-2);
   --ui-design-tinted-success-stroke-weight: 0px;
   --ui-color-design-tinted-success-content: var(--ui-color-accent-extra-grass);
@@ -151,6 +152,7 @@
   --ui-color-design-tinted-stroke: var(--ui-color-accent-soft-blue-2);
   --ui-design-tinted-stroke-weight: 0px;
   --ui-color-design-tinted-content: var(--ui-color-accent-main-link);
+  --ui-color-design-tinted-content-alt: var(--ui-color-accent-extra-darkblue);
   --ui-color-design-tinted-content-icon: var(--ui-color-accent-main-link);
   --ui-color-design-tinted-content-icon-secondary: #0154C880;
   --ui-color-design-tinted-content-chevron: var(--ui-color-accent-main-link);
@@ -169,6 +171,13 @@
   --ui-color-design-tinted-warning-content-icon: var(--ui-color-accent-extra-orange);
   --ui-color-design-tinted-warning-content-chevron: var(--ui-color-accent-extra-orange);
   --ui-color-design-tinted-warning-content-divider: #FFEBD0;
+  --ui-color-design-tinted-violet-bg: var(--ui-color-accent-soft-violet-2);
+  --ui-color-design-tinted-violet-stroke: var(--ui-color-accent-soft-violet-2);
+  --ui-design-tinted-violet-stroke-weight: 0px;
+  --ui-color-design-tinted-violet-content: var(--ui-color-accent-soft-element-violet);
+  --ui-color-design-tinted-violet-content-icon: var(--ui-color-accent-soft-element-violet);
+  --ui-color-design-tinted-violet-content-chevron: var(--ui-color-accent-soft-element-violet);
+  --ui-color-design-tinted-violet-content-divider: #F2D0FF;
   --ui-color-design-tinted-na-bg: var(--ui-color-base-7);
   --ui-color-design-tinted-na-stroke: var(--ui-color-base-7);
   --ui-design-tinted-na-stroke-weight: 0px;
@@ -189,8 +198,10 @@
   --ui-design-outline-a2-stroke-weight-alt: var(--ui-border-width-thin);
   --ui-color-design-outline-a2-content: var(--ui-color-accent-main-primary);
   --ui-color-design-outline-a2-content-icon: var(--ui-color-accent-main-primary);
+  --ui-color-design-outline-a2-content-icon-secondary: var(--ui-color-accent-main-primary-alt-2);
   --ui-color-design-outline-a2-content-chevron: var(--ui-color-accent-main-primary);
   --ui-color-design-outline-a2-content-divider: #D0E6FF;
+  --ui-color-design-outline-a2-focused-bg: var(--ui-color-accent-soft-blue-3);
   --ui-color-design-outline-bg: var(--ui-color-bg-content-primary);
   --ui-color-design-outline-success-bg: var(--ui-color-bg-content-primary);
   --ui-color-design-outline-success-stroke: var(--ui-color-accent-soft-border-green);
@@ -269,18 +280,18 @@
   --ui-color-design-plain-na-content-icon: var(--ui-color-base-4);
   --ui-color-design-plain-na-content-chevron: var(--ui-color-base-4);
   --ui-color-design-plain-na-content-divider: var(--ui-color-base-7);
-  --ui-color-design-plain-na-focused-bg: var(--ui-color-bg-content-primary);
   --ui-color-design-selection-bg: var(--ui-color-accent-soft-blue-3);
+  --ui-color-design-plain-na-focused-bg: var(--ui-color-bg-content-primary);
   --ui-color-design-selection-stroke: var(--ui-color-accent-soft-blue-1);
   --ui-design-selection-stroke-weight: var(--ui-border-width-medium);
   --ui-design-selection-stroke-weight-alt: var(--ui-border-width-thin);
-  --ui-color-design-plain-na-focused-stroke: var(--ui-color-divider-default);
   --ui-color-design-selection-content: var(--ui-color-accent-main-primary);
-  --ui-design-plain-na-focused-stroke-weight: var(--ui-border-width-medium);
+  --ui-color-design-plain-na-focused-stroke: var(--ui-color-divider-default);
   --ui-color-design-selection-content-icon: var(--ui-color-accent-main-primary);
+  --ui-design-plain-na-focused-stroke-weight: var(--ui-border-width-medium);
   --ui-color-design-selection-content-icon-secondary: var(--ui-color-accent-main-primary-alt-2);
-  --ui-color-design-selection-content-chevron: var(--ui-color-accent-main-primary);
   --ui-color-design-plain-na-focused-content: var(--ui-color-base-1);
+  --ui-color-design-selection-content-chevron: var(--ui-color-accent-main-primary);
   --ui-color-design-selection-content-divider: var(--ui-color-accent-soft-blue-1);
   --ui-color-design-selection-focused-bg: var(--ui-color-bg-content-primary);
   --ui-color-accent-main-primary-alt: #1F86FF;
@@ -402,8 +413,8 @@
   --ui-color-g-glass-orange-bg-2: #DB7600D1;
   --ui-color-g-glass-orange-bg-3: #FFD685BD;
   --ui-color-g-glass-orange-stroke: #FFFFFF2E;
-  --ui-color-white-base: #FFFFFF;
   --ui-color-blue-09: #F3F8FF;
+  --ui-color-white-base: #FFFFFF;
   --ui-color-blue-10: #F3FAFF;
   --ui-color-blue-15: #F0F7FF;
   --ui-color-blue-20: #E7F4FF;
@@ -563,8 +574,8 @@
   --ui-divider-optical-1-weight: var(--ui-border-width-thin);
   --ui-divider-optical-2-weight: var(--ui-border-width-thick);
   --ui-color-divider-optical-on-overlay: #FFFFFF14;
-  --ui-color-bg-content-secondary: #1F1F1F;
   --ui-divider-optical-on-overlay-weight: var(--ui-border-width-thin);
+  --ui-color-bg-content-secondary: #1F1F1F;
   --ui-color-bg-content-tertiary: #171717;
   --ui-color-bg-vibrant-accent: #262626E0;
   --ui-color-bg-state-hover-default-hex: #000000;
@@ -671,6 +682,7 @@
   --ui-color-design-tinted-a1-content-chevron: var(--ui-color-base-white-fixed);
   --ui-color-design-tinted-a1-content-divider: #FFFFFF3D;
   --ui-color-design-tinted-success-bg: var(--ui-color-accent-soft-green-2);
+  --ui-color-design-tinted-success-bg-alt: var(--ui-color-accent-soft-green-3);
   --ui-color-design-tinted-success-stroke: var(--ui-color-accent-soft-green-2);
   --ui-design-tinted-success-stroke-weight: 0px;
   --ui-color-design-tinted-success-content: var(--ui-color-accent-extra-grass);
@@ -681,6 +693,7 @@
   --ui-color-design-tinted-stroke: var(--ui-color-accent-soft-blue-2);
   --ui-design-tinted-stroke-weight: 0px;
   --ui-color-design-tinted-content: var(--ui-color-accent-main-link);
+  --ui-color-design-tinted-content-alt: var(--ui-color-accent-extra-darkblue);
   --ui-color-design-tinted-content-icon: var(--ui-color-accent-main-link);
   --ui-color-design-tinted-content-icon-secondary: #468BEC80;
   --ui-color-design-tinted-content-chevron: var(--ui-color-accent-main-link);
@@ -699,6 +712,13 @@
   --ui-color-design-tinted-warning-content-icon: var(--ui-color-accent-extra-orange);
   --ui-color-design-tinted-warning-content-chevron: var(--ui-color-accent-extra-orange);
   --ui-color-design-tinted-warning-content-divider: #7E5200;
+  --ui-color-design-tinted-violet-bg: var(--ui-color-accent-soft-violet-2);
+  --ui-color-design-tinted-violet-stroke: var(--ui-color-accent-soft-violet-2);
+  --ui-design-tinted-violet-stroke-weight: 0px;
+  --ui-color-design-tinted-violet-content: var(--ui-color-accent-soft-element-violet);
+  --ui-color-design-tinted-violet-content-icon: var(--ui-color-accent-soft-element-violet);
+  --ui-color-design-tinted-violet-content-chevron: var(--ui-color-accent-soft-element-violet);
+  --ui-color-design-tinted-violet-content-divider: #60007E;
   --ui-color-design-tinted-na-bg: var(--ui-color-base-7);
   --ui-color-design-tinted-na-stroke: var(--ui-color-base-7);
   --ui-design-tinted-na-stroke-weight: 0px;
@@ -719,8 +739,10 @@
   --ui-design-outline-a2-stroke-weight-alt: var(--ui-border-width-thin);
   --ui-color-design-outline-a2-content: var(--ui-color-accent-main-primary);
   --ui-color-design-outline-a2-content-icon: var(--ui-color-accent-main-primary);
+  --ui-color-design-outline-a2-content-icon-secondary: #5EAEFF;
   --ui-color-design-outline-a2-content-chevron: var(--ui-color-accent-main-primary);
   --ui-color-design-outline-a2-content-divider: #003F7E;
+  --ui-color-design-outline-a2-focused-bg: var(--ui-color-accent-soft-blue-3);
   --ui-color-design-outline-bg: var(--ui-color-bg-content-primary);
   --ui-color-design-outline-success-bg: var(--ui-color-bg-content-primary);
   --ui-color-design-outline-success-stroke: var(--ui-color-accent-soft-border-green);
@@ -799,18 +821,18 @@
   --ui-color-design-plain-na-content-icon: var(--ui-color-base-4);
   --ui-color-design-plain-na-content-chevron: var(--ui-color-base-4);
   --ui-color-design-plain-na-content-divider: var(--ui-color-base-7);
-  --ui-color-design-plain-na-focused-bg: var(--ui-color-divider-accent);
   --ui-color-design-selection-bg: #1F3048;
+  --ui-color-design-plain-na-focused-bg: var(--ui-color-divider-accent);
   --ui-color-design-selection-stroke: #294162;
   --ui-design-selection-stroke-weight: var(--ui-border-width-medium);
   --ui-design-selection-stroke-weight-alt: var(--ui-border-width-thin);
-  --ui-color-design-plain-na-focused-stroke: var(--ui-color-divider-default);
   --ui-color-design-selection-content: #2A94FF;
-  --ui-design-plain-na-focused-stroke-weight: var(--ui-border-width-medium);
+  --ui-color-design-plain-na-focused-stroke: var(--ui-color-divider-default);
   --ui-color-design-selection-content-icon: #2A94FF;
+  --ui-design-plain-na-focused-stroke-weight: var(--ui-border-width-medium);
   --ui-color-design-selection-content-icon-secondary: #5EAEFF;
-  --ui-color-design-selection-content-chevron: #2A94FF;
   --ui-color-design-plain-na-focused-content: var(--ui-color-base-1);
+  --ui-color-design-selection-content-chevron: #2A94FF;
   --ui-color-design-selection-content-divider: var(--ui-color-accent-soft-blue-1);
   --ui-color-design-selection-focused-bg: #1F3048;
   --ui-color-accent-main-primary-alt: #1B79E6;
@@ -932,8 +954,8 @@
   --ui-color-g-glass-orange-bg-2: #D06A0CD1;
   --ui-color-g-glass-orange-bg-3: #FFD27CBD;
   --ui-color-g-glass-orange-stroke: #00000029;
-  --ui-color-white-base: #FFFFFF;
   --ui-color-blue-09: #FFFFFF;
+  --ui-color-white-base: #FFFFFF;
   --ui-color-blue-10: #F4FCFE;
   --ui-color-blue-15: #ECFAFE;
   --ui-color-blue-20: #E5F9FF;
@@ -1093,8 +1115,8 @@
   --ui-divider-optical-1-weight: var(--ui-border-width-thin);
   --ui-divider-optical-2-weight: var(--ui-border-width-thin);
   --ui-color-divider-optical-on-overlay: #00000014;
-  --ui-color-bg-content-secondary: #0000000A;
   --ui-divider-optical-on-overlay-weight: var(--ui-border-width-thin);
+  --ui-color-bg-content-secondary: #0000000A;
   --ui-color-bg-content-tertiary: #00000005;
   --ui-color-bg-vibrant-accent: #00000033;
   --ui-color-bg-state-hover-default-hex: #000000;
@@ -1201,6 +1223,7 @@
   --ui-color-design-tinted-a1-content-chevron: var(--ui-color-base-4);
   --ui-color-design-tinted-a1-content-divider: var(--ui-color-base-7);
   --ui-color-design-tinted-success-bg: var(--ui-color-base-8);
+  --ui-color-design-tinted-success-bg-alt: var(--ui-color-base-7);
   --ui-color-design-tinted-success-stroke: var(--ui-color-base-white-fixed);
   --ui-design-tinted-success-stroke-weight: 0px;
   --ui-color-design-tinted-success-content: var(--ui-color-base-0);
@@ -1211,6 +1234,7 @@
   --ui-color-design-tinted-stroke: var(--ui-color-base-white-fixed);
   --ui-design-tinted-stroke-weight: 0px;
   --ui-color-design-tinted-content: var(--ui-color-base-0);
+  --ui-color-design-tinted-content-alt: var(--ui-color-base-0);
   --ui-color-design-tinted-content-icon: var(--ui-color-base-0);
   --ui-color-design-tinted-content-icon-secondary: var(--ui-color-base-4);
   --ui-color-design-tinted-content-chevron: var(--ui-color-base-4);
@@ -1229,6 +1253,13 @@
   --ui-color-design-tinted-warning-content-icon: var(--ui-color-base-0);
   --ui-color-design-tinted-warning-content-chevron: var(--ui-color-base-4);
   --ui-color-design-tinted-warning-content-divider: var(--ui-color-base-7);
+  --ui-color-design-tinted-violet-bg: var(--ui-color-base-8);
+  --ui-color-design-tinted-violet-stroke: var(--ui-color-base-white-fixed);
+  --ui-design-tinted-violet-stroke-weight: 0px;
+  --ui-color-design-tinted-violet-content: var(--ui-color-base-0);
+  --ui-color-design-tinted-violet-content-icon: var(--ui-color-base-0);
+  --ui-color-design-tinted-violet-content-chevron: var(--ui-color-base-4);
+  --ui-color-design-tinted-violet-content-divider: var(--ui-color-base-7);
   --ui-color-design-tinted-na-bg: var(--ui-color-base-8);
   --ui-color-design-tinted-na-stroke: var(--ui-color-base-white-fixed);
   --ui-design-tinted-na-stroke-weight: 0px;
@@ -1249,8 +1280,10 @@
   --ui-design-outline-a2-stroke-weight-alt: var(--ui-border-width-thin);
   --ui-color-design-outline-a2-content: var(--ui-color-base-0);
   --ui-color-design-outline-a2-content-icon: var(--ui-color-base-1);
+  --ui-color-design-outline-a2-content-icon-secondary: var(--ui-color-base-2);
   --ui-color-design-outline-a2-content-chevron: var(--ui-color-base-1);
   --ui-color-design-outline-a2-content-divider: var(--ui-color-base-7);
+  --ui-color-design-outline-a2-focused-bg: #00000014;
   --ui-color-design-outline-bg: var(--ui-color-bg-content-primary);
   --ui-color-design-outline-success-bg: var(--ui-color-bg-content-primary);
   --ui-color-design-outline-success-stroke: var(--ui-color-base-7);
@@ -1329,18 +1362,18 @@
   --ui-color-design-plain-na-content-icon: var(--ui-color-base-5);
   --ui-color-design-plain-na-content-chevron: var(--ui-color-base-5);
   --ui-color-design-plain-na-content-divider: var(--ui-color-base-8);
-  --ui-color-design-plain-na-focused-bg: #00000014;
   --ui-color-design-selection-bg: #00000014;
+  --ui-color-design-plain-na-focused-bg: #00000014;
   --ui-color-design-selection-stroke: #00000000;
   --ui-design-selection-stroke-weight: 0px;
   --ui-design-selection-stroke-weight-alt: 0px;
-  --ui-color-design-plain-na-focused-stroke: #00000014;
   --ui-color-design-selection-content: var(--ui-color-base-1);
-  --ui-design-plain-na-focused-stroke-weight: var(--ui-border-width-medium);
+  --ui-color-design-plain-na-focused-stroke: #00000014;
   --ui-color-design-selection-content-icon: var(--ui-color-base-1);
+  --ui-design-plain-na-focused-stroke-weight: var(--ui-border-width-medium);
   --ui-color-design-selection-content-icon-secondary: var(--ui-color-base-2);
-  --ui-color-design-selection-content-chevron: var(--ui-color-base-0);
   --ui-color-design-plain-na-focused-content: var(--ui-color-base-1);
+  --ui-color-design-selection-content-chevron: var(--ui-color-base-0);
   --ui-color-design-selection-content-divider: var(--ui-color-base-7);
   --ui-color-design-selection-focused-bg: #00000026;
   --ui-color-accent-main-primary-alt: #1B79E6;
@@ -1462,8 +1495,8 @@
   --ui-color-g-glass-orange-bg-2: #D06A0CD1;
   --ui-color-g-glass-orange-bg-3: #FFD27CBD;
   --ui-color-g-glass-orange-stroke: #FFFFFF24;
-  --ui-color-white-base: #FFFFFF;
   --ui-color-blue-09: #FFFFFF;
+  --ui-color-white-base: #FFFFFF;
   --ui-color-blue-10: #F4FCFE;
   --ui-color-blue-15: #ECFAFE;
   --ui-color-blue-20: #E5F9FF;
@@ -1623,8 +1656,8 @@
   --ui-divider-optical-1-weight: var(--ui-border-width-thin);
   --ui-divider-optical-2-weight: var(--ui-border-width-thick);
   --ui-color-divider-optical-on-overlay: #FFFFFF1F;
-  --ui-color-bg-content-secondary: #FFFFFF1F;
   --ui-divider-optical-on-overlay-weight: var(--ui-border-width-thin);
+  --ui-color-bg-content-secondary: #FFFFFF1F;
   --ui-color-bg-content-tertiary: #FFFFFF14;
   --ui-color-bg-vibrant-accent: #FFFFFF3D;
   --ui-color-bg-state-hover-default-hex: #FFFFFF;
@@ -1731,6 +1764,7 @@
   --ui-color-design-tinted-a1-content-chevron: var(--ui-color-base-4);
   --ui-color-design-tinted-a1-content-divider: var(--ui-color-base-7);
   --ui-color-design-tinted-success-bg: var(--ui-color-base-8);
+  --ui-color-design-tinted-success-bg-alt: var(--ui-color-base-7);
   --ui-color-design-tinted-success-stroke: var(--ui-color-base-white-fixed);
   --ui-design-tinted-success-stroke-weight: 0px;
   --ui-color-design-tinted-success-content: var(--ui-color-base-0);
@@ -1741,6 +1775,7 @@
   --ui-color-design-tinted-stroke: var(--ui-color-base-white-fixed);
   --ui-design-tinted-stroke-weight: 0px;
   --ui-color-design-tinted-content: var(--ui-color-base-0);
+  --ui-color-design-tinted-content-alt: var(--ui-color-base-0);
   --ui-color-design-tinted-content-icon: var(--ui-color-base-0);
   --ui-color-design-tinted-content-icon-secondary: var(--ui-color-base-4);
   --ui-color-design-tinted-content-chevron: var(--ui-color-base-4);
@@ -1759,6 +1794,13 @@
   --ui-color-design-tinted-warning-content-icon: var(--ui-color-base-0);
   --ui-color-design-tinted-warning-content-chevron: var(--ui-color-base-4);
   --ui-color-design-tinted-warning-content-divider: var(--ui-color-base-7);
+  --ui-color-design-tinted-violet-bg: var(--ui-color-base-8);
+  --ui-color-design-tinted-violet-stroke: var(--ui-color-base-white-fixed);
+  --ui-design-tinted-violet-stroke-weight: 0px;
+  --ui-color-design-tinted-violet-content: var(--ui-color-base-0);
+  --ui-color-design-tinted-violet-content-icon: var(--ui-color-base-0);
+  --ui-color-design-tinted-violet-content-chevron: var(--ui-color-base-4);
+  --ui-color-design-tinted-violet-content-divider: var(--ui-color-base-7);
   --ui-color-design-tinted-na-bg: var(--ui-color-base-8);
   --ui-color-design-tinted-na-stroke: var(--ui-color-base-white-fixed);
   --ui-design-tinted-na-stroke-weight: 0px;
@@ -1779,8 +1821,10 @@
   --ui-design-outline-a2-stroke-weight-alt: var(--ui-border-width-thin);
   --ui-color-design-outline-a2-content: var(--ui-color-base-0);
   --ui-color-design-outline-a2-content-icon: var(--ui-color-base-1);
+  --ui-color-design-outline-a2-content-icon-secondary: var(--ui-color-base-2);
   --ui-color-design-outline-a2-content-chevron: var(--ui-color-base-1);
   --ui-color-design-outline-a2-content-divider: var(--ui-color-base-7);
+  --ui-color-design-outline-a2-focused-bg: #FFFFFF4D;
   --ui-color-design-outline-bg: var(--ui-color-bg-content-primary);
   --ui-color-design-outline-success-bg: var(--ui-color-bg-content-primary);
   --ui-color-design-outline-success-stroke: var(--ui-color-base-7);
@@ -1859,18 +1903,18 @@
   --ui-color-design-plain-na-content-icon: var(--ui-color-base-4);
   --ui-color-design-plain-na-content-chevron: var(--ui-color-base-4);
   --ui-color-design-plain-na-content-divider: var(--ui-color-base-8);
-  --ui-color-design-plain-na-focused-bg: #FFFFFF1F;
   --ui-color-design-selection-bg: #FFFFFF4D;
+  --ui-color-design-plain-na-focused-bg: #FFFFFF1F;
   --ui-color-design-selection-stroke: #FFFFFF00;
   --ui-design-selection-stroke-weight: 0px;
   --ui-design-selection-stroke-weight-alt: 0px;
-  --ui-color-design-plain-na-focused-stroke: #FFFFFF1F;
   --ui-color-design-selection-content: var(--ui-color-base-0);
-  --ui-design-plain-na-focused-stroke-weight: var(--ui-border-width-medium);
+  --ui-color-design-plain-na-focused-stroke: #FFFFFF1F;
   --ui-color-design-selection-content-icon: var(--ui-color-base-0);
+  --ui-design-plain-na-focused-stroke-weight: var(--ui-border-width-medium);
   --ui-color-design-selection-content-icon-secondary: var(--ui-color-base-2);
-  --ui-color-design-selection-content-chevron: var(--ui-color-base-0);
   --ui-color-design-plain-na-focused-content: var(--ui-color-base-1);
+  --ui-color-design-selection-content-chevron: var(--ui-color-base-0);
   --ui-color-design-selection-content-divider: var(--ui-color-base-7);
   --ui-color-design-selection-focused-bg: #FFFFFF57;
   --ui-color-accent-main-primary-alt: #1B79E6;
@@ -1992,8 +2036,8 @@
   --ui-color-g-glass-orange-bg-2: #D06A0CD1;
   --ui-color-g-glass-orange-bg-3: #FFD27CBD;
   --ui-color-g-glass-orange-stroke: #FFFFFF24;
-  --ui-color-white-base: #FFFFFF;
   --ui-color-blue-09: #FFFFFF;
+  --ui-color-white-base: #FFFFFF;
   --ui-color-blue-10: #F4FCFE;
   --ui-color-blue-15: #ECFAFE;
   --ui-color-blue-20: #E5F9FF;

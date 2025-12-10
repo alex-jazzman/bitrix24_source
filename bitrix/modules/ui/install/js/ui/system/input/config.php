@@ -9,6 +9,7 @@ return [
 	'js' => 'dist/input.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
+		'ui.system.chip.vue',
 		'ui.icon-set.api.vue',
 		'ui.icon-set.outline',
 	],

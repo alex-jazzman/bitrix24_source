@@ -186,6 +186,9 @@ export const Selector = {
 		},
 		getOrder() {
 			this.searchQuery = '';
+			this.filteredItems.forEach((item, index) => {
+				item.sort = index;
+			});
 
 			return this.filteredItems;
 		},

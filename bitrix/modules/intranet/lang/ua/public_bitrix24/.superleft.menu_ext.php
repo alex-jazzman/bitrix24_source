@@ -1,4 +1,5 @@
 <?php
+$MESS["MENU_AI_AGENTS"] = "AI-агенти";
 $MESS["MENU_AI_SECTION"] = "Лабораторія AI";
 $MESS["MENU_AUTOMATION_SECTION"] = "Автоматизація";
 $MESS["MENU_BIZPROC"] = "Бізнес-процеси";

@@ -113,6 +113,9 @@ this.BX.UI = this.BX.UI || {};
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _badge, main_core.Type.isStringFilled(params.badge) ? new Badge({
 	      text: params.badge
 	    }) : null);
+	    main_core_events.EventEmitter.subscribe(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Settings:onBeforeSave', function () {
+	      _this.cleanError();
+	    });
 	    return _this;
 	  }
 	  babelHelpers.createClass(BaseField, [{
@@ -134,19 +137,21 @@ this.BX.UI = this.BX.UI || {};
 	    key: "setErrors",
 	    value: function setErrors(errorMessages) {
 	      this.cleanError();
-	      main_core.Dom.addClass(this.getErrorBox(), '--error');
-	      var _iterator = _createForOfIteratorHelper(errorMessages),
-	        _step;
-	      try {
-	        for (_iterator.s(); !(_step = _iterator.n()).done;) {
-	          var message = _step.value;
-	          var error = main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"ui-section__error-message\">\n\t\t\t\t\t<span class=\"ui-icon-set --warning\"></span>\n\t\t\t\t\t<span>", "</span>\n\t\t\t\t</div>\n\t\t\t"])), message);
-	          main_core.Dom.append(error, this.renderErrors());
+	      if (main_core.Type.isArray(errorMessages) && errorMessages.length > 0) {
+	        main_core.Dom.addClass(this.getErrorBox(), '--error');
+	        var _iterator = _createForOfIteratorHelper(errorMessages),
+	          _step;
+	        try {
+	          for (_iterator.s(); !(_step = _iterator.n()).done;) {
+	            var message = _step.value;
+	            var error = main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"ui-section__error-message\">\n\t\t\t\t\t<span class=\"ui-icon-set --warning\"></span>\n\t\t\t\t\t<span>", "</span>\n\t\t\t\t</div>\n\t\t\t"])), message);
+	            main_core.Dom.append(error, this.renderErrors());
+	          }
+	        } catch (err) {
+	          _iterator.e(err);
+	        } finally {
+	          _iterator.f();
 	        }
-	      } catch (err) {
-	        _iterator.e(err);
-	      } finally {
-	        _iterator.f();
 	      }
 	    }
 	  }, {

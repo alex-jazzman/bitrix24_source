@@ -1,7 +1,7 @@
 <?php
 $MESS["TASKS_DEADLINE_NOTIFICATION_CANCEL_BUTTON_MSGVER_1"] = "Не вказувати строк";
 $MESS["TASKS_DEADLINE_NOTIFICATION_DAY"] = "Сьогодні";
-$MESS["TASKS_DEADLINE_NOTIFICATION_DEADLINE_TITLE"] = "Крайній термін";
+$MESS["TASKS_DEADLINE_NOTIFICATION_DEADLINE_TITLE"] = "Кінцевий термін";
 $MESS["TASKS_DEADLINE_NOTIFICATION_DEFAULT_DEADLINE_CHECKER"] = "Указувати крайній термін для нових завдань";
 $MESS["TASKS_DEADLINE_NOTIFICATION_DEFAULT_DEADLINE_HINT"] = "Крайній термін за вмовчанням указуватиметься в усіх завданнях, які ви створюєте. За потреби ви зможете змінювати його.";
 $MESS["TASKS_DEADLINE_NOTIFICATION_DESCRIPTION"] = " ";

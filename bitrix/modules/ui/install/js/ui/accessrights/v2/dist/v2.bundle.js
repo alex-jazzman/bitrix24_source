@@ -1945,8 +1945,9 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	      return ItemsMapper.mapUserGroups(this.userGroupsBySelectedMember);
 	    },
 	    viewDialogItems() {
+	      var _this$selectedMember;
 	      const result = [];
-	      const selectedMemberId = this.selectedMember ? this.selectedMember.id : SELECTED_ALL_USER_ID;
+	      const selectedMemberId = (_this$selectedMember = this.selectedMember) != null && _this$selectedMember.id ? this.selectedMember.id : SELECTED_ALL_USER_ID;
 	      for (const copyDialogItem of ItemsMapper.mapUserGroups(this.userGroupsBySelectedMember)) {
 	        result.push({
 	          ...copyDialogItem,
@@ -1989,7 +1990,7 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	        dropdownMode: true,
 	        enableSearch: true,
 	        cacheable: false,
-	        items: this.viewDialogItems,
+	        items: this.copyDialogItems,
 	        events: {
 	          'Item:onSelect': dialogEvent => {
 	            const {
@@ -2014,7 +2015,7 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	        maxSelected: this.maxVisibleUserGroups,
 	        events: {
 	          onSave: () => {
-	            var _this$selectedMember;
+	            var _this$selectedMember2;
 	            const selectedItems = this.viewDialog.getSelectedItems();
 	            const userSortConfig = {};
 	            selectedItems.forEach((item, index) => {
@@ -2023,7 +2024,7 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 	            this.$store.dispatch('userGroups/updateSortConfigForSelectedMember', {
 	              sortConfigForSelectedMember: userSortConfig
 	            });
-	            if (!((_this$selectedMember = this.selectedMember) != null && _this$selectedMember.id) || this.selectedMember.id === SELECTED_ALL_USER_ID) {
+	            if (!((_this$selectedMember2 = this.selectedMember) != null && _this$selectedMember2.id) || this.selectedMember.id === SELECTED_ALL_USER_ID) {
 	              saveSortConfigForAllUserGroups(this.userSortConfigName, userSortConfig);
 	            }
 	            this.viewDialog = null;

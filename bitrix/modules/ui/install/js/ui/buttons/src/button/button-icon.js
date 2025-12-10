@@ -74,4 +74,8 @@ export default class ButtonIcon
 	static TWO_PERSONS = 'ui-btn-icon-two-persons';
 	static COPILOT = 'ui-btn-icon-copilot';
 	static RELOAD = 'ui-btn-icon-reload';
+	static WORKFLOW = 'ui-btn-icon-workflow';
+	static PERSON = 'ui-btn-icon-person';
+	static WORKFLOW_STOP = 'ui-btn-icon-workflow-stop';
+	static MARKET = 'ui-btn-icon-market';
 }

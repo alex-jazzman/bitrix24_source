@@ -1,3 +1,4 @@
 export * as Vue from './vue';
+export * from './chip';
 export { ChipDesign, ChipSize } from './const';
-export type { ChipImage } from './types';
+export type { ChipProps, ChipImage } from './types';

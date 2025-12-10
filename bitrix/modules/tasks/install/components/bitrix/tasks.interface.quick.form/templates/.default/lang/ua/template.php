@@ -1,7 +1,7 @@
 <?php
 $MESS["TASKS_QUICK_ASSIGNEE"] = "Виконавець";
 $MESS["TASKS_QUICK_CANCEL"] = "Скасувати";
-$MESS["TASKS_QUICK_DEADLINE"] = "Крайній термін";
+$MESS["TASKS_QUICK_DEADLINE"] = "Кінцевий термін";
 $MESS["TASKS_QUICK_DESCRIPTION"] = "опис";
 $MESS["TASKS_QUICK_FORM_AFTER_SAVE_MESSAGE"] = "Завдання &quot;#TASK_NAME#&quot; збережене.";
 $MESS["TASKS_QUICK_FORM_DESC_PLACEHOLDER"] = "Опис завдання";

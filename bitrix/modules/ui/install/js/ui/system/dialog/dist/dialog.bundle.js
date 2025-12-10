@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.UI = this.BX.UI || {};
-(function (exports,main_core,main_popup,ui_system_typography,ui_iconSet_api_core) {
+(function (exports,main_popup,ui_system_typography,ui_iconSet_api_core,ui_iconSet_outline,main_core) {
 	'use strict';
 
 	const DialogAnglePositions = Object.freeze({
@@ -17,6 +17,10 @@ this.BX.UI = this.BX.UI || {};
 	  leftTop: 'leftTop',
 	  leftCenter: 'leftCenter',
 	  leftBottom: 'leftBottom'
+	});
+	const DialogBackground = Object.freeze({
+	  default: 'default',
+	  vibrant: 'vibrant'
 	});
 	const aliases = {
 	  onShow: {
@@ -35,6 +39,25 @@ this.BX.UI = this.BX.UI || {};
 	    namespace: 'BX.UI.System.Dialog',
 	    eventName: 'onAfterHide'
 	  }
+	};
+
+	const getClosestZIndexElement = target => {
+	  let currentElement = target;
+	  while (currentElement && currentElement !== document.body) {
+	    const computedStyle = getComputedStyle(currentElement);
+	    const position = computedStyle.position;
+	    if (position === 'absolute' || position === 'fixed') {
+	      const zIndex = computedStyle.zIndex;
+	      if (zIndex !== 'auto') {
+	        const zIndexValue = parseInt(zIndex, 10);
+	        if (main_core.Type.isNumber(zIndexValue)) {
+	          return zIndexValue;
+	        }
+	      }
+	    }
+	    currentElement = currentElement.parentElement;
+	  }
+	  return 0;
 	};
 
 	let _ = t => t,
@@ -60,6 +83,7 @@ this.BX.UI = this.BX.UI || {};
 	var _disableScrolling = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("disableScrolling");
 	var _closeByClickOutside = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("closeByClickOutside");
 	var _closeByEsc = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("closeByEsc");
+	var _dialogBackground = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("dialogBackground");
 	var _stickPosition = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("stickPosition");
 	var _bindElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bindElement");
 	var _anglePosition = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("anglePosition");
@@ -188,6 +212,10 @@ this.BX.UI = this.BX.UI || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    Object.defineProperty(this, _dialogBackground, {
+	      writable: true,
+	      value: void 0
+	    });
 	    Object.defineProperty(this, _stickPosition, {
 	      writable: true,
 	      value: void 0
@@ -220,6 +248,7 @@ this.BX.UI = this.BX.UI || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _closeByClickOutside)[_closeByClickOutside] = (_options$closeByClick = options.closeByClickOutside) != null ? _options$closeByClick : true;
 	    babelHelpers.classPrivateFieldLooseBase(this, _closeByEsc)[_closeByEsc] = (_options$closeByEsc = options.closeByEsc) != null ? _options$closeByEsc : true;
 	    babelHelpers.classPrivateFieldLooseBase(this, _width)[_width] = options.width;
+	    babelHelpers.classPrivateFieldLooseBase(this, _dialogBackground)[_dialogBackground] = options.background || DialogBackground.default;
 
 	    // this.#stickPosition = options.stickPosition;
 	    // this.#anglePosition = options.anglePosition;
@@ -313,6 +342,18 @@ this.BX.UI = this.BX.UI || {};
 	      backgroundColor: 'rgba(0, 32, 78, 0.46)',
 	      opacity: 100
 	    } : undefined,
+	    autoHideHandler: event => {
+	      if (event.target.closest('.ui-system-dialog')) {
+	        event.preventDefault();
+	        return false;
+	      }
+	      const zIndex = getClosestZIndexElement(event.target);
+	      if (zIndex > babelHelpers.classPrivateFieldLooseBase(this, _getPopup)[_getPopup]().getZindex()) {
+	        event.preventDefault();
+	        return false;
+	      }
+	      return true;
+	    },
 	    autoHide: babelHelpers.classPrivateFieldLooseBase(this, _closeByClickOutside)[_closeByClickOutside],
 	    closeByEsc: babelHelpers.classPrivateFieldLooseBase(this, _closeByEsc)[_closeByEsc],
 	    cacheable: false,
@@ -525,6 +566,7 @@ this.BX.UI = this.BX.UI || {};
 	    const angleClass = babelHelpers.classPrivateFieldLooseBase(this, _anglePosition)[_anglePosition].replaceAll(/([A-Z])/g, '-$1').toLowerCase();
 	    classes.push(`popup-window-angle-${angleClass}`);
 	  }
+	  classes.push(`--bg-${babelHelpers.classPrivateFieldLooseBase(this, _dialogBackground)[_dialogBackground]}`);
 	  return classes.join(' ');
 	}
 	function _adjustDialogPosition2() {
@@ -535,6 +577,7 @@ this.BX.UI = this.BX.UI || {};
 	}
 
 	exports.Dialog = Dialog;
+	exports.DialogBackground = DialogBackground;
 
-}((this.BX.UI.System = this.BX.UI.System || {}),BX,BX.Main,BX.UI.System.Typography,BX.UI.IconSet));
+}((this.BX.UI.System = this.BX.UI.System || {}),BX.Main,BX.UI.System.Typography,BX.UI.IconSet,BX,BX));
 //# sourceMappingURL=dialog.bundle.js.map

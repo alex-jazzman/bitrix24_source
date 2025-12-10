@@ -46,4 +46,4 @@ $MESS["IBLOCK_CML2_TITLE"] = "XML импорты";
 $MESS["IBLOCK_CML2_UPDATED"] = "Жаңартылды: #COUNT#";
 $MESS["IBLOCK_CML2_URL_DATA_FILE"] = "Жүктеуге арналған файл";
 $MESS["IBLOCK_CML2_WITH_ERRORS"] = "Қателермен: #COUNT#";
-$MESS["IBLOCK_CML2_WRONG_FILE_ERROR"] = "Көрсетілген файл екінші басылымның CommerceML пішіміндегі xml файлы емес.";
+$MESS['IBLOCK_CML2_WRONG_FILE_ERROR'] = "Көрсетілген файл екінші басылымның CommerceML пішіміндегі xml файлы емес.";

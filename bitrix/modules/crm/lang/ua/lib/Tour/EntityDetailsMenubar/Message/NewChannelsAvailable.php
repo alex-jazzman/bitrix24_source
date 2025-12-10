@@ -1,0 +1,4 @@
+<?php
+$MESS["CRM_TOUR_ENTITY_DETAILS_MENUBAR_MESSAGE_NEW_CHANS_AVAILABLE_BUTTON"] = "Під'єднати месенджери";
+$MESS["CRM_TOUR_ENTITY_DETAILS_MENUBAR_MESSAGE_NEW_CHANS_AVAILABLE_TEXT"] = "Під'єднайте WhatsApp або Telegram і пишіть клієнтам першими.";
+$MESS["CRM_TOUR_ENTITY_DETAILS_MENUBAR_MESSAGE_NEW_CHANS_AVAILABLE_TITLE"] = "Додано нові канали зв'язку";

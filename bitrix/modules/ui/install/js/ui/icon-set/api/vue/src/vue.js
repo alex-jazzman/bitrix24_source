@@ -1,4 +1,4 @@
-import { Set, Outline, Solid } from 'ui.icon-set.api.core';
+import { Set, Outline, Solid, SmallOutline } from 'ui.icon-set.api.core';
 
 // @vue/component
 const BIcon = {
@@ -7,7 +7,11 @@ const BIcon = {
 			type: String,
 			required: true,
 			validator(value): boolean {
-				return Object.values(Set).includes(value) || Object.values(Outline).includes(value) || Object.values(Solid).includes(value);
+				return Object.values(Set).includes(value)
+					|| Object.values(Outline).includes(value)
+					|| Object.values(Solid).includes(value)
+					|| Object.values(SmallOutline).includes(value)
+				;
 			},
 		},
 		color: {
@@ -28,6 +32,10 @@ const BIcon = {
 			type: Boolean,
 			default: false,
 		},
+		responsive: {
+			type: Boolean,
+			default: false,
+		},
 	},
 
 	computed: {
@@ -36,6 +44,7 @@ const BIcon = {
 				'ui-icon-set',
 				`--${this.name}`,
 				this.hoverableClassnameModifier,
+				this.responsiveClassnameModifier,
 			];
 		},
 		hoverableClassnameModifier(): string
@@ -52,14 +61,23 @@ const BIcon = {
 
 			return '';
 		},
+		responsiveClassnameModifier(): string
+		{
+			return this.responsive ? '--responsive' : '';
+		},
 		inlineSize(): string {
+			if (this.responsive)
+			{
+				return '';
+			}
+
 			return this.size ? `--ui-icon-set__icon-size: ${this.size}px;` : '';
 		},
 		inlineColor(): string {
 			return this.color ? `--ui-icon-set__icon-color: ${this.color};` : '';
 		},
 
-		inlineStyle(): void {
+		inlineStyle(): string {
 			return this.inlineSize + this.inlineColor;
 		},
 	},

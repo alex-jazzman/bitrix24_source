@@ -15,4 +15,4 @@ $MESS["TASK_NAME_IBLOCK_ELEMENT_ADD"] = "Қосу";
 $MESS["TASK_NAME_IBLOCK_FULL"] = "Толық қолжетімділік";
 $MESS["TASK_NAME_IBLOCK_FULL_EDIT"] = "Өзгерту";
 $MESS["TASK_NAME_IBLOCK_LIMITED_EDIT"] = "Шектеулермен өзгерту";
-$MESS["TASK_NAME_IBLOCK_READ"] = "Оқу";
+$MESS['TASK_NAME_IBLOCK_READ'] = "Оқу";

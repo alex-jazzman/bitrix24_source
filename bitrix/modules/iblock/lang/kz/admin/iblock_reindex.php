@@ -12,4 +12,4 @@ $MESS["IBLOCK_REINDEX_TAB"] = "Жасау";
 $MESS["IBLOCK_REINDEX_TAB_TITLE"] = "Параметрлер";
 $MESS["IBLOCK_REINDEX_TITLE"] = "Ақпараттық блоктардың фасеттік индекстері";
 $MESS["IBLOCK_REINDEX_TOTAL"] = "Индекстелген элементтер:";
-$MESS["IBLOCK_REINDEX_TOTAL_COMPLETE"] = "Барлық индекстер жасалған.";
+$MESS['IBLOCK_REINDEX_TOTAL_COMPLETE'] = "Барлық индекстер жасалған.";

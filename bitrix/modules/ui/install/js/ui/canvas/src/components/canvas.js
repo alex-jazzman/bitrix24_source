@@ -70,9 +70,9 @@ export const TransformCanvas = {
 		},
 		transformStyles(): { [key: string]: string }
 		{
-			this.transform = this.modelValue ? {
-				...this.modelValue,
-			} : this.transform;
+			this.transform = this.modelValue
+				? { ...this.modelValue }
+				: this.transform;
 			const { x, y, zoom } = this.transform;
 
 			return {
@@ -82,13 +82,13 @@ export const TransformCanvas = {
 	},
 
 	methods: {
-		onmousedown(event: MouseEvent): void
+		onMouseDown(event: MouseEvent): void
 		{
 			this.dragOn = true;
 			this.dragDirection = null;
 		},
 
-		onmousemove(event: MouseEvent): void
+		onMouseMove(event: MouseEvent): void
 		{
 			if (!this.dragOn)
 			{
@@ -124,14 +124,14 @@ export const TransformCanvas = {
 			});
 		},
 
-		onmouseup(): void
+		onMouseUp(): void
 		{
 			this.dragOn = false;
 			this.dragging = false;
 			this.dragDirection = null;
 		},
 
-		oncontextmenu(event: MouseEvent): void
+		onContextMenu(event: MouseEvent): void
 		{
 			event.preventDefault();
 		},
@@ -143,7 +143,7 @@ export const TransformCanvas = {
 				: event.deltaMode === 0;
 		},
 
-		onwheel(event: WheelEvent): void
+		onWheel(event: WheelEvent): void
 		{
 			const isTrackpad = this.isTrackpad(event);
 
@@ -201,11 +201,11 @@ export const TransformCanvas = {
 			class="ui-transform-canvas"
 			:class="canvasClass"
 			:style="canvasStyles"
-			@mousedown="onmousedown"
-			@mousemove="onmousemove"
-			@mouseup="onmouseup"
-			@wheel="onwheel"
-			@contextmenu="oncontextmenu"
+			@mousedown="onMouseDown"
+			@mousemove="onMouseMove"
+			@mouseup="onMouseUp"
+			@wheel="onWheel"
+			@contextmenu="onContextMenu"
 		>
 			<div
 				class="ui-transform-canvas__transform"

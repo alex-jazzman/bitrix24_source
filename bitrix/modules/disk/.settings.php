@@ -3,10 +3,6 @@
 use Bitrix\Disk\Bitrix24Disk\SubscriberManager;
 use Bitrix\Disk\Document\DocumentHandlersManager;
 use Bitrix\Disk\Document\OnlyOffice;
-use Bitrix\Disk\Internal\Access\UnifiedLink\AccessCheckHandlerFactory;
-use Bitrix\Disk\Internal\Service\UnifiedLink\SupportPolicy\SupportPolicyFactory;
-use Bitrix\Disk\Internal\Service\UnifiedLink\UnifiedLinkAccessService;
-use Bitrix\Disk\Internal\Service\UnifiedLink\UnifiedLinkSupportService;
 use Bitrix\Disk\Internals\DeletedLogManager;
 use Bitrix\Disk\Internals\DeletionNotifyManager;
 use Bitrix\Disk\Internals\Runtime\StorageRuntimeCache;
@@ -77,16 +73,6 @@ return [
 			],
 			'disk.trackedObjectManager' => [
 				'className' => TrackedObjectManager::class,
-			],
-			UnifiedLinkSupportService::class => [
-				'constructor' => static function () {
-					return new UnifiedLinkSupportService(new SupportPolicyFactory());
-				},
-			],
-			UnifiedLinkAccessService::class => [
-				'constructor' => static function () {
-					return new UnifiedLinkAccessService(new AccessCheckHandlerFactory());
-				},
 			],
 		],
 		'readonly' => true,

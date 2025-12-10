@@ -44,4 +44,4 @@ $MESS["IBD_FIELD_TIMESTAMP_X"] = "Элементті өзгерту күні";
 $MESS["IBD_FIELD_USERNAME_PROPERTY"] = " (аты)";
 $MESS["IBD_FIELD_XML_ID"] = "Сыртқы кілт";
 $MESS["IBD_OPERATION_READ"] = "Оқу";
-$MESS["IBD_OPERATION_WRITE"] = "Жазба";
+$MESS['IBD_OPERATION_WRITE'] = "Жазба";

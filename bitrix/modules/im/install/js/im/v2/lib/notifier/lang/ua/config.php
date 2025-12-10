@@ -1,4 +1,5 @@
 <?php
+$MESS["IM_NOTIFICATIONS_ITEM_MENU_UNSUBSCRIBE_CANCEL"] = "Скасувати";
 $MESS["IM_NOTIFIER_AUDIO_INPUT_ERROR"] = "Не вдалося розпізнати мову, спробуйте пізніше.";
 $MESS["IM_NOTIFIER_CALL_BACKGROUND_FILE_SIZE_ERROR"] = "Розмір вибраного файлу \"#FILE_NAME#\" перевищує максимальний (#LIMIT# Мб).";
 $MESS["IM_NOTIFIER_CALL_BACKGROUND_FILE_UNSUPPORTED_ERROR"] = "Вибраний файл \"#FILE_NAME#\" неможливо використати як фон.";
@@ -44,5 +45,7 @@ $MESS["IM_NOTIFIER_MESSAGE_SELECT_LIMIT_ERROR"] = "Вибрано максима
 $MESS["IM_NOTIFIER_RECENT_PIN_DEFAULT_ERROR"] = "Не вдалося закріпити повідомлення.";
 $MESS["IM_NOTIFIER_RECENT_PIN_LIMIT_ERROR"] = "Усього можна закріпити максиму стільки чатів, каналів і колаб: #MAX_PINS#.";
 $MESS["IM_NOTIFIER_RECENT_UNPIN_DEFAULT_ERROR"] = "Не вдалося відкріпити повідомлення.";
+$MESS["IM_NOTIFIER_SUBSCRIBE_COMPLETE"] = "Ви підписалися на сповіщення типу «#TYPE#».";
 $MESS["IM_NOTIFIER_TEXT_COPY_COMPLETE"] = "Текст скопійовано.";
+$MESS["IM_NOTIFIER_UNSUBSCRIBE_COMPLETE"] = "Ви відписалися від усіх сповіщень типу «#TYPE#».";
 $MESS["IM_NOTIFIER_VOTE_CLOSED_ERROR"] = "Змінити оцінку цього діалогу вже не можна.";

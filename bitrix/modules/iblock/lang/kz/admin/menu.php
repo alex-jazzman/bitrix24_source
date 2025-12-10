@@ -17,4 +17,4 @@ $MESS["IBLOCK_MENU_REINDEX"] = "Фасеттік индекстер";
 $MESS["IBLOCK_MENU_REINDEX_TITLE"] = "Қасиеттер мәндері үшін фасеттік индекстерді жасау";
 $MESS["IBLOCK_MENU_SEC_EL"] = "Осы топтың элементтері";
 $MESS["IBLOCK_MENU_SEPARATOR"] = "Ақпараттық блоктар";
-$MESS["IBLOCK_MENU_SETTINGS_TITLE"] = "Ақпараттық блоктарды баптау";
+$MESS['IBLOCK_MENU_SETTINGS_TITLE'] = "Ақпараттық блоктарды баптау";

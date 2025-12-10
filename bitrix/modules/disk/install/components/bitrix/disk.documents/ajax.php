@@ -59,7 +59,7 @@ final class DiskDocumentsController extends Disk\Internals\Engine\Controller
 
 		if (!$isBoard && $supportsUnifiedLink)
 		{
-			$viewUnifiedLink = $urlManager->getUnifiedLink($file, ['noRedirect' => true]);
+			$viewUnifiedLink = $urlManager->getUnifiedLink($file);
 			$actions[] = [
 				'id' => 'view',
 				'text' => Loc::getMessage('DISK_DOCUMENTS_ACT_OPEN'),

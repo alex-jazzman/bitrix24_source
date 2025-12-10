@@ -5713,6 +5713,7 @@ if(typeof BX.UI.EntityEditorText === "undefined")
 					props: { className: "ui-entity-editor-content-block" },
 					text: BX.message("UI_ENTITY_EDITOR_FIELD_EMPTY")
 				});
+				BX.addClass(this._wrapper, "ui-entity-editor-content-block-click-empty");
 			}
 		}
 
@@ -7639,6 +7640,7 @@ if(typeof BX.UI.EntityEditorDatetime === "undefined")
 			if(!this.hasContentToDisplay())
 			{
 				value = BX.message("UI_ENTITY_EDITOR_FIELD_EMPTY");
+				BX.addClass(this._wrapper, "ui-entity-editor-content-block-click-empty");
 			}
 
 			this._innerWrapper = BX.create("div",
@@ -8130,6 +8132,7 @@ if(typeof BX.UI.EntityEditorList === "undefined")
 			if(!this.hasContentToDisplay())
 			{
 				text = BX.message("UI_ENTITY_EDITOR_FIELD_EMPTY");
+				BX.addClass(this._wrapper, "ui-entity-editor-content-block-click-empty");
 			}
 			else if(item)
 			{
@@ -10365,6 +10368,7 @@ if(typeof BX.UI.EntityEditorCustom === "undefined")
 					props: { className: "ui-entity-editor-content-block-text" },
 					text: BX.message("UI_ENTITY_EDITOR_FIELD_EMPTY")
 				}));
+			BX.addClass(this._wrapper, "ui-entity-editor-content-block-click-empty");
 		}
 
 		if(this.isContextMenuEnabled())

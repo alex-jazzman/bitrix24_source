@@ -574,6 +574,28 @@
 	--o-ui-icon-set__path_more-vertical-m: url('/bitrix/js/ui/icon-set/outline/images/more-vertical-m.svg');
 	--o-ui-icon-set__path_more-vertical-l: url('/bitrix/js/ui/icon-set/outline/images/more-vertical-l.svg');
 	--o-ui-icon-set__path_database: url('/bitrix/js/ui/icon-set/outline/images/database.svg');
+	--o-ui-icon-set__path_client-chat: url('/bitrix/js/ui/icon-set/outline/images/client-chat.svg');
+	--o-ui-icon-set__path_legal-processes: url('/bitrix/js/ui/icon-set/outline/images/legal-process.svg');
+	--o-ui-icon-set__path_marketing: url('/bitrix/js/ui/icon-set/outline/images/marketing.svg');
+	--o-ui-icon-set__path_roles-library: url('/bitrix/js/ui/icon-set/outline/images/roles-library.svg');
+	--o-ui-icon-set__path_ai-robot: url('/bitrix/js/ui/icon-set/outline/images/ai-robot.svg');
+	--o-ui-icon-set__path_condition: url('/bitrix/js/ui/icon-set/outline/images/condition.svg');
+	--o-ui-icon-set__path_data-reading: url('/bitrix/js/ui/icon-set/outline/images/data-reading.svg');
+	--o-ui-icon-set__path_frame-create: url('/bitrix/js/ui/icon-set/outline/images/frame-create.svg');
+	--o-ui-icon-set__path_mcp: url('/bitrix/js/ui/icon-set/outline/images/mcp.svg');
+	--o-ui-icon-set__path_mcp-letters: url('/bitrix/js/ui/icon-set/outline/images/mcp-letters.svg');
+	--o-ui-icon-set__path_merge: url('/bitrix/js/ui/icon-set/outline/images/merge.svg');
+	--o-ui-icon-set__path_sticker-smile: url('/bitrix/js/ui/icon-set/outline/images/sticker-smile.svg');
+	--o-ui-icon-set__path_cient-letter: url('/bitrix/js/ui/icon-set/outline/images/client-letter.svg');
+	--o-ui-icon-set__path_connection: url('/bitrix/js/ui/icon-set/outline/images/connection.svg');
+	--o-ui-icon-set__path_copied: url('/bitrix/js/ui/icon-set/outline/images/copied.svg');
+	--o-ui-icon-set__path_crm-online-store: url('/bitrix/js/ui/icon-set/outline/images/crm-online-store.svg');
+	--o-ui-icon-set__path_crm-payment-and-delivery: url('/bitrix/js/ui/icon-set/outline/images/crm-payment-and-delivery.svg');
+	--o-ui-icon-set__path_lightning-plus: url('/bitrix/js/ui/icon-set/outline/images/lightning-plus.svg');
+	--o-ui-icon-set__path_unc-1: url('/bitrix/js/ui/icon-set/outline/images/unc-1.svg');
+	--o-ui-icon-set__path_document-sign: url('/bitrix/js/ui/icon-set/outline/images/document-sign.svg');
+	--o-ui-icon-set__path_black-list: url('/bitrix/js/ui/icon-set/outline/images/black-list.svg');
+	--o-ui-icon-set__path_important-task: url('/bitrix/js/ui/icon-set/outline/images/important-task.svg');
 }
 
 .ui-icon-set.--o-double-gis {
@@ -2870,4 +2892,92 @@
 
 .ui-icon-set.--o-database {
 	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_database);
+}
+
+.ui-icon-set.--o-client-chat {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_client-chat);
+}
+
+.ui-icon-set.--o-legal-processes {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_legal-processes);
+}
+
+.ui-icon-set.--o-marketing {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_marketing);
+}
+
+.ui-icon-set.--o-roles-library {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_roles-library);
+}
+
+.ui-icon-set.--o-ai-robot {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_ai-robot);
+}
+
+.ui-icon-set.--o-condition {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_condition);
+}
+
+.ui-icon-set.--o-data-reading {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_data-reading);
+}
+
+.ui-icon-set.--o-frame-create {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_frame-create);
+}
+
+.ui-icon-set.--o-mcp {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_mcp);
+}
+
+.ui-icon-set.--o-mcp-letters {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_mcp-letters);
+}
+
+.ui-icon-set.--o-merge {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_merge);
+}
+
+.ui-icon-set.--o-sticker-smile {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_sticker-smile);
+}
+
+.ui-icon-set.--o-client-letter {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_cient-letter);
+}
+
+.ui-icon-set.--o-connection {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_connection);
+}
+
+.ui-icon-set.--o-copied {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_copied);
+}
+
+.ui-icon-set.--o-crm-online-store {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_crm-online-store);
+}
+
+.ui-icon-set.--o-crm-payment-and-delivery {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_crm-payment-and-delivery);
+}
+
+.ui-icon-set.--o-lightning-plus {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_lightning-plus);
+}
+
+.ui-icon-set.--o-unc-1 {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_unc-1);
+}
+
+.ui-icon-set.--o-document-sign {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_document-sign);
+}
+
+.ui-icon-set.--o-black-list {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_black-list);
+}
+
+.ui-icon-set.--o-important-task {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_important-task);
 }

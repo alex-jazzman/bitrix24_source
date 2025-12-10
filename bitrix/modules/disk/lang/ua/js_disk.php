@@ -2,6 +2,7 @@
 $MESS["DISK_JS_BTN_CANCEL"] = "Скасувати";
 $MESS["DISK_JS_BTN_CLOSE"] = "Закрити";
 $MESS["DISK_JS_BTN_DOWNLOAD"] = "Скачати";
+$MESS["DISK_JS_BTN_OPEN"] = "Відкрити";
 $MESS["DISK_JS_BTN_SAVE"] = "Зберегти";
 $MESS["DISK_JS_DOCUMENT_ONLYOFFICE_SAVED"] = "Документ #name# оновлений";
 $MESS["DISK_JS_DOCUMENT_ONLYOFFICE_SAVE_PROCESS"] = "Іде збереження документа: #name#";

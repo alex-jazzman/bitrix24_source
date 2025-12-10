@@ -36,6 +36,7 @@ $MESS["BICONNECTOR_SUPERSET_DASHBOARD_GRID_EXPORT_NOTIFICATION_ERROR"] = "Не �
 $MESS["BICONNECTOR_SUPERSET_DASHBOARD_GRID_LOCK_NOTIFICATION"] = "Вимкніть BI-конструктор, якщо хочете перейти на тариф нижче. Щоб продовжити користуватися інструментом, оплатіть поточний тариф.";
 $MESS["BICONNECTOR_SUPERSET_DASHBOARD_GRID_PUBLISH_NOTIFICATION_ERROR"] = "Під час публікації звіту сталася помилка.";
 $MESS["BICONNECTOR_SUPERSET_DASHBOARD_GRID_SECOND_DB_CONNECT_INFO"] = "Звіти в BI-конструкторі можуть працювати ще швидше. Зверніться до адміністратора вашого Бітрікс24. [link]Докладніше[/link]";
+$MESS["BICONNECTOR_SUPERSET_DASHBOARD_GRID_SECOND_DB_CONNECT_KEY_UPDATE"] = "Оновіть ключ шифрування, щоб звіти працювали ще швидше. [link]Докладніше[/link]";
 $MESS["BICONNECTOR_SUPERSET_DASHBOARD_GRID_SET_DRAFT_NOTIFICATION_ERROR"] = "Під час створення чернетки сталася помилка.";
 $MESS["BICONNECTOR_SUPERSET_DASHBOARD_GRID_STATUS_DRAFT"] = "Чернетка";
 $MESS["BICONNECTOR_SUPERSET_DASHBOARD_GRID_STATUS_FAILED"] = "Помилка";

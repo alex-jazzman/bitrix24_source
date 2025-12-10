@@ -5,6 +5,7 @@ $MESS["CRM_CHANNEL_PUBLIC_LINK_NOT_AVAILABLE_NOTIFICATION_MESSAGE"] = "Поси�
 $MESS["CRM_CHANNEL_SELECTOR_ACTIVATE_CHANNELS"] = "Використати доступні варіанти";
 $MESS["CRM_CHANNEL_SELECTOR_CHOOSE_FROM_MARKET"] = "Вибрати інший сервіс";
 $MESS["CRM_CHANNEL_SELECTOR_DEFAULT_TITLE"] = "Надіслати клієнтам";
+$MESS["CRM_CHANNEL_SELECTOR_DEFAULT_TITLE_MSGVER_1"] = "Надсилання";
 $MESS["CRM_CHANNEL_SELECTOR_MESSAGE_WITH_LINK"] = "#MESSAGE# #LINK#";
 $MESS["CRM_CHANNEL_SELECTOR_NO_ACTIVE_CHANNELS_TEXT"] = "Надавайте спільний доступ до документів<br>швидко й просто";
 $MESS["CRM_CHANNEL_SELECTOR_SEND_BUTTON"] = "Відправити";

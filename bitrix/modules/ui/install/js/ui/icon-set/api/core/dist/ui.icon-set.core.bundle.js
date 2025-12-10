@@ -1309,7 +1309,29 @@ this.BX.UI = this.BX.UI || {};
 	  MORE_VERTICAL_S: 'more-vertical-s',
 	  MORE_VERTICAL_M: 'more-vertical-m',
 	  MORE_VERTICAL_L: 'more-vertical-l',
-	  DATABASE: 'o-database'
+	  DATABASE: 'o-database',
+	  CLIENT_CHAT: 'o-client-chat',
+	  LEGAL_PROCESSES: 'o-legal-processes',
+	  MARKETING: 'o-marketing',
+	  ROLES_LIBRARY: 'o-roles-library',
+	  AI_ROBOT: 'o-ai-robot',
+	  CONDITION: 'o-condition',
+	  DATA_READING: 'o-data-reading',
+	  FRAME_CREATE: 'o-frame-create',
+	  MCP: 'o-mcp',
+	  MCP_LETTERS: 'o-mcp-letters',
+	  MERGE: 'o-merge',
+	  STICKER_SMILE: 'o-sticker-smile',
+	  CLIENT_LETTER: 'o-client-letter',
+	  CONNECTION: 'o-connection',
+	  COPIED: 'o-copied',
+	  CRM_ONLINE_STORE: 'o-crm-online-store',
+	  CRM_PAYMENT_AND_DELIVERY: 'o-crm-payment-and-delivery',
+	  LIGHTNING_PLUS: 'o-lightning-plus',
+	  UNC_1: 'o-unc-1',
+	  DOCUMENT_SIGN: 'o-document-sign',
+	  BLACK_LIST: 'o-black-list',
+	  IMPORTANT_TASK: 'o-important-task',
 	});
 	const Solid = Object.freeze({
 	  THREE_PERSONS: 's-3-persons',
@@ -1427,6 +1449,125 @@ this.BX.UI = this.BX.UI || {};
 	  WALLET: 's-wallet',
 	  WINDOW_FLAG: 's-window-flag'
 	});
+	const SmallOutline = Object.freeze({
+	  AUDIO_TO_SCRIPT: 'so-audio-to-script',
+	  CHECK: 'so-check',
+	  CIRCLE_CHECK: 'so-circle-check',
+	  CLOCK: 'so-clock',
+	  CLOUD_TIME: 'so-cloud-time',
+	  CROSS: 'so-cross',
+	  DIGITS_24: 'so-digits-24',
+	  DOUBLE_CHECK: 'so-double-check',
+	  EARTH: 'so-earth',
+	  FACEBOOK: 'so-facebook',
+	  GIFT: 'so-gift',
+	  GLOBE_EXTRANET: 'so-globe-extranet',
+	  GROUPME: 'so-groupme',
+	  INSTAGRAM: 'so-instagram',
+	  KIK: 'so-kik',
+	  MAIL: 'so-mail',
+	  MENTION: 'so-mention',
+	  MESSAGE_2: 'so-message-2',
+	  MESSAGE: 'so-message',
+	  MESSENGER_META: 'so-messenger-meta',
+	  NOTIFICATION_OFF: 'so-notification-off',
+	  NOTIFICATION: 'so-notification',
+	  OPEN_CHANNELS: 'so-open-channels',
+	  PERSON: 'so-person',
+	  PIN: 'so-pin',
+	  ROBOT: 'so-robot',
+	  SKYPE: 'so-skype',
+	  SLACK: 'so-slack',
+	  SMALL_CROWN: 'so-small-crown',
+	  SMALL_HEART: 'so-small-heart',
+	  SMALL_PHONE_UP: 'so-small-phone-up',
+	  SOUND_OFF: 'so-sound-off',
+	  STOP: 'so-stop',
+	  TELEGRAM: 'so-telegram',
+	  TIMER_DOT: 'so-timer-dot',
+	  TRANSCRIPTION: 'so-transcription',
+	  TWILLIO: 'so-twillio',
+	  UNDO: 'so-undo',
+	  UNPIN: 'so-unpin',
+	  VACATION: 'so-vacation',
+	  VIBER: 'so-viber',
+	  VK: 'so-vk',
+	  WINDOW_SCREEN: 'so-window-screen'
+	});
+	const Disk = Object.freeze({
+	  DOC: 'doc',
+	  DOCX: 'docx',
+	  PDF: 'pdf',
+	  XLS: 'xls',
+	  XLSX: 'xlsx',
+	  PPT: 'ppt',
+	  PPTX: 'pptx',
+	  ZIP: 'zip',
+	  RAR: 'rar',
+	  ARCHIVE: 'archive',
+	  PSD: 'psd',
+	  TXT: 'txt',
+	  PHP: 'php',
+	  BOARD: 'board',
+	  ODF: 'odf',
+	  ODT: 'odt',
+	  ODS: 'ods',
+	  ODP: 'odp',
+	  AUDIO: 'audio',
+	  IMAGE: 'image',
+	  VIDEO: 'video',
+	  COMPLEX_GRAPHIC: 'complex-graphic',
+	  SIGN: 'sign',
+	  SCRIPTS: 'scripts',
+	  TEXT: 'text',
+	  ADD: 'add',
+	  PHOTO: 'photo',
+	  EMPTY: 'empty',
+	  LOADING: 'loading',
+	  FOLDER: 'folder',
+	  FOLDER_GROUP: 'folder-group',
+	  FOLDER_SHARED: 'folder-shared',
+	  FOLDER_COLLAB: 'folder-collab',
+	  FOLDER_24: 'folder-24',
+	  FOLDER_PERSON: 'folder-person'
+	});
+	const DiskCompact = Object.freeze({
+	  DOC: 'doc-compact',
+	  DOCX: 'docx-compact',
+	  PDF: 'pdf-compact',
+	  XLS: 'xls-compact',
+	  XLSX: 'xlsx-compact',
+	  PPT: 'ppt-compact',
+	  PPTX: 'pptx-compact',
+	  ZIP: 'zip-compact',
+	  RAR: 'rar-compact',
+	  ARCHIVE: 'archive-compact',
+	  PSD: 'psd-compact',
+	  TXT: 'txt-compact',
+	  PHP: 'php-compact',
+	  BOARD: 'board-compact',
+	  ODF: 'odf-compact',
+	  ODT: 'odt-compact',
+	  ODS: 'ods-compact',
+	  ODP: 'odp-compact',
+	  AUDIO: 'audio-compact',
+	  IMAGE: 'image-compact',
+	  VIDEO: 'video-compact',
+	  COMPLEX_GRAPHIC: 'complex-graphic-compact',
+	  SIGN: 'sign-compact',
+	  SCRIPTS: 'scripts-compact',
+	  TEXT: 'text-compact',
+	  ADD: 'add-compact',
+	  PHOTO: 'photo-compact',
+	  EMPTY: 'empty-compact',
+	  LOADING: 'loading-compact',
+	  FOLDER: 'folder-compact',
+	  FOLDER_GROUP: 'folder-group-compact',
+	  FOLDER_SHARED: 'folder-shared-compact',
+	  FOLDER_COLLAB: 'folder-collab-compact',
+	  FOLDER_24: 'folder-24-compact',
+	  FOLDER_PERSON: 'folder-person-compact'
+	});
 	const Set = Object.freeze({
 	  ...Actions,
 	  ...Social,
@@ -1446,11 +1587,36 @@ this.BX.UI = this.BX.UI || {};
 	let _ = t => t,
 	  _t;
 	var _hoverMode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hoverMode");
+	var _responsive = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("responsive");
 	var _getHoverModeClassnameModifier = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getHoverModeClassnameModifier");
 	var _checkIconExistence = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("checkIconExistence");
+	var _isIconWithFixedColor = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isIconWithFixedColor");
 	class Icon {
+	  static isValid(params = {}) {
+	    return Icon.validateParams(params) === null;
+	  }
+	  static validateParams(params) {
+	    if (!params.icon) {
+	      return 'IconSet: property "icon" not set.';
+	    }
+	    if (!main_core.Type.isUndefined(params.size) && !main_core.Type.isNumber(params.size)) {
+	      return 'IconSet: "size" is not a number.';
+	    }
+	    if (params.color && !main_core.Type.isString(params.color)) {
+	      return 'IconSet: "color" is not a string.';
+	    }
+	    const sets = [Actions, Main, ContactCenter, Outline, CRM, Social, Animated, Editor, Special, Solid, Disk, DiskCompact, SmallOutline];
+	    const iconExists = sets.some(set => Object.values(set).includes(params.icon));
+	    if (!iconExists) {
+	      return 'IconSet: "icon" is not exist.';
+	    }
+	    return null;
+	  }
 	  constructor(params = {}) {
-	    var _params$hoverMode;
+	    var _params$hoverMode, _params$responsive;
+	    Object.defineProperty(this, _isIconWithFixedColor, {
+	      value: _isIconWithFixedColor2
+	    });
 	    Object.defineProperty(this, _checkIconExistence, {
 	      value: _checkIconExistence2
 	    });
@@ -1461,11 +1627,19 @@ this.BX.UI = this.BX.UI || {};
 	      writable: true,
 	      value: null
 	    });
-	    this.validateParams(params);
+	    Object.defineProperty(this, _responsive, {
+	      writable: true,
+	      value: false
+	    });
+	    const error = Icon.validateParams(params);
+	    if (error) {
+	      throw new Error(error);
+	    }
 	    this.icon = params.icon;
 	    this.size = params.size > 0 ? params.size : null;
 	    this.color = params.color || null;
 	    babelHelpers.classPrivateFieldLooseBase(this, _hoverMode)[_hoverMode] = (_params$hoverMode = params.hoverMode) != null ? _params$hoverMode : null;
+	    babelHelpers.classPrivateFieldLooseBase(this, _responsive)[_responsive] = (_params$responsive = params.responsive) != null ? _params$responsive : false;
 	    this.iconElement = null;
 	  }
 	  validateParams(params) {
@@ -1481,6 +1655,9 @@ this.BX.UI = this.BX.UI || {};
 	    if (params.color && !main_core.Type.isString(params.color)) {
 	      throw new TypeError('IconSet: "color" is not a string.');
 	    }
+	    if (!main_core.Type.isUndefined(params.responsive) && !main_core.Type.isBoolean(params.responsive)) {
+	      throw new TypeError('IconSet: "responsive" is not a boolean.');
+	    }
 	  }
 	  renderTo(node) {
 	    if (!main_core.Type.isElementNode(node)) {
@@ -1491,7 +1668,9 @@ this.BX.UI = this.BX.UI || {};
 	  render() {
 	    const className = `ui-icon-set --${this.icon}`;
 	    this.iconElement = main_core.Tag.render(_t || (_t = _`<div class="${0}"></div>`), className);
-	    if (this.size) {
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _responsive)[_responsive]) {
+	      main_core.Dom.style(this.iconElement, '--ui-icon-set__icon-size', '100%');
+	    } else if (this.size) {
 	      main_core.Dom.style(this.iconElement, '--ui-icon-set__icon-size', `${this.size}px`);
 	    }
 	    if (this.color) {
@@ -1499,6 +1678,11 @@ this.BX.UI = this.BX.UI || {};
 	    }
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _hoverMode)[_hoverMode]) {
 	      this.setHoverMode(babelHelpers.classPrivateFieldLooseBase(this, _hoverMode)[_hoverMode]);
+	    }
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _isIconWithFixedColor)[_isIconWithFixedColor]()) {
+	      main_core.Dom.addClass(this.iconElement, '--fixed-color');
+	    } else {
+	      main_core.Dom.removeClass(this.iconElement, '--fixed-color');
 	    }
 	    return this.iconElement;
 	  }
@@ -1519,6 +1703,19 @@ this.BX.UI = this.BX.UI || {};
 	    main_core.Dom.removeClass(this.iconElement, babelHelpers.classPrivateFieldLooseBase(this, _getHoverModeClassnameModifier)[_getHoverModeClassnameModifier](prevHoverMode));
 	    main_core.Dom.addClass(this.iconElement, babelHelpers.classPrivateFieldLooseBase(this, _getHoverModeClassnameModifier)[_getHoverModeClassnameModifier](hoverMode));
 	  }
+	  setResponsive(responsive) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _responsive)[_responsive] = responsive;
+	    if (!this.iconElement) {
+	      return;
+	    }
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _responsive)[_responsive]) {
+	      main_core.Dom.style(this.iconElement, '--ui-icon-set__icon-size', '100%');
+	      main_core.Dom.addClass(this.iconElement, '--responsive');
+	    } else {
+	      main_core.Dom.style(this.iconElement, '--ui-icon-set__icon-size', null);
+	      main_core.Dom.removeClass(this.iconElement, '--responsive');
+	    }
+	  }
 	}
 	function _getHoverModeClassnameModifier2(hoverMode) {
 	  var _hoverModeModifiers$h;
@@ -1534,6 +1731,9 @@ this.BX.UI = this.BX.UI || {};
 	    return Object.values(set).includes(iconName);
 	  });
 	}
+	function _isIconWithFixedColor2() {
+	  return Object.values(Disk).includes(this.icon) || Object.values(DiskCompact).includes(this.icon);
+	}
 
 	exports.Icon = Icon;
 	exports.IconHoverMode = IconHoverMode;
@@ -1548,6 +1748,9 @@ this.BX.UI = this.BX.UI || {};
 	exports.Animated = Animated;
 	exports.Outline = Outline;
 	exports.Solid = Solid;
+	exports.Disk = Disk;
+	exports.DiskCompact = DiskCompact;
+	exports.SmallOutline = SmallOutline;
 
 }((this.BX.UI.IconSet = this.BX.UI.IconSet || {}),BX));
 //# sourceMappingURL=ui.icon-set.core.bundle.js.map

@@ -10,6 +10,7 @@ use Bitrix\Mobile\Tab\Utils;
 use Bitrix\MobileApp\Janative\Manager;
 use Bitrix\SignMobile\Config\Feature;
 use Bitrix\Sign\Type\CounterType;
+use Bitrix\Mobile\Menu\Analytics;
 
 class SignTab implements Tabable
 {
@@ -63,6 +64,9 @@ class SignTab implements Tabable
 		}
 
 		return [
+			'id' => 'signing',
+			'section_code' => 'teamwork',
+			'sort' => 200,
 			'title' => $this->getTitle(),
 			'useLetterImage' => true,
 			'imageUrl' => 'sign/my-documents.png',
@@ -72,6 +76,7 @@ class SignTab implements Tabable
 				'counter' => enum_exists(CounterType::class)
 					? CounterType::SIGN_B2E_MY_DOCUMENTS->value
 					: 'sign_b2e_current',
+				'analytics' => Analytics::signDocuments(),
 			],
 		];
 	}
@@ -93,7 +98,7 @@ class SignTab implements Tabable
 
 	public function getTitle(): ?string
 	{
-		return Loc::getMessage('SIGN_MOBILE_TAB_TITLE');
+		return Loc::getMessage('SIGN_MOBILE_TAB_TITLE_MSGVER_1');
 	}
 
 	public function setContext($context): void
